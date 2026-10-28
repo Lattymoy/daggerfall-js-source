@@ -20,6 +20,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { planRoute, routeLegs, routeDrawPoints } from '../../src/systems/travel/travelRoute.js';
+import { drawRouteRuns, drawOwnRun } from '../../src/systems/travel/roadLine.js';   // PIN MOVED (ROAD-FOLLOW): the host's line drawn along the painted road
 import { createTravelView, ROUTE_DOT_PX, ROUTE_DOTS_MAX } from '../../src/scenes/travelView.js';
 import { forwardOf, TV_RISE_S } from '../../src/player/travelCamera.js';
 import { projectToScreen } from '../../src/player/tapRay.js';
@@ -74,6 +75,7 @@ function journey(goal, spot = null) {
     // the scene point of a native one, on flat ground (CI has no ARENA2 heights): world.js tvSceneOf's own placement
     tvSceneOf: (nx, nz, lift = 0) => { const [x, z] = state.localFromWorld(nx, nz); return [x, lift, z]; },
     deepWaters: null, tvSeaY: () => 0, tvGroundGenNow: () => 1,
+    drawRouteRuns, drawOwnRun,   // PIN MOVED (ROAD-FOLLOW): the host's two imports its line draws through
   };
   const travelViewRoute = new Function('d', `const { ${Object.keys(d).join(', ')} } = d;\n${src.route}\nreturn travelViewRoute;`)(d);
   const n1 = d.tvTrip.natives[1], [ax, az] = state.localFromWorld(n1[0], n1[1]);

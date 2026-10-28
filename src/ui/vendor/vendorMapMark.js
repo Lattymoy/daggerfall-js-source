@@ -32,11 +32,20 @@ const LABEL_MAX = 48;
  * @returns {{ key: string, px: number, py: number, x: number, y: number, cx: number, cy: number, r: number, label: string, town: string }|null}
  */
 export function readVendorMark(fn, size) {
+  return readVendorMarkIn(fn, { x0: 0, y0: 0, w: size.width, h: size.height });
+}
+
+/** BAY-LEFT-MAPS (bible/10-UI/Held-Map-Arc.md): the trader's waypoint over a BOX of map pixels (`box` {x0, y0, w, h} - the
+ *  held map's sheet: the continent's frame while it is shown, the Bay's own rectangle else), as the bounties are read
+ *  (ui/bounty/bountyMapMark.js readBountyMarksIn) - a trader's house past the Bay is its town's coin where the Bay's
+ *  1000 x 500 dropped it. The Bay's own box is readVendorMark's, to the pixel.
+ *  @param {(() => any) | undefined} fn @param {{x0:number, y0:number, w:number, h:number}} box */
+export function readVendorMarkIn(fn, box) {
   let m = null;
   try { m = typeof fn === 'function' ? fn() : null; } catch { return null; }
   if (!m || typeof m !== 'object') return null;
   const { px, py } = m;
-  if (!Number.isInteger(px) || !Number.isInteger(py) || px < 0 || py < 0 || px >= size.width || py >= size.height) return null;
+  if (!Number.isInteger(px) || !Number.isInteger(py) || px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) return null;
   const label = String(m.label ?? VENDOR_LEGEND_TEXT).slice(0, LABEL_MAX);
   const town = String(m.town ?? '').slice(0, LABEL_MAX);
   return { key: `${px},${py}|${label}|${town}`, px, py, x: px + 0.5, y: py + 0.5, cx: px + 0.5, cy: py + 0.5, r: VENDOR_RING_R, label, town };

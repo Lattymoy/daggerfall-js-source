@@ -57,6 +57,10 @@ assist stows a Large Galley's and a Large Boat VII's canvas with the wind ahead 
 about 30 degrees off the wind's eye - the Classic model as built, within the "In irons" hint's 40 degrees; the screenshots'
 panels show no such hint.
 
+AUDIT HELM-SIGHT B1 (2026-10-27, `../audits/Audit-Helm-Sight.md`) corrects the last sentence for the assist: it stows
+all of a Large Galley's or a Large Boat VII's canvas from 40 to about 85 degrees off the wind's eye too, and there the
+panel reads "Stow sails" at 0 knots and no hint says why. The irons hint covers the 40 degrees nearest the eye alone.
+
 `test/systems/comeSailAway/fb1021b_sailwind.test.js` (4): the chain on the real runtime, saved below ground and loaded
 outdoors - a Small Ship under sail and a Large Boat raised from rest make way; a load indoors keeps none and a load outdoors
 keeps the wind its save carried; the predicate. `tools/mutants/fb1021b_sailwind.json` (3, 3 dead). TIDY1's folder pin

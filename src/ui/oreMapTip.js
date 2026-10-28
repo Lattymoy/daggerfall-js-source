@@ -16,11 +16,12 @@
 // dungeon's Moonstone) - is said on the state line, which had read the surface table alone: a HauntedWoodlands card
 // said "No vein here needs witnesses" over dungeons whose Moonstone did. Its words through the text core (L10N4), the
 // ores' and the lands' names DFU's own.
-import { VEIN_TABLES, DUNGEON_VEINS, deepClimateOres, regionSignature, UNCONFIRMED_VEIN_TIER, WITNESS, factConfirmed } from '../net/nodeLaw.js';
+import { VEIN_TABLES, veinTable, DUNGEON_VEINS, deepClimateOres, regionSignature, UNCONFIRMED_VEIN_TIER, WITNESS, factConfirmed } from '../net/nodeLaw.js';
+import { richness } from '../net/provinceNodes.js';   // WW-C1: a province rich in veins
 import { kingdomOf, KINGDOMS } from '../net/kingdomLaw.js';
 import { minedMaterial } from '../net/professionLaw.js';
 import { materialLabel } from '../systems/professions/profItems.js';
-import { REGION_NAMES } from '../formats/mapsTables.js';
+import { REGION_NAMES, CYRODIIL_REGION } from '../formats/mapsTables.js';
 import { t, formatMessage, intlLocale } from '../systems/textManager.js';
 
 export const ORE_TIP_TITLE = 'Ore here';
@@ -55,20 +56,30 @@ const tierOf = (key) => minedMaterial(key)?.tier ?? 0;
  *   veins on such ground are the climate's whole table and only the signature waits (net/nodeLaw.js vein)
  */
 export function oreMapTip({ climate, region = null, fact = null, surveyed = false }) {
-  const table = VEIN_TABLES[climate];
-  if (!table) return null;
-  const sig = Number.isInteger(region) ? regionSignature(region) : null;
+  const own = VEIN_TABLES[climate];
+  if (!own) return null;
+  const at = Number.isInteger(region) ? /** @type {number} */ (region) : null;
+  const sig = at !== null ? regionSignature(at) : null;
   const words = (keys) => keys.map(oreWord).join(', ');
   // DEEP-OPEN: the deep veins' table every dungeon draws on anyone's word - its climate's own ore apart (below)
-  const lines = [t('ore.tip.veins', 'Veins: {ores}', { ores: words(table) }), t('ore.tip.dungeons', 'Dungeons: {ores}', { ores: words(DUNGEON_VEINS) })];
-  if (sig) {
-    const crown = kingdomOf(region);
-    const owner = crown ? KINGDOMS[crown].name : REGION_NAMES[/** @type {number} */ (region)] ?? t('ore.tip.thisLand', 'This land');
-    lines.push(t('ore.tip.own', '{owner}\'s own ore: {ore}', { owner, ore: oreWord(sig.ore) }));
-  }
+  const lines = [t('ore.tip.veins', 'Veins: {ores}', { ores: words(own) }), t('ore.tip.dungeons', 'Dungeons: {ores}', { ores: words(DUNGEON_VEINS) })];
+  // WW-C1 (bible/03-World/World-Wide.md WW-C): a province's richness on witnessed ground beside its own ore - Cyrodiil's
+  // every province's ores and metals (nodeLaw.js veinTable: their tables merged), said in a line the card holds whole
+  const rich = at !== null ? richness(at, 'vein') : 1;
+  const times = rich > 1 ? ` (${rich}x the veins)` : '';
+  const ores = sig ? [...new Set(sig.ores)] : [];
+  if (at === CYRODIIL_REGION) lines.push(`Cyrodiil holds every province's ores and metals${times}`);
+  else if (sig) {
+    const crown = kingdomOf(at);
+    const owner = crown ? KINGDOMS[/** @type {keyof typeof KINGDOMS} */ (crown)].name : REGION_NAMES[/** @type {number} */ (at)] ?? t('ore.tip.thisLand', 'This land');
+    lines.push(t('ore.tip.own', '{owner}\'s own ore: {ore}', { owner, ore: oreWord(sig.ore) }) + times);
+  } else if (times) lines.push(`${REGION_NAMES[/** @type {number} */ (at)]}${times}`);
   // what the witnesses hold back: the table's veins over the unwitnessed tier, and the signature - MINE-PERKS: from a
-  // Surveyor the signature alone (their own word witnesses the rest), so their card says no vein waits, or only it
-  const held = [...new Set([...(surveyed ? [] : table.filter((k) => tierOf(k) > UNCONFIRMED_VEIN_TIER)), ...(sig ? [sig.ore] : [])])].map(oreWord);
+  // Surveyor the signature alone (their own word witnesses the rest), so their card says no vein waits, or only it.
+  // WW-C1: and a province's metals its own climate's table does not hold - more than three said as its richest ores
+  const table = /** @type {readonly string[]} */ (veinTable({ climate, region: at, confirmed: true }));
+  const heldKeys = [...new Set([...table.filter((k) => !own.includes(k) || (!surveyed && tierOf(k) > UNCONFIRMED_VEIN_TIER)), ...ores])];
+  const held = heldKeys.length > 3 ? ['its richest ores'] : heldKeys.map(oreWord);
   // DEEP-OPEN: and a dungeon's climate ore, which waits on that dungeon's witnesses whatever this ground's state (a
   // Surveyor's word witnesses their surface veins alone - nodeLaw.js vein `surveyed`)
   const deep = deepClimateOres(climate).map(oreWord);

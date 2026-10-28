@@ -1,9 +1,9 @@
 [
   {
     "name": "FIELD-RAID-FT-null-walked",
-    "file": "src/scenes/world.js",
-    "old": "    peersInTown: () => (peersNear() ?? []).filter(",
-    "new": "    peersInTown: () => peersNear().filter(",
+    "file": "src/scenes/raidHost.js",
+    "old": "    peersInTown: () => (host.peersNear() ?? []).filter(",
+    "new": "    peersInTown: () => host.peersNear().filter(",
     "tests": [
       "test/scenes/field_raid_ft.test.js"
     ]

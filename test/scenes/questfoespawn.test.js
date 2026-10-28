@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { mintQuestFoeWave, bindQuestFoeHost, placeFoeEnv, entityOccupancy, questFoeGender } from '../../src/scenes/quest/questFoeHost.js';
 import { placeFoeFreely } from '../../src/systems/quest/sceneMount.js';
 import { GENDERS } from '../../src/characters/nameHelper.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT (at the merge of main into TESA): the world host read whole - questWorld is scenes/questWorld.js's
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -136,7 +137,7 @@ test('B1 gender: the Foe resource\'s own humanoid gender, the marker stand\'s re
 });
 
 test('B1 seam gate: the trio is mounted on questWorld and the pools drive + tear down behaviours', () => {
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   const modes = read('src/scenes/worldModes.js');
   const ext = read('src/scenes/exteriorFoes.js');
   const dun = read('src/scenes/dungeonContext.js');

@@ -17,11 +17,14 @@
 // (systems/town/townSeats.js) and its book (net/townSeatBook.js) read it.
 // ═══════════════════════════════════════════════════════════════════
 import { ONLINE_EPOCH_MS } from './wire.js';
-import { KINGDOMS, MARCHES, kingdomOf, isMarch, isFreeLand } from './kingdomLaw.js';
+import { KINGDOMS, MARCHES, kingdomOf, isMarch, isFreeLand, kingdomSeatName } from './kingdomLaw.js';
 import { TIDE_EFFECTS } from './tideLaw.js';   // SEASON1 part two: the Tides' numbers (9.3)
 import { HERALDRY_COLOURS } from './heraldryLaw.js';
 import { marksText } from './marksLaw.js';   // AUDIT-SEATS L7: "1,200 Drakes"
 import { fortWork, revoltDue, REVOLT, marketHallTitheCap } from './fortLaw.js';   // SEAT2b: a work's name in the Chronicle; part two (c): a seat at Standing 0 revolts
+import { REGION_NAMES, BAY_REGION_COUNT } from '../formats/mapsTables.js';   // DOMAIN3: a region's Charter named for its region; WW7-3: the Bay's count
+import { gateLaneOf } from './gate/gateLaw.js';   // WW7-3: a gate's lane, its province
+import { t } from '../systems/textManager.js';   // DOMAIN3: the region law's words, in the player's language
 
 /** A heraldry colour key's hex (heraldryLaw.js's palette), or null. */
 const heraldryHex = (key) => HERALDRY_COLOURS.find((c) => c.key === key)?.hex ?? null;
@@ -31,8 +34,10 @@ const amountOf = (x) => { const n = Number(x); return Number.isFinite(n) && n > 
 /** A seat's tier: a crown (the three capitals) or a palace (every other location with a Palace) - SEAT0 3.1. */
 export const SEAT_TIERS = Object.freeze(['palace', 'crown']);
 /** The crown seats, by their region's index (REGION_NAMES) - Daggerfall, Wayrest, Sentinel (SEAT0 3.2: "Crown seats
- *  must also match: tier crown, name in HUB_CAPITALS, region index 17, 23 or 20"). */
-export const CROWN_SEAT_REGIONS = Object.freeze({ 17: 'daggerfall', 23: 'wayrest', 20: 'sentinel' });
+ *  must also match: tier crown, name in HUB_CAPITALS, region index 17, 23 or 20"); WW7-3: and each province's past the
+ *  Bay but High Rock's and Hammerfell's, at its capital (net/kingdomLaw.js KINGDOMS). */
+export const CROWN_SEAT_REGIONS = Object.freeze({ 17: 'daggerfall', 23: 'wayrest', 20: 'sentinel',
+  64: 'skyrim', 65: 'morrowind', 66: 'summerset', 67: 'valenwood', 68: 'elsweyr', 69: 'blackmarsh', 70: 'cyrodiil' });
 
 /** THE WITNESSED REGISTRY (SEAT0 3.2, Appendix B). A seat is witnessed as the professions' pixels are - ONE table
  *  (`world_witness`, the kind `seat`, keyed by the map id) and ONE law (net/nodeLaw.js witnessedFact and WITNESS: an
@@ -53,11 +58,23 @@ export const seatsSwitchOf = (v) => (SEATS_SWITCH.includes(v) ? v : 'off');
 
 /** A seat's key: its location's MAPS.BSA map id, unsigned (regionHubs.js's key). */
 export const seatKeyOk = (k) => Number.isSafeInteger(k) && k >= 0 && k <= 0xffffffff;
-/** A region index MAPS.BSA holds (0-61). */
-export const seatRegionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r <= 61;
-/** A map pixel (MAPS.BSA's 1000 x 500). */
+/** A region index: MAPS.BSA's 62 and, WW7-3, the provinces' past the Bay (WW-R's 62-70 - formats/mapsTables.js
+ *  REGION_NAMES, every region a seat may stand in). */
+export const seatRegionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r < REGION_NAMES.length;
+/** WW7-3: WHERE A GATE'S KILL COUNTS - a Bay region for the Bay's lane (0), and for a lane past the Bay its own province's
+ *  region alone (net/gate/gateLaw.js: lane `t` is theatre `t`'s; WW-R: its region 61 + t), so a province's gate is its own
+ *  seats' and no other's. `day` the gate's number. */
+export const gateRegionOk = (day, region) => {
+  if (!Number.isSafeInteger(day) || day < 0 || !seatRegionOk(region)) return false;
+  const lane = gateLaneOf(day);
+  return lane === 0 ? region < BAY_REGION_COUNT : region === BAY_REGION_COUNT - 1 + lane;
+};
+/** WW7-3: the world's grid's half span (world/worldWide/worldGrid.js WORLD_PIXEL_SPAN - its number here, so the law the
+ *  services bundle reads no map). */
+export const SEAT_PIXEL_SPAN = 8192;
+/** A map pixel of the world's grid (WW7-3: past the Bay too - MAPS.BSA's 1000 x 500 were the Bay's alone). */
 const pixelOk = (p) => Array.isArray(p) && p.length === 2 && Number.isSafeInteger(p[0]) && Number.isSafeInteger(p[1])
-  && p[0] >= 0 && p[0] < 1000 && p[1] >= 0 && p[1] < 500;
+  && Math.abs(p[0]) < SEAT_PIXEL_SPAN && Math.abs(p[1]) < SEAT_PIXEL_SPAN;
 /** A location's name as MAPS.BSA spells it - printable, bounded. */
 const nameOk = (n) => typeof n === 'string' && n.length >= 1 && n.length <= 48 && /^[\x20-\x7e]+$/.test(n) && n.trim() === n;
 
@@ -73,7 +90,7 @@ export function seatReportOf(raw) {
   if (!seatKeyOk(key) || !nameOk(name) || !seatRegionOk(region) || !SEAT_TIERS.includes(tier) || !pixelOk(pixel)) return null;
   // a crown stands in its crown's region and bears its name (SEAT0 3.2: "tier crown, name in HUB_CAPITALS, region index
   // 17, 23 or 20")
-  if (tier === 'crown' && (!Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, region) || name !== KINGDOMS[CROWN_SEAT_REGIONS[region]]?.name)) return null;
+  if (tier === 'crown' && (!Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, region) || name !== kingdomSeatName(CROWN_SEAT_REGIONS[region]))) return null;   // WW7-3: a province's crown its capital's name
   return { key, name, region, tier, pixel: [pixel[0], pixel[1]] };
 }
 /** The report's bytes - what three witnesses must agree on, byte for byte. */
@@ -133,9 +150,27 @@ export const kingdomName = (id) => KINGDOMS[id]?.name ?? null;
 
 /** THE CHARTER (SEAT0 3.3): "the Charter of <Town>", or a crown's "the Crown Charter of <Kingdom>". */
 export function charterName(seat) {
-  if (seat?.tier === 'crown') return `the Crown Charter of ${kingdomName(CROWN_SEAT_REGIONS[seat.region]) ?? seat.name}`;
-  return `the Charter of ${seat?.name ?? 'the town'}`;
+  // DOMAIN3: through the text core - a holding's words (holdingWords) set the name inside a sentence of their own language
+  if (seat?.tier === 'crown') return t('seat.charter.crown', 'the Crown Charter of {kingdom}', { kingdom: kingdomName(CROWN_SEAT_REGIONS[seat.region]) ?? seat.name });
+  // DOMAIN3 (Domains.md section 3, "The words"): a region's Charter, where the region law rules, is named for its REGION -
+  // "the Charter of Koegria", ruled from Aldcester (`domain`, the seats' list's mark of a seat of power)
+  if (seat?.domain && REGION_NAMES[seat.region]) return t('seat.charter.region', 'the Charter of {region}', { region: REGION_NAMES[seat.region] });
+  return t('seat.charter.town', 'the Charter of {town}', { town: seat?.name ?? '' });
 }
+/** DOMAIN3: a HOLDING - a seat town of a region whose Charter is its seat of power's, dressed by the seats' book with that
+ *  Charter (`charterSeat`, net/townSeatBook.js dressed) - named in its Charter's words: the arrival's "Ripmore, in the
+ *  Charter of Anticlere, held by the Silver Hand <SH>.", or (`box`) the map box's "Ripmore, in the Charter of Anticlere:
+ *  held by the Silver Hand <SH>". */
+export function holdingWords(seat, box = false) {
+  const c = seat.charterSeat;
+  const holder = c?.holder?.guild ?? null;
+  const args = { town: seat.name, charter: charterName(c), guild: holder ? guildWords(holder) : '' };
+  if (box) return holder ? t('seat.holding.boxHeld', '{town}, in {charter}: held by {guild}', args) : t('seat.holding.boxUnheld', '{town}, in {charter}: unheld', args);
+  return holder ? t('seat.holding.held', '{town}, in {charter}, held by {guild}.', args) : t('seat.holding.unheld', '{town}, in {charter}. Its Charter is unheld.', args);
+}
+/** DOMAIN3: the Seat tab's line at a holding's board - its war is its Charter's, fought at the seat of power. */
+export const holdingTabLine = (seat) => t('seat.holding.tab', '{town} is a holding of {charter}. Its Charter is won, held and besieged at {seat}, and everything given or earned here counts there.',
+  { town: seat.name, charter: charterName(seat.charterSeat), seat: seat.charterSeat?.name ?? '' });
 /** A guild as the arrival line names it: "the Silver Hand <SH>". */
 export const guildWords = (g) => `${/^the /i.test(g.name) ? `the ${g.name.slice(4)}` : g.name} <${g.tag}>`;   // SEAT2b part two: exported - the Watchtowers' word names a guild the Chronicle's way
 /** CROWN2: the same, opening a sentence (SEAT2a's announcement too, which had opened one with "the"). */
@@ -144,10 +179,11 @@ const GuildWords = (g) => { const w = guildWords(g); return `${w[0].toUpperCase(
  * THE ARRIVAL LINE (SEAT0 3.3 - HUB1's five-second line, extended to every seat): "Anticlere. Its Charter is unheld."; a
  * held one "Anticlere, held by the Silver Hand <SH>."; a crown "Wayrest, capital of the Kingdom of Wayrest, held by the
  * Ebon Oath <EO>." (unheld: "... Its Crown Charter is unheld.").
- * @param {{ name: string, tier: string, region: number, holder?: any, battle?: any }} seat   AUDIT-SEATS G2: and the week's battle
+ * @param {{ name: string, tier: string, region: number, holder?: any, battle?: any, charterSeat?: any }} seat   AUDIT-SEATS G2: and the week's battle; DOMAIN3: a holding's Charter
  * @param {{ name: string, tag: string }|null} [holder]
  */
 export function seatArrivalLine(seat, holder = seat?.holder?.guild ?? null, nowMs = Date.now()) {   // SEAT1c: a dressed seat names its own holder
+  if (seat?.charterSeat) return holdingWords(seat);   // DOMAIN3: a holding says its region's Charter
   const siege = siegeCalledClause(seat?.battle, nowMs);
   if (seat.tier === 'crown') {
     const k = kingdomName(CROWN_SEAT_REGIONS[seat.region]) ?? seat.name;
@@ -166,23 +202,30 @@ export function siegeCalledClause(battle, nowMs) {
 
 /** The map's line for a seat, in its box: "The Charter of Anticlere: unheld" (SEAT1c: "held by the Silver Hand <SH>"). */
 export function seatInfoLine(seat, holder = null) {
-  const c = charterName(seat);
-  return `${c[0].toUpperCase()}${c.slice(1)}: ${holder ? `held by ${guildWords(holder)}` : 'unheld'}`;
+  if (seat?.charterSeat) return holdingWords(seat, true);   // DOMAIN3: a holding's box names its Charter and the Charter's holder
+  // AUDIT DOMAINS C2: through the text core whole - the Charter's name is the player's language now, and its line was English
+  const c = charterName(seat), charter = `${c[0].toUpperCase()}${c.slice(1)}`;
+  return holder ? t('seat.info.held', '{charter}: held by {guild}', { charter, guild: guildWords(holder) }) : t('seat.info.unheld', '{charter}: unheld', { charter });
 }
 
 /** THE MAP'S MARKS (SEAT0 3.3): the unheld ring's stone grey; each crown's metal; a free land's green. */
 // AUDIT-SEATS L10: the heraldry's own colours by name (Ash, Azure, Crimson, Gold, Vert), not their hex written twice
 export const SEAT_RING_UNHELD = heraldryHex('ash');
-export const KINGDOM_METALS = Object.freeze({ daggerfall: heraldryHex('azure'), wayrest: heraldryHex('crimson'), sentinel: heraldryHex('gold') });
+export const KINGDOM_METALS = Object.freeze({ daggerfall: heraldryHex('azure'), wayrest: heraldryHex('crimson'), sentinel: heraldryHex('gold'),
+  // WW7-3: the provinces' crowns - Skyrim's snow, Morrowind's ash-blood, Summerset's sky, Valenwood's leaf, Elsweyr's
+  // sand, Black Marsh's mire, the Empire's purple
+  skyrim: heraldryHex('argent'), morrowind: heraldryHex('sanguine'), summerset: heraldryHex('celeste'), valenwood: heraldryHex('teal'),
+  elsweyr: heraldryHex('tenne'), blackmarsh: heraldryHex('umber'), cyrodiil: heraldryHex('purpure') });
 export const FREE_LAND_RING = heraldryHex('vert');
 /** The same metals as heraldry colours (net/heraldryLaw.js keys) - the kingdom's plain banner at an unheld seat. */
-export const KINGDOM_BANNER_COLOURS = Object.freeze({ daggerfall: 'azure', wayrest: 'crimson', sentinel: 'gold' });
+export const KINGDOM_BANNER_COLOURS = Object.freeze({ daggerfall: 'azure', wayrest: 'crimson', sentinel: 'gold',
+  skyrim: 'argent', morrowind: 'sanguine', summerset: 'celeste', valenwood: 'teal', elsweyr: 'tenne', blackmarsh: 'umber', cyrodiil: 'purpure' });   // WW7-3
 /**
  * How a seat is marked on the map - `{ ring, crown, second, fill, split, siege }`: the ring's colour (unheld stone grey;
  * a holder's border), the crown's metal over a crown seat (or null), and a thin second ring - a March's in both claiming
  * crowns' metals, a Free Land's green - or null; SEAT1c: the holder's field filling it, a Contested seat's two
  * contenders' fields splitting it, and whether a siege is called there this week.
- * @param {{ tier: string, region: number, holder?: any, battle?: any }} seat
+ * @param {{ tier: string, region: number, holder?: any, battle?: any, charterSeat?: any }} seat
  */
 export function seatMapMark(seat) {
   const crown = seat.tier === 'crown' ? KINGDOM_METALS[CROWN_SEAT_REGIONS[seat.region]] ?? null : null;
@@ -190,7 +233,7 @@ export function seatMapMark(seat) {
     : isFreeLand(seat.region) ? [FREE_LAND_RING] : null;
   // SEAT1c (3.3): a held seat's ring filled with its holder's first colour and edged in its second; a Contested seat's
   // split in the two contenders' first colours; a siege week's edge burning
-  const h = seat.holder?.guild?.heraldry ?? null;
+  const h = (seat.charterSeat ?? seat).holder?.guild?.heraldry ?? null;   // DOMAIN3: a holding in its Charter's holder's colours
   const fill = h ? heraldryHex(h.field) : null;
   const ring = h ? heraldryHex(h.border) ?? SEAT_RING_UNHELD : SEAT_RING_UNHELD;
   const b = seat.battle ?? null;
@@ -743,7 +786,8 @@ export const seatClaimLine = (seat, defence = null) => (defence == null
 // generic id and a claim (net/identityToken.js SEAT_TITLES, `ts`: [the seat key, the Season]); the client words it.
 
 /** A crown seat's glyph, by its kingdom - a crown in the kingdom's metal. */
-export const SEAT_CROWN_GLYPHS = Object.freeze({ daggerfall: 'crownDF', wayrest: 'crownWR', sentinel: 'crownSN' });
+export const SEAT_CROWN_GLYPHS = Object.freeze({ daggerfall: 'crownDF', wayrest: 'crownWR', sentinel: 'crownSN',
+  skyrim: 'crownSK', morrowind: 'crownMW', summerset: 'crownSU', valenwood: 'crownVW', elsweyr: 'crownEW', blackmarsh: 'crownBM', cyrodiil: 'crownCY' });   // WW7-3
 /** The glyphs a guild's Charters give every member: `tower` for any palace seat it holds, and each crown's own -
  *  `holds` `[{ key, tier, region }]`, in the vocabulary's order. */
 export function seatGlyphsOf(holds) {
@@ -751,7 +795,7 @@ export function seatGlyphsOf(holds) {
   for (const h of holds ?? []) {
     if (h.tier === 'crown') { const g = SEAT_CROWN_GLYPHS[CROWN_SEAT_REGIONS[h.region]]; if (g) out.add(g); } else out.add('tower');
   }
-  return ['tower', 'crownDF', 'crownWR', 'crownSN'].filter((g) => out.has(g));
+  return ['tower', ...Object.values(SEAT_CROWN_GLYPHS)].filter((g) => out.has(g));
 }
 /** The title a guild's Charters give its guildmaster - "Protector of <Kingdom>" for a crown it holds (the lowest key),
  *  else "Warden of <Town>" for a palace seat (the lowest key) - `{ title, ts }`, or null for none. SEASON1: `season` the
@@ -824,7 +868,7 @@ export const titheOf = (amount, pct) => Math.floor((Math.max(0, amount) * Math.m
 export function bailiwickOf(seats, region, pixel = null) {
   let best = null, bestD = Infinity;
   for (const s of seats) {
-    if (s.region !== region) continue;
+    if (s.region !== region || /** @type {any} */ (s).charter != null) continue;   // DOMAIN3: a holding (the seats' list's mark) is its Charter's bailiwick
     const d = pixel ? (s.pixel[0] - pixel[0]) ** 2 + (s.pixel[1] - pixel[1]) ** 2 : 0;
     if (d < bestD || (d === bestD && s.key < best.key)) { best = s; bestD = d; }
   }
@@ -981,12 +1025,16 @@ export const EDICT_WORDS = Object.freeze({
   conscription: 'The kingdom\'s palace seats held by other guilds pay the crown 2% of their week\'s Tithe, a March\'s 1%. Standing -5 at every seat that pays.',
   'royal-tourney': 'A duel ladder all week at the castle\'s square, every blow refereed; the week\'s champion takes the prize and the title Champion of the kingdom for good.',
 });
-/** An Edict's line in the Seat tab, with its cost at a seat of `tier`. */
-export function edictLine(edict, tier, tide = 'calm') {   // SEASON1 part two: `tide` the coming week's, a Festival's cost
+/** BAY-LEFT-SEA: what the Bounty does at a seat past the Bay (bountyDenPixel) - its bailiwick's dens, no camp's. */
+const bountyDenWords = () => t('seat.edict.bountyDens', 'Outlaws\' hideouts and lairs near the town: the treasury pays {silver} silver a den cleared, from what is set aside.', { silver: BOUNTY_MARKS });
+/** An Edict's line in the Seat tab, with its cost at a seat of `tier`. BAY-LEFT-SEA: `seat` the seat it is proclaimed at -
+ *  a Bounty past the Bay (its region a province's) pays for its dens. */
+export function edictLine(edict, tier, tide = 'calm', seat = null) {   // SEASON1 part two: `tide` the coming week's, a Festival's cost
   const e = EDICTS[edict];
   if (!e) return null;
   const cost = edictCost(edict, tier, tide);
-  return `${e.name}: ${EDICT_WORDS[edict]}${cost ? ` Costs ${cost.toLocaleString('en-US')} silver.` : ''}`;
+  const words = edict === 'bounty' && Number(seat?.region) >= BAY_REGION_COUNT ? bountyDenWords() : EDICT_WORDS[edict];
+  return `${e.name}: ${words}${cost ? ` Costs ${cost.toLocaleString('en-US')} silver.` : ''}`;
 }
 /**
  * THE HOLDER'S OWN LINES on the Seat tab, for its members (SEAT0 7.9) - `h` the standings answer's `holding`
@@ -1039,6 +1087,28 @@ export function bountySitePixel(site) {
   return x < 1000 && y < 500 ? [x, y] : null;
 }
 
+/**
+ * BAY-LEFT-SEA (2026-10-26; the audit "no system left behind in the Bay", item 20 - B8 = E3; the owner: "Every single
+ * thing here needs to be addressed. No exceptions."): THE BOUNTY PAST THE BAY. World of Daggerfall's camps are the Bay's
+ * alone, so a province's seat could proclaim a Bounty that never paid. Past the Bay it pays for its bailiwick's foes' DENS
+ * - an outlaws' hideout (LW12: its band struck down) and a lair (TESA8: a foe struck down in it) - by a camp's kind of
+ * claim: the den's id names its map pixel (`"px,py:hideout"`, `"px,py:lair"`), paid once a UTC day whoever cleared it,
+ * five an account a day, bounded and not witnessed (seatHolding.js claimBounty). A den's id on the Bay is none.
+ */
+export const BOUNTY_DEN_KINDS = Object.freeze(['hideout', 'lair']);
+/** A den's id, or null. @param {string} kind @param {number} px @param {number} py */
+export const bountyDenId = (kind, px, py) => (BOUNTY_DEN_KINDS.includes(kind) && Number.isSafeInteger(px) && Number.isSafeInteger(py) ? `${px},${py}:${kind}` : null);
+/** The map pixel a den's id names - past the Bay, on the world's grid, the id canonical - or null. @param {unknown} site */
+export function bountyDenPixel(site) {
+  const m = /^(-?\d{1,4}),(-?\d{1,4}):(hideout|lair)$/.exec(typeof site === 'string' ? site : '');
+  if (!m) return null;
+  const x = Number(m[1]), y = Number(m[2]);
+  if (bountyDenId(m[3], x, y) !== site || Math.abs(x) >= SEAT_PIXEL_SPAN || Math.abs(y) >= SEAT_PIXEL_SPAN) return null;
+  return x >= 0 && y >= 0 && x < 1000 && y < 500 ? null : [x, y];
+}
+/** A Bounty claim's pixel: a World of Daggerfall camp's on the Bay (bountySitePixel), a den's past it. @param {unknown} site */
+export const bountyClaimPixel = (site) => bountySitePixel(site) ?? bountyDenPixel(site);
+
 /** THE LEVY'S SHARE OF ONE HARVEST (SEAT0 7.6): a tenth of `qty`, its fraction kept or not by `roll` (0-1, the
  *  harvest's own) - so a harvest of 3 gives the seat one unit three times in ten, and the tenth holds on average. */
 export const levyOf = (qty, roll) => {
@@ -1065,9 +1135,14 @@ const WEDNESDAY_MS = 54 * H;
  *  and the latest, Saturday 02:00 (Sunday 02:00), ends at 04:00. */
 export const siegeStartMs = (week, day, hour) => seatWeekStartMs(week) + WEDNESDAY_MS + day * 24 * H + hour * H + (hour < 16 ? 24 * H : 0);
 /** CROWN SIEGES (6.3, DECIDED): Saturday, Daggerfall at 20:00, Wayrest at 21:00, Sentinel at 22:00 - whatever the
- *  holder's window. */
+ *  holder's window; WW7-3: the provinces' crowns Friday, 17:00 to 23:00. */
 export const CROWN_SIEGE_SLOT = Object.freeze({
   daggerfall: Object.freeze({ day: 3, hour: 20 }), wayrest: Object.freeze({ day: 3, hour: 21 }), sentinel: Object.freeze({ day: 3, hour: 22 }),
+  // WW7-3: the provinces' crowns on Friday (2), an hour each from 17:00 to 23:00 - Saturday the Bay's crowns' night, no
+  // two crowns' sieges at once
+  skyrim: Object.freeze({ day: 2, hour: 17 }), morrowind: Object.freeze({ day: 2, hour: 18 }), summerset: Object.freeze({ day: 2, hour: 19 }),
+  valenwood: Object.freeze({ day: 2, hour: 20 }), elsweyr: Object.freeze({ day: 2, hour: 21 }), blackmarsh: Object.freeze({ day: 2, hour: 22 }),
+  cyrodiil: Object.freeze({ day: 2, hour: 23 }),
 });
 /** How long a battle runs (6.2, 6.7): a palace siege 30 minutes, a crown's 45, a Tourney 20. SEAT2b part two (c) (7.7:
  *  "inside the window's two hours"): a revolt its whole window (net/fortLaw.js REVOLT.windowMs). */

@@ -60,8 +60,9 @@
   {
     "name": "RESTORE-A-the-words-offline-too",
     "file": "src/systems/banking.js",
-    "old": "  if (!online) return null;\n  const slot = houses?.[regionIndex];",
-    "new": "  const slot = houses?.[regionIndex];",
+    "old": "  if (!online) return null;\n  const slot = deed ?? houses?.[regionIndex];",
+    "new": "  const slot = deed ?? houses?.[regionIndex];",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/systems/auditrealm2_customs.test.js",
       "test/systems/restore.test.js"
@@ -134,8 +135,9 @@
   {
     "name": "RESTORE-A-a-crossed-house-counted",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "slot?.buildingKey > 0 && !slot.crossed)",
-    "new": "slot?.buildingKey > 0)",
+    "old": "    if (!slot.crossed) deeds.push(",
+    "new": "    if (slot) deeds.push(",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/systems/house_loss.test.js",
       "test/systems/auditrealm2_customs.test.js"
@@ -164,8 +166,9 @@
   {
     "name": "RESTORE-B-no-evidence-asked",
     "file": "src/systems/realmCustoms.js",
-    "old": "    if (!permanent.has(name) || houses[region]?.buildingKey > 0) continue;",
-    "new": "    if (houses[region]?.buildingKey > 0) continue;",
+    "old": "if (!permanent.has(name) || regionDeedsOf(houses, region).length >= HOUSES_PER_REGION) continue;",
+    "new": "if (regionDeedsOf(houses, region).length >= HOUSES_PER_REGION) continue;",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/systems/restore.test.js"
     ]
@@ -173,8 +176,9 @@
   {
     "name": "RESTORE-B-a-region-overwritten",
     "file": "src/systems/realmCustoms.js",
-    "old": "    if (!permanent.has(name) || houses[region]?.buildingKey > 0) continue;",
-    "new": "    if (!permanent.has(name)) continue;",
+    "old": "      if (first?.buildingKey > 0) (first.more ??= []).push(deed);\n      else houses[region] = ",
+    "new": "      houses[region] = ",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/systems/restore.test.js"
     ]

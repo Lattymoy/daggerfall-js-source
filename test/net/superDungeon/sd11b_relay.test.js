@@ -704,7 +704,7 @@ test('SD11b THE RELAY BY SOURCE: the seams these fixes stand on - the realm\'s a
   assert.match(r, /const charLv = \(isCellRoom\(a\.key\) \|\| realmRoom \|\| ktRoom\) && Number\.isSafeInteger\(who\.cl\) && who\.cl >= 1 \? \{ cl: who\.cl \} : \{\};/);   // PIN MOVED (KETCH): and a ship's member's, the level its token signs
   assert.match(r, /try \{ await this\._sdHeldBeat\(now\); \}/);
   assert.match(r, /if \(this\._sdFellTelling\) return this\._sdFellTelling;/);
-  assert.match(r, /await this\.state\.storage\.put\(\{ \[SD_KEY\]: rec, \[SD_SLOT_KEY\]: hw \}\);/);
+  assert.match(r, /await this\.state\.storage\.put\(\{ \[sdLaneKey\(SD_KEY, lane\)\]: rec, \[sdLaneKey\(SD_SLOT_KEY, lane\)\]: hw \}\);/);   // PIN MOVED (WW5): a lane's record and its mark, together - the Bay's under the keys it always had (wire.js sdLaneKey)
   assert.match(r, /if \(isSdRoom\(a\.key\)\) \{ try \{ if \(!\(await this\._sdHelloFight\(ws, who\.subject, sdSlotOfRoom\(a\.key\), now\)\)\) return; \}/);
 });
 
@@ -783,6 +783,8 @@ test('SD11b THE RELAY\'S SMALLER ARMS (L8 G13, added at SD11c): a fighter\'s NEW
     hub.room.env.ROOMS = { idFromName: HR.idFromName, get: () => ({ fetch: async () => new Response(JSON.stringify({ n: 1e9 }), { status: 200 }) }) };
     const counts = await hub.room._sdCensus();
     hub.room.env.ROOMS = HR;
-    assert.ok(counts.length > 0 && counts.every((n) => n === CHAT_SOCKETS_MAX), 'bounded by a channel\'s sockets');
+    // PIN MOVED (WW5): the Bay's lane's census asks the Bay's 62 alone - a province's region is its own lane's to count
+    assert.ok(counts.length === 71 && counts.slice(0, 62).every((n) => n === CHAT_SOCKETS_MAX), 'bounded by a channel\'s sockets');
+    assert.ok(counts.slice(62).every((n) => n === 0), 'a province\'s channel never asked by the Bay\'s lane');
   });
 });

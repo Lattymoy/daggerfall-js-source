@@ -92,7 +92,7 @@ test('RVN7c THE INK SHEET: a lair\'s circle painted in blood red, its wash and i
 
 test('RVN7c EVERY MAP READS IT: the held map (its poll, its sheet, its legend), the classic region page (its texels and its repaint), and the world host\'s dep (mutants: any unwired)', () => {
   const h = read('src/ui/heldMap.js');
-  assert.match(h, /const lairs = readBountyMarks\(this\.deps\.revenants, this\._size, REVENANT_LEGEND_TEXT\);/);
+  assert.match(h, /const lairs = readBountyMarksIn\(this\.deps\.revenants, sheet, REVENANT_LEGEND_TEXT\);/);   // PIN MOVED (LAIR-WORLD): over the sheet - the continent's frame while it is shown, a lair past the Bay drawn
   assert.match(h, /if \(lKey !== this\._revenantsKey\) \{ this\._revenantsKey = lKey; this\._revenants = lairs; gateMoved = true; this\._dirty = true; \}/);
   assert.match(h, /revenants: this\._revenants,   \/\/ RVN7c/);
   assert.match(h, /if \(this\._revenants\.length\) \{   \/\/ RVN7c: and a lair's blood-red circle\n\s*const dot = el\('span', 'hmlegdot'\);\n\s*dot\.style\.background = REVENANT_RING_CSS;/);

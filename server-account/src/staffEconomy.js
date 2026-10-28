@@ -247,7 +247,7 @@ async function streamView(db, body, nowS) {
   return {
     player, kinds, since, until,
     item: str(body.item), priceMin: int(body.priceMin, 0, Number.MAX_SAFE_INTEGER), priceMax: int(body.priceMax, 0, Number.MAX_SAFE_INTEGER),
-    region: int(body.region, 0, 61), before: m ? { at: Number(m[1]), k: m[2] } : null,
+    region: int(body.region, 0, 70), before: m ? { at: Number(m[1]), k: m[2] } : null,
   };
 }
 

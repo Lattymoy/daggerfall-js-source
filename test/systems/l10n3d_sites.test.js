@@ -49,7 +49,9 @@ const ROUTED = {
   'src/scenes/exterior.js': 1,
   'src/scenes/hostMagic.js': 6,
   'src/scenes/menu.js': 1,
-  'src/scenes/world.js': 16,
+  'src/scenes/questWorld.js': 2,   // TESA's merge (HOST-SPLIT): moved verbatim out of world.js's bootWorld, its two with it
+  'src/scenes/world.js': 13,
+  'src/scenes/worldQuickSave.js': 1,   // TESA's merge (HOST-SPLIT): the quick save's, likewise
   'src/scenes/worldModes.js': 7,
   'src/systems/answerPipeline.js': 24,
   'src/systems/artifactEffects.js': 1,
@@ -83,6 +85,7 @@ const ROUTED = {
   'src/systems/modSettings.js': 16,   // L10N4: the mods' option names DFU has - Unleveled Loot's ten materials, None, Low/Medium/High
   'src/systems/mysticism.js': 14,
   'src/systems/notebook.js': 5,
+  'src/systems/online/onlineHomes.js': 1,   // IC-PROPS (2026-10-27): a nameless house's door says DFU's "Residence" (PlayerGPS.cs:1306-1309)
   'src/systems/playerTorch.js': 1,
   'src/systems/potions.js': 20,
   'src/systems/quest/actions.js': 2,

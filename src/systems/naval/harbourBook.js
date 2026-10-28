@@ -6,25 +6,25 @@
 // kept here, the world host sounds them every exterior frame whatever runs on the water, and the quays
 // (scenes/quayPool.js) and the naval host (its moored ships, its docking, its errands) read the same book.
 //
-// ITS LIFE (navalHost.js harbourFrame's, moved whole): the port town within a pixel of the player (RPT1026-WORLD FAR-QUAY:
-// every port town within SEA_RING - harbourOf, below) (`harbourNear` - its
-// key, its name, its footprint in the scene now and whether every pixel the sounding reads is built) is sounded once
-// that ground is built (AUDIT HOLDINGS O1: a pixel not built reads as land); a port that gave no harbour is sounded again
-// HARBOUR_RETRY_S later (AUDIT SHIP-LIFE B7); the berths move with the floating origin (`offsetAll`), and the book is
-// emptied at a transition, a jump and a load (`clear`) - found again where the world is next. A naval host made without
-// a book (its tests) keeps one of its own and steps it in its frame, as before.
+// ITS LIFE (navalHost.js harbourFrame's, moved whole): every port town within SEA_RING of the player (RPT1026-WORLD
+// FAR-QUAY, harbourOf below; `harbourNear` - its key, name, footprint in the scene and whether every pixel the sounding
+// reads is built) is sounded once that ground is built (AUDIT HOLDINGS O1: a pixel not built reads as land); a port that
+// gave no harbour is sounded again HARBOUR_RETRY_S later (AUDIT SHIP-LIFE B7); the berths move with the floating origin
+// (`offsetAll`), and the book is emptied at a transition, a jump and a load (`clear`). A naval host made without a book
+// (its tests) keeps one of its own and steps it in its frame, as before.
 //
 // FB1020c HARBOUR-REACH (the field, 2026-10-20: "a lot of harbor towns dont have harbors dispite being along the coast"):
 // ONE REACH FOR BOTH LAWS. A port town is one the open sea bears on within SEA_RING map pixels (world/portSites.js
-// portTownOnSea - its shipyard, its lighthouse, the harbour board's port), and its harbour was sounded on the built ground
-// within HARBOUR_REACH (420 m) of its footprint alone. DFU's kernel (DefaultTerrainSampler, TerrainHelper's location blend)
-// lays the shore of a coast whose land stands high or whose town fills its pixel far past that: on the real map 37 of the
-// 106 port towns sounded no harbour at all - no quay, no docks, no ship moored - Daggerfall, Sentinel and Wayrest among
-// them (their shores 1.5 km, 700 m and 1.1 km off their footprints). A Bay port whose own shore gives no berth is sounded
-// again out to the ring the port law read (`portRingReach`: the pixels within SEA_RING of the town's), once its ground is
-// built - never "no harbour" before it is (an unbuilt pixel reads as land) - and only once a book's life (its scan is some
-// five times the near one's): 36 of the 37 stand a harbour, and Aldbrugh by the ring's square (ALDBRUGH-QUAY: its sea lies
-// in the corner alone, past the round reach). An isle's port past the Veil sounds its own reach (AUDIT CAPTAIN'S SEA H1).
+// portTownOnSea), and its harbour was sounded within HARBOUR_REACH (420 m) of its footprint alone. DFU's kernel lays the
+// shore of a high coast, or of a town that fills its pixel, far past that: 37 of the 106 port towns sounded no harbour -
+// Daggerfall, Sentinel and Wayrest among them (shores 1.5 km, 700 m and 1.1 km off). A Bay port whose own shore gives no
+// berth is sounded again out to the ring the port law read (`portRingReach`), once its ground is built (an unbuilt pixel
+// reads as land) and once a book's life (the scan is some five times the near one's): 36 of the 37 stand a harbour, and
+// Aldbrugh by the ring's square (ALDBRUGH-QUAY). An isle's port past the Veil sounds its own (AUDIT CAPTAIN'S SEA H1).
+//
+// PORT-SHIPS (2026-10-27, Solitude's ships inside its walls): A BERTH STANDS WHERE A SHIP CAN (shipLife.js berthStands) -
+// the town keeps its ships out (`near.keep`, systems/naval/harbourKeep.js) and her waterplane floats over ground under the
+// sea's top (`deps.ground`, as navalIsWater reads it). Either missing asks nothing of it.
 //
 // Not a DFU member. Ledger A (QUAYS).
 import { findHarbour, offsetHarbour, HARBOUR_REACH } from './shipLife.js';
@@ -141,13 +141,13 @@ export function harbourOf(t, { state, built, woods }) {
 }
 
 /**
- * `ready(reach)` - whether every pixel a sounding to `reach` (m, its own when none is named) reads is built (RPT1026-WORLD
- * FAR-QUAY: or dry for certain - harbourKnown). RPT1026-WORLD FAR-QUAY: `harbourNear` may answer every port near the
- * player, a list (harbourOf's, one a town) - each is sounded as the one port always was.
+ * `ready(reach)`: every pixel a sounding to `reach` (m; its own when unnamed) reads is built, or dry for certain
+ * (harbourKnown). RPT1026-WORLD FAR-QUAY: `harbourNear` may answer a list, a port a town, each sounded as one always was.
  * @param {{
  *   harbourNear: () => ({ key: string, name?: string|null, rect: { minX: number, maxX: number, minZ: number, maxZ: number },
- *     ready?: (reach?: number) => boolean, reach?: number } | null),
+ *     ready?: (reach?: number) => boolean, reach?: number, keep?: ?((x: number, z: number) => boolean) } | null),
  *   isWater: (x: number, z: number, hull: number) => boolean,
+ *   ground?: (x: number, z: number) => number,
  * }} deps
  */
 export function createHarbourBook(deps) {
@@ -166,7 +166,7 @@ export function createHarbourBook(deps) {
   /** One port's sounding (step's, for each port the host names). */
   function stepOne(near, clock) {
     const own = near.reach ?? HARBOUR_REACH;
-    const sound = (reach = own, square = false) => findHarbour({ rect: near.rect, isWater: (x, z, h) => deps.isWater(x, z, h), reach, square });   // AUDIT CAPTAIN'S SEA H1: an isle port's own reach
+    const sound = (reach = own, square = false) => findHarbour({ rect: near.rect, isWater: (x, z, h) => deps.isWater(x, z, h), reach, square, keep: near.keep ?? null, ground: deps.ground ?? null });   // AUDIT CAPTAIN'S SEA H1: an isle port's own reach; PORT-SHIPS: its town's keep and the ground
     const h = book.get(near.key);
     if (!h) { if (near.ready?.() !== false) book.set(near.key, { key: near.key, name: near.name ?? null, harbour: sound(), at: clock }); }
     else if (!h.harbour && clock - h.at >= HARBOUR_RETRY_S && near.ready?.() !== false) { h.harbour = sound(); h.at = clock; }

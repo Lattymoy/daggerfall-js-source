@@ -403,7 +403,7 @@ test('B1: the accounts and the loan SURVIVE a save (SerializablePlayer)', async 
   const loaded = { stats: {}, items: [] };
   restorePlayer(loaded, snap);
 
-  assert.equal(loaded.bankAccounts.length, 62, 'every region came back');
+  assert.equal(loaded.bankAccounts.length, 71, 'every region came back');   // PIN MOVED (WW-R, bible/03-World/World-Wide.md): the provinces' accounts after the Bay's
   assert.equal(accountTotal(loaded.bankAccounts, 17), 10000);
   assert.equal(loanedTotal(loaded.bankAccounts, 17), 11000, 'the loan survived');
   assert.equal(loanDueDate(loaded.bankAccounts, 17), 500000 + LOAN_REPAY_MINUTES,
@@ -427,7 +427,7 @@ test('B1: the accounts and the loan SURVIVE a save (SerializablePlayer)', async 
   delete old.bankAccounts;
   const fresh = { stats: {}, items: [] };
   restorePlayer(fresh, old);
-  assert.equal(fresh.bankAccounts.length, 62, 'the full table, as a new game mints it');
+  assert.equal(fresh.bankAccounts.length, 71, 'the full table, as a new game mints it');   // PIN MOVED (WW-R): the provinces' after the Bay's
   assert.equal(accountTotal(fresh.bankAccounts, 17), 0);
 });
 

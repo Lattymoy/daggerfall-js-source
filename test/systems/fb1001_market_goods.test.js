@@ -560,8 +560,8 @@ test('MARKET-ANY service: a listing the decision cannot write - the thirtieth pl
 });
 
 test('MARKET-ANY wiring: the host builds the pack side over the live player (a piece another book keeps left out), hands the tab its goods, a piece\'s listing and a record\'s name, and the book the realm act\'s abandon and the collect\'s receive; the service routes the list and the collect with the realm\'s records (mutants: the keeper unasked; the tab\'s goods unwired; the routes without R2)', () => {
-  const w = src('src/scenes/world.js');
-  assert.match(w, /const marketGoods = createMarketGoods\(playerEntity, \{ kept: \(pv\) => pieceKept\(pv\), say: \(t\) => townTalk\.say\(t\) \}\);/);
+  const w = src('src/scenes/world.js') + src('src/scenes/marketPiecesHost.js');   // PIN MOVED (BAY-LEFT-SEA): HOST-SPLIT - the market's pieces and hubs moved out of bootWorld to scenes/marketPiecesHost.js
+  assert.match(w, /const marketGoods = createMarketGoods\(playerEntity, \{ kept: \(pv\) => pieceKept\(pv\), say: \(t\) => host\.townTalk\.say\(t\) \}\);/);   // PIN MOVED (BAY-LEFT-SEA): the moved module reads the HUD's talk live, as the host did
   assert.match(w, /drop: marketDrop, goods: \(\) => marketGoods\.goods\(\), good: \(it\) => marketGoods\.good\(it\), goodName: \(rec\) => marketGoods\.goodName\(rec\),/);
   assert.match(w, /abandon: \(why\) => realmSession\.abandon\(why\) \} : null, goods: realmSession \? \{ receive: \(rec, why\) => marketGoods\.receive\(rec, why\) \} : null,/);   // PIN MOVED (RPT1026-MARKET ARRIVE): the road's word handed through
   const index = src('server-account/src/index.js');

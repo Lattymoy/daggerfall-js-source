@@ -169,7 +169,7 @@
   },
   {
     "name": "EGMADE-a-portal-in-a-made-level",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/portalStoneHost.js",
     "old": "if (_mode() !== 'exterior' || madeRuleHere('portalStone') === 'refused') return PORTAL_TEXT.notHere;",
     "new": "if (_mode() !== 'exterior') return PORTAL_TEXT.notHere;",
     "tests": [

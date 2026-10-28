@@ -189,7 +189,8 @@
     "new": "  if (!regionOk(region)) return [];",
     "tests": [
       "test/net/chap2b_receipts.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "CHAP2B-ROUTE-GATE",

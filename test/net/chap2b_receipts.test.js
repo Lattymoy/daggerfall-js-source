@@ -163,7 +163,7 @@ test('CHAP2b the credit\'s bounds: never past 100, what is owed trimmed; never a
   assert.deepEqual(await creditReceipt(ctx, { id: mallory.id }, env, { character: s.R.id, kind: 'raid', id: '21:3:1', region: ANTICLERE }), { counted: false, why: 'no-member' });
   s.raw.prepare('UPDATE realm_characters SET dead_at = ? WHERE id = ?').run(_now, s.R.id);
   assert.deepEqual(await creditReceipt(ctx, { id: s.who.id }, env, { character: s.R.id, kind: 'raid', id: '21:4:1', region: ANTICLERE }), { counted: false, why: 'no-member' });
-  for (const [body, why] of [[{ character: s.R.id, kind: 'serpent', id: 1, region: ANTICLERE }, 'no-receipt'], [{ character: s.R.id, kind: 'gate', id: 1, region: 62 }, 'no-region']]) {
+  for (const [body, why] of [[{ character: s.R.id, kind: 'serpent', id: 1, region: ANTICLERE }, 'no-receipt'], [{ character: s.R.id, kind: 'gate', id: 1, region: 71 }, 'no-region']   /* PIN MOVED (WW7-5) */]) {
     assert.deepEqual(await creditReceipt(ctx, { id: s.who.id }, env, body), { counted: false, why }, why);
   }
   const throws = { prepare: () => { throw new Error('D1 down'); } };
@@ -237,7 +237,8 @@ test('CHAP2b the wiring: both routes credit after the receipt\'s row, the raid b
   // PIN MOVED (AUDIT CHAP3 C8: and the Merit its chapters counted it)
   assert.match(world, /if \(c\?\.counted\) \{\n\s+rollTracker\?\.refresh\(\);\n(?:\s+\/\/[^\n]*\n)*\s+const merit = \(c\.merit \?\? \[\]\)\.reduce\(\(n, \/\*\* @type \{any\} \*\/ x\) => n \+ \(Number\(x\?\.amount\) \|\| 0\), 0\);\n\s+const line = hallRememberLine\(\(c\.credited \?\? \[\]\)\.map\(\(x\) => x\.f\), merit\);\n\s+if \(line\) chatNotice\(line\);/);
   // PIN MOVED (AUDIT CHAP3 C3: a kept gate claim waits for the gate's scan; C4: a raid's said on the fighting character's page)
-  assert.match(world, /claim: \(r\) => \(gateClaimReady\(\) \? _accountGates\.claim\(r, gateSeatWord\(r\)\)\.then\(rollHeard\) : Promise\.resolve\(\{ ok: false, error: 'offline' \}\)\),/);
+  // PIN MOVED (WW-GATES-EVERYWHERE A2b): the wait asks the receipt - a lane past the Bay's waits on no scan
+  assert.match(world, /claim: \(r\) => \(gateClaimReady\(r\) \? _accountGates\.claim\(r, gateSeatWord\(r\)\)\.then\(rollHeard\) : Promise\.resolve\(\{ ok: false, error: 'offline' \}\)\),/);
   assert.match(world, /claim: \(r, ch, \.\.\.a\) => _accountRaids\.claim\(r, ch, \.\.\.a\)\.then\(\(x\) => \(ch === characterIdOf\(playerEntity\) \? rollHeard\(x\) : x\)\),/);
   // PIN MOVED: GUILD3d - the asks are each chapter's Duties line on its card
   // PIN MOVED: AUDIT GUILD3 L2 - and the reader's Merit row, the Merit promised only where it earns

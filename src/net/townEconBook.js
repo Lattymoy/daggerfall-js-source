@@ -235,7 +235,7 @@ export function createTownEconBook({ door, storage = null, nowMs = () => Date.no
         // a young account's ticks count nothing yet, and a guest's never: asked no more this page
         if ((r?.ok && r.data?.why?.young) || r?.error === 'towns-need-account') watchStopped = true;
         // AUDIT TOWN-ECON 2 SVC-5: the pixels whose footsteps are full today, kept off until the day turns
-        if (r?.ok && Array.isArray(r.data?.full)) for (const k of r.data.full) if (typeof k === 'string' && /^\d{1,3},\d{1,3}$/.test(k)) fullAt.set(k, dayNow());
+        if (r?.ok && Array.isArray(r.data?.full)) for (const k of r.data.full) if (typeof k === 'string' && /^-?\d{1,4},-?\d{1,4}$/.test(k)) fullAt.set(k, dayNow());   // WW7-5: a pixel past the Bay too
       } else if (TOWN_ECON_STOPS.includes(r?.error)) watchStopped = true;
       else {
         watchFails += 1;
@@ -264,8 +264,9 @@ export function createTownEconBook({ door, storage = null, nowMs = () => Date.no
 
 /** AUDIT TOWN-ECON 2 SVC-1: A DEVELOPER'S CHAT WORD (the halls' `/hall`, npcHallBook.js parseHallCommand): `/town audit`
  *  (the confirmed towns of the region the player stands in) or `/town strike <map id>` - `{ op, key? }`, `{ error }` in
- *  words, or null when the line is not /town. NEVER GUARDED HERE (RED1's law): the service asks whether this player may. */
-export const TOWN_USAGE = 'Usage: /town audit - the confirmed towns of this region; /town strike <map id> - a false town struck from the registry.';
+ *  words, or null when the line is not /town. NEVER GUARDED HERE (RED1's law): the service asks whether this player may.
+ *  BAY-LEFT-SEA (the audit's E4): `/town audit <n>` its n-th page (townEconLaw.js TOWN_AUDIT_PAGE a page) - `page` n - 1. */
+export const TOWN_USAGE = 'Usage: /town audit [page] - the confirmed towns of this region, 400 a page; /town strike <map id> - a false town struck from the registry.';
 export function parseTownCommand(/** @type {unknown} */ text) {
   const m = /^\/town(?:\s+([\s\S]*))?$/i.exec(String(text ?? '').trim());
   if (!m) return null;
@@ -273,19 +274,22 @@ export function parseTownCommand(/** @type {unknown} */ text) {
   const o = String(op ?? '').toLowerCase();
   if (o === 'audit' && key == null) return { op: 'audit' };
   const k = Number(key);
+  if (o === 'audit' && /^\d{1,4}$/.test(key ?? '') && k >= 1 && !more.length) return { op: 'audit', page: k - 1 };   // BAY-LEFT-SEA: a page past the first
   if (o !== 'strike' || !/^\d+$/.test(key ?? '') || !Number.isSafeInteger(k) || k < 1 || k > 0xffffffff || more.length) return { error: TOWN_USAGE };
   return { op: 'strike', key: k };
 }
 /** The registry's audit as chat lines: a confirmed town a line - its map id, pixel, place, the accounts that confirmed
  *  it, and FALSE where the town this client's own map holds at that pixel is another (`mapAt(px, py)`, its map id) -
- *  or a line that none is confirmed. */
+ *  or a line that none is confirmed. BAY-LEFT-SEA: and, where the service says a page follows (`more`), the word for it. */
 export function townAuditLines(/** @type {any} */ data, /** @type {(x: number, y: number) => (number|null|undefined)} */ mapAt) {
   const towns = data?.towns ?? [];
   if (!towns.length) return ['No town of this region is confirmed in the registry.'];
-  return towns.map((/** @type {any} */ t) => {
+  const lines = towns.map((/** @type {any} */ t) => {
     const here = mapAt(t.px, t.py);
     const own = here == null ? 'no town here at that pixel' : (here >>> 0) === t.map ? 'the town here' : `FALSE - the town here is ${here >>> 0}`;
     return `Town ${t.map} at ${t.px},${t.py} (location ${t.location}): ${own}; confirmed by ${(t.by ?? []).join(', ') || 'nobody kept'}`;
   });
+  if (data?.more === true) lines.push(`More confirmed towns of this region: /town audit ${(Number(data.page) || 0) + 2}`);
+  return lines;
 }
 

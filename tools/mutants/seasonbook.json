@@ -1127,25 +1127,25 @@
   {
     "name": "SEASON-BOOK-the-laurel-live-under-the-post",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "postFocusBack = true; render(); }, { swallow: true });\n      for (const n of [stage, home.querySelector?.('.px-profile'), mark, envelope, laurel])",
-    "new": "postFocusBack = true; render(); }, { swallow: true });\n      for (const n of [stage, home.querySelector?.('.px-profile'), mark, envelope])",
+    "old": "postFocusBack = true; render(); }, { swallow: true });\n      for (const n of [stage, home.querySelector?.('.px-profile'), mark, envelope, laurel, gem])",
+    "new": "postFocusBack = true; render(); }, { swallow: true });\n      for (const n of [stage, home.querySelector?.('.px-profile'), mark, envelope, gem])",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js",
       "test/ui/enhanced/seasonbook_face.test.js",
       "test/net/serverpost_client.test.js"
     ],
-    "note": "AUDIT P4: the laurel pressed under the mailbox."
+    "note": "AUDIT P4: the laurel pressed under the mailbox. SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "SEASON-BOOK-the-face-in-reach-under-the-window",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "closeOnOutsideTap(home, '.px-seasonwin', closeSeason, { swallow: true });\n      for (const n of [stage, home.querySelector?.('.px-profile'), mark, envelope, laurel]) n?.setAttribute?.('inert', '');",
+    "old": "closeOnOutsideTap(home, '.px-seasonwin', closeSeason, { swallow: true });\n      for (const n of [stage, home.querySelector?.('.px-profile'), mark, envelope, laurel, gem]) n?.setAttribute?.('inert', '');",
     "new": "closeOnOutsideTap(home, '.px-seasonwin', closeSeason, { swallow: true });",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js",
       "test/ui/enhanced/seasonbook_face.test.js"
     ],
-    "note": "The face and its marks reachable under the season window."
+    "note": "The face and its marks reachable under the season window. SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "SEASON-BOOK-the-focus-in-every-repaint",
@@ -1172,12 +1172,12 @@
   {
     "name": "SEASON-BOOK-the-rebuild-keeps-the-tick",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "  stopSeason();   // SEASON-BOOK: and the season window's\n  app.innerHTML = '';",
-    "new": "  app.innerHTML = '';",
+    "old": "  stopSeason();   // SEASON-BOOK: and the season window's\n  stopShop();",
+    "new": "  stopShop();",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
-    "note": "A rebuild of the face leaving the old window's tick running beside the new one's."
+    "note": "A rebuild of the face leaving the old window's tick running beside the new one's. SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "SEASON-BOOK-the-anchor-kept",

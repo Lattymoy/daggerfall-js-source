@@ -23,8 +23,9 @@ import { spendAmmoFor, ARROW_TEMPLATE } from '../../../src/systems/inventory.js'
 import { startShotTally, stopShotTally, noteShot, noteShotRecoverable } from '../../../src/systems/shotTally.js';
 import { playerArrowHitFoe } from '../../../src/combat/arrowFlight.js';
 import { PELLET_TEMPLATE } from '../../../src/characters/thunderlockIds.js';
+import { hostText } from '../../hostText.mjs';
 
-const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
+const read = (p) => hostText(p);   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld (scenes/questWorld.js, scenes/worldQuickSave.js) - the host read whole
 const settle = () => new Promise((r) => setTimeout(r, 0));
 const arrows = (n, extra = {}) => ({ name: 'Arrow', group: 'Weapons', templateIndex: ARROW_TEMPLATE, stackCount: n, ...extra });
 const realArrows = (items) => items.filter((i) => i.templateIndex === ARROW_TEMPLATE && !i.timeForItemToDisappear).reduce((n, i) => n + i.stackCount, 0);
@@ -194,9 +195,9 @@ test('CURSE-OFF-SAND: the Curse of Daggerfall\'s wave waits outside the arena\'s
   // instance and the undercroft are dungeon levels; dungeonContext.js stands what worldModes.js places - THE FOUR HOSTS
   // RULE). No host refuses at PLACEMENT any more - a pending wave raises the encounter event every tick it waits
   for (const host of ['world.js', 'exterior.js']) {
-    assert.match(read(`src/scenes/${host}`), /foeKeptOff: \(foe\) => \(\(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\n\s*\? !!modes\?\.questFoeKeptOff\?\.\(foe\)\n\s*: keptOffArenaGround\(\{ questName: foe\?\.parentQuest\?\.questName, feet: player\.pos, centre: arenaCity(Pixel\(\)|Origin) \? arenaCityStage\.centre\(\) : null \}\)\),/, host);
+    assert.match(read(`src/scenes/${host}`), /foeKeptOff: \(foe\) => \(\((?:host\.)?modes\?\.mode \?\? 'exterior'\) !== 'exterior'\n\s*\? !!(?:host\.)?modes\?\.questFoeKeptOff\?\.\(foe\)\n\s*: keptOffArenaGround\(\{ questName: foe\?\.parentQuest\?\.questName, feet: player\.pos, centre: arenaCity(Pixel\(\)|Origin) \? arenaCityStage\.centre\(\) : null \}\)\),/, host);
     const src = read(`src/scenes/${host}`), at = src.indexOf('tryPlaceFoe: (handle) => {');
-    assert.ok(at > 0 && !src.slice(at, at + 6000).includes('keptOffArenaGround'), `${host}: no refusal at placement`);
+    assert.ok(at > 0 && !src.slice(at, at + 6000).includes('keptOffArenaGround'), `${host}: no refusal at placement`);   // PIN MOVED (TESA's merge): world.js's quest world is scenes/questWorld.js's (host.modes), the host read whole
   }
   assert.match(read('src/scenes/worldModes.js'), /questFoeKeptOff\(foe\) \{\n\s*return mode === 'dungeon' && keptOffArenaGround\(\{ questName: foe\?\.parentQuest\?\.questName, inArenaLevel: isArenaFloor\(dungeonLoc\) \|\| isArenaUndercroft\(dungeonLoc\) \}\);/);
 });

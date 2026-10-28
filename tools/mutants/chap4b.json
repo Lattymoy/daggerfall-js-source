@@ -6,7 +6,8 @@
     "new": "return list.filter((s) => regionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "CHAP4B-SEATS-REGION",
@@ -15,7 +16,8 @@
     "new": "return list.filter((s) => isRollFaction(s?.f) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "CHAP4B-SEATS-KIND",
@@ -24,7 +26,8 @@
     "new": "return list.filter((s) => isRollFaction(s?.f) && regionOk(s?.region))",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "CHAP4B-RANKAT-REGION",

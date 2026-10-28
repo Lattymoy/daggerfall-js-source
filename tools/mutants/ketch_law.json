@@ -29,8 +29,8 @@
   {
     "name": "KTL-the-sighting-late",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "const n = Math.floor((t - (KT_EPOCH_MS - KT_SIGHT_MS)) / KT_EVERY_MS);",
-    "new": "const n = Math.floor((t - KT_EPOCH_MS) / KT_EVERY_MS);",
+    "old": "const n = Math.floor((t - ketchStationSlot(theatre) * KT_THEATRE_STAGGER_MS - (KT_EPOCH_MS - KT_SIGHT_MS)) / KT_EVERY_MS);",
+    "new": "const n = Math.floor((t - ketchStationSlot(theatre) * KT_THEATRE_STAGGER_MS - KT_EPOCH_MS) / KT_EVERY_MS);",
     "tests": [
       "test/net/ketch/ketch_law.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "KTL-away-naming-the-voyage-gone",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "if (t >= v.endAt) return { ...ketchVoyageOf(n + 1), phase: 'away' };",
-    "new": "if (t >= v.endAt) return { ...ketchVoyageOf(n), phase: 'away' };",
+    "old": "if (t >= v.endAt) return { ...ketchVoyageOf(base + n + 1), phase: 'away' };",
+    "new": "if (t >= v.endAt) return { ...ketchVoyageOf(base + n), phase: 'away' };",
     "tests": [
       "test/net/ketch/ketch_law.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "KTL-boarding-through-the-last-minutes",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "export const ketchBoards = (n, now) => { const v = ketchVoyageOf(n); return now >= v.at && now < v.departAt; };",
-    "new": "export const ketchBoards = (n, now) => { const v = ketchVoyageOf(n); return now >= v.at && now < v.endAt; };",
+    "old": "return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.departAt; };",
+    "new": "return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.endAt; };",
     "tests": [
       "test/net/ketch/ketch_law.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "KTL-holding-before-the-arrival",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "export const ketchHolds = (n, now) => { const v = ketchVoyageOf(n); return now >= v.at && now < v.endAt; };",
-    "new": "export const ketchHolds = (n, now) => { const v = ketchVoyageOf(n); return now >= v.sightAt && now < v.endAt; };",
+    "old": "return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.endAt; };",
+    "new": "return ketchStationOk(ketchTheatreOf(n)) && now >= v.sightAt && now < v.endAt; };",
     "tests": [
       "test/net/ketch/ketch_law.test.js"
     ]

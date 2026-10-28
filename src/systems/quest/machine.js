@@ -310,6 +310,7 @@ import { Clock } from './clock.js';
 import { questDataOnThisClock, shiftQuestStamps } from './questStamps.js';   // TIME3: a party member's copy, on this character's clock; QUEST-SHELF: a reclaimed quest's, by the time it was set aside
 import { BUILDING_TYPES } from '../../world/buildingNames.js';   // DISC28-I: IsActiveQuestBuilding's House1-House6
 import { adoptLinkedDungeonSize } from '../../world/smallerDungeons.js';   // AUDIT DELVE E5: the size a quest's markers were chosen on
+import { START_QUESTS } from '../starts/starts.js';   // START1: the starts' quests, the main quest's prologue
 
 const HOUSE1 = BUILDING_TYPES.House1, HOUSE6 = BUILDING_TYPES.House6;
 
@@ -340,7 +341,7 @@ export function mintShareId() {
   const r = globalThis.crypto?.randomUUID?.();
   return r ?? `s${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
 }
-export const PROTECTED_QUESTS = Object.freeze(['S0000999', 'S0000977', '_BRISIEN']);
+export const PROTECTED_QUESTS = Object.freeze(['S0000999', 'S0000977', '_BRISIEN', ...START_QUESTS]);   // START1: a start holds the commission the main quest waits on
 /** IsProtectedQuest's name test, one home (AUDIT CURSE-SYNC, the review's reuse finding): `name` in `list`,
  *  case-insensitive as C#'s. scenes/quest/questFoeHost.js's WORLD_QUESTS reads the same test. */
 export const questNameIn = (list, name) => { const n = (name ?? '').toLowerCase(); return list.some((x) => x.toLowerCase() === n); };
@@ -1238,6 +1239,7 @@ export class QuestMachine {
   }
 
   restoreSaveData(data) {
+    this.restores = (this.restores ?? 0) + 1;   // AUDIT STARTS Q5: a load landed - what a start still on its way reads (scenes/startsHost.js begin)
     this.siteLinks = (data.siteLinks ?? []).map((l) => structuredClone(l));
     // AUDIT 24: the globals ride the envelope now. A pre-AUDIT-24 save
     // carries none, which leaves whatever the fresh machine holds -

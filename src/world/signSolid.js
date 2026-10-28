@@ -26,6 +26,7 @@
 // stand on.
 
 import { isShopSignModel } from './houseSigns.js';   // AUDIT FB1025i G3 (ONE MEMBER, ONE EXPORT): the range is HOUSE-SIGN's
+import { flatTriangles } from './capitalShapes.js';   // CAPITAL-TREES: a capital tree's flats
 
 /** How far (metres, in the model's own frame) over its foot a sign's triangle must stand, every corner of it, to hang. */
 export const SIGN_HANG_M = 1;
@@ -51,15 +52,22 @@ export function signHungMarks(positions, indices) {
 
 /** @type {WeakMap<object, Uint8Array>} a sign model's marks, made once a model */
 const HUNG = new WeakMap();
+/** @type {WeakMap<object, Uint8Array | null>} CAPITAL-TREES: a model's flats' marks (or none), made once a model */
+const FLATS = new WeakMap();
 
 /**
  * What a town host hands the collider beside a placed model's own triangles (addMesh's `sight`): a sign's hung marks
- * (signHungMarks, once a model), null for every other model - all of it a body's.
+ * (signHungMarks, once a model), null for every other model - all of it a body's. CAPITAL-TREES: and a capital tree's
+ * flats (world/capitalShapes.js flatTriangles - its leaf sprays' cards and its lianas, once a model): a body passes
+ * through a tree's leaves as through Daggerfall's own trees' flats, and a ray stops at them as at a sign's board.
  * @param {number} modelIdNum
- * @param {{ positions: ArrayLike<number>, indices: ArrayLike<number> }} model its CPU mesh, as the host's model cache holds it
+ * @param {{ positions: ArrayLike<number>, indices: ArrayLike<number>, subMeshes?: ReadonlyArray<any> }} model its CPU mesh, as the host's model cache holds it
  * @returns {Uint8Array | null}
  */
 export function sightMarksOf(modelIdNum, model) {
+  if (model && !FLATS.has(model)) FLATS.set(model, flatTriangles(model));   // CAPITAL-TREES: a capital tree's leaf sprays and lianas pass a body, as a sign's board
+  const flats = model ? FLATS.get(model) : null;
+  if (flats) return flats;
   if (!isShopSignModel(modelIdNum)) return null;
   let marks = HUNG.get(model);
   if (!marks) HUNG.set(model, (marks = signHungMarks(model.positions, model.indices)));

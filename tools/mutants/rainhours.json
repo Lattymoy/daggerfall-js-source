@@ -47,8 +47,8 @@
   {
     "name": "RAIN-HEART-every-front-pours",
     "file": "src/systems/weather/weatherMap.js",
-    "old": "export const STRENGTH = Object.freeze({ rain: Object.freeze([EDGE_INTENSITY, 1]) });",
-    "new": "export const STRENGTH = Object.freeze({});",
+    "old": "export const STRENGTH = Object.freeze({ rain: Object.freeze([EDGE_INTENSITY, 1]), ashfall: Object.freeze([0.35, 1]) });",
+    "new": "export const STRENGTH = Object.freeze({ ashfall: Object.freeze([0.35, 1]) });",
     "tests": [
       "test/systems/weather/rainhours.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RAIN-HEART-the-floor-at-nothing",
     "file": "src/systems/weather/weatherMap.js",
-    "old": "export const STRENGTH = Object.freeze({ rain: Object.freeze([EDGE_INTENSITY, 1]) });",
-    "new": "export const STRENGTH = Object.freeze({ rain: Object.freeze([0, 1]) });",
+    "old": "export const STRENGTH = Object.freeze({ rain: Object.freeze([EDGE_INTENSITY, 1]), ashfall: Object.freeze([0.35, 1]) });",
+    "new": "export const STRENGTH = Object.freeze({ rain: Object.freeze([0, 1]), ashfall: Object.freeze([0.35, 1]) });",
     "tests": [
       "test/systems/weather/rainhours.test.js"
     ]

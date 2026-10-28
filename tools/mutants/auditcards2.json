@@ -1293,8 +1293,8 @@
   },
   {
     "name": "A2-world-save-ignores",
-    "file": "src/scenes/world.js",
-    "old": "    if (modes?.cardTableLive?.()) { if (!quiet) townTalk.say('You cannot save with chips on the table.'); return false; }\n",
+    "file": "src/scenes/worldQuickSave.js",
+    "old": "    if (host.modes?.cardTableLive?.()) { if (!quiet) townTalk.say('You cannot save with chips on the table.'); return false; }\n",
     "new": "\n",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",

@@ -675,13 +675,12 @@ const GROUND_NORMAL_STEP = 0.5;
 export class Collider {
   /** @param {(x:number,z:number)=>number} heightAt floor beneath everything
    *  @param {((x:number,z:number)=>number)|null} [surfaceAt] BLOOD1 AUDIT 3:
-   *  the DRAWN ground, where it differs from the floor the capsule
-   *  walks on. The world host's `heightAt` is a bilinear read of the
-   *  heightmap; the terrain it draws is two triangles a quad, and the
-   *  two surfaces are up to 0.08 apart on real grades (terrainSurface.js
-   *  measured it) - four times a mark's 2cm lift. The capsule keeps
-   *  the bilinear floor it has always had; a thing PLACED on the ground
-   *  (surfaceHit, groundNormal) asks where the ground is drawn. */
+   *  the DRAWN ground, at the ring class each pixel is drawn at; a thing
+   *  PLACED on the ground (surfaceHit, groundNormal) asks where the
+   *  ground is drawn. FLORA-GROUND: the world host's `heightAt` walks the
+   *  same two triangles a quad at the near grid's stride (terrainSurface.js
+   *  walkGroundAt, the ground's one law) - it was a bilinear read of the
+   *  heightmap, up to 46 cm off the drawn ground on the landforms. */
   constructor(heightAt = () => -Infinity, surfaceAt = null) {
     this.heightAt = heightAt;
     this.surfaceAt = typeof surfaceAt === 'function' ? surfaceAt : null;
@@ -696,6 +695,49 @@ export class Collider {
     this._walk = 0;   // FIELD BUGS 2026-10-25i RAIL-HANG: a walking step's body height while its passes resolve (_moveStep), 0 for none
     this._walkRefused = false;   // RAIL-HANG: a sphere's resolve made again with no walking floor taken (_resolveSphere)
     this._onGround = false;   // RAIL-HANG (AUDIT FB1025i G6): the move's body stood on the ground when it began (move's `onGround`)
+    /** IC-SWAP-BEHIND (scenes/swapBehind.js): the keys whose buckets are HELD - laid but answering no query (a pixel's view
+     *  built behind the one that stands) - and those buckets, until `wake` stands them under their pixel's own key. */
+    this._holding = new Set();
+    /** @type {Map<string, any>} */
+    this._held = new Map();
+  }
+
+  /** IC-SWAP-BEHIND: every bucket laid under `key` - or under a key of its (`key:...`, a gate's) - from now is HELD - in no
+   *  query, no filing, no bounds - until `wake`. */
+  hold(bucketKey) { this._holding.add(bucketKey); this.cover?.hold?.(bucketKey); }
+  /** IC-SWAP-BEHIND: is a bucket key held - its own, or one of a held key's (`key:...`). @param {string} bucketKey */
+  _isHeld(bucketKey) {
+    if (!this._holding.size) return false;
+    if (this._holding.has(bucketKey)) return true;
+    for (const h of this._holding) if (typeof bucketKey === 'string' && bucketKey.startsWith(`${h}:`)) return true;
+    return false;
+  }
+  /** IC-SWAP-BEHIND: a held key let go with its bucket, its cover and its withheld parts - a build behind that failed. */
+  unhold(bucketKey) {
+    this._holding.delete(bucketKey);
+    for (const k of [...this._held.keys()]) if (k === bucketKey || (typeof k === 'string' && k.startsWith(`${bucketKey}:`))) this.removeBucket(k);
+    this.cover?.unhold?.(bucketKey);
+  }
+  /** IC-SWAP-BEHIND: whether a key's bucket is held (or would be laid held). */
+  holds(bucketKey) { return this._isHeld(bucketKey) || this._held.has(bucketKey); }
+  /** IC-SWAP-BEHIND: THE HELD BUCKET STOOD UNDER ITS PIXEL'S OWN KEY - `from`'s bucket (if one was laid) answers queries as
+   *  `to` from now; its cover and its withheld late parts move with it. A bucket standing under `to` must have gone first
+   *  (the view it replaces, torn down). */
+  wake(from, to) {
+    this._holding.delete(from);
+    // its own bucket and its keys' (`from:...` - a gate's), each under the pixel's own (`to:...`)
+    for (const [k, bucket] of [...this._held]) {
+      const own = k === from, sub = typeof k === 'string' && k.startsWith(`${from}:`);
+      if (!own && !sub) continue;
+      const as = own ? to : `${to}${k.slice(from.length)}`;
+      if (this._buckets.has(as)) throw new Error(`collider: ${as} stands - its view goes before the one behind it wakes`);
+      this._held.delete(k);
+      bucket.key = as;
+      this._buckets.set(as, bucket);
+      this._broad = null;
+    }
+    this.late?.rename?.(from, to);   // its withheld late parts (and its gates') stand there when they stand
+    this.cover?.wake?.(from, to);   // its cover (ai/cover.js), held as the bucket was
   }
 
   /** SEA-DROPS: THE POSED MOVERS MAY STAND ELSEWHERE NOW - every bucket laid with addMesh's `posed` has its world box made
@@ -849,7 +891,8 @@ export class Collider {
    * it, a rider rides under it.
    */
   addMesh(bucketKey, positions, indices, matrix, translation = null, rotation = null, posed = false, sight = null) {
-    let bucket = this._buckets.get(bucketKey);
+    const held = this._isHeld(bucketKey);   // IC-SWAP-BEHIND: laid aside, answering nothing until it wakes
+    let bucket = held ? this._held.get(bucketKey) : this._buckets.get(bucketKey);
     const fresh = !bucket;
     if (!bucket) {
       // AUDIT NAME1 F2: `min`/`max` are the bucket's own bounds in ITS
@@ -857,7 +900,7 @@ export class Collider {
       // already does), kept as the triangles go in - one compare per
       // vertex, paid once at load, against a walk paid per ray.
       bucket = { key: bucketKey, moves: !!(translation || rotation), frame: FRAME_OF.get(translation) ?? null, ord: -1, _broadStamp: 0, lvl: FILED_NONE, bx0: 0, bx1: -1, bz0: 0, bz1: -1, tris: [], yLo: [], yHi: [], part: [], parts: 0, sight: null, rayMark: null, posed: !!posed && !!(translation || rotation), wbox: null, grid: new Map(), wide: [], wideTree: null, t: translation || (() => ZERO3), r: rotation, min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };   // AUDIT BRANCH (WoD) B1; OW-WOD-LAG: the wide triangles, and their tree (built when first asked); FB0930-FRAME: its key, whether it moves, its place in the walk
-      this._buckets.set(bucketKey, bucket);
+      (held ? this._held : this._buckets).set(bucketKey, bucket);
     }
     const m = matrix;
     const tx = (i) => {
@@ -912,7 +955,7 @@ export class Collider {
     // FB0930-FRAME: a new bucket, or a box that grows, is filed again before the next query. PERF-COL2 (AUDIT): into the
     // standing filing, where its frames stand where they were filed - a new bucket at the walk's end, a grown one under
     // the cells it gained; else the whole filing is made again at the next query, as it was for every mesh.
-    const broad = this._broad;
+    const broad = held ? null : this._broad;   // IC-SWAP-BEHIND: a held bucket is filed nowhere
     if (broad !== null) {
       if (framesMoved(broad)) this._broad = null;
       else {
@@ -927,12 +970,13 @@ export class Collider {
    *  query of a frame in play. A bucket with none, or whose tree stands, costs nothing; a later mesh raises it again,
    *  lazily, on the query that needs it. */
   settle(bucketKey) {
-    const bucket = this._buckets.get(bucketKey);
+    const bucket = this._buckets.get(bucketKey) ?? this._held.get(bucketKey);   // IC-SWAP-BEHIND: a held one's tree too
     if (bucket && bucket.wide.length) wideTree(bucket);
   }
 
   removeBucket(bucketKey) {
     if (this._buckets.delete(bucketKey)) this._broad = null;   // FB0930-FRAME: the filing is dropped with it
+    this._held.delete(bucketKey);   // IC-SWAP-BEHIND: a held one goes as a standing one (its key still held: a build behind lays it anew)
     this.cover?.remove(bucketKey);   // TACT1: a bucket's cover leaves with it
     this.late?.forget(bucketKey);   // ROCK-CLEAR: and its parts held back from the body - a pixel streamed out stands none of them later
   }

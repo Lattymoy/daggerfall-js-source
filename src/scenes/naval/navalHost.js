@@ -70,6 +70,7 @@ import { wrapAngle, multiply } from '../../world/mat4.js';   // ONCRASH1: the po
 import { createShipDamage, shotDamage, shotMen, ballMen, playerMen, SHIP_STATES, SINK_SECONDS, SINK_CLEAR, sinkAngles, sinkDepth, BRACE_TAKEN, FIRE_CHANCE, WRECKED_OARS, repairCost, STRUCK_AT } from '../../systems/naval/navalDamage.js';
 import { createGunDeck, aimSolution, volleyLaunches, bearingOf, sideForBearing, toWorld, RIPPLE_S, READY_FLASH_S } from '../../systems/naval/navalGunnery.js';
 import { flatHull, hullOverlap, hullBuild, firstBuildOf, batteryOf, batteriesOf, GUNS, classById, classFor, shipNames, crownOf, classLine, SIDES, SIDE_DIR, BARREL, NAVAL_FACTIONS, HULL, PLAYER_CREW_TOUGHNESS, SHIP_TOUGHNESS, shipBatteryWeight, MOD_BUILDS, flagOf, CROWNS } from '../../systems/naval/navalShips.js';
+import { shipNameBank } from '../../systems/naval/shipNameBank.js';   // WW3: the waters' people, past the Bay a province's
 import { createWaterGrid, errandFor, errandRng, dwellOf, offsetErrand, alongside, BERTH_SNAP_M, BERTH_WAY } from '../../systems/naval/shipLife.js';   // SHIP-LIFE
 import { createHarbourBook, HARBOUR_RETRY_S } from '../../systems/naval/harbourBook.js';   // HARBOUR-BOOK: the harbours, the world's and mine
 import { hash32 } from '../../world/spawnedDungeons.js';
@@ -90,7 +91,7 @@ import { createPassageBerths } from './passageBerths.js';   // PASSAGE: a berth'
 import { createFishingFleet } from './fishingFleet.js';   // FISH-BOATS: a port's fishing boats, stood
 import { createPassageQuay } from './passageQuay.js';   // PASSAGE-QUAY: a booked ship brought in to her port's quay
 import { yardOffer, yardAll, fieldMend, FIELD_QUIET_S, FIELD_REFLOAT, YARD_PRICE, provisionOffer, seaRepair, wantsRepair, paidDamage, STORE_POINTS, STORES_STOCK, storesToWhole, SEA_REPAIR_UNDER_FIRE, FIELD_MEND_CAP } from '../../systems/naval/navalYard.js';
-import { createCompanions, companionRows, heldAtSide, packStaysAshore } from '../../systems/naval/crewCompanions.js';   // CREW-COMPANIONS - COMPANION-DROP: the zone keeps him at my side
+import { createCompanions, companionRows } from '../../systems/naval/crewCompanions.js';   // CREW-COMPANIONS
 import { createShipCrew, reloadScaleOf, mendScaleOf, handsBonusOf, crewCard, CREW_ORDERS, ORDER_TEXT, spiritsOf, LOOKOUT_ROLE, FIRST_MATE, crewWorth, NO_WORTH, SEASONED_HIRE } from '../../systems/naval/shipCrew.js';   // SHIP-CREW; CAPT-CREW: what her posts are worth
 import { crewRoster, playerCrewCount } from '../../systems/naval/crewLife.js';   // AUDIT NAV1: the shipwright, the mending at sea
 import { enlistPlan, releasePlan, CREW_HALL_TEXT } from '../../systems/crewHall.js';   // SHIPYARDS: the crew hall's recruits signed on to her deck by name, and paid off
@@ -639,6 +640,19 @@ const dist2d = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]);
 /** A launch's arc to `t` seconds, in 18 points - an aim's line to where its ball stops short of the sea. */
 const arcTo = (l, t) => Array.from({ length: 18 }, (_, j) => shotPosition(l.p0, l.v0, t * j / 17));
 
+/** WW3: the waters' people - a crew's region and its name bank, the province's past the Bay - off one read of the
+ *  waters (AUDIT WW F12: the host's `where` is a search of the ports, asked once). @param {{ region?: number, area?: number }} w */
+const watersFolk = (w) => ({ regionIndex: w.region ?? 17, bank: shipNameBank(w.region ?? 17, w.area ?? -1) });
+/** WW3: a ship's names by her waters' people - her region's on the Bay, and past it the name bank of the area she is
+ *  named in (`area`: a packet's her home port's, another's the waters here). AUDIT TESA II K7: built here, beside
+ *  watersFolk, so the host's scope keeps only the call (the hosts do not grow, bible/01-Overview/Host-Split.md). */
+const watersShipNames = (cls, seed, region, crown, area) => shipNames(cls, seed, { regionIndex: region, crown, bank: shipNameBank(region, area) });
+/** WW3: the area a launched ship's names are drawn in - her spec's (a packet's her home port's; WW7-8: a peer's word's, the
+ *  stander's own), a ship of a named region none (her region's people), else the waters here. WW7-8: kept on her entry and
+ *  said on the wire (systems/naval/navalWire.js `r`), so every reader names her by her stander's people, past the Bay too.
+ *  @param {{ area?: number, region?: number }} spec @param {{ area?: number }} w */
+const namesArea = (spec, w) => spec.area ?? ((spec.region ?? -1) >= 0 ? -1 : w.area ?? -1);
+
 /**
  * @param {any} deps - see the file's head
  */
@@ -730,7 +744,7 @@ export function createNavalHost(deps) {
     const rec = saved ? savedHurts(saved, boat.hull, st.damage) : null;   // TOUGHER-SHIPS: her hurts and credit on her whole now
     if (saved) { st.damage.restore(rec); if (Number.isFinite(saved.barrels)) st.guns.barrels = saved.barrels; st.guns.restoreLoads(saved.loads ?? null); pendingBoats.delete(boat.uid); }   // SHOT-KINDS: her loads
     // SHIP-CREW: her crew as people (names, spirits, the order standing), and SEA-REPAIR's store part-spent
-    st.crew = createShipCrew({ seed: (deps.crewSeed?.(boat) ?? boat.uid ?? 1) >>> 0, regionIndex: where().region ?? 17, record: saved?.mates ?? null });
+    st.crew = createShipCrew({ seed: (deps.crewSeed?.(boat) ?? boat.uid ?? 1) >>> 0, ...watersFolk(where()), record: saved?.mates ?? null });   // WW3: the waters' people past the Bay
     st.credit = Number.isFinite(rec?.credit) ? Math.max(0, Math.min(STORE_POINTS, rec.credit)) : 0;   // AUDIT CC-D1: in work points (an older save's share of a whole reads as next to none)
     st.lastCrew = st.damage.crew; st.wasWrecked = st.damage.state === SHIP_STATES.wrecked; st.inFight = false; st.mustered = !!saved?.mates; st.repairing = false;
     st.hull = boat.hull;   // TOUGHER-SHIPS: her build, the scale the save keeps her on (savedRecord)
@@ -1830,7 +1844,7 @@ export function createNavalHost(deps) {
     // colours the sea's own (systems/naval/etherShips.js), a legend's her own
     const legend = legendOfClass(cls.id);
     const ether = spec.ether ?? (legend || w.ether ? w.ether?.band ?? 'shallows' : null);
-    const names = ether ? etherShipNames(cls, spec.seed) : shipNames(cls, spec.seed, { regionIndex: region, crown });
+    const area = namesArea(spec, w), names = ether ? etherShipNames(cls, spec.seed) : watersShipNames(cls, spec.seed, region, crown, area);   // WW3: her waters' people past the Bay - a packet's her home port's, another's the waters here; WW7-8: her stander's, said on the wire
     const num = n ?? nextNumber();
     const id = owner ? `${owner}:${num}` : `${myId()}:${num}`;
     const ship = createSeaShip({ id, seed: spec.seed, classId: spec.classId, variant: spec.variant ?? 0, pos: spec.pos, yaw: spec.yaw ?? 0, names, owner, errand: spec.errand ?? null });
@@ -1838,7 +1852,7 @@ export function createNavalHost(deps) {
     if (spec.deep) ship.temper = temperOf(cls, spec.seed, { bold: DEEP_BOLD });   // CAPT-WATERS: the deep waters' pirates bolder
     else if (ether && cls.faction === 'pirate') ship.temper = temperOf(cls, spec.seed, { bold: etherBold(ether) });   // ETHER-SEA: the deeper the band, the bolder its corsairs
     if (legend) ship.temper = TEMPERS.bold;   // ETHER-LEGENDS: a legend fears nothing that sails
-    const entry = { id, n: num, owner, gen: Math.max(0, Math.min(NAVAL_GEN_MAX, spec.gen | 0)), region, deep: !!spec.deep, ether, legend: legend?.id ?? null, orphan: null, ship, boat: null, fires: null, fireLoop: null, sinkLoop: null, target: null, seen: clock, charged: null, myBlowAt: -Infinity, grappleAt: -Infinity, hunter: !!spec.hunter, phase: spec.phase ?? random() * 6.28, lifeDt: 0, lifeN: num % FAR_LIFE_EVERY, list: null, wake: false, deck: null, prize: null, lost: false, sinkUnder: null, colours: null, fade: 0, retiring: false };   // SHIP-FADE: she comes into the world
+    const entry = { id, n: num, owner, gen: Math.max(0, Math.min(NAVAL_GEN_MAX, spec.gen | 0)), region, area, deep: !!spec.deep, ether, legend: legend?.id ?? null, orphan: null, ship, boat: null, fires: null, fireLoop: null, sinkLoop: null, target: null, seen: clock, charged: null, myBlowAt: -Infinity, grappleAt: -Infinity, hunter: !!spec.hunter, phase: spec.phase ?? random() * 6.28, lifeDt: 0, lifeN: num % FAR_LIFE_EVERY, list: null, wake: false, deck: null, prize: null, lost: false, sinkUnder: null, colours: null, fade: 0, retiring: false };   // SHIP-FADE: she comes into the world
     // ETHER-LEGENDS: she comes, said - AUDIT CAPTAIN'S SEA D12: to every captain whose sea she comes into (a party's other
     // captain stands another's copy of her, and never heard her come), once while she is in it
     const heard = legend && [...sea.values()].some((x) => x.legend === legend.id && x.ship.damage.state !== SHIP_STATES.sunk);
@@ -2359,12 +2373,12 @@ export function createNavalHost(deps) {
       let e = null;
       if (berth >= 0) {
         const b = h.harbour.berths[berth], at = alongside(b, cls.hull, h.harbour.hull);   // QUAYS: alongside its quay
-        e = launch({ seed, classId: cls.id, region: l.region, pos: [at[0], deps.seaY(), at[1]], yaw: b.yaw, errand: { kind: 'moored', harbour: h.key, berth, until: Infinity, path: null, i: 0 } });
+        e = launch({ seed, classId: cls.id, region: l.region, area: l.area, pos: [at[0], deps.seaY(), at[1]], yaw: b.yaw, errand: { kind: 'moored', harbour: h.key, berth, until: Infinity, path: null, i: 0 } });
         if (e) { e.ship.sails = 0; e.ship.sailsWant = 0; }
       } else {
         if (l.phase !== 'sail' || under >= max) continue;
         if (!deps.isWater(l.pos[0], l.pos[2], cls.hull)) continue;   // her place not yet water deep enough for her hull here
-        e = launch({ seed, classId: cls.id, region: l.region, pos: [l.pos[0], deps.seaY(), l.pos[2]], yaw: l.yaw });   // AUDIT BAY A8: named by her lane's port, wherever she is met
+        e = launch({ seed, classId: cls.id, region: l.region, area: l.area, pos: [l.pos[0], deps.seaY(), l.pos[2]], yaw: l.yaw });   // AUDIT BAY A8: named by her lane's port, wherever she is met
         if (e) under++;
       }
       if (e) e.liner = linerTag(l);
@@ -3911,7 +3925,7 @@ export function createNavalHost(deps) {
     prizeRaid = { quest, state: 'open' };
     const cls = classById(deps.level?.() >= 4 ? 'pirateBrig' : 'pirateSloop');
     const seed = u32();
-    const names = shipNames(cls, seed, { regionIndex: where().region ?? 17 });
+    const names = shipNames(cls, seed, watersFolk(where()));
     const items = holdOf(cls, seed, (key, tier) => deps.hold?.(key, tier) ?? []);
     const drawn = drawnPlunder(items);   // AUDIT CAPTAIN'S SEA L12
     const opened = deps.board?.openPlunder?.({
@@ -4629,7 +4643,7 @@ export function createNavalHost(deps) {
       hull: e.ship.damage.hullShare(), sail: e.ship.damage.sailShare(), crew: e.ship.damage.crewShare(),
       state: e.ship.boarded && e.ship.damage.state === SHIP_STATES.struck ? 'boarded' : e.ship.damage.state, heel: e.ship.heel, seed: e.ship.seed, fire: e.ship.damage.fire > 0,   // RAM-BOARD (AUDIT 2026-10-17): a sound ship being boarded is said afloat - her captain's mode says 'boarded'
       runOut: [...e.ship.runOut.keys()].reduce((m, side) => m | (1 << SIDES.indexOf(side)), 0),
-      gen: e.gen, region: e.region,
+      gen: e.gen, region: e.region, area: e.area,   // WW7-8: and the area her names were drawn in (the wire's `r` past the Bay)
       // AUDIT NAV2 F1/F3/F5: her captain as I sail her - her temper (a raider's bold is mine, not her seed's), her mode
       // (her crew at battle on every screen) and the ship of mine she struck to (her victor, through a handover)
       temper: e.ship.temper, mode: e.ship.boarded ? 'boarded' : e.ship.mode, struckTo: e.struck && !sea.get(e.struck.by)?.owner ? sea.get(e.struck.by)?.n ?? -1 : -1,
@@ -4683,7 +4697,7 @@ export function createNavalHost(deps) {
       }
       keep.add(id);
       const pos = toScene(w.pos);
-      const fresh = !e; if (!e) e = launch({ seed: w.seed, classId: w.classId, variant: w.variant, pos: [pos[0], deps.seaY(), pos[2]], yaw: w.yaw, gen: w.gen, region: w.region, deep: w.deep }, owner, w.n);   // AUDIT 2: `fresh` - a copy launched by this word
+      const fresh = !e; if (!e) e = launch({ seed: w.seed, classId: w.classId, variant: w.variant, pos: [pos[0], deps.seaY(), pos[2]], yaw: w.yaw, gen: w.gen, region: w.region, area: w.area, deep: w.deep }, owner, w.n);   // AUDIT 2: `fresh` - a copy launched by this word; WW7-8: named as her stander named her
       if (!e) continue;
       e.retiring = false;   // SHIP-FADE: said again - she stays
       e.gen = w.gen;
@@ -5172,7 +5186,7 @@ export function createNavalHost(deps) {
    *  his gold into my purse - and said as it went: the HUD said "stowed in your pack" over six claymores gone. */
   function stowPack(uid, items, name) {
     if (!items?.length) return;
-    const boat = packStaysAshore() ? null : (csa()?.state?.AllBoats ?? []).find((b) => b?.uid === uid) ?? null;   // COMPANION-DROP: in the open zone, mine - it drops with my pack there
+    const boat = (csa()?.state?.AllBoats ?? []).find((b) => b?.uid === uid) ?? null;
     const rest = boat ? deps.board?.giveItems?.(items, boat)?.left ?? [] : items;
     const mine = rest.length ? deps.board?.giveItems?.(rest, null, { force: true }) ?? null : null;
     const where = !rest.length ? 'in the hold' : rest.length === items.length ? 'in your pack' : 'in the hold and your pack';
@@ -5185,7 +5199,6 @@ export function createNavalHost(deps) {
     const hand = st.crew.hands.find((h) => h.name === name);
     if (!hand) return null;
     if (companions.isAshore(boat.uid, name)) {
-      if (heldAtSide(name, deps.say)) return null;   // COMPANION-DROP (crewCompanions.js): never sent back from inside the open zone
       const pack = companions.takePack(boat.uid, name);   // COMPANION-KIT: his pack stowed in her hold
       companions.sendBack(boat.uid, name);
       deps.say?.(`${name} goes back aboard.`, 3);

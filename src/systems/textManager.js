@@ -110,6 +110,15 @@ export function setLocale(code) {
   for (const fn of [..._listeners]) { try { fn(next); } catch (err) { console.error('[text] a locale listener threw:', err?.message ?? err); } }
   return true;
 }
+/** AUDIT TESA II P10: `fn` read in the BASE locale - DFU's own English, whatever the player chose - and the locale put back
+ *  after, no listener told (nothing switched: one synchronous read). A PLACE's name is the world's, every client's alike
+ *  (world/tamrielCountry.js countryName: the tavern words of an inn past the Bay), as DFU keeps a location's canonical name
+ *  its key (GetLocalizedLocationName localizes the display alone). @template T @param {() => T} fn @returns {T} */
+export function withBaseText(fn) {
+  const was = _locale;
+  _locale = BASE_LOCALE;
+  try { return fn(); } finally { _locale = was; }
+}
 /** A listener for locale switches; answers its remover. */
 export function onLocaleChange(fn) { _listeners.add(fn); return () => _listeners.delete(fn); }
 
@@ -248,8 +257,19 @@ export const getLocalizedSpellName = (id, standardName) => tryGetLocalizedText(T
 export const getLocalizedItemName = (id, fallback) => tryGetLocalizedText(TextCollections.TextItems, id) ?? fallback;
 /** GetLocalizedMagicItemName (TextManager.cs:534-541): by magic item template index, else `fallback`. */
 export const getLocalizedMagicItemName = (id, fallback) => tryGetLocalizedText(TextCollections.TextMagicItems, id) ?? fallback;
-/** GetLocalizedFactionName (TextManager.cs:550-557): by faction id, else `fallback`. */
-export const getLocalizedFactionName = (id, fallback) => tryGetLocalizedText(TextCollections.Factions, id) ?? fallback;
+const _factionNameText = [];
+/** PROVINCE-COURTS: the port's own factions' names in the player's language - `fn(id)` a shown name or null (systems/faction/
+ *  provinceFactions.js registers the provinces' courts and people). The port's own door, asked after a translation pack's
+ *  Factions table: no pack holds an id the port minted. Answers the function that lets it go. */
+export function registerFactionNameText(fn) {
+  if (typeof fn !== 'function') throw new Error('registerFactionNameText: a function of the faction id');
+  _factionNameText.unshift(fn);
+  return () => { const i = _factionNameText.indexOf(fn); if (i >= 0) _factionNameText.splice(i, 1); };
+}
+const portFactionName = (id) => { for (const fn of _factionNameText) { const v = fn(id); if (v != null) return v; } return null; };
+/** GetLocalizedFactionName (TextManager.cs:550-557): by faction id, else `fallback` - PROVINCE-COURTS: a port faction's name
+ *  between the two (registerFactionNameText). */
+export const getLocalizedFactionName = (id, fallback) => tryGetLocalizedText(TextCollections.Factions, id) ?? portFactionName(id) ?? fallback;
 const _customEnemyNameText = [];
 /** A mod's enemy names in the player's language: `fn(id)` a translated name or null, the latest registered asked first.
  *  The port's own door - DFU's GetCustomEnemyName answers the mod's English in every language (AUDIT DEX A6). Answers

@@ -1,0 +1,272 @@
+[
+  {
+    "name": "TESA13-no-apron",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  const side = ROAD_TILE + 2, ox = tx * ROAD_TILE - 1",
+    "new": "  const side = ROAD_TILE, ox = tx * ROAD_TILE - 1",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-no-margin-offset",
+    "file": "src/ui/tamrielInk.js",
+    "old": "(mask ??= new Uint8Array(side * side))[(v + 1) * side + (u + 1)] = bits;",
+    "new": "(mask ??= new Uint8Array(side * side))[v * side + u] = bits;",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-tile-offset-dropped",
+    "file": "src/ui/tamrielInk.js",
+    "old": "ox = tx * ROAD_TILE - 1, oy = ty * ROAD_TILE - 1;",
+    "new": "ox = tx * ROAD_TILE, oy = ty * ROAD_TILE - 1;",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-tracks-as-roads",
+    "file": "src/ui/tamrielInk.js",
+    "old": "    if (mask) for (const c of pathChains(mask, side, side)) out[kind].push(",
+    "new": "    if (mask) for (const c of pathChains(mask, side, side)) out.roads.push(",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-key-off-by-one",
+    "file": "src/world/arenaRoads.js",
+    "old": "export const beyondPixel = (key) => [(key % 65536) - 32768,",
+    "new": "export const beyondPixel = (key) => [(key % 65536) - 32767,",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-marks-at-far",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  if (!placesIn || band === 'far' || opts.portsOnly) return [];",
+    "new": "  if (!placesIn || opts.portsOnly) return [];",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-filters-ignored",
+    "file": "src/ui/tamrielInk.js",
+    "old": "    const colorIndex = getPixelColorIndex(place.type, filters);",
+    "new": "    const colorIndex = getPixelColorIndex(place.type);",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-band-ignored",
+    "file": "src/ui/tamrielInk.js",
+    "old": "    if (colorIndex < 0 || !shown.has(colorIndex)) continue;",
+    "new": "    if (colorIndex < 0) continue;",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-frame-ignored",
+    "file": "src/ui/tamrielInk.js",
+    "old": "    x0 = Math.max(x0, Math.floor(frame.x0)); y0 = Math.max(y0, Math.floor(frame.y0));",
+    "new": "",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-off-centre",
+    "file": "src/ui/tamrielInk.js",
+    "old": "    out.push({ place, kind: markKind(colorIndex), x: place.x + 0.5, y: place.y + 0.5 });",
+    "new": "    out.push({ place, kind: markKind(colorIndex), x: place.x, y: place.y + 0.5 });",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-paths-unpainted",
+    "file": "src/ui/tamrielInk.js",
+    "old": "    strokePaths(penOf(ctx, view, paperW, paperH).stroke, arenaRoadsIn(view.ox, view.oy, x1, y1), band, filters);",
+    "new": "    void 0;",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-filters-not-handed",
+    "file": "src/ui/tamrielInk.js",
+    "old": "arenaRoadsIn(view.ox, view.oy, x1, y1), band, filters);",
+    "new": "arenaRoadsIn(view.ox, view.oy, x1, y1), band, {});",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-band-not-handed",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  const band = opts.band ?? zoomBand(s);",
+    "new": "  const band = zoomBand(s);",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-no-halo",
+    "file": "src/ui/tamrielInk.js",
+    "old": "        paintGlyph(ctx, marks[i].kind, at[i][0], at[i][1], halo, halo ? undefined : opts.inks?.[marks[i].kind]);",
+    "new": "        if (!halo) paintGlyph(ctx, marks[i].kind, at[i][0], at[i][1], halo, halo ? undefined : opts.inks?.[marks[i].kind]);",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-no-hue",
+    "file": "src/ui/tamrielInk.js",
+    "old": "        paintGlyph(ctx, marks[i].kind, at[i][0], at[i][1], halo, halo ? undefined : opts.inks?.[marks[i].kind]);",
+    "new": "        paintGlyph(ctx, marks[i].kind, at[i][0], at[i][1], halo, undefined);",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-marks-on-the-continent",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  if (!opts.continent) {\n    yield;\n    const pad = MARK_REACH_PX",
+    "new": "  if (true) {\n    yield;\n    const pad = MARK_REACH_PX",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-hover-silent",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  if (mark) {\n    const mk = provinceKeyAt",
+    "new": "  if (false) {\n    const mk = provinceKeyAt",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-hover-no-word",
+    "file": "src/ui/tamrielInk.js",
+    "old": "mark.place.name ?? marks?.nameOf?.(mark.place.x, mark.place.y) ?? '', locationTypeName(mark.place.type)) };",
+    "new": "mark.place.name ?? marks?.nameOf?.(mark.place.x, mark.place.y) ?? '', null) };",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-atlas-asks-the-bay",
+    "file": "src/world/tamrielAtlas.js",
+    "old": "        if (inBay(x, y)) continue;",
+    "new": "",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-atlas-first-in-first-out",
+    "file": "src/world/tamrielAtlas.js",
+    "old": "        tiles.delete(key);   // read again: to the back of the line\n",
+    "new": "",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-window-never-repaints-owed",
+    "file": "src/ui/heldMap.js",
+    "old": "        if (this._pastBayTiles?.takePending()) { this._staticKey = ''; this._dirty = true; }\n",
+    "new": "",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-atlas-one-short",
+    "file": "src/world/tamrielAtlas.js",
+    "old": "      while (tiles.size > ATLAS_TILES_KEPT)",
+    "new": "      while (tiles.size >= ATLAS_TILES_KEPT)",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-atlas-stamp-ignored",
+    "file": "src/world/tamrielAtlas.js",
+    "old": "      if (!sameStamp(kept, s)) { tiles.clear(); kept = s; }",
+    "new": "      if (!kept) kept = s;",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-atlas-capitals-unstamped",
+    "file": "src/world/tamrielAtlas.js",
+    "old": "arenaPlacesVersion(), capitalsVersion()];",
+    "new": "arenaPlacesVersion()];",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-atlas-whole-tiles",
+    "file": "src/world/tamrielAtlas.js",
+    "old": "        for (const p of tile) if (p.x >= x0 && p.x < x1 && p.y >= y0 && p.y < y1) out.push(p);",
+    "new": "        for (const p of tile) out.push(p);",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-dry-floor-too-high",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "lo = SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT,",
+    "new": "lo = SPAWN_DRY_ELEVATION / MAX_TERRAIN_HEIGHT,",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-dry-ceiling-too-low",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "    if (sum + left < goal - margin) return false;",
+    "new": "    if (sum + left * lo < goal - margin) return false;",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-dry-a-column-skipped",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "const DRY_COLUMN_ORDER = Object.freeze([0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15]);",
+    "new": "const DRY_COLUMN_ORDER = Object.freeze([0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7]);",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-window-key-unmoved",
+    "file": "src/ui/heldMap.js",
+    "old": "        const pastBay = `${arenaRoadsVersion()}|${pastBayPlacesVersion()}`;",
+    "new": "        const pastBay = `${pastBayPlacesVersion()}`;",
+    "tests": [
+      "test/tesa13_mapink.test.js"
+    ]
+  },
+  {
+    "name": "TESA13-dry-not-the-country-ground",
+    "file": "src/world/tamrielCountry.js",
+    "old": "    if (d === undefined) dry.set(key, d = plateauDry(woods, px, py));",
+    "new": "    if (d === undefined) dry.set(key, d = true);",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  }
+]

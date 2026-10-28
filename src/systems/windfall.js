@@ -29,7 +29,7 @@
 // outdoors' own wind's (systems/wind/windDrive.js `dir` - the wisps', the rain's, the clouds'), Windfall's slow wander and
 // its gusts' swing turned about it; the mod's daily heading (HashUnit x 360 + WindDirectionDegrees) stands only where
 // the host hands no wind (a test, a frame with none). The port's eighth weather, the sandstorm (WEATHER2d, a gale's
-// wind - WIND1's VIOLENCE 0.95), is a storm here as Thunder is; DFU has no such word.
+// wind - WIND1's VIOLENCE 0.95), is a storm here as Thunder is; DFU has no such word. ASHFALL1's ashfall is an Overcast.
 
 import { modSetting } from './modSettings.js';
 import { NetRandom } from '../formats/netRuntime.js';
@@ -62,8 +62,9 @@ const moveTowards = (c, t, d) => (Math.abs(f32(t - c)) <= d ? t : f32(c + Math.s
 const repeatF = (t, length) => clampF(f32(t - f32(f32(Math.floor(f32(t / length))) * length)), 0, length);
 
 // ---- the word the host hands -----------------------------------------------------------------------------------
-const WORD_TO_WEATHER = Object.freeze({ ...WEATHER, sandstorm: WEATHER.thunder });
-/** The weather the mod reads: DFU's WeatherType number, or the port's word (the sandstorm a storm, as Thunder). */
+const WORD_TO_WEATHER = Object.freeze({ ...WEATHER, sandstorm: WEATHER.thunder, ashfall: WEATHER.overcast });
+/** The weather the mod reads: DFU's WeatherType number, or the port's word (the sandstorm a storm, as Thunder; ASHFALL1:
+ *  the ashfall an overcast, as its breeze is). */
 export const windfallWeather = (w) => (typeof w === 'number' ? w : (WORD_TO_WEATHER[w] ?? 0));
 
 // ---- WindRecordWeights -------------------------------------------------------------------------------------------

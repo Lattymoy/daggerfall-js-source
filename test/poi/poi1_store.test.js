@@ -116,8 +116,9 @@ test('POI-1 DOCUMENT: a whole POI answers no problems; every field short of the 
   assert.match(badL({ name: '' }), /^name:/m);
   assert.deepEqual(bad({ about: 'two\nlines' }), []);
   assert.match(badL({ about: 'a\u0007bell' }), /^about:/m);
-  assert.match(badL({ place: { ...good.place, px: 1000 } }), /^place\.px:/m);
-  assert.match(badL({ place: { ...good.place, py: -1 } }), /^place\.py:/m);
+  // PIN MOVED (AUDIT RELEASE R2-8): a place's pixel is the world's grid - (1000, y) and (x, -1) are land past the Bay now
+  assert.match(badL({ place: { ...good.place, px: 8192 } }), /^place\.px:/m);
+  assert.match(badL({ place: { ...good.place, py: -8192 } }), /^place\.py:/m);
   assert.match(badL({ place: { ...good.place, x: 819.2 } }), /^place\.x:/m);
   assert.match(badL({ place: { ...good.place, ground: 'float' } }), /^place\.ground:/m);
   assert.match(badL({ place: { ...good.place, r: [0, 0, 0, 2] } }), /^place\.r:/m);

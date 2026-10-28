@@ -54,7 +54,11 @@ test('EVERY-STANDING: every organization by group - the guilds and temples the p
     'the Fighters Guild is a membership - under Guilds above, with its rank');
   assert.deepEqual(groups[1].rows.map((r) => r.factionId), Object.values(DIVINES), 'the eight temples by the god their membership reads - no Ebonarm, who keeps none');
   assert.deepEqual(groups[2].rows.map((r) => r.factionId), Object.values(ORDERS));
-  assert.deepEqual(groups[3].rows.map((r) => [r.name, r.rep]), [['Daggerfall', 0], ['Orsinium', 0], ['Wayrest', 22]], 'by name');
+  // PIN MOVED (PROVINCE-COURTS): every store carries the nine provinces' own kingdoms past the Bay (systems/faction/
+  // provinceFactions.js), listed by name among FACTION.TXT's - their Courts and People, like the Bay's, are no kingdom
+  assert.deepEqual(groups[3].rows.map((r) => [r.name, r.rep]), [['Black Marsh', 0], ['Cyrodiil', 0], ['Daggerfall', 0], ['Elsweyr', 0], ['Hammerfell', 0], ['High Rock', 0],
+    ['Morrowind', 0], ['Orsinium', 0], ['Skyrim', 0], ['Sumurset Isle', 0], ['Valenwood', 0], ['Wayrest', 22]], 'by name');
+  assert.ok(!groups.flatMap((g) => g.rows).some((r) => r.factionId === 6264 || r.factionId === 6364 || r.factionId === 6164), 'Skyrim\'s Court, People and ruler are no kingdom');
   assert.deepEqual(groups[6].rows.map((r) => [r.name, r.rep]), [['Clavicus Vile', 0], ['Sheogorath', 10]]);
   assert.ok(!groups.flatMap((g) => g.rows).some((r) => r.factionId === 517 || r.factionId === 595 || r.factionId === RANDOM_RULER));
   assert.deepEqual(standingGroups({ name: 'x' }), [], 'no faction store yet: nothing to read');
@@ -83,7 +87,7 @@ test('EVERY-STANDING: on by default (STANDING-ON); on, the Standing page draws e
     assert.equal(row.className, 'px-stat px-org');
     assert.equal(text(row), 'The Mages Guild|-15');
     assert.equal(row.children[1].className, 'v bad', 'toned as the page tones a reputation');
-    assert.equal(detail.children.filter((n) => n.className === 'px-stat px-org').length, 4 + 8 + 10 + 3 + 1 + 1 + 2);
+    assert.equal(detail.children.filter((n) => n.className === 'px-stat px-org').length, 4 + 8 + 10 + 3 + 9 + 1 + 1 + 2);   // PIN MOVED (PROVINCE-COURTS): the nine provinces' kingdoms
   } finally { delete globalThis.document; }
 });
 
@@ -91,8 +95,9 @@ test('EVERY-STANDING with ARENA2: the player\'s own FACTION.TXT - the four guild
   const ff = new FactionFile();
   ff.load(new Uint8Array(readFileSync(join(ARENA2, 'FACTION.TXT'))));
   const groups = standingGroups({ name: 'x', factionRep: createFactionRep(ff.factionDict), guildMemberships: {} });
-  assert.deepEqual(groups.map((g) => [g.id, g.rows.length]), [['guilds', 4], ['temples', 8], ['orders', 10], ['kingdoms', 45], ['covens', 14], ['clans', 9], ['daedra', 16]]);
+  // PIN MOVED (PROVINCE-COURTS): FACTION.TXT's 45 kingdoms and the nine provinces' own past the Bay
+  assert.deepEqual(groups.map((g) => [g.id, g.rows.length]), [['guilds', 4], ['temples', 8], ['orders', 10], ['kingdoms', 45 + 9], ['covens', 14], ['clans', 9], ['daedra', 16]]);
   const k = groups.find((g) => g.id === 'kingdoms').rows.map((r) => r.name);
-  for (const n of ['Daggerfall', 'Wayrest', 'Sentinel', 'Orsinium', 'The Septim Empire', 'Isle of Balfiera']) assert.ok(k.includes(n), n);
+  for (const n of ['Daggerfall', 'Wayrest', 'Sentinel', 'Orsinium', 'The Septim Empire', 'Isle of Balfiera', 'Skyrim', 'Cyrodiil']) assert.ok(k.includes(n), n);
   assert.deepEqual(groups.find((g) => g.id === 'guilds').rows.map((r) => r.name), ['The Fighters Guild', 'The Mages Guild', 'The Thieves Guild', 'The Dark Brotherhood']);
 });

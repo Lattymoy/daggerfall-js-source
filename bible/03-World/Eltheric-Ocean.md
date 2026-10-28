@@ -547,11 +547,13 @@ the drawn floor the bathymetry's within the mesh's step), shallowing to every is
 pixel's ground; the surface stands; the swim's column reads carved water. Every Deep Waters system that works off a
 floor - the decorations, the fish, the foes, the loot, the remains - works past the Veil with it.
 
-HELD: THE PITS. There's a Hole in the Bottom of the Ocean cuts its pits into Iliac Puddle No More's floors, and a pit's
-drowned dungeon is named by its pixel's id's low twenty bits (`oceanHoles.js` GetAbyssMapId) - the Bay's 1000 x 500
-alone keeps those apart. A pixel off the Bay's map is refused before the hash is asked
-(`oceanHolesHost.js:"if (!isValidMapPixel(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }"`):
-no pit past the Veil until it has an abyss of its own.
+HELD: THE PITS - LIFTED (PITS-WORLD, 2026-10-27). There's a Hole in the Bottom of the Ocean cuts its pits into Iliac
+Puddle No More's floors, and a pit's drowned dungeon was named by its pixel's id's low twenty bits (`oceanHoles.js`
+GetAbyssMapId) - the Bay's 1000 x 500 alone keeps those apart - so a pixel off the Bay's map was refused before the hash
+was asked: no pit past the Veil until it had an abyss of its own. It has one now: an abyss past the Bay is named in the
+world's abyss lane (`03-World/World-Wide.md` WORLD-LANES), and the hold is the world's grid
+(`oceanHolesHost.js:"if (!pitPixelOk(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }"`),
+so the Veil's open sea opens pits as the Bay's does (`03-World/Ocean-Holes.md` PITS-WORLD).
 
 ## ETHER-NODES - the professions' nodes
 
@@ -629,7 +631,8 @@ cross water in a boat (OWS2). Five of its reads still held the Bay:
 **Measured, kept.** The route planner (OWS2's sea, TV-BEYOND's ground past the map) plans past the Veil as it does past
 the Bay: a crossing of 12 pixels between two isles by Veilhaven in 12 ms, and "no way by land" on foot in 14 ms - its
 widest box held about the two ends, about twice the Bay's whole map (1,001 by 1,012 pixels - AUDIT ETHER-OW D-4).
-**Held.** The sea lanes (`laneOpen`: the Bay's packets between its ports) and the serpent's site stay the Bay's. The sea
+**Held.** The sea lanes (`laneOpen`: the Bay's packets between its ports) and the serpent's site stay off it (the Bay's
+then; the world's lanes since WW3 and WW7-12 - `03-World/World-Wide.md` - none in the Eltheric Ocean's box). The sea
 fight's own traffic - the director's corsairs and the legends - is drawn under the view as hulls and is not marked, as
 the Bay's own pirates are not; a raider is marked where she stands as a ship (NAV-R). The chart is still never pressed
 to travel: the Overworld is. The node law reads the one home with every answer unchanged (`test/net/ether_nodes.test.js`
@@ -701,9 +704,9 @@ its "+75% loot" English.
   open sea"): since FOE-KEEPS a death to a foe there costs a tenth and rises at the nearest freeport, so a Fleet Summon
   after it was the sea's free hop for captain, ship and hold, past the waters where another captain takes a third of a
   boarded hold - no Summon and no Send away into, out of or about the open sea while it is a PvP zone, the player's
-  waters or hers past the peace (`fleetHost.js:"const openSea = !!w.sea && ("`, the host's `where().sea`). Sail her. A WAGON parked on the open sea's ground (an isle's) is with its
-  owner at a death there, as one in the mountains is (`wildCart.js:"return !wildInside(mask, p.x, p.y) && !(etherWildRingAt(p.x, p.y) > 0);"`
-  - AUDIT SEA VENTURES C4: it counted as away, and its cargo never dropped).
+  waters or hers past the peace (`fleetHost.js:"const openSea = !!w.sea && ("`, the host's `where().sea`). Sail her. A WAGON parked on the open sea's ground (an isle's) was with its
+  owner at a death there, as one in the mountains was (AUDIT SEA VENTURES C4: it had counted as away, and its cargo never
+  dropped) - until STORE-KEEPS (2026-10-26, Wild-Zone.md section 4) made every cart storage no death takes.
 - STRANGERS: every other player past the Veil outside my party and my guild is unseen on the maps
   (`wildHidesPlayer` - near the zone is the whole sea, the peace too, as the mountains' band is), a red "Stranger"
   helm on the Overworld within 1.5 km, said within 600 m, no name over their heads, and a journey slowed by them
@@ -715,8 +718,8 @@ its "+75% loot" English.
   (`world.js:"if (!loading && (wildTeleportRefused(boatPixelOf(boat)) || veilRefused(boatPixelOf(boat)))) return true;"`
   - AUDIT SEA VENTURES C1: Transport > Ship's carried a captain from a Bay town's bank onto her boat a hundred leagues
   past the Veil, and back, past every refusal).
-- THE COMPANIONS: a hand ashore and a sworn one at the side drop their packs with the player's (COMPANION-DROP); one
-  revenant at the side, refused in the sea's words ("Only one revenant may walk at your side on the open Eltheric
+- THE COMPANIONS: a hand ashore's pack and a sworn one's pack and kit are storage no death takes (STORE-KEEPS,
+  2026-10-26 - COMPANION-DROP had them drop with the player's); one revenant at the side, refused in the sea's words ("Only one revenant may walk at your side on the open Eltheric
   Ocean." - AUDIT SEA VENTURES C7).
 - THE PARTY: a party left past the peace keeps the zone's ten minutes' truce, said in the sea's words; and a party's
   walk that leads onto the open sea warns as one into the mountains does (`zoneWord('walkInto', ETHER_KIND)` - AUDIT SEA
@@ -735,14 +738,13 @@ its "+75% loot" English.
 - NO PACE CAP. The mountains' x20 / x40 (`WILD_PACE_CAP`) is never set at sea (`world.js:"setPaceZoneCap(wildHere() && wildZoneKind() !== ETHER_KIND"`):
   the sea's leagues are its own price (the Abyss is an hour at the helm's top speed), and a stranger near still holds
   a journey (STRANGER-PACE).
-- A HAND ASHORE GOES BACK ABOARD. COMPANION-DROP's "no send-off in zone" is the mountains' (the owner, 2026-10-19):
-  at sea a hand is sent back to her boat and a hand knocked out gives his pack to her hold
-  (`crewCompanions.js:"export function heldAtSide"`, `packStaysAshore`) - the boat's hold is the sea's own shelter, open
-  from anywhere already (CARGO-ANYWHERE, Wild-Zone.md section 4's open door), and a captain a hundred leagues out could
-  otherwise never send her hands home short of Veilhaven. A sworn one at the side stays, as in the mountains: the
-  roster's "away" is no hold.
-- THE HOLD IS KEPT. A boat on the zone's water keeps her hold through a death there (Wild-Zone.md section 4, "Open for
-  the owner") - at sea, where most of what a captain carries is in it, the larger share of the shelter. A death still
+- A HAND ASHORE GOES BACK ABOARD. COMPANION-DROP's "no send-off in zone" was the mountains' (the owner, 2026-10-19):
+  at sea a hand was sent back to her boat and a hand knocked out gave his pack to her hold - the boat's hold the sea's
+  own shelter, open from anywhere already (CARGO-ANYWHERE). STORE-KEEPS (2026-10-26) retired the rule with the pack's
+  drop it served: on either ground a hand goes back aboard, and a sworn one is sent away, as anywhere.
+- THE HOLD IS KEPT. A boat on the zone's water keeps her hold through a death there (Wild-Zone.md section 4 - storage,
+  since STORE-KEEPS, as the cart and the companions' packs are; nothing is stowed in it for a minute after a player's
+  blow or a gunfight - AUDIT PVP-EASE's combat lock) - at sea, where most of what a captain carries is in it, the larger share of the shelter. A death still
   takes none of it; a SHIP WRECKED AT ANOTHER CAPTAIN'S GUNS AND BOARDED gives up a share of it (SHIP-PVP, below - her
   best piece always, and more of her best while they come to a third of what she could give - AUDIT SEA VENTURES F3:
   "up to a third" was the promise, and her best piece alone may be all she carries; never a locked, bound or classic
@@ -841,7 +843,7 @@ its band's: III the Deep Aether, IV the Abyss - the High Crags' and the Heart's.
 day.
 
 **A VAULT IS A HALL.** Its door is a hall's (`world.js:"return seaVentures.vaultHere() ?? (a && p"`, `wildHallHere` - a
-vault first; `wildDungeonGate` keeps it past the mountains' mask: `world.js:"if (!wildInside(mask, p.x, p.y) && !seaVentures.vaultHere()) return true;"`):
+vault first; `wildDungeonGate` keeps it past the mountains' mask: `world.js:"if ((!wildInside(mask, p.x, p.y) && !seaVentures.vaultHere()) || hit?.dfLocation?.capital) return true;"`):
 the hub's hour's lock on whoever leaves it, lifted while their own remains lie inside; the crows over it while a body
 lies there; wiped twenty minutes empty and its chests keyed by the reset's epoch; an elite dungeon whose foes are its
 ring's high tier (`dungeonContext.js:"if (dfLocation?.wildRing > 0) {"`, wildHallFoes over the isle's own place id). The
@@ -1024,7 +1026,7 @@ the box, and harmless so: the relay referees no fall there.
 **THE SERVICE** (`server-account/src/seaBounty.js`; tables `migrations/0146_sea_bounty.sql`; the law both ends read,
 `src/net/sea/seaBountyLaw.js`):
 
-- THE KILL is written in the fall's OWN batch (`server-account/src/wild.js:"...seaKillSteps(ctx.db, sea, ctx.nowS),"`):
+- THE KILL is written in the fall's OWN batch (`server-account/src/wild.js:"// SEA-BOUNTY (seaBounty.js): a fall at sea at another's hand - the bounties on the fallen claimed for its killer, in the"` - and REPEAT-SHIELD's, a fall that takes nothing, writes it too):
   `sea_kills` once by the remains' id; every bounty standing on the fallen character claimed by that fall (guarded by
   no kill of it written yet, so two tabs racing one fall claim once); their sum OWED to the killer's character
   (`sea_bounty_owed`). A fall asked again answers from its first row and writes nothing.
@@ -1191,7 +1193,7 @@ and was unshootable after twenty seconds).
   kept until it would be whole - no shot lands on her, nor hers on another - and her next helm takes it back. One who
   crosses into another cell's room CARRIES it: the bar's share and when a captain last struck her (`seaCarry`), put at
   the hub with the zone's own carry on every shot that took any of it
-  (`server/src/index.js:"if (res.dealt > 0) this._wildCarryPut(tb.sub, this._zoneCarry(st, tb.sub, now));"`), taken at
+  (`server/src/index.js:"if (res.dealt > 0) this._wildCarryPut(tb.sub, this._zoneCarry(st, tb.sub, now, a.key));"`), taken at
   her first helm there while it is newer than what the room knows and within `SEA_REF.mendMs`
   (`seaRef.js:"if (c) { x.seaCarry = null; if (now - c.at < SEA_REF.mendMs && c.at > s.struckAt) { s.hp = s.max * c.h; s.struckAt = c.at; } }"`).
   A captain who stands in the zone saying nothing (a hidden tab) is at sea all the same - never forgotten for her quiet.
@@ -1318,10 +1320,11 @@ the Veil", "Legends ended"; its trades count 'ether' and 'legend' ships.
   fifty" was not).
 - **The light, not the sky.** The dome, the clouds and the fog are the world's own past the Veil; a grade of the sky's
   four passes (as the brass's) is a later slice's.
-- **Deep Waters by its own bake; the pits the Bay's.** ETHER-HOLD (from play, 2026-10-11: a player over the side
+- **Deep Waters by its own bake; the pits the Bay's (until PITS-WORLD).** ETHER-HOLD (from play, 2026-10-11: a player over the side
   stood on a floor carved against the Bay's clamped corner, and could neither swim nor float back) held the carve off
   the box; ETHER-DEEP (above) carves it by its own frame, and a host told nothing of the sea still holds it
-  (test/world/ethersea_dwhold.test.js). Ocean Holes' pits stay the Bay's.
+  (test/world/ethersea_dwhold.test.js). Ocean Holes' pits stood the Bay's until PITS-WORLD (2026-10-27,
+  `03-World/Ocean-Holes.md`): they open past the Veil now, each abyss in the world's abyss lane.
 - **Online**, the crossing is each ship's: a party aboard crosses with her (VEIL-PARTY, above); a party on two ships
   crosses as two.
 - **The Overworld's enemies, seeded on the sea** (ETHER-OW): the bands roam the isles and Warm Ashes' raiders sail the

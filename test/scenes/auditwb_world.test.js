@@ -107,7 +107,7 @@ test('AUDIT WB C4 a clock that steps BACK never says a line twice; a new day say
 
 test('AUDIT WB C4 the seam: the world\'s omen is ready when the relay\'s clock is read and the hub has welcomed (or eight seconds on the relay\'s alone), and settles', () => {
   const world = hostText('src/scenes/world.js');
-  const at = world.indexOf('const gateOmen = params.has(\'online\') ? createGateOmen(');
+  const at = world.indexOf('const gateOmen = params.has(\'online\') ? createGateLanes(');   // PIN MOVED (WW2): the omen a lane at a time - its deps the same
   const deps = world.slice(at, world.indexOf('}) : null;', at));
   assert.match(deps, /ready: \(\) => \{ if \(!online\?\.clockRead\) \{ _omenClockAt = null; return false; \}/);
   assert.match(deps, /return !!socialLink\(\)\?\.clockRead \|\| performance\.now\(\) - _omenClockAt > 8000; \},/);

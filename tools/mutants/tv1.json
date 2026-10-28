@@ -481,7 +481,7 @@
   },
   {
     "name": "AUDIT-DEEP-X3-the-save-reads-the-raw-camera",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldQuickSave.js",
     "old": "camera: mwViewSaveCamera(), transport:",
     "new": "camera: mwCamera.state(), transport:",
     "tests": [

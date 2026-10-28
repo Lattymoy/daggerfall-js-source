@@ -65,7 +65,7 @@ test('AUDIT 30 C3: a kept listing answered by a settle takes its piece out of th
   const dropped = [];
   await b.settle(() => {}, () => {}, (it, where) => { dropped.push([it.provenance, where]); pack.splice(pack.findIndex((x) => x.provenance === it.provenance), 1); });
   assert.deepEqual([dropped, pack.length], [[[P(2), 'pack']], 0], 'listed and in the pack at once');
-  assert.match(src('src/scenes/world.js'), /const marketDrop = \(item\) => \{[\s\S]{0,400}?list\.splice\(i, 1\);/);
+  assert.match(src('src/scenes/marketPiecesHost.js'), /const marketDrop = \(item\) => \{[\s\S]{0,400}?list\.splice\(i, 1\);/);   // PIN MOVED (BAY-LEFT-SEA): HOST-SPLIT - the market's pieces and hubs moved out of bootWorld to scenes/marketPiecesHost.js
   assert.match(src('src/ui/marketTab.js'), /m\.book\.settle\(m\.mint, m\.putBack, m\.drop \?\? null\)/);
 });
 

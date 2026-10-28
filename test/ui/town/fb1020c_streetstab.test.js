@@ -150,7 +150,7 @@ test('STREETS-TAB ONE BAG: the streets on the travel key\'s window are the M key
   assert.deepEqual(h.asked, [4242, 4242, 4242], 'the town\'s homes asked at every open, either key (TOWN-MARKS)');
   h.shown[0].dispose?.(); travel.dispose?.();
   // the door's bag is the one home of both
-  assert.deepEqual(Object.keys(townSheetBag({})).sort(), ['blocks', 'boards', 'buildings', 'discovered', 'gridH', 'gridW', 'homes', 'homesVersion', 'party', 'player', 'questBuildings', 'revealAll', 'title']);
+  assert.deepEqual(Object.keys(townSheetBag({})).sort(), ['blocks', 'boards', 'buildings', 'discovered', 'gridH', 'gridW', 'homes', 'homesVersion', 'imperial', 'party', 'player', 'questBuildings', 'revealAll', 'title']);   // PIN MOVED (IC-TOWNMAP): and the Imperial City's slice (ui/town/imperialSheet.js)
   // the wild: the M key opens nothing, as DFU's (DaggerfallUI.cs:633-650)
   h.at = { x: 6, y: 5 };
   town.toggleExteriorAutomap();
