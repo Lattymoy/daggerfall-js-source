@@ -128,8 +128,11 @@ ARMRAM03 record 14 (43736), BANKAS01 record 0 (43708), BOOKAL01 record 18 (43754
 box round each house's models names the same house. The door ties, not the box: wherever the two disagree, the door's
 building is the one of the sign's own trade. A sign past 8 m from every door stands - the two on a big tavern's side
 wall 19 m from its door (GENRAS02, CLOTAM01), and MAGEAA13's, 14.8 m from a house. A world-data block is asked by the
-same rule, since the served block carries the mod's type; Beautiful Villages' TVRNAS04, TVRNAS06 and TVRNAS07 were not
-measured. Both skins. `test/world/housesign.test.js` (5); `tools/mutants/housesign.json` (8, all dead); Port-Ledger A.
+same rule, since the served block carries the mod's type. Measured 2026-10-26 with Beautiful Villages and Beautiful
+Cities on as they ship: of their blocks' 482 signs, seven come down, all at a House2's door - DABOOKBL01 record 1
+(43727), GEMSAL02 record 18 (43726), MARKAB01 record 7 (43736), TVRNAS00 record 5, TVRNAS04 record 6, TVRNAS06 record 5
+and TVRNAS07 record 8 (43727). With the mods on, Knightscester's tavern-sign house is TVRNAS00's; checked in-game. Both
+skins. `test/world/housesign.test.js` (6); `tools/mutants/housesign.json` (8, all dead); Port-Ledger A.
 
 ## PEEK-WORD: a peer's boat that her word no longer names (7)
 
