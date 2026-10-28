@@ -382,7 +382,7 @@ test('HCC-PARK / RIDE hosts: the owner\'s word names the character, is ticked wi
   assert.match(w, /peerRiders\.sync\(seen, onlineToScene,[^\n]*\n\s+const afoot = seen\.filter\(\(d\) => (?:\(peerRidesIn3d\(d\) \|\| )?!peerRiders\.isRiding\(d\.id\)[^;]*\);[^\n]*\n\s+peerBodies\.sync\(afoot,/);
   assert.match(w, /bodyHeight: \(id\) => peerRiders\.heightOf\(id\) \|\| peerBodies\.heightOf\(id\)/);
   assert.match(w, /const riding = \(modes\?\.mode \?\? 'exterior'\) === 'exterior' && isRiding\(player\.transportMode\);/);
-  assert.match(w, /rd: !riding \? 0 : player\.transportMode === TRANSPORT_MODES\.Cart \? 2 : 1,/);
+  assert.match(w, /rd: dragonPoseRide\(\) \?\? \(!riding \? 0 : player\.transportMode === TRANSPORT_MODES\.Cart \? 2 : 1\),/);   // PIN MOVED (DRAGON-RIDE): on the dragon, its own ride first (systems/staffDragon.js)
   assert.match(w, /rv: [^\n]*modSetting\('eye-of-the-beholder', 'Graphics\.OnHorse'\)/);
   assert.match(w, /const eye = \[feet\[0\], feet\[1\] \+ \(s\.rd \? RIDE_EYE_HEIGHT : h - 0\.2\), feet\[2\]\];/);
   assert.match(rd('src/net/remotePlayers.js'), /onFoot: !shown\.rd,/);

@@ -331,8 +331,9 @@ test('LEGACY2: the model question offers Enduring first - Enter without reading 
   // PIN MOVED (LEGACY-CHOICE): and online a third answer after the two - no lineage, Enduring still first
   assert.deepEqual(on.map((x) => [x.id, x.locked]), [[MODELS.enduring, false], [MODELS.bloodline, false], [NO_LINEAGE, false]], 'LEGACY7: online Bloodline is open - the realm holds the line');
   // PIN MOVED (AUDIT LEGACY III U8): beside the line's end, never instead of it - the end holds online as off
-  assert.deepEqual([on[1].lines[3], o[1].lines[3]], ['With no one left, the line ends.', 'With no one left, the line ends.']);
-  assert.match(on[1].lines[4], /^Online, a death is final on every device\.$/);
+  // PIN MOVED (CASUAL-LIFE): online Bloodline says it in three lines, so Casual's four fit the classic face
+  assert.deepEqual([on[1].lines[1], o[1].lines[3]], ['With no one left, the line ends.', 'With no one left, the line ends.']);
+  assert.match(on[1].lines[2], /^Online, a death is final on every device\.$/);
   assert.equal(o[1].lines.length, 4, 'offline, the four lines as before');
 });
 

@@ -182,7 +182,7 @@
  {
   "name": "DEX5-my-missile-passes",
   "file": "src/scenes/hostMagic.js",
-  "old": "const hitBody = m.dead ? null : corpsePrefabStruck(m.pos, foes(), MISSILE_COLLIDER_RADIUS);",
+  "old": "const hitBody = m.dead || m.dragon ? null : corpsePrefabStruck(m.pos, foes(), MISSILE_COLLIDER_RADIUS);",
   "new": "const hitBody = null;",
   "why": "my spell's missile flies through the body's trigger",
   "tests": [

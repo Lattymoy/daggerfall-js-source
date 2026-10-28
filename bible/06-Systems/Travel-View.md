@@ -3912,7 +3912,8 @@ its districts and fabric, 11.9 s).
 Past the Bay a place not built is now rung by its footprint (`terrainTiles.js:"export function locationFootprintRect(dfLocation) {"`,
 LANDFORM4's: the block grid and the clearance, off the map table), which holds every tile the stamp could. The Bay's places
 keep their stamped rect (their blocks are BLOCKS.BSA's, and the painted ring roads follow it), a built pixel its build's.
-`bootWorld` does not grow. Pin `test/scenes/far_rings.test.js`.
+`bootWorld` does not grow. Pin `test/scenes/far_rings.test.js`. PIN MOVED: OW-TOWN-RING's host rect (`ow_wod.test.js`) - the
+merge missed it, and main's deploy failed on it.
 
 GREEDY-BEYOND's mutants' sweep (its fallback asked of the planner's 126 records): one record its own (no-walk-across-country,
 killed by the lean asked of an all-open plan alone); two old ones killed by new pins (ROAD-BEYOND-no-greed on a road lattice,

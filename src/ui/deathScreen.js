@@ -35,6 +35,7 @@ import { drawEnhancedDeath, removeEnhancedDeath } from './enhanced/enhancedDeath
 import { EYE_HEIGHT } from '../player/motor.js';   // DEATH3: the standing eye the fall starts from
 import { isOnlinePage } from '../systems/online/onlineLane.js';   // DEATH4: the online screen counts down, the offline one waits
 import { stateDeathLoss, deathGoldLoss, deathPenaltyLine } from '../systems/deathPenalty.js';   // DEATH-PENALTY: the screen says what the respawn is about to take
+import { isCasual } from '../systems/legacy/casual.js';   // CASUAL-LIFE: a Casual death states no loss
 import { goldPiecesOf } from '../systems/inventory.js';   // DEATH-PENALTY: the purse the loss is read off
 import { wildDeath, wildDeathLines, WILD_DEATH_HOLD_S } from '../systems/wild/wildZone.js';   // WILD1: a death in the open zone holds two minutes, Enter or not
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
@@ -141,7 +142,8 @@ export class DeathScreen {
     const respawns = this.online || this.rises;
     // EG-H2 (bible/11-Multiplayer/Elite-Gates.md section 24): a made level whose law exempts DEATH-PENALTY (the Spire's -
     // systems/madeLevel.js) hands `penalty: false`: the respawn takes nothing, so the screen states nothing
-    this.goldLoss = respawns && penalty !== false ? deathGoldLoss(goldPiecesOf(entity)) : 0;
+    // CASUAL-LIFE (bible/06-Systems/Legacy-Arc.md section 6): nor a Casual character's - its death costs nothing
+    this.goldLoss = respawns && penalty !== false && !isCasual(entity) ? deathGoldLoss(goldPiecesOf(entity)) : 0;
     if (respawns) stateDeathLoss(this.goldLoss);
     this.goldLossLine = deathPenaltyLine(this.goldLoss);   // drawn ONCE: the enhanced face redraws every frame and the words must not change under the player
     this.clock = 0;   // DEATH4: the enhanced screen's own clock (the sequence's stops short of its reset)
