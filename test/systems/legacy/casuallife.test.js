@@ -66,7 +66,7 @@ test('CASUAL-LIFE kept on the character and its save; the Family tab names it', 
   const back = ent('c-casual');
   restorePlayer(back, JSON.parse(JSON.stringify(snapshotPlayer(saved))));
   assert.equal(back.legacyChoice, CASUAL);
-  assert.match(noFamilyLine({ on: () => true, choice: () => CASUAL, online: () => true }), /plays Casual, without a house/);
+  assert.match(noFamilyLine({ on: () => true, choice: () => CASUAL, online: () => true }), /plays Casual, with no family line/);
 });
 
 test('CASUAL-LIFE a Casual death takes no gold - the respawn and the death screen both - and spends the stated loss', () => {

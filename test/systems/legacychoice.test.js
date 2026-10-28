@@ -98,7 +98,7 @@ test('LEGACY-CHOICE the question: online three answers - Enduring first, Bloodli
   assert.ok(on.every((o) => !o.locked));
   // PIN MOVED (CASUAL-LIFE): no lineage is Casual online, and says what it does
   assert.equal(on[2].title, 'Casual');
-  assert.match(on[2].lines.join(' '), /No house, no heirs/);
+  assert.match(on[2].lines.join(' '), /No family line, no heirs/);
   assert.deepEqual([LEGACY_MODEL_TAGS[MODELS.enduring], LEGACY_MODEL_TAGS[MODELS.bloodline], LEGACY_MODEL_TAGS[NO_LINEAGE]], ['Not permadeath', 'Permadeath', 'No death cost']);
   assert.deepEqual(legacyModelOptions({ online: false, tollShare: 0.06 }).map((o) => o.id), [MODELS.enduring, MODELS.bloodline], 'offline its two');
   assert.ok(isLegacyChoice(NO_LINEAGE) && isLegacyChoice(MODELS.bloodline) && !isLegacyChoice('nobody') && !isLegacyChoice(undefined));
@@ -348,8 +348,8 @@ test('LEGACY-CHOICE the law: no lineage founds no house - at the birth, at any l
 test('LEGACY-CHOICE the Family tab says why there is no house: no lineage chosen, or online one loaded with none - a new character founds one', () => {
   const prov = (over) => ({ on: () => true, ...over });
   // PIN MOVED (CASUAL-LIFE): the answer's name is Casual
-  assert.match(noFamilyLine(prov({ choice: () => NO_LINEAGE, online: () => true })), /plays Casual, without a house\. Make a new character to found one\./);
-  assert.match(noFamilyLine(prov({ choice: () => NO_LINEAGE, online: () => false })), /plays Casual, without a house/);
+  assert.match(noFamilyLine(prov({ choice: () => NO_LINEAGE, online: () => true })), /plays Casual, with no family line\. Make a new character to found one\./);
+  assert.match(noFamilyLine(prov({ choice: () => NO_LINEAGE, online: () => false })), /plays Casual, with no family line/);
   assert.match(noFamilyLine(prov({ choice: () => null, online: () => true })), /Online, a house is founded only when a character is made\. Make a new character to found one\./);
   assert.match(noFamilyLine(prov({ choice: () => null, online: () => false })), /founded when your character is made, or the first time an older character is loaded/);
   assert.match(noFamilyLine({ on: () => false }), /Turn on Project Legacy/);

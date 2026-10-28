@@ -126,7 +126,7 @@ test('FAMILY-TAB the Family key without a house says why on the HUD - the pages\
         assert.equal(node.id, '', `${skin}: no pause screen stood up`);
       });
       assert.deepEqual(lines, [noFamilyLine(chose)], `${skin}: said why, in the pages' words`);
-      assert.match(lines[0], /plays Casual, without a house/);   // PIN MOVED (CASUAL-LIFE)
+      assert.match(lines[0], /plays Casual, with no family line/);   // PIN MOVED (CASUAL-LIFE)
       // with a house, the key's door opens the port's own pause screen on the tab (either skin - the classic has no tabs)
       setFamilyProvider(provider({ family: house() }));
       lines.length = 0;

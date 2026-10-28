@@ -233,7 +233,9 @@ finishChargen`, `test/systems/legacychoice.test.js`, `tools/mutants/legacychoice
   lineage is Casual. It founds no house, as before. Its death costs nothing: no tenth of the purse (`deathPenalty.js`,
   the death screen states none) and no piece to a revenant (`revenant.js revenantTakes`). The Wild keeps its own law:
   a player's kill there takes the zone's share. Online Enduring and Bloodline say three lines each, so Casual's four
-  fit the classic face. `test/systems/legacy/casuallife.test.js`.
+  fit the classic face. `test/systems/legacy/casuallife.test.js`. CASUAL-WORDS (asked: "the no house need to go",
+  "its misunderstanding"): its words say family line, never house, so no one reads it as no home. A home is bought as
+  before.
 - LEGACY-POINTER (FIELD 2026-10-06, Mac: "moving the mouse up and down switches between the options instead of letting
   you hover and select"): WHILE THE POPUP IS UP ITS TILES OWN THE POINTER. Every host hands the slot's occupant each
   mousemove from a listener on the WINDOW (world.js, exterior.js, worldModes.js, dungeon.js - the dungeon context's

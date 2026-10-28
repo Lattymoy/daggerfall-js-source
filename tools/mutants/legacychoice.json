@@ -162,7 +162,7 @@
   {
     "name": "LEGACY-CHOICE-no-lineage-unsaid",
     "file": "src/ui/familyPages.js",
-    "old": "    : prov.choice?.() === NO_LINEAGE ? 'This character plays Casual, without a house. Make a new character to found one.'   // CASUAL-LIFE\n",
+    "old": "    : prov.choice?.() === NO_LINEAGE ? 'This character plays Casual, with no family line. Make a new character to found one.'   // CASUAL-LIFE\n",
     "new": "",
     "tests": [
       "test/systems/legacychoice.test.js"

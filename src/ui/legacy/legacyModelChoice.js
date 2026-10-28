@@ -30,12 +30,12 @@ export const LEGACY_MODEL_FACE = Object.freeze({
 export const LEGACY_CHOICE_FACE = Object.freeze({
   eyebrow: 'A new character',
   title: 'Will your line endure?',
-  lead: 'Found a house and choose how it meets death, or play Casual without one. It cannot be changed later.',   // CASUAL-LIFE
+  lead: 'Found a family line and choose how it meets death, or play Casual without one. It cannot be changed later.',   // CASUAL-LIFE
   pick: 'Choose',
   hint: 'Click one · up/down and Enter · 1, 2 or 3',
 });
 /** ...and the classic face's two lines over the options, online. */
-export const LEGACY_CHOICE_TEXT = Object.freeze({ title: 'WILL YOUR LINE ENDURE?', lines: Object.freeze(['Found a house and choose its way with death,', 'or play Casual. It cannot be changed later.']) });   // CASUAL-LIFE
+export const LEGACY_CHOICE_TEXT = Object.freeze({ title: 'WILL YOUR LINE ENDURE?', lines: Object.freeze(['Found a line and choose its way with death,', 'or play Casual. It cannot be changed later.']) });   // CASUAL-LIFE
 /** Each answer's short tag on the Plus face. LEGACY-CHOICE: no lineage is the game's own death, tagged with the word the
  *  leveling question gives the game as it always was (LEVELING_FACE_TAGS) - not its title said twice. */
 export const LEGACY_MODEL_TAGS = Object.freeze({ [MODELS.enduring]: 'Not permadeath', [MODELS.bloodline]: 'Permadeath', [NO_LINEAGE]: 'No death cost' });   // CASUAL-LIFE
@@ -73,7 +73,7 @@ export function legacyModelOptions({ online = isOnlinePage(), tollShare = legacy
     ]) }),
     // LEGACY-CHOICE: online, a character may found no house at all. CASUAL-LIFE: it is Casual, and says what it does
     ...(online ? [Object.freeze({ id: NO_LINEAGE, title: t('legacy.choice.casual.title', 'Casual'), locked: false, lockNote: null, lines: Object.freeze([
-      t('legacy.choice.casual.what', 'No house, no heirs and no permadeath.'),
+      t('legacy.choice.casual.what', 'No family line, no heirs and no permadeath.'),
       t('legacy.choice.casual.cost', 'A death costs no gold, no years and no gear.'),
       t('legacy.choice.casual.rise', 'You rise again at half health.'),
       t('legacy.choice.casual.wild', 'In the Wild, a player\'s kill still takes a share.'),

@@ -76,7 +76,7 @@ test('AUDIT PLAIN-UI W2 W3 W10 W11 the Family page: the estate is whoever carrie
     const none = document.createElement('div');
     drawGuidePage(none, () => {}, { el, divider: (w) => el('div', 'px-divword', w) });
     assert.equal(none.children[1].className, 'px-note');
-    assert.match(none.children[1].textContent, /plays Casual, without a house/);   // PIN MOVED (CASUAL-LIFE)
+    assert.match(none.children[1].textContent, /plays Casual, with no family line/);   // PIN MOVED (CASUAL-LIFE)
   } finally {
     setModSetting(LEGACY_MOD, 'Legacy.Toll', was);
     setFamilyProvider(null);
