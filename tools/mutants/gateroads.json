@@ -245,7 +245,7 @@
   {
     "name": "GATE-ROADS-the-roads-never-laid",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "    if (hasLocation && locationRect?.gateRoads) layGateRoads(tilemap, paths, tileData, locationRect.gateRoads);\n",
+    "old": "    if (hasLocation && locationRect?.gateRoads) layGateRoads(tilemap, paths, tileData, locationRect.gateRoads, locationRect.mask);   // FB1028: on its ground\n",
     "new": "",
     "tests": [
       "test/world/gateroads.test.js"

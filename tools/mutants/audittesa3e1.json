@@ -65,7 +65,7 @@
   {
     "name": "E1-4-the-version-unmoved",
     "file": "src/world/deepWater/deepWatersBakeCache.js",
-    "old": "export const BAKE_GENERATOR_VERSION = 2;",
+    "old": "export const BAKE_GENERATOR_VERSION = 3;",
     "new": "export const BAKE_GENERATOR_VERSION = 1;",
     "tests": [
       "test/world/audittesa3e1.test.js"

@@ -74,8 +74,8 @@
  {
   "name": "TW-the-turn-mirrored",
   "file": "src/world/townWalls.js",
-  "old": "const [wx, wz] = p.out, ux = wz, uz = -wx;",
-  "new": "const [wx, wz] = p.out, ux = -wz, uz = wx;",
+  "old": "const [wx, wz] = p.out, ux = wz, uz = -wx, th = tower ? p.thick ?? 1 : 1;",
+  "new": "const [wx, wz] = p.out, ux = -wz, uz = wx, th = tower ? p.thick ?? 1 : 1;",
   "tests": [
    "test/world/townwalls.test.js"
   ]
@@ -128,8 +128,8 @@
  {
   "name": "TW-the-round-unread",
   "file": "src/world/terrain/terrainTiles.js",
-  "old": "townShapeField(walled ? townRound(padded, PW, PH).inside : padded, PW, PH,",
-  "new": "townShapeField(padded, PW, PH,",
+  "old": "  const occ = walled ? townRound(padded, PW, PH).inside : padded;",
+  "new": "  const occ = padded;",
   "tests": [
    "test/world/townwalls.test.js"
   ]

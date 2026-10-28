@@ -364,6 +364,44 @@ export function* yardSitesSteps(g) {
   return out;
 }
 
+/** FB1028 YARDS: a yard's place still good on a ground - its own cells on no road, no way and nothing shut, and its pad
+ *  round it (YARD_PAD_M) clear of every closed cell: the wall's, a house's, the ground's edge. @param {any} g @param {any} s */
+export function siteFits(g, s) {
+  const pad = Math.ceil(YARD_PAD_M / NAV_CELL - 1e-9), W = g.width;
+  for (let y = s.gy - pad; y < s.gy + s.nz + pad; y++) for (let x = s.gx - pad; x < s.gx + s.nx + pad; x++) {
+    if (x < 0 || y < 0 || x >= W || y >= g.height || g.blocked[y * W + x]) return false;
+    if (x >= s.gx && y >= s.gy && x < s.gx + s.nx && y < s.gy + s.nz && (g.road[y * W + x] || g.shut?.[y * W + x])) return false;
+  }
+  return true;
+}
+
+/**
+ * FB1028 YARDS (the owner: a yard keeps its #1184 place unless that place is broken): THE YARDS KEPT, AND THE BROKEN ONES
+ * PLACED AGAIN. `sites` were placed on #1184's ground; `g` is the ground as it stands now (the new wall and roads). A yard
+ * whose place no longer fits it (siteFits) is placed again by its kind's law (lawSiteSteps) on `g`, every kept yard's and
+ * `ports`' ground closed first - so none overlaps another. A port's place is kept as it is. @param {any} g
+ * @param {any[]} sites @param {any[]} ports @returns {Generator<void, any[], void>}
+ */
+export function* keptSitesSteps(g, sites, ports = []) {
+  const broken = sites.filter((s) => YARD_FOOT[s.kind] && !siteFits(g, s));
+  if (!broken.length) return sites;
+  for (const s of [...sites, ...ports]) if (!broken.includes(s)) closeSite(g, s);
+  const out = [];
+  for (const s of sites) {
+    if (!broken.includes(s)) { out.push(s); continue; }
+    const t = yield* lawSiteSteps(g, s.kind);
+    if (t) { out.push(t); closeSite(g, t); }
+  }
+  return out;
+}
+
+/** FB1028 YARDS: keptSitesSteps on the town's ground as it stands now (`now` its shut, townGroundSteps' ground).
+ *  @param {any} yl @param {any} measures @param {any} now @param {any} ways @param {any[]} sites @param {any[]} ports */
+export function* keptTownSitesSteps(yl, measures, now, ways, sites, ports) {
+  const g = yield* townGroundSteps(yl, measures, now, ways);
+  return g ? yield* keptSitesSteps(g, sites, ports) : sites;
+}
+
 /** CARP-YARD: THE PROFESSIONS' YARDS on a ground, in CRAFT_YARD_ORDER, each on what the last left - placed by the host
  *  AFTER the two yards and a port town's places (scenes/world.js townPlacesFor), so none of theirs moves. Pure (it closes
  *  `g` as it goes). */

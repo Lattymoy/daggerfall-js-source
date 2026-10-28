@@ -99,6 +99,44 @@ export function townTiles(w, h, rmbAt) {
   return occ;
 }
 
+/** FB1028 CROP-GROUND: the fields of flats (world/flatFields.js, which re-exports these): a model id that sows a field,
+ *  and its measure. Kept here so the terrain's outline reads it with no module more on the boot path. */
+const _fields = new Map();
+/** @param {number} id @param {{ rangeX: number, rangeZ: number, spacing: number, noise: number, firstRecordOnly?: boolean }} spec @param {() => boolean} [isOn] */
+export function registerFlatField(id, spec, isOn = () => true) { _fields.set(Number(id), { spec: Object.freeze({ ...spec }), isOn }); }
+/** @param {number} id */
+export function flatFieldFor(id) { const f = _fields.get(Number(id)); return f && f.isOn() ? f.spec : null; }
+export function _resetFlatFields() { _fields.clear(); }
+
+/**
+ * FB1028 CROP-GROUND: THE TILES A TOWN'S FIELDS ARE SOWN OVER. A field's plants stand on its block's plane, over a
+ * rectangle round its record (flatFields.js sowField, in the world's axes, each plant nudged up to `noise`), so every
+ * tile of it is the town's - its record's tile alone left the plants over the land's slope and the sea.
+ * @param {number} w @param {number} h @param {(bx: number, by: number) => any} rmbAt @param {number} [pad] tiles each side
+ * @returns {?Uint8Array} 1 a field's tile, (w*16 + 2pad) x (h*16 + 2pad) row-major from the south-west, or null for none
+ */
+export function townFieldTiles(w, h, rmbAt, pad = 0) {
+  const T = SHAPE_TILES_PER_BLOCK, PW = w * T + 2 * pad, PH = h * T + 2 * pad, UNITS = 40;   // a block unit is 0.025 m
+  let out = null;
+  for (let by = 0; by < h; by++) {
+    for (let bx = 0; bx < w; bx++) {
+      for (const r of rmbAt(bx, by)?.misc3dObjectRecords ?? []) {
+        const f = flatFieldFor(r.modelIdNum);
+        if (!f) continue;
+        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = r.zPos + 4096;
+        out ??= new Uint8Array(PW * PH);
+        for (let y = Math.floor((z - hz) / RECORD_TILE_UNITS); y <= Math.floor((z + hz) / RECORD_TILE_UNITS); y++) {
+          for (let x = Math.floor((r.xPos - hx) / RECORD_TILE_UNITS); x <= Math.floor((r.xPos + hx) / RECORD_TILE_UNITS); x++) {
+            const X = pad + bx * T + x, Y = pad + by * T + y;
+            if (X >= 0 && Y >= 0 && X < PW && Y < PH) out[Y * PW + X] = 1;
+          }
+        }
+      }
+    }
+  }
+  return out;
+}
+
 /** A hash of integers in [0, 1) - the outline's own noise, the same on every client and in every worker. */
 function hash01(seed, x, y) {
   let h = (seed ^ 0x9e3779b9) >>> 0;
