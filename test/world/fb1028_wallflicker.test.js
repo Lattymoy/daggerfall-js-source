@@ -198,7 +198,7 @@ test('WALL-FLICKER the cut: a length\'s and a gate\'s faces cut clear of a bend 
   const straight = bend(0);
   const was = fights(whole(straight, classic), 1e-3);
   assert.ok(Math.abs(was - (4 * 4.8 * 6.45 + 2 * 4.8 * 4.4)) < 0.01, `whole: each length's faces over half of each of the tower's two sides, the turret's too (${was})`);
-  for (const frame of [0, 37]) for (const [deg, what] of [[0, 'straight'], [0.002, 'a hair off straight'], [1, 'a degree'], [8, 'eight degrees'], [50, 'a sharp bend']]) {
+  for (const frame of [0, 37]) for (const [deg, what] of [[0, 'straight'], [0.002, 'a hair off straight'], [1, 'a degree'], [3, 'three degrees, the inner face past the grown body'], [8, 'eight degrees'], [50, 'a sharp bend']]) {
     const pieces = turned(bend(deg), frame), m = townWallModel(pieces, classic), now = fights(m, 0.04);
     assert.ok(now < 1e-6, `${what}, the frame turned ${frame}: no two faces within 4 cm over each other (${now} m2)`);
     // PIN MOVED (AUDIT FB1028): against the pieces made alone as grown - a sharp bend's grown tower alone shows 14 more
