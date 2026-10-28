@@ -79,7 +79,7 @@ Every finding below is fixed, pinned and recorded where its system lives.
   slice whose index holds a Mages Guild hall, quarter 34 of the Elven Gardens. The pin searched again after the quest had
   started, and the search leaves out a building a quest holds (Place.cs's IsBuildingAssigned); IC-STAIRS' doors left
   that quarter one hall, so the pin walked on past it. Re-aimed: the site's own slice gives its kind by holding it, and a
-  nearer slice with a free hall still fails it.
+  nearer slice with a free hall still fails it. `tools/mutants/questsites.json`'s 18 records on the file, all dead.
 
 ## Lane 1 - the last audit's pins
 
