@@ -275,12 +275,12 @@
   {
     "name": "LANDFORM-restand-scale-only",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + moved;",
-    "new": "if (!(was > 0) || was === STREAMING_TERRAIN_SCALE) return y + moved;",
+    "old": "if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + relief + town(y + relief);",
+    "new": "if (!(was > 0) || was === STREAMING_TERRAIN_SCALE) return y + relief + town(y + relief);",
     "tests": [
       "test/systems/landform.test.js"
     ],
-    "note": "Re-aimed by content (RELIEF-PEAKS): the record rides its ground's move on that return too"
+    "note": "Re-aimed by content (AUDIT FB1028 A1): restandHeight's moves as `relief` and `town(yy)`. Re-aimed by content (RELIEF-PEAKS): the record rides its ground's move on that return too"
   },
   {
     "name": "LANDFORM-rivers-player-online",

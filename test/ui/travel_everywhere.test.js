@@ -115,7 +115,7 @@ test('TRAVEL-EVERYWHERE the player\'s own map: a place past the Bay the world kn
     assert.equal(st.trip.minutes, t.minutes, 'DFU\'s own bill to its pixel');
     assert.ok(!st.trip.walked, 'fast travel, as a Bay place without Travel Options');
     begin(win);
-    assert.deepEqual([commits[0]?.kind, commits[0]?.pick.pixel, commits[0]?.pick.name, commits[0]?.opts.playerControlled, commits[0]?.pick.named], ['travel', { x: VILLAGE.px, y: VILLAGE.py }, 'Dragon Bridge', false, undefined], 'the place\'s journey (world.js onTravel), never onTravelToCoords');
+    assert.deepEqual([commits[0]?.kind, commits[0]?.pick.pixel, commits[0]?.pick.name, commits[0]?.opts.playerControlled, commits[0]?.pick.place], ['travel', { x: VILLAGE.px, y: VILLAGE.py }, 'Dragon Bridge', false, true], 'the place\'s journey (world.js onTravel), never onTravelToCoords');
 
     // Travel Options' fork decides, as on the Bay: here it walks (cautious, inns stopped, the ship knocked off off a port)
     const w2 = mkWin({ travelOptions: () => TO_WALKS });
@@ -150,7 +150,7 @@ test('TRAVEL-EVERYWHERE the player\'s own map: a place past the Bay the world kn
   });
 });
 
-test('TRAVEL-EVERYWHERE a quest\'s place past the Bay is a place by its naming, and the pick says so to the host, whose Overworld route and Travel Options\' summary ask the law named (AUDIT TRAVEL-EVERYWHERE 1, 5) (mutants: the goto unnamed; the pick unnamed; the host\'s ask unnamed)', () => {
+test('TRAVEL-EVERYWHERE a quest\'s place past the Bay is a place by its naming, and the pick says so to the host (OW-PLACE-WALK\'s `place`), whose Overworld route and Travel Options\' summary ask the law by it (AUDIT TRAVEL-EVERYWHERE 1, 5) (mutants: the goto unnamed; the quest unnamed; Travel Options by the pick)', () => {
   withDocument(() => {
     standPlaces();
     const { win, commits } = mkWin({ travelOptions: () => TO_WALKS });
@@ -158,12 +158,12 @@ test('TRAVEL-EVERYWHERE a quest\'s place past the Bay is a place by its naming, 
     win._consumeGotoPlace();
     assert.deepEqual([win._selected?.place, win._selected?.town?.named, win._panel], [true, true, 'travel'], 'the journal\'s find: a place, its journey open');
     begin(win);
-    assert.deepEqual([commits[0]?.kind, commits[0]?.pick.named], ['travel', true]);
+    assert.deepEqual([commits[0]?.kind, commits[0]?.pick.place], ['travel', true]);
     assert.equal(pastBayPlaceSummary(LAIR.px, LAIR.py), null, 'unfound');
     assert.equal(pastBayPlaceSummary(LAIR.px, LAIR.py, true)?.name, LAIR.name, 'named');
     const W = hostText('src/scenes/world.js');
-    assert.match(W, /const summary = tvPlaceSummary\(pick\.pixel\.x, pick\.pixel\.y, !!pick\.named\);/, 'the Overworld\'s route asks it named');
-    assert.match(W, /\} : tvPlaceSummary\(pick\.pixel\.x, pick\.pixel\.y, !!pick\.named\) \?\? pick, !!opts\?\.speedCautious, estimateMinutes\);/, 'Travel Options\' journey past the Bay goes by the place\'s own summary, which stands it');
+    assert.match(W, /const summary = !coords \|\| pick\.place \? tvPlaceSummary\(pick\.pixel\.x, pick\.pixel\.y, !!pick\.place\) : null;/, 'the Overworld\'s route asks it by the pick\'s word');
+    assert.match(W, /\} : tvPlaceSummary\(pick\.pixel\.x, pick\.pixel\.y, !!pick\.place\) \?\? pick, !!opts\?\.speedCautious, estimateMinutes\);/, 'Travel Options\' journey past the Bay goes by the place\'s own summary, which stands it');
     assert.match(hostText('src/scenes/mapPlacesHost.js'), /setPastBayPlaceLaw\(tvPlaceSummary\);/, 'the host publishes its one law');
   });
 });

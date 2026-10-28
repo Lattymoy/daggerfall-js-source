@@ -792,6 +792,9 @@ pool's behavioural proof of the same lines.
   peers', the foes' and the watch's, 14 skins a frame at Near on a street
   with all four, 24 at All; every one a palette upload (MWNPC1), every seen
   body in its lane's one bind (MWNPC2).
+- AMENDED BY PROVINCE-FOLK (2026-10-28, `03-World/World-Wide.md`): past the Bay a walker is one of the
+  province's people (`person.folk`), and the body is that race - a Dark Elf in Mournhold, an Imperial in the Imperial
+  City - while the picture far off stays one of Daggerfall's three (`mobilePerson.js spriteRaceOf`).
 
 PROVEN. `test/characters/mwnpc7_folk.test.js` (4): every race, gender and outfit
 variant's look (its garments in its slots, the street's dyes, a face),

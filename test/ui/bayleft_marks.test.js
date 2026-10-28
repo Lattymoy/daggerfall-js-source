@@ -199,7 +199,9 @@ test('BAY-LEFT-MAPS C2 WILD-WAYPOINT IN CYRODIIL: a death in the open zone by th
   fresh();
 });
 
-test('BAY-LEFT-MAPS C2 THE HELD MAP\'S RIGHT CLICK: the add menu opens on a point past the Bay while the continent is shown, and on the Bay\'s sheet alone while it is not; "Travel here" is offered on a flag on the Bay and, PIN MOVED (TRAVEL-EVERYWHERE), on one past it as well - the walk OW-PAST-BAY gives bare land there (mutants: the menu held to the Bay; Travel here held to the Bay)', async () => {
+// PIN MOVED (OW-PLACE-WALK, 2026-10-28; bible/03-World/Arena-Provinces.md): "Travel here" on a flag past the Bay was never offered
+// (TESA-NO-FAST). OW-PAST-BAY made a press on that land a walk, so a flag on it is walked to the same way - never one on the sea.
+test('BAY-LEFT-MAPS C2 THE HELD MAP\'S RIGHT CLICK: the add menu opens on a point past the Bay while the continent is shown, and on the Bay\'s sheet alone while it is not; "Travel here" is offered on a flag on the Bay, on one on the land past it, and never on one on the sea past it (mutants: the menu held to the Bay; Travel here held to the Bay; the sea flag walked)', async () => {
   _resetForTests();
   setTamrielFit(null);
   fresh();
@@ -224,10 +226,16 @@ test('BAY-LEFT-MAPS C2 THE HELD MAP\'S RIGHT CLICK: the add menu opens on a poin
     globalThis.document.body.children.length = 0;
     win._waypointContext(0, 0);
     const said = texts(globalThis.document.body);
-    assert.ok(said.includes('Follow') && said.includes('Travel here'), 'a flag past the Bay: followed, and travelled to as a flag on the Bay is');
+    assert.ok(said.includes('Follow') && said.includes('Travel here'), 'a flag on the land past the Bay: walked to, as a press there is (OW-PAST-BAY)');
+    const sea = addWaypoint({ mx: -299.5, my: 250.5, name: 'Offshore' }).waypoint;
+    win._waypointAt = () => sea;
+    globalThis.document.body.children.length = 0;
+    win._waypointContext(0, 0);
+    const wet = texts(globalThis.document.body);
+    assert.ok(wet.includes('Follow') && !wet.includes('Travel here'), 'a flag on the sea past the Bay: no walk there');
     win._tamriel = true;
     win._waypointTravel(far);
-    assert.deepEqual([win._selected?.pastBay, win._selected?.walk, win._selected?.x, win._panel], [true, true, 1569.5, 'travel'], 'its journey: the walk to its pixel');
+    assert.deepEqual([win._selected?.pastBay, win._selected?.walk, win._selected?.door, win._selected?.x, win._panel], [true, true, false, 1569.5, 'travel'], 'its journey: the walk to its bare pixel (TRAVEL-EVERYWHERE)');
     menu.closeWaypointMenu();
     win.dispose();
     setPref('tamrielMap', false);

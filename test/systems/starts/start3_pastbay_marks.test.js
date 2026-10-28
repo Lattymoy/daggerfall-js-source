@@ -181,7 +181,7 @@ test('START3 the held map: a press on a quest\'s diamond past the Bay picks the 
     // the world's one law of a place past the Bay (scenes/mapPlacesHost.js tvPlaceSummary): an unfound lair, known by its naming
     win.deps.pastBayPlace = (px, py, named) => { asked.push(named); return named ? { locationType: LOCATION_TYPES.DungeonLabyrinth } : null; };
     const pick = win._questPlace({ px: LAIR_PX.x, py: LAIR_PX.y, placeName: 'The Haunt of Baringon' });
-    assert.deepEqual(pick, { coords: true, x: LAIR_PX.x + 0.5, y: LAIR_PX.y + 0.5, colorIndex: -1, kind: 'coords', name: 'The Haunt of Baringon', summary: null, mapId: null, arena: true, pastBay: true, portal: true, walk: false, place: true, town: { locationType: LOCATION_TYPES.DungeonLabyrinth, capital: false, named: true } });   // PIN MOVED (TRAVEL-EVERYWHERE): a place, by the quest's naming
+    assert.deepEqual(pick, { coords: true, x: LAIR_PX.x + 0.5, y: LAIR_PX.y + 0.5, colorIndex: -1, kind: 'coords', name: 'The Haunt of Baringon', summary: null, mapId: null, arena: true, pastBay: true, portal: true, walk: false, place: true, door: true, town: { locationType: LOCATION_TYPES.DungeonLabyrinth, capital: false, named: true } });   // PIN MOVED (TRAVEL-EVERYWHERE): a place, by the quest's naming
     assert.deepEqual(asked, [true], 'the law asked named'); 
     win.gotoPlace({ siteDetails: { regionIndex: 64, regionName: 'Skyrim', locationName: 'The Haunt of Baringon', worldPixel: LAIR_PX } });
     win._consumeGotoPlace();

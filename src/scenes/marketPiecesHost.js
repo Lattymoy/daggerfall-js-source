@@ -3,7 +3,7 @@
 // settled names by value at construction, every live one (a `let` someone writes, a `const` made below) read at its
 // use as `host.<name>` - as the code read them where it was.
 import { addItem } from '../systems/inventory.js';
-import { asMinted, isCraftedFurniture, mintPiece, pieceOfRecipe } from '../systems/smithItems.js';
+import { asMinted, isCraftedFurniture, mintPiece, mintMarketPiece, pieceOfRecipe } from '../systems/smithItems.js';
 import { commissionFilledBy } from '../net/writLaw.js';
 import { createMarketGoods, tradeRefusal } from '../systems/tradePack.js';
 import { isLocked } from '../systems/item/itemLock.js';
@@ -11,7 +11,7 @@ import { itemLongName } from '../systems/item/itemInfo.js';
 import { itemPicture } from '../ui/menu/menuPicture.js';
 import { playerEntity } from '../characters/playerEntity.js';
 import { unequipItem } from '../systems/equip.js';
-import { WEAR_WHOLE, wearCondition, wearOf } from '../net/marketLaw.js';
+import { WEAR_WHOLE, wearOf } from '../net/marketLaw.js';
 import { createMarketHubs } from '../systems/region/marketHubs.js';   // BAY-LEFT-SEA: the provinces' hubs too
 
 /** @param {any} host */
@@ -24,14 +24,13 @@ export function createMarketPieces(host) {
   const pieceLists = () => [playerEntity.items, playerEntity.furnishings, playerEntity.wagonItems, playerEntity.otherItems].filter(Array.isArray);
   const heldProvenances = () => new Set(pieceLists().flat().map((it) => it?.provenance).filter(Boolean));
   /** PROF5: A PIECE FROM THE MARKET (bought here, collected off the road, or come back from a listing): minted from its
-   *  record as the anvil mints it, at its wear (marketLaw wearCondition), into the pack - or, furniture, the home's
+   *  record as the anvil mints it, at its wear (smithItems.js mintMarketPiece), into the pack - or, furniture, the home's
    *  things - once by its provenance id. */
   const marketMint = (piece) => {
     if (!piece?.provenance) return;
     if (heldProvenances().has(piece.provenance)) return;
-    const it = mintPiece(piece, piece.provenance);
+    const it = mintMarketPiece(piece);   // MARKET-LOOK: the mint the board's look shows
     if (!it) return;
-    if (it.maxCondition > 0) it.currentCondition = wearCondition(it.maxCondition, piece.wear);
     const home = isCraftedFurniture(it);
     if (home) (playerEntity.furnishings ??= []).push(it); else addItem((playerEntity.items ??= []), it, 'back');
     host.townTalk.say(`${itemLongName(it)} is ${home ? 'among your home\'s things' : 'in your pack'}.`);

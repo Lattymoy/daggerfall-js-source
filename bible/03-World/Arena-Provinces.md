@@ -216,6 +216,19 @@ into, a dungeon to go down - and the held map takes the player there.
   map keeps TESA2's and PORTAL-ANYWHERE's portals. PIN MOVED: `test/tesa2_arena.test.js`'s cursor,
   `start3_pastbay_marks`' pick (`walk`). Pins `test/ui/owpastbay_walk.test.js` (3); mutants `tools/mutants/owpastbay.json`
   (9, all dead), six records re-aimed by content.
+- **OW-PLACE-WALK** (2026-10-28, the owner: "ensure travel when clicking a point on the held map properly makes you
+  travel"): in the game on the freeware, Begin on Solitude said "You cannot walk out onto the water." - OW-PAST-BAY
+  handed a city as a bare pixel, and Solitude's pixel is the sea's byte. A city, a countryside mark, a quest's, a found
+  or the journal's place past the Bay is now handed as a place (`ui/heldMap.js` `_pastBayPick`'s `place`), and Begin
+  walks to its door as the Overworld does (`scenes/world.js` beginAcceleratedTravel: `tvPlaceSummary`,
+  `travelViewRouteTo`); a place the Overworld does not know is walked to as a spot. "Travel here" on a flag on land past
+  the Bay is the walk a press there is (`_flagTravels`), never on the sea. PIN MOVED: BAY-LEFT-MAPS C2, START3's pick,
+  OW-ONLY's and TESA2's source pins. Pins `test/ui/owplacewalk.test.js` (3); mutants `tools/mutants/owplacewalk.json`
+  (13, all dead), four records re-aimed by content.
+- **OPEN (OW-PLACE-WALK)**: from Daggerfall the Imperial City's journey says "There is no way there by land." The way is
+  there - Kvatch to the city plans in 3,171 cells - but on the freeware's ground with no roads past the Bay landed, the
+  plan from Daggerfall spends ROAD-BEYOND's whole count (100,001 cells), where Bruma takes 52,257 and Solitude 38,596.
+  It is the Overworld planner's spend, its own click's too, not the map's.
 - **TRAVEL-EVERYWHERE** (2026-10-28, the owner: *"the travel services won't take you to other provinces"*, then *"Like
   how it works in the bay should be how it works everywhere. These tests are outdated"*): TESA-NO-FAST IS RETIRED. A place
   past the Bay is travelled to as a Bay place is. The journey's law past the Bay (`systems/travel/pastBayTravel.js`
@@ -228,7 +241,8 @@ into, a dungeon to go down - and the held map takes the player there.
   places host publishes (`world/pastBayPlaces.js` setPastBayPlaceLaw) and the map asks (`_pastBayTownAt`), as the Bay's map
   asks discovery. Its panel bills it as a Bay place, Begin is the place's journey (world.js onTravel), and Disable Normal
   Travel's refusal is asked of it.
-- **TRAVEL-EVERYWHERE, what is not a place**: a place the world does not know, and bare land, stay OW-PAST-BAY's walk.
+- **TRAVEL-EVERYWHERE, what is not a place**: a place the world does not know is walked to, to its door (OW-PLACE-WALK,
+  above, its `place` the pick's word to the host); bare land stays OW-PAST-BAY's walk.
   On the teleport map a known place is a portal's end; bare land is the Portal Stone's alone. A quest's place, a find and
   a flag past the Bay offer their journeys. A captain's map keeps the Bay's docks: the mod's tables are the Bay's 382.
 - **TRAVEL-EVERYWHERE, the carriage** (`systems/immersiveTravel.js` carriageRefusal): the driver's laws read a town past
@@ -239,8 +253,8 @@ into, a dungeon to go down - and the held map takes the player there.
   ports past the Bay (WW3's ports in her master's list, LONG-VOYAGE's lanes; `test/scenes/bayleft_places.test.js`).
 - **AUDIT TRAVEL-EVERYWHERE** (2026-10-28, the owner: "Audit this"; an independent read of the diff). (1) Begin on a
   place past the Bay the world did not know (an unfound lair, a quest's site) did nothing and said nothing: the host's
-  route asked the law unnamed and found no summary. FIXED: a place is one only where known, and the pick carries a
-  quest's naming (`named`) to the host's two asks. (2) No discovery law past the Bay: an unfound dungeon was a fast
+  route asked the law unnamed and found no summary. FIXED: a place is one only where known, a quest's by its naming,
+  and the host's two asks read the pick's `place`. (2) No discovery law past the Bay: an unfound dungeon was a fast
   journey, a carriage's and a portal's end. FIXED by (1)'s law. (3) A place of no type slipped Disable Normal Travel.
   FIXED: its type is the law's summary's. (4) Capital to capital ran one way. FIXED: a capital past the Bay where the
   player stands is one.
@@ -256,7 +270,7 @@ into, a dungeon to go down - and the held map takes the player there.
   `test/tesa2_arena.test.js`, `test/ui/bayleft_marks.test.js` (C2), `test/ui/owpastbay_walk.test.js`, `test/ui/tamriel.test.js`.
   Mutants `tools/mutants/travel_everywhere.json` (26, all dead); P4's six records retired with its law
   (`audittesa2p.json`), the rest re-aimed by content. The refusal's words (`travel.pastBay.refused`) left every language's
-  catalog. THE FOUR HOSTS: `scenes/world.js`'s gate keeps its shape, and its two asks of the law take the pick's naming,
+  catalog. THE FOUR HOSTS: `scenes/world.js`'s gate keeps its shape, and its two asks of the law read the pick's `place`,
   no line grown (`test/scenes/hostceiling.test.js`); `scenes/exterior.js` and `scenes/dungeonContext.js` open no travel map;
   `scenes/worldModes.js` opens a driver's map through world.js openImmersiveMap. Nothing crosses the wire.
 - **What an Arena town is not yet**: no spawn ever clones one (`spawnTemplates`, AUDIT CAPTAIN'S SEA P3's law); its port byte is its place's (TESA6: `arenaLocations.js` portTownAndUnknown 1 for a port). `/tp` names Arena's
@@ -936,6 +950,9 @@ player's Daggerfall files, the same Tamriel on every client, online and off.
   sand, where the Bay's own ports do so 7 times in 155; five moved 1 or 2 pixels, Solitude's pin keeps its pixel); one with no shore in
   reach stands as any place and is none - on the freeware's picture Anvil and Leyawiin (no Gold Coast and no Topal Bay
   there), so 28 ports. A.EXE's coastal list is not read.
+- **COAST-PORT** (`01-Overview/bugs/Field-Bugs-2026-10-28b.md`): a place the open sea bears on, within SEA_RING and its lakes
+  left out, is a port too, whatever the lore says: Farrun, Shornhelm, Blacklight, Tear, Thorn, Elden Root and Silinorin.
+  35 places are ports.
 - **The towns and villages** (made): eight towns and sixteen villages a province (PLACE_COUNTS: Arena's shape of a
   province - a count, no data), each a quarter inside a cell of its province's land off the Bay's rectangle and
   BAY_MARGIN, the farthest of PLACE_TRIES (24) draws off the province's hash from every place before it; named by the

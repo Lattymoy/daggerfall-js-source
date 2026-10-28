@@ -21,8 +21,9 @@
 // (`movedAt`: world/landforms.js groundMovedField over today's reader and the one it was written on, tamrielGround.js
 // groundBefore) before the lift goes on - its height over the ground kept - and the old law's lift it takes off is the one
 // with no ranges (the host's `landformsHere({ before: true })`): the ranges were not there when it was written.
-import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE, GROUND_FRAME_LAW, LIFT_FRAME_LAW } from '../world/terrain/terrainSampler.js';
-import { landformLiftField, groundMovedField } from '../world/landforms.js';
+import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE, GROUND_FRAME_LAW, LIFT_FRAME_LAW, RELIEF_FRAME_LAW } from '../world/terrain/terrainSampler.js';
+import { landformLiftField, groundMovedField, townGroundMovedField } from '../world/landforms.js';
+import { shapeBefore } from '../world/terrain/townBlendBefore.js';   // FB1028 TOWN-GROUND: the outline a record's town had
 import { setLocationTiles } from '../world/terrain/terrainTiles.js';
 import { inWorldGrid } from '../world/worldWide/worldGrid.js';   // BAY-LEFT-GROUND: the lift on the world's grid
 import { inBay } from '../world/tamriel/tamrielFrame.js';
@@ -39,12 +40,12 @@ export function framePixelAt(state, x, z) {
  * the lift under the frame's old law - the ground past the Bay before its sites), the ground the stream stands
  * (`heightAt`, with the frame's compensation), the frame (`state`: its compensation and its natives) and the Landforms
  * row (`landform`); `bayAt(x, z)` whether a scene point's pixel is the Bay's; RELIEF-PEAKS `movedAt(x, z)` how far DFU's
- * own ground there moved under a record written before GROUND_FRAME_LAW 3 (world units; none, nothing moved).
+ * own ground moved under a record before RELIEF_FRAME_LAW 3, FB1028 `townMovedAt` a town's blend's move before 4 (metres).
  * @param {{ landform: boolean, liftAt: (x: number, z: number, o?: { before?: boolean }) => number,
  *   heightAt: (x: number, z: number) => number, state: any, bayAt: (x: number, z: number) => boolean,
- *   movedAt?: ?((x: number, z: number) => number) }} o
+ *   movedAt?: ?((x: number, z: number) => number), townMovedAt?: ?((x: number, z: number) => number) }} o
  */
-export function recordFrame({ landform, liftAt, heightAt, state, bayAt, movedAt = null }) {
+export function recordFrame({ landform, liftAt, heightAt, state, bayAt, movedAt = null, townMovedAt = null }) {
   const landformLiftAt = liftAt;
   /** AUDIT LANDFORMS C1/B4: A HEIGHT GOES INTO A RECORD IN DFU'S FRAME. With the row on the ground at (x, z) stands
    *  `landformLiftAt(x, z)` over DFU's, and every exterior height a record carries (the save, the scene cache, the ship's
@@ -85,14 +86,22 @@ export function recordFrame({ landform, liftAt, heightAt, state, bayAt, movedAt 
   // BAY-LEFT-GROUND (D5): `frame` the record's frame's law (its `groundFrame`). One written before LIFT_FRAME_LAW, past
   // the Bay, stood the shaped ground of its day (the lift answered 0 there): its height is put into DFU's frame by that
   // day's lift first, so the lift goes on once and its `off` is exact. With the row off it comes as it always came.
-  // RELIEF-PEAKS: one written before GROUND_FRAME_LAW (3), past the Bay, rides DFU's own ground's move there - with the row
-  // off too: the large map is the kernel's own term, never the row's.
+  // RELIEF-PEAKS: one before RELIEF_FRAME_LAW (3), past the Bay, rides DFU's own ground's move there, the row off too.
+  // FB1028 (bible/03-World/Town-Shapes.md "TS2 at FB1028"): one before GROUND_FRAME_LAW (4) rides its town's blend's move.
+  const townMove = (yy, x, z) => {   // AUDIT FB1028: a record #1371's build wrote (stamped 3) stands nearer today's ground - not moved again
+    const d = townMovedAt(x, z), h = d ? heightAt(x, z) : NaN;
+    if (!Number.isFinite(h)) return d;
+    const g = h - state.compensation[1] - (landform ? landformLiftAt(x, z) : 0);
+    return Math.abs(yy - g) < Math.abs(yy - (g - d)) ? 0 : d;
+  };
   const restandHeight = (y, x, z, was, frame = null) => {
-    const moved = movedAt && Number.isFinite(y) && !(frame >= GROUND_FRAME_LAW) && !bayAt(x, z) ? movedAt(x, z) : 0;
-    if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + moved;
+    const relief = movedAt && Number.isFinite(y) && !(frame >= RELIEF_FRAME_LAW) && !bayAt(x, z) ? movedAt(x, z) : 0;
+    const town = (yy) => (townMovedAt && Number.isFinite(y) && !(frame >= GROUND_FRAME_LAW) ? townMove(yy, x, z) : 0);
+    if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + relief + town(y + relief);
     if (!Number.isFinite(y)) return y;
     if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });   // BAY-LEFT-GROUND: the old law's frame past the Bay, into DFU's
-    y += moved;   // RELIEF-PEAKS: DFU's frame of its day onto today's
+    y += relief;   // RELIEF-PEAKS: DFU's frame of its day onto today's
+    y += town(y);   // FB1028: its town's blend's move
     const now = landform ? landformLiftAt(x, z) : 0;
     const r = was > 0 ? was / STREAMING_TERRAIN_SCALE : 1;
     const h = heightAt(x, z);
@@ -178,8 +187,25 @@ export function createGroundFrame(host) {
     _movedFields.set(key, moved);
     return moved((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE;
   };
+  /** FB1028 TOWN-GROUND (GROUND_FRAME_LAW 4): how far a town's blend moved DFU's own ground at a scene point under a record
+   *  written before it, world units (world/landforms.js townGroundMovedField, on the Bay and past it). Kept as the lift's. */
+  const _townMoved = new Map();
+  const townMovedAt = (x, z) => {
+    const [px, py] = framePixelAt(host.state, x, z), rect = host.woods && inWorldGrid(px, py) ? liftRectAt(px, py) : null;
+    if (!rect?.shape) return 0;
+    const key = `${px},${py},${rect.xMin},${rect.xMax},${rect.yMin},${rect.yMax}`;
+    let moved = _townMoved.get(key);
+    if (moved !== undefined) _townMoved.delete(key);
+    else {
+      if (_townMoved.size >= LIFT_FIELDS_KEPT) _townMoved.delete(_townMoved.keys().next().value);   // the longest unasked goes
+      moved = townGroundMovedField(host.woods, px, py, rect, shapeBefore(rect.shape, _liftLocationAt(px, py)?.mapTableData?.mapId ?? 0));
+    }
+    _townMoved.set(key, moved);
+    const t = host.state.pixelTranslation(px, py);
+    return moved ? moved((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE : 0;
+  };
   /** The stream's frame, read live (a load's teleport makes a new origin). */
   const frameNow = { get compensation() { return host.state.compensation; }, localFromWorld: (nx, nz) => host.state.localFromWorld(nx, nz) };
-  const law = recordFrame({ landform, liftAt: landformLiftAt, heightAt, state: frameNow, bayAt: (x, z) => inBay(...framePixelAt(host.state, x, z)), movedAt: groundMovedAt });
-  return { ...law, landformLiftAt, groundMovedAt };
+  const law = recordFrame({ landform, liftAt: landformLiftAt, heightAt, state: frameNow, bayAt: (x, z) => inBay(...framePixelAt(host.state, x, z)), movedAt: groundMovedAt, townMovedAt });
+  return { ...law, landformLiftAt, groundMovedAt, townMovedAt };
 }

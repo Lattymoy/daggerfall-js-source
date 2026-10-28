@@ -42,10 +42,12 @@ export const STREAMING_TERRAIN_SCALE = 1.25;
  *  it - the landforms' lift answered 0 off the Bay's 1000 x 500. 2 (LIFT_FRAME_LAW): DFU's frame on every pixel of the
  *  world's grid (scenes/groundFrameHost.js). 3: RELIEF-PEAKS (bible/03-World/Tamriel.md) - DFU's own ground past the Bay
  *  stands its large map by WOODS.WLD's law of the small (world/tamriel/tamrielGround.js largeOfByte), where it stood a
- *  swell about 4.5: a record before it is moved by its ground's own move (world/landforms.js groundMovedField). It says
- *  nothing of the Landforms row (AUDIT LANDFORMS C1's law): a build without the row, or one that never knew the stamp,
- *  reads a record as it always read one. */
-export const GROUND_FRAME_LAW = 3;
+ *  swell about 4.5: a record before it is moved by its ground's own move (world/landforms.js groundMovedField). 4: FB1028
+ *  (bible/03-World/Town-Shapes.md "TS2 at FB1028") - a town's blend moved it (townGroundMovedField). Not the row's law
+ *  (AUDIT LANDFORMS C1): a build without the row, or one that never knew the stamp, reads a record as it always did. */
+export const GROUND_FRAME_LAW = 4;
+/** RELIEF-PEAKS: the frame's law from which a record past the Bay stands its large map's law (groundMovedField). */
+export const RELIEF_FRAME_LAW = 3;
 /** BAY-LEFT-GROUND (D5): the frame's law from which a record past the Bay is DFU's frame (its lift left out). */
 export const LIFT_FRAME_LAW = 2;
 /** What a record carrying an exterior height writes beside it: the scale the ground stood at, and its frame's law. */
@@ -151,6 +153,11 @@ export function sampleKernel(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMEN
     }
   };
 }
+
+/** SEA-SQUARE (FIELD BUGS 2026-10-28b): a map pixel's square is built between the bytes of columns x - 1 and x and rows
+ *  y - 1 and y (kernelTerms' control points), so byte (x, y) is the height at its square's south-east corner, never its
+ *  middle. Whether `byteIs` holds at all four corners - the square's own ground, whole. */
+export const squareCornersAll = (byteIs, x, y) => byteIs(x - 1, y - 1) && byteIs(x, y - 1) && byteIs(x - 1, y) && byteIs(x, y);
 
 /**
  * The kernel's two windows for one map pixel - the small heightmap's 4 x 4 (`shmAt(r, c)`: r east, c the map's rows from

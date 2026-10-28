@@ -66,8 +66,8 @@
   {
     "name": "OW-PAST-BAY-the-pick-never-walks",
     "file": "src/ui/heldMap.js",
-    "old": "walk: !place && this._walksPastBay(), place, town };",
-    "new": "walk: false, place, town };",
+    "old": "walk: !place && this._walksPastBay(), place, door: !bare, town };",
+    "new": "walk: false, place, door: !bare, town };",
     "tests": [
       "test/ui/owpastbay_walk.test.js"
     ],

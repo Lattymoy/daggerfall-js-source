@@ -92,15 +92,6 @@
     ]
   },
   {
-    "name": "TE-the-flag-past-the-bay-unpicked",
-    "file": "src/ui/heldMap.js",
-    "old": "const past = !inBay(px, py) ? this._pastBayPick(px, py, name, null) : null;",
-    "new": "const past = null;",
-    "tests": [
-      "test/ui/bayleft_marks.test.js"
-    ]
-  },
-  {
     "name": "TE-the-mark-no-portal",
     "file": "src/ui/heldMap.js",
     "old": "const mark = past?.on === 'mark' && !inBay(past.pixel.x, past.pixel.y) && this._pastBayTownAt(past.pixel.x, past.pixel.y) ? past : null;",
@@ -159,8 +150,8 @@
   {
     "name": "TE-the-quest-unnamed",
     "file": "src/ui/heldMap.js",
-    "old": "this._pastBayPick(q.px, q.py, q.placeName, this._pastBayTownAt(q.px, q.py, true));",
-    "new": "this._pastBayPick(q.px, q.py, q.placeName);",
+    "old": "return this._pastBayPick(q.px, q.py, q.placeName, { named: true });",
+    "new": "return this._pastBayPick(q.px, q.py, q.placeName);",
     "tests": [
       "test/systems/starts/start3_pastbay_marks.test.js",
       "test/systems/starts/auditstarts.test.js",
@@ -170,20 +161,11 @@
   {
     "name": "TE-the-goto-unnamed",
     "file": "src/ui/heldMap.js",
-    "old": "this._pastBayTownAt(site.worldPixel.x, site.worldPixel.y, true));",
-    "new": "this._pastBayTownAt(site.worldPixel.x, site.worldPixel.y));",
+    "old": "site.locationName, { named: true });",
+    "new": "site.locationName);",
     "tests": [
       "test/ui/travel_everywhere.test.js",
       "test/systems/starts/start3_pastbay_marks.test.js"
-    ]
-  },
-  {
-    "name": "TE-the-pick-unnamed",
-    "file": "src/ui/heldMap.js",
-    "old": ", ...(selected.town?.named ? { named: true } : {}) };",
-    "new": " };",
-    "tests": [
-      "test/ui/travel_everywhere.test.js"
     ]
   },
   {
@@ -223,18 +205,9 @@
     ]
   },
   {
-    "name": "TE-the-route-unnamed",
-    "file": "src/scenes/world.js",
-    "old": "        const summary = tvPlaceSummary(pick.pixel.x, pick.pixel.y, !!pick.named);",
-    "new": "        const summary = tvPlaceSummary(pick.pixel.x, pick.pixel.y);",
-    "tests": [
-      "test/ui/travel_everywhere.test.js"
-    ]
-  },
-  {
     "name": "TE-travel-options-by-the-pick",
     "file": "src/scenes/world.js",
-    "old": "} : tvPlaceSummary(pick.pixel.x, pick.pixel.y, !!pick.named) ?? pick, !!opts?.speedCautious, estimateMinutes);",
+    "old": "} : tvPlaceSummary(pick.pixel.x, pick.pixel.y, !!pick.place) ?? pick, !!opts?.speedCautious, estimateMinutes);",
     "new": "} : pick, !!opts?.speedCautious, estimateMinutes);",
     "tests": [
       "test/ui/travel_everywhere.test.js"

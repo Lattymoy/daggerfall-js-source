@@ -148,14 +148,87 @@ A town's level moved at 103 of the 3,444 (the edge band takes margin off its mea
 bake draws an isle's outline off its template's packed basis, which carries the crops' tiles too (`etherWatersBake.js`
 etherPlaceRects), and the boot walks' kept blocks keep a model's id (FIRST-VISIT, `groundTilesKept.js`), so a second
 launch's outlines hold the crops as the first's. THE GROUND MOVED: its shores and outskirts by tens of metres, so GROUND_LAW (`net/wire.js`) moves 2 to
-3, and RELAY_VERSION with it - the print reads no real town (`03-World/Landforms.md` GROUND-GATE).
+3, and RELAY_VERSION with it; the print now reads a town (`03-World/Landforms.md` GROUND-GATE).
 
-Tests `test/world/terrain/fb1028_townground.test.js` (7) and `test/world/terrain/fb1028_townground_real.test.js` (ARENA2).
-Mutants `tools/mutants/fb1028_townground.json` (24, all dead). PINS MOVED: `test/world/terrain/townshapes.test.js`
-(Antelibuton's sea 2,084 samples, where 3,000), `test/world/audittesa3e1.test.js` (the bake's version 3),
-`test/systems/naval/portships_bay.test.js` and `portships_real.test.js` (sounded off the water alone no ship stands on a
-bank at Chestertower, Pilliweyn, Wadijerareg, Sunhold or Woodhearth: their banks were TS2's cliffs); re-aimed by content:
-TS-the-sea-lifted, TS-the-edge-moved, TW-the-round-unread, E1-4-the-version-unmoved.
+**The records.** A saved height is DFU's frame: DFU's own samples through the town's classic blend
+(`scenes/groundFrameHost.js`). The blend moved that ground: of the 3,444 town pixels, 747 by over 5 m and 147 by over
+20 m (Chesterbrugh +291.8 m, Westhead Moor +55 m, Aldwall Rock -37.8 m). The ground's print, which read no town, held
+the same cells under GROUND_LAW 2 and 3; TS2's 12-sample ease now moves it 8.9 m.
+So GROUND_FRAME_LAW (`world/terrain/terrainSampler.js`) moves 3 to 4: a record stamped before 4 (an outer camp, a pile,
+an anchor, the restored position) is moved by its town's blend's change at its spot (`world/landforms.js`
+townGroundMovedField, today's blend less TS2's), on the Bay and past it, the row on or off. TS2's blend is kept for this
+alone, over the outline before the crops (`world/terrain/townBlendBefore.js`). RELIEF-PEAKS keeps its own law,
+RELIEF_FRAME_LAW 3.
+
+**The records #1371 wrote.** #1371's build stood today's ground and still stamped 3, so a record it saved would be moved
+twice. A record stamped before 4 is moved only when it stands nearer the old ground than today's (`groundFrameHost.js`
+townMove); with the ground there not yet loaded it is moved, as one written before #1371.
+
+**Not a Bay town's ground alone.** The blend is every shaped town's, so towns past the Bay moved too (Sunhold's and
+Woodhearth's banks, below).
+
+**AUDIT FB1028 A2-A3 (GROUND_LAW 4).** The cold audit of #1371 found two defects. A2: a town's own ground stood at its
+level to the pixel's last sample but one, so where its margin reached the edge band the seam was a cliff (Sentinel's
+south seam fell 47 m in 12.8 m). A3: each sample read its reach off its own height, so the departure kept,
+Δ·S(c/Δ), fell as Δ grew past 4c/3: beside tall relief, land further off the town's level ended nearer it (a pit on a
+hill's flank; Chesterbrugh's row y = 83 rose, then fell, over land rising 964 to 1021 m).
+
+**The law now** (`world/terrain/terrainTiles.js` blendShapedTerrain). On the land the departure kept `d` samples out is
+the least of the land's departure times the smoothstep over SHAPE_BLEND_TILES and a smooth cone (easeCone: 32/3 of that
+smoothstep to nine samples, then a grade a sample). It never falls as the land stands further off, rises at 4/3 of
+SHAPE_GRADE at the most, and reaches the land where FB1028's did. The sea and its shore's first 10 m (SHAPE_SHORE_M)
+fade to FB1028's ease, its reach off its own depth: the cone there kept a raised port's sea low further out (a jetty's
+90th percentile 0.11 to 1.14 m). The two agree to a departure of 41 m. There, sea far below can still end nearer the
+level than sea less far. The weight reads `ground` alone, so every blend eases alike.
+
+**The seam.** A sample's share of the way to the edge is measured, inside the band the seam needs, from the town's last
+stood sample: a corner of a tile within a tile of a building's, a model's, a flat's or a crop's (a model's foot overhangs
+its own tile: at distance 0 alone Aldwall Rock's model 323 stood 1.9 m in its ground). Every stood sample keeps the
+level, so only the core's corners past a tile ease with the seam. Where buildings stand in the band (Sentinel fills its
+pixel) the seam stays steeper than the grade: easing it would stand them off their ground, as TS2 did.
+
+**Across the edge (assessed, not built).** The worst seams meet the next pixel: Tunmont's west 130 m over its
+neighbour's sea, Kalunnunu's north 109 m over open sea, Naresa's south 166 m under a hillside rising away, Sentinel's
+south 47 m under land its neighbour's tavern leaves 54 tiles of room. A run at the grade needs 34, 29, 43 and 12 samples
+past the edge. Every producer of a pixel's ground (the stream's worker, its classic pass, the landforms' lift, the
+records' frame, the Deep Waters and isles' bakes, the print) would have to read its neighbours' outlines and blended
+levels, a second pixel's build each, and the first two would raise land in open sea.
+
+**The records' frame.** This ground is unmerged, so GROUND_FRAME_LAW stays 4: a record stamped 4 was written on it, and
+townGroundMovedField reads today's blend, this law (Westhead Moor's move 60.0 m at the most, where FB1028's was 55 m).
+GROUND_LAW moves 3 to 4 (RELAY_VERSION world279) and BAKE_GENERATOR_VERSION 3 to 4. The print's town cell, a hillside,
+moves 7.8 m at 19 of its points.
+
+**AUDIT FB1028 A2-A3 measured.** As above, the stream's build of every Bay town pixel; the row off reads the blend alone.
+
+| the Bay's 3,444 town pixels | FB1028 | A2-A3 |
+| --- | --- | --- |
+| towns with a step over 10 m (row on) | 3 | 3 |
+| the worst step | 18.6 m | 18.6 m |
+| steps over 6 m: by the sea / at a pixel edge / on land | 120 / 1,222 / 6,333 | 116 / 1,184 / 3,996 |
+| steps over 10 m | 995 | 969 |
+| flats and models off their plane | 0 | 0 |
+| sea samples kept | 135,907 | 135,907 |
+| ground past a jetty's end over its deck: 90th percentile, worst, ports over 6 m (of 106) | 0.11 m, 11.48 m, 5 | 0.11 m, 11.44 m, 5 |
+| towns whose edge row the blend steepens over 5 m (row off) | 56 (worst 23.3 m) | 52 (worst 23.1 m) |
+| slope reversals 10 samples in (row off) | 19,065 (107 towns over 3 m, worst 11.0 m) | 19,867 (110 towns over 3 m, worst 11.0 m) |
+| Westhead Moor's / Aldwall Rock's worst step | 7.33 / 7.73 m | 7.33 / 7.73 m |
+
+**What grew, and why.** Slope reversals, 802 more (110 towns over 3 m, where 107): the cone climbs with distance, so on a hill's far side the eased ground rises while the land falls, and the seam's run turns the land's own slope by an edge. The worst is Naresa's at its seam, as before. The ports are FB1028's: the sea eases as it did. The seam gained little (edge rows over 5 m 56 to 52, the three towns over 10 m the same): its room is the core's corners past a tile, since all a model may stand on keeps the level.
+
+Tests `test/world/terrain/fb1028_townground.test.js` (10; A2's, A3's and the port's after the edge's), `fb1028_townground_real.test.js`
+(ARENA2) and `fb1028_townground_frame.test.js` (6). Mutants `tools/mutants/fb1028_townground.json` (47, all dead). PINS
+MOVED by A2-A3: the edge test's level under the buildings (its stood samples, not all its ground), the frame's Westhead
+Moor move (55 to 60.0 m), the bake's version 4, world279's 44 pins; re-aimed by content: the ease's mutants here,
+TS-the-sea-lifted, E1-4-the-version-unmoved, BAY-LEFT-GROUND-GROUND-LAW-not-moved, NIRNROOT-SAGE-relay-unmoved,
+S38-version-not-bumped. PINS MOVED by FB1028:
+`test/world/reliefpeaks.test.js` and `bayleftground_frame.test.js` (the stamp 4), the ground's print (a town's cell),
+`test/world/terrain/townshapes.test.js` (Antelibuton's sea 2,084 samples, where 3,000), `test/world/audittesa3e1.test.js`
+(the bake's version 3), `test/systems/naval/portships_bay.test.js` and `portships_real.test.js` (sounded off the water
+alone no ship stands on a bank at Chestertower, Pilliweyn, Wadijerareg, Sunhold or Woodhearth: their banks were TS2's
+cliffs); re-aimed by content: TS-the-sea-lifted, TW-the-round-unread, E1-4-the-version-unmoved,
+RELIEF-PEAKS-record-move-on-stamped, -on-the-bay and -unhanded; TS-the-edge-moved at the pixel's edge kept the land's (AUDIT FB1028: its first aim
+was FB1028-the-edge-share-unread's).
 
 ## 5. TS3 - a town past the Bay is its own outline of blocks (BUILT)
 
@@ -730,8 +803,9 @@ wall's, within 4 cm): 88 towns, 1,853 m2. The fabric now lays nothing on a cell 
 
 **Measured after**: no two faces within 1 mm on any wall of either set, nor within 4 cm (822,943 and 495,846 m2 before),
 two that only meet along an edge aside; the same open ends seen at the towers as before, by level rays from both sides
-at 22 walls. The model holds 5 per cent more triangles on the Bay and 7 per cent more past it, and takes about seven
-times as long to make (11 against 79 ms a city, on a loaded machine). So the model door makes it a breath at a time,
+at 22 walls. With section 16's mitres and grown towers, the model of every fifth Bay city holds 10.6 per cent more
+triangles than its pieces made alone (886,446 to 980,640), 12.0 per cent on the test's sample of both sets, and takes
+about seven times as long to make (37 against 5 ms a city, on a loaded machine). So the model door makes it a breath at a time,
 WALL_PIECES_A_BREATH (16) pieces between two (townWallModelSliced), as it makes the town's fabric.
 
 **The probe.** Riften's gate drawn at the game's depth (24 bits, 0.2 to 6,000 m), each piece in its own colour, from its
@@ -747,8 +821,11 @@ within 4 cm of each other. The Bay's towns have no fabric.
   ring.
 - The hosts: none grows - the wall is `world/townWalls.js`'s, the paving `world/urban/townFabricStand.js`'s.
 - Tests `test/world/fb1028_wallflicker.test.js` (7, three on ARENA2: every twentieth walled city on the Bay and past it,
-  Riften, five towns whose fabric lay in their wall's faces). Mutants `tools/mutants/fb1028_wallflicker.json` (22: 20
-  dead, 2 recorded equivalent with why). Re-aimed by content: `townboards.json` TB-the-stands-ground-dropped (dead).
+  Riften, five towns whose fabric lay in their wall's faces). PINS MOVED (AUDIT FB1028): its bends' towers grown as
+  wallPieces mints them, so the open ends are read against the pieces made alone as grown and the body as grown; a
+  three-degree bend added. Mutants `tools/mutants/fb1028_wallflicker.json` (23: 19 dead, 4 recorded equivalent with why
+  - two of them the mitre's branch, which cuts on mitreEnds' own plane; three die only on ARENA2). Re-aimed by content: `townboards.json`
+  TB-the-stands-ground-dropped (dead).
 
 ## 16. FB1028 - the Bay's walls: no door, no bend run through, no road into the wall (BUILT)
 
@@ -765,8 +842,9 @@ Daggerfall is one: it stands as every Bay city does with the packs off. Every co
 
 - **The doors are the wall's own.** Daggerfall's length (ARCH3D 445) carries a door on its inner face a metre from its
   end, its gate (446) two: a Town23 building's doors into the ring block's "City Walls". A wall on its outline is one
-  model of the town's own and opens into nothing; at every chord's end a length's door stood inside its tower - 16,329
-  of the 32,779 doors on the 410 walls (44 of Daggerfall's 106). No building stands within 2 m of any wall (159,004
+  model of the town's own and opens into nothing; at a chord's end a length's door stood in its tower - of the 32,779
+  doors on #1184's 410 walls, 7,169 inside a tower's body and 11,191 inside it or on its side's plane, within 1 cm (21 and
+  34 of Daggerfall's 106). No building stands within 2 m of any wall (159,004
   building models; Daggerfall's nearest 6.45 m): TS7's pin read the wall's own cells, so it could not have seen one.
 - **Parts clipping into itself are the bends.** A bend's tower is the wall's own thickness (TS8), so at a bend its two
   lengths ran on through each other and out of its faces: on the bend's inner side their faces and parapets crossed in
@@ -813,26 +891,38 @@ what they read at #1184: the paths with no arm taken up and the roads of the gat
 them as `yard`), and that wall's cells - no street's gate, no tower grown (townWall's `yardPieces`). The host shuts the
 yards' ground so (`scenes/pixelBuild.js` yardShut); its walkers keep the new.
 
-**A broken yard placed again** (`merchantYardSites.js:"export function* keptSitesSteps(g, sites, ports = []) {"`). A
+**And the gates' things and the ground as #1184 laid them** (FB1028 YARDS Y1, Y2). The yards measure the wall's carrier
+as #1184 laid it: its boards, carriages and markers by that wall's gates, stood clear of its cells
+(`townWalls.js:"export function townWallYardLayout(yl, dfLocation) {"`). The game stands today's. The yards' ground is
+TS2's mask over the outline before its crops, with no edge band
+(`townBlendBefore.js:"export function townGroundMaskBefore(shape, ground, hDim) {"`, the kernel's `yardGround`), and
+today's ring is no road on it (`terrainGen.js:"export function ringAsWas(paths, ring, yardGround) {"`). The host hands
+both (`scenes/pixelBuild.js` shapeWas, yardShut), so the Bay's yards keep #1184's mask whatever today's becomes.
+
+**A broken yard placed again** (`merchantYardSites.js:"export function* keptSitesSteps(g, sites, ports = [], gained = null) {"`). A
 yard keeps its #1184 place unless the place no longer fits the town as it stands (siteFits: its cells on no road and
 nothing shut, its pad clear of the wall and every closed cell). One that does not is placed again by its kind's law on
-the new ground, every kept yard's and port's ground closed first (`scenes/world.js` townPlacesFor, `yardWalkShut`).
+the new ground, every kept yard's and port's ground closed first (`scenes/world.js` townPlacesFor, `world/townWalls.js`
+yardWalkShut). AUDIT FB1028 B5: a kept yard's pad may touch a cell only the wall's growth since #1184 closed (a tower
+grown, a street's gate), never its own ground. Y1: the keep reads the gates' things as they stand, and a pad may touch a
+cell only their move since #1184 closed.
 
-Measured over all 410: 1,183 of the 1,258 yards stand on #1184's cells; none broken after (none in, against or on
-the wall, on a road, off its ground or out of reach), none over another. The 75 moved:
+Measured over all 410 at the merge: 1,183 of the 1,258 yards stood on #1184's cells; 50 moved on a gate's new road, 2 in
+the new wall, 19 against a grown tower, and 4 stables by the gate dressing. B5 and B2 (a road's gate keeps its things)
+put back the 19 and Puweyn's stable. At `dba794637` 1,199 stood: Knightsgate's stable moved by the gate dressing, the new
+mask moved Wayrest's shipyard and Penwall Derry's shipyard and lighthouse, and Naresa's Wagon Yard had moved since,
+closed on the walkers' ground (by none of the wall, the ground or the gates' things). Y1 puts the stable back and Y2 the
+three port places: now 1,203 stand; no yard broken (none in, against or on the wall, on a road, off its ground or out of
+reach), none over another. The 55 moved:
 
 | city | yard | why |
 | --- | --- | --- |
 | Akhahanu | Stable | on a gate's new road |
 | Akhahanu | Wagon Yard | on a gate's new road |
 | Akhera-Korom | joinery | on a gate's new road |
-| Aldhope | Stable | against a grown tower |
-| Aldingborne Commons | joinery | against a grown tower |
 | Aldleigh | Wagon Yard | on a gate's new road |
 | Atrohala | joinery | on a gate's new road |
-| Baelhead | Stable | against a grown tower |
 | Baelwall | Wagon Yard | on a gate's new road |
-| Baelway | Stable | against a grown tower |
 | Baelwood | Stable | on a gate's new road |
 | Bhoriane | joinery | on a gate's new road |
 | Blackley | joinery | on a gate's new road |
@@ -841,67 +931,60 @@ the wall, on a road, off its ground or out of reach), none over another. The 75 
 | Burgwold | joinery | on a gate's new road |
 | Ceranda-Kom | Wagon Yard | on a gate's new road |
 | Charbeth | Wagon Yard | on a gate's new road |
-| Charenwall | joinery | against a grown tower |
 | Charenworth | Stable | on a gate's new road |
-| Charenworth | Wagon Yard | against a grown tower |
 | Chesterbeth | joinery | on a gate's new road |
 | Chesterbeth | Wagon Yard | on a gate's new road |
-| Cromtry | Stable | against a grown tower |
 | Cromwark Hamlet | Stable | on a gate's new road |
-| Crosswych Wood | joinery | against a grown tower |
-| Deerbridge Hollow | Stable | against a grown tower |
 | Eastcastle | Stable | on a gate's new road |
 | Elotunia | joinery | on a gate's new road |
 | Fontbeth | Wagon Yard | on a gate's new road |
 | Fontfort | Stable | on a gate's new road |
 | Gothwark | Stable | on a gate's new road |
-| Graybrone Court | Wagon Yard | against a grown tower |
-| Graybury | Wagon Yard | against a grown tower |
 | Gyselah | Wagon Yard | on a gate's new road |
 | Holway | Stable | on a gate's new road |
-| Issaqumbaa | Stable | the gate dressing moved (not fixed) |
+| Issaqumbaa | Stable | on a gate's new road |
 | Jaladnia | Stable | on a gate's new road |
 | Khajastareg | Wagon Yard | on a gate's new road |
 | Knightsgate | joinery | on a gate's new road |
-| Knightsgate | Stable | the gate dressing moved (not fixed) |
 | Knightsmore | Stable | in the new wall |
-| Longbeth | Stable | against a grown tower |
 | Longhope End | Stable | on a gate's new road |
 | Merborne | joinery | on a gate's new road |
 | Mesajer | Wagon Yard | on a gate's new road |
 | Midbury | joinery | on a gate's new road |
+| Naresa | Wagon Yard | closed on the walkers' ground |
 | Newcester | Stable | on a gate's new road |
 | Newmarket | joinery | on a gate's new road |
 | Newvale | Wagon Yard | on a gate's new road |
 | Osenabu | Wagon Yard | on a gate's new road |
-| Oxfort | Stable | against a grown tower |
 | Oxway | joinery | on a gate's new road |
-| Penbrugh | Wagon Yard | against a grown tower |
 | Penwood | Wagon Yard | on a gate's new road |
 | Pothago | Stable | on a gate's new road |
-| Puweyn | Stable | the gate dressing moved (not fixed) |
 | Pythinis | Stable | on a gate's new road |
-| Reycastle | Stable | against a grown tower |
-| Ripmarket | joinery | against a grown tower |
 | Singcroft | Wagon Yard | on a gate's new road |
 | Singham | Wagon Yard | on a gate's new road |
-| Syra-Kom | Stable | the gate dressing moved (not fixed) |
+| Syra-Kom | Stable | on a gate's new road |
 | Syrunnuweyn | Wagon Yard | on a gate's new road |
 | Tasoparet | Wagon Yard | on a gate's new road |
 | Tigonus | joinery | in the new wall |
-| Tsetetturia | joinery | against a grown tower |
 | Tsetissiara | Stable | on a gate's new road |
-| Tulaelius | Wagon Yard | against a grown tower |
 | Tunborne | joinery | on a gate's new road |
 | Tuntale | Wagon Yard | on a gate's new road |
 | Umberadax | Wagon Yard | on a gate's new road |
 | Whitewark | Stable | on a gate's new road |
-| Wrothgaria | joinery | against a grown tower |
 | Zenirijet | Stable | on a gate's new road |
 
-The four by the gate dressing: TS7 steps a gate's boards and carriage clear of the wall's cells, the grown towers'
-now, so they stand up to 0.8 m over (Knightsgate's two, measured), and a yard's measures read them. Their places fit
-the town; the yards' measures still read the new dressing.
+The three by the gate dressing (Y1): TS7 steps a gate's boards and carriage clear of the grown towers, up to 0.8 m
+over #1184's (Knightsgate's two). On the things as #1184 laid them, all three stables are placed on #1184's cells.
+Knightsgate's keeps them. Issaqumbaa's and Syra-Kom's lie on a gate's new road on today's ground, so they are broken and
+placed again by the law: Issaqumbaa's 4 cells away, Syra-Kom's across the town.
+
+Past the Bay (Y2), sampled over every eighth walled template (102, 306 yards): 11 moved before, 1 now. That one, template
+297's stable, also moves with the mask and the paths left out, so neither is its cause (OPEN). The keep moves 1 more
+(template 33's stable), which the new ground breaks.
+
+The street gates (Y3): each has a road out. Naresa's, Akhahanu's and Menakat's open onto the town's paving, and
+GATE-ROADS lays one or two tiles on to the ring. The audit's probe read the painter's tiles alone, 6 to 15 m out, where
+the paving is. No gate or road code changed: 1,568 gates.
 
 **Not changed, and why.** The wall is one model, so its pixel's build stands its 14,600 triangles in one step: 30 to 94 ms
 on the collider, and as much again with the player in town (the late solids' gate, `player/lateSolid.js`, builds a probe of
@@ -911,7 +994,9 @@ inside crosses the town's open cells as its fabric's road, and is left for its o
 
 DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from Daggerfall's wall pieces - no door where the wall is a model of
 the town's own, a length cut at a bend and its tower grown across; from Basic Roads' tiles on a Bay wall's ground. Tests
-`test/world/fb1028_walls.test.js` (10, four on ARENA2). Mutants `tools/mutants/fb1028_walls.json` (32, all dead). PINS
+`test/world/fb1028_walls.test.js` (21, six on ARENA2) and `test/world/fb1028_yards_past.test.js` (1, on ARENA2). Mutants
+`tools/mutants/fb1028_walls.json` (51; the 37 dead without ARENA2: AUDIT FB1028 runs the yard law, yardRoads, yardPieces
+and the host's own lines on synthetic towns; of Y1-Y2's 14, 12 die without ARENA2 and 2 with it). PINS
 MOVED: `test/world/gateroads.test.js` (the kernel handed the town's ground), `test/world/townbends.test.js` (a tower's
 footprint as wide as it stands); `baywalls`, `ic_stutter`, `merchantyards1`, `shipyards1_found` (the host hands the
 places the yards' shut), `carpyard1` (the kept yards), `road/roads` (the yards' paths); re-aimed by content: GATE-ROADS-the-roads-never-laid, TS8-towers-whole,

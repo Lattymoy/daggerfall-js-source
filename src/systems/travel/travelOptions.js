@@ -56,7 +56,7 @@ import { hasPortFor } from './travelPorts.js';   // SEAT2b part two: HasPort, or
 import { FATIGUE_MULTIPLIER } from '../statMods.js';
 import { LOCATION_TYPES, CLIMATES, worldCoordToMapPixel } from '../../formats/mapsFile.js';
 import { joinPoint, dryLine as dryLineOf, finalRoadVia } from './travelRoute.js';   // AUDIT OW3 J3: a resume rejoins the road where the start's join did; AUDIT DEEP T2-1's law, one home (OWS2)
-import { seaLegMark, SEA_LEG_UNBUILT, SEA_LEG_DRY } from './seaMark.js';
+import { seaLegMark, seaLegWindow, seaLegBuiltAt, SEA_LEG_UNBUILT, SEA_LEG_DRY } from './seaMark.js';
 import { legEnd, nearestOnLine, lineUpTo } from './roadLine.js';   // ROAD-FOLLOW: a road past the Bay walked on its curves   // FIELD BUGS 2026-10-21d PASSAGE-IN: a sailed leg aimed where she floats
 import { travelRateOf } from '../timeScale.js';   // RATE-LAW: the journey's rate is its ground's
 
@@ -729,8 +729,7 @@ export function createTravelOptions(deps = {}) {
   /** AUDIT FB1021d PS-1: whether a leg's pixel has ground built to read - the host's reader answers null where not. */
   const seaLegBuilt = (leg) => {
     if (!leg || typeof deps.seaWaterAt !== 'function') return false;
-    const m = legMiddle(leg);
-    return deps.seaWaterAt(m.x, m.z) !== null;
+    return seaLegBuiltAt(seaLegWindow(leg.x, leg.y), deps.seaWaterAt);   // SEA-SQUARE: the squares its mark is read on
   };
   /** The leg the route is on: a pixel's middle while legs remain, and at the last the place itself (its rect grown by
    *  the arrival buffer, as the mod's own location journey, :62-73) or the spot. */
@@ -782,14 +781,15 @@ export function createTravelOptions(deps = {}) {
     // PASSAGE-IN (FIELD BUGS 2026-10-21d): or, where that middle is the built ground's land, about the water nearest it
     // that floats her (seaMark.js; `seaWaterAt` the host's reading of the ground the boat floats on)
     // OW-ROADSIDE: the join is a point of the road's own lane
-    const read = leg.kind === 'sea' ? seaLegMark(o, deps.seaWaterAt) : null;
+    const w = leg.kind === 'sea' || leg.kind === 'embark' ? seaLegWindow(leg.x, leg.y) : o;   // SEA-SQUARE: past the Bay about the pixel's byte
+    const read = leg.kind === 'sea' ? seaLegMark(w, deps.seaWaterAt) : null;
     // AUDIT FB1021d PS-1: a pixel built where nowhere floats her is passed - she makes for the next leg; one whose ground
     // is not built yet is aimed at its middle, and again once it is (`update`: r.seaUnbuilt)
     if (read === SEA_LEG_DRY && r.i < r.legs.length - 1) { r.i++; startRouteLeg(); return; }
     r.seaUnbuilt = read === SEA_LEG_UNBUILT ? r.i : null;
     const mark = read === SEA_LEG_DRY || read === SEA_LEG_UNBUILT ? null : read;
     const rect = mark ? rectOf(mark.x - SEA_LEG_SIZE / 2, mark.z - SEA_LEG_SIZE / 2, SEA_LEG_SIZE, SEA_LEG_SIZE)
-      : leg.kind === 'sea' || leg.kind === 'embark' ? rectOf(o.x + SEA_LEG_LO, o.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE) : leg.at ? spotRect(leg.at) : leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(o.x + MID_LO, o.z + MID_LO, P_SIZE, P_SIZE);   // ROAD-FOLLOW: a curve's apex
+      : leg.kind === 'sea' || leg.kind === 'embark' ? rectOf(w.x + SEA_LEG_LO, w.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE) : leg.at ? spotRect(leg.at) : leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(o.x + MID_LO, o.z + MID_LO, P_SIZE, P_SIZE);   // ROAD-FOLLOW: a curve's apex
     const lane = routeLane(r, Math.min(r.i, r.legs.length - 1));   // OW-ROAD-TRUE: a road's leg walks its line
     const path = lane?.pts ?? null;   // ROAD-FOLLOW: on the curves past the Bay
     // ROAD-SMOOTH: the line the next leg walks, so a leg that ends inside a curve is walked on through it

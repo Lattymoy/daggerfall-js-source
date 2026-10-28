@@ -62,8 +62,8 @@
  {
   "name": "DEX7-the-lizard-a-breton",
   "file": "src/characters/foeBodies.js",
-  "old": "modRace(f.mobileType) ?? bay.race",
-  "new": "bay.race",
+  "old": "modRace(f.mobileType) ?? personRace(f, h, bay.race)",
+  "new": "personRace(f, h, bay.race)",
   "why": "a lizard man drawn as any of the Bay's people",
   "tests": [
    "test/systems/enemyExpansion/dex7_bodies.test.js"

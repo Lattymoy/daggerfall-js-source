@@ -708,13 +708,13 @@ function openWaterNear(p, isWater) {
   return null;
 }
 
-test('AUDIT STARTS V4/V7 on the freeware\'s Tamriel: from the nearest open water to each of the 28 ports past the Bay a voyage reaches Daggerfall, and from Daggerfall\'s each of them - ashore once, within reach of the port (on it, but where the coast stands it on water), each planned in under a second and a half (mutants: the landfall\'s goals, its pad)', { skip: skipReal }, async () => {
+test('AUDIT STARTS V4/V7 on the freeware\'s Tamriel: from the nearest open water to each of the 35 ports past the Bay a voyage reaches Daggerfall, and from Daggerfall\'s each of them - ashore once, within reach of the port (on it, but where the coast stands it on water), each planned in under a second and a half (mutants: the landfall\'s goals, its pad)', { skip: skipReal }, async () => {
   const t = await realSea();
   const { arenaPixels, setArenaStanding } = await import('../../../src/world/arenaPlaces.js');
   setArenaStanding(true);
   try {
     const ports = arenaPixels().stood.filter((p) => p.port);
-    assert.equal(ports.length, 28);
+    assert.equal(ports.length, 35);   // PIN MOVED (FIELD BUGS 2026-10-28b COAST-PORT): 28, and the seven places the sea bears on
     const home = openWaterNear(t.dp, t.rg.isWater);
     assert.ok(home, 'Daggerfall\'s harbor');
     let most = 0;   // PIN MOVED (PLAN-SLICES): a plan's cells, an op count - the journey's plan is made a slice of PLAN_FRAME_CELLS a frame, and a clock on a shared runner is a flake

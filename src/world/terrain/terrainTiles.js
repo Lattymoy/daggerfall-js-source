@@ -460,6 +460,13 @@ export const SHAPE_GRADE = 0.6;
 export const SHAPE_EDGE_TILES = 4;
 /** FB1028: SHAPE_GRADE as a sample's rise in the kernel's normalized heights (a sample 6.4 m, a unit 1539 x 1.25 m). */
 const shapeGrade = (hDim) => SHAPE_GRADE * (TERRAIN_SIZE / (hDim - 1)) / (MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE);
+const smooth = (t) => t * t * (3 - 2 * t);
+/** AUDIT FB1028 A3: the most the ease keeps of the land's departure `d` samples out, in grades - a smooth cone: 32/3 of
+ *  the smoothstep to nine samples (4/3 of the grade at its steepest), then one grade a sample. */
+const easeCone = (d) => (d < 9 ? (32 / 3) * smooth(d / SHAPE_BLEND_TILES) : d);
+/** AUDIT FB1028 A3 (round 2): the metres over the sea a sample under its town fades from FB1028's ease into the cone -
+ *  the cone in a port's sea kept it low further out, and the ground past a jetty's end stood over its deck. */
+const SHAPE_SHORE_M = 10;
 /** TOWN-SHAPES: the least a town stands at - a step over the beach, so a shore town's ground is dry land. */
 const SHAPE_FLOOR = Math.fround((SCALED_BEACH_ELEVATION + 1) / MAX_TERRAIN_HEIGHT);
 
@@ -494,20 +501,38 @@ function blendShapedTerrain(heightmapData, shape, ground, hDim, diff) {
   // FB1028: the level the ease reads its reach off - `ground`'s own over the same land - and the grade a sample, normalized
   let gsum = 0;
   for (let y = 0; y < hDim; y++) for (let x = 0; x < hDim; x++) if (inside[y * hDim + x] && !isWaterHeight(sampleHeight(ground[y + x * hDim]))) gsum += ground[y + x * hDim];
-  const level = gsum / n, grade = shapeGrade(hDim);
+  const level = gsum / n, grade = shapeGrade(hDim), stood = tileDistance(stoodSamples(shape, mask, hDim), hDim, hDim);
   for (let y = 0; y < hDim; y++) {
     for (let x = 0; x < hDim; x++) {
       const idx = y + x * hDim, d = dist[y * hDim + x], e = Math.min(x, y, hDim - 1 - x, hDim - 1 - y);
       if (e === 0) continue;   // the pixel's edge the land's own, so a neighbour's ground meets it
-      let s = 1;
-      if (d > 0) {
-        const t = Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, Math.abs(level - ground[idx]) / grade));
-        s = Math.min(t * t * (3 - 2 * t), e / (e + d));
-      }
+      // AUDIT FB1028 A3: the land keeps the least of its departure x the smoothstep and the cone, which never falls as it
+      // stands further off; the sea and its shore's first SHAPE_SHORE_M fade to FB1028's reach off its own depth, so a sea
+      // rises to its quay as before. The two agree to 41 m
+      const off = Math.abs(level - ground[idx]);
+      const cone = Math.min(smooth(Math.min(1, d / SHAPE_BLEND_TILES)), off > 0 ? easeCone(d) * grade / off : 1);
+      const shore = Math.min(1, Math.max(0, (sampleHeight(ground[idx]) - SCALED_OCEAN_ELEVATION) * STREAMING_TERRAIN_SCALE / SHAPE_SHORE_M));
+      const kept = cone * shore + (1 - shore) * (1 - smooth(Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade))));
+      // its share of the way to the edge - AUDIT FB1028 A2: in the band the seam needs, from the town's last stood sample
+      // (across the core's margin at the most), so the seam's run eases its margin there too
+      const side = e === x ? ground[y] : e === hDim - 1 - x ? ground[y + (hDim - 1) * hDim] : e === y ? ground[x * hDim] : ground[hDim - 1 + x * hDim];
+      const band = Math.max(SHAPE_EDGE_TILES, Math.abs(level - side) / grade);
+      const run = Math.min(stood[y * hDim + x], d + TOWN_SHAPE.seaMargin + 1, Math.max(d, band - e));
+      const s = run > 0 ? Math.min(1 - kept, e / (e + run)) : 1;
       if (s > 0) heightmapData[idx] = heightmapData[idx] + (target - heightmapData[idx]) * s;
     }
   }
   return target;
+}
+/** AUDIT FB1028 A2: the samples a building, a model, a flat or a crop stands on - the corners of the town's tiles within
+ *  a tile of one (a model's foot overhangs its own: Aldwall Rock's 323 by a tile) - kept at the level. Index y * hDim + x. */
+function stoodSamples(shape, mask, hDim) {
+  const D = WORLD_MAP_TILE_DIM, out = new Uint8Array(hDim * hDim);
+  for (let ty = 0; ty < D; ty++) for (let tx = 0; tx < D; tx++) {
+    if (!mask[tx + ty * D] || shapeFieldDistance(shape[tx + ty * D]) > 1) continue;
+    for (let dy = 0; dy <= 1; dy++) for (let dx = 0; dx <= 1; dx++) if (ty + dy < hDim && tx + dx < hDim) out[(ty + dy) * hDim + tx + dx] = 1;
+  }
+  return out;
 }
 /** TOWN-SHAPES: a town's tiles its outline took off its stamped ground (townGroundMask: the sea's) given back to the land -
  *  a tile setLocationTiles stamped there cleared, so the land's own tiles are laid. */

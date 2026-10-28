@@ -101,7 +101,7 @@
   {
     "name": "START3-press-unpicked",
     "file": "src/ui/heldMap.js",
-    "old": "    if (!inBay(q.px, q.py)) return this._pastBayPick(q.px, q.py, q.placeName, this._pastBayTownAt(q.px, q.py, true));   // START3: past the Bay, the quest's own place - TRAVEL-EVERYWHERE: named, so known\n",
+    "old": "    if (!inBay(q.px, q.py)) return this._pastBayPick(q.px, q.py, q.placeName, { named: true });   // START3: past the Bay, the quest's own place - TRAVEL-EVERYWHERE: named, so known\n",
     "new": "",
     "tests": [
       "test/systems/starts/start3_pastbay_marks.test.js"

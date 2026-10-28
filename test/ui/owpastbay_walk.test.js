@@ -93,7 +93,7 @@ test('OW-PAST-BAY what walks nowhere: the sea; bare land where the mod allows no
   const sea = heldMap();
   pressAt(sea, PAST, { on: 'sea', label: 'the Sea of Ghosts', city: null });
   assert.equal(sea._selected ?? null, null, 'the sea is no walk');
-  assert.equal(sea._pastBayPick(PAST.x, PAST.y, 'x', null).walk, true, 'bare land walks');
+  assert.equal(sea._pastBayPick(PAST.x, PAST.y, 'x', { bare: true }).walk, true, 'bare land walks');
 
   const noCoords = heldMap({ coords: false });
   pressAt(noCoords, PAST, { on: 'land', label: 'Skyrim', city: null });
@@ -102,8 +102,8 @@ test('OW-PAST-BAY what walks nowhere: the sea; bare land where the mod allows no
   assert.equal(noCoords._panel, 'travel', 'a place still walks');
 
   const noMod = heldMap({ to: false });
-  assert.equal(noMod._pastBayPick(PAST.x, PAST.y, 'x', null).walk, false, 'no Travel Options: nothing walks bare land, as on the Bay');
-  noMod._select(noMod._pastBayPick(PAST.x, PAST.y, 'x', null));
+  assert.equal(noMod._pastBayPick(PAST.x, PAST.y, 'x', { bare: true }).walk, false, 'no Travel Options: nothing walks bare land, as on the Bay');
+  noMod._select(noMod._pastBayPick(PAST.x, PAST.y, 'x', { bare: true }));
   noMod._openPanel('travel');
   assert.equal(noMod._panel ?? null, null, 'and the panel stays shut');
 
