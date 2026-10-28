@@ -251,5 +251,8 @@ half `src/scenes/staffPilotHost.js`).
 - **The end**: the boss falls (its reward and lines as ever), none stands in `PILOT_WAIT_MS` (60 s), or Leave boss - the
   boss, if it still stands, goes back to its own brain where it stands. The game tells the panel why (`left`, `fell`,
   `none`).
+- **PILOT-ECHO** (2026-10-28, live: the list redrew without end, Leave boss lost, a boss called on every pass): the game's
+  answer (`{ on, ev, boss }`, `{ on: false, ev, why }`) goes out on the same window the panel's ask comes in on, so the
+  door (`net/staffHook.js`) takes `pilot` only without `boss` or `why` - its own answer is never heard as an ask.
 - **Known limits**: the boss walks at my pace, not its kind's; a game that ran the event before keeps the monsters it had
   stood (they fight on as theirs); my own weapon still swings at a click if drawn.

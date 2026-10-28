@@ -657,7 +657,7 @@ test('STAFF-PILOT: the page\'s half - the panel\'s word starts and ends it, a hi
   host.word({ dfoStaff: 'pilot', on: true, ev: '../x' });
   assert.equal(posts.at(-1).why, 'bad');
   const door = rd('src/net/staffHook.js');
-  assert.match(door, /m\.dfoStaff === 'pilot' && typeof m\.on === 'boolean' && pilot\) \{ seen = true; pilot\(m\); \}/);
+  assert.match(door, /m\.dfoStaff === 'pilot' && typeof m\.on === 'boolean' && !\('boss' in m\) && !\('why' in m\) && pilot\) \{ seen = true; pilot\(m\); \}/);
   const pool = rd('src/scenes/exteriorFoes.js');
   assert.match(pool, /f\.ai\.update\(foeFrameDt\(dt\), playerFeet, _armed\(f, senses\), _fParalyzed, _fPaused\);[^\n]*\n\s*f\.ai\._pilot = pilotFoe\(f\) \? pilotSteer\(f, playerFeet, peerCandidates\(\), performance\.now\(\)\) : null;/, 'steered after its motor, its holds on its brain');
   // the machines read the holds: the attack decides no swing of its own (a swing in flight still steps), the cast none
