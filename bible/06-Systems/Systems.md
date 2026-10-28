@@ -17,6 +17,8 @@ it (`03-World/Tamriel-Lands.md`).
 
 Two more in the count: `staffBossPilot.js`, a staff member steering their event's mini boss (STAFF-PILOT, `11-Multiplayer/Staff-Events.md` section 10), and `levelClimb.js`, the online level's climb shared out to exactly 45 and every realm character's level read again from its skills (LEVEL-45, Port-Ledger A).
 
+(HOME-STRANDED: `decor/homeStranded.js`, the chest goods the old pour left under a home's building scene, kept at the boot and brought back into the chests at the owner's visit - `01-Overview/bugs/Field-Bugs-2026-10-25d.md` HOME-STRANDED)
+
 The horizontal slices' modules (2026-10-27, #1334): FISH-BOATS `naval/fishingBoats.js` (`03-World/Naval-Combat.md`);
 POWER-CEILING `powerCeiling.js` and SET-CATCHUP `sigil/setReach.js` (`05-Combat/Power-Ceiling.md`, `11-Multiplayer/Sigil-Sets.md`
 5); APPEARANCES `appearances.js` (`04-Characters/Wardrobe.md`); HUNTERS-MARK `hunt/trophies.js`, `hunt/gatheredLog.js` and

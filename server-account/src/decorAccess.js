@@ -111,6 +111,24 @@ function clearPiece(save, id) {
   for (const scene of save?.sceneCache?.scenes ?? []) if (scene?.decorItems?.[id]) delete scene.decorItems[id];
 }
 
+/** What one scene's piece holds. */
+function goodsUnder(save, sceneName, id) {
+  const scene = (save?.sceneCache?.scenes ?? []).find((s) => s?.sceneName === sceneName);
+  const list = scene?.decorItems?.[id];
+  return Array.isArray(list) ? list : [];
+}
+
+/** HOME-STRANDED: the bin's goods, taken out of every scene but the home's own, before the bin pours them there. */
+function clearGhosts(save, homeScene, id, uids) {
+  for (const scene of save?.sceneCache?.scenes ?? []) {
+    const list = scene?.decorItems?.[id];
+    if (scene?.sceneName === homeScene || !Array.isArray(list)) continue;
+    const kept = list.filter((it) => !uids.has(it?.uid));
+    if (kept.length) scene.decorItems[id] = kept;
+    else delete scene.decorItems[id];
+  }
+}
+
 /** The lowest rank that may open a hall piece. No row, and anything that is not a rank, is the whole guild. Higher ranks may too. */
 function hallCutoff(row) {
   if (!row || row.mode !== 'guild' || typeof row.friends !== 'string' || !/^[0-3]$/.test(row.friends)) return GUILD_RANK_RECRUIT;
@@ -246,21 +264,25 @@ async function moveChest(ctx, player, { mapId, buildingKey, character, id, kind,
   }
   const side = await realmActFirst(db, player.id, character, realm);
   if (side.error || !side.at) return side.error ? side : { error: 'realm-needed' };
-  const have = new Set(goodsIn(save, id).map((it) => it?.uid));
+  // HOME-POUR: the home's own scene, the one the owner's client reads for it. The building's scene is a stranger's
+  // visit: the client never reads it for its own home, and the next world move clears it.
+  const name = homeSceneName(mapId, buildingKey);
+  // HOME-STRANDED: only the home's own list counts as already poured. A copy under another scene is a ghost the client
+  // wrote back after the share took it (bible/01-Overview/bugs/Field-Bugs-2026-10-25d.md): counted, it kept the bin's
+  // good out of the pour, the bin's row was deleted, and the ghost went with the next world move.
+  const have = new Set(goodsUnder(save, name, id).map((it) => it?.uid));
   const pour = back.filter((it) => !have.has(it.uid));
   const prep = await prepareRealmRecord(ctx, player.id, side.at, (live) => {
     if (moving.length) clearPiece(live, id);
+    if (back.length) clearGhosts(live, name, id, new Set(back.map((it) => it.uid)));
     if (pour.length) {
-      // HOME-POUR: the home's own scene, the one the owner's client reads for it. The building's scene is a stranger's
-      // visit: the client never reads it for its own home, and the next world move clears it.
-      const name = homeSceneName(mapId, buildingKey);
       live.sceneCache ??= { scenes: [] };
       if (!Array.isArray(live.sceneCache.scenes)) live.sceneCache.scenes = [];
       if (!Array.isArray(live.sceneCache.permanentScenes)) live.sceneCache.permanentScenes = [];
       if (!live.sceneCache.permanentScenes.includes(name)) live.sceneCache.permanentScenes.push(name);
       let scene = live.sceneCache.scenes.find((s) => s?.sceneName === name);
       if (!scene) { scene = { sceneName: name }; live.sceneCache.scenes.push(scene); }
-      const there = new Set(goodsIn(live, id).map((it) => it?.uid));
+      const there = new Set(goodsUnder(live, name, id).map((it) => it?.uid));
       const list = Array.isArray(scene.decorItems?.[id]) ? scene.decorItems[id] : [];
       scene.decorItems = { ...(scene.decorItems ?? {}), [id]: [...list, ...pour.filter((it) => !there.has(it.uid))] };
     }

@@ -6,6 +6,7 @@ import { t } from '../textManager.js';
 import { ITEM_UID_RE } from '../item/itemLaw.js';
 import { mintItemId } from '../item/itemIds.js';
 import { absorbStack, addGoldPieces } from '../inventory.js';
+import { bringStrandedHome, strandedBackLine } from './homeStranded.js';   // HOME-STRANDED: what the old pour left under the building
 
 let storage = new Set();
 let station = new Set();
@@ -19,15 +20,17 @@ let asked = 0;
 let asking = false;
 let again = null;
 
-/** Asked when the room's list stands. The service says which of these pieces this player may use. */
-export function noteDecorGrants(homeDecor, mapId, buildingKey, character) {
+/** Asked when the room's list stands. The service says which of these pieces this player may use. `pool` (the room's
+ *  pieces, decorRoom.js) is handed in the owner's own home alone, with `player`, whose save the stranded goods go back
+ *  into (HOME-STRANDED). */
+export function noteDecorGrants(homeDecor, mapId, buildingKey, character, pool = null, player = null) {
   storage = new Set();
   station = new Set();
   bin = new Set();
   shared = new Set();
   known = false;
   const ask = ++asked;
-  again = () => noteDecorGrants(homeDecor, mapId, buildingKey, character);
+  again = () => noteDecorGrants(homeDecor, mapId, buildingKey, character, pool, player);
   if (!homeDecor?.use) { asking = false; known = true; return; }   // no service to say a chest is shared: none is
   asking = true;
   Promise.resolve(homeDecor.use({ mapId, buildingKey, character, op: 'grants' })).then((res) => {
@@ -40,6 +43,10 @@ export function noteDecorGrants(homeDecor, mapId, buildingKey, character) {
     const use = new Set((res.data.use ?? []).map((row) => row?.id));
     shared = new Set([...(res.data.storage ?? []).filter((id) => use.has(id)), ...(res.data.bin ?? [])]);
     known = true;
+    if (pool && player?.sceneCache) {
+      const back = bringStrandedHome(player.sceneCache, { mapId, buildingKey }, { storage: [...storage], shared, itemsOf: pool.itemsOf, carried: player.items ?? [] });
+      if (back.length) door?.say?.(strandedBackLine(back.length));
+    }
   }, () => { if (ask === asked) asking = false; });
 }
 
