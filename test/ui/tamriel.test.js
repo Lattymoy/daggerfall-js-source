@@ -356,8 +356,11 @@ test('TAMRIEL1 ink: a hover beyond the Bay answers a city within CITY_HIT_PX, el
   const [sx, sy] = pictureToBay(26, 66);
   assert.equal(tamrielPlaceAt(sx, sy, view, ink), 'Eltheric Ocean');
   assert.equal(tamrielPlaceAt(solitude.x, solitude.y, view, null), TAMRIEL_TEXT.land('Skyrim'), 'no model: no cities, the province still');
-  assert.equal(TAMRIEL_TEXT.city('Skyrim', 'Solitude'), 'Skyrim : Solitude (beyond the Bay)', 'the sheet\'s own "Region : Location" reading');
-  assert.equal(TAMRIEL_TEXT.land('Skyrim'), 'Skyrim (beyond the Bay)');
+  // PIN MOVED (AUDIT TAMRIEL-WIDE D3): the land past the Bay is the world's, named by its province and place alone
+  assert.equal(TAMRIEL_TEXT.city('Skyrim', 'Solitude'), 'Skyrim : Solitude', 'the sheet\'s own "Region : Location" reading');
+  assert.equal(TAMRIEL_TEXT.city('Skyrim', 'Solitude', 'town'), 'Skyrim : Solitude (town)');
+  assert.equal(TAMRIEL_TEXT.land('Skyrim'), 'Skyrim');
+  assert.equal(TAMRIEL_TEXT.beyond, 'Tamriel', 'a place of no province is Tamriel\'s');
 });
 
 // ── THE RASTER ──────────────────────────────────────────────────
@@ -485,7 +488,7 @@ test('TAMRIEL1 switch: the Features row `tamriel-map` is on by default on the pl
   assert.deepEqual([...row.kinds], ['enhanced']);
   assert.deepEqual(row.control, { store: 'prefs', key: 'tamrielMap', initial: true, online: 'player' });
   assert.match(row.effect, /next time a map is opened/);
-  assert.match(row.note, /You can’t travel beyond the Bay\./, 'the note says what the map is not');
+  assert.match(row.note, /A place past the Bay is reached overland, not by fast travel\.$/, 'the note says how the land past the Bay is reached');   // PIN MOVED (AUDIT TAMRIEL-WIDE D1): it said you cannot travel there - OW-PAST-BAY walks there, TESA-NO-FAST holds
   _resetForTests();
   try {
     assert.equal(tamrielMapOn(), true, 'on by default');

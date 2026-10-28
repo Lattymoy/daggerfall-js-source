@@ -820,8 +820,8 @@
   "by": "claude-in-session"
  },
  "coll.src.world": {
-  "en": "45b24cf8e9dc",
-  "tr": "7dc59c50a387",
+  "en": "859abfc107a6",
+  "tr": "e656a69e5861",
   "by": "claude-in-session"
  },
  "coll.state.character": {
@@ -1374,6 +1374,16 @@
   "tr": "28afb99f614e",
   "by": "claude-in-session"
  },
+ "features.tamrielLand.note": {
+  "en": "c4201ee9109a",
+  "tr": "ef750dfd8a59",
+  "by": "claude-in-session"
+ },
+ "features.tamrielLand.title": {
+  "en": "3bc7615ad83a",
+  "tr": "5713fbd14ac8",
+  "by": "claude-in-session"
+ },
  "features.tamrielLands.note": {
   "en": "dc37f2698218",
   "tr": "f5b7f4a81d25",
@@ -1382,6 +1392,16 @@
  "features.tamrielLands.title": {
   "en": "1e8a962cf274",
   "tr": "a1c9e014dbec",
+  "by": "claude-in-session"
+ },
+ "features.tamrielMap.note": {
+  "en": "36c7988dcf52",
+  "tr": "f548b8aad3bb",
+  "by": "claude-in-session"
+ },
+ "features.tamrielMap.title": {
+  "en": "b5c1bd42eaeb",
+  "tr": "67b32a682026",
   "by": "claude-in-session"
  },
  "features.wagonUpkeep.boons": {
@@ -2767,6 +2787,41 @@
  "lw.econ.thriving.b": {
   "en": "2d8ffddfef34",
   "tr": "d8f0209cdd1e",
+  "by": "claude-in-session"
+ },
+ "map.sheet.bay": {
+  "en": "78880f8c76b4",
+  "tr": "ab77641b4523",
+  "by": "claude-in-session"
+ },
+ "map.sheet.dungeon": {
+  "en": "ef947e3aef31",
+  "tr": "b27af1c5fa1b",
+  "by": "claude-in-session"
+ },
+ "map.sheet.interior": {
+  "en": "1dd68e5c21e5",
+  "tr": "4e816216e223",
+  "by": "claude-in-session"
+ },
+ "map.sheet.tamriel": {
+  "en": "b2fa7a769061",
+  "tr": "cd2d6b0f0c59",
+  "by": "claude-in-session"
+ },
+ "map.sheet.town": {
+  "en": "5d9c113b57b1",
+  "tr": "21c7ad30d235",
+  "by": "claude-in-session"
+ },
+ "map.tamriel.place": {
+  "en": "51513f0338a4",
+  "tr": "51513f0338a4",
+  "by": "claude-in-session"
+ },
+ "map.tamriel.placeKind": {
+  "en": "4baa9f07cc0b",
+  "tr": "4baa9f07cc0b",
   "by": "claude-in-session"
  },
  "mentor.ended": {

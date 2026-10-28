@@ -225,7 +225,7 @@ export const ROOM_TALKS = Object.freeze({
     S('A septim on the dice?', 'You still owe me from the last throw.', 'Then double or nothing.'),
     S('To {town}!', 'To {town}. Gods help it.'),
     S('Keep your voice down. The walls listen.', 'Walls? In here it\'s the serving girl.'),
-    S('They say a dragon was seen over {region}.', 'They say that after the fourth cup in every tavern in the Bay.'),
+    S('They say a dragon was seen over {region}.', 'They say that after the fourth cup in every tavern in the land.'),
     S('Is that seat taken?', 'It is now. Sit, {a}.'),
   ]),
   temple: Object.freeze([
@@ -487,7 +487,7 @@ export const HELPED_NEWS = Object.freeze({
 /** LW5b: what the town says of a passage by sea that cost a life - `{place}` the port they sailed for. */
 export const SEA_NEWS = Object.freeze({
   fell: Object.freeze([
-    Object.freeze(['{who} was lost at sea, on the crossing to {place}.', 'The Bay takes its share.']),
+    Object.freeze(['{who} was lost at sea, on the crossing to {place}.', 'The sea takes its share.']),
     Object.freeze(['Did you hear? {who} went over the side, halfway to {place}.', 'In that weather?', 'In any weather. The sea does not ask.']),
   ]),
 });

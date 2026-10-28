@@ -170,7 +170,7 @@ test('TESA12 the ink: on the trace the continent\'s cities are the places past t
   assert.deepEqual(ink.cities.map((c) => [c.province, c.name, c.kind]), off.map((p) => [p.province, p.name, p.kind]));
   assert.deepEqual(ink.cities.filter((c) => c.capital).map((c) => c.name), ['Solitude'], 'TAMRIEL1\'s capital of Skyrim');
   const town = ink.cities.find((c) => c.kind === 'town');
-  assert.equal(tamrielPlaceAt(town.x, town.y, { ox: 0, oy: 0, scale: 1 }, ink), `${town.province === 'Skyrim' ? 'Skyrim' : 'High Rock'} : ${town.name} (town, beyond the Bay)`);
+  assert.equal(tamrielPlaceAt(town.x, town.y, { ox: 0, oy: 0, scale: 1 }, ink), `${town.province === 'Skyrim' ? 'Skyrim' : 'High Rock'} : ${town.name} (town)`);   // PIN MOVED (AUDIT TAMRIEL-WIDE D3): the land past the Bay is the world's, named by its province and place alone
 });
 
 test('TESA12 no Arena: no reader, no card, no store read - the boot empties the store a copy was attached to, once and quietly; the places stand online whatever the door says; a town past the Bay is named on the wire (mutant: the clear, the door, the wire)', async () => {
