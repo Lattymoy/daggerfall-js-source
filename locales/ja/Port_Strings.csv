@@ -2962,6 +2962,8 @@ reforge.refusal.line,"この効果行の代わりになる別の種類の効果�
 rest.exhausted.fighting,"疲れ果てて戦えません。敵から離れて休んでください！"
 saddle.hello.key,"{key}: 鞍のパネル"
 saddle.hello.none,"鞍のパネル: 操作設定でキーを割り当ててください"
+sd.copy.party,"この時に入れるのはあなたのパーティーだけです。"
+sd.copy.shared,"この共有の時には{max}人中{n}人のプレイヤーがいます。"
 sd.hall.lastBy,"最後に回した人：{name}"
 sd.hall.snapLashes,"時が一気に巻き戻る。助けにならなかった者：{names}。"
 sd.hall.snapLashesMore,"時が一気に巻き戻る。助けにならなかった者：{names}、ほか{more, plural, other {#人}}。"
