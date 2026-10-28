@@ -943,7 +943,7 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from Daggerfall's wall pi
 the town's own, a length cut at a bend and its tower grown across; from Basic Roads' tiles on a Bay wall's ground. Tests
 `test/world/fb1028_walls.test.js` (21, six on ARENA2) and `test/world/fb1028_yards_past.test.js` (1, on ARENA2). Mutants
 `tools/mutants/fb1028_walls.json` (51; the 37 dead without ARENA2: AUDIT FB1028 runs the yard law, yardRoads, yardPieces
-and the host's own lines on synthetic towns; of Y1-Y2's 14, 12 die without ARENA2). PINS
+and the host's own lines on synthetic towns; of Y1-Y2's 14, 12 die without ARENA2 and 2 with it). PINS
 MOVED: `test/world/gateroads.test.js` (the kernel handed the town's ground), `test/world/townbends.test.js` (a tower's
 footprint as wide as it stands); `baywalls`, `ic_stutter`, `merchantyards1`, `shipyards1_found` (the host hands the
 places the yards' shut), `carpyard1` (the kept yards), `road/roads` (the yards' paths); re-aimed by content: GATE-ROADS-the-roads-never-laid, TS8-towers-whole,
