@@ -24174,6 +24174,31 @@
   "tr": "c6b31f3539c8",
   "by": "claude-in-session"
  },
+ "net.staffPull.denied": {
+  "en": "1e87a04b459d",
+  "tr": "fd45372bd364",
+  "by": "claude-in-session"
+ },
+ "net.staffPull.done": {
+  "en": "c958b3636478",
+  "tr": "77cd1900a8f8",
+  "by": "claude-in-session"
+ },
+ "net.staffPull.failed": {
+  "en": "9dd8eb30aab5",
+  "tr": "08e9e26820bb",
+  "by": "claude-in-session"
+ },
+ "net.staffPull.frozen": {
+  "en": "e2021e2ca81f",
+  "tr": "a66b7a0d01b1",
+  "by": "claude-in-session"
+ },
+ "net.staffPull.landed": {
+  "en": "da9588779274",
+  "tr": "1389d194d17a",
+  "by": "claude-in-session"
+ },
  "net.staffTp.exact": {
   "en": "8fb56b5df042",
   "tr": "4ddac0915c0d",

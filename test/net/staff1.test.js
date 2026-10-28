@@ -49,7 +49,7 @@ test('STAFF1 grammar: /tp takes a place, a map pixel or @player; /god and /fly f
   assert.deepEqual(parseStaffCommand('/staff'), { cmd: 'staff' });
   assert.ok('error' in parseStaffCommand('/heal me'));
   for (const line of ['/red hi', '/unstuck', 'tp Daggerfall', '/tpx 1 2', '//tp 1 2', 'hello']) assert.equal(parseStaffCommand(line), null, line);
-  assert.deepEqual([...STAFF_COMMANDS], ['tp', 'god', 'fly', 'heal', 'pos', 'staff', 'relay']);   // PIN MOVED (SCALE5b): /relay, a developer's (net/relayCfg.js, test/net/scale5b.test.js)
+  assert.deepEqual([...STAFF_COMMANDS], ['tp', 'tpa', 'god', 'fly', 'heal', 'pos', 'staff', 'relay']);   // PIN MOVED (STAFF-PULL): /tpa, bring a player (test/net/staffpull.test.js); PIN MOVED (SCALE5b): /relay, a developer's (net/relayCfg.js, test/net/scale5b.test.js)
   for (const c of STAFF_COMMANDS.filter((n) => n !== 'staff')) assert.ok(STAFF_HELP_LINES.some((l) => l.startsWith(`/${c} `)), `/staff lists /${c}`);
 });
 
