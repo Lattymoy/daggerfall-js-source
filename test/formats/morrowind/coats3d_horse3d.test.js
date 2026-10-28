@@ -524,7 +524,7 @@ test('COATS3D AUDIT the peers: a rider yielded to the 3D horse whose body did no
   riders.settle(() => false, () => true);
   assert.equal(riders.riders.has('far'), false, 'the frame its body first stands, the sprite is let go');
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const afoot = seen\.filter\(\(d\) => \(peerRidesIn3d\(d\) \|\| !peerRiders\.isRiding\(d\.id\)\) && !d\.shown\?\.wb/, 'the bodies take the rider whether or not the sprite stood in last frame - else its body would never build');
+  assert.match(w, /const afoot = seen\.filter\(\(d\) => d\.shown\?\.rd !== POSE_RIDE\.Dragon && \(peerRidesIn3d\(d\) \|\| !peerRiders\.isRiding\(d\.id\)\) && !d\.shown\?\.wb/, 'the bodies take the rider whether or not the sprite stood in last frame - else its body would never build');   // PIN MOVED (DRAGON-RIDE): a dragon's rider first left out (remotePlayers stands the dragon)
 });
 
 test('COATS3D AUDIT the sprite lane\'s rider: a look chosen fetches its mounted sprites HORSE_PRELOAD_A_FRAME a frame, never all in one task', async () => {

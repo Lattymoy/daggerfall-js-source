@@ -27,7 +27,7 @@ import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { drawText, measureText } from '../ui/text.js';
 import { titleBadge, glyphMarks, gradientAt } from '../ui/playerBadge.js';   // ACC3: what a title and a glyph LOOK like - one home, both faces (the DOM layer reads the same module)
 import { projectToScreen } from '../player/tapRay.js'; import { multiply } from '../world/mat4.js';   // one home (audit24 onehome): the touch layer's own projection
-import { LOOK_ITEM_FIELDS, LOOK_GROUPS, LOOK_GLOW_SLOTS, lookGlowOk } from './wire.js';   // the look's vocabulary: the wire's own; WEAPON-GLOW1: and a weapon's glow
+import { LOOK_ITEM_FIELDS, LOOK_GROUPS, LOOK_GLOW_SLOTS, lookGlowOk, POSE_RIDE, POSE_RIDE_DRAGON_KIND } from './wire.js';   // the look's vocabulary: the wire's own; WEAPON-GLOW1: and a weapon's glow
 import { appearanceOf, validWireAppearance } from './appearanceLaw.js';   // APPEARANCES: a worn piece's look, said and read
 import { meshGlow, glowWord } from '../systems/weaponGlow.js';   // WEAPON-GLOW1: a held weapon's glow, said on the look
 import { renownText } from './renown.js';   // RENOWN1: Renown's words, left of the name in the bitmap face too
@@ -951,7 +951,8 @@ export class RemotePlayers {
       // keeps the doll path until the look lands: classMobileType's Thief is for a look with no class or one this build
       // does not know, and handing it to a look that has not arrived drew a Thief, then nothing while the real class
       // built, then the real sprite
-      const mobileType = beast ? (beast === 2 ? MOBILE_TYPES.Wereboar : MOBILE_TYPES.Werewolf) : spritesOn && peer.look ? classMobileType(peer.look.class) : null;
+      // DRAGON-RIDE: an Admin on the Dwarven Dragon stands as the dragon's own sprite, the rider in its art (a build without the dragon: as before)
+      const mobileType = beast ? (beast === 2 ? MOBILE_TYPES.Wereboar : MOBILE_TYPES.Werewolf) : peer.shown.rd === POSE_RIDE.Dragon && ENEMY_BASICS[POSE_RIDE_DRAGON_KIND] ? POSE_RIDE_DRAGON_KIND : spritesOn && peer.look ? classMobileType(peer.look.class) : null;
       const bundle = mobileType != null && ENEMY_BASICS[mobileType] ? this._mobileFor(peer.id, mobileType, peer.look?.gender === 'female' ? 'female' : 'male') : null;
       if (bundle && typeof bundle.then !== 'function') { this._syncMobilePeer(peer, bundle, toScene, dt, eye, veil); continue; }
       // BEAST-PEER (2026-09-26, Mac: "Wereform uses daggerfall paperdoll when others see you transform"): A BEAST IS
@@ -1102,7 +1103,7 @@ export class RemotePlayers {
    *  the peers' own falloff. Gated with their footsteps ('peerFootsteps' - hooves are a mount's steps). */
   _syncRidingSound(peer, toScene, dt, eye = null, poseAgeMs = null) {
     const audio = this.deps?.audio;
-    const rd = (peer.shown?.rd | 0) || (peer.shown?.bench === 2 ? 2 : 0);   // WAGONS3: a driver glued onto their bench (scenes/horseCartPool.js driverGlue) still drives the cart
+    const rd = peer.shown?.rd === POSE_RIDE.Dragon ? 0 : (peer.shown?.rd | 0) || (peer.shown?.bench === 2 ? 2 : 0);   // DRAGON-RIDE: a dragon has no hooves   // WAGONS3: a driver glued onto their bench (scenes/horseCartPool.js driverGlue) still drives the cart
     if (!audio?.setLoop3d || !rd || getPref('peerFootsteps') === false) {
       this._stopRidingSound(peer.id);
       if (!rd) this._onFoot.add(peer.id);   // AUDIT DISC7 B4: seen on foot - a mount after this is a real one
