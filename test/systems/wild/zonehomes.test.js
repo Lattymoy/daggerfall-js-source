@@ -1,44 +1,27 @@
 // ZONE-HOMES (2026-10-28; bible/11-Multiplayer/Wild-Zone.md section 29), the owner: "Imperial City houses still cannot
-// be purchased". PVPDUNGEONS refused every house in the zone, and the zone is Cyrodiil whole, the Imperial City in its
-// heart: the door offered "Buy it" and the press said "No house is for sale". The law (systems/wild/zoneSafe.js
-// zoneHouseFree): a house in a settlement's streets is for sale in the zone, as ZONE-SAFE made them peace.
+// be purchased", then "You made it where you cant buy a house in the ocean or in the open country. Why?". A house is for
+// sale online wherever its door stands: the open zone (Cyrodiil, the sea past Veilhaven's peace) refuses none, and an
+// isle town's house is for sale as any town's.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { zoneHouseFree, ZONE_SAFE_TEXT, SETTLEMENT_TYPES } from '../../../src/systems/wild/zoneSafe.js';
-import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
-import { locationWorldRect, WORLD_MAP_RMB_DIM } from '../../../src/world/streamingWorld.js';
 import { homePurchasable } from '../../../src/systems/online/onlineHomes.js';
 import { etherPlaceId } from '../../../src/world/etherPlaces.js';
 import { capitalPlaceId } from '../../../src/world/tamrielCapitals.js';
 import { BUILDING_TYPES } from '../../../src/world/buildingNames.js';
 
-/** A location of `type` (test/systems/wild/wildcityport.test.js's). */
-const place = (type, w = 1, h = 1) => ({ name: 'Somewhere', mapTableData: { locationType: type }, exterior: { exteriorData: { width: w, height: h, blockNames: Array(w * h).fill('TVRNAL01.RMB') } } });
-const IN = { x: 2069, y: 658 };
-
-test('ZONE-HOMES THE LAW (zoneSafe.js zoneHouseFree): outside the zone every house; in it a door in a settlement\'s streets, never the open country, a farmstead\'s, an inn\'s, a temple\'s or a manor\'s, nor a press made indoors (mutants: the zone ignored; a settlement refused; the open country free)', () => {
-  assert.equal(zoneHouseFree(false, null, new Map()), true, 'outside the zone: Daggerfall\'s law');
-  for (const type of Object.values(LOCATION_TYPES)) {
-    const loc = place(type, 3, 3), index = new Map([[`${IN.x},${IN.y}`, loc]]);
-    const r = locationWorldRect(loc, IN.x, IN.y), mid = [(r.minX + r.maxX) / 2, 0, (r.minZ + r.maxZ) / 2];
-    assert.equal(zoneHouseFree(true, mid, index), SETTLEMENT_TYPES.has(type), `in the zone, in a place of kind ${type}`);
-    assert.equal(zoneHouseFree(true, [r.maxX + WORLD_MAP_RMB_DIM + 1, 0, mid[2]], index), false, `kind ${type}: the open country of its own pixel`);
-  }
-  assert.equal(zoneHouseFree(true, null, new Map([[`${IN.x},${IN.y}`, place(LOCATION_TYPES.TownCity)]])), false, 'no feet (indoors, underground): the zone\'s');
-  assert.equal(ZONE_SAFE_TEXT.noHouse, 'In Cyrodiil, houses are for sale only in cities, towns and villages.');
-});
-
-test('ZONE-HOMES THE HOSTS: the interior host\'s buy asks the world host\'s seam, and the seam asks the law where I stand outdoors (mutants: the seam\'s old refusal of the whole zone)', () => {
+test('ZONE-HOMES THE ZONE REFUSES NO HOUSE: the buy asks no zone, and the world host keeps no such seam (mutants: the zone\'s refusal back)', () => {
   const world = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
   const modes = readFileSync(new URL('../../../src/scenes/worldModes.js', import.meta.url), 'utf8');
-  assert.match(world, /wildNoHouse: \(\) => \{ if \(zoneHouseFree\(wildHere\(\), wildOutdoors\(\) \? campToWire\(player\.feetAt\(\)\) : null, locationIndex\)\) return false; townTalk\.say\(ZONE_SAFE_TEXT\.noHouse\); return true; \}/);
-  assert.match(modes, /async function buyHomeAt\(bd, price\) \{[^]*?if \(host\.wildNoHouse\?\.\(\)\) return;/);
+  const buy = modes.slice(modes.indexOf('async function buyHomeAt(bd, price) {'), modes.indexOf('// ═══ HOME-RENT'));
+  assert.ok(buy.length > 100, 'buyHomeAt found');
+  assert.doesNotMatch(buy, /wild/i, 'the house buy asks nothing of the zone');
+  assert.doesNotMatch(world, /wildNoHouse/, 'no seam refuses a house');
 });
 
-test('ZONE-HOMES AUDIT: an isle town\'s house is never for sale (Eltheric-Ocean.md P9) - its port town is a settlement in the sea\'s open zone, so the zone\'s law no longer refused it; the buy law does, in the peace too - and an Imperial City slice\'s house still is (mutants: the isle\'s town unread)', () => {
+test('ZONE-HOMES AN ISLE TOWN\'S HOUSE IS FOR SALE: the buy law takes an isle town\'s house as an Imperial City slice\'s or any other town\'s (mutants: an isle town refused)', () => {
   const house = (townMapId) => ({ buildingType: BUILDING_TYPES.House1, factionId: 0, buildingKey: 66059, hasInterior: true, townMapId });
-  assert.equal(homePurchasable(house(etherPlaceId({ cx: 3, cy: 7 }))), false, 'an isle town\'s');
+  assert.equal(homePurchasable(house(etherPlaceId({ cx: 3, cy: 7 }))), true, 'an isle town\'s');
   assert.equal(homePurchasable(house(capitalPlaceId(0, 12))), true, 'a capital\'s slice\'s');
-  assert.equal(homePurchasable(house(undefined)), true, 'a record naming no town: as before');
+  assert.equal(homePurchasable(house(undefined)), true, 'a record naming no town');
 });
