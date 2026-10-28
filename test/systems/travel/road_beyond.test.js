@@ -148,13 +148,15 @@ test('ROAD-BEYOND the ladder\'s rungs past the table are no wider than BEYOND_MA
   assert.ok(asks < 6 * tally.n, `${asks} asks for ${tally.n} cells (every neighbour's asked, some eight a cell)`);
 });
 
-test('ROAD-BEYOND the spend is counted: a goal past the Bay no way reaches costs at most the roads\' search, the ladder\'s whole spend and the walk\'s across country - never a rung of 200 000 four times over, twice (mutant: the ladder\'s spend)', () => {
+// PIN MOVED (GREEDY-BEYOND, bible/06-Systems/Travel-View.md): the walk across country that spends its count leans on its goal
+// once more (BEYOND_GREED), with its own count - a third BEYOND_MAX_EXPANSIONS
+test('ROAD-BEYOND the spend is counted: a goal past the Bay no way reaches costs at most the roads\' search, the ladder\'s whole spend, the walk\'s across country and its lean on the goal - never a rung of 200 000 four times over, twice (mutant: the ladder\'s spend)', () => {
   // the goal on an island of one pixel in a pond past the Bay; a road from the traveller that never reaches it
   const pond = (x, y) => Math.max(Math.abs(x - 1500), Math.abs(y - 500)) <= 6 && !(x === 1500 && y === 500);
   const pathsBeyond = roadThrough(ell());
   const tally = { n: 0 };
   assert.equal(planRoute({ x: 1100, y: 100 }, { x: 1500, y: 500 }, { ...bay(), isWater: pond, pathsBeyond, tally }), null);
-  assert.ok(tally.n <= BY_ROAD_MAX_EXPANSIONS + 2 * BEYOND_MAX_EXPANSIONS, `${tally.n} cells`);
+  assert.ok(tally.n <= BY_ROAD_MAX_EXPANSIONS + 3 * BEYOND_MAX_EXPANSIONS, `${tally.n} cells`);
 });
 
 test('ROAD-BEYOND a plan with no road past the Bay is the straight walk it is: the ladder\'s heuristic the field\'s own price there, so a walk of 600 pixels expands some cells a pixel - where a road\'s price flooded the whole box and found none in the spend (mutant: hCost)', () => {

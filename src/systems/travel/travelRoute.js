@@ -529,6 +529,13 @@ export function* planRouteSteps(from, to, opts = {}) {
   // ROAD-BEYOND: a plan by the roads past the Bay that neither the roads nor the ladder's spend found walks across country
   // (the FREE plan's own, as cheap to find as a straight walk) - never "no way" for a field the budget did not reach
   if (!best && past && (roads || tracks) && !sea) return yield* planRouteSteps(from, to, { ...opts, roads: null, tracks: null, tally });
+  // GREEDY-BEYOND: an all-open plan past the Bay that spent its count leans on its goal (BEYOND_GREED). On open ground
+  // every monotone path costs the same, so a detour near the goal made the exact search expand the whole parallelogram
+  // between the ends: Daggerfall to the Imperial City, round Lake Rumare's west arm, 530,000 cells. A box that held no
+  // way is not searched again.
+  if (!best && past && !sea && tally.n - spent >= BEYOND_MAX_EXPANSIONS) {
+    return yield* searchSteps(from, to, { roads, tracks, isWater, width, height, bounds: reachOf(BEYOND_MARGIN), margin: BEYOND_MARGIN, maxExpansions: BEYOND_MAX_EXPANSIONS, openBlocked, goalExempt, peakAt, sea, beyond, hCost: BEYOND_GREED * ROUTE_COST.open, tally, endLeg });
+  }
   return best;
 }
 
@@ -542,6 +549,9 @@ export const BY_ROAD_MAX_EXPANSIONS = 100000;
 /** ROAD-BEYOND: searchByRoad leans on its goal by this much (a weighted A*: a way by the roads at most this much dearer than
  *  the cheapest, for a search that does not walk every road of a province to prove it). */
 export const BY_ROAD_GREED = 1.25;
+/** GREEDY-BEYOND: how hard an all-open plan past the Bay leans on its goal once the exact search has spent its count - a
+ *  weighted A*, at most three times the cheapest. Measured on the freeware's city trips: within a tenth of it. */
+export const BEYOND_GREED = 3;
 /** ROAD-BEYOND: how far an end looks for the nearest road or track, pixels (the longest axis) - ROAD-FOLLOW: an end no
  *  road comes this near walks the open ground as TV2's law has it (roadEnds). */
 export const BY_ROAD_SEEK = 96;
