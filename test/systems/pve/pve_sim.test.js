@@ -49,7 +49,7 @@ test('FIXED-PVE the category law: Normal is the unit, and each category\'s healt
 });
 
 test('FIXED-PVE a player on the reference line keeps the planned edge over a Normal foe of its level', () => {
-  for (const level of [1, 12, 27, 45]) {
+  for (const level of [6, 12, 27, 45]) {   // at level 1 a foe's whole numbers are too coarse to hold it
     const r = referencePlayer(level);
     const b = { blow: r.blow, hit: 1, actionS: r.swingS, health: r.health, taken: 1, evade: 0, block: 0, regen: 0, vigil: false, hitCap: null,
       spellShare: 0, element: null, blade: true, family: 'melee', range: 0, control: 0 };

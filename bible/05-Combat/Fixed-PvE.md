@@ -41,7 +41,7 @@ The tests: `test/systems/pve/pve_core.test.js`.
 
 | Piece | Module | What it holds |
 |---|---|---|
-| Builds | `pveBuilds.js` | Melee, Archer, Destruction Mage, Defensive Fighter, Battlemage, Hand-to-Hand, at six tiers of skill and gear (levels 1, 10, 20, 30, 40, 45). The top tier holds the live hits of a fully geared build: 1,550 for a two-hander or a bow, 1,310 a fist, 1,375 a cast under the mages' rework. Tempos come from the swing law, the bow's cooldown and the cast clock |
+| Builds | `pveBuilds.js` | Melee, Archer, Destruction Mage, Defensive Fighter, Battlemage, Hand-to-Hand, at six tiers of skill and gear (levels 1, 10, 20, 30, 40, 45). Each tier's hit is the live formula's mean (`tierBlow`): about 1,650 a Dai-Katana or a long bow, 1,410 a fist and 1,390 a cast under the mages' rework at the top. Tempos come from the swing law, the bow's cooldown and the cast clock |
 | Profile | `pveProfile.js` | Offense (damage a second), defense (health over guards), sustain, control, mobility; the Combat Score; one build against one template, and a danger word |
 | Simulator | `pveSim.js` | A party against foes: two melee and two ranged tokens a player, the boss traits, heals, summons, shield walls, rage, seeded |
 | Report | `tools/pveBalance.mjs` | Every build alone against Normal and Strong foes, and every template against its party, beside a plain foe of its category |
@@ -50,8 +50,10 @@ The Combat Score is the square root of offense times defense: no weight to tune.
 makes a foe imports it, and the tests hold that. The danger word reads the margin, and names what it cannot count:
 armour, magicka, and abilities it does not model.
 
-What the first report found: archers and mages trail the other builds alone below level 40, as the bow's cooldown
-and cloth health stand today. Unyielding and Vigil make every foe past level 40 easier for a set wearer. A lone
+Each build is the best custom class for its job (the owner, 2026-10-28: the base game's builds are not the
+measure): 30 health a level, every attribute first, its skill and Critical Strike primary, expert in its weapon.
+What the report found: archers trail alone below level 40, as the bow's cooldown stands. Mages trail below 40 under
+the rework, whose base of Destruction x0.15 is small while the skill is low. Unyielding and Vigil make every foe past level 40 easier for a set wearer. A lone
 healer is weak, and berserker rage and the raid leader's seven abilities run hot. Boss blows come out small, because
 the builds bring no healing yet. Stage 9 adds that. The tests: `test/systems/pve/pve_sim.test.js`.
 

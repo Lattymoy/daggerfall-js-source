@@ -12,8 +12,8 @@ import { TACT } from '../../ai/tactics.js';
 /** [level, what a swing lands, health it can lose] of the reference player: the middle of the six reference builds
  *  (pveBuilds.js - the test holds the two together), its damage a second times its own swing, health over its guards. */
 export const REFERENCE_PLAYER = Object.freeze([
-  Object.freeze([1, 3.7, 44]), Object.freeze([10, 14.9, 137]), Object.freeze([20, 57, 390]),
-  Object.freeze([30, 230, 834]), Object.freeze([40, 744, 1548]), Object.freeze([45, 1738, 2418]),
+  Object.freeze([1, 13.7, 45]), Object.freeze([10, 25.1, 140]), Object.freeze([20, 57.3, 400]),
+  Object.freeze([30, 312, 855]), Object.freeze([40, 991, 1587]), Object.freeze([45, 1860, 2480]),
 ]);
 export const LEVEL_MIN = 1;
 export const LEVEL_MAX = 45;
