@@ -1,116 +1,5 @@
 [
   {
-    "name": "COMPANION-DROP-the-packs-never-read",
-    "file": "src/systems/wild/wildDropLaw.js",
-    "old": "export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { cart: withCart = true, packs = wildPacksOf(entity), letters = false } = {}) {",
-    "new": "export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { cart: withCart = true, packs = [], letters = false } = {}) {",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ],
-    "note": "Re-aimed by content (AUDIT FOE-KEEPS): LETTERS-TENTH's option beside the packs"
-  },
-  {
-    "name": "COMPANION-DROP-a-packs-drop-dropped",
-    "file": "src/systems/wild/wildDropLaw.js",
-    "old": "    ...packs.flatMap((p) => takeWildDrop([], p.items).map((it) => /** @type {[any, string]} */ ([it, p.f])))];",
-    "new": "    ];",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-a-kept-piece-taken",
-    "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  const hp = packs.map((p) => aside(p.items));",
-    "new": "  const hp = packs.map(() => []);",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-a-kept-piece-never-back",
-    "file": "src/systems/wild/wildDropLaw.js",
-    "old": " packs.forEach((p, i) => back(p.items, hp[i]));",
-    "new": " void hp;",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-a-cut-piece-lost",
-    "file": "src/systems/wild/wildDropLaw.js",
-    "old": "    else if (from !== 'gold') packs.find((p) => p.f === from)?.items.push(it);   // COMPANION-DROP: back in his pack\n",
-    "new": "    else if (from !== 'gold') void 0;\n",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-a-packs-coin-never-back",
-    "file": "src/systems/wild/wildDropLaw.js",
-    "old": "      packCoins.forEach((c, i) => { const n = gold.packs?.[packs[i].f] ?? 0; if (c && n) c.stackCount = Math.max(0, Math.floor(c.stackCount ?? 0)) + n; });\n",
-    "new": "",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ],
-    "equivalent": true,
-    "why": "the gold is the second record a death takes, after one piece of at most WILD_RECORD_BYTES_MAX (4 KiB), and a remains holds WILD_REMAINS_ITEMS_MAX (96) records and WILD_REMAINS_BYTES_MAX (100 KiB): the gold always fits, so its put-back never runs - kept as the law's word on a pack's coin that would not fit, as the cart's is (int_lane2.json INT9-AUDIT-THE-CARTS-COIN-INTO-THE-PURSE); a pack's share out of its coin is pinned where the gold is taken."
-  },
-  {
-    "name": "COMPANION-DROP-a-kit-never-written",
-    "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  for (const p of packs) p.put?.(p.items);   // COMPANION-DROP: a kit's slots as its list now stands\n",
-    "new": "",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-the-coin-share-unsaid",
-    "file": "src/systems/wild/wildDropLaw.js",
-    "old": "if (n > 0) (gold.packs ??= {})[packs[i].f] = n;",
-    "new": "void n;",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-takeWildGold-packs-unread",
-    "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  for (const coin of [cart, ...packs.map((p) => coinIn(p.items))]) {",
-    "new": "  for (const coin of [cart]) {",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-the-take-hands-no-packs-to-the-gold",
-    "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  const coin = takeWildGold(entity, { cart: withCart, packs });",
-    "new": "  const coin = takeWildGold(entity, { cart: withCart, packs: [] });",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-the-candidates-without-the-packs",
-    "file": "src/systems/wild/wildDropLaw.js",
-    "old": ", ...packs.flatMap((p) => p.items.filter((it) => wildCanLose(it)))];",
-    "new": "];",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-the-candidates-default-none",
-    "file": "src/systems/wild/wildDropLaw.js",
-    "old": "export function wildDropCandidates(entity, w = -1, wt = null, { cart: withCart = true, packs = wildPacksOf(entity) } = {}) {",
-    "new": "export function wildDropCandidates(entity, w = -1, wt = null, { cart: withCart = true, packs = [] } = {}) {",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
     "name": "COMPANION-DROP-the-sworns-state-unread",
     "file": "src/systems/wild/wildLeaf.js",
     "old": " && (r.companion?.state ?? 'with') === 'with').slice(0, WILD_REVENANTS_MAX);",
@@ -221,88 +110,6 @@
     ]
   },
   {
-    "name": "COMPANION-DROP-the-crew-never-held",
-    "file": "src/systems/naval/crewCompanions.js",
-    "old": "  if (!wildHere() || wildZoneKind() === ETHER_KIND) return false;   // ETHER-WILD: at sea her hold is the shelter, open from anywhere already (Eltheric-Ocean.md ETHER-WILD)\n  say?.(WILD_TEXT.companionStays(name), 3);",
-    "new": "  if (true) return false;   // ETHER-WILD: at sea her hold is the shelter, open from anywhere already (Eltheric-Ocean.md ETHER-WILD)\n  say?.(WILD_TEXT.companionStays(name), 3);",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-the-crew-held-unsaid",
-    "file": "src/systems/naval/crewCompanions.js",
-    "old": "  say?.(WILD_TEXT.companionStays(name), 3);\n",
-    "new": "",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-his-pack-to-the-hold-in-the-zone",
-    "file": "src/systems/naval/crewCompanions.js",
-    "old": "export const packStaysAshore = () => wildHere() && wildZoneKind() !== ETHER_KIND;",
-    "new": "export const packStaysAshore = () => false;",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-the-host-never-asks",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "      if (heldAtSide(name, deps.say)) return null;   // COMPANION-DROP (crewCompanions.js): never sent back from inside the open zone\n",
-    "new": "",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-the-host-stows-in-the-hold",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "    const boat = packStaysAshore() ? null : (csa()",
-    "new": "    const boat = false ? null : (csa()",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-the-sworn-sent-away",
-    "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  if (leaveRefusal(r)) return false;   // COMPANION-DROP: never from my side inside the open zone - by me or by the slots' hold\n",
-    "new": "",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js",
-      "test/systems/revenant/revenant_audit.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-the-sworn-on-an-errand",
-    "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  return leaveRefusal(r);   // COMPANION-DROP: never from my side inside the open zone\n",
-    "new": "  return null;\n",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-a-gift-outside-the-zone",
-    "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  if (wildHere() && !swornAtYourSide().includes(r)) return WILD_TEXT.companionAway(r.name);",
-    "new": "",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-the-one-outside-refused-too",
-    "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "export const leaveRefusal = (r) => (wildHere() && swornAtYourSide().includes(r) ?",
-    "new": "export const leaveRefusal = (r) => (wildHere() ?",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
     "name": "COMPANION-DROP-the-side-unsliced-in-the-zone",
     "file": "src/systems/revenant/revenantCompanions.js",
     "old": "export const swornAtYourSide = () => (wildHere() ? wildSwornAtSide(revenantsWithYou()) : revenantsWithYou());",
@@ -322,51 +129,6 @@
     ]
   },
   {
-    "name": "COMPANION-DROP-the-knock-hands-nothing",
-    "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "      leftWithYou(r);   // COMPANION-DROP: carried off inside the zone, what it carries stays with me\n",
-    "new": "",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-the-knock-keeps-the-kit",
-    "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  const items = [...(r.companion?.items ?? []), ...gearItems(r.companion?.gear)];\n  if (!items.length) return 0;",
-    "new": "  const items = [...(r.companion?.items ?? [])];\n  if (!items.length) return 0;",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-the-knock-hands-over-outside-the-zone",
-    "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  if (!_player || !wildHere() || !swornAtYourSide().includes(r)) return 0;",
-    "new": "  if (!_player) return 0;",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-the-knock-unsaid",
-    "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  try { popupMessage(WILD_TEXT.companionLeft(r.name, items.length)); } catch { /* a word is nobody's failure */ }\n",
-    "new": "",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-the-knock-copies-the-pack",
-    "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  revenantCompanionUpdate(_player, r.id, (c) => { c.items = []; c.gear = {}; });\n",
-    "new": "",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
     "name": "COMPANION-DROP-the-hand-back-destroys",
     "file": "src/systems/revenant/revenantCompanions.js",
     "old": "  for (const it of items) { if (isGoldPieces(it)) addGoldPieces(_player, it.stackCount ?? 1); else addItem(_player.items, it); }",
@@ -378,130 +140,11 @@
   },
   {
     "name": "COMPANION-DROP-the-game-takes-nothing-from-its-companions",
-    "file": "src/scenes/world.js",
-    "old": ", wildPacks(naval?.companions?.party, revenantsWithYou()));   // COMPANION-DROP",
+    "file": "src/scenes/wildDropHost.js",
+    "old": ", wildPacks(host.naval?.companions?.party, revenantsWithYou()));   // COMPANION-DROP",
     "new": ");   // COMPANION-DROP",
     "tests": [
       "test/net/int9_wild_ref.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-the-slots-hold-sends-the-one-at-my-side",
-    "file": "src/scenes/world.js",
-    "old": ".filter((r) => !leaveRefusal(r)).sort(",
-    "new": ".sort(",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js",
-      "test/systems/revenant/revenant_audit.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-the-roster-unsaid",
-    "file": "src/ui/companionRoster.js",
-    "old": "const no = leaveRefusal(r); _notice = no ? { id: r.id, text: no } : null; if (!no) sendRevenantAway(r.id);",
-    "new": "const no = null; _notice = no; sendRevenantAway(r.id);",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-the-words-lost",
-    "file": "src/systems/wild/wildZone.js",
-    "old": "'{name} stays at your side until you leave the {zone}.'",
-    "new": "'No companion leaves.'",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "COMPANION-DROP-the-away-words-lost",
-    "file": "src/systems/wild/wildZone.js",
-    "old": "'{name} is waiting outside the {zone}. Come out to hand over gear.'",
-    "new": "''",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-FB1019f-B2-the-refusal-gone",
-    "file": "server-account/src/wild.js",
-    "old": "    if (!packsRead && wildTakesPacks(drop)) return 'not-found';   // a game from before the word: the take refused, nothing moved\n",
-    "new": "",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-FB1019f-B2-a-seizure-refused",
-    "file": "server-account/src/wild.js",
-    "old": "  const packsRead = seize || body?.packs === WILD_FALL_PACKS;",
-    "new": "  const packsRead = body?.packs === WILD_FALL_PACKS;",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-FB1019f-B2-the-word-never-heard",
-    "file": "server-account/src/wild.js",
-    "old": "seize || body?.packs === WILD_FALL_PACKS;",
-    "new": "seize || body?.packs === 'yes';",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-FB1019f-B2-a-packs-coin-unread",
-    "file": "src/systems/wild/wildDropLaw.js",
-    "old": " && f !== 'gold') || !!drop.gold.packs;",
-    "new": " && f !== 'gold');",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-FB1019f-B2-the-pile-read-as-a-pack",
-    "file": "src/systems/wild/wildDropLaw.js",
-    "old": "f !== 'cart' && f !== 'gold') || !!drop.gold.packs;",
-    "new": "f !== 'cart') || !!drop.gold.packs;",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-FB1019f-B2-the-cart-read-as-a-pack",
-    "file": "src/systems/wild/wildDropLaw.js",
-    "old": "drop.from.some((f) => f !== 'bag' && f !== 'cart' && ",
-    "new": "drop.from.some((f) => f !== 'bag' && ",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-FB1019f-B2-the-bag-read-as-a-pack",
-    "file": "src/systems/wild/wildDropLaw.js",
-    "old": "drop.from.some((f) => f !== 'bag' && f !== 'cart'",
-    "new": "drop.from.some((f) => f !== 'cart'",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-FB1019f-B2-the-words-without-the-packs",
-    "file": "src/systems/wild/wildDeath.js",
-    "old": "({ ...wildCartWord(on, rec, mask), packs: WILD_FALL_PACKS, letters: WILD_FALL_LETTERS })",
-    "new": "({ ...wildCartWord(on, rec, mask), letters: WILD_FALL_LETTERS })",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ],
-    "note": "Re-aimed by content (AUDIT FOE-KEEPS): LETTERS-TENTH's word beside the packs'"
-  },
-  {
-    "name": "AUDIT-FB1019f-B2-the-host-asks-without-the-word",
-    "file": "src/scenes/world.js",
-    "old": "...wildFallWords(hccOn(), hccRuntime.getSaveData(), wildMaskOf(maps)) }),",
-    "new": "...{ cart: 1 } }),",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
     ]
   },
   {
@@ -509,15 +152,6 @@
     "file": "src/systems/wild/wildLeaf.js",
     "old": "!!r && !!r.sworn && !r.defeated",
     "new": "!!r && !r.defeated",
-    "tests": [
-      "test/systems/fb1019f_companiondrop.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-FB1019f-B4-an-empty-hand-over-said",
-    "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  if (!items.length) return 0;\n",
-    "new": "",
     "tests": [
       "test/systems/fb1019f_companiondrop.test.js"
     ]
@@ -534,7 +168,7 @@
   },
   {
     "name": "AUDIT-FB1019f-B5-the-host-asks-the-old-question",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/wildDropHost.js",
     "old": "    else if (wildTookAny(out, d.gold)) townTalk.say(",
     "new": "    else if (out.length || d.gold?.purse || d.gold?.cart) townTalk.say(",
     "tests": [

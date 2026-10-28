@@ -31,11 +31,12 @@
 // travel's arrival is the arrival's minute while the trip's own time has not yet run). Off the lane every answer is
 // DFU's: the season the host holds, the set as it is, no snow in the draw.
 import { SnowpackLattice, snowlineOf, coverAtHeight, latticeKey, yearOriginOf, SNOWPACK } from '../systems/weather/snowpack.js';
-import { SEA_LEVEL_M } from '../systems/weather/airTemperature.js';
+import { SEA_LEVEL_M, airGround } from '../systems/weather/airTemperature.js';
 import { TERRAIN_SIZE as PIXEL_M } from '../world/terrain/terrainSampler.js';
 import { getTerrainGroundArchive, groundIsSnowy, SEASON } from '../world/climateSwaps.js';
 import { ecoOrigin } from '../world/ecotone.js';
 import { snowCoverAt, SNOW_TILE_ROW0 } from '../render/snowCoverGlsl.js';
+import { mergeCapLine, capLineAt, CAP_NONE, ashShareAt, bareLine } from '../world/peaks/snowcap.js';   // PEAKS1: the snow that never melts, a floor under the pack; RED-MOUNTAIN: and the ash it never lies on
 
 /**
  * THE HOST'S NUMBERS. `spacing` the lattice's (map pixels: 1.6 km - the snowline's field is smooth over that, its fall's
@@ -90,7 +91,7 @@ export function twinLayers(summer, winter) {
  * @param {{ renderer: any, climateAt: (px: number, py: number) => number, mapHeight: number, stateOf: () => any,
  *   builtOf: () => Map<string, any>, owns: () => boolean,
  *   markReskin: (key: string) => void, markRebuild: (key: string) => void, now: () => number, place?: () => { px: number, py: number }, arriving?: () => boolean,
- *   clock?: () => number }} deps
+ *   clock?: () => number, capLine?: ?((cx: number, cy: number) => number) }} deps
  *   `climateAt` the map's climate index; `stateOf()` the stream's state and `builtOf()` its pixels (asked, never held);
  *   `owns()` whether the snow lane runs (weatherSim.js precipLawOn - the enhanced
  *   lane's law, with a host that handed the air its map); `markReskin(key)` the snow's re-skin of one pixel in place (world.js
@@ -99,10 +100,19 @@ export function twinLayers(summer, winter) {
  *   that asks before the first frame (`settle`); `arriving()` whether the world is still standing up (no ground under the
  *   player) - a build's wait then takes the arrival's budget (SNOW_COVER.arriveMs); `clock()` the frames' budget's clock
  *   (performance.now's - SNOW-BUDGET). OW-HITCH's `normalOf` (the drawn ground's normal, for the slope's shed) went with
- *   SNOW-FACE's slope: the snow reads no normal and no height.
+ *   SNOW-FACE's slope: the snow reads no normal and no height. PEAKS1: `capLine(cx, cy)` the perennial snowline at map pixel corner
+ *   (cx, cy) (world/peaks/snowcap.js capLineAt, m above the sea) - each point's lines the lower of its pack's and the cap's
+ *   (mergeCapLine), so every reader of the lines wears the summits' snow; and the frame's texels carry it in their alpha
+ *   for the bare faces (render/snowCapGlsl.js). Unhanded, the cap is the land's own wherever the air's ground is the
+ *   landforms' (airGround.js lawAirGround `landforms` - the world host hands the air its map with the Landforms row, so the
+ *   host's own scope never grows: HOST-SPLIT) - capLineAt on `climateAt`; null, no cap.
  */
-export function createSnowCoverHost({ renderer, climateAt, mapHeight, stateOf, builtOf, owns, markReskin, markRebuild, now, place = null, arriving = null, clock = () => performance.now() }) {
+export function createSnowCoverHost({ renderer, climateAt, mapHeight, stateOf, builtOf, owns, markReskin, markRebuild, now, place = null, arriving = null, clock = () => performance.now(), capLine = undefined }) {
   const lattice = new SnowpackLattice({ climateAt, spacing: SNOW_COVER.spacing });
+  /** PEAKS1: a corner's cap line - the handed law's, else the land's own on the landforms' ground, else none */
+  const capOf = (cx, cy) => (capLine !== undefined ? (capLine ? capLine(cx, cy) : CAP_NONE) : airGround()?.landforms ? capLineAt(cx, cy, climateAt) : CAP_NONE);
+  /** RED-MOUNTAIN (AUDIT RED-MOUNTAIN L1): a corner's share of the volcano's ash - the land's own, with its cap */
+  const ashOf = (cx, cy) => (capLine === undefined && airGround()?.landforms ? ashShareAt(cx, cy) : 0);
   const S = SNOW_COVER.spacing, R = SNOW_COVER.radius, SIDE = 2 * R + 1, STEP = SNOWPACK.stepMinutes;
   /** each window point's snowlines: `target` the pack now's, `shown` eased toward it (the frames'), `build` the pack's at
    *  the last step of the grid (the builds'); by lattice key, for the window's points alone (AUDIT PRECIP PACK-5: a point
@@ -149,10 +159,10 @@ export function createSnowCoverHost({ renderer, climateAt, mapHeight, stateOf, b
   const readNow = (pt, t) => {
     const k = latticeKey(pt.i, pt.j);
     let l = lines.get(k);
-    if (!l) lines.set(k, (l = { target: new Float32Array(3), shown: null, build: new Float32Array(3) }));
-    snowlineOf(lattice.packNow(pt, t, _pack), _line, pt.n);
+    if (!l) lines.set(k, (l = { target: new Float32Array(3), shown: null, build: new Float32Array(3), cap: capOf(pt.i * S, pt.j * S), ash: ashOf(pt.i * S, pt.j * S) }));
+    bareLine(mergeCapLine(snowlineOf(lattice.packNow(pt, t, _pack), _line, pt.n), l.cap), l.ash, BARE_LINE[0]);   // PEAKS1: the cap a floor under the pack; RED-MOUNTAIN: the ash bare
     l.target[0] = _line[0]; l.target[1] = _line[1]; l.target[2] = _line[2];
-    snowlineOf(t >= pt.step ? pt.swe : pt.prev, _line, pt.n);
+    bareLine(mergeCapLine(snowlineOf(t >= pt.step ? pt.swe : pt.prev, _line, pt.n), l.cap), l.ash, BARE_LINE[0]);
     l.build[0] = _line[0]; l.build[1] = _line[1]; l.build[2] = _line[2];
     if (!l.shown) l.shown = Float32Array.from(l.target);
   };
@@ -344,7 +354,7 @@ export function createSnowCoverHost({ renderer, climateAt, mapHeight, stateOf, b
         for (let j = 0; j < SIDE; j++) {
           for (let i = 0; i < SIDE; i++) {
             const l = lineOf(i0 + i, j0 + j, 'shown'), o = (j * SIDE + i) * 4;
-            tex[o] = l[0]; tex[o + 1] = l[1]; tex[o + 2] = l[2]; tex[o + 3] = 0;
+            tex[o] = l[0]; tex[o + 1] = l[1]; tex[o + 2] = l[2]; tex[o + 3] = lines.get(latticeKey(i0 + i, j0 + j))?.cap ?? CAP_NONE;   // PEAKS1: the cap's line, the bare faces'
           }
         }
         texGen = gen; texI = i0; texJ = j0; out.gen++;

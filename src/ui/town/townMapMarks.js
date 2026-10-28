@@ -17,6 +17,7 @@
 //   map id must be this town's too - isHouseOwned asks the region alone because its callers stand at the door).
 import { homeDoorTitle } from '../../systems/online/onlineHomes.js';
 import { unseenText } from '../../net/boardLaw.js';
+import { regionDeedsOf } from '../../net/homeLaw.js';   // HOUSES-3: a region's three deeds
 
 /** The board's name under the pointer. */
 export const TOWN_BOARD_LABEL = 'Notice Board';
@@ -68,21 +69,21 @@ export function townBoardRows(p, bountyAt, unseen = 0) {
 
 /**
  * The town's player housing, one row a building: `buildings` (world/buildingSummaries.js's rows for this town), its
- * `mapId`, the character's bank-bought `houses` slot for `regionIndex`, and `homeAt(mapId, buildingKey)` (the online
- * registry, or null offline). An online home answers first; the bank's house only where no home stands.
+ * `mapId`, the character's bank-bought `houses` deeds for `regionIndex` (HOUSES-3: three a region, net/homeLaw.js
+ * regionDeedsOf), and `homeAt(mapId, buildingKey)` (the online registry, or null offline). An online home answers first;
+ * the bank's house only where no home stands.
  */
 export function townHomeRows({ buildings = [], mapId, regionIndex, houses = null, homeAt = null }) {
   if (!Number.isFinite(Number(mapId))) return [];
   const id = Number(mapId) >>> 0;
-  const slot = houses?.[regionIndex];
-  const bought = slot?.buildingKey > 0 && Number.isFinite(Number(slot.mapId)) && (Number(slot.mapId) >>> 0) === id ? slot.buildingKey : 0;
+  const bought = new Set(regionDeedsOf(houses, regionIndex).filter((d) => Number.isFinite(Number(d.mapId)) && (Number(d.mapId) >>> 0) === id).map((d) => d.buildingKey));
   const out = [];
   for (const b of buildings ?? []) {
     const key = b?.buildingKey;
     if (!(key > 0)) continue;
     const home = homeAt ? homeAt(id, key) : null;
     if (home) out.push({ buildingKey: key, own: home.own === true, label: homeDoorTitle(home) });
-    else if (key === bought) out.push({ buildingKey: key, own: true, label: TOWN_HOUSE_LABEL });
+    else if (bought.has(key)) out.push({ buildingKey: key, own: true, label: TOWN_HOUSE_LABEL });
   }
   return out;
 }

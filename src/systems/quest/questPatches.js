@@ -66,6 +66,24 @@ export function entryLines(text, width = ENTRY_WIDTH) {
  *  nearest town's (place.js NEAR-SITE): Glaghton Court's duel is at Moriribia's inn, and the journal sent the player to
  *  Glaghton Court. The inn's own town (`___inn_`) is the questor's wherever the inn is in it, so DFU's words stand there. */
 export const QUEST_PATCHES = Object.freeze({
+  // _BRISIEN (the main quest's opener), START1 (bible/06-Systems/Alternate-Starts-Arc.md section 4): its start-up's
+  // `say 1025` is the classic start's waking - "You wake and look around the room ... Once free of the cave, you can
+  // begin the Emperor's quest" - shown the moment DFU's StartGameBehaviour started it on a new character. No new
+  // character starts it now: a start's commission does, in the city of Daggerfall, days or months after the cave
+  // (systems/starts/starts.js), and the start's own quest has told the wreck. The line goes; the rest of the script is
+  // DFU's. A quest saved past its start-up keeps the actions it was saved with (task.js restoreSaveData).
+  // AUDIT STARTS Q3: and the two places the script tells the wreck as the player's own - its journal's first entry (1010:
+  // "Before landing in Daggerfall, a sudden storm capsized the ship. I barely made it into this cave.", logged where it
+  // starts, in Daggerfall's streets now) and Lady Brisienna's first letter (1020: "I heard about your accident at sea")
+  // - are words for the shipwreck alone: a province's start and the commission in hand never went to sea. The entry's
+  // last paragraph goes (the start's own journal has told the way here); the letter's first is said true of every start,
+  // and of a save from before the starts.
+  _BRISIEN: () => [
+    { old: '\tpc at PiratesHold set _exitstarter_ \n\tsay 1025 \n', new: '\tpc at PiratesHold set _exitstarter_ \n', count: 1 },
+    { old: ' most appreciative.\n    Before landing in Daggerfall, a sudden storm\n capsized the ship. I barely made it into this cave.\n', new: ' most appreciative.\n', count: 1 },
+    { old: "     I heard about your accident at sea, and feared the\n worst. Now that I've heard you're alive and well, I\n would like the opportunity to meet with you and discuss\n our beloved Emperor's mission in the Iliac Bay.\n",
+      new: "     Word has reached me that you are in the Iliac Bay\n at last, and alive and well. I would like the\n opportunity to meet with you and discuss our beloved\n Emperor's mission here.\n", count: 1 },
+  ],
   A0C00Y10: () => [{ old: ' _inn_ in ___giver_ in six hours.', new: ' _inn_ in ___inn_ in six hours.', count: 1 }],
   // M0B11Y18 (Lord K'avar), AUDIT QA3 C3: `_S.10_`'s `pc at _L.00_ set _S.12_` stops K'avar's archers (`_S.12_ task: clear
   // _conhouse_`) once the player reaches his hideout - read at last (QUEST-AUDIT III DOTTED-SYMBOLS: C# never read

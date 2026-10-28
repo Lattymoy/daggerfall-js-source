@@ -100,6 +100,7 @@ import {
   // the cycling arithmetic and dropIconIdxs' record lookup.
   openDropIcon, canChangeDropIcon, cycleDropIcon, dropIconRecord,
   groundRefusalOf,   // HOUSE-DROP: the host's word against the ground
+  storeRefusalOf,   // AUDIT PVP-EASE L2-1: the combat lock on storing
   storeCapacityOf,   // COMPANION-WEIGHT: a storage's own weight limit
   theftTarget,   // STOLEN-GOODS: a take from someone else's keeping is a theft
 } from '../../systems/inventorySession.js';
@@ -894,12 +895,12 @@ export class NativeInventoryWindow {
           carried: goldAmount(player),
           usingWagon: this.usingWagon,
           remote: this._remote(),
-          groundRefusal: groundRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // HOUSE-DROP
+          groundRefusal: groundRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }), storeRefusal: storeRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // HOUSE-DROP
           capacity: storeCapacityOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // COMPANION-WEIGHT
           wagonKg: wagonKgFor(this.hooks.entity),   // WAGONS1: the driven wagon's capacity
         });
         if (plan.notice) this.boxes = [{ rows: [{ text: plan.notice, center: true }] }];
-        if (!plan.ok) { if (plan.refusal?.reason === 'ground') this._refuse(plan.refusal); return; }   // HOUSE-DROP: the floor's refusal is said
+        if (!plan.ok) { if (plan.refusal?.reason === 'ground' || plan.refusal?.reason === 'store') this._refuse(plan.refusal); return; }   // HOUSE-DROP: the floor's refusal is said - AUDIT PVP-EASE L2-1: and the combat lock's
         deductGold(player, plan.amount);
         addItem(this._remote(), goldStack(plan.amount));
       },
@@ -1021,7 +1022,7 @@ export class NativeInventoryWindow {
       const plan = planStore(it, {
         remote: to, usingWagon: this.usingWagon, chooseOne: this.chooseOne,
         getQuest: this.hooks.getQuest ?? null,
-        groundRefusal: groundRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // HOUSE-DROP: a floor that refuses a drop
+        groundRefusal: groundRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }), storeRefusal: storeRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // HOUSE-DROP: a floor that refuses a drop
         capacity: storeCapacityOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // COMPANION-WEIGHT: a companion's pack takes what fits
         wagonKg: wagonKgFor(this.hooks.entity),   // WAGONS1: the driven wagon's capacity
         bagLoaded: !bagMayLeave(this.hooks.entity),   // BAG1: a loaded Materials Bag never leaves the pack (AUDIT2 H11: the one test)

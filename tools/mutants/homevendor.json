@@ -139,7 +139,7 @@
   {
     "name": "HOMEVENDOR-an-off-map-pixel-taken",
     "file": "src/ui/vendor/vendorMapMark.js",
-    "old": " || px >= size.width || py >= size.height) return null;",
+    "old": " || px >= box.x0 + box.w || py >= box.y0 + box.h) return null;",
     "new": ") return null;",
     "tests": [
       "test/ui/homevendor_ui.test.js"

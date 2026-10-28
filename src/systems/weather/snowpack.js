@@ -40,7 +40,7 @@ import { MAX_MAP_PIXEL_Y } from '../../formats/mapsFile.js';
  * under the one law;
  * `levels` the altitudes a place's pack is kept at (metres above the sea - the lowest are below it, the air there read on
  * down the lapse, so a pack white to the shore still has a snowline to blend across; the highest over the tallest ground
- * the landforms stand, LANDFORM_CEILING's 3,610 m over the sea); `rate` the fall at a band's full intensity (mm of water
+ * the world stands - RED-MOUNTAIN's rim (world/tamriel/redMountain.js), over which a place would read white); `rate` the fall at a band's full intensity (mm of water
  * an hour - AUDIT PRECIP PACK-2: measured against the map's own wet hours, a sixth of all hours in High Rock, so a year
  * falls 800 to 1,300 mm on its lowlands and ranges, as a temperate maritime land does; the guessed 4 / 10 / 2.5 fell
  * three times that, a boreal pack on lowland woods); `melt` the degree-hour factor (4 mm a degree-day: the textbook's open
@@ -50,7 +50,7 @@ import { MAX_MAP_PIXEL_Y } from '../../formats/mapsFile.js';
  */
 export const SNOWPACK = Object.freeze({
   stepMinutes: 180,
-  levels: Object.freeze({ from: -600, step: 200, count: 23 }),
+  levels: Object.freeze({ from: -600, step: 200, count: 45 }),   // RED-MOUNTAIN: to 8,200 m, over its rim on the relief's top byte with the large map (23 to 3,800 before)
   rate: Object.freeze({ rain: 1.3, thunder: 3.3, snow: 0.8 }),
   melt: 4 / 24,
   rainMelt: 4.19 / 334,
@@ -266,6 +266,8 @@ export class SnowpackLattice {
      *  after a long catch-up (`advance`), and its year of nodes with it */
     this._births = (px, py) => climateAt(px, py);
     this._caughtUp = 0;
+    /** AUDIT TESA II G3: the air's ground's version the points were made on (`fresh`) */
+    this._groundVersion = airGround()?.version?.();
     /** @type {Map<number, any>} */
     this.points = new Map();
     /** @type {Map<number, Array<{ x: number, z: number, range: number, systems: any[] }>>} the wet systems found at a step, and the discs they cover */
@@ -290,6 +292,7 @@ export class SnowpackLattice {
    * point, here). A made point starts at its year's origin with the pack its summer left (`spin`, below).
    */
   point(i, j, t) {
+    this.fresh();
     const key = latticeKey(i, j), S = SNOWPACK.stepMinutes;
     let pt = this.points.get(key);
     const origin = yearOriginOf(t);
@@ -350,6 +353,7 @@ export class SnowpackLattice {
    *  widened by REACH_PAD so a window that moves on finds its new edge inside it, and kept for the points after. The
    *  finding walks a node at a time; null when `deadline` (on `now`'s clock) comes first - the next ask goes on with it. */
   systemsFor(t, pts, deadline = Infinity, now = () => performance.now()) {
+    this.fresh();
     let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
     for (const pt of pts) { x0 = Math.min(x0, pt.x); x1 = Math.max(x1, pt.x); z0 = Math.min(z0, pt.z); z1 = Math.max(z1, pt.z); }
     const covers = (d) => pts.every((pt) => Math.hypot(pt.x - d.x, pt.z - d.z) <= d.range);
@@ -487,6 +491,17 @@ export class SnowpackLattice {
   }
   /** Forget every point and every held system (the next ask starts over). */
   reset() { this.points.clear(); this._systems.clear(); this._job = null; this._span = null; }
+  /** AUDIT TESA II G3: THE MAP MOVED - the air's ground's `version` (airGround.js lawAirGround: the zones' stamp - the trace
+   *  and the relief landing after the boot, a fit) moved since the points were made: every point's air and its ceiling,
+   *  and every system born on the climates as they stood, are the old land's - forgotten, and the births read afresh (a
+   *  read of its own: the weather map's memo keys the births by it). A point had kept its ceiling for the session. */
+  fresh() {
+    const v = airGround()?.version?.();
+    if (v === this._groundVersion) return;
+    this._groundVersion = v;
+    this.reset();
+    this._births = (px, py) => this.climateAt(px, py);
+  }
 }
 const _air = { base: 0, day: 0, th0: 0, th1: 0 };
 const _fall = { intensity: 0, rain: 0, thunder: 0, snow: 0, cover: 0 };   // OW-HITCH: a point's fall at a step, read at once

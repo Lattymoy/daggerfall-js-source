@@ -299,7 +299,8 @@ test('AUDIT TOWN-ECON 2 the client\'s fixes: a pixel the service says is full to
   assert.equal(parseTownCommand('hello'), null);
   assert.deepEqual(parseTownCommand('/town audit'), { op: 'audit' });
   assert.deepEqual(parseTownCommand('/town strike 3358447'), { op: 'strike', key: 3358447 });
-  for (const bad of ['/town', '/town strike', '/town strike x', '/town strike 0', '/town strike 1 2', '/town audit 5']) assert.deepEqual(parseTownCommand(bad), { error: TOWN_USAGE }, bad);
+  for (const bad of ['/town', '/town strike', '/town strike x', '/town strike 0', '/town strike 1 2', '/town audit x']) assert.deepEqual(parseTownCommand(bad), { error: TOWN_USAGE }, bad);
+  assert.deepEqual(parseTownCommand('/town audit 5'), { op: 'audit', page: 4 });   // PIN MOVED (BAY-LEFT-SEA, the audit's E4): a page of the region's confirmed towns, 400 a page
   assert.deepEqual(townAuditLines({ towns: [] }, () => null), ['No town of this region is confirmed in the registry.']);
   const lines = townAuditLines({ towns: [{ map: RIP, px: 212, py: 151, location: 5, by: ['Ada', 'Bel', 'Cyr'] }, { map: 77, px: 10, py: 10, location: 6, by: [] }] }, (x) => (x === 212 ? RIP : x === 10 ? 999 : null));
   assert.match(lines[0], /^Town \d+ at 212,151 \(location 5\): the town here; confirmed by Ada, Bel, Cyr$/);
@@ -307,21 +308,24 @@ test('AUDIT TOWN-ECON 2 the client\'s fixes: a pixel the service says is full to
   const said = [];
   const sent = [];
   const dh = createTownEconHost({ online: () => true, townOf: (id) => towns.get(id), seatAt: () => null, seats: () => null, raidedAt: () => false, nowMs: () => T * 1000,
-    door: { ...d.door, me: () => ME, strike: async (map) => { sent.push(['strike', map]); return { ok: true, data: { reports: 3 } }; }, audit: async (region) => { sent.push(['audit', region]); return { ok: true, data: { towns: [] } }; } },
+    door: { ...d.door, me: () => ME, strike: async (map) => { sent.push(['strike', map]); return { ok: true, data: { reports: 3 } }; }, audit: async (region, page) => { sent.push(['audit', region, page]); return { ok: true, data: { towns: [] } }; } },   // PIN MOVED (BAY-LEFT-SEA): and its page
     storage: memory(), regionHere: () => 17 });
   assert.equal(dh.command('/hall audit', (l) => said.push(l)), false, 'not its word');
   assert.equal(dh.command('/town strike 42', (l) => said.push(l)), true);
   assert.equal(dh.command('/town audit', (l) => said.push(l)), true);
   await flush();
-  assert.deepEqual(sent, [['strike', 42], ['audit', 17]]);
+  assert.deepEqual(sent, [['strike', 42], ['audit', 17, 0]]);
   assert.deepEqual(said, ['Town 42 is struck from the registry (3 reports).', 'No town of this region is confirmed in the registry.']);
+  assert.equal(dh.command('/town audit 3', (l) => said.push(l)), true);   // BAY-LEFT-SEA: the third page
+  await flush();
+  assert.deepEqual(sent.at(-1), ['audit', 17, 2]);
   // the door's routes
   const posted = [];
   const signed = memory();
   signed.setItem(SESSION_KEY, JSON.stringify({ secret: 'sek', id: ME }));
   const door = accountTowns({ fetch: async (u, i) => { posted.push([new URL(u).pathname, JSON.parse(i.body)]); return new Response('{"ok":true}', { status: 200 }); }, storage: signed });
-  await door.strike(42); await door.audit(17); await door.witness({ map: 1 }, 'k1.r.s');
-  assert.deepEqual(posted.map(([p, b]) => [p, Object.keys(b).filter((k) => k !== 'secret')]), [['/v1/towns/strike', ['map']], ['/v1/towns/audit', ['region']], ['/v1/towns/witness', ['town', 'receipt']]]);
+  await door.strike(42); await door.audit(17); await door.witness({ map: 1 }, 'k1.r.s'); await door.audit(64, 2);
+  assert.deepEqual(posted.map(([p, b]) => [p, Object.keys(b).filter((k) => k !== 'secret')]), [['/v1/towns/strike', ['map']], ['/v1/towns/audit', ['region']], ['/v1/towns/witness', ['town', 'receipt']], ['/v1/towns/audit', ['region', 'page']]]);   // BAY-LEFT-SEA: a page past the first
   // the world host's wiring
   const w = rd('src/scenes/world.js');
   assert.match(w, /chapters: chapterSheet, clockHeard: \(\) => _sharedClockHeard,/);

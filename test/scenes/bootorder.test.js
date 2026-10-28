@@ -46,6 +46,14 @@ const MOVED = movedOutOf('src/scenes/world.js').map((p) => {
   const ctor = tree.body.find((n) => n.type === 'ExportNamedDeclaration' && n.declaration?.type === 'FunctionDeclaration')?.declaration;
   return { file: p, ctor, handle: ctor?.params[0]?.name };
 });
+// IC-SWAP-BEHIND (scenes/swapBehind.js): a rebuild goes through the swap - made in scenes/tamrielSweepsHost.js over the
+// host's own names - and the first build reaches it (its roadless retry marks the pixel; its publish is the swap's). So
+// the walk follows `swap.<method>` into the swap's methods as into the host's, each `host.<name>` there its host's name -
+// those the sweeps' host hands it under another (SWAP_NAMES) read as the host's own.
+const SWAP_TREE = parse(readFileSync(new URL('../../src/scenes/swapBehind.js', import.meta.url), 'utf8'), { ecmaVersion: 'latest', sourceType: 'module' });
+const SWAP_CTOR = SWAP_TREE.body.find((n) => n.type === 'ExportNamedDeclaration' && n.declaration?.id?.name === 'createSwapBehind')?.declaration;
+const SWAP_API = SWAP_CTOR?.body.body.find((n) => n.type === 'VariableDeclaration' && n.declarations[0]?.id?.name === 'api')?.declarations[0].init;
+const SWAP_NAMES = { doorsMoved: 'doorGeneration', seasonHold: '_seasonHoldKey', walkMode: 'walkMode', playerSpawned: 'playerSpawned' };
 const lineOf = (p) => src.slice(0, p).split('\n').length;
 const kids = (n) => {
   const out = [];
@@ -65,15 +73,18 @@ const findFn = (n, name) => {
 };
 /** the identifiers a node names, and the functions it calls, OUTSIDE any
  *  nested function body - what running that node touches right now */
-function surface(node, handle = null) {
+function surface(node, handle = null, swapOwn = false) {
   const ids = new Set(), calls = new Set();
-  const live = (x) => (handle && x.type === 'MemberExpression' && !x.computed && x.object.type === 'Identifier' && x.object.name === handle ? x.property.name : null);
+  const live = (x) => (handle && x.type === 'MemberExpression' && !x.computed && x.object.type === 'Identifier' && x.object.name === handle ? (swapOwn ? SWAP_NAMES[x.property.name] ?? x.property.name : x.property.name) : null);
+  // IC-SWAP-BEHIND: `swap.<method>(...)` - and inside the swap, `api.<method>(...)` - a call into the swap's method
+  const swapCall = (c) => (c.type === 'MemberExpression' && !c.computed && c.object.type === 'Identifier' && (c.object.name === 'swap' || (swapOwn && c.object.name === 'api')) ? `swap.${c.property.name}` : null);
   (function walk(x, depth) {
     if (isFn(x)) depth += 1;
     if (live(x)) { if (depth === 0) ids.add(live(x)); return; }   // a moved module's `host.<name>`: the host's <name>, read here
     if (x.type === 'Identifier' && depth === 0) ids.add(x.name);
     if (x.type === 'CallExpression' && x.callee.type === 'Identifier' && depth === 0) calls.add(x.callee.name);
     if (x.type === 'CallExpression' && live(x.callee) && depth === 0) calls.add(live(x.callee));
+    if (x.type === 'CallExpression' && swapCall(x.callee) && depth === 0) calls.add(swapCall(x.callee));
     for (const [k, c] of kids(x)) {
       if (x.type === 'MemberExpression' && k === 'property' && !x.computed) continue;
       if ((x.type === 'Property' || x.type === 'MethodDefinition' || x.type === 'PropertyDefinition') && k === 'key' && !x.computed) continue;
@@ -110,10 +121,12 @@ const ALLOWED = {
   // lands mid-build, which on a fast connection is every boot. What makes
   // these four safe is that every read of them is behind `if (collectLoose)`
   // and that call site passes it false.
-  droppedLoot: ['destroyPixel, and only under collectLoose - and standWodPile, which stands only the piles an unload carried (collectLoose); the sweep carries none', 'collectLoose: false', ['destroyPixel', 'standWodPile']],
-  droppedTorches: ['destroyPixel, and only under collectLoose', 'collectLoose: false', ['destroyPixel']],
-  cityGuards: ['destroyPixel, and only under collectLoose', 'collectLoose: false', ['destroyPixel']],
-  exteriorFoes: ['destroyPixel, and only under collectLoose', 'collectLoose: false', ['destroyPixel']],
+  // PIN MOVED (IC-SWAP-BEHIND): the call sites are the swap's now (scenes/swapBehind.js mark and publish - the retry marks
+  // the pixel, the build behind it publishes through the swap), each passing it false (every one held below)
+  droppedLoot: ['destroyPixel, and only under collectLoose - and standWodPile, which stands only the piles an unload carried (collectLoose); the sweep carries none', 'host.destroyPixel(px, py, { collectLoose: false', ['destroyPixel', 'standWodPile']],
+  droppedTorches: ['destroyPixel, and only under collectLoose', 'host.destroyPixel(px, py, { collectLoose: false', ['destroyPixel']],
+  cityGuards: ['destroyPixel, and only under collectLoose', 'host.destroyPixel(px, py, { collectLoose: false', ['destroyPixel']],
+  exteriorFoes: ['destroyPixel, and only under collectLoose', 'host.destroyPixel(px, py, { collectLoose: false', ['destroyPixel']],
   // BOOT-TDZ2: the playerTravelPixel() reads, behind the mod's own guard -
   // with no mod there is nothing to initialise and the call never happens.
   walkMode: ['playerTravelPixel, behind the travelOptions guard', 'if (host.travelOptions && dfLocation) {', ['playerTravelPixel']],
@@ -154,6 +167,14 @@ test('BOOT-TDZ2: nothing the boot walk runs reads a binding the boot walk has no
     }
   }
   assert.ok(fns.has('buildPixelNow'), 'the walk reaches the pixel build, wherever it stands');
+  // IC-SWAP-BEHIND: the swap's methods, walked as the host's through its handle
+  const swapOwn = new Set();
+  assert.ok(SWAP_API?.type === 'ObjectExpression', 'scenes/swapBehind.js: the swap\'s methods on its `api`');
+  for (const q of SWAP_API.properties) {
+    if (q.type !== 'Property' || q.kind !== 'init' || !isFn(q.value)) continue;
+    arrows.set(`swap.${q.key.name}`, q.value); handleOf.set(q.value, SWAP_CTOR.params[0].name); swapOwn.add(q.value);
+  }
+  assert.ok(arrows.has('swap.mark') && arrows.has('swap.publish') && arrows.has('swap.keyFor'), 'the swap\'s mark, its build\'s key and its publish');
 
   const buildAt = body.findIndex((n) => /const playerPixel = await awaitedBuild\(first\.px, first\.py\);/.test(src.slice(n.start, n.end)));
   assert.notEqual(buildAt, -1, 'the boot no longer awaits its own first pixel build by that name');
@@ -166,7 +187,7 @@ test('BOOT-TDZ2: nothing the boot walk runs reads a binding the boot walk has no
     if (memo.has(name)) return memo.get(name);
     const f = fns.get(name) ?? arrows.get(name);
     if (!f) return new Set();
-    const { ids, calls } = surface(f.body, handleOf.get(f));
+    const { ids, calls } = surface(f.body, handleOf.get(f), swapOwn.has(f));
     const out = new Set(ids);
     for (const c of calls) for (const x of reach(c, seen)) out.add(x);
     memo.set(name, out);
@@ -202,7 +223,11 @@ test('BOOT-TDZ2: nothing the boot walk runs reads a binding the boot walk has no
   // on the exact line that produced the second crash. Each entry names
   // the source the excuse rests on; delete the guard and the excuse goes
   // with it, whatever the walker still thinks it can reach.
-  const builder = hostText('src/scenes/pixelBuild.js');   // HOST-SPLIT 2: the pixel builder, moved whole into its module
+  // IC-SWAP-BEHIND: and the swap the build tears down through - every teardown it asks passes collectLoose false
+  const swapSrc = readFileSync(new URL('../../src/scenes/swapBehind.js', import.meta.url), 'utf8');
+  const swapTears = swapSrc.match(/host\.destroyPixel\([^)]*\)/g) ?? [];
+  assert.ok(swapTears.length >= 3 && swapTears.every((c) => /\{ collectLoose: false\b/.test(c)), `the swap's teardowns, each a rebuild's: ${swapTears.join(' / ')}`);
+  const builder = `${hostText('src/scenes/pixelBuild.js')}\n${swapSrc}`;   // HOST-SPLIT 2: the pixel builder, moved whole into its module
   for (const [nm, [why, guard]] of Object.entries(ALLOWED)) {
     assert.ok(builder.includes(guard),
       `${nm} is excused as "${why}", and the guard that excuse rests on (${guard}) is no longer in the pixel builder`);
@@ -219,7 +244,7 @@ test('BOOT-TDZ2: nothing the boot walk runs reads a binding the boot walk has no
     visited.add(name);
     const f = fns.get(name) ?? arrows.get(name);
     if (!f) return;
-    const { ids, calls } = surface(f.body, handleOf.get(f));
+    const { ids, calls } = surface(f.body, handleOf.get(f), swapOwn.has(f));
     for (const nm of ids) note(nm, name);
     for (const c of calls) visit(c);
   };

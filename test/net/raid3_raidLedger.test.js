@@ -185,9 +185,12 @@ test('RAID3 wire: a word is projected - its fields, bounded, nothing else; a fra
   assert.deepEqual(RAID_OUT_KINDS, ['st', 'cl', 'rc', 'cls', 'tw'], 'RAID-ROLL: `tw` the hub asking for the towns table');
   assert.deepEqual(validRaidIn({ ...word({ n: 3, s: 1 }), junk: 1 }), word({ n: 3, s: 1 }));
   assert.deepEqual(validRaidIn({ ...word(), s: undefined }), word({ s: 0 }));
-  for (const bad of [{ k: 'x' }, { key: '3:7' }, { st: -1 }, { st: 1.5 }, { tg: RAID_TARGET_MIN - 1 }, { tg: RAID_TARGET_MAX + 1 }, { ty: RAID_TYPES }, { px: 1000 }, { py: 500 }, { px: -1 }, { n: RAID_WORD_KILLS_MAX + 1 }, { n: -1 }, { s: 2 }]) {
+  for (const bad of [{ k: 'x' }, { key: '3:7' }, { st: -1 }, { st: 1.5 }, { tg: RAID_TARGET_MIN - 1 }, { tg: RAID_TARGET_MAX + 1 }, { ty: RAID_TYPES }, { px: 8192 }, { py: -8192 }, { px: 1.5 }, { n: RAID_WORD_KILLS_MAX + 1 }, { n: -1 }, { s: 2 }]) {
     assert.equal(validRaidIn(word(bad)), null, JSON.stringify(bad));
   }
+  // PIN MOVED (WW6): the town's pixel is the world's (net/wire.js worldPixelOk) - a raid past the Bay is a word too; which
+  // side of the Bay's edge a key's town stands on is the ledger's own law (net/raid/raidLaw.js raidSideOk)
+  assert.deepEqual([validRaidIn(word({ px: 1000 }))?.px, validRaidIn(word({ py: 500 }))?.py, validRaidIn(word({ px: -1 }))?.px, validRaidIn(word({ px: 8191, py: -8191 }))?.py], [1000, 500, -1, -8191]);
   assert.equal(validRaidIn(word({ tg: RAID_TARGET_MAX, ty: RAID_TYPES - 1, px: 999, py: 499, n: RAID_WORD_KILLS_MAX })).n, RAID_WORD_KILLS_MAX, 'every top end is in');
   assert.deepEqual(parseClient(JSON.stringify({ t: 'raid', ...word() })), { error: 'raid before hello' });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'raid', ...word({ n: -1 }) }), { hasHello: true }), { error: 'bad raid' });
@@ -700,10 +703,13 @@ test('RAID3 client: my receipt is kept, one a raid, and handed on once (RAID4 ca
 
 test('RAID3 the world host by source: the raid system is told whether the relay keeps raids and sends its word through the session; the session\'s raid words and the hub link\'s reach the raid; the relay\'s arm is in the relay and the hub\'s door in its fetch', () => {
   const w = rd('src/scenes/world.js');
-  const at = w.indexOf('  setRaidingPartiesHost({');
-  const body = w.slice(at, w.indexOf('\n  });', at));
-  assert.match(body, /relayRaids: \(\) => !!online\?\.raidOk,/);
-  assert.match(body, /sendRaid: \(w, cell\) => !!online\?\.sendRaid\(w, cell\),/);
+  // PIN MOVED (WW6): the seams moved verbatim out of bootWorld to scenes/raidHost.js (HOST-SPLIT), the host's live names
+  // read there as `host.<name>`
+  const rh = rd('src/scenes/raidHost.js');
+  const at = rh.indexOf('  setRaidingPartiesHost({');
+  const body = rh.slice(at, rh.indexOf('\n  });', at));
+  assert.match(body, /relayRaids: \(\) => !!host\.online\?\.raidOk,/);
+  assert.match(body, /sendRaid: \(w, cell\) => !!host\.online\?\.sendRaid\(w, cell\),/);
   assert.match(w, /online\.onRaid = \(f, room\) => raidRelayWord\(f, room\);/);
   assert.match(w, /if \(tab\.room === SOCIAL_ROOM\) link\.onRaid = \(f, room\) => \(f\.k === 'tw' \? offerRaidTowns\(link, f\.h\) : raidRelayWord\(f, room\)\);/);   // RAID-ROLL: the hub's ask for the towns table beside it
   const relay = rd('server/src/index.js');

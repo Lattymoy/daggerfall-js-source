@@ -11,12 +11,12 @@
   {
     "name": "SHADOWCLOAK-the-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage' });",
-    "new": "radiance: 'primarch', shadowcloak: 'aegis', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage' });",
+    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
+    "new": "radiance: 'primarch', shadowcloak: 'aegis', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
-    "note": "SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content). NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
+    "note": "SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content). NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word. SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "SHADOWCLOAK-the-kind",
@@ -68,12 +68,12 @@
   {
     "name": "SHADOWCLOAK-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke']);   // NIRNROOT-SAGE (2026-10-26, for Blob-Marley: \"billowing smoke, circling nirn roots around midsection, small glowing green runes encircling feet\"): SAGE'S SMOKE last - smoke billowing up about the body, nirnroots circling the waist, green runes glowing round the feet; the Nirnroot Sage's own, granted with its title by name, never sold;   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;",
-    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke']);   // NIRNROOT-SAGE (2026-10-26, for Blob-Marley: \"billowing smoke, circling nirn roots around midsection, small glowing green runes encircling feet\"): SAGE'S SMOKE last - smoke billowing up about the body, nirnroots circling the waist, green runes glowing round the feet; the Nirnroot Sage's own, granted with its title by name, never sold;   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;",
+    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal']);",
+    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal']);",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
-    "note": "SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's Crystal Resonance. WIKIMAID (re-aimed by content). NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
+    "note": "SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's Crystal Resonance. WIKIMAID (re-aimed by content). NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word. SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "SHADOWCLOAK-the-hood-too-tall",
@@ -456,11 +456,12 @@
   {
     "name": "SHADOWCLOAK-the-torn-cloth-still-drawn",
     "file": "src/render/auraRing.js",
-    "old": "    if (torn < CLOAK_RIP_S && !folded && Math.hypot(",
-    "new": "    if (!folded && Math.hypot(",
+    "old": "    if (torn < CLOAK_RIP_S && !folded && !auraEyeAtHead(",
+    "new": "    if (!folded && !auraEyeAtHead(",
     "tests": [
       "test/net/shadowcloak.test.js"
-    ]
+    ],
+    "note": "SHOP (re-aimed by content): the head test is auraEyeAtHead now."
   },
   {
     "name": "SHADOWCLOAK-the-shreds-never-drawn",
@@ -839,11 +840,12 @@
   {
     "name": "SHADOWCLOAK-a-riders-cape-drawn",
     "file": "src/render/auraRing.js",
-    "old": "    if (torn < CLOAK_RIP_S && !folded && Math.hypot(",
-    "new": "    if (torn < CLOAK_RIP_S && Math.hypot(",
+    "old": "    if (torn < CLOAK_RIP_S && !folded && !auraEyeAtHead(",
+    "new": "    if (torn < CLOAK_RIP_S && !auraEyeAtHead(",
     "tests": [
       "test/net/shadowcloak.test.js"
-    ]
+    ],
+    "note": "SHOP (re-aimed by content): the head test is auraEyeAtHead now."
   },
   {
     "name": "SHADOWCLOAK-a-riders-emblems-drawn",
@@ -956,11 +958,12 @@
   {
     "name": "SHADOWCLOAK-the-cloth-in-first-person",
     "file": "src/render/auraRing.js",
-    "old": " && Math.hypot(dx - c * hd[0] - sn * hd[2], eye[1] - w.at[1] - hd[1], dz + sn * hd[0] - c * hd[2]) >= CLOAK_INSIDE_M) {",
-    "new": ") {",
+    "old": " && !auraEyeAtHead(w, eye)) {   // the eye inside the hood",
+    "new": ") {   // the eye inside the hood",
     "tests": [
       "test/net/shadowcloak.test.js"
-    ]
+    ],
+    "note": "SHOP (re-aimed by content): the test is auraEyeAtHead now, the cape's and the cloak's one."
   },
   {
     "name": "SHADOWCLOAK-the-emblems-drawn-torn-through",
@@ -1145,11 +1148,12 @@
   {
     "name": "SHADOWCLOAK-inside-by-the-axis",
     "file": "src/render/auraRing.js",
-    "old": " && Math.hypot(dx - c * hd[0] - sn * hd[2], eye[1] - w.at[1] - hd[1], dz + sn * hd[0] - c * hd[2]) >= CLOAK_INSIDE_M) {",
-    "new": " && Math.hypot(dx, dz) >= 0.55) {",
+    "old": "  return Math.hypot(dx - c * hd[0] - sn * hd[2], eye[1] - w.at[1] - hd[1], dz + sn * hd[0] - c * hd[2]) < CLOAK_INSIDE_M;",
+    "new": "  return Math.hypot(dx, dz) < 0.55;",
     "tests": [
       "test/net/shadowcloak.test.js"
-    ]
+    ],
+    "note": "SHOP (re-aimed by content): the measure lives in auraEyeAtHead now."
   },
   {
     "name": "SHADOWCLOAK-the-fade-by-the-axis",

@@ -209,7 +209,11 @@ const GOLDEN = Object.freeze({
   // the seeded fight's fortieth second (their cooldown run from his wake), naming the chained by peer id (`pk`); every frame
   // before it word for word as COURT-WATCH's (05991c48..., 192 frames)
   gate: Object.freeze({ n: 190, h: '3db1852e7b7c714a313ceb3f19790f9cfb0e6348f2599c0905f35c97bdfe9c35' }),
-  sd: Object.freeze({ n: 140, h: 'b0019f8f7fd56073923afc19176cba6cf95d3d295840299ee38804d233195ee9' }),
+  // PIN MOVED (WW5, bible/03-World/World-Wide.md WW5): the hub runs a director a lane - the Bay's and eight provinces' -
+  // before the realm opens, so the seeded die stands elsewhere when the fight begins (b0019f8f..., 140 frames before). The
+  // Remnant's frames are the same: with the die seeded afresh at the fight's first hello the realm says 148 frames hashed
+  // 36cc80c3ccedd3eeef2d26a35633c6778389cbb984c13413f2d1ae383613befa on the tree before WW5 and after it alike
+  sd: Object.freeze({ n: 146, h: '1e8fe66973b532178b65903095c99018a4532b20a13535c410c760f0eaa30daf' }),
   serpent: Object.freeze({ n: 232, h: '8569aebc4ba221743d3191c8d952bcca99e72e164b032cfd37f00eb613ce3ded' }),
   // PIN MOVED (RPT1026-EVENTS ORRERY-HANDS, net/superDungeon/sdBrain.js orreryRightsSnapped): a hand's lengthening is counted for
   // the Hollow, so past the snap Ann - ten long turns behind her - waits while Bo and the keepers turn (`w`, to her alone),

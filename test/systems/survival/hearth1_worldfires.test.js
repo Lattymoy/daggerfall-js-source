@@ -99,7 +99,8 @@ test('HEARTH1: all four hosts answer with their own fires - THE FOUR HOSTS RULE'
   // flats; the interior takes the light list its context built.
   const world = hostText('src/scenes/world.js'), ex = read('src/scenes/exterior.js');
   const dung = read('src/scenes/dungeonContext.js'), wm = read('src/scenes/worldModes.js');
-  assert.match(world, /if \(isHearthFlat\(LIGHTS_ARCHIVE, light\.record\)\) pixelHearths\.push\(\[lp\[0\], lp\[1\], lp\[2\], locLocal\[1\] \+ light\.foot, light\.w, light\.h\]\);/);
+  // PIN MOVED (SOLITUDE-RELIEF): its foot on its block's tier (`blockY`, the location's flatten where no block is lifted)
+  assert.match(world, /if \(isHearthFlat\(LIGHTS_ARCHIVE, light\.record\)\) pixelHearths\.push\(\[lp\[0\], lp\[1\], lp\[2\], blockY \+ light\.foot, light\.w, light\.h\]\);/);
   assert.match(world, /hearths: hearthsNear,/, 'the streaming host hands its door to the pool');
   assert.match(ex, /if \(isHearthFlat\(LIGHTS_ARCHIVE, light\.record\)\) cityHearths\.push\(\{ \.\.\.l, foot: light\.foot, w: light\.w, h: light\.h \}\);/);
   assert.match(ex, /hearths: \(\) => cityHearths,/);

@@ -1,0 +1,65 @@
+[
+  {
+    "name": "RIVER-FORDS-the-width-unpriced",
+    "file": "src/world/road/roadLand.js",
+    "old": "if (raster.dir[i]) out[i] = RIVER_FORD.cost + RIVER_FORD.perM * raster.width[i];",
+    "new": "if (raster.dir[i]) out[i] = RIVER_FORD.cost;",
+    "tests": [
+      "test/world/road/river_fords.test.js"
+    ]
+  },
+  {
+    "name": "RIVER-FORDS-the-corner-unpriced",
+    "file": "src/world/road/roadLand.js",
+    "old": "  if (t.river) { const r = t.river[i] || (cx !== nx && cy !== ny ? Math.min(t.river[cy * MAP_WIDTH + nx], t.river[ny * MAP_WIDTH + cx]) : 0); if (r) c += len * r; }",
+    "new": "  if (t.river) { const r = t.river[i]; if (r) c += len * r; }",
+    "tests": [
+      "test/world/road/river_fords.test.js"
+    ]
+  },
+  {
+    "name": "RIVER-FORDS-the-corner-one-side",
+    "file": "src/world/road/roadLand.js",
+    "old": "Math.min(t.river[cy * MAP_WIDTH + nx], t.river[ny * MAP_WIDTH + cx])",
+    "new": "Math.max(t.river[cy * MAP_WIDTH + nx], t.river[ny * MAP_WIDTH + cx])",
+    "tests": [
+      "test/world/road/river_fords.test.js"
+    ]
+  },
+  {
+    "name": "RIVER-FORDS-the-price-unread",
+    "file": "src/world/road/roadLand.js",
+    "old": "  if (t.river) { const r = t.river[i] ||",
+    "new": "  if (false) { const r = t.river[i] ||",
+    "tests": [
+      "test/world/road/river_fords.test.js"
+    ]
+  },
+  {
+    "name": "RIVER-FORDS-the-raster-unread",
+    "file": "src/world/tamrielRoads.js",
+    "old": "  land.river = riverFords(riverRaster(gx, gy, MAP_W, MAP_H));\n",
+    "new": "",
+    "tests": [
+      "test/world/road/river_fords.test.js"
+    ]
+  },
+  {
+    "name": "RIVER-FORDS-the-paths-unread",
+    "file": "src/world/tamriel/tamrielWaters.js",
+    "old": "      if (paths && onPath(paths, x, y, span)) continue;",
+    "new": "      if (false) continue;",
+    "tests": [
+      "test/world/road/river_fords.test.js"
+    ]
+  },
+  {
+    "name": "RIVER-FORDS-the-paths-unhanded",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "paintTamrielWaters(tileData, px, py, hasLocation ? locationRect : null, undefined, paths);",
+    "new": "paintTamrielWaters(tileData, px, py, hasLocation ? locationRect : null);",
+    "tests": [
+      "test/world/road/river_fords.test.js"
+    ]
+  }
+]

@@ -34,10 +34,11 @@ import { repairReadyLine } from '../../src/ui/enhanced/enhancedTrade.js';
 import { restClockLine } from '../../src/ui/restWindow.js';
 import { TavernWindow, TAVERN_RECTS, TAVERN_PANEL_X, TAVERN_PANEL_Y, OWN_TIME_ROOM, OWN_TIME_ROOM_NOTE } from '../../src/ui/tavernWindow.js';
 import { RACES } from '../../src/systems/races.js';
+import { hostText } from '../hostText.mjs';
 
 afterEach(() => { setSharedClock(null); resetWeatherSim(); setWeatherMapLaw(false); setSharedWeather(false); });
 
-const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld (scenes/questWorld.js, scenes/worldQuickSave.js) - the host read whole
 const D = MINUTES_PER_DAY, H = 60;
 const quiet = () => ({ hurt() {}, heal() {}, drainMagicka() {}, restoreMagicka() {}, drainFatigue() {}, restoreFatigue() {}, say() {} });
 /** A faction store with the Merchants and four provinces, as the day block's world half and the power walks read it. */

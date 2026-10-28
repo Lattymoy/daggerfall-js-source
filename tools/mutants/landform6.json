@@ -111,11 +111,12 @@
   {
     "name": "LANDFORM6-job-on-no-climates",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "  const landforms = landform ? createLandforms({ woods, roads, sites, climates }) : null;",
-    "new": "  const landforms = landform ? createLandforms({ woods, roads, sites }) : null;",
+    "old": "  const landforms = landform ? createLandforms({ woods, roads, sites, beyond, climates }) : null;",
+    "new": "  const landforms = landform ? createLandforms({ woods, roads, sites, beyond }) : null;",
     "tests": [
       "test/world/terrain/landform6.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the kernels carry the sites past the Bay (D1)."
   },
   {
     "name": "LANDFORM6-ranges-inverted",

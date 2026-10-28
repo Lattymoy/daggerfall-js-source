@@ -279,7 +279,7 @@ test('SERVER-POST the wiring: the pause face stands the envelope beside the hour
   assert.match(menu, /function postEnvelope\(home, glass\) \{\n  if \(!hooks\.post\?\.\(\)\) return null;/, 'online only - where the host hands a box');
   assert.match(menu, /postAnchor = anchorPost\(envelope, glass, home\.querySelector\?\.\('\.px-profile'\), home\);/);
   assert.match(menu, /else if \(postOpen && hooks\.post\?\.\(\)\) \{\n[^\n]*\n\s*const pstage = el\('div', 'px-stage px-timersstage px-poststage'\);/);
-  assert.match(menu, /for \(const n of \[stage, home\.querySelector\?\.\('\.px-profile'\), mark, envelope, laurel\]\) n\?\.setAttribute\?\.\('inert', ''\);/);   // PIN MOVED (SEASON-BOOK): and the laurel beside it
+  assert.match(menu, /for \(const n of \[stage, home\.querySelector\?\.\('\.px-profile'\), mark, envelope, laurel, gem\]\) n\?\.setAttribute\?\.\('inert', ''\);/);   // PIN MOVED (SEASON-BOOK): and the laurel beside it; PIN MOVED (SHOP): and the gem
   assert.match(menu, /: postOpen && postView \? \(\) => \{ postOpen = false; postKeep = \{\}; postFocusBack = true; render\(\); \}/, 'Escape closes it first');
   assert.match(menu, /stopTimers\(\);   \/\/ TIMERS1: a rebuild builds the window again, with its own tick\n  stopPost\(\);/);
   assert.match(menu, /releaseShotsPane\(\);   \/\/ LOAD1[^\n]*\n      stopPost\(\);   \/\/ SERVER-POST/, 'and on unmount');
@@ -398,7 +398,7 @@ test('AUDIT SERVER-POST the doors: /mail opens the mailbox on either skin and wh
   assert.match(door, /\.filter\(\(n\) => !n\.closest\?\.\('\[inert\]'\)\);/, 'Tab never into what is out of reach');
   const menu = src('src/ui/enhanced/enhancedMenu.js');
   assert.match(menu, /else if \(at === 'mailbox'\) postOpen = true;/, 'the door lands on the window');
-  assert.match(menu, /closeOnOutsideTap\(home, '\.px-acctwin', [^\n]*\n\s*for \(const n of \[stage, mark, envelope, laurel\]\) n\?\.setAttribute\?\.\('inert', ''\);/, 'the face under the account window inert');   // PIN MOVED (SEASON-BOOK): the laurel too
+  assert.match(menu, /closeOnOutsideTap\(home, '\.px-acctwin', [^\n]*\n\s*for \(const n of \[stage, mark, envelope, laurel, gem\]\) n\?\.setAttribute\?\.\('inert', ''\);/, 'the face under the account window inert');   // PIN MOVED (SEASON-BOOK): the laurel too; PIN MOVED (SHOP): and the gem
   assert.match(menu, /postKeep = \{\};\n/, 'the window\'s place reset with the visit');
   assert.match(menu, /postView = postWindow\(document, \{ box: \(\) => hooks\.post\?\.\(\) \?\? null, keep: postKeep,/);
 });

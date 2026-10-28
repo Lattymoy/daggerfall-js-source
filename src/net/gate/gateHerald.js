@@ -25,7 +25,7 @@
 //   heralds and the hub that read them from this file.
 //
 // Not a DFU member: Daggerfall has no other players and no Discord. Ledger A (DISCORD-GATES).
-import { gameDayAt, isGateDay, gateAt, gateTimes, gateBossOf, gateModsOf, gatePortentsOf, portentsLine, GATE_EVERY_DAYS, GATE_COLLAPSE_MS } from './gateLaw.js';
+import { gameDayAt, isGateDay, gateAt, gateTimes, gateBossOf, gateModsOf, gatePortentsOf, portentsLine, gateNumber, gateDayOf, gateLaneOf, GATE_EVERY_DAYS, GATE_COLLAPSE_MS } from './gateLaw.js';
 import { GATE_TOP_MAX } from '../wire.js';
 import { readGateMods } from './gateMods.js';   // WB8c: tonight's marks in the omen's post
 import { RITE_OMEN_LINE } from './gateRite.js';
@@ -103,17 +103,22 @@ export function ritePost({ place = null, by = [], n = 0 }) {
 /**
  * The omen the herald owes next: `{day, at}` - the first gate whose omen is not posted (`postedDay` and before are) and
  * whose gate has not opened yet, due at its omen (now, once that has passed). A gate that opened unposted is let go.
+ * WW2: on lane `lane` (the Bay's, 0, by default) - its gates' numbers, its own today (gameDayAt's), `postedDay` a number of
+ * that lane.
  * @param {number} nowMs relay clock
  * @param {number} [postedDay] the last day whose omen was posted
+ * @param {number} [lane]
  */
-export function heraldOmenDue(nowMs, postedDay = -1) {
-  const today = gameDayAt(nowMs);
-  const posted = Number.isSafeInteger(postedDay) && postedDay <= today ? postedDay : -1;   // a day not yet come is no post made
+export function heraldOmenDue(nowMs, postedDay = -1, lane = 0) {
+  const today = gameDayAt(nowMs, lane);
+  const was = Number.isSafeInteger(postedDay) && postedDay >= 0 && gateLaneOf(postedDay) === lane ? gateDayOf(postedDay) : -1;
+  const posted = was <= today ? was : -1;   // a day not yet come is no post made
   for (let d = Math.max(0, today); d <= today + GATE_EVERY_DAYS; d++) {
-    if (!isGateDay(d) || d <= posted) continue;
-    const t = gateTimes(d);
+    const n = gateNumber(d, lane);
+    if (!isGateDay(n) || d <= posted) continue;
+    const t = gateTimes(n);
     if (t.openAt <= nowMs) continue;
-    return { day: d, at: Math.max(nowMs, t.omenAt) };
+    return { day: n, at: Math.max(nowMs, t.omenAt) };
   }
   return null;
 }
@@ -122,8 +127,8 @@ export function heraldOmenDue(nowMs, postedDay = -1) {
 export const heraldFellLive = (day, nowMs) => isGateDay(day) && nowMs < gateTimes(day).wrathAt + GATE_COLLAPSE_MS + HERALD_FELL_KEEP_MS;
 
 /** Does the hub take a word of day `day`'s site at `nowMs` - the gate the clock is about, or the next one a moment
- *  before the turn? */
-export const gateSiteDayOk = (day, nowMs) => Number.isSafeInteger(day) && (day === gateAt(nowMs).day || day === gateAt(nowMs + GATE_SITE_SKEW_MS).day);
+ *  before the turn? WW2: on the gate's own lane (`day` a gate's number). */
+export const gateSiteDayOk = (day, nowMs) => isGateDay(day) && (day === gateAt(nowMs, gateLaneOf(day)).day || day === gateAt(nowMs + GATE_SITE_SKEW_MS, gateLaneOf(day)).day);
 
 /**
  * THE HUB'S RECORD OF WHERE THE GATE STANDS, with one account's word folded in: `{d, c}` - the day, and each place said

@@ -117,7 +117,9 @@ test('L10N3e places: the town talk host - %cn (MacroHelper.cs:571/:573), the cou
   // is the topics' own names
   const tt = readFileSync(new URL('../../src/scenes/townTalk.js', import.meta.url), 'utf8');
   assert.match(tt, /const cityName = \(\) => topics\?\.locationName \?\? topics\?\.regionName \?\? '';/);
-  assert.match(tt, /discoverBuilding\(`\$\{regionNow\(\)\}:\$\{cityName\(\)\}`, building, null, questBuildingSource\)/);
+  // PIN MOVED (BAY-LEFT-MAPS C7 = E2, test/systems/bayleft_disckey.test.js): the key by the one key-maker - the Bay's byte for
+  // byte, a place past the Bay its map id after it (systems/discovery.js townBookId)
+  assert.match(tt, /discoverBuilding\(townBookId\(regionNow\(\), cityName\(\), topics\?\.mapId\), building, null, questBuildingSource\)/);
   assert.equal((tt.match(/shownCityName\(\)/g) ?? []).length, 5, 'the five places %cn is shown: two greetings, the answer, the accessor, the court');
 });
 

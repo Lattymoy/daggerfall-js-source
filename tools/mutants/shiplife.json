@@ -286,11 +286,12 @@
   },
   {
     "name": "SHIPLIFE-WORLD-no-harbour-door",
-    "file": "src/scenes/world.js",
-    "old": "    harbourNear: navalHarbourNear,\n    isWater: navalIsWater,\n  });",
-    "new": "    harbourNearX: navalHarbourNear,\n    isWater: navalIsWater,\n  });",
+    "file": "src/scenes/harbourHost.js",
+    "old": "    harbourNear: navalHarbourNear,\n    isWater: navalIsWater,\n",
+    "new": "    harbourNearX: navalHarbourNear,\n    isWater: navalIsWater,\n",
     "tests": [
       "test/systems/naval/shiplife.test.js"
-    ]
+    ],
+    "note": "PORT-SHIPS: re-aimed by content - the book's wiring took a third line (its ground), the door's two lines the same."
   }
 ]

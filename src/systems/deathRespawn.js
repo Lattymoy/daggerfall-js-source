@@ -91,6 +91,36 @@ export function nearestSafeLocationAnywhere(maps, mapPixelXY, accept = null) {  
   return best;
 }
 
+/**
+ * AUDIT TESA II P2/P3 (bible/03-World/Arena-Provinces.md, A2-4's rise): THE NEAREST SAFE PLACE OF THE WORLD - the three
+ * kinds (SAFE_KINDS) over places no region's table holds: the world's registry's (world/worldWide/worldPlaces.js - the
+ * Bay's MAPS.BSA rows and the places past the Bay, each `{ type, dungeonType, px, py }`) and any list beside them (the
+ * host's: the countryside's towns it stood), the nearest by the crow's flight that `accept` takes (nearestSafeLocation's
+ * own arm). Past the Bay the regions' tables hold no town, so the rise there, the open zone's and /unstuck read this: a
+ * town of the province where the player stands, never a Bay town a continent away, and never the water where they fell.
+ * Answers nearestSafeLocation's shape (`locationIndex` -1: no region's row; `place` the registry's), or null.
+ * @param {Iterable<Iterable<{ type?: number, locationType?: number, dungeonType?: number, px: number, py: number }>>} lists
+ * @param {{ x: number, y: number }} mapPixelXY @param {((hit: any) => boolean)|null} [accept]
+ */
+export function nearestSafePlace(lists, mapPixelXY, accept = null) {
+  let best = null;
+  let bestDist = Infinity;
+  for (const list of lists) {
+    for (const p of list) {
+      const e = { locationType: p.type ?? p.locationType, dungeonType: p.dungeonType };
+      const found = SAFE_KINDS.find((t) => t.match(e));
+      if (!found) continue;
+      const dx = p.px - mapPixelXY.x, dz = p.py - mapPixelXY.y;
+      const d2 = dx * dx + dz * dz;
+      if (d2 >= bestDist) continue;
+      const hit = { kind: found.kind, locationIndex: -1, mapPixel: { x: p.px, y: p.py }, place: p };
+      if (accept && !accept(hit)) continue;
+      bestDist = d2; best = hit;
+    }
+  }
+  return best;
+}
+
 const FLAVOR = Object.freeze({
   temple: [
     'The temple priests found you at death\u2019s door and pulled you back through it. You wake on cool stone, a healer\u2019s hand still warm on your chest.',

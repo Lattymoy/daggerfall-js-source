@@ -15,6 +15,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { composeSessionState, restoreSessionState } from '../../../src/systems/save/save.js';
+import { hostText } from '../../hostText.mjs';   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld - the host read whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -80,7 +81,7 @@ test('restoreSessionState: quest before conversation (the C# order), the mill or
 });
 
 test('B4 seam gate: both quicksaving hosts run the composer, and the dungeon context is HANDED the bridge', () => {
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   const dungeonCtx = read('src/scenes/dungeonContext.js');
   const modes = read('src/scenes/worldModes.js');
   // two inline copies of the envelope is exactly how the halves
@@ -94,5 +95,5 @@ test('B4 seam gate: both quicksaving hosts run the composer, and the dungeon con
   // a ported law that evaporates silently - the standing lesson)
   assert.match(modes, /questBridge, talkSave,\s*\n\s*onQuestRestored: \(\) => \{ onQuestRestored\?\.\(\); mountQuestResources\(\); \},/);
   assert.match(world, /talkSave: \{ mill: rumorMill, tree: topicTree, session: npcSession \}/);
-  assert.match(world, /onQuestRestored: \(\) => \{ _questStarted = true; \}/);
+  assert.match(world, /onQuestRestored: \(\) => \{ _questStarted = starts\.restored\(\); \}/);   // PIN MOVED (AUDIT STARTS W5): the latch the start host's - a story never begun is handed its commission
 });

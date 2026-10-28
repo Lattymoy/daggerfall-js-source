@@ -1,0 +1,47 @@
+[
+  {
+    "name": "IC-TOWNMAP-the-closed-byte-back-on-the-debug-red",
+    "file": "src/ui/exteriorAutomapWindow.js",
+    "old": "        if (byte === 0 || byte === CAPITAL_CLOSED_BYTE) continue;\n",
+    "new": "        if (byte === 0) continue;\n",
+    "tests": [
+      "test/ui/town/ic_townmap.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWNMAP-a-byte-past-the-closed-one-skipped",
+    "file": "src/ui/exteriorAutomapWindow.js",
+    "old": "        if (byte === 0 || byte === CAPITAL_CLOSED_BYTE) continue;\n",
+    "new": "        if (byte === 0 || byte >= CAPITAL_CLOSED_BYTE) continue;\n",
+    "tests": [
+      "test/ui/town/ic_townmap.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWNMAP-the-debug-red-lost",
+    "file": "src/ui/exteriorAutomapWindow.js",
+    "old": "        else c = (0xff000000 | (byte << 16) | 0x0000ff) >>> 0;",
+    "new": "        else continue;",
+    "tests": [
+      "test/ui/town/ic_townmap.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWNMAP-the-plan-null-with-no-chain",
+    "file": "src/ui/town/townSheet.js",
+    "old": "      return deps.blocks?.length ? plan : null;\n",
+    "new": "      return plan?.chains?.length ? plan : null;\n",
+    "tests": [
+      "test/ui/town/ic_townmap.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWNMAP-a-town-with-no-blocks-a-plan",
+    "file": "src/ui/town/townSheet.js",
+    "old": "      return deps.blocks?.length ? plan : null;\n",
+    "new": "      return plan;\n",
+    "tests": [
+      "test/ui/town/ic_townmap.test.js"
+    ]
+  }
+]

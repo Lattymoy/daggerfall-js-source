@@ -62,8 +62,8 @@
   {
     "name": "OW-ROADSIDE-join-ignored",
     "file": "src/systems/travel/travelOptions.js",
-    "old": ": leg.at ? spotRect(leg.at) : rectOf(o.x + MID_LO, o.z + MID_LO, P_SIZE, P_SIZE);",
-    "new": ": rectOf(o.x + MID_LO, o.z + MID_LO, P_SIZE, P_SIZE);",
+    "old": ": leg.at ? spotRect(leg.at) : leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(",
+    "new": ": leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "OW-ROADSIDE-drawn-beside",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "(l) => (l.at ? [l.at.x, l.at.z] : centre(l))",
-    "new": "(l) => centre(l)",
+    "old": "(l) => (l.at ? [l.at.x, l.at.z] : onRoad(l, l.line ? [...l.line[l.line.length - 1]] : centre(l)))",
+    "new": "(l) => (onRoad(l, l.line ? [...l.line[l.line.length - 1]] : centre(l)))",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],

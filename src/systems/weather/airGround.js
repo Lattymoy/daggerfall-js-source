@@ -19,12 +19,14 @@
 //   - ITS TOP (the snowpack's ceiling, AUDIT PRECIP PACK-1) is the bound of the ground each pixel can stand
 //     (world/landforms.js groundTopOf), never a byte and a guess.
 import { meanGroundField, groundTopOf } from '../../world/landforms.js';
-import { groundWoods, groundClimateIndex } from '../../world/tamriel/tamrielGround.js';
+import { groundWoods, groundAirClimateIndex } from '../../world/tamriel/tamrielGround.js';
+import { biomeStamp } from '../../world/tamriel/tamrielBiomes.js';   // AUDIT TESA-BIOME Z5: the map's version, so the air's kept tiles follow the land   // TESA-BIOME: past the Bay a zone's air where it is not its ground's
 import { etherWoods, etherClimateIndex } from '../../world/ethericSea.js';
 import { TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION } from '../../world/terrain/terrainSampler.js';
 import { MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from '../../formats/mapsFile.js';
 import { PAK_WIDTH } from '../../formats/pakFile.js';
-import { SEA_LEVEL_M } from './airTemperature.js';
+import { SEA_LEVEL_M, LAPSE_C_PER_M } from './airTemperature.js';
+import { redMountainSmooth } from '../../world/tamriel/redMountain.js';   // RED-MOUNTAIN: the volcano's fire
 
 /** The Bay's own reader under any composition the host made of it (groundWoods' `bay`, etherWoods' `under`). */
 export function bayReader(woods) {
@@ -53,11 +55,18 @@ export function lawAirGround({ woods, maps, landforms, climates = () => null }) 
   const pak = maps.climatePak;
   const raw = pak.undilated ?? pak.buffer;
   const bayClimate = (x, y) => (x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y ? raw[y * PAK_WIDTH + x + 1] : -1);
-  const climateAt = etherClimateIndex(groundClimateIndex(bayClimate));
+  const climateAt = etherClimateIndex(groundAirClimateIndex(bayClimate));
   const span = HEIGHTMAP_DIMENSION - 1;
   const fields = new Map();
+  const tops = new Map();
+  /** AUDIT TESA II G3: the fields and the tops are the land's as it stood - the zones' stamp moving (the trace and the relief
+   *  landing after the boot, a fit: tamrielBiomes.js biomeStamp, this map's `version`) drops them, as the air's tiles drop
+   *  (AUDIT TESA-BIOME Z5). A summit read before the relief landed had kept the authored ground's 255 m for its 1,785. */
+  let stamp = biomeStamp();
+  const fresh = () => { const v = biomeStamp(); if (v !== stamp) { stamp = v; fields.clear(); tops.clear(); } };
   /** A pixel's mean-ground field, kept for the last few pixels asked (a frame asks the player's and its cells'). */
   const fieldOf = (px, py) => {
+    fresh();
     const key = (px + 16384) * 32768 + (py + 16384);
     let f = fields.get(key);
     if (f) { fields.delete(key); fields.set(key, f); return f; }
@@ -66,15 +75,21 @@ export function lawAirGround({ woods, maps, landforms, climates = () => null }) 
     fields.set(key, f);
     return f;
   };
-  const tops = new Map();
   return {
     climateAt,
+    /** RED-MOUNTAIN: THE GROUND'S OWN HEAT at field (x, z), degrees C - the volcano's fire, as much as its cone's height
+     *  cools the air (its smooth lift down the lapse), so its ash is the plateau's air at any height and never holds
+     *  snow (the lore's "ash and blighted rock, never snow"). None without the landforms, where no cone stands. */
+    heatAt: (x, z) => (landforms ? LAPSE_C_PER_M * redMountainSmooth((x / TERRAIN_SIZE) * span, (z / TERRAIN_SIZE + 1) * span) * STREAMING_TERRAIN_SCALE : 0),
+    landforms: !!landforms,   // PEAKS1: whether the ground is the landforms' (scenes/snowCoverHost.js: the summits' caps ride on them)
+    version: biomeStamp,   // AUDIT TESA-BIOME Z5: the land past the Bay moving (the trace, a fit) moves the climates read here
     groundAt(x, z) {
       const px = Math.floor(x / TERRAIN_SIZE), row = Math.floor(z / TERRAIN_SIZE), py = MAX_MAP_PIXEL_Y - 1 - row;
       const sx = (x / TERRAIN_SIZE - px) * span, sy = (z / TERRAIN_SIZE - row) * span;
       return metresOfUnits(fieldOf(px, py)(sx, sy));
     },
     topAt(px, py) {
+      fresh();
       const table = climates();
       const key = ((px + 16384) * 32768 + (py + 16384)) * 2 + (table ? 1 : 0);
       let t = tops.get(key);

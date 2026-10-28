@@ -1,0 +1,386 @@
+[
+  {
+    "name": "TESA10c-alinor-inland",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "name: 'Alinor', province: 'Sumurset', shore: true,",
+    "new": "name: 'Alinor', province: 'Sumurset', shore: false,",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-torval-province",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "name: 'Torval', province: 'Elsweyr',",
+    "new": "name: 'Torval', province: 'Valenwood',",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-helstrom-no-models",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "CAPITAL_MODELS.helstromWalks, CAPITAL_MODELS.palisade]) }),",
+    "new": "CAPITAL_MODELS.helstromWalks]) }),",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-install-no-oak",
+    "file": "src/world/capitalModels.js",
+    "old": "    [CAPITAL_MODELS.grahtOak]: () => buildGrahtOak(),\n",
+    "new": "",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-blocks-one-name",
+    "file": "src/world/capitalPlans.js",
+    "old": "const ownBlocks = (tag, codes, tile, closed, tree = null) => Object.freeze(Object.fromEntries(codes.map((code) => [code, Object.freeze({ name: `TESA${tag}${code}.RMB`, tile, closed, ...(tree ? { tree } : {}) })])));",
+    "new": "const ownBlocks = (tag, codes, tile, closed, tree = null) => Object.freeze(Object.fromEntries(codes.map((code) => [code, Object.freeze({ name: `TESA${tag}.RMB`, tile, closed, ...(tree ? { tree } : {}) })])));",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-statue-open",
+    "file": "src/world/capitalPlans.js",
+    "old": "  if (inBox(dx, dz, P.x, P.z, M.statue.plinth + 1, M.statue.plinth + 1)) return true;",
+    "new": "  if (inBox(dx, dz, P.x, P.z, 0, 0)) return true;",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-plaza-gates-shut",
+    "file": "src/world/capitalPlans.js",
+    "old": "  if (Math.abs(r - P.r) < P.band && Math.min(Math.abs(x), Math.abs(z)) > P.gate / 2) return true;",
+    "new": "  if (Math.abs(r - P.r) < P.band) return true;",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-fane-open",
+    "file": "src/world/capitalPlans.js",
+    "old": "  if (inBox(dx, dz, M.fane.x, M.fane.z, M.fane.plinth, M.fane.plinth)) return true;",
+    "new": "  if (inBox(dx, dz, M.fane.x, M.fane.z, 0, 0)) return true;",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-alinor-quay-dry",
+    "file": "src/world/capitalPlans.js",
+    "old": "const alinorTile = (dx, dz) => (dz >= ALINOR.quay.edge ? 0 : 3);",
+    "new": "const alinorTile = () => 3;",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-alinor-keep-open",
+    "file": "src/world/capitalPlans.js",
+    "old": "  return inBox(dx, dz, 0, 0, side, side);",
+    "new": "  return false;",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-oak-soil",
+    "file": "src/world/capitalPlans.js",
+    "old": "const falinestiTile = (dx, dz) => (Math.hypot(dx, dz) < FALINESTI.soil ? 1 : 2);",
+    "new": "const falinestiTile = () => 2;",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-oak-open",
+    "file": "src/world/capitalPlans.js",
+    "old": "const falinestiClosed = (dx, dz) => Math.hypot(dx, dz) < FALINESTI.foot;",
+    "new": "const falinestiClosed = () => false;",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-torval-quay-dry",
+    "file": "src/world/capitalPlans.js",
+    "old": "  if (dz >= TORVAL.quay.edge) return 0;\n",
+    "new": "",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-temple-open",
+    "file": "src/world/capitalPlans.js",
+    "old": "  return inBox(dx, dz, T.x, T.z, T.tiers[0], T.tiers[0]);",
+    "new": "  return false;",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-canal-dry",
+    "file": "src/world/capitalPlans.js",
+    "old": "  if (dz > HELSTROM.canal.z0 && dz < HELSTROM.canal.z1) return Math.hypot(dx - H.x, dz - H.z) < H.isle ? 2 : 0;",
+    "new": "  if (dz > HELSTROM.canal.z0 && dz < HELSTROM.canal.z1) return 2;",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-xanmeer-open",
+    "file": "src/world/capitalPlans.js",
+    "old": "  if (Math.abs(dx) < X.tiers[0] / 2 && Math.abs(dz) < X.tiers[0] / 2) return true;",
+    "new": "  if (Math.abs(dx) < 0) return true;",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-hist-open",
+    "file": "src/world/capitalPlans.js",
+    "old": "  return Math.hypot(dx - H.x, dz - H.z) < H.r + 2;",
+    "new": "  return false;",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-canal-row-dry",
+    "file": "src/world/capitalPlans.js",
+    "old": "  'L L L H0 L L L L',",
+    "new": "  'L L G H0 L L L L',",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-plaza-walled",
+    "file": "src/world/capitalMournhold.js",
+    "old": "    if (skip || e <= s) continue;\n    wallRun(mb, MARBLE, [P.x + Math.cos(s) * P.r, P.z + Math.sin(s) * P.r]",
+    "new": "    if (e <= s) continue;\n    wallRun(mb, MARBLE, [P.x + Math.cos(s) * P.r, P.z + Math.sin(s) * P.r]",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ],
+    "equivalent": true,
+    "why": "No run of the plaza's 48 lies wholly inside a gate: a run spans 2*pi/48 (0.131 rad) and a gate 2*asin(4.2/70) (0.120), so `skip` is never set and the trims either side do the gate's work. Kept for a ring of more runs."
+  },
+  {
+    "name": "TESA10c-plaza-gate-trim",
+    "file": "src/world/capitalMournhold.js",
+    "old": "      else if (s < ga + half && s > ga - half) s = ga + half;",
+    "new": "      else if (s < ga + half && s > ga - half) s = ga - half;",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-fane-no-lantern",
+    "file": "src/world/capitalMournhold.js",
+    "old": "taper(mb, GOLD, 8, 2.8, 4, 0.05, 10, { vRepeat: 3 });",
+    "new": "taper(mb, GOLD, 8, 2.8, 4, 0.05, 4.5, { vRepeat: 3 });",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-fane-porch-turned",
+    "file": "src/world/capitalMournhold.js",
+    "old": "  const pz = F.z + F.plinth / 2 + F.porch / 2;",
+    "new": "  const pz = F.z - F.plinth / 2 - F.porch / 2;",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-mh-gates-shut",
+    "file": "src/world/capitalMournhold.js",
+    "old": "  for (let i = 0; i < 4; i++) gatedRun(mb, OCHRE, C[i], C[(i + 1) % 4], W.thick, W.h, h, W.gate, W.gateH);",
+    "new": "  for (let i = 0; i < 4; i++) wallRun(mb, OCHRE, C[i], C[(i + 1) % 4], W.thick, W.h);",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-bazaar-astray",
+    "file": "src/world/capitalMournhold.js",
+    "old": "    const x = B.x - B.w / 2 + ((c + 0.5) * B.w) / B.cols, z = B.z - B.d / 2 + ((r + 0.5) * B.d) / B.rows, hw = B.stall / 2, hd = B.deep / 2;",
+    "new": "    const x = B.x + ((c + 0.5) * B.w) / B.cols, z = B.z - B.d / 2 + ((r + 0.5) * B.d) / B.rows, hw = B.stall / 2, hd = B.deep / 2;",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-alinor-crown-short",
+    "file": "src/world/capitalAlinor.js",
+    "old": "    taper(mb, GOLD, 12, P.towerR * 0.85, P.towerH + 1.4, 0.05, P.towerH + 1.4 + P.crown, { vRepeat: 6 });",
+    "new": "    taper(mb, GOLD, 12, P.towerR * 0.85, P.towerH + 1.4, 0.05, P.towerH + 1.4 + P.crown / 2, { vRepeat: 6 });",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-alinor-north-shut",
+    "file": "src/world/capitalAlinor.js",
+    "old": "brokenRun(mb, ne, nw, W, [[W.east - W.northGate, W.gate, W.gateH]]);",
+    "new": "brokenRun(mb, ne, nw, W, [[W.east / 2, W.gate, W.gateH]]);",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-alinor-corners-turned",
+    "file": "src/world/capitalAlinor.js",
+    "old": "  return [[W.east, W.south], [W.east, W.north], [W.west, W.north], [W.west, W.south]];",
+    "new": "  return [[W.west, W.south], [W.west, W.north], [W.east, W.north], [W.east, W.south]];",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-roots-short",
+    "file": "src/world/capitalFalinesti.js",
+    "old": "reach: F.rootOut - (1 - k) * 18,",
+    "new": "reach: F.rootOut * 0.5 - (1 - k) * 18,",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ],
+    "note": "RE-AIMED BY CONTENT (CAPITAL-TREES): the roots are buttresses now (world/capitalFalinesti.js grahtRoots) - their reach halved, none out to rootOut"
+  },
+  {
+    "name": "TESA10c-no-platforms",
+    "file": "src/world/capitalFalinesti.js",
+    "old": "    ring(mb, TIMBER, PLATFORM_SIDES, rr - 2, rr + F.platformW, y, 0, platformOpen(F));   // AUDIT TESA II C4: open over the walkway's last rise to it\n    ring(mb, TIMBER, PLATFORM_SIDES, rr - 2, rr + F.platformW, y - 0.7, 0, platformOpen(F));\n",
+    "new": "",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ],
+    "note": "RE-AIMED BY CONTENT (CAPITAL-TREES): the platform's deck its two rings now (its fascia and rail apart) - both gone"
+  },
+  {
+    "name": "TESA10c-trunk-radius-flat",
+    "file": "src/world/capitalFalinesti.js",
+    "old": "  for (let i = 0; i + 1 < L.length; i++) if (y <= L[i + 1][0]) return L[i][1] + ((L[i + 1][1] - L[i][1]) * (y - L[i][0])) / (L[i + 1][0] - L[i][0]);",
+    "new": "  for (let i = 0; i + 1 < L.length; i++) if (y <= L[i + 1][0]) return L[i][1];",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-crown-low",
+    "file": "src/world/capitalFalinesti.js",
+    "old": "out.push({ c, r: rad, squash, cards, size, seed: 0x6a70 + out.length * 7, detail });",
+    "new": "out.push({ c: [c[0], c[1] - 56, c[2]], r: rad, squash, cards, size, seed: 0x6a70 + out.length * 7, detail });",
+    "tests": [
+      "test/tesa10c_capitals.test.js",
+      "test/world/capitaltrees.test.js"
+    ],
+    "note": "RE-AIMED BY CONTENT (CAPITAL-TREES): the crown is masses in storeys now (grahtCrown), not one blob - every mass sunk the old blob's 56 m, the crown's top under its band"
+  },
+  {
+    "name": "TESA10c-secunda-red",
+    "file": "src/world/capitalTorval.js",
+    "old": "  for (const [[dx, r, h], tex] of [[M.masser, TERRA], [M.secunda, MARBLE]]) {",
+    "new": "  for (const [[dx, r, h], tex] of [[M.secunda, TERRA], [M.masser, MARBLE]]) {",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-temple-no-stair",
+    "file": "src/world/capitalTorval.js",
+    "old": "  mb.quad(SAND, a, b, c, d, outward(a, b, c, [M.x, 0, M.z]), [[0, 0], [2, 0], [2, -8], [0, -8]]);",
+    "new": "  void outward;",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-torval-gate-shut",
+    "file": "src/world/capitalTorval.js",
+    "old": "  gatedRun(mb, SAND, se, ne, W.thick, W.h, side / 2, W.gate, W.gateH);",
+    "new": "  gatedRun(mb, SAND, se, ne, W.thick, W.h, side / 4, W.gate, W.gateH);",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-palace-dome-low",
+    "file": "src/world/capitalTorval.js",
+    "old": "  crescent(mb, P.x, P.h + P.drumH + P.domeH - 0.4, P.z, 2.6);   // TESA-LORE: its moon, where a spike stood",
+    "new": "  crescent(mb, P.x, P.h + P.drumH + P.domeH - 0.4, P.z, 1);   // TESA-LORE: its moon, where a spike stood",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-xanmeer-no-stairs",
+    "file": "src/world/capitalHelstrom.js",
+    "old": "    mb.quad(MOSS, a, b, c, d, n, [[0, 0], [1, 0], [1, -run / 4], [0, -run / 4]]);",
+    "new": "    void run; void n;",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-shrine-low",
+    "file": "src/world/capitalHelstrom.js",
+    "old": "  pyramid(mb, MOSS, 0, 0, X.shrine + 2, X.shrine + 2, top + X.shrineH, X.shrine * 0.6);",
+    "new": "  pyramid(mb, MOSS, 0, 0, X.shrine + 2, X.shrine + 2, top + X.shrineH, X.shrine * 0.3);",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-hist-no-sap",
+    "file": "src/world/capitalHelstrom.js",
+    "old": "    blob(mb, GOLD, p[0] + Math.cos(a) * r, -1 + T.h * t, p[2] + Math.sin(a) * r, 0.9, 1.6, 0.9, { n: 6, rings: 4, rough: 0.1, seed: 0xe40 + i });",
+    "new": "    void p; void r; void a;",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-walks-gone",
+    "file": "src/world/capitalHelstrom.js",
+    "old": "    hall(mb, TIMBER, x, zc, H.walkW, len, H.walkDeck - 0.35, H.walkDeck, 0.5);",
+    "new": "    void zc;",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-canal-walled",
+    "file": "src/world/capitalHelstrom.js",
+    "old": "  return [[0, P.east, P.gate], [2, -P.west, P.gate], [1, (C.z0 + C.z1) / 2 - P.north, C.z1 - C.z0], [3, ns - ((C.z0 + C.z1) / 2 - P.north), C.z1 - C.z0]];",
+    "new": "  return [[0, P.east, P.gate], [2, -P.west, P.gate]];",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-canal-gap-wrong-end",
+    "file": "src/world/capitalHelstrom.js",
+    "old": "[3, ns - ((C.z0 + C.z1) / 2 - P.north), C.z1 - C.z0]];",
+    "new": "[3, (C.z0 + C.z1) / 2 - P.north, C.z1 - C.z0]];",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA10c-no-watchtowers",
+    "file": "src/world/capitalHelstrom.js",
+    "old": "    pyramid(mb, TIMBER, x, z, P.tower + 1.6, P.tower + 1.6, P.towerH + 3.4, 3.5);",
+    "new": "    void x;",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  }
+]

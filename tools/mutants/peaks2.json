@@ -1,0 +1,146 @@
+[
+  {
+    "name": "PEAKS2-the-foot",
+    "file": "src/world/peaks/massif.js",
+    "old": "foot: 240, crest: 1500, high: 300,",
+    "new": "foot: 200, crest: 1500, high: 300,",
+    "tests": [
+      "test/world/peaks2_massif.test.js"
+    ]
+  },
+  {
+    "name": "PEAKS2-the-crest",
+    "file": "src/world/peaks/massif.js",
+    "old": "foot: 240, crest: 1500, high: 300,",
+    "new": "foot: 240, crest: 1400, high: 300,",
+    "tests": [
+      "test/world/peaks2_massif.test.js"
+    ]
+  },
+  {
+    "name": "PEAKS2-the-high",
+    "file": "src/world/peaks/massif.js",
+    "old": "foot: 240, crest: 1500, high: 300,",
+    "new": "foot: 240, crest: 1500, high: 330,",
+    "tests": [
+      "test/world/peaks2_massif.test.js"
+    ]
+  },
+  {
+    "name": "PEAKS2-the-low-ground-s-zero",
+    "file": "src/world/peaks/massif.js",
+    "old": "return amp > 0 ? amp * massifShape(wx, wy, c2, s2, grade, noise) : 0;",
+    "new": "return amp > 0 ? amp * massifShape(wx, wy, c2, s2, grade, noise) : 0.5;",
+    "tests": [
+      "test/world/peaks2_massif.test.js"
+    ]
+  },
+  {
+    "name": "PEAKS2-the-spurs-centre",
+    "file": "src/world/peaks/massif.js",
+    "old": "spurs: Object.freeze([0.979, 1.6])",
+    "new": "spurs: Object.freeze([0.95, 1.6])",
+    "tests": [
+      "test/world/peaks2_massif.test.js"
+    ]
+  },
+  {
+    "name": "PEAKS2-the-crest-s-centre",
+    "file": "src/world/peaks/massif.js",
+    "old": "crest: Object.freeze([0.401, 2.68])",
+    "new": "crest: Object.freeze([0.38, 2.68])",
+    "tests": [
+      "test/world/peaks2_massif.test.js"
+    ]
+  },
+  {
+    "name": "PEAKS2-a-gain",
+    "file": "src/world/peaks/massif.js",
+    "old": "crest: Object.freeze([0.401, 2.68])",
+    "new": "crest: Object.freeze([0.401, 1.2])",
+    "tests": [
+      "test/world/peaks2_massif.test.js"
+    ]
+  },
+  {
+    "name": "PEAKS2-the-stretch",
+    "file": "src/world/peaks/massif.js",
+    "old": "across: 380, stretch: 2.2, sharp: 0.05,",
+    "new": "across: 380, stretch: 1, sharp: 0.05,",
+    "tests": [
+      "test/world/peaks2_massif.test.js"
+    ]
+  },
+  {
+    "name": "PEAKS2-the-frames-axis",
+    "file": "src/world/peaks/massif.js",
+    "old": "const u = (wx * c + wy * s) / D.stretch, v = wy * c - wx * s;",
+    "new": "const u = wx * c + wy * s, v = (wy * c - wx * s) / D.stretch;",
+    "tests": [
+      "test/world/peaks2_massif.test.js"
+    ]
+  },
+  {
+    "name": "PEAKS2-the-saddle-s-depth",
+    "file": "src/world/peaks/massif.js",
+    "old": "crestScale: 1100, saddleScale: 900, saddle: 0.35,",
+    "new": "crestScale: 1100, saddleScale: 900, saddle: 0.9,",
+    "tests": [
+      "test/world/peaks2_massif.test.js"
+    ]
+  },
+  {
+    "name": "PEAKS2-the-saddles-field",
+    "file": "src/world/peaks/massif.js",
+    "old": "  return a * (D.saddle + (1 - D.saddle) * m);",
+    "new": "  return a;",
+    "tests": [
+      "test/world/peaks2_massif.test.js"
+    ]
+  },
+  {
+    "name": "PEAKS2-a-reader-s-own-state",
+    "file": "src/world/peaks/massif.js",
+    "old": "  orient(c2, s2, _f);",
+    "new": "  if (!(_f[1] > 0)) orient(c2, s2, _f);",
+    "tests": [
+      "test/world/peaks2_massif.test.js"
+    ]
+  },
+  {
+    "name": "PEAKS2-an-octave-more",
+    "file": "src/world/peaks/massif.js",
+    "old": "  return a + 0.5 * a * b;",
+    "new": "  return a + 0.5 * a * b + 0.01 * noise(wx / 40, wy / 40);",
+    "tests": [
+      "test/world/peaks2_massif.test.js"
+    ]
+  },
+  {
+    "name": "PEAKS2-the-spurs-spacing",
+    "file": "src/world/peaks/massif.js",
+    "old": "across: 380, stretch: 2.2, sharp: 0.05,",
+    "new": "across: 120, stretch: 2.2, sharp: 0.05,",
+    "tests": [
+      "test/world/peaks2_massif.test.js"
+    ]
+  },
+  {
+    "name": "PEAKS2-the-flank-s-blend",
+    "file": "src/world/peaks/massif.js",
+    "old": "const flank = smooth01((grade - D.flank * 0.5) / D.flank);",
+    "new": "const flank = grade > D.flank ? 1 : 0;",
+    "tests": [
+      "test/world/peaks2_massif.test.js"
+    ]
+  },
+  {
+    "name": "PEAKS2-the-unwired-note",
+    "file": "src/world/peaks/massif.js",
+    "old": "// NOT WIRED YET.",
+    "new": "// WIRED.",
+    "tests": [
+      "test/world/peaks2_massif.test.js"
+    ]
+  }
+]
