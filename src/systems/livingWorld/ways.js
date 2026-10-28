@@ -26,6 +26,7 @@
 // could. The same pairs, planned by the same planner on the same network in the same direction - every way the one it
 // was - known in a tenth of the frames.
 import { planRoute } from '../travel/travelRoute.js';
+import { keepLandPieces } from '../travel/landPiecesKept.js';   // FIRST-VISIT: the land's pieces kept across launches
 import { inBay } from '../../world/tamriel/tamrielFrame.js';
 
 /** New pairs asked a frame - at the least (LW3). */
@@ -46,12 +47,12 @@ export const WAYS_MAX_PER_FRAME = 32;
  * kept apart by the drawn network it read; with no land past the Bay it has no way. The Bay's pairs are the Bay's
  * planner's, as they always were.
  * @typedef {{ pixels: { x: number, y: number }[], kinds?: string[] }} WayPlan
- * @param {{ roads: () => ({ roads: any, tracks: any } | null), ground: () => object, plan?: typeof planRoute, now?: () => number,
+ * @param {{ roads: () => ({ roads: any, tracks: any } | null), ground: () => object, plan?: typeof planRoute, now?: () => number, keep?: typeof keepLandPieces,
  *   beyond?: { epoch: () => number, plan: (a: { x: number, y: number }, b: { x: number, y: number }, cross?: boolean) => (WayPlan | null | undefined), frame?: () => void, clear?: () => void } | null }} deps -
  *   `roads` the drawn network (null until it is built); `ground` the planner's ground (travelRoute.js routeGround's);
  *   `now` the clock the frame's asking is timed by (PERF-WAYS1; milliseconds); WW7-7 `beyond` the ways past the Bay
  */
-export function createWayBook({ roads, ground, plan = planRoute, now = () => performance.now(), beyond = null }) {
+export function createWayBook({ roads, ground, plan = planRoute, now = () => performance.now(), beyond = null, keep = keepLandPieces }) {   // FIRST-VISIT `keep`: the fetch of the land's pieces (landPiecesKept.js) - a promise the book waits on, or null
   /** @type {Map<string, WayPlan|null>} */
   const book = new Map();
   /** WW7-7: the ways past the Bay, and the epoch of the roads past the Bay they were asked on. @type {Map<string, WayPlan|null>} */
@@ -63,6 +64,7 @@ export function createWayBook({ roads, ground, plan = planRoute, now = () => per
   let budget = WAYS_PER_FRAME;
   let asked = 0, spent = 0, spendMs = WAYS_MS_PER_FRAME;   // PERF-WAYS1: the frame's asking so far (pairs, ms), and how long it may run past the floor
   let net = null, generation = 0;
+  let keeping = null;   // FIRST-VISIT: the network's pieces being fetched (or folded and kept) - the ways wait on it
   /** The kept way of the lower id's town to the other's, the reverse when `flip`. @param {WayPlan|null|undefined} way @param {boolean} flip */
   const turned = (way, flip) => (!way || !flip ? way : { pixels: [...way.pixels].reverse(), kinds: [...(way.kinds ?? [])].reverse() });
   /** WW7-7: a pair past the Bay - its planner's, on the build of the roads past the Bay it was asked on. WW7-9: `cross` a
@@ -100,7 +102,14 @@ export function createWayBook({ roads, ground, plan = planRoute, now = () => per
       if ((pastA || pastB) && beyond) { const flip = a.mapId > b.mapId; return farWayOf(flip ? b : a, flip ? a : b, flip, pastA !== pastB); }   // WW7-9: past the Bay, or across its edge
       const raw = roads();
       if (!raw) return undefined;
-      if (raw.roads !== net) { if (net !== null) { book.clear(); generation++; } net = raw.roads; }
+      if (raw.roads !== net) {
+        if (net !== null) { book.clear(); generation++; }
+        net = raw.roads;
+        const k = keep?.(ground(), raw) ?? null;
+        keeping = k;
+        k?.catch(() => false).finally(() => { if (keeping === k) keeping = null; });
+      }
+      if (keeping) return undefined;
       const flip = a.mapId > b.mapId;
       const p = flip ? b : a, q = flip ? a : b;
       const key = `${p.mapId}>${q.mapId}`;
@@ -121,5 +130,7 @@ export function createWayBook({ roads, ground, plan = planRoute, now = () => per
     /** Bumped each time the network changed under the book (the host's trips are cleared with it). */
     get generation() { return generation; },
     get size() { return book.size + far.size + edge.size; },
+    /** FIRST-VISIT: the land's pieces being fetched for the network - a promise the ways wait on, or null. */
+    get keeping() { return keeping; },
   };
 }

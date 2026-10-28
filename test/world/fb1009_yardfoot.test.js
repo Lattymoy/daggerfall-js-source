@@ -139,7 +139,7 @@ function yardRig(svc, town, { who, charId, key, gold = 5000 }) {
   const doc = fakeDoc();
   const win = fakeWin();
   const yards = createHomeYards({
-    api: { yards: (m) => api.yards(m), place: (a) => api.place(a), move: (a) => api.move(a), remove: (a) => api.remove(a) },
+    api: { yardCells: (m, c) => api.yardCells(m, c), place: (a) => api.place(a), move: (a) => api.move(a), remove: (a) => api.remove(a) },
     homes: { homeAt: (m, k) => (k === key ? { owner: who.handle, own: true, mine: true, look: null } : town.built.homeFrames.has(k) ? { owner: 'Tomas', own: false } : null) },
     built: () => built, translation: () => T, feet: () => feet, outside: () => true, eye: () => cam.pos,
     collider: () => collider, meshes: { getGpuMesh: async (id) => ({ gpu: id }), cpuModels }, renderer, getTexture: async () => ({ recordCount: 1 }), uploadRecord() {},

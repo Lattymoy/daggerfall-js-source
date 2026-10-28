@@ -42,6 +42,7 @@
 //
 // Pure: no clock (every `now` an argument), no DOM, no network.
 // ═════════════════════════════════════════════════════════════════════
+import { newHealthShare, noteRefereeChange } from './refereeHealthShare.js';
 
 /** A siege's room: `siege:<seat key>:<seat week>` - one a battle (Seats-Arc 6.2). */
 export const SIEGE_ROOM = /^siege:(0|[1-9]\d{0,9}):(0|[1-9]\d{0,5})$/;
@@ -199,7 +200,7 @@ export function siegeHeld(look, w, m) {
 /** A fighter's state as the room keeps it. */
 export const newFighter = (lv, now) => {
   const max = siegeVitality(lv);
-  return { lv: Math.max(1, Math.min(SIEGE_VITALITY.levelMax, Math.trunc(Number(lv) || 1))), hp: max, max, down: false, upAt: 0, safeTo: 0, rate: SIEGE_BLOWS_HZ, rateAt: now, casts: [], heals: [], harm: [], dealt: 0, clipped: 0 };
+  return { lv: Math.max(1, Math.min(SIEGE_VITALITY.levelMax, Math.trunc(Number(lv) || 1))), hp: max, max, down: false, upAt: 0, safeTo: 0, rate: SIEGE_BLOWS_HZ, rateAt: now, casts: [], heals: [], harm: [], dealt: 0, clipped: 0, share: newHealthShare(now) };   // SHARED-HEALTH: the count is the player's health, as a share
 };
 const metres = (a, b) => Math.hypot((a.x - b.x) / SIEGE_UNITS_PER_M, (a.y - b.y) / SIEGE_UNITS_PER_M, (a.z - b.z) / SIEGE_UNITS_PER_M);
 /** The striker's rate bucket, refilled to `now` (one second deep) - true where a blow may be spent. */
@@ -245,6 +246,7 @@ export function refereeBlow(by, to, { from = null, at = null, held = null, d = 0
   by.clipped += want - got;
   by.dealt += got;
   to.hp -= got;
+  if (got > 0) noteRefereeChange(to, -got, now, true);   // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP
   const fell = to.hp <= 0;
   if (fell) to.down = true;
   return { ok: true, dealt: got, fell, why: null };
@@ -269,6 +271,7 @@ export function refereeCast(by, to, { from = null, at = null, d = 0, heal = fals
     by.heals.push(now);
     const got = Math.min(want, SIEGE_CASTS.healMax, to.max - to.hp);
     to.hp += got;
+    if (got > 0) noteRefereeChange(to, got, now);
     return { ok: true, dealt: -got, fell: false, why: null };
   }
   if (by === to) return { ok: false, dealt: 0, fell: false, why: 'no-fighter' };
@@ -281,6 +284,7 @@ export function refereeCast(by, to, { from = null, at = null, d = 0, heal = fals
   by.clipped += want - got;
   by.dealt += got;
   to.hp -= got;
+  if (got > 0) noteRefereeChange(to, -got, now, true);
   const fell = to.hp <= 0;
   if (fell) to.down = true;
   return { ok: true, dealt: got, fell, why: null };
@@ -321,7 +325,9 @@ export const siegeNextWave = (now, waveMs) => (Math.floor(now / waveMs) + 1) * w
 /** A fallen fighter's rise at its wave: whole again, and SIEGE_PROTECT_MS no blow touches. Answers whether it rose. */
 export function siegeRise(f, now) {
   if (!f.down || now < f.upAt) return false;
-  f.down = false; f.hp = f.max; f.safeTo = now + SIEGE_PROTECT_MS; f.casts = []; f.heals = [];
+  f.down = false;
+  noteRefereeChange(f, f.max - Math.max(0, f.hp), now);   // SHARED-HEALTH: the rise heals the player's own health whole
+  f.hp = f.max; f.safeTo = now + SIEGE_PROTECT_MS; f.casts = []; f.heals = [];
   return true;
 }
 
@@ -752,7 +758,9 @@ function npcStep(b, fighters, nowMs, ground, out) {
       const to = n.atk.to, f = fighters.find((x) => x.sub === to);
       n.atk = null;
       if (foeOf(K, f) && fromMe(f) <= K.landM && nowMs >= (f.safeTo ?? 0)) {
-        f.hp -= Math.min(K.damage, f.hp);
+        const dealt = Math.min(K.damage, f.hp);
+        f.hp -= dealt;
+        if (dealt > 0) noteRefereeChange(f, -dealt, nowMs);   // SHARED-HEALTH: a relay foe's blow reaches the player's health too
         const fell = f.hp <= 0;
         if (fell) { f.down = true; f.upAt = siegeNextWave(nowMs, siegeWaveMs(b, f.side)); }
         out.push({ k: 'nhit', n: n.id, to, h: f.hp, m: f.max, fell });

@@ -307,5 +307,14 @@
     "tests": [
       "test/systems/auditrealm2_client.test.js"
     ]
+  },
+  {
+    "name": "CLOSE-SAVE-host-leaves-without-the-save",
+    "file": "src/scenes/world.js",
+    "old": "whenPageHides(globalThis.document, () => { if (online) onlineCheckpoint(); }, realmSession);",
+    "new": "whenPageHides(globalThis.document, () => { if (online) onlineCheckpoint(); });",
+    "tests": [
+      "test/systems/auditrealm2_client.test.js"
+    ]
   }
 ]

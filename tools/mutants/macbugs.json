@@ -67,7 +67,7 @@
   {
     "name": "MAC-C-the-sheet-page-leaves-its-capture-listener-behind",
     "file": "src/ui/charSheetDoor.js",
-    "old": "    globalThis.removeEventListener?.('keydown', onSheetKey, true);",
+    "old": "    unlistenSheetKeys();",
     "new": "",
     "tests": [
       "test/ui/macc_window_keys.test.js"

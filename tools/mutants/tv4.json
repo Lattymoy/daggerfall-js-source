@@ -352,7 +352,7 @@
   {
     "name": "AUDIT-DEEP2-D3-the-field-not-the-sky",
     "file": "src/scenes/shared.js",
-    "old": "    drawnCells: () => clouds?.cells ?? null,",
+    "old": "    drawnCells: () => cloudsShown?.cells ?? null,",
     "new": "    drawnCells: () => null,",
     "tests": [
       "test/render/tv4_weather_above.test.js"

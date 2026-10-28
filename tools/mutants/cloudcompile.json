@@ -1,0 +1,123 @@
+[
+  {
+    "name": "CC-the-door-forced",
+    "file": "src/render/cloudsArrival.js",
+    "old": "      clouds = door();",
+    "new": "      clouds = door(true);",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "The clouds built the first frame whatever the driver says: the page waits on the march's compile again (seconds on D3D11)."
+  },
+  {
+    "name": "CC-not-started-at-the-mount",
+    "file": "src/render/cloudsArrival.js",
+    "old": "  if (parallelCompile(gl)) startPrograms(gl, CLOUDS_ARRIVAL_PROGRAMS);",
+    "new": "",
+    "tests": [
+      "test/render/cloudsarrival.test.js",
+      "test/render/bootcompile.test.js"
+    ],
+    "note": "A sky whose switches the boot read otherwise compiles its clouds only from its first draw."
+  },
+  {
+    "name": "CC-started-without-the-extension",
+    "file": "src/render/cloudsArrival.js",
+    "old": "  if (parallelCompile(gl)) startPrograms(gl, CLOUDS_ARRIVAL_PROGRAMS);",
+    "new": "  startPrograms(gl, CLOUDS_ARRIVAL_PROGRAMS);",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "Where the driver compiles in line, the mount queues seven links that hold the page's next GL read."
+  },
+  {
+    "name": "CC-shown-before-the-first-sweep",
+    "file": "src/render/cloudsArrival.js",
+    "old": "      if (!clouds || (!builtOnFirstAsk && clouds.sweeps === 0)) return null;",
+    "new": "      if (!clouds) return null;",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "Clouds built late take the sky over the frame they are built: the dome's decks stand down and the sky shows neither until their first sweep."
+  },
+  {
+    "name": "CC-the-first-ask-waits-a-sweep",
+    "file": "src/render/cloudsArrival.js",
+    "old": "      if (!clouds || (!builtOnFirstAsk && clouds.sweeps === 0)) return null;",
+    "new": "      if (!clouds || clouds.sweeps === 0) return null;",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "A compile that beat the boot still costs a frame: the clouds are drawn the frame after their first sweep, not with it."
+  },
+  {
+    "name": "CC-the-recenters-lost",
+    "file": "src/render/cloudsArrival.js",
+    "old": "    if (offsetPending) built.offsetOrigin(pendingOffset);",
+    "new": "",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "A recenter before the build is dropped: the late clouds sample their field away from where a boot build would."
+  },
+  {
+    "name": "CC-the-viewport-not-restored",
+    "file": "src/render/cloudsArrival.js",
+    "old": "    const built = new VolumetricClouds(gl, quality, buildViewport);",
+    "new": "    const built = new VolumetricClouds(gl, quality);",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "The build restores the whole buffer's viewport, and the sky's draw goes on in it instead of the world rect."
+  },
+  {
+    "name": "CC-the-sky-switched-by-the-build",
+    "file": "src/scenes/shared.js",
+    "old": "      if (enhancedSky) enhancedSky.cloudsExternal = !!cloudsShown;",
+    "new": "      if (enhancedSky) enhancedSky.cloudsExternal = !!clouds;",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "The dome's decks stand down before the clouds have a sweep to draw: frames with a bare sky."
+  },
+  {
+    "name": "CC-the-sun-dimmed-twice",
+    "file": "src/scenes/shared.js",
+    "old": "      if (cloudsShown) return 1;",
+    "new": "      if (clouds) return 1;",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "The key light drops the dome's occlusion before the ground reads the clouds' map."
+  },
+  {
+    "name": "CC-D-the-whole-sweep-ignored",
+    "file": "src/render/volumetricClouds.js",
+    "old": "      const rows = this.wholeFirstSweep && this.sweeps === 0 ? q.height : Math.ceil(q.height / this.pace);",
+    "new": "      const rows = Math.ceil(q.height / this.pace);",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "Option D asked for and not given: the first sweep striped, the clouds drawn frames later."
+  },
+  {
+    "name": "CC-D-every-sweep-whole",
+    "file": "src/render/volumetricClouds.js",
+    "old": "      const rows = this.wholeFirstSweep && this.sweeps === 0 ? q.height : Math.ceil(q.height / this.pace);",
+    "new": "      const rows = this.wholeFirstSweep ? q.height : Math.ceil(q.height / this.pace);",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "Every sweep marched whole: the whole map's GPU time every frame, for good."
+  },
+  {
+    "name": "CC-D-the-door-not-handed",
+    "file": "src/render/cloudsArrival.js",
+    "old": "    built.wholeFirstSweep = wholeFirstSweep;",
+    "new": "",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "The controller reads `?cloudsweep=whole` and the clouds never hear it."
+  }
+]

@@ -126,6 +126,8 @@ import {
 } from '../../systems/realmSaves.js';   // REALM P1.3: the Online door lists the realm's characters, the service's
 import { applyCustoms, customsLines, crossLeveling, LEVELING_CROSS_LINE } from '../../systems/realmCustoms.js';   // REALM P1.5: an offline character comes in once, through customs
 import { REALM_COPY_SAVE_NAME, realmCopyIds } from '../../systems/realmCopyMark.js';   // a copy of a realm character never comes in
+import { copyStrandedToOffline, hasStranded } from '../../systems/online/strandedCopy.js';   // STRANDED: a save set aside, back as an offline character
+import { strandedNotice } from './strandedNotice.js';   // STRANDED: and said on its tile
 import { bringOnlineButton } from './bringOnlineButton.js';
 import { createRealmLine } from '../../systems/legacy/realmLine.js';   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): the account's lines, read at the door
 import { loadFamily } from '../../systems/legacy/store.js';
@@ -254,6 +256,7 @@ import { serviceBase, storedSession } from '../../net/accountClient.js';
 import { isBountyQuestId, abandonBountyQuest, shareBountyQuest, bountyQuestShareable } from '../../systems/bounty/bountyJournal.js';   // BOUNTY1: a bounty in the journal - its Abandon and its Share
 import { isHuntQuestId, abandonHuntQuest } from '../../systems/huntJournal.js';   // RVN7c: a revenant's hunt in the journal - its Abandon
 import { liveBundles, canEndBundle, endBundle } from '../../systems/mysticism.js';   // BUFF-END: the Stats page's Effects - the ONE bundle walk, and which the player may end
+import { listenWindowKeys } from '../windowStack.js';   // COVERED-KEYS: the window's keys, gated while a box covers it
 import { maxRoundsRemaining } from '../hud/hudActiveSpells.js';   // BUFF-END: a bundle's rounds, as the HUD reads them
 
 // ── THE RAIL ─────────────────────────────────────────────────────
@@ -362,7 +365,8 @@ let homeLevel = 'top';
 function focusDoor(id) {
   globalThis.requestAnimationFrame?.(() => (app?.querySelector?.(`.px-menu .door-${id}`) ?? app?.querySelector?.('.px-menu .doorbtn'))?.focus?.());
 }
-let keyHandler = null;
+let unlistenKeys = null;
+let windowOwner = null;   // COVERED-KEYS: the stack window this page draws - the Growth tab's embedded Ascension gates its keys on it
 // ACC1f (Mac: "The online details itself will live as a popup on main
 // menu startup and a new profile icon"): whether the account window is
 // open, and whether startup has already offered it once.
@@ -1405,6 +1409,8 @@ function realmCard(who) {
       const save = realmRowAsSave(row, { dateText: (sec) => new Date(sec * 1000).toLocaleDateString() });
       grid.append(saveTile(document, save, {
         face: loadFace(save, { scale: 2, copy: true }),
+        // STRANDED: progress this device kept that never reached the realm - said apart from the tile's buttons, with its way back
+        notice: hasStranded(appStorage(), row.id) ? strandedNotice({ name: row.name, busy: realmBusy, ask, recover: () => copyStrandedOffline(row) }) : null,
         actions: [
           { label: save.unfinished ? t('menu.realm.neverSaved', 'Never saved') : t('menu.realm.play', 'Play'), primary: true, disabled: realmBusy || save.unfinished, onClick: () => { _pickedRealmId = row.id; onAction('online'); } },
           { label: t('menu.realm.copyOffline', 'Copy to offline'), disabled: realmBusy || save.unfinished, onClick: () => copyToOffline(row) },
@@ -1519,6 +1525,12 @@ function copyToOffline(row) {
     const r = saveSlot(snap.name || row.name, REALM_COPY_SAVE_NAME, snap, { storage: appStorage() });
     return r.ok ? { ok: true } : { ok: false, error: 'no-room' };
   }, () => [t('menu.realm.copied', '{name} is copied as a new offline character. Nothing you play on the copy comes back online.', { name: row.name })]);
+}
+
+/** STRANDED: the save this device set aside for a realm character, copied as a new offline character and dropped from the
+ *  device (systems/online/strandedCopy.js). Nothing played on the copy goes back. */
+function copyStrandedOffline(row) {
+  return realmAct(() => copyStrandedToOffline({ storage: appStorage(), id: row.id, name: row.name }), () => [t('menu.realm.strandedCopied', '{name}\u2019s unsaved progress is now a new offline character. Nothing you play on the copy comes back online.', { name: row.name })]);
 }
 
 // UXB1-E (2026-09-25, the UX backlog: "Add a 'sync from server' option so players can ensure their offline play
@@ -2598,8 +2610,8 @@ function prefRow(key, name, note, { onChange = null, home = false } = {}) {
 // honesty, once the thing has a record elsewhere (About, the Ledger).
 
 /** A choice row: the button names the CURRENT tier and a click steps
- *  to the next, wrapping (PERF1). */
-function choiceRow(key, name, note, tiers, { home = false, read = null, write = null } = {}) {
+ *  to the next, wrapping (PERF1). `tier` is its dot: 'restart' for a key the shell reads at launch (GPU-BACKEND). */
+function choiceRow(key, name, note, tiers, { home = false, read = null, write = null, tier = 'live' } = {}) {
   if (!home) { const moved = featureForControl('prefs', key); if (moved) return movedRow(moved); }   // FT2
   // FT2: a condensed row reads the lane's live value and writes both stores
   const cur = String(read ? read() : getPref(key));
@@ -2616,7 +2628,7 @@ function choiceRow(key, name, note, tiers, { home = false, read = null, write = 
   const b = el('button', 'act rowact', tiers[at][1]);
   b.onclick = step;
   if (onlineForcedPref(key) !== undefined) { lockOnline(b, main); b.textContent = t('menu.online.lockedTier', '{tier} (online)', { tier: tiers[at][1] }); }   // OL1: the outdoors row reads the lane's forced answer and names its tier under the lock
-  ctl.append(b, el('span', 'tier live'));
+  ctl.append(b, el('span', `tier ${tier}`));
   row.append(ctl);
   return row;
 }
@@ -3098,11 +3110,24 @@ function portRowsInterface({ pause = false } = {}) {
     row.append(ctl);
     out.push(row);
   }
+  out.push(graphicsBackendRow());   // GPU-BACKEND: the app on Windows only
   out.push(prefRow('showFps', t('menu.hud.fps', 'FPS counter'),
     t('menu.hud.fpsNote', 'Frame rate in the top-right corner.')));
   if (!pause) out.push(prefRow('skipStartVideo', skipStartVideoName(), skipStartVideoNote()));   // UXB1-A: read at launch, so the front door's alone - as the skin's
   out.push(...spireAccessRows());   // EG-G1: Settings > Accessibility lists them (ui/settings/settingsMap.js)
   return out.filter(Boolean);   // FT13
+}
+
+/** GPU-BACKEND (2026-10-26): the desktop app's graphics backend on Windows, read by the shell at its next launch
+ *  (app/lib/graphicsBackend.cjs, which falls back to Direct3D 11 by itself when Vulkan does not start). A browser
+ *  chooses its own backend, so the row is drawn in the app on Windows only. */
+function graphicsBackendRow() {
+  if (globalThis.daggerShell?.platform !== 'win32') return null;
+  const row = choiceRow('graphicsBackend', t('menu.video.backend', 'Graphics backend'),
+    `${t('menu.video.backendNote', 'Vulkan prepares the graphics faster at the first start after an update, but runs a little slower in play. Wait For Screen Refresh stays on with it. If it cannot start, the app goes back to Direct3D 11.')} ${TIER_TEXT.restart}`,
+    [['default', t('menu.video.backendDefault', 'Direct3D 11')], ['vulkan', t('menu.video.backendVulkan', 'Vulkan')]], { tier: 'restart' });
+  row.dataset.opt = 'graphicsBackend'; row.dataset.pref = 'graphicsBackend';   // ORG2
+  return row;
 }
 
 /** EG-G1 (bible/11-Multiplayer/Elite-Gates.md section 25.7): THE SPIRE'S ACCESSIBILITY ROWS (ui/eliteGates/egAccess.js) - reduced
@@ -4839,7 +4864,7 @@ function pauseWindow() {
 // Ascension and the skies drawn in the pane (ui/growth/growthStage.js), Master Skills a press away on the Stats tab.
 function pauseGrowth(body) {
   drawGrowthTab(body, {
-    el, divider: pxDivider, skillMeter, askCard, entity: playerEntity, render, hooks, captain: holdingsProvider()?.captain ?? null,
+    el, divider: pxDivider, skillMeter, askCard, entity: playerEntity, render, hooks, captain: holdingsProvider()?.captain ?? null, owner: windowOwner,
     openMaster: () => { releaseGrowthTab(); pauseTab = 'stats'; statsSec = 'master'; _masterNote = null; render(); },
   });
 }
@@ -6374,6 +6399,8 @@ export function mountEnhancedMenu(host, {
   // should land on that page rather than on a menu with it one press
   // further in - the dial's north asked for the character sheet.
   at = null,
+  // COVERED-KEYS: the window this page draws (ui/pauseDoor.js, ui/charSheetDoor.js) - its keys are gated on it. None at boot.
+  owner = null,
 } = {}) {
   injectEnhancedStyle();
   injectEnhancedFonts();
@@ -6381,6 +6408,7 @@ export function mountEnhancedMenu(host, {
   onAction = handler;
   mode = m === 'pause' ? 'pause' : 'boot';
   hooks = h ?? {};
+  windowOwner = owner;   // before the first render: the Growth tab hands it to the Ascension it draws
   questRepairSaid = null;   // QREPAIR: a repair's line is that visit's
   // PROFILE2: and the profile window is a visit's too - the pause screen mounts this module again, and a window left
   // open on the door (or on the last pause) must not be standing over the next one before the player asks for it
@@ -6482,10 +6510,11 @@ export function mountEnhancedMenu(host, {
   else if (at === 'companions') { pauseTab = 'holdings'; holdSec = 'companions'; }   // RVN-STARS: back from a sworn one's stars
   _eff = null;
   render();
-  keyHandler = onKey;
   backArmed = null;   // AUDIT DISC28 UI-2: a press is a visit's - the last screen's never answers on this one
-  globalThis.addEventListener('keydown', keyHandler, { capture: true });
-  globalThis.addEventListener('keyup', keyHandler, { capture: true });   // AUDIT DISC28 UI-2: the release, where the pause face answers
+  // AUDIT DISC28 UI-2: the release too, where the pause face answers. COVERED-KEYS: under a box the press and the release
+  // are the box's, and a press armed before the box came up never answers on a release after it
+  unlistenKeys?.();   // a mount over a mount lays one listener, as the window's own addEventListener of one function did
+  unlistenKeys = listenWindowKeys(owner, onKey, { types: ['keydown', 'keyup'], onCovered: () => { backArmed = null; } });
   // PX1: the pixel ground is drawn for the viewport it mounted on; a
   // rotate or a resize while the home is up redraws it, or the sky
   // stretches - the prototype's own phone-shot lesson.
@@ -6511,8 +6540,7 @@ export function mountEnhancedMenu(host, {
       // menu torn down without this eats Escape for the whole session
       // - which on the pause door means the game can never be paused
       // again.
-      if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
-      if (keyHandler) globalThis.removeEventListener('keyup', keyHandler, { capture: true });   // AUDIT DISC28 UI-2
+      unlistenKeys?.();   // the press and the release both (AUDIT DISC28 UI-2)
       if (lockHandler && typeof document !== 'undefined') document.removeEventListener('pointerlockchange', lockHandler);
       if (resizeHandler) globalThis.removeEventListener('resize', resizeHandler);
       if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
@@ -6534,7 +6562,8 @@ export function mountEnhancedMenu(host, {
       // whole tree, the sky's canvas with it) and the account card's paint and focus listener
       footObs?.disconnect?.(); footObs = null;
       acctPaint = null; acctOff?.(); acctOff = null;
-      keyHandler = null;
+      unlistenKeys = null;
+      windowOwner = null;
       lockHandler = null;
       resizeHandler = null;
       host.innerHTML = '';

@@ -17,9 +17,10 @@ import { REFUSALS } from '../../src/net/accountClient.js';
 import { homeOutsideKept, homeYardWhere, createOnlineHomes, homeHallRows, HOME_VERB, HALL_VERB, hallEntryTurnable } from '../../src/systems/online/onlineHomes.js';
 import { createHomeYards, YARD_IN_HALL, YARD_HALL_FULL, YARD_IN_HOUSE, YARD_FULL } from '../../src/scenes/homeYards.js';
 import { decorWhyNot } from '../../src/ui/decorPanel.js';
-import { fakeDoc, fakeWin, fakeBlocks, rmb, TOWN, settle } from '../decorFakes.mjs';
+import { fakeDoc, fakeWin, fakeBlocks, rmb, TOWN, settle, townCellsApi } from '../decorFakes.mjs';
 import { GuildBook } from '../../src/net/guild/guildBook.js';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
+import { townYards } from '../yardCellsRead.mjs';   // YARD-CELL: a town's yards, read through its cells
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const HALL = { mapId: 7, buildingKey: 300, region: 17, price: 20_000, layout: null };   // AUDIT PRE-MERGE 1003 WD1: a hall says its town's layout (none: an old build's, 426)
@@ -97,7 +98,7 @@ test('GUILD-YARD the hall\'s YARD: its keepers place pieces outside it off their
   const room = await svc.call('/v1/homes/decor', { mapId: 7, buildingKey: 300 }, recruit.secret);
   assert.deepEqual(room.body.pieces, [], 'the hall\'s rooms list none of it');
   const g = await svc.guest();
-  const yards = await svc.call('/v1/homes/yards', { mapId: 7 }, g.secret);
+  const yards = await townYards(svc.call, 7, g.secret);
   assert.deepEqual(yards.body.yards.map((x) => [x.buildingKey, x.pieces.map((p) => p.id)]), [[300, ['yard1', 'yard2']]], 'a visitor sees it');
   // its own cap: sixty a yard, as a home's
   const ins = raw.prepare('INSERT INTO home_decor (map_id, building_key, id, model, place, placed_at, paid, yard) VALUES (7, 300, ?, 41000, ?, ?, 0, 1)');
@@ -143,7 +144,7 @@ test('GUILD-YARD the hall SOLD: its yard goes with it as its rooms\' pieces do -
   assert.equal((await view()).treasury, t0 + homeSaleRefund(30_000) + 220);
   assert.equal(raw.prepare('SELECT COUNT(*) AS n FROM home_decor WHERE yard = 1').get().n, 0, 'cleared');
   const g = await svc.guest();
-  assert.deepEqual((await svc.call('/v1/homes/yards', { mapId: 7 }, g.secret)).body.yards, [], 'the street sees none of it');
+  assert.deepEqual((await townYards(svc.call, 7, g.secret)).body.yards, [], 'the street sees none of it');
 });
 
 test('GUILD-YARD whose outside the playing character keeps: its own home\'s, or a hall it is a keeper of - never a hall it is a plain member of, nor a stranger\'s; the yard\'s name follows (mutants: a member keeps; a keeper keeps none)', () => {
@@ -184,7 +185,7 @@ function world(row, { pieces = [], frames = null, rows = new Map(), feet: at = [
   const built = new Map([['0,0', { px: 0, py: 0, homeTown: 7, homeFrames, homeRegion: 17 }]]);
   const writes = [], said = [], looks = [];
   const api = {
-    yards: async () => ({ ok: true, data: { yards: [{ buildingKey: 300, pieces }] } }),
+    yardCells: townCellsApi(async () => ({ ok: true, data: { yards: [{ buildingKey: 300, pieces }] } })),
     place: async (b) => { writes.push(['place', b]); return { ok: true, data: { piece: b.piece } }; },
     move: async (b) => { writes.push(['move', b]); return { ok: true, data: {} }; },
     remove: async (b) => { writes.push(['remove', b]); return { ok: true, data: { piece: pieces.find((p) => p.id === b.id), gold: 0, treasury: 60 } }; },

@@ -69,9 +69,12 @@ export function coverProxies(base, size, { tree = false } = {}) {
  *  is seen in it, never the one-way hiding place it was. A felled tree (FELLED) and a person (`c.noCover`) are no
  *  cover at all. */
 export function rayCylinder(o, d, cyl, maxDist, endAt = null) {
-  const c0 = cyl.c;
+  return rayUpright(o, d, cyl.c, cyl.r, cyl.h, cyl.lift ?? 0, maxDist, endAt);
+}
+/** COVER-COMPACT: rayCylinder over a proxy's own numbers - the index's columns ask it with no object a proxy. */
+function rayUpright(o, d, c0, r, h, lift, maxDist, endAt) {
   if (FELLED.has(c0) || c0.noCover) return Infinity;
-  const cx = c0[0], cy = c0[1] + (cyl.lift ?? 0), cz = c0[2], r = cyl.r, top = cy + cyl.h;
+  const cx = c0[0], cy = c0[1] + lift, cz = c0[2], top = cy + h;
   const ox = o[0] - cx, oz = o[2] - cz;
   if (ox * ox + oz * oz <= r * r && o[1] >= cy && o[1] <= top) return Infinity;
   if (endAt != null) {   // the sight ray's own end (its target's eye), however short the search has been cut
@@ -112,34 +115,120 @@ const _lo = [0, 0, 0];   // AUDIT TACT D11: the ray in a set's frame - one scrat
 /** AUDIT TACT D11: a broad-phase cell's key as a number (no string a cell a ray); cells within +-32768 of the frame's
  *  origin - 131 km at 4 m, past any pixel or room. */
 const cellKey = (gx, gz) => (gx + 32768) * 65536 + (gz + 32768);
-/** MEM-AUDIT (2026-10-23): A CELL IS HELD AT ITS SIZE WHILE IT IS SMALL. The index was the largest thing a streamed world
- *  kept - ~290 MB of the 1.16 GB live heap at Knightstale's 121 pixels (V8's sampling profile, `fill` and the proxies) -
- *  and most of it air: a cell grown by push from [] has seventeen slots from its first (AUDIT C4), and most cells hold
- *  one to three proxies. Below CELL_EXACT a cell is copied one longer, in the same order, so it holds exactly its own; past it, pushed.
- *  A ray, a body's query and the probes read the same proxies in the same order. */
+/** MEM-AUDIT (2026-10-23): a cell below this many proxies was held at its size, copied one longer a proxy. COVER-COMPACT
+ *  (below) holds no cell as an array any more; the constant stays for what imports it. */
 export const CELL_EXACT = 16;
-function fileIn(grid, k, it) {
-  const cell = grid.get(k);
-  if (!cell) { grid.set(k, [it]); return; }
-  if (cell.length >= CELL_EXACT) { cell.push(it); return; }
-  grid.set(k, cell.concat([it]));   // AUDIT MEM-AUDIT C3: packed and exact - one array shape, as the pushed cells were (a holey copy made the ray's loop polymorphic)
+
+// COVER-COMPACT (2026-10-26, bible/07-Rendering/Performance-Priority.md): A SET IS COLUMNS. The index was the largest thing a
+// streamed world kept (237 MB of ~735 MB live at 121 pixels), a Map entry and a small array a cell. A set holds its cover
+// by proxy index: the base array by reference (FELLED and `noCover` key on it), radius, height and lift as Float64
+// (Float32 would move an answer), a ray's mark as Int32. A grid is three sorted typed lists: cell keys, where each
+// cell's references start, and the references. A build merges new references behind old ones, so a cell keeps filing order.
+// A `fill` builds when what waits is at least half of what is built; a read builds the rest. Building at every fill made
+// grouped adds quadratic (300 adds of 40 flats: 5 -> 185 ms); building only at a read left unread sets as plain arrays.
+const NO_F64 = new Float64Array(0), NO_I32 = new Int32Array(0);
+/** A grid of no cells; `pk`/`pi` are the keys and indices filed since its lists were built. */
+const freshCells = () => ({ keys: NO_F64, off: new Int32Array(1), idx: NO_I32, pk: [], pi: [] });
+function fileIn(cells, k, i) {
+  cells.pk.push(k);
+  cells.pi.push(i);
 }
-// MEM-AUDIT: and every proxy's maker gives it the index's `_mark` at birth, last of its keys (coverProxy, coverProxies,
-// propBodies.js, the jungle's) - added first by `fill` (which still zeroes it: a proxy may be filed in two indexes), it was
-// a map transition and an out-of-line property array a proxy (AUDIT C4), a million and a half of them at Knightstale.
+/** The first cell whose key is `k` or past it. */
+function firstAt(keys, k) {
+  let lo = 0, hi = keys.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if (keys[mid] < k) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+/** The references' positions sorted by cell, a cell's own in the order filed. Each is one number - its key past the
+ *  least, times the count, plus its position - so a typed sort orders them with no comparator; a spread too wide for
+ *  that to stay exact takes the comparator (Array's sort is stable). */
+function filingOrder(pk) {
+  const added = pk.length;
+  let least = Infinity, most = -Infinity;
+  for (const k of pk) {
+    if (k < least) least = k;
+    if (k > most) most = k;
+  }
+  if ((most - least + 1) * added >= Number.MAX_SAFE_INTEGER) return Array.from({ length: added }, (_, j) => j).sort((a, b) => pk[a] - pk[b]);
+  const packed = new Float64Array(added);
+  for (let j = 0; j < added; j++) packed[j] = (pk[j] - least) * added + j;
+  packed.sort();
+  const order = new Int32Array(added);
+  for (let j = 0; j < added; j++) order[j] = packed[j] % added;
+  return order;
+}
+/** The grid's lists rebuilt with the references filed since: those sorted by cell (a stable sort keeps a cell's own in
+ *  the order filed) and merged behind the old, a cell's old references first. */
+function buildCells(cells) {
+  const pk = cells.pk, pi = cells.pi, added = pk.length;
+  if (!added) return;
+  const order = filingOrder(pk);
+  const keys = cells.keys, off = cells.off, idx = cells.idx, total = idx.length + added;
+  const refKeys = new Float64Array(total), refs = new Int32Array(total);
+  let c = 0, j = 0, m = 0;
+  while (c < keys.length || j < added) {
+    if (j >= added || (c < keys.length && keys[c] <= pk[order[j]])) {
+      for (let q = off[c]; q < off[c + 1]; q++) {
+        refKeys[m] = keys[c];
+        refs[m++] = idx[q];
+      }
+      c++;
+    } else {
+      refKeys[m] = pk[order[j]];
+      refs[m++] = pi[order[j]];
+      j++;
+    }
+  }
+  let cellCount = 0;
+  for (let q = 0; q < total; q++) if (q === 0 || refKeys[q] !== refKeys[q - 1]) cellCount++;
+  const newKeys = new Float64Array(cellCount), newOff = new Int32Array(cellCount + 1);
+  for (let q = 0, u = -1; q < total; q++) {
+    if (q === 0 || refKeys[q] !== refKeys[q - 1]) {
+      newKeys[++u] = refKeys[q];
+      newOff[u] = q;
+    }
+  }
+  newOff[cellCount] = total;
+  cells.keys = newKeys;
+  cells.off = newOff;
+  cells.idx = refs;
+  cells.pk = [];
+  cells.pi = [];
+}
+/** A Float64 column of `n` slots holding `a`'s first ones. */
+function resized(a, n) {
+  const b = new Float64Array(n);
+  b.set(a.length > n ? a.subarray(0, n) : a);
+  return b;
+}
+/** A set's next ray stamp for `mark` - wrapped before the Int32 runs out, every mark cleared with it. */
+function nextStamp(set, stampKey, markKey) {
+  if (set[stampKey] === 0x7fffffff) {
+    set[markKey].fill(0);
+    set[stampKey] = 0;
+  }
+  return ++set[stampKey];
+}
 
 /** TACT1: cover is read with the Enhanced AI switch on - this module is the switch's one reader for it, so a host
  *  stands its index without seeing the switch (enhancedAI4's AUDIT 55 holds who may). */
 export const coverSwitchOn = () => getPref('enhancedAI') === true;
 
 /**
- * The cover index.
- * @param {{ enabled?: () => boolean }} [opts] `enabled` - is cover read at all (by default the Enhanced AI switch)
+ * @typedef {{ keys: Float64Array, off: Int32Array, idx: Int32Array, pk: number[], pi: number[] }} CoverCells
+ * @typedef {{ n: number, bases: any[], r: Float64Array, h: Float64Array, lift: Float64Array, mark: Int32Array,
+ *   stamp: number, t: () => number[], grid: CoverCells, wide: CoverCells, wideR: number, min: number[], max: number[],
+ *   bodies: any[], bodyN: number, bodyCells: CoverCells, bodyMark: Int32Array, bodyStamp: number, dirty: boolean }} CoverSet
  */
+
+/** The cover index. `enabled` - is cover read at all (by default the Enhanced AI switch). @param {{ enabled?: () => boolean }} [opts] */
 export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
-  /** @type {Map<any, { items: any[], t: () => number[], grid: Map<number, any[]>, wide: Map<number, any[]>, wideR: number, min: number[], max: number[], bodies: Map<number, any[]>, bodyN: number }>} */
+  /** @type {Map<any, CoverSet>} */
   const sets = new Map();
-  let stamp = 0;
   /** IC-SWAP-BEHIND (scenes/swapBehind.js): the keys whose sets are HELD - filled but in no query - and those sets, until
    *  `wake` puts them in under their pixel's own key. @type {Set<any>} */
   const holding = new Set();
@@ -147,8 +236,14 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
   const held = new Map();
   const setsOf = (/** @type {any} */ key) => (holding.has(key) ? held : sets);
 
-  /** A set of no proxies yet, `t` its frame's translation - in the index once placed (add, place). */
-  const fresh = (t) => ({ items: [], t: t || (() => ZERO3), grid: new Map(), wide: new Map(), wideR: 0, min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity], bodies: new Map(), bodyN: 0 });
+  /** A set of no proxies yet, `t` its frame's translation - in the index once placed (add, place).
+   *  @returns {CoverSet} */
+  const fresh = (t) => ({
+    n: 0, bases: [], r: NO_F64, h: NO_F64, lift: NO_F64, mark: NO_I32, stamp: 0,
+    t: t || (() => ZERO3), grid: freshCells(), wide: freshCells(), wideR: 0,
+    min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity],
+    bodies: [], bodyN: 0, bodyCells: freshCells(), bodyMark: NO_I32, bodyStamp: 0, dirty: false,
+  });
   /** Add proxies to the set `key` (appended to what it holds); `t` its frame's translation. */
   function add(key, items, t = null) {
     const into = setsOf(key);
@@ -160,33 +255,68 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
   function fill(set, items) {
     for (const it of items) {
       if (!(it?.r > 0) || !(it.h > 0) || !it.c || it.c.noCover) continue;   // AUDIT TACT B3: a person is no cover
-      it._mark = 0;
+      set.dirty = true;
       if (it.body) { fileBody(set, it); continue; }   // PROP-BODIES: a body, never cover
-      set.items.push(it);
+      const i = set.n++;
+      if (i >= set.r.length) {
+        const room = Math.max(16, i + (i >> 1));
+        set.r = resized(set.r, room);
+        set.h = resized(set.h, room);
+        set.lift = resized(set.lift, room);
+      }
+      set.bases.push(it.c);
+      set.r[i] = it.r;
+      set.h[i] = it.h;
+      set.lift[i] = it.lift ?? 0;
       const [x, y, z] = it.c;
       set.min[0] = Math.min(set.min[0], x - it.r); set.max[0] = Math.max(set.max[0], x + it.r);
       set.min[1] = Math.min(set.min[1], y - 64); set.max[1] = Math.max(set.max[1], y + (it.lift ?? 0) + it.h + 64);   // slack, not a bound
       set.min[2] = Math.min(set.min[2], z - it.r); set.max[2] = Math.max(set.max[2], z + it.r);
       if (it.r > COVER_CELL) {   // TREE-1: a wide proxy, once, under its centre
-        fileIn(set.wide, cellKey(Math.floor(x / COVER_WIDE), Math.floor(z / COVER_WIDE)), it);
+        fileIn(set.wide, cellKey(Math.floor(x / COVER_WIDE), Math.floor(z / COVER_WIDE)), i);
         if (it.r > set.wideR) set.wideR = it.r;
         continue;
       }
       for (let gx = Math.floor((x - it.r) / COVER_CELL); gx <= Math.floor((x + it.r) / COVER_CELL); gx++) {
-        for (let gz = Math.floor((z - it.r) / COVER_CELL); gz <= Math.floor((z + it.r) / COVER_CELL); gz++) fileIn(set.grid, cellKey(gx, gz), it);
+        for (let gz = Math.floor((z - it.r) / COVER_CELL); gz <= Math.floor((z + it.r) / COVER_CELL); gz++) fileIn(set.grid, cellKey(gx, gz), i);
       }
     }
-    return set.items.length;
+    if (set.dirty && 2 * waiting(set) >= built(set)) seal(set);
+    return set.n;
   }
 
   /** PROP-BODIES: a body into its set's own grid - every cell its foot circle touches, so a query reaching the circle
    *  meets one of them. */
   function fileBody(set, it) {
     const [x, , z] = it.c;
-    set.bodyN += 1;
+    const i = set.bodyN++;
+    set.bodies.push(it);
     for (let gx = Math.floor((x - it.r) / COVER_CELL); gx <= Math.floor((x + it.r) / COVER_CELL); gx++) {
-      for (let gz = Math.floor((z - it.r) / COVER_CELL); gz <= Math.floor((z + it.r) / COVER_CELL); gz++) fileIn(set.bodies, cellKey(gx, gz), it);
+      for (let gz = Math.floor((z - it.r) / COVER_CELL); gz <= Math.floor((z + it.r) / COVER_CELL); gz++) fileIn(set.bodyCells, cellKey(gx, gz), i);
     }
+  }
+
+  /** COVER-COMPACT: the references a set holds waiting for its next build, and those built. */
+  const waiting = (set) => set.grid.pk.length + set.wide.pk.length + set.bodyCells.pk.length;
+  const built = (set) => set.grid.idx.length + set.wide.idx.length + set.bodyCells.idx.length;
+
+  /** COVER-COMPACT: a set filled since its last build, made readable - its columns cut to their length, its grids'
+   *  lists built, its marks one a proxy. */
+  function seal(set) {
+    set.dirty = false;
+    const n = set.n;
+    if (set.r.length !== n) {
+      set.r = resized(set.r, n);
+      set.h = resized(set.h, n);
+      set.lift = resized(set.lift, n);
+    }
+    set.bases = set.bases.slice();   // an exact copy: a pushed array keeps up to half again in slack
+    set.bodies = set.bodies.slice();
+    if (set.mark.length !== n) set.mark = new Int32Array(n);
+    if (set.bodyMark.length !== set.bodyN) set.bodyMark = new Int32Array(set.bodyN);
+    buildCells(set.grid);
+    buildCells(set.wide);
+    buildCells(set.bodyCells);
   }
 
   /** PROP-BODIES: every body whose foot circle, widened by `reach`, holds the point `p` (x and z), handed to `visit`
@@ -194,16 +324,19 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
   function near(p, reach, visit) {
     for (const set of sets.values()) {
       if (!set.bodyN) continue;
+      if (set.dirty) seal(set);
       const t = set.t(), x = p[0] - t[0], z = p[2] - t[2];
-      stamp += 1;
+      const stamp = nextStamp(set, 'bodyStamp', 'bodyMark'), mark = set.bodyMark;
+      const { keys, off, idx } = set.bodyCells;
+      const gz0 = Math.floor((z - reach) / COVER_CELL), gz1 = Math.floor((z + reach) / COVER_CELL);
       for (let gx = Math.floor((x - reach) / COVER_CELL); gx <= Math.floor((x + reach) / COVER_CELL); gx++) {
-        for (let gz = Math.floor((z - reach) / COVER_CELL); gz <= Math.floor((z + reach) / COVER_CELL); gz++) {
-          const cell = set.bodies.get(cellKey(gx, gz));
-          if (!cell) continue;
-          for (const it of cell) {
-            if (it._mark === stamp) continue;
-            it._mark = stamp;
-            const c = it.c;
+        const last = cellKey(gx, gz1);
+        for (let cell = firstAt(keys, cellKey(gx, gz0)); cell < keys.length && keys[cell] <= last; cell++) {
+          for (let q = off[cell]; q < off[cell + 1]; q++) {
+            const i = idx[q];
+            if (mark[i] === stamp) continue;
+            mark[i] = stamp;
+            const it = set.bodies[i], c = it.c;
             if (FELLED.has(c) || c.noCover) continue;
             const dx = x - c[0], dz = z - c[2], R = it.r + reach;
             if (dx * dx + dz * dz < R * R) visit(it, c[0] + t[0], c[1] + t[1] + (it.lift ?? 0), c[2] + t[2]);
@@ -233,37 +366,40 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
     const lo = _lo;
     const endAt = sight ? maxDist : null;
     for (const set of sets.values()) {
+      if (set.dirty) seal(set);
       const t = set.t();
       lo[0] = origin[0] - t[0]; lo[1] = origin[1] - t[1]; lo[2] = origin[2] - t[2];
       const reach = Math.min(maxDist, best);
       const ex = lo[0] + dir[0] * reach, ez = lo[2] + dir[2] * reach;
       if (Math.max(lo[0], ex) < set.min[0] || Math.min(lo[0], ex) > set.max[0]) continue;
       if (Math.max(lo[2], ez) < set.min[2] || Math.min(lo[2], ez) > set.max[2]) continue;
-      stamp += 1;
+      const stamp = nextStamp(set, 'stamp', 'mark'), mark = set.mark;
+      const bases = set.bases, rs = set.r, hs = set.h, lifts = set.lift;
       const gx0 = Math.floor(Math.min(lo[0], ex) / COVER_CELL), gx1 = Math.floor(Math.max(lo[0], ex) / COVER_CELL);
       const gz0 = Math.floor(Math.min(lo[2], ez) / COVER_CELL), gz1 = Math.floor(Math.max(lo[2], ez) / COVER_CELL);
+      const grid = set.grid;
       for (let gx = gx0; gx <= gx1; gx++) {
-        for (let gz = gz0; gz <= gz1; gz++) {
-          const cell = set.grid.get(cellKey(gx, gz));
-          if (!cell) continue;
-          for (const it of cell) {
-            if (it._mark === stamp) continue;
-            it._mark = stamp;
-            const s = rayCylinder(lo, dir, it, Math.min(maxDist, best), endAt);
+        const last = cellKey(gx, gz1);
+        for (let cell = firstAt(grid.keys, cellKey(gx, gz0)); cell < grid.keys.length && grid.keys[cell] <= last; cell++) {
+          for (let q = grid.off[cell]; q < grid.off[cell + 1]; q++) {
+            const i = grid.idx[q];
+            if (mark[i] === stamp) continue;
+            mark[i] = stamp;
+            const s = rayUpright(lo, dir, bases[i], rs[i], hs[i], lifts[i], Math.min(maxDist, best), endAt);
             if (s < best) best = s;
           }
         }
       }
       if (set.wideR > 0) {   // TREE-1: the wide proxies whose centre stands within the widest radius of the ray's box
-        const R = set.wideR;
+        const R = set.wideR, wide = set.wide;
         const wx0 = Math.floor((Math.min(lo[0], ex) - R) / COVER_WIDE), wx1 = Math.floor((Math.max(lo[0], ex) + R) / COVER_WIDE);
         const wz0 = Math.floor((Math.min(lo[2], ez) - R) / COVER_WIDE), wz1 = Math.floor((Math.max(lo[2], ez) + R) / COVER_WIDE);
         for (let gx = wx0; gx <= wx1; gx++) {
-          for (let gz = wz0; gz <= wz1; gz++) {
-            const cell = set.wide.get(cellKey(gx, gz));
-            if (!cell) continue;
-            for (const it of cell) {
-              const s = rayCylinder(lo, dir, it, Math.min(maxDist, best), endAt);
+          const last = cellKey(gx, wz1);
+          for (let cell = firstAt(wide.keys, cellKey(gx, wz0)); cell < wide.keys.length && wide.keys[cell] <= last; cell++) {
+            for (let q = wide.off[cell]; q < wide.off[cell + 1]; q++) {
+              const i = wide.idx[q];
+              const s = rayUpright(lo, dir, bases[i], rs[i], hs[i], lifts[i], Math.min(maxDist, best), endAt);
               if (s < best) best = s;
             }
           }
@@ -280,9 +416,9 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
     /** Is cover read at all (the Enhanced AI switch). */
     on: () => !!enabled(),
     /** How many proxies, over every set (tests, probes). */
-    size: () => { let n = 0; for (const s of sets.values()) n += s.items.length; return n; },
+    size: () => { let n = 0; for (const s of sets.values()) n += s.n; return n; },
     /** AUDIT BANTHA1 TREE-1: how many references the grids hold, over every set (tests, probes) - a wide proxy is one. */
-    refs: () => { let n = 0; for (const s of sets.values()) for (const g of [s.grid, s.wide]) for (const cell of g.values()) n += cell.length; return n; },
+    refs: () => { let n = 0; for (const s of sets.values()) for (const g of [s.grid, s.wide]) n += g.idx.length + g.pk.length; return n; },
     has: (key) => sets.has(key),
     /** PROP-BODIES: how many bodies, over every set (tests, probes). */
     bodies: () => { let n = 0; for (const s of sets.values()) n += s.bodyN; return n; },

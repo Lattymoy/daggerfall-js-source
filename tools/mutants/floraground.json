@@ -323,7 +323,7 @@
   },
   {
     "name": "FLORA-GROUND-RINGS-the-snow-off-the-bed",
-    "file": "src/scenes/snowGround.js",
+    "file": "src/systems/snowfall/snowGroundLaw.js",
     "old": "return drawnGroundAt(p.samples, lx, lz, p._stride ?? 1, p._bed?.depths ?? null);",
     "new": "return drawnGroundAt(p.samples, lx, lz, p._stride ?? 1, null);",
     "tests": [

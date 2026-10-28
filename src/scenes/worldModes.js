@@ -5479,7 +5479,7 @@ export function createWorldModes(host) {
         if (interiorHome?.own && !_sceneHeldForLayout) decorSetDownHeld(r.data.pieces);   // HOLD-KEPT: and what a piece the service no longer has held
         if (!shown) { interiorCtx?.base?.setHidden([]); return; }   // HOME-VOTE: the room as Daggerfall furnished it
         interiorCtx?.base?.setHidden(Array.isArray(r.data.hidden) ? r.data.hidden : []);   // BASE-HIDE: the room its owner cleared, for everyone
-        noteDecorGrants(host.homeDecor, Number(homeTownOf(b)) >>> 0, b.buildingKey, host.decorCharacter?.() ?? null);   // DECOR-ACCESS
+        noteDecorGrants(host.homeDecor, Number(homeTownOf(b)) >>> 0, b.buildingKey, host.decorCharacter?.() ?? null, interiorHome?.own && !_sceneHeldForLayout ? interiorDecor : null, playerEntity);   // DECOR-ACCESS; HOME-STRANDED: the owner's chests take back what the old pour left under the building
         bindDecorHouseFrom(host, playerEntity, say, accountRefusalText, Number(homeTownOf(b)) >>> 0, b.buildingKey, (loot) => (interiorOverlay = openDecorChest(interiorInventory, loot) ?? interiorOverlay));
       },
     });

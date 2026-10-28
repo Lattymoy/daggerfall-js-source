@@ -141,6 +141,12 @@ export class BlocksFile {
     return this._bsa ? this._bsa.count : 0;
   }
 
+  /** FIRST-VISIT: the archive's bytes, or null - what a derived answer's stamp is taken over
+   *  (systems/firstVisit/firstVisitStore.js bytesStamp). */
+  get bytes() {
+    return this._bsa?._bytes ?? null;
+  }
+
   /**
    * Load BLOCKS.BSA contents.
    * @param {Uint8Array} bytes

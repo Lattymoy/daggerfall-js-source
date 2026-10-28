@@ -239,7 +239,7 @@ import {
   nameAsOf, wornNameOf, chooseNameAs,   // NAME-AS: the name the room reads - the account's or the character's
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
-import { mintToken, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, mintHomeOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
+import { mintToken, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, mintHomeOrder, mintYardOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, SAFE_OPEN_ROUTES, STAFF_ROUTES, savePathOf, realmPathOf, poiPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining, routeDb, d1BookmarkOf, D1_BOOKMARK_RE, d1Overloaded, noteOverload, shedding } from './service.js';   // SCALE4d: the routes a read replica may serve, and the session they are served on
 import { poiRolesOf, putPoiAsset, getPoiAsset, savePoiDraft, submitPoi, withdrawPoi, requestRetire, reviewPoi, rollbackPoi, listPoi, poiHistory, poiQueue, poiLiveFeed, poiHeldVersion, poiFeedTag, listShelf, shelfEntry, shelve, unshelve, POI_ASSET_MAX, POI_DRAFT_BODY_MAX, POI_LIVE_ASSET_MAX_AGE_S } from './poi.js';   // POI-1: the POI store - builders draft, an approver decides, the feed is what is live; POI-4b: the library's shelf
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
@@ -325,7 +325,8 @@ const withSeatTitles = async (ctx, player, env) => withChapterTitles(ctx, seatsO
 const withChapterTitles = async (/** @type {any} */ ctx, /** @type {any} */ player, /** @type {any} */ env) => withMasteryMarks(ctx, chapterTitlesOpenFor(player, env)
   ? { ...player, chapterTitles: [...new Set((await chapterTitlesOfAccount(ctx.db, player.id, ctx.nowS, seasonZeroOf(env.SEASON_ZERO_WEEK))).map((t) => t.title))] } : player);
 import { huntState, huntClear, withMasteryMarks, HUNT_STATUS } from './hunts.js';   // HUNTERS-MARK: the hunt's ledger; MARKS-OF-MASTERY: the titles read off it
-import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase, yardsKept, forgetYards, settleYards } from './decor.js';   // YARD-SHED: a town's yards kept   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
+import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase } from './decor.js';
+import { yardCellsKept, forgetYardCell, forgetYardTown, settleYardCell } from './yardCells.js';   // YARD-CELL: a town's yards kept and read a block at a time   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
 import { commitDecorBatch } from './decorBatch.js';   // DECOR-BATCH: one Confirm for a home's draft
 import { decorUse } from './decorAccess.js';   // DECOR-ACCESS: who may use a container or a station
 import { DECOR_BATCH_BYTES } from '../../src/net/decorLaw.js';
@@ -704,6 +705,16 @@ async function guildOrdersOf(r, s, env, subtle, nowS) {
  *  online: a quest never picks its residence in a house bought after a page's boot read, and one picked there and not yet
  *  reached is chosen again. A service with no key still acts, answering none: the pages read the move at their next
  *  boot (homes.js homeLayouts). */
+/** YARD-CELL YC2 (bible/11-Multiplayer/Yard-Cells.md section 3.6): a decor answer whose write moved its cell (`settled`) carries
+ *  its new version (`yardVer`, for the owner's page) and a signed YARD ORDER (`yardOrder`) for the hub; neither if none moved or no key. */
+async function yardOrderOf(r, settled, mapId, s, env, subtle, nowS) {
+  if (!settled) return r;
+  const key = await signingKey(env, subtle);
+  if (!key) return r;
+  const yardOrder = await mintYardOrder({ s, m: mapId, c: settled.cell, v: settled.ver }, key, { subtle, nowS });
+  return { ...r, yardVer: settled.ver, yardOrder };
+}
+
 async function homeOrdersOf(r, s, env, subtle, nowS) {
   const { moved, ...answer } = r ?? {};
   if (!Array.isArray(moved) || !moved.length) return answer;
@@ -1056,15 +1067,19 @@ const service = {
       if (body === undefined && path === '/v1/homes/decor/batch') return no('too-large', 413, origin);   // DECOR-BATCH: past 128 KiB, before a session is read
       if (!body) return no('body', 400, origin);
       // YARD-SHED (2026-10-06, the service down - "D1 DB is overloaded. Requests queued for too long."): A TOWN'S YARDS NEED
-      // NO SESSION. Its answer is every caller's alike, any guest's to read (decor.js yardsKept), and the two reads a
-      // session costs were most of the database's day - so it is answered here, from the isolate's kept answer, bounded
-      // per address in this isolate's memory as a session's door is per account (no write to count it).
-      if (path === '/v1/homes/yards' && request.method === 'POST') {
+      // NO SESSION. Their answer is every caller's alike, any guest's to read, and the two reads a session costs were most
+      // of the database's day - so they are answered here, from the isolate's kept cells (yardCells.js yardCellsKept),
+      // bounded per address in this isolate's memory as a session's door is per account (no write to count it).
+      if (path === '/v1/homes/yards/cells' && request.method === 'POST') {
         const ip = request.headers.get('cf-connecting-ip') || 'unknown';
         if (overAccountRate(`yards:${ip}`, nowS, ACCOUNT_MAX, ACCOUNT_WINDOW_S)) return no('rate', 429, origin);
-        const r = await yardsKept(ctx, body.mapId, nowS);
+        const r = await yardCellsKept(ctx, body, nowS);
         return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);
       }
+      // YARD-CELL: the whole town's yards, which a build from before the cells asks, are refused - a town is read by its
+      // cells now, and the old answer was cut at 6,500 pieces. Such a build reads any answer but `ok` as a failed ask and
+      // backs off without a word; the site's build notice (net/updateNotice.js) tells it to reload.
+      if (path === '/v1/homes/yards' && request.method === 'POST') return no('client-update', 410, origin);
       // POI-1: THE LIVE FEED AND A LIVE ASSET NEED NO SESSION - what every approved POI is, and the bytes it names, are
       // every player's to read, the game's included (poi.js). Bounded per address in this isolate's memory, as the yards
       // are; the feed kept in the isolate and answered 304 to a game that already holds its version; an asset by its
@@ -1807,11 +1822,12 @@ const service = {
                 : path === '/v1/homes/decor/batch' ? await commitDecorBatch(hctx, who.player, body)   // DECOR-BATCH
                   : path === '/v1/homes/decor/use' ? await decorUse(hctx, who.player, body)   // DECOR-ACCESS
                     : await removeDecor(hctx, who.player, body);
+          let settled = null;
           if (path !== '/v1/homes/decor/use') {   // a chest's list, settle or release moves no yard
-            forgetYards(body?.mapId);   // YARD-SHED: the town's kept yards let go, whatever the write did
-            await settleYards(ctx.db, body?.mapId).catch((e) => console.warn('[yards] the town not built', e?.message ?? e));   // YARD-SNAP: and built again (the clock builds one this misses)
+            forgetYardCell(body?.mapId, body?.buildingKey);   // YARD-CELL: the cell's kept answer let go, whatever the write did
+            settled = await settleYardCell(ctx.db, body?.mapId, body?.buildingKey).catch((e) => { console.warn('[yards] the cell not built', e?.message ?? e); return null; });   // and built again (the clock builds one this misses)
           }
-          if (!('error' in r)) return json(r, 200, origin);
+          if (!('error' in r)) return json(await yardOrderOf(r, settled, body?.mapId, who.player.id, env, subtle, nowS), 200, origin);   // YC2: a yard that moved, said to every page online
           const said = realmNo(r);
           if (said) return said;
           const status = r.error === 'decor-cap' || r.error === 'yard-cap' || r.error === 'decor-taken' || r.error === 'guild-treasury-full' || r.error === 'vendor-stocked' || r.error === 'decor-rev' || r.error === 'decor-holds' || r.error === 'decor-shut' || r.error === 'decor-held' || r.error === 'decor-busy' || r.error === 'decor-lapsed' ? 409   // RPT1026-CHESTGOLD: a hold run out; GUILD1d: a hall piece's half back, into a full treasury; HOME-VENDOR: a stocked trader stays; DECOR-BATCH: a stale revision, or a chest that still holds goods; DECOR-ACCESS: shut, held, or open to someone else
@@ -2742,9 +2758,9 @@ const service = {
         if (path === '/v1/realm/wed') return answer(await realmWed(rctx, me, { id: body.id, lease: body.lease, sid: body.sid, partner: body.partner, partnerChar: body.partnerChar, withdraw: body.withdraw === true }));
         if (path === '/v1/realm/unions') return json({ unions: await listUnions(rctx, me) }, 200, origin);
         // /v1/realm/delete - HOUSE-LOSS: which undoes one too, for a door that asks a delete. ACCOUNT-HOMES: the homes it
-        // bought go with it (QUEST-HOME's `moved`), and their towns' kept yards are let go as a decor write lets them go (YARD-SHED)
+        // bought go with it (QUEST-HOME's `moved`), and their towns' kept yard cells are let go as a decor write lets one go
         const deleted = await deleteRealm(rctx, me, body.id);
-        for (const { mapId } of deleted?.moved ?? []) forgetYards(mapId);
+        for (const { mapId } of deleted?.moved ?? []) forgetYardTown(mapId);
         return answer(await homeOrdersOf(deleted, me, env, subtle, nowS));   // QUEST-HOME: its homes a house again to every page online
       }
 

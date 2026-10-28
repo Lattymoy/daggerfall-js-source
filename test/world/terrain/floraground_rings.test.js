@@ -112,7 +112,7 @@ test('FLORA-GROUND THE RINGS the ground a pixel draws is one law: drawnGroundAt 
     apart = Math.max(apart, Math.abs(drawnGroundAt(hm, x, z, 4) - walkGroundAt(hm, x, z)));
   }
   assert.ok(apart > 1, `the far ring's ground parts from the walk floor by ${apart.toFixed(2)} m on this field`);
-  assert.match(src('src/scenes/snowGround.js'), /return drawnGroundAt\(p\.samples, lx, lz, p\._stride \?\? 1, p\._bed\?\.depths \?\? null\);/, 'the snow lies on the same law, its bed with it');
+  assert.match(src('src/systems/snowfall/snowGroundLaw.js'), /return drawnGroundAt\(p\.samples, lx, lz, p\._stride \?\? 1, p\._bed\?\.depths \?\? null\);/, 'the snow lies on the same law, its bed with it');
 });
 
 test('FLORA-GROUND THE RINGS every plant of the ground is drawn on the ground its pixel draws, at every ring: at stride 4 each on the far ring\'s mesh by its own sink, a mound\'s tree where it stands, the cull boxes with them; again at the same ring nothing moves; at stride 1 each back on the walk floor; a bed carved under it in the near ring, each on the carved ground (mutants: the mark unread; the lift reversed; the near ring\'s bed ignored; the seat that never moves; the box left behind; the pixel\'s box ungrown; the lift kept across a re-carve)', () => {

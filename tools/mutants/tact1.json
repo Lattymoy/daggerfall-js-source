@@ -83,8 +83,8 @@
   {
     "name": "TACT1-first-not-nearest",
     "file": "src/ai/cover.js",
-    "old": "            it._mark = stamp;\n            const s = rayCylinder(lo, dir, it, Math.min(maxDist, best), endAt);\n            if (s < best) best = s;",
-    "new": "            it._mark = stamp;\n            const s = rayCylinder(lo, dir, it, Math.min(maxDist, best), endAt);\n            if (s < best) return s;",
+    "old": "            mark[i] = stamp;\n            const s = rayUpright(lo, dir, bases[i], rs[i], hs[i], lifts[i], Math.min(maxDist, best), endAt);\n            if (s < best) best = s;",
+    "new": "            mark[i] = stamp;\n            const s = rayUpright(lo, dir, bases[i], rs[i], hs[i], lifts[i], Math.min(maxDist, best), endAt);\n            if (s < best) return s;",
     "tests": [
       "test/scenes/tact1.test.js"
     ],
