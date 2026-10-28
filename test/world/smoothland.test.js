@@ -443,10 +443,12 @@ test('SMOOTH-LAND with ARENA2: on the player\'s own picture no staircase is left
   assert.ok(coastTurn < 20 && borderTurn < 50, `the sharpest turns: a coast's ${coastTurn.toFixed(1)} degrees, a border's ${borderTurn.toFixed(1)}`);
   // the places: each on its own province's land by the one law, a port beside its sea
   const AP = await import('../../src/world/arenaPlaces.js');
+  const { seaBears } = await import('../../src/net/fortLaw.js');
   const { stood } = AP.arenaPixels();
   assert.ok(stood.length > 280);
   for (const p of stood) {
     assert.equal(provinceKeyBeyondBay(p.bx, p.by), p.province, `${p.name} on its own land`);
-    if (p.port) assert.ok([[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]].some(([dx, dy]) => AP.pictureSea(tr, p.bx + dx, p.by + dy)), `${p.name} beside the sea`);
+    // PIN MOVED (FIELD BUGS 2026-10-28 COAST-PORT): a place the sea bears on is a port too - within SEA_RING, Elden Root's two
+    if (p.port) assert.ok(seaBears(p.bx, p.by, (x, y) => AP.pictureSea(tr, x, y)), `${p.name} beside the sea`);
   }
 });

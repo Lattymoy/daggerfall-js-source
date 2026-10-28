@@ -20,6 +20,7 @@ import { capitalPin, capitalOnPixel } from './tamrielCapitals.js';   // TESA10: 
 import { plateauDry } from './spawnedDungeons.js';   // AUDIT TESA II P8: a port's plateau above the beach
 import { groundWoods, bayEdgeDistance, SEAM_PX, BLEND_PX } from './tamriel/tamrielGround.js';
 import { WoodsFile } from '../formats/woodsFile.js';
+import { seaBears } from '../net/fortLaw.js';   // COAST-PORT: the shipyard's and the harbour board's ring
 
 // ── TESA2: THE PIXEL A PLACE STANDS ON ──────────────────────────
 
@@ -144,6 +145,14 @@ function nearestShore(x, y, shore, dry, from) {
  */
 export function standArenaPixels(model, trace, pinned = null, reserved = null, dry = null) {
   const stood = [], unstood = [], byPixel = new Map(), lands = new Map();
+  // COAST-PORT (FIELD BUGS 2026-10-28): a place the open sea bears on is a port, whatever the lore says - Farrun, Tear and
+  // four more stood a pixel off the sea with no harbour. The open sea is the picture's, its lakes left out.
+  const lakes = pictureLakes(trace);
+  const openSea = (/** @type {number} */ bx, /** @type {number} */ by) => {
+    if (inBay(bx, by) || !pictureSea(trace, bx, by)) return false;
+    const [qx, qy] = bayToPicture(bx + 0.5, by + 0.5), ix = Math.floor(qx), iy = Math.floor(qy);
+    return !(ix >= 0 && iy >= 0 && ix < trace.w && iy < trace.h && lakes[iy * trace.w + ix] === 1);
+  };
   const pins = new Map();
   for (const p of pinned ? model.places : []) {
     const at = p.name ? pinned(p) : null;
@@ -172,7 +181,7 @@ export function standArenaPixels(model, trace, pinned = null, reserved = null, d
     const at = onShore ?? nearestPixel(x, y, PIXEL_REACH, free);
     if (!at) { unstood.push(p); continue; }
     const { port: _lore, ...rest } = p;   // TESA12: the lore's word - a port only on its shore
-    const placed = { ...rest, bx: at[0], by: at[1], ...(onShore ? { port: true } : {}) };
+    const placed = { ...rest, bx: at[0], by: at[1], ...(onShore || seaBears(at[0], at[1], openSea) ? { port: true } : {}) };   // COAST-PORT
     stood.push(placed);
     byPixel.set(`${at[0]},${at[1]}`, placed);
   }

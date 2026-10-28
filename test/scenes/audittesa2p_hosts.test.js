@@ -226,7 +226,7 @@ test('AUDIT TESA II P7 THE LANES PAST THE BAY: their own reach and their own nea
   const two = [{ id: 1, name: 'A', px: 2000, py: -300 }, { id: 2, name: 'B', px: 2300, py: -300 }];
   assert.equal(laneNetwork(two, open, BEYOND_LANE_MAX_PX).length, 1);
   assert.equal(laneNetwork(two, open).length, 0, 'the Bay\'s reach: none');
-  assert.match(rd('src/scenes/naval/worldLanes.js'), /beyondList = laneNetwork\(ports\.list\(\), worldOpen, BEYOND_LANE_MAX_PX\);/);
+  assert.match(rd('src/scenes/naval/worldLanes.js'), /beyondList = laneNetwork\(ports\.list\(\), worldOpen, BEYOND_LANE_MAX_PX, true\);/);   // PIN MOVED (SEA-SQUARE): the roomiest roadstead
   assert.match(W, /if \(!worldLanes\.near\(lane, here\)\) continue;/, 'the host\'s feed asks the book');
 });
 
@@ -244,7 +244,7 @@ test('AUDIT TESA II P7 A WAY PAST THE BAY KEEPS OFF THE BAY\'S RECTANGLE: the Ba
   }
 });
 
-test('AUDIT TESA II P7 (ARENA2) THE WAYS PAST THE BAY on the freeware\'s world, at the picture\'s scale: between the world\'s ports (the places past the Bay registered), 19 of the 21 lanes find a way, each in a second\'s tenth; every leg on the world\'s lane water at the Bay\'s scale, none in the Bay\'s rectangle nor on a lake (mutants: the corner cut; the leg unasked; the lakes the sea; the Bay\'s rectangle sailed)', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
+test('AUDIT TESA II P7 (ARENA2) THE WAYS PAST THE BAY on the freeware\'s world, at the picture\'s scale: between the world\'s ports (the places past the Bay registered), 29 of the 31 lanes find a way (PIN MOVED, FIELD BUGS 2026-10-28 COAST-PORT: 19 of 21 before the seven coast ports), each in a second\'s tenth; every leg on the world\'s lane water at the Bay\'s scale, none in the Bay\'s rectangle nor on a lake (mutants: the corner cut; the leg unasked; the lakes the sea; the Bay\'s rectangle sailed)', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
   const { DFPalette } = await import('../../src/formats/dfPalette.js');
   const { preloadTamrielTrace } = await import('../../src/ui/tamrielTrace.js');
   const { WoodsFile } = await import('../../src/formats/woodsFile.js');
@@ -264,15 +264,15 @@ test('AUDIT TESA II P7 (ARENA2) THE WAYS PAST THE BAY on the freeware\'s world, 
   const places = createWorldPlaces();
   places.register('tesa', arenaPixels().stood.map((p) => ({ mapId: arenaPlaceId(p), name: p.name, px: p.bx, py: p.by, type: ARENA_TEMPLATE_KINDS[p.kind].type, port: !!p.port })));
   const ports = createWorldPorts({ places, openSea: (x, y) => water(x, y) && !pastBayLakeAt(x, y) });
-  const lanes = laneNetwork(ports.list(), lw.open, BEYOND_LANE_MAX_PX);
-  assert.equal(ports.list().length, 28);
+  const lanes = laneNetwork(ports.list(), lw.open, BEYOND_LANE_MAX_PX, true);   // PIN MOVED (SEA-SQUARE): the host's roomiest roadsteads
+  assert.equal(ports.list().length, 35);   // PIN MOVED (COAST-PORT): 28, and the seven places the sea bears on
   assert.ok(ports.list().every((p) => p.region === regionOfTheatre(p.theatre) && p.region >= 62), 'a port\'s region its province\'s (WW-R)');
-  assert.equal(lanes.length, 21);
+  assert.equal(lanes.length, 31);
   const t0 = performance.now();
   const ways = lanes.map((l) => beyondLaneWay(l, lw.openNative));
   const ms = performance.now() - t0;
-  assert.equal(ways.filter(Boolean).length, 19, 'Vivec-Ebonheart and Senchal-Torval: the picture\'s water joins them at a corner alone');
-  assert.ok(ms < 21 * 100, `${ms.toFixed(0)} ms`);
+  assert.equal(ways.filter(Boolean).length, 29, 'Vivec-Ebonheart and Senchal-Torval: the picture\'s water joins them at a corner alone');
+  assert.ok(ms < 31 * 100, `${ms.toFixed(0)} ms`);
   const tr = tamrielTrace(), lakes = pictureLakes(tr), bay = bayPictureRect();
   let off = 0, inRect = 0, onLake = 0;
   for (const way of ways.filter(Boolean)) {

@@ -469,6 +469,9 @@ of the world's, so the bound is the law's (Port-Ledger).
   roadstead on the law's sea whose cell's centre is land - a corner the law rounded, 13 of the 22 the freeware's lanes join -
   leaves from the nearest open-sea cell within MOOR_REACH (2) it reaches straight on the lane water (`moorCell`), that
   cell's centre kept in its chain; 19 of the 21 lanes find a way, as before.
+- **SEA-SQUARE** (`01-Overview/bugs/Field-Bugs-2026-10-28.md`): past the Bay a pixel is the lanes' water where its square's
+  four corner bytes are (a byte is its square's south-east corner in DFU's kernel), and a roadstead is the roomiest pixel of
+  its ring. Seven roadsteads had stood on land, and packets circled off them.
 - **One book**: `all()` the Bay's lanes and then the world's, each lane's way kept once (`way`) - the feed of packets
   about the player, the living world's sailors and crews ashore, and the passage by sea read it. The serpent reads it
   whole (WW7-12: `whole()`, then `all()`); SEA-TRADE's port lanes the world's (WW7-10: a Bay port's the Bay's alone).
