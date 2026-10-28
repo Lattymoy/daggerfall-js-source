@@ -99,7 +99,8 @@ gate gets its own gate. Now no wall has a door or a piece in another. 8 pieces o
 THE YARDS. The owner's rule: a yard keeps its #1184 place unless the place is broken. The new roads moved 310, so a yard
 now reads the roads and the wall as #1184 laid them, and one whose place no longer fits is placed again. At the merge
 1,183 of the 1,258 stood where they stood. Of the 75 moved, 50 lay on a gate's new road, 2 in the new wall and 19 against
-a grown tower; 4 stables moved but were not broken (below). Since the audit's B5 and B2 (`0be4199e9`), the 19 and
+a grown tower. 4 stables moved without being broken, by the gate furniture: Knightsgate, Issaqumbaa, Syra-Kom and
+Puweyn. Since the audit's B5 and B2 (`0be4199e9`), the 19 and
 Puweyn's stable stand on their #1184 cells: 1,203 stand, and 55 moved. Town-Shapes section 16 lists them all. Westhead
 Moor's shipyard is not among them.
 
