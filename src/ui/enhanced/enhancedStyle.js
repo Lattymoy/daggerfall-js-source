@@ -598,6 +598,9 @@ select, input, textarea { font: inherit; }
    joins it, because that is the question actually being asked. */
 @media (max-width: 860px), (pointer: coarse) {
   .shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+  /* A tile's notice (ui/saveTile.js notice - STRANDED's way back) wears the backup line's compact button at a desk,
+     and a thumb's here */
+  .svnotice .act { min-height: 44px; }
   .side { display: contents; }
   .brand { padding: 22px 20px 16px; background: var(--ink); }
   .brand h1 { font-size: 27px; }
@@ -5949,7 +5952,7 @@ ${tierMarkCss({ wash: (k) => TIER_MARKS[k], washAlpha: 0.2, edge: '#0b0805', sel
 /* OW-WHO: the Players row's word - the row's first cell, so never hidden with the glyphs' words on a phone (the
    grid's rows are display: contents, and a hidden first cell would shift every row after it a column) */
 .hmkeywho { font-size: 11px; color: #c5bda2; letter-spacing: 0.08em; text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
-/* WILD2: THE ZONE MAP'S LEGEND (ui/wild/wildZoneMap.js buildZoneLegend) - the Wrothgarian Mountains' four rings, where I
+/* WILD2: THE ZONE MAP'S LEGEND (ui/wild/wildZoneMap.js buildZoneLegend) - the open zone's four rings (Cyrodiil's), where I
    stand and the zone's laws, in the held map's plaque language (the hover card's frame, the key's bone and brass): a
    panel on the right of the paper, the room the zone map's view leaves it (ZONE_LEGEND_W). Each ring's swatch is its
    fill on the sheet; the ring I stand in wears the brass edge. A solid panel, so a press on it is never a drag. */

@@ -225,7 +225,7 @@ start.
 FOUND. HOUSE-WAITS (`Field-Bugs-2026-10-09f.md`) answers a waiting Succession from the Online page and boots the birth
 with `legacyborn`, `region` and `loc` - the line's seat (`waitingHouses.js:"const place = family.seat?.region"`). The front door then set `classic` as for
 every menu door (`main.js:"else params.set('classic', '1')"`), and the world host reads the classic start's cell before the place a boot names
-(`world.js:"if (params.has('classic'))"`): the heir stood in Privateer's Hold, inside it with StartInDungeon. The world's own Succession was never
+(`bootStartHost.js:"if (params.has('classic'))"`, moved out of world.js by BAY-LEFT-B): the heir stood in Privateer's Hold, inside it with StartInDungeon. The world's own Succession was never
 touched - its address drops `classic` (places.js birthSearch).
 
 FIXED. A boot bearing a member leaves the classic start off (`main.js:"if (legacyBirth) params.delete"`), so it stands in the place its birth names.

@@ -34,7 +34,8 @@ So, as decided here (each decision is argued in its section):
   each finisher's feat, and the account service pays it. Offline there is no Super dungeon; every dungeon is Regular.
 - **One at a time, until it is beaten.** The hub keeps ONE record (section 2). A Super dungeon stands until its boss
   falls - then it collapses - or until its time runs out unbeaten (48 hours) - then it fades. After either, the next
-  one rises somewhere else.
+  one rises somewhere else. Since WW5 (section 16, WW5), one at a time in each theatre: the Bay's and each province's
+  lane keeps its own record, Cyrodiil's open zone none.
 - **"Where population is at its most" in both of its senses.** The relay counts the players in each of the Bay's 62
   regions at the moment one rises and picks the fullest (section 3); inside that region every client places it by the
   first of the region's cities, ranked as its hub is (a city, the one named for its region, then the largest), that has
@@ -96,7 +97,8 @@ Ledger A rows are SD-ONLINE (the world's dungeon sizes online), TIER1 (the label
 ## 2. The director - one record in the hub
 
 The hub (`chat:world`, the room every online tab holds) keeps the Super dungeon's record under the storage key `sdev`
-(outside the `look:`/`secret:`/`party:`/`world:` prefixes the sweeps delete - the relay map's trap). The record:
+(outside the `look:`/`secret:`/`party:`/`world:` prefixes the sweeps delete - the relay map's trap; WW5: that is the
+Bay's lane's, a province lane's is `sdev:<lane>` with its slots in its own span - section 16, WW5). The record:
 
 | field | meaning |
 |---|---|
@@ -125,9 +127,12 @@ opt-in is needed (this page first planned one, `sdv`; SD3 found it unneeded).
 
 ## 3. Where it rises - the census and the city
 
-**The census (relay).** When a Hollow is due to rise, the hub asks each of the 62 region rooms (`chat:region.0..61`)
+**The census (relay).** (WW5: a lane asks its own regions alone - a province's Hollow its province's room; section 16,
+WW5.) When a Hollow is due to rise, the hub asks each of the 62 region rooms (`chat:region.0..61`)
 through `/internal/sd/census`, each call bounded by `ROOM_CALL_MS`. A region room answers the number of DISTINCT
-verified, linked accounts among its sockets (a guest is not counted - one click makes a guest). The hub takes the
+verified, linked accounts among its sockets (a guest is not counted - one click makes a guest).
+
+The hub takes the
 region with the most, at least `SD_CENSUS_MIN` (2); ties are broken by the slot's hash, and the region the last Hollow
 rose in is skipped when another qualifies (the gate's bag seam rule, so one crowd does not keep every Hollow). With no
 region at the minimum, `r = -1`. A region with no town to rise by is never chosen, however full (SD-SEA,
@@ -748,6 +753,7 @@ gate's, a battle's, an arena's) write their own socket and never run in `sd:<s>`
 | SD-SEA | no Hollow rises at sea |
 | SD-THROUGH | the Way Through: once one has stepped through the Rift, a second Rift beside everyone in the Hollow and everyone entering it |
 | AUDIT SD-THROUGH | the Way Through audited in three lanes: pressed, never walked into; stood only whole; the relay's lost tell owed |
+| WW5 | a Hollow in every theatre: a slot a lane, the census every region's, a province's site, words, relay and page (`03-World/World-Wide.md` WW5) |
 
 Each slice records below what it shipped, what it pins and what it leaves.
 
@@ -3578,6 +3584,43 @@ lines, as the slice left it, of 8,463); `scenes/world.js` WIRED (the windows far
 36,158); `scenes/worldModes.js` WIRED (the look's forward, B4 - 10,956 of 10,998); `scenes/exterior.js` FLAGGED - offline,
 no Hollow.
 
+### WW5 - 2026-10-27 (a Hollow in every theatre)
+
+The owner, after the audit Left In The Bay (item 26), 2026-10-26: *"Every single thing here needs to be addressed. No
+exceptions."* One Hollow stood in the world, its census the Bay's 62 regions, its site over MAPS.BSA's rows. The owner's
+call taken with it: **a site-bound world event stands nowhere in the open PvP zone** - Cyrodiil's lane keeps no Hollow.
+The record is `03-World/World-Wide.md` WW5; what it means here:
+
+- **A slot a lane.** Each lane that stands (`net/wire.js` `SITE_EVENT_LANES`: the Bay's and the eight provinces') keeps
+  its own director and its own record: lane t's slots are `t x SD_LANE_SPAN + 1, + 2 ...` (`SD_LANE_SPAN` 10,000,000), so
+  the Bay's are the 1, 2, 3 they always were and every realm, receipt, spoils key and `sd_kills` row keeps its number. A
+  slot is still one Hollow's whole identity; its room `sd:<s>` nine digits at most (section 2's record, a lane at a time:
+  the Bay's under `sdev` as always, a province's under `sdev:<lane>`).
+- **The census counts every region** (`SD_REGION_COUNT` = `CHAT_REGION_COUNT`, 71): each lane asks its own regions
+  (`net/superDungeon/sdLaw.js` `sdLaneRegions` - the Bay's 62, a province's one), and a lane's Hollow rises in its own
+  (`sdLaneRegionOk`). A crowd in Skyrim draws Skyrim's Hollow, never the Bay's (section 3's law, a lane at a time).
+- **Its site** (`systems/superDungeon/sdSite.js`): its cities the registry's places of its theatre ranked by the hubs'
+  claim (`sdTheatreCities`), its pixel a suitable one of its theatre's gate scan whose nearest town is that city, on dry
+  ground (`findSdTheatreSite`), its location the Bay's own labyrinths and keeps cloned under the Hollows' world lane of
+  map ids (`sdWorldMapId`, `SD_WORLD_LANE` 0x35d).
+- **Its words** say its province: "in Skyrim" where a Bay Hollow's say its region (`sdWhere`'s `province`; the herald's
+  rise "somewhere in Skyrim" - `net/superDungeon/sdHerald.js` `sdProvinceName`).
+- **The relay**: a lane's record, mark, owed find and herald state under `<key>:<lane>` (`sdLaneKey`), an account's
+  receipt a lane (`sdReceiptKey(sub, lane)`); its beat runs every lane's director a lane at a time (`_sdLaneBeat`); its fan
+  and its hello say a province's record as `ln` (`SD_LANE_KIND` - an older client drops it; the Bay's stays `ev`); the live
+  door answers the asker's slot's lane. world270 and acct196, folded in while undeployed (`WW5_RELAY_MIN` 270).
+- **The page** (`scenes/superDungeon/sdLanes.js` `createSdLanes`): the Bay's lane is the host it always was
+  (`scenes/superDungeon/sdHost.js`), a province's lane a host of its own over its ground; a risen Hollow a province away is
+  never asked of its ground. Each reader of ONE Hollow reads the one in focus (the lane I stand in, else the nearest
+  standing Hollow, else the Bay's); the held map's rings, the Timers' rows and the event board are every lane's.
+- **The Hour** (sections 7-11) is every lane's alike: its room, fight, receipts and spoils are the slot's.
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (the lanes in place of the one host, in place - `bootWorld` 35,799 -> 35,798
+logical lines); `scenes/dungeonContext.js` (the Hollow's own build, by its slot), `scenes/worldModes.js` and
+`scenes/exterior.js` (offline, no Hollow) FLAGGED - no Hollow site of their own.
+
+Pins: `test/world/worldWide/ww5_hollows.test.js`; mutants `tools/mutants/ww5_hollows.json`. PIN MOVED and the records
+re-aimed by content: `03-World/World-Wide.md` WW5.
 
 ### RPT1026-EVENTS ORRERY-HANDS - 2026-10-26 (the stones' rights for the Hollow, and the hands named)
 

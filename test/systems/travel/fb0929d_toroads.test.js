@@ -30,6 +30,8 @@ import { mapPixelWorldOrigin } from '../../../src/systems/travel/travelPaths.js'
 import { rectOf } from '../../../src/systems/travel/travelAutopilot.js';
 import { TravelControlUI } from '../../../src/ui/travel/travelControlUI.js';
 import { planRoute, routeLegs, routeGround, joinPoint, routeDrawPoints, roadShare, crossesWater, dryLine, TV_MOUNTAIN_CLIMATE } from '../../../src/systems/travel/travelRoute.js';
+import { planJourney } from '../../../src/systems/travel/planSlices.js';   // PLAN-SLICES
+import { tvMooredDry, tvSeaAsk } from '../../../src/systems/travel/seaAsk.js';   // PLAN-SLICES: out of the host
 import { WATER_BYTE } from '../../../src/world/roadsProducer.js';
 import { DIR_DELTA } from '../../../src/world/road/roadNetwork.js';
 import { worldCoordToMapPixel } from '../../../src/formats/mapsFile.js';
@@ -103,12 +105,12 @@ const ON_COORDS = grab(/\n\s*onTravelToCoords: (\(pick, opts\) => \{ [^\n]*? \})
 const HOST = [
   lineSource('const TV_SEA_EPS_M = '), lineSource('const tvQuiet = '), lineSource('const tvTrip = '), lineSource('const tvWater = '),
   lineSource('let _tvRouteGround = null;'), lineSource('let _tvRocksFrom = null, _tvRocksRoads = null, _tvRocks = null;'), lineSource('let _tvRocksMask = null;'), fnSource('tvWodRocks'),
-  lineSource('const tvWildFree = '), lineSource('let _tvGroundWild = false;'), constBlock('tvRouteGround'), lineSource('const tvLegMid = '), lineSource('const tvSeaAsk = '),   // WILD1: the ground's open zone (none here: wildMapMask null) - its block, re-read as the zone comes or goes
+  lineSource('const tvWildFree = '), lineSource('let _tvGroundWild = false;'), constBlock('tvRouteGround'), lineSource('const tvLegMid = '),   // WILD1: the ground's open zone (none here: wildMapMask null) - its block, re-read as the zone comes or goes
   lineSource('const _tvTownRects = new Map();'), fnSource('tvTownRects'), fnSource('tvRingAt'),   // OW-WOD-PATH, OW-TOWN-RING: the host's own (no World of Daggerfall list here; no location on the way)
   constBlock('travelViewAllowed'),
   fnSource('tvOwnsJourneys'), fnSource('tvRoutesJourneys'), fnSource('tvMapForcesRoads'), fnSource('travelViewResume'), fnSource('beginAcceleratedTravel'),
   fnSource('travelViewRouteTo'), fnSource('tvFreePull'), fnSource('tvJoinedLegs'), fnSource('travelViewWalkTo'), fnSource('tvJourneyUp'),
-  fnSource('tvMooredDry'), fnSource('tvSeaNoWay'), lineSource('const climbingNow = '), fnSource('travelViewCanGo'),   // AUDIT FB1007b C2: no journey from a wall
+  fnSource('tvSeaNoWay'), lineSource('const climbingNow = '), fnSource('travelViewCanGo'),   // AUDIT FB1007b C2: no journey from a wall
   `const onLower = ${ON_LOWER};`, `const onTravel = ${ON_TRAVEL};`, `const onTravelToCoords = ${ON_COORDS};`,
   'return { tvOwnsJourneys, tvRoutesJourneys, travelViewResume, beginAcceleratedTravel, tvJourneyUp, onLower, onTravel, onTravelToCoords, tvTrip };',
 ].join('\n');
@@ -186,6 +188,7 @@ function host({ firstPerson = false, roads = false, enhanced = true } = {}) {
     planRoute, routeGround, routeLegs, joinPoint, routeDrawPoints, roadShare, crossesWater, dryLine, TV_MOUNTAIN_CLIMATE, travelTripLine,
     travelPathUsesRoads, TRAVEL_PATH_TEXT,   // OW-PATH (main's Roads / Free switch on the Overworld's bar): the route asks it
     freePull,   // PIN MOVED (GRANT3, HOST-SPLIT): tvFreePull's pull is systems/travel/freePull.js
+    planJourney, tvMooredDry, tvSeaAsk,   // PIN MOVED (PLAN-SLICES): the journeys run through the slicer; OWS2's two asks out of the host (systems/travel/seaAsk.js)
     tvSeaMeans: () => null, tvSeaBegin: () => {}, csaRuntime: null, csaOn: () => false, csaAboard: { aboard: false },
     tvOfferPassage: (place) => { h.offered.push(place.name); return false; },
     tvCautious: () => false, partyWalkBegin: (dest) => h.party.push(dest), travelGovernor: { reset() {} },
@@ -195,6 +198,7 @@ function host({ firstPerson = false, roads = false, enhanced = true } = {}) {
     TEST_GODMODE: false, staffPowers: () => ({ god: false }), teleportTo: refuse('teleportTo'),   // TESTBUILD: the shipped build's god mode is off
     wildMapMask: () => null, wildInside: () => false,   // WILD1: no open zone on this map
     wagonRiders: null,   // WAGONS2: seated in no one's wagon - the Overworld's own refusal of a rider stands unasked
+    rumareSeaPixel: () => false,   // PIN MOVED (RUMARE-WATER): the voyages' sea takes the Imperial City's lake (world/rumareWaters.js) - none on this map
   };
   Object.assign(h, new Function(...Object.keys(env), HOST)(...Object.values(env)));
   Object.assign(h, { to, ui, view });
@@ -276,7 +280,7 @@ test('TO-ROADS, the journey\'s life (the host\'s own code): a foe stops it as th
     setTimeScale(20);   // the journey's own ask, set by the mod's panel
     const g = mountGovernor({
       travelControlUI: { isShowing: true },   // RATE-LAW: no spinner, no limit - the journey's ask is travelAsked below
-      foePaced, foeRate, tvInTown: () => false, TOWN_PACE_MAX: 5,   /* OW-TOWN-WALK: out of town */ travellerOnRoad: () => false,
+      foePaced, foeRate, tvTownPace: () => null,   /* OW-TOWN-WALK: out of town */ travellerOnRoad: () => false,
       travelOptions: { state: { autopilot: {} } },
       travelWalkRate, TV_MOVE_ACTIONS,
       travelView: { active: false, state: 'off' },   // the view left down

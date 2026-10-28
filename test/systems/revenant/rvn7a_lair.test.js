@@ -147,7 +147,7 @@ test('RVN7a THE HOSTS: the world host\'s door names my map pixel and the named d
   const w = read('src/scenes/world.js');
   // PIN MOVED (FIELD BUGS 2026-10-22d LAIR-DOOR): the door is scenes/lairHost.js's, over the same index - the boards' ring, the
   // game's own dungeons, their regions - and asks of my pixel or the one asked (fb1022d_lairdoor.test.js drives it)
-  assert.match(w, /const magic = createPlayerMagic\(\{\n\s*renderer, audio, getTexture, uploadRecord, uploadRecordFrame,\n(?:\s*\/\/[^\n]*\n)*\s*lairHere: createLairDoor\(\{ maps, blocks, arch, locations: locationIndex, dungeons: _bountyDungeonPixels, regions: _dungeonRegionPixels, here: playerTravelPixel \}\),/);
+  assert.match(w, /const magic = createPlayerMagic\(\{\n\s*renderer, audio, getTexture, uploadRecord, uploadRecordFrame,\n(?:\s*\/\/[^\n]*\n)*\s*lairHere: createLairDoor\(\{ maps, blocks, arch, locations: locationIndex, dungeons: _bountyDungeonPixels, regions: _dungeonRegionPixels, here: playerTravelPixel, pastBay: provinceQuestPlaces \}\),/);   // PIN MOVED (LAIR-WORLD): and the lairs past the Bay (scenes/tamrielPlacesHost.js provinceQuestPlaces)
   assert.match(w, /_dungeonRegionPixels\.set\(`\$\{p\.x\},\$\{p\.y\}`, r\);/);
   const d = read('src/scenes/dungeonContext.js');
   assert.match(d, /return \{ underground: \{ px: p\.x, py: p\.y, name: String\(dfLocation\.name\), region: dfLocation\.regionIndex \?\? -1 \} \};/);

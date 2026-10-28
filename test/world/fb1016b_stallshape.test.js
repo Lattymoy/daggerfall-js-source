@@ -36,6 +36,7 @@ import {
   COUNTER_STALLS, OPEN_STALLS, ROCK_BOX_WD3, ROCK_BOX_NOW, ROCK_K, STALL_K,
 } from '../../tools/yardReseat.mjs';
 import { standService, T0 } from '../accountDb.mjs';
+import { townYards } from '../yardCellsRead.mjs';   // YARD-CELL: a town's yards, read through its cells
 
 const S = RMBRP_STALL_SCALE;
 const near = (a, b, e = 1e-4) => Math.abs(a - b) <= e;
@@ -253,7 +254,7 @@ async function furnished(t) {
    *  the isolates a deploy stands up answer the first time they are asked. */
   const yards = async () => {
     clock += 60;
-    return Object.fromEntries((await svc.call('/v1/homes/yards', { mapId: 7 })).body.yards.flatMap((y) => y.pieces).map((p) => [p.id, p]));
+    return Object.fromEntries((await townYards(svc.call, 7)).body.yards.flatMap((y) => y.pieces).map((p) => [p.id, p]));
   };
   return { raw, placed, rows, yards };
 }

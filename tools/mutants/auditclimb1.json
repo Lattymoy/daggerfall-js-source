@@ -282,8 +282,8 @@
   {
     "name": "AUDITCLIMB1-G3-no-clamber",
     "file": "src/player/motor.js",
-    "old": "    const over = senseOver(this.collider, this.pos, ledge, geo, PARKOUR_OVER_DROP);",
-    "new": "    const over = null;",
+    "old": "    const over = senseOver(this.collider, this.pos, ledge, geo, PARKOUR_OVER_DROP)\n",
+    "new": "    const over = null\n",
     "tests": [
       "test/systems/auditclimb1.test.js",
       "test/systems/parkour.test.js",

@@ -176,6 +176,22 @@ game asks the game through the staff hook's door: `places?` (a region's named pl
 staff member's region, the place on their pixel or -1, their pixel). The boot hands its maps over with
 `gameMaps(new MapsFile())`. A panel in a tab of its own can stage an area alone.
 
+PAST THE BAY (AUDIT RELEASE R2-7, 2026-10-26, `01-Overview/audits/Audit-Release-R2.md`; the owner: "Take care of
+exclusions and gaps"). An event's pixel is the world's (the law's STAFF_EVENT_PIXEL_BOUND, the wire's WORLD_PIXEL_BOUND -
+the event, and its place's `sev` word to the place's cell), so an AREA's event stands in a province as on the Bay. A
+TOWN's event runs as the town's raid (section 4), and since WW6 (2026-10-27, `03-World/World-Wide.md` WW6) the raids
+stand past the Bay, so a TOWN's event does too: a Bay town by its MAPS.BSA location (0..9999) on the Bay's own map, as
+it always was, a town past the Bay by its place's own location index (negative - no MAPS.BSA row holds it) on the world's
+grid off the Bay, in a province's region (62..70; `staffEventLaw.js staffTownPixelOk`). A town's location and its pixel on
+two sides of the Bay's edge is refused by name (`event-bad-town`; it was `event-bad-town-past-bay`), and an area is `loc`
+-1 alone. The picker lists a province's region (62..70) from the world's registry (`gamePlaces`, kept as the boot makes
+it - its listed places in the province's theatre: the capitals, cities, towns and villages) and offers a town as itself
+(its registry `location`; Solitude by `capitalLocationIndex(1, 0)`), a place with no index of its own as an area at its
+pixel (`loc` -1), so what it offers runs; `here?` past the Bay names the town, or the area, on the staff member's pixel.
+The game stands a town's event past the Bay in its town by its index, as the raid stands there - its rect, the town's
+watch, its word to the town's cell (`systems/staffEvents.js staffRaidHere`, `world/raidShared.js raidTownIs`). Staff may
+bring one to any province's town, Cyrodiil's included (staff's call: the open zone's rule is the day's roll's).
+
 ## 7. Versions and what a deploy does
 
 - Relay `world256` (`STAFF_EVENT_RELAY_MIN`): `staffEventLaw.js`, `staffEventReceipt.js` and `server/src/staffEvents.js` join the bundle. An

@@ -22,6 +22,7 @@ import {
   capturePendingScreenshot, SCREENSHOT_W, SCREENSHOT_H, SAVE_SHOT_PREFIX,
 } from '../../src/systems/save/saveSlots.js';
 import { SaveWindow } from '../../src/ui/saveWindow.js';
+import { hostText } from '../hostText.mjs';   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld - the host read whole
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -167,7 +168,7 @@ test('SS1: the hosts arm at save and deliver at frame end - THE FOUR HOSTS named
   // and BOTH frame tails (the modal early-return and the main tail)
   // deliver - a save armed from the pause window must not wait for
   // the modal arm to drop.
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /if \(r\.ok && !quiet\) requestScreenshot\(r\.key\);/,   // REALM P0.5: a quiet checkpoint takes no shot
     'the world composer arms on success');
   assert.equal((world.match(/capturePendingScreenshot\(canvas\);/g) || []).length, 2,

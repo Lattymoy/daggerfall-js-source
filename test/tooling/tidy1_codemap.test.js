@@ -42,6 +42,7 @@ test('TIDY1: Come Sail Away lives in its folder', () => {
     'comeSailAwayMap.js', 'comeSailAwayModels.js', 'comeSailAwayWaves.js', 'comeSailAwayWire.js', 'csaBoatMenu.js',
     'csaLoadWind.js',   // PIN MOVED (FIELD BUGS 2026-10-21b SAIL-WIND: a load outdoors never keeps the indoors' wind - the runtime's OnLoad seam, beside it)
     'peaceWay.js',   // PIN MOVED (NAVAL-REFIT PEACE-WAY: her way out of a fight - the runtime's own speed seam, beside it)
+    'shipBuildsKept.js',   // PIN MOVED (FIRST-VISIT: the port ships' builds kept across launches - the models' loader's, beside it)
   ]);
 });
 
@@ -75,6 +76,7 @@ test('TIDY2: every relative import in the code resolves - the game, the two Work
     ['app/launcher/pad.js: ./menuPad.js', 'the launcher\'s pad is copied beside it at packaging (app/ build), not tracked'],
     ['src/systems/racialLive.js: ./formulas.js', 'quoted in a comment: `node -e "import(\'./formulas.js\')"`'],
     ['tools/titleProbe.mjs: ../public/logo.png', 'the probe shoots the missing-asset arm when there is no logo'],
+    ['src/systems/firstVisit/firstVisitStore.js: ../../firstVisitPins.js', 'FIRST-VISIT: generated at install and build (scripts/firstVisitPins.mjs), gitignored'],
   ]);
   const code = files.filter((f) => /^(src|server\/src|server-account\/src|tools|scripts|app)\//.test(f) && /\.(m?js|cjs)$/.test(f) && f !== 'tools/moveModule.mjs');
   const bad = unresolvedIn(code.map((f) => [f, rd(f)]), files).filter((l) => !KNOWN.has(l));

@@ -92,8 +92,8 @@
   {
     "name": "YARD-MERGE-k-the-settle-unread",
     "file": "src/scenes/decor/decorRoom.js",
-    "old": "    if (mergeDue && merge && merge.now() - changedAt >= DECOR_MERGE_SETTLE_MS && merge.take()) remerge();",
-    "new": "    if (mergeDue && merge && merge.take()) remerge();",
+    "old": "    if (mergeDue && merge?.take && merge.now() - changedAt >= DECOR_MERGE_SETTLE_MS && merge.take()) remerge();",
+    "new": "    if (mergeDue && merge?.take && merge.take()) remerge();",
     "tests": [
       "test/scenes/yardmerge.test.js"
     ]
@@ -173,7 +173,7 @@
   {
     "name": "YARD-MERGE-t-the-merge-kept-after-its-piece-went",
     "file": "src/scenes/decor/decorRoom.js",
-    "old": "    if (entry.merged) unmerge();   // YARD-MERGE: a merged piece going takes the merges with it\n",
+    "old": "    if (entry.merged) (merge?.letGo ?? unmerge)();   // YARD-MERGE: a merged piece going takes the merges with it (YARD-BLOCK: its block's)\n",
     "new": "",
     "tests": [
       "test/scenes/yardmerge.test.js"
@@ -218,8 +218,8 @@
   {
     "name": "YARD-MERGE-y-the-floor-unread",
     "file": "src/scenes/decor/decorRoom.js",
-    "old": "    if (into.length >= DECOR_MERGE_MIN && renderer?.createMesh) {",
-    "new": "    if (into.length && renderer?.createMesh) {",
+    "old": "  if (into.length >= DECOR_MERGE_MIN && renderer?.createMesh) {",
+    "new": "  if (into.length && renderer?.createMesh) {",
     "tests": [
       "test/scenes/yardmerge.test.js"
     ]
@@ -326,7 +326,7 @@
   {
     "name": "YARD-MERGE-ak-a-group-of-one",
     "file": "src/scenes/decor/decorRoom.js",
-    "old": "      if (members.length < 2) continue;\n",
+    "old": "    if (members.length < 2) continue;\n",
     "new": "",
     "tests": [
       "test/scenes/yardmerge.test.js"
@@ -335,7 +335,7 @@
   {
     "name": "YARD-MERGE-al-the-centres-off",
     "file": "src/scenes/decor/decorRoom.js",
-    "old": "members.map((e) => [o[0] + e.piece.pos[0], o[1] + e.piece.pos[1], o[2] + e.piece.pos[2]])",
+    "old": "members.map((e) => [e.o[0] + e.piece.pos[0], e.o[1] + e.piece.pos[1], e.o[2] + e.piece.pos[2]])",
     "new": "members.map((e) => [e.piece.pos[0], e.piece.pos[1], e.piece.pos[2]])",
     "tests": [
       "test/scenes/yardmerge.test.js"
@@ -344,7 +344,7 @@
   {
     "name": "YARD-MERGE-am-the-sway-dropped",
     "file": "src/scenes/decor/decorRoom.js",
-    "old": "      if (b0.sway != null) batch.sway = b0.sway;\n",
+    "old": "    if (b0.sway != null) batch.sway = b0.sway;\n",
     "new": "",
     "tests": [
       "test/scenes/yardmerge.test.js"
@@ -353,7 +353,7 @@
   {
     "name": "YARD-MERGE-an-windfall-dropped",
     "file": "src/scenes/decor/decorRoom.js",
-    "old": "      if (b0.windfall != null) batch.windfall = b0.windfall;\n",
+    "old": "    if (b0.windfall != null) batch.windfall = b0.windfall;\n",
     "new": "",
     "tests": [
       "test/scenes/yardmerge.test.js"
@@ -470,7 +470,7 @@
   {
     "name": "YARD-MERGE-ba-the-yards-unwired",
     "file": "src/scenes/homeYards.js",
-    "old": "      merge,   // YARD-MERGE: a yard's models one mesh once it settles, a frame's budget at a time\n",
+    "old": "      merge: door ?? merge,   // YARD-MERGE: a yard's models one mesh once it settles, a frame's budget at a time (YARD-BLOCK: a stranger's, its block's)\n",
     "new": "",
     "tests": [
       "test/scenes/yardmerge.test.js"

@@ -298,7 +298,7 @@ function enhancedPauseOverlay(show, base) {
   const rvnStars = revenantStarsOver({
     alive: () => !fired,
     below: () => { try { view?.unmount(); } catch { /* already gone */ } view = null; },
-    back: () => { if (!fired && seams) view = seams.mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: 'companions' }); },
+    back: () => { if (!fired && seams) view = seams.mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: 'companions', owner: overlay }); },
   });
   const host = document.createElement('div');
   host.id = 'enhanced-pause';
@@ -385,7 +385,7 @@ function enhancedPauseOverlay(show, base) {
     mount: (mod) => {
       const { mountEnhancedMenu } = mod;
       seams = mod;
-      view = mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: hooks.at ?? null });
+      view = mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: hooks.at ?? null, owner: overlay });   // COVERED-KEYS: the window its keys are gated on
       focusIn();   // AUDIT LEGACY III U2
     },
     alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'pause',

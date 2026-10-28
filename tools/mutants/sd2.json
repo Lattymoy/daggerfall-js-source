@@ -52,32 +52,32 @@
   {
     "name": "SD2-the-great-cities-always-the-first",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "  const start = rec.r < 0 ? sdRoll(rec.s, 5) % cities.length : 0;",
-    "new": "  const start = 0;",
+    "old": "  const byTown = pixelsByTown(scan);\n  const start = rec.r < 0 ? sdRoll(rec.s, 5) % cities.length : 0;",
+    "new": "  const byTown = pixelsByTown(scan);\n  const start = 0;",
     "tests": [
       "test/systems/superDungeon/sd2_sdsite.test.js"
     ],
-    "note": "The slot's roll picks among the great cities."
+    "note": "The slot's roll picks among the great cities. WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5)."
   },
   {
     "name": "SD2-a-city-with-no-ring-ends-it",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "    if (!pixels?.length) continue;",
-    "new": "    if (!pixels?.length) return null;",
+    "old": "    const ti = scan.towns.findIndex((t) => t.px === cx && t.py === cy);\n    const pixels = ti >= 0 ? byTown.get(ti) : null;\n    if (!pixels?.length) continue;",
+    "new": "    const ti = scan.towns.findIndex((t) => t.px === cx && t.py === cy);\n    const pixels = ti >= 0 ? byTown.get(ti) : null;\n    if (!pixels?.length) return null;",
     "tests": [
       "test/systems/superDungeon/sd2_sdsite.test.js"
     ],
-    "note": "A city with no suitable pixel passes to the next."
+    "note": "A city with no suitable pixel passes to the next. WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5)."
   },
   {
     "name": "SD2-always-the-first-pixel",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "    const roll = sdRoll(rec.s, 4) % pixels.length;",
-    "new": "    const roll = 0;",
+    "old": "    const roll = sdRoll(rec.s, 4) % pixels.length;\n    for (let j = 0; j < pixels.length; j++) {\n      const id = pixels[(roll + j) % pixels.length];",
+    "new": "    const roll = 0;\n    for (let j = 0; j < pixels.length; j++) {\n      const id = pixels[(roll + j) % pixels.length];",
     "tests": [
       "test/systems/superDungeon/sd2_sdsite.test.js"
     ],
-    "note": "The slot's roll moves the site round the city."
+    "note": "The slot's roll moves the site round the city. WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5)."
   },
   {
     "name": "SD2-a-small-template",

@@ -2,8 +2,9 @@
  {
   "name": "STAR3-the-star-index-unbounded",
   "file": "src/net/wire.js",
-  "old": "!intIn(m.k, 0, STAR_STARS_MAX - 1)",
-  "new": "!intIn(m.k, 0, STAR_STARS_MAX)",
+  "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+  "old": "k < STAR_STARS_MAX * STAR_LANES_WIRE && siteEventPixelOk(Math.floor(k / STAR_STARS_MAX), px, py);",
+  "new": "k < STAR_STARS_MAX * STAR_LANES_WIRE && siteEventPixelOk(0, px, py);",
   "tests": [
    "test/net/starfall/star3_relay.test.js"
   ]
@@ -317,8 +318,9 @@
  {
   "name": "STAR3-the-held-list-unsaid-at-a-hello",
   "file": "server/src/index.js",
-  "old": "if (l.length) this._send(ws, JSON.stringify({ t: 'star', k: 'hds', l }));",
-  "new": "if (false) this._send(ws, JSON.stringify({ t: 'star', k: 'hds', l }));",
+  "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+  "old": "if (l.length) this._send(ws, JSON.stringify({ t: 'star', k: 'hds', l: starHeldOrder(l) }));",
+  "new": "if (false) this._send(ws, JSON.stringify({ t: 'star', k: 'hds', l: starHeldOrder(l) }));",
   "tests": [
    "test/net/starfall/star3_relay.test.js"
   ]
@@ -335,8 +337,9 @@
  {
   "name": "STAR3-the-welcome-ignored",
   "file": "src/net/online.js",
-  "old": "if (primary) this.starOk = relaySupportsStar(relayV);",
-  "new": "if (primary) this.starOk = true;",
+  "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+  "old": "if (primary) { this.starOk = relaySupportsStar(relayV); this.ww5Ok = relaySupportsWw5(relayV); }",
+  "new": "if (primary) { this.starOk = true; this.ww5Ok = relaySupportsWw5(relayV); }",
   "tests": [
    "test/net/starfall/star3_relay.test.js"
   ]

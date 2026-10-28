@@ -21,9 +21,9 @@
   },
   {
     "name": "OW5b-D2-forgotten-renewed",
-    "file": "src/scenes/world.js",
-    "old": "        _locIndexGen += 1;   // AUDIT OW4 D5\n        locationIndex.delete(key);\n        return null;",
-    "new": "        _locIndexGen += 1;   // AUDIT OW4 D5\n        _spawnLedger.forget(key);\n        locationIndex.delete(key);\n        return null;",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "        host._locIndexGen += 1;   // AUDIT OW4 D5\n        locationIndex.delete(key);\n        return null;",
+    "new": "        host._locIndexGen += 1;   // AUDIT OW4 D5\n        _spawnLedger.forget(key);\n        locationIndex.delete(key);\n        return null;",
     "tests": [
       "test/world/spawneddungeons.test.js"
     ],
@@ -31,8 +31,8 @@
   },
   {
     "name": "OW5b-D2-index-trusted",
-    "file": "src/scenes/world.js",
-    "old": "    if (loc?.spawned && !loc.wildHall && _spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key)) {",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "    if (loc?.spawned && !loc.wildHall && _spawnLedger.expired(key, host._spawnClock()) && !_insideSpawn(key)) {",
     "new": "    if (false) {",
     "tests": [
       "test/world/spawneddungeons.test.js"
@@ -42,18 +42,18 @@
   {
     "name": "OW5b-D2-build-skips-the-ask",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const dfLocation = _locationToBuild(px, py) || null;",
-    "new": "    const dfLocation = locationIndex.get(key) || spawnedDungeonAt(px, py) || null;",
+    "old": "    const dfLocation = capitalBuildView(_locationToBuild(px, py), px, py, host.state.current) || null;",
+    "new": "    const dfLocation = capitalBuildView(locationIndex.get(key) || spawnedDungeonAt(px, py), px, py, host.state.current) || null;",
     "tests": [
       "test/world/spawneddungeons.test.js"
     ],
-    "note": "The build bypasses the one ask: an expired spawn the index holds is built again."
+    "note": "PIN MOVED (IC-GRAND): the ask's answer passes through capitalBuildView (a far slice's view)."
   },
   {
     "name": "OW5b-D2-gone-while-standing",
-    "file": "src/scenes/world.js",
-    "old": "return b ? b.location == null : _spawnLedger.expired(key, _spawnClock()); };",
-    "new": "return _spawnLedger.expired(key, _spawnClock()); };",
+    "file": "src/scenes/spawnGroundHost.js",
+    "old": "return b ? b.location == null : _spawnLedger.expired(key, host._spawnClock()); };",
+    "new": "return _spawnLedger.expired(key, host._spawnClock()); };",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
@@ -91,7 +91,7 @@
   },
   {
     "name": "OW5b-D3-no-would-be-spawn",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/spawnGroundHost.js",
     "old": " ?? (params.has('online') && !inEtherLaw(x, y) && spawnsDungeon(_spawnSalt, x, y) ? tvSpawnAt(x, y) : null);",
     "new": " ?? null;",
     "tests": [

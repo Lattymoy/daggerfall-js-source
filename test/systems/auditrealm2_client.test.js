@@ -82,19 +82,21 @@ function fakeStorage() {
 }
 /** A signed-in guest on a device, the Worker behind its fetch - through a real Request, so a header a browser refuses is
  *  refused here too. `door.plan` is a queue of per-request modes ('ok', 'offline', 'lose-answer', 'rate' - the account's
- *  request rate, as the Worker answers it before any route); empty is 'ok'. */
+ *  request rate, as the Worker answers it before any route); empty is 'ok'. `door.hangPuts`: every put is cut off, never
+ *  answered - a going page's. */
 async function device() {
   _resetKeyForTests();
   const env = { DB: d1(), SAVES: r2(), ACCOUNT_VERSION: 'test1' };
   const g = await (await worker.fetch(new Request('https://accounts.invalid/v1/auth/guest', { method: 'POST', body: JSON.stringify(ACCEPTED) }), env)).json();
   const storage = fakeStorage();
   storage.setItem(SESSION_KEY, JSON.stringify({ id: g.id, secret: g.secret }));
-  const door = { plan: [], log: [], tiles: [] };
+  const door = { plan: [], log: [], tiles: [], hangPuts: false };
   const fetch = async (url, init) => {
     const mode = door.plan.length ? door.plan.shift() : 'ok';
     door.log.push(`${init?.method ?? 'GET'} ${new URL(url).pathname}${init?.keepalive ? ' keepalive' : ''}`);
     if (init?.headers?.['x-realm-summary'] != null) door.tiles.push(init.headers['x-realm-summary']);
     if (mode === 'offline') throw new TypeError('network');
+    if (door.hangPuts && init?.method === 'PUT') return new Promise(() => {});
     if (mode === 'rate') return new Response(JSON.stringify({ error: 'rate' }), { status: 429, headers: { 'content-type': 'application/json' } });
     const res = await worker.fetch(new Request(url, init), env);
     if (mode === 'lose-answer') throw new TypeError('the answer was lost');
@@ -282,6 +284,35 @@ test('AUDIT REALM2 C2 in the host: beforeunload gives no lease up (the unload gu
   releaseUnloadGuard();
 });
 
+test('CLOSE-SAVE (FIELD BUGS 2026-10-26) in the host: a close or a reload fires pagehide BEFORE visibilitychange - the page\'s own checkpoint rides the leave, kept on the device before the lease goes, and the next join plays it (mutant: the leave without the save - nothing kept, the piece worn since the last landed checkpoint gone)', async () => {
+  const dev = await device();
+  const c = await joined(dev, { v: 1, name: 'Nystul' });
+  const win = new EventTarget();
+  win.document = Object.assign(new EventTarget(), { visibilityState: 'visible' });
+  const worn = JSON.stringify({ v: 1, name: 'Nystul', worn: 'ruhn-warden-plate' });
+  const realmHooks = {
+    realmSession: c.session, setBeforeTitleExit: () => {}, whenPageHides: realmSaves.whenPageHides, whenPageGoes: realmSaves.whenPageGoes,
+    globalThis: win, online: {}, legacyHost: null, duelLeaveNow: () => {}, REALM_EXIT_WAIT_MS: 10,
+    // world.js onlineCheckpoint's realm arm: the composed save handed to the session through the sink, synchronously
+    onlineCheckpoint: () => { void c.session.checkpoint(worn); return true; },
+  };
+  mount(W.top(WORLD, 'whenPageGoes('), realmHooks);
+  mount(W.top(WORLD, 'setBeforeTitleExit('), realmHooks);   // whenPageHides' checkpoint, registered as the host registers it
+  dev.door.hangPuts = true;   // the page's put: cut off by its going, never answered
+  // the order Edge fires them in for a close, a reload and a navigation (the HTML spec's unload steps)
+  win.dispatchEvent(new Event('pagehide'));
+  win.document.visibilityState = 'hidden';
+  win.document.dispatchEvent(new Event('visibilitychange'));
+  await settle();
+  assert.equal(c.session.lost, 'left');
+  assert.ok(dev.door.log.some((l) => l.endsWith('/v1/realm/leave keepalive')), 'the lease given up');
+  assert.equal(realmSaves.readUnsent(dev.storage, c.id)?.text, worn, 'kept on the device before the lease went');
+  assert.notEqual(await c.text(), worn, 'the service never took it');
+  const boot = await openRealmBoot({ io: dev.io, id: c.id });
+  assert.equal(boot.restored, true);
+  assert.equal(boot.snap.worn, 'ruhn-warden-plate', 'the next join plays what the page held as it closed');
+});
+
 /** A composer's realm arm (world.js worldQuickSave, dungeonContext.js quickSave) - its own two lines. */
 function realmArm(rel) {
   const S = src(rel);
@@ -292,7 +323,7 @@ function realmArm(rel) {
 }
 
 test('AUDIT REALM2 C2: F9 says what the realm answered - "Saved to the realm." only for a checkpoint that landed; one refused says so and why, in both composers; a quiet checkpoint says nothing either way (mutant: the word said before the answer)', async () => {
-  for (const [rel, hud] of [['src/scenes/world.js', 'townTalk'], ['src/scenes/dungeonContext.js', 'hudText']]) {
+  for (const [rel, hud] of [['src/scenes/worldQuickSave.js', 'townTalk'], ['src/scenes/dungeonContext.js', 'hudText']]) {   // PIN MOVED (HOST-SPLIT, at the merge of main into TESA): the world composer is scenes/worldQuickSave.js's
     const said = [];
     const arm = mount(`return (snap, sink, quiet) => { ${realmArm(rel)}\nreturn 'slot'; };`, {
       realmSaveSink: () => null, REALM_SAVED_TEXT, sayRealmSave: realmSaves.sayRealmSave,
@@ -609,7 +640,7 @@ test('AUDIT REALM2 M5: realmCheckpoint answers what its composer did - a save th
   answer = true;
   assert.equal(realmCheckpoint(), true, 'composed: a checkpoint');
   // the world composer's own refusal, mid-descent: said to F9, never to the quiet checkpoint
-  const worldQuickSave = mount(`${W.fn('worldQuickSave')}\nreturn worldQuickSave;`, { ohAbyss: { entering: true }, townTalk: { say: (t) => said.push(t) }, QUICK_SAVE_NAME: 'QuickSave' });
+  const worldQuickSave = mount(`${sliced('src/scenes/worldQuickSave.js').fn('worldQuickSave')}\nreturn worldQuickSave;`, { host: { ohAbyss: { entering: true } }, townTalk: { say: (t) => said.push(t) }, QUICK_SAVE_NAME: 'QuickSave' });   // PIN MOVED (HOST-SPLIT, at the merge of main into TESA): the world composer is scenes/worldQuickSave.js's, the descent read live through host
   assert.equal(worldQuickSave('QuickSave', { quiet: true }), false);
   assert.deepEqual(said, [], 'the periodic checkpoint says nothing');
   assert.equal(worldQuickSave('QuickSave'), false);

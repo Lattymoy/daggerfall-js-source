@@ -591,8 +591,8 @@
   {
     "name": "ONESEAT-T1-riders-kept",
     "file": "src/scenes/world.js",
-    "old": "onlineCheckpoint());\n      peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); peerWalkers?.destroy();",
-    "new": "onlineCheckpoint());\n      peerBodies.destroy(); remotePlayers.sync([], onlineToScene);",
+    "old": "checkpointClock.frame(now);\n      peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); peerWalkers?.destroy();",
+    "new": "checkpointClock.frame(now);\n      peerBodies.destroy(); remotePlayers.sync([], onlineToScene);",
     "tests": [
       "test/net/oneseat.test.js"
     ]

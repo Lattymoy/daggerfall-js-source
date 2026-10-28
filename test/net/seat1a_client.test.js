@@ -78,10 +78,14 @@ test('SEAT1a the law: a report canonical in its bytes and read back; a crown in 
   assert.deepEqual(parseSeatReport(seatReportText(a)), { seat: a });
   assert.equal(parseSeatReport('[3021,"Anticlere",21,"palace",402]'), null);
   assert.equal(parseSeatReport('[3021, "Anticlere",21,"palace",402,151]'), null, 'only the canonical bytes');
-  for (const bad of [{ ...a, key: -1 }, { ...a, key: 2 ** 32 }, { ...a, name: '' }, { ...a, name: 'x'.repeat(49) }, { ...a, name: 'Antié' }, { ...a, region: 62 },
-    { ...a, tier: 'castle' }, { ...a, pixel: [1000, 0] }, { ...a, pixel: [0, 500] }, { ...a, pixel: [1.5, 2] }]) assert.equal(seatReportOf(bad), null, JSON.stringify(bad));
+  for (const bad of [{ ...a, key: -1 }, { ...a, key: 2 ** 32 }, { ...a, name: '' }, { ...a, name: 'x'.repeat(49) }, { ...a, name: 'Antié' }, { ...a, region: 71 },
+    { ...a, tier: 'castle' }, { ...a, pixel: [8192, 0] }, { ...a, pixel: [0, -8192] }, { ...a, pixel: [1.5, 2] }]) assert.equal(seatReportOf(bad), null, JSON.stringify(bad));
+  // PIN MOVED (WW7-3, bible/03-World/World-Wide.md WW7): a seat past the Bay - a province's region, a pixel of the world's grid
+  assert.ok(seatReportOf({ ...a, region: 64, pixel: [1000, 0] }) && seatReportOf({ ...a, region: 70, pixel: [-40, 600] }));
   assert.ok(seatReportOf({ ...a, name: 'x'.repeat(48) }));
-  assert.deepEqual(CROWN_SEAT_REGIONS, { 17: 'daggerfall', 23: 'wayrest', 20: 'sentinel' });
+  assert.deepEqual(CROWN_SEAT_REGIONS, { 17: 'daggerfall', 23: 'wayrest', 20: 'sentinel', 64: 'skyrim', 65: 'morrowind', 66: 'summerset', 67: 'valenwood', 68: 'elsweyr', 69: 'blackmarsh', 70: 'cyrodiil' });   // PIN MOVED (WW7-3, bible/03-World/World-Wide.md WW7): the provinces' crowns
+  assert.ok(seatReportOf({ key: 2, name: 'Solitude', region: 64, tier: 'crown', pixel: [1600, 30] }), 'a province crown bears its capital\'s name');
+  assert.equal(seatReportOf({ key: 2, name: 'Skyrim', region: 64, tier: 'crown', pixel: [1600, 30] }), null, 'never its kingdom\'s');
   assert.ok(seatReportOf({ key: 1, name: 'Wayrest', region: 23, tier: 'crown', pixel: [1, 1] }));
   assert.equal(seatReportOf({ key: 1, name: 'Sentinel', region: 23, tier: 'crown', pixel: [1, 1] }), null);
   assert.equal(seatReportOf({ key: 1, name: 'Anticlere', region: 21, tier: 'crown', pixel: [1, 1] }), null);
@@ -121,7 +125,8 @@ test('SEAT1a the words and the marks: the Charter, the arrival line, the map\'s 
   assert.equal(seatArrivalLine(crown, { name: 'Ebon Oath', tag: 'EO' }), 'Wayrest, capital of the Kingdom of Wayrest, held by Ebon Oath <EO>.');
   assert.equal(seatInfoLine(pal), 'The Charter of Anticlere: unheld');
   assert.equal(SEAT_RING_UNHELD, '#8a8a8a');
-  assert.deepEqual(KINGDOM_METALS, { daggerfall: '#3b6fd8', wayrest: '#b3262e', sentinel: '#d4a017' });
+  assert.deepEqual(KINGDOM_METALS, { daggerfall: '#3b6fd8', wayrest: '#b3262e', sentinel: '#d4a017',
+    skyrim: '#e6e6e6', morrowind: '#7d1f1f', summerset: '#7fb3e6', valenwood: '#1f7f7f', elsweyr: '#c46a1b', blackmarsh: '#5a3e22', cyrodiil: '#7a3fa0' });   // PIN MOVED (WW7-3): the provinces' crowns' metals
   assert.equal(FREE_LAND_RING, '#2f8f4e');
   // SEAT1c (PIN MOVED): an unheld, quiet seat's mark names no fill, no split and no siege
   assert.deepEqual(seatMapMark(crown), { ring: '#8a8a8a', crown: '#b3262e', second: null, fill: null, split: null, siege: false });
@@ -176,7 +181,7 @@ test('SEAT1a the book: open by the service\'s word; the list kept its minutes (a
   now += 86_400_000;
   assert.equal(await book.witness(seat), true, 'the next day, again');
   assert.deepEqual(witnessed, [3021, 3021]);
-  assert.equal(await book.witness({ ...seat, pixel: [1000, 0] }), false, 'a bad seat is no report');
+  assert.equal(await book.witness({ ...seat, pixel: [8192, 0] }), false, 'a bad seat is no report');   // PIN MOVED (WW7-3, bible/03-World/World-Wide.md WW7): off the world's grid
   answer = { ok: false, error: 'seats-closed' };
   now += SEAT_LIST_CACHE_MS + 1;
   await book.read();
@@ -259,7 +264,9 @@ test('SEAT1a the hosts by source: the boot pass derives the seats over the hubs\
   // PIN MOVED (AUDIT LEGACY III W1): the rows are let go once the Living World's two indices over them stand (releaseHubRows)
   // - emptied here at the boot, every index read nothing
   assert.match(w, /const townSeats = deriveTownSeats\(_hubRows, \{ regionNameOf: \(r\) => maps\.getRegionName\(r\), isHub: \(k\) => regionHubs\.byMapId\.has\(k\) \}\);/, 'the game\'s own rows');
-  assert.match(w, /const releaseHubRows = \(\) => \{ if \(_livingTowns && _livingDungeons\) _hubRows\.length = 0; \};/, '...let go once both indices stand');
+  // PIN MOVED (WW1, bible/03-World/World-Wide.md): the seats are derived before the rows go - and they go once the world's
+  // registry has them (test/systems/legacy/auditlegacy3.test.js runs the boot's lines)
+  assert.ok(w.indexOf('const townSeats = deriveTownSeats(_hubRows,') < w.indexOf('worldPlaces.register(BAY_SOURCE, bayPlaceRows(_hubRows, { hasPort }));\n  _hubRows.length = 0;'), '...derived before the rows are let go');
   // SEAT1b (PIN MOVED): the book's door is named once, for the Watch's account beside it
   assert.match(w, /const _seatDoor = params\.has\('online'\) \? accountSeats\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\) \}\) : null;\n\s*const seatBook = _seatDoor\n\s*\? createTownSeatBook\(\{\n\s*door: _seatDoor,/);
   assert.match(w, /const seatHere = \(mapId\) => \(seatBook\?\.open === true \? seatBook\.dressed\(seatAtMapId\(townSeats, mapId\)\) : null\);/);   // SEAT1c (PIN MOVED): dressed in its holder

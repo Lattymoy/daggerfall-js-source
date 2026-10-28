@@ -224,13 +224,13 @@
   {
     "name": "B7-channel-welcome-without-the-clock",
     "file": "server/src/index.js",
-    "old": "others.length + 1, v: RELAY_VERSION, now: Date.now(), ...(ev",
-    "new": "others.length + 1, v: RELAY_VERSION, ...(ev",
+    "old": "others.length + 1, v: RELAY_VERSION, now: Date.now(), ...(isSocialRoom(a.key) ? { [YARD_WELCOME_FIELD]: 1 } : {}), ...(ev",
+    "new": "others.length + 1, v: RELAY_VERSION, ...(isSocialRoom(a.key) ? { [YARD_WELCOME_FIELD]: 1 } : {}), ...(ev",
     "tests": [
       "test/net/chat1.test.js",
       "test/systems/quest/world5.test.js"
     ],
-    "note": "SCALE5c (re-aimed by content): the welcome n reads the hub count on a shard"
+    "note": "Re-aimed by content (YARD-CELL YC2): the line YC2 changed. SCALE5c (re-aimed by content): the welcome n reads the hub count on a shard"
   },
   {
     "name": "C20-door-drops-my-tabs",

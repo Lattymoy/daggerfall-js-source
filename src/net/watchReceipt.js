@@ -26,6 +26,7 @@
 //
 // Not a DFU member. Ledger A (EVERY PALACE A SEAT's row).
 import { _b64url, SIG_BYTES, SKEW_S, ID_RE } from './identityToken.js';
+import { worldPixelOk } from './wire.js';   // WW7-5: the world's grid, the wire's own bound
 
 /** The only version this file reads or writes. */
 export const WATCH_RECEIPT_V = 'k1';
@@ -45,11 +46,17 @@ export const WATCH_MOVED_MS = 300_000;
  * @param {number} now
  */
 export const watchDue = (w, now) => now - w.moved <= WATCH_MOVED_MS && now - w.at >= WATCH_TICK_MS;
+/** WW7-5: the Eltheric Ocean's box past the Veil (world/ethericSea.js ETHER_BOX, its numbers here - the relay's and the
+ *  services' bundles read no map; ww7_books.test.js pins them equal): no Watch there. */
+export const WATCH_VEIL_BOX = Object.freeze({ x0: 64, x1: 8128, y0: -7680, y1: -2688 });
 /** THE WATCH'S GROUND (AUDIT ETHER-OW C2-1): the map pixels a receipt can name - the Bay's map, where the relay mints
  *  them (server/src/index.js `_watchTick`) and the account service takes them (watchReceiptValid). One home: a
  *  Motherlode's site must be a pixel a Watch can vouch for (net/motherlodeLaw.js motherlodeSites), or nobody can strike
- *  it - ETHER-NODES' isles were witnessed and confirmed past the Veil, where no receipt is ever minted. */
-export const watchPixelOk = (x, y) => Number.isSafeInteger(x) && Number.isSafeInteger(y) && x >= 0 && x < 1000 && y >= 0 && y < 500;
+ *  it - ETHER-NODES' isles were witnessed and confirmed past the Veil, where no receipt is ever minted. WW7-5
+ *  (bible/03-World/World-Wide.md WW7-5): and the land past the Bay - the world's grid (net/wire.js worldPixelOk), never
+ *  the Veil's box, so a town, a seat and a node past the Bay are watched and the isles still are not. */
+export const watchPixelOk = (x, y) => Number.isSafeInteger(x) && Number.isSafeInteger(y) && worldPixelOk(x) && worldPixelOk(y)
+  && !(x >= WATCH_VEIL_BOX.x0 && x < WATCH_VEIL_BOX.x1 && y >= WATCH_VEIL_BOX.y0 && y < WATCH_VEIL_BOX.y1);
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();

@@ -27,6 +27,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { trees, nodeKey, WOOD_TABLES } from '../net/nodeLaw.js';
 import { FELLED } from '../ai/cover.js';   // AUDIT TACT B1: a felled tree is no cover
+import { drawnCentre } from './floraSeat.js';   // FLORA-GROUND, THE RINGS: a tree drawn on its pixel's ring
 import { tierOpen, TIER_RANKS, woodAxeBand, chopsFor, storesFullIn, goneIn, fullWordsIn, GROUND_WHERE, GROUND_WHERE_WORDS } from '../net/professionLaw.js';
 import { createChopAct } from '../systems/chopAct.js';
 import { FT } from '../systems/foraging/foragingLaw.js';
@@ -85,11 +86,13 @@ export const axeHandFrame = (swing) => (swing > 0 ? { state: 'StrikeDownRight', 
  * FOREST1 (AUDIT FOREST1 F3): under Real forests a flat carries how wooded its tile is (`wood`), and the day's trees
  * stand at the woods' own (FOREST.woods and over) wherever the pixel has any - the plains' lone trees stand only where
  * a pixel has no wood at all. DFU's scatter carries no `wood`, and every flat of it is the nearest's to take.
- * @param {{ px: number, py: number, day: number, climate: number, confirmed?: boolean,
+ * WW-C1: `region` - the pixel's, a forest province's richness on confirmed ground (net/nodeLaw.js nodeSlots). AUDIT TESA II
+ * J5: `jungle` - a jungle zone's pixel past the Bay (gatherHost.js withJungleWord), the jungle's trees on confirmed ground.
+ * @param {{ px: number, py: number, day: number, climate: number, region?: number|null, confirmed?: boolean, jungle?: boolean,
  *   forest?: { trees: Array<{ id: number, group: string, i: number, x: number, y: number, z: number, wood?: number }> }|null,
  *   rocks?: number[][] }} p
  */
-export function standTrees({ px, py, day, climate, confirmed = false, forest = null, rocks = [] }) {
+export function standTrees({ px, py, day, climate, region = null, confirmed = false, jungle = false, forest = null, rocks = [] }) {
   const out = [];
   const all = forest?.trees ?? [];
   if (!WOOD_TABLES[climate] || !all.length) return out;
@@ -98,7 +101,7 @@ export function standTrees({ px, py, day, climate, confirmed = false, forest = n
   // flat, not once a flat a tree (JUNGLE-WOODS: the jungle's 48 trees a day over its ~5,400 tree flats)
   const flats = (woods.length ? woods : all).filter((f) => !insideRocks(rocks, f.x, f.z));
   const claimed = new Set();
-  for (const t of trees({ x: px, y: py, day, climate, confirmed })) {
+  for (const t of trees({ x: px, y: py, day, climate, region, confirmed, jungle })) {   // AUDIT TESA II J5: the jungle's past the Bay, on its confirmed word
     const lx = t.u * TERRAIN_SIZE, lz = t.v * TERRAIN_SIZE;
     let best = null, bestD = Infinity;
     for (const f of flats) {
@@ -122,7 +125,9 @@ export const FOREST_STAMP = { n: 0 };
 
 /**
  * THE FELLED TREES SUNK: each forest group's flats rewritten in place, the felled ones' below the ground by their height
- * and a metre, the rest where they grew - so a day's turn stands yesterday's felled trees again.
+ * and a metre, the rest where they grew - so a day's turn stands yesterday's felled trees again. FLORA-GROUND, THE
+ * RINGS: each drawn on the ground its pixel draws (`g.lift`, scenes/floraSeat.js drawnCentre - the one law the ring's
+ * seat draws by), its place the walk ground's.
  * @param {{ groups: Map<string, { batch: any, centers: number[][], size: { w: number, h: number }, sunkN?: number }> }} forest
  * @param {Set<string>} sunk `${group}#${i}` of every flat felled
  * @param {{ moveBillboardBatch: (b: any, c: number[][]) => boolean }} renderer
@@ -135,9 +140,8 @@ export function sinkFelled(forest, sunk, renderer) {
     const centers = g.centers.map((c, i) => {
       const felled = sunk.has(`${gk}#${i}`);
       if (felled) FELLED.add(c); else FELLED.delete(c);   // AUDIT TACT B1: the tree's cover (ai/cover.js) - a felled one is no cover, a regrown one is
-      if (!felled) return c;
-      n++;
-      return [c[0], c[1] - g.size.h - 1, c[2]];
+      if (felled) n++;
+      return drawnCentre(g, c, i, felled);   // FLORA-GROUND, THE RINGS: on the ground its pixel draws, a felled one under it (scenes/floraSeat.js)
     });
     if (n === 0 && had === 0) continue;   // nothing felled here, then or now: the batch as it was built
     renderer.moveBillboardBatch(g.batch, centers);
@@ -186,7 +190,7 @@ export function treeKind({ book, renderer = null, flatBatchAabb = null, getTextu
     id: 'tree',
     professions: Object.freeze(['logging']),
     nodesOf({ px, py, day, info, confirmed, entry, near }) {
-      return standTrees({ px, py, day, climate: info.climate, confirmed, forest: entry.forest ?? null, rocks: [...(entry.rocks ?? []), ...(near ?? [])] });   // NODE-CLEAR; ROCK-NEAR
+      return standTrees({ px, py, day, climate: info.climate, region: info.region, confirmed, jungle: info.jungle === true, forest: entry.forest ?? null, rocks: [...(entry.rocks ?? []), ...(near ?? [])] });   // NODE-CLEAR; ROCK-NEAR; AUDIT TESA II J5
     },
     /** A standing tree is the forest's own flat: the node adds none. */
     flatsOf: () => [],

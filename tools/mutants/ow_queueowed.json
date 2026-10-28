@@ -2,12 +2,12 @@
   {
     "name": "QUEUE-OWED-pump-builds-the-head",
     "file": "src/scenes/world.js",
-    "old": "    if (building || !state.owes(queue)) return;   // QUEUE-OWED: a pixel the stream let go while it waited is never built",
-    "new": "    if (building || queue.length === 0) return;",
+    "old": "!state.owes(queue) || !capitalPrebuild.firstReady(queue)) return;",
+    "new": "queue.length === 0 || !capitalPrebuild.firstReady(queue)) return;",
     "tests": [
       "test/systems/travel/ow_queueowed.test.js"
     ],
-    "note": "The pump starts on the queue's head whatever the stream holds: a pixel let go by the frame's crossing before the pump's turn is built whole and thrown away, while the grid round the traveller waits - the report."
+    "note": "The pump starts on the queue's head whatever the stream holds: a pixel let go by the frame's crossing before the pump's turn is built whole and thrown away, while the grid round the traveller waits - the report. Re-aimed by content (IC-STUTTER): the pump's line asks the Imperial City's workers after the stream's books."
   },
   {
     "name": "QUEUE-OWED-books-unread",

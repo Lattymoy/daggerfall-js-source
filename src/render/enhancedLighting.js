@@ -73,10 +73,13 @@ import { FLAT_DISSOLVE_GLSL } from '../systems/dissolve.js';   // DISSOLVE: the 
 import { FLAT_CRACK_GLSL } from '../systems/veinCrack.js';   // VEIN-CRACKS: the classic BB_FS's own
 import { HIT_FLASH_GLSL, ELITE_GLOW_GLSL, GLINT_GLSL } from '../systems/hitFlash.js';   // HITFLASH1: the struck-red term, the classic BB_FS's own
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
+import { roadEdgeGlsl } from './roadEdgeGlsl.js';   // ROAD-LOOK: a road's edge blended into its ground, both terrain programs' one chunk
+import { groundEdgeGlsl } from './groundEdgeGlsl.js';   // COAST-LOOK: the ground's kinds blended and the sea's cut on their line, both terrain programs' one chunk
 import { ecotoneGlsl } from './ecotoneGlsl.js';   // ECOTONE1: the ground's share of its neighbours, both terrain programs' one chunk
-import { snowCoverGlsl } from './snowCoverGlsl.js';   // PRECIP4: the snow the ground keeps, after it
+import { snowCoverGlsl, SNOW_TILE_M } from './snowCoverGlsl.js';   // PRECIP4: the snow the ground keeps, after it
+import { snowCapGlsl } from './snowCapGlsl.js';   // PEAKS1: a steep face over the cap's line is bare rock
 import { WATER_BED_GLSL, waterBedMix } from './waterBedGlsl.js';   // WATER-NEXT 2: under the enhanced water the ground is a bed
-import { RING_SEA_GLSL } from './horizonHaze.js';   // FAR-SEA1: the ring's sea and the horizon's haze, the classic ring's own text
+import { RING_SEA_GLSL, FLORA_GLSL } from './horizonHaze.js';   // FAR-SEA1: the ring's sea and the horizon's haze, the classic ring's own text; FAR-FLORA: the canopy's grain
 import { RING_HAZE_GLSL } from './hazeGlsl.js';   // BANTHA1: and the jungle's haze over it, the classic ring's own text
 import { realWindowsGlsl, RW_MAIN_DERIVS, RW_MAIN_CUTOUT, RW_MAIN_GLASS, RW_MAIN_ROOM } from './realWindows.js';   // RW1: the real windows, the classic FS's own block on the lane's codec
 import { MESH_ALPHA_GLSL } from './meshAlpha.js';   // POI-2: the lane's mesh FS ends on the same translucency as the classic one
@@ -991,6 +994,7 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
+uniform vec4 uFadeTint;   // MID-RING: a just-built pixel's tint (rgb, linear) and its share left (a)
 ${CLOUD_SHADOW_GLSL}
 ${EL_GLSL}
 ${SHADOW_GLSL}
@@ -999,7 +1003,7 @@ ${EL_FOG_GLSL}
 ${EL_POINT_LIT_GLSL}
 ${ecotoneGlsl('elDecode')}
 ${snowCoverGlsl('elDecode')}
-${WATER_BED_GLSL}
+${snowCapGlsl('elDecode', SNOW_TILE_M)}
 out vec4 outColor;
 const mat2 ROT[4] = mat2[4](
   mat2(1.0, 0.0, 0.0, 1.0),
@@ -1008,6 +1012,9 @@ const mat2 ROT[4] = mat2[4](
   mat2(0.0, 1.0, -1.0, 0.0));
 const vec2 TRANS[4] = vec2[4](
   vec2(0.0, 0.0), vec2(0.0, 1.0), vec2(1.0, 1.0), vec2(1.0, 0.0));
+${roadEdgeGlsl('elDecode')}
+${groundEdgeGlsl('elDecode')}   // COAST-LOOK: a transition's two kinds, the sea's cut on their line (render/groundEdgeGlsl.js)
+${WATER_BED_GLSL}
 void main() {
   vec2 unwrapped = vLocalXZ / uTileSize;
   ivec2 cell = clamp(ivec2(floor(unwrapped)), ivec2(0), ivec2(127));
@@ -1037,11 +1044,20 @@ void main() {
   vec2 gx = ROT[t] * dFdx(unwrapped);
   vec2 gy = ROT[t] * dFdy(unwrapped);
   vec3 tex = elDecode(textureGrad(uTileArr, vec3(tuv, float(layer)), gx, gy).rgb);
+  // COAST-LOOK (render/groundEdgeGlsl.js): a transition is its two kinds' own ground, each its own picture at its share,
+  // each taking the border's sets (ECOTONE1) and the snow's winter twin by the same
+  highp uint geA, geB; float geS;
+  bool ge = groundMix(data, tileUV, unwrapped, geA, geB, geS);
+  vec2 dux = transpose(ROT[t]) * gx, duy = transpose(ROT[t]) * gy;   // the coordinate's own gradient (ROT is orthonormal)
   vec4 ew = ecoWeights(vLocalXZ);   // ECOTONE1: the border's shares, once (AUDIT PRECIP GROUND-6: the snow crosses it by the same)
-  tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share
+  if (ge) tex = mix(ecotone(geBase(geA, tileUV, dux, duy), ew, vec3(tileUV, float(geA)), dux, duy), ecotone(geBase(geB, tileUV, dux, duy), ew, vec3(tileUV, float(geB)), dux, duy), geS);
+  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground, its neighbour decoded as its own
+  if (!ge) tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share
   float snowC = snowCover(vLocalXZ, vWorldPos.y, gx, gy);   // PRECIP4: the snow the ground keeps (the bed below reads it too)
-  tex = snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);
+  snowC = snowFace(tex, snowC, vLocalXZ, vWorldPos.y, normalize(vNormal), tuv, gx, gy);   // PEAKS1: a steep face over the cap's line is bare rock (render/snowCapGlsl.js)
+  tex = ge ? mix(snowGround(tex, ew, snowC, vec3(tileUV, float(geA)), dux, duy), snowGround(tex, ew, snowC, vec3(tileUV, float(geB)), dux, duy), geS) : snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);
   ${waterBedMix((t) => `elDecode(${t})`)}
+  tex = mix(tex, uFadeTint.rgb, uFadeTint.a);   // MID-RING: out of the middle ring's tint, a just-built pixel's
   vec3 n = normalize(vNormal);
   // PERF-SUN2 (2026-09-19, Mac: "over 1000 calls and looking up in the sky
   // restores frame rate"): THE SUN'S SHADOW IS NOT READ WHERE THE SUN
@@ -1156,6 +1172,7 @@ uniform vec3 uSeaMoonColor;
 ${RING_SEA_GLSL}
 ${RING_CLOUD_GLSL}
 ${RING_HAZE_GLSL}
+${FLORA_GLSL}
 ${EL_GLSL}
 out vec4 outColor;
 void main() {
@@ -1165,7 +1182,7 @@ void main() {
   float diff = max(dot(n, uLightDir), 0.0);
   float mdiff = max(dot(n, uMoonDir), 0.0);
   float sun = ringSun();   // OW-HORIZON: the clouds' shadow where their map knows the ground, the far law past it
-  vec3 lit = elDecode(vColor) * (uAmbient + uSunColor * (sun * diff) + uMoonColor * (uMoonScale * mdiff));
+  vec3 lit = mix(elDecode(vColor) * (uAmbient + uSunColor * (sun * diff) + uMoonColor * (uMoonScale * mdiff)), elDecode(vCanopy) * floraLight(uAmbient, uSunColor, sun, uMoonColor, uMoonScale) * floraGrain(vWorld.xz), vFlora);   // FAR-FLORA: the canopy over the ground, lit as the trees are near
   vec3 shown = elEncode(elTonemapRGB(lit * ex));   // HQ1
   // FAR-SEA1: the sea is the water's own - and the water surface is a classic-space program on every lane, so the sea
   // beside it is summed in the same space, from the same light (AUDIT FAR-SEA1 L1: its body and its glints, not the
@@ -1174,7 +1191,7 @@ void main() {
   if (sea > 0.0) shown = mix(shown, ringSea(uSeaAmbient, uSeaSunColor, uSeaMoonColor, sun), sea);
   // EL-DISTANCE: the ring fades into the fog in DISPLAY space, as elFinish and the classic ring do - mixed in linear
   // it reached the fog colour long before the streamed ground beside it (FAR-SEA1: the horizon's one law)
-  vec3 col = mix(shown, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold)));   // BANTHA1: and the jungle's haze
+  vec3 col = mix(shown, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist))));   // BANTHA1: and the jungle's haze
   outColor = vec4(col + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0, 1.0);   // EL6: the ring's sky gradient, dithered at the byte
 }`;
 

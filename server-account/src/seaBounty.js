@@ -23,7 +23,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { realmActFirst, prepareRealmRecord, mustChange, dropIfUnnamed, recordMovedOf, dropObjects } from './realm.js';
 import { payFromSave, creditSave } from '../../src/net/realm/realmGoldLaw.js';
-import { regionOk } from '../../src/net/nodeLaw.js';
+import { regionOk } from '../../src/net/nodeLaw.js';   // WW7-5: a town book's region any of the world's
 import { seaRoomOf } from '../../src/net/wire.js';
 import { REALM_CHARACTER_RE } from '../../src/net/identityToken.js';
 import { SEA_WANTED_DAYS, SEA_BOARD_MAX, SEA_BOUNTY_RID_RE, seaBountyGoldOk } from '../../src/net/sea/seaBountyLaw.js';

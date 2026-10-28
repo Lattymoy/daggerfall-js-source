@@ -126,6 +126,8 @@ import {
 } from '../../systems/realmSaves.js';   // REALM P1.3: the Online door lists the realm's characters, the service's
 import { applyCustoms, customsLines, crossLeveling, LEVELING_CROSS_LINE } from '../../systems/realmCustoms.js';   // REALM P1.5: an offline character comes in once, through customs
 import { REALM_COPY_SAVE_NAME, realmCopyIds } from '../../systems/realmCopyMark.js';   // a copy of a realm character never comes in
+import { copyStrandedToOffline, hasStranded } from '../../systems/online/strandedCopy.js';   // STRANDED: a save set aside, back as an offline character
+import { strandedNotice } from './strandedNotice.js';   // STRANDED: and said on its tile
 import { bringOnlineButton } from './bringOnlineButton.js';
 import { createRealmLine } from '../../systems/legacy/realmLine.js';   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): the account's lines, read at the door
 import { loadFamily } from '../../systems/legacy/store.js';
@@ -245,6 +247,7 @@ import { loadFace } from '../facePortrait.js';
 import { timersMark, timersWindow, anchorBeside } from './enhancedTimers.js';   // TIMERS1: the hourglass beside the profile mark, and its window
 import { postMark, postWindow, watchPostMark, anchorPost } from './enhancedPost.js';   // SERVER-POST: the mailbox beside the hourglass, and its window
 import { seasonMark, seasonWindow, seasonSource, anchorSeason } from './enhancedSeason.js';   // SEASON-BOOK: the laurel beside the envelope, and its window
+import { shopMark, shopWindow } from './enhancedShop.js';   // SHOP: the gem at the end of the row of marks, and its window
 import { profileBadge, portraitSave, liveCharacter, characterLine } from '../profileBadge.js';   // PROFILE1: the mark is the last character's portrait   // TILE1: the character's face, the one home chargen also reads
 import { profileIconNode } from '../profileIcons.js';   // WITCH1: a profile icon worn, in the mark's portrait
 import { ownIcon } from '../../systems/ownGlyphs.js';   // WITCH1: the icon the stored session says this device's player wears
@@ -253,6 +256,7 @@ import { serviceBase, storedSession } from '../../net/accountClient.js';
 import { isBountyQuestId, abandonBountyQuest, shareBountyQuest, bountyQuestShareable } from '../../systems/bounty/bountyJournal.js';   // BOUNTY1: a bounty in the journal - its Abandon and its Share
 import { isHuntQuestId, abandonHuntQuest } from '../../systems/huntJournal.js';   // RVN7c: a revenant's hunt in the journal - its Abandon
 import { liveBundles, canEndBundle, endBundle } from '../../systems/mysticism.js';   // BUFF-END: the Stats page's Effects - the ONE bundle walk, and which the player may end
+import { listenWindowKeys } from '../windowStack.js';   // COVERED-KEYS: the window's keys, gated while a box covers it
 import { maxRoundsRemaining } from '../hud/hudActiveSpells.js';   // BUFF-END: a bundle's rounds, as the HUD reads them
 
 // ── THE RAIL ─────────────────────────────────────────────────────
@@ -361,7 +365,8 @@ let homeLevel = 'top';
 function focusDoor(id) {
   globalThis.requestAnimationFrame?.(() => (app?.querySelector?.(`.px-menu .door-${id}`) ?? app?.querySelector?.('.px-menu .doorbtn'))?.focus?.());
 }
-let keyHandler = null;
+let unlistenKeys = null;
+let windowOwner = null;   // COVERED-KEYS: the stack window this page draws - the Growth tab's embedded Ascension gates its keys on it
 // ACC1f (Mac: "The online details itself will live as a popup on main
 // menu startup and a new profile icon"): whether the account window is
 // open, and whether startup has already offered it once.
@@ -434,6 +439,36 @@ function seasonLaurel(home, chain) {
   seasonAnchor = anchorSeason(laurel, chain, home.querySelector?.('.px-profile'), home);
   if (seasonFocusBack && !seasonOpen) { seasonFocusBack = false; globalThis.requestAnimationFrame?.(() => laurel.focus?.()); }
   return laurel;
+}
+/** SHOP: the shop's window over the pause face, its live view, the gem's placing, the visit's account flow (read when
+ *  the window first opens) and the tab the window shows - a rebuild of the face keeps both. */
+let shopOpen = false;
+let shopView = null;
+let shopAnchor = null;
+let shopFocusBack = false;   // a closed window hands the focus back to the gem
+let shopFocusIn = false;     // the window just opened - the focus goes into it, once
+let shopFlow = null;
+let shopKeep = {};
+const stopShop = () => { shopView?.stop(); shopView = null; shopAnchor?.(); shopAnchor = null; };
+const closeShop = () => { shopOpen = false; shopFocusBack = true; render(); };
+/** SHOP: the visit's flow - made and started on the window's first ask, after the draw that asked (a read's first word
+ *  draws the window again, in place). */
+const shopFlowOf = () => {
+  if (!shopFlow) {
+    const flow = newAccountFlow(() => { if (shopFlow === flow) shopView?.draw(); });
+    shopFlow = flow;
+    globalThis.queueMicrotask?.(() => { if (shopFlow === flow) flow.start().catch?.(() => {}); });
+  }
+  return shopFlow;
+};
+/** SHOP (the owner: "A new glyph panel alongside the timer and mailbox that will be used for our monetization shop"): THE
+ *  GEM on the pause face, at the end of the row of marks `chain` - online or not, for the account is the shop's. */
+function shopGem(home, chain) {
+  const gem = shopMark(document, { open: shopOpen, onOpen: () => { shopOpen = true; shopFocusIn = true; render(); } });
+  home.append(gem);
+  shopAnchor = anchorSeason(gem, chain, home.querySelector?.('.px-profile'), home);
+  if (shopFocusBack && !shopOpen) { shopFocusBack = false; globalThis.requestAnimationFrame?.(() => gem.focus?.()); }
+  return gem;
 }
 let accountOffered = false;
 // ═══ TILE2/ACC2: WHAT THE CLOUD HOLDS, ASKED ONCE PER VISIT ═══════
@@ -1374,6 +1409,8 @@ function realmCard(who) {
       const save = realmRowAsSave(row, { dateText: (sec) => new Date(sec * 1000).toLocaleDateString() });
       grid.append(saveTile(document, save, {
         face: loadFace(save, { scale: 2, copy: true }),
+        // STRANDED: progress this device kept that never reached the realm - said apart from the tile's buttons, with its way back
+        notice: hasStranded(appStorage(), row.id) ? strandedNotice({ name: row.name, busy: realmBusy, ask, recover: () => copyStrandedOffline(row) }) : null,
         actions: [
           { label: save.unfinished ? t('menu.realm.neverSaved', 'Never saved') : t('menu.realm.play', 'Play'), primary: true, disabled: realmBusy || save.unfinished, onClick: () => { _pickedRealmId = row.id; onAction('online'); } },
           { label: t('menu.realm.copyOffline', 'Copy to offline'), disabled: realmBusy || save.unfinished, onClick: () => copyToOffline(row) },
@@ -1429,7 +1466,7 @@ function carryOn(familyId, personId, newborn = false) {
   if (!took.ok) { realmWords = [took.why]; realmBusy = false; render(); return; }
   Promise.resolve(realmLine?.push(took.family)).then(() => realmLine?.flush()).then((ok) => {
     if (!ok) { realmWords = [realmRefusalText(realmLine?.refusalOf(familyId) ?? realmLine?.error ?? 'server')]; realmBusy = false; render(); return; }
-    _pickedLegacyBirth = { personId: took.heirId, region: took.place.region, loc: took.place.loc };   // RPT1026-MISC HEIR-WAITS: the heir the take named (a newborn's id is minted there)
+    _pickedLegacyBirth = { personId: took.heirId, region: took.place.region, loc: took.place.loc, ...(Number.isInteger(took.place.mapId) ? { mapId: took.place.mapId } : {}) };   // RPT1026-MISC HEIR-WAITS: the heir the take named (a newborn's id is minted there); BAY-LEFT-B: and the seat's map id
     realmBusy = false;
     onAction('online-new');
   }).catch(() => { realmWords = [realmRefusalText('server')]; realmBusy = false; render(); });
@@ -1488,6 +1525,12 @@ function copyToOffline(row) {
     const r = saveSlot(snap.name || row.name, REALM_COPY_SAVE_NAME, snap, { storage: appStorage() });
     return r.ok ? { ok: true } : { ok: false, error: 'no-room' };
   }, () => [t('menu.realm.copied', '{name} is copied as a new offline character. Nothing you play on the copy comes back online.', { name: row.name })]);
+}
+
+/** STRANDED: the save this device set aside for a realm character, copied as a new offline character and dropped from the
+ *  device (systems/online/strandedCopy.js). Nothing played on the copy goes back. */
+function copyStrandedOffline(row) {
+  return realmAct(() => copyStrandedToOffline({ storage: appStorage(), id: row.id, name: row.name }), () => [t('menu.realm.strandedCopied', '{name}\u2019s unsaved progress is now a new offline character. Nothing you play on the copy comes back online.', { name: row.name })]);
 }
 
 // UXB1-E (2026-09-25, the UX backlog: "Add a 'sync from server' option so players can ensure their offline play
@@ -2567,8 +2610,8 @@ function prefRow(key, name, note, { onChange = null, home = false } = {}) {
 // honesty, once the thing has a record elsewhere (About, the Ledger).
 
 /** A choice row: the button names the CURRENT tier and a click steps
- *  to the next, wrapping (PERF1). */
-function choiceRow(key, name, note, tiers, { home = false, read = null, write = null } = {}) {
+ *  to the next, wrapping (PERF1). `tier` is its dot: 'restart' for a key the shell reads at launch (GPU-BACKEND). */
+function choiceRow(key, name, note, tiers, { home = false, read = null, write = null, tier = 'live' } = {}) {
   if (!home) { const moved = featureForControl('prefs', key); if (moved) return movedRow(moved); }   // FT2
   // FT2: a condensed row reads the lane's live value and writes both stores
   const cur = String(read ? read() : getPref(key));
@@ -2585,7 +2628,7 @@ function choiceRow(key, name, note, tiers, { home = false, read = null, write = 
   const b = el('button', 'act rowact', tiers[at][1]);
   b.onclick = step;
   if (onlineForcedPref(key) !== undefined) { lockOnline(b, main); b.textContent = t('menu.online.lockedTier', '{tier} (online)', { tier: tiers[at][1] }); }   // OL1: the outdoors row reads the lane's forced answer and names its tier under the lock
-  ctl.append(b, el('span', 'tier live'));
+  ctl.append(b, el('span', `tier ${tier}`));
   row.append(ctl);
   return row;
 }
@@ -3067,11 +3110,24 @@ function portRowsInterface({ pause = false } = {}) {
     row.append(ctl);
     out.push(row);
   }
+  out.push(graphicsBackendRow());   // GPU-BACKEND: the app on Windows only
   out.push(prefRow('showFps', t('menu.hud.fps', 'FPS counter'),
     t('menu.hud.fpsNote', 'Frame rate in the top-right corner.')));
   if (!pause) out.push(prefRow('skipStartVideo', skipStartVideoName(), skipStartVideoNote()));   // UXB1-A: read at launch, so the front door's alone - as the skin's
   out.push(...spireAccessRows());   // EG-G1: Settings > Accessibility lists them (ui/settings/settingsMap.js)
   return out.filter(Boolean);   // FT13
+}
+
+/** GPU-BACKEND (2026-10-26): the desktop app's graphics backend on Windows, read by the shell at its next launch
+ *  (app/lib/graphicsBackend.cjs, which falls back to Direct3D 11 by itself when Vulkan does not start). A browser
+ *  chooses its own backend, so the row is drawn in the app on Windows only. */
+function graphicsBackendRow() {
+  if (globalThis.daggerShell?.platform !== 'win32') return null;
+  const row = choiceRow('graphicsBackend', t('menu.video.backend', 'Graphics backend'),
+    `${t('menu.video.backendNote', 'Vulkan prepares the graphics faster at the first start after an update, but runs a little slower in play. Wait For Screen Refresh stays on with it. If it cannot start, the app goes back to Direct3D 11.')} ${TIER_TEXT.restart}`,
+    [['default', t('menu.video.backendDefault', 'Direct3D 11')], ['vulkan', t('menu.video.backendVulkan', 'Vulkan')]], { tier: 'restart' });
+  row.dataset.opt = 'graphicsBackend'; row.dataset.pref = 'graphicsBackend';   // ORG2
+  return row;
 }
 
 /** EG-G1 (bible/11-Multiplayer/Elite-Gates.md section 25.7): THE SPIRE'S ACCESSIBILITY ROWS (ui/eliteGates/egAccess.js) - reduced
@@ -4487,6 +4543,7 @@ function renderHome() {
     }
     const envelope = postEnvelope(home, mark);   // SERVER-POST: the mailbox beside the hourglass, online - its count kept live
     const laurel = seasonLaurel(home, [mark, envelope]);   // SEASON-BOOK: the laurel beside the envelope, online
+    const gem = shopGem(home, [mark, envelope, laurel]);   // SHOP: the gem beside the laurel, online or not
     // AUDIT SEASON-BOOK S4: a window whose mark is gone (the clock lost, the box gone) is closed - never kept to come back
     // over whatever the player moved on to when the mark returns
     if (timersOpen && !mark) timersOpen = false;
@@ -4497,7 +4554,7 @@ function renderHome() {
       acct.append(accountWindow());
       home.append(acct);
       closeOnOutsideTap(home, '.px-acctwin', closeAccount);   // AUDIT RECOVERY-SET B1: not over codes
-      for (const n of [stage, mark, envelope, laurel]) n?.setAttribute?.('inert', '');   // AUDIT SERVER-POST: the face under the account window out of reach, as under the timers' - SEASON-BOOK: the laurel too
+      for (const n of [stage, mark, envelope, laurel, gem]) n?.setAttribute?.('inert', '');   // AUDIT SERVER-POST: the face under the account window out of reach, as under the timers' - SEASON-BOOK: the laurel too - SHOP: and the gem
     }
     else if (timersOpen && hooks.timers?.()) {
       const tstage = el('div', 'px-stage px-timersstage');
@@ -4512,6 +4569,7 @@ function renderHome() {
       for (const n of [stage, home.querySelector?.('.px-profile'), mark]) n?.setAttribute?.('inert', '');
       envelope?.setAttribute?.('inert', '');   // SERVER-POST: and the envelope beside it
       laurel?.setAttribute?.('inert', '');   // SEASON-BOOK: and the laurel
+      gem?.setAttribute?.('inert', '');   // SHOP: and the gem
     }
     else if (postOpen && hooks.post?.()) {
       // SERVER-POST: the mailbox's window, on the hourglass's own stage (centred, its own padding - enhancedStyle.js)
@@ -4520,7 +4578,7 @@ function renderHome() {
       pstage.append(postView.root);
       home.append(pstage);
       closeOnOutsideTap(home, '.px-postwin', () => { postOpen = false; postKeep = {}; postFocusBack = true; render(); }, { swallow: true });
-      for (const n of [stage, home.querySelector?.('.px-profile'), mark, envelope, laurel]) n?.setAttribute?.('inert', '');
+      for (const n of [stage, home.querySelector?.('.px-profile'), mark, envelope, laurel, gem]) n?.setAttribute?.('inert', '');
     }
     else if (seasonOpen && laurel) {
       // SEASON-BOOK: the season window, on the hourglass's own stage; its read asks the boards (the laurel's test does not)
@@ -4530,13 +4588,23 @@ function renderHome() {
       sstage.append(seasonView.root);
       home.append(sstage);
       closeOnOutsideTap(home, '.px-seasonwin', closeSeason, { swallow: true });
-      for (const n of [stage, home.querySelector?.('.px-profile'), mark, envelope, laurel]) n?.setAttribute?.('inert', '');
+      for (const n of [stage, home.querySelector?.('.px-profile'), mark, envelope, laurel, gem]) n?.setAttribute?.('inert', '');
+    }
+    else if (shopOpen) {
+      // SHOP: the shop's window, on the hourglass's own stage; its flow is the visit's, read on its first open
+      const shstage = el('div', 'px-stage px-timersstage px-shopstage');
+      shopView = shopWindow(document, { flow: shopFlowOf, keep: shopKeep, onClose: closeShop, focus: shopFocusIn });
+      shopFocusIn = false;
+      shstage.append(shopView.root);
+      home.append(shstage);
+      closeOnOutsideTap(home, '.px-shopwin', closeShop, { swallow: true });
+      for (const n of [stage, home.querySelector?.('.px-profile'), mark, envelope, laurel, gem]) n?.setAttribute?.('inert', '');
     }
     // OT1 (Mac: "tapping outside of any UI closes the UI"): a tap on the
     // scrim - outside the window, the clock and the foot - resumes,
     // the way Escape does; the front door has no scrim and no resume.
     // PROFILE2: the mark is inside too (a press on it opens the window), and with the window open the tap is its.
-    else closeOnOutsideTap(home, '.px-win, .px-clock, .px-foot, .px-profile, .px-timersmark, .px-postmark, .px-seasonmark', () => { if (pauseTab === 'growth' && growthAsks()) return; onAction('resume'); });   // SERVER-POST: the envelope inside too - AUDIT GROWTH LANE3-4: a Growth face asked first (GROWTH5)
+    else closeOnOutsideTap(home, '.px-win, .px-clock, .px-foot, .px-profile, .px-timersmark, .px-postmark, .px-seasonmark, .px-shopmark', () => { if (pauseTab === 'growth' && growthAsks()) return; onAction('resume'); });   // SERVER-POST: the envelope inside too - AUDIT GROWTH LANE3-4: a Growth face asked first (GROWTH5)
     // PX4 (Mac): NO FOOT AT PAUSE - no skin toggle, no About plaque;
     // About is a System-tab row instead, and the skin switch stays on
     // the boot face and the settings shell.
@@ -4796,7 +4864,7 @@ function pauseWindow() {
 // Ascension and the skies drawn in the pane (ui/growth/growthStage.js), Master Skills a press away on the Stats tab.
 function pauseGrowth(body) {
   drawGrowthTab(body, {
-    el, divider: pxDivider, skillMeter, askCard, entity: playerEntity, render, hooks, captain: holdingsProvider()?.captain ?? null,
+    el, divider: pxDivider, skillMeter, askCard, entity: playerEntity, render, hooks, captain: holdingsProvider()?.captain ?? null, owner: windowOwner,
     openMaster: () => { releaseGrowthTab(); pauseTab = 'stats'; statsSec = 'master'; _masterNote = null; render(); },
   });
 }
@@ -6062,6 +6130,7 @@ function renderInto() {
   stopTimers();   // TIMERS1: a rebuild builds the window again, with its own tick
   stopPost();   // SERVER-POST: and the mailbox's, and the envelope's count
   stopSeason();   // SEASON-BOOK: and the season window's
+  stopShop();   // SHOP: and the shop's, its previews let go
   app.innerHTML = '';
   // TITLE-DOOR: the boot home stands on the film's held title, so its host is see-through there (uiCalmStyle.js
   // TITLE_DOOR_CSS); every section keeps the opaque ground the canvas is hidden under
@@ -6267,6 +6336,7 @@ function onKey(e) {
     : timersOpen && timersView ? () => { timersOpen = false; timersFocusBack = true; render(); }   // TIMERS1: the window first, ahead of the pause face's resume (AUDIT UI-11: a window that is drawn)
     : postOpen && postView ? () => { postOpen = false; postKeep = {}; postFocusBack = true; render(); }   // SERVER-POST: the mailbox's window, as the timers'
     : seasonOpen && seasonView ? () => closeSeason()   // SEASON-BOOK: the season window, as the timers'
+    : shopOpen && shopView ? () => closeShop()   // SHOP: the shop's window, as the timers'
     // AUDIT 32 P12: an act under way on the Stores page is set down first (nothing spent, said) - never the window
     : profActUnderWay() ? () => { setDownProfAct(); render(); }
     : confirming ? () => { answered(); render(); }   // RPT1026-MISC CONFIRM-SHEET: and the sheet the ask raised
@@ -6329,6 +6399,8 @@ export function mountEnhancedMenu(host, {
   // should land on that page rather than on a menu with it one press
   // further in - the dial's north asked for the character sheet.
   at = null,
+  // COVERED-KEYS: the window this page draws (ui/pauseDoor.js, ui/charSheetDoor.js) - its keys are gated on it. None at boot.
+  owner = null,
 } = {}) {
   injectEnhancedStyle();
   injectEnhancedFonts();
@@ -6336,6 +6408,7 @@ export function mountEnhancedMenu(host, {
   onAction = handler;
   mode = m === 'pause' ? 'pause' : 'boot';
   hooks = h ?? {};
+  windowOwner = owner;   // before the first render: the Growth tab hands it to the Ascension it draws
   questRepairSaid = null;   // QREPAIR: a repair's line is that visit's
   // PROFILE2: and the profile window is a visit's too - the pause screen mounts this module again, and a window left
   // open on the door (or on the last pause) must not be standing over the next one before the player asks for it
@@ -6422,6 +6495,7 @@ export function mountEnhancedMenu(host, {
   discardControlsStaging();   // FIX-F: a second visit never inherits the first one's staged binds
   seasonOpen = false;   // SEASON-BOOK: and the season window's (a visit's, as the timers' and the mailbox's above)
   seasonFocusBack = false;
+  shopOpen = false; shopFocusBack = false; shopFlow = null; shopKeep = {};   // SHOP: and the shop's, its account read again next visit
   // PROF2: a landing on a professions page - the Stats tab at it (a home forge's press opens the Stores' forge); the
   // draw falls back to the character's own page when the professions are not the account's
   // HOLDINGS: the Professions page is the Stats rail's, the Stores page the Holdings rail's
@@ -6436,10 +6510,11 @@ export function mountEnhancedMenu(host, {
   else if (at === 'companions') { pauseTab = 'holdings'; holdSec = 'companions'; }   // RVN-STARS: back from a sworn one's stars
   _eff = null;
   render();
-  keyHandler = onKey;
   backArmed = null;   // AUDIT DISC28 UI-2: a press is a visit's - the last screen's never answers on this one
-  globalThis.addEventListener('keydown', keyHandler, { capture: true });
-  globalThis.addEventListener('keyup', keyHandler, { capture: true });   // AUDIT DISC28 UI-2: the release, where the pause face answers
+  // AUDIT DISC28 UI-2: the release too, where the pause face answers. COVERED-KEYS: under a box the press and the release
+  // are the box's, and a press armed before the box came up never answers on a release after it
+  unlistenKeys?.();   // a mount over a mount lays one listener, as the window's own addEventListener of one function did
+  unlistenKeys = listenWindowKeys(owner, onKey, { types: ['keydown', 'keyup'], onCovered: () => { backArmed = null; } });
   // PX1: the pixel ground is drawn for the viewport it mounted on; a
   // rotate or a resize while the home is up redraws it, or the sky
   // stretches - the prototype's own phone-shot lesson.
@@ -6465,8 +6540,7 @@ export function mountEnhancedMenu(host, {
       // menu torn down without this eats Escape for the whole session
       // - which on the pause door means the game can never be paused
       // again.
-      if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
-      if (keyHandler) globalThis.removeEventListener('keyup', keyHandler, { capture: true });   // AUDIT DISC28 UI-2
+      unlistenKeys?.();   // the press and the release both (AUDIT DISC28 UI-2)
       if (lockHandler && typeof document !== 'undefined') document.removeEventListener('pointerlockchange', lockHandler);
       if (resizeHandler) globalThis.removeEventListener('resize', resizeHandler);
       if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
@@ -6477,6 +6551,7 @@ export function mountEnhancedMenu(host, {
       stopPost();   // SERVER-POST: and the mailbox's ticks
       releaseTutorialsPane();   // TUT1: the next visit opens on the first page
       stopSeason();   // SEASON-BOOK: and the season window's
+      stopShop();   // SHOP: and the shop's
       releaseGrowthTab();   // GROWTH3: a face on the Growth stage goes with the window (full screen too)
       askUp?.();   // AUDIT GROWTH LANE3-9: and a Yes/No card standing over it
       // FIX-F: and the rebind pane's own capture listener, which is on
@@ -6487,7 +6562,8 @@ export function mountEnhancedMenu(host, {
       // whole tree, the sky's canvas with it) and the account card's paint and focus listener
       footObs?.disconnect?.(); footObs = null;
       acctPaint = null; acctOff?.(); acctOff = null;
-      keyHandler = null;
+      unlistenKeys = null;
+      windowOwner = null;
       lockHandler = null;
       resizeHandler = null;
       host.innerHTML = '';

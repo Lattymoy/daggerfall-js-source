@@ -20,7 +20,7 @@
 
 import { modSetting } from './modSettings.js';
 import { roundToInt, lerpF } from './mathf.js';   // Mathf.RoundToInt (banker's), Mathf.Lerp in float
-import { bytesToBase64, base64ToBytes } from './save/saveTransfer.js';   // Convert.ToBase64String / FromBase64String
+import { bytesToBase64, base64ToBytes } from './save/base64Bytes.js';   // Convert.ToBase64String / FromBase64String
 import { deflateRaw, inflateRaw } from '../formats/rawDeflate.js';   // DeflateStream
 
 const f32 = Math.fround;
@@ -1090,12 +1090,16 @@ export function markAuthoredBlock(authored, ground, originX, originZ) {
   for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) if (ground[j][15 - i].textureRecord < 56) authored[(originZ + i) * 128 + originX + j] = 1;
 }
 
-/** BasicRoadsTerrain: one pixel's painted tiles, each road record classified as the network's road or track. */
+/** BasicRoadsTerrain: one pixel's painted tiles, each road record classified as the network's road or track.
+ *  BAY-LEFT-GROUND (bible/03-World/Landforms.md, the snow's part; departure from BasicRoadsTerrain.TryCreate): a network
+ *  that says its own `kindAt(x, z, tile)` classifies by it - past the Bay the roads are TESA's (world/arenaRoads.js),
+ *  drawn as curves (world/road/roadCurves.js, VOYAGER2), whose tiles no Basic Roads arm predicts; the painter's own word
+ *  is read there instead (scenes/snowfallHost.js snowfallNetworkBeyond). An authored tile is still none. */
 export class BasicRoadsTerrain {
   /**
    * @param {ArrayLike<number>} tiles - the pixel's 128 x 128 TileMap bytes (record << 2 | turn), row 0 south
    * @param {ArrayLike<boolean>} authored - the tiles a location's own blocks lay
-   * @param {{ roads: number, roadCorners: number, paths: number, pathCorners: number }} net
+   * @param {{ roads: number, roadCorners: number, paths: number, pathCorners: number, kindAt?: (x: number, z: number, tile: number) => number }} net
    * @param {{ xMin: number, xMax: number, yMin: number, yMax: number }} rect - the location's rectangle in tiles
    */
   constructor(mapX, mapY, tiles, authored, net, rect) {
@@ -1108,7 +1112,7 @@ export class BasicRoadsTerrain {
       for (let x = 0; x < 128; x++) {
         const i = z * 128 + x;
         if (!PAINTED_ROAD_RECORDS.includes(this.tiles[i] >> 2)) continue;
-        const k = classifyRoadTile(x, z, this.tiles[i], net, rect, authored[i]);
+        const k = net.kindAt ? (authored[i] ? ROAD_KIND.none : net.kindAt(x, z, this.tiles[i])) : classifyRoadTile(x, z, this.tiles[i], net, rect, authored[i]);
         this.kinds[i] = k;
         if (k === ROAD_KIND.road) this.roadTiles++;
         if (k === ROAD_KIND.path) this.pathTiles++;

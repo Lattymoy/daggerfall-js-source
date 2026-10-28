@@ -773,13 +773,17 @@ void main() {
   outColor.rgb = hazeSky(outColor.rgb, dir);   // BANTHA1: the jungle's haze toward the horizon - the port's ground haze, in front of the mod's skybox (it takes no fog of its own); AUDIT BANTHA1 HAZE-8: after the grades
 }`;
 
+/** BOOT-COMPILE: the pass's one program, as its constructor builds it: what the boot starts ahead of the build
+ *  (render/bootPrograms.js). */
+export const DYNAMIC_SKIES_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[VS, FS]]));
+
 /** The pass. Textures arrive through `setTexture(name, image)` as the
  *  vendored files load; until one lands its slot shows the shader's own
  *  default ("black", "bump", "white"). */
 export class DynamicSkiesRenderer {
   constructor(gl) {
     this.gl = gl;
-    const prog = buildProgram(gl, VS, FS);
+    const prog = buildProgram(gl, ...DYNAMIC_SKIES_PROGRAMS[0]);
     this.program = prog;
     this.u = {};
     for (const name of UNIFORM_NAMES) this.u[name] = gl.getUniformLocation(prog, name);

@@ -214,8 +214,8 @@
   {
     "name": "ACS-B10-sea-at",
     "file": "src/scenes/world.js",
-    "old": "    if (!(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT)) return tamrielLand && seaPixel(x, y);",
-    "new": "    if (!(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT)) return seaPixel(x, y);",
+    "old": "return tamrielLand && ((seaPixel(x, y) && !pastBayLakeAt(x, y)) || rumareSeaPixel(x, y));",
+    "new": "return ((seaPixel(x, y) && !pastBayLakeAt(x, y)) || rumareSeaPixel(x, y));",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js",
       "test/systems/naval/fb1014_inlandports.test.js"
@@ -1007,10 +1007,11 @@
   {
     "name": "ACS-G3-law-arm",
     "file": "src/world/landforms.js",
-    "old": "  if (inEtherLaw(ix, iy) || inEtherLaw(ix + 1, iy + 1)) {",
-    "new": "  if (false) {",
+    "old": "  if (!inEtherLaw(x, y)) return nodeLand(x, y, climates);",
+    "new": "  return nodeLand(x, y, climates);",
     "tests": [
-      "test/systems/naval/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/world/audittesa2g_landforms.test.js"
     ]
   },
   {
@@ -1079,11 +1080,12 @@
   {
     "name": "ACS-G6-ring-grid",
     "file": "src/render/farRing.js",
-    "old": "  if (relief && byteAtPast) {",
-    "new": "  if (false) {",
+    "old": "own(x, y) ? cliffFadeAt(gridByte, x, y) : cliffFadeAt(byteAt, clampX(x), clampY(y));",
+    "new": "cliffFadeAt(byteAt, clampX(x), clampY(y));",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the ring's nodes' fades are read once a node into a grid of their own; an isle's node past the map faded at the clamped corner again"
   },
   {
     "name": "ACS-G6-ring-own",
@@ -1096,7 +1098,7 @@
   },
   {
     "name": "ACS-G7-raids",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/raidHost.js",
     "old": "return !(etherSea && inEther(px.x, px.y)) && politicClaimed(",
     "new": "return politicClaimed(",
     "tests": [
@@ -1160,8 +1162,8 @@
   {
     "name": "ACS-G14-moon",
     "file": "src/scenes/world.js",
-    "old": "renderer.setMoonlight(moonNow && etherAirW ? { scale: moonNow.scale, dir: moonNow.dir, color: etherLight(moonNow.color, etherAirW, ETHER_KEY_TINT) } : moonNow);",
-    "new": "renderer.setMoonlight(moonNow);",
+    "old": "moonNow && etherAirW ? { scale: moonNow.scale, dir: moonNow.dir, color: etherLight(moonNow.color, etherAirW, ETHER_KEY_TINT) } : moonNow, jungle?.canopy));",
+    "new": "moonNow, jungle?.canopy));",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1213,7 +1215,7 @@
   },
   {
     "name": "ACS-H1-host-town",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/harbourHost.js",
     "old": "name: isle.name, reach: ETHER_HARBOUR_REACH });",
     "new": "name: isle.name });",
     "tests": [
@@ -1269,8 +1271,8 @@
   {
     "name": "ACS-P3-spawn-filter",
     "file": "src/world/spawnedDungeons.js",
-    "old": "&& !l.spawned && !l.ether   // AUDIT CAPTAIN'S SEA P3",
-    "new": "&& !l.spawned   // AUDIT CAPTAIN'S SEA P3",
+    "old": "&& !l.spawned && !l.ether && !l.arena   // AUDIT CAPTAIN'S SEA P3",
+    "new": "&& !l.spawned && !l.arena   // AUDIT CAPTAIN'S SEA P3",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1370,11 +1372,12 @@
   {
     "name": "ACS-P6-guild",
     "file": "src/scenes/world.js",
-    "old": "wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)",
-    "new": "wildTeleportRefused(pick.pixel)",
+    "old": "if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return false;   // PVPDUNGEONS",
+    "new": "if (wildTeleportRefused(pick.pixel)) return false;   // PVPDUNGEONS",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
-    ]
+    ],
+    "note": "PORTAL-BAY (PIN MOVED): re-aimed by content - teleportTo answers whether it arrived (false for a refusal)"
   },
   {
     "name": "ACS-P6-party",
@@ -1396,27 +1399,28 @@
   },
   {
     "name": "ACS-P6-map-false",
-    "file": "src/scenes/world.js",
-    "old": "    if (veilRefused()) return false;",
-    "new": "    void 0;",
+    "file": "src/scenes/portalStoneHost.js",
+    "old": "    if (host.wildTeleportRefused() || host.veilRefused()) return false;",
+    "new": "    if (host.wildTeleportRefused()) return false;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-P6-stone",
-    "file": "src/scenes/world.js",
-    "old": "    if (veilRefused(pick.pixel)) return;",
-    "new": "    void 0;",
+    "file": "src/scenes/portalStoneHost.js",
+    "old": "const teleportRefused = (to) => host.wildTeleportRefused(to) || host.veilRefused(to) || ",
+    "new": "const teleportRefused = (to) => host.wildTeleportRefused(to) || ",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
-    ]
+    ],
+    "note": "PORTAL-BAY (PIN MOVED): re-aimed by content - the stone's pick and step ask one teleport gate (scenes/portalStoneHost.js teleportRefused); the Veil's read dropped from it"
   },
   {
     "name": "ACS-P8-index",
     "file": "src/scenes/world.js",
-    "old": "?? (etherSea ? [...locationIndex.values()].find((l) => l?.ether && l.name === locationName && l.regionName === regionName) ?? null : null);",
-    "new": "?? null;",
+    "old": "    ?? [...locationIndex.values()].find((l) => (l?.ether || l?.arena || l?.country || l?.capital) && l.name === locationName && l.regionName === regionName) ?? null;",
+    "new": "    ?? null;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1442,8 +1446,8 @@
   {
     "name": "ACS-P9-sale",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (isEtherPlaceId(dir.mapId)) return [];",
-    "new": "    void 0;",
+    "old": "if (isEtherPlaceId(dir.mapId)) return [];",
+    "new": "if (false) return [];",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

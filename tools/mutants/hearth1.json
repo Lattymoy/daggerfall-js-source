@@ -147,7 +147,7 @@
  {
   "name": "HEARTH1-the-streaming-host-stops-collecting-so-no-town-brazier-is-a-fire",
   "file": "src/scenes/pixelBuild.js",
-  "old": "          if (isHearthFlat(LIGHTS_ARCHIVE, light.record)) pixelHearths.push([lp[0], lp[1], lp[2], locLocal[1] + light.foot, light.w, light.h]);",
+  "old": "          if (isHearthFlat(LIGHTS_ARCHIVE, light.record)) pixelHearths.push([lp[0], lp[1], lp[2], blockY + light.foot, light.w, light.h]);",
   "new": "",
   "tests": [
    "test/systems/survival/hearth1_worldfires.test.js"

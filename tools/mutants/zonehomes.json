@@ -1,0 +1,20 @@
+[
+  {
+    "name": "ZH-the-zone-refuses-a-house-again",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!homes) return;\n    // WD3 (AUDIT WD3 O1/O2)",
+    "new": "    if (!homes) return;\n    if (host.wildNoHouse?.()) return;\n    // WD3 (AUDIT WD3 O1/O2)",
+    "tests": [
+      "test/systems/wild/zonehomes.test.js"
+    ]
+  },
+  {
+    "name": "ZH-an-isle-town-refused",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "  homeCandidate(bd) && bd.hasInterior !== false && !(isActiveQuestBuilding?.(bd) ?? false);",
+    "new": "  homeCandidate(bd) && bd.hasInterior !== false && !(((bd.townMapId ?? 0) >>> 20) === 0xe7) && !(isActiveQuestBuilding?.(bd) ?? false);",
+    "tests": [
+      "test/systems/wild/zonehomes.test.js"
+    ]
+  }
+]

@@ -1744,6 +1744,21 @@ reached by the page that starts it. NOT SEEN: the film on a hardware GPU - every
 here was SwiftShader's, which draws one in 3 to 7 s at 1280 x 720 (INTRO2's in about 0.45 s); the probes wait for it
 accordingly (three minutes a wait).
 
+THE SET (the merge of main into #1184, 2026-10-27). INTRO4 brought TESA's city to main as it stood at 4d8200b01, the
+Imperial City at seven pixels a side, and shot the film on it: the camera's path, the fog, the lake and the dive past the
+Colosseum. TESA's IC-GRAND has since made the game's city twenty-five pixels a side (its wall 6,900 m out where it was
+1,950 m) and gave the Colosseum's ground to Daggerfall's arena (`03-World/Arena-Provinces.md` IC-GRAND).
+
+The two met at
+the merge: the game's `world/imperialCity.js`, `capitalImperial.js` and `capitalShapes.js` are IC-GRAND's, and the film
+reads its own copy of the city it was shot on, `ui/intro/set/` (the three modules as main had them, their imports'
+paths and an export list the only changes), so every frame of the film stays the one pinned above
+(`ui/intro/introCity.js:"import { IMPERIAL, IMPERIAL_CELLS, IMPERIAL_CITY_PLAN, imperialDistrictAt, imperialTile, imperialTree } from './set/imperialCity.js';"`). PIN MOVED:
+`test/ui/intro4_film.test.js` reads the landmarks off the set. The set's 23 proper names stand on the L10N4 ratchet
+where world/imperialCity.js's did (`test/systems/l10n4_hardcoded.test.js`). STILL OPEN: re-shooting the film on the
+grand city - a new camera path over a city 3.5 times as wide, without the Colosseum - is its own slice; until then the
+film's city is not the one the player walks into.
+
 #### TITLE-DOOR (2026-10-27): the held title is the front door
 
 The owner: *"People really love the start game intro screen. I think instead.of this leading to the online/offline
@@ -18943,6 +18958,20 @@ sworn companion by its own name, a calmed one, and a kneeling revenant - its mot
 the dungeon's arms pass `!f.yielded` (the street's `!f._pupYield` too) and its "- beaten" cue reads.
 
 The classic skin has none of it, byte for byte.
+
+**IC-PROPS (2026-10-27, the owner: "Some doors in Imperial city can be entered but dont show the tooltip", then "a world
+wide issue").** The law above broke at two doors. A house with no name of its own had a plaque only where it listed verbs
+(online, for sale): offline and everywhere else the door entered and said nothing - 6,325 of the 8,295 building doors
+with a room over the freeware's blocks and both town packs.
+
+DFU names every residence "Residence" (PlayerGPS.cs:1306-1309)
+and the mod prints it (.cs:719-728), so the port does now, whatever the verbs
+(`online/onlineHomes.js:"export const homeDoorName = (name, hasVerbs, type = null) =>"`), and a nameless building of no
+house type (a ship's deck) says its place. And a door of a NEIGHBOURING location (the Imperial City's next slice, a town
+across a pixel's edge) was named and discovered in the player's own town's book: the host's record now carries the
+door's own town (`scenes/townTalk.js:"const doorTownOf = (place, data) =>"`, from `scenes/world.js:"...townTalk.doorTownOf(dfLoc, d) };"`), and the plaque, the press
+and the activation read it - so the plaque names what the press enters. The record: `03-World/Arena-Provinces.md`
+IC-PROPS; pins `test/systems/icprops_doors.test.js`.
 
 ## CHARGEN-REFLEX — the Continue button was covered, not dead (2026-09-22)
 

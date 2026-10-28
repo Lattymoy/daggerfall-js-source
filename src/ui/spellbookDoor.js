@@ -118,14 +118,15 @@ function enhancedSpellbookOverlay(shared, onClose) {
   unregister = registerOverlay(close);
     // MENU1: the ONE lazy-chunk door (ui/enhanced/enhancedChunk.js) - retried
     // once, then SPOKEN rather than closed in silence.
+    // COVERED-KEYS: `owner` is the window the book's keys are gated on (ui/windowStack.js listenWindowKeys).
     mountEnhancedChunk({
       load: () => import('./enhanced/enhancedSpellbook.js'),
-      mount: ({ mountEnhancedSpellbook }) => { view = mountEnhancedSpellbook(host, { ...shared, onExit: close }); },
+      mount: ({ mountEnhancedSpellbook }) => { view = mountEnhancedSpellbook(host, { ...shared, onExit: close, owner: overlay }); },
       alive: () => !done, host, onDismiss: close, label: 'spellbook',
     });
   };
   mount();
-  return {
+  const overlay = {
     // THE HOST CONTRACT, in the hosts' own words - `input`, not
     // `onKey`. The hosts dereference these unguarded
     // (dungeonContext.js `activeOverlay.input(action, e)`,
@@ -148,4 +149,5 @@ function enhancedSpellbookOverlay(shared, onClose) {
     dispose: close,
     destroy: close,
   };
+  return overlay;
 }

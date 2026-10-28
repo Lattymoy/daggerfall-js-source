@@ -196,10 +196,12 @@ test('DECOR-OUTDOOR AUDIT 05b A4: a yard built again under its owner\'s open dec
   const tool = w.yards.tool();
   assert.equal(tool.openPanel(), true);
   const ids = () => w.yards.yards()[0].pool.list().map((p) => p.id);
-  // another writer takes p2 up; the town is asked again and answers so - held back while the owner writes
+  // another writer takes p2 up; the town is asked again and answers so - held back while the owner writes. PIN MOVED
+  // (YARD-CELL): a window over the street pauses the poll now, so the answer is one that lands while the decorator is up
+  // with no window over the street (a poll asked as the panel opened)
   w.town.pieces = [yardPiece()];
   w.clock.t += YARD_TOWN_TTL_MS + 1;
-  await w.run(2, true);
+  await w.run(2, false);
   assert.deepEqual(ids(), ['p1', 'p2'], 'held back while the decorator is up');
   // its pixel built again (a season's turn) under the open decorator
   w.built.set('0,0', w.pixel(SEASON.Winter));

@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-DISC28-UI2-no-release-listener",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "  globalThis.addEventListener('keyup', keyHandler, { capture: true });",
-    "new": "",
+    "old": "types: ['keydown', 'keyup']",
+    "new": "types: ['keydown']",
     "tests": [
       "test/ui/auditdisc28_ui.test.js"
     ]
@@ -92,7 +92,7 @@
   {
     "name": "AUDIT-DISC28-UI2-release-listener-outlives-the-screen",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "      if (keyHandler) globalThis.removeEventListener('keyup', keyHandler, { capture: true });",
+    "old": "      unlistenKeys?.();   // the press and the release both (AUDIT DISC28 UI-2)",
     "new": "",
     "tests": [
       "test/ui/auditdisc28_ui.test.js"

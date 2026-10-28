@@ -10,16 +10,17 @@
 //   FOG_RES canvas pixels a map pixel (the map's whole span of the zone, never more): the zone's mask feathered by a
 //   distance-to-edge falloff, times three octaves of value noise, in the parchment's own ash and dried-blood tones. The
 //   sheet draws it as one image under the view's transform, smoothed - nothing is computed per frame.
-//   THE RED LINE - the zone's edge (systems/wild/wildZone.js wildEdgeChains), a dark halo under a red stroke, and over it a
-//   brighter dashed line once the sheet is zoomed past its far band - the map's own pen, a warning's colour.
+//   THE RED LINE - the zone's edge (ui/wild/wildZoneMap.js zoneLine - ZONE-LINE: Cyrodiil's is the province's own line), a
+//   dark halo under a red stroke, and over it a brighter dashed line once the sheet is zoomed past its far band - the map's
+//   own pen, a warning's colour.
 //
 // And one mark the overlay breathes: MY REMAINS (net/wild/wildRemains.js) - a ring and its name where my things lie, while
 // they lie, pulsing as the gate's ring does.
 //
 // Pure canvas 2D over the view's own transform (ui/ink/inkMap.js toPaper); no game import beyond the zone's leaf.
 // ═══════════════════════════════════════════════════════════════════
-import { wildEdgeChains } from '../../systems/wild/wildZone.js';
-import { smoothContour } from './wildZoneMap.js';   // SMOOTHZONE: the red line is a contour, not a pixel's staircase
+import { maskWorld } from '../../systems/wild/wildZone.js';
+import { zoneLine, inkRes } from './wildZoneMap.js';   // SMOOTHZONE: the red line is a contour, not a cell's staircase - ZONE-LINE: a zone kept to the pixel its own line
 
 /** Canvas pixels a map pixel in the fog's own canvas - smooth at any zoom the sheet allows, ~1 MB for the zone. */
 export const FOG_RES = 6;
@@ -50,14 +51,15 @@ export function fogNoise(x, y) {
 }
 
 /**
- * THE FOG's pixels for a zone mask: `{ data: Uint8ClampedArray (RGBA), w, h, x0, y0 }` - the zone's box, FOG_RES canvas
- * pixels a map pixel, its alpha the feathered mask times the noise. Pure (no canvas), so the pins can read it.
+ * THE FOG's pixels for a zone mask: `{ data: Uint8ClampedArray (RGBA), w, h, x0, y0 }` - the zone's box (`x0`, `y0` its
+ * corner on the world), `res` canvas pixels a cell of the mask's grid (WW-C2: a map pixel's where the cell is one), its
+ * alpha the feathered mask times the noise. Pure (no canvas), so the pins can read it.
  */
-export function fogPixels(mask, res = FOG_RES) {
+export function fogPixels(mask, res = inkRes(mask, FOG_RES)) {
   if (!mask?.box) return null;
   const { x0, y0, x1, y1 } = mask.box;
   const mw = x1 - x0 + 1, mh = y1 - y0 + 1;
-  // the distance (in map pixels, a chessboard's) from each inside pixel to the nearest outside one, out to the feather
+  // the distance (in cells, a chessboard's) from each inside cell to the nearest outside one, out to the feather
   const reach = Math.ceil(FOG_FEATHER_PX) + 1;
   const depth = new Float32Array(mw * mh);
   const isIn = (x, y) => x >= 0 && y >= 0 && x < mask.width && y < mask.height && mask.inside[y * mask.width + x] === 1;
@@ -101,7 +103,8 @@ export function fogPixels(mask, res = FOG_RES) {
       data[o + 3] = Math.round(255 * Math.min(0.78, a));
     }
   }
-  return { data, w, h, x0, y0 };
+  const [wx, wy] = maskWorld(mask, x0, y0);
+  return { data, w, h, x0: wx, y0: wy, res };
 }
 
 const _cache = new WeakMap();   // mask -> { canvas, x0, y0, w, h, chains }
@@ -118,7 +121,8 @@ export function wildInk(mask, doc = globalThis.document) {
     const c = canvas.getContext('2d');
     if (c) c.putImageData(new ImageData(px.data, px.w, px.h), 0, 0);
   }
-  const ink = { canvas, x0: px?.x0 ?? 0, y0: px?.y0 ?? 0, w: (px?.w ?? 0) / FOG_RES, h: (px?.h ?? 0) / FOG_RES, chains: wildEdgeChains(mask).map((c) => smoothContour(c)) };
+  const cell = mask.cell ?? 1;   // WW-C2: the canvas laid on the world at the grid's scale
+  const ink = { canvas, x0: px?.x0 ?? 0, y0: px?.y0 ?? 0, w: ((px?.w ?? 0) / (px?.res ?? FOG_RES)) * cell, h: ((px?.h ?? 0) / (px?.res ?? FOG_RES)) * cell, chains: zoneLine(mask) };
   _cache.set(mask, ink);
   return ink;
 }

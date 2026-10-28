@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import worker from '../server-account/src/index.js';
 import { _resetKeyForTests } from '../server-account/src/signing.js';
 import { _resetPassKeyForTests } from '../server-account/src/sessionPass.js';
-import { _resetYardsKept } from '../server-account/src/decor.js';   // YARD-SHED: a stood service is a fresh isolate - no town's yards kept
+import { _resetYardCellsKept } from '../server-account/src/yardCells.js';   // YARD-SHED, YARD-CELL: a stood service is a fresh isolate - no yard cell kept
 import { _resetBusyShed } from '../server-account/src/service.js';   // BUSY-GATE: and nothing shed
 import { _resetWeeksKept } from '../server-account/src/weekKept.js';   // PRIMARY-FOLD: nor any week read settled
 import { forgetChapters } from '../server-account/src/npcHalls.js';   // AUDIT CHAP3 T4: nor any region's chapters - a test's first read is its own database's
@@ -95,7 +95,7 @@ const CRAFTED_ACTS = new Set(['/v1/market/list', '/v1/market/auction', '/v1/writ
 export async function standService(extra = {}) {
   _resetKeyForTests();
   _resetPassKeyForTests();   // SESSION-SIGN: the pass key drawn from this service's own key
-  _resetYardsKept();
+  _resetYardCellsKept();
   _resetBusyShed();
   forgetChapters();
   _resetWeeksKept();

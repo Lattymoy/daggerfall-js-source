@@ -199,7 +199,7 @@ test('PERF-EXT30: Dynamic Skies\' sheets at opacity 0 read nothing and hand on t
       assert.ok(s.Opacity > 0, `${n} ${k}: opacity ${s.Opacity}`);
     }
   }
-  assert.match(read('src/scenes/shared.js'), /if \(clouds && dynamicSky\) dynamicSky\.cloudsExternal = true;/, 'DS2: under the clouds, the default');
+  assert.match(read('src/scenes/shared.js'), /if \(dynamicSky\) dynamicSky\.cloudsExternal = !!cloudsShown;/, 'DS2: under the clouds, the default (CLOUD-COMPILE: once they stand)');
 });
 
 // ── PERF-EXT30: THE PORT'S DOME ───────────────────────────────────────────────────────────────────────────────────────

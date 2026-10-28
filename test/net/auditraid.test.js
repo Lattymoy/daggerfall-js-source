@@ -428,7 +428,7 @@ test('AUDIT RAID wiring by source: the relay keeps receipts at the hub and hands
   assert.match(idx, /if \(!here\) return;   \/\/ AUDIT RAID R1/);
   assert.match(idx, /if \(!\(await this\._raidMakeRoom\(now, acct\)\)\) return;/);
   assert.match(idx, /if \(!raidWordSane\(m\)\) \{ this\._junk\(ws\); return; \}/);
-  assert.match(idx, /if \(!raidWordFits\(m, sharedClassicMinutes\(now\)\)\) return;   \/\/ outside its raid's time: nothing read, kept or said\n(?:[^\n]*\n){0,8}?\s*const id = raidLedgerId\(m\);/);   // RAID-ROLL's reads of the day's roll sit between (test/systems/raidroll.test.js)
+  assert.match(idx, /if \(!raidWordFits\(m, sharedClassicMinutes\(now\)\)\) return;   \/\/ outside its raid's time: nothing read, kept or said\n(?:[^\n]*\n){0,10}?\s*const id = raidLedgerId\(m\);/);   // RAID-ROLL's reads of the day's roll sit between (test/systems/raidroll.test.js); PIN MOVED (WW6): and the word's lane, two lines of it said
   assert.match(idx, /await this\.state\.storage\.put\('raidcl', next\);\n\s*this\._raidCleans = next;/);
   assert.match(idx, /await this\._raidReceiptsKeep\(cl, body\?\.rc, now\);/);
   assert.match(idx, /if \(sub\) \{ try \{ await this\._raidReceiptsTo\(ws, sub, now\); \}/);

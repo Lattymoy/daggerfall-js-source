@@ -1,0 +1,353 @@
+[
+  {
+    "name": "GATE-ROADS-passage-uncarved",
+    "file": "src/world/road/gateRoads.js",
+    "old": "            for (const k of run) if (k !== i) passage.add(k);\n",
+    "new": "",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-a-house-crossed",
+    "file": "src/world/road/gateRoads.js",
+    "old": "passage.has(i) || blocked[i] === GATE_BLOCK.hard || wet(tilemap, tileData, i) ? Infinity",
+    "new": "passage.has(i) || wet(tilemap, tileData, i) ? Infinity",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-water-crossed",
+    "file": "src/world/road/gateRoads.js",
+    "old": "passage.has(i) || blocked[i] === GATE_BLOCK.hard || wet(tilemap, tileData, i) ? Infinity",
+    "new": "passage.has(i) || blocked[i] === GATE_BLOCK.hard ? Infinity",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-sea-corners-unread",
+    "file": "src/world/road/gateRoads.js",
+    "old": "  return !tileData[c] || !tileData[c + 1] || !tileData[c + TD] || !tileData[c + TD + 1];",
+    "new": "  return false;",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-paving-relaid",
+    "file": "src/world/road/gateRoads.js",
+    "old": "      if (paving(i)) continue;   // a road there already",
+    "new": "      if (false) continue;   // a road there already",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-paths-unmarked",
+    "file": "src/world/road/gateRoads.js",
+    "old": "      tilemap[i] = TILE.road; paths[i] = 1;",
+    "new": "      tilemap[i] = TILE.road;",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-reach-unread",
+    "file": "src/world/road/gateRoads.js",
+    "old": "      if (nc > GATE_ROAD.reach || nc >= best[j * 9 + d]) continue;",
+    "new": "      if (nc >= best[j * 9 + d]) continue;",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-pavings-cost",
+    "file": "src/world/road/gateRoads.js",
+    "old": "paving(i) ? GATE_ROAD.paved : blocked[i] === GATE_BLOCK.soft",
+    "new": "blocked[i] === GATE_BLOCK.soft",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-a-flats-cost",
+    "file": "src/world/road/gateRoads.js",
+    "old": "blocked[i] === GATE_BLOCK.soft ? GATE_ROAD.flat : 1);",
+    "new": "blocked[i] === GATE_BLOCK.soft ? 1 : 1);",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-turn-unread",
+    "file": "src/world/road/gateRoads.js",
+    "old": " + (dir !== 8 && dir !== d ? GATE_ROAD.turn : 0);",
+    "new": ";",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-a-corner-cut",
+    "file": "src/world/road/gateRoads.js",
+    "old": "      if (d >= 4 && !(open(nx + y * D) < Infinity && open(x + ny * D) < Infinity)) continue;   // no corner cut past a house\n",
+    "new": "",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-a-street-widened",
+    "file": "src/world/road/gateRoads.js",
+    "old": "      if (paving(out[k])) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-slide-unread",
+    "file": "src/world/townWalls.js",
+    "old": "  const pieces = roads.length ? wallPieces(pts, c, ways, { onLine: true }) : wallPieces(pts, c, gates);",
+    "new": "  const pieces = roads.length ? wallPieces(pts, c, roads, { onLine: true }) : wallPieces(pts, c, gates);",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-ways-width-unread",
+    "file": "src/world/townWalls.js",
+    "old": "    for (let j = -half; j <= half; j++) if (house(",
+    "new": "    for (let j = 0; j <= 0; j++) if (house(",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-pavings-run-unread",
+    "file": "src/world/townWalls.js",
+    "old": "    if (i >= 0 && streets[i] && ++paved >= need) return true;",
+    "new": "    if (i >= 0 && streets[i] && ++paved >= 1) return true;",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-slides-reach-unread",
+    "file": "src/world/townWalls.js",
+    "old": "    for (let s = 0; s <= GATE_WAY.reach && !way; s += 0.8)",
+    "new": "    for (let s = 0; s <= 10 * GATE_WAY.reach && !way; s += 0.8)",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-merge-dropped",
+    "file": "src/world/townWalls.js",
+    "old": "    if (!out.some((o) => Math.abs(((o.a - way.a + P / 2) % P + P) % P - P / 2) < GATE_ARMS_MERGE)) out.push(way);",
+    "new": "    out.push(way);",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-streets-row-unflipped",
+    "file": "src/world/townWalls.js",
+    "old": "ROAD_RECORDS.includes(gt[tx]?.[T - 1 - ty]?.textureRecord)",
+    "new": "ROAD_RECORDS.includes(gt[tx]?.[ty]?.textureRecord)",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-flats-a-house",
+    "file": "src/world/townWalls.js",
+    "old": "if (a[y * S + x] && a[y * S + x] !== 0xfb) out[(by * S + S - 1 - y) * W + bx * S + x] = 1;\n  }\n  return out;\n}\n\n/** Whether the way",
+    "new": "if (a[y * S + x]) out[(by * S + S - 1 - y) * W + bx * S + x] = 1;\n  }\n  return out;\n}\n\n/** Whether the way",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-turn-unread-gates",
+    "file": "src/world/townGates.js",
+    "old": "const f = ((s.yRotation ?? 0) * Math.PI) / 1024,",
+    "new": "const f = 0,",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-origin-unshifted",
+    "file": "src/world/townGates.js",
+    "old": "({ x: o.x + g.at[0] / TILE_M, y: o.y + g.at[1] / TILE_M,",
+    "new": "({ x: g.at[0] / TILE_M, y: g.at[1] / TILE_M,",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-houses-unmarked",
+    "file": "src/world/townGates.js",
+    "old": "    if (houses[i] || walls?.[i]) mark(",
+    "new": "    if (walls?.[i]) mark(",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-flats-hard",
+    "file": "src/world/townGates.js",
+    "old": "o.y + Math.floor(r[1] / TILE_M), GATE_BLOCK.soft);",
+    "new": "o.y + Math.floor(r[1] / TILE_M), GATE_BLOCK.hard);",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-wall-unread",
+    "file": "src/world/townGates.js",
+    "old": "  const at = wall ? wall.pieces.filter((p) => p.model === WALL_MODELS.gate).map(gateOpening) : blockGates(w, h, rmbAt);",
+    "new": "  const at = blockGates(w, h, rmbAt);",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-walls-cells-unmarked",
+    "file": "src/world/townGates.js",
+    "old": "walls = wall ? townWallCells(wall, w, h) : null;",
+    "new": "walls = null;",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-a-capital-laid",
+    "file": "src/world/townGates.js",
+    "old": "  if (!ed || dfLocation.capital) return null;",
+    "new": "  if (!ed) return null;",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-gates-never-handed",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "    if (locationRect) locationRect.gateRoads = townGateRoads(groundLocation, maps, blocks);   // GATE-ROADS: its gates for the kernel to lay their roads (world/townGates.js)\n",
+    "new": "",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-roads-never-laid",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "    if (hasLocation && locationRect?.gateRoads) layGateRoads(tilemap, paths, tileData, locationRect.gateRoads, locationRect.mask);   // FB1028: on its ground\n",
+    "new": "",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-openings-width-unread",
+    "file": "src/world/road/gateRoads.js",
+    "old": "T = GATE_ROAD.through, h = (g.half ?? 0) / 2;",
+    "new": "T = GATE_ROAD.through, h = 0;",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-water-walked",
+    "file": "src/world/road/gateRoads.js",
+    "old": "          if (i < 0 || wet(tilemap, tileData, i)) break;",
+    "new": "          if (i < 0) break;",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-opening-at-the-origin",
+    "file": "src/world/townWalls.js",
+    "old": "  const s = GATE_OPENING.along * (p.stretch ?? 1);",
+    "new": "  const s = 0;",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-lines-gate-unshifted",
+    "file": "src/world/townWalls.js",
+    "old": "lineHit(pts, g, -L / 2 + GATE_OPENING.along)",
+    "new": "lineHit(pts, g, -L / 2)",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-shift-the-wrong-way",
+    "file": "src/world/townWalls.js",
+    "old": "lineHit(pts, g, -L / 2 + GATE_OPENING.along)",
+    "new": "lineHit(pts, g, -L / 2 - GATE_OPENING.along)",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-street-test-off-the-chord",
+    "file": "src/world/townWalls.js",
+    "old": "const c = gateAt(a0 + sg * s);",
+    "new": "const c = at(a0 + sg * s);",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-fabric-off-the-origin",
+    "file": "src/world/townWalls.js",
+    "old": ".map((p) => Object.freeze(gateOpening(p))) : null;",
+    "new": ".map((p) => Object.freeze({ at: p.at, out: p.out })) : null;",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-models-own-turn-unread",
+    "file": "src/world/townGates.js",
+    "old": "F = f + ((o.yRotation ?? 0) * Math.PI) / 1024;",
+    "new": "F = f;",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-kept-rings-opening-unread",
+    "file": "src/world/townGates.js",
+    "old": "        out.push(gateOpening({ at: [sx + lx * cos - lz * sin, sz + lx * sin + lz * cos], out: [-Math.sin(F), Math.cos(F)] }));",
+    "new": "        out.push({ at: [sx + lx * cos - lz * sin, sz + lx * sin + lz * cos], out: [-Math.sin(F), Math.cos(F)] });",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-walls-openings-unread",
+    "file": "src/world/townGates.js",
+    "old": "wall.pieces.filter((p) => p.model === WALL_MODELS.gate).map(gateOpening) : blockGates(w, h, rmbAt);",
+    "new": "wall.pieces.filter((p) => p.model === WALL_MODELS.gate) : blockGates(w, h, rmbAt);",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  },
+  {
+    "name": "GATE-ROADS-the-half-unhanded",
+    "file": "src/world/townGates.js",
+    "old": "half: GATE_OPENING.half / TILE_M }));",
+    "new": "half: 0 }));",
+    "tests": [
+      "test/world/gateroads.test.js"
+    ]
+  }
+]

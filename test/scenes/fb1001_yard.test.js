@@ -69,7 +69,7 @@ function yardRig(svc, town, { who, charId, key, t = [-300, 0, -350], gold = 5000
   const gate = { hold: false, release: null };
   const wire = [];
   const door = {
-    yards: async (m) => { const r = await api.yards(m); wire.push('yards'); if (gate.hold) await new Promise((res) => { gate.release = res; }); return r; },
+    yardCells: async (m, c) => { const r = await api.yardCells(m, c); wire.push('yards'); if (gate.hold) await new Promise((res) => { gate.release = res; }); return r; },
     place: async (a) => { wire.push('place'); return api.place(a); },
     move: async (a) => { wire.push('move'); return api.move(a); },
     remove: async (a) => { wire.push('remove'); return api.remove(a); },

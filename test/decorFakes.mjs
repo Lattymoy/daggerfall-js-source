@@ -285,6 +285,27 @@ export const WOODS = getWorldClimateSettings(231).climateType;
 export const SWAPPED = [...Array(500).keys()].find((a) => applyClimate(a, 0, DESERT, SEASON.Summer) !== a && applyClimate(a, 0, DESERT, SEASON.Summer) !== applyClimate(a, 0, WOODS, SEASON.Summer));
 export const yardPiece = (over = {}) => ({ id: 'p1', model: null, flat: [504, 12], pos: [8, 0, 2], rot: [0, 0, 0], scale: 2, light: null, storage: false, paid: 120, ...over });
 
+/**
+ * YARD-CELL: A FAKE SERVICE'S CELL ROUTE over a whole-town answer `yards(mapId)` (the shape the old route answered) - the
+ * town read again at every ask, each asked cell answered at a version past any the page holds, as the old route sent
+ * the whole town each time. A refusal passes through as it came.
+ */
+export function townCellsApi(yards) {
+  let ver = 0;
+  return async (mapId, cells) => {
+    const answer = await yards(mapId);
+    if (!answer?.ok) return answer;
+    ver++;
+    const byCell = new Map();
+    for (const yard of answer.data?.yards ?? []) {
+      const cell = Math.floor(yard.buildingKey / 256);
+      if (!byCell.has(cell)) byCell.set(cell, []);
+      byCell.get(cell).push(yard);
+    }
+    return { ok: true, data: { mapId, cells: cells.map(([cell]) => ({ cell, ver, yards: byCell.get(cell) ?? [] })), more: [] } };
+  };
+}
+
 /** The real yard host over a town pixel built in `season`, its town of `climate`, a home (300) holding `pieces` - `own`
  *  the player's, who stands on its lot - with the panel's picture door `iconUrl`. DECOR-LPT: `trees` the world's Low Poly
  *  Trees (`{ door, sway }`, scenes/yardNature.js), `sizes` a record's picture over its archive's (`'504.20': [w, h]`);
@@ -314,7 +335,7 @@ export function yardWorld({ pieces, season = SEASON.Summer, climate = WOODS, sea
   const built = new Map([['0,0', pixel(season)]]);
   const sizes = { 504: [40, 120], 505: [44, 130], 201: [30, 20], ...own_sizes };
   const yards = createHomeYards({
-    api: { yards: async () => ({ ok: true, data: { yards: [{ buildingKey: 300, pieces: town.pieces }, ...Object.entries(neighbours).map(([k, n]) => ({ buildingKey: Number(k), pieces: n.pieces }))] } }) },
+    api: { yardCells: townCellsApi(async () => ({ ok: true, data: { yards: [{ buildingKey: 300, pieces: town.pieces }, ...Object.entries(neighbours).map(([k, n]) => ({ buildingKey: Number(k), pieces: n.pieces }))] } })) },
     homes: { homeAt: (m, k) => (k === 300 ? { owner: 'Tomas', own, look: null, ...home } : neighbours[k] ? { owner: 'Ilsa', own: false, look: null } : null) },
     built: () => built, translation: () => shift, feet: () => (own ? [18, 0, 10] : [100, 0, 100]), outside: () => true, eye: () => (own ? [18, 1.6, 10] : [100, 1.6, 100]),
     collider: () => ({ addMesh() {}, removeBucket() {} }),

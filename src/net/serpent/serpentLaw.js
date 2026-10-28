@@ -1,7 +1,7 @@
 // @ts-check
 // SERPENT1 (2026-10-04, Mac: "A new world event that requires players with a ship to meet up and take on a large scale
 // sea serpent in the ocean", then "You make the decisions and online only. I trust your instinct. Be as detailed as
-// possible and make this something truly special"): THE SERPENT'S LAW - when Sethrakul rises, which of the Bay's lanes
+// possible and make this something truly special"): THE SERPENT'S LAW - when Sethrakul rises, which of the world's lanes
 // it rises on, and the words every client says of it. Design: bible/11-Multiplayer/Sea-Serpent.md.
 //
 // A FUNCTION OF THE CLOCK, AND NOTHING ELSE - the gate's law (net/gate/gateLaw.js), on the same event clock (WORLD5's
@@ -10,10 +10,12 @@
 // at 05:00, the storm closing its waters at 08:00 and its sounding - gone into the deep - at 10:00. Every client and
 // the relay compute the same instants with nothing sent.
 //
-// WHERE IS THE CLIENT'S (systems/serpent/serpentSite.js): the lane is rolled here over the Bay's packet lanes (systems/naval/
-// seaLanes.js laneNetwork - the same list on every client, made from the map files every client holds), the spot along
-// its way by the rolls below. The relay never reads a map file; the fight lives in the cell room the site stands in
-// (net/serpent/serpentBrain.js, server/src/index.js), whichever socket of a player's - its own cell's or a halo's - reaches it.
+// WHERE IS THE CLIENT'S (systems/serpent/serpentSite.js): the lane is rolled here over the world's packet lanes (WW7-12,
+// bible/03-World/World-Wide.md: scenes/naval/worldLanes.js `all` - the Bay's, the ones past it and across its edge, the
+// same list on every game that stands the land past the Bay; a game that does not takes the hub's word of the site the
+// accounts agree on, net/serpent/serpentHerald.js serpentAtWord), the spot along its way by the rolls below. The relay
+// never reads a map file; the fight lives in the cell room the site stands in (net/serpent/serpentBrain.js,
+// server/src/index.js), whichever socket of a player's - its own cell's or a halo's - reaches it.
 //
 // PURE, and the relay's too: this file imports wire.js alone (the clock) and the gate's hash (gateLaw.js, itself the
 // relay's) - nothing here reads a map file.

@@ -9,9 +9,9 @@
   },
   {
    "file": "src/net/gate/gateLaw.js",
-   "has": "export const gameDayAt = (nowMs) => Math.floor(sharedClassicMinutes(nowMs) / GATE_DAY_MINUTES);",
+   "has": "export const gameDayAt = (nowMs, lane = 0) => Math.floor((sharedClassicMinutes(nowMs) - lane * GATE_LANE_STAGGER) / GATE_DAY_MINUTES);",
    "clock": "event",
-   "why": "the gate's day - its number, its room, its marks"
+   "why": "the gate's day - its number, its room, its marks; WW2: a lane's, its stagger behind the Bay's (gateAt and the herald read it)"
   },
   {
    "file": "src/net/gate/gateLaw.js",
@@ -809,6 +809,12 @@
    "has": "Float32Array(roomAmbient(isNight(skyMinutes() %",
    "clock": "sky",
    "why": "the interior's night light (RPT1026-WORLD DARK-ROOM: an unlit room keeps it as its ambient)"
+  },
+  {
+   "file": "src/scenes/townProbes.js",
+   "has": "const at = partyAt(p.trip, skyMinutes());",
+   "clock": "sky",
+   "why": "WW7-7's probe door: the road's parties where their trips have them at the sky's minute, as the roads layer places them"
   },
   {
    "file": "src/scenes/worldModes.js",

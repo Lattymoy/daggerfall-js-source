@@ -1030,7 +1030,7 @@ export function labWindSlider(w) {
   return Math.min(200, mag * 6500);
 }
 /** the lab's weather dim table, for uDim */
-export const LAB_DIM = Object.freeze({ sunny: 1.00, cloudy: 0.90, overcast: 0.72, fog: 0.66, rain: 0.60, thunder: 0.46, snow: 0.80, sandstorm: 0.55 });   // WEATHER2d: the port's own row, the lab's table untouched
+export const LAB_DIM = Object.freeze({ sunny: 1.00, cloudy: 0.90, overcast: 0.72, fog: 0.66, rain: 0.60, thunder: 0.46, snow: 0.80, sandstorm: 0.55, ashfall: 0.58 });   // WEATHER2d: the port's own row, the lab's table untouched; ASHFALL1: the pall's, a shade under a rain's
 
 /**
  * The lab's scatter, verbatim in its law, around `centre` (world xz):
@@ -1966,6 +1966,11 @@ export function floorRecordsOf(layers, { roadRecords = new Set([46, 47, 55]) } =
   return out;
 }
 
+/** BOOT-COMPILE: the pass's one program for `stages` (the game's by default), as its constructor builds it: what the
+ *  boot starts ahead of the build (render/bootPrograms.js).
+ *  @param {{ vs: string, fs: string }} [stages] @returns {ReadonlyArray<readonly [string, string]>} */
+export const labGrassPrograms = (stages = grassStagesOf(MEADOW_ART)) => [[LAB_GRASS_HEAD + GAME_GRASS_FIELD + stages.vs, LAB_GRASS_HEAD + stages.fs]];
+
 /**
  * GR1: the lab's grass pass, as a renderer of its own beside the world
  * renderer - the same shape as PrecipitationRenderer. Owns its program,
@@ -1988,7 +1993,7 @@ export class LabGrassRenderer {
    *  @param {{ art?: GrassArt, stages?: { vs: string, fs: string }, tuft?: { w: number, h: number } | null, provoke?: boolean }} [o] */
   constructor(gl, { art = MEADOW_ART, stages = grassStagesOf(art), tuft = null, provoke = true } = {}) {   // BANTHA2: `art` the sprite set the meadow wears (MEADOW_ART; the jungle floor's)   // GRASS-PX4: `tuft` ({ w, h }) lays the sheet at another size - the probe photographs the old 16x32 beside the shipped 8x16 through it; GRASS-ON: `provoke` false keeps GL's convention (below)
     this.gl = gl;
-    const prog = buildProgram(gl, LAB_GRASS_HEAD + GAME_GRASS_FIELD + stages.vs, LAB_GRASS_HEAD + stages.fs);   // GRASS-PX: the lab's text under the declared edits
+    const prog = buildProgram(gl, ...labGrassPrograms(stages)[0]);   // GRASS-PX: the lab's text under the declared edits
     this.program = prog;
     this.u = {};
     for (const n of ['uVP', 'uTime', 'uWind', 'uRange', 'uEye', 'uSunDir', 'uWindDir', 'uSnowFull', 'uSlotN', 'uCellFrame', 'uBladeScale', 'uCellSize', 'uGField', 'uGFieldOrigin', 'uGFieldM', 'uSnowGlobal', 'uWindV', 'uAmb', 'uSunCol', 'uDim', 'uSunScale', 'uMoonDir', 'uMoonScale', 'uMoonCol',

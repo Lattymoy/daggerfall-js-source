@@ -1,0 +1,589 @@
+[
+  {
+    "name": "TESA7-ordinal-west-open",
+    "file": "src/world/tamrielCountry.js",
+    "old": "if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 ||",
+    "new": "if (!Number.isInteger(x) || !Number.isInteger(y) || y < 0 ||",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-ordinal-north-open",
+    "file": "src/world/tamrielCountry.js",
+    "old": "|| x < 0 || y < 0 || x >= 1 << COUNTRY_GRID.wBits",
+    "new": "|| x < 0 || x >= 1 << COUNTRY_GRID.wBits",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-ordinal-east-open",
+    "file": "src/world/tamrielCountry.js",
+    "old": " || x >= 1 << COUNTRY_GRID.wBits || y >= COUNTRY_GRID.h) return -1;",
+    "new": " || y >= COUNTRY_GRID.h) return -1;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-ordinal-south-open",
+    "file": "src/world/tamrielCountry.js",
+    "old": " || x >= 1 << COUNTRY_GRID.wBits || y >= COUNTRY_GRID.h) return -1;",
+    "new": " || x >= 1 << COUNTRY_GRID.wBits) return -1;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-ordinal-point",
+    "file": "src/world/tamrielCountry.js",
+    "old": "if (!Number.isInteger(x) || !Number.isInteger(y) ||",
+    "new": "if (",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-ordinal-rows-overlap",
+    "file": "src/world/tamrielCountry.js",
+    "old": "  return (y << COUNTRY_GRID.wBits) | x;",
+    "new": "  return (y << 12) + x;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-id-low-bit-off",
+    "file": "src/world/tamrielCountry.js",
+    "old": "(((COUNTRY_LANE + (n >>> 19)) << 20) | 0x80000 | (n & 0x7ffff)) >>> 0;",
+    "new": "(((COUNTRY_LANE + (n >>> 19)) << 20) | (n & 0x7ffff)) >>> 0;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-id-one-lane",
+    "file": "src/world/tamrielCountry.js",
+    "old": "(((COUNTRY_LANE + (n >>> 19)) << 20) | 0x80000 | (n & 0x7ffff)) >>> 0;",
+    "new": "((COUNTRY_LANE << 20) | 0x80000 | (n & 0x7ffff)) >>> 0;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-is-id-lane-floor",
+    "file": "src/world/tamrielCountry.js",
+    "old": "return lane >= COUNTRY_LANE && lane <= CAPITAL_LANE && (v & 0x80000) !== 0;",
+    "new": "return lane <= CAPITAL_LANE && (v & 0x80000) !== 0;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-is-id-lane-ceiling",
+    "file": "src/world/tamrielCountry.js",
+    "old": "return lane >= COUNTRY_LANE && lane <= CAPITAL_LANE && (v & 0x80000) !== 0;",
+    "new": "return lane >= COUNTRY_LANE && (v & 0x80000) !== 0;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-is-id-low-bit",
+    "file": "src/world/tamrielCountry.js",
+    "old": "return lane >= COUNTRY_LANE && lane <= CAPITAL_LANE && (v & 0x80000) !== 0;",
+    "new": "return lane >= COUNTRY_LANE && lane <= CAPITAL_LANE;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-index-shared",
+    "file": "src/world/tamrielCountry.js",
+    "old": "export const countryLocationIndex = (n) => -(COUNTRY_INDEX_BASE + n);",
+    "new": "export const countryLocationIndex = (n) => -(1000000 + n);",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-template-dungeons",
+    "file": "src/world/tamrielCountry.js",
+    "old": "l?.exterior?.exteriorData && !l.hasDungeon && !l.spawned",
+    "new": "l?.exterior?.exteriorData && !l.spawned",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-template-no-exterior",
+    "file": "src/world/tamrielCountry.js",
+    "old": "(l) => l?.exterior?.exteriorData && !l.hasDungeon",
+    "new": "(l) => l && !l.hasDungeon",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-template-spawn",
+    "file": "src/world/tamrielCountry.js",
+    "old": "!l.hasDungeon && !l.spawned && !l.ether",
+    "new": "!l.hasDungeon && !l.ether",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-template-isle",
+    "file": "src/world/tamrielCountry.js",
+    "old": "!l.spawned && !l.ether && !l.arena",
+    "new": "!l.spawned && !l.arena",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-template-arena",
+    "file": "src/world/tamrielCountry.js",
+    "old": "!l.ether && !l.arena && !l.country",
+    "new": "!l.ether && !l.country",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-template-own",
+    "file": "src/world/tamrielCountry.js",
+    "old": "!l.arena && !l.country && !isMain(idOf(l))",
+    "new": "!l.arena && !isMain(idOf(l))",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-template-main",
+    "file": "src/world/tamrielCountry.js",
+    "old": "!l.country && !isMain(idOf(l)));",
+    "new": "!l.country);",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-template-unordered",
+    "file": "src/world/tamrielCountry.js",
+    "old": ".sort((a, b) => idOf(a) - idOf(b)));\n  return out;\n}\n\n/**\n * THE BAY'S COUNT",
+    "new": ");\n  return out;\n}\n\n/**\n * THE BAY'S COUNT",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-template-kind",
+    "file": "src/world/tamrielCountry.js",
+    "old": "list.filter((l) => l.mapTableData?.locationType === type)",
+    "new": "list.filter((l) => l.mapTableData?.locationType !== LOCATION_TYPES.TownCity)",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-count-climate-origin",
+    "file": "src/world/tamrielCountry.js",
+    "old": "      const c = climateAt(p.x, p.y);",
+    "new": "      const c = climateAt(0, 0);",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-count-once",
+    "file": "src/world/tamrielCountry.js",
+    "old": "      row.set(type, (row.get(type) ?? 0) + 1);",
+    "new": "      row.set(type, 1);",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-land-water",
+    "file": "src/world/tamrielCountry.js",
+    "old": "      if (!isWater(x, y, c)) out.set(c, (out.get(c) ?? 0) + 1);",
+    "new": "      out.set(c, (out.get(c) ?? 0) + 1);",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-land-half",
+    "file": "src/world/tamrielCountry.js",
+    "old": "  for (let y = 0; y < BAY_H; y++) {",
+    "new": "  for (let y = 0; y < BAY_H / 2; y++) {",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-rate-not-cumulative",
+    "file": "src/world/tamrielCountry.js",
+    "old": "      ceiling += k / n;",
+    "new": "      ceiling = k / n;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-rate-zero-kind",
+    "file": "src/world/tamrielCountry.js",
+    "old": "      if (!k) continue;\n      ceiling += k / n;",
+    "new": "      ceiling += k / n;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-rate-no-land",
+    "file": "src/world/tamrielCountry.js",
+    "old": "    if (!n) continue;\n    let ceiling = 0;",
+    "new": "    let ceiling = 0;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-rate-empty-climate",
+    "file": "src/world/tamrielCountry.js",
+    "old": "    if (steps.length) out.set(c, steps);",
+    "new": "    out.set(c, steps);",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-roll-shared",
+    "file": "src/world/tamrielCountry.js",
+    "old": "export const countryRoll = (px, py) => hash32(COUNTRY_SALT, px, py, 1) / 4294967296;",
+    "new": "export const countryRoll = (px, py) => hash32(COUNTRY_SALT, px, py, 2) / 4294967296;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-pick-at-ceiling",
+    "file": "src/world/tamrielCountry.js",
+    "old": "  const step = steps.find(([, ceiling]) => r < ceiling);",
+    "new": "  const step = steps.find(([, ceiling]) => r <= ceiling + 0.005);",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-pick-template-roll",
+    "file": "src/world/tamrielCountry.js",
+    "old": "  return { type: step[0], template: list[hash32(COUNTRY_SALT, px, py, 2) % list.length] };",
+    "new": "  return { type: step[0], template: list[0] };",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-pick-empty-kind",
+    "file": "src/world/tamrielCountry.js",
+    "old": "  if (!list?.length) return null;\n  return { type: step[0]",
+    "new": "  return { type: step[0]",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-name-state-kept",
+    "file": "src/world/tamrielCountry.js",
+    "old": "  } finally {\n    setSeed(saved);\n  }",
+    "new": "  } finally {\n    void saved;\n  }",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-name-unseeded",
+    "file": "src/world/tamrielCountry.js",
+    "old": "    srand(seed >>> 0);\n    return withBaseText(() => withGameNameBanks(() => draw(frames)",
+    "new": "    return withBaseText(() => withGameNameBanks(() => draw(frames)",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-name-nord-son",
+    "file": "src/world/tamrielCountry.js",
+    "old": "return bank === BANK_TYPES.Nord && s.endsWith('sen') && s.length > 3 ? s.slice(0, -3) : s;",
+    "new": "return s;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-name-redguard-empty",
+    "file": "src/world/tamrielCountry.js",
+    "old": "  if (!s) return firstName(bank, gender());",
+    "new": "  if (!s) return s;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-name-inn-kind",
+    "file": "src/world/tamrielCountry.js",
+    "old": "        case '%v': return `${draw(tavernsA())} ${draw(tavernsB())} ${draw(TAVERN_KINDS)}`;",
+    "new": "        case '%v': return `${draw(tavernsA())} ${draw(tavernsB())}`;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-name-temple-god",
+    "file": "src/world/tamrielCountry.js",
+    "old": "        default: return draw(TEMPLE_GODS);",
+    "new": "        default: return 'Vivec';",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-name-farm-frames",
+    "file": "src/world/tamrielCountry.js",
+    "old": "  [LOCATION_TYPES.HomeFarms]: Object.freeze(['The %s Farmstead', \"Old %f's Farm\", '%s Orchard', '%s Grange']),",
+    "new": "  [LOCATION_TYPES.HomeFarms]: Object.freeze(['The %s Farmstead', \"Old %f's Farm\", '%s Orchard']),",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-name-city-framed",
+    "file": "src/world/tamrielCountry.js",
+    "old": "  if (!frames) return '';",
+    "new": "  if (!frames) return 'Town';",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-ground-bay-key",
+    "file": "src/world/tamrielCountry.js",
+    "old": "    const key = `${px},${py}`;\n    let d = dry.get(key);",
+    "new": "    const key = py * 1000 + px;\n    let d = dry.get(key);",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-ground-not-kept",
+    "file": "src/world/tamrielCountry.js",
+    "old": "    if (d === undefined) dry.set(key, d = plateauDry(woods, px, py));",
+    "new": "    d = plateauDry(woods, px, py);",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-clone-port",
+    "file": "src/world/tamrielCountry.js",
+    "old": "exteriorData: { ...template.exterior?.exteriorData, locationId: mapId, mapId, portTownAndUnknown: 0 },",
+    "new": "exteriorData: { ...template.exterior?.exteriorData, locationId: mapId, mapId },",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-clone-record-id",
+    "file": "src/world/tamrielCountry.js",
+    "old": "recordElement: { ...template.exterior.recordElement, header: { ...template.exterior.recordElement.header, locationId: mapId } } } : {}),\n    },\n    country:",
+    "new": "recordElement: template.exterior.recordElement } : {}),\n    },\n    country:",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-clone-index",
+    "file": "src/world/tamrielCountry.js",
+    "old": "    locationIndex: countryLocationIndex(n),\n    mapTableData:",
+    "new": "    mapTableData:",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-clone-ll",
+    "file": "src/world/tamrielCountry.js",
+    "old": "    mapTableData: { ...template.mapTableData, mapId, longitude: ll.x, latitude: ll.y },\n    exterior: {\n      ...template.exterior,\n      exteriorData: { ...template.exterior?.exteriorData, locationId: mapId, mapId, portTownAndUnknown: 0 },",
+    "new": "    mapTableData: { ...template.mapTableData, mapId },\n    exterior: {\n      ...template.exterior,\n      exteriorData: { ...template.exterior?.exteriorData, locationId: mapId, mapId, portTownAndUnknown: 0 },",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-clone-region",
+    "file": "src/world/tamrielCountry.js",
+    "old": "    regionIndex: where.regionIndex ?? template.regionIndex,\n    regionName: where.regionName ?? template.regionName,\n    politic: where.politic ?? template.politic,\n    climate: where.climate ?? template.climate,\n    locationIndex: countryLocationIndex(n),",
+    "new": "    locationIndex: countryLocationIndex(n),",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-clone-template-id",
+    "file": "src/world/tamrielCountry.js",
+    "old": "type: place.type, template: idOf(template) }),",
+    "new": "type: place.type }),",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-clone-off-grid",
+    "file": "src/world/tamrielCountry.js",
+    "old": "  const n = countryOrdinal(place.px, place.py);\n  if (n < 0) return null;",
+    "new": "  const n = Math.max(0, countryOrdinal(place.px, place.py));",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-door-shut",
+    "file": "src/scenes/shared.js",
+    "old": "  return pageParam('country', search) !== 'off' || isOnlinePage(search);",
+    "new": "  return true;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-host-door",
+    "file": "src/scenes/world.js",
+    "old": "  const _countryTemplates = tamrielLand && countrysideOn() ? countryTemplates(",
+    "new": "  const _countryTemplates = tamrielLand ? countryTemplates(",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-host-arena-last",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "|| host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
+    "new": "|| host.capitalLocationAt(px, py) || host.countryLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ],
+    "note": "SPAWN-WORLD re-aimed by content: the build past the Bay ends in the spawner (spawnPastBayAt)."
+  },
+  {
+    "name": "TESA7-host-no-country",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "|| host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
+    "new": "|| host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ],
+    "note": "SPAWN-WORLD re-aimed by content: the build past the Bay ends in the spawner (spawnPastBayAt)."
+  },
+  {
+    "name": "TESA7-host-water",
+    "file": "src/world/tamrielCountry.js",
+    "old": "return pick && heightAt(px, py) > WATER_BYTE && ground(px, py) ? pick : null;",
+    "new": "return pick && ground(px, py) ? pick : null;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-host-shore",
+    "file": "src/world/tamrielCountry.js",
+    "old": "return pick && heightAt(px, py) > WATER_BYTE && ground(px, py) ? pick : null;",
+    "new": "return pick && heightAt(px, py) > WATER_BYTE ? pick : null;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-host-bank-clamp",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "countryName(pick.type, provinceNameBank(provinceKeyBeyondBay(px, py)) ?? getNameBankOfRegion(regionIndex), countryNameSeed(px, py))",
+    "new": "countryName(pick.type, getNameBankOfRegion(regionIndex), countryNameSeed(px, py))",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-host-stale-kept",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "      if (at && had.country.type === at.pick.type && had.country.template === at.pick.template.mapTableData?.mapId && had.name === at.name) return had;",
+    "new": "      if (had) return had;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-host-kind-kept",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "      if (at && had.country.type === at.pick.type && had.country.template === at.pick.template.mapTableData?.mapId && had.name === at.name) return had;",
+    "new": "      if (at) return had;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-host-not-deleted",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "      host._locIndexGen += 1;\n      locationIndex.delete(key);\n    }\n    if (!at) return null;\n    const { pick, regionIndex, name } = at;",
+    "new": "    }\n    if (!at) return null;\n    const { pick, regionIndex, name } = at;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-host-not-indexed",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    const loc = outlineTownLocation(made, blockOf, { round: imperialOutskirts(px, py) });   // TOWN-SHAPES TS3; TS5: the Imperial City's outskirts round\n    host._locIndexGen += 1;\n    locationIndex.set(key, loc);",
+    "new": "    const loc = outlineTownLocation(made, blockOf, { round: imperialOutskirts(px, py) });   // TOWN-SHAPES TS3; TS5: the Imperial City's outskirts round\n    host._locIndexGen += 1;",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-host-politic",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "synthesizeCountryLocation(pick.template, { px, py, type: pick.type, name }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex,",
+    "new": "synthesizeCountryLocation(pick.template, { px, py, type: pick.type, name }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: regionIndex,",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-host-rates-dry",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "(x, y, c) => isWaterPixel(c, host.woods.getHeightMapValue(x, y))));",
+    "new": "() => false));",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-modes-deed-sold",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (isEtherPlaceId(dir.mapId)) return [];",
+    "new": "if (isEtherPlaceId(dir.mapId) || isCountryPlaceId(dir.mapId)) return [];",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  },
+  {
+    "name": "TESA7-modes-deed-owned",
+    "file": "src/scenes/worldModes.js",
+    "old": "const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && isHouseOwned(",
+    "new": "const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && !isCountryPlaceId(homeTownOf(b)) && isHouseOwned(",
+    "tests": [
+      "test/tesa7_country.test.js"
+    ]
+  }
+]

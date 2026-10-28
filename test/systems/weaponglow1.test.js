@@ -690,7 +690,7 @@ test('WEAPON-GLOW1: the Morrowind shaders - the body\'s own vertex shader, insta
   // AUDIT WEAPON-GLOW MW-6 / SPR-6: both glows' programs are warmed at idle, before the first glowing weapon
   const { r } = loggingRenderer();
   const steps = r.lazyWarmSteps();
-  for (const s of steps.slice(-2)) s();
+  for (const s of steps.slice(-2)) s.run();
   assert.ok(r.weaponGlowMeshProgram && r.weaponGlowQuadProgram && r.weaponGlowFieldProgram);
 });
 

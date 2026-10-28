@@ -280,7 +280,7 @@ test('PACK-SPREAD (mob 2026-10-25: "evenly swap them between all player in a cit
   raidRelayWord({ k: 'sev', sev: { k: 'ev', l: [{ ...EV, n: 100 }] } }, 'social');
   for (let i = 0; i < 200 && solo.log.raiders.length < 10; i++) { frame(0.05); await tick(); }
   assert.ok(solo.log.raiders.every((f) => f.o?.at || f.o?.near == null), 'my own feet');
-  assert.ok(rd('src/scenes/world.js').includes('feet: at?.at ?? at?.near ?? enchantFeet()'), 'the host stands a leader around the player it was given');
+  assert.ok(rd('src/scenes/raidHost.js').includes('feet: at?.at ?? at?.near ?? enchantFeet()'), 'the host stands a leader around the player it was given');   // PIN MOVED (WW6): the raids' host seams moved verbatim out of bootWorld to scenes/raidHost.js (HOST-SPLIT)
 });
 
 test('PACK-SCALE (mob 2026-10-25: "they arnt spawn ing quick enough", card "Scale with players in town"): one player as ever; each more five more standing to forty, a quarter quicker to twice; the step stands to the scaled cap', async () => {
@@ -313,7 +313,7 @@ test('BOSS-SPOT (mob 2026-10-25: "spawn it on the highest lvl player", "or large
   const src = rd('src/systems/raidingParties.js');
   assert.equal(src.split("spawn(raid, 'boss', raid.staff.b, staffBossPlace(raid)); return 'boss'; }").length - 1, 2, 'the meter\'s boss and a lost one both');
   assert.match(src, /return at && at\[0\] !== me \? \{ near: at\[1\] \} : undefined;/);
-  assert.ok(rd('src/scenes/world.js').includes("peerFeetInTown: () => [[online?.id ?? '', player.feetAt(), playerEntity.level ?? 1], ...(peersNear() ?? [])"), 'me first, with my level');
+  assert.ok(rd('src/scenes/raidHost.js').includes("peerFeetInTown: () => [[host.online?.id ?? '', player.feetAt(), playerEntity.level ?? 1], ...(host.peersNear() ?? [])"), 'me first, with my level');   // PIN MOVED (WW6): in scenes/raidHost.js, the host's live names as `host.<name>`
 });
 
 test('STAFF-EVENT PACKS: monsters stood in packs of 3-5 of any of the kinds picked, each led from anywhere around me, its pack around its leader, to the 25 cap in 7-15 s (PACK-FAST: was 20-45)', async () => {
@@ -457,7 +457,7 @@ test('STAFF-EVENT: the client\'s word and the relay\'s frame - a staff word pars
   assert.match(online, /m\.t === 'sev'/);
   assert.match(online, /relaySupportsStaffEvents/);
   assert.match(online, /r\.k === 'st' \|\| r\.k === 'bd' \|\| r\.k === 'rc' \? isCellRoom\(room\)/, 'THE REWARD: the board and my receipt from the place\'s cell alone');
-  assert.match(rd('src/scenes/world.js'), /onRaidReceipt: \(r, c, held\) => \{ \(c\?\.v \? grantStaffSpoils\(raidSpoils, spoilsLock, c, /, 'THE REWARD: an event\'s receipt rolls its spoils into the pack');   // PIN MOVED (AUDIT WORLD-EVENTS L3-14): a raid's receipt carries whether its town was held
+  assert.match(rd('src/scenes/raidHost.js'), /onRaidReceipt: \(r, c, held\) => \{ \(c\?\.v \? grantStaffSpoils\(host\.raidSpoils, spoilsLock, c, /, 'THE REWARD: an event\'s receipt rolls its spoils into the pack');   // PIN MOVED (WW6): in scenes/raidHost.js (HOST-SPLIT)   // PIN MOVED (AUDIT WORLD-EVENTS L3-14): a raid's receipt carries whether its town was held
   assert.ok(validStaffEvent(EV));
   // mob 2026-10-24: a city said as a city, anything else as an area
   assert.equal(staffAttackLine({ locationIndex: -1, locationName: 'Road', regionIndex: 3, staff: { b: 7 } }), 'The area of Road is under attack!');
@@ -494,7 +494,8 @@ test('PACK-EVERY (mob 2026-10-26: "make sure we spawn a pack on every player in 
   assert.equal(peerInEventPlace([10, 0, 10], null, world, me), true, 'an area: my pixel');
   assert.equal(peerInEventPlace([10 + 1e6, 0, 10], null, world, me), false, 'another pixel');
   assert.equal(peerInEventPlace(null, null, world, me), false);
-  assert.ok(rd('src/scenes/world.js').includes('.filter((p) => raidPeerInPlace(p.feet, _musicLoc ? _foeInTownRect : null, state, playerTravelPixel())).map('), 'the host asks it');
+  // PIN MOVED (the fifth merge of main into #1184): the raid host is scenes/raidHost.js (#1184's HOST-SPLIT) - `_musicLoc` read live
+  assert.ok(rd('src/scenes/raidHost.js').includes('.filter((p) => raidPeerInPlace(p.feet, host._musicLoc ? _foeInTownRect : null, state, playerTravelPixel())).map('), 'the host asks it');
 });
 
 test('PACK-STALL (mob 2026-10-26: "town was not spawning enemy on every player"): a leader with no spot about one player goes to the next after STAFF_PACK_LEADER_TRIES - the packs never stall on one', async () => {

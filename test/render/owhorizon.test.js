@@ -247,7 +247,7 @@ test('OW-HORIZON the host\'s wiring: the fog row and the lens through the view\'
   assert.ok(tvfAt > 0 && projAt > tvfAt, 'the lens after the view\'s frame');
   assert.ok(projAt < w.indexOf('renderer.beginFrame(proj, view, sunDirection(minute), WORLD_FRAME);'), '...and before the frame begins with it');
   assert.ok(!/perspective\(glassFov\(fieldOfView\(\)/.test(w), 'no second lens');
-  assert.match(w, /new FarRingRenderer\(renderer\.gl, \{ renderer \}\)/);
+  assert.match(w, /new FarRingRenderer\(renderer\.gl, \{ renderer, mid: terrainGen \}\)/);   // PIN MOVED (MID-RING): and the terrain's client - the middle ring and the far field asked of its worker
   assert.match(w, /\n  const built = new BuiltPixels\(\); \/\/ key -> pixel entry/, 'the host\'s built pixels count their changes');
   assert.match(w, /\}, state\.current\.x, state\.current\.y, state\.terrainDistance, built\);/);
   assert.match(w, /farRing\.punchHole\(state\.current\.x, state\.current\.y, state\.terrainDistance, built\);/);
@@ -257,7 +257,7 @@ test('OW-HORIZON the host\'s wiring: the fog row and the lens through the view\'
   assert.equal((r.match(/gl\.getUniformLocation\([^,]+, 'uCloudShadowFar'\)\]/g) ?? []).length, 6, 'every program\'s pair a triple - the terrain, the mesh, the character, the flats, the decal and the ground\'s snow');
   assert.match(r, /cloud: \[u\('uCloudShadowMap'\), u\('uCloudShadowRect'\), u\('uCloudShadowFar'\)\],/, 'the water\'s too');
   const sh = rd('src/scenes/shared.js');
-  assert.match(sh, /Object\.assign\(enhancedSky\.cloudShadow, clouds\.shadow, \{ far: farCoverSun\(\) \}\);/);
-  assert.match(sh, /if \(!clouds\) return this\.sunFactor\(\);\s*\n\s*return farCoverSun\(\);/, 'the ring\'s dim and the deck\'s far one law');
+  assert.match(sh, /Object\.assign\(enhancedSky\.cloudShadow, cloudsShown\.shadow, \{ far: farCoverSun\(\) \}\);/);
+  assert.match(sh, /if \(!cloudsShown\) return this\.sunFactor\(\);\s*\n\s*return farCoverSun\(\);/, 'the ring\'s dim and the deck\'s far one law');
   assert.ok(RING_RIM_START < TV_HAZE_END);
 });

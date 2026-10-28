@@ -1,0 +1,281 @@
+[
+  {
+    "name": "VC-1-edge",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "edge: Object.freeze({ out: 0, in: 600 }),",
+    "new": "edge: Object.freeze({ out: 0, in: 300 }),",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-2-share-sign",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "export const canopyShare = (depth) => smoothstep(-JUNGLE_CANOPY.edge.out, JUNGLE_CANOPY.edge.in, depth);",
+    "new": "export const canopyShare = (depth) => smoothstep(-JUNGLE_CANOPY.edge.out, JUNGLE_CANOPY.edge.in, -depth);",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-3-under-inverted",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "(Number.isFinite(h) ? 1 - smoothstep(",
+    "new": "(Number.isFinite(h) ? smoothstep(",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-4-under-unknown-open",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "JUNGLE_CANOPY.height + JUNGLE_CANOPY.above, h) : 1);",
+    "new": "JUNGLE_CANOPY.height + JUNGLE_CANOPY.above, h) : 0);",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-5-no-jump",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "Math.hypot(eye[0] - s.eye[0], eye[2] - s.eye[2]) > JUNGLE_CANOPY.jump;",
+    "new": "Math.hypot(eye[0] - s.eye[0], eye[2] - s.eye[2]) > 1e12;",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-6-no-ease",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "s.w = jumped ? t : s.w + (t - s.w) * (1 - Math.exp(-Math.max(0, dt) / JUNGLE_CANOPY.lag));",
+    "new": "s.w = t;",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-7-tail-kept",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "  if (s.w < 1e-4) s.w = 0;\n",
+    "new": "",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-8-light-new-at-none",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "  if (!(k > 0) && rgb instanceof Float32Array) return rgb;\n",
+    "new": "",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-9-light-not-dimmed",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "rgb[i] * (1 - take * k) * (1 + (tint[i] - 1) * k)",
+    "new": "rgb[i] * (1 + (tint[i] - 1) * k)",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-10-light-not-leaned",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "rgb[i] * (1 - take * k) * (1 + (tint[i] - 1) * k)",
+    "new": "rgb[i] * (1 - take * k)",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-11-key-kept",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "export const canopyKey = (w) => 1 - JUNGLE_CANOPY.key * clamp01(w || 0);",
+    "new": "export const canopyKey = (w) => 1;",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-12-moon-kept",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "scale: moon.scale * canopyKey(w),",
+    "new": "scale: moon.scale,",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-13-moon-dimmed-twice",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "color: canopyLight(moon.color, w, 0) };",
+    "new": "color: canopyLight(moon.color, w) };",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-14-fog-kept",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "out[c] = color[c] * (1 - JUNGLE_CANOPY.fog * k) * (1 + (t[c] - 1) * k);",
+    "new": "out[c] = color[c] * (1 + (t[c] - 1) * k);",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-17-leaves-unlit",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "for (let c = 0; c < 3; c++) out[c] = clamp01(color[c] * l[c]);",
+    "new": "for (let c = 0; c < 3; c++) out[c] = clamp01(l[c]);",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-18-water-kept",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "  if (!sky || !(w > 0)) return sky;\n  const lerp",
+    "new": "  return sky;\n  const lerp",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-29-over-the-crowns",
+    "file": "src/scenes/jungleHost.js",
+    "old": "canopyShare(jungleDepthAt(w.px, w.py, nine, w.lx, w.lz)) * canopyUnder(over) : 0 });",
+    "new": "canopyShare(jungleDepthAt(w.px, w.py, nine, w.lx, w.lz)) : 0 });",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-30-fog-undimmed",
+    "file": "src/scenes/jungleHost.js",
+    "old": "    canopyFog(c, cs.w, c);\n",
+    "new": "",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-31-ceiling-left-up",
+    "file": "src/scenes/jungleHost.js",
+    "old": "if (canopySent) { sky?.setCanopy?.(null); canopySent = false; }",
+    "new": "if (canopySent) { canopySent = false; }",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-32-haze-off-no-canopy",
+    "file": "src/scenes/jungleHost.js",
+    "old": "      if (!haze) return canopiedOff(fogColor, sky);",
+    "new": "      if (!haze) return off(fogColor, sky);",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-33-canopy-the-jungle",
+    "file": "src/scenes/jungleHost.js",
+    "old": "const canopyAt = zoneAt ? (x, y) => !!zoneAt(x, y)?.canopy : null;",
+    "new": "const canopyAt = zoneAt ? (x, y) => !!zoneAt(x, y)?.jungle : null;",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-34-canopy-field-kept",
+    "file": "src/scenes/jungleHost.js",
+    "old": "fieldVersion = v; field = null; canopyField = null; }",
+    "new": "fieldVersion = v; field = null; }",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-35-canopy-unstepped",
+    "file": "src/scenes/jungleHost.js",
+    "old": "      canopyStep(eye, dt);   // VALENWOOD-CANOPY",
+    "new": "      // VALENWOOD-CANOPY",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-36-jungle-from-zones",
+    "file": "src/scenes/jungleHost.js",
+    "old": "  beyond ??= zoneAt ? (x, y) => !!zoneAt(x, y)?.jungle : null;\n",
+    "new": "",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-39-water-unleaned",
+    "file": "src/scenes/shared.js",
+    "old": "const leaved = (ws) => canopyWaterSky(ws, canopyLeaves);",
+    "new": "const leaved = (ws) => ws;",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-40-leaves-unhanded",
+    "file": "src/scenes/shared.js",
+    "old": "if (v && v[3] > 0) canopyLeaves.set(v);",
+    "new": "if (v && v[3] > 0) void v;",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-41-ambient-unleaned",
+    "file": "src/scenes/world.js",
+    "old": "canopyLight(etherLight(sdBrassLight(sunbabyLight(",
+    "new": "(etherLight(sdBrassLight(sunbabyLight(",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-42-key-untaken",
+    "file": "src/scenes/world.js",
+    "old": "* (1 - DREAD_KEY_DIM * skyDreadW) * canopyKey(jungle?.canopy),",
+    "new": "* (1 - DREAD_KEY_DIM * skyDreadW),",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-43-moon-untaken",
+    "file": "src/scenes/world.js",
+    "old": "renderer.setMoonlight(canopyMoon(moonNow && etherAirW",
+    "new": "renderer.setMoonlight((moonNow && etherAirW",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-44-grahtwood-open",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "name: 'Grahtwood', climate: C.Rainforest, jungle: true, canopy: true,",
+    "new": "name: 'Grahtwood', climate: C.Rainforest, jungle: true,",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "VC-45-greenshade-open",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "name: 'Greenshade', climate: C.Swamp, jungle: true, canopy: true,",
+    "new": "name: 'Greenshade', climate: C.Swamp, canopy: true,",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  }
+]

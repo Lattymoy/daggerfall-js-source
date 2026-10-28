@@ -135,7 +135,7 @@ test('STREAM1: the queue is spent a pixel a frame, nearest first, and never on a
   assert.deepEqual([far, near].sort(sorter), [near, far]);
   // BOTH call sites queue the promotion and take the demotion now
   assert.match(world, /if \(want === 1\) restridePending\.set\(`\$\{p\.px\},\$\{p\.py\}`, p\);/, 'the crossing sweep');
-  assert.match(world, /if \(wantStride === 1\) host\.restridePending\.set\(key, entry\);/, 'and the publish re-check');
+  assert.match(world, /if \(wantStride === 1\) host\.restridePending\.set\(pkey, entry\);/, 'and the publish re-check');   // PIN MOVED (IC-SWAP-BEHIND): the pixel's own key
   assert.ok(!/for \(const p of built\.values\(\)\) \{\s*const want = strideFor\(p\.px, p\.py\);\s*if \(want !== p\._stride\) restrideTerrain\(p, want\);/.test(world),
     'the inline sweep that paid all five is gone');
 });

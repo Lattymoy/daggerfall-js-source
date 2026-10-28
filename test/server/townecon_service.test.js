@@ -7,6 +7,7 @@ import { standService, T0 } from '../accountDb.mjs';
 import { seatRealm } from '../realmSeat.mjs';
 import { mintWatchReceipt } from '../../src/net/watchReceipt.js';
 import { mintRaidReceipt } from '../../src/net/raid/raidReceipt.js';
+import { arenaPlaceId, arenaLocationIndex } from '../../src/world/arenaLocations.js';   // WW6: a town past the Bay's own id and index
 import { WITNESS } from '../../src/net/nodeLaw.js';
 import { validLootList, generateRandomLoot, LOOT_MATRICES } from '../../src/systems/loot/loot.js';
 import { ARROW_TEMPLATE } from '../../src/systems/inventory.js';
@@ -387,6 +388,26 @@ test('TOWN-ECON TE2 a raid driven off counts at the confirmed town its key names
   const kid = await s.seated('Kid', {}, { old: false });
   assert.equal((await raid(kid, `${DF}:${TOWN.location}:1003`)).body.recorded, true);
   assert.deepEqual(s.acts(kid), [], 'a young account none');
+});
+
+test('WW6 a raid driven off PAST THE BAY counts at its town past the Bay - the receipt\'s key a province\'s region and the town\'s own index (net/raid/raidLaw.js RAID_KEY_RE), the town registry\'s row that town\'s own report (net/townEconLaw.js townReportOf, WW7-5); the claim\'s row the key, the day the key\'s (mutants: the key\'s province refused at the account; the town\'s index read as a Bay row\'s)', async () => {
+  _now = T0;
+  const s = await stand();
+  const hero = await s.seated('Wanderer');
+  const place = { provinceIndex: 2, id: 28 };   // an Arena place of Skyrim's (world/arenaLocations.js): its own map id and index
+  const PAST = Object.freeze({ map: arenaPlaceId(place), px: 2425, py: 270, region: 64, location: arenaLocationIndex(place) });
+  const key = (day) => `${PAST.region}:${PAST.location}:${day}`;
+  const raid = async (who, k) => s.call('/v1/raid/claim', {
+    receipt: await mintRaidReceipt({ w: k, s: who.id, c: 778, y: 1 }, s.gateKey, { subtle, nowS: _now }), character: who.character, name: who.handle,
+  }, who.secret);
+  await s.confirm(PAST);
+  const r = await raid(hero, key(1001));
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.equal(r.body.recorded, true, 'the province\'s raid recorded');
+  assert.deepEqual(s.raw.prepare('SELECT raid, day, party FROM raid_cleanses WHERE account = ?').all(hero.id).map((x) => ({ ...x })), [{ raid: key(1001), day: 1001, party: 1 }]);
+  assert.deepEqual(s.acts(hero), [{ map: PAST.map, day: today(), src: 'raid', n: 1 }], 'at its town past the Bay');
+  await assert.rejects(() => mintRaidReceipt({ w: `3:${PAST.location}:1002`, s: hero.id, c: 1, y: 1 }, s.gateKey, { subtle, nowS: _now }), /claim set/, 'a Bay region never names a town past the Bay\'s index');
+  await assert.rejects(() => mintRaidReceipt({ w: `64:5:1002`, s: hero.id, c: 1, y: 1 }, s.gateKey, { subtle, nowS: _now }), /claim set/, 'nor a province a MAPS.BSA row');
 });
 
 test('TOWN-ECON TE2 the sweep: a town\'s days and its accounts\' acts go once past the days the share weighs, and AUDIT TOWN-ECON 2 SVC-5 the ticks seen once past a receipt\'s life, in the hourly clock (mutants: TOWNECON2-sweep-days, TOWNECON-AUDIT2-SVC5-seen-kept)', async () => {

@@ -71,6 +71,7 @@ function enhancedTavernOverlay(hooks) {
     draw() { /* DOM, not canvas */ },
     dispose() { close(); },
   };
+  hooks.owner = overlay;   // COVERED-KEYS: the window the panel's keys are gated on (ui/windowStack.js listenWindowKeys)
 
   mountEnhancedChunk({
     load: () => import('./enhanced/enhancedTavern.js'),

@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { ALLOC_CHILD_ARGS } from '../allocChild.mjs';
 import { StaticBatchBuilder, keyResolver } from '../../src/render/staticBatch.js';
-import { createCoverIndex, coverProxy, coverProxies, CELL_EXACT, COVER_CELL } from '../../src/ai/cover.js';
+import { coverProxy, coverProxies } from '../../src/ai/cover.js';
 import { flatBodies, jungleBody } from '../../src/world/propBodies.js';
 import { jungleCover } from '../../src/world/jungle/jungleModels.js';
 import { trs } from '../../src/world/mat4.js';
@@ -54,70 +54,30 @@ test('MEM-AUDIT the static batch: the merge spends its inputs - the builder a ho
 
 // ─── THE COVER INDEX ─────────────────────────────────────────────────
 
-test('MEM-AUDIT the cover index: a cell is held at its size while small - the same proxies in the same order as the pushes filed them, on every grid (the cover\'s, the bodies\', the wide); a cell copied one longer below CELL_EXACT and pushed past it; a cell of one proxy at its size; every proxy born with its mark, last of its keys (AUDIT C1/C2, P4) (mutants: a cell pushed from its first, the order turned, a grid pushed, a maker without the mark)', () => {
-  const idx = createCoverIndex({ enabled: () => true });
-  const set = idx.staged();
-  let seed = 7;
-  const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 0x100000000;
-  const items = [];
-  for (let i = 0; i < 4000; i++) items.push(...coverProxies([rnd() * 300, 0, rnd() * 300], { w: 1 + rnd() * 8, h: 3 + rnd() * 9 }, { tree: rnd() < 0.5 }));
-  for (let i = 0; i < 60; i++) items.push(coverProxy([150 + rnd(), 0, 150 + rnd()], { w: 2, h: 2 }));   // one crowded corner: cells past CELL_EXACT
-  for (let i = 0; i < 400; i++) items.push(...jungleCover([rnd() * 300, 0, rnd() * 300], 0, 1 + rnd()));   // the wide grid's: crowns past a cell
-  for (let i = 0; i < 40; i++) items.push(...jungleCover([40 + rnd() * 4, 0, 40 + rnd() * 4], 0, 1));   // a wide cell past CELL_EXACT
-  const bodies = [...flatBodies(null, 504, 3, { w: 3, h: 9 }, items.slice(0, 500).map((p) => p.c), { tree: true }), ...Array.from({ length: 40 }, () => jungleBody([60 + rnd(), 0, 60 + rnd()], 0, 1))];
-  assert.ok(items.some((p) => p.r > COVER_CELL), 'wide proxies among them');
-  // the pushes' own grids, restated: every cell its proxies in the order they were filed
-  const key = (gx, gz) => (gx + 32768) * 65536 + (gz + 32768);
-  const file = (m, k, it) => { let c = m.get(k); if (!c) m.set(k, c = []); c.push(it); };
-  const ref = { grid: new Map(), wide: new Map(), bodies: new Map() };
-  const order = [...items, ...bodies].map((it) => [rnd(), it]).sort((a, b) => a[0] - b[0]).map(([, it]) => it);
-  for (const it of order) {
-    const [x, , z] = it.c;
-    if (!it.body && it.r > COVER_CELL) { file(ref.wide, key(Math.floor(x / 32), Math.floor(z / 32)), it); continue; }
-    const m = it.body ? ref.bodies : ref.grid;
-    for (let gx = Math.floor((x - it.r) / COVER_CELL); gx <= Math.floor((x + it.r) / COVER_CELL); gx++) for (let gz = Math.floor((z - it.r) / COVER_CELL); gz <= Math.floor((z + it.r) / COVER_CELL); gz++) file(m, key(gx, gz), it);
-  }
-  const tally = { grid: [0, 0], wide: [0, 0], bodies: [0, 0] };
-  const all = order;   // seeded: every grid grows across slices
-  for (let i = 0; i < all.length; i += 997) {   // filled a slice at a time, as a streamed pixel's is
-    const before = Object.fromEntries(Object.keys(tally).map((g) => [g, new Map([...set[g]].map(([k, c]) => [k, [c, c.length]]))]));
-    idx.fill(set, all.slice(i, i + 997));
-    for (const g of Object.keys(tally)) {
-      for (const [k, [was, n]] of before[g]) {
-        const now = set[g].get(k);
-        if (now.length === n) continue;
-        if (n < CELL_EXACT) { assert.notEqual(now, was, `${g}: a small cell grown is a new array, its own size`); tally[g][0]++; } else { assert.equal(now, was, `${g}: a cell past CELL_EXACT is pushed`); tally[g][1]++; }
-      }
-    }
-  }
-  for (const g of Object.keys(ref)) {
-    assert.deepEqual([...set[g].keys()].sort((a, b) => a - b), [...ref[g].keys()].sort((a, b) => a - b), `${g}: the same cells`);
-    for (const [k, c] of ref[g]) assert.deepEqual(set[g].get(k), c, `${g}: each its proxies, in the order filed`);
-  }
-  for (const g of ['grid', 'wide']) assert.ok(tally[g][0] > 0 && tally[g][1] > 0, `${g}: both arms met (${tally[g]})`);
-  assert.ok(tally.bodies[0] > 0, `bodies: copied (${tally.bodies})`);
-  // every maker, fresh (`fill` marks what it files), the same keys in the same order - one shape for the ray's loop
+test('MEM-AUDIT the cover index: held at its size - COVER-COMPACT (2026-10-26): a proxy is a slot in its set\'s typed columns and a cell a slot in sorted typed lists, so 100,000 proxies a cell each cost under 64 B a proxy (~118 B as arrays held at their size, ~246 pushed from []); every proxy born with its mark, last of its keys (AUDIT C1/C2, P4) (mutants: a maker without the mark; tools/mutants/coverCompact.json holds the lists\' order)', () => {
+  // every maker, fresh, the same keys in the same order - one shape a proxy (the index no longer reads `_mark`: cover.js COVER-COMPACT)
   const COVER_KEYS = ['c', 'r', 'h', 'lift', '_mark'], BODY_KEYS = ['c', 'r', 'h', 'lift', 'body', '_mark'];
   for (const p of [coverProxy([0, 0, 0], { w: 2, h: 2 }), ...coverProxies([0, 0, 0], { w: 2, h: 9 }, { tree: true }), ...jungleCover([0, 0, 0], 0, 1)]) assert.deepEqual(Object.keys(p), COVER_KEYS, 'a cover proxy');
   for (const p of [...flatBodies(null, 504, 3, { w: 3, h: 9 }, [[0, 0, 0]], { tree: true }), jungleBody([0, 0, 0], 0, 1)]) assert.deepEqual(Object.keys(p), BODY_KEYS, 'a body');
-  // a cell of one proxy at its size: measured on the heap - 100,000 cells of one, each its own - in the measuring child
+  // a proxy in a cell of its own: measured on the heap - 100,000 of them, as `add` leaves them (built, never waiting for a first read), their stores counted with the heap - in the measuring child
   // (ALLOC-RACE: test/allocChild.mjs, the one home of its flags)
   const script = `
     import { createCoverIndex, coverProxy } from ${JSON.stringify(new URL('../../src/ai/cover.js', import.meta.url).href)};
     const one = createCoverIndex({ enabled: () => true });
     const lone = Array.from({ length: 100000 }, (_, i) => coverProxy([(i % 1000) * 8 + 2, 0, Math.floor(i / 1000) * 8 + 2], { w: 1.5, h: 2 }));
     globalThis.gc(); globalThis.gc();
-    const h0 = process.memoryUsage().heapUsed;
+    const held = () => { const m = process.memoryUsage(); return m.heapUsed + m.arrayBuffers; };   // a typed list's store is outside the heap
+    const h0 = held();
     one.add('one', lone);
     globalThis.gc(); globalThis.gc();
-    const perCell = (process.memoryUsage().heapUsed - h0) / 100000;   // read before refs(), which allocates
+    const perCell = (held() - h0) / 100000;   // read before refs(), which allocates
     console.log(JSON.stringify({ refs: one.refs(), perCell }));
   `;
   const run = spawnSync(process.execPath, [...ALLOC_CHILD_ARGS, '--input-type=module', '-e', script], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr);
   const { refs, perCell } = JSON.parse(run.stdout.trim().split('\n').pop());
   assert.equal(refs, 100000, 'a cell each');
-  assert.ok(perCell < 180, `a cell of one proxy and its entry: ${perCell.toFixed(0)} B (~118 at its size; pushed from [], ~246)`);
+  assert.ok(perCell < 64, `a proxy and its cell: ${perCell.toFixed(0)} B (~118 as arrays held at their size; pushed from [], ~246)`);
 });
 
 // ─── THE SNOW'S BLANKET ──────────────────────────────────────────────

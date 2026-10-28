@@ -76,6 +76,7 @@ import { HANDLE_RE } from '../../src/net/handleShape.js';
 import { MARKS_LEDGER_SHOWN, MARKS_MAX } from '../../src/net/marksLaw.js';   // MARKS1: the guild's Marks lines shown; AUDIT GUILD3 S3: the room its going needs
 import { marksOpenFor, guildMarksSweep, guildDeedsToday } from './marks.js';   // AUDIT 28 M5: the Marks shown only where they are the viewer's; M3: a guild that goes sweeps them; AUDIT SILVER-WAYS A3: the day's deeds
 import { hallViewOf, heraldryOfRow } from './halls.js';   // GUILD1d: the guild's hall and heraldry, in its view
+import { castleViewOf } from './castles.js';   // DOMAIN2: a guild's castles on its view
 import {
   GUILD_FOUND_GOLD, GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_RANK_NAMES, GUILD_RANK_MASTER, GUILD_RANK_OFFICER, GUILD_RANK_RECRUIT,
   GUILD_TREASURY_MAX, GUILD_LEDGER_SHOWN, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S, GUILD_INVITE_TTL_S, GUILD_ID_RE, GUILD_MEMBER_RE,
@@ -214,6 +215,9 @@ async function viewOf(db, guildId, me, nowS, marksOpen = false, env = null) {
     hallGold: Number(g.realm_gold ?? 0),
     // GUILD1d (Seats-Arc 8): the hall (null for none) and the heraldry (null until chosen), every member's to read
     hall, heraldry: heraldryOfRow(g.heraldry),
+    // DOMAIN2 (Domains.md 6): its castles - each one's region, key and the instance's epoch the door keys its room by - and,
+    // to its Guildmaster, the castles its crowns may buy; a castle gone with its region released first (castles.js)
+    ...(await castleViewOf(db, guildId, Number(me.rank), nowS)),
     // GUILD2a: when the guild last took a new name, and when it may next (null: now)
     renamedAt: g.renamed_at == null ? null : Number(g.renamed_at), renameAt: guildRenameAt(g.renamed_at == null ? null : Number(g.renamed_at)),
     // GUILD3c: to its guildmaster, everything that holds the guild from going - said before the press (guildHolds)

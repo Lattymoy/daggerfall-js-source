@@ -13,6 +13,7 @@ import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 import { creatureLook } from './creatureBodies.js';   // MWNPC9: a creature foe's look, its Morrowind creature
 import { ARMOR_ENUM, WEAPONS_ENUM, equipmentVariantFor } from '../combat/enemyEquipment.js'; import { ARMOR_MATERIAL } from '../systems/armorMaterials.js'; import { MOBILE_TYPES } from './mobile/mobileTypes.js';   // MWNPC10: a roster's people, armoured and armed by their class
 import { npcHint } from './wardrobe.js';   // MWNPC17: the man under the kit his own - his head, his hair, the clothes' records
+import { folkHere, folkWhere, folkRace, folkOfKey, FOLK_RACE_KEYS } from './provinceFolk.js';   // PROVINCE-FOLK: past the Bay a foe is one of the province's people
 import { isClassEnemyId, isClassicEnemyId } from './enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class; DEX7: a mod's person row names its own mobile
 
 /** The Iliac Bay's people, weighted - the races a class foe is drawn as (Daggerfall's own spelling, the look's). The
@@ -71,20 +72,43 @@ export function foeSeed(f) {
  *  (scenes/crewAshore.js stamps `person` on every body it stands - a crew hand his own, a sworn revenant its record's),
  *  and a revenant come back for the player (its record's `person` on its stamp - systems/revenant/revenant.js revenantPerson,
  *  minted off the body it was born in), so the one that kneels is the one that follows. It is the seed: every machine
- *  reads it off the wire (`ls`) as a foe's own, so the room sees the same man. Null: a foe of the place, drawn off where
- *  it stood. @param {any} f */
+ *  reads it off the wire (`ls`); past the Bay a copy's race is drawn where it stands (AUDIT PROVINCE-FOLK B3). Null: a
+ *  foe of the place, drawn off where it stood. @param {any} f */
 export function ownPerson(f) {
   const p = f?.person ?? f?.entity?.revenant?.person;
   return Number.isInteger(p) && p >= 0 && p <= 0xffffffff ? p : null;
 }
 const pick = (list, h) => list[h % list.length];
 
-/** MWNPC10: the person a seed draws - a race of the Bay's by its weight and a face - one home for the foe's look and
- *  the roster's (rosterLook). */
-function bayPerson(h) {
+/** MWNPC10: the person a seed draws - a race and a face - one home for the foe's look and the roster's (rosterLook).
+ *  PROVINCE-FOLK: `people` past the Bay (characters/provinceFolk.js), else the Bay's weights. */
+function bayPerson(h, people = null) {
   let r = mix(h ^ 0x51ed27) % RACE_TOTAL, race = FOE_RACES[0][0];
   for (const [name, w] of FOE_RACES) { if (r < w) { race = name; break; } r -= w; }
-  return { race, faceIndex: mix(h ^ 0xfa) % 10 };
+  return { race: folkRace(people, h) ?? race, faceIndex: mix(h ^ 0xfa) % 10 };
+}
+/** AUDIT PROVINCE-FOLK A1: the race a person of their own was born in (a revenant's record keeps it - revenant.js
+ *  `race`), or null: theirs is then the Bay's draw on their seed, wherever they stand. @param {any} f */
+export const ownRace = (f) => {
+  const r = f?.folk ?? f?.entity?.revenant?.race;
+  return typeof r === 'string' && FOLK_RACE_KEYS.includes(r) ? r : null;
+};
+/** AUDIT PROVINCE-FOLK A5: a foe of the place's race, drawn once a seed where it stands (provinceFolk.js folkWhere: the
+ *  pixel under its feet), so every machine that sees it stands the same people and a new kit never re-races it.
+ *  @param {any} f @param {number} h */
+function placeRace(f, h) {
+  if (f._mwRaceSeed !== h) { f._mwRaceSeed = h; f._mwRace = bayPerson(h, folkWhere(f.ai?.feet ?? null)).race; }
+  return f._mwRace;
+}
+/** A person foe's race off seed `h`: one of their own as they were born (else the Bay's draw), one of the place where
+ *  it stands. @param {any} f @param {number} h @param {string} bay the Bay's draw on `h` */
+const personRace = (f, h, bay) => (ownPerson(f) != null ? ownRace(f) ?? bay : placeRace(f, h));
+/** AUDIT PROVINCE-FOLK A1: the race a person foe's body is drawn in now (foeLook's), for a revenant to be born in - one
+ *  of the peoples past the Bay, else null. @param {any} f */
+export function bodyRaceOf(f) {
+  if (!isPersonFoe(f) || ORC_MOBILES.has(f.mobileType) || modRace(f.mobileType)) return null;
+  const h = foeSeed(f), r = personRace(f, h, bayPerson(h).race);
+  return FOLK_RACE_KEYS.includes(r) ? r : null;
 }
 /** MWNPC10: the clothes under what `items` already holds - a shirt, legs and shoes for each slot nothing fills, dyed
  *  off the seed (the reference's slot law: the armour shows, the clothes are under it). */
@@ -178,7 +202,7 @@ export function foeLook(f) {
   if (f._mwLook && f._mwLookKey === wornKey && f._mwLookSeed === h) return f._mwLook;
   f._mwLookSeed = h;
   const bay = bayPerson(h), faceIndex = bay.faceIndex;
-  const race = ORC_MOBILES.has(f.mobileType) ? 'Orc' : modRace(f.mobileType) ?? bay.race;   // MWNPC12: an orc in Morrowind's Orc body; DEX7: a mod's person in its row's race
+  const race = ORC_MOBILES.has(f.mobileType) ? 'Orc' : modRace(f.mobileType) ?? personRace(f, h, bay.race);   // MWNPC12: an orc in Morrowind's Orc body; DEX7: a mod's person in its row's race
   const gender = f.gender === 'female' ? 'female' : 'male';
   f._mwLookKey = wornKey;
   return (f._mwLook = { race, gender, faceIndex, items: clothesUnder([...worn], FOE_WARDROBE[gender], h), npc: npcHint(h, 0), ...(VAMPIRE_MOBILES.has(f.mobileType) ? { vampire: true } : {}), ...(f.mobileType === WOLF_MOBILE ? { wolf: true } : {}) });   // MWNPC14: a vampire's face; MWNPC15: a werewolf's beast; MWNPC17: the seed every machine shares, so the copy is the same man
@@ -344,11 +368,11 @@ function orcKit(mobileType, h) {
  * its armour in their dyes, and steel for the classes that go in it (the watch helmed) - MWNPC10c: and its class's
  * blade in its hand (`rosterBlade`), and `race` its own where the caller knows it (a living world's resident). Kept on
  * `rec` while the mobile, gender, seed and race hold - one build for its life.
- * @param {any} rec @param {{ mobileType: number, gender?: string, seed?: number, race?: string }} o
+ * @param {any} rec @param {{ mobileType: number, gender?: string, seed?: number, race?: string, home?: string|null }} o
  */
-export function rosterLook(rec, { mobileType, gender = 'male', seed = 0, race = undefined }) {
-  if (rec._mwRosterMob === mobileType && rec._mwRosterG === gender && rec._mwRosterSeed === seed && rec._mwRosterRace === race) return rec._mwRosterLook;   // no key built a frame
-  rec._mwRosterMob = mobileType; rec._mwRosterG = gender; rec._mwRosterSeed = seed; rec._mwRosterRace = race;
+export function rosterLook(rec, { mobileType, gender = 'male', seed = 0, race = undefined, home = undefined }) {
+  if (rec._mwRosterMob === mobileType && rec._mwRosterG === gender && rec._mwRosterSeed === seed && rec._mwRosterRace === race && rec._mwRosterHome === home) return rec._mwRosterLook;   // no key built a frame
+  rec._mwRosterMob = mobileType; rec._mwRosterG = gender; rec._mwRosterSeed = seed; rec._mwRosterRace = race; rec._mwRosterHome = home;
   const orc = ORC_MOBILES.has(mobileType);   // MWNPC12: a person, never a creature
   const vampire = VAMPIRE_MOBILES.has(mobileType);   // MWNPC14: and a vampire
   const wolf = mobileType === WOLF_MOBILE;   // MWNPC15: and a werewolf
@@ -356,7 +380,7 @@ export function rosterLook(rec, { mobileType, gender = 'male', seed = 0, race = 
   if (mod?.sprite) return (rec._mwRosterLook = null);
   if (!orc && !vampire && !wolf && !mod && !isClassEnemyId(mobileType)) return (rec._mwRosterLook = creatureLook({ mobileType }));
   const h = mix((seed >>> 0) ^ mix((mobileType | 0) + 0x9e3779b9));
-  const bay = bayPerson(h);
+  const bay = bayPerson(h, race ? null : home === undefined ? folkHere() : folkOfKey(home));   // AUDIT PROVINCE-FOLK A3: `home` a roster's own people (provinceFolk.js folkOfKey - a ship's waters'; null the Bay's), else the place's
   const g = gender === 'female' ? 'female' : 'male';
   const items = /** @type {any[]} */ (orc ? orcKit(mobileType, h) : vampire || wolf || (mod && !isClassEnemyId(mobileType)) ? [] : [rosterBlade(h)]);   // MWNPC14: a vampire's claws are its own; DEX7: and a mod's monster's (SetEnemyCareer's table arms none - equipmentVariantFor)
   if (STEEL_CLASSES.has(mobileType)) {

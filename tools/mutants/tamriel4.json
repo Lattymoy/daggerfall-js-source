@@ -69,13 +69,7 @@
     "new": "t = 0.25;",
     "tests": ["test/ui/tamriel4.test.js"]
   },
-  {
-    "name": "TAMRIEL4-borders-end-short-of-the-coast",
-    "file": "src/ui/tamrielInk.js",
-    "old": "chaikinCapped(snapEnds(simplifyChain(c, COAST_SIMPLIFY_PX), coastPic), SMOOTH_PASSES, COAST_CUT_PX)",
-    "new": "chaikinCapped(simplifyChain(c, COAST_SIMPLIFY_PX), SMOOTH_PASSES, COAST_CUT_PX)",
-    "tests": ["test/ui/tamriel4.test.js"]
-  },
+  
   {
     "name": "TAMRIEL4-the-frame-inked-as-shore",
     "file": "src/ui/tamrielInk.js",

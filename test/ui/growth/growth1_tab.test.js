@@ -734,7 +734,7 @@ test('AUDIT GROWTH LANE5-4 THE TAB WITH ITS REAL FACES, DRIVEN: the Firmament an
     // the window put away takes the face with it (its listeners, its frame loop, a full-screen box)
     menu.unmount(); menu = null;
     assert.equal(stageLive(), null, 'the face went with the window');
-    assert.match(rd('src/ui/growth/growthTab.js'), /entity, embed: true, onExit: \(\) => \{ dropStage\(\); ctx\.render\(\); \} \}\)\)/, 'the Ascension ascended: the stage drops it and the page draws again');
+    assert.match(rd('src/ui/growth/growthTab.js'), /entity, embed: true, owner: ctx.owner, onExit: \(\) => \{ dropStage\(\); ctx\.render\(\); \} \}\)\)/, 'the Ascension ascended: the stage drops it and the page draws again');
   } finally { menu?.unmount(); host.remove?.(); setFirmamentBook(null); setHoldingsProvider(null); restore(); dropStage(); globalThis.requestAnimationFrame = raf; }
 });
 

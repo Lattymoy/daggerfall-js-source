@@ -257,5 +257,19 @@
  "Gentle work": "Sanfte Arbeit",
  "Lockpicking": "Schlossknacken",
  "Glint": "Glanz",
- "Outline": "Umriss"
+ "Outline": "Umriss",
+ "Shop (the real-money shop)": "Shop (in-world shops stay Laden)",
+ "Pre-alpha": "Pre-Alpha (die Pre-Alpha)",
+ "proceeds": "Einnahmen",
+ "cosmetic": "kosmetisch",
+ "Owned (shop state)": "Im Besitz",
+ "receipt": "Quittung",
+ "mailbox": "Postfach",
+ "profile": "Profil",
+ "account": "Konto",
+ "username": "Benutzername",
+ "Sign in": "anmelden (Zum Kaufen anmelden)",
+ "gem (the shop's button on the pause menu)": "Edelstein",
+ "Origin (the ouroboros glyph)": "Ursprung",
+ "Terms of Service": "Nutzungsbedingungen"
 }

@@ -363,7 +363,7 @@
   {
     "name": "SERPENT2-scene-says-nothing",
     "file": "src/scenes/world.js",
-    "old": "if (a) socialLink()?.sendSerpentSite?.(a.day, a.site.sx, a.site.sz, a.site.near);",
+    "old": "if (a && !a.site.told) socialLink()?.sendSerpentSite?.(a.day, a.site.sx, a.site.sz, a.site.near);",
     "new": "void a;",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"

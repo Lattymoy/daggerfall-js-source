@@ -68,6 +68,19 @@ float horizonHaze(float d, float fogStart, float fogEnd, float rimStart, float r
  *  running down to the sea crosses into the sea's haze without a line. */
 export const SEA_HAZE_BAND = 1.0;
 
+/** RED-MOUNTAIN (03-World/Red-Mountain.md): THE HAZE LIES UNDER THE SUMMITS. Ground over `from` metres (the land's old
+ *  ceiling - Red Mountain's cone alone stands over it) is seen through thinner air: the far ring's haze hold eased down
+ *  by `keep` of itself by `to`, so the summit stands clear on the horizon. The rim still closes it into the sky. AUDIT
+ *  RED-MOUNTAIN F6: the thinner air comes in over `ease` metres past the streamed grid's edge, never at it - beside the
+ *  grid the summit is hazed as the streamed ground is, so no seam stands on the cone where the grid ends. */
+export const SUMMIT_HAZE = Object.freeze({ from: 3700, to: 6500, keep: 0.7, ease: 8000 });
+/** summitHoldAt(hold, alt, d, from): the ring's haze hold at `alt` metres over the ring's origin, `d` from the eye, the
+ *  streamed grid's edge `from` metres out (SUMMIT_HAZE). The far ring's, the volcano's fire's and the fence glow's. */
+export const SUMMIT_HOLD_GLSL = `
+float summitHoldAt(float hold, float alt, float d, float from) {
+  return hold * (1.0 - ${SUMMIT_HAZE.keep.toFixed(4)} * smoothstep(${SUMMIT_HAZE.from.toFixed(1)}, ${SUMMIT_HAZE.to.toFixed(1)}, alt) * smoothstep(from, from + ${SUMMIT_HAZE.ease.toFixed(1)}, d));
+}`;
+
 /** FAR-SEA1: what both lanes' far-ring fragment shaders read for the ring's sea and the horizon's haze - the vertex
  *  shader's sea weight, its world point and the sea's body (render/farRing.js VS: the camera climate's water texel
  *  under the water's tint), the eye in the same frame, the sky the water reflects, the water's Fresnel at normal
@@ -78,13 +91,18 @@ export const SEA_HAZE_BAND = 1.0;
 export const RING_SEA_GLSL = `in float vSea;
 in vec3 vWorld;
 in vec3 vSeaBody;
+uniform vec3 uOrigin;
 uniform vec3 uEye;
 uniform vec3 uSkyZenith;
 uniform vec3 uSkyHorizon;
 uniform float uSeaF0;
 uniform float uSeaLook;   // 1 with a sky to reflect (and the Enhanced water on), 0 without (the sea lit as ground, as before)
+uniform float uSummitFrom;   // RED-MOUNTAIN: the streamed grid's edge, metres out - the summits' thinner air eased in past it
 ${SEA_LOOK_GLSL}
 ${HORIZON_HAZE_GLSL}
+${SUMMIT_HOLD_GLSL}
+// RED-MOUNTAIN: the haze lies under the summits - the ring's hold eased down over ground standing over SUMMIT_HAZE.from
+float summitHold(float hold, float d) { return summitHoldAt(hold, vWorld.y - uOrigin.y, d, uSummitFrom); }
 vec3 ringSea(vec3 ambient, vec3 sunColor, vec3 moonColor, float sunScale) {
   vec3 V = normalize(uEye - vWorld);   // the normal is up: the facing and the reflected ray's height are V.y
   vec3 lit = vSeaBody * seaLight(ambient, sunColor, sunScale * max(uLightDir.y, 0.0), moonColor, uMoonScale * max(uMoonDir.y, 0.0));
@@ -92,3 +110,37 @@ vec3 ringSea(vec3 ambient, vec3 sunColor, vec3 moonColor, float sunScale) {
   vec3 Hm = normalize(uMoonDir + V);
   return seaSky(lit, V.y, uSkyZenith, uSkyHorizon, uSeaF0) + seaGlints(sunColor, seaSunLobe(H.y) * sunScale, moonColor, seaMoonLobe(Hm.y) * uMoonScale);
 }`;
+
+/** FAR-FLORA (2026-10-26, bible/06-Systems/Travel-View.md FAR-FLORA): THE CANOPY - the far views' woods are their trees'
+ *  own colour (`vCanopy`) over the share of the ground their crowns hide (`vFlora`; render/farFlora.js,
+ *  world/terrain/floraCover.js), LIT AS THE TREES ARE NEAR (floraLight: the flats' light, render/renderer.js BB_FS - the
+ *  ambient and half the moon, half the sun under the clouds' shadow - so a wood on the horizon is the band's trees'
+ *  aggregate, render/farTrees.js), and broken into crowns and groves (floraGrain): a value noise on the world's own metres
+ *  at the near law's spacing of a Tree in the woods (FLORA_CROWN_M: FOREST1's half a Tree a 6.4 m tile) and at a grove of
+ *  them (FLORA_GROVE_M), each faded out as its cells grow smaller than a fragment (fwidth) - so it never shimmers past the
+ *  distance it can show. Both lanes' far-ring programs mix the canopy over the ground by `vFlora` (0: the ground's light
+ *  alone, as before). Here, beside the horizon's other text both lanes read, so the boot's graph takes no new leaf.
+ *  floraGrain(xz): 1 with the woods off (uFlora.x 0: one test), the crowns' and groves' dark and light about 1 on. */
+export const FLORA_CROWN_M = 9;
+/** floraLight(...): the flats' light (render/renderer.js BB_FS: uTint the ambient and half the moon, uBBSun half the sun) -
+ *  the canopy's (FLORA_GLSL) and the band's trees' (render/farTrees.js) one text. */
+export const FLORA_LIGHT_GLSL = `vec3 floraLight(vec3 ambient, vec3 sunColor, float sun, vec3 moonColor, float moonScale) {
+  return ambient + moonColor * (moonScale * 0.5) + sunColor * (sun * 0.5);
+}`;
+export const FLORA_GROVE_M = 46;
+export const FLORA_GLSL = `in float vFlora;
+in vec3 vCanopy;
+uniform vec3 uFlora;   // x 1 with the woods on; y, z the crowns' and the groves' spacing (metres)
+float floraHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float floraNoise(vec2 p) {
+  vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(floraHash(i), floraHash(i + vec2(1.0, 0.0)), u.x), mix(floraHash(i + vec2(0.0, 1.0)), floraHash(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+float floraGrain(vec2 xz) {
+  if (uFlora.x < 0.5) return 1.0;
+  vec2 c = xz / uFlora.y, g = xz / uFlora.z;
+  float fc = 1.0 - smoothstep(0.3, 0.8, length(fwidth(c)));
+  float fg = 1.0 - smoothstep(0.3, 0.8, length(fwidth(g)));
+  return 1.0 + 0.55 * (floraNoise(c) - 0.5) * fc + 0.4 * (floraNoise(g) - 0.5) * fg;
+}
+${FLORA_LIGHT_GLSL}`;

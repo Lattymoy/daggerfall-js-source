@@ -39,6 +39,33 @@ compares the two cell for cell; they agree to within the Perlin departure
 (Port-Ledger A: Ken Perlin's reference noise where Unity's Mathf.PerlinNoise
 stood - the author's bake is a little wetter at the coast).
 
+A COASTAL TOWN'S BLEND IS ITS OUTLINE'S (AUDIT TESA III E1-4, 2026-10-26;
+`01-Overview/audits/Audit-Tesa-III-E1.md`). TOWN-SHAPES TS2 flattens a town to
+its own outline and keeps the sea past its ease (`03-World/Town-Shapes.md`),
+where DFU's rect blend lifted the rect's sea into land - and the bake was
+handed the rect's four numbers alone, so it blended DFU's way: at 262 of the
+Bay's 339 coastal location pixels it called 453,230 samples of the streamed
+sea land, and shaped the seafloor before them against the old rect's coastline
+(up to 27 m off at the default Water Depth). Each row now carries the rect's
+outline (`deepWatersClient.js` deepWatersLocationRects; `rectsLookup` hands it
+to `pixelWaterSampler`'s blend), the key fingerprints its bytes, and
+BAKE_GENERATOR_VERSION is 2 (FB1028: 3), so no bake kept from before is read. The mod's own
+file knows no TS2, so the DW-A oracle's agreement now departs at those pixels
+too (its bounds hold room for it; not run here - no `DW_BAKE_FILE`). The
+Eltheric isles' half (fixed by the terrain stream, the same day): the isles'
+bake had read its templates' rects alone, while each isle's clone stands its
+own outline, seeded by its own map id. `etherPlaceRects` keeps each template's
+outline BASIS once (`terrainTiles.js` locationOutlineBasis: its grid's occupied
+tiles and the tiles it stamps, packed a bit a tile, 2,737 distinct of 7,538
+templates, 2.15 MB on the freeware data), and `etherRectAt` draws the isle's
+outline and the rect cut under it off that basis under the isle's own id
+(`outlineOfBasis`, `rectOfBasis` - locationShapeField is the same basis under
+the location's own id). Over 120 port and ruin isles about Veilhaven the bake's
+outline and bounds are the clone's at every one, and the bake's water against
+the streamed ground went from 3,691 samples off (13 isles) to none. The isles'
+bake is built as it is asked and kept in memory alone, so no cache's version
+moves.
+
 THE FRAME (ETHER-DEEP, 2026-10-12; `03-World/Eltheric-Ocean.md`). The mod knows
 one map, IsValidMapPixel's 1000 x 500, and clamps every query to it. The
 port's bake answers a FRAME of pixels - its planes indexed and its cells
@@ -56,7 +83,8 @@ PLANE_KEEP_RADIUS from the pixel last asked or sent are let go (asked again, the
 are built again; the bytes are the same). The main thread's Bay bake had only
 added the worker's rows, for the session. The host's dry check reads only the sea
 bits its thread holds (C1-3): a fresh Eltheric cell is the worker's trip to answer.
-There's a Hole in the Bottom of the Ocean's pits stay the Bay's.
+There's a Hole in the Bottom of the Ocean's pits stood the Bay's until PITS-WORLD
+(2026-10-27, `03-World/Ocean-Holes.md`): they open in the Eltheric's frame too now.
 
 ## The floor (DW-B)
 
@@ -715,3 +743,82 @@ Mutation records: `tools/mutants/dwa.json`, `tools/mutants/dwd.json`,
 `tools/mutants/dwe.json`, `tools/mutants/dwe5.json` (46, 46 dead),
 `tools/mutants/dwf.json` (14, 14 dead), `tools/mutants/dwfa.json` (39, 39
 dead), `tools/mutants/farclip1.json` (27, 27 dead).
+
+## TAMRIEL-DEEP - the continent's sea carved (2026-10-26)
+
+The owner: *"Overhaul coastlines to properly have sand/dirt and arc into the deep, with the ability to slightly see
+through water and actually see the depth"*.
+
+**What stood.** Iliac Puddle No More carves the Bay's sea against its map's bake. ETHER-DEEP gave the Eltheric Ocean's box
+a bake of its own (`03-World/Eltheric-Ocean.md`). The sea past the Bay's edge got neither: every coast of the continent,
+the Niben and Lake Rumare (`03-World/Tamriel.md` NIBEN-SEA). TAMRIEL2 recorded it: "the sea past the Bay is the kernel's
+own water tiles (Deep Waters' bathymetry is the Bay's)". That water lay over the bed WATER-NEXT carves under a pond, at
+most `BED_DEPTH` (4) down. There was no shelf and no deep, so the clear water showed a flat bed a stride under the
+surface, wherever the coast was.
+
+**The bake** (`world/tamrielWatersBake.js` `TamrielWatersBake`). It covers the continent's FRAME on the live fit
+(`tamrielWaterFrame`) and is built by the Bay's own rules from the composed ground
+(`world/tamriel/tamrielGround.js` groundWoods): the bound's classes, the candidates, the distance planes and the queries.
+The floor shelves from every beach into the deep as the Bay's does: 2.7 m at the water's edge and 11.2 m 128 m out, then
+the climate's plain (the Ocean's 210 m, under the player's Water Depth). Its depth band shades the floor's
+sand-mid-deep ramp, and the enhanced water above shows it through its body. The Bay's own pixels stay the Bay's bake's.
+Its planes read the Bay's sea across the seam from the Bay's bake, so no shelf rises at the map's edge.
+
+**The open sea is the trace's.** The Bay floods its water from its map's border, and the Eltheric from an isle's cell
+ring, which is all sea. The continent's sea is whatever the trace says, so the flood runs a cell at a time
+(`TAMRIEL_CELL_PX` 32, with `TAMRIEL_APRON_PX` 16 round it so a channel that leaves the cell and comes back is followed).
+It is seeded from every pixel the bound calls all sea whose picture pixel is the trace's open sea (`pictureOpenSeaAt`:
+off the land and no lake, `world/tamriel/tamrielLand.js` pictureLakes, which moved there from `world/arenaPlaces.js` so
+the worker reads it). On the Bay's own pixels, the Bay's bake's fully reached pixels seed it.
+- A lake the picture draws (Hammerfell's two) is never seeded. It stays the kernel's water, as the Bay's lakes do.
+- The flood (`deepWatersBake.js` `floodSteps`) takes `seedAt`: every candidate cell of a pixel it names is reached at
+  the start, instead of the border's.
+
+**The sea carries no detail** (`tamrielGround.js` `tamrielLargeMap`). The first build carved nothing. The continent's
+large-map detail, a lattice hash of 0 to 9 (BREATHTAKER3's `LARGE_SWELL` since, `03-World/Tamriel.md`), stood over its sea
+as well as its land, and lifted the seabed into the beach line's reach: not one pixel of the continent's sea was the sea
+to the bound (`classifyPixel`), every one mixed. WOODS.WLD's own sea carries none (0 over 406 of 411 sampled Bay sea
+pixels, 1 the most). The continent's sea now carries none either, and its open water is the sea to the bound. The swell's
+kept pixels now read the land, so `dropGroundCache` (every thread's, when a picture lands) drops them with the ground's
+bytes.
+
+**Both threads, and no host line.** The continent's bake waits on the trace, which lands after the world mounts. So:
+- the bakes have room for it (`etherWatersBake.js` `worldBakes`'s `continent`, `DeepWatersBakes.setTamriel`, its rows
+  marked `TAMRIEL_ROW` and routed to it, `waterFrameOf`'s fourth argument the continent's frame);
+- the client sets it on this thread and tells the worker (`deepWatersClient.js` `setTamriel`). The worker installs its
+  own copies of the trace and the fit, as the terrain worker does, and composes the continent over its own reader
+  (`deepWatersWorker.js`'s `tamriel` message, held until its bake is in);
+- the host asks at every promote (`scenes/deepWater/deepWatersHost.js` `syncContinent`: the trace's version and the fit,
+  handed once a picture). Only a world whose land past the Bay streams (`woods.isTamrielGround`) carves it.
+
+Nothing in `scenes/world.js` waits on it.
+
+**Not done, and why.** A place past the Bay blends its pixel's ground as a classic location's, and the bake samples the
+continent's pixels without a location's rect. A coastal town's cells may therefore read as water in the planes where the
+town raised them. The carve itself takes a cell only where its four corners stand at the ocean's height, so no town is
+cut. The Ocean Holes' pits stood the Bay's until PITS-WORLD (2026-10-27, `03-World/Ocean-Holes.md`): the continent's
+carved sea opens them now, each abyss in the world's abyss lane, and online the open zone's water (Lake Rumare, the
+Niben) none. RUMARE-WATER (`03-World/Tamriel.md`): a shore capital stood its
+every slice at the ocean's height (AUDIT TESA II C2), so its streets were such cells. Its land now stands a metre over
+the sea (`world/terrain/capitalSea.js` CAPITAL_FREEBOARD, past the carve's 0.25 headroom) and only its water at the sea's
+height. The Imperial City's span is read by this bake as the streamed build lays it (`tamrielWatersBake.js`
+rumareWaterSampler), so its lake is flooded from the canal and carved as the sea's.
+
+### Pins
+
+- `test/world/deepWater/tamriel_deep.test.js` (7): the large map following the land (none at sea, its kept pixels
+  dropped with the ground's); the seeded flood; the bake (the open sea at the planes' cap, the lake
+  unseeded, the coast nearer, the Bay's pixels the Bay's bake's, no class kept off its slot); the frames and the routing
+  (rows by their mark, set when the trace lands); the client and the worker's word; the host (handed once a picture, held
+  before, held where the land past the Bay does not stream); and on the player's own files the Topal Bay, the Niben, the
+  canal (under IC-GRAND's twenty-five pixels, at Bay row 676), Hammerfell's lake and a coast's pixel.
+- PIN MOVED: `test/world/tamriel2.test.js` (the large map's detail on the land, none at sea);
+  `test/world/deepWater/ether_deep.test.js` and `test/world/audittesa3e1_ether.test.js` (the host's, the client's and the
+  worker's lines carry the continent's word).
+- Mutants: `tools/mutants/tamrieldeep.json` (19, all dead; TDEEP-detail-at-sea re-aimed onto the swell at the merge of
+  BREATHTAKER3, and TDEEP-swell-cache-kept added). Re-aimed by content, all dead: `ether_deep.json`'s
+  ED-rows-misrouted, ED-bay-alone, ED-routing-bay, ED-client-unsaid, ED-client-no-ether, ED-worker-raw, ED-host-bay-gate,
+  ED-host-any-pixel, ED-host-bay-climates and ED-host-unsaid; `audit_etherow.json`'s AEOW-T-ether-takes-bay-rows,
+  AEOW-T-evict-ether-kept and AEOW-T-evict-bay-kept; `audittesa2p.json`'s P12-flood-four-ways (pictureLakes' new home).
+
+Section A, TAMRIEL-DEEP (OURS: DFU stops at the Bay's edge; the mod's law carried to the continent's frame).

@@ -679,7 +679,7 @@ test('RVN-STARS THE DOORS: both doors that draw the pause window lay its sky ove
   assert.match(read('src/ui/companionRoster.js'), /`cmp-\$\{r\.id\}-stars`/, 'the key the door focuses');
   const pause = read('src/ui/pauseDoor.js');
   assert.match(pause, /get openRevenantStars\(\) \{ return rvnStars\.hook; \},/);
-  assert.match(pause, /view = seams\.mountEnhancedMenu\(host, \{ mode: 'pause', hooks, onAction: act, at: 'companions' \}\);/);
+  assert.match(pause, /view = seams\.mountEnhancedMenu\(host, \{ mode: 'pause', hooks, onAction: act, at: 'companions', owner: overlay \}\);/);
   assert.match(pause, /rvnStars\.drop\(\);   \/\/ RVN-STARS: a sworn one's stars go with this window/);   // PIN MOVED (GROWTH3: the Firmament's door went to the Growth tab)
   const sheet = read('src/ui/charSheetDoor.js');
   assert.match(sheet, /openRevenantStars: rvnStars\.hook,/);

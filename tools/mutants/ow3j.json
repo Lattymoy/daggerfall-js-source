@@ -162,8 +162,8 @@
   {
     "name": "OW3-J5-start-exempt-again",
     "file": "src/systems/travel/travelRoute.js",
-    "old": ": goalExempt ? 2 : 1, leaving);",
-    "new": ": goalExempt ? 2 : 1, leaving || c === start);",
+    "old": ": goalExempt ? 2 : 1, leaving, beyond);",
+    "new": ": goalExempt ? 2 : 1, leaving || c === start, beyond);",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "OW3-J5-plateau-climbed",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "n !== goal ? 0 : goalExempt ? 2 : 1, leaving);",
-    "new": "n !== goal ? 0 : 2, leaving);",
+    "old": "n !== goal ? 0 : goalExempt ? 2 : 1, leaving, beyond);",
+    "new": "n !== goal ? 0 : 2, leaving, beyond);",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],

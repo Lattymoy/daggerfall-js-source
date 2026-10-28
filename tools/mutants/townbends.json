@@ -1,0 +1,83 @@
+[
+  {
+    "name": "TS8-stubs-kept",
+    "file": "src/world/townWalls.js",
+    "old": "      if (under && (mid(0) > x1 + eps || mid(2) < z0 - eps)) continue;   // a stub",
+    "new": "      if (under && false) continue;   // a stub",
+    "tests": [
+      "test/world/townbends.test.js"
+    ]
+  },
+  {
+    "name": "TS8-one-stub-kept",
+    "file": "src/world/townWalls.js",
+    "old": "      if (under && (mid(0) > x1 + eps || mid(2) < z0 - eps)) continue;   // a stub",
+    "new": "      if (under && mid(2) < z0 - eps) continue;   // a stub",
+    "tests": [
+      "test/world/townbends.test.js"
+    ]
+  },
+  {
+    "name": "TS8-walk-faces-kept",
+    "file": "src/world/townWalls.js",
+    "old": "      if (under && (on(0, x1) || on(2, z0))) continue;   // a side a stub joined",
+    "new": "      if (under && false) continue;   // a side a stub joined",
+    "tests": [
+      "test/world/townbends.test.js"
+    ]
+  },
+  {
+    "name": "TS8-sides-left-open",
+    "file": "src/world/townWalls.js",
+    "old": "      if (under && (on(0, x0) || on(2, z1))) { for (const v of ids) put(v, true); n++; }   // its far side, closed",
+    "new": "      if (under && on(0, x0)) { for (const v of ids) put(v, true); n++; }   // its far side, closed",
+    "tests": [
+      "test/world/townbends.test.js"
+    ]
+  },
+  {
+    "name": "TS8-turn-unturned",
+    "file": "src/world/townWalls.js",
+    "old": "    const s = turn ? -1 : 1;",
+    "new": "    const s = 1;",
+    "tests": [
+      "test/world/townbends.test.js"
+    ]
+  },
+  {
+    "name": "TS8-body-off-origin",
+    "file": "src/world/townWalls.js",
+    "old": "    positions.push(s * (P[v * 3] - cx), P[v * 3 + 1], s * (P[v * 3 + 2] - cz));",
+    "new": "    positions.push(s * P[v * 3], P[v * 3 + 1], s * P[v * 3 + 2]);",
+    "tests": [
+      "test/world/townbends.test.js"
+    ]
+  },
+  {
+    "name": "TS8-mods-tower-cut",
+    "file": "src/world/townWalls.js",
+    "old": ".some((d) => Math.abs(d) > 0.05)) { _bends.set(m, m); return m; }",
+    "new": ".some((d) => Math.abs(d) > 5)) { _bends.set(m, m); return m; }",
+    "tests": [
+      "test/world/townbends.test.js"
+    ]
+  },
+  {
+    "name": "TS8-towers-whole",
+    "file": "src/world/townWalls.js",
+    "old": "m = wallDoorless(tower ? bendTower(classicModel(p.model)) : classicModel(p.model));",
+    "new": "m = wallDoorless(classicModel(p.model));",
+    "tests": [
+      "test/world/townbends.test.js"
+    ]
+  },
+  {
+    "name": "TS8-tower-cells-whole",
+    "file": "src/world/townWalls.js",
+    "old": "const WALL_FOOT = Object.freeze({ thick: 9.6, tower: 9.6 });",
+    "new": "const WALL_FOOT = Object.freeze({ thick: 9.6, tower: 16.8 });",
+    "tests": [
+      "test/world/townbends.test.js"
+    ]
+  }
+]

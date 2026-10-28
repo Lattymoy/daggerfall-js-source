@@ -112,7 +112,7 @@ const governorHost = (over = {}) => {
   };
   const scope = {
     travelControlUI: { get isShowing() { return d.journey; } }, travelOptions: { state: { get autopilot() { return d.journey ? {} : null; } } },
-    travellerOnRoad: () => !!d.onRoad, foePaced, foeRate, tvInTown: () => !!d.town, TOWN_PACE_MAX: 5,   /* OW-TOWN-WALK: out of town unless a test stands the traveller in one */   // RATE-LAW: the keys' travel's ground; ENEMY-PACE's fixed floor
+    travellerOnRoad: () => !!d.onRoad, foePaced, foeRate, tvTownPace: () => (d.town ? 5 : null),   /* OW-TOWN-WALK: out of town unless a test stands the traveller in one */   // RATE-LAW: the keys' travel's ground; ENEMY-PACE's fixed floor
     travelView: { get active() { return d.up; }, get state() { return d.up ? 'up' : 'off'; } }, tvOwnsJourneys: () => d.owns,
     worldTimeScale: () => d.scale, setWorldTimeScale: (n) => { d.scale = n; },
     // OW-LEAD: the feet in the middle of pixel (100, 100), native - the rig's owed pixels are that one (the hole underfoot)

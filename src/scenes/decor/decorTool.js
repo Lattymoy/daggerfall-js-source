@@ -93,6 +93,7 @@ import { InputMessageBoxWindow } from '../../ui/inputMessageBox.js';
 import { loadDecorHotbar, saveDecorHotbar, decorHotId, DECOR_HOT_SLOTS } from '../../systems/decor/decorHotbar.js';
 import { decorLookOffers, decorAimKind, decorUseLabel, decorUseNext, decorUseCircle, decorHallRankNext, decorHallUseLabel, DECOR_USE_MODES } from '../../systems/decor/decorLook.js';
 import { noteDecorShared } from '../../systems/decor/decorGrants.js';
+import { dropGhosts } from '../../systems/decor/homeStranded.js';   // HOME-STRANDED: a chest's move reaches every cached scene
 import { decorDelta, decorDraftParts, decorDraftText, decorHallDraftText, mintDecorTxn } from '../../systems/decor/decorDraft.js';   // DECOR-BATCH
 import { interiorDoorIndex, interiorDoorKey } from '../../systems/decor/decorInteriorDoors.js';
 import { DECOR_CAP, DECOR_HALL_CAP, DECOR_PRICE_PER_METRE, DECOR_HIDDEN_CAP, decorPrice, decorPieceOf, decorRefund, decorRescale, mintDecorId, DECOR_STATIONS, DECOR_STATION_FEES, DECOR_STATION_NAMES, decorGoldMove } from '../../net/decorLaw.js';
@@ -1148,6 +1149,11 @@ export function createDecorTool(deps) {
     const data = answer?.data;
     const list = pool.itemsOf?.(id);
     if (!list || !data) return;
+    // HOME-STRANDED: the service's move reached every scene of the record; the cache follows, or its next checkpoint
+    // writes the goods back under another scene as ghosts
+    const cache = deps.identity?.()?.sceneCache;
+    if (data.moved) dropGhosts(cache, id, null);
+    if (Array.isArray(data.restored)) dropGhosts(cache, id, new Set(data.restored.map((/** @type {any} */ it) => it?.uid)));
     if (data.moved) list.length = 0;
     if (Array.isArray(data.restored)) {
       const have = new Set(list.map((/** @type {any} */ it) => it?.uid));
