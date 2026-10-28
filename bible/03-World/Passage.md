@@ -78,7 +78,7 @@ from her own port's roadstead her master's resume runs her in (`passage.js` voya
 over every journey; under First Person Travel it is sailed from her helm. Her hands are aboard (a fresh crew state,
 every hand), so a raider met on the way is met as any ship of mine meets one. Time passes as the journey's does.
 
-SEA-SQUARE (`01-Overview/bugs/Field-Bugs-2026-10-28.md`): past the Bay a sailed leg is aimed about its pixel's byte, its
+SEA-SQUARE (`01-Overview/bugs/Field-Bugs-2026-10-28b.md`): past the Bay a sailed leg is aimed about its pixel's byte, its
 square's south-east corner (`seaMark.js` seaLegWindow) - the square's middle put 31 of 70 voyages' runs on land there.
 
 A voyage stopped with the player still aboard - a foe near, a raider's chase, a load that put them back at her helm -

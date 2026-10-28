@@ -448,7 +448,7 @@ test('SMOOTH-LAND with ARENA2: on the player\'s own picture no staircase is left
   assert.ok(stood.length > 280);
   for (const p of stood) {
     assert.equal(provinceKeyBeyondBay(p.bx, p.by), p.province, `${p.name} on its own land`);
-    // PIN MOVED (FIELD BUGS 2026-10-28 COAST-PORT): a place the sea bears on is a port too - within SEA_RING, Elden Root's two
+    // PIN MOVED (FIELD BUGS 2026-10-28b COAST-PORT): a place the sea bears on is a port too - within SEA_RING, Elden Root's two
     if (p.port) assert.ok(seaBears(p.bx, p.by, (x, y) => AP.pictureSea(tr, x, y)), `${p.name} beside the sea`);
   }
 });

@@ -897,7 +897,7 @@ player's Daggerfall files, the same Tamriel on every client, online and off.
   sand, where the Bay's own ports do so 7 times in 155; five moved 1 or 2 pixels, Solitude's pin keeps its pixel); one with no shore in
   reach stands as any place and is none - on the freeware's picture Anvil and Leyawiin (no Gold Coast and no Topal Bay
   there), so 28 ports. A.EXE's coastal list is not read.
-- **COAST-PORT** (`01-Overview/bugs/Field-Bugs-2026-10-28.md`): a place the open sea bears on, within SEA_RING and its lakes
+- **COAST-PORT** (`01-Overview/bugs/Field-Bugs-2026-10-28b.md`): a place the open sea bears on, within SEA_RING and its lakes
   left out, is a port too, whatever the lore says: Farrun, Shornhelm, Blacklight, Tear, Thorn, Elden Root and Silinorin.
   35 places are ports.
 - **The towns and villages** (made): eight towns and sixteen villages a province (PLACE_COUNTS: Arena's shape of a

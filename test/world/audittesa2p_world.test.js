@@ -99,7 +99,7 @@ test('AUDIT TESA II P7/P13 (ARENA2) THE ROWS PAST THE BAY on the freeware\'s tra
   assert.ok(icRows.every((r) => r.type === LOCATION_TYPES.TownCity && r.w === 8 && r.h === 8));
   for (const p of px.stood.filter((q) => q.pinned)) assert.ok(!rows.some((r) => r.mapId === arenaPlaceId(p)), `${p.name} stands as its capital alone`);
   // PIN MOVED (NIBEN-SEA): 29 - the Imperial City's Waterfront a port, its canal through to the lake's arm
-  assert.equal(rows.filter((r) => r.port).length, 36, 'the lore\'s ports, a pinned one its capital\'s centre, the Imperial City\'s Waterfront and the places the sea bears on');   // PIN MOVED (FIELD BUGS 2026-10-28 COAST-PORT): 29, and its seven
+  assert.equal(rows.filter((r) => r.port).length, 36, 'the lore\'s ports, a pinned one its capital\'s centre, the Imperial City\'s Waterfront and the places the sea bears on');   // PIN MOVED (FIELD BUGS 2026-10-28b COAST-PORT): 29, and its seven
   // PIN MOVED (RUMARE-WATER): the Waterfront's own slice, row 22 - its quay and its piers' ends, the lake the sea's - where
   // it was the south edge's
   assert.deepEqual(icRows.filter((r) => r.port).map((r) => [r.px - at.px, r.py - at.py]), [[0, 22 - h]], 'the Imperial City\'s port its Waterfront\'s slice');

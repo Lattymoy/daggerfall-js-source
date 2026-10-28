@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-28 (bible/01-Overview/bugs/Field-Bugs-2026-10-28.md), three reports of the Tamriel integration:
+// FIELD BUGS 2026-10-28b (bible/01-Overview/bugs/Field-Bugs-2026-10-28b.md), three reports of the Tamriel integration:
 // SEA-SQUARE - ships went in circles at the coasts past the Bay, and voyages port to port stuck there: DFU's kernel builds
 // a map pixel's square between the bytes of columns x - 1 and x and rows y - 1 and y, so a byte is its square's south-east
 // corner, and the lanes and the voyages read it as the square's middle; COAST-PORT - coastal cities with no port: only a

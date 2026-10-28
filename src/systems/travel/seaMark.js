@@ -25,7 +25,7 @@ import { inBay } from '../../world/tamriel/tamrielFrame.js';
 export const PIXEL_TILES = MP_WORLD_UNITS / TILE;
 /** Half the block of water a mark must stand in, in tiles: 5 by 5 - 32 m. */
 export const MARK_BLOCK_HALF = 2;
-/** SEA-SQUARE (FIELD BUGS 2026-10-28): the window (a pixel wide, native, its south-west corner) a sailed leg into map pixel
+/** SEA-SQUARE (FIELD BUGS 2026-10-28b): the window (a pixel wide, native, its south-west corner) a sailed leg into map pixel
  *  (x, y) is aimed in - its square on the Bay; past the Bay centred on its byte, the square's south-east corner, where the
  *  planner's water is (world/terrain/terrainSampler.js squareCornersAll). */
 export function seaLegWindow(x, y) {

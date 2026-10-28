@@ -700,7 +700,7 @@ test('AUDIT STARTS V4/V7 on the freeware\'s Tamriel: from the nearest open water
   setArenaStanding(true);
   try {
     const ports = arenaPixels().stood.filter((p) => p.port);
-    assert.equal(ports.length, 35);   // PIN MOVED (FIELD BUGS 2026-10-28 COAST-PORT): 28, and the seven places the sea bears on
+    assert.equal(ports.length, 35);   // PIN MOVED (FIELD BUGS 2026-10-28b COAST-PORT): 28, and the seven places the sea bears on
     const home = openWaterNear(t.dp, t.rg.isWater);
     assert.ok(home, 'Daggerfall\'s harbor');
     let most = 0;   // PIN MOVED (PLAN-SLICES): a plan's cells, an op count - the journey's plan is made a slice of PLAN_FRAME_CELLS a frame, and a clock on a shared runner is a flake

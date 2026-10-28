@@ -268,7 +268,7 @@ test('NIBEN-SEA (ARENA2): on the player\'s own picture the Niben joins Lake Ruma
   const ic = ports.find((p) => p.name === 'Imperial City');
   // PIN MOVED (RUMARE-WATER): the harbour the Waterfront's slice (2069, 668), where it was the span's south edge's (670)
   assert.deepEqual([ic?.px, ic?.py, ic?.reach], [2069, 668, CANAL_PORT_REACH_PX], 'the harbour\'s slice, the Waterfront\'s');
-  const lane = laneNetwork(ports, lw.open, BEYOND_LANE_MAX_PX, true).find((l) => [l.a.id, l.b.id].includes(ic.id) && [l.a.name, l.b.name].includes('Senchal'));   // PIN MOVED (FIELD BUGS 2026-10-28 SEA-SQUARE): the host's roomiest roadstead
+  const lane = laneNetwork(ports, lw.open, BEYOND_LANE_MAX_PX, true).find((l) => [l.a.id, l.b.id].includes(ic.id) && [l.a.name, l.b.name].includes('Senchal'));   // PIN MOVED (FIELD BUGS 2026-10-28b SEA-SQUARE): the host's roomiest roadstead
   assert.ok(lane, 'a lane to Senchal');
   const way = beyondLaneWay(lane, lw.openNative);
   assert.ok(way && way.len > 800_000, `down the Niben (${way ? Math.round(way.len / 1000) : 0} km)`);

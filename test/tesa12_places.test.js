@@ -217,6 +217,6 @@ test('TESA12 with ARENA2: on the player\'s own trace every one of TAMRIEL1\'s 67
     assert.deepEqual([mine.filter((p) => p.kind === 'town').length, mine.filter((p) => p.kind === 'village').length], [8, 16], key);
   }
   const px = arenaPixels();
-  assert.deepEqual([m.places.length, px.stood.length, px.unstood.length, px.stood.filter((p) => p.port).length], [283, 283, 0, 35]);   // PIN MOVED (FIELD BUGS 2026-10-28 COAST-PORT): 28, and the seven places the sea bears on
+  assert.deepEqual([m.places.length, px.stood.length, px.unstood.length, px.stood.filter((p) => p.port).length], [283, 283, 0, 35]);   // PIN MOVED (FIELD BUGS 2026-10-28b COAST-PORT): 28, and the seven places the sea bears on
   assert.deepEqual(px.stood.filter((p) => !p.port && CITIES.some((c) => c.port && c.name === p.name)).map((p) => p.name), ['Anvil', 'Leyawiin'], 'no shore within SHORE_REACH: no port');
 });

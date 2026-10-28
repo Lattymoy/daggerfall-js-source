@@ -98,7 +98,7 @@ test('BAY-LEFT-SEA (ARENA2): on the freeware all 36 ports past the Bay keep a cr
     const by = {};
     for (const p of ports) (by[p.crown] ??= []).push(p.name);
     assert.deepEqual(by, {
-      // PIN MOVED (FIELD BUGS 2026-10-28 COAST-PORT): Farrun, Shornhelm, Blacklight, Tear, Elden Root, Thorn and Silinorin
+      // PIN MOVED (FIELD BUGS 2026-10-28b COAST-PORT): Farrun, Shornhelm, Blacklight, Tear, Elden Root, Thorn and Silinorin
       Wayrest: ['Imperial City', 'Solitude', 'Torval', 'Farrun', 'Jehanna', 'Shornhelm', 'Rihad', 'Windhelm', 'Winterhold', 'Dawnstar', 'Blacklight', 'Necrom', 'Ebonheart', 'Tear', 'Vivec', 'Elden Root', 'Haven', 'Woodhearth', 'Southpoint', 'Senchal', 'Lilmoth', 'Soulrest', 'Archon', 'Thorn'],
       Sentinel: ['Alinor', 'Hegathe', 'Taneth', 'Gilane', 'Dusk', 'Lillandril', 'Shimmerene', 'Sunhold', 'Firsthold', 'Skywatch', 'Silinorin'],
       Daggerfall: ['Northpoint'],

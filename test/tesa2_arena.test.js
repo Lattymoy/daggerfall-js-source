@@ -272,7 +272,7 @@ test('TESA2 with ARENA2: on the player\'s own trace all 283 places past the Bay 
   let off = 0;
   for (const p of px.stood) {
     if (p.pinned) { const at = capitalPin(p); assert.ok(at && CAPITALS.some((c) => c.name === p.name), p.name); assert.deepEqual([p.bx, p.by], [at.px, at.py], p.name); continue; }
-    if (p.port && CITIES.some((c) => c.port && c.name === p.name)) continue;   // PIN MOVED (FIELD BUGS 2026-10-28 COAST-PORT): a lore port on its shore - a coast port stands where any place does
+    if (p.port && CITIES.some((c) => c.port && c.name === p.name)) continue;   // PIN MOVED (FIELD BUGS 2026-10-28b COAST-PORT): a lore port on its shore - a coast port stands where any place does
     const [x, y] = pictureToBay(p.px, p.py), fx = Math.floor(x), fy = Math.floor(y);
     assert.equal(provinceKeyBeyondBay(p.bx, p.by), p.province, `${p.name} on its own land`);
     if (provinceKeyBeyondBay(fx, fy) === p.province) { assert.deepEqual([p.bx, p.by], [fx, fy], p.name); continue; }

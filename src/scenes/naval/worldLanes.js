@@ -54,7 +54,7 @@ export function bayLanePorts(mapDict, maps, portIds) {
 /**
  * The world's lane water: the Bay's own (`bayOpen`) on the Bay; past it, where the land past the Bay stands (`beyond()`),
  * the Ocean climate on water (`water`, `climateAt`) outside the Eltheric Ocean's box, and RUMARE-WATER's Imperial City's
- * lake (world/rumareWaters.js rumareSeaPixel). SEA-SQUARE (FIELD BUGS 2026-10-28): a pixel past the Bay is that water where
+ * lake (world/rumareWaters.js rumareSeaPixel). SEA-SQUARE (FIELD BUGS 2026-10-28b): a pixel past the Bay is that water where
  * its four corner bytes are (world/terrain/terrainSampler.js squareCornersAll: a byte is its square's south-east corner).
  * Its native twin reads a point's pixel FLOORED (seaRaiders.js tvRaidSea's own reading).
  * @param {{ bayOpen: (x: number, y: number) => boolean, water: (x: number, y: number) => boolean, climateAt: (x: number, y: number) => number, beyond: () => boolean }} o

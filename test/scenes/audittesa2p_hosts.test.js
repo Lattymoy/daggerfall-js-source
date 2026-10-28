@@ -244,7 +244,7 @@ test('AUDIT TESA II P7 A WAY PAST THE BAY KEEPS OFF THE BAY\'S RECTANGLE: the Ba
   }
 });
 
-test('AUDIT TESA II P7 (ARENA2) THE WAYS PAST THE BAY on the freeware\'s world, at the picture\'s scale: between the world\'s ports (the places past the Bay registered), 29 of the 31 lanes find a way (PIN MOVED, FIELD BUGS 2026-10-28 COAST-PORT: 19 of 21 before the seven coast ports), each in a second\'s tenth; every leg on the world\'s lane water at the Bay\'s scale, none in the Bay\'s rectangle nor on a lake (mutants: the corner cut; the leg unasked; the lakes the sea; the Bay\'s rectangle sailed)', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
+test('AUDIT TESA II P7 (ARENA2) THE WAYS PAST THE BAY on the freeware\'s world, at the picture\'s scale: between the world\'s ports (the places past the Bay registered), 29 of the 31 lanes find a way (PIN MOVED, FIELD BUGS 2026-10-28b COAST-PORT: 19 of 21 before the seven coast ports), each in a second\'s tenth; every leg on the world\'s lane water at the Bay\'s scale, none in the Bay\'s rectangle nor on a lake (mutants: the corner cut; the leg unasked; the lakes the sea; the Bay\'s rectangle sailed)', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
   const { DFPalette } = await import('../../src/formats/dfPalette.js');
   const { preloadTamrielTrace } = await import('../../src/ui/tamrielTrace.js');
   const { WoodsFile } = await import('../../src/formats/woodsFile.js');

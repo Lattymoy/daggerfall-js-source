@@ -1,8 +1,8 @@
-# FIELD BUGS 2026-10-28 - the Tamriel integration: ships in circles, voyages stuck on the coast, coastal cities with no port
+# FIELD BUGS 2026-10-28b - the Tamriel integration: ships in circles, voyages stuck on the coast, coastal cities with no port
 
 Three reports of the Tamriel integration, handed over by the owner in a session. Read on main's `c9651c3c8` with the
-freeware's data (`tools/fetch-data.sh`). The pins are `test/world/worldWide/fb1028_seasquare.test.js`, the mutants
-`tools/mutants/fb1028_seasquare.json` (15, all dead).
+freeware's data (`tools/fetch-data.sh`). The pins are `test/world/worldWide/fb1028b_seasquare.test.js`, the mutants
+`tools/mutants/fb1028b_seasquare.json` (15, all dead).
 
 | | Report | What it was | Done |
 |---|---|---|---|
@@ -82,7 +82,7 @@ NOT CHANGED. Ald'ruhn stands three pixels from the sea, past the ring. Anvil and
 
 ## Pins
 
-`fb1028_seasquare.test.js` (9): the kernel's square and the corner law, the lanes' water, the roomy roadstead (and the
+`fb1028b_seasquare.test.js` (9): the kernel's square and the corner law, the lanes' water, the roomy roadstead (and the
 crossing lanes'), the aim's window and Travel Options' aim; the coast's ports; and on the freeware every roadstead,
 three voyages, a packet bound for Gilane and the seven new ports.
 

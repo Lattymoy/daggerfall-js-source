@@ -713,7 +713,7 @@ test('START2 on the freeware\'s Tamriel: a voyage from every port past the Bay t
       const voyage = { start: 'sea', goal: 'land', voyage: true, again: false };
       // every port past the Bay - the provinces' starts' ways home among them - from the water about it a voyage reaches
       const ports = arenaPixels().stood.filter((p) => p.port);
-      assert.equal(ports.length, 35, 'TESA12\'s 28 ports and COAST-PORT\'s seven');   // PIN MOVED (FIELD BUGS 2026-10-28 COAST-PORT)
+      assert.equal(ports.length, 35, 'TESA12\'s 28 ports and COAST-PORT\'s seven');   // PIN MOVED (FIELD BUGS 2026-10-28b COAST-PORT)
       let most = 0;   // PIN MOVED (PLAN-SLICES): a plan's cells, an op count, never a clock (a flake on a shared runner)
       for (const p of ports) {
         let routed = null;
