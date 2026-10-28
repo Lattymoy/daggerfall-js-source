@@ -234,6 +234,6 @@ test('WOD7: the host - a marker I spring is recorded and asks for a full frame; 
   assert.match(EF, /        site: f\.site \?\? null,/, 'a camp foe\'s site rides the save...');
   assert.match(EF, /        if \(typeof sf\.site === 'string'\) f\.site = sf\.site;/, '...and comes back with it, so a loaded camp still rides');
   assert.match(WORLD, /exteriorFoes\.setOnSites\(\(from, sites\) => wodPeerSites\(from, sites\), wodSprungList\);/);
-  assert.match(WORLD, /if \(!wodKept\.life\) wodForgetPeerSites\(key\);/, 'a fresh promote forgets them');
+  assert.match(WORLD, /if \(!wodKept\.life\) wodForgetPeerSites\(pkey\);/, 'a fresh promote forgets them');   // PIN MOVED (IC-SWAP-BEHIND): the pixel's own key
   assert.match(WORLD, /const n = oidSeen\.get\(s\.objectID\) \?\? 0; oidSeen\.set\(s\.objectID, n \+ 1\);\n\s*wodSpawners\.push\(\{[^\n]*oid: s\.objectID, oidN: n \}\);/, 'the index among the pixel\'s alike');
 });

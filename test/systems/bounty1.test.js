@@ -439,7 +439,8 @@ test('BOUNTY1: the bounties tick in the modal arm too - inside a dungeon or a bu
   const body = src.slice(arm, armEnd);
   assert.match(body, /bountyHost\?\.tick\(dt\)/, 'the bounty tick runs in the modal arm (Mac: the graveyard\'s spiders never stood)');
   assert.match(body, /bountyFarms\?\.sync\(/, 'and the farms are brought in line there (they come down underground)');
-  assert.match(src, /dungeonPixel: \(\) => \{[\s\S]{0,400}modes\?\.dungeonLocation\?\.mapTableData/, 'the dungeon\'s own pixel is its location\'s');
+  assert.match(src, /dungeonPixel: \(\) => bountyDungeonPixel\(modes, playerTravelPixel\),/, 'the dungeon\'s own pixel is its location\'s');   // PIN MOVED (LAIR-WORLD, HOST-SPLIT): the closure out to scenes/bountyHost.js bountyDungeonPixel, verbatim
+  assert.match(readFileSync(new URL('../../src/scenes/bountyHost.js', import.meta.url), 'utf8'), /export function bountyDungeonPixel\(modes, travelPixel\) \{[\s\S]{0,200}modes\?\.dungeonLocation\?\.mapTableData/);
 });
 
 test('BOUNTY-FARM-PICK: a notice copies one of the eight nearest farms, the same one for everyone', async () => {

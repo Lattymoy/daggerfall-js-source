@@ -18,6 +18,7 @@ import { loadQuestTables } from '../../../src/systems/quest/tables.js';
 import { QuestMachine } from '../../../src/systems/quest/machine.js';
 import { defaultActionTemplates, CastEffectDo, ClickedFoe, PromptMulti, CastSpellDo } from '../../../src/systems/quest/actions.js';
 import { pickQuestFoe, DEFAULT_ACTIVATION_DISTANCE } from '../../../src/player/activate.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT (at the merge of main into TESA): the world host read whole - questWorld is scenes/questWorld.js's
 
 const VENDOR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'vendor', 'dfu-quests');
 const read = (p) => readFileSync(p, 'utf8').replace(/^﻿/, '');
@@ -385,7 +386,7 @@ test('QG1 seams: the two world reads stand on questWorld, byte-folded like MakeC
   // (actions.js:"= parentQuest?.hooks?.world?.getClassicSpellEffects?.(action.spellID)"/actions.js:"CastSpellDo could not find".."this.setComplete();   // C#: the TEMPLATE completes - kept") and the task can never fire, whatever the
   // ready-spell doors raise.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    const world = readSrc(f);
+    const world = f === 'src/scenes/world.js' ? hostText(f) : readSrc(f);
     assert.match(world, /getClassicSpellEffects: \(spellID\) => spellRecordOfIndex\(spellID\)\?\.effects \?\? null/,
       `${f}: the G4 SPELLS.STD registry answers the record`);
     assert.match(world, /\(\(e\.type \?\? 0\) & 0xff\) === \(\(effect\.type \?\? 0\) & 0xff\)/,

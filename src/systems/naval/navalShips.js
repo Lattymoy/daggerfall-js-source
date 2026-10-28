@@ -632,10 +632,11 @@ export function crownOf(px, py, capitals = null, regionIndex = -1) {
  * stood.
  * @param {any} shipClass
  * @param {number} seed
- * @param {{ regionIndex?: number, crown?: any }} [where] - the waters' region (the captain's name bank) and the crown
- *   a navy ship serves (crownOf's answer)
+ * @param {{ regionIndex?: number, crown?: any, bank?: number|null }} [where] - the waters' region (the captain's name bank)
+ *   and the crown a navy ship serves (crownOf's answer); WW3: `bank` the waters' people's where the caller knows better
+ *   (systems/naval/shipNameBank.js - past the Bay a province's), the region's else
  */
-export function shipNames(shipClass, seed, { regionIndex = 17, crown: crownIn = null } = {}) {
+export function shipNames(shipClass, seed, { regionIndex = 17, crown: crownIn = null, bank = null } = {}) {
   const rng = mulberry32((seed ^ 0x5eaf00d) >>> 0);
   rng();   // SHIP-NAMES: the draw the name took off this stream - her captain's draws are the ones they always were
   const crown = shipClass.faction === 'navy' ? crownIn ?? crownOf(0, 0, null, regionIndex) : null;
@@ -645,8 +646,7 @@ export function shipNames(shipClass, seed, { regionIndex = 17, crown: crownIn = 
   let captain;
   try {
     srand((seed >>> 0) || 1);
-    const bank = getNameBankOfRegion(regionIndex >= 0 && regionIndex < REGION_NAMES.length ? regionIndex : 17);
-    captain = fullName(bank, rng() < 0.5 ? GENDERS.Male : GENDERS.Female);
+    captain = fullName(Number.isInteger(bank) ? /** @type {number} */ (bank) : getNameBankOfRegion(regionIndex >= 0 && regionIndex < REGION_NAMES.length ? regionIndex : 17), rng() < 0.5 ? GENDERS.Male : GENDERS.Female);
   } finally { setSeed(saved); }
   return { name, captain, crown: crown?.name ?? null };
 }

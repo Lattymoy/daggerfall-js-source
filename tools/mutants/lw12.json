@@ -623,7 +623,7 @@
   {
     "name": "LW12-wire-to-region",
     "file": "src/scenes/world.js",
-    "old": "...(trip.to?.region != null && trip.to.region !== trip.from?.region ? livingHideoutsOf(trip.to.region) : [])]",
+    "old": "...(trip.to?.area != null && trip.to.area !== trip.from?.area ? livingHideoutsOf(trip.to.area) : [])]",
     "new": "]",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"

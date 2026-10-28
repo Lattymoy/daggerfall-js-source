@@ -22,10 +22,11 @@ import { Collider } from '../../../src/player/collider.js';
 import { snapshotPlayer, restorePlayer } from '../../../src/systems/save/save.js';
 import { createBankAccounts, createHouses, SHIP_TYPES } from '../../../src/systems/banking.js';
 import { MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE } from '../../../src/world/terrain/terrainSampler.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT (at the merge of main into TESA): the world host read whole - its save is scenes/worldQuickSave.js's
 
 const { PlayerMotor, FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, GRAVITY } = MOTOR;
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
-const W = rd('src/scenes/world.js');
+const W = hostText('src/scenes/world.js');
 const WM = rd('src/scenes/worldModes.js');
 const DC = rd('src/scenes/dungeonContext.js');
 

@@ -1,0 +1,292 @@
+[
+  {
+    "name": "HOUSES3-the-number",
+    "file": "src/net/homeLaw.js",
+    "old": "export const HOME_CAP = 3;",
+    "new": "export const HOME_CAP = 1;",
+    "tests": [
+      "test/systems/houses.test.js",
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-the-slot-alone",
+    "file": "src/net/homeLaw.js",
+    "old": "return [slot, ...(Array.isArray(slot.more) ? slot.more : [])].filter(",
+    "new": "return [slot].filter(",
+    "tests": [
+      "test/systems/houses.test.js",
+      "test/systems/houses3.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-the-slot-overwritten",
+    "file": "src/systems/banking.js",
+    "old": "const slot = (first.buildingKey ?? 0) > 0 ? blankHouse(regionIndex) : first;",
+    "new": "const slot = first;",
+    "tests": [
+      "test/systems/houses.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-a-fourth-kept",
+    "file": "src/systems/banking.js",
+    "old": "  if ((first.buildingKey ?? 0) > 0 && regionHousesFull(houses, regionIndex)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/houses.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-owned-the-first-alone",
+    "file": "src/systems/banking.js",
+    "old": "return regionDeeds(houses, regionIndex).some((d) => d.buildingKey === buildingKey && deedStands(d) && deedHeldIn(d, mapId));",
+    "new": "return regionDeeds(houses, regionIndex).slice(0, 1).some((d) => d.buildingKey === buildingKey && deedStands(d) && deedHeldIn(d, mapId));",
+    "tests": [
+      "test/systems/houses.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-no-next-in-the-slot",
+    "file": "src/systems/banking.js",
+    "old": "houses[regionIndex] = next ? { ...next, regionIndex, ...(rest.length ? { more: rest } : {}) } : blankHouse(regionIndex);",
+    "new": "houses[regionIndex] = blankHouse(regionIndex);",
+    "tests": [
+      "test/systems/houses.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-paid-with-no-room",
+    "file": "src/systems/banking.js",
+    "old": "  if (regionHousesFull(houses, regionIndex)) return { result: TRANSACTION_RESULT.NONE };",
+    "new": "",
+    "tests": [
+      "test/systems/houses.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-the-first-sold",
+    "file": "src/systems/banking.js",
+    "old": "const slot = deed ?? houses[regionIndex];",
+    "new": "const slot = houses[regionIndex];",
+    "tests": [
+      "test/systems/houses.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-the-copy-shallow",
+    "file": "src/systems/banking.js",
+    "old": "export const copyHouseSlot = (slot) => ({ ...slot, ...(Array.isArray(slot?.more) ? { more: slot.more.map((d) => ({ ...d })) } : {}) });",
+    "new": "export const copyHouseSlot = (slot) => ({ ...slot });",
+    "tests": [
+      "test/systems/houses.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-the-bank-sells-a-fourth",
+    "file": "src/systems/banking.js",
+    "old": "if (housesFull) return { kind: 'refuse', result: TRANSACTION_RESULT.ALREADY_OWN_HOUSE, lines: [housesFullText()] };",
+    "new": "if (false) return { kind: 'refuse', result: TRANSACTION_RESULT.ALREADY_OWN_HOUSE, lines: [housesFullText()] };",
+    "tests": [
+      "test/systems/bankwindow.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-no-next-offer",
+    "file": "src/ui/bankWindow.js",
+    "old": "      this.box.onNo = () => this._offerHouse(offers, i + 1);\n",
+    "new": "",
+    "tests": [
+      "test/systems/bankwindow.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-the-crossed-offered",
+    "file": "src/ui/bankWindow.js",
+    "old": "      if (offers[i].crossed) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/bankwindow.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-the-first-sold-at-the-bank",
+    "file": "src/ui/bankWindow.js",
+    "old": "this.box.onYes = () => this.hooks.sellHouse?.(i);",
+    "new": "this.box.onYes = () => this.hooks.sellHouse?.(0);",
+    "tests": [
+      "test/systems/bankwindow.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-escape-the-next",
+    "file": "src/ui/bankWindow.js",
+    "old": "else if (code === 'Escape') this._dismissBox();",
+    "new": "else if (code === 'Escape') this._dismissBox(MB_BUTTONS.No);",
+    "tests": [
+      "test/systems/bankwindow.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-the-order-gives-a-fourth",
+    "file": "src/systems/knightlyGifts.js",
+    "old": "if (housesFull) return { kind: 'refuse', result: alreadyOwnResult, line: housesFullText() };",
+    "new": "if (false) return { kind: 'refuse', result: alreadyOwnResult, line: housesFullText() };",
+    "tests": [
+      "test/systems/houses.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-the-service-cap-in-all",
+    "file": "server-account/src/homes.js",
+    "old": "AND char_id = ? AND region = ? AND deed = 0) < ?",
+    "new": "AND char_id = ? AND ? IS NOT NULL AND deed = 0) < ?",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-a-forged-region",
+    "file": "server-account/src/homes.js",
+    "old": "  if (witnessed && Number(witnessed.region) !== region) return { error: 'bad-home' };\n",
+    "new": "",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-the-transfer-cap-in-all-read",
+    "file": "server-account/src/homeTransfer.js",
+    "old": "AND guild_id IS NULL AND region = (SELECT region FROM homes WHERE map_id = ? AND building_key = ?)';",
+    "new": "AND guild_id IS NULL AND ? IS NOT NULL AND ? IS NOT NULL';",
+    "tests": [
+      "test/server/hometransfer.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-the-transfer-cap-in-all-write",
+    "file": "server-account/src/homeTransfer.js",
+    "old": " AND h.guild_id IS NULL AND h.region = homes.region) < ?8",
+    "new": " AND h.guild_id IS NULL) < ?8",
+    "tests": [
+      "test/server/hometransfer.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-customs-past-the-three",
+    "file": "src/systems/realmCustoms.js",
+    "old": "if (!permanent.has(name) || regionDeedsOf(houses, region).length >= HOUSES_PER_REGION) continue;",
+    "new": "if (!permanent.has(name)) continue;",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-gold-the-slots-alone",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "for (const slot of deedsOfHouses(snap?.houses)) {",
+    "new": "for (const slot of (Array.isArray(snap?.houses) ? snap.houses : []).filter((s) => s?.buildingKey > 0)) {",
+    "tests": [
+      "test/systems/houses3.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-marks-the-first-alone",
+    "file": "src/ui/town/townMapMarks.js",
+    "old": "const bought = new Set(regionDeedsOf(houses, regionIndex).filter(",
+    "new": "const bought = new Set(regionDeedsOf(houses, regionIndex).slice(0, 1).filter(",
+    "tests": [
+      "test/systems/houses3.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-held-the-slots-alone",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "export const realmDeedsOf = (houses) => (Array.isArray(houses) ? houses : []).flatMap((_, region) => regionDeedsOf(houses, region).flatMap((slot) => {",
+    "new": "export const realmDeedsOf = (houses) => (Array.isArray(houses) ? houses : []).flatMap((_, region) => regionDeedsOf(houses, region).slice(0, 1).flatMap((slot) => {",
+    "tests": [
+      "test/systems/houses3.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-arena-the-first-alone",
+    "file": "src/systems/arena/arenaMove.js",
+    "old": "    first ??= moved;\n",
+    "new": "    first ??= moved;\n    break;\n",
+    "tests": [
+      "test/systems/houses3.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-arena-own-free",
+    "file": "src/systems/arena/arenaMove.js",
+    "old": "held: new Set([...held, ...own])",
+    "new": "held",
+    "tests": [
+      "test/systems/houses3.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-host-bank-full-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "housesFull: () => regionHousesFull(playerEntity.houses ?? [], bankRegion()),",
+    "new": "housesFull: () => false,",
+    "tests": [
+      "test/systems/houses3.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-host-order-full-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "housesFull: regionHousesFull(playerEntity.houses, region),",
+    "new": "housesFull: false,",
+    "tests": [
+      "test/systems/houses3.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-host-the-deed-unnamed",
+    "file": "src/scenes/worldModes.js",
+    "old": "deed: offered?.deed ?? null }",
+    "new": "deed: null }",
+    "tests": [
+      "test/systems/houses3.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-host-market-own",
+    "file": "src/scenes/worldModes.js",
+    "old": "owned: (bs) => houseOwnedAt({ townMapId: dir.mapId, regionIndex: dir.regionIndex }, bs.buildingKey) || ",
+    "new": "owned: (bs) => ",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-save-shallow",
+    "file": "src/systems/save/save.js",
+    "old": "snap.houses = (entity.houses ?? []).map(copyHouseSlot);",
+    "new": "snap.houses = (entity.houses ?? []).map((h) => ({ ...h }));",
+    "tests": [
+      "test/systems/houses3.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-pins-the-slots-alone",
+    "file": "src/scenes/world.js",
+    "old": "houses: allDeeds(playerEntity.houses), rooms: playerEntity.rentedRooms,",
+    "new": "houses: playerEntity.houses, rooms: playerEntity.rentedRooms,",
+    "tests": [
+      "test/systems/houses3.test.js"
+    ]
+  },
+  {
+    "name": "HOUSES3-inherit-waits-at-one",
+    "file": "src/scenes/world.js",
+    "old": "    if (regionHousesFull(playerEntity.houses, region)) return 'waits';\n",
+    "new": "    if ((playerEntity.houses[region].buildingKey | 0) > 0) return 'waits';\n",
+    "tests": [
+      "test/systems/legacy/permadeath_houses.test.js"
+    ]
+  }
+]

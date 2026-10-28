@@ -1,13 +1,13 @@
 [
   {
     "name": "WILDSUITE-BOOT-TDZ2-hall-stood-from-below",
-    "file": "src/scenes/world.js",
-    "old": "return wildHallStandOf(_wm, px, py); }",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "return zoneHalls.standOf(_wm, px, py); }",
     "new": "return wildHallStand(px, py); }",
     "tests": [
       "test/scenes/bootorder.test.js"
     ],
-    "why": "the pixel builder asking the session's wrapper, declared far below the first build: the dead zone the boot walk names"
+    "why": "the pixel builder asking the session's wrapper, declared far below the first build: the dead zone the boot walk names RE-AIMED (WW-C2, bible/03-World/World-Wide.md WW-C): the halls' stand scenes/zoneHallsHost.js's, built above the pixel builder."
   },
   {
     "name": "WILDSUITE-AUDIT68-X3-zone-gate-outside-the-transition-gate",

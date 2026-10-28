@@ -73,7 +73,8 @@ import { payFromSave, creditSave } from '../../src/net/realm/realmGoldLaw.js';  
 import { CHAR_ID_RE, readAll } from './service.js';   // MARKET-SPEED: a read's queries in three round trips
 import { MARKS_MAX, MARK_WORTH_GOLD, utcDay } from '../../src/net/marksLaw.js';
 import { STORES_MAX, looseOnly } from '../../src/net/professionLaw.js';   // CLOTH-GEMS: the loose door's materials are no market's
-import { material, regionOk, WITNESS } from '../../src/net/nodeLaw.js';
+import { material, regionOk, WITNESS } from '../../src/net/nodeLaw.js';   // WW7-5: a town book's region any of the world's
+import { REGION_NAMES } from '../../src/formats/mapsTables.js';   // WW7-5: the world's regions, the hubs' count
 import { RECIPES, recipeById } from '../../src/net/recipeLaw.js';
 import {
   MARKET_LISTING_S, MARKET_ORDER_S, MARKET_ORDERS_MAX, MARKET_POSTS_MAX, MARKET_OPS_MAX, MARKET_WINDOW_S,
@@ -137,7 +138,7 @@ const witnessOf = (player, nowS) => (Number.isSafeInteger(player.registered_at) 
 function hubsOf(hubs) {
   const out = new Map();
   if (!hubs || typeof hubs !== 'object' || Array.isArray(hubs)) return out;
-  for (const [k, v] of Object.entries(hubs).slice(0, 62)) {
+  for (const [k, v] of Object.entries(hubs).slice(0, REGION_NAMES.length)) {   // WW7-5: every region's, the provinces' too
     const r = Number(k);
     if (!regionOk(r) || !Array.isArray(v)) continue;
     const [x, y] = v;
@@ -446,7 +447,7 @@ const auctionsDueRead = (db, nowS) => db.prepare(`SELECT id, high, region, board
  * auction closes unsold. AUDIT 31 S1: a standing bid whose row is gone (its bidder's account deleted - no route does
  * it, Professions-Arc 18) closes it unsold too, never a sale to no one: the owner written NULL failed every read after.
  */
-export async function closeAuctions(ctx, read = null) {
+export async function closeAuctions(ctx, read = null, env = null) {   // DOMAIN3: `env`, the region law's week (the Tithe's bailiwick)
   const { db, nowS, rand } = ctx;
   // MARKET-SPEED: the candidates as a read's first batch found them (auctionsDueRead), or read here - the clock's
   const due = read ?? ((await auctionsDueRead(db, nowS).all()).results ?? []);
@@ -464,7 +465,7 @@ export async function closeAuctions(ctx, read = null) {
     const nonce = mintId(rand);
     const high = a.high == null ? null : Number(a.high);
     // SEAT1d: the Tithe of the seat the auction's board belongs to, from the seller's proceeds
-    const tt = high == null ? null : await titheAt(db, nowS, Number(a.region), rowBoard(a));
+    const tt = high == null ? null : await titheAt(db, nowS, Number(a.region), rowBoard(a), env);
     const tithe = tt ? saleTithe(high, tt.pct) : 0;
     const tax = high == null ? 0 : saleTaxOn(0, high), gets = high == null ? 0 : high - tax - tithe;
     const room = Number(a.balance) + gets <= MARKS_MAX;
@@ -670,7 +671,7 @@ export async function marketRead(ctx, player, env, { character, region, view, fa
   // closes them each minute, so a read nearly always finds none); the settle's reads then asked again, behind the close
   const first = await readAll(db, [...settleReads(db, me, nowS), auctionsDueRead(db, nowS)]);
   const dueAuctions = first[first.length - 1];
-  if (dueAuctions.length) await closeAuctions(ctx, dueAuctions);
+  if (dueAuctions.length) await closeAuctions(ctx, dueAuctions, env);
   const touched = await settle(ctx, player, dueAuctions.length ? null : first.slice(0, -1));
   const today = utcDay(nowS);
   const own = hubsOf(hubs);
@@ -1320,8 +1321,8 @@ export async function marketBuy(ctx, player, env, { character, region, listing: 
   // the courier the buyer's board's seat takes, out of what is burnt
   const [hubsNow, tt, ctAny] = await Promise.all([
     hubsAt(db, [from, region], own),
-    at ? null : titheAt(db, nowS, from, rowBoard(l)),
-    at || from === region ? null : titheAt(db, nowS, region, boardOf(board)),
+    at ? null : titheAt(db, nowS, from, rowBoard(l), env),
+    at || from === region ? null : titheAt(db, nowS, region, boardOf(board), env),
   ]);
   const road = courierOf(hubsNow, from, region, units, courierSlow(env, nowS, region));
   if (!road) return { error: 'market-no-road' };
@@ -1654,7 +1655,7 @@ export async function marketFill(ctx, player, env, { character, region, order: i
   const pay = total - tax - road.courier;
   if (pay < 1) return { error: road.courier > 0 ? 'market-courier-dear' : 'market-taxed-out' };
   if (Number.isSafeInteger(least) && pay < least) return { error: 'market-price-moved' };
-  const ct = road.courier > 0 ? await titheAt(db, nowS, region, boardOf(board)) : null;
+  const ct = road.courier > 0 ? await titheAt(db, nowS, region, boardOf(board), env) : null;
   const fillTithe = ct ? titheOf(road.courier, ct.pct) : 0;   // the buy's courier share (SEAT1d), the filler's board's
   const nonce = mintId(rand);
   const day = utcDay(nowS);

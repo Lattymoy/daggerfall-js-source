@@ -25,6 +25,7 @@ export const QUEST_DIRS = Object.freeze([
   ['warm-ashes-ships', 'vendor/warm-ashes-ships/Quests'],
   ['foraging', 'vendor/foraging/Quests'],
   ['questlines', 'src/systems/questlines/quests'],
+  ['starts', 'src/systems/starts/quests'],   // START1: the starts' own quests (systems/starts/starts.js)
 ]);
 
 /** Every quest file the pack holds: upper-case name -> { name, dir, path }. A mod's quest of a DFU name is the mod's. */

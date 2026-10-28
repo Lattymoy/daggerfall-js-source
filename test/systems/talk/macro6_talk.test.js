@@ -31,7 +31,8 @@ test('MACRO-6: the Where-is answer answers %hnt2 and the two names, each occurre
 
 test('MACRO-6: the engine-less host hands the answer its names and a lazy hint', () => {
   const src = read('src/scenes/townTalk.js');
-  assert.match(src, /const names = talkMacroSource\(\{\s*fullName: \(gender\) => nameHelperFullName\(getNameBankOfRegion\(regionNow\(\)\), gender === 'female' \? GENDERS\.Female : GENDERS\.Male\),\s*bumpSeed,\s*\}\);/,
+  // TESA3: past the Bay the province's bank (bible/03-World/Arena-Provinces.md), else the region's
+  assert.match(src, /const names = talkMacroSource\(\{\s*fullName: \(gender\) => nameHelperFullName\(provinceBank\(\) \?\? getNameBankOfRegion\(regionNow\(\)\), gender === 'female' \? GENDERS\.Female : GENDERS\.Male\),[^\n]*\s*bumpSeed,\s*\}\);/,
     'TalkManagerMCP’s own FemaleName/MaleName, the region’s bank and MaleName’s seed nudge');
   assert.match(src, /femaleName: \(\) => names\.femaleName\(\), maleName: \(\) => names\.maleName\(\),/);
   assert.match(src, /\n\s+hint, key: building\.name,/, 'the hint goes over as the FUNCTION - the walk calls it per occurrence');

@@ -438,11 +438,12 @@
   {
     "name": "SEAT2b2-dressed-no-works",
     "file": "src/net/townSeatBook.js",
-    "old": "{ holder: s.holder ?? null, battle: s.battle ?? null, forts: s.forts ?? null }",
-    "new": "{ holder: s.holder ?? null, battle: s.battle ?? null }",
+    "old": "{ holder: s.holder ?? null, battle: s.battle ?? null, forts: s.forts ?? null,",
+    "new": "{ holder: s.holder ?? null, battle: s.battle ?? null,",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DOMAIN3): the dress carries a seat of power's mark and a holding's Charter after its works."
   },
   {
     "name": "SEAT2b2-tab-no-towers",

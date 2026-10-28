@@ -76,7 +76,7 @@ test('SEAT1a the shape: a crown stands in its crown\'s region and bears its name
   const dev = await aged('Devra');
   assert.equal((await witness(dev, { ...WAYREST, name: 'Daggerfall' })).body.error, 'bad-seat', 'a crown bearing another\'s name');
   assert.equal((await witness(dev, { ...WAYREST, region: 21 })).body.error, 'bad-seat', 'a crown outside its region');
-  assert.equal((await witness(dev, { ...ANTICLERE, pixel: [1000, 1] })).body.error, 'bad-seat');
+  assert.equal((await witness(dev, { ...ANTICLERE, pixel: [8192, 1] })).body.error, 'bad-seat');   // PIN MOVED (WW7-3, bible/03-World/World-Wide.md WW7): off the world's grid
   assert.equal((await witness(dev, { ...ANTICLERE, name: ' Anticlere' })).body.error, 'bad-seat', 'the canonical name alone');
   assert.equal((await witness(dev, WAYREST)).status, 200);
   for (let i = 1; i < SEAT_WITNESS_REPORTS_HOUR; i++) await witness(dev);

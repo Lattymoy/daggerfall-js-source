@@ -34,6 +34,9 @@ import { BOSS_SEAM_KEYS, bossSeam, GATE_SEAM, SD_SEAM, SERPENT_SEAM } from '../.
 import { judgeGate, judgeRemnant, judgeSerpent, posAt, posAfter, posYAt } from '../../../src/net/bossRef.js';
 import { createSdSteps, sdStepKey } from '../../../src/scenes/superDungeon/sdSteps.js';
 import { Collider } from '../../../src/player/collider.js';
+import { sdTestKey, sdOneParty } from '../superDungeon/sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const quiet = async (fn) => { const w = console.warn, i = console.info; console.warn = () => {}; console.info = () => {}; try { return await fn(); } finally { console.warn = w; console.info = i; } };
 const sha = (lines) => createHash('sha256').update(lines.join('\n')).digest('hex');
@@ -99,7 +102,7 @@ async function withRealmOf(fn, { concord = true } = {}) {
     const cell = world.room(worldRoom(PX, PY));
     const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
     await cell.raw(mara, JSON.stringify({ t: 'sd', k: 'found', s: rec.s, px: PX, py: PY }));
-    const realm = world.room(sdRoomKey(rec.s));
+    const realm = world.room(sdTestKey(rec.s));
     realm.env.BOSS_BODY = ENFORCE;
     if (concord) { const h = await realm.room._sdHallOf(rec.s); h.ok = true; await realm.room.state.storage.put('sdorrery', h); }
     const beat = async (ms) => { const end = clock + ms; while (realm.alarm.at != null && realm.alarm.at <= end) { clock = Math.max(clock, realm.alarm.at); await realm.fire(); } clock = end; };
@@ -206,7 +209,11 @@ const GOLDEN = Object.freeze({
   // the seeded fight's fortieth second (their cooldown run from his wake), naming the chained by peer id (`pk`); every frame
   // before it word for word as COURT-WATCH's (05991c48..., 192 frames)
   gate: Object.freeze({ n: 190, h: '3db1852e7b7c714a313ceb3f19790f9cfb0e6348f2599c0905f35c97bdfe9c35' }),
-  sd: Object.freeze({ n: 140, h: 'b0019f8f7fd56073923afc19176cba6cf95d3d295840299ee38804d233195ee9' }),
+  // PIN MOVED (WW5, bible/03-World/World-Wide.md WW5): the hub runs a director a lane - the Bay's and eight provinces' -
+  // before the realm opens, so the seeded die stands elsewhere when the fight begins (b0019f8f..., 140 frames before). The
+  // Remnant's frames are the same: with the die seeded afresh at the fight's first hello the realm says 148 frames hashed
+  // 36cc80c3ccedd3eeef2d26a35633c6778389cbb984c13413f2d1ae383613befa on the tree before WW5 and after it alike
+  sd: Object.freeze({ n: 146, h: '1e8fe66973b532178b65903095c99018a4532b20a13535c410c760f0eaa30daf' }),
   serpent: Object.freeze({ n: 232, h: '8569aebc4ba221743d3191c8d952bcca99e72e164b032cfd37f00eb613ce3ded' }),
   // PIN MOVED (RPT1026-EVENTS ORRERY-HANDS, net/superDungeon/sdBrain.js orreryRightsSnapped): a hand's lengthening is counted for
   // the Hollow, so past the snap Ann - ten long turns behind her - waits while Bo and the keepers turn (`w`, to her alone),

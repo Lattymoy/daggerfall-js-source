@@ -83,8 +83,8 @@
   {
     "name": "SPREAD-a-plant-on-the-understorey-s-tile",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "      if (!ground || taken[ti]) continue;",
-    "new": "      if (!ground) continue;",
+    "old": "      if (!ground || taken[ti] || onFoot?.[ti] === 2) continue;",
+    "new": "      if (!ground || onFoot?.[ti] === 2) continue;",
     "tests": [
       "test/world/junglespread.test.js"
     ]

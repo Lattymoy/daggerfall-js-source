@@ -1,0 +1,74 @@
+// @ts-check
+// GATE-ROADS (bible/03-World/Town-Shapes.md GATE-ROADS): A WALLED TOWN'S GATES FOR THEIR ROADS - each gate in its pixel's
+// tiles and what stands in its road's way, for the terrain kernel to lay (world/road/gateRoads.js layGateRoads). The main
+// thread's: a wall on its outline is made here (world/townWalls.js, its gates on its roads and its streets); a ring a town
+// keeps - Daggerfall's own, or a town mod's (Beautiful Cities rebuilds every Bay city's) - stands its gates in its blocks.
+import { townWallOf, townWallCells, townHouses, gateOpening, WALL_MODELS, GATE_OPENING } from './townWalls.js';
+import { getLocationTerrainTileOrigin } from './terrain/terrainTiles.js';
+import { isWallCarrier, SHAPE_AUTOMAP_SIDE } from './townShape.js';
+import { GATE_BLOCK } from './road/gateRoads.js';
+
+const TILE_M = 6.4, BLOCK_M = 102.4, D = 128;
+
+/** A kept ring's gates: each gate model (WALL_MODELS.gate) its blocks stand, its opening's middle (gateOpening) facing out
+ *  (RMBLayout: a subrecord at (x, 4096 - z) turned by its yRotation, its model's offset turned with it, the model turned by
+ *  its own on that) - in the town's metres.
+ *  @param {number} w @param {number} h @param {(bx: number, by: number) => any} rmbAt */
+export function blockGates(w, h, rmbAt) {
+  const out = [];
+  for (let by = 0; by < h; by++) for (let bx = 0; bx < w; bx++) {
+    for (const s of rmbAt(bx, by)?.subRecords ?? []) {
+      for (const o of s.exterior?.block3dObjectRecords ?? []) {
+        if (o.modelIdNum !== WALL_MODELS.gate) continue;
+        const f = ((s.yRotation ?? 0) * Math.PI) / 1024, cos = Math.cos(f), sin = Math.sin(f), lx = o.xPos * 0.025, lz = o.zPos * 0.025;
+        const sx = bx * BLOCK_M + s.xPos * 0.025, sz = by * BLOCK_M + (4096 - s.zPos) * 0.025, F = f + ((o.yRotation ?? 0) * Math.PI) / 1024;
+        out.push(gateOpening({ at: [sx + lx * cos - lz * sin, sz + lx * sin + lz * cos], out: [-Math.sin(F), Math.cos(F)] }));
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * GATE-ROADS: A TOWN'S GATES AND THEIR BLOCKS for the terrain kernel - `{ gates, blocked }`: each gate `{ x, y, ox, oy,
+ * half }` (its opening's middle in its pixel's tiles, x east and y north, its outward normal, the opening's half width in
+ * tiles - GATE_OPENING), and per tile (x + y * 128) GATE_BLOCK's hard for a house or the wall and soft for a block's model
+ * or flat. Null for a town with no gate, a capital (its own approaches, world/capitalApproaches.js), and a wall still
+ * waiting for its roads (its pixel is built again when they land). `mapsFile` and `blocksFile` read its blocks as
+ * setLocationTiles does.
+ * @param {any} dfLocation @param {any} mapsFile @param {any} blocksFile */
+export function townGateRoads(dfLocation, mapsFile, blocksFile) {
+  const ed = dfLocation?.exterior?.exteriorData;
+  if (!ed || dfLocation.capital) return null;
+  const { width: w, height: h } = ed, o = getLocationTerrainTileOrigin(dfLocation);
+  const blocks = [];
+  for (let by = 0; by < h; by++) for (let bx = 0; bx < w; bx++) {
+    const name = blocksFile.checkName(mapsFile.getRmbBlockName(dfLocation, bx, by)), i = isWallCarrier(name) ? -1 : blocksFile.getBlockIndex(name);
+    blocks.push(i < 0 ? null : blocksFile.getBlock(i)?.rmbBlock ?? null);
+  }
+  const rmbAt = (bx, by) => blocks[by * w + bx];
+  const wall = dfLocation.outline?.walled ? townWallOf(dfLocation) : null;
+  if (dfLocation.outline?.walled && !wall) return null;
+  const at = wall ? wall.pieces.filter((p) => p.model === WALL_MODELS.gate).map(gateOpening) : blockGates(w, h, rmbAt);
+  if (!at.length) return null;
+  const gates = at.map((g) => ({ x: o.x + g.at[0] / TILE_M, y: o.y + g.at[1] / TILE_M, ox: g.out[0], oy: g.out[1], half: GATE_OPENING.half / TILE_M }));
+  const blocked = new Uint8Array(D * D), S = SHAPE_AUTOMAP_SIDE, C = TILE_M / (BLOCK_M / S);
+  const mark = (tx, ty, v) => { if (tx >= 0 && ty >= 0 && tx < D && ty < D && blocked[tx + ty * D] !== GATE_BLOCK.hard) blocked[tx + ty * D] = v; };
+  for (const r of rmbAtRecords(w, h, rmbAt)) mark(o.x + Math.floor(r[0] / TILE_M), o.y + Math.floor(r[1] / TILE_M), GATE_BLOCK.soft);
+  const houses = townHouses(w, h, rmbAt), walls = wall ? townWallCells(wall, w, h) : null;
+  for (let cy = 0; cy < h * S; cy++) for (let cx = 0; cx < w * S; cx++) {
+    const i = cy * w * S + cx;
+    if (houses[i] || walls?.[i]) mark(o.x + Math.floor(cx / C), o.y + Math.floor(cy / C), GATE_BLOCK.hard);
+  }
+  return { gates, blocked };
+}
+
+/** Each block's misc models' and flats' places in the town's metres (world/townShape.js townTiles' read). */
+function rmbAtRecords(w, h, rmbAt) {
+  const out = [];
+  for (let by = 0; by < h; by++) for (let bx = 0; bx < w; bx++) {
+    const rmb = rmbAt(bx, by);
+    for (const r of [...(rmb?.misc3dObjectRecords ?? []), ...(rmb?.miscFlatObjectRecords ?? [])]) out.push([bx * BLOCK_M + r.xPos * 0.025, by * BLOCK_M + (r.zPos + 4096) * 0.025]);
+  }
+  return out;
+}

@@ -814,7 +814,7 @@ THE LAWS.
   schoolPotency, read by `systems/effects.js` casterDamageScaled with the blow's own rounding and floor of one; a spell
   the throw turned whole stays nothing). The climb is `skillSoftcap.js` climbedSkill - the one read the foes' edge
   takes, so the climb that raises them is the climb that pays; a worn Destruction line already pays in price (the live
-  value SPELL-COST-PAST reads) and strikes no harder, and mentoring reads none, as the edge does. Offline DFU's price
+  value SPELL-COST-PAST reads) and strikes no harder, and mentoring reads the mentored climb (MENTOR2). Offline DFU's price
   term stands (to nothing at 110 - the field report's For Mac), and so does its damage. Never at a player, a peer's
   stand-in or a foe's cast (`ownSpellAt`): a refereed fight's stand-in is a player (`combat/duelCombat.js` duelStub), so
   the duel, the siege, the Wild Zone and the arena are BAL8's to the point.
@@ -1053,7 +1053,7 @@ health x1.04; each Renown past 15, to 50, x1.01 and x1.005 - compounding, becaus
 
 WHOSE LEVEL. The threat is read where a foe is built, off the builder's player (`heroThreatOf`: `mentorMode.js`
 effectiveLevel - a mentor's, the group's - and the page's Renown, `sigil.js` sigilRenown; no Renown while mentoring,
-when the Firmament sleeps; offline the level alone). Every client builds its own copy of every foe it sees, so a foe's
+its foes the group's; offline the level alone). Every client builds its own copy of every foe it sees, so a foe's
 blows at me are my threat's: my own foes whole, a dungeon's layout copy whole (its maximum then the host's `k`, as
 SOFTCAP2's standing always was), a peer's puppet its blows alone (`{ puppet: true }` - its health is its owner's
 word). The hero's health is stood on `healthMult` as well (`enemyEntity.js` applyProgressionScaling), the field
@@ -1159,7 +1159,7 @@ no two-handed term to match. A shaft flies at `systems/spellcast.js:"export cons
 (`combat/arrowFlight.js:"(m.orb ? MISSILE_SPEED : ARROW_FLIGHT_SPEED)"`, `scenes/dungeonContext.js:"(m.arrow && !m.flatArchive ? ARROW_FLIGHT_SPEED : MISSILE_SPEED)"`).
 A spell and a gun's orb stay on MISSILE_SPEED. The bow's draw, its 0.0625 s tick and GetBowCooldownTime
 are unchanged. Archery Mastery is unchanged: +1% of the blow per effective point past 100, and never
-against a player, in a duel, while mentoring, in beast form, or through the Warden's ward.
+against a player, in a duel, in beast form, or through the Warden's ward.
 
 Measured at Strength 75, Speed 70, Daedric, weapon skill 100, every face of the die, a held shot at 60 fps
 (`test/combat/balArchery.test.js`). A Daedric Long Bow's sustained blow went from 23 to 26; the Longsword's
@@ -1174,6 +1174,18 @@ The Thunderlock's reload was the lab's fixed 1.7 s. It is now
 `cooldownUntil` when the shot ends, so the pump and the next trigger share that span. Speed 50 is 1.70 s,
 75 is 1.53 s, 100 is 1.36 s, 150 is 1.02 s, and it does not go under 1 s. The frame clock stays 14 fps.
 A Pistolet's reload stays 1.4 s. At this build the Thunderlock's sustained DPS went from 11.95 to 12.82.
+
+ARCHERY-REF (2026-10-26, from the CI of the merged change): the referees kept DFU's bow tops. The relay judges a
+player's blow in a siege, an arena bout, a duel and the open zone against its own copies of the weapon tables,
+pinned equal to `characters/weapons.js`, and the account service signs a character's arms reach from one of them.
+Both copies still read 16 and 18, so a top bow blow stood over the referee's bucket. They read 17 and 19 now
+(`net/siege/siegeRef.js:"126: 18, 127: 12, 128: 16, 129: 17, 130: 19,"`,
+`net/arena/arenaLaw.js:"export const ARENA_WEAPON_MAX"`): relay world270 and account acct196 (acct197 since the merge of main), in the TESA fold's release
+(#1184, which carried it while main stood red). The flight pins
+measured a shaft by MISSILE_SPEED's 1.25 m a 0.05 s step; they step it by the frame that flies those 1.25 m at
+ARROW_FLIGHT_SPEED now (`test/scenes/roadh_tail.test.js`, `test/systems/arrowfoes.test.js`, AUDIT 65 CV-2), and
+the volley's landings are timed at ARROW_FLIGHT_SPEED (TECHFX1). Mutants: `tools/mutants/archeryref.json`. BOW-TOPS, below, made the same fix on main; at the merge of main into #1184 (2026-10-27)
+the two met with one set of values, and the relay's row is world270, past BOW-TOPS's world269.
 
 **BOW-TOPS (2026-10-26, the owner: "Deploy failed").** BAL-ARCHERY merged with the deploy red, and deploys 1705 to
 1707 failed on what it moved without moving its pins. The relay keeps its own copies of the weapon tops, and they

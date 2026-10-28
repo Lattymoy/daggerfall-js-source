@@ -84,10 +84,16 @@ export const DYNAMIC_SKIES_MOD = Object.freeze({
 });
 
 /** loadAllSkyboxSettings: the preset the mod loads per WeatherType,
- *  keyed by the port's weather names (WeatherType.None == Sunny). */
+ *  keyed by the port's weather names (WeatherType.None == Sunny).
+ *  ASHFALL1's audit: the port's own two words take the presets their fog
+ *  rows stand in for (world/weather.js fogForWeather under a mod's five) -
+ *  the sandstorm the fog's sky, the ashfall the overcast's (its flags');
+ *  unmapped, both fell to the sunny sky and the sunny fog under a wall of
+ *  sand or a pall of ash. */
 export const WEATHER_PRESET = Object.freeze({
   sunny: 'SkyboxSunny', cloudy: 'SkyboxCloudy', overcast: 'SkyboxOvercast', fog: 'SkyboxFog',
   rain: 'SkyboxRain', thunder: 'SkyboxThunder', snow: 'SkyboxSnow',
+  sandstorm: 'SkyboxFog', ashfall: 'SkyboxOvercast',
 });
 
 /** loadFogSettings' dictionary (BLBSkybox.cs:1100-1108): which of the
@@ -96,6 +102,7 @@ export const WEATHER_PRESET = Object.freeze({
 export const FOG_PRESET_FOR_WEATHER = Object.freeze({
   sunny: 'FogSunny', cloudy: 'FogSunny', overcast: 'FogOvercast', fog: 'FogHeavyFog',
   rain: 'FogRainy', thunder: 'FogRainy', snow: 'FogSnowy',
+  sandstorm: 'FogHeavyFog', ashfall: 'FogSnowy',   // ASHFALL1's audit: as world/weather.js fogForWeather stands them in
 });
 
 /** "Because game runs at timescale 12" - the mod's own constant. */

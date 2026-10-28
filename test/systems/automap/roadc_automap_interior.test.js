@@ -158,7 +158,7 @@ test('c2/S9 THE ENTRANCE BEACON AS A SEQUENCE: lit by SetupBeacons, put out by H
   } finally { resetAutomapStore(); }
 });
 
-test('c2/S9 the dictionary tail (:2362-2379): a mapped dungeon under the SAME location lights the shop-s beacon', () => {
+test('c2/S9 the dictionary tail (:2362-2379): a mapped dungeon under the SAME location lights the shop-s beacon', async () => {
   resetAutomapStore();
   try {
     // DFU looks the BUILDING up in the DUNGEON dictionary by the current
@@ -172,8 +172,10 @@ test('c2/S9 the dictionary tail (:2362-2379): a mapped dungeon under the SAME lo
     // getDungeonAutomap over automapDungeonKey - both already exported,
     // neither writing.
     const wm = src('src/scenes/worldModes.js');
-    assert.match(wm, /dungeonEntranceDiscovered: !!getDungeonAutomap\(\s*\n?\s*automapDungeonKey\(hit\.dfLocation\?\.regionIndex \?\? -1, hit\.dfLocation\?\.name \?\? ''\)\)\?\.entranceDiscovered/,
-      'the host reads the dungeon dictionary by the location key');
+    assert.match(wm, /dungeonEntranceDiscovered: !!getDungeonAutomap\(\s*\n?\s*automapKeyOf\(hit\.dfLocation\)\)\?\.entranceDiscovered/,
+      'the host reads the dungeon dictionary by the location key');   // PIN MOVED (TESA8, bible/03-World/Arena-Provinces.md): through automapKeyOf - DFU's key for every place of the game's, a lair past the Bay's with its map id
+    const { automapKeyOf, automapDungeonKey } = await import('../../../src/systems/automap/automap.js');
+    assert.equal(automapKeyOf({ regionIndex: 17, name: 'Daggerfall' }), automapDungeonKey(17, 'Daggerfall'), 'the same string DFU reads');
   } finally { resetAutomapStore(); }
 });
 

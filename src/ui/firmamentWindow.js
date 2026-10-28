@@ -30,7 +30,8 @@ import {
   buildCode, treeOfCode, treeFault,
 } from '../net/firmament/firmamentLaw.js';
 import { firmamentBook } from '../net/firmament/firmamentBook.js';
-import { firmamentStatus, onFirmamentChange } from '../systems/firmamentLive.js';   // FIRM-STATUS: whether the stars act now, said on the side panel
+import { firmamentStatus, onFirmamentChange, firmamentMentorScale } from '../systems/firmamentLive.js';
+import { firmamentMentoringText } from '../systems/mentorText.js';   // MENTOR2: the combat stars' share while mentoring   // FIRM-STATUS: whether the stars act now, said on the side panel
 import { sigilDueling } from '../systems/sigil/sigil.js';
 import { accountRefusalText } from '../net/accountClient.js';   // AUDIT UICALM-FIRM1 L4 L4: a refusal the window has no words for, in the account's
 import { FRAME_TONES } from './enhanced/enhancedFrame.js';
@@ -469,8 +470,9 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     }
     const p = purse();
     // the caps (firmamentLaw.js STAT_DEFS, BLOW_CAP, BLOW_TOTAL_CAP) and where the sky sleeps (firmamentPowers.js firmamentAwake: offline,
-    // a duel or an arena bout, mentoring; never a blow or a spell at a player - a siege and the Wrothgarian zone included)
-    parts.push(el('p', 'fmt-note', `${t('firmament.side.caps', 'Limits for all stars together: +30% weapon damage (up to +50% against unaware foes, or while you are below half Health), +30% spell damage, 15% less damage taken.')} ${t('firmament.side.where', 'Stars work only online, and not while you mentor. Combat stars do nothing in duels or Arena fights, and never add damage against other players.')}`));
+    // a duel or an arena bout; never a blow or a spell at a player - a siege and the Wrothgarian zone included). MENTOR2:
+    // mentoring scales the combat stars, it no longer stops them
+    parts.push(el('p', 'fmt-note', `${t('firmament.side.caps', 'Limits for all stars together: +30% weapon damage (up to +50% against unaware foes, or while you are below half Health), +30% spell damage, 15% less damage taken.')} ${t('firmament.side.where', 'Stars work only online. While you mentor, your combat stars work at a lower share. Combat stars do nothing in duels or Arena fights, and never add damage against other players.')}`));
     parts.push(el('p', 'fmt-note', `${p.renown < p.refund.freeBelow
       ? t('firmament.side.refundFree', 'Removing stars is free until Renown {renown}.', { renown: p.refund.freeBelow })
       : t('firmament.side.refundCost', 'Removing an accepted star costs {silver} silver.', { silver: p.refund.perStar })} ${t('firmament.side.respec', 'A respec removes all your stars and your birthsign for {gold, number} gold.', GOLD)}`));
@@ -714,7 +716,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     if (status === 'seat') return t('firmament.status.seat', 'Your stars are off: another tab or device is playing online, so this one is offline.');
     if (status === 'unread') return t('firmament.status.unread', 'Your stars are off until they load from the server.');
     if (status === 'no-sign') return t('firmament.status.noSign', 'Your stars are off until you choose a birthsign and press {accept}.', { accept: t('firmament.accept', 'Accept') });
-    if (status === 'mentoring') return t('firmament.status.mentoring', 'Your stars are off while you mentor a lower-level party. They return when you leave the party.');
+    if (status === 'mentoring') return firmamentMentoringText(firmamentMentorScale());   // MENTOR2: the combat stars at a share, the life stars whole
     if (status === 'duel') return t('firmament.status.duel', 'Your combat stars are off during this duel or Arena fight. Your crafting and trade stars still work.');
     return t('firmament.status.active', 'Your accepted stars are active.');
   }
@@ -1207,7 +1209,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     const fail = readFailText(book.state);
     if (fail) say(fail, true, true);
   }) : null;
-  // FIRM-STATUS: the side panel's status line moves when the page goes offline or online, or mentoring starts or ends
+  // FIRM-STATUS: the side panel's status line moves when the page goes offline or online, or the mentor's share moves
   const offSky = preview ? null : onFirmamentChange(() => {
     if (!dead) refresh();
   });

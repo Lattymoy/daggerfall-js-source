@@ -19,6 +19,7 @@ import { navalHitData, validNavalRecord } from '../../../src/systems/naval/naval
 import { CRIMES } from '../../../src/systems/crimes.js';
 import { NAVAL_SFX } from '../../../src/systems/naval/navalSounds.js';
 import { classById, hullBuild, firstBuildOf, NAVAL_FACTIONS } from '../../../src/systems/naval/navalShips.js';
+import { hostText } from '../../hostText.mjs';   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld - the host read whole
 
 const src = (p) => readFileSync(new URL(`../../../src/${p}`, import.meta.url), 'utf8');
 const fileFetch = async (url) => {
@@ -425,7 +426,7 @@ test('NAV-H online, the striker: the stander\'s ships stand here as puppets ease
 // ── the world host's wiring ─────────────────────────────────────────────────────────────────────────────────────
 
 test('NAV-H the world host: one naval host on Come Sail Away\'s pool, its record in the save\'s per-mod slot, its frame after the helm moved the boat and before the pool walks the hulls, the Activate ladder\'s own arm, its pass after the boats\' drops, its lights beside the Thunderlock\'s flash, the origin\'s move, every transition, the quest foes on a boarded deck, the raid\'s end and Warm Ashes\' gate, and (AUDIT NAV1, online #9) a blow or a claim to another player through the world\'s hit retry queue (mutants: a door unwired, a bare send)', () => {
-  const w = src('scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /naval = createNavalHost\(\{/);
   // AUDIT NAV1 (online #9): the sea's blows and grapples through AUDIT FOES FOE2's pending set - one the wire refused, or
   // sent while the socket was away, goes a frame later (a bare send threw the refusal away: a blow that never happened)
@@ -454,7 +455,7 @@ test('NAV-H the world host: one naval host on Come Sail Away\'s pool, its record
 });
 
 test('NAV-H the attack\'s five doors: a readied spell eats the press first, the helm\'s guns take it second, the rig last; the release is never gated and fires the broadside as its own statement; at a helm with guns the drag and the look under a held attack are the aim\'s - the look never dropped there - and the pad and the finger hold it plainly (mutants: the guns before the spell, a gated release, the look settled while aiming)', () => {
-  const w = src('scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /\{ if \(gatherHost\?\.acting\(\)\) return; if \(magic\.interceptAttack\(true\)\) return; if \(naval\?\.attackInput\(true\)\) return; weaponRig\.attackInput\(0, 0, true\); \}/, 'mousedown (PROF1\'s act takes its own press first, main\'s)');
   assert.match(w, /if \(isSwingButton\(e\.button\) && walkMode && modeNow\(\) === 'exterior'\) weaponRig\.attackInput\(0, 0, false\); if \(isSwingButton\(e\.button\)\) navalRelease\(\);/, 'mouseup');
   assert.match(w, /if \(held && magic\.interceptAttack\(true\)\) return;[^\n]*\n\s+if \(held && naval\?\.attackInput\(true\)\) return;[^\n]*\n\s+if \(!held\) navalRelease\(\);[^\n]*\n\s+weaponRig\.attackInput\(dx, dy, held\);/, 'the finger and the pad');
@@ -472,7 +473,7 @@ test('NAV-H the attack\'s five doors: a readied spell eats the press first, the 
 });
 
 test('NAV-H the switch: the Features row on the port\'s own prefs, forced on online, its three parts - the traffic, the boarders, a voyage raid\'s plunder - each the player\'s own; the host reads them through `setting` (mutants: the switch unread, a part unwired)', () => {
-  const w = src('scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const navalOn = \(\) => !!csaRuntime && csaOn\(\) && getPref\('naval'\) !== false;/);
   for (const [k, pref] of [['ShipsAtSea', 'naval-ships'], ['RaidPrize', 'naval-raid-prize'], ['Boarders', 'naval-boarders']]) {
     assert.ok(w.includes(`'${k}'`) && w.includes(`'${pref}'`), `${k} reads ${pref}`);

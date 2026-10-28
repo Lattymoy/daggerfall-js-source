@@ -236,13 +236,17 @@ export const OVERWORLD_DOT_SIZES = Object.freeze([
  * Returns [{ x, z, colorIndex, summary }] - scene position on the
  * relief's own pixel centers.
  */
+/** A place summary's map pixel: its own `pixel` where it carries one (WW-C2: a zone hall past the Bay - an id's
+ *  `y * 1000 + x` names a pixel of the Bay's map alone), else its id's (MapsFile.getPixelFromPixelID). */
+export const summaryPixel = (summary) => (summary?.pixel ? { x: summary.pixel.x, y: summary.pixel.y } : getPixelFromPixelID(summary.id));
+
 export function buildMarkerModel(summaries, filters, { isDiscovered = checkLocationDiscovered } = {}) {
   const out = [];
   for (const summary of summaries) {
     if (!isDiscovered(summary)) continue;
     const colorIndex = getPixelColorIndex(summary.locationType, filters);
     if (colorIndex === -1) continue;
-    const { x, y } = getPixelFromPixelID(summary.id);
+    const { x, y } = summaryPixel(summary);
     out.push({ x: x + 0.5, z: -(y + 0.5), colorIndex, summary });
   }
   return out;

@@ -300,9 +300,9 @@ test('RAID-WON `crew` and `late`: her ship gone, only the raid\'s own crew withd
   pool.push(late3);
   assert.equal(ashore.late(other, late3), false, 'another quest\'s foe stands');
   assert.ok(pool.includes(late3));
-  const ring = rd('src/scenes/world.js');
-  assert.match(ring, /questBehaviour: handle\.behaviour,\n\s*\}\)\)\.then\(\(f\) => raidAshore\.late\(foe\.parentQuest, f\)\)\.catch\(\(e\) => console\.error\('\[quest\] exterior foe stand failed:'/, 'the open ground\'s ring asks it');
+  const ring = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT, at the merge of main into TESA): questWorld is scenes/questWorld.js's - the host read whole, the ashore host read live through host
+  assert.match(ring, /questBehaviour: handle\.behaviour,\n\s*\}\)\)\.then\(\(f\) => host\.raidAshore\.late\(foe\.parentQuest, f\)\)\.catch\(\(e\) => console\.error\('\[quest\] exterior foe stand failed:'/, 'the open ground\'s ring asks it');
   assert.match(ring, /raidLate: \(quest, f\) => raidAshore\.late\(quest, f\),/, 'and hands it below deck');
   assert.match(rd('src/scenes/worldModes.js'), /\}\)\)\.then\(\(f\) => host\.raidLate\?\.\(foe\.parentQuest, f\)\)\.catch\(\(e\) => console\.error\('\[quest\] interior foe stand failed:'/, 'below deck asks it');
-  assert.match(rd('src/scenes/world.js'), /\.then\(\(f\) => \{ if \(!raidAshore\.late\(handle\.foe\?\.parentQuest, f\)\) navalDeckBody\(f, _deck\[2\]\); \}\)/, 'the deck\'s landing asks it');
+  assert.match(ring, /\.then\(\(f\) => \{ if \(!host\.raidAshore\.late\(handle\.foe\?\.parentQuest, f\)\) navalDeckBody\(f, _deck\[2\]\); \}\)/, 'the deck\'s landing asks it');   // PIN MOVED (HOST-SPLIT, at the merge): questWorld's
 });

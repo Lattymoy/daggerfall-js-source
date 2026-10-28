@@ -194,13 +194,14 @@
   {
     "name": "AUDIT-LANDFORMS-III-C4-sites-of-the-3x3",
     "file": "src/world/landforms.js",
-    "old": "    for (let qx = px - 2; qx <= px + 2; qx++) {\n      if (qx < 0 || qx >= MAP_W) continue;\n      const i = 4 * (qy * MAP_W + qx);",
-    "new": "    for (let qx = px - 1; qx <= px + 1; qx++) {\n      if (qx < 0 || qx >= MAP_W) continue;\n      const i = 4 * (qy * MAP_W + qx);",
+    "old": "    for (let qx = px - SITE_REACH_PIXELS; qx <= px + SITE_REACH_PIXELS; qx++) {\n      let xa, xb, ya, yb;\n      if (onSiteTable(qx, qy)) {",
+    "new": "    for (let qx = px - 1; qx <= px + 1; qx++) {\n      let xa, xb, ya, yb;\n      if (onSiteTable(qx, qy)) {",
     "tests": [
       "test/world/terrain/auditlandforms3.test.js"
     ],
     "equivalent": true,
-    "why": "sitesAbout's 5x5 is a margin (its docblock): a sample reads a neighbour's arm only at its last two profile points, on their shared edge, where a site two pixels off stands at least its widest reach away (124 samples: 128 less its clearance of 3, less the one sample in) - so the 3x3's sites land on the same floats. Kept against a dial that reaches further."
+    "why": "sitesAbout's 5x5 is a margin (its docblock): a sample reads a neighbour's arm only at its last two profile points, on their shared edge, where a site two pixels off stands at least its widest reach away (124 samples: 128 less its clearance of 3, less the one sample in) - so the 3x3's sites land on the same floats. Kept against a dial that reaches further.",
+    "note": "BAY-LEFT-GROUND (D1): re-aimed by content - the 5x5's columns read SITE_REACH_PIXELS now, and a pixel off the Bay's table reads the sites past it in the same loop."
   },
   {
     "name": "AUDIT-LANDFORMS-III-C5-weights-not-fourth",
@@ -250,8 +251,8 @@
   {
     "name": "AUDIT-LANDFORMS-III-B4-restride-off-the-climates",
     "file": "src/scenes/world.js",
-    "old": "roads: terrainGen.roads(), sites: _landformSites, climates: _landformClimates, bed: waterOn",
-    "new": "roads: terrainGen.roads(), sites: _landformSites, bed: waterOn",
+    "old": "roads: terrainGen.roads(), sites: _landformSites, beyond: beyondSites.beyond(), climates: _landformClimates, bed: waterOn",
+    "new": "roads: terrainGen.roads(), sites: _landformSites, beyond: beyondSites.beyond(), bed: waterOn",
     "tests": [
       "test/world/terrain/auditlandforms3.test.js"
     ]

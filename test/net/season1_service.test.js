@@ -145,7 +145,9 @@ test('SEASON1 SEASON 0\'S END WIPES THE SEATS (18): its own week settled - the u
     'town_seat_renown', 'town_seat_rights', 'town_seat_aftermath', 'town_seat_windows', 'town_seat_stockpile', 'town_seat_levies', 'town_seat_history',
     'guild_fealty', 'guild_pacts',
     // PIN MOVED (SEAT2b): and the works - a beta's walls fall with its Charters
-    'town_seat_forts', 'town_seat_fort_held', 'town_seat_fortifier', 'town_seat_camps']);
+    'town_seat_forts', 'town_seat_fort_held', 'town_seat_fortifier', 'town_seat_camps',
+    // PIN MOVED (DOMAIN1): and the gifts that filled them
+    'town_seat_gifts']);
   // Season 1 begins: the board says so
   const st = (await s.call('/v1/seats/standings', { key: ALCAIRE.key }, sh.gm)).body;
   assert.deepEqual([st.season, st.holder], [{ n: 1, start: W + 1, end: W + 9 }, null]);

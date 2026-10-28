@@ -139,8 +139,8 @@
   {
     "name": "ORT-lane-from-the-joins-point",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const a = prev.ring ? prev.at : legMiddle(prev), b = leg.ring ? leg.at : legMiddle(leg);",
-    "new": "    const a = prev.at ?? legMiddle(prev), b = leg.ring ? leg.at : legMiddle(leg);",
+    "old": "    const a = prev.ring ? prev.at : legEnd(prev, legMiddle), b = leg.ring ? leg.at : legEnd(leg, legMiddle);",
+    "new": "    const a = prev.at ?? legEnd(prev, legMiddle), b = leg.ring ? leg.at : legEnd(leg, legMiddle);",
     "tests": [
       "test/systems/travel/ow_roadtrue.test.js"
     ]

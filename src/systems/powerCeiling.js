@@ -6,7 +6,7 @@
 // the registry past its own top is the one cut. The runners (entityMods.js, playerEntity.js) and registries import it.
 
 /** THE BLOW POWERS' TOPS: each registry's most onto one blow (per cent), measured from today's records and laws. */
-export const BLOW_TOPS = Object.freeze({ sigil: 12, sets: 200, loot: 240, firmament: 50, mastery: 400, martial: 40 });   // WEAPON-GEAR: mastery's top the live skill's x5 (weaponMastery.js), was the climb's +80%
+export const BLOW_TOPS = Object.freeze({ sigil: 12, sets: 200, loot: 240, firmament: 50, mastery: 400, martial: 40 });   // WEAPON-GEAR: mastery's top the axe's climb 80 + its gear's 320 (weaponMastery.js), was the climb's +80%
 /** THE GUARDS' TOPS: each registry's most off one hurt (per cent), its guards multiplied. */
 export const GUARD_TOPS = Object.freeze({ loot: 55, sets: 50, firmament: 15, martial: 30, arcane: 20 });
 /** A blow is at most this many times what its powers were handed (x119.95; x43.18 before WEAPON-GEAR). */

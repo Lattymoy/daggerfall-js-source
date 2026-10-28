@@ -237,7 +237,7 @@ test('AUDIT 31 H1: a piece one book keeps an act on is never taken by the other;
   await w2.settle((it) => back.push(it), (it) => { const i = two.pack.findIndex((x) => x.provenance === it.provenance); if (i >= 0) two.pack.splice(i, 1); });
   assert.deepEqual([back.length, two.pack.length, w2.pending], [0, 0, 0]);
   assert.deepEqual([...PIECE_GONE].sort(), ['market-listed', 'market-standing', 'market-uncollected']);   // PIN MOVED (MARKET-KEEP): never 'market-not-yours'
-  const w = src('src/scenes/world.js');
+  const w = src('src/scenes/world.js') + src('src/scenes/marketPiecesHost.js');   // PIN MOVED (BAY-LEFT-SEA): HOST-SPLIT - the market's pieces and hubs moved out of bootWorld to scenes/marketPiecesHost.js
   assert.match(w, /holds: \(pv\) => !!writBook\?\.holdsPiece\(pv\)/);
   assert.match(w, /holds: \(pv\) => !!marketBook\?\.holdsPiece\(pv\)/);
   assert.match(w, /const pieceKept = \(pv\) => !!marketBook\?\.holdsPiece\(pv\) \|\| !!writBook\?\.holdsPiece\(pv\);/);
@@ -245,7 +245,7 @@ test('AUDIT 31 H1: a piece one book keeps an act on is never taken by the other;
 });
 
 test('AUDIT 31 H5: every list a crafted piece can lie in - the pack, the home\'s things, the wagon, a repairer\'s hands - is minted, put back and dropped by its provenance', () => {
-  const w = src('src/scenes/world.js');
+  const w = src('src/scenes/world.js') + src('src/scenes/marketPiecesHost.js');   // PIN MOVED (BAY-LEFT-SEA): HOST-SPLIT - the market's pieces and hubs moved out of bootWorld to scenes/marketPiecesHost.js
   assert.match(w, /const pieceLists = \(\) => \[playerEntity\.items, playerEntity\.furnishings, playerEntity\.wagonItems, playerEntity\.otherItems\]\.filter\(Array\.isArray\);/);
   assert.match(w, /for \(const list of pieceLists\(\)\) \{   \/\/ AUDIT 31 H5/);
   assert.match(w, /const marketPutBack = \(item, where\) => \{\n\s*if \(!item\?\.provenance\) return;\n\s*if \(heldProvenances\(\)\.has\(item\.provenance\)\) return;/);

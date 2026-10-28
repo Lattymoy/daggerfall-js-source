@@ -162,7 +162,7 @@ export function createTravelViewMarks(host) {
       for (const q of marksOn() ? questMapMarks(questTracker.views, questTracker.shown()?.id ?? null, questPixel) : []) {
         let h = _tvQuestHold.get(q.key);
         if (!h) { h = {}; _tvQuestHold.set(q.key, h); }
-        if (!h.mid) { const s = tvPlaceSummary(q.px, q.py), r = s ? tvPlaceRect(s) : null; if (r) h.mid = { x: r.cx, z: r.cz }; }   // its place's middle, read once a mark
+        if (!h.mid) { const s = tvPlaceSummary(q.px, q.py, true), r = s ? tvPlaceRect(s) : null; if (r) h.mid = { x: r.cx, z: r.cz }; }   // its place's middle, read once a mark (BAY-LEFT-MAPS: the place the quest names, past the Bay found or not)
         const o = h.mid ? null : mapPixelToWorldCoords(q.px, q.py);
         const x = h.mid?.x ?? o.x + 16384, z = h.mid?.z ?? o.z + 16384;   // native units
         keep.add(q.key);

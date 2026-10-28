@@ -46,7 +46,7 @@ import { SOUND } from '../systems/soundClips.js';
 import {
   TRANSACTION_TYPE, TRANSACTION_RESULT,
   bankButtonEnabled, toggleTransactionInput, parseTransactionAmount,
-  borrowDecision, buyHouseDecision, buyShipDecision, sellDecision,
+  borrowDecision, buyHouseDecision, buyShipDecision, sellDecision, houseOfferText,
   accountTotal, loanedTotal, loanDueDate, calculateMaxBankLoan,
   depositGold, withdrawGold, depositAllLetters, withdrawLetter,
   repayLoan, borrowLoan, shipSellPrice,
@@ -133,6 +133,10 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + BANK_PANEL_X && y >= ry + B
  *   ownsHouse(), ownsShip(), housesForSale(), isPortTown(), houseSellPrice()
  *   ownedHouseResolved() -> AUDIT 64 F26: GetBuildingSummary's bool
  *   crossedDeed(kind) -> RESTORE: the bank's words for a deed that came through customs, or null
+ *   housesFull()   -> HOUSES-3: the region holds its three houses (Buy House refuses)
+ *   houseOffers()  -> HOUSES-3: the region's houses the bank buys back in this town, each { price, crossed } (crossed:
+ *                    the customs' words, or null), offered in turn; sellHouse(i) sells the i-th. A host with none
+ *                    offers the one house the four hooks above name (Daggerfall's one house a region)
  *   openPurchase()  -> H2: mounts the purchase window; false if it cannot
  *   onClose()
  */
@@ -312,12 +316,13 @@ export class BankWindow {
       // here online could be anybody's online home tomorrow. The host answers the lines; offline it answers none.
       const online = this.hooks.onlineHomeLines?.() ?? null;
       if (online) { this.box = { rows: online.map((text) => ({ text, center: true })), buttons: null, amount: 0, onYes: null }; return; }
-      const d = buyHouseDecision({ ownsHouse: this.hooks.ownsHouse?.(), housesForSale: this.hooks.housesForSale?.() ?? 0 });
+      const d = buyHouseDecision({ housesFull: !!this.hooks.housesFull?.(), housesForSale: this.hooks.housesForSale?.() ?? 0 });
       // H2: 'pick' reaches the purchase window at last. The refusals
-      // are still the law's - already own one, nothing for sale - and
+      // are still the law's - the region's three owned (HOUSES-3, said
+      // in the bank's words counted to three), nothing for sale - and
       // a host with no purchase window falls back to DFU's own answer
       // for a missing directory (:433-434).
-      if (d.kind === 'refuse') { this._popup(d.result); return; }
+      if (d.kind === 'refuse') { if (d.lines) this._lines(d.lines); else this._popup(d.result); return; }
       if (!this.hooks.openPurchase?.()) this._popup(TRANSACTION_RESULT.NO_HOUSES_FOR_SALE);
       return;
     }
@@ -344,15 +349,8 @@ export class BankWindow {
       // that wires no resolver is a host with NO building directory,
       // which is :446's silent false arm - hence `=== true`, not a
       // lenient default DFU has no counterpart for.
-      // RESTORE: a house that came through customs is never bought back online - said, not offered (banking.js crossedDeedLines)
-      const crossed = this.hooks.crossedDeed?.('house');
-      if (crossed) { this._lines(crossed); return; }
-      const resolved = this.hooks.ownedHouseResolved?.() === true;
-      const d = sellDecision('house', {
-        owns: !!this.hooks.ownsHouse?.() && resolved,
-        price: this.hooks.houseSellPrice?.() ?? 0,
-      });
-      if (d.kind === 'offer') this._popup(d.result, d.price);
+      // HOUSES-3: a region holds three houses, and this town may stand more than one of them - each offered in turn
+      this._offerHouse(this.hooks.houseOffers?.() ?? this._oneHouseOffer());
       return;
     }
     if (name === 'sellShip') {
@@ -364,18 +362,46 @@ export class BankWindow {
     }
   }
 
+  /** The house a host of Daggerfall's one house a region names, as an offer list: RESTORE's crossed words, else DFU's three
+   *  nested conditions (AUDIT 64 F26) - owned, a directory, the key resolved in it - or none. */
+  _oneHouseOffer() {
+    const crossed = this.hooks.crossedDeed?.('house');
+    if (crossed) return [{ crossed }];
+    const resolved = this.hooks.ownedHouseResolved?.() === true;
+    return this.hooks.ownsHouse?.() && resolved ? [{ price: this.hooks.houseSellPrice?.() ?? 0, crossed: null }] : [];
+  }
+
+  /** HOUSES-3: THE TOWN'S HOUSES, OFFERED IN TURN from `from` - Yes sells the one offered (sellHouse(i)), No offers the next.
+   *  One the bank does not buy back is passed by (RESTORE: online, what came through customs), and said only where it
+   *  was all there was to offer; none at all is Daggerfall's silence (:443-451 has no else). */
+  _offerHouse(offers, from = 0) {
+    for (let i = from; i < offers.length; i++) {
+      if (offers[i].crossed) continue;
+      const d = sellDecision('house', { owns: true, price: offers[i].price ?? 0 });
+      this._popup(d.result, d.price);
+      if (offers.length > 1) this.box.rows = [...this.box.rows, { text: houseOfferText(i + 1, offers.length), center: true }];
+      this.box.onYes = () => this.hooks.sellHouse?.(i);
+      this.box.onNo = () => this._offerHouse(offers, i + 1);
+      return;
+    }
+    const crossed = from === 0 ? offers.find((o) => o.crossed)?.crossed : null;
+    if (crossed) this._lines(crossed);
+  }
+
   _dismissBox(button = null) {
     if (this.box?.waiting) return;   // MARKS1: the counting box stays until the service answers
     const b = this.box;
     this.box = null;
     if (b?.buttons === 'YesNo' && button === MB_BUTTONS.Yes) b.onYes?.();
+    else if (b?.buttons === 'YesNo' && button === MB_BUTTONS.No) b.onNo?.();   // HOUSES-3: the town's next house (Escape closes)
   }
 
   input(code, e = null) {
     if (this.box) {
       if (this.box.buttons === 'YesNo') {
         if (code === 'KeyY') this._dismissBox(MB_BUTTONS.Yes);
-        else if (code === 'KeyN' || code === 'Escape') this._dismissBox(MB_BUTTONS.No);
+        else if (code === 'KeyN') this._dismissBox(MB_BUTTONS.No);
+        else if (code === 'Escape') this._dismissBox();   // HOUSES-3: a close, never the No that offers the next house
       } else this._dismissBox();
       return;
     }

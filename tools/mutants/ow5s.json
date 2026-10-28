@@ -83,22 +83,22 @@
   {
     "name": "OW5b-S5-born-off-the-map",
     "file": "src/scenes/world.js",
-    "old": "    if (!onBayOrEther(px, py) || maps.getClimateIndex(px, py) !== CLIMATES.Ocean) return false;",
+    "old": "    if (!onWorldSea(px, py, tamrielLand) || maps.getClimateIndex(px, py) !== CLIMATES.Ocean) return false;",
     "new": "    if (maps.getClimateIndex(px, py) !== CLIMATES.Ocean) return false;",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ],
-    "note": "A raider born a pixel past the map's edge. RE-AIMED (ETHER-OW): the ground is the Bay's map or the Eltheric Ocean's box (onBayOrEther)."
+    "note": "A raider born a pixel past the map's edge. RE-AIMED (ETHER-OW): the ground is the Bay's map or the Eltheric Ocean's box (onBayOrEther). Re-aimed by content (WW3, bible/03-World/World-Wide.md): the line carries the waters' area / the world's sea ground."
   },
   {
     "name": "OW5b-S5-sails-off-the-map",
     "file": "src/scenes/world.js",
-    "old": "    return onBayOrEther(px, py) && tvWater(px, py);",
+    "old": "    return onWorldSea(px, py, tamrielLand) && tvWater(px, py);",
     "new": "    return tvWater(px, py);",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ],
-    "note": "Past the map's edge is the sea: a raider sails off the world. RE-AIMED (ETHER-OW): the ground's own law, onBayOrEther, at the floored pixel."
+    "note": "Past the map's edge is the sea: a raider sails off the world. RE-AIMED (ETHER-OW): the ground's own law, onBayOrEther, at the floored pixel. Re-aimed by content (WW3, bible/03-World/World-Wide.md): the line carries the waters' area / the world's sea ground."
   },
   {
     "name": "OW5b-S4-leg-by-its-end",

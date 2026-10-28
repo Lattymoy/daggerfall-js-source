@@ -212,20 +212,22 @@
   {
     "name": "NAV1O-region-unbounded",
     "file": "src/systems/naval/navalWire.js",
-    "old": "Number.isInteger(sh.region) && sh.region >= 0 && sh.region < REGION_NAMES.length ? sh.region : -1]);",
+    "old": "Number.isInteger(sh.region) && sh.region >= 0 && sh.region < BAY_REGION_COUNT ? sh.region : -1]);",
     "new": "sh.region | 0]);",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "NAV1O-door-handover-unchecked",
     "file": "src/systems/naval/navalWire.js",
-    "old": "  if (w.length === 19 && (!int(w[17], 0, NAVAL_GEN_MAX) || !int(w[18], -1, REGION_NAMES.length - 1))) return null;\n",
+    "old": "  if (w.length === 19 && (!int(w[17], 0, NAVAL_GEN_MAX) || !int(w[18], -1, BAY_REGION_COUNT - 1))) return null;",
     "new": "",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "NAV1O-old-word-first-claim",

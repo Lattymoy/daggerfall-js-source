@@ -244,8 +244,8 @@
   },
   {
     "name": "CARDS10-save-waits",
-    "file": "src/scenes/world.js",
-    "old": "    if (modes?.iliacStaked?.()) { if (!quiet)",
+    "file": "src/scenes/worldQuickSave.js",
+    "old": "    if (host.modes?.iliacStaked?.()) { if (!quiet)",
     "new": "    if (false) { if (!quiet)",
     "tests": [
       "test/systems/cards10_table.test.js"

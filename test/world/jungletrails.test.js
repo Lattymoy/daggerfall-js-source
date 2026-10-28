@@ -4,7 +4,8 @@
 // them as VERGE1 keeps it off a road. world/jungle/jungleTrails.js; bible/03-World/Bantha-Jungle.md "The trails".
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { JUNGLE_TRAILS, trailDistance, trailRoom, trailClear, paintJungleTrails, warpStretch } from '../../src/world/jungle/jungleTrails.js';
+import { JUNGLE_TRAILS, trailDistance, trailRoom, trailClear, paintJungleTrails, warpStretch, cornerCleared } from '../../src/world/jungle/jungleTrails.js';
+import { natureCleared } from '../../src/world/terrain/terrainNature.js';
 import { JUNGLE, JUNGLE_PALMS, JUNGLE_COVER, withJungle } from '../../src/world/terrain/jungleNature.js';
 import { JUNGLE_MEASURES } from '../../src/world/jungle/jungleModels.js';
 import { jungleDepthAt, JUNGLE_EDGE } from '../../src/world/jungle/jungleRegion.js';
@@ -148,6 +149,35 @@ test('JUNGLE-TRAILS the painter: a trail runs on across every pixel\'s edge, eas
   assert.equal(paint(940, 300, { nine: OUTSIDE }).n, 0);
   const handed = new Uint8Array(T * T);
   assert.equal(paint(940, 300, { paths: handed }).paths, handed, 'the mask handed is the one marked');
+});
+
+test('JUNGLE-TRAILS a town\'s clearing (AUDIT TESA III E1-5, TS6): a trail stops where the town\'s trees stop - no corner of a tile within NATURE_CLEARANCE of its outline dirt, past its rect\'s square too; the rect\'s open ground past the clearing the trail\'s; a rect without an outline its square, corners inclusive, as before (mutants: the outline unread; a corner\'s south row of tiles unread; its west column unread)', () => {
+  // an outline 16 tiles square whose rect is misplaced on it: its east and north margin past the square, the square's
+  // south-west reaching ground more than the clearance off the outline
+  const shape = new Uint8Array(T * T);
+  for (let y = 56; y < 72; y++) for (let x = 56; x < 72; x++) shape[y * T + x] = 1;
+  const rect = { xMin: 40, xMax: 66, yMin: 40, yMax: 66, shape };
+  const cleared = (x, y) => [[x - 1, y - 1], [x, y - 1], [x - 1, y], [x, y]].some(([tx, ty]) => tx >= 0 && ty >= 0 && tx < T && ty < T && natureCleared(rect, tx, ty));
+  const inSquare = (x, y) => x >= rect.xMin && x <= rect.xMax && y >= rect.yMin && y <= rect.yMax;
+  let kept = 0, past = 0, open = 0, south = 0, west = 0;
+  for (let px = 880; px < 960; px++) {
+    const { td, dirt } = paint(px, 300, { rect });
+    for (let y = 0; y < D; y++) for (let x = 0; x < D; x++) {
+      const i = x + y * D, want = brute(px, 300, x, y);
+      assert.equal(cornerCleared(rect, x, y), cleared(x, y));
+      if (cleared(x, y)) {
+        assert.equal(td[i], 2, `${px}: corner ${x},${y} of the clearing the town's own`);
+        if (want) { kept++; if (!inSquare(x, y)) past++; if (!natureCleared(rect, Math.min(x, T - 1), Math.min(y, T - 1))) { if (y > 0 && natureCleared(rect, Math.min(x, T - 1), y - 1)) south++; else west++; } }
+        continue;
+      }
+      assert.equal(dirt[i] === 1, want, `${px}: corner ${x},${y} off the clearing the trail's`);
+      if (want && inSquare(x, y)) open++;
+    }
+  }
+  assert.ok(kept > 150 && past > 80 && open > 120 && south > 4 && west > 4, `the trails met the clearing (${kept}), past the square (${past}), the square's open ground (${open}), the clearing's south (${south}) and west edges (${west})`);
+  // a capital's rect, no outline: its square, its far corners its own
+  const square = { xMin: 40, xMax: 90, yMin: 40, yMax: 90 };
+  assert.deepEqual([cornerCleared(square, 40, 40), cornerCleared(square, 90, 90), cornerCleared(square, 39, 60), cornerCleared(square, 60, 91)], [true, true, false, false]);
 });
 
 test('JUNGLE-TRAILS the gate: a trail only where the jungle is whole - every dirt corner JUNGLE_EDGE.in deep, the line\'s corners nearer the edge left as they were (mutants: the gate gone; the reach test answering none)', () => {

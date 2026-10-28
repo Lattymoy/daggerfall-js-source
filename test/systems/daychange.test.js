@@ -139,7 +139,7 @@ test('S41 prices: FindFactionByTypeAndRegion\'s region -1 FALLBACK carries the w
 });
 
 test('S41 prices: the walk covers all 62 of PlayerEntity.regionData, materialising what the shops never touched', () => {
-  assert.equal(REGION_COUNT, 62, 'new RegionDataRecord[62] (PlayerEntity.cs:99)');
+  assert.equal(REGION_COUNT, 71, 'new RegionDataRecord[62] (PlayerEntity.cs:99) - and the provinces\' nine');   // PIN MOVED (WW-R, bible/03-World/World-Wide.md): the walk covers the provinces' too (their roll after the Bay's: the Bay's prices are the ones they were)
   const p = player();                                       // nothing initialised at all
   const regions = Array.from({ length: REGION_COUNT }, (_, i) => i);
   updateRegionalPrices(p, dict({ regions }), 1, () => 0.99);

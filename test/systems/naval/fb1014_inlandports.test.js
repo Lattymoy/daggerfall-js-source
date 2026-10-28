@@ -31,6 +31,8 @@ import { boardFor, deliveryPort, SITE_PX } from '../../../src/systems/naval/harb
 import { chartSite } from '../../../src/systems/naval/treasureCharts.js';
 import { layoutLocation } from '../../../src/world/locationLayout.js';
 import { NAV_CELLS_PER_BLOCK, tileWeight } from '../../../src/world/city/cityNavigation.js';
+import { createWorldPorts } from '../../../src/world/worldWide/worldPorts.js';
+import { createWorldPlaces } from '../../../src/world/worldWide/worldPlaces.js';
 
 const W = hostText('src/scenes/world.js');   // the world host whole - its pixel build stands in src/scenes/pixelBuild.js (HOST-SPLIT 2)
 
@@ -106,13 +108,15 @@ test('INLAND-PORTS THE TOWNS (the report): a city the byte\'s 0x10 marks, on Tra
 });
 
 /** The host's open sea, lifted off world.js and run over a map of the test's (`isWater`) and the ether's switch. */
-function hostOpenSea({ isWater, width, height, ether = false, inEther = () => false, tamriel = false }) {
+function hostOpenSea({ isWater, width, height, ether = false, inEther = () => false, tamriel = false, lakeAt = () => false, rumareAt = () => false }) {
   const m = /\n {2}(let _openSea = null;\n {2}const openSea = \(x, y\) => \{\n[\s\S]*?\n {2}\};)\n/.exec(W);
   assert.ok(m, 'the host\'s open sea moved');
   let asked = 0;
   const seaPixel = (x, y) => { asked++; return isWater(x, y); };
   // eslint-disable-next-line no-new-func
-  const openSea = new Function('etherSea', 'inEther', 'seaPixel', 'MAP_WIDTH', 'MAP_HEIGHT', 'openSeaOf', 'tamrielLand', `${m[1]}\nreturn openSea;`)(ether, inEther, seaPixel, width, height, openSeaOf, tamriel);
+  // PIN MOVED (AUDIT TESA II P12): the picture's lakes (world/arenaPlaces.js pastBayLakeAt) handed, the test's own;
+  // PIN MOVED (RUMARE-WATER): and the Imperial City's lake (world/rumareWaters.js rumareSeaPixel)
+  const openSea = new Function('etherSea', 'inEther', 'seaPixel', 'MAP_WIDTH', 'MAP_HEIGHT', 'openSeaOf', 'tamrielLand', 'pastBayLakeAt', 'rumareSeaPixel', `${m[1]}\nreturn openSea;`)(ether, inEther, seaPixel, width, height, openSeaOf, tamriel, lakeAt, rumareAt);
   return { openSea, asked: () => asked };
 }
 
@@ -138,6 +142,13 @@ test('INLAND-PORTS THE HOST\'S OPEN SEA, run: a pixel of the Bay\'s map is the f
   const tam = hostOpenSea({ isWater: beyond, width: 6, height: 3, tamriel: true });
   assert.deepEqual([tam.openSea(-3, 0), tam.openSea(-3, 1), tam.openSea(3, 1)], [true, false, false], 'the continent\'s sea, its land, and the Bay\'s pond still none');
   assert.equal(hostOpenSea({ isWater: beyond, width: 6, height: 3 }).openSea(-3, 0), false, 'the land beyond the Bay off: nothing streams past the edge');
+  // AUDIT TESA II P12: a lake of the picture past the edge (Lake Rumare's kind) is no sea, the water its border joins is
+  const lake = hostOpenSea({ isWater: beyond, width: 6, height: 3, tamriel: true, lakeAt: (x, y) => x === -3 && y === 2 });
+  assert.deepEqual([lake.openSea(-3, 2), lake.openSea(-3, 0)], [false, true], 'the lake none, the sea beside it the sea');
+  // RUMARE-WATER: the Imperial City's lake past the edge the sea's, its land's water or not - with the land beyond the Bay
+  const city = (x, y) => x === -3 && y === 1;
+  assert.equal(hostOpenSea({ isWater: beyond, width: 6, height: 3, tamriel: true, rumareAt: city }).openSea(-3, 1), true, 'the city\'s lake the sea\'s');
+  assert.equal(hostOpenSea({ isWater: beyond, width: 6, height: 3, rumareAt: city }).openSea(-3, 1), false, 'the land beyond the Bay off: none');
 });
 
 /** The host's port list (the harbour board's), lifted off world.js and run over a map directory and an open sea of the
@@ -146,8 +157,9 @@ function hostPortList({ dict, maps, openSea }) {
   const list = /\n {2}(let _navalPortList = null;\n {2}const navalPortList = \(\) => \{\n[\s\S]*?\n {2}\};)\n/.exec(W);
   assert.ok(list, 'the host\'s port list moved');
   // eslint-disable-next-line no-new-func
-  return new Function('mapDict', 'maps', 'PORT_LOCATION_IDS', 'isPortTownType', 'getPixelFromPixelID', 'navalCrownOf', 'navalCapitals', 'seaBears', 'openSea',
-    `${list[1]}\nreturn navalPortList;`)(dict, maps, PORT_LOCATION_IDS, isPortTownType, getPixelFromPixelID, crownOf, () => [], seaBears, openSea)();
+  return new Function('mapDict', 'maps', 'PORT_LOCATION_IDS', 'isPortTownType', 'getPixelFromPixelID', 'navalCrownOf', 'navalCapitals', 'seaBears', 'openSea', 'worldPorts',
+    `${list[1]}\nreturn navalPortList;`)(dict, maps, PORT_LOCATION_IDS, isPortTownType, getPixelFromPixelID, crownOf, () => [], seaBears, openSea,
+    createWorldPorts({ places: createWorldPlaces(), openSea }))();   // PIN MOVED (WW3): the world's ports past the Bay after the Bay's (none here)
 }
 
 test('INLAND-PORTS THE HOST: the pixel\'s build and the town\'s places ask portOnSea (a port by its data on the open sea), the bearing is read off the open sea, the open sea stands above the stream; the harbour board\'s ports, run, are the towns the open sea bears on - no board in a capital in the hills or by a lake (mutants: the board\'s sea unasked, the host asking the data alone, the bearing off any water)', () => {
@@ -157,7 +169,7 @@ test('INLAND-PORTS THE HOST: the pixel\'s build and the town\'s places ask portO
   assert.match(W, /const bearing = seaBearing\(lp\.x, lp\.y, openSea\);/);
   assert.match(W, /\n {4}_openSea \?\?= openSeaOf\(seaPixel, MAP_WIDTH, MAP_HEIGHT\);\n/);
   // BOOT-TDZ: declared above the stream, as seaPixel is - the boot's first build reads it
-  const decl = W.indexOf('\n  const openSea = (x, y) => {'), places = W.indexOf('\n  function townPlacesFor(');
+  const decl = W.indexOf('\n  const openSea = (x, y) => {'), places = W.indexOf('\n  async function townPlacesFor(');   // PIN MOVED (IC-STUTTER): awaited, a step at a time
   assert.ok(decl > W.indexOf('\n  const seaPixel = (x, y) =>') && decl < places, 'beside seaPixel, before the towns\' places');
   // the board: three of Travel Options' harbours - a capital, a village by a lake, a hamlet on the sea's shore
   const ids = [...new Set(PORT_LOCATION_IDS)].slice(0, 3);

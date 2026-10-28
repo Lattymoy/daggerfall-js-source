@@ -80,7 +80,7 @@ test('SCALE5c the law: sixteen shards beside the bus, each a channel the Worker 
   assert.equal(H.shardHash('a'), 0xe40c292c, 'FNV-1a, both ends');
   assert.equal(H.hubHopOf({ t: 'hub', key: 'chat:world.3' }), 'chat:world.3');
   assert.equal(H.hubHopOf({ t: 'hub', key: SOCIAL_ROOM }), SOCIAL_ROOM);
-  for (const bad of [{ t: 'hub', key: 'chat:region.62' }, { t: 'hub', key: 'world:1,2' }, { t: 'hub' }, { t: 'x', key: 'chat:world.3' }, null]) assert.equal(H.hubHopOf(bad), null);   // part two: a region's channel and its shards are hops too
+  for (const bad of [{ t: 'hub', key: 'chat:region.71' }, { t: 'hub', key: 'world:1,2' }, { t: 'hub' }, { t: 'x', key: 'chat:world.3' }, null]) assert.equal(H.hubHopOf(bad), null);   // part two: a region's channel and its shards are hops too
   assert.equal(H.hubShardsSupported('world191'), false); assert.equal(H.hubShardsSupported('world192'), true);
   const look = { race: 'Nord', gender: 'male', faceIndex: 0, items: [] };
   const hello = (hs) => parseClient(JSON.stringify({ t: 'hello', id: 'peer-0001', secret: 'secret-of-peer-0001', name: 'x', look, pose: null, hs }));
@@ -528,11 +528,11 @@ test('SCALE5c part two: A REGION\'S CHANNEL, FOUR WAYS - its shards beside it, a
   const { CHAT_REGION_COUNT, chatRegionRoom, isChatRoom: chatRoom, isRegionRoom: regionRoom, isSocialRoom: socialRoom } = await import('../../src/net/wire.js');
   assert.equal(H.REGION_SHARDS, 4);
   assert.equal(H.REGION_CHANNELS, CHAT_REGION_COUNT, 'the politic map\'s regions, both ends');
-  assert.equal(H.REGION_SHARD_ROOMS.length, CHAT_REGION_COUNT * H.REGION_SHARDS);
+  assert.equal(H.REGION_SHARD_ROOMS.length, H.REGION_SPLIT * H.REGION_SHARDS);   // PIN MOVED (PROVINCE-SLEEP): the Bay's regions are split, a province is one channel (test/net/sleepcost.test.js)
   for (const k of H.REGION_SHARD_ROOMS) { assert.ok(CHAT_ROOMS.has(k), k); assert.equal(chatRoom(k), true); assert.equal(regionRoom(k), true); assert.equal(socialRoom(k), false); assert.equal(H.isRegionShard(k), true); }
-  for (const k of ['chat:region.62.0', 'chat:region.3.4', 'chat:region.03.1', 'chat:region.3.01', 'chat:region.3', 'chat:world.3', null]) assert.equal(H.isRegionShard(k), false, String(k));
+  for (const k of ['chat:region.71.0', 'chat:region.3.4', 'chat:region.03.1', 'chat:region.3.01', 'chat:region.3', 'chat:world.3', null]) assert.equal(H.isRegionShard(k), false, String(k));
   assert.equal(H.busOf('chat:region.7.2'), 'chat:region.7'); assert.equal(H.busOf('chat:world.3'), SOCIAL_ROOM); assert.equal(H.busOf('chat:region.7'), null);
-  assert.equal(H.isChannelBus('chat:region.7'), true); assert.equal(H.isChannelBus(SOCIAL_ROOM), true); assert.equal(H.isChannelBus('chat:world.3'), false); assert.equal(H.isChannelBus('chat:region.62'), false);
+  assert.equal(H.isChannelBus('chat:region.7'), true); assert.equal(H.isChannelBus(SOCIAL_ROOM), true); assert.equal(H.isChannelBus('chat:world.3'), false); assert.equal(H.isChannelBus('chat:region.71'), false);   // PIN MOVED (WW-R): the provinces' nine after the Bay's 62
   assert.equal(H.channelOf('chat:region.7.2'), 'chat:region.7'); assert.equal(H.channelOf('cell:1,2'), 'cell:1,2');
   assert.equal(H.shardOf('chat:region.7', 'acct-x', SPLIT), `chat:region.7.${H.shardHash('acct-x') % H.REGION_SHARDS}`);
   assert.equal(H.shardOf('chat:region.7', 'acct-x'), null, 'COST-1: whole unless the relay names the region');
