@@ -384,6 +384,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/ui/gate/` | The Oblivion Gate on screen: the banner, the boss bar, the damage chart, the ground view, the marks and the title card. |
 | `src/ui/growth/` | The pause window's Growth tab (`10-UI/Growth.md`): its rail and landings, the specialisations' guide, and the stage that draws the Firmament, the captain's stars and the Ascension in its pane. |
 | `src/ui/hud/` | The classic HUD: vitals, compass, crosshair, active spells - its windows. |
+| `src/ui/icons/` | The drawn icons' art, each drawn by `profileIcons.js` drawnIconNode: the profile icons' shared shapes and motions, Season One's and the daily wares' icons (none a figure, `06-Systems/Aurum.md` section 7) and the effect emblems (`06-Systems/Storefront.md` section 9). |
 | `src/ui/ink/` | The ink maps: town, dungeon, automap - its windows. |
 | `src/ui/intro/` | The intro: its screen, cue, landscape and shaders, the city it draws (`introCity.js`) and the continent (`introTamriel.js`), built in its worker (`introBuildWorker.js`, `introBuild.js`); the Bay's authored shape (`introMap.js`) - its windows. |
 | `src/ui/intro/set/` | The film's set (INTRO4, `10-UI/UI-Arc.md`): the Imperial City as the intro was shot on it - the city's plan (`imperialCity.js`), its landmarks (`capitalImperial.js`) and the shapes they are built of (`capitalShapes.js`), kept as shot, never the game's grown city. |

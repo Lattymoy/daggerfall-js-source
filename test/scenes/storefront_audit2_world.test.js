@@ -8,6 +8,7 @@ import '../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
+import { CURB_SHARE, WARD_SHARE } from '../../src/systems/bossTraits.js';   // the most blows a camp's foe can take
 import { client, settle, HEART_T, memStorage, S1, SCAN } from './seasonRig.mjs';
 import { createSeasonHost, SEASON_MAUL_HELD_STORE, SEASON_MAUL_REASK_MS, SEASON_MAUL_ASKS, SEASON_RING_M } from '../../src/scenes/seasonHost.js';
 import { setRealmSaveSink, realmSaveSink } from '../../src/scenes/shared.js';
@@ -28,9 +29,12 @@ const clocked = (clock) => { Date.now = () => clock.t; return clock; };
 const DAY_MS = 86_400_000;
 const falls = (c) => c.said.filter((s) => s === COLOSSUS_TEXT.falls()).length;
 const heldOf = (store) => JSON.parse(store.getItem(SEASON_MAUL_HELD_STORE) ?? '{}');
+/** The most blows a foe can take of one that would kill it outright (bossTraits.js): its ward and then its health, each
+ *  at CURB_SHARE a blow - a construct may be the street's elite, curbing or warded (CI found four too few). */
+const MOST_BLOWS = Math.ceil((1 + WARD_SHARE) / CURB_SHARE) + 1;
 /** Every live foe of the camp killed by its owner's blows - the Colossus's ward first, then its health. */
 async function clear(c) {
-  for (let i = 0; i < 4 && c.own().length; i++) { for (const x of c.own()) c.kill(x); await settle(); }
+  for (let i = 0; i < MOST_BLOWS && c.own().length; i++) { for (const x of c.own()) c.kill(x); await settle(); }
   assert.equal(c.own().length, 0, 'the camp cleared');
   await c.beat(); await settle();
 }

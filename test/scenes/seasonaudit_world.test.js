@@ -12,7 +12,7 @@ import { client, settle, HEART_T, memStorage } from './seasonRig.mjs';
 import { COLOSSUS_TRAITS, SEASON_QUIET_MS, SEASON_ORPHAN_MS, SEASON_QUIET_STORE, SEASON_MAUL_ASKS } from '../../src/scenes/seasonHost.js';
 import { COLOSSUS_TEXT } from '../../src/systems/pass/seasonWords.js';
 import { RESONANT_MAUL } from '../../src/systems/pass/resonantMaul.js';
-import { bossStrike, BOSS_TRAITS_MOST, bossTraitsMost } from '../../src/systems/bossTraits.js';
+import { bossStrike, BOSS_TRAITS_MOST, bossTraitsMost, CURB_SHARE, WARD_SHARE } from '../../src/systems/bossTraits.js';
 import { isColossusSite, isBrassSite } from '../../src/world/worldOfDaggerfall/wodShared.js';
 import { createWeapon, WEAPONS_ENUM } from '../../src/combat/enemyEquipment.js';
 import { SESSION_KEY } from '../../src/net/accountClient.js';
@@ -24,9 +24,12 @@ const clocked = (clock) => { Date.now = () => clock.t; return clock; };
 const SWORD = createWeapon(WEAPONS_ENUM.Longsword, 4, () => 0.5);
 const falls = (c) => c.said.filter((s) => s === COLOSSUS_TEXT.falls()).length;
 const wakes = (c) => c.said.filter((s) => s === COLOSSUS_TEXT.wakes(c.f.near)).length;
+/** The most blows a foe can take of one that would kill it outright (bossTraits.js): its ward and then its health, each
+ *  at CURB_SHARE a blow - a construct may be the street's elite, curbing or warded (CI found four too few). */
+const MOST_BLOWS = Math.ceil((1 + WARD_SHARE) / CURB_SHARE) + 1;
 /** Every live foe of the camp killed by its owner's blows - the Colossus's ward first, then its health. */
 async function clear(c) {
-  for (let i = 0; i < 4 && c.own().length; i++) { for (const x of c.own()) c.kill(x); await settle(); }
+  for (let i = 0; i < MOST_BLOWS && c.own().length; i++) { for (const x of c.own()) c.kill(x); await settle(); }
   assert.equal(c.own().length, 0, 'the camp cleared');
 }
 
