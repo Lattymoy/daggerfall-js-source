@@ -290,5 +290,14 @@
   "tests": [
    "test/world/capitalcarriages.test.js"
   ]
+ },
+ {
+  "name": "AUDIT-CC-P-the-faction-dropped",
+  "file": "src/world/capitalCarriages.js",
+  "old": ": { ...it.r }, model: it.model",
+  "new": ": { ...it.r, FactionID: 0 }, model: it.model",
+  "tests": [
+   "test/world/capitalcarriages.test.js"
+  ]
  }
 ]

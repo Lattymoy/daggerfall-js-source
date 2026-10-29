@@ -420,3 +420,16 @@ test('AUDIT CAPITAL-CARRIAGES T3-T7: the Imperial City\'s stand clear of its gat
   const G = R.SOLITUDE_GATE_ROAD, at = [280, S.z1 + S.bank / 4], r = R.gateRoadAt(...at), slope = r.d < G.half + G.shoulder ? null : R.southSlope(...at);
   assert.ok(slope !== null && Math.abs(R.southHeight(...at) - (R.SOLITUDE_LEVELS.city + (slope - R.SOLITUDE_LEVELS.city) * 0.15625)) < 1e-9, 'a quarter into the bank: smoothstep\'s 0.15625');
 });
+
+test('AUDIT CAPITAL-CARRIAGES P: each capital\'s driver, read off its block by the game\'s own reader, a person in Carriage Drivers whose click is the merchant\'s popup - Fast Travel on its button - as the Bay\'s are (mutants: the faction dropped)', async () => {
+  const { blockFromJson } = await import('../../src/formats/worldData/worldDataReplacement.js');
+  const { collectMiscFlats } = await import('../../src/world/rmbFlats.js');
+  const { staticNpcRoute } = await import('../../src/systems/guild/guildServiceFlow.js');
+  const { IT_FACTIONS, CARRIAGE_DRIVERS_FACTION_ID } = await import('../../src/systems/immersiveTravel.js');
+  modOn();
+  installCapitals({ addTextures: () => 0 });
+  const npcFaction = IT_FACTIONS.find((f) => f.id === CARRIAGE_DRIVERS_FACTION_ID);
+  const drivers = capitalPortBlocks({ gateThings: capitalCarriagesOf }).flatMap((b) => collectMiscFlats(blockFromJson(b.json, 0, b.name)).filter((f) => f.factionID === CARRIAGE_DRIVERS_FACTION_ID));
+  assert.equal(drivers.length, CAPITALS.reduce((n, c) => n + c.gates.length, 0), 'one a road gate');
+  for (const f of drivers) assert.deepEqual(staticNpcRoute({ npcFactionId: f.factionID, npcFaction, insideBuilding: false, hasCustomMerchantService: (id) => id === CARRIAGE_DRIVERS_FACTION_ID }), { kind: 'merchant', service: 'sell' });
+});

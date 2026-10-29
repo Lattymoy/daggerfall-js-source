@@ -10,7 +10,7 @@ lines - before it was fixed, and each fix is pinned and mutated (`tools/mutants/
 |---|---|---|
 | L | the law: each stand on the ground the terrain kernel draws, the cities' gates on their real roads, the map's carriage towns | 7 |
 | T | the pins, the mutants and the record: what each assertion holds, survivors with and without ARENA2, every claim | 8 |
-| P | the player's view: the running game, a driver clicked at each capital's gate | see its section |
+| P | the player's view: the running game, a driver clicked at each capital's gate | 0; stopped unfinished |
 
 ## Lane L - the law
 
@@ -39,7 +39,14 @@ lines - before it was fixed, and each fix is pinned and mutated (`tools/mutants/
 
 ## Lane P - the player's view
 
-Pending.
+The lane booted the game in headless Chromium, 10 to 20 minutes a boot, and was stopped after two hours. It
+reached two gates. At Helstrom's north gate and the Imperial City's west gate the driver stood on its ground (within
+0.13 m of the carriage's), but the probe saw no Fast Travel after its click. The click was not proven to land on the
+driver, and a street merchant's first click loads the popup's art before the popup opens (`worldModes.js`), so this is
+the probe's, not a finding. What a click needs was proven in node instead: each of the 18 drivers, read off its block by
+the game's reader (blockFromJson, collectMiscFlats), is a person in faction 8642, and the click router sends each to
+the merchant's popup, Fast Travel on its button, as the Bay's (pinned; mutant AUDIT-CC-P-the-faction-dropped).
+Not seen: the popup drawn at a capital's gate.
 
 ## Not changed
 

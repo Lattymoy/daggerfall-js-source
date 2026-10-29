@@ -286,12 +286,12 @@ with `ARENA2_PATH`), `test/systems/travel/it1_heldmap.test.js` (4), `test/system
 `tools/mutants/auditit1.json` (30, all dead). Not seen in a browser: no ARENA2,
 no GPU in this container.
 
-CAPITAL-CARRIAGES: `test/world/capitalcarriages.test.js` (7, three with `ARENA2_PATH`: the gate frames off BLOCKS.BSA and
+CAPITAL-CARRIAGES: `test/world/capitalcarriages.test.js` (8, three with `ARENA2_PATH`: the gate frames off BLOCKS.BSA and
 the 407 city templates; every capital's records on the ground the terrain kernel draws; a walled city's gates on their
 roads, on the Bay and past it); `tools/mutants/capitalcarriages.json` (16) and `tools/mutants/audit_capitalcarriages.json`
-(31, two equivalent as recorded), all dead with `ARENA2_PATH` set. Audited the same day:
+(32, two equivalent as recorded), all dead with `ARENA2_PATH` set. Audited the same day:
 `01-Overview/audits/Audit-Capital-Carriages.md`. PINS MOVED: `test/audit_tesa.test.js` (the install line),
 `test/world/baywalls.test.js` (the carrier's furniture), `test/ui/fb1004e_overworld.test.js` (the map's wheel);
 re-aimed by content: AUDIT-TESA-A6-2-own-law-alone, AUDIT-TESA-A6-2-garden-open, AUDIT-TESA-A6-2-install-no-footprint,
 AUDIT-TESA-II-C7-the-centre-carrier-alone, TESA10-models-every-block, TB-the-carrier-bare, TB-the-fallback-unlaid,
-FB1028-Y1-the-carrier-laid-as-today. Not seen in a browser.
+FB1028-Y1-the-carrier-laid-as-today. A driver's click not seen in a browser (the audit's lane P): pinned on the game's own reader and router.
