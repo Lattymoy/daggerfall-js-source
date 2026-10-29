@@ -47,7 +47,7 @@
   {
     "name": "ORT-look-never-grown",
     "file": "src/systems/travel/travelAutopilot.js",
-    "old": "    const look = Math.max(this.lookMin, Math.min(this.lookMax, LANE_LOOK_STEPS * step));",
+    "old": "    const look = Math.max(this.lookMin, Math.min(this.lookMax, LANE_LOOK_STEPS * w.reach));",
     "new": "    const look = this.lookMin;",
     "tests": [
       "test/systems/travel/ow_roadtrue.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "ORT-look-no-ceiling",
     "file": "src/systems/travel/travelAutopilot.js",
-    "old": "    const look = Math.max(this.lookMin, Math.min(this.lookMax, LANE_LOOK_STEPS * step));",
-    "new": "    const look = Math.max(this.lookMin, LANE_LOOK_STEPS * step);",
+    "old": "    const look = Math.max(this.lookMin, Math.min(this.lookMax, LANE_LOOK_STEPS * w.reach));",
+    "new": "    const look = Math.max(this.lookMin, LANE_LOOK_STEPS * w.reach);",
     "tests": [
       "test/systems/travel/ow_roadtrue.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ORT-step-unmeasured",
     "file": "src/systems/travel/travelAutopilot.js",
-    "old": "    this.lastAt = { x: worldX, z: worldZ };\n    const look",
-    "new": "    const look",
+    "old": "    w.at = { x: worldX, z: worldZ };\n    if (step > 0)",
+    "new": "    if (step > 0)",
     "tests": [
       "test/systems/travel/ow_roadtrue.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "ORT-last-leg-unlaned",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "path: finalPath(r, rectCentre(rect), true) });",
-    "new": "path: null });",
+    "old": "path: finalPath(r, rectCentre(rect), true), cornerTurn",
+    "new": "path: null, cornerTurn",
     "tests": [
       "test/systems/travel/ow_roadtrue.test.js"
     ]

@@ -234,8 +234,8 @@ export function validPortalRecord(r) {
   if (!Array.isArray(r.p) || r.p.length !== 3 || !r.p.every(Number.isFinite)) return null;
   if (Math.abs(r.p[0]) > POSE_BOUND || Math.abs(r.p[2]) > POSE_BOUND || Math.abs(r.p[1]) > POSE_Y_BOUND) return null;
   if (!Array.isArray(r.d) || r.d.length !== 2 || !r.d.every(Number.isInteger)) return null;
-  // AUDIT-TESA A2-2: a portal's end is a pixel of the world - the land past the Bay a stone reaches too (TESA-NO-FAST:
-  // its one road there), within the wire's own bound
+  // AUDIT-TESA A2-2: a portal's end is a pixel of the world - the land past the Bay a stone reaches too, within
+  // the wire's own bound
   if (!worldPixelOk(r.d[0]) || !worldPixelOk(r.d[1])) return null;
   if (!Number.isFinite(r.r) || r.r <= 0 || r.r > PORTAL_OPEN_MS) return null;
   return { i: r.i, p: [r.p[0], r.p[1], r.p[2]], d: [r.d[0], r.d[1]], r: r.r };

@@ -101,11 +101,12 @@
   {
     "name": "START3-press-unpicked",
     "file": "src/ui/heldMap.js",
-    "old": "    if (!inBay(q.px, q.py)) return this._pastBayPick(q.px, q.py, q.placeName, true);   // START3: past the Bay, the quest's own place\n",
+    "old": "    if (!inBay(q.px, q.py)) return this._pastBayPick(q.px, q.py, q.placeName, { named: true });   // START3: past the Bay, the quest's own place - TRAVEL-EVERYWHERE: named, so known\n",
     "new": "",
     "tests": [
       "test/systems/starts/start3_pastbay_marks.test.js"
-    ]
+    ],
+    "note": "AUDIT TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay where the world knows it, the press's pick one method"
   },
   {
     "name": "START3-goto-by-name-alone",

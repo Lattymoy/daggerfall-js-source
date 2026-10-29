@@ -2,56 +2,62 @@
   {
     "name": "OPW-the-city-a-spot-again",
     "file": "src/ui/heldMap.js",
-    "old": "this._pastBayPick(end.pixel.x, end.pixel.y, end.name, true)",
-    "new": "this._pastBayPick(end.pixel.x, end.pixel.y, end.name)",
+    "old": "this._pastBayPick(end.pixel.x, end.pixel.y, end.name)",
+    "new": "this._pastBayPick(end.pixel.x, end.pixel.y, end.name, { bare: true })",
     "tests": [
       "test/ui/owplacewalk.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content at the merge with TRAVEL-EVERYWHERE: _pastBayPick takes { bare, named }; a known place is the Bay's journey (`place`), any other pick a place's walk to its door (`door`, the pick's `place`)."
   },
   {
     "name": "OPW-the-pick's-word-dropped",
     "file": "src/ui/heldMap.js",
-    "old": "name: selected.name, ...(selected.place ? { place: true } : {}) };",
+    "old": "name: selected.name, ...(selected.place || selected.door ? { place: true } : {}) };",
     "new": "name: selected.name };",
     "tests": [
       "test/ui/owplacewalk.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content at the merge with TRAVEL-EVERYWHERE: _pastBayPick takes { bare, named }; a known place is the Bay's journey (`place`), any other pick a place's walk to its door (`door`, the pick's `place`)."
   },
   {
     "name": "OPW-a-spot-made-a-place",
     "file": "src/ui/heldMap.js",
-    "old": "walk: this._walksPastBay(), place };",
-    "new": "walk: this._walksPastBay(), place: true };",
+    "old": "place, door: !bare, town };",
+    "new": "place, door: true, town };",
     "tests": [
       "test/ui/owplacewalk.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content at the merge with TRAVEL-EVERYWHERE: _pastBayPick takes { bare, named }; a known place is the Bay's journey (`place`), any other pick a place's walk to its door (`door`, the pick's `place`)."
   },
   {
     "name": "OPW-the-quest's-place-a-spot",
     "file": "src/ui/heldMap.js",
-    "old": "return this._pastBayPick(q.px, q.py, q.placeName, true);",
-    "new": "return this._pastBayPick(q.px, q.py, q.placeName);",
+    "old": "return this._pastBayPick(q.px, q.py, q.placeName, { named: true });",
+    "new": "return this._pastBayPick(q.px, q.py, q.placeName, { bare: true });",
     "tests": [
       "test/ui/owplacewalk.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content at the merge with TRAVEL-EVERYWHERE: _pastBayPick takes { bare, named }; a known place is the Bay's journey (`place`), any other pick a place's walk to its door (`door`, the pick's `place`)."
   },
   {
     "name": "OPW-the-found-place-a-spot",
     "file": "src/ui/heldMap.js",
-    "old": "this._pastBayPick(entry.pos.x, entry.pos.y, entry.name, true)",
-    "new": "this._pastBayPick(entry.pos.x, entry.pos.y, entry.name)",
+    "old": "this._pastBayPick(entry.pos.x, entry.pos.y, entry.name)",
+    "new": "this._pastBayPick(entry.pos.x, entry.pos.y, entry.name, { bare: true })",
     "tests": [
       "test/ui/owplacewalk.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content at the merge with TRAVEL-EVERYWHERE: _pastBayPick takes { bare, named }; a known place is the Bay's journey (`place`), any other pick a place's walk to its door (`door`, the pick's `place`)."
   },
   {
     "name": "OPW-the-journal's-place-a-spot",
     "file": "src/ui/heldMap.js",
-    "old": "this._pastBayPick(site.worldPixel.x, site.worldPixel.y, site.locationName, true);",
-    "new": "this._pastBayPick(site.worldPixel.x, site.worldPixel.y, site.locationName);",
+    "old": "this._pastBayPick(site.worldPixel.x, site.worldPixel.y, site.locationName, { named: true });",
+    "new": "this._pastBayPick(site.worldPixel.x, site.worldPixel.y, site.locationName, { bare: true });",
     "tests": [
       "test/ui/owplacewalk.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content at the merge with TRAVEL-EVERYWHERE: _pastBayPick takes { bare, named }; a known place is the Bay's journey (`place`), any other pick a place's walk to its door (`door`, the pick's `place`)."
   },
   {
     "name": "OPW-the-sea-flag-walked",
@@ -66,11 +72,12 @@
   {
     "name": "OPW-the-flag's-walk-never-picked",
     "file": "src/ui/heldMap.js",
-    "old": "const pick = !inBay(px, py) ? this._pastBayPick(px, py, name)",
+    "old": "const pick = !inBay(px, py) ? this._pastBayPick(px, py, name, { bare: true })",
     "new": "const pick = !inBay(px, py) ? null",
     "tests": [
       "test/ui/owplacewalk.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content at the merge with TRAVEL-EVERYWHERE: _pastBayPick takes { bare, named }; a known place is the Bay's journey (`place`), any other pick a place's walk to its door (`door`, the pick's `place`)."
   },
   {
     "name": "OPW-the-menu-asks-the-bay's-law",
@@ -93,11 +100,12 @@
   {
     "name": "OPW-the-sheet's-name-unasked",
     "file": "src/scenes/world.js",
-    "old": "tvPlaceSummary(pick.pixel.x, pick.pixel.y, !!pick.place)",
-    "new": "tvPlaceSummary(pick.pixel.x, pick.pixel.y)",
+    "old": "const summary = !coords || pick.place ? tvPlaceSummary(pick.pixel.x, pick.pixel.y, !!pick.place) : null;",
+    "new": "const summary = !coords || pick.place ? tvPlaceSummary(pick.pixel.x, pick.pixel.y) : null;",
     "tests": [
       "test/ui/owplacewalk.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content at the merge with TRAVEL-EVERYWHERE: _pastBayPick takes { bare, named }; a known place is the Bay's journey (`place`), any other pick a place's walk to its door (`door`, the pick's `place`)."
   },
   {
     "name": "OPW-a-known-place-dropped",
