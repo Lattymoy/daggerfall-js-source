@@ -233,6 +233,9 @@ test('BAY-LEFT-MAPS C2 THE HELD MAP\'S RIGHT CLICK: the add menu opens on a poin
     win._waypointContext(0, 0);
     const wet = texts(globalThis.document.body);
     assert.ok(wet.includes('Follow') && !wet.includes('Travel here'), 'a flag on the sea past the Bay: no walk there');
+    win._tamriel = true;
+    win._waypointTravel(far);
+    assert.deepEqual([win._selected?.pastBay, win._selected?.walk, win._selected?.door, win._selected?.x, win._panel], [true, true, false, 1569.5, 'travel'], 'its journey: the walk to its bare pixel (TRAVEL-EVERYWHERE)');
     menu.closeWaypointMenu();
     win.dispose();
     setPref('tamrielMap', false);
