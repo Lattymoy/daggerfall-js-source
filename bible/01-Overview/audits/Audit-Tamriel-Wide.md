@@ -46,7 +46,7 @@ loses data; MEDIUM: wrong in a corner a player reaches; LOW: the record, a cost,
 | A2 | LOW | The capitals' yard bounds read the Imperial City's blocks off BLOCKS.BSA, which holds none of them: the test guarded nothing, the record's 23 and 794 were 0s | FIXED - counted as served; the record corrected (`11-Multiplayer/Yard-Cells.md`); HOME_TOWN_MAX's margin left open |
 | B1 | MEDIUM | SD-PARTY's one life and one win a Hollow kept nothing in a province's Hollow: the hub read the Bay lane's record | FIXED - the hub reads the slot's lane (`server/src/sdCopy.js`; `11-Multiplayer/Super-Dungeons.md`), world281 |
 | B2 | MEDIUM | Staff `/tp @player` refused a player in an Ocean Hole's abyss past the Bay (its pit bounded to 0..999) | FIXED - the pit bounded by `worldPixelOk` (`net/staffTeleport.js`; `03-World/Ocean-Holes.md`), world281 |
-| B3 = C3 | MEDIUM | Two dungeons past the Bay shared one dungeon-vein identity (`mapId & 0xfffff`): an Eltheric ruin and a lair, two abysses | FIXED - a place the port made keys by its whole id (`scenes/dungeonIdentity.js`; `06-Systems/Professions-Arc.md`), acct210 |
+| B3 = C3 | MEDIUM | Two dungeons past the Bay shared one dungeon-vein identity (`mapId & 0xfffff`): an Eltheric ruin and a lair, two abysses | FIXED - a place the port made keys by its whole id (`scenes/dungeonIdentity.js`; `06-Systems/Professions-Arc.md`), acct211 |
 | B4 = C7 | LOW | Staff `/tp x y`, `/tp <place>` and the staff flat map knew the Bay's grid alone | FIXED - the world's grid and the registry (`scenes/staffTp.js`; `06-Systems/Online-Arc.md`); the relay's own copy waits for its next version |
 | B5 | LOW | The hub's cleansed raids list held 64, two days of the Bay's raids; the world's lanes roll some 300 | FIXED - two days of every lane's slots, 576 (`net/wire.js` RAID_CLEANS_MAX; `03-World/Raiding-Parties.md`), world281 |
 | B6 | - | The house cap (HOUSES-3) is three a region, and past the Bay a region is a province | THE OWNER'S CALL |
@@ -81,7 +81,7 @@ line, true again. E1's bank cabin pin gained the producer's `campToWire` and ass
 
 ## Deploy order
 
-The account service first (acct210, acct209 on the branch until ARMORY took it at the merge of main: an older service refuses a dungeon's whole id), then the relay (world281: the
+The account service first (acct211, acct209 then acct210 on the branch until ARMORY and LODE-HERD took them at the merges of main: an older service refuses a dungeon's whole id), then the relay (world281: the
 hub's lane keys, the abyss bound, the cleanses list, the serpent's site law; world280 on the branch), then the site.
 
 ## Left for the owner, and open
