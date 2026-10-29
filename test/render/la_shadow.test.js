@@ -387,7 +387,7 @@ test('LA-LIGHTS2: the host - on the lane the street picks one lantern past the c
 
 test('LA-SHADOW1: the pass and the grid by source - the anchor held and passed, carried by the recentre, the Z up', () => {
   const sp = rd('src/render/shadowPass.js');
-  assert.match(sp, /sunAnchorFor\(f\.eye, this\._sunAnchor, f\.lightDir, sunTexelWorld\(SHADOW_CASCADES\.length - 1, k\)\);[^\n]*\n\s+sunCascadeMatrices\(f\.eye, f\.lightDir, this\._sunVPNew, this\._sunAnchor, k\);/);
+  assert.match(sp, /sunAnchorFor\(f\.eye, this\._sunAnchor, sunDir, sunTexelWorld\(SHADOW_CASCADES\.length - 1, k\)\);[^\n]*\n\s+sunCascadeMatrices\(f\.eye, sunDir, this\._sunVPNew, this\._sunAnchor, k\);/);   // PIN MOVED (WL1): `sunDir`, the street's sun or a building's window sun
   assert.match(sp, /this\._sunAnchor\[0\] \+= offset\[0\]; this\._sunAnchor\[1\] \+= offset\[1\]; this\._sunAnchor\[2\] \+= offset\[2\];/);
   assert.match(sp, /const up = Math\.abs\(lightDir\[2\]\) < 0\.9 \? Z_UP : Y_UP;/);
   assert.ok(sunTexelWorld(0) < 0.02);

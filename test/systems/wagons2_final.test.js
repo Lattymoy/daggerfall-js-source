@@ -26,7 +26,7 @@ import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { clockFogColor, realWindowsGlsl, RW_SEED_GLSL } from '../../src/render/realWindows.js';
 import { exteriorAmbient, sunScale, viewOutLight } from '../../src/world/worldClock.js';
 import { EMIT_MESH_FS } from '../../src/render/airPass.js';
-import { ROOM_LIT_SHARE } from '../../src/world/windowRoomArt.js';
+import { ROOM_LIT_SHARE, ROOM_LIT_K, roomLitAt, roomSeedBits } from '../../src/world/windowRoomArt.js';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const sources = new Map();
@@ -238,7 +238,7 @@ test('RW1 x WAGONS2 (FINAL AUDIT) THE VIEW OUT IN THE WEATHER: the street behind
   assert.deepEqual(viewOutLight(noon, ns, NaN, undefined).sun, sunScale(noon), 'no word: a clear day');
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const src = read(f);
-    assert.match(src, /const light = viewOutLight\(clockMinute, getFloat\('Enhancements', 'NightAmbientLightScale', 0, 1\), weatherTerms\(\)\.sun, sky\.sunFactor\(\)\);\n\s+r\.setLighting\(withMoonAmbient\(light\.ambient, sky\.moonlight\(\)\), light\.sun, SUN_RIG_COLOR\);\n\s+r\.setFogColor\(clockFogColor\(keptFog, keptSun, r\._sunScale\)\);/, f);
+    assert.match(src, /const light = viewOutLight\(clockMinute, getFloat\('Enhancements', 'NightAmbientLightScale', 0, 1\), weatherTerms\(\)\.sun, sky\.sunFactor\(\)\);\n\s+lightStreetAt\(r, light, sky\.moonlight\(\), SUN_RIG_COLOR\);[^\n]*\n\s+r\.setFogColor\(clockFogColor\(keptFog, keptSun, r\._sunScale\)\);/, f);   // WL1: and the moon of the hour (render/enhancedSky.js lightStreetAt)
   }
 });
 
@@ -257,19 +257,17 @@ test('RW1 x WAGONS2 (FINAL AUDIT) THE SEA IN THE VIEW OUT: Deep Waters (on by de
 test('RW1 x WAGONS2 (FINAL AUDIT) A DARK ROOM GLOWS NOWHERE: the room\'s lit seed is one text (RW_SEED_GLSL), read by the room behind the glass and by the air pass\'s emission replay - which blooms an exterior pane\'s mask only where its room is lit, so a room drawn dark at night wears no amber halo with Enhanced Lighting on (mutants: the replay\'s test, its uniform never set, the renderer\'s word)', () => {
   const room = realWindowsGlsl('c');
   assert.ok(room.includes(RW_SEED_GLSL), 'the room\'s seed is the shared text');
-  assert.match(room, /float s2 = rwLitSeed\(vn, vWorldPos, uModel\[3\]\.xyz, vUV\);/);
-  assert.match(room, /float lit = night \* step\(s2, RW_LIT_SHARE\);/);
-  assert.match(RW_SEED_GLSL, new RegExp(`const float RW_LIT_SHARE = ${ROOM_LIT_SHARE};`));
+  assert.match(room, /highp uint sb = rwSeedBits\(vn, vWorldPos, uModel\[3\]\.xyz, vUV\);/);
+  assert.match(room, /float lit = rwRoomLit\(sb\) \? night : 0\.0;/);
+  assert.match(RW_SEED_GLSL, new RegExp(`bool rwRoomLit\\(highp uint h\\) \\{ return \\(h >> 8u\\) < ${ROOM_LIT_K}u; \\}`), 'WL1: the lit law in whole numbers');
   assert.ok(EMIT_MESH_FS.includes(RW_SEED_GLSL), 'and the replay\'s');
-  assert.match(EMIT_MESH_FS, /if \(uRoomsLit > 0\.5 && rwLitSeed\(normalize\(vNormal\), vWorldPos, uModel\[3\]\.xyz, vUV\) > RW_LIT_SHARE\) discard;/, 'unlit (s2 past the share, as step(s2, share) reads it): no bloom');
+  assert.match(EMIT_MESH_FS, /if \(uRoomsLit > 0\.5 && !rwRoomLit\(rwSeedBits\(normalize\(vNormal\), vWorldPos, uModel\[3\]\.xyz, vUV\)\)\) discard;/, 'unlit (the room\'s own law): no bloom');
   const ap = read('src/render/airPass.js');
   assert.match(ap, /gl\.uniform1f\(P\.emitMesh\.uRoomsLit, f\.windowRooms && sm\._evWin === GLASS_EXTERIOR \? 1 : 0\);/, 'set for every sub-mesh - a room\'s glass alone');
   assert.match(ap, /'uBloomSize', 'uRoomsLit'\]\),/, 'its location asked');
   assert.match(read('src/render/renderer.js'), /windowRooms: !!this\._rw\?\.rooms,/, 'the renderer says whether rooms stand behind exterior glass');
-  // the JS twin of the hash: the share the shader keeps
-  const fr = (x) => x - Math.floor(x);
-  const hash = (p) => { let [x, y, z] = [fr(p[0] * 0.1031), fr(p[1] * 0.1030), fr(p[2] * 0.0973)]; const d = x * (y + 33.33) + y * (x + 33.33) + z * (z + 33.33); x += d; y += d; z += d; return fr((x + y) * z); };
+  // the JS twin of the hash (world/windowRoomArt.js roomSeedBits): the share the shader keeps
   let lit = 0, n = 0;
-  for (let tx = 0; tx < 40; tx++) for (let pl = 0; pl < 40; pl++) { n++; if (hash([3.1 * 0 + 0, pl * 0.37, tx + 11]) <= ROOM_LIT_SHARE) lit++; }
-  assert.ok(Math.abs(lit / n - ROOM_LIT_SHARE) < 0.08, `about the share lit (${lit}/${n})`);
+  for (let tx = 0; tx < 40; tx++) for (let pl = 0; pl < 40; pl++) { n++; if (roomLitAt(roomSeedBits(0, 0, 4, pl, tx, 0))) lit++; }
+  assert.ok(Math.abs(lit / n - ROOM_LIT_SHARE) < 0.04, `about the share lit (${lit}/${n})`);
 });

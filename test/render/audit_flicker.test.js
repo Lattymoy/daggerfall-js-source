@@ -179,7 +179,9 @@ test('AUDIT FLICKER S2: A RE-ANCHOR KEEPS THE GRID - walking past the hold moved
   assert.ok(worstOld > 0.2, `the old re-anchor jumped the grid (${worstOld.toFixed(3)} of a texel)`);
   assert.ok(SUN_ANCHOR_HOLD > 1, 'the hold');
   // the pass hands it the light and the far texel, at the travel view's scale
-  assert.match(rd('src/render/shadowPass.js'), /sunAnchorFor\(f\.eye, this\._sunAnchor, f\.lightDir, sunTexelWorld\(SHADOW_CASCADES\.length - 1, k\)\);/);
+  // PIN MOVED (WL1): the light is `sunDir` - the street's own sun, or a building's window sun (`f.windowSun`)
+  assert.match(rd('src/render/shadowPass.js'), /sunAnchorFor\(f\.eye, this\._sunAnchor, sunDir, sunTexelWorld\(SHADOW_CASCADES\.length - 1, k\)\);/);
+  assert.match(rd('src/render/shadowPass.js'), /const sunDir = this\.kind === 'sun' \? f\.lightDir : f\.windowSun \?\? null;/);
 });
 
 // ── P1: a flat's lamp read, off its own card ───────────────────────────────────────────────────────────────────────
