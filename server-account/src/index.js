@@ -277,6 +277,7 @@ import { chapterSheet, chapterSeatsOf, chapterTitlesOpenFor, chapterTitlesOfAcco
 import { contractRegionOfRaid } from '../../src/net/writLaw.js';   // CHAP2b: the region a raid's key names   // CHAP2a: a town's guild halls, witnessed; AUDIT CHAP2 E1: audited and struck
 import { claimRaid, raidRecordOf } from './raids.js';   // RAID4: the towns defended
 import { claimSerpent, serpentRecordOf } from './serpents.js';   // SERPENT1: the serpents slain
+import { claimDragon } from './dragons.js';   // DRAGON4: the dragons slain, their hoards and their tames
 import { claimStar, starRecordOf } from './stars.js';   // STAR7: the fallen stars held
 import { claimSd, sdRecordOf } from './sds.js';   // SD9b: the Hours broken
 import { claimKetch, ketchRecordOf } from './ketch.js';   // KETCH: the Ketchmaster's hold, once a voyage - and the voyages sailed, on the cards
@@ -1594,6 +1595,16 @@ const service = {
         const answer = { ...r };
         delete answer.day; delete answer.struck;   // the service's own: the kill's day and whether the batch struck
         return json({ ...answer, order: signed, ...(r.recorded ? { marks: await serpentStrikeAnswer(ctx, who.player, env, !!r.struck, r.day) } : {}) }, 200, origin);
+      }
+
+      if (path === '/v1/dragon/claim' && request.method === 'POST') {
+        // DRAGON4: A DWARVEN DRAGON'S RECEIPT, CARRIED HERE BY THE ACCOUNT IT NAMES, with the character that fought it. The relay
+        // signed it at the kill (src/net/dragon/dragonReceipt.js); the session says who is asking, never the body, and dragons.js
+        // `claimDragon` holds the rest - the signature, the account, one row a (watch, account), the device's hoard, the tame.
+        const r = await claimDragon(ctx, who.player, { receipt: body.receipt, character: body.character, cid: body.cid ?? null }, await gatePublicKey(env, subtle));
+        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
+        if (r.recorded === true) await grantSpoils(ctx.db, who.player.id);   // INT5: a signed win's spoils, the budget's fill
+        return json(r, 200, origin);
       }
 
       if (path === '/v1/sd/claim' && request.method === 'POST') {

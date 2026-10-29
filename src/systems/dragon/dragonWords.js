@@ -9,9 +9,20 @@ import { t } from '../textManager.js';
 export const dragonName = (b) => (b ? t('dragon.name.shiny', 'The Aetherbright Dragon') : t('dragon.name', 'The Dwarven Dragon'));
 export const dragonTitle = () => t('dragon.title', 'Rourken Outrider');
 
+/** Where it circles, by systems/compassWords.js's English ways - a whole phrase, so each language words it its own way. */
+const DRAGON_WAY = Object.freeze({
+  north: () => t('dragon.way.north', 'to the north'), 'north-east': () => t('dragon.way.northEast', 'to the north-east'),
+  east: () => t('dragon.way.east', 'to the east'), 'south-east': () => t('dragon.way.southEast', 'to the south-east'),
+  south: () => t('dragon.way.south', 'to the south'), 'south-west': () => t('dragon.way.southWest', 'to the south-west'),
+  west: () => t('dragon.way.west', 'to the west'), 'north-west': () => t('dragon.way.northWest', 'to the north-west'),
+});
+
 /** The lines of its fight and its sky. */
 export const DRAGON_WORDS = Object.freeze({
-  circles: (dir, b) => (b ? t('dragon.circles.shiny', 'A blue dragon circles in the sky to the {dir}.', { dir }) : t('dragon.circles', 'A dragon circles in the sky to the {dir}.', { dir })),
+  circles: (dir, b) => {
+    const way = DRAGON_WAY[dir]?.() ?? DRAGON_WAY.north();
+    return b ? t('dragon.circles.shiny', 'A blue dragon circles in the sky {way}.', { way }) : t('dragon.circles', 'A dragon circles in the sky {way}.', { way });
+  },
   get grounded() { return t('dragon.grounded', 'It crashes down! Strike it while it is on the ground.'); },
   get aloft() { return t('dragon.aloft', 'It beats its wings and climbs back into the sky.'); },
   get phase2() { return t('dragon.phase2', 'The dragon roars. Steam pours from its seams!'); },
@@ -48,4 +59,16 @@ export const DRAGON_NO_TEXT = Object.freeze({
   get full() { return t('dragon.no.full', 'Too many fight this dragon already.'); },
   get slain() { return t('dragon.no.slain', 'The dragon is already slain.'); },
   get reload() { return t('dragon.no.reload', 'Your game is out of date. Save, then reload or update the app to fight the dragon.'); },
+});
+
+/** DRAGON4: its hoard's lines (systems/dragon/dragonSpoils.js) and its claim's (net/dragon/dragonClaims.js). */
+export const DRAGON_SPOILS_TEXT = Object.freeze({
+  granted: (b) => t('dragon.spoils.granted', '{name}\'s hoard is yours. It is in your pack.', { name: dragonName(b) }),
+  recovered: () => t('dragon.spoils.recovered', 'A dragon\'s hoard is in your pack.'),
+  kept: (who) => (who ? t('dragon.spoils.kept', 'The dragon\'s hoard waits for {who}.', { who }) : t('dragon.spoils.keptAnyone', 'The dragon\'s hoard waits for the one who fought it.')),
+});
+export const DRAGON_CLAIM_TEXT = Object.freeze({
+  recorded: (n) => t('dragon.claim.recorded', 'The dragon\'s fall is on your record. Dragons slain: {n}.', { n }),
+  guest: () => t('dragon.claim.guest', 'This dragon is not on your record yet: only registered accounts keep one. Add a username this week and it counts.'),
+  tamed: () => t('dragon.claim.tamed', 'Its core still turns. The dragon is yours to bind.'),
 });

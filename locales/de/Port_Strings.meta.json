@@ -10759,6 +10759,231 @@
   "tr": "851765ec00f4",
   "by": "claude-in-session"
  },
+ "dragon.aloft": {
+  "en": "b85acc8cd027",
+  "tr": "f0e05726955d",
+  "by": "claude-in-session"
+ },
+ "dragon.bar.aloft": {
+  "en": "a7ef2443f0da",
+  "tr": "b3afb76306ab",
+  "by": "claude-in-session"
+ },
+ "dragon.bar.climbs": {
+  "en": "31d480278d6c",
+  "tr": "3aab20480638",
+  "by": "claude-in-session"
+ },
+ "dragon.bar.fighter": {
+  "en": "670696d61734",
+  "tr": "8b7f104cda09",
+  "by": "claude-in-session"
+ },
+ "dragon.bar.fighters": {
+  "en": "550dd5bf59c2",
+  "tr": "73541b2d27b9",
+  "by": "claude-in-session"
+ },
+ "dragon.bar.grounded": {
+  "en": "f46eac25837b",
+  "tr": "cef278d1edb6",
+  "by": "claude-in-session"
+ },
+ "dragon.blow.breath": {
+  "en": "113de29ef363",
+  "tr": "0fbb0f8cc402",
+  "by": "claude-in-session"
+ },
+ "dragon.blow.claw": {
+  "en": "c62f3c418f00",
+  "tr": "c8be10783f57",
+  "by": "claude-in-session"
+ },
+ "dragon.blow.crash": {
+  "en": "73166cd8006c",
+  "tr": "ccb2cfd94587",
+  "by": "claude-in-session"
+ },
+ "dragon.blow.gust": {
+  "en": "11dfa00a5108",
+  "tr": "ffcb71ab7906",
+  "by": "claude-in-session"
+ },
+ "dragon.blow.rain": {
+  "en": "a45eddfc297d",
+  "tr": "e6d71a9363e3",
+  "by": "claude-in-session"
+ },
+ "dragon.blow.strafe": {
+  "en": "429f7052d6ff",
+  "tr": "93ca617a0f3b",
+  "by": "claude-in-session"
+ },
+ "dragon.blow.tail": {
+  "en": "25e41b11daeb",
+  "tr": "220a534d5f8e",
+  "by": "claude-in-session"
+ },
+ "dragon.blow.vent": {
+  "en": "938e88d3b2c6",
+  "tr": "dd13802c54a6",
+  "by": "claude-in-session"
+ },
+ "dragon.blow.volley": {
+  "en": "5e52626455db",
+  "tr": "24c582e1d15b",
+  "by": "claude-in-session"
+ },
+ "dragon.circles": {
+  "en": "d034b72a1d02",
+  "tr": "00b738a74e11",
+  "by": "claude-in-session"
+ },
+ "dragon.circles.shiny": {
+  "en": "30558f9dcf25",
+  "tr": "f704851f7baa",
+  "by": "claude-in-session"
+ },
+ "dragon.claim.guest": {
+  "en": "ab87cdb92c3c",
+  "tr": "7d6096142b62",
+  "by": "claude-in-session"
+ },
+ "dragon.claim.recorded": {
+  "en": "5abb799ef1af",
+  "tr": "a3e555065460",
+  "by": "claude-in-session"
+ },
+ "dragon.claim.tamed": {
+  "en": "b8894f81c1a8",
+  "tr": "aa9d18109f1b",
+  "by": "claude-in-session"
+ },
+ "dragon.fell": {
+  "en": "c2cc54fdb22f",
+  "tr": "e796364732f4",
+  "by": "claude-in-session"
+ },
+ "dragon.gone": {
+  "en": "3d85fe5295b3",
+  "tr": "7d882fcfbc6c",
+  "by": "claude-in-session"
+ },
+ "dragon.grounded": {
+  "en": "73a3112146c6",
+  "tr": "31b2b23044fe",
+  "by": "claude-in-session"
+ },
+ "dragon.name": {
+  "en": "4d27e12d38a5",
+  "tr": "cf7122e95980",
+  "by": "claude-in-session"
+ },
+ "dragon.name.shiny": {
+  "en": "3cdb17cf02bd",
+  "tr": "922027892981",
+  "by": "claude-in-session"
+ },
+ "dragon.no.far": {
+  "en": "9f8e80e8e2eb",
+  "tr": "872956992137",
+  "by": "claude-in-session"
+ },
+ "dragon.no.full": {
+  "en": "40867e1764af",
+  "tr": "e1eb60a56059",
+  "by": "claude-in-session"
+ },
+ "dragon.no.gone": {
+  "en": "92139d033b68",
+  "tr": "ca7eb7eeb125",
+  "by": "claude-in-session"
+ },
+ "dragon.no.reload": {
+  "en": "4fc1cf03ece1",
+  "tr": "470665b3a5d1",
+  "by": "claude-in-session"
+ },
+ "dragon.no.slain": {
+  "en": "0b4be7438aac",
+  "tr": "55820e21f9dc",
+  "by": "claude-in-session"
+ },
+ "dragon.phase2": {
+  "en": "5b08ce8d02e5",
+  "tr": "54e1f0ce42a0",
+  "by": "claude-in-session"
+ },
+ "dragon.phase3": {
+  "en": "1ca56f63f58e",
+  "tr": "4d40735054b8",
+  "by": "claude-in-session"
+ },
+ "dragon.spoils.granted": {
+  "en": "38d3f2244ce0",
+  "tr": "11df8a3b8f14",
+  "by": "claude-in-session"
+ },
+ "dragon.spoils.kept": {
+  "en": "8159f382dd27",
+  "tr": "7b0f2377f308",
+  "by": "claude-in-session"
+ },
+ "dragon.spoils.keptAnyone": {
+  "en": "628e24dfbca6",
+  "tr": "12ddd101ebbf",
+  "by": "claude-in-session"
+ },
+ "dragon.spoils.recovered": {
+  "en": "fc2533f11312",
+  "tr": "a104a8e424cf",
+  "by": "claude-in-session"
+ },
+ "dragon.title": {
+  "en": "c8e7c9f7f341",
+  "tr": "1407716ad4b5",
+  "by": "claude-in-session"
+ },
+ "dragon.way.east": {
+  "en": "b71eb83dfd5e",
+  "tr": "ba8dfc3ef4bf",
+  "by": "claude-in-session"
+ },
+ "dragon.way.north": {
+  "en": "1a747bfc2db5",
+  "tr": "efd7fcca0e39",
+  "by": "claude-in-session"
+ },
+ "dragon.way.northEast": {
+  "en": "e23b01f51164",
+  "tr": "b0bb48b71b2d",
+  "by": "claude-in-session"
+ },
+ "dragon.way.northWest": {
+  "en": "be1f81bea958",
+  "tr": "7f7b389609e4",
+  "by": "claude-in-session"
+ },
+ "dragon.way.south": {
+  "en": "89bdb1e52baa",
+  "tr": "e14de65e1b4b",
+  "by": "claude-in-session"
+ },
+ "dragon.way.southEast": {
+  "en": "5310557eb497",
+  "tr": "3fde2ca4146d",
+  "by": "claude-in-session"
+ },
+ "dragon.way.southWest": {
+  "en": "6629d1ee1a67",
+  "tr": "21427db5ece8",
+  "by": "claude-in-session"
+ },
+ "dragon.way.west": {
+  "en": "82f1bd81bbf1",
+  "tr": "b693a14e395a",
+  "by": "claude-in-session"
+ },
  "eg.ask.bargain": {
   "en": "c6c9ac7dddef",
   "tr": "d224ce97619c",

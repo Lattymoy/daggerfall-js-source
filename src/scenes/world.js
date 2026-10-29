@@ -22945,11 +22945,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   onSlotSaved((characterId) => { try { spoilsPool.saved(characterId); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); } });
   // REALM P1.3: a realm checkpoint's spoils. AUDIT REALM2 C1: a town's thanks with them - RAID4b's own pool was cleared by a
   // slot's save alone (onSlotSaved, below), which a realm character never writes, so every join handed the thanks back
-  _realmSaveHooks.held = (who) => { try { return [...(spoilsPool?.heldIds?.(who) ?? []), ...(raidSpoils?.heldIds?.(who) ?? []), ...(serpentSpoils?.heldIds?.(who) ?? []), ...(sdSpoilsPool?.heldIds?.(who) ?? []), ...(starfall?.spoilsHeld(who) ?? []), ...(ketch?.spoilsHeld(who) ?? [])]; } catch { return null; } };   // SERPENT1: and the Old Coil's hoard; SD9e: and the Brass Remnant's spoils; STAR7: and a held star's
+  _realmSaveHooks.held = (who) => { try { return [...(spoilsPool?.heldIds?.(who) ?? []), ...(raidSpoils?.heldIds?.(who) ?? []), ...(serpentSpoils?.heldIds?.(who) ?? []), ...(sdSpoilsPool?.heldIds?.(who) ?? []), ...(starfall?.spoilsHeld(who) ?? []), ...(ketch?.spoilsHeld(who) ?? []), ...(dragonSky?.spoilsHeld(who) ?? [])]; } catch { return null; } };   // SERPENT1: and the Old Coil's hoard; SD9e: and the Brass Remnant's spoils; STAR7: and a held star's
   // INT3: the judge's hold, said to the player each time a landed checkpoint moves it (systems/realmSaves.js); AUTO-HOLD: and
   // the pieces the ledger locked, named (scenes/realmHoldHost.js)
   wireRealmHolds(realmSession, { say: (t) => townTalk.say(t), entity: playerEntity });
-  _realmSaveHooks.landed = (who, ids) => { try { spoilsPool?.saved(who, ids); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); } try { raidSpoils?.saved(who, ids); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } try { serpentSpoils?.saved(who, ids); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } try { sdSpoilsPool?.saved(who, ids); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } starfall?.spoilsSaved(who, ids); ketch?.spoilsLanded(who, ids); };   // STAR7: and a held star's (its own catch); AUDIT KETCH L2-3: and the Ketchmaster's hold's (its own)
+  _realmSaveHooks.landed = (who, ids) => { try { spoilsPool?.saved(who, ids); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); } try { raidSpoils?.saved(who, ids); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } try { serpentSpoils?.saved(who, ids); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } try { sdSpoilsPool?.saved(who, ids); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } starfall?.spoilsSaved(who, ids); ketch?.spoilsLanded(who, ids); dragonSky?.spoilsSaved(who, ids); };   // STAR7: and a held star's (its own catch); AUDIT KETCH L2-3: and the Ketchmaster's hold's (its own)
   onSlotSaved((characterId) => { try { raidSpoils.saved(characterId); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } });   // RAID4b
   /** SERPENT1: THE OLD COIL'S HOARD (systems/serpent/serpentSpoils.js) - the raids' door, under keys of its own: no floor, no word
    *  to the hub, the crash's records a save clears. Made online or not, as the pools are. */
@@ -23114,6 +23114,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     try { if (recoverSpoils(_spoilsStore, takeSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => sdSpoilsPool.adopt(rec), key: SD_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(SD_SPOILS_TEXT.recovered); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); }   // SD9e: the Brass Remnant's spoils, the same door
     starfall?.recoverSpoils(who, _spoilsInSave);   // STAR7: a held star's spoils, the same door (scenes/starfall/starRewards.js)
     ketch?.recoverSpoils(who, _spoilsInSave);   // AUDIT KETCH L2-2, L2-3: the Ketchmaster's hold's, and my shares still owed (scenes/ketch/ketchClient.js)
+    dragonSky?.recoverSpoils(who, _spoilsInSave);   // DRAGON4: a slain dragon's hoard, the same door (scenes/dragonRewards.js)
     _spoilsInSave = null;   // AUDIT RESCUE-SAVE A1: the boot's load alone - a load in the session is its own pack
   };
   // AUDIT ONLINE2 F3 (AUDIT RAID R8d): A LOAD IN THE SESSION IS A STAND-UP - the pack is the loaded save's, so the pools
@@ -23589,7 +23590,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // words for this machine's site, and its host (scenes/dragonHost.js). Online alone: the relay runs its fight. The Bay's
   // scan is read once its slices are whole, never forced in a frame (AUDIT WB C7).
   const dragonSites = params.has('online') ? createDragonSites({ bayScan: () => (warmGateScan(), _gateScan), theatres: () => theatreGates }) : null;
-  const dragonLink = dragonSites ? createDragonLink({ now: () => Date.now() + _sharedOffsetMs, say: (code) => dragonSky?.refused(code), site: () => dragonSky?.site() ?? null }) : null;
+  const dragonLink = dragonSites ? createDragonLink({ now: () => Date.now() + _sharedOffsetMs, say: (code) => dragonSky?.refused(code), site: () => dragonSky?.site() ?? null, onReceipt: (r) => dragonSky?.receipt(r) }) : null;
   dragonSky = dragonLink ? createDragonHost({
     now: () => Date.now() + _sharedOffsetMs, link: dragonLink, sites: dragonSites,
     online: { ready: (cell) => !!online?.dragonReady?.(cell), send: (w, cell) => !!online?.sendDragon?.(w, cell) },
@@ -23597,11 +23598,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     ground: (x, z) => surfaceAt(x, z), feet: () => player.feetAt(), eye: () => cam.pos, level: () => playerEntity.level ?? 1,
     renderer, getTexture, uploadRecordFrame, audio,
     say: (text, sec) => townTalk.say(text, sec), mid: (text, sec) => setMidScreenText(text, sec),
+    takeSpoil, relayNowS, chatNotice: (text) => chatNotice(text),   // DRAGON4: its rewards' (scenes/dragonRewards.js) - the pack's door, the relay's clock, the chat's line (declared below: read at the call)
   }) : null;
   let _dragonBarUp = false;
   /** The dragon's frame (the online frame's, after the serpent's): on the street, to the dead too, its sky, its fight and its bar. */
   const dragonFrame = () => {
     if (!dragonSky) return;
+    dragonSky.tick();   // DRAGON4: its receipts offered in their time, in any mode
     let fight = false;
     try { fight = (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned ? dragonSky.frame() : (dragonSky.leave(), false); } catch (e) { console.warn('[dragon] frame', e?.message ?? e); }
     const bar = fight ? dragonBarModel(dragonSky.bar()) : null;
@@ -33990,6 +33993,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // Dodging tally, the poison seam and the recoverable arrow all
     // ride the hit.
     meterFor(renderer.gl)?.markCpu('arrows');   // PERF-ZONE2: the missiles' flight and their draw
+    const frameArrows = () => {   // PERF-V8
     arrows.update(foeDt, {   // AUDIT (pre-merge) P6: QUEST-POPUP-PAUSE's hold - offline, an arrow already loosed waits under the quest's box with its archer
       // enemy arrows hunt only a SPAWNED, WALKING player - fly/orbit
       // camera modes have no capsule to hit
@@ -34056,6 +34060,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           : exteriorFoes.attackFromPlayer(f, player.pos, 'arrow')),   // AUDIT WORLD6b-iii(e) A2: the shaft's kind on the zero blow; AUDIT WORLD6b-ii B4: the one door - a PUPPET's is its owner's (a zero blow diverted, a damaging one already was), no area of mine wakes
       })),
     });
+    };
+    frameArrows();
     arrows.draw(renderer);
     // UNDER-LOOK and UNDER-RAYS (FIELD BUGS 2026-10-01 #4, #5): under the sea, the water body and the sun's shafts over
     // every pixel the world drew - after the last world pass, before the weapon and the HUD (world/underwater/underwaterLook.js)

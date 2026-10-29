@@ -197,6 +197,7 @@ const NO_PERSON = Object.freeze({
   'src/scenes/corpseMarker.js': 'a foe\'s corpse',
   'src/scenes/droppedLoot.js': 'loot piles',
   'src/scenes/droppedTorches.js': 'torches',
+  'src/scenes/dragonHost.js': 'the Dwarven Dragon, the sky\'s world boss, as a mobile unit - never a person (DRAGON3)',
   'src/scenes/exteriorFoes.js': 'foes as mobile units',
   'src/scenes/gate/gateCourt.js': 'the gate boss as a mobile unit, and his corpse',
   'src/scenes/eliteGates/egFight.js': 'an Elite Breach\'s champion or Court lord as a mobile unit (EG-PLAY)',

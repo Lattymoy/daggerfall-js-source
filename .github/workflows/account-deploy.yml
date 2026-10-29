@@ -146,6 +146,7 @@ on:
       - "src/net/starfall/starReceipt.js"
       - "src/net/starfall/starfallLaw.js"
       - "src/net/serpent/serpentHoardLaw.js"
+      - "src/net/dragon/dragonReceipt.js"
       - "src/net/arena/arenaReceipt.js"
       - "src/net/arena/arenaLaw.js"
       - "src/net/wire.js"

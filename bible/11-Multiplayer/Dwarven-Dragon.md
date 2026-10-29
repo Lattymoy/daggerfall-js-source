@@ -77,8 +77,8 @@ it in the same place with no frame sent.
   (1.6 - a wingspan near 19 m), its idle frames in the air.
 - **Heard**: a roar once in every `DRAGON_ROAR_MS` (40 s) of the clock, placed at it, carrying `DRAGON_ROAR_R` (3 km).
 - **Told once**, after a player has been within `DRAGON_NOTICE_R` (1.5 km) of a roosting dragon for
-  `DRAGON_NOTICE_WAIT_MS` (6 s): *"A dragon circles in the sky to the north-east."* (the compass word from the player
-  to it). The wait is longer than the cell's pace for its whole state, so a dragon its cell says slain is never told.
+  `DRAGON_NOTICE_WAIT_MS` (6 s): *"A dragon circles in the sky to the north-east."* (the way from the player to it, a
+  whole phrase of its own in each language: `dragon.way.*`, never an English compass word inside a translation). The wait is longer than the cell's pace for its whole state, so a dragon its cell says slain is never told.
 
 ## 4. The fight - who runs it
 
@@ -154,28 +154,29 @@ serpent's does.
 ## 8. The spoils and the tame
 
 **The receipt** (`net/dragon/dragonReceipt.js`, version `z1`): Ed25519 under the relay's one key, refused by every other
-verifier and theirs by this one. Its claims: `w` the watch, `b` the dragon (0 brass, 1 Aetherbright), `s` the account,
-`c` the hoard's seed, `x` dealt or stood, `l` the level, `i` issued, `e` a week on.
+verifier and theirs by this one. Its claims: `q` the watch, `b` the dragon (0 brass, 1 Aetherbright), `s` the account,
+`c` the hoard's seed, `x` dealt or stood, `l` the level, `m` the relay's body count, `i` issued, `e` a week on.
 
-**The hoard** (systems/dragon/dragonSpoils.js, rolled on the receipt's seed, never past the character's level), within
-the ceiling's seven rungs:
+**The claim** (`server-account/src/dragons.js` `claimDragon`, route `/v1/dragon/claim`, migration `0192_dragon.sql`, acct213).
+The device carries the receipt (`net/dragon/dragonClaims.js`) with the character that fought and a claim id of its own.
+The service counts one kill a (watch, account) in `dragon_kills`, and gives the hoard to the claim whose id writes the
+watch's `dragon_spoils` row, so a second browser is answered no. A guest is given its hoard and nothing else. The kill is
+the questline act `dragon-slain`. No Renown and no silver: the dragon pays its hoard and its tame.
 
-- gold, `DRAGON_GOLD_PER_LEVEL` (180) a level, a fifth either way;
-- a dealer: one piece Rare or better (Legendary 15% of the time) and one Magic or better;
-- a stander: the Magic-or-better piece and 60% of the gold.
+**The hoard** (`systems/dragon/dragonSpoils.js`, rolled on the receipt's seed, never past the character's level), within the
+ceiling's seven rungs: gold, `DRAGON_GOLD_PER_LEVEL` (180) a level, a fifth either way; a dealer one piece Rare or better
+(Legendary 15% of the time) and one Magic or better; a stander the Magic-or-better piece and 60% of the gold. Every piece
+takes the ladder's last pass, the sockets' and the technique's. It goes straight into the pack (`scenes/dragonRewards.js`,
+the serpent's spoils pool under the dragon's own keys), and a crash hands it back at the next stand-up.
 
-The pieces burst from the fallen dragon with the gate's spew (World-Bosses.md section 7) and are taken by walking over
-them.
+**The tame.** The service draws from its own randomness, never the receipt's seed (the serpent's honours law), 1 in
+`DRAGON_TAME_ONE_IN` (100), for a dealer's first write, for a character that holds no dragon (`dragon_mounts`, UNIQUE
+account and character). The draw writes the mount's row by THIS claim's kill row alone, in one batch. Every answer while
+the row stands names the tame, so a lost answer is told again. The device keeps it (`dragon4.tamed`) until it is bound.
 
-**The tame** (the account service, migration `0192_dragon.sql`, route `/v1/dragon/claim`). The service counts one
-kill per (fight, account) and draws, from its own randomness and never the receipt's seed (the serpent's honours law),
-1 in `DRAGON_TAME_ONE_IN` (100) for a dealer whose character holds no dragon. A tame writes the account's
-`dragon_mounts` row - its id, the character, its look - and answers it.
-
-**Binding it.** A tamed player sees *"Its core still turns."* over the fallen dragon. Activating it binds it: the
+**Binding it** (DRAGON5). A tamed player sees *"Its core still turns."* Activating the fallen dragon binds it: the
 dragon rises, its glow back, and kneels. Its item - **the Dwarven Dragon**, in the Transportation group - goes into the
-pack, and the dragon flies off to wait for its first summons. A tame not bound at the remains is bound at the next
-claim's answer instead, straight into the pack: nothing is lost to a door.
+pack. A tame not bound at the remains is bound at the next claim's answer instead, straight into the pack.
 
 ## 9. What a player sees and hears
 
@@ -231,13 +232,13 @@ colours, under the player and on every other screen.
 | **DRAGON1** | the ride seen: one relay gate in `net/wire.js` beside `POSE_RIDE`, the Dragon ride and its look, every screen drawing the rider as the dragon | yes | no |
 | **DRAGON2** | the law, the body, the brain, the receipt; the cell's fight; the `dragon` frame | yes | no |
 | **DRAGON3** | the client: the roost in the sky, the fight, the telegraphs draped, the bar, its voice, my blows on it, its blows on me, the fall and the remains | no | no |
-| **DRAGON4** | the hoard and the tame: the claim, the service's row and draw, the binding, the judge's provenance | no | yes |
+| **DRAGON4** | the hoard and the tame: the claim, the service's rows and draw, the hoard in the pack (the binding and the judge's provenance are DRAGON5's) | no | yes |
 | **DRAGON5** | the mount: its item, the transport mode, the flight, the saddle, summon, name, bags, care and oil | no | yes (item law) |
 | **DRAGON6** | the travel map: the dragon's rate, straight over sea and land | no | no |
 | **DRAGON7** | the Aetherbright: the palette, the roll, its look kept | no | no |
 
 The relay changes land in ONE version (world281 - every byte of the relay's bundle is hashed), and the service's in one
-(acct211). Each slice: pins in `test/`, a mutant record, its record here.
+(acct213 - acct211 when this page was written, renumbered past main's KEEP-MARK and SHED-REPLICA). Each slice: pins in `test/`, a mutant record, its record here.
 
 ## 13. The record, slice by slice
 
@@ -269,3 +270,18 @@ model, its voice, its fall and its remains. Beside it: `net/dragon/dragonLink.js
 while its remains lie (`DRAGON_REMAINS_MS` moved to the law). Pinned by `test/net/dragon/dragon3_client.test.js` (7),
 `test/scenes/dragon3_host.test.js` (7) and `test/net/dragon/dragon3_relay.test.js` (1); `tools/mutants/dragon3.json`, 27
 dead. PINS MOVED: the serpent's marks (`serpent4`), its spell door (`fb1019f_bossdot`), NAV-H's enemies near (`nav_h_host`).
+
+**DRAGON4 - the hoard and the tame (2026-10-29, acct213, migration 0192).** `server-account/src/dragons.js` `claimDragon` behind
+`/v1/dragon/claim`: one kill a (watch, account), the hoard to the device that wrote its row, the tame drawn by the
+service for a dealer's first write, one a character, named at every answer while its row stands. On the device:
+`net/dragon/dragonClaims.js` (the carrier), `systems/dragon/dragonSpoils.js` (the hoard), `scenes/dragonRewards.js` (the
+hoard into the pack, the tame kept), made by the dragon's host on three world bindings (bootWorld 35,256). The questline
+act `dragon-slain`; the hoard in the honest producers' sweep (`test/honestItems.mjs`). Pinned by
+`test/net/dragon/dragon4_service.test.js` (3) and `test/net/dragon/dragon4_claims.test.js` (4); `tools/mutants/dragon4.json`,
+20 dead. PINS MOVED: the account version's (acct213) and their ten mutant records, the questline acts' count, the
+schema's tables, the sweep's producers (92).
+
+Its words in the thirteen finished languages, drafted in-session (`tools/l10nInSession.mjs`). The sighting's way is now
+a phrase of its own (`dragon.way.*`), so no language reads an English compass word inside its sentence (a test in
+`dragon3_client.test.js`). A bad character is refused with the serpent's `renown-character`. The world frame's arrows
+moved to a closure of their own (`frameArrows`, PERF-V8), bootWorld 35,258.

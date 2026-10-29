@@ -4,12 +4,15 @@
 // dragonSkyAt, skyWatchAt). tools/mutants/dragon3.json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { createDragonLink, foldDragon, DRAGON_STATE_EMPTY, sameDragonSite } from '../../../src/net/dragon/dragonLink.js';
 import { dragonSiteOf, pixelCentreNative, createDragonSites } from '../../../src/systems/dragon/dragonSite.js';
 import { dragonBarModel, DRAGON_PHASE_AT, DRAGON_LEAVE_WARN_MS } from '../../../src/ui/dragonBar.js';
 import { drapeGrid, drapeBounds, DRAPE_CELLS_MAX } from '../../../src/render/dragon/dragonTelegraph.js';
 import { dragonSkyAt, skyWatchAt } from '../../../src/scenes/dragonHost.js';
-import { DRAGON_NO_TEXT } from '../../../src/systems/dragon/dragonWords.js';
+import { DRAGON_NO_TEXT, DRAGON_WORDS } from '../../../src/systems/dragon/dragonWords.js';
+import { COMPASS_WORDS } from '../../../src/systems/compassWords.js';
+import * as tm from '../../../src/systems/textManager.js';
 import { isDragonWatch, dragonTimes, dragonSiteDay, dragonLaneOf, DRAGON_CLIMB_MS, DRAGON_REMAINS_MS } from '../../../src/net/dragon/dragonLaw.js';
 import { roostLeg, dragonLegAt, orbitLeg, CLIMB_ALT } from '../../../src/net/dragon/dragonBody.js';
 import { validDragonOut, DRAGON_NO_WORDS } from '../../../src/net/wire.js';
@@ -131,4 +134,12 @@ test('DRAGON3 sky: with no fight heard it roosts on its own clock, then climbs a
   assert.equal(skyWatchAt(TT.leaveAt + 60_000).w, W, 'past its climb, its remains may still lie');
   const after = skyWatchAt(TT.leaveAt + DRAGON_REMAINS_MS + 1);
   assert.notEqual(after.w, W);
+});
+
+test('DRAGON3 the sighting\'s way: every compass way a whole phrase of its own, so a language never reads an English word inside its sentence (mutants: the way left English)', () => {
+  for (const w of COMPASS_WORDS) assert.equal(DRAGON_WORDS.circles(w, 0), `A dragon circles in the sky to the ${w}.`, w);
+  assert.equal(DRAGON_WORDS.circles('east', 1), 'A blue dragon circles in the sky to the east.');
+  tm.patchLocaleTable('fr', 'Port_Strings', tm.loadStringTableCsv(readFileSync(new URL('../../../locales/fr/Port_Strings.csv', import.meta.url), 'utf8')));
+  tm.setLocale('fr');
+  try { assert.equal(DRAGON_WORDS.circles('north', 0), tm.t('dragon.circles', '', { way: tm.t('dragon.way.north', '') })); assert.doesNotMatch(DRAGON_WORDS.circles('north', 0), /north/); } finally { tm.setLocale('en'); }
 });

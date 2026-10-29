@@ -32,6 +32,7 @@ import { createSerpentSpell } from './gate/standInSpell.js';
 import { TELEGRAPH_STYLE, TELEGRAPH_EDGE, TELEGRAPH_POOL, TELEGRAPH_KIND } from '../render/gate/gateTelegraph.js';
 import { DragonTelegraphPass, drapeBounds, drapeGrid } from '../render/dragon/dragonTelegraph.js';
 import { dragonName, dragonTitle, DRAGON_WORDS, DRAGON_BLOW_NAMES, DRAGON_NO_TEXT } from '../systems/dragon/dragonWords.js';
+import { createDragonRewards } from './dragonRewards.js';   // DRAGON4: its receipts carried, its hoard given, a tame kept
 
 /** Its drawn size over its sprite's own (a wingspan near 19 m), how far it is drawn and heard, and the sighting's reach (m). */
 export const DRAGON_SCALE = 1.6;
@@ -108,7 +109,8 @@ export const dragonBoxesWith = (sky, others) => (sky ? sky.boxes(others) : other
 /**
  * deps = { now, link (dragonLink.js), sites (dragonSite.js), online: { ready(cell), send(word, cell) }, local(nx, nz) -> [x, z]
  * (a native point in the scene), native(x, z) -> [nx, nz], ground(x, z), feet(), eye(), level(), renderer?, getTexture?,
- * uploadRecordFrame?, audio?, say?(text, s), mid?(text, s), player?(), hurt?(n, el), save?(e, el) }
+ * uploadRecordFrame?, audio?, say?(text, s), mid?(text, s), player?(), hurt?(n, el), save?(e, el), takeSpoil?(p), relayNowS?(),
+ * chatNotice?(text) } - the last three its rewards' (scenes/dragonRewards.js) 
  * @param {any} deps
  */
 export function createDragonHost(deps) {
@@ -124,6 +126,9 @@ export function createDragonHost(deps) {
   let _standIn = null;
   const standIn = () => (_standIn ??= bossStandIn({ mobile: DWARVEN_DRAGON_ID }, dragonName(0), () => { const s = deps.link.state(); return live?.mine ? wordShare(s.hp, s.max) : null; }));
   const lv = () => Math.max(1, Math.floor(deps.level?.() ?? 1));
+  /** DRAGON4: its rewards, made the first time a receipt, a stand-up or a frame asks. */
+  let _rewards = null;
+  const rewards = () => (_rewards ??= createDragonRewards(deps));
   const spell = createSerpentSpell({ player: player(), standIn, land: (_box, d) => hit(d, HIT_KINDS.Spell), cap: () => standInBlowCap(standIn(), lv()) });
 
   /** A new watch's dragon forgets the last one's: its blows are numbered from one again. */
@@ -377,6 +382,16 @@ export function createDragonHost(deps) {
     },
     /** OFF THE STREET or offline: the body put away; `offline` the fight forgotten too. */
     leave(offline = false) { putAway(); if (offline) { deps.link.leave(); queue = []; } },
+    /** DRAGON4: the receipts kept, offered again in their time - every online frame, in any mode. */
+    tick() { if (deps.takeSpoil) { try { rewards().tick(); } catch (e) { console.warn('[dragon] claims', e?.message ?? e); } } },
+    /** DRAGON4: a receipt the relay handed me (the cell at the kill, the hub at a hello) - carried to the account service. */
+    receipt: (r) => rewards().receipt(r),
+    /** DRAGON4: the hoard's crash door at a character's stand-up, and the realm save's two hooks. */
+    recoverSpoils: (who, inSave = null) => rewards().recover(who, inSave),
+    spoilsHeld: (who) => rewards().held(who),
+    spoilsSaved: (who, ids) => rewards().saved(who, ids),
+    /** DRAGON4: the tames the service drew, not yet bound. */
+    tames: () => rewards().tames(),
     /** The site this frame's dragon is of (`{w, sx, sz}`), or null - the link folds its words alone. */
     site: () => live?.site ?? null,
     /** Test seams. */
