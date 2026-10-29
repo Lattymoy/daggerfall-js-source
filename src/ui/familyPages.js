@@ -704,7 +704,7 @@ export function drawHousePage(detail, rerender, { el, divider } = /** @type {any
   else if (prov.inWorld && !prov.inWorld()) detail.append(el('p', 'px-note', 'Your family is hidden because "Family In World" is off in Project Legacy\'s settings.'));
   else detail.append(el('p', 'px-note', 'Your family lives in the world while you play one of them. Talk to one to play as them.'));
   // the house's dead - the blood's, and a spouse's beside them (wed in: said so); one gone from the realm is no death
-  const fallen = family.people.filter((p) => p.died && p.died.cause !== 'gone').sort((a, b) => (b.died.at ?? 0) - (a.died.at ?? 0));
+  const fallen = family.people.filter((p) => p.died && p.died.cause !== 'gone' && p.kind !== 'union').sort((a, b) => (b.died.at ?? 0) - (a.died.at ?? 0));   // AUDIT FB1029 E-M1: a union child is the other house's dead
   if (fallen.length) {
     detail.append(el('p', 'fam-h', 'The fallen'));
     const list = el('div', 'fam-hall');

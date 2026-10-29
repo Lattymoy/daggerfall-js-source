@@ -258,7 +258,7 @@ FOUND. Working as recorded: a child of a two-player union is minted by the house
 (`marriage.js:"standing in this"`, childStep) and recorded in that house's line alone - LEGACY7 part three's departure, "each house raises
 its own children of the union (two records, two clocks - the realm keeps no shared child)" (Legacy-Arc section 9). The
 other player's house rolls its own on its own clock, and had none yet. The owner chose on 2026-10-29: "Show on both
-trees". Built as Legacy-Arc section 9a (FIELD BUGS 2026-10-29, acct217).
+trees". Built as Legacy-Arc section 9a (FIELD BUGS 2026-10-29b, acct220).
 
 ## THE FOUR HOSTS (5)
 

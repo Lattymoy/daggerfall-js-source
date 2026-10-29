@@ -141,7 +141,9 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   const unmet = meets && hasLocation ? { samples: Float32Array.from(samples), classic: classic && Float32Array.from(classic) } : null;
   if (meets) {
     applyTownMeets(samples, px, py, meetsOf(meets, landforms));
-    if (classic) applyTownMeets(classic, px, py, meetsOf(meets, null));
+    // AUDIT FB1029 D-S2: the tiles are classed on the classic pass, so it takes the drawn ground's meets too - no water left
+    // where the shaped meet raised the ground
+    if (classic) applyTownMeets(classic, px, py, [...(meetsOf(meets, null) ?? []), ...(landforms ? meetsOf(meets, landforms) ?? [] : [])]);
   }
   let avg = 0;
   /** @type {?Uint8Array} FB1028 YARDS Y2: the town's ground as #1184 drew it (TS2's mask over the outline before its crops) */

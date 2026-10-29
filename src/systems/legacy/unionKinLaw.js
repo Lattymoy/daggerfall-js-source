@@ -10,11 +10,13 @@ export const KIN_NAME_MAX = 40;
 export const KIN_FACE_MAX = 999;
 /** How a life ends on a card; any other word reads 'unknown'. */
 export const KIN_CAUSES = Object.freeze(['fell', 'slain', 'years', 'gone']);
+/** The deaths taken back a card carries (revived.js stamps) - the latest, at most. */
+export const KIN_REVIVED_MAX = 8;
 const SID_RE = /^[A-Za-z0-9]{6,16}$/;
 
 /**
  * @typedef {{ key:number, given:string, surname:string, house:string|null, gender:'male'|'female', race:string|null,
- *   face:number, born:number, died:{ at:number, cause:string }|null, minor:boolean }} KinCard
+ *   face:number, born:number, died:{ at:number, cause:string }|null, revived:number[], minor:boolean }} KinCard
  */
 
 const nameOf = (/** @type {unknown} */ s) => { const v = String(s ?? '').trim(); return v.length <= KIN_NAME_MAX ? v : ''; };
@@ -30,6 +32,7 @@ export function kinCard(c) {
     race: typeof c.race === 'string' && /^[A-Za-z][A-Za-z ]{0,23}$/.test(c.race) ? c.race : null,
     face: Number.isSafeInteger(c.face) && c.face >= 0 && c.face <= KIN_FACE_MAX ? c.face : 0,
     born: Number.isFinite(c.born) && c.born >= 0 ? Math.floor(c.born) : 0, died, minor: c.minor === true,
+    revived: Array.isArray(c.revived) ? c.revived.filter((/** @type {unknown} */ n) => Number.isFinite(n)).map(Number).slice(-KIN_REVIVED_MAX) : [],   // AUDIT FB1029 E-S1
   };
 }
 

@@ -194,7 +194,7 @@
   {
     "name": "INT18-a-death-unwritten",
     "file": "src/systems/legacy/legacyLaw.js",
-    "old": "      if (was.died && !now.died) out.add('death');",
+    "old": "      if (was.died && !now.died && !((was.kind ?? 'member') === 'union' && revivedOf(now).includes(Number(was.died.at)))) out.add('death');",
     "new": "",
     "why": "a copy that takes back a death the line recorded lands",
     "tests": ["test/server/int18_lineage_law.test.js"]

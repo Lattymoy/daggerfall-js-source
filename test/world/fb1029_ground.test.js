@@ -224,6 +224,9 @@ test('ACROSS-EDGE the wiring (by source): every pixel\'s job asks the towns of i
   const src = (f) => readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8');
   assert.match(src('src/scenes/pixelBuild.js'), /about: townMeets\?\.about\(px, py, meetsTown\(groundLocation\) \? locationRect\?\.shape : null\) \?\? null,/);
   assert.match(src('src/scenes/pixelBuild.js'), /meets: meets \?\? null,/, 'the published pixel keeps its meets for a restride');
+  // AUDIT FB1029 D-S2: the tiles are classed on the classic pass - it takes the drawn ground's meets beside DFU's own, so a
+  // town met on the shaped ground alone leaves no water tile on ground its meet raised (Ageliret: 21 before)
+  assert.match(src('src/world/terrain/terrainGen.js'), /if \(classic\) applyTownMeets\(classic, px, py, \[\.\.\.\(meetsOf\(meets, null\) \?\? \[\]\), \.\.\.\(landforms \? meetsOf\(meets, landforms\) \?\? \[\] : \[\]\)\]\);/, 'the classic pass takes the shaped meets too');
   const frame = src('src/scenes/groundFrameHost.js');
   assert.match(frame, /const townMeets = createTownMeets\(\{ groundLocationAt: _liftLocationAt, maps, blocks \}\);/);
   assert.match(frame, /field = landformLiftField\(host\.woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere\(\{ before \}\), about\);/);

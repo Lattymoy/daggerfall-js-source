@@ -97,11 +97,17 @@ export function samePerson(p, o) {
  */
 export function rekeyClashes(mine, other) {
   const theirs = new Map((other?.people ?? []).map((o) => [o.id, o]));
-  const clash = (mine?.people ?? []).filter((p) => theirs.has(p.id) && !samePerson(p, theirs.get(p.id)));
+  // AUDIT FB1029 E-S2: a union's child the other copy holds under another id is that one - it takes the other's id
+  const kin = (/** @type {any} */ p) => (p.kind === 'union' && p.union ? `${p.union.sid}|${p.union.key}` : null);
+  const theirKin = new Map((other?.people ?? []).filter(kin).map((o) => [kin(o), o.id]));
+  const twin = (mine?.people ?? []).filter((p) => kin(p) && theirKin.has(kin(p)) && theirKin.get(kin(p)) !== p.id);
+  const twinIds = new Set(twin.map((p) => p.id));
+  const clash = (mine?.people ?? []).filter((p) => !twinIds.has(p.id) && theirs.has(p.id) && !samePerson(p, theirs.get(p.id)));
   /** @type {Map<number, number>} */
   const moved = new Map();
-  if (!clash.length) return moved;
+  if (!clash.length && !twin.length) return moved;
   let next = Math.max(mine.nextId | 0, other.nextId | 0, ...mine.people.map((p) => p.id + 1), ...other.people.map((o) => o.id + 1));
+  for (const p of twin) moved.set(p.id, /** @type {number} */ (theirKin.get(kin(p))));
   for (const p of clash) moved.set(p.id, next++);
   const to = (/** @type {number} */ id) => (moved.has(id) ? /** @type {number} */ (moved.get(id)) : id);
   for (const p of mine.people) {

@@ -16,7 +16,9 @@ import { REALM_CHARACTERS_MAX } from '../../../server-account/src/realm.js';
 import { createLegacyHost } from '../../../src/scenes/legacyHost.js';
 import { createRealmLine } from '../../../src/systems/legacy/realmLine.js';
 import { personOf, familyRng, MODELS, LEGACY_MOD, readFamily, successors, childrenOf, leanRecord } from '../../../src/systems/legacy/family.js';
-import { samePerson, mergeFacts } from '../../../src/systems/legacy/store.js';
+import { samePerson, mergeFacts, rekeyClashes } from '../../../src/systems/legacy/store.js';
+import { stampRevived, dropRevived } from '../../../src/systems/legacy/revived.js';
+import { lineageLawFindings } from '../../../src/systems/legacy/legacyLaw.js';
 import { unionSpouse, childrenTogether, childStep, CHILDREN_MAX, CHILD_DAYS } from '../../../src/systems/legacy/marriage.js';
 import { unionKinHeard, unionKinOf as kinOfHouse, kinBornLine, raisedWord } from '../../../src/systems/legacy/unionKin.js';
 import { kinCard, readUnionKin, UNION_KIN_MAX } from '../../../src/systems/legacy/unionKinLaw.js';
@@ -102,7 +104,7 @@ test('UNION-CHILDREN the report: her house bears a child of the union, and his t
   assert.deepEqual(plates(him), ['Vowel', 'Zinnia'], 'before the read: his tree has the couple alone');
   // the realm's read: her line's child, by her line's id - hers reads none of his (he has none)
   const [u] = await him.unions();
-  assert.deepEqual(u.children, [{ key: kid.id, given: kid.given, surname: kid.surname, house: 'Indoril', gender: kid.gender, race: kid.race, face: kid.face, born: kid.born, died: null, minor: true }]);
+  assert.deepEqual(u.children, [{ key: kid.id, given: kid.given, surname: kid.surname, house: 'Indoril', gender: kid.gender, race: kid.race, face: kid.face, born: kid.born, died: null, minor: true, revived: [] }])   // PIN MOVED (AUDIT FB1029 E-S1): the card carries the bearer's revival stamps;
   assert.deepEqual((await her.unions())[0].children, []);
   // his house hears it: one person of kind 'union', the couple's child, said once on his HUD
   assert.ok((await him.hear()) >= 1);
@@ -195,7 +197,7 @@ test('UNION-CHILDREN as they live on: a name, a coming of age and a death reach 
   // one first heard of already dead is recorded and never announced as born
   const said = him.said.length;
   const [u] = await him.unions();
-  assert.ok(him.host.unionsHeard([{ ...u, children: [...u.children, kinCard({ key: 777, given: 'Ilsa', surname: 'Indoril', died: { at: 5, cause: 'years' } })] }]) >= 1);
+  assert.ok(him.host.unionsHeard([{ ...u, children: [...u.children, kinCard({ key: 777, given: 'Ilsa', surname: 'Indoril', died: { at: 5, cause: 'years' }, minor: true })] }]) >= 1);
   assert.ok(kinOfHouse(him.host.family, 'wedZinVow1').some((p) => p.given === 'Ilsa' && p.died));
   assert.equal(him.said.length, said);
   him.line.push(him.host.family);
@@ -288,8 +290,9 @@ test('UNION-CHILDREN the record\'s law: a union child is one person across two c
   assert.equal(leanRecord(f), true);
   assert.equal(me.standing, null);
   // the card's shape
-  assert.deepEqual(kinCard({ key: 4, given: 'A'.repeat(41), surname: 'Dres', house: 'Dres', gender: 'x', race: 'Dark Elf<', face: 5000, born: -3, died: { at: 9, cause: 'eaten' }, minor: 1 }),
-    { key: 4, given: '', surname: 'Dres', house: 'Dres', gender: 'male', race: null, face: 0, born: 0, died: { at: 9, cause: 'unknown' }, minor: false });
+  // PIN MOVED (AUDIT FB1029 E-S1): and its revival stamps, numbers alone, the latest KIN_REVIVED_MAX
+  assert.deepEqual(kinCard({ key: 4, given: 'A'.repeat(41), surname: 'Dres', house: 'Dres', gender: 'x', race: 'Dark Elf<', face: 5000, born: -3, died: { at: 9, cause: 'eaten' }, minor: 1, revived: [1, 'x', Infinity, 5, 6, 7, 8, 9, 10, 11, 12, 13] }),
+    { key: 4, given: '', surname: 'Dres', house: 'Dres', gender: 'male', race: null, face: 0, born: 0, died: { at: 9, cause: 'unknown' }, minor: false, revived: [6, 7, 8, 9, 10, 11, 12, 13] });
   assert.equal(kinCard({ key: 1.5 }), null);
   // at most UNION_KIN_MAX a union from one read, as the service sends
   const many = Array.from({ length: UNION_KIN_MAX + 2 }, (_, k) => ({ key: 300 + k, given: `K${k}`, surname: 'Indoril' }));
@@ -316,7 +319,7 @@ test('UNION-CHILDREN mixed builds: a new client and an older service (no `childr
   assert.equal(kinOfHouse(him.host.family, 'wedZinVow1').length, 1);
 });
 
-test('UNION-CHILDREN the pages: his card of her child names the house that raises them and offers no Play as; his House page and the Hall count the blood\'s generations (mutants: the chip, the two counts)', async () => {
+test('UNION-CHILDREN the pages: his card of her child names the house that raises them and offers no Play as; his House page and the Hall count the blood\'s generations, and his fallen are his own (mutants: the chip, the two counts, the fallen list)', async () => {
   const S = await standService();
   const her = await player(S, 'Zinnia', 'Indoril', 'female', 7);
   const him = await player(S, 'Vowel', 'Dres', 'male', 11);
@@ -344,4 +347,86 @@ test('UNION-CHILDREN the pages: his card of her child names the house that raise
   const hall = el('div');
   drawHallPage(hall, () => {}, { el, divider });
   assert.match(hall.textContent, /Enduring - 1 generation, 3 remembered, 0 fallen/, 'the Hall too: the blood\'s generations; everyone on the tree remembered');
+  c.died = { at: 9, cause: 'years', place: null, by: null };
+  const h2 = el('div');
+  drawHousePage(h2, () => {}, { el, divider });
+  assert.equal(/The fallen/.test(h2.textContent), false, 'AUDIT FB1029 E-M1: her house\'s dead are not his house\'s fallen');
+});
+
+test('AUDIT FB1029 E-S1 a revived union child: the bearer\'s revival stamp rides the card, the other house lifts the death it heard and the realm takes that copy; a union child\'s death undone with no stamp, and a member\'s even with one, are still refused (mutants: the stamps uncarried; untaken; the law\'s leave any union child\'s; a member\'s)', async () => {
+  const S = await standService();
+  const her = await player(S, 'Zinnia', 'Indoril', 'female', 7);
+  const him = await player(S, 'Vowel', 'Dres', 'male', 11);
+  await wed(her, him);
+  const kid = await childOf(her);
+  await him.hear();
+  const c = kinOfHouse(him.host.family, 'wedZinVow1')[0];
+  kid.died = { at: 4242, cause: 'slain', place: null, by: null };
+  her.line.push(JSON.parse(JSON.stringify(her.host.family)));
+  assert.equal(await her.line.flush(), true);
+  await him.hear();
+  him.line.push(JSON.parse(JSON.stringify(him.host.family)));
+  assert.equal(await him.line.flush(), true);
+  const stored = JSON.parse(JSON.stringify(him.host.family));
+  assert.ok(c.died, 'his house heard the death, and the realm holds it');
+  // her line takes the death back, as the realm's revival writes it (server-account/src/legacy.js reviveOnLine)
+  const line = JSON.parse(JSON.stringify(her.host.family));
+  stampRevived(personOf(line, kid.id), 4242);
+  dropRevived(line);
+  const cards = unionKinOf(JSON.stringify(line), her.host.family.currentId, 'wedZinVow1');
+  assert.deepEqual([cards[0].died, cards[0].revived], [null, [4242]], 'the card: alive, the death taken back');
+  unionKinHeard(him.host.family, unionSpouse(him.host.family, 'wedZinVow1'), cards);
+  assert.equal(c.died, null, 'his house lifts the death it heard');
+  assert.ok(!personChips(him.host.family, c, 0).some((x) => x.text === 'Fallen'));
+  assert.deepEqual(lineageLawFindings(him.host.family, stored), [], 'the realm takes that copy');
+  him.line.push(him.host.family);
+  assert.equal(await him.line.flush(), true);
+  // no stamp, no leave; and a member's death stays the house's own fact
+  const bare = JSON.parse(JSON.stringify(stored));
+  personOf(bare, c.id).died = null;
+  assert.deepEqual(lineageLawFindings(bare, stored), ['death'], 'a union child\'s death undone with no stamp');
+  const own = JSON.parse(JSON.stringify(stored)), mine = own.people.find((p) => (p.kind ?? 'member') === 'member');
+  const was = JSON.parse(JSON.stringify(own));
+  personOf(was, mine.id).died = { at: 99, cause: 'fell', place: null, by: null };
+  stampRevived(mine, 99);
+  assert.deepEqual(lineageLawFindings(own, was), ['death'], 'a member\'s death undone, stamp or none');
+});
+
+test('AUDIT FB1029 E-S2 one union child, two copies, two ids: the merge makes them one - the other copy\'s id stands and what this copy held there moves aside (mutants: the twin unread; the twin moved past both counters)', async () => {
+  const S = await standService();
+  const her = await player(S, 'Zinnia', 'Indoril', 'female', 7);
+  const him = await player(S, 'Vowel', 'Dres', 'male', 11);
+  await wed(her, him);
+  const kid = await childOf(her);
+  const [u] = await him.unions();
+  const wife = () => unionSpouse(a, 'wedZinVow1');
+  // copy A hears the child first; copy B minted its own newborn at that id, then hears the child at the next
+  const a = JSON.parse(JSON.stringify(him.host.family)), b = JSON.parse(JSON.stringify(him.host.family));
+  unionKinHeard(a, wife(), u.children);
+  const own = { ...JSON.parse(JSON.stringify(personOf(b, b.currentId))), id: b.nextId++, kind: 'member', parents: [b.currentId], children: [], born: 1, given: 'Own' };
+  b.people.push(own);
+  unionKinHeard(b, unionSpouse(b, 'wedZinVow1'), u.children);
+  const ka = kinOfHouse(a, 'wedZinVow1')[0], kb = kinOfHouse(b, 'wedZinVow1')[0];
+  assert.notEqual(ka.id, kb.id, 'two copies, two ids');
+  mergeFacts(b, a);
+  const kin = kinOfHouse(b, 'wedZinVow1');
+  assert.deepEqual(kin.map((p) => [p.id, p.union.key]), [[ka.id, kid.id]], 'one child, at the other copy\'s id');
+  assert.ok(b.people.some((p) => p.given === 'Own' && p.id !== ka.id), 'the newborn moved aside, kept');
+  const fam = layoutTree(b).families.find((f) => f.children.includes(ka.id));
+  assert.equal(fam.children.filter((id) => personOf(b, id)?.kind === 'union').length, 1, 'drawn once');
+  assert.equal(rekeyClashes(JSON.parse(JSON.stringify(b)), a).size, 0, 'merged, nothing more to move');
+});
+
+test('AUDIT FB1029 E-M2 a child first heard already grown is not announced as born; one heard a minor is (mutant: the age unread)', async () => {
+  const S = await standService();
+  const her = await player(S, 'Zinnia', 'Indoril', 'female', 7);
+  const him = await player(S, 'Vowel', 'Dres', 'male', 11);
+  await wed(her, him);
+  await childOf(her);
+  const [u] = await him.unions();
+  const said = him.said.length;
+  assert.ok(him.host.unionsHeard([{ ...u, children: [{ ...u.children[0], minor: false }] }]) >= 1);
+  assert.equal(him.said.length, said, 'grown: no birth said');
+  assert.ok(him.host.unionsHeard([{ ...u, children: [...u.children, kinCard({ key: 778, given: 'Ilsa', surname: 'Indoril', minor: true })] }]) >= 1);
+  assert.equal(him.said.length, said + 1, 'a minor: said once');
 });

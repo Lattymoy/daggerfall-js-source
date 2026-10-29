@@ -1013,8 +1013,8 @@
   {
     "name": "AUDIT-LEGACY-III-U9-the-gone-among-the-fallen",
     "file": "src/ui/familyPages.js",
-    "old": "  const fallen = family.people.filter((p) => p.died && p.died.cause !== 'gone').sort(",
-    "new": "  const fallen = family.people.filter((p) => p.died).sort(",
+    "old": "  const fallen = family.people.filter((p) => p.died && p.died.cause !== 'gone' && p.kind !== 'union').sort(",
+    "new": "  const fallen = family.people.filter((p) => p.died && p.kind !== 'union').sort(",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]

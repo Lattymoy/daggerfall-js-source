@@ -1387,7 +1387,7 @@ export function createLegacyHost(deps) {
       if (!s && (s = wedPlayerHeard(u, { quiet: u.endedAt != null }))) n++;
       const kin = s ? unionKinHeard(family, s, u.children) : null;   // UNION-CHILDREN: the children their house raises
       if (kin?.added.length || kin?.changed) n++;
-      if (s?.spouse === family.currentId) for (const k of kin?.added ?? []) if (!k.died) deps.say(kinBornLine(k, s));
+      if (s?.spouse === family.currentId) for (const k of kin?.added ?? []) if (!k.died && k.minor) deps.say(kinBornLine(k, s));   // AUDIT FB1029 E-M2: a child heard grown was not just born
       if (!s || u.endedAt == null || u.endedBy !== 'partner' || !playerSpouseLost(family, s, deps.now(), u.endedWhy)) continue;
       n++;
       if (s.spouse === family.currentId) deps.say((u.endedWhy === 'gone' ? MARRIAGE_TEXT.gone : MARRIAGE_TEXT.lost)(fullNameOf(s.given, s.surname)));

@@ -1,4 +1,4 @@
-# AUDIT FB1029 - FIELD BUGS 2026-10-29 read cold, 2026-10-29
+# AUDIT FB1029 - FIELD BUGS 2026-10-29b read cold, 2026-10-29
 
 The owner: *"Audit this"*, of BRIDGE-ENDS and GRAVE-PACK (`../bugs/Field-Bugs-2026-10-29b.md`). Three cold lanes read the
 head (`52b6d5b4d`) against its base (`c1f7101c0`), each in its own worktree with the freeware's data, each given the
@@ -72,3 +72,33 @@ predates this branch.
 Tests `test/world/fb1029_bridgeends.test.js` (4), `test/scenes/fb1029_gravepack.test.js` (7). Mutants
 `tools/mutants/fb1029_bridgeends.json` (16: 15 dead, 1 recorded equivalent), `tools/mutants/fb1029_gravepack.json` (18,
 all dead).
+
+## AUDIT FB1029 II - the whole branch, 2026-10-29
+
+The owner: *"Audit this"*, again, of the whole branch after the merge with main. Three cold lanes: D the ground
+(ROAD-DRY, ACROSS-EDGE), E the family (UNION-CHILDREN), F the pins, the versions and the record.
+
+**D-S2 (should-fix). The classic pass classed tiles on the plain meet alone.** Where the shaped meet raised the ground
+(the Landforms row on), the tiles stayed wet: Ageliret had 21 more wet tiles. FIXED: the classic pass takes both meets
+(`terrainGen.js`); 0 more across the 65 met towns. Pinned in `fb1029_ground.test.js`'s wiring test.
+
+**D-S1 (open). The bake and the stream disagree with the Landforms row on.** The Deep Waters bake reads the plain meet;
+the stream draws the shaped one. Samples whose sea differs, over the 65 met towns' 3 x 3s: 177 with the row off, 4,169
+with it on (Ageliret 753, Kalunnunu 329). The real-data pin compares the bake with the row off only. Not changed here.
+
+**D minor (recorded).** A met edge stands up to 114.5 m over the next pixel's unmet kernel (Holmarket's west edge),
+seen only while that pixel is the last streamed. A pixel build with a town in its 3 x 3 costs 41.8 to 63.9 ms before
+the meets are kept; the bake 8.6 to 13.1 s. Arms run on a pixel's four sides only.
+
+**E (all fixed).** S1: a revived union child stayed dead on the other tree - the card carries the revival stamps. S2:
+two copies with one child under two ids made two people - the merge makes them one. M1: the other house's dead stood
+in the House page's fallen. M2: a child first heard grown was announced as born. Each pinned in
+`fb1029_union.test.js`; `fb1029_union.json` 41, all dead.
+
+**E (recorded, not changed).** M3: a union ended over 30 days ago is read no more, so a later death there is never
+heard. M4: an older client reads no `kind`, and counts a union child as its own. M6: six lines near LINEAGE_MAX_BYTES
+cost about 4 ms and 786 KB from D1 a poll, a replica read every ten minutes.
+
+**F (fixed).** The records named world284 and acct217 (the merge renumbered them world286 and acct220); Town-Shapes
+pointed to a section 17 that is not there; two dead mutant-list names; this page's title; the equivalent count (two:
+BRIDGE-ENDS-a63-rects and MEET-reach-3x3); the PR's Verification.

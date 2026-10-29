@@ -1,7 +1,7 @@
 # FIELD BUGS 2026-10-29c - the ground meets a town, the paving stands dry
 
 Two threads of `Field-Bugs-2026-10-29b.md` moved the ground, so they share one branch and one bump: GROUND_LAW 5, one
-RELAY_VERSION (world284), one bake version and one recorded print. Each was read on the freeware's data
+RELAY_VERSION (world286), one bake version and one recorded print. Each was read on the freeware's data
 (`tools/fetch-data.sh`) with both town packs on, as online stands them.
 
 | | Report | The owner's decision | Done |
@@ -40,7 +40,7 @@ the paving.
 Tests `test/world/fb1029_ground.test.js` (2 on synthetic ground: the producer, both passes and the edges; the law) and
 `test/systems/travel/rpt1026_world_causeway.test.js` (its third test on ARENA2: Grayidge's and Sentinel's causeways built,
 the Deep Waters bake and the pixel's carve, no hole under the road). Mutants `tools/mutants/fb1029_ground.json`
-(ROAD-DRY's 11, MUTANTS_ROAD).
+(ROAD-DRY's 11, all dead).
 
 NOT CHANGED. smoothRoadHeights, to the byte. Arena's roads past the Bay: the law reads the Bay's bytes alone. The
 records' lift reads no road (it never did), and a causeway rose a metre over the sea, where a record stood afloat. The
@@ -50,7 +50,7 @@ living world's dry ground (`world/dryGround.js`) reads the kernel, so a causeway
 
 `src/world/terrain/townMeet.js` (townMeetOf, applyTownMeets, meetLiftAt, townMeetsAbout), `src/scenes/townMeetsHost.js`
 (the towns of a pixel's 3 x 3), wired by `scenes/pixelBuild.js` and `scenes/groundFrameHost.js`. The law is
-`03-World/Town-Shapes.md` section 17.
+this section; `03-World/Town-Shapes.md` "Across the edge" points here.
 
 FOUND. #1371 (FB1028 TOWN-GROUND) fixed five of the list's six. DFU's BlendLocationTerrain keeps a pixel's edge the
 land's own, and TS2's ease ends there. Kalunnunu stands 100 m over its harbour, and its pixel's north edge stands over
@@ -87,8 +87,8 @@ DEPARTURE (named; Port-Ledger section A, ACROSS-EDGE): DFU keeps a pixel's edge 
 
 Tests `test/world/fb1029_ground.test.js` (6 on synthetic ground: the law; the producers agree; the levels; the records'
 frame; the towns; the wiring) and `test/world/fb1029_ground_real.test.js` (ARENA2: Kalunnunu's 3 x 3, its harbour, the
-bake's sea, Tunmont, Naresa, Chesterbrugh and Sentinel). Mutants `tools/mutants/fb1029_ground.json` (ACROSS-EDGE's 37,
-MUTANTS_MEET).
+bake's sea, Tunmont, Naresa, Chesterbrugh and Sentinel). Mutants `tools/mutants/fb1029_ground.json` (ACROSS-EDGE's 38:
+37 dead, MEET-reach-3x3 recorded equivalent).
 
 NOT CHANGED. The ground past the Bay: no met town's 3 x 3 reaches past the Bay's frame. The far rings and the far trees
 (`world/terrain/midRingGrid.js`, `floraCover.js`) read the kernel and no location, as before. The harbour book's
@@ -127,7 +127,7 @@ its own way down. Then BRIDGE-ENDS' abutments stand as they are. Each would move
 
 ## THE GROUND MOVED
 
-GROUND_LAW 4 to 5 (`net/wire.js`) and RELAY_VERSION world284 (NOT YET DEPLOYED). BAKE_GENERATOR_VERSION 4 to 5: the bake
+GROUND_LAW 4 to 5 (`net/wire.js`) and RELAY_VERSION world286 (NOT YET DEPLOYED). BAKE_GENERATOR_VERSION 4 to 5: the bake
 reads the meets. GROUND_FRAME_LAW 4 to 5: a record stamped before 5 rides the meets' move (`world/landforms.js`
 townMeetMovedField), and a record before 4 still rides its town's blend's move first (TOWN_FRAME_LAW 4). The print
 (`tools/groundPrint.mjs`, `test/fixtures/groundPrint.json`) reads three new cells: a town on a cliff over its sea and the
