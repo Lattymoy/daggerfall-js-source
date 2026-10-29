@@ -15,15 +15,15 @@ import { ARMORY_SET_TEXT } from '../../src/ui/armoryText.js';
 import { badged, readArmory } from '../../src/net/wire.js';
 import { POSE_AT, REST_POINTS, newPose, poseFromBones, poseFromFigure, poseAtRest, poseWorld, spriteMarks, spriteArmsSeen } from '../../src/render/armoryPose.js';
 import { spriteFor } from '../../src/player/eyeOfTheBeholder/eotbSprite.js';
-import { auraSpriteBones } from '../../src/render/auraRing.js';
+import { auraSpriteBones, auraClothOver } from '../../src/render/auraRing.js';
 import {
   armoryDraws, armoryWearers, armoryMotionStep, armoryEyeAtHead, armoryPrograms, armoryRatesWhole, ARMORY_BODY_PIECES, ARMORY_PROGRAMS,
   ARMORY_RANGE_M, ARMORY_DRAW_MAX, ARMORY_TRAIL, ARMORY_STRIDE_M, ArmoryRenderer,
 } from '../../src/render/armoryPass.js';
-import { createAuraHost, armoryOthersOf, ARMORY_NEAR_M } from '../../src/scenes/auraHost.js';
+import { createAuraHost, armoryOthersOf, armoryLayers, ARMORY_NEAR_M } from '../../src/scenes/auraHost.js';
 import { weaponPieceArt, weaponPieceLayout, startWeaponPiecePreview, BLADE_W, BLADE_H, BLADE_FILL } from '../../src/render/weaponPiecePreview.js';
 import { glowSpec, ARMORY_LEVEL, armoryWeaponStage } from '../../src/systems/weaponGlow.js';
-import { SESSION_KEY } from '../../src/net/accountClient.js';
+import { SESSION_KEY, keepSession, adoptIdentity } from '../../src/net/accountClient.js';
 import { parseNif } from '../../src/formats/morrowind/mwNifFile.js';
 import { buildSkeleton, skeletonSpaceMatrices, GRAPH_ROOT } from '../../src/formats/morrowind/mwSkin.js';
 import { armBonesInBody } from '../../src/combat/fpArm.js';
@@ -390,6 +390,60 @@ test('ARMORY the world host: my kit gathered at my feet and a peer\'s off the re
     assert.equal(host.counts().armory, 0, 'a frame\'s, drawn once');
     assert.deepEqual([armoryOthersOf('near'), armoryOthersOf('none'), armoryOthersOf('x'), ARMORY_NEAR_M], ['near', 'none', 'all', 20]);
   } finally {
+    if (was === undefined) delete globalThis.localStorage; else globalThis.localStorage = was;
+  }
+});
+
+test('ARMORY-SEEN the cloth law: a cloak or a cape covers its body from an eye on the side its back faces - not from the front or the side, not folded away on a rider, never an aura with no cloth - and the frame\'s pieces split by it, by the wearer\'s id (mutants: the side reversed; any aura a cloth; the split by place, not id)', () => {
+  const w = (/** @type {any} */ o) => ({ id: 'a', at: [5, 0, 5], aura: 'eternal', yaw: 0, ...o });
+  const behind = [5, 1.6, 2], front = [5, 1.6, 8], side = [8, 1.6, 5.4];
+  assert.deepEqual([auraClothOver(w({}), behind), auraClothOver(w({}), front), auraClothOver(w({}), side)], [true, false, false]);
+  assert.deepEqual([auraClothOver(w({ aura: 'shadowcloak' }), behind), auraClothOver(w({ aura: 'dagonfire' }), behind), auraClothOver(w({ aura: 'seraphwings' }), behind)], [true, false, false], 'the cloak\'s cloth and Eternal\'s cape alone');
+  assert.deepEqual([auraClothOver(w({ mounted: true }), behind), auraClothOver(w({ yaw: Math.PI }), behind), auraClothOver(w({}), null)], [false, false, false], 'a rider\'s folded away; turned round, its back to the other side');
+  const under = /** @type {any[]} */ ([]), over = /** @type {any[]} */ ([]);
+  const kits = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+  armoryLayers(kits, [w({ id: 'c', at: [0, 0, 0] }), w({ id: 'a' }), w({ id: 'b', aura: 'dagonfire' })], behind, under, over);
+  assert.deepEqual([under.map((k) => k.id), over.map((k) => k.id)], [['a'], ['b', 'c']], 'each kit by its own wearer\'s cloth');
+  armoryLayers([{ id: 'a' }], [], behind, under, over);
+  assert.deepEqual([under.length, over.length], [0, 1], 'refilled, and no aura no cloth');
+});
+
+test('ARMORY-SEEN the world host lays my pieces under my Eternal cape where the eye sees my back, and over it from the front - drawn after every cape, a Sigil on the back burned through it (mutants: the layers never split; the under layer drawn after the auras)', () => {
+  const was = globalThis.localStorage, wasNow = performance.now;
+  const st = memStorage();
+  keepSession(st, { id: 'u1', name: 'Me', kind: 'linked', sessionId: 's1', secret: 'x' });
+  adoptIdentity(st, { aura: 'eternal', armory: '0b000', secret: 'x' });
+  globalThis.localStorage = /** @type {any} */ (st);
+  let clock = 100;
+  performance.now = () => clock * 1000;
+  try {
+    const log = /** @type {any[]} */ ([]);
+    const gl = new Proxy({}, { get: (_, k) => (typeof k === 'string' && /^[A-Z][A-Z_0-9]*$/.test(k) ? 1 : (...a) => { log.push([k, ...a]); return k === 'getExtension' ? null : k === 'getUniformLocation' ? a[1] : {}; }) });
+    const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+    const renderer = /** @type {any} */ ({ gl, _proj: I, _view: I, _camPos: [0, 1.6, -3], _fogMode: 0, markForeignPass: () => {} });
+    const online = { rehello: () => true, auraOf: () => null, armoryOf: () => null };
+    const host = createAuraHost({
+      renderer, online: () => online, travelActive: () => false, quiet: () => false, camYaw: () => 0,
+      player: () => ({ feetAt: () => [0, 0, 0], bodyFeetAt: () => [0, 0, 0], bodyYawFor: () => 0, height: 1.8, riding: false }),
+      spawned: () => true, beast: () => false, veiled: () => false, toScene: (/** @type {any} */ s) => s.at,
+      walkers: () => null, riders: () => null, bodies: () => null,
+    });
+    const order = (/** @type {number[]} */ eye) => {
+      renderer._camPos = eye;
+      clock += 5;   // kindled past AURA_KINDLE_S
+      host.frame([]);
+      log.length = 0;
+      host.draw();
+      const at = (/** @type {string} */ u) => log.findIndex((c) => c[0].startsWith('uniform') && c[1] === u);
+      return { piece: at('uFace'), cape: at('uCapeS') };
+    };
+    order([0, 1.6, -3]);
+    const back = order([0, 1.6, -3]), front = order([0, 1.6, 3]);
+    assert.ok(back.piece >= 0 && back.cape >= 0 && front.piece >= 0 && front.cape >= 0, `both drawn each frame (${JSON.stringify({ back, front })})`);
+    assert.ok(back.piece < back.cape, 'seen from behind: the Sigil first, the cape laid over it');
+    assert.ok(front.cape < front.piece, 'seen from the front: the cape behind the body, the Sigil over it');
+  } finally {
+    performance.now = wasNow;
     if (was === undefined) delete globalThis.localStorage; else globalThis.localStorage = was;
   }
 });

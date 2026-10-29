@@ -15679,6 +15679,16 @@
   "tr": "20c460e07925",
   "by": "claude-in-session"
  },
+ "inventory.cape.label": {
+  "en": "cb4796c29622",
+  "tr": "461e0d392133",
+  "by": "claude-in-session"
+ },
+ "inventory.cape.title": {
+  "en": "8cd2d555af57",
+  "tr": "258129de87d4",
+  "by": "claude-in-session"
+ },
  "inventory.quest.item": {
   "en": "18d4da5c6380",
   "tr": "beda8292b85f",

@@ -34,6 +34,7 @@
 //
 //     node tools/enhancedPackLayoutProbe.mjs                    -> shots (tools/shots/, or SHOT_DIR) and a report
 //     PROBE_PORT=<n> node tools/enhancedPackLayoutProbe.mjs     -> reuse a dev server already listening there
+//     DRESS=grimoire node tools/enhancedPackLayoutProbe.mjs     -> the same pack in the Grimoire dress (CAPE-TOGGLE)
 import { mkdirSync } from 'node:fs';
 import { writeFile, unlink } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -54,6 +55,8 @@ import { equipItem } from '/src/systems/equip.js';
 import { setItemFields, mintCondition } from '/src/systems/item/itemTemplates.js';
 import { ITEM_TEMPLATES } from '/src/characters/paperdoll/paperdoll.js';
 import { createInventoryWindow } from '/src/ui/inventoryDoor.js';
+import { toggleHood } from '/src/systems/useItem.js';   // CAPE-TOGGLE: a raised hood's chip beside the switch
+import { hoodUp } from '/src/systems/survival/temperature.js';
 
 // the doll's art, stood in wherever the pack draws its Avatar plaque, every render
 let art = null, wantArt = false;
@@ -140,6 +143,27 @@ globalThis.__wornTap = () => {
   off?.click();
   return { panel: !!panel, panelReach, off: !!off, offReach, worn: cloak.equipSlot != null };
 };
+/** CAPE-TOGGLE: the Cloaks panel's switch - reachable, over no word of the panel, and with the hood raised its chip beside
+ *  it, not under it; a press hides the capes (aria-pressed false, the eye struck), a second shows them */
+globalThis.__cape = () => {
+  const sw = () => q('.worncape');
+  const panel = () => [...document.querySelectorAll('#enhanced-inventory .wornrow')].find((n) => n.querySelector('.wornslot')?.textContent === 'Cloaks');
+  const meet = (a, b) => !!a && !!b && a.x < b.r && b.x < a.r && a.y < b.b && b.y < a.b;
+  // a word as its letters show: the text's own box cut to its element's content box (an ellipsis clips the rest)
+  const letters = (n) => { const r = document.createRange(); r.selectNodeContents(n); const a = r.getBoundingClientRect(), o = n.getBoundingClientRect(), cs = getComputedStyle(n);
+    const b = { left: o.left + parseFloat(cs.paddingLeft), top: o.top, right: o.right - parseFloat(cs.paddingRight), bottom: o.bottom };   // its content box: a padding is room kept, not letters
+    const x = Math.max(a.left, b.left), y = Math.max(a.top, b.top), rr = Math.min(a.right, b.right), bb = Math.min(a.bottom, b.bottom); return { x, y, w: rr - x, h: bb - y, r: rr, b: bb }; };
+  const tile = () => { const t = panel()?.firstElementChild; const g = t?.querySelector('img, canvas'); return box(g ?? t); };   // its picture
+  const shown = () => [tile(), ...[...(panel()?.querySelectorAll('.wornslot, .wornname') ?? [])].map(letters)].filter(Boolean);
+  const words = () => [...shown(), ...[...(panel()?.querySelectorAll('.worncount, .wornhood') ?? [])].map(box)];   // all the panel shows
+  const before = { reach: reach(sw()), pressed: sw()?.getAttribute('aria-pressed'), overWords: words().some((w) => meet(box(sw()), w)), inPanel: (() => { const a = box(sw()), b = box(panel()); return !!a && !!b && a.x >= b.x && a.r <= b.r && a.y >= b.y && a.b <= b.b; })() };
+  if (!hoodUp(cloak)) toggleHood(cloak);
+  sw()?.click();
+  const hood = panel()?.querySelector('.wornhood');
+  const off = { pressed: sw()?.getAttribute('aria-pressed'), struck: sw()?.querySelectorAll('path').length === 2, hood: !!hood, hoodBeside: !!hood && !meet(box(hood), box(sw())), reach: reach(sw()), overWords: words().some((w) => meet(box(sw()), w)) };
+  sw()?.click();
+  return { before, off, on: { pressed: sw()?.getAttribute('aria-pressed') } };
+};
 globalThis.__ready = true;
 </script></body></html>`;
 
@@ -174,7 +198,7 @@ async function open(ctxOpts, count, art) {
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (err) => errors.push(err.message));
-  await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+  await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced${process.env.DRESS ? `&dress=${encodeURIComponent(process.env.DRESS)}` : ''}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
   await page.waitForFunction(() => globalThis.__ready === true, null, { timeout: 90000 });
   await page.evaluate(([n, a]) => globalThis.__open(n, a), [count, art]);
   await page.waitForSelector('#enhanced-inventory .itemrow', { timeout: 30000 });
@@ -183,6 +207,18 @@ async function open(ctxOpts, count, art) {
   return { ctx, page, errors };
 }
 const fmt = (m) => `list ${Math.round(m.list)}px, first row ${m.firstRowReach}/${m.firstRow} reachable, doll ${m.doll?.shown ? `${Math.round(m.doll.w)}x${Math.round(m.doll.h)}` : 'hidden'}, panels ${Math.round(m.cellMinW)}px wide at least`;
+
+/** CAPE-TOGGLE's checks, on the page as it stands (the switch over the Cloaks panel, its two presses) */
+async function capeChecks(label, page) {
+  const c = await page.evaluate(() => globalThis.__cape());
+  check(`${label}: the Cape switch stands in the Cloaks panel, pressable, over none of its words`, c.before.reach && c.before.inPanel && !c.before.overWords && c.before.pressed === 'true', JSON.stringify(c.before));
+  check(`${label}: pressed, it hides the capes - struck through, clear of the raised hood's chip and every word, still pressable`, c.off.pressed === 'false' && c.off.struck && c.off.hood && c.off.hoodBeside && c.off.reach && !c.off.overWords, JSON.stringify(c.off));
+  check(`${label}: pressed again, it shows them`, c.on.pressed === 'true', JSON.stringify(c.on));
+  await page.evaluate(() => document.querySelector('#enhanced-inventory .worncape')?.click());   // the shot of it off, hood up
+  await settle(page);
+  await page.screenshot({ path: join(OUT, `packlayout-${label}-capeoff.png`) });
+  await page.evaluate(() => document.querySelector('#enhanced-inventory .worncape')?.click());
+}
 
 async function desk(label, viewport) {
   // PX31's own checks, with the doll's art stood in - the desk is not the phone's rule and keeps its figure whole
@@ -211,6 +247,7 @@ async function desk(label, viewport) {
   check(`${label}: the figure stands whole, no Body button`, m.doll.shown && m.doll.art && m.doll.h > 300 && !m.body?.shown,
     `doll ${Math.round(m.doll.h)}px tall, body button ${m.body?.shown ? 'shown' : 'hidden'}`);
   await page.screenshot({ path: join(OUT, `packlayout-${label}.png`) });
+  await capeChecks(label, page);
   check(`${label}: no page errors`, errors.length === 0, errors.join(' | '));
   await ctx.close();
 }
@@ -229,6 +266,7 @@ async function phone(label, ctxOpts) {
   check(`${label}: nothing of the region runs past it sideways`, m.sideways <= 1, `${Math.round(m.sideways)}px`);
   check(`${label}: a list of forty scrolls inside the dock`, m.listScrolls);
   await page.screenshot({ path: join(OUT, `packlayout-${label}.png`) });
+  await capeChecks(label, page);
   // the item count never sizes the region: the same pack with five items
   const many = m.main.h;
   await page.evaluate(() => globalThis.__open(5, true));
@@ -268,6 +306,7 @@ async function figure(label, ctxOpts) {
   check(`${label}: the worn panels keep their width`, m.cellMinW >= 100, `${Math.round(m.cellMinW)}px`);
   check(`${label}: nothing of the region runs past it sideways`, m.sideways <= 1, `${Math.round(m.sideways)}px`);
   await page.screenshot({ path: join(OUT, `packlayout-${label}.png`) });
+  await capeChecks(label, page);
   check(`${label}: no page errors`, errors.length === 0, errors.join(' | '));
   await ctx.close();
 }

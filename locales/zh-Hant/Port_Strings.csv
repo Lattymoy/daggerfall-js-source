@@ -345,6 +345,8 @@ holdings.horse.boons.starving,"飢腸轆轆 - 進食前無法疾馳。餵餵牠�
 holdings.wagon.boons.failing,"快散架了，但仍全速前行。"
 holdings.wagon.boons.rickety,"搖搖晃晃，但仍全速前行。"
 holdings.wagon.boons.sound,"堅固 - 因此行駛得更快。"
+inventory.cape.label,"顯示披風"
+inventory.cape.title,"顯示或隱藏你的披風和光環。其他玩家看到的也一樣。"
 inventory.store.chestAct,"請先關上箱子再這樣做。"
 inventory.store.chestAlone,"打開馬車或背包前，請先關上箱子。"
 items.gold.sharedFull,"這裡放不下更多金幣了。這裡的所有人共用這個容器，其中一堆金幣最多 {max, number} 枚。"

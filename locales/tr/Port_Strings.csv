@@ -452,6 +452,8 @@ holdings.horse.boons.starving,"Açlıktan bitkin - yiyene kadar dörtnala koşma
 holdings.wagon.boons.failing,"Dağılmak üzere, ama hâlâ tam hızla gider."
 holdings.wagon.boons.rickety,"Köhne, ama hâlâ tam hızla gider."
 holdings.wagon.boons.sound,"Sağlam - bu yüzden daha hızlı gider."
+inventory.cape.label,"Pelerini göster"
+inventory.cape.title,"Pelerinini ve auranı gösterir ya da gizler. Diğer oyuncular da aynısını görür."
 inventory.store.chestAct,"Bunu yapmadan önce sandığı kapat."
 inventory.store.chestAlone,"Arabanı ya da çantanı açmadan önce sandığı kapat."
 items.gold.sharedFull,"Buraya daha fazla altın sığmaz. Buradaki herkes bu kabı paylaşıyor ve içindeki bir altın yığını en fazla {max, number} alır."
