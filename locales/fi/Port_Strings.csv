@@ -1194,7 +1194,7 @@ gfx.fix.win.close,"Sulje kaikki Chrome-ikkunat. Jos sen kuvake jää kellon vier
 gfx.fix.win.run,"Paina Win+R, liitä tämä polku ja paina Enter:"
 gfx.fix.win.start,"Käynnistä Chrome uudelleen."
 growth.spec.why.chosenMentor,"Erikoistumisesi. Sen voimat toimivat {pct} %:n teholla, kun olet alemman tason ryhmän mentori."
-helm.heavy,"Liian raskas. Kevennä reppua, vaunuja tai ruumaa"
+helm.heavy,"Liian raskas. Kevennä reppua, vankkureita tai ruumaa"
 holdings.horse.boons.hungry,"Nälkäinen, mutta ei vielä haittaa."
 holdings.horse.boons.starving,"Nääntyvä - ei laukkaa ennen kuin se syö. Ruoki se."
 holdings.wagon.boons.failing,"Hajoamassa, mutta kulkee yhä täyttä vauhtia."

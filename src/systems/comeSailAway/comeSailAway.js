@@ -594,6 +594,8 @@ export function createComeSailAwayRuntime(deps) {
     inputCurrent: [0, 0],
     oarModeTimer: 0,
     boatCargoMod: 1,
+    /** AUDIT FB1029d B3: the hold her load was last weighed against (kg) - none on a hull with no Cargo modifier. */
+    cargoThreshold: 0,
     lastWeight: 0,
     /** FixedUpdate's current (CSA-F): written only while the waves are on. */
     currentVector: [0, 0, 0],
@@ -952,6 +954,7 @@ export function createComeSailAwayRuntime(deps) {
   function UpdateBoatCargoMod(boat) {
     const { load: num, threshold } = cargoLoad(boat);
     state.boatCargoMod = mathfClamp(f(2 - f(num / threshold)), 0, 1);
+    state.cargoThreshold = threshold;
     if (state.lastWeight !== num) {
       state.lastWeight = num;
       const words = cargoModWords(state.boatCargoMod);
@@ -1336,6 +1339,8 @@ export function createComeSailAwayRuntime(deps) {
   function inIrons(b) {
     // SAIL-FREE: under the responsive helm her canvas draws on every heading, the wind's eye too (sailDrive) - no irons
     if (state.sailPosition === 0 || b.Sails.length < 1 || responsive()) return false;
+    // AUDIT FB1029d B4: a load that holds her dead holds her oars and rudder too - striking sail to row turns nothing
+    if (!(state.boatCargoMod > 0)) return false;
     const toWind = Math.abs(vSignedAngle(flat(forwardOf(b.GameObject)), flat(state.windVectorCurrent), V_UP));   // the wind blows TO: 180 is dead into it
     // AUDIT NAV2 F15: her way THROUGH THE WATER - velocityCurrent carries the sea's current too (half the wind with the
     // waves on, the mod's default), which held a hull lying head to wind over IRONS_TELL_WAY: never told. GALLEON
@@ -3290,7 +3295,9 @@ export function createComeSailAwayRuntime(deps) {
         moreSail: boat.Sails.length > 0 && (state.sailPosition === 0 || (squareHandled(boat) && squareStowed(boat))), inIrons: inIrons(boat) && state.ironsFor >= IRONS_TELL_S,
         // HELM-SPEED (2026-10-06, Mac: "add a speed indicator for when you're sailing"): her way through the water (m/s)
         way: vMagnitude(state.MoveVectorCurrent),
-        heavy: state.boatCargoMod < 0.5,   // HEAVY-HINT: her load holds her to half her way or less (cargoModWords' worse word)
+        // HEAVY-HINT: her load holds her under half her way (cargoModWords' worse word) - AUDIT FB1029d B3: never a hull with
+        // no hold, which no lightening helps (the Classic helm's Carrack: the mod's own threshold of nought)
+        heavy: state.boatCargoMod < 0.5 && state.cargoThreshold > 0,
       };
     },
     /** AUDIT NAV2 F14 x F16: whether the helm is the responsive one (HELM-WAY) - this helm's word while one is taken,

@@ -24,15 +24,15 @@
     "old": "(!hccOn() || hccRuntime?.wagonWithPlayer?.() ?", "new": "(hccRuntime?.wagonWithPlayer?.() ?",
     "tests": ["test/systems/comeSailAway/fb1029d_sailing.test.js"], "why": "with Horse Cart and Cargo off the cart no longer goes where its owner goes - DFU's law dropped" },
   { "name": "CARGO-ASHORE-stabled-aboard", "file": "src/systems/horse/horseCart.js",
-    "old": "  const wagonWithPlayer = () => wagonState.Mode === WAGON_MODE.WithPlayer && !wagonState.WagonStabled;", "new": "  const wagonWithPlayer = () => wagonState.Mode === WAGON_MODE.WithPlayer;",
+    "old": "  const wagonWithPlayer = () => wagonState.Mode === WAGON_MODE.WithPlayer && !wagonState.WagonStabled && !parkDue(cartParks);", "new": "  const wagonWithPlayer = () => wagonState.Mode === WAGON_MODE.WithPlayer && !parkDue(cartParks);",
     "tests": ["test/systems/comeSailAway/fb1029d_sailing.test.js"], "why": "a stabled wagon weighs on the ship" },
   { "name": "CARGO-ASHORE-parked-aboard", "file": "src/systems/horse/horseCart.js",
-    "old": "  const wagonWithPlayer = () => wagonState.Mode === WAGON_MODE.WithPlayer && !wagonState.WagonStabled;", "new": "  const wagonWithPlayer = () => wagonState.Mode !== WAGON_MODE.None && !wagonState.WagonStabled;",
+    "old": "  const wagonWithPlayer = () => wagonState.Mode === WAGON_MODE.WithPlayer && !wagonState.WagonStabled && !parkDue(cartParks);", "new": "  const wagonWithPlayer = () => wagonState.Mode !== WAGON_MODE.None && !wagonState.WagonStabled && !parkDue(cartParks);",
     "tests": ["test/systems/comeSailAway/fb1029d_sailing.test.js"], "why": "a wagon parked at a door weighs on the ship" },
   { "name": "HEAVY-HINT-unsaid", "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "  if (h.heavy) return helmHeavyText();", "new": "",
     "tests": ["test/systems/comeSailAway/fb1029d_sailing.test.js"], "why": "the load that holds her is said once, three seconds, as the helm is taken" },
   { "name": "HEAVY-HINT-threshold", "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "        heavy: state.boatCargoMod < 0.5,", "new": "        heavy: state.boatCargoMod < 0,",
+    "old": "        heavy: state.boatCargoMod < 0.5 && state.cargoThreshold > 0,", "new": "        heavy: state.boatCargoMod < 0 && state.cargoThreshold > 0,",
     "tests": ["test/systems/comeSailAway/fb1029d_sailing.test.js"], "why": "a ship dead in the water is never called heavy" }
 ]

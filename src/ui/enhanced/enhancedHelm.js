@@ -343,7 +343,7 @@ function paintHelm(doc, parts, last, state, hooks, holds) {
   if (last.title !== title) { last.title = title; parts.name.textContent = title; }
   const speed = h ? helmSpeedText(h.way) : '';
   if (last.speed !== speed) { last.speed = speed; parts.speed.textContent = speed; }
-  const hint = h ? helmHint(h, state) : '';
+  const hint = h ? helmHint(h, state) : aboard?.passage && aboard.heavy ? helmHeavyText() : '';   // AUDIT FB1029d B5: a passenger's load
   if (last.hint !== hint) { last.hint = hint; parts.hint.textContent = hint; }
   const list = h ? helmButtons(h) : aboard?.passage ? passengerButtons(aboard) : [];
   const sig = list.map((b) => b.act).join(',');
