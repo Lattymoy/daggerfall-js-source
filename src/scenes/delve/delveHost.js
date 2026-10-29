@@ -11,7 +11,7 @@ import { fireLayoutInputs, enemyMarks, itemMarks, blockWaterY } from '../../worl
 import { RDB_SIDE } from '../../world/rdbLayout.js';
 import {
   newDelveLedger, foldDelveWord, foldDelveHit, foldDelveAct, inWard, plateAt, delvePlates, delvePlanHash, DP, FLAME, WEIGHT,
-  HOLD_WAVES, DELVE_WARD_PAD_M, DELVE_KIND_NAMES, DELVE_REACH_M, SPRING_POUR_MS, SPRING_ALIVE, DRIFT_MAX, DRIFT_EVERY_MS,
+  HOLD_WAVES, DELVE_WARD_PAD_M, DELVE_KIND_NAMES, DELVE_REACH_M, DELVE_WEIGHT_HALF_M, SPRING_POUR_MS, SPRING_ALIVE, DRIFT_MAX, DRIFT_EVERY_MS,
   VIGIL_LIGHT, isWaveKind, springSpots, springCount, brazierSpots, weightSpots, weighPlates, driftSpots, holdCaptainTraits,
 } from '../../net/delve/delveLaw.js';
 import { createHoldFoes, HOLD_RANK_STEP_M } from './delveHold.js';
@@ -445,7 +445,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
       if (aabb) out.push({ key: `${DELVE_KEY}vault:${r.site.i}`, aabb, distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE });
       if (r.site.kind !== 'weighing' || r.won) continue;
       weightPlaces(r.site, r.led).forEach((at, j) => {
-        if (at) out.push({ key: `${DELVE_KEY}weight:${r.site.i}:${j}`, aabb: { min: [at[0] - 0.45, at[1], at[2] - 0.45], max: [at[0] + 0.45, at[1] + 0.5, at[2] + 0.45] }, distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE });
+        if (at) out.push({ key: `${DELVE_KEY}weight:${r.site.i}:${j}`, aabb: { min: [at[0] - DELVE_WEIGHT_HALF_M, at[1], at[2] - DELVE_WEIGHT_HALF_M], max: [at[0] + DELVE_WEIGHT_HALF_M, at[1] + 0.5, at[2] + DELVE_WEIGHT_HALF_M] }, distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE });
       });
     }
     return out;

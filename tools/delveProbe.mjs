@@ -124,6 +124,20 @@ for (const s of sites) {
     }
     return k;
   }, s.i);
+  /** The dungeon's own foes within 30 m of the site felled, as a player would fight them (a blow on a carrier lets its
+   *  piece go - the game's law), said when any were; the encounter's own are killMine's. */
+  const clearNear = async () => {
+    const n = await page.evaluate(([x, z]) => {
+      const out = [];
+      for (const [j, f] of Object.entries(JSON.parse(window.__foes()))) {
+        const r = window.__foeRecord(Number(j));
+        if (!r || r._delve || f.dead || !f.pos || Math.hypot(f.pos[0] - x, f.pos[2] - z) > 30) continue;
+        out.push(`${f.type} ${Math.round(Math.hypot(f.pos[0] - x, f.pos[2] - z))} m`); window.__damageFoe(Number(j), (r.entity?.health ?? 1) + 999);
+      }
+      return out;
+    }, [s.x, s.z]);
+    if (n.length) console.log(`  the dungeon's own foes felled: ${n.join(', ')}`);
+  };
   /** Stood a step off a piece on the heart's side, looking at its middle, the weapon readied - as a defender stands. */
   const aimAt = async (p) => {
     const dx = s.x - p[0], dz = s.z - p[2], d = Math.hypot(dx, dz) || 1, a = [p[0] + (dx / d) * 1.2, p[1], p[2] + (dz / d) * 1.2];
@@ -165,7 +179,7 @@ for (const s of sites) {
     let struck = 0, measured = false, quiet = Date.now();
     while (!(await state())[s.i].won && Date.now() - t0 < 2_400_000) {
       if (Date.now() - quiet > 60_000) { quiet = Date.now(); console.log(`  still: ${JSON.stringify((await state())[s.i])} "${await say()}"`); }
-      await closeWindows(); await killMine();
+      await closeWindows(); await killMine(); await clearNear();
       const st = (await state())[s.i];
       if (st.p === 1 || st.p === 9 || st.p === 4) { await at([s.x, s.y, s.z]); await frames(10); continue; }   // rising, sunk, or the captain (felled by killMine)
       const spots = s.kind === 'seals' ? sealSpots(s, st.k) : springSpots(s, st.k);
@@ -188,7 +202,7 @@ for (const s of sites) {
     let quiet = Date.now();
     while (!(await state())[s.i].won && Date.now() - t0 < 600_000) {
       if (Date.now() - quiet > 30_000) { quiet = Date.now(); console.log(`  still: ${JSON.stringify((await state())[s.i])} "${await say()}" at ${JSON.stringify(await page.evaluate(() => window.__player.pos.map((v) => Math.round(v * 10) / 10)))}`); }
-      await heal(); await closeWindows(); await killMine();
+      await heal(); await closeWindows(); await killMine(); await clearNear();
       const st = (await state())[s.i];
       if (st.p !== 6) { await frames(10); continue; }
       const j = [0, 1, 2, 3].slice(0, st.k).find((k) => !(st.lb & (1 << k)));
@@ -199,7 +213,9 @@ for (const s of sites) {
     }
   } else if (s.kind === 'weighing') {
     const homes = weightSpots(s), plates = weighPlates(s);
+    const why = async () => console.log(`    health by frame (frame, health, maximum): ${JSON.stringify(await page.evaluate(() => window.__hpTrace))}`);
     for (let j = 0; j < 2; j++) {
+      await clearNear();
       // taken as a player takes it: stood a step off it, looking at it, the activation's own ray (tryActivate -> takeLoot)
       const w = homes[j], dx = s.x - w[0], dz = s.z - w[2], d = Math.hypot(dx, dz) || 1, a = [w[0] + (dx / d) * 1.2, w[1], w[2] + (dz / d) * 1.2];
       await at(a); await frames(4);
@@ -207,9 +223,11 @@ for (const s of sites) {
       await frames(2);
       await page.evaluate(() => window.__activate());
       await frames(6);
-      console.log(`  weight ${j}: ${(await state())[s.i].wt[j] === 1 ? 'taken' : 'NOT taken'}`);
+      console.log(`  weight ${j}: ${(await state())[s.i].wt[j] === 1 ? 'taken' : 'NOT taken'} (${JSON.stringify((await state())[s.i].wt)})`);
+      if ((await state())[s.i].wt[j] !== 1) await why();
       await at(plates[j]); await frames(40);
-      console.log(`  weight ${j}: ${(await state())[s.i].wt[j] === 2 ? 'on its plate' : 'NOT set'}`);
+      console.log(`  weight ${j}: ${(await state())[s.i].wt[j] === 2 ? 'on its plate' : 'NOT set'} (${JSON.stringify((await state())[s.i].wt)})`);
+      if ((await state())[s.i].wt[j] !== 2) await why();
     }
     await at(plates[2]);
     for (let k = 0; k < 30 && !(await state())[s.i].won; k++) { await frames(10); if (k % 5 === 4) console.log(`  still: ${JSON.stringify((await state())[s.i])} "${await say()}"`); }

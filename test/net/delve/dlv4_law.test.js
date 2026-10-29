@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   DP, FLAME, WEIGHT, newDelveLedger, stepDelve, foldDelveWord, foldDelveHit, foldDelveAct, delveState, delvePhaseLeft, delveCarrier,
-  isWaveKind, delveKindById, DELVE_HEART_VAULTS, DELVE_BURDEN, DELVE_REACH_M, delveErrandMs,
+  isWaveKind, delveKindById, DELVE_HEART_VAULTS, DELVE_BURDEN, DELVE_REACH_M, DELVE_PRESS_M, DELVE_WEIGHT_HALF_M, delveErrandMs,
   SPRING_MIN, SPRING_MAX, springCount, SPRING_POUR_MS, SPRING_ALIVE, SPRING_TEAM_S, springHp, SPRING_MAX_MS, SPRING_R, SPRING_H,
   VIGIL_LIGHT, VIGIL_BLOW_LIGHT, VIGIL_BREATH_LIGHT, VIGIL_REST_MS, braziersFor, FLAME_LIFE_MS, FLAME_LIES_MS, DRIFT_MAX, DRIFT_EVERY_MS, PUZZLE_RISE_MS,
   WEIGH_RING_M, WEIGHTS, WEIGH_HOLD_MS, WEIGH_FRESH_MS, sealCount, SEAL_RING_M, sealHp, SEAL_WORK_MS, SEAL_SINK_MS, sealRouteM, sealWindowMs,
@@ -16,6 +16,7 @@ import {
 import { STAR_LIGHT, STAR_BLOW_LIGHT, STAR_BREATH_LIGHT, STAR_BLOWS_BURST, starClearFloorMs } from '../../../src/net/starfall/starfallLaw.js';
 import { KT_CARRY_PACE, ktLeastMs } from '../../../src/net/ketch/ketchBrain.js';
 import { crystalHpFor, dpsRef, HOST_HP_MIN, HIT_KINDS, BUCKET_DEPTH_X, HIT_CAP_X, MELEE_REACH, POSE_SLACK } from '../../../src/net/gate/gateBrain.js';
+import { TREASURE_ACTIVATION_DISTANCE } from '../../../src/player/activate.js';
 
 const T0 = 1_000_000;
 const site = (o = {}) => ({ i: 0, kind: 'wellsprings', x: 10, y: -2, z: 20, r: 4, tier: 'regular', vault: [13.4, -2, 20], ...o });
@@ -257,6 +258,22 @@ test('DLV4 THE FLAME\'S CLOCK AND FALL: carried 20 s it gutters back to the hear
   assert.equal(led.fl, FLAME.lying);
   assert.deepEqual(say(led, 'B', word(), t + 800 + FLAME_LIES_MS), [{ k: 'gutter' }]);
   assert.deepEqual(stepDelve(led, t + 800 + FLAME_LIES_MS + DELVE_LET_GO_MS), [{ k: 'let' }]);
+});
+
+test('DLV4 THE PRESS\'S REACH (the real game\'s probe: a weight pressed from 1.3 m took nothing, and said nothing): a weight is taken from as far as a press reaches - the activation\'s treasure distance to its box - and no farther; the flame, walked to, from 1.2 m (mutants: the walking reach for a press; the box\'s half lost; the press\'s reach for the flame)', () => {
+  assert.equal(DELVE_PRESS_M, TREASURE_ACTIVATION_DISTANCE + DELVE_WEIGHT_HALF_M, 'the press\'s own reach, from the feet to the spot on the flat');
+  assert.equal(DELVE_WEIGHT_HALF_M, 0.45);
+  const s = site({ kind: 'weighing' }), homes = weightSpots(s), off = (p, m) => [p[0] + m, p[1], p[2]];
+  const L = newDelveLedger(s, 'A', 3, T0);
+  say(L, 'A', word(), T0);
+  assert.deepEqual(act(L, s, 'A', 'take', 0, off(homes[0], 3.6), T0 + 100), [{ k: 'take', j: 0 }], '3.6 m off: a press reaches it');
+  const F = newDelveLedger(s, 'A', 3, T0);
+  say(F, 'A', word(), T0);
+  assert.deepEqual(act(F, s, 'A', 'take', 0, off(homes[0], 3.7), T0 + 100), [], '3.7 m off: past the press');
+  const b = site({ kind: 'brazier' }), B = newDelveLedger(b, 'A', 3, T0);
+  say(B, 'A', word(), T0); stepDelve(B, T0 + PUZZLE_RISE_MS + 1);
+  assert.deepEqual(act(B, b, 'A', 'take', -1, [b.x + 1.3, b.y, b.z], T0 + PUZZLE_RISE_MS + 2), [], 'the flame is walked to, not pressed');
+  assert.deepEqual(act(B, b, 'A', 'take', -1, [b.x + 1.2, b.y, b.z], T0 + PUZZLE_RISE_MS + 3), [{ k: 'take' }], 'and taken within its 1.2 m');
 });
 
 test('DLV4 THE WEIGHING, WHOLE: a weight taken at its home, carried no faster than a runner bearing it, set on a free plate; a member on a plate holds it while their word is fresh; all three held 3 s wins, any let go starts the count again - one player can carry two and stand on the third (mutants: the hold\'s time; a stale word holding; a set on a taken plate; the count kept after a let-go)', () => {

@@ -1078,5 +1078,45 @@
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
+  },
+  {
+    "name": "DLV4-press-walking-reach",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "    if (!at || !within(at, pose, DELVE_PRESS_M)) return;",
+    "new": "    if (!at || !within(at, pose, DELVE_REACH_M)) return;",
+    "tests": [
+      "test/net/delve/dlv4_law.test.js"
+    ],
+    "why": "a weight pressed from 2 m takes nothing, and says nothing"
+  },
+  {
+    "name": "DLV4-press-box-lost",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "export const DELVE_PRESS_M = 3.2 + DELVE_WEIGHT_HALF_M;",
+    "new": "export const DELVE_PRESS_M = 3.2;",
+    "tests": [
+      "test/net/delve/dlv4_law.test.js"
+    ],
+    "why": "a press on the box's far side refused"
+  },
+  {
+    "name": "DLV4-flame-pressed",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "    const lying = led.fl === FLAME.lying, at = lying ? led.fx : siteHeart(site);\n    if (!within(at, pose, DELVE_REACH_M)) return;",
+    "new": "    const lying = led.fl === FLAME.lying, at = lying ? led.fx : siteHeart(site);\n    if (!within(at, pose, DELVE_PRESS_M)) return;",
+    "tests": [
+      "test/net/delve/dlv4_law.test.js"
+    ],
+    "why": "the flame taken from across the ward"
+  },
+  {
+    "name": "DLV4-weight-box-own",
+    "file": "src/scenes/delve/delveHost.js",
+    "old": "aabb: { min: [at[0] - DELVE_WEIGHT_HALF_M, at[1], at[2] - DELVE_WEIGHT_HALF_M]",
+    "new": "aabb: { min: [at[0] - 0.3, at[1], at[2] - DELVE_WEIGHT_HALF_M]",
+    "tests": [
+      "test/scenes/delve/dlv4_host.test.js"
+    ],
+    "why": "the box a press meets is not the one the law reads"
   }
 ]

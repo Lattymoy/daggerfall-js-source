@@ -153,8 +153,8 @@ The Brazier Rite and the Seals rise 3 s after the first step in, and count the p
 - **THE WEIGHING** (plates held together - the winch's law). Three plates 3 m from the heart, on the axes the vault
   does not take. Each is held by a member standing on it (their word fresh within 2.5 s) or by a stone weight carried
   from the ward's gates (THE BURDEN again). All three held for 3 s opens the vault; any let go starts the count again.
-  One player carries two weights and stands on the third. A weight lifted off a plate goes back on it only when its
-  carrier steps off and on again.
+  One player carries two weights and stands on the third. A weight is taken by a press, from as far as one reaches. A
+  weight lifted off a plate goes back on it only when its carrier steps off and on again.
 - **THE SEALS** (break them all in time - the crystals' law). Three to six seals (`2 + ceil(n / 2)`) rise 3 m round the
   heart, each a Dagon's crystal's health for the party (`crystalHpFor`). Break all within 40 s plus law 7's floor of
   their route (measured: 24 s could not be won at a level-1 character's own blows - section 14). Failed, they sink and

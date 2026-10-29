@@ -107,6 +107,7 @@ the crystal seam. Fixed where each began, each pinned and its mutants dead (`too
 | F12 | Nit | `hit` answered true for a refused blow, so a spell kept rounds on the piece; the bible put the Seals' vault at a wall. | It answers whether the blow landed; the bible says the heart. |
 | P1 | Minor | The host judged my blows and acts in the ward by the disc alone, my words by the disc and a line to the heart. | One reading for all three (`holds`). |
 | P2 | Nit | The brazier's flame stood at 0.8 m, in the pedestal: its top face is 36 units, 0.9 m, over its lowest point. | Measured from ARENA2 and pinned. |
+| P3 | Major | **Found in the real game** (`tools/delveProbe.mjs`, the Weighing): **a weight pressed from 1.3 m took nothing, and said nothing.** The press reaches 3.2 m (DFU's treasure distance, to the weight's box); the law took a weight within 1.2 m, the walking reach. | A weight is taken from as far as a press reaches (`DELVE_PRESS_M`, the box's half shared with the host's target); the flame, braziers and plates, walked to, keep 1.2 m. |
 
 ## G - DLV3, the encounters online (2026-10-29)
 

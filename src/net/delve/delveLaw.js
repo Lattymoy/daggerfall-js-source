@@ -42,8 +42,15 @@ export const DELVE_PACE_MPS = ((30 + 150) / 39.5) * (1.35 + 5 / 200);
 export const delveErrandMs = (routeM) => Math.ceil(((Math.max(0, routeM) / DELVE_PACE_MPS + 1.5) * 1000) / 10) * 10;
 /** A carried piece slows its carrier to this of their pace (THE BURDEN - the Ketch's carry, net/ketch/ketchBrain.js). */
 export const DELVE_BURDEN = KT_CARRY_PACE;
-/** How near a member stands to a piece to take it, set it down or light it (m, on its storey). */
+/** How near a member walks to a piece to take it, set it down or light it (m, on its storey). */
 export const DELVE_REACH_M = 1.2;
+/** A weight's box, half its width (m): what the press's ray meets (scenes/delve/delveHost.js). */
+export const DELVE_WEIGHT_HALF_M = 0.45;
+/** A weight is taken by a press, so as far as a press reaches: DFU's treasure distance, 128 units (3.2 m from the eye to
+ *  its box - player/activate.js TREASURE_ACTIVATION_DISTANCE), and the box's half, from the feet to its spot on the flat.
+ *  At DELVE_REACH_M a press from 2 m took nothing, and said nothing (DLV4's probe). The law imports no player code: the
+ *  two are pinned equal by test. */
+export const DELVE_PRESS_M = 3.2 + DELVE_WEIGHT_HALF_M;
 
 // ═══ THE LEDGER'S CLOCKS ═════════════════════════════════════════════════════════════════════════════════════════════
 /** A member's word counts it present at the site this long. */
@@ -605,7 +612,7 @@ function weightAct(led, site, acct, act, pose, nowMs, ev) {
   const mine = led.wt.findIndex((t) => t.s === WEIGHT.carried && t.by === acct);
   if (act.a === 'take' && mine < 0) {
     const j = act.j, t = Number.isInteger(j) ? led.wt[j] : null, at = t ? weightAt(site, t, j) : null;
-    if (!at || !within(at, pose, DELVE_REACH_M)) return;
+    if (!at || !within(at, pose, DELVE_PRESS_M)) return;
     Object.assign(t, { s: WEIGHT.carried, by: acct, p: -1, ta: nowMs, tp: [at[0], at[2]] });
     ev.push({ k: 'take', j });
     weighStep(led, nowMs, ev);

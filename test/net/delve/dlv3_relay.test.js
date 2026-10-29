@@ -401,8 +401,10 @@ test('DLV3 BLOWS AND ACTS IN THE ROOM: a blow lands from within its reach of the
     await say(F, w(4));
     assert.equal(seen(F, 4).p, DP.work);
     const act = (a, j) => say(F, { t: 'dv', k: 'a', h: P2.h, i: 4, a: DELVE_ACTS.indexOf(a), j });
+    const far = ((h) => { const dx = h[0] - WEI.x, dz = h[2] - WEI.z, d = Math.hypot(dx, dz); return [WEI.x - (dx / d) * 5.5, h[1], WEI.z - (dz / d) * 5.5]; })(homes[0]);
+    await stand(F, far);
     await act('take', 0);
-    assert.equal(seen(F, 4).me.hd, -2, 'from the heart, past its reach: nothing in hand');
+    assert.equal(seen(F, 4).me.hd, -2, 'across the ward, past a press\'s reach (DELVE_PRESS_M): nothing in hand');   // PIN MOVED (DLV4's probe: a weight is taken by a press, from as far as one reaches - its home, on a gate, is within that of the heart)
     await stand(F, homes[0]);
     await act('take', 0);
     assert.equal(seen(F, 4).me.hd, 0, 'taken at its home');

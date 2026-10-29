@@ -15,6 +15,7 @@ import { DELVE_CHEST_MODEL } from '../../../src/scenes/delve/delvePieces.js';
 import {
   DP, FLAME, WEIGHT, HOLD_GATHER_MS, HOLD_CAPTAIN_MIN_MS, PUZZLE_RISE_MS, SPRING_POUR_MS, SPRING_ALIVE, VIGIL_REST_MS, DELVE_BURDEN,
   springSpots, springCount, sealSpots, brazierSpots, weighPlates, weightSpots, newDelveLedger, foldDelveWord, stepDelve, holdGates, driftSpots, DRIFT_EVERY_MS,
+  DELVE_WEIGHT_HALF_M,
 } from '../../../src/net/delve/delveLaw.js';
 import { siteKinds } from '../../../src/world/dungeon/delveSites.js';
 import { HIT_KINDS } from '../../../src/net/gate/gateBrain.js';
@@ -245,6 +246,8 @@ test('DLV4 THE WEIGHING IN A ROOM: a weight pressed is taken, carried with its b
   assert.equal(host.state()[0].p, DP.work);
   const keys = D.targets().filter((t) => delveKeyWeight(t.key)).map((t) => t.key);
   assert.deepEqual(keys, ['delve:weight:0:0', 'delve:weight:0:1', 'delve:weight:0:2']);
+  const box = D.targets().find((t) => t.key === 'delve:weight:0:0').aabb;
+  assert.deepEqual([box.max[0] - box.min[0], box.max[2] - box.min[2], box.max[1] - box.min[1]].map((v) => Math.round(v * 100) / 100), [2 * DELVE_WEIGHT_HALF_M, 2 * DELVE_WEIGHT_HALF_M, 0.5], 'the box a press meets is the law\'s (DELVE_PRESS_M reads its half)');
   for (let j = 0; j < 2; j++) {
     await run(D, 200, homes[j], 0, pw);
     assert.equal(host.press(`delve:weight:0:${j}`), 1);
