@@ -429,6 +429,14 @@ export const CASTLE_DAGGERFALL_FOYER_DOOR_LOAD_IDS = Object.freeze([29331574, 29
 const EARLY_KEY_PREFIX = 'act:decor:';
 const EARLY_MAX = 64;
 
+/** Stand an object's bucket at `m` (null: take it away). The collider's restand keeps its broad filing; a collider
+ *  without one (a test's stand-in) is asked to remove and add, which is what restand means. */
+function standBucket(collider, o, m) {
+  if (collider.restand) { collider.restand(o.key, o.cpu.positions, o.cpu.indices, m); return; }
+  collider.removeBucket(o.key);
+  if (m) collider.addMesh(o.key, o.cpu.positions, o.cpu.indices, m);
+}
+
 export class ActionSystem {
 constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = null, setGlobalVar = null, playerLevel = () => 1, lockpickSkill = () => 0, rolls = Math.random, insideDungeonCastle = () => false, magicDoorsContext = null } = {}) {
     this.collider = collider;
@@ -1111,8 +1119,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       if (o.kind === 'moveFlat') { this._applyFlat(o); return; }
       this._applyMatrix(o);
       if (o.kind === 'action') {
-        this.collider.removeBucket(o.key);
-        this.collider.addMesh(o.key, o.cpu.positions, o.cpu.indices, o.matrix);
+        standBucket(this.collider, o, o.matrix);
       }
       return;
     }
@@ -1505,14 +1512,10 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       else if (o.moveState === 'end') o.moveT = 1;
     }
     this._applyMatrix(o);
-    this.collider.removeBucket(o.key);
-    if (o.kind === 'door') {
-      // A door is solid only while its swing is fully closed - at its
-      // LIVE pose, which a Move record may have carried off the base.
-      if (o.state === 'start') this.collider.addMesh(o.key, o.cpu.positions, o.cpu.indices, o.matrix);
-    } else {
-      this.collider.addMesh(o.key, o.cpu.positions, o.cpu.indices, o.matrix);
-    }
+    // A door is solid only while its swing is fully closed - at its
+    // LIVE pose, which a Move record may have carried off the base.
+    const solid = o.kind !== 'door' || o.state === 'start';
+    standBucket(this.collider, o, solid ? o.matrix : null);
   }
 
   /** AUDIT LW-ROOMS (scenes/livingWorld/livingIndoors.js): `fn`'s answer with every
@@ -1596,7 +1599,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
    *  between the mover and the world - HOLDS the mover at the last pose that closed on nobody, its `t` with it: the
    *  tween waits there, and plays on when the body is clear (DaggerfallAction's tween never stops - Port-Ledger A). */
   _standMover(o, t0, m0, body) {
-    const place = (m) => { this.collider.removeBucket(o.key); if (m) this.collider.addMesh(o.key, o.cpu.positions, o.cpu.indices, m); };
+    const place = (m) => standBucket(this.collider, o, m);
     place(o.matrix);
     if (!body) return;
     const t1 = o.t, m1 = o.matrix, n = moverSteps(this.collider, o.key, m0, m1, body);

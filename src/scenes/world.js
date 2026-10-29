@@ -2708,7 +2708,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const precipOpts = { enhanced: sky.enhanced, countCap: Number(params.get('rain')) || null };
   if (sky.pixelSnow) precipOpts.pixelSnow = sky.pixelSnow;   // DS1: Dynamic Skies' InitSnow - the pixel snow replacement, when its switch is on
   let precip = precipMode && !isDryFall(precipMode) ? new PrecipitationRenderer(renderer.gl, precipOpts) : null;   // ASHFALL1's audit: a dry fall at boot builds no rain program either
-  const wxEye32 = new Float32Array(3);   // RAIN-LEAK: the falling weather's eye, filled each frame - never a fresh array a frame
+  const wxEye32 = new Float32Array(3);   // RAIN-LEAK, FRAME-ALLOC: the view's eye for the weather and the passes after it, filled each frame - never a fresh array a frame
   // PERF-WARM: the renderer's on-demand programs, and the rain's whole
   // renderer, paid for at idle rather than on the frame that first needs
   // them. The rain is the expensive one: a weather change builds a
@@ -33741,7 +33741,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // the wisps - writes no depth, so every pass drawn AFTER it painted over it: the grass field and the halls' banners
     // stood in front of rain falling nearer the eye. It is drawn once the opaque world is whole (below, after the banners).
     const drawFalling = () => {
-      wxEye32[0] = wxEye[0]; wxEye32[1] = wxEye[1]; wxEye32[2] = wxEye[2];   // RAIN-LEAK: filled here, not in the frame - PERF-V8's bytecode ceiling
       const precipShown = enhancedFront ? fx.shown : precipMode;
       if (isDryFall(precipShown)) {
         // WEATHER2d, ASHFALL1: THE DRY FALLS - the sand and the ash (render/dryFall.js) by the fall's kind, the front's
@@ -33788,10 +33787,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         renderer.markForeignPass();
       }
     };
+    // RAIN-LEAK, FRAME-ALLOC: one eye array a frame for the falling weather and every pass after it that takes a
+    // Float32Array eye (the bolts, the banners, the flags, the duel walls, the gate, the smoke, the omen, the starfall,
+    // the loot lines). None of them keeps or changes it, so one fill replaces a fresh copy per pass.
+    wxEye32[0] = wxEye[0]; wxEye32[1] = wxEye[1]; wxEye32[2] = wxEye[2];
     // BOLT: the burning channels, over what the world drew and behind what stands in front of them - from the eye the
     // view was built from (mwv.eye: a third-person camera stands metres off the head, cam.pos)
     if (boltsGl && boltFrame.bolts.length && !_dwAirOff) {
-      boltsGl.draw(boltFrame.bolts, proj, view, new Float32Array(mwv.eye), undefined, renderer.worldViewportPx?.[3]);   // RETRO1: the world image's own pixel
+      boltsGl.draw(boltFrame.bolts, proj, view, wxEye32, undefined, renderer.worldViewportPx?.[3]);   // RETRO1: the world image's own pixel
       renderer.markForeignPass();
     }
     // GR1: THE LAB'S GRASS. The scatter is the lab's 1,200,000 candidates
@@ -33977,7 +33980,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const frameBanners = () => {   // PERF-V8
     if (hallBanners || seatBanners) {
       const hung = bannersHung();   // SEAT1a: the seats' banners with the halls'
-      if (hung.length && bannerPass.draw(hung, proj, view, new Float32Array(mwv.eye), now / 1000, {
+      if (hung.length && bannerPass.draw(hung, proj, view, wxEye32, now / 1000, {
         light: { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, sunScale: renderer._sunScale, moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonCol: renderer._moonColor },   // AUDIT GUILD1d R9: and the moon, as the grass takes it
         wind: Math.min(1, wd.strength01 * wd.gust),
         fog: { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos, dw: renderer._dwFog, haze: renderer._haze, focus: renderer._focus },
@@ -33988,7 +33991,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const frameShipFlags = () => {   // PERF-V8
     // SHIP-COLOURS: and the ships' flags, cloth as the banners are (render/shipFlagPass.js), on the same light and wind - a
     // foreign seam of its own (the banners' program left bound under it)
-    if (shipFlagPass && shipFlagPass.draw(shipFlags.draws(), proj, view, new Float32Array(mwv.eye), now / 1000, {   // none to draw: its idle textures pruned, no pass
+    if (shipFlagPass && shipFlagPass.draw(shipFlags.draws(), proj, view, wxEye32, now / 1000, {   // none to draw: its idle textures pruned, no pass
       light: { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, sunScale: renderer._sunScale, moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonCol: renderer._moonColor },
       wind: Math.min(1, wd.strength01 * wd.gust),
       fog: { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos, dw: renderer._dwFog, haze: renderer._haze, focus: renderer._focus },
@@ -34028,28 +34031,28 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (duelWall) {
       const rings = duelRingsNow(dt);
       if (rings.length) {
-        duelWall.draw(rings, proj, view, new Float32Array(mwv.eye), now / 1000,
+        duelWall.draw(rings, proj, view, wxEye32, now / 1000,
           { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos, dw: renderer._dwFog, haze: renderer._haze, focus: renderer._focus });   // DW-C: the sea's fog with the frame's; AUDIT DEEP R-1: and the travel view's focus
         renderer.markForeignPass();
       }
     }
     // WB2: THE GATE'S FIRE AND BEACON - after the duel wall, the same eye and fog; the stone went in the world pass, so
     // the pillars in front of the fire hide it
-    if (gatePool?.stands() && gatePool.drawPass(proj, view, new Float32Array(mwv.eye), now / 1000,   // AUDIT WB C7: its arguments built only when a gate stands
+    if (gatePool?.stands() && gatePool.drawPass(proj, view, wxEye32, now / 1000,   // AUDIT WB C7: its arguments built only when a gate stands
       { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos, focus: renderer._focus, haze: renderer._haze })) renderer.markForeignPass();   // AUDIT DEEP R-1: the travel view's focus
     // WB12d: the rite's pillar of smoke, the gate's fire's eye and fog - from the omen, before the gate stands
-    if (riteHost?.smoking() && riteHost.drawSmoke(proj, view, new Float32Array(mwv.eye), now / 1000,   // AUDIT WB C7: its arguments built only while it shows
+    if (riteHost?.smoking() && riteHost.drawSmoke(proj, view, wxEye32, now / 1000,   // AUDIT WB C7: its arguments built only while it shows
       { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos, focus: renderer._focus, haze: renderer._haze, light: (renderer._ambient[0] + renderer._ambient[1] + renderer._ambient[2]) / 3 + 0.6 * renderer._sunScale })) renderer.markForeignPass();   // AUDIT WB12d (G8): lit as the rain's curtains are
     // SD2c: THE HOLLOW'S OMEN - a Super dungeon's column of brass-gold light, after the gate's fire, the same eye and fog
     const sdo = sdHost ? sdOmenNow() : null;
-    if (sdo && sdOmenPassOf()?.draw([sdo], proj, view, new Float32Array(mwv.eye), now / 1000,
+    if (sdo && sdOmenPassOf()?.draw([sdo], proj, view, wxEye32, now / 1000,
       { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos, focus: renderer._focus, haze: renderer._haze })) renderer.markForeignPass();
     // STAR4: THE STARFALL'S SKY - the omens, the falls, the flashes and their rings, the beacons - the same eye and fog
-    if (starfall?.showing() && starfall.drawSky(proj, view, new Float32Array(mwv.eye), now / 1000)) renderer.markForeignPass();
+    if (starfall?.showing() && starfall.drawSky(proj, view, wxEye32, now / 1000)) renderer.markForeignPass();
     rocket.draw(proj, view, mwv.eye);   // ROCKET1: the rocket - its brown sky, mounds, poop, horses and their clouds, the same eye and fog
     // LOOT11 (the Loot arc): THE LINES OF LIGHT over my bodies and the street's piles holding a Rare or better - after the
     // gate's fire, the same eye and fog (scenes/lootLines.js: the nearest eight within 40 m)
-    if (lootLines.draw(() => [...exteriorFoes.lootFinds(), ...droppedLoot.lootFinds()], proj, view, new Float32Array(mwv.eye), now / 1000,
+    if (lootLines.draw(() => [...exteriorFoes.lootFinds(), ...droppedLoot.lootFinds()], proj, view, wxEye32, now / 1000,
       { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos, focus: renderer._focus, haze: renderer._haze })) renderer.markForeignPass();
     if (npcMarks.draw(proj, view, mwv.eye, streetPeople, now / 1000)) renderer.markForeignPass();   // NPC-MARKS: the marks over the street's people, after its flats
     // TV4 (bible/06-Systems/Travel-View.md): THE CURTAINS FROM ABOVE - the weather map's falling cells as veils stood in
