@@ -1421,8 +1421,8 @@ function realmCard(who) {
     realmAsked = true;
     realmList(realmIo({ fetch: (...a) => globalThis.fetch(...a), storage: appStorage() })).then((r) => {
       realmRows = r.ok ? r.characters : [];
-      realmRowsOk = !!r.ok;
       if (r.ok) sweepUnsent(appStorage(), r.characters, storedSession(appStorage())?.id ?? null);   // AUDIT RESCUE-SAVE A7 + 2 B5: a copy no join can play goes
+      realmRowsOk = !!r.ok;
       realmMax = r.ok ? r.max : 0;
       if (!r.ok) realmWords = [...realmWords, realmRefusalText(r.error)];
       render();

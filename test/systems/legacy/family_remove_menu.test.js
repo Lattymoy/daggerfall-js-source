@@ -37,7 +37,7 @@ test('FAMILY-REMOVE (AUDIT FB1029e F3, F5, T4) the card: the spare lines the dev
   assert.deepEqual(withoutLine(lineIds, 'fam-a-aaaaaa'), ['fam-b-bbbbbb', 'fam-c-cccccc']);
   assert.equal(withoutLine(null, 'fam-a-aaaaaa'), null);
   const m = src('src/ui/enhanced/enhancedMenu.js');
-  assert.match(m, /realmRows = r\.ok \? r\.characters : \[\];\n\s*realmRowsOk = !!r\.ok;/, 'the roster read says whether it was answered');
+  assert.match(m, /realmRows = r\.ok \? r\.characters : \[\];\n\s*if \(r\.ok\) sweepUnsent\([^\n]*\n\s*realmRowsOk = !!r\.ok;/, 'the roster read says whether it was answered');
   assert.match(m, /const spare = spareFamilies\(\{ rows: realmRows, rowsOk: realmRowsOk, lineIds: realmLineIds, load: \(id\) => loadFamily\(appStorage\(\), id\) \}\);\n\s*if \(!spare\) return null;/);
   assert.match(m, /label: t\('menu\.realm\.removeFamily', 'Remove family'\),\n\s*disabled: realmBusy,/, 'never pressed while another realm act runs');
   assert.match(m, /realmLineageRemove\(realmIoNow\(\), family\.id\)\.then\(\(r\) => \(r\?\.error === 'no-lineage' \? \{ ok: true \} : r\)\)/, 'a line already gone is removed');
