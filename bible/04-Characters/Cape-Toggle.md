@@ -26,8 +26,8 @@ the player's own with Cloak1 and Cloak2 empty while capes are hidden, a copy mad
 else's, a foe's or a townsperson's, is the table itself.
 
 What is worn does not change. The cloak stays in its slot, on the paper doll and in the Cloaks panel; its warmth, a
-raised hood and the vampire's shade (`survival/temperature.js` cloakState) read the real table, as every rule does. Only the drawers read the
-drawn one.
+raised hood and the vampire's shade (`survival/temperature.js` cloakState) read the real table, as every rule does.
+Only the drawers read the drawn one.
 
 ## 3. The drawers - one door
 
@@ -64,7 +64,7 @@ longer carries. Deploy the relay first, then the site.
 An eye in the Cloaks panel's bottom-right corner (`enhancedInventory.js` capeSwitch): pressed (`aria-pressed`) and gold
 while shown, struck through while hidden; its words in its label and title (`inventory.cape.label`,
 `inventory.cape.title`, every language). A filled panel is itself a button, so the eye is a sibling in the panel's grid
-cell. A press turns the pref, dresses the body again, redraws the figure and the panel - HOOD-SAID's three.
+cell. A press turns the pref, dresses the body again, redraws the figure and the panel, as HOOD-SAID's press does.
 
 It is a tile of the frame (`enhancedFrame.js` FRAME_ROLES), so each dress paints it as the panel it stands on; in the
 Grimoire's ink it was invisible until then. On a phone the cloak's name keeps clear of it (`enhancedPlusStyle.js`, the
