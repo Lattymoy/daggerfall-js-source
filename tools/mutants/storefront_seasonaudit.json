@@ -268,5 +268,14 @@
     "tests": [
       "test/server/seasonmaul_service.test.js"
     ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-days-no-unsaid",
+    "file": "src/scenes/seasonHost.js",
+    "old": "      if (a?.error === 'taken') setMidScreenText(accountRefusalText('taken'));   // AUDIT-STOREFRONT: why no Maul came",
+    "new": "      if (false) setMidScreenText(accountRefusalText('taken'));   // AUDIT-STOREFRONT: why no Maul came",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
   }
 ]

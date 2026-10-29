@@ -122,7 +122,8 @@ heard (`relayNowS`).
   it while it is near, and says its fall, with a body.
 - **The Maul's day.** A character whose blow landed on the Colossus then asks the account service for **the Resonant
   Maul** (`POST /v1/season/maul`, `server-account/src/seasonClaim.js`): yes once a UTC day an account, inside the Heart
-  stage, on the service's clock. The Maul is minted on that yes alone: offline, signed out or refused, none. The ask is a
+  stage, on the service's clock. The Maul is minted on that yes alone: offline, signed out or refused, none. A second
+  felling that day is told why (`taken`, the account's refusal sentences, `accountClient.js` REFUSAL_WORDS). The ask is a
   progression claim, as the season's finds are (`progress.js` PROGRESS_ROUTES, the `pass` stream): the account's seated
   realm character is asked, and a session's secret alone is refused (AUDIT-STOREFRONT).
 - **The Resonant Maul** (`src/systems/pass/resonantMaul.js`). A Dwarven warhammer of the Legendary rung: +30% damage, +12

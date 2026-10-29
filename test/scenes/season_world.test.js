@@ -31,6 +31,7 @@ import { gateClearSet, FISSURE_ROCK_M } from '../../src/world/gate/gateClearance
 import { readFissureMarksIn } from '../../src/ui/fissureMapMark.js';
 import { paintFissureMark } from '../../src/ui/ink/inkMap.js';
 import { midScreenText } from '../../src/ui/midScreenText.js';
+import { accountRefusalText } from '../../src/net/accountClient.js';
 import { reportPlayerKill } from '../../src/systems/playerKills.js';
 import { _resetPassClientForTests } from '../../src/systems/pass/passClient.js';
 import { passGrantName } from '../../src/ui/passText.js';
@@ -283,7 +284,7 @@ test('STOREFRONT a fissure\'s camp: sprung by the first player near, its constru
   assert.ok(!w.sprung.has(f.site), 'and its site nobody\'s');
 });
 
-test('STOREFRONT the Colossus falls: a character whose blow landed takes the Resonant Maul on the service\'s yes, once a UTC day, its line said; one who never struck it asks nothing; a camp cleared is quiet a while, then stands again (mutants: a Maul unstruck; the camp stood again at once)', async () => {
+test('STOREFRONT the Colossus falls: a character whose blow landed takes the Resonant Maul on the service\'s yes, once a UTC day, its line said - and the day\'s no said too; one who never struck it asks nothing; a camp cleared is quiet a while, then stands again (mutants: a Maul unstruck; the camp stood again at once; the day\'s no unsaid)', async () => {
   const w = world(); clock(w);
   const f = w.sites().find((s) => s.heart);
   w.at(f, 30); await w.beat();
@@ -300,6 +301,7 @@ test('STOREFRONT the Colossus falls: a character whose blow landed takes the Res
   w.foes.foes = w.foes.foes.filter((x) => !x.dead);
   kill(); w.host.frame(); await settle();
   assert.equal(w.taken.length, 1, 'once a day: the service said no');
+  assert.equal(midScreenText.text, accountRefusalText('taken'), 'and the player is told why no Maul came');   // AUDIT-STOREFRONT
   w.t += 86_400_000; w.foes.foes = []; await w.beat(); kill(); w.host.frame(); await settle();
   assert.equal(w.taken.length, 2, 'the next day');
   const u = world(); clock(u); u.struck = false;

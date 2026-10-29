@@ -176,6 +176,7 @@ const REFUSAL_WORDS = {
   live: () => t('account.refusal.live', 'You hold a breach already.'),
   rehearsed: () => t('account.refusal.rehearsed', 'You have rehearsed the Spire today. A Weir Key opens it again.'),
   spent: () => t('account.refusal.spent', 'That breach is spent.'),
+  taken: () => t('account.refusal.taken', 'You took the Resonant Maul today. Fell the Colossus again tomorrow for another.'),   // AUDIT-STOREFRONT: the Maul's day (seasonClaim.js)
   breach: () => t('account.refusal.breach', 'That breach is not one the Spire knows.'),
   none: () => t('account.refusal.none', 'The Spire took no key for that.'),   // AUDIT EG IV (lane3 #1): an open asked again (`again`) whose ask never reached it
   // EG-E3: a dungeon elite's find (server-account/src/eg.js findEg)

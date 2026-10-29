@@ -3784,6 +3784,11 @@
   "tr": "bb820fb98ad7",
   "by": "claude-in-session"
  },
+ "account.refusal.taken": {
+  "en": "d9745037440f",
+  "tr": "402206740e98",
+  "by": "claude-in-session"
+ },
  "account.refusal.termsStale": {
   "en": "608f3f07d210",
   "tr": "ddd04201fa5d",

@@ -21,7 +21,7 @@ import { giveBossTraits, bossWardShare, hasBossTrait } from '../systems/bossTrai
 import { playerDoor } from '../systems/playerDoor.js';
 import { playStorefrontSound } from '../systems/storefrontSounds.js';
 import { renownStruckAt } from '../net/renownTracker.js';
-import { storedSession, accountSeasonMaul } from '../net/accountClient.js';
+import { storedSession, accountSeasonMaul, accountRefusalText } from '../net/accountClient.js';
 import { characterIdOf } from '../systems/characterId.js';
 import { playerEntity } from '../characters/playerEntity.js';
 import { appStorage } from '../systems/appStorage.js';
@@ -368,6 +368,7 @@ export function createSeasonHost(host) {
         setMidScreenText(COLOSSUS_TEXT.maul());
         return true;
       }
+      if (a?.error === 'taken') setMidScreenText(accountRefusalText('taken'));   // AUDIT-STOREFRONT: why no Maul came
       if (!(a?.error === 'offline' || a?.error === 'server' || (a?.status ?? 0) >= 500)) return false;   // a refusal: today's taken, the stage closed, no session
     }
     return false;
