@@ -9,8 +9,9 @@ import {
   gateNumber, gateDayOf, gateLaneOf, gateBaseMinute, isGateDay, gateTimes, gateAt, gameDayAt, gateOrder, gateIndex, gateRoomKey, isGateRoom,
   gateMarksCycleLength, gateSpotLocal, omenRing, GATE_LANES, GATE_LANE_SPAN, GATE_LANE_STAGGER, GATE_LANE_INDEX_STEP, GATE_DAY_MINUTES,
   GATE_OMEN_MINUTE, GATE_RISE_MINUTE, GATE_OPEN_MINUTE, GATE_SEAL_MINUTE, GATE_WRATH_MINUTE, GATE_COLLAPSE_MS, GATE_EVERY_DAYS,
-  gateAdmits, gateHolds, GATE_LANES_OPEN, gateLaneOpen,
+  gateAdmits, gateHolds, GATE_LANES_OPEN, gateLaneOpen, gateFrontDay,
 } from '../../../src/net/gate/gateLaw.js';
+import { frontStands } from '../../../src/net/frontLaw.js';
 import { heraldOmenDue, gateSiteDayOk } from '../../../src/net/gate/gateHerald.js';
 import {
   sharedClassicMinutes, wallMsForClassicMinutes, gateReceiptKey, gateLaneKey, gatePixelOk, gateLaneWire, relaySupportsGateLanes,
@@ -36,6 +37,11 @@ setTamrielTrace(null); setTamrielFit(null);   // the authored shape and fit: no 
 const src = (p) => codeOnly(readFileSync(new URL('../../../' + p, import.meta.url), 'utf8'));
 const NOW = Date.UTC(2026, 9, 24, 12, 0, 0);
 const CLASSIC_MIN_MS = 5000;
+/** FRONTS (bible/03-World/World-Wide.md FRONTS): does lane `lane`'s gate of day `d` stand on its turn - read off the
+ *  front law and the day the gate opens in, never off isGateDay, which is under test. */
+const stirred = (d, lane) => frontStands(gateFrontDay(gateNumber(d, lane)), lane);
+/** FRONTS: the first gate day from `d` on whose gate stands on `lane` (`d` itself outside the fronts). */
+const stirredDay = (d, lane) => { while (!stirred(d, lane)) d++; return d; };
 
 // ─── the Bay's lane as it was before WW2, word for word (net/gate/gateLaw.js and net/gate/gateHerald.js at b268ad5b0d) ───
 const oldIsGateDay = (day) => Number.isSafeInteger(day) && day >= 0 && day % GATE_EVERY_DAYS === 0;
@@ -75,7 +81,7 @@ test('WW2 the lanes: a lane a theatre, a gate\'s NUMBER its day on the Bay\'s la
     for (let lane = 0; lane < GATE_LANES; lane++) {
       const n = gateNumber(day, lane);
       assert.deepEqual([gateDayOf(n), gateLaneOf(n), gateLaneWire(n)], [day, lane, lane]);
-      assert.equal(isGateDay(n), day % GATE_EVERY_DAYS === 0);
+      assert.equal(isGateDay(n), day % GATE_EVERY_DAYS === 0 && stirred(day, lane));   // PIN MOVED: FRONTS - a province's gate on its turn alone
       assert.equal(gateRoomKey(n), `gate:${n}`, 'a lane\'s gate a room of its own');
     }
   }
@@ -109,7 +115,7 @@ test('WW2 the Bay\'s lane is the gate it always was: its instants, the gate the 
   for (let d = 0; d < 400; d++) assert.equal(gateIndex(d), Math.floor(d / GATE_EVERY_DAYS), 'the Bay\'s place in the cycles');
 });
 
-test('WW2 THE STAGGER: lane t\'s gate runs GATE_LANE_STAGGER classic minutes (twelve real) behind lane t - 1\'s, so a game day\'s ten gates open across 108 of its 120 real minutes, two or three standing at once; each lane its own today, its own gate the clock is about and its own omen owed, on its own numbers (mutants: no stagger, the lane\'s today the Bay\'s, the herald\'s lane)', () => {
+test('WW2 THE STAGGER: lane t\'s gate runs GATE_LANE_STAGGER classic minutes (twelve real) behind lane t - 1\'s, so a game day\'s ten gates open across 108 of its 120 real minutes (PIN MOVED: FRONTS - the Bay\'s and the day\'s two provinces\' stand, three at most at once); each lane its own today, its own gate the clock is about and its own omen owed, on its own numbers (mutants: no stagger, the lane\'s today the Bay\'s, the herald\'s lane)', () => {
   assert.equal(GATE_LANE_STAGGER * CLASSIC_MIN_MS, 12 * 60_000);
   assert.ok((GATE_LANES - 1) * GATE_LANE_STAGGER < GATE_DAY_MINUTES, 'the last lane opens inside its day');
   const day = oldGameDayAt(NOW);
@@ -118,26 +124,51 @@ test('WW2 THE STAGGER: lane t\'s gate runs GATE_LANE_STAGGER classic minutes (tw
     for (const k of ['omenAt', 'riseAt', 'openAt', 'sealAt', 'wrathAt']) assert.ok(Math.abs(b[k] - a[k] - 12 * 60_000) <= 1, `lane ${lane} ${k}`);
     assert.equal(gateBaseMinute(gateNumber(day, lane)), day * GATE_DAY_MINUTES + lane * GATE_LANE_STAGGER);
   }
-  // each lane's own clock: at every instant its gate is its own lane's, and the Bay's gate shifted by its stagger
+  // each lane's own clock: at every instant its gate is its own lane's, and the Bay's gate shifted by its stagger. PIN
+  // MOVED: FRONTS - the Bay's old clock shifted, walked to the lane's next gate that stands (Cyrodiil's, 9, outside the fronts)
+  const frontedGateDay = (ms, lane) => {
+    let day = oldGameDayAt(ms);
+    if (oldIsGateDay(day - 1) && stirred(day - 1, lane) && ms < oldGateTimes(day - 1).wrathAt + GATE_COLLAPSE_MS) return day - 1;
+    while (!(oldIsGateDay(day) && stirred(day, lane))) day++;
+    return day;
+  };
+  const frontedOmenDue = (ms, lane) => {
+    const today = oldGameDayAt(ms);
+    for (let d = Math.max(0, today); d <= today + GATE_EVERY_DAYS; d++) {
+      if (!oldIsGateDay(d) || !stirred(d, lane)) continue;
+      const t = oldGateTimes(d);
+      if (t.openAt <= ms) continue;
+      return { day: d, at: Math.max(ms, t.omenAt) };
+    }
+    return null;
+  };
+  let owed = 0;
   for (let ms = NOW; ms < NOW + 86_400_000; ms += 61_000) {
     for (const lane of [1, 4, 9]) {
       const g = gateAt(ms, lane), shift = lane * GATE_LANE_STAGGER * CLASSIC_MIN_MS;
       assert.equal(gateLaneOf(g.day), lane);
-      assert.equal(gateDayOf(g.day), gateAt(ms - shift).day, `lane ${lane} at ${ms - NOW}`);
+      assert.equal(gateDayOf(g.day), frontedGateDay(ms - shift, lane), `lane ${lane} at ${ms - NOW}`);
       assert.equal(gameDayAt(ms, lane), gameDayAt(ms - shift));
-      const due = heraldOmenDue(ms, -1, lane), bay = heraldOmenDue(ms - shift, -1);
-      assert.deepEqual(due && { day: gateDayOf(due.day), lane: gateLaneOf(due.day), at: due.at - shift }, bay && { day: bay.day, lane, at: Math.max(bay.at, ms - shift) }, `the omen owed on lane ${lane}`);
+      const due = heraldOmenDue(ms, -1, lane), bay = frontedOmenDue(ms - shift, lane);
+      assert.deepEqual(due && { day: gateDayOf(due.day), lane: gateLaneOf(due.day), at: due.at - shift }, bay && { day: bay.day, lane, at: bay.at }, `the omen owed on lane ${lane}`);
+      if (due && lane !== 9) owed++;
     }
   }
-  // a lane's own post stands for it, and only for it
-  const n1 = heraldOmenDue(NOW, -1, 1).day;
-  assert.notDeepEqual(heraldOmenDue(NOW, n1, 1)?.day, n1, 'lane 1\'s post spends lane 1\'s omen');
-  assert.deepEqual(heraldOmenDue(NOW, n1, 2), heraldOmenDue(NOW, -1, 2), 'and never lane 2\'s');
-  // the count at once: the gates standing (omen to wrath) at each instant of a day
+  assert.ok(owed > 100, `a province's omen owed at ${owed} instants`);
+  // a lane's own post stands for it, and only for it - PIN MOVED: FRONTS, at an instant both lanes owe one, lane 1's today's
+  // (a post of a day not yet come is no post made)
+  let AT = NOW;
+  const owes = (ms) => { const d1 = heraldOmenDue(ms, -1, 1); return !!d1 && gateDayOf(d1.day) === gameDayAt(ms, 1) && !!heraldOmenDue(ms, -1, 2); };
+  while (!owes(AT)) AT += 600_000;
+  const n1 = heraldOmenDue(AT, -1, 1).day;
+  assert.notDeepEqual(heraldOmenDue(AT, n1, 1)?.day, n1, 'lane 1\'s post spends lane 1\'s omen');
+  assert.deepEqual(heraldOmenDue(AT, n1, 2), heraldOmenDue(AT, -1, 2), 'and never lane 2\'s');
+  // the count at once: the gates standing (omen to wrath) at each instant of a day. PIN MOVED: FRONTS - the lanes that
+  // stand alone (the open zone none), and three at most: the Bay's and the day's two provinces'
   let most = 0;
   for (let ms = NOW; ms < NOW + 86_400_000; ms += 60_000) {
     let up = 0;
-    for (let lane = 0; lane < GATE_LANES; lane++) { const t = gateAt(ms, lane); if (ms >= t.omenAt && ms < t.wrathAt) up++; }
+    for (const lane of GATE_LANES_OPEN) { const t = gateAt(ms, lane); if (ms >= t.omenAt && ms < t.wrathAt) up++; }
     most = Math.max(most, up);
   }
   assert.ok(most >= 2 && most <= 3, `${most} gates at once at the most`);
@@ -202,10 +233,17 @@ test('WW2 the wire: a gate\'s pixel the Bay\'s map on the Bay\'s lane, as it alw
   assert.ok(GATE_LANES_OPEN.includes(0) && !GATE_LANES_OPEN.includes(CYRODIIL_THEATRE));
   assert.ok(GATE_LANES_OPEN.every((l) => Number.isSafeInteger(l) && l >= 0 && l < GATE_LANES));
   for (const lane of [0, 1, 8, 9, 10, 4000]) {
-    const d = gateNumber(900, lane);
+    const d = gateNumber(stirredDay(900, lane), lane);   // PIN MOVED: FRONTS - a province's gate on its turn
     assert.equal(!!validGateIn({ k: 'spent', d }), gateLaneOpen(lane), `spent on lane ${lane}`);
     assert.equal(gateAdmits(d, gateTimes(d).openAt + 1), gateLaneOpen(lane), `admits on lane ${lane}`);
     assert.equal(gateHolds(d, gateTimes(d).openAt + 1), gateLaneOpen(lane), `holds on lane ${lane}`);
+  }
+  // FRONTS: off its turn a province's gate admits and holds no one; a receipt of its number is still spent
+  for (const lane of [1, 8]) {
+    let day = 900;
+    while (stirred(day, lane)) day++;
+    const d = gateNumber(day, lane);
+    assert.deepEqual([gateAdmits(d, gateTimes(d).openAt + 1), gateHolds(d, gateTimes(d).openAt + 1), !!validGateIn({ k: 'spent', d })], [false, false, true], `lane ${lane} off its turn`);
   }
   // PIN MOVED (AUDIT TESA II Z2): 256 (world254 on WORLD-WIDE's branch, renumbered past AUDIT FOE-KEEPS's world254 and AUDIT
   // TESA-BIOME's world255), then 260 at the merge with main - and the literal pinned at 256 while main's world256-world259
@@ -400,7 +438,7 @@ test('WW2 the theatres\' scans: a lane past the Bay for each theatre whose liste
 const siteAt = (n, px, py, place) => { const spot = gateSpotLocal(n); return { day: n, px, py, spot, ring: omenRing(n, px, py, spot), near: place, place }; };
 
 test('WW2 the host\'s gates: one omen a lane, each saying its own lines with its own gate\'s number; the Bay\'s gate what frame/current/mapMark always answered; the nearest gate\'s stone, circle and cage; every lane\'s ring and row; the lanes past the Bay only while the relay keeps them (mutants: the lanes ungated, the nearest by lane, a lane\'s line on the Bay\'s card)', () => {
-  const day = oldGameDayAt(NOW) + 1;
+  const day = stirredDay(oldGameDayAt(NOW) + 1, 1);   // PIN MOVED: FRONTS - a day of lane 1's turn
   const now = { t: gateTimes(gateNumber(day, 0)).openAt + 60_000 };   // the Bay's gate open a minute; lane 1's in its omen
   const bayAt = [300, 200], skyAt = [-1500, -900];
   const said = [];
