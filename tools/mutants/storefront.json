@@ -456,8 +456,8 @@
   {
     "name": "STOREFRONT-the-find-before-the-read",
     "file": "src/systems/pass/passClient.js",
-    "old": "    if (!passState() || _reread) {   // a level reached is told against the level before it: read it first; a shut season again\n",
-    "new": "    if (_reread) {\n",
+    "old": "    if ((due || !passState()) && !(await readPass()) && due) { _rest.unheard(); return 0; }",
+    "new": "    if (due && !(await readPass()) && due) { _rest.unheard(); return 0; }",
     "tests": [
       "test/systems/pass/passclient.test.js"
     ]

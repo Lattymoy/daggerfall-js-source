@@ -41,29 +41,32 @@
   },
   {
     "name": "PASSAUDIT-2-the-shut-read-kept-for-the-page",
-    "file": "src/systems/pass/passClient.js",
-    "old": "  if (d.open === false) { restUntil(_doors.nowMs() + PASS_REST_MS.long); _reread = true; }",
-    "new": "  if (d.open === false) { restUntil(Infinity); _reread = true; }",
+    "file": "src/net/askRest.js",
+    "old": "      if (open === false) rest(nowMs() + ASK_REST_MS.long, true);",
+    "new": "      if (open === false) rest(Infinity, true);",
     "tests": [
-      "test/systems/pass/passclient.test.js"
+      "test/systems/pass/passclient.test.js",
+      "test/systems/festival/witch1_client.test.js"
     ]
   },
   {
     "name": "PASSAUDIT-2-the-shut-season-never-read-again",
-    "file": "src/systems/pass/passClient.js",
-    "old": "    if (!passState() || _reread) {   // a level reached is told against the level before it: read it first; a shut season again\n",
-    "new": "    if (!passState()) {\n",
+    "file": "src/net/askRest.js",
+    "old": "    due: (/** @type {unknown} */ open) => reread || open === false,",
+    "new": "    due: (/** @type {unknown} */ open) => reread,",
     "tests": [
-      "test/systems/pass/passclient.test.js"
+      "test/systems/pass/passclient.test.js",
+      "test/systems/festival/witch1_client.test.js"
     ]
   },
   {
     "name": "PASSAUDIT-2-an-unanswered-read-asked-every-deed",
-    "file": "src/systems/pass/passClient.js",
-    "old": "      if (!(await readPass()) && _reread) { restUntil(_doors.nowMs() + PASS_REST_MS.brief); return 0; }",
-    "new": "      await readPass();",
+    "file": "src/net/askRest.js",
+    "old": "    unheard() { rest(nowMs() + ASK_REST_MS.brief, false); },",
+    "new": "    unheard() { },",
     "tests": [
-      "test/systems/pass/passclient.test.js"
+      "test/systems/pass/passclient.test.js",
+      "test/systems/festival/witch1_client.test.js"
     ]
   },
   {
@@ -87,8 +90,8 @@
   {
     "name": "PASSAUDIT-3-spent-as-profession-xp",
     "file": "server-account/src/progress.js",
-    "old": "    case '/v1/pass/find': add('pass', 1); break;",
-    "new": "",
+    "old": "    case '/v1/pass/find': case '/v1/festival/find': add(PROGRESS_ROUTES[path][0], 1); break;",
+    "new": "    case '/v1/festival/find': add(PROGRESS_ROUTES[path][0], 1); break;",
     "tests": [
       "test/server/storefront_passaudit.test.js"
     ]
@@ -131,47 +134,49 @@
   },
   {
     "name": "PASSAUDIT-11-no-rest-after-capped",
-    "file": "src/systems/pass/passClient.js",
-    "old": "  if (error === 'capped') restUntil((utcDay(Math.floor(now / 1000)) + 1) * 86_400_000);",
-    "new": "  if (error === 'capped') { /* no rest */ }",
+    "file": "src/net/askRest.js",
+    "old": "      if (error === 'capped') rest((utcDay(Math.floor(now / 1000)) + 1) * 86_400_000, false);",
+    "new": "      if (error === 'capped') { /* no rest */ }",
     "tests": [
       "test/systems/pass/passclient.test.js"
     ]
   },
   {
     "name": "PASSAUDIT-11-the-days-end-missed",
-    "file": "src/systems/pass/passClient.js",
-    "old": "  if (error === 'capped') restUntil((utcDay(Math.floor(now / 1000)) + 1) * 86_400_000);",
-    "new": "  if (error === 'capped') restUntil((utcDay(Math.floor(now / 1000)) + 2) * 86_400_000);",
+    "file": "src/net/askRest.js",
+    "old": "      if (error === 'capped') rest((utcDay(Math.floor(now / 1000)) + 1) * 86_400_000, false);",
+    "new": "      if (error === 'capped') rest((utcDay(Math.floor(now / 1000)) + 2) * 86_400_000, false);",
     "tests": [
       "test/systems/pass/passclient.test.js"
     ]
   },
   {
     "name": "PASSAUDIT-11-a-closed-find-never-read-again",
-    "file": "src/systems/pass/passClient.js",
-    "old": "  else if (error === 'closed') { restUntil(now + PASS_REST_MS.brief); _reread = true; }",
-    "new": "  else if (error === 'closed') { restUntil(now + PASS_REST_MS.brief); }",
+    "file": "src/net/askRest.js",
+    "old": "      else if (error === 'closed') { rest(now + ASK_REST_MS.brief, false); reread = true; }",
+    "new": "      else if (error === 'closed') { rest(now + ASK_REST_MS.brief, false); }",
     "tests": [
       "test/systems/pass/passclient.test.js"
     ]
   },
   {
     "name": "PASSAUDIT-11-a-rate-asked-every-deed",
-    "file": "src/systems/pass/passClient.js",
-    "old": "  else if (error === 'rate' || error === 'progress-play') restUntil(now + PASS_REST_MS.brief);",
-    "new": "  else if (error === 'rate') restUntil(now + PASS_REST_MS.brief);",
+    "file": "src/net/askRest.js",
+    "old": "      else if (error === 'rate' || error === 'progress-play') rest(now + ASK_REST_MS.brief, false);",
+    "new": "      else if (error === 'rate') rest(now + ASK_REST_MS.brief, false);",
     "tests": [
-      "test/systems/pass/passclient.test.js"
+      "test/systems/pass/passclient.test.js",
+      "test/systems/festival/witch1_client.test.js"
     ]
   },
   {
     "name": "PASSAUDIT-11-a-seat-refusal-asked-every-deed",
-    "file": "src/systems/pass/passClient.js",
-    "old": "  else if (error === 'progress-seat' || error === 'trade-held') restUntil(now + PASS_REST_MS.long);",
-    "new": "  else if (error === 'progress-seat') restUntil(now + PASS_REST_MS.long);",
+    "file": "src/net/askRest.js",
+    "old": "      else if (error === 'progress-seat' || error === 'trade-held') rest(now + ASK_REST_MS.long, false);",
+    "new": "      else if (error === 'progress-seat') rest(now + ASK_REST_MS.long, false);",
     "tests": [
-      "test/systems/pass/passclient.test.js"
+      "test/systems/pass/passclient.test.js",
+      "test/systems/festival/witch1_client.test.js"
     ]
   },
   {
@@ -190,6 +195,96 @@
     "new": "'And {n} levels at once.'",
     "tests": [
       "test/systems/pass/passclient.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-2-an-open-read-leaves-the-rest",
+    "file": "src/net/askRest.js",
+    "old": "      else if (open === true && shut) rest(0, false);",
+    "new": "",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-2f-festival-open-the-days-again",
+    "file": "server-account/src/festival.js",
+    "old": "    open: festivalOpenFor(player, env),",
+    "new": "    open: festivalOpenFor(player, env) && inDays(nowS),",
+    "tests": [
+      "test/server/storefront_passaudit.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-2f-the-festival-veto-kept",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "  if (!festivalOpen(festivalNowMs()) || _rest.shut()) return 'closed';",
+    "new": "  if (!festivalOpen(festivalNowMs()) || festivalState().open === false) return 'closed';",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-2f-the-festival-never-reads-again",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "    if (_rest.due(festivalState().open) && !(await readFestival())) { _rest.unheard(); return 0; }   // a shut word read again\n",
+    "new": "",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-2f-the-festival-read-unheard",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "  _rest.heard(r.data?.open);",
+    "new": "",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-3f-the-festival-find-no-claim",
+    "file": "server-account/src/progress.js",
+    "old": "  '/v1/festival/find': Object.freeze(['festival', false]),\n",
+    "new": "",
+    "tests": [
+      "test/server/storefront_passaudit.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-3f-the-pass-stream",
+    "file": "server-account/src/progress.js",
+    "old": "  '/v1/festival/find': Object.freeze(['festival', false]),\n",
+    "new": "  '/v1/festival/find': Object.freeze(['pass', false]),\n",
+    "tests": [
+      "test/server/storefront_passaudit.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-3f-the-festival-route-spends-nothing",
+    "file": "server-account/src/index.js",
+    "old": "        if (progressRoute) await progressSpent(ctx, who.player.id, path, r);   // INT17: a find's ask answered (AUDIT PASS 3)\n",
+    "new": "",
+    "tests": [
+      "test/server/storefront_passaudit.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-3f-the-festival-refusal-unheard",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "    if (!r?.ok) _rest.refused(r?.error);\n",
+    "new": "",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-3f-the-queued-finds-past-a-refusal",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "    if (_rest.resting()) return 0;   // a refusal ahead of it in the queue stood the page back\n",
+    "new": "",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
     ]
   }
 ]

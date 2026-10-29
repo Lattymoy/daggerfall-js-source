@@ -66,6 +66,12 @@ AUDIT PASS 1 (2026-10-29, `06-Systems/Battle-Pass.md` section 8): the Sky-Ketch'
 find, since each is said again at will with no receipt behind it. The acts no find pays are one list, `qlActs.js`
 ACT_NOT_FOUND, which the festival and the Battle Pass both read.
 
+AUDIT PASS 2 and 3, the festival's twins (2026-10-29, the same section): `open` in the account's festival is the switch's
+word alone (`festival.js` festivalOf), because a page that read it before the festival's days kept `false` after them.
+A page told the festival is shut says `closed` for ten minutes, then reads it again on its next find, and a refusal
+rests its finds as the pass's do (`src/net/askRest.js`). A find is a progression claim (`progress.js` PROGRESS_ROUTES),
+asked of the seated realm character on a stream of its own, `festival`: the day's 1,500 asks an hour of play.
+
 ## The Wyrd Sister
 
 A witch of the Glenmoril Wyrd stands beside a tavern's door wherever one side of it is clear (FLATS.CFG's "mysterious

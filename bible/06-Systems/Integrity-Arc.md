@@ -1269,7 +1269,8 @@ for the professions (10,000 XP an hour, 20,000 held), which no route bounded by 
 
 AUDIT PASS 3 (2026-10-29, `06-Systems/Battle-Pass.md` section 8): the Battle Pass's find (`/v1/pass/find`) is a claim of
 the account's seat too, on a ninth stream, `pass`: an ask answered spends one, and the first line is the day's 2,000 asks
-an hour. A line staff wrote before a stream was added reads that stream's first line (`progress.js` progressConfig),
+an hour. The Witches' Festival's find (`/v1/festival/find`) is the tenth, `festival`, its day's 1,500 asks an hour, the
+same way. A line staff wrote before a stream was added reads that stream's first line (`progress.js` progressConfig),
 where the whole line had been refused for the stream it lacked; a line staff write still names every stream.
 
 MEASURE FIRST (the owner, asked: "Measure first" - as the wealth budget and the boss fights' count were): while the line

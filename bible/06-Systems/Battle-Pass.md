@@ -156,6 +156,11 @@ and 10) are the shop's.
   staff wrote before the stream existed reads its first line for it (`06-Systems/Integrity-Arc.md` INT17).
 - **8.** A find answers its season, tracks and share, so a level reached after a purchase is told with its premium reward.
 - **9.** The read at bind runs in the finds' queue: a late answer put the level back, and the next level was said twice.
-- **11.** A refusal stands the page back (`passClient.js` PASS_REST_MS): the day's asks spent until the next UTC day, a
+- **11.** A refusal stands the page back (`net/askRest.js` ASK_REST_MS): the day's asks spent until the next UTC day, a
   find called closed, a rate or an empty bucket a minute, a seat or hold refused ten minutes.
 - **12.** Section 7 says what the window draws, and section 5 that levels at once wait past the open stage's top.
+- **The Witches' Festival's twins of 2 and 3.** The festival's finds had both faults. Its `open` is now the switch's word
+  alone too (`festival.js` festivalOf), and `/v1/festival/find` is a progression claim on a stream of its own,
+  `festival` - an honest page asks a Soul Cake and a pass find for one kill, so a shared bucket would refuse it. The
+  rest after a shut word or a refusal is one rule for both pages, `src/net/askRest.js` (createAskRest), as the acts no
+  find pays are one list. A town's `open` is no longer taken as the switch's word: it counts the festival's days too.

@@ -37,6 +37,7 @@ import { TIDE_EFFECTS } from '../../src/net/tideLaw.js';
 import { MARKS_FAUCETS } from '../../src/net/marksLaw.js';
 import { writXp } from '../../src/net/professionLaw.js';
 import { PASS_DAY_ASKS } from '../../src/net/battlePassLaw.js';
+import { FIND_ASKS_PER_DAY } from '../../src/net/festivalLaw.js';
 
 /** A raid's game day is two real hours (systems/raidingParties.js GAME_DAY_REAL_HOURS - the test holds the two equal). */
 const RAID_GAME_DAY_HOURS = 2;
@@ -57,6 +58,7 @@ export const PROGRESS_LINE = Object.freeze({
     gather: Object.freeze({ rate: MARKS_FAUCETS.gather.perDay, cap: MARKS_FAUCETS.gather.perDay }),   // a harvest's silver
     prof: Object.freeze({ rate: 10_000, cap: 20_000 }),   // profession XP - no route bounded it by the hour; a guess
     pass: Object.freeze({ rate: PASS_DAY_ASKS, cap: PASS_DAY_ASKS }),   // AUDIT PASS 3: the Battle Pass's finds - the day's asks
+    festival: Object.freeze({ rate: FIND_ASKS_PER_DAY, cap: FIND_ASKS_PER_DAY }),   // and the Witches' Festival's, the same way
   }),
 });
 /** The streams, in the line's order. */
@@ -78,9 +80,11 @@ export const PROGRESS_ROUTES = Object.freeze({
   // whose Watch bucket is empty refuses it as it refuses the seats'
   '/v1/towns/watch': Object.freeze(['watch', false]),
   '/v1/marks/find': Object.freeze(['find', false]),
-  // AUDIT PASS 3: a Battle Pass find (battlePass.js) - a session's secret alone farmed it with no game running. Its own
-  // stream: the silver finds' twenty a day would refuse an honest page's second thousand asks
+  // AUDIT PASS 3: a Battle Pass find (battlePass.js) and a Soul Cake's (festival.js) - a session's secret alone farmed
+  // them with no game running. Each its own stream: an honest page asks both for one kill, and the silver finds' twenty
+  // a day would refuse it
   '/v1/pass/find': Object.freeze(['pass', false]),
+  '/v1/festival/find': Object.freeze(['festival', false]),
   '/v1/prof/harvest': Object.freeze(['prof', true]),
   '/v1/prof/smelt': Object.freeze(['prof', true]),
   '/v1/prof/craft': Object.freeze(['prof', true]),
@@ -239,7 +243,7 @@ export function progressSpentOf(path, a) {
     case '/v1/seats/watch': add('watch', n(a.counted)); break;
     case '/v1/towns/watch': break;   // AUDIT TOWN-ECON 2 SVC-2: a town's share, never its player's progress
     case '/v1/marks/find': if (n(a.struck)) add('find', 1); break;
-    case '/v1/pass/find': add('pass', 1); break;   // AUDIT PASS 3: an ask answered (its `xp` is the season's, never a profession's)
+    case '/v1/pass/find': case '/v1/festival/find': add(PROGRESS_ROUTES[path][0], 1); break;   // AUDIT PASS 3: an ask answered (a pass's `xp` is the season's, never a profession's)
     case '/v1/writs/deliver': if (a.ok) { add('prof', writXp(n(a.pay))); add('renown', n(a.renown?.credited)); } break;
     case '/v1/writs/craft': if (a.ok) { add('prof', n(a.xp)); add('renown', n(a.renown?.credited)); } break;   // CRAFT-WRITS: the XP the crafter's limit let in
     default:

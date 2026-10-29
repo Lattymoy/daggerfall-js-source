@@ -8,8 +8,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  bindPass, passState, passLive, askPassFind, passFoeSource, grantsAt, refreshPass, _resetPassClientForTests, PASS_CONSTRUCT_MOBILES, PASS_REST_MS,
+  bindPass, passState, passLive, askPassFind, passFoeSource, grantsAt, refreshPass, _resetPassClientForTests, PASS_CONSTRUCT_MOBILES,
 } from '../../../src/systems/pass/passClient.js';
+import { ASK_REST_MS } from '../../../src/net/askRest.js';
 import { reportPlayerKill } from '../../../src/systems/playerKills.js';
 import { noteAct } from '../../../src/systems/questlines/qlActs.js';
 import { KNIGHT_CITY_WATCH } from '../../../src/characters/mobile/mobileTypes.js';
@@ -144,14 +145,14 @@ test('AUDIT PASS 2: a page that read the pass shut reads it again once its rest 
   assert.equal(await askPassFind('foe'), 0);
   assert.equal(reads, 1, 'no read a deed while it rests');
   on = true;   // the deploy turns PASS_OPEN on
-  now += PASS_REST_MS.long;
+  now += ASK_REST_MS.long;
   const answered = svc.api.mine;
   svc.api.mine = async () => { reads++; return { ok: false, error: 'offline' }; };
   assert.equal(await askPassFind('foe'), 0, 'the read again unanswered');
   assert.equal(await askPassFind('foe'), 0);
   assert.equal(reads, 2, 'a minute before it is asked again, not a read a deed');
   svc.api.mine = answered;
-  now += PASS_REST_MS.brief;
+  now += ASK_REST_MS.brief;
   assert.equal(await askPassFind('foe'), 12, 'read again, and played');
   assert.equal(reads, 3);
   assert.equal(await askPassFind('foe'), 12, 'and played on, no read');
@@ -218,10 +219,10 @@ test('AUDIT PASS 11: a refusal stands the page back - the day\'s asks spent unti
   assert.equal(asks(), 3, 'closed: a minute\'s rest');
   refuse = null;
   const was = reads;
-  now += PASS_REST_MS.brief;
+  now += ASK_REST_MS.brief;
   await askPassFind('foe');
   assert.deepEqual([asks(), reads - was], [4, 1], 'then the season read again, and asked');
-  for (const [error, ms] of [['rate', PASS_REST_MS.brief], ['progress-play', PASS_REST_MS.brief], ['progress-seat', PASS_REST_MS.long], ['trade-held', PASS_REST_MS.long]]) {
+  for (const [error, ms] of [['rate', ASK_REST_MS.brief], ['progress-play', ASK_REST_MS.brief], ['progress-seat', ASK_REST_MS.long], ['trade-held', ASK_REST_MS.long]]) {
     refuse = error;
     const at = asks();
     await askPassFind('foe'); await askPassFind('foe');

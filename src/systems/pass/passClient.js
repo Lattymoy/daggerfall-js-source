@@ -13,17 +13,13 @@ import { KNIGHT_CITY_WATCH } from '../../characters/mobile/mobileTypes.js';
 import { foeFindSource } from '../festival/festivalFoes.js';
 import { isPassSource, passSeasonAt, PASS_REWARDS, PASS_DAY_XP, PASS_CONSTRUCT_MOBILES } from '../../net/battlePassLaw.js';
 import { utcDay } from '../../net/marksLaw.js';
+import { createAskRest } from '../../net/askRest.js';
 
 /** The kill listener's and the act hearer's name. */
 export const PASS_FIND = 'pass-find';
 /** The season's constructs (net/battlePassLaw.js) - a body the season stood is marked `passConstruct` as well
  *  (scenes/seasonHost.js). */
 export { PASS_CONSTRUCT_MOBILES };
-/** AUDIT PASS 11: HOW LONG A REFUSAL STANDS THE PAGE BACK. `brief`: a find called closed (the two clocks may straddle the
- *  opening - the season is read again after it), a rate, an enforced line's empty bucket. `long`: a read saying the pass is
- *  shut for this account (read again after it: a switch turned on is heard no other way), a seat or hold refused. The
- *  day's asks spent wait for the next UTC day. */
-export const PASS_REST_MS = Object.freeze({ brief: 60_000, long: 10 * 60_000 });
 
 const NO_DOORS = Object.freeze({ online: () => false, nowMs: () => Date.now(), onEvent: (/** @type {any} */ _e) => {} });
 /** @type {any} */ let _doors = NO_DOORS;
@@ -35,9 +31,8 @@ const _hear = new Set();
 let _version = 0;
 const changed = () => { _version++; for (const fn of _hear) { try { fn(); } catch { /* a listener's throw is not ours */ } } };
 const account = () => _api?.me?.() ?? null;
-/** No find is asked before `until` (the shared clock) for the account `of`; `_reread`: the season is read before the next. */
-let _rest = { until: 0, of: /** @type {string|null} */ (null) }, _reread = false;
-const restUntil = (/** @type {number} */ at) => { _rest = { until: at, of: account() }; };
+/** AUDIT PASS 2, 11: the page's rest after the service said shut or refused a find - the festival's rule too (net/askRest.js). */
+const _rest = createAskRest({ nowMs: () => _doors.nowMs(), account });
 let _chain = Promise.resolve();
 /** AUDIT PASS 9: ONE QUEUE - the season's reads and the finds one after another, so no answer lands over a newer one. */
 function queued(/** @type {() => Promise<any>} */ fn) {
@@ -52,7 +47,7 @@ function queued(/** @type {() => Promise<any>} */ fn) {
 export function bindPass(doors = null) {
   _doors = doors ? { ...NO_DOORS, ...doors } : NO_DOORS;
   _api = doors ? (doors.api ?? accountBattlePass({ fetch: (/** @type {any} */ u, /** @type {any} */ i) => globalThis.fetch(u, i), storage: appStorage() })) : null;
-  _rest = { until: 0, of: null }; _reread = false;
+  _rest.reset();
   if (doors) refreshPass().catch(() => {});
   return _api;
 }
@@ -66,8 +61,7 @@ export const passState = () => (_stateOf && _stateOf === account() ? _state : nu
  *  the page - a page loaded before the opening or before the switch turned on asked nothing until it was reloaded. */
 export function passLive() {
   if (!_api || !_doors.online() || !account() || _api.guest?.()) return false;
-  const now = _doors.nowMs();
-  return !!passSeasonAt(now) && !(_rest.of === account() && now < _rest.until);
+  return !!passSeasonAt(_doors.nowMs()) && !_rest.resting();
 }
 
 /** The season's answer taken in - its level before and after told as a level reached, with the rewards on it. */
@@ -76,7 +70,6 @@ function learn(/** @type {any} */ d, /** @type {boolean} */ told) {
   const was = passState();
   const next = { ...(was ?? {}), ...d };
   _state = next; _stateOf = account();
-  if (d.open === false) { restUntil(_doors.nowMs() + PASS_REST_MS.long); _reread = true; }
   if (told && was && Number.isSafeInteger(d.level) && d.level > (was.level ?? 0)) {
     for (let lv = (was.level ?? 0) + 1; lv <= d.level; lv++) _doors.onEvent({ kind: 'level', level: lv, grants: grantsAt(next, lv) });
   }
@@ -98,33 +91,24 @@ async function readPass() {
   if (!_api || !account() || _api.guest?.()) return false;
   const r = await _api.mine().catch(() => null);
   if (!r?.ok) return false;
-  _reread = false;
   learn(r.data, false);
+  _rest.heard(r.data?.open);
   return true;
 }
 /** Ask the service for the account's season, queued with the finds. Answers whether it was heard. */
 export const refreshPass = () => queued(readPass);
-
-/** AUDIT PASS 11: a find refused stands the page back (PASS_REST_MS), so the deeds after it ask nothing. */
-function refused(/** @type {unknown} */ error) {
-  const now = _doors.nowMs();
-  if (error === 'capped') restUntil((utcDay(Math.floor(now / 1000)) + 1) * 86_400_000);
-  else if (error === 'closed') { restUntil(now + PASS_REST_MS.brief); _reread = true; }
-  else if (error === 'rate' || error === 'progress-play') restUntil(now + PASS_REST_MS.brief);
-  else if (error === 'progress-seat' || error === 'trade-held') restUntil(now + PASS_REST_MS.long);
-}
 
 /** ASK FOR A FIND: `source` (battlePassLaw PASS_SOURCES), queued behind the asks before it. Answers the experience gained. */
 export function askPassFind(/** @type {string} */ source) {
   if (!isPassSource(source) || !passLive()) return Promise.resolve(0);
   return queued(async () => {
     if (!passLive()) return 0;   // a refusal ahead of it in the queue stood the page back
-    if (!passState() || _reread) {   // a level reached is told against the level before it: read it first; a shut season again
-      if (!(await readPass()) && _reread) { restUntil(_doors.nowMs() + PASS_REST_MS.brief); return 0; }
-    }
+    // a level reached is told against the level before it: read it first; and a season said shut, again
+    const due = _rest.due(passState()?.open);
+    if ((due || !passState()) && !(await readPass()) && due) { _rest.unheard(); return 0; }
     if (passState()?.open === false) return 0;
     const r = await _api.find(source).catch(() => null);
-    if (!r?.ok) { refused(r?.error); return 0; }
+    if (!r?.ok) { _rest.refused(r?.error); return 0; }   // the deeds after it ask nothing while it stands
     learn(r.data, true);
     return Number.isSafeInteger(r.data?.gained) ? r.data.gained : 0;
   });
@@ -159,4 +143,4 @@ hearActs(PASS_FIND, (/** @type {string} */ kind) => {
 });
 
 /** For the tests: forget everything. */
-export function _resetPassClientForTests() { _doors = NO_DOORS; _api = null; _state = null; _stateOf = null; _fullSaid = ''; _chain = Promise.resolve(); _hear.clear(); _rest = { until: 0, of: null }; _reread = false; }
+export function _resetPassClientForTests() { _doors = NO_DOORS; _api = null; _state = null; _stateOf = null; _fullSaid = ''; _chain = Promise.resolve(); _hear.clear(); _rest.reset(); }

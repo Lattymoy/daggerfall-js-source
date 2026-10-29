@@ -2341,6 +2341,7 @@ const service = {
         }[path];
         if (!act) return no('not-found', 404, origin);
         const r = await act();
+        if (progressRoute) await progressSpent(ctx, who.player.id, path, r);   // INT17: a find's ask answered (AUDIT PASS 3)
         if ('error' in r) return json({ error: r.error, ...(Number.isSafeInteger(r.cakes) ? { cakes: r.cakes } : {}), ...(Number.isSafeInteger(r.bowls) ? { bowls: r.bowls } : {}) }, FEST_STATUS[r.error] ?? 400, origin);
         return json(r, 200, origin);
       }
