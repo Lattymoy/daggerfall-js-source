@@ -72,10 +72,9 @@ import { t } from '../systems/textManager.js';   // L10N4: the two notices in th
 export const RELAY_RESTART_TEXT = 'The server was updated and restarted. Players nearby and chat will come back on their own in a moment.';
 /** L10N4: RELAY_RESTART_TEXT as the player reads it, read when it is said. */
 export const relayRestartText = () => t('net.update.relayRestart', RELAY_RESTART_TEXT);
-/** What a new client build says. It does NOT reload for them - a reload
- *  mid-dungeon costs whatever is not saved, and that is the player's
- *  call to make, not ours. It says what to do first. */
-export const BUILD_UPDATE_TEXT = 'A new version of the game has been released. Save your game, then reload the page to pick it up.';
+/** What a new client build says. UPDATE-FORCE (ui/updateScreen.js): the game now saves and reloads for them a
+ *  minute later, so the line says that rather than asking them to. */
+export const BUILD_UPDATE_TEXT = 'A new version of the game is out. Your character will be saved and the game reloaded in one minute.';
 /** L10N4: BUILD_UPDATE_TEXT as the player reads it. */
 export const buildUpdateText = () => t('net.update.build', BUILD_UPDATE_TEXT);
 
@@ -102,10 +101,10 @@ export const RELAY_SEEN_MAX = 32;
 export const RELAY_NOTICE_MIN_MS = 30_000;
 
 /** How often a running tab asks the site which build it is serving, ms.
- *  Long on purpose: the answer changes a few times a day at most, the
- *  cost of being late is a stale tab and not a broken one, and a shorter
- *  poll would put every open tab on the CDN for nothing. */
-export const BUILD_POLL_MS = 10 * 60 * 1000;
+ *  UPDATE-FORCE: two minutes, was ten - every tab now reloads onto the new
+ *  build, and ten minutes of mixed builds is ten minutes of two rule sets.
+ *  One small no-store page fetch; each tab's phase is its own load time. */
+export const BUILD_POLL_MS = 2 * 60 * 1000;
 
 /** How long the build poll waits for the site before giving up, ms. A
  *  request that never settles used to disable the poll for the whole

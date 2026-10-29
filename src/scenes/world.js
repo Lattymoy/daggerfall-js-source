@@ -1032,7 +1032,8 @@ import { PageOffers, pageOfferText, pageShownText, pageTooFarText, keptPageToken
 import { quickslotTag, quickslotHand, tagText, actionKeyWord } from '../ui/quickslotTags.js';   // JOURNAL1: the F-menu's own key, named off the live bindings
 import { isTouchDevice } from '../ui/touch/touchDevice.js';   // JOURNAL1: ...or a tap, where a finger points
 import { composeCard, createCardAnswerGate, CARD_WAIT_MS } from '../net/profileCard.js';   // INSPECT1: my card when asked, and how often one asker is answered
-import { relayVersionSeen, buildUpdateSeen, fetchLiveBuildTag, relayRestartText, buildUpdateText, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
+import { relayVersionSeen, buildUpdateSeen, fetchLiveBuildTag, relayRestartText, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
+import { startForcedUpdate } from '../ui/updateScreen.js';   // UPDATE-FORCE: a new build saves and reloads every open game
 import { BUILD_TAG } from '../buildTag.js';   // SRV-N: which build this tab is actually running
 import { morrowindDataCount, morrowindDataGeneration, getBytes, clearRetiredArena } from './dataSource.js';   // MWBODY1: the bodies' gate - Morrowind data attached - and its generation
 // Q4-v: THE QUEST BRIDGE - the machine goes live in this host.
@@ -26954,7 +26955,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // it is now running code we have replaced - it finds out when a lazy
   // chunk 404s and systems/staleChunk.js reloads it out from under the
   // player. So ask the site, on the site's own rhythm rather than the
-  // frame's, and let the player choose the moment.
+  // frame's. UPDATE-FORCE: a new build no longer waits on the player - ui/updateScreen.js saves and reloads.
   let _buildPolledAt = 0;
   const buildPoll = (now) => {
     // The FIRST poll waits a full interval too, measured from the PAGE's
@@ -26974,7 +26975,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     _buildPolledAt = now;
     const href = globalThis.location?.href ?? '';
     fetchLiveBuildTag(href).then((tag) => {
-      if (buildUpdateSeen(tag, BUILD_TAG) === 'changed') chatNotice(buildUpdateText());
+      // UPDATE-FORCE: the minute's warning, then the screen - held while a death screen or a duel is up
+      if (buildUpdateSeen(tag, BUILD_TAG) === 'changed') startForcedUpdate({ notice: chatNotice, save: onlineCheckpoint, busy: () => !!duelMgr?.duel || townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() || successionOpen() });
     }, () => {});   // `fetchLiveBuildTag` swallows its own throws; this is the belt for a rejection it cannot see
   };
   // ═══ CHAT-CHAN — THE FOUR CHANNELS, AT THE HOST ═══════════════════
