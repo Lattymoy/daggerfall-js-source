@@ -163,7 +163,7 @@ ${RW_MAIN_GLASS}
     pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
   lit += albedo * pointAcc;
-  lit += albedo * winLit(vWorldPos, n, 0.0, vWorldPos);   // WL1: the windows' light, through their glass (render/windowLight.js)
+  lit += albedo * winLit(vWorldPos, n, 0.0, 1.0);   // WL1: the windows' light, through their glass (render/windowLight.js)
   // R12: the player-following indirect point light (SunlightRig's
   // IndirectLight) - same falloff shape as the lantern lights; the
   // zeroed default color makes this a no-op in unlit scenes.
@@ -543,7 +543,7 @@ void main() {
     pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
   lit += albedo * pointAcc;
-  lit += albedo * winLit(vWorldPos, n, 0.0, vWorldPos);   // WL1
+  lit += albedo * winLit(vWorldPos, n, 0.0, 1.0);   // WL1
   // R12: the player-following indirect light (see the mesh FS).
   vec3 iL = uIndirect.xyz - vWorldPos;
   float iD = length(iL);
@@ -888,7 +888,7 @@ ${LPT_FS_TEXEL}  // Spectral flats keep their 180-alpha translucency (blended pa
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
     pointAcc += att * att * uPointColors[i];
   }
-  pointAcc += winLit(vBBWorld, vec3(0.0), 1.0, vBBWorld);   // WL1: by attenuation alone, as a lantern lights a flat
+  pointAcc += winLit(vBBWorld, vec3(0.0), 1.0, 1.0);   // WL1: by attenuation alone, as a lantern lights a flat
   // spectral eyes/body glow, or an auto-emissive flat's own albedo (black
   // tex otherwise). AUDIT 39r R17: DaggerfallBillboard.shader:56-58 lights
   // albedo.rgb - emission and adds the emission back - "Emission cancels
@@ -1114,7 +1114,7 @@ void main() {
     pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
   lit += tex * pointAcc;
-  lit += tex * winLit(vWorldPos, n, 0.0, vWorldPos);   // WL1
+  lit += tex * winLit(vWorldPos, n, 0.0, 1.0);   // WL1
   // R12: the player-following indirect light (see the mesh FS).
   vec3 iL = uIndirect.xyz - vWorldPos;
   float iD = length(iL);
@@ -1336,7 +1336,7 @@ void main() {
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
     pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
-  pointAcc += winLit(vWorld, n, 0.0, vWorld);   // WL1
+  pointAcc += winLit(vWorld, n, 0.0, 1.0);   // WL1
   vec3 iL = uIndirect.xyz - vWorld;
   float iD = length(iL);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
@@ -2727,7 +2727,7 @@ export class Renderer {
    *  uploads (uPrevVP), so a shift between beginFrame and a draw left the billboard, decal, character and terrain
    *  blocks the pre-shift matrix for the rest of the frame, the march reprojecting 819 units off. The one host calls it
    *  before beginFrame today; the stamp makes the order not matter. */
-  shadowOriginShift(offset) { this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._wl.shift(offset); this._frameStamp++; }   // LA-POST6: and the air's held view-projections - the contact march reprojects the moved world by them; WL1: and the windows the window light keeps
+  shadowOriginShift(offset) { this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._wl?.shift(offset); this._frameStamp++; }   // LA-POST6: and the air's held view-projections - the contact march reprojects the moved world by them; WL1: and the windows the window light keeps
   /** SHADOW-REACH: would a caster whose world box is `box` (+ the translation) cast into this frame's shadow maps - a
    *  host asks for what its VIEW cull rejected, and records it (below) rather than drawing it. False with no pass. */
   shadowReach(box, ox = 0, oy = 0, oz = 0) { return this._casting && this._shadows.reaches(box, ox, oy, oz); }
@@ -2834,7 +2834,7 @@ export class Renderer {
     const gl = this.gl;
     this._wl.bind();   // the block stands under every program that holds it, lit or not
     const on = this._wlLive && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved;
-    gl.uniform1i(loc.on, on ? 1 : 0);
+    gl.uniform1i(loc.on, on ? (this._wlSun ? 2 : 1) : 0);   // 2: the sun through glass stands in the sun map - a flat's vertex stage reads it once a quad
     if (!on) return;
     if (loc.rect) { gl.uniform4fv(loc.rect, this._clusterRect); gl.uniform2fv(loc.z, this._clusterZ); gl.uniform4fv(loc.fwd, this._camFwd); }
     this._activeTexture(gl.TEXTURE0 + CLUSTER_GRID_UNIT);
@@ -5577,7 +5577,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (opts.alpha && tex) (this._alphaArt ??= new WeakSet()).add(tex);   // OVH2: the texture's own treatment, read at every screen draw of it (AUDIT RETRO1 J7: a lost context's null is no key)
     if (opts.cutout) this._markCutout(tex);   // RW1: { cutout: true } - the texture's own treatment in every solid pass (a texel under half alpha is a hole)
     const base = `${archive}_${record}`;
-    if (opts.cutout) { this._cutoutKeys.add(base); if (windowLightOn()) this._wl.addMask(base, color32, true); }   // WL1: its holes, the sun's way in
+    if (opts.cutout) { (this._cutoutKeys ??= new Set()).add(base); if (windowLightOn()) this._wl?.addMask(base, color32, true); }   // WL1: its holes, the sun's way in
     let keys = this._texKeysByBase.get(base);
     if (!keys) this._texKeysByBase.set(base, keys = new Set());
     keys.add(key);
@@ -5609,7 +5609,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const base = this._texBaseOf?.get(key);
     this._texBaseOf?.delete(key);
     const keys = base === undefined ? null : this._texKeysByBase.get(base);
-    if (keys) { keys.delete(key); if (!keys.size) { this._texKeysByBase.delete(base); if (this._cutoutKeys.delete(base)) this._wl.dropMask(base); } }   // WL1: a cutout's holes go with its last picture
+    if (keys) { keys.delete(key); if (!keys.size) { this._texKeysByBase.delete(base); if (this._cutoutKeys?.delete(base)) this._wl?.dropMask(base); } }   // WL1: a cutout's holes go with its last picture
     if (tex) this.gl.deleteTexture(tex);
     if (this._tex0Bound === tex) this._tex0Bound = null;
     this._texGen++;
@@ -5621,7 +5621,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (!this.emissionTextures.has(key) && this.glassMasks?.has(key)) {   // RW1: an interior's declared glass rides the same `e:` key
       const glass = this.glassMasks.get(key);
       this.glassMasks.delete(key);
-      this._wl.dropMask(key);   // WL1: and its layer
+      this._wl?.dropMask(key);   // WL1: and its layer
       if (glass) this.gl.deleteTexture(glass);
       if (this._tex1Bound === glass) this._tex1Bound = null;
       this._texGen++;
@@ -5632,7 +5632,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.emissionTextures.delete(key);
     this.emissionWhite.delete(key);
     this.windowMasks?.delete(key);   // RW1
-    this._wl.dropMask(key);   // WL1: a window's mask, and its layer
+    this._wl?.dropMask(key);   // WL1: a window's mask, and its layer
     if (tex) this.gl.deleteTexture(tex);
     if (this._tex1Bound === tex) this._tex1Bound = null;
     this._texGen++;
@@ -5783,7 +5783,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  pipeline's word for one not uploaded yet (glassKeyTest: a mesh is made before a climate's picture of it is up). */
   wlGlassKey(archive, record) {
     const k = `${archive}_${record}`;
-    return this.windowMasks.has(k) || this.glassMasks.has(k) || this._cutoutKeys.has(k) || !!this.glassKeyTest?.(archive, record);
+    return !!(this.windowMasks?.has(k) || this.glassMasks?.has(k) || this._cutoutKeys?.has(k) || this.glassKeyTest?.(archive, record));
   }
 
   /** WL1: a model's apertures (render/windowLight.js windowAperturesOf) for each sub-mesh whose picture may hold glass -
@@ -6598,7 +6598,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.emissionWhite.delete(key);
     this.windowMasks.delete(key);
     this.glassMasks.set(key, tex);
-    if (windowLightOn()) this._wl.addMask(key, color32);   // WL1: the sun's way in
+    if (windowLightOn()) this._wl?.addMask(key, color32);   // WL1: the sun's way in
     this._texGen++;   // EV2: a sub-mesh stamped before the declaration looks again
     return tex;
   }
@@ -7114,7 +7114,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     else if (!this._retroMips) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0);   // RETRO1: the albedo's cap, so both samples still come from one level
     this._activeTexture(gl.TEXTURE0);
     this.emissionTextures.set(key, tex);
-    if (opts.window && windowLightOn()) this._wl.addMask(key, color32);   // WL1: the window's glass, for the light it lets through
+    if (opts.window && windowLightOn()) this._wl?.addMask(key, color32);   // WL1: the window's glass, for the light it lets through
     this._texGen++;   // EV2: cached sub-mesh lookups refresh
     return tex;
   }
@@ -7437,7 +7437,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   destroyMesh(mesh) {
     const gl = this.gl;
     mesh._dead = true;   // EL2: a shadow record from the last frame may still hold it
-    this._wl.forget(mesh);   // WL1: none of its windows lights
+    this._wl?.forget(mesh);   // WL1: none of its windows lights
     for (const b of mesh.buffers) gl.deleteBuffer(b);
     gl.deleteVertexArray(mesh.vao);
     if (mesh.shadowVao) gl.deleteVertexArray(mesh.shadowVao);   // LA-AUDIT A1: its index buffer is one of mesh.buffers

@@ -83,7 +83,7 @@
   {
     "name": "PERF-SUN2-the-flats-gate-goes-so-every-sprite-in-the-world-reads-the-sun-map-at-midnight",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vBBSunVis = dot(uBBSun, uBBSun) > 0.0 ? (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;",
+    "old": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0 || uWinOn == 2) ? (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;",
     "new": "  vBBSunVis = (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y));",
     "tests": [
       "test/render/perfsun_fragment.test.js"

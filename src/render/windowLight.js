@@ -187,22 +187,24 @@ export function windowLightAt(rec, wp, n, maskAt, atten) {
 const f = (x) => { const s = Number(x).toFixed(6).replace(/0+$/, ''); return s.endsWith('.') ? `${s}0` : s; };
 
 /** THE BLOCK. `atten` the lane's lamp falloff (a GLSL expression of rl, the lamp's distance, and r), `shadow` whether the lane's sun map is
- *  there to read (SHADOW_GLSL interpolated before this), `clusters` whether the program declares LC1's grid itself
- *  (the classic set: the lane's EL_CLUSTER_GLSL already does). winLit(wp, n, isFlat, base): what the frame's window
- *  lights add at a point (a flat passes no normal and its base, where its sun is read). */
+ *  there to read (SHADOW_GLSL interpolated before this; 'flat' the billboard program's, which takes flatSun alone),
+ *  `clusters` whether the program declares LC1's grid itself (the classic set: the lane's EL_CLUSTER_GLSL already does).
+ *  winLit(wp, n, isFlat, flatSun): what the frame's window lights add at a point (a flat passes no normal and its sun
+ *  map's word, read once a quad - LA-COST3's vBBSunVis).
+ * @param {{ atten?: string, shadow?: boolean | 'flat', clusters?: boolean }} [opts] */
 export function windowLightGlsl({ atten = 'wlClassicAtten(rl, r)', shadow = false, clusters = false } = {}) {
   return `
 // WL1: WINDOW LIGHT (render/windowLight.js)
 layout(std140) uniform WinLights { vec4 uWinL[${WL_MAX_LIGHTS * WL_VEC4}]; };
 uniform highp sampler2DArray uWinMask;   // the glass's masks, a layer a window picture
-uniform int uWinOn;                      // 1: the frame carries window lights, in LC1's grid's band
+uniform int uWinOn;                      // 1: the frame carries window lights, in LC1's grid's band; 2: and a sun through glass the sun map holds
 ${clusters ? `uniform highp usampler2D uClusterGrid;
 uniform highp usampler2D uClusterList;
 uniform vec4 uClusterRect;
 uniform vec2 uClusterZ;
 uniform vec4 uCamFwd;` : ''}
 float wlClassicAtten(float d, float r) { float a = clamp(1.0 - d / r, 0.0, 1.0); return a * a; }
-vec3 winLit(vec3 wp, vec3 n, float isFlat, vec3 base) {
+vec3 winLit(vec3 wp, vec3 n, float isFlat, float flatSun) {
   if (uWinOn == 0) return vec3(0.0);
   ivec2 tc = clamp(ivec2((gl_FragCoord.xy - uClusterRect.xy) * uClusterRect.zw), ivec2(0), ivec2(${CLUSTER_X - 1}, ${CLUSTER_Y - 1}));
   int zc = clamp(int(log(max((dot(uCamFwd.xyz, wp) + uCamFwd.w) * uClusterZ.x, 1.0)) * uClusterZ.y), 0, ${CLUSTER_Z - 1});
@@ -246,7 +248,7 @@ vec3 winLit(vec3 wp, vec3 n, float isFlat, vec3 base) {
     float m = textureLod(uWinMask, vec3(c1.w + a * c3.w, c2.w + b * c4.w, float(code & 255)), lod).r;
     if (m <= 0.0) continue;
     float r = c0.w;
-    float g = kind == 0 ? ${atten} : ${shadow ? '(kind == 1 ? (isFlat > 0.5 ? sunShadowSoftAt(base, vec3(0.0), 0.0) : sunShadowAt(wp, n)) : 1.0)' : '1.0'};
+    float g = kind == 0 ? ${atten} : ${shadow === 'flat' ? '(kind == 1 ? flatSun : 1.0)' : shadow ? '(kind == 1 ? (isFlat > 0.5 ? flatSun : sunShadowAt(wp, n)) : 1.0)' : '1.0'};
     acc += c5.rgb * (m * ndl * g);
   }
   return acc;
