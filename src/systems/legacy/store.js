@@ -77,10 +77,12 @@ export const MEMBER_SAVE_FIELDS = Object.freeze(['given', 'surname', 'gender', '
 /** AUDIT LEGACY III A3/P3: whether two copies' persons of one id are ONE person. Ids are minted by each copy's own
  *  counter (nextId), so two copies that each minted someone - a child here, a spouse there - gave two people one id. One
  *  person is the same kind, born at the same minute of the same parents, and - wed in - the same townsperson
- *  (residentId) or the same union (realm.sid); their names and what they wear may differ (a save rewrites them). */
+ *  (residentId) or the same union (realm.sid) - or the same child of a union (union.sid, union.key); their names and what
+ *  they wear may differ (a save rewrites them). */
 export function samePerson(p, o) {
   if (!p || !o || (p.kind ?? 'member') !== (o.kind ?? 'member')) return false;
   if ((p.residentId ?? null) !== (o.residentId ?? null) || (p.realm?.sid ?? null) !== (o.realm?.sid ?? null)) return false;
+  if ((p.union?.sid ?? null) !== (o.union?.sid ?? null) || (p.union?.key ?? null) !== (o.union?.key ?? null)) return false;   // UNION-CHILDREN: the other house's child
   if ((Number(p.born) || 0) !== (Number(o.born) || 0)) return false;
   const a = [...(p.parents ?? [])].sort((x, y) => x - y), b = [...(o.parents ?? [])].sort((x, y) => x - y);
   return a.length === b.length && a.every((x, i) => x === b[i]);

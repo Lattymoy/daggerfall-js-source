@@ -2,8 +2,8 @@
 
 Six reports from 2026-10-12 - five Discord threads handed over as screenshots, and one from the owner - read on the
 code as it stands at main's `a7e7ea64`. Four are fixed here (one of them in three parts); one is DFU's own quest
-working as written, answered for the player; one part of the family tree is the recorded design, planned for the
-owner's call.
+working as written, answered for the player; one part of the family tree was the recorded design, built on
+2026-10-29 (UNION-CHILDREN).
 
 | | Report | What it was | Done |
 |---|---|---|---|
@@ -11,7 +11,7 @@ owner's call.
 | 2 | "Companion Inventory prioritized over looting, taking helm, and other context options" - "you need to get them to move before you can loot an item since it keeps opening their inventory instead" | a companion at the player's heel is a foe the one ray strikes like any other: nearer than the body, the pile, the boat's helm or the door behind him, he was the hit, and his hit opens his pack | fixed (ALLY-YIELDS) |
 | 3 | "magic item with only cast on use effect cannot be salvaged" - "it doesn't show up at all in the reforge menu for salvaging" | the "Blazing Holy Dagger of Fireballs" is DFU's own magic (a MAGIC.DEF row on a Holy Dagger), which LOOT9's law prices at no shards - the guilds sell it every day; the Salvage page dropped it silently | the law stands; the page and the card say why (SALVAGE-CLASSIC) |
 | 4 | "Unable to sail any ship after leaving a fleet ship in the Etheric Ocean and returning to Iliac Bay" - "my ship refused to move in any direction regardless of sail length ... All other ships including rowboats were now non-functional. I could command the helm, but movement was disabled"; on the Carrack, brought back across, every ship sailed again | not reproduced: no state ties a ship's side of the Veil to the helm, and the reported sequence sails in the Bay. One law reads exactly as told - the captain's own load weighed against each hull's hold (only the Carrack's carries most) - and its word was covered by the crossing's | the helm unchanged; the load's word said beneath the crossing's (ETHER-STRAND); questions to the reporter |
-| 5 | "Odd family tree behavior" - the two heirs one name and class, two birthdays, the nightblade gone; "Only one of us could actually see the heirs"; the heir born "near Privateer's Hold", not at the farm's hovel made the seat | online the page bearing the heir offered the waiting Succession again, and the birth's first save wrote the newborn over the other child; each house raises its own children of a two-player union (Legacy-Arc section 9); a seat moved only to a town, and the Online page's birth booted the classic start | fixed (HEIR-CLONE, SEAT-HOME, BIRTH-START); the union's children not changed - the owner's call, planned (UNION-CHILDREN) |
+| 5 | "Odd family tree behavior" - the two heirs one name and class, two birthdays, the nightblade gone; "Only one of us could actually see the heirs"; the heir born "near Privateer's Hold", not at the farm's hovel made the seat | online the page bearing the heir offered the waiting Succession again, and the birth's first save wrote the newborn over the other child; each house raises its own children of a two-player union (Legacy-Arc section 9); a seat moved only to a town, and the Online page's birth booted the classic start | fixed (HEIR-CLONE, SEAT-HOME, BIRTH-START); the union's children on both trees built 2026-10-29 (UNION-CHILDREN) |
 | 6 | "companions when morrowind attached switches character race" (the owner) | a companion's Morrowind body drew its race, face, head, hair and clothes off the STAND - its species, its pool number and where it stood - and the companion layer stands a new body at every door, dungeon, fast travel, load and sweep; a revenant drew its own afresh at every return, so the one that knelt rose from its portal another race | fixed (ALLY-RACE) |
 
 ## DECOY-THIEF: the man in the house is not the thief to fight (1)
@@ -252,27 +252,13 @@ dungeon under it, never a farm the house holds nothing on. The House page's move
 host's refusal the same words). Recorded as a law, not a departure: the seat was meant to be a PLACE (section 4's B11
 root - a coordinate is no place), and a home of the house's own is one.
 
-## UNION-CHILDREN: the children of two players' union, on both trees (5) - NOT CHANGED, a plan
+## UNION-CHILDREN: the children of two players' union, on both trees (5) - built 2026-10-29
 
 FOUND. Working as recorded: a child of a two-player union is minted by the house whose member's own clock rolls it
 (`marriage.js:"standing in this"`, childStep) and recorded in that house's line alone - LEGACY7 part three's departure, "each house raises
 its own children of the union (two records, two clocks - the realm keeps no shared child)" (Legacy-Arc section 9). The
-other player's house rolls its own on its own clock, and had none yet. Making them shared retires a recorded departure
-and shows one account's line to another, so it is the owner's call. THE PLAN, if taken:
-
-- THE LAW. A child is of the house that bore them - its surname, its blood, played only from that line (the realm's
-  one character a person, `realm_characters (lineage_id, person_id)`). The other house SEES them through the marriage:
-  a person of a new kind, `'union'` - never played there, never carrying that mantle, never standing in that world -
-  hung under the couple on the tree, the card saying "Raised in the house of Hlaalu".
-- THE SERVICE (no migration, no client write: derived from what the realm holds). `listUnions` reads, for each union, the
-  partner's line (`lineages` by the partner character's `lineage_id`) and answers `children`: its persons whose parents
-  are the partner's person (`person_id`) and the spouse person whose `realm.sid` is the union's - each `{ key, given,
-  surname, gender, race, face, className, born, died, minor }`, every name through `checkName` as `houseOn` reads a
-  house's. An ACCOUNT_VERSION bump (acct121 at the time of writing).
-- THE CLIENT. `unionsHeard` records each child not in the record as `kind: 'union'` (`union: { sid, key }`, parents the
-  member and the spouse), and updates the name, a death and the coming of age as heard; `readFamily` holds the shape,
-  `samePerson` keys it by the sid and the key; `successors`, `waitingHouses`, `homeOf` and the switch already pass over
-  anyone not of the blood.
+other player's house rolls its own on its own clock, and had none yet. The owner chose on 2026-10-29: "Show on both
+trees". Built as Legacy-Arc section 9a (FIELD BUGS 2026-10-29, acct217).
 
 ## THE FOUR HOSTS (5)
 
