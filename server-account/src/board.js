@@ -62,7 +62,7 @@ export function boardOpenFor(player, env) {
 }
 
 /** The author's badge as the service would sign it NOW (letters.js's rule): a title worn only while held. */
-const badgeOf = (row, env, nowS) => (row ? { title: titleWorn(row, env) ?? null, glyphs: glyphsShown(row, env, nowS) } : { title: null, glyphs: [] });
+const badgeOf = (row, env, nowS) => (row ? { title: titleWorn(row, env, nowS) ?? null, glyphs: glyphsShown(row, env, nowS) } : { title: null, glyphs: [] });
 
 /** The expired rows, gone (PROF0 20: "notes deleted on expiry") - `limit` of each table at once, answering how many went.
  *  SCALE4b (2026-10-08): THE SERVICE'S CLOCK'S, never a read's - every board read swept first, two writes on the

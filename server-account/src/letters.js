@@ -99,7 +99,7 @@ export async function sendLetter({ db, rand, nowS }, sender, { to, toAccount, su
 
 /** The sender's badge as the service would sign it NOW (titles.js: a title worn only while held, glyphs derived) -
  *  or none, for a sender whose row is gone. */
-const badgeOf = (row, env, nowS) => (row ? { title: titleWorn(row, env) ?? null, glyphs: glyphsShown(row, env, nowS) } : { title: null, glyphs: [] });
+const badgeOf = (row, env, nowS) => (row ? { title: titleWorn(row, env, nowS) ?? null, glyphs: glyphsShown(row, env, nowS) } : { title: null, glyphs: [] });
 
 /**
  * A READER'S BOX, newest first: every letter's head (who, what about, when, whether opened) and the count unopened -

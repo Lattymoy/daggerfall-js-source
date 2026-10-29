@@ -215,6 +215,7 @@ import { INSTANCE_TAG_SOURCE, isInstanceRoom } from './instanceRoom.js';   // IN
 import { privateInteriorOf } from './privateInterior.js';   // SLIM-FRAME: an owned interior's poses are MapsFile's (nativePoseRoom) - privateInterior.js imports nothing, and the relay walks it already
 import { validSdMarks, SD_ELEMENTS } from './superDungeon/sdMarks.js';   // SD18a: a Hollow's marks and its blows' elements - sdMarks.js imports nothing, so the worker's graph stays
 import { validArenaIn, validArenaOut } from './arena/arenaLaw.js';   // ARENA4: the arena's words both ways - arenaLaw.js imports nothing, so the worker's graph stays flat
+import { effectKitOk } from './effectLaw.js';   // STOREFRONT: the effects kit worn rides a row - effectLaw.js imports nothing
 import { armoryKitOk } from './armoryLaw.js';   // ARMORY: the kit worn rides a row - armoryLaw.js imports nothing, so the worker's graph stays flat
 import { readHouse } from './houseLaw.js';   // LEGACY7 part two: a house rides a row - houseLaw.js imports nothing, so the worker's graph stays flat
 import { validHoldemIn, validHoldemOut } from './holdemTable.js';   // CARDS5: the relay's card table's words both ways - holdemTable.js imports only cardLaw.js, which imports only dice.js (already the bundle's)
@@ -1929,6 +1930,7 @@ export function poseChanged(a, b, eps = 0.01) {
     || (a.lt | 0) !== (b.lt | 0)   // PEERLIGHT1: a torch lit, put out or guttering goes out at once
     || (a.hl | 0) !== (b.hl | 0)   // HT-WAIST-NET: a lantern lit at the waist, or put out, goes out at once, as a draw does
     || (a.hk | 0) !== (b.hk | 0) || (a.hu | 0) !== (b.hu | 0)   // PEERFX1: a blow landed or taken goes out at once, as a swing does
+    || (a.xk | 0) !== (b.xk | 0)   // STOREFRONT: a kill of mine goes out at once, so its effect plays where the others see the body fall
     || (a.cv | 0) !== (b.cv | 0)   // INVIS-NET: a player vanishing (or coming back) is news at once, as a draw is
     || (a.cl | 0) !== (b.cl | 0) || ((a.cl | 0) > 0 && Math.abs(wrapAngle((a.cw ?? 0) - (b.cw ?? 0))) > eps)   // CLIMB5: a hold taken or let go, a move begun, goes out at once - and the body turning on the wall, as a turn does
     || (a.ck | 0) !== (b.ck | 0) || (a.cy | 0) !== (b.cy | 0)   // CLIMB6: a move of another kind, or on another lip, is another move - at once
@@ -2013,7 +2015,7 @@ export const poseHandsOf = (usingRightHand, strikeHand) => ({ ...(usingRightHand
 /** A pose the room will relay, or null. */
 export function validPose(p) {
   if (!p || typeof p !== 'object') return null;
-  const { x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr, ce, ar, fk, rd, rv, rc, hs, lh, ah, wb, dd, hl, lt, lc, hk, hp, hb, hq, hu, uq, cv, cl, cw, ck, cy, cd, st, ga, gb, gm, ts, pl, ab } = p;
+  const { x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr, ce, ar, fk, rd, rv, rc, hs, lh, ah, wb, dd, hl, lt, lc, hk, hp, hb, hq, hu, uq, xk, xp, xh, cv, cl, cw, ck, cy, cd, st, ga, gb, gm, ts, pl, ab } = p;
   if (![x, y, z, yaw, pitch].every(finite)) return null;
   if (Math.abs(x) > POSE_BOUND || Math.abs(z) > POSE_BOUND || Math.abs(y) > POSE_Y_BOUND) return null;
   // ONCRASH1 (2026-09-15, Mac: "reports of player browser crashing when
@@ -2085,6 +2087,10 @@ export function validPose(p) {
     // health (`hq`, 0-100); and the times the player was struck (`hu`, a count). The others ring and splash them
     // (net/peer/peerFx.js). OMITTED at 0 (validLook's `class` law): a player who never fought keeps the bytes it had.
     ...peerFxOf(hk, hp, hb, hq, hu, uq),
+    // STOREFRONT (2026-10-29, bible/06-Systems/Storefront.md section 4): the foes my own blow killed (`xk`, a count) with the
+    // last one's place (`xp`, the pose's own frame) and its body's height in decimetres (`xh`) - the others draw my kill
+    // effect there, the one my token's `fx` names (net/peer/peerFx.js). OMITTED at 0: a player who never killed keeps its bytes.
+    ...killFxOf(xk, xp, xh),
     // INVIS-NET (2026-09-27, Mac relaying reports: "Other player's still see other players who are suppose to be
     // invisible"): `cv` the player's MAGICAL CONCEALMENT - DaggerfallEntity's IsInvisible 1, IsBlending (Chameleon) 2,
     // IsAShade (Shadow) 4, normal or true power - so the others draw them as DFU draws every concealed entity that is
@@ -2152,6 +2158,14 @@ function climbOf(cl, cw, ck, cy, cd) {
   if (Number.isInteger(cy) && Math.abs(cy) <= CLIMB_MOVE_RISE_MAX) out.cy = cy;
   if (Number.isInteger(cd) && cd >= 1 && cd <= CLIMB_MOVE_TIME_MAX) out.cd = cd;
   return out;
+}
+/** STOREFRONT: the pose's kill fields, bounded - absent when the count is 0 or the point is not a place. A body's height
+ *  is 1 to KILL_FX_HEIGHT_MAX decimetres, a person's 18 when it is not said. */
+export const KILL_FX_HEIGHT_MAX = 120;
+function killFxOf(xk, xp, xh) {
+  const k = uint(xk, 65535) ?? 0;
+  const pt = Array.isArray(xp) && xp.length === 3 && xp.every(finite) && Math.abs(xp[0]) <= POSE_BOUND && Math.abs(xp[2]) <= POSE_BOUND && Math.abs(xp[1]) <= POSE_Y_BOUND ? [xp[0], xp[1], xp[2]] : null;
+  return k && pt ? { xk: k, xp: pt, xh: Math.max(1, uint(xh, KILL_FX_HEIGHT_MAX) ?? 18) } : {};
 }
 /** PEERFX1: the pose's blow and hurt fields, bounded - absent when their counts are 0 or the point is not a place. */
 function peerFxOf(hk, hp, hb, hq, hu, uq) {
@@ -3032,6 +3046,8 @@ export function badged(row, from) {
   if (typeof au === 'string' && AURAS.includes(au)) row.au = au;
   // ARMORY: AND THE AURA ARMORY'S KIT, by the aura's law - off the verified token alone, a kit of known pieces or nothing
   if (armoryKitOk(from?.ak)) row.ak = from.ak;
+  // STOREFRONT: AND THE EFFECTS KIT, by the armory's law - off the verified token alone, a kit of known effects or nothing
+  if (effectKitOk(from?.fx)) row.fx = from.fx;
   // WITCH1: AND THE PROFILE ICON WORN, by the aura's law - off the verified token alone, one of the known or nothing
   const pi = from?.pi;
   if (typeof pi === 'string' && ICONS.includes(pi)) row.pi = pi;
@@ -3059,6 +3075,9 @@ export const readAura = (row) => (typeof row?.au === 'string' && AURAS.includes(
 /** ARMORY: the Aura Armory's kit a row carries, as a client reads it back - `badged`'s other half; null for none, and for
  *  anything that is no kit of known pieces (a stranger's word about themselves). */
 export const readArmory = (row) => (armoryKitOk(row?.ak) ? row.ak : null);
+/** STOREFRONT: the effects kit a row carries, as a client reads it back - `badged`'s other half; null for none, and for
+ *  anything that is no kit of known effects (a stranger's word about themselves). */
+export const readEffects = (row) => (effectKitOk(row?.fx) ? row.fx : null);
 /** WITCH1: the profile icon a row carries, as a client reads it back - `badged`'s other half; null for none (the face),
  *  and for a word the vocabulary does not hold (a stranger's word about themselves). */
 export const readIcon = (row) => (typeof row?.pi === 'string' && ICONS.includes(row.pi) ? row.pi : null);

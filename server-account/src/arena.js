@@ -53,7 +53,7 @@ import { shapeOf, keptFits } from './keptBoard.js';   // AUDIT LEAN-READS B1/B10
 /** The service's doors that read a badge (a token's mint, the account's wardrobe, an equip): the arena's honours ride the
  *  row there (two reads - one an index lookup, one kept a minute). AUDIT PRE-MERGE 1003 S8: and on the rows a box's
  *  letters and a board's notes are badged from (withArenaHonoursAll - letters.js, board.js). */
-export const ARENA_HONOUR_PATHS = new Set(['/v1/auth/token', '/v1/account', '/v1/account/title', '/v1/account/aura', '/v1/account/insignia', '/v1/patreon/unlink', '/v1/account/glyph', '/v1/account/icon', '/v1/account/armory']);   // AUDIT COLLECTIONS-II (lanes 1, 2): and the glyph's and the icon's doors - each answers the whole wardrobe, which the flow takes whole, so an answer read without the honours dropped a champion's title and laurel (and the laurel could not be hidden)
+export const ARENA_HONOUR_PATHS = new Set(['/v1/auth/token', '/v1/account', '/v1/account/title', '/v1/account/aura', '/v1/account/insignia', '/v1/patreon/unlink', '/v1/account/glyph', '/v1/account/icon', '/v1/account/armory', '/v1/account/effect']);   // AUDIT COLLECTIONS-II (lanes 1, 2): and the glyph's and the icon's doors - each answers the whole wardrobe, which the flow takes whole, so an answer read without the honours dropped a champion's title and laurel (and the laurel could not be hidden)
 /** A board's rows before the caller's own is pinned under them. */
 export const ARENA_BOARD_TOP = 10;
 /** The Hall of Champions' names a board carries. */

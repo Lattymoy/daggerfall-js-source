@@ -15,7 +15,7 @@ import { compiledPass } from '../render/glProgram.js';
 import { peerBodyYaw } from '../net/peer/peerClimb.js';
 import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { mwViewBodyBones, mwViewSpriteFigure, mwViewSpriteFacing } from '../player/mwView.js';
-import { ownAura, ownArmory } from '../systems/ownGlyphs.js';
+import { ownAura, ownArmory, ownEffects } from '../systems/ownGlyphs.js';
 import { getPref } from '../systems/uiPrefs.js';
 
 /** ARMORY: the "Others' armory" choice (systems/features.js 'armory-others') - every peer's pieces, those within this many
@@ -38,7 +38,7 @@ export function createAuraHost(deps) {
   const { renderer } = deps;
   /** The aura the last minted token said, and the kit (undefined until a service that says one) - a wear since is said
    *  again at the next frame (AURA-LIVE). */
-  let auraHeard, armoryHeard;
+  let auraHeard, armoryHeard, effectsHeard;   // STOREFRONT: and the effects kit, said again the same way
   let gathered = 0;   // PROFILE-SLOTS: the frames gathered - a name lifts only over a piece drawn in this one (nameTopOf)
   const auraList = [], auraDraw = [], auraPool = new Map(), auraLights = [], armoryList = [], armoryDraw = [], armoryPool = new Map();
   const self = { id: 'self', at: [0, 0, 0], aura: null, seed: 0.37, kindle: 1, since: 0, yaw: 0 };   // SHADOW-CLOAK: `yaw` the facing the cloak's opening faces
@@ -77,6 +77,7 @@ export function createAuraHost(deps) {
     issued(/** @type {any} */ who) {
       if (who && 'aura' in who) auraHeard = who.aura ?? null;
       if (who && 'armory' in who) armoryHeard = who.armory ?? null;
+      if (who && 'effects' in who) effectsHeard = who.effects ?? null;
     },
     /** WB9g: GATHERED WITH THE PEERS each frame - mine as the service signed it, and every peer's the relay vouched for. */
     frame(/** @type {any[]} */ seen) {
@@ -88,8 +89,8 @@ export function createAuraHost(deps) {
       const vw = renderer._view, right = vw ? [vw[0], vw[4], vw[8]] : null;   // the view's right, a sprite's feet off it (the draw's)
       // the service's last word on my own - a mint's, a wear's from any door; AURA-LIVE: one the room's token did not say is
       // said again, so the room sees it now. ARMORY: and the kit the same
-      const mine = ownAura(), kit = ownArmory();
-      if ((auraHeard !== undefined && mine !== auraHeard) || (armoryHeard !== undefined && kit !== armoryHeard)) { if (online.rehello?.()) { auraHeard = mine; armoryHeard = kit; } }
+      const mine = ownAura(), kit = ownArmory(), fx = ownEffects();
+      if ((auraHeard !== undefined && mine !== auraHeard) || (armoryHeard !== undefined && kit !== armoryHeard) || (effectsHeard !== undefined && fx !== effectsHeard)) { if (online.rehello?.()) { auraHeard = mine; armoryHeard = kit; effectsHeard = fx; } }
       const spawned = deps.spawned(), faced = mwViewSpriteFacing();
       if (mine && spawned) {
         const f = player.feetAt();

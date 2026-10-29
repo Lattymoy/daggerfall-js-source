@@ -39,8 +39,9 @@ import { guestName, isHandleShaped, isGuestShaped } from './guestName.js';
 import { handleLooksLikeEmail } from '../../src/net/handleShape.js';   // HANDLE-EMAIL: a username is never an address
 import { NAME_MAX } from '../../src/net/wire.js';   // NAME-AS: the wire's bound on a name, a worn character's among them
 import { checkName } from '../../src/net/nameFilter.js';   // NAME-AS: which word a character's name was refused for (NAME-F: a refusal names it)
-import { armoryKitWith, armoryKitOk, armoryKitPieces } from '../../src/net/armoryLaw.js';   // ARMORY: the kit with one slot changed, or a whole kit
-import { wardrobeOf, equipRefusal, canModerate, isDeveloper, auraRefusal, glyphRefusal, glyphsHidden, iconRefusal, armoryRefusal, armoryWorn } from './titles.js';   // ACC3: what a player holds, wears and is true of - all four derived; WB9g: and the aura worn
+import { armoryKitWith, armoryKitOk, armoryKitPieces } from '../../src/net/armoryLaw.js';
+import { effectKitWith } from '../../src/net/effectLaw.js';   // STOREFRONT: the effects kit with one slot changed   // ARMORY: the kit with one slot changed, or a whole kit
+import { wardrobeOf, equipRefusal, canModerate, isDeveloper, auraRefusal, glyphRefusal, glyphsHidden, iconRefusal, armoryRefusal, armoryWorn, effectRefusal, effectsWorn } from './titles.js';   // ACC3: what a player holds, wears and is true of - all four derived; WB9g: and the aura worn
 import { brokerRidOk, brokerSaleOf, brokerSaleWrite, brokerRidFreeSql } from './brokerSales.js';   // AUDIT FB1024 (BROKER-RID): a press by its request id
 import { insigniaById, insigniaHeld } from '../../src/net/insignia.js';   // WB9g: the Broker's insignia - one law both ends
 import { ID_RE, nameIsIssuable } from '../../src/net/identityToken.js';
@@ -540,7 +541,7 @@ export async function equipTitle({ db, nowS }, player, env, title) {
  * wardrobe after the write.
  */
 export async function equipAura({ db, nowS }, player, env, aura) {
-  const why = auraRefusal(aura, player, env);   // AEGIS: a list's aura is held off the config
+  const why = auraRefusal(aura, player, env, nowS);   // AEGIS: a list's aura is held off the config
   if (why) return { error: why };
   await db.prepare('UPDATE players SET aura = ?, last_seen = ? WHERE id = ?').bind(aura, nowS, player.id).run();
   return { ok: true, ...wardrobeOf({ ...player, aura }, env, nowS) };
@@ -567,12 +568,23 @@ export async function equipArmoryKit({ db, nowS }, player, env, kit) {
   return { ok: true, ...wardrobeOf({ ...player, armory: kit }, env, nowS) };
 }
 
+/** STOREFRONT (bible/06-Systems/Storefront.md) - WEAR ONE EFFECT IN ITS SLOT, OR BARE IT: the armory's law for the kill
+ *  effect, the portal skin and the mount look. Refused against what the player holds now (effectRefusal); the kit written
+ *  is the one worn now with that slot changed. Answers the wardrobe after the write. */
+export async function equipEffect({ db, nowS }, player, env, slot, key) {
+  const why = effectRefusal(slot, key, player, nowS);
+  if (why) return { error: why };
+  const effects = effectKitWith(effectsWorn(player, nowS) ?? null, /** @type {string} */ (slot), key);
+  await db.prepare('UPDATE players SET effects = ?, last_seen = ? WHERE id = ?').bind(effects, nowS, player.id).run();
+  return { ok: true, ...wardrobeOf({ ...player, effects }, env, nowS) };
+}
+
 /**
  * WITCH1 (bible/06-Systems/Witches-Festival.md) - WEAR ONE PROFILE ICON, OR NONE (the character's face): the aura's law,
  * in the portrait well. Answers the wardrobe after the write; `not-held` for one the account does not hold.
  */
 export async function equipIcon({ db, nowS }, player, env, icon) {
-  const why = iconRefusal(icon, player);
+  const why = iconRefusal(icon, player, nowS);
   if (why) return { error: why };
   await db.prepare('UPDATE players SET icon = ?, last_seen = ? WHERE id = ?').bind(icon, nowS, player.id).run();
   return { ok: true, ...wardrobeOf({ ...player, icon }, env, nowS) };

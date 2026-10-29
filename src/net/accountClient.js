@@ -42,6 +42,7 @@ import { HANDLE_RE } from './handleShape.js';
 import { carryYardOrder } from './yardPush.js';   // YARD-CELL YC2
 import { SESSION_PASS_HEADER } from './sessionPassLaw.js';   // SESSION-SIGN: the pass's one name on the wire
 import { AURAS, ICONS } from './identityToken.js';
+import { effectKitOk } from './effectLaw.js';   // STOREFRONT: a stored effects kit is a kit of known effects, or none
 import { armoryKitOk } from './armoryLaw.js';   // ARMORY: a stored kit is a kit of known pieces, or none   // WB9g: the auras that exist - a stored one is one of them, or none; WITCH1: and the icons
 import { NAME_MAX } from './wire.js';   // NAME-AS: the wire's bound on a name, in the sentence that says a character's is past it
 import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, LETTERS_SENT_MAX, LETTERS_PAIR_MAX } from './letterLaw.js';   // MAIL1: the letter's bounds, in the refusals' own sentences
@@ -1300,6 +1301,8 @@ export const equipAura = (io, aura) => call(io, '/v1/account/aura', { aura: aura
 export const equipArmory = (io, slot, piece) => call(io, '/v1/account/armory', { slot, piece: piece ?? null });
 /** ARMORY: a whole kit at once (the Eternal set's Wear), or `null` to bare every slot - the same door. */
 export const equipArmoryKit = (io, kit) => call(io, '/v1/account/armory', { kit: kit ?? null });
+/** STOREFRONT: wear an effect in its slot (`kill`, `portal`, `mount`), or null to bare it - the same wardrobe answer. */
+export const equipEffect = (io, slot, key) => call(io, '/v1/account/effect', { slot, key: key ?? null });
 /** WITCH1: wear one profile icon, or none (null: the character's face) - the wardrobe after the write. The service refuses
  *  `not-held` for an icon this account does not hold. */
 export const equipIcon = (io, icon) => call(io, '/v1/account/icon', { icon: icon ?? null });
@@ -1452,9 +1455,9 @@ export function keepSession(storage, { id, name, kind, sessionId, secret, glyphs
  * profile mark and the account card read it here (systems/ownGlyphs.js ownIcon).
  *
  * @param {any} storage
- * @param {{ name?: string, kind?: string, glyphs?: string[], glyphsOff?: string[], aura?: string|null, armory?: string|null, icon?: string|null, nameAsAt?: number, secret?: string }} [who]
+ * @param {{ name?: string, kind?: string, glyphs?: string[], glyphsOff?: string[], aura?: string|null, armory?: string|null, effects?: string|null, icon?: string|null, nameAsAt?: number, secret?: string }} [who]
  */
-export function adoptIdentity(storage, { name, kind, glyphs, glyphsOff, aura, armory, icon, nameAsAt, secret } = {}) {
+export function adoptIdentity(storage, { name, kind, glyphs, glyphsOff, aura, armory, effects, icon, nameAsAt, secret } = {}) {
   const was = storedSession(storage);
   if (!was) return false;
   if (typeof secret === 'string' && was.secret !== secret) return false;
@@ -1466,9 +1469,10 @@ export function adoptIdentity(storage, { name, kind, glyphs, glyphsOff, aura, ar
   if (aura !== undefined) next.aura = typeof aura === 'string' && AURAS.includes(aura) ? aura : null;   // WB9g: one that exists, or none
   if (icon !== undefined) next.icon = typeof icon === 'string' && ICONS.includes(icon) ? icon : null;   // WITCH1: likewise
   if (armory !== undefined) next.armory = armoryKitOk(armory) ? armory : null;   // ARMORY: likewise
+  if (effects !== undefined) next.effects = effectKitOk(effects) ? effects : null;   // STOREFRONT: likewise
   if (Number.isSafeInteger(nameAsAt) && nameAsAt > 0 && !(Number.isSafeInteger(was.nameAsAt) && was.nameAsAt >= nameAsAt)) next.nameAsAt = nameAsAt;   // NAME-AS: forward only
   const sameGlyphs = (next.glyphs ?? []).join('+') === (was.glyphs ?? []).join('+');
-  const sameAura = (next.aura ?? null) === (was.aura ?? null) && (next.icon ?? null) === (was.icon ?? null) && (next.armory ?? null) === (was.armory ?? null);   // WITCH1: and the icon; ARMORY: and the kit
+  const sameAura = (next.aura ?? null) === (was.aura ?? null) && (next.icon ?? null) === (was.icon ?? null) && (next.armory ?? null) === (was.armory ?? null) && (next.effects ?? null) === (was.effects ?? null);   // WITCH1: and the icon; ARMORY: and the kit; STOREFRONT: and the effects
   if (next.name === was.name && next.kind === was.kind && sameGlyphs && sameAura && next.nameAsAt === was.nameAsAt) return false;   // nothing to write, and a write is a storage event every open tab hears
   return keepSession(storage, next);
 }
@@ -1739,6 +1743,11 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
           ...(Array.isArray(answer.data.glyphsOff) ? { glyphsOff: answer.data.glyphsOff } : {}),   // absent for none
           // WB9g: the aura at my own feet (null for none) - absent from a service before acct38, which says nothing
           ...('aura' in answer.data ? { aura: typeof answer.data.aura === 'string' ? answer.data.aura : null } : {}),
+          // ARMORY: the Aura Armory's kit I wear (null for none) - the mint answers it, and it was never read here, so a kit
+          // worn since the last hello went unsaid to the room (auraHost.issued never heard one); absent before acct209
+          ...('armory' in answer.data ? { armory: typeof answer.data.armory === 'string' ? answer.data.armory : null } : {}),
+          // STOREFRONT: the effects kit I wear (null for none) - absent from a service before this release, which says nothing
+          ...('effects' in answer.data ? { effects: typeof answer.data.effects === 'string' ? answer.data.effects : null } : {}),
           // WITCH1: the profile icon I wear (null for the face) - absent from a service before acct165, which says nothing
           ...('icon' in answer.data ? { icon: typeof answer.data.icon === 'string' ? answer.data.icon : null } : {}),
           // SEASON1 part two: a Season's banner ribbon under my own name (null for none) - absent from a service before acct58
@@ -2048,6 +2057,18 @@ export function accountFestival({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }
     fill: ({ mapId, buildingKey, character }) => post('/v1/festival/offering/fill', { mapId, buildingKey, character }),
     takeIn: ({ mapId, buildingKey, character }) => post('/v1/festival/offering/take-in', { mapId, buildingKey, character }),
     take: ({ mapId, buildingKey }) => post('/v1/festival/offering/take', { mapId, buildingKey }),
+    me: () => storedSession(storage)?.id ?? null,
+    guest: () => (storedSession(storage)?.kind ?? null) === 'guest',
+  };
+}
+
+/** STOREFRONT (bible/06-Systems/Battle-Pass.md): THE BATTLE PASS (server-account/src/battlePass.js) through the one door -
+ *  the account's season (`mine`) and a deed's find (`find`, by its source). `call`'s shape, never a throw. */
+export function accountBattlePass({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
+  const post = waitedPost({ fetch, storage }, waitMs);
+  return {
+    mine: () => post('/v1/pass/mine', {}),
+    find: (/** @type {string} */ source) => post('/v1/pass/find', { source }),
     me: () => storedSession(storage)?.id ?? null,
     guest: () => (storedSession(storage)?.kind ?? null) === 'guest',
   };

@@ -234,7 +234,7 @@ import {
   devicesOf, accountView, displayName, accountKind,
   register, login, recover, changePassword, setEmail, overRate, overAccountRate, accountRateFull,
   newRecoveryCodes,   // RECOVERY-SET: a new set of codes from the profile
-  accountWardrobe, equipTitle, equipAura, equipArmory, equipArmoryKit, equipIcon, equipGlyph, buyInsignia, insigniaPurse, creditPlay, isMuted, mutedUntil,
+  accountWardrobe, equipTitle, equipAura, equipArmory, equipArmoryKit, equipEffect, equipIcon, equipGlyph, buyInsignia, insigniaPurse, creditPlay, isMuted, mutedUntil,
   duelRecordOf, claimDuel, gateRecordOf, claimGate, legalRefusal,
   nameAsOf, wornNameOf, chooseNameAs,   // NAME-AS: the name the room reads - the account's or the character's
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
@@ -256,7 +256,7 @@ import { seaSeasonBoard } from './seaSeason.js';   // SEA-SEASON: the sea's seas
 import { seaWreck, seaPrizeCollect, seaPrizeReclaim } from './seaWreck.js';   // SHIP-PVP: a wreck at sea, and its prize
 import { deckOrderOf, claimIliac, iliacBoardOf } from './iliac.js';
 import { claimGambit, gambitBoardOf } from './gambit.js';   // KG6: The King's Gambit's season board and its GRANDMASTER   // CARDS10: a ranked seat's deck vouched for, Iliac Hand's season board and its title
-import { titleWorn, glyphsOf, glyphsHidden, auraWorn, iconWorn, armoryWorn } from './titles.js';
+import { titleWorn, glyphsOf, glyphsHidden, auraWorn, iconWorn, armoryWorn, effectsWorn } from './titles.js';
 import { withHonours } from './honours.js';   // SIGN-BATCH: the three games' honours on a badge's row, in one batch
 import { claimArena, arenaAttempt, arenaBoardOf, arenaTeam, arenaRatingOf, ARENA_HONOUR_PATHS, ARENA_RENOWN_REGION } from './arena.js';   // ARENA4: the arena's records, its board, its banners, and the honours the mint reads
 import { arenaSeasonOf } from '../../src/net/arena/arenaLaw.js';
@@ -287,6 +287,7 @@ import { settleBrokerSale } from './brokerSales.js';   // AUDIT FB1024 (BROKER-R
 import { startsEg } from './egStarts.js';   // EG-F: the start window's preflight
 import { claimLamp } from './lamp.js';
 import { festivalOf, findFestival, buyFestival, festivalTown, setOffering, fillOffering, takeInOffering, takeFromOffering, FEST_STATUS } from './festival.js';   // WITCH1: the Witches' Festival   // LAMP-KEEPER II: I Love Lamp, laid on the row
+import { passOf, findPass, BATTLE_PASS_STATUS } from './battlePass.js';   // STOREFRONT: the Battle Pass - the account's season and a deed's find
 import { claimQl, QL_STATUS } from './questlines.js';   // QL12: a questline's step claimed - what the service witnessed, paid
 import { voteHome } from './homeVotes.js';   // HOME-VOTE: a town's word on a player's house
 import { claimHome, releaseHome, setHomeEntry, homesInTown, homesOf, setHomeLook, homeLayoutsKept, arenaMoveHome, arenaMovesOf, arenaMoveSeen, holdDeed, inheritHome } from './homes.js';   // HOME1: the online homes' routes; HOME-LOOK: its outside; WD3: the towns' layouts; ARENA4b: the homes the arena displaced, moved; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held
@@ -1237,7 +1238,7 @@ const service = {
         // guild's badge below - three reads of one row; each keeps its own law over it
         const member = renownCharacterOk(body.character) && (seats || body.guild === true) ? await mintMemberOf(ctx, who.player.id, body.character) : undefined;
         const seatBadge = seats && renownCharacterOk(body.character) ? await seatBadgeOf(ctx.db, who.player.id, body.character, seasonOf(seatWeekOf(nowS * 1000), zero)?.n ?? 0, member) : null;
-        const wornT = titleWorn(worn, env);
+        const wornT = titleWorn(worn, env, nowS);
         // CROWN1 part two: the champion's is the account's own, kept for good - no guildmaster's; SEASON1: and so are a
         // Season's crowned and keeper (seatRoyal.js keptTitleOf)
         const kept = seats && KEPT_TITLES.includes(wornT) ? await keptTitleOf(ctx.db, who.player.id, wornT, zero) : null;
@@ -1254,9 +1255,10 @@ const service = {
         const wardrobe = {
           ...seatT,
           g: [...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])],
-          au: auraWorn(who.player, env),   // WB9g: the aura worn, the title's law - absent for none; AEGIS: a list's read off the config
-          pi: iconWorn(who.player),   // WITCH1: the profile icon worn, the aura's law - absent for none (the character's face)
+          au: auraWorn(who.player, env, nowS),   // WB9g: the aura worn, the title's law - absent for none; AEGIS: a list's read off the config
+          pi: iconWorn(who.player, nowS),   // WITCH1: the profile icon worn, the aura's law - absent for none (the character's face)
           ak: armoryWorn(who.player),   // ARMORY: the Aura Armory's kit worn, the aura's law - absent for none
+          fx: effectsWorn(who.player, nowS),   // STOREFRONT: the effects kit worn (a kill effect, a portal skin, a mount look) - absent for none
           ...(rb ? { rb } : {}),
         };
         // GLYPH-WEAR: the glyphs taken off ride BESIDE `g`, never out of it - `g` is what is true and what the relay's
@@ -1344,6 +1346,7 @@ const service = {
           aura: wardrobe.au ?? null,   // WB9g: the aura at my own feet, beside the token as the title is
           icon: wardrobe.pi ?? null,   // WITCH1: the profile icon in my own portrait well, beside the token as the aura is
           armory: wardrobe.ak ?? null,   // ARMORY: the kit on my own body, beside the token as the aura is
+          effects: wardrobe.fx ?? null,   // STOREFRONT: my kill effect, portals' skin and mount's look, beside the token as the kit is
           ribbon: wardrobe.rb ?? null,   // SEASON1 part two: the ribbon under my own name, beside the token as the aura is
           house: houseWorn ?? null,   // LEGACY7: the house my token wears, beside it as the ribbon is
           expiresAt: nowS + MAX_TTL_S,
@@ -2283,6 +2286,13 @@ const service = {
         return r.error ? no(r.error, r.error === 'armory-not-held' ? 403 : 400, origin) : json(r, 200, origin);
       }
 
+      if (path === '/v1/account/effect' && request.method === 'POST') {
+        // STOREFRONT: WEAR ONE EFFECT IN ITS SLOT (a kill effect, a portal skin, a mount look), OR BARE IT - the armory's door
+        // a slot at a time. 403 for one not held, as the aura's; 400 for a slot or key the service does not know.
+        const r = await equipEffect(ctx, await withSeatTitles(ctx, who.player, env), env, body.slot, body.key ?? null);
+        return r.error ? no(r.error, r.error === 'not-held' ? 403 : 400, origin) : json(r, 200, origin);
+      }
+
       if (path === '/v1/account/icon' && request.method === 'POST') {
         // WITCH1: WEAR ONE PROFILE ICON, OR NONE - the aura's door, in the portrait well. 403 for `not-held`, as the aura's.
         const r = await equipIcon(ctx, await withSeatTitles(ctx, who.player, env), env, body.icon ?? null);
@@ -2308,6 +2318,16 @@ const service = {
         if (!act) return no('not-found', 404, origin);
         const r = await act();
         if ('error' in r) return json({ error: r.error, ...(Number.isSafeInteger(r.cakes) ? { cakes: r.cakes } : {}), ...(Number.isSafeInteger(r.bowls) ? { bowls: r.bowls } : {}) }, FEST_STATUS[r.error] ?? 400, origin);
+        return json(r, 200, origin);
+      }
+
+      // ═══ STOREFRONT: THE BATTLE PASS ═══════════════════════════════════
+      //
+      // bible/06-Systems/Battle-Pass.md: the account's season (its level, tracks, day and challenges), and a deed's find.
+      if (path === '/v1/pass/mine' || path === '/v1/pass/find') {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const r = path === '/v1/pass/mine' ? await passOf(ctx, who.player, env) : await findPass(ctx, who.player, body, env);
+        if ('error' in r) return json({ error: r.error }, BATTLE_PASS_STATUS[/** @type {keyof typeof BATTLE_PASS_STATUS} */ (r.error)] ?? 400, origin);
         return json(r, 200, origin);
       }
 

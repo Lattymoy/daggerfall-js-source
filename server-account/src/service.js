@@ -396,6 +396,9 @@ export const ROUTES = new Set([
   '/v1/broker/settle',   // AUDIT FB1024 (BROKER-RID): a Broker sale whose answer was lost, asked after by its request id
   '/v1/account/icon',   // WITCH1: a profile icon worn, or none
   '/v1/account/armory',   // ARMORY: an Aura Armory piece worn in its slot, or the slot emptied
+  '/v1/account/effect',   // STOREFRONT: a kill effect, a portal skin or a mount look worn in its slot, or the slot bared
+  // STOREFRONT (bible/06-Systems/Battle-Pass.md): THE BATTLE PASS - the account's season, and a deed's find
+  '/v1/pass/mine', '/v1/pass/find',
   // WITCH1 (bible/06-Systems/Witches-Festival.md): THE WITCHES' FESTIVAL - the account's cakes, a find, a sale, a town's
   // offerings, and an offering set out, filled, taken in and taken from
   '/v1/festival/mine', '/v1/festival/find', '/v1/festival/buy', '/v1/festival/town',
@@ -613,7 +616,7 @@ export const ROUTES = new Set([
   // (the list, one piece's trail, a trail check recorded) - Admin only (staffCensus.js)
   '/v1/staff/census/find', '/v1/staff/census', '/v1/staff/census/jumps', '/v1/staff/contested', '/v1/staff/contested/piece', '/v1/staff/contested/trail',
   // STAFF-PANEL3-ECON: the panel's economy (staffEconomy.js) - the market and trades stream, node activity, the economy, per guild
-  '/v1/staff/econ/stream', '/v1/staff/econ/harvests', '/v1/staff/econ/economy', '/v1/staff/econ/guilds',
+  '/v1/staff/econ/stream', '/v1/staff/econ/harvests', '/v1/staff/econ/economy', '/v1/staff/econ/guilds', '/v1/staff/econ/shop',   // STOREFRONT: the shop's demand
   // STAFF-PANEL5-FOLLOW: a follow token for a hidden staff spectator, minted and written down (staffFollow.js)
   '/v1/staff/follow',
   // STAFF-PANEL5-MESSAGE: Message on screen - one sent, and each one's state (staffMessage.js); and the game's two: the

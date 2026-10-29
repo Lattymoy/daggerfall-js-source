@@ -43,7 +43,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  openGuest, register, login, recover, readAccount, changePassword, logout, equipTitle, equipAura, equipArmory, equipArmoryKit, equipIcon, equipGlyph, adoptIdentity, unlinkPatreon,
+  openGuest, register, login, recover, readAccount, changePassword, logout, equipTitle, equipAura, equipArmory, equipArmoryKit, equipEffect, equipIcon, equipGlyph, adoptIdentity, unlinkPatreon,
   newRecoveryCodes,   // RECOVERY-SET: a new set of recovery codes, from the profile
   chooseNameAs,   // NAME-AS: which name the room reads
   storedSession, keepSession, forgetSession, accountRefusalText, handleShapeOk,
@@ -56,7 +56,18 @@ import { AURA_TEXT, TITLE_TEXT } from './playerBadge.js';   // SHADOW-CLOAK (AUD
 import { ICON_TEXT } from './profileIcons.js';   // WITCH1: an icon's name in the card's note
 import { armoryKitOk, armoryKitPieces } from '../net/armoryLaw.js';   // ARMORY: the kit a wardrobe states, and its pieces
 import { armoryPieceName } from './armoryText.js';   // ARMORY: a piece's name in the card's note
+import { effectKitOk, effectWorn } from '../net/effectLaw.js';   // STOREFRONT: the effects kit a wardrobe states
+import { effectName, effectsHeldOf } from './effectText.js';   // STOREFRONT: an effect's name in the card's note
 import { shopCardOf, shopWareById, SHOP_WARE_NAME } from '../net/shopLaw.js';   // SHOP: the shop's card on the account read
+
+/** SHOP: a ware's name as the arrival's note says it - a piece's and an effect's in the player's language (STOREFRONT),
+ *  the rest the shop's own. */
+const arrivedName = (/** @type {string} */ id) => {
+  const [kind, key] = id.split(':');
+  if (kind === 'armory') return armoryPieceName(key);
+  if (kind === 'kill' || kind === 'portal' || kind === 'mount') return effectName(kind, key);
+  return SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (id)] ?? id;
+};
 
 /** Every stage this card can be on. Exported because a pin that
  *  enumerates them by hand is a pin that stops covering the one added
@@ -309,7 +320,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
     // top-right button reads the stored session. This is the next answer
     // that states the name after a registration (acknowledging the code
     // lands here), and it is the service's own word, so it is adopted.
-    adoptIdentity(storage, { name: r.data.account?.name, kind: r.data.account?.kind, glyphs: r.data.wardrobe?.glyphs, glyphsOff: r.data.wardrobe?.glyphsOff, aura: auraStated(r.data.wardrobe), armory: armoryStated(r.data.wardrobe), icon: iconStated(r.data.wardrobe), secret: asked });   // SHADOW-FANG: and what is true of the account; AUDIT B4: into the session that asked; WB9g: and the aura worn
+    adoptIdentity(storage, { name: r.data.account?.name, kind: r.data.account?.kind, glyphs: r.data.wardrobe?.glyphs, glyphsOff: r.data.wardrobe?.glyphsOff, aura: auraStated(r.data.wardrobe), armory: armoryStated(r.data.wardrobe), effects: effectsStated(r.data.wardrobe), icon: iconStated(r.data.wardrobe), secret: asked });   // SHADOW-FANG: and what is true of the account; AUDIT B4: into the session that asked; WB9g: and the aura worn
     // ACC3c: THE WARDROBE IS ITS OWN FIELD, exactly as the service
     // answers it - what this account HOLDS, what it WEARS, and what is
     // true of it. Held beside `account` rather than folded into it,
@@ -360,13 +371,13 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
     const was = self.patreon;
     const d = r.data;
     self.account = d.account;
-    adoptIdentity(storage, { name: d.account?.name, kind: d.account?.kind, glyphs: d.wardrobe?.glyphs, glyphsOff: d.wardrobe?.glyphsOff, aura: auraStated(d.wardrobe), armory: armoryStated(d.wardrobe), icon: iconStated(d.wardrobe), secret: asked });   // `start`'s word, adopted as it adopts it
+    adoptIdentity(storage, { name: d.account?.name, kind: d.account?.kind, glyphs: d.wardrobe?.glyphs, glyphsOff: d.wardrobe?.glyphsOff, aura: auraStated(d.wardrobe), armory: armoryStated(d.wardrobe), effects: effectsStated(d.wardrobe), icon: iconStated(d.wardrobe), secret: asked });   // `start`'s word, adopted as it adopts it
     self.wardrobe = d.wardrobe ?? null;
     self.patreon = d.patreon ?? null;
     self.shop = shopCardOf(d.shop);
     // SHOP: back from paying, the ware the read says is held now - said once, where the player looks
     if (self.shopWaiting && self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held)) {
-      self.note = t('account.flow.shopArrived', '{name} is on your account. A receipt is in your mailbox.', { name: String(self.shopWaiting).startsWith('armory:') ? armoryPieceName(String(self.shopWaiting).slice(7)) : SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (self.shopWaiting)] ?? self.shopWaiting });   // ARMORY: a piece in the player's language
+      self.note = t('account.flow.shopArrived', '{name} is on your account. A receipt is in your mailbox.', { name: arrivedName(String(self.shopWaiting)) });
       self.shopWaiting = null;
     }
     if (self.patreonWaiting && self.patreon?.linked && (!was?.linked || String(was.titles) !== String(self.patreon.titles))) {
@@ -392,7 +403,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
       self.patreonWaiting = false;
       self.busy = false;
       self.note = t('account.flow.patreonUnlinked', 'Patreon unlinked.');
-      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), icon: iconStated(r.data), secret: asked });   // a lapsed tier's glyph off my own screen at once
+      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), effects: effectsStated(r.data), icon: iconStated(r.data), secret: asked });   // a lapsed tier's glyph off my own screen at once
       changed();
       return true;
     } catch {
@@ -433,7 +444,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
       self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };   // WB9g: the auras ride the same answer
       self.busy = false;
       self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: TITLE_TEXT[want] ?? want }) : t('account.flow.titleRemoved', 'Title removed.');   // COLLECTIONS-II: the title's name, never its key (the Collections page says this note)
-      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), icon: iconStated(r.data), secret: asked });   // WB9g: my own screen's word, from the answer (AUDIT B4: into the session that asked)
+      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), effects: effectsStated(r.data), icon: iconStated(r.data), secret: asked });   // WB9g: my own screen's word, from the answer (AUDIT B4: into the session that asked)
       changed();
       return true;
     } catch {
@@ -459,7 +470,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
       self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff ?? [], ...auraHalf(r.data) };   // absent is none
       self.busy = false;
       self.note = on ? t('account.flow.glyphShown', 'Glyph shown.') : t('account.flow.glyphHidden', 'Glyph hidden.');
-      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), icon: iconStated(r.data), secret: asked });   // my own screen's word: the shown glyphs dress my werewolf
+      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), effects: effectsStated(r.data), icon: iconStated(r.data), secret: asked });   // my own screen's word: the shown glyphs dress my werewolf
       changed();
       return true;
     } catch {
@@ -471,13 +482,18 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
   const glyphHalf = (d) => (Array.isArray(d?.glyphsOff) ? { glyphsOff: d.glyphsOff } : {});
   /** WB9g: the aura half of a wardrobe answer - what a service since acct38 says (its auras held, the one worn, the
    *  Broker's insignia owned), or nothing from one before it. */
-  const auraHalf = (d) => (Array.isArray(d?.auras) ? { auras: d.auras, aura: d.aura ?? null, insignia: Array.isArray(d.insignia) ? d.insignia : [], ...iconHalf(d), ...armoryHalf(d) } : {});
+  const auraHalf = (d) => (Array.isArray(d?.auras) ? { auras: d.auras, aura: d.aura ?? null, insignia: Array.isArray(d.insignia) ? d.insignia : [], ...iconHalf(d), ...armoryHalf(d), ...effectsHalf(d) } : {});
   /** WITCH1: the icon half of a wardrobe answer - the profile icons held and the one worn, or nothing from a service
    *  before acct162. */
   const iconHalf = (d) => (Array.isArray(d?.icons) ? { icons: d.icons, icon: d.icon ?? null } : {});
   /** ARMORY: the Aura Armory half of a wardrobe answer - the pieces held and the kit worn, or nothing from a service before
    *  it. */
   const armoryHalf = (d) => (Array.isArray(d?.armoryHeld) ? { armoryHeld: d.armoryHeld, armory: armoryKitOk(d.armory) ? d.armory : null } : {});
+  /** STOREFRONT: the effects half of a wardrobe answer - the kill effects, portal skins and mount looks held (a slot's
+   *  keys) and the kit worn - or nothing from a service before it. */
+  const effectsHalf = (d) => (d?.effectsHeld && typeof d.effectsHeld === 'object' ? { effectsHeld: effectsHeldOf(d.effectsHeld), effects: effectKitOk(d.effects) ? d.effects : null } : {});
+  /** STOREFRONT: the effects kit a wardrobe answer says is worn (null for none), or undefined from a service before it. */
+  function effectsStated(d) { return d?.effectsHeld && typeof d.effectsHeld === 'object' ? (effectKitOk(d.effects) ? d.effects : null) : undefined; }
   /** ARMORY: the kit a wardrobe answer says is worn (null for none), or undefined from a service before it. */
   function armoryStated(d) { return Array.isArray(d?.armoryHeld) ? (armoryKitOk(d.armory) ? d.armory : null) : undefined; }
   /** WB9g: the aura a wardrobe answer says is worn (null for none), or undefined from a service before acct38. */
@@ -502,7 +518,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
       self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };
       self.busy = false;
       self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');   // SHADOW-CLOAK (AUDIT): the aura's name, never its key
-      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), icon: iconStated(r.data), secret: asked });
+      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), effects: effectsStated(r.data), icon: iconStated(r.data), secret: asked });
       changed();
       return true;
     } catch {
@@ -527,7 +543,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
       self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };
       self.busy = false;
       self.note = note;
-      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), icon: iconStated(r.data), secret: asked });
+      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), effects: effectsStated(r.data), icon: iconStated(r.data), secret: asked });
       changed();
       return true;
     } catch {
@@ -540,6 +556,13 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
   };
   /** ARMORY: A WHOLE KIT AT ONCE - the Eternal set's Wear - or `null`, every piece off. */
   self.wearArmoryKit = (/** @type {string|null} */ kit) => armoryWore(() => equipArmoryKit(door(), kit), kit ? t('account.flow.wearingSet', 'Wearing the whole set.') : t('account.flow.armoryRemovedAll', 'Every piece removed.'));
+  /** STOREFRONT (bible/06-Systems/Storefront.md): WEAR ONE EFFECT IN ITS SLOT - a kill effect, a portal skin, a mount look -
+   *  the armory's door a slot at a time; pressing the one worn bares the slot. The stored session learns the kit, so my own
+   *  kills, portals and horse show it at once, and the room at once (auraHost.js says hello again). */
+  self.wearEffect = (/** @type {string} */ slot, /** @type {string|null} */ key) => {
+    const want = effectWorn(self.wardrobe?.effects, slot) === key ? null : (key ?? null);
+    return armoryWore(() => equipEffect(door(), slot, want), want ? t('account.flow.wearing', 'Wearing {what}.', { what: effectName(slot, want) }) : t('account.flow.effectRemoved', 'Taken off.'));
+  };
 
   /**
    * WITCH1 (bible/06-Systems/Witches-Festival.md) - WEAR ONE PROFILE ICON, OR NONE: the aura's law, in the portrait well.
@@ -559,7 +582,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
       self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };
       self.busy = false;
       self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: ICON_TEXT[want] ?? want }) : t('account.flow.iconRemoved', 'Icon removed.');
-      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), icon: iconStated(r.data), secret: asked });
+      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), effects: effectsStated(r.data), icon: iconStated(r.data), secret: asked });
       changed();
       return true;
     } catch {

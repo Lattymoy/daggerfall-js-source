@@ -107,7 +107,9 @@ import { QL_TITLES, qlTitleBit } from '../../src/net/questlineClaims.js';   // Q
 import { festivalWaresHeld, HEARTHKEEPER_GIVEN, SOULCAKE_TAKEN } from '../../src/net/festivalLaw.js';   // WITCH1: the Witches' Festival's wares and honours on the row
 import { STAFF_GLYPHS } from '../../src/net/staffCommands.js';   // STAFF-PANEL2-FIX: the glyphs that open the staff's commands, none held while cut off
 import { MASTERY_MARKS } from '../../src/net/huntLaw.js';   // HUNTERS-MARK, MARKS-OF-MASTERY: the hunt's, a Master's and the sea's titles
-import { shopKeysOf } from '../../src/net/shopLaw.js';   // SHOP: a ware bought, its bit on the row
+import { shopKeysOf, shopHeldIds } from '../../src/net/shopLaw.js';   // SHOP: a ware bought, its bit on the row; STOREFRONT: or its id
+import { EFFECT_SLOTS, effectOf, effectKitHeld } from '../../src/net/effectLaw.js';   // STOREFRONT: the effects held and worn
+import { PASS_SEASONS, passKeysOf } from '../../src/net/battlePassLaw.js';   // STOREFRONT: the Battle Pass's rewards, to the level reached
 import { ARMORY_PIECES, ARMORY_SLOTS, armoryPieceOf, armoryKitHeld } from '../../src/net/armoryLaw.js';   // ARMORY: the Aura Armory's pieces and the kit worn
 
 /** THE FOUNDER CUTOFF, and it is a date rather than a count because
@@ -346,7 +348,7 @@ const firstPlayed = (player) => Math.min(
  * @param {any} player the row
  * @param {any} env    the Worker's config
  */
-export function titlesHeld(player, env) {
+export function titlesHeld(player, env, nowS = nowSecs()) {
   const held = [];
   // FOUNDER IS FOR REGISTERED ACCOUNTS (Mac's own call when asked
   // whether guests count): a guest row is device-bound and one storage
@@ -408,12 +410,22 @@ export function titlesHeld(player, env) {
     // living Master of a profession, the serpents it helped slay - laid on the row as `masteryMarks` for this request alone
     if (Array.isArray(player?.masteryMarks)) for (const t of MASTERY_MARKS) if (player.masteryMarks.includes(t) && !held.includes(t)) held.push(t);
     for (const t of shopKeys(player, 'title')) if (!held.includes(t)) held.push(t);   // SHOP: Genesis, bought (shop.js)
+    for (const t of passKeys(player, 'title', nowS)) if (!held.includes(t)) held.push(t);   // STOREFRONT: the Battle Pass's, reached
   }
   return held;
 }
-/** SHOP (bible/06-Systems/Shop.md): the keys of one kind the shop sold this row (`shop_wares`, its bits - shop.js sets
- *  them on a paid order and takes them off on a refund). A registered account's alone: a guest cannot buy. */
-export const shopKeys = (/** @type {any} */ player, /** @type {string} */ kind) => (typeof player?.handle === 'string' && player.handle ? shopKeysOf(player?.shop_wares, kind) : []);
+/** SHOP (bible/06-Systems/Shop.md): the keys of one kind the shop sold this row (`shop_wares`, its bits, and since
+ *  STOREFRONT `shop_held`, its ids - shop.js sets them on a paid order and takes them off on a refund; a bundle or the
+ *  Eternal Set gives what it holds). A registered account's alone: a guest cannot buy. */
+export const shopKeys = (/** @type {any} */ player, /** @type {string} */ kind) => (typeof player?.handle === 'string' && player.handle ? shopKeysOf(player, kind) : []);
+/** The service's clock in whole seconds - a default for a read that was never handed one. */
+const nowSecs = () => Math.floor(Date.now() / 1000);
+/** STOREFRONT (bible/06-Systems/Battle-Pass.md): each season's experience on the row (`pass_<season>`, migration 0192). */
+export const passXpOf = (/** @type {any} */ player) => Object.fromEntries(PASS_SEASONS.map((s) => [s.id, player?.[`pass_${s.id}`]]));
+/** STOREFRONT: the keys of one kind the Battle Pass gives this row - each season's tracks to the level its experience
+ *  reached at `nowS` (net/battlePassLaw.js passGrants: the premium track with a pass held). A registered account's alone. */
+export const passKeys = (/** @type {any} */ player, /** @type {string} */ kind, nowS = nowSecs()) =>
+  (typeof player?.handle === 'string' && player.handle ? passKeysOf(passXpOf(player), shopHeldIds(player), kind, nowS * 1000) : []);
 /** WITCH1: the title an account's Hearth Offerings earn (net/identityToken.js TITLES's spelling). */
 export const HEARTHKEEPER_TITLE = 'hearthkeeper';
 /** WITCH1: the keys of one kind among the festival's account wares a row bought (festivalLaw.js FESTIVAL_WARES). */
@@ -427,7 +439,7 @@ export const DEVELOPER_AURA = 'seraphwings';
  *  first, the auras their listed titles carry (TIER_AURA), in TIER_AURA's own order - read off the config as the title is,
  *  so `env` is owed wherever a list could grant one (a caller without it reads the Broker's alone, as before).
  *  SERAPH-WINGS: and, after those, a developer's wings (DEVELOPER_AURA). */
-export function aurasHeld(player, env) {
+export function aurasHeld(player, env, nowS = nowSecs()) {
   const held = [];
   for (const [t, a] of Object.entries(TIER_AURA)) if (holdsTier(t, player, env) && !held.includes(a)) held.push(a);
   if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);
@@ -444,6 +456,7 @@ export function aurasHeld(player, env) {
   if (typeof player?.handle === 'string' && player.handle && (Number(player?.serpent_honours) & SERPENT_HONOUR_AURA)) held.push('maelstrom');
   if (typeof player?.handle === 'string' && player.handle) for (const a of festivalKeys(player, 'aura')) if (!held.includes(a)) held.push(a);   // WITCH1: Witchfire, bought
   for (const a of shopKeys(player, 'aura')) if (!held.includes(a)) held.push(a);   // SHOP: Eternal, bought
+  for (const a of passKeys(player, 'aura', nowS)) if (!held.includes(a)) held.push(a);   // STOREFRONT: the Battle Pass's, reached
   return held;
 }
 
@@ -451,28 +464,47 @@ export function aurasHeld(player, env) {
  *  Sister (`fest_wares`), and the Soul Cake once the account has taken SOULCAKE_TAKEN cakes from other players' offerings
  *  (`fest_taken`). A registered account's alone. In ICONS's order. */
 export const SOULCAKE_ICON = 'soulcake';
-export function iconsHeld(/** @type {any} */ player) {
+export function iconsHeld(/** @type {any} */ player, nowS = nowSecs()) {
   if (!(typeof player?.handle === 'string' && player.handle)) return [];
-  const own = new Set(festivalKeys(player, 'icon'));
+  const own = new Set([...festivalKeys(player, 'icon'), ...passKeys(player, 'icon', nowS)]);   // STOREFRONT: and the Battle Pass's portraits
   if (Number(player?.fest_taken) >= SOULCAKE_TAKEN) own.add(SOULCAKE_ICON);
   return ICONS.filter((i) => own.has(i));
 }
 /** WITCH1: the icon this player WEARS - the stored one, while they hold it (titleWorn's law). */
-export function iconWorn(/** @type {any} */ player) {
+export function iconWorn(/** @type {any} */ player, nowS = nowSecs()) {
   const i = player?.icon;
-  return typeof i === 'string' && i && iconsHeld(player).includes(i) ? i : undefined;
+  return typeof i === 'string' && i && iconsHeld(player, nowS).includes(i) ? i : undefined;
 }
 /** WITCH1: what a player may wear as their icon - the refusal word, or null; `null` (the character's face) always. */
-export function iconRefusal(/** @type {unknown} */ icon, /** @type {any} */ player) {
+export function iconRefusal(/** @type {unknown} */ icon, /** @type {any} */ player, nowS = nowSecs()) {
   if (icon === null) return null;
   if (typeof icon !== 'string' || !ICONS.includes(icon)) return 'no-icon';
-  return iconsHeld(player).includes(icon) ? null : 'not-held';
+  return iconsHeld(player, nowS).includes(icon) ? null : 'not-held';
 }
 /** WB9g: the aura this player WEARS - the stored one, while they hold it (titleWorn's law). AEGIS: held by a list too. */
-export function auraWorn(player, env) {
+export function auraWorn(player, env, nowS = nowSecs()) {
   const a = player?.aura;
   if (typeof a !== 'string' || !a) return undefined;
-  return aurasHeld(player, env).includes(a) ? a : undefined;
+  return aurasHeld(player, env, nowS).includes(a) ? a : undefined;
+}
+/** STOREFRONT (bible/06-Systems/Storefront.md): THE EFFECTS THIS PLAYER HOLDS, a slot's keys in the catalogue's order -
+ *  the shop's (a ware, or a bundle's) and the Battle Pass's. A registered account's alone. */
+export function effectsHeld(/** @type {any} */ player, nowS = nowSecs()) {
+  /** @type {Record<string, string[]>} */ const out = {};
+  for (const slot of EFFECT_SLOTS) {
+    const own = new Set([...shopKeys(player, slot), ...passKeys(player, slot, nowS)]);
+    out[slot] = [...own].filter((k) => effectOf(slot, k));
+  }
+  return out;
+}
+/** STOREFRONT: the effects kit this player WEARS - the stored one less any effect no longer held, or undefined. */
+export const effectsWorn = (/** @type {any} */ player, nowS = nowSecs()) => effectKitHeld(player?.effects, effectsHeld(player, nowS)) ?? undefined;
+/** STOREFRONT: what a player may wear in an effect's slot - the refusal word, or null; `null` (the slot bared) always. */
+export function effectRefusal(/** @type {unknown} */ slot, /** @type {unknown} */ key, /** @type {any} */ player, nowS = nowSecs()) {
+  if (typeof slot !== 'string' || !EFFECT_SLOTS.includes(slot)) return 'no-effect';
+  if (key === null) return null;
+  if (!effectOf(slot, key)) return 'no-effect';
+  return effectsHeld(player, nowS)[slot].includes(/** @type {string} */ (key)) ? null : 'not-held';
 }
 /** ARMORY (bible/04-Characters/Aura-Armory.md): THE AURA ARMORY PIECES THIS PLAYER HOLDS, in the catalogue's order - the
  *  Sigil Broker's off `insignia` (insignia.js, the Dagonfire line), the shop's off `shop_wares` (shop.js - a set its every
@@ -497,10 +529,10 @@ export function armoryRefusal(/** @type {unknown} */ slot, /** @type {unknown} *
   return armoryHeld(player).includes(p.key) ? null : 'armory-not-held';
 }
 /** WB9g: what a player may wear at their feet - the refusal word, or null; `null` (none) is always allowed. */
-export function auraRefusal(aura, player, env) {
+export function auraRefusal(aura, player, env, nowS = nowSecs()) {
   if (aura === null) return null;
   if (typeof aura !== 'string' || !AURAS.includes(aura)) return 'no-aura';
-  return aurasHeld(player, env).includes(aura) ? null : 'not-held';
+  return aurasHeld(player, env, nowS).includes(aura) ? null : 'not-held';
 }
 
 /** THE GLYPHS THAT ARE TRUE OF THIS PLAYER, in a fixed order. GLYPH-WEAR: a player may take one off (glyphsHidden),
@@ -513,6 +545,7 @@ export function glyphsOf(player, env, nowS) {
   for (const t of Object.keys(TIER_LISTS)) if (holdsTier(t, player, env)) on.push(TIER_GLYPH[t]);   // TITLE-N: each title's own glyph
   if (player?.arena?.champion === true) on.push('laurel');   // ARENA4: the laurel, true of the season's #1 while they hold it
   for (const g of shopKeys(player, 'glyph')) if (!on.includes(g)) on.push(g);   // SHOP: the Origin, bought - true of the account that paid for it
+  for (const g of passKeys(player, 'glyph', nowS)) if (!on.includes(g)) on.push(g);   // STOREFRONT: the Battle Pass's, reached
   return on;
 }
 
@@ -542,19 +575,19 @@ export function glyphRefusal(glyph, player, env, nowS) {
  *  a fact checked now, so the check is here rather than at the write -
  *  a developer removed from the list stops wearing the badge on their
  *  next token, without anybody having to remember to clear a column. */
-export function titleWorn(player, env) {
+export function titleWorn(player, env, nowS = nowSecs()) {
   const t = player?.title;
   if (typeof t !== 'string' || !t) return undefined;
-  return titlesHeld(player, env).includes(t) ? t : undefined;
+  return titlesHeld(player, env, nowS).includes(t) ? t : undefined;
 }
 
 /** What a player may equip, answered as the service answers it: the
  *  refusal word, or null. `null` (take it off) is always allowed - a
  *  player may always wear nothing. */
-export function equipRefusal(title, player, env) {
+export function equipRefusal(title, player, env, nowS = nowSecs()) {
   if (title === null) return null;
   if (typeof title !== 'string' || !TITLES.includes(title)) return 'no-title';
-  return titlesHeld(player, env).includes(title) ? null : 'not-held';
+  return titlesHeld(player, env, nowS).includes(title) ? null : 'not-held';
 }
 
 /** GLYPH-WEAR: `{ glyphsOff }` while a glyph is taken off, else nothing - a player hiding none reads the answer they always did. */
@@ -563,17 +596,19 @@ const glyphsOffOf = (player, env, nowS) => { const off = glyphsHidden(player, en
 /** The account view's own half: what to show in the window. WB9g: and the auras held and the one worn, and the
  *  Broker's insignia the account bought (its ids). */
 export const wardrobeOf = (player, env, nowS) => ({
-  titles: titlesHeld(player, env),
-  title: titleWorn(player, env) ?? null,
+  titles: titlesHeld(player, env, nowS),
+  title: titleWorn(player, env, nowS) ?? null,
   glyphs: glyphsOf(player, env, nowS),
   ...glyphsOffOf(player, env, nowS),   // GLYPH-WEAR: the ones taken off, absent for none - `glyphs` stays all that is true
-  auras: aurasHeld(player, env),   // AEGIS: a list's aura beside the Broker's
-  aura: auraWorn(player, env) ?? null,
+  auras: aurasHeld(player, env, nowS),   // AEGIS: a list's aura beside the Broker's
+  aura: auraWorn(player, env, nowS) ?? null,
   insignia: insigniaHeld(player?.insignia),
-  icons: iconsHeld(player),   // WITCH1: the profile icons held, and the one worn (null: the character's face)
-  icon: iconWorn(player) ?? null,
+  icons: iconsHeld(player, nowS),   // WITCH1: the profile icons held, and the one worn (null: the character's face)
+  icon: iconWorn(player, nowS) ?? null,
   armoryHeld: armoryHeld(player),   // ARMORY: the Aura Armory pieces held, and the kit worn (null for none)
   armory: armoryWorn(player) ?? null,
+  effectsHeld: effectsHeld(player, nowS),   // STOREFRONT: the kill effects, portal skins and mount looks held, and the kit worn
+  effects: effectsWorn(player, nowS) ?? null,
 });
 
 export { TITLES, GLYPHS };

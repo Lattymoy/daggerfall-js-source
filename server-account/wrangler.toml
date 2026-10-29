@@ -346,6 +346,9 @@ QUESTLINES_OPEN = "on"
 # and the Hearth Offerings (server-account/src/festival.js); outside them the days shut it whatever this says. Shut,
 # nothing is found, sold or set out, and every count is kept. "on" - the owner's ask is the event live for everyone.
 FESTIVAL_OPEN = "on"
+# STOREFRONT (bible/06-Systems/Battle-Pass.md): the Battle Pass's finds - "off", "dev" (DEVELOPER_HANDLES alone) or "on".
+# A season's own days (src/net/battlePassLaw.js PASS_SEASONS) still bound them.
+PASS_OPEN = "on"
 # CHAP4c (Chapters-Arc 6): THE CHAPTERS' TITLES - a seat's Master, officer and Former Master signed on the token - by
 # this switch, "on" or anything else for off. Shipped OFF: the relay must carry the five ids first (RELAY_VERSION
 # world183, which relay-deploy.yml deploys on the merge to main - AUDIT CHAP4 R2; CHAP6e's High Master and Season
@@ -463,7 +466,30 @@ PATREON_TIERS = "29666211:disciple,29666234:herald,29666221:hierophant"
 # deploy has put STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET from the
 # repository's own secrets (.github/workflows/account-deploy.yml).
 # ARMORY (2026-10-28, bible/04-Characters/Aura-Armory.md): and the Aura Armory's Eternal line, a piece a slot.
-SHOP_ON_SALE = "title:genesis,glyph:origin,aura:eternal,armory:eternalset,armory:eternalhalo,armory:eternalsigil,armory:eternalarmlets,armory:eternalgreaves,armory:eternaledge"
+# STOREFRONT (2026-10-29, bible/06-Systems/Storefront.md, Battle-Pass.md): and the sheet's wares - the kill effects,
+# portal skins, mount looks, name visuals, bundles, the Battle Pass and its boosters (a season's wares only in its days).
+SHOP_ON_SALE = "title:genesis,glyph:origin,aura:eternal,armory:eternalset,armory:eternalhalo,armory:eternalsigil,armory:eternalarmlets,armory:eternalgreaves,armory:eternaledge,kill:ashen,kill:voidrend,kill:pyre,portal:runic,portal:daedric,portal:aetheric,mount:spectral,mount:dawnfire,mount:warhorse,title:dawnbringer,title:voidwalker,title:eternalchampion,bundle:daedricchampion,bundle:portalmaster,bundle:lordofoblivion,bundle:seasonalcollector,pass:s1premium,pass:s1deluxe,boost:s1cog,boost:s1tonal,boost:s1heart"
+# STOREFRONT: THE LAUNCH WINDOWS - what the shop's carousel features and when, a line a window: `<ware> <from> <to>`, UTC
+# days, the last day inside; `limited` after it sells the ware only inside that window. A ware is never sold before its
+# first window opens. The live season's Battle Pass leads the carousel on its own. One drop a fortnight, as the
+# developer asked ("every step in Donate Shop should be rethinked 5 times before ship and in exact right moment").
+SHOP_FEATURED = """
+kill:ashen 2026-10-30 2026-11-12
+kill:voidrend 2026-10-30 2026-11-12
+kill:pyre 2026-10-30 2026-11-12
+portal:runic 2026-11-13 2026-11-26
+portal:daedric 2026-11-13 2026-11-26
+portal:aetheric 2026-11-13 2026-11-26
+title:dawnbringer 2026-11-27 2026-12-10
+title:voidwalker 2026-11-27 2026-12-10
+title:eternalchampion 2026-11-27 2026-12-10
+bundle:portalmaster 2026-11-27 2026-12-10 limited
+mount:spectral 2026-12-11 2026-12-24
+mount:dawnfire 2026-12-11 2026-12-24
+mount:warhorse 2026-12-11 2026-12-24
+bundle:daedricchampion 2026-12-25 2027-01-08 limited
+bundle:lordofoblivion 2026-12-25 2027-01-08 limited
+"""
 
 [[d1_databases]]
 binding = "DB"
