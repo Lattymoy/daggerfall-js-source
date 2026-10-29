@@ -248,11 +248,13 @@ into, a dungeon to go down - and the held map takes the player there.
   `06-Systems/Immersive-Travel.md` departure 13, `01-Overview/Port-Ledger.md` A. Ship passage already sailed to the
   ports past the Bay (WW3's ports in her master's list, LONG-VOYAGE's lanes; `test/scenes/bayleft_places.test.js`).
 - **CAPITAL-CARRIAGES, the drivers** (2026-10-29, the owner: *"Ensure all capitals and cities outside the bay properly
-  have the wagon transport at their gates"*): every city past the Bay already stood a carriage and a driver at each gate
-  of its wall (TS4, TS7 - measured over all 407 city templates cloned past the Bay). The seven capitals stood none: each
-  of their 18 road gates now stands Immersive Travel's carriage, team and driver (`world/capitalCarriages.js`). Outside
-  where the capital's ground allows it (the Imperial City, Solitude, Helstrom), else just inside the gate (Mournhold,
-  Alinor, Torval, Falinesti). `06-Systems/Immersive-Travel.md` departures 14 and 15.
+  have the wagon transport at their gates"*): every city past the Bay stood carriages at its wall's gates (TS4, TS7),
+  but a gate past its template's four stood none and a third of them stood on a road (AUDIT CAPITAL-CARRIAGES L2, L3,
+  T1, measured on the gates its roads give it): now every gate stands one, off the roads (`03-World/Town-Shapes.md`).
+  The seven capitals stood none: each of their 18 road gates now stands Immersive Travel's carriage, team and driver
+  (`world/capitalCarriages.js`). Outside where the capital's ground allows it (the Imperial City, Solitude, Helstrom),
+  else just inside the gate (Mournhold, Alinor, Torval, Falinesti). `06-Systems/Immersive-Travel.md` departures 14 and
+  15; `01-Overview/audits/Audit-Capital-Carriages.md`.
 - **AUDIT TRAVEL-EVERYWHERE** (2026-10-28, the owner: "Audit this"; an independent read of the diff). (1) Begin on a
   place past the Bay the world did not know (an unfound lair, a quest's site) did nothing and said nothing: the host's
   route asked the law unnamed and found no summary. FIXED: a place is one only where known, a quest's by its naming,
@@ -2598,9 +2600,11 @@ capitals on reliefs of their own if the owner wants them.
 
 **The carriage's stand** (CAPITAL-CARRIAGES, 2026-10-29): the slope under the main gate fell half a metre a metre, with
 nowhere level for Immersive Travel's carriage outside it. The Well District's ledge under the south wall is carried out
-level west of the Gate Road's last run, to 10 m past the cliff's line and 36 m along it, and banked down to the slope over
-8 m (`solitudeRelief.js` SOLITUDE_CARRIAGE_STAND, southHeight). It stays clear of the road and its shoulder: the road's
-heights are unchanged. `test/world/capitalcarriages.test.js`.
+level west of the Gate Road's last run, 13.2 m past the cliff's line and 32 m along it, and banked down to the slope over a
+tile (`solitudeRelief.js` SOLITUDE_CARRIAGE_STAND, southHeight). AUDIT CAPITAL-CARRIAGES L4, L5: its edges stand on the
+terrain's vertex lines, so the ground drawn on it is level to its edge (the first stand's edges fell between them, and
+its carriage stood on its bank 0.6 m out of true); its bank stops short of the road's shoulder, which it had reshaped by
+up to 2.3 m. The road and its shoulder are unchanged. `test/world/capitalcarriages.test.js`.
 
 ## IC-PROPS - the yards where they belong, every door its plaque, the grand city its only layout (2026-10-27)
 

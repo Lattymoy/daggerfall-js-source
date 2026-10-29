@@ -261,21 +261,21 @@ character's own clock (LIVED1).
     any driver's (`03-World/Arena-Provinces.md` TRAVEL-EVERYWHERE). A captain's map keeps the Bay's docks, and the
     classic skin's map is the Bay's alone. `test/ui/travel_everywhere.test.js`.
 14. **A capital past the Bay stands its carriages** (CAPITAL-CARRIAGES, 2026-10-29, the owner: "Ensure all capitals
-    and cities outside the bay properly have the wagon transport at their gates"). A walled city past the Bay already
-    had them: its wall carries each template gate's records (TS4, TS7). The seven capitals are our own plans with no
-    WALLAA gate, so none of their 18 road gates had a driver, and departure 13's "capital to capital" had no carriage to
-    start from. Each road gate now takes the records of Daggerfall's gate on its side (WALLAA08 north to 11 west),
-    carried to the capital's gate as TS7 carries them (`world/capitalCarriages.js`). They are then moved the least step
-    that puts every record on the capital's gardens or open ground, off its rim, clear of its models, its approach and
-    the gate's lane, and level on Solitude's relief.
+    and cities outside the bay properly have the wagon transport at their gates"). A walled city carries each template
+    gate's records to its own gates (TS4, TS7, `03-World/Town-Shapes.md`; AUDIT CAPITAL-CARRIAGES: off its roads, a
+    fifth gate dressed). The seven capitals are our own plans with no WALLAA gate, so their 18 road gates had no driver.
+    Each now takes the records of the Daggerfall gate that faces the way they stand (outside, its side's: WALLAA08 north
+    to 11 west; inside, the opposite side's), carried as TS7 carries them (`world/capitalCarriages.js`). They move the
+    least step that stands every record on the capital's gardens or open ground, off its rim, clear of its models, its
+    approach and the gate's lane, and a model level on the ground as drawn.
 15. **Inside the gate where the ground outside is too narrow.** Mournhold's, Alinor's and Torval's walls stand 6 to 8 m
-    in from their rim, whose ground is blended to the land's and not flat. Their carriages stand just inside each gate,
-    facing in, on the garden ring; Falinesti's (no wall) inside its own ground where each road reaches it. The Imperial
-    City's (Talos Bridge's landing), Helstrom's and Solitude's stand outside. Solitude's slope fell half a metre a metre
-    under its main gate, so its relief now has a level stand west of the Gate Road's last run
-    (`world/solitudeRelief.js` SOLITUDE_CARRIAGE_STAND). Each gate's records go on the block of its cell (a garden, the
-    Imperial City's approach), with no tree and no walker under them. A capital is a carriage town on the maps
-    (`hasCarriageGate`).
+    in from their rim, whose ground is blended to the land's. Their carriages stand just inside each gate, facing in, on
+    the garden ring. Falinesti has no wall: its carriages stand inside its own ground where each road reaches it. The
+    Imperial City's (Talos Bridge's landing, on a level apron - `world/rumareWaters.js` RUMARE_LANDING), Helstrom's and
+    Solitude's stand outside. Solitude's slope fell half a metre a metre under its main gate, so its relief has a level
+    stand west of the Gate Road's last run (`world/solitudeRelief.js` SOLITUDE_CARRIAGE_STAND). Each gate's records go on
+    the block of its cell, with no tree and no walker under them. The maps' wheel marks a capital's slice with a road
+    gate in it (`isCarriageTown`): the Imperial City's west slice of its 625.
 
 ## Pins
 
@@ -286,8 +286,12 @@ with `ARENA2_PATH`), `test/systems/travel/it1_heldmap.test.js` (4), `test/system
 `tools/mutants/auditit1.json` (30, all dead). Not seen in a browser: no ARENA2,
 no GPU in this container.
 
-CAPITAL-CARRIAGES: `test/world/capitalcarriages.test.js` (4, one with `ARENA2_PATH`: the four gate frames read off
-BLOCKS.BSA, and each of the 407 city templates cloned past the Bay walled with a carriage and a driver at every gate);
-`tools/mutants/capitalcarriages.json` (16, all dead). PINS MOVED: `test/audit_tesa.test.js` (the install line);
+CAPITAL-CARRIAGES: `test/world/capitalcarriages.test.js` (7, three with `ARENA2_PATH`: the gate frames off BLOCKS.BSA and
+the 407 city templates; every capital's records on the ground the terrain kernel draws; a walled city's gates on their
+roads, on the Bay and past it); `tools/mutants/capitalcarriages.json` (16) and `tools/mutants/audit_capitalcarriages.json`
+(31, two equivalent as recorded), all dead with `ARENA2_PATH` set. Audited the same day:
+`01-Overview/audits/Audit-Capital-Carriages.md`. PINS MOVED: `test/audit_tesa.test.js` (the install line),
+`test/world/baywalls.test.js` (the carrier's furniture), `test/ui/fb1004e_overworld.test.js` (the map's wheel);
 re-aimed by content: AUDIT-TESA-A6-2-own-law-alone, AUDIT-TESA-A6-2-garden-open, AUDIT-TESA-A6-2-install-no-footprint,
-AUDIT-TESA-II-C7-the-centre-carrier-alone, TESA10-models-every-block. Not seen in a browser.
+AUDIT-TESA-II-C7-the-centre-carrier-alone, TESA10-models-every-block, TB-the-carrier-bare, TB-the-fallback-unlaid,
+FB1028-Y1-the-carrier-laid-as-today. Not seen in a browser.

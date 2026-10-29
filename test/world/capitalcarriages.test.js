@@ -98,7 +98,7 @@ test('CAPITAL-CARRIAGES every capital past the Bay a carriage and a driver at ea
   for (const s of kept) for (const it of s.items) assert.ok(rumareFlatAt(it.x, it.z), `never on the far shore's rise: ${it.x}, ${it.z}`);
 });
 
-test('CAPITAL-CARRIAGES the blocks carry them: each gate\'s records on the block of its cell (a garden\'s, the Imperial City\'s approach\'s), each where its law stands it; no tree and no walker under them; none and no block changed while the mod is not loaded; a capital\'s slice with a road gate a carriage town, no other (mutants: the records unlaid; the cell another\'s; the trees planted; the walkers through; every slice a carriage town; the map\'s wheel by the blocks\' word alone)', () => {
+test('CAPITAL-CARRIAGES the blocks carry them: each gate\'s records on the block of its cell (a garden\'s, the Imperial City\'s approach\'s), each where its law stands it; no tree and no walker under them; none while the mod is not loaded, each block as it stands without them (Solitude\'s stand is its ground\'s, mod or no mod); a capital\'s slice with a road gate a carriage town, no other (mutants: the records unlaid; the cell another\'s; the trees planted; the walkers through; every slice a carriage town; the map\'s wheel by the blocks\' word alone)', () => {
   modOn();
   installCapitals({ addTextures: () => 0 });
   const blocks = capitalPortBlocks({ footprint: (cap) => (footprints.has(cap.key) ? footprints.get(cap.key) : footprints.set(cap.key, capitalFootprint(cap)).get(cap.key)), gateThings: capitalCarriagesOf });

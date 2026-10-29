@@ -461,6 +461,13 @@ and gate dressing standing only where Daggerfall's blocks put them.
   read the wall's own cells - FB1028 measured the houses: none within 2 m); 3,280
   boards, every one inside its wall; 1,640 carriages and 1,640 drivers, every carriage outside; every piece clear of the
   wall and the houses and on the town's ground.
+- **Off the roads, at every gate** (AUDIT CAPITAL-CARRIAGES L2 and L3, 2026-10-29; townGateOutside, GATE_ROAD_CLEAR,
+  `world/townGates.js`): a wall built on its pixel's roads can have more gates than its template's four frames, and the
+  things outside a gate stood where its road came in. A gate past the frames takes its nearest frame's things again,
+  turned to face it. The things outside stand on the town's own ground, 2.5 tiles and their reach off each painted road's
+  and track's line and off each gate's passage, the group moved along the wall up to 32 m. A gate's laid road goes round
+  the carriage's models. The Bay, every second walled city, the packs off, on Basic Roads' roads: 731 of 780 gates
+  dressed, now 780; 29 carriages on a road, now 0. Past the Bay 2 of 109 gates (Jehanna, Rihad) have no clear place.
 - **The yards** (`world/merchantYards/merchantYardSites.js` townGroundOf's `shut`, `scenes/world.js` townPlacesFor,
   `scenes/pixelBuild.js`): a town's Stable, Wagon Yard, joinery and port places are placed on its walk grid shut as its
   walkers' is (`world/townWalls.js` townWalkShut: off its ground, on its wall). Measured over a quarter of the cities and
