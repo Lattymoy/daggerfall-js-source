@@ -12,8 +12,8 @@
  {
   "name": "TOMBRIDES-door-asks-too",
   "file": "server-account/src/index.js",
-  "old": "{ tomb: path !== '/v1/auth/token' && path !== '/v1/homes/town' && typeof",
-  "new": "{ tomb: path !== '/v1/auth/token' && typeof",
+  "old": "{ tomb: path !== '/v1/auth/token' && path !== '/v1/homes/town' && path !== '/v1/homes/own' && typeof",
+  "new": "{ tomb: path !== '/v1/auth/token' && path !== '/v1/homes/own' && typeof",
   "tests": [
    "test/systems/online/homes_shed.test.js"
   ],
@@ -22,8 +22,8 @@
  {
   "name": "TOMBRIDES-dead-a-400",
   "file": "server-account/src/index.js",
-  "old": "no(r.error, r.error === 'dead' ? 410 : 400, origin)",
-  "new": "no(r.error, 400, origin)",
+  "old": "no(r.error, r.error === 'dead' ? 410 : 400, origin) : json(r, 200, origin);   // TOMB-RIDES: the door's own 410",
+  "new": "no(r.error, 400, origin) : json(r, 200, origin);   // TOMB-RIDES: the door's own 410",
   "tests": [
    "test/systems/online/homes_shed.test.js"
   ],

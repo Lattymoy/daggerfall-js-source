@@ -48,8 +48,8 @@
  {
   "name": "PRIMARYFOLD-door-asks-no-stream",
   "file": "server-account/src/index.js",
-  "old": "&& path !== '/v1/homes/town' && typeof body.character === 'string' ? body.character : null, stream: claimed });",
-  "new": "&& path !== '/v1/homes/town' && typeof body.character === 'string' ? body.character : null, stream: null });",
+  "old": "&& path !== '/v1/homes/own' && typeof body.character === 'string' ? body.character : null, stream: claimed });",
+  "new": "&& path !== '/v1/homes/own' && typeof body.character === 'string' ? body.character : null, stream: null });",
   "tests": [
    "test/server/primaryfold.test.js",
    "test/server/int16_progress.test.js"

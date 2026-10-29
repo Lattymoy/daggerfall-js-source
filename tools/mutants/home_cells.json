@@ -1,0 +1,252 @@
+[
+  {
+    "name": "YC4-the-moved-trigger-blind-to-score",
+    "file": "server-account/migrations/0193_home_cell.sql",
+    "old": "AFTER UPDATE OF map_id, building_key, owner_name, entry, look, score, guild_id, deed ON homes",
+    "new": "AFTER UPDATE OF map_id, building_key, owner_name, entry, look, guild_id, deed ON homes",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "a home rescored keeps its cell's version: pages hold the old score"
+  },
+  {
+    "name": "YC4-the-moved-trigger-guard-blind-to-look",
+    "file": "server-account/migrations/0193_home_cell.sql",
+    "old": "OR OLD.entry IS NOT NEW.entry OR OLD.look IS NOT NEW.look",
+    "new": "OR OLD.entry IS NOT NEW.entry OR 0",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "a home repainted keeps its cell's version"
+  },
+  {
+    "name": "YC4-the-guild-trigger-moves-no-hall",
+    "file": "server-account/migrations/0193_home_cell.sql",
+    "old": "FROM homes h WHERE h.guild_id = NEW.id",
+    "new": "FROM homes h WHERE 0",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "a guild renamed leaves its hall's cell where it stood"
+  },
+  {
+    "name": "YC4-the-backfill-range-half-a-block",
+    "file": "server-account/migrations/0193_home_cell.sql",
+    "old": "WHERE h.map_id = v.map_id AND h.building_key BETWEEN v.cell * 256 AND v.cell * 256 + 255\n    ORDER BY h.building_key)))",
+    "new": "WHERE h.map_id = v.map_id AND h.building_key BETWEEN v.cell * 256 AND v.cell * 256 + 127\n    ORDER BY h.building_key)))",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "the migration's backfill leaves out a block's high records"
+  },
+  {
+    "name": "YC4-the-backfill-stale-at-unlisted-rooms",
+    "file": "server-account/migrations/0193_home_cell.sql",
+    "old": "AND r.listed = 1 AND r.tenant IS NOT NULL AND r.until > CAST",
+    "new": "AND r.tenant IS NOT NULL AND r.until > CAST",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "the backfill waits on a room nobody can rent"
+  },
+  {
+    "name": "YC4-stale-at-unlisted-rooms",
+    "file": "server-account/src/homeCells.js",
+    "old": "r.listed = 1 AND r.tenant IS NOT NULL AND r.until > ${now})",
+    "new": "r.tenant IS NOT NULL AND r.until > ${now})",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "a cell waits on a room nobody can rent"
+  },
+  {
+    "name": "YC4-the-clock-bumps-after-the-moment",
+    "file": "server-account/src/homeCells.js",
+    "old": "'UPDATE home_cell_ver SET ver = ver + 1, stale_at = NULL WHERE stale_at IS NOT NULL AND stale_at <= ?1'",
+    "new": "'UPDATE home_cell_ver SET ver = ver + 1, stale_at = NULL WHERE stale_at IS NOT NULL AND stale_at < ?1'",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "a room free at its end is said a minute late"
+  },
+  {
+    "name": "YC4-the-clock-never-due",
+    "file": "server-account/src/homeCells.js",
+    "old": "EXISTS (SELECT 1 FROM home_cell_ver WHERE stale_at IS NOT NULL AND stale_at <= ?1) AS due",
+    "new": "0 AS due",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "a tenancy's end never moves its cell on a world with nothing stale"
+  },
+  {
+    "name": "YC4-the-rooms-counted-at-another-moment",
+    "file": "server-account/src/homeCells.js",
+    "old": "      ${roomsFreeSql(now)}\n    FROM homes h LEFT JOIN guilds g",
+    "new": "      ${roomsFreeSql('0')}\n    FROM homes h LEFT JOIN guilds g",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "a cell counts a room whose tenancy ended as let"
+  },
+  {
+    "name": "YC4-a-version-any-change",
+    "file": "server-account/src/homeCells.js",
+    "old": "const moved = state.ver != null ? Number(state.ver) > Number(state.have) : !!state.orphan;",
+    "new": "const moved = state.ver != null ? Number(state.ver) !== Number(state.have) : !!state.orphan;",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "a replica behind the asker takes its cell back"
+  },
+  {
+    "name": "YC4-the-budget-unread",
+    "file": "server-account/src/homeCells.js",
+    "old": "if (taken > 0 && bytes >= budget) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "a whole town in one answer, however large"
+  },
+  {
+    "name": "YC4-the-kept-compare",
+    "file": "server-account/src/homeCells.js",
+    "old": "if (entry && entry.ver <= have) continue;",
+    "new": "if (entry && entry.ver < have) continue;",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "a cell the asker holds sent again from memory"
+  },
+  {
+    "name": "YC4-the-written-mark-unread",
+    "file": "server-account/src/homeCells.js",
+    "old": "if (entry?.written) return 'first-primary';",
+    "new": "if (false) return 'first-primary';",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "the read after this isolate's write goes to a replica that may stand before it"
+  },
+  {
+    "name": "YC4-the-write-forgets-nothing",
+    "file": "server-account/src/homeCells.js",
+    "old": "    forgetHomeCell(mapId, buildingKey);\n",
+    "new": "",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "a write's cell kept 30 s as it stood before"
+  },
+  {
+    "name": "YC4-the-arena-moves-one-cell",
+    "file": "server-account/src/homeCells.js",
+    "old": "[[body?.mapId, body?.from], [body?.mapId, body?.to]]",
+    "new": "[[body?.mapId, body?.from]]",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "the house moved to is never built"
+  },
+  {
+    "name": "YC4-the-offer-unread",
+    "file": "server-account/src/homeCells.js",
+    "old": "return offer ? [[offer.map_id, offer.building_key]] : [];",
+    "new": "return [];",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "a sale accepted moves no cell until the clock"
+  },
+  {
+    "name": "YC4-the-shared-row-keeps-mine",
+    "file": "server-account/src/homes.js",
+    "old": ".filter(([field]) => field !== 'mine')",
+    "new": ".filter(() => true)",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "every caller told `mine: false` by the shared rows"
+  },
+  {
+    "name": "YC4-own-the-votes-unread",
+    "file": "server-account/src/homes.js",
+    "old": "      UNION SELECT building_key FROM home_votes WHERE player = ?2 AND map_id = ?4\n",
+    "new": "",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "a home the caller voted on comes without its vote"
+  },
+  {
+    "name": "YC4-own-the-offers-made-unread",
+    "file": "server-account/src/homes.js",
+    "old": "(buyer = ?2 OR seller = ?2)",
+    "new": "(seller = ?2)",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "a home the caller offered to buy comes without the offer"
+  },
+  {
+    "name": "YC4-own-the-halls-unread",
+    "file": "server-account/src/homes.js",
+    "old": "      UNION SELECT hh.building_key FROM guild_members k JOIN homes hh ON hh.guild_id = k.guild_id WHERE k.player = ?2 AND hh.map_id = ?4\n",
+    "new": "",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "a member's hall comes without its rank"
+  },
+  {
+    "name": "YC4-own-the-tenancy-unread",
+    "file": "server-account/src/homes.js",
+    "old": "      UNION SELECT building_key FROM home_rooms WHERE tenant = ?2 AND tenant_char = ?3 AND until > ?1 AND map_id = ?4\n",
+    "new": "",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "a tenant's room shut to it"
+  },
+  {
+    "name": "YC4-own-the-guildmates-unread",
+    "file": "server-account/src/homes.js",
+    "old": "AND gh.guild_id IS NULL AND gh.entry = 'guild')",
+    "new": "AND gh.guild_id IS NULL AND gh.entry = 'none')",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "a guildmate's door shut to the guild"
+  },
+  {
+    "name": "YC4-own-the-deed-unhidden",
+    "file": "server-account/src/homes.js",
+    "old": "hidden: read.results.filter((h) => deedHiddenFrom(h, player, me))",
+    "new": "hidden: read.results.filter(() => false)",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "a knight's deed read as an online home by its knight"
+  },
+  {
+    "name": "YC4-a-claim-answers-no-cell",
+    "file": "server-account/src/index.js",
+    "old": "if (!('error' in r)) return json(await homeOrdersOf(await cellsMoved(r), who.player.id, env, subtle, nowS), 200, origin);   // QUEST-HOME: a home now",
+    "new": "if (!('error' in r)) return json(await homeOrdersOf(r, who.player.id, env, subtle, nowS), 200, origin);   // QUEST-HOME: a home now",
+    "tests": [
+      "test/server/home_cells.test.js"
+    ],
+    "note": "a claim neither builds its cell nor answers it"
+  },
+  {
+    "name": "YC4-the-cells-off-the-pass",
+    "file": "server-account/src/sessionPass.js",
+    "old": "'/v1/festival/town', '/v1/homes/cells']);",
+    "new": "'/v1/festival/town']);",
+    "tests": [
+      "test/server/sessionsign.test.js"
+    ],
+    "note": "every page's minute ask of its town pays a session lookup"
+  }
+]

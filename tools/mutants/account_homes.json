@@ -168,7 +168,7 @@
   {
     "name": "ACCOUNT-HOMES-delete-yards-kept",
     "file": "server-account/src/index.js",
-    "old": "        for (const { mapId } of deleted?.moved ?? []) forgetYardTown(mapId);\n",
+    "old": "          forgetYardTown(mapId);\n",
     "new": "",
     "tests": [
       "test/server/account_homes.test.js"
