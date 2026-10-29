@@ -20,7 +20,7 @@
  {
   "name": "WW7-1-a-source-unregistered",
   "file": "src/scenes/tamrielPlacesHost.js",
-  "old": "    if (_countryTemplates) worldPlaces.registerPixels(TESA_SOURCES.country, countryRow, countryPixelOfId);   // AUDIT FB1029e P1: its id read back to its pixel\n",
+  "old": "    if (_countryTemplates) worldPlaces.registerPixels(TESA_SOURCES.country, countryRow, countryPixelOfId);   // AUDIT FB1029f P1: its id read back to its pixel\n",
   "new": "",
   "tests": [
    "test/world/worldWide/ww7_places.test.js"

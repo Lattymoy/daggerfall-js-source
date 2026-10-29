@@ -146,19 +146,6 @@ export async function putLineage({ db, nowS }, playerId, { id, record: sent, bas
   return (await staleLine(db, playerId, id, rec.model)) ?? { error: 'too-many-lineages' };
 }
 
-/** FAMILY-FORGET (bible/01-Overview/bugs/Field-Bugs-2026-10-29e.md): a line its account lets go - only one no living
- *  realm character plays (a fall a Resurrect may still take back counts as living), so nobody loses the house they wear.
- *  The record goes and frees its place under LINEAGES_MAX; its fallen's tombstones stay, so no save loads past a death.
- *  Answers `{ ok: true }` or `{ error }`: 'body', 'lineage-held', 'no-lineage'. */
-export async function forgetLineage({ db }, /** @type {string} */ playerId, /** @type {{ id: unknown }} */ { id }) {
-  if (!playerId || typeof id !== 'string' || !LINEAGE_ID_RE.test(id)) return { error: 'body' };
-  const living = 'SELECT 1 FROM realm_characters WHERE player = ? AND lineage_id = ? AND (dead_at IS NULL OR rez_lease IS NOT NULL)';
-  const gone = await db.prepare(`DELETE FROM lineages WHERE player = ? AND id = ? AND NOT EXISTS (${living})`).bind(playerId, id, playerId, id).run();
-  if (gone.meta.changes) return { ok: true };
-  const had = await db.prepare('SELECT 1 FROM lineages WHERE player = ? AND id = ?').bind(playerId, id).first();
-  return { error: had ? 'lineage-held' : 'no-lineage' };
-}
-
 /**
  * REVIVE: THE DEATHS THE STORED COPY SAYS WERE TAKEN BACK (src/systems/legacy/revived.js - an operator's revival,
  * tools/reviveRealmCharacter.mjs, stamps the stored copy). A copy from a device that never heard of the revival carries

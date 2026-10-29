@@ -568,7 +568,7 @@ account.refusal.titheThisWeek,"十分の一税は今週すでに設定されて�
 account.refusal.toSelf,"自分自身に手紙を送ることはできません。"
 account.refusal.tooLarge,"そのセーブは大きすぎてバックアップできません。"
 account.refusal.tooManyCharacters,"1つのアカウントが持てる上限までオンラインキャラクターがいます。空きを作るには1人削除してください。"
-account.refusal.tooManyLineages,"1つのアカウントがオンラインで持てる上限まで一族がいます。下で古い一族を忘れて空きを作ってください。"
+account.refusal.tooManyLineages,"1つのアカウントがオンラインで持てる上限まで一族がいます。"
 account.refusal.tooManySaves,"クラウドバックアップがいっぱいです。空きを作るには、そこにあるセーブを削除してください。"
 account.refusal.townUnwalked,"町を報告する前に、その通りを歩いてください。"
 account.refusal.townsClosed,"町の経済は現在閉じられています。"

@@ -116,7 +116,7 @@ export function approachPoints(a) {
  * @returns {{held: Array<{standIn:number, index:number, other:number, otherIndex:number, vertices:number, depth:number}>, pads: Array<{model:number, index:number, vertices:number, over:number}>, approach: Array<{model:number, index:number, door:number, by:string, k:number, over:number}>, padTriangles:number}}
  */
 export function sweepBlock(models, getModel, { drawn = drawnHillStandIn, pads = true } = {}) {
-  const placed = models.map((m, index) => ({ index, id: m.modelIdNum, M: m.matrix, mesh: getModel(m.modelIdNum) })).filter((p) => p.mesh?.positions?.length && !RMBRP_HILLS[p.id] && !isBulletinBoard(p.id));   // AUDIT FB1029e R6: no board stands (NOTICE-PANEL)
+  const placed = models.map((m, index) => ({ index, id: m.modelIdNum, M: m.matrix, mesh: getModel(m.modelIdNum) })).filter((p) => p.mesh?.positions?.length && !RMBRP_HILLS[p.id] && !isBulletinBoard(p.id));   // AUDIT FB1029f R6: no board stands (NOTICE-PANEL)
   const solidOf = new Map();
   const solid = (p) => { if (!solidOf.has(p)) solidOf.set(p, placedSolid(p.mesh, p.M)); return solidOf.get(p); };
   // HELD: a structure holds no other model's vertex past a touch

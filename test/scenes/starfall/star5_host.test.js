@@ -544,7 +544,7 @@ test('AUDIT STARFALL C4 A MASTER THAT NEVER STOOD IS STOOD AGAIN: a stand that c
   Date.now = realNow;
 });
 
-test('STAR-MASTER-FLED A MASTER GONE WITHOUT A FALL IS STOOD AGAIN: one that left the pool with no body (escaped, removed) holds nothing and is stood again whole, a world boss from its landing; one that fell with a body is its fall and stands no second (Field-Bugs-2026-10-29e: the star waited on an escaped master until dawn) (mutants: the gone master kept; a fall read as gone)', async () => {
+test('STAR-MASTER-FLED A MASTER GONE WITHOUT A FALL IS STOOD AGAIN: one that left the pool with no body (escaped, removed) holds nothing and is stood again whole, a world boss from its landing; one that fell with a body is its fall and stands no second (Field-Bugs-2026-10-29f: the star waited on an escaped master until dawn) (mutants: the gone master kept; a fall read as gone)', async () => {
   const w = world();
   clockOf(w);
   const ms = w.sites(2);

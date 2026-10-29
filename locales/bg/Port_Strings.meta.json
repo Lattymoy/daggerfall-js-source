@@ -2094,11 +2094,6 @@
   "tr": "af0b57070615",
   "by": "claude-in-session"
  },
- "account.refusal.lineageHeld": {
-  "en": "09fe688bc50a",
-  "tr": "5d0d61bdb585",
-  "by": "claude-in-session"
- },
  "account.refusal.lineageLaw": {
   "en": "fcdea82bce37",
   "tr": "6c5404a6f2f1",
@@ -3740,8 +3735,8 @@
   "by": "claude-in-session"
  },
  "account.refusal.tooManyLineages": {
-  "en": "e7f4a370fc23",
-  "tr": "6dae779b3756",
+  "en": "04ee7a4c73e9",
+  "tr": "8fa06d05e398",
   "by": "claude-in-session"
  },
  "account.refusal.tooManySaves": {
@@ -20764,21 +20759,6 @@
   "tr": "846f1ec9b9a8",
   "by": "claude-in-session"
  },
- "menu.realm.forget": {
-  "en": "03d5d8019927",
-  "tr": "133f1edfa804",
-  "by": "claude-in-session"
- },
- "menu.realm.forgetAsk": {
-  "en": "b4b939233ecf",
-  "tr": "55a76f96713e",
-  "by": "claude-in-session"
- },
- "menu.realm.forgetBody": {
-  "en": "b27beaff2ffd",
-  "tr": "6e56a6673863",
-  "by": "claude-in-session"
- },
  "menu.realm.heading": {
   "en": "81480a8e85a4",
   "tr": "90fba729bd99",
@@ -20797,11 +20777,6 @@
  "menu.realm.none": {
   "en": "e782a4c7217e",
   "tr": "676f4964aac3",
-  "by": "claude-in-session"
- },
- "menu.realm.oldFamilies": {
-  "en": "0baec9b1b418",
-  "tr": "661f337a58f1",
   "by": "claude-in-session"
  },
  "menu.realm.play": {

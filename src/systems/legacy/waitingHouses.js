@@ -108,7 +108,3 @@ export function takeUpLine({ storage, tab, familyId, personId, now = Date.now(),
   const mapId = /** @type {{ mapId?: number }} */ (place).mapId;
   return { ok: true, family, heirId: heir.id, place: { region: place.region, loc: place.loc, ...(Number.isInteger(mapId) ? { mapId } : {}) } };   // RPT1026-MISC HEIR-WAITS: a newborn's id is minted here; BAY-LEFT-B: and its map id - a seat past the Bay is booted by it (places.js birthSearch's `seat`)
 }
-
-/** FAMILY-FORGET (bible/01-Overview/bugs/Field-Bugs-2026-10-29e.md): the account's lines no living realm character plays -
- *  `played` the roster's lines (each row's `lineage`) - which the Online page offers to forget. */
-export const oldLines = (/** @type {any[]} */ families, /** @type {Set<string>} */ played) => families.filter((f) => f?.id && !played.has(f.id));

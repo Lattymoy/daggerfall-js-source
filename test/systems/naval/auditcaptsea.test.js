@@ -751,7 +751,7 @@ test('AUDIT CAPTAIN\'S SEA X1/X3: a refusal said once in its waters, and the cro
   assert.deepEqual(d.log, [], 'a party member\'s helm through the arrival\'s wait: nothing');
 });
 
-test('SEA-ROWS: never asked across a journey\'s way - a voyage to a serpent past the Bay was asked to cross on its way - and asked where the journey ends in the crossing\'s waters; never on the rows south of the Bay\'s (Field-Bugs-2026-10-29e) (mutants: the journey\'s gate; the rows\' bound)', async () => {
+test('SEA-ROWS: never asked across a journey\'s way - a voyage to a serpent past the Bay was asked to cross on its way - and asked where the journey ends in the crossing\'s waters; never on the rows south of the Bay\'s (Field-Bugs-2026-10-29f) (mutants: the journey\'s gate; the rows\' bound)', async () => {
   const c = await crossingWorld({ journey: true });
   c.step(6);
   assert.deepEqual(c.log, [], 'under way: nothing');

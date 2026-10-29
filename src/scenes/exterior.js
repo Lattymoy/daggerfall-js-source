@@ -480,7 +480,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       for (const hf of HOLD_FLATS) archives.add(hf.archive);
     }
     for (const placed of b.layout.models) {
-      if (!isBulletinBoard(placed.modelIdNum)) modelIds.add(placed.modelIdNum);   // AUDIT FB1029e R6: no board stands, none is fetched
+      if (!isBulletinBoard(placed.modelIdNum)) modelIds.add(placed.modelIdNum);   // AUDIT FB1029f R6: no board stands, none is fetched
       // AUDIT 64 F14: a city gate swaps between BOTH variants at dawn
       // and dusk (DaggerfallCityGate.cs:29-34), so both meshes have to
       // be resident, climate-remapped and their archives fetched before

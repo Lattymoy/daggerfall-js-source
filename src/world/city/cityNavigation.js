@@ -60,7 +60,7 @@ export const WATER_RECORDS_ENHANCED = Object.freeze((() => {
 export const WATER_RECORDS_CLASSIC = Object.freeze([0, 5, 6, 20, 21, 30, 31]);
 
 /** A road cell's weight (CityNavigation.cs's road family) - the yards, the monument, the warden and the town paths read
- *  a way in by it. AUDIT FB1029e R6: its home was gothwayBoards.js, which kept nothing else once the boards went. */
+ *  a way in by it. AUDIT FB1029f R6: its home was gothwayBoards.js, which kept nothing else once the boards went. */
 export const ROAD_WEIGHT = 15;
 
 export const NAV_CELLS_PER_BLOCK = 64;

@@ -1,4 +1,4 @@
-// NOTICE-PANEL (bible/01-Overview/bugs/Field-Bugs-2026-10-29e.md row 5; the owner, 2026-10-29: "remove the notice board
+// NOTICE-PANEL (bible/01-Overview/bugs/Field-Bugs-2026-10-29f.md row 5; the owner, 2026-10-29: "remove the notice board
 // prop from all cities", its replacement "a detailed drop down from the compass that shows the town name, guild control,
 // prosperity and clickable notice board button ... always be present when inside a city and go away when leaving a
 // city. This goes for any settlement"): the view (ui/hud/townPanel.js), the host (scenes/townPanelHost.js), the lines
@@ -63,7 +63,7 @@ function page({ compass = true } = {}) {
   return { doc, body, top };
 }
 const one = (root, k) => root.byClass(k)[0];
-/** Alinor as the producers mint it (AUDIT FB1029e P1: TEST THE SHAPE THE PRODUCER MINTS - its own map id and pixel). */
+/** Alinor as the producers mint it (AUDIT FB1029f P1: TEST THE SHAPE THE PRODUCER MINTS - its own map id and pixel). */
 const ALINOR_K = CAPITALS.findIndex((c) => c.key === 'alinor');
 const ALINOR_ID = capitalPlaceId(ALINOR_K, 0), ALINOR_AT = capitalCentrePixel(ALINOR_K);
 
@@ -73,7 +73,7 @@ test('NOTICE-PANEL the view: the town\'s name heads it, its lines under it, the 
   let folded = null;
   const p = createTownPanel({ doc, onNotice: () => pressed.push('notice'), onBounty: () => pressed.push('bounty'), onFold: (f) => { folded = f; } });
   assert.equal(p.shown, false, 'made hidden');
-  assert.equal(p.el.parentNode, top, 'AUDIT FB1029e P4: seated from its making - the HUD editor\'s preview before the first town');
+  assert.equal(p.el.parentNode, top, 'AUDIT FB1029f P4: seated from its making - the HUD editor\'s preview before the first town');
   p.show({ name: 'Daggerfall', lines: ['Under the Crown Charter of Daggerfall: unheld', 'Economy: Steady (50/100). Market flat.'], unseen: 3, bounty: true });
   assert.equal(p.el.parentNode, top, 'under the compass, in its column');
   assert.equal(p.shown, true);
@@ -86,7 +86,7 @@ test('NOTICE-PANEL the view: the town\'s name heads it, its lines under it, the 
   assert.equal(notice.fire('mousedown'), true, 'the hosts swing from a window mousedown - the press never reaches them');
   notice.fire('click'); bounty.fire('click');
   assert.deepEqual(pressed, ['notice', 'bounty']);
-  assert.deepEqual([notice.blurred, bounty.blurred], [1, 1], 'AUDIT FB1029e P14: a press lets go of the focus - the next Space is no press');
+  assert.deepEqual([notice.blurred, bounty.blurred], [1, 1], 'AUDIT FB1029f P14: a press lets go of the focus - the next Space is no press');
   p.show({ name: 'Daggerfall', lines: [], unseen: 0, bounty: false });
   assert.equal(bounty.hidden, true, 'no hunts kept: no Bounty Board');
   assert.equal(one(p.el, 'dftown-new').textContent, '', 'nothing new: no count');
@@ -95,7 +95,7 @@ test('NOTICE-PANEL the view: the town\'s name heads it, its lines under it, the 
   assert.ok(p.el.cls.has('folded') && p.folded);
   p.hide();
   assert.equal(p.shown, false);
-  assert.equal(one(p.el, 'dftown-name').textContent, '', 'AUDIT FB1029e P4: out of town its heading is the preview\'s, not the last town\'s');
+  assert.equal(one(p.el, 'dftown-name').textContent, '', 'AUDIT FB1029f P4: out of town its heading is the preview\'s, not the last town\'s');
   p.show({ name: 'Wayrest', lines: ['x'], unseen: 0 });
   assert.equal(one(p.el, 'dftown-name').textContent, 'Wayrest', 'drawn again in the next town');
   const lone = page({ compass: false });
@@ -103,12 +103,12 @@ test('NOTICE-PANEL the view: the town\'s name heads it, its lines under it, the 
   q.show({ name: 'Alinor', lines: [] });
   assert.ok(q.el.parentNode === lone.body && q.el.cls.has('fixed'), 'no compass column (the classic skin): on its own');
   q.place({ right: 0, bottom: 104 });
-  assert.ok(q.el.cls.has('at-compass') && q.el.style.right === '0px' && q.el.style.bottom === '104px', 'AUDIT FB1029e P6, P13: on the classic compass, off the popup text at the top');
+  assert.ok(q.el.cls.has('at-compass') && q.el.style.right === '0px' && q.el.style.bottom === '104px', 'AUDIT FB1029f P6, P13: on the classic compass, off the popup text at the top');
   q.place(null);
   assert.ok(!q.el.cls.has('at-compass') && q.el.style.bottom === '', 'no compass drawn: under the top edge');
   p.place({ right: 0, bottom: 104 });
   assert.ok(!p.el.cls.has('at-compass'), 'the enhanced HUD\'s column is its own place');
-  assert.deepEqual([TOWN_PANEL_TEXT.unseen(1), TOWN_PANEL_TEXT.unseen(0)], ['1 new', ''], 'AUDIT FB1029e P10: the count is the panel\'s word, in the player\'s language');
+  assert.deepEqual([TOWN_PANEL_TEXT.unseen(1), TOWN_PANEL_TEXT.unseen(0)], ['1 new', ''], 'AUDIT FB1029f P10: the count is the panel\'s word, in the player\'s language');
   assert.match(src('src/ui/hud/townPanel.js'), /t\('town\.panel\.new', '\{n, plural, one \{# new\} other \{# new\}\}', \{ n \}\)/);
 });
 
@@ -156,7 +156,7 @@ test('NOTICE-PANEL the host: shown in a settlement, taken down out of one and un
   setPref('townPanelFolded', true);
   const again = page();
   createTownPanelHost({ doc: again.doc, town: () => null, covered: () => false }).frame();
-  assert.ok(again.doc.body.all().find((n) => n.cls.has('dftown-panel'))?.cls.has('folded'), 'AUDIT FB1029e P8: a fold kept is a fold read back');
+  assert.ok(again.doc.body.all().find((n) => n.cls.has('dftown-panel'))?.cls.has('folded'), 'AUDIT FB1029f P8: a fold kept is a fold read back');
   setPref('townPanelFolded', false);
 });
 
@@ -214,9 +214,9 @@ test('NOTICE-PANEL the reading: a town\'s lines online, by its map id, in the Ba
 test('NOTICE-PANEL the wiring: the settlement is the Stores\' own reach (a city, hamlet or village, its streets and buildings, never below), framed above the modal gate; the boards\' places kept for the siege field\'s Market alone; the panel movable and its fold kept (mutants: the places dropped from the field; the name unshown)', () => {
   const w = hostText('src/scenes/world.js');
   assert.match(w, /const settlementHere = \(\) => \(_storesReached\(\) \? panelTownOf\(_musicLoc, playerTravelPixel\(\), getLocalizedLocationName\) : null\);/);
-  // AUDIT FB1029e P5, P8: the whole of what covers it - the classic skin's HUD toggle with it
+  // AUDIT FB1029f P5, P8: the whole of what covers it - the classic skin's HUD toggle with it
   assert.match(w, /covered: \(\) => townTalk\.overlayActive \|\| townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\) \|\| gamePaused\(\) \|\| !!townTalk\.hudHidden \|\| !hudRenderEnabled\(\) \|\| !!travelView\?\.active\n\s*\|\| !!travelOptions\?\.isTravelActive/);
-  assert.match(w, /anchor: classicCompassAnchor,/, 'AUDIT FB1029e P6, P13: the classic compass\'s corner');
+  assert.match(w, /anchor: classicCompassAnchor,/, 'AUDIT FB1029f P6, P13: the classic compass\'s corner');
   assert.match(w, /questSyncTick\(\);\n\s*townPanel\.frame\(\);/, 'every mode: a town\'s buildings are the town');
   assert.match(w, /\|\| !!travelOptions\?\.isTravelActive \|\| !!arenaBouts\.bout\(\) \|\| !!csaAboard\.aboard \|\| !!csaRuntime\?\.state\?\.CurrentBoat,/, 'the journey bar, the versus bar and the helm stand under the compass');
   const b = hostText('src/scenes/pixelBuild.js');
@@ -233,7 +233,7 @@ test('NOTICE-PANEL the wiring: the settlement is the Stores\' own reach (a city,
   assert.equal(PREF_DEFAULTS.townPanelFolded, false);
 });
 
-test('AUDIT FB1029e P2, P7: the panel\'s town is a city, a hamlet or a village (never a farm, a manor, a lone tavern or a temple); a capital over several pixels is one town - its own id, name and centre, the slice a district line - past the Bay as in it (mutants: DFU\'s seven types; a capital\'s slice its own town)', () => {
+test('AUDIT FB1029f P2, P7: the panel\'s town is a city, a hamlet or a village (never a farm, a manor, a lone tavern or a temple); a capital over several pixels is one town - its own id, name and centre, the slice a district line - past the Bay as in it (mutants: DFU\'s seven types; a capital\'s slice its own town)', () => {
   const at = { x: 207, y: 213 }, shownOf = (id, n) => `${n}*`;
   const town = (type) => panelTownOf({ name: 'P', mapTableData: { mapId: 99, locationType: type } }, at, shownOf);
   for (const t of Object.values(LOCATION_TYPES)) assert.equal(!!town(t), PANEL_TOWN_TYPES.has(t), `type ${t}`);
@@ -248,7 +248,7 @@ test('AUDIT FB1029e P2, P7: the panel\'s town is a city, a hamlet or a village (
   assert.deepEqual(panelTownOf(slice(0), { x: centre.px, y: centre.py }, shownOf), { mapId: capitalPlaceId(k, 0), px: centre.px, py: centre.py, name: 'Alinor', shown: 'Alinor*' }, 'the centre: no district');
 });
 
-test('AUDIT FB1029e P1: past the Bay the registry holds every capital\'s every slice as the build lays it, and finds a countryside place by its id unasked - so a harbour\'s and a village\'s panel say their control and prosperity (mutants: a capital\'s square read; the id never read back)', () => {
+test('AUDIT FB1029f P1: past the Bay the registry holds every capital\'s every slice as the build lays it, and finds a countryside place by its id unasked - so a harbour\'s and a village\'s panel say their control and prosperity (mutants: a capital\'s square read; the id never read back)', () => {
   const rows = pastBayPlaceRows({ pixels: null, templateOf: () => null, capitals: true });
   CAPITALS.forEach((cap, k) => {
     const want = capitalSpanPixels(k).map(({ x, y }) => `${x},${y}`).sort();
@@ -273,7 +273,7 @@ test('AUDIT FB1029e P1: past the Bay the registry holds every capital\'s every s
   assert.match(econ.panelLinesAt(capitalPlaceId(k, 1))[0] ?? '', /^Economy: /, 'the harbour slice has its economy');
 });
 
-test('AUDIT FB1029e P6, P13: on the classic skin the panel stands on the compass the HUD last drew - the corner box over its Detect row, or the large bar\'s compass - in the page\'s pixels whatever the canvas\'s own (mutants: the box unrecorded; the canvas\'s pixels read as the page\'s)', () => {
+test('AUDIT FB1029f P6, P13: on the classic skin the panel stands on the compass the HUD last drew - the corner box over its Detect row, or the large bar\'s compass - in the page\'s pixels whatever the canvas\'s own (mutants: the box unrecorded; the canvas\'s pixels read as the page\'s)', () => {
   const canvas = (w, h, rect) => ({ width: w, height: h, getBoundingClientRect: () => rect });
   const page = { left: 0, top: 0, width: 1920, height: 1080, right: 1920, bottom: 1080 };
   assert.deepEqual(compassAnchorOf({ x: 1800, y: 900, w: 120, canvas: canvas(1920, 1080, page) }, 1920, 1080), { right: 0, bottom: 180 });

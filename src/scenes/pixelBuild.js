@@ -595,7 +595,7 @@ export function createPixelBuild(host) {
           const cpu = cpuModels.get(placed.modelIdNum);
           const box = transformedAabb(archAabb(placed.modelIdNum, cpu.positions), local);
           // NOTICE-PANEL (scenes/townPanelHost.js): a town's board (RMBLayout's standalone 41739) does not stand - the town
-          // panel under the compass is its press. Its place is kept, the very box a drawn model's is (AUDIT FB1029e R1: one
+          // panel under the compass is its press. Its place is kept, the very box a drawn model's is (AUDIT FB1029f R1: one
           // reckoning, so the siege field's Market every machine lays never drifts from where a board stood)
           if (isBulletinBoard(placed.modelIdNum)) { pixelBoards.push({ box, local }); continue; }
           const climateFree = isClimateFreeModel(placed.modelIdNum);   // ARENA1: the colosseum - never swapped, nor a key of the pixel's table

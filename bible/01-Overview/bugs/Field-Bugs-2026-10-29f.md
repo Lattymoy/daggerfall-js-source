@@ -1,14 +1,14 @@
-# FIELD BUGS 2026-10-29e - the phone's boot, the Starfall's master, the families' cap, the open sea and the boards
+# FIELD BUGS 2026-10-29f - the phone's boot, the Starfall's master, the open sea and the boards
 
-Five Discord reports and the owner's board change, handed over by the owner in a session. Read on main's `c1f7101c0`
-with the freeware's data (`tools/fetch-data.sh`). The mutants are `tools/mutants/fb1029e_fieldbugs.json`.
-(Written as page (b); #1431 took 29b and 29c and #1428 took 29d first, so this batch is (e).)
+Five Discord reports and the owner's board change (one fixed on main first), handed over by the owner in a session. Read on main's `c1f7101c0`
+with the freeware's data (`tools/fetch-data.sh`). The mutants are `tools/mutants/fb1029f_fieldbugs.json`.
+(Written as page (b); #1431 took 29b and 29c, #1428 29d and #1436 29e first, so this batch is (f).)
 
 | | Report | What it was | Done |
 |---|---|---|---|
 | 1 | "Game fails to load on mobile website client" - iPhone, Safari and Chrome: "undefined is not a constructor (evaluating 'new YKt({woods:Dt,woodsBytes:pt})')" | A top-level await (FIRST-VISIT, 2026-10-28) made the world's graph async; WebKit before Safari 27 resolves a second `import()` of one before it runs | WEBKIT-TLA |
 | 2 | "Falling Star Elite Boss Softlock" - an Unquiet Elite Daedra Lord ran off, became a revenant, and the event stuck on its master | A world boss could wear the mark and run; a master gone with no body was still the master | STAR-MASTER-FLED |
-| 3 | "Families (bloodline) max" - "I have no characters anymore and I still cannot make another bloodline", and "being able to remove old families" | Every Bloodline or Enduring birth founds a line, the realm holds 40, and nothing let one go | FAMILY-FORGET |
+| 3 | "Families (bloodline) max" - "I have no characters anymore and I still cannot make another bloodline", and "being able to remove old families" | Every Bloodline or Enduring founding takes a place under the realm's 40, and nothing let one go | Fixed on main first: FAMILY-REMOVE (`Field-Bugs-2026-10-29e.md` 3) |
 | 4 | "You (almost) literally cannot go to Sethrakul fights beyond the bay, sometimes" - "You get told you're going to the E-O instead", and "it takes forever to get to the fights that aren't near to the shore" | The crossing's waters covered the sea past the Bay's rows; a voyage was asked to cross on its way; the voyage planner's floods sailed a "Λ" | SEA-ROWS, SEA-TAUT |
 | 5 | "Bounty Boards missing from Alinor and other settlements" | Daggerfall stands its board only in a city wall's blocks: no hamlet, no village and no capital past the Bay stood one | NOTICE-PANEL |
 | 6 | The owner: "remove the notice board prop from all cities", for "a detailed drop down from the compass that shows the town name, guild control, prosperity and clickable notice board button" in "any settlement, city or town" | - | NOTICE-PANEL |
@@ -23,12 +23,12 @@ and the front door imports the world twice - the menu's warm-up and Play. WebKit
 resolves the second import of such a graph at once (WebKit bug 242740, fixed by Safari 27's loader rewrite). Every
 browser on an iPhone is WebKit, so every iPhone before iOS 27. Desktop Chromium was unaffected.
 
-FOUND TOO (AUDIT FB1029e TLA-2). The menu's own graph holds the store's chunk, so the warm-up and the menu reach the
+FOUND TOO (AUDIT FB1029f TLA-2). The menu's own graph holds the store's chunk, so the warm-up and the menu reach the
 awaiting store together and the warm-up's world never runs: the world chunk's body ran in no failing run, even with Play
 25 s late.
 
 MEASURED. Of every chunk the build writes, only the store's and the two prototype pages' entries awaited at the top.
-AUDIT FB1029e TLA-2 reproduced the field's error with the WebKit the repo's Playwright pins (26.0) through the real front
+AUDIT FB1029f TLA-2 reproduced the field's error with the WebKit the repo's Playwright pins (26.0) through the real front
 door - OFFLINE, NEW GAME, BEGIN (`tools/webkitDoorProbe.mjs`): the base build threw "undefined is not a constructor
 (evaluating 'new RHt({woods:Lt,woodsBytes:Ot})')" in 4 of 6 desktop runs and on an emulated iPhone 15; this fix booted
 6 of 6, and on the iPhone.
@@ -37,7 +37,7 @@ FIXED. The store imports the pins and awaits nothing. Every install, build and d
 plain import always finds them. The dev server still works them out again for each page load: each page's HTML now
 drops the pins module it served, in place of the store asking under a URL of the load's own
 (`scripts/firstVisitPins.mjs`). `test/tree/toplevelawait.test.js` refuses a top-level await in any source module another
-imports (vendor code and template-literal imports since AUDIT FB1029e TLA-1), and the build refuses one in any chunk
+imports (vendor code and template-literal imports since AUDIT FB1029f TLA-1), and the build refuses one in any chunk
 another imports (`scripts/noTopLevelAwait.mjs`) - only a page's own entry may await. A new worktree writes the pins
 before it tests (`node scripts/firstVisitPins.mjs`; `npm install` does it), as the store imports them plainly.
 
@@ -55,19 +55,13 @@ section 51). And a master gone from the pool with no fall is no master: it is st
 never stood (`scenes/starfall/starfallHost.js` owner). Pinned through the real street pool
 (`test/systems/revenant/auditunquiet.test.js`) and the host (`test/scenes/starfall/star5_host.test.js`).
 
-## The families' bound (FAMILY-FORGET)
+## The families' bound (withdrawn for FAMILY-REMOVE)
 
-FOUND. The refusal is the account service's `too-many-lineages`: a founding past `LINEAGES_MAX` (40) lines
-(`server-account/src/legacy.js` putLineage). Every Bloodline or Enduring birth founds a new line, and nothing let one
-go - a delete, a death and "let the line end" all keep the row, and it counts. A one-life player who deleted each
-character met the bound with no characters left. A Casual character founds no line, so the bound never refused one;
-the report's "any gamemode" was not found in the code, and the message a Casual try showed would say what stopped it.
-
-FIXED. `POST /v1/realm/lineage/forget` lets go a line no living realm character plays (acct221, `forgetLineage`; a fall
-a Resurrect may still take back counts as living). Its fallen's tombstones stay, so no save loads past a death. The
-Online page lists such lines under Old families, each with Forget, and the forget drops the device's copy too, so no
-push founds it again. The bound's refusal says to forget one (`06-Systems/Legacy-Arc.md` section 9). Pinned by
-`test/server/fb1029e_family_forget.test.js`.
+This branch fixed the families' bound as FAMILY-FORGET (a forget route and an Old families list on the Online page).
+Main fixed the same report first as FAMILY-REMOVE (#1436, `Field-Bugs-2026-10-29e.md` section 3, acct221): its own
+route, its own list and the same living test. Two routes and two lists for one job would be wrong, so FAMILY-FORGET was
+withdrawn at the merge of main (AUDIT FB1029f) - its code, keys, pins and records - and this branch changes no account
+service. What the audit's family lane found, read again against FAMILY-REMOVE, is in `../audits/Audit-FB1029f.md`.
 
 ## The serpent past the Bay (SEA-ROWS, SEA-TAUT)
 
@@ -85,7 +79,7 @@ FIXED. The crossing's waters are the Bay's own rows alone, and it is never asked
 chose: no serpent site and no far lane is in them now. The floods count a step's own length, and the sailed stretch is
 pulled taut across open water (`seaTaut`): median 1.001, p90 1.004, no leg ashore on the kernel's ground (SEA-SQUARE's
 pin). Pinned by `test/world/ethersea.test.js`, `test/systems/naval/auditcaptsea.test.js` and
-`test/systems/travel/fb1029e_seataut.test.js`.
+`test/systems/travel/fb1029f_seataut.test.js`.
 
 ## The boards (NOTICE-PANEL)
 
@@ -111,4 +105,4 @@ KEPT. The boards' places, for the siege field's Market alone: every machine lays
 stand where they stood. REMOVED with the boards: the street's press and its plaque, the count over a board, the town
 map's board mark, a seat's pennant and a Festival's banner over a board, and Gothway Garden's two boards (its Bounty
 Board is on the panel). The bench stands no board and no panel (FLAGGED). Pinned by
-`test/scenes/fb1029e_townpanel.test.js` and `test/systems/bulletinboard.test.js`.
+`test/scenes/fb1029f_townpanel.test.js` and `test/systems/bulletinboard.test.js`.

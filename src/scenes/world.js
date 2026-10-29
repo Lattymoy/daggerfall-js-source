@@ -19993,7 +19993,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     beat: () => heartbeat.beat(),
     visible: () => globalThis.document?.visibilityState !== 'hidden',
   });
-  // the town's board, read where and while the town panel's frame finds the player in a town (AUDIT FB1029e P3: indoors too)
+  // the town's board, read where and while the town panel's frame finds the player in a town (AUDIT FB1029f P3: indoors too)
   if (noticeBook) heartbeat.add('board', noticeBook.heartbeatPart(() => townPanel.boardTown(FRAME_LIVE_MS)));
   /** QUEST-PARTY (2026-09-26, Mac: "Party shares them"): THE PARTY'S LAW FOR A POOL'S QUEST FOES - one home for the
    *  open air's pool (onlineStart) and each building's (worldModes' interior pool, QUEST-PARTY phase 3b). A quest shared
@@ -26648,7 +26648,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   };
   /** NOTICE-PANEL: the settlement the player is in - a city, hamlet or village, on its streets or in its buildings, never
    *  below (the Stores' own reach, _storesReached) - or null. */
-  const settlementHere = () => (_storesReached() ? panelTownOf(_musicLoc, playerTravelPixel(), getLocalizedLocationName) : null);   // AUDIT FB1029e P2, P7
+  const settlementHere = () => (_storesReached() ? panelTownOf(_musicLoc, playerTravelPixel(), getLocalizedLocationName) : null);   // AUDIT FB1029f P2, P7
   const townPanel = createTownPanelHost({   // HOST-SPLIT: src/scenes/townPanelHost.js
     town: settlementHere,
     covered: () => townTalk.overlayActive || townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused() || !!townTalk.hudHidden || !hudRenderEnabled() || !!travelView?.active
@@ -26660,7 +26660,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     showBox: (w) => townTalk.showOverlay(w),
     bounty: () => !!bountyHost,
     openBounty: (town) => bountyHost?.openBoard(town) ?? false,
-    anchor: classicCompassAnchor,   // AUDIT FB1029e P6, P13: on the classic skin, the compass's corner
+    anchor: classicCompassAnchor,   // AUDIT FB1029f P6, P13: on the classic skin, the compass's corner
   });
   const partyMarkers = () => (social?.others() ?? [])
     .filter((m) => !!m.p)

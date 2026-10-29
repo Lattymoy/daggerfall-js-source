@@ -567,7 +567,7 @@ account.refusal.titheThisWeek,"Dziesięcinę ustalono już w tym tygodniu. Możn
 account.refusal.toSelf,"Nie możesz wysłać listu do siebie."
 account.refusal.tooLarge,"Ten zapis jest zbyt duży na kopię zapasową."
 account.refusal.tooManyCharacters,"Masz tyle postaci online, ile może mieć konto. Usuń jedną, aby zrobić miejsce."
-account.refusal.tooManyLineages,"Masz tyle rodów, ile konto może mieć online. Zapomnij poniżej stary ród, aby zrobić miejsce."
+account.refusal.tooManyLineages,"Masz tyle rodów, ile konto może mieć online."
 account.refusal.tooManySaves,"Twoja kopia w chmurze jest pełna. Usuń tam jakiś zapis, aby zrobić miejsce."
 account.refusal.townUnwalked,"Przejdź ulicami miasta, zanim je zgłosisz."
 account.refusal.townsClosed,"Gospodarka miast jest na razie zamknięta."

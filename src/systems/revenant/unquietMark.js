@@ -53,7 +53,7 @@ export function markUnquiet(entity) {
   return entity.unquiet;
 }
 /** Does this foe carry the mark? Never one of the open zone's (`wildFoe`, `wildGiant`) or the sand's (`bout`), nor a
- *  world boss (`worldBoss`, the Starfall's master): its fall is its event's (STAR-MASTER-FLED, Field-Bugs-2026-10-29e). */
+ *  world boss (`worldBoss`, the Starfall's master): its fall is its event's (STAR-MASTER-FLED, Field-Bugs-2026-10-29f). */
 export const isUnquiet = (entity) => entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && !entity.worldBoss;
 /** Tests only: every draw answers `v` (true, false), or the id's own again (null) - a real pool's foe marked at will. */
 let _force = null;

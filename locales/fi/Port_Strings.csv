@@ -568,7 +568,7 @@ account.refusal.titheThisWeek,"Kymmenykset on jo asetettu tällä viikolla. Niit
 account.refusal.toSelf,"Et voi lähettää kirjettä itsellesi."
 account.refusal.tooLarge,"Tuo tallennus on liian suuri varmuuskopioitavaksi."
 account.refusal.tooManyCharacters,"Sinulla on niin monta verkkohahmoa kuin tilillä voi olla. Poista yksi tehdäksesi tilaa."
-account.refusal.tooManyLineages,"Sinulla on niin monta sukua kuin tilillä voi olla verkossa. Unohda vanha suku alta, niin tilaa vapautuu."
+account.refusal.tooManyLineages,"Sinulla on niin monta sukua kuin tilillä voi olla verkossa."
 account.refusal.tooManySaves,"Pilvivarmuuskopiosi on täynnä. Poista sieltä tallennus tehdäksesi tilaa."
 account.refusal.townUnwalked,"Kulje kaupungin kaduilla ennen kuin ilmoitat sen."
 account.refusal.townsClosed,"Kaupunkien talous on toistaiseksi suljettu."

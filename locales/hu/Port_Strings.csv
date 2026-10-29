@@ -567,7 +567,7 @@ account.refusal.titheThisWeek,"A Tizedet ezen a héten már beállították. A F
 account.refusal.toSelf,"Saját magadnak nem küldhetsz levelet."
 account.refusal.tooLarge,"Ez a mentés túl nagy a biztonsági mentéshez."
 account.refusal.tooManyCharacters,"Annyi online karaktered van, amennyi egy fiókban lehet. Törölj egyet, hogy legyen hely."
-account.refusal.tooManyLineages,"Annyi családod van online, amennyi egy fiókban lehet. Felejts el lent egy régi családot, hogy legyen hely."
+account.refusal.tooManyLineages,"Annyi családod van online, amennyi egy fiókban lehet."
 account.refusal.tooManySaves,"A felhős biztonsági mentésed megtelt. Törölj ott egy mentést, hogy legyen hely."
 account.refusal.townUnwalked,"Járd be egy város utcáit, mielőtt jelentenéd."
 account.refusal.townsClosed,"A városok gazdasága egyelőre zárva van."

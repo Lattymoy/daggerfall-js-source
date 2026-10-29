@@ -201,12 +201,6 @@ export function mergeFacts(mine, other) {
   return mine;
 }
 
-/** FAMILY-FORGET: the device's copy of family `id` let go - the realm forgot the line, so no push writes it back. */
-export function dropFamily(storage, id) {
-  if (!storage || !id) return;
-  try { storage.removeItem(keyOf(id)); } catch { /* a storage that throws keeps it: the next pull reads the realm's list */ }
-}
-
 /** Every stored family (the Hall of Ancestors), newest founded first. */
 export function listFamilies(storage) {
   const out = [];

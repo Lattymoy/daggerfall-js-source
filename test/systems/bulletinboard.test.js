@@ -9,7 +9,7 @@
 // in every town block, and no click could reach either. What is
 // pinned here is the whole path from a mill entry to the lines the
 // box shows. NOTICE-PANEL (2026-10-29): no board stands any more - the
-// town panel's Notice Board opens the same box (test/scenes/fb1029e_townpanel.test.js).
+// town panel's Notice Board opens the same box (test/scenes/fb1029f_townpanel.test.js).
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -168,7 +168,7 @@ test('NOTICE-PANEL the streaming world stands no board: the build keeps its plac
   const b = src('src/scenes/pixelBuild.js');
   const at = b.indexOf('if (isBulletinBoard(placed.modelIdNum)) { pixelBoards.push({ box, local }); continue; }');
   assert.ok(at > 0 && at < b.indexOf('const climateFree = isClimateFreeModel(placed.modelIdNum);'), 'caught before it is remapped, drawn or made solid');
-  // PIN MOVED (AUDIT FB1029e R1): its place is the very box and matrix a drawn model's are - one reckoning, read once
+  // PIN MOVED (AUDIT FB1029f R1): its place is the very box and matrix a drawn model's are - one reckoning, read once
   assert.match(b, /if \(!gpu\) continue;\n\s*const local = multiply\(originMatrix, placed\.matrix\);\n\s*const cpu = cpuModels\.get\(placed\.modelIdNum\);\n\s*const box = transformedAabb\(archAabb\(placed\.modelIdNum, cpu\.positions\), local\);\n(\s*\/\/[^\n]*\n)*\s*if \(isBulletinBoard\(placed\.modelIdNum\)\) \{ pixelBoards\.push\(\{ box, local \}\); continue; \}/);
   assert.equal(b.match(/multiply\(originMatrix, placed\.matrix\)/g)?.length, 1, 'no second reckoning of a placed model\'s matrix');
   assert.doesNotMatch(b, /boards: pixelBoards,   \/\/|BULLETIN_BOARD_MODEL_ID/, 'no list on the pixel, and no board of the build\'s own');
@@ -184,8 +184,8 @@ test('the probe exterior host stands no board either - FLAGGED: no account servi
   const e = src('src/scenes/exterior.js');
   assert.ok(e.includes("import { isBulletinBoard, isCityGate,") && e.includes("} from '../world/rmbLayout.js';"));
   assert.match(e, /if \(isBulletinBoard\(placed\.modelIdNum\)\) continue;/, 'skipped where the placement is stood');
-  assert.match(e, /if \(!isBulletinBoard\(placed\.modelIdNum\)\) modelIds\.add\(placed\.modelIdNum\);/, 'AUDIT FB1029e R6: and never fetched for it');
-  assert.match(src('tools/townSolidsSweep.mjs'), /&& !RMBRP_HILLS\[p\.id\] && !isBulletinBoard\(p\.id\)\);/, 'AUDIT FB1029e R6: the solids sweep counts no board as standing');
+  assert.match(e, /if \(!isBulletinBoard\(placed\.modelIdNum\)\) modelIds\.add\(placed\.modelIdNum\);/, 'AUDIT FB1029f R6: and never fetched for it');
+  assert.match(src('tools/townSolidsSweep.mjs'), /&& !RMBRP_HILLS\[p\.id\] && !isBulletinBoard\(p\.id\)\);/, 'AUDIT FB1029f R6: the solids sweep counts no board as standing');
   assert.doesNotMatch(e, /boardTargets|bulletinBoards|createTownPanelHost/);
   // and the CONTENT of the no-news arm, which the panel opens offline -
   // one centred row, the location's own name.

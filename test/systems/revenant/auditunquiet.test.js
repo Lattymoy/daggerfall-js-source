@@ -534,7 +534,7 @@ test('AUQ B11 THE CRAFT THROUGH THE REAL STREET POOL: a rank-II spriggan breaks 
 
 // ── a world boss's fall is its event's (STAR-MASTER-FLED) ───────────
 
-test('STAR-MASTER-FLED NEVER A WORLD BOSS: the Starfall master (`worldBoss`), marked or not, is no candidate, wears no "Unquiet" and rises from no deed (Field-Bugs-2026-10-29e: an Unquiet Elite Daedra Lord ran, became a revenant, and its star waited on it until dawn) (mutants: the candidate\'s world boss; the mark\'s; the title\'s)', () => {
+test('STAR-MASTER-FLED NEVER A WORLD BOSS: the Starfall master (`worldBoss`), marked or not, is no candidate, wears no "Unquiet" and rises from no deed (Field-Bugs-2026-10-29f: an Unquiet Elite Daedra Lord ran, became a revenant, and its star waited on it until dawn) (mutants: the candidate\'s world boss; the mark\'s; the title\'s)', () => {
   const p = me();
   assert.equal(N.revenantCandidate(foe()), true, 'the same foe, no world boss: a candidate');
   assert.equal(N.revenantCandidate(foe({ worldBoss: true })), false);

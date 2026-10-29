@@ -390,7 +390,7 @@ export function etherLight(rgb, w, tint = ETHER_LIGHT_TINT) {
 export const CROSS_X = 230;
 export const CROSS_LAND_PX = 20;
 /** Is a pixel of the Bay's world crossing waters (`landPx` its distance to the nearest land, pixels - the host's)? On the
- *  Bay's own rows alone (SEA-ROWS, bible/01-Overview/bugs/Field-Bugs-2026-10-29e.md): south of them lies the sea the world
+ *  Bay's own rows alone (SEA-ROWS, bible/01-Overview/bugs/Field-Bugs-2026-10-29f.md): south of them lies the sea the world
  *  sails past the Bay - Sumurset's lanes and the serpent's waters - which asked ships bound there to cross. */
 export const crossingWaters = (x, y, landPx) => !inEtherLaw(x, y) && x < CROSS_X && y >= 0 && y < MAX_MAP_PIXEL_Y && typeof landPx === 'number' && landPx >= CROSS_LAND_PX;   // BAY-OWN: the Bay's rows, west of High Rock too (no inBay); Infinity: no land in reach
 /** Where a crossing home comes out when the captain's way out is not kept: the open Abecean off the Bay's mouth. */

@@ -615,7 +615,7 @@ export function createStarfallHost(host) {
     }
     if (L.p === P_WAVE && S.stoodWave === L.w && !S.pending && S.waveFoes.size && [...S.waveFoes].every((f) => f.dead)) S.wc = L.w;
     // AUDIT STARFALL C4: a master that never stood (no ground under its place, a full pool) is stood again a moment on, as
-    // a wave is - none standing and none on its way. STAR-MASTER-FLED (Field-Bugs-2026-10-29e): so is one gone from the
+    // a wave is - none standing and none on its way. STAR-MASTER-FLED (Field-Bugs-2026-10-29f): so is one gone from the
     // pool with no fall (no body, never counted) - the star waited on it until dawn
     if (L.p === P_MASTER && S.master?.dead && !S.master.corpse && !S.mf) S.master = null;
     if (L.p === P_MASTER && S.masterStood && !S.master && now() - S.standAt >= STAR_RESTAND_MS) S.masterStood = false;

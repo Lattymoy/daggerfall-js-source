@@ -255,7 +255,7 @@ export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
  *  makes a click fall through to the world. */
 let lastLargeHudBar = null;
 export const largeHudBar = () => lastLargeHudBar;
-/** NOTICE-PANEL (AUDIT FB1029e P6, P13): the classic compass as last drawn - the corner box, its Detect row above it, or
+/** NOTICE-PANEL (AUDIT FB1029f P6, P13): the classic compass as last drawn - the corner box, its Detect row above it, or
  *  the large bar's - in its canvas's pixels, so the town panel stands on it; null while no classic HUD is drawn. */
 let lastCompassBox = /** @type {{ x: number, y: number, w: number, canvas: any } | null} */ (null);
 /** A compass box in the page's pixels: the right and bottom offsets of its top-right corner from a `vw` by `vh` viewport's

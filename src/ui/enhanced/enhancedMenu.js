@@ -122,7 +122,7 @@ import { offlineCopyOf, onlineCopyOf } from '../../systems/offlineCopy.js';   //
 import { sharedClassicMinutes } from '../../net/wire.js';   // AUDIT LIVED1 G: the shared clock's minute a character joins at
 import { SKY_SEGMENTS, skyClassicMinutes, wallMsForSkyMinutes } from '../../net/skyLaw.js';   // TIME4: the sky's day, said at the door
 import {
-  realmIo, realmList, realmCustoms, realmPut, realmDelete, realmLineageForget, realmUndo, realmFetch, realmRowAsSave, realmSummaryOf, realmRefusalText, takeRealmNotice,
+  realmIo, realmList, realmCustoms, realmPut, realmDelete, realmUndo, realmFetch, realmRowAsSave, realmSummaryOf, realmRefusalText, takeRealmNotice,
   sweepUnsent,
 } from '../../systems/realmSaves.js';   // REALM P1.3: the Online door lists the realm's characters, the service's
 import { applyCustoms, customsLines, crossLeveling, LEVELING_CROSS_LINE } from '../../systems/realmCustoms.js';   // REALM P1.5: an offline character comes in once, through customs
@@ -132,8 +132,7 @@ import { strandedNotice } from './strandedNotice.js';   // STRANDED: and said on
 import { bringOnlineButton } from './bringOnlineButton.js';
 import { createRealmLine } from '../../systems/legacy/realmLine.js';   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): the account's lines, read at the door
 import { loadFamily } from '../../systems/legacy/store.js';
-import { fullNameOf } from '../../systems/legacy/family.js';   // FAMILY-FORGET: an old family's founder, named
-import { waitingHouses, oldLines, takeUpLine, houseWaitsTitle, houseWaitsLine, heirButtonLabel, newbornButtonLabel } from '../../systems/legacy/waitingHouses.js';
+import { waitingHouses, takeUpLine, houseWaitsTitle, houseWaitsLine, heirButtonLabel, newbornButtonLabel } from '../../systems/legacy/waitingHouses.js';
 import { legacySettings } from '../../systems/legacy/settings.js';   // RPT1026-MISC HEIR-WAITS: the Descendants dial a newborn heir is offered by
 import { mintCharacterId } from '../../systems/characterId.js';   // REALM P1.4: a copy to offline is a new offline character
 import { exportSavesZip, collectSlots, importSlots, entriesFromFiles, slotPathOf, TRANSFER_ZIP_NAME } from '../../systems/save/saveTransfer.js';   // SP1: saves move between the website and the app
@@ -1450,8 +1449,6 @@ function realmCard(who) {
     box.append(grid);
   } else box.append(el('p', 'meta', t('menu.realm.none', 'No online characters yet. Make one, or bring one of yours in below.')));
   for (const card of waitingHouseCards()) box.append(card);
-  const old = oldFamiliesCard();
-  if (old) box.append(old);
   box.append(acts([{ label: t('menu.realm.new', 'New online character'), primary: !realmRows.length, disabled: realmBusy || realmRows.length >= realmMax, onClick: () => onAction('online-new') }]));
   return box;
 }
@@ -1484,23 +1481,6 @@ function waitingHouseCards() {
     }] : [])]));
     return card;
   });
-}
-/** FAMILY-FORGET (bible/01-Overview/bugs/Field-Bugs-2026-10-29e.md, a player: "being able to remove old families"): the
- *  account's lines no living character plays, each forgotten from here. Every new house founds a line and the realm holds
- *  LINEAGES_MAX, so a one-life player who deleted each character found every new house refused. */
-function oldFamiliesCard() {
-  if (!realmRows || !realmLineIds?.length) return null;
-  const old = oldLines(realmLineIds.map((id) => loadFamily(appStorage(), id)), new Set(realmRows.map((r) => r.lineage)));
-  if (!old.length) return null;
-  const card = el('div', 'card svoldfamilies');
-  card.append(el('h4', null, t('menu.realm.oldFamilies', 'Old families')));
-  const forget = t('menu.realm.forget', 'Forget');
-  for (const family of old) {
-    const founder = family.people[0];
-    card.append(el('p', 'meta', founder ? `${family.surname} (${fullNameOf(founder.given, family.surname)})` : family.surname));
-    card.append(acts([{ label: forget, disabled: realmBusy, onClick: () => ask(t('menu.realm.forgetAsk', 'Forget the {surname} family?', { surname: family.surname }), t('menu.realm.forgetBody', 'It leaves your families for good, and frees its place for a new one. Its fallen stay fallen.'), forget, () => realmAct(() => realmLineageForget(realmIoNow(), family.id), () => [])) }]));
-  }
-  return card;
 }
 /** HOUSE-WAITS: the Succession's choice, made here - the record stored and the realm's copy written (its birth checks
  *  the person there), then the boot births them online. */

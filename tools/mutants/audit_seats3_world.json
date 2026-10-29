@@ -15,7 +15,7 @@
   "old": "gates: pixelGates.map((g) => ({ box: g.entry?._box })), boards: pixelBoards, bounty: pixelBoardSplit, centre:",
   "new": "gates: pixelGates.map((g) => ({ box: g.entry?._box })), centre:",
   "tests": [
-   "test/scenes/fb1029e_townpanel.test.js"
+   "test/scenes/fb1029f_townpanel.test.js"
   ]
  },
  {

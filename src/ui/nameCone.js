@@ -16,7 +16,7 @@ export function nameOffDeg(view, p) {
   return Math.atan2(Math.hypot(x, y), -z) * 180 / Math.PI;
 }
 
-/** A tag's wanted opacity: 1 for a point with no angle, my party or my foe; else the cone's band. (AUDIT FB1029e R4: a
+/** A tag's wanted opacity: 1 for a point with no angle, my party or my foe; else the cone's band. (AUDIT FB1029f R4: a
  *  board's count was the one other point the names' pass took, and it went with the boards.) */
 export function nameConeTarget(p) {
   if (!p || p.near || !Number.isFinite(p.off)) return 1;

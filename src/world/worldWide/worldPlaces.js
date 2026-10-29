@@ -72,7 +72,7 @@ export function createWorldPlaces() {
   const lists = new Map();
   /** @type {Map<string, (px: number, py: number) => PlaceRow|null|undefined>} */
   const pixels = new Map();
-  /** NOTICE-PANEL (AUDIT FB1029e P1): a pixel provider's map id read back to its pixel - so a place is found by its id
+  /** NOTICE-PANEL (AUDIT FB1029f P1): a pixel provider's map id read back to its pixel - so a place is found by its id
    *  before anything asked its pixel (a town's panel, its counters' prices). @type {Map<string, (mapId: number) => ({ x: number, y: number }|null)>} */
   const pixelOfId = new Map();
   let generation = 0;

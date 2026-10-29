@@ -5,7 +5,7 @@
   "old": "for (const read of pixelOfId.values()) {",
   "new": "for (const read of [].values()) {",
   "tests": [
-   "test/scenes/fb1029e_townpanel.test.js"
+   "test/scenes/fb1029f_townpanel.test.js"
   ],
   "why": "a countryside place past the Bay found only once something asked its pixel - a village's panel says no control and no prosperity"
  },
@@ -15,7 +15,7 @@
   "old": "worldPlaces.registerPixels(TESA_SOURCES.country, countryRow, countryPixelOfId);",
   "new": "worldPlaces.registerPixels(TESA_SOURCES.country, countryRow);",
   "tests": [
-   "test/scenes/fb1029e_townpanel.test.js",
+   "test/scenes/fb1029f_townpanel.test.js",
    "test/world/worldWide/ww7_places.test.js"
   ],
   "why": "the host's countryside registered with no id reader - the registry's reader stands unused"
@@ -26,7 +26,7 @@
   "old": "for (let s = 0; s < D.w * D.h; s++) {",
   "new": "for (let s = 0; s < D.w * D.w; s++) {",
   "tests": [
-   "test/scenes/fb1029e_townpanel.test.js"
+   "test/scenes/fb1029f_townpanel.test.js"
   ],
   "why": "a capital's span read as a square - Alinor's and Torval's sea slices out of the registry again"
  },
@@ -36,7 +36,7 @@
   "old": "h: many ? 8 : cap.plan.length,",
   "new": "h: cap.plan.length,",
   "tests": [
-   "test/scenes/fb1029e_townpanel.test.js"
+   "test/scenes/fb1029f_townpanel.test.js"
   ],
   "why": "a slice of a capital over several pixels laid as its whole plan - Alinor's eight by sixteen"
  },
@@ -46,7 +46,7 @@
   "old": "new Set([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage])",
   "new": "new Set([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage, LOCATION_TYPES.HomeFarms])",
   "tests": [
-   "test/scenes/fb1029e_townpanel.test.js"
+   "test/scenes/fb1029f_townpanel.test.js"
   ],
   "why": "a farmstead given a town panel and a board of its own"
  },
@@ -56,7 +56,7 @@
   "old": "if (cap && centre) {",
   "new": "if (false) {",
   "tests": [
-   "test/scenes/fb1029e_townpanel.test.js"
+   "test/scenes/fb1029f_townpanel.test.js"
   ],
   "why": "a capital's every pixel its own town - the Imperial City's 625 boards under 14 headings"
  },
@@ -76,7 +76,7 @@
   "old": "    root.classList.toggle('fixed', !top);\n  };\n  seat();\n",
   "new": "    root.classList.toggle('fixed', !top);\n  };\n",
   "tests": [
-   "test/scenes/fb1029e_townpanel.test.js"
+   "test/scenes/fb1029f_townpanel.test.js"
   ],
   "why": "the panel in no page until the first town - the HUD editor has no preview to move"
  },
@@ -86,7 +86,7 @@
   "old": "if (drawn) { drawn = ''; name.textContent = ''; lines.replaceChildren(); }",
   "new": "",
   "tests": [
-   "test/scenes/fb1029e_townpanel.test.js"
+   "test/scenes/fb1029f_townpanel.test.js"
   ],
   "why": "out of town the preview keeps the last town's name and lines"
  },
@@ -96,7 +96,7 @@
   "old": "|| !!townTalk.hudHidden || !hudRenderEnabled() || !!travelView?.active",
   "new": "|| !!townTalk.hudHidden || !!travelView?.active",
   "tests": [
-   "test/scenes/fb1029e_townpanel.test.js"
+   "test/scenes/fb1029f_townpanel.test.js"
   ],
   "why": "the classic skin's HUD toggle leaves the panel standing"
  },
@@ -106,7 +106,7 @@
   "old": "    anchor: classicCompassAnchor,",
   "new": "",
   "tests": [
-   "test/scenes/fb1029e_townpanel.test.js"
+   "test/scenes/fb1029f_townpanel.test.js"
   ],
   "why": "the classic skin's panel under the top edge again, over the popup text"
  },
@@ -116,7 +116,7 @@
   "old": "root.style.bottom = a ? `${anchor?.bottom}px` : '';",
   "new": "",
   "tests": [
-   "test/scenes/fb1029e_townpanel.test.js"
+   "test/scenes/fb1029f_townpanel.test.js"
   ],
   "why": "the panel told the compass's corner and standing nowhere near it"
  },
@@ -126,7 +126,7 @@
   "old": "const kx = r.width / b.canvas.width, ky = r.height / b.canvas.height;",
   "new": "const kx = 1, ky = 1;",
   "tests": [
-   "test/scenes/fb1029e_townpanel.test.js"
+   "test/scenes/fb1029f_townpanel.test.js"
   ],
   "why": "a device-pixel canvas's pixels read as the page's - the panel twice as far up"
  },
@@ -136,7 +136,7 @@
   "old": "  lastCompassBox = { x: bx, y: by - DETECT_MARKER_H * s, w: bw, canvas };   // NOTICE-PANEL: over its Detect row\n",
   "new": "",
   "tests": [
-   "test/scenes/fb1029e_townpanel.test.js"
+   "test/scenes/fb1029f_townpanel.test.js"
   ],
   "why": "the corner compass drawn and never told - no anchor on the small classic HUD"
  },
@@ -156,7 +156,7 @@
   "old": "folded: getPref('townPanelFolded') === true,",
   "new": "folded: false,",
   "tests": [
-   "test/scenes/fb1029e_townpanel.test.js"
+   "test/scenes/fb1029f_townpanel.test.js"
   ],
   "why": "a fold kept and never read back - the panel opens full again each session"
  },
@@ -166,7 +166,7 @@
   "old": "unseen: (n) => (n > 0 ? t('town.panel.new', '{n, plural, one {# new} other {# new}}', { n }) : ''),",
   "new": "unseen: (n) => (n > 0 ? `${n} new` : ''),",
   "tests": [
-   "test/scenes/fb1029e_townpanel.test.js",
+   "test/scenes/fb1029f_townpanel.test.js",
    "test/net/notice1.test.js"
   ],
   "why": "the count in English beside the localised button"
@@ -177,7 +177,7 @@
   "old": "e.stopPropagation(); n.blur?.(); fn();",
   "new": "e.stopPropagation(); fn();",
   "tests": [
-   "test/scenes/fb1029e_townpanel.test.js"
+   "test/scenes/fb1029f_townpanel.test.js"
   ],
   "why": "a pressed button keeps the focus - the next Space presses it again"
  }

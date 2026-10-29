@@ -40,7 +40,7 @@ export function pastBayPlaceRows({ pixels, templateOf, capitals }) {
     CAPITALS.forEach((cap, k) => {
       const at = capitalPin({ name: cap.name, province: cap.province });
       if (!at) return;
-      // AUDIT FB1029e P1: its span as the build lays it (synthesizeCapitalLocation) - w by h slices about its centre, each
+      // AUDIT FB1029f P1: its span as the build lays it (synthesizeCapitalLocation) - w by h slices about its centre, each
       // eight blocks square where there are several; a square's n by n read Alinor's and Torval's harbours out
       const D = capitalDims(cap), many = D.w * D.h > 1;
       const pin = pixels?.byPixel.get(`${at.px},${at.py}`) ?? null;   // the place of its name, pinned on its centre
