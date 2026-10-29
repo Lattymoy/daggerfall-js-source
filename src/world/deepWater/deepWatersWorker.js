@@ -35,7 +35,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { WoodsFile } from '../../formats/woodsFile.js';
-import { buildGlobal, DeepWatersBake, PLANE_KEEP_RADIUS } from './deepWatersBake.js';   // AUDIT ETHER-OW C1-2: the planes' keep, one home
+import { buildGlobal, DeepWatersBake, PLANE_KEEP_RADIUS, bakeMeetsAt } from './deepWatersBake.js';   // AUDIT ETHER-OW C1-2: the planes' keep, one home; ACROSS-EDGE: the towns' meets
 import { cachedBake, bakeCacheKey, fnv1a, rectsFingerprint, rectsLookup } from './deepWatersBakeCache.js';
 import { buildDeepWatersPixel, deepWatersPixelTransfers } from './deepWatersPixel.js';
 import { worldBakes } from '../etherWatersBake.js';   // ETHER-DEEP
@@ -75,11 +75,11 @@ async function build(m) {
     if (!woods.load(m.woodsBytes)) throw new Error('WOODS.WLD failed to load in the deep waters worker');
     const rows = m.rects ?? [];
     const key = bakeCacheKey({ woodsHash: fnv1a(m.woodsBytes), rectsHash: rectsFingerprint(rows) });
-    const locationRectAt = rectsLookup(rows);
-    const g = await cachedBake({ key, build: () => buildGlobal(woods, { locationRectAt }) });
+    const locationRectAt = rectsLookup(rows), meetsAt = bakeMeetsAt(woods, locationRectAt);   // ACROSS-EDGE: one read of each town's meet
+    const g = await cachedBake({ key, build: () => buildGlobal(woods, { locationRectAt, meetsAt }) });
     if (!g) throw new Error('deep waters bake produced nothing');
     reader = woods;
-    bake = worldBakes(new DeepWatersBake({ woods, global: g, locationRectAt }), { woods: m.ether ? etherWoods(woods) : woods, ether: m.ether ?? null, continent: !!m.continent });
+    bake = worldBakes(new DeepWatersBake({ woods, global: g, locationRectAt, meetsAt }), { woods: m.ether ? etherWoods(woods) : woods, ether: m.ether ?? null, continent: !!m.continent });
     // the main thread's copy crosses; this thread's arrays stay behind for the pixels
     const record = { state: g.state.slice(), classes: g.classes.slice(), partialIndex: g.partialIndex.slice(), partialBits: g.partialBits.slice(), stats: { ...g.stats, cached: !!g.cached } };
     globalThis.postMessage({ t: 'built', record }, [record.state.buffer, record.classes.buffer, record.partialIndex.buffer, record.partialBits.buffer]);

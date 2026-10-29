@@ -31,6 +31,8 @@ import { layoutNature, layoutLandProps } from './terrainNature.js';
 import { jungleLayout, jungleWhole } from './jungleNature.js';   // BANTHA1: the jungle over the pixel's own layout
 import { paintJungleTrails } from '../jungle/jungleTrails.js';   // JUNGLE-TRAILS: the jungle's own trails
 import { paintRoads, smoothRoadHeights, pathCorners } from '../road/roadPainter.js';
+import { dryRoadHeights, roadCrossings } from '../road/roadDry.js';   // ROAD-DRY: the Bay's paving over the sea stands dry
+import { townMeetsAbout, applyTownMeets, meetLiftAt } from './townMeet.js';   // ACROSS-EDGE: the ground meets a town across its pixel's edge
 import { MAP_W } from '../road/roadNetwork.js';
 import { arenaRoadByte, arenaRoadCorners, arenaJoinByte } from '../arenaRoads.js';   // TESA4: Arena's roads past the Bay; TESA5: their joins on it
 import { inBay } from '../tamriel/tamrielFrame.js';
@@ -113,7 +115,13 @@ function flattenAverage(inputs, landforms, at, own) {
   return out;
 }
 
-export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, beyond = null, climates = null, wod = null, forests = null, landform = false, ecotone = null, bed = false, flattenAt = null, jungle = null, lands = null }) {
+/** ACROSS-EDGE: the meets a pass of a pixel took (townMeetsAbout's, the shaped ground's with `landforms`) - its ghost rows'. */
+export const meetsOf = (meets, landforms) => (meets?.length ? meets.map((m) => ({ px: m.px, py: m.py, meet: landforms ? m.shaped : m.plain })) : null);
+/** The ground a built pixel's grid is made again of (restrideGrid, the worker's promotion): its pixel, its samples and
+ *  ACROSS-EDGE the meets they took, which its ghost rows take too - one place, so no grid job leaves them behind. */
+export const gridGround = (p) => ({ px: p.px, py: p.py, samples: p.samples, meets: p.meets ?? null });
+
+export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, beyond = null, climates = null, wod = null, forests = null, landform = false, ecotone = null, bed = false, flattenAt = null, jungle = null, lands = null, about = null }) {
   // LANDFORM1-3: built from the network THIS kernel holds - the one the painter below paints - so the cut and the paint
   // are the same roads; restrideGrid's ghost rows take the same landforms, so the edge normals read the shaped ground.
   // LANDFORM4: and the sites this kernel holds (landforms.js landformSites, the client's to hand both threads); LANDFORM6:
@@ -127,21 +135,29 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // where they part from the shaped ground they part by at most 2.2 m (the Dunynak Excavation, 313 under 10 cm).
   const classic = landforms && hasLocation ? new Float32Array(HEIGHTMAP_DIMENSION * HEIGHTMAP_DIMENSION) : null;
   const samples = generateSamples(woods, px, py, HEIGHTMAP_DIMENSION, landforms, classic);
+  // ACROSS-EDGE: the towns about it move its ground to meet them, before any blend (world/terrain/townMeet.js)
+  const meets = about?.length ? townMeetsAbout(about, { woods, landforms, px, py, own: { samples, classic } }) : null;
+  // a location stands where it stood: its level, its outline and its reach read before the meets
+  const unmet = meets && hasLocation ? { samples: Float32Array.from(samples), classic: classic && Float32Array.from(classic) } : null;
+  if (meets) {
+    applyTownMeets(samples, px, py, meetsOf(meets, landforms));
+    if (classic) applyTownMeets(classic, px, py, meetsOf(meets, null));
+  }
   let avg = 0;
   /** @type {?Uint8Array} FB1028 YARDS Y2: the town's ground as #1184 drew it (TS2's mask over the outline before its crops) */
   let yardGround = null;
   if (hasLocation) {
     // TESA11: a city over several pixels stands on one ground - each of its pixels flattened to its centre's average
-    const flat = flattenAt ? (flattenAt.relief ? reliefFlat(flattenAt.relief) : (flattenAt.sea ? CAPITAL_SEA_FLAT : flattenAverage({ woods, roads, sites, beyond, climates }, landforms, flattenAt, px === flattenAt.px && py === flattenAt.py ? { samples, classic } : null))) : null;   // AUDIT TESA II C2: a shore capital at the sea's floor; SOLITUDE-RELIEF: one on a relief of its own at its streets' level
+    const flat = flattenAt ? (flattenAt.relief ? reliefFlat(flattenAt.relief) : (flattenAt.sea ? CAPITAL_SEA_FLAT : flattenAverage({ woods, roads, sites, beyond, climates }, landforms, flattenAt, px === flattenAt.px && py === flattenAt.py ? unmet ?? { samples, classic } : null))) : null;   // AUDIT TESA II C2: a shore capital at the sea's floor; SOLITUDE-RELIEF: one on a relief of its own at its streets' level
     const own = () => [Float32Array.from(samples), classic ? Float32Array.from(classic) : null];
     const natural = flattenAt?.sea && !flattenAt.relief ? own() : null;   // RUMARE-WATER: the land's own ground, the far shore's and the rim's
     const raised = flattenAt?.relief ? own() : null;   // SOLITUDE-RELIEF: its edge band's
-    avg = flat ? flat.avg : calcAvgMaxHeight(samples)[0];
+    avg = flat ? flat.avg : calcAvgMaxHeight(unmet?.samples ?? samples)[0];
     // TOWN-SHAPES (bible/03-World/Town-Shapes.md): a town with an outline flattens to it, at its own land's height - the sea
     // past its margin read on DFU's own samples (the classic pass's, where the ground is shaped), as its tiles are
-    const ground = locationRect?.shape ? Float32Array.from(classic ?? samples) : null;
-    avg = blendLocationTerrain(samples, avg, locationRect, HEIGHTMAP_DIMENSION, ground ?? samples);
-    if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(classic)[0], locationRect, HEIGHTMAP_DIMENSION, ground ?? classic);
+    const ground = locationRect?.shape ? (unmet ? unmet.classic ?? unmet.samples : Float32Array.from(classic ?? samples)) : null;
+    avg = blendLocationTerrain(samples, avg, locationRect, HEIGHTMAP_DIMENSION, ground ?? samples, false, unmet?.samples);
+    if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(unmet?.classic ?? classic)[0], locationRect, HEIGHTMAP_DIMENSION, ground ?? classic, false, unmet?.classic);
     if (natural) for (const [S, n] of [[samples, natural[0]], [classic, natural[1]]]) if (S && n) capitalSeaGround(S, n, tilemap, locationRect, px, py, flattenAt.seaEdges);   // RUMARE-WATER: its water the sea's, its land over it
     if (raised) for (const [S, n] of [[samples, raised[0]], [classic, raised[1]]]) if (S && n) capitalReliefGround(S, n, flattenAt.relief);   // SOLITUDE-RELIEF: every vertex its relief's
     if (ground) {
@@ -196,6 +212,10 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     // worker needs no settings access.
     if (roads.smooth !== false) smoothRoadHeights(samples, tilemap, 129, hasLocation ? locationRect : null);   // AUDIT 51: the mod skips the rect
     if (roads.smooth !== false && classic) smoothRoadHeights(classic, tilemap, 129, locationRect);   // AUDIT LANDFORMS II H2: DFU's own samples as its nature reads them
+    if (!arena) {   // ROAD-DRY: the Bay's paving over the sea stands dry, its arms across the edges as their neighbours stand them
+      const crossings = roadCrossings(px, py, (x, y) => (x >= 0 && y >= 0 && x < MAP_W ? roads.roads?.[y * MAP_W + x] ?? 0 : 0) | arenaJoinByte(x, y), inBay);
+      for (const S of classic ? [samples, classic] : [samples]) dryRoadHeights(S, tilemap, paths, 129, hasLocation ? locationRect : null, crossings);
+    }
     // GATE-ROADS (world/road/gateRoads.js): a walled town's gates on their roads - after the painter and its smoothing, so
     // Basic Roads' tiles and the ground's heights are their own
     if (hasLocation && locationRect?.gateRoads) yardPaths = yardRoads(tilemap, paths, tileData, locationRect.gateRoads);   // FB1028 YARDS: #1184's roads
@@ -223,7 +243,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   if (classic && wodResult) applyPicks(classic, wod.picks);   // AUDIT LANDFORMS II H2: DFU's nature reads the ground a site levelled (above) - so the beach it asks is DFU's own samples levelled by the same picks
   const tilemapBytes = convertTilemap(tilemap);
   // PERF-EXT26: the one grid law, the restride's too; AUDIT WATER-NEXT P1: and the bed under its water, carved here
-  const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: bed ? tilemapBytes : null });
+  const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: bed ? tilemapBytes : null, meets: meetsOf(meets, landforms) });
   // FOREST1's places - the location (hidden or not, as the caller says) and every World of Daggerfall SITE (the loader's
   // rect is only the last), each its whole footprint; never a rock field or a mountain (AUDIT FOREST1 F1: the caller marks
   // them `hide: false` and they are no place). BANTHA1: the jungle's clearings are the same places
@@ -280,6 +300,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     yardGround,   // FB1028 YARDS Y2: the town's ground as #1184 drew it, the yards' alone - null with no outline
     townGround: locationRect?.mask ?? null,   // TS6: the town's ground (townGroundMask) - its walkers' (world/townShape.js shutOffGround)
     bridges,   // ROAD-LOOK: the bridges this pixel owns (world/road/roadBridges.js bridgesOf) - null on the Bay, or with the rivers uncarved
+    meets: meetsOf(meets, landforms),   // ACROSS-EDGE: the meets its samples took - a restride's ghost rows
   };
 }
 
@@ -302,9 +323,10 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
  * @param {{ woods: object, px: number, py: number, stride?: number, samples: Float32Array, landform?: boolean, roads?: ?object, sites?: ?Uint8Array, beyond?: ?Map<number, number>, climates?: ?Uint8Array, landforms?: ?object, bed?: ?Uint8Array }} job
  * @returns {{ positions: Float32Array, normals: Float32Array, bed: ?{depths: Float32Array, sheetDepths: Float32Array, positions: Float32Array, normals: Float32Array} }}
  */
-export function restrideGrid({ woods, px, py, stride = 1, samples, landform = false, roads = null, sites = null, beyond = null, climates = null, landforms = null, bed = null }) {   // AUDIT WATER-NEXT P1: `bed` the TileMap to carve by
+export function restrideGrid({ woods, px, py, stride = 1, samples, landform = false, roads = null, sites = null, beyond = null, climates = null, landforms = null, bed = null, meets = null }) {   // AUDIT WATER-NEXT P1: `bed` the TileMap to carve by
   const lf = landforms ?? (landform ? createLandforms({ woods, roads, sites, beyond, climates }) : null);   // BAY-LEFT-GROUND: and the sites past the Bay
-  const ghost = ghostSampler(woods, px, py, HEIGHTMAP_DIMENSION, lf);
+  const raw = ghostSampler(woods, px, py, HEIGHTMAP_DIMENSION, lf);
+  const ghost = meets?.length ? (x, y) => meetLiftAt(px, py, meets, x, y, raw(x, y)) : raw;   // ACROSS-EDGE: the ghost rows the neighbours' met ground
   const grid = buildTerrainGrid(samples, stride, ghost);
   // AUDIT WATER-NEXT F2: a near grid's bed reads its neighbours' tiles across the seams (the ghost is their own kernel),
   // where its water comes near an edge

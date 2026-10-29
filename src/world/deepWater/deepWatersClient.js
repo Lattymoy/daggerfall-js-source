@@ -19,7 +19,7 @@
 //    worker runs; a job the dead worker still owed is answered here too.
 // ═══════════════════════════════════════════════════════════════════
 
-import { buildGlobalSteps, classifyPixel, PIXEL_MIXED, DeepWatersBake } from './deepWatersBake.js';
+import { buildGlobalSteps, classifyPixel, PIXEL_MIXED, PIXEL_LAND, DeepWatersBake, bakeMeetsAt } from './deepWatersBake.js';
 import { bakeCacheKey, bakeStore, cachedBake, fnv1a, rectsFingerprint, rectsLookup } from './deepWatersBakeCache.js';
 import { locationRectReader } from '../terrain/terrainTiles.js';   // BOOT-RECTS: the walk's blocks parsed once
 import { buildDeepWatersPixel } from './deepWatersPixel.js';
@@ -33,23 +33,26 @@ function defaultWorkerFactory() {
 }
 
 /**
- * SetLocationTiles' rect for every classic location whose pixel the bound
- * cannot settle - the only pixels whose blend can move the coastline.
- * @param {object} woods - the boot-smoothed reader.
- * @param {Iterable<[number, number, object]>} locations - [px, py, dfLocation].
+ * SetLocationTiles' rect for every classic location whose pixel the bound cannot settle - the only pixels whose blend can
+ * move the coastline - and ACROSS-EDGE each town `meets` names (townMeetsHost.js meetsTown) by water, a 1 seventh.
+ * @param {object} woods - the boot-smoothed reader. @param {Iterable<[number, number, object]>} locations - [px, py, dfLocation].
+ * @param {object} maps @param {object} blocks @param {(loc: any) => boolean} [meets]
  * @returns {Array<any[]>} [pixelId, xMin, xMax, yMin, yMax] rows - and the rect's outline (its `shape`, 128 x 128) sixth
  *   where it carries one (AUDIT TESA III E1-4).
  */
-export function deepWatersLocationRects(woods, locations, maps, blocks) {
+export function deepWatersLocationRects(woods, locations, maps, blocks, meets = () => false) {
   const rows = [];
   const rectOf = locationRectReader(maps, blocks);
+  /** ACROSS-EDGE: whether a town's 3 x 3 holds a pixel that may be water - its meet may raise it */
+  const nearWater = (px, py) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (classifyPixel(woods, px + dx, py + dy) !== PIXEL_LAND) return true; return false; };
   for (const [px, py, loc] of locations) {
     if (!loc || loc.spawned) continue;   // SPAWNED-DUNGEONS1 clones are the port's, not the baker's
-    if (classifyPixel(woods, px, py) !== PIXEL_MIXED) continue;
+    const met = meets(loc);
+    if (classifyPixel(woods, px, py) !== PIXEL_MIXED && !(met && nearWater(px, py))) continue;
     const r = rectOf(loc);
     // AUDIT TESA III E1-4: and the town's outline (TOWN-SHAPES TS2, terrainTiles.js locationShapeField), which the streamed
     // build's blend follows - the bake read the rect alone and blended it DFU's way, land where TS2 keeps a shore town's sea
-    rows.push([py * 1000 + px, r.xMin, r.xMax, r.yMin, r.yMax, ...(r.shape ? [r.shape] : [])]);
+    rows.push([py * 1000 + px, r.xMin, r.xMax, r.yMin, r.yMax, ...(r.shape ? [r.shape, ...(met ? [1] : [])] : [])]);
   }
   return rows;
 }
@@ -60,13 +63,13 @@ const etherGround = (woods) => (woods?.isEtherGround ? woods : etherWoods(woods)
 /** Same-thread build, sliced: at most `sliceMs` of work between yields to the event loop. */
 async function buildHere(woods, rows, { store = bakeStore(), sliceMs = 8, woodsBytes = null } = {}) {
   const key = bakeCacheKey({ woodsHash: woodsBytes ? fnv1a(woodsBytes) : 0, rectsHash: rectsFingerprint(rows) });
-  const locationRectAt = rectsLookup(rows);
+  const locationRectAt = rectsLookup(rows), meetsAt = bakeMeetsAt(woods, locationRectAt);   // ACROSS-EDGE: one read of each town's meet
   let result = null;
   if (store) {
     const hit = await store.get(key);
     if (hit && hit.state && hit.classes && hit.partialIndex && hit.partialBits) return { ...hit, cached: true };
   }
-  const steps = buildGlobalSteps(woods, { locationRectAt });
+  const steps = buildGlobalSteps(woods, { locationRectAt, meetsAt });
   for (;;) {
     const t0 = globalThis.performance?.now?.() ?? Date.now();
     let r;
