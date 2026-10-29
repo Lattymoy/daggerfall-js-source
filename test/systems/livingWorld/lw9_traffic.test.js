@@ -78,8 +78,9 @@ test('LW9 the census: the road\'s new traffic APPENDED after the first roster (L
   const first = travellerRoster({ ...city, type: undefined });
   assert.deepEqual(first.slice(0, base).map((r) => [r.id, r.name, r.job]), roster.slice(0, base).map((r) => [r.id, r.name, r.job]), 'every id before the new traffic unchanged');
   assert.ok(roster.slice(0, base).every((r) => TRAVELLER_JOBS.includes(r.job)));
-  assert.deepEqual(roster.slice(base).map((r) => `${r.id}:${r.job}`), ['patrol', 'patrol', 'patrol', 'noble', 'retainer', 'retainer', 'minstrel', 'pedlar', 'pedlar', 'pedlar', 'pedlar', 'pilgrim', 'courier'].map((j, i) => `L900.t${base + i}:${j}`));
-  assert.deepEqual(first.slice(base).map((r) => r.job), ['pedlar', 'pedlar', 'pedlar', 'pedlar', 'pilgrim', 'courier'], 'more of the road\'s own after the new traffic, whatever the kind of place');
+  // LW-WIDE: PIN MOVED - to the fourth rank (`wideFrom`), dealt after these
+  assert.deepEqual(roster.slice(base, roster.wideFrom).map((r) => `${r.id}:${r.job}`), ['patrol', 'patrol', 'patrol', 'noble', 'retainer', 'retainer', 'minstrel', 'pedlar', 'pedlar', 'pedlar', 'pedlar', 'pilgrim', 'courier'].map((j, i) => `L900.t${base + i}:${j}`));
+  assert.deepEqual(first.slice(base, first.wideFrom).map((r) => r.job), ['pedlar', 'pedlar', 'pedlar', 'pedlar', 'pilgrim', 'courier'], 'more of the road\'s own after the new traffic, whatever the kind of place');
   assert.deepEqual([...MORE_JOBS], ['pedlar', 'pilgrim', 'courier']);
   assert.deepEqual([[1], [2], [4], [9], [36]].map(([blocks]) => moreCounts({ mapId: 1, blocks })), [
     { pedlar: 0, pilgrim: 0, courier: 0 }, { pedlar: 1, pilgrim: 0, courier: 0 }, { pedlar: 1, pilgrim: 1, courier: 0 },

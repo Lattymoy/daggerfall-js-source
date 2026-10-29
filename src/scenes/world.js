@@ -120,7 +120,7 @@ import { characterRelations } from '../systems/livingWorld/regardClock.js';   //
 import { friendCards } from '../systems/livingWorld/friendWord.js';   // AUDIT FB1021d RO-4: a friend made, named for the HUD
 import { firstNameOf } from '../systems/livingWorld/lines.js';
 import { mintResident } from '../systems/livingWorld/census.js';   // LW4: a newcomer to a place the road emptied (LW3's travellers: scenes/livingWorld/livingTrips.js)
-import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn, divesIn, TRIP_REACH_PX } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths
+import { townTrips, townTripsSteps, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn, divesIn, TRIP_REACH_PX } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths
 import { placeAt, turnKey } from '../systems/livingWorld/lives.js';   // LW4: who holds a traveller's place
 import { peoplePage, residentOfId, regardBadge } from '../systems/livingWorld/people.js';   // LW7c: the chronicle's People page; AUDIT FB1010 C1: a betrothed as the census mints them
 import { troubleOf, troubledTrip } from '../systems/livingWorld/trouble.js';   // LW4: trouble on the road
@@ -513,7 +513,8 @@ import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest/rest.js';   
 import { buildingCompassDirection, directionHintString } from '../systems/talk/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it; SPAWNED-DUNGEONS2b: the same eight-word compass
 import { seasonValue, MINUTES_PER_DAY, dateFromClassicMinutes, dateTimeString, midDateTimeString } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes
 import { regionPriceAdjustment, worldPriceTiltOf, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
-import { getNameBankOfRegion, getRandomFullNameOfBank } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5); AUDIT 58: MacroHelper.GetRandomFullName, one home - TESA3: its draw, from the bank where the player stands
+import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5)
+import { personName, randomPersonName } from '../characters/personNames.js';   // AUDIT 58: MacroHelper.GetRandomFullName's draw - TESA3: from the bank where the player stands; REGION-NAMES: the person named off it
 import { createHitEffects, setSplashObserver } from './hitEffects.js';
 import { noteMyBlow, noteMyHurt, isHurtClip, poseFx, createPeerFxPlayer } from '../net/peer/peerFx.js';   // PEERFX1: the others see and hear my blows, and hear me struck
 import { hitFlashStrength, setBatchHitFlash, HIT_FLASH_S } from '../systems/hitFlash.js';   // HITFLASH1: a struck body's red - the peers' curve is the foes'
@@ -1070,7 +1071,7 @@ import { expandRandomTextRecord as expandTalkRecord, expandMessageBoxTokens } fr
 import { TOKEN_TEXT } from '../formats/textRsc.js';   // AUDIT 63 F3: TextFile.Formatting.Text, for DaggerfallMessageBox.SetText(string)'s one-token tokenization
 import { OATH_RACE_INDEX, raceDisplayName } from '../systems/talk/talkSession.js';
 import { bumpSeed } from '../formats/dfRandom.js';
-import { fullName as nameHelperFullName, GENDERS, BANK_TYPES } from '../characters/nameHelper.js';
+import { GENDERS, BANK_TYPES } from '../characters/nameHelper.js';
 
 // NameHelper.BankTypes -> the Races name TalkManagerMCP's Oath reads
 const RACE_BY_NAME_BANK = Object.freeze(Object.fromEntries(
@@ -3186,7 +3187,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     for (let d = 0; d <= NEWS_DAYS; d++) {
       // the towns about read a town a slice (townTrips keeps each day's: the visitors' read after them is the book's)
       const noon = (day - d) * 1440 + 240 + 720;
-      for (const near of livingTripWorld.townsNear(town.px ?? 0, town.py ?? 0, TRIP_REACH_PX)) { if (townTrips(near, noon, livingTripWorld, o) === undefined) out.partial = true; yield; }
+      for (const near of livingTripWorld.townsNear(town.px ?? 0, town.py ?? 0, TRIP_REACH_PX)) { if ((yield* townTripsSteps(near, noon, livingTripWorld, o)) === undefined) out.partial = true; yield; }   // AUDIT FULLER-LW A7: a traveller a slice
       const vs = livingVisitorsCached(town, day - d, o);
       if (vs === undefined) out.partial = true;   // a way still asked: the word worked again later
       yield;
@@ -3199,7 +3200,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         const heard = relay && courier ? yield* livingVisitsGen(tr.from, Math.floor((tr.outT0 - 240) / 1440), o, false) : [];
         if (heard.partial) out.partial = true;
         const fromNoon = Math.floor((tr.outT0 - 240) / 1440) * 1440 + 240 + 720;
-        for (let b = 0; b <= NEWS_DAYS; b++) { townTrips(tr.from, fromNoon - b * 1440, livingTripWorld, o); yield; }   // its town's news, a day a slice
+        for (let b = 0; b <= NEWS_DAYS; b++) { yield* townTripsSteps(tr.from, fromNoon - b * 1440, livingTripWorld, o); yield; }   // its town's news, a day a slice (a traveller at a time)
         const said = livingRoadNewsAt(tr.from, tr.outT0, o);
         if (!said.whole) out.partial = true;   // AUDIT LW-II B4: a day of its town's news still asked - the word worked again
         out.push({ id: tr.id, from, inT: tr.outT1, outT0: tr.outT0, courier, news: said.news, ...(heard.length ? { relay: heard } : {}) });
@@ -18369,7 +18370,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // OWN nameBank - not the region's, so this is not talkMcp's
     // one-argument form. Unmounted, %pqn in the "any work" answers
     // (8076/8077) named nobody while still spending the seeded roll.
-    fullName: (nameBank, gender) => nameHelperFullName(nameBank, gender),
+    fullName: (nameBank, gender) => personName(nameBank, gender),   // REGION-NAMES: the Person's own door (quest/person.js), so %pqn names them alike
     buildingType: () => (modes?.interiorBuilding?.buildingType === TALK_BUILDING_TYPES.Palace ? 'Palace' : null),
     isPlayerInsideCastle: () => modes?.insideDungeonCastle ?? false,   // ROAD-B B4: GameManager.IsPlayerInsideCastle, LIVE (see the note on the pipeline mount below)
     guildMemberships: () => Object.entries(activeMemberships(playerEntity))
@@ -18460,7 +18461,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  LOCATION's regionIndex is -1 across the whole wilderness and fell
    *  through getNameBankOfRegion to Breton, the same drift AUDIT 24
    *  fixed on the quest side. */
-  const talkFullName = (gender) => nameHelperFullName(nameBankHere(), gender);   // TESA3: the province's people past the Bay
+  const talkFullName = (gender) => personName(nameBankHere(), gender);   // TESA3: the province's people past the Bay; REGION-NAMES
 
   /** TalkManagerMCP's context: the two engine objects plus the host
    *  data the thirteen handlers read. Built lazily because the
@@ -18478,7 +18479,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // through to MacroHelper.GetRandomFullName, whose gender is a coin
     // flip on the DFRandom stream (:333-341) - not Male. One home, in
     // nameHelper.js beside its GetRandomNameBank sibling.
-    randomFullName: () => getRandomFullNameOfBank(nameBankHere()),   // TESA3: MacroHelper.GetRandomFullName's draw, from the bank where the player stands
+    randomFullName: () => randomPersonName(nameBankHere()),   // TESA3: MacroHelper.GetRandomFullName's draw, from the bank where the player stands
     fullName: (gender) => talkFullName(gender === 'female' ? GENDERS.Female : GENDERS.Male),
     localizedText: (key) => TALK_STRINGS[key] ?? '',
     // ROAD-E E7: THE ONE GAMEMANAGER. MacroHelper's GLOBAL rows read

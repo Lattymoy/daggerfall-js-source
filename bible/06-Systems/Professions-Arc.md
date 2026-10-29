@@ -2353,7 +2353,7 @@ As built:
   And, asked (Mac: "Hold it at nodes"), a node under the look or an act playing holds the free climb's walk-in start
   (CLIMB-NODE, `player/motor.js` _freeStart) - walking into a vein's rock to reach it had climbed the rock.
 
-- **AUDIT TAMRIEL-WIDE C3** (2026-10-28, acct212; the owner: "ensure our future development isnt just Daggerfall
+- **AUDIT TAMRIEL-WIDE C3** (2026-10-28, acct213; the owner: "ensure our future development isnt just Daggerfall
   anymore and is the entirety of tamriel"): a dungeon vein past the Bay is keyed by its whole map id. Past the Bay the
   bits of `MapId & 0xfffff` are a lane's count, not a pixel. An Eltheric ruin and a lair shared one id (53,534 of
   56,792 ruins; Old Aelara and the lair at (2393,-635) were both 573867), and so did two abysses: one witnessed fact
@@ -2368,7 +2368,7 @@ As built:
   that pixel (`dungeonIdentity.js:"export function keptGround(x, y) {"`). Its template is picked by hash and by the
   player's quest sites, so two players could name two grounds for one abyss. At sea past the Bay that ground is the
   Ocean climate and region 0, the politic map's clamp, as a haul there reads it. The Bay's abyss keeps its template's
-  ground, the one its facts were witnessed under. **Deploy**: the account service (acct212) before the site; an
+  ground, the one its facts were witnessed under. **Deploy**: the account service (acct213) before the site; an
   older service refuses a whole id (`bad-node`, `bad-pixels`). The deploys run the relay, then the account, then the
   site (AUDIT TAMRIEL-WIDE II R3). The relay is unchanged. **Pinned**:
   `test/world/worldWide/audit_tamrielwide_account.test.js` (4 of its 7), `tools/mutants/audit_tamrielwide_account.json`

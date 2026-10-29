@@ -240,7 +240,7 @@ import {
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
 import { mintToken, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, mintHomeOrder, mintYardOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
-import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, SAFE_OPEN_ROUTES, STAFF_ROUTES, savePathOf, realmPathOf, poiPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining, routeDb, d1BookmarkOf, D1_BOOKMARK_RE, d1Overloaded, noteOverload, shedding, REPLICA_ROUTES } from './service.js';   // SCALE4d: the routes a read replica may serve, and the session they are served on
+import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, SAFE_OPEN_ROUTES, STAFF_ROUTES, savePathOf, realmPathOf, poiPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining, routeDb, d1BookmarkOf, D1_BOOKMARK_RE, d1Overloaded, noteOverload, shedding, REPLICA_ROUTES, replicaDb, REPLICA_ANY } from './service.js';   // SCALE4d: the routes a read replica may serve, and the session they are served on
 import { poiRolesOf, putPoiAsset, getPoiAsset, savePoiDraft, submitPoi, withdrawPoi, requestRetire, reviewPoi, rollbackPoi, listPoi, poiHistory, poiQueue, poiLiveFeed, poiHeldVersion, poiFeedTag, listShelf, shelfEntry, shelve, unshelve, POI_ASSET_MAX, POI_DRAFT_BODY_MAX, POI_LIVE_ASSET_MAX_AGE_S } from './poi.js';   // POI-1: the POI store - builders draft, an approver decides, the feed is what is live; POI-4b: the library's shelf
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey, gatePublicKey } from './signing.js';
@@ -886,12 +886,16 @@ const service = {
     // REPLICA_ROUTES); every other route on the binding as before
     // SCALE4g: and the reads a tab keeps asking, each on the session of the bookmark it carries; the session is held so
     // the answer can carry its newest bookmark back (`fetch`, below)
-    const db = routeDb(env.DB, path, request.method, d1BookmarkOf(request));
+    // SHED-REPLICA (bible/11-Multiplayer/Scale-Arc.md): A REPLICA READ THIS ISOLATE WOULD SHED ASKS ANY INSTANCE INSTEAD.
+    // Overloaded, the primary outruns its replica, so no replica is as new as a bookmark and every read went to the
+    // primary (0% replica from 01:15 on 2026-10-29). A display a little old answers; a shed answers nothing.
+    const shed = shedding(path, request.method, Date.now());
+    const db = shed && REPLICA_ROUTES.get(path) === request.method ? replicaDb(env.DB, REPLICA_ANY) : routeDb(env.DB, path, request.method, d1BookmarkOf(request));
     if (db !== env.DB) held.session = db;
     const ctx = { db, primary: env.DB, subtle, rand, nowS };   // SCALE4g: `primary` the binding, for a read-then-store a session must not make (board.js)
     // BUSY-GATE (service.js shedding): A READ THIS ISOLATE SHEDS, having just met an overloaded database, is answered as
-    // the overload is - before the session's lookup or any statement of its own
-    if (shedding(path, request.method, Date.now())) return overloaded(origin);
+    // the overload is - before the session's lookup or any statement of its own (SHED-REPLICA: one no replica may serve)
+    if (shed && db === env.DB) return overloaded(origin);
 
     try {
       // PATREON-LINK: THE THREE DOORS A BROWSER AND PATREON KNOCK AT. No session: each is proven by what it carries

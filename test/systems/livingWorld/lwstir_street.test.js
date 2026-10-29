@@ -472,7 +472,9 @@ test('LW-STIR on the street: an incident takes its two out of the round\'s circl
         assert.equal(mine.length, 1, `${key}: one line of theirs`);
         assert.ok(mine[0].person.living.id === line.who.id && mine[0].text === line.text && mine[0].kind === (line.loud ? 'shout' : 'talk'), `${key}: by its speaker, ${line.loud ? 'shouted' : 'said'}`);
         said++;
-        assert.equal(sayWith(lt, rowsOf(lt, ids, new Set([line.who.id === a.id ? b.id : a.id])), [pa.x, 1.6, pa.z], 50).filter((o) => o.person.living.id === a.id || o.person.living.id === b.id).length, 0, `${key}: not while the other walks`);
+        // LW-ANTICS: PIN MOVED - a cutpurse's chase is said on the run, from its first shout
+        const chase = inc.kind === 'cutpurse' && t >= inc.loudFrom;
+        assert.equal(sayWith(lt, rowsOf(lt, ids, new Set([line.who.id === a.id ? b.id : a.id])), [pa.x, 1.6, pa.z], 50).filter((o) => o.person.living.id === a.id || o.person.living.id === b.id).length, chase ? 1 : 0, `${key}: ${chase ? 'said on the run' : 'not while the other walks'}`);
       }
       if (!stirLoud(inc, t)) continue;
       // shouted: the spot's circles hush - a line its circle has this moment goes unsaid - and its others turn to look
@@ -610,7 +612,16 @@ test('LW-STIR the game\'s own cities (ARENA2): Daggerfall, Wayrest and Ripmarket
         words++;
         tickAt(lt, (inc.from + inc.end) / 2);
         const pa = lt._aloneAt.get(inc.members[0].id), pb = lt._aloneAt.get(inc.members[1].id);
-        if (pa?.spot.key === key && pb?.spot.key === key) { assert.ok(Math.abs(Math.hypot(pa.x - pb.x, pa.z - pb.z) - FACE_M) < 1e-6, `${name} ${key}: FACE_M apart`); apart++; }
+        if (pa?.spot.key === key && pb?.spot.key === key) {
+          // LW-DENSE: PIN MOVED - a fuller square meets AUDIT LW-STIR B5 more often: where no place before the one who keeps
+          // their stand is free of the spot's others, the other speaks from their own; anywhere else, FACE_M apart
+          const k0 = lt._inStir.get(inc.members[0].id).keeps === inc.members[0].id ? 0 : 1;
+          const keeper = k0 === 0 ? pa : pb, other = k0 === 0 ? pb : pa;
+          const others = [...(lt._circled.get(key) ?? []), ...[...lt._aloneAt.entries()].filter(([id, q]) => q.spot.key === key && id !== inc.members[1 - k0].id).map(([, q]) => q)].filter((q) => q !== keeper);
+          const roomy = besideStand(keeper.spot, keeper, (x, z) => [keeper, ...others].every((q) => Math.hypot(q.x - x, q.z - z) >= SPACE_M - 1e-6), lt._street);
+          if (roomy || Math.abs(Math.hypot(pa.x - pb.x, pa.z - pb.z) - FACE_M) < 1e-6) { assert.ok(Math.abs(Math.hypot(pa.x - pb.x, pa.z - pb.z) - FACE_M) < 1e-6, `${name} ${key}: FACE_M apart`); apart++; }
+          else assert.ok(Math.hypot(other.x - keeper.x, other.z - keeper.z) >= SPACE_M - 1e-6, `${name} ${key}: no room before them - from their own`);
+        }
       }
     }
     assert.ok(halts >= 4 && words >= 15 && apart >= words * 0.8, `${name}: halted ${halts}, ${words} incidents, ${apart} stood apart`);

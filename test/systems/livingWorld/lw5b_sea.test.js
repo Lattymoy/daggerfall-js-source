@@ -5,6 +5,7 @@
 // ports (test/lwRoads.mjs `sea`) and the synthetic town.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { isWidePlace } from '../../../src/systems/livingWorld/census.js';   // LW-WIDE
 import { readFileSync } from 'node:fs';
 import { synthMap, livingMap, partiesOver } from '../../lwRoads.mjs';
 import { synthTown } from '../../lwTown.mjs';
@@ -34,6 +35,7 @@ test('LW5b the passage: a port town\'s traveller sails on about SEA_CHANCE of th
       for (let k = 40; k < 70; k++) {
         const t = ownTrip(res, town, k, sea.world, O());
         if (!town.port || !(SEA_CHANCE[res.job] > 0)) { assert.ok(!t?.sea, `${res.job} of ${town.name}: never by sea`); continue; }
+        if (isWidePlace(res, sea.world.rosterOf(town))) continue;   // LW-WIDE: PIN MOVED - the fourth rank stands after a port's sailors, so its places are other slots on the land's copy
         const lt = ownTrip(res, landOf.get(town.mapId), k, land.world, O());
         if (!t) { assert.equal(lt, null, 'no trip at all: none by road either'); continue; }
         trips++;
@@ -77,7 +79,7 @@ test('LW5b the passage: a port town\'s traveller sails on about SEA_CHANCE of th
   // the fallback: the cycles a port's traveller's dice said sail, with no lane to sail, are the road's trips they always were
   const noLanes = { ...sea.world, lanesFrom: () => [] };
   let fellBack = 0;
-  for (const r of sea.world.rosterOf(port).filter((x) => SEA_CHANCE[x.job] > 0)) {
+  for (const r of sea.world.rosterOf(port).filter((x) => SEA_CHANCE[x.job] > 0 && !isWidePlace(x, sea.world.rosterOf(port)))) {   // LW-WIDE: the first ranks (the land's copy holds the fourth at other slots)
     for (let k = 40; k < 70; k++) {
       if (!(lwRng(r.town, r.slot, k, 0x736561)() < SEA_CHANCE[r.job])) continue;
       const lt = ownTrip(r, landOf.get(port.mapId), k, land.world, O());

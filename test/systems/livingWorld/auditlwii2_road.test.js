@@ -363,7 +363,8 @@ test('AUDIT LW-II-2 R8: a company hired on a merchant\'s train is a company stil
         seen.add(tr.id);
         const c = companiesOf(map.world.rosterOf(town)).find((x) => x.key === tr.hiredBy);
         if (namedIn(c, town.name).name === namedIn(c, '').name) continue;
-        for (let m = Math.ceil(whenWalked(tr.outT0, 0)) + 20; m < tr.outT1 && !found; m += 20) { const at = partyAt(tr, m); if (onRoad(at) && !at.camp && !at.halt) found = { tr, t: m, at, town, c }; }
+        const of = new Set(c.places.map((p) => p.slot));   // LW-WIDE: PIN MOVED - one with two of it walking (a place may stand empty that cycle)
+        for (let m = Math.ceil(whenWalked(tr.outT0, 0)) + 20; m < tr.outT1 && !found; m += 20) { const at = partyAt(tr, m); if (onRoad(at) && !at.camp && !at.halt && membersAt(tr, m).filter((x) => of.has(x.slot)).length >= 2) found = { tr, t: m, at, town, c }; }
         if (found) break;
       }
       if (found) break;

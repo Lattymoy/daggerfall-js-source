@@ -16,7 +16,8 @@
 // Pure. Not a DFU member. Ledger A (ARENA).
 
 import { srand, getSeed, setSeed } from '../../formats/dfRandom.js';
-import { fullName, monsterName, GENDERS, BANK_TYPES } from '../../characters/nameHelper.js';
+import { monsterName, GENDERS, BANK_TYPES } from '../../characters/nameHelper.js';
+import { personName } from '../../characters/personNames.js';   // REGION-NAMES
 import { enemyDisplayName } from '../../characters/enemy/enemyBasics.js';
 import { MOBILE_TYPES as M } from '../../characters/mobile/mobileTypes.js';
 import { ARENA_TEXT } from './arenaText.js';
@@ -33,7 +34,7 @@ function drawName(seed, bank, gender) {
   try {
     srand((seed >>> 0) || 1);
     if (bank === BANK_TYPES.Monster1) return monsterName(gender, () => 0, BANK_TYPES.Monster1);
-    return fullName(bank, gender);
+    return personName(bank, gender);
   } finally { setSeed(saved); }
 }
 

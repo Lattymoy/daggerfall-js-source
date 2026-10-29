@@ -37,7 +37,7 @@
 // Pure: no DOM, no renderer, no clock. Not a DFU member. Ledger A (MERCHANT-YARDS, CARP-YARD).
 import { LOCATION_TYPES } from '../formats/mapsFile.js';
 import { getNameBankOfRegion, GENDERS } from '../characters/nameHelper.js';
-import { residentName } from './livingWorld/census.js';
+import { seededPersonName } from '../characters/personNames.js';   // REGION-NAMES
 import { folkOfRegion, folkRace, folkNameBank, folkKeyOf } from '../characters/provinceFolk.js';   // PROVINCE-FOLK
 import { setItemFields, mintCondition, TRANSPORT_HORSE } from './item/itemTemplates.js';
 import { WAGON_KIND_ORDER, newWagonItem, isWagonItem } from './wagon/wagonKinds.js';
@@ -149,7 +149,8 @@ export function townKeeper(seed, regionIndex, people = folkOfRegion(regionIndex)
   const female = ((seed >>> 7) & 1) === 1;
   const gender = female ? GENDERS.Female : GENDERS.Male;
   const race = folkRace(people, seed ^ 0x666f6c6b);   // PROVINCE-FOLK: past the Bay one of the place's people (its zone's - AUDIT PROVINCE-FOLK B6), named from their own bank
-  const name = residentName(seed, race ? folkNameBank(race) : getNameBankOfRegion(Number.isInteger(regionIndex) ? regionIndex : -1), gender);
+  const name = seededPersonName(seed, race ? folkNameBank(race) : getNameBankOfRegion(Number.isInteger(regionIndex) ? regionIndex : -1), gender,
+    { race, region: Number.isInteger(regionIndex) ? regionIndex : -1, home: folkKeyOf(people) });   // REGION-NAMES: their people's customs, their region's
   return { name, gender, sex: female ? 'female' : 'male', variant: (seed >>> 11) & 3, ...(race ? { race, home: folkKeyOf(people) } : {}) };   // `home`: whose people, for the place's hands (portHost.js raceOf)
 }
 /**
