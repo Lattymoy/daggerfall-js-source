@@ -247,8 +247,6 @@ export function createDragonKeep(deps) {
     const t = deps.now(), m = deps.street() ? mineShown(t) : null;
     return m ? dragonKeepWireRecord({ spot: m.spot, yaw: m.yaw, kind: m.kind, age: m.age, look: look(), name: keep()?.name ?? '' }, toWire) : null;
   }
-  /** Whether my word moved since it was last said (the foes frame is made for it). */
-  const moved = (toWire) => dragonKeepRecordKey(record(toWire)) !== lastKey;
   /** My word on the foes frame: `dk` when it moved, or on a full frame (null: none stands). */
   function word(frame, full, toWire) {
     const rec = record(toWire), key = dragonKeepRecordKey(rec);
@@ -283,7 +281,7 @@ export function createDragonKeep(deps) {
   };
   setDragonKeepDoor(door);
   return {
-    tick, batches: frameBatches, targets, hoverName, activate, word, moved, peer, door,
+    tick, batches: frameBatches, targets, hoverName, activate, word, peer, door,
     clearPeers: () => peers.clear(),
   };
 }

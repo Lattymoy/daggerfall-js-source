@@ -2266,11 +2266,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     _lostSites.clear();   // AUDIT WB12d (C1): a site a race gave away is the old world's - the epoch above already ends its spawns in flight
     _owners.clear(); _pupPending.clear(); _pupIndex.clear(); _pupKept.clear();   // AUDIT WORLD6b C10: the teardown ends the owners' records too (AUDIT DISC28 QS-J: the kept ones with them)
     _onHccClear?.();   // AUDIT HCC O2: and the peers' teams with them - a fast travel's clearLive re-anchors the origin with no offset to ride
-    _onDragonKeepClear?.();   // DRAGON5b: and their dragons
     _onDuelClear?.();   // DUEL1: and the rings they duel in
     _onCsaClear?.();   // CSA-J: and their boats
     _onCsaAboardClear?.();   // CSA-K: and their places aboard
     _onNavalClear?.();   // NAV-G: and the ships they stand
+    _onDragonKeepClear?.();   // DRAGON5b: and their dragons
     body.destroy();   // OUTDOOR-LOOT: and a claim in flight and not lapsed goes with its claimer (D-1)
   }
 
@@ -3342,11 +3342,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     _pupPending.clear();
     _adopted.clear();   // AUDIT (pre-merge) D2: another cell's foes are nobody's to give back here
     _onHccClear?.();   // HCC-ONLINE: the peers' teams go with their puppets (a room change, a leave)
-    _onDragonKeepClear?.();   // DRAGON5b: and their dragons
     _onDuelClear?.();   // DUEL1: and their rings
     _onCsaClear?.();   // CSA-J: and their boats
     _onCsaAboardClear?.();   // CSA-K: and their places aboard
     _onNavalClear?.();   // NAV-G: and the ships they stand
+    _onDragonKeepClear?.();   // DRAGON5b: and their dragons
     body.clearAll();   // OUTDOOR-LOOT: and the views; a claim in flight in a cell this player no longer holds goes with the claimer (D-1), one in a halo's cell lands through the ledger
   }
   /** OW6: THE CAMPS' NUMBERS, one counter for this pool - the host's stands (world.js _standCampEncounter) and a camp an

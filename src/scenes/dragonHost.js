@@ -430,7 +430,7 @@ export function createDragonSky({ bayScan, theatres, street, barBlocked = () => 
     /** The boss's body and the tamed dragons' (mine waiting, and the others'), for the flats' axis. */
     batches() { _all.length = 0; _all.push(...bossBatches(), ...keep.batches()); return _all; },
     /** DRAGON5b: the keep's seams - my word on the foes frame, the others' in, its box, its plaque, its press. */
-    keepWord: keep.word, keepMoved: keep.moved, keepPeer: keep.peer, keepPeersClear: keep.clearPeers, keepTargets: keep.targets, keepHoverName: keep.hoverName, keepActivate: keep.activate,
+    keepWord: keep.word, keepPeer: keep.peer, keepPeersClear: keep.clearPeers, keepTargets: keep.targets, keepHoverName: keep.hoverName, keepActivate: keep.activate,
     /** A word of its cell's (or my receipt from the hub). @param {any} w */
     word: (w) => link.word(w),
     /** The online frame's (after the serpent's): on the street, to the dead too, its sky, its fight and its bar. */

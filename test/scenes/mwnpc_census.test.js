@@ -41,6 +41,7 @@ const WIRED = Object.freeze([
 const DECLARED = Object.freeze({
   'src/net/remotePlayers.js': 'the peers\' own fallback picture (a doll or a class sprite) - a peer stands in net/peer/peerBodies.js, built by world.js',
   'src/scenes/dragonHost.js': 'DRAGON3\'s Dwarven Dragon - our own clockwork dragon: no Morrowind creature is it (characters/dwarvenDragon.js declares the miss), so its sprite stands',
+  'src/scenes/dragonKeepHost.js': 'DRAGON5b\'s tamed Dwarven Dragon, waiting or flying in or out - the same clockwork dragon, so its sprite stands',
   'src/scenes/sigilBrokerPool.js': 'the Daedra Seducer in her MORTAL GUISE - the match would stand the winged twilight she is hiding (section 15a)',
   'src/world/bandSprites.js': 'the Overworld\'s far bands - grown, fading sprites at the map\'s distance; their people stand in bodies on the ground (section 15c)',
   'src/characters/enemy/enemyAnchor.js': 'a size for a foe\'s anchor - it draws nothing',

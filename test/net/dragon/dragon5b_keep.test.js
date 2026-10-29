@@ -193,11 +193,9 @@ test('DRAGON5b the cell: my word rides my foes frame when it moves and on a full
   const { w, entity, keep } = world();
   entity.dragonKeep = { ...freshDragonKeep(), where: KEEP.Waiting, nx: 0, nz: 400, name: 'Ember' };
   const frame = {};
-  assert.equal(keep.moved((p) => p), true);
   keep.word(frame, false, (p) => p);
   assert.deepEqual(frame.dk, { p: [0, 0, 10], yw: 0, n: 'Ember' });
   const again = {};
-  assert.equal(keep.moved((p) => p), false);
   keep.word(again, false, (p) => p);
   assert.equal('dk' in again, false, 'unmoved: not said');
   keep.word(again, true, (p) => p);
@@ -268,8 +266,7 @@ test('DRAGON5b the doors: the transport window\'s Dragon row and the summon key 
     /else if \(_race\.dragonWins\) dragonSky\.keepActivate\(_dragonPick\.key, _dragonPick\.distance, getInteractionMode\(\), plaqueActionFor\(_dragonPick\.key\)\);/,
     /dragon: dragonSky \? pickActivatableHit\(cam\.pos, _hd, dragonSky\.keepTargets\(\), collider\) : null,/,
     /\(key\) => dragonSky\?\.keepHoverName\(key\) \?\? null,/,
-    /if \(cell\) dragonSky\?\.keepWord\(frame, full, campToWire\);/,
-    /\|\| !!dragonSky\?\.keepMoved\(campToWire\)\)/,
+    /frame\.wr = wagonRiders\?\.word\(\) \?\? null; if \(cell\) dragonSky\?\.keepWord\(frame, full, campToWire\);/,
     /exteriorFoes\.setOnDragonKeep\(\(from, dk\) => dragonSky\?\.keepPeer\(from, dk, campToScene\), \(\) => dragonSky\?\.keepPeersClear\(\)\);/,
     /townTalk, makeInventoryWindow,/,
   ]) assert.match(w, re);
