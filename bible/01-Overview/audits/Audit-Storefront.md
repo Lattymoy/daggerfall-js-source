@@ -27,7 +27,7 @@ Severity: BLOCKER a dupe, a loss, a crash or a hole any player can use; HIGH a b
 wrong result a player meets; LOW an edge, a risk, a word or the record alone. Every FIXED is pinned in the test its
 verdict names, and where it changed code it has a mutant in the lane's list (`tools/mutants/storefront_shopaudit.json`,
 `storefront_passaudit.json`, `storefront_renderaudit.json`, `storefront_seasonaudit.json`, `storefront_portraits.json`,
-`storefront_mountpoints.json`, `storefront_mountlooks.json`, and lane 2's).
+`storefront_mountpoints.json`, `storefront_mountlooks.json`, `storefront_seasontamriel.json`, and lane 2's).
 
 ## Findings
 
@@ -109,6 +109,7 @@ Lane 3's #4 is lane 2's #3.
 | W7 | MED | A cleared camp's quiet held only on the stander's page, and only in memory | FIXED: every screen whose last foes there are bodies, kept across a reload |
 | W8-W12 | LOW | `who()` never named the account; the fall line said to a striker alone; fissures on roads; the waking said before anything stood; a race lost read as a clear | FIXED, each (Battle-Pass.md section 6) |
 | W13 | LOW | A camp's stander walking off takes the fight away | KEPT: the Starfall's leash; the reason in Battle-Pass.md section 6 |
+| W14 | HIGH | The season stood in the Bay alone: its fissures read the Bay's gate scan and its regions, so a player in a province met no tremor's fissure, no construct and no Colossus (TAMRIEL-WIDE) | FIXED: a few fissures an area in every theatre a star night stands in (Cyrodiil none, as the Starfall), on each theatre's scan, off its roads once they are laid, giving way to its own gate; the Bay's byte for byte as before; no relay change. `season_tamriel` |
 
 ### V - the assets
 
