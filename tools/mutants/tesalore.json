@@ -342,8 +342,8 @@
   {
     "name": "TESA-LORE-no-bridges",
     "file": "src/world/capitalAlinor.js",
-    "old": "  for (const x of A.bridges) {\n    for (let i = 0; i < N; i++) {",
-    "new": "  for (const x of []) {\n    for (let i = 0; i < N; i++) {",
+    "old": "  for (const x of A.bridges) {\n    span(x, R.z0, R.z1, yAt, N, 1.2, null);",
+    "new": "  for (const x of []) {\n    span(x, R.z0, R.z1, yAt, N, 1.2, null);",
     "tests": [
       "test/tesalore_capitals.test.js"
     ]

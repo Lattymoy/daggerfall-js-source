@@ -157,7 +157,7 @@ serpent's does.
 verifier and theirs by this one. Its claims: `q` the watch, `b` the dragon (0 brass, 1 Aetherbright), `s` the account,
 `c` the hoard's seed, `x` dealt or stood, `l` the level, `m` the relay's body count, `i` issued, `e` a week on.
 
-**The claim** (`server-account/src/dragons.js` `claimDragon`, route `/v1/dragon/claim`, migration `0193_dragon.sql`, acct219).
+**The claim** (`server-account/src/dragons.js` `claimDragon`, route `/v1/dragon/claim`, migration `0194_dragon.sql`, acct221).
 The device carries the receipt (`net/dragon/dragonClaims.js`) with the character that fought and a claim id of its own.
 The service counts one kill a (watch, account) in `dragon_kills`, and gives the hoard to the claim whose id writes the
 watch's `dragon_spoils` row, so a second browser is answered no. A guest is given its hoard and nothing else. The kill is
@@ -248,21 +248,21 @@ colours, under the player and on every other screen.
 | **DRAGON6** | the travel map: the dragon's rate, straight over sea and land | no | no |
 | **DRAGON7** | the Aetherbright: the palette, the roll, its look kept | no | no |
 
-The relay changes land in ONE version (world286 - every byte of the relay's bundle is hashed; world281, world283, world284,
-then world285, until the merges of main renumbered it past world281 to world285), and the service's in one (acct219 - acct211
-when this page was written, renumbered past KEEP-MARK, SHED-REPLICA, the PvP rework's acct213-acct215, CRAFT-SET's acct216,
-AUDIT TAMRIEL-WIDE's acct217 and INSURE-ALL's acct218). Each slice: pins in `test/`, a mutant record, its record here.
+The relay changes land in ONE version (world287 - every byte of the relay's bundle is hashed; world281, world283, world284,
+world285 then world286, until the merges of main renumbered it past world281 to world286), and the service's in one (acct221 -
+acct211 when this page was written, renumbered past KEEP-MARK, SHED-REPLICA, the PvP rework's acct213-acct215, CRAFT-SET's
+acct216, AUDIT TAMRIEL-WIDE's acct217, INSURE-ALL's acct218, YARD-CELL's acct219 and UNION-CHILDREN's acct220). Each slice: pins in `test/`, a mutant record, its record here.
 
 ## 13. The record, slice by slice
 
 **DRAGON1 - the ride seen (2026-10-29).** PR #1359 kept a copy of the ride's relay gate (world276) in
 `systems/staffDragon.js`, and the wire's half sat on #1360, which never merged. Main's relay reached world280 with no dragon
 in its pose law and clamped `rd` 3 to the cart, so other players saw an Admin on a cart. The gate now lives in
-`net/wire.js` beside `POSE_RIDE` (`DRAGON_RIDE_RELAY_MIN` 286, `relaySupportsDragonRide`), and `net/remotePlayers.js` stands
+`net/wire.js` beside `POSE_RIDE` (`DRAGON_RIDE_RELAY_MIN` 287, `relaySupportsDragonRide`), and `net/remotePlayers.js` stands
 a dragon's rider as the Dwarven Dragon, with no hooves and no Morrowind body. Pinned by `test/net/dragonride_wire.test.js`
 (the gate and the law agree at this wire's own version); `tools/mutants/dragon1.json`, 6 dead.
 
-**DRAGON2 - the fight's law and the relay's half (2026-10-29, world286).** `net/dragon/dragonLaw.js` (the watch, the look,
+**DRAGON2 - the fight's law and the relay's half (2026-10-29, world287).** `net/dragon/dragonLaw.js` (the watch, the look,
 the site's roll), `net/dragon/dragonBody.js` (the plan's legs), `net/dragon/dragonBrain.js` (the fight), `net/dragon/dragonReceipt.js`
 (`z1`), `net/bossRef.js` judgeDragon and `net/bossSeam.js` DRAGON_SEAM; the `dragon` frame in `net/wire.js`; the relay's half in
 `server/src/dragonFights.js`, which `server/src/index.js` calls from its dispatch, its hub route and hello, its alarm (the
@@ -274,7 +274,7 @@ Its follow-up: a replace meant for the dragon's refusal codes had also rewritten
 (`SERPENT_NO_WORDS`), so the client dropped that refusal. It is restored, and the SD9a bundle pin moved
 (`test/net/superDungeon/sd9a_receipt.test.js`).
 
-**DRAGON3 - the client (2026-10-29, world286).** `scenes/dragonHost.js` is the dragon on this screen: its sky,
+**DRAGON3 - the client (2026-10-29, world287).** `scenes/dragonHost.js` is the dragon on this screen: its sky,
 the sighting, the `in`, its blows draped and judged on my feet, my shafts, spells and swings out to its cell, the bar's
 model, its voice, its fall and its remains. Beside it: `net/dragon/dragonLink.js` (the fold, this site's words alone),
 `systems/dragon/dragonSite.js`, `systems/dragon/dragonWords.js`, `ui/dragonBar.js` (brass) and
@@ -284,7 +284,7 @@ while its remains lie (`DRAGON_REMAINS_MS` moved to the law). Pinned by `test/ne
 `test/scenes/dragon3_host.test.js` (7) and `test/net/dragon/dragon3_relay.test.js` (1); `tools/mutants/dragon3.json`, 27
 dead. PINS MOVED: the serpent's marks (`serpent4`), its spell door (`fb1019f_bossdot`), NAV-H's enemies near (`nav_h_host`).
 
-**DRAGON4 - the hoard and the tame (2026-10-29, acct219, migration 0193; acct213 and 0192 on its branch, renumbered past the PvP rework, CRAFT-SET, AUDIT TAMRIEL-WIDE and INSURE-ALL at the merges of main).** `server-account/src/dragons.js` `claimDragon` behind
+**DRAGON4 - the hoard and the tame (2026-10-29, acct221, migration 0194; acct213 and 0192 on its branch, renumbered past the PvP rework, CRAFT-SET, AUDIT TAMRIEL-WIDE, INSURE-ALL, YARD-CELL and UNION-CHILDREN at the merges of main).** `server-account/src/dragons.js` `claimDragon` behind
 `/v1/dragon/claim`: one kill a (watch, account), the hoard to the device that wrote its row, the tame drawn by the
 service for a dealer's first write, one a character, named at every answer while its row stands. On the device:
 `net/dragon/dragonClaims.js` (the carrier), `systems/dragon/dragonSpoils.js` (the hoard), `scenes/dragonRewards.js` (the
@@ -354,6 +354,13 @@ merged bundle's hash, 11fe794e); acct219 and migration 0193 stand. `DRAGON_RIDE_
 world285 still clamps `rd` 3), and the fight's gate with it. PINS MOVED: the relay version's (fifty files, the dragon's
 note before CAPE-TOGGLE's), CAPE-TOGGLE's own (`capetoggle`), the gates' refusals (`dragonride_wire`, `dragon2_law`),
 and three mutant records on the version lines.
+
+**THE MERGE OF MAIN AT c72b366b5 (2026-10-29, #1424 TRAVIS-FOLD and #1431 FB1029).** Main took world286 (FB1029 GROUND),
+acct219 (YARD-CELL YC3, migration 0193) and acct220 (UNION-CHILDREN), so the dragon is world287 and acct221, and its
+migration is 0194. `DRAGON_RIDE_RELAY_MIN` is 287 (main's world286 still clamps `rd` 3), and the fight's gate with it.
+Item law 15 names acct221. bootWorld measures 35,228: main took four lines out. PINS MOVED: both versions' (each note
+before main's), the service's tables and history (`accountworker`, `auditscale2_acct`), the gates' refusals, and the
+mutant records on the version lines.
 
 **DRAGON7 - the Aetherbright (2026-10-29).** `characters/dwarvenDragonShiny.js` turns each PLTE colour at load - the brass
 and copper to aetherium's blue, the wings' olive membrane to its violet, the greys cooled - and writes the chunk's CRC

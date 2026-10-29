@@ -67,18 +67,45 @@ test('CAUSEWAY on the whole map: the forty-pixel coast road in the sea at (515-5
     && ground.isWater(p.x, plan.pixels[i - 1].y) && ground.isWater(plan.pixels[i - 1].x, p.y)), 'a diagonal of his through a corner of the sea');
 });
 
-test('CAUSEWAY: the inlet\'s pixel as the terrain kernel builds it with his roads - a strip of road tiles, none with a water corner, the water either side (what the route walks is ground the feet stand on)', { skip: skipReal }, () => {
+test('CAUSEWAY: the inlet\'s pixel and Sentinel\'s coast road as the terrain kernel builds them with his roads - a strip of road tiles, none with a water corner, the water either side; ROAD-DRY: every corner of his paving at CAPITAL_LAND, and Deep Waters (its bake, its carve, its water test) leaves the road whole - the sea round it still the sea\'s (what the route walks is ground the feet stand on) (mutants: the lift unwired; the edges unread)', { skip: skipReal, timeout: 600_000 }, async () => {
   const { woods } = real();
-  const tilemap = new Uint8Array(128 * 128);
-  const out = generatePixelTerrain({ woods, px: INLET.x, py: INLET.y, tilemap, climateType: 0, roads: { ...NET, smooth: true } });
-  let road = 0, water = 0;
-  for (let i = 0; i < 128 * 128; i++) {
-    const rec = out.tilemapBytes[i] >> 2;
-    if (rec === 0) water++;
-    if (out.paths[i]) { road++; assert.equal(waterCorners(convertTile(out.tilemapBytes[i])), 0, `a road tile with no water under the feet (${i % 128}, ${Math.floor(i / 128)})`); }
+  const { buildGlobal, DeepWatersBake } = await import('../../../src/world/deepWater/deepWatersBake.js');
+  const { buildDeepWatersPixel } = await import('../../../src/world/deepWater/deepWatersPixel.js');
+  const { HOLES_RESOLUTION } = await import('../../../src/world/deepWater/deepWaterFloor.js');
+  const { isLocalPointWater } = await import('../../../src/world/deepWater/deepWaterClassification.js');
+  const { CAPITAL_LAND } = await import('../../../src/world/terrain/capitalSea.js');
+  const { PAVING } = await import('../../../src/world/road/roadDry.js');
+  const { MapsFile: Maps } = await import('../../../src/formats/mapsFile.js');
+  const maps = new Maps(); maps.load(...['MAPS.BSA', 'CLIMATE.PAK', 'POLITIC.PAK'].map((f) => new Uint8Array(readFileSync(join(ARENA2, f)))));
+  const bake = new DeepWatersBake({ woods, global: buildGlobal(woods) }), n = HOLES_RESOLUTION, H = 129;
+  for (const [px, py, wide] of [[INLET.x, INLET.y, 256], [421, 374, 0]]) {
+    const tilemap = new Uint8Array(128 * 128);
+    const out = generatePixelTerrain({ woods, px, py, tilemap, climateType: 0, roads: { ...NET, smooth: true } });
+    let road = 0, water = 0, paving = 0;
+    for (let i = 0; i < 128 * 128; i++) {
+      const rec = out.tilemapBytes[i] >> 2;
+      if (rec === 0) water++;
+      if (out.paths[i]) { road++; assert.equal(waterCorners(convertTile(out.tilemapBytes[i])), 0, `a road tile with no water under the feet (${i % 128}, ${Math.floor(i / 128)})`); }
+    }
+    if (wide) assert.equal(road, wide, 'two tiles wide, the pixel\'s length');
+    assert.ok(water > 4000, `the water either side: ${water} tiles`);
+    const climates = [];
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) climates.push(maps.getClimateIndex(px + dx, py + dy));
+    const dw = buildDeepWatersPixel({ px, py, samples: out.samples, tilemap: out.tilemap, tilemapBytes: out.tilemapBytes, climates, waterDepth: null, spawnSurfaces: true }, bake);
+    assert.ok(dw.holes && dw.holes.some((v) => v === 0), `(${px}, ${py}): the sea beside the road carved`);
+    for (let y = 0; y < 128; y++) for (let x = 0; x < 128; x++) {
+      const i = y * 128 + x;
+      if (!out.paths[i] || !PAVING.has(out.tilemapBytes[i] >> 2)) continue;
+      paving++;
+      for (const [cx, cy] of [[x, y], [x + 1, y], [x, y + 1], [x + 1, y + 1]]) assert.ok(out.samples[cx * H + cy] >= CAPITAL_LAND, `(${px}, ${py}): the paving's corner (${cx}, ${cy}) over the sea's line`);
+      for (let a = 0; a < 4; a++) for (let b = 0; b < 4; b++) {
+        const fx = (x + (a + 0.5) / 4) / 128, fz = (y + (b + 0.5) / 4) / 128;
+        assert.ok(!dw.holes || dw.holes[Math.floor(fz * n) * n + Math.floor(fx * n)] === 1, `(${px}, ${py}): no carve under the road at (${x}, ${y})`);
+        assert.ok(!isLocalPointWater({ samples: out.samples, tilemap: out.tilemap }, fx, fz), `(${px}, ${py}): no water drawn over the road at (${x}, ${y})`);
+      }
+    }
+    assert.ok(paving > 200, `(${px}, ${py}): ${paving} paving tiles`);
   }
-  assert.equal(road, 256, 'two tiles wide, the pixel\'s length');
-  assert.ok(water > 8000, `the water either side: ${water} tiles`);
 });
 
 test('CAUSEWAY the law: a step on his road into a water pixel and through a corner of the sea is taken; a track\'s, an open step\'s and a road half-drawn (one end\'s edge) are refused (mutants: the sea refused under the road; the corner refused; a track paved)', () => {

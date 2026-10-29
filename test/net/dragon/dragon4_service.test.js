@@ -89,7 +89,7 @@ test('DRAGON4 THE CLAIM: counted once a (watch, account) - a second claim answer
   assert.equal((await claimDragon({ db, nowS: T0, subtle, rand }, a, { receipt: r1, character: 'char-0001' }, null)).error, 'no-gate-key');
 });
 
-test('DRAGON4 THE ROUTE: /v1/dragon/claim behind a session, the session\'s account (never the body\'s), answered as the claim answers; listed among the service\'s routes; acct219 (mutants: the route unlisted)', async () => {
+test('DRAGON4 THE ROUTE: /v1/dragon/claim behind a session, the session\'s account (never the body\'s), answered as the claim answers; listed among the service\'s routes; acct221 (mutants: the route unlisted)', async () => {
   const S = await standService();
   const who = await S.registered('Brassbane');
   const r = await mintDragonReceipt({ q: W, b: 0, s: who.id, c: 5, x: 'dealt', l: 12 }, S.gatePriv, { subtle, nowS: Math.floor(Date.now() / 1000) });
@@ -100,5 +100,5 @@ test('DRAGON4 THE ROUTE: /v1/dragon/claim behind a session, the session\'s accou
   const other = await S.registered('Coilhand');
   assert.equal((await S.call('/v1/dragon/claim', { receipt: r, character: other.character }, other.secret)).status, 403, 'not the receipt\'s account');
   assert.match(src('server-account/src/service.js'), /'\/v1\/dragon\/claim',   \/\/ DRAGON4/);
-  assert.match(src('server-account/migrations/0193_dragon.sql'), /UNIQUE \(account, char_id\)/);
+  assert.match(src('server-account/migrations/0194_dragon.sql'), /UNIQUE \(account, char_id\)/);
 });

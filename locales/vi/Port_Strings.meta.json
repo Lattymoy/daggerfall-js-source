@@ -924,6 +924,11 @@
   "tr": "d307df468afb",
   "by": "claude-in-session"
  },
+ "decor.yard.behind": {
+  "en": "e66a9854186d",
+  "tr": "1bd981311386",
+  "by": "claude-in-session"
+ },
  "dex.enemy.archerRider": {
   "en": "684bf52c59e7",
   "tr": "29a620cd0c21",
@@ -4450,13 +4455,23 @@
   "by": "claude-in-session"
  },
  "sea.wild.chipTip": {
-  "en": "9e14a86d940a",
-  "tr": "138b15967d14",
+  "en": "88c4bc67ac34",
+  "tr": "d454377af440",
+  "by": "claude-in-session"
+ },
+ "sea.wild.dropLate": {
+  "en": "81c1d7e08802",
+  "tr": "2c9da3a33152",
   "by": "claude-in-session"
  },
  "sea.wild.enter": {
-  "en": "f49115e892b2",
-  "tr": "7497a97aadcb",
+  "en": "14bca5e366ed",
+  "tr": "ad9d68bd77ab",
+  "by": "claude-in-session"
+ },
+ "sea.wild.walkInto": {
+  "en": "eec82857378c",
+  "tr": "c6938e72bbe7",
   "by": "claude-in-session"
  },
  "settings.language.machine": {
@@ -5170,8 +5185,8 @@
   "by": "claude-in-session"
  },
  "tutorials.wildZone.body2": {
-  "en": "5c2566aaad07",
-  "tr": "aeeaf89571a5",
+  "en": "87989055cf87",
+  "tr": "477df9661356",
   "by": "claude-in-session"
  },
  "wagon.upkeep.boons.failing": {
@@ -5185,8 +5200,8 @@
   "by": "claude-in-session"
  },
  "wild.death.kept": {
-  "en": "5677b5a00569",
-  "tr": "19a2afb18b6d",
+  "en": "e9a05a7b45a6",
+  "tr": "9941d8ee30bf",
   "by": "claude-in-session"
  },
  "wild.death.last": {
@@ -5254,6 +5269,16 @@
   "tr": "73549c954fb3",
   "by": "claude-in-session"
  },
+ "wild.insure.line": {
+  "en": "3bd9cec6aa23",
+  "tr": "66ecf7590a0a",
+  "by": "claude-in-session"
+ },
+ "wild.legend.offline": {
+  "en": "86db54caef14",
+  "tr": "fbe904bc2ea2",
+  "by": "claude-in-session"
+ },
  "wild.safe.chip": {
   "en": "3441354558b8",
   "tr": "059178bcd802",
@@ -5275,13 +5300,13 @@
   "by": "claude-in-session"
  },
  "wild.zone.chipTip": {
-  "en": "fda83308207b",
-  "tr": "2deb4f86274c",
+  "en": "687871882d2f",
+  "tr": "697efab97298",
   "by": "claude-in-session"
  },
  "wild.zone.enter": {
-  "en": "006e183d3d6a",
-  "tr": "3d685e16a27a",
+  "en": "d8ef5b322bf0",
+  "tr": "fdc53462451d",
   "by": "claude-in-session"
  }
 }

@@ -248,8 +248,9 @@ export function playerSpouseLost(family, spouse, at, why) {
   return true;
 }
 
-/** The children the two have had together. */
-export const childrenTogether = (family, member, spouse) => (family?.people ?? []).filter((p) => p.parents.includes(member.id) && p.parents.includes(spouse.id)).length;
+/** The children the two have had together in this house. UNION-CHILDREN: a child the other player's house raises is
+ *  not one of them - each house rolls its own CHILDREN_MAX, and theirs never take this house's places. */
+export const childrenTogether = (family, member, spouse) => (family?.people ?? []).filter((p) => (p.kind ?? 'member') === 'member' && p.parents.includes(member.id) && p.parents.includes(spouse.id)).length;
 
 /**
  * A CHILD, perhaps: every CHILD_DAYS days since the wedding (or the last child's day), CHILD_CHANCE of one while both

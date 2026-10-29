@@ -77,7 +77,7 @@ test('DRAGON-RIDE /dragon\'s grammar: bare turns the ride over, on and off say s
 
 test('DRAGON-RIDE my pose says the dragon only while I ride, and only to a relay that keeps it (mutants: said to an older relay, which draws a cart; said on foot)', () => {
   _resetDragonRide();
-  noteDragonRelay(`world${DRAGON_RIDE_RELAY_MIN}`);   // PIN MOVED: DRAGON1 (Dwarven-Dragon.md section 10) - the wire's gate, world286 (world281, world283, world284 then world285 on its branch, renumbered past world281 to world285 at the merges of main); it was this file's world276
+  noteDragonRelay(`world${DRAGON_RIDE_RELAY_MIN}`);   // PIN MOVED: DRAGON1 (Dwarven-Dragon.md section 10) - the wire's gate, world287 (world281, world283, world284, world285 then world286 on its branch, renumbered past world281 to world286 at the merges of main); it was this file's world276
   assert.equal(dragonPoseRide(), null);
   mountDragon(false);
   assert.equal(dragonPoseRide(), DRAGON_POSE_RIDE);

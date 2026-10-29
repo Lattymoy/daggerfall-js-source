@@ -349,8 +349,8 @@
   {
     "name": "RW1-shadow-cells-for-cut",
     "file": "src/render/shadowPass.js",
-    "old": "        const cells = r.bounded && !mesh._evAnyCut ? mesh.shadowCells : null;   // RW1: a mesh with a cutout picture replays its sub-meshes - a cell mixes pictures",
-    "new": "        const cells = r.bounded ? mesh.shadowCells : null;",
+    "old": "        const glassCut = this._glassCut && mesh._evAnyGlass;   // WL1: a building's sun map cuts its windows' panes\n        const cells = r.bounded && !mesh._evAnyCut && !glassCut ? mesh.shadowCells : null;   // RW1: a mesh with a cutout picture replays its sub-meshes - a cell mixes pictures",
+    "new": "        const cells = r.bounded && !glassCut ? mesh.shadowCells : null;",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -376,8 +376,8 @@
   {
     "name": "RW1-window-flag-lost",
     "file": "src/scenes/dataPipeline.js",
-    "old": "t.getWindowColors32(bitmap), { replacement, window: true });",
-    "new": "t.getWindowColors32(bitmap), { replacement });",
+    "old": "exteriorWindowMask(archive, record, bitmap, t), { replacement, window: true });",
+    "new": "exteriorWindowMask(archive, record, bitmap, t), { replacement });",
     "tests": [
       "test/render/windows1_rooms.test.js"
     ]

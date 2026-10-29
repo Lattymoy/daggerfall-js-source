@@ -148,7 +148,7 @@ test('AUDIT RETRO1 A4: a replacement texture (TryImportTexture) keeps its mip ch
   // PIN MOVED (AUDIT GALLEON-2 PF5, 2026-10-03): but for a stand-in the port paints as a hull's classic art (the new
   // galleon's), which Retro Mode caps as it caps ARENA2's (test/world/ships/auditgalleon2_prefab.test.js PF5)
   assert.match(dp, /const replacement = !!swap && !classicArt\.has\(Number\(archive\)\);/, 'the pipeline flags TryImportTexture\'s');
-  assert.match(dp, /renderer\.uploadEmissionTexture\(archive, record, t\.getWindowColors32\(bitmap\), \{ replacement, window: true \}\);/);   // RW1: and the window flag beside it (render/realWindows.js)
+  assert.match(dp, /renderer\.uploadEmissionTexture\(archive, record, exteriorWindowMask\(archive, record, bitmap, t\), \{ replacement, window: true \}\);/);   // RW1: and the window flag beside it (render/realWindows.js)   // PIN MOVED (WL1): DFU's mask, or the glass of the twelve it misses (world/exteriorGlass.js)
   assert.match(dp, /renderer\.uploadEmissionTexture\(archive, record, color32, \{ white: true, replacement \}\);/);
 });
 

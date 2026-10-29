@@ -343,6 +343,7 @@ on:
       - "src/systems/legacy/houseName.js"
       - "src/systems/lockpick/lockpickRow.js"
       - "src/systems/legacy/legacyLaw.js"
+      - "src/systems/legacy/unionKinLaw.js"
       - "src/systems/livingWorld/keepsake.js"
       - "src/systems/livingWorld/seed.js"
       - "src/systems/loot/loot.js"

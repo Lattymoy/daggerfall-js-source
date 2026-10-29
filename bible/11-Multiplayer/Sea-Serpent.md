@@ -983,5 +983,5 @@ audit found the same gap in its own beat (`11-Multiplayer/Dwarven-Dragon.md` sec
 tried again at SERPENT_TELL_RETRY_MS, as a said one not yet told is
 (`server/src/index.js:"if (f.fell && !f.said) at = Math.min(at, now + SERPENT_TELL_RETRY_MS);"`).
 
-Pins: `test/net/serpent/serpentretry.test.js` (1). Mutants: `tools/mutants/serpentretry.json` (1, dead). Relay world286,
-re-hashed in place (not yet deployed).
+Pins: `test/net/serpent/serpentretry.test.js` (1). Mutants: `tools/mutants/serpentretry.json` (1, dead). Relay world287 (the
+dragon's, renumbered at the merges of main), not yet deployed.

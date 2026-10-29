@@ -59,9 +59,48 @@ const pick = (seed, n) => Math.min(n - 1, Math.max(0, Math.floor(seed * n)));
 export const roomStyleOf = (seed) => pick(seed, ROOM_STYLES.length);
 export const roomPieceOf = (seed) => pick(seed, ROOM_PIECES.length);
 export const roomFabricOf = (seed) => pick(seed, ROOM_FABRICS.length);
-/** A night room's lamp burns when its seed falls under the lit share. */
-export const roomLitAt = (seed) => seed < ROOM_LIT_SHARE;
-export const roomCurtained = (seed) => seed < ROOM_CURTAIN_SHARE;
+
+// WL1: A WINDOW'S SEED IS A WHOLE NUMBER. Whether its room is lit and whether curtains hang in it is read the same on
+// every GPU and here, so the light it throws (render/windowLight.js) is the room's own: the GLSL twin
+// (realWindows.js rwSeedBits) mixes the same whole numbers - the normal's quarters, the wall's plane in native units,
+// the glass's tile - with 32-bit wrapping arithmetic (MurmurHash3's mix and finish), where the float hash it replaced
+// rounded apart between a GPU and the CPU at a share's edge. The style, piece and cloth stay on the float hash: no light
+// reads them.
+export const ROOM_SEED_START = 0x2545f491;
+/** What lifts a seed's inputs above zero before they are bits: a normal's quarters (-4..4) and a plane or a tile. */
+export const ROOM_SEED_NQ = 8;
+export const ROOM_SEED_BIAS = 1 << 30;
+/** The salt of the curtains' own bits, and the shares as whole thresholds (the lit share over 24 bits, the curtained
+ *  share over 16). */
+export const ROOM_CURTAIN_SALT = 0x68e31da4;
+export const ROOM_LIT_K = Math.round(ROOM_LIT_SHARE * 2 ** 24);
+export const ROOM_CURTAIN_K = Math.round(ROOM_CURTAIN_SHARE * 2 ** 16);
+/** MurmurHash3's block mix and its finish, on unsigned 32-bit words. */
+export function seedMix(h, k) {
+  k = Math.imul(k, 0xcc9e2d51); k = (k << 15) | (k >>> 17); k = Math.imul(k, 0x1b873593);
+  h ^= k; h = (h << 13) | (h >>> 19);
+  return (Math.imul(h, 5) + 0xe6546b64) >>> 0;
+}
+export function seedFinal(h) {
+  h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16;
+  return h >>> 0;
+}
+/** A window's seed: the wall's normal in quarters, its plane (native units off the model's origin) and the tile. */
+export function roomSeedBits(nqx, nqy, nqz, plane, tx, ty) {
+  let h = ROOM_SEED_START;
+  for (const v of [nqx + ROOM_SEED_NQ, nqy + ROOM_SEED_NQ, nqz + ROOM_SEED_NQ, plane + ROOM_SEED_BIAS, tx + ROOM_SEED_BIAS, ty + ROOM_SEED_BIAS]) h = seedMix(h, v >>> 0);
+  return seedFinal(h);
+}
+/** A night room's lamp burns when its seed's top 24 bits fall under the lit share. */
+export const roomLitAt = (h) => (h >>> 8) < ROOM_LIT_K;
+/** The curtains' bits, off the seed; curtains hang when their low 16 fall under the share, their inner edges (of the
+ *  tile's width: the left at [0] + [1] x a byte, the right at [2] - [3] x a byte) from the two high bytes; a rug lies on
+ *  the floor when the seed is odd. */
+export const curtainBitsOf = (h) => seedFinal((h ^ ROOM_CURTAIN_SALT) >>> 0);
+export const roomCurtained = (c) => (c & 0xffff) < ROOM_CURTAIN_K;
+export const ROOM_CURTAIN_EDGE = Object.freeze([0.18, 0.14, 0.82, 0.14]);
+export const curtainEdges = (c) => [ROOM_CURTAIN_EDGE[0] + ROOM_CURTAIN_EDGE[1] * (((c >>> 16) & 0xff) / 255), ROOM_CURTAIN_EDGE[2] - ROOM_CURTAIN_EDGE[3] * ((c >>> 24) / 255)];
+export const roomRugAt = (h) => (h & 1) === 1;
 
 /** The styles' colours as one flat sRGB list (style-major, ROOM_COLOR_SLOTS within) - what the shader's table is. */
 export function roomColorTable() {

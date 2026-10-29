@@ -86,7 +86,7 @@
   "realm.locked.one": 2,
   "realm.stranded": 1,
   "rvn.roster.abroadLaw": 7,
-  "sea.wild.chipTip": 3,
+  "sea.wild.chipTip": 2,
   "season.book.cakes.about": 1,
   "seat.gift.ruleCamp": 27,
   "seat.gift.ruleStockpile": 21,
@@ -188,8 +188,7 @@
   "rvn.stars.hint": 7,
   "rvn.stars.hintTouch": 1,
   "sea.season.lede": 2,
-  "social.guild.castle.none": 17,
-  "wild.legend.offline": 5
+  "social.guild.castle.none": 17
  },
  "padding": {
   "captain.sky.noPoints": 1,
@@ -3152,7 +3151,7 @@
   "bible/06-Systems/Immersive-Footsteps.md": 79,
   "bible/06-Systems/Immersive-Travel.md": 89,
   "bible/06-Systems/Integrity-Arc.md": 5162,
-  "bible/06-Systems/Legacy-Arc.md": 2979,
+  "bible/06-Systems/Legacy-Arc.md": 2946,
   "bible/06-Systems/Lived-Time.md": 26,
   "bible/06-Systems/Living-World-II.md": 1515,
   "bible/06-Systems/Living-World.md": 4551,
@@ -3269,7 +3268,7 @@
   "bible/11-Multiplayer/Super-Dungeons-Look.md": 25,
   "bible/11-Multiplayer/Super-Dungeons.md": 4290,
   "bible/11-Multiplayer/Tavern-Cards.md": 2757,
-  "bible/11-Multiplayer/Wild-Zone.md": 4449,
+  "bible/11-Multiplayer/Wild-Zone.md": 4447,
   "bible/11-Multiplayer/World-Bosses.md": 6562,
   "bible/12-Enhanced-AI/Enhanced-AI-Arc.md": 461,
   "bible/12-Enhanced-AI/Feud-Arc.md": 2362,
