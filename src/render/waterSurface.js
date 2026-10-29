@@ -172,7 +172,8 @@ export function windStrength01(wind) {
  * The frame's water uniforms, from what the hosts hold: the clock in
  * real seconds, the eased wind row (null = calm; the direction is the
  * row's), the front's rain intensity 0..1, and the sky's two colours
- * ({zenith, horizon} 0..1 rgb, or null for the default day).
+ * ({zenith, horizon} 0..1 rgb, or null for the default day) - SKYRIM-AURORA: and its `aurora`, the aurora's dome map
+ * ({ tex }) the water reflects, or none.
  */
 export function waterUniforms({ seconds = 0, wind = null, rain = 0, sky = null, still = false } = {}) {
   const t = still ? 0 : seconds;
@@ -189,6 +190,7 @@ export function waterUniforms({ seconds = 0, wind = null, rain = 0, sky = null, 
     rain: Math.min(1, Math.max(0, rain || 0)),
     zenith: sky?.zenith ?? DEFAULT_SKY_ZENITH,
     horizon: sky?.horizon ?? DEFAULT_SKY_HORIZON,
+    aurora: sky?.aurora?.tex ?? null,   // SKYRIM-AURORA: the dome map's texture, or null
     // AUDIT WATER-NEXT m6: no `scroll` and no `opacity` - WATER-NEXT 2's sheet scrolls no texel and has no one opacity
     // (the body swallows light by its depth; MAC2's "darker and not as see through" is the deep water's now), and
     // WATER_OPACITY, forwarded here and pinned as the surface's floor, was a law nothing drew
@@ -298,6 +300,15 @@ export const WATER_SCENE_UNIT = 7;
 /** WATER-NEXT 4: the ripple field's unit - 1, the billboards' emission unit, its shadow forgotten after the bind. */
 export const WATER_RIPPLE_UNIT = 1;
 export const WATER_SCENE_DEPTH_UNIT = 6;
+/** SKYRIM-AURORA: the aurora's dome map's unit - no other fixed unit's (the snow's are 16-20, the skin's 21, the panes' 22,
+ *  the snow lines' 23, the window light's 24); the black texel while there is none. */
+export const AURORA_SKY_UNIT = 25;
+/** SKYRIM-AURORA: where the aurora's dome map (render/auroraPass.js AURORA_DOME_FS) holds direction R - its azimuth from the
+ *  north toward the east across, its height up. Here, beside its reader, so the boot's graph takes no new file. */
+export const AURORA_DOME_UV_GLSL = `vec2 auroraDomeUv(vec3 R) { return vec2((length(R.xz) > 1e-6 ? atan(R.x, R.z) : 0.0) * 0.15915494 + 0.5, R.y); }`;   // atan(0, 0) is undefined: straight up, any azimuth
+/** SKYRIM-AURORA: the least share of the aurora the water reflects - its Fresnel where that is more. Calm water at night
+ *  shows the curtains as it shows a lamp's glint; the bare Fresnel, a few hundredths looking down, hid them. */
+export const AURORA_MIRROR = 0.3;
 
 /** WATER-NEXT 2: the sheet - the grid AS IT STOOD before the bed was carved under it (world/water/waterBed.js), its bed's
  *  depth on attribute 1, lifted WATER_LIFT and heaved by the swell. The open sea's sheet (Deep Waters' top, `uOpen`)
@@ -391,6 +402,9 @@ uniform vec4 uIndirect;
 uniform vec3 uIndirectColor;
 uniform vec3 uSkyZenith;
 uniform vec3 uSkyHorizon;
+uniform sampler2D uAuroraSky;   // SKYRIM-AURORA: the aurora's dome map (render/auroraPass.js), read while uAuroraSkyOn is 1
+uniform int uAuroraSkyOn;
+${AURORA_DOME_UV_GLSL}
 uniform vec3 uTint;
 uniform float uF0;
 uniform float uShoreSoft;
@@ -530,6 +544,10 @@ void main() {
   float F = seaFresnel(NdV, uF0);   // AUDIT FAR-SEA1 C12: the open sea's light, one text with the far ring's sea (render/horizonHaze.js)
   vec3 R = reflect(-V, n);
   vec3 skyRefl = seaSkyRefl(R.y, uSkyZenith, uSkyHorizon);
+  // SKYRIM-AURORA: the aurora in the water, by the reflected ray (an explicit level: the flow here is not uniform), at the
+  // water's Fresnel or AURORA_MIRROR, the more - added as the glints are, below
+  vec3 auroraRefl = vec3(0.0);
+  if (uAuroraSkyOn == 1) auroraRefl = textureLod(uAuroraSky, auroraDomeUv(R), 0.0).rgb * step(0.0, R.y) * max(F, ${AURORA_MIRROR.toFixed(2)});
   // PERF-SUN2: the shadow read only while the sun is up - a uniform branch
   float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''} : 0.0;   // EL7: a quay's shadow lies on the water under the lane
   // the body lit as water is lit: the sky's light into it, the sun's and the moon's through it, softly
@@ -604,6 +622,7 @@ void main() {
   vec3 Hm = normalize(uMoonDir + V);
   float mspec = seaMoonLobe(dot(n, Hm)) * uMoonScale;
   own += seaGlints(uSunColor, spec, uMoonColor, mspec) + pointSpec * 1.2;   // WATER-LIT1: the lamps' and the torch's glints
+  own += auroraRefl * (1.0 - foam);   // SKYRIM-AURORA: the curtains in the water, under no foam
   // the fogs over the water's own light at its share - the air's, then DW-C's sea fog - as a premultiplied colour takes
   // them (an affine fog of x is x * m + c; at a share s, x * m + c * s): the copy's share is left as it was drawn
   vec3 ownShare = uSceneOn == 1 ? vec3(1.0) - trans : vec3(cover);

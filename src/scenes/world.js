@@ -1246,7 +1246,7 @@ import { createPortalStoneHost } from './portalStoneHost.js';   // HOST-SPLIT
 import { createWildDropHost } from './wildDropHost.js';   // HOST-SPLIT
 import { createWildInsureBook, setWildInsureBook } from '../net/wild/wildInsureBook.js';   // WILD-INSURE: my policies on my gear
 import { createWildGrace } from '../systems/wild/wildGrace.js';   // ZONE-GRACE: safe passage, as the referee says it
-import { createPvpKitBar } from '../ui/pvpKitBar.js';   // PVP-KIT: the PvP spell bar
+import { createPvpSpellMenu } from '../ui/pvpSpellMenu.js';   // PVP-SET: the PvP set of the hotbar and its menu
 import { createPvpFlagHost } from './pvpFlagHost.js';   // PVP-FLAG: the open zone's flag, on this page
 import { createPvpRulesHost } from './pvpRulesHost.js';   // PVP-RULES: a flagged fighter's limits
 import { createPvpGuardsHost } from './pvpGuardsHost.js';   // PVP-GUARDS: the watch hunts a villain in town
@@ -21178,7 +21178,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   wildInsure.read();
   const wildGrace = createWildGrace({ me: () => online?.id ?? null, say: (l) => { setMidScreenText(l); townTalk.say(l); } });   // ZONE-GRACE (systems/wild/wildGrace.js)
   const pvpFlag = createPvpGuardsHost(createPvpRulesHost(createPvpFlagHost(() => online, playerEntity, setMidScreenText, townTalk), player, playerEntity, setMidScreenText), () => [cityGuards, walkMode && playerSpawned ? player.pos : cam.pos, cam.yaw, modes?.mode ?? 'exterior', settledAt(campToWire(player.feetAt()), locationIndex)], playerEntity, setMidScreenText).flag;   // PVP-FLAG (scenes/pvpFlagHost.js); PVP-RULES (scenes/pvpRulesHost.js): a flagged fighter's limits; PVP-GUARDS (scenes/pvpGuardsHost.js): the watch hunts a villain in town
-  const pvpKit = createPvpKitBar(() => [online, magic, modes?.mode, allyTargetPick, cam, socialFwd], pvpFlag, playerEntity);   // PVP-KIT: the PvP spell bar on keys 3 to 0 (ui/pvpKitBar.js)
+  const pvpKit = createPvpSpellMenu(() => [online, magic, modes?.mode, allyTargetPick, cam, socialFwd], pvpFlag, playerEntity);   // PVP-SET: the hotbar's PvP set under the flag, and its menu (ui/pvpSpellMenu.js)
   const _duelSent = new Map();   // my blow's number -> { kind, weapon } - what it was
   let _duelLastWeapon = null;    // INT8: the weapon of my last strike - the referee's word on it names no number
   let _duelFoe = null;      // my opponent as the HUD's target bar reads a foe ({ entity: { name, health, maxHealth }, dead })
@@ -28255,7 +28255,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // WAGONS2 (FINAL AUDIT): and the weather's - the street frame's own terms (world/worldClock.js viewOutLight), so the clock's
       // air below compares a dimmed sun with a dimmed sun
       const light = viewOutLight(clockMinute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherTerms().sun, sky.sunFactor());
-      lightStreetAt(r, light, sky.moonlight(), SUN_RIG_COLOR);   // WL1: and the moon of the hour, whose light a window lets in (render/enhancedSky.js)
+      lightStreetAt(r, light, sky.moonlight(clockMinute), SUN_RIG_COLOR);   // WL1: and the moon of the hour, whose light a window lets in (render/enhancedSky.js) - the sky's night light at the clock's minute
       r.setFogColor(clockFogColor(keptFog, keptSun, r._sunScale));   // RW1 (AUDIT): ...re-lit by the clock - the sky behind the glass with it
       r.setWindowEmission(windowEmissionRGB(windowStyleForTime(clockMinute)));
       r.setPointLights(lightsOnAt(clockMinute) ? outsideLanterns(r) : new Float32Array(0), CITY_LIGHT_COLOR_F32);   // RW1 (AUDIT): the town's lanterns by the clock - never the player's own light, which stays indoors with them
