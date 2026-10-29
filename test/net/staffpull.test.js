@@ -119,14 +119,14 @@ test('STAFF-PULL client: a pull waits its own time; the hub\'s pull lands me and
   assert.deepEqual(sent.at(-1), { k: 'landed', ticket: 'ticket-3', no: 'unavailable' });
 });
 
-test('STAFF-PULL session: a relay before world276 is never sent a pull', () => {
+test('STAFF-PULL session: a relay before world281 is never sent a pull', () => {
   const { FakeWS, sockets } = fakeSocketClass();
   const s = new OnlineSession({ url: 'wss://relay.test', name: 'Warden', id: 'peer-staff', secret: 'secret-staff', WebSocketImpl: FakeWS, presence: false });
   s.join(SOCIAL_ROOM); const ws = sockets[0]; ws.open();
   const welcome = (v) => ws.receive({ t: 'welcome', id: 'peer-staff', peers: [], n: 1, v });
   const pull = { k: 'pull', nonce: 'n1', name: 'Bran', dest: here };
-  welcome('world274');
-  assert.equal(staffPullSupported('world274'), false);
+  welcome('world280');
+  assert.equal(staffPullSupported('world280'), false);
   assert.equal(s.sendStaffTeleport(pull), false);
   assert.equal(s.sendStaffTeleport({ k: 'ask', nonce: 'n2', name: 'Bran' }), true, 'the ask still goes');
   assert.equal(ws.sent.map(JSON.parse).some((m) => m.t === 'stp' && m.k === 'pull'), false);
