@@ -10,7 +10,7 @@ read 1 and 2 cold (`../audits/Audit-FB1029.md`).
 | 2 | Fay: "Bounty targets in crypt" - "The Daedroths don't seem to spawn inside the crypt or in the overworld around it" | A graveyard's hunt stands in the open air, and the camp's stand refused every spot in the graveyard's own rect | FIXED (GRAVE-PACK) |
 | 3 | AustinHale: "List of Ports with broke[n terrain]" - Westhead Moor, Aldwall Rock, Gothcroft, Antelibuton, Kalunnunu, Torval | The first five are #1184's town ground, which #1371 (FB1028 TOWN-GROUND) fixed; the list matches the ground before it. Kalunnunu stands 100 m over its harbour at its pixel's edge; Torval and Alinor stand in a bowl | Kalunnunu, Torval and Alinor: being built (the owner: "Ground meets the town", "Give them a relief") |
 | 4 | YeetMa...: "Large portion of road in jabivia is also a body of water" | Basic Roads paves the Bay's sea ground, which stays at the sea's height, so Deep Waters draws its water over the road and carves under it (5 pixels; Sentinel's coast road at 421,374) | being built (the owner: "Lift the paving") |
-| 5 | watchouttheres...: "Family between married characters not appearing for both players" | Recorded: each house raises its own children of a two-player union (Legacy-Arc section 9, FB1012d UNION-CHILDREN) | being built (the owner: "Show on both trees") |
+| 5 | watchouttheres...: "Family between married characters not appearing for both players" | Recorded: each house raises its own children of a two-player union (Legacy-Arc section 9, FB1012d UNION-CHILDREN) | FIXED (UNION-CHILDREN, acct217; `06-Systems/Legacy-Arc.md` section 9a) |
 
 ## BRIDGE-ENDS: Alinor's bridges meet their banks (1)
 
