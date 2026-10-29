@@ -223,6 +223,9 @@ export const PREF_DEFAULTS = Object.freeze({
   // LOAD1 (2026-10-05): the PrintScreen key's download - on, the PNG is saved as KB1 always saved it; off, the shot is
   // kept in the gallery alone (ui/screenshot.js). The Screenshots pane's own switch, so it is no Features row.
   shotDownload: true,
+  // CAPE-TOGGLE (2026-10-29): the inventory's Cape switch - my worn cloak and my aura drawn, for me and everyone
+  // (systems/capeShown.js). The pack's own switch, so it is no Features row.
+  capeShown: true,
   // MIDI-OUT1 (2026-10-11, a player asking for MIDI out): the Web MIDI output the music plays on, by its name - '' is
   // none, the game's own synth (systems/midiOut.js). A device, not a taste, so it is no Features row.
   midiOut: '',

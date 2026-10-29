@@ -334,6 +334,9 @@ export const TREES_VS = VS;
 
 /** The band's program text for a lane: none the classic's, the lighting lane's own, the classic-shadow lane's look over it. */
 export const treesFsFor = (lane) => (!lane ? FS : lane.key === 'classic-shadows' ? classicLook(TREES_LANE_FS) : TREES_LANE_FS);
+// SHADER-EASE MOUNT-START (2026-10-29): what the constructor builds, started at page load (render/mountPrograms.js).
+/** @param {any} lane the far ring's lane, or null */
+export const farTreesPrograms = (lane) => [/** @type {const} */ ([VS, treesFsFor(lane)])];
 
 /**
  * THE BAND'S GL SIDE AND ITS BOOK: the trees kept by the pixel, the atlas, the instance buffers (one drawn, one being laid),

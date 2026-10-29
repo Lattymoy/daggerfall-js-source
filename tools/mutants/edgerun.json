@@ -1,0 +1,58 @@
+[
+  {
+    "name": "EDGERUN-exact-again",
+    "file": "src/ui/tamrielInk.js",
+    "old": "Math.abs(u - edge) <= EDGE_RUN_PX && Math.abs(v - edge) <= EDGE_RUN_PX;",
+    "new": "u === edge && v === edge;",
+    "tests": ["test/ui/tamriel4.test.js"],
+    "why": "EDGE-RUN: the exact test SMOOTH-LAND's lines never meet"
+  },
+  {
+    "name": "EDGERUN-half-open",
+    "file": "src/ui/tamrielInk.js",
+    "old": "Math.abs(u - edge) <= EDGE_RUN_PX && Math.abs(v - edge) <= EDGE_RUN_PX;",
+    "new": "Math.abs(u - edge) < EDGE_RUN_PX && Math.abs(v - edge) < EDGE_RUN_PX;",
+    "tests": ["test/ui/tamriel4.test.js"],
+    "why": "EDGE-RUN: a crossing half a pixel off is still the frame's"
+  },
+  {
+    "name": "EDGERUN-one-end",
+    "file": "src/ui/tamrielInk.js",
+    "old": "Math.abs(u - edge) <= EDGE_RUN_PX && Math.abs(v - edge) <= EDGE_RUN_PX;",
+    "new": "Math.abs(u - edge) <= EDGE_RUN_PX || Math.abs(v - edge) <= EDGE_RUN_PX;",
+    "tests": ["test/ui/tamriel4.test.js"],
+    "why": "EDGE-RUN: a chain that only ends on the frame is kept"
+  },
+  {
+    "name": "EDGERUN-wider",
+    "file": "src/ui/tamrielInk.js",
+    "old": "export const EDGE_RUN_PX = 0.5;",
+    "new": "export const EDGE_RUN_PX = 0.6;",
+    "tests": ["test/ui/tamriel4.test.js"],
+    "why": "EDGE-RUN: half a pixel, the furthest a crossing between two centres lies"
+  },
+  {
+    "name": "EDGERUN-no-right",
+    "file": "src/ui/tamrielInk.js",
+    "old": "near(a.x, b.x, r.x0) || near(a.x, b.x, r.x1) ||",
+    "new": "near(a.x, b.x, r.x0) ||",
+    "tests": ["test/ui/tamriel4.test.js"],
+    "why": "EDGE-RUN: the right edge"
+  },
+  {
+    "name": "EDGERUN-no-top",
+    "file": "src/ui/tamrielInk.js",
+    "old": "|| near(a.y, b.y, r.y0) ||",
+    "new": "||",
+    "tests": ["test/ui/tamriel4.test.js"],
+    "why": "EDGE-RUN: the top edge"
+  },
+  {
+    "name": "EDGERUN-no-bottom",
+    "file": "src/ui/tamrielInk.js",
+    "old": "|| near(a.y, b.y, r.y1);",
+    "new": ";",
+    "tests": ["test/ui/tamriel4.test.js"],
+    "why": "EDGE-RUN: the bottom edge"
+  }
+]

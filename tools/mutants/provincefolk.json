@@ -200,8 +200,8 @@
  {
   "name": "PFOLK-the-Imperial-everywhere",
   "file": "src/characters/peopleBodies.js",
-  "old": "const own = RACE_NAME[data.race], native = own ? nativeHere() : null;",
-  "new": "const own = RACE_NAME[data.race], native = own ? nativeHere() ?? 'Imperial' : null;",
+  "old": "const own = RACE_NAME[data.race], native = own ? nativeAt(feet) : null;",
+  "new": "const own = RACE_NAME[data.race], native = own ? nativeAt(feet) ?? 'Imperial' : null;",
   "tests": [
    "test/characters/provincefolk.test.js"
   ]

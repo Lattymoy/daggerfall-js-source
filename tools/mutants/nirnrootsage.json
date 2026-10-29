@@ -212,12 +212,12 @@
   {
     "name": "NIRNROOT-SAGE-relay-unmoved",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world283';",
+    "old": "export const RELAY_VERSION = 'world285';",
     "new": "export const RELAY_VERSION = 'world267';",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
-    "note": "Re-aimed by content (AUDIT FB1028 A2-A3): world279, GROUND_LAW 4. Re-aimed by content (FB1028 TOWN-GROUND): world278, GROUND_LAW 3. MASTER-THREE (PIN MOVED): world271 (MASTERY_SLOTS 3/2/1 in systems/masterSkills.js, a file the bundle reaches; world269, then world270, on its branch, renumbered past BOW-TOPS and CHAT-POST at the merges). The vocabulary changed under a relay version already named. SHOP (re-aimed by content): the line it quotes grew with the shop. PIN MOVED: SD-PARTY world275, re-aimed by content."
+    "note": "Re-aimed by content (CAPE-TOGGLE): world285, a look's `hc` (world284 on its branch, past AUDIT TAMRIEL-WIDE at the merge of main). Re-aimed by content (THE MERGES OF MAIN INTO AUDIT TAMRIEL-WIDE): world284, past main's world281 to world283. Re-aimed by content (AUDIT TAMRIEL-WIDE B1, B2, B5 and E3): world280. Re-aimed by content (AUDIT FB1028 A2-A3): world279, GROUND_LAW 4. Re-aimed by content (FB1028 TOWN-GROUND): world278, GROUND_LAW 3. MASTER-THREE (PIN MOVED): world271 (MASTERY_SLOTS 3/2/1 in systems/masterSkills.js, a file the bundle reaches; world269, then world270, on its branch, renumbered past BOW-TOPS and CHAT-POST at the merges). The vocabulary changed under a relay version already named. SHOP (re-aimed by content): the line it quotes grew with the shop. PIN MOVED: SD-PARTY world275, re-aimed by content."
   },
   {
     "name": "NIRNROOT-SAGE-the-kind",

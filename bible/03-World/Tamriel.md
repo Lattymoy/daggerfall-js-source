@@ -1259,6 +1259,17 @@ band aids or half assed work"*.
 Section A, RELIEF-PEAKS (OURS: DFU stops at the Bay's edge; the large map's law is read off DFU's own WOODS.WLD, and
 the ranges and Red Mountain are the port's own).
 
+## EDGE-RUN - the frame's line dropped off the traced coast again (2026-10-29)
+
+The owner saw a hard black line down the lower half of the Bay's west edge, in open sea. It was the traced coast's run
+along the Bay's frame, at x -0.109 from y 367 to 454. `dropEdgeRuns` (TAMRIEL4) dropped a run only when both ends lay
+exactly on the edge. SMOOTH-LAND's lines cross between two pixel centres, so the frame's own line lies up to half a pixel
+off the edge and was kept. A run with both ends within EDGE_RUN_PX (0.5 map pixels) of one edge is now the frame's.
+
+- **Pins:** `test/ui/tamriel4.test.js` (the west edge's -0.109 run dropped, each of the four edges, half a pixel
+  either side kept as frame, 0.51 kept as shore).
+- **Mutants:** `tools/mutants/edgerun.json` (7, all dead).
+
 ## OFFSHORE-MARKS - places and roads past the Bay in the sea (2026-10-29)
 
 The owner, of the travel map past the Bay: roads and locations sit under the water, off the coast. Measured in node on

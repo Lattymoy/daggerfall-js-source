@@ -478,8 +478,10 @@ test('DA13: the shell - the game\'s channel asked first everywhere, served by th
   // Restart to Update reloads onto a version the channel brought - the page's own Leave/Stay asks first
   assert.match(sliceOf('async function restartToUpdate()', '/** A box over the window'), /if \(updateReady\?\.game\) \{ reloadOntoUpdate\(\); return; \}/);
   assert.match(sliceOf('function reloadOntoUpdate()', '/** The menu\'s check, out loud'), /markLeaving\(gameWindow\.webContents\);\s*gameWindow\.webContents\.reload\(\);/);
-  // opened once, by the one instance, before the first request
-  assert.match(main, /if \(!isSingleInstance\) return;[^\n]*\n\s*openGame\(\);[^\n]*\n\s*protocol\.handle\('dagger', handleDagger\);/);
+  // opened once, by the one instance, before ready and so before the first request (SHADER-EASE CACHE-TURN moved it)
+  assert.match(main, /\nif \(isSingleInstance\) \{ openGame\(\); turnGpuCache\(/);
+  assert.equal([...main.matchAll(/\bopenGame\(\);/g)].length, 1, 'opened once');
+  assert.ok(main.indexOf('\nif (isSingleInstance) { openGame();') < main.indexOf('\napp.whenReady()'), 'before ready');
   assert.match(sliceOf('function openGame() {', '/** The version of the game this copy plays'), /const seed = app\.isPackaged \? loadSeed\(GAME_SEED, app\.getVersion\(\)\) : null;\s*if \(!seed\) return;/);
   // the game's version is what the player is told and what Play keeps
   assert.match(main, /const gameVersion = \(\) => gameStore\?\.version\(\) \?\? app\.getVersion\(\);/);

@@ -21,7 +21,7 @@ import { RACES } from '../systems/races.js';
 import { SOCIAL_GROUPS, GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
 import { isNpcFlat } from '../world/npcFlatArchives.js';   // STALL-FLATS: RDBLayout.NPCFlatArchives, the people's pictures
 import { dressPerson } from './wardrobe.js';   // MWNPC17: the wardrobe's roles
-import { nativeHere } from './provinceFolk.js';   // PROVINCE-FOLK: the place's own people past the Bay
+import { nativeAt } from './provinceFolk.js';   // PROVINCE-FOLK: the place's own people past the Bay
 
 const RACE_NAME = Object.freeze(Object.fromEntries(Object.entries(RACES).map(([k, v]) => [v, k])));
 
@@ -67,7 +67,7 @@ export function wardrobeOf(f) {
  * for as long as they stand. MWNPC17: dressed by their kind's role off their name seed (characters/wardrobe.js).
  * @param {any} pn @param {any} data @param {any} faction
  */
-export function personLook(pn, data, faction) {
+export function personLook(pn, data, faction, feet = null) {
   if (pn._mwLook !== undefined) return pn._mwLook;
   if (!data || isChildNPCData(data)) return (pn._mwLook = null);
   // MWNPC8b: an EDITOR flat (a marker DFU never renders, whatever faction it carries) is no one to stand a body for -
@@ -80,7 +80,7 @@ export function personLook(pn, data, faction) {
   // no person's archive, so this one law keeps the marker's sprite-less flat bodiless too.
   if (!data.questPerson && !isNpcFlat(data.billboardArchiveIndex)) return (pn._mwLook = null);
   const kind = wardrobeOf(faction);
-  const race = standingRace(data, faction);   // PROVINCE-FOLK: past the Bay the place's own people
+  const race = standingRace(data, faction, feet);   // PROVINCE-FOLK: past the Bay the place's own people - AUDIT TAMRIEL-WIDE E2: where they stand
   if (kind === 'none' || !race) return (pn._mwLook = null);
   const gender = data.gender === GENDERS.Female ? 'female' : 'male';
   const seed = mix((data.nameSeed | 0) ^ mix(data.hash | 0));
@@ -101,7 +101,7 @@ export function personLook(pn, data, faction) {
  * is first looked at (a host hands one object for every frame, its members getters).
  * @param {any} fig a standing piece ({ piece }) @param {{ flats?: any, race?: any } | null} [ctx]
  */
-export function figureLook(fig, ctx = null) {
+export function figureLook(fig, ctx = null, feet = null) {
   if (fig._mwLook !== undefined) return fig._mwLook;
   const piece = fig.piece, flat = piece?.flat;
   if (!Array.isArray(flat)) return (fig._mwLook = null);
@@ -114,15 +114,15 @@ export function figureLook(fig, ctx = null) {
   if (!gender) return (fig._mwLook = null);
   const seed = textSeed(`decor:${piece.id}`);
   const d = dressPerson({ role: figureRole(row.caption), gender, seed });
-  return (fig._mwLook = { race: nativeHere() ?? raceNameOf(ctx?.race ?? null), gender, faceIndex: seed % 10, items: d.items, npc: d.npc });   // PROVINCE-FOLK: past the Bay the place's own people
+  return (fig._mwLook = { race: nativeAt(feet) ?? raceNameOf(ctx?.race ?? null), gender, faceIndex: seed % 10, items: d.items, npc: d.npc });   // PROVINCE-FOLK: past the Bay the place's own people
 }
 /** PROVINCE-FOLK (bible/03-World/World-Wide.md): A STANDING PERSON'S BODY'S RACE - their record's (GetRaceFromFaction), but
  *  past the Bay one whose race is the region's, or a region's faction's (a Bay town's People, a province's Court), is the
  *  place's own people (provinceFolk.js nativeHere: Cyrodiil's Imperials - WW-R records them as Bretons - the Reach's
  *  Reachmen, Skyrim's Nords); a named one (an Individual faction) and a faction's own people keep theirs.
  *  @param {any} data staticNpcData's @param {any} faction its FACTION.TXT row */
-export function standingRace(data, faction) {
-  const own = RACE_NAME[data.race], native = own ? nativeHere() : null;
+export function standingRace(data, faction, feet = null) {
+  const own = RACE_NAME[data.race], native = own ? nativeAt(feet) : null;
   if (!native || faction?.type === FACTION_TYPES.Individual) return own;
   const regional = !faction || !Number.isInteger(faction.race) || faction.race < 0 || faction.race > 7 || (Number.isInteger(faction.region) && faction.region >= 0);
   return regional ? native : own;

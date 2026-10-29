@@ -241,7 +241,10 @@ test('TESA2 the host: offline on the land beyond the Bay it stands the places - 
   assert.match(w, /\.finally\(\(\) => arenaTraceLanded\(\)\);/, 'landed, or never will');
   assert.match(w, /if \(!arenaTraceAsked\) arenaTraceLanded\(\);/, 'the door shut: nothing to wait for');
   assert.ok(w.indexOf('const arenaTraced = ') < w.indexOf(WAIT), 'the trace\'s promise made before the load waits on it');
-  assert.match(w, /if \(_arenaTemplates\) for \(const a of arenaPixels\(\)\?\.stood \?\? \[\]\) if \(!locationIndex\.has\(`\$\{a\.bx\},\$\{a\.by\}`\)\) places\.push\(\{ name: a\.name, px: a\.bx, py: a\.by \}\);/);
+  // PIN MOVED (AUDIT TAMRIEL-WIDE B4/C7): /tp's places are scenes/staffTp.js staffTpPlaces's - the stood places, when they
+  // stand, on no indexed pixel
+  assert.match(w, /staffTpPlaces\(\{ locationIndex, stood: _arenaTemplates \? arenaPixels\(\)\?\.stood : null, registry: worldPlaces \}\)/);
+  assert.match(read('src/scenes/staffTp.js'), /for \(const a of stood \?\? \[\]\) if \(!locationIndex\.has\(`\$\{a\.bx\},\$\{a\.by\}`\)\) \{ places\.push\(\{ name: a\.name, px: a\.bx, py: a\.by \}\);/);
   const modes = read('src/scenes/worldModes.js');
   // PIN MOVED (BAY-LEFT-B, bible/03-World/Arena-Provinces.md): an Arena town sells its houses - its province's region's,
   // its deed held to its own map id (banking.js deedHeldIn); the Veil's guard alone stands

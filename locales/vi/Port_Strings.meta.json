@@ -820,8 +820,8 @@
   "by": "claude-in-session"
  },
  "coll.src.world": {
-  "en": "45b24cf8e9dc",
-  "tr": "bb67c2035822",
+  "en": "859abfc107a6",
+  "tr": "f944a1b5e621",
   "by": "claude-in-session"
  },
  "coll.state.character": {
@@ -922,6 +922,11 @@
  "credits.mudex.what": {
   "en": "dab7ae5a1402",
   "tr": "d307df468afb",
+  "by": "claude-in-session"
+ },
+ "decor.yard.behind": {
+  "en": "e66a9854186d",
+  "tr": "1bd981311386",
   "by": "claude-in-session"
  },
  "dex.enemy.archerRider": {
@@ -1379,6 +1384,16 @@
   "tr": "e59b38b5501f",
   "by": "claude-in-session"
  },
+ "features.tamrielLand.note": {
+  "en": "c4201ee9109a",
+  "tr": "89d93c19a685",
+  "by": "claude-in-session"
+ },
+ "features.tamrielLand.title": {
+  "en": "3bc7615ad83a",
+  "tr": "825a24eb75a4",
+  "by": "claude-in-session"
+ },
  "features.tamrielLands.note": {
   "en": "dc37f2698218",
   "tr": "7cafaff50fd1",
@@ -1387,6 +1402,16 @@
  "features.tamrielLands.title": {
   "en": "1e8a962cf274",
   "tr": "93046d219521",
+  "by": "claude-in-session"
+ },
+ "features.tamrielMap.note": {
+  "en": "eda2af4235c1",
+  "tr": "de1e7901f774",
+  "by": "claude-in-session"
+ },
+ "features.tamrielMap.title": {
+  "en": "b5c1bd42eaeb",
+  "tr": "3d7827cab5d0",
   "by": "claude-in-session"
  },
  "features.wagonUpkeep.boons": {
@@ -1604,6 +1629,81 @@
   "tr": "f49a40432c5f",
   "by": "claude-in-session"
  },
+ "gfx.bar.preparing": {
+  "en": "62a6d1012582",
+  "tr": "2d0177538eaa",
+  "by": "claude-in-session"
+ },
+ "gfx.bar.ready": {
+  "en": "9930ea8bc52e",
+  "tr": "5cf49dbcb6df",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.button": {
+  "en": "69086bb69eff",
+  "tr": "43c4b1270bd3",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.close": {
+  "en": "bbfa773e5a63",
+  "tr": "d2b73ab2ada1",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.copy": {
+  "en": "af74f7c5362a",
+  "tr": "09a1db3ed41f",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.edge": {
+  "en": "e3fefd6f90b9",
+  "tr": "ad3fa1fe1d61",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.folders": {
+  "en": "16eb48819d73",
+  "tr": "e4b98569efee",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.mac.go": {
+  "en": "794827f753d8",
+  "tr": "c44b10b42868",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.mac.quit": {
+  "en": "e3c9830d2135",
+  "tr": "9673f110c551",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.note": {
+  "en": "f000ca038a57",
+  "tr": "09acc31c27df",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.profile": {
+  "en": "3a1ef5df59ff",
+  "tr": "cf717d88dc2c",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.why": {
+  "en": "4c0b60ec10d9",
+  "tr": "801fb694ef43",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.win.close": {
+  "en": "520764dd506b",
+  "tr": "a806c50da8b6",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.win.run": {
+  "en": "2993606036eb",
+  "tr": "1a741beb2b16",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.win.start": {
+  "en": "dc9c4564afab",
+  "tr": "c643d2ba8c7e",
+  "by": "claude-in-session"
+ },
  "growth.spec.why.chosenMentor": {
   "en": "54129619c117",
   "tr": "3ab972a05b78",
@@ -1632,6 +1732,16 @@
  "holdings.wagon.boons.sound": {
   "en": "71476c661351",
   "tr": "0c7c43e1809a",
+  "by": "claude-in-session"
+ },
+ "inventory.cape.label": {
+  "en": "cb4796c29622",
+  "tr": "bceeaae472e8",
+  "by": "claude-in-session"
+ },
+ "inventory.cape.title": {
+  "en": "8cd2d555af57",
+  "tr": "d5bba5cf4b31",
   "by": "claude-in-session"
  },
  "inventory.store.chestAct": {
@@ -2819,6 +2929,41 @@
   "tr": "d1b1b605e5b9",
   "by": "claude-in-session"
  },
+ "map.sheet.bay": {
+  "en": "78880f8c76b4",
+  "tr": "7be54335da2d",
+  "by": "claude-in-session"
+ },
+ "map.sheet.dungeon": {
+  "en": "ef947e3aef31",
+  "tr": "0123e4f86e07",
+  "by": "claude-in-session"
+ },
+ "map.sheet.interior": {
+  "en": "1dd68e5c21e5",
+  "tr": "55f2e0f53e57",
+  "by": "claude-in-session"
+ },
+ "map.sheet.tamriel": {
+  "en": "b2fa7a769061",
+  "tr": "b2fa7a769061",
+  "by": "claude-in-session"
+ },
+ "map.sheet.town": {
+  "en": "5d9c113b57b1",
+  "tr": "b17f7428d51f",
+  "by": "claude-in-session"
+ },
+ "map.tamriel.place": {
+  "en": "51513f0338a4",
+  "tr": "51513f0338a4",
+  "by": "claude-in-session"
+ },
+ "map.tamriel.placeKind": {
+  "en": "4baa9f07cc0b",
+  "tr": "4baa9f07cc0b",
+  "by": "claude-in-session"
+ },
  "mentor.ended": {
   "en": "f1e2a03439db",
   "tr": "dc7b7b09b2e4",
@@ -3855,8 +4000,8 @@
   "by": "claude-in-session"
  },
  "pvp.level30.warn": {
-  "en": "0a84a8632180",
-  "tr": "5ac24e61ff35",
+  "en": "6c45d870e1ce",
+  "tr": "a2c0ba7c9e58",
   "by": "claude-in-session"
  },
  "pvp.potion.health": {
@@ -4310,13 +4455,23 @@
   "by": "claude-in-session"
  },
  "sea.wild.chipTip": {
-  "en": "9e14a86d940a",
-  "tr": "138b15967d14",
+  "en": "88c4bc67ac34",
+  "tr": "d454377af440",
+  "by": "claude-in-session"
+ },
+ "sea.wild.dropLate": {
+  "en": "81c1d7e08802",
+  "tr": "2c9da3a33152",
   "by": "claude-in-session"
  },
  "sea.wild.enter": {
-  "en": "f49115e892b2",
-  "tr": "7497a97aadcb",
+  "en": "14bca5e366ed",
+  "tr": "ad9d68bd77ab",
+  "by": "claude-in-session"
+ },
+ "sea.wild.walkInto": {
+  "en": "eec82857378c",
+  "tr": "c6938e72bbe7",
   "by": "claude-in-session"
  },
  "settings.language.machine": {
@@ -5030,8 +5185,8 @@
   "by": "claude-in-session"
  },
  "tutorials.wildZone.body2": {
-  "en": "5c2566aaad07",
-  "tr": "aeeaf89571a5",
+  "en": "87989055cf87",
+  "tr": "477df9661356",
   "by": "claude-in-session"
  },
  "wagon.upkeep.boons.failing": {
@@ -5045,8 +5200,8 @@
   "by": "claude-in-session"
  },
  "wild.death.kept": {
-  "en": "5677b5a00569",
-  "tr": "19a2afb18b6d",
+  "en": "e9a05a7b45a6",
+  "tr": "9941d8ee30bf",
   "by": "claude-in-session"
  },
  "wild.death.last": {
@@ -5114,6 +5269,16 @@
   "tr": "73549c954fb3",
   "by": "claude-in-session"
  },
+ "wild.insure.line": {
+  "en": "3bd9cec6aa23",
+  "tr": "66ecf7590a0a",
+  "by": "claude-in-session"
+ },
+ "wild.legend.offline": {
+  "en": "86db54caef14",
+  "tr": "fbe904bc2ea2",
+  "by": "claude-in-session"
+ },
  "wild.safe.chip": {
   "en": "3441354558b8",
   "tr": "059178bcd802",
@@ -5135,13 +5300,13 @@
   "by": "claude-in-session"
  },
  "wild.zone.chipTip": {
-  "en": "fda83308207b",
-  "tr": "2deb4f86274c",
+  "en": "687871882d2f",
+  "tr": "697efab97298",
   "by": "claude-in-session"
  },
  "wild.zone.enter": {
-  "en": "006e183d3d6a",
-  "tr": "3d685e16a27a",
+  "en": "d8ef5b322bf0",
+  "tr": "fdc53462451d",
   "by": "claude-in-session"
  }
 }

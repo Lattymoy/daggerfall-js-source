@@ -257,6 +257,7 @@ export const TUTORIALS = Object.freeze([
   page({
     id: 'travel-map', group: 'travel', title: 'The Travel Map', trigger: 'When you first open the travel map.',
     body: [
+      // AUDIT TAMRIEL-WIDE D5: true past the Bay too since TRAVEL-EVERYWHERE (pastBayTravel.js pastBayJourney)
       '{TravelMap} opens the map of the whole land. Choose a place to travel there. The journey takes days in the game but only a moment for you.',
       'You decide how fast to go, how to travel and whether to camp or stop at inns. Online, journeys over land are made along the roads instead.',
     ],
@@ -532,7 +533,9 @@ export const TUTORIALS = Object.freeze([
   page({
     id: 'arena', group: 'challenges', title: 'The Arena', trigger: 'When you first visit the arena.',
     body: [
-      'The arena stands in the province\'s capital. Speak with the Herald at the gate to fight. The recruiters will take you onto a team, and the bookmaker takes wagers.',
+      // AUDIT TAMRIEL-WIDE II T1: two arenas - Daggerfall city's and the Imperial City's Arena District (IC-GRAND;
+      // world/arena/arenaCity.js standsArena); TUT1 names no Daggerfall
+      'An arena stands in the Imperial City and in the Iliac Bay\'s westernmost crown city. Speak with the Herald at the gate to fight. The recruiters will take you onto a team, and the bookmaker takes wagers.',
       'There are ten ranks to climb, and the purse reaches 10,000 gold. One defeat ends your run, and potions are forbidden.',
     ],
   }),
@@ -624,14 +627,13 @@ export const TUTORIALS = Object.freeze([
   }),
   page({
     id: 'wild-zone', group: 'online', title: 'The Open Zone', trigger: 'When you first enter the open zone.',
-    // FOE-KEEPS; AUDIT FOE-KEEPS O4: the page pops in either zone, the sea's too, and said the bag and cart lost whole at
-    // a kill - a tenth of the gold with them, and any other death there costs the usual tenth. STORE-KEEPS and WILD-INSURE
-    // (2026-10-26): the cart and the companions' packs are kept now, and so is insured gear; through the text core
-    // (L10N4), read when shown; WW-C2: the open zone is Cyrodiil's
+    // FOE-KEEPS; AUDIT FOE-KEEPS O4: the page pops in either zone, the sea's too. PVP-WORDS (PVP-REWARD, 2026-10-29): a
+    // kill drops nothing - its killer's one roll, a piece, a policy's gold or the last tenth - and any other death there
+    // costs the usual tenth; through the text core (L10N4), read when shown; WW-C2: the open zone is Cyrodiil's
     get body() {
       return [
         t('tutorials.wildZone.body1', 'Players may fight one another in Cyrodiil and on the open {word} Ocean, where monsters are tougher and spoils richer.', { word: ETHER_WORD }),
-        t('tutorials.wildZone.body2', 'If another player kills you there, your bag drops with a tenth of your gold, and they may take one worn item. Your cart, companions\' packs and insured gear are kept. Any other death costs the usual tenth.'),
+        t('tutorials.wildZone.body2', 'If another player kills you there, nothing drops. They may take one uninsured worn piece, or else one policy\'s gold, or else a tenth of your coin and letters of credit. Any other death costs the usual tenth.'),
       ];
     },
   }),

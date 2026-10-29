@@ -97,7 +97,7 @@ test('TIMERS1: the raids, the game day and the UTC day', () => {
   const many = Array.from({ length: 22 }, (_, i) => ({ name: `T${i}`, region: `R${i % 11}`, type: 'orcs', startMs: NOW + (i + 1) * 60_000, endMs: NOW + (i + 11) * 60_000 }));
   const crowd = eventTimerRows({ now: NOW, raids: many, region: 'R3' });
   assert.equal(crowd.filter((r) => r.kind === 'raid').length, 3, 'twenty-two raids: R3\'s two and one row for the rest');
-  assert.equal(byId(crowd, 'raids:elsewhere').detail, '19 more today across the Iliac Bay');
+  assert.equal(byId(crowd, 'raids:elsewhere').detail, '19 more today across Tamriel');   // PIN MOVED (AUDIT TAMRIEL-WIDE D6): WW6's lanes raid past the Bay
   assert.equal(byId(eventTimerRows({ now: NOW, raids: many }), 'raids:elsewhere').title, 'Next raid: T0', 'with no region known, the next one');
   assert.equal(byId(rows, 'gameday').title, 'New bounty hunts and raids', 'AUDIT TIMERS1 D4: the event clock\'s day, said as what turns - not the calendar\'s');
   const next = byId(rows, 'gameday').at;

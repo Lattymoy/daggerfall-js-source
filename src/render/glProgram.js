@@ -24,6 +24,13 @@ const STARTED = new WeakMap();
 // COMPILE-QUEUE (FIELD BUGS 2026-10-27b): a pair startProgramsInTurn holds for its turn, no program made yet - `wanted`
 // once a door asks for it, which brings it to the front.
 const queued = () => ({ prog: null, wanted: false });
+/** SHADER-EASE MOUNT-START (2026-10-29): the sources a build has made, per context - a queue that comes after never
+ *  starts them again (a host that mounted before the queue built its passes cold). */
+const TAKEN = new WeakMap();
+const takenOf = (gl) => { let t = TAKEN.get(gl); if (!t) TAKEN.set(gl, (t = new Set())); return t; };
+/** SHADER-EASE GFX-BAR (2026-10-29): the started and queued programs on `gl` not yet taken, as [key, program or null]
+ *  - read only, nothing linked or started (ui/gfxPrepBar.js). @param {any} gl @returns {Array<[string, any]>} */
+export const startedPrograms = (gl) => [...(STARTED.get(gl) ?? [])].map(([k, s]) => [k, s.prog]);
 /** Each context's KHR_parallel_shader_compile, or null. */
 const PARALLEL = new WeakMap();
 
@@ -86,7 +93,8 @@ export async function startProgramsInTurn(gl, pairs, wait) {
   let started = STARTED.get(gl);
   if (!started) STARTED.set(gl, (started = new Map()));
   const keyed = pairs.map(([vs, fs]) => [`${vs}\0${fs}`, vs, fs]);
-  for (const [k] of keyed) if (!started.has(k)) started.set(k, queued());
+  const taken = takenOf(gl);
+  for (const [k] of keyed) if (!started.has(k) && !taken.has(k)) started.set(k, queued());
   const turn = () => keyed.find(([k]) => started.get(k)?.wanted) ?? keyed.find(([k]) => started.get(k)?.prog === null);
   try {
     for (let next = turn(); next && !gl.isContextLost?.(); next = turn()) {
@@ -97,6 +105,19 @@ export async function startProgramsInTurn(gl, pairs, wait) {
   } finally {
     for (const [k] of keyed) if (started.get(k)?.prog === null) started.delete(k);   // a queue that ends early strands no pair: its door starts it
   }
+}
+
+/** SHADER-EASE MOUNT-START (2026-10-29): whether the driver has finished each program `pairs` names that is started and
+ *  not yet taken - read only, nothing linked or started (startPrograms' `ready()` starts again a program a build took).
+ *  A pair taken or never started counts as done; true at once where the context cannot say.
+ *  @param {any} gl @param {ReadonlyArray<readonly [string, string]>} pairs @returns {boolean} */
+export function startedDone(gl, pairs) {
+  const ext = parallelCompile(gl), started = STARTED.get(gl);
+  if (!ext || !started || gl.isContextLost?.()) return true;
+  return pairs.every(([vs, fs]) => {
+    const prog = started.get(`${vs}\0${fs}`)?.prog;
+    return !prog || gl.getProgramParameter(prog, ext.COMPLETION_STATUS_KHR) === true;
+  });
 }
 
 /** AUDIT SHADER-STALL (2026-10-20): the programs `pairs` names that were started and never taken, let go - their
@@ -136,6 +157,17 @@ export function compiledPass(gl, programs, make, fail = () => {}) {
   return /** @type {any} */ (Object.defineProperty(door, 'settled', { get: () => !!pass || tried }));
 }
 
+// SHADER-EASE LINK-WAIT (2026-10-29): the one LINK_STATUS read is where a cold compile holds the page's thread. A read
+// that waits past LINK_WAIT_MS is kept (the last LINK_WAIT_KEEP): which program, how long, and whether a start had it
+// ahead (`started`) - a build no warm started shows false. linkWaits() reads them.
+export const LINK_WAIT_MS = 50;
+export const LINK_WAIT_KEEP = 32;
+/** @type {Array<{ label: string, ms: number, started: boolean }>} */
+const WAITS = [];
+/** The slow LINK_STATUS reads kept, oldest first - a copy. */
+export const linkWaits = () => WAITS.slice();
+const clock = () => globalThis.performance?.now?.() ?? 0;
+
 /** Compile `vsSrc` and `fsSrc` and link them into a program, in the order
  *  every pass wrote it: createProgram, then per stage createShader,
  *  shaderSource, compileShader, the COMPILE_STATUS check and attachShader,
@@ -155,9 +187,15 @@ export function buildProgram(gl, vsSrc, fsSrc, label = '') {
   const started = STARTED.get(gl);
   const took = started?.get(key);
   if (took) started.delete(key);
+  takenOf(gl).add(key);
   const { prog, vs, fs } = took?.prog ? took : link(gl, vsSrc, fsSrc);   // COMPILE-QUEUE: a queued pair is compiled here, out of its turn
   let fault = /** @type {string|null} */ (null);
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+  const t0 = clock(), linked = gl.getProgramParameter(prog, gl.LINK_STATUS), ms = clock() - t0;
+  if (ms > LINK_WAIT_MS) {
+    const wait = { label: label || `${vsSrc.length}+${fsSrc.length} chars`, ms: Math.round(ms), started: !!took?.prog };
+    if (WAITS.push(wait) > LINK_WAIT_KEEP) WAITS.shift();
+  }
+  if (!linked) {
     for (const sh of [vs, fs]) if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) { fault = `${label ? `${label} shader: ` : ''}${gl.getShaderInfoLog(sh)}`; break; }
     fault ??= `${label ? `${label} link: ` : ''}${gl.getProgramInfoLog(prog)}`;
   }

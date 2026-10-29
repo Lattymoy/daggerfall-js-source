@@ -66,11 +66,12 @@
   {
     "name": "PORTALBAY-the-arrivals-answer-unread",
     "file": "src/scenes/portalStoneHost.js",
-    "old": "      try { if (!(await teleportTo(g.dest))) hudFade.clearFade(); }",
-    "new": "      try { await teleportTo(g.dest); }",
+    "old": "      try { if (!(await teleportTo(g.dest, { zoneFree: !pvpFlagOn() }))) hudFade.clearFade(); }",
+    "new": "      try { await teleportTo(g.dest, { zoneFree: !pvpFlagOn() }); }",
     "tests": [
       "test/systems/portalbay_stone.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE III): the line its fix rewrote."
   },
   {
     "name": "PORTALBAY-teleportTo-never-says-it-arrived",

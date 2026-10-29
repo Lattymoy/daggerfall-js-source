@@ -82,6 +82,8 @@ import { isNatureArchive, BLOCK_FLATS_OFFSET_Y } from '../world/rmbFlats.js';   
 import { LIGHTS_ARCHIVE, CITY_LIGHT_RANGE, CITY_LIGHT_INTENSITY, CITY_LIGHT_COLOR } from '../world/city/cityLights.js';   // YARD-LIGHT: the town's lantern
 import { interiorLightProperties } from '../world/interior/interiorLights.js';   // a candle's own light, the same one it gives indoors
 import { GLOBAL_SCALE } from '../world/meshReader.js';
+import { fabricBackyardOf } from '../world/imperialBackyards.js';   // IC-BACKYARD: an Imperial City house's yard, the court behind it
+import { t } from '../systems/textManager.js';
 import { transformedAabb } from '../render/frustum.js';   // FB1009 HOME-FOOT: a model's ground where its placement stands it
 import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a row named by its lamp
 import { createBankAccounts, BANK_REGION_COUNT, goldRegion } from '../systems/banking.js';   // the yard's wallet (homeYardWallet)
@@ -325,7 +327,29 @@ export function yardLot(origin, box, margin = YARD_MARGIN, rects = null) {
   const walls = Array.isArray(rects) && rects.length ? rects.map((r) => [r[0] - origin[0], r[1] - origin[2], r[2] - origin[0], r[3] - origin[2]]) : [house];
   return { house, walls, lot: [house[0] - margin, house[1] - margin, house[2] + margin, house[3] + margin], y: box[1] - origin[1] };
 }
+/** AUDIT TAMRIEL-WIDE A1: A HOME'S LOT off its frame (pixelBuild.js homeFrames) - never grown round a terraced house: an
+ *  Imperial City house's one model is its door, so a lot grown round it held its own rooms, the neighbours' and the street.
+ *  IC-BACKYARD: its lot is the court behind it (world/imperialBackyards.js, by its frame's `block` and `record`) - turned
+ *  with it, `alone` (the fabric parts it from the neighbours', no midline), opened at its door (`access`, the door's box).
+ *  AUDIT TAMRIEL-WIDE II W1: with no court of its own, the door's box, where nothing places - its owner, at the door, still
+ *  takes back what was set down before. @param {any} frame */
+export function lotOfFrame(frame) {
+  if (!frame?.terraced) return yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects);
+  const door = yardLot(frame.at, frame.box, 0), yard = door ? fabricBackyardOf(frame.block, frame.record) : null;
+  return yard ? { ...door, lot: [...yard.lot], turn: yard.turn, alone: true, access: door.lot } : door;
+}
 const inRect = (x, z, r, pad = 0) => x >= r[0] - pad && x <= r[2] + pad && z >= r[1] - pad && z <= r[3] + pad;
+/** IC-BACKYARD: a point of a lot's frame on the lot's own axes, and back - turned with its house (`turn`, radians). */
+export const lotAxes = (lot, x, z) => { const a = lot?.turn ?? 0, c = Math.cos(a), s = Math.sin(a); return a ? [x * c + z * s, z * c - x * s] : [x, z]; };
+const lotFrame = (lot, u, v) => { const a = lot?.turn ?? 0, c = Math.cos(a), s = Math.sin(a); return a ? [u * c - v * s, u * s + v * c] : [u, v]; };
+/** Whether a point of the frame stands on the lot (within `pad` of it). */
+const onLot = (lot, x, z, pad = 0) => { const [u, v] = lotAxes(lot, x, z); return inRect(u, v, lot.lot, pad); };
+/** IC-BACKYARD: the box round a lot on its frame's axes. */
+export function lotBox(lot) {
+  if (!lot.turn) return lot.lot;
+  const [x0, z0, x1, z1] = lot.lot, ps = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([u, v]) => lotFrame(lot, u, v));
+  return [Math.min(...ps.map((p) => p[0])), Math.min(...ps.map((p) => p[1])), Math.max(...ps.map((p) => p[0])), Math.max(...ps.map((p) => p[1]))];
+}
 /** HOME-LINE (FIELD BUGS 2026-10-11b): how far (x, z) stands from the nearest of these footprints [x0, z0, x1, z1] - 0 on
  *  one, Infinity for none. */
 export const yardGapTo = (rs, x, z) => (rs ?? []).reduce((m, r) => Math.min(m, Math.hypot(Math.max(r[0] - x, 0, x - r[2]), Math.max(r[1] - z, 0, z - r[3]))), Infinity);
@@ -376,13 +400,13 @@ export function yardWhyNot(pos, lot, others = [], foot = [], roads = [], lines =
   const [x, , z] = pos;
   const corners = (foot ?? []).map(([dx, dz]) => [x + dx, z + dz]);
   const points = [[x, z], ...corners];
-  if (!points.every(([px, pz]) => inRect(px, pz, lot.lot))) return YARD_OFF_LOT;
+  if (!points.every(([px, pz]) => onLot(lot, px, pz))) return YARD_OFF_LOT;
   const ground = corners.length ? corners : [[x, z]];
   const meets = (r) => inRect(x, z, r) || yardFootMeets(ground, r, YARD_EDGE_PAD);   // FB1009 HOME-FOOT: its middle, or its ground
   if ((lot.walls ?? [lot.house]).some(meets)) return YARD_IN_HOUSE;
   if ((others ?? []).some(meets)) return YARD_ON_OTHER;
   const own = lot.walls ?? [lot.house];
-  if (points.some(([px, pz]) => yardGapTo(lines, px, pz) < yardGapTo(own, px, pz))) return YARD_ON_OTHER;   // HOME-LINE; YARD-LINE: a lot's holder's
+  if (!lot.alone && points.some(([px, pz]) => yardGapTo(lines, px, pz) < yardGapTo(own, px, pz))) return YARD_ON_OTHER;   // HOME-LINE; YARD-LINE: a lot's holder's; IC-BACKYARD: an `alone` lot's line is the fabric's
   if ((roads ?? []).some((r) => yardFootMeets(ground, r, YARD_EDGE_PAD))) return YARD_ON_ROAD;
   if (!decorYardHighOk({ pos })) return YARD_TOO_HIGH;   // YARD-HEIGHT: never a tower - the service's own law
   return null;
@@ -406,7 +430,7 @@ export function yardRoadsOf(p, at, lot) {
   const bytes = p?.tilemapBytes ?? null;
   if (!bytes || !lot || !Array.isArray(at)) return [];
   const S = RMB_TILE_SIDE, N = TERRAIN_TILE_DIM;
-  const [lx0, lz0, lx1, lz1] = lot.lot;
+  const [lx0, lz0, lx1, lz1] = lotBox(lot);
   const tx0 = Math.max(0, Math.floor((at[0] + lx0) / S)), tx1 = Math.min(N - 1, Math.floor((at[0] + lx1) / S));
   const tz0 = Math.max(0, Math.floor((at[2] + lz0) / S)), tz1 = Math.min(N - 1, Math.floor((at[2] + lz1) / S));
   const out = [];
@@ -423,12 +447,13 @@ export function yardRoadsOf(p, at, lot) {
  * FB1001 ROAD-LOT: THE LOT'S EDGE, WHERE A PIECE MAY STAND - the lot's rect with the road taken out of it (`roads`,
  * yardRoadsOf's squares), as its boundary: segments [ax, az, bx, bz] in the lot's frame, each run so the lot lies on its
  * left (the bands' faces turned in, as the four sides always were), joined end to end into loops and a straight run
- * one segment. With no road it is the lot's four sides, south first.
+ * one segment. With no road it is the lot's four sides, south first. IC-BACKYARD: a turned lot's four sides, turned back
+ * to its frame - its court holds no road (and a road's squares stand on the frame's axes, not the lot's).
  */
 export function yardLotEdges(lot, roads = []) {
   if (!lot) return [];
   const [X0, Z0, X1, Z1] = lot.lot;
-  const holes = (roads ?? []).filter((r) => r[0] < X1 && r[2] > X0 && r[1] < Z1 && r[3] > Z0);
+  const holes = lot.turn ? [] : (roads ?? []).filter((r) => r[0] < X1 && r[2] > X0 && r[1] < Z1 && r[3] > Z0);
   const cuts = (lo, hi, i, j) => [...new Set([lo, hi, ...holes.flatMap((r) => [r[i], r[j]]).filter((v) => v > lo && v < hi)])].sort((a, b) => a - b);
   const xs = cuts(X0, X1, 0, 2), zs = cuts(Z0, Z1, 1, 3);
   const open = (i, j) => {
@@ -469,10 +494,13 @@ export function yardLotEdges(lot, roads = []) {
     }
     out.push(run);
   }
-  return out;   // a loop starts at its lowest corner, so its last run and its first never lie on one line
+  // a loop starts at its lowest corner, so its last run and its first never lie on one line
+  return lot.turn ? out.map(([ax, az, bx, bz]) => [...lotFrame(lot, ax, az), ...lotFrame(lot, bx, bz)]) : out;
 }
-/** Whether a world point stands on the lot (or within `near` of it) - `origin` the frame's, in the world. */
-export const yardHolds = (lot, origin, p, near = 0) => !!lot && Array.isArray(p) && inRect(p[0] - origin[0], p[2] - origin[2], lot.lot, near);
+/** Whether a world point stands on the lot (or within `near` of it) - `origin` the frame's, in the world. IC-BACKYARD: or
+ *  at its door, for a lot that stands away from it (`access`). */
+export const yardHolds = (lot, origin, p, near = 0) => !!lot && Array.isArray(p)
+  && (onLot(lot, p[0] - origin[0], p[2] - origin[2], near) || (!!lot.access && inRect(p[0] - origin[0], p[2] - origin[2], lot.access, near)));
 /**
  * THE LOT'S MARKED EDGE: its four sides as upright bands (the decal pass's quads - combat/blood/bloodDecals.js writeDecalQuad's
  * shape), standing on the ground, in the world (`origin` the frame's). FB1001 ROAD-LOT: with the road taken out of it
@@ -549,6 +577,7 @@ export function createHomeYards(deps) {
   let syncIn = 0;
   /** @type {any} the owner's own yard the decorator stands in, or null */
   let cur = null;
+  let panelWas = false;
 
   /** DECOR-OUTDOOR: the built pixel a yard stands in, now (a season's turn builds it again). */
   const entryOf = (y) => deps.built?.()?.get?.(`${y.px},${y.py}`) ?? null;
@@ -584,7 +613,10 @@ export function createHomeYards(deps) {
    *  kept one merges alone, as its owner writes into it. */
   function makeYard(key, p, bk, frame, kept) {
     const door = kept ? null : blocks.door(`${p.px},${p.py}:${yardCellOf(bk)}`, p.px, p.py, () => deps.translation(p.px, p.py));
-    const y = { key, px: p.px, py: p.py, mapId: p.homeTown, bk, frame, t: [...deps.translation(p.px, p.py)], sig: '', src: null, srcSig: '', kept, door, lot: yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects), pool: null, entry: p, skin: p._skinGen ?? 0, trees: new Map(), treeSet: null };
+    // AUDIT IC-BACKYARD P1: its lot worked when first read - an Imperial City house's is a survey of its court, and a
+    // stranger's yard never reads its lot (ownYardHere asks a kept one's alone)
+    let lot;
+    const y = { key, px: p.px, py: p.py, mapId: p.homeTown, bk, frame, t: [...deps.translation(p.px, p.py)], sig: '', src: null, srcSig: '', kept, door, get lot() { if (lot === undefined) lot = lotOfFrame(frame); return lot; }, pool: null, entry: p, skin: p._skinGen ?? 0, trees: new Map(), treeSet: null };
     y.pool = createDecorRoom({
       meshes: deps.meshes, renderer: deps.renderer, getTexture: deps.getTexture, uploadRecord: deps.uploadRecord, uploadRecordFrame: deps.uploadRecordFrame,
       collider: () => deps.collider?.() ?? null, origin: () => originOf(y),
@@ -877,6 +909,11 @@ export function createHomeYards(deps) {
       if (again) cur = { ...cur, yard: again }; else { tool.close(); cur = null; }
     }
     tool.frame({ dt, cam, overlayUp, interior: !!cur });
+    // AUDIT IC-BACKYARD P2: a lot away from its door - an Imperial City house's court, out of sight from the street - said
+    // where it is as the decorator opens
+    const open = tool.panelOpen();
+    if (open && !panelWas && cur?.yard.lot?.access) deps.say?.(t('decor.yard.behind', 'Your yard is the court behind your house. Fly up over the roof to reach it.'));
+    panelWas = open;
   }
 
   /**

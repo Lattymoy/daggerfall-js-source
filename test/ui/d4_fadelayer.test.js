@@ -241,7 +241,7 @@ test('D4: the teleport popup smashes to black as TeleportAway\'s first statement
   assert.deepEqual(hudFade.backgroundColor, [0, 0, 0, 0]);
 
   const world = src('scenes/world.js');
-  const tp = world.indexOf('async function teleportTo(pick)');
+  const tp = world.indexOf('async function teleportTo(pick, { zoneFree = false } = {})');   // PIN MOVED (AUDIT TAMRIEL-WIDE III F1)
   assert.ok(tp > 0);
   const fade = world.indexOf('hudFade.fadeHUDFromBlack();', tp);
   const end = world.indexOf('_teleporting = false;', tp);
