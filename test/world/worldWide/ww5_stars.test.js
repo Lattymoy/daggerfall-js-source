@@ -310,7 +310,8 @@ function starWorld({ ww5 = true, region = 17, n = N } = {}) {
 test('WW5 THE HOST: every theatre\'s stars stand - the Bay\'s and a province\'s, each its own key; none of a province\'s on a relay that keeps none; the Timers the theatre I stand in alone (the Bay\'s at sea and in Cyrodiil); a province\'s hold said to its own theatre, the Bay\'s to everyone; the map every theatre\'s (mutants: the lanes unasked; the relay gate; the Timers every theatre\'s; the hold to everyone)', () => {
   // PIN MOVED: FRONTS - a festival night on Skyrim's turn, all three of its stars landing (net/frontLaw.js); N is High Rock's and Summerset's
   let NS = N;
-  while (![9, 10, 11].every((k) => starInWindow(NS, k))) NS++;
+  while (NS < N + 48 && ![9, 10, 11].every((k) => starInWindow(NS, k))) NS++;
+  assert.ok(NS < N + 48, 'Skyrim\'s turn comes within two days of nights');
   const realNow = Date.now;
   try {
     const { w, host, sk } = starWorld({ n: NS });
