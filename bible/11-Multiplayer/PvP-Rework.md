@@ -399,4 +399,4 @@ The body goes as a normal leave when its lock runs out or its fall is signed (`w
 Its account's hello in that room takes it back, with the health the referee kept and no safe passage
 (`pvpLinger.js:"function lingerTaken("`); a hello in another room ends it at the room's next ask of the hub. A villain
 stays only when a blow fell in the lock. A close outside the lock, a hidden socket, or the room's last socket leaves at
-once. Relay world289. A departure: DFU has no PvP.
+once. Relay world290. A departure: DFU has no PvP.

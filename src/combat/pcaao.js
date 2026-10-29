@@ -488,6 +488,7 @@ export function pcaaoHandToHandAttackDamage(attacker, target, damageModifier, pl
   if (player) {
     const h2h = skill(attacker, SKILLS.HandToHand);
     damage = range(handToHandMinDamage(h2h), handToHandMaxDamage(h2h), rolls);
+    if (info?.wraps) damage = weaponDamageMods(info.wraps, damage);   // HAND-WRAPS: the wraps' own lines over the fist's roll, as a weapon's over its own
     damage += damageModifier;
     damage += pcaaoDamageModifier(stat(attacker, 'strength'));
     damage += clawMetalDamage(attacker);
@@ -1059,7 +1060,7 @@ export function pcaaoAttackDamage(attacker, target, {
   weapon: weaponIn = null, damageMod = 0, toHitMod = 0, backstabChance = 0, weaponAnimTime = 0,
   rolls = Math.random, dfRand = () => Math.floor(Math.random() * 32768), onMonsterHit = null, onInflictPoison = null,
   say = null, playerReflexes = null, notes = null, modules = pcaaoModules(), unaware = false, onStruck = null,
-  blowShare = null,
+  blowShare = null, wraps = null,
 } = {}) {
   if (!attacker || !target) return 0;
   let weapon = weaponIn;
@@ -1131,7 +1132,7 @@ export function pcaaoAttackDamage(attacker, target, {
     if (isPlayer(attacker) || isClassEnemy(AIAttacker)) {
       if (pcaaoSuccessfulHit(attacker, target, chanceToHitMod, struckBodyPart, rolls, modules, notes)) {
         if (notes) notes.hit = true;
-        damage = pcaaoHandToHandAttackDamage(attacker, target, damageModifiers, isPlayer(attacker), rolls, { unaware: !!unaware });   // BAL10: the host's word, for the fists' blow modifiers
+        damage = pcaaoHandToHandAttackDamage(attacker, target, damageModifiers, isPlayer(attacker), rolls, { unaware: !!unaware, wraps });   // BAL10: the host's word, for the fists' blow modifiers; HAND-WRAPS: and the wraps' lines (formulas.js)
         const before = damage;
         damage = pcaaoBackstabDamage(damage, backstab, rolls, say);
         backstabbed(before, damage);

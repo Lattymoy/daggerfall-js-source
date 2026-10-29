@@ -21,6 +21,7 @@ import { EQUIP_SLOTS } from './paperdoll/paperdoll.js';
 import { ITEM_GROUPS, SLOT_RULES, WEAPON_HANDS, SHIELD_INDICES } from './equipRules.js';
 import { getBool } from '../systems/settings/settings.js';
 import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js';   // RRI1: GetItemHands / GetEquipSlot are virtuals a custom class answers   // AUDIT 58: ItemEquipTable.cs:635 reads BowLeftHandWithSwitching
+import { HAND_WRAPS_TEMPLATE } from './handWrapsIds.js';   // HAND-WRAPS: a leaf, as thunderlockIds.js
 import { THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE } from './thunderlockIds.js';   // FIELD-GUN2: the departure below - a leaf with no imports, so this cannot cycle
 
 export const ITEM_HANDS = Object.freeze({ None: 0, RightOnly: 1, LeftOnly: 2, Either: 3, Both: 4 });
@@ -66,6 +67,7 @@ export function getItemHands(item, { bowLeftHand = getBool('Enhancements', 'BowL
   // PISTOLET: the same arm for the second gun - Either, a one-handed weapon's hand, so it is worn in either hand and a
   // second one in the other makes a pair (combat/twoHands/handsLaw.js DUAL_GUN_TYPES)
   if (group === ITEM_GROUPS.Weapons && item.templateIndex === PISTOLET_TEMPLATE) return ITEM_HANDS.Either;
+  if (group === ITEM_GROUPS.Weapons && item.templateIndex === HAND_WRAPS_TEMPLATE) return ITEM_HANDS.Either;   // HAND-WRAPS: worn in either hand, both fists up (combat/twoHands/handsLaw.js)
   const cls = customItemClass(item.templateIndex);   // RRI1: ItemArchersAxe / ItemLightFlail answer Either
   if (cls?.itemHands) return ITEM_HANDS[cls.itemHands];
   const w = WEAPON_HANDS[item.templateIndex];

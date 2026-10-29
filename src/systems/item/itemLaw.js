@@ -86,6 +86,7 @@ import '../professions/profTemplates.js';
 import '../survival/items.js';
 import '../thunderlock.js';
 import '../pistolet.js';   // PISTOLET: the second gun's row, the Thunderlock's way
+import '../handWraps.js';   // HAND-WRAPS: the fists' weapon's row
 import '../gate/gateSpoils.js';
 import '../ayleidStones.js';
 import '../gems.js';   // GEM2: the graded gems' rows
@@ -129,7 +130,7 @@ import { DRAGON_MOUNT_TEMPLATE, isDragonMount, dragonMountWellFormed } from '../
  *  such field). Nothing a law of 13 found is lawful now. MASTER-ART left it at 14: a Master's work (net/masterLaw.js) is a
  *  shape no earlier law met honestly - none was made before the service that makes it, whose judge is this law - so no
  *  finding of 14 is one to ask again. */
-export const ITEM_LAW_VERSION = 15;   // DRAGON5: the Dwarven Dragon (1820) a template the law knows - law 14 found every one 'template'
+export const ITEM_LAW_VERSION = 15;   // DRAGON5: the Dwarven Dragon (1820) a template the law knows - law 14 found every one 'template'; HAND-WRAPS left it: no pair existed for a law to find against (acct224 carries the row)
 
 const T = ENCHANTMENT_TYPES;
 const TYPE_KEY = Object.freeze(Object.fromEntries(Object.entries(T).map(([k, v]) => [v, k])));
@@ -150,7 +151,7 @@ const CLASSIC_GROUPS = (() => {
  *  writes it. Every index not named here is UselessItems2's - the custom items' own group. Pinned by the producer sweep
  *  (test/systems/item/int1_itemlaw.test.js): every custom index a producer mints, in the group it mints it in. */
 export const CUSTOM_TEMPLATE_GROUPS = Object.freeze({
-  Weapons: Object.freeze([513, 514, 560, 561, 562]),
+  Weapons: Object.freeze([513, 514, 560, 561, 562, 563]),   // HAND-WRAPS: 563
   Armor: Object.freeze([515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526]),
   Gems: Object.freeze([570, 571, ...GEM_GRADE_TEMPLATES]),   // GEM2: the graded gems (systems/gems.js)
   Jewellery: Object.freeze([]),
