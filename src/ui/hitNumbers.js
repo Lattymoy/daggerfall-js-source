@@ -29,6 +29,8 @@
 // is pinned.
 // ═══════════════════════════════════════════════════════════════════
 import { setPlayerAttackHook } from '../combat/formulas.js';
+import { registerSpellLandedListener } from '../systems/spell/spellPower.js';
+
 
 const RISE_MS = 950;
 let layer = null;
@@ -53,6 +55,33 @@ export function numberFor(r) {
   if (r.critical) return { kind: 'crit', text: String(dmg), tag: null };
   return { kind: 'hit', text: String(dmg), tag: null };
 }
+
+/** Function to read out Spell hit damage 
+Exclude stand in enemies, since these have their own damage display logic
+somewhere else living. The damage display functions maybe should be put together
+in the future..*/
+export function spellNumberFor(info) {
+  if (!info || !info.r || info.self || !info.foe || info.target?.landsByWord) return null;
+
+    // Check damage here, since secondary spell effects can still be resisted while damage is applied
+  const dmg = Math.max(0, Math.round(info.r.damage || 0));
+  if (dmg > 0) return {kind: 'hit', text: String(dmg), tag: null};
+	
+  if (info.r.reflected) return {kind: 'miss', text: 'Reflected', tag: null};
+  if (info.r.saved || info.r.resisted) return {kind: 'miss', text: 'Resisted', tag: null};
+  if (info.r.absorbed) return {kind: 'absorbed', text: 'Absorbed', tag: null};
+
+  // TODO: damage over time is not shown yet - its ticks land per round and live in systems/effects.js runEffectRound
+  return null;
+}
+
+/** Wrapper for spellNumberFor since it get's info as a whole and not only results*/
+export function showSpellNumber(info) {
+    if (!registered) return null;
+    const n = spellNumberFor(info);
+    return n ? showNumber(n) : null;
+}
+
 
 /** PARTY-BUFFS (Tabitha: "I'd also like floating Heal numbers"): a heal I TOOK - my health between two frames the
  *  HUD drew, as "+N" in green on this same layer, a little under the reticle where the blows rise. Only a RISE, and
@@ -105,6 +134,7 @@ export function showNumber(n, { scatter01 = Math.random } = {}) {
   setTimeout(gone, RISE_MS + 250);
   return node;
 }
+
 
 // ── TELL9: THE WORDS ON THE HIT (bible/12-Enhanced-AI/Feud-Arc.md 11.2) ──
 /** What a telegraphed blow's fight adds to a number: my blow on a wind-up that broke into a STAGGER, one that HOLDS, one
@@ -170,6 +200,7 @@ export function mountHitNumbers() {
     const node = showNumber(numberFor(r));
     _lastHit = node && r?.hit && !r.ineffective ? { target: r.target ?? null, node, at: Date.now() } : null;   // TELL9: the door's word joins it
   });
+  registerSpellLandedListener('hit-spell-numbers', showSpellNumber);
 }
 /** For tests and the classic skin's guarantee: nothing registered. */
 export function unmountHitNumbers() {
@@ -177,5 +208,6 @@ export function unmountHitNumbers() {
   registered = false;
   _lastHit = null;
   setPlayerAttackHook(null);
+  registerSpellLandedListener('hit-spell-numbers', null); 
   if (layer) { layer.remove(); layer = null; }
 }
