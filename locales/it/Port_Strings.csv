@@ -2966,6 +2966,7 @@ guild.wayBack.shut,"Questa sede è chiusa in questa Stagione - le sedi della gil
 guild.wayBack.skills,"Serve anche un’abilità della gilda a {high} e una seconda a {low}: {skills}."
 guild.wayBack.standing,"La tua reputazione qui è {rep}. Si accettano membri da {need} in su."
 haul.capped,"Limite giornaliero di argento raggiunto"
+helm.heavy,"Troppo pesante. Alleggerisci lo zaino, il carro o la stiva"
 helm.passenger,"{ship}, diretta a {port} - al timone c’è il suo capitano"
 holdings.horse.boons.hungry,"Affamato, ma ancora senza penalità."
 holdings.horse.boons.starving,"Allo stremo - niente galoppo finché non mangia. Dagli da mangiare."

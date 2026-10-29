@@ -29,8 +29,8 @@
   {
     "name": "HOLD-send-away-indoors",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if (pee().isPlayerInside() || tm().isOnShip()) return { ok: false, text: HCC_TEXT.sendAwayOutdoorsOnly };",
-    "new": "    if (tm().isOnShip()) return { ok: false, text: HCC_TEXT.sendAwayOutdoorsOnly };",
+    "old": "    if (pee().isPlayerInside() || aboard()) return { ok: false, text: HCC_TEXT.sendAwayOutdoorsOnly };",
+    "new": "    if (aboard()) return { ok: false, text: HCC_TEXT.sendAwayOutdoorsOnly };",
     "tests": [
       "test/systems/horse/holdings.test.js"
     ]

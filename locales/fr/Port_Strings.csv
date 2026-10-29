@@ -2966,6 +2966,7 @@ guild.wayBack.shut,"Cette maison est fermée cette Saison - les maisons de la gu
 guild.wayBack.skills,"Il faut aussi une compétence de guilde à {high} et une deuxième à {low} : {skills}."
 guild.wayBack.standing,"Votre réputation ici est de {rep}. Les membres sont admis à partir de {need}."
 haul.capped,"Plafond d’argent du jour atteint"
+helm.heavy,"Trop lourd. Allégez votre sac, votre chariot ou la cale"
 helm.passenger,"{ship}, en route pour {port} - son capitaine tient la barre"
 holdings.horse.boons.hungry,"Affamé, mais pas encore de pénalité."
 holdings.horse.boons.starving,"Famélique - pas de galop tant qu'il n'a pas mangé. Nourrissez-le."

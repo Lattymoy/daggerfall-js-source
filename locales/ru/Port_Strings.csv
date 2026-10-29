@@ -2966,6 +2966,7 @@ guild.wayBack.shut,"Этот зал закрыт в этом Сезоне — з
 guild.wayBack.skills,"Нужен и один навык гильдии на {high}, а второй на {low}: {skills}."
 guild.wayBack.standing,"Ваше положение здесь: {rep}. В члены принимают начиная с {need}."
 haul.capped,"Дневной лимит серебра достигнут"
+helm.heavy,"Слишком тяжело. Облегчите рюкзак, повозку или трюм"
 helm.passenger,"{ship}, курсом на {port} — правит её шкипер"
 holdings.horse.boons.hungry,"Голоден, но штрафа пока нет."
 holdings.horse.boons.starving,"Изнурён голодом - не скачет галопом, пока не поест. Накормите его."
