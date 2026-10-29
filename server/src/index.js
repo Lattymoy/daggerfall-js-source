@@ -263,7 +263,7 @@ import { isSiegeRoom, newFighter, armsOk, SIEGE_HIT, ROYAL_RING, isSiegeNpcId, s
 import { mintSiegeReceipt, SIEGE_RECEIPT_TTL_S, mintRoyalReceipt } from '../../src/net/siege/siegeReceipt.js';   // SEAT2a: the relay's fourth signature - a fighter's result and Honours
 import { takeHealthReport, poolWord, poolUnheard } from '../../src/net/siege/refereeHealthShare.js';   // SHARED-HEALTH: one health pool under the referee
 import { newDuelRef, duelNote, duelOpen, duelBoutOf, duelBlow, duelPose, duelEnd, duelForfeit, duelStep, duelVitals } from '../../src/net/duel/duelRef.js';   // INT8: the duel refereed
-import { newWildRef, wildZone, wildPose, wildBlow, wildKin, sameGuild, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildCredit, wildFallOf, wildDownWord, wildGraceLeft, wildGraceTaken, wildAggroWord, wildFlagWord, WILD_GRACE, WILD_FALL_PREFIX, WILD_REF } from '../../src/net/wild/wildRef.js';   // INT9: the open zone refereed
+import { newWildRef, wildZone, wildPose, wildBlow, wildKin, sameGuild, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildCredit, wildFallOf, wildDownWord, wildGraceLeft, wildGraceTaken, wildAggroWord, wildFlagWord, wildBarWord, wildBarWords, WILD_GRACE, WILD_FALL_PREFIX, WILD_REF } from '../../src/net/wild/wildRef.js';   // INT9: the open zone refereed
 import { mintWildReceipt, mintWildCollect, mintSeaWreck, WILD_RECEIPT_TTL_S, SEA_WRECK_TTL_S } from '../../src/net/wild/wildReceipt.js';   // INT9: a fall, signed; MAC (2026-10-14): and a killer's collect; SHIP-PVP: and a wreck
 import { seaHelm, seaShot, seaBoard, seaStep, seaGone, seaCarry, seaWreckOf, SEA_WRECK_PREFIX, SEA_REF } from '../../src/net/sea/seaRef.js';
 /** AUDIT SEA VENTURES A8: a signed word owed an account that is away (a fall's receipt, a wreck's) kept in the room's storage
@@ -11504,6 +11504,13 @@ export class Room {
     const mine = this._siegeSocketOf(a.sub);
     if (!mine) return;
     for (const [sub, o] of st.fighters) if (sub !== a.sub && o.zone && o.flag) this._send(mine[0], JSON.stringify(wildFlagWord(o, Date.now())));
+    this._wildBarsTo(st, a.sub, mine[0]);   // PVP-BAR: and each one's bar
+  }
+  /** PVP-BAR (wildRef.js wildBarWords): each flagged fighter's bar that moved, said to the room - at most once each half second. */
+  _wildBarSay(st, now) { for (const w of wildBarWords(st, now)) this._wildFan(w); }
+  /** PVP-BAR: every flagged fighter's bar but its own, to one that has just stood in the zone. */
+  _wildBarsTo(st, sub, ws) {
+    for (const [s, o] of st.fighters) { const w = s !== sub && o.zone && o.flag ? wildBarWord(o) : null; if (w) this._send(ws, JSON.stringify(w)); }
   }
 
   /** PVP-SKULL: each flagged fighter of a blow said to the room in aggro (wildRef.js wildAggroWord). */
@@ -11545,6 +11552,7 @@ export class Room {
   async _wildBeat(now) {
     const st = await this._wildSt();
     for (const w of seaStep(st, now)) await this._seaSign(w, now);   // SHIP-PVP: a wreck its killer never boarded, signed unboarded
+    this._wildBarSay(st, now);   // PVP-BAR
     if (!st.falls.size) return;
     for (const fall of wildStep(st, now)) await this._wildSign(fall, now);
   }

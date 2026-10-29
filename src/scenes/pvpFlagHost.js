@@ -8,6 +8,14 @@ import { pvpFlagRefusal, PVP_FLAG } from '../systems/wild/pvpFlag.js';
 import { t } from '../systems/textManager.js';
 import { noteCaps } from '../ui/capsFix.js';
 import { skullSrc } from '../ui/pvpSkull.js';
+import { CONCEAL_MODE } from '../systems/combatVisuals.js';   // PVP-BAR
+
+/** PVP-BAR: a concealed player in a PvP fight - a faint body that keeps its skull and bar (the name is taken). */
+export const PVP_FIGHT_VEIL = Object.freeze({ mode: CONCEAL_MODE.reveal, alpha: 0.3, t: 0, phase: 0, named: true });
+/** PVP-BAR: how long a frame's veil stands for the name pass that follows it. */
+const VEIL_FRAME_MS = 250;
+/** PVP-BAR: a point's whole name taken, its skull and bar kept. */
+const nameless = (p) => ({ ...p, name: '', title: null, glyphs: [], lv: null, gt: null, rb: null, house: null, tint: null });
 
 const SKULL_EDGE = Object.freeze({ off: '#4caf50', white: '#8a7246', gold: '#e8b62c', red: '#d42a1e' });
 
@@ -22,6 +30,8 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
   const say = (line) => { midScreen(line); talk.say(line); };
   let on = false, fightAt = -Infinity, button = /** @type {HTMLButtonElement | null} */ (null);
   const peers = new Map();   // PVP-SKULL: a flagged peer's id -> when its aggro ends (gold until then)
+  const bars = new Map();   // PVP-BAR: a flagged peer's id -> its bar `{ h, s }`, per cent
+  const veiled = new Map();   // PVP-BAR: a concealed peer in a fight -> when a frame last drew it faint
   const me = () => online()?.id ?? null;
   /** PVP-SKULL: a skull's kind - none unflagged, gold in aggro, white else. */
   const skullOf = (id) => (peers.has(id) ? (peers.get(id) > now() ? 'gold' : 'white') : null);
@@ -47,10 +57,13 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
   /** The referee's word: a flag (mine is its to hold - a drop refused in the lock comes back up), or a blow on me or by me. */
   const heard = (g) => {
     if (g?.k === 'flag') {
-      if (g.id === me()) { on = g.f === 1; paint(); } else if (g.f === 1) peers.set(g.id, g.a ? now() + g.a : -Infinity); else peers.delete(g.id);
+      if (g.id === me()) { on = g.f === 1; paint(); } else if (g.f === 1) peers.set(g.id, g.a ? now() + g.a : -Infinity); else { peers.delete(g.id); bars.delete(g.id); }
       return true;
     }
-    if (g?.k === 'hp' && (g.by === me() || g.to === me())) fightAt = now();
+    if (g?.k === 'bar') { bars.set(g.id, { h: g.h, s: g.s ?? 0 }); return true; }   // PVP-BAR: the referee's word on a flagged fighter's bar
+    if (g?.k !== 'hp') return false;
+    if (g.by === me() || g.to === me()) fightAt = now();
+    for (const [id, hp, max] of g.h ?? []) if (max > 0) bars.set(id, { h: hp > 0 ? Math.max(1, Math.min(100, Math.round((100 * hp) / max))) : 0, s: bars.get(id)?.s ?? 0 });   // PVP-BAR: a blow's own count, at once
     return false;
   };
   if (doc) {
@@ -79,8 +92,23 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     flagOf: (peerId) => peers.has(peerId),
     skullOf,
     mySkull,
-    /** PVP-SKULL: wrap the host's name mask - each player's point wears its skull (ui/nameLayer.js draws it). */
-    mask: (inner) => (p) => { const q = inner ? inner(p) : p; const k = q && q.kind !== 'board' ? skullOf(q.id) : null; return k ? { ...q, skull: k } : q; },
+    /** PVP-SKULL: wrap the host's name mask - each player's point wears its skull (ui/nameLayer.js draws it). PVP-BAR: and
+     *  its bar under it. A flagged player the mask leaves nameless (the zone's stranger) or veils keeps both, without a name. */
+    mask: (inner) => (p) => {
+      const q = inner ? inner(p) : p;
+      const k = p && p.kind !== 'board' ? skullOf(p.id) : null;
+      if (!k) return q;
+      const bar = bars.get(p.id);
+      const shown = !q || now() - (veiled.get(p.id) ?? -Infinity) < VEIL_FRAME_MS ? nameless(q ?? p) : q;
+      return { ...shown, skull: k, ...(bar ? { bar } : {}) };
+    },
+    /** PVP-BAR (the owner: "They always have some body just fiant"): a concealed peer in a PvP fight (its skull gold) is
+     *  drawn faint, never nowhere - `look` is combatVisuals.js peerDraw's answer for its pose's `cv`. */
+    look: (id, bits, look) => {
+      if (look?.kind === 'plain' || (bits & 7) === 7 || skullOf(id) !== 'gold') return look;   // 7: a staff member inside its event's boss
+      veiled.set(id, now());
+      return { kind: 'conceal', visual: PVP_FIGHT_VEIL };
+    },
   };
   _current = api;
   return api;

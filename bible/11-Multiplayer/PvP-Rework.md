@@ -134,3 +134,17 @@ step outside was close and just now (`zoneEdge.js:"export const ZONE_EDGE = Obje
 the referee grants an entry's safe passage on it alone (`wildRef.js:"else if (!x.down && !rose && ed && now"`). A
 teleport, a dungeon left, a town's streets left (the streets say 0 to the referee) and a rise grant none. The relay has
 no map, so the word is the client's own, as the streets' peace is.
+
+## PVP-BAR: health over a flagged player
+
+"How does the health and shield bar look", then "Perfect" to its mockup: a red health bar with a thin blue Shield strip
+on top, between the skull and the name (`nameLayer.js:"const paintBar = (tag, b) => {"`), on flagged players alone. The
+referee says each flagged fighter's bar to the room when it moves, in whole per cent, at most once each half second
+(`wildRef.js:"export function wildBarWords(st, now) {"`), off the zone's beat
+(`server/src/index.js:"_wildBarSay(st, now) {"`), and every bar to one entering. The referee knows a Shield spell as on
+or off, never its amount, so the strip is whole or gone. A flagged stranger, nameless in the 3D scene, still shows its
+skull and bar (`pvpFlagHost.js:"const shown = !q ||"`).
+
+"So a hidden player u only see the skull and hp bar", "They always have some body just fiant": a Chameleon or
+Invisible player whose skull is gold is drawn faint, with skull and bar and no name
+(`pvpFlagHost.js:"export const PVP_FIGHT_VEIL = Object.freeze({"`). A departure: DFU has no PvP.

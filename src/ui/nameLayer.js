@@ -188,6 +188,11 @@ export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
 .dfname-title:empty { display: none; }
 .dfname-skull { width: 1.6em; height: 1.6em; margin: 0 auto .15em; background: center / contain no-repeat; image-rendering: pixelated; }
 .dfname-skull.off { display: none; }
+/* PVP-BAR: a flagged player's health in red under the skull, a thin blue Shield strip on top. */
+.dfname-bar { width: 3.4em; margin: 0 auto .2em; border: 1px solid #000; background: #3a0d0a; }
+.dfname-bar.off { display: none; }
+.dfname-bar-s { height: .14em; background: #3d7be0; }
+.dfname-bar-h { height: .32em; background: #d42a1e; }
 /* ACC3 - THE GLYPHS, right of the name. Sized off the label's own em so
    they shrink with distance exactly as the name does, and drawn in
    currentColor so ui/playerBadge.js is the only place a colour is
@@ -290,6 +295,13 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
   const setCls = (n, c) => { if (n.className !== c) n.className = c; };
   /** PERF-NAMES1: one tag's value, written when it differs from what THIS LAYER last wrote there (`tag[slot]`). */
   const put = (tag, slot, v, write) => { if (tag[slot] !== v) { tag[slot] = v; write(v); } };
+  /** PVP-BAR: the bar shown at its health and Shield (per cent), or hidden where the point carries none. */
+  const paintBar = (tag, b) => {
+    setCls(tag.bar, b ? 'dfname-bar' : 'dfname-bar off');
+    if (!b) return;
+    tag.barH.style.width = `${Math.max(0, Math.min(100, b.h))}%`;
+    tag.barS.style.width = `${Math.max(0, Math.min(100, b.s ?? 0))}%`;
+  };
   const live = new Set();   // PERF-NAMES1: the frame's ids, one set refilled
 
   const makeTag = () => {
@@ -324,9 +336,16 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
     house.className = 'dfname-house';
     const skull = doc.createElement('div');   // PVP-SKULL: over the title, the flagged player's mark (ui/pvpSkull.js)
     skull.className = 'dfname-skull off';
-    node.append(bubble, skull, title, tag, house, ribbon);
+    const bar = doc.createElement('div');   // PVP-BAR: under the skull, above the name - its Shield strip and its health
+    bar.className = 'dfname-bar off';
+    const barS = doc.createElement('div');
+    barS.className = 'dfname-bar-s';
+    const barH = doc.createElement('div');
+    barH.className = 'dfname-bar-h';
+    bar.append(barS, barH);
+    node.append(bubble, skull, bar, title, tag, house, ribbon);
     root.append(node);
-    return { node, bubble, skull, skullOf: '', title, tag, lv, name, guild, glyphs, house, ribbon, worn: null, titled: null, inked: undefined, banded: '', armed: '',
+    return { node, bubble, skull, skullOf: '', bar, barS, barH, barOf: '', title, tag, lv, name, guild, glyphs, house, ribbon, worn: null, titled: null, inked: undefined, banded: '', armed: '',
       // PERF-NAMES1: what this tag's DOM was last told, kept here and compared here - a read of `style.x` or
       // `textContent` asks the browser to serialise the value back, a cost a frame for every label
       at: null, size: null, lvOf: undefined, gtOf: undefined, houseOf: undefined, said: null, nameText: null, titleText: null, bubbleOn: null, bubbleText: null, bubbleAlpha: null };   // HERALDRY-SHOWN: `armed`, the frame as written   // SEASON1 part two: `banded`, the ribbon as written   // SHADOW-FANG: `titled`, the title whose paint is on; AUDIT A10: `inked`, the name's colour as written
@@ -488,6 +507,7 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
           setTitleFlame(tag.title, badge?.flame ? badge.key : null);   // SHOP: Genesis on its fire, written with its paint
         }
         put(tag, 'skullOf', p.skull ?? '', (k) => { setCls(tag.skull, k ? 'dfname-skull' : 'dfname-skull off'); tag.skull.style.backgroundImage = k ? `url("${skullSrc(k)}")` : ''; tag.skull.style.filter = skullGlow(k); });   // PVP-SKULL
+        put(tag, 'barOf', p.bar ? `${p.bar.h}/${p.bar.s ?? 0}` : '', () => paintBar(tag, p.bar));   // PVP-BAR
         if (p.glyphs?.length || tag.worn !== '') setGlyphs(tag, p);   // PERF-NAMES1: a peer with no glyph and none worn has nothing to compare
         const b = bubbles.get(p.id);
         // AUDIT NAME1 F9: a bubble is SHOWN when it can be seen. A negative age - a clock stepped backwards, a

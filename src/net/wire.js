@@ -5013,7 +5013,7 @@ export const WILD_ORDER_MAX = 1024;
 export const WILD_REF_RELAY_MIN = 185;   // world183, then world184, on its branch, renumbered past CHAP4c's world183 and PERF-RELAY1's world184 at the merges
 export const relaySupportsWildRef = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= WILD_REF_RELAY_MIN; };
 /** INT9: the zone referee's word kinds (`{t:'wref', k, ...}`, the relay's alone). */
-export const WILD_REF_KINDS = Object.freeze(['hp', 'fell', 'rc', 'hull', 'wreck', 'wc', 'down', 'grace', 'flag']);
+export const WILD_REF_KINDS = Object.freeze(['hp', 'fell', 'rc', 'hull', 'wreck', 'wc', 'down', 'grace', 'flag', 'bar']);
 /** WILD-REJOIN: the longest a `down` word says a fallen has left to lie, ms (net/wild/wildRef.js WILD_REF.riseMs, pinned
  *  equal - this leaf imports no referee). */
 export const WILD_DOWN_MS_MAX = 120_000;
@@ -5050,6 +5050,7 @@ export function validWildRefOut(m) {
   }
   if (m.k === 'down') return validWildDown(m);
   if (m.k === 'flag') return idOk(m.id) && (m.f === 0 || m.f === 1) ? { k: 'flag', id: m.id, f: m.f, ...(m.f === 1 && Number.isInteger(m.a) && m.a > 0 && m.a <= 60_000 ? { a: m.a } : {}) } : null;   // PVP-FLAG: a fighter's flag, as the referee holds it - PVP-SKULL: `a`, its aggro left in ms
+  if (m.k === 'bar') return idOk(m.id) && intIn(m.h, 0, 100) && (m.s === undefined || intIn(m.s, 0, 100)) ? { k: 'bar', id: m.id, h: m.h, ...(m.s > 0 ? { s: m.s } : {}) } : null;   // PVP-BAR: a flagged fighter's health and Shield, per cent
   if (m.k === 'grace') return idOk(m.id) && intIn(m.ms, 0, WILD_GRACE_MS_MAX) && (m.n === undefined || m.n === 1) ? { k: 'grace', id: m.id, ms: m.ms, ...(m.n === 1 ? { n: 1 } : {}) } : null;   // ZONE-GRACE
   const r = typeof m.r === 'string' && WILD_ID_RE.test(m.r) ? m.r : null;
   if (!r) return null;

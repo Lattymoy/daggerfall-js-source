@@ -1,0 +1,200 @@
+[
+  {
+    "name": "PVP-BAR-the-throttle",
+    "file": "src/net/wild/wildRef.js",
+    "old": "if (now - (st.barAt ?? -Infinity) < WILD_BAR.sayMs) return [];",
+    "new": "if (false) return [];",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-unchanged-said",
+    "file": "src/net/wild/wildRef.js",
+    "old": "if (!w || key === x.barSaid) continue;",
+    "new": "if (!w) continue;",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-unflagged-said",
+    "file": "src/net/wild/wildRef.js",
+    "old": "if (!x.flag || !x.zone) { x.barSaid = undefined; continue; }",
+    "new": "if (!x.zone) { x.barSaid = undefined; continue; }",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-unflagged-remembered",
+    "file": "src/net/wild/wildRef.js",
+    "old": "if (!x.flag || !x.zone) { x.barSaid = undefined; continue; }",
+    "new": "if (!x.flag || !x.zone) { continue; }",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-floor-of-one",
+    "file": "src/net/wild/wildRef.js",
+    "old": "const h = hp > 0 ? Math.max(1, Math.min(100,",
+    "new": "const h = hp > 0 ? Math.max(0, Math.min(100,",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-shield-dropped",
+    "file": "src/net/wild/wildRef.js",
+    "old": "...(f.share.shield ? { s: 100 } : {}) };",
+    "new": "};",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-unheard-said",
+    "file": "src/net/wild/wildRef.js",
+    "old": "if (!f || !f.share?.heard || !(f.max > 0)) return null;",
+    "new": "if (!f || !(f.max > 0)) return null;",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-wire-kind",
+    "file": "src/net/wire.js",
+    "old": "'down', 'grace', 'flag', 'bar']);",
+    "new": "'down', 'grace', 'flag']);",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-wire-bound",
+    "file": "src/net/wire.js",
+    "old": "idOk(m.id) && intIn(m.h, 0, 100) &&",
+    "new": "idOk(m.id) && Number.isFinite(m.h) &&",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-wire-shield-unread",
+    "file": "src/net/wire.js",
+    "old": "...(m.s > 0 ? { s: m.s } : {}) } : null;   // PVP-BAR",
+    "new": "} : null;   // PVP-BAR",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-beat-unwired",
+    "file": "server/src/index.js",
+    "old": "    this._wildBarSay(st, now);   // PVP-BAR\n",
+    "new": "",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-newcomer-untold",
+    "file": "server/src/index.js",
+    "old": "    this._wildBarsTo(st, a.sub, mine[0]);   // PVP-BAR: and each one's bar\n",
+    "new": "",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-page-bar-unkept",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "if (g?.k === 'bar') { bars.set(g.id, { h: g.h, s: g.s ?? 0 }); return true; }",
+    "new": "if (g?.k === 'bar') { return true; }",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-page-blow-unread",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "for (const [id, hp, max] of g.h ?? []) if (max > 0) bars.set(",
+    "new": "for (const [id, hp, max] of g.h ?? []) if (max < 0) bars.set(",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-page-flag-down-kept",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "else { peers.delete(g.id); bars.delete(g.id); }",
+    "new": "else { peers.delete(g.id); }",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-page-stranger-dropped",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "const shown = !q ||",
+    "new": "if (!q) return q;\n      const shown = !q ||",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-page-veil-unworn",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "if (look?.kind === 'plain' || (bits & 7) === 7 || skullOf(id) !== 'gold') return look;",
+    "new": "return look;",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-page-staff-veiled",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "if (look?.kind === 'plain' || (bits & 7) === 7 || skullOf(id) !== 'gold') return look;",
+    "new": "if (look?.kind === 'plain' || skullOf(id) !== 'gold') return look;",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-page-name-kept",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "now() - (veiled.get(p.id) ?? -Infinity) < VEIL_FRAME_MS ? nameless(q ?? p) : q;",
+    "new": "false ? nameless(q ?? p) : q;",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-page-bar-unworn",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "return { ...shown, skull: k, ...(bar ? { bar } : {}) };",
+    "new": "return { ...shown, skull: k };",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-tag-unpainted",
+    "file": "src/ui/nameLayer.js",
+    "old": "() => paintBar(tag, p.bar));   // PVP-BAR",
+    "new": "() => {});   // PVP-BAR",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BAR-the-shield-width-unread",
+    "file": "src/ui/nameLayer.js",
+    "old": "tag.barS.style.width = `${Math.max(0, Math.min(100, b.s ?? 0))}%`;",
+    "new": "tag.barS.style.width = '100%';",
+    "tests": [
+      "test/net/pvpbar.test.js"
+    ]
+  }
+]

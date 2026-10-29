@@ -357,3 +357,34 @@ export function wildAggroWord(x, now) {
 
 /** PVP-SKULL: a flagged fighter's word to one entering - its aggro left riding it. */
 export const wildFlagWord = (x, now) => ({ t: 'wref', k: 'flag', id: x.id, f: 1, ...(pvpAggroLeft(Math.max(x.fightAt, x.struckAt), now) ? { a: pvpAggroLeft(Math.max(x.fightAt, x.struckAt), now) } : {}) });
+
+/** PVP-BAR (the owner, 2026-10-29: "How does the health and shield bar look", then "Perfect" to its mockup): how often a
+ *  room looks for a flagged fighter's bar that moved - so each is said at most once in that time. */
+export const WILD_BAR = Object.freeze({ sayMs: 500 });
+
+/** PVP-BAR: a flagged fighter's bar as the room hears it - its health in whole per cent (1 while it stands), and `s` 100
+ *  under a Shield spell (the referee knows a Shield as on or off, never its amount). Null for a pool no report anchored. */
+export function wildBarWord(x) {
+  const f = x?.f;
+  if (!f || !f.share?.heard || !(f.max > 0)) return null;
+  const hp = Math.max(0, f.hp);
+  const h = hp > 0 ? Math.max(1, Math.min(100, Math.round((100 * hp) / f.max))) : 0;
+  return { t: 'wref', k: 'bar', id: x.id, h, ...(f.share.shield ? { s: 100 } : {}) };
+}
+
+/** PVP-BAR: the bars that moved since the room last said them - flagged fighters in the zone alone, the room's whole look
+ *  at most once each WILD_BAR.sayMs. A fighter unflagged or gone forgets its last bar, so its next flag says it again. */
+export function wildBarWords(st, now) {
+  if (now - (st.barAt ?? -Infinity) < WILD_BAR.sayMs) return [];
+  st.barAt = now;
+  const out = [];
+  for (const x of st.fighters.values()) {
+    if (!x.flag || !x.zone) { x.barSaid = undefined; continue; }
+    const w = wildBarWord(x);
+    const key = w ? `${w.h}/${w.s ?? 0}` : undefined;
+    if (!w || key === x.barSaid) continue;
+    x.barSaid = key;
+    out.push(w);
+  }
+  return out;
+}

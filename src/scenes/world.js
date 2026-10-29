@@ -28034,7 +28034,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const veilOn = combatVisualsOn();   // ECV1: once per frame
     const seen = [];
     for (const d of visiblePeers) {
-      const look = peerDraw(d.shown?.cv | 0, veilOn, _veilT, d.id);
+      const look = pvpFlag.look(d.id, d.shown?.cv | 0, peerDraw(d.shown?.cv | 0, veilOn, _veilT, d.id));   // PVP-BAR: a concealed player in a PvP fight drawn faint
       if (look.kind === 'hidden') { _hiddenPeers.add(d.id); continue; }   // INVIS-NET: the classic lane - the concealed stand nowhere here
       const veil = look.kind === 'conceal' ? look.visual : egClient?.allyVeil(social?.accountOfPeer?.(d.id), d.shown, onlineToScene) ?? null; if (veil) _veils.set(d.id, veil);   // AUDIT EG V (h; Elite-Gates.md section 8.2): an ally on the Spire's traversal ground at 60% (scenes/eliteGates/egClient.js allyVeil)
       seen.push(d);
