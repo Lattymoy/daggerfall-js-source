@@ -312,7 +312,7 @@ test('PVP-EDGE (systems/wild/zoneEdge.js, net/online.js, net/wire.js, net/wild/w
   assert.deepEqual([st.fighters.get('acct-a').graceUntil, st.fighters.get('acct-b').graceUntil], [-Infinity, WILD_GRACE.ms], 'walked in: passage; else none');
   // the wire
   assert.deepEqual(validWildData({ k: 'zone', z: 1, ed: 1 }), { k: 'zone', z: 1, ed: 1 });
-  assert.ok(rd('src/scenes/world.js').includes('online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere() && wildOutdoors(), player.pos, Date.now()));'), 'the host says each walk');
+  assert.ok(rd('src/scenes/world.js').includes('online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere() && wildOutdoors(), player.pos, Date.now()));'), 'the host says each walk');
   assert.deepEqual(validWildData({ k: 'zone', z: 0, ed: 1 }), { k: 'zone', z: 0 });
   // the link: on the entry alone
   const info = console.info, warn = console.warn; console.info = () => {}; console.warn = () => {};

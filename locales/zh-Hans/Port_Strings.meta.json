@@ -3674,6 +3674,16 @@
   "tr": "7bc5515c9e3a",
   "by": "claude-in-session"
  },
+ "pvp.guards.come": {
+  "en": "106800836cc9",
+  "tr": "e400794ae94a",
+  "by": "claude-in-session"
+ },
+ "pvp.guards.gone": {
+  "en": "7e232c13eae0",
+  "tr": "470f79b11841",
+  "by": "claude-in-session"
+ },
  "pvp.kit.absorb": {
   "en": "ae56f146b0ea",
   "tr": "34884378f28f",
@@ -5110,8 +5120,8 @@
   "by": "claude-in-session"
  },
  "wild.safe.enter": {
-  "en": "ad383c8c5831",
-  "tr": "e6fb4eb05bed",
+  "en": "54ece1a6e9cb",
+  "tr": "26ae58b7c0db",
   "by": "claude-in-session"
  },
  "wild.safe.leave": {
@@ -5120,8 +5130,8 @@
   "by": "claude-in-session"
  },
  "wild.safe.rule": {
-  "en": "8c3fdb0b18fb",
-  "tr": "eac26928d431",
+  "en": "fa5c45927161",
+  "tr": "956530a736e5",
   "by": "claude-in-session"
  },
  "wild.zone.chipTip": {

@@ -200,8 +200,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-zone-word-unpassed",
     "file": "server/src/index.js",
-    "old": "carry, died, fl, ed, vl: a.vl ?? 0 }",
-    "new": "carry, died, fl, ed, vl: 0 }",
+    "old": "carry, died, fl, ed, vl: a.vl ?? 0, sf }",
+    "new": "carry, died, fl, ed, vl: 0, sf }",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
