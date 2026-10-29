@@ -25,20 +25,17 @@ import { AURA_PROGRAMS } from './auraRing.js';
 import { ARMORY_PROGRAMS } from './armoryPass.js';
 import { FIRE_PROGRAMS } from './redMountainFire.js';
 import { GLOW_PROGRAMS } from './ghostfenceGlow.js';
+import { NODE_GLOW_PROGRAMS } from './nodeGlow.js';
+import { NAVAL_PROGRAMS } from './navalRender.js';
+import { idleTurn } from './idleTurn.js';   // the queue's wait between turns
 
-/** The programs started early: a gate's fire (the world's gates, the Elite arches, the court's way in and way home),
- *  the court's and the Spire's telegraphs, his blows' sparks, the crystals, the nodes' glint (NODE-GLINT's, the outline's
- *  before it), and the auras' - one program a look (AURA-SPLIT), the first wearer in range having waited 8.5-11 s on
- *  D3D11 for the one program they had been (AURA-STALL); the armory's pieces, one program each (ARMORY); the volcano's
- *  fire and the fence's glow (AUDIT RED-MOUNTAIN F5). */
-export const playPrograms = () => [...GATE_PASS_PROGRAMS, ...telegraphPrograms(false), ...telegraphPrograms(true), ...GATE_FX_PROGRAMS, ...CRYSTAL_PROGRAMS, ...NODE_GLINT_PROGRAMS, ...AURA_PROGRAMS, ...ARMORY_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS];
-
-/** The queue's wait between turns: the browser's next idle, or a quarter second at the most (a timer where it has none,
- *  one that never keeps a test's process alive). */
-const idleTurn = () => new Promise((resolve) => {
-  if (globalThis.requestIdleCallback) globalThis.requestIdleCallback(() => resolve(undefined), { timeout: 250 });
-  else /** @type {any} */ (setTimeout(resolve, 50)).unref?.();
-});
+/** The programs started early: a gate's fire, the court's and the Spire's telegraphs, his blows' sparks, the crystals,
+ *  the nodes' glint, the volcano's fire and the fence's glow (AUDIT RED-MOUNTAIN F5); SHADER-EASE QUEUE-ORDER
+ *  (2026-10-29): the nodes' glow and the sea fight's effects, first built at a node or a broadside; then the auras' 16
+ *  (AURA-SPLIT, AURA-STALL) and the armory's 8 (ARMORY) last - the longest compiles, each behind a door that waits for
+ *  it, so they no longer hold the queue ahead of the cheap ones a first build reads at once. A door that asks for a
+ *  pair still brings it to the front (glProgram.js COMPILE-QUEUE `wanted`). */
+export const playPrograms = () => [...GATE_PASS_PROGRAMS, ...telegraphPrograms(false), ...telegraphPrograms(true), ...GATE_FX_PROGRAMS, ...CRYSTAL_PROGRAMS, ...NODE_GLINT_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS, ...NODE_GLOW_PROGRAMS, ...NAVAL_PROGRAMS, ...AURA_PROGRAMS, ...ARMORY_PROGRAMS];
 
 /** Start them on `gl` where its driver compiles beside the frames; answers whether it did. COMPILE-QUEUE (FIELD BUGS
  *  2026-10-27b, "hitch 13064 ms" on the desktop app after login): one at a time (glProgram.js startProgramsInTurn). All

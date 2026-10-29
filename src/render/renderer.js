@@ -1676,7 +1676,7 @@ export function buildWireIndices(triIndices, subMeshes) {
 }
 
 /** BOOT-COMPILE: the shaders render/bootPrograms.js laneBootPrograms names beside the world set's own. */
-export { VS as MESH_VS, BB_VS, TERRAIN_VS, TERRAIN_FS };
+export { VS as MESH_VS, BB_VS, TERRAIN_VS, TERRAIN_FS, CHAR_VS, CHAR_SKIN_VS };   // SHADER-EASE MOUNT-START: the rigs' two, for the shadow pass's early start
 
 /** EL1: the classic set's source - the world programs a classic page compiles, built by the constructor. */
 const CLASSIC_SET = Object.freeze({ key: 'classic', meshFs: FS, bbFs: BB_FS, terrainFs: TERRAIN_FS, charFs: CHAR_FS, decalFs: DECAL_FS });   // MAC-BUG W6: and the decal pass, its fifth

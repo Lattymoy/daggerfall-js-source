@@ -110,6 +110,8 @@ void main(){
   a *= vLife * (uAlpha.x + uAlpha.y * uStrength);
   o = vec4(uColor, a);
 }`;
+// SHADER-EASE MOUNT-START (2026-10-29): what the constructor builds, started at page load (render/mountPrograms.js).
+export const WISP_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([WISP_VS, WISP_FS]))]);
 
 /** The box that follows the eye, metres a side (the rain's is 42; the
  *  wisps read from further, so the wind is legible over a field). */
