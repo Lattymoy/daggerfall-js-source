@@ -5,7 +5,8 @@ import assert from 'node:assert/strict';
 import {
   mayRideDragon, ridingDragon, mountDragon, landDragon, dragonFlyMult, dragonFire, dragonFiring, dragonBolt, dragonVolley,
   DRAGON_FLY_MULT, DRAGON_BOLT_DAMAGE, DRAGON_BOLT_COOLDOWN_MS, DRAGON_BOLT_MEET, _resetDragonRide,
-  parseDragonCommand, DRAGON_HELP_LINE, noteDragonRelay, dragonPoseRide, DRAGON_POSE_RIDE,
+  parseDragonCommand, DRAGON_HELP_LINE, noteDragonRelay, dragonPoseRide, DRAGON_POSE_RIDE, dragonWireCast, drawPeerCast,
+  dragonRideLook, setDragonRideLook,
 } from '../../src/systems/staffDragon.js';
 import { registerFlySpeedMod, flySpeedMult } from '../../src/player/motor.js';
 import { parseStaffCommand } from '../../src/net/staffCommands.js';
@@ -88,5 +89,59 @@ test('DRAGON-RIDE my pose says the dragon only while I ride, and only to a relay
   assert.equal(dragonPoseRide(), DRAGON_POSE_RIDE);
   landDragon();
   assert.equal(dragonPoseRide(), null);
+  _resetDragonRide();
+});
+
+test('DRAGON-SHOTS each volley moves the pose\'s cast count as a ranged shock, so the peers draw it; a refused press and the ground move nothing (mutants: the volley uncounted; the rig\'s range and element kept in the saddle; a cooled-down press counted)', () => {
+  _resetDragonRide();
+  const rig = { n: 7, rangeType: 1, element: 0 };
+  assert.deepEqual(dragonWireCast(rig), { n: 7, rangeType: 1, element: 0 }, 'on foot the rig\'s cast stands');
+  mountDragon(false);
+  assert.equal(dragonFire(1000), true);
+  assert.deepEqual(dragonWireCast(rig), { n: 8, rangeType: 2, element: 3 }, 'one volley, one cast: ranged, shock');
+  assert.equal(dragonFire(1000 + DRAGON_BOLT_COOLDOWN_MS - 1), false);
+  assert.equal(dragonWireCast(rig).n, 8, 'a press the cannons refuse is no cast');
+  assert.equal(dragonFire(1000 + DRAGON_BOLT_COOLDOWN_MS), true);
+  assert.equal(dragonWireCast({ ...rig, n: 0xffff }).n, 1, 'the count wraps as the rig\'s does');
+  landDragon();
+  assert.deepEqual(dragonWireCast(rig), { n: 9, rangeType: 1, element: 0 }, 'landed: the count kept (peers read a change), the rig\'s range and element back');
+  _resetDragonRide();
+});
+
+test('DRAGON-SHOTS a peer riding the dragon is drawn firing both cannons, crossing down the look; any other peer\'s cast from the eye (mutants: one ball for a rider; two for a walker)', () => {
+  const look = { from: [0, 10, 0], dir: [0, 0, 1], element: 3, rangeType: 2, casterId: 'p1' };
+  const drawn = [];
+  drawPeerCast((l) => drawn.push(l), look, DRAGON_POSE_RIDE);
+  assert.equal(drawn.length, 2);
+  assert.ok(drawn[0].from[0] < 0 && drawn[1].from[0] > 0, 'one from each barrel');
+  assert.ok(drawn.every((l) => l.element === 3 && l.casterId === 'p1'));
+  drawn.length = 0;
+  drawPeerCast((l) => drawn.push(l), look, 1);
+  assert.deepEqual(drawn, [look]);
+});
+
+test('DRAGON-BLUE /dragon blue mounts the Aetherbright, brass the brass, and either changes the look in the saddle; on foot the look is none (mutants: blue refused; the look kept past the landing; a look past the two)', () => {
+  assert.deepEqual(parseDragonCommand('/dragon blue'), { cmd: 'dragon', on: true, look: 1 });
+  assert.deepEqual(parseDragonCommand('/dragon Aetherbright'), { cmd: 'dragon', on: true, look: 1 });
+  assert.deepEqual(parseDragonCommand('/dragon aether'), { cmd: 'dragon', on: true, look: 1 });
+  assert.deepEqual(parseDragonCommand('/dragon brass'), { cmd: 'dragon', on: true, look: 0 });
+  assert.ok('error' in parseDragonCommand('/dragon red'));
+  assert.ok('error' in parseDragonCommand('/dragon blue now'));
+  assert.ok(DRAGON_HELP_LINE.includes('blue'));
+  _resetDragonRide();
+  assert.equal(dragonRideLook(), 0);
+  mountDragon(false, 1);
+  assert.equal(dragonRideLook(), 1, 'the Aetherbright, for my saddle and the pose\'s rc');
+  setDragonRideLook(0);
+  assert.equal(dragonRideLook(), 0);
+  setDragonRideLook(7);
+  assert.equal(dragonRideLook(), 0, 'only the two looks');
+  setDragonRideLook(1);
+  landDragon();
+  assert.equal(dragonRideLook(), 0, 'landed: no dragon, no look');
+  setDragonRideLook(1);
+  assert.equal(dragonRideLook(), 0, 'no look on foot');
+  mountDragon(false);
+  assert.equal(dragonRideLook(), 0, 'a bare mount is the brass');
   _resetDragonRide();
 });

@@ -180,7 +180,8 @@ test('SPELLFX1 wire (world98): the pose carries the cast\'s element (`ce`, 0..4)
   assert.equal(validPose(base).ce, 4, 'an older pose: Magic'); assert.equal(validPose(base).ar, 0);
   assert.equal(validPose({ ...base, ce: 9 }).ce, 4, 'past the table: Magic');
   const w = rd('src/scenes/world.js');
-  assert.match(w, /cn: rig\.cast\.n, cr: rig\.cast\.rangeType \| 0, ce: rig\.cast\.element \?\? 4,[^\n]*\n\s*ar: rig\.shot\?\.n \?\? 0,/, 'the sender fills them');
+  // PIN MOVED (DRAGON-SHOTS): the rig's cast through systems/staffDragon.js dragonWireCast, the dragon's volleys counted in (was: `cn: rig.cast.n, cr: rig.cast.rangeType | 0, ce: rig.cast.element ?? 4,`)
+  assert.match(w, /cn: dragonWireCast\(rig\.cast\)\.n, cr: dragonWireCast\(rig\.cast\)\.rangeType \| 0, ce: dragonWireCast\(rig\.cast\)\.element \?\? 4,[^\n]*\n\s*ar: rig\.shot\?\.n \?\? 0,/, 'the sender fills them');
   assert.match(w, /peerCastVisuals\(visiblePeers\);[^\n]*\n(?:[^\n]*\n){0,12}?\s*const seen = \[\];\n\s*for \(const d of visiblePeers\) \{[\s\S]*?\n\s*seen\.push\(d\);\n\s*\}\n(?:\s*peerCandlesFrame\(seen, dt\);[^\n]*\n)?(?:\s*\/\/[^\n]*\n)*\s*peerRiders\.sync\(seen,[^\n]*\n\s*const afoot = [^\n]*\n\s*peerBodies\.sync\(afoot, onlineToScene, dt, player\.pos, \{ priority: \(id\) => !!social\?\.isPartyPeer\(id\), conceal: veilOf \}\);/, 'drawn beside AUDIT PARTY8\'s party-first body sync, which stands (RIDE: over the peers afoot, the riders synced between)');
 });
 

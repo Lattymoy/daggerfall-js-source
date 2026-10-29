@@ -34,23 +34,43 @@ export function noteDragonRelay(v) { _relayKeepsRide = relaySupportsDragonRide(v
  *  it, else null (the pose's own ride stands). @param {unknown} [mode] */
 export const dragonPoseRide = (mode = null) => ((_ride || mode === 'Dragon') && _relayKeepsRide ? DRAGON_POSE_RIDE : null);
 
-/** @type {{ flyWas: boolean, firedAt: number } | null} */
+/** @type {{ flyWas: boolean, firedAt: number, look: number } | null} */
 let _ride = null;
 
 /** Whether a player wearing `glyphs` may ride. @param {unknown} glyphs */
 export const mayRideDragon = (glyphs) => Array.isArray(glyphs) && glyphs.some((g) => DRAGON_GLYPHS.includes(g));
 export const ridingDragon = () => _ride !== null;
-/** Mount: `flyWas` is /fly before it, given back when I land. */
-export function mountDragon(flyWas = false) { _ride = { flyWas: !!flyWas, firedAt: -Infinity }; }
+/** Mount: `flyWas` is /fly before it, given back when I land; `look` the dragon's (1 the Aetherbright, DRAGON-BLUE). */
+export function mountDragon(flyWas = false, look = 0) { _ride = { flyWas: !!flyWas, firedAt: -Infinity, look: look === 1 ? 1 : 0 }; }
+/** DRAGON-BLUE (2026-10-29, mob: "can i get a blue aetherbright version"): the look of the dragon I ride - 1 the Aetherbright
+ *  (Dwarven-Dragon.md section 11, the tame's own palette), 0 the brass or on foot. My saddle and the pose's `rc` read it. */
+export const dragonRideLook = () => (_ride ? _ride.look : 0);
+/** DRAGON-BLUE: the ride's look changed in the saddle. @param {number} look */
+export function setDragonRideLook(look) { if (_ride) _ride.look = look === 1 ? 1 : 0; }
 /** Land: answers what /fly was before the ride, or null when I was not riding. */
 export function landDragon() { const was = _ride ? _ride.flyWas : null; _ride = null; return was; }
 /** The flight's multiplier now (player/motor.js registerFlySpeedMod). */
 export const dragonFlyMult = () => (_ride ? DRAGON_FLY_MULT : 1);
+/** DRAGON-SHOTS (2026-10-29, mob: "the dragons spells are not seeable by others"): the volleys fired, for the wire. The pose's
+ *  cast count (`cn`) was the rig's alone, counted as the hands play a cast, and the cannons play none - so no peer drew a ball. */
+let _volleys = 0;
 /** A volley at `now` (ms): true and the clock set when the cannons are ready. @param {number} now */
 export function dragonFire(now) {
   if (!_ride || now - _ride.firedAt < DRAGON_BOLT_COOLDOWN_MS) return false;
   _ride.firedAt = now;
+  _volleys = (_volleys + 1) & 0xffff;
   return true;
+}
+/** DRAGON-SHOTS: the pose's cast from the rig's (`{ n, rangeType, element }`, combat/weapon/weaponRig.js) - its count plus my
+ *  volleys, so each volley moves `cn` as a cast does; in the saddle every press is the cannons', a ranged shock.
+ *  @param {{ n: number, rangeType: number, element: number }} cast */
+export const dragonWireCast = (cast) => ({ n: (cast.n + _volleys) & 0xffff, rangeType: _ride ? 2 : cast.rangeType, element: _ride ? 3 : cast.element });
+/** DRAGON-SHOTS: a peer's cast drawn (`fx`, the engine's spellVisual, with `look` its { from, dir, ... }) - from both cannons
+ *  when the peer rides the dragon (`rd`, the pose's ride), else from the eye as any cast.
+ *  @param {(look: any) => unknown} fx @param {{ from: number[], dir: number[] }} look @param {unknown} rd */
+export function drawPeerCast(fx, look, rd) {
+  if (rd !== DRAGON_POSE_RIDE) { fx(look); return; }
+  for (const v of dragonVolley(look.from, look.dir)) fx({ ...look, from: v.pos, dir: v.dir });
 }
 /** Whether the saddle shows its firing picture at `now`. @param {number} now */
 export const dragonFiring = (now) => !!_ride && now - _ride.firedAt < DRAGON_FIRE_SHOW_MS;
@@ -80,17 +100,20 @@ export function dragonVolley(eye, dir) {
 }
 
 /** The line /staff adds for the ride. */
-export const DRAGON_HELP_LINE = '/dragon [on|off] - ride the Dwarven Dragon (Admins only)';
-/** /dragon [on|off], or null when the line is not one (its own grammar, beside net/staffCommands.js's: the relay reads that
- *  file's bytes, and the ride is this page's alone). A bare /dragon turns the ride over (`on` undefined).
+export const DRAGON_HELP_LINE = '/dragon [on|off|blue|brass] - ride the Dwarven Dragon, blue the Aetherbright (Admins only)';
+/** /dragon [on|off|blue|brass], or null when the line is not one (its own grammar, beside net/staffCommands.js's: the relay
+ *  reads that file's bytes, and the ride is this page's alone). A bare /dragon turns the ride over (`on` undefined); blue
+ *  (or aether, aetherbright) mounts the Aetherbright or turns my dragon to it, brass back (DRAGON-BLUE).
  *  @param {unknown} text */
 export function parseDragonCommand(text) {
   const m = /^\/dragon(?:\s+([\s\S]*))?$/i.exec(String(text ?? '').trim());
   if (!m) return null;
   const words = (m[1] ?? '').trim().toLowerCase().split(/\s+/).filter(Boolean);
-  if (words.length > 1 || (words.length && words[0] !== 'on' && words[0] !== 'off')) return { error: 'Usage: /dragon [on|off].' };
+  const look = { blue: 1, aether: 1, aetherbright: 1, brass: 0 }[words[0] ?? ''];
+  if (words.length > 1 || (words.length && words[0] !== 'on' && words[0] !== 'off' && look === undefined)) return { error: 'Usage: /dragon [on|off|blue|brass].' };
+  if (look !== undefined) return { cmd: 'dragon', on: true, look };
   return words.length ? { cmd: 'dragon', on: words[0] === 'on' } : { cmd: 'dragon' };
 }
 
 /** For tests: no ride. */
-export function _resetDragonRide() { _ride = null; _relayKeepsRide = false; }
+export function _resetDragonRide() { _ride = null; _relayKeepsRide = false; _volleys = 0; }
