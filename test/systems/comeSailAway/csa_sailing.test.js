@@ -1009,7 +1009,10 @@ test('HELM-KEYS in irons: her sails up, her bow within IRONS_TELL_DEG of the win
   // PIN MOVED (AUDIT NAV2 F15): under the mod's own default waves, the sea's current never forced away - it rides in her
   // velocity (half the wind), and her way through the water is what is read
   const s = scene({ settings: { 'Waves.Enable': true } });
+  // AUDIT FB1029d B4: a hull with a hold - the Classic helm's Carrack has none (her mod nought), a dead hull no oar or
+  // rudder moves, so she is never told to row out of irons
   const boat = s.place(4, 0);
+  boat.modifierCargoThreshold = 3;
   s.rt.StartSailing(boat);
   const ahead = [0, 0, -1];   // blowing TO her stern: from dead ahead (the bow is +z)
   const lie = (seconds) => { for (let t = 0; t < seconds; t += 0.25) { s.rt.state.windVectorCurrent = ahead; s.frame(); } };

@@ -281,7 +281,8 @@ test('TAMRIEL2 host: the reader is rebound to the composed one at the mount, aft
   // PIN MOVED (ETHER-SEA, bible/03-World/Eltheric-Ocean.md): and the Eltheric Ocean's isles past the map, whatever the
   // continent's switch says
   assert.match(src, /byteAt: tamrielLand \|\| etherSea \? \(x, y\) => woods\.getHeightMapValue\(x, y\) : null,/, 'the ring past the map');
-  assert.match(src, /restrideGrid\(\{ woods, px: p\.px/, 'the promotion reads the one reader');
+  // PIN MOVED (FB1029 ACROSS-EDGE): a promotion's ground is gridGround's - the pixel, its samples and its town meets
+  assert.match(src, /restrideGrid\(\{ \.\.\.gridGround\(p\), woods, stride,/, 'the promotion reads the one reader');
   assert.equal((src.match(/tamrielLandOn\(\)/g) ?? []).length, 1, 'read once, at the mount');
 });
 
@@ -315,5 +316,6 @@ test('TAMRIEL2-WORKER: every module the terrain worker reaches, at any depth, li
   // PIN MOVED (GATE-ROADS): 72 - a gate's road (world/road/gateRoads.js) and Daggerfall's paving records' one home it reads
   // (world/road/roadEdge.js), both pure
   // PIN MOVED (AUDIT FB1028 A1): 73 - TS2's blend as it stood, kept for the town move (world/terrain/townBlendBefore.js), pure
-  assert.ok(seen.size > 20 && seen.size < 74, `${seen.size} modules`);
+  // PIN MOVED (FB1029 GROUND): 75 - ACROSS-EDGE's meet (world/terrain/townMeet.js) and ROAD-DRY's lift (world/road/roadDry.js), both pure
+  assert.ok(seen.size > 20 && seen.size < 76, `${seen.size} modules`);
 });

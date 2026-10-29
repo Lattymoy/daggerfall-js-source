@@ -67,7 +67,7 @@ test('CAPE-TOGGLE the look: hidden, my look leaves the cloak out and says `hc` 1
   assert.deepEqual([cloakItems(fl).length, 'hc' in fl], [1, false], 'a foe is drawn as it is dressed');
   assert.equal(validLook(hidden).hc, 1, 'the wire keeps it');
   assert.deepEqual([validLook({ ...hidden, hc: 2 }).hc, validLook({ ...hidden, hc: '1' }).hc, 'hc' in validLook(shown)], [undefined, undefined, false], 'one word, 1, or nothing');
-  assert.equal(RELAY_VERSION, 'world285', 'the relay that keeps it');
+  assert.equal(RELAY_VERSION, 'world286', 'the relay that keeps it');   // PIN MOVED: world286, FB1029 GROUND (world284 on its branch, renumbered past world284 and world285 on main at the merge)
   // TAMRIEL-WIDE: the switch reads no place - a room past the Bay (Whiterun's cell) answers as the Bay's does
   for (const room of ['world:2,12', worldRoom(1820, -300)]) {
     const { FakeWS, sockets } = fakeSocketClass();
