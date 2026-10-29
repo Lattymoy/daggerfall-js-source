@@ -250,8 +250,8 @@ test('EVENT-TIP on the held map: the hover asks a party member, a raided town, a
 
 test('EVENT-TIP by source: the host hands the map the raids running now, the pointer writes the card, and leaving or pressing takes it down', () => {
   const w = read('src/scenes/world.js');
-  assert.match(w, /gate: \(\) => gateOmen\?\.mapMark\(\) \?\? null,\n(?:\s*gates: \(\) => gateOmen\?\.mapMarks\(\) \?\? \[\],[^\n]*\n)?(?:\s*\/\/[^\n]*\n)*\s*raids: \(\) => \(raidingPartiesOn\(\) \? raidMapMarks\(raidState\(\)\.raids, worldMinutes\(\), \{ regionName: \(r\) => REGION_NAMES\[r\] \?\? '', localTime: sharedClockOn\(\) \? eventLocalTime : null, relay: raidRelayState \}\) : \[\]\),/,
-    'beside the gate, on the raids\' own clock, none while the mod is off - and (TIME1) online the withdrawal said in local time; (FIELD BUGS 2026-10-11g RAID-WORD, PIN MOVED) the town\'s ledger its count');
+  assert.match(w, /gate: \(\) => gateOmen\?\.mapMark\(\) \?\? null,\n(?:\s*gates: \(\) => gateOmen\?\.mapMarks\(\) \?\? \[\],[^\n]*\n)?(?:\s*fronts: \(\) => [^\n]*\n)?(?:\s*\/\/[^\n]*\n)*\s*raids: \(\) => \(raidingPartiesOn\(\) \? raidMapMarks\(raidState\(\)\.raids, worldMinutes\(\), \{ regionName: \(r\) => REGION_NAMES\[r\] \?\? '', localTime: sharedClockOn\(\) \? eventLocalTime : null, relay: raidRelayState \}\) : \[\]\),/,
+    'beside the gate, on the raids\' own clock, none while the mod is off - and (TIME1) online the withdrawal said in local time; (FIELD BUGS 2026-10-11g RAID-WORD, PIN MOVED) the town\'s ledger its count; (FRONTS, PIN MOVED) the fronts\' line may stand between');
   const h = read('src/ui/heldMap.js');
   assert.match(h, /this\._hoverAt = tab \? null : \{ sx: hx, sy: hy, cx: e\.clientX, cy: e\.clientY \};\n\s*this\._showTip\(tab \? null : hit\?\.tip \?\? null, e\.clientX, e\.clientY\);/);
   assert.match(h, /stage\.addEventListener\('pointerleave', \(e\) => \{ if \(e\.pointerType !== 'mouse' && this\._tipUntil !== null\) return; this\._hoverAt = null; this\._showTip\(null\); \}\);/, 'WB13c: a tap\'s card outlives the finger\'s leaving');
