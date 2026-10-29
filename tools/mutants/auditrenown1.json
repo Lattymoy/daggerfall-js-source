@@ -258,8 +258,8 @@
   {
     "name": "AUDIT-RENOWN1-tracker-leave-clears",
     "file": "src/net/renownTracker.js",
-    "old": "      try { leave(h.character, h.xp, name?.() ?? null, h.rid, h.region); return true; } catch { return false; }",
-    "new": "      try { leave(h.character, h.xp, name?.() ?? null, h.rid, h.region); held = null; return true; } catch { return false; }",
+    "old": "      try { leave(h.character, h.xp, name?.() ?? null, h.rid, h.region, h.vd); return true; } catch { return false; }",
+    "new": "      try { leave(h.character, h.xp, name?.() ?? null, h.rid, h.region, h.vd); held = null; return true; } catch { return false; }",
     "tests": [
       "test/net/auditrenown1.test.js"
     ],
@@ -268,8 +268,8 @@
   {
     "name": "AUDIT-RENOWN1-client-keepalive-dropped",
     "file": "src/net/accountClient.js",
-    "old": "    leave: (character, xp, name = null, rid = null, region = null) => report(character, xp, name, rid, true, region),",
-    "new": "    leave: (character, xp, name = null, rid = null, region = null) => report(character, xp, name, rid, false, region),",
+    "old": "    leave: (character, xp, name = null, rid = null, region = null, vd = 0) => report(character, xp, name, rid, true, region, vd),",
+    "new": "    leave: (character, xp, name = null, rid = null, region = null, vd = 0) => report(character, xp, name, rid, false, region, vd),",
     "tests": [
       "test/net/auditrenown1.test.js"
     ],

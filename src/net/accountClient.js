@@ -2074,7 +2074,7 @@ export function accountArena({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
 }
 
 /** RENOWN1: what one of this account's characters earned online - `{ character, xp, level, credited, rose, order }`. */
-export const reportRenownXp = (io, character, xp, name = null, rid = null, region = null) => call(io, '/v1/renown/xp', { character, xp, name, ...(rid ? { rid } : {}), ...(region != null ? { region } : {}) });   // AUDIT RENOWN1 DATA-4: `rid` the report's own id; SEAT1b: `region` where it was earned
+export const reportRenownXp = (io, character, xp, name = null, rid = null, region = null, vd = 0) => call(io, '/v1/renown/xp', { character, xp, name, ...(rid ? { rid } : {}), ...(region != null ? { region } : {}), ...(vd > 0 ? { vd } : {}) });   // AUDIT RENOWN1 DATA-4: `rid` the report's own id; SEAT1b: `region` where it was earned; PVP-VILLAIN-KEEP: `vd` the villain meter it lowers
 
 /**
  * RENOWN1: THE RENOWN'S REPORT, bound to this device's stored
@@ -2083,14 +2083,14 @@ export const reportRenownXp = (io, character, xp, name = null, rid = null, regio
  * never a knock.
  */
 export function accountRenown({ fetch, storage }) {
-  const report = async (character, xp, name = null, rid = null, keepalive = false, region = null) => {
+  const report = async (character, xp, name = null, rid = null, keepalive = false, region = null, vd = 0) => {
     const s = storedSession(storage);
-    return s ? reportRenownXp({ fetch, base: serviceBase(storage), secret: s.secret, keepalive }, character, xp, name, rid, region) : { ok: false, error: 'no-session' };
+    return s ? reportRenownXp({ fetch, base: serviceBase(storage), secret: s.secret, keepalive }, character, xp, name, rid, region, vd) : { ok: false, error: 'no-session' };
   };
   return {
-    report: (character, xp, name = null, rid = null, region = null) => report(character, xp, name, rid, false, region),
+    report: (character, xp, name = null, rid = null, region = null, vd = 0) => report(character, xp, name, rid, false, region, vd),
     /** AUDIT RENOWN1 GAME-8: the same report as the page goes - `keepalive`, so the browser finishes it after the page. */
-    leave: (character, xp, name = null, rid = null, region = null) => report(character, xp, name, rid, true, region),
+    leave: (character, xp, name = null, rid = null, region = null, vd = 0) => report(character, xp, name, rid, true, region, vd),
   };
 }
 

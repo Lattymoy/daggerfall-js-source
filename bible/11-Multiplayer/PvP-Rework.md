@@ -178,10 +178,28 @@ up (`wildRef.js:"else if (isVillain(x.vi)) x.flag = true;"`). The referee counts
 tells the killer its meter (`wref` `vil`) and signs the points into the fall's receipt (`vp`). The pause menu's Stats page
 shows "Villainy 3,240 / 5,000" on a bar to 10,000 with a red mark at 5,000 (`pvpVillainBar.js:"export function statsVillainy("`).
 
-Not built yet: the account service keeps no meter. It must take the receipt's `vp` onto the killer's character, sign the
-meter into the identity token for the relay to read on entry, and lower it by 1 for each monster at or above the level
-less 1, 200 for a helpful quest and 500 for a raid (none while red). Until then the meter lives in the relay's memory
-alone. A departure: DFU has no PvP.
+PVP-VILLAIN-KEEP, below, keeps the meter on the character and lowers it. A departure: DFU has no PvP.
+
+## PVP-VILLAIN-KEEP: the meter kept
+
+The meter lived in the relay's memory alone, so a new relay instance forgot it. Now the character keeps it
+(`realm_characters.villainy`, migration 0192). The account service adds a fall's signed `vp` to the killer's character in
+the fall's own batch (`server-account/src/villainy.js:"export function villainFallSteps(db, claims) {"`, wired in `wildFall` and in
+REPEAT-SHIELD's `wildShielded`: a shielded kill is still a kill the killer chose). The batch writes the fall's remains id,
+so a fall asked twice adds once. The meter is held to 10,000.
+
+The mint signs it as `vl` beside the realm's yes (`realm.js:"vl: villainClamp(row.villainy),"`, checked at
+`identityToken.js:"if (c.vl !== undefined && !(c.rc === 1 && villainyIssuable(c.vl))) return false;"`). The relay puts it
+on the socket (`wildRef.js:"export const wildTokenAtt = "`) and the referee takes the larger of it and the carried meter
+(`wildRef.js:"if (villainClamp(vl) > villainClamp(x.vi)) x.vi = villainClamp(vl);"`). A villain by its token is red at its
+first step into the zone. The hello's token body is 928 now: a house beside every other claim and `vl` is 899.
+
+What lowers it. A raid's claim takes 500, once by its own row, none while red
+(`server-account/src/villainy.js:"export function villainRaidStep(db, playerId, character, raid, nonce) {"`). A monster at or above my level
+less 1 takes 1 and a quest done 200: the page adds them to its next Renown report as `vd`
+(`renownTracker.js:"const vd = Math.min(vdPend, xp);"`). The service takes no more than the XP that report credited, the
+hour's progress bound, and never below 0 (`server-account/src/villainy.js:"export function villainReportDown("`). The monster's level and the
+quest are the page's word, as the Renown they pay is. A departure: DFU has no PvP.
 
 ## PVP-RULES: a flagged fighter's limits
 

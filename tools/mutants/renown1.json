@@ -246,8 +246,8 @@
   {
     "name": "RENOWN1-refusal-retried-forever",
     "file": "src/net/renownTracker.js",
-    "old": "    if (PERMANENT.has(r?.error)) { stopped = true; held = null; pend.clear(); try { onStop(r.error); } catch { /* the stop stands */ } }",
-    "new": "    if (PERMANENT.has(r?.error)) { held = null; pend.clear(); try { onStop(r.error); } catch { /* the stop stands */ } }",
+    "old": "    if (PERMANENT.has(r?.error)) { stopped = true; held = null; pend.clear(); vdPend = 0; try { onStop(r.error); } catch { /* the stop stands */ } }",
+    "new": "    if (PERMANENT.has(r?.error)) { held = null; pend.clear(); vdPend = 0; try { onStop(r.error); } catch { /* the stop stands */ } }",
     "tests": [
       "test/net/renown1.test.js"
     ],

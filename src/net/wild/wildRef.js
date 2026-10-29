@@ -39,7 +39,7 @@
 import { SIEGE_HIT, newFighter, refereeBlow, refereeCast, refereeStep } from '../siege/siegeRef.js';
 import { resetHealthShare } from '../siege/refereeHealthShare.js';
 import { pvpFlagCanDrop, pvpAggroLeft, pvpYoung, PVP_FLAG } from '../../systems/wild/pvpFlag.js';   // PVP-FLAG
-import { isVillain, villainAfter, villainKillPoints, VILLAIN } from '../../systems/wild/villainLaw.js';   // PVP-VILLAIN
+import { isVillain, villainAfter, villainClamp, villainKillPoints, VILLAIN } from '../../systems/wild/villainLaw.js';   // PVP-VILLAIN
 
 /** The zone referee's own numbers: how long a bar carried from another room stands (`mendMs` - SHARED-HEALTH: no longer a
  *  heal; the name is kept for its pins and the client's readout, which hides a fight this quiet); how long a killer has to pick a worn piece before the fall is signed without one; the party's truce
@@ -79,7 +79,7 @@ export const newWildRef = () => ({ fighters: new Map(), falls: new Map(), fights
 
 /**
  * A SOCKET'S WORD ON THE ZONE (`zone` - `z` true: it stands in the zone; false: it has left it): its fighter made or
- * kept (`id` its socket's id now, `lv` the Renown its token signs, `cl` its character level, `ci` its realm character, `ed` its word that it walked in over the edge), its place the pose it
+ * kept (`id` its socket's id now, `lv` the Renown its token signs, `cl` its character level, `ci` its realm character, `ed` its word that it walked in over the edge, `vl` the villain meter its token signs), its place the pose it
  * stands at. A NEW fighter takes the vitality it CARRIES (`carry` - the hub's word on its last fight in another room:
  * `{ hp, max, down, downAt, at, heard }`, AUDIT INT9: a step into another cell was a fresh bar), unless that word is
  * older than WILD_REF.mendMs. A fighter down rises on its word that it stands in the zone again once WILD_REF.riseMs has
@@ -87,7 +87,7 @@ export const newWildRef = () => ({ fighters: new Map(), falls: new Map(), fights
  * sooner keeps its bar (AUDIT INT9: a word off and on was a heal). SHARED-HEALTH: a count started again waits for the player's report, which can lower it and never lift it.
  * Answers the fighter, or null (none made: a word off, a full room).
  */
-export function wildZone(st, sub, { id, lv = 1, cl = null, ci = '', carry = null, died = false, fl = null, ed = false }, z, pose, now) {
+export function wildZone(st, sub, { id, lv = 1, cl = null, ci = '', carry = null, died = false, fl = null, ed = false, vl = 0 }, z, pose, now) {
   let x = st.fighters.get(sub);
   if (!x) {
     if (!z) return null;
@@ -99,6 +99,7 @@ export function wildZone(st, sub, { id, lv = 1, cl = null, ci = '', carry = null
   } else if (z && !x.zone && carry && carry.at > x.outAt) takeCarry(x, carry, now);   // it fought in another room since it left this one
   x.id = id; if (ci) x.ci = ci;
   if (Number.isSafeInteger(cl)) x.cl = cl;   // PVP-30: the character level its token signs
+  if (villainClamp(vl) > villainClamp(x.vi)) x.vi = villainClamp(vl);   // PVP-VILLAIN-KEEP: the meter its token signs, where it is the larger
   // PVP-FLAG: a word with its flag - up at once, down only past the lock after its last fight; a word with none keeps it.
   // PVP-30: never up under level 30
   if (pvpYoung(x.cl)) x.flag = false;
@@ -438,3 +439,7 @@ export function wildVillainy(/** @type {any} */ st, /** @type {any} */ fall, /**
 
 /** PVP-VILLAIN: a fighter's red mark on its flag word (`v` 1), or nothing. */
 export const wildRed = (/** @type {any} */ x) => (isVillain(x?.vi) ? { v: 1 } : {});
+
+/** PVP-VILLAIN-KEEP: what a realm character's hello puts on its socket - its id (AUDIT LEGACY III O1) and the villain meter
+ *  its token signs (`vl`, absent at 0), which wildZone seeds its fighter from. */
+export const wildTokenAtt = (/** @type {any} */ who) => ({ ci: who.ci, ...(Number.isSafeInteger(who.vl) && who.vl > 0 ? { vl: villainClamp(who.vl) } : {}) });
