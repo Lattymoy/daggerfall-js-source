@@ -1,0 +1,115 @@
+# AUDIT STOREFRONT (2026-10-29) - the shop, the effects, the Battle Pass and the season in the world, audited before they merge
+
+The owner, of STOREFRONT (`06-Systems/Storefront.md`, `06-Systems/Battle-Pass.md`): **"Please audit this deeply, ensure
+its perfection along with exceptional design for all assets"**, and of the profile slots' pictures: **"The profile images
+leave a lot to be desired"**. This page is the findings, each with its verdict. What the audit changed is written into
+the record's sections as they now stand, and the code says the same at every site under AUDIT-STOREFRONT or its lane's
+own word (AUDIT PASS, AUDIT LANE 5, AUDIT STOREFRONT RENDER).
+
+## How it was run
+
+Five lanes, each a cold reader of the branch at f44a61723, told to reproduce every finding before reporting it, to cite
+the code by its text, and to fix nothing. A sixth lane is the assets themselves: every picture the change draws was
+rendered and looked at - the shop's panels shot in time (`tools/storefrontGalleryProbe.mjs`), the try-on stage frame by
+frame, every horse sprite in each mount look, the portraits large. No fix was made until the lanes had reported. The
+fixes were made in seven lanes of their own (A to G), each on its own branch off f44a61723, then merged.
+
+| Lane | Over | Fixed in |
+|---|---|---|
+| 1 - the shop | the purchase path: the price, the order, the webhook, the card, the window | A (the service), B (the window) |
+| 2 - the wire | the effects kit on the token, the pose's kill fields, peers' effects | E |
+| 3 - the render | the kill-effects engine, the portal skins, the stage, the shaders | F |
+| 4 - the pass | the finds, the pass's card and client, the season's wares in the shop | C, and A for the wares |
+| 5 - the season in the world | Dwemer's Breach: the fissures, the Colossus, the Resonant Maul | G |
+| V - the assets | every picture: portraits, emblems, wares' art, stages, mount looks | D |
+
+Severity: BLOCKER a dupe, a loss, a crash or a hole any player can use; HIGH a broken promise or a likely bug; MED a
+wrong result a player meets; LOW an edge, a risk, a word or the record alone. Every FIXED is pinned in the test its
+verdict names, and where it changed code it has a mutant in the lane's list (`tools/mutants/storefront_shopaudit.json`,
+`storefront_passaudit.json`, `storefront_renderaudit.json`, `storefront_seasonaudit.json`, `storefront_portraits.json`,
+`storefront_mountpoints.json`, and lane 2's).
+
+## Findings
+
+### 1 - the shop
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| S1 | HIGH | A ware refunded or disputed stayed held when a bundle bought later for less also gave it: the Pyre disputed after the Daedric Champion left all four wares for the bundle's cut price | FIXED: an order keeps its credit, the ids its price took off; a ware taken back that a giver held with credit for it is marked lost (`-<id>` in `shop_held`) and no giver gives it; a payment that covers it again clears the mark. `test/server/storefront_audit.test.js` S1 |
+| S2 | MED | Every ware not yet dropped stood on the window as "No longer sold", which also told each coming drop; Collections said "In the shop" before the drop and after a window shut | FIXED: the card carries no ware before its drop (`shopDropped`), and Collections reads the card. S2 |
+| S3 | MED | A replaced checkout page still took the old price, and a page paid for a ware already held took the money | FIXED: a replaced page is closed at Stripe; a grant closes the pages it made wrong; a page paid anyway is refunded by the service under the order's own key, owed until Stripe takes it (Storefront.md 3.2). S3 |
+| S4 | MED | A malformed `SHOP_FEATURED` line opened its ware's sale for ever, and a rolled date (13th month, 31 November) read as another | FIXED: dates read strictly; a bad line naming a ware shuts its sale; a pin reads every line of the deploy's schedule. `storefront_service.test.js` S4 |
+| S5 | MED | A booster a stronger one makes worth nothing was sold to that account (lane 4 #5) | FIXED: the card marks it spent, its page refuses it, the window offers no Buy. S5 |
+| S6 | LOW | The season's wares were sold while `PASS_OPEN` shut the finds (lane 4 #4) | FIXED: a season's ware needs the pass on. S6 |
+| S7 | LOW | Two overlapping orders landing together added the Deluxe's levels twice (lane 4 #7) | FIXED: the grant is guarded on the row as read and decided again on a fresh read. S7 |
+| S8 | LOW | The demand's "opened" counted presses that never reached Stripe | FIXED. S8 |
+| S9 | LOW | A panel's featured and limited words were drawn once, wrong after its window shut or past midnight | FIXED: drawn with the panel's state, the day counted again at UTC midnight. `test/ui/storefront_audit_window.test.js` S9 |
+| S10 | LOW | A season's ware paid after its season was granted (lane 4 #10) | FIXED: refunded instead; the season's wares stop selling SHOP_CHECKOUT_MS before its end, a Stripe page's life. S10 |
+| S11 | MED | The Premium Pass said "twenty more rewards"; its track has twelve (lane 4 #6) | FIXED: counted off the track, in each language's plural. S11 |
+| S12 | LOW | A cut for a ware held inside a giver the bundle gives was never said | FIXED: the confirm page and the window say a giver held in part. S12 |
+| S13 | LOW | The carousel's dots were 14 px targets, under WCAG 2.2's 24 px | FIXED: 24 px targets, the 14 px mark inside. S13 |
+
+### 4 - the pass
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| P1 | HIGH | Riding the Sky-Ketch's lift and banking a cell paid as endgame finds, with no cooldown | FIXED: the acts no find pays are one list (`qlActs.js` ACT_NOT_FOUND), read by the pass and the Witches' Festival alike - each had kept its own copy. `test/server/storefront_passaudit.test.js`, `ql11_acts` |
+| P2 | MED | A page loaded before the opening, or before `PASS_OPEN` turned on, never asked a find | FIXED: the card's `open` is the switch's word alone; a page told the pass is shut rests, then reads again. `passclient` |
+| P3 | MED | `/v1/pass/find` was no progression claim: no seated character, no play behind it | FIXED: a progression route on a stream of its own (`pass`); a line staff stored before the stream was added reads its first line for it. `int16_progress` (PIN MOVED) |
+| P8 | LOW | A find's answer had no tracks, so a level notice went stale after a purchase | FIXED |
+| P9 | LOW | The bind's read ran beside the finds, so a late answer rolled the level back | FIXED: one queue |
+| P11 | LOW | The client never backed off a refusal | FIXED: PASS_REST_MS, each refusal its rest |
+| P12 | LOW | The record and the comments said what the code did not | FIXED in Battle-Pass.md sections 5, 7 and 8 |
+
+Lane 4's #4, #5, #6, #7 and #10 are lane 1's S6, S5, S11, S7 and S10.
+
+### 3 - the render
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| R1 | HIGH | A skinned Portal Stone gate stood its pieces on world X, not across the view | FIXED: the portal set reads the camera itself (`portalFx.js` portalBasis), so no caller can forget it. `test/render/killfx.test.js`, `portalskins` |
+| R2 | MED | The portal-skin bursts assumed every portal faces ±Z; the fissure's wake too | FIXED: the burst carries the portal's facing and every recipe lays its parts on the portal's own axes |
+| R3 | MED | The kill effects were drawn before the opaque world was whole, so foes and grass behind a burst painted over it | FIXED: drawn after the last opaque pass in each host - moved lines, no host grew |
+| R5 | MED | GLSL `pow` of a negative base in the new shaders (undefined) | FIXED: written as products; a sweep holds every new shader to it |
+| R6 | LOW | The stage applied its fit twice on y, sinking the Daedric arch and the Aetheric shards | FIXED |
+| R7 | LOW | Per-frame allocation in the effects' hot path (2.7 kB a frame in `build`) | FIXED: 0 bytes a frame, measured |
+| R8 | LOW | The pass rewrote one instance-buffer range twice a frame | FIXED: each layer its own range |
+| R9 | LOW | A full pool popped bursts out, and other bursts took the kills' slots | FIXED: each kind its own pool (KFX_POOL_OF), the oldest faded out over KFX_FADE_S |
+| R10 | LOW | Less motion was not honoured on the try-on stage, and was read once | FIXED: the stage plays once and holds; read live |
+
+Lane 3's #4 is lane 2's #3.
+
+### 5 - the season in the world
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| W1 | HIGH | The fissures' clearings made every pixel build and the clearing sweep about 100 times slower for the season | FIXED: asked by pixel (`gateClearance.js` setNear): 4,000 flats 53 ms to 0.7 ms, the season's sweep 453 ms to 11 ms. `test/world/gate/seasonclear.test.js` |
+| W2 | HIGH | The Resonant Maul was minted on the page alone; its once a day was the device's | FIXED: the service's (`POST /v1/season/maul`, `seasonClaim.js`), once a UTC day an account, a lost answer a yes again. `seasonmaul_service.test.js` |
+| W3 | HIGH | Every reader's copy of the Colossus lost Blade-turning: blades and arrows did double damage but on the owner's screen | FIXED: one trait cap for every reader (`bossTraitsMost`). `seasonaudit_world.test.js` |
+| W4 | MED | One Colossus in twenty stood with one random elite trait instead of the season's three | FIXED: never the street's elite roll |
+| W5 | MED | No Colossus bar but on the owner's screen | FIXED |
+| W6 | MED | A Colossus taken down, not killed, counted as fallen and gave the Maul | FIXED: a fall needs a body |
+| W7 | MED | A cleared camp's quiet held only on the stander's page, and only in memory | FIXED: every screen whose last foes there are bodies, kept across a reload |
+| W8-W12 | LOW | `who()` never named the account; the fall line said to a striker alone; fissures on roads; the waking said before anything stood; a race lost read as a clear | FIXED, each (Battle-Pass.md section 6) |
+| W13 | LOW | A camp's stander walking off takes the fight away | KEPT: the Starfall's leash; the reason in Battle-Pass.md section 6 |
+
+### V - the assets
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| V1 | HIGH | The profile portraits read as flat clip art (the owner) | FIXED: all twelve drawn again on a renderer with shared materials, a clip and a bezel. `test/ui/storefront_badges.test.js` |
+| V2 | MED | An effect had no picture where it cannot play: a bundle's pieces, the profile's choices, the pass's track | FIXED: an emblem each (`ui/effectEmblems.js`) |
+| V3 | MED | A bundle's stage, a booster's and a pass's showed a name and no picture | FIXED: one door for a ware's picture (`ui/wareArt.js`); a bundle lays out its pieces; a booster's and a pass's banner is built round the season's art |
+| V4 | MED | The stages wore a stand-in, never the player; the Pyre burned a shadow behind its pillar | FIXED: the player's own body, asked once a window |
+| V5 | LOW | A long title's big plate ran out of its stage | FIXED: fitted with container units at every width |
+| V6 | MED | A mount look dyed the hide alone: the Spectral Steed kept a black mane, tail and far legs, on the sprites and on the 3D horse | FIXED: the look shades the horse's points (`horseCoats.js` pointsOf, POINT_SHADES) and the 3D horse's hair (`horseRig.js` HAIR_ROWS); no rider's bow, steel or cloak moves. `mountlook` (PIN MOVED) |
+| V7 | - | The pass-only wares (the Tonal kill, the Brass gate, the Automaton, the season's titles, glyphs and auras) | Seen in time on the stage after R1-R10: sound, nothing changed |
+
+## Known, and not changed
+
+- A bridle drawn in the horse's black takes the look's shade with the mane: across the hide it is drawn as the shading
+  is, a dark band, and a rule that spared it blacked the small sprites' shading (V6; Storefront.md section 7).
+- The festival's own find has the same two gaps as P2 and P3 (`/v1/festival/find`, `festivalShut`): fixed with them
+  where one rule serves both, or named here.
+- `tools/storefrontProbe.mjs` reads the carousel's first slide after the window loads; on a machine slow enough that
+  the carousel turns first, its arrow check fails though the arrow steps exactly one.
