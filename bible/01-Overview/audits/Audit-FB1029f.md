@@ -53,7 +53,7 @@ law refused them, and a sale of that house left them in the next owner's yard. A
 joining draws no midline between one owner's houses and nothing more.
 
 **B5 (LOW). The edge read lines within 12 m; the law reads every line.** Sentinel drew 1,558 refused points inside its
-edge. The reach is the farthest any of the house's walls stands from the lot now, read wall by wall.
+edge. It reads every line nearer than the lot's farthest point from the house now (a wall's farthest point is a corner).
 
 **B6 (LOW). A joined edge passed the decal batch's 64 bands** and lost the rest. Joined edges peak at 39 now; past 64,
 the slopes are read coarser.
