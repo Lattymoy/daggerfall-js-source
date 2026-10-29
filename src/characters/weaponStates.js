@@ -154,7 +154,7 @@ export function registerMeleeWeaponAnimTime(fn) { _animTimeOverride = typeof fn 
 export function getBowCooldownTime(liveSpeed) {
   return (10 * (100 - liveSpeed) + 800) / CLASSIC_FRAME_UPDATE;
 }
-/** BOW-LAW (bible/05-Combat/Fixed-PvE.md section 5): A DEPARTURE - A BOW RELOADS ON THE SWING'S LAW. DFU's line above
+/** BOW-LAW (bible/01-Overview/Port-Ledger.md, BOW-LAW): A DEPARTURE - A BOW RELOADS ON THE SWING'S LAW. DFU's line above
  *  keeps a shot 1.4-1.6 s apart at any Speed and nothing quickens it, so an archer lands half a swordsman's damage a
  *  second. For a wielder the port knows, the reload is what is left of a five-frame swing of the bow - its weight
  *  against Strength, both hands, the pace powers, SWING_FRAME_MIN - once the draw and the loose have played; DFU's line otherwise. */
