@@ -127,5 +127,6 @@ already does. `04-Characters/Aura-Armory.md` section 8 says so now; the owner ma
 
 ## Met, not this change's
 
-The full suite's FB1002 CRACK-LIP and WD1's and IT1's patch hashes (on this session's freeware download of ARENA2) fail
-the same on `7048bb485`; `staffpanel5` fails now and then on either.
+The whole suite on the merged head (38,191 tests, this session's freeware download of ARENA2): FB1002 CRACK-LIP fails,
+its test and the code it reads main's own; `staffpanel5` failed once and passes alone. WD1's patch hash failed once
+under load in an earlier run and passed here.
