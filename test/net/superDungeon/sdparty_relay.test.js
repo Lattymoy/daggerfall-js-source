@@ -171,20 +171,20 @@ test('SD-PARTY THE PAGE PICKS ITS PARTY\'S HOUR: the kept copy while it is this 
   assert.deepEqual([sdRelayHttp('wss://a.b/'), sdRelayHttp('ws://localhost:8787'), sdRelayHttp('ftp://x'), sdRelayHttp(null)], ['https://a.b', 'http://localhost:8787', null, null]);
 });
 
-test('SD-SOLO A SHARED HOUR: `sd:<s>.p<n>` admits anyone in no party to SD_PUB_SEATS - its seats its first eight\'s, never freed; one of them comes back, a ninth is refused (mutants: the stranger refused; the seats the realm\'s; a seat freed)', async () => {
-  assert.deepEqual([SD_PUB_SEATS, sdPubOwner(0), sdPubOwner(SD_PUB_MAX - 1), sdPubOwner(SD_PUB_MAX), sdPubOwner(-1), isSdPubOwner('p01'), isSdPubOwner('p7')], [8, 'p0', `p${SD_PUB_MAX - 1}`, null, null, false, true]);
+test('SD-SOLO A SHARED HOUR: `sd:<s>.p<n>` admits anyone in no party to SD_PUB_SEATS - its seats its first SD_PUB_SEATS\', never freed; one of them comes back, the next newcomer is refused (mutants: the stranger refused; the seats the realm\'s; a seat freed)', async () => {
+  assert.deepEqual([SD_PUB_SEATS, sdPubOwner(0), sdPubOwner(SD_PUB_MAX - 1), sdPubOwner(SD_PUB_MAX), sdPubOwner(-1), isSdPubOwner('p01'), isSdPubOwner('p7')], [40, 'p0', `p${SD_PUB_MAX - 1}`, null, null, false, true]);
   assert.equal(sdRoomKey(2, 'p5'), 'sd:2.p5');
   assert.equal(isSdRoom(`sd:2.p${SD_PUB_MAX}`), false, 'past the last shared Hour, no room');
   assert.equal(await sdCopyRight('sd:2.p5', 'acct-peer-cy', false, async () => false), null, 'a shared Hour\'s door is its seats\'');
-  await withHollow(async ({ world, rec, hello }) => {
+  await withHollow(async ({ world, rec, hello, step }) => {
     const pub = world.room(/** @type {string} */ (sdRoomKey(rec.s, 'p0')));
     const h = await pub.room._sdHallOf(rec.s); h.ok = true; await pub.room.state.storage.put('sdorrery', h);
     const ws = [];
-    for (let i = 0; i < SD_PUB_SEATS; i++) ws.push(await hello(pub, `peer-s${i}`));
-    assert.deepEqual(ws.map((w) => w.closed), Array(SD_PUB_SEATS).fill(null), 'eight strangers in');
+    for (let i = 0; i < SD_PUB_SEATS; i++) { ws.push(await hello(pub, `peer-s${i}`, { kind: 'linked' })); step(1000); }   // signed in, a beat apart - the hello's own gates are not this law's
+    assert.deepEqual(ws.map((w) => w.closed), Array(SD_PUB_SEATS).fill(null), 'every seat a stranger\'s');   // PIN MOVED (SD-SOLO-40, 2026-10-28, the owner: "lets up the amount in a non party to 40"): 40 seats, it was eight
     await pub.drop(ws[0]);
-    assert.equal(reason(await hello(pub, 'peer-s9')), SD_NO_FULL, 'a ninth refused - a gone one\'s seat stays its');
-    assert.equal((await hello(pub, 'peer-s0')).closed, null, 'its own comes back');
+    assert.equal(reason(await hello(pub, 'peer-s99', { kind: 'linked' })), SD_NO_FULL, 'the next refused - a gone one\'s seat stays its');
+    assert.equal((await hello(pub, 'peer-s0', { kind: 'linked' })).closed, null, 'its own comes back');
     const seats = async (o) => (await pub.room.fetch(new Request(`https://relay.internal${SD_INTERNAL_SEATS}`, { method: 'POST', body: JSON.stringify({ s: rec.s, o }) }))).json();
     assert.deepEqual(await seats(await instanceOwnerOf('acct-peer-s3')), { ok: true, has: true, open: false }, 'the walk\'s answer: full, and holds s3');
     assert.deepEqual(await seats(await instanceOwnerOf('acct-peer-zz')), { ok: true, has: false, open: false });
@@ -213,8 +213,8 @@ test('SD-SOLO THE WORKER\'S WALK: the first shared Hour that holds me, else the 
 
 test('SD-SOLO THE ENTRY LINE: a party\'s Hour says only the party enters it; a shared one, how many are in it of SD_PUB_SEATS (mutants: the count unsaid; the party\'s said as shared)', () => {
   assert.equal(sdCopyLine('0123456789abcdef', 3), 'Only your party can enter this Hour.');
-  assert.equal(sdCopyLine('p2', 3), '3 of 8 players are in this shared Hour.');
-  assert.equal(sdCopyLine('p2', 0), '1 of 8 players are in this shared Hour.', 'me counted');
+  assert.equal(sdCopyLine('p2', 3), '3 of 40 players are in this shared Hour.');
+  assert.equal(sdCopyLine('p2', 0), '1 of 40 players are in this shared Hour.', 'me counted');
   assert.equal(sdCopyLine(null, 3), null);
 });
 

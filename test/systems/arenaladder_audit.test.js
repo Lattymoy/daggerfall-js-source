@@ -356,7 +356,7 @@ test('AUDIT ARENA-LADDER L5: THE SAND\'S KIT LAW - in a bout of one\'s own no po
   const P = { activeEffects: [...SAND_BARRED_KINDS.map((kind) => ({ kind, roundsRemaining: 9 })), { kind: 'shield', roundsRemaining: 9 }] };
   assert.equal(stripSandBarred(P), SAND_BARRED_KINDS.length);
   assert.deepEqual(P.activeEffects.map((e) => e.kind), ['shield'], 'a Shield stays');
-  assert.match(rd('src/scenes/hostMagic.js'), /why = spellRefusal\?\.\(sp\) \?\? sandSpellRefusal\(sp\);/, 'every host\'s one cast engine asks');
+  assert.match(rd('src/scenes/hostMagic.js'), /why = spellRefusal\?\.\(sp\) \?\? sandSpellRefusal\(sp\)( \?\? pvpSpellRefusal\(sp\))?;/, 'every host\'s one cast engine asks');
   const ab = rd('src/scenes/arena/arenaBouts.js');
   assert.match(ab, /if \(boutLive\(C\.b\)\) stripSandBarred\(P\);/, 'the floor\'s frame takes them off');
   assert.match(ab, /if \(C\.you && P && kitBout\(C\) && boutLive\(C\.b\)\) stripSandBarred\(P\);/, 'and the relay\'s ladder\'s');

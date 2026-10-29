@@ -45,7 +45,7 @@ test('HOMES-SHED a town\'s homes and its Open Gates are ONE request: with the se
   assert.equal(seen.openGates, undefined);
   assert.equal(seen.homes[0].entry, 'private');
   assert.equal(homesAsked().length, 1, 'the homes read asked once');
-  assert.equal(homesAsked()[0].length, 2, 'in a batch of two');
+  assert.equal(homesAsked()[0].length, 3, 'in a batch of three');   // PIN MOVED (TOMB-RIDES): the door's tombstone rides it too
   assert.ok(homesAsked()[0].some((sql) => GATES_SQL.test(sql)), 'the edict\'s read beside it');
   assert.ok(!asked.some((a) => a.length === 1 && GATES_SQL.test(a[0])), 'never a request of its own');
 
@@ -57,7 +57,7 @@ test('HOMES-SHED a town\'s homes and its Open Gates are ONE request: with the se
   seen = await town(visitor);
   assert.deepEqual([seen.openGates, seen.homes[0].entry], [true, 'public'], 'the edict read in the batch is the edict obeyed');
   assert.equal(homesAsked().length, 1);
-  assert.equal(homesAsked()[0].length, 2);
+  assert.equal(homesAsked()[0].length, 3);   // PIN MOVED (TOMB-RIDES)
   assert.equal(asked.filter((a) => a.some((sql) => GATES_SQL.test(sql))).length, 1, 'the edict asked once, in that batch');
   assert.equal((await town(owner)).homes[0].entry, 'private', 'its owner\'s own choice, kept');
 
@@ -67,8 +67,37 @@ test('HOMES-SHED a town\'s homes and its Open Gates are ONE request: with the se
   seen = await town(visitor);
   assert.equal(seen.openGates, undefined);
   assert.equal(seen.homes[0].entry, 'private');
-  assert.deepEqual(homesAsked().map((a) => a.length), [1], 'the homes read, alone');
+  assert.deepEqual(homesAsked().map((a) => a.length), [2], 'the homes read, beside the tombstone alone');   // PIN MOVED (TOMB-RIDES): was [1]
   assert.ok(!asked.some((a) => a.some((sql) => GATES_SQL.test(sql))), 'no edict asked');
+});
+
+const TOMB_SQL = /FROM realm_characters WHERE id = \?2 AND player = \?1 AND dead_at IS NOT NULL/;
+
+test('TOMB-RIDES a town\'s homes ask the named character\'s tombstone in their own batch - one request, never the door\'s trip before it, seats open or closed - and a tombstone is answered 410 `dead` as the door answered it; a read naming no character asks none (mutants: the tombstone unread; the door asks it too; a tombstone answered 400)', async () => {
+  const svc = await standService({ SEATS_OPEN: 'on' });
+  const raw = svc.env.DB._raw;
+  const who = await svc.registered('Wayfarer');
+  const T = 152;
+  const FALLEN = 'r22222222222222222222';
+  raw.prepare("INSERT INTO realm_characters (id, player, name, created_at, updated_at, dead_at) VALUES (?, ?, 'Fallen', 1, 1, 5)").run(FALLEN, who.id);
+  const asked = askedOf(svc.env.DB);
+  const tombAsked = () => asked.filter((a) => a.some((sql) => TOMB_SQL.test(sql)));
+  const town = (body) => svc.call('/v1/homes/town', { mapId: T, ...body }, who.secret);
+  for (const seats of ['on', 'off']) {
+    svc.env.SEATS_OPEN = seats;
+    asked.length = 0;
+    const dead = await town({ character: FALLEN });
+    assert.deepEqual([dead.status, dead.body], [410, { error: 'dead' }], `seats ${seats}: the door's own answer`);
+    assert.equal(tombAsked().length, 1, `seats ${seats}: the tombstone asked once`);
+    assert.ok(tombAsked()[0].some((sql) => HOMES_SQL.test(sql)), `seats ${seats}: in the homes read's batch`);
+    asked.length = 0;
+    const live = await town({ character: who.character });
+    assert.equal(live.status, 200, `seats ${seats}: a live character reads its town`);
+    assert.deepEqual(tombAsked().map((a) => a.length), [seats === 'on' ? 3 : 2], `seats ${seats}: one request carries it`);
+  }
+  asked.length = 0;
+  assert.equal((await town({})).status, 200);
+  assert.deepEqual(tombAsked(), [], 'no character named, no tombstone asked');
 });
 
 test('HOMES-SHED the siege blackout\'s question answers a throw as every route does: an overloaded D1 a 503 `server` and any other throw a 500 `server`, each logged with its path and counted on the request\'s metrics point - it was the one route above the service\'s try that asks the database, and its throw left the Worker as a bare 500 with no body, no log line and no point (mutants: the try taken away)', async () => {

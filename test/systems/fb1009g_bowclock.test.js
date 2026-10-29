@@ -14,7 +14,9 @@ import { MW_WEAPON_TYPE } from '../../src/formats/morrowind/mwFirstPerson.js';
 import { setValue, resetToDefaults } from '../../src/systems/settings/settings.js';
 import { _resetModSettings } from '../../src/systems/modSettings.js';
 import { EQUIP_SLOTS } from '../../src/systems/equip.js';
-import { getBowCooldownTime } from '../../src/characters/weaponStates.js';
+import { bowReloadSeconds } from '../../src/characters/weaponStates.js';
+import { WEAPON_TYPES } from '../../src/combat/fpsWeapon.js';
+import '../../src/combat/swingLaw.js';
 
 const DT = 1 / 60;
 const LONG_BOW = () => ({ name: 'Long Bow', templateIndex: 130, material: 0 });
@@ -165,7 +167,9 @@ test('BOW-CLOCK: an arm still drawing past the 1.2s ceiling keeps the arrow unti
 test('BOW-CLOCK: the instant shot repeats while the button is held, at the machine\'s own rate - on the sprite and under the arm', () => {
   // THE OWNER'S DEPARTURE: DFU's WeaponManager looses again only once the button was released since the last shot
   // (lastAttackHand == Hand.None). With BowDrawback off a held button looses the moment the bow is ready.
-  const cycle = 4 * 0.0625 + getBowCooldownTime(50);   // StrikeDown from the drawn frame 3 to 7, then the cooldown
+  // StrikeDown from the drawn frame 3 to 7, then the cooldown - BOW-LAW's, read off the rig's own archer
+  const archer = { items: [ARROWS()], equip: { slots: { [EQUIP_SLOTS.RightHand]: LONG_BOW() } }, stats: { speed: 50 } };
+  const cycle = 4 * 0.0625 + bowReloadSeconds(50, { entity: archer, weaponType: WEAPON_TYPES.Bow, usingRightHand: true });
   {
     const r = bowRig({ speed: 50 });
     const arrows = play(r, 6, () => true);

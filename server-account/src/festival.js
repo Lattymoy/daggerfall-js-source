@@ -99,8 +99,11 @@ const orphansHome = (/** @type {any} */ db, /** @type {string} */ id) => db.batc
  */
 export async function festivalOf({ db, nowS }, player, env) {
   if (!player?.handle) return { error: 'guest' };
-  await orphansHome(db, player.id);
-  const { results: mine } = await db.prepare('SELECT map_id, building_key, char_id, stock FROM fest_offerings WHERE player = ?1').bind(player.id).all();
+  const mineRead = () => db.prepare('SELECT map_id, building_key, char_id, stock FROM fest_offerings WHERE player = ?1').bind(player.id).all();
+  let { results: mine } = await mineRead();
+  // ORPHAN-GATE (bible/11-Multiplayer/Scale-Arc.md ORPHAN-GATE): an orphan is one of the account's offerings, so an account
+  // with none has none to bring home - and nearly every read was a write transaction on the primary for nothing
+  if (mine?.length) { await orphansHome(db, player.id); ({ results: mine } = await mineRead()); }
   const row = await db.prepare('SELECT fest_cakes, fest_bowls, fest_wares, fest_given, fest_taken FROM players WHERE id = ?1').bind(player.id).first();
   // CAKE-CAP-SAID: the day's cakes found so far (findFestival's own row), so the Wyrd's window says how near the day's end is
   const finds = await db.prepare('SELECT found FROM fest_finds WHERE account = ?1 AND day = ?2').bind(player.id, utcDay(nowS)).first();

@@ -248,7 +248,7 @@ test('SD2c the hosts by source: world.js hands the held map, the compass, the Ti
   assert.match(w, /return Math\.hypot\(at\[0\] - f\[0\], at\[1\] - f\[2\]\) <= SD_COMPASS_M \? at : null;/, 'inside its kilometre');
   assert.match(w, /if \(!o \|\| \(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\) return null;\n {4}const p = playerTravelPixel\(\);\n {4}const \{ site, loc, key \} = o\.hollow;\n {4}if \(!sdOmenSeen\(site, p\.x, p\.y\)\) return null;/, 'outside alone, from its twelve pixels');
   const gateFire = w.indexOf('if (gatePool?.stands() && gatePool.drawPass(');
-  const omen = w.indexOf('if (sdo && sdOmenPassOf()?.draw([sdo], proj, view, new Float32Array(mwv.eye), now / 1000,');
+  const omen = w.indexOf('if (sdo && sdOmenPassOf()?.draw([sdo], proj, view, wxEye32, now / 1000,');
   assert.ok(gateFire > 0 && omen > gateFire, 'after the gate\'s fire');
   assert.match(w, /if \(_sdOmenPass === undefined\) \{ try \{ _sdOmenPass = new SdOmenPassRenderer\(renderer\.gl\); \}/, 'built once, the first time');
   const hm = read('src/ui/heldMap.js');

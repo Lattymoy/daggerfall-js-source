@@ -52,6 +52,9 @@ export const wildFallGraceS = (claims) => (claims?.g === 1 ? 0 : WILD_FALL_GRACE
 export const WILD_RECEIPT_MAX = 512;
 /** A remains' id: the relay's, twelve hex. */
 export const WILD_REMAINS_RE = /^[0-9a-f]{12}$/;
+/** PVP-VILLAIN: a fall's `vp`, the villain points its kill laid on its killer (absent for none), is at most this
+ *  (systems/wild/villainLaw.js VILLAIN.max, pinned equal). */
+export const WILD_VILLAIN_MAX = 10_000;
 /** The most worn pieces an offer lists (net/wire.js WILD_ITEMS_MAX, pinned equal - this leaf imports only the token's). */
 export const WILD_WORN_MAX = 16;
 
@@ -67,7 +70,7 @@ export const WILD_ROOM_RE = /^[a-z]{1,12}:[\x21-\x7e]{1,80}$/;
 export const WILD_COLLECT_V = 'g1';
 export const WILD_COLLECT_TTL_S = 300;
 /** A collect never carries a fall's own fields, nor any other receipt's. */
-const COLLECT_FOREIGN = [...WILD_FOREIGN, 'f', 'w', 'wt', 'm', 'kc', 'g'];
+const COLLECT_FOREIGN = [...WILD_FOREIGN, 'f', 'w', 'wt', 'm', 'kc', 'g', 'vp'];
 
 /** Everything a well-formed fall receipt's claims must be, before any signature is considered. */
 export function wildReceiptValid(/** @type {any} */ c) {
@@ -81,15 +84,16 @@ export function wildReceiptValid(/** @type {any} */ c) {
   if (c.m !== undefined && !(typeof c.m === 'string' && WILD_ROOM_RE.test(c.m))) return false;   // SEA-BOUNTY: the room
   if (c.kc !== undefined && !(typeof c.kc === 'string' && REALM_CHARACTER_RE.test(c.kc))) return false;   // SEA-BOUNTY: the killer's character
   if (c.g !== undefined && c.g !== 1) return false;   // WILD-REJOIN: the fallen gone from the room, or unsaid
+  if (c.vp !== undefined && !(Number.isSafeInteger(c.vp) && c.vp > 0 && c.vp <= WILD_VILLAIN_MAX)) return false;   // PVP-VILLAIN
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > WILD_RECEIPT_TTL_S) return false;
   return true;
 }
 /** MINT - the relay's half; unsigned (`f1.<body>.`) with no key, which the service declines. */
-export async function mintWildReceipt(/** @type {{ f: string, c: string, k: string, r: string, w: number, wt?: number[]|null, m?: string, kc?: string, g?: number }} */ { f, c, k, r, w, wt = null, m = '', kc = '', g = 0 }, /** @type {CryptoKey|null} */ privateKey, /** @type {{ subtle: SubtleCrypto, nowS: number }} */ { subtle, nowS }) {
+export async function mintWildReceipt(/** @type {{ f: string, c: string, k: string, r: string, w: number, wt?: number[]|null, m?: string, kc?: string, g?: number, vp?: number }} */ { f, c, k, r, w, wt = null, m = '', kc = '', g = 0, vp = 0 }, /** @type {CryptoKey|null} */ privateKey, /** @type {{ subtle: SubtleCrypto, nowS: number }} */ { subtle, nowS }) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintWildReceipt needs an integer epoch-seconds clock');
   const fallenGone = g === 1 ? { g: 1 } : {};
-  const claims = { f, c, k, r, w, ...(w >= 0 && wt ? { wt } : {}), ...(m ? { m } : {}), ...(kc ? { kc } : {}), ...fallenGone, i: nowS, e: nowS + WILD_RECEIPT_TTL_S };
+  const claims = { f, c, k, r, w, ...(w >= 0 && wt ? { wt } : {}), ...(m ? { m } : {}), ...(kc ? { kc } : {}), ...fallenGone, ...(vp > 0 ? { vp } : {}), i: nowS, e: nowS + WILD_RECEIPT_TTL_S };
   if (!wildReceiptValid(claims)) throw new TypeError('mintWildReceipt refused a claim set it could not verify');
   return mintAs(WILD_RECEIPT_V, claims, privateKey, subtle);
 }

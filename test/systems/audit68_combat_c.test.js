@@ -16,6 +16,7 @@ import { setItemFields, mintCondition } from '../../src/systems/item/itemTemplat
 import { createThunderlock, createPellets } from '../../src/systems/thunderlock.js';
 import { setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
 import { setValue } from '../../src/systems/settings/settings.js';
+import { PVE_SWAP_PACE } from '../../src/combat/weapon/swapPace.js';
 
 setValue('Controls', 'WeaponSwingMode', '2');   // the port's default (click or hold), stated so the file does not lean on it
 
@@ -82,7 +83,9 @@ test('AUDIT 68 S09-sheathed-swing: a held button swings nothing once the weapon 
   c.readyWeapon();
   c.attackInput(0, 0, true);
   run(c, 30);
-  entity.equipCountdown = 2000;
+  // SWAP-PACE drains it at 980 * PVE_SWAP_PACE a second outside the PvP zone: it outlasts the settle's 120 frames and the
+  // 30 read after, whatever the random swing in flight (2000 ran out under a long one)
+  entity.equipCountdown = 980 * PVE_SWAP_PACE * (120 + 30) / 60 + 1;
   settleIdle(c);
   const under = run(c, 30);
   assert.ok(entity.equipCountdown > 0, 'still counting');

@@ -17,6 +17,7 @@
 // GetClassCareerTemplate), which a module-level literal cannot await
 // - and nothing reads these once chargen resolves. armor 0 until
 // player equipment. LiveSpeed lives in PlayerMotor stats.
+import { pvpLevitateBarred } from '../systems/wild/pvpRules.js';   // PVP-RULES: no Levitate under the flag
 import { SKILL_COUNT, SKILLS_RECENTLY_RAISED_WORDS } from '../systems/skills.js';
 import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';   // AUDIT 65 SL-4: PlayerEntity.cs:128's socialGroupCount = 11
 import { pageHas } from '../systems/pageQuery.js';   // AUDIT ANTICHEAT A1: the probe gate's one parse a search
@@ -262,7 +263,7 @@ export function registerLevitateWard(fn) { _levitateWard = typeof fn === 'functi
 /** EG-H2 (bible/11-Multiplayer/Elite-Gates.md section 10.7): ONE WARD. The Spire's ward is OR'd into the one
  *  registration (scenes/world.js - the made level's law, systems/madeLevel.js `levitate`, beside the siege's room), as
  *  the page asks; EG-PLAY's second seam beside it (registerSpireLevitateWard) is retired. */
-export const levitateWarded = () => { try { return !!_levitateWard?.(); } catch { return false; } };
+export const levitateWarded = () => { try { return !!_levitateWard?.() || pvpLevitateBarred(); } catch { return false; } };   // PVP-RULES: and a flagged fighter's, in the open zone (systems/wild/pvpRules.js)
 /** AUDIT-SEATS G4 (Seats-Arc 6.6: "a free camera over the town"; 19: "a free camera (WASD, the mouse, the pad's
  *  sticks)"): A SPECTATOR'S FLIGHT, registered by the host that knows who watches a battle from its room (scenes/
  *  world.js): while it answers true, the motor-flag write lifts the body as the staff's /fly does - the motor's own

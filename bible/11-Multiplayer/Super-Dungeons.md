@@ -3711,13 +3711,13 @@ kill's collapse has run (SD_COLLAPSE_MS from `fell.at`), the copy refuses one wh
 
 **A shared Hour for players in no party (SD-SOLO).** The owner: *"if no one is in a party allow them to be put into a 8
 player instance so randoms arnt turned away"*. Its owner is `p<n>` (`sdPubOwner`, n under SD_PUB_MAX 64). Its door
-takes anyone to SD_PUB_SEATS (8); the seats are the first eight's and are never freed, so its dead can come back. The
+takes anyone to SD_PUB_SEATS (40 - SD-SOLO-40, the owner: *"lets up the amount in a non party to 40"*; it was 8); the seats are the first 40's and are never freed, so its dead can come back. The
 page asks the Worker's `/sd/open?s=&o=<my digest>` (`sdOpenDoor`), which walks the shared Hours in order and answers
 the first that holds me, else the first with a seat and its Remnant standing. None answering, the page goes to its
 own Hour. A party of one counts as no party.
 
 **The entry line.** The owner: *"player are told that only the party or how many player are already in that
-instance"*. Once the Hour has welcomed the page, it says *"Only your party can enter this Hour."* or *"3 of 8 players
+instance"*. Once the Hour has welcomed the page, it says *"Only your party can enter this Hour."* or *"3 of 40 players
 are in this shared Hour."* (`sdCopyLine`, said from `sdAloneFrame`). Refusals that name the Hour are said as the relay
 says them.
 

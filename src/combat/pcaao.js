@@ -924,6 +924,16 @@ export function pcaaoArmorDamageReductionWithUnarmed(attacker, target, damage, s
   return unityRound(F(damage * F(1 - naturalDamResist)));
 }
 
+/** PVP-GUARD (the PvP rework): what of a nominal 100 the piece over `part` keeps from a blow of `kind` ('edged', 'blunt',
+ *  'unarmed') - its row, its condition and the natural resistance, as a monster's blow reads them; a shield's block is left
+ *  out (the relay rolls none). Bare, the natural resistance alone. */
+export function pcaaoPartKept(target, part, kind, naturalDamResist, modules) {
+  const armor = struckSlotItem(target, part);
+  if (!armor) return unityRound(F(100 * F(1 - naturalDamResist)));
+  const rows = kind === 'unarmed' ? UNARMED_ROWS : kind === 'blunt' ? BLUNT_ROWS : EDGED_ROWS;
+  return table(rows, pcaaoArmorMaterialIdentifier(armor), 100, condOf(armor, modules), naturalDamResist);
+}
+
 /** PercentageReductionCalculationForMonsters: the innate hide of a
  *  monster that wears nothing on the struck part - the C# switches on
  *  `enemyGroup + 1`: Animals 1.0; Undead - the Skeletal Warrior 0.8;

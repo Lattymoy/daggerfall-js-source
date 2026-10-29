@@ -48,6 +48,7 @@ import { charSheetHooks } from './charSheetNav.js';
 import { VirtueLevelUpScreen } from './virtueLevelUp.js';   // ORL1
 import { levelNotices } from './levelUp/levelNotice.js';   // LV2: who already played the fanfare
 import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1
+import { pvp30Asks, pvp30Box } from './levelUp/pvp30Ask.js';   // PVP-30: the level that opens PvP asks first
 import { releaseCapLatch } from '../systems/levelCap.js';   // AUDIT FB1026d C1: F5 at the cap opens the sheet, never a level-up with no level
 import { spendPoolLowest } from '../systems/chargen.js';   // LV1: the headless pool policy, for the font-less escape
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
@@ -113,7 +114,7 @@ const fanfared = new WeakMap();
  */
 export function levelUpScreenFor(entity, virtue = !entity?.oghmaLevelUp && usesVirtueLeveling(entity)) {
   releaseCapLatch(entity);   // LEVEL-45 (AUDIT FB1026d C1)
-  if (!entity?.readyToLevelUp) return null;
+  if (!entity?.readyToLevelUp || pvp30Asks(entity)) return null;   // PVP-30: no rollout before the ask's Yes
   // LV2: ...and whether the WINDOW still owes the fanfare. On the
   // enhanced skin ui/levelUp/levelNotice.js played it at the moment the level
   // was earned, which may be long before this window is asked for;
@@ -178,6 +179,7 @@ export function createCharSheetWindow(deps = {}) {
   // them.
   releaseCapLatch(deps.entity);   // LEVEL-45 (AUDIT FB1026d C1): a level latched past the cap opens nothing
   if (deps.entity?.readyToLevelUp) {
+    if (pvp30Asks(deps.entity)) return pvp30Box(deps.entity);
     const virtue = !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity);
     const rollout = () => levelUpScreenFor(deps.entity, virtue);   // GROWTH1: the screen's one home (LV2's fanfare with it)
     // `document` for the reason this file's other fork gives: node

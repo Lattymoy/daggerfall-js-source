@@ -91,7 +91,7 @@ test('LOOT11: the finds - a pile put down (a house\'s treasure too); a body of m
 test('LOOT11: every host draws them in its own pass - the street after the gate\'s fire, the dungeon after its billboards, a building after its characters', () => {
   const w = read('src/scenes/world.js');
   assert.match(w, /const lootLines = createLootLines\(renderer\.gl\);/, 'one pass, built once');
-  assert.match(w, /if \(lootLines\.draw\(\(\) => \[\.\.\.exteriorFoes\.lootFinds\(\), \.\.\.droppedLoot\.lootFinds\(\)\], proj, view, new Float32Array\(mwv\.eye\), now \/ 1000,/, 'the street\'s');
+  assert.match(w, /if \(lootLines\.draw\(\(\) => \[\.\.\.exteriorFoes\.lootFinds\(\), \.\.\.droppedLoot\.lootFinds\(\)\], proj, view, wxEye32, now \/ 1000,/, 'the street\'s');
   assert.match(w, /drawLootLines: \(\{ proj, view, eye, finds \}\) => \{\s*if \(lootLines\.draw\(finds, proj, view, eye, performance\.now\(\) \/ 1000, \{ mode: renderer\._fogMode/, 'the modes\' hook, in their own air');
   const m = read('src/scenes/worldModes.js');
   assert.match(m, /host\.drawLootLines\?\.\(\{ proj, view, eye: mwv\.eye, finds: \(\) => dungeonCtx\.lootFinds\?\.\(\) \?\? \[\] \}\);/, 'the dungeon\'s');

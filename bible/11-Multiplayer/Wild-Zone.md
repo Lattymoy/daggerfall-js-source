@@ -62,6 +62,11 @@ and the wagon themselves never dropped - `WILD_NEVER_GROUPS`' Transportation); a
 (section 3b). What still punishes: the bag's drop, a tenth of the purse and of each letter, the killer's one worn piece,
 the two minutes down and the rise outside the zone.
 
+PVP-REWARD and PVP-NO-TENTH (2026-10-29, `PvP-Rework.md`) took the bag's drop and the tenths away. A player kill takes
+one worn piece, else one policy's gold, else its last roll: a tenth of the coin and letters together, the purse first,
+for the killer alone (`wildDropLaw.js:"export function takeWildLastRoll("`). No gold lies in the remains for anyone,
+so WILD GOLD and LETTERS-TENTH in section 4 are history at a player kill.
+
 AUDIT PVP-EASE (2026-10-26, the owner: "Can we audit this"; `01-Overview/audits/Audit-PvP-Ease.md`): four cold lanes
 read the change: 21 reported, 16 defects. All 16 are fixed. Four of them were the owner's to call, and the owner chose:
 - a COMBAT LOCK on storing for a minute after a player's blow (section 4, STORE-KEEPS - the storage had made the drop
@@ -129,7 +134,7 @@ border east (WILD-KEEPOUT, WILD-KEEPOUT2), read off the map files by `wildMaskOf
 Two players standing in the zone may strike each other - never KIN: a member of my party or one under its truce, my
 duel's opponent, or - MAC'S DECISION (2026-10-14, "Guildmates are friends") - a member of my guild - in the
 open country but never in the streets of a city, a town or a village (ZONE-SAFE, section 26) and, since PVPDUNGEON (2026-10-08, the owner: "players should be able to attack each other in dungeons
-too in the pvp zone"), in its dungeons (`wildCan`, `world.js:"const wildCan = ()"`) - in its dungeons only since
+too in the pvp zone"), in its dungeons (`wildCan`, `world.js:"const wildCan = (streets"`) - in its dungeons only since
 AUDIT FB1018 L3-5 (`01-Overview/audits/Audit-Field-Bugs-2026-10-18.md`): wildFair had asked whether the PEER's pose
 stands in the zone, and a dungeon's pose is the dungeon's own frame, which the map reads as its corner pixel, so every
 peer underground was refused. In a dungeon a room's peer is fair by the place now (the place is the zone: wildCan's
@@ -143,7 +148,7 @@ arms its token signs, the reach from the places the relay believes; the referee'
 a fall. There is no floor - a blow can kill. AUDIT FOE-KEEPS E2 (the owner, 2026-10-24, asked: "Credit the last
 player"): A DEATH THE REFEREE DID NOT SEE - a foe's, a fall's, the sea's - within `WILD_REF.creditMs` (10 s, pinned equal
 to `WILD_KILL_CREDIT_MS`) of a fair player's blow is that player's kill: my own cell's socket says I left the zone dying
-(`zone` 0 with `dd`, `world.js:"online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0)"`) and the relay makes
+(`zone` 0 with `dd`, `world.js:"setWildZone?.(wildCan() ? 1 : wildCan(true)"`) and the relay makes
 the fall as a blow's (`wildRef.js:"export function wildCredit"`, `server/src/index.js:"async _wildCredit(st, a, now)"`) -
 said to the room, signed after the killer's pick or at once where no body is searched, and taken as any kill is. Since
 FOE-KEEPS a death to a foe drops nothing, so a player losing a fight denied its winner everything by dying to a foe, a
@@ -175,7 +180,7 @@ a temple - outdoors (its door's roof arm retired: no blow is struck under a roof
 ## 3b. Safe passage (ZONE-GRACE)
 
 ZONE-GRACE (2026-10-26, PVP-EASE above; the owner chose "Entry/rise grace"): FOR SIXTY SECONDS AFTER A FIGHTER ENTERS THE
-ZONE OR RISES FROM A FALL, NO PLAYER'S BLOW OR CAST LANDS ON IT, and its own blow or cast on a player ends it at once
+ZONE (never on a rise since PVP-DEATH, `PvP-Rework.md`), NO PLAYER'S BLOW OR CAST LANDS ON IT, and its own blow or cast on a player ends it at once
 (`WILD_GRACE`, `wildRef.js:"export const WILD_GRACE"`). It is the referee's, like every other law of the fight: a blow on a
 fighter under it is refused (`wildBlow`'s `grace`), and a striker under it loses it as its blow is judged
 (`graceEnded`). AN ENTRY GRANTS IT ONLY TO ONE AWAY AND QUIET: away from the zone `WILD_GRACE.awayMs` (30 s) and in no
@@ -190,11 +195,10 @@ gone - `_wildLeaveCarry`), at a death, when a passage ends (its blow, its take) 
 hub drops a leave said by a room the fighter has already left for another (`lr`, the room that said it - never `rk`,
 a foes frame's raid word, which the relay reads nowhere). Before the audit
 the carry was put for a struck fighter alone and read within the mend's half minute: a striker, a fighter under passage
-and a walker were granted a fresh minute at every cell they crossed, and every keepalive into a woken cell. A RISE always
-grants it (AUDIT PVP-EASE L3-6, the owner: "Yes, every rise"): a fallen standing again after `WILD_REF.riseMs` (a kill
-rises outside the zone and is granted it again at its entry), and a death the referee did not keep - a foe's, said `died`
-on its way out (`wildZone`'s `died`, carried as `dd` to the town's cell) - rising inside, at its ring's town (section 4),
-once. A TAKE ENDS IT (AUDIT PVP-EASE L3-4, the owner: "Any take ends passage"): taking from a remains - one's own or
+and a walker were granted a fresh minute at every cell they crossed, and every keepalive into a woken cell. A RISE NO LONGER
+grants it (PVP-DEATH, `PvP-Rework.md`, over AUDIT PVP-EASE L3-6's "Yes, every rise"): neither a fallen standing again
+after `WILD_REF.riseMs` nor a death the referee did not keep - a foe's, said `died` on its way out (`wildZone`'s `died`,
+carried as `dd` to the town's cell) - rising inside, at its ring's town (section 4). A TAKE ENDS IT (AUDIT PVP-EASE L3-4, the owner: "Any take ends passage"): taking from a remains - one's own or
 another's - ends the taker's passage as its blow does (`wildGraceTaken`, `_wildGraceTake`), so the rise's minute is no
 untouchable run back to the body. SHIPS' GUNS KEEP IT (AUDIT PVP-EASE L3-3): a ship whose captain is under it takes no
 shot (`seaRef.js` `seaShot`'s `grace`), a captain's own shot ends its passage, and a gunfight is a fight for both, for an
@@ -210,6 +214,9 @@ forgets what it heard and says nothing (AUDIT PVP-EASE L3-7: "Other players can 
 out, where none can). world270 (world269 on its branch). Not a DFU member: Daggerfall Unity has no other players.
 
 ## 4. A death in the zone
+
+PVP-REWARD (2026-10-29) replaced the bag drop and the killer's pick below: a kill gives one random uninsured worn
+piece, or one policy's gold (`PvP-Rework.md` PVP-REWARD).
 
 FOE-KEEPS (2026-10-24, the owner: "I feel like the eltheric sea can be too punishing. I dont want people to lose
 everything they have. Espcially the fact you can lose your spellbook? Ridiculous"; asked, the owner chose "Only PvP
@@ -350,7 +357,8 @@ Either death, at the first dead frame, while the room is still the player's (`wi
 - A DEATH IN A HALL (HALL-CROWS, the owner: "i dont see the crows circleling around the dungeon where i died on the
   zone map"): always locks the hall for the hour and sets the crows over it, whether or not the pack had anything to
   drop (`world.js:"if (modes?.mode === 'dungeon' && _wdunInside)"`; section 13).
-- THE WAIT: the death screen holds `WILD_DEATH_HOLD_S` (120 s) and takes no Enter; the killer's body lies as long.
+- THE WAIT: the death screen holds `WILD_DEATH_HOLD_S` (60 s, PVP-RISE: "Jist like pve deaths" - 120 s before); Enter
+  rises after 15 s (DEATH-15, PvP-Rework.md PVP-RISE); the killer's body lies as long.
 - A GAME CLOSED ON THE DEATH SCREEN (WILD-REJOIN, FIELD BUGS 2026-10-25h, a player's report: "if you die in the
   wilderness and alt f4 before you are looted you wont be able to be looted by who killed you. you can also skip the
   death timer this way"): the fall is the referee's, and the referee keeps the fighter down its two minutes
@@ -401,7 +409,7 @@ both ends read (`src/systems/wild/wildInsureLaw.js`):
 - IN FORCE `WILD_INSURE_SETTLE_S` (120 s) AFTER IT IS WRITTEN, against the fall's own signing (the receipt's `i`): the
   killer has `WILD_REF.pickMs` to pick and the fall is signed after it, so a policy written on the death screen keeps from
   nothing (`wildPolicyInForce`). The game writes one only outside the zone (`insureInZone`), where the walk in is longer.
-- AT A KILL (`server-account/src/wild.js:"const insured = wildInsuredBy(policies.filter((p) => wildPolicyInForce(Number(p.at), fallAt)).map((p) => String(p.key)));"`):
+- AT A KILL (`server-account/src/wild.js:"const insured = pvpInsuredFor(live.map((p) => String(p.key)),"`; PVP-REWARD since, `PvP-Rework.md`):
   a piece under a policy in force is kept as a piece the ledger bars is - never taken by the killer's pick, never
   dropped, never asked of the ledger - and (AUDIT PVP-EASE L1-3, L2-2, the owner: "Only when it saved the piece") A
   POLICY IS SPENT ONLY WHEN IT SAVED ITS PIECE: the worn piece the killer picked, or a bag piece the drop would have
@@ -409,10 +417,9 @@ both ends read (`src/systems/wild/wildInsureLaw.js`):
   it takes from (`wildDropLaw.js:"function wildSaved("`), spent in the fall's own batch (`spent_r`, `spent_at`). A
   policy on a worn piece no pick named, in a hall that searches no body, or past the remains' bound stays in force.
   Before the audit every policy on a piece the fallen carried or wore was spent at any kill - a hall death burnt a fifth
-  of every insured worn piece's worth for nothing. THE KILLER'S OFFER READS NO POLICY (L2-2, L2-3, L4-1): an insured worn
-  piece is offered as any other at both ends (`wornOffer`, the first dead frame's
-  `world.js:"const worn = isCellRoom(online.room) ? wornOffer(playerEntity.items) : [];"`), and a pick of one lands on
-  nothing - the piece kept, its policy spent; so no fight waits on a book the page read late or never. The answer names
+  of every insured worn piece's worth for nothing. PVP-REWARD retired the killer's offer and pick
+  (`world.js:"// PVP-REWARD: no worn offer - the account service rolls the killer's piece (systems/wild/pvpReward.js)"`),
+  so no fight waits on a book the page read late or never. The answer names
   the keys kept (`insured`); the fallen's game forgets those policies and its death screen says how many pieces insurance
   kept (`WILD_TEXT.deathInsured`). A death to a foe takes nothing and spends nothing (FOE-KEEPS); nor does a shielded
   kill (section 4c).
@@ -1266,12 +1273,13 @@ town. The open country, the roads, the dungeons (a city's own too) and the zone'
   in the open country, 5,929 of MAPS.BSA's 15,251 rows against the settlements' 3,444, so as towns they would stand a
   refuge on every road. They keep the zone's watch (section 3, ZONE-WATCH). A lair, a graveyard, a coven, a cult's
   shrine and a poor home are neither.
-- MY WORD (`world.js:"const wildCan = () =>"`): outdoors in a settlement's streets I may fight no one, so my word on the
-  zone to the referee is 0 (INT9 - `world.js:"online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0)"`) and
+- MY WORD (`world.js:"const wildCan = (streets"`): outdoors in a settlement's streets I may fight no one, so my word on the
+  zone to the referee is 0 (INT9 - `world.js:"setWildZone?.(wildCan() ? 1 : wildCan(true)"`) and
   the referee, which lands a blow only where both fighters said they stand in the zone
   (`wildRef.js:"export function wildBlow"`), refuses every blow and cast into the streets and out of them. A fighter who steps into the streets is
   away from the zone as the referee reads it: whole again `WILD_REF.riseMs` later. THE RELAY IS UNCHANGED (no wire, no
   relay version): it has no map, and the defender's own word protects the defender (section 22's known limits).
+  Now 2 there: a villain is fair from them (PvP-Rework.md PVP-SAFE-HIT).
 - EVERY DOOR (`world.js:"const wildFair = (peerId) => {"`): no body whose shown pose stands in a settlement's streets is
   fair, so the melee arm, the arrows and the cast engine's marks pass it by; underground the zone fights as it did - a
   body's pose there is the dungeon's own frame, never a street.

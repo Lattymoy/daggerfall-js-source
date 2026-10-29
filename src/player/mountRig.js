@@ -50,6 +50,17 @@ import { fpLightingOn } from '../combat/fpsWeapon.js';   // HORSE-LIT: the first
 import { enhancedSoundsOn } from '../systems/enhancedSounds.js';   // HORSE-VOICE: the port's own sounds, the enhanced skin's ES1 switch
 import { createHorseVoice, hoofClipFor, installHorseSounds } from '../systems/horse/horseVoice.js';   // HORSE-VOICE: the horse's voices and its hooves on the ground under it
 
+/** PVP-RULES (scenes/pvpRulesHost.js): the door that bars a saddle now - it answers its refusal's line, or null - and
+ *  the live rig's own way down, for that host's poll. */
+let _rideBar = /** @type {(() => string | null) | null} */ (null), _rideSay = /** @type {((line: string) => void) | null} */ (null);
+let _footNow = /** @type {(() => void) | null} */ (null);
+export function setRideBar(fn, say = null) { _rideBar = typeof fn === 'function' ? fn : null; _rideSay = say; }
+export const rideFoot = () => _footNow?.();
+/** PVP-RULES: the bar's line now, or null. */
+export const rideBarred = () => _rideBar?.() ?? null;
+/** A saddle refused now, its line said. */
+const refused = (mode) => { const barred = isRiding(mode) ? rideBarred() : null; if (barred) _rideSay?.(barred); return !!barred; };
+
 /**
  * @param deps {
  *   renderer, canvas (element or () => element), fetchBytes, palette, audio,
@@ -131,6 +142,7 @@ export function createMountRig({
    * speed, the bob and the hoof loop with no horse under them.
    */
   function setMode(mode) {
+    if (refused(mode)) return;   // PVP-RULES: no saddle under the flag
     player.setTransportMode(mode);   // F-E3: the height action rides with the mode
     voice.mount(isRiding(mode));   // HORSE-VOICE: a mount's whinny is the next voice; a dismount drops a spook's neigh not yet said
     // DISC29-F (Skibbster on Discord: the gallop kept playing inside a building entered at speed): UpdateMode's first
@@ -167,6 +179,7 @@ export function createMountRig({
       .catch((e) => console.warn('[transport] mount art unavailable:', e?.message ?? e));
   }
 
+  _footNow = () => setMode(TRANSPORT_MODES.Foot);
   return {
     setMode,
     /** For a host that needs to know whether the sprite is up. */

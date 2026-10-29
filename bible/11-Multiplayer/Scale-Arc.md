@@ -88,6 +88,7 @@ Four read-only audits covered the relay (`server/src/index.js`), the account ser
 | GROUND-KEPT | The overload held past midnight (2026-10-29, 01:00 UTC, 22% of requests 503): a writ board read scanned its region's witnessed ground - 123,000 rows in 409 ms - twice a read where the day's writs had not posted, 684 times an hour on the primary. An isolate keeps a region's ground ten minutes; none is never kept | No | **Built** (2026-10-29; acct210, acct209 on its branch) |
 | KEEP-MARK | The overload held after LODE-HERD, HUNT-LEAN and GROUND-KEPT deployed (2026-10-29, 47-55% of requests 503): the read replicas served 0% of statements from 01:15, against a fifth to a half while the service was well. A shed or refused replica read said no bookmark and a read past its wait timed out, and the page forgets its bookmark on both (AUDIT SCALE II A-6, C-7) - so every next read started at the primary. Such an answer hands back the bookmark it carried; a read that timed out keeps the page's | No | **Built** (2026-10-29; acct211) |
 | SHED-REPLICA | KEEP-MARK deployed and the replica still served 0%: overloaded, the primary outran its replica, so no replica was as new as a page's bookmark and D1 sent every read to the primary. A replica read an isolate would shed asks any instance instead - a display its replica's lag old, never a 503; a busy read no replica may serve is shed as before | No | **Built** (2026-10-29; acct212) |
+| MINT-TITLE-GATE, TOMB-RIDES, ORPHAN-GATE, RETRY-SEEN | The overload held at about 23% of requests 503 (2026-10-29). The mint reads a title family only for a title of it worn; a town's tombstone rides its homes batch; a festival read with no offering writes nothing; the 503's Retry-After is exposed to the page | No | **Built** (2026-10-29; acct213) |
 | SCALE6 | Abuse and backups: Turnstile on guest creation, /64 IPv6 rate keys, bans, report and ignore, `ALLOWED_ORIGIN`, R2 snapshots, a hub export | Some | Alongside |
 
 **Relay deploy policy (SCALE):** relay changes are batched into as few deploys as possible, each in a window announced beforehand. A deploy drops every player, and until SCALE2 every reconnect is a D1 write storm.
@@ -4683,3 +4684,43 @@ Pins: `test/server/shed_replica.test.js` (1), `test/net/busy_heart.test.js` (its
 `test/server/keep_mark.test.js` reads a town on a session that says no position; BUSYGATE-shed-unread and SCALE4d's two
 records re-aimed at the line they mutate; the version pins to acct212.
 
+
+## MINT-TITLE-GATE, TOMB-RIDES, ORPHAN-GATE and RETRY-SEEN: built (2026-10-29, this branch - acct213, no migration, no relay change)
+
+At 05:55 UTC the overload still answered about 23% of requests 503. Traces of the busiest routes, each checked by an
+adversarial reader, found four account-service cuts that change no answer.
+
+- **MINT-TITLE-GATE** (`index.js` mint): the mint read the Charter titles (two statements) and the Marks of Mastery (one)
+  on every mint, 14,957 an hour. `worn` is read by `titleWorn` alone, which signs the chosen title only if `titlesHeld`
+  holds it, and each family's read adds only its own titles. So a family is read only when the title worn is one of it,
+  and the signed token is the same. A new family laid on the row for `titlesHeld` needs its gate there too.
+- **TOMB-RIDES** (`homes.js` homesInTown): `/v1/homes/town`, 80,901 an hour, asked the door's tombstone on a trip of
+  its own before the homes batch. The tombstone now rides that batch, seats open or closed: one trip an ask, a tombstone
+  still 410 `dead`.
+- **ORPHAN-GATE** (`festival.js` festivalOf): every festival read ran the orphans' write batch on the primary. An orphan
+  is one of the account's own offerings, so an account with none skips it.
+- **RETRY-SEEN** (`index.js` overloaded, ADMIT-LINE): the 503's Retry-After was not exposed, so a page read it as null.
+  Exposed, every `server` or `queue` 503 holds the page's gated reads at least that long: fewer reads in a bad minute,
+  displays a little older.
+
+Pins: `test/server/mint_title_gate.test.js`, `test/systems/online/homes_shed.test.js` (TOMB-RIDES, and HOMES-SHED's
+batch sizes moved), `test/server/witch1_festival.test.js` (ORPHAN-GATE), `test/server/keep_mark.test.js` (RETRY-SEEN),
+`test/net/busy_gate.test.js` and `test/server/admitline.test.js` (the header exposed). Mutants: `tools/mutants/`
+`mint_title_gate.json`, `tomb_rides.json`, `orphan_gate.json`, `retry_seen.json`; CHAP4C-MINT-WORN, HOMESSHED-gates-own-trip,
+PRIMARYFOLD-door-asks-no-stream and AUDIT-LEGACY-III-O12-the-mint-refused re-aimed. The version pins to acct213.
+
+## CRAFT-SET and DECOR-SEEK: built (2026-10-29, this branch - acct216, no migration, no relay change)
+
+After acct213 the database still stalled for a minute every 10 to 20 minutes. The 10:02 UTC hour named the cause: the
+Work tab's eligible read (`writs.js` eligibleHere) ran 871 ms on average and read about 6.4M rows a run, and
+`/v1/writs/list` read 1.01 billion rows in 221 asks.
+
+- **CRAFT-SET** (`professions.js` craftedBySql): the read asked, for each candidate piece, whether any of the account's
+  crafts named it as its first or second piece - a scan of every craft, once a piece. The crafts are now one
+  uncorrelated IN list, read once a statement. A crafting writ's piece check (`craftWrits.js` pieceOkSql) reads it too.
+- **DECOR-SEEK**: `json_extract(item, '$.pv') = p.provenance` gives the comparison the column's TEXT affinity, so
+  `idx_home_decor_pv` was scanned whole once a piece. `+p.provenance` drops the affinity and the index is searched. The
+  eligible read, pieceOkSql and the market's pieceWaysRead take it.
+
+The answers are the same. A bench of 3,000 crafts, 50,000 decor rows and 20 commissions ran 15.9 s, now 13 ms. Pins:
+`test/server/craft_set.test.js`; mutants: `tools/mutants/craft_set.json`. The version pins to acct216.

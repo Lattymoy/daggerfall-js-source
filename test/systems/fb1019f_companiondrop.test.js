@@ -157,8 +157,8 @@ test('STORE-KEEPS THE PACKS THROUGH THE SERVICE AND BACK (server-account/src/wil
   const fall = (body, who = ria) => quiet(() => svc.call('/v1/wild/fall', { room: worldRoom(520, 110), ...body }, who.secret));
   // her game's own words, and a tab's from before them
   assert.deepEqual(wildFallWords(), { packs: WILD_FALL_PACKS, letters: 1 });
-  const d = (await fall({ receipt: await mintWildReceipt({ f: ria.id, c: R.id, k: bo.id, r: '0123456789b1', w: -1 }, svc.gatePriv, { subtle: globalThis.crypto.subtle, nowS: now() }), realm: R.at(), ...wildFallWords() })).body;
-  assert.deepEqual([...new Set(d.took.map((x) => x.f))], ['bag'], JSON.stringify(d));
+  const d = (await fall({ receipt: await mintWildReceipt({ f: ria.id, c: R.id, k: bo.id, r: '0123456789b1', w: -1 }, svc.gatePriv, { subtle: globalThis.crypto.subtle, nowS: now() }), realm: R.at(), collect: 1, ...wildFallWords() })).body;   // PIN MOVED (PVP-NO-TENTH): no worn piece, no policy - the last roll, where the room collects
+  assert.deepEqual(d.took, [], JSON.stringify(d));   // PIN MOVED (PVP-REWARD): the bag drops nothing, and she wears nothing a kill takes
   assert.deepEqual(d.gold, { purse: 40, cart: 0 }, 'no pack\'s share');
   assert.equal(d.items.find((i) => i.group === 'Currency').stackCount, 40, 'the remains\' gold: her tenth alone');
   assert.deepEqual(packsOf(stored()), whole, 'the record\'s packs whole');
@@ -169,10 +169,10 @@ test('STORE-KEEPS THE PACKS THROUGH THE SERVICE AND BACK (server-account/src/wil
   assert.equal(seized.body.gold.packs, undefined, 'a seizure takes no pack\'s coin');
   assert.deepEqual(packsOf(stored()), whole, 'nor its pieces');
   assert.ok(!rd('server-account/src/wild.js').includes("return 'not-found'"), 'no take of the packs to refuse');
-  // her game: what the service took, out of its own lists - her bag's claymore; her companions' live lists untouched
+  // her game: what the service took, out of its own lists - her purse's tenth (PIN MOVED, PVP-REWARD: her bag's claymore kept); her companions' live lists untouched
   const bag = s.p.items.length;
   const out = wildTakeTook(s.p, d.took, d.gold, () => {}, wildPacks(s.h.host.companions.party, RC.revenantsWithYou()));
-  assert.deepEqual([out.length, s.p.items.length, s.p.goldPieces], [1, bag - 1, 360]);
+  assert.deepEqual([out.length, s.p.items.length, s.p.goldPieces], [0, bag, 360]);
   assert.deepEqual([kinds(s.pack).length, coin(s.pack)], [4, 300], 'his live pack whole');
   // an answer from before STORE-KEEPS, asked again: its pack's piece and coin come out of that pack alone
   const was = { items: [], goldPieces: 0 };

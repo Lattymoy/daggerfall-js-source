@@ -13,6 +13,7 @@
 One line per arc, newest first within each group. Each entry names its own
 page; the page is the record, this is the way in.
 
+- `11-Multiplayer/Scale-Arc.md` (MINT-TITLE-GATE, TOMB-RIDES, ORPHAN-GATE, RETRY-SEEN) - 2026-10-29, the overload held at about a quarter of requests 503: the mint reads a title family only for a title of it worn, a town's tombstone rides its homes batch, a festival read with no offering writes nothing, and the 503's Retry-After reaches the page (acct213).
 - `11-Multiplayer/Scale-Arc.md` (SHED-REPLICA) - 2026-10-29, the replica still idle after KEEP-MARK: overloaded, the primary outran its replica and every bookmark read went to the primary; a replica read an isolate would shed asks any instance instead - a display a little old, never a 503 (acct212).
 - `11-Multiplayer/Scale-Arc.md` (KEEP-MARK) - 2026-10-29, the overload held after acct210 with the read replicas serving none of it: a shed or refused replica read hands back the bookmark it carried, and a read that timed out keeps the page's, so the next reads ride a replica again (acct211).
 - `11-Multiplayer/Scale-Arc.md` (LODE-HERD, HUNT-LEAN, GROUND-KEPT) - 2026-10-29, reported: "People are experiencing server issues": the account database overloaded at the evening's peak and past midnight; the Motherlodes pick one read a minute under the day's claim, the hunt's read lean - no write, a replica's, asked every ten minutes - and a region's ground kept an isolate ten minutes, the writ board's scan (acct210).
