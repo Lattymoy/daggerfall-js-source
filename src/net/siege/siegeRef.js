@@ -41,7 +41,7 @@
 //
 // Pure: no clock (every `now` an argument), no DOM, no network.
 // ═════════════════════════════════════════════════════════════════════
-import { newHealthShare, noteRefereeChange, healRoom, spendHeal } from './refereeHealthShare.js';
+import { newHealthShare, noteRefereeChange, healRoom, spendHeal, guardedBlow } from './refereeHealthShare.js';
 
 /** A siege's room: `siege:<seat key>:<seat week>` - one a battle (Seats-Arc 6.2). */
 export const SIEGE_ROOM = /^siege:(0|[1-9]\d{0,9}):(0|[1-9]\d{0,5})$/;
@@ -104,6 +104,10 @@ export const SIEGE_WEAPONS = Object.freeze({
   Katana: 121, Claymore: 122, Dai_Katana: 123, Mace: 124, Flail: 125, Warhammer: 126, Battle_Axe: 127, War_Axe: 128,
   Short_Bow: 129, Long_Bow: 130,
 });
+/** PVP-GUARD: a held weapon's kind against armour - hand-to-hand (-1) unarmed, DFU's Blunt Weapon skill's four blunt,
+ *  every other weapon (a bow's shaft too) edged, as the overhaul reads them (combat/pcaao.js). */
+const PVP_BLUNT = new Set([SIEGE_WEAPONS.Staff, SIEGE_WEAPONS.Mace, SIEGE_WEAPONS.Flail, SIEGE_WEAPONS.Warhammer]);
+export const pvpBlowKind = (w) => (w === -1 ? 'unarmed' : PVP_BLUNT.has(w) ? 'blunt' : 'edged');
 /** FormulaHelper.CalculateWeaponMaxDamage, by template (characters/weapons.js MAX_DAMAGE, pinned equal) - the bows one
  *  higher, BAL-ARCHERY's (bible/05-Combat/Balance-Arc.md section 18). */
 export const SIEGE_WEAPON_MAX = Object.freeze({
@@ -236,7 +240,7 @@ export function refereeBlow(by, to, { from = null, at = null, held = null, d = 0
   if (shaft !== siegeIsBow(held.w) || (shaft && armsOk(wa) && wa[1] !== 1)) return { ok: false, dealt: 0, fell: false, why: 'weapon' };   // INT7: a shaft a signed bow's
   const reach = (shaft ? SIEGE_REACH.shaft : SIEGE_REACH.melee) + SIEGE_REACH.slack;
   if (metres(from, at) > reach) return { ok: false, dealt: 0, fell: false, why: 'reach' };
-  const want = Math.max(0, Math.trunc(Number(d) || 0));
+  const want = guardedBlow(to, pvpBlowKind(held.w), Math.trunc(Number(d) || 0));   // PVP-GUARD: the armour first (none below 0)
   const got = Math.min(want, pvpHitMax(to), to.hp);   // PVP-HIT: the body's share
   by.clipped += want - got;
   by.dealt += got;

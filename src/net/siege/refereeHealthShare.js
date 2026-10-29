@@ -27,19 +27,32 @@ export const pvpHealShare = (restoration) => {
 /** The most Restoration a report may claim (skill + gear: a mastered 200 and every gear line). */
 export const PVP_RESTORATION_MAX = 1000;
 
+/** PVP-GUARD: the share of a player's blow a fighter's armour lets through, per cent, by the blow's kind - edged, blunt,
+ *  unarmed (combat/pvpGuard.js reports it). Never under `min` (Daedric, its natural resistance and room over it), never
+ *  over `max` (a weak body takes more). Unreported, a fighter wears nothing. */
+export const PVP_GUARD = Object.freeze({ min: 10, max: 150, bare: 100 });
+export const PVP_GUARD_KINDS = Object.freeze(['edged', 'blunt', 'unarmed']);
+/** PVP-GUARD: a blow of `kind` (PVP_GUARD_KINDS) on `fighter`, after its armour - never under 1 where it was over 0. */
+export function guardedBlow(fighter, kind, want) {
+  const g = fighter?.share?.guard;
+  const i = PVP_GUARD_KINDS.indexOf(kind);
+  const kept = Array.isArray(g) && i >= 0 ? g[i] : PVP_GUARD.bare;
+  return want > 0 ? Math.max(1, Math.round((want * kept) / 100)) : 0;
+}
+
 /** How many referee changes a pool remembers for reports that lag behind them. */
 export const HEALTH_SHARE_LOG_MAX = 32;
 
-/** @typedef {{ epoch: number, word: number, log: Array<[number, number]>, heard: boolean, report: number, playerBlowAt: number, heals: Array<[number, number]>, resto: number }} HealthShare
+/** @typedef {{ epoch: number, word: number, log: Array<[number, number]>, heard: boolean, report: number, playerBlowAt: number, heals: Array<[number, number]>, resto: number, guard: number[]|null }} HealthShare
  *  The referee's state on a fighter: the pool's identity (creation ms), its last change's number, `[word, change]` of recent changes, whether a report anchored it, the last report taken, when a player last struck it (ms, 0 never), `[at, healed]` in the heal window, and its reported Restoration. */
-/** @typedef {{ report: number, share: number, seen: Array<[number, number]>, max?: number, resto?: number }} HealthReport
- *  A client's report (net/wire.js validVitIn): its number, its health over its maximum in HEALTH_SHARE_WHOLE parts, `[epoch, word]` of the last word it applied from each pool, and (PVP-HEALTH) its real maximum and Restoration. */
+/** @typedef {{ report: number, share: number, seen: Array<[number, number]>, max?: number, resto?: number, guard?: number[] }} HealthReport
+ *  A client's report (net/wire.js validVitIn): its number, its health over its maximum in HEALTH_SHARE_WHOLE parts, `[epoch, word]` of the last word it applied from each pool, and (PVP-HEALTH) its real maximum and Restoration, and (PVP-GUARD) its armour's shares. */
 /** @typedef {{ health: number, max: number, epoch: number, word: number, report: number }} PoolWord
  *  The referee's word on a pool to its fighter (net/wire.js validVitOut, `k: 'h'`): the count, its whole, the pool's epoch and last change, the last report the count includes. */
 
 /** A fresh share state: unheard, never struck by a player. @param {number} now @returns {HealthShare} */
 export function newHealthShare(now) {
-  return { epoch: Math.trunc(now), word: 0, log: [], heard: false, report: 0, playerBlowAt: 0, heals: [], resto: 0 };
+  return { epoch: Math.trunc(now), word: 0, log: [], heard: false, report: 0, playerBlowAt: 0, heals: [], resto: 0, guard: null };
 }
 
 /** A fighter's share state - made where a fighter kept from before this law (a siege's storage) has none. */
@@ -127,6 +140,9 @@ export function takeHealthReport(fighter, report, now, { healsBlocked = false } 
   const share = shareOf(fighter, now);
   if (Number.isFinite(report.resto)) share.resto = Math.max(0, Math.min(PVP_RESTORATION_MAX, Math.trunc(report.resto)));
   if (Number.isFinite(report.max)) setPoolMax(fighter, report.max, now);   // PVP-HEALTH: the pool's whole is the real maximum
+  if (Array.isArray(report.guard) && report.guard.length === PVP_GUARD_KINDS.length) {
+    share.guard = report.guard.map((n) => Math.max(PVP_GUARD.min, Math.min(PVP_GUARD.max, Math.trunc(Number(n) || 0))));   // PVP-GUARD
+  }
   const target = (report.share * fighter.max) / HEALTH_SHARE_WHOLE + unseenChange(share, report.seen);
   const difference = target - fighter.hp;
   if (difference <= -0.5) {

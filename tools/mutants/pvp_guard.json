@@ -1,0 +1,44 @@
+[
+  {
+    "name": "PVP-GUARD-a-row-swapped",
+    "file": "src/combat/pcaao.js",
+    "old": "  const rows = kind === 'unarmed' ? UNARMED_ROWS : kind === 'blunt' ? BLUNT_ROWS : EDGED_ROWS;\n  return table(rows, pcaaoArmorMaterialIdentifier(armor), 100, condOf(armor, modules), naturalDamResist);",
+    "new": "  const rows = kind === 'unarmed' ? UNARMED_ROWS : kind === 'blunt' ? EDGED_ROWS : EDGED_ROWS;\n  return table(rows, pcaaoArmorMaterialIdentifier(armor), 100, condOf(armor, modules), naturalDamResist);",
+    "tests": ["test/combat/pvp_guard.test.js"]
+  },
+  {
+    "name": "PVP-GUARD-the-resistance-unread",
+    "file": "src/combat/pvpGuard.js",
+    "old": "  const nat = pcaaoNaturalDamageResistance(entity);",
+    "new": "  const nat = 0;",
+    "tests": ["test/combat/pvp_guard.test.js"]
+  },
+  {
+    "name": "PVP-GUARD-the-guard-unread",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "  const want = guardedBlow(to, pvpBlowKind(held.w), Math.trunc(Number(d) || 0));",
+    "new": "  const want = Math.max(0, Math.trunc(Number(d) || 0));",
+    "tests": ["test/combat/pvp_guard.test.js"]
+  },
+  {
+    "name": "PVP-GUARD-blunt-read-as-edged",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "export const pvpBlowKind = (w) => (w === -1 ? 'unarmed' : PVP_BLUNT.has(w) ? 'blunt' : 'edged');",
+    "new": "export const pvpBlowKind = (w) => (w === -1 ? 'unarmed' : 'edged');",
+    "tests": ["test/combat/pvp_guard.test.js"]
+  },
+  {
+    "name": "PVP-GUARD-the-floor-unread",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "    share.guard = report.guard.map((n) => Math.max(PVP_GUARD.min, Math.min(PVP_GUARD.max, Math.trunc(Number(n) || 0))));",
+    "new": "    share.guard = report.guard.map((n) => Math.max(0, Math.min(PVP_GUARD.max, Math.trunc(Number(n) || 0))));",
+    "tests": ["test/combat/pvp_guard.test.js"]
+  },
+  {
+    "name": "PVP-GUARD-the-change-unseen",
+    "file": "src/net/siege/refereeHealthMirror.js",
+    "old": "        || String(guard()) !== lastSentGuard;",
+    "new": "        || false;",
+    "tests": ["test/combat/pvp_guard.test.js"]
+  }
+]

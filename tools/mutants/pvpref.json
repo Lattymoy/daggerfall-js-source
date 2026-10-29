@@ -501,17 +501,8 @@
   {
     "name": "PVPREF-blow-fractional",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  const want = Math.max(0, Math.trunc(Number(d) || 0));\n  const got = Math.min(want, pvpHitMax(to), to.hp);   // PVP-HIT: the body's share",
-    "new": "  const want = Math.max(0, Number(d) || 0);\n  const got = Math.min(want, pvpHitMax(to), to.hp);   // PVP-HIT: the body's share",
-    "tests": [
-      "test/systems/pvpref_law.test.js"
-    ]
-  },
-  {
-    "name": "PVPREF-blow-below-nought",
-    "file": "src/net/siege/siegeRef.js",
-    "old": "  const want = Math.max(0, Math.trunc(Number(d) || 0));\n  const got = Math.min(want, pvpHitMax(to), to.hp);   // PVP-HIT: the body's share",
-    "new": "  const want = Math.trunc(Number(d) || 0);\n  const got = Math.min(want, pvpHitMax(to), to.hp);   // PVP-HIT: the body's share",
+    "old": "  const want = guardedBlow(to, pvpBlowKind(held.w), Math.trunc(Number(d) || 0));   // PVP-GUARD: the armour first (none below 0)",
+    "new": "  const want = guardedBlow(to, pvpBlowKind(held.w), Number(d) || 0);   // PVP-GUARD: the armour first (none below 0)",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
