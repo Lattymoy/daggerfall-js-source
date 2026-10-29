@@ -195,5 +195,7 @@ export function createGateLanes({ omen, bayGateSite, scans, lanesOk, here, open 
     cageSite: () => nearest((o) => o.cageSite()),
     /** The lanes standing now. */
     lanes,
+    /** AUDIT FRONTS B12: whether the relay keeps the lanes past the Bay - the provinces' events, and so their turns, stand. */
+    lanesOk: () => !!lanesOk(),
   };
 }

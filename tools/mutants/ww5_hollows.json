@@ -200,7 +200,7 @@
   {
     "name": "WW5-SD-one-lane-beaten",
     "file": "server/src/index.js",
-    "old": "    for (const lane of SD_LANES) await this._sdLaneBeat(now, lane);",
+    "old": "    for (const lane of sdBeatOrder(await this._sdRecs())) await this._sdLaneBeat(now, lane);",
     "new": "    await this._sdLaneBeat(now, 0);",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
