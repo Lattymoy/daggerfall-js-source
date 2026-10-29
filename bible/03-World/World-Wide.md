@@ -2197,6 +2197,14 @@ province's bank - `worldModes.js` `currentNameBank`). The plaque's person pick i
   Solitude stood four street people named alike: DFU's seed is the record's place in its block against the location,
   so a block repeated repeats its people.
 
+## SKYRIM-AURORA - an aurora in Skyrim's sky alone (recorded, 2026-10-29)
+
+The aurora (`07-Rendering/Skyrim-Aurora.md`) is drawn where the player stands under Skyrim's sky: Skyrim's theatre,
+or at sea past the Bay the nearest land's within ten picture units (the Sea of Ghosts). Nowhere else, the Bay included.
+The owner asked for Skyrim's sky ("let's develop an aurora for the skyrim sky then"), and Skyrim is the province the
+lore gives one. Its latitude is read on the land in use, the trace once it lands. Its pins hold Skyrim and its sea
+beside the Bay, Morrowind, High Rock, Cyrodiil, High Rock's north sea and the far ocean.
+
 ## FRONTS - two provinces a game day (BUILT, 2026-10-29; AUDIT FRONTS the same day)
 
 The owner, 2026-10-29: *"Currently with the expansion of tamriel, events are way overdone with their spawning. I like
