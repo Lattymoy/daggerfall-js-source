@@ -43,7 +43,7 @@ test('REGION-NAMES hugely diverse: two thousand of each people are at least 1,40
   }
 });
 
-test('REGION-NAMES the Orcs: every one gro- (a son) or gra- (a daughter) of a forebear, one given name before it (UESP Lore:Orc Names) (mutants: gro and gra swapped)', () => {
+test('REGION-NAMES the Orcs: every one gro- (a son) or gra- (a daughter) of a forebear, one given name before it (UESP Lore:Names) (mutants: gro and gra swapped)', () => {
   const list = names('orc', 400, { region: 67 });
   assert.ok(male(list).every((n) => /^[A-Z][a-z]+ gro-[A-Z][a-z]+$/.test(n)), male(list).find((n) => !/ gro-/.test(n)));
   assert.ok(female(list).every((n) => /^[A-Z][a-z]+ gra-[A-Z][a-z]+$/.test(n)), female(list).find((n) => !/ gra-/.test(n)));

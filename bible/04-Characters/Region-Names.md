@@ -27,16 +27,16 @@ Eleven peoples, each with its own shapes:
 
 | People | Customs (each a share) | Lore |
 |---|---|---|
-| Breton | Daggerfall's draw; an anglic given name and a place name (Holtmore, Kingswell); a frankish name, sometimes "de" (Aublieu); a Celtic one or "Le" and an epithet (Le Du) | UESP Lore:Breton Names |
+| Breton | Daggerfall's draw; an anglic given name and a place name (Holtmore, Kingswell); a frankish name, sometimes "de" (Aublieu); a Celtic one or "Le" and an epithet (Le Du) | UESP Lore:Names |
 | Redguard | Daggerfall's draw; one name, or "at-" a direct forebear (Hosni at-Tura); a family name; "al-" the place one comes from in Hammerfell (al-Rihad) | Lawrence Schick, UESP General:ZOS_Correspondence |
-| Nord | Daggerfall's draw; a father's name and -sen, -son or -sdottir; a clan of two words (Battle-Born); an epithet (the Bold) | UESP Lore:Nord Names |
+| Nord | Daggerfall's draw; a father's name and -sen, -son or -sdottir; a clan of two words (Battle-Born); an epithet (the Bold) | UESP Lore:Names |
 | Dunmer | Daggerfall's draw; a family name most of all; rarely the old style, the house before the person (Hlaalu Helseth, Indoril Nerevar); an Ashlander's one name, in Morrowind only | UESP Lore_talk:Names |
-| Altmer | Daggerfall's draw; a family name; "of" a city of the Isles (of Cloudrest) | UESP Lore:Altmer Names |
-| Bosmer | Daggerfall's draw; a family name, elvish most of all, or of the wood (Briarsong); one name alone | UESP Lore:Bosmer Names |
-| Khajiit | Daggerfall's draw; an honorific before the apostrophe (Ri'saad, J'zargo); a plain name, sometimes a family | UESP Lore:Khajiit Names |
-| Argonian | DFU's Imperial draw (its own quirk, kept as one custom); a Jel name, sometimes a tail (Jalus-Sa); its gloss (Hides-In-Mud, Mends-Her-Heart) | UESP Lore:Argonian Names |
-| Imperial | Daggerfall's draw; a Colovian praenomen and family (Fausto Belianus); a Nibenese name (Leyawiin's Blackwood the most) | UESP Lore:Imperial Names |
-| Orc | One given name and gro- (a son) or gra- (a daughter) of a forebear | UESP Lore:Orc Names |
+| Altmer | Daggerfall's draw; a family name; "of" a city of the Isles (of Cloudrest) | UESP Lore:Names |
+| Bosmer | Daggerfall's draw; a family name, elvish most of all, or of the wood (Briarsong); one name alone | UESP Lore:Names |
+| Khajiit | Daggerfall's draw; an honorific before the apostrophe (Ri'saad, J'zargo); a plain name, sometimes a family | UESP Lore:Names |
+| Argonian | DFU's Imperial draw (its own quirk, kept as one custom); a Jel name, sometimes a tail (Jalus-Sa); its gloss (Hides-In-Mud, Mends-Her-Heart) | UESP Lore:Names |
+| Imperial | Daggerfall's draw; a Colovian praenomen and family (Fausto Belianus); a Nibenese name (Leyawiin's Blackwood the most) | UESP Lore:Names |
+| Orc | One given name and gro- (a son) or gra- (a daughter) of a forebear | UESP Lore:Names |
 | Reachman | One name, an epithet (the Grey) or a clan (Bloodtooth); a Breton of the Reach is a Reachman 70% of the time | UESP Lore:Reachmen |
 
 **Each region its own.** A region keeps 24 families of each people (`regionFamilies`), and about 45% of its people
