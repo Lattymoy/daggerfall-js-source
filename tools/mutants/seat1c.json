@@ -494,8 +494,8 @@
   {
     "name": "SEAT1c-member-no-glyph",
     "file": "server-account/src/index.js",
-    "old": "          g: [...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])],",
-    "new": "          g: glyphsOf(who.player, env, nowS),",
+    "old": "          g: glyphsInOrder([...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])]),",
+    "new": "          g: glyphsInOrder(glyphsOf(who.player, env, nowS)),",
     "tests": [
       "test/net/seat1c_titles.test.js"
     ]

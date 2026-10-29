@@ -190,9 +190,10 @@ test('STOREFRONT whose look: mine off my token\'s kit, a peer\'s off its own, on
   assert.match(rd('src/player/mountRig.js'), /ridingLook\(mode, ownMountLook\(riddenHorseLook\(playerEntity\?\.items \?\? \[\]\)\)\)/);
   assert.match(rd('src/combat/weapon/weaponRig.js'), /horseLook: entity \? ownMountLook\(riddenHorseLook\(entity\.items \?\? \[\]\)\) : 0,/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(rd(host), /look: ownMountLook\(riddenHorseLook\(playerEntity\.items \?\? \[\]\)\), slow: player\.slowRide/, host);
-  assert.match(rd('src/net/peer/peerRiders.js'), /horse: peerMountLook\(peer\.id, pose\.rc \| 0\)/);
-  assert.match(rd('src/net/peer/peerBodies.js'), /look: peerMountLook\(b\.id, shown\.rc \| 0\)/);
-  assert.match(rd('src/scenes/horseCartPool.js'), /owner === '' \? ownMountLook\(horseLook\?\.\(\)\) : peerMountLook\(_peers\.get\(owner\)\?\.ownerId \?\? owner, _peers\.get\(owner\)\?\.horseLook \?\? 0\)/);
+  // PIN MOVED (the wire audit): each peer's horse with where it stands, for the Others' effects choice
+  assert.match(rd('src/net/peer/peerRiders.js'), /horse: peerMountLook\(peer\.id, pose\.rc \| 0, feet\)/);
+  assert.match(rd('src/net/peer/peerBodies.js'), /look: peerMountLook\(b\.id, shown\.rc \| 0, f\)/);
+  assert.match(rd('src/scenes/horseCartPool.js'), /owner === '' \? ownMountLook\(horseLook\?\.\(\)\) : peerMountLook\(_peers\.get\(owner\)\?\.ownerId \?\? owner, _peers\.get\(owner\)\?\.horseLook \?\? 0, at\)/);
   assert.match(rd('src/world/wagonModels.js'), /horseLook: \(\) => riddenHorseLook\(items\(\)\),/, 'the wagon\'s team in its own coat');
 });
 
@@ -214,5 +215,5 @@ test('STOREFRONT the beat: a horse in a look throws its beat through the running
   assert.equal(fx.size, 0, 'riders not seen let go');
   assert.deepEqual(Object.keys(MOUNT_PREVIEW_BEAT).sort(), [...MOUNT_LOOKS].sort());
   assert.match(rd('src/player/mountRig.js'), /mountFx\.step\('self', mounted \? effectWorn\(ownEffects\(\), 'mount'\) : null,/);
-  assert.match(rd('src/net/peer/peerFx.js'), /const ridden = pose\.rd === POSE_RIDE\.Horse && !pose\.wb \? effectWorn\(kit, 'mount'\) : null;/);
+  assert.match(rd('src/net/peer/peerFx.js'), /const ridden = pose\.rd === POSE_RIDE\.Horse && !pose\.wb && othersEffectShown\(feet\) \? effectWorn\(kit, 'mount'\) : null;/);   // PIN MOVED (the wire audit): by the Others' effects choice
 });

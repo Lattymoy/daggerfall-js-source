@@ -26,7 +26,11 @@ export function playKillFx(/** @type {string|null} */ look, /** @type {any} */ f
   return !!door?.killFx?.(look, fx.at, { h: fx.h, w: fx.w, ghost: ghostOf(fx.batch) });
 }
 
+// The wire audit: the others are told by the wire's own reach (noteMyKill's, from my feet), never by whether my screen
+// drew it - my camera stands off my feet, and a host may draw none.
 registerPlayerKillListener(KILL_FX_LISTENER, (/** @type {any} */ _entity, /** @type {any} */ info) => {
   const look = effectWorn(ownEffects(), 'kill');
-  if (look && playKillFx(look, info?.fx)) noteMyKill(info.fx.at, info.fx.h);
+  if (!look || !info?.fx?.at) return;
+  playKillFx(look, info.fx);
+  noteMyKill(info.fx.at, info.fx.h, playerDoor()?.feet?.());
 });

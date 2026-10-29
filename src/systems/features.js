@@ -571,7 +571,8 @@ export const FEATURES = Object.freeze([
     control: Object.freeze({ store: 'prefs', key: 'armoryOthers', initial: 'all', online: 'player', tiers: Object.freeze([tier('all', () => t('features.armoryOthers.all', 'All')), tier('near', () => t('features.armoryOthers.near', 'Near')), tier('none', () => t('features.armoryOthers.none', 'None'))]) }),
   }),
   // STOREFRONT (2026-10-29; bible/06-Systems/Storefront.md sections 4 and 7): WHOSE KILL EFFECTS AND MOUNT LOOKS ARE
-  // DRAWN - every other player's, those near, or none (net/peer/peerFx.js, scenes/auraHost.js). One's own always is.
+  // DRAWN - every other player's, those near, or none (net/peer/peerEffects.js othersEffectShown: a kill effect, and a
+  // mount look's dye and beat). One's own always is.
   Object.freeze({
     id: 'killfx-others',
     group: 'sight',

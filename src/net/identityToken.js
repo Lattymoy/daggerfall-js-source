@@ -243,8 +243,8 @@ export const GLYPHS_MAX = GLYPHS.length;
 /** STOREFRONT (2026-10-29): THE GLYPHS SIGNED AS A MASK - `gb`, lowercase hex over GLYPHS (four a character, the first
  *  glyph the lowest bit of the first), its trailing zeros dropped. Every glyph's name in the body grew the token past the
  *  verifier's bound (every claim at once was 1,057 characters of 1,024); the mask is nine characters for all 33, and a
- *  glyph appended costs a bit. GLYPHS only grows at its end, so a mask means what it meant. The verifier reads it back
- *  as `g`, so every reader sees the list it always did. */
+ *  glyph appended costs a bit. GLYPHS only grows at its end, so a mask means what it meant (the wire audit's prefix pin,
+ *  test/net/storefront_wireaudit.test.js). The verifier reads it back as `g`, in GLYPHS' order. */
 export const GLYPH_BITS_RE = new RegExp(`^[0-9a-f]{1,${Math.ceil(GLYPHS.length / 4)}}$`);
 /** A glyph list as its mask (`gb`), or '' for none. Pure. @param {ReadonlyArray<string>} list */
 export function glyphBitsOf(list) {
@@ -262,6 +262,9 @@ export function glyphsOfBits(/** @type {unknown} */ bits) {
   }
   return out;
 }
+/** A glyph list as the mask reads it back - in GLYPHS' order, each once, a word GLYPHS lacks dropped - so the service's
+ *  own answer lists them as the room does (the wire audit). Pure. */
+export const glyphsInOrder = (/** @type {ReadonlyArray<string>} */ list) => GLYPHS.filter((g) => list.includes(g));
 
 /** WITCH1 (2026-10-20, the owner: "a brand new item (profile icon)"; bible/06-Systems/Witches-Festival.md): THE PROFILE
  *  ICONS THAT EXIST. An icon is WORN, one at a time, as a title is - in the profile's portrait well in place of the

@@ -98,8 +98,8 @@ day, and how a launch window moved it.
 A kill effect plays where a foe my own blow killed falls (`systems/playerKills.js` - every pool's word, a remote foe's
 `slain` and a dungeon joiner's `v` among them). The standing body burns away in the effect's colour while the effect
 bursts out of it; the corpse lies under it as before, its loot untouched. A Morrowind body plays its death and the
-burst stands over it. The other players see mine: my pose carries a kill counter and the place (`kc`, `kp`, `ks`), and
-my token carries which effect (`fx`), so nobody can show one they do not own.
+burst stands over it. The other players see mine: my pose carries a kill counter, the place and the body's height (`xk`,
+`xp`, `xh`), and my token carries which effect (`fx`), so nobody can show one they do not own.
 
 | Effect | Tier | What plays |
 | --- | --- | --- |
@@ -110,8 +110,9 @@ my token carries which effect (`fx`), so nobody can show one they do not own.
 
 `render/killFx.js` holds the simulation (`KillFx`) and its pass (`KillFxPass`). Each host's magic engine
 (`scenes/hostMagic.js`) owns one, so all four hosts step, shift, clear and draw it with the impact sparks. Each look rings
-its own sound (`tools/storefrontSfx.mjs`, `public/sfx/fx-kill-*.wav`). "Others' kill effects" (Features: all, near, none)
-chooses whose are drawn. Where the browser asks for less motion (`prefers-reduced-motion`), the flashes are dimmer.
+its own sound (`tools/storefrontSfx.mjs`, `public/sfx/fx-kill-*.wav`). "Others' effects" (Features: all, near, none)
+chooses whose kill effects and mount looks are drawn (`net/peer/peerEffects.js` othersEffectShown). Where the browser asks
+for less motion (`prefers-reduced-motion`), the flashes are dimmer.
 
 ## 5. Portal skins
 
@@ -157,7 +158,8 @@ The 3D horse's mane and tail are their own picture, shaded the same a few rows a
 
 The look rides no wire of its own: the horse's code on the wire is the item's four parts (`wireHorseLook`), and each
 screen lays a rider's look on from its token (`systems/horse/mountLook.js`). The beat - hoofprints, a mane, steam - is the
-kill effects' engine's, as ambient bursts that never take a kill's place (`systems/horse/mountFx.js`).
+kill effects' engine's, as ambient bursts that never take a kill's place (`systems/horse/mountFx.js`). A peer's look, its
+dye and its beat, is drawn by the viewer's "Others' effects" choice, as its kill effects are (section 4).
 
 ## 8. Bundles
 
@@ -205,6 +207,22 @@ The token's new claim is `fx`, the effects kit: three characters, the kill effec
 `0` for none, omitted when none is worn (`net/effectLaw.js`). The relay badges it on a peer's row beside the aura and
 the armory kit. The pose carries `xk` (my kills with an effect, a count), `xp` (the last one's place) and `xh` (the body's
 height, in tenths of a metre).
+
+**The wire audit** (2026-10-29). A kill is told while it falls within 45 m of my feet, my own draw's reach
+(`render/killFx.js` KFX_FAR_M), whatever my screen drew. A peer's kill plays only within that and 8 m of ease of its drawn
+feet, the ease a peer's portal has (`net/peer/peerFx.js` KILL_FX_PEER_M), so a modified client's pyre in a stranger's
+face is refused. A kill farther away is not told: no peer would play it. A peer's blow plays only within its farthest
+shaft (BLOW_PEER_M).
+
+A kill rides one second of poses (GAP_MAX_MS) and then leaves them, and the second wire rounds its place and a blow's as
+the pose's own (`slimPose`). The session keeps a peer's kit with its id, so a peer stood again from memory wears its
+effects. The service answers glyphs in GLYPHS' order, the order the mask gives the room, and GLYPHS grows only at its
+end. Pinned by `test/net/storefront_wireaudit.test.js`.
+
+**Deploy, and the rollback floor.** The relay (world283) goes before the account service (acct216) that mints `gb`, and
+`account-deploy.yml` waits for it. A relay before world283 drops a `gb` token's glyphs, or refuses one that also carries
+`gx`. So world283 is the relay's floor while acct216 or later mints: to roll the relay back, roll the service back first
+and wait MAX_TTL_S (five minutes) for its tokens to lapse.
 
 ## 11. Not built, and why
 

@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-MERGE-PLUS-B6-a-peers-blows-ungated",
     "file": "src/net/peer/peerFx.js",
-    "old": "if (at && !(t - (s.bt ?? -Infinity) < FX_MIN_GAP_S)) {",
-    "new": "if (at) {",
+    "old": "if (at && within(at, feet, BLOW_PEER_M) && !(t - (s.bt ?? -Infinity) < FX_MIN_GAP_S)) {",
+    "new": "if (at && within(at, feet, BLOW_PEER_M)) {",
     "tests": [
       "test/systems/auditmergeplus_plus.test.js"
     ]

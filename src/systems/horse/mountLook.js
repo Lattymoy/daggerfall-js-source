@@ -7,9 +7,10 @@
 import { withMountLook } from './horseCoats.js';
 import { effectWorn } from '../../net/effectLaw.js';
 import { ownEffects } from '../ownGlyphs.js';
-import { peerEffectWorn } from '../../net/peer/peerEffects.js';
+import { peerEffectWorn, othersEffectShown } from '../../net/peer/peerEffects.js';
 
 /** My horse's code with the mount look I wear laid over it. */
 export const ownMountLook = (/** @type {unknown} */ code) => withMountLook(code, effectWorn(ownEffects(), 'mount'));
-/** A peer's horse's code with the mount look its token says laid over it. */
-export const peerMountLook = (/** @type {unknown} */ id, /** @type {unknown} */ code) => withMountLook(code, peerEffectWorn(id, 'mount'));
+/** A peer's horse's code with the mount look its token says laid over it, where the horse stands (`at`, the scene's) is
+ *  shown by the "Others' effects" choice - else its coat alone. */
+export const peerMountLook = (/** @type {unknown} */ id, /** @type {unknown} */ code, /** @type {ArrayLike<number>|null|undefined} */ at) => withMountLook(code, othersEffectShown(at) ? peerEffectWorn(id, 'mount') : null);
