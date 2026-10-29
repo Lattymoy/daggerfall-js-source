@@ -1134,6 +1134,14 @@ get field trials. `main.cjs` sizes both stores to 128 MiB (GPU_CACHE_KB, the `gp
 the app is ready, beside FPS-VSYNC's, PERF-GPU1's and PERF-GC1's switches. The record and the shell's two-launch
 measurement: `bugs/Field-Bugs-2026-10-23b.md`. Pins: `test/tooling/fb1023b_gpucache.test.js`.
 
+SHADER-EASE CACHE-TURN (2026-10-29, the owner: the game locks up on load after each update, and deleting GPUCache,
+GrShaderCache and ShaderCache cures it). Each update changes the GLSL, so the 128 MiB cache fills with programs no page
+links again, and Chromium reads every kept one into the GPU process at start. `app/lib/gpuCacheTurn.cjs` deletes the
+GPU caches under userData when the version played is not the one in `gpu-cache-turn.json`, then records it. The key is
+the shell's version and the game's (`gameVersion()`): the channel (DA13) brings new shaders without a new shell, so
+`main.cjs` opens the game store before ready and turns the cache there, by the one instance, before Chromium opens it.
+A held folder is logged and tried again next launch; it never stops one. Pins: `test/tooling/shaderease_cacheturn.test.js`.
+
 ## The GPU's last ten minutes, kept with a crash (GPU-TRAIL, 2026-10-24)
 
 Players report the game's page stopping after a while of play, and the box says "It ran out of memory". That is only
