@@ -73,11 +73,15 @@ export function unregisterCustomModel(id) { _models.delete(Number(id)); _aliases
 // meshes are copies of the ARCH3D records, which the port never carries. An ALIAS names the classic model to read out
 // of the player's ARCH3D and the textures to swap on it - `remap`, `"<archive>_<record>"` -> [archive, record] - so the
 // geometry is the player's own and only the swap is the port's (world/townStandIns.js).
-const _aliases = new Map();   // id -> { model, remap, isOn }
-/** Register `id` as classic `model` with its textures swapped (`remap`). */
-export function registerModelAlias(id, { model, remap = {} }, isOn = () => true) {
-  _aliases.set(Number(id), { model: Number(model), remap: Object.freeze({ ...remap }), isOn: typeof isOn === 'function' ? isOn : () => true });
+const _aliases = new Map();   // id -> { model, remap, turn, isOn }
+/** Register `id` as classic `model` with its textures swapped (`remap`). BED-TURN: `turn`, in a record's YRotation units
+ *  (2048 a whole turn), is how far the mods' own mesh faces from the classic one - a room's placement of `id` is turned
+ *  by it back onto the classic mesh (world/interior/interiorLayout.js). */
+export function registerModelAlias(id, { model, remap = {}, turn = 0 }, isOn = () => true) {
+  _aliases.set(Number(id), { model: Number(model), remap: Object.freeze({ ...remap }), turn: Number(turn) || 0, isOn: typeof isOn === 'function' ? isOn : () => true });
 }
+/** BED-TURN: the YRotation a room's record of `id` is turned by (its alias's `turn` while it is on), else 0. */
+export const aliasTurnOf = (id) => customAliasFor(id)?.turn ?? 0;
 /** The alias registered for `id` while its switch is on - { model, remap } - else null. */
 export function customAliasFor(id) {
   const a = _aliases.get(Number(id));

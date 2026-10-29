@@ -599,6 +599,11 @@
   "tr": "a09e0393fbba",
   "by": "claude-in-session"
  },
+ "account.refusal.lineageInUse": {
+  "en": "b210f6197958",
+  "tr": "c1cc9692aadc",
+  "by": "claude-in-session"
+ },
  "account.refusal.marketSellerFrozen": {
   "en": "e83eacbb66fb",
   "tr": "d64ba5595d16",
@@ -627,6 +632,11 @@
  "account.refusal.repairNotSet": {
   "en": "6ee1527e65ec",
   "tr": "da3f8e98eb6e",
+  "by": "claude-in-session"
+ },
+ "account.refusal.tooManyLineages": {
+  "en": "5f69291d1652",
+  "tr": "1a37c52430b0",
   "by": "claude-in-session"
  },
  "account.refusal.townUnwalked": {
@@ -2244,6 +2254,11 @@
   "tr": "d8bb0e1644f4",
   "by": "claude-in-session"
  },
+ "helm.heavy": {
+  "en": "1909b8911a74",
+  "tr": "690aab35ec3a",
+  "by": "claude-in-session"
+ },
  "holdings.horse.boons.hungry": {
   "en": "11b471ca7d1e",
   "tr": "4fec749ebd39",
@@ -3682,6 +3697,56 @@
  "menu.rail.test": {
   "en": "4fd8df831597",
   "tr": "565af54f4d8d",
+  "by": "claude-in-session"
+ },
+ "menu.realm.families": {
+  "en": "862a863ff592",
+  "tr": "bb8b7222eef0",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familiesHide": {
+  "en": "34d8b60fe253",
+  "tr": "3c920475424b",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familiesShow": {
+  "en": "d97d1ee339e4",
+  "tr": "beca88a1ba92",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyRemoved": {
+  "en": "2cbcaf937fc9",
+  "tr": "2ad4701dabc3",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyRow": {
+  "en": "5e293ce32dbd",
+  "tr": "a1c683ebd43b",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyUnnamed": {
+  "en": "9b115c99b1da",
+  "tr": "f37b8a3e7300",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamily": {
+  "en": "a53c064ca700",
+  "tr": "e8585ae84045",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyAsk": {
+  "en": "5694f452ab8b",
+  "tr": "658607e16040",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyBody": {
+  "en": "c055ce52aa9e",
+  "tr": "afc896fcf358",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyYes": {
+  "en": "e963907dac5c",
+  "tr": "d38bc7b3ddd2",
   "by": "claude-in-session"
  },
  "menu.realm.strandedAsk": {

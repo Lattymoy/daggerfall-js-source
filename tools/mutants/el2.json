@@ -209,8 +209,8 @@
   {
     "name": "render-no-colormask",
     "file": "src/render/shadowPass.js",
-    "old": "    gl.colorMask(false, false, false, false);\n    if (this.kind === 'sun') {",
-    "new": "    if (this.kind === 'sun') {",
+    "old": "    gl.colorMask(false, false, false, false);\n    // WL1: A BUILDING'S FRAME DRAWS THE SUN TOO",
+    "new": "    // WL1: A BUILDING'S FRAME DRAWS THE SUN TOO",
     "tests": [
       "test/render/el2_shadows.test.js"
     ]

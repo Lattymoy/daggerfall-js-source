@@ -17,6 +17,7 @@
 import { sharedClassicMinutes, wallMsForClassicMinutes, GATE_LANES_OPEN, gateLaneOpen } from '../wire.js';   // AUDIT WW F2: the lanes that stand
 import { GATE_COURTS_MAX } from './gateCourts.js';   // GATE-COURTS: a night's courts' rooms - gateCourts.js imports nothing
 import { GATE_ASPECTS, GATE_TRIALS, readGateMods, GATE_DIRE, gateDireLine, CAPTIVE_NAMES, validGatePortents, portentOf } from './gateMods.js';   // WB8b: the Warden's marks, drawn by the day; WB14b: and the night's portents
+import { frontStands, frontDayOfMinute } from '../frontLaw.js';   // FRONTS: a province's gate on its turn alone - frontLaw.js imports nothing
 
 /** Classic minutes in a game day (gameDate.js MINUTES_PER_DAY - pinned equal; not imported, the relay's graph stays flat). */
 export const GATE_DAY_MINUTES = 1440;
@@ -76,8 +77,11 @@ export const gateDayOf = (n) => n % GATE_LANE_SPAN;
 export const gateLaneOf = (n) => Math.floor(n / GATE_LANE_SPAN);
 /** The classic minute a gate's day begins at - its game day's midnight, its lane's stagger behind. @param {number} n */
 export const gateBaseMinute = (n) => gateDayOf(n) * GATE_DAY_MINUTES + gateLaneOf(n) * GATE_LANE_STAGGER;
-/** Does `n` number a gate - a whole number of a lane the world has, on a gate day? (Lane 0's numbers are its days.) */
-export const isGateDay = (n) => Number.isSafeInteger(n) && n >= 0 && gateLaneOf(n) < GATE_LANES && gateDayOf(n) % GATE_EVERY_DAYS === 0;
+/** FRONTS (bible/03-World/World-Wide.md FRONTS): the game day a gate's front is read on - the day it opens in. */
+export const gateFrontDay = (n) => frontDayOfMinute(gateBaseMinute(n) + GATE_OPEN_MINUTE);
+/** Does `n` number a gate - a whole number of a lane the world has, on a gate day? (Lane 0's numbers are its days.)
+ *  FRONTS: a province's gate opens only on its province's turn (net/frontLaw.js); the Bay's every day, as before. */
+export const isGateDay = (n) => Number.isSafeInteger(n) && n >= 0 && gateLaneOf(n) < GATE_LANES && gateDayOf(n) % GATE_EVERY_DAYS === 0 && frontStands(gateFrontDay(n), gateLaneOf(n));
 
 /**
  * A gate's instants, RELAY-CLOCK milliseconds (the client reads its own through the welcome's offset - WORLD5).

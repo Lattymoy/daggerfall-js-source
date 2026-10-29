@@ -169,7 +169,7 @@ test('FB1028 every blend of a pixel eases alike: the shaped samples less DFU\'s 
   let worst = 0;
   for (let i = 0; i < field.length; i++) worst = Math.max(worst, Math.abs((a[i] - b[i]) - field[i]) * M);
   assert.ok(worst < 0.01, `the lift blended is the blends' difference to ${worst.toFixed(4)} m`);
-  assert.equal(BAKE_GENERATOR_VERSION, 4, 'PIN MOVED (AUDIT FB1028 A2-A3): the ease at the seam and beside tall relief (was 3); the sea a town\'s ease needs lifted (was 2)');
+  assert.equal(BAKE_GENERATOR_VERSION, 5, 'PIN MOVED (FB1029 ACROSS-EDGE): the ground about a town meets it (was 4); PIN MOVED (AUDIT FB1028 A2-A3): the ease at the seam and beside tall relief (was 3); the sea a town\'s ease needs lifted (was 2)');
 });
 
 test('FB1028 CROP-GROUND: a field of flats is the town\'s ground under every plant it sows - its record\'s tile alone left the rest over the land\'s slope and the sea (mutants: the fields unread; the field\'s half-range unread)', () => {

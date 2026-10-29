@@ -893,8 +893,8 @@
   {
     "name": "SKYRIM-AURORA-the-view-outs-minute-dropped",
     "file": "src/scenes/world.js",
-    "old": "sky.moonlight(clockMinute)), light.sun, SUN_RIG_COLOR);",
-    "new": "sky.moonlight()), light.sun, SUN_RIG_COLOR);",
+    "old": "lightStreetAt(r, light, sky.moonlight(clockMinute), SUN_RIG_COLOR);",
+    "new": "lightStreetAt(r, light, sky.moonlight(), SUN_RIG_COLOR);",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]

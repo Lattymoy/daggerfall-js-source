@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-HERALD-CARDS-M1-the-abyss-to-the-gate",
     "file": "server/src/index.js",
-    "old": "this._heraldSend(sdHeraldPost(due.kind, rec, h.sdRole), 'abyss')",
-    "new": "this._heraldSend(sdHeraldPost(due.kind, rec, h.sdRole), 'gate')",
+    "old": "this._heraldSend(sdHeraldPost(due.kind, rec, h.sdRole, sdRiseNotBefore(rec, now, await this._sdRecs())), 'abyss')",
+    "new": "this._heraldSend(sdHeraldPost(due.kind, rec, h.sdRole, sdRiseNotBefore(rec, now, await this._sdRecs())), 'gate')",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]

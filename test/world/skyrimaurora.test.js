@@ -371,7 +371,7 @@ test('SKYRIM-AURORA THE SKY CONTROLLER: built on the enhanced lane alone at the 
   assert.match(shared, /\(enhancedSky \?\? dynamicSky \?\? sky\)\.draw\(yaw, pitch, fovY, aspect\);\s*aurora\?\.draw\(yaw, pitch, fovY, aspect, viewport, 1 - brassW\);[^\n]*\n(\s*\/\/[^\n]*\n)*\s*skyViewport = viewport;\s*clouds\?\.update\(viewport\);\s*cloudsShown\?\.draw/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     assert.ok(!/aurora/i.test(rd(host)), `${host} carries none of it`);
-    assert.match(rd(host), /r\.setLighting\(withMoonAmbient\(light\.ambient, sky\.moonlight\(clockMinute\)\), light\.sun, SUN_RIG_COLOR\);/, `${host}: the view out's light at its clock minute`);
+    assert.match(rd(host), /lightStreetAt\(r, light, sky\.moonlight\(clockMinute\), SUN_RIG_COLOR\);/, `${host}: the view out's light at its clock minute`);
   }
   assert.match(rd('src/characters/provinceFolk.js'), /export const pixelHere = \(\) => \(_pixelOf \? _pixelOf\(null\) : null\);/, 'the world host\'s own place door');
   assert.match(rd('src/tools/skyLab.js'), /const auroraW = Number\(auroraDoor\(params\.get\('aurora'\)\)\) \|\| 0;/, 'the lab reads the game\'s door');

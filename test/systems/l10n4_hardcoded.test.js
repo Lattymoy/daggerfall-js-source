@@ -204,7 +204,7 @@ const HARDCODED = {
   'src/render/eliteGates/egMistPass.js': 1,
   'src/render/eliteGates/egSkyPass.js': 1,
   'src/render/eliteGates/egStairPass.js': 2,
-  'src/render/enhancedLighting.js': 4,
+  'src/render/enhancedLighting.js': 3,
   'src/render/enhancedSky.js': 1,
   'src/render/farTrees.js': 2,   // FAR-TREES: its fragment stages' head and body - GLSL the scan reads as prose (`in vec3`), as every pass's; no word a player reads
   'src/render/foeTelegraph.js': 1,
@@ -247,7 +247,7 @@ const HARDCODED = {
   'src/render/superDungeon/sdStompWall.js': 2,
   'src/render/superDungeon/sdVeil.js': 1,
   'src/render/serpentRender.js': 4,
-  'src/render/shadowPass.js': 6,
+  'src/render/shadowPass.js': 7,   // WL1: DEPTH_GLASS_FS, a building's glass cut out of its sun map - GLSL the scan reads as prose (`in vec2`), as DEPTH_BB_FS beside it
   'src/render/skyRenderer.js': 1,
   'src/render/snowfallGlsl.js': 2,
   'src/render/spellImpactFx.js': 2,
@@ -357,7 +357,7 @@ const HARDCODED = {
   'src/systems/champions.js': 6,
   'src/systems/chargen.js': 1,
   'src/systems/cloudSaves.js': 5,
-  'src/systems/comeSailAway/comeSailAway.js': 86,
+  'src/systems/comeSailAway/comeSailAway.js': 87,   // AUDIT FB1029d WIND-HELD: +1, the log's line when the frame lays the door's wind - a developer's, never a player's
   'src/systems/comeSailAway/comeSailAwayBoat.js': 1,
   'src/systems/comeSailAway/comeSailAwayHulls.js': 3,
   'src/systems/comeSailAway/comeSailAwayItems.js': 2,

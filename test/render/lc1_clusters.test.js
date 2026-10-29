@@ -19,7 +19,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  CLUSTER_X, CLUSTER_Y, CLUSTER_Z, CLUSTER_CELLS, CLUSTER_NEAR, CLUSTER_FAR, CLUSTER_Z_SCALE, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, CLUSTER_LIST_CAP, CLUSTER_GRID_W, CLUSTER_GRID_H,
+  CLUSTER_X, CLUSTER_Y, CLUSTER_Z, CLUSTER_CELLS, CLUSTER_NEAR, CLUSTER_FAR, CLUSTER_Z_SCALE, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, CLUSTER_LIST_CAP, CLUSTER_GRID_W, CLUSTER_GRID_H, CLUSTER_BANDS,
   CLUSTER_GRID_UNIT, CLUSTER_LIST_UNIT, clustersOn, sliceOf, clusterCellOf, createClusterSpace, cellsOfSphere, buildLightClusters, cellLights, cellOfPoint, meanListLength,
 } from '../../src/render/lightClusters.js';
 import { EL_CLUSTER_GLSL, EL_MESH_FS, EL_BB_FS, EL_TERRAIN_FS, EL_CHAR_FS, EL_DECAL_FS, EL_FAR_RING_FS, EL_LANE, EL_MAX_LIGHTS } from '../../src/render/enhancedLighting.js';
@@ -193,16 +193,17 @@ function recordingGl() {
 }
 const uni = (calls, name) => calls.filter((c) => (c[0] === 'uniform1i' || c[0] === 'uniform4fv' || c[0] === 'uniform2fv') && c[1] === name);
 
-test('LC1: the renderer on the fake GL - the two integer textures made with the lane (RG16UI 144x24, R8UI 256x256, NEAREST), the grid built and uploaded once per WORLD frame with the lights set, the samplers on units 9 and 10 and `uClusterOn` 1 in the mesh upload; a frame that is not the world\'s (no WORLD_FRAME) uploads nothing and says 0; the classic set never speaks of it (mutants: the grid built on every frame kind; the textures made per frame; `uClusterOn` left 1 outside a world frame)', () => {
+test('LC1: the renderer on the fake GL - the two integer textures made with the renderer (RG16UI 144x48, R8UI 256x512, NEAREST: WL1 - the lanterns\' band and the window lights\' band, read on either set), the grid built and uploaded once per WORLD frame with the lights set, the samplers on units 9 and 10 and `uClusterOn` 1 in the mesh upload; a frame that is not the world\'s (no WORLD_FRAME) uploads nothing and says 0; the classic set never walks the lanterns\' grid (mutants: the grid built on every frame kind; the textures made per frame; `uClusterOn` left 1 outside a world frame)', () => {
   const { gl, calls, canvas } = recordingGl();
+  const made = (cs) => cs.filter((c) => c[0] === 'texImage2D' && (c[3] === gl.RG16UI || c[3] === gl.R8UI));   // [name, target, level, internal, w, h, border, format, type, data]
   const r = new Renderer(canvas);
-  assert.equal(r._clusterTex, null, 'the classic set: no grid');
+  assert.equal(made(calls).length, 2, 'WL1: two integer textures, made with the renderer - the window lights\' band is read on either set');
+  assert.deepEqual(made(calls).map((c) => [c[3], c[4], c[5], c[7], c[8]]), [[gl.RG16UI, CLUSTER_GRID_W, CLUSTER_GRID_H * CLUSTER_BANDS, gl.RG_INTEGER, gl.UNSIGNED_SHORT], [gl.R8UI, CLUSTER_LIST_W, CLUSTER_LIST_ROWS * CLUSTER_BANDS, gl.RED_INTEGER, gl.UNSIGNED_BYTE]]);
+  assert.equal(CLUSTER_BANDS, 2, 'the lanterns\' band and the windows\'');
   calls.length = 0;
   r.setLightingLane(EL_LANE);
-  const made = calls.filter((c) => c[0] === 'texImage2D' && (c[3] === gl.RG16UI || c[3] === gl.R8UI));   // [name, target, level, internal, w, h, border, format, type, data]
-  assert.equal(made.length, 2, 'two integer textures');
-  assert.deepEqual(made.map((c) => [c[3], c[4], c[5], c[7], c[8]]), [[gl.RG16UI, CLUSTER_GRID_W, CLUSTER_GRID_H, gl.RG_INTEGER, gl.UNSIGNED_SHORT], [gl.R8UI, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, gl.RED_INTEGER, gl.UNSIGNED_BYTE]]);
-  assert.ok(r._clusterTex && r._clusters, 'made with the lane');
+  assert.equal(made(calls).length, 0, 'none more with the lane');
+  assert.ok(r._clusterTex && r._clusters, 'kept with the lane');
   const tex = r._clusterTex;
   r.setLightingLane(null); r.setLightingLane(EL_LANE);
   assert.equal(r._clusterTex, tex, 'made once, kept across the lane going and coming');

@@ -523,3 +523,17 @@ Pins: the tests and mutant records above, each named for its finding (`AUDIT-F*`
 `tools/mutants/huntersmark.json`). PIN MOVED: the ceiling's 48 (the law's test), the traits' line (the window's test),
 six records of this slice re-aimed by content; `mail1.test.js`'s D1 harness gained D1's own `batch`. The account service changed (ACCOUNT_VERSION at the merge); the relay
 and the wire did not.
+
+## 14. GRAVE-PACK - a graveyard's hunt stands at its graveyard (FB1029, 2026-10-29)
+
+A graveyard's hunt stands its pack in the open air, through the camp's stand (`scenes/world.js` _standCampEncounter).
+That stand refused any spot in a location's rect (DISC19-F), and the graveyard's own rect runs a block past its walls,
+so from its door or its grounds nothing ever stood, and from a fast travel's arrival one try in six (the Crypts of
+Wickfield).
+Now the board hands the stand the hunt's own pixel (`scenes/bountyHost.js` packTick, `place`), and that location's
+rect is not refused (`_inAnyLocationRect`'s `own`). Every other location's rect, a town's among them, still is, and a
+hunt on open ground hands no place.
+
+A pack stood outside is judged by the street's pool in every mode (`foePool`'s `open`), so a trip down into the crypt
+keeps it while its beasts stand, and lets it go when they were handed off at the door. Its beasts carry the place (`bountyPlace`), so WILD-ALERT treats them as wild foes: the mark, the fast traveller's
+gate and the stealth check. Record: `01-Overview/bugs/Field-Bugs-2026-10-29b.md`; AUDIT FB1029 B1-B4.
