@@ -349,8 +349,8 @@
   {
     "name": "FB1013d-AUDIT-B1-the-key-unkept",
     "file": "src/scenes/world.js",
-    "old": "      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex, key: modes?.dungeonCtx?.locationKey?.() ?? null, size: builtDungeonSize(modes?.dungeonLocation) } : null,",
-    "new": "      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex, size: builtDungeonSize(modes?.dungeonLocation) } : null,",
+    "old": "      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex, key: modes?.dungeonCtx?.locationKey?.() ?? null, size: dungeonRoomSize(modes?.dungeonLocation) } : null,",
+    "new": "      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex, size: dungeonRoomSize(modes?.dungeonLocation) } : null,",
     "tests": [
       "test/systems/fb1013d_remains.test.js"
     ]
@@ -367,7 +367,7 @@
   {
     "name": "FB1013d-AUDIT-B1-the-size-unkept",
     "file": "src/scenes/world.js",
-    "old": "      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex, key: modes?.dungeonCtx?.locationKey?.() ?? null, size: builtDungeonSize(modes?.dungeonLocation) } : null,",
+    "old": "      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex, key: modes?.dungeonCtx?.locationKey?.() ?? null, size: dungeonRoomSize(modes?.dungeonLocation) } : null,",
     "new": "      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex, key: modes?.dungeonCtx?.locationKey?.() ?? null } : null,",
     "tests": [
       "test/systems/fb1013d_remains.test.js"

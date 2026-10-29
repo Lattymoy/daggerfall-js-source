@@ -83,8 +83,8 @@
   {
     "name": "DLV5-anchors-three",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "export const CURATED_ANCHORS_MAX = 2;",
-    "new": "export const CURATED_ANCHORS_MAX = 3;",
+    "old": "export const CURATED_ANCHORS_MAX = 1;",
+    "new": "export const CURATED_ANCHORS_MAX = 2;",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -103,15 +103,6 @@
     "file": "src/world/dungeon/curatedBlocks.js",
     "old": "export const CURATED_ANCHOR_R = Object.freeze([3, 4]);",
     "new": "export const CURATED_ANCHOR_R = Object.freeze([3, 4, 5]);",
-    "tests": [
-      "test/world/dlv5_curated.test.js"
-    ]
-  },
-  {
-    "name": "DLV5-wards-meet",
-    "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "anchors[i].at[2] - anchors[j].at[2]) < anchors[i].r + anchors[j].r)",
-    "new": "anchors[i].at[2] - anchors[j].at[2]) < 0)",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -155,7 +146,7 @@
   {
     "name": "DLV5-ref-doubled",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "let k = refs.findIndex((m) => m.modelIdNum === id);",
+    "old": "let k = refs.findIndex((m) => m.modelIdNum === id && !m.description);",
     "new": "let k = -1;",
     "tests": [
       "test/world/dlv5_curated.test.js"
@@ -335,8 +326,8 @@
   {
     "name": "DLV5-slot-of-one",
     "file": "src/world/dungeon/curatedSplice.js",
-    "old": "return { j: slots[pick(id, 2, slots.length)], rec: pool[pick(id, 1, pool.length)] };",
-    "new": "return { j: slots[0], rec: pool[pick(id, 1, pool.length)] };",
+    "old": "return { j: slots[pick(id, 2, slots.length)], rec };",
+    "new": "return { j: slots[0], rec };",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -379,18 +370,19 @@
   },
   {
     "name": "DLV5-splice-unasked",
-    "file": "src/world/dungeon/dungeonLayout.js",
-    "old": "for (const block of spliceCurated(dfLocation, CURATED_RECORDS, dfLocation.dungeon.blocks)) {",
-    "new": "for (const block of dfLocation.dungeon.blocks) {",
+    "file": "src/world/smallerDungeons.js",
+    "old": "return deps.whole ? built : curatedLocation(built);",
+    "new": "return built;",
     "tests": [
-      "test/world/dlv5_curated.test.js"
+      "test/world/dlv5_curated.test.js",
+      "test/world/dlv56_audit.test.js"
     ]
   },
   {
     "name": "DLV5-install-one-index",
     "file": "src/world/dungeon/curatedInstall.js",
-    "old": "(blocksFile) => curatedBlockOf(blocksFile?.getBlockByName(rec.base), rec), CURATED_BLOCK_INDEX + rec.n);",
-    "new": "(blocksFile) => curatedBlockOf(blocksFile?.getBlockByName(rec.base), rec), CURATED_BLOCK_INDEX);",
+    "old": "(blocksFile) => curatedBlockOf(blocksFile?.readClassicBlock?.(blocksFile.getBlockIndex(rec.base)) ?? null, rec), CURATED_BLOCK_INDEX + rec.n);",
+    "new": "(blocksFile) => curatedBlockOf(blocksFile?.readClassicBlock?.(blocksFile.getBlockIndex(rec.base)) ?? null, rec), CURATED_BLOCK_INDEX);",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -398,8 +390,8 @@
   {
     "name": "DLV5-install-base-unread",
     "file": "src/world/dungeon/curatedInstall.js",
-    "old": "blocksFile?.getBlockByName(rec.base)",
-    "new": "blocksFile?.getBlockByName(curatedBlockName(rec.n))",
+    "old": "blocksFile.getBlockIndex(rec.base)",
+    "new": "blocksFile.getBlockIndex(curatedBlockName(rec.n))",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]

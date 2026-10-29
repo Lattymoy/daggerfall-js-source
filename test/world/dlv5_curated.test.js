@@ -48,8 +48,12 @@ test('DLV5 THE RECORD\'S LAW: an id, its number, an interior base, the types it 
   assert.equal(bad({ anchors: [a] }), null);
   assert.match(bad({ anchors: [{ ...a, kind: 'clock' }] }), /^anchors: a kind/);
   assert.match(bad({ anchors: [{ ...a, r: 5 }] }), /^anchors: r/);
-  assert.match(bad({ anchors: [a, { ...a, at: [26, 0, 20] }] }), /two wards meet/);
-  assert.match(bad({ anchors: [a, { ...a, at: [40, 0, 40] }, { ...a, at: [8, 0, 44] }] }), /2 at most/);
+  assert.match(bad({ anchors: [a, { ...a, at: [40, 0, 40] }] }), /1 at most/, 'a block is one site at most - two stood 8 m apart where the plan keeps 60');
+  assert.match(bad({ drop: [{ flat: [199, 15], at: [1, 1, 1], r: 2 }] }), /by its name/, 'an editor marker by its name alone - a quest\'s or the way in\'s never by a flat');
+  assert.match(bad({ drop: [{ marker: 'start', at: [1, 1, 1], r: 2 }] }), /never the way in/, 'the start marker carries the block\'s water level');
+  assert.match(bad({ drop: [{ marker: 'enter', at: [1, 1, 1], r: 2 }] }), /never the way in/);
+  assert.match(bad({ add: [{ at: [51.2, 1, 1], model: 41300 }] }), /^add: a point/, 'half-open: 51.2 is the next block\'s 0');
+  assert.equal(bad({ add: [{ at: [51.19, 1, 51.19], model: 41300 }] }), null);
   assert.throws(() => checkedRecords([{ ...REC, n: 0 }]), /lab's draft/, 'number 0 never ships');
   assert.throws(() => checkedRecords([REC, { ...REC, n: 8 }]), /id: twice/);
   assert.throws(() => checkedRecords([REC, { ...REC, id: 'other-hall' }]), /n: twice/);
@@ -66,7 +70,7 @@ function base() {
       modelReferenceList: [{ modelId: '41300', modelIdNum: 41300, description: '' }, { modelId: '55012', modelIdNum: 55012, description: 'DOR' }],
       objectRootList: [{ rdbObjects: [
         model(100, 0, 20, 20), model(200, 1, 22, 20, { nextObjectOffset: 300, previousObjectOffset: 0, flags: 1 }), model(800, 1, 20.3, 20, null, { textureArchive: 199, textureRecord: 15 }),
-        flat(300, 199, 15, 21, 20), flat(400, 199, 15, 19, 21), flat(500, 199, 15, 40, 40), flat(600, 216, 3, 20, 19), flat(700, 199, 10, 5, 5),
+        flat(300, 199, 15, 21, 20), flat(400, 199, 15, 19, 21), flat(500, 199, 15, 40, 40), flat(600, 216, 3, 20, 19), flat(700, 199, 10, 5, 5), flat(900, 199, 15, 19.5, 20.5, 500),
       ] }],
     },
   };
@@ -74,7 +78,7 @@ function base() {
 
 test('DLV5 THE BLOCK MADE OF ITS BASE: its own name, index and record position; a drop takes what it names within its reach and nothing an action chains; an add laid at its own position - a model by id (its reference reused or added, its rotation in the base\'s units), a marker, a foe of its mobile - in a root of its own; the base untouched (mutants: a drop of anything near; a chained foe dropped; the reference doubled; the rotation\'s sign; the base\'s position kept)', () => {
   const b = base(), before = JSON.stringify(b);
-  const rec = { ...REC, drop: [{ marker: 'foe', at: [20, 0, 20], r: 3 }, { model: 41300, at: [20, 0, 20], r: 0.5 }], add: [{ model: 55012, at: [10, 0.5, 10], rot: [0, 90, 0] }, { model: 41108, at: [11, 0, 11] }, { marker: 'treasure', at: [12, 0, 12] }, { marker: 'foe', mobile: 7, at: [13, 0, 13] }] };
+  const rec = { ...REC, drop: [{ marker: 'foe', at: [20, 0, 20], r: 3 }, { model: 41300, at: [20, 0, 20], r: 0.5 }, { model: 55012, at: [22, 0, 20], r: 0.5 }], add: [{ model: 55012, at: [10, 0.5, 10], rot: [0, 90, 0] }, { model: 41108, at: [11, 0, 11] }, { marker: 'treasure', at: [12, 0, 12] }, { marker: 'foe', mobile: 7, at: [13, 0, 13] }, { model: 41300, at: [14, 0, 14], rot: [10, 0, -20] }] };
   const c = curatedBlockOf(b, rec);
   assert.equal(JSON.stringify(b), before, 'the base untouched');
   assert.deepEqual([c.name, c.servedName, c.index, c.position], [curatedBlockName(7), curatedBlockName(7), CURATED_BLOCK_INDEX + 7, CURATED_POSITION + 7 * CURATED_POSITION_STEP]);
@@ -83,12 +87,12 @@ test('DLV5 THE BLOCK MADE OF ITS BASE: its own name, index and record position; 
   assert.deepEqual([CURATED_MARKERS.treasure, [CURATED_MARKERS.foe, CURATED_MARKERS.enemy]], [RANDOM_TREASURE_MARKER_RECORD, ENEMY_MARKER_RECORDS], 'the markers the loot and the foes read');
   assert.ok(FIRE_MARKER_RECORDS.includes(CURATED_MARKERS.start) && FIRE_MARKER_RECORDS.includes(CURATED_MARKERS.enter));
   const kept = c.rdbBlock.objectRootList[0].rdbObjects.map((o) => o.position);
-  assert.deepEqual(kept, [200, 800, 300, 500, 600, 700], 'the model named within its reach and the foe at 19,21 gone; the chained foe at 21,20, the far one, the treasure, the start kept - and the other model in reach, whose flat resource (a JSON block carries all three) names a foe');
+  assert.deepEqual(kept, [200, 800, 300, 500, 600, 700, 900], 'the model named within its reach and the foe at 19,21 gone; the door that acts (its chain\'s head, 200), the foe it chains to (300), the foe at the head of a chain of its own (900), the far one, the treasure, the start kept - and the other model in reach, whose flat resource (a JSON block carries all three) names a foe');
   const add = c.rdbBlock.objectRootList[1].rdbObjects;
-  assert.deepEqual(add.map((o) => o.position), [CURATED_ADD_POSITION, CURATED_ADD_POSITION + 1, CURATED_ADD_POSITION + 2, CURATED_ADD_POSITION + 3]);
-  assert.deepEqual(c.rdbBlock.modelReferenceList.map((m) => m.modelIdNum), [41300, 55012, 41108], 'a known model reused, a new one added');
-  assert.equal(add[0].resources.modelResource.modelIndex, 1);
-  assert.equal(add[1].resources.modelResource.modelIndex, 2);
+  assert.deepEqual(add.map((o) => o.position), [0, 1, 2, 3, 4].map((k) => CURATED_ADD_POSITION + k));
+  assert.deepEqual(c.rdbBlock.modelReferenceList.map((m) => [m.modelIdNum, m.description]), [[41300, ''], [55012, 'DOR'], [55012, ''], [41108, '']], 'a plain reference reused, a described one never (the base\'s `DOR` makes its model an action door) - its own added');
+  assert.deepEqual([add[0], add[1], add[4]].map((o) => o.resources.modelResource.modelIndex), [2, 3, 0]);
+  assert.deepEqual(['xRotation', 'yRotation', 'zRotation'].map((k) => add[4].resources.modelResource[k]), [10, 0, -20].map((d) => Math.round(-d * ROTATION_DIVISOR)), 'each axis its own, in the base\'s units (-raw / divisor reads back the degrees)');
   assert.equal(add[0].resources.modelResource.yRotation, Math.round(-90 * ROTATION_DIVISOR), 'the layout reads -raw / divisor back to 90 degrees');
   assert.deepEqual([add[0].xPos, add[0].yPos, add[0].zPos], [U(10), U(-0.5), U(10)], 'y up in metres is the base\'s -y');
   assert.deepEqual([add[2].resources.flatResource.textureArchive, add[2].resources.flatResource.textureRecord], [199, CURATED_MARKERS.treasure]);
@@ -167,7 +171,8 @@ test('DLV5 THE ANCHORS STAND FIRST: a curated block\'s, in the dungeon\'s frame,
   assert.equal(delveSitePlan({ blocks, probe, seed: 9, anchors, kinds: ['hold'] }).anchored, 0, 'an anchor of a kind not built stands none');
 });
 
-test('DLV5 THE LAYOUT\'S ONE DEPARTURE: a game-made dungeon laid with the curated block in its slot, Daggerfall\'s own as MAPS.BSA lists it (mutants: the splice unasked)', () => {
+test('DLV5 THE LAYOUT\'S ONE DEPARTURE: a game-made dungeon built (smallerDungeons.js dungeonLocationFor) with the curated block in its slot and its number - the list the quests read and the layout lays; whole (an instance\'s, an online quest\'s) its own blocks; Daggerfall\'s own as MAPS.BSA lists it (AUDIT DLV5-6 H1 - mutants: the splice unasked; the whole spliced)', async () => {
+  const { dungeonLocationFor } = await import('../../src/world/smallerDungeons.js');
   const names = new Map();
   const blocksFile = {
     getBlockIndex: (n) => { if (!names.has(n)) names.set(n, names.size + 1); return names.get(n); },
@@ -176,9 +181,15 @@ test('DLV5 THE LAYOUT\'S ONE DEPARTURE: a game-made dungeon laid with the curate
   const id = [...Array(400).keys()].map((k) => k + 1).find((k) => curatedSlot(spawnOf(k), CURATED_RECORDS));
   const loc = spawnOf(id);
   const want = curatedSlot(loc, CURATED_RECORDS);
-  const laidOut = layoutDungeon(loc, blocksFile, () => null);
-  assert.equal(laidOut.blocks[want.j].name, curatedBlockName(want.rec.n), 'the spawn laid with its curated block');
-  const real = layoutDungeon({ ...loc, spawned: false }, blocksFile, () => null);
+  const built = dungeonLocationFor(loc, { setting: false, medium: false, world: false });
+  assert.equal(built.dungeon.blocks[want.j].blockName, curatedBlockName(want.rec.n), 'the spawn built with its curated block');
+  assert.equal(built.curated, want.rec.n, 'and its number, the room\'s tag');
+  assert.equal(loc.dungeon.blocks.filter((b) => isCuratedName(b.blockName)).length, 0, 'the cached location untouched');
+  const laidOut = layoutDungeon(built, blocksFile, () => null);
+  assert.equal(laidOut.blocks[want.j].name, curatedBlockName(want.rec.n), 'laid as built');
+  const whole = dungeonLocationFor(loc, { setting: false, medium: false, world: false, whole: true });
+  assert.deepEqual([whole.dungeon.blocks.map((b) => b.blockName), whole.curated], [loc.dungeon.blocks.map((b) => b.blockName), undefined], 'the dungeon whole: its own blocks');
+  const real = layoutDungeon(dungeonLocationFor({ ...loc, spawned: false }, { setting: false, medium: false, world: false }), blocksFile, () => null);
   assert.deepEqual(real.blocks.map((b) => b.name), loc.dungeon.blocks.map((b) => b.blockName), 'a real dungeon: its own blocks');
 });
 
@@ -188,11 +199,11 @@ test('DLV5 THE INSTALL: each record on the world-data door at its index, its blo
   W._resetWorldDataReplacement();
   W.installWorldDataReplacement();
   const asked = [];
-  W.bindWorldDataBlocks({ count: 100, getBlockIndex: () => -1, getBlockByName: (n) => { asked.push(n); return base(); } });
+  W.bindWorldDataBlocks({ count: 100, getBlockIndex: (n) => (n === 'N0000023.RDB' ? 23 : -1), readClassicBlock: (k) => { asked.push(k); return k === 23 ? base() : null; }, getBlockByName: () => { throw new Error('a mod\'s block of the base\'s name is never read'); } });
   assert.equal(installCuratedBlocks([REC]), 1);
   assert.equal(W.getNewDFBlockIndex(curatedBlockName(7)), CURATED_BLOCK_INDEX + 7);
   const made = W.getDFBlockReplacementData(CURATED_BLOCK_INDEX + 7, curatedBlockName(7));
-  assert.deepEqual([made?.name, asked], [curatedBlockName(7), ['N0000023.RDB']], 'made of its base, by the base\'s name');
+  assert.deepEqual([made?.name, asked], [curatedBlockName(7), [23]], 'made of BLOCKS.BSA\'s own base, by its index');
   W._resetWorldDataReplacement();
   assert.match(readFileSync(new URL('../../src/scenes/modWorldData.js', import.meta.url), 'utf8'), /\n {4}installTownOutline\(\);[^\n]*\n {4}installCuratedBlocks\(\);/, 'installed with the port\'s own blocks, before any is read');
 });
@@ -263,7 +274,7 @@ test('DLV5 THE LAB\'S LAW (delve.html): a draft is number 0; a thing put at my f
   const tpl = { name: 'tpl', hasDungeon: true, climate: { worldClimate: 231 }, mapTableData: { mapId: 99, dungeonType: 0 }, dungeon: { recordElement: { header: { locationId: 5 } }, blocks: [{ blockName: 'N0000001.RDB' }, { blockName: 'B0000002.RDB' }, { blockName: 'B0000003.RDB' }] } };
   assert.deepEqual(L.labBorders(tpl), ['B0000002.RDB', 'B0000003.RDB', 'B0000002.RDB', 'B0000003.RDB']);
   const loc = L.labLocation(p2.draft, tpl);
-  assert.deepEqual(loc.dungeon.blocks.map((b) => [b.blockName, b.x, b.z, b.isStartingBlock]), [[curatedBlockName(0), 0, 0, true], ['B0000002.RDB', 0, -1, false], ['B0000003.RDB', -1, 0, false], ['B0000002.RDB', 1, 0, false], ['B0000003.RDB', 0, 1, false]]);
+  assert.deepEqual(loc.dungeon.blocks.map((b) => [b.blockName, b.x, b.z, b.isStartingBlock]), [[curatedBlockName(0), 0, 0, false], ['B0000002.RDB', 0, -1, false], ['B0000003.RDB', -1, 0, false], ['B0000002.RDB', 1, 0, false], ['B0000003.RDB', 0, 1, false]]);
   assert.deepEqual([loc.mapTableData.mapId, loc.delveLab, gameMade(loc)], [0, true, false], 'no room, never spliced');
   const ex = L.labExport(p2.draft, 3);
   assert.ok(ex.text.endsWith('}\n'));
@@ -276,8 +287,9 @@ test('DLV5 THE LAB\'S LAW (delve.html): a draft is number 0; a thing put at my f
   assert.equal(curatedRecordsLive(), CURATED_RECORDS);
 });
 
-test('DLV5 THE BENCH\'S PLACES: `?spawn=px,py` the named dungeon cloned on that pixel as the world clones a spawn; `?dungeon=lab` the lab\'s draft - a shipped record\'s, or this browser\'s - registered as number 0 and laid; a draft the law refuses refused by name; any other ask the bench\'s own (mutants: the pixel unread; the draft unregistered)', async () => {
-  const { benchLocation, readLabDraft, LAB_DRAFT_KEY } = await import('../../src/scenes/delve/delveBench.js');
+test('DLV5 THE BENCH\'S PLACES: `?spawn=px,py` the named dungeon cloned on that pixel as the world clones a spawn and built as the world builds it; `?dungeon=lab` the lab\'s draft - a shipped record\'s (its number kept), a kept one by its id, or the open one - registered as number 0 and laid, never as the start; a draft the law refuses, or a base the player\'s BLOCKS.BSA lacks, refused by name; any other ask the bench\'s own (AUDIT DLV5-6 M5, M6 - mutants: the pixel unread; the draft unregistered; the kept drafts unread by id)', async () => {
+  const { benchLocation, readLabDraft } = await import('../../src/scenes/delve/delveBench.js');
+  const { labKeep, labKept, LAB_DRAFTS_KEY, LAB_CURRENT_KEY } = await import('../../src/world/dungeon/curatedLab.js');
   const W = await import('../../src/formats/worldData/worldDataReplacement.js');
   const { spawnedMapId, WORLD_SALT } = await import('../../src/world/spawnedDungeons.js');
   const { setCuratedDraft } = await import('../../src/world/dungeon/curatedRecords.js');
@@ -289,13 +301,23 @@ test('DLV5 THE BENCH\'S PLACES: `?spawn=px,py` the named dungeon cloned on that 
   assert.equal(benchLocation(P('dungeon=Bedard Laboratory'), maps, null), null, 'the bench\'s own');
   W._resetWorldDataReplacement(); W.installWorldDataReplacement();
   const lab = benchLocation(P('dungeon=lab&lab=crypt-hall'), maps, null);
-  assert.deepEqual([lab.draft.id, lab.draft.n, lab.location.dungeon.blocks[0].blockName], ['crypt-hall', 0, curatedBlockName(0)]);
+  assert.deepEqual([lab.draft.id, lab.draft.n, lab.draft.from, lab.location.dungeon.blocks[0].blockName, lab.location.dungeon.blocks[0].isStartingBlock], ['crypt-hall', 0, 1, curatedBlockName(0), false], 'its shipped number kept; never the start (no exit door of its base stands, as in the game)');
   assert.equal(W.getNewDFBlockIndex(curatedBlockName(0)), CURATED_BLOCK_INDEX, 'registered as number 0');
-  const kept = new Map([[LAB_DRAFT_KEY, JSON.stringify({ ...lab.draft, anchors: [{ kind: 'clock', at: [1, 0, 1], r: 4, vault: [1, 0, 1] }] })]]);
-  const storage = { getItem: (k) => kept.get(k) ?? null };
-  assert.equal(readLabDraft(P(''), storage).anchors[0].kind, 'clock');
-  assert.throws(() => benchLocation(P('dungeon=lab'), maps, storage), /the lab's draft: anchors: a kind/);
+  assert.throws(() => benchLocation(P('dungeon=lab&lab=crypt-hall'), maps, null, { getBlockIndex: () => -1 }), /base: N0000023\.RDB is not in your BLOCKS\.BSA/);
+  // the kept drafts: each by its id, the open one read when none is named; a refused one never kept
+  const store = new Map(), storage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => { store.set(k, v); } };
+  assert.equal(labKeep(storage, { ...lab.draft, id: 'my-hall' }), null);
+  assert.equal(labKeep(storage, { ...lab.draft, id: 'other-hall' }), null);
+  assert.deepEqual([Object.keys(labKept(storage).drafts), store.get(LAB_CURRENT_KEY)], [['my-hall', 'other-hall'], 'other-hall']);
+  assert.match(labKeep(storage, { ...lab.draft, id: 'my-hall', anchors: [{ kind: 'clock', at: [1, 0, 1], r: 4, vault: [1, 0, 1] }] }), /^anchors: a kind/);
+  assert.equal(labKept(storage).drafts['my-hall'].anchors.length, 1, 'the kept one untouched by a refused keep');
+  assert.match(labKeep({ getItem: () => null, setItem: () => { throw new Error('quota'); } }, lab.draft), /keeps no storage/);
+  assert.deepEqual([readLabDraft(P(''), storage).id, readLabDraft(P('draft=my-hall'), storage).id, readLabDraft(P('draft=nobody'), storage)], ['other-hall', 'my-hall', null]);
+  store.set(LAB_DRAFTS_KEY, JSON.stringify({ bad: { ...lab.draft, id: 'bad', anchors: [{ kind: 'clock', at: [1, 0, 1], r: 4, vault: [1, 0, 1] }] } }));
+  assert.throws(() => benchLocation(P('dungeon=lab&draft=bad'), maps, storage), /the lab's draft: anchors: a kind/, 'a draft kept by an older lab still refused by name');
   assert.throws(() => benchLocation(P('dungeon=lab'), maps, { getItem: () => null }), /no draft/);
+  store.set(LAB_DRAFTS_KEY, '{not json');
+  assert.deepEqual(labKept(storage).drafts, {}, 'a broken store keeps none');
   setCuratedDraft(null);
   W._resetWorldDataReplacement();
 });

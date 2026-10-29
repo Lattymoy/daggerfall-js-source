@@ -1,25 +1,29 @@
 // @ts-check
 // DELVE II (DLV5, bible/03-World/Delve-II.md section 8): THE BENCH'S OWN PLACES (scenes/dungeon.js, `?dungeon=`).
 // `?spawn=px,py` with `?dungeon=<a dungeon's name>`: that dungeon cloned onto the pixel as the world clones a spawn
-// (world/spawnedDungeons.js; `?elite` an Elite one), so its curated block and its encounters stand as they will in the
-// world. `?dungeon=lab`: the lab's draft (delve.html) - this browser's, or a shipped record's (`?lab=<id>`) - number 0,
-// laid as the start with four borders of a real dungeon of its type round it. Null for any other ask.
+// (world/spawnedDungeons.js; `?elite` an Elite one) and built as the world builds it (its size, its curated block - `?online`
+// the online world's), so its encounters stand as they will there. `?dungeon=lab`: the lab's draft (delve.html) - a
+// shipped record's (`?lab=<id>`), a kept one (`?draft=<id>`) or the open one - number 0, laid with four borders of a real
+// dungeon of its type round it. Null for any other ask.
 import { synthesizeDungeonLocation, WORLD_SALT } from '../../world/spawnedDungeons.js';
+import { dungeonLocationFor } from '../../world/smallerDungeons.js';
 import { dfMeshToModel } from '../../world/meshReader.js';
 import { classicBillboardSize } from '../../world/rmbFlats.js';
 import { CURATED_RECORDS, setCuratedDraft } from '../../world/dungeon/curatedRecords.js';
 import { installCuratedBlocks } from '../../world/dungeon/curatedInstall.js';
-import { labDraftOf, labLocation, labBorders, labRound, LAB_DRAFT_KEY } from '../../world/dungeon/curatedLab.js';
+import { labDraftOf, labLocation, labBorders, labRound, labKept } from '../../world/dungeon/curatedLab.js';
 
-export { LAB_DRAFT_KEY };
-/** The lab's draft: a shipped record's (`?lab=<id>`), else this browser's kept one, else null. */
+/** The lab's draft: a shipped record's (`?lab=<id>`), a kept one by its id (`?draft=<id>`), else the open one, else null. */
 export function readLabDraft(params, storage) {
   const id = params.get('lab');
   if (id) { const rec = CURATED_RECORDS.find((r) => r.id === id); return rec ? labDraftOf(rec) : null; }
-  try { const kept = storage?.getItem(LAB_DRAFT_KEY); return kept ? JSON.parse(kept) : null; } catch { return null; }
+  const { drafts, current } = labKept(storage);
+  return drafts[params.get('draft') ?? current ?? ''] ?? null;
 }
 /** The first of the game's dungeons of `type` with border blocks to close a lab's block: its record and its look. */
 export function labTemplate(maps, type) {
+  // The lab borrows a real dungeon's border blocks and climate, and every dungeon type stands among MAPS.BSA's own.
+  // BAY-OWN: the templates every lair past the Bay is cloned from too (world/tamrielDungeons.js)
   for (let r = 0; r < maps.regionCount; r++) {
     const reg = maps.getRegion(r);
     if (!reg) continue;
@@ -33,8 +37,8 @@ export function labTemplate(maps, type) {
 /** DLV6: where the lab stands me - `?at=x,y,z` (the spot its Rebuild left me on), else the draft's first anchor's heart;
  *  null leaves it to the dungeon's start (a base holds no start marker of its own). */
 export function labSpawn(params, draft) {
-  const at = String(params.get('at') ?? '').split(',').map(Number);
-  if (at.length === 3 && at.every(Number.isFinite)) return at;
+  const raw = String(params.get('at') ?? '').split(',');
+  if (raw.length === 3 && raw.every((v) => v.trim() !== '' && Number.isFinite(Number(v)))) return raw.map(Number);   // an empty field is no 0
   const a = draft?.anchors?.[0]?.at;
   return a ? labRound([a[0], a[1] + 0.05, a[2]]) : null;
 }
@@ -62,15 +66,16 @@ export function labFoot(arch, getTexture) {
   };
 }
 /**
- * The bench's place for `params`, or null: `{ location, draft?, spawn? }`. A lab's draft the law refuses throws, by name.
- * @param {URLSearchParams} params @param {any} maps the bench's MapsFile @param {any} [storage]
+ * The bench's place for `params`, or null: `{ location, draft?, spawn? }`. A lab's draft the law refuses throws, by name,
+ * as does one whose base the player's BLOCKS.BSA lacks (`blocks`, the bench's).
+ * @param {URLSearchParams} params @param {any} maps the bench's MapsFile @param {any} [storage] @param {any} [blocks]
  */
-export function benchLocation(params, maps, storage = globalThis.localStorage) {
+export function benchLocation(params, maps, storage = globalThis.localStorage, blocks = null) {
   const name = params.get('dungeon') ?? '', region = params.get('region') || 'Daggerfall';
   if (name === 'lab') {
     const draft = readLabDraft(params, storage);
     if (!draft) throw new Error('the lab holds no draft: open delve.html first');
-    const why = setCuratedDraft(draft);
+    const why = setCuratedDraft(draft) ?? (blocks && blocks.getBlockIndex(draft.base) === -1 ? `base: ${draft.base} is not in your BLOCKS.BSA` : null);
     if (why) throw new Error(`the lab's draft: ${why}`);
     const template = labTemplate(maps, draft.types[0]);
     if (!template) throw new Error(`the lab's draft: no dungeon of type ${draft.types[0]} to borrow borders from`);
@@ -81,7 +86,8 @@ export function benchLocation(params, maps, storage = globalThis.localStorage) {
     const [px, py] = String(params.get('spawn')).split(',').map(Number);
     const template = maps.getLocationByName(region, name);
     if (!template || !Number.isInteger(px) || !Number.isInteger(py)) return null;
-    return { location: synthesizeDungeonLocation(template, { salt: WORLD_SALT, px, py, elite: params.has('elite') }) };
+    const clone = synthesizeDungeonLocation(template, { salt: WORLD_SALT, px, py, elite: params.has('elite') });
+    return { location: dungeonLocationFor(clone, { online: params.has('online') }) };   // AUDIT DLV5-6: built as the world builds it
   }
   return null;
 }

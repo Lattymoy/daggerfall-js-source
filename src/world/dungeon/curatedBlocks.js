@@ -27,17 +27,24 @@ export const CURATED_ADD_POSITION = 0x7f000000;
 export const CURATED_MARKERS = Object.freeze({ start: 10, enter: 8, enemy: 16, foe: 15, treasure: 19 });
 /** A curated block's name: an N first (formats/blocksFile.js getRdbType: an ordinary block), no name BLOCKS.BSA has. */
 export const curatedBlockName = (n) => `NDLV${String(n).padStart(4, '0')}.RDB`;
-/** An anchor's ward and the most a block holds (law 4's disc, DSITE.r; a block is one site at most in the census). */
+/** An anchor's ward and the most a block holds (law 4's disc, DSITE.r; a block is one site at most - AUDIT DLV5-6: two in
+ *  one block stood 8 m apart where the plan keeps sites 60 m). */
 export const CURATED_ANCHOR_R = Object.freeze([3, 4]);
-export const CURATED_ANCHORS_MAX = 2;
+export const CURATED_ANCHORS_MAX = 1;
+/** AUDIT DLV5-6 M8: the markers a drop never takes - the way in (the block's first start marker carries its water level
+ *  and its castle flag, rdbLayout.js), and the way in's own. */
+export const CURATED_KEPT_MARKERS = Object.freeze(['start', 'enter']);
 /** DLV6: an added light's reach (m), as the block's own lights have (world/dungeon/dungeonLights.js collectDungeonLights:
  *  the radius times GLOBAL_SCALE times 3 - the freeware's interior lights reach 3 to 12 m). */
 export const CURATED_LIGHT_M = Object.freeze([1, 12]);
 /** A light's radius in the block's units, for a reach in metres. */
 export const lightRadiusOf = (m) => Math.round(m / (GLOBAL_SCALE * 3));
 
-const inBlock = (p) => Array.isArray(p) && p.length === 3 && p.every(Number.isFinite) && p[0] >= 0 && p[0] <= RDB_SIDE && p[2] >= 0 && p[2] <= RDB_SIDE && Math.abs(p[1]) <= RDB_SIDE;
+/** In the block: half-open, as a block's own frame is (51.2 is the next block's 0 - AUDIT DLV5-6). */
+const inBlock = (p) => Array.isArray(p) && p.length === 3 && p.every(Number.isFinite) && p[0] >= 0 && p[0] < RDB_SIDE && p[2] >= 0 && p[2] < RDB_SIDE && Math.abs(p[1]) <= RDB_SIDE;
 const flat = (a) => Array.isArray(a) && a.length === 2 && a.every((v) => Number.isInteger(v) && v >= 0 && v < 1024);
+/** The editor's archive (TEXTURE.199): its records are markers, named by `marker` alone. */
+const EDITOR_ARCHIVE = 199;
 
 /** What is wrong with a record, or null (each block's own word, so a bad one is refused by name). Pure. @param {any} rec */
 export function curatedRecordError(rec) {
@@ -52,7 +59,9 @@ export function curatedRecordError(rec) {
     if ([d.model !== undefined, d.flat !== undefined, d.marker !== undefined].filter(Boolean).length !== 1) return 'drop: what it takes - one of model, flat or marker';
     if (d.model !== undefined && !(Number.isInteger(d.model) && d.model > 0)) return 'drop: a model id';
     if (d.flat !== undefined && !(Array.isArray(d.flat) && d.flat.length === 2 && Number.isInteger(d.flat[0]) && Number.isInteger(d.flat[1]) && d.flat[1] >= -1)) return 'drop: a flat [archive, record], record -1 for any';
+    if (d.flat?.[0] === EDITOR_ARCHIVE) return 'drop: an editor marker by its name (`marker`), never by its flat';
     if (d.marker !== undefined && !Object.hasOwn(CURATED_MARKERS, d.marker)) return `drop: a marker of ${Object.keys(CURATED_MARKERS).join(', ')}`;
+    if (CURATED_KEPT_MARKERS.includes(d.marker)) return 'drop: never the way in (a start or an enter marker)';
   }
   for (const a of rec.add ?? []) {
     if (!inBlock(a?.at)) return 'add: a point in the block';
@@ -72,9 +81,6 @@ export function curatedRecordError(rec) {
     if (!inBlock(a.at) || !inBlock(a.vault)) return 'anchors: a heart and a vault in the block';
     if (!CURATED_ANCHOR_R.includes(a.r)) return `anchors: r ${CURATED_ANCHOR_R.join(' or ')}`;
   }
-  for (let i = 0; i < anchors.length; i++) for (let j = i + 1; j < anchors.length; j++) {
-    if (Math.hypot(anchors[i].at[0] - anchors[j].at[0], anchors[i].at[2] - anchors[j].at[2]) < anchors[i].r + anchors[j].r) return 'anchors: two wards meet';
-  }
   return null;
 }
 
@@ -82,13 +88,21 @@ export function curatedRecordError(rec) {
 const units = (at) => [Math.round(at[0] / GLOBAL_SCALE), Math.round(-at[1] / GLOBAL_SCALE), Math.round(at[2] / GLOBAL_SCALE)];
 /** Where a base object stands, in metres. */
 const metresOf = (o) => [o.xPos * GLOBAL_SCALE, -o.yPos * GLOBAL_SCALE, o.zPos * GLOBAL_SCALE];
-/** The base's objects an action names (a door's chain, a lever's): never dropped, so no chain is broken. */
+/** The base's objects that act or that an action names (a door's chain, a lever and what it moves, a teleport): never
+ *  dropped, so no chain is broken and no way is shut (AUDIT DLV5-6 M8: a chain's head was droppable - 138 of them). */
 function linkedOf(rdb) {
   const linked = new Set();
   for (const g of rdb.objectRootList ?? []) for (const o of g.rdbObjects ?? []) {
     const a = o.resources?.modelResource?.actionResource, f = o.resources?.flatResource;
-    if (o.type === RDB_RESOURCE_TYPES.Model && a) { if (a.nextObjectOffset > 0) linked.add(a.nextObjectOffset); if (a.previousObjectOffset > 0) linked.add(a.previousObjectOffset); }
-    if (o.type === RDB_RESOURCE_TYPES.Flat && f?.nextObjectOffset > 0) linked.add(f.nextObjectOffset);
+    if (o.type === RDB_RESOURCE_TYPES.Model && a) {
+      if (a.flags || a.nextObjectOffset > 0 || a.previousObjectOffset > 0) linked.add(o.position);
+      if (a.nextObjectOffset > 0) linked.add(a.nextObjectOffset);
+      if (a.previousObjectOffset > 0) linked.add(a.previousObjectOffset);
+    }
+    if (o.type === RDB_RESOURCE_TYPES.Flat && f && (f.action > 0 || f.nextObjectOffset > 0)) {
+      linked.add(o.position);
+      if (f.nextObjectOffset > 0) linked.add(f.nextObjectOffset);
+    }
   }
   return linked;
 }
@@ -119,7 +133,7 @@ export function curatedBlockOf(base, rec) {
   const dropped = (o) => !linked.has(o.position) && (rec.drop ?? []).some((d) => takes(d, o, rdb) && Math.hypot(...metresOf(o).map((v, k) => v - d.at[k])) <= d.r);
   const refs = [...(rdb.modelReferenceList ?? [])];
   const refOf = (id) => {
-    let k = refs.findIndex((m) => m.modelIdNum === id);
+    let k = refs.findIndex((m) => m.modelIdNum === id && !m.description);   // a described reference means more (`DOR`: an action door)
     if (k < 0) { k = refs.length; refs.push({ modelId: String(id), modelIdNum: id, description: '' }); }
     return k;
   };

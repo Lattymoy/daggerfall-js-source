@@ -139,6 +139,28 @@ mints, so the room's words are now read through the wire's own law before the ho
   which the levelled kinds alone read (`enc`, `camp`, `band`, `encr`), and no stand in a dungeon asks one: its every
   ask names its own kind (`loose`, `quest`, `rev`, `ally`, `delve` - scenes/dungeonContext.js spawnLooseFoe).
 
+## H - DLV5 and DLV6, the curated blocks (2026-10-29)
+
+A cold lane read the record's law, the made block, the splice, the anchors, the fires, the lab and the four shipped
+records, and measured them on the freeware's data: 2,232 spawned-style clones spliced. Each finding is fixed where it
+began and pinned (`test/world/dlv56_audit.test.js`, `tools/mutants/dlv56.json`, 43 records, every one dead).
+
+| ID | Sev | Finding | Fix |
+|---|---|---|---|
+| H1 | High | **A quest's things stood in a block no longer laid.** The layout spliced; the quests read the location's own list. 2,156 of the 2,232 replaced blocks held quest markers, 79% of them with no floor under them. | The location as built carries the block (`smallerDungeons.js dungeonLocationFor`, `curatedSplice.js curatedLocation`), which the world host and both quest worlds read; the layout lays the list it is given. The dungeon whole - an instance's, an online quest's - is its own blocks. |
+| H2 | High | **The game's own path for the anchors was untested**: the context passes none, and both laws read their defaults. Emptied, every test stayed green. | Pinned through the defaults with a laid curated block. |
+| H3 | Medium | **An older page lays the slot as Daggerfall's** in the same room, and a record joining a pool re-dealt every dungeon of its type. | The room's size word names the block (`full+2`) and the room carries it, `.c2` after the size's (`net/wire.js` WORLD_ROOM, `dungeonRoomTag`); online the public room counts as relaid, so a quest's things stand in its instance. Each record weighs on its own lane: a new one takes only the dungeons it outweighs. |
+| H4 | Medium | The lab's template loop read MAPS.BSA's regions (TAMRIEL-WIDE). | The Bay's own templates, said so (`BAY-OWN:`): every lair past the Bay is cloned from them. |
+| H5 | Medium | **Export and Rebuild kept one type and a new number**: throne-hall would have lost four types and become NDLV0005. | A draft keeps every type (a list field) and the number it ships as. |
+| H6 | Medium | **One draft slot** - a typo, a shipped record opened, or no storage lost the designer's work, and the next boot threw. | Drafts kept by id (`labKeep`, `labKept`), never one the law refuses; delve.html resumes them; no storage, nothing leaves the page. |
+| H7 | Medium | A Super dungeon's Hollow took a block and stood no encounter in it. | No Hollow and no zone hall takes one (`curatedTakes`). |
+| H8 | Medium | **A chain's head could be dropped** (138 levers, wheels and teleport doors), and a flat drop could take a quest marker or the start marker that carries the water level. | What acts and what an action names are kept; editor markers by name alone; the way in never. |
+| H9 | Minor | The lab judged a 3 m ward by its own law, the game by the large one. | An anchor gives way to a fire or the way in by its own ward's law (8 m and 12 m for 3 m; 12 m and 20 m for 4 m). |
+| H10 | Low | The lab laid its draft as the start, so its base's exit door stood; the bench's spawn laid whole; a base missing crashed unnamed; 51.2 sat in two blocks; an empty `at` field read 0; an added model took a base reference's `DOR`; a mod's block of the base's name was read; two anchors stood 8 m apart; the way in was never asked; a 0 could ship. | Each fixed: never the start; built as the world builds it; named; half-open; refused; its own reference; BLOCKS.BSA's own; one anchor a block; asked; refused. |
+
+- **NOT A FINDING.** The fire law keeps 12 m from an anchor that a fire or the way in then stands down: a campfire
+  fewer in a block whose encounter gave way, never one in a ward.
+
 ## Pins and mutants
 
 `test/net/delve/dlv1_law.test.js`, `test/world/dlv1_sites.test.js`, `test/systems/delve/dlv2_words.test.js`,

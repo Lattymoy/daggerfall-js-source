@@ -1,26 +1,27 @@
 // @ts-check
-// DELVE II (DLV5): THE LAB'S FRONT PAGE (delve.html) - the shipped curated blocks, each opened in the bench's lab, and a
-// new block begun from a base and a type: its draft kept in this browser (world/dungeon/curatedLab.js LAB_DRAFT_KEY) and
-// the bench opened on it (`?dungeon=lab`). The game's own data is the player's, read by the bench as the game reads it.
+// DELVE II (DLV5): THE LAB'S FRONT PAGE (delve.html) - the shipped curated blocks, each opened in the bench's lab; the
+// drafts this browser keeps, each by its id, to resume; and a new block begun from a base and its types, kept beside them
+// (world/dungeon/curatedLab.js labKeep - AUDIT DLV5-6 M6: never over a kept one) and the bench opened on it
+// (`?dungeon=lab`). The game's own data is the player's, read by the bench as the game reads it.
 import { CURATED_RECORDS } from '../world/dungeon/curatedRecords.js';
-import { curatedRecordError } from '../world/dungeon/curatedBlocks.js';
-import { labNew, LAB_DRAFT_KEY } from '../world/dungeon/curatedLab.js';
+import { labNew, labKeep, labKept, labTypes } from '../world/dungeon/curatedLab.js';
 import { DUNGEON_TYPES } from '../formats/mapsFile.js';
 
 const LAB = '/play/?dungeon=lab&class=1&novideo';
 const $ = (id) => /** @type {any} */ (document.getElementById(id));
-for (const r of CURATED_RECORDS) {
-  const a = Object.assign(document.createElement('a'), { href: `${LAB}&lab=${encodeURIComponent(r.id)}`, textContent: r.id });
-  const li = document.createElement('li');
-  li.append(a, ` - number ${r.n}, base ${r.base}, ${r.anchors.map((x) => x.kind).join(' and ') || 'no anchor'}`);
-  $('shipped').append(li);
-}
-for (const [k, v] of Object.entries(DUNGEON_TYPES)) if (k !== 'NoDungeon') $('type').append(Object.assign(document.createElement('option'), { value: String(v), textContent: k }));
+const item = (href, text, rest) => { const li = document.createElement('li'); li.append(Object.assign(document.createElement('a'), { href, textContent: text }), rest); return li; };
+for (const r of CURATED_RECORDS) $('shipped').append(item(`${LAB}&lab=${encodeURIComponent(r.id)}`, r.id, ` - number ${r.n}, base ${r.base}, ${r.anchors.map((x) => x.kind).join(' and ') || 'no anchor'}`));
+const { drafts } = labKept(globalThis.localStorage);
+for (const d of Object.values(drafts)) $('kept').append(item(`${LAB}&draft=${encodeURIComponent(d.id)}`, d.id, ` - base ${d.base}, ${(d.add ?? []).length} added, ${(d.anchors ?? []).length} anchor(s)`));
+if (!Object.keys(drafts).length) $('kept').append(Object.assign(document.createElement('li'), { textContent: 'none yet' }));
+$('types-help').textContent = Object.entries(DUNGEON_TYPES).filter(([k]) => k !== 'NoDungeon').map(([k, v]) => `${v} ${k}`).join(', ');
 $('new').addEventListener('submit', (e) => {
   e.preventDefault();
-  const draft = labNew($('id').value.trim(), $('base').value.trim().toUpperCase(), Number($('type').value));
-  const why = curatedRecordError(draft);
+  const id = $('id').value.trim(), types = labTypes($('types').value);
+  if (!types) { $('say').textContent = 'types: the dungeon types it joins, by number (1, 2, 11)'; return; }
+  if (Object.hasOwn(labKept(globalThis.localStorage).drafts, id)) { $('say').textContent = `a draft named ${id} is kept: resume it above, or name this one otherwise`; return; }
+  const draft = { ...labNew(id, $('base').value.trim().toUpperCase(), types[0]), types };
+  const why = labKeep(globalThis.localStorage, draft);
   if (why) { $('say').textContent = why; return; }
-  try { localStorage.setItem(LAB_DRAFT_KEY, JSON.stringify(draft)); } catch { $('say').textContent = 'This browser keeps no storage: the lab needs it.'; return; }
-  location.href = LAB;
+  location.href = `${LAB}&draft=${encodeURIComponent(id)}`;
 });

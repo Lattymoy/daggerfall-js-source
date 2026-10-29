@@ -215,27 +215,33 @@ party's puzzle. Offline the same law runs in the client, its ledger saved with t
 ## 8. Curated blocks (DLV5 and DLV6)
 
 - **WHERE.** Only in dungeons the game lays out itself: spawned (`world/spawnedDungeons.js`), Elite and the lairs past
-  the Bay (`world/tamrielDungeons.js`). Never in Daggerfall's 4,232, never in the Abyss Hollow (its own law).
-- **WHAT.** A real interior block of the player's own BLOCKS.BSA - its `base` - with objects taken out by name
-  (`drop`: a marker, a flat or a model within a reach, never one an action chains), Daggerfall's models, flats,
-  editor markers and lights added (`add`: a light by its reach, 1 to 12 m, as the base's own lights are read), and its
-  encounters' anchors. A record of ours (`src/assets/delve/<id>.json`, the law
-  `world/dungeon/curatedBlocks.js`), made when first read as a capital's castle halls are (`registerPortBlockOf`, at
-  907000 and its number). DEPARTURE from the plan's whole World Data JSON: made of a base, its edges meet its
-  neighbours as the base's do, and no block of the game's enters the repository (WD1's rule).
+  the Bay (`world/tamrielDungeons.js`). Never in Daggerfall's 4,232, a Super dungeon's Hollow (it stands no
+  encounter), a zone hall (its room is its lane's law) or a made level (`curatedSplice.js curatedTakes`).
+- **WHAT.** A real interior block of BLOCKS.BSA - its `base`, read as the file holds it - with objects taken out by
+  name (`drop`: a model, a flat or a marker within a reach; never what acts or what an action names, an editor marker
+  by its name alone, never the way in), Daggerfall's models, flats, editor markers and lights added (`add`: a light by
+  its reach, 1 to 12 m, as the base's own lights are read), and one encounter's anchor. A record of ours
+  (`src/assets/delve/<id>.json`, the law `world/dungeon/curatedBlocks.js`), made when first read as a capital's castle
+  halls are (`registerPortBlockOf`, at 907000 and its number). DEPARTURE from the plan's whole World Data JSON: made of
+  a base, its edges meet its neighbours as the base's do, and no block of the game's enters the repository (WD1's rule).
 - **HOW IN.** A game-made dungeon whose type's pool holds a block takes one at CURATED_CHANCE (a half), in place of one
-  interior block that is not the start, all drawn off its own map id (`world/dungeon/curatedSplice.js`) where the
-  dungeon is laid (`dungeonLayout.js`, after a smaller size is drawn). Its room key is already its own, so no
-  Daggerfall dungeon's online room moves. Its anchors stand first in the site law, as designed; the law finds the rest.
-- **THE FIRES.** An anchor keeps the site law's 12 m from every fire, as a found site does. The campfire law stands
-  none within DFIRE.anchorM of one (`dungeonFires.js`); an anchor that a layout fire crowds (a neighbour block's
-  brazier) gives way, and the law finds a site in its place. A record drops its base's own fire within that reach.
-- **THE TOOL.** `delve.html` opens the bench's lab (`?dungeon=lab`): the draft (number 0) the start, four borders of
-  a real dungeon of its type round it. Its panel sets a model or a flat on the floor at the player's feet (its foot
-  read from the player's own data - `scenes/delve/delveBench.js` labFoot), a light over them, a marker, a drop, an
-  anchor or its vault. It lays the block again with the player where they stood (`?at=`, else the first anchor), asks
-  the site law of every anchor (the host's `landing`), and exports the record. The bench's `?spawn=px,py` stands a
-  named dungeon cloned on a pixel, as the world clones a spawn.
+  interior block that is not the start, drawn off its own map id - each record weighing on its own lane, so a record
+  added takes only the dungeons it outweighs. The location as built carries it, after any smaller size
+  (`smallerDungeons.js dungeonLocationFor`): the layout, the quests' markers and the room read one list. The dungeon
+  whole - an instance's, an online quest's - is its own blocks. Its room names the block after its size, `.c2`
+  (`net/wire.js` dungeonRoomTag), since an older page lays that slot as Daggerfall's; online that public room is relaid,
+  so a quest's things stand in its instance. Its anchor stands first in the site law; the law finds the rest.
+- **THE FIRES AND THE WAY IN.** An anchor keeps its own ward's distance from every fire and from the way in, as a found
+  site does (a 4 m ward 12 m and 20 m, a 3 m one 8 m and 12 m); one crowded gives way, and the law finds a site in its
+  place. The campfire law stands none within DFIRE.anchorM (12 m) of one (`dungeonFires.js`). A record drops its
+  base's own fire within that reach.
+- **THE TOOL.** `delve.html` lists the shipped blocks and the drafts this browser keeps, each by its id, and begins a
+  new one. The bench's lab (`?dungeon=lab`) lays the draft (number 0) with four borders of a real dungeon of its type
+  round it, as the game lays it (never as the start). Its panel sets a model or a flat on the floor at the player's
+  feet (its foot read from the player's data - `scenes/delve/delveBench.js` labFoot), a light over them, a marker, a
+  drop, an anchor or its vault. Rebuild keeps the draft, never one the law refuses, and lays it again with the player
+  where they stood; Check asks the host's `landing`; Export gives the record with every type and its own number. The
+  bench's `?spawn=px,py` builds a named dungeon cloned on a pixel, as the world builds a spawn.
 - **THE LOOK.** Daggerfall's own models and flats, and code-painted pieces under DF-LOOK (`01-Overview/DF-Art.md`):
   no render of game data ships (Port-Doctrine).
 

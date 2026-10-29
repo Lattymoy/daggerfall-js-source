@@ -1,0 +1,434 @@
+[
+  {
+    "name": "DLV56-H1-whole-spliced",
+    "file": "src/world/smallerDungeons.js",
+    "old": "return deps.whole ? built : curatedLocation(built);",
+    "new": "return curatedLocation(built);",
+    "tests": [
+      "test/world/dlv56_audit.test.js",
+      "test/world/dlv5_curated.test.js"
+    ],
+    "why": "an instance's dungeon, laid whole, takes the curated block its quest never saw"
+  },
+  {
+    "name": "DLV56-H2-fires-default-empty",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "anchors = curatedAnchors(blocks, curatedRecordsLive()) } = {}) {",
+    "new": "anchors = [] } = {}) {",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "the game's own call passes none: campfires in a designed ward"
+  },
+  {
+    "name": "DLV56-H2-sites-default-empty",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "anchors = curatedAnchors(blocks, curatedRecordsLive()) } = {}) {",
+    "new": "anchors = [] } = {}) {",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "no designed encounter stands in the game"
+  },
+  {
+    "name": "DLV56-M3-size-word-blind",
+    "file": "src/world/smallerDungeons.js",
+    "old": "return Number.isInteger(n) && n > 0 ? `${s}+${n}` : s;",
+    "new": "return s;",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "a curated room keyed as the whole dungeon's"
+  },
+  {
+    "name": "DLV56-M3-tag-unminted",
+    "file": "src/net/wire.js",
+    "old": "+ (/^[1-9]\\d{0,2}$/.test(c ?? '') ? `.c${c}` : '')",
+    "new": "",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "the block's number dropped from the room"
+  },
+  {
+    "name": "DLV56-M3-room-refused",
+    "file": "src/net/wire.js",
+    "old": "(?:\\\\.c[1-9]\\\\d{0,2})?|${INSTANCE_TAG_SOURCE})|interior",
+    "new": "(?:\\\\.c0)?|${INSTANCE_TAG_SOURCE})|interior",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "the relay keeps no world for a curated room"
+  },
+  {
+    "name": "DLV56-M3-relaid-blind",
+    "file": "src/world/smallerDungeons.js",
+    "old": " || curatedSlot(dfLocation, CURATED_RECORDS) != null;",
+    "new": ";",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "a quest's things looked for in a curated public room"
+  },
+  {
+    "name": "DLV56-M3-staff-whole",
+    "file": "src/net/staffTeleport.js",
+    "old": "whole: !!word || (!m[2] && !m[3]), pos: null",
+    "new": "whole: !!word || !m[2], pos: null",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "staff's note builds a curated room whole"
+  },
+  {
+    "name": "DLV56-M3-draw-one-lane",
+    "file": "src/world/dungeon/curatedSplice.js",
+    "old": "const weight = (id, rec) => hash32(id, CURATED_LANE, 0x100 + rec.n);",
+    "new": "const weight = (id, rec) => hash32(id, CURATED_LANE, 0x100);",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "every record one weight: the new one never taken"
+  },
+  {
+    "name": "DLV56-M7-hollow-takes",
+    "file": "src/world/dungeon/curatedSplice.js",
+    "old": "gameMade(loc) && dungeonTier(loc) !== 'super' && !isHallMapId",
+    "new": "gameMade(loc) && !isHallMapId",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "a Hollow spliced with no encounter to stand"
+  },
+  {
+    "name": "DLV56-M7-hall-takes",
+    "file": "src/world/dungeon/curatedSplice.js",
+    "old": "&& !isHallMapId(loc?.mapTableData?.mapId);",
+    "new": ";",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "a zone hall's room key moved off its lane's law"
+  },
+  {
+    "name": "DLV56-M9-large-law-always",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "const lawOf = (a) => (a.r === DSITE.r ? DSITE : DSITE_SMALL);",
+    "new": "const lawOf = () => DSITE;",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "a small ward judged by the large law"
+  },
+  {
+    "name": "DLV56-M9-start-unread",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": " && (!start || d2(start, a.at) >= SQ(lawOf(a).startM))",
+    "new": "",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "an anchor by the way in"
+  },
+  {
+    "name": "DLV56-M9-fire-flat",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "anchors.every((a) => d2(a.at, c.pos) >= SQ(DFIRE.anchorM))",
+    "new": "anchors.every((a) => (a.at[0] - c.pos[0]) ** 2 + (a.at[2] - c.pos[2]) ** 2 >= SQ(DFIRE.anchorM))",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "a storey's height unread"
+  },
+  {
+    "name": "DLV56-ANCHOR-vault-heart",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "vault: a.vault.map(cm) })),",
+    "new": "vault: a.at.map(cm) })),",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "the designed vault at the heart"
+  },
+  {
+    "name": "DLV56-ANCHOR-ward-large",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "r: a.r, tier, vault: a.vault",
+    "new": "r: DSITE.r, tier, vault: a.vault",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "a 3 m ward stood at 4"
+  },
+  {
+    "name": "DLV56-ANCHOR-count-early",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "if (count <= 0 && !fixed.length) return",
+    "new": "if (count <= 0) return",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "a two-block dungeon's anchor never stood"
+  },
+  {
+    "name": "DLV56-DROP-previous-unread",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "      if (a.previousObjectOffset > 0) linked.add(a.previousObjectOffset);\n",
+    "new": "",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "what a model's `previous` names dropped"
+  },
+  {
+    "name": "DLV56-DROP-flat-next-unread",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "      if (f.nextObjectOffset > 0) linked.add(f.nextObjectOffset);\n",
+    "new": "",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "what a flat's `next` names dropped"
+  },
+  {
+    "name": "DLV56-DROP-flat-acting",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "(f.action > 0 || f.nextObjectOffset > 0)",
+    "new": "(f.nextObjectOffset > 0)",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "a flat that acts dropped"
+  },
+  {
+    "name": "DLV56-DROP-head-dropped",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "      if (a.flags || a.nextObjectOffset > 0 || a.previousObjectOffset > 0) linked.add(o.position);\n",
+    "new": "",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ],
+    "why": "a lever or a door at a chain's head dropped"
+  },
+  {
+    "name": "DLV56-DROP-any-record",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "(record === -1 || f.textureRecord === record)",
+    "new": "true",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "a flat drop takes every record of its archive"
+  },
+  {
+    "name": "DLV56-DROP-editor-flat",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "if (d.flat?.[0] === EDITOR_ARCHIVE) return",
+    "new": "if (false) return",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ],
+    "why": "a quest marker dropped by its flat"
+  },
+  {
+    "name": "DLV56-DROP-way-in",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "if (CURATED_KEPT_MARKERS.includes(d.marker)) return",
+    "new": "if (false) return",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ],
+    "why": "the start marker and its water level dropped"
+  },
+  {
+    "name": "DLV56-BLOCK-closed-edge",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "p[0] < RDB_SIDE && p[2] >= 0 && p[2] < RDB_SIDE",
+    "new": "p[0] <= RDB_SIDE && p[2] >= 0 && p[2] <= RDB_SIDE",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ],
+    "why": "a point on the next block's edge"
+  },
+  {
+    "name": "DLV56-BLOCK-described-ref",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "m.modelIdNum === id && !m.description);",
+    "new": "m.modelIdNum === id);",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ],
+    "why": "an added model made the base's action door"
+  },
+  {
+    "name": "DLV56-BLOCK-modded-base",
+    "file": "src/world/dungeon/curatedInstall.js",
+    "old": "blocksFile?.readClassicBlock?.(blocksFile.getBlockIndex(rec.base)) ?? null",
+    "new": "blocksFile?.getBlockByName?.(rec.base)",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ],
+    "why": "a mod's block of the base's name"
+  },
+  {
+    "name": "DLV56-LAW-vault-anywhere",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "if (!inBlock(a.at) || !inBlock(a.vault)) return",
+    "new": "if (!inBlock(a.at)) return",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "a vault outside its block"
+  },
+  {
+    "name": "DLV56-LAW-rot-unread",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "if (a.rot !== undefined && !(Array.isArray(a.rot) && a.rot.length === 3 && a.rot.every(Number.isFinite))) return",
+    "new": "if (false) return",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "a rotation of two numbers"
+  },
+  {
+    "name": "DLV56-LAW-model-unbounded",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "a.model > 0 && a.model < 1e6",
+    "new": "a.model > 0",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "a model id past the archive's"
+  },
+  {
+    "name": "DLV56-LAW-drop-reach-unbounded",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "d.r > 0 && d.r <= RDB_SIDE",
+    "new": "d.r > 0",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "a drop's reach past its block"
+  },
+  {
+    "name": "DLV56-SLOT-start-by-index",
+    "file": "src/world/dungeon/curatedSplice.js",
+    "old": "!blocks[j].isStartingBlock",
+    "new": "j !== 0",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "the start taken where it is not the first"
+  },
+  {
+    "name": "DLV56-LAB-keep-refused-kept",
+    "file": "src/world/dungeon/curatedLab.js",
+    "old": "  if (why) return why;\n  try {",
+    "new": "  try {",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ],
+    "why": "a draft the law refuses kept, and the lab never opens again"
+  },
+  {
+    "name": "DLV56-LAB-draft-by-id-unread",
+    "file": "src/scenes/delve/delveBench.js",
+    "old": "drafts[params.get('draft') ?? current ?? '']",
+    "new": "drafts[current ?? '']",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ],
+    "why": "a kept draft named in the link never opened"
+  },
+  {
+    "name": "DLV56-LAB-from-lost",
+    "file": "src/world/dungeon/curatedLab.js",
+    "old": "n: 0, from: rec.n, base",
+    "new": "n: 0, base",
+    "tests": [
+      "test/world/dlv56_audit.test.js",
+      "test/world/dlv5_curated.test.js"
+    ],
+    "why": "a shipped record exported as a new number"
+  },
+  {
+    "name": "DLV56-LAB-export-zero",
+    "file": "src/world/dungeon/curatedLab.js",
+    "old": "?? (n === 0 ? 'n: 0 is the lab\\'s own draft - a shipped record is 1 or more' : null)",
+    "new": "",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "a 0 shipped: every load stops"
+  },
+  {
+    "name": "DLV56-LAB-types-first",
+    "file": "src/tools/delveLab.js",
+    "old": "const t = labTypes(types.value);",
+    "new": "const t = labTypes(types.value)?.slice(0, 1) ?? null;",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "a record's other types dropped at a rebuild"
+  },
+  {
+    "name": "DLV56-LAB-export-n-default",
+    "file": "src/tools/delveLab.js",
+    "old": "const exportN = num(d.from ?? Math.max(",
+    "new": "const exportN = num(Math.max(",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "the export's number a new one"
+  },
+  {
+    "name": "DLV56-LAB-start",
+    "file": "src/world/dungeon/curatedLab.js",
+    "old": "blockName: curatedBlockName(0), isStartingBlock: false }",
+    "new": "blockName: curatedBlockName(0), isStartingBlock: true }",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ],
+    "why": "the lab lays its base's exit door, which the game never does"
+  },
+  {
+    "name": "DLV56-LAB-base-unchecked",
+    "file": "src/scenes/delve/delveBench.js",
+    "old": "(blocks && blocks.getBlockIndex(draft.base) === -1 ? `base: ${draft.base} is not in your BLOCKS.BSA` : null)",
+    "new": "null",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ],
+    "why": "a base the data lacks: a TypeError at the layout"
+  },
+  {
+    "name": "DLV56-BENCH-spawn-unbuilt",
+    "file": "src/scenes/delve/delveBench.js",
+    "old": "return { location: dungeonLocationFor(clone, { online: params.has('online') }) };",
+    "new": "return { location: clone };",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "the bench's spawn without the world's size and block"
+  },
+  {
+    "name": "DLV56-BENCH-elite-unread",
+    "file": "src/scenes/delve/delveBench.js",
+    "old": "elite: params.has('elite') });",
+    "new": "elite: false });",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "?elite unread"
+  },
+  {
+    "name": "DLV56-HOST-first-floor",
+    "file": "src/scenes/delve/delveHost.js",
+    "old": "if (f && Number.isFinite(f.y)) return [c.pos[0], f.y + 0.05, c.pos[2]];",
+    "new": "if (f && Number.isFinite(f.y)) return [c.pos[0], c.pos[1], c.pos[2]];",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "the lab stands a fresh draft off its floor"
+  }
+]

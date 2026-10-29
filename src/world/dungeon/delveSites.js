@@ -234,12 +234,14 @@ export function tooNearTaken(pos, taken) {
  *   kinds?: readonly string[], none?: boolean, tally?: Record<string, any> | null, anchors?: any[] }} PlanOpts */
 export function delveSitePlan(/** @type {PlanOpts} */ { blocks, probe, doors = [], fires = [], seed = 0, tier = 'regular', kinds = DELVE_KIND_NAMES, none = false, tally = null, anchors = curatedAnchors(blocks, curatedRecordsLive()) } = {}) {
   // DLV5: a curated block's anchors stand first, as designed (its kinds the ones built); the law finds the rest of the count.
-  // DLV6: one a fire crowds gives way, as a found site would (a neighbour block's brazier; the campfires keep clear of them)
-  const fixed = none ? [] : anchors.filter((a) => kinds.includes(a.kind) && fires.every((q) => d2(q, a.at) >= SQ(DSITE.fireM)));
+  // DLV6: one a fire or the way in crowds gives way, by its own ward's law, as a found site would (a neighbour block's
+  // brazier, a neighbour start block's door - AUDIT DLV5-6: 17 of 2,232 spliced dungeons); the campfires keep clear of them
+  const start = dungeonStart(blocks);
+  const lawOf = (a) => (a.r === DSITE.r ? DSITE : DSITE_SMALL);
+  const fixed = none ? [] : anchors.filter((a) => kinds.includes(a.kind) && fires.every((q) => d2(q, a.at) >= SQ(lawOf(a).fireM)) && (!start || d2(start, a.at) >= SQ(lawOf(a).startM)));
   const count = none ? 0 : Math.max(0, delveSiteCount(blocks) - fixed.length);
   const cands = siteCandidates(blocks);
   if (count <= 0 && !fixed.length) return { sites: [], candidates: cands.length, valid: 0, small: 0, anchored: 0 };
-  const start = dungeonStart(blocks);
   const marks = { probe, doors, enemies: enemyMarks(blocks), items: itemMarks(blocks), fires, start, tier };
   const held = fixed.map((a) => a.at);
   const valid = count > 0 ? landDelveSites(cands, { ...marks, tally }).filter((c) => !tooNearTaken(c.pos, held)) : [];

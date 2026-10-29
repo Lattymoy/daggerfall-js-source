@@ -5,7 +5,7 @@
 // again with it, you where you stood. Check asks the site law of every anchor; Export gives the record as
 // src/assets/delve/<id>.json takes it. The law is world/dungeon/curatedLab.js; this file is its buttons alone. A developer's
 // tool: its words are not the game's.
-import { labPut, labTake, labVault, labExport } from '../world/dungeon/curatedLab.js';
+import { labPut, labTake, labVault, labExport, labTypes } from '../world/dungeon/curatedLab.js';
 import { CURATED_MARKERS } from '../world/dungeon/curatedBlocks.js';
 import { CURATED_RECORDS } from '../world/dungeon/curatedRecords.js';
 import { DELVE_KIND_NAMES } from '../net/delve/delveLaw.js';
@@ -24,9 +24,9 @@ const CSS = `#delve-lab { position: fixed; right: 10px; top: 10px; width: min(36
  * The panel, mounted once: `draft` the lab's record, `feet()` the player's feet, `landing(at, r)` the site law's word on
  * a spot (scenes/delve/delveHost.js landing), `foot(item)` how far a model's or a flat's origin stands over its foot
  * (scenes/delve/delveBench.js labFoot; null for one the data lacks), `rebuild(draft, at)` keeps the draft and lays the
- * block again with me at `at`.
+ * block again with me at `at` - or says why not (curatedLab.js labKeep), and nothing is lost.
  * @param {{ draft: any, feet: () => number[], landing: (at: number[], r: number) => any, foot: (item: any) => Promise<number | null>,
- *   rebuild: (d: any, at: number[]) => void, doc?: Document }} o
+ *   rebuild: (d: any, at: number[]) => string | null, doc?: Document }} o
  */
 export function mountDelveLab({ draft, feet, landing, foot, rebuild, doc = document }) {
   let d = draft;
@@ -49,8 +49,8 @@ export function mountDelveLab({ draft, feet, landing, foot, rebuild, doc = docum
   };
 
   const id = el('input', { value: d.id }), base = el('input', { value: d.base });
-  const type = el('select');
-  for (const [k, v] of Object.entries(DUNGEON_TYPES)) if (k !== 'NoDungeon') type.append(el('option', { value: String(v), textContent: k, selected: d.types[0] === v }));
+  const types = el('input', { value: d.types.join(', ') });   // AUDIT DLV5-6 M5: every type the record joins, never the first alone
+  const typeNames = Object.entries(DUNGEON_TYPES).filter(([k]) => k !== 'NoDungeon').map(([k, v]) => `${v} ${k}`).join(', ');
   const where = el('div', { className: 'say' });
   const model = num(41300), rotY = num(0, 15), marker = el('select'), mobile = num(0), archive = num(199), record = num(0);
   for (const k of Object.keys(CURATED_MARKERS)) marker.append(el('option', { value: k, textContent: k }));
@@ -63,8 +63,13 @@ export function mountDelveLab({ draft, feet, landing, foot, rebuild, doc = docum
   const lists = el('div');
   const ship = el('select');
   for (const r of CURATED_RECORDS) ship.append(el('option', { value: r.id, textContent: `${r.id} (${r.n})` }));
-  const exportN = num(Math.max(1, ...CURATED_RECORDS.map((r) => r.n + 1)));
+  const exportN = num(d.from ?? Math.max(1, ...CURATED_RECORDS.map((r) => r.n + 1)));   // AUDIT DLV5-6 M5: a shipped block ships as its own number
   const btn = (text, fn) => el('button', { type: 'button', textContent: text, onclick: fn });
+  /** The draft with the panel's id, base and types - or why not. */
+  const drafted = () => {
+    const t = labTypes(types.value);
+    return t ? { draft: { ...d, id: id.value.trim(), base: base.value.trim().toUpperCase(), types: t } } : { why: 'types: the dungeon types it joins, by number (1, 2, 11)' };
+  };
   const dropItem = () => {
     if (dropWhat.value === 'marker') return { marker: dropId.value };
     if (dropWhat.value === 'model') return { model: Number(dropId.value) };
@@ -82,7 +87,8 @@ export function mountDelveLab({ draft, feet, landing, foot, rebuild, doc = docum
   }
   panel.append(
     el('h2', { textContent: 'Delve lab - a curated block' }),
-    el('div', { className: 'row' }, 'id ', id, ' base ', base, ' type ', type),
+    el('div', { className: 'row' }, 'id ', id, ' base ', base, ' types ', types),
+    el('div', { className: 'say' }, typeNames),
     where,
     el('h3', { textContent: 'At my feet' }),
     el('div', { className: 'row' }, 'model ', model, ' turn ', rotY, btn('Model here', () => stand({ model: Number(model.value), rot: [0, Number(rotY.value), 0] }))),
@@ -94,9 +100,11 @@ export function mountDelveLab({ draft, feet, landing, foot, rebuild, doc = docum
     el('div', { className: 'row' }, btn('Check the anchors', () => tell((d.anchors ?? []).map((a) => { const w = landing(a.at, a.r); return `${a.kind} at ${a.at.join(', ')}: ${w.ok ? 'stands' : `refused (${w.rule})`}`; }).join('\n') || 'no anchors'))),
     lists,
     el('h3', { textContent: 'The record' }),
-    el('div', { className: 'row' }, btn('Rebuild', () => rebuild({ ...d, id: id.value, base: base.value, types: [Number(type.value)] }, at())), ' ship as number ', exportN,
+    el('div', { className: 'row' }, btn('Rebuild', () => { const r = drafted(); if (r.why) { tell(r.why, true); return; } const why = rebuild(r.draft, at()); if (why) tell(why, true); }), ' ship as number ', exportN,
       btn('Export', () => {
-        const r = labExport({ ...d, id: id.value, base: base.value, types: [Number(type.value)] }, Number(exportN.value));
+        const rec = drafted();
+        if (rec.why) { tell(rec.why, true); return; }
+        const r = labExport(rec.draft, Number(exportN.value));
         if (r.why) { tell(r.why, true); return; }
         const a = el('a', { href: URL.createObjectURL(new Blob([r.text], { type: 'application/json' })), download: `${id.value}.json` });
         a.click();

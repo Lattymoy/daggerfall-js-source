@@ -21,11 +21,14 @@
       walk it, put things at your feet from the panel, rebuild, and export the record into src/assets/delve/.</p>
     <h2>The shipped blocks</h2>
     <ul id="shipped"></ul>
+    <h2>Your drafts</h2>
+    <ul id="kept"></ul>
     <h2>A new block</h2>
     <form id="new">
       <label for="id">Its id (a-z, 0-9 and -)</label><input id="id" value="my-hall" required />
       <label for="base">Its base: an interior block of BLOCKS.BSA</label><input id="base" value="N0000023.RDB" required />
-      <label for="type">The dungeon type it joins</label><select id="type"></select>
+      <label for="types">The dungeon types it joins, by number</label><input id="types" value="0" required />
+      <p id="types-help"></p>
       <p><button type="submit">Open it in the lab</button> <span id="say" class="bad"></span></p>
     </form>
   </main>

@@ -590,10 +590,10 @@ const HARDCODED = {
   'src/tools/abyssLab.js': 2,
   'src/tools/cardsLab.js': 5,
   'src/tools/depthCopyCheck.js': 8,
-  'src/tools/delveLab.js': 17,   // DELVE II DLV5-6: the curated blocks' lab panel (delve.html, the bench's `?dungeon=lab`) - a designer's tool, never the game's
-  'src/tools/delveLabPage.js': 1,   // DELVE II DLV5: the lab's front page's one refusal (no storage) - the designer's
-  'src/world/dungeon/curatedBlocks.js': 16,   // DELVE II DLV5-6: the record law's refusals, each by name - read in the lab and thrown at a bad record's import, never shown a player
-  'src/world/dungeon/curatedLab.js': 2,   // DELVE II DLV5: the lab law's two refusals (no anchor for a vault), the designer's
+  'src/tools/delveLab.js': 18,   // DELVE II DLV5-6: the curated blocks' lab panel (delve.html, the bench's `?dungeon=lab`) - a designer's tool, never the game's
+  'src/tools/delveLabPage.js': 2,   // DELVE II DLV5: the lab's front page's refusals (the types, a kept id) - the designer's
+  'src/world/dungeon/curatedBlocks.js': 17,   // DELVE II DLV5-6: the record law's refusals, each by name - read in the lab and thrown at a bad record's import, never shown a player
+  'src/world/dungeon/curatedLab.js': 5,   // DELVE II DLV5: the lab law's refusals (no anchor for a vault, a draft numbered past 0, no storage, a 0 exported), the designer's
   'src/world/dungeon/curatedRecords.js': 2,   // DELVE II DLV5: a shipped record numbered 0, a draft numbered past 0 - refusals thrown at load or said in the lab
   'src/tools/enhanced/enhancedUI.js': 24,
   'src/tools/enhanced/enhancedVisuals.js': 1,

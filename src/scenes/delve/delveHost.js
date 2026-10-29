@@ -6,7 +6,7 @@
 // words said to it (net/delve/delveLink.js) - the foes stood only while the room names my machine. The foes (delveHold.js),
 // plates (delveLitany.js), pieces (delveBodies.js), marks and chest (delvePieces.js), looks (delveProps.js) and the vault;
 // scenes/dungeonContext.js wires it in a few lines (HOST-SPLIT). Not a DFU member (Ledger A: DELVE II).
-import { delveSitePlan, colliderSiteProbe, landDelveSites, DSITE, DSITE_SMALL } from '../../world/dungeon/delveSites.js';
+import { delveSitePlan, colliderSiteProbe, landDelveSites, siteCandidates, DSITE, DSITE_SMALL } from '../../world/dungeon/delveSites.js';
 import { fireLayoutInputs, enemyMarks, itemMarks, blockWaterY } from '../../world/dungeon/dungeonFires.js';
 import { RDB_SIDE } from '../../world/rdbLayout.js';
 import {
@@ -633,6 +633,12 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
       const tally = {}, b = blocks.find((x) => at[0] >= x.originX && at[0] < x.originX + RDB_SIDE && at[2] >= x.originZ && at[2] < x.originZ + RDB_SIDE);
       const got = landDelveSites([{ pos: at, water: b ? blockWaterY(b.layout) : -Infinity }], { probe, doors, enemies: enemyMarks(blocks), items: itemMarks(blocks), fires: [...existing, ...fires], start: null, tally, law: r === DSITE.r ? DSITE : DSITE_SMALL, tier });
       return got.length ? { ok: true, y: got[0].pos[1] } : { ok: false, rule: Object.keys(tally)[0] ?? 'floor' };
+    },
+    /** DLV6: the first floor the site law's grid finds (layout order, no border block) - where the lab stands a player whose
+     *  draft names no spot yet (scenes/dungeon.js, `?dungeon=lab`). Null with no probe or no floor. */
+    firstFloor() {
+      for (const c of probe ? siteCandidates(blocks) : []) { const f = probe.floor(c.pos); if (f && Number.isFinite(f.y)) return [c.pos[0], f.y + 0.05, c.pos[2]]; }
+      return null;
     },
     /** Where a site's weights' homes, plates and braziers stand (the probes'). */
     spots: (i) => { const s = plan.sites[i]; return s ? { weights: weightSpots(s), plates: weighPlates(s), braziers: brazierSpots(s, runs[i].led?.k || 3) } : null; },

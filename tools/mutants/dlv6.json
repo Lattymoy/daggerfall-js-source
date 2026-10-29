@@ -52,7 +52,7 @@
   {
     "name": "DLV6-spawn-at-unread",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "if (at.length === 3 && at.every(Number.isFinite)) return at;",
+    "old": "  if (raw.length === 3 && raw.every((v) => v.trim() !== '' && Number.isFinite(Number(v)))) return raw.map(Number);   // an empty field is no 0\n",
     "new": "",
     "tests": [
       "test/world/dlv6_blocks.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "DLV6-panel-rebuild-where",
     "file": "src/tools/delveLab.js",
-    "old": "types: [Number(type.value)] }, at())),",
-    "new": "types: [Number(type.value)] }, [0, 0, 0])),",
+    "old": "const why = rebuild(r.draft, at());",
+    "new": "const why = rebuild(r.draft, [0, 0, 0]);",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "DLV6-anchor-crowded-stands",
     "file": "src/world/dungeon/delveSites.js",
-    "old": "kinds.includes(a.kind) && fires.every((q) => d2(q, a.at) >= SQ(DSITE.fireM)))",
-    "new": "kinds.includes(a.kind))",
+    "old": "kinds.includes(a.kind) && fires.every((q) => d2(q, a.at) >= SQ(lawOf(a).fireM))",
+    "new": "kinds.includes(a.kind)",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],

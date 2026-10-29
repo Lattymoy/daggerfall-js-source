@@ -11,7 +11,7 @@ import { readFileSync } from 'node:fs';
 import { parse } from 'acorn';
 import { isStartDungeon, isStartCell } from '../../src/systems/startDungeon.js';
 import * as startDungeon from '../../src/systems/startDungeon.js';
-import { builtDungeonSize } from '../../src/world/smallerDungeons.js';
+import { dungeonRoomSize } from '../../src/world/smallerDungeons.js';   // PIN MOVED (DELVE II, AUDIT DLV5-6 M3): the room's layout word
 import { mapPixelToLongitudeLatitude } from '../../src/formats/mapsFile.js';
 import { setValue } from '../../src/systems/settings/settings.js';
 import { roomKeyFor } from '../../src/net/online.js';
@@ -56,8 +56,8 @@ const props = new Map();
   if (n.type === 'Property' && n.key?.name) props.set(n.key.name, WM.slice(n.start, n.end));
   for (const v of Object.values(n)) if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v === 'object') walk(v);
 })(parse(WM, { ecmaVersion: 'latest', sourceType: 'module' }));
-const roomIdentityIn = (dungeonLoc) => Function('mode', 'dungeonLoc', 'isGateArena', 'isSdRealm', 'isEgHall', 'isKetchShip', 'isArenaFloor', 'isStartDungeon', 'builtDungeonSize', 'host', 'placeInstance',
-  `return ({${props.get('roomIdentity')}}).roomIdentity();`)('dungeon', dungeonLoc, () => false, () => false, () => false, () => false, () => false, isStartDungeon, builtDungeonSize, {}, null);   // PIN MOVED (KETCH): `isKetchShip` - a crew's ship is its own room, never the Hold   // PIN MOVED (INSTANCES' audit): `placeInstance`, the mode's own - null, the public room   // INSTANCES: `host` - no door, so no instance (the public room this pins)
+const roomIdentityIn = (dungeonLoc) => Function('mode', 'dungeonLoc', 'isGateArena', 'isSdRealm', 'isEgHall', 'isKetchShip', 'isArenaFloor', 'isStartDungeon', 'dungeonRoomSize', 'host', 'placeInstance',
+  `return ({${props.get('roomIdentity')}}).roomIdentity();`)('dungeon', dungeonLoc, () => false, () => false, () => false, () => false, () => false, isStartDungeon, dungeonRoomSize, {}, null);   // PIN MOVED (KETCH): `isKetchShip` - a crew's ship is its own room, never the Hold   // PIN MOVED (INSTANCES' audit): `placeInstance`, the mode's own - null, the public room   // INSTANCES: `host` - no door, so no instance (the public room this pins)
 
 // world.js's key block, executed from its source - the one the frame names its room by
 const W = hostText('src/scenes/world.js');

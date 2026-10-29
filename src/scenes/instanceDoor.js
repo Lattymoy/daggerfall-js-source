@@ -41,7 +41,7 @@ import { roomKeyFor } from '../net/online.js';
 import { wdunHallOfRoom, seaRoomCell } from '../net/wire.js';
 import { openerQuestOf, partnerInstances, instanceOffer, questDungeonWhole, questsAtSite, questInstanceEpoch, remainsWholeAt, remainsInstanceEpoch } from '../systems/instancePlaces.js';
 import { isPrivateersHold } from '../systems/startDungeon.js';   // HOLD-ONCE: online the Hold's public room is entered once - its instance any time
-import { builtSizeFor } from '../world/smallerDungeons.js';   // QUEST-ELSEWHERE: the size the world builds a dungeon's public room at
+import { relaidOnline } from '../world/smallerDungeons.js';   // QUEST-ELSEWHERE: the size the world builds a dungeon's public room at (DELVE II: and its curated block)
 
 /** The words, one home - drafted in the thirteen whole languages (locales/), keys under `instance.door`. */
 export const INSTANCE_TEXT = Object.freeze({
@@ -65,12 +65,12 @@ const PUBLIC = Object.freeze({ instance: null, whole: false });
 /** A dungeon's site, from the location its door names. QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c): `relaid` - online the
  *  world builds its public room smaller, where a quest's things never stand (systems/instancePlaces.js questMountsHere)
  *  and the line's remains laid whole never lie (remainsWholeAt). AUDIT FB1019f B1: the size BUILT
- *  (world/smallerDungeons.js builtSizeFor), the size the mount reads (worldModes.js mountQuestResources' builtDungeonSize) -
+ *  (world/smallerDungeons.js builtSizeFor, relaidOnline), the size the mount reads (worldModes.js mountQuestResources' dungeonRoomSize) -
  *  never the size drawn, which a dungeon at or under its size's threshold never takes: its public room is the dungeon
  *  whole, and its quest's things and its remains stand there. */
 export const dungeonSite = (dfLocation) => {
   const mapId = (Number(dfLocation?.mapTableData?.mapId) || 0) >>> 0;
-  return { siteType: SITE_TYPES.Dungeon, mapId, buildingKey: 0, layout: null, isHold: isPrivateersHold(dfLocation), home: false, name: dfLocation?.name ? getLocalizedLocationName(mapId, dfLocation.name) : '', relaid: builtSizeFor(dfLocation, { online: true }) !== 'full' };
+  return { siteType: SITE_TYPES.Dungeon, mapId, buildingKey: 0, layout: null, isHold: isPrivateersHold(dfLocation), home: false, name: dfLocation?.name ? getLocalizedLocationName(mapId, dfLocation.name) : '', relaid: relaidOnline(dfLocation) };
 };
 /** A building's site in the town `mapId`, from its building record (buildingDataForDoor's): `layout` its town's (the
  *  room's - WD3), `home` a player's home or a house of the player's own - whose room is its owner's, never an instance. */

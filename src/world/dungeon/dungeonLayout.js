@@ -22,8 +22,6 @@ import { layoutRdbBlock, RDB_SIDE } from '../rdbLayout.js';
 import { dungeonTextureTable } from './dungeonTextures.js';   // AUDIT 28 W3c: the whole modes-0-4 fork
 import { DOOR_TYPE } from '../meshReader.js';
 import { transformPoint } from '../mat4.js';
-import { spliceCurated } from './curatedSplice.js';   // DELVE II (DLV5): a curated block in a game-made dungeon
-import { CURATED_RECORDS } from './curatedRecords.js';
 
 export { RDB_SIDE };
 
@@ -69,9 +67,9 @@ export function layoutDungeon(dfLocation, blocksFile, getModel) {
   let startMarker = null;
   let enterMarker = null;
 
-  // DEPARTURE (DELVE II DLV5, Delve-II.md section 8): a dungeon the game lays out itself takes a curated block in place of
-  // one interior block - drawn here, after any smaller size, so it is never the start (world/dungeon/curatedSplice.js)
-  for (const block of spliceCurated(dfLocation, CURATED_RECORDS, dfLocation.dungeon.blocks)) {
+  // DELVE II (DLV5): a game-made dungeon's curated block is in its list already - the location as built
+  // (smallerDungeons.js dungeonLocationFor, curatedSplice.js curatedLocation), which the quests read too
+  for (const block of dfLocation.dungeon.blocks) {
     const blockIndex = blocksFile.getBlockIndex(block.blockName);
     if (blockIndex === -1) throw new Error(`block not found: ${block.blockName}`);
     const dfBlock = blocksFile.getBlock(blockIndex);

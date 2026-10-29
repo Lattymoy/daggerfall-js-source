@@ -808,7 +808,7 @@ import { noteLocalPlayer, tacticsNow, tickTactics, offsetTactics } from '../ai/t
 import { drawableBlows, registerBlowDodgedListener } from '../ai/foeBlows.js';   // TACT4; AUDIT ARENA-LADDER: a dodge told
 import { landViewRead } from '../world/landView.js';   // LV1: the enhanced lane's own streamed radius; FT2: the read is the module's
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, hourOf, daylightScale, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime, viewOutLight } from '../world/worldClock.js';
-import { builtDungeonSize } from '../world/smallerDungeons.js';   // AUDIT 28 F-B2: the quest layer sees the sized dungeon; AUDIT FB1013d B1: the size a fallen's dungeon was built at
+import { dungeonRoomSize } from '../world/smallerDungeons.js';   // AUDIT 28 F-B2: the quest layer sees the sized dungeon; AUDIT FB1013d B1: the size a fallen's dungeon was built at; DELVE II (AUDIT DLV5-6 M3): and its curated block
 import { audio, QuestAudioSource, plainSourceGain } from '../systems/audio.js';   // E6: the QuestMachine's own DaggerfallAudioSource (PlaySound's busy-skip)
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
@@ -26232,7 +26232,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // AUDIT FB1013d B1: and the dungeon's own key - its save's and its room's (`dungeon:<locationId>`): a made dungeon
       // shares its region's row, the Arena's Undercroft its city's - and the size it was built at (Smaller Dungeons: another
       // size is another layout, where the fallen's floor position is some other room or none)
-      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex, key: modes?.dungeonCtx?.locationKey?.() ?? null, size: builtDungeonSize(modes?.dungeonLocation) } : null,
+      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex, key: modes?.dungeonCtx?.locationKey?.() ?? null, size: dungeonRoomSize(modes?.dungeonLocation) } : null,
       pos: mode === 'dungeon' ? pos : null,
       // FB1013d: and the height they stood at - the body stands there (a roof, a bridge): a record's, so in DFU's frame
       // (AUDIT LANDFORMS C1) on the ground it was measured on (TERRAIN-SCALE1), as the Recall anchor keeps its own.
