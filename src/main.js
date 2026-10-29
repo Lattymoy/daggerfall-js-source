@@ -71,7 +71,7 @@ async function boot() {
   // SHADER-EASE GFX-BAR (2026-10-29): the menus' graphics bar and Fix stutter button (ui/gfxPrepBar.js), up while one shows
   // - mounted at once from the loaded module, so its key listener is laid before the menu's
   let gfxMod = null;
-  const gfxBar = import('./ui/gfxPrepBar.js').then((m) => { gfxMod = m; }).catch(() => {});
+  const gfxBar = import('./ui/gfxPrepBar.js').then((m) => (gfxMod = m)).catch(() => null);
   const gfxPrep = (on) => { try { if (on) gfxMod?.gfxPrepUp(renderer.gl); else gfxMod?.gfxPrepDown(); } catch { /* the menu stands without it */ } };
   import('./render/portraitRenderer.js').then(({ setPortraitRenderer }) => setPortraitRenderer(renderer)).catch(() => {});   // PORTRAIT3D: the faces' renderer, for the menu's wells that hold none (behind a door: BOOT2's ceiling)
   renderer.setRetroSource(retroFrameConfig);   // RETRO1: DFU's retro mode - asked once per world frame, so the settings screen's change lands on the next
