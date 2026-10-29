@@ -40,7 +40,7 @@ export const DECOR_OWN_KEPT_BACK = Object.freeze(new Set([TEMPLATES.Spellbook, T
 export const DECOR_CAP = 200;
 /** A guild hall's interior. A house holds DECOR_CAP or more by its ground (decorCapOf). The palace Charter Room keeps its own cap. */
 export const DECOR_HALL_CAP = 300;
-/** DECOR-ROOMY (FIELD BUGS 2026-10-29b, the housing thread's item 6: "Some houses, for example in Sentinel, are REALLY
+/** DECOR-ROOMY (FIELD BUGS 2026-10-29f, the housing thread's item 6: "Some houses, for example in Sentinel, are REALLY
  *  WIDE and take as much as three times the space of a small house"): a home holds DECOR_CAP to DECOR_CAP_GROUND_M2 of
  *  ground and as much more again for each as much more - three times as wide, three times the pieces - to DECOR_CAP_MAX,
  *  in steps of DECOR_CAP_STEP. The ground is HOME-PRICE's (the building's model box - net/homeLaw.js homeGroundOk). */
@@ -54,7 +54,7 @@ export function decorCapOf(groundM2) {
 }
 /** A piece's id: the client mints it (the save and the service key on the same one). */
 export const DECOR_ID_RE = /^[A-Za-z0-9_-]{1,24}$/;
-/** REST-GUEST (FIELD BUGS 2026-10-29b): the home's own row among its pieces' access rows - who besides its owner may rest
+/** REST-GUEST (FIELD BUGS 2026-10-29f): the home's own row among its pieces' access rows - who besides its owner may rest
  *  in it. mintDecorId never makes it (twelve of [0-9a-z]). */
 export const DECOR_REST_ID = '_rest';
 /** ARCH3D model ids run to six digits; TEXTURE records below 512, and archives below 512 - DECOR2c: or the port's own
@@ -373,7 +373,7 @@ export function mintDecorId(rand = Math.random) {
  *  classic archive's three digits could not name them: online the room's whole list was refused, offline the piece came
  *  back at the next load. */
 export const DECOR_BASE_KEY_RE = /^(?:m(?:0|[1-9]\d{0,3}):(?:0|[1-9]\d{0,5})|f(?:0|[1-9]\d{0,3}):(?:0|[1-9]\d{0,4})\.(?:0|[1-9]\d{0,2})|intdoor:(?:0|[1-9]\d{0,2}))$/;
-/** DOOR-KEPT (FIELD BUGS 2026-10-29b): a room's swing door taken out rides the same list (systems/decor/decorInteriorDoors.js
+/** DOOR-KEPT (FIELD BUGS 2026-10-29f): a room's swing door taken out rides the same list (systems/decor/decorInteriorDoors.js
  *  `intdoor:<record>`), so an online home's is the service's - every visitor's and every device's - as its furniture is. */
 export const decorIsDoorKey = (key) => typeof key === 'string' && key.startsWith('intdoor:');
 /** How many built-in pieces one room may keep taken out - more than any interior lays, and a whole list at its widest

@@ -1,5 +1,5 @@
 // @ts-check
-// DECOR-ROOMY (FIELD BUGS 2026-10-29b; #feature-feedback, "Housing feedback & suggestions after 20 hours of decorating",
+// DECOR-ROOMY (FIELD BUGS 2026-10-29f; #feature-feedback, "Housing feedback & suggestions after 20 hours of decorating",
 // item 6: "Rise the decoration limit for bigger houses ... Some houses, for example in Sentinel, are REALLY WIDE").
 // An online home's room holds the cap the account service says with its list (net/decorLaw.js decorCapOf, by the ground
 // its price was set from); a home bought before the service kept its ground has its owner's client name it once - the

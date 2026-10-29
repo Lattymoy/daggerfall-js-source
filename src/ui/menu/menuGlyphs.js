@@ -200,7 +200,7 @@ export const DFICON_ROWS = Object.freeze({
     '############',
     '............',
   ],
-  // DECOR-KINDS (FIELD BUGS 2026-10-29b): what a piece is
+  // DECOR-KINDS (FIELD BUGS 2026-10-29f): what a piece is
   statues: [
     '....####....',
     '....####....',

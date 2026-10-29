@@ -33,7 +33,7 @@ export const baseBucketOf = (key) => `base:${key}`;
  *  looks for doorways in it alone. */
 export const INTERIOR_SHELL_BUCKET = 'interior';
 
-/** DOOR-KEPT (FIELD BUGS 2026-10-29b): a room's list as the account service keeps it, stood whole - the pieces taken out,
+/** DOOR-KEPT (FIELD BUGS 2026-10-29f): a room's list as the account service keeps it, stood whole - the pieces taken out,
  *  and the swing doors (`roomDoors`, systems/decor/decorInteriorDoors.js). */
 export function standRoomHidden(base, list) {
   if (!base) return;

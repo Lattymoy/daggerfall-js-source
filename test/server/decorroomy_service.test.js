@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-29b DECOR-ROOMY (#feature-feedback, "Housing feedback & suggestions after 20 hours of decorating",
+// FIELD BUGS 2026-10-29f DECOR-ROOMY (#feature-feedback, "Housing feedback & suggestions after 20 hours of decorating",
 // item 6: "Rise the decoration limit for bigger houses ... Some houses, for example in Sentinel, are REALLY WIDE and take
 // as much as three times the space of a small house"). A home's room holds pieces by its ground - the measure its price
 // was set from, kept with the claim where the price agrees - to DECOR_CAP_MAX; a home bought before names it once.

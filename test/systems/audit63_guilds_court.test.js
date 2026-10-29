@@ -741,7 +741,7 @@ test('AUDIT 65 MC-2: per family - who reaches for the ray, who keeps the narrow 
   // not select the resource and the click falls through in silence -
   // recorded in worldModes.js's own note and in Quest-Arc.md, and a
   // lane must not port it under cover of this one.
-  // PIN MOVED (FIELD BUGS 2026-10-29b, HOST-SPLIT): the quest stands' targets live in systems/quest/sceneMount.js questFlatTargets
+  // PIN MOVED (FIELD BUGS 2026-10-29f, HOST-SPLIT): the quest stands' targets live in systems/quest/sceneMount.js questFlatTargets
   const qs = read('../../src/systems/quest/sceneMount.js');
   const qAt = qs.indexOf('key: `questflat:${i}`');
   assert.ok(qAt > 0);

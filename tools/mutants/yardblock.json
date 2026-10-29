@@ -25,7 +25,7 @@
     "tests": [
       "test/scenes/yardblock.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "YARD-BLOCK-d-the-merge-kept-after-its-piece-went",

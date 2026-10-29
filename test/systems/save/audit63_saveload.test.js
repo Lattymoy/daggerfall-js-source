@@ -200,7 +200,7 @@ test('AUDIT 63 F25: both save hosts write the hand and land it, and neither re-r
     { weaponDrawn: true, usingRightHand: false }, 'and PER FIELD is the law, not a whole-bag pick');
   const landed = { sheathed: true, usingRightHand: true };
   applyWeaponPose(landed, { usingRightHand: false });
-  assert.deepEqual(landed, { sheathed: true, usingRightHand: false, handRestored: true }, ':421 sets the property, presence-gated');   // PIN MOVED (HAND-FOLLOWS, FIELD BUGS 2026-10-29b): and marks the hand restored, so the next UpdateHands keeps it
+  assert.deepEqual(landed, { sheathed: true, usingRightHand: false, handRestored: true }, ':421 sets the property, presence-gated');   // PIN MOVED (HAND-FOLLOWS, FIELD BUGS 2026-10-29f): and marks the hand restored, so the next UpdateHands keeps it
   assert.match(WORLD, /applyWeaponPose\(weaponRig\.playerWeapon, pose\);/, 'the world host lands it through that law');
   assert.match(WORLD, /modes\?\.applyWeaponPose\?\.\(pose\);/, 'and the pair lands in the interior rig too - DFU sets ONE manager');
 

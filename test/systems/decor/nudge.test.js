@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-29b NUDGE (#feature-feedback, "Housing feedback & suggestions after 20 hours of decorating", items
+// FIELD BUGS 2026-10-29f NUDGE (#feature-feedback, "Housing feedback & suggestions after 20 hours of decorating", items
 // 12 and 14: "Just like there are buttons to move a part up and down it would be great to be able to nudge them sideways
 // a little bit"; "Allow SOME clipping inside the houses"). A piece in the flight is pushed a step along the level, the
 // way the eye sees it and on the world axis nearest that way, to a metre each side of where the eye sets it - after the

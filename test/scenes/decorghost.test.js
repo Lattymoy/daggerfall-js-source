@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-29b DECOR-GHOST (#feature-feedback, "Housing feedback & suggestions after 20 hours of decorating",
+// FIELD BUGS 2026-10-29f DECOR-GHOST (#feature-feedback, "Housing feedback & suggestions after 20 hours of decorating",
 // item 21: "Allow us to move items we hover the mouse over ... Bonus points if the original part would become
 // semi-transparent while we're moving it"). The press on a placed piece already moves it (RPT1026-WORLD DECOR-VERBS); the
 // piece where it stood was hidden while it moved. Now it stands as its ghost - a model at DECOR_HELD_SHOWN of its

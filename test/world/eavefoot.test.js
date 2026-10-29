@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-29b EAVE-FOOT (#feature-feedback, "Housing feedback & suggestions after 20 hours of decorating",
+// FIELD BUGS 2026-10-29f EAVE-FOOT (#feature-feedback, "Housing feedback & suggestions after 20 hours of decorating",
 // item 13: "Fix the 'Inside the house' restriction in houses with extending rooftops - House hitboxes should only apply
 // [to] the foundation"). FB1009 HOME-FOOT's eave law asked whether a roof's ground lies inside the walls by counting
 // every upright face a ray from it crossed. A two-storey house's upper wall stands in its ground wall's plane as a face

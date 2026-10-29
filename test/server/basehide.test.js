@@ -314,7 +314,7 @@ function doorRoom() {
   return { ...r, doors };
 }
 
-test('DOOR-KEPT (FIELD BUGS 2026-10-29b, the housing thread\'s item 9: "Make it possible to remove doors inside the houses"): a swing door taken out is a name on the room\'s list - an online home\'s on the service, so every visitor and every device meets the room without it, where it was the owner\'s save\'s alone; the doors stand off the list as the furniture does, and the room\'s pieces never keep a door\'s name (mutants: DOORKEPT-law-refused, DOORKEPT-door-a-piece, DOORKEPT-write-without-doors, DOORKEPT-doors-unstood, DOORKEPT-door-before-the-answer)', async () => {
+test('DOOR-KEPT (FIELD BUGS 2026-10-29f, the housing thread\'s item 9: "Make it possible to remove doors inside the houses"): a swing door taken out is a name on the room\'s list - an online home\'s on the service, so every visitor and every device meets the room without it, where it was the owner\'s save\'s alone; the doors stand off the list as the furniture does, and the room\'s pieces never keep a door\'s name (mutants: DOORKEPT-law-refused, DOORKEPT-door-a-piece, DOORKEPT-write-without-doors, DOORKEPT-doors-unstood, DOORKEPT-door-before-the-answer)', async () => {
   for (const k of ['intdoor:0', 'intdoor:2', 'intdoor:499']) { assert.match(k, DECOR_BASE_KEY_RE, k); assert.equal(decorIsDoorKey(k), true); }
   for (const k of ['intdoor:01', 'intdoor:-1', 'intdoor:1000', 'intdoor:', 'door:2']) assert.doesNotMatch(k, DECOR_BASE_KEY_RE, k);
   assert.equal(decorBaseWhat('intdoor:2'), null, 'no piece of the room');

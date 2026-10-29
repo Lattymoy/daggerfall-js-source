@@ -99,7 +99,7 @@
     "tests": [
       "test/systems/decor/decordungeon.test.js"
     ],
-    "note": "DECOR-KINDS (FIELD BUGS 2026-10-29b, PIN MOVED): re-aimed by content - a piece is filed by what it is first."
+    "note": "DECOR-KINDS (FIELD BUGS 2026-10-29f, PIN MOVED): re-aimed by content - a piece is filed by what it is first."
   },
   {
     "name": "DECORDUNGEON-numbered-mixed",

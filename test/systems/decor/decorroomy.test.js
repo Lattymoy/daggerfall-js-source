@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-29b DECOR-ROOMY, the client (the service's half: test/server/decorroomy_service.test.js). A claim names the
+// FIELD BUGS 2026-10-29f DECOR-ROOMY, the client (the service's half: test/server/decorroomy_service.test.js). A claim names the
 // ground its price was set from; the room holds the cap the service says with its list; a home bought before names its
 // ground once from the owner's client; an offline house holds its own ground's cap.
 import { test } from 'node:test';

@@ -1,9 +1,10 @@
-# FIELD BUGS 2026-10-29b - the housing thread, the Gilded weapons, the off hand and Long Blade
+# FIELD BUGS 2026-10-29f - the housing thread, the Gilded weapons, the off hand and Long Blade
 
 Five #feature-feedback threads, handed over by the owner as screenshots: "Housing feedback & suggestions after 20 hours
 of decorating" (twenty-two numbered items), "Gilded weapons lacking power", "Gilded Weapons" (a crimson glow), "long
 sword, broad sword, saber don't mastering long blade", and a weapon dragged to the L-Hand slot. The owner: "No band aids.
-Only return when finished". Read on main's `5995d0bb9` with the freeware's data, merged with main's `662b68634`.
+Only return when finished". Read on main's `5995d0bb9` with the freeware's data, merged with main's `662b68634` and
+`d9e485583`. Renumbered 29f at that second merge: main's FIELD BUGS 2026-10-29b to 29e took the earlier letters.
 
 The housing thread's author struck items 1, 3, 4, 7 and 11 as done. Items 5 and 18 to 20 were not in the screenshots, so
 this page says nothing of them. Item 21 (click a placed piece to move it) shipped with RPT1026-WORLD's DECOR-VERBS; its

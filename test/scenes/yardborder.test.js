@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-29b YARD-BORDER and YARD-JOINED (#feature-feedback, "Housing feedback & suggestions after 20 hours of
+// FIELD BUGS 2026-10-29f YARD-BORDER and YARD-JOINED (#feature-feedback, "Housing feedback & suggestions after 20 hours of
 // decorating", item 16: "Fix the borders of the house visibility - If two plots overlap, which they do literally all the
 // time, the borders you see are just wrong"; item 17: "Owning two houses next to each other should allow you to build
 // beyond the plot border"). HOME-LINE gives the ground between two houses to the nearer, but the edge was drawn round

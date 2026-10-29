@@ -1,5 +1,5 @@
 // @ts-check
-// HOME-MUTE (FIELD BUGS 2026-10-29b; #feature-feedback, "Housing feedback & suggestions after 20 hours of decorating",
+// HOME-MUTE (FIELD BUGS 2026-10-29f; #feature-feedback, "Housing feedback & suggestions after 20 hours of decorating",
 // item 22: "Let us turn off the visibility of selected house decorations ... just come to someone's doors and turn off
 // their HORRIBLE DESERT SHACK IN THE MIDDLE OF A NORTHERN CITY"). The town's vote hides a home for everyone; this hides
 // one for me alone. At a stranger's door, "Hide its decorations" puts it on this device's list, and it stands for me as a

@@ -1,4 +1,4 @@
--- REST-GUEST (FIELD BUGS 2026-10-29b): who besides its owner may rest in a home - the home's own row, kind 'rest', its
+-- REST-GUEST (FIELD BUGS 2026-10-29f): who besides its owner may rest in a home - the home's own row, kind 'rest', its
 -- piece id the home's (src/net/decorLaw.js DECOR_REST_ID), friends and party stored as a chest's are. The kind's CHECK
 -- widened; every row carried as it stood. A sale, a transfer and a move already clear the home's rows.
 CREATE TABLE decor_access_next (

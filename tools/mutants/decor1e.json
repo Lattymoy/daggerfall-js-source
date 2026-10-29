@@ -169,7 +169,7 @@
     "tests": [
       "test/systems/online/decor1e.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "DECOR1e-a-move-a-new-piece",

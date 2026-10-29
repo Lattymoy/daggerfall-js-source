@@ -48,7 +48,7 @@
       "test/server/homerent.test.js",
       "test/systems/houses.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "RENT-REST-the-host-asks-the-offline-bank-online",

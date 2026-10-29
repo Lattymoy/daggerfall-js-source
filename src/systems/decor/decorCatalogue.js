@@ -69,7 +69,7 @@ export const DECOR_KINDS = Object.freeze({
   bed: 'Beds', storage: 'Storage', shelf: 'Shelves', furniture: 'Furniture', door: 'Doors',   // HOME-DOORS
   light: 'Lights', clothing: 'Clothing', boxes: 'Boxes and bottles', arms: 'Arms and armor',
   books: 'Books and scrolls', misc: 'Odds and ends', treasure: 'Treasure', decor: 'Decorations',
-  // DECOR-KINDS (FIELD BUGS 2026-10-29b): what a piece IS, wherever Daggerfall stood it (decorWhatKind)
+  // DECOR-KINDS (FIELD BUGS 2026-10-29f): what a piece IS, wherever Daggerfall stood it (decorWhatKind)
   statues: 'Statues', tools: 'Tools', animals: 'Animals', remains: 'Remains',
   people: 'Vendors',   // HOME-VENDOR (Mac: "People category sounds wrong call it vendors"): the people Daggerfall stands in its rooms - a home's trader is one of them, made the vendor station
   dungeon: 'Dungeon pieces',   // DECOR-DUNGEON: what Daggerfall stands in its dungeons and nowhere in a house - a cage, a coffin, a chain (DECOR-KINDS: its tables and statues filed as what they are)
@@ -97,7 +97,7 @@ const LIGHT_NAMES = Object.freeze({
   25: 'Lantern with medium chain', 26: 'Lantern with short chain', 27: 'Lantern',
 });
 
-/** DECOR-KINDS (FIELD BUGS 2026-10-29b; #feature-feedback, the housing thread's item 2: "a lot of plants are located in
+/** DECOR-KINDS (FIELD BUGS 2026-10-29f; #feature-feedback, the housing thread's item 2: "a lot of plants are located in
  *  the 'outdoor' category, while some furniture are located in 'dungeons'"): WHAT A PIECE IS, by its picture or its
  *  model, where the game files it as nothing more. Each archive was looked at whole (TEXTURE.053 shop signs, 096 and 206
  *  bodies and bones, 097 and 098 statues, 100 and 190 dungeon dressing, 200 household things, 201 animals, 202

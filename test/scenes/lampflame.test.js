@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-29b LAMP-FLAME and CANDLE-DIM (#feature-feedback, "Housing feedback & suggestions after 20 hours
+// FIELD BUGS 2026-10-29f LAMP-FLAME and CANDLE-DIM (#feature-feedback, "Housing feedback & suggestions after 20 hours
 // of decorating", items 15 and 10): a placed lamp's light hangs at its flame, measured off TEXTURE.210, scaled with the
 // piece - DFU's offsets left the short-chain lantern's and the "todo" records' lights in the chain or the post; and a
 // yard's candle burns at its own colour and intensity, as a room's does, never as the street's lantern.

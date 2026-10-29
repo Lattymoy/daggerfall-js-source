@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-29b REST-GUEST (#feature-feedback, "Housing feedback & suggestions after 20 hours of decorating",
+// FIELD BUGS 2026-10-29f REST-GUEST (#feature-feedback, "Housing feedback & suggestions after 20 hours of decorating",
 // item 8: "Allow friends and guild members to rest in your house - Sleepovers...?"). The owner says who besides them may
 // rest - Me, Friends, Party, Guild - from the decorator's bar in their own online home, written to the home's own row on
 // the account service; a guest the row names is told so with the room's grants, and rests there as in their own home.

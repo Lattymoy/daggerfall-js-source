@@ -88,7 +88,7 @@
     "tests": [
       "test/scenes/fb1001_yard.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "ROAD-LOT-the-decorator-asks-no-road",
@@ -98,7 +98,7 @@
     "tests": [
       "test/scenes/fb1001_yard.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "ROAD-LOT-the-marked-edge-crosses-the-road",
@@ -108,7 +108,7 @@
     "tests": [
       "test/scenes/fb1001_yard.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "ROAD-LOT-a-west-east-side-turned-the-wrong-way",
@@ -128,7 +128,7 @@
     "tests": [
       "test/scenes/fb1001_yard.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "ROAD-LOT-a-loops-runs-left-unjoined",

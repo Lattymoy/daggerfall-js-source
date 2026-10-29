@@ -372,7 +372,7 @@ test('DECOR-BATCH a standing poll is the revision row', async () => {
   assert.equal(empty.pieces, undefined);
 });
 
-test('REST-GUEST (FIELD BUGS 2026-10-29b, the housing thread\'s item 8: "Allow friends and guild members to rest in your house"): the home\'s own row says who besides its owner may rest - friends named, the party, the guild - and the grants answer it to the guest; never on a piece\'s id, never a hall\'s; the owner always may; a sale clears it (mutants: RESTGUEST-kind-refused, RESTGUEST-any-id, RESTGUEST-grant-unsaid, RESTGUEST-rest-a-station, RESTGUEST-hall-set)', async () => {
+test('REST-GUEST (FIELD BUGS 2026-10-29f, the housing thread\'s item 8: "Allow friends and guild members to rest in your house"): the home\'s own row says who besides its owner may rest - friends named, the party, the guild - and the grants answer it to the guest; never on a piece\'s id, never a hall\'s; the owner always may; a sale clears it (mutants: RESTGUEST-kind-refused, RESTGUEST-any-id, RESTGUEST-grant-unsaid, RESTGUEST-rest-a-station, RESTGUEST-hall-set)', async () => {
   const { env, call, registered } = await stand();
   const aldric = await registered('Aldric');
   const mara = await registered('Mara');

@@ -111,7 +111,7 @@ test('DECOR-DUNGEON the collector: a dungeon block gives its furnishings - the t
 });
 
 test('DECOR-DUNGEON the catalogue: what stands in a dungeon and in no house is Dungeon furniture unless the game files it (a light stays a light, a prisoner a Vendor); a room\'s names never move for the dungeons read - theirs are numbered after; and every room offers them (mutants: DECORDUNGEON-kind-unset, DECORDUNGEON-numbered-mixed)', () => {
-  assert.equal(DECOR_KINDS.dungeon, 'Dungeon pieces');   // PIN MOVED (DECOR-KINDS, FIELD BUGS 2026-10-29b): its furniture and statues are filed as what they are
+  assert.equal(DECOR_KINDS.dungeon, 'Dungeon pieces');   // PIN MOVED (DECOR-KINDS, FIELD BUGS 2026-10-29f): its furniture and statues are filed as what they are
   const room = rmb([41120], [[210, 99], [210, 98]], [], [[182, 5]]);
   const cat = decorCatalogue(collectDecor([room, DUNGEON, rdb([[41121], [74072, 'BCX']], [['m', 0], ['m', 1], ['f', 210, 50], ['f', 182, 1], ['f', 254, 3]])]));
   const by = Object.fromEntries(cat.map((e) => [e.key, e]));

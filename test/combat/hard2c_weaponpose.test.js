@@ -115,7 +115,7 @@ test('HARD2c: the law itself, against SerializablePlayer.cs', () => {
   // :420-421 - and back, as a PAIR. F25 was the second line missing.
   const rig = { sheathed: true, usingRightHand: true };
   applyWeaponPose(rig, { weaponDrawn: true, usingRightHand: false });
-  assert.deepEqual(rig, { sheathed: false, usingRightHand: false, handRestored: true }, 'both halves land, which is what AUDIT 63 F25 found missing');   // PIN MOVED (HAND-FOLLOWS, FIELD BUGS 2026-10-29b): and the hand is marked restored, so the next UpdateHands keeps it
+  assert.deepEqual(rig, { sheathed: false, usingRightHand: false, handRestored: true }, 'both halves land, which is what AUDIT 63 F25 found missing');   // PIN MOVED (HAND-FOLLOWS, FIELD BUGS 2026-10-29f): and the hand is marked restored, so the next UpdateHands keeps it
 
   // PRESENCE-GATED: a pre-field envelope leaves the live hand alone
   // rather than reading `undefined` as "sheathed, right hand".

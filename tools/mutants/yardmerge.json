@@ -34,7 +34,7 @@
     "tests": [
       "test/scenes/yardmerge.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "YARD-MERGE-e-a-door-joins",
@@ -44,7 +44,7 @@
     "tests": [
       "test/scenes/yardmerge.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "YARD-MERGE-f-no-triangles-joins",
@@ -117,7 +117,7 @@
     "tests": [
       "test/scenes/yardmerge.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "YARD-MERGE-n-the-remap-dropped",
@@ -262,7 +262,7 @@
     "tests": [
       "test/scenes/yardmerge.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "YARD-MERGE-ad-a-mount-joins",
@@ -272,7 +272,7 @@
     "tests": [
       "test/scenes/yardmerge.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "YARD-MERGE-ae-a-figure-joins",
@@ -282,7 +282,7 @@
     "tests": [
       "test/scenes/yardmerge.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "YARD-MERGE-af-many-quads-join",
@@ -382,7 +382,7 @@
     "tests": [
       "test/scenes/yardmerge.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "YARD-MERGE-aq-the-size-test-dropped-for-a-group",

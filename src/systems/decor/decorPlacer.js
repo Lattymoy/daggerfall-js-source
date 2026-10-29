@@ -66,7 +66,7 @@ export const DECOR_HANG_NY = 0.5;
 export const DECOR_WALL_GAP = 0.02;
 /** How far an ordinary piece may sit into a wall, metres. Never more than half its own reach. */
 export const DECOR_WALL_CLIP = 0.05;
-/** NUDGE (FIELD BUGS 2026-10-29b, the housing thread's items 12 and 14): a sideways step, a fine one, and how far the
+/** NUDGE (FIELD BUGS 2026-10-29f, the housing thread's items 12 and 14): a sideways step, a fine one, and how far the
  *  owner may push a piece from where the eye sets it on each level axis - into a wall or another piece as they choose. */
 export const DECOR_NUDGE_STEP = 0.05;
 export const DECOR_NUDGE_FINE = 0.01;

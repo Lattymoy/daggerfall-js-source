@@ -179,7 +179,7 @@
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "DECOR2c-the-lift-off-the-surface",
@@ -189,7 +189,7 @@
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "DECOR2c-the-grid-off-the-surface",

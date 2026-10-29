@@ -231,7 +231,7 @@ export const YARD_ROOF_Y = 2;
  * houses), so the step before the owner's own door was "inside your house" while a neighbour whose door is in its box's
  * side stood free. A face is sampled strictly inside itself, so a roof's edge on a cell's side never marks the next.
  * A roof past the walls is an eave, its ground the yard. A roof with no walls under it, and anything lower than the
- * roof (a step, a porch), covers its ground. EAVE-FOOT (FIELD BUGS 2026-10-29b): only the ground floor's walls count,
+ * roof (a step, a porch), covers its ground. EAVE-FOOT (FIELD BUGS 2026-10-29f): only the ground floor's walls count,
  * and a plane is one crossing - an upper storey's wall in the ground wall's plane made the eave the house.
  */
 export function modelFootRects(positions, indices, cell = YARD_FOOT_CELL) {
@@ -363,7 +363,7 @@ export function lotBox(lot) {
 /** HOME-LINE (FIELD BUGS 2026-10-11b): how far (x, z) stands from the nearest of these footprints [x0, z0, x1, z1] - 0 on
  *  one, Infinity for none. */
 /**
- * YARD-JOINED (FIELD BUGS 2026-10-29b, the housing thread's item 17: "Owning two houses next to each other should allow
+ * YARD-JOINED (FIELD BUGS 2026-10-29f, the housing thread's item 17: "Owning two houses next to each other should allow
  * you to build beyond the plot border"): A LOT WITH ITS OWNER'S LOTS BESIDE IT - `mates`, each `{ lot, walls }` in this
  * lot's frame. A piece may stand on any of them; their houses are the owner's houses (never stood in), and the
  * midline is drawn from all of them. A turned or a lone lot joins none.
@@ -556,7 +556,7 @@ function simplifyLoop(runs, tol) {
 export const YARD_BORDER_CELL = 0.5;
 export const YARD_BORDER_TOL = 0.4;
 /**
- * YARD-BORDER (FIELD BUGS 2026-10-29b, the housing thread's item 16: "If two plots overlap, which they do literally all
+ * YARD-BORDER (FIELD BUGS 2026-10-29f, the housing thread's item 16: "If two plots overlap, which they do literally all
  * the time, the borders you see are just wrong"): THE EDGE OF WHERE A PIECE MAY STAND. The marked edge was the lot's
  * rectangle while HOME-LINE gives the ground nearer another lot-holder's house (`lines`) to that house. It is now the lot
  * (YARD-JOINED: and its owner's lots joined to it) with the road and the neighbours' side of the midline taken out, as

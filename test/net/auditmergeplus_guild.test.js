@@ -234,7 +234,7 @@ test('AUDIT MERGE-PLUS A1 the host: the door\'s buy (worldModes.js buyHomeAt, li
   assert.ok(at > 0, 'the host\'s buy');
   const body = WM.slice(at, WM.indexOf('\n  }\n', at) + 4);
   const lift = new Function('host', 'homeTownOf', 'bankPurse', 'homeAccount', 'buyOnlineHome', 'HOME_BUY_BUSY', 'townTalk', 'homeShortLine',
-    'accountRefusalText', 'addPermanentScene', 'sceneCache', 'homeSceneName', 'HOME_BOUGHT_LINE', 'houseFootprintM2', `${body}\nreturn buyHomeAt;`);   // PIN MOVED (DECOR-ROOMY, FIELD BUGS 2026-10-29b): the buy names the ground its price was set from
+    'accountRefusalText', 'addPermanentScene', 'sceneCache', 'homeSceneName', 'HOME_BOUGHT_LINE', 'houseFootprintM2', `${body}\nreturn buyHomeAt;`);   // PIN MOVED (DECOR-ROOMY, FIELD BUGS 2026-10-29f): the buy names the ground its price was set from
   // the registry over a door whose claims answer when the test says - every claim out, so a press that should never
   // have claimed is still answered and counted rather than left waiting
   const waiting = [];

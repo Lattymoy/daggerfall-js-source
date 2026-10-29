@@ -209,7 +209,7 @@ export function standDecorMerge(renderer, into, keyed, o) {
   return { mesh, flatGroups };
 }
 
-/** DECOR-GHOST (FIELD BUGS 2026-10-29b, the housing thread's item 21: "Bonus points if the original part would become
+/** DECOR-GHOST (FIELD BUGS 2026-10-29f, the housing thread's item 21: "Bonus points if the original part would become
  *  semi-transparent while we're moving it"): the share of a moved piece drawn where it stood, and its flat's pale edge. */
 export const DECOR_HELD_SHOWN = 0.4;
 export const DECOR_HELD_EDGE = Object.freeze([0.75, 0.85, 1]);

@@ -14,7 +14,7 @@
     "file": "server-account/src/homes.js",
     "old": "paid, mapId, mapId, layout, ground, player.id, character, region, HOME_CAP, mapId, ...layoutMatchBinds(layout));",
     "new": "paid, mapId, mapId, layout, ground, player.id, character, region, HOME_CAP + 1, mapId, ...layoutMatchBinds(layout));",
-    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew.",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew.",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -37,7 +37,7 @@
     "tests": [
       "test/server/home1.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-04d KNIGHT-HOUSE (PIN MOVED, re-aimed by content): the deed's hold is an INSERT OR IGNORE too - aimed at the claim's, whose column list ends at `layout`. FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-04d KNIGHT-HOUSE (PIN MOVED, re-aimed by content): the deed's hold is an INSERT OR IGNORE too - aimed at the claim's, whose column list ends at `layout`. FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "HOME1-claim-repeat-refused",
@@ -57,7 +57,7 @@
     "tests": [
       "test/server/home1.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-04d KNIGHT-HOUSE (PIN MOVED, re-aimed by content): holdDeed counts the same hour - aimed at the claim's, whose next line is realmClaim. FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-04d KNIGHT-HOUSE (PIN MOVED, re-aimed by content): holdDeed counts the same hour - aimed at the claim's, whose next line is realmClaim. FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "HOME1-release-anyones",
@@ -279,7 +279,7 @@
     "tests": [
       "test/server/home1.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "HOME1-no-read-back",
@@ -325,7 +325,7 @@
     "tests": [
       "test/server/home1.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "HOME1-credited-before-the-service-agrees",

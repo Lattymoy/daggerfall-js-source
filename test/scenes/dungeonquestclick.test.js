@@ -27,7 +27,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const wm = () => readFileSync(join(ROOT, 'src/scenes/worldModes.js'), 'utf8');
-/** PIN MOVED (HOST-SPLIT, FIELD BUGS 2026-10-29b): the target walk moved out of the host, unchanged, beside questStandBox. */
+/** PIN MOVED (HOST-SPLIT, FIELD BUGS 2026-10-29f): the target walk moved out of the host, unchanged, beside questStandBox. */
 const mount = () => readFileSync(join(ROOT, 'src/systems/quest/sceneMount.js'), 'utf8');
 
 test('DQ1: the target walk and the click each have ONE home', () => {

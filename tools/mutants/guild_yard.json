@@ -116,7 +116,7 @@
     "tests": [
       "test/net/guild_yard.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "GUILD-YARD-the-rooms-hall-lost",
@@ -150,7 +150,7 @@
     "file": "src/scenes/world.js",
     "old": "((row?.look && homeDecorShownHere(row, p.homeTown)) || row?.mine || row?.keeper)) merged = true;",
     "new": "((row?.look && homeDecorShownHere(row, p.homeTown)) || row?.mine)) merged = true;",
-    "note": "HOME-VOTE (PIN MOVED): a look counts only where it is shown - a shunned home's stays in the merge FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew.",
+    "note": "HOME-VOTE (PIN MOVED): a look counts only where it is shown - a shunned home's stays in the merge FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew.",
     "tests": [
       "test/net/guild_yard.test.js"
     ]

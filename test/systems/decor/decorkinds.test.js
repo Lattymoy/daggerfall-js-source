@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-29b DECOR-KINDS (#feature-feedback, "Housing feedback & suggestions after 20 hours of decorating",
+// FIELD BUGS 2026-10-29f DECOR-KINDS (#feature-feedback, "Housing feedback & suggestions after 20 hours of decorating",
 // item 2: "a lot of plants are located in the 'outdoor' category, while some furniture are located in 'dungeons', so it
 // would be nice to have more of them"). A piece is filed by what it is - its picture's archive or its model's family -
 // and only where nothing says, by where Daggerfall stood it; four kinds more: statues, tools, animals, remains.

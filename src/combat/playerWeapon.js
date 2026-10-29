@@ -369,7 +369,7 @@ export class PlayerWeapon {
       this.holdingShield = true;
       left = null;
     }
-    // HAND-FOLLOWS (FIELD BUGS 2026-10-29b, "long sword bugged"): when what the hands hold changes, an empty hand in use
+    // HAND-FOLLOWS (FIELD BUGS 2026-10-29f, "long sword bugged"): when what the hands hold changes, an empty hand in use
     // gives way to a lone weapon in the other - a one-hander moved to the left hand swung fists and trained Hand-to-Hand.
     // H still picks the bare hand after; a restored hand (applyWeaponPose) is kept. MW-HAND follows every frame.
     const changed = (rightHandItem ?? null) !== this.currentRightHandWeapon || left !== this.currentLeftHandWeapon;

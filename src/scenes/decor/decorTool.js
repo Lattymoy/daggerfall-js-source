@@ -1230,7 +1230,7 @@ export function createDecorTool(deps) {
       return true;
     } finally { useBusy = false; }
   }
-  /** REST-GUEST (FIELD BUGS 2026-10-29b, the housing thread's item 8: "Allow friends and guild members to rest in your
+  /** REST-GUEST (FIELD BUGS 2026-10-29f, the housing thread's item 8: "Allow friends and guild members to rest in your
    *  house"): whether the owner may say who rests here - their own online home, never a hall (its members rest already)
    *  nor a palace. */
   const restOffered = (r) => !!(r && r.kind === 'home' && !r.hall && !r.seat && typeof deps.homeDecor?.use === 'function');

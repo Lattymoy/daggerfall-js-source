@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-29b HOME-MUTE (#feature-feedback, "Housing feedback & suggestions after 20 hours of decorating",
+// FIELD BUGS 2026-10-29f HOME-MUTE (#feature-feedback, "Housing feedback & suggestions after 20 hours of decorating",
 // item 22: "Let us turn off the visibility of selected house decorations ... just come to someone's doors and turn off
 // their HORRIBLE DESERT SHACK"). At a stranger's door a row hides its decorations for me alone - its paint, its yard and
 // its room stand as a shunned home's do (HOME-VOTE's homeDecorShown) - kept on this device by town, building and owner,

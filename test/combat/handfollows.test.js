@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-29b HAND-FOLLOWS (#feature-feedback, "long sword bugged": "long sword, broad sword, saber don't
+// FIELD BUGS 2026-10-29f HAND-FOLLOWS (#feature-feedback, "long sword bugged": "long sword, broad sword, saber don't
 // mastering long blade"). Every Long Blade arm reads the template, and all six long blades train alike. What differs is
 // the hand: a one-hander can stand alone in the LEFT hand (a second weapon's free hand, SWAP-HANDS, the hand panel's
 // drop), and DFU's used hand stays right - so on the classic lane the swing was fists and trained Hand-to-Hand. The
