@@ -39,13 +39,13 @@ test('PVP-FLAG THE LAW (systems/wild/pvpFlag.js): up from level 30, at once; dow
   assert.deepEqual([pvpFlagCanDrop(0, L - 1), pvpFlagCanDrop(0, L), pvpFlagCanDrop(-Infinity, 0)], [false, true, true]);
 });
 
-test('PVP-FLAG THE REFEREE (net/wild/wildRef.js): a blow lands only flagged on flagged; a drop inside the lock is held up; past it, it comes down; a word with no flag keeps it (mutants: the blow unasked; the lock unheld; the word unread)', () => {
+test('PVP-FLAG THE REFEREE (net/wild/wildRef.js): a blow lands only from a flagged striker - the struck one\'s flag never shields it; a drop inside the lock is held up; past it, it comes down; a word with no flag keeps it (mutants: the blow unasked; the lock unheld; the word unread)', () => {
   let { st, now } = enter(1, 0);
-  assert.equal(hit(st, now).why, 'unflagged', 'the struck unflagged');
-  assert.equal(hit(st, now, 'acct-b', 'acct-a').why, 'unflagged', 'the striker unflagged');
+  assert.equal(hit(st, now).ok, true, 'a flagged striker lands on the unflagged');
+  assert.equal(hit(st, now, 'acct-b', 'acct-a').why, 'unflagged', 'the striker unflagged: no blow');
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, ci: 'r-b', fl: 1 }, true, at(1), now);
   assert.equal(st.fighters.get('acct-b').flag, true, 'up at once');
-  assert.equal(hit(st, now).ok, true, 'both flagged: it lands');
+  assert.equal(hit(st, now).ok, true, 'both flagged: it lands too');
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, ci: 'r-b', fl: 0 }, true, at(1), now + L - 1);
   assert.equal(st.fighters.get('acct-b').flag, true, 'a drop inside the lock is held up');
   wildZone(st, 'acct-a', { id: 'peer-a', lv: 10, ci: 'r-a', fl: 0 }, true, at(-1), now + L - 1);
@@ -75,7 +75,7 @@ const W = (x) => [BASE.x + x * M, 0, BASE.z];
 const LOOK = { race: 'Nord', gender: 'male', faceIndex: 0, items: [] };
 const flags = (ws) => ws.sent.filter((m) => m.t === 'wref' && m.k === 'flag').map((m) => [m.id, m.f]);
 
-test('PVP-FLAG THE RELAY (server/src/index.js _wildFlagSay): each flag said to the room as it moves, every flag said to one entering; an unflagged one is struck by nobody (mutants: the move unsaid; the newcomer untold; the refused drop unsaid)', async () => {
+test('PVP-FLAG THE RELAY (server/src/index.js _wildFlagSay): each flag said to the room as it moves, every flag said to one entering; an unflagged one strikes nobody (mutants: the move unsaid; the newcomer untold; the refused drop unsaid)', async () => {
   const realNow = Date.now; let clock = 1_800_000_000_000; Date.now = () => clock;
   try {
     const r = fakeRoom(CELL, { now: () => clock });
@@ -86,18 +86,18 @@ test('PVP-FLAG THE RELAY (server/src/index.js _wildFlagSay): each flag said to t
     await say(b, { k: 'zone', z: 1, fl: 0 });
     assert.deepEqual(flags(b), [['peer-0001', 1], ['peer-0002', 0], ['peer-0001', 1]], 'the room heard each, and the newcomer every flag up');
     clock += WILD_GRACE.ms + 1;
-    await say(a, { k: 'strike', to: 'peer-0002', n: 1, by: 'melee', p: W(-1), d: 999 });
-    assert.equal(b.sent.filter((m) => m.t === 'wref' && m.k === 'hp').length, 0, 'no blow on the unflagged');
-    await say(b, { k: 'zone', z: 1, fl: 1 });
+    await say(b, { k: 'strike', to: 'peer-0001', n: 1, by: 'melee', p: W(1), d: 999 });
+    assert.equal(a.sent.filter((m) => m.t === 'wref' && m.k === 'hp').length, 0, 'the unflagged strikes no one');
     await say(a, { k: 'strike', to: 'peer-0002', n: 2, by: 'melee', p: W(-1), d: 999 });
-    assert.equal(b.sent.filter((m) => m.t === 'wref' && m.k === 'hp').length, 1, 'both up: it lands');
+    assert.equal(b.sent.filter((m) => m.t === 'wref' && m.k === 'hp').length, 1, 'a flagged striker lands on the unflagged');
+    await say(b, { k: 'zone', z: 1, fl: 1 });
     const before = flags(a).length;
     await say(b, { k: 'zone', z: 1, fl: 0 });
     assert.deepEqual(flags(a).slice(before), [['peer-0002', 1]], 'a drop in the lock: the room told it holds');
   } finally { Date.now = realNow; }
 });
 
-test('PVP-FLAG THE PAGE (scenes/pvpFlagHost.js): Caps Lock or the button toggles it; the referee\'s word holds mine; a peer is fair only both up; a blow on me starts the lock; the Portal Stone is free while I am down (mutants: the fair unasked; my word unheld; the lock unstarted; the stone\'s door)', () => {
+test('PVP-FLAG THE PAGE (scenes/pvpFlagHost.js): Caps Lock or the button toggles it; the referee\'s word holds mine; a peer is fair while mine is up; a blow on me starts the lock; the Portal Stone is free while I am down (mutants: the fair unasked; my word unheld; the lock unstarted; the stone\'s door)', () => {
   let clock = 0;
   const said = [], sent = [];
   const online = { id: 'peer-me', wildOk: true, setWildFlag: (v) => sent.push(v) };
@@ -109,7 +109,7 @@ test('PVP-FLAG THE PAGE (scenes/pvpFlagHost.js): Caps Lock or the button toggles
   assert.equal(pvpFlagOn(), true, 'the stone\'s door hears it');
   f.heard({ k: 'flag', id: 'peer-x', f: 1 });
   assert.equal(f.fair('peer-x'), true);
-  assert.equal(f.fair('peer-y'), false, 'a peer never said is no target');
+  assert.equal(f.fair('peer-y'), true, 'theirs never shields them');
   f.heard({ k: 'hp', by: 'peer-x', to: 'peer-me' });
   clock = L - 1;
   assert.equal(f.toggle(), false, 'in the lock');

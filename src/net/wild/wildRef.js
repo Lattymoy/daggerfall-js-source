@@ -227,7 +227,7 @@ export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, 
   if (!a.zone || !t.zone) return { ok: false, dealt: 0, fell: false, fall: null, why: 'zone' };
   if (a.down || t.down) return { ok: false, dealt: 0, fell: false, fall: null, why: 'down' };
   if (kin) return { ok: false, dealt: 0, fell: false, fall: null, why: 'kin' };
-  if (!a.flag || !t.flag) return { ok: false, dealt: 0, fell: false, fall: null, why: 'unflagged' };   // PVP-FLAG: flagged on flagged alone
+  if (!a.flag) return { ok: false, dealt: 0, fell: false, fall: null, why: 'unflagged' };   // PVP-FLAG: an unflagged striker touches no player - the struck one's flag never shields it
   if (now - a.jumpAt < WILD_REF.jumpMs) return { ok: false, dealt: 0, fell: false, fall: null, why: 'jump' };
   // ZONE-GRACE: my blow on a fair player ends my safe passage; theirs keeps them from it
   const graceEnded = a.graceUntil > now;

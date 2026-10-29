@@ -2,7 +2,7 @@
 // PVP-FLAG (systems/wild/pvpFlag.js): THE FLAG, ON THIS PAGE - the module the world host wires (src/scenes/fishHost.js is
 // the shape). It holds my flag and every peer's as the zone's referee says them (`wref` k 'flag'), notes my last PvP blow
 // given or taken (`wref` k 'hp'), toggles on Caps Lock or the HUD button, and answers the two doors the host asks: may I
-// fight this peer (both flagged), and is a Portal Stone free of the zone's law (I am not flagged - the owner: "with no
+// strike a player (my flag up), and is a Portal Stone free of the zone's law (I am not flagged - the owner: "with no
 // flagg we will allow player to use portal stone anywwere").
 import { pvpFlagRefusal } from '../systems/wild/pvpFlag.js';
 import { t } from '../systems/textManager.js';
@@ -63,8 +63,8 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     heard,
     /** Wrap the host's `wref` door: the flag's words taken here, every word handed on. */
     wrap: (inner) => (g, room) => { if (!heard(g)) inner(g, room); },
-    /** May I fight `peerId`: both flagged. */
-    fair: (peerId) => on && peers.get(peerId) === true,
+    /** May I strike a player: my own flag up (theirs never shields them). */
+    fair: () => on,
     flagOf: (peerId) => peers.get(peerId) === true,
   };
   _current = api;
