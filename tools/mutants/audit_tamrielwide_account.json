@@ -103,8 +103,8 @@
   {
     "name": "AUDIT-TW-B4-the-host's-bay-grammar",
     "file": "src/scenes/world.js",
-    "old": "const staffCmd = isStaffT(staffGlyphs()) ? parseStaffLine(",
-    "new": "const staffCmd = isStaffT(staffGlyphs()) ? parseStaffCommand(",
+    "old": "(parseDragonCommand(text) ?? parseStaffLine(",
+    "new": "(parseDragonCommand(text) ?? parseStaffCommand(",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_account.test.js",
       "test/net/staff1.test.js"

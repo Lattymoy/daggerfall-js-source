@@ -155,8 +155,8 @@ test('AUDIT TAMRIEL-WIDE B4/C7: /tp <x> <y> takes a pixel of the world\'s grid, 
   const help = staffHelpLines();
   assert.equal(help.length, 9);
   assert.ok(help.includes('/tp <x> <y> - to a map pixel') && !help.some((l) => /0-999/.test(l)), 'the help names no Bay bound');
-  assert.match(src('src/scenes/world.js'), /const staffCmd = isStaffT\(staffGlyphs\(\)\) \? parseStaffLine\(/, 'the host reads the world\'s grammar');
-  assert.match(src('src/scenes/world.js'), /if \(c\.cmd === 'staff'\) \{ for \(const line of staffHelpLines\(\)\) say\(line\); return; \}/);
+  assert.match(src('src/scenes/world.js'), /const staffCmd = isStaffT\(staffGlyphs\(\)\) \? \(parseDragonCommand\(text\) \?\? parseStaffLine\(/, 'the host reads the world\'s grammar (after DRAGON-RIDE\'s /dragon)');
+  assert.match(src('src/scenes/world.js'), /if \(c\.cmd === 'staff'\) \{ for \(const line of \[\.\.\.staffHelpLines\(\), DRAGON_HELP_LINE\]\) say\(line\); return; \}/);   // and DRAGON-RIDE's line after
 });
 
 test('AUDIT TAMRIEL-WIDE B4/C7: /tp <place> searches the registry\'s places past the Bay after the Bay\'s own, in the order it always read them - the location index, the stood places on no indexed pixel - and a pixel once (mutants: the registry unread; its Bay rows read; a held pixel twice)', () => {
