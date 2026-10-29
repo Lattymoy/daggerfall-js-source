@@ -192,8 +192,8 @@
   {
     "name": "DISC19-F-defender-walks-with-crime-watch",
     "file": "src/scenes/cityGuards.js",
-    "old": "      for (const g of guards) if (!g.dead && !g.defender) { g.dead = true; releaseGuardBatch(g); }",
-    "new": "      for (const g of guards) if (!g.dead) { g.dead = true; releaseGuardBatch(g); }",
+    "old": "      for (const g of guards) if (!g.dead && !g.defender && !g.hunter) { g.dead = true; releaseGuardBatch(g); }",
+    "new": "      for (const g of guards) if (!g.dead && !g.hunter) { g.dead = true; releaseGuardBatch(g); }",
     "tests": [
       "test/systems/disc19.test.js"
     ]
