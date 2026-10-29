@@ -11,7 +11,7 @@
 // request lands in another, and the game's staff tags ask Home again every minute (the extension's background.js) - so
 // nearly every open read it all afresh.
 //
-// So an answer here is kept in `staff_kept` (migration 0193, seat_facts_kept's and town_econ_kept's shape): one row a
+// So an answer here is kept in `staff_kept` (migration 0194, seat_facts_kept's and town_econ_kept's shape): one row a
 // key, its JSON and when it was made. A read inside `freshS` answers the row - one statement by its key. A row older than
 // that but inside `staleS` answers AT ONCE as it stands, and one request (the row's `busy_until` claim) makes it again
 // after the answer (the Worker's waitUntil, `ctx.later`). Past `staleS`, or with no row, the answer is made and kept
