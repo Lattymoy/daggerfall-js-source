@@ -97,7 +97,8 @@ test('AUDIT-TESA A3-1: a town on the shore whose own pixel reads as the sea is r
   // PIN MOVED (TESA14): TESA4's window cell retired - a town is its own pixel now. Two cities past the Bay (y < 0) on the
   // shore, their pixels' bytes the sea's, the strip of land just south of them the one way between
   const region = regionOf(regionLattice({ x0: 2000, y0: -1000, w: 800, h: 300 }), 0, 0);
-  const heightAt = (x, y) => (y === -899 && x >= 2090 && x <= 2150 ? 40 : 0);
+  // PIN MOVED (OFFSHORE-ROADS): the strip two pixels deep - a road's square is dry only with its four corners land
+  const heightAt = (x, y) => ((y === -899 || y === -898) && x >= 2090 && x <= 2150 ? 40 : 0);
   const nodes = [{ x: 2100, y: -900, type: 0 }, { x: 2140, y: -900, type: 0 }];
   const out = buildTamrielRegion({ region, places: [], nodes, obstacles: [], gates: [], heightAt });
   assert.ok(out.roads.get(beyondKey(2100, -900)), 'the first town\'s pixel carries its road');

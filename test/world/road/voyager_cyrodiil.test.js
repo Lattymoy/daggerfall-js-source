@@ -150,5 +150,5 @@ test('VOYAGER-CYRODIIL the host reads the Imperial City\'s ring and gates off th
   assert.doesNotMatch(host.slice(host.indexOf('export function cyrodiilTrunksFor')), /gates: \[\[\d/);
   const worker = read('src/world/tamrielRoadsWorker.js');
   assert.match(worker, /trunkLegs: planTrunkLegs\(m\.trunks \?\? null, \{ heightAt, walkable, wet \}\)/);
-  assert.match(worker, /const walkable = \(x, y\) => !inBay\(x, y\) && heightAt\(x, y\) > WATER_BYTE && !held\.has\(`\$\{x\},\$\{y\}`\);/);
+  assert.match(worker, /const walkable = \(x, y\) => !inBay\(x, y\) && squareDry\(heightAt, x, y\) && !held\.has\(`\$\{x\},\$\{y\}`\);/);   // PIN MOVED (OFFSHORE-ROADS): a square's four corners
 });
