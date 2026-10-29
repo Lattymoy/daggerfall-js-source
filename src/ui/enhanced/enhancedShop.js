@@ -400,8 +400,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
       if (art) halo.append(art);
       ban.append(halo, el('div', 'sh-seasonname', shopWareName(w)));
       if (boost) {
-        ban.append(el('div', 'sh-boostmult', `×${boost.mult}`));
-        if (boost.levels) ban.append(el('div', 'sh-seasondays', t('pass.boost.levels', 'And {n} levels at once.', { n: boost.levels })));
+        ban.append(el('div', 'sh-boostmult', `×${boost.mult}`));   // its levels the panel's own line says (passBoostText)
       } else if (season) {
         const own = PASS_DELUXE[/** @type {keyof typeof PASS_DELUXE} */ (season.id)];
         if (w.id === PASS_WARES[/** @type {keyof typeof PASS_WARES} */ (season.id)]?.deluxe && own) {   // the Deluxe's own three, shown
