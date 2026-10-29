@@ -373,7 +373,8 @@ Daggerfall's ship, a Come Sail Away deck (the pair's rule, AUDIT FB1029d B1) or 
 **CI ON THE MERGES (2026-10-29).** Two of DRAGON5b's own, which the stopped local suite never reached. The keep's
 places were `KEEP`, a name `scenes/dataSource.js` already declares (audit24's one home); they are `DRAGON_WHERE`. And
 the foes module's setter joined the line PORTAL1 pins; it stands on its own line, the module's way, and that line is
-main's again.
+main's again. Its dispatch sat between SURV3's camps and the frame's end; it reads beside EG-F's now. OL2's word on
+the fare moved with PARTY-TRAVEL's bag, so its pin reads the host whole (`hostText`).
 
 **DRAGON7 - the Aetherbright (2026-10-29).** `characters/dwarvenDragonShiny.js` turns each PLTE colour at load - the brass
 and copper to aetherium's blue, the wings' olive membrane to its violet, the greys cooled - and writes the chunk's CRC

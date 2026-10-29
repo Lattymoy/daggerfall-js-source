@@ -2842,10 +2842,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (data.ab !== undefined) _onCsaAboard?.(from, data.ab, _now());   // CSA-K: the sender's place aboard a boat (null: aboard none) - the same law, the same test
     if (data.nv !== undefined) _onNaval?.(from, data.nv, _now());   // NAV-G: the owner's sea (null: none) - the ships they stand, their last volleys and barrels; past the same room test
     if (data.ea !== undefined) _onEgArch?.(from, data.ea);   // EG-F: the owner's Elite arch - the hub's signed call's arch fields, verified by the hearer; past the same room test
+    if (data.dk !== undefined) _onDragonKeep?.(from, data.dk, _now());   // DRAGON5b: the owner's tamed dragon left in the world (null: none) - the same law
     if (data.pg !== undefined) _onPortals?.(from, data.pg);   // PORTAL1: the owner's portal - a frame without it leaves the copy to run out on its own time; past the same room test
     if (data.hv !== undefined) _onHcc?.(from, data.hv, _now());   // HCC-ONLINE: the owner's horse and wagon (null: none stand) - a frame without the field leaves the last word standing; past the same room test the camps pass
     if (Array.isArray(data.c)) _onCamps?.(from, data.c, _now()); if (data.wr !== undefined) _onRide?.(from, data.wr);   // SURV3: the owner's camps ride the same frame, past the same room test - the host's pool lands them; WAGONS1: their ask for a seat in my wagon, or the seat they sit in - the same room test
-    if (data.dk !== undefined) _onDragonKeep?.(from, data.dk, _now());   // DRAGON5b: the owner's tamed dragon left in the world (null: none) - the same law
     return true;
   }
   /** One streamed record onto its puppet: the target pose - kept in the WORLD frame and converted every step (AUDIT
