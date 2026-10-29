@@ -30,6 +30,7 @@ the sky) are not read yet.
 
 A cast carries its spell's element (`el`, DFU's 0-4: fire, frost, poison, shock, magic;
 `siegeCombat.js:"export const pvpSpellElement = (sp) =>"`). The struck player reports, per element, what its Resist
-effects and its gear's resistance let through (`pvpGuard.js:"export function pvpWardKept("`, the report's `w`). The
-referee holds each share to at least 10 - the plan's "resist max 90" - and takes it before PVP-HIT's cap
-(`refereeHealthShare.js:"export function wardedCast("`). The saving throw stays the caster's roll on the neutral stand-in.
+effects let through, then its own saving throw - race, Willpower and gear, as a monster's spell meets it - summed over
+the dice (`spellcast.js:"export function savedShare("`; `pvpGuard.js:"export function pvpWardKept("`, the report's
+`w`). The caster's stand-in rolls no save. The referee holds each share to at least 10 - the plan's "resist max 90" - and
+takes it before PVP-HIT's cap (`refereeHealthShare.js:"export function wardedCast("`).

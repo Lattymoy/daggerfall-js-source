@@ -54,24 +54,6 @@
     ]
   },
   {
-    "name": "PVP-WARD-the-gear-unread",
-    "file": "src/combat/pvpGuard.js",
-    "old": "    const resist = elementalResistanceChance(entity, el) + entityResistMod(entity, [name]);",
-    "new": "    const resist = elementalResistanceChance(entity, el);",
-    "tests": [
-      "test/combat/pvp_guard.test.js"
-    ]
-  },
-  {
-    "name": "PVP-WARD-another-elements-chance",
-    "file": "src/combat/pvpGuard.js",
-    "old": "    const resist = elementalResistanceChance(entity, el) + entityResistMod(entity, [name]);",
-    "new": "    const resist = elementalResistanceChance(entity, 0) + entityResistMod(entity, [name]);",
-    "tests": [
-      "test/combat/pvp_guard.test.js"
-    ]
-  },
-  {
     "name": "PVP-WARD-the-ward-unread",
     "file": "src/net/siege/siegeRef.js",
     "old": "  const hurt = wardedCast(to, el, want);   // PVP-WARD: the target's resistance first",
@@ -87,6 +69,42 @@
     "new": "    share.ward = report.ward.map((n) => Math.max(0, Math.min(PVP_WARD.max, Math.trunc(Number(n) || 0))));   // PVP-WARD",
     "tests": [
       "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-WARD-the-throw-unread",
+    "file": "src/combat/pvpGuard.js",
+    "old": "    const lands = sc.immune ? 0 : savedShare(sc.chance);",
+    "new": "    const lands = 100;",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-WARD-another-elements-chance",
+    "file": "src/combat/pvpGuard.js",
+    "old": "    const sc = savingChance(el, elementFlag(el), entity);",
+    "new": "    const sc = savingChance(0, elementFlag(0), entity);",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-WARD-the-dice-unprorated",
+    "file": "src/systems/spellcast.js",
+    "old": "roll > saving ? 100 : saving - 20 <= roll ? 100 - 5 * (saving - roll) : 0;",
+    "new": "roll > saving ? 100 : 0;",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-WARD-the-stand-in-saves",
+    "file": "src/combat/siegeCombat.js",
+    "old": "  if (harmful && !run({ ...harmful, rangeType: 0 }, {",
+    "new": "  if (harmful && !run(harmful, {",
+    "tests": [
+      "test/systems/auditcc_pvp.test.js"
     ]
   }
 ]

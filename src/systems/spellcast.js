@@ -160,6 +160,16 @@ export function savingChance(element, effectFlags, target, modifier = 0, pierce 
   return { immune: false, chance: saving };
 }
 
+/** PVP-WARD: what of a spell a saving chance of `saving` lets land on average, per cent - savingThrow's dice summed (a
+ *  roll over it lands whole; within 20 of it prorated; else nothing). */
+export function savedShare(saving) {
+  let sum = 0;
+  for (let roll = 1; roll <= 100; roll++) sum += roll > saving ? 100 : saving - 20 <= roll ? 100 - 5 * (saving - roll) : 0;
+  return sum / 100;
+}
+/** PVP-WARD: the effect flag a spell of `element` saves with (ELEMENT_EFFECT_FLAG). */
+export const elementFlag = (element) => ELEMENT_EFFECT_FLAG[element] ?? EFFECT_FLAGS.Magic;
+
 export function savingThrow(element, effectFlags, target, modifier = 0, rolls = Math.random, pierce = 0) {
   // X1: ELEMENTAL RESISTANCE comes FIRST and is absolute - DFU tests
   // the resistance flag at the very top of SavingThrow (FH:1442-1452)

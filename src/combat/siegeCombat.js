@@ -55,7 +55,7 @@ export function pvpFirstEffect(sp) {
 
 /**
  * THE NUMBERS A SPELL CARRIES TO THE REFEREE: `{ harm, heal }` - what its harmful families (duelSpellOf) deal at once (at
- * its own range, its save rolled as any caster's spell's) and what its Heal Health restores (as ALLY-CAST's receiver
+ * its own range, no save rolled - PVP-WARD: the target's own throw rides its report) and what its Heal Health restores (as ALLY-CAST's receiver
  * lands a gift: a self-cast, no save), landed through `apply` (systems/effects.js applySpell) at `level` on `standIn` (the
  * neutral one, combat/duelCombat.js duelStandIn - AUDIT C&C H5: a body of the caster's own sheet saved against its spell
  * with its own willpower and race; the target's protections are not a number this client has; the referee clips), `caster`
@@ -74,7 +74,8 @@ export function siegeSpellNumbers(sp, level, standIn, caster = null, { apply = a
   // PVP-SPELLS: the first effect alone, of the PvP families (pvpFirstEffect)
   const first = pvpFirstEffect(sp);
   const harmful = first && first.type !== 10 ? duelSpellOf({ ...sp, effects: [first] }) : null;
-  if (harmful && !run(harmful, { hurt: count('harm'), heal: none, drainFatigue: none, restoreFatigue: none, drainMagicka: none, restoreMagicka: none })) harm = 0;
+  // PVP-WARD: no save on the stand-in - the target's own throw is in its report (combat/pvpGuard.js pvpWardKept)
+  if (harmful && !run({ ...harmful, rangeType: 0 }, { hurt: count('harm'), heal: none, drainFatigue: none, restoreFatigue: none, drainMagicka: none, restoreMagicka: none })) harm = 0;
   // its Heal Health (effects.js isHealHealth) landed as ALLY-CAST lands a gift - a self-cast (rangeType 0), no save rolled
   if (first?.type === 10 && !run({ ...sp, rangeType: 0, effects: [first] }, { hurt: none, heal: count('heal'), drainFatigue: none, restoreFatigue: none, drainMagicka: none, restoreMagicka: none })) heal = 0;
   return { harm: Math.round(harm), heal: Math.round(heal) };

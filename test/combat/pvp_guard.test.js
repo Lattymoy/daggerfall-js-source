@@ -10,6 +10,7 @@ import { pvpArmorKept, pvpWardKept } from '../../src/combat/pvpGuard.js';
 import { pvpSpellElement, pvpCastFrame } from '../../src/combat/siegeCombat.js';
 import { PVP_GUARD, PVP_WARD, guardedBlow, wardedCast, takeHealthReport, HEALTH_SHARE_WHOLE } from '../../src/net/siege/refereeHealthShare.js';
 import { SIEGE_HIT, SIEGE_UNITS_PER_M, newFighter, refereeBlow, refereeCast, pvpBlowKind } from '../../src/net/siege/siegeRef.js';
+import { savedShare } from '../../src/systems/spellcast.js';
 import { validVitIn, validDuelData, validSiegeIn, VIT_GUARD_MAX, PVP_ELEMENTS } from '../../src/net/wire.js';
 import { createRefereeHealthMirror } from '../../src/net/siege/refereeHealthMirror.js';
 
@@ -78,12 +79,16 @@ test('PVP-GUARD: the mirror sends my shares and reports again when my armour cha
   assert.deepEqual(sent.at(-1).g, [34, 40, 30]);
 });
 
-test('PVP-WARD: the resistances a body reports - its Resist effects and its gear, per element (mutants: the gear unread; an element\'s chance read for another)', () => {
+test('PVP-WARD: what of a player\'s spell lands on a body - its Resist effects first, then its own saving throw: race, Willpower and gear, as a monster\'s spell meets it (mutants: the throw unread; an element\'s chance read for another)', () => {
   assert.equal(PVP_ELEMENTS, 5);
-  assert.deepEqual(pvpWardKept(body()), [100, 100, 100, 100, 100], 'none: whole');
+  assert.deepEqual([5, 50, 60, 95].map(savedShare), [99.5, 60.5, 50.5, 15.5], 'the throw\'s dice, summed');
+  assert.deepEqual(pvpWardKept(body()), [56, 56, 56, 56, 56], 'Willpower 50: a saving chance of 55');
+  assert.deepEqual(pvpWardKept(body(100)), [51, 51, 51, 51, 51], 'Willpower 100: 60');
+  assert.deepEqual(pvpWardKept({ ...body(100), raceId: 1 }), [51, 51, 51, 51, 21], 'a Breton: +30 against magic');
+  assert.deepEqual(pvpWardKept({ ...body(100), raceId: 3 }), [51, 21, 51, 51, 51], 'a Nord: against frost');
   const warded = { ...body(), activeEffects: [{ kind: 'elementalResistance', element: 0, chance: 60 }, { kind: 'elementalResistance', element: 3, chance: 200 }] };
-  assert.deepEqual(pvpWardKept(warded), [40, 100, 100, 0, 100], 'fire 60%, shock past whole');
-  assert.deepEqual(pvpWardKept({ ...body(), _mods: { resist: { frost: 25, magic: 15 } } }), [100, 75, 100, 100, 85], 'the gear\'s resistance');
+  assert.deepEqual(pvpWardKept(warded), [22, 56, 56, 0, 56], 'a Resist effect first: fire 60%, shock past whole');
+  assert.deepEqual(pvpWardKept({ ...body(), _mods: { resist: { frost: 25, magic: 15 } } }), [56, 31, 56, 56, 41], 'the gear\'s resistance, on the throw');
   assert.deepEqual([pvpSpellElement({ element: 0 }), pvpSpellElement({ element: 3 }), pvpSpellElement({}), pvpSpellElement({ element: 9 })], [0, 3, 4, 4]);
   assert.deepEqual(pvpCastFrame([1, 2, 3], 50.4, { element: 1 }), { p: [1, 2, 3], d: 50, el: 1 });
 });

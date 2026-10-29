@@ -138,7 +138,7 @@ test('AUDIT C&C H5 A SPELL\'S HARM IS COUNTED ON THE NEUTRAL STAND-IN: the caste
   const strong = mintPlayer();
   fortify(strong, 'willpower', 49);
   assert.equal(liveStat(strong, 'willpower'), 100);
-  assert.deepEqual([sum(casts(e, bolt(4), 200)), sum(casts(e, bolt(0), 200)), sum(casts(e, bolt(1), 200)), sum(casts(strong, bolt(4), 200))], [2361, 2361, 2361, 2361], 'harm of 200 bolts each');
+  assert.deepEqual([sum(casts(e, bolt(4), 200)), sum(casts(e, bolt(0), 200)), sum(casts(e, bolt(1), 200)), sum(casts(strong, bolt(4), 200))], [4000, 4000, 4000, 4000], 'harm of 200 bolts each');   // PIN MOVED (PVP-WARD): no save rolled on the stand-in - the target's own throw rides its report (was 2,361)
   const DISINTEGRATE = buildCustomSpell({ slots: [{ type: 5, subType: 255, settings: { chanceBase: 100 } }], rangeType: 1, element: 4, name: 'Disintegrate' });
   const hurt = mintPlayer();
   hurt.health = 5;

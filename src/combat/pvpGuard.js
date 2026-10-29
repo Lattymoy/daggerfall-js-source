@@ -8,11 +8,10 @@
 import { PCAAO_BODY_PARTS, pcaaoNaturalDamageResistance, pcaaoPartKept, pcaaoModules } from './pcaao.js';
 import { PVP_GUARD_KINDS } from '../net/siege/refereeHealthShare.js';
 import { VIT_GUARD_MAX } from '../net/wire.js';
-import { elementalResistanceChance } from '../systems/spellcast.js';
-import { entityResistMod } from '../systems/entityMods.js';
+import { elementalResistanceChance, savingChance, savedShare, elementFlag } from '../systems/spellcast.js';
 
-/** DFU's elements in order (fire 0, frost 1, poison 2, shock 3, magic 4), by the name the gear's resistance reads. */
-const ELEMENT_NAMES = Object.freeze(['fire', 'frost', 'poison', 'shock', 'magic']);
+/** DFU's elements, fire 0, frost 1, poison 2, shock 3, magic 4. */
+const ELEMENTS = Object.freeze([0, 1, 2, 3, 4]);
 
 /** The share of a blow `entity`'s armour lets through, per cent, for each of PVP_GUARD_KINDS (edged, blunt, unarmed). */
 export function pvpArmorKept(entity, modules = pcaaoModules()) {
@@ -23,11 +22,14 @@ export function pvpArmorKept(entity, modules = pcaaoModules()) {
   });
 }
 
-/** PVP-WARD: the share of a player's spell `entity`'s resistances let through, per cent, for each element - its Resist
- *  effects' chance and its gear's resistance, the referee's floor of 10 its "resist max 90". */
+/** PVP-WARD (the owner: "race and willpower need to work"): what of a player's spell lands on `entity`, per cent, for each
+ *  element, on average - its Resist effects' chance first, then its own saving throw (race, Willpower, career, biography,
+ *  gear), as a monster's spell meets it (systems/spellcast.js savingThrow). The referee's floor of 10 is "resist max 90". */
 export function pvpWardKept(entity) {
-  return ELEMENT_NAMES.map((name, el) => {
-    const resist = elementalResistanceChance(entity, el) + entityResistMod(entity, [name]);
-    return Math.max(0, Math.min(100, Math.round(100 - resist)));
+  return ELEMENTS.map((el) => {
+    const resisted = Math.min(100, elementalResistanceChance(entity, el));
+    const sc = savingChance(el, elementFlag(el), entity);
+    const lands = sc.immune ? 0 : savedShare(sc.chance);
+    return Math.max(0, Math.min(100, Math.round(((100 - resisted) * lands) / 100)));
   });
 }
