@@ -1141,7 +1141,7 @@ import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBob
 import { createClimbFeelHost } from '../player/climb/climbFeel.js';   // CLIMB4: the climb's camera
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hud/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, actionsOf, actionOf, held, moveHeld, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS, swingKeyHeld } from '../ui/input.js';
+import { keyEdges, noteKeyDown, noteKeyUp, letGoOnBlur, beginInputFrame, pressed, released, actionsOf, actionOf, held, moveHeld, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS, swingKeyHeld } from '../ui/input.js';
 import { armUnloadGuard, releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game; AUDIT-MACL F3: ...and down for a door the game opened itself
 import { codeMeans, getBinding, codeForAction, getJoystickUIBinding, HELM_RUDDER_ACTIONS } from '../systems/inputActions.js';   // AUDIT-TO1 H2: the help's TravelMap binding, read through the store's own accessor   // FIX-E: the overlay's QuickLoad read, off the code alone   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { buttonText } from '../systems/controlsConfig.js';   // AUDIT DEEP T1-12: the travel view's hint names the bound keys as the Controls page does
@@ -16226,6 +16226,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // open); null offline and while no gate is marked, and both maps draw nothing
       gate: () => gateOmen?.mapMark() ?? null,
       gates: () => gateOmen?.mapMarks() ?? [],   // WW2: every lane's ring past the Bay
+      fronts: () => (_sharedClockHeard && gateOmen?.lanesOk() ? battleNowMs() : null),   // FRONTS: the card's line for a place past the Bay
       // EVENT-TIP (Mac: "add a tooltip to the map for these type of events"): THE TOWNS UNDER ATTACK - every raid
       // running now on the raids' own clock, at its town, with the card a hover asks for (ui/eventMapMarks.js). A
       // function for the gate's reason; none while the mod is off. The enhanced map alone draws them.
@@ -16497,6 +16498,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         pixel: playerTravelPixel(),
         gate: { place: gateOmen?.current?.()?.site?.place ?? null, site: gateOmen?.current?.()?.site ?? null, fellAt: (day) => gateLink?.fellAt?.(day) ?? null },
         gates: (gateOmen?.currents() ?? []).filter((x) => x.lane && x.c.site).map(({ lane, c }) => ({ lane, place: c.site.place, site: c.site })),   // WW2: every lane's past the Bay that found its site
+        fronts: !!gateOmen?.lanesOk(),   // FRONTS: the provinces' turns, where the provinces stand events
         // SERPENT-TIMERS: the sea serpent - the port it lies off as the omen found it, and its kill at this machine's site
         serpent: { place: serpentOmen?.current?.()?.site?.near ?? null, site: serpentOmen?.current?.()?.site ?? null, fellAt: (day) => { const site = serpentOmen?.current?.()?.site; return site && site.day === day ? serpentLink?.fellAt?.(day, site) ?? null : null; } },
         // SD2c: the Super dungeon - the hub's record, its name and its city (the row's own law asks the phase: a row once found)
@@ -17067,6 +17069,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // movement Set since the first host and never told the open window
   // anything; DFU's buttons hear both edges (Button.cs:79-92) and the
   // travel popup's EXIT is the deferral that needs the release.
+  letGoOnBlur(keys, latch.edge);   // KEYS-BLUR: a key held as the page lost focus is let go
   addEventListener('keyup', (e) => { keys.delete(e.code); noteKeyUp(latch.edge, e.code); peerMenuReader?.up(e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'Escape' && escRelock) { const r = escRelock; escRelock = null; r(); } if (e.code === 'AltLeft') e.preventDefault(); townTalk.keyup(e); modes?.keyup?.(e); });   // ROAD-E E1: the up seam reaches BOTH slots this host feeds - the outer overlay and the mode machine's
   // U45: Actions.ActivateCursor (Enter) - PlayerMouseLook.cursorActive,
   // bound since I1 with no consumer, and the flag the large HUD's

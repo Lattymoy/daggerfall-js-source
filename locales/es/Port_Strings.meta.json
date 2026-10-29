@@ -2094,6 +2094,11 @@
   "tr": "da2e51f2d6a4",
   "by": "claude-in-session"
  },
+ "account.refusal.lineageInUse": {
+  "en": "b210f6197958",
+  "tr": "26c53cbabcf3",
+  "by": "claude-in-session"
+ },
  "account.refusal.lineageLaw": {
   "en": "fcdea82bce37",
   "tr": "163355efcdfe",
@@ -3735,8 +3740,8 @@
   "by": "claude-in-session"
  },
  "account.refusal.tooManyLineages": {
-  "en": "04ee7a4c73e9",
-  "tr": "c6efe0b86b98",
+  "en": "5f69291d1652",
+  "tr": "4b06a07bde57",
   "by": "claude-in-session"
  },
  "account.refusal.tooManySaves": {
@@ -13589,6 +13594,36 @@
   "tr": "cc215143934c",
   "by": "claude-in-session"
  },
+ "fronts.card.next": {
+  "en": "5024e013d6b4",
+  "tr": "8da970c7c0f1",
+  "by": "claude-in-session"
+ },
+ "fronts.card.now": {
+  "en": "2f28fa4a2817",
+  "tr": "2be4ad04452e",
+  "by": "claude-in-session"
+ },
+ "fronts.timers.next": {
+  "en": "7e237b9868ce",
+  "tr": "a940aec7c505",
+  "by": "claude-in-session"
+ },
+ "fronts.timers.now": {
+  "en": "ad207e489d32",
+  "tr": "49fe9fc7aa59",
+  "by": "claude-in-session"
+ },
+ "fronts.timers.nowSub": {
+  "en": "92ad0d959bd5",
+  "tr": "4eadd275a3c6",
+  "by": "claude-in-session"
+ },
+ "fronts.timers.then": {
+  "en": "6b1314ffe651",
+  "tr": "238dc6a93b63",
+  "by": "claude-in-session"
+ },
  "gate.arsenal.branded": {
   "en": "7b9321e45770",
   "tr": "d1283f44e3e7",
@@ -20759,6 +20794,36 @@
   "tr": "92033624f142",
   "by": "claude-in-session"
  },
+ "menu.realm.families": {
+  "en": "862a863ff592",
+  "tr": "9d0613ab27b3",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familiesHide": {
+  "en": "34d8b60fe253",
+  "tr": "4f58415a4d62",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familiesShow": {
+  "en": "d97d1ee339e4",
+  "tr": "906dc61756b8",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyRemoved": {
+  "en": "2cbcaf937fc9",
+  "tr": "9006ec749009",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyRow": {
+  "en": "5e293ce32dbd",
+  "tr": "7b6cdc4bebe3",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyUnnamed": {
+  "en": "9b115c99b1da",
+  "tr": "4b9a18b3e746",
+  "by": "claude-in-session"
+ },
  "menu.realm.heading": {
   "en": "81480a8e85a4",
   "tr": "3637518d5df3",
@@ -20782,6 +20847,26 @@
  "menu.realm.play": {
   "en": "5d12bd53552c",
   "tr": "06d92aef3735",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamily": {
+  "en": "a53c064ca700",
+  "tr": "5c70cf597202",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyAsk": {
+  "en": "5694f452ab8b",
+  "tr": "3d98eb0c1bbd",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyBody": {
+  "en": "c055ce52aa9e",
+  "tr": "61290232430a",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyYes": {
+  "en": "e963907dac5c",
+  "tr": "54e140f9f073",
   "by": "claude-in-session"
  },
  "menu.realm.strandedAsk": {

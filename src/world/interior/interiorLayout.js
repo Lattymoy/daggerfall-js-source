@@ -35,6 +35,7 @@
 // they are pure layout data, position-only.
 
 import { ROTATION_DIVISOR } from '../../formats/blocksFile.js';
+import { aliasTurnOf } from '../customModels.js';   // BED-TURN: a mod's piece drawn on a classic mesh that faces another way
 import { GLOBAL_SCALE, DOOR_TYPE } from '../meshReader.js';   // MAC-BUG1: a synthesised exit is a BUILDING door like any other
 import { EDITOR_FLATS_ARCHIVE } from '../rmbFlats.js';
 import { getStaticDoors } from '../staticDoors.js';
@@ -224,7 +225,7 @@ export function layoutInterior(dfBlock, blockIndex, recordIndex, getModel) {
     const matrix = trs(
       px, py, pz,
       -obj.xRotation / ROTATION_DIVISOR,
-      -obj.yRotation / ROTATION_DIVISOR,
+      -(obj.yRotation + aliasTurnOf(obj.modelIdNum)) / ROTATION_DIVISOR,
       -obj.zRotation / ROTATION_DIVISOR,
       ...modelScaleVector(obj),
     );

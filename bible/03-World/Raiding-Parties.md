@@ -10,7 +10,7 @@ questions, Mac answered "1. Server 2. Keep 3. We can also add renown and it's ow
 ## What it does
 
 Each game day, towns across the Iliac Bay are raided (and, since WW6, the towns of every province past it - each
-province's own day, below). The roll picks a region evenly among the travel map's regions
+province's own day, below; since FRONTS, online, the day's two provinces alone - `03-World/World-Wide.md` FRONTS). The roll picks a region evenly among the travel map's regions
 that hold a city, hamlet or village, then a town evenly in that region; a town is raided at most once a day. Each raid
 starts between 00:00 and 22:00, lasts two game hours (ten real minutes), and brings one party - knights (Knights),
 bandits (Rogue 50%, Thief 30%, Burglar 20%) or orcs (Orc 70%, Sergeant 25%, Warlord 5%) - with 15 to 25 deaths to
@@ -500,7 +500,8 @@ The owner's call taken (2026-10-26: *"Every single thing here needs to be addres
   generator (`net/raid/raidLaw.js raidDayRandom(day, lane)`), its towns the world's registry's listed towns there grouped by
   AREA - the province's districts, what a region is to the Bay's draw (`systems/raidingParties.js raidLaneGroups`; a capital
   one town, its centre) - each keyed by its own location index (`64:-1000124:600` - Torbarke in Skyrim), at the mod's pace
-  (half a raid an area a game day: 125 a day past the Bay on the freeware beside the Bay's 22). Cyrodiil, the open zone,
+  (half a raid an area a game day: 125 a day past the Bay on the freeware beside the Bay's 22; online since FRONTS, 29 to
+  33). Cyrodiil, the open zone,
   stands none (the owner's call, taken 2026-10-26: no site-bound world event in the open PvP zone).
 - **The province's own parties.** A lane draws the mod's parties its province's fauna stands (TESA-BIOME's rosters,
   `RAID_LANE_PARTIES`): High Rock all three (Orsinium's orcs), Valenwood bandits and orcs (Malabal Tor's), Morrowind and

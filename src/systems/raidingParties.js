@@ -97,7 +97,7 @@ import { ORDERS } from './guild/guildVariants.js';
 import { GUILDS } from './guild/guilds.js';
 import { renownStruckAt } from '../net/renownTracker.js';
 import { raidRunnerOf, validRaidWords, validRaidObjWords, RAID_WORD_STALE_MS, RAID_WORDS_MAX, RAID_CLAIM_AGE_MAX, raidTownIs } from '../world/raidShared.js';   // RAID2: the online arm's law, shared with the foes pool; WW6: a raid's town, the Bay's or past it
-import { RAID_WORD_MS, RAID_WORD_KILLS_MAX, raidSig, rollRaidTowns, raidDayRandom, raidsPerDay, raidTownsCanon, raidTownsHash, raidLaneOfRegion, raidLaneOpen, raidLaneParties, raidLaneCount, RAID_LANES_BEYOND } from '../net/raid/raidLaw.js';   // RAID3: the relay's ledger's law; RAID-ROLL: the day's roll, the relay's too; WW6: a lane a theatre
+import { RAID_WORD_MS, RAID_WORD_KILLS_MAX, raidSig, rollRaidTowns, raidDayRandom, raidsPerDay, raidTownsCanon, raidTownsHash, raidLaneOfRegion, raidLaneOpen, raidLaneStands, raidLaneParties, raidLaneCount, RAID_LANES_BEYOND } from '../net/raid/raidLaw.js';   // RAID3: the relay's ledger's law; RAID-ROLL: the day's roll, the relay's too; WW6: a lane a theatre
 import { inBay } from '../world/tamriel/tamrielFrame.js';   // WW6: the Bay's own map
 import { areaAt } from '../world/worldWide/worldGrid.js';   // WW6: the area a raid is told of past the Bay - a province's district
 import { readRaidReceipt } from '../net/raid/raidReceipt.js';
@@ -289,8 +289,10 @@ export function rollRaids(day, regions, count, random, parties = undefined) {
  *  dayRng for the raids' salt - the relay's one copy), the count off the pace. */
 export const raidsForDay = (day, regions) => rollRaids(day, regions, raidsPerDay(regions?.length ?? 0), raidDayRandom(day));
 /** WW6: A LANE'S DAY - its own generator (raidDayRandom's lane), its pace (half a raid an area, raidLaw.js raidLaneCount),
- *  its own parties - off its towns (raidLaneGroups). @param {number} day @param {number} lane @param {ReadonlyArray<any>} groups */
-export const raidsForLane = (day, lane, groups) => rollRaids(day, groups, raidLaneCount(groups?.length ?? 0), raidDayRandom(day, lane), raidLaneParties(lane));
+ *  its own parties - off its towns (raidLaneGroups). FRONTS: none on a day off its province's turn (raidLaneStands) -
+ *  online alone (`fronted`): the turns are the shared clock's, and an offline save's days are its own (AUDIT FRONTS B6).
+ *  @param {number} day @param {number} lane @param {ReadonlyArray<any>} groups @param {boolean} [fronted] */
+export const raidsForLane = (day, lane, groups, fronted = true) => (fronted && !raidLaneStands(day, lane) ? [] : rollRaids(day, groups, raidLaneCount(groups?.length ?? 0), raidDayRandom(day, lane), raidLaneParties(lane)));
 /** WW6: where a raid is told of (its announcement, its withdrawal, the board's card): its AREA - on the Bay its region,
  *  as RAID1 has it, past the Bay its province's district. @param {{ area?: number, regionIndex: number }} raid */
 export const raidHome = (raid) => (Number.isInteger(raid?.area) ? /** @type {number} */ (raid.area) : raid.regionIndex);
@@ -506,7 +508,7 @@ function laneGroupsNow(lane) {
   return g;
 }
 /** Every lane past the Bay's raids for a day. @param {number} day */
-const lanesForDay = (day) => RAID_LANES_BEYOND.flatMap((lane) => raidsForLane(day, lane, laneGroupsNow(lane)));
+const lanesForDay = (day) => RAID_LANES_BEYOND.flatMap((lane) => raidsForLane(day, lane, laneGroupsNow(lane), sharedClockOn()));
 /** A raid's identity: its key and its tuple (AUDIT RAID R1's - the relay's ledger's too). */
 const raidIdOf = (raid) => `${raidKey(raid)}|${raidSigOf(raid)}`;
 /** Whatever the runtime kept of a raid that leaves the list (its words, the relay's, its objective's). */
@@ -525,7 +527,7 @@ function forgetRaid(r) {
 function syncLanes() {
   const day = state.lastSelectedDay;
   if (day < 0) return;
-  const sig = `${day}|${placesGen()}`;
+  const sig = `${day}|${placesGen()}|${sharedClockOn() ? 1 : 0}`;   // AUDIT FRONTS B6: the fronts online alone
   if (_laneSig === sig) return;
   _laneSig = sig;
   const held = new Map(state.raids.filter((r) => raidLaneOfRegion(r.regionIndex) > 0).map((r) => [raidIdOf(r), r]));
@@ -1521,13 +1523,13 @@ export function raidTimerList(relayOf, regionName = () => '', aheadMs = 0) {
   const next = state.lastSelectedDay + 1, now = (host().now ?? worldMinutes)(), turn = next * MINUTES_PER_DAY;
   if (aheadMs > 0 && Number.isFinite(next) && turn > now && relayOf(turn) - relayOf(now) <= aheadMs) {
     const gen = placesGen();   // WW6: and the lanes past the Bay's next day, as the registry holds their towns now
-    if (_ahead.day !== next || _ahead.gen !== gen) { const regions = regionsNow(); if (regions) _ahead = { day: next, gen, raids: [...raidsForDay(next, regions).filter((r) => !isWildRegion(r.regionIndex)), ...lanesForDay(next)] }; }
+    if (_ahead.day !== next || _ahead.gen !== gen || _ahead.on !== sharedClockOn()) { const regions = regionsNow(); if (regions) _ahead = { day: next, gen, on: sharedClockOn(), raids: [...raidsForDay(next, regions).filter((r) => !isWildRegion(r.regionIndex)), ...lanesForDay(next)] }; }
     if (_ahead.day === next) out.push(..._ahead.raids.map(row));   // the regions not read yet: asked again next read
   }
   return out;
 }
 /** AUDIT EVENTS1 A4: the next day's roll, made once a day for raidTimerList (WW6: and again when the registry's places move). */
-let _ahead = { day: NaN, gen: NaN, raids: [] };
+let _ahead = { day: NaN, gen: NaN, on: false, raids: [] };
 /** AUDIT EVENTS1 A8 / C7: the region the raids count the player in - PlayerGPS.CurrentRegionIndex less the sea and the
  *  Eltheric Ocean (fix 8, AUDIT CAPTAIN'S SEA G7: the host's own `regionIndex`) - -1 where none. */
 export const raidRegionNow = () => { try { return host().regionIndex?.() ?? -1; } catch { return -1; } };
@@ -1565,7 +1567,7 @@ export function _resetRaidingParties() {
   state = newRaidSaveData(); _live = []; _pending = null; _nextSpawnIn = 0; _nextDefenderIn = 0; _sweepIn = 0;
   _lastRegion = -1; _regions = null; _host = null; _laneGen = NaN; _laneGroups = new Map(); _laneSig = null; _installed = false; _townsText = null; _townsHash = null;
   _peerWords = new Map(); _myClaims = new Map(); _unclaimedSince = new Map();
-  _relay = new Map(); _receipts = new Map(); _lastWord = null; _ahead = { day: NaN, gen: NaN, raids: [] }; _staffBoards.clear(); _pupKilled = new WeakSet(); _pack = null; _packTurn = 0; _bossMisses = 0;
+  _relay = new Map(); _receipts = new Map(); _lastWord = null; _ahead = { day: NaN, gen: NaN, on: false, raids: [] }; _staffBoards.clear(); _pupKilled = new WeakSet(); _pack = null; _packTurn = 0; _bossMisses = 0;
   _peerObj = new Map(); _held = [];   // RAID5
 }
 /** Test seam: the runtime, read-only. */

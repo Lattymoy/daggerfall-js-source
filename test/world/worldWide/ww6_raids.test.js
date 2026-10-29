@@ -62,6 +62,7 @@ import { fakeRooms } from '../../fakeRoom.mjs';
 import { OnlineSession } from '../../../src/net/online.js';
 import { fakeSocketClass } from '../../fakeSocket.mjs';
 import { codeOnly } from '../../codeOnly.mjs';
+import { frontStands, frontNextDay } from '../../../src/net/frontLaw.js';   // FRONTS: a province's raids on its turn alone
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const subtle = globalThis.crypto.subtle;
@@ -73,6 +74,8 @@ setTamrielTrace(null); setTamrielFit(null);   // the authored shape and fit: no 
 const at = (name) => { const c = CITIES.find((x) => x.name === name); const [x, y] = pictureToBay(c.at[0], c.at[1]).map(Math.floor); return { x, y }; };
 
 const D = 600;   // the raids' day
+/** PIN MOVED: FRONTS - day 600 is Morrowind's and Summerset's turn; Skyrim's raids are read on its next, 601. */
+const SKY = frontNextDay(D, 3);
 const T = LOCATION_TYPES;
 /** A province's towns as TESA's providers register them (world/pastBayRows.js): an Arena place by its own id and index. */
 const arenaRow = (name, provinceIndex, id, type = T.TownCity, nudge = [0, 0]) => {
@@ -208,8 +211,12 @@ test('WW6 a lane\'s day: its own generator (the Bay\'s untouched), its raids eac
   assert.equal([r0(), r0(), r0()].join(','), salted(DAY_SALT.raids), 'the Bay\'s lane is the raids\' own salt');
   assert.equal(RAID_LANE_SALT >>> 0, 0x85ebca6b);
   for (const lane of RAID_LANES_BEYOND) {
+    let turns = 0;
     for (let day = D; day < D + 20; day++) {
       const raids = raidsForLane(day, lane, groups), slots = raidDaySlots(day, lane);
+      // PIN MOVED: FRONTS - a lane rolls and the relay reads slots on its province's turn alone
+      if (!frontStands(day, lane)) { assert.deepEqual([raids.length, slots.size], [0, 0], `lane ${lane} day ${day}: off its turn`); continue; }
+      turns++;
       assert.equal(raids.length, 15, 'half a raid an area');
       for (const r of raids) {
         const w = { st: r.startMinute, tg: r.attackAmount, ty: r.type };
@@ -220,6 +227,7 @@ test('WW6 a lane\'s day: its own generator (the Bay\'s untouched), its raids eac
       }
       assert.ok(raids.filter((r) => raidOnSlot({ st: r.startMinute, tg: r.attackAmount, ty: r.type }, raidDaySlots(day))).length < raids.length, 'the Bay\'s slots are not its');
     }
+    assert.ok(turns >= 4, `lane ${lane}: a turn each four-day cycle (${turns})`);
   }
   assert.equal(raidDaySlots(D, RAID_ZONE_LANE).size, 0, 'the open zone draws none');
   assert.equal(raidDaySlots(D, 99).size, 0);
@@ -256,8 +264,8 @@ test('WW6 a lane\'s towns off the world\'s registry: its theatre\'s LISTED towns
 
 // ═══ THE CLIENT'S DAY ════════════════════════════════════════════════════════════════════════════
 
-const DAY_AT = (min) => D * MINUTES_PER_DAY + min;
-const bayRaid = (o = {}) => ({ regionIndex: 3, locationIndex: 7, startDay: D, locationName: 'Gothway Garden', type: 2, startMinute: DAY_AT(600), endMinute: DAY_AT(720), killed: 0, attackAmount: 15, cleansed: false, announced: false, struck: false, px: 200, py: 100, ...o });
+const DAY_AT = (min) => SKY * MINUTES_PER_DAY + min;   // PIN MOVED: FRONTS - the client's day a Skyrim turn
+const bayRaid = (o = {}) => ({ regionIndex: 3, locationIndex: 7, startDay: SKY, locationName: 'Gothway Garden', type: 2, startMinute: DAY_AT(600), endMinute: DAY_AT(720), killed: 0, attackAmount: 15, cleansed: false, announced: false, struck: false, px: 200, py: 100, ...o });
 function rig(places) {
   const at = { now: DAY_AT(0), region: 3, pixel: { x: 200, y: 100 }, town: null, places, relay: false };
   const log = { said: [], raiders: [], words: [] };
@@ -278,10 +286,10 @@ beforeEach(() => { _resetRaidingParties(); _resetModSettings(); setSharedClock(n
 test('WW6 the client\'s day: the lanes past the Bay rolled for the day the Bay\'s list was (the Bay\'s raids untouched), each kept by its key and tuple through a roll again, gone when the registry\'s places go, never one run out rolled back in, nor said; saved with its area and restored (mutants: the lanes never synced; a held raid replaced by its roll; a lane\'s raids kept with no places; a run-out raid rolled again withdrawn aloud; the area unsaved)', () => {
   const places = skyrim();
   const { at, log } = rig(places);
-  restoreRaidSaveData({ lastSelectedDay: D, raids: [bayRaid()] });
+  restoreRaidSaveData({ lastSelectedDay: SKY, raids: [bayRaid()] });
   const was = structuredClone(raidState().raids);
   raidFrame(0);
-  const lane = raidsForLane(D, 3, raidLaneGroups(places, 3, capitalStreet));
+  const lane = raidsForLane(SKY, 3, raidLaneGroups(places, 3, capitalStreet));
   assert.ok(lane.length > 0);
   assert.equal(raidState().raids.filter((r) => r.regionIndex < RAID_BAY_REGIONS).length, 1);
   assert.deepEqual(raidState().raids[0], was[0], 'the Bay\'s raid as it was');
@@ -309,7 +317,7 @@ test('WW6 the client\'s day: the lanes past the Bay rolled for the day the Bay\'
   at.region = 3; at.pixel = { x: 200, y: 100 };
   // saved with its area; the registry gone, the lane's raids go
   _resetRaidingParties(); rig(places);
-  restoreRaidSaveData({ lastSelectedDay: D, raids: [bayRaid()] });
+  restoreRaidSaveData({ lastSelectedDay: SKY, raids: [bayRaid()] });
   raidFrame(0);
   const saved = getRaidSaveData();
   const one = saved.raids.find((r) => r.regionIndex === 64);
@@ -328,7 +336,7 @@ test('WW6 the client\'s day: the lanes past the Bay rolled for the day the Bay\'
 test('WW6 the client\'s raid past the Bay: told in its AREA (a player in its district hears it, one elsewhere in the province not; on the Bay its region as ever), stood in its town by the town\'s own index, its word to the town\'s cell on the world\'s grid; the board\'s and the timers\' rows the player\'s own by area, a Bay raid\'s row the one it was (mutants: told to the province; the town matched by region; the home flag unread)', async () => {
   const places = skyrim();
   const { at, log } = rig(places);
-  restoreRaidSaveData({ lastSelectedDay: D, raids: [bayRaid({ startMinute: DAY_AT(0), endMinute: DAY_AT(1439) })] });   // a Bay raid the whole day, on the board beside it
+  restoreRaidSaveData({ lastSelectedDay: SKY, raids: [bayRaid({ startMinute: DAY_AT(0), endMinute: DAY_AT(1439) })] });   // a Bay raid the whole day, on the board beside it
   raidFrame(0);
   assert.deepEqual(log.said, [`Gothway Garden in ${REGION_NAMES[3]} is under attack by orcs!`], 'on the Bay, its region\'s as ever');
   log.said.length = 0;
@@ -379,7 +387,7 @@ test('WW6 the client\'s raid past the Bay: told in its AREA (a player in its dis
   assert.ok(word, 'said to the relay');
   assert.deepEqual(word.w, { k: 'w', key: raidKey(r), st: r.startMinute, tg: r.attackAmount, ty: r.type, px: r.px, py: r.py, n: 2, s: 0 });
   assert.equal(word.cell, worldRoom(r.px, r.py), 'the town\'s own cell past the Bay');
-  assert.ok(validRaidIn(word.w) && raidWordSane(word.w) && raidOnSlot(word.w, raidDaySlots(D, 3)), 'a word the relay takes');
+  assert.ok(validRaidIn(word.w) && raidWordSane(word.w) && raidOnSlot(word.w, raidDaySlots(SKY, 3)), 'a word the relay takes');
 });
 
 // ═══ THE RELAY ═══════════════════════════════════════════════════════════════════════════════════
@@ -394,7 +402,7 @@ const wordOf = (r, o = {}) => ({ k: 'w', key: raidKey(r), st: r.startMinute, tg:
 
 test('WW6 the relay: a raid past the Bay is kept in its town\'s cell as the Bay\'s is - made from its pixel, counted, cleansed once with a receipt naming the province\'s key; a word on the wrong side of the Bay\'s edge, of the open zone or off its lane\'s slots is no raid; the hub\'s pinned table (MAPS.BSA\'s) the Bay\'s lane\'s alone (mutants: the relay reads a lane against the Bay\'s slots; the hub\'s roll asked of a lane; the side unread)', async () => {
   const places = skyrim();
-  const r = raidsForLane(D, 3, raidLaneGroups(places, 3, capitalStreet))[0];
+  const r = raidsForLane(SKY, 3, raidLaneGroups(places, 3, capitalStreet))[0];   // PIN MOVED: FRONTS - Skyrim's turn
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pkcs8 = Buffer.from(await subtle.exportKey('pkcs8', kp.privateKey)).toString('base64');
   await onTheRelay(async ({ world, step, set }) => {
@@ -402,7 +410,7 @@ test('WW6 the relay: a raid past the Bay is kept in its town\'s cell as the Bay\
     cell.env.GATE_SIGNING_KEY = pkcs8;
     const a = cell.connect(); await quiet(() => cell.hello(a, 'peer-0001', poseOn(r.px, r.py)));
     const say = (o) => quiet(() => cell.raw(a, JSON.stringify({ t: 'raid', ...wordOf(r, o) })));
-    assert.equal(raidOnSlot(wordOf(r), raidDaySlots(D, 0)), false, 'its tuple its lane\'s alone - read against the Bay\'s slots it is none');
+    assert.equal(raidOnSlot(wordOf(r), raidDaySlots(SKY, 0)), false, 'its tuple its lane\'s alone - read against the Bay\'s slots it is none');
     await say({ s: 1 });
     const led = cell.store.get(raidLedgerKey(raidLedgerId(wordOf(r))));
     assert.ok(led, 'its ledger in the town\'s cell past the Bay');
@@ -416,19 +424,19 @@ test('WW6 the relay: a raid past the Bay is kept in its town\'s cell as the Bay\
     assert.ok(validRaidOut(out.find((m) => m.k === 'cl')), 'the client takes its word back');
     // the wrong side, the open zone, another lane's slots: no raid (struck, or dropped)
     const junk0 = a.meters.junk ?? 0;
-    await quiet(() => cell.raw(a, JSON.stringify({ t: 'raid', ...wordOf(r, { key: `3:7:${D}` }) })));
+    await quiet(() => cell.raw(a, JSON.stringify({ t: 'raid', ...wordOf(r, { key: `3:7:${SKY}` }) })));
     step(1000);   // the raid frames' own bucket
-    await quiet(() => cell.raw(a, JSON.stringify({ t: 'raid', ...wordOf(r, { key: `70:${r.locationIndex}:${D}` }) })));
+    await quiet(() => cell.raw(a, JSON.stringify({ t: 'raid', ...wordOf(r, { key: `70:${r.locationIndex}:${SKY}` }) })));
     assert.equal((a.meters.junk ?? 0) - junk0, 2, 'a Bay key past the Bay, a raid of the open zone: no honest machine\'s');
     // a tuple the Bay's day drew and the lane's never: on its pixel, in its window - no ledger
-    const [st, tg, ty] = [...raidDaySlots(D)][0].split('.').map(Number);
+    const [st, tg, ty] = [...raidDaySlots(SKY)][0].split('.').map(Number);
     const off = { ...wordOf(r), st, tg, ty };
-    assert.equal(raidOnSlot(off, raidDaySlots(D, 3)), false, 'the lane never drew it');
+    assert.equal(raidOnSlot(off, raidDaySlots(SKY, 3)), false, 'the lane never drew it');
     set(wallMsForClassicMinutes(st + 10));
     await quiet(() => cell.raw(a, JSON.stringify({ t: 'raid', ...off, s: 1 })));
     assert.equal(cell.store.has(raidLedgerKey(raidLedgerId(off))), false, 'a tuple the lane never drew: no ledger');
     // the hub's pinned roll names the Bay's raids alone - a lane past the Bay is never read against it
-    const r2 = raidsForLane(D, 3, raidLaneGroups(places, 3, capitalStreet))[1];
+    const r2 = raidsForLane(SKY, 3, raidLaneGroups(places, 3, capitalStreet))[1];
     set(wallMsForClassicMinutes(r2.startMinute + 10));   // inside its own window
     const cell2 = world.room(worldRoom(r2.px, r2.py));
     cell2.room._raidDayIdsOf = async () => new Set();
@@ -438,7 +446,10 @@ test('WW6 the relay: a raid past the Bay is kept in its town\'s cell as the Bay\
     // a cell at the Bay's edge holds both sides' raids: each lane-day its own slots, the Bay's by its day as before
     const edge = world.room(worldRoom(999, 200)).room;
     assert.deepEqual([...edge._raidSlotsOf(D, 0)], [...raidDaySlots(D)]);
-    assert.deepEqual([...edge._raidSlotsOf(D, 2)], [...raidDaySlots(D, 2)], 'not the Bay\'s, read first');
+    const H = frontNextDay(D, 2);   // PIN MOVED: FRONTS - Hammerfell's slots on its turn, none off it
+    assert.ok(raidDaySlots(H, 2).size > 0);
+    assert.deepEqual([...edge._raidSlotsOf(H, 2)], [...raidDaySlots(H, 2)], 'not the Bay\'s, read first');
+    assert.equal(edge._raidSlotsOf(D, 2).size, 0, 'off its turn: no slot');
     assert.deepEqual([...edge._raidSlotsOf(D)], [...raidDaySlots(D)]);
   }, r);
   const relay = codeOnly(rd('server/src/index.js'));
@@ -560,24 +571,25 @@ test('WW6 with ARENA2: every province\'s lane over the freeware\'s registry with
     places.register(BAY_SOURCE, bayPlaceRows(rows.filter((l) => l?.exterior?.exteriorData)));
     places.registerLive(PAST_BAY_SOURCE, { stamp: () => [arenaPixels()], rows: () => pastBayPlaceRows({ pixels: arenaPixels(), templateOf: (p) => arenaTemplateOf(aT, p), capitals: true }) });
     // every lane: its towns, its areas, its day's raids (measured on the freeware)
-    const lanes = Array.from({ length: RAID_LANES - 1 }, (_, i) => { const g = raidLaneGroups(places, i + 1, capitalStreet); return [PROVINCE_OF_ID[i + 1], g.reduce((s, x) => s + x.towns.length, 0), g.length, raidsForLane(D, i + 1, g).length]; });
+    const lanes = Array.from({ length: RAID_LANES - 1 }, (_, i) => { const g = raidLaneGroups(places, i + 1, capitalStreet); return [PROVINCE_OF_ID[i + 1], g.reduce((s, x) => s + x.towns.length, 0), g.length, raidsForLane(frontNextDay(D, i + 1), i + 1, g).length]; });   // PIN MOVED: FRONTS - a province's day's raids on its turn
     assert.deepEqual(lanes, [['HighRock', 29, 28, 14], ['Hammerfell', 31, 31, 16], ['Skyrim', 33, 33, 17], ['Morrowind', 31, 31, 16], ['Sumurset', 32, 30, 15], ['Valenwood', 31, 31, 16], ['Elsweyr', 31, 29, 15], ['BlackMarsh', 32, 31, 16], ['Imperial', 0, 0, 0]]);
+    for (let lane = 1; lane < RAID_LANES - 1; lane++) { const off = frontNextDay(D, lane) + 1; assert.equal(frontStands(off, lane), false); assert.equal(raidsForLane(off, lane, raidLaneGroups(places, lane, capitalStreet)).length, 0, `${PROVINCE_OF_ID[lane]}: none off its turn`); }
     for (let lane = 1; lane < RAID_LANES; lane++) for (const g of raidLaneGroups(places, lane, capitalStreet)) for (const t of g.towns) assert.ok(raidSideOk({ key: `${g.region}:${t.index}:${D}`, px: t.px, py: t.py }), `${t.name}: its own side`);
     // the Bay's roll on the real table the old law's, to the byte
     assert.deepEqual([bay.length, bay.reduce((s, g) => s + g.towns.length, 0)], [43, 3444]);
     for (let day = D; day < D + 30; day++) assert.deepEqual(rollRaidTowns(day, bay, raidsPerDay(bay.length), raidDayRandom(day)), OLD.roll(day, bay, raidsPerDay(bay.length), OLD.random(day)));
     // a raid on a Skyrim town
-    const r = raidsForLane(D, 3, raidLaneGroups(places, 3, capitalStreet))[0];
-    assert.deepEqual([raidKey(r), r.locationName, r.px, r.py, raidTypeName(r.type), r.startMinute, r.attackAmount], [`64:-1000124:${D}`, 'Torbarke', 2425, 270, 'bandits', 865294, 17]);
+    const r = raidsForLane(SKY, 3, raidLaneGroups(places, 3, capitalStreet))[0];   // PIN MOVED: FRONTS - Skyrim's turn, day 601
+    assert.deepEqual([raidKey(r), r.locationName, r.px, r.py, raidTypeName(r.type), r.startMinute, r.attackAmount], [`64:-1000102:${SKY}`, 'Falkreath', 1829, 139, 'bandits', 866233, 20]);   // was day 600's Torbarke (2425, 270)
     const word = wordOf(r, { n: 3, s: 1 });
     assert.deepEqual(parseClient(JSON.stringify({ t: 'raid', ...word }), { hasHello: true }), { t: 'raid', ...word }, 'the relay\'s parse');
-    assert.ok(raidWordSane(word) && raidOnSlot(word, raidDaySlots(D, 3)) && !raidOnSlot(word, raidDaySlots(D, 0)), 'its lane\'s slots, not the Bay\'s');
-    assert.equal(worldRoom(word.px, word.py), 'world:151,16');
+    assert.ok(raidWordSane(word) && raidOnSlot(word, raidDaySlots(SKY, 3)) && !raidOnSlot(word, raidDaySlots(SKY, 0)), 'its lane\'s slots, not the Bay\'s');
+    assert.equal(worldRoom(word.px, word.py), 'world:114,8');
     await onTheRelay(async ({ world }) => {
       const cell = world.room(worldRoom(r.px, r.py));
       const a = cell.connect(); await quiet(() => cell.hello(a, 'peer-0001', poseOn(r.px, r.py)));
       await quiet(() => cell.raw(a, JSON.stringify({ t: 'raid', ...wordOf(r, { s: 1 }) })));
-      assert.deepEqual(a.sent.filter((m) => m.t === 'raid').at(-1), { t: 'raid', k: 'st', key: raidKey(r), n: 0, tg: r.attackAmount, st: r.startMinute, c: 0, g: raidSig(word) }, 'the relay keeps Torbarke\'s raid');
+      assert.deepEqual(a.sent.filter((m) => m.t === 'raid').at(-1), { t: 'raid', k: 'st', key: raidKey(r), n: 0, tg: r.attackAmount, st: r.startMinute, c: 0, g: raidSig(word) }, 'the relay keeps Falkreath\'s raid');
     }, r);
     // a staff event at Solitude, as the picker offers it
     const sol = staffPlaces({ getRegion: () => null, getRegionName: (x) => REGION_NAMES[x] ?? '' }, 64, places).list.find((x) => x.name === 'Solitude');

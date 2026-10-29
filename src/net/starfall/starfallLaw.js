@@ -19,7 +19,8 @@
 // PURE, and the relay's too: it imports the wire's and the gate's law (both already the relay's) and the festival's
 // calendar (net/festivalLaw.js, a leaf but for the holiday tables). An edit here is an
 // edit to the relay's law (test/net/relayversion.test.js). Not a DFU member. Ledger A (STARFALL).
-import { PIXEL_UNITS, STAR_LEDGERS_MAX, STAR_LEDGERS_BY_MAX, STAR_IDLE_MS, STAR_WAVE_SIZE_OLD_MAX, siteEventLaneOpen, siteEventPixelOk } from '../wire.js';
+import { PIXEL_UNITS, STAR_LEDGERS_MAX, STAR_LEDGERS_BY_MAX, STAR_IDLE_MS, STAR_WAVE_SIZE_OLD_MAX, siteEventLaneOpen, siteEventPixelOk, sharedClassicMinutes } from '../wire.js';
+import { frontStands, frontDayOfMinute } from '../frontLaw.js';   // FRONTS: a province's stars on its turn alone
 import { gateHash, PIXEL_M, GATE_SPOT_SPREAD_M } from '../gate/gateLaw.js';
 import { festivalOpen } from '../festivalLaw.js';   // the festival's one calendar (a leaf beside the holiday tables)
 
@@ -81,8 +82,12 @@ export function starTimes(n, k) {
   const fallAt = n * STAR_HOUR_MS + STAR_FALLS_MS[starIndexOf(k)];   // WW5: every lane's star its place's instant
   return { omenAt: fallAt - STAR_OMEN_MS, streakAt: fallAt - STAR_STREAK_MS, fallAt, endAt: fallAt + STAR_LIFE_MS, goneAt: fallAt + STAR_LIFE_MS + STAR_AFTER_MS };
 }
-/** Whether a star of night `n` falls inside the window: its landing is the window's. */
-export const starInWindow = (n, k) => starOk(n, k) && starfallRuns(starTimes(n, k).fallAt);
+/** FRONTS (bible/03-World/World-Wide.md FRONTS): the game day a star's front is read on - the day it lands in. */
+export const starFrontDay = (n, k) => frontDayOfMinute(sharedClassicMinutes(starTimes(n, k).fallAt));
+/** Whether a star of night `n` falls inside the window: its landing is the window's. FRONTS: and a province's star lands
+ *  on its province's turn alone (net/frontLaw.js); the Bay's every night. starOk stays the shape alone, so a receipt
+ *  already minted reads as it did. */
+export const starInWindow = (n, k) => starOk(n, k) && starfallRuns(starTimes(n, k).fallAt) && frontStands(starFrontDay(n, k), starLaneOf(k));
 /** Whether a word about star (n, k) is heard at `nowMs`: from its landing to its deadline and the grace - inside the
  *  window. Before it lands there is nothing to defend; after its deadline nothing to move. */
 export function starHeard(n, k, nowMs) {
