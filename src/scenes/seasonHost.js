@@ -306,7 +306,7 @@ export function createSeasonHost(host) {
         F.pending--;
         if (fo && fissures.get(F.key) !== F) { foes.removeFoe?.(fo); return; }   // the fissure went while it stood
         if (fo) made(F, fo, colossus, campId);
-        if (fo && !woke) { woke = true; burst('fissure-wake', [F.heart[0], F.heart[1], F.heart[2]], { h: 2, w: 6 }); }
+        if (fo && !woke) { woke = true; burst('fissure-wake', [F.heart[0], F.heart[1], F.heart[2]], { h: 2, w: 6, dir: [Math.sin(F.f.yaw), Math.cos(F.f.yaw)] }); }   // along its crack (toWorld's turn)
         if (fo && colossus) say(COLOSSUS_TEXT.wakes(F.f.near));
         if (!F.pending && !F.spawned && fissures.get(F.key) === F) for (const s of [F.f.site, F.f.hSite]) if (s) camp.unsprang(s);   // none stood: claimed by nobody, tried again
       };
@@ -395,7 +395,7 @@ export function createSeasonHost(host) {
       if (f) playStorefrontSound(audio, 'storefront:season-tremor', [f[0], f[1] + 1, f[2]], 1, { maxDistance: 60 });
     }
     if (t - tremor.kickAt >= TREMOR_KICK_MS) { tremor.kickAt = t; shake(tr.kick); }
-    if (f && t - tremor.dustAt >= TREMOR_DUST_MS) { tremor.dustAt = t; burst('tremor-dust', [f[0], f[1], f[2]], { ambient: true }); }
+    if (f && t - tremor.dustAt >= TREMOR_DUST_MS) { tremor.dustAt = t; burst('tremor-dust', [f[0], f[1], f[2]]); }
   }
 
   /** The Colossus's bar, while it is near and standing or a moment after its fall. */
@@ -454,7 +454,7 @@ export function createSeasonHost(host) {
             if (t - F.ventAt[i] < SEASON_STEAM_MS) return;
             F.ventAt[i] = t + i * 300;
             const [x, z] = toWorld(F, lx, lz);
-            burst('fissure-steam', [x, groundAt(x, z) || F.heart[1], z], { ambient: true });
+            burst('fissure-steam', [x, groundAt(x, z) || F.heart[1], z]);
           });
         }
         if (d <= SEASON_HUM_M && t - F.humAt >= SEASON_HUM_MS) { F.humAt = t; playStorefrontSound(audio, 'storefront:season-hum', [F.heart[0], F.heart[1] + 0.5, F.heart[2]], 0.8, { maxDistance: SEASON_HUM_M }); }

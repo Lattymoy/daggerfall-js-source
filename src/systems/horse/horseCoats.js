@@ -648,11 +648,13 @@ export function recolorHorse(image, look, { bottomFirst = true, legs = true, tac
 const _hides = new WeakMap();
 /** AUDIT-STOREFRONT: and its points, found once a picture a `tack` the first time a mount look asks. */
 const _points = new WeakMap();
-function pointsOfImage(colors, src, w, h, tack, hide, down, hideH) {
-  let kept = _points.get(colors);
-  if (!kept) { kept = [null, null]; _points.set(colors, kept); }
+const pointsOfImage = (colors, src, w, h, tack, hide, down, hideH) => keptOf(_points, colors, tack, () => pointsOf(src, w, h, hide, tack, down, hideH));
+/** PERF-HIDE: what `cache` keeps for a picture's pixels' array and a `tack` - `make`'s answer, asked once. */
+function keptOf(cache, colors, tack, make) {
+  let kept = cache.get(colors);
+  if (!kept) { kept = [null, null]; cache.set(colors, kept); }
   const k = tack ? 1 : 0;
-  return kept[k] ?? (kept[k] = pointsOf(src, w, h, hide, tack, down, hideH));
+  return kept[k] ?? (kept[k] = make());
 }
 
 /**
@@ -671,10 +673,7 @@ function pointsOfImage(colors, src, w, h, tack, hide, down, hideH) {
  * @returns {{ at: Int32Array, x0: number, x1: number, r0: number, r1: number }}
  */
 function hideOf(colors, src, w, h, tack) {
-  let kept = _hides.get(colors);
-  if (!kept) { kept = [null, null]; _hides.set(colors, kept); }
-  const k = tack ? 1 : 0;
-  return kept[k] ?? (kept[k] = findHide(src, w, h, tack));
+  return keptOf(_hides, colors, tack, () => findHide(src, w, h, tack));
 }
 
 /** PERF-HIDE: the hide `recolorHorse` dyes `image` by - the one it keeps for the picture (`tack` as recolorHorse's).

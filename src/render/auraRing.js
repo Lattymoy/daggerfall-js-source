@@ -2846,7 +2846,8 @@ vec3 ${fn}Ground(vec2 p) {
   // THE POOL of blue the coil throws, brightest at the feet; THE COIL'S FOOT, a ring of brass with the light inside it
   vec3 col = ${P}_BLUE * exp(-r * r / 0.35) * 0.28;
   col += ${P}_BRASS * turnBand(r, uRingR - 0.018, uRingR + 0.018, px) * 0.75;
-  col += ${P}_GLOW * exp(-pow((r - uRingR + 0.045) / 0.012, 2.0)) * 0.45 * helixRun(0.0);
+  float glowAt = (r - uRingR + 0.045) / 0.012;   // squared as a product: pow of a negative is undefined in GLSL
+  col += ${P}_GLOW * exp(-glowAt * glowAt) * 0.45 * helixRun(0.0);
   if (r > 0.05) {
     // where the strand and the brass leave the ground, turning with the coil
     float a = atan(p.y, p.x), circ = TAU * uRingR, rr = r - uRingR;

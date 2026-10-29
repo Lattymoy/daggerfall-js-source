@@ -215,24 +215,31 @@ export const portalSkinOf = (/** @type {unknown} */ skin) => (typeof skin === 's
 /**
  * WHERE A PIECE STANDS: piece `i` of a dress at `t` s into the portal's life, `open` how open it stands (0..1+), about
  * the portal's middle `mid` (the scene's), `right` the way across it as the eye sees it (unit, level). Answers its feet
- * (a billboard stands on them), its scale (0 hidden) and how far round it has turned (a frame offset).
+ * (a billboard stands on them), its scale (0 hidden) and its turn (a frame offset), into `out` or a new record.
  * @param {{ place: string, count: number, size: { w: number, h: number } }} d @param {number} i @param {number} t
- * @param {number} open @param {number[]} mid @param {number[]} right @param {boolean} closing
+ * @param {number} open @param {ArrayLike<number>} mid @param {ArrayLike<number>} right @param {boolean} closing
+ * @param {{ at: number[], scale: number, spin: number }} [out]
  */
-export function dressPlace(d, i, t, open, mid, right, closing) {
-  const k = clamp01(open);
+export function dressPlace(d, i, t, open, mid, right, closing, out = { at: [0, 0, 0], scale: 0, spin: 0 }) {
+  const k = clamp01(open), at = out.at;
   if (d.place === 'arch') {   // it thrusts up out of the ground as the portal tears open, and sinks as it seals
     const rise = closing ? k : Math.min(1.04, smooth(0, 1, k * 1.2) + 0.04 * Math.sin(k * Math.PI));
-    return { at: [mid[0], mid[1] - 1.25 - d.size.h * (1 - rise) * 0.3, mid[2]], scale: Math.max(0.02, rise), spin: 0 };
+    at[0] = mid[0]; at[1] = mid[1] - 1.25 - d.size.h * (1 - rise) * 0.3; at[2] = mid[2];
+    out.scale = Math.max(0.02, rise); out.spin = 0;
+    return out;
   }
   if (d.place === 'orbit') {   // the shards rise off the ground on a spiral and gather into a turning ring about the gate
     const share = (i + 0.5) / d.count, gather = smooth(0, 1, (k - share * 0.35) / 0.65);
     const ang = TAU * share + t * TAU * 0.16 + (1 - gather) * 2.4;
     const R = 1.15 * (0.4 + 0.6 * gather), y = mid[1] + (-1.4 + 1.4 * gather) * (closing ? 1.3 : 1) + 0.18 * Math.sin(t * 2.1 + i * 1.7) + (share - 0.5) * 1.1 * gather;
-    return { at: [mid[0] + Math.cos(ang) * R, y - d.size.h * 0.5, mid[2] + Math.sin(ang) * R], scale: closing ? k : Math.max(0.05, gather), spin: 0 };
+    at[0] = mid[0] + Math.cos(ang) * R; at[1] = y - d.size.h * 0.5; at[2] = mid[2] + Math.sin(ang) * R;
+    out.scale = closing ? k : Math.max(0.05, gather); out.spin = 0;
+    return out;
   }
   // 'rim': the cogs set round the gate's edge in its own plane, each turning, the next the other way
   const ang = TAU * (i / d.count) + 0.4;
   const rx = 0.86 * k, ry = 1.28 * k;
-  return { at: [mid[0] + right[0] * Math.cos(ang) * rx, mid[1] + Math.sin(ang) * ry - d.size.h * 0.5, mid[2] + right[2] * Math.cos(ang) * rx], scale: k, spin: i % 2 ? -1 : 1 };
+  at[0] = mid[0] + right[0] * Math.cos(ang) * rx; at[1] = mid[1] + Math.sin(ang) * ry - d.size.h * 0.5; at[2] = mid[2] + right[2] * Math.cos(ang) * rx;
+  out.scale = k; out.spin = i % 2 ? -1 : 1;
+  return out;
 }

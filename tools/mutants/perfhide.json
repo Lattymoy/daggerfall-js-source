@@ -2,8 +2,8 @@
   {
     "name": "PH-hide-found-every-dye",
     "file": "src/systems/horse/horseCoats.js",
-    "old": "  return kept[k] ?? (kept[k] = findHide(src, w, h, tack));",
-    "new": "  return (kept[k] = findHide(src, w, h, tack));",
+    "old": "  return kept[k] ?? (kept[k] = make());",
+    "new": "  return (kept[k] = make());",
     "tests": [
       "test/systems/horse/perfhide.test.js"
     ]

@@ -203,7 +203,7 @@ test('STOREFRONT the beat: a horse in a look throws its beat through the running
   assert.equal(run(2), Math.floor(2 / MOUNT_FX_BEAT_S[2]));
   assert.equal(run(2, true, 100, 0.03), Math.floor(3 / MOUNT_FX_BEAT_S[2]), 'a frame that does not divide the beat: it keeps its time');
   assert.ok(run(1) < run(2) && run(0) < run(1), 'a gallop\'s beat, a walk\'s, a breath');
-  assert.ok(beats.every((b) => b.recipe === 'mount-dawnfire' && b.ambient && b.dir.length === 2));
+  assert.ok(beats.every((b) => b.recipe === 'mount-dawnfire' && b.dir.length === 2));   // the horses' pool is the recipe's (render/killFx.js KFX_POOL_OF)
   run(2, false);
   assert.ok(beats.every((b) => b.mane === false), 'no mane from its own saddle');
   beats.length = 0;

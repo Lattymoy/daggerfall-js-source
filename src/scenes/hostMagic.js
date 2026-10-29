@@ -95,6 +95,7 @@ import { fpsSpellCasting } from '../combat/fpsSpellCasting.js';   // CAST-SPEED:
 import { reportPlayerAttack } from '../combat/formulas.js';   // SPELL-NUMBERS: my spell's landing pops its number, as a blow's does
 import { spellHandUp, spellHandBusy, tellCastPending, CAST_PRESS } from '../combat/twoHands/spellHand.js';
 import { KillFx, KillFxPass, KILL_FX_PROGRAMS, KFX_GHOST_S, KILL_FX_EDGE } from '../render/killFx.js';   // STOREFRONT: the kill effects, drawn by every host through this engine
+import { prefersReducedMotion } from '../systems/hitFlash.js';   // STOREFRONT: the viewer's less motion, read live
 import { setBatchDissolve } from '../systems/dissolve.js';   // STOREFRONT: a kill effect's ghost burnt away
 import '../systems/killEffects.js';   // STOREFRONT: my kills play the effect I wear, through this engine's door
 import { playStorefrontSound } from '../systems/storefrontSounds.js';   // STOREFRONT: a kill effect's own sound   // SPELL-HAND: a spell in the free hand beside a weapon - the swing is the weapon's
@@ -683,7 +684,7 @@ export function createPlayerMagic({
   // STOREFRONT (bible/06-Systems/Storefront.md section 4): THE KILL EFFECTS - a burst where a foe falls to a wearer's blow
   // (render/killFx.js), and the flat it stood in copied and burnt away in the look's colour (the ghost), the corpse lying
   // under it as ever. Stepped, shifted, cleared and drawn with the impact sparks; its pass warmed at idle as theirs is.
-  const killFx = new KillFx({ reduced: !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches });
+  const killFx = new KillFx({ reduced: () => prefersReducedMotion() });   // less motion read at each burst, so a change mid-session is followed
   let killPass = null, killBroken = false;
   if (renderer?.gl && globalThis.requestIdleCallback) void warmPrograms([{ start: () => startPrograms(renderer.gl, KILL_FX_PROGRAMS), run: () => { if (!killPass && !killBroken) killPass = new KillFxPass(renderer.gl); }, need: () => !killPass && !killBroken }], { alive: () => !killBroken });
   /** @type {{ batch: any, age: number, life: number, edge: ReadonlyArray<number> }[]} */
@@ -1895,8 +1896,9 @@ export function createPlayerMagic({
     /** TECH-FX (bible/05-Combat/Weapon-Techniques.md THE FEEL): a weapon technique's burst, into this engine's own impact
      *  sparks (render/spellImpactFx.js `technique`) - the one pass drawFx already draws; the host's technique door calls it. */
     techniqueFx: (recipe, at, o) => fx.technique(recipe, at, o),
-    /** IMPACTFX: THE BURSTS' PASS - the hosts call this right after this engine's billboards, in their world pass,
-     *  under the renderer's own camera and fog. Answers whether it drew (it marks the foreign pass itself). */
+    /** IMPACTFX: THE BURSTS' PASS - the hosts call this in their world pass once its last opaque draw is done (it writes
+     *  no depth: whatever is drawn after it paints over it - AUDIT STOREFRONT RENDER L3), under the renderer's own camera
+     *  and fog. Answers whether it drew (it marks the foreign pass itself). */
     drawFx() {
       const mw = drawKills() + Number(mwFx.draw()) > 0;   // STOREFRONT: the kill effects; MW-SPELLFX1: Morrowind's spell effects, through the renderer's own particle path
       if (!fx.live || fxBroken || !renderer?.gl || !renderer._proj || !renderer._view) return mw;

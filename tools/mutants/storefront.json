@@ -104,8 +104,8 @@
   {
     "name": "STOREFRONT-one-cap-for-kills-and-breaths",
     "file": "src/render/killFx.js",
-    "old": "    for (const x of this.bursts) if (x.ambient === amb) mine++;",
-    "new": "    for (const x of this.bursts) mine++;",
+    "old": "    for (const x of this.bursts) if (x.pool === pool && x.fade < 0) mine++;",
+    "new": "    for (const x of this.bursts) if (x.fade < 0) mine++;",
     "tests": [
       "test/render/killfx.test.js"
     ]

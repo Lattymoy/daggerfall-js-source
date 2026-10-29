@@ -119,12 +119,12 @@ test('STOREFRONT a peer\'s kill: played where its pose says the body fell, the l
 test('STOREFRONT a riding peer\'s mount look: its beat through the running host\'s engine, on a horse alone (never the cart, never a beast), faster at a gallop, nothing with no look; and a peer\'s worn effect by its id through the seam the host binds (mutants: a beat on foot; the seam reading my own kit)', () => {
   let t = 0;
   const beats = [];
-  setPlayerDoor({ foes: () => [], feet: () => [0, 0, 0], hurtFoe() {}, castOnPlayer() {}, burst: (recipe, at, o) => { beats.push({ recipe, pace: o.pace, ambient: o.ambient }); return true; } });
+  setPlayerDoor({ foes: () => [], feet: () => [0, 0, 0], hurtFoe() {}, castOnPlayer() {}, burst: (recipe, at, o) => { beats.push({ recipe, pace: o.pace }); return true; } });
   const fx = createPeerFxPlayer({ toScene: (p) => [p.x, p.y, p.z], now: () => t });
   const ride = (rd, mv) => ({ x: 0, y: 0, z: 0, rd, mv, yaw: 0 });
   for (let i = 0; i < 40; i++) { fx.update('r1', ride(1, 2), [0, 0, 0], 1.8, '00a'); fx.frame(); t += 0.05; }
   const gallop = beats.length;
-  assert.ok(gallop >= 8 && beats.every((b) => b.recipe === 'mount-warhorse' && b.pace === 2 && b.ambient), `${gallop} beats at a gallop`);
+  assert.ok(gallop >= 8 && beats.every((b) => b.recipe === 'mount-warhorse' && b.pace === 2), `${gallop} beats at a gallop`);   // its pool the recipe's (test/render/killfx.test.js)
   beats.length = 0;
   for (let i = 0; i < 40; i++) { fx.update('r1', ride(2, 2), [0, 0, 0], 1.8, '00a'); fx.frame(); t += 0.05; }
   assert.equal(beats.length, 0, 'the cart: none');
