@@ -225,11 +225,12 @@ export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { l
 }
 
 /** AUDIT PVP-EASE L1-3: the insured pieces a death would have taken without its policies - takeWildDeath run on a copy
- *  of `entity` with none, its taken pieces' ledger keys that a policy names. @returns {string[]} */
+ *  of `entity` with none, its taken pieces' keys that a policy names. @returns {string[]} */
 function wildSaved(/** @type {any} */ entity, /** @type {number} */ w, /** @type {(item: any) => boolean} */ keep, /** @type {number[] | null} */ wt, /** @type {boolean} */ letters, /** @type {(item: any) => boolean} */ insured, /** @type {boolean} */ bag) {
   const copy = { items: JSON.parse(JSON.stringify(Array.isArray(entity?.items) ? entity.items : [])), goldPieces: entity?.goldPieces ?? 0 };
   const would = takeWildDeath(copy, w, keep, wt, { letters, bag });
-  return [...new Set(would.taken.filter((it) => insured(it)).map(ledgerKeyOf).filter((k) => k != null))];
+  const keyOf = /** @type {any} */ (insured).keyOf ?? ledgerKeyOf;   // INSURE-ALL: the policy's own key (wildInsureLaw.js insureKeyOf)
+  return [...new Set(would.taken.filter((it) => insured(it)).map(keyOf).filter((k) => k != null))];
 }
 
 // ── THE PACKS AT THE SIDE (COMPANION-DROP, FIELD BUGS 2026-10-19f; STORE-KEEPS, 2026-10-26) ───────────────────────────

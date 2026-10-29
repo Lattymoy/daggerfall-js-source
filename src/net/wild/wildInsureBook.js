@@ -17,9 +17,8 @@
 // `realmSession.id`, never an id the save carries or characterIdOf mints - read at boot for a stand-in, the service
 // answered `body` and the book was empty for good), and the card's read asks again when it is stale (`lineOf`).
 // ═══════════════════════════════════════════════════════════════════
-import { ledgerKeyOf } from '../../systems/item/itemIds.js';
 import { walletReserve } from '../realm/realmGoldLaw.js';
-import { wildInsurable, wildPremium, WILD_INSURE_SETTLE_S } from '../../systems/wild/wildInsureLaw.js';
+import { wildInsurable, wildPremium, insureKeyOf, wildInsureKey, WILD_INSURE_SETTLE_S } from '../../systems/wild/wildInsureLaw.js';
 import { WILD_TEXT } from '../../systems/wild/wildZone.js';
 import { REFUSALS } from '../accountClient.js';
 
@@ -65,7 +64,7 @@ export function createWildInsureBook({ door, realm, wallet, character, region = 
     /** Read again when the character changed or the last read is stale. */
     fresh() { if (character() !== readFor || now() - readAt > WILD_POLICIES_STALE_MS) book.read(); },
     /** The policy on `item`, or null. @param {any} item */
-    policyOf(item) { const k = ledgerKeyOf(item); return k != null ? policies.get(k) ?? null : null; },
+    policyOf(item) { const k = insureKeyOf(item); return k != null ? policies.get(k) ?? null : null; },
     /** The card's line for `item`: insured and in force, insured and soon in force (its minutes), or null - the read asked
      *  again first when it is stale or another character's (AUDIT PVP-EASE L4-1). @param {any} item */
     lineOf(item) {
@@ -91,11 +90,13 @@ export function createWildInsureBook({ door, realm, wallet, character, region = 
       return null;
     },
     /** INSURE `item`: the premium paid off the record and the policy written, one act. Answers `{ ok, text }` - the words to
-     *  say either way. @param {any} item */
+     *  say either way. INSURE-ALL: a piece with no key yet (plain gear, an old piece) is given its id here, and the act's
+     *  first checkpoint carries it to the record the service reads. @param {any} item */
     async insure(item) {
       const no = book.refusal(item);
       if (no) return { ok: false, text: no };
-      const key = /** @type {string} */ (ledgerKeyOf(item)), gold = wildPremium(item), at = region();
+      const key = wildInsureKey(item), gold = wildPremium(item), at = region();
+      if (key == null) return { ok: false, text: REFUSALS['insure-piece'] };
       const w = /** @type {any} */ (wallet)(at);
       busy = true;
       let r;
