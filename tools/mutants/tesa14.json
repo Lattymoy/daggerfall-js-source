@@ -127,9 +127,10 @@
   },
   {
     "name": "TESA14-the-places-as-they-come",
+    "reaimed": "OFFSHORE-ROADS: re-aimed by content - the places' yard and its comment now stand between the sort and its loop (bible/03-World/Tamriel.md OFFSHORE-MARKS)",
     "file": "src/world/tamrielRoads.js",
-    "old": ".sort((a, b) => a.y - b.y || a.x - b.x);\n  for (const p of ordered)",
-    "new": ";\n  for (const p of ordered)",
+    "old": "!taken.has(`${p.x},${p.y}`)).sort((a, b) => a.y - b.y || a.x - b.x);",
+    "new": "!taken.has(`${p.x},${p.y}`));",
     "tests": [
       "test/tesa14_roads.test.js"
     ]

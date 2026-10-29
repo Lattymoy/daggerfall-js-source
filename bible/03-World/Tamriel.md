@@ -1289,5 +1289,5 @@ calls sea (34 road pixels). It waits on the seams work on `dropEdgeRuns`.
   along a coast on dry squares; two shore hamlets joined; a boxed-in shore temple's track out through its yard.
 - PIN MOVED: `test/audit_tesa.test.js` (AUDIT-TESA A7-4); TAMRIEL_ROADS_VERSION in `test/tesa14_roads.test.js`,
   `test/world/road/river_fords.test.js`, `test/world/road/roadlook.test.js` and `test/world/road/voyager1_land.test.js`.
-- Mutants: `tools/mutants/offshore.json` (5, all dead). Re-aimed by content: AUDIT-TESA-A7-4-ink-at-point and
-  VOYAGER1-the-version-unmoved.
+- Mutants: `tools/mutants/offshore.json` (5, all dead). Re-aimed by content: AUDIT-TESA-A7-4-ink-at-point,
+  VOYAGER1-the-version-unmoved and TESA14-the-places-as-they-come.
