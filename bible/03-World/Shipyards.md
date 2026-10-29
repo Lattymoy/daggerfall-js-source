@@ -74,6 +74,11 @@ distance an exact sum or a `Math.sqrt` of one - the same on every engine. The pe
 (`carveYards`). What fits stands - the shipyard first, then the lighthouse on what it left - and what does not is said
 once in the console (`[port] <town>: no room for its ...`); a town with room for neither stands none.
 
+**A town's own place** (WESTHEAD-NORTH, 2026-10-29). A town with a `PORT_PLACES_NEAR` row for the layout it stands in
+(`portPlacesNear`) stands that kind as near the row's cell as fits: the distance from the place's middle to the cell, a
+`Math.sqrt`, takes the sea's distance's place in its score. The face's cost and the road's stay. Westhead Moor's
+shipyard alone has rows, one for Daggerfall's layout and one for Beautiful Cities' (`01-Overview/bugs/Field-Bugs-2026-10-28.md`).
+
 ## What stands
 
 The port's own geometry in the port's own art, made at boot under the pseudo-archive 38231 (`world/portArt.js`
@@ -246,7 +251,8 @@ The departure is the port's own (DFU has no crew hall). THE FOUR HOSTS: `world.j
 the game is in the shared world; `worldModes.js`, `dungeonContext.js` and `exterior.js` stand no shipyard. Pins:
 `test/server/crewsigned.test.js` (the real Worker; AUDIT HORIZONTAL G5: its service tests hold the clock at one
 instant, as a crew day turns every two real hours; G9: the three days' keep pinned as stated),
-`test/systems/shipyards1_host.test.js` (CREW-SIGNED, through the real service). Mutants: `tools/mutants/seaopen.json`
+`test/systems/shipyards1_host.test.js` (CREW-SIGNED, through the real service; it waits on the releases the host says,
+never a count of event-loop turns - CI, 2026-10-29: one took 500). Mutants: `tools/mutants/seaopen.json`
 (CREW-, all dead).
 
 ## The lighthouse

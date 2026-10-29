@@ -4,8 +4,8 @@
 // nirnroots circling around me", and his final idea, "billowing smoke, circling nirn roots around midsection, small
 // glowing green runes encircling feet". The owner named the title Nirnroot Sage and its glyph a nirnroot sprig. The
 // handle list grants all three together (TIER_LISTS, TIER_GLYPH and TIER_AURA, WIKIMAID's law); the title is drawn a
-// nirnroot's leaf into its glow into the smoke's haze, the glyph is a nirnroot - its leaves, its stem and its glowing bulb
-// - and the aura is the aura pass's fifteenth look (render/auraRing.js AURA_LOOK): green runes round the feet, smoke
+// nirnroot's leaf into its glow into the smoke's haze, the glyph is a nirnroot leaf - a fan of serrated leaflets on a short stem
+// (NIRN-LEAF, 2026-10-29) - and the aura is the aura pass's fifteenth look (render/auraRing.js AURA_LOOK): green runes round the feet, smoke
 // billowing up about the body, and the glyph's own nirnroots circling the waist, every card where node's law has it
 // (sageCardsInto), its shader RUN here against it.
 import '../modsOff.js';
@@ -37,7 +37,7 @@ import {
   SAGE_RUNE_R, SAGE_RUNES, SAGE_RUNE_SCALE, SAGE_BAND_M, SAGE_WALL_H, SAGE_SCRIPT, SAGE_ROOTS, SAGE_ROOT_R, SAGE_ROOT_Y,
   SAGE_ROOT_M, SAGE_ROOT_PAD, SAGE_ROOT_BOB, SAGE_ROOT_SWAY, SAGE_ROOT_TILT, SAGE_EMERGE, SAGE_EMERGE_STEP, SAGE_PUFFS,
   SAGE_PUFF_LIFE, SAGE_PUFF_M, SAGE_SMOKE_H, SAGE_PUFF_R, SAGE_PUFF_DRIFT, SAGE_PUFF_A, SAGE_NEAR, SAGE_CARDS, SAGE_HZ,
-  SAGE_RGB, sageRatesWhole, sagePuff, sageRoot, sageClock, sageCardsInto,
+  SAGE_RGB, SAGE_LEAF_RGB, SAGE_FAN, SAGE_FAN_R, sageRatesWhole, sagePuff, sageRoot, sageClock, sageCardsInto,
 } from '../../src/render/auraRing.js';
 import { glslFunctions, GlslDiscard } from '../glsl.mjs';
 
@@ -134,7 +134,7 @@ const crosses = ([ax, ay, bx, by], [cx, cy, dx, dy]) => {
 /** Inside a shape filled even-odd over its edges (the shader's own rule, cloakCross). */
 const insideOf = (edges, [x, y]) => edges.reduce((n, [ax, ay, bx, by]) => n + ((ay <= y) !== (by <= y) && x < ax + ((y - ay) * (bx - ax)) / (by - ay) ? 1 : 0), 0) % 2 === 1;
 
-test('NIRNROOT-SAGE the glyph\'s shape: a nirnroot - one outline, inside the box, NEVER CROSSING ITSELF (the aura\'s nirnroots fill it even-odd); the bulb at its top in the middle; a broad leaf out to each side low down, and a narrower pair up the stem, the right one higher; its details a list of two - the four leaves\' veins in the deep green, inside the leaves and none crossing another; the bulb\'s heart in the haze, inside the bulb - each a figure the shader\'s edges can cut (mutants: a leaf dropped, the outline crossing itself, the heart out of the bulb, the details out of order)', () => {
+test('NIRNROOT-SAGE the glyph\'s shape (NIRN-LEAF, the owner: "nicer nirnroot more marijuana style"): a nirnroot leaf - one outline, inside the box, NEVER CROSSING ITSELF (the aura\'s nirnroots fill it even-odd); a fan of seven leaflets out of one point low in the box, the middle one tallest and reaching the top, the outer pairs shorter, the last pair drooping past level; open air between them; serrated - each long leaflet\'s edge in and out many times; a short stem below; its details a list of two - the veins in the haze, a midrib up every leaflet and none crossing another, inside the leaf; the stem\'s core in the deep green, inside the stem - each a figure the shader\'s edges can cut (mutants: a leaflet dropped, the outline crossing itself, the details out of order)', () => {
   const [outline, ...more] = figuresOf(GLYPH_PATH.nirnrootsage);
   assert.equal(more.length, 0, 'one outline');
   for (const [x, y] of outline) assert.ok(x >= 0 && x <= 16 && y >= 0 && y <= 16, `inside the box: ${x},${y}`);
@@ -146,26 +146,36 @@ test('NIRNROOT-SAGE the glyph\'s shape: a nirnroot - one outline, inside the box
     assert.ok(!crosses(edges[i], edges[j]), `never crossing itself: edges ${i} and ${j}`);
   }
   const top = outline.reduce((t, p) => (p[1] < t[1] ? p : t));
-  assert.ok(top[1] < 1 && Math.abs(top[0] - 8) < 1, `the bulb at the top, in the middle (${top})`);
-  assert.ok(insideOf(edges, [8.3, 2.8]) && insideOf(edges, [8.3, 12]), 'the bulb and the stem filled');
-  assert.ok(insideOf(edges, [2.5, 12]) && insideOf(edges, [13.5, 12]), 'a broad leaf out to each side, low down');
-  assert.ok(insideOf(edges, [4, 8.8]) && insideOf(edges, [11.5, 7]), 'a narrower pair up the stem');
-  assert.ok(!insideOf(edges, [4, 4]) && !insideOf(edges, [12, 3]) && !insideOf(edges, [5.5, 11]), 'open air between the leaves and beside the bulb');
-  const tips = outline.filter(([x]) => x < 1.5 || x > 14.5);
-  assert.ok(tips.some(([x]) => x < 1.5) && tips.some(([x]) => x > 14.5) && tips.every(([, y]) => y > 9), `the broad leaves the glyph's widest, low (${tips.map((p) => p.join(','))})`);
-  const leftMid = outline.filter(([x, y]) => x < 3 && y < 9), rightMid = outline.filter(([x, y]) => x > 13 && y < 9);
-  assert.ok(leftMid.length && rightMid.length && Math.min(...rightMid.map(([, y]) => y)) < Math.min(...leftMid.map(([, y]) => y)), 'the right of the upper pair higher than the left, as a plant grows');
+  assert.ok(top[1] < 1.5 && Math.abs(top[0] - 8) < 0.5, `the middle leaflet the tallest, at the top in the middle (${top})`);
+  // the seven leaflets: a point filled two thirds of the way up each, and open air between each two, at the fan's angles
+  const [fx, fy] = SAGE_FAN;
+  const along = (deg, r) => [fx + Math.sin((deg * Math.PI) / 180) * r, fy - Math.cos((deg * Math.PI) / 180) * r];
+  const leaflets = [[-102, 4], [-64, 5.5], [-31, 7], [0, 8], [31, 7], [64, 5.5], [102, 4]];
+  for (const [deg, r] of leaflets) assert.ok(insideOf(edges, along(deg, r)), `a leaflet at ${deg} degrees`);
+  for (let k = 0; k + 1 < leaflets.length; k++) {
+    const deg = (leaflets[k][0] + leaflets[k + 1][0]) / 2;
+    assert.ok(!insideOf(edges, along(deg, 4.5)), `open air between the leaflets either side of ${deg} degrees`);
+  }
+  assert.ok(insideOf(edges, [8, 14.5]) && !insideOf(edges, [7, 14.5]) && !insideOf(edges, [9, 14.5]), 'a short, slender stem below the fan');
+  const lows = outline.filter(([x]) => x < 4 || x > 12).filter(([, y]) => y > fy);
+  assert.ok(lows.some(([x]) => x < 4) && lows.some(([x]) => x > 12), 'the last pair drooping past level, either side');
+  // serrated: up the middle leaflet's left edge, from the fan to the tip, the edge goes in and out at least five times
+  const left = outline.filter(([x, y]) => x < 8 && x > 6.5 && y < 11 && y > 1);
+  let turns = 0;
+  for (let i = 2; i < left.length; i++) if (Math.sign(left[i][0] - left[i - 1][0]) !== Math.sign(left[i - 1][0] - left[i - 2][0])) turns++;
+  assert.ok(turns >= 8, `the middle leaflet serrated (${turns} turns along its edge)`);
   const dets = GLYPH_DETAIL.nirnrootsage;
   assert.ok(Array.isArray(dets) && dets.length === 2, 'two details, a list');
   assert.deepEqual(glyphDetails(dets), dets, 'walked as they are');
-  assert.deepEqual(dets.map((d) => cssRgba(d.rgba)), [cssRgba(NIRN_DEEP), cssRgba(NIRN_HAZE)], 'the veins\' deep green, then the heart\'s haze');
+  assert.deepEqual(dets.map((d) => cssRgba(d.rgba)), [cssRgba(NIRN_HAZE), cssRgba(NIRN_DEEP)], 'the veins\' haze, then the stem\'s deep green');
   const veins = figuresOf(dets[0].path);
-  assert.equal(veins.length, 4, 'a vein to each leaf');
-  for (const vein of veins) for (const p of vein) assert.ok(insideOf(edges, p), `a vein inside its leaf (${p})`);
+  assert.ok(veins.length >= 7, 'a vein up every leaflet, at least');
+  for (const vein of veins) for (const p of vein) assert.ok(insideOf(edges, p), `a vein inside the leaf (${p})`);
+  for (const [deg, r] of leaflets) assert.ok(insideOf(glyphEdges(dets[0].path), along(deg, r)), `a midrib up the leaflet at ${deg} degrees`);
   const veinEdges = glyphEdges(dets[0].path);
   for (let i = 0; i < veinEdges.length; i++) for (let j = i + 1; j < veinEdges.length; j++) assert.ok(!crosses(veinEdges[i], veinEdges[j]), `no vein crossing another (${i}, ${j})`);
-  const [heart] = figuresOf(dets[1].path);
-  for (const p of heart) assert.ok(insideOf(edges, p) && p[1] < 5, `the heart inside the bulb (${p})`);
+  const [core] = figuresOf(dets[1].path);
+  for (const p of core) assert.ok(insideOf(edges, p) && p[1] > fy, `the stem\'s core inside the stem (${p})`);
   for (const d of dets) assert.doesNotThrow(() => glyphEdges(d.path));
 });
 
@@ -235,7 +245,7 @@ test('NIRNROOT-SAGE the service end to end: Blob-Marley registers, holds the tit
 });
 
 test('NIRNROOT-SAGE token and relay: a token may carry the title, the glyph and the smoke and verifies; every glyph at once still fits; a word the vocabulary lacks is refused; the relay - world268 and after, the ones that know the words - reads all three out of the signature onto the peer\'s row (mutants: the vocabulary\'s words)', async () => {
-  assert.equal(RELAY_VERSION, 'world285', 'PIN MOVED: world285, CAPE-TOGGLE (world284 on its branch); world284, AUDIT TAMRIEL-WIDE B1, B2, B5 and E3 (the Hollows past the Bay, an abyss past the Bay, the cleanses of every lane, the serpent site law; world281 then world283 on its branch, renumbered past world281 to world283 at the merges of main); PIN MOVED: world283, PVP-SAFE-HIT; world282, PVP-FOLLOWUP; world281, PVP-REWORK (the PvP rework; NOT YET DEPLOYED; world280 on its branch, renumbered past ARMORY at world280); PIN MOVED: world279, AUDIT FB1028 A2-A3 (GROUND_LAW 4: the town ease meets its seam at the grade and keeps the order of its land); PIN MOVED: world278, FB1028 TOWN-GROUND (GROUND_LAW 3: a Bay town\'s ground moved at its shores and outskirts; NOT YET DEPLOYED); PIN MOVED: world277, WILD-REMAINS-LOSS (the room loads its key before it checks a deposit order, and names seized remains for the fallen; world265 to world276 on its branch, renumbered past GATE-COURTS, AUDIT KETCH II, KETCH-WORDS, NIRNROOT-SAGE, BOW-TOPS, CHAT-POST, MASTER-THREE, FIELD BUGS 2026-10-26r, APPEARANCES and HUNTERS-MARK, LADDER-CUT, SD-PARTY and TESA and SHOP at the merges; NOT YET DEPLOYED); PIN MOVED: world277, SHARED-HEALTH (the open zone, a duel and a siege referee the health of the player as a share - the vit frame; world270 to world276 on its branch, renumbered past later relay releases at the merges, folded in place with WILD-REMAINS-LOSS; NOT YET DEPLOYED); PIN MOVED: world277, YARD-CELL YC2 (2026-10-27, bible/11-Multiplayer/Yard-Cells.md section 11; world271 to world277, and acct198 to acct200 then acct205 and acct206, on its branch, renumbered past YC1 at the merges) (the yard arm of the hub: a carried YARD ORDER verified and fanned once a second, server/src/yardWords.js; yd in its welcome); PIN MOVED: world277, YARD-CELL (net/homeLaw.js HOME_TOWN_MAX 2,048 - a law of the relay import graph, no relay behaviour moves; world266 on its branch, renumbered past main at the merges, last past TESA and SHOP); PIN MOVED: world273, APPEARANCES and HUNTERS-MARK renumbered past FIELD BUGS 2026-10-26r\'s world272 at the merge; PIN MOVED: world272, APPEARANCES and HUNTERS-MARK renumbered past MASTER-THREE\'s world271 at the merge; PIN MOVED: world269, BOW-TOPS (the arena\'s and the siege\'s weapon tops take BAL-ARCHERY\'s bows, a Short Bow 17 and a Long Bow 19; NOT YET DEPLOYED); NIRNROOT-SAGE moved it on: the vocabulary rides the relay\'s bundle (world267 on its branch, renumbered past KETCH-WORDS at the merge; NOT YET DEPLOYED)');   // PIN MOVED: world280, ARMORY (the armory's kit, `ak`, read off every token and badged; world277 then world278 on its branch, renumbered past main's world278 and world279 at the merges); PIN MOVED: world276, SHOP (Genesis, Eternal and Origin join the vocabulary, last; the token's body bound 896); PIN MOVED: world275, SD-PARTY (each party its own Shattered Hour, sd:<s>.<owner>; server/src/sdCopy.js joins the bundle; renumbered past LADDER-CUT's world274 at the merge; NOT YET DEPLOYED); PIN MOVED: world274, LADDER-CUT (the mastery cost ladder 1.5/2/4 in systems/skillSoftcap.js, a file the bundle reaches; NOT YET DEPLOYED); PIN MOVED: world271, APPEARANCES and HUNTERS-MARK, one release (a look item carries the look a worn piece wears; TITLES gain sixteen, last; NOT YET DEPLOYED)
+  assert.equal(RELAY_VERSION, 'world289', 'PIN MOVED: world288, DRAGON (the pose keeps rd 3, a rider on the Dwarven Dragon, and the fight of the Dwarven Dragon; world281, world283, world284, world285, world286 then world287 on its branch, renumbered past world281 to world287 at the merges of main); PIN MOVED: world287, FRONTS (world286 on its branch, renumbered past world286 of FB1029 GROUND at the merge of main); world286, FB1029 GROUND (world284 on its branch, renumbered past world284 and world285 on main at the merge; GROUND_LAW 5: the ground meets a town across the edge of its pixel, and paving over the sea stands dry); PIN MOVED: world285, CAPE-TOGGLE (world284 on its branch); world284, AUDIT TAMRIEL-WIDE B1, B2, B5 and E3 (the Hollows past the Bay, an abyss past the Bay, the cleanses of every lane, the serpent site law; world281 then world283 on its branch, renumbered past world281 to world283 at the merges of main); PIN MOVED: world283, PVP-SAFE-HIT; world282, PVP-FOLLOWUP; world281, PVP-REWORK (the PvP rework; NOT YET DEPLOYED; world280 on its branch, renumbered past ARMORY at world280); PIN MOVED: world279, AUDIT FB1028 A2-A3 (GROUND_LAW 4: the town ease meets its seam at the grade and keeps the order of its land); PIN MOVED: world278, FB1028 TOWN-GROUND (GROUND_LAW 3: a Bay town\'s ground moved at its shores and outskirts; NOT YET DEPLOYED); PIN MOVED: world277, WILD-REMAINS-LOSS (the room loads its key before it checks a deposit order, and names seized remains for the fallen; world265 to world276 on its branch, renumbered past GATE-COURTS, AUDIT KETCH II, KETCH-WORDS, NIRNROOT-SAGE, BOW-TOPS, CHAT-POST, MASTER-THREE, FIELD BUGS 2026-10-26r, APPEARANCES and HUNTERS-MARK, LADDER-CUT, SD-PARTY and TESA and SHOP at the merges; NOT YET DEPLOYED); PIN MOVED: world277, SHARED-HEALTH (the open zone, a duel and a siege referee the health of the player as a share - the vit frame; world270 to world276 on its branch, renumbered past later relay releases at the merges, folded in place with WILD-REMAINS-LOSS; NOT YET DEPLOYED); PIN MOVED: world277, YARD-CELL YC2 (2026-10-27, bible/11-Multiplayer/Yard-Cells.md section 11; world271 to world277, and acct198 to acct200 then acct205 and acct206, on its branch, renumbered past YC1 at the merges) (the yard arm of the hub: a carried YARD ORDER verified and fanned once a second, server/src/yardWords.js; yd in its welcome); PIN MOVED: world277, YARD-CELL (net/homeLaw.js HOME_TOWN_MAX 2,048 - a law of the relay import graph, no relay behaviour moves; world266 on its branch, renumbered past main at the merges, last past TESA and SHOP); PIN MOVED: world273, APPEARANCES and HUNTERS-MARK renumbered past FIELD BUGS 2026-10-26r\'s world272 at the merge; PIN MOVED: world272, APPEARANCES and HUNTERS-MARK renumbered past MASTER-THREE\'s world271 at the merge; PIN MOVED: world269, BOW-TOPS (the arena\'s and the siege\'s weapon tops take BAL-ARCHERY\'s bows, a Short Bow 17 and a Long Bow 19; NOT YET DEPLOYED); NIRNROOT-SAGE moved it on: the vocabulary rides the relay\'s bundle (world267 on its branch, renumbered past KETCH-WORDS at the merge; NOT YET DEPLOYED)');   // PIN MOVED: world280, ARMORY (the armory's kit, `ak`, read off every token and badged; world277 then world278 on its branch, renumbered past main's world278 and world279 at the merges); PIN MOVED: world276, SHOP (Genesis, Eternal and Origin join the vocabulary, last; the token's body bound 896); PIN MOVED: world275, SD-PARTY (each party its own Shattered Hour, sd:<s>.<owner>; server/src/sdCopy.js joins the bundle; renumbered past LADDER-CUT's world274 at the merge; NOT YET DEPLOYED); PIN MOVED: world274, LADDER-CUT (the mastery cost ladder 1.5/2/4 in systems/skillSoftcap.js, a file the bundle reaches; NOT YET DEPLOYED); PIN MOVED: world271, APPEARANCES and HUNTERS-MARK, one release (a look item carries the look a worn piece wears; TITLES gain sixteen, last; NOT YET DEPLOYED)
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pub = await importPublicKeyB64(Buffer.from(new Uint8Array(await subtle.exportKey('raw', kp.publicKey))).toString('base64url'), { subtle });
   const nowS = 1_760_000_000;
@@ -273,7 +283,7 @@ test('NIRNROOT-SAGE drawn: over a head the words in their gradient clipped to th
   assert.equal(svg.style.color, '#7affb0');
   assert.equal(svg.children.length, 3, 'the nirnroot and its two details');
   assert.deepEqual([svg.children[0].attrs.d, svg.children[0].attrs.fill, svg.children[0].attrs.stroke], [GLYPH_PATH.nirnrootsage, 'currentColor', undefined], 'the nirnroot, filled');
-  assert.deepEqual(svg.children.slice(1).map((c) => [c.attrs.d, c.attrs.fill]), GLYPH_DETAIL.nirnrootsage.map((d) => [d.path, cssRgba(d.rgba)]), 'its veins and the bulb\'s heart over it, each in its own colour, in order');
+  assert.deepEqual(svg.children.slice(1).map((c) => [c.attrs.d, c.attrs.fill]), GLYPH_DETAIL.nirnrootsage.map((d) => [d.path, cssRgba(d.rgba)]), 'its veins and the stem\'s core over it, each in its own colour, in order');
   for (const rule of [
     '.card button.acttitle.tl-nirnrootsage { color: #7affb0; }',
     '.card .acctglyph.gl-nirnrootsage .acctglyphart { color: #7affb0; }',
@@ -449,21 +459,21 @@ const near3 = (c, want, tol = 1e-3) => [0, 1, 2].every((i) => Math.abs(c[i] - wa
 const uvOf = ([x, y]) => [(x - 8) / (16 * SAGE_ROOT_PAD) + 0.5, 0.5 - (y - 8) / (16 * SAGE_ROOT_PAD)];
 const lum = (c) => c[0] + c[1] + c[2];
 
-test('NIRNROOT-SAGE a nirnroot, the shader RUN: inside the badge\'s own outline it covers whole - leaf green at its foot, its glow at the bulb; its veins the deep green; the bulb\'s heart the haze; about it its glow, added, gone before the card\'s edge; nothing far from it (mutants: the veins, the heart, the cover, the halo covering)', () => {
+test('NIRNROOT-SAGE a nirnroot, the shader RUN: inside the badge\'s own outline it covers whole - teal at the fan\'s heart, out to mint at the tips (NIRN-LEAF); its veins the haze; its stem\'s core the deep green; about it its glow, added, gone before the card\'s edge; nothing far from it (mutants: the veins, the stem, the cover, the halo covering)', () => {
   const root = (g, opts = {}) => sageAt(2, uvOf(g), { vS: [1, 0, 0], px: 0.0004, ...opts });
-  const stem = root([8.2, 13.5]), bulb = root([8.3, 0.9]);
-  assert.ok(Math.abs(stem[3] - 1) < 1e-9 && Math.abs(bulb[3] - 1) < 1e-9, 'covering whole');
-  assert.ok(green(stem) && green(bulb), 'green');
-  assert.ok(bulb[1] > stem[1] + 0.15 && near3(bulb, SAGE_RGB.glow, 0.02), `its glow at the bulb (${bulb.map((x) => x.toFixed(3))}), the leaf\'s green lower (${stem.map((x) => x.toFixed(3))})`);
-  assert.ok(near3(root([8.3, 2.8]), SAGE_RGB.haze), 'the bulb\'s heart, the haze');
-  assert.ok(near3(root([5.025, 8.78]), SAGE_RGB.deep, 0.02), 'a vein, the deep green');
-  const leaf = root([5.0, 9.45]);
-  assert.ok(leaf[3] === 1 && !near3(leaf, SAGE_RGB.deep, 0.05), 'beside the vein, the leaf');
-  const glow = root([4, 4]);
+  const heart = root([8.35, 8.9]), tip = root([8, 2.0]);
+  assert.ok(Math.abs(heart[3] - 1) < 1e-9 && Math.abs(tip[3] - 1) < 1e-9, 'covering whole');
+  assert.ok(green(heart) && green(tip), 'green');
+  assert.ok(tip[0] > heart[0] + 0.2 && near3(tip, SAGE_LEAF_RGB.tip, 0.03), `mint at the tip (${tip.map((x) => x.toFixed(3))}), the teal deeper in (${heart.map((x) => x.toFixed(3))})`);
+  assert.ok(heart[2] > heart[0] + 0.15, 'teal: more blue than red in it');
+  const rib = root([8, 6.4]), mix = SAGE_RGB.haze.map((h, i) => h * 0.8 + root([8.35, 6.4])[i] * 0.2);
+  assert.ok(near3(rib, mix, 0.04), `a midrib, the haze (${rib.map((x) => x.toFixed(3))})`);
+  assert.ok(near3(root([8, 14.5]), SAGE_RGB.deep, 0.02), 'the stem\'s core, the deep green');
+  const glow = root([2, 2.5]);
   assert.ok(glow[3] === 0 && glow[1] > 0.005 && green(glow), `beside it, its glow - added, no cover (${glow.map((x) => x.toFixed(4))})`);
   const far = sageAt(2, [0.01, 0.99], { vS: [1, 0, 0] });
   assert.ok(far[3] === 0 && lum(far) < 1e-3, 'at the card\'s corner, nothing');
-  assert.ok(near3(root([8.2, 13.5], { world: [0, 0, 400], fog: { density: 0.01 } }), [0, 0, 0], 0.1), 'the fog thins it');
+  assert.ok(near3(root([8.35, 8.9], { world: [0, 0, 400], fog: { density: 0.01 } }), [0, 0, 0], 0.1), 'the fog thins it');
 });
 
 test('NIRNROOT-SAGE a puff, the shader RUN: a round billow of the smoke, covering - thickest in its middle, nothing past its round; lit from above, the haze on its crown over the smoke\'s grey; young, the runes\' green on its belly; thinning to nothing as it ages; its cover the law\'s (mutants: the puff added not covered, the cover ignored, lit from below)', () => {

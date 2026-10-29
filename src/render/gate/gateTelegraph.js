@@ -727,12 +727,12 @@ export const telegraphPrograms = (spire) => [spire ? [TELEGRAPH_VS_SPIRE, TELEGR
 const NO_FOG_FLOOR = Object.freeze([0, 0, 1]);
 
 export class GateTelegraphRenderer {
-  /** @param {WebGL2RenderingContext} gl @param {{ spire?: boolean }} [o] - EG-G2: `spire`, the Spire's stage (TELEGRAPH_FS_SPIRE; EG-ZG: and
-   *  TELEGRAPH_VS_SPIRE - the fight floors' triangles at their own heights) */
-  constructor(gl, { spire = false } = {}) {
+  /** @param {WebGL2RenderingContext} gl @param {{ spire?: boolean, programs?: string[][] }} [o] - EG-G2: `spire`, the Spire's stage (TELEGRAPH_FS_SPIRE; EG-ZG: and
+   *  TELEGRAPH_VS_SPIRE - the fight floors' triangles at their own heights); DRAGON3: `programs` another stage's pair (render/dragon/dragonTelegraph.js - the land's heights) */
+  constructor(gl, { spire = false, programs = null } = {}) {
     this.gl = gl;
     this.spire = !!spire;
-    const [[vs, fs]] = telegraphPrograms(this.spire);
+    const [[vs, fs]] = programs ?? telegraphPrograms(this.spire);
     const prog = buildProgram(gl, vs, fs);
     this.program = prog;
     this.u = {};

@@ -446,7 +446,7 @@ test('NAV-H the world host: one naval host on Come Sail Away\'s pool, its record
   assert.match(w, /leaveShipGate: \(quest\) => naval\?\.leaveShipGate\(quest\) \?\? 'proceed',/);
   assert.match(w, /const csaColliderBoats = \(\) => \(naval\?\.enabled \? \[\.\.\.csa\.boats, \.\.\.naval\.collidable\(\)\] : csa\.boats\);/, 'her deck walkable, her hull a thing to strike');
   // a hostile ship in reach is an enemy nearby wherever the game asks it outdoors, as DUEL1's opponent is
-  assert.match(w, /const navalHostileNear = \(\) => !!naval\?\.hostileNear\(\);/);
+  assert.match(w, /const navalHostileNear = \(\) => !!naval\?\.hostileNear\(\) \|\| !!dragonSky\?\.near\(\);/);   // PIN MOVED (DRAGON3): and a dragon's fight about me
   assert.match(w, /enemiesNearby: \(\) => areEnemiesNearby\([^\n]*\) \|\| navalHostileNear\(\),   \/\/ NAV-H: a hostile ship in reach holds the helm's time scale too/, 'no hurrying time with a hostile sail near');
   assert.match(w, /if \(duelEnemyNear\(\) \|\| areEnemiesNearby\(\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]\) \|\| navalHostileNear\(\)\) \{/, 'no travel map');
   assert.match(w, /\.\.\.exteriorFoes\.foes\]\) \|\| navalHostileNear\(\)\) return localizedText\('cannotTravelWithEnemiesNearby', CANNOT_TRAVEL_ENEMIES_TEXT\);/, 'no party trip');

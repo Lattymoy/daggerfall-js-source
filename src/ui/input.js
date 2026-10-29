@@ -507,6 +507,27 @@ function actionCodes(b, action) {
 export function keyEdges() { return { down: new Set(), up: new Set(), downFrame: new Set(), upFrame: new Set(), own: new Set() }; }
 export function noteKeyDown(edges, code, repeat = false) { if (edges && !repeat) { edges.down.add(code); edges.own?.add(code); } }
 export function noteKeyUp(edges, code) { if (!edges) return; if (edges.own && !edges.own.delete(code)) return; edges.up.add(code); }
+/** KEYS-BLUR (FIELD BUGS 2026-10-29e, "sometimes my boat begins to spin"): a page that loses focus never hears the keys
+ *  let go under it (alt-tab, an overlay's own shortcut), so a held key stayed held - a helm swung on, a body walked.
+ *  On blur, and when the page is hidden, every held key gets its keyup, at the document as the pad's are (AUDIT FB1029e
+ *  S3: the host's own keyup and every window's run); one no listener let go is let go here. A mouse button is left to
+ *  its own mouseup, which the page still hears. Answers the uninstall. */
+export function letGoOnBlur(/** @type {Set<string>} */ keys, /** @type {any} */ edges, /** @type {any} */ win = globalThis) {
+  const keyUp = (/** @type {string} */ code) => {
+    const e = typeof win.KeyboardEvent === 'function' ? new win.KeyboardEvent('keyup', { code, key: code, bubbles: true })
+      : Object.assign(new globalThis.Event('keyup', { bubbles: true }), { code, key: code });
+    (win.document ?? win).dispatchEvent?.(e);
+  };
+  const up = () => {
+    const held = [...keys].filter((code) => !MOUSE_CODES.includes(code));
+    for (const code of held) keyUp(code);
+    for (const code of held) if (keys.delete(code)) noteKeyUp(edges, code);
+  };
+  const hidden = () => { if (win.document?.visibilityState === 'hidden') up(); };
+  win.addEventListener?.('blur', up);
+  win.document?.addEventListener?.('visibilitychange', hidden);
+  return () => { win.removeEventListener?.('blur', up); win.document?.removeEventListener?.('visibilitychange', hidden); };
+}
 /** The frame's ONE rotation. Idempotent only in the sense that a second
  *  call in the same frame would throw the frame's edges away - so it is
  *  called once, at the top of the host's frame, and never inside a gate. */

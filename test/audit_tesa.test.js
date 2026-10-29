@@ -368,6 +368,7 @@ test('AUDIT-TESA A6-3: no landmark stands in one of Daggerfall\'s blocks a capit
   const { customModelFor } = await import('../src/world/customModels.js');
   const { BLOCK_M, CAPITAL_MODELS } = await import('../src/world/tamrielCapitals.js');
   const { SOLITUDE_TERRACES } = await import('../src/world/solitudeRelief.js');
+  const { alinorAbutments } = await import('../src/world/capitalAlinor.js');
   installCapitals({ addTextures: () => 0 });
   for (const cap of CAPITALS) {
     const [AX, AR] = cap.anchor;
@@ -377,10 +378,13 @@ test('AUDIT-TESA A6-3: no landmark stands in one of Daggerfall\'s blocks a capit
       // than the terrain's cell, and only where those blocks' own automaps hold no house (the ARENA2 pin,
       // test/world/solitude_relief.test.js)
       const strip = id === CAPITAL_MODELS.solitudeTerraces ? SOLITUDE_TERRACES.line.depth + 0.51 : 0.51;
+      // PIN MOVED (FB1029 BRIDGE-ENDS; AUDIT FB1029 A-minor): Alinor's bridges' abutments, and nothing else of the model,
+      // stand in the bank's blocks - their rects alone, on cells the automaps hold nothing on (test/world/fb1029_bridgeends.test.js)
+      const abut = id === CAPITAL_MODELS.alinorBridges ? alinorAbutments() : [];
       const p = customModelFor(id).positions;
       for (let i = 0; i < p.length; i += 3) {
         const x = p[i], y = p[i + 1], z = -p[i + 2];
-        if (y < 0.5 || y > 30) continue;
+        if (y < 0.5 || y > 30 || abut.some(([x0, z0, x1, z1]) => x >= x0 - 1e-3 && x <= x1 + 1e-3 && z >= z0 - 1e-3 && z <= z1 + 1e-3)) continue;
         const cx = Math.floor(x / BLOCK_M + AX), r = Math.floor(z / BLOCK_M + AR), cell = cap.cellAt ? cap.cellAt(r, cx) : cap.plan[r]?.[cx];   // PIN MOVED (IC-GRAND): the Imperial City's plan by its law
         if (!cell || cell === 'L' || cell === 'G' || cell === 'O' || (cap.family ? /^I[0-9a-z]{4}$/.test(cell) : Object.hasOwn(cap.blocks, cell))) continue;
         const lx = x - (cx - AX) * BLOCK_M, lz = z - (r - AR) * BLOCK_M, depth = Math.min(lx, BLOCK_M - lx, lz, BLOCK_M - lz);

@@ -27,7 +27,8 @@ import { StaticBatchBuilder } from '../../src/render/staticBatch.js';
 import { windowEmissionRGB } from '../../src/render/windowEmission.js';
 import { createViewOut, viewOutFrame, realWindowsGlsl, ROOM_SUN_SHARE } from '../../src/render/realWindows.js';
 import { lightStreetAt } from '../../src/render/enhancedSky.js';
-import { EXTERIOR_GLASS, exteriorGlassIndices, exteriorWindowMask, fillSpecks, SPECK_MAX } from '../../src/world/exteriorGlass.js';
+import { EL_BB_FS, EL_MESH_FS } from '../../src/render/enhancedLighting.js';
+import { EXTERIOR_GLASS, exteriorGlassIndices, exteriorWindowMask, fillPaneSpecks, SPECK_MAX } from '../../src/world/exteriorGlass.js';
 import { isExteriorWindow } from '../../src/world/climateSwaps.js';
 import { scanWindows } from '../../tools/exteriorGlassScan.mjs';
 import { perspective, lookAt, identity } from '../../src/world/mat4.js';
@@ -214,20 +215,25 @@ test('WL1 W4: THE SHADER\'S BLOCK walks what the twin walks - in both sets: the 
   ]) assert.ok(g.includes(line), line);
   assert.ok(windowLightGlsl({ clusters: true }).includes('uniform highp usampler2D uClusterGrid;') && !g.includes('uClusterGrid;'));
   const lane = windowLightGlsl({ atten: 'elAttenuation(rl, r)', shadow: true });
-  assert.ok(lane.includes('float g = kind == 0 ? elAttenuation(rl, r) : (kind == 1 ? (isFlat > 0.5 ? sunShadowSoftAt(base, vec3(0.0), 0.0) : sunShadowAt(wp, n)) : 1.0);'));
+  assert.ok(lane.includes('float g = kind == 0 ? elAttenuation(rl, r) : (kind == 1 ? (isFlat > 0.5 ? flatSun : sunShadowAt(wp, n)) : 1.0);'));
+  // a flat's sun through glass is its quad's one read (LA-COST3's vBBSunVis): the billboard program's block reads no map
+  const flat = windowLightGlsl({ atten: 'elAttenuation(rl, r)', shadow: 'flat' });
+  assert.ok(flat.includes('float g = kind == 0 ? elAttenuation(rl, r) : (kind == 1 ? flatSun : 1.0);') && !/sunShadow(?:Soft)?At\(/.test(flat));
   const el = rd('src/render/enhancedLighting.js');
-  const point = el.slice(el.indexOf('const EL_POINT_LIT_GLSL = `'), el.indexOf('`;', el.indexOf('const EL_POINT_LIT_GLSL = `')));
-  assert.ok(point.includes("${windowLightGlsl({ atten: 'elAttenuation(rl, r)', shadow: true })}"), 'the lane\'s point term carries the block');
-  assert.ok(point.includes('acc + winLit(wp, n, 0.0, wp)') && point.includes('acc + winLit(wp, vec3(0.0), 1.0, base)'));
+  const point = el.slice(el.indexOf('const elPointLitGlsl = (wlShadow) => `'), el.indexOf('`;', el.indexOf('const elPointLitGlsl = (wlShadow) => `')));
+  assert.ok(point.includes("${windowLightGlsl({ atten: 'elAttenuation(rl, r)', shadow: wlShadow })}"), 'the lane\'s point term carries the block');
+  assert.ok(point.includes('acc + winLit(wp, n, 0.0, 1.0)') && point.includes('acc + winLit(wp, vec3(0.0), 1.0, flatSun)'));
+  assert.ok(el.includes("const EL_POINT_LIT_GLSL = elPointLitGlsl(true);") && el.includes("const EL_POINT_LIT_FLAT_GLSL = elPointLitGlsl('flat');"));
+  assert.ok(EL_BB_FS.includes(flat) && EL_MESH_FS.includes(lane), 'the flat\'s program takes the flat block, a surface\'s the sun map\'s');
   const r = rd('src/render/renderer.js');
   assert.match(r, /const WL_CLASSIC_GLSL = windowLightGlsl\(\{ clusters: true \}\);/);
   const between = (a, b) => r.slice(r.indexOf(a), r.indexOf(b, r.indexOf(a) + a.length));
   for (const [name, from, to, call] of [
-    ['FS', 'const FS = `', 'const CHAR_FS = `', 'lit += albedo * winLit(vWorldPos, n, 0.0, vWorldPos);'],
-    ['CHAR_FS', 'const CHAR_FS = `', '`;', 'lit += albedo * winLit(vWorldPos, n, 0.0, vWorldPos);'],
-    ['TERRAIN_FS', 'const TERRAIN_FS = `', '`;', 'winLit(vWorldPos, n, 0.0, vWorldPos)'],
-    ['BB_FS', 'const BB_FS = `', '`;', 'pointAcc += winLit(vBBWorld, vec3(0.0), 1.0, vBBWorld);'],
-    ['DECAL_FS', 'const DECAL_FS = `', '`;', 'pointAcc += winLit(vWorld, n, 0.0, vWorld);'],
+    ['FS', 'const FS = `', 'const CHAR_FS = `', 'lit += albedo * winLit(vWorldPos, n, 0.0, 1.0);'],
+    ['CHAR_FS', 'const CHAR_FS = `', '`;', 'lit += albedo * winLit(vWorldPos, n, 0.0, 1.0);'],
+    ['TERRAIN_FS', 'const TERRAIN_FS = `', '`;', 'winLit(vWorldPos, n, 0.0, 1.0)'],
+    ['BB_FS', 'const BB_FS = `', '`;', 'pointAcc += winLit(vBBWorld, vec3(0.0), 1.0, 1.0);'],
+    ['DECAL_FS', 'const DECAL_FS = `', '`;', 'pointAcc += winLit(vWorld, n, 0.0, 1.0);'],
   ]) {
     const src = between(from, to);
     assert.ok(src.includes('${WL_CLASSIC_GLSL}') && src.includes(call), name);
@@ -512,7 +518,7 @@ test('WL1 W12: the mock rooms by day - the sun through the glass lands on the ro
   lightStreetAt(r, { ambient: new Float32Array([0.1, 0.1, 0.12]), sun: 0 }, moon, [1, 1, 1]);
   assert.equal(calls[1][1], moon, 'the hour\'s moon');
   assert.ok(near(calls[0][1][2], 0.15, 1e-6), 'its ambient lifted by the moon');
-  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(rd(host), /lightStreetAt\(r, light, sky\.moonlight\(\), SUN_RIG_COLOR\);/, host);
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(rd(host), /lightStreetAt\(r, light, sky\.moonlight\(clockMinute\), SUN_RIG_COLOR\);/, host);   // PIN MOVED (AUDIT SKYRIM-AURORA 2): the sky's night light at the clock's minute
 });
 
 test('WL1 W13 (see-through): the exterior windows whose glass is not the palette\'s 0xff - each named record\'s colours read as its panes, specks inside a pane filled, the lead and the frame kept; a record with DFU\'s own glass keeps DFU\'s mask; a record not a window none; the pipeline uploads the mask for every window record (mutants: the table, the speck fill, DFU\'s mask overridden)', () => {
@@ -534,10 +540,10 @@ test('WL1 W13 (see-through): the exterior windows whose glass is not the palette
   assert.deepEqual(exteriorWindowMask(171, 2, { width: W, height: H, data: own }, t), t.getWindowColors32({ width: W, height: H, data: own }), 'DFU\'s own glass stands');
   assert.equal(exteriorWindowMask(171, 3, { width: W, height: H, data }, t), null, 'not a window');
   const specks = new Uint8Array(25).fill(1); specks[12] = 0; specks[13] = 0; specks[7] = 0;
-  assert.equal(fillSpecks(specks, 5, 5)[12], 1, `a run of ${SPECK_MAX} inside glass filled`);
+  assert.equal(fillPaneSpecks(specks, 5, 5)[12], 1, `a run of ${SPECK_MAX} inside glass filled`);
   const diag = new Uint8Array(64).fill(1);
   for (let i = 1; i < 7; i++) diag[i * 8 + i] = 0;   // a lattice's lead, one texel wide, corner to corner
-  assert.equal(Array.from(fillSpecks(diag, 8, 8)).filter((v) => !v).length, 6, 'a diagonal lead is one run, kept');
+  assert.equal(Array.from(fillPaneSpecks(diag, 8, 8)).filter((v) => !v).length, 6, 'a diagonal lead is one run, kept');
   assert.match(rd('src/scenes/dataPipeline.js'), /renderer\.uploadEmissionTexture\(archive, record, exteriorWindowMask\(archive, record, bitmap, t\), \{ replacement, window: true \}\);/);
 });
 
@@ -633,9 +639,9 @@ test('WL1 W17 (AUDIT): no window picture is ever lost - a mask is kept with its 
   pass2.frame({ kind: 'street', eye: [0, 4, 0], view: lookAt([0, 4, 0], [0, 0.3, -8.5], [0, 1, 0]), proj: perspective(1.1, 1.6, 0.1, 500), now: 1016, lamp: [1, 1, 1], glass: () => 'window' });
   assert.equal(log.filter((c) => c[0] === 'texSubImage3D' || c[0] === 'generateMipmap').length, 0, 'held: nothing again');
   const r = rd('src/render/renderer.js');
-  assert.match(r, /this\.windowMasks\?\.delete\(key\);   \/\/ RW1\n    this\._wl\.dropMask\(key\);/, 'an evicted window picture frees its layer');
-  assert.match(r, /this\.glassMasks\.delete\(key\);\n      this\._wl\.dropMask\(key\);/, 'and an evicted glass mask');
-  assert.match(r, /if \(this\._cutoutKeys\.delete\(base\)\) this\._wl\.dropMask\(base\);/, 'and a cutout\'s last picture');
+  assert.match(r, /this\.windowMasks\?\.delete\(key\);   \/\/ RW1\n    this\._wl\?\.dropMask\(key\);/, 'an evicted window picture frees its layer');
+  assert.match(r, /this\.glassMasks\.delete\(key\);\n      this\._wl\?\.dropMask\(key\);/, 'and an evicted glass mask');
+  assert.match(r, /if \(this\._cutoutKeys\?\.delete\(base\)\) this\._wl\?\.dropMask\(base\);/, 'and a cutout\'s last picture');
 });
 
 test('WL1 W18 (AUDIT): more cells than the band\'s list holds keeps the nearest lights that fit - never none (mutant: the frame dropping every light)', () => {
@@ -768,4 +774,11 @@ test('WL1 W22 (AUDIT): the renderer\'s edges - the outside is read once in its i
   r._wlLive = false;
   r._uploadWl({ on: { name: 'uWinOn' } });
   assert.ok(log.some((c) => c[0] === 'bindBufferBase' && c[2] === WL_UBO_BINDING), 'the block stands again');
+  // the switch says whether the sun map holds a window's sun: a flat's vertex stage reads it for its window light then
+  r._wlLive = true;
+  for (const [sun, want] of [[[0.8, 0.5, 0.1], 2], [null, 1]]) {
+    r._wlSun = sun; log.length = 0;
+    r._uploadWl({ on: { name: 'uWinOn' } });
+    assert.deepEqual(uploads(log, 'uWinOn'), [[want]], sun ? 'a window\'s sun in the map: 2' : 'lamps alone: 1');
+  }
 });

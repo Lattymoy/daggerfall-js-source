@@ -282,7 +282,7 @@
   {
     "name": "DISC19-F-camp-pitched-in-town",
     "file": "src/scenes/world.js",
-    "old": "      if (anchor && _inAnyLocationRect([anchor.x, anchor.y, anchor.z])) anchor = null;",
+    "old": "      if (anchor && _inAnyLocationRect([anchor.x, anchor.y, anchor.z], hit.ownPlace)) anchor = null;",
     "new": "",
     "tests": [
       "test/systems/disc19.test.js"

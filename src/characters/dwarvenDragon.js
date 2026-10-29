@@ -11,9 +11,10 @@ import { registerCreatureMatches } from './creatureBodies.js';
 import { addVendorTextures } from '../systems/textureReplacement.js';
 import { APP_ROOT } from '../systems/appRoot.js';
 import { t, registerCustomEnemyNameText } from '../systems/textManager.js';
-import { DWARVEN_DRAGON_ID, DWARVEN_DRAGON_ARCHIVE } from './dwarvenDragonId.js';
+import { DWARVEN_DRAGON_ID, DWARVEN_DRAGON_ARCHIVE, AETHERBRIGHT_ARCHIVE } from './dwarvenDragonId.js';
+import { aetherbrightPng } from './dwarvenDragonShiny.js';   // DRAGON7: the Aetherbright, 1800's pictures under its palette
 
-export { DWARVEN_DRAGON_ID, DWARVEN_DRAGON_ARCHIVE };
+export { DWARVEN_DRAGON_ID, DWARVEN_DRAGON_ARCHIVE, AETHERBRIGHT_ARCHIVE };
 
 /** Its name in the player's language; the game's own English (the save, the log) is the career's. */
 export const dwarvenDragonName = () => t('enemy.dwarvenDragon', 'Dwarven Dragon');
@@ -58,13 +59,15 @@ async function fetchPng(url) {
   return new Uint8Array(await r.arrayBuffer());
 }
 
-/** Every picture, as texture-door entries (dexSprites.js's shape). */
+/** Every picture, as texture-door entries (dexSprites.js's shape): the brass (1800), and the Aetherbright (1801) - the same
+ *  file under its own palette, turned as it loads (DRAGON7). */
 export function dwarvenDragonSpriteEntries({ fetchBytes = fetchPng } = {}) {
   const out = [];
   DWARVEN_DRAGON_FRAMES.forEach((n, record) => {
     for (let frame = 0; frame < n; frame++) {
-      const name = `${DWARVEN_DRAGON_ARCHIVE}_${record}-${frame}`;
-      out.push({ archive: DWARVEN_DRAGON_ARCHIVE, record, frame, map: 'Albedo', standIn: true, readOnly: true, fileName: name, load: () => fetchBytes(dwarvenDragonArtUrl(name)) });
+      const name = `${DWARVEN_DRAGON_ARCHIVE}_${record}-${frame}`, url = dwarvenDragonArtUrl(name);
+      out.push({ archive: DWARVEN_DRAGON_ARCHIVE, record, frame, map: 'Albedo', standIn: true, readOnly: true, fileName: name, load: () => fetchBytes(url) });
+      out.push({ archive: AETHERBRIGHT_ARCHIVE, record, frame, map: 'Albedo', standIn: true, readOnly: true, fileName: `${AETHERBRIGHT_ARCHIVE}_${record}-${frame}`, load: async () => aetherbrightPng(await fetchBytes(url)) });
     }
   });
   return out;

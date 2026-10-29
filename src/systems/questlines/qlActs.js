@@ -50,6 +50,7 @@ export const ACT_KINDS = Object.freeze({
   'valkynaz-felled': 'endgame',   // a Valkynaz's Redoubt taken in an Elite Breach
   'hour-broken': 'endgame',   // the Brass Remnant broken in the Shattered Hour
   'serpent-slain': 'endgame',   // the Sea Serpent slain
+  'dragon-slain': 'endgame',   // DRAGON4: the Dwarven Dragon slain - its z1 receipt counted once (`recorded`)
   'star-held': 'endgame',   // a fallen star held through its master's fall (the Starfall - STAR8)
   'heart-star-held': 'endgame',   // the Heart-Star held - the Witches' Night's last star; said in the same turn as its `star-held`, so the festival's finds count one deed (festivalClient.js ONE DEED, ONE FIND)
   // KETCH (bible/11-Multiplayer/Sky-Ketch.md section 13): the sky-ketch's three (the last a receipt the service holds)

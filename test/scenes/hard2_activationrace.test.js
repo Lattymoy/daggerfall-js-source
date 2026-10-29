@@ -188,11 +188,12 @@ test('HARD2: both exterior hosts ask the ONE race and hand-roll none of it, and 
     // SURV3: two more families under the same ray - a camp and a water source (each row may carry its slice's comment)
     // WB2: and the world host one more, the Oblivion Gate (online alone - the ?exterior host stands none)
     // SET7: ...and the Sigil Broker who stands beside it; CSA-D: and Come Sail Away's boats
+    const dragonRow = host === 'src/scenes/world.js' ? String.raw`\s*dragon: _dragonPick,[^\n]*\n` : '';   // PIN MOVED (DRAGON5b): the tamed dragon waiting, raced with the mounts
     const gateRow = host === 'src/scenes/world.js' ? String.raw`\s*gate: _gatePick,[^\n]*\n\s*broker: _brokerPick,[^\n]*\n\s*boat: _csaBoatPick,[^\n]*\n` : '';
     // PIN MOVED (ALLY-YIELDS, bible/01-Overview/bugs/Field-Bugs-2026-10-12d.md): the door set comes in as its PICK (`door:`,
     // worldModes exteriorActivationHit), its reach with it, where it was its distance alone - the race's `next` asks
     // whether it answers before a companion in front of it may take the press; `doorDistance` is the pick's distance
-    assert.match(src, new RegExp(String.raw`const _race = raceActivation\(\{\s*\n\s*corpse: _corpsePick,\s*\n\s*pile: _pilePick,\s*\n\s*torch: _torchPick,\s*\n\s*wagon: _wagonPick,\s*\n\s*horseCart: _hccPick,[^\n]*\n\s*camp: _campPick,[^\n]*\n\s*water: _springPick,[^\n]*\n` + gateRow + String.raw`\s*door: modes\.exteriorActivationHit\(cam\.pos, useFwd\),[^\n]*\n\s*personDistances: (?:_livePersons|_talkPersons\(\))\.map\(\(p\) => rayPersonDistance\(cam\.pos, useFwd, p\.pos\)\),\s*\n\s*\}\);`), `${host}: and feeds it every family the ray can strike`);   // LW3: the streaming host's persons are the town's and the road's (`_talkPersons()`)
+    assert.match(src, new RegExp(String.raw`const _race = raceActivation\(\{\s*\n\s*corpse: _corpsePick,\s*\n\s*pile: _pilePick,\s*\n\s*torch: _torchPick,\s*\n\s*wagon: _wagonPick,\s*\n\s*horseCart: _hccPick,[^\n]*\n` + dragonRow + String.raw`\s*camp: _campPick,[^\n]*\n\s*water: _springPick,[^\n]*\n` + gateRow + String.raw`\s*door: modes\.exteriorActivationHit\(cam\.pos, useFwd\),[^\n]*\n\s*personDistances: (?:_livePersons|_talkPersons\(\))\.map\(\(p\) => rayPersonDistance\(cam\.pos, useFwd, p\.pos\)\),\s*\n\s*\}\);`), `${host}: and feeds it every family the ray can strike`);   // LW3: the streaming host's persons are the town's and the road's (`_talkPersons()`)
     for (const [name, re] of [['the body and the pile', /const _lootPick = _race\.loot, _dropPick = _race\.drop;/],
       ['the person arm\'s rival', /const _nonPersonRival = _race\.nonPersonRival;/],
       ['the foe arm\'s rival', /const _rivalDist = _race\.rival;/],

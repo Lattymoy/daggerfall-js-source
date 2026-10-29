@@ -248,8 +248,8 @@
   {
     "name": "LA-AUDIT-C1-the-shift-moves-no-stamp",
     "file": "src/render/renderer.js",
-    "old": "this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._wl.shift(offset); this._frameStamp++; }",
-    "new": "this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._wl.shift(offset); }",
+    "old": "this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._wl?.shift(offset); this._frameStamp++; }",
+    "new": "this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._wl?.shift(offset); }",
     "tests": [
       "test/render/la_audit.test.js"
     ]

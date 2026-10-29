@@ -50,6 +50,7 @@ import { displayName } from './accounts.js';
 import { findAccount } from './sanctions.js';
 import { holdStandsSql } from './realm.js';
 import { readAll, DB_ROOT } from './service.js';
+import { staffKept } from './staffKept.js';   // STAFF-SPEED-2: the economy kept for every isolate
 import { canModerate } from './titles.js';
 import { medianOf, MARKET_MEDIAN_DAYS } from '../../src/net/marketLaw.js';
 import { MARK_WORTH_GOLD, utcDay } from '../../src/net/marksLaw.js';
@@ -87,6 +88,9 @@ export const ECON_DAYS_DEFAULT = 7;
 /** How long a heavy answer is kept (design doc: "Cache them for 5-10 minutes"); node activity the shorter. */
 export const ECON_KEEP_S = 10 * 60;
 export const HARVEST_KEEP_S = 5 * 60;
+/** STAFF-SPEED-2 (staffKept.js): the economy kept ECON_KEEP_S for every isolate, and answered up to this old while one
+ *  request reads it again - its numbers say their own `asOf`. */
+export const ECON_STALE_S = 60 * 60;
 /** Node activity: the day's busiest harvesters ranked, the week's longest unbroken runs beside them, a page. */
 export const HARVEST_DAY_RANKED = 200;
 export const HARVEST_WEEK_RANKED = 50;
@@ -738,7 +742,7 @@ export async function staffEconomy(ctx, env, path, body, who, audit) {
   if (path === '/v1/staff/econ/economy') {
     const days = Math.min(int(body.days, 1, Number.MAX_SAFE_INTEGER) ?? ECON_DAYS_DEFAULT, ECON_DAYS_MAX);
     // STAFF-PANEL-SPEED: the audit row with the economy's reads, one trip
-    const [answer] = await Promise.all([economy(db, nowS, days), audit('economy-read', null, { days }, { onceIn: READ_ROW_S }).run()]);
+    const [answer] = await Promise.all([staffKept(ctx, `econ:economy:${days}`, ECON_KEEP_S, ECON_STALE_S, () => economy(db, nowS, days)), audit('economy-read', null, { days }, { onceIn: READ_ROW_S }).run()]);
     return answer;
   }
 

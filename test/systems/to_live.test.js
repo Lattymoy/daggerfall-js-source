@@ -16,6 +16,7 @@ import { isPlayerControlledTravel } from '../../src/ui/travel/travelPopUp.js';
 import { MOD_CURATED, modDials } from '../../src/systems/features.js';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+import { hostText } from '../hostText.mjs';
 const CAUTIOUS = 'CautiousTravel.PlayerControlledCautiousTravel', INNS = 'StopAtInnsTravel.PlayerControlledInnsTravel';
 
 test('TO-LIVE THE LIVE HALF READ AGAIN: handed the boot bag, the read answers the store as it stands now - Cautiously off, a cautious trip is DFU\'s fast travel at once - while the starred half (roads integration, the junction map and its placement, paid teleportation) stays the load\'s (mutants: the boot bag returned whole, the restart half read afresh)', () => {
@@ -45,7 +46,7 @@ test('TO-LIVE THE LIVE HALF READ AGAIN: handed the boot bag, the read answers th
 });
 
 test('TO-LIVE THE HOST READS IT AGAIN: the world keeps its load\'s bag and, on a change of the mod settings, reads the live half afresh and hands it to the mod - at the map\'s open (the fare deps\' handle) and in the journey\'s own frame; RATE-LAW: no limit to hand the panel (mutants: never refreshed, refreshed but not handed over)', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT, DRAGON5b): the host read whole - the maps' handle is scenes/travelFareHost.js's
   assert.match(w, /let travelOptionsSettings = readTravelOptionsSettings\(\);/);
   assert.match(w, /const travelOptionsBoot = travelOptionsSettings;/);
   const fn = w.match(/function refreshTravelOptionsSettings\(\) \{[\s\S]*?\n {2}\}/)?.[0] ?? '';
@@ -53,7 +54,7 @@ test('TO-LIVE THE HOST READS IT AGAIN: the world keeps its load\'s bag and, on a
   assert.match(fn, /travelOptionsSettings = readTravelOptionsSettings\(modSetting, travelOptionsBoot\);/);
   assert.match(fn, /if \(travelOptions\) travelOptions\.settings = travelOptionsSettings;/);
   assert.doesNotMatch(fn, /setAccelerationLimit/, 'RATE-LAW: the panel has no limit');
-  assert.match(w, /travelOptions: \(\) => \{ refreshTravelOptionsSettings\(\); return travelOptions; \},/, 'the maps\' handle');
+  assert.match(w, /travelOptions: \(\) => \{ refreshTravelOptionsSettings\(\); return host\.travelOptions; \},/, 'the maps\' handle');   // PIN MOVED (HOST-SPLIT, DRAGON5b): the host's live `let`, through `host`
   assert.match(w, /refreshTravelOptionsSettings\(\);[^\n]*\n\s+const report = travelOptions\.update\(\{/, 'the journey\'s frame');
 });
 

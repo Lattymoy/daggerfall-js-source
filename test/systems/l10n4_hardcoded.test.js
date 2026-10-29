@@ -21,6 +21,7 @@ const HARDCODED = {
   'src/characters/clothing.js': 12,
   'src/characters/creatureBodies.js': 8,
   'src/characters/daedra.js': 4,
+  'src/systems/handWraps.js': 2,   // HAND-WRAPS: the template row's name, 'Hand Wraps', as the Pistolet's; its lore, an item's own record, as the guns' is
   'src/systems/staffDragon.js': 1,   // DRAGON-RIDE: /dragon's /staff line, the staff list's English as the rest of it (net/staffCommands.js)
   'src/scenes/staffDragonHost.js': 5,   // DRAGON-RIDE: /dragon's answers, said to the Admin alone, as the staff commands' own (world.js runStaffCommand)
   'src/characters/dwarvenDragon.js': 2,   // DWARVEN-DRAGON: its career's English (the save's and the staff list's - a player reads t()'s) and its census miss, never shown
@@ -197,6 +198,7 @@ const HARDCODED = {
   'src/render/courtCrystals.js': 3,
   'src/render/deadlands.js': 4,
   'src/render/deepWatersRender.js': 13,
+  'src/render/dragon/dragonTelegraph.js': 1,   // DRAGON3: its draped stage - GLSL the scan reads as prose (`in vec3`), armoryPass.js's same line
   'src/render/dryFall.js': 1,   // ASHFALL1: the ash's fragment stage (GLSL, never a player's text - as windWisps.js's)
   'src/render/duelWall.js': 1,
   'src/render/dynamicSkiesRenderer.js': 1,
@@ -204,7 +206,7 @@ const HARDCODED = {
   'src/render/eliteGates/egMistPass.js': 1,
   'src/render/eliteGates/egSkyPass.js': 1,
   'src/render/eliteGates/egStairPass.js': 2,
-  'src/render/enhancedLighting.js': 4,
+  'src/render/enhancedLighting.js': 3,
   'src/render/enhancedSky.js': 1,
   'src/render/farTrees.js': 2,   // FAR-TREES: its fragment stages' head and body - GLSL the scan reads as prose (`in vec3`), as every pass's; no word a player reads
   'src/render/foeTelegraph.js': 1,
@@ -228,6 +230,7 @@ const HARDCODED = {
   'src/render/rainCurtains.js': 1,
   'src/render/realWindows.js': 11,
   'src/render/redMountainFire.js': 3,   // RED-MOUNTAIN: its shaders' sources, as every pass's - no word a player reads
+  'src/render/auroraPass.js': 4,   // SKYRIM-AURORA: its four shaders' sources - no word a player reads
   'src/render/ghostfenceGlow.js': 1,   // GHOSTFENCE: its shaders' sources - no word a player reads (AUDIT RED-MOUNTAIN: 4 to 1, its looks named functions)
   'src/render/renderer.js': 17,
   'src/render/retroPass.js': 1,
@@ -246,7 +249,7 @@ const HARDCODED = {
   'src/render/superDungeon/sdStompWall.js': 2,
   'src/render/superDungeon/sdVeil.js': 1,
   'src/render/serpentRender.js': 4,
-  'src/render/shadowPass.js': 6,
+  'src/render/shadowPass.js': 7,   // WL1: DEPTH_GLASS_FS, a building's glass cut out of its sun map - GLSL the scan reads as prose (`in vec2`), as DEPTH_BB_FS beside it
   'src/render/skyRenderer.js': 1,
   'src/render/snowfallGlsl.js': 2,
   'src/render/spellImpactFx.js': 2,
@@ -356,7 +359,7 @@ const HARDCODED = {
   'src/systems/champions.js': 6,
   'src/systems/chargen.js': 1,
   'src/systems/cloudSaves.js': 5,
-  'src/systems/comeSailAway/comeSailAway.js': 86,
+  'src/systems/comeSailAway/comeSailAway.js': 87,   // AUDIT FB1029d WIND-HELD: +1, the log's line when the frame lays the door's wind - a developer's, never a player's
   'src/systems/comeSailAway/comeSailAwayBoat.js': 1,
   'src/systems/comeSailAway/comeSailAwayHulls.js': 3,
   'src/systems/comeSailAway/comeSailAwayItems.js': 2,
@@ -380,6 +383,7 @@ const HARDCODED = {
   'src/systems/decor/decorMods.js': 16,
   'src/systems/dfmodTextures.js': 3,
   'src/systems/diseases.js': 9,
+  'src/systems/dragon/dragonMount.js': 1,   // DRAGON5: the Dwarven Dragon's row name - English, as every custom row's is (upkeepItemRows.js)
   'src/systems/dungeon/dungeonEcho.js': 6,
   'src/systems/dungeon/dungeonTier.js': 3,
   'src/systems/dynamicSkies/dynamicSkies.js': 3,
@@ -566,7 +570,7 @@ const HARDCODED = {
   'src/systems/travel/travelViewFilters.js': 7,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (MAP-PLAYERS: +1, the Players switch's tip)
   'src/systems/tutorialCatalogue.js': 213,   // RPT1026-QUESTS BOUNTY-WAY: +1, the bounties page rewritten - its old words held "return", which the scan reads as code, so they were never counted; the catalogue is English, as every page's
   'src/systems/uiSkin.js': 1,
-  'src/systems/upkeep/upkeepItemRows.js': 2,
+  'src/systems/upkeep/upkeepItemRows.js': 3,   // DRAGON5c: Dwarven Oil's row name - English, as every custom row's is (dragonMount.js)
   'src/systems/upkeep/upkeepRuntime.js': 8,
   'src/systems/useItem.js': 12,
   'src/systems/vampirism.js': 2,
@@ -816,7 +820,7 @@ const HARDCODED = {
   'src/world/oceanHoles.js': 9,
   'src/world/outdoors.js': 2,
   'src/world/passiveFish.js': 5,
-  'src/world/eliteGates/pseudoArchives.js': 53,   // DWARVEN-DRAGON: +1, its sprites' row (DWARVEN_DRAGON_ARCHIVE) - the registry's own words for a developer; GHOSTFENCE (AUDIT RED-MOUNTAIN, CI): +1, the Ghostfence's art row (GHOSTFENCE_ARCHIVE) - the registry's own words for a developer; LOCKPICK (main): +1, the Lockpick's picture's row (LOCKPICK_ARCHIVE) - the registry's own words for a developer; AUDIT TESA III (at URBANIZER's merge): +1, the towns' fabric's art row (URBAN_ARCHIVE) - the registry's own words for a developer; KETCH: +1, the Sky-Ketch's art row (KT_ARCHIVE) - the registry's own words for a developer; TESA10 (at the merge of main into TESA): +1, the capitals' row (CAPITAL_ARCHIVE) - the registry's own words for a developer; PISTOLET: +1, the Dwarven Pistolet's art row (PISTOLET_ARCHIVE) - the registry's own words for a developer; WITCH1: +1, the Witches' Festival's pictures' row (FESTIVAL_ARCHIVE) - the registry's own words for a developer; NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's; STAR4/STAR7: +2, the star's two archives' rows
+  'src/world/eliteGates/pseudoArchives.js': 54,   // DRAGON7: +1, the Aetherbright's row (AETHERBRIGHT_ARCHIVE) - the registry's own words for a developer, as the brass's; DWARVEN-DRAGON: +1, its sprites' row (DWARVEN_DRAGON_ARCHIVE) - the registry's own words for a developer; GHOSTFENCE (AUDIT RED-MOUNTAIN, CI): +1, the Ghostfence's art row (GHOSTFENCE_ARCHIVE) - the registry's own words for a developer; LOCKPICK (main): +1, the Lockpick's picture's row (LOCKPICK_ARCHIVE) - the registry's own words for a developer; AUDIT TESA III (at URBANIZER's merge): +1, the towns' fabric's art row (URBAN_ARCHIVE) - the registry's own words for a developer; KETCH: +1, the Sky-Ketch's art row (KT_ARCHIVE) - the registry's own words for a developer; TESA10 (at the merge of main into TESA): +1, the capitals' row (CAPITAL_ARCHIVE) - the registry's own words for a developer; PISTOLET: +1, the Dwarven Pistolet's art row (PISTOLET_ARCHIVE) - the registry's own words for a developer; WITCH1: +1, the Witches' Festival's pictures' row (FESTIVAL_ARCHIVE) - the registry's own words for a developer; NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's; STAR4/STAR7: +2, the star's two archives' rows
   'src/world/superDungeon/sdDungeon.js': 6,
   'src/world/superDungeon/sdRealm.js': 10,
   'src/world/spawnedDungeons.js': 3,

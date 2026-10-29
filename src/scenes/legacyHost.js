@@ -59,6 +59,7 @@ import {
   splitName, dayOf as courtDayOf, MARRIAGE_TEXT, TOPIC, wedPlayer, unionSpouse, playerSpouseLost, residentInHouse, forgetCourtship, warmCourtship, deedDoneOn,
 } from '../systems/legacy/marriage.js';
 import { deedsFor, deedLabel, deedQuestion, deedRefusal, deedRegard, deedAffection, deedTally, DEED_TEXT, GIFT_GOLD } from '../systems/legacy/courtDeeds.js';   // COURT-DEEDS
+import { unionKinHeard, kinBornLine } from '../systems/legacy/unionKin.js';   // UNION-CHILDREN: the other house's children of a union
 import { deductGold, totalGoldAmount } from '../systems/court.js';   // COURT-DEEDS: a gift's gold, coin then letters
 import { memberStanding, inheritStanding, inheritRegards, noteNews, newsFor as houseNewsFor, hearNews } from '../systems/legacy/influence.js';
 import { HOUSES_PER_REGION } from '../systems/banking.js';   // HOUSES-3: the bank's three a region, said where an heir's house waits
@@ -1376,7 +1377,7 @@ export function createLegacyHost(deps) {
   /** THE ACCOUNT'S UNIONS as the realm says them (a boot's read - realmSaves.js realmUnions): each union of this house's
    *  members recorded, and each the OTHER's death or delete ended (`endedBy` 'partner') ended in the record - the member
    *  may wed again. A union ended by this house's own member's death needs nothing: that death is this record's own.
-   *  Answers how many changed. */
+   *  UNION-CHILDREN: and the children the other's house raises, as it reads them (unionKin.js). Answers how many changed. */
   function unionsHeard(unions) {
     if (!family || !deps.on() || past || !Array.isArray(unions)) return 0;
     let n = 0;
@@ -1384,6 +1385,9 @@ export function createLegacyHost(deps) {
       if (!u || typeof u.sid !== 'string') continue;
       let s = unionSpouse(family, u.sid);
       if (!s && (s = wedPlayerHeard(u, { quiet: u.endedAt != null }))) n++;
+      const kin = s ? unionKinHeard(family, s, u.children) : null;   // UNION-CHILDREN: the children their house raises
+      if (kin?.added.length || kin?.changed) n++;
+      if (s?.spouse === family.currentId) for (const k of kin?.added ?? []) if (!k.died && k.minor) deps.say(kinBornLine(k, s));   // AUDIT FB1029 E-M2: a child heard grown was not just born
       if (!s || u.endedAt == null || u.endedBy !== 'partner' || !playerSpouseLost(family, s, deps.now(), u.endedWhy)) continue;
       n++;
       if (s.spouse === family.currentId) deps.say((u.endedWhy === 'gone' ? MARRIAGE_TEXT.gone : MARRIAGE_TEXT.lost)(fullNameOf(s.given, s.surname)));

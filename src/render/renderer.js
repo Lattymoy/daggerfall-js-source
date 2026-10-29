@@ -163,7 +163,7 @@ ${RW_MAIN_GLASS}
     pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
   lit += albedo * pointAcc;
-  lit += albedo * winLit(vWorldPos, n, 0.0, vWorldPos);   // WL1: the windows' light, through their glass (render/windowLight.js)
+  lit += albedo * winLit(vWorldPos, n, 0.0, 1.0);   // WL1: the windows' light, through their glass (render/windowLight.js)
   // R12: the player-following indirect point light (SunlightRig's
   // IndirectLight) - same falloff shape as the lantern lights; the
   // zeroed default color makes this a no-op in unlit scenes.
@@ -543,7 +543,7 @@ void main() {
     pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
   lit += albedo * pointAcc;
-  lit += albedo * winLit(vWorldPos, n, 0.0, vWorldPos);   // WL1
+  lit += albedo * winLit(vWorldPos, n, 0.0, 1.0);   // WL1
   // R12: the player-following indirect light (see the mesh FS).
   vec3 iL = uIndirect.xyz - vWorldPos;
   float iD = length(iL);
@@ -888,7 +888,7 @@ ${LPT_FS_TEXEL}  // Spectral flats keep their 180-alpha translucency (blended pa
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
     pointAcc += att * att * uPointColors[i];
   }
-  pointAcc += winLit(vBBWorld, vec3(0.0), 1.0, vBBWorld);   // WL1: by attenuation alone, as a lantern lights a flat
+  pointAcc += winLit(vBBWorld, vec3(0.0), 1.0, 1.0);   // WL1: by attenuation alone, as a lantern lights a flat
   // spectral eyes/body glow, or an auto-emissive flat's own albedo (black
   // tex otherwise). AUDIT 39r R17: DaggerfallBillboard.shader:56-58 lights
   // albedo.rgb - emission and adds the emission back - "Emission cancels
@@ -1114,7 +1114,7 @@ void main() {
     pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
   lit += tex * pointAcc;
-  lit += tex * winLit(vWorldPos, n, 0.0, vWorldPos);   // WL1
+  lit += tex * winLit(vWorldPos, n, 0.0, 1.0);   // WL1
   // R12: the player-following indirect light (see the mesh FS).
   vec3 iL = uIndirect.xyz - vWorldPos;
   float iD = length(iL);
@@ -1336,7 +1336,7 @@ void main() {
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
     pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
-  pointAcc += winLit(vWorld, n, 0.0, vWorld);   // WL1
+  pointAcc += winLit(vWorld, n, 0.0, 1.0);   // WL1
   vec3 iL = uIndirect.xyz - vWorld;
   float iD = length(iL);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
@@ -1589,7 +1589,7 @@ export const PANEL_CLEAR_RGBA = Object.freeze([49 / 255, 77 / 255, 121 / 255, 5 
 // see AUTOMAP_WATER_COLOR below for the seam DFU reads it across.
 import { WATER_MAP_COLOR } from './underwaterFog.js';
 import { WATER_SURFACE_VS, waterSurfaceFs } from './waterSurface.js';   // WATER1: the enhanced water pass over the terrain grid
-import { WATER_LAYER_UNITS, WATER_SCENE_UNIT, WATER_SCENE_DEPTH_UNIT, NO_BED_DEPTH, WATER_RIPPLE_UNIT } from './waterSurface.js';   // FIELD BUGS 2026-09-29 (the sea) #4: WATER1's offset is the sea's surface film's
+import { WATER_LAYER_UNITS, WATER_SCENE_UNIT, WATER_SCENE_DEPTH_UNIT, NO_BED_DEPTH, WATER_RIPPLE_UNIT, AURORA_SKY_UNIT } from './waterSurface.js';   // FIELD BUGS 2026-09-29 (the sea) #4: WATER1's offset is the sea's surface film's
 import { WATER_BED_GLSL, waterBedMix } from './waterBedGlsl.js';   // WATER-NEXT 2: the ground under the water is a bed
 import { packWaterMask, WATER_DRAW_MASK_TABLE } from '../world/water/waterCorners.js';   // MAC2: the corner table's one home; WATER-DRAW1: the PASS takes the draw's table, not the feet's
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
@@ -1607,6 +1607,11 @@ const SNOW_UNIT_LIST = Object.entries(SNOW_UNITS);   // AUDIT ENVIRONS P1: the f
 /** WEAPON-GLOW1: the glow's seconds, wrapped where every rate in it is whole (render/weaponGlowGlsl.js). A wall clock,
  *  as the elite foes' glow is: a look, and the same look in every pass that draws one. */
 export const glowSeconds = (now = globalThis.performance?.now?.() ?? Date.now()) => (now / 1000) % GLOW_CLOCK_PERIOD;
+/** HAND-WRAPS: the ranges a glow of `slot` lights - a weapon's its slot's; the fists' ('hands') the body's hands, the
+ *  skin's 'hand' row and a worn glove's hand parts, named `left hand (<record id>)` (formats/morrowind/mwItemMap.js's
+ *  rows; AUDIT C1: the pieces carry no part name). A glove of one mesh to the elbow lights whole. */
+const GLOW_HAND_SLOT = /^(?:(?:left|right) )?hand(?: \(|$)/;
+export const inGlowSlot = (r, slot) => (slot === 'hands' ? GLOW_HAND_SLOT.test(r.slot ?? '') : r.slot === slot);
 /** WEAPON-GLOW1: the Morrowind outline's draws per look, built once. */
 const _glowDraws = new Map();
 const glowDrawsFor = (look) => { let d = _glowDraws.get(look); if (!d) { d = glowRingDraws(look); _glowDraws.set(look, d); } return d; };
@@ -2003,6 +2008,11 @@ export class Renderer {
       gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
       new Uint8Array([0, 0, 0, 255])
     );
+    // SKYRIM-AURORA: the water's two fixed units hold the black texel until their own texture comes - the snow lines' and
+    // the aurora's dome map's - so a sampler on either never finds an empty unit
+    for (const unit of [SNOW_LINES_UNIT, AURORA_SKY_UNIT]) { this._activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, this._blackTex); }
+    this._activeTexture(gl.TEXTURE0);
+    this._auroraBound = this._blackTex;
 
     this._csStamp = 0; this._csUploaded = {}; this._csRect = new Float32Array(4);
     this.tileArrays = new Map(); // archive -> TEXTURE_2D_ARRAY
@@ -2032,6 +2042,7 @@ export class Renderer {
     this.waterSurfaceProgram = this._buildProgram(WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL));
     this.waterSurfaceProgramLane = null; this._wsLane = null;   // EL7: built with the lane
     this._ws = this._waterLocs(this.waterSurfaceProgram);
+    this._waterSamplerUnits(this.waterSurfaceProgram, this._ws);   // SKYRIM-AURORA
     this._waterSurfaceFog = this._ws.fog;
     this._csLoc.water = this._ws.cloud;
     this._waterFog = {
@@ -2657,6 +2668,7 @@ export class Renderer {
       if (lane.shadows && !this.waterSurfaceProgramLane) {
         this.waterSurfaceProgramLane = this._buildProgram(WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL, SHADOW_GLSL));
         this._wsLane = this._waterLocs(this.waterSurfaceProgramLane);
+        this._waterSamplerUnits(this.waterSurfaceProgramLane, this._wsLane);   // SKYRIM-AURORA
         const p = this.waterSurfaceProgramLane, gl = this.gl;
         this._wsLane.shadow = {
           sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'), sunTexel: gl.getUniformLocation(p, 'uSunTexel'), sunOrigin: gl.getUniformLocation(p, 'uSunOrigin'),
@@ -2727,7 +2739,7 @@ export class Renderer {
    *  uploads (uPrevVP), so a shift between beginFrame and a draw left the billboard, decal, character and terrain
    *  blocks the pre-shift matrix for the rest of the frame, the march reprojecting 819 units off. The one host calls it
    *  before beginFrame today; the stamp makes the order not matter. */
-  shadowOriginShift(offset) { this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._wl.shift(offset); this._frameStamp++; }   // LA-POST6: and the air's held view-projections - the contact march reprojects the moved world by them; WL1: and the windows the window light keeps
+  shadowOriginShift(offset) { this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._wl?.shift(offset); this._frameStamp++; }   // LA-POST6: and the air's held view-projections - the contact march reprojects the moved world by them; WL1: and the windows the window light keeps
   /** SHADOW-REACH: would a caster whose world box is `box` (+ the translation) cast into this frame's shadow maps - a
    *  host asks for what its VIEW cull rejected, and records it (below) rather than drawing it. False with no pass. */
   shadowReach(box, ox = 0, oy = 0, oz = 0) { return this._casting && this._shadows.reaches(box, ox, oy, oz); }
@@ -2834,7 +2846,7 @@ export class Renderer {
     const gl = this.gl;
     this._wl.bind();   // the block stands under every program that holds it, lit or not
     const on = this._wlLive && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved;
-    gl.uniform1i(loc.on, on ? 1 : 0);
+    gl.uniform1i(loc.on, on ? (this._wlSun ? 2 : 1) : 0);   // 2: the sun through glass stands in the sun map - a flat's vertex stage reads it once a quad
     if (!on) return;
     if (loc.rect) { gl.uniform4fv(loc.rect, this._clusterRect); gl.uniform2fv(loc.z, this._clusterZ); gl.uniform4fv(loc.fwd, this._camFwd); }
     this._activeTexture(gl.TEXTURE0 + CLUSTER_GRID_UNIT);
@@ -3939,7 +3951,7 @@ export class Renderer {
     // this body's palette is on its unit: the outline's rings BEFORE the body (at the back of the pass, so everything
     // drawn after covers them) and its charge after; each hands charProgram back for the lines that follow
     // TWO-HANDS: and a pair's LEFT blade its own (`mesh.offWeaponGlow` on the 'offweapon' ranges) - each hand its weapon's
-    const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow) && this._spriteDepth > 0 && this._studioDepth === 0 && this._glowVpH > 0 && !!mesh.ranges;
+    const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow || mesh.handGlow) && this._spriteDepth > 0 && this._studioDepth === 0 && this._glowVpH > 0 && !!mesh.ranges;
     if (glow) this._drawWeaponGlows(mesh, modelMatrix, skin, false);
     if (mesh.ranges && mesh.ranges.length) {
       for (const r of mesh.ranges) {
@@ -4001,7 +4013,7 @@ export class Renderer {
     this._close2D();   // PERF-2D: drawCharacter's own baseline - closed already, said where the draw is
     if (!g) return;
     let any = false;
-    for (const r of mesh.ranges) if (r.slot === slot && !r.hidden) { any = true; break; }
+    for (const r of mesh.ranges) if (inGlowSlot(r, slot) && !r.hidden) { any = true; break; }
     if (!any || !g.ramp || !(g.code > 0)) return;
     const gl = this.gl;
     this._ensureWeaponGlowMeshProgram();
@@ -4048,7 +4060,7 @@ export class Renderer {
       gl.depthFunc(gl.LEQUAL);
     }
     for (const r of mesh.ranges) {
-      if (r.slot !== slot || r.hidden) continue;
+      if (!inGlowSlot(r, slot) || r.hidden) continue;
       gl.uniform1f(u.useTex, r.tex ? 1 : 0);
       gl.uniform1f(u.alphaCut, r.alphaCut || 0);
       gl.bindTexture(gl.TEXTURE_2D, r.tex || this._blackTex);
@@ -4071,6 +4083,7 @@ export class Renderer {
   _drawWeaponGlows(mesh, modelMatrix, skin, charge) {
     if (mesh.weaponGlow) this._drawWeaponGlow(mesh, modelMatrix, skin, charge, 'weapon', mesh.weaponGlow);
     if (mesh.offWeaponGlow) this._drawWeaponGlow(mesh, modelMatrix, skin, charge, 'offweapon', mesh.offWeaponGlow);
+    if (mesh.handGlow) this._drawWeaponGlow(mesh, modelMatrix, skin, charge, 'hands', mesh.handGlow);   // HAND-WRAPS: the fists
   }
 
   /** WEAPON-GLOW1: the Morrowind glow's program - the character program's skinned vertex shader with the glow's shift
@@ -5577,7 +5590,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (opts.alpha && tex) (this._alphaArt ??= new WeakSet()).add(tex);   // OVH2: the texture's own treatment, read at every screen draw of it (AUDIT RETRO1 J7: a lost context's null is no key)
     if (opts.cutout) this._markCutout(tex);   // RW1: { cutout: true } - the texture's own treatment in every solid pass (a texel under half alpha is a hole)
     const base = `${archive}_${record}`;
-    if (opts.cutout) { this._cutoutKeys.add(base); if (windowLightOn()) this._wl.addMask(base, color32, true); }   // WL1: its holes, the sun's way in
+    if (opts.cutout) { (this._cutoutKeys ??= new Set()).add(base); if (windowLightOn()) this._wl?.addMask(base, color32, true); }   // WL1: its holes, the sun's way in
     let keys = this._texKeysByBase.get(base);
     if (!keys) this._texKeysByBase.set(base, keys = new Set());
     keys.add(key);
@@ -5609,7 +5622,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const base = this._texBaseOf?.get(key);
     this._texBaseOf?.delete(key);
     const keys = base === undefined ? null : this._texKeysByBase.get(base);
-    if (keys) { keys.delete(key); if (!keys.size) { this._texKeysByBase.delete(base); if (this._cutoutKeys.delete(base)) this._wl.dropMask(base); } }   // WL1: a cutout's holes go with its last picture
+    if (keys) { keys.delete(key); if (!keys.size) { this._texKeysByBase.delete(base); if (this._cutoutKeys?.delete(base)) this._wl?.dropMask(base); } }   // WL1: a cutout's holes go with its last picture
     if (tex) this.gl.deleteTexture(tex);
     if (this._tex0Bound === tex) this._tex0Bound = null;
     this._texGen++;
@@ -5621,7 +5634,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (!this.emissionTextures.has(key) && this.glassMasks?.has(key)) {   // RW1: an interior's declared glass rides the same `e:` key
       const glass = this.glassMasks.get(key);
       this.glassMasks.delete(key);
-      this._wl.dropMask(key);   // WL1: and its layer
+      this._wl?.dropMask(key);   // WL1: and its layer
       if (glass) this.gl.deleteTexture(glass);
       if (this._tex1Bound === glass) this._tex1Bound = null;
       this._texGen++;
@@ -5632,7 +5645,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.emissionTextures.delete(key);
     this.emissionWhite.delete(key);
     this.windowMasks?.delete(key);   // RW1
-    this._wl.dropMask(key);   // WL1: a window's mask, and its layer
+    this._wl?.dropMask(key);   // WL1: a window's mask, and its layer
     if (tex) this.gl.deleteTexture(tex);
     if (this._tex1Bound === tex) this._tex1Bound = null;
     this._texGen++;
@@ -5783,7 +5796,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  pipeline's word for one not uploaded yet (glassKeyTest: a mesh is made before a climate's picture of it is up). */
   wlGlassKey(archive, record) {
     const k = `${archive}_${record}`;
-    return this.windowMasks.has(k) || this.glassMasks.has(k) || this._cutoutKeys.has(k) || !!this.glassKeyTest?.(archive, record);
+    return !!(this.windowMasks?.has(k) || this.glassMasks?.has(k) || this._cutoutKeys?.has(k) || this.glassKeyTest?.(archive, record));
   }
 
   /** WL1: a model's apertures (render/windowLight.js windowAperturesOf) for each sub-mesh whose picture may hold glass -
@@ -6598,7 +6611,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.emissionWhite.delete(key);
     this.windowMasks.delete(key);
     this.glassMasks.set(key, tex);
-    if (windowLightOn()) this._wl.addMask(key, color32);   // WL1: the sun's way in
+    if (windowLightOn()) this._wl?.addMask(key, color32);   // WL1: the sun's way in
     this._texGen++;   // EV2: a sub-mesh stamped before the declaration looks again
     return tex;
   }
@@ -7114,7 +7127,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     else if (!this._retroMips) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0);   // RETRO1: the albedo's cap, so both samples still come from one level
     this._activeTexture(gl.TEXTURE0);
     this.emissionTextures.set(key, tex);
-    if (opts.window && windowLightOn()) this._wl.addMask(key, color32);   // WL1: the window's glass, for the light it lets through
+    if (opts.window && windowLightOn()) this._wl?.addMask(key, color32);   // WL1: the window's glass, for the light it lets through
     this._texGen++;   // EV2: cached sub-mesh lookups refresh
     return tex;
   }
@@ -7437,7 +7450,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   destroyMesh(mesh) {
     const gl = this.gl;
     mesh._dead = true;   // EL2: a shadow record from the last frame may still hold it
-    this._wl.forget(mesh);   // WL1: none of its windows lights
+    this._wl?.forget(mesh);   // WL1: none of its windows lights
     for (const b of mesh.buffers) gl.deleteBuffer(b);
     gl.deleteVertexArray(mesh.vao);
     if (mesh.shadowVao) gl.deleteVertexArray(mesh.shadowVao);   // LA-AUDIT A1: its index buffer is one of mesh.buffers
@@ -7579,6 +7592,27 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   setWaterRipples(field, span = 48, cells = 96) {
     this._ripples = field ?? null;   // AUDIT WATER-NEXT P4: the field itself, a frame's handing no object
     this._rippleSpan = span; this._rippleCells = cells;
+  }
+
+  /** SKYRIM-AURORA: a water program's two fixed samplers, sent once when it is built: the snow lines' unit and the aurora's
+   *  dome map's. A frame with no ground snow (Enhanced Environments off, a boot before the snow is read, the bench, the
+   *  water lab) had left the snow's on unit 0 beside the tile array - two types on one unit, and the water refused. */
+  _waterSamplerUnits(P, L) {
+    this._use(P);
+    this.gl.uniform1i(L.snow.lines, SNOW_LINES_UNIT); L.snowUnit = true;
+    this.gl.uniform1i(L.auroraSky, AURORA_SKY_UNIT);
+  }
+
+  /** SKYRIM-AURORA: the aurora's dome map on its unit (render/auroraPass.js, waterUniforms' `aurora`), or the black texel
+   *  and the switch off - each sent only when it changes: the unit is the aurora's alone (skyrimaurora.test.js holds it). */
+  _bindAuroraSky(L, tex) {
+    const gl = this.gl, on = tex ? 1 : 0, want = tex ?? this._blackTex;
+    if (L.auroraOn !== on) { gl.uniform1i(L.auroraSkyOn, on); L.auroraOn = on; }
+    if (this._auroraBound === want) return;
+    this._activeTexture(gl.TEXTURE0 + AURORA_SKY_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, want);
+    this._activeTexture(gl.TEXTURE0);
+    this._auroraBound = want;
   }
 
   /** WATER-NEXT 4: the ripple field on its unit (uploaded when its version moved), or the switch off. */
@@ -8248,6 +8282,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       swell: u('uSwell'), absorb: u('uAbsorb'), open: u('uOpen'), openColor: u('uOpenColor'),   // WATER-NEXT 2
       sceneOn: u('uSceneOn'), scene: u('uScene'), sceneDepth: u('uSceneDepth'), sceneSize: u('uSceneSize'),
       rippleOn: u('uRippleOn'), ripple: u('uRipple'), rippleRect: u('uRippleRect'),   // WATER-NEXT 4
+      auroraSky: u('uAuroraSky'), auroraSkyOn: u('uAuroraSkyOn'), auroraOn: 0,   // SKYRIM-AURORA: the aurora's dome map, its switch as sent (GL's own 0)
       fog: { fogColor: u('uFogColor'), fogMode: u('uFogMode'), fogDensity: u('uFogDensity'), fogRange: u('uFogRange'), camPos: u('uCamPos'), focus: u('uFocus'), dwFog: u('uDwFog'), haze: u('uJungleHaze') },   // DW-C: and the sea's; TV1: the focus; BANTHA1: the jungle's haze
       seaHaze: u('uSeaHaze'),   // FAR-SEA1: the far ring's haze on the sea
       // VC4 recorded that the deck's shadow reached neither the grass nor the water; WATER1 closes the water half
@@ -8351,6 +8386,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform1f(L.groundEdge, this.coastEdges ? 1 : 0);   // COAST-LOOK: the sheet's shore on the ground's line (render/groundEdgeGlsl.js)
     this._bindUnderWater(L);
     this._bindRipples(L);
+    this._bindAuroraSky(L, u.aurora);   // SKYRIM-AURORA
     // the ground's own light, term for term, so the surface sits in the
     // frame the land beside it is lit in
     this._uploadCloudShadow('water');
@@ -8377,6 +8413,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform4fv(L.indirect, this._indirect);
     gl.uniform3fv(L.indirectColor, this._indirectColor);
     // AUDIT PRECIP GROUND-5: the frame's snow lines (setSnowFrame) on their unit; each row says whether it reads them
+    // (SKYRIM-AURORA: the sampler's unit is sent when the program is built - _waterSamplerUnits)
     if (this._snowFrame && this._snowTex) {
       if (!L.snowUnit) { gl.uniform1i(L.snow.lines, SNOW_LINES_UNIT); L.snowUnit = true; }   // a sampler's unit is the program's: sent once
       this._activeTexture(gl.TEXTURE0 + SNOW_LINES_UNIT);

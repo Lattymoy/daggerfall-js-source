@@ -109,7 +109,7 @@ test('PVP-FLAG THE PAGE (scenes/pvpFlagHost.js): Caps Lock or the button toggles
   const said = [], sent = [];
   const online = { id: 'peer-me', wildOk: true, setWildFlag: (v) => sent.push(v) };
   const player = { level: 30 };
-  const f = createPvpFlagHost(() => online, player, (l) => said.push(l), { say: () => {} }, { doc: null, now: () => clock });
+  const f = createPvpFlagHost(() => online, player, (l) => said.push(l), { say: () => {} }, { doc: null, now: () => clock, zone: () => true });
   assert.equal(pvpFlagOn(), false);
   assert.equal(f.toggle(), true);
   assert.deepEqual(sent, [true]);
@@ -146,7 +146,7 @@ test('PVP-FLAG THE KEY (scenes/pvpFlagHost.js): Caps Lock toggles the flag in th
     const stub = () => ({ style: {}, setAttribute: () => {}, addEventListener: () => {} });
     const doc = { addEventListener: (k, fn) => handlers.push([k, fn]), createElement: stub, body: null };
     const sent = [];
-    createPvpFlagHost(() => ({ id: 'peer-me', wildOk: true, setWildFlag: (v) => sent.push(v) }), { level: 30 }, () => {}, { say: () => {} }, { doc, now: () => 0 });
+    createPvpFlagHost(() => ({ id: 'peer-me', wildOk: true, setWildFlag: (v) => sent.push(v) }), { level: 30 }, () => {}, { say: () => {} }, { doc, now: () => 0, zone: () => true });
     const key = handlers.find(([k]) => k === 'keydown')[1];
     key({ code: 'CapsLock', target: { tagName: 'INPUT' } });
     key({ code: 'CapsLock', target: { tagName: 'TEXTAREA' } });
@@ -197,7 +197,7 @@ test('PVP-SKULL THE REFEREE AND THE WIRE (net/wild/wildRef.js wildAggroWord, wil
 
 test('PVP-SKULL THE PAGE (scenes/pvpFlagHost.js, ui/pvpSkull.js, ui/nameLayer.js): a peer flagged wears white, gold while its aggro runs, none unflagged; mine gold after a blow; the name mask hands each point its skull; one 16-pixel drawing in three tints (mutants: the gold unread; the mask unworn; a tint lost)', () => {
   let clock = 0;
-  const f = createPvpFlagHost(() => ({ id: 'peer-me', wildOk: true, setWildFlag: () => {} }), { level: 30 }, () => {}, { say: () => {} }, { doc: null, now: () => clock });
+  const f = createPvpFlagHost(() => ({ id: 'peer-me', wildOk: true, setWildFlag: () => {} }), { level: 30 }, () => {}, { say: () => {} }, { doc: null, now: () => clock, zone: () => true });
   f.heard({ k: 'flag', id: 'peer-x', f: 1, a: 5000 });
   f.heard({ k: 'flag', id: 'peer-y', f: 1 });
   assert.deepEqual([f.skullOf('peer-x'), f.skullOf('peer-y'), f.skullOf('peer-z')], ['gold', 'white', null]);
@@ -281,7 +281,7 @@ test('PVP-30 THE ASK (ui/levelUp/pvp30Ask.js, ui/charSheetDoor.js, ui/growth/gro
 });
 
 test('PVP-SKULL THE OVERWORLD (scenes/travelViewMarks.js, scenes/travelView.js, ui/travel/travelViewHud.js; the owner: "overwold should show skulls"): a player\'s mark on the Overworld carries the skull the page holds for them - near, a stranger, or a region traveller - and the readout draws it over their name (mutants: the door shut; a mark bare; the carry dropped; the drawing undrawn)', () => {
-  const f = createPvpFlagHost(() => ({ id: 'peer-me', wildOk: true, setWildFlag: () => {} }), { level: 30 }, () => {}, { say: () => {} }, { doc: null, now: () => 0 });
+  const f = createPvpFlagHost(() => ({ id: 'peer-me', wildOk: true, setWildFlag: () => {} }), { level: 30 }, () => {}, { say: () => {} }, { doc: null, now: () => 0, zone: () => true });
   f.heard({ k: 'flag', id: 'peer-x', f: 1, a: 5000 });
   assert.deepEqual([pvpSkullOf('peer-x'), pvpSkullOf('peer-z')], ['gold', null]);
   const marks = rd('src/scenes/travelViewMarks.js');
@@ -338,4 +338,36 @@ test('PVP-EDGE (systems/wild/zoneEdge.js, net/online.js, net/wire.js, net/wild/w
     await say(b, { k: 'zone', z: 1, ed: 1 });
     assert.deepEqual(a.sent.filter((m) => m.t === 'wref' && m.k === 'grace').map((m) => m.id), ['peer-0002'], 'only the walk in is graced');
   } finally { Date.now = realNow; }
+});
+
+test('PVP-FLAG-ZONE (scenes/pvpFlagHost.js; the owner: "or i can flag anywerte"): the flag goes up in the zone alone - Cyrodiil, the open sea, their halls; out of it the key and the button do nothing and a raised flag comes down once the lock lets it; PVP-FLAG-SPOT ("left center or right center"): the button at the middle of the right edge (mutants: the zone unasked; the flag kept outside)', () => {
+  const realInterval = globalThis.setInterval, ticks = [];
+  globalThis.setInterval = (fn) => { ticks.push(fn); return 0; };
+  try {
+    let inZone = false, clock = 0;
+    const sent = [], said = [], handlers = [], button = { style: {}, setAttribute: () => {}, addEventListener: () => {} };
+    const doc = { addEventListener: (k, fn) => handlers.push([k, fn]), createElement: () => button, body: null };
+    const f = createPvpFlagHost(() => ({ id: 'peer-me', wildOk: true, setWildFlag: (v) => sent.push(v) }), { level: 30 }, (l) => said.push(l), { say: () => {} }, { doc, now: () => clock, zone: () => inZone });
+    const key = handlers.find(([k]) => k === 'keydown')[1];
+    key({ code: 'CapsLock', target: { tagName: 'CANVAS' } });
+    assert.equal(f.toggle(), false);
+    assert.deepEqual(sent, [], 'outside the zone: no flag');
+    ticks[0]();
+    assert.equal(button.style.display, 'none', 'outside the zone: no button');
+    assert.deepEqual([button.style.right, button.style.top, button.style.transform], ['8px', '50%', 'translateY(-50%)'], 'the middle of the right edge');
+    inZone = true;
+    ticks[0]();
+    assert.equal(button.style.display, 'block');
+    key({ code: 'CapsLock', target: { tagName: 'CANVAS' } });
+    assert.deepEqual(sent, [true], 'in the zone: up');
+    f.heard({ k: 'hp', by: 'peer-me', to: 'peer-x' });
+    inZone = false;
+    ticks[0]();
+    assert.equal(f.on(), true, 'in the lock: kept');
+    clock = PVP_FLAG.lockMs;
+    ticks[0]();
+    assert.equal(f.on(), false, 'the lock over: down');
+    assert.deepEqual(sent, [true, false]);
+    assert.equal(said.at(-1), 'PvP is off.');
+  } finally { globalThis.setInterval = realInterval; }
 });

@@ -64,10 +64,10 @@ export function passengerHelm(input, boat, journey) {
 /** The helm panel's card for a passenger at her helm under way - her hull, her name and her port, and (AUDIT FB1021d PS-7)
  *  the time dial the helm reads, which the card's buttons turn - or null: a boat of mine, or a voyage halted (the helm is
  *  the passenger's, PS-2). @param {any} boat @param {{ live?: boolean } | null | undefined} journey
- *  @param {{ timeDial?: boolean, timeScale?: number, timeScaleIndex?: number, timeScaleMax?: number } | null} [helm] */
+ *  @param {{ timeDial?: boolean, timeScale?: number, timeScaleIndex?: number, timeScaleMax?: number, heavy?: boolean } | null} [helm] */
 export function passengerCard(boat, journey, helm = null) {
   if (!mastersHelm(boat, journey)) return null;
   const c = /** @type {any} */ (charterOf(boat));
-  return { hull: boat.hull, passage: { ship: c.ship, port: c.to.name },
+  return { hull: boat.hull, passage: { ship: c.ship, port: c.to.name }, heavy: !!helm?.heavy,   // AUDIT FB1029d B5: her load said to the passenger too
     dial: helm ? { timeDial: helm.timeDial, timeScale: helm.timeScale, timeScaleIndex: helm.timeScaleIndex, timeScaleMax: helm.timeScaleMax } : null };
 }

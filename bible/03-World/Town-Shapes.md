@@ -187,7 +187,7 @@ its own tile: at distance 0 alone Aldwall Rock's model 323 stood 1.9 m in its gr
 level, so only the core's corners past a tile ease with the seam. Where buildings stand in the band (Sentinel fills its
 pixel) the seam stays steeper than the grade: easing it would stand them off their ground, as TS2 did.
 
-**Across the edge (assessed, not built).** The worst seams meet the next pixel: Tunmont's west 130 m over its
+**Across the edge (BUILT: ACROSS-EDGE, `../01-Overview/bugs/Field-Bugs-2026-10-29c.md`).** The worst seams meet the next pixel: Tunmont's west 130 m over its
 neighbour's sea, Kalunnunu's north 109 m over open sea, Naresa's south 166 m under a hillside rising away, Sentinel's
 south 47 m under land its neighbour's tavern leaves 54 tiles of room. A run at the grade needs 34, 29, 43 and 12 samples
 past the edge. Every producer of a pixel's ground (the stream's worker, its classic pass, the landforms' lift, the
@@ -979,6 +979,9 @@ reach), none over another. The 55 moved:
 | Umberadax | Wagon Yard | on a gate's new road |
 | Whitewark | Stable | on a gate's new road |
 | Zenirijet | Stable | on a gate's new road |
+
+Westhead Moor's shipyard and lighthouse moved again since, on purpose: WESTHEAD-NORTH
+(`01-Overview/bugs/Field-Bugs-2026-10-28.md`).
 
 The three by the gate dressing (Y1): TS7 steps a gate's boards and carriage clear of the grown towers, up to 0.8 m
 over #1184's (Knightsgate's two). On the things as #1184 laid them, all three stables are placed on #1184's cells.

@@ -6705,7 +6705,7 @@ possible. No exceptions and no band aids." The decisions below are the record's,
   work as a Legendary of no record and drops it silently, so once an older build held a room's seat, its word said the
   container without the piece and every peer landed that. A Mounted Trophy (HUNTERS-MARK) goes the same way: main cannot
   read the word, but a seat that read the container before the put says its older list. Now a loot room's hello says the
-  loot its build reads (`wire.js:"export const LOOT_HELLO_LAW = 1;"`, `ll`), and while the relay setting `lootDoor` is on
+  loot its build reads (`wire.js:"export const LOOT_HELLO_LAW = 2;"`, `ll`), and while the relay setting `lootDoor` is on
   the relay refuses one that says less or none, with GROUND-GATE's words
   (`server/src/index.js:"async _lootDoorRefusal(key, m, now) {"`).
 

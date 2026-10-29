@@ -41,7 +41,7 @@ import { makeFont } from '../ui/text.js';   // ROAD-C c2/S9: the map's status/ho
 import { FntFile } from '../formats/fntFile.js';   // ROAD-C c2/S9
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-tail: UserInterfaceManager's stack, and its PAUSE, for the fourth host
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
-import { swallowBrowserKey, actionsOf, keyboardLook } from '../ui/input.js';   // U47: F5/F6/F11 - one list, in ui/input.js; FIX-F: the automap through the registry, and the look keys off the same registry
+import { swallowBrowserKey, actionsOf, keyboardLook, letGoOnBlur } from '../ui/input.js';   // U47: F5/F6/F11 - one list, in ui/input.js; FIX-F: the automap through the registry, and the look keys off the same registry
 import { worldViewportRect, largeHudWorldAspect } from '../ui/hud/hudLarge.js';   // AUDIT RETRO1 A8/C4: the lens and the world rect the other hosts take - the docked bar's, and retro mode's texture aspect and pillarbox
 import { hudShortcutKey } from '../ui/hud/hudShortcuts.js';   // AUDIT RETRO1 C4: DaggerfallHUD's shortcuts, Shift-F11 among them, as in the other hosts
 import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: DFU's TargetFrameRate, the fourth host's
@@ -234,6 +234,7 @@ export async function bootInterior(canvas, renderer, params, status) {
   // above) and had never been told about the way up, so the automap
   // this host mounts could neither close on DFU's key UP nor hold a
   // key down for more than the browser's repeat.
+  letGoOnBlur(keys, null);   // KEYS-BLUR: a key held as the page lost focus is let go
   addEventListener('keyup', (e) => {
     keys.delete(e.code);
     if (!overlay) return;

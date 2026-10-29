@@ -86,6 +86,7 @@ import '../professions/profTemplates.js';
 import '../survival/items.js';
 import '../thunderlock.js';
 import '../pistolet.js';   // PISTOLET: the second gun's row, the Thunderlock's way
+import '../handWraps.js';   // HAND-WRAPS: the fists' weapon's row
 import '../gate/gateSpoils.js';
 import '../ayleidStones.js';
 import '../gems.js';   // GEM2: the graded gems' rows
@@ -97,6 +98,7 @@ import '../comeSailAway/comeSailAwayItems.js';
 import '../naval/navalStores.js';
 import '../naval/tradeGoods.js';   // CAPT-TRADE: the exchange's goods
 import '../naval/treasureCharts.js';   // CAPT-CHARTS: the treasure chart
+import { DRAGON_MOUNT_TEMPLATE, isDragonMount, dragonMountWellFormed } from '../dragon/dragonMount.js';   // DRAGON5: the tamed dragon
 
 /** The law's version - a finding names the law that found it, so a law loosened later can be asked again. TECH1 moved it
  *  to 2: a weapon's technique line (systems/loot/lootRarity.js AFFIX_KINDS.technique) is lawful from it on, so a finding a law
@@ -128,7 +130,7 @@ import '../naval/treasureCharts.js';   // CAPT-CHARTS: the treasure chart
  *  such field). Nothing a law of 13 found is lawful now. MASTER-ART left it at 14: a Master's work (net/masterLaw.js) is a
  *  shape no earlier law met honestly - none was made before the service that makes it, whose judge is this law - so no
  *  finding of 14 is one to ask again. */
-export const ITEM_LAW_VERSION = 14;
+export const ITEM_LAW_VERSION = 15;   // DRAGON5: the Dwarven Dragon (1820) a template the law knows - law 14 found every one 'template'; HAND-WRAPS left it: no pair existed for a law to find against (acct224 carries the row)
 
 const T = ENCHANTMENT_TYPES;
 const TYPE_KEY = Object.freeze(Object.fromEntries(Object.entries(T).map(([k, v]) => [v, k])));
@@ -149,11 +151,12 @@ const CLASSIC_GROUPS = (() => {
  *  writes it. Every index not named here is UselessItems2's - the custom items' own group. Pinned by the producer sweep
  *  (test/systems/item/int1_itemlaw.test.js): every custom index a producer mints, in the group it mints it in. */
 export const CUSTOM_TEMPLATE_GROUPS = Object.freeze({
-  Weapons: Object.freeze([513, 514, 560, 561, 562]),
+  Weapons: Object.freeze([513, 514, 560, 561, 562, 563]),   // HAND-WRAPS: 563
   Armor: Object.freeze([515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526]),
   Gems: Object.freeze([570, 571, ...GEM_GRADE_TEMPLATES]),   // GEM2: the graded gems (systems/gems.js)
   Jewellery: Object.freeze([]),
   Furniture: Object.freeze([696, 697, 698, 699]),
+  Transportation: Object.freeze([DRAGON_MOUNT_TEMPLATE]),   // DRAGON5: the tamed dragon (systems/dragon/dragonMount.js)
 });
 const CUSTOM_GROUP_OF = new Map(Object.entries(CUSTOM_TEMPLATE_GROUPS).flatMap(([g, list]) => list.map((i) => /** @type {[number, string]} */ ([i, g]))));
 /** The groups a template may be minted in. */
@@ -289,7 +292,11 @@ export function itemFindings(v, opts = {}) {
   //    (WAGON-PRICE: one bought before the price rose stays lawful) ──
   if ((has(item, 'wagonKind') || has(item, 'wagonLook') || has(item, 'wagonEntry')) && item.templateIndex !== TRANSPORT_SMALL_CART) out.add('wagon');
   if (has(item, 'wagonKind') && item.wagonKind !== 'cart' && !(item.value >= (WAGON_KINDS[item.wagonKind]?.floor ?? Infinity))) out.add('wagon');
-  if (['horseCoat', 'horsePattern', 'horseLegs', 'horseSeed', 'horseBond', 'horseFed'].some((k) => has(item, k)) && item.templateIndex !== TRANSPORT_HORSE) out.add('horse');   // COATS1: a horse's look on DFU's Horse alone; STEED1: and its bond and its food
+  if (['horseCoat', 'horsePattern', 'horseLegs', 'horseSeed'].some((k) => has(item, k)) && item.templateIndex !== TRANSPORT_HORSE) out.add('horse');   // COATS1: a horse's look on DFU's Horse alone
+  if (['horseBond', 'horseFed'].some((k) => has(item, k)) && item.templateIndex !== TRANSPORT_HORSE && !isDragonMount(item)) out.add('horse');   // STEED1: its bond and its food; DRAGON5c: the tamed dragon's too (horse care's law)
+  // ── DRAGON5: a tame's id and look on the dragon's own template alone, and that template a tame's (the judge asks its row) ──
+  if ((has(item, 'dragonId') || has(item, 'dragonLook')) && !isDragonMount(item)) out.add('dragon');
+  if (isDragonMount(item) && !dragonMountWellFormed(item)) out.add('dragon');
   // ── the Broker's binding ────────────────────────────────────────────
   if (has(item, 'stonesPaid') && !(item.bound === true && BROKER_STONES.has(item.stonesPaid))) out.add('bound');
   // ── the ladder, the records, the sigil and the enchantments ──────────

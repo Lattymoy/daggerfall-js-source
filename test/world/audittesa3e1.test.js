@@ -102,9 +102,9 @@ test('AUDIT TESA III E1-4 THE DEEP WATERS BAKE BLENDS A TOWN AS THE STREAMED BUI
   moved[64 * 128 + 65] = 1;
   assert.notEqual(rectsFingerprint(rows), rectsFingerprint([[250500, 10, 20, 30, 40, moved], [100, 1, 2, 3, 4]]), 'an outline moved moves the key');
   assert.equal(rectsFingerprint([[100, 1, 2, 3, 4]]), rectsFingerprint([[100, 1, 2, 3, 4]]));
-  assert.equal(BAKE_GENERATOR_VERSION, 4, 'the bake\'s rules moved: a coastal town\'s blend its outline\'s (was 1), then the sea a town\'s ease reaches lifted (was 2), then its seam and tall relief (was 3)');   // PIN MOVED (AUDIT FB1028 A2-A3: 4) (FB1028): 3 (test/world/terrain/fb1028_townground.test.js)
+  assert.equal(BAKE_GENERATOR_VERSION, 5, 'the bake\'s rules moved: a coastal town\'s blend its outline\'s (was 1), then the sea a town\'s ease reaches lifted (was 2), then its seam and tall relief (was 3), then its neighbours\' meets and the dry paving (was 4)');   // PIN MOVED (FB1029 GROUND): 5   // PIN MOVED (AUDIT FB1028 A2-A3: 4) (FB1028): 3 (test/world/terrain/fb1028_townground.test.js)
   assert.match(bakeCacheKey({ woodsHash: 1, rectsHash: 2 }), new RegExp(`^dwbake:v${BAKE_GENERATOR_VERSION}:1:2$`));
-  assert.match(rd('src/world/deepWater/deepWatersClient.js'), /rows\.push\(\[py \* 1000 \+ px, r\.xMin, r\.xMax, r\.yMin, r\.yMax, \.\.\.\(r\.shape \? \[r\.shape\] : \[\]\)\]\);/);
+  assert.match(rd('src/world/deepWater/deepWatersClient.js'), /rows\.push\(\[py \* 1000 \+ px, r\.xMin, r\.xMax, r\.yMin, r\.yMax, \.\.\.\(r\.shape \? \[r\.shape, \.\.\.\(met \? \[1\] : \[\]\)\] : \[\]\)\]\);/);
 });
 
 test('AUDIT TESA III E1-4 with ARENA2: Antelibuton and Aldwall Rock - the bake\'s water test over the row Deep Waters is handed is the streamed build\'s ground, sample for sample; the rect alone (the bake before) called thousands of their sea samples land (mutant: the outline left off the row)', { skip: skipReal }, async () => {

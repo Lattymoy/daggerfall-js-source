@@ -55,7 +55,7 @@ test('BAY-LEFT-GROUND D5 the frame\'s law: past the Bay a record is DFU\'s frame
   assert.equal(plain.restandHeight(old, x, 0, 1.5, null), plainBay.restandHeight(old, x, 0, 1.5, null), 'the row off, a record of the prefab\'s scale past the Bay: stood again as on the Bay - no old law\'s step');
   assert.equal(plain.groundFrameHeight(ground + off, x, 0), ground + off);
   assert.deepEqual({ ...RECORD_GROUND_STAMP }, { terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW });
-  assert.equal(GROUND_FRAME_LAW, 4);   // PIN MOVED (FB1028 TOWN-GROUND): 4 - a town's blend moved DFU's own ground (test/world/terrain/fb1028_townground_frame.test.js); PIN MOVED (RELIEF-PEAKS): 3 - DFU's own ground past the Bay moved (its large map's law); D5's own law is LIFT_FRAME_LAW, 2 (test/world/reliefpeaks.test.js)
+  assert.equal(GROUND_FRAME_LAW, 5);   // PIN MOVED (FB1029 ACROSS-EDGE): 5 - the ground about a town rose to meet it (test/world/fb1029_ground.test.js); PIN MOVED (FB1028 TOWN-GROUND): 4 - a town's blend moved DFU's own ground (test/world/terrain/fb1028_townground_frame.test.js); PIN MOVED (RELIEF-PEAKS): 3 - DFU's own ground past the Bay moved (its large map's law); D5's own law is LIFT_FRAME_LAW, 2 (test/world/reliefpeaks.test.js)
   assert.equal(LIFT_FRAME_LAW, 2);
 });
 
@@ -162,7 +162,7 @@ test('BAY-LEFT-GROUND D5 the world host: the lift\'s place past the Bay the buil
   assert.match(w, /const _liftLocationAt = \(x, y\) => \(onTheBay\(x, y\) \? spawnGroundPlace\.groundLocationAt\(x, y, locationIndex\.get\(`\$\{x\},\$\{y\}`\)\) : _locationToBuild\(x, y\)\);/);
   assert.match(w, /const landformsHere = \(\{ before = false \} = \{\}\) => \(landform \? createLandforms\(\{ woods, roads: terrainGen\.roads\(\), sites: _landformSites, beyond: before \? null : beyondSites\.beyond\(\), climates: _landformClimates, ranges: !before \}\) : null\);/, 'the old law\'s landforms: the Bay\'s table alone');   // PIN MOVED (RELIEF-PEAKS): the old law's landforms without the ranges, which a record written then never stood
   assert.match(w, /createGroundFrame\(\{[^\n]*\n\s+_liftLocationAt, blocks, built, heightAt, heightCell, landform, landformsHere, maps, terrainGen, beyondSites,\n/);
-  assert.match(readFileSync(new URL('../../../src/scenes/groundFrameHost.js', import.meta.url), 'utf8'), /field = landformLiftField\(host\.woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere\(\{ before \}\)\);/, 'the lift asks the law it reads by');
+  assert.match(readFileSync(new URL('../../../src/scenes/groundFrameHost.js', import.meta.url), 'utf8'), /field = landformLiftField\(host\.woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere\(\{ before \}\), about\);/, 'the lift asks the law it reads by');   // PIN MOVED (FB1029 ACROSS-EDGE): and the towns it meets
   assert.equal((w.match(/\.\.\.RECORD_GROUND_STAMP/g) ?? []).length, 4, 'the scene cache, the deck, the anchor, a remains\' place');
   assert.match(w, /restandHeight\(p\[1\], x, z, savedScale, extras\.groundFrame\)/, 'the camps left outside');
   assert.match(w, /restandHeight\(y, x, z, was, arrived\.groundFrame\)/, 'the scene cache');

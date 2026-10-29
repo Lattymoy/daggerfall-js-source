@@ -1,0 +1,938 @@
+[
+  {
+    "name": "SKYRIM-AURORA-the-theatre-any-province",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "skyTheatreAt(px, py) !== SKYRIM_THEATRE) return null;",
+    "new": "skyTheatreAt(px, py) < 0) return null;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-latitude-unturned",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "return clamp01((south - bayToPicture(px + 0.5, py + 0.5)[1]) / (south - north));",
+    "new": "return clamp01((bayToPicture(px + 0.5, py + 0.5)[1] - north) / (south - north));",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-pixels-centre-dropped",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "return clamp01((south - bayToPicture(px + 0.5, py + 0.5)[1])",
+    "new": "return clamp01((south - bayToPicture(px, py)[1])",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-a-pixel-not-whole",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "if (!inWorldGrid(px, py) || skyTheatreAt",
+    "new": "if (skyTheatreAt",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-rows-fixed",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "    const has = (y) =>",
+    "new": "    _rows = { version, north: 18.25, south: 77.75 };\n    return [_rows.north, _rows.south];\n    // eslint-disable-next-line no-unreachable\n    const has = (y) =>",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-rows-never-found-again",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "  if (_rows?.version !== version) {",
+    "new": "  if (!_rows) {",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-sea-left-out",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "  return t >= 0 || inBay(px, py) ? t : seaTheatre(px, py);",
+    "new": "  return t;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-sea-reach-unbounded",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "r <= AURORA_DIALS.seaReach && theatre < 0",
+    "new": "r <= 40 && theatre < 0",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-bay-searched",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "  return t >= 0 || inBay(px, py) ? t : seaTheatre(px, py);",
+    "new": "  return t > 0 ? t : seaTheatre(px, py);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-dark-ramp-turned",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "smoothstep(AURORA_DIALS.sunFrom, AURORA_DIALS.sunFull, elevDeg);",
+    "new": "smoothstep(AURORA_DIALS.sunFull, AURORA_DIALS.sunFrom, elevDeg);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-sun-at-noon",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "Math.asin(Math.sin(Math.PI * dayFraction(minuteOfDay)))",
+    "new": "Math.asin(Math.cos(Math.PI * dayFraction(minuteOfDay)))",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-cover-unread",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": ": 1 - smoothstep(d.coverFrom, d.coverGone, c);",
+    "new": ": 1;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-decks-unread",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "return decks ? 1 - smoothstep(d.decksFrom, d.decksGone, c) :",
+    "new": "return false ? 1 - smoothstep(d.decksFrom, d.decksGone, c) :",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-no-cover-a-clear-sky",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "c = Number.isFinite(cover) ? cover : 1;",
+    "new": "c = Number.isFinite(cover) ? cover : 0;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-night-sky-unread",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "  if (!nightSky) return NO_AURORA;\n",
+    "new": "",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-night-cut-at-midnight",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "Math.floor((skyMinutes + MINUTES_PER_DAY / 2) / MINUTES_PER_DAY)",
+    "new": "Math.floor(skyMinutes / MINUTES_PER_DAY)",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-a-tiers-share",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "  Object.freeze({ share: 0.2, from: 0.3, to: 0.5 }),",
+    "new": "  Object.freeze({ share: 0.3, from: 0.3, to: 0.5 }),",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-top-tiers-floor",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "  Object.freeze({ share: 0.25, from: 0.9, to: 1 }),",
+    "new": "  Object.freeze({ share: 0.25, from: 0.86, to: 1 }),",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-tier-roll-unspent",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "r -= t.share; }",
+    "new": "}",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-swell-gone",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "  return auroraNightBase(night) * (1 - swell + swell * 0.5 * (1 + Math.sin(2 * Math.PI * skyMinutes / swellMinutes + phase)));",
+    "new": "  return auroraNightBase(night) * (1 - swell + swell * 0.5 * (1 + Math.sin(phase)));",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-swells-phase-lost",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "skyMinutes / swellMinutes + phase)));",
+    "new": "skyMinutes / swellMinutes)));",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-souths-share",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "const weight = (d.south + (1 - d.south) * lat)",
+    "new": "const weight = (1 * lat + d.south * 0)",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-hang-unturned",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "hang: d.hangSouth * (1 - lat) + d.hangNorth * lat",
+    "new": "hang: d.hangNorth * (1 - lat) + d.hangSouth * lat",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-dark-unread",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "return sky.weight > 0 && dark > 0 ? { weight: sky.weight * dark, hang: sky.hang } : NO_AURORA;",
+    "new": "return sky.weight > 0 ? { weight: sky.weight, hang: sky.hang } : NO_AURORA;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-a-dial-moved",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "  swellMinutes: 150, swell: 0.2,",
+    "new": "  swellMinutes: 15, swell: 0.2,",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-pass-drawn-at-0",
+    "file": "src/render/auroraPass.js",
+    "old": "    if (!(weight > 0)) return;\n    const gl = this.gl, u = this.u, ph",
+    "new": "    const gl = this.gl, u = this.u, ph",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-blended-over-by-alpha",
+    "file": "src/render/auroraPass.js",
+    "old": "gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ZERO, gl.ONE);",
+    "new": "gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-depth-written",
+    "file": "src/render/auroraPass.js",
+    "old": "    gl.depthMask(false);\n    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);",
+    "new": "    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-depth-test-left-as-found",
+    "file": "src/render/auroraPass.js",
+    "old": "    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);   // only where",
+    "new": "    gl.depthFunc(gl.LEQUAL);   // only where",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-march-blended",
+    "file": "src/render/auroraPass.js",
+    "old": "    gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);\n    gl.bindVertexArray(this.vao);",
+    "new": "    gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);\n    gl.bindVertexArray(this.vao);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-map-full-size",
+    "file": "src/render/auroraPass.js",
+    "old": "const mw = Math.max(1, Math.round(w * this.scale)), mh = Math.max(1, Math.round(h * this.scale));",
+    "new": "const mw = Math.max(1, Math.round(w)), mh = Math.max(1, Math.round(h));",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-map-made-every-frame",
+    "file": "src/render/auroraPass.js",
+    "old": "    if (this.map && this.map.width === mw && this.map.height === mh) return this.map;\n",
+    "new": "",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-map-never-freed",
+    "file": "src/render/auroraPass.js",
+    "old": "    this._freeMap();\n    if (this.dome)",
+    "new": "    if (this.dome)",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-texel-for-the-pixel",
+    "file": "src/render/auroraPass.js",
+    "old": "this._along(u, weight, hang, ph, 2 * tanHalf / map.height, this.steps);",
+    "new": "this._along(u, weight, hang, ph, 2 * tanHalf / viewport[3], this.steps);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-a-tier-moved",
+    "file": "src/render/auroraPass.js",
+    "old": "  lo: Object.freeze({ steps: 6, scale: 0.5 }),",
+    "new": "  lo: Object.freeze({ steps: 8, scale: 0.5 }),",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-skip-short",
+    "file": "src/render/auroraPass.js",
+    "old": "export const AURORA_REACH = AURORA_WAVES.reduce((s, w) => s + w[0], 0) + 1.4;",
+    "new": "export const AURORA_REACH = AURORA_WAVES.reduce((s, w) => s + w[0], 0) + 0.4;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-step-unwidened",
+    "file": "src/render/auroraPass.js",
+    "old": "  float sVar = ${f(AURORA_SHEET_VAR)} + step2 * step2 / 12.0,",
+    "new": "  float sVar = ${f(AURORA_SHEET_VAR)} + step2 * 0.0,",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-roll-off-gone",
+    "file": "src/render/auroraPass.js",
+    "old": "  col *= m > 1e-5 ? ${f(AURORA_PEAK)} * (1.0 - exp(-m / ${f(AURORA_PEAK)})) / m : 1.0;\n",
+    "new": "",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-dither-gone",
+    "file": "src/render/auroraPass.js",
+    "old": "  col += (jitter - 0.5) / 255.0 * step(0.004, col.g + col.b);",
+    "new": "  col += 0.0;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-horizon-uncapped",
+    "file": "src/render/auroraPass.js",
+    "old": "min(inversesqrt(up), ${f(AURORA_HORIZON_LIFT)})",
+    "new": "inversesqrt(up)",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-rays-never-faded",
+    "file": "src/render/auroraPass.js",
+    "old": "float lodR = smoothstep(0.25, 0.6, span * 7.0 / 6.2832)",
+    "new": "float lodR = 0.0 * smoothstep(0.25, 0.6, span * 7.0 / 6.2832)",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-drawn-under-the-horizon",
+    "file": "src/render/auroraPass.js",
+    "old": "  if (dir.y <= 0.0) return vec3(0.0);   // the ground's texels cost nothing\n",
+    "new": "",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-a-phase-unwrapped",
+    "file": "src/render/auroraPass.js",
+    "old": "wrap = (r) => wrapAngle(t * r);",
+    "new": "wrap = (r) => t * r;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-rows-wrap-lost",
+    "file": "src/render/auroraPass.js",
+    "old": "lo.push(r0); hi.push((r0 + 1) % AURORA_RAY_ROWS);",
+    "new": "lo.push(r0); hi.push(r0 + 1);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-a-hue-moved",
+    "file": "src/render/auroraPass.js",
+    "old": "export const AURORA_HEM = Object.freeze([0.25, 1.0, 0.55]);",
+    "new": "export const AURORA_HEM = Object.freeze([0.55, 1.0, 0.25]);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-ease-skipped",
+    "file": "src/scenes/auroraHost.js",
+    "old": "      sky += ((Number.isFinite(want.weight) ? want.weight : 0) - sky) * (1 - Math.exp(-dt / AURORA_EASE_S));",
+    "new": "      sky = Number.isFinite(want.weight) ? want.weight : 0;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-first-use-eased-from-0",
+    "file": "src/scenes/auroraHost.js",
+    "old": "dt = last === null || !Number.isFinite(now - last) ? Infinity : Math.max(0, (now - last) / 1000);",
+    "new": "dt = last === null || !Number.isFinite(now - last) ? 0 : Math.max(0, (now - last) / 1000);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-dark-eased",
+    "file": "src/scenes/auroraHost.js",
+    "old": "    get weight() { return sky * dark; },",
+    "new": "    get weight() { return sky; },",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-jump-unread",
+    "file": "src/scenes/auroraHost.js",
+    "old": "    jump() { last = null; },",
+    "new": "    jump() {},",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-door-unread",
+    "file": "src/scenes/auroraHost.js",
+    "old": "  if (door === 'off') return null;\n",
+    "new": "",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-door-case-kept",
+    "file": "src/scenes/auroraHost.js",
+    "old": "const s = String(v).trim().toLowerCase();",
+    "new": "const s = String(v);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-fading-hang-dropped",
+    "file": "src/scenes/auroraHost.js",
+    "old": "      if (want.weight > 0) hang = want.hang;",
+    "new": "      hang = want.hang;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-a-bad-clock-kept",
+    "file": "src/scenes/auroraHost.js",
+    "old": "dt = last === null || !Number.isFinite(now - last) ? Infinity",
+    "new": "dt = last === null ? Infinity",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-tier-unread",
+    "file": "src/scenes/auroraHost.js",
+    "old": "  const tier = AURORA_QUALITY[/** @type {keyof typeof AURORA_QUALITY} */ (quality)] ?? AURORA_QUALITY.default;",
+    "new": "  const tier = AURORA_QUALITY.default;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-veil-unread",
+    "file": "src/scenes/auroraHost.js",
+    "old": "      const v = Math.max(0, Math.min(1, veil)), w = sky * dark * v, p = w >= AURORA_DRAWN_FROM ? pass() : null;",
+    "new": "      const v = 1, w = sky * dark * v, p = w >= AURORA_DRAWN_FROM ? pass() : null;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-clock-unread",
+    "file": "src/scenes/auroraHost.js",
+    "old": "      seconds = Number.isFinite(walkMinutes) ? walkMinutes * WIND_SECONDS_PER_MINUTE : 0;",
+    "new": "      seconds = 0;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-place-door-unread",
+    "file": "src/scenes/auroraHost.js",
+    "old": "{ here = pixelHere, clock",
+    "new": "{ here = () => null, clock",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-never-drawn",
+    "file": "src/scenes/shared.js",
+    "old": "      aurora?.draw(yaw, pitch, fovY, aspect, viewport, 1 - brassW);   // SKYRIM-AURORA: over the night sky, under the clouds; dimmed in a Hollow's brass air\n",
+    "new": "",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-drawn-after-the-clouds",
+    "file": "src/scenes/shared.js",
+    "old": "      aurora?.draw(yaw, pitch, fovY, aspect, viewport, 1 - brassW);   // SKYRIM-AURORA: over the night sky, under the clouds; dimmed in a Hollow's brass air\n      // CLOUD-COMPILE: marched from their build; the composite draws nothing until their first whole sweep. The\n      // per-frame setters (dread, brass, haze, bolt) reach them from the frame after their build, before that sweep.\n      skyViewport = viewport;\n      clouds?.update(viewport);\n      cloudsShown?.draw(yaw, pitch, fovY, aspect);   // VC3: over the dome, under the host's marker\n",
+    "new": "      // CLOUD-COMPILE: marched from their build; the composite draws nothing until their first whole sweep. The\n      // per-frame setters (dread, brass, haze, bolt) reach them from the frame after their build, before that sweep.\n      skyViewport = viewport;\n      clouds?.update(viewport);\n      cloudsShown?.draw(yaw, pitch, fovY, aspect);   // VC3: over the dome, under the host's marker\n      aurora?.draw(yaw, pitch, fovY, aspect, viewport, 1 - brassW);   // SKYRIM-AURORA: over the night sky, under the clouds; dimmed in a Hollow's brass air\n",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-classic-lane-given-it",
+    "file": "src/scenes/shared.js",
+    "old": "const aurora = enhancedLane ? createAuroraHost(gl, params, { quality: cloudQuality }) : null;",
+    "new": "const aurora = createAuroraHost(gl, params, { quality: cloudQuality });",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-cover-unhanded",
+    "file": "src/scenes/shared.js",
+    "old": "aurora?.use(minuteOfDay, skyNow, weatherRowNow.cover, (dynamic ? showNightSky : true) && !sunbabyOn && !(sunbabyW > 0), !cloudsShown, nowMin);",
+    "new": "aurora?.use(minuteOfDay, skyNow, 0, (dynamic ? showNightSky : true) && !sunbabyOn && !(sunbabyW > 0), !cloudsShown, nowMin);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-weatherstyle-on-the-dome",
+    "file": "src/scenes/shared.js",
+    "old": "aurora?.use(minuteOfDay, skyNow, weatherRowNow.cover, (dynamic ? showNightSky : true) && !sunbabyOn && !(sunbabyW > 0), !cloudsShown, nowMin);",
+    "new": "aurora?.use(minuteOfDay, skyNow, weatherRowNow.cover, showNightSky && !sunbabyOn && !(sunbabyW > 0), !cloudsShown, nowMin);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-jump-untold",
+    "file": "src/scenes/shared.js",
+    "old": "      aurora?.jump();   // SKYRIM-AURORA: and the aurora the place it landed in\n",
+    "new": "",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-brass-unread",
+    "file": "src/scenes/shared.js",
+    "old": "aurora?.draw(yaw, pitch, fovY, aspect, viewport, 1 - brassW);",
+    "new": "aurora?.draw(yaw, pitch, fovY, aspect, viewport, 1);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-labs-own-door",
+    "file": "src/tools/skyLab.js",
+    "old": "const auroraW = Number(auroraDoor(params.get('aurora'))) || 0;",
+    "new": "const auroraW = Math.min(1, Number(params.get('aurora') || 0));",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-dome-never-marched",
+    "file": "src/render/auroraPass.js",
+    "old": "    if (this._domeTurn++ % AURORA_DOME.every === 0) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-dome-every-frame",
+    "file": "src/render/auroraPass.js",
+    "old": "this._domeTurn++ % AURORA_DOME.every === 0",
+    "new": "this._domeTurn++ % 1 === 0",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-dome-at-the-screens-steps",
+    "file": "src/render/auroraPass.js",
+    "old": "TAU / AURORA_DOME.width, AURORA_DOME.steps);",
+    "new": "TAU / AURORA_DOME.width, this.steps);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-domes-azimuth-turned",
+    "file": "src/render/auroraPass.js",
+    "old": "float az = (uv.x - 0.5) * 6.2831853, y = uv.y",
+    "new": "float az = (0.5 - uv.x) * 6.2831853, y = uv.y",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-dome-unwrapped",
+    "file": "src/render/auroraPass.js",
+    "old": "createRenderTarget(gl, AURORA_DOME.width, AURORA_DOME.height, { wrapS: 'REPEAT' })",
+    "new": "createRenderTarget(gl, AURORA_DOME.width, AURORA_DOME.height)",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-dome-never-freed",
+    "file": "src/render/auroraPass.js",
+    "old": "    if (this.dome) { gl.deleteTexture(this.dome.tex); gl.deleteFramebuffer(this.dome.fbo); this.dome = null; this.domeDrawn = false; }\n",
+    "new": "",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-horizon-fade-moved",
+    "file": "src/render/auroraPass.js",
+    "old": "smoothstep(0.01, 0.12, dir.y);",
+    "new": "smoothstep(0.02, 0.2, dir.y);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-a-light-moved",
+    "file": "src/render/auroraPass.js",
+    "old": "export const AURORA_LIGHT = Object.freeze([0.012, 0.06, 0.042]);",
+    "new": "export const AURORA_LIGHT = Object.freeze([0.06, 0.06, 0.042]);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-light-dropped",
+    "file": "src/scenes/shared.js",
+    "old": "const moonNow = (minute) => withAuroraLight(enhancedSky?.state ? moonlightTerm(enhancedSky.state) : dynamicMoonlight(dynamicMoons), aurora?.light(minute) ?? null);",
+    "new": "const moonNow = (minute) => withAuroraLight(enhancedSky?.state ? moonlightTerm(enhancedSky.state) : dynamicMoonlight(dynamicMoons), null);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-key-lit",
+    "file": "src/scenes/auroraHost.js",
+    "old": "if (!moon) return { dir: [0, 1, 0], scale: 0, color: [0, 0, 0],",
+    "new": "if (!moon) return { dir: [0, 1, 0], scale: 1, color: [0, 0, 0],",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-moons-ambient-lost",
+    "file": "src/scenes/auroraHost.js",
+    "old": "ambient: [moon.ambient[0] + light[0], moon.ambient[1] + light[1], moon.ambient[2] + light[2]] };",
+    "new": "ambient: [light[0], light[1], light[2]] };",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-light-unweighted",
+    "file": "src/scenes/auroraHost.js",
+    "old": "for (let c = 0; c < 3; c++) light[c] = AURORA_LIGHT[c] * w;",
+    "new": "for (let c = 0; c < 3; c++) light[c] = AURORA_LIGHT[c];",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-map-unhanded",
+    "file": "src/scenes/shared.js",
+    "old": "const auroraIn = (ws) => { const map = aurora?.skyMap ?? null; return map ? { ...ws, aurora: map } : ws; };",
+    "new": "const auroraIn = (ws) => ws;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-map-unforwarded",
+    "file": "src/render/waterSurface.js",
+    "old": "    aurora: sky?.aurora?.tex ?? null,",
+    "new": "    aurora: null,",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-bare-fresnel",
+    "file": "src/render/waterSurface.js",
+    "old": "* max(F, ${AURORA_MIRROR.toFixed(2)});",
+    "new": "* F;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-mirror-moved",
+    "file": "src/render/waterSurface.js",
+    "old": "export const AURORA_MIRROR = 0.3;",
+    "new": "export const AURORA_MIRROR = 0.1;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-mirror-unadded",
+    "file": "src/render/waterSurface.js",
+    "old": "  own += auroraRefl * (1.0 - foam);   // SKYRIM-AURORA: the curtains in the water, under no foam\n",
+    "new": "",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-unit-shared",
+    "file": "src/render/waterSurface.js",
+    "old": "export const AURORA_SKY_UNIT = 25;",
+    "new": "export const AURORA_SKY_UNIT = 0;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-map-unbound",
+    "file": "src/render/renderer.js",
+    "old": "    this._bindAuroraSky(L, u.aurora);   // SKYRIM-AURORA\n",
+    "new": "",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-snow-sampler-unsent",
+    "file": "src/render/renderer.js",
+    "old": "    this.gl.uniform1i(L.snow.lines, SNOW_LINES_UNIT); L.snowUnit = true;\n",
+    "new": "",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-lanes-samplers-unsent",
+    "file": "src/render/renderer.js",
+    "old": "        this._waterSamplerUnits(this.waterSurfaceProgramLane, this._wsLane);   // SKYRIM-AURORA\n",
+    "new": "",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-units-left-empty",
+    "file": "src/render/renderer.js",
+    "old": "    for (const unit of [SNOW_LINES_UNIT, AURORA_SKY_UNIT]) { this._activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, this._blackTex); }\n",
+    "new": "",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-unit-the-snows",
+    "file": "src/render/waterSurface.js",
+    "old": "export const AURORA_SKY_UNIT = 25;",
+    "new": "export const AURORA_SKY_UNIT = 19;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-fresh-dome-unread",
+    "file": "src/render/auroraPass.js",
+    "old": "    if (freshDome || !this.domeDrawn) this._domeTurn = 0;",
+    "new": "    if (!this.domeDrawn) this._domeTurn = 0;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-turn-not-begun-again",
+    "file": "src/render/auroraPass.js",
+    "old": "    if (freshDome || !this.domeDrawn) this._domeTurn = 0;\n    if (this._domeTurn++ % AURORA_DOME.every === 0) {",
+    "new": "    if (!this.domeDrawn) this._domeTurn = 0;\n    if (freshDome || this._domeTurn++ % AURORA_DOME.every === 0) {",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-gap-unread",
+    "file": "src/scenes/auroraHost.js",
+    "old": "      if (!(dt < AURORA_DOME_GAP_S)) stale = true;\n",
+    "new": "",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-gap-moved",
+    "file": "src/scenes/auroraHost.js",
+    "old": "export const AURORA_DOME_GAP_S = 0.5;",
+    "new": "export const AURORA_DOME_GAP_S = 2;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-skip-unread",
+    "file": "src/scenes/auroraHost.js",
+    "old": "p.draw(yaw, pitch, fovY, aspect, w, hang, seconds, viewport, stale || drawnFrame < frame - 1);",
+    "new": "p.draw(yaw, pitch, fovY, aspect, w, hang, seconds, viewport, stale);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-staleness-kept",
+    "file": "src/scenes/auroraHost.js",
+    "old": "      drawnFrame = frame; stale = false;",
+    "new": "      drawnFrame = frame;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-map-ungated",
+    "file": "src/scenes/auroraHost.js",
+    "old": "      skyMap.tex = drawnFrame === frame ? pass()?.domeTex ?? null : null;",
+    "new": "      skyMap.tex = pass()?.domeTex ?? null;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-light-veil-unread",
+    "file": "src/scenes/auroraHost.js",
+    "old": "      shown = p ? sky * v : 0;",
+    "new": "      shown = p ? sky : 0;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-light-without-a-pass",
+    "file": "src/scenes/auroraHost.js",
+    "old": "      shown = p ? sky * v : 0;",
+    "new": "      shown = w >= AURORA_DRAWN_FROM ? sky * v : 0;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-light-minute-unread",
+    "file": "src/scenes/auroraHost.js",
+    "old": "      const w = shown * darkAt(atMinute);",
+    "new": "      const w = shown * dark;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-sun-baby-unread",
+    "file": "src/scenes/shared.js",
+    "old": "aurora?.use(minuteOfDay, skyNow, weatherRowNow.cover, (dynamic ? showNightSky : true) && !sunbabyOn && !(sunbabyW > 0), !cloudsShown, nowMin);",
+    "new": "aurora?.use(minuteOfDay, skyNow, weatherRowNow.cover, (dynamic ? showNightSky : true), !cloudsShown, nowMin);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-view-outs-minute-dropped",
+    "file": "src/scenes/world.js",
+    "old": "lightStreetAt(r, light, sky.moonlight(clockMinute), SUN_RIG_COLOR);",
+    "new": "lightStreetAt(r, light, sky.moonlight(), SUN_RIG_COLOR);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-zenith-unguarded",
+    "file": "src/render/waterSurface.js",
+    "old": "(length(R.xz) > 1e-6 ? atan(R.x, R.z) : 0.0)",
+    "new": "atan(R.x, R.z)",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-height-read-as-an-angle",
+    "file": "src/render/auroraPass.js",
+    "old": "float az = (uv.x - 0.5) * 6.2831853, y = uv.y,",
+    "new": "float az = (uv.x - 0.5) * 6.2831853, y = sin(uv.y * 1.5707963),",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-marchs-rect-lost",
+    "file": "src/render/auroraPass.js",
+    "old": "    withTarget(gl, map, viewport, () => {",
+    "new": "    withTarget(gl, map, [0, 0, 1, 1], () => {",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-unit-the-windows",
+    "file": "src/render/waterSurface.js",
+    "old": "export const AURORA_SKY_UNIT = 25;",
+    "new": "export const AURORA_SKY_UNIT = 24;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  }
+]

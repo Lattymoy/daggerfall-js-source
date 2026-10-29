@@ -137,7 +137,7 @@
   {
     "name": "WL1-glsl-sun-map-unread",
     "file": "src/render/windowLight.js",
-    "old": "(kind == 1 ? (isFlat > 0.5 ? sunShadowSoftAt(base, vec3(0.0), 0.0) : sunShadowAt(wp, n)) : 1.0)",
+    "old": "(kind == 1 ? (isFlat > 0.5 ? flatSun : sunShadowAt(wp, n)) : 1.0)",
     "new": "1.0",
     "tests": [
       "test/render/wl1_windowlight.test.js"
@@ -353,7 +353,7 @@
   {
     "name": "WL1-destroy-keeps-the-windows",
     "file": "src/render/renderer.js",
-    "old": "    this._wl.forget(mesh);   // WL1: none of its windows lights",
+    "old": "    this._wl?.forget(mesh);   // WL1: none of its windows lights",
     "new": "    // forgotten",
     "tests": [
       "test/render/wl1_windowlight.test.js"
@@ -398,7 +398,7 @@
   {
     "name": "WL1-classic-flat-unlit",
     "file": "src/render/renderer.js",
-    "old": "  pointAcc += winLit(vBBWorld, vec3(0.0), 1.0, vBBWorld);",
+    "old": "  pointAcc += winLit(vBBWorld, vec3(0.0), 1.0, 1.0);",
     "new": "  pointAcc += vec3(0.0);",
     "tests": [
       "test/render/wl1_windowlight.test.js"
@@ -470,7 +470,7 @@
   {
     "name": "WL1-lane-point-unlit",
     "file": "src/render/enhancedLighting.js",
-    "old": "  return acc + winLit(wp, n, 0.0, wp);",
+    "old": "  return acc + winLit(wp, n, 0.0, 1.0);",
     "new": "  return acc;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
@@ -697,8 +697,8 @@
   {
     "name": "WL1-door-shut-keeps-masks",
     "file": "src/render/renderer.js",
-    "old": "    if (opts.window && windowLightOn()) this._wl.addMask(key, color32);",
-    "new": "    if (opts.window) this._wl.addMask(key, color32);",
+    "old": "    if (opts.window && windowLightOn()) this._wl?.addMask(key, color32);",
+    "new": "    if (opts.window) this._wl?.addMask(key, color32);",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -755,6 +755,33 @@
     "new": "[DEPTH_COPY_VS, DEPTH_COPY_FS]];",
     "tests": [
       "test/render/shadermount.test.js"
+    ]
+  },
+  {
+    "name": "WL1-FIX-flat-window-sun-unread",
+    "file": "src/render/windowLight.js",
+    "old": "'(kind == 1 ? flatSun : 1.0)'",
+    "new": "'1.0'",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-FIX-flat-vertex-ignores-the-window-sun",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0 || uWinOn == 2) ? (uMesh",
+    "new": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0) ? (uMesh",
+    "tests": [
+      "test/render/la_cost.test.js"
+    ]
+  },
+  {
+    "name": "WL1-FIX-the-switch-never-says-the-sun",
+    "file": "src/render/renderer.js",
+    "old": "gl.uniform1i(loc.on, on ? (this._wlSun ? 2 : 1) : 0);",
+    "new": "gl.uniform1i(loc.on, on ? 1 : 0);",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
     ]
   }
 ]

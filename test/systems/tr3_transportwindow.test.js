@@ -47,7 +47,7 @@ test('TR3: the rects - four rows and an exit on the panel, three DISABLED rows i
 
 test('TR3: ownership is read ONCE at Setup (:78-81) and decides which rows work', () => {
   const w = win({ hasHorse: false, hasCart: true });
-  assert.deepEqual({ ...w.enabled }, { foot: true, horse: false, cart: true, ship: false });
+  assert.deepEqual({ ...w.enabled }, { foot: true, horse: false, cart: true, ship: false, dragon: false });   // PIN MOVED (DRAGON5): the tamed dragon's row, off without one
   // Foot is ALWAYS enabled - there is no `if` around its handler.
   assert.equal(win({ hasHorse: false, hasCart: false }).enabled.foot, true);
   // Selling the horse after the window opened does not change the row.
@@ -131,10 +131,10 @@ test('TR3/MAC-K3: the host door - grounded and outdoors only, and EVERY host tha
   assert.match(rig, /shipAvailable: isShipAvailable\(\{ canSail: !!onShip, ownsShip: ownsShip\(playerEntity\), \.\.\.\(shipLocation\?\.\(\) \?\? \{\}\) \}\),/);   // RR1: through TransportManager.ShipAvailiable's delegate, the host's own gate first
   // The mount's art is loaded on the pick and dropped when you dismount.
   assert.match(rig, /animator\.mount\(mode\);/);
-  assert.match(rig, /_artFor = isRiding\(mode\) \? artKey\(mode\) : null;\s*\n\s*if \(!_artFor\) return;[\s\S]{0,120}loadRidingArt\(fetchBytes, palette, renderer, mode, lookNow\(mode\)\)/);   // COATS1: in the ridden horse's look
+  assert.match(rig, /_artFor = isHorseRide\(mode\) \? artKey\(mode\) : null;\s*\n\s*if \(!_artFor\) return;[\s\S]{0,120}loadRidingArt\(fetchBytes, palette, renderer, mode, lookNow\(mode\)\)/);   // COATS1: in the ridden horse's look; PIN MOVED (DRAGON5): a horse ride's alone - a dragon's rider sees its saddle (isHorseRide)
   // F-E1 (the parity audit): OnGUI :293 refuses to draw while paused -
   // an open window hides the mount, it does not freeze it.
-  assert.match(rig, /if \(art && isRiding\(player\.transportMode\) && !ridePaused && !mwViewHides\(\)\.horse\) \{/);   // AUDIT-EOTB2: and not under the Eye Of The Beholder body, which draws the rider with the horse
+  assert.match(rig, /if \(art && isHorseRide\(player\.transportMode\) && !ridePaused && !mwViewHides\(\)\.horse\) \{/);   // AUDIT-EOTB2: and not under the Eye Of The Beholder body, which draws the rider with the horse; PIN MOVED (DRAGON5): a horse ride's alone - a dragon's rider sees its saddle (isHorseRide)
   // The loop is a REAL channel, not an optional-chained no-op, and the
   // clip is the CLASSIC one, literally: the enhanced 3D horse that once
   // swapped mod clips into this expression was removed whole (2026-09-04). HORSE-VOL: its volume under Horse Volume.
