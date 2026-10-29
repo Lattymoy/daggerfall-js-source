@@ -87,7 +87,7 @@ test('AUDIT WATER-NEXT P1: the bed is the kernel\'s - carved with the grid by re
   // the kernel's one grid law carries it; the answer's shape is the host's
   const k = rd('src/world/terrain/terrainGen.js');
   assert.match(k, /const halo = bed && stride === 1 && bedNearEdge\(bed\) \? bedHalo\(ghost, px, py\) : null;\n\s*return \{ positions: grid\.positions, normals: grid\.normals, bed: bed \? gridBed\(grid, bed, stride, halo\) : null \};/);
-  assert.match(k, /const grid = restrideGrid\(\{ woods, px, py, stride, samples, landforms, bed: bed \? tilemapBytes : null \}\);/, 'the build\'s grid carves by its own TileMap');
+  assert.match(k, /const grid = restrideGrid\(\{ woods, px, py, stride, samples, landforms, bed: bed \? tilemapBytes : null, meets: meetsOf\(meets, landforms\) \}\);/, 'the build\'s grid carves by its own TileMap');   // PIN MOVED (FB1029 ACROSS-EDGE): and its town meets
   const g = flatGrid(128, 128, 0);
   const sea = new Uint8Array(128 * 128), kb = gridBed(g, sea, 1);
   assert.deepEqual(Object.keys(kb).sort(), ['depths', 'halo', 'normals', 'positions', 'sheetDepths']);
@@ -100,7 +100,7 @@ test('AUDIT WATER-NEXT P1: the bed is the kernel\'s - carved with the grid by re
   const w = hostText('src/scenes/world.js');
   assert.doesNotMatch(w, /waterBedOf\(/, 'the streaming host carves nothing on its own thread');
   assert.match(w, /bed: waterOn,   \/\/ AUDIT WATER-NEXT P1/, 'the build asks the kernel');
-  assert.match(w, /terrainGen\.grid\(\{ px: p\.px, py: p\.py, stride: 1, samples: p\.samples, landform, bed: bedBytes \}\)/, 'the promotion asks the worker');
+  assert.match(w, /terrainGen\.grid\(\{ \.\.\.gridGround\(p\), stride: 1, landform, bed: bedBytes \}\)/, 'the promotion asks the worker');   // PIN MOVED (FB1029 ACROSS-EDGE): the pixel's ground gridGround's
   // PIN MOVED (BAY-LEFT-GROUND, D1): and the sites past the Bay beside the Bay's (test/world/terrain/bayleftground_sites.test.js)
   assert.match(w, /roads: terrainGen\.roads\(\), sites: _landformSites, beyond: beyondSites\.beyond\(\), climates: _landformClimates, bed: waterOn \? bedBytesOf\(p\) : null \}\)\) \{/, 'the restride asks the kernel');   // LANDFORM4/6: beside the landforms' sites and climates
 });

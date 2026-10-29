@@ -174,7 +174,7 @@
   {
     "name": "LANDFORM-lift-unblended",
     "file": "src/world/landforms.js",
-    "old": "    blendLocationTerrain(field, sum / field.length, locationRect, hDim, classic, true);   // TOWN-SHAPES: the outline's, the sea read on DFU's own ground\n",
+    "old": "    blendLocationTerrain(field, sum / field.length, locationRect, hDim, unmet?.classic ?? classic, true, unmet?.field);   // TOWN-SHAPES: the outline's, the sea read on DFU's own ground\n",
     "new": "\n",
     "tests": [
       "test/systems/landform.test.js"
@@ -210,8 +210,8 @@
   {
     "name": "LANDFORM-build-ghost-rows-raw",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: bed ? tilemapBytes : null });",
-    "new": "const grid = restrideGrid({ woods, px, py, stride, samples, bed: bed ? tilemapBytes : null });",
+    "old": "const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: bed ? tilemapBytes : null, meets: meetsOf(meets, landforms) });",
+    "new": "const grid = restrideGrid({ woods, px, py, stride, samples, bed: bed ? tilemapBytes : null, meets: meetsOf(meets, landforms) });",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "LANDFORM-restand-scale-only",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + relief + town(y + relief);",
-    "new": "if (!(was > 0) || was === STREAMING_TERRAIN_SCALE) return y + relief + town(y + relief);",
+    "old": "if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + relief + town(y + relief) + meet;",
+    "new": "if (!(was > 0) || was === STREAMING_TERRAIN_SCALE) return y + relief + town(y + relief) + meet;",
     "tests": [
       "test/systems/landform.test.js"
     ],

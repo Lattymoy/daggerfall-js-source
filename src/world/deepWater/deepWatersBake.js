@@ -63,6 +63,7 @@ import {
   HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, BASE_HEIGHT_SCALE,
 } from '../terrain/terrainSampler.js';
 import { calcAvgMaxHeight, blendLocationTerrain } from '../terrain/terrainTiles.js';
+import { townMeetOf, applyTownMeets } from '../terrain/townMeet.js';   // ACROSS-EDGE: the ground about a town meets it
 import { MAP_WIDTH as MAP_W, MAP_HEIGHT as MAP_H } from '../../formats/woodsFile.js';   // IsValidMapPixel's 1000 x 500
 import { roundToInt } from '../../systems/mathf.js';
 
@@ -265,15 +266,16 @@ export function settleRange(lo, hi) {
 /**
  * A pixel's water test over its heightmap samples, x east, y north, 0..128:
  * `quick` answers 1 / 0 from the first two terms or -1, `exact` pays for the
- * ground noise, `water` is the one then the other.
+ * ground noise, `water` is the one then the other. ACROSS-EDGE: `meets` (bakeMeetsAt's) raise them, as the classic pass.
  * @returns {{water: Function, quick: Function, exact: Function}}
  */
-export function pixelWaterSampler(woods, mapPixelX, mapPixelY, locationRect = null) {
-  if (locationRect) {
+export function pixelWaterSampler(woods, mapPixelX, mapPixelY, locationRect = null, meets = null) {
+  if (locationRect || meets) {
     // The blend reads the whole pixel's average, so the pixel is sampled whole - the streamed build's own order.
-    const S = generateSamples(woods, mapPixelX, mapPixelY);
-    const [avg] = calcAvgMaxHeight(S);
-    blendLocationTerrain(S, avg, locationRect);   // TOWN-SHAPES: a town's outline, as the streamed build flattens it (AUDIT TESA III E1-4: the rect's `shape`, its row's - deepWatersClient.js deepWatersLocationRects)
+    const S = generateSamples(woods, mapPixelX, mapPixelY), unmet = meets ? Float32Array.from(S) : null;
+    if (meets) applyTownMeets(S, mapPixelX, mapPixelY, meets);
+    const [avg] = calcAvgMaxHeight(unmet ?? S);
+    if (locationRect) blendLocationTerrain(S, avg, locationRect, HDIM, unmet ?? S, false, unmet);   // TOWN-SHAPES: a town's outline, as the streamed build flattens it (AUDIT TESA III E1-4: the rect's `shape`, its row's - deepWatersClient.js deepWatersLocationRects)
     const water = (x, y) => S[x * HDIM + y] <= WATER_THRESHOLD;
     return { water, quick: (x, y) => (water(x, y) ? 1 : 0), exact: water };
   }
@@ -445,6 +447,35 @@ function floodInside(reached, cand) {
 const ALL8 = new Uint8Array(8).fill(0xff);
 const NONE8 = new Uint8Array(8);
 
+/** ACROSS-EDGE: a pixel's class with the meets about it (`met`) - a sea a town's ground meets is sampled, as MIXED. */
+export const meetClass = (c, met) => (c === PIXEL_SEA && met ? PIXEL_MIXED : c);
+
+/**
+ * ACROSS-EDGE (FB1029, world/terrain/townMeet.js): THE MEETS ABOUT A PIXEL THE BAKE READS - each town row of its 3 x 3
+ * (`meets`, deepWatersClient.js deepWatersLocationRects) with its meet on DFU's own ground, as the stream's classic pass
+ * takes it; null for none. A town's meet is read once, when a pixel about it is first asked.
+ * @param {object} woods @param {(px: number, py: number) => ?object} locationRectAt
+ * @returns {(px: number, py: number) => ?Array<{ px: number, py: number, meet: any }>}
+ */
+export function bakeMeetsAt(woods, locationRectAt) {
+  const kept = new Map();
+  const meetOf = (x, y) => {
+    // BAY-OWN: a meet is a Bay town's (MAPS.BSA), on the bake's own grid of the Bay
+    const k = y * MAP_W + x;
+    if (!kept.has(k)) { const r = locationRectAt(x, y), S = r?.meets && r.shape ? generateSamples(woods, x, y) : null; kept.set(k, S ? townMeetOf(S, r.shape, S) : null); }
+    return kept.get(k);
+  };
+  return (px, py) => {
+    let out = null;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      // BAY-OWN: the bake's own grid, the Bay's - a meet past it there is none
+      const x = px + dx, y = py + dy, m = x >= 0 && y >= 0 && x < MAP_W && y < MAP_H ? meetOf(x, y) : null;
+      if (m) (out ??= []).push({ px: x, py: y, meet: m });
+    }
+    return out;
+  };
+}
+
 /**
  * Build the world's sea mask.
  * @param {object} woods - the loaded (boot-smoothed) WoodsFile.
@@ -471,8 +502,9 @@ export function buildGlobal(woods, opts = {}) {
  */
 export function* buildGlobalSteps(woods, {
   locationRectAt = () => null,
-  classify = (px, py) => classifyPixel(woods, px, py),
-  candidates = (px, py) => coarseCandidateBits(pixelWaterSampler(woods, px, py, locationRectAt(px, py))),
+  meetsAt = bakeMeetsAt(woods, locationRectAt),
+  classify = (px, py) => meetClass(classifyPixel(woods, px, py), meetsAt(px, py)),
+  candidates = (px, py) => coarseCandidateBits(pixelWaterSampler(woods, px, py, locationRectAt(px, py), meetsAt(px, py))),
 } = {}) {
   return yield* floodSteps(MAP_W, MAP_H, classify, candidates);
 }
@@ -694,13 +726,14 @@ export class DeepWatersBake {
    * @param {(px: number, py: number) => Uint8Array} [deps.fineAt] - a mixed pixel's 512-byte fine mask (test seam).
    * @param {{ x0: number, y0: number, w: number, h: number }} [deps.frame] - ETHER-DEEP: the pixels it answers (BAY_FRAME)
    */
-  constructor({ woods, global, locationRectAt = () => null, fineAt = null, frame = BAY_FRAME }) {
+  constructor({ woods, global, locationRectAt = () => null, fineAt = null, frame = BAY_FRAME, meetsAt = null }) {
     this.woods = woods;
     this.frame = frame;   // ETHER-DEEP: the pixels it answers - the Bay's map, or (etherWatersBake.js) the Eltheric Ocean's box
     this.state = global?.state ?? null;
     this.classes = global?.classes ?? null;
     this.locationRectAt = locationRectAt;
-    this._fineAt = fineAt ?? ((px, py) => fineMaskBits(pixelWaterSampler(this.woods, px, py, this.locationRectAt(px, py))));
+    this.meetsAt = meetsAt ?? bakeMeetsAt(woods, locationRectAt);   // ACROSS-EDGE: the towns its ground meets
+    this._fineAt = fineAt ?? ((px, py) => fineMaskBits(pixelWaterSampler(this.woods, px, py, this.locationRectAt(px, py), this.meetsAt(px, py))));
     this._partial = new Map();
     for (let k = 0; k < (global?.partialIndex.length ?? 0); k++) this._partial.set(global.partialIndex[k], global.partialBits.subarray(k * 8, k * 8 + 8));
     this._fine = new Map();       // pixel -> 512 bytes

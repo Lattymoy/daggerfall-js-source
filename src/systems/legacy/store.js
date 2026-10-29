@@ -77,10 +77,12 @@ export const MEMBER_SAVE_FIELDS = Object.freeze(['given', 'surname', 'gender', '
 /** AUDIT LEGACY III A3/P3: whether two copies' persons of one id are ONE person. Ids are minted by each copy's own
  *  counter (nextId), so two copies that each minted someone - a child here, a spouse there - gave two people one id. One
  *  person is the same kind, born at the same minute of the same parents, and - wed in - the same townsperson
- *  (residentId) or the same union (realm.sid); their names and what they wear may differ (a save rewrites them). */
+ *  (residentId) or the same union (realm.sid) - or the same child of a union (union.sid, union.key); their names and what
+ *  they wear may differ (a save rewrites them). */
 export function samePerson(p, o) {
   if (!p || !o || (p.kind ?? 'member') !== (o.kind ?? 'member')) return false;
   if ((p.residentId ?? null) !== (o.residentId ?? null) || (p.realm?.sid ?? null) !== (o.realm?.sid ?? null)) return false;
+  if ((p.union?.sid ?? null) !== (o.union?.sid ?? null) || (p.union?.key ?? null) !== (o.union?.key ?? null)) return false;   // UNION-CHILDREN: the other house's child
   if ((Number(p.born) || 0) !== (Number(o.born) || 0)) return false;
   const a = [...(p.parents ?? [])].sort((x, y) => x - y), b = [...(o.parents ?? [])].sort((x, y) => x - y);
   return a.length === b.length && a.every((x, i) => x === b[i]);
@@ -95,11 +97,17 @@ export function samePerson(p, o) {
  */
 export function rekeyClashes(mine, other) {
   const theirs = new Map((other?.people ?? []).map((o) => [o.id, o]));
-  const clash = (mine?.people ?? []).filter((p) => theirs.has(p.id) && !samePerson(p, theirs.get(p.id)));
+  // AUDIT FB1029 E-S2: a union's child the other copy holds under another id is that one - it takes the other's id
+  const kin = (/** @type {any} */ p) => (p.kind === 'union' && p.union ? `${p.union.sid}|${p.union.key}` : null);
+  const theirKin = new Map((other?.people ?? []).filter(kin).map((o) => [kin(o), o.id]));
+  const twin = (mine?.people ?? []).filter((p) => kin(p) && theirKin.has(kin(p)) && theirKin.get(kin(p)) !== p.id);
+  const twinIds = new Set(twin.map((p) => p.id));
+  const clash = (mine?.people ?? []).filter((p) => !twinIds.has(p.id) && theirs.has(p.id) && !samePerson(p, theirs.get(p.id)));
   /** @type {Map<number, number>} */
   const moved = new Map();
-  if (!clash.length) return moved;
+  if (!clash.length && !twin.length) return moved;
   let next = Math.max(mine.nextId | 0, other.nextId | 0, ...mine.people.map((p) => p.id + 1), ...other.people.map((o) => o.id + 1));
+  for (const p of twin) moved.set(p.id, /** @type {number} */ (theirKin.get(kin(p))));
   for (const p of clash) moved.set(p.id, next++);
   const to = (/** @type {number} */ id) => (moved.has(id) ? /** @type {number} */ (moved.get(id)) : id);
   for (const p of mine.people) {

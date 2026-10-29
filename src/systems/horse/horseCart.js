@@ -17,7 +17,7 @@
 //
 //   deps = {
 //     ready() -> bool                    TryGetGameManager: a game in progress, the player standing, the world up
-//     transport: { get(), set(mode), hasCart(), hasHorse(), isOnShip() }      TransportManager
+//     transport: { get(), set(mode), hasCart(), hasHorse(), isOnShip(), onDeck() }   TransportManager; onDeck the port's deck (FB1029d B1)
 //     teamShort() -> string | null       WAGONS3: why the wagon driven cannot be hitched - its team short of the horses
 //                                        it takes (systems/wagon/wagonKinds.js wagonTeamShort); absent, never short
 //     player: { position() -> [x,y,z] (the capsule's centre), forward(), movement() -> { position, forward } }
@@ -729,7 +729,7 @@ export function createHorseCartRuntime(deps) {
     if (isTeamFollowing()) return false;
     if (tm().get() === TRANSPORT.Cart && wagonState.Mode === WAGON_MODE.WithPlayer && wagonState.HorseMode === HORSE_MODE.HitchedToWagon) return true;
     if (wagonState.HorseMode === HORSE_MODE.WithPlayer) return true;
-    if (pee().isPlayerInside() || tm().isOnShip()) return false;
+    if (pee().isPlayerInside() || aboard()) return false;
     const pos = tryGetHorseScenePosition();
     if (!pos) return false;
     if (!isWithinHorizontalDistance(playerPosition(), pos, maxDistance)) return false;
@@ -739,7 +739,7 @@ export function createHorseCartRuntime(deps) {
   function canMountNearbyDeployedCart() {
     if (!ready()) return false;
     if (wagonState.Mode !== WAGON_MODE.Deployed && wagonState.Mode !== WAGON_MODE.FollowingPlayer) return false;
-    if (pee().isPlayerInside() || tm().isOnShip()) return false;
+    if (pee().isPlayerInside() || aboard()) return false;
     const w = tryGetPhysicalWagonScene();
     if (!w) return false;
     let wagonPos = w.anchor ?? w.position;
@@ -843,15 +843,16 @@ export function createHorseCartRuntime(deps) {
     }
     if (mode === previousTransportMode) return;
     const prev = previousTransportMode;
+    if ((mode === TRANSPORT.Cart || mode === TRANSPORT.Horse) && deps.transport.onDeck?.()) { rejectTransportChange(prev, HCC_TEXT.mountOutdoorsOnly); return; }   // AUDIT FB1029d B1: no pair mounted on a deck
     if (mode === TRANSPORT.Cart && teamShort()) { rejectTransportChange(prev, teamShort()); return; }   // WAGONS3
     if (mode === TRANSPORT.Cart && !tryPrepareCartMount()) { rejectTransportChange(prev, HCC_TEXT.wagonNotWithYou); return; }
     if (mode === TRANSPORT.Horse && prev !== TRANSPORT.Cart && !tryPrepareHorseMount(HORSE_MENU_MOUNT_DISTANCE)) { rejectTransportChange(prev, `${horseSubject(true)} is not close enough.`); return; }
     leaveStable(mode);
     if (mode === TRANSPORT.Horse && prev !== TRANSPORT.Cart) deployWagonBeforeHorseTravel();
-    if (prev === TRANSPORT.Cart && wagonState.Mode === WAGON_MODE.WithPlayer && !pee().isPlayerInside() && !hasPendingInteriorDeployment) {
+    if (cartParks(prev, mode)) {
       const hm = mode === TRANSPORT.Horse ? HORSE_MODE.WithPlayer : (tm().hasHorse() ? HORSE_MODE.HitchedToWagon : HORSE_MODE.None);
       deployFromBestAvailablePose(hm);
-    } else if (prev === TRANSPORT.Horse && mode === TRANSPORT.Foot && wagonState.HorseMode === HORSE_MODE.WithPlayer && !pee().isPlayerInside() && !hasPendingInteriorHorseDeployment) {
+    } else if (horseParks(prev, mode)) {
       deployHorseBehindPlayer();
     }
     if (mode !== TRANSPORT.Cart) rememberValidNonCartMode(mode);
@@ -870,7 +871,7 @@ export function createHorseCartRuntime(deps) {
     const mode = tm().get();
     if (mode === TRANSPORT.Horse || mode === TRANSPORT.Cart) { tm().set(TRANSPORT.Foot); return; }   // the direct set; ObserveTransportMode reads it next frame
     if (mode !== TRANSPORT.Foot) { say(HCC_TEXT.quickMountUnavailable); return; }
-    if (pee().isPlayerInside() || tm().isOnShip()) { say(HCC_TEXT.mountOutdoorsOnly); return; }
+    if (pee().isPlayerInside() || aboard()) { say(HCC_TEXT.mountOutdoorsOnly); return; }
     const target = resolveQuickMountMode(wagonState.LastMount, tm().hasHorse(), drivableCart());   // AUDIT WAGONS3 T3
     if (target === TRANSPORT.Foot) { say(HCC_TEXT.doNotOwnHorseOrWagon); return; }
     tryUseTransport(target);
@@ -879,7 +880,7 @@ export function createHorseCartRuntime(deps) {
   /** HandleSummonTransport's body, its line ANSWERED rather than said (HOLDINGS: the Stable page says it under its row,
    *  the hotkey on the HUD) - `{ ok, text }`, `ok` when something was summoned. */
   function summonTransport() {
-    if (pee().isPlayerInside() || tm().isOnShip()) return { ok: false, text: HCC_TEXT.summonOutdoorsOnly };
+    if (pee().isPlayerInside() || aboard()) return { ok: false, text: HCC_TEXT.summonOutdoorsOnly };
     const hasHorse = tm().hasHorse(), hasCart = tm().hasCart();
     if (!hasHorse && !hasCart) return { ok: false, text: HCC_TEXT.doNotOwnHorseOrWagon };
     if (!physicalPersistenceEnabled) return { ok: false, text: HCC_TEXT.alreadyWithYou };
@@ -912,7 +913,7 @@ export function createHorseCartRuntime(deps) {
    * the world) and with nothing out. Answers `{ ok, text }`.
    */
   function sendTransportAway() {
-    if (pee().isPlayerInside() || tm().isOnShip()) return { ok: false, text: HCC_TEXT.sendAwayOutdoorsOnly };
+    if (pee().isPlayerInside() || aboard()) return { ok: false, text: HCC_TEXT.sendAwayOutdoorsOnly };
     const hasHorse = tm().hasHorse(), hasCart = tm().hasCart();
     if (!hasHorse && !hasCart) return { ok: false, text: HCC_TEXT.doNotOwnHorseOrWagon };
     if (!physicalPersistenceEnabled) return { ok: false, text: HCC_TEXT.notInTheWorld };
@@ -1276,6 +1277,21 @@ export function createHorseCartRuntime(deps) {
     if (wagonState.Mode === WAGON_MODE.WithPlayer) return !wagonState.WagonStabled;   // WAGON-STABLED: a stabled one stays at the stable
     return physicalPersistenceEnabled && (followingTransportFastTravels || forceNextJourney) && isTeamFollowing();
   }
+  /** A cart left outdoors parks its wagon where the player stands, and a horse left for foot waits behind them
+   *  (ObserveTransportMode, below) - AUDIT FB1029d B2: one law for the park and for the keeping read before its frame. */
+  const cartParks = (prev, mode) => prev === TRANSPORT.Cart && mode !== TRANSPORT.Cart && wagonState.Mode === WAGON_MODE.WithPlayer && !pee().isPlayerInside() && !hasPendingInteriorDeployment;
+  const horseParks = (prev, mode) => prev === TRANSPORT.Horse && mode === TRANSPORT.Foot && wagonState.HorseMode === HORSE_MODE.WithPlayer && !pee().isPlayerInside() && !hasPendingInteriorHorseDeployment;
+  /** A park the next observed frame makes - the game has set the mode, the runtime has not answered it yet. */
+  const parkDue = (parks) => physicalPersistenceEnabled && hasObservedTransportMode && parks(previousTransportMode, tm().get());
+  /** CARGO-ASHORE (FIELD BUGS 2026-10-29d): whether the wagon is in the player's keeping - not parked, stabled or
+   *  following on foot, nor parked by the dismount just made (AUDIT FB1029d B2) - so its load goes where they go, a ship's
+   *  hold too (world.js, Come Sail Away's cargo). AUDIT FB1029d B6: the horse by its own keeping, or hitched to that wagon. */
+  const wagonWithPlayer = () => wagonState.Mode === WAGON_MODE.WithPlayer && !wagonState.WagonStabled && !parkDue(cartParks);
+  const horseWithPlayer = () => !wagonState.HorseStabled && ((wagonState.HorseMode === HORSE_MODE.WithPlayer && !parkDue(horseParks) && !parkDue(cartParks)) || (wagonState.HorseMode === HORSE_MODE.HitchedToWagon && wagonWithPlayer()));
+  /** AUDIT FB1029d B1: aboard a ship - Daggerfall's own (TransportManager.IsOnShip) or a Come Sail Away deck the host says
+   *  the player stands on (`transport.onDeck`): no pair is mounted, summoned or sent away there - a summon at a helm set the
+   *  wagon down in the sea, and Send away shed its load from a ship already under way. */
+  const aboard = () => tm().isOnShip() || !!deps.transport.onDeck?.();
   function convertFollowingTransportToWaitAtDeparture() {
     const isTeam = isTeamFollowing();
     if (ready()) { if (isTeam) cacheFollowingWagonWorldPose(); else cacheFollowingHorseWorldPose(); }
@@ -1584,7 +1600,7 @@ export function createHorseCartRuntime(deps) {
     lateUpdate, rebase, regroundStanding, handleSettingsChanged,
     handleStartLoad, handleNewGame, getSaveData, restoreSaveData, newSaveData, suspend,
     handlePreTransition, handleSuccessfulInteriorTransition, handleFailedTransition, handleExteriorTransition,
-    handlePreFastTravel, handlePostFastTravel, forceNextFastTravel, wagonGoesOnJourney,
+    handlePreFastTravel, handlePostFastTravel, forceNextFastTravel, wagonGoesOnJourney, wagonWithPlayer, horseWithPlayer,
     canUseTransport, tryUseTransport, canMountHorseFromTransportWindow, canUseCartFromTransportWindow,
     handleHorseTransportButton: () => { tryUseTransport(TRANSPORT.Horse); }, handleCartTransportButton: () => { tryUseTransport(TRANSPORT.Cart); },
     handleQuickMountOrDismount, handleSummonTransport,
