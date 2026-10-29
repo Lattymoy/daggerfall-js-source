@@ -231,11 +231,13 @@
   {
     "name": "CHAP4C-MINT-WORN",
     "file": "server-account/src/index.js",
-    "old": "const worn = await withChapterTitles(ctx, seats ? { ...who.player, seatTitles: await seatTitlesOf(ctx.db, who.player.id) } : who.player, env);",
-    "new": "const worn = seats ? { ...who.player, seatTitles: await seatTitlesOf(ctx.db, who.player.id) } : who.player;",
+    "old": "if (CHAPTER_TITLES.includes(chosen) || MASTERY_MARKS.includes(chosen)) worn = await withChapterTitles(ctx, worn, env);",
+    "new": "if (CHAPTER_TITLES.includes(chosen) || MASTERY_MARKS.includes(chosen)) worn = worn;",
     "tests": [
-      "test/net/chap4c_titles.test.js"
-    ]
+      "test/net/chap4c_titles.test.js",
+      "test/server/mint_title_gate.test.js"
+    ],
+    "note": "PIN MOVED (MINT-TITLE-GATE): re-aimed at the gated read - a chapter's or a mastery title worn and never read"
   },
   {
     "name": "CHAP4C-MINT-CHAR",

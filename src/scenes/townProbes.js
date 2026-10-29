@@ -50,6 +50,9 @@ export function createTownProbes(host) {
       return { id: p.trip.id, kind: p.trip.kind, from: p.trip.from?.name ?? null, to: p.trip.to?.name ?? null, home: [p.trip.from?.px, p.trip.from?.py],
         party: p.trip.party?.length ?? 1, phase: at.phase, camp: !!at.camp, native: placed ? [at.x, at.z] : null, scene: placed ? state.localFromWorld(at.x, at.z) : null };
     });
+    // HOVER-NAMES probe surface (tools/hoverNamesProbe.mjs): the road's people drawn on the ground as talk targets -
+    // their names and their feet in the scene - the seats the plaque's person pick races
+    window.__roadSeats = () => (livingRoadsOf?.()?.talkSeats?.() ?? []).map((s) => ({ name: s.person?.nameNPC ?? null, pos: [...s.pos] }));
     // MAP3: the held pose's tuning door - `__heldPose()` reads the pose in
     // force while the map is up, `__heldPose({ bones: { 'left forearm':
     // [rx, ry, rz], ... }, paper: { width, forward, drop, tilt } })` re-places

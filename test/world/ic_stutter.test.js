@@ -307,6 +307,11 @@ test('IC-STUTTER THE PLACES\' STEPS COUNTED - on a town of two quarters 512 cell
   assert.equal(whole.quarters?.length, 2, 'a town of two quarters');
   assert.deepEqual(stepped.value.quarters.map((q) => [q.netId, q.square?.cell, q.exits.map((e) => e.cell), q.corners.map((c) => c.cell), [...q.doors.keys()]]), whole.quarters.map((q) => [q.netId, q.square?.cell, q.exits.map((e) => e.cell), q.corners.map((c) => c.cell), [...q.doors.keys()]]));
   assert.deepEqual([...stepped.value.net], [...whole.net]);
+  // AUDIT LW-ANTICS A5: each quarter's squares, corners and exits keyed its own - two quarters never share a spot's key
+  const keysOf = (q) => [...q.squares, ...q.corners, ...q.exits].map((sp) => sp.key);
+  const [k0, k1] = whole.quarters.map(keysOf);
+  assert.ok(k1.length && k1.every((k) => k.startsWith('q1.')) && k0.every((k) => !k.startsWith('q')), 'the second quarter\'s tagged, the first as it was');
+  assert.equal(k0.filter((k) => k1.includes(k)).length, 0, 'no key in both');
   assert.equal(stepped.yields, 95, 'the count its steps make on this town - a pass left whole, or a quarter\'s, changes it');
 });
 

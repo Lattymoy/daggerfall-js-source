@@ -602,6 +602,7 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
 
   /** @type {Map<number, Set<number>>} QUEST-HOME: every town's homes by building, as the boot's read of the towns said */
   let everyTown = new Map();
+  let everyTownHeard = false;
   /** QUEST-HOME: the host told the registry knows of homes it may not have known (onHomes) - a listener's fault is never
    *  the registry's. */
   const told = () => { try { onHomes?.(); } catch { /* a listener's fault is never the registry's */ } };
@@ -622,6 +623,7 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
       if (keys.size) next.set(id, keys);
     }
     everyTown = next;
+    everyTownHeard = true;
     if (next.size) told();
     return true;
   }
@@ -654,6 +656,9 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
    * house it could have had, never sends its player into one its owner keeps.
    */
   const homeStands = (mapId, buildingKey) => !!towns.get(idOf(mapId))?.homes.has(buildingKey) || !!everyTown.get(idOf(mapId))?.has(buildingKey);
+  /** OVERLOAD-EASE (2026-10-29): whether the boot's read of every town says this place holds no home - so a pixel's build
+   *  need not ask it (most streamed places hold none). A town this page asked keeps its own answer; doors still ask. */
+  const heardHomeless = (mapId) => everyTownHeard && !everyTown.has(idOf(mapId)) && !towns.get(idOf(mapId))?.homes.size;
 
   /** A change I made, shown now and read back from the service after (the owner's name, the others' doors).
    *  LEGACY7 part five: and told (`onWrote`) - a home of mine bought, sold or changed is the line's to learn again.
@@ -792,7 +797,7 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
   /** AUDIT GUILD1d A5: something a door shows moved outside the registry (the guild book's look - whether this character
    *  may buy a hall): the doors are read again. */
   const bump = () => { version++; };
-  return { ensure, waitFor, known, homeAt, hearEveryTown, hearHome, homeStands, claim, release, setEntry, setLook, vote, homesIn, bump, holdDeed, releaseDeed, transfer, version: () => version };
+  return { ensure, waitFor, known, homeAt, hearEveryTown, hearHome, homeStands, heardHomeless, claim, release, setEntry, setLook, vote, homesIn, bump, holdDeed, releaseDeed, transfer, version: () => version };
 }
 
 // ═══ FIELD BUGS 2026-10-04d KNIGHT-HOUSE - A HOUSE THE REALM GAVE IS ITS KNIGHT'S, ON EVERY DOOR ═══════════════════════

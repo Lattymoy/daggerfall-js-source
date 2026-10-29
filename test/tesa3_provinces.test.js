@@ -80,13 +80,13 @@ test('TESA3 the host: the province where the player stands (never on the Bay, at
   assert.match(w, /const _region = `\$\{_questRegionIndex\(\)\}\|\$\{provinceHere\(\)\?\.key \?\? ''\}`;/, 'a province\'s edge is a region\'s');
   // whose names
   assert.match(w, /nameBankOfCurrentRegion: \(\) => nameBankHere\(\),/);
-  assert.match(w, /randomFullName: \(\) => getRandomFullNameOfBank\(nameBankHere\(\)\),/);
+  assert.match(w, /randomFullName: \(\) => randomPersonName\(nameBankHere\(\)\),/);   // REGION-NAMES: PIN MOVED - getRandomFullNameOfBank's coin, then the person (personNames.js randomPersonName)
   assert.match(w, /raceOfCurrentRegion: \(\) => \(RACE_BY_NAME_BANK\[nameBankHere\(\)\] \?\? 'Breton'\),/);
   assert.match(w, /regionIndex: \(\) => _questRegionIndex\(\),\n\s+nameBank: \(\) => provinceBankHere\(\),/, 'the town talk told');
   const tt = read('src/scenes/townTalk.js');
   assert.match(tt, /const provinceBank = \(\) => \(typeof nameBank === 'function' \? nameBank\(\) : null\) \?\? null;/);
   assert.match(tt, /nameBank: provinceBank\(\) \?\? getNameBankOfRegion\(region\),/, 'the building names\' people');
-  assert.match(tt, /fullName: \(gender\) => nameHelperFullName\(provinceBank\(\) \?\? getNameBankOfRegion\(regionNow\(\)\), /, 'the talk\'s %fn/%mn');
+  assert.match(tt, /fullName: \(gender\) => personName\(provinceBank\(\) \?\? getNameBankOfRegion\(regionNow\(\)\), /, 'the talk\'s %fn/%mn');   // REGION-NAMES: PIN MOVED
   // and no region index: the province never enters a region read
   const regionFn = w.slice(w.indexOf('  function _questRegionIndex() {'), w.indexOf('\n  }\n', w.indexOf('  function _questRegionIndex() {')));
   assert.match(regionFn, /return maps\.getRegionIndexAt\(px\.x, px\.y\);$/, 'the player\'s region index is the 62 regions\' law');

@@ -338,10 +338,10 @@ export const townPlaces = (nav, doors, buildings, o = {}) => stepsDone(townPlace
  * @param {{ width: number, height: number, weightAt: (gx: number, gy: number) => number }} nav
  * @param {readonly { key: number, x: number, z: number, nx: number, nz: number }[]} doors
  * @param {readonly { key: number, type: number, factionId?: number }[]} buildings
- * @param {{ quarters?: boolean, streets?: { label: Int32Array, id: number } | null, netId?: number | null }} [o]
+ * @param {{ quarters?: boolean, streets?: { label: Int32Array, id: number } | null, netId?: number | null, tag?: string }} [o] - `tag` a later quarter's, before its spot keys (AUDIT LW-ANTICS A5)
  * @returns {Generator<void, Places, void>}
  */
-export function* townPlacesSteps(nav, doors, buildings, { quarters = false, streets: given = null, netId: forced = null } = {}) {
+export function* townPlacesSteps(nav, doors, buildings, { quarters = false, streets: given = null, netId: forced = null, tag = '' } = {}) {
   const W = nav.width, H = nav.height;
   const types = new Map((buildings ?? []).map((b) => [b.key, b.type]));
   const factions = new Map((buildings ?? []).map((b) => [b.key, b.factionId ?? 0]));
@@ -417,7 +417,7 @@ export function* townPlacesSteps(nav, doors, buildings, { quarters = false, stre
   const squares = [];
   if (square) {
     const [x, z] = centre(square);
-    squareSpot = { key: 'sq', kind: 'square', cell: square, x, z, yaw: 0 };
+    squareSpot = { key: `${tag}sq`, kind: 'square', cell: square, x, z, yaw: 0 };
     social.unshift(squareSpot);
     squares.push(squareSpot);
     // LW-SPREAD: THE SQUARE'S POINTS - the most open cells about it (the same window), SQUARE_GAP apart and seen from it
@@ -440,7 +440,7 @@ export function* townPlacesSteps(nav, doors, buildings, { quarters = false, stre
       if (squares.some((s) => Math.hypot(s.cell[0] - c.x, s.cell[1] - c.y) < SQUARE_GAP)) continue;
       if (!netLine(net, netId, W, square, [c.x, c.y])) continue;
       const [px, pz] = centre([c.x, c.y]);
-      squares.push({ key: `sq${squares.length}`, kind: 'square', cell: [c.x, c.y], x: px, z: pz, yaw: 0 });
+      squares.push({ key: `${tag}sq${squares.length}`, kind: 'square', cell: [c.x, c.y], x: px, z: pz, yaw: 0 });
     }
   }
   // LW-SPREAD: THE TOWN'S CORNERS - each block's most open street cell inside its margin (the first in the grid's order on
@@ -470,7 +470,7 @@ export function* townPlacesSteps(nav, doors, buildings, { quarters = false, stre
     for (const c of best) {
       if (taken.some((t) => Math.hypot(t[0] - c.x, t[1] - c.y) < CORNER_GAP)) continue;
       const [px, pz] = centre([c.x, c.y]);
-      corners.push({ key: `c${c.bx}.${c.by}`, kind: 'corner', cell: [c.x, c.y], x: px, z: pz, yaw: 0 });
+      corners.push({ key: `${tag}c${c.bx}.${c.by}`, kind: 'corner', cell: [c.x, c.y], x: px, z: pz, yaw: 0 });
       taken.push([c.x, c.y]);
     }
   }
@@ -500,7 +500,7 @@ export function* townPlacesSteps(nav, doors, buildings, { quarters = false, stre
     if (!best) continue;
     const [x, z] = centre(best);
     const yaw = side === 'n' ? 0 : side === 's' ? Math.PI : side === 'e' ? Math.PI / 2 : -Math.PI / 2;
-    exits.push(/** @type {Spot} */ ({ key: `x${side}`, kind: 'exit', cell: best, x, z, yaw, side }));
+    exits.push(/** @type {Spot} */ ({ key: `${tag}x${side}`, kind: 'exit', cell: best, x, z, yaw, side }));
   }
   const town = { doors: doorSpots, square: squareSpot, squares, corners, social, market, dock, exits, types, factions, net, netId };
   if (!quarterIds) return town;
@@ -511,7 +511,7 @@ export function* townPlacesSteps(nav, doors, buildings, { quarters = false, stre
   const byQ = quarterIds.map(() => []);
   for (const d of ordered) { const s = doorSpots.get(d.key); if (s && s.cell) byQ[quarterAt(s.cell)].push(d); }
   const each = [];
-  for (let q = 0; q < quarterIds.length; q++) each.push(yield* townPlacesSteps(nav, byQ[q], buildings, { streets, netId: quarterIds[q] }));
+  for (let q = 0; q < quarterIds.length; q++) each.push(yield* townPlacesSteps(nav, byQ[q], buildings, { streets, netId: quarterIds[q], tag: q ? `q${q}.` : '' }));
   return { ...town, quarters: each, quarterAt };
 }
 

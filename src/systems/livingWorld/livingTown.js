@@ -7,7 +7,7 @@
 //
 //  - THE CENSUS AND THE DAY. Every resident of the town (census.js) has their day (dayPlan.js); four times a second the
 //    town reads each one's entry at the clock's minute, and those OUTDOORS - walking, or standing at a spot - within
-//    LIVING_RANGE of the player are wanted on the street, the nearest first, to DFU's own cap (maxPopulationFor).
+//    LIVING_RANGE of the player are wanted on the street, the nearest first, to the street's cap (livingStreetCap).
 //  - WHERE EXACTLY. A walk is the grid's A* path (townPaths.js, searched in slices), walked at the day's pace and
 //    never slower (a path longer than the plan guessed is walked faster, to WALK_FAST times the pace, and arrives late
 //    past that - the stay after it starts when they arrive). A stay at a spot is a place about it: in a circle with
@@ -42,19 +42,20 @@
 //    (`WITNESS_M`, a clear line - `o.sees`) counts it a crime; so does every one who saw a hand caught in a purse, and
 //    one of the watch STRUCK (`struck`) remembers the blow. A word's tone (`toned`) moves a regard once a day. The town
 //    talks of it for NEWS_DAYS (`deedNews`): one of its own struck down - and, seen, by whom.
-import { POP_RECYCLE_DISTANCE, maxPopulationFor, popAllowChange } from '../town/townPopulation.js';
+import { POP_RECYCLE_DISTANCE, POP_VISIBLE_RANGE, maxPopulationFor, popAllowChange } from '../town/townPopulation.js';
 import { PERSON_MOVE_SPEED } from '../../characters/mobile/mobilePerson.js';
 import { townPlaces, townPlacesSteps, exitToward, harbourDock, streetGeometry } from './places.js';
 import { stepsBreathing } from '../../world/puddleMask.js';   // IC-STUTTER: OW-HITCH's runner
-import { townCensus, quarterCensus, isHome, watchShiftSize } from './census.js';
+import { townCensus, quarterCensus, isHome, watchShiftSize, CROWD_FROM_BLOCKS } from './census.js';
 import { isCapitalPlaceId } from '../../world/capitalLane.js';   // IC-GRAND: a capital's slice a town of quarters
 import { dayPlan, entryAt, isOutdoor, walkMinutes, DAY_START_MIN, DAY_MIN, GUILD_DAY_OFFSETS } from './dayPlan.js';
 import { townClassOf, stillRoleOf, stillFlatOf } from './looks.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
+import { DIVINES } from '../guild/guildFactions.js';   // AUDIT LW-ANTICS B7: a temple's god, for its sermon
 import { NAV_CELL } from '../../world/city/cityNavigation.js';   // LW-DAWN: a berth's cell
 import { createPathBook, pointOnLine } from './townPaths.js';
 import { spotCircles, spotRound, circleLine, circlesStands, aloneStand, aloneStands, ROUND_S, GATHER_BEAT_S, lineMinutes, ALONE_FAR_M, SPACE_M } from './meetups.js';
-import { spotIncidents, stirLine, stirLoud, smallVoice, gateWord } from './stir.js';
+import { spotIncidents, stirLine, stirLoud, smallVoice, gateWord, cutpurseRun, CHASE_M, CAUGHT_M } from './stir.js';
 import { LIVING_GREETINGS, LIVING_KEEPSAKE, WATCH_GREETINGS, HEARD_GREETINGS, watchBand, fillLine, firstNameOf, CHAPTER_NEWS, CHAPTER_NEWS_DAYS, townEconNews, TOWN_ECON_NEWS_DAYS, CHAPTER_EVENT_NEWS } from './lines.js';
 import { keepsakeFor } from './keepsake.js';
 import { lwSeed, textSeed } from './seed.js';
@@ -74,6 +75,14 @@ export const CREW_REPLAN_MIN = 5;
 export const LIVING_TICK_S = 0.25;
 /** How far a resident is stood from the player (m) - DFU's recycle distance. */
 export const LIVING_RANGE = POP_RECYCLE_DISTANCE;
+/** LW-DENSE: the most a town stands on its street - DFU's own cap (maxPopulationFor); from CROWD_FROM_BLOCKS, where its
+ *  houses fill (census.js houseCrowdOf), STREET_PER_BLOCK a block of its grid to STREET_MAX: a city's street held DFU's 48 to
+ *  96 over a census of hundreds. */
+export const STREET_PER_BLOCK = 3;
+export const STREET_MAX = 160;
+/** @param {number} blocks */
+export const livingStreetCap = (blocks) => (blocks < CROWD_FROM_BLOCKS ? maxPopulationFor(blocks)
+  : Math.max(maxPopulationFor(blocks), Math.min(STREET_MAX, STREET_PER_BLOCK * Math.max(1, blocks | 0))));
 /** The searches one frame may make. */
 export const PATHS_PER_FRAME = 4;
 /** A path longer than the day guessed is walked up to this many times the pace. */
@@ -83,6 +92,11 @@ export const CATCH_UP = 0.35;
 /** A body further than this from where its day has it (m) is stood there at once (a first frame, a rest's jump of the
  *  clock); nearer, it walks there (a circle reshuffled, a stand left for the next walk). */
 export const SNAP_M = 30;
+/** AUDIT LW-ANTICS A2: the shortest run off a cutpurse makes (m) - a lane clear for less is no way; A1: their next walk
+ *  joined where its line comes within JOIN_M of where they ran, in its first JOIN_SPAN_M. */
+export const RUN_MIN_M = 4;
+export const JOIN_M = 4;
+export const JOIN_SPAN_M = 30;
 /** A walk begun this many of the clock's minutes ago from a door is a coming-out (seen at any range). */
 export const DOOR_POP_MIN = 2;
 /** WATCH-PROTECTS: how near a hostile monster sends one on the street running (m) - a few strides of it. */
@@ -152,6 +166,15 @@ export function walkGap(e, p) {
   const gx = Math.max(Math.min(a.x, b.x) - p[0], 0, p[0] - Math.max(a.x, b.x));
   const gz = Math.max(Math.min(a.z, b.z) - p[2], 0, p[2] - Math.max(a.z, b.z));
   return Math.hypot(gx, gz);
+}
+/** LW-DENSE: how far from `p` (m) one on a walk not searched yet would be at minute `t`, walked straight - the census asks
+ *  the nearest first, and those within sight with the street's own walks (a great city's street of 160 kept its near ones
+ *  waiting five seconds behind its far ones). @param {{ from?: { x: number, z: number }, to?: { x: number, z: number },
+ *  t0: number, t1: number }} e @param {number} t @param {number[]} p */
+export function walkNear(e, t, p) {
+  const a = /** @type {{ x: number, z: number }} */ (e.from), b = /** @type {{ x: number, z: number }} */ (e.to);
+  const f = Math.max(0, Math.min(1, (t - e.t0) / Math.max(1e-6, e.t1 - e.t0)));
+  return Math.hypot(a.x + (b.x - a.x) * f - p[0], a.z + (b.z - a.z) * f - p[2]);
 }
 /** LW-TALK: how much nearer a talking circle counts than its nearest one (m) - the ring the ones alone at a spot stand in
  *  (meetups.js ALONE_FAR_M), which its circles stand beyond: counted level with them, not behind them all. Nearest alone,
@@ -227,6 +250,10 @@ export function besideDay(cur, day) {
   if (o) o.other = null;
   return o;
 }
+
+/** AUDIT LW-ANTICS B7: a temple's god by its faction (guildFactions.js DIVINES). */
+/** @type {Map<number, string>} */
+const GOD_OF = new Map(Object.entries(DIVINES).map(([god, f]) => [f, god]));
 
 /** CHAP5b: the factions of a town's guild halls - its temples' too with `temples` - its chapters, each once, in order.
  *  @param {import('./places.js').Places} places @param {boolean} [temples] @returns {number[]} */
@@ -338,7 +365,7 @@ export class LivingTown {
     this.residents = this.places.quarters ? quarterCensus(o.town, o.buildings, this.places.quarters.map((q) => new Set(q.doors.keys()))) : townCensus(o.town, o.buildings, new Set(this.places.doors.keys()));   // LW-WALLS: the watch's and a traveller's home on the street; IC-GRAND: each quarter's people its own
     /** WATCH-DAY: the town's watch a shift (census.js) - its companies' duties (dayPlan.js watchDuty) */
     this._watchSize = watchShiftSize(o.town);
-    this.maxPopulation = maxPopulationFor(o.town.blocks);
+    this.maxPopulation = livingStreetCap(o.town.blocks);   // LW-DENSE: the street's cap by the town's size
     /** @type {Row[]} */
     this.pool = [];
     /** @type {Map<string, { day: number, plan: Entry[], roads?: boolean, inT?: number, home?: number|null, other?: any, sheet?: string, pv?: number, pe?: string, pb?: string }>} LW-DAWN `other`: the day kept beside it; CHAP5b `sheet` the halls' bands it was made under; LW15 `pv` the patrons' word it was made on (AUDIT LW-II-2 W5: `pe` its own errands', `pb` the browsers' doors' - a plan that read it alone) */
@@ -389,6 +416,11 @@ export class LivingTown {
     this._stirAt = new Map();
     /** LW-STIR: the watch stepping into a quarrel this beat, by the watchman's id @type {Map<string, import('./stir.js').Incident>} */
     this._stirVoice = new Map();
+    /** LW-ANTICS: each cutpurse's way off, by incident (`_chaseWayOf`) @type {WeakMap<object, { dx: number, dz: number, len: number } | null>} */
+    this._chaseWays = new WeakMap();
+    /** AUDIT LW-ANTICS A1: where each cutpurse's run ended, held through the rest of their stay and joined to their next
+     *  walk's line (`_heldRun`) @type {Map<string, { spot: any, e: any, walk: any, x: number, z: number, yaw: number, until: number, line?: any, join?: number }>} */
+    this._ranTo = new Map();
     /** @type {{ person: any, text: string, until: number }[]} the words to the player standing */
     this._greetings = [];
     /** LW15: each day's patrons' word (`_patronDayOf`), and AUDIT LW-II-2 W2/W4 each day's households' holders
@@ -864,7 +896,7 @@ export class LivingTown {
    * A walk whose path is not searched yet is `pending` (AUDIT-G1: the census searches the ones that may pass near the
    * player, `_tick`).
    * @param {Resident} res @param {number} t @param {boolean} search
-   * @returns {{ x: number, z: number, yaw: number, moving: boolean, e: Entry, pending?: boolean, fromDoor?: boolean } | null}
+   * @returns {{ x: number, z: number, yaw: number, moving: boolean, e: Entry, pending?: boolean, fromDoor?: boolean, run?: boolean } | null}
    */
   where(res, t, search) {
     const at = this.entryOf(res, t);
@@ -879,6 +911,8 @@ export class LivingTown {
       if (line === undefined) return { x: e.from.x, z: e.from.z, yaw: 0, moving: false, e, pending: true };
       if (line === null) return null;
       const w = this._walked(e, line, t);
+      const held = this._heldRun(res, e, line, w.s);   // AUDIT LW-ANTICS A1: a cutpurse off from where they ran to
+      if (held) return held;
       if (w.s < line.len) {
         // WATCH-DAY: the second of a pair at the first's shoulder; LW-SPACE: one of a company leaving together in file
         const p = e.pair === 1 ? this._atShoulder(line, w.s) : pointOnLine(line, Math.max(0, w.s - this._fileOf(res, e) * FILE_M));
@@ -898,7 +932,99 @@ export class LivingTown {
     const other = mine?.spot === e.at ? this._aloneAt.get(mine.other) : null;
     const loud = mine?.spot === e.at ? null : this._stirAt.get(e.at.key)?.mid;
     const yaw = other?.spot === e.at ? Math.atan2(other.x - st.x, other.z - st.z) : e.kind === 'post' && !inCircle ? e.at.yaw : loud ? Math.atan2(loud.x - st.x, loud.z - st.z) : st.yaw;
-    return { x: st.x, z: st.z, yaw, moving: false, e };   // WATCH-DAY: a post keeps the road
+    const ran = this._ranTo.get(res.id);
+    if (ran && ran.spot === e.at && t >= ran.e.t0 && t < ran.until && !this._inStir.has(res.id)) return { x: ran.x, z: ran.z, yaw: ran.yaw, moving: false, e };   // AUDIT LW-ANTICS A1: the round over, still where they ran
+    return this._runOf(res, e, t) ?? { x: st.x, z: st.z, yaw, moving: false, e };   // WATCH-DAY: a post keeps the road; LW-ANTICS: a cutpurse's run
+  }
+
+  /**
+   * AUDIT LW-ANTICS A1: A CUTPURSE OFF FROM WHERE THEY RAN TO - the walk after the stay they ran in. Its line comes
+   * nearest where the run ended at `join` (within its first JOIN_SPAN_M): within JOIN_M of it, they wait there till the
+   * walk's own pace has come so far, then walk on along it; else the walk is walked as any is (null). They never walk
+   * back to the one robbed when the way on lies ahead. @param {Resident} res @param {Entry} e @param {any} line @param {number} s
+   */
+  _heldRun(res, e, line, s) {
+    const ran = this._ranTo.get(res.id);
+    if (!ran || e !== ran.walk) return null;
+    if (ran.line !== line) {
+      ran.line = line;
+      let best = Infinity, join = -1;
+      for (let k = 0, top = Math.min(line.len, JOIN_SPAN_M); k <= top; k += 0.5) {
+        const q = pointOnLine(line, k), d = Math.hypot(q.x - ran.x, q.z - ran.z);
+        if (d < best) { best = d; join = k; }
+      }
+      ran.join = best <= JOIN_M ? join : -1;
+    }
+    const join = ran.join ?? -1;
+    if (join < 0 || s >= join) return null;
+    return { x: ran.x, z: ran.z, yaw: ran.yaw, moving: false, e: ran.e };   // waiting where they ran, the stay's own
+  }
+
+  /**
+   * LW-ANTICS: A CUTPURSE'S RUN (stir.js cutpurseRun) - from the first shout the cutpurse runs from their stand, away from
+   * the one robbed, along a clear line of the street (the first of eight bearings by turns, `_chaseWayOf`), and the watch
+   * stepping in runs after them and holds them; null for anyone else, or no clear way. Read off the stands every reader
+   * lays alike (`_aloneAt`), so every reader sees the same run. `run`: at a frightened run's pace (`update`).
+   * @param {Resident} res @param {Entry} e @param {number} t
+   */
+  _runOf(res, e, t) {
+    const mine = this._inStir.get(res.id);
+    const g = mine ? null : this._stirVoice.get(res.id);
+    const inc = mine?.spot === e.at && mine.inc.kind === 'cutpurse' ? mine.inc : g?.kind === 'cutpurse' && g.spot === e.at.key ? g : null;
+    if (!inc || (mine && inc.members[0].id !== res.id)) return null;   // the one robbed keeps their stand
+    const thief = !!mine;
+    // AUDIT LW-ANTICS A1: the thief's words over, where the run ended - through the rest of their stay (the lift is laid
+    // at its end), never back to the one robbed; the watch back to his own place
+    const over = thief && t >= inc.end;
+    const from = this._aloneAt.get(inc.members[0].id);
+    const walk = this._nextWalk(inc.members[0], e, t);
+    const way = from?.spot === e.at ? this._chaseWayOf(inc, from, this._aloneAt.get(inc.members[1].id), walk?.to ?? null) : null;
+    const r = cutpurseRun(inc, over ? inc.end - 1e-6 : t, this._baseRate(), FLEE_SPEED, way?.len);
+    if (!r || !from || !way) return null;
+    const d = thief ? r.thief : r.guard;
+    if (!thief && d <= 0) return null;   // the watch not off yet: his own place
+    const caught = !!inc.guard && r.thief >= way.len && r.guard >= r.thief - CAUGHT_M - 1e-6;
+    const yaw = Math.atan2(way.dx, way.dz) + (thief && caught ? Math.PI : 0);   // caught, the cutpurse turns to the watch
+    const x = from.x + way.dx * d, z = from.z + way.dz * d;
+    if (thief) {
+      this._ranTo.set(res.id, { spot: e.at, e, walk, x, z, yaw, until: walk?.t0 ?? e.t1 });
+      if (this._ranTo.size > 256) for (const [id, h] of this._ranTo) if (h.until < t - DAY_MIN) this._ranTo.delete(id);
+    }
+    if (over) return { x, z, yaw, moving: false, e };
+    return { x, z, yaw, moving: thief ? r.thief < way.len : r.guard < r.thief - CAUGHT_M - 1e-6, run: true, e };
+  }
+
+  /** AUDIT LW-ANTICS A1: a resident's walk on after their stay `e` (their plan's next), or null.
+   *  @param {any} res @param {Entry} e @param {number} t @returns {Entry | null} */
+  _nextWalk(res, e, t) {
+    const plan = this.planOf(res, this.dayOf(t));
+    for (let i = plan.indexOf(e) + 1; i > 0 && i < plan.length; i++) if (plan[i].kind === 'walk') return plan[i];
+    return null;
+  }
+
+  /** LW-ANTICS: the cutpurse's way off - away from the one robbed, AUDIT LW-ANTICS A1: toward where they walk next where
+   *  that is away from them, else off to that side of them - the first of eight bearings by turns that the street holds
+   *  clear for CHASE_M; A2: none
+   *  clear so far, the one it holds clear farthest, RUN_MIN_M or more (a lane). Kept by incident.
+   *  @param {any} inc @param {{ x: number, z: number }} from @param {{ x: number, z: number } | undefined} mark
+   *  @param {{ x: number, z: number } | null} [toward] */
+  _chaseWayOf(inc, from, mark, toward = null) {
+    if (this._chaseWays.has(inc)) return this._chaseWays.get(inc) ?? null;
+    const away = mark ? Math.atan2(from.x - mark.x, from.z - mark.z) : (inc.seed % 628) / 100;
+    // where they walk next past the one robbed: off to the side of them nearer it, never through them
+    const next = toward && Math.hypot(toward.x - from.x, toward.z - from.z) > 1 ? Math.atan2(toward.x - from.x, toward.z - from.z) : NaN;
+    const side = Math.sin(next - away) >= 0 ? Math.PI / 2 : -Math.PI / 2;
+    const b0 = !Number.isFinite(next) ? away : Math.cos(next - away) > 0 ? next : away + side;
+    let way = null, best = null;
+    for (const k of [0, 1, -1, 2, -2, 3, -3, 4]) {
+      const b = b0 + (k * Math.PI) / 4, dx = Math.sin(b), dz = Math.cos(b);
+      const len = Math.min(CHASE_M, this._street.reach(from.x, from.z, from.x + dx * CHASE_M, from.z + dz * CHASE_M));
+      if (len >= CHASE_M - 1e-6) { way = { dx, dz, len: CHASE_M }; break; }
+      if (len >= RUN_MIN_M && (!best || len > best.len + 1e-6)) best = { dx, dz, len };
+    }
+    way ??= best;
+    this._chaseWays.set(inc, way);
+    return way;
   }
 
   /**
@@ -1091,7 +1217,7 @@ export class LivingTown {
     /** AUDIT LW-STIR B2: those with the watch - dealt the day's incidents as everyone is, and left out (`absent`) */
     const lent = [];
     const wanted = [];
-    /** @type {{ res: Resident, gap: number }[]} */
+    /** @type {{ res: Resident, near: number }[]} */
     const pending = [];
     if (this.o.harbour && !this.places.dock.length && !this._harbourDock) this.dockSpot();   // LW5: the harbour sounded since
     for (const res of [...this.peopleOf(day), ...this._crewsNow()]) {
@@ -1141,7 +1267,10 @@ export class LivingTown {
       const inc = (stirs.by.get(key) ?? []).find((x) => x.round === round.round) ?? null;
       if (list.length < 2 && !inc) continue;
       const spot = spotOf.get(key) ?? stirs.spots.get(key);
-      if (inc && inc.members.every((m) => !absent.has(m.id))) {
+      // AUDIT LW-ANTICS A1: the round through only while both are still at the spot - one gone on to another spot after it
+      // (a labourer's next stint) is filed under the incident they are in there, never this one's over
+      const still = (/** @type {Resident} */ m) => inc.end > t || this.entryOf(m, t)?.e?.at?.key === key;
+      if (inc && inc.members.every((m) => !absent.has(m.id)) && inc.members.every(still)) {
         const unit = { members: inc.members, seed: inc.seed, start: round.start, end: round.end, from: inc.from };   // the street keeps them together (keepUnits)
         const keeps = inc.members[inc.anchor].id;
         inc.members.forEach((m, i) => this._inStir.set(m.id, { inc, pair: unit, spot, other: inc.members[1 - i].id, keeps }));
@@ -1188,7 +1317,7 @@ export class LivingTown {
       if (!at) continue;
       const w = this.where(res, t, false);
       if (!w) continue;
-      if (w.pending) { const gap = walkGap(w.e, playerPos); if (gap < LIVING_RANGE + WALK_STRAY_M) pending.push({ res, gap }); continue; }
+      if (w.pending) { if (walkGap(w.e, playerPos) < LIVING_RANGE + WALK_STRAY_M) pending.push({ res, near: walkNear(w.e, t, playerPos) }); continue; }
       const d = Math.hypot(w.x - playerPos[0], w.z - playerPos[2]);
       if (d < LIVING_RANGE) wanted.push({ res, d });
     }
@@ -1196,10 +1325,12 @@ export class LivingTown {
     // budget (the rest on the beats after). Read at their start, a walk begun beyond the street's reach was never searched
     // (only a row on the street searches its own) and its walker never came on, though they passed beside the player
     if (pending.length) {
-      pending.sort((a, b) => a.gap - b.gap || (a.res.id < b.res.id ? -1 : 1));
+      pending.sort((a, b) => a.near - b.near || (a.res.id < b.res.id ? -1 : 1));   // LW-DENSE: by walkNear
       this._paths.budget(this._standing() ? ARRIVAL_PATHS_PER_FRAME : CENSUS_PATHS);
-      for (const { res } of pending) {
+      for (const { res, near } of pending) {
+        this._onStreet = near < POP_VISIBLE_RANGE;   // LW-DENSE: within sight, asked with the street's own
         const w = this.where(res, t, true);
+        this._onStreet = false;
         // LW-PERF: one whose walk is still waiting to be searched is nowhere known yet - wanted on the beat after its
         // search (a row stood off its walk's start was out of the street's reach once its walk was known)
         if (!w || w.pending) continue;
@@ -1259,7 +1390,9 @@ export class LivingTown {
     /** @type {Map<string, import('./stir.js').Incident[]>} */
     const by = new Map();
     for (const [key, list] of stays) {
-      const got = spotIncidents(key, list, day, this.o.town.mapId, lineMinutes(rate), rate);
+      const sp = spots.get(key);
+      const at = sp?.building != null ? { building: sp.building, god: GOD_OF.get(this.places.factions?.get(sp.building) ?? 0) ?? null } : sp;   // AUDIT LW-ANTICS B7: its god
+      const got = spotIncidents(key, list, day, this.o.town.mapId, lineMinutes(rate), rate, at);   // LW-ANTICS: the spot, for a priest's door
       if (got.length) by.set(key, got);
     }
     const got = { sig, rate, gen: this._planGen, by, spots };   // (the plans the deal made counted)
@@ -1389,7 +1522,8 @@ export class LivingTown {
       else if (w.pending) { if (!row.visible) continue; p.moving = false; }
       else {
         const d0 = Math.hypot(w.x - p.pos[0], w.z - p.pos[2]);
-        const step = PERSON_MOVE_SPEED * WALK_FAST * dt * scale;
+        const step = (w.run ? FLEE_SPEED : PERSON_MOVE_SPEED * WALK_FAST) * dt * scale;   // LW-ANTICS: a cutpurse's run, and the watch after them
+        if (w.run) p.pace = FLEE_SPEED / PERSON_MOVE_SPEED;
         if (!row.visible || d0 > Math.max(SNAP_M, step * 3)) { p.pos[0] = w.x; p.pos[2] = w.z; p.yaw = w.yaw; p.moving = w.moving; row.side = 0; }
         else if (stop) p.moving = false;   // held by the politeness gate: where it stands, still (DFU's walker idles on the spot) - LW-SPREAD's audit: a body trailing its walk's point walked up to it while held
         else {
@@ -1426,8 +1560,11 @@ export class LivingTown {
       // LW-LOOKS: one keeping their place alone - a beggar at their pitch, a stall-keeper at their stall, a priest at the
       // temple's door - stands as Daggerfall's still picture of their kind (looks.js), stood where nobody sees it, as the
       // uniform is; themselves again at once when they go on or join a circle (a picture never walks)
+      // AUDIT STAND-LIFE B5: one of a circle or an incident at their spot attends to it - no glance away from the talk
+      const attending = this._inCircle.get(res.id)?.spot === w.e.at || (this._stirring(res.id) && this._inStir.get(res.id)?.spot === w.e.at);
+      p.attending = attending;
       if (typeof p.still === 'function') {
-        const role = !p.moving && this._inCircle.get(res.id)?.spot !== w.e.at && !(this._stirring(res.id) && this._inStir.get(res.id)?.spot === w.e.at) ? stillRoleOf(res, w.e) : null;   // a walk's none (stillRoleOf); AUDIT LW-STIR B4: nor one of an incident at its spot while it runs - a still picture faces nobody
+        const role = !p.moving && !attending ? stillRoleOf(res, w.e) : null;   // a walk's none (stillRoleOf); AUDIT LW-STIR B4: nor one of an incident at its spot while it runs - a still picture faces nobody
         const want = role ? stillFlatOf(res, role) : null;
         const has = p.stillLook;
         if ((want?.archive ?? -1) !== (has?.archive ?? -1) || (want?.record ?? -1) !== (has?.record ?? -1) || (want && (p.stillRole ?? null) !== role)) {   // AUDIT MW-NPC II K1: two kinds share a picture - the kind is the body's
@@ -1560,6 +1697,8 @@ export class LivingTown {
      *  to one the street had not stood) - WATCH-PROTECTS: and none of them frightened (`flee`): scattered from a monster,
      *  standing clear of it, the circle is silent */
     const standing = new Set(this.pool.filter((r) => r.visible && r.res && !r.person.moving && !r.flee).map((r) => r.res.id));
+    /** @type {Set<string> | null} LW-ANTICS: those on this street, standing or running (a chase's) */
+    let onStreet = null;
     for (const row of this.pool) {
       if (!row.visible || !row.res || row.flee) continue;   // WATCH-PROTECTS: the frightened say nothing
       const p = row.person;
@@ -1571,7 +1710,9 @@ export class LivingTown {
       const inc = own ?? this._stirVoice.get(id) ?? null;
       if (inc) {
         const line = stirLine(inc, this._now, lineMin, inc.kind === 'gate' || inc.kind === 'challenge' ? { ...ctx, home: this._homeOf(inc.members[1]) } : ctx);   // AUDIT LW-STIR: the stranger's own town
-        if (line && line.who.id === id && inc.members.every((m) => standing.has(m.id)) && standing.has(id)) {
+        // LW-ANTICS: a cutpurse's chase is said on the run - from its first shout, its people on this street will do
+        const by = inc.kind === 'cutpurse' && this._now >= inc.loudFrom ? (onStreet ??= new Set(this.pool.filter((r) => r.visible && r.res && !r.flee).map((r) => r.res.id))) : standing;
+        if (line && line.who.id === id && inc.members.every((m) => by.has(m.id)) && by.has(id)) {
           out.push({ person: p, text: line.text, kind: line.loud ? 'shout' : 'talk' });
           continue;
         }

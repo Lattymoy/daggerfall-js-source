@@ -139,7 +139,7 @@ test('CHAP4c the wiring: the relay\'s version is a new one with its law; the tom
   assert.match(rd('test/net/relayversion.test.js'), /\n  world183: '[0-9a-f]{64}',   \/\/ CHAP4c /);   // PIN MOVED (the merge of main past CARDS10's world182): world183; PIN MOVED (AUDIT CHAP4 R12): CHAP4c's own row - world179's is HOURS-FIRST's, world180's TAVERN-TABLES' and world181's TV-BEYOND's since the merges of main
   const ix = rd('server-account/src/index.js');
   assert.match(ix, /const withSeatTitles = async \(ctx, player, env\) => withChapterTitles\(ctx, /);
-  assert.match(ix, /const worn = await withChapterTitles\(ctx, seats \? /);
+  assert.match(ix, /\) worn = await withChapterTitles\(ctx, worn, env\);/);   // PIN MOVED (MINT-TITLE-GATE): read for a chapter or mastery title worn (test/server/mint_title_gate.test.js)
   assert.match(ix, /\.find\(\(t\) => t\.title === wornT\) \?\? null : null;/);
   assert.match(rd('server-account/src/titles.js'), /if \(Array\.isArray\(player\?\.chapterTitles\)\) for \(const t of player\.chapterTitles\) if \(CHAPTER_TITLES\.includes\(t\) && !held\.includes\(t\)\) held\.push\(t\);/);
 });

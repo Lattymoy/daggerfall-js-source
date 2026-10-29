@@ -199,8 +199,8 @@ test('LW16 the living town: any town\'s deeds (the word a visitor carries from t
 test('LW16 the host\'s seams: a town\'s carried word worked a slice a frame (a generator over the visits of these NEWS_DAYS days, each its town\'s news when it set out, a courier\'s the visits its town had had - one hop), the town told it once done; the kept word made again with the roads; a town\'s news at any minute; the talk\'s regard of a stranger by the repute; the talk\'s {from} (mutants: each seam)', () => {
   const w = hostText('src/scenes/world.js');
   assert.match(w, /carriedOf: \(day\) => livingCarriedOf\(livingTown, day\),/);
-  assert.match(w, /for \(const near of livingTripWorld\.townsNear\(town\.px \?\? 0, town\.py \?\? 0, TRIP_REACH_PX\)\) \{ if \(townTrips\(near, noon, livingTripWorld, o\) === undefined\) out\.partial = true; yield; \}\n\s+const vs = livingVisitorsCached\(town, day - d, o\);\n.*\n\s+yield;/);   // PIN MOVED (AUDIT LW-II B4): a town about still asked: partial;
-  assert.match(w, /for \(let b = 0; b <= NEWS_DAYS; b\+\+\) \{ townTrips\(tr\.from, fromNoon - b \* 1440, livingTripWorld, o\); yield; \}/);
+  assert.match(w, /for \(const near of livingTripWorld\.townsNear\(town\.px \?\? 0, town\.py \?\? 0, TRIP_REACH_PX\)\) \{ if \(\(yield\* townTripsSteps\(near, noon, livingTripWorld, o\)\) === undefined\) out\.partial = true; yield; \}[^\n]*\n\s+const vs = livingVisitorsCached\(town, day - d, o\);\n.*\n\s+yield;/);   // PIN MOVED (AUDIT FULLER-LW A7): a traveller a slice (trips.js townTripsSteps); PIN MOVED (AUDIT LW-II B4): a town about still asked: partial;
+  assert.match(w, /for \(let b = 0; b <= NEWS_DAYS; b\+\+\) \{ yield\* townTripsSteps\(tr\.from, fromNoon - b \* 1440, livingTripWorld, o\); yield; \}/);   // PIN MOVED (AUDIT FULLER-LW A7)
   assert.match(w, /const heard = relay && courier \? yield\* livingVisitsGen\(tr\.from, Math\.floor\(\(tr\.outT0 - 240\) \/ 1440\), o, false\) : \[\];/);
   assert.match(w, /const said = livingRoadNewsAt\(tr\.from, tr\.outT0, o\);\n\s+if \(!said\.whole\) out\.partial = true;/);   // PIN MOVED (AUDIT LW-II B4)
   assert.match(w, /whole: _livingToldKept\.get\(k\) === told,/);

@@ -112,7 +112,7 @@
   {
     "name": "AUDIT-SCALE-II-A6-offline-keeps",
     "file": "src/net/accountClient.js",
-    "old": "    forgetD1Bookmark();   // AUDIT SCALE II A-6: a call that could not be made - a preflight refusing the header among them\n",
+    "old": "    if (!read || !passKeptThrough(e)) forgetD1Bookmark();\n",
     "new": "",
     "tests": [
       "test/server/auditscale2_acct.test.js"

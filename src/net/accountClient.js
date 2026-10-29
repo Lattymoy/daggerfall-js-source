@@ -1155,7 +1155,9 @@ export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = nul
     // A NETWORK FAILURE IS A REFUSAL, NOT A THROW. ONCRASH1's law on
     // this side too: a throw out of a button handler ends more than the
     // button. Every arm of this function returns the same shape.
-    forgetD1Bookmark();   // AUDIT SCALE II A-6: a call that could not be made - a preflight refusing the header among them
+    // AUDIT SCALE II A-6: a call that could not be made - a preflight refusing the header among them. KEEP-MARK: but a read
+    // that timed out keeps it, as the pass is kept (E7) - the overload's own answer, which sent every next read to the primary
+    if (!read || !passKeptThrough(e)) forgetD1Bookmark();
     if (!passKeptThrough(e)) forgetSessionPass();   // SESSION-SIGN: the same, for the pass's - but a timeout's (E7)
     // SLOW-SHED (bible/11-Multiplayer/Scale-Arc.md SLOW-SHED): A READ THE SERVICE WAS TOO SLOW TO ANSWER IS ITS OVERLOAD'S
     // WORD - its reads stand back as an overload answer stands them back. In the 18:05 overload the database answered
@@ -1212,7 +1214,9 @@ export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = nul
   // with its own id (the service's `repeat` answers one that landed), a read shows the last good view. As `ok` with no
   // data it let a kept purchase go unminted and cached a blank market for a minute. A 204 says it has nothing to say.
   if (!parsed && res.status !== 204) { forgetD1Bookmark(); return { ok: false, error: 'offline', unknown: true, status: res.status }; }   // AUDIT SCALE II A-6: `offline`, as one never made
-  _busy = { n: 0, until: _busy.until };   // BUSY-GATE: an answer starts the count again; a hold already running runs out
+  // BUSY-GATE: a held read's own answer starts the count again (BUSY-COUNT: an act's, a write's or a mint's, which always go,
+  // kept it at the first wait all through an overload); a hold already running runs out
+  if (busyRead(path, method)) _busy = { n: 0, until: _busy.until };
   heardHomeOrders(data);   // QUEST-HOME: a home bought, held or given up, said to every page online
   if (typeof data?.yardOrder === 'string') carryYardOrder(data.yardOrder);   // YARD-CELL YC2: a yard that moved, carried to the hub (net/yardPush.js)
   return { ok: true, data, status: res.status };
@@ -1488,6 +1492,12 @@ export function forgetSession(storage) {
  *  burst (and a deploy's reconnect wave) and keeps what the token signs - the level, the title, the guild - no older
  *  than that in any room it opens; the token itself lives MAX_TTL_S (five minutes). */
 export const TOKEN_REUSE_MS = 60_000;
+/** TOKEN-STRETCH (2026-10-29, the account database overloaded and two mints in three answered 503): while this sign-in's
+ *  last mint failed, or the page's BUSY-GATE holds, the held token opens new rooms up to TOKEN_STRETCH_MS from when its
+ *  mint was SENT - the relay takes it for MAX_TTL_S (five minutes), and the service signs it after the send, so a minute
+ *  is left for the hello. Each retry of a room that needs a token was another mint into the overload. The cost: a
+ *  room opened on it reads level, title, guild and a mute or freeze laid since the mint up to four minutes late, not one. */
+export const TOKEN_STRETCH_MS = 240_000;
 
 /** STORM-SHED (2026-10-06 evening, the account service overloaded a second time - "D1 DB is overloaded"; decorations
  *  missing): A FAILED MINT HOLDS THE PAGE'S NEXT ONE OFF. A room whose hello the relay refused for want of a token asks
@@ -1611,7 +1621,7 @@ export const lineHoldMs = (/** @type {unknown} */ wait, rand = Math.random) => {
  * @returns {((room?: string|null) => Promise<string|null>) & { lastWhy: string|null, coolMs: () => number, opened: (room: string|null, token: string) => void, unopened: (room: string|null, token: string) => void, ahead: (room?: string|null, withinMs?: number) => boolean, holds: (room: string|null) => boolean, forget: () => void }}
  */
 export function accountTokenMinter({ fetch, storage, onIssued = null, character = null, now = () => Date.now(), rand = Math.random }) {
-  /** @type {{ token: string, secret: string, character: string|null, at: number, rooms: Set<string> } | null} */
+  /** @type {{ token: string, secret: string, character: string|null, at: number, sent: number, rooms: Set<string> } | null} */
   let held = null;
   /** @type {Promise<string|null> | null} */
   let minting = null;
@@ -1621,9 +1631,13 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
   /** STORM-SHED: the mints held off after a failure - one sign-in's (its secret), until `until` on now()'s clock, the
    *  failures in a row counted and the last one's word kept to answer with. */
   let cool = { secret: /** @type {string|null} */ (null), fails: 0, until: -Infinity, why: /** @type {string|null} */ (null) };
+  /** TOKEN-STRETCH: this sign-in's last mint failed, or the page's gate holds (its own clock, Date.now: `call`'s). */
+  const stretching = (/** @type {string} */ secret) => (cool.secret === secret && (cool.fails > 0 || cool.why === 'queue')) || Date.now() < busyUntil();
+  /** Whether the held token may still open a new room at `t`: its reuse minute, or TOKEN-STRETCH's from its send. */
+  const lives = (/** @type {number} */ t, /** @type {string} */ secret) => !!held && (t - held.at < TOKEN_REUSE_MS || (stretching(secret) && t - held.sent < TOKEN_STRETCH_MS));
   const reuse = (/** @type {string|null} */ room, /** @type {string} */ secret, /** @type {string|null} */ named) => {
     if (!held || room == null || held.rooms.has(room) || held.secret !== secret || held.character !== named) return null;
-    if (!(now() - held.at < TOKEN_REUSE_MS)) return null;
+    if (!lives(now(), secret)) return null;
     return held.token;
   };
   /** The character the next mint names (RENOWN1) - read at each ask; a seam that throws costs the level, never the hello. */
@@ -1636,9 +1650,10 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
    *  its failure's hold set (STORM-SHED) - the one door the minter and DOOR-TOKEN's `ahead` both mint through. */
   const start = (/** @type {any} */ session, /** @type {string|null} */ named) => {
     const era = forgets;
+    const sent = now();   // TOKEN-STRETCH: the stretch is counted from here - the service signs the token after it
     const p = mintFresh(session, named).then((token) => {
       if (token) {
-        if (era === forgets) held = { token, secret: session.secret, character: named, at: now(), rooms: new Set() };   // STORM-SHED: opened by a hello (`opened`), never by the mint
+        if (era === forgets) held = { token, secret: session.secret, character: named, at: now(), sent, rooms: new Set() };   // STORM-SHED: opened by a hello (`opened`), never by the mint
         cool = { secret: null, fails: 0, until: -Infinity, why: null };
       } else if (minter.lastWhy === 'queue') {
         // AUDIT SCALE II L4a: the line's own wait, its failures in a row left where they stood
@@ -1701,7 +1716,7 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
       if (cool.secret === session.secret && now() < cool.until) return false;
       const named = namedNow();
       const by = now() + Math.max(0, Number(withinMs) || 0);   // AUDIT A2: when its socket asks - the door's own margin
-      const opens = !!held && held.secret === session.secret && held.character === named && by - held.at < TOKEN_REUSE_MS && !(room != null && held.rooms.has(room));
+      const opens = !!held && held.secret === session.secret && held.character === named && lives(by, session.secret) && !(room != null && held.rooms.has(room));
       if (opens) return false;
       start(session, named);
       return true;

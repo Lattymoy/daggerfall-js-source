@@ -94,7 +94,7 @@ import { makeBuildingKey } from '../systems/talk/talkTopics.js';
 import { makeCityGate } from '../world/city/cityGate.js';
 import { markRemapLaw, remapAsked, remapLawOf, remapSubMeshes, reskinRemap } from '../world/texRemap.js';
 import { MobilePerson, PERSON_MOVE_SPEED, walkerRace } from '../characters/mobile/mobilePerson.js';
-import { folkOfLocation } from '../characters/provinceFolk.js';   // PROVINCE-FOLK
+import { folkOfLocation, folkKeyOf } from '../characters/provinceFolk.js';   // PROVINCE-FOLK; REGION-NAMES: whose people
 import { multiply, trs } from '../world/mat4.js';
 import { naturePicture, junglePicture } from '../world/naturePicture.js';
 import { onFloatingFrame } from '../player/collider.js';
@@ -524,7 +524,9 @@ export function createPixelBuild(host) {
       // HOME-LOOK: the town's homes, asked before its buildings are merged (a moment, never long - a town unheard by
       // then is painted when it is heard of)
       homeTown = (dfLocation.mapTableData?.mapId ?? 0) >>> 0;
-      if (onlineHomes && homeTown) {
+      // OVERLOAD-EASE (2026-10-29): a far Imperial City slice stands no buildings, and a place the boot's read says holds
+      // no home has none to paint - neither asks the service (they were most of /v1/homes/town's asks)
+      if (onlineHomes && homeTown && !farView && !onlineHomes.heardHomeless?.(homeTown)) {
         // AUDIT: a town heard before is read as it was heard (asked again behind the build; an answer that moves is
         // painted by refreshHomeLooks) - only a town never heard is waited for, a moment, never at every rebuild
         if (onlineHomes.known(homeTown)) onlineHomes.ensure(homeTown).catch(() => {});
@@ -980,6 +982,7 @@ export function createPixelBuild(host) {
           race: walkerRace(climate?.people, dfLocation.regionIndex),
           nameBank: provinceNameBank(provinceAt(px, py)?.key) ?? getNameBankOfRegion(dfLocation.regionIndex),   // AUDIT-TESA A2-5: past the Bay the province's people, never the Bay region's
           folk: folkOfLocation(dfLocation),   // PROVINCE-FOLK: past the Bay each walker one of the place's people (its zone's - AUDIT PROVINCE-FOLK B6), named from their own bank
+          region: dfLocation.regionIndex ?? -1, home: folkKeyOf(folkOfLocation(dfLocation)),   // REGION-NAMES: its walkers named by its region's customs
           makePerson: (archive, guard) => {
             const person = new MobilePerson(nav, {
               archive, guard,

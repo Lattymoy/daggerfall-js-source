@@ -26,7 +26,7 @@
 // dungeonContext.js stands no street. Not a DFU member. Ledger A (THE WITCHES' FESTIVAL).
 import {
   bindFestival, festivalLive, festivalShut, festivalAccount, festivalState, festivalFindsToday, festivalWardrobe, hearFestival, offeringMove, townOfferings,
-  refreshFestival, buyWare, wearWare, wearAccount, wareItem, loadWardrobe,
+  refreshFestival, pendingSale, buyWare, wearWare, wearAccount, wareItem, loadWardrobe,
 } from '../systems/festival/festivalClient.js';
 import { setOfferingPlacer, hearthOffering } from '../systems/festival/soulCake.js';
 import { cakesText, cakesFoundText, festivalRefusalText, festivalNotice, festivalNightText, lastDayText } from '../systems/festival/festivalWords.js';
@@ -91,7 +91,10 @@ export function createWitchesHost(deps) {
   const stood = new Map();
   /** pixel key -> the list a stand is being made for (its texture awaited) */
   const standing = new Map();
-  let heard = false, noticed = false, nightSaid = -1, account = /** @type {string|null} */ (null);
+  // OVERLOAD-EASE (2026-10-29): the account's festival is asked once a sign-in, not at every relay reconnect - a failed
+  // ask again after OFFERING_REFRESH_MS, never every frame
+  let heardFor = /** @type {string|null} */ (null), mineAt = -Infinity, mineAsking = false;
+  let noticed = false, nightSaid = -1, account = /** @type {string|null} */ (null);
 
   const pixelKey = (/** @type {any} */ e) => `${e.px},${e.py}`;
   /** The street's ray's list, filled in place a frame - each box the ray's `{ min, max }` (FB1020e OFFERING-RAY: the
@@ -176,12 +179,19 @@ export function createWitchesHost(deps) {
     if (deps.mode?.() !== 'exterior') return;
     // offline, or another account signed in: nothing anyone's machine stood stands on (every pixel's, not this one's alone)
     const who = online() ? festivalAccount() : null;
-    if (who !== account) { account = who; heard = false; towns.clear(); for (const k of [...stood.keys()]) unstand(k); }
+    if (who !== account) {
+      account = who; towns.clear(); for (const k of [...stood.keys()]) unstand(k);
+      if (who && who === heardFor && pendingSale()) { heardFor = null; mineAt = -Infinity; }   // a sale whose answer was lost lands
+    }
     const entry = here();
     if (!entry) return;
     if (entry.witchHomes) notice();   // a town the festival dressed
     if (!online()) return;
-    if (!heard) { heard = true; refreshFestival().catch(() => {}); }
+    if (heardFor !== account && !mineAsking && Date.now() - mineAt >= OFFERING_REFRESH_MS) {
+      const asked = account;
+      mineAsking = true; mineAt = Date.now();
+      refreshFestival().then((ok) => { if (ok && asked === account) heardFor = asked; }, () => {}).finally(() => { mineAsking = false; });
+    }
     const key = pixelKey(entry), mapId = entry.homeTown;
     if (!asks(mapId)) { towns.delete(mapId); if (stood.has(key)) unstand(key); return; }
     const t = towns.get(mapId);

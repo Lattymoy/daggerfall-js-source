@@ -262,8 +262,8 @@
   {
     "name": "ICS-places-quarters-whole",
     "file": "src/systems/livingWorld/places.js",
-    "old": "  for (let q = 0; q < quarterIds.length; q++) each.push(yield* townPlacesSteps(nav, byQ[q], buildings, { streets, netId: quarterIds[q] }));",
-    "new": "  for (let q = 0; q < quarterIds.length; q++) each.push(townPlaces(nav, byQ[q], buildings, { streets, netId: quarterIds[q] }));",
+    "old": "  for (let q = 0; q < quarterIds.length; q++) each.push(yield* townPlacesSteps(nav, byQ[q], buildings, { streets, netId: quarterIds[q], tag: q ? `q${q}.` : '' }));",
+    "new": "  for (let q = 0; q < quarterIds.length; q++) each.push(townPlaces(nav, byQ[q], buildings, { streets, netId: quarterIds[q], tag: q ? `q${q}.` : '' }));",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
