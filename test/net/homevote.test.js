@@ -133,7 +133,7 @@ test('HOME-VOTE the service: an account a week old votes and the score is its vo
   const bob = aged(await svc.registered('Bob'));
   const cid = aged(await svc.registered('Cid'));
   const g = await svc.guest();
-  assert.deepEqual((await vote(bob, -1)).body, { ok: true, mapId: 7, buildingKey: 300, vote: -1, score: -1 });
+  assert.deepEqual({ ...(await vote(bob, -1)).body, homeCellsMoved: undefined }, { ok: true, mapId: 7, buildingKey: 300, vote: -1, score: -1, homeCellsMoved: undefined });   // PIN MOVED (YC4): and the cell it moved (home_cells.test.js)
   assert.equal((await vote(bob, -1)).body.score, -1, 'the same vote again: still one');
   assert.equal((await vote(cid, 1)).body.score, 0);
   assert.equal((await vote(bob, 1)).body.score, 2, 'a change of mind');

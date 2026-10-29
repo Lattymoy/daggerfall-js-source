@@ -70,7 +70,7 @@ test('ARENA4b a home MOVED: the row whole at the new key, the old gone; the cata
   const r = await move(owner, { realm: at });
   assert.equal(r.status, 200, JSON.stringify(r.body));
   // PIN MOVED (FIELD BUGS 2026-10-14 QUEST-HOME, test/net/fb1014_questhome.test.js): and the move's one home order, for every page online
-  assert.deepEqual({ ...r.body, realm: undefined, homeOrders: undefined }, { ok: true, mapId: DF, from: OLD, to: NEW, refund: 700, pieces: 2, items: 1, tenancies: 1, withdrawn: 2, hidden: true, realm: undefined, homeOrders: undefined });
+  assert.deepEqual({ ...r.body, realm: undefined, homeOrders: undefined, homeCellsMoved: undefined }, { ok: true, mapId: DF, from: OLD, to: NEW, refund: 700, pieces: 2, items: 1, tenancies: 1, withdrawn: 2, hidden: true, realm: undefined, homeOrders: undefined, homeCellsMoved: undefined });   // PIN MOVED (YC4): and the cells it moved (home_cells.test.js)
   assert.equal(r.body.homeOrders?.length, 1, 'one town, the old house and the new');
   assert.equal(r.body.realm.seq, at.seq + 1, 'the record moved one on - a realm act');
   const after = raw.prepare('SELECT * FROM homes WHERE map_id = ? AND building_key = ?').get(DF, NEW);

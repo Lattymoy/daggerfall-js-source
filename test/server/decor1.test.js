@@ -235,13 +235,13 @@ test('DECOR1e a home sold takes its placed pieces, and its release answers how m
   assert.equal(db.prepare('SELECT COUNT(*) AS n FROM home_decor').get().n, 4, 'and takes nothing');
   const sold = await call('POST', '/v1/homes/release', HOME, aldric);
   // PIN MOVED (FIELD BUGS 2026-10-14 QUEST-HOME, test/net/fb1014_questhome.test.js): and the sale's home order, for every page online
-  assert.deepEqual({ ...sold.body, homeOrders: undefined }, { ok: true, price: 42000, decorCount: 3, decorBack: 90 + 20 + 10, homeOrders: undefined }, 'each half truncated - never the half of the sum (121)');
+  assert.deepEqual({ ...sold.body, homeOrders: undefined, homeCellsMoved: undefined }, { ok: true, price: 42000, decorCount: 3, decorBack: 90 + 20 + 10, homeOrders: undefined, homeCellsMoved: undefined }, 'each half truncated - never the half of the sum (121)');   // PIN MOVED (YC4): and the cell the sale moved
   assert.equal(sold.body.homeOrders?.length, 1);
   assert.equal(sold.body.decorBack, decorSaleBack(pieces), 'the service\'s sum is the law\'s');
   assert.equal(db.prepare('SELECT COUNT(*) AS n FROM home_decor').get().n, 0, 'and they went with it');
   house();
   const bare = (await call('POST', '/v1/homes/release', HOME, aldric)).body;   // PIN MOVED (QUEST-HOME): with its home order
-  assert.deepEqual({ ...bare, homeOrders: undefined }, { ok: true, price: 42000, decorCount: 0, decorBack: 0, homeOrders: undefined }, 'none placed, none back');
+  assert.deepEqual({ ...bare, homeOrders: undefined, homeCellsMoved: undefined }, { ok: true, price: 42000, decorCount: 0, decorBack: 0, homeOrders: undefined, homeCellsMoved: undefined }, 'none placed, none back');   // PIN MOVED (YC4): and the cell the sale moved
 });
 
 test('DECOR2a an own item\'s piece in an online home: the service keeps WHICH item it is - the game\'s own numbers, beside what the piece is - read back by every visitor and never rewritten by a move; an own piece that says it cost gold or holds things is refused at the placing and at a move (the move leaves it as it stood), as is a bad descriptor or one on a model; a release counts it and owes nothing for it (mutants: the descriptor dropped, a move rewriting it, a cost or a hold moved onto it)', async (t) => {
