@@ -10844,6 +10844,11 @@
   "tr": "68141ffff80d",
   "by": "claude-in-session"
  },
+ "dragon.claim.bound": {
+  "en": "37d4b28492fb",
+  "tr": "476421ea7283",
+  "by": "claude-in-session"
+ },
  "dragon.claim.guest": {
   "en": "ab87cdb92c3c",
   "tr": "7214b8b3b203",
@@ -10855,8 +10860,8 @@
   "by": "claude-in-session"
  },
  "dragon.claim.tamed": {
-  "en": "b8894f81c1a8",
-  "tr": "34c06cdb5b44",
+  "en": "72cdda38b046",
+  "tr": "f5eb7fd2d996",
   "by": "claude-in-session"
  },
  "dragon.fell": {
@@ -40107,6 +40112,11 @@
  "trade.counter.title.sellMagic": {
   "en": "2b1ee8ca6b70",
   "tr": "aa1154984397",
+  "by": "claude-in-session"
+ },
+ "transport.dragon": {
+  "en": "55c68ec2d30f",
+  "tr": "ecc3c98bbc54",
   "by": "claude-in-session"
  },
  "travel.held.foes": {

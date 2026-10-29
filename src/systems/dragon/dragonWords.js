@@ -70,5 +70,7 @@ export const DRAGON_SPOILS_TEXT = Object.freeze({
 export const DRAGON_CLAIM_TEXT = Object.freeze({
   recorded: (n) => t('dragon.claim.recorded', 'The dragon\'s fall is on your record. Dragons slain: {n}.', { n }),
   guest: () => t('dragon.claim.guest', 'This dragon is not on your record yet: only registered accounts keep one. Add a username this week and it counts.'),
-  tamed: () => t('dragon.claim.tamed', 'Its core still turns. The dragon is yours to bind.'),
+  tamed: () => t('dragon.claim.tamed', 'Its core still turns. The Dwarven Dragon is yours.'),
+  /** DRAGON5: bound into the pack. */
+  bound: () => t('dragon.claim.bound', 'The Dwarven Dragon is yours. Ride it from the Transport window.'),
 });

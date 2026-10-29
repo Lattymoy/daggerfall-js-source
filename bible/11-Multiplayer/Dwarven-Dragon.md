@@ -174,9 +174,9 @@ the serpent's spoils pool under the dragon's own keys), and a crash hands it bac
 account and character). The draw writes the mount's row by THIS claim's kill row alone, in one batch. Every answer while
 the row stands names the tame, so a lost answer is told again. The device keeps it (`dragon4.tamed`) until it is bound.
 
-**Binding it** (DRAGON5). A tamed player sees *"Its core still turns."* Activating the fallen dragon binds it: the
-dragon rises, its glow back, and kneels. Its item - **the Dwarven Dragon**, in the Transportation group - goes into the
-pack. A tame not bound at the remains is bound at the next claim's answer instead, straight into the pack.
+**Binding it** (DRAGON5). A tamed player sees *"Its core still turns. The Dwarven Dragon is yours."* Its item - **the
+Dwarven Dragon**, in the Transportation group - goes into the pack at the claim's answer, or at the character's next
+stand-up when another stood then (`scenes/dragonRewards.js` bind), once DRAGON_MOUNT_ONLINE is on (section 13, DRAGON5a).
 
 ## 9. What a player sees and hears
 
@@ -286,3 +286,22 @@ Its words in the thirteen finished languages, drafted in-session (`tools/l10nInS
 a phrase of its own (`dragon.way.*`), so no language reads an English compass word inside its sentence (a test in
 `dragon3_client.test.js`). A bad character is refused with the serpent's `renown-character`. The world frame's arrows
 moved to a closure of their own (`frameArrows`, PERF-V8), bootWorld 35,258.
+
+**DRAGON5a - the mount: its item, its ride and its flight (2026-10-29).** `systems/dragon/dragonMount.js`: the Dwarven
+Dragon (template 1820), a Transportation piece bound to the pack and worth nothing to the measure, its picture the
+dragon's own idle front. The item law's `dragon` finding (ITEM_LAW_VERSION 15) and the judge's `dragon-tame`
+(`judge.js` judgeDragons: the tame's row, this account and character, held once). `TRANSPORT_MODES.Dragon` is riding but
+never a horse ride (`isHorseRide`): no sprite, hooves or voices, and the saddle over the view (`player/dragonSaddle.js`,
+the Admin's ride's too). The flight (`systems/dragon/dragonFlight.js`, `player/dragonRide.js` on the motor's ride step
+and sink): jump held 0.4 s, 25 m/s aloft, the ground lands it, a fall caught after DRAGON_CATCH_S (1.2 s). Both pickers'
+Dragon row; the pose's ride and look. Pinned by `test/net/dragon/dragon5_mount.test.js` (9); `tools/mutants/dragon5.json`,
+26 dead.
+
+PINS MOVED by DRAGON5a: the item law at 15 (seven pins, LAW_SERVICE's 15 acct217's, and its seven mutant records),
+the modes and groups (`tr1`, `int1`), the rig's horse-only lines (eight pins, `horsevoice`), the levitation term
+(`staff1`, `audit_seats_client`), the footsteps (`if1`), the pose (`hcc_park`, `coats1`).
+
+Two calls of its own. The tame binds at the claim's answer or the next stand-up, not at the remains: the answer comes
+seconds after the kill, so a walk back added nothing. And DRAGON_MOUNT_ONLINE is off for this release (REST6's law,
+SHIP BEFORE ANYONE CAN SEE ONE): the tame waits on the device and in its row, and a later release turns it on. The
+classic window's Dragon row is drawn under DFU's art, a departure (MOVE00I0 has four rows).

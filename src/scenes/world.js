@@ -617,6 +617,7 @@ import { TRANSPORT_MODES } from '../systems/transport.js';   // TR3: what the ro
 import { shipTransition, REPOSITION, isOnShip, shipMemory, shipRestorePos } from '../systems/ship.js';   // TR4: board and disembark; AUDIT-TO1 D1: TransportManager.IsOnShip for the popup; AUDIT 68 S22: the memory's height, compensation-free
 import { createStaffDragonHost } from './staffDragonHost.js';   // DRAGON-RIDE: an Admin's ride on the Dwarven Dragon
 import { parseDragonCommand, DRAGON_HELP_LINE, noteDragonRelay, dragonPoseRide } from '../systems/staffDragon.js';   // DRAGON-RIDE: /dragon's grammar and its /staff line
+import { dragonMountOf, dragonLookOfItem } from '../systems/dragon/dragonMount.js';   // DRAGON5: a tamed dragon's look in the pose
 import { createMountRig } from '../player/mountRig.js';   // MAC-K3: the mount surface, one home for this host and the fixed-city one
 import { worldViewportRect, largeHudWorldAspect } from '../ui/hud/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass (RETRO1: and retro mode's aspect correction pillarboxes it)
 import { createLockOn, LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // TI1: touch lock-on
@@ -27857,9 +27858,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       ar: rig.shot?.n ?? 0,   // SPELLFX1: and the arrows loosed, so the peers draw the shafts
       // RIDE: the mount - the horse or the cart, outdoors (a door dismounts), and which of Eye Of The Beholder's five
       // mounted sprite sets this player chose, so the others draw the rider they drew themselves
-      rd: dragonPoseRide() ?? (!riding ? 0 : player.transportMode === TRANSPORT_MODES.Cart ? 2 : 1),   // DRAGON-RIDE: on the dragon, its own ride (systems/staffDragon.js - a relay that keeps it)
+      rd: dragonPoseRide(riding ? player.transportMode : null) ?? (!riding ? 0 : player.transportMode === TRANSPORT_MODES.Cart ? 2 : 1),   // DRAGON-RIDE: on the dragon, its own ride (systems/staffDragon.js - a relay that keeps it); DRAGON5: a tamed one's too
       rv: Math.max(0, Math.min(4, (() => { try { return modSetting('eye-of-the-beholder', 'Graphics.OnHorse') | 0; } catch { return 0; } })())),   // AUDIT RIDE: the one key, not the mod's whole settings object every frame
-      rc: riding ? riddenHorseLook(playerEntity.items ?? []) || undefined : undefined,   // COATS1: the look the horse under them wears (wire.js rideOf) - absent for the bay as drawn
+      rc: riding ? (player.transportMode === TRANSPORT_MODES.Dragon ? dragonLookOfItem(dragonMountOf(playerEntity.items)) : riddenHorseLook(playerEntity.items ?? [])) || undefined : undefined,   // DRAGON5: a tamed dragon's look, 1 the Aetherbright   // COATS1: the look the horse under them wears (wire.js rideOf) - absent for the bay as drawn
       hs: riding && moved && _hsLatch ? 1 : undefined,   // DISC7: the motor's half-speed flag, the one fact the peers' clop swaps on (wire.js rideOf) - latched off a moving frame (AUDIT DISC7 B2), and absent rather than 0 (B8: the wire omits it at 0)
       // DISC12: the hand in use (the look carries both hands' weapons; the others drew the right one always, so a
       // left-handed fighter was a fist to them) and the beast form (LycanthropyEffect's isTransformed - the others saw

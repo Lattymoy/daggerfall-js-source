@@ -95,6 +95,19 @@ export function flySpeedMult() {
   for (const fn of _flyMods.values()) { try { const v = Number(fn()); if (Number.isFinite(v) && v > 0) k *= v; } catch { /* a ride is not the flight's problem */ } }
   return k;
 }
+// DRAGON5 (bible/11-Multiplayer/Dwarven-Dragon.md section 10; Ledger A): a tamed dragon's flight. The ride's step is told
+// each update's input before the motor moves (player/dragonRide.js: the takeoff's held jump), one slot; and a named
+// registry of sinks pulls the levitating ladder down (a winded dragon glides). None registered is DFU's levitation.
+let _rideStep = null;
+export function registerRideStep(fn) { _rideStep = typeof fn === 'function' ? fn : null; }
+const _flySinks = new Map();
+export function registerFlySink(name, fn) { if (typeof fn === 'function') _flySinks.set(name, fn); else _flySinks.delete(name); }
+/** The levitating ladder's sink now - the sum of every sink's positive number (one that throws is none). */
+export function flySink() {
+  let k = 0;
+  for (const fn of _flySinks.values()) { try { const v = Number(fn()); if (Number.isFinite(v) && v > 0) k += v; } catch { /* a ride is not the flight's problem */ } }
+  return k;
+}
 // KETCH (2026-10-24, bible/11-Multiplayer/Sky-Ketch.md section 6; a departure from DFU, Ledger A): THE BURDEN - a named
 // registry of modifiers on EVERY pace on foot (the walk, the run, the crouch, the sneak - never a mount's), read every step:
 // an aether cell carried in both hands slows its carrier whatever its pace. None registered, or each answering 1 (or no
@@ -1644,6 +1657,7 @@ export class PlayerMotor {
    *  that accumulates less than one physics step must not swallow the
    *  press (AUDIT 18 - at 120 Hz that dropped every other crouch). */
   update(dt, input, yaw, pitch = 0) {
+    try { _rideStep?.(dt, this, input); } catch (e) { console.warn('[motor] ride step', e?.message ?? e); }   // DRAGON5: the mount's flight hears the jump first
     this.jumped = false;
     this.parkoured = null;
     if (this.climbEvents.length) this.climbEvents = [];
@@ -3167,6 +3181,7 @@ export class PlayerMotor {
       if (this.swimming && overEncumbered && !this.climb?.isClimbing && !this.waterWalking) my -= 1;
       else if (input.up) my += 1;
       else if (input.down) my -= 1;
+      if (this.levitating) my -= flySink();   // DRAGON5: a winded dragon glides down
       // AddMovement's THREE arms, in DFU's own order (LevitateMotor.cs
       // :116-140). AUDIT 24 player: the port had a different ladder -
       // levitation short-circuited the water-walking arm, and the

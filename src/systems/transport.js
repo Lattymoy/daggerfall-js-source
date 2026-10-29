@@ -27,11 +27,12 @@
 //     handler has no arm for it, so you walk out on foot.)
 
 import { TRANSPORT_HORSE_TEMPLATE, hasCart, hasHorse } from './inventorySession.js';
+import { hasDragon } from './dragon/dragonMount.js';   // DRAGON5: the tamed dragon, a third mount
 
 /** TransportModes (:23-31). Ship is "(not a real player transport
  *  mode)" in DFU's own comment - it is the fast-travel boarding, and
  *  it is not part of TR1. */
-export const TRANSPORT_MODES = Object.freeze({ Foot: 'Foot', Horse: 'Horse', Cart: 'Cart', Ship: 'Ship' });
+export const TRANSPORT_MODES = Object.freeze({ Foot: 'Foot', Horse: 'Horse', Cart: 'Cart', Ship: 'Ship', Dragon: 'Dragon' });   // DRAGON5: Dragon is the port's own (Ledger A)
 
 /** PlayerSpeedChanger.cs:31-34. */
 export const DF_RIDE_BASE = 375;   // dfWalkBase 150 + 225
@@ -49,11 +50,13 @@ export const HORSE_ITEM_INDEXES = Object.freeze([TRANSPORT_HORSE_TEMPLATE]);
  *  DFU's HasHorse walks `horseItemIndexes`; with no mod calling
  *  AddHorseItemIndex that list IS the single template below, so the
  *  two are the same test. */
-export { hasCart, hasHorse };
+export { hasCart, hasHorse, hasDragon };
 
 /** IsOnFoot (:55-58). */
 export const isOnFoot = (mode) => mode === TRANSPORT_MODES.Foot;
-export const isRiding = (mode) => mode === TRANSPORT_MODES.Horse || mode === TRANSPORT_MODES.Cart;
+export const isRiding = (mode) => mode === TRANSPORT_MODES.Horse || mode === TRANSPORT_MODES.Cart || mode === TRANSPORT_MODES.Dragon;
+/** DRAGON5: a ride on a horse - DFU's two, the horse and the cart behind one: their sprite, hooves and voices. */
+export const isHorseRide = (mode) => mode === TRANSPORT_MODES.Horse || mode === TRANSPORT_MODES.Cart;
 
 /**
  * ToggleMount (:113-127), verbatim: mounted dismounts; on foot the
@@ -65,6 +68,7 @@ export function toggleMount(mode, items = []) {
   if (isRiding(mode)) return TRANSPORT_MODES.Foot;
   if (hasHorse(items)) return TRANSPORT_MODES.Horse;
   if (hasCart(items)) return TRANSPORT_MODES.Cart;
+  if (hasDragon(items)) return TRANSPORT_MODES.Dragon;   // DRAGON5: past DFU's two, so a horse is still the one a key mounts
   return mode;   // nothing to mount: the mode is unchanged (no else arm)
 }
 

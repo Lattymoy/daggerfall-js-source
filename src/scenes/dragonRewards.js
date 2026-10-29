@@ -14,6 +14,8 @@ import { onSlotSaved, onSlotLoaded, enumerateSaves } from '../systems/save/saveS
 import { dragonSpoilsList, dragonSpoilsDay, DRAGON_SPOILS_KEYS, DRAGON_SPOILS_TEXT, DRAGON_SPOILS_RECORDS_MAX } from '../systems/dragon/dragonSpoils.js';
 import { playerEntity } from '../characters/playerEntity.js';
 import { setMidScreenText } from '../ui/midScreenText.js';
+import { newDragonMount, isDragonMount, hasDragon, DRAGON_MOUNT_ONLINE } from '../systems/dragon/dragonMount.js';   // DRAGON5: the tame bound
+import { DRAGON_CLAIM_TEXT } from '../systems/dragon/dragonWords.js';
 import { createSpoilsPool, spoilsStore, recoverSpoils, spoilsLevel, spoilsLock } from './spoilsPool.js';
 
 /** The tames the service drew for this device's accounts, not yet bound: `[{ id, look, character, w }]`. */
@@ -22,7 +24,7 @@ export const DRAGON_TAMES_MAX = 8;
 const TAME_ID_RE = /^dg[0-9a-f]{16}$/;
 
 /**
- * THE REWARDS: `{ receipt(r), tick(), recover(who, inSave), held(who), saved(who, ids), tames(), boundTame(id), claims, spoils }`.
+ * THE REWARDS: `{ receipt(r), tick(), recover(who, inSave), held(who), saved(who, ids), tames(), boundTame(id), bind(who), claims, spoils }`.
  * @param {any} host the dragon host's bindings by name
  */
 export function createDragonRewards(host) {
@@ -49,12 +51,26 @@ export function createDragonRewards(host) {
   }
   const readTames = () => { let v; try { v = store.get(DRAGON_TAMES_KEY); } catch { v = null; } return Array.isArray(v) ? v.filter((x) => x && TAME_ID_RE.test(x.id)) : []; };
   const writeTames = (list) => { try { store.set(DRAGON_TAMES_KEY, list.slice(-DRAGON_TAMES_MAX)); } catch { /* the service tells it again at the next claim */ } };
-  /** A tame the service drew: kept until it is bound (DRAGON5), once by its id. */
+  /** A tame the service drew: kept until it is bound, once by its id. */
   function tamed(t, entry) {
     if (!t || !TAME_ID_RE.test(t.id) || readTames().some((x) => x.id === t.id)) return;
     const c = readDragonReceipt(entry?.r);
     writeTames([...readTames(), { id: t.id, look: t.look === 1 ? 1 : 0, character: typeof t.character === 'string' ? t.character : entry?.ch ?? null, w: c?.q ?? null }]);
     host.onTamed?.(t);
+    bind(who());
+  }
+  /** DRAGON5: THE TAME BOUND - the standing character's tame into its pack as its dragon (one a character), and let go
+   *  once the pack holds it. Waits while DRAGON_MOUNT_ONLINE is off (REST6's law); `dragonMountOnline` for the tests. */
+  function bind(characterId) {
+    if (!(host.dragonMountOnline ?? DRAGON_MOUNT_ONLINE) || !characterId || characterId !== who()) return false;
+    const items = playerEntity.items ?? [];
+    let bound = false;
+    for (const t of readTames().filter((x) => !x.character || x.character === characterId)) {
+      if (!hasDragon(items)) { host.takeSpoil?.({ kind: 'item', item: newDragonMount(t) }); bound = true; }
+      if (items.some((it) => isDragonMount(it))) writeTames(readTames().filter((x) => x.id !== t.id));
+    }
+    if (bound) host.chatNotice?.(DRAGON_CLAIM_TEXT.bound());
+    return bound;
   }
   const claims = createDragonClaims({
     claim: account.claim, me: account.me, nowS: () => host.relayNowS?.() ?? null, store,
@@ -70,6 +86,7 @@ export function createDragonRewards(host) {
       try {
         if (recoverSpoils(store, (p) => host.takeSpoil?.(p), { who: characterId, saves: enumerateSaves().info.values(), onHanded: (rec) => spoils.adopt(rec), key: DRAGON_SPOILS_KEYS.store, inSave })) setMidScreenText(DRAGON_SPOILS_TEXT.recovered());
       } catch (e) { console.warn('[dragon] spoils', e?.message ?? e); }
+      try { bind(characterId); } catch (e) { console.warn('[dragon] bind', e?.message ?? e); }   // DRAGON5: a tame drawn while another stood
     },
     /** The realm save's hooks: the records whose pieces are in the pack, and those a landed checkpoint holds. */
     held: (characterId) => { try { return spoils.heldIds?.(characterId) ?? []; } catch { return []; } },
@@ -77,6 +94,7 @@ export function createDragonRewards(host) {
     /** The tames not yet bound, and one bound (let go). */
     tames: () => readTames(),
     boundTame(id) { writeTames(readTames().filter((x) => x.id !== id)); },
+    bind,
     claims,
     spoils,
   };

@@ -30,8 +30,9 @@ export const DRAGON_POSE_RIDE = POSE_RIDE.Dragon;
 let _relayKeepsRide = false;
 /** The relay's version, as each welcome says it (scenes/world.js onRelayVersion). @param {unknown} v */
 export function noteDragonRelay(v) { _relayKeepsRide = relaySupportsDragonRide(v); }
-/** My pose's `rd` while I ride on a relay that keeps it, else null (the pose's own ride stands). */
-export const dragonPoseRide = () => (_ride && _relayKeepsRide ? DRAGON_POSE_RIDE : null);
+/** My pose's `rd` while I ride - an Admin's ride, or DRAGON5's tamed dragon (`mode` my transport's) - on a relay that keeps
+ *  it, else null (the pose's own ride stands). @param {unknown} [mode] */
+export const dragonPoseRide = (mode = null) => ((_ride || mode === 'Dragon') && _relayKeepsRide ? DRAGON_POSE_RIDE : null);
 
 /** @type {{ flyWas: boolean, firedAt: number } | null} */
 let _ride = null;

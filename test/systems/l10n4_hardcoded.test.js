@@ -381,6 +381,7 @@ const HARDCODED = {
   'src/systems/decor/decorMods.js': 16,
   'src/systems/dfmodTextures.js': 3,
   'src/systems/diseases.js': 9,
+  'src/systems/dragon/dragonMount.js': 1,   // DRAGON5: the Dwarven Dragon's row name - English, as every custom row's is (upkeepItemRows.js)
   'src/systems/dungeon/dungeonEcho.js': 6,
   'src/systems/dungeon/dungeonTier.js': 3,
   'src/systems/dynamicSkies/dynamicSkies.js': 3,
