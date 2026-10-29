@@ -13,6 +13,7 @@ import { validLootList } from '../../src/systems/loot/loot.js';
 import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { seededRng } from '../../src/systems/wind/wind.js';
 import { homeSceneName } from '../../src/net/homeScene.js';
+import { yardCellOf } from '../../src/net/yardCellLaw.js';
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const { subtle } = globalThis.crypto;
@@ -319,7 +320,7 @@ test('DECOR-ACCESS two stacks of one good land as one stack', async () => {
   assert.equal(recordOf(env, M.id).items.length, 0);
 });
 
-test('DECOR-ACCESS several goods are still there at the next open, and using the chest does not rebuild the town', async () => {
+test('DECOR-ACCESS several goods are still there at the next open, and using the chest does not rebuild its yard', async () => {
   const { env, call, registered } = await stand();
   const aldric = await registered('Aldric');
   const mara = await registered('Mara');
@@ -335,11 +336,11 @@ test('DECOR-ACCESS several goods are still there at the next open, and using the
   assert.equal((await call('POST', '/v1/homes/claim', home(A.id, A.at()), aldric)).status, 200);
   assert.equal((await call('POST', '/v1/homes/decor/place', { ...HOME, character: A.id, realm: realmAt(env, A.id), piece: piece() }, aldric)).status, 200);
   assert.equal((await call('POST', '/v1/homes/decor/use', { ...HOME, character: A.id, op: 'set', id: 'p1', kind: 'storage', mode: 'chosen_friends', names: ['Mara'] }, aldric)).status, 200);
-  env.DB._raw.prepare('INSERT INTO home_yards_ver (map_id, ver) VALUES (?, 4)').run(HOME.mapId);
-  env.DB._raw.prepare("INSERT INTO home_yards (map_id, built, shape, rows) VALUES (?, 1, 'stale', 'kept')").run(HOME.mapId);
+  env.DB._raw.prepare('INSERT INTO home_yard_cell_ver (map_id, cell, ver, built) VALUES (?, ?, 4, 1) ON CONFLICT (map_id, cell) DO UPDATE SET ver = 4, built = 1').run(HOME.mapId, yardCellOf(HOME.buildingKey));
+  env.DB._raw.prepare("INSERT INTO home_yard_cells (map_id, cell, built, shape, rows) VALUES (?, ?, 1, 'stale', 'kept') ON CONFLICT (map_id, cell) DO UPDATE SET built = 1, shape = 'stale', rows = 'kept'").run(HOME.mapId, yardCellOf(HOME.buildingKey));
   const open = await call('POST', '/v1/homes/decor/use', { ...HOME, character: M.id, op: 'list', id: 'p1', hold: true }, mara);
   assert.equal(open.status, 200, JSON.stringify(open.body));
-  assert.equal(env.DB._raw.prepare('SELECT rows FROM home_yards WHERE map_id = ?').get(HOME.mapId).rows, 'kept', 'opening a chest does not rebuild the town');
+  assert.equal(env.DB._raw.prepare('SELECT rows FROM home_yard_cells WHERE map_id = ? AND cell = ?').get(HOME.mapId, yardCellOf(HOME.buildingKey)).rows, 'kept', 'opening a chest does not rebuild its yard');
   const busy = await call('POST', '/v1/homes/decor/use', { ...HOME, character: A.id, op: 'list', id: 'p1', hold: true }, aldric);
   assert.equal(busy.status, 409);
   assert.equal(busy.body.error, 'decor-busy');
@@ -353,7 +354,7 @@ test('DECOR-ACCESS several goods are still there at the next open, and using the
   assert.equal((await call('POST', '/v1/homes/decor/use', { ...HOME, character: M.id, op: 'list', id: 'p1', hold: true }, mara)).body.ok, true);
   const put = await call('POST', '/v1/homes/decor/use', { ...HOME, character: M.id, realm: realmAt(env, M.id), op: 'settle', id: 'p1', put: goods.map((it) => it.uid) }, mara);
   assert.equal(put.status, 200, JSON.stringify(put.body));
-  assert.equal(env.DB._raw.prepare('SELECT rows FROM home_yards WHERE map_id = ?').get(HOME.mapId).rows, 'kept', 'closing a chest does not rebuild the town');
+  assert.equal(env.DB._raw.prepare('SELECT rows FROM home_yard_cells WHERE map_id = ? AND cell = ?').get(HOME.mapId, yardCellOf(HOME.buildingKey)).rows, 'kept', 'closing a chest does not rebuild the town');
   assert.equal(recordOf(env, M.id).items.length, 0);
   const again = await call('POST', '/v1/homes/decor/use', { ...HOME, character: M.id, op: 'list', id: 'p1', hold: true }, mara);
   assert.deepEqual(again.body.items.map((it) => it.uid).sort(), goods.map((it) => it.uid).sort());

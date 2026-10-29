@@ -10504,6 +10504,11 @@
   "tr": "826ed8b624ac",
   "by": "claude-in-session"
  },
+ "decor.yard.behind": {
+  "en": "e66a9854186d",
+  "tr": "2ab9bdc07e0c",
+  "by": "claude-in-session"
+ },
  "dex.enemy.archerRider": {
   "en": "684bf52c59e7",
   "tr": "510271358c8d",
@@ -37415,8 +37420,8 @@
   "by": "claude-in-session"
  },
  "sea.wild.chipTip": {
-  "en": "9e14a86d940a",
-  "tr": "5ea810ec141c",
+  "en": "88c4bc67ac34",
+  "tr": "83189a35135d",
   "by": "claude-in-session"
  },
  "sea.wild.crossWarn": {
@@ -37435,13 +37440,13 @@
   "by": "claude-in-session"
  },
  "sea.wild.dropLate": {
-  "en": "0a6951c155e0",
-  "tr": "600a6d4b50b6",
+  "en": "81c1d7e08802",
+  "tr": "15aa59a5f542",
   "by": "claude-in-session"
  },
  "sea.wild.enter": {
-  "en": "f49115e892b2",
-  "tr": "203cd4adb35d",
+  "en": "14bca5e366ed",
+  "tr": "17991b319101",
   "by": "claude-in-session"
  },
  "sea.wild.leave": {
@@ -37485,8 +37490,8 @@
   "by": "claude-in-session"
  },
  "sea.wild.walkInto": {
-  "en": "4a86279b0614",
-  "tr": "9c2952fe9af2",
+  "en": "eec82857378c",
+  "tr": "a737a498555f",
   "by": "claude-in-session"
  },
  "search.searchedBy": {
@@ -40215,8 +40220,8 @@
   "by": "claude-in-session"
  },
  "tutorials.wildZone.body2": {
-  "en": "5c2566aaad07",
-  "tr": "f37cbd572c70",
+  "en": "87989055cf87",
+  "tr": "97125365c26c",
   "by": "claude-in-session"
  },
  "veil.party.captain": {
@@ -40440,8 +40445,8 @@
   "by": "claude-in-session"
  },
  "wild.death.kept": {
-  "en": "5677b5a00569",
-  "tr": "2e3b1ee0c535",
+  "en": "e9a05a7b45a6",
+  "tr": "2c2db9816f31",
   "by": "claude-in-session"
  },
  "wild.death.last": {
@@ -40550,8 +40555,8 @@
   "by": "claude-in-session"
  },
  "wild.insure.line": {
-  "en": "993784cd95a5",
-  "tr": "25e9cd969dd9",
+  "en": "3bd9cec6aa23",
+  "tr": "8806f5af8cf1",
   "by": "claude-in-session"
  },
  "wild.insure.offline": {
@@ -40565,8 +40570,8 @@
   "by": "claude-in-session"
  },
  "wild.legend.offline": {
-  "en": "80b4064ee77c",
-  "tr": "a1511f247fe1",
+  "en": "86db54caef14",
+  "tr": "d21eca10e494",
   "by": "claude-in-session"
  },
  "wild.legend.travel": {
@@ -40615,13 +40620,13 @@
   "by": "claude-in-session"
  },
  "wild.zone.chipTip": {
-  "en": "fda83308207b",
-  "tr": "ac75c8e7e9df",
+  "en": "687871882d2f",
+  "tr": "851c59030e6a",
   "by": "claude-in-session"
  },
  "wild.zone.enter": {
-  "en": "006e183d3d6a",
-  "tr": "22a3fb924cae",
+  "en": "d8ef5b322bf0",
+  "tr": "7660efea6941",
   "by": "claude-in-session"
  },
  "wild.zone.revenantOne": {

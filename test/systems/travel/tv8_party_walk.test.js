@@ -804,7 +804,7 @@ test('PARTY-TRUCE (FIELD BUGS 2026-10-09b): a party\'s walk that ends in the ope
   assert.equal(L.routeTo(), true);
   w.tick(1100);
   assert.deepEqual(M.box.rows, ['L leads the party to Ripwych.', WILD_TEXT.walkInto, 'Travel with them?']);
-  assert.match(WILD_TEXT.walkInto, /open PvP zone\. Other players may kill you there and take what you carry/);
+  assert.match(WILD_TEXT.walkInto, /open PvP zone\. Other players may kill you there and take a worn piece or gold\.$/);   // PIN MOVED (PVP-WORDS): 'and take what you carry'
   const w8 = rd('src/scenes/world.js');
   // PIN MOVED (AUDIT SEA VENTURES C3): and the open sea past Veilhaven's peace, in its own words
   assert.match(w8, /const wildWalkRow = \(x, y\) => \{ const m = wildMask\(\); return !online\?\.wildOk \? null : etherSea && etherWildRingAt\(x, y\) > 0 \? zoneWord\('walkInto', ETHER_KIND\) : m && wildNear\(m, x, y\) \? WILD_TEXT\.walkInto : null; \};/, 'the host asks the zone\'s mask, its band included');

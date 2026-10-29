@@ -16,7 +16,7 @@ import { traceTamrielPicture, closeBorderLines, fillSpecks, HOLE_PX, pieces, pal
 import { fitBayToPicture, FIT_PPUS, FIT_AREA_WEIGHT, setTamrielTrace, PROVINCE_OF_ID } from '../../src/world/tamriel/tamrielLand.js';
 import { setTamrielFit, bayToPicture, BAY_W, BAY_H } from '../../src/world/tamriel/tamrielFrame.js';
 import {
-  contourSegments, chaikinCapped, dropEdgeRuns, tracedChains, buildTamrielInk, STITCH_REACH, SMOOTH_PASSES, COAST_SIMPLIFY_PX,
+  contourSegments, chaikinCapped, dropEdgeRuns, EDGE_RUN_PX, tracedChains, buildTamrielInk, STITCH_REACH, SMOOTH_PASSES, COAST_SIMPLIFY_PX,
   COAST_CUT_PX, BORDER_SNAP_PX,
 } from '../../src/ui/tamrielInk.js';
 import { linkSegments } from '../../src/ui/ink/inkMap.js';
@@ -250,6 +250,13 @@ test('TAMRIEL4 ink on the trace: the coast stays within half a picture pixel of 
   const r = { x0: 0, y0: 0, x1: 100, y1: 50 };
   assert.deepEqual(dropEdgeRuns([{ x: -5, y: 10 }, { x: 0, y: 10 }, { x: 0, y: 30 }, { x: -5, y: 30 }], r), [[{ x: -5, y: 10 }, { x: 0, y: 10 }], [{ x: 0, y: 30 }, { x: -5, y: 30 }]]);
   assert.deepEqual(dropEdgeRuns([{ x: -5, y: 10 }, { x: 0, y: 12 }], r), [[{ x: -5, y: 10 }, { x: 0, y: 12 }]], 'a chain that only ends on the frame is kept');
+  // EDGE-RUN: SMOOTH-LAND's frame line lies up to half a pixel off the edge (x -0.109 on the freeware's west edge)
+  assert.equal(EDGE_RUN_PX, 0.5);
+  assert.deepEqual(dropEdgeRuns([{ x: -5, y: 10 }, { x: -0.109, y: 12 }, { x: -0.103, y: 30 }, { x: -5, y: 32 }], r), [[{ x: -5, y: 10 }, { x: -0.109, y: 12 }], [{ x: -0.103, y: 30 }, { x: -5, y: 32 }]]);
+  assert.deepEqual(dropEdgeRuns([{ x: 90, y: 55 }, { x: 80, y: 50.5 }, { x: 60, y: 49.5 }, { x: 50, y: 55 }], r), [[{ x: 90, y: 55 }, { x: 80, y: 50.5 }], [{ x: 60, y: 49.5 }, { x: 50, y: 55 }]], 'half a pixel either side of the bottom edge is the frame');
+  assert.deepEqual(dropEdgeRuns([{ x: 105, y: 10 }, { x: 100.2, y: 10 }, { x: 100.3, y: 20 }, { x: 105, y: 20 }], r), [[{ x: 105, y: 10 }, { x: 100.2, y: 10 }], [{ x: 100.3, y: 20 }, { x: 105, y: 20 }]], 'the right edge');
+  assert.deepEqual(dropEdgeRuns([{ x: 10, y: -5 }, { x: 10, y: -0.3 }, { x: 30, y: 0.2 }, { x: 30, y: -5 }], r), [[{ x: 10, y: -5 }, { x: 10, y: -0.3 }], [{ x: 30, y: 0.2 }, { x: 30, y: -5 }]], 'the top edge');
+  assert.deepEqual(dropEdgeRuns([{ x: 101, y: 10 }, { x: 100.51, y: 10 }, { x: 100.51, y: 30 }], r), [[{ x: 101, y: 10 }, { x: 100.51, y: 10 }, { x: 100.51, y: 30 }]], 'past half a pixel a run is a shore');
   const ink = buildTamrielInk();
   assert.deepEqual(ink.rivers, [], 'the picture\'s own water is its rivers');
   assert.equal(ink.traced, true);
