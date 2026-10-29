@@ -157,7 +157,7 @@ serpent's does.
 verifier and theirs by this one. Its claims: `q` the watch, `b` the dragon (0 brass, 1 Aetherbright), `s` the account,
 `c` the hoard's seed, `x` dealt or stood, `l` the level, `m` the relay's body count, `i` issued, `e` a week on.
 
-**The claim** (`server-account/src/dragons.js` `claimDragon`, route `/v1/dragon/claim`, migration `0194_dragon.sql`, acct221).
+**The claim** (`server-account/src/dragons.js` `claimDragon`, route `/v1/dragon/claim`, migration `0194_dragon.sql`, acct222).
 The device carries the receipt (`net/dragon/dragonClaims.js`) with the character that fought and a claim id of its own.
 The service counts one kill a (watch, account) in `dragon_kills`, and gives the hoard to the claim whose id writes the
 watch's `dragon_spoils` row, so a second browser is answered no. A guest is given its hoard and nothing else. The kill is
@@ -249,9 +249,10 @@ colours, under the player and on every other screen.
 | **DRAGON7** | the Aetherbright: the palette, the roll, its look kept | no | no |
 
 The relay changes land in ONE version (world287 - every byte of the relay's bundle is hashed; world281, world283, world284,
-world285 then world286, until the merges of main renumbered it past world281 to world286), and the service's in one (acct221 -
+world285 then world286, until the merges of main renumbered it past world281 to world286), and the service's in one (acct222 -
 acct211 when this page was written, renumbered past KEEP-MARK, SHED-REPLICA, the PvP rework's acct213-acct215, CRAFT-SET's
-acct216, AUDIT TAMRIEL-WIDE's acct217, INSURE-ALL's acct218, YARD-CELL's acct219 and UNION-CHILDREN's acct220). Each slice: pins in `test/`, a mutant record, its record here.
+acct216, AUDIT TAMRIEL-WIDE's acct217, INSURE-ALL's acct218, YARD-CELL's acct219, UNION-CHILDREN's acct220 and
+HEARTH-SIBLING's acct221). Each slice: pins in `test/`, a mutant record, its record here.
 
 ## 13. The record, slice by slice
 
@@ -284,7 +285,7 @@ while its remains lie (`DRAGON_REMAINS_MS` moved to the law). Pinned by `test/ne
 `test/scenes/dragon3_host.test.js` (7) and `test/net/dragon/dragon3_relay.test.js` (1); `tools/mutants/dragon3.json`, 27
 dead. PINS MOVED: the serpent's marks (`serpent4`), its spell door (`fb1019f_bossdot`), NAV-H's enemies near (`nav_h_host`).
 
-**DRAGON4 - the hoard and the tame (2026-10-29, acct221, migration 0194; acct213 and 0192 on its branch, renumbered past the PvP rework, CRAFT-SET, AUDIT TAMRIEL-WIDE, INSURE-ALL, YARD-CELL and UNION-CHILDREN at the merges of main).** `server-account/src/dragons.js` `claimDragon` behind
+**DRAGON4 - the hoard and the tame (2026-10-29, acct222, migration 0194; acct213 and 0192 on its branch, renumbered past the PvP rework, CRAFT-SET, AUDIT TAMRIEL-WIDE, INSURE-ALL, YARD-CELL, UNION-CHILDREN and HEARTH-SIBLING at the merges of main).** `server-account/src/dragons.js` `claimDragon` behind
 `/v1/dragon/claim`: one kill a (watch, account), the hoard to the device that wrote its row, the tame drawn by the
 service for a dealer's first write, one a character, named at every answer while its row stands. On the device:
 `net/dragon/dragonClaims.js` (the carrier), `systems/dragon/dragonSpoils.js` (the hoard), `scenes/dragonRewards.js` (the
@@ -375,6 +376,12 @@ places were `KEEP`, a name `scenes/dataSource.js` already declares (audit24's on
 the foes module's setter joined the line PORTAL1 pins; it stands on its own line, the module's way, and that line is
 main's again. Its dispatch sat between SURV3's camps and the frame's end; it reads beside EG-F's now. OL2's word on
 the fare moved with PARTY-TRAVEL's bag, so its pin reads the host whole (`hostText`).
+
+**THE MERGE OF MAIN AT d9e485583 (2026-10-29, #1436 FIELD BUGS 2026-10-29e).** Main took acct221 (HEARTH-SIBLING and
+FAMILY-REMOVE, no migration), so the service is acct222; the relay stays world287 and migration 0194 stands. Item law 15
+names acct222. bootWorld measures 35,233: main's KEYS-BLUR put one line in. PINS MOVED: the account version's (each note
+before main's), the service's history check (`auditscale2_acct`), `tech1_roster`'s law, and ten mutant records on the
+version lines.
 
 **DRAGON7 - the Aetherbright (2026-10-29).** `characters/dwarvenDragonShiny.js` turns each PLTE colour at load - the brass
 and copper to aetherium's blue, the wings' olive membrane to its violet, the greys cooled - and writes the chunk's CRC
