@@ -270,3 +270,18 @@ tenth and the letters' tenth still go to the remains; the cart and the packs sta
 (`wild.js:"{ villain: isVillain(Number(row.villainy)) }"`). "Insurance cost 20%": a
 premium stays a fifth of `itemWorth` (`wildInsureLaw.js:"export const WILD_INSURE_DIVISOR = 5;"`), which counts the
 piece's price and its lines' worth. The service is acct214 (acct211 on its branch). A departure: DFU has no PvP.
+
+## PVP-RISE: a death's wait like PvE's
+
+"Need to have to eake up im nearest town", "Jist like pve deaths": a death in the zone rises at the nearest town or temple
+outside it (Wild-Zone.md THE RISE, as before), after the online PvE wait of 60 s
+(`wildZone.js:"export const WILD_DEATH_HOLD_S = 60;"`), not two minutes. The referee keeps the fighter down as long
+(`wildRef.js:"riseMs: 60_000,"`, the wire's `down` word at most `wire.js:"export const WILD_DOWN_MS_MAX = 60_000;"`). A
+departure: DFU has no PvP.
+
+DEATH-15 ("Change that to 15 second on death", "For both"; the owner chose to keep the Resurrect minute): online, in
+the zone or out of it, Enter rises once `deathScreen.js:"export const DEATH_RISE_MIN_S = 15;"` have passed (a rejoin's
+served time counts, `canRise`); until then the screen says only the count. The rest of the minute is for a party
+member's Resurrect, and the body still lies the minute. The raise window is the longest screen and half a minute,
+`revived.js:"export const REZ_HOLD_S = 90;"` (150 while the zone held two minutes). Relay world282. A departure: DFU
+rises after its three seconds.

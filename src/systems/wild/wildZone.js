@@ -55,8 +55,9 @@ export const wildRingLoot = (ring) => WILD_RING_LOOT[(ring | 0) - 1] ?? WILD_RIN
 /** A ring's word for the maps and the HUD. */
 export const wildRingName = (ring) => ['The Borderlands', 'The Wilds', 'The Heartlands', 'The Heart'][(ring | 0) - 1] ?? 'The Heart';   // WW-C2: Cyrodiil's, its border to the Imperial heart (the mountains' Foothills to High Crags retired)
 export const wildRingBonus = (ring) => `+${Math.round((wildRingLoot(ring) - 1) * 100)}% loot`;
-/** "has to wait 2mins till respawn" - and a killer's body lies as long. */
-export const WILD_DEATH_HOLD_S = 120;
+/** PVP-RISE (the owner, 2026-10-29: "Need to have to eake up im nearest town", "Jist like pve deaths"): the wait an online
+ *  PvE death has (ui/deathScreen.js ONLINE_RESPAWN_SECONDS), once "has to wait 2mins till respawn" - and a body lies as long. */
+export const WILD_DEATH_HOLD_S = 60;
 /** A blow from another player this recent at the death names them the killer (a lingering spell, a foe's last swing
  *  after a player's - the player who brought you down). */
 export const WILD_KILL_CREDIT_MS = 10_000;

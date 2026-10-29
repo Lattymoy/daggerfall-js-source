@@ -352,7 +352,8 @@ Either death, at the first dead frame, while the room is still the player's (`wi
 - A DEATH IN A HALL (HALL-CROWS, the owner: "i dont see the crows circleling around the dungeon where i died on the
   zone map"): always locks the hall for the hour and sets the crows over it, whether or not the pack had anything to
   drop (`world.js:"if (modes?.mode === 'dungeon' && _wdunInside)"`; section 13).
-- THE WAIT: the death screen holds `WILD_DEATH_HOLD_S` (120 s) and takes no Enter; the killer's body lies as long.
+- THE WAIT: the death screen holds `WILD_DEATH_HOLD_S` (60 s, PVP-RISE: "Jist like pve deaths" - 120 s before); Enter
+  rises after 15 s (DEATH-15, PvP-Rework.md PVP-RISE); the killer's body lies as long.
 - A GAME CLOSED ON THE DEATH SCREEN (WILD-REJOIN, FIELD BUGS 2026-10-25h, a player's report: "if you die in the
   wilderness and alt f4 before you are looted you wont be able to be looted by who killed you. you can also skip the
   death timer this way"): the fall is the referee's, and the referee keeps the fighter down its two minutes
