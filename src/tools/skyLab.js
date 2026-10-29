@@ -2,7 +2,8 @@
 // the hour, the weather, the day (for the moons' phases), the view and
 // the fog on sliders - the tuning surface and the eyeball tool, no game
 // data needed. `?hour=&weather=&day=&yaw=&pitch=&fog=` pins any of them
-// for the probe, and `?still` freezes the clouds' drift.
+// for the probe, and `?still` freezes the clouds' drift. SKYRIM-AURORA: `?aurora=<0..1>` draws the aurora at that
+// weight over the sky, under the clouds, its arcs `&hang=` hem heights north (render/auroraPass.js).
 import { EnhancedSkyRenderer, skyState, WEATHER_SKY, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';
 import { cloudsStateUnderMod, dynamicMoonState } from '../render/dynamicSkiesBridge.js';   // DS2: the clouds' state under the mod, as the game builds it
 import { MINUTES_PER_DAY, lunarPhaseFractionsFromMinutes } from '../systems/gameDate.js';   // CLK3: the clock's own fraction, as the dome takes it
@@ -12,6 +13,7 @@ import { dynamicSkiesAssets, loadDynamicSkiesTexture, DYNAMIC_SKIES_TEXTURES } f
 import { weatherSunlightScale } from '../world/weather.js';
 import { CloudNoise } from '../render/cloudNoise.js';   // VC2: the noise volumes' slice viewer - ?noise=shape|detail&z=&ch=&tiles=
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome - ?clouds=off|lo|hi
+import { AuroraPass } from '../render/auroraPass.js';   // SKYRIM-AURORA
 
 const params = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
@@ -40,6 +42,9 @@ const $ = (id) => document.getElementById(id);
 const controls = ['hour', 'weather', 'day', 'yaw', 'pitch', 'fog'];
 for (const id of controls) if (params.has(id)) $(id).value = params.get(id);
 const still = params.has('still');
+const auroraW = params.has('aurora') ? Math.min(1, Number(params.get('aurora') || 1)) : 0;
+const auroraHang = Number(params.get('hang') ?? 0.4);
+let aurora = null;
 // VC5: the panel's clouds row is the URL doors made visible - the tier
 // select and the shadow-map box rewrite the query and reload, so the
 // sky is rebuilt whole (a tier is a set of targets, not a live knob).
@@ -110,6 +115,7 @@ function frame() {
   gl.enable(gl.CULL_FACE); gl.enable(gl.DEPTH_TEST);
   const yaw = Number($('yaw').value) * Math.PI / 180, pitch = Number($('pitch').value) * Math.PI / 180;
   sky.draw(yaw, pitch, 65 * Math.PI / 180, w / h);
+  if (auroraW > 0) (aurora ??= new AuroraPass(gl)).draw(yaw, pitch, 65 * Math.PI / 180, w / h, auroraW, auroraHang);
   if (cloudsDoor !== 'off') {
     clouds ??= new VolumetricClouds(gl, Object.hasOwn(CLOUD_QUALITY, cloudsDoor) ? cloudsDoor : 'default', [0, 0, w, h]);
     // DS2: under the mod the clouds take the synthesised state the game

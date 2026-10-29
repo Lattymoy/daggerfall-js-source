@@ -24,6 +24,7 @@ import { dreadGrade, DREAD_SKY_WORD } from '../world/dreadSky.js';   // EVENT1: 
 import { sunbabyHaze, sunbabyWaterSky } from '../world/sunbabySky.js';   // SUNBABY1: the sun baby's haze and the sky the water mirrors under it
 import { sdBrassGrade } from '../systems/superDungeon/sdOmen.js';   // SD19: the brass air near a standing Hollow
 import { SunbabySkyRenderer } from '../render/sunbabySkyRenderer.js';   // SUNBABY1: its flower sky, over every sky
+import { createAuroraHost } from './auroraHost.js';   // SKYRIM-AURORA: Skyrim's aurora over the lane's night sky
 import { QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
 import { createCloudsArrival } from '../render/cloudsArrival.js';   // CLOUD-COMPILE: the clouds built once their programs are done
 import { canopyWaterSky } from '../world/jungle/jungleCanopy.js';   // VALENWOOD-CANOPY: the sky the water mirrors under a closed canopy
@@ -281,6 +282,8 @@ export function createSkyController(gl, params) {
   // The rect the sky last drew in, handed to the clouds' build to restore (the noise draws in its own targets).
   let skyViewport = /** @type {number[]|null} */ (null);
   const dynamicSky = dynamicOn ? new DynamicSkiesRenderer(gl) : null;
+  // SKYRIM-AURORA: on the lane's sky, the port's dome or the mod's - the classic panorama stays Daggerfall's own
+  const aurora = enhancedLane ? createAuroraHost(gl, params) : null;
   // PS3 (Mac: "there's these progressing circles in the sky when I want it
   // to be a smooth sky transition"): the mod's own REDUCE_COLOR quantizes
   // with a bare ceil and no dither, so the sky's iso-luminance contours -
@@ -706,6 +709,7 @@ export function createSkyController(gl, params) {
         const easeDt = windModel.inLead() ? dt * (WEATHER_EASE_MINUTES / windModel.leadMinutes()) : dt;   // WEATHER2b: the front's own lead - a crossing's few minutes, the day roll's three hours
         weatherRowNow = easeWeather(weatherRowNow, want, easeDt);
         weatherRowNow.wind = windModel.vector();
+        aurora?.use(minuteOfDay, skyNow, weatherRowNow.cover, showNightSky);   // SKYRIM-AURORA: the eased cover hides it as the clouds come
         // WIND2: the cloud DRIFT is integrated here, once - the one place
         // the wind and the clock meet. Every deck reads this offset
         // instead of multiplying wind by time, which with a wind that
@@ -832,6 +836,7 @@ export function createSkyController(gl, params) {
       const meter = meterFor(gl);
       meter?.mark('sky');
       (enhancedSky ?? dynamicSky ?? sky).draw(yaw, pitch, fovY, aspect);
+      aurora?.draw(yaw, pitch, fovY, aspect);   // SKYRIM-AURORA: over the night sky, under the clouds
       // CLOUD-COMPILE: marched from their build; the composite draws nothing until their first whole sweep. The
       // per-frame setters (dread, brass, haze, bolt) reach them from the frame after their build, before that sweep.
       skyViewport = viewport;

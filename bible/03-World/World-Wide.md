@@ -2192,3 +2192,7 @@ province's bank - `worldModes.js` `currentNameBank`). The plaque's person pick i
   Solitude stood four street people named alike: DFU's seed is the record's place in its block against the location,
   so a block repeated repeats its people.
 
+
+## SKYRIM-AURORA - an aurora in Skyrim's sky alone (recorded, 2026-10-29)
+
+The aurora (`07-Rendering/Skyrim-Aurora.md`) is drawn where `theatreAt` says the player stands in Skyrim, and nowhere else, the Bay included. The owner asked for Skyrim's sky ("let's develop an aurora for the skyrim sky then"), and Skyrim is the province the lore gives one. Its pins hold Skyrim beside the Bay, Morrowind, High Rock and Cyrodiil.

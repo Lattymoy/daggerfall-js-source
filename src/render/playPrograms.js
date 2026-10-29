@@ -27,15 +27,17 @@ import { FIRE_PROGRAMS } from './redMountainFire.js';
 import { GLOW_PROGRAMS } from './ghostfenceGlow.js';
 import { NODE_GLOW_PROGRAMS } from './nodeGlow.js';
 import { NAVAL_PROGRAMS } from './navalRender.js';
+import { AURORA_PROGRAMS } from './auroraPass.js';
 import { idleTurn } from './idleTurn.js';   // the queue's wait between turns
 
 /** The programs started early: a gate's fire, the court's and the Spire's telegraphs, his blows' sparks, the crystals,
  *  the nodes' glint, the volcano's fire and the fence's glow (AUDIT RED-MOUNTAIN F5); SHADER-EASE QUEUE-ORDER
- *  (2026-10-29): the nodes' glow and the sea fight's effects, first built at a node or a broadside; then the auras' 16
+ *  (2026-10-29): the nodes' glow and the sea fight's effects, first built at a node or a broadside; SKYRIM-AURORA: the
+ *  aurora, first built under Skyrim's night sky; then the auras' 16
  *  (AURA-SPLIT, AURA-STALL) and the armory's 8 (ARMORY) last - the longest compiles, each behind a door that waits for
  *  it, so they no longer hold the queue ahead of the cheap ones a first build reads at once. A door that asks for a
  *  pair still brings it to the front (glProgram.js COMPILE-QUEUE `wanted`). */
-export const playPrograms = () => [...GATE_PASS_PROGRAMS, ...telegraphPrograms(false), ...telegraphPrograms(true), ...GATE_FX_PROGRAMS, ...CRYSTAL_PROGRAMS, ...NODE_GLINT_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS, ...NODE_GLOW_PROGRAMS, ...NAVAL_PROGRAMS, ...AURA_PROGRAMS, ...ARMORY_PROGRAMS];
+export const playPrograms = () => [...GATE_PASS_PROGRAMS, ...telegraphPrograms(false), ...telegraphPrograms(true), ...GATE_FX_PROGRAMS, ...CRYSTAL_PROGRAMS, ...NODE_GLINT_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS, ...NODE_GLOW_PROGRAMS, ...NAVAL_PROGRAMS, ...AURORA_PROGRAMS, ...AURA_PROGRAMS, ...ARMORY_PROGRAMS];
 
 /** Start them on `gl` where its driver compiles beside the frames; answers whether it did. COMPILE-QUEUE (FIELD BUGS
  *  2026-10-27b, "hitch 13064 ms" on the desktop app after login): one at a time (glProgram.js startProgramsInTurn). All

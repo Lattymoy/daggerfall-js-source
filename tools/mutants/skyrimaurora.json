@@ -1,0 +1,209 @@
+[
+  {
+    "name": "SKYRIM-AURORA-the-theatre-any-province",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "theatreAt(px, py) !== SKYRIM_THEATRE) return null;",
+    "new": "theatreAt(px, py) < 0) return null;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-latitude-unturned",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "return clamp01((AURORA_DIALS.southY - y) / (AURORA_DIALS.southY - AURORA_DIALS.northY));",
+    "new": "return clamp01((y - AURORA_DIALS.northY) / (AURORA_DIALS.southY - AURORA_DIALS.northY));",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-dark-ramp-turned",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "return ramp(AURORA_DIALS.sunFrom, AURORA_DIALS.sunFull, elevDeg);",
+    "new": "return ramp(AURORA_DIALS.sunFull, AURORA_DIALS.sunFrom, elevDeg);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-sun-at-noon",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "Math.asin(Math.sin(Math.PI * dayFraction(minuteOfDay)))",
+    "new": "Math.asin(Math.cos(Math.PI * dayFraction(minuteOfDay)))",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-cover-unread",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "export const auroraClear = (cover) => 1 - ramp(AURORA_DIALS.coverFrom, AURORA_DIALS.coverGone, Number(cover) || 0);",
+    "new": "export const auroraClear = (cover) => 1;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-night-sky-unread",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "  if (!nightSky) return NO_AURORA;\n",
+    "new": "",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-night-cut-at-midnight",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "Math.floor((skyMinutes + MINUTES_PER_DAY / 2) / MINUTES_PER_DAY)",
+    "new": "Math.floor(skyMinutes / MINUTES_PER_DAY)",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-a-tiers-share",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "  Object.freeze({ share: 0.2, from: 0.3, to: 0.5 }),",
+    "new": "  Object.freeze({ share: 0.3, from: 0.3, to: 0.5 }),",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-tier-roll-unspent",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "r -= t.share; }",
+    "new": "}",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-swell-past-its-fifth",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "return base * (1 - swell + swell * 0.5 * (1 + Math.sin(",
+    "new": "return base * (1 - 2 * swell + swell * 0.5 * (1 + Math.sin(",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-souths-share",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "const weight = (d.south + (1 - d.south) * lat)",
+    "new": "const weight = (1 * lat + d.south * 0)",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-hang-unturned",
+    "file": "src/world/tamriel/skyrimAurora.js",
+    "old": "hang: d.hangSouth * (1 - lat) + d.hangNorth * lat",
+    "new": "hang: d.hangNorth * (1 - lat) + d.hangSouth * lat",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-pass-drawn-at-0",
+    "file": "src/render/auroraPass.js",
+    "old": "    if (!(weight > 0)) return;\n    const gl = this.gl, u = this.u;",
+    "new": "    const gl = this.gl, u = this.u;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-blended-over-by-alpha",
+    "file": "src/render/auroraPass.js",
+    "old": "gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ZERO, gl.ONE);",
+    "new": "gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-depth-written",
+    "file": "src/render/auroraPass.js",
+    "old": "    gl.depthMask(false);\n    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);",
+    "new": "    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-drawn-under-the-horizon",
+    "file": "src/render/auroraPass.js",
+    "old": "  if (dir.y <= 0.0) discard;\n",
+    "new": "",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-ease-skipped",
+    "file": "src/scenes/auroraHost.js",
+    "old": "weight += (want.weight - weight) * (1 - Math.exp(-dt / AURORA_EASE_S));",
+    "new": "weight = want.weight;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-first-use-eased-from-0",
+    "file": "src/scenes/auroraHost.js",
+    "old": "const now = clock(), dt = last === null ? Infinity : Math.max(0, (now - last) / 1000);",
+    "new": "const now = clock(), dt = last === null ? 0 : Math.max(0, (now - last) / 1000);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-door-unread",
+    "file": "src/scenes/auroraHost.js",
+    "old": "  if (door === 'off') return null;\n",
+    "new": "",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-fading-hang-dropped",
+    "file": "src/scenes/auroraHost.js",
+    "old": "      if (want.weight > 0) hang = want.hang;",
+    "new": "      hang = want.hang;",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-drawn-after-the-clouds",
+    "file": "src/scenes/shared.js",
+    "old": "      aurora?.draw(yaw, pitch, fovY, aspect);   // SKYRIM-AURORA: over the night sky, under the clouds\n",
+    "new": "",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-classic-lane-given-it",
+    "file": "src/scenes/shared.js",
+    "old": "const aurora = enhancedLane ? createAuroraHost(gl, params) : null;",
+    "new": "const aurora = createAuroraHost(gl, params);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-cover-unhanded",
+    "file": "src/scenes/shared.js",
+    "old": "aurora?.use(minuteOfDay, skyNow, weatherRowNow.cover, showNightSky);",
+    "new": "aurora?.use(minuteOfDay, skyNow, 0, showNightSky);",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  }
+]
