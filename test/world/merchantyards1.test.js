@@ -121,7 +121,10 @@ test('MERCHANT-YARDS THE KEEPER: named on the region\'s bank on the town and the
   const banks = [...byBank.values()].filter((rs) => rs.length >= 2);
   assert.ok(banks.length >= 2, 'two banks with two regions each');
   const [[p0, p1], [q0]] = banks;
-  assert.equal(yardKeeper(4242, 'stable', p0).name, yardKeeper(4242, 'stable', p1).name, 'one bank, one keeper');
+  // REGION-NAMES: PIN MOVED - one region, one keeper on every client; two regions of one bank each their own families and
+  // fashions (characters/regionNames.js), so not one keeper any more
+  assert.equal(yardKeeper(4242, 'stable', p0).name, yardKeeper(4242, 'stable', p0).name, 'one region, one keeper');
+  assert.ok(p1 !== p0);
   const differ = [...Array(40).keys()].filter((m) => yardKeeper(m, 'stable', p0).name !== yardKeeper(m, 'stable', q0).name).length;
   assert.ok(differ >= 30, `another bank, another keeper (${differ} of 40)`);
   const seen = new Set(), sexes = new Set();

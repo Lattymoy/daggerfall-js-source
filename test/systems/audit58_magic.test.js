@@ -322,11 +322,13 @@ test('AUDIT 58: GetRandomFullName draws the gender - the talk fallback is not al
   // PIN MOVED (TESA3, bible/03-World/Arena-Provinces.md): through the one bank where the player stands - the region's
   // (GetNameBankOfRegion over PlayerGPS.CurrentRegionIndex) on the Bay, a province's past it - and getRandomFullName's own
   // draw from it (nameHelper.js getRandomFullNameOfBank, which getRandomFullName now calls)
-  assert.match(w, /randomFullName: \(\) => getRandomFullNameOfBank\(nameBankHere\(\)\)/);
-  assert.match(w, /const talkFullName = \(gender\) => nameHelperFullName\(nameBankHere\(\), gender\);/);
+  // REGION-NAMES: PIN MOVED - the same draws through the person's doors (characters/personNames.js randomPersonName, personName)
+  assert.match(w, /randomFullName: \(\) => randomPersonName\(nameBankHere\(\)\)/);
+  assert.match(w, /const talkFullName = \(gender\) => personName\(nameBankHere\(\), gender\);/);
   assert.match(w, /const nameBankHere = \(\) => provinceBankHere\(\) \?\? getNameBankOfRegion\(_questRegionIndex\(\)\);/);
   assert.match(src('characters/nameHelper.js'), /export function getRandomFullName\(regionIndex\) \{\n  return getRandomFullNameOfBank\(getNameBankOfRegion\(regionIndex \?\? -1\)\);\n\}/);
   assert.ok(!/talkFullName\(GENDERS\.Male\)/.test(w), 'no hardcoded Male fallback survives');
   // one home: the %rn arm calls it too rather than repeating the body
-  assert.match(src('systems/quest/questMacros.js'), /return getRandomFullName\(w\.currentRegionIndex\?\.\(\) \?\? -1\);/);
+  assert.match(src('systems/quest/questMacros.js'), /return randomPersonName\(getNameBankOfRegion\(w\.currentRegionIndex\?\.\(\) \?\? -1\)\);/);
+  assert.match(src('characters/personNames.js'), /export function randomPersonName\(bank\) \{\n  const gender = randomRangeInclusive\(0, 1\) === 1 \? GENDERS\.Female : GENDERS\.Male;\n  return personName\(bank, gender\);/);
 });

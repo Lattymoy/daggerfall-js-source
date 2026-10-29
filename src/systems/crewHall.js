@@ -33,7 +33,7 @@
 // Pure: no DOM, no clock (the host hands the day). Its seeds its own (mulberry32 on hash32), the global stream put back.
 import { hash32 } from '../world/spawnedDungeons.js';
 import { mulberry32 } from '../combat/blood/bloodArt.js';
-import { residentName } from './livingWorld/census.js';
+import { seededPersonName } from '../characters/personNames.js';   // REGION-NAMES
 import { getNameBankOfRegion, GENDERS } from '../characters/nameHelper.js';
 import { PLAYER_CREW, playerCrewCount, CREW_SHOWN } from './naval/crewLife.js';
 import { CREW_PER_HAND, MOBILE } from './naval/navalBoarding.js';
@@ -134,7 +134,7 @@ export function recruitsOf({ mapId, day, regionIndex = -1, serving = null }) {
     const gi = RECRUIT_GRADES.indexOf(drawGrade(r));
     const grade = RECRUIT_GRADES[gi];
     const trade = mobile === MOBILE.Bard ? 'Bard' : drawTrade(r, gi);
-    const name = residentName(Math.floor(r() * 0xffffffff) >>> 0, bank, female ? GENDERS.Female : GENDERS.Male);
+    const name = seededPersonName(Math.floor(r() * 0xffffffff) >>> 0, bank, female ? GENDERS.Female : GENDERS.Male, { region: Number.isInteger(regionIndex) ? regionIndex : -1 });
     const lines = RECRUIT_LINES[grade.key];
     const rec = {
       id: `${mapId >>> 0}:${Math.floor(Number(day) || 0)}:${i}`, name, gender: female ? GENDERS.Female : GENDERS.Male, sex: female ? 'female' : 'male', mobile,

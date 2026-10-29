@@ -174,8 +174,8 @@
   {
     "name": "LW-PERF-fav-tie",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "    || (rank.get(a) ?? 0) - (rank.get(b) ?? 0));",
-    "new": "    || 0);",
+    "old": "    || (rank.get(a) ?? 0) - (rank.get(b) ?? 0)));",
+    "new": "    || 0));",
     "tests": [
       "test/systems/livingWorld/lwperf_cost.test.js"
     ]

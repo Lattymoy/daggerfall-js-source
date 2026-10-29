@@ -18,7 +18,8 @@ import { loadQuestTables } from '../../../src/systems/quest/tables.js';
 import { QuestMachine } from '../../../src/systems/quest/machine.js';
 import { getMacro, MACRO_TYPES, expandQuestString, getMessageResources, questMacroSource, getContextValue, setIdRegion } from '../../../src/systems/quest/questMacros.js';
 import { srand } from '../../../src/formats/dfRandom.js';
-import { GENDERS } from '../../../src/characters/nameHelper.js';
+import { GENDERS, fullName, getNameBankOfRegion, getRandomFullName } from '../../../src/characters/nameHelper.js';
+import { personName, randomPersonName } from '../../../src/characters/personNames.js';   // REGION-NAMES
 import { mapPixelToWorldCoord } from '../../../src/formats/mapsFile.js';
 
 const VENDOR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'vendor', 'dfu-quests');
@@ -559,11 +560,24 @@ test('the UID-seeded name sources are exact: %n gender coin, %fn, and the +3457 
   const world = makeWorld();
   const stub = { uid: 4242, hooks: { world } };
   const src = questMacroSource(stub);
-  assert.equal(src.name(), 'Raithi', 'srand(4242) + the DFRandom gender coin');
-  assert.equal(src.femaleName(), 'Baos-i');
-  assert.equal(src.maleName(), 'Cauvin', 'the +3457 offset');
-  // uid 7's coin lands MALE - the pair pins the coin itself
-  assert.equal(questMacroSource({ uid: 7, hooks: stub.hooks }).name(), "F'orcten");
+  // REGION-NAMES: PIN MOVED - each source is still DFU's draw off its seed, verbatim, and the person is named by their
+  // people's customs after it (personNames.js): the draws pinned, then the names off them
+  const bank = getNameBankOfRegion(world.currentRegionIndex());
+  const drawn = (seed, g) => { srand(seed); return fullName(bank, g); };
+  const named = (seed, g) => { srand(seed); return personName(bank, g); };
+  const coin = (seed) => { srand(seed); return getRandomFullName(world.currentRegionIndex()); };
+  assert.equal(coin(4242), 'Raithi', 'srand(4242) + the DFRandom gender coin');
+  assert.equal(drawn(4242, GENDERS.Female), 'Baos-i');
+  assert.equal(drawn(4242 + 3457, GENDERS.Male), 'Cauvin', 'the +3457 offset');
+  assert.equal(coin(7), "F'orcten", 'uid 7\'s coin lands MALE - the pair pins the coin itself');
+  srand(4242);
+  const want = randomPersonName(bank), wantF = named(4242, GENDERS.Female), wantM = named(4242 + 3457, GENDERS.Male);
+  srand(7);
+  const want7 = randomPersonName(bank);
+  assert.equal(src.name(), want);
+  assert.equal(src.femaleName(), wantF);
+  assert.equal(src.maleName(), wantM);
+  assert.equal(questMacroSource({ uid: 7, hooks: stub.hooks }).name(), want7);
 });
 
 test('%vcn succeeds for a VampireClan person by home region; the region miss falls to the faction name', () => {
@@ -673,12 +687,20 @@ test('%rn falls to a seeded random full name when the province has no Individual
   world._province = { ruler: 1, children: [] };
   world.getFactionData = () => null;
   const hooks = { world };
-    srand(9001);
-  assert.equal(getContextValue('%rn', { uid: 1, hooks }, hooks), "D'eght-si",
-    'the fallback draws on the live DFRandom chain - exact from srand(9001), the FEMALE coin');
+  // REGION-NAMES: PIN MOVED - GetRandomFullName's coin and draw verbatim, then the person named after it
+  const bank = getNameBankOfRegion(world.currentRegionIndex());
+  srand(9001);
+  assert.equal(getRandomFullName(world.currentRegionIndex()), "D'eght-si", 'the fallback draws on the live DFRandom chain - exact from srand(9001), the FEMALE coin');
   srand(9003);
-  assert.equal(getContextValue('%rn', { uid: 1, hooks }, hooks), 'Rirhtun',
-    'srand(9003) lands the MALE coin - the pair pins the coin itself');
+  assert.equal(getRandomFullName(world.currentRegionIndex()), 'Rirhtun', 'srand(9003) lands the MALE coin - the pair pins the coin itself');
+  srand(9001);
+  const want1 = randomPersonName(bank);
+  srand(9001);
+  assert.equal(getContextValue('%rn', { uid: 1, hooks }, hooks), want1);
+  srand(9003);
+  const want3 = randomPersonName(bank);
+  srand(9003);
+  assert.equal(getContextValue('%rn', { uid: 1, hooks }, hooks), want3);
 });
 
 test('expandQuestString expands ONE context macro in a bare string; getMessageResources enumerates', () => {

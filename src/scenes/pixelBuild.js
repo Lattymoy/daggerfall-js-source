@@ -94,7 +94,7 @@ import { makeBuildingKey } from '../systems/talk/talkTopics.js';
 import { makeCityGate } from '../world/city/cityGate.js';
 import { markRemapLaw, remapAsked, remapLawOf, remapSubMeshes, reskinRemap } from '../world/texRemap.js';
 import { MobilePerson, PERSON_MOVE_SPEED, walkerRace } from '../characters/mobile/mobilePerson.js';
-import { folkOfLocation } from '../characters/provinceFolk.js';   // PROVINCE-FOLK
+import { folkOfLocation, folkKeyOf } from '../characters/provinceFolk.js';   // PROVINCE-FOLK; REGION-NAMES: whose people
 import { multiply, trs } from '../world/mat4.js';
 import { naturePicture, junglePicture } from '../world/naturePicture.js';
 import { onFloatingFrame } from '../player/collider.js';
@@ -980,6 +980,7 @@ export function createPixelBuild(host) {
           race: walkerRace(climate?.people, dfLocation.regionIndex),
           nameBank: provinceNameBank(provinceAt(px, py)?.key) ?? getNameBankOfRegion(dfLocation.regionIndex),   // AUDIT-TESA A2-5: past the Bay the province's people, never the Bay region's
           folk: folkOfLocation(dfLocation),   // PROVINCE-FOLK: past the Bay each walker one of the place's people (its zone's - AUDIT PROVINCE-FOLK B6), named from their own bank
+          region: dfLocation.regionIndex ?? -1, home: folkKeyOf(folkOfLocation(dfLocation)),   // REGION-NAMES: its walkers named by its region's customs
           makePerson: (archive, guard) => {
             const person = new MobilePerson(nav, {
               archive, guard,
