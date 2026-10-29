@@ -346,8 +346,8 @@
   {
     "name": "FB1028-Y1-the-carrier-laid-as-today",
     "file": "src/world/townWalls.js",
-    "old": "    const then = gateFurniture(was, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, was, rmbOf));",
-    "new": "    const then = gateFurniture(wall, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, wall, rmbOf));",
+    "old": "    const then = gateFurniture(was, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, was, rmbOf), townGateOutside(dfLocation, was, townPaths(dfLocation), rmbOf));",
+    "new": "    const then = gateFurniture(wall, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, wall, rmbOf), townGateOutside(dfLocation, wall, townPaths(dfLocation), rmbOf));",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]

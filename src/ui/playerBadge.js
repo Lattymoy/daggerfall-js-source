@@ -318,8 +318,8 @@ export const WITCH_VIOLET = Object.freeze([0.71, 0.42, 0.94, 1]);     // #b56bf0
  *  No colour was named; the aura is a nirnroot's and its runes are asked GREEN, so the title, its glyph and the aura are
  *  one family: a nirnroot's LEAF green; its GLOW, the luminous mint a nirnroot gives off in the dark and the runes' light
  *  - the title's one colour, 62 from the nearest title's (the Disciple's teal), greener and brighter than every green a
- *  title wears; the HAZE, the pale of the smoke where the light catches it, the gradient's end and the bud's heart; the
- *  DEEP green of the leaves' veins and the shade under the smoke; and the SMOKE's own grey, a breath of the green in it
+ *  title wears; the HAZE, the pale of the smoke where the light catches it, the gradient's end and the leaves' veins; the
+ *  DEEP green of the stem's core and the shade under the smoke; and the SMOKE's own grey, a breath of the green in it
  *  (render/auraRing.js SAGE_RGB reads all five from here). "Nirnroot Sage" is drawn leaf into glow into haze, and edged in
  *  black, as every gradient title with a light end is. */
 export const NIRN_LEAF = Object.freeze([0.18, 0.62, 0.341, 1]);      // #2e9e57
@@ -684,12 +684,13 @@ export const GLYPH_DETAIL = Object.freeze({
     Object.freeze({ path: 'M4.3 8.6L4.6 7.4Q5 6.4 5.9 6.9Q6.5 6 7.3 6.5Q8 5.7 8.7 6.5Q9.5 6 10.1 6.9Q11 6.4 11.4 7.4L11.7 8.6Q8 7.4 4.3 8.6Z', rgba: WARREN_FRILL }),
     Object.freeze({ path: 'M4.3 8.6Q8 7.4 11.7 8.6L11.8 9.4Q8 8.2 4.2 9.4ZM6.1 10.1Q6.75 10.1 6.75 10.8Q6.75 11.5 6.1 11.5Q5.45 11.5 5.45 10.8Q5.45 10.1 6.1 10.1ZM9.9 10.1Q10.55 10.1 10.55 10.8Q10.55 11.5 9.9 11.5Q9.25 11.5 9.25 10.8Q9.25 10.1 9.9 10.1ZM7.4 12.4L8.6 12.4L8 13.1Z', rgba: WARREN_PLUM }),
   ]),
-  // NIRNROOT-SAGE: TWO DETAILS, in order: the four leaves' veins, a midrib along each from the stem to near its tip, in
-  // the deep green; and the bud's HEART, its glowing middle, in the haze. Four slivers and an oval, none crossing another,
-  // so the aura's nirnroots (render/auraRing.js, cut by glyphEdges and filled even-odd) draw them as the badge does.
+  // NIRNROOT-SAGE (NIRN-LEAF, 2026-10-29): TWO DETAILS, in order: the VEINS in the haze, pale as Skyrim's nirnroot's -
+  // a midrib along each leaflet from the fan's point to near its tip, and on the five long leaflets a side vein off it
+  // toward its teeth, either side; and the STEM's core in the deep green. Slivers, none crossing another, so the aura's
+  // nirnroots (render/auraRing.js, cut by glyphEdges and filled even-odd) draw them as the badge does.
   nirnrootsage: Object.freeze([
-    Object.freeze({ path: 'M7 14.1Q3.9 12.7 1.4 11.6Q3.9 13.1 7 14.5ZM7.4 9.75Q4.9 8.6 2.9 7.6Q4.9 9 7.4 10.1ZM9 8.55Q11.2 6.8 13.2 5.45Q11.4 7.2 9 8.95ZM9 13.9Q12.2 12.2 14.8 10.85Q12.4 12.7 9 14.3Z', rgba: NIRN_DEEP }),
-    Object.freeze({ path: 'M8.3 1.35Q9.4 1.35 9.4 2.8Q9.4 4.25 8.3 4.25Q7.2 4.25 7.2 2.8Q7.2 1.35 8.3 1.35Z', rgba: NIRN_HAZE }),
+    Object.freeze({ path: 'M6.41 12.63L3.32 13.39L6.46 12.84ZM6.61 11.6L1.69 9.32L6.51 11.8ZM7.27 10.97L3.5 4.91L7.08 11.09ZM8.11 10.8L8 2.28L7.89 10.8ZM8.92 11.09L12.5 4.91L8.73 10.97ZM9.49 11.8L14.31 9.32L9.39 11.6ZM9.54 12.84L12.68 13.39L9.59 12.63ZM4.62 10.92L3.96 11.02L4.43 10.82ZM4.76 10.65L4.43 10.07L4.56 10.55ZM3.35 10.3L2.69 10.4L3.15 10.2ZM3.48 10.03L3.15 9.45L3.28 9.93ZM5.82 9.07L5.14 8.84L5.71 8.88ZM6.08 8.92L6.2 8.2L5.97 8.73ZM5.07 7.82L4.39 7.59L4.96 7.63ZM5.33 7.67L5.45 6.95L5.22 7.48ZM4.32 6.57L3.64 6.34L4.21 6.38ZM4.58 6.42L4.7 5.7L4.47 6.23ZM7.85 8.27L7.32 7.72L7.85 8.05ZM8.15 8.27L8.68 7.72L8.15 8.05ZM7.85 6.84L7.32 6.29L7.85 6.62ZM8.15 6.84L8.68 6.29L8.15 6.62ZM7.85 5.41L7.32 4.86L7.85 5.19ZM8.15 5.41L8.68 4.86L8.15 5.19ZM7.85 3.97L7.32 3.42L7.85 3.75ZM8.15 3.97L8.68 3.42L8.15 3.75ZM9.92 8.92L9.8 8.2L10.03 8.73ZM10.18 9.07L10.86 8.84L10.29 8.88ZM10.67 7.67L10.55 6.95L10.78 7.48ZM10.93 7.82L11.61 7.59L11.04 7.63ZM11.42 6.42L11.3 5.7L11.53 6.23ZM11.68 6.57L12.36 6.34L11.79 6.38ZM11.24 10.65L11.57 10.07L11.44 10.55ZM11.38 10.92L12.04 11.02L11.57 10.82ZM12.52 10.03L12.85 9.45L12.72 9.93ZM12.65 10.3L13.31 10.4L12.85 10.2Z', rgba: NIRN_HAZE }),
+    Object.freeze({ path: 'M7.86 15.45L7.9 12.7L8.1 12.7L8.14 15.45Z', rgba: NIRN_DEEP }),
   ]),  // SHOP: THE ORIGIN'S FIVE DETAILS, in order: the wing's membrane, three panes between its fingers, in the deep; the
   // belly's plates along the ring's inside, in the heart; the eye; and THE FIRST SPARK burning at the ring's middle - a
   // four-pointed star in the core over its halo in the violet. Each fills a part of the body and crosses no other.
@@ -852,12 +853,12 @@ export const GLYPH_PATH = Object.freeze({
   // and its face are GLYPH_DETAIL's. Seen in Chromium at 13 to 64 px over a night sky, a day sky, stone, grass and snow:
   // the ears and the lace read from 13 px.
   wikimaid: 'M3.6 8.6Q4.3 7 5 6.5Q3.6 3 4.6 0.7Q5.3 0.1 6 0.8Q7.3 3.4 7.1 6.2Q8 6 8.9 6.2Q8.7 3.4 10 0.8Q10.7 0.1 11.4 0.7Q12.4 3 11 6.5Q11.7 7 12.4 8.6Q13.4 10.6 12.6 12.8Q11 15.2 8 15.2Q5 15.2 3.4 12.8Q2.6 10.6 3.6 8.6Z',
-  // NIRNROOT-SAGE (2026-10-26, for Blob-Marley - the owner: "Nirnroot sprig"): A NIRNROOT - a slender stem rising out of two
-  // broad leaves at its foot, a narrower pair up the stem (the right one higher, as a plant grows), and at its top the
-  // nirnroot's bulb, the glow it is known by. One outline, filled, never crossing itself, in M, L, Q and Z alone - the
-  // aura's nirnroots are this path (render/auraRing.js glyphEdges, filled even-odd). Seen in Chromium at 13 to 128 px over
-  // a night sky, a day sky, stone, grass and snow: the bulb and the leaves read from 13 px; the veins from 24.
-  nirnrootsage: 'M7.3 15.6Q3.2 15.6 0.6 11.4Q4 10.6 7.4 13L7.5 10.8Q4.6 10.9 2.4 7.4Q5 7.2 7.6 9L7.7 5.6Q5.7 4.9 6.1 2.8Q6.6 0.5 8.3 0.4Q10 0.5 10.5 2.8Q10.9 4.9 8.9 5.6L8.9 7.9Q11.2 5.6 13.8 5.2Q12 8.8 8.9 9.6L8.9 12.6Q12.2 10 15.4 10.6Q13.2 15.4 8.7 15.6Z',
+  // NIRNROOT-SAGE (2026-10-26; NIRN-LEAF 2026-10-29, the owner: "nicer nirnroot more marijuana style", after Skyrim's
+  // nirnroot): A NIRNROOT LEAF - a fan of seven slender leaflets out of one point low in the box, the middle one the
+  // tallest, the pairs either side shorter and lower, the last pair drooping past level; every leaflet serrated, its
+  // teeth leaning toward its tip; a short stem below. One outline, filled, never crossing itself, in M, L, Q and Z alone -
+  // the aura's nirnroots are this path (render/auraRing.js glyphEdges, filled even-odd).
+  nirnrootsage: 'M7.68 15.6L7.74 12.9L7.04 12.71L6.53 12.85L5.65 13.56L5.42 13.31L4.51 13.89L4.26 13.56L3.27 13.76L2.72 13.52L3.12 13.08L4.11 12.86L4.2 12.46L5.27 12.62L5.38 12.29L6.48 12.59L7 12.51L7.11 12.29L7.06 12.05L6.27 11.75L4.92 11.76L4.89 11.35L3.55 11.35L3.57 10.82L2.33 10.62L2.34 10.12L1.26 9.58L0.81 8.89L1.62 8.82L2.71 9.34L3.1 9.02L4.03 9.88L4.43 9.54L5.26 10.59L5.6 10.37L6.42 11.43L7.15 11.87L7.34 11.79L7.4 11.59L6.75 10.73L5.59 9.98L5.79 9.6L4.58 8.88L4.91 8.43L3.79 7.66L4.16 7.18L3.23 6.29L3.53 5.85L2.89 4.79L2.85 3.83L3.68 4.32L4.32 5.38L4.84 5.32L5.19 6.56L5.79 6.45L5.94 7.81L6.49 7.73L6.57 9.13L6.99 9.13L7.11 10.51L7.57 11.49L7.76 11.53L7.9 11.4L7.77 10.13L7.17 8.91L7.54 8.7L6.86 7.48L7.38 7.27L6.71 6.05L7.32 5.83L6.78 4.62L7.37 4.4L7.05 3.19L7.54 2.97L7.52 1.76L8 0.8L8.48 1.76L8.46 2.97L8.95 3.19L8.63 4.4L9.22 4.62L8.68 5.83L9.29 6.05L8.62 7.27L9.14 7.48L8.46 8.7L8.83 8.91L8.23 10.13L8.1 11.4L8.24 11.53L8.43 11.49L8.89 10.51L9.01 9.13L9.43 9.13L9.51 7.73L10.06 7.81L10.21 6.45L10.81 6.56L11.16 5.32L11.68 5.38L12.32 4.32L13.15 3.83L13.11 4.79L12.47 5.85L12.77 6.29L11.84 7.18L12.21 7.66L11.09 8.43L11.42 8.88L10.21 9.6L10.41 9.98L9.25 10.73L8.6 11.59L8.66 11.79L8.85 11.87L9.58 11.43L10.4 10.37L10.74 10.59L11.57 9.54L11.97 9.88L12.9 9.02L13.29 9.34L14.38 8.82L15.19 8.89L14.74 9.58L13.66 10.12L13.67 10.62L12.43 10.82L12.45 11.35L11.11 11.35L11.08 11.76L9.73 11.75L8.94 12.05L8.89 12.29L9 12.51L9.52 12.59L10.62 12.29L10.73 12.62L11.8 12.46L11.89 12.86L12.88 13.08L13.28 13.52L12.73 13.76L11.74 13.56L11.49 13.89L10.58 13.31L10.35 13.56L9.47 12.85L8.96 12.71L8.26 12.9L8.32 15.6Z',
   // SHOP (2026-10-28 - the owner: "an extremely detailed animated dragon glyph"): THE ORIGIN - an ouroboros, the dragon
   // coiled round on itself and biting its tail, the old sign of a beginning that never ends. Its horned head at the top
   // right, jaws open on the tail's tip; one bat's wing raised at the top left; spines down its back and two clutches of

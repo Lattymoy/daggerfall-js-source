@@ -65,6 +65,7 @@
 //     (at most SPARE_MAX of them): the next peer who wears the same body -
 //     its look and its form - stands in it at once, with no build.
 import { createFpArm } from '../../combat/fpArm.js';
+import { fistWrapsOf } from '../../characters/handWrapsIds.js';   // HAND-WRAPS: a peer's fists glow with their wraps
 import { dfWornEquipment } from '../../formats/morrowind/mwItemMap.js';
 import { werewolfSkinOf } from '../../characters/werewolfSkin.js';   // SHADOW-FANG: a peer's wolf in the skin their signed glyphs name
 import { npcHintOf, npcKeyOf, withNpcPicks, npcFaceOf, WARDROBE_BEAST_RACES } from '../../characters/wardrobe.js';   // MWNPC17: an NPC's own garments, head and hair
@@ -243,6 +244,13 @@ const _stubSlots = new WeakMap();   // MW-CROWD: a look's stand-in's slots, once
 export const heldWeaponKey = (/** @type {any} */ it) => (it ? `${it.templateIndex}|${it.material ?? ''}|${it.equipSlot}|${appearanceSig(it)}` : '');
 export function peerWeaponOf(look, shown = null) {
   return stubSlotsOf(look)[shown?.lh ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null;
+}
+/** HAND-WRAPS (AUDIT C2): the glow a peer's fists wear - the first pair of Hand Wraps a fist wears, right then left
+ *  (characters/handWrapsIds.js fistWrapsOf), whose look carries a glow word; else null. The hand in use is not asked. */
+export function peerWrapsGlow(look) {
+  const s = stubSlotsOf(look), R = s[EQUIP_SLOTS.RightHand] ?? null, L = s[EQUIP_SLOTS.LeftHand] ?? null;
+  for (const w of [fistWrapsOf(R, L), fistWrapsOf(L, R)]) { const g = w ? glowFromWord(w.glow) : null; if (g) return g; }
+  return null;
 }
 /** MW-CROWD: every stepped body asked this every frame, and each ask built a whole stand-in (an entity, a 27-slot equip
  *  table, its items) - eight bodies' worth of garbage a frame in a crowd. One a look now. */
@@ -881,6 +889,7 @@ export class PeerBodies {
     // template in the same hand), when MY switch shows glows; a gatherer's tool, a wolf's claws and a creature carry none
     const heldNow = hands ? (hands.dual ? hands.right : peerWeaponOf(look, shown)) : null;
     b.rig.setWeaponGlow?.(heldNow && weaponGlowOn() ? glowFromWord(heldNow.glow) : null, heldNow);   // AUDIT WEAPON-GLOW NET-1: and the weapon it is of
+    b.rig.setHandGlow?.(hands && weaponGlowOn() ? peerWrapsGlow(look) : null);   // HAND-WRAPS (AUDIT C2): their fists in their wraps' glow, whichever hand holds them
     // AUDIT MIXED-PAIR L4-3: A PAIR IN BOTH HANDS - the mode and the lead, and the left hand's weapon mirrored on its own
     // bone, through the rig's own doors (the local rig's handArm: each a fast path, the left bound once a change)
     b.rig.setHands?.({ mode: hands?.dual ? HANDS_MODE.Dual : HANDS_MODE.Single, lead: hands?.lead ?? 'R' });

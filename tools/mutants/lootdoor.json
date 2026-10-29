@@ -52,8 +52,8 @@
   {
     "name": "LOOT-DOOR-the-number",
     "file": "src/net/wire.js",
-    "old": "export const LOOT_HELLO_LAW = 1;",
-    "new": "export const LOOT_HELLO_LAW = 2;",
+    "old": "export const LOOT_HELLO_LAW = 2;",
+    "new": "export const LOOT_HELLO_LAW = 1;",
     "why": "the number names a law this build is not",
     "tests": [
       "test/net/lootdoor.test.js"

@@ -153,7 +153,7 @@ test('OW-KIN / OW-WHO on the travel map: the rows keep their kin and Renown, a k
   assert.match(W, /carriageAt: \(summary\) => carriageTown\(summary\?\.mapID \?\? summary\?\.mapId\),/);
   // PIN MOVED (BAY-LEFT-MAPS, test/scenes/bayleft_places.test.js): the town by the place's own key - a Bay town by its pixel id
   // (DFU's mask, `y * 1000 + x`), one past the Bay by its whole id where the registry stands it - never every id as the Bay's
-  assert.match(W, /on = hasCarriageGate\(townOfKey\(id\)\);/);
+  assert.match(W, /on = isCarriageTown\(townOfKey\(id\)\);/);   // PIN MOVED (AUDIT CAPITAL-CARRIAGES L6): a capital's slice by its gates, else the blocks' word
   assert.match(W, /if \(key < BAY_PIXEL_IDS\) return locationIndex\.get\(`\$\{key % MAX_MAP_PIXEL_X\},\$\{Math\.floor\(key \/ MAX_MAP_PIXEL_X\)\}`\);/);
   assert.match(W, /if \(!immersiveTravelLoaded\(\) \|\| !Number\.isFinite\(mapId\) \|\| isHallMapId\(mapId\)\) return false;/, 'no carriages without the mod');   // PIN MOVED (AUDIT WW F1): nor at a zone hall
   // PIN MOVED (TOWN-ECON TE1, test/systems/townecon.test.js): the Overworld's card is the town's (systems/town/townEcon.js tipFnAt -

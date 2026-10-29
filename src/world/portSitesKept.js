@@ -46,13 +46,15 @@ export async function prefetchPortSites(store = derivedValueStore()) {
 
 /**
  * portSitesOn's answer for this ground and field: the kept sites (closed on `g`, as portSitesOn closes them), or
- * portSitesOn's own, kept. Each call answers fresh objects - the host dresses the sites it is handed.
+ * portSitesOn's own, kept. Each call answers fresh objects - the host dresses the sites it is handed. `near` the town's
+ * PORT_PLACES_NEAR row (portSites.js), in the key: the pin reads portSitesOn's code, not the table.
  * @param {{ width: number, height: number, blocked: Uint8Array, road: Uint8Array }} g
  * @param {{ at: (gx: number, gy: number) => number, kind?: string }} field
+ * @param {Readonly<Record<string, ReadonlyArray<number>>>|null} [near]
  */
-export function keptPortSitesOn(g, field) {
-  if (!kept) return portSitesOn(g, field);
-  const key = portSitesStamp(g, field);
+export function keptPortSitesOn(g, field, near = null) {
+  if (!kept) return portSitesOn(g, field, near);
+  const key = `${portSitesStamp(g, field)}${near ? `:near${JSON.stringify(near)}` : ''}`;
   const sites = kept.towns.get(key);
   if (sites) {
     kept.towns.delete(key);
@@ -60,7 +62,7 @@ export function keptPortSitesOn(g, field) {
     for (const s of sites) closeSite(g, s);
     return structuredClone(sites);
   }
-  const placed = portSitesOn(g, field);
+  const placed = portSitesOn(g, field, near);
   kept.towns.set(key, structuredClone(placed));
   while (kept.towns.size > PORT_SITES_MAX) kept.towns.delete(kept.towns.keys().next().value);
   scheduleSave();
