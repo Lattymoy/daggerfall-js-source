@@ -341,14 +341,15 @@ test('DLV2 NONE STOOD: online (until DLV3), the row off, or a dungeon of none - 
   assert.equal(online.drawPass(new Float32Array(16), new Float32Array(16), [s.x, 1, s.z]), false);
 });
 
-test('DLV2 THE WIRING (HOST-SPLIT): the context builds it after its api, ticks it and draws it in drawFoes, presses its vault through takeLoot, saves and lays back its word, and destroys it; both dungeon hosts send `delve:` to takeLoot; the row on the Dungeons tab (mutants: a press arm missing; the save unkept)', () => {
+test('DLV2 THE WIRING (HOST-SPLIT): the context builds it after its api and before the Rift\'s stand, ticks it and draws it in drawFoes, presses its vault through takeLoot, keeps its word in a save beside the world record and lays it back at the load, and destroys it; both dungeon hosts send `delve:` to takeLoot; the row on the Dungeons tab (mutants: a press arm missing; the save unkept)', () => {
   const ctx = rd('src/scenes/dungeonContext.js');
-  assert.match(ctx, /const delve = createDelveHost\(\{ api, deps, location: dfLocation, blocks: dungeon\.blocks, hearths: dungeonHearths, fires: dungeonFires, player: \(\) => playerEntity, rollPile: \(\) => rollPileItems\(\), online: onlineRoom \}\);\n {2}return api;/);
-  assert.match(ctx, /camps\.tick\(dt\);[^\n]*\n {4}delve\.frame\(dt, playerFeet\);/);
+  assert.match(ctx, /const delve = createDelveHost\(\{ api, deps, location: dfLocation, blocks: dungeon\.blocks, hearths: dungeonHearths, fires: dungeonFires, player: \(\) => playerEntity, rollPile: rollPileItems, online: onlineRoom \}\);\n {2}if \(sdEnd && !_sdEndAsked\)[^\n]*\n {2}return api;/);
+  assert.match(ctx, /sweepColdPeers\(dt\);[^\n]*\n {4}delve\.frame\(dt, playerFeet\);/);
   assert.match(ctx, /opts\.lateWorldDraw\?\.\(\);\n {4}senseFrame\(eye\);[^\n]*\n {4}delve\.drawPass\(proj, view, eye\);/);
   assert.match(ctx, /if \(kind === 'delve'\) return delve\.press\(key, mode\);/);
-  assert.match(ctx, /delve: delve\.snapshot\(\),/);
-  assert.match(ctx, /if \(truncate\) delve\.restore\(w\.delve\);/);
+  assert.match(ctx, /world: \{ \.\.\.collectWorld\(\)[^\n]*\n {8}delve: delve\.snapshot\(\),/);
+  assert.match(ctx, /if \(extras\.locationKey === _locationKey && !otherLayout\) delve\.restore\(extras\.delve\);/);
+  assert.doesNotMatch(ctx.slice(ctx.indexOf('function collectWorld()'), ctx.indexOf('function applyWorld(')), /delve/, 'the world record and its apply hold none of it (the room\'s memory is DLV3\'s)');
   assert.match(ctx, /delve\.destroy\(\);/);
   for (const h of ['src/scenes/worldModes.js', 'src/scenes/dungeon.js']) assert.match(rd(h), /key\.startsWith\('search:'\) \|\| key\.startsWith\('delve:'\)/, `${h}'s press arm`);
   assert.match(rd('src/ui/settings/settingsMap.js'), /"feat:world-dungeon-sizes", "feat:dungeon-encounters"/);

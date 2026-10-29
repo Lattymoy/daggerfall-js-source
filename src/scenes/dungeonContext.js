@@ -6432,7 +6432,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // lost without it.
       droppedTorches: droppedTorches.snapshot(),   // HT1: HandheldTorchesSaveData
       camps: camps.snapshot(),   // SURV3: my fires, the same law
-      delve: delve.snapshot(),   // DELVE II: the won sites' vaults - a running attempt is never saved
       droppedLoot: droppedLoot._piles.filter((p) => !p.unsaved).map((p) => ({   // STUCK-ARROWS: WOD5's LoadID-0 container rides no save (a stuck shaft)
         pos: [...p.pos], archive: p.archive, record: p.record, items: p.items.map((it) => ({ ...it })), ...(p.owner === 'wild' ? { wild: true } : {}),
         ...(p.physical ? { physical: true } : {}),   // AUDIT PI1 H6: a shift-drop stays one - restorePiles lays it back lying
@@ -6646,7 +6645,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // clearing restore would delete this player's floor stash and mint the host's under their feet
     if (truncate) droppedLoot.restorePiles(w.droppedLoot);   // AUDIT 23: absent list clears, per rebuild-from-save
     if (truncate) droppedTorches.restore(w.droppedTorches);   // HT1: the same law
-    if (truncate) delve.restore(w.delve);   // DELVE II: a save's won sites, under its own plan alone
     if (truncate) { camps.dropOwn(); camps.restore(w.camps); }   // SURV3; AUDIT SURV-TIERS (the third pass): the save says which fires are mine - a kit fire lit after it goes with the rewind
     // P10 + AUDIT 23 (save-load-11): state, lock and BOTH tweens
     // restore, then each object settles its matrix and collider bucket
@@ -7402,8 +7400,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     hitEffects.bleedPlayer(dt, playerFeet, playerEntity);   // BLOOD2e: and the player's own blood, at the feet
     droppedTorches.tick(dt);   // HT1: the burn, the flight, the flames
     camps.tick(dt);   // SURV3: the fires burn down
-    delve.frame(dt, playerFeet);   // DELVE II: the encounters' clock and ledgers - waits under a window, as the foes do
     sweepColdPeers(dt);   // AUDIT REST-PARTY B3: a room's cold fire whose owner left the room goes with them (AUDIT REST II F9: once a second, while a peer's camp stands)
+    delve.frame(dt, playerFeet);   // DELVE II: the encounters' clock and ledgers - waits under a window, as the foes do
     // PX21c / WORLD-HOVER: THE HOVER PLAQUE, from the frame function
     // both dungeon hosts already call - the splash clock's reasoning,
     // one slice on. It runs the SAME pick the take runs, so it cannot
@@ -9632,6 +9630,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // departure and its reason are on the export.
         smallerDungeonsState: smallerDungeonsStamp(dfLocation),
         world: { ...collectWorld(), outerCamps: opts.outerCampsSave?.() ?? null },   // AUDIT REST II H6: and my camps outside, the world host's
+        delve: delve.snapshot(),   // DELVE II: the won sites' vaults - a running attempt is never saved; the save's own, beside the world record
         // AUDIT HCC H3: DFU's per-mod save data rides a dungeon save too - Horse Cart and Cargo's record (the horse,
         // its name, the parked wagon, the entrance it waits at) from the world host that runs the mod
         // WA1: DFU's per-mod slot - HCC's record through its own seam (AUDIT HCC H3), every mod after it through the
@@ -9745,6 +9744,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const otherLayout = extras.locationKey === _locationKey && needsStartWarp(extras.smallerDungeonsState, dfLocation);
       const settled = extras.world && extras.locationKey === _locationKey && !otherLayout ? applyWorld(extras.world) : null;   // AUDIT OH-F B1: the rebuilds, handed back
       if (!settled && extras.world && !otherLayout) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends in the STANDALONE scene alone - a world-hosted dungeon hands such a save up before this (quickLoad, CASTLE1)
+      if (extras.locationKey === _locationKey && !otherLayout) delve.restore(extras.delve);   // DELVE II: the save's won sites, under its own plan alone - a save from before them, none
       // A1: restorePlayer replaced the automap store, so the live
       // record reference is stale. Re-fetch on the LOAD arm
       // (initFromLoadingSave, Automap.cs:2492-2493): a bare
@@ -10833,9 +10833,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // loop of the torch in the player's HAND and PlayerTorch's
       // position override (AUDIT 66 F8).
       uninstallSurvivalGate(_survivalGate, unregisterPreventRestCondition);   // AUDIT SURV B/C: a dead dungeon's handler was refusing the outdoor fire
+      delve.destroy();   // DELVE II: its targets, its chests and its pass
       camps.packOwnFires();   // AUDIT REST F1: the dungeon keeps nothing of mine once I leave - my Campfire comes with me
       camps.destroyAll();   // SURV3: a fire's batch is this context's too
-      delve.destroy();   // DELVE II: its targets, its chests and its pass
       droppedTorches.destroyAll();
       weaponRig.dispose?.();
       // AUDIT 64 F41: the scene ambience leaves with the scene too -
@@ -10901,9 +10901,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     setFoeDead(f, true);
   }
   for (const [i, p] of lootPiles.entries()) if (p.stopKey && _deepCleared.has(p.stopKey) && !p.items.length) settleLootFlat(i);
-  if (sdEnd && !_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }
   // DELVE II (DLV2): THE DUNGEON'S ENCOUNTERS - the site law on the built collider, the fire plan's doors and fires, the
   // dungeon's own pile roll; its targets and plaque through the api's own doors (scenes/delve/delveHost.js)
-  const delve = createDelveHost({ api, deps, location: dfLocation, blocks: dungeon.blocks, hearths: dungeonHearths, fires: dungeonFires, player: () => playerEntity, rollPile: () => rollPileItems(), online: onlineRoom });
+  const delve = createDelveHost({ api, deps, location: dfLocation, blocks: dungeon.blocks, hearths: dungeonHearths, fires: dungeonFires, player: () => playerEntity, rollPile: rollPileItems, online: onlineRoom });
+  if (sdEnd && !_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }
   return api;
 }
