@@ -3006,15 +3006,14 @@ LINK_STATUS read; a read over 50 ms is kept (`linkWaits()`, the last 32: label, 
 dead.
 
 **SHADER-EASE MOUNT-START and QUEUE-ORDER (2026-10-29: in Chrome the game froze for the first 30-60 s in the world
-after each update).** Each pass an outdoor host builds at mount read its link at once, cold: the shadow pass's seven
-depth programs, the far ring and its trees, the skies and weather passes, the duel wall, banners, flags, curtains, loot
-lines and NPC marks. The depth programs join `laneBootPrograms`. The rest, and the shadow
-pass's three body programs, are listed by `render/mountPrograms.js` by each host's own switch: none behind `?interior`
-or `?dungeon`, and only the sky and marks for the fixed city (`?exterior`, `?region`, `?loc`). They are queued one at a
-time (COMPILE-QUEUE), once the boot's batch ahead of the clouds is done (`startedDone`, read only), or after
-`MOUNT_WAIT_TURNS`. The batch hands over its blocking builds first, the clouds last. The play queue adds the nodes' glow
-and the sea fight's effects, and ends with the auras and armory. Pins: `test/render/shadermount.test.js`. Mutants:
-`tools/mutants/shader_mount.json`, 28, all dead.
+after each update).** Each pass an outdoor host builds at mount read its link at once, cold: the shadow pass's depth
+and body programs, the far ring and trees, the skies and weather, duel wall, banners, flags, curtains, loot lines and
+NPC marks. The depth programs join `laneBootPrograms`; `render/mountPrograms.js` lists the rest by each host's own
+switch - none behind `?interior` or `?dungeon`, only the sky and marks for the fixed city (`?exterior`, `?region`,
+`?loc`). They are queued one at a time (COMPILE-QUEUE) once the boot's batch ahead of the clouds is done
+(`startedDone`, read only), or after `MOUNT_WAIT_TURNS`. The play queue adds the nodes' glow and the sea fight's
+effects, auras and armory last. Pins: `test/render/shadermount.test.js`. Mutants: `tools/mutants/shader_mount.json`,
+28, all dead.
 
 ## CLOUD-COMPILE — the volumetric clouds arrive when their programs are done
 
