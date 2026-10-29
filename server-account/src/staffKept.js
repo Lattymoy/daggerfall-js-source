@@ -1,32 +1,16 @@
 // @ts-check
-// ═══════════════════════════════════════════════════════════════════
-// STAFF-SPEED-2 (2026-10-29, the staff panel "runs slow", "slow switching pages between any of them", "server refuses a
-// lot") - THE PANEL'S HEAVY READS KEPT IN ONE ROW EVERY ISOLATE READS.
-//
-// Read off the live service (Analytics Engine, 3 hours to 14:31 UTC): Home 4.5 s at the median and 22 s at the 95th (41
-// statements an open, 87 s of the database's time summed), the Economy 14 s (52 s of it), the Status up to 7 s - while the
-// game's own routes waited near a second on the same primary, and the database answered `overloaded` to some of the
-// panel's lightest reads (a session's lookup refused in 3 ms). Each of these answers was already kept, but in the
-// ISOLATE's memory (staffEconomy.js `kept`, staffStatus.js `cached`): a busy Worker runs many isolates, a panel's next
-// request lands in another, and the game's staff tags ask Home again every minute (the extension's background.js) - so
-// nearly every open read it all afresh.
-//
-// So an answer here is kept in `staff_kept` (migration 0194, seat_facts_kept's and town_econ_kept's shape): one row a
-// key, its JSON and when it was made. A read inside `freshS` answers the row - one statement by its key. A row older than
-// that but inside `staleS` answers AT ONCE as it stands, and one request (the row's `busy_until` claim) makes it again
-// after the answer (the Worker's waitUntil, `ctx.later`). Past `staleS`, or with no row, the answer is made and kept
-// before it is sent, as before. The isolate keeps the parsed row its `freshS` too, so a burst asks the table once.
-//
-// What is never kept here: anything one staff member sees and another does not (a claim of theirs, their watchlist) -
-// a key names one answer every caller of its door would be given. A row that will not read (the migration not applied
-// yet, a database refusing) is the same as no row: the answer is made as it was before this.
+// STAFF-SPEED-2 (2026-10-29, the staff panel slow on every page, "server refuses a lot"): Home, Status and Economy
+// were kept in isolate memory, and a busy Worker's next request lands in another isolate, so nearly every open read it
+// all again (live: Home p95 22 s, Economy p50 14 s, D1 answering `overloaded`).
+// So an answer is kept in `staff_kept` (migration 0194): one row a key. Inside `freshS` the row answers. Inside
+// `staleS` it answers at once and one request (the `busy_until` claim) makes it again after (`ctx.later`). Past that,
+// or no row, it is made before it is sent. Never kept: what one staff member sees and another does not. No table: no row.
+import { DB_ROOT } from './service.js';
 
 /** The longest answer kept, bytes of its JSON: D1 takes a value to 2 MB; past this one the answer is made every time. */
 export const STAFF_KEPT_MAX_BYTES = 900_000;
 /** How long one request's claim to make a stale row again holds, seconds: past it another request may. */
 export const STAFF_KEPT_BUSY_S = 60;
-
-import { DB_ROOT } from './service.js';
 
 /** This isolate's parsed rows, per database binding (a request's counted Proxy names its binding, service.js DB_ROOT):
  *  key -> { at, value }. @type {WeakMap<object, Map<string, { at: number, value: any }>>} */
