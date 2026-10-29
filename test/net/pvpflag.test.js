@@ -15,6 +15,10 @@ import { capsFixKey, noteCaps } from '../../src/ui/capsFix.js';
 import { SKULL_ROWS, SKULL_TINTS, skullSrc, skullGlow } from '../../src/ui/pvpSkull.js';
 import { pvp30Asks, pvp30Said, pvp30Rows, pvp30No, pvp30Box } from '../../src/ui/levelUp/pvp30Ask.js';
 import { levelUpScreenFor } from '../../src/ui/charSheetDoor.js';
+import { ZONE_EDGE, zoneEdgeSee, resetZoneEdge } from '../../src/systems/wild/zoneEdge.js';
+import { OnlineSession } from '../../src/net/online.js';
+import { RELAY_VERSION } from '../../src/net/wire.js';
+import { fakeSocketClass } from '../fakeSocket.mjs';
 import { fakeRoom } from '../fakeRoom.mjs';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -286,4 +290,52 @@ test('PVP-SKULL THE OVERWORLD (scenes/travelViewMarks.js, scenes/travelView.js, 
   const hud = rd('src/ui/travel/travelViewHud.js');
   assert.ok(hud.includes("else if (sk) g.drawImage(sk, inScreen(x - SKULL_PX / 2, SKULL_PX, vw), ly - SKULL_PX - 1, SKULL_PX, SKULL_PX);"));
   assert.ok(hud.includes("q.m.color ?? '', q.m.skull ?? '');"), 'a skull up or down draws the picture again');
+});
+
+test('PVP-EDGE (systems/wild/zoneEdge.js, net/online.js, net/wire.js, net/wild/wildRef.js, relay; the owner: "only from ebterin from the edge", "if u tp in no safe passage"): safe passage only for a walk in over the zone\'s edge - a step outside close and just now; a teleport, a town\'s streets left or a rise is none; the word rides the entry alone, the wire and the relay carry it, the referee asks it (mutants: the distance unread; the time unread; the word on every keepalive; the wire\'s `ed` dropped; the relay\'s unpassed; the referee unasking)', async () => {
+  resetZoneEdge();
+  assert.deepEqual(ZONE_EDGE, { m: 60, ms: 5_000, keepMs: 15_000 });
+  zoneEdgeSee(false, [0, 0, 0], 0);
+  assert.equal(zoneEdgeSee(true, [ZONE_EDGE.m, 0, 0], 100), true, 'a walk over the edge');
+  assert.equal(zoneEdgeSee(true, [ZONE_EDGE.m, 0, 0], 100 + ZONE_EDGE.keepMs), true);
+  assert.equal(zoneEdgeSee(true, [ZONE_EDGE.m, 0, 0], 101 + ZONE_EDGE.keepMs), false, 'said a while, then not');
+  zoneEdgeSee(false, [0, 0, 0], 0);
+  assert.equal(zoneEdgeSee(true, [5_000, 0, 0], 100), false, 'a teleport: far from the last step outside');
+  zoneEdgeSee(false, [0, 0, 0], 0);
+  assert.equal(zoneEdgeSee(true, [1, 0, 0], ZONE_EDGE.ms + 1), false, 'a load: long after it');
+  resetZoneEdge();
+  assert.equal(zoneEdgeSee(true, [1, 0, 0], 0), false, 'never outside this page: no walk');
+  // the referee
+  const st = newWildRef();
+  wildZone(st, 'acct-a', { id: 'peer-a', lv: 10, ci: 'r-a' }, true, at(-1), 0);
+  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, ci: 'r-b', ed: true }, true, at(1), 0);
+  assert.deepEqual([st.fighters.get('acct-a').graceUntil, st.fighters.get('acct-b').graceUntil], [-Infinity, WILD_GRACE.ms], 'walked in: passage; else none');
+  // the wire
+  assert.deepEqual(validWildData({ k: 'zone', z: 1, ed: 1 }), { k: 'zone', z: 1, ed: 1 });
+  assert.ok(rd('src/scenes/world.js').includes('online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere() && wildOutdoors(), player.pos, Date.now()));'), 'the host says each walk');
+  assert.deepEqual(validWildData({ k: 'zone', z: 0, ed: 1 }), { k: 'zone', z: 0 });
+  // the link: on the entry alone
+  const info = console.info, warn = console.warn; console.info = () => {}; console.warn = () => {};
+  try {
+    const { FakeWS, sockets } = fakeSocketClass();
+    const clock = { t: 1000 };
+    const s = new OnlineSession({ url: 'wss://relay.test', name: 'Example', id: 'exam-0001', secret: 'secret-of-exam-0001', WebSocketImpl: FakeWS, now: () => clock.t });
+    s.join('world:2,12', { x: 1, y: 0, z: 1, yaw: 0 }); sockets[0].open(); sockets[0].receive({ t: 'welcome', id: 'exam-0001', peers: [], host: null, world: null, v: RELAY_VERSION });
+    const eds = () => sockets[0].sent.map((x) => JSON.parse(x)).filter((m) => m.t === 'wild' && m.data?.k === 'zone').map((m) => [m.data.z, m.data.ed ?? 0]);
+    s.setWildZone(1, false, true);
+    clock.t += 60_000; s.setWildZone(1, false, true);
+    s.setWildZone(0); s.setWildZone(1, false, false);
+    assert.deepEqual(eds(), [[1, 1], [1, 0], [0, 0], [1, 0]], 'the entry walked says so; a keepalive and a teleport do not');
+  } finally { console.info = info; console.warn = warn; }
+  // the relay
+  const realNow = Date.now; let clock = 1_800_000_000_000; Date.now = () => clock;
+  try {
+    const r = fakeRoom(CELL, { now: () => clock });
+    const say = (ws, d) => r.raw(ws, JSON.stringify({ t: 'wild', data: d }));
+    const join = async (id, x, ci) => { const ws = r.connect(); await r.hello(ws, id, P(x), { lv: 10, look: LOOK, rc: 1, ci }); return ws; };
+    const a = await join('peer-0001', -1, 'r00000000000000000a02'), b = await join('peer-0002', 1, 'r00000000000000000a01');
+    await say(a, { k: 'zone', z: 1 });
+    await say(b, { k: 'zone', z: 1, ed: 1 });
+    assert.deepEqual(a.sent.filter((m) => m.t === 'wref' && m.k === 'grace').map((m) => m.id), ['peer-0002'], 'only the walk in is graced');
+  } finally { Date.now = realNow; }
 });

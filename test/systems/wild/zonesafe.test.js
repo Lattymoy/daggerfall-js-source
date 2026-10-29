@@ -164,7 +164,7 @@ test('ZONE-SAFE THE HOST\'S DOORS (scenes/world.js wildCan, wildFair - the four 
   scope.modes.mode = 'interior';
   assert.ok(!wildCan(), 'under a roof no one fights');
   // the word the referee hears is wildCan's (INT9), and the dungeon's swing and casts read these same doors
-  assert.match(W, /online\?\.setWildZone\?\.\(wildCan\(\) \? 1 : 0, playerEntity\.health <= 0\);/);
+  assert.match(W, /online\?\.setWildZone\?\.\(wildCan\(\) \? 1 : 0, playerEntity\.health <= 0, zoneEdgeSee\(/);
   assert.match(W, /wildBodies: \(\) => wildBodiesNow\(\),/);
   assert.match(W, /const wildBodiesNow = \(\) => \{\n {4}if \(!wildCan\(\)\) return NO_BODIES;\n {4}const out = \[\];\n {4}for \(const b of peersNear\(\) \?\? \[\]\) if \(wildFair\(b\.id\)\) out\.push\(b\);/);
   assert.match(W, /const wildStrikeOut = \(to, by, weapon, swing, drawMs = 0, \{ off = false \} = \{\}\) => \{\n {4}if \(!wildFair\(to\)\) return false;/);

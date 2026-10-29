@@ -429,12 +429,12 @@ test('INT9 THE RELAY, THE FIGHT: a strike in the zone is the referee\'s - routed
   const a = await join('peer-0001', -1), b = await join('peer-0002', 1, { rc: 1, ci: RC }), c = await join('peer-0003', 30);
   await say(a, { k: 'strike', to: 'peer-0002', n: 1, by: 'melee', p: W(-1), d: 999 });
   assert.equal(refs(a).length + refs(b).length, 0, 'nobody said they stand in the zone: nothing lands');
-  await say(a, { k: 'zone', z: 1 });
+  await say(a, { k: 'zone', z: 1, ed: 1 });
   step(300);
   await say(a, { k: 'strike', to: 'peer-0002', n: 2, by: 'melee', p: W(-1), d: 999 });
   assert.equal(refs(b, 'hp').length, 0, 'one fighter\'s word is not the other\'s');   // PIN MOVED (ZONE-GRACE): the room hears a's safe passage - no blow
   assert.deepEqual(refs(b, 'grace'), [{ t: 'wref', k: 'grace', id: 'peer-0001', ms: WILD_GRACE.ms }], 'ZONE-GRACE: a\'s entry, said to the room');
-  await say(b, { k: 'zone', z: 1 });
+  await say(b, { k: 'zone', z: 1, ed: 1 });
   step(300);
   await say(a, { k: 'strike', to: 'peer-0002', n: 3, by: 'melee', p: W(-1), d: 999 });
   assert.deepEqual(refs(a, 'grace').at(-1), { t: 'wref', k: 'grace', id: 'peer-0002', ms: WILD_GRACE.ms - 300, n: 1 }, 'PIN MOVED (ZONE-GRACE): just entered, under safe passage - the striker told');
@@ -771,7 +771,7 @@ test('INT9 THE CLIENT: a blow rolled on my own sheet and sent as a number; no de
   const w = hostText('src/scenes/world.js'), o = rd('src/net/online.js');
   assert.ok(o.includes('if (primary) this.wildOk = relaySupportsWildRef(relayV);'), 'a relay that referees the zone, or none of it');
   assert.ok(o.includes("} else if (m.t === 'wref') {"));
-  assert.ok(w.includes('online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0);'));   // PIN MOVED (AUDIT FOE-KEEPS E2): and left dying
+  assert.ok(w.includes('online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere() && wildOutdoors(), player.pos, Date.now()));'));   // PIN MOVED (AUDIT FOE-KEEPS E2): and left dying
   assert.ok(w.includes("const n = wildFight.blow(to, 'strike', { by, p: campToWire(player.feetAt()), d: Math.trunc(r.dmg),"));
   assert.ok(!w.includes('resolveDuelStrike(d, playerEntity'), 'the defender resolves nothing');
   assert.ok(w.includes('      forcePlayerDeath(playerEntity);\n'), 'the referee\'s fall, a death');

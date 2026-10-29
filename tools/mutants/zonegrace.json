@@ -58,8 +58,8 @@
   {
     "name": "PVP-DEATH-the-rise-an-entry",
     "file": "src/net/wild/wildRef.js",
-    "old": "else if (!x.down && !rose && now",
-    "new": "else if (!x.down && now",
+    "old": "else if (!x.down && !rose && ed && now",
+    "new": "else if (!x.down && ed && now",
     "tests": ["test/net/zonegrace.test.js"]
   },
   {

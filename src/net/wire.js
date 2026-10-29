@@ -4966,7 +4966,7 @@ export function validWildData(d) {
   } else if (d.k === 'zone') {
     if (d.z !== 0 && d.z !== 1) return null;
     if (d.fl !== undefined && d.fl !== 0 && d.fl !== 1) return null;
-    out = { k: 'zone', z: d.z, ...(d.z === 0 && d.dd === 1 ? { dd: 1 } : {}), ...(d.z === 1 && d.fl !== undefined ? { fl: d.fl } : {}) };   // INT9: my word on the zone - AUDIT FOE-KEEPS E2: `dd` 1, left it dead - PVP-FLAG: `fl`, my flag
+    out = { k: 'zone', z: d.z, ...(d.z === 0 && d.dd === 1 ? { dd: 1 } : {}), ...(d.z === 1 && d.fl !== undefined ? { fl: d.fl } : {}), ...(d.z === 1 && d.ed === 1 ? { ed: 1 } : {}) };   // INT9: my word on the zone - AUDIT FOE-KEEPS E2: `dd` 1, left it dead - PVP-FLAG: `fl`, my flag - PVP-EDGE: `ed` 1, walked in over the edge
   } else if (d.k === 'helm') {
     // SHIP-PVP: my word at my helm - my hull (-1: left it), my toughness in hundredths, my boat's uid, my hull per mille
     // AUDIT SEA VENTURES A4: a ship said is a boat the service can name - a hull with no uid (u 0) was a ship that could be

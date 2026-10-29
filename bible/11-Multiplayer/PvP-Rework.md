@@ -126,3 +126,11 @@ refusal. Online, the level up from 29 to 30 asks first, Yes or Not yet; Not yet 
 "when u die u need to take away player protection form ebing killed again", "they go to town in a safe zone when dead": a
 rise from a fall, or a return after a foe's kill, grants no safe passage (`wildRef.js:"const rose = z && x.down"`). This
 replaces ZONE-GRACE's rise arm (`Wild-Zone.md`); an entry from outside, away and quiet, still grants it.
+
+## PVP-EDGE: safe passage only for a walk in
+
+"only from ebterin from the edge", "if u tp in no safe passage": the game says the zone word's `ed` only when its last
+step outside was close and just now (`zoneEdge.js:"export const ZONE_EDGE = Object.freeze({ m: 60, ms: 5_000,"`), and
+the referee grants an entry's safe passage on it alone (`wildRef.js:"else if (!x.down && !rose && ed && now"`). A
+teleport, a dungeon left, a town's streets left (the streets say 0 to the referee) and a rise grant none. The relay has
+no map, so the word is the client's own, as the streets' peace is.

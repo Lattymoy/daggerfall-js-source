@@ -78,7 +78,7 @@ export const newWildRef = () => ({ fighters: new Map(), falls: new Map() });
 
 /**
  * A SOCKET'S WORD ON THE ZONE (`zone` - `z` true: it stands in the zone; false: it has left it): its fighter made or
- * kept (`id` its socket's id now, `lv` the Renown its token signs, `cl` its character level, `ci` its realm character), its place the pose it
+ * kept (`id` its socket's id now, `lv` the Renown its token signs, `cl` its character level, `ci` its realm character, `ed` its word that it walked in over the edge), its place the pose it
  * stands at. A NEW fighter takes the vitality it CARRIES (`carry` - the hub's word on its last fight in another room:
  * `{ hp, max, down, downAt, at, heard }`, AUDIT INT9: a step into another cell was a fresh bar), unless that word is
  * older than WILD_REF.mendMs. A fighter down rises on its word that it stands in the zone again once WILD_REF.riseMs has
@@ -86,7 +86,7 @@ export const newWildRef = () => ({ fighters: new Map(), falls: new Map() });
  * sooner keeps its bar (AUDIT INT9: a word off and on was a heal). SHARED-HEALTH: a count started again waits for the player's report, which can lower it and never lift it.
  * Answers the fighter, or null (none made: a word off, a full room).
  */
-export function wildZone(st, sub, { id, lv = 1, cl = null, ci = '', carry = null, died = false, fl = null }, z, pose, now) {
+export function wildZone(st, sub, { id, lv = 1, cl = null, ci = '', carry = null, died = false, fl = null, ed = false }, z, pose, now) {
   let x = st.fighters.get(sub);
   if (!x) {
     if (!z) return null;
@@ -111,9 +111,9 @@ export function wildZone(st, sub, { id, lv = 1, cl = null, ci = '', carry = null
     // SHARED-HEALTH: back after long away, the count starts again from the player's own health (its next report)
     if (now - x.outAt >= WILD_REF.riseMs && !x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; resetHealthShare(x.f, now); }
     // ZONE-GRACE: an entry - away long enough, and out of every fight long enough; never after a death (PVP-DEATH, above -
-    // a foe's death, `died` on its way out or `dd` carried, as well)
+    // a foe's death, `died` on its way out or `dd` carried, as well); PVP-EDGE: and only walked in over the edge (`ed`)
     if (!x.down && x.diedAt > -Infinity) x.diedAt = -Infinity;
-    else if (!x.down && !rose && now - x.outAt >= WILD_GRACE.awayMs && now - Math.max(x.fightAt, x.struckAt) >= WILD_GRACE.fightMs) x.graceUntil = Math.max(x.graceUntil, now + WILD_GRACE.ms);
+    else if (!x.down && !rose && ed && now - x.outAt >= WILD_GRACE.awayMs && now - Math.max(x.fightAt, x.struckAt) >= WILD_GRACE.fightMs) x.graceUntil = Math.max(x.graceUntil, now + WILD_GRACE.ms);
     x.zoneAt = now;
   }
   if (!z && x.zone) x.outAt = now;

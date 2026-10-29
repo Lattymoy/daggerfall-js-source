@@ -28,8 +28,8 @@ const hit = (st, now, by = 'acct-a', to = 'acct-b') => wildBlow(st, by, to, { d:
 /** Two fighters entering the zone at `now`. */
 function enter(now) {
   const st = newWildRef();
-  wildZone(st, 'acct-a', { id: 'peer-a', lv: 10, ci: 'r-a' }, true, at(-1), now);
-  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, ci: 'r-b' }, true, at(1), now);
+  wildZone(st, 'acct-a', { id: 'peer-a', lv: 10, ci: 'r-a', ed: true }, true, at(-1), now);
+  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, ci: 'r-b', ed: true }, true, at(1), now);
   return st;
 }
 
@@ -45,7 +45,7 @@ test('ZONE-GRACE THE LAW, AN ENTRY (net/wild/wildRef.js wildZone, wildBlow): a f
   assert.deepEqual([back.ok, back.dealt > 0, back.graceEnded], [true, true, true], 'he strikes back - his ends, and his blow lands on her');
   // run out
   const st2 = enter(0);
-  wildZone(st2, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), G - 1);   // a keepalive is no entry
+  wildZone(st2, 'acct-b', { id: 'peer-b', lv: 10, ed: true }, true, at(1), G - 1);   // a keepalive is no entry
   assert.equal(hit(st2, G - 1, 'acct-a', 'acct-b').why, 'grace');
   const st3 = enter(0);
   wildBlow(st3, 'acct-b', 'acct-a', { d: 0, held: FIST }, 1);   // nothing: his own passage ended by his swing
@@ -58,20 +58,20 @@ test('ZONE-GRACE THE LAW, NO WAY OUT OF A FIGHT: a fighter that steps out of the
   assert.ok(r.dealt > 0, 'a fight, past their entry\'s passage');
   // b steps out and straight back in
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, false, at(1), 2_000);
-  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), 2_000 + WILD_GRACE.awayMs);
+  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, ed: true }, true, at(1), 2_000 + WILD_GRACE.awayMs);
   assert.equal(wildGraceLeft(st, 'acct-b', 2_000 + WILD_GRACE.awayMs), 0, 'away long enough, but struck inside the fight\'s minute: none');
   // and the striker the same - a fight is both sides'
   wildZone(st, 'acct-a', { id: 'peer-a', lv: 10 }, false, at(-1), 3_000);
-  wildZone(st, 'acct-a', { id: 'peer-a', lv: 10 }, true, at(-1), 3_000 + WILD_GRACE.awayMs);
+  wildZone(st, 'acct-a', { id: 'peer-a', lv: 10, ed: true }, true, at(-1), 3_000 + WILD_GRACE.awayMs);
   assert.equal(wildGraceLeft(st, 'acct-a', 3_000 + WILD_GRACE.awayMs), 0, 'the striker none either');
   // quiet a minute, away a moment: none (away too short)
   const t = 1_000 + WILD_GRACE.fightMs + 5_000;
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, false, at(1), t);
-  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), t + 1_000);
+  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, ed: true }, true, at(1), t + 1_000);
   assert.equal(wildGraceLeft(st, 'acct-b', t + 1_000), 0, 'a step out and back');
   // quiet and away long enough: a fresh passage
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, false, at(1), t + 2_000);
-  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), t + 2_000 + WILD_GRACE.awayMs);
+  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, ed: true }, true, at(1), t + 2_000 + WILD_GRACE.awayMs);
   assert.equal(wildGraceLeft(st, 'acct-b', t + 2_000 + WILD_GRACE.awayMs), G);
 });
 
@@ -81,10 +81,10 @@ test('ZONE-GRACE THE LAW, A RISE AND A CROSSING: a fallen rising on its word has
   do { r = hit(st, 1_000 + 300 * k++); } while (!r.fell && k < 400);
   assert.ok(r.fell, 'b fell');
   const fellAt = 1_000 + 300 * (k - 1);
-  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), fellAt + WILD_REF.riseMs);
+  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, ed: true }, true, at(1), fellAt + WILD_REF.riseMs);
   assert.equal(wildGraceLeft(st, 'acct-b', fellAt + WILD_REF.riseMs), 0, 'risen: no passage');
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, false, at(1), fellAt + WILD_REF.riseMs + 1);
-  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), fellAt + 2 * WILD_REF.riseMs);
+  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, ed: true }, true, at(1), fellAt + 2 * WILD_REF.riseMs);
   assert.equal(wildGraceLeft(st, 'acct-b', fellAt + 2 * WILD_REF.riseMs), G, 'a later entry from outside: its passage');
   // a fallen gone to town, back past the rise: the rise is its entry, and no passage
   const away = enter(-G);
@@ -92,15 +92,15 @@ test('ZONE-GRACE THE LAW, A RISE AND A CROSSING: a fallen rising on its word has
   do { q = hit(away, 1_000 + 300 * j++); } while (!q.fell && j < 400);
   const fell2 = 1_000 + 300 * (j - 1);
   wildZone(away, 'acct-b', { id: 'peer-b', lv: 10 }, false, at(1), fell2 + 1);
-  wildZone(away, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), fell2 + WILD_REF.riseMs);
+  wildZone(away, 'acct-b', { id: 'peer-b', lv: 10, ed: true }, true, at(1), fell2 + WILD_REF.riseMs);
   assert.equal(wildGraceLeft(away, 'acct-b', fell2 + WILD_REF.riseMs), 0, 'back from town and risen: no passage');
   // the crossing: the carry the hub keeps, read in the next room
   const fresh = newWildRef();
-  wildZone(fresh, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), fellAt + WILD_REF.riseMs);
+  wildZone(fresh, 'acct-b', { id: 'peer-b', lv: 10, ed: true }, true, at(1), fellAt + WILD_REF.riseMs);
   const carry = wildCarryOf(JSON.parse(JSON.stringify(wildCarry(fresh, 'acct-b', fellAt + WILD_REF.riseMs + 5_000))));
   assert.equal(carry.gr, fellAt + WILD_REF.riseMs + G, 'its passage carried');
   const next = newWildRef();
-  wildZone(next, 'acct-b', { id: 'peer-b', lv: 10, carry }, true, at(1), fellAt + WILD_REF.riseMs + 6_000);
+  wildZone(next, 'acct-b', { id: 'peer-b', lv: 10, carry, ed: true }, true, at(1), fellAt + WILD_REF.riseMs + 6_000);
   assert.equal(wildGraceLeft(next, 'acct-b', fellAt + WILD_REF.riseMs + 6_000), G - 6_000, 'the same passage, never a fresh one');
   // a crossing in the middle of a fight: no passage at all in the next room
   const fight = enter(-G);
@@ -108,7 +108,7 @@ test('ZONE-GRACE THE LAW, A RISE AND A CROSSING: a fallen rising on its word has
   const c2 = wildCarryOf(wildCarry(fight, 'acct-b', 2_000));
   assert.equal(c2.gr, undefined, 'no passage to carry');
   const room2 = newWildRef();
-  wildZone(room2, 'acct-b', { id: 'peer-b', lv: 10, carry: c2 }, true, at(1), 2_500);
+  wildZone(room2, 'acct-b', { id: 'peer-b', lv: 10, carry: c2, ed: true }, true, at(1), 2_500);
   assert.equal(wildGraceLeft(room2, 'acct-b', 2_500), 0, 'a crossing is no way out of a fight');
 });
 
@@ -128,9 +128,9 @@ test('ZONE-GRACE THE RELAY (server/src/index.js _wildGraceSay, _wildGraceBlow): 
     const say = (ws, d) => r.raw(ws, JSON.stringify({ t: 'wild', data: d }));
     const join = async (id, x, ci) => { const ws = r.connect(); await r.hello(ws, id, P(x), { lv: 10, look: LOOK, rc: 1, ci }); return ws; };
     const a = await join('peer-0001', -1, 'r00000000000000000a02'), b = await join('peer-0002', 1, 'r00000000000000000a01'), c = await join('peer-0003', 30, 'r00000000000000000a03');
-    await say(a, { k: 'zone', z: 1 });
+    await say(a, { k: 'zone', z: 1, ed: 1 });
     clock += 1_000;
-    await say(b, { k: 'zone', z: 1 });
+    await say(b, { k: 'zone', z: 1, ed: 1 });
     for (const ws of [a, b, c]) assert.deepEqual(refs(ws, 'grace').map((g) => [g.id, g.ms]), [['peer-0001', G], ['peer-0002', G]], 'each entry said to the room');
     for (const g of refs(c, 'grace')) assert.ok(validWildRefOut(g), 'a word the wire takes');
     clock += 300;
@@ -213,14 +213,14 @@ test('ZONE-GRACE AUDIT PVP-EASE L3-1, L3-2, L3-5 THE LAW: A CROSSING AND A WAKE 
   const ca = wildCarryOf(JSON.parse(JSON.stringify(wildCarry(st, 'acct-a', 3_000))));
   assert.deepEqual([ca.fa, ca.in], [1_000, 1], 'its fight and its stand carried');
   const next = newWildRef();
-  wildZone(next, 'acct-a', { id: 'peer-a', lv: 10, carry: ca }, true, at(-1), 3_000);
+  wildZone(next, 'acct-a', { id: 'peer-a', lv: 10, carry: ca, ed: true }, true, at(-1), 3_000);
   assert.equal(wildGraceLeft(next, 'acct-a', 3_000), 0, 'the striker: none');
   // the struck one crosses 31 s after the blow - past the mend, which bounded the old carry
   wildGone(st, 'acct-b', 32_000);
   const cb = wildCarryOf(wildCarry(st, 'acct-b', 32_000));
   assert.equal(cb.in, undefined, 'its leave');
   const next2 = newWildRef();
-  wildZone(next2, 'acct-b', { id: 'peer-b', lv: 10, carry: cb }, true, at(1), 33_000);
+  wildZone(next2, 'acct-b', { id: 'peer-b', lv: 10, carry: cb, ed: true }, true, at(1), 33_000);
   assert.equal(wildGraceLeft(next2, 'acct-b', 33_000), 0, 'a crossing: none');
   // and one that steps out the moment after the blow, away the half minute: its fight a minute's still
   const st2 = enter(-G);
@@ -228,16 +228,16 @@ test('ZONE-GRACE AUDIT PVP-EASE L3-1, L3-2, L3-5 THE LAW: A CROSSING AND A WAKE 
   wildGone(st2, 'acct-b', 2_000);
   const cb2 = wildCarryOf(wildCarry(st2, 'acct-b', 2_000));
   const next3 = newWildRef();
-  wildZone(next3, 'acct-b', { id: 'peer-b', lv: 10, carry: cb2 }, true, at(1), 2_000 + WILD_GRACE.awayMs);
+  wildZone(next3, 'acct-b', { id: 'peer-b', lv: 10, carry: cb2, ed: true }, true, at(1), 2_000 + WILD_GRACE.awayMs);
   assert.equal(wildGraceLeft(next3, 'acct-b', 2_000 + WILD_GRACE.awayMs), 0, 'struck inside the fight\'s minute: none');
   // a walker who never fought, crossing cell after cell - and a room that slept and woke, its fighters forgotten
   const w1 = newWildRef();
-  wildZone(w1, 'acct-w', { id: 'peer-w', lv: 10 }, true, at(0), 0);
+  wildZone(w1, 'acct-w', { id: 'peer-w', lv: 10, ed: true }, true, at(0), 0);
   assert.equal(wildGraceLeft(w1, 'acct-w', 0), G, 'its entry');
   const cw = wildCarryOf(wildCarry(w1, 'acct-w', 50_000));
   for (const t of [85_000, 140_000]) {
     const w2 = newWildRef();
-    wildZone(w2, 'acct-w', { id: 'peer-w', lv: 10, carry: cw }, true, at(0), t);
+    wildZone(w2, 'acct-w', { id: 'peer-w', lv: 10, carry: cw, ed: true }, true, at(0), t);
     assert.equal(wildGraceLeft(w2, 'acct-w', t), 0, `at ${t}: in the zone by the last word - never a fresh minute`);
   }
   // L3-5: a passage its own blow ended stays ended across the line
@@ -248,7 +248,7 @@ test('ZONE-GRACE AUDIT PVP-EASE L3-1, L3-2, L3-5 THE LAW: A CROSSING AND A WAKE 
   const e2 = newWildRef();
   wildZone(e2, 'acct-a', { id: 'peer-a', lv: 10, carry: { ...ce, gr: 61_000, at: 1_000 } }, true, at(-1), 1_200);
   wildZone(e2, 'acct-a', { id: 'peer-a', lv: 10 }, false, at(-1), 1_300);
-  wildZone(e2, 'acct-a', { id: 'peer-a', lv: 10, carry: ce }, true, at(-1), 4_000);
+  wildZone(e2, 'acct-a', { id: 'peer-a', lv: 10, carry: ce, ed: true }, true, at(-1), 4_000);
   assert.equal(wildGraceLeft(e2, 'acct-a', 4_000), 0, 'the newer word: ended');
 });
 
@@ -256,7 +256,7 @@ test('ZONE-GRACE AUDIT PVP-EASE L3-6 + L3-4 THE LAW: no rise grants the minute -
   const st = enter(-G);
   hit(st, 1_000);
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, died: true }, false, at(1), 2_000);   // a foe's kill, said on its way out
-  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), 12_000);
+  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, ed: true }, true, at(1), 12_000);
   assert.equal(wildGraceLeft(st, 'acct-b', 12_000), 0, 'risen from a foe\'s kill: no passage');
   // the town in another cell
   const st2 = enter(-G);
@@ -265,10 +265,10 @@ test('ZONE-GRACE AUDIT PVP-EASE L3-6 + L3-4 THE LAW: no rise grants the minute -
   assert.equal(cd.dd, 2_000);
   const town = newWildRef();
   const back = 2_000 + WILD_GRACE.awayMs + 1;   // away and quiet long enough for an entry's passage, but a death's return
-  wildZone(town, 'acct-b', { id: 'peer-b', lv: 10, carry: cd }, true, at(1), back);
+  wildZone(town, 'acct-b', { id: 'peer-b', lv: 10, carry: cd, ed: true }, true, at(1), back);
   assert.equal(wildGraceLeft(town, 'acct-b', back), 0, 'the death carried: no passage in the town\'s cell');
   wildZone(town, 'acct-b', { id: 'peer-b', lv: 10 }, false, at(1), 16_000);
-  wildZone(town, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), 17_000 + WILD_GRACE.awayMs + G);
+  wildZone(town, 'acct-b', { id: 'peer-b', lv: 10, ed: true }, true, at(1), 17_000 + WILD_GRACE.awayMs + G);
   assert.equal(wildGraceLeft(town, 'acct-b', 17_000 + WILD_GRACE.awayMs + G), G, 'a later entry from outside, out of the fight: its passage');
   // a take
   const T = 18_000 + WILD_GRACE.awayMs + G;
@@ -279,8 +279,8 @@ test('ZONE-GRACE AUDIT PVP-EASE L3-6 + L3-4 THE LAW: no rise grants the minute -
 
 test('ZONE-GRACE AUDIT PVP-EASE L3-3 THE SEA (net/sea/seaRef.js seaShot): a ship whose captain is under safe passage takes no shot; a graced captain\'s own shot ends its passage and lands; a gunfight is a fight for both, for an entry\'s ask (mutants: the target\'s passage unread; the shooter\'s kept; the fight unmarked)', () => {
   const sea = newWildRef();
-  wildZone(sea, 'a', { id: 'pa', lv: 10, ci: 'r-a' }, true, { x: 0, y: 0, z: 0 }, 0);   // just sailed in
-  wildZone(sea, 'b', { id: 'pb', lv: 10, ci: 'r-b' }, true, { x: 50 * M, y: 0, z: 0 }, -G);   // long since
+  wildZone(sea, 'a', { id: 'pa', lv: 10, ci: 'r-a', ed: true }, true, { x: 0, y: 0, z: 0 }, 0);   // just sailed in
+  wildZone(sea, 'b', { id: 'pb', lv: 10, ci: 'r-b', ed: true }, true, { x: 50 * M, y: 0, z: 0 }, -G);   // long since
   seaHelm(sea, 'a', { id: 'pa', ci: 'r-a', hl: 2, t: 1, u: 11, h: 1 }, 1_000);
   seaHelm(sea, 'b', { id: 'pb', ci: 'r-b', hl: 2, t: 1, u: 22, h: 1 }, 1_000);
   const no = seaShot(sea, 'b', 'a', { d: 50 }, 3_000);
@@ -299,7 +299,7 @@ test('ZONE-GRACE AUDIT PVP-EASE L3-1 THE RELAY (server/src/index.js): the hub ho
     const A = worldRoom(PX, PY), B = worldRoom(PX + 2 * 16, PY);
     assert.notEqual(A, B, 'two cells');
     const base = (key) => { const m = /^world:(-?\d+),(-?\d+)$/.exec(key); return { x: Number(m[1]) * PIXEL_UNITS + 16384, z: (499 - Number(m[2])) * PIXEL_UNITS + 16384 }; };
-    const zone = (key, ws) => world.room(key).raw(ws, JSON.stringify({ t: 'wild', data: { k: 'zone', z: 1 } }));
+    const zone = (key, ws) => world.room(key).raw(ws, JSON.stringify({ t: 'wild', data: { k: 'zone', z: 1, ed: 1 } }));
     const join = async (key, id, x, ci) => {
       const r = world.room(key), b0 = base(key), ws = r.connect();
       await r.hello(ws, id, { x: b0.x + x * M, y: 0, z: b0.z, yaw: 0, pitch: 0 }, { lv: 10, look: LOOK, rc: 1, ci });

@@ -1922,18 +1922,20 @@ export class OnlineSession {
    *  stands in, carried across by the hub as it crosses (every halo said 1 too, and each held a whole bar of its own) -
    *  again on its welcome, at each crossing (join), and every WILD_ZONE_KEEP_MS while it stands (a relay object that
    *  restarted, or the close of a tab's other socket, forgot it). */
-  setWildZone(z, dead = false) {
+  setWildZone(z, dead = false, edge = false) {
     const v = z ? 1 : 0;
     const now = this._now();
     if (v === this._wildZone && !(v === 1 && now - this._wildZoneAt >= WILD_ZONE_KEEP_MS)) return;
+    const entry = v === 1 && this._wildZone !== 1;
     this._wildZone = v;
     // AUDIT FOE-KEEPS E2: `dead` - I left it dying, which the referee did not see (a foe, a fall, the sea): its kill credit
-    if (this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) { this._sayZone(this._ws, v, !v && dead); this._wildZoneAt = now; }
+    // PVP-EDGE: an entry walked over the edge says so (systems/wild/zoneEdge.js) - the referee's one door to safe passage
+    if (this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) { this._sayZone(this._ws, v, !v && dead, entry && edge); this._wildZoneAt = now; }
   }
   /** One socket told my zone word - outside the frames' shared bucket (it is said once a crossing; the relay's own bucket
    *  for the socket bounds it). */
-  _sayZone(ws, z, dead = false) {
-    try { ws.send(JSON.stringify({ t: 'wild', data: { k: 'zone', z, ...(dead ? { dd: 1 } : {}), ...(z === 1 ? { fl: this.wildFlag ? 1 : 0 } : {}) } })); this.stats.sent++; } catch { /* a closing socket: its welcome says it again */ }
+  _sayZone(ws, z, dead = false, edge = false) {
+    try { ws.send(JSON.stringify({ t: 'wild', data: { k: 'zone', z, ...(dead ? { dd: 1 } : {}), ...(z === 1 ? { fl: this.wildFlag ? 1 : 0 } : {}), ...(z === 1 && edge ? { ed: 1 } : {}) } })); this.stats.sent++; } catch { /* a closing socket: its welcome says it again */ }
   }
   /** PVP-FLAG: my flag moved - said at once where I stand in the zone (the referee holds it down inside the lock). */
   setWildFlag(on) {
