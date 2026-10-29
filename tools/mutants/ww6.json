@@ -304,7 +304,7 @@
   {
     "name": "WW6-client-sig-day-only",
     "file": "src/systems/raidingParties.js",
-    "old": "  const sig = `${day}|${placesGen()}`;",
+    "old": "  const sig = `${day}|${placesGen()}|${sharedClockOn() ? 1 : 0}`;",
     "new": "  const sig = `${day}`;",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"

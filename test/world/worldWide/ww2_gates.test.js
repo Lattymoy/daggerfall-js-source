@@ -11,7 +11,7 @@ import {
   GATE_OMEN_MINUTE, GATE_RISE_MINUTE, GATE_OPEN_MINUTE, GATE_SEAL_MINUTE, GATE_WRATH_MINUTE, GATE_COLLAPSE_MS, GATE_EVERY_DAYS,
   gateAdmits, gateHolds, GATE_LANES_OPEN, gateLaneOpen, gateFrontDay,
 } from '../../../src/net/gate/gateLaw.js';
-import { frontStands } from '../../../src/net/frontLaw.js';
+import { frontStands, frontLanes } from '../../../src/net/frontLaw.js';
 import { heraldOmenDue, gateSiteDayOk } from '../../../src/net/gate/gateHerald.js';
 import {
   sharedClassicMinutes, wallMsForClassicMinutes, gateReceiptKey, gateLaneKey, gatePixelOk, gateLaneWire, relaySupportsGateLanes,
@@ -168,7 +168,12 @@ test('WW2 THE STAGGER: lane t\'s gate runs GATE_LANE_STAGGER classic minutes (tw
   let most = 0;
   for (let ms = NOW; ms < NOW + 86_400_000; ms += 60_000) {
     let up = 0;
-    for (const lane of GATE_LANES_OPEN) { const t = gateAt(ms, lane); if (ms >= t.omenAt && ms < t.wrathAt) up++; }
+    for (const lane of GATE_LANES_OPEN) {
+      const t = gateAt(ms, lane);
+      if (!(ms >= t.omenAt && ms < t.wrathAt)) continue;
+      up++;
+      if (lane > 0) assert.ok(frontLanes(gateFrontDay(t.day)).includes(lane), `lane ${lane}'s standing gate is on its turn`);   // AUDIT FRONTS C12
+    }
     most = Math.max(most, up);
   }
   assert.ok(most >= 2 && most <= 3, `${most} gates at once at the most`);

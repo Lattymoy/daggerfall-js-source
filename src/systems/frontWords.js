@@ -17,17 +17,18 @@ export const frontDayAt = (now) => frontDayOfMinute(sharedClassicMinutes(now));
 export const frontDayStartMs = (day) => Math.round(wallMsForClassicMinutes(day * FRONT_DAY_MINUTES));
 
 /**
- * THE TIMERS' ROWS: today's fronts, live to the day's end, and the next two days', coming - eventTimerRows' shape.
+ * THE TIMERS' ROWS: today's fronts, live to the day's end, and the next two days', coming - eventTimerRows' shape. A
+ * schedule, not an event (`sched` - AUDIT FRONTS B4: never counted as under way).
  * @param {number} now relay clock
- * @returns {Array<{id: string, kind: string, title: string, where: string|null, detail: string|null, live: boolean, at: number, until: number|null}>}
+ * @returns {Array<{id: string, kind: string, title: string, where: string|null, detail: string|null, live: boolean, sched: boolean, at: number, until: number|null}>}
  */
 export function frontTimerRows(now) {
   if (!Number.isFinite(now)) return [];
   const day = frontDayAt(now), end = frontDayStartMs(day + 1);
   return [
-    { id: `front:${day}`, kind: 'front', title: t('fronts.timers.now', 'World events in {a} and {b}', pairOf(day)), where: null, detail: t('fronts.timers.nowSub', 'Past the Bay, only these provinces start world events until this runs out'), live: true, at: end, until: end },
-    { id: `front:${day + 1}`, kind: 'front', title: t('fronts.timers.next', 'Next: {a} and {b}', pairOf(day + 1)), where: null, detail: null, live: false, at: end, until: null },
-    { id: `front:${day + 2}`, kind: 'front', title: t('fronts.timers.then', 'Then: {a} and {b}', pairOf(day + 2)), where: null, detail: null, live: false, at: frontDayStartMs(day + 2), until: null },
+    { id: `front:${day}`, kind: 'front', title: t('fronts.timers.now', 'Past the Bay: {a} and {b}', pairOf(day)), where: null, detail: t('fronts.timers.nowSub', 'Only these provinces start gates, raids, stars and Abyss Dungeons until this runs out'), live: true, sched: true, at: end, until: end },
+    { id: `front:${day + 1}`, kind: 'front', title: t('fronts.timers.next', 'Next: {a} and {b}', pairOf(day + 1)), where: null, detail: null, live: false, sched: true, at: end, until: null },
+    { id: `front:${day + 2}`, kind: 'front', title: t('fronts.timers.then', 'Then: {a} and {b}', pairOf(day + 2)), where: null, detail: null, live: false, sched: true, at: frontDayStartMs(day + 2), until: null },
   ];
 }
 
@@ -39,6 +40,6 @@ export function frontTimerRows(now) {
 export function frontCardLine(now, lane, whenText) {
   if (!Number.isFinite(now) || !FRONT_PROVINCES.includes(lane)) return null;
   const day = frontDayAt(now);
-  if (frontStands(day, lane)) return t('fronts.card.now', 'World events here now');
-  return t('fronts.card.next', 'World events here from {when}', { when: whenText(frontDayStartMs(frontNextDay(day, lane))) });
+  if (frontStands(day, lane)) return t('fronts.card.now', 'Gates, raids, stars and Abyss Dungeons start here now');
+  return t('fronts.card.next', 'Gates, raids, stars and Abyss Dungeons start here from {when}', { when: whenText(frontDayStartMs(frontNextDay(day, lane))) });
 }

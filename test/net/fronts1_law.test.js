@@ -11,9 +11,11 @@ import { heraldOmenDue } from '../../src/net/gate/gateHerald.js';
 import { starInWindow, starOk, starTimes, starOfLane, starfallRuns, starFrontDay, STAR_HOUR_MS, STAR_PER_NIGHT } from '../../src/net/starfall/starfallLaw.js';
 import { raidDaySlots, raidDayRandom, raidLaneOpen, raidLaneParties, raidLaneStands, RAID_SLOTS_MAX, RAID_DAY_MINUTES, RAID_TARGET_MIN, RAID_TARGET_MAX } from '../../src/net/raid/raidLaw.js';
 import { raidsForLane } from '../../src/systems/raidingParties.js';
-import { sdDue, sdRise, sdFirst, sdFrontFrom, sdHeldPast, SD_FRONT_HOLLOWS, SD_LANE_SPAN, SD_LIFETIME_MS, SD_COOLDOWN_MS } from '../../src/net/superDungeon/sdLaw.js';
+import { sdHeraldPost } from '../../src/net/superDungeon/sdHerald.js';
+import { REGION_NAMES, regionOfTheatre } from '../../src/formats/mapsTables.js';
+import { sdDue, sdRise, sdGone, sdFirst, sdFrontFrom, sdHeldPast, sdRiseNotBefore, sdBeatOrder, sdPhase, SD_FRONT_HOLLOWS, SD_LANE_SPAN, SD_LIFETIME_MS, SD_COOLDOWN_MS, SD_COLLAPSE_MS, SD_LANES } from '../../src/net/superDungeon/sdLaw.js';
 import { frontTimerRows, frontCardLine, frontDayAt, frontDayStartMs } from '../../src/systems/frontWords.js';
-import { eventTimerRows, TIMER_GROUPS } from '../../src/systems/eventTimers.js';
+import { eventTimerRows, TIMER_GROUPS, timerGroups } from '../../src/systems/eventTimers.js';
 import { THEATRE_COUNT } from '../../src/world/worldWide/worldGrid.js';
 import { MINUTES_PER_DAY } from '../../src/systems/gameDate.js';
 
@@ -95,7 +97,6 @@ test('FRONTS THE GATES: the Bay\'s gate every day as before; a province\'s on th
       if (due) assert.ok(isGateDay(due.day) && gateLaneOf(due.day) === l);
     }
   }
-  assert.ok(gateTimes(gateNumber(gateDayOf(gateAt(NOW, 3).day), 3)).openAt > 0);
 });
 
 test('FRONTS THE STARS: a province\'s star lands on its turn alone, the Bay\'s every night of the festival; a star\'s shape (starOk) is what it was, so a receipt already minted reads as before (mutants: the fronts unread; starOk made to read them)', () => {
@@ -108,7 +109,7 @@ test('FRONTS THE STARS: a province\'s star lands on its turn alone, the Bay\'s e
         assert.equal(starFrontDay(n, k), day);
         const was = starOk(n, k) && starfallRuns(starTimes(n, k).fallAt);
         assert.equal(starInWindow(n, k), was && frontStands(day, lane), `night ${n} star ${k}`);
-        if (was && lane > 0 && !frontStands(day, lane)) assert.equal(starOk(n, k), true, 'the shape stands');
+        if (lane > 0 && !frontStands(day, lane)) assert.equal(starOk(n, k), true, 'AUDIT FRONTS A5: an off-turn star\'s shape stands');
         if (starInWindow(n, k)) { if (lane === 0) bay++; else past++; }
       }
     }
@@ -187,8 +188,14 @@ test('FRONTS THE TIMERS AND THE MAP: today\'s two provinces live to the day\'s e
   assert.equal(rows[0].until, frontDayStartMs(DAY_NOW + 1));
   assert.equal(rows[2].at, frontDayStartMs(DAY_NOW + 2));
   assert.equal(frontDayAt(frontDayStartMs(DAY_NOW + 1) + 1), DAY_NOW + 1);
-  assert.match(rows[0].title, /^World events in \S.* and \S/);
-  assert.match(rows[1].title, /^Next: /);
+  // AUDIT FRONTS C1: the provinces named are the day's own, each by its lane's region
+  const names = (d) => frontLanes(d).map((l) => REGION_NAMES[regionOfTheatre(l)]);
+  assert.deepEqual(rows.map((r) => r.title), [`Past the Bay: ${names(DAY_NOW).join(' and ')}`, `Next: ${names(DAY_NOW + 1).join(' and ')}`, `Then: ${names(DAY_NOW + 2).join(' and ')}`]);
+  assert.equal(rows[0].detail, 'Only these provinces start gates, raids, stars and Abyss Dungeons until this runs out');
+  // AUDIT FRONTS B4: a schedule, never counted as under way
+  assert.ok(rows.every((r) => r.sched));
+  const world = timerGroups(eventTimerRows({ now: NOW, fronts: true })).find((g) => g.id === 'world');
+  assert.equal(world.live, eventTimerRows({ now: NOW, fronts: true }).filter((r) => r.live && r.kind !== 'front' && TIMER_GROUPS[0].kinds.includes(r.kind)).length);
   assert.ok(TIMER_GROUPS.find((g) => g.id === 'world').kinds.includes('front'));
   const ids = (src) => eventTimerRows({ now: NOW, ...src }).filter((r) => r.kind === 'front').map((r) => r.id);
   assert.deepEqual(ids({ fronts: true }), rows.map((r) => r.id));
@@ -197,7 +204,7 @@ test('FRONTS THE TIMERS AND THE MAP: today\'s two provinces live to the day\'s e
   const when = (ms) => `@${ms}`;
   for (const l of FRONT_PROVINCES) {
     const line = frontCardLine(NOW, l, when);
-    assert.equal(line, frontStands(DAY_NOW, l) ? 'World events here now' : `World events here from @${frontDayStartMs(frontNextDay(DAY_NOW, l))}`);
+    assert.equal(line, frontStands(DAY_NOW, l) ? 'Gates, raids, stars and Abyss Dungeons start here now' : `Gates, raids, stars and Abyss Dungeons start here from @${frontDayStartMs(frontNextDay(DAY_NOW, l))}`);
   }
   assert.equal(frontCardLine(NOW, 0, when), null, 'the Bay is no front');
   assert.equal(frontCardLine(NOW, 9, when), null, 'nor the open zone');
@@ -207,7 +214,74 @@ test('FRONTS the wiring: the law imports nothing; the host hands the Timers and 
   const law = readFileSync(new URL('../../src/net/frontLaw.js', import.meta.url), 'utf8');
   assert.equal([...law.matchAll(/^import /gm)].length, 0, 'the relay\'s graph stays flat');
   const host = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(host, /fronts: !!online\.gateLanesOk && !!socialLink\(\)\?\.gateLanesOk,/);
-  assert.match(host, /fronts: \(\) => \(online && _sharedClockHeard && online\.gateLanesOk && socialLink\(\)\?\.gateLanesOk \? battleNowMs\(\) : null\),/);
+  assert.match(host, /fronts: !!gateOmen\?\.lanesOk\(\),/);
+  assert.match(host, /fronts: \(\) => \(_sharedClockHeard && gateOmen\?\.lanesOk\(\) \? battleNowMs\(\) : null\),/);
+  const hub = readFileSync(new URL('../../server/src/index.js', import.meta.url), 'utf8');
+  // AUDIT FRONTS A1: the herald's card names the next's turn and a free place; A9: a turn ended mid-census arms the next
+  assert.match(hub, /sdHeraldPost\(due\.kind, rec, h\.sdRole, sdRiseNotBefore\(rec, now, await this\._sdRecs\(\)\)\)/);
+  assert.match(hub, /if \(!risen\) \{ const d = sdDue\(cur, now, held\); if \(d\.at != null\) await this\._hubArm\(d\.at\); break; \}/);
+  // AUDIT FRONTS A2: the hub beats its lanes in the fair order
+  assert.match(readFileSync(new URL('../../server/src/index.js', import.meta.url), 'utf8'), /for \(const lane of sdBeatOrder\(await this\._sdRecs\(\)\)\) await this\._sdLaneBeat\(now, lane\);/);
   assert.match(readFileSync(new URL('../../src/ui/heldMap.js', import.meta.url), 'utf8'), /frontCardLine\(frontNow, theatreOfRegion\(region\)/);
+});
+
+test('AUDIT FRONTS B1, A1, B7: a province\'s next Abyss Dungeon is said not before its turn nor while two stand past the Bay - the Timers\' row and the herald\'s card alike; the Bay\'s at its rest (mutants: the cap unread; the turn unread; the row\'s own instant; the herald\'s rest)', () => {
+  const dayStart = (d) => Math.ceil(wallMsForClassicMinutes(d * FRONT_DAY_MINUTES)) + 1;
+  const lane = 1, offDay = frontNextDay(DAY_NOW, lane) + 1, off = dayStart(offDay) + 60_000;
+  const gone = { s: lane * SD_LANE_SPAN + 3, ph: 'fell', r: -1, at: off - 3_600_000, until: off + SD_LIFETIME_MS, fellAt: off - SD_COLLAPSE_MS - 1000, next: off + 60_000 };
+  assert.equal(sdPhase(gone, off), 'gone');
+  // nothing standing elsewhere: its next turn
+  const turn = dayStart(frontNextDay(offDay, lane));
+  assert.equal(sdRiseNotBefore(gone, off, [gone]), turn);
+  // two standing past the Bay, ending at e1 < e2: the first turn after e1
+  const standing = (l, until) => ({ s: l * SD_LANE_SPAN + 2, ph: 'found', r: -1, at: off - 1000, until, next: until + SD_COOLDOWN_MS });
+  const e1 = off + 30 * 3_600_000, e2 = off + 40 * 3_600_000;
+  const recs = [gone, standing(4, e2), standing(6, e1)];
+  const after = sdRiseNotBefore(gone, off, recs);
+  assert.equal(after, sdFrontFrom(e1, lane));
+  assert.ok(after >= e1);
+  // the Timers' coming row says that instant, to its own province's players
+  const src = { now: off, sd: { rec: null, lanes: recs.map((rec) => ({ rec, lane: Math.floor(rec.s / SD_LANE_SPAN), province: 'High Rock', mine: rec === gone })) } };
+  const row = eventTimerRows(src).find((r) => r.id === `sd:${gone.s + 1}`);
+  assert.equal(row?.at, after);
+  assert.equal(eventTimerRows({ ...src, sd: { rec: null, lanes: [src.sd.lanes[0]] } }).find((r) => r.id === `sd:${gone.s + 1}`)?.at, turn);
+  // the herald's fall card names the same instant; the Bay's, its rest
+  const when = (ms) => `<t:${Math.floor(ms / 1000)}:t>`;
+  const card = (post) => JSON.stringify(post);
+  assert.ok(card(sdHeraldPost('fell', { ...gone, top: 'Ann', n: 2 }, null, after)).includes(when(after)));
+  const bay = { ...gone, s: 7, next: off + 60_000 };
+  assert.equal(sdRiseNotBefore(bay, off, recs), bay.next, 'the Bay\'s lane: its rest alone');
+});
+
+test('AUDIT FRONTS A2: a place freed past the Bay goes to the province that waited longest, not the lowest lane - over a year of the director\'s own law, unbeaten Hollows rise evenly - 40 to 49 a province, where the lane order gave 21 to 70 (mutants: the beat in lane order)', () => {
+  assert.deepEqual(sdBeatOrder([]), [0, ...SD_LANES.filter((l) => l > 0)], 'none yet: by lane');
+  const r = (l, at) => ({ s: l * SD_LANE_SPAN + 1, ph: 'gone', r: -1, at, until: at, next: at });
+  assert.deepEqual(sdBeatOrder([r(1, 50), r(2, 10), r(5, 30)]).slice(0, 4), [0, 3, 4, 6], 'never risen first');
+  assert.deepEqual(sdBeatOrder([r(1, 50), r(2, 10), r(3, 30), r(4, 1), r(5, 2), r(6, 3), r(7, 4), r(8, 5)]), [0, 4, 5, 6, 7, 8, 2, 3, 1]);
+  // the hub's loop, run on the law: every hour, each lane's due move, in the beat's order
+  const recs = new Map(SD_LANES.map((l) => [l, sdFirst(NOW, l)]));
+  const rises = new Map(SD_LANES.map((l) => [l, 0]));
+  for (let now = NOW; now < NOW + 365 * 86_400_000; now += 600_000) {
+    for (const lane of sdBeatOrder([...recs.values()])) {
+      if (sdDue(recs.get(lane), now).act === 'gone') recs.set(lane, sdGone(recs.get(lane), now));
+      const all = [...recs.values()], rec = recs.get(lane), held = sdHeldPast(all, now, lane);
+      if (sdDue(rec, now, held).act !== 'rise') continue;
+      const risen = sdRise(rec, now, -1, lane, held);
+      if (risen) { recs.set(lane, risen); rises.set(lane, rises.get(lane) + 1); }
+    }
+  }
+  const past = [...rises].filter(([l]) => l > 0).map(([, n]) => n);
+  assert.ok(Math.max(...past) - Math.min(...past) <= Math.ceil(Math.max(...past) / 4), `even rises past the Bay: ${past.join(', ')}`);
+});
+
+test('AUDIT FRONTS B6: offline the provinces\' raids keep the mod\'s own pace - the turns are the shared clock\'s, and a save\'s days are its own (mutants: the fronts offline)', () => {
+  const groups = [{ region: 64, area: 1, towns: [{ index: -1000124, px: 2425, py: 270 }, { index: -1000125, px: 2430, py: 271 }] }];
+  for (let d = DAY_NOW; d < DAY_NOW + 8; d++) {
+    for (const l of FRONT_PROVINCES) {
+      assert.equal(raidsForLane(d, l, groups, false).length > 0, true, `offline day ${d} lane ${l}`);
+      if (frontStands(d, l)) assert.deepEqual(raidsForLane(d, l, groups, false), raidsForLane(d, l, groups), 'on its turn the same roll');
+    }
+  }
+  const src = readFileSync(new URL('../../src/systems/raidingParties.js', import.meta.url), 'utf8');
+  assert.match(src, /raidsForLane\(day, lane, laneGroupsNow\(lane\), sharedClockOn\(\)\)/);
 });

@@ -38,7 +38,7 @@
   {
     "name": "TIMERS2-the-live-count-off",
     "file": "src/systems/eventTimers.js",
-    "old": "live: of.filter((r) => r.live).length",
+    "old": "live: of.filter((r) => r.live && !r.sched).length",
     "new": "live: of.length",
     "tests": [
       "test/ui/enhanced/timers2.test.js"

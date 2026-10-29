@@ -100,7 +100,7 @@ export const sdHolds = (rec, now) => { const p = sdPhase(rec, now); return p ===
 // back; a null is "not now", never an error.
 
 // FRONTS (bible/03-World/World-Wide.md FRONTS): a province's Hollow rises only on its province's turn (net/frontLaw.js),
-// and no more than SD_FRONT_HOLLOWS stand past the Bay at once - a Hollow stands two days, so a turn alone would still
+// and no more than SD_FRONT_HOLLOWS stand past the Bay at once - a Hollow stands two real days, so a turn alone would still
 // keep one in every province. The Bay's rises as before. The hub hands the count (`held`) off its lanes' records.
 /** FRONTS: the Hollows that stand past the Bay at once, at most - a day's fronts' worth. */
 export const SD_FRONT_HOLLOWS = FRONT_PER_DAY;
@@ -112,9 +112,28 @@ export function sdFrontFrom(now, lane) {
 }
 /** FRONTS: the Hollows standing past the Bay at `now` on a lane other than `lane` (`recs`, every lane's record).
  *  @param {ReadonlyArray<SdRecord|null|undefined>} recs @param {number} now @param {number} lane */
-export const sdHeldPast = (recs, now, lane) => (recs ?? []).filter((r) => r && sdLaneOf(r.s) > 0 && sdLaneOf(r.s) !== lane && sdStands(sdPhase(r, now))).length;
+export const sdHeldPast = (recs, now, lane) => sdStandingPast(recs, now, lane).length;
+const sdStandingPast = (recs, now, lane) => (recs ?? []).filter((r) => r && sdLaneOf(r.s) > 0 && sdLaneOf(r.s) !== lane && sdStands(sdPhase(r, now)));
 /** FRONTS: may lane `lane` raise a Hollow at `now`, with `held` standing past the Bay elsewhere? */
 const sdFrontMay = (now, lane, held) => sdFrontFrom(now, lane) <= now && (lane === 0 || held < SD_FRONT_HOLLOWS);
+/** AUDIT FRONTS A1, B1: the earliest a record's lane may raise its next Hollow, from `now` on - its rest, its turn and a
+ *  free place past the Bay among `recs` (every lane's record). A bound, never a promise: a turn can pass with nothing risen.
+ *  @param {SdRecord} rec @param {number} now @param {ReadonlyArray<SdRecord|null|undefined>} recs */
+export function sdRiseNotBefore(rec, now, recs) {
+  const lane = sdLaneOf(rec.s);
+  let t = Math.max(rec.next, now);
+  for (let step = 0; lane > 0 && step < 16; step++) {
+    t = sdFrontFrom(t, lane);
+    const standing = sdStandingPast(recs, t, lane);
+    if (standing.length < SD_FRONT_HOLLOWS) return t;
+    t = Math.min(...standing.map((r) => (r.fellAt != null ? r.fellAt + SD_COLLAPSE_MS : r.until)));
+  }
+  return t;
+}
+/** AUDIT FRONTS A2: the order the director beats its lanes in - the Bay's, then the provinces whose last Hollow rose
+ *  longest ago (none yet first), so a place freed past the Bay goes to the province that waited, not the lowest lane. */
+export const sdBeatOrder = (recs) => [0, ...SD_LANES.filter((l) => l > 0).sort((a, b) => sdLastRise(recs, a) - sdLastRise(recs, b) || a - b)];
+const sdLastRise = (recs, lane) => { const r = (recs ?? []).find((x) => x && sdLaneOf(x.s) === lane); return r && r.s % SD_LANE_SPAN ? r.at : -Infinity; };
 
 /** The hub's first beat: nothing has risen, the first rise SD_FIRST_RISE_MS on. WW5: a lane's own - its zero slot. */
 export const sdFirst = (now, lane = 0) => /** @type {SdRecord} */ ({ s: lane * SD_LANE_SPAN, ph: 'gone', r: -1, at: now, until: now, next: now + SD_FIRST_RISE_MS });

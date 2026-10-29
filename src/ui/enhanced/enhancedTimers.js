@@ -52,7 +52,7 @@ export function timersMark(doc, { onOpen, open = false }) {
   const b = doc.createElement('button');
   b.type = 'button';
   b.className = 'px-timersmark';
-  b.setAttribute('aria-label', 'Timers: gates, the sea serpent, the Abyss Dungeon, the Starfall, the Sky-Ketch, raids, battles and resets');   // SD2c: its row; STAR6: the Starfall's; KETCH: the Sky-Ketch's
+  b.setAttribute('aria-label', 'Timers: the provinces\' turns, gates, the sea serpent, the Abyss Dungeon, the Starfall, the Sky-Ketch, raids, battles and resets');   // SD2c: its row; STAR6: the Starfall's; KETCH: the Sky-Ketch's; AUDIT FRONTS B13: the fronts'
   b.setAttribute('aria-haspopup', 'dialog');   // AUDIT TIMERS1 UI-6
   b.setAttribute('aria-expanded', open ? 'true' : 'false');
   b.title = 'Timers';

@@ -428,8 +428,8 @@
  {
   "name": "EVENTS1-a-roll-before-the-regions",
   "file": "src/systems/raidingParties.js",
-  "old": "if (regions) _ahead = { day: next, gen, raids: [...raidsForDay(next, regions)",
-  "new": "_ahead = { day: next, gen, raids: !regions ? [] : [...raidsForDay(next, regions)",
+  "old": "if (regions) _ahead = { day: next, gen, on: sharedClockOn(), raids: [...raidsForDay(next, regions)",
+  "new": "_ahead = { day: next, gen, on: sharedClockOn(), raids: !regions ? [] : [...raidsForDay(next, regions)",
   "tests": [
    "test/systems/events1_board.test.js"
   ]

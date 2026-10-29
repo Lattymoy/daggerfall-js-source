@@ -365,7 +365,7 @@ test('WW5 THE HOST: every theatre\'s stars stand - the Bay\'s and a province\'s,
   }
 });
 
-test('WW5 ON THE FREEWARE\'S WORLD: the Bay\'s nights the law before WW5, star for star over the festival\'s every night (its covens, its pixels, its towns); every province\'s every night of the festival three stars, each in its own theatre on its scan\'s ground by a town of its own, its theatre\'s gate of the day kept off (TESA\'s places registered, WW7-1)', { skip: HAVE ? false : 'ARENA2_PATH not set (sh tools/fetch-data.sh)', timeout: 600_000 }, async () => {
+test('WW5 ON THE FREEWARE\'S WORLD: the Bay\'s nights the law before WW5, star for star over the festival\'s every night (its covens, its pixels, its towns); every province\'s three star sites a night (AUDIT FRONTS C12: the sites alone - which nights stand them is its turn\'s), each in its own theatre on its scan\'s ground by a town of its own, its theatre\'s gate of the day kept off (TESA\'s places registered, WW7-1)', { skip: HAVE ? false : 'ARENA2_PATH not set (sh tools/fetch-data.sh)', timeout: 600_000 }, async () => {
   const W = await ww5World();
   const from = starNightAt(FESTIVAL.fromMs), to = starNightAt(FESTIVAL.toMs);
   const bayGate = (d) => findGateSite(d, W.bayScan);
