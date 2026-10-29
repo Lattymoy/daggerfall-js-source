@@ -4,7 +4,7 @@
 // armory pose (render/armoryPose.js poseFromFigure over its marks) dotted over it where the stage and the world stand
 // it - shoulders, elbows and wrists, the hips, knees and feet, the head and the crown. A contact sheet to
 // tools/shots/sprite_arms.png (or SHOT_DIR); ONLY=<a|b> the bodies named so, ZOOM=<n> their size, VIEW=<0-7> the idle table's orientation.
-//
+// It fails on a page error, a body with no picture or marks, or a pose point off its picture.
 //     node tools/spriteArmsSheet.mjs
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
@@ -16,9 +16,12 @@ const BLANK = { name: 'arms-sheet-page', configureServer(s) { s.middlewares.use(
 const server = await createServer({ server: { port: 5245, strictPort: true }, logLevel: 'silent', plugins: [BLANK] });
 await server.listen();
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+let fails = 0;
+const check = (/** @type {string} */ name, /** @type {boolean} */ ok, detail = '') => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); if (!ok) fails++; };
+const errors = /** @type {string[]} */ ([]);
 try {
   const page = await browser.newPage({ viewport: { width: 1800, height: 1200 } });
-  page.on('pageerror', (e) => console.log('pageerror', e.message));
+  page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('http://localhost:5245/armssheet/');
   const out = await page.evaluate(async ({ zoom, only, view }) => {
     const { spriteBodyOf } = await import('/src/ui/profileBody.js');
@@ -30,10 +33,11 @@ try {
     looks.push({ name: 'Layered (female, plate)', look: { onFoot: 0, wornArmour: true, gender: 'female', outfit: 'p6p6p6' } });
     looks.push({ name: 'Layered (female, leather)', look: { onFoot: 0, wornArmour: true, gender: 'female', outfit: 'lll' } });
     const cells = [], report = [];
+    const POINTS = ['shL', 'shR', 'elL', 'elR', 'waL', 'waR', 'hipL', 'hipR', 'knL', 'knR', 'ftL', 'ftR', 'head', 'neck', 'chest', 'pelvis', 'crown'];
     for (const { name, look } of looks.filter((l) => !only.length || only.some((o) => l.name.includes(o)))) {
       const b = await spriteBodyOf(look, { view }).catch(() => null);
       if (!b) { report.push({ name, missing: true }); continue; }
-      const pose = newPose(), marks = spriteMarks(b.colors, b.width, b.height, { arms: spriteArmsSeen(b.view) });
+      const pose = newPose(), marks = spriteMarks(b.colors, b.width, b.height, { arms: spriteArmsSeen(b.view), art: b.art });
       poseFromFigure({ base: b.base, mpp: b.mpp, beast: false, marks, shift: b.shift }, pose);
       const c = document.createElement('canvas'); c.width = b.width * zoom; c.height = b.height * zoom + 16;
       const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
@@ -54,9 +58,10 @@ try {
       for (const n of ['hipL', 'hipR', 'knL', 'knR', 'ftL', 'ftR']) dot(n, '#2adfff');
       for (const n of ['head', 'neck', 'chest', 'pelvis']) dot(n, '#7dff5a');
       dot('crown', '#ffffff');
+      const off = POINTS.filter((n) => { const [x, y] = px(n); return !(x >= 0 && x <= b.width * zoom && y >= 0 && y <= b.height * zoom); });
       g.fillStyle = '#ddd'; g.font = '11px monospace'; g.fillText(name.slice(0, Math.floor(c.width / 6.6)), 2, c.height - 4);
       cells.push(c);
-      report.push({ name, w: b.width, h: b.height, mpp: +b.mpp.toFixed(4), base: +b.base.toFixed(3), shift: +b.shift.toFixed(3), marks });
+      report.push({ name, w: b.width, h: b.height, mpp: +b.mpp.toFixed(4), base: +b.base.toFixed(3), shift: +b.shift.toFixed(3), marks, off });
     }
     // the sheet: cells in rows, each its own size
     const W = 1780; let x = 0, y = 0, rowH = 0; const at = [];
@@ -69,8 +74,16 @@ try {
   const tag = `${process.env.ONLY ? '_some' : ''}${process.env.VIEW ? `_v${process.env.VIEW}` : ''}`;
   writeFileSync(`${OUT}/sprite_arms${tag}.png`, Buffer.from(out.png.split(',')[1], 'base64'));
   writeFileSync(`${OUT}/sprite_arms${tag}.json`, JSON.stringify(out.report, null, 1));
-  console.log(`${out.report.length} bodies, ${out.report.filter((r) => r.missing).length} with no picture - ${OUT}/sprite_arms.png`);
+  console.log(`${out.report.length} bodies - ${OUT}/sprite_arms${tag}.png`);
+  const seen = Number(process.env.VIEW ?? 0) !== 2;   // a side view's arms are not read (armoryPose.js spriteArmsSeen)
+  check('every body has a picture', out.report.every((r) => !r.missing), out.report.filter((r) => r.missing).map((r) => r.name).join(', '));
+  const unread = out.report.filter((r) => !r.missing && (!r.marks || !r.marks.legs || (seen && !r.marks.arms)));
+  check('every body\'s marks read - its head, its legs, and its arms where they are seen', unread.length === 0, unread.map((r) => r.name).join(', '));
+  const outside = out.report.filter((r) => r.off?.length);
+  check('every pose point on its picture', outside.length === 0, outside.map((r) => `${r.name}: ${r.off.join(' ')}`).join('; '));
+  check('no page error', errors.length === 0, errors.join('; '));
 } finally {
   await browser.close();
   await server.close();
 }
+process.exitCode = fails ? 1 : 0;

@@ -51,7 +51,7 @@ import {
   DELAYED_FRAMES, ORIENTATION_TIME, signedAngleY, tableMoveSpeed, portrayedYaw,
 } from './eotbBillboard.js';
 import { spriteMarks, spriteArmsSeen } from '../../render/armoryPose.js';   // ARMORY: where the body stands in its own picture
-import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, flipRows, worldOrderColors, lookedPixels, decodeSprite } from './eotbSprite.js';
+import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, spriteArtScale, flipRows, worldOrderColors, lookedPixels, decodeSprite } from './eotbSprite.js';
 import { decodePng } from '../../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
 import { decodeServedPng } from '../../systems/vanillaEnhanced/vanillaEnhancedPack.js';   // FIRST-VISIT: and its decode workers
 import { isLayeredKey, decodeLayered, outfitOfSlots, layeredGenderOf, LAYERED_ARCHIVE } from './layeredArmor.js';   // WORN-ARMOUR: the body in the armour it wears
@@ -397,7 +397,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       // is its own pixels under its own key (`s.rec`, EOTB5)
       const px = s.mirror ? flipRows(colors, width, height) : colors;
       renderer.uploadTexture(s.archive, s.rec, { width, height, colors: px });
-      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view) }) };   // ARMORY: the body's place in the picture, read once
+      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }) };   // ARMORY: the body's place in the picture, read once
     })();
     tex.set(cacheKey(s), p);
     p.then((r) => { if (tex.get(cacheKey(s)) !== p) return; tex.set(cacheKey(s), r); firstUp = true; },

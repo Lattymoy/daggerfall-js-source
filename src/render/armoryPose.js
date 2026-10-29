@@ -67,9 +67,12 @@ const LEG_ROWS = 30, LEG_MIN_PX = 5;
  * on its feet - its sword arm out, its staff beside it - so a piece hung at the picture's middle hangs beside the head.
  * `beast` the same at a beast's rows (EOTB_FIGURE.beast). Null where nothing stands. Pure.
  */
-export function spriteMarks(/** @type {ArrayLike<number>} */ colors, /** @type {number} */ w, /** @type {number} */ h, { arms = true } = {}) {
+export function spriteMarks(/** @type {ArrayLike<number>} */ colors, /** @type {number} */ w, /** @type {number} */ h, { arms = true, art = 1 } = {}) {
   if (!colors || !(w > 0) || !(h > 0) || colors.length < w * h) return null;
   const mid = (w - 1) / 2;
+  // a record drawn at another scale (eotbSprite.js spriteArtScale) is read at the sets' rows and widths scaled by it
+  const A = art > 0 ? art : 1, sc = (/** @type {number} */ n) => Math.max(1, Math.round(n * A));
+  const legRows = sc(LEG_ROWS), legMin = sc(LEG_MIN_PX), headMin = sc(HEAD_MIN_PX), bodyOff = BODY_OFF_PX * A;
   const solid = (/** @type {number} */ x, /** @type {number} */ r) => x >= 0 && x < w && r >= 0 && r < h && ((colors[r * w + x] >>> 24) & 255) > 127;
   /** Every opaque run of row `r`, [first, last] column - each row read once, the arms, legs and shafts asking again. */
   const rowRuns = /** @type {number[][][]} */ ([]);
@@ -87,14 +90,14 @@ export function spriteMarks(/** @type {ArrayLike<number>} */ colors, /** @type {
   // THE BODY'S AXIS: the middle of its legs, every run a leg's width in their rows weighed by its width - a picture is
   // as wide as what it holds, so a sword or a mace held out stands the body far off its middle (a side view's most)
   let legSum = 0, legW = 0;
-  for (let r = 0; r < Math.min(h, LEG_ROWS); r++) for (const [x0, x1] of runsAt(r)) { const wd = x1 - x0 + 1; if (wd >= LEG_MIN_PX) { legSum += ((x0 + x1) / 2) * wd; legW += wd; } }
+  for (let r = 0; r < Math.min(h, legRows); r++) for (const [x0, x1] of runsAt(r)) { const wd = x1 - x0 + 1; if (wd >= legMin) { legSum += ((x0 + x1) / 2) * wd; legW += wd; } }
   const axis = legW ? legSum / legW : mid;
   /** Row `r`'s run at least `minW` wide nearest the axis, within BODY_OFF_PX of it: { c its middle, wd its width } - or null. */
   const runAt = (/** @type {number} */ r, minW = 1) => {
     let best = null;
     for (const [x0, x1] of runsAt(r)) {
       const c = (x0 + x1) / 2, wd = x1 - x0 + 1;
-      if (wd >= minW && Math.abs(c - axis) <= BODY_OFF_PX && (!best || Math.abs(c - axis) < Math.abs(best.c - axis))) best = { c, wd };
+      if (wd >= minW && Math.abs(c - axis) <= bodyOff && (!best || Math.abs(c - axis) < Math.abs(best.c - axis))) best = { c, wd };
     }
     return best;
   };
@@ -106,7 +109,7 @@ export function spriteMarks(/** @type {ArrayLike<number>} */ colors, /** @type {
   /** The head's top: up from the neck the run over the body's middle, each row the run most over the last - never the
    *  orb of a staff or the tip of a blade beside it, on runs of their own; a run three rows under 3 px is a shaft. */
   const topOf = (/** @type {number} */ k) => {
-    const r0 = Math.round(EOTB_FIGURE.neck * k), first = runAt(r0, HEAD_MIN_PX);
+    const r0 = Math.round(EOTB_FIGURE.neck * k), first = runAt(r0, headMin);
     if (!first) return null;
     let a = Math.round(first.c - (first.wd - 1) / 2), b = a + first.wd - 1, top = r0, thin = 0;
     for (let r = r0 + 1; r < h; r++) {
@@ -125,7 +128,8 @@ export function spriteMarks(/** @type {ArrayLike<number>} */ colors, /** @type {
    *  it (the run reaching past the arm's edge) the edge goes on as it went. Its shoulder, elbow and wrist, half an arm in
    *  from the edge: { sh, el, wa } columns off the picture's middle at `rows` [shoulder, elbow, wrist] - or null. */
   const armOf = (/** @type {number} */ s, /** @type {number} */ cx) => {
-    const rows = /** @type {number[]} */ ([EOTB_FIGURE.shoulder, SPRITE_ROWS.elbow, SPRITE_ROWS.wrist]), { reach, step, half } = ARM_PX, out = (/** @type {number} */ x) => s * (x - cx);
+    const at0 = /** @type {number[]} */ ([EOTB_FIGURE.shoulder, SPRITE_ROWS.elbow, SPRITE_ROWS.wrist]), rows = at0.map((r) => Math.round(r * A));   // the sets' rows, and the picture's
+    const reach = ARM_PX.reach * A, step = ARM_PX.step * A, half = ARM_PX.half * A, out = (/** @type {number} */ x) => s * (x - cx);
     const c0 = Math.round(cx);
     let x = c0;
     if (!solid(x, rows[0])) return null;
@@ -147,28 +151,28 @@ export function spriteMarks(/** @type {ArrayLike<number>} */ colors, /** @type {
       edge.set(r, e);
     }
     const last = [...edge.values()].pop() ?? x, at = (/** @type {number} */ r) => (edge.get(r) ?? last) - s * half - mid;
-    return { sh: at(rows[0]), el: at(rows[1]), wa: at(rows[2]), rows };
+    return { sh: at(rows[0]), el: at(rows[1]), wa: at(rows[2]), rows: at0 };
   };
   /** A shaft, not a leg: a staff's run is as narrow a dozen rows over or under it, where a leg has its shin or thigh. */
-  const shaft = (/** @type {number} */ r, /** @type {number} */ x0, /** @type {number} */ x1) => [r - 12, r + 12].some((q) => q >= 0 && q < h
-    && !runsAt(q).some(([a, b]) => b >= x0 && a <= x1 && b - a + 1 >= LEG_MIN_PX));
+  const shaft = (/** @type {number} */ r, /** @type {number} */ x0, /** @type {number} */ x1) => [r - sc(12), r + sc(12)].some((q) => q >= 0 && q < h
+    && !runsAt(q).some(([a, b]) => b >= x0 && a <= x1 && b - a + 1 >= legMin));
   /** THE LEGS at a row: the two runs a leg's width nearest the axis, their middles - or one robe, or legs one before
    *  the other, split at its quarters when it is two legs wide - as [left, right] columns off the picture's middle. */
   const legsAt = (/** @type {number} */ r) => {
-    const runs = runsAt(r).filter(([x0, x1]) => x1 - x0 + 1 >= 3 && Math.abs((x0 + x1) / 2 - axis) <= BODY_OFF_PX + 8 && !shaft(r, x0, x1))
+    const runs = runsAt(r).filter(([x0, x1]) => x1 - x0 + 1 >= 3 && Math.abs((x0 + x1) / 2 - axis) <= bodyOff + 8 * A && !shaft(r, x0, x1))
       .sort((p, q) => Math.abs((p[0] + p[1]) / 2 - axis) - Math.abs((q[0] + q[1]) / 2 - axis));
     if (!runs.length) return null;
     if (runs.length > 1) { const [a, b] = [runs[0], runs[1]].sort((p, q) => p[0] - q[0]); return [(a[0] + a[1]) / 2 - mid, (b[0] + b[1]) / 2 - mid]; }
     const [x0, x1] = runs[0], wd = x1 - x0 + 1;
-    return wd >= 2 * LEG_MIN_PX + 2 ? [x0 + wd / 4 - 0.5 - mid, x1 - wd / 4 + 0.5 - mid] : [(x0 + x1) / 2 - mid, (x0 + x1) / 2 - mid];
+    return wd >= 2 * legMin + 2 ? [x0 + wd / 4 - 0.5 - mid, x1 - wd / 4 + 0.5 - mid] : [(x0 + x1) / 2 - mid, (x0 + x1) / 2 - mid];
   };
-  const read = (/** @type {number} */ k) => ({ top: topOf(k), head: across(MARK_ROWS.head, k, HEAD_MIN_PX), chest: across(MARK_ROWS.chest, k), pelvis: across(MARK_ROWS.pelvis, k) });
-  const own = read(1);
+  const read = (/** @type {number} */ k) => ({ top: topOf(k), head: across(MARK_ROWS.head, k, headMin), chest: across(MARK_ROWS.chest, k), pelvis: across(MARK_ROWS.pelvis, k) });
+  const own = read(A);
   if (own.chest === null && own.head === null) return null;
   // the arms of a standing figure (a beast's are its own, and wear nothing)
   const cx = mid + (own.chest ?? own.head ?? 0), L = arms ? armOf(-1, cx) : null, R = arms ? armOf(1, cx) : null;
-  const knee = legsAt(SPRITE_ROWS.knee), ankle = legsAt(SPRITE_ROWS.ankle);
-  return { ...own, arms: L && R ? { L, R } : null, legs: knee && ankle ? { knee, ankle } : null, beast: read(EOTB_FIGURE.beast) };
+  const knee = legsAt(Math.round(SPRITE_ROWS.knee * A)), ankle = legsAt(Math.round(SPRITE_ROWS.ankle * A));
+  return { ...own, arms: L && R ? { L, R } : null, legs: knee && ankle ? { knee, ankle } : null, beast: read(EOTB_FIGURE.beast * A), art: A };
 }
 
 const set = (/** @type {Float32Array} */ pts, /** @type {string} */ name, /** @type {ArrayLike<number>} */ v) => { const i = POSE_AT[name]; pts[i] = v[0]; pts[i + 1] = v[1]; pts[i + 2] = v[2]; };
@@ -218,10 +222,11 @@ export function poseFromBones(/** @type {any} */ bones, /** @type {any} */ out) 
  */
 export function poseFromFigure(/** @type {any} */ fig, /** @type {any} */ out) {
   if (!fig || !Number.isFinite(fig.base) || !(fig.mpp > 0)) return false;
-  const m = fig.mpp * (fig.beast === true ? EOTB_FIGURE.beast : 1), at = (/** @type {number} */ px) => fig.base + px * m, x = (/** @type {number} */ px) => px * m;
+  const art = fig.marks?.art > 0 ? fig.marks.art : 1;   // a record drawn at another scale: the sets' rows in its pixels (spriteMarks)
+  const m = fig.mpp * (fig.beast === true ? EOTB_FIGURE.beast : 1) * art, at = (/** @type {number} */ px) => fig.base + px * m, x = (/** @type {number} */ px) => px * m;
   const R = SPRITE_ROWS, pts = out.pts, half = CLOAK_SHOULDER_HALF * m / EOTB_FIGURE.mpp;   // the shoulders as the cape's are (auraSpriteBones)
   // the picture's own marks (spriteMarks), where they were read: the head's top and the body's middle across the card
-  const mk = fig.marks ? (fig.beast === true ? fig.marks.beast : fig.marks) : null, k = fig.beast === true ? EOTB_FIGURE.beast : 1;
+  const mk = fig.marks ? (fig.beast === true ? fig.marks.beast : fig.marks) : null, k = (fig.beast === true ? EOTB_FIGURE.beast : 1) * art;
   const headY = Number.isFinite(mk?.top) ? fig.base + (mk.top / k - HEAD_TOP_PX) * m : at(EOTB_FIGURE.head) + CLOAK_HEAD_ABOVE * m / EOTB_FIGURE.mpp;
   set(pts, 'head', [0, headY, 0.01]);
   set(pts, 'crown', [0, pts[POSE_AT.head + 1] + CROWN_ABOVE * m / EOTB_FIGURE.mpp, 0.01]);

@@ -199,6 +199,13 @@ Three staff sets read the head's top off the staff's orb, so a crown floated ove
 or a mace held out lost its body, its head points in the air beside it. The phone's account window filled the screen
 only because the skin card's row happened to; its grid track is the screen's now.
 
+**The second audit** made the sheet judge its bodies (every view's marks read, every pose point on its picture). It
+found one record drawn at another scale: the female Acrobat seen three-quarter on is 81 px tall where the sets draw 110
+(ACRO-SHORT's record scale). Read at the sets' rows its shoulders were its neck, and a head piece or a cape stood
+0.4 m over its head. A picture's marks are read at the sets' rows and widths scaled by its record's scale
+(`eotbSprite.js` spriteArtScale, spriteMarks' `art`), and its pose and its cape stand at the body's own heights. A
+peer's name lifts only over a head piece drawn in that frame, and a sprite's Cinderstride embers fall at each foot.
+
 ## 11. How it is checked
 
 - `test/render/armory.test.js` - the kit's law, the wire, the words, the pose, the marks, each piece's draws, the pass

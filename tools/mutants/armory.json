@@ -79,7 +79,7 @@
   {
     "name": "ARMORY-the-staff-taken-for-the-head",
     "file": "src/render/armoryPose.js",
-    "old": "first = runAt(r0, HEAD_MIN_PX);",
+    "old": "first = runAt(r0, headMin);",
     "new": "first = runAt(r0);",
     "tests": [
       "test/render/armory.test.js"
@@ -454,8 +454,8 @@
   {
     "name": "ARMORY-a-staff-taken-for-a-leg",
     "file": "src/render/armoryPose.js",
-    "old": "Math.abs((x0 + x1) / 2 - axis) <= BODY_OFF_PX + 8 && !shaft(r, x0, x1))",
-    "new": "Math.abs((x0 + x1) / 2 - axis) <= BODY_OFF_PX + 8)",
+    "old": "Math.abs((x0 + x1) / 2 - axis) <= bodyOff + 8 * A && !shaft(r, x0, x1))",
+    "new": "Math.abs((x0 + x1) / 2 - axis) <= bodyOff + 8 * A)",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -490,7 +490,7 @@
   {
     "name": "ARMORY-a-robe-one-leg",
     "file": "src/render/armoryPose.js",
-    "old": "return wd >= 2 * LEG_MIN_PX + 2 ? [",
+    "old": "return wd >= 2 * legMin + 2 ? [",
     "new": "return false ? [",
     "tests": [
       "test/render/armory.test.js"
@@ -510,6 +510,51 @@
     "file": "src/scenes/auraHost.js",
     "old": "peerPose(d.id, w); armoryMotionStep(w, t, right);",
     "new": "peerPose(d.id, w); armoryMotionStep(w, t);",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-art-unread",
+    "file": "src/render/armoryPose.js",
+    "old": "const A = art > 0 ? art : 1, sc =",
+    "new": "const A = 1, sc =",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-poses-rows-the-pictures-pixels",
+    "file": "src/render/armoryPose.js",
+    "old": "  const art = fig.marks?.art > 0 ? fig.marks.art : 1;   // a record drawn at another scale",
+    "new": "  const art = 1;   // a record drawn at another scale",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-capes-rows-the-pictures-pixels",
+    "file": "src/render/auraRing.js",
+    "old": " * (fig.marks?.art > 0 ? fig.marks.art : 1), at = (px) => fig.base + px * m,",
+    "new": ", at = (px) => fig.base + px * m,",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-world-body-reads-at-the-sets-scale",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "{ arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }",
+    "new": "{ arms: spriteArmsSeen(s.view) }",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-arms-read-at-the-sets-rows",
+    "file": "src/render/armoryPose.js",
+    "old": "rows = at0.map((r) => Math.round(r * A));",
+    "new": "rows = at0;",
     "tests": [
       "test/render/armory.test.js"
     ]

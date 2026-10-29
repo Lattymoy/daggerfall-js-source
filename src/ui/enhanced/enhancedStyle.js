@@ -1237,7 +1237,7 @@ img.fit { image-rendering: pixelated; }   /* AUDIT UI A1: a fitted picture drawn
   text-align: left; cursor: pointer; opacity: 1; }
 .card button.slottile:hover { background: rgba(255, 255, 255, 0.06); }
 .card button.slottile.on { border-color: var(--brass); box-shadow: inset 0 0 0 1px var(--brass); background: rgba(255, 255, 255, 0.06); }
-.card button.slottile .slotname { font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
+.card button.slottile .slotname { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
 .card button.slottile .slotworn { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
 .card button.slottile.empty .slotworn { color: var(--dim); }
 .card button.slottile .slotglyphs { display: flex; gap: 4px; }

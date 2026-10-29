@@ -15,6 +15,7 @@ import { ARMORY_SET_TEXT } from '../../src/ui/armoryText.js';
 import { badged, readArmory } from '../../src/net/wire.js';
 import { POSE_AT, REST_POINTS, newPose, poseFromBones, poseFromFigure, poseAtRest, poseWorld, spriteMarks, spriteArmsSeen } from '../../src/render/armoryPose.js';
 import { spriteFor } from '../../src/player/eyeOfTheBeholder/eotbSprite.js';
+import { auraSpriteBones } from '../../src/render/auraRing.js';
 import {
   armoryDraws, armoryWearers, armoryMotionStep, armoryEyeAtHead, armoryPrograms, armoryRatesWhole, ARMORY_BODY_PIECES, ARMORY_PROGRAMS,
   ARMORY_RANGE_M, ARMORY_DRAW_MAX, ARMORY_TRAIL, ARMORY_STRIDE_M, ArmoryRenderer,
@@ -403,4 +404,31 @@ test('ARMORY HOST-SPLIT: the world host wires the module and keeps none of it (m
   assert.match(h, /const vw = renderer\._view, right = vw \? \[vw\[0\], vw\[4\], vw\[8\]\] : null;/, 'the view\'s right, the draw\'s (ArmoryRenderer.draw)');
   assert.match(h, /selfPose\(selfKit\.pose, player\); armoryMotionStep\(selfKit, t, right\);/);
   assert.match(h, /peerPose\(d\.id, w\); armoryMotionStep\(w, t, right\);/, 'a sprite\'s embers off its feet, mine and a peer\'s');
+});
+
+test('ARMORY a record drawn at another scale (eotbSprite.js spriteArtScale - ACRO-SHORT\'s Acrobat seen three-quarter on, 81 px where the sets draw 110): its marks read at the sets\' rows scaled by it, and its pose stands at the body\'s own heights (mutants: the art unread; the pose\'s rows the picture\'s pixels)', () => {
+  const w = 64, h = 128, big = new Uint32Array(w * h);
+  const fill = (/** @type {number} */ x0, /** @type {number} */ x1, /** @type {number} */ y0, /** @type {number} */ y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) big[y * w + x] = 0xff000000; };
+  fill(26, 37, 0, 90); fill(28, 35, 91, 104);   // the torso and legs, the head
+  fill(18, 23, 50, 88); fill(24, 25, 84, 88); fill(40, 45, 50, 88); fill(38, 39, 84, 88);   // two arms hanging apart
+  const A = 0.75, sw = Math.round(w * A), sh = Math.round(h * A), small = new Uint32Array(sw * sh);
+  for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) small[y * sw + x] = big[Math.floor(y / A) * w + Math.floor(x / A)];
+  const full = spriteMarks(big, w, h), drawn = spriteMarks(small, sw, sh, { art: A });
+  assert.ok(full?.arms && drawn?.arms && drawn.legs, 'the small picture read whole - its arms and legs');
+  assert.equal(drawn.art, A);
+  assert.ok(Math.abs(drawn.top - full.top * A) <= 1, `its head's top in its own pixels (${drawn.top} by ${full.top * A})`);
+  assert.equal(spriteMarks(small, sw, sh)?.arms, null, 'read at the sets\' own rows, its shoulders are its neck - no arms');
+  // the pose: the same body at the same heights, its picture's pixels the bigger
+  const at = (/** @type {any} */ marks, /** @type {number} */ mpp, /** @type {string} */ n) => { const p = newPose(); poseFromFigure({ base: 0, mpp, marks, shift: 0 }, p); return p.pts[POSE_AT[n] + 1]; };
+  for (const n of ['shL', 'elR', 'knL', 'head', 'crown']) {
+    const a = at(full, 0.02, n), b = at(drawn, 0.02 / A, n);
+    assert.ok(Math.abs(a - b) < 0.04, `${n} at ${b.toFixed(3)} m, the full picture's ${a.toFixed(3)}`);
+  }
+  // the auras' cape and wings hang off the same rows (auraRing.js auraSpriteBones)
+  const cape = (/** @type {any} */ marks, /** @type {number} */ mpp) => auraSpriteBones({ base: 0, mpp, marks })['bip01 l upperarm'][1];
+  assert.ok(Math.abs(cape(drawn, 0.02 / A) - cape(full, 0.02)) < 1e-9, 'the cape\'s shoulders at the body\'s own');
+  // every reader hands the record's scale over (the world's body, a peer's, the profile's stage)
+  for (const f of ['src/player/eyeOfTheBeholder/eotbBody.js', 'src/net/peer/peerRiders.js']) assert.match(rd(f), /spriteMarks\(px, width, height, \{ arms: spriteArmsSeen\(s\.view\), art: spriteArtScale\(s\.archive, s\.record\) \}\)/, f);
+  assert.match(rd('src/render/characterStage.js'), /art: shown\.art \}/);
+  assert.match(rd('src/ui/profileBody.js'), /art: spriteArtScale\(s\.archive, s\.record\) \};/);
 });

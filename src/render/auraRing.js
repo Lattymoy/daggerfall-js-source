@@ -3132,7 +3132,7 @@ export const EOTB_FIGURE = Object.freeze({ mpp: 0.019, shoulder: 86, neck: 91, h
  *  is drawn. Pure. */
 export function auraSpriteBones(fig) {
   if (!fig || !Number.isFinite(fig.base) || !(fig.mpp > 0)) return null;
-  const m = fig.mpp * (fig.beast === true ? EOTB_FIGURE.beast : 1), at = (px) => fig.base + px * m, half = CLOAK_SHOULDER_HALF * m / EOTB_FIGURE.mpp;
+  const m = fig.mpp * (fig.beast === true ? EOTB_FIGURE.beast : 1) * (fig.marks?.art > 0 ? fig.marks.art : 1), at = (px) => fig.base + px * m, half = CLOAK_SHOULDER_HALF * m / EOTB_FIGURE.mpp;   // ARMORY: a record drawn at another scale (armoryPose.js spriteMarks' `art`)
   return {
     'bip01 l upperarm': [-half, at(EOTB_FIGURE.shoulder), 0], 'bip01 r upperarm': [half, at(EOTB_FIGURE.shoulder), 0],
     'bip01 neck': [0, at(EOTB_FIGURE.neck), 0], 'bip01 head': [0, at(EOTB_FIGURE.head), 0], 'bip01 spine2': [0, at(EOTB_FIGURE.spine), 0],

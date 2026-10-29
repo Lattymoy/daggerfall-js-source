@@ -5,7 +5,7 @@
 // the rig is built), and its sprite everywhere: the on-foot skin chosen, or the layered gear it wears in its own body
 // (player/eyeOfTheBeholder/eotbBody.js look(), layeredArmor.js), at the world's size and offset. Not a DFU member.
 import { modSettingsOf } from '../systems/modSettings.js';
-import { spriteFor, eotbSpriteUrl, spriteOffset, spriteSize, decodeSprite } from '../player/eyeOfTheBeholder/eotbSprite.js';
+import { spriteFor, eotbSpriteUrl, spriteOffset, spriteArtScale, spriteSize, decodeSprite } from '../player/eyeOfTheBeholder/eotbSprite.js';
 import { layeredGenderOf } from '../player/eyeOfTheBeholder/layeredArmor.js';
 import { STAGE_BONES, stageCameraOfBones } from '../render/characterStage.js';
 import { CAPSULE_HEIGHT } from '../player/motor.js';
@@ -40,7 +40,7 @@ export async function spriteBodyOf(/** @type {any} */ look, { scale = 1, view = 
   if (!px?.width || !px?.height || !px.colors) return null;
   const xml = spriteOffset(s.archive, s.record);
   const size = spriteSize(px.width, px.height, { scale: scale > 0 ? scale : 1 }, xml.scale);
-  return { kind: 'sprite', width: px.width, height: px.height, colors: px.colors, mpp: size.h / px.height, base: xml.y / xml.scale, shift: (xml.x / xml.scale) * (s.mirror ? -1 : 1), key: s.key, view: s.view ?? 0 };
+  return { kind: 'sprite', width: px.width, height: px.height, colors: px.colors, mpp: size.h / px.height, base: xml.y / xml.scale, shift: (xml.x / xml.scale) * (s.mirror ? -1 : 1), key: s.key, view: s.view ?? 0, art: spriteArtScale(s.archive, s.record) };
 }
 
 /**

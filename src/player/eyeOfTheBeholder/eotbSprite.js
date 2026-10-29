@@ -87,10 +87,17 @@ export function spriteOffset(archive, record) {
   const o = spriteInfo.offsets[`${archive}_${record}-0`];
   const d = spriteInfo.default;
   const xml = o ? { scale: o.scale ?? 1, x: o.x ?? 0, y: o.y ?? 0 } : { scale: d.scale ?? 1, x: d.x ?? 0, y: d.y ?? 0 };
+  const s = spriteArtScale(archive, record);
+  return s === 1 ? xml : { ...xml, scale: xml.scale * s };
+}
+
+/** A RECORD'S ART SCALE: its pixels a set's pixel - 1 for the sets. What spriteOffset scales a record by, and the rows a
+ *  picture's marks are read at (render/armoryPose.js spriteMarks' `art`). Pure. */
+export function spriteArtScale(/** @type {number} */ archive, /** @type {number} */ record) {
   // ACRO-SHORT: a class sheet's record drawn at another scale carries its own (player/classSkins.js classRecordScale)
   const k = classRecordScale(archive, record);
   const s = k * eotbRecordScale(archive, record);   // RPT1026-MISC SPELL-SHORT: and a set of the mod's own drawn so
-  return s === 1 ? xml : { ...xml, scale: xml.scale * s };
+  return s;
 }
 
 /**

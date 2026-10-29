@@ -175,7 +175,7 @@ export function startCharacterStage(canvas, { body = null, kit = null, aura = nu
       gl.bindTexture(gl.TEXTURE_2D, tex);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, shown.width, shown.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(shown.data.buffer, shown.data.byteOffset, shown.width * shown.height * 4));
     } else if (shown?.kind === 'sprite') {
-      const fig = { base: shown.base ?? 0, mpp: shown.mpp, beast: false, marks: spriteMarks(shown.colors, shown.width, shown.height, { arms: spriteArmsSeen(shown.view) }), shift: shown.shift ?? 0 };
+      const fig = { base: shown.base ?? 0, mpp: shown.mpp, beast: false, marks: spriteMarks(shown.colors, shown.width, shown.height, { arms: spriteArmsSeen(shown.view), art: shown.art }), shift: shown.shift ?? 0 };
       if (!poseFromFigure(fig, pose)) { shown = null; poseAtRest(pose); }
       else {
         auraCapeStep(wearer, { feet: [0, 0, 0], yaw: 0, bones: auraSpriteBones(fig) });

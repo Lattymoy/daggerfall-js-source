@@ -29,7 +29,7 @@ import { orientationFor, portrayedYaw, frameCount, frameTime, chooseTable, speed
 import { getMeleeWeaponAnimTime } from '../../characters/weaponStates.js';
 import { EOTB_FOOT_SET_COUNT } from '../../player/classSkins.js';   // PEERFX3: a class skin is a set past the mod's
 import { spriteMarks, spriteArmsSeen } from '../../render/armoryPose.js';   // ARMORY: where the body stands in its own picture
-import { spriteFor, eotbSpriteUrl, spriteSize, spriteOffset, flipRows, worldOrderColors, lookedPixels } from '../../player/eyeOfTheBeholder/eotbSprite.js';
+import { spriteFor, eotbSpriteUrl, spriteSize, spriteOffset, spriteArtScale, flipRows, worldOrderColors, lookedPixels } from '../../player/eyeOfTheBeholder/eotbSprite.js';
 import { decodePng } from '../../systems/textureReplacement.js';
 import { isLayeredKey, decodeLayered, outfitOfItems, layeredGenderOf, LAYERED_OWN } from '../../player/eyeOfTheBeholder/layeredArmor.js';   // WORN-ARMOUR: a walker in the armour it wears
 import { modSetting } from '../../systems/modSettings.js';   // LAYERED-PEERS: whether this player wears Layered Gearing
@@ -144,7 +144,7 @@ export function createEotbArt({ renderer = null, urlFor = eotbSpriteUrl, decode 
       const { width, height, colors } = lookedPixels(s, raw);   // COATS1: a rider's mount in its look
       const px = s.mirror ? flipRows(colors, width, height) : colors;
       renderer.uploadTexture(s.archive, s.rec, { width, height, colors: px });
-      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view) }) };   // ARMORY: the body's place in the picture, read once
+      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }) };   // ARMORY: the body's place in the picture, read once
     });
     tex.set(k, p);
     p.then((r) => { if (tex.get(k) === p) tex.set(k, r); }, () => { if (tex.get(k) === p) tex.set(k, { failedAt: clock() }); });
