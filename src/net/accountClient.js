@@ -1035,6 +1035,7 @@ export const D1_BOOKMARK_READS = new Map([
   ['/v1/saves', 'GET'],
   ['/v1/arena/board', 'POST'],
   ['/v1/festival/town', 'POST'],   // WITCH1: a town's Hearth Offerings
+  ['/v1/hunt/state', 'POST'],   // HUNT-LEAN: a character's hunt
 ]);
 let _d1Mark = { secret: null, mark: null };
 /** AUDIT SCALE II A-2: how many times the page's bookmark has been forgotten - a read's answer is kept only under the

@@ -14,7 +14,7 @@ import { seatRegionOk, seatWeekStartMs } from '../../src/net/townSeatLaw.js';
 import { PROF_XP_MAX } from '../../src/net/professionLaw.js';
 import { huntClearOf, huntTierFits, huntWeekAt, masteryMarksOf, HUNT_CLEARS_DAY_MAX, HUNT_RUNGS, HUNT_MARK_RUNG, HUNT_TITLES } from '../../src/net/huntLaw.js';
 
-/** Asks an account may make of the ledger an hour - a reader's page and a hunter's reports, never a script's. */
+/** Reports an account may make to the ledger an hour - a hunter's, never a script's (HUNT-LEAN: the read counts none). */
 export const HUNT_OPS_HOUR = 240;
 /** The refusals' statuses (index.js answers the rest 400). */
 export const HUNT_STATUS = Object.freeze({ 'hunt-need-account': 403, 'hunt-rate': 429, 'hunt-rung': 409, 'hunt-tier': 409, 'hunt-late': 409, 'hunt-early': 409 });
@@ -46,13 +46,14 @@ async function huntStateOf(db, playerId, character, nowS) {
 /**
  * /v1/hunt/state - `{ character }`: `{ ok, clears, marks, markDone, regions, account }` - the character's board clears,
  * its named marks and whether this week's is cleared, its clears by the boards' region, and the account's. Or `{ error }`:
- * 'hunt-need-account', 'hunt-character', 'hunt-rate'.
+ * 'hunt-need-account', 'hunt-character'.
+ * HUNT-LEAN (2026-10-29, bible/11-Multiplayer/Scale-Arc.md HUNT-LEAN): a read that writes nothing - no rate window, the
+ * primary's write on every page's poll - so a D1 replica serves it (service.js REPLICA_ROUTES).
  * @param {{ db: any, nowS: number }} ctx @param {any} player @param {any} _env @param {any} body
  */
 export async function huntState(ctx, player, _env, body) {
   if (accountKind(player) !== 'linked') return { error: 'hunt-need-account' };
   if (!renownCharacterOk(body?.character)) return { error: 'hunt-character' };
-  if (await overRate(ctx, `hunt:${player.id}`, HUNT_OPS_HOUR, 3600)) return { error: 'hunt-rate' };
   return { ok: true, ...(await huntStateOf(ctx.db, player.id, body.character, ctx.nowS)) };
 }
 
