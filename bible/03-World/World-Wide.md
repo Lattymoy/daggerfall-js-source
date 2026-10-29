@@ -2274,4 +2274,6 @@ stars over ten festival days; the raids against the old slots, and offline; the 
 order; the Timers' rows by name; the wiring. `test/ui/fronts1_card.test.js`: the card drawn. `tools/mutants/fronts.json`:
 35, all dead. The WW2, WW5, WW6 and WW-GATES-EVERYWHERE pins moved to the provinces' turns (PIN MOVED: FRONTS). EG3's
 Hollow realm re-recorded (146 to 144 frames): fewer province Hollows rise before it opens, so the seeded die stands
-elsewhere; seeded afresh at the fight's first hello, main and FRONTS say the same 142 frames.
+elsewhere; seeded afresh at the fight's first hello, main and FRONTS say the same 142 frames. FRONTS merged before CI
+read it, so two pins moved after (PIN MOVED: FRONTS): EVENT-TIP's host pin takes the fronts' clock beside the gates,
+and L10N3e's census counts `frontWords.js`'s name lookup.
