@@ -225,6 +225,13 @@ test('DLV1 THE SMALL ROOM: where the large rooms leave the count short, a 3 m di
   const tally = {};
   delveSitePlan({ blocks, probe: smallOnly, seed: 99, tally });
   assert.ok(tally.room > 0 && tally.small && !tally.small.room, 'each pass tallied apart');
+  // a small spot 59.7 m off the large site, its storey 3 m up: not certainly near (it may land 7 m under), so probed - and
+  // then refused by the spacing from what the first pass stood
+  const lx = RDB_SIDE + 3.6 + 8, lz = 3.6 + 8, sx = lx + 59.2, sz = lz + 8;
+  const at = (p, x, z) => Math.abs(p[0] - x) < 0.01 && Math.abs(p[2] - z) < 0.01;
+  const probe2 = { floor: () => ({ y: 0, ny: 1 }), room: (p, r) => ((r === 4 && at(p, lx, lz)) || (r === 3 && at(p, sx, sz)) ? { walls: walls() } : null) };
+  const two = delveSitePlan({ blocks: row(4, { markers: (i) => (i === 2 ? [mk(19, 5, 5, 3)] : []) }), probe: probe2, seed: 99 });
+  assert.deepEqual(two.sites.map((x) => [x.x, x.z, x.r]), [[Math.round(lx * 100) / 100, Math.round(lz * 100) / 100, 4]], 'the near small spot never stood');
 });
 
 test('DLV1 THE ROOM KEEPS CLEAR OF WHAT MOVES: no mover, door or piece not the dungeon\'s own reaches into the disc at its build pose - a sliding wall, a lift, a door (AUDIT DELVE II L1: model 59006\'s wall stood in 20 sites\' discs) (mutants: the movers unread; the disc\'s reach; the band over the floor)', () => {
@@ -247,12 +254,15 @@ test('DLV1 THE ROOM KEEPS CLEAR OF WHAT MOVES: no mover, door or piece not the d
   assert.equal(boxMeetsDisc(b, [0, -2.4, 0], 4), true);
 });
 
-test('DLV1 THE FLOOR ASKED WHERE IT MATTERS: sixteen bearings on every ring, and every piece\'s own spot - the tier\'s plates, the gates (AUDIT DELVE II L9: a block between two bearings) (mutants: eight bearings; the plates\' spots unasked; the tier unread; the gates\' unasked)', () => {
+test('DLV1 THE FLOOR ASKED WHERE A PIECE STANDS: every ring on its eight bearings, and every piece\'s own spot - the tier\'s plates, the gates, the vault\'s four; between them a room holds what rooms hold (AUDIT DELVE II L9) (mutants: the plates\' spots unasked; the tier unread; the gates\' unasked; the vault\'s unasked)', () => {
   const near = (p, x, z) => Math.abs(p[0] - x) < 1e-6 && Math.abs(p[2] - z) < 1e-6;
   const raised = (x, z) => ({ floor: (p) => (near(p, x, z) ? { y: 0.6, ny: 1 } : { y: 0, ny: 1 }), room: () => ({ walls: walls() }) });
   const cand = [{ pos: [0, 0.5, 0], water: -Infinity, block: 0, start: false }];
   assert.equal(landDelveSites(cand, { probe: raised(99, 99) }).length, 1, 'flat: kept');
-  assert.equal(landDelveSites(cand, { probe: raised(3 * 0.9238795325112867, 3 * 0.3826834323650898) }).length, 0, 'between the eight, on the 3 m ring');
+  assert.equal(landDelveSites(cand, { probe: raised(3 * 0.9238795325112867, 3 * 0.3826834323650898) }).length, 1, 'a table between the bearings: a room holds what rooms hold');
+  assert.equal(landDelveSites(cand, { probe: raised(3, 0) }).length, 0, 'on a ring\'s bearing');
+  assert.equal(landDelveSites(cand, { probe: raised(0, 3.4) }).length, 0, 'a vault\'s spot');
+  assert.equal(landDelveSites(cand, { probe: raised(-2.4, 0), law: DSITE_SMALL }).length, 0, 'the small room\'s vault, 0.6 m in from its 3 m');
   assert.equal(landDelveSites(cand, { probe: raised(2.5 * 0.951057, 2.5 * 0.309017), tier: 'elite' }).length, 0, 'an Elite\'s plate');
   assert.equal(landDelveSites(cand, { probe: raised(2.5 * 0.951057, 2.5 * 0.309017) }).length, 1, 'no plate there in a regular dungeon');
   assert.equal(landDelveSites(cand, { probe: raised(0, -2.5) }).length, 0, 'a plate of four');

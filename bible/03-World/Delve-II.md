@@ -9,7 +9,8 @@ anything and really kill this."
 The first Delve arc (`Delve-Arc.md`, 2026-10-05) answered "removing esoteric nature of dungeons", "(no logical
 interaction moments)" and "way to detect interactables" with legibility: the look round, the chain's echo, the way out.
 DELVE II answers the second point with things to do: rooms a party comes upon and fights through or works out, each
-opening a vault. Status: DLV0, the design, recorded here. Nothing below is built yet.
+opening a vault. Status: DLV0 to DLV2 built (the law, the sites and the game offline - sections 4 and 12) and audited
+(AUDIT DELVE II, `01-Overview/audits/Audit-Delve-II.md`); DLV3 to DLV6 to come.
 
 ## 1. The owner's four decisions (2026-10-28)
 
@@ -58,10 +59,11 @@ puzzle".
 1. **THE LAYOUT STAYS.** In Daggerfall's own dungeons an encounter stands in a room the layout already has. No block is
    added, moved or removed, so every quest marker, treasure pile and foe stands where it did, and a dungeon's online
    room keeps its key. Curated blocks stand only in game-made dungeons (section 8).
-2. **NEVER IN THE WAY.** No site stands on a marker, a door or the way in. A puzzle guards a vault, never a passage. A
-   wave's ward holds its foes in, never a player: a player may always walk out, and the room is never sealed.
+2. **NEVER IN THE WAY.** No site stands on a door, a mover, the way in, or a start, treasure or quest marker, and a
+   foe's marker never at its heart. A puzzle guards a vault, never a passage. A ward holds no player: a player may
+   always walk out, and the room is never sealed.
 3. **ONE TO EIGHT.** Every encounter is won by one character of the floor build (law 7) and scales to a party of
-   eight: wave sizes, a puzzle's pieces and a timed window all read the party standing at the start.
+   eight: a wave's size reads the party in the ward as the wave stands, and a timed window the party at its start.
 4. **THE SAME ON EVERY CLIENT.** Sites are a pure function of the layout, the collider's answers and the dungeon's
    seed, under `dungeonFires.js`'s determinism rules. Nothing about where a site stands rides the wire.
 5. **THE PARTY OWNS, THE RELAY COUNTS.** Online, the relay keeps each started encounter's ledger in the dungeon's room.
@@ -86,56 +88,58 @@ census (DLV1, `tools/delveSiteProbe.mjs`) before it was kept.
 | Rule | Value | Why |
 |---|---|---|
 | Candidates | a 4 m grid over every non-border block, centred, at each storey its markers stand on (heights 6 m apart) | the markers and block centres the fire law asks found a room in one dungeon of three; the grid finds the rooms between them |
-| Floor | a face that looks up within 4 m below, level to 0.25 m on rings at 1.5, 3 and 4 m (the outer ring asked first) | a room's floor, never a stair, a ramp or a tabletop |
-| The disc | radius 4 m; the eight chest-height rays clear past it; a ceiling within 12 m; walls on at least four rays within 30 m; the body fits | room to fight or work, inside a room, never on its roof or in an open hall |
+| Floor | a face that looks up within 4 m below, level to 0.25 m on rings at 1.5, 3 and 4 m on the eight bearings (the outer ring asked first), and on every piece's own spot: the tier's plates, the gates, the vault's four | a room's floor, never a stair, a ramp or a tabletop; a room may hold furniture between the bearings, never under a piece |
+| The disc | radius 4 m; no mover, door or other piece not the dungeon's own reaching into it, 2.5 m over its floor (its box at the build pose: `Collider.bucketBoxes`); the eight chest-height rays clear past it; a ceiling within 12 m; walls on at least four rays within 30 m; the body fits | room to fight or work, inside a room, never on its roof, in an open hall or in a sliding wall's path |
 | Clear of | doors 4.5 m; an enemy marker's own spot 2 m; start, treasure and quest markers 4 m (both on their storey); the way in 20 m; every fire 12 m; water by 0.5 m | law 2. The halls the foes stand in are the rooms a site wants, so a foe's marker refuses only its own spot |
-| The small room | where the large rooms leave the count short: a 3 m disc on a 2 m grid, rings at 1.5 and 3 m, doors 3.5 m, items 3 m, the way in 12 m, fires 8 m, 60 m from the sites already stood | a small dungeon's rooms |
+| The small room | where the large rooms leave the count short: a 3 m disc on a 2 m grid, rings at 1.5 and 3 m, doors 3.5 m, items 3 m, the way in 12 m, fires 8 m, 60 m from the sites already stood; a candidate certainly within 60 m of one (its floor lands at most 4 m under its storey) never probed | a small dungeon's rooms |
 | How many | non-border blocks / 2, at least 1, at most 3 | 4,221 of the 4,232 dungeons have one to four inner blocks: a four-block dungeon stands a wave and a puzzle |
 | None in | a palace (`isPalaceLayout`), Privateer's Hold, the made levels (court, Hour, Spire, Ketch, arenas), the Abyss Hollow | a court is no dungeon; the Hold is the tutorial; the made levels have their own law |
 | Choice | the deepest first (height counted twice), then farthest-point 60 m apart, a storey with none first, ties by `hash32(seed, i)` | spread through the dungeon, the same everywhere |
 | Kind | seeded by the dungeon's id and the site's index; the second site takes the family the first did not | variety in one dungeon, the same for every visitor |
-| Vault | a Hold's toward the nearest wall of the four axis bearings, the disc's radius less 0.6 m out; a Litany's at its heart | a Hold's gates stand on the diagonals and a Litany's plates on the axes: the chest stands on neither |
+| Vault | a Hold's toward the nearest wall of the four axis bearings (the walls to the centimetre: a nearer by less is a tie, the first bearing), the disc's radius less 0.6 m out; a Litany's at its heart | a Hold's gates stand on the diagonals and a Litany's plates on the axes: the chest stands on neither; no last bit of an engine's trig moves it |
 
-**THE CENSUS** (2026-10-28, all 4,232 dungeons, four shards of about 40 s). 4,228 want sites; the three palaces and
-Privateer's Hold want none. 3,838 (90.8%) stand at least one, and 1,382 stand two or three, each with a wave and a
-puzzle. 390 stand none: their rooms are corridors and stairs. Of 5,698 sites wanted, 5,226 stand, 1,194 of them in a
-small room; 2,645 are Holds and 2,581 Litanies. A refused spot's first broken rule is most often no floor (a grid point
-in rock or void), then a floor not level, then a door. One site for five blocks stood one in every dungeon, and the
-large rooms alone a site in 73 dungeons of a hundred: the count and the small room are the census's.
+**THE CENSUS** (AUDIT DELVE II, 2026-10-29, all 4,232 dungeons, four shards of about 40 s). 4,228 want sites; the
+three palaces and Privateer's Hold want none. 3,838 (90.7%) stand at least one, and 1,381 stand two or three, each with
+a wave and a puzzle. 390 stand none: their rooms are corridors and stairs. Of 5,698 sites wanted, 5,225 stand, 1,231 of
+them in a small room; 2,645 are Holds and 2,580 Litanies. No disc holds a mover or a door (86 did before the audit).
+A refused spot's first broken rule is most often no floor, then a floor not level, then a door. The large rooms alone
+stand a site in 73 dungeons of a hundred: the count and the small room are the census's.
 
-**THE COST.** The plan runs once, in the dungeon's load beside the fire plan: 6 ms at the median, 42 ms at the 95th
-percentile, 76 ms at worst (Node, one core, the probe's own clock).
+**THE COST.** The plan runs once, in the dungeon's load beside the fire plan: 7.4 ms at the median, 25 ms at the 90th percentile, 48 ms at the 99th, 101 ms
+at worst (Tower Mastersley; Node, one core, every dungeon - the fire plan 1.3 ms at the median beside it).
 
 ## 5. The kinds
 
 Each kind's numbers are starting values, held in `net/delve/delveLaw.js`, measured in the game before they ship. `n` is
-the party standing at the start (1 to 8); a foe is drawn from the dungeon's own encounter table at the dungeon's own
-level and tier, so a cave's waves are a cave's and an Elite's are an Elite's (BAL3: the place sets the threat).
+the party in the ward as a wave stands (1 to 8); a foe is drawn from the dungeon's own encounter table (its place, as
+its layout's foes: DEX3's `dungeonPlace`) at the player's level and the dungeon's tier (BAL3: the place sets the
+threat). A dungeon whose table stands no foe stands no Hold.
 
 ### 5.1 Waves
 
 - **THE HOLD.** Survive three waves inside the ward. A wave is `3 + 2(n - 1) + (w - 1)` foes, at most 12 (one grant,
   section 7). The ward rises for 4 s before the first. A five-second breath between waves (STAR-TUNE's lesson: "The
   time between waves is too long"). A wave that runs 90 s gives way to the next. The last is a captain: an elite of
-  the table with one boss trait, two in an Elite or Abyss dungeon (BOSS-TRAITS), its fall believed no sooner than 20 s.
+  the table with one boss trait, two in an Elite dungeon (BOSS-TRAITS), its fall believed no sooner than one kill's
+  least time (2.5 s, the Starfall's). Not fallen in 5 minutes, it outlasts the ward and the attempt ends.
 - **THE WELLSPRINGS.** Two to four sources - a cracked tomb, a pool, a broken altar, by the dungeon's type - each
   pouring a foe every 12 s, three of its own alive at most. Break every source, then the captain. A source's health is
   sized to the party (the Spire's `egHpTeam` rule, `net/eliteGates/egBodies.js`).
 - **THE VIGIL.** A relic at the disc's heart with 100 light; foes go for it before the party (`huntsStar`'s rule).
   Three waves as the Hold's; the light lost, the vigil fails and can be tried again after the respawn breath (60 s).
 
-A wave's foes are held to the ward (the disc and 2 m round it, 3 m up or down): they never chase a player through the
-dungeon, and a player who leaves the ward leaves the fight. The encounter clock runs only while a member was in the
-ward within 15 s. Every member out of the ward for 30 s ends the attempt: its foes crumble, nothing is earned, the
-site can be tried again.
+A wave's foes fight as any foe of the dungeon does (no leash: the AI's follower leash turns the Enhanced AI's fighting
+off). The ward is the disc and 2 m round it, 3 m up or down, in its own room (past the disc, a clear line to the
+heart). The encounter clock runs only while a member was in the ward within 15 s. Every member out of the ward for 30 s
+ends the attempt: its foes crumble wherever they are, nothing is earned, and the ward wakes again to a step back in.
 
 ### 5.2 Puzzles
 
 - **THE LITANY** (runes in order - the Examination's law). Four plates 2.5 m round the disc's heart, five in an
-  Elite or Abyss dungeon. They light one at a time, a second each, with a numeral and a chime, then go dark. Step on
-  each in that order (within 1.2 m). A lit plate may be stood on again; a wrong one darkens all and the order plays
-  again. Untimed; in an Elite or Abyss dungeon a wrong plate also wakes two foes of the table. A party silent at the
-  site for 60 s lets it go.
+  Elite dungeon. They light one at a time, a second each, with a numeral and a chime, then go dark. Step on each in
+  that order (within 1.2 m). A lit plate may be stood on again; a wrong one darkens all and the order plays again.
+  Untimed; in an Elite dungeon a wrong plate also wakes two foes of the table. A party silent at the site for 60 s lets
+  it go.
 - **THE BRAZIER RITE** (carry and bank - the Ketch's law). A source flame at the heart and three braziers at the rim,
   four for a party of four or more. Take the flame, carry it slowed (THE BURDEN, 0.72) with the weapon put up, and
   light a brazier. A carried flame gutters out after 20 s; a carrier struck drops it, and it lies 10 s to be taken up.
@@ -151,11 +155,12 @@ No puzzle hurts a player for a wrong answer, and none is the clock: no dial, no 
 
 ## 6. The vault
 
-- A chest stands sealed from the moment the site is seen (Daggerfall's own, model 41811, the Crown Hall's): at a Hold's
-  wall, at a Litany's heart. The encounter won, it opens.
-- Its roll is `rollPileItems`: the dungeon's tables at its type, its Elite or Abyss odds, LOOT-GATE's rarity, the
-  online party's shared base (PARTY-LOOT). Offline, the player's own roll. It is never empty: a roll with no item is
-  rolled again, once, and then holds the pile's gold.
+- A chest stands sealed from the dungeon's first frame (Daggerfall's own, model 41811, the Crown Hall's), solid as a
+  block's chest is: at a Hold's wall, at a Litany's heart. The encounter won, it opens. Its plaque names a sealed vault
+  and what opens it, and lists a won one as a pile; quick loot takes from it; the look round calls it a find.
+- Its roll is `rollPileItems`: the dungeon's tables at its type, its Elite odds, LOOT-GATE's rarity, the online party's
+  shared base (PARTY-LOOT). Offline, the player's own roll. It is never empty: a roll with no item is rolled again,
+  once, and then holds the level's gold (1 a level, at least 1).
 - One vault a site a respawn (law 8). Online, each earner opens its own share once.
 - POWER-CEILING (`05-Combat/Power-Ceiling.md`): nothing here is a new line, rung or band.
   The vault's roll is the pile's own, which `test/combat/powerceiling_walk.test.js` walks. Patch notes, release notes
@@ -172,8 +177,9 @@ The relay reads no game data (Port-Doctrine), so it cannot place a site. Every c
   the phase, the wave and its deaths, the pieces' state, the earners. Starfall's machine: an encounter clock that runs
   only while the owning party stands at the site, floors on every clear, a word heard late moved as if on time.
 - **THE PARTY.** The first word's speaker owns the site. A word from another account counts only if the hub says it is
-  of the owner's party (`_instanceKinOf`, SD-PARTY's door). A wave's attempt that fails (section 5.1) or a puzzle let
-  go (section 5.2) drops the ledger, and the site is free.
+  of the owner's party (`_instanceKinOf`, SD-PARTY's door). A wave's attempt that fails (section 5.1), a puzzle let
+  go (section 5.2) or a ledger never woken in 60 s drops the ledger, and the site is free. The fold that ends one moves
+  nothing more. Accounts are kept in a map with no prototype, and a word heard late moves no time back.
 - **REACH.** A puzzle's step, carry or break is judged against the plan's spots and the speaker's last pose the room
   heard, with `ktLeastMs`'s step law at THE DELVE PACE.
 - **THE WAVES.** A machine of the owning party stands the foes (Starfall's camp law) under a grant kind of its own,
@@ -208,10 +214,10 @@ party's puzzle. Offline the same law runs in the client, its ledger saved with t
 | Slice | What | Done when |
 |---|---|---|
 | DLV0 | This record | merged |
-| DLV1 | The law: `net/delve/delveLaw.js` (kinds, numbers, the ledger machine, its words, earned) and `world/dungeon/delveSites.js` (the site law); the census probe | DONE 2026-10-28: `test/net/delve/dlv1_law.test.js` and `test/world/dlv1_sites.test.js`, 98 mutants dead (`tools/mutants/dlv1.json`); the census in section 4 |
-| DLV2 | Offline in the game: `scenes/delve/delveHost.js` wired by `buildDungeonContext`; the Hold and the Litany; the vault; the HUD's words; the Features row `dungeon-encounters`; the Ledger A row | stood and won in the real game at three sizes and an Elite; save, load and respawn; frame cost measured (section 12) |
+| DLV1 | The law: `net/delve/delveLaw.js` (kinds, numbers, the ledger machine, its words, earned) and `world/dungeon/delveSites.js` (the site law); the census probe | DONE 2026-10-28: `test/net/delve/dlv1_law.test.js` and `test/world/dlv1_sites.test.js`, their mutants dead (`tools/mutants/dlv1.json`); the census in section 4 |
+| DLV2 | Offline in the game: `scenes/delve/delveHost.js` wired by `buildDungeonContext`; the Hold and the Litany; the vault; the HUD's words; the Features row `dungeon-encounters`; the Ledger A row | DONE 2026-10-29: stood and won in the real game; save and load; frame cost measured (section 12). AUDIT DELVE II the same day. An Elite stands online alone, so DLV3 stands it |
 | DLV3 | Online: the relay's ledger, the party's door, the plan's hash, the `delve` grant kind | a party of two wins both kinds; a stranger refused; a relay version |
-| DLV4 | The Wellsprings, the Vigil, the Brazier Rite, the Weighing, the Seals; AUDIT DELVE II | every kind stood, won and failed, solo and in a party |
+| DLV4 | The Wellsprings, the Vigil, the Brazier Rite, the Weighing, the Seals; their audit | every kind stood, won and failed, solo and in a party |
 | DLV5 | Curated blocks: the format, the registry, the splice law, the lab page | a curated block stood in a spawned dungeon, its encounter designed |
 | DLV6 | The first curated blocks, their set pieces; AUDIT DLV5-6 | as the owner plays them |
 
@@ -220,9 +226,10 @@ real game over the freeware's data, and a frame-cost measure (`npm run perf`) be
 
 ## 10. The four hosts
 
-- `scenes/dungeonContext.js`: WIRED at DLV2 - the one host that stands a dungeon. 21 logical lines (8,436 to 8,457,
-  under its 8,463 ceiling): the build after its api, the frame and the marks in drawFoes, the vault's arm in takeLoot,
-  the save's word and its restore, the destroy, and the probes' door. The rest is `scenes/delve/`.
+- `scenes/dungeonContext.js`: WIRED at DLV2 - the one host that stands a dungeon. 25 logical lines (8,436 to 8,461,
+  under its 8,463 ceiling): the build after its api, the frame and the marks in drawFoes, the vault's arms in takeLoot
+  and lootContents, the save's word in its world record and its restore, the stamp the two replace doors carry, the
+  destroy, and the probes' door. The rest is `scenes/delve/`.
 - `scenes/world.js`: WIRED at DLV3 - the online link (the ledger's frames), through a module it constructs.
 - `scenes/worldModes.js`: WIRED at DLV2 - `delve:` joins its press arm's prefixes (no logical line); the rest is the
   context's.
@@ -236,7 +243,7 @@ Each has a default the slices follow until the owner says otherwise.
 
 - **Strangers and waves.** Default: a stranger may fight a wave's foes and earns nothing.
 - **Which dungeons.** Default: every dungeon but palaces, Privateer's Hold, the made levels and the Abyss Hollow. The 14
-  main-story dungeons included: no site stands on a marker.
+  main-story dungeons included: no site stands on a quest marker.
 - **How many.** Default: one site for two blocks, one to three (the census moved it from five).
 - **The switch.** Default: an Enhanced Features row, on. Offline it is the player's; online the room's sites stand for
   everyone in it, whatever the row says, as a shared dungeon's foes do.
@@ -251,15 +258,17 @@ foes. Online none stands until DLV3, and the row's note says so.
 
 | Piece | How |
 |---|---|
-| A wave's foes | `chooseRandomEnemy` on the dungeon's own type and the player's level, stood by `spawnLooseFoe` at the four gates (a rank 0.9 m nearer the heart each time round), facing the heart |
-| The leash | the AI's own `follow` (enemyMotor.js): the heart its leader, the ward and 2 m its leash - past it a foe drops the player and walks home |
-| The captain | an elite where elites stand (`elitesAllowed`), its boss traits the ledger's count (`giveBossTraits`) |
-| A failed attempt | its living foes crumble (`removeLooseFoe`); one that stands after is taken back |
+| A wave's foes | `chooseRandomEnemy` on the dungeon's own table and place (`dungeonPlace`) at the player's level, stood by `spawnLooseFoe` at the four gates (a rank 0.9 m nearer the heart each time round), facing the heart; a foe that will not stand asked three times |
+| No leash | a foe of a wave fights as the dungeon's own do: the AI's follower leash would turn the Enhanced AI's fighting off (`ai/tactics.js`) |
+| The count | each foe carries a stamp (`_delve`); a body that takes its place takes it (the Wabbajack's change, a rebuild in its slot); the pool is read once a frame - a kill is a foe downed (killed, executed, spared, put to flight), a foe removed by another hand is out of its wave and no kill |
+| The captain | an elite where elites stand (`elitesAllowed`), its boss traits the ledger's count (`giveBossTraits`); one gone without its fall stands again after 2 s; alive 5 minutes, it outlasts the ward |
+| An ended attempt | its living foes crumble (`removeLooseFoe`), wherever they are; one that stands after is taken back; the ward wakes again to a step back in |
 | The plates | shown a second each, a chime rising with the numeral; a step said once as a plate is stepped onto |
-| The marks | the gate's telegraph pass: the ward's ring and gates, the plates by their looks, the vault's seal |
-| The vault | Daggerfall's chest (41811); its roll the dungeon's own `rollPileItems`, rolled once at the win |
-| A save | the plan's hash and each won site's vault; a running attempt is never saved |
-| The clock | the dungeon's frame, so it waits under a window as the foes do |
+| The marks | the gate's telegraph pass in its lit grammar (a bright line, a dark keyline, filled where live), under the frame's fog, kept and filled in place: the ward's ring and gates, the plates by their looks, the vault's seal |
+| The vault | Daggerfall's chest (41811), in the mesh list and the collider, offline from the first frame; its roll the dungeon's own `rollPileItems`, rolled once at the win; listed on the plaque, taken by quick loot, a find to the look round |
+| A save | in the dungeon's world record (the envelope keeps only what it names): the plan's hash and each won site's vault; a running attempt is never saved, and a load takes every living foe a site stood |
+| The clock | the dungeon's frame, so it waits under a window as the foes do; a frame of no number moves it nothing |
+| The cost | the encounters' frame 0.21 ms and their marks 0.22 ms a frame at the mean, on the software rasteriser at 800 x 500 (`tools/delveProbe.mjs`, Bedard Laboratory) |
 
 The dev bench's `?class`, `?nofoes`, `?spell` and `?weapon` stood inside a comment (FOE1's bug class): every `?dungeon=`
 boot opened the wizard and stood no layout foe. They are one option a line now, and `tools/delveProbe.mjs` drives the

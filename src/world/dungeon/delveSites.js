@@ -40,11 +40,9 @@ export const DSITE_SMALL = Object.freeze({ ...DSITE, r: 3, rings: Object.freeze(
 const R2 = Math.SQRT1_2;
 /** The eight bearings, literals and one IEEE product, in dungeonFires.js ringOf's order. @type {ReadonlyArray<readonly number[]>} */
 const EIGHT = Object.freeze([[1, 0], [-1, 0], [0, 1], [0, -1], [R2, R2], [R2, -R2], [-R2, R2], [-R2, -R2]].map((b) => Object.freeze(b)));
-/** The floor is asked on sixteen: the eight and the eight between them (22.5 degrees off each axis), literals. */
-const C22 = 0.9238795325112867, S22 = 0.3826834323650898;
-const SIXTEEN = Object.freeze([...EIGHT, ...[[C22, S22], [S22, C22], [-S22, C22], [-C22, S22], [-C22, -S22], [-S22, -C22], [S22, -C22], [C22, -S22]].map((b) => Object.freeze(b))]);
-/** And where every piece of either kind stands, on its own spot: the Litany's plates (the tier's four or five,
- *  delveLaw.js litanyPlates' bearings) and the Hold's gates (the diagonals, half a metre in). */
+/** Where every piece of either kind stands, each asked on its own spot: the Litany's plates (the tier's four or five,
+ *  delveLaw.js litanyPlates' bearings), the Hold's gates (the diagonals, half a metre in) and its vault (an axis, 0.6 m
+ *  in - vaultSpot). Between them a room may hold what rooms hold (AUDIT DELVE II L9: the census). */
 const PLATES = Object.freeze({
   4: Object.freeze([[0, 1], [1, 0], [0, -1], [-1, 0]].map((b) => Object.freeze(b))),
   5: Object.freeze([[0, 1], [0.951057, 0.309017], [0.587785, -0.809017], [-0.587785, -0.809017], [-0.951057, 0.309017]].map((b) => Object.freeze(b))),
@@ -113,19 +111,20 @@ export function siteCandidates(blocks, /** @type {number} */ gridM = DSITE.gridM
   });
   return out;
 }
-/** Is the floor level and flat round `pos` (already on its floor) - on every ring of `law` at sixteen bearings, the outer
- *  ring first, and on every piece's own spot (the `tier`'s plates, the gates)? */
+/** Is the floor level and flat round `pos` (already on its floor) - on every ring of `law` at the eight bearings, the
+ *  outer ring first, and on every piece's own spot (the `tier`'s plates, the gates, the vault's four)? */
 function levelDisc(probe, pos, law, tier) {
   const flat = (x, z) => {
     const g = probe.floor([x, pos[1], z]);
     return !!g && g.ny > law.flatNy && Math.abs(g.y - pos[1]) <= law.levelM;
   };
   for (let k = law.rings.length - 1; k >= 0; k--) {
-    for (const [dx, dz] of SIXTEEN) if (!flat(pos[0] + dx * law.rings[k], pos[2] + dz * law.rings[k])) return false;
+    for (const [dx, dz] of EIGHT) if (!flat(pos[0] + dx * law.rings[k], pos[2] + dz * law.rings[k])) return false;
   }
   for (const [dx, dz] of PLATES[litanyCount(tier)]) if (!flat(pos[0] + dx * LITANY_RING_M, pos[2] + dz * LITANY_RING_M)) return false;
-  const g = law.r - 0.5;
+  const g = law.r - 0.5, v = law.r - 0.6;
   for (const [dx, dz] of EIGHT.slice(4)) if (!flat(pos[0] + dx * g, pos[2] + dz * g)) return false;
+  for (const [dx, dz] of EIGHT.slice(0, 4)) if (!flat(pos[0] + dx * v, pos[2] + dz * v)) return false;
   return true;
 }
 
@@ -208,7 +207,7 @@ function vaultSpot(pos, walls, r, kind) {
   if (kind === 'litany') return [cm(pos[0]), cm(pos[1]), cm(pos[2])];
   let j = 0;
   for (let k = 1; k < 4; k++) if (cm(walls[k]) < cm(walls[j])) j = k;
-  const g = r - 0.6;
+  const g = r - 0.6;   // levelDisc asks the floor here, on all four
   return [cm(pos[0] + EIGHT[j][0] * g), cm(pos[1]), cm(pos[2] + EIGHT[j][1] * g)];
 }
 

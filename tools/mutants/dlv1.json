@@ -1017,15 +1017,6 @@
     ]
   },
   {
-    "name": "DLV1-eight-bearings",
-    "file": "src/world/dungeon/delveSites.js",
-    "old": "for (const [dx, dz] of SIXTEEN) if (!flat(",
-    "new": "for (const [dx, dz] of EIGHT) if (!flat(",
-    "tests": [
-      "test/world/dlv1_sites.test.js"
-    ]
-  },
-  {
     "name": "DLV1-the-plates-unasked",
     "file": "src/world/dungeon/delveSites.js",
     "old": "  for (const [dx, dz] of PLATES[litanyCount(tier)]) if (!flat(pos[0] + dx * LITANY_RING_M, pos[2] + dz * LITANY_RING_M)) return false;\n",
@@ -1046,8 +1037,8 @@
   {
     "name": "DLV1-the-small-gate-at-the-large-reach",
     "file": "src/world/dungeon/delveSites.js",
-    "old": "const g = law.r - 0.5;",
-    "new": "const g = DSITE.r - 0.5;",
+    "old": "const g = law.r - 0.5, v = law.r - 0.6;",
+    "new": "const g = DSITE.r - 0.5, v = law.r - 0.6;",
     "tests": [
       "test/world/dlv1_sites.test.js"
     ]
@@ -1084,6 +1075,24 @@
     "file": "src/world/dungeon/delveSites.js",
     "old": "for (const [dx, dz] of PLATES[litanyCount(tier)])",
     "new": "for (const [dx, dz] of PLATES[4])",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-vault-spots-unasked",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "  for (const [dx, dz] of EIGHT.slice(0, 4)) if (!flat(pos[0] + dx * v, pos[2] + dz * v)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-small-vault-at-the-large-reach",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "const g = law.r - 0.5, v = law.r - 0.6;",
+    "new": "const g = law.r - 0.5, v = DSITE.r - 0.6;",
     "tests": [
       "test/world/dlv1_sites.test.js"
     ]

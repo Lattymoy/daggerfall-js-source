@@ -16,6 +16,7 @@ import { starClearFloorMs } from '../../../src/net/starfall/starfallLaw.js';
 import { TELEGRAPH_KIND, TELEGRAPH_POOL } from '../../../src/render/gate/gateTelegraph.js';
 import { quickLootArm, resetQuickLoot, foldQuickLoot } from '../../../src/systems/quickLoot.js';
 import { registerEncounterTableSelector } from '../../../src/characters/encounterTableDoor.js';
+import { snapshotPlayer, restorePlayer } from '../../../src/systems/save/save.js';
 import { resolveHover } from '../../../src/systems/worldHover.js';
 import { setPref as setUiPref } from '../../../src/systems/uiPrefs.js';
 import { Collider } from '../../../src/player/collider.js';
@@ -386,6 +387,9 @@ test('DLV2 THE HOLD, WON IN A ROOM: the plan on the collider, the near line, the
   // the save: the won site and its vault, under this plan alone
   const snap = host.snapshot();
   assert.deepEqual(snap.won, [{ i: 0, items: [mace] }]);
+  // through the save's own envelope (systems/save/save.js - it keeps only the options it names): inside the world record
+  const env = JSON.parse(JSON.stringify(snapshotPlayer({ items: [], stats: {} }, { world: { foes: [], delve: snap } })));
+  assert.deepEqual(restorePlayer({ items: [], stats: {} }, env).world.delve, snap, 'the vaults come back from a real save');
   host.restore(null);
   assert.equal(host.state()[0].won, false, 'a save with no word: nothing won');
   host.restore({ ...snap, h: snap.h + 1 });
