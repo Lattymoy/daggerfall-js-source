@@ -80,6 +80,7 @@ import { WILD_FALLS_KEEP_S } from './wild.js';   // INT9: a death's drop's keepi
 import { settleHolds, REZ_SETTLE_MAX } from './legacy.js';   // REZ-BLOODLINE AUDIT R1: a held fall's window closed
 import { spendLapsedStakes } from './eg.js';   // EG-ZM: the Weir Key's stake's clock
 import { TOWN_ECON_SWEEPS, TOWN_ECON_SEEN_SWEEP, townEconKeptFrom, townEconSeenFrom, keepTownShares, townsOpen } from './townEcon.js';   // TOWN-ECON TE2: a town's acts past the days kept; AUDIT TOWN-ECON 2 SVC-3: the shares kept once
+import { settleHomeCellsClock } from './homeCells.js';   // YC4: a town's home cells moved past a tenancy's end, and built again
 import { settleStaleYardCells } from './yardCells.js';   // YARD-CELL: a town's yard cells built again where a cascade left them stale
 import { STAFF_AUDIT_KEEP_S } from './staff.js';   // STAFF-PANEL1: the audit log's month
 import { censusDay, censusBackfill } from './staffCensus.js';   // STAFF-PANEL4-CENSUS: the census's day and its one backfill, off peak
@@ -154,7 +155,9 @@ export const MINUTE_JOBS = Object.freeze([
   ['town-shares', async (ctx, env) => (townsOpen(env) ? keepTownShares(ctx.db, ctx.nowS) : 0)],
   // YARD-CELL (yardCells.js settleStaleYardCells): a town's yard cells built again where a write no decor route made left
   // them stale - a home released, an account gone, a sweep; until then such a cell is read from its rows, as before
-  ['yard-cells', (ctx) => settleStaleYardCells(ctx.db)],
+  // YC4 (homeCells.js settleHomeCellsClock): and a town's home cells - those whose let room fell vacant moved a version,
+  // every stale one built again. One job with the yards', so no other job's share of a firing shrinks
+  ['yard-cells', async (ctx) => (await settleStaleYardCells(ctx.db)) + (await settleHomeCellsClock(ctx.db, ctx.nowS))],
   // the season's #1, counted before a reader would count it (arena.js championNow, STORM-SHED 2's kept word). AUDIT SCALE
   // A4: COUNTED ONLY WHEN A BOUT HAS COME SINCE - the board moves through a bout alone (claimArena counts it at once; no
   // route deletes an account), so a kept word no bout is newer than is stamped again rather than counted: the count

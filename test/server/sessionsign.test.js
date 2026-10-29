@@ -47,6 +47,7 @@ const HOT = (character) => [
   ['/v1/chapters/list', { character }],
   ['/v1/seats/list', {}],
   ['/v1/festival/town', { mapId: 7 }],   // PIN MOVED (WITCH1): a town's Hearth Offerings, asked as its homes are
+  ['/v1/homes/cells', { mapId: 7, cells: [[1, 0], [0, 0]] }],   // PIN MOVED (YC4): a town's homes by cell - 300's cell first
 ];
 
 test('SESSION-SIGN the oracle: every hot route answers under a pass exactly as under the lookup - for a guest, an account, a developer, a newcomer a week can not yet witness and a muted one, with the switches on and at `dev`, in a town with a home - and asks no lookup; the first ask, the lookup\'s, hands the pass back, exposed to the page; a banned account is handed none (mutants: a field the pass leaves out; the handle; the registration; the mute; a route added; the mint before the ban)', async () => {
@@ -83,7 +84,9 @@ test('SESSION-SIGN the oracle: every hot route answers under a pass exactly as u
       }
       for (const [path] of HOT('c')) {
         const seen = new Set([...answers].filter(([k]) => k.startsWith(`${path} `)).map(([, v]) => v));
-        assert.ok(path === '/v1/chapters/list' && sw === 'on' ? seen.size >= 1 : seen.size > 1, `${sw} ${path}: the accounts are answered differently - the oracle reaches what it reads`);
+        // PIN MOVED (YC4): a town's home cells are every caller's alike - one answer, whoever asks
+        if (path === '/v1/homes/cells') assert.equal(seen.size, 1, `${sw} ${path}: every account answered alike`);
+        else assert.ok(path === '/v1/chapters/list' && sw === 'on' ? seen.size >= 1 : seen.size > 1, `${sw} ${path}: the accounts are answered differently - the oracle reaches what it reads`);
       }
       for (const [path, body] of HOT(banned.character)) {
         const r = await t.ask('POST', path, banned.secret, body);

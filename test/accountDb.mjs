@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import worker from '../server-account/src/index.js';
 import { _resetKeyForTests } from '../server-account/src/signing.js';
 import { _resetPassKeyForTests } from '../server-account/src/sessionPass.js';
+import { _resetHomeCellsKept } from '../server-account/src/homeCells.js';   // YC4: nor any home cell
 import { _resetYardCellsKept } from '../server-account/src/yardCells.js';   // YARD-SHED, YARD-CELL: a stood service is a fresh isolate - no yard cell kept
 import { _resetBusyShed } from '../server-account/src/service.js';   // BUSY-GATE: and nothing shed
 import { _resetWeeksKept } from '../server-account/src/weekKept.js';   // PRIMARY-FOLD: nor any week read settled
@@ -96,6 +97,7 @@ export async function standService(extra = {}) {
   _resetKeyForTests();
   _resetPassKeyForTests();   // SESSION-SIGN: the pass key drawn from this service's own key
   _resetYardCellsKept();
+  _resetHomeCellsKept();
   _resetBusyShed();
   forgetChapters();
   _resetWeeksKept();
