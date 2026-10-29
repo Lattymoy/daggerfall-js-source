@@ -10,11 +10,16 @@ import {
   SKYRIM_THEATRE, AURORA_DIALS, AURORA_NIGHTS, NO_AURORA, auroraLatitude, auroraDark, auroraClear, auroraNight,
   auroraNightBase, auroraNightStrength, auroraTarget, auroraSky, auroraRoll, skyrimRows, skyTheatreAt,
 } from '../../src/world/tamriel/skyrimAurora.js';
-import { AuroraPass, AURORA_FS, AURORA_UNIFORMS, AURORA_PROGRAMS } from '../../src/render/auroraPass.js';
+import {
+  AuroraPass, AURORA_FS, AURORA_ADD_FS, AURORA_UNIFORMS, AURORA_PROGRAMS, AURORA_QUALITY, AURORA_MAX_STEPS, AURORA_DEPTH, AURORA_ARC_GAP,
+  AURORA_RAY_ROWS, AURORA_ARC_ROW, AURORA_WAVES, AURORA_RATES, AURORA_SHEET_VAR, AURORA_GLOW_VAR, AURORA_REACH, AURORA_HEM, AURORA_CROWN,
+  AURORA_GLOW, AURORA_GAIN, AURORA_PEAK, AURORA_HORIZON_LIFT, auroraPhases,
+} from '../../src/render/auroraPass.js';
 import { createAuroraHost, auroraDoor, AURORA_EASE_S, AURORA_DRAWN_FROM } from '../../src/scenes/auroraHost.js';
 import { THEATRE_KEYS, theatreAt } from '../../src/world/worldWide/worldGrid.js';
 import { pictureToBay, setTamrielFit } from '../../src/world/tamriel/tamrielFrame.js';
 import { setTamrielTrace } from '../../src/world/tamriel/tamrielLand.js';
+import { setFolkPlace } from '../../src/characters/provinceFolk.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 /** A picture-grid point's world pixel. */
@@ -24,9 +29,8 @@ const ARENA2 = process.env.ARENA2_PATH;
 const HAVE_ARENA2 = !!ARENA2 && ['TMAP00I0.IMG', 'TAMRIEL2.IMG', 'MAP.PAL'].every((f) => existsSync(join(ARENA2, f)));
 afterEach(() => { setTamrielTrace(null); setTamrielFit(null); });
 
-// Skyrim's Frozen Coast and its Pinewoods (world/tamriel/tamrielBiomes.js's own points), the Bay's Daggerfall, and the
-// provinces beside Skyrim - each where its own theatre says; and the seas past the Bay
-const COAST = pix(168, 22), PINES = pix(180, 58);
+// Skyrim, the Bay's Daggerfall and the provinces beside Skyrim - each where its own theatre says; and the seas past the Bay
+const COAST = pix(168, 22), PINES = pix(180, 58);   // on the Frozen Coast and in the Pinewoods
 const MORROWIND = pix(240, 60), HIGH_ROCK = pix(80, 40), CYRODIIL = pix(180, 100);
 const DAGGERFALL = [207, 213];
 const GHOSTS = pix(165, 14), FAR_SEA = pix(160, 2), WROTHGAR_SEA = pix(80, 18);
@@ -143,11 +147,13 @@ function fakeGl() {
   const gl = new Proxy({}, {
     get(_, k) {
       if (typeof k !== 'string') return undefined;
+      if (k === 'drawingBufferWidth' || k === 'drawingBufferHeight') return 64;
       if (/^[A-Z0-9_]+$/.test(k)) return k;
       return (...a) => {
         calls.push([k, ...a]);
         if (k === 'getShaderParameter' || k === 'getProgramParameter') return true;
         if (k === 'getUniformLocation') return a[1];
+        if (k === 'getExtension') return null;
         if (k.startsWith('create')) return { k };
         return undefined;
       };
@@ -156,34 +162,84 @@ function fakeGl() {
   return { gl, calls };
 }
 
-test('SKYRIM-AURORA THE PASS: nothing at weight 0; above it one triangle at the far plane, its light ADDED to the sky with the buffer\'s alpha untouched, every state put back, and every allocation let go (mutants: drawn at 0; blended over by alpha; the depth written)', () => {
+test('SKYRIM-AURORA THE PASS\'S DIALS: the tiers, the curtains, the clock, the colours and the light as the record gives them - and the skip reaches past every wave and glow (mutants: any of them moved)', () => {
+  assert.deepEqual(JSON.parse(JSON.stringify(AURORA_QUALITY)), { lo: { steps: 6, scale: 0.5 }, default: { steps: 10, scale: 0.5 }, hi: { steps: 12, scale: 0.75 } });
+  assert.deepEqual([AURORA_MAX_STEPS, AURORA_DEPTH, AURORA_ARC_GAP, AURORA_RAY_ROWS, AURORA_ARC_ROW], [16, 1.5, 1.3, 256, 5.3]);
+  assert.deepEqual(JSON.parse(JSON.stringify(AURORA_WAVES)), [[0.55, 0.62, 0.035], [0.3, 1.37, -0.05], [0.35, 2.9, 0.07]]);
+  assert.deepEqual({ ...AURORA_RATES }, { swell: -0.06, hem: 0.02, rays: 0.16 });
+  assert.deepEqual([AURORA_SHEET_VAR, AURORA_GLOW_VAR], [1 / 24, 1 / 5]);
+  assert.deepEqual([[...AURORA_HEM], [...AURORA_CROWN], [...AURORA_GLOW]], [[0.25, 1, 0.55], [0.1, 0.6, 0.9], [0.08, 0.25, 0.85]]);
+  assert.deepEqual([AURORA_GAIN, AURORA_PEAK, AURORA_HORIZON_LIFT], [0.42, 0.95, 1.5]);
+  // the skip: the waves' amplitudes summed, and the glow out to where it is under 1/100 (exp(-2.5 * 1.4^2))
+  close(AURORA_REACH, 0.55 + 0.3 + 0.35 + 1.4, 1e-12);
+  assert.ok(Math.exp(-2.5 * 1.4 * 1.4) < 0.01);
+  for (const line of [
+    'if (yHi < uHang - 3.9 || yLo > uHang + 3.9) return;',   // the skip, at the gap and the reach
+    'float sVar = 0.041667 + step2 * step2 / 12.0, gVar = 0.2 + step2 * step2 / 12.0;',   // each sample widened by its step
+    'float hem = smoothstep(0.0, 0.06 + 1.0 / uSteps, hn) * exp(-hn * 2.4);',
+    'col *= m > 1e-5 ? 0.95 * (1.0 - exp(-m / 0.95)) / m : 1.0;',   // the roll-off
+    'col += (jitter - 0.5) / 255.0 * step(0.004, col.g + col.b);',   // the dither
+    'min(inversesqrt(up), 1.5) * smoothstep(0.02, 0.2, dir.y);',   // the horizon's lift, capped
+    'float lodR = smoothstep(0.25, 0.6, span * 7.0 / 6.2832), lodW = smoothstep(0.25, 0.6, span * 2.9 / 6.2832);',
+    'if (dir.y <= 0.0) return;',   // the ground's texels cost nothing
+  ]) assert.ok(AURORA_FS.includes(line), line);
+});
+
+test('SKYRIM-AURORA THE CLOCK: the phases wrapped in double precision on the CPU - every wave and drift in [0, 2pi), each arc\'s rays on two whole rows of the noise\'s 256 and the share between them, seamless where the rows wrap (mutants: a phase unwrapped; the rows\' wrap lost)', () => {
+  for (const t of [0, 100, 3599.98, 3600, 1e9 + 0.5]) {
+    const ph = auroraPhases(t);
+    AURORA_WAVES.forEach((w, i) => close(ph.wave[i], (((t * w[2]) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI), 1e-9));
+    for (const v of [...ph.wave, ...ph.drift]) assert.ok(v >= 0 && v < 2 * Math.PI, `${t}: ${v}`);
+    for (let k = 0; k < 3; k++) {
+      const row = (((t * 0.16 + k * 5.3) % 256) + 256) % 256, r0 = Math.floor(row), u = row - r0;
+      assert.deepEqual([ph.lo[k], ph.hi[k]], [r0, (r0 + 1) % 256]);
+      close(ph.share[k], u * u * (3 - 2 * u), 1e-12);
+    }
+  }
+  const atWrap = auroraPhases((255.5 - 0) / 0.16);
+  assert.deepEqual([atWrap.lo[0], atWrap.hi[0]], [255, 0], 'the last row blends into the first');
+  close(atWrap.share[0], 0.5, 1e-9);
+  assert.deepEqual(auroraPhases(NaN), auroraPhases(0), 'no clock is the clock at 0');
+});
+
+test('SKYRIM-AURORA THE PASS: nothing at weight 0; above it the march into its map (nothing blended, the frame and the world rect given back), then one triangle at the far plane ADDING the map to the sky with the buffer\'s alpha untouched - every state put back, every allocation let go (mutants: drawn at 0; blended over by alpha; the depth written; the depth test left as found)', () => {
   const { gl, calls } = fakeGl();
-  const p = new AuroraPass(gl);
+  const p = new AuroraPass(gl, AURORA_QUALITY.lo);
   calls.length = 0;
-  p.draw(0.3, 0.2, 1.1, 16 / 9, 0, 1);
+  p.draw(0.3, 0.2, 1.1, 16 / 9, 0, 1, 0, [0, 0, 200, 100]);
   assert.deepEqual(calls, [], 'no aurora, no pass');
-  p.draw(0.3, 0.2, 1.1, 16 / 9, 0.6, 1.5);
+  p.draw(0.3, 0.2, 1.1, 16 / 9, 0.6, 1.5, 0, [10, 20, 200, 100]);
   const at = (k, ...a) => calls.findIndex((c) => c[0] === k && a.every((v, i) => c[i + 1] === v));
-  const draw = at('drawArrays', 'TRIANGLES', 0, 3);
-  assert.ok(draw >= 0);
-  assert.ok(at('enable', 'BLEND') >= 0 && at('enable', 'BLEND') < draw);
-  assert.ok(at('blendFuncSeparate', 'ONE', 'ONE', 'ZERO', 'ONE') >= 0 && at('blendFuncSeparate', 'ONE', 'ONE', 'ZERO', 'ONE') < draw, 'light added; the alpha untouched');
-  for (const [k, v] of [['depthFunc', 'LEQUAL'], ['depthMask', false]]) assert.ok(at(k, v) >= 0 && at(k, v) < draw, `${k} ${v}: only the cleared depth, none written - the land stands over it`);
+  const all = (k, ...a) => calls.map((c, i) => (c[0] === k && a.every((v, j) => c[j + 1] === v) ? i : -1)).filter((i) => i >= 0);
+  const [march, add] = all('drawArrays', 'TRIANGLES', 0, 3);
+  assert.ok(march >= 0 && add > march, 'the march, then the add');
+  assert.ok(at('texImage2D', 'TEXTURE_2D', 0, 'RGBA8', 100, 50) >= 0, 'the map at the tier\'s half of the world rect');
+  assert.ok(at('bindFramebuffer', 'FRAMEBUFFER') < march && at('viewport', 0, 0, 100, 50) < march);
+  assert.ok(at('disable', 'BLEND') < march && at('disable', 'DEPTH_TEST') < march, 'the march blends nothing');
+  const between = calls.slice(march, add);
+  assert.ok(between.some((c) => c[0] === 'bindFramebuffer' && c[2] === null), 'the frame given back');
+  assert.ok(between.some((c) => c[0] === 'viewport' && c[1] === 10 && c[2] === 20 && c[3] === 200 && c[4] === 100), 'and the world rect');
+  const addState = (k, ...a) => between.some((c) => c[0] === k && a.every((v, i) => c[i + 1] === v));
+  for (const [k, ...a] of [['blendFuncSeparate', 'ONE', 'ONE', 'ZERO', 'ONE'], ['enable', 'BLEND'], ['enable', 'DEPTH_TEST'], ['depthFunc', 'LEQUAL'], ['depthMask', false]]) assert.ok(addState(k, ...a), `the add: ${k} ${a}`);
   assert.deepEqual(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uWeight'), ['uniform1f', 'uWeight', 0.6]);
   assert.deepEqual(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uHang'), ['uniform1f', 'uHang', 1.5]);
-  const after = calls.slice(draw);
-  for (const [k, ...a] of [['disable', 'BLEND'], ['enable', 'CULL_FACE'], ['depthFunc', 'LESS'], ['depthMask', true]]) assert.ok(after.some((c) => c[0] === k && a.every((v, i) => c[i + 1] === v)), `${k} ${a} put back`);
+  assert.deepEqual(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uSteps'), ['uniform1f', 'uSteps', 6]);
+  close(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uPixel')[2], 2 * Math.tan(0.55) / 50, 1e-12);
+  const after = calls.slice(add);
+  for (const [k, ...a] of [['disable', 'BLEND'], ['enable', 'CULL_FACE'], ['depthFunc', 'LESS'], ['depthMask', true], ['bindTexture', 'TEXTURE_2D', null]]) assert.ok(after.some((c) => c[0] === k && a.every((v, i) => c[i + 1] === v)), `${k} ${a} put back`);
+  calls.length = 0;
+  p.draw(0.3, 0.2, 1.1, 16 / 9, 0.6, 1.5, 0, [10, 20, 200, 100]);
+  assert.equal(at('texImage2D', 'TEXTURE_2D', 0, 'RGBA8', 100, 50), -1, 'the map kept while the rect holds');
   calls.length = 0;
   p.dispose();
-  assert.deepEqual(calls.map((c) => c[0]), ['deleteProgram', 'deleteBuffer', 'deleteVertexArray']);
-  for (const u of AURORA_UNIFORMS) assert.match(AURORA_FS, new RegExp(`uniform float[^;]*\\b${u}\\b`), u);
-  assert.match(AURORA_FS, /if \(dir\.y <= 0\.0\) discard;/, 'none under the horizon');
-  assert.deepEqual(AURORA_PROGRAMS[0][1], AURORA_FS);
+  assert.deepEqual(calls.map((c) => c[0]), ['deleteProgram', 'deleteProgram', 'deleteBuffer', 'deleteVertexArray', 'deleteTexture', 'deleteFramebuffer']);
+  for (const u of AURORA_UNIFORMS) assert.match(AURORA_FS, new RegExp(`uniform \\w+[^;]*\\b${u}\\b`), u);
+  assert.deepEqual(AURORA_PROGRAMS.map((pr) => pr[1]), [AURORA_FS, AURORA_ADD_FS]);
 });
 
 test('SKYRIM-AURORA THE DOOR: the sky\'s aurora at the player\'s pixel, whole at first and after a jump, eased over 6 real seconds after that - times the dark at the frame\'s own minute, so a rest into the day takes it at once; a bad frame never latches it; `?aurora=` off, on or a weight anywhere (mutants: the ease skipped; the first use eased from 0; the dark eased; the jump unread; the NaN kept; the door unread)', () => {
   let here = /** @type {{x: number, y: number}|null} */ ({ x: PINES[0], y: PINES[1] }), ms = 0;
-  const host = /** @type {NonNullable<ReturnType<typeof createAuroraHost>>} */ (createAuroraHost(null, new URLSearchParams(''), () => here, () => ms));
+  const host = /** @type {NonNullable<ReturnType<typeof createAuroraHost>>} */ (createAuroraHost(null, new URLSearchParams(''), { here: () => here, clock: () => ms }));
   const pines = auroraSky({ px: PINES[0], py: PINES[1], skyMinutes: NIGHT_SKY, cover: 0.32 }), want = pines.weight;
   assert.ok(want > 0 && pines.hang > AURORA_DIALS.hangNorth);
   host.use(MIDNIGHT, NIGHT_SKY, 0.32, true);
@@ -207,24 +263,58 @@ test('SKYRIM-AURORA THE DOOR: the sky\'s aurora at the player\'s pixel, whole at
   ms += 60000;
   host.use(MIDNIGHT, NIGHT_SKY, 0.32, true);
   assert.ok(host.weight > 0.9 * want, 'one bad frame forgotten');
+  ms = NaN;
+  host.use(MIDNIGHT, NIGHT_SKY, 0.32, true);
+  close(host.weight, want, 1e-12);   // a bad clock is a jump: whole
+  ms = 1e6;
+  host.use(MIDNIGHT, NIGHT_SKY, 0.32, true);
+  close(host.weight, want, 1e-12);   // and the next frame whole too, the clock found again
   here = null;
   ms += 60000;
   host.use(MIDNIGHT, NIGHT_SKY, 0.32, true);
   assert.ok(host.weight < AURORA_DRAWN_FROM, 'gone with no pixel');
-  host.draw(0, 0, 1, 1);   // no gl: nothing to build, nothing thrown
   assert.equal(createAuroraHost(null, new URLSearchParams('aurora=off')), null);
-  const forced = /** @type {NonNullable<ReturnType<typeof createAuroraHost>>} */ (createAuroraHost(null, new URLSearchParams('aurora=0.5'), () => ({ x: DAGGERFALL[0], y: DAGGERFALL[1] }), () => 0));
+  const forced = /** @type {NonNullable<ReturnType<typeof createAuroraHost>>} */ (createAuroraHost(null, new URLSearchParams('aurora=0.5'), { here: () => ({ x: DAGGERFALL[0], y: DAGGERFALL[1] }), clock: () => 0 }));
   forced.use(12 * 60, 0, 1, false);
   assert.equal(forced.weight, 0.5, 'a door stands it anywhere, at any hour');
+  forced.draw(0, 0, 1, 1, [0, 0, 8, 8]);   // no gl: nothing to build, nothing thrown
   assert.deepEqual(['on', '', '0.25', '7', '-1', 'off', 'OFF', ' On ', 'x', null].map(auroraDoor), [1, 1, 0.25, 1, 0, 'off', 'off', 1, null, null]);
 });
 
-test('SKYRIM-AURORA THE SKY CONTROLLER: built on the enhanced lane alone, handed the eased cover after the ease (the WeatherStyle only under the mod, the decks while no volumetric clouds are shown), told of a jump, drawn over the lane\'s sky and under its clouds - and no host grows (mutants: drawn after the clouds; the classic lane given it; the cover unhanded; the jump untold)', () => {
+test('SKYRIM-AURORA THE DOOR, DRAWN: built on its tier\'s march, handed the walk clock\'s time, and dimmed by the veil - none drawn at a veil of 0 (mutants: the tier unread; the veil unread; the clock unread)', () => {
+  const { gl, calls } = fakeGl();
+  const host = /** @type {NonNullable<ReturnType<typeof createAuroraHost>>} */ (createAuroraHost(gl, new URLSearchParams('aurora=1'), { quality: 'lo' }));
+  host.use(MIDNIGHT, NIGHT_SKY, 0.32, true, false, 100);
+  calls.length = 0;
+  host.draw(0, 0.3, 1.1, 1.5, [0, 0, 64, 32], 0);
+  assert.equal(calls.filter((c) => c[0] === 'drawArrays').length, 0, 'a whole veil draws nothing');
+  host.draw(0, 0.3, 1.1, 1.5, [0, 0, 64, 32], 0.5);
+  assert.deepEqual(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uWeight'), ['uniform1f', 'uWeight', 0.5]);
+  assert.deepEqual(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uSteps'), ['uniform1f', 'uSteps', 6], 'the lo tier\'s');
+  const ph = auroraPhases(100 * 5), wave = calls.find((c) => c[0] === 'uniform3f' && c[1] === 'uWave');
+  assert.deepEqual(wave.slice(2), ph.wave, 'a game minute is five of the curtains\' seconds');
+});
+
+test('SKYRIM-AURORA THE PLACE DOOR: the world host\'s own door (setFolkPlace) is the pixel the aurora reads - and none with no host (mutants: the place door unread)', () => {
+  let ms = 0;
+  setFolkPlace((feet) => (feet ? null : { x: PINES[0], y: PINES[1] }), () => 0);
+  try {
+    const host = /** @type {NonNullable<ReturnType<typeof createAuroraHost>>} */ (createAuroraHost(null, new URLSearchParams(''), { clock: () => ms }));
+    host.use(MIDNIGHT, NIGHT_SKY, 0.32, true);
+    close(host.weight, auroraSky({ px: PINES[0], py: PINES[1], skyMinutes: NIGHT_SKY, cover: 0.32 }).weight);
+    setFolkPlace(null, null);
+    ms += 60000;
+    host.use(MIDNIGHT, NIGHT_SKY, 0.32, true);
+    assert.ok(host.weight < AURORA_DRAWN_FROM, 'no host, no place');
+  } finally { setFolkPlace(null, null); }
+});
+
+test('SKYRIM-AURORA THE SKY CONTROLLER: built on the enhanced lane alone at the clouds\' tier, handed the eased cover after the ease (the WeatherStyle only under the mod, the decks while no volumetric clouds are shown) and the walk clock, told of a jump, drawn over the lane\'s sky and under its clouds in the world rect, dimmed in the brass air - and no host grows (mutants: drawn after the clouds; never drawn; the classic lane given it; the cover unhanded; the jump untold; the brass unread)', () => {
   const shared = rd('src/scenes/shared.js');
-  assert.match(shared, /const aurora = enhancedLane \? createAuroraHost\(gl, params\) : null;/);
-  assert.match(shared, /weatherRowNow = easeWeather\(weatherRowNow, want, easeDt\);\s*weatherRowNow\.wind = windModel\.vector\(\);(\s*\/\/[^\n]*)*\s*aurora\?\.use\(minuteOfDay, skyNow, weatherRowNow\.cover, dynamic \? showNightSky : true, !cloudsShown\);/);
+  assert.match(shared, /const aurora = enhancedLane \? createAuroraHost\(gl, params, \{ quality: cloudQuality \}\) : null;/);
+  assert.match(shared, /weatherRowNow = easeWeather\(weatherRowNow, want, easeDt\);\s*weatherRowNow\.wind = windModel\.vector\(\);(\s*\/\/[^\n]*)*\s*aurora\?\.use\(minuteOfDay, skyNow, weatherRowNow\.cover, dynamic \? showNightSky : true, !cloudsShown, nowMin\);/);
   assert.match(shared, /weatherJump\(\) \{[^}]*clouds\?\.jump\(\);[^\n]*\n\s*aurora\?\.jump\(\);/);
-  assert.match(shared, /\(enhancedSky \?\? dynamicSky \?\? sky\)\.draw\(yaw, pitch, fovY, aspect\);\s*aurora\?\.draw\(yaw, pitch, fovY, aspect\);[^\n]*\n(\s*\/\/[^\n]*\n)*\s*skyViewport = viewport;\s*clouds\?\.update\(viewport\);\s*cloudsShown\?\.draw/);
+  assert.match(shared, /\(enhancedSky \?\? dynamicSky \?\? sky\)\.draw\(yaw, pitch, fovY, aspect\);\s*aurora\?\.draw\(yaw, pitch, fovY, aspect, viewport, 1 - brassW\);[^\n]*\n(\s*\/\/[^\n]*\n)*\s*skyViewport = viewport;\s*clouds\?\.update\(viewport\);\s*cloudsShown\?\.draw/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.ok(!/aurora/i.test(rd(host)), `${host} carries none of it`);
   assert.match(rd('src/characters/provinceFolk.js'), /export const pixelHere = \(\) => \(_pixelOf \? _pixelOf\(null\) : null\);/, 'the world host\'s own place door');
   assert.match(rd('src/tools/skyLab.js'), /const auroraW = Number\(auroraDoor\(params\.get\('aurora'\)\)\) \|\| 0;/, 'the lab reads the game\'s door');

@@ -154,7 +154,7 @@
   {
     "name": "QO-long-ones-first-again",
     "file": "src/render/playPrograms.js",
-    "old": "...NODE_GLINT_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS, ...NODE_GLOW_PROGRAMS, ...NAVAL_PROGRAMS, ...AURORA_PROGRAMS, ...AURA_PROGRAMS, ...ARMORY_PROGRAMS];",
+    "old": "...NODE_GLINT_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS, ...NODE_GLOW_PROGRAMS, ...NAVAL_PROGRAMS, ...AURA_PROGRAMS, ...ARMORY_PROGRAMS, ...AURORA_PROGRAMS];",
     "new": "...NODE_GLINT_PROGRAMS, ...AURA_PROGRAMS, ...ARMORY_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS, ...NODE_GLOW_PROGRAMS, ...NAVAL_PROGRAMS, ...AURORA_PROGRAMS];",
     "tests": ["test/render/auditshaderstall.test.js", "test/render/shadermount.test.js"],
     "note": "QUEUE-ORDER: the auras and the armory last"

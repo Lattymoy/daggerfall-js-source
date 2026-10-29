@@ -283,7 +283,7 @@ export function createSkyController(gl, params) {
   let skyViewport = /** @type {number[]|null} */ (null);
   const dynamicSky = dynamicOn ? new DynamicSkiesRenderer(gl) : null;
   // SKYRIM-AURORA: on the lane's sky, the port's dome or the mod's - the classic panorama stays Daggerfall's own
-  const aurora = enhancedLane ? createAuroraHost(gl, params) : null;
+  const aurora = enhancedLane ? createAuroraHost(gl, params, { quality: cloudQuality }) : null;   // its march the clouds' tier's
   // PS3 (Mac: "there's these progressing circles in the sky when I want it
   // to be a smooth sky transition"): the mod's own REDUCE_COLOR quantizes
   // with a bare ceil and no dither, so the sky's iso-luminance contours -
@@ -712,7 +712,7 @@ export function createSkyController(gl, params) {
         weatherRowNow.wind = windModel.vector();
         // SKYRIM-AURORA: the eased cover hides it as the clouds come; the port's dome reads no WeatherStyle (its cover is
         // the front's), the mod's presets switch on it; and over the sky's own decks it goes sooner
-        aurora?.use(minuteOfDay, skyNow, weatherRowNow.cover, dynamic ? showNightSky : true, !cloudsShown);
+        aurora?.use(minuteOfDay, skyNow, weatherRowNow.cover, dynamic ? showNightSky : true, !cloudsShown, nowMin);
         // WIND2: the cloud DRIFT is integrated here, once - the one place
         // the wind and the clock meet. Every deck reads this offset
         // instead of multiplying wind by time, which with a wind that
@@ -839,7 +839,7 @@ export function createSkyController(gl, params) {
       const meter = meterFor(gl);
       meter?.mark('sky');
       (enhancedSky ?? dynamicSky ?? sky).draw(yaw, pitch, fovY, aspect);
-      aurora?.draw(yaw, pitch, fovY, aspect);   // SKYRIM-AURORA: over the night sky, under the clouds
+      aurora?.draw(yaw, pitch, fovY, aspect, viewport, 1 - brassW);   // SKYRIM-AURORA: over the night sky, under the clouds; dimmed in a Hollow's brass air
       // CLOUD-COMPILE: marched from their build; the composite draws nothing until their first whole sweep. The
       // per-frame setters (dread, brass, haze, bolt) reach them from the frame after their build, before that sweep.
       skyViewport = viewport;

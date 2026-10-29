@@ -228,6 +228,7 @@ const HARDCODED = {
   'src/render/rainCurtains.js': 1,
   'src/render/realWindows.js': 11,
   'src/render/redMountainFire.js': 3,   // RED-MOUNTAIN: its shaders' sources, as every pass's - no word a player reads
+  'src/render/auroraPass.js': 2,   // SKYRIM-AURORA: its two shaders' plain sources - no word a player reads
   'src/render/ghostfenceGlow.js': 1,   // GHOSTFENCE: its shaders' sources - no word a player reads (AUDIT RED-MOUNTAIN: 4 to 1, its looks named functions)
   'src/render/renderer.js': 17,
   'src/render/retroPass.js': 1,

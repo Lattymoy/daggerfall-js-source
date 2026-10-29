@@ -1,16 +1,10 @@
-// SKYRIM-AURORA (bible/07-Rendering/Skyrim-Aurora.md) - THE AURORA, SEEN in the real game: the world host boots in the
-// Bay at night, looks north and shoots (no aurora: the Bay's sky has none), then jumps to Solitude's pixel on Skyrim's
-// north coast (`__tesaJump`), waits for the stream to go idle and shoots north and overhead. Each shot's upper sky is
-// read for its green: the mean of G - max(R, B) over the top 40% of the frame. Frames are counted on the shot-mode
-// `__frame` counter, never slept for. Exit 1 when Skyrim's sky is not greener than the Bay's, or on a page error.
-//
-// Usage: ARENA2_PATH=/home/claude/dfdata/arena2 OUT=<dir> node tools/auroraProbe.mjs
-//   PORT=5184          the vite port
-//   TOD=23:00          the hour the boot starts at
-//   TIMESCALE=0        the clock's rate (DFU's TimeScale 12; 0 holds the night through a boot of many minutes)
-//   EXTRA=&aurora=on   more of the query (a door; the law's own weight by default)
-//   BOOT_MS=3600000    how long the boot may take
-//   CHROMIUM=<path>    a browser other than the pinned Playwright's
+// SKYRIM-AURORA (bible/07-Rendering/Skyrim-Aurora.md): the aurora in the real game. The world boots in the Bay at night
+// and shoots north (the Bay's sky has none), jumps to Solitude on Skyrim's north coast (`__tesaJump`) and shoots north,
+// up and south. A shot's score is the mean green of its top 40%; frames are counted on `__frame`, never slept for. Exit 1
+// on a page error, or when Skyrim's north is not GREEN_OVER greener than the Bay's.
+// Usage: ARENA2_PATH=/home/claude/dfdata/arena2 OUT=<dir> node tools/auroraProbe.mjs - and PORT=5184, TOD=23:00,
+// TIMESCALE=0 (DFU's is 12; 0 holds the night through a boot of many minutes), EXTRA=<more query>, BOOT_MS=3600000,
+// GREEN_OVER=3, CHROMIUM=<a browser other than the pinned Playwright's>.
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
@@ -34,16 +28,13 @@ const ev = (fn, ...args) => page.evaluate(fn, ...args);
 const frames = async (n) => { const f0 = await ev(() => window.__frame); await page.waitForFunction((t) => window.__frame >= t, f0 + n, { timeout: 900000 }); };
 const idle = async () => { await page.waitForFunction(() => window.__streamIdle?.() === true, null, { timeout: 1800000 }); await frames(2); };
 
-/** The upper sky's green: mean G - max(R, B) over the top 40% of a shot, 0..255. */
+/** The upper sky's green: the mean G over the top 40% of a shot, 0..255 (the aurora's crown and glow are blue-led, so
+ *  its green is the one channel the night sky does not carry). */
 const greenOf = (buf) => {
   const png = PNG.sync.read(buf);
   let sum = 0, n = 0;
   for (let y = 0; y < Math.floor(png.height * 0.4); y++) {
-    for (let x = 0; x < png.width; x++) {
-      const i = (y * png.width + x) * 4;
-      sum += Math.max(0, png.data[i + 1] - Math.max(png.data[i], png.data[i + 2]));
-      n++;
-    }
+    for (let x = 0; x < png.width; x++) { sum += png.data[(y * png.width + x) * 4 + 1]; n++; }
   }
   return sum / n;
 };
@@ -88,5 +79,6 @@ await shoot('skyrim-south', 180, 30);
 await browser.close();
 await server.close();
 if (errors.length) { console.log(errors.slice(0, 8).join('\n')); process.exit(1); }
-if (!(north > bay + 1)) { console.log(`Skyrim's north sky (${north.toFixed(2)}) is not greener than the Bay's (${bay.toFixed(2)})`); process.exit(1); }
+const OVER = Number(process.env.GREEN_OVER ?? 3);
+if (!(north > bay + OVER)) { console.log(`Skyrim's north sky (${north.toFixed(2)}) is not ${OVER} greener than the Bay's (${bay.toFixed(2)})`); process.exit(1); }
 console.log('ok');
