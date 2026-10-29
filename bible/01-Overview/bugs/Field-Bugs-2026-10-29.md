@@ -1,14 +1,15 @@
 # FIELD BUGS 2026-10-29 - the Aura Armory unseen on its wearer, and the paid set through the cape (ARMORY-SEEN)
 
-Two player reports of the Aura Armory (`04-Characters/Aura-Armory.md`), handed over by the owner: "players are reporting
-not being able to see them on their character", and the paid look "clips through the front of the character". Read on
-main's `3b56d5119` with the freeware's data. The pins are `test/net/armorylive.test.js` and `test/render/armory.test.js`
-(ARMORY-SEEN), the mutants `tools/mutants/armoryseen.json` (9, all dead).
+Three player reports of the Aura Armory (`04-Characters/Aura-Armory.md`), handed over by the owner: "players are reporting
+not being able to see them on their character", the paid look "clips through the front of the character", and "Same
+with the weapon skin". Read on main's `3b56d5119` with the freeware's data. The pins are `test/net/armorylive.test.js`
+and `test/render/armory.test.js` (ARMORY-SEEN), the mutants `tools/mutants/armoryseen.json` (9, all dead).
 
 | | Report | What it was | Done |
 |---|---|---|---|
 | 1 | "not being able to see them on their character" | The device's stored session never kept the kit, so a player's own body drew no piece | ARMORY-SEEN 1 |
 | 2 | The paid look "clips through the front" | Seen from behind, the Eternal set's pieces burned on top of the Eternal cape that hangs over them | ARMORY-SEEN 2 |
+| 3 | "Same with the weapon skin" | The weapon piece reads the same dropped kit, so no hand drew it | ARMORY-SEEN 1 |
 
 ## 1. The pieces unseen on their own wearer
 
@@ -23,6 +24,12 @@ FOUND TOO. The mint's answer carries the kit (`armory`), but the minter builds i
 worn since was never said again to the room (AURA-LIVE). Others saw it at the next room.
 
 FIXED. `keepSession` keeps the kit, and the minter hands it on as it does the aura.
+
+THE WEAPON PIECE (3). Every hand that draws the Brand of the Breach or the Eternal Edge reads the kit each frame through
+`ownArmory`: the classic hand's outline (`combat/weapon/weaponRig.js` askHeld), the Morrowind arm (setWeaponGlow), and
+the look's word a peer's Morrowind body draws (`net/remotePlayers.js` composeLook, sent again every
+ONLINE_LOOK_CHECK_MS). With the kit dropped none drew it, and the fix above restores all three. A sprite in third person
+and the profile's stage still draw no weapon piece, as section 8 of `04-Characters/Aura-Armory.md` decided.
 
 WHY THE PINS PASSED. The world host's test wrote a session with a kit by hand and told the host a kit no minter told it
 (`Home.md`, TEST THE SHAPE THE PRODUCER MINTS). The new pins run the real minter and the real session writer, and one
