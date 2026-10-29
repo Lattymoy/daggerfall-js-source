@@ -62,6 +62,8 @@ import {
 import { takeSceneOwn, removePermanentScene } from '../sceneCache.js';   // ACCOUNT-HOMES: a home the account holds no more, let go
 import { ownBackLines } from '../decor/decorFurnish.js';   // ACCOUNT-HOMES: what is said of one's own things come back
 import { t, localizedText } from '../textManager.js';   // ACCOUNT-HOMES, GUILD-HALL-SALE: their words in the player's language; IC-PROPS: DFU's own "residence"
+import { createHomeCellSync } from './homeCellSync.js';   // YC4: a town's homes read by cell and the caller's own part
+import { onHomeCellWords } from '../../net/homeCellPush.js';   // YC4: the hub's word that a home cell moved
 
 /** How long a town's answer is believed before a door asks again. */
 export const HOME_TOWN_TTL_MS = 60_000;
@@ -475,10 +477,10 @@ export const HOME_BANK_LINES = Object.freeze(['Online, a home is bought', 'at it
  * LEGACY7 part five: `onWrote(mapId, buildingKey)` told of each change of mine (a claim, a release, an entry) - the
  * line's houses read again. QUEST-HOME (Mac, 2026-10-15: "Close both"): `onHomes()` told whenever the registry learns of
  * a building that is a home (the boot's read, a hub word, a town's answer) - a quest site not yet reached in one is
- * chosen again (scenes/world.js).
- * @param {{ api: any, character?: () => (string|null), now?: () => number, ttlMs?: number, onWrote?: ((mapId: number, buildingKey: number) => void) | null, onHomes?: (() => void) | null }} opts
+ * chosen again (scenes/world.js). YC4: `homeCellWords`, the hub's word that a home cell moved.
+ * @param {{ api: any, character?: () => (string|null), now?: () => number, ttlMs?: number, onWrote?: ((mapId: number, buildingKey: number) => void) | null, onHomes?: (() => void) | null, homeCellWords?: ((ear: (words: number[][]) => void) => unknown) | null }} opts
  */
-export function createOnlineHomes({ api, character = () => null, now = () => Date.now(), ttlMs = HOME_TOWN_TTL_MS, onWrote = null, onHomes = null }) {
+export function createOnlineHomes({ api, character = () => null, now = () => Date.now(), ttlMs = HOME_TOWN_TTL_MS, onWrote = null, onHomes = null, homeCellWords = onHomeCellWords }) {
   /** @type {Map<number, {at: number, homes: Map<number, any>}>} */
   const towns = new Map();
   /** @type {Map<number, Promise<boolean>>} */
@@ -496,12 +498,14 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
   const forcedFlight = new Set();
   let version = 0;
   const idOf = (mapId) => (Number.isFinite(Number(mapId)) ? Number(mapId) >>> 0 : 0);
+  const townReads = createHomeCellSync({ api, now });   // YC4: a town read by cell and own part, where the service has them
 
   /** Ask for a town unless its answer is fresh - one ask in flight a town. Resolves whether the town is known.
    *  BOOT-OVERLAP: `character` asks as the one named rather than the one playing now - the boot asks its towns before the
    *  save it restores is the one playing (a realm save's own id; undefined: the one playing).
-   *  @param {any} mapId @param {{ force?: boolean, character?: string|null }} [opts] @returns {Promise<boolean>} */
-  function ensure(mapId, { force = false, character: as = undefined } = {}) {
+   *  YC4: `own` asks the caller's own part with the cells (homeCellSync.js) - every forced ask but a cell word's.
+   *  @param {any} mapId @param {{ force?: boolean, character?: string|null, own?: boolean }} [opts] @returns {Promise<boolean>} */
+  function ensure(mapId, { force = false, character: as = undefined, own = force } = {}) {
     const id = idOf(mapId);
     if (!homeMapIdOk(id)) return Promise.resolve(false);
     const had = towns.get(id);
@@ -515,7 +519,7 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
     if (!force && f && now() - f.at < homeRetryMs(f.n)) return Promise.resolve(!!had);
     const gen = writesTo(id);
     const p = Promise.resolve()
-      .then(() => api.town(id, as === undefined ? character() : as))   // HOME-RENT: the playing character's own tenancies ride the answer
+      .then(() => townReads.read(id, as === undefined ? character() : as, { own }))   // HOME-RENT: the playing character's own tenancies ride the answer
       .then((r) => {
         const list = r?.ok ? r.data?.homes : null;
         // unanswered: what was known stands, nothing new is believed, and the next ask waits a little
@@ -641,7 +645,11 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
       if (!homeMapIdOk(id)) continue;
       const keys = new Set(everyTown.get(id) ?? []);
       for (const k of w.u ?? []) if (homeBuildingKeyOk(k) && !keys.has(k)) { keys.add(k); became = true; }
-      for (const k of w.d ?? []) { keys.delete(k); towns.get(id)?.homes.delete(k); }
+      for (const k of w.d ?? []) {
+        keys.delete(k);
+        towns.get(id)?.homes.delete(k);
+        townReads.forget(id, k);   // YC4: a cell answered from before the word does not bring it back
+      }
       if (keys.size) everyTown.set(id, keys); else everyTown.delete(id);
       if (towns.has(id)) { version++; ensure(id, { force: true }); }
     }
@@ -668,6 +676,7 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
     if (mine) {
       try { onWrote?.(id, buildingKey); } catch { /* a listener's fault is never the registry's */ }
     }
+    if (!row) townReads.forget(id, buildingKey);   // YC4: a home I let go stays gone over a cell answered from before it
     const t = towns.get(id);
     if (t) {
       if (row) t.homes.set(buildingKey, row);
@@ -797,6 +806,22 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
   /** AUDIT GUILD1d A5: something a door shows moved outside the registry (the guild book's look - whether this character
    *  may buy a hall): the doors are read again. */
   const bump = () => { version++; };
+
+  /** YC4: THE HUB'S WORD THAT HOME CELLS MOVED, `[mapId, cell, version]` each (net/homeCellWordLaw.js). A town this page
+   *  holds, whose cell it holds below that version, is asked again at once - its own part too where it holds a row of
+   *  its own in that cell. One ask a town, however many of its cells the frame names. */
+  function hearHomeCells(/** @type {number[][]} */ words) {
+    /** @type {Map<number, boolean>} each town to ask, and whether its own part with it */
+    const asks = new Map();
+    for (const [mapId, cell, cellVersion] of words) {
+      const id = idOf(mapId);
+      if (!towns.has(id) || !townReads.wants(id, cell, cellVersion)) continue;
+      asks.set(id, asks.get(id) === true || townReads.ownIn(id, cell));
+    }
+    for (const [id, own] of asks) ensure(id, { force: true, own });
+  }
+  if (!townReads.older()) homeCellWords?.(hearHomeCells);
+
   return { ensure, waitFor, known, homeAt, hearEveryTown, hearHome, homeStands, heardHomeless, claim, release, setEntry, setLook, vote, homesIn, bump, holdDeed, releaseDeed, transfer, version: () => version };
 }
 

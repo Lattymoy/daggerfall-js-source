@@ -754,10 +754,14 @@ many cells at once (a guild's heraldry, which redraws all its halls) answers no 
 ### 14.5 The client
 
 `onlineHomes.js` keeps one registry, and `homeAt` reads it as today. It merges the shared rows by cell with the
-caller's own rows by building key. It asks a town's cells as `yardCellSync.js` asks the yards: nearest first, with the
-versions it holds, every 60 s and at once on a home word. It asks its own part when it first asks a town, after each of its own writes, on a
-home word for a cell where it holds an own row, and every 5 minutes. Only those make the own part change, so it
-is asked far less than the town is today. QUEST-HOME's home words (`hearHome`) still make it ask at once.
+caller's own rows by building key. It asks a town's cells with the versions it holds, every 60 s and at once on a
+home word. It asks its own part when it first asks a town, after each of its own writes, on a home word for a cell
+where it holds an own row, and every 5 minutes. Only those make the own part change, so it is asked far less than the
+town is today. QUEST-HOME's home words (`hearHome`) still make it ask at once.
+
+The registry knows a town by its map id, not where the player stands, so it asks every cell a town can hold (65) in
+one request, not nearest first (`homeCellSync.js` HOME_TOWN_CELLS). A service that answers the two routes with a 404,
+400 or 403 is older than acct216: the page reads `/v1/homes/town` from then on.
 
 ### 14.6 Decided (2026-10-29)
 

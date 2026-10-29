@@ -1,0 +1,292 @@
+[
+  {
+    "name": "YC4-HOME-CELL-own-row-under-the-shared",
+    "file": "src/systems/online/homeCellSync.js",
+    "old": "if (ownKeys.has(buildingKey) || own.hidden.has(buildingKey) || goneNow(town, buildingKey)) continue;",
+    "new": "if (own.hidden.has(buildingKey) || goneNow(town, buildingKey)) continue;",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "the shared row of my own home stands over my own row"
+  },
+  {
+    "name": "YC4-HOME-CELL-the-hidden-deed-kept",
+    "file": "src/systems/online/homeCellSync.js",
+    "old": "if (ownKeys.has(buildingKey) || own.hidden.has(buildingKey) || goneNow(town, buildingKey)) continue;",
+    "new": "if (ownKeys.has(buildingKey) || goneNow(town, buildingKey)) continue;",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "a deed held for its knight is an online home to them"
+  },
+  {
+    "name": "YC4-HOME-CELL-the-gone-hold-unread",
+    "file": "src/systems/online/homeCellSync.js",
+    "old": "if (ownKeys.has(buildingKey) || own.hidden.has(buildingKey) || goneNow(town, buildingKey)) continue;",
+    "new": "if (ownKeys.has(buildingKey) || own.hidden.has(buildingKey)) continue;",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "a home sold comes back from a cell answered before the sale"
+  },
+  {
+    "name": "YC4-HOME-CELL-the-gates-open-a-hall",
+    "file": "src/systems/online/homeCellSync.js",
+    "old": "rows.push(own.openGates && !shared.hall ?",
+    "new": "rows.push(own.openGates ?",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "Open Gates opens a hall, which homesInTown never did"
+  },
+  {
+    "name": "YC4-HOME-CELL-the-gates-unread",
+    "file": "src/systems/online/homeCellSync.js",
+    "old": "rows.push(own.openGates && !shared.hall ? { ...shared, entry: 'public' } : shared);",
+    "new": "rows.push(shared);",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "a shared home keeps its door shut under Open Gates"
+  },
+  {
+    "name": "YC4-HOME-CELL-the-versions-unsent",
+    "file": "src/systems/online/homeCellSync.js",
+    "old": "const asked = wanted.map((cell) => [cell, town.cells.get(cell)?.ver ?? 0]);",
+    "new": "const asked = wanted.map((cell) => [cell, 0]);",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "every read asks every cell whole"
+  },
+  {
+    "name": "YC4-HOME-CELL-an-older-version-believed",
+    "file": "src/systems/online/homeCellSync.js",
+    "old": "      if (held && ver < held.ver) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "a replica behind the page takes a cell back"
+  },
+  {
+    "name": "YC4-HOME-CELL-the-own-part-every-read",
+    "file": "src/systems/online/homeCellSync.js",
+    "old": "const ownDue = own || !town.own || town.own.character !== character || now() - town.own.at >= HOME_OWN_TTL_MS;",
+    "new": "const ownDue = true;",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "the own part asked at every poll"
+  },
+  {
+    "name": "YC4-HOME-CELL-the-character-unread",
+    "file": "src/systems/online/homeCellSync.js",
+    "old": "const ownDue = own || !town.own || town.own.character !== character || now() - town.own.at >= HOME_OWN_TTL_MS;",
+    "new": "const ownDue = own || !town.own || now() - town.own.at >= HOME_OWN_TTL_MS;",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "another character reads the last one's own part"
+  },
+  {
+    "name": "YC4-HOME-CELL-the-own-clock-never-runs-out",
+    "file": "src/systems/online/homeCellSync.js",
+    "old": "const ownDue = own || !town.own || town.own.character !== character || now() - town.own.at >= HOME_OWN_TTL_MS;",
+    "new": "const ownDue = own || !town.own || town.own.character !== character;",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "the own part never asked again on its own"
+  },
+  {
+    "name": "YC4-HOME-CELL-no-fallback",
+    "file": "src/systems/online/homeCellSync.js",
+    "old": "if (fromOlderService(cellsAnswer) || fromOlderService(ownAnswer)) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "a service from before acct216 leaves every town unknown"
+  },
+  {
+    "name": "YC4-HOME-CELL-the-own-refusal-unread",
+    "file": "src/systems/online/homeCellSync.js",
+    "old": "if (fromOlderService(cellsAnswer) || fromOlderService(ownAnswer)) {",
+    "new": "if (fromOlderService(cellsAnswer)) {",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "an older service refusing the own part is a failure for ever"
+  },
+  {
+    "name": "YC4-HOME-CELL-an-overload-read-as-older",
+    "file": "src/systems/online/homeCellSync.js",
+    "old": "const OLDER_SERVICE_STATUSES = new Set([400, 403, 404, 405]);",
+    "new": "const OLDER_SERVICE_STATUSES = new Set([400, 403, 404, 405, 503]);",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "one overload sends the page to the old route for good"
+  },
+  {
+    "name": "YC4-HOME-CELL-more-never-asked",
+    "file": "src/systems/online/homeCellSync.js",
+    "old": "      wanted = more;\n",
+    "new": "      wanted = [];\n",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "the cells a full answer left are not asked until the next poll"
+  },
+  {
+    "name": "YC4-HOME-CELL-the-rounds-past-the-bound",
+    "file": "src/systems/online/homeCellSync.js",
+    "old": "round < HOME_CELLS_ROUNDS_MAX && wanted.length",
+    "new": "round < HOME_CELLS_ROUNDS_MAX + 1 && wanted.length",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "a service that keeps saying more is asked past the bound"
+  },
+  {
+    "name": "YC4-HOME-CELL-a-word-at-the-version-held",
+    "file": "src/systems/online/homeCellSync.js",
+    "old": "return (town.cells.get(cell)?.ver ?? 0) < version;",
+    "new": "return (town.cells.get(cell)?.ver ?? 0) <= version;",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "a word the page already holds asks again"
+  },
+  {
+    "name": "YC4-HOME-CELL-the-own-part-on-every-word",
+    "file": "src/systems/online/homeCellSync.js",
+    "old": "yardCellOf(row.buildingKey) === cell);",
+    "new": "true);",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "a word on a cell with no home of mine asks the own part"
+  },
+  {
+    "name": "YC4-HOME-CELL-a-word-never-asks-the-own-part",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "asks.set(id, asks.get(id) === true || townReads.ownIn(id, cell));",
+    "new": "asks.set(id, false);",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "a word on my own home's cell leaves the own part stale"
+  },
+  {
+    "name": "YC4-HOME-CELL-no-ear",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "if (!townReads.older()) homeCellWords?.(hearHomeCells);",
+    "new": "if (false) homeCellWords?.(hearHomeCells);",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "the hub's words never reach the registry"
+  },
+  {
+    "name": "YC4-HOME-CELL-an-ear-on-an-old-door",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "if (!townReads.older()) homeCellWords?.(hearHomeCells);",
+    "new": "homeCellWords?.(hearHomeCells);",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "a door with no cell routes listens all the same"
+  },
+  {
+    "name": "YC4-HOME-CELL-the-release-unforgotten",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "    if (!row) townReads.forget(id, buildingKey);",
+    "new": "",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "a home I sold stands again off a cell answered before the sale"
+  },
+  {
+    "name": "YC4-HOME-CELL-a-write-leaves-the-own-part",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "character: as = undefined, own = force } = {}) {",
+    "new": "character: as = undefined, own = false } = {}) {",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "a write of mine is not read back in my own part"
+  },
+  {
+    "name": "YC4-HOME-CELL-the-welcome-unread",
+    "file": "src/net/homeCellPush.js",
+    "old": "hears = welcome?.[HOME_CELL_WELCOME_FIELD] === 1;",
+    "new": "hears = true;",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "an order sent to a relay that closes the socket on it"
+  },
+  {
+    "name": "YC4-HOME-CELL-no-spacing",
+    "file": "src/net/homeCellPush.js",
+    "old": "const wait = sentAt + HOME_CELL_SEND_MS - now;",
+    "new": "const wait = 0;",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "orders sent past the hub's rate"
+  },
+  {
+    "name": "YC4-HOME-CELL-another-sessions-frame",
+    "file": "src/net/homeCellPush.js",
+    "old": "export function hearHomeCellFrame(/** @type {any} */ session, /** @type {any} */ frame, now = Date.now()) {\n  if (link?.session !== session) return;\n",
+    "new": "export function hearHomeCellFrame(/** @type {any} */ session, /** @type {any} */ frame, now = Date.now()) {\n",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "a frame on a halo socket heard as the hub's"
+  },
+  {
+    "name": "YC4-HOME-CELL-the-intake-ungated",
+    "file": "src/net/homeCellPush.js",
+    "old": "  if (!gate.pass) return;\n",
+    "new": "",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "a flood of frames is a flood of asks"
+  },
+  {
+    "name": "YC4-HOME-CELL-the-carrier-dropped",
+    "file": "src/net/accountClient.js",
+    "old": "  if (Array.isArray(data?.homeCellOrders)) carryHomeCellOrders(data.homeCellOrders);",
+    "new": "",
+    "tests": [
+      "test/systems/online/homecellsync.test.js"
+    ],
+    "note": "a home write's order never reaches the hub"
+  },
+  {
+    "name": "YC4-HOME-CELL-the-hall-unsigned",
+    "file": "server-account/src/index.js",
+    "old": "  if (path !== '/v1/guilds/hall/buy' && path !== '/v1/guilds/hall/sell') return r;",
+    "new": "  return r;",
+    "tests": [
+      "test/server/home_cell_order.test.js"
+    ],
+    "note": "a hall bought or sold pushes nothing"
+  },
+  {
+    "name": "YC4-HOME-CELL-the-sales-building-unread",
+    "file": "server-account/src/index.js",
+    "old": "const buildingKey = move?.on?.[0] ?? move?.off?.[0];",
+    "new": "const buildingKey = move?.on?.[0];",
+    "tests": [
+      "test/server/home_cell_order.test.js"
+    ],
+    "note": "the Guild tab's sale names no cell"
+  }
+]
