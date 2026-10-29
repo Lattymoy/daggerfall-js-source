@@ -165,6 +165,7 @@ on:
       - "src/systems/wild/pvpReward.js"
       - "src/systems/wild/wildStoreLock.js"
       - "src/systems/wild/wildLeaf.js"
+      - "src/systems/wild/villainLaw.js"
       - "src/systems/item/itemKinds.js"
       - "src/net/gate/gateMods.js"
       - "src/net/insignia.js"

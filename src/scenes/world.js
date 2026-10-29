@@ -871,6 +871,7 @@ import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/
 import { createHeartbeat, whileLive } from '../net/heartbeat.js';   // SCALE4c: the beat, the letterbox and the town's board in one request
 import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
 import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus (RENOWN3: read against my Renown)
+import { villainMonsterLowers, villainQuestLowers } from '../systems/wild/villainLaw.js';   // PVP-VILLAIN-KEEP: a monster at my level and a quest lower the villain meter
 import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry, renownStruckAt, renownReportSoon } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
 import { createHallBook, hallFactionsOf, chapterFactionOf, parseHallCommand, hallAuditLines } from '../net/npcHallBook.js';   // CHAP2a: a town's guild halls, witnessed as I walk in; AUDIT CHAP2 E1: a developer's /hall
@@ -19909,8 +19910,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // known, and the next report goes at the minute's pace to learn it (net/renownTracker.js renownReportSoon)
   let _renownRoom = null;
   const renownTracker = onlineOn ? createRenownTracker({
-    report: (c, xp, name, rid, region) => { _renownSentHour = renownHour(); return renownAccount.report(c, xp, name, rid, region); },   // AUDIT SCALE II C-3: the hour it goes in
-    leave: (c, xp, name, rid, region) => renownAccount.leave(c, xp, name, rid, region),   // AUDIT RENOWN1 GAME-8: the page's last word, finished by the browser
+    report: (c, xp, name, rid, region, vd) => { _renownSentHour = renownHour(); return renownAccount.report(c, xp, name, rid, region, vd); },   // AUDIT SCALE II C-3: the hour it goes in
+    leave: (c, xp, name, rid, region, vd) => renownAccount.leave(c, xp, name, rid, region, vd),   // AUDIT RENOWN1 GAME-8: the page's last word, finished by the browser
     character: () => characterIdOf(playerEntity),
     region: () => { const px = playerTravelPixel(); const r = maps.getRegionIndexAt(px.x, px.y); return Number.isSafeInteger(r) ? r : null; },   // SEAT1b: where the XP was earned - a pledged seat's region counts it (Seats-Arc 4.2)
     name: () => (typeof playerEntity?.name === 'string' ? playerEntity.name : null),
@@ -19983,7 +19984,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // in an hour the bound has spent, since nothing earned then counts). Built only online, like the tracker.
     setHudRenown(() => ({ level: renownNow, xp: renownXp, pending: _renownCapHour === renownHour() ? 0 : renownTracker.pending() }));
     globalThis.addEventListener?.('pagehide', () => { renownTracker.leave(); });   // RENOWN1: what was earned since the last report goes as the page does. AUDIT RENOWN1 GAME-8: by `keepalive`, under the report's own id
-    setRenownKillHandler((foe) => { const party = 1 + (partyNear()?.length ?? 0); const xp = renownPartyXp(renownKillXp(renownFoeLevel(foe), renownNow), Number.isInteger(foe?._fightN) ? Math.min(party, foe._fightN) : party); renownTracker.earn(xp); sigilDrinks(xp); seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes?.dungeonLocation : null)).catch(() => {}); });   // BAY-LEFT-SEA: a lair's foe struck down past the Bay - its den, a Bounty's (systems/seatEdicts.js lairDenOf)   // AUDIT PSCALE1 PLAY-4: a shared foe's bonus counts the partymates who FOUGHT it (its fighters, systems/party/partyScale.js) - a partymate idling in the cell pads nothing   // RENOWN3: read against my Renown, never above it by more than RENOWN_OVER_MAX
+    setRenownKillHandler((foe) => { const party = 1 + (partyNear()?.length ?? 0); const xp = renownPartyXp(renownKillXp(renownFoeLevel(foe), renownNow), Number.isInteger(foe?._fightN) ? Math.min(party, foe._fightN) : party); renownTracker.earn(xp, villainMonsterLowers(playerEntity.level, renownFoeLevel(foe))); sigilDrinks(xp); seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes?.dungeonLocation : null)).catch(() => {}); });   // BAY-LEFT-SEA: a lair's foe struck down past the Bay - its den, a Bounty's (systems/seatEdicts.js lairDenOf)   // AUDIT PSCALE1 PLAY-4: a shared foe's bonus counts the partymates who FOUGHT it (its fighters, systems/party/partyScale.js) - a partymate idling in the cell pads nothing   // RENOWN3: read against my Renown, never above it by more than RENOWN_OVER_MAX
     const paid = new Set();
     renownQuestEnded = (q) => {
       if (!q?.questSuccess) return;
@@ -19991,7 +19992,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (!key || paid.has(key)) return;   // a quest pays once, however its end is heard again
       paid.add(key);
       const xp = renownQuestXp(playerEntity.level, renownNow);   // RENOWN3: the quest's level read against my Renown too
-      renownTracker.earn(xp);
+      renownTracker.earn(xp, villainQuestLowers());   // PVP-VILLAIN-KEEP: a quest done lowers the villain meter
       sigilDrinks(xp);   // SIGIL1
     };
   }

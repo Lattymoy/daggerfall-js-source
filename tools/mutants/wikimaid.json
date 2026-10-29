@@ -585,7 +585,7 @@
   {
     "name": "WIKIMAID-body-bound-unraised",
     "file": "src/net/identityToken.js",
-    "old": "export const TOKEN_BODY_MAX = 896;",
+    "old": "export const TOKEN_BODY_MAX = 928;",
     "new": "export const TOKEN_BODY_MAX = 800;",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"

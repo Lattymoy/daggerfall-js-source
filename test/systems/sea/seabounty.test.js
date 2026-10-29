@@ -367,8 +367,8 @@ test('SEA-BOUNTY the seams by source: the relay passes the room and signs it wit
   assert.match(ref, /kc: typeof v\.kc === 'string' \? v\.kc : '', m: typeof v\.m === 'string' \? v\.m : '',/);
   const wild = src('server-account/src/wild.js');
   assert.match(wild, /sea = c;/);
-  assert.match(wild, /\.\.\.seaKillSteps\(ctx\.db, sea, ctx\.nowS\),\n {4}\/\/ WILD-INSURE: each policy that kept its piece, spent in the batch that kept it\n {4}\.\.\.spent\.map\(/);   // PIN MOVED (WILD-INSURE, 2026-10-26): the kill's bounties, then the policies the fall spent - one batch
-  assert.match(wild, /\.bind\(r, charId, fallen, killer, ctx\.nowS, room, JSON\.stringify\(tk\), fallAt\),\n {6}\.\.\.seaKillSteps\(ctx\.db, sea, ctx\.nowS\),\n {4}\]\);/, 'REPEAT-SHIELD: a shielded fall still writes its kill at sea');   // PIN MOVED (AUDIT PVP-EASE L1-1, 2026-10-26): the row carries its kill's moment, `ki`
+  assert.match(wild, /\.\.\.seaKillSteps\(ctx\.db, sea, ctx\.nowS\),\n {4}\.\.\.villainFallSteps\(ctx\.db, sea\),[^\n]*\n {4}\/\/ WILD-INSURE: each policy that kept its piece, spent in the batch that kept it\n {4}\.\.\.spent\.map\(/);   // PIN MOVED (WILD-INSURE, 2026-10-26): the kill's bounties, then the policies the fall spent - one batch
+  assert.match(wild, /\.bind\(r, charId, fallen, killer, ctx\.nowS, room, JSON\.stringify\(tk\), fallAt\),\n {6}\.\.\.seaKillSteps\(ctx\.db, sea, ctx\.nowS\),\n {6}\.\.\.villainFallSteps\(ctx\.db, sea\),[^\n]*\n {4}\]\);/, 'REPEAT-SHIELD: a shielded fall still writes its kill at sea');   // PIN MOVED (AUDIT PVP-EASE L1-1, 2026-10-26): the row carries its kill's moment, `ki`
   const idx = src('server-account/src/index.js');
   assert.match(idx, /'\/v1\/sea\/bounty\/board': async \(\) => seaBountyBoard\(sctx, who\.player, body\),/);
   assert.match(idx, /'\/v1\/sea\/bounty\/post': async \(\) => seaBountyPost\(sctx, who\.player, body\),/);

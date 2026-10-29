@@ -4,6 +4,7 @@
 // barr"). Keys 1 and 2 stay the potions'. A press readies the slot's spell and fires it at once, the hotbar's way
 // (systems/quickslots.js hotbarPress). With the mouse free, a click on a slot opens its picker: the spell, its element or
 // attribute, its icon. The bar is kept in this browser (a viewer's convenience). The one host line is in scenes/world.js.
+import { appStorage } from '../systems/appStorage.js';
 import { t } from '../systems/textManager.js';
 import { HOTBAR_SLOT_ACTIONS } from '../systems/inputActions.js';
 import { eventActions, isTextEntryTarget, hostPaused, bindings } from './input.js';
@@ -28,10 +29,10 @@ export const kitSlotOfEvent = (e) => eventActions(e).map((a) => KIT_ACTIONS.inde
 
 /** Read and write the saved bar; a blocked store leaves the default. */
 export function loadKitBar(key = STORE) {
-  try { return kitBarOf(JSON.parse(globalThis.localStorage?.getItem(key) ?? 'null')); } catch { return kitBarOf(null); }
+  try { return kitBarOf(JSON.parse(appStorage()?.getItem(key) ?? 'null')); } catch { return kitBarOf(null); }
 }
 export function saveKitBar(bar, key = STORE) {
-  try { globalThis.localStorage?.setItem(key, JSON.stringify(bar)); } catch { /* a private window keeps it for the page */ }
+  try { appStorage()?.setItem(key, JSON.stringify(bar)); } catch { /* a private window keeps it for the page */ }
 }
 
 /**

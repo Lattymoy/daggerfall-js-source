@@ -1002,13 +1002,13 @@ const SECRET_RE = /^[A-Za-z0-9_-]{8,64}$/;
  *  too. Every claim at once had reached 639 of 640, and a house (LEGACY7) took such a token past it: minted, then
  *  refused here at every hello. With a house at its bounds and the realm character (`ci`) the body is 778.
  *
- *  WIKIMAID (world214): 864 - the WikiMaid's glyph took every claim at once, a house and the arms to 808 of 800. SHOP (world274): 896 - the Origin's, to 867.
+ *  WIKIMAID (world214): 864 - the WikiMaid's glyph took every claim at once, a house and the arms to 808 of 800. SHOP (world274): 896 - the Origin's, to 867. PVP-VILLAIN-KEEP (world281): 928 - `vl`, a house and every claim but the crowns: 899.
  *
  *  THE VERSION PREFIX IS NOT SPELLED OUT HERE. identityToken.js is the
  *  one home for which version exists and the verifier refuses anything
  *  else before parsing a byte; a second copy of `v1` in this file would
  *  be a second thing to forget on the day there is a v2. */
-const TOKEN_RE = /^[A-Za-z0-9]{1,8}\.[A-Za-z0-9_-]{1,896}\.[A-Za-z0-9_-]{1,128}$/;
+const TOKEN_RE = /^[A-Za-z0-9]{1,8}\.[A-Za-z0-9_-]{1,928}\.[A-Za-z0-9_-]{1,128}$/;
 
 /** The name a refused one becomes. Not a mask (`C**` is a shape a
  *  player treats as a puzzle) and not an error the relay could not

@@ -380,3 +380,15 @@ test('WILD-INSURE AND REPEAT-SHIELD THE WORDS AND THE HOST: the death screen say
   assert.ok(inv.includes('const b = el(\'button\', \'act\', WILD_TEXT.insureAct(ins.premiumOf(picked)));'), 'and offers it');
   assert.equal(WILD_TEXT.insureAct(1234), 'Insure (1,234 gold)');
 });
+
+test('WILD-INSURE THE SERVICE, A VILLAIN (server-account/src/wild.js wildFall, the owner: "villian lose insurance"): a fallen whose meter is red (villainLaw.js isVillain) holds no policy - the roll takes the insured sword as if bare and spends nothing (mutants: the meter unread)', async () => {
+  const g = await stood({ axeWorn: false });
+  const gk = ledgerKeyOf(g.sword);
+  assert.equal((await g.insure([gk])).status, 200);
+  g.settle();
+  g.svc.env.DB._raw.prepare('UPDATE realm_characters SET villainy = 5000 WHERE id = ?').run(g.R.id);
+  const r = await g.fall({ by: g.cy, r: '0123456789c1', w: -1 });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.deepEqual([r.body.wi, r.body.took.map((x) => x.t), r.body.insured], [0, [LONGSWORD], undefined], 'the villain\'s sword taken; no policy read');
+  assert.equal(g.svc.env.DB._raw.prepare('SELECT state FROM wild_insurance WHERE key = ?').get(gk).state, 'active', 'and none spent');
+});

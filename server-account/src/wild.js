@@ -72,6 +72,8 @@ import { piecesBarred, knownCopySteps } from './ledger.js';
 import { isFrozen } from './staffFreeze.js';   // STAFF-PANEL5-FREEZE: a fall naming a frozen account
 import { wornNameOf } from './accounts.js';   // WILD-REMAINS-LOSS: the name the fallen wears, its token's law
 import { seaKillSteps } from './seaBounty.js';   // SEA-BOUNTY: a kill at sea, written with its fall
+import { villainFallSteps } from './villainy.js';
+import { isVillain } from '../../src/systems/wild/villainLaw.js';   // PVP-VILLAIN: a villain's policies keep nothing   // PVP-VILLAIN-KEEP: a kill's villain points, written with its fall
 
 /** How long a fall's row is kept (its receipt's hour, and the room's remains' ten minutes past its respawn's two). */
 export const WILD_FALLS_KEEP_S = 2 * 3600;
@@ -203,7 +205,7 @@ export async function wildFall(ctx, player, body, { gateKey, signing }, again = 
   if (repeat) return wildShielded(ctx, player, body, { gateKey, signing }, again, { r, charId, fallen, killer, room, sea, fallAt });
   // the ledger's word on what may leave, before the drop is taken - asked of EVERY piece the death could take (a copy,
   // another's piece, a claim waiting - kept)
-  const row = await ctx.db.prepare('SELECT obj, held, judged_seq FROM realm_characters WHERE id = ?1 AND player = ?2 AND dead_at IS NULL').bind(charId, fallen).first();
+  const row = await ctx.db.prepare('SELECT obj, held, judged_seq, villainy FROM realm_characters WHERE id = ?1 AND player = ?2 AND dead_at IS NULL').bind(charId, fallen).first();
   if (!row?.obj || !ctx.bucket) return { error: 'no-realm-character' };
   let stored = null;
   try { stored = JSON.parse(/** @type {string} */ (await realmSaveTextOf(await ctx.bucket.get(row.obj)))); } catch { stored = null; }
@@ -215,7 +217,7 @@ export async function wildFall(ctx, player, body, { gateKey, signing }, again = 
   // WILD-INSURE: the policies in force at the fall's signing keep their pieces. PVP-VILLAIN's seam: a villain holds none
   const { results: policies = [] } = await ctx.db.prepare("SELECT key, at, premium FROM wild_insurance WHERE char_id = ?1 AND state = 'active'").bind(charId).all();
   const live = policies.filter((p) => wildPolicyInForce(Number(p.at), fallAt));
-  const insured = pvpInsuredFor(live.map((p) => String(p.key)), { villain: false });
+  const insured = pvpInsuredFor(live.map((p) => String(p.key)), { villain: isVillain(Number(row.villainy)) });   // the owner: "villian lose insurance"
   // AUDIT FOE-KEEPS LETTERS-TENTH: a tab that says it lowers a letter by its share (or a seizure, which no game applies) -
   // a tenth of each letter's worth into the pile; a tab from before the word, the letters whole as it would apply them
   const letters = seize || body?.letters === WILD_FALL_LETTERS;
@@ -272,6 +274,7 @@ export async function wildFall(ctx, player, body, { gateKey, signing }, again = 
     // SEA-BOUNTY (seaBounty.js): a fall at sea at another's hand - the bounties on the fallen claimed for its killer, in the
     // batch that writes the fall, or neither lands
     ...seaKillSteps(ctx.db, sea, ctx.nowS),
+    ...villainFallSteps(ctx.db, sea),   // PVP-VILLAIN-KEEP: the kill's points on its killer, once with the fall
     // WILD-INSURE: each policy that kept its piece, spent in the batch that kept it
     ...spent.map((k) => ctx.db.prepare("UPDATE wild_insurance SET state = 'spent', spent_r = ?3, spent_at = ?4 WHERE char_id = ?1 AND key = ?2 AND state = 'active'").bind(charId, k, r, ctx.nowS)),
   ];
@@ -300,6 +303,7 @@ async function wildShielded(ctx, player, body, keys, again, { r, charId, fallen,
       ctx.db.prepare("INSERT INTO wild_falls (r, char_id, player, killer, at, items, kept, burnt, wi, wm, oi, wg, tk, ki) VALUES (?1, ?2, ?3, ?4, ?5, '[]', '[]', 0, -1, ?6, ?5, NULL, ?7, ?8)")
         .bind(r, charId, fallen, killer, ctx.nowS, room, JSON.stringify(tk), fallAt),
       ...seaKillSteps(ctx.db, sea, ctx.nowS),
+      ...villainFallSteps(ctx.db, sea),   // PVP-VILLAIN-KEEP: a shielded kill is still a kill its killer chose
     ]);
   } catch (e) {
     const now = await ctx.db.prepare('SELECT 1 AS x FROM wild_falls WHERE r = ?1').bind(r).first();

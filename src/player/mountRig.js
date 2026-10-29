@@ -58,6 +58,8 @@ export function setRideBar(fn, say = null) { _rideBar = typeof fn === 'function'
 export const rideFoot = () => _footNow?.();
 /** PVP-RULES: the bar's line now, or null. */
 export const rideBarred = () => _rideBar?.() ?? null;
+/** A saddle refused now, its line said. */
+const refused = (mode) => { const barred = isRiding(mode) ? rideBarred() : null; if (barred) _rideSay?.(barred); return !!barred; };
 
 /**
  * @param deps {
@@ -140,8 +142,7 @@ export function createMountRig({
    * speed, the bob and the hoof loop with no horse under them.
    */
   function setMode(mode) {
-    const barred = isRiding(mode) ? rideBarred() : null;
-    if (barred) { _rideSay?.(barred); return; }   // PVP-RULES: no saddle under the flag
+    if (refused(mode)) return;   // PVP-RULES: no saddle under the flag
     player.setTransportMode(mode);   // F-E3: the height action rides with the mode
     voice.mount(isRiding(mode));   // HORSE-VOICE: a mount's whinny is the next voice; a dismount drops a spook's neigh not yet said
     // DISC29-F (Skibbster on Discord: the gallop kept playing inside a building entered at speed): UpdateMode's first

@@ -147,7 +147,8 @@ test('PVP-RULES NO SADDLE (the owner: "No horse u demoibt", "Demount"): flagged 
   assert.equal(pvpSpellRefusal({ rangeType: 0, pvpKit: 'fortify', effects: [{ type: 9 }] }), null, 'PVP-KIT: the bar\'s Fortify is cast');
   assert.match(pvpSpellRefusal({ rangeType: 0, effects: [{ type: 9 }] }), /yourself/);
   assert.match(readFileSync('src/systems/effects.js', 'utf8'), /if \(spell\?\.pvpKit != null\) list\[i\]\.bundleKit = true;/, 'a bar spell\'s entry is marked');
-  assert.match(readFileSync('src/player/mountRig.js', 'utf8'), /const barred = isRiding\(mode\) \? rideBarred\(\) : null;\n\s+if \(barred\) \{ _rideSay\?\.\(barred\); return; \}/, 'the one place the mode changes refuses the saddle');
+  assert.match(readFileSync('src/player/mountRig.js', 'utf8'), /function setMode\(mode\) \{\n\s+if \(refused\(mode\)\) return;/, 'the one place the mode changes refuses the saddle');
+  assert.match(readFileSync('src/player/mountRig.js', 'utf8'), /const refused = \(mode\) => \{ const barred = isRiding\(mode\) \? rideBarred\(\) : null; if \(barred\) _rideSay\?\.\(barred\); return !!barred; \};/, 'a saddle asks the bar and says its line');
   assert.match(readFileSync('src/scenes/pvpRulesHost.js', 'utf8'), /if \(isRiding\(motor\?\.transportMode\)\) \{ rideFoot\(\);/);
   on = false;
   assert.equal(rideBarred(), null, 'off the flag a saddle is free');
