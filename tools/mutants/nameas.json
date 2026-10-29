@@ -204,8 +204,8 @@
   {
     "name": "NAMEAS-keepSession-drops-the-stamp",
     "file": "src/net/accountClient.js",
-    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, nameAsAt })",
-    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon })",
+    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, nameAsAt })",
+    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory })",
     "tests": [
       "test/net/nameas_client.test.js"
     ]

@@ -4,8 +4,13 @@
 // real Room (test/fakeRoom.mjs) end to end.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { OnlineSession, REHELLO_GAP_MS } from '../../src/net/online.js';
 import { PIXEL_UNITS } from '../../src/net/wire.js';
+import { accountTokenMinter, adoptIdentity, keepSession, storedSession } from '../../src/net/accountClient.js';
+import { ownArmory } from '../../src/systems/ownGlyphs.js';
+import { armoryWeaponLook } from '../../src/systems/weaponGlow.js';
+import { createAuraHost } from '../../src/scenes/auraHost.js';
 import { fakeRoom } from '../fakeRoom.mjs';
 import { fakeSocketClass } from '../fakeSocket.mjs';
 
@@ -99,4 +104,64 @@ test('ARMORY live: a kit put on mid-session reaches the room through the real re
   a.s.rehello();
   clock.t += REHELLO_GAP_MS; a.s.tick();
   await until(() => b.s.armoryOf('aaaa-0001') === null, 'b drops the pieces');
+});
+
+/** A device's storage, as localStorage answers. */
+const memStorage = () => { const m = new Map(); return { getItem: (/** @type {string} */ k) => m.get(k) ?? null, setItem: (/** @type {string} */ k, /** @type {string} */ v) => m.set(k, String(v)), removeItem: (/** @type {string} */ k) => m.delete(k) }; };
+
+test('ARMORY-SEEN (players could not see their own pieces) - my kit through the producers that write it: the mint\'s answer hands it to the page and the stored session, `ownArmory` and the weapon glow read it back, a wear\'s answer lands the same way, and the world host hears the mint\'s kit, so a wear since is said again (mutants: keepSession dropping the kit; the minter dropping it)', async () => {
+  const storage = memStorage();
+  keepSession(storage, { id: 'p_me', name: 'Mac', kind: 'linked', sessionId: 's1', secret: 'SECRETSECRETSECRETSECRET' });
+  let answer = /** @type {any} */ ({ token: 'v1.t.s', name: 'Mac', kind: 'linked', title: null, glyphs: [], level: 10, aura: null, armory: 'bbbb0' });
+  const fetch = async () => ({ ok: true, status: 200, json: async () => answer });
+  const issued = /** @type {any[]} */ ([]);
+  const mint = accountTokenMinter({ fetch, storage, onIssued: (w) => issued.push(w), character: () => 'char-aaaa' });
+  await mint();
+  assert.equal(issued.at(-1).armory, 'bbbb0', 'the page is told the kit the token signed');
+  assert.equal(storedSession(storage)?.armory, 'bbbb0', 'and the stored session keeps it');
+  assert.equal(ownArmory(storage), 'bbbb0', 'so my own body wears it');
+  assert.deepEqual([armoryWeaponLook(ownArmory(storage)), armoryWeaponLook(ownArmory(memStorage()))], [null, null], 'no weapon piece in this kit, none with no session');
+  const { armory: _drop, ...older } = answer;
+  answer = older;
+  await mint();
+  assert.deepEqual(['armory' in issued.at(-1), ownArmory(storage)], [false, 'bbbb0'], 'an older service says nothing, and the kit stays');
+  // a wear's answer (ui/accountFlow.js armoryWore) - a weapon piece too, which the glow reads off the same word
+  assert.equal(adoptIdentity(storage, { armory: 'a000b', secret: 'SECRETSECRETSECRETSECRET' }), true);
+  assert.deepEqual([ownArmory(storage), armoryWeaponLook(ownArmory(storage))], ['a000b', 'edge']);
+  assert.equal(adoptIdentity(storage, { armory: 'a000b', secret: 'SECRETSECRETSECRETSECRET' }), false, 'a kit that did not change is not written again');
+  answer = { ...older, armory: null };
+  await mint();
+  assert.deepEqual([issued.at(-1).armory, ownArmory(storage)], [null, null], 'none, said and kept');
+  // THE WORLD HOST on the same device: the mint's kit heard, my body dressed, and a wear since said to the room again
+  answer = { ...older, armory: 'bbbb0' };
+  await mint();
+  const was = globalThis.localStorage;
+  globalThis.localStorage = /** @type {any} */ (storage);
+  try {
+    let rehellos = 0;
+    const online = { rehello: () => { rehellos++; return true; }, auraOf: () => null, armoryOf: () => null };
+    const host = createAuraHost({
+      renderer: { gl: null }, online: () => online, travelActive: () => false, quiet: () => false, camYaw: () => 0,
+      player: () => ({ feetAt: () => [1, 0, 2], bodyYawFor: () => 0, height: 1.8, riding: false }),
+      spawned: () => true, beast: () => false, veiled: () => false, toScene: (/** @type {any} */ s) => s.at,
+      walkers: () => null, riders: () => null, bodies: () => null,
+    });
+    host.issued(issued.at(-1));
+    host.frame([]);
+    assert.deepEqual([host.armoryWearersNow().map((w) => w.kit), rehellos], [['bbbb0'], 0], 'my kit on my body, the room already told');
+    adoptIdentity(storage, { armory: 'b000b', secret: 'SECRETSECRETSECRETSECRET' });
+    host.frame([]);
+    assert.deepEqual([host.armoryWearersNow().map((w) => w.kit), rehellos], [['b000b'], 1], 'a wear since: drawn now, and said again');
+  } finally {
+    if (was === undefined) delete globalThis.localStorage; else globalThis.localStorage = was;
+  }
+});
+
+test('ARMORY-SEEN the stored session keeps every field adoptIdentity writes - the kit was written and dropped by keepSession\'s list (mutants: keepSession dropping the kit)', () => {
+  const src = readFileSync(new URL('../../src/net/accountClient.js', import.meta.url), 'utf8');
+  const adopt = src.slice(src.indexOf('export function adoptIdentity('), src.indexOf('\n}\n', src.indexOf('export function adoptIdentity(')));
+  const written = [...new Set([...adopt.matchAll(/\bnext\.(\w+) = /g)].map((m) => m[1]))];
+  const kept = src.match(/storage\?\.setItem\?\.\(SESSION_KEY, JSON\.stringify\(\{ ([^}]+) \}\)\)/)?.[1].split(/,\s*/) ?? [];
+  assert.ok(written.length >= 7 && written.includes('armory'), `adoptIdentity's fields read (${written})`);
+  assert.deepEqual(written.filter((f) => !kept.includes(f)), [], 'each one kept');
 });
