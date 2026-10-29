@@ -16,13 +16,15 @@ export const KFX_SHAPE = Object.freeze({ glow: 0, spark: 1, shard: 2, flake: 3, 
 /** Floats an instance: centre xyz, size, turn, shape, rgb, alpha, dir xyz (a spark's streak, a ground shape's normal, a
  *  standing shape's height in x), seed, progress, heat (how much of its core burns white). */
 export const KFX_FLOATS = 16;
+/** A layer's instances at most; the pass's buffer holds both layers, each in its own range. */
 export const KFX_MAX_INSTANCES = 3000;
-/** At most this many bursts alive at once (the oldest gives way); none begun past KFX_FAR_M from the eye; past
- *  KFX_DETAIL_M a burst throws half its particles. */
-export const KFX_MAX_LIVE = 12;
-/** ...and apart from them, at most this many AMBIENT bursts (a portal's breath, a mount look's beat), which never take
- *  a kill's place. */
-export const KFX_MAX_AMBIENT = 40;
+/** THE BUDGET (AUDIT STOREFRONT RENDER L8): each pool its own cap, so no kind of burst takes another's room - the kills;
+ *  a portal's opening and a fissure's waking (`event`); a place's breath, a portal's, a fissure's vents, the tremor's
+ *  dust (`place`); the horses' beats (`mount`). The 52 bursts the kills' 12 and a shared 40 were, split. A pool full,
+ *  its oldest burst fades out over KFX_FADE_S. None begun past KFX_FAR_M from the eye; past KFX_DETAIL_M a burst
+ *  throws half its particles. */
+export const KFX_POOL_CAP = Object.freeze({ kill: 12, event: 8, place: 16, mount: 16 });
+export const KFX_FADE_S = 0.25;
 export const KFX_FAR_M = 45;
 export const KFX_DETAIL_M = 18;
 /** The ghost's burn: the standing body eaten in the look's colour this long (s), the corpse lying under it. */
@@ -58,11 +60,12 @@ const lerp = (/** @type {number} */ a, /** @type {number} */ b, /** @type {numbe
 /** THE SIMULATION - every live burst's parts and lights: `start` begins one, `step` flies them, `build` writes this
  *  frame's instances, the blended layer first (`alpha`, `nAlpha`) and the added (`add`, `nAdd`). Floating-origin safe. */
 export class KillFx {
-  constructor({ rng = Math.random, reduced = false } = {}) {
+  /** `reduced` whether the player asks for less motion now: a function read at each burst's start (the setting followed
+   *  mid-session), or a fixed answer. */
+  constructor({ rng = Math.random, reduced = /** @type {boolean | (() => boolean)} */ (false) } = {}) {
     this.rng = rng;
-    /** Fewer and softer flashes where the player asks for less motion. */
-    this.reduced = reduced;
-    /** @type {{ parts: Part[], at: number[], look: string, age: number, ambient: boolean }[]} */
+    this._reduced = typeof reduced === 'function' ? reduced : () => !!reduced;
+    /** @type {{ parts: Part[], at: number[], look: string, age: number, pool: string, fade: number }[]} `fade` -1 live, else s into its fade */
     this.bursts = [];
     /** @type {{ at: number[], color: number[], range: number, life: number, age: number }[]} */
     this.lights = [];
@@ -70,32 +73,36 @@ export class KillFx {
     this.add = new Float32Array(KFX_MAX_INSTANCES * KFX_FLOATS);
     this.nAlpha = 0;
     this.nAdd = 0;
+    this._dir = [0, 0, 0];   // build's scratch, and light's answer: a frame allocates nothing
+    this._light = { x: 0, y: 0, z: 0, range: 0, color: [0, 0, 0], carried: true };
   }
+  /** Fewer and softer flashes where the player asks for less motion. */
+  get reduced() { return this._reduced(); }
   r(/** @type {number} */ a, /** @type {number} */ b) { return a + (b - a) * this.rng(); }
   get live() { return this.bursts.length > 0; }
 
   /**
    * BEGIN A BURST of `look` at a fallen body: `at` its feet (the scene's), `h` and `w` its height and width (m), `eye`
-   * the camera (none: the detail of a near one). Answers the burst, or null (no such look, or too far to be seen).
-   * `ambient` a breath under its own cap (KFX_MAX_AMBIENT); `dir` the body's facing on the ground ([x, z]), `pace` its
-   * gait (0 standing, 1 walking, 2 running) and `mane` whether its head is seen - a mount look's beat reads them.
+   * the camera (none: the detail of a near one). Answers the burst, or null (no such look, or too far to be seen). Its
+   * pool is its recipe's (KFX_POOL_OF). `dir` the body's facing on the ground ([x, z]; a portal's, away from the eye),
+   * `pace` its gait (0 standing, 1 walking, 2 running) and `mane` whether its head is seen - a mount look's beat reads them.
    * @param {string} look @param {number[]} at
-   * @param {{ h?: number, w?: number, eye?: number[]|null, ambient?: boolean, dir?: number[]|null, pace?: number, mane?: boolean }} [o]
+   * @param {{ h?: number, w?: number, eye?: number[]|null, dir?: ReadonlyArray<number>|null, pace?: number, mane?: boolean }} [o]
    */
-  start(look, at, { h = 1.8, w = 0.8, eye = null, ambient = false, dir = null, pace = 0, mane = true } = {}) {
+  start(look, at, { h = 1.8, w = 0.8, eye = null, dir = null, pace = 0, mane = true } = {}) {
     const recipe = RECIPES[/** @type {keyof typeof RECIPES} */ (look)];
     if (!recipe || !at || !at.every?.(Number.isFinite)) return null;
     const far = eye ? Math.hypot(at[0] - eye[0], at[1] - eye[1], at[2] - eye[2]) : 0;
     if (far > KFX_FAR_M) return null;
-    const amb = !!ambient, cap = amb ? KFX_MAX_AMBIENT : KFX_MAX_LIVE;
+    const pool = KFX_POOL_OF[/** @type {keyof typeof KFX_POOL_OF} */ (look)], cap = KFX_POOL_CAP[pool];
     let mine = 0;
-    for (const x of this.bursts) if (x.ambient === amb) mine++;
-    for (let k = 0; mine >= cap && k < this.bursts.length;) { if (this.bursts[k].ambient === amb) { this.bursts.splice(k, 1); mine--; } else k++; }   // the oldest of its own kind gives way
+    for (const x of this.bursts) if (x.pool === pool && x.fade < 0) mine++;
+    for (let k = 0; mine >= cap && k < this.bursts.length; k++) { const x = this.bursts[k]; if (x.pool === pool && x.fade < 0) { x.fade = 0; mine--; } }   // the oldest of its pool fades out
     const H = Math.max(0.4, Math.min(8, Number.isFinite(h) ? h : 1.8)), W = Math.max(0.3, Math.min(5, Number.isFinite(w) ? w : 0.8));
-    const b = { parts: /** @type {Part[]} */ ([]), at: [at[0], at[1], at[2]], look, age: 0, ambient: amb };
+    const b = { parts: /** @type {Part[]} */ ([]), at: [at[0], at[1], at[2]], look, age: 0, pool, fade: -1 };
     const dl = dir && Number.isFinite(dir[0]) && Number.isFinite(dir[1]) ? Math.hypot(dir[0], dir[1]) : 0;
     const ctx = { fx: this, b, at: b.at, h: H, w: W, gy: at[1], n: (/** @type {number} */ k) => Math.max(1, Math.round(k * (far > KFX_DETAIL_M ? 0.5 : 1))),
-      dir: dl > 1e-6 ? [/** @type {number[]} */ (dir)[0] / dl, /** @type {number[]} */ (dir)[1] / dl] : [0, 1], pace: pace | 0, mane: mane !== false };
+      dir: dl > 1e-6 ? [/** @type {ReadonlyArray<number>} */ (dir)[0] / dl, /** @type {ReadonlyArray<number>} */ (dir)[1] / dl] : [0, 1], pace: pace | 0, mane: mane !== false };
     recipe(ctx);
     this.bursts.push(b);
     const L = KFX_LIGHT[/** @type {keyof typeof KFX_LIGHT} */ (look)];
@@ -121,6 +128,7 @@ export class KillFx {
     for (let i = this.bursts.length - 1; i >= 0; i--) {
       const b = this.bursts[i];
       b.age += d;
+      if (b.fade >= 0 && (b.fade += d) >= KFX_FADE_S) { this.bursts.splice(i, 1); continue; }
       const P = b.parts;
       for (let j = P.length - 1; j >= 0; j--) {
         const p = P[j];
@@ -166,56 +174,62 @@ export class KillFx {
 
   clear() { this.bursts.length = 0; this.lights.length = 0; this.nAlpha = 0; this.nAdd = 0; }
 
-  /** The brightest light the live bursts throw this frame, in nearestLights' shape, or null. */
+  /** The brightest light the live bursts throw this frame, in nearestLights' shape (one record, rewritten), or null. */
   light() {
-    let best = null, bestK = 0;
+    let best = null, bestR = 0, bestK = 0;
     for (const l of this.lights) {
       const u = l.age / l.life, k = Math.pow(1 - u, 1.6) * Math.min(1, l.age / 0.04 + 0.3);
-      if (k * l.range > bestK) { bestK = k * l.range; best = { l, k }; }
+      if (k * l.range > bestR) { bestR = k * l.range; best = l; bestK = k; }
     }
     if (!best) return null;
-    const { l, k } = best;
-    return { x: l.at[0], y: l.at[1], z: l.at[2], range: l.range * (0.5 + 0.5 * k), color: [l.color[0] * k, l.color[1] * k, l.color[2] * k], carried: true };
+    const o = this._light, k = bestK;
+    o.x = best.at[0]; o.y = best.at[1]; o.z = best.at[2]; o.range = best.range * (0.5 + 0.5 * k);
+    o.color[0] = best.color[0] * k; o.color[1] = best.color[1] * k; o.color[2] = best.color[2] * k;
+    return o;
   }
 
   /** This frame's instances into `alpha` and `add`; answers how many in all. */
   build() {
-    let na = 0, nd = 0;
-    const put = (/** @type {boolean} */ add, /** @type {number[]} */ at, /** @type {number} */ s, /** @type {number} */ rot, /** @type {number} */ shape, /** @type {number[]} */ c, /** @type {number} */ a, /** @type {ArrayLike<number>} */ dir, /** @type {number} */ seed, /** @type {number} */ u, /** @type {number} */ heat) => {
-      if (!(a > 0.003) || !(s > 0)) return;
-      const B = add ? this.add : this.alpha, n = add ? nd : na;
-      if (n >= KFX_MAX_INSTANCES) return;
-      const o = n * KFX_FLOATS;
-      B[o] = at[0]; B[o + 1] = at[1]; B[o + 2] = at[2]; B[o + 3] = s; B[o + 4] = rot; B[o + 5] = shape;
-      B[o + 6] = c[0]; B[o + 7] = c[1]; B[o + 8] = c[2]; B[o + 9] = a;
-      B[o + 10] = dir[0]; B[o + 11] = dir[1]; B[o + 12] = dir[2]; B[o + 13] = seed; B[o + 14] = u; B[o + 15] = heat;
-      if (add) nd++; else na++;
-    };
-    const dir = [0, 0, 0];
+    this.nAlpha = 0; this.nAdd = 0;
+    const dir = this._dir;
     for (const b of this.bursts) {
+      const out = b.fade >= 0 ? 1 - b.fade / KFX_FADE_S : 1;   // a burst its pool let go, fading
       for (const p of b.parts) {
         if (p.age < 0) continue;
         const u = Math.min(1, p.age / p.life);
-        let a = lerp(p.a0, p.a1, u) * (1 - smoothstep(0.78, 1, u));
+        let a = lerp(p.a0, p.a1, u) * (1 - smoothstep(0.78, 1, u)) * out;
         if (p.fadeIn > 0) a *= Math.min(1, p.age / p.fadeIn);
         const s = lerp(p.s0, p.s1, ease(u));
-        const c = [lerp(p.c0[0], p.c1[0], u), lerp(p.c0[1], p.c1[1], u), lerp(p.c0[2], p.c1[2], u)];
         if (p.shape === KFX_SHAPE.spark && !p.rest && p.streak > 0) { dir[0] = p.v[0] * p.streak; dir[1] = p.v[1] * p.streak; dir[2] = p.v[2] * p.streak; }
         else if (p.shape === KFX_SHAPE.ring || p.shape === KFX_SHAPE.sigil || p.shape === KFX_SHAPE.disc) { dir[0] = UP[0]; dir[1] = UP[1]; dir[2] = UP[2]; }
         else if (p.shape === KFX_SHAPE.rift || p.shape === KFX_SHAPE.beam) { dir[0] = lerp(p.h0, p.h1, ease(u)); dir[1] = 0; dir[2] = 0; }
         else { dir[0] = dir[1] = dir[2] = 0; }
-        put(p.add, p.p, s, p.rot, p.shape, c, a, dir, p.seed, u, p.heat);
-        if (p.twin) put(!p.add, p.p, s * p.twin.s, p.rot, p.shape, p.twin.c, a * p.twin.a, dir, p.seed + 0.5, u, p.twin.heat ?? 0);   // a rift's rim beside its void
+        // the part, then its twin in the other layer (a rift's rim beside its void) - written here, never through a call:
+        // a call the engine does not inline boxes every number handed to it, and this loop runs a part a frame
+        for (let k = 0; k < (p.twin ? 2 : 1); k++) {
+          const tw = k ? p.twin : null, add = tw ? !p.add : p.add, A = tw ? a * tw.a : a, S = tw ? s * tw.s : s;
+          const n = add ? this.nAdd : this.nAlpha;
+          if (!(A > 0.003) || !(S > 0) || n >= KFX_MAX_INSTANCES) continue;
+          const B = add ? this.add : this.alpha, o = n * KFX_FLOATS, at = p.p, c0 = tw ? tw.c : p.c0, c1 = tw ? tw.c : p.c1;
+          B[o] = at[0]; B[o + 1] = at[1]; B[o + 2] = at[2]; B[o + 3] = S; B[o + 4] = p.rot; B[o + 5] = p.shape;
+          B[o + 6] = lerp(c0[0], c1[0], u); B[o + 7] = lerp(c0[1], c1[1], u); B[o + 8] = lerp(c0[2], c1[2], u); B[o + 9] = A;
+          B[o + 10] = dir[0]; B[o + 11] = dir[1]; B[o + 12] = dir[2]; B[o + 13] = tw ? p.seed + 0.5 : p.seed; B[o + 14] = u; B[o + 15] = tw ? tw.heat ?? 0 : p.heat;
+          if (add) this.nAdd++; else this.nAlpha++;
+        }
       }
     }
-    this.nAlpha = na; this.nAdd = nd;
-    return na + nd;
+    return this.nAlpha + this.nAdd;
   }
 }
 const smoothstep = (/** @type {number} */ e0, /** @type {number} */ e1, /** @type {number} */ x) => { const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
 
 /** A direction out from the body's axis at a random bearing, `up` its rise. */
 const outward = (/** @type {KillFx} */ fx, /** @type {number} */ speed, /** @type {number} */ up) => { const a = fx.r(0, TAU); return [Math.cos(a) * speed, up, Math.sin(a) * speed]; };
+/** A burst's own axes (AUDIT STOREFRONT RENDER L2): `x` across a portal (along a fissure's crack), `y` up, `z` through
+ *  it, turned by its facing `c.dir` - so a rim or a foot is round the portal as it is seen, never on world X. `turned` a
+ *  velocity; `onAxes` a point off its feet. With no facing given ([0, 1]) across is world X. */
+const turned = (/** @type {any} */ c, /** @type {number} */ x, /** @type {number} */ y, /** @type {number} */ z) => [c.dir[1] * x + c.dir[0] * z, y, c.dir[1] * z - c.dir[0] * x];
+const onAxes = (/** @type {any} */ c, /** @type {number} */ x, /** @type {number} */ y, /** @type {number} */ z) => [c.at[0] + c.dir[1] * x + c.dir[0] * z, y, c.at[2] + c.dir[1] * z - c.dir[0] * x];
 
 /** THE RECIPES: each writes its parts into the burst. `n(k)` a count at this burst's detail. */
 /** A mount look's struck hoof: one of the four, fore or hind, either side, on the ground under it. */
@@ -355,74 +369,82 @@ const RECIPES = Object.freeze({
     fx.part(b, { p: [chest[0], chest[1] - 0.06, chest[2]], life: 0.35, s0: 0.05, s1: 0.04, c0: [0.5, 0.85, 1.0], c1: [0.3, 0.6, 1.0], a0: 0.7, a1: 0, heat: 0.8 });
   },
 
-  // ═══ THE PORTAL SKINS' BURSTS (scenes/portalSkins.js): `h` the portal's height, `w` its width ═══
+  // ═══ THE PORTAL SKINS' BURSTS (scenes/portalSkins.js): `h` the portal's height, `w` its width, `dir` its facing - every
+  //     point and flight on its own axes (onAxes, turned) ═══
   /** RUNIC STONE opening: frost glints thrown off the rim, a cold ring on the ground. */
-  'portal-runic-open'(/** @type {any} */ { fx, b, at, h, w, gy, n }) {
+  'portal-runic-open'(/** @type {any} */ c) {
+    const { fx, b, at, h, w, gy, n } = c;
     for (let i = 0, N = n(28); i < N; i++) {
       const a = fx.r(0, TAU);
-      fx.part(b, { p: [at[0] + Math.cos(a) * w * 0.5, at[1] + h * (0.5 + Math.sin(a) * 0.48), at[2] + Math.sin(a) * w * 0.15], v: [Math.cos(a) * fx.r(0.4, 1.4), fx.r(-0.2, 0.8), fx.r(-0.4, 0.4)], life: fx.r(0.5, 0.9),
+      fx.part(b, { p: onAxes(c, Math.cos(a) * w * 0.5, at[1] + h * (0.5 + Math.sin(a) * 0.48), Math.sin(a) * w * 0.15), v: turned(c, Math.cos(a) * fx.r(0.4, 1.4), fx.r(-0.2, 0.8), fx.r(-0.4, 0.4)), life: fx.r(0.5, 0.9),
         s0: 0.02, s1: 0.006, shape: KFX_SHAPE.spark, c0: [0.85, 0.97, 1.0], c1: [0.3, 0.7, 1.0], a0: 1, a1: 0.3, drag: 1.5, streak: 0.04, heat: 0.7 });
     }
     fx.part(b, { p: [at[0], gy + 0.03, at[2]], life: 0.6, s0: w * 0.3, s1: w * 1.6, shape: KFX_SHAPE.ring, c0: [0.7, 0.92, 1.0], c1: [0.3, 0.6, 1.0], a0: fx.reduced ? 0.25 : 0.6 });
   },
   /** DAEDRIC STONE opening: the arch tears up through the ground in a burst of crimson, embers flung up. */
-  'portal-daedric-open'(/** @type {any} */ { fx, b, at, h, w, gy, n }) {
+  'portal-daedric-open'(/** @type {any} */ c) {
+    const { fx, b, at, h, w, gy, n } = c;
     fx.part(b, { p: [at[0], at[1] + h * 0.5, at[2]], life: 0.3, s0: w * 0.5, s1: w * 1.4, c0: [1, 0.6, 0.3], c1: [1, 0.2, 0.05], a0: fx.reduced ? 0.35 : 0.9, heat: 1 });
     fx.part(b, { p: [at[0], gy + 0.025, at[2]], life: 1.2, s0: w * 0.5, s1: w * 0.9, shape: KFX_SHAPE.sigil, c0: [1.0, 0.35, 0.08], c1: [0.6, 0.06, 0.02], a0: 0.9, a1: 0.3, spin: 0.6, heat: 0.2 });
     for (let i = 0, N = n(40); i < N; i++) {
-      fx.part(b, { p: [at[0] + fx.r(-0.6, 0.6) * w, gy + 0.05, at[2] + fx.r(-0.3, 0.3) * w], v: [fx.r(-0.6, 0.6), fx.r(2.5, 5.5), fx.r(-0.6, 0.6)], life: fx.r(0.6, 1.2), s0: fx.r(0.014, 0.024), s1: 0.005, shape: KFX_SHAPE.spark,
+      fx.part(b, { p: onAxes(c, fx.r(-0.6, 0.6) * w, gy + 0.05, fx.r(-0.3, 0.3) * w), v: turned(c, fx.r(-0.6, 0.6), fx.r(2.5, 5.5), fx.r(-0.6, 0.6)), life: fx.r(0.6, 1.2), s0: fx.r(0.014, 0.024), s1: 0.005, shape: KFX_SHAPE.spark,
         c0: [1, 0.8, 0.4], c1: [0.8, 0.12, 0.02], a0: 1, a1: 0.3, drag: 1.0, g: 1.5, streak: 0.05, heat: 0.8 });
     }
     for (let i = 0, N = n(8); i < N; i++) {   // the ground broken where the iron came up
-      fx.part(b, { p: [at[0] + fx.r(-0.7, 0.7) * w, gy + 0.05, at[2] + fx.r(-0.35, 0.35) * w], v: [fx.r(-1.5, 1.5), fx.r(1.5, 3.5), fx.r(-1.5, 1.5)], life: fx.r(1.0, 1.6), s0: fx.r(0.04, 0.08), s1: 0.05,
+      fx.part(b, { p: onAxes(c, fx.r(-0.7, 0.7) * w, gy + 0.05, fx.r(-0.35, 0.35) * w), v: turned(c, fx.r(-1.5, 1.5), fx.r(1.5, 3.5), fx.r(-1.5, 1.5)), life: fx.r(1.0, 1.6), s0: fx.r(0.04, 0.08), s1: 0.05,
         shape: KFX_SHAPE.shard, c0: [0.22, 0.16, 0.15], c1: [0.14, 0.1, 0.1], a0: 1, a1: 0.8, add: false, g: 9.8, gy, bounce: 0.3, spin: fx.r(-12, 12), rot: fx.r(0, TAU) });
     }
     fx.part(b, { p: [at[0], gy + 0.03, at[2]], life: 0.55, s0: w * 0.4, s1: w * 2.2, shape: KFX_SHAPE.ring, c0: [1.0, 0.45, 0.15], c1: [0.6, 0.08, 0.02], a0: fx.reduced ? 0.3 : 0.85 });
   },
   /** DAEDRIC STONE standing: embers rising off the arch's foot. */
-  'portal-daedric-embers'(/** @type {any} */ { fx, b, at, h, w, gy }) {
+  'portal-daedric-embers'(/** @type {any} */ c) {
+    const { fx, b, h, w, gy } = c;
     for (let i = 0; i < 3; i++) {
       const side = fx.rng() < 0.5 ? -1 : 1;
-      fx.part(b, { p: [at[0] + side * w * fx.r(0.55, 0.75), gy + fx.r(0, 0.4) * h, at[2] + fx.r(-0.1, 0.1)], v: [fx.r(-0.2, 0.2), fx.r(0.7, 1.6), fx.r(-0.2, 0.2)], life: fx.r(0.9, 1.6),
+      fx.part(b, { p: onAxes(c, side * w * fx.r(0.55, 0.75), gy + fx.r(0, 0.4) * h, fx.r(-0.1, 0.1)), v: turned(c, fx.r(-0.2, 0.2), fx.r(0.7, 1.6), fx.r(-0.2, 0.2)), life: fx.r(0.9, 1.6),
         s0: fx.r(0.012, 0.02), s1: 0.004, shape: KFX_SHAPE.spark, c0: [1, 0.75, 0.35], c1: [0.8, 0.12, 0.02], a0: 0.9, a1: 0.2, drag: 0.6, flutter: 1.5, streak: 0.04, heat: 0.6 });
     }
   },
   /** AETHERIC STONE opening: motes spiralling up off the ground as the crystals gather, then a flash as the ring closes. */
-  'portal-aetheric-open'(/** @type {any} */ { fx, b, at, h, w, gy, n }) {
+  'portal-aetheric-open'(/** @type {any} */ c) {
+    const { fx, b, at, h, w, gy, n } = c;
     const mid = [at[0], at[1] + h * 0.5, at[2]];
     for (let i = 0, N = n(48); i < N; i++) {
       const a = fx.r(0, TAU), r = fx.r(0.6, 1.3);
-      fx.part(b, { p: [mid[0] + Math.cos(a) * r, gy + 0.05, mid[2] + Math.sin(a) * r], age: -fx.r(0, 0.5), life: fx.r(0.7, 1.0), s0: 0.018, s1: 0.006, c0: [0.9, 0.85, 1.0], c1: [0.55, 0.35, 1.0], a0: 1, a1: 0.5, heat: 0.6,
+      fx.part(b, { p: onAxes(c, Math.cos(a) * r, gy + 0.05, Math.sin(a) * r), age: -fx.r(0, 0.5), life: fx.r(0.7, 1.0), s0: 0.018, s1: 0.006, c0: [0.9, 0.85, 1.0], c1: [0.55, 0.35, 1.0], a0: 1, a1: 0.5, heat: 0.6,
         swirl: { c: [mid[0], mid[1], mid[2]], w: fx.r(2.5, 4), pull: 1.6 } });
     }
     fx.part(b, { p: [...mid], age: -0.38, life: 0.4, s0: w * 0.4, s1: w * 1.5, c0: [1, 0.95, 1], c1: [0.7, 0.5, 1], a0: fx.reduced ? 0.35 : 1, heat: 1 });
     fx.part(b, { p: [at[0], gy + 0.03, at[2]], age: -0.38, life: 0.7, s0: w * 0.4, s1: w * 2.6, shape: KFX_SHAPE.ring, c0: [0.95, 0.75, 1.0], c1: [0.4, 0.6, 1.0], a0: fx.reduced ? 0.3 : 0.8 });
   },
   /** AETHERIC STONE standing: a few motes drifting off the ring. */
-  'portal-aetheric-motes'(/** @type {any} */ { fx, b, at, h }) {
+  'portal-aetheric-motes'(/** @type {any} */ c) {
+    const { fx, b, at, h } = c;
     for (let i = 0; i < 3; i++) {
       const a = fx.r(0, TAU);
-      fx.part(b, { p: [at[0] + Math.cos(a) * 1.1, at[1] + h * fx.r(0.2, 0.9), at[2] + Math.sin(a) * 1.1], v: [fx.r(-0.15, 0.15), fx.r(0.15, 0.45), fx.r(-0.15, 0.15)], life: fx.r(1.0, 1.6),
+      fx.part(b, { p: onAxes(c, Math.cos(a) * 1.1, at[1] + h * fx.r(0.2, 0.9), Math.sin(a) * 1.1), v: turned(c, fx.r(-0.15, 0.15), fx.r(0.15, 0.45), fx.r(-0.15, 0.15)), life: fx.r(1.0, 1.6),
         s0: 0.016, s1: 0.004, c0: [0.95, 0.9, 1.0], c1: [0.5, 0.35, 1.0], a0: 0.9, a1: 0.2, flutter: 0.8, heat: 0.5 });
     }
   },
   /** BRASS GATE opening: a blast of steam at its foot, a blue ring, sparks off the cogs. */
-  'portal-brass-open'(/** @type {any} */ { fx, b, at, h, w, gy, n }) {
+  'portal-brass-open'(/** @type {any} */ c) {
+    const { fx, b, at, h, w, gy, n } = c;
     for (let i = 0, N = n(10); i < N; i++) {
       const v = outward(fx, fx.r(0.8, 1.8), fx.r(0.6, 1.6));
-      fx.part(b, { p: [at[0], gy + 0.1, at[2]], v, life: fx.r(1.0, 1.6), s0: w * 0.2, s1: w * 0.7, shape: KFX_SHAPE.smoke, c0: [0.9, 0.93, 0.95], c1: [0.75, 0.8, 0.85], a0: 0.45, a1: 0, add: false, drag: 1.6, rot: fx.r(0, TAU), spin: fx.r(-0.6, 0.6) });
+      fx.part(b, { p: [at[0], gy + 0.1, at[2]], v: turned(c, v[0], v[1], v[2]), life: fx.r(1.0, 1.6), s0: w * 0.2, s1: w * 0.7, shape: KFX_SHAPE.smoke, c0: [0.9, 0.93, 0.95], c1: [0.75, 0.8, 0.85], a0: 0.45, a1: 0, add: false, drag: 1.6, rot: fx.r(0, TAU), spin: fx.r(-0.6, 0.6) });
     }
     for (let i = 0, N = n(24); i < N; i++) {
       const a = fx.r(0, TAU);
-      fx.part(b, { p: [at[0] + Math.cos(a) * w * 0.55, at[1] + h * (0.5 + Math.sin(a) * 0.5), at[2]], v: [Math.cos(a) * fx.r(1, 3), fx.r(0, 2), fx.r(-0.5, 0.5)], life: fx.r(0.3, 0.6),
+      fx.part(b, { p: onAxes(c, Math.cos(a) * w * 0.55, at[1] + h * (0.5 + Math.sin(a) * 0.5), 0), v: turned(c, Math.cos(a) * fx.r(1, 3), fx.r(0, 2), fx.r(-0.5, 0.5)), life: fx.r(0.3, 0.6),
         s0: 0.014, s1: 0.004, shape: KFX_SHAPE.spark, c0: [1, 0.85, 0.5], c1: [0.6, 0.85, 1.0], a0: 1, a1: 0.3, drag: 2, g: 5, streak: 0.04, heat: 0.8 });
     }
     fx.part(b, { p: [at[0], gy + 0.03, at[2]], life: 0.6, s0: w * 0.4, s1: w * 2.2, shape: KFX_SHAPE.ring, c0: [0.6, 0.9, 1.0], c1: [0.25, 0.55, 1.0], a0: fx.reduced ? 0.3 : 0.75 });
   },
   /** BRASS GATE standing: a breath of steam at its foot. */
-  'portal-brass-steam'(/** @type {any} */ { fx, b, at, w, gy }) {
+  'portal-brass-steam'(/** @type {any} */ c) {
+    const { fx, b, w, gy } = c;
     const side = fx.rng() < 0.5 ? -1 : 1;
-    fx.part(b, { p: [at[0] + side * w * 0.45, gy + 0.15, at[2]], v: [side * fx.r(0.1, 0.4), fx.r(0.5, 1.0), fx.r(-0.1, 0.1)], life: fx.r(1.2, 1.8), s0: w * 0.15, s1: w * 0.5, shape: KFX_SHAPE.smoke,
+    fx.part(b, { p: onAxes(c, side * w * 0.45, gy + 0.15, 0), v: turned(c, side * fx.r(0.1, 0.4), fx.r(0.5, 1.0), fx.r(-0.1, 0.1)), life: fx.r(1.2, 1.8), s0: w * 0.15, s1: w * 0.5, shape: KFX_SHAPE.smoke,
       c0: [0.92, 0.94, 0.96], c1: [0.8, 0.84, 0.88], a0: 0.32, a1: 0, add: false, drag: 0.8, fadeIn: 0.15, rot: fx.r(0, TAU), spin: fx.r(-0.5, 0.5) });
   },
 
@@ -461,14 +483,16 @@ const RECIPES = Object.freeze({
     }
     fx.part(b, { p: [at[0], gy + 0.15, at[2]], v: [0, fx.r(0.3, 0.6), 0], life: fx.r(1.0, 1.6), s0: 0.12, s1: 0.05, c0: [0.55, 0.85, 1.0], c1: [0.25, 0.55, 1.0], a0: 0.6, a1: 0, flutter: 0.6, heat: 0.6 });
   },
-  /** A FISSURE WAKING: a blast of steam out of the crack, its light flaring, sparks off the brass as the constructs climb out. */
-  'fissure-wake'(/** @type {any} */ { fx, b, at, gy, n }) {
+  /** A FISSURE WAKING: a blast of steam out of the crack, its light flaring, sparks off the brass as the constructs climb
+   *  out - along the crack, its facing `dir` the fissure's (seasonHost.js). */
+  'fissure-wake'(/** @type {any} */ c) {
+    const { fx, b, at, gy, n } = c;
     for (let i = 0, N = n(12); i < N; i++) {
-      fx.part(b, { p: [at[0] + fx.r(-3, 3), gy + 0.2, at[2] + fx.r(-0.6, 0.6)], v: [fx.r(-0.5, 0.5), fx.r(2.5, 4.5), fx.r(-0.5, 0.5)], life: fx.r(1.8, 2.6), s0: 0.6, s1: 2.6, shape: KFX_SHAPE.smoke,
+      fx.part(b, { p: onAxes(c, fx.r(-3, 3), gy + 0.2, fx.r(-0.6, 0.6)), v: turned(c, fx.r(-0.5, 0.5), fx.r(2.5, 4.5), fx.r(-0.5, 0.5)), life: fx.r(1.8, 2.6), s0: 0.6, s1: 2.6, shape: KFX_SHAPE.smoke,
         c0: [0.92, 0.95, 0.98], c1: [0.78, 0.82, 0.88], a0: 0.5, a1: 0, add: false, drag: 1.2, rot: fx.r(0, TAU), spin: fx.r(-0.5, 0.5) });
     }
     for (let i = 0, N = n(36); i < N; i++) {
-      fx.part(b, { p: [at[0] + fx.r(-3, 3), gy + 0.3, at[2]], v: [fx.r(-2, 2), fx.r(2, 5), fx.r(-2, 2)], life: fx.r(0.4, 0.8), s0: 0.016, s1: 0.004, shape: KFX_SHAPE.spark,
+      fx.part(b, { p: onAxes(c, fx.r(-3, 3), gy + 0.3, 0), v: turned(c, fx.r(-2, 2), fx.r(2, 5), fx.r(-2, 2)), life: fx.r(0.4, 0.8), s0: 0.016, s1: 0.004, shape: KFX_SHAPE.spark,
         c0: [1, 0.88, 0.5], c1: [0.5, 0.8, 1.0], a0: 1, a1: 0.3, drag: 1.2, g: 6, streak: 0.04, heat: 0.8 });
     }
     fx.part(b, { p: [at[0], gy + 0.04, at[2]], life: 0.9, s0: 1, s1: 9, shape: KFX_SHAPE.ring, c0: [0.6, 0.9, 1.0], c1: [0.25, 0.55, 1.0], a0: fx.reduced ? 0.3 : 0.8 });
@@ -489,6 +513,13 @@ const RECIPES = Object.freeze({
 });
 /** Every recipe's name - the kill looks', the portal skins' bursts, the mount looks' beats and the season's (the tests walk them). */
 export const KFX_RECIPES = Object.freeze(Object.keys(RECIPES));
+/** Each recipe's pool (KFX_POOL_CAP) - the recipe's own, so no caller can start an opening in a kill's room. */
+export const KFX_POOL_OF = Object.freeze({
+  ashen: 'kill', voidrend: 'kill', pyre: 'kill', tonal: 'kill',
+  'portal-runic-open': 'event', 'portal-daedric-open': 'event', 'portal-aetheric-open': 'event', 'portal-brass-open': 'event', 'fissure-wake': 'event',
+  'portal-daedric-embers': 'place', 'portal-aetheric-motes': 'place', 'portal-brass-steam': 'place', 'fissure-steam': 'place', 'tremor-dust': 'place',
+  'mount-warhorse': 'mount', 'mount-spectral': 'mount', 'mount-dawnfire': 'mount', 'mount-automaton': 'mount',
+});
 
 
 // ═══ THE PASS ════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -640,11 +671,13 @@ void main() {
   } else if (vShape == 7) {     // the Daedric sigil: three rings, eight blades between, runes round its rim, an eye
     if (r >= 1.0) discard;
     float ang = atan(vQ.y, vQ.x);
-    float ring = exp(-pow((r - 0.93) / 0.025, 2.0)) + exp(-pow((r - 0.8) / 0.015, 2.0)) * 0.9 + exp(-pow((r - 0.42) / 0.02, 2.0));
+    // every square a product, never pow(x, 2.0): GLSL leaves pow of a negative undefined (a driver's exp2/log2 is NaN)
+    float d1 = (r - 0.93) / 0.025, d2 = (r - 0.8) / 0.015, d3 = (r - 0.42) / 0.02, d4 = (r - 0.14) / 0.03;
+    float ring = exp(-d1 * d1) + exp(-d2 * d2) * 0.9 + exp(-d3 * d3);
     float sect = fract(ang * 8.0 / TAU) - 0.5;
     float blade = step(0.42, r) * step(r, 0.8) * step(abs(sect), (0.8 - r) * 0.55 + 0.012);
     float rune = step(0.82, r) * step(r, 0.91) * step(0.55, h12(vec2(floor(ang * 48.0 / TAU), 3.0))) * step(0.25, abs(fract(ang * 48.0 / TAU) - 0.5) * 2.0);
-    float eye = exp(-pow((r - 0.14) / 0.03, 2.0)) + (1.0 - smoothstep(0.0, 0.08, r));
+    float eye = exp(-d4 * d4) + (1.0 - smoothstep(0.0, 0.08, r));
     float burn = 0.75 + 0.5 * vnoise(vec2(ang * 5.0, r * 8.0 - u * 6.0));
     k = clamp(ring + blade * 0.9 + rune * 0.8 + eye, 0.0, 1.4) * burn;
     if (k < 0.02) discard;
@@ -655,7 +688,7 @@ void main() {
     float wob = 0.55 + 0.45 * vnoise(vec2(vQ.y * 4.0, seed * 9.0 + u * 3.0));
     float e = (vQ.x * vQ.x) / (wob * wob) + vQ.y * vQ.y;
     if (e >= 1.0) discard;
-    if (uAdd == 1) { k = exp(-pow((sqrt(e) - 0.82) / 0.12, 2.0)) * (0.8 + 0.6 * vnoise(vQ * 8.0 + u * 5.0)); heat *= k; }
+    if (uAdd == 1) { float d = (sqrt(e) - 0.82) / 0.12; k = exp(-d * d) * (0.8 + 0.6 * vnoise(vQ * 8.0 + u * 5.0)); heat *= k; }
     else k = 1.0 - smoothstep(0.6, 1.0, e);
   } else {                      // a beam of fire standing on its foot
     float x = abs(vQ.x), y = vQ.y * 0.5 + 0.5;
@@ -674,7 +707,11 @@ void main() {
 export const KILL_FX_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[KILL_FX_VS, KILL_FX_FS]]));
 const NO_HAZE = new Float32Array(8);
 
-/** THE PASS: one program, one quad, one instance buffer, re-filled per layer. */
+/** A layer's range of the pass's instance buffer (bytes): the blended layer's first, the added layer's after it. */
+export const KFX_LAYER_BYTES = KFX_MAX_INSTANCES * KFX_FLOATS * 4;
+
+/** THE PASS: one program, one quad, one instance buffer holding both layers - each its own range and its own VAO, so
+ *  no range is written twice in a frame (a driver that cannot rename a buffer would stall on the draw before). */
 export class KillFxPass {
   constructor(/** @type {WebGL2RenderingContext} */ gl) {
     this.gl = gl;
@@ -683,19 +720,25 @@ export class KillFxPass {
     /** @type {Record<string, WebGLUniformLocation|null>} */
     this.u = {};
     for (const n of ['uVP', 'uEye', 'uRight', 'uUp', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze', 'uAdd']) this.u[n] = gl.getUniformLocation(this.prog, n);
-    this.vao = gl.createVertexArray();
-    gl.bindVertexArray(this.vao);
     this.quad = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quad);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1]), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     this.inst = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.inst);
-    gl.bufferData(gl.ARRAY_BUFFER, KFX_MAX_INSTANCES * KFX_FLOATS * 4, gl.DYNAMIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, 2 * KFX_LAYER_BYTES, gl.DYNAMIC_DRAW);
     const S = KFX_FLOATS * 4;
-    const attr = (/** @type {number} */ loc, /** @type {number} */ size, /** @type {number} */ off) => { gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, gl.FLOAT, false, S, off); gl.vertexAttribDivisor(loc, 1); };
-    attr(1, 4, 0); attr(2, 2, 16); attr(3, 4, 24); attr(4, 3, 40); attr(5, 3, 52);
+    /** @type {(WebGLVertexArrayObject|null)[]} the blended layer's VAO, the added layer's */
+    this.vaos = [0, KFX_LAYER_BYTES].map((base) => {
+      const vao = gl.createVertexArray();
+      gl.bindVertexArray(vao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.quad);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.inst);
+      const attr = (/** @type {number} */ loc, /** @type {number} */ size, /** @type {number} */ off) => { gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, gl.FLOAT, false, S, base + off); gl.vertexAttribDivisor(loc, 1); };
+      attr(1, 4, 0); attr(2, 2, 16); attr(3, 4, 24); attr(4, 3, 40); attr(5, 3, 52);
+      return vao;
+    });
     gl.bindVertexArray(null);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     this._vp = new Float32Array(16);
@@ -705,7 +748,7 @@ export class KillFxPass {
   /** EVERY ALLOCATION HAS AN OWNER: the magic engine frees its pass with itself (hostMagic destroy). */
   destroy() {
     const gl = this.gl;
-    gl.deleteBuffer(this.quad); gl.deleteBuffer(this.inst); gl.deleteVertexArray(this.vao); gl.deleteProgram(this.prog);
+    gl.deleteBuffer(this.quad); gl.deleteBuffer(this.inst); for (const v of this.vaos) gl.deleteVertexArray(v); gl.deleteProgram(this.prog);
   }
 
   /** Draw the simulation's two layers under this frame's camera and fog. Leaves the renderer's baseline: no blend, depth
@@ -726,7 +769,6 @@ export class KillFxPass {
     gl.uniform3fv(u.uCamPos, fog?.camPos ?? eye);
     if (u.uFocus) gl.uniform4fv(u.uFocus, fog?.focus ?? [0, 0, 0, 0]);
     if (u.uJungleHaze) gl.uniform4fv(u.uJungleHaze, fog?.haze ?? NO_HAZE);
-    gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.inst);
     gl.enable(gl.BLEND);
     gl.depthMask(false);
@@ -735,12 +777,14 @@ export class KillFxPass {
       gl.uniform1i(u.uAdd, 0);
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       gl.bufferSubData(gl.ARRAY_BUFFER, 0, fx.alpha, 0, fx.nAlpha * KFX_FLOATS);
+      gl.bindVertexArray(this.vaos[0]);
       gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, fx.nAlpha);
     }
     if (fx.nAdd > 0) {
       gl.uniform1i(u.uAdd, 1);
       gl.blendFunc(gl.ONE, gl.ONE);
-      gl.bufferSubData(gl.ARRAY_BUFFER, 0, fx.add, 0, fx.nAdd * KFX_FLOATS);
+      gl.bufferSubData(gl.ARRAY_BUFFER, KFX_LAYER_BYTES, fx.add, 0, fx.nAdd * KFX_FLOATS);
+      gl.bindVertexArray(this.vaos[1]);
       gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, fx.nAdd);
     }
     gl.bindVertexArray(null);

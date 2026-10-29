@@ -178,3 +178,29 @@ height, in tenths of a metre).
   rename rewrites some forty columns and needs the owner's rules on cost and abuse.
 - **Consumable Bundles.** Every consumable in the pack moves play - potions, Portal Stones, shards - so selling one is
   pay-to-win under the Terms.
+
+## 12. AUDIT STOREFRONT RENDER (2026-10-29)
+
+The effects' rendering read cold (lane 3). Each finding fixed at its cause, pinned in `test/render/killfx.test.js`,
+`test/scenes/portalskins.test.js` and `test/ui/storefront_badges.test.js`, its mutants in
+`tools/mutants/storefront_renderaudit.json`, all dead.
+
+- **L1, the portal's basis.** A pool that ticked its portals with no eye (the Portal Stone's gate, the Elite Breach
+  call's) stood a skin's cogs and arch on world X: from the east the cogs were one column. The set now reads the
+  camera off the renderer's own view (`portalFx.js:"export function portalBasis("`), so no pool can forget it.
+- **L2, the bursts' facing.** The portal bursts placed their rims and feet on world X. The burst door carries the
+  portal's facing (`dir`), and every portal recipe places and throws its parts on its own axes
+  (`killFx.js:"const onAxes = "`). A fissure's waking had the same fault and takes its crack's facing.
+- **L3, the draw order.** The kill effects and the impact sparks write no depth, and three hosts drew them before
+  their street's people, grass, banners or a building's characters, which painted over them. Each draws them once its
+  last opaque pass is done, as RAIN-OVER-GRASS and GRASS-PORTAL do; the dungeon already did.
+- **L5, pow of a negative.** The Daedric sigil, the Voidrend rim and the coils' ground ring squared by `pow`, which
+  GLSL leaves undefined. Each is a product now, under SHADOW-CLOAK's pin.
+- **L6 and L7, the frame's cost.** The build, the light, a skinned portal's tick and its batches allocated 2.7 KB, 264
+  B, 2 KB and 940 B a frame; now 0, 0, 16 and 0. The pass wrote one buffer range twice a frame; each layer has its own.
+- **L8, the budget.** A burst's pool is its recipe's (`killFx.js:"export const KFX_POOL_OF"`): kills, events (a
+  portal's opening, a fissure's waking), places' breaths and horses' beats, each its own cap, the old 52 split. A full
+  pool fades its oldest burst out over a quarter second, never cutting it whole.
+- **L9 and L10, the try-on stage.** It applied the fit twice on y and sank the arch under the floor. Under less motion
+  it now plays once and holds, as the window's other previews stop, and the setting is followed mid-session there and
+  in the world's engine (`systems/hitFlash.js` `prefersReducedMotion`).

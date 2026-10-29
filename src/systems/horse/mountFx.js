@@ -1,9 +1,9 @@
 // @ts-check
 // STOREFRONT (2026-10-29; bible/06-Systems/Storefront.md section 7): A MOUNT LOOK IN THE WORLD - the beat each horse in
 // a look throws (render/killFx.js 'mount-*': a hoof's smoke, print or sparks, a mane of fire or light) through the
-// running host's magic engine (systems/playerDoor.js `burst`), as an ambient burst that never takes a kill effect's
-// place. A beat a stride while it moves, a slow one while it stands. My horse is stepped by the mount rig
-// (player/mountRig.js), a peer's by the peers' effects (net/peer/peerFx.js). Not a DFU member.
+// running host's magic engine (systems/playerDoor.js `burst`), in the horses' own pool, which never takes a kill effect's
+// place (render/killFx.js KFX_POOL_OF). A beat a stride while it moves, a slow one while it stands. My horse is stepped
+// by the mount rig (player/mountRig.js), a peer's by the peers' effects (net/peer/peerFx.js). Not a DFU member.
 import { playerDoor } from '../playerDoor.js';
 
 /** The beat (s): standing, walking, running. */
@@ -29,7 +29,7 @@ export function createMountFx({ door = playerDoor } = {}) {
       if (c.t + 1e-9 < beat) return false;
       c.t = Math.min(c.t - beat, beat);   // the remainder carried, so the beat keeps its time - never a burst of them after a long frame
       const y = Number.isFinite(yaw) ? yaw : 0;
-      try { return !!door()?.burst?.(`mount-${look}`, feet, { ...MOUNT_FX_SIZE, ambient: true, dir: [Math.sin(y), Math.cos(y)], pace: p, mane }); } catch { return false; }
+      try { return !!door()?.burst?.(`mount-${look}`, feet, { ...MOUNT_FX_SIZE, dir: [Math.sin(y), Math.cos(y)], pace: p, mane }); } catch { return false; }
     },
     /** The riders not stepped since the last sweep let go - once a frame, after every horse. */
     sweep() { for (const [id, c] of clocks) { if (!c.seen) clocks.delete(id); else c.seen = false; } },

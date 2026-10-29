@@ -8,7 +8,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { PORTAL_SKIN_KEYS, PORTAL_SKIN, portalSkinOf, dressPlace } from '../../src/scenes/portalSkins.js';
-import { createPortalSet, portalLife, PORTAL_SIZE } from '../../src/scenes/portalFx.js';
+import { createPortalSet, portalLife, portalBasis, PORTAL_SIZE, PORTAL_BACK } from '../../src/scenes/portalFx.js';
+import { lookAt } from '../../src/world/mat4.js';
 import { createPortalGates } from '../../src/scenes/portalGates.js';
 import { PORTAL_SKINS } from '../../src/net/effectLaw.js';
 import { SESSION_KEY } from '../../src/net/accountClient.js';
@@ -118,5 +119,43 @@ test('STOREFRONT whose skin: my portals in the one I wear - my companions\' and 
     assert.match(s, /portals\.openMine\(at\);   \/\/ STOREFRONT: my spared revenant's portal/);
   }
   assert.match(rd('src/scenes/exteriorFoes.js'), /portals\.open\(f\.ai\.feet, \{ quiet: true, skin: peerEffectWorn\(f\.puppet, 'portal'\) \}\)/, 'a peer\'s spared revenant in its owner\'s');
+  delete globalThis.localStorage;
+});
+
+test('STOREFRONT A SKINNED PORTAL FACES THE FRAME\'S CAMERA, WHOEVER TICKS IT (AUDIT STOREFRONT RENDER L1): the basis is read off the renderer\'s own view - so the Portal Stone\'s gate (its pool ticked with no eye), the Elite Breach call\'s, the companions\' and the peers\' all stand their cogs across the view and their arch behind the vortex from any side; and a skin\'s opening and breath carry its facing to the burst (mutants: the view unread; the basis off world X; the arch toward the eye; the burst with no facing)', () => {
+  const mid = [0, PORTAL_SIZE.h * 0.5, 0], out = () => ({ right: [0, 0, 0], back: [0, 0, 0] });
+  for (const eye of [[20, 1.6, 0], [-20, 1.6, 0], [0, 1.6, 20], [0, 1.6, -20], [14, 1.6, 14], [-3, 9, 4]]) {
+    const L = Math.hypot(mid[0] - eye[0], mid[2] - eye[2]), back = [(mid[0] - eye[0]) / L, 0, (mid[2] - eye[2]) / L], right = [back[2], 0, -back[0]];
+    for (const b of [portalBasis(lookAt(eye, mid, [0, 1, 0]), null, mid, out()), portalBasis(null, eye, mid, out())]) {
+      for (let i = 0; i < 3; i++) assert.ok(Math.abs(b.back[i] - back[i]) < 1e-6 && Math.abs(b.right[i] - right[i]) < 1e-6, `from ${eye}: away from the eye, across the view (${b.back}, ${b.right})`);
+    }
+  }
+  const none = portalBasis(null, null, mid, out());
+  assert.ok([...none.right, ...none.back].every((v, i) => v === [1, 0, 0, 0, 0, 1][i]), 'before any frame: world X');
+  // the gate's pool, ticked as world.js ticks it (no eye, indoors no feet), seen from 20 m east
+  wearing('0d0');
+  const bursts = [];
+  setPlayerDoor({ foes: () => [], feet: () => [0, 0, 0], hurtFoe() {}, castOnPlayer() {}, burst: (recipe, at, o) => { bursts.push({ recipe, dir: o.dir }); return true; } });
+  const eye = [20, 1.6, 0], r = Object.assign(fakeRenderer(), { _view: lookAt(eye, [0, 1.25, 0], [0, 1, 0]), _camPos: new Float32Array(eye) });
+  let t = 0;
+  const gates = createPortalGates({ renderer: r, now: () => t, destOf: () => ({ pixel: { x: 1, y: 1 }, name: 'There' }), eventGround: false });
+  gates.open([0, 0, 0], { pixel: { x: 1, y: 1 }, name: 'There' });
+  t = 1500; gates.tick(null);
+  const cogs = r.made.filter((b) => b.archive === 'fxportal_brass_cog');
+  assert.equal(cogs.length, 6);
+  const zs = cogs.map((b) => b.origin[2]);
+  assert.ok(cogs.every((b) => Math.abs(b.origin[0]) < 1e-9) && Math.max(...zs) - Math.min(...zs) > 1.2, `the cogs round the rim across the view (${zs.map((z) => z.toFixed(2))})`);
+  assert.ok(bursts.length && bursts.every((b) => Math.abs(b.dir[0] + 1) < 1e-9 && Math.abs(b.dir[1]) < 1e-9), `its opening and breath face away from the eye (${JSON.stringify(bursts)})`);
+  // the Daedric arch behind its vortex, away from the eye
+  const set = createPortalSet({ renderer: r, now: () => t });
+  set.open([5, 0, 0], { fixed: true, skin: 'daedric', holdMs: 5000 });
+  t += 900; set.tick();
+  const arch = r.made.find((b) => b.archive === 'fxportal_daedric_arch');
+  assert.ok(arch.origin[0] < 5 - 0.07 && Math.abs(arch.origin[2]) < 1e-9, `the arch behind it (${arch.origin.map((v) => v.toFixed(2))})`);
+  // a companion's, its pool handing no eye: it still stands a step behind its body, away from the frame's camera
+  const behind = set.open([2, 0, 3]);
+  t += 100; set.tick();
+  assert.ok(Math.abs(behind.origin[0] - (2 - PORTAL_BACK * 18 / Math.hypot(18, 3))) < 1e-9 && behind.origin[2] > 3, `behind its body (${behind.origin.map((v) => v.toFixed(2))})`);
+  setPlayerDoor(null);
   delete globalThis.localStorage;
 });

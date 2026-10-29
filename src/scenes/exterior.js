@@ -6143,7 +6143,6 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.drawBillboards(_visBatches, camRight, UP_Y);
     if (_castBatches.length) renderer.recordShadowBillboards(_castBatches, camRight, UP_Y);   // SHADOW-REACH: for the maps alone, on the same wind
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);   // M2: spell missiles in flight
-    magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes
     // T1: the wandering townsfolk - population ticks at 10Hz, the
     // politeness idle gate whole (mobilePerson.personWantsToStop),
     // daytime only; live persons render as C11-style mobile batches
@@ -6236,6 +6235,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         grounded: !walkMode || !!player.grounded, settings: hazeFrameSettings() });   // AUDIT ENVIRONS W4 (world.js's twin): the ease on the real clock, the shimmer on the game's
       if (hz.visible && hazeGl.draw(hz, proj, view, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight], hz.seconds)) renderer.markForeignPass();
     }
+    magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes; STOREFRONT (AUDIT STOREFRONT RENDER L3): with the kill effects, after the walkers, the watch, the foes and the Windfall - no depth written, so a flat drawn after them painted over them (world.js's twin note)
     // WX2: what falls is what the front SHOWS (world.js's twin note)
     eye32[0] = eye[0]; eye32[1] = eye[1]; eye32[2] = eye[2];
     const precipShown = enhancedFront ? fx.shown : precipMode;

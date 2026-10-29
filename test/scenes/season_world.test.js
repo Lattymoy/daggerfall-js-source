@@ -193,7 +193,7 @@ function world({ t = HEART_T, online = true } = {}) {
     player: { feetAt: () => w.feet }, walkMode: true, playerSpawned: true, get online() { return online ? {} : null; }, collider: w.col, _sharedOffsetMs: 0,
     _wodPeerSprung: w.peer, wodPeerHeldAgo: () => w.peerAgo, wodForgetPeer: (s) => { w.forgot.push(s); w.peer.delete(s); },
     wodSprang: (s) => w.sprung.add(s), wodUnsprang: (s) => w.sprung.delete(s),
-    chatNotice: (s) => w.tells.push(s), say: (s) => w.said.push(s), shake: (k) => w.shakes.push(k), burst: (r, at, o) => { w.bursts.push([r, o?.ambient ?? false]); return true; },
+    chatNotice: (s) => w.tells.push(s), say: (s) => w.said.push(s), shake: (k) => w.shakes.push(k), burst: (r, at, o) => { w.bursts.push([r, o ?? null]); return true; },
     struckAt: () => (w.struck ? 1 : null), take: (item) => w.taken.push(item), who: () => 'acct|char', storage: w.storage, bindPass: false,
     audio: { buffers: new Map([['storefront:season-hum', {}], ['storefront:season-tremor', {}]]), play3d: (k, at) => w.heard.push(k) },
     labGrassField: { invalidate() {} }, gamePaused: () => false, townTalk: { hudHidden: false },
@@ -217,7 +217,7 @@ test('STOREFRONT the host\'s tremor: at the hour the stage\'s line once, its rum
   assert.deepEqual(w.said, [TREMOR_TEXT[1]()]);
   assert.ok(w.heard.includes('storefront:season-tremor'));
   assert.equal(w.shakes.length, 1);
-  assert.ok(w.bursts.some(([r, amb]) => r === 'tremor-dust' && amb));
+  assert.ok(w.bursts.some(([r]) => r === 'tremor-dust'));   // in the places' pool, by its recipe (render/killFx.js KFX_POOL_OF)
   w.t += TREMOR_KICK_MS - 1; w.host.frame();
   assert.equal(w.shakes.length, 1, 'not every frame');
   w.t += 1; w.host.frame();
@@ -268,7 +268,8 @@ test('STOREFRONT a fissure\'s camp: sprung by the first player near, its constru
   assert.ok(col.entity.healthMult >= COLOSSUS_HEALTH);
   assert.deepEqual(col.entity.bossTraits, [...COLOSSUS_TRAITS]);
   assert.ok(w.said.includes(COLOSSUS_TEXT.wakes(f.near)));
-  assert.ok(w.bursts.some(([r]) => r === 'fissure-wake'));
+  const wake = w.bursts.find(([r]) => r === 'fissure-wake');
+  assert.ok(wake && Math.abs(wake[1].dir[0] - Math.sin(f.yaw)) < 1e-9 && Math.abs(wake[1].dir[1] - Math.cos(f.yaw)) < 1e-9, 'it wakes along its crack (AUDIT STOREFRONT RENDER L2)');
   // a reader's copy is named by its site
   const copy = { site: f.hSite, puppet: 'peer', mobileType: COLOSSUS_MOBILE, entity: { raidLeader: { name: '' } }, ai: { feet: [0, 0, 0] } };
   w.foes.foes.push(copy); w.host.frame();

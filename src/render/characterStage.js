@@ -13,6 +13,7 @@ import { newPose, poseAtRest, poseFromBones, poseFromFigure, spriteMarks, sprite
 import { previewMesh } from './auraPreview.js';
 import { ortho, lookAt, multiply } from '../world/mat4.js';
 import { createEffectStage } from './effectStage.js';   // STOREFRONT: a kill effect or a portal skin tried on
+import { prefersReducedMotion } from '../systems/hitFlash.js';   // STOREFRONT: the viewer's less motion, read live
 
 /** THE STAGE'S FRAME, one for every body: an orthographic camera `pitch` (rad) over level, the highest a plate's anchor
  *  can stand over the body (stageTopOf) `top` of the way down the picture and the near edge of the widest aura's ring
@@ -176,7 +177,7 @@ export function startCharacterStage(canvas, { body = null, kit = null, aura = nu
   try { aurPass = new AuraRingRenderer(gl); } catch { aurPass = null; }
   try { armPass = new ArmoryRenderer(gl); } catch { armPass = null; }
   // STOREFRONT: the effects tried on - a kill on the body, a portal behind it - and each loop's cue (`cue`: its sound)
-  const effects = createEffectStage(gl, { reduced: !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches, onCue: (sl, k) => cue?.(sl, k) });
+  const effects = createEffectStage(gl, { reduced: () => prefersReducedMotion(), onCue: (sl, k) => cue?.(sl, k) });   // less motion followed mid-session
   let lastT = now();
 
   const t0 = now();

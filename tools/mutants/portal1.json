@@ -482,8 +482,8 @@
   {
     "name": "PORTAL1-vortex-follows-the-eye",
     "file": "src/scenes/portalFx.js",
-    "old": "      if (p.fixed) { p.origin[0] = p.feet[0]; p.origin[2] = p.feet[2]; }   // PORTAL1: a gate stands where it opened\n      else if (eye) {",
-    "new": "      if (eye) {",
+    "old": "      if (p.fixed) { p.origin[0] = p.feet[0]; p.origin[2] = p.feet[2]; }   // PORTAL1: a gate stands where it opened\n      else if (from) {",
+    "new": "      if (from) {",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]

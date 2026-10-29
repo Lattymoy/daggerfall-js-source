@@ -33428,7 +33428,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], windClock, wd.gust] : null, floraSwayOn() && wd.on ? windfallLaw : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway); WINDFALL1: by the mod's law while it is on
     renderer.drawBillboards(allBatches, camRight, bbUp);
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, bbUp);   // M2: spell missiles
-    magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes
     // T2 towns: every built populated pixel runs its own pool
     // (PopulationManager is per-location); the pool sees the player in
     // the pixel's LOCATION frame, and live persons draw through the
@@ -33982,6 +33981,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     };
     frameHaze();
     renderer.drawHeld(camRight, bbUp);   // GRASS-PORTAL: the street's blended flats, over the grass behind them
+    magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes; STOREFRONT (AUDIT STOREFRONT RENDER L3): with the kill effects, once the opaque world is whole - no depth written, so the street's flats, the grass and the banners drawn after them painted over them (RAIN-OVER-GRASS's law)
     poiHost?.drawTranslucent(renderer, mwv.eye, yardCull);   // POI-2: a POI's glass and its like, after every opaque thing and the sea's top, the farthest first; AUDIT POI R4: and after the grass, the banners, the Windfall and the haze, which write depth its glass does not (RAIN-OVER-GRASS's law) - and R14: the farthest from the view's own eye
     if (poiEditor?.drawLines(proj, view)) renderer.markForeignPass();   // POI-3: the editor's boxes where the models stand, then its handles over everything (AUDIT POI R4: over the glass too, moved with it)
     drawFalling();   // RAIN-OVER-GRASS: after the grass and the banners, before the translucent bodies and the fires

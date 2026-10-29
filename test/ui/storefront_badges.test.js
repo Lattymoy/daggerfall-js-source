@@ -18,7 +18,7 @@ import {
   AURA_LOOK, AURA_FS, AURA_GROUND_R, auraPrograms, DOMINION_R, DOMINION_BAND_M, DOMINION_RUNES, DOMINION_SCRIPT, DOMINION_RGB, dominionRatesWhole,
   dominionRuneAt, HELIX_R, HELIX_H, HELIX_RGB, GILDED_RGB, helixRatesWhole, helixStrandAt,
 } from '../../src/render/auraRing.js';
-import { glslFunctions } from '../glsl.mjs';
+import { glslFunctions, GlslDiscard } from '../glsl.mjs';
 
 const NEW_TITLES = ['dawnbringer', 'voidwalker', 'eternalchampion', 'brassbound', 'tremorborn', 'tonalarchitect', 'brasswright', 'heartwaker', 'numidiumecho'];
 const PLATES = ['dawnbringer', 'voidwalker', 'eternalchampion', 'heartwaker', 'numidiumecho'];
@@ -242,4 +242,22 @@ test('STOREFRONT the coils, the shader RUN: the aetherium strand blue where the 
   const v = 0.4, t = 21.3, u = (helixStrandAt(v, t) + 0.5) % 1;
   const plain = run('aetherium', 1, [u, v], { t }), gilded = run('gildedcoil', 1, [u, v], { t });
   assert.ok(gilded[0] + gilded[1] > (plain[0] + plain[1]) * 1.3 && gilded[1] / gilded[0] > plain[1] / plain[0], 'the gilded\'s brass the brighter and golder');
+});
+
+test('STOREFRONT no pow of a negative in the new auras (AUDIT STOREFRONT RENDER L5): GLSL leaves pow(x < 0, y) undefined (a driver\'s exp2/log2 answers NaN, and the evaluator\'s Math.pow would hide it) - the Daedric Dominion, the Aetherium Coil and the Gilded Coil, their grounds over the whole disc and their walls over the whole strip, at three clocks: the coils\' ring of light squared as a product (SHADOW-CLOAK\'s pin; mutants: the ring squared by pow)', () => {
+  const FS = AURA_FS.replace(/\bpow\(/g, 'auraPowChk(').replace('out vec4 o;', 'out vec4 o;\nfloat powNeg = 0.0;\nfloat auraPowChk(float b, float e) { if (b < 0.0) powNeg = 1.0; return exp(e * log(max(abs(b), 1e-30))); }');
+  assert.ok(FS.includes('float powNeg'), 'the guard took');
+  const f = glslFunctions(FS, {
+    vP: [0, 0], vWorld: [0, 0, 0], vS: [0, 0, 0], uKind: 0, uAura: 16, uTime: 0, uSeed: 0, uKindle: 1, uRingR: 1, uGroundR: AURA_GROUND_R, uFlameH: 1,
+    uFogMode: 0, uFogDensity: 0, uFogRange: [0, 1], uCamPos: [0, 1.2, 5], uAt: [0, 0, 0], uFocus: [0, 0, 0, 0], uResLit: Array(48).fill(0), dFdx: () => [0.001, 0, 0], dFdy: () => [0, 0.001, 0],
+  });
+  let lit = 0;
+  for (const aura of NEW_AURAS) for (const t of [3.1, 47.9, 102.4]) for (const kind of [0, 1]) for (let i = 0; i <= 30; i++) for (let j = 0; j <= 30; j++) {
+    const look = AURA_LOOK[aura];
+    const vP = kind ? [i / 30, j / 30] : polar(AURA_GROUND_R * i / 30, (j / 30) * TAU);
+    Object.assign(f.globals, { vP, uKind: kind, uAura: look.kind, uRingR: look.ringR, uFlameH: look.flameH, uTime: t, powNeg: 0 });
+    try { f.main(); lit++; } catch (e) { if (!(e instanceof GlslDiscard)) throw e; }
+    assert.equal(f.globals.powNeg, 0, `${aura}, kind ${kind}, at ${vP.map((x) => x.toFixed(2))}, ${t}`);
+  }
+  assert.ok(lit > 5000, `the sweep drew (${lit})`);
 });

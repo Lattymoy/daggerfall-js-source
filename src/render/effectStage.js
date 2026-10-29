@@ -15,6 +15,10 @@ export const STAGE_KILL_S = Object.freeze({ back: 2.3, whole: 2.8, cycle: 3.6 })
 export const STAGE_PORTAL_MS = Object.freeze({ hold: 2800, pause: 700 });
 /** How far behind the body the portal stands (m, away from the eye). */
 export const STAGE_PORTAL_BACK = 0.7;
+/** The stage's portal faces away from its eye (render/killFx.js `dir`): the camera looks down -Z. */
+export const STAGE_FACING = Object.freeze([0, -1]);
+/** Where a loop stands still for less motion (s into it): a kill's body whole again, a portal wide open. */
+export const stageHoldS = (/** @type {string|null} */ slot) => (slot === 'portal' ? (PORTAL_MS.open + STAGE_PORTAL_MS.hold / 2) / 1000 : STAGE_KILL_S.whole);
 /** The tallest a piece stands (the Daedric Stone's arch, m) - the portal is drawn smaller where the frame is shorter. */
 export const STAGE_PORTAL_TOP = 3.35;
 
@@ -49,13 +53,15 @@ void main() { vec4 c = texture(uTex, vUv); if (c.a < 0.02) discard; o = vec4(c.r
 /**
  * The stage's effects on `gl`: `set(slot, key)` tries one on ('kill' or 'portal', `key` its look; a portal's null the
  * violet vortex; any other slot nothing), `step(dt, height)` runs it, `burn()` the body's dissolve now (null for none),
- * `drawBehind(vp, right)` the portal before the body, `drawFront(proj, view, eye)` the bursts after it.
+ * `drawBehind(vp, right)` the portal before the body, `drawFront(proj, view, eye)` the bursts after it. Under less
+ * motion (`reduced`: read each frame, or fixed) it plays once to its hold (stageHoldS) and stands still.
  * @param {WebGL2RenderingContext} gl
- * @param {{ reduced?: boolean, onCue?: (slot: string, key: string|null) => void }} [o] `onCue` each loop's start (its sound)
+ * @param {{ reduced?: boolean | (() => boolean), onCue?: (slot: string, key: string|null) => void }} [o] `onCue` each loop's start (its sound)
  */
-export function createEffectStage(gl, { reduced = false, onCue = () => {} } = {}) {
+export function createEffectStage(gl, { reduced = /** @type {boolean | (() => boolean)} */ (false), onCue = () => {} } = {}) {
+  const still = typeof reduced === 'function' ? reduced : () => !!reduced;
   let sim = /** @type {KillFx|null} */ (null), pass = /** @type {KillFxPass|null} */ (null);
-  try { sim = new KillFx({ reduced }); pass = new KillFxPass(gl); } catch { sim = null; pass = null; }
+  try { sim = new KillFx({ reduced: still }); pass = new KillFxPass(gl); } catch { sim = null; pass = null; }
   const compile = (/** @type {number} */ type, /** @type {string} */ src) => { const s = /** @type {WebGLShader} */ (gl.createShader(type)); gl.shaderSource(s, src); gl.compileShader(s); return s; };
   const prog = /** @type {WebGLProgram} */ (gl.createProgram());
   gl.attachShader(prog, compile(gl.VERTEX_SHADER, CARD_VS)); gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, CARD_FS)); gl.linkProgram(prog);
@@ -91,7 +97,7 @@ export function createEffectStage(gl, { reduced = false, onCue = () => {} } = {}
   function cue() {
     breath = 0;
     if (slot === 'kill' && key) sim?.start(key, [0, 0, 0], { h: height * 1.02, w: height * 0.45 });
-    else if (slot === 'portal') { const look = portalSkinOf(key); if (look) sim?.start(look.open, [at[0], 0.05, at[2]], { h: PORTAL_SIZE.h, w: PORTAL_SIZE.w }); }
+    else if (slot === 'portal') { const look = portalSkinOf(key); if (look) sim?.start(look.open, [at[0], 0.05, at[2]], { h: PORTAL_SIZE.h, w: PORTAL_SIZE.w, dir: STAGE_FACING }); }
     onCue(/** @type {string} */ (slot), key);
   }
   return {
@@ -108,15 +114,16 @@ export function createEffectStage(gl, { reduced = false, onCue = () => {} } = {}
       const d = Math.min(0.05, Math.max(0, Number.isFinite(dt) ? dt : 0));
       sim?.step(d);
       if (!slot) return;
-      t += d;
-      const loop = cycleS();
+      const loop = cycleS(), calm = still();
+      if (calm) { const holdAt = Math.floor(t / loop) * loop + stageHoldS(slot); t = Math.min(t + d, holdAt); }   // this loop to its hold, and no further
+      else t += d;
       const n = Math.floor(t / loop);
       if (n !== cycleAt) { cycleAt = n; cue(); }
       const look = slot === 'portal' ? portalSkinOf(key) : null;
-      if (look?.ambient) {
+      if (look?.ambient && !calm) {
         const age = (t % loop) * 1000, { open: o } = portalOpenAt(age, { holdMs: STAGE_PORTAL_MS.hold });
         breath += d;
-        if (o > 0.8 && breath >= look.ambient.every) { breath = 0; sim?.start(look.ambient.recipe, [at[0], 0.05, at[2]], { h: PORTAL_SIZE.h, w: PORTAL_SIZE.w, ambient: true }); }
+        if (o > 0.8 && breath >= look.ambient.every) { breath = 0; sim?.start(look.ambient.recipe, [at[0], 0.05, at[2]], { h: PORTAL_SIZE.h, w: PORTAL_SIZE.w, dir: STAGE_FACING }); }
       }
     },
     /** The body's burn now - `[share, r, g, b]`, the edge's colour - or null while it stands whole. */
@@ -152,7 +159,7 @@ export function createEffectStage(gl, { reduced = false, onCue = () => {} } = {}
       for (const d of look?.dress ?? []) for (let i = 0; i < d.count; i++) {
         const pl = dressPlace(d, i, age / 1000, k, d.place === 'arch' ? [mid[0], mid[1], mid[2] - 0.08] : mid, right, closing);
         const sc = pl.scale * fit, fr = Math.floor((age / 1000 + (i * 0.37) % 1) * d.fps) % d.frames;
-        const foot = [mid[0] + (pl.at[0] - mid[0]) * fit, pl.at[1] * fit, mid[2] + (pl.at[2] - mid[2]) * fit];
+        const foot = [mid[0] + (pl.at[0] - mid[0]) * fit, mid[1] + (pl.at[1] - mid[1]) * fit, mid[2] + (pl.at[2] - mid[2]) * fit];   // `mid` is fitted already: the fit once
         pieces.push({ id: `${d.archive}/${fr}`, p: foot, w: d.size.w * sc * (pl.spin < 0 ? -1 : 1), h: d.size.h * sc, a: Math.min(1, pl.scale * 1.2), back: d.place === 'arch' });
       }
       for (const q of pieces) if (q.back) card(q.id, q.p, q.w, q.h, q.a);   // the arch stands behind its vortex

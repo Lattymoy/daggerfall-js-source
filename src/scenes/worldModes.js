@@ -11333,7 +11333,6 @@ export function createWorldModes(host) {
       magic.firePending([...cam.pos], eyeDir(), overlayHeld);   // AUDIT SPELL-HAND L4-6: a kept press never leaves under a window
       magic.update(dt, player.pos, eyeDir(), player.height, player.feetAt());   // X11: the candle hangs off the look direction; DISC13-A off the render feet
       if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);
-      magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes
     }
     // LM1: the transformed move-sound loop, in this host's INTERIOR
     // arm (dungeon mode runs dungeonContext's frame, which carries its
@@ -11342,6 +11341,7 @@ export function createWorldModes(host) {
     { const mv = lycanthropeMoveSound(playerEntity, dt); if (mv != null) audio.playOneShot(mv, 1); }
     if (interiorCtx.animateChars) interiorCtx.animateChars((performance.now() - _charT0) / 1000, _charAnimMode);
     for (const d of interiorCtx.charDraws) renderer.drawCharacter(d.mesh, d.matrix);
+    magic?.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes; STOREFRONT (AUDIT STOREFRONT RENDER L3): with the kill effects, after the room's last opaque draw (its characters) - no depth written, so a body drawn after them painted over them
     host.drawVeiledPeerBodies?.();   // INVIS-LOOK: the concealed peers' bodies, translucent - after the room's opaque draws, before the weapon's screen quads
     interiorFoes?.drawVeiledBodies();   // MWNPC5c: the concealed foes' bodies, beside the peers'
     interiorGuards?.drawVeiledBodies();   // MWNPC6: and the watch's
