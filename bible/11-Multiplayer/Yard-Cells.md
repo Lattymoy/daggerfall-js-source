@@ -763,7 +763,7 @@ town is today. QUEST-HOME's home words (`hearHome`) still make it ask at once.
 
 The registry knows a town by its map id, not where the player stands, so it asks every cell a town can hold (65) in
 one request, not nearest first (`homeCellSync.js` HOME_TOWN_CELLS). A service that answers the two routes with a 404,
-400 or 403 is older than acct216: the page reads `/v1/homes/town` from then on.
+400 or 403 is older than acct219: the page reads `/v1/homes/town` from then on.
 
 ### 14.6 Decided (2026-10-29)
 
