@@ -266,6 +266,7 @@ import { newDuelRef, duelNote, duelOpen, duelBoutOf, duelBlow, duelPose, duelEnd
 import { newWildRef, wildZone, wildTokenAtt, wildPose, wildBlow, wildKin, sameGuild, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildCredit, wildFallOf, wildDownWord, wildGraceLeft, wildGraceTaken, wildAggroWord, wildFlagWord, wildBarWord, wildBarWords, wildOpenedBy, wildVillainy, wildRed, WILD_GRACE, WILD_FALL_PREFIX, WILD_REF } from '../../src/net/wild/wildRef.js';   // INT9: the open zone refereed
 import { mintWildReceipt, mintWildCollect, mintSeaWreck, WILD_RECEIPT_TTL_S, SEA_WRECK_TTL_S } from '../../src/net/wild/wildReceipt.js';   // INT9: a fall, signed; MAC (2026-10-14): and a killer's collect; SHIP-PVP: and a wreck
 import { seaHelm, seaShot, seaBoard, seaStep, seaGone, seaCarry, seaWreckOf, SEA_WRECK_PREFIX, SEA_REF } from '../../src/net/sea/seaRef.js';
+import { lingerHold, lingerTarget, lingerStep, lingerHello, lingerZone } from './pvpLinger.js';   // PVP-LINGER: a body left in its lock
 /** AUDIT SEA VENTURES A8: a signed word owed an account that is away (a fall's receipt, a wreck's) kept in the room's storage
  *  under this prefix as long as a receipt lives - a relay object that slept lost it from its memory, and a captain back
  *  in the zone was handed nothing. */
@@ -5198,14 +5199,16 @@ export class Room {
     followLeft(this, ws, a);   // STAFF-PANEL5-FOLLOW: a spectator gone, or a followed account's last socket here
     // INT9 (AUDIT): a fighter whose last socket here went is out of the zone (a closed tab kept its `zone` for good, and a
     // room of them refused every newcomer)
-    if (a.sub && this._wildRef && ![...this._all()].some(([w, b]) => w !== ws && b.id && b.sub === a.sub)) { wildGone(this._wildRef, a.sub, Date.now()); seaGone(this._wildRef, a.sub, Date.now()); this._wildLeaveCarry(a, Date.now()); }   // SHIP-PVP: and her ship off the guns (AUDIT SEA VENTURES F1/A1: her bar kept)
+    const wildLast = !!a.sub && !!this._wildRef && ![...this._all()].some(([w, b]) => w !== ws && b.id && b.sub === a.sub);
+    const lingers = wildLast && !last && await this._lingerHold(a, Date.now());   // PVP-LINGER (pvpLinger.js): a body in its lock stays, its leave said when it goes
+    if (wildLast && !lingers) { wildGone(this._wildRef, a.sub, Date.now()); seaGone(this._wildRef, a.sub, Date.now()); this._wildLeaveCarry(a, Date.now()); }   // SHIP-PVP: and her ship off the guns (AUDIT SEA VENTURES F1/A1: her bar kept)
     this._looks.delete(a.id);
     if (!last) this._secrets.set(a.id, null);   // SCALE2b: the kept copy goes with the stored one (a drain's sweep clears both)
     this._raidTownsUp.delete(ws);   // SCALE2b: an upload its socket never finished goes with it
     if (!last && !isChatRoom(a.key)) { try { await this.state.storage.delete(lookKey(a.id)); } catch { /* the room forgets it on the next empty hello */ } }
     // ROSTER-G: a channel says its leaves now, as it says its joins - the roster beside the chat is everyone online
     const out = JSON.stringify({ t: 'leave', id: a.id, ...(isChatRoom(a.key) && !(isChannelShard(a.key) && this._hubTotal == null) ? { n: isChannelShard(a.key) ? this._hubN(this._namedCount()) : this._vsocks.size ? this._busCount() : this._namedCount() } : {}) });   // AUDIT SCALE II R2-4 (p4d): and a woken shard's leave none, as its join   // SCALE5c: a shard's, the hub's count   // AUDIT SCALE5a C1-C3: a channel's leave says the room's count, as its join does
-    if (a.hid) { /* STAFF-PANEL5-HIDDEN: a hidden socket's leave said to nobody */ } else if (isChatRoom(a.key)) this._fanRoster(ws, out); else this._fanBut(ws, out);   // SCALE5a: in place, as the join's; SCALE5b: a channel's, the second wire's batched
+    if (lingers) { /* PVP-LINGER: said when its body goes */ } else if (a.hid) { /* STAFF-PANEL5-HIDDEN: a hidden socket's leave said to nobody */ } else if (isChatRoom(a.key)) this._fanRoster(ws, out); else this._fanBut(ws, out);   // SCALE5a: in place, as the join's; SCALE5b: a channel's, the second wire's batched
     if ((isChannelShard(a.key) || (a.ly && isGateRoom(a.key))) && a.vid) { this._vidIdx.delete(a.vid); this._hubUpOwe(a.vid, 'x', 0); }   // SCALE5d part two: a court copy's too   // SCALE5c: and the bus told it went
     else if (isChannelBus(a.key)) this._busCountMoved();   // SCALE5c: the bus's - its shards told the hub's count
     this._travOwed.delete(a.id);   // AUDIT DEEP2 C2: the leave takes the mark out - an owed clear of it is said
@@ -11293,6 +11296,7 @@ export class Room {
   }
   /** The live remains to a socket that just said hello. */
   async _wildHello(ws, now) {
+    await lingerHello(this, ws, now);   // PVP-LINGER: my own body taken back, the others shown to me
     const map = await this._wildRemains(now);
     for (const rec of [...map.values()]) {
       if (!remainsLive(rec, now)) { await this._wildDrop(map, rec.r); continue; }
@@ -11430,6 +11434,7 @@ export class Room {
     const flagWas = was?.flag;
     const x = wildZone(st, a.sub, { id: a.id, lv: a.lv, cl: a.cl ?? null, ci: a.ci ?? '', carry, died, fl, ed, vl: a.vl ?? 0, sf }, z === 1, a.pose, now);
     if (x) this._wildFlagSay(st, a, x, flagWas, wasIn, fl);   // PVP-FLAG
+    if (x && z === 1) lingerZone(this, a.sub, x);   // PVP-LINGER: a body taken back hears its health
     if (x && x.graceUntil > now && x.graceUntil !== graceWas) this._wildGraceSay(a, x.graceUntil - now);   // ZONE-GRACE: safe passage begun, or carried in
     if (x && (x.zone !== wasIn || died)) this._wildCarryPut(a.sub, this._zoneCarry(st, a.sub, now, a.key));   // AUDIT PVP-EASE L3-1: an entry, a leave and a death, at the hub
     if (x && carry?.sea) x.seaCarry = carry.sea;   // AUDIT SEA VENTURES F1/A1: her ship's bar too, for her next helm word (seaRef.js seaHelm)
@@ -11467,7 +11472,7 @@ export class Room {
   async _wildBlow(a, d, now) {
     if (!a.sub) return;
     const st = await this._wildSt();
-    const target = this._idFirst(d.to);   // SCALE5b: by the id index
+    const target = this._idFirst(d.to) ?? lingerTarget(this, d.to);   // SCALE5b: by the id index; PVP-LINGER: or a body left in its lock
     const tb = target?.[1];
     const fa = st.fighters.get(a.sub), ft = tb?.sub ? st.fighters.get(tb.sub) : null;
     // INT9 (AUDIT): what the referee refuses anyway is refused before the hub is asked (a blow a frame asked it)
@@ -11493,7 +11498,7 @@ export class Room {
     if (!res.ok || !res.dealt) return;
     this._wildAggroSay(st, [a.sub, tb.sub], now);   // PVP-SKULL: the striker's and the struck one's skulls gold
     const word = JSON.stringify({ t: 'wref', k: 'hp', by: a.id, to: tb.id, d: res.dealt, r, h: wildVitals(st, a.sub, tb.sub) });
-    this._send(target[0], word);
+    if (target[0]) this._send(target[0], word);   // PVP-LINGER: a body has no socket
     const mine = this._siegeSocketOf(a.sub);
     if (mine) this._send(mine[0], word);
     this._wildCarryPut(tb.sub, this._zoneCarry(st, tb.sub, now, a.key));   // INT9 (AUDIT): the bar it carries into the next room
@@ -11560,6 +11565,14 @@ export class Room {
     this._wildGraceSay(a, 0);
     this._wildCarryPut(a.sub, this._zoneCarry(st, a.sub, now, a.key));
   }
+  /** PVP-LINGER (pvpLinger.js lingerHold): a fighter's last socket gone - its body kept while its lock runs, with its look
+   *  for one who enters. Answers whether it stays. */
+  async _lingerHold(a, now) {
+    if (!this._wildRef?.fighters.get(a.sub)?.zone) return false;
+    let look = this._looks.get(a.id) ?? null;
+    if (!look) { try { look = (await this.state.storage.get(lookKey(a.id))) ?? null; } catch { look = null; } }
+    return lingerHold(this, a, look, now);
+  }
   /** AUDIT PVP-EASE L3-1: a fighter's socket gone from the room (wildGone) - its leave kept at the hub, so the next room it
    *  stands in reads a crossing, never an entry. */
   _wildLeaveCarry(a, now) {
@@ -11577,6 +11590,7 @@ export class Room {
    *  without a piece. */
   async _wildBeat(now) {
     const st = await this._wildSt();
+    await lingerStep(this, now);   // PVP-LINGER: each body taken back, gone, or said again
     for (const w of seaStep(st, now)) await this._seaSign(w, now);   // SHIP-PVP: a wreck its killer never boarded, signed unboarded
     this._wildBarSay(st, now);   // PVP-BAR
     if (!st.falls.size) return;
