@@ -620,7 +620,7 @@ async function openSealed(token, publicKey, { subtle, nowS, skewS, valid }) {
  *  second: 'renown', a character's Renown that ROSE while its player was
  *  already in a room, carried in by that player's own client (the token
  *  that let them in said the Renown they had then). */
-export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline', 'sevent', 'yard']);   // YARD-CELL YC2: a yard's cell moved to a version, the service's word for every page online (bible/11-Multiplayer/Yard-Cells.md section 3.6)   // STAFF-PANEL5-MESSAGE: a staff message stored for account `s` (`mi` its id) - the hub nudges that account's own sockets   // SAFE4: a ban - its end, the service's word that the account may no longer play   // EG-PLAY: an Elite Breach's open and a member's admission   // QUEST-HOME: a town's homes moved, the service's word for every page online   // INT9: a fall's drop, the service's word on what it took   // CARDS10: a ranked seat's deck, vouched for   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass   // STAFF-PANEL2-FIX: a staff member cut off, the service's word that the account's sockets close   // STAFF-PANEL5-HIDDEN: a hidden staff subject's mark ended (Show myself, the staff session's end) - its sockets closed, never shown   // STAFF-PANEL5-FREEZE: a staff freeze - its end, the service's word that the account may only look around - and a staff line's nudge, the service's word that a staff chat thread has a new line
+export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline', 'sevent', 'yard', 'hcell']);   // YC4: a town's home cell moved to a version, the service's word for every page online (bible/11-Multiplayer/Yard-Cells.md section 14.4)   // YARD-CELL YC2: a yard's cell moved to a version, the service's word for every page online (bible/11-Multiplayer/Yard-Cells.md section 3.6)   // STAFF-PANEL5-MESSAGE: a staff message stored for account `s` (`mi` its id) - the hub nudges that account's own sockets   // SAFE4: a ban - its end, the service's word that the account may no longer play   // EG-PLAY: an Elite Breach's open and a member's admission   // QUEST-HOME: a town's homes moved, the service's word for every page online   // INT9: a fall's drop, the service's word on what it took   // CARDS10: a ranked seat's deck, vouched for   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass   // STAFF-PANEL2-FIX: a staff member cut off, the service's word that the account's sockets close   // STAFF-PANEL5-HIDDEN: a hidden staff subject's mark ended (Show myself, the staff session's end) - its sockets closed, never shown   // STAFF-PANEL5-FREEZE: a staff freeze - its end, the service's word that the account may only look around - and a staff line's nudge, the service's word that a staff chat thread has a new line
 /** An order lives a minute - long enough to be carried to every room
  *  the moderator holds, short enough that a leaked one is stale before
  *  anyone could use it for anything but what it already said. */
@@ -694,9 +694,11 @@ export function orderValid(c) {
   // event's id - and carries nothing else; no other kind carries `op`, `ev` or `ei`
   if (c.o !== 'sevent' && (c.op !== undefined || c.ev !== undefined || c.ei !== undefined)) return false;
   if (c.o === 'sevent' && !staffEventOrderValid(c)) return false;
-  // YARD-CELL YC2: a yard order is `{o:'yard', s, m, c, v, i, e}` and carries nothing else; no other kind carries `m`, `c` or `v`
-  if (c.o !== 'yard' && (c.m !== undefined || c.c !== undefined || c.v !== undefined)) return false;
-  if (c.o === 'yard' && !yardOrderValid(c)) return false;
+  // YARD-CELL YC2: a yard order is `{o:'yard', s, m, c, v, i, e}` and carries nothing else; YC4's home cell order
+  // `{o:'hcell', s, m, c, v, i, e}` likewise. No other kind carries `m`, `c` or `v`
+  const isCellOrder = c.o === 'yard' || c.o === 'hcell';
+  if (!isCellOrder && (c.m !== undefined || c.c !== undefined || c.v !== undefined)) return false;
+  if (isCellOrder && !cellOrderValid(c)) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > ORDER_TTL_S) return false;
   return true;
@@ -750,7 +752,8 @@ const YARD_ORDER_KEYS = Object.freeze(['o', 's', 'm', 'c', 'v', 'i', 'e']);
 /** The widest yard cell (net/yardCellLaw.js YARD_CELL_MAX, read off homeLaw.js alone so the relay's graph does not take
  *  in decorLaw.js). */
 const YARD_ORDER_CELL_MAX = Math.floor(HOME_KEY_MAX / 256);
-function yardOrderValid(c) {
+/** A yard order's or a home cell order's own fields: town `m`, cell `c` (one RMB block's 256 keys) and version `v`. */
+function cellOrderValid(c) {
   if (Object.keys(c).some((k) => !YARD_ORDER_KEYS.includes(k))) return false;
   if (!homeMapIdOk(c.m)) return false;
   if (!Number.isSafeInteger(c.c) || c.c < 0 || c.c > YARD_ORDER_CELL_MAX) return false;
@@ -761,6 +764,20 @@ export async function mintYardOrder({ s, m, c, v }, privateKey, { subtle, nowS, 
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintYardOrder needs an integer epoch-seconds clock');
   const claims = { o: 'yard', s, m, c, v, i: nowS, e: nowS + ttlS };
   if (!orderValid(claims)) throw new TypeError('mintYardOrder refused an order it could not verify');
+  return sealClaims(claims, privateKey, subtle);
+}
+
+/* ═══ YC4: THE HOME CELL ORDER (bible/11-Multiplayer/Yard-Cells.md section 14.4) ═══════════════════════════════════════
+ *
+ * A home write that moved a cell's shared rows moved its version. The service hands the acting player's client its word
+ * on it, `{o:'hcell', s, m, c, v, i, e}` - account `s`'s act moved town `m`'s home cell `c` to version `v` - the yard
+ * order's shape under its own kind, so a word for one never makes a page ask the other's cell.
+ */
+/** YC4: MINT A HOME CELL ORDER - the service's word that account `s`'s act moved town `m`'s home cell `c` to version `v`. */
+export async function mintHomeCellOrder({ s, m, c, v }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+  if (!Number.isSafeInteger(nowS)) throw new TypeError('mintHomeCellOrder needs an integer epoch-seconds clock');
+  const claims = { o: 'hcell', s, m, c, v, i: nowS, e: nowS + ttlS };
+  if (!orderValid(claims)) throw new TypeError('mintHomeCellOrder refused an order it could not verify');
   return sealClaims(claims, privateKey, subtle);
 }
 
