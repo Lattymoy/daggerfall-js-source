@@ -1111,6 +1111,7 @@ import { parseEventCommand } from '../net/chatCommands.js';   // EVENT1: /event,
 import { createSunbaby, sunbabyLight, SUNBABY_WEATHER, sunbabyKey, createSunbabyRain } from '../world/sunbabySky.js';   // SUNBABY1: the sun baby's sky of flowers, the clear day and the light under it; SUNBABY2: the wrath's key light and its fireballs
 import { relayKnowsLiveEvent } from '../net/wire.js';   // SUNBABY1: a word staged only on a relay that knows it
 import { createStaffTeleportClient, validStaffDestination, staffDestinationKey, followStaffPlayer, staffTpLine } from '../net/staffTeleport.js';   // STAFF-PANEL5-FOLLOW: and the line a /tp @player ends on
+import { createStaffPull } from './staffPullHost.js';   // STAFF-PULL: /tpa and the panel's Bring to me
 import { gameMaps, gamePlaces } from '../net/staffPlaces.js';   // STAFF-EVENT: the game's maps, for the Staff Panel's place picker; AUDIT RELEASE R2-7: and the world's places past the Bay
 import { staffFollowOnPage, relinkGame } from './staffFollowHost.js';   // STAFF-PANEL5-FOLLOW: the game's staff hook (net/staffHook.js) and the host's half of a follow; STAFF-HIDE-TOGGLE: and the panel's relink
 import { createStaffViewHost } from './staffViewHost.js';   // STAFF-VIEW1: the staff tags, Shift+M and a tag's follow
@@ -19808,10 +19809,17 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
   }
 
+  // STAFF-PULL: bring a player to me, and be brought (scenes/staffPullHost.js) - the /tp loader's own guards
+  const staffPull = createStaffPull({ client: () => staffTeleportClient, glyphs: staffGlyphs, here: staffDestination, prepare: prepareStaffDestination, place: placeStaffDestination, fade: hudFade,
+    why: () => (siegeSession?.active() || royalSession?.active() || modes?.roomIdentity?.()?.kind === 'arena' ? 'battle' : !walkMode || !playerSpawned || worldMoveBusy() || modes?.transitioning || seatOut() || !(playerEntity.health > 0) || modes?.deathUp?.() ? 'busy' : null),
+    alive: () => !seatOut() && playerEntity.health > 0 && !modes?.deathUp?.(),
+    hold: (on) => { _teleporting = staffTeleportHeld = on; },
+    say: (line) => chatLog?.pushAll({ text: line, system: true }) });
   /** STAFF1: A STAFF COMMAND, RUN (net/staffCommands.js parseStaffCommand's answer) - its lines to the typer alone. */
   function runStaffCommand(tabId, c) {
     const say = (line) => chatLog.push(tabId, { text: line, system: true });
     if ('error' in c) { say(c.error); return; }
+    if (c.cmd === 'tpa') { staffPull.command(c.player, say); return; }   // STAFF-PULL
     if (c.cmd === 'staff') { for (const line of [...STAFF_HELP_LINES, DRAGON_HELP_LINE]) say(line); return; }
     if (c.cmd === 'relay') {
       // SCALE5b: a relay setting, to the hub (net/relayCfg.js) - the Developer's alone; the hub's answer lands in this tab
@@ -20439,7 +20447,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         link.onRelayCfg = (m) => chatLog.push(relayCfgTab ?? tab.id, { text: m.error ? `Relay: ${m.error}.` : `Relay: ${m.k} is now ${m.v === '' ? 'unset' : m.v}.`, system: true });
         link.onFound = (f) => chatLog.push(findTab ?? tab.id, { text: foundText(f), system: true });   // SCALE5c: a search's answer, in the tab that asked
         staffTeleportClient?.cancel();
-        const client = createStaffTeleportClient({ send: (m) => link.sendStaffTeleport(m), capture: staffDestination });
+        const client = createStaffTeleportClient({ send: (m) => link.sendStaffTeleport(m), capture: staffDestination, pulled: (d) => staffPull.land(d) });   // STAFF-PULL: and staff bring me to them
         staffTeleportClient = client;
         link.onStaffTeleport = (m) => client.receive(m);
         link.onStaffMessage = createStaffMessages(chatLog).heard;   // STAFF-PANEL5-MESSAGE: a staff message waits - the box, its OK, and its copy on the Staff tab (net/staffMessages.js)
@@ -21439,7 +21447,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // starts on this page (net/staffHook.js), and what the scene does with it (scenes/staffFollowHost.js)
   // STAFF-HIDE-TOGGLE (mob, 2026-10-23: "need hide to be a toggle"): and the panel's `relink` - Hide me or Show myself pressed,
   // every link of the game's own remade on a fresh token at once (staffFollowHost.js relinkGame)
-  const staffFollow = staffFollowOnPage({ main: () => online, prepare: (d) => prepareStaffDestination(d, () => staffFollow.locked()), mode: () => modes?.mode ?? 'exterior', pixel: () => state.current, toScene: (p) => onlineToScene(p), relink: () => relinkGame(identityMinter, online, chatLinks?.values()) });
+  const staffFollow = staffFollowOnPage({ main: () => online, prepare: (d) => prepareStaffDestination(d, () => staffFollow.locked()), mode: () => modes?.mode ?? 'exterior', pixel: () => state.current, toScene: (p) => onlineToScene(p), relink: () => relinkGame(identityMinter, online, chatLinks?.values()), pull: (sub) => staffPull.pull({ acct: sub }) });   // STAFF-PULL: the panel's Bring to me
   // STAFF-VIEW1 (mob: "np player esp in staff panel?", "i need staff panel to have esp"; design doc, In game: the staff
   // view): THE STAFF TAGS - every player this game receives tagged for an Admin or a Moderator where a Staff Panel spoke,
   // on the ground and on the Overworld (the travel view, Shift+M), a click a follow at once (scenes/staffViewHost.js)
