@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 
-import { d1, standService, T0 } from '../accountDb.mjs';
+import { d1, d1CompoundBound, standService, T0 } from '../accountDb.mjs';
 import {
   settleHomeCell, settleHomeCellsClock, settleHomeCellsAfter, readHomeCells, homeCellRowsOf, homeCellsKept, forgetHomeCell,
   _resetHomeCellsKept, HOME_CELL_SHAPE, HOME_CELLS_FROM, HOMES_KEPT_S,
@@ -242,7 +242,10 @@ test('YC4 the shared answer is homesInTown\'s for a reader with nothing of its o
 });
 
 test('YC4 the own answer: every home the caller\'s own rows reach - owned, a hall of its guilds, a room it rents, a vote, an offer either way, a guildmate\'s door - as homesInTown answers it, every home homesInTown answers with anything of the caller\'s among them, and the named character\'s deed hidden (mutants: an arm of the keys dropped, the hidden deed listed)', async () => {
-  const { db, keys } = standTown();
+  const stood = standTown();
+  const keys = stood.keys;
+  // D1 refuses a compound SELECT past five terms; node:sqlite takes 500
+  const db = d1CompoundBound(stood.db);
   const town = await homesInTown({ db, nowS: T0 }, ME, { mapId: 7, character: MY_CHAR });
   const own = await homesOwn({ db, nowS: T0 }, ME, { mapId: 7, character: MY_CHAR });
   const shared = await sharedOf(db, 7, [yardCellOf(keys.k(1)), yardCellOf(keys.far(1))]);

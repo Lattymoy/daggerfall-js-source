@@ -172,8 +172,8 @@
   {
     "name": "YC4-own-the-votes-unread",
     "file": "server-account/src/homes.js",
-    "old": "      UNION SELECT building_key FROM home_votes WHERE player = ?2 AND map_id = ?4\n",
-    "new": "",
+    "old": "IN (SELECT building_key FROM home_votes WHERE player = ?2 AND map_id = ?4\n",
+    "new": "IN (SELECT building_key FROM home_votes WHERE 0\n",
     "tests": [
       "test/server/home_cells.test.js"
     ],
