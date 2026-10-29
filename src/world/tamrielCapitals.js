@@ -11,7 +11,7 @@
 // WHERE: the capital's point on Daggerfall's map of Tamriel (world/tamriel/tamrielGeography.js CITIES - TAMRIEL1's, the port's own
 // reading of the picture), on the live fit - every client's the same pixel, with Arena attached or not. With Arena
 // attached, Arena's place of the capital's name stands on it too (world/arenaPlaces.js standArenaPixels' `pinned`), so its
-// roads, its map ink and a portal's end all lead here (TESA-NO-FAST: the map is no journey past the Bay).
+// roads, its map ink and a portal's end all lead here (TRAVEL-EVERYWHERE: and the map's journeys).
 //
 // THE IMPERIAL CITY (world/imperialCity.js, TESA11): City Isle in Lake Rumare over nine pixels - the White-Gold Tower on
 // Green Emperor Way, the six walled districts round it on their sectors, the Prison, the University and the Waterfront

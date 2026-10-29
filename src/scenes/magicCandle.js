@@ -226,15 +226,17 @@ export function createMagicCandle({
   }
 
   return {
-    /** @param active - hasActiveEffect(playerEntity, 'light') */
-    update(dt, { active, feet, height, forward }) {
+    /** @param active - hasActiveEffect(playerEntity, 'light')
+     *  @param sprite - false: the light alone, no candle drawn (CANDLE-POV: my own candle in first person) */
+    update(dt, { active, feet, height, forward, sprite = true }) {
       if (!active) { if (lit) { lit = false; dropSprite(); } return; }
       lit = true;
       wobble.tick(dt);
       const b = candleBase(feet, height, forward);
       const o = wobble.offset();
       pos[0] = b[0] + o[0]; pos[1] = b[1] + o[1]; pos[2] = b[2] + o[2];
-      if (!batch) spawnSprite();
+      if (!sprite) dropSprite();
+      else if (!batch) spawnSprite();
       else batch.origin = [pos[0] - basePos[0], pos[1] - basePos[1], pos[2] - basePos[2]];
     },
     /** The point light, in nearestLights' own shape, or null. */

@@ -1376,7 +1376,7 @@ reader is its box reader over the Bay's own box, to the pixel. Lane C's p3 on th
 (`systems/map/mapWaypoints.js` onMap), so none stood past it - and the open zone is Cyrodiil's since WW-C2, so the remains
 flag never planted. The world's grid now (`net/wire.js` worldPixelOk). A client from before decodes a line naming a point
 past the Bay as no waypoint and still takes it off the chat: nothing stored, nothing shown. The right click opens the add
-menu anywhere the sheet shows, and "Travel here" is never offered on a flag past the Bay (TESA-NO-FAST). Lane C's p4:
+menu anywhere the sheet shows, and "Travel here" is offered on a flag past the Bay as on the Bay (TRAVEL-EVERYWHERE). Lane C's p4:
 Solitude's and Torval's waypoints refused -> placed, a party line past the Bay refused -> decoded; p13: the remains by the
 Imperial City and by Bruma refused -> planted.
 
@@ -1387,8 +1387,8 @@ names. While the sheet shows the continent it reads the registry's listed rows a
 slices one a name (its slice nearest the centre; the harbour's for its own name). A row is named by its province's region
 (WW-R: Cyrodiil, as the Bay's rows are named by theirs, not the painting's "Imperial Province"). A place past the Bay is
 found whether or not it was found in the game (the sheet inks it either way, TESA1), and under the Ports filter only a
-port is. A pick is START3's pick of a place past the Bay (`_pastBayPick`): no journey (TESA-NO-FAST), and on the teleport
-map a portal's end where it is one. The index is kept by that ink, which moves as the places stand. Lane C's p1: 0 of 296
+port is. A pick is START3's pick of a place past the Bay (`_pastBayPick`): its journey, as a Bay place's (TRAVEL-EVERYWHERE),
+and on the teleport map a portal's end. The index is kept by that ink, which moves as the places stand. Lane C's p1: 0 of 296
 names found -> 296 of 296.
 
 **C11 - the small gaps.**

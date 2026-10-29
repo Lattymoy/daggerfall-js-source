@@ -39,7 +39,8 @@ import { guestName, isHandleShaped, isGuestShaped } from './guestName.js';
 import { handleLooksLikeEmail } from '../../src/net/handleShape.js';   // HANDLE-EMAIL: a username is never an address
 import { NAME_MAX } from '../../src/net/wire.js';   // NAME-AS: the wire's bound on a name, a worn character's among them
 import { checkName } from '../../src/net/nameFilter.js';   // NAME-AS: which word a character's name was refused for (NAME-F: a refusal names it)
-import { wardrobeOf, equipRefusal, canModerate, isDeveloper, auraRefusal, glyphRefusal, glyphsHidden, iconRefusal } from './titles.js';   // ACC3: what a player holds, wears and is true of - all four derived; WB9g: and the aura worn
+import { armoryKitWith, armoryKitOk, armoryKitPieces } from '../../src/net/armoryLaw.js';   // ARMORY: the kit with one slot changed, or a whole kit
+import { wardrobeOf, equipRefusal, canModerate, isDeveloper, auraRefusal, glyphRefusal, glyphsHidden, iconRefusal, armoryRefusal, armoryWorn } from './titles.js';   // ACC3: what a player holds, wears and is true of - all four derived; WB9g: and the aura worn
 import { brokerRidOk, brokerSaleOf, brokerSaleWrite, brokerRidFreeSql } from './brokerSales.js';   // AUDIT FB1024 (BROKER-RID): a press by its request id
 import { insigniaById, insigniaHeld } from '../../src/net/insignia.js';   // WB9g: the Broker's insignia - one law both ends
 import { ID_RE, nameIsIssuable } from '../../src/net/identityToken.js';
@@ -543,6 +544,27 @@ export async function equipAura({ db, nowS }, player, env, aura) {
   if (why) return { error: why };
   await db.prepare('UPDATE players SET aura = ?, last_seen = ? WHERE id = ?').bind(aura, nowS, player.id).run();
   return { ok: true, ...wardrobeOf({ ...player, aura }, env, nowS) };
+}
+
+/**
+ * ARMORY (bible/04-Characters/Aura-Armory.md) - WEAR ONE PIECE IN ITS SLOT, OR EMPTY THE SLOT: the aura's law a slot at a
+ * time. Refused against what the player HOLDS, derived now (armoryRefusal); the kit written is the one worn now with that
+ * slot changed, so a piece no longer held drops out at the write too. Answers the wardrobe after the write.
+ */
+export async function equipArmory({ db, nowS }, player, env, slot, piece) {
+  const why = armoryRefusal(slot, piece, player);
+  if (why) return { error: why };
+  const armory = armoryKitWith(armoryWorn(player) ?? null, /** @type {string} */ (slot), piece);
+  await db.prepare('UPDATE players SET armory = ?, last_seen = ? WHERE id = ?').bind(armory, nowS, player.id).run();
+  return { ok: true, ...wardrobeOf({ ...player, armory }, env, nowS) };
+}
+/** ARMORY: WEAR A WHOLE KIT AT ONCE - the Eternal set's Wear (`kit` every slot's piece, held) - or `null`, every slot bared.
+ *  Each piece refused as one worn alone would be (armoryRefusal). Answers the wardrobe after the write. */
+export async function equipArmoryKit({ db, nowS }, player, env, kit) {
+  if (kit !== null && !armoryKitOk(kit)) return { error: 'no-piece' };
+  for (const [slot, key] of Object.entries(armoryKitPieces(kit))) { const why = key ? armoryRefusal(slot, key, player) : null; if (why) return { error: why }; }
+  await db.prepare('UPDATE players SET armory = ?, last_seen = ? WHERE id = ?').bind(kit, nowS, player.id).run();
+  return { ok: true, ...wardrobeOf({ ...player, armory: kit }, env, nowS) };
 }
 
 /**

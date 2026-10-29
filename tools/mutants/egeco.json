@@ -199,9 +199,9 @@
   },
   {
     "name": "EGECO-auras-in-a-trial",
-    "file": "src/scenes/world.js",
-    "old": "    if (egClient?.quiet?.()) return;",
-    "new": "    if (false) return;",
+    "file": "src/scenes/auraHost.js",
+    "old": "      if (deps.quiet()) return;",
+    "new": "      if (false) return;",
     "tests": [
       "test/scenes/eliteGates/egeco_hosts.test.js"
     ]

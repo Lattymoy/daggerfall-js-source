@@ -61,15 +61,17 @@ const heads = (all) => all.filter((n) => has(n, 'acctsechead')).map((n) => n.tex
 
 // ── PROFILE-MENU ────────────────────────────────────────────────────
 
-test('PROFILE-MENU: signed in, the card is a profile - the plate first, then the Record, the Characters, the Wardrobe and the Account, in two columns, each under its head; signed out it is the card it was (mutants: the sections out of order; a section drawn empty; the plate on a form)', () => {
+test('PROFILE-MENU: signed in, the card is a profile - the plate first, then the character on its stage between its slots (PROFILE-SLOTS), then the Record, the Characters and the Account, in two columns, each under its head; signed out it is the card it was (mutants: the sections out of order; a section drawn empty; the plate on a form)', () => {
   const { card, all } = draw({ wardrobe: { titles: ['disciple'], title: 'disciple', glyphs: ['sprout'] } });
   assert.equal(card.root.className, 'card acct acctin', 'the profile\'s own class, so the window widens for it');
-  const [plate, grid] = card.root.children;
-  assert.ok(has(plate, 'acctplate') && has(grid, 'acctgrid'), 'the plate, then the sections');
+  // PIN MOVED (PROFILE-SLOTS): the character between the plate and the sections - the wardrobe its slots' pickers now
+  const [plate, chars, grid] = card.root.children;
+  assert.ok(has(plate, 'acctplate') && has(chars, 'acctslots') && has(grid, 'acctgrid'), 'the plate, the character, then the sections');
+  assert.equal(chars.children[0].textContent, 'Character');
   assert.equal(grid.className, 'acctgrid acctgrid2', 'two columns, both with something in them');
   const [deeds, kept] = grid.children;
   assert.deepEqual(heads(deeds.all), ['Record', 'Characters'], 'what they have done, in the first column');
-  assert.deepEqual(heads(kept.all), ['Wardrobe', 'Account'], 'what they wear and what the account is, in the second');
+  assert.deepEqual(heads(kept.all), ['Account'], 'what the account is, in the second');
   // the plate: the portrait, the heading the Renown pins read (RENOWN1), what is worn
   const [well, ident] = plate.children;
   assert.ok(has(well, 'acctportrait') && has(well.children[0], 'acctsilhouette'), 'no face handed in: the silhouette');
@@ -78,14 +80,14 @@ test('PROFILE-MENU: signed in, the card is a profile - the plate first, then the
   // nothing to tell (a service from before the record, or the offline fallback's stored session): no Record, no
   // Characters, no Wardrobe - the Account stands alone, and in ONE column (AUDIT P2: an empty left one stood beside it)
   const bare = draw({ account: { id: 'p2', name: 'Theod', handle: 'Theod', kind: 'linked', playedS: 60 } });
-  assert.deepEqual(heads(bare.all()), ['Account'], 'no heading over an empty box (ACC1e)');
-  const bareGrid = bare.card.root.children[1];
+  assert.deepEqual(heads(bare.all()), ['Character', 'Account'], 'no heading over an empty box (ACC1e) - the character stands on its stage');
+  const bareGrid = bare.card.root.children[2];
   assert.deepEqual([bareGrid.className, bareGrid.children.length], ['acctgrid', 1], 'one column, not two with one empty');
   // a NEW GUEST as the service answers one today (records at zero, no Renown yet, Marks not a guest's): the Record
   // with its zeros, and the guest's note inside the Account it is about
   const guest = draw({ account: { id: 'p3', name: 'Theod Gwyn', guestName: 'Theod Gwyn', handle: null, kind: 'guest', registeredAt: null,
     playedS: 600, duels: { wins: 0, losses: 0 }, gates: { closed: 0 }, raids: { defended: 0 }, serpents: { slain: 0 }, renown: [], marks: null } });
-  assert.deepEqual(heads(guest.all()), ['Record', 'Account']);
+  assert.deepEqual(heads(guest.all()), ['Character', 'Record', 'Account']);
   const acct = guest.all().find((n) => n.tag === 'section' && n.children[0]?.textContent === 'Account');
   assert.ok(acct.all.some((n) => n.className === 'meta' && /keeps everything this account already has/.test(n.textContent)), 'the note is the Account\'s');
   // a form is the card it was: no plate, no profile class

@@ -148,7 +148,7 @@
   },
   {
     "name": "SHADOWFANG-card-word-unwrapped",
-    "file": "src/ui/enhanced/enhancedAccount.js",
+    "file": "src/ui/characterSlots.js",
     "old": "        b.append(word);\n",
     "new": "        b.textContent = TITLE_TEXT[key] ?? key;\n",
     "tests": [

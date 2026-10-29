@@ -130,7 +130,9 @@ time, under any switch, even after the festival; the bowl and its cakes come bac
 The town underfoot is asked for its offerings every 60 seconds and after every move (`scenes/witchesHost.js`) - while the
 festival is live there, or while one of the account's own stands in it; never a guest's (`/v1/festival/town` is a hot
 read: a session pass, a replica's, shed under an overload as a town's homes are). Each stands at its door where the build
-kept its spot clear (`world/witchesDecor.js` `homes` - a dressed town keeps no other), its tallow lantern lit at dusk with
+kept its spot clear (`world/witchesDecor.js` `homes` - a dressed town keeps no other): a carved pumpkin on a stool under
+a lantern, the owner's own picture (OFFERING-ART, 2026-10-28: `public/art/hearth-offering.png`, `world/festivalArt.js`
+`OFFERING_ART`, which replaced the painted bowl of cakes), its lantern lit at dusk with
 the town's; offline, or another account signed in, every pixel's come down. One whose home its character no longer owns
 stands nowhere, and its bowl and its cakes go back to its account.
 
