@@ -13,7 +13,7 @@
 import { discoveryGeneration, hasDiscoveredLocationId, discoveryKeyOf, BAKED_KNOWN_TYPES } from '../systems/discovery.js';
 import { capitalStreet } from './livingWorld/livingIndex.js';   // OW-BEYOND-KNOWN: a capital is one town (IC-GRAND)
 import { etherPlaceIsle } from '../world/etherPlaces.js';
-import { hasCarriageGate } from '../world/immersiveTravelGates.js';
+import { isCarriageTown } from '../world/capitalCarriages.js';   // AUDIT CAPITAL-CARRIAGES L6: a capital's slice by its gates
 import { immersiveTravelLoaded } from '../systems/immersiveTravel.js';
 import { inEther } from '../world/ethericSea.js';
 import { isHallMapId, spawnedHallMapId } from '../net/wire.js';
@@ -48,7 +48,7 @@ export function createMapPlaces(host) {
     if (_carriageOf.gen !== host._locIndexGen) { _carriageOf.of.clear(); _carriageOf.gen = host._locIndexGen; }
     const id = discoveryKeyOf(mapId);
     let on = _carriageOf.of.get(id);
-    if (on === undefined) { on = hasCarriageGate(townOfKey(id)); _carriageOf.of.set(id, on); }
+    if (on === undefined) { on = isCarriageTown(townOfKey(id)); _carriageOf.of.set(id, on); }
     return on;
   };
   /** The place a key (discoveryKeyOf's) names where it stands: a Bay pixel id's place on that pixel; a whole id's on the

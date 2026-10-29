@@ -209,9 +209,11 @@ export function gateRoadAt(x, z) {
 }
 
 /** CAPITAL-CARRIAGES (world/capitalCarriages.js): the carriage's stand outside the main gate - the Well District's ledge
- *  under the south wall carried out level west of the Gate Road's last run, clear of its shoulder, its edge banked down to
- *  the slope over `bank` metres. The slope there falls half a metre a metre: no carriage stood on it. */
-export const SOLITUDE_CARRIAGE_STAND = Object.freeze({ x0: 262, x1: 298, z0: SOLITUDE_CLIFFS.south, z1: 432, bank: 8 });
+ *  under the south wall carried out level west of the Gate Road's last run, its edge banked down to the slope over `bank`
+ *  metres, clear of the road and its shoulder. The slope there falls half a metre a metre: no carriage stood on it.
+ *  AUDIT CAPITAL-CARRIAGES L4/L5: its edges and its bank's on the terrain's vertex lines (6.4 m from the pixel's corner), so
+ *  the ground drawn on it is level to its edge; its bank short of the shoulder it had reshaped. */
+export const SOLITUDE_CARRIAGE_STAND = Object.freeze({ x0: 262.4, x1: 294.4, z0: SOLITUDE_CLIFFS.south, z1: 435.2, bank: 6.4 });
 
 /** The slope below the south wall: from the plateau's edge to the land's own at the pixel's south edge, steepest under
  *  the wall - and the Gate Road cut and filled across it, and the carriage's stand filled out level beside it. */

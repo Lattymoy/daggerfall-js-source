@@ -35,14 +35,15 @@ import { registerPortBlock, blockFromJson } from '../formats/worldData/worldData
 import { layoutRmbBlock } from './rmbLayout.js';   // FB1028 YARDS Y1: the carrier as #1184 laid it, for the yards' measures
 import { registerCustomModel } from './customModels.js';
 import { carriageRecordsOf } from './immersiveTravelGates.js';   // TS7: Immersive Travel's carriages, at the new gates
-import { getLocationTerrainTileOrigin } from './terrain/terrainTiles.js';   // TS7: a town's walk shut to its ground
+import { getLocationTerrainTileOrigin, locationShapeField } from './terrain/terrainTiles.js';   // TS7: a town's walk shut to its ground; AUDIT CAPITAL-CARRIAGES L2: its gate things on it
 import { reliefOf } from './terrain/capitalRelief.js';   // SOLITUDE-RELIEF: a capital's terraces' works
 import { NAV_CELL } from './city/cityNavigation.js';
 import { curvesOf, curvePolyline, CURVE_STEPS } from './road/roadCurves.js';   // ROAD-FOLLOW: past the Bay a road's arm is its curve
 import { DIR_DELTA } from './road/roadNetwork.js';
 import { arenaRoadByte, arenaJoinByte } from './arenaRoads.js';   // ROAD-FOLLOW: the roads past the Bay, and a crossing's join on the Bay
 import { inBay } from './tamriel/tamrielFrame.js';
-import { ROAD_RECORDS } from './road/roadEdge.js';   // GATE-ROADS: Daggerfall's paving, a town's streets
+import { ROAD_RECORDS } from './road/roadEdge.js';
+import { GATE_ROAD } from './road/gateRoads.js';   // AUDIT CAPITAL-CARRIAGES L2: a gate's passage, as it is laid   // GATE-ROADS: Daggerfall's paving, a town's streets
 import { subMeshDoorType, DOOR_TYPE } from './meshReader.js';   // FB1028 DOORS: a wall piece's door faces, by DFU's door law
 
 /** Daggerfall's wall pieces (ARCH3D): a tower, a length of wall (25.6 m, 9.6 m thick, its inside its local -z), a gate. */
@@ -592,7 +593,7 @@ export function roadGatePoints(pts, origin, paths) {
  * @param {?{ cells: Uint8Array, W: number, H: number }} [blocked]
  * @returns {{ models: any[], flats: any[] }}
  */
-export function gateFurniture(wall, classicOf, extra = carriageRecordsOf, blocked = null) {
+export function gateFurniture(wall, classicOf, extra = carriageRecordsOf, blocked = null, outside = null) {
   const models = [], flats = [], frames = wall?.frames ?? [], c = wall?.middle ?? [0, 0];
   const gp = (wall?.pieces ?? []).filter((p) => p.model === WALL_MODELS.gate);
   const bearing = ([x, z]) => Math.atan2(z - c[1], x - c[0]);
@@ -601,10 +602,14 @@ export function gateFurniture(wall, classicOf, extra = carriageRecordsOf, blocke
   // AUDIT FB1028 B2: a road's gate takes its template gate's things first, a street's gate (streetGates) what is left
   const street = (i) => (wall?.streetWays ?? []).some((q) => Math.hypot(q[0] - gp[i].at[0], q[1] - gp[i].at[1]) < TOWN_WALL.piece / 2) ? 1 : 0;
   pairs.sort((a, b) => street(a[1]) - street(b[1]) || a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);
-  const usedP = new Set(), usedF = new Set();
+  const usedP = new Set(), usedF = new Set(), dressed = [];
   for (const [, i, j] of pairs) {
     if (usedP.has(i) || usedF.has(j)) continue;
-    usedP.add(i); usedF.add(j);
+    usedP.add(i); usedF.add(j); dressed.push([i, j]);
+  }
+  // AUDIT CAPITAL-CARRIAGES L3: a gate past the template's frames (a fifth, a street's) takes its nearest frame's things again
+  for (const [, i, j] of pairs) if (!usedP.has(i)) { usedP.add(i); dressed.push([i, j]); }
+  for (const [i, j] of dressed) {
     const p = gp[i], f = frames[j], ut = [f.out[1], -f.out[0]], up = [p.out[1], -p.out[0]];
     const turn = Math.round((Math.atan2(f.out[0] * p.out[1] - f.out[1] * p.out[0], f.out[0] * p.out[0] + f.out[1] * p.out[1]) * 1024) / Math.PI);
     /** a record's place in the template gate's frame: along its line, and out from it (inside below 0) */
@@ -620,14 +625,19 @@ export function gateFurniture(wall, classicOf, extra = carriageRecordsOf, blocke
     ];
     for (const side of [-1, 1]) {
       const group = items.filter((it) => (it.at[1] < 0 ? -1 : 1) === side);
-      const clear = (it, da, db) => clearAt(blocked, place([it.at[0] + da, it.at[1] + side * db]), it.model ? GATE_CLEAR.model : GATE_CLEAR.flat);
+      // AUDIT CAPITAL-CARRIAGES L2: the things outside a gate on the town's ground, off its roads (townGateOutside)
+      const clear = (it, da, db) => {
+        const q = place([it.at[0] + da, it.at[1] + side * db]), reach = it.model ? GATE_CLEAR.model : GATE_CLEAR.flat;
+        return clearAt(blocked, q, reach) && (side < 0 || !outside || outside(q[0], q[1], reach));
+      };
       let d = 0;
       while (d < GATE_CLEAR.most && !group.every((it) => clear(it, 0, d))) d += GATE_CLEAR.step;
-      const together = group.every((it) => clear(it, 0, d));
+      // AUDIT CAPITAL-CARRIAGES L2: else the group moved together along its wall as well, before each thing alone
+      const shift = group.every((it) => clear(it, 0, d)) ? [0, d] : nearestClear((a, b) => group.every((it) => clear(it, a, b)), null, outside ? GATE_ROAD_CLEAR.most : GATE_CLEAR.most);
       for (const it of group) {
         // the group moved together where it can; else each of its own, the nearest clear place on its side (a wall bent at
         // the gate, a house behind it - 2 of the Bay's 3,280 boards)
-        const [da, db] = together ? [0, d] : nearestClear((a, b) => clear(it, a, b));
+        const [da, db] = shift ?? nearestClear((a, b) => clear(it, a, b));
         const [x, z] = place([it.at[0] + da, it.at[1] + side * db]);
         if (it.model) models.push({ ...it.r, ...record(x, z), YRotation: (it.r.YRotation ?? 0) + turn });
         else flats.push({ ...it.r, ...record(x, z) });
@@ -635,6 +645,42 @@ export function gateFurniture(wall, classicOf, extra = carriageRecordsOf, blocke
     }
   }
   return { models, flats };
+}
+/** AUDIT CAPITAL-CARRIAGES L2: the tiles of a gate's passage out (world/road/gateRoads.js layGateRoads' `through`: its lines
+ *  across the opening, out to GATE_ROAD.through and two tiles more - laid through whatever stands there), as town tiles
+ *  "x,y". @param {{ at: number[], out: number[] }} g its opening (gateOpening) */
+const passageTiles = (g, out = new Set()) => {
+  const h = GATE_OPENING.half / TILE_M / 2, [ox, oy] = g.out, x0 = g.at[0] / TILE_M, y0 = g.at[1] / TILE_M;
+  for (const j of [0, -h, h]) for (let t = 0; t <= GATE_ROAD.through + 2; t += 0.25) out.add(`${Math.floor(x0 + ox * t - oy * j)},${Math.floor(y0 + oy * t + ox * j)}`);
+  return out;
+};
+/** AUDIT CAPITAL-CARRIAGES L2: WHERE A WALLED TOWN'S GATE THINGS STAND OUTSIDE IT (the town's metres): `(x, z, reach)` - on
+ *  the town's own ground (its round and apron, locationShapeField - past it the painter's ring road) and clear of each road
+ *  and track its pixel paints (`paths`, as roadGatePoints walks them) and of each gate's passage out, by the thing's reach.
+ *  The carriages of 33 of 108 gates past the Bay stood on a road. Null with no paths known (no roads to read).
+ *  @param {any} dfLocation @param {any} wall @param {any} paths @param {(name: string) => any} rmbOf */
+export function townGateOutside(dfLocation, wall, paths, rmbOf) {
+  if (!paths || !wall) return null;
+  const o = getLocationTerrainTileOrigin(dfLocation), C = GATE_ROAD_CLEAR, lines = [], ed = dfLocation.exterior.exteriorData;
+  for (const kind of /** @type {const} */ (['roads', 'tracks'])) for (const [bit] of DIR_DELTA) for (const arm of armLines(paths[kind] | 0, bit, !!paths.curved)) lines.push(arm.map(([tx, ty]) => [(tx - o.x) * TILE_M, (ty - o.y) * TILE_M]));
+  const passage = new Set();
+  for (const g of (wall.pieces ?? []).filter((p) => p.model === WALL_MODELS.gate).map(gateOpening)) passageTiles(g, passage);
+  const nearPassage = (x, z, reach) => {
+    for (let tx = Math.floor((x - reach) / TILE_M); tx <= Math.floor((x + reach) / TILE_M); tx++) for (let ty = Math.floor((z - reach) / TILE_M); ty <= Math.floor((z + reach) / TILE_M); ty++) {
+      if (passage.has(`${tx},${ty}`) && Math.hypot(Math.max(tx * TILE_M, Math.min(x, (tx + 1) * TILE_M)) - x, Math.max(ty * TILE_M, Math.min(z, (ty + 1) * TILE_M)) - z) < reach) return true;
+    }
+    return false;
+  };
+  const shape = locationShapeField(dfLocation, (bx, by) => rmbOf(ed.blockNames[by * ed.width + bx]), o);
+  const onGround = (x, z) => { const tx = o.x + Math.floor(x / TILE_M), ty = o.y + Math.floor(z / TILE_M); return !shape || (tx >= 0 && ty >= 0 && tx < 128 && ty < 128 && shape[tx + ty * 128] > 0); };
+  const nearLine = (l, x, z, d) => l.some((a, k) => {
+    const b = l[k + 1];
+    if (!b) return false;
+    const dx = b[0] - a[0], dz = b[1] - a[1], ll = dx * dx + dz * dz, t = ll ? Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / ll)) : 0;
+    return Math.hypot(a[0] + dx * t - x, a[1] + dz * t - z) < d;
+  });
+  return (x, z, reach) => [[0, 0], [reach, 0], [-reach, 0], [0, reach], [0, -reach]].every(([a, b]) => onGround(x + a, z + b))
+    && !lines.some((l) => nearLine(l, x, z, C.line + reach)) && !nearPassage(x, z, reach);
 }
 /** TS7: a classic block's misc model and flat as the carrier's JSON writes them (formats/worldData/worldDataJson.js modelJson,
  *  flatJson - zero scales dropped). */
@@ -647,14 +693,18 @@ const flatRecord = (f) => ({ Position: f.position ?? 0, XPos: f.xPos, YPos: f.yP
 /** TS7: how far a thing at a gate keeps off a wall's or a building's cell (a model's reach, a flat's), and the step and the
  *  most it is moved to be clear, in metres. */
 export const GATE_CLEAR = Object.freeze({ model: 2.4, flat: 0.8, step: 0.8, most: 16 });
+/** AUDIT CAPITAL-CARRIAGES L2: how far a gate's things outside it keep from a painted road's or track's line, past each
+ *  thing's reach: two and a half tiles - the painter's road is four whole tiles wide (measured at Stormhold, Riverhold);
+ *  and how far a group goes along its wall to stand clear of them (twice GATE_CLEAR.most). */
+export const GATE_ROAD_CLEAR = Object.freeze({ line: 2.5 * TILE_M, most: 2 * GATE_CLEAR.most });
 /** TS7: the nearest offset (along, further out on its side) at which `ok` holds - rings of GATE_CLEAR.step out to its
  *  most, never back across the wall; none, where it stood. */
-function nearestClear(ok) {
-  const { step, most } = GATE_CLEAR;
+function nearestClear(ok, none = [0, 0], most = GATE_CLEAR.most) {
+  const { step } = GATE_CLEAR;
   for (let r = 0; r <= most; r += step) {
     for (let a = -r; a <= r + 1e-9; a += step) for (const b of [r - Math.abs(a), Math.abs(a) - r + 2 * r]) if (b >= 0 && b <= most && ok(a, b)) return [a, b];
   }
-  return [0, 0];
+  return none;
 }
 /** TS7: whether no blocked cell lies within `reach` of (x, z) - a cell its 1.6 m square, the town's metres. */
 function clearAt(blocked, [x, z], reach) {
@@ -1123,8 +1173,8 @@ export function registerTownWall(dfLocation, templateNames, io, open, made = und
     if (!wall?.yardPieces) return null;
     if (kept.yardBlock !== undefined) return kept.yardBlock;
     const was = { ...wall, pieces: wall.yardPieces, streetWays: [] }, markers = gateMarkers(was.pieces);
-    const then = gateFurniture(was, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, was, rmbOf));
-    const now = gateFurniture(wall, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, wall, rmbOf));
+    const then = gateFurniture(was, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, was, rmbOf), townGateOutside(dfLocation, was, townPaths(dfLocation), rmbOf));
+    const now = gateFurniture(wall, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, wall, rmbOf), townGateOutside(dfLocation, wall, townPaths(dfLocation), rmbOf));
     const same = JSON.stringify([then, markers]) === JSON.stringify([now, wall.markers]);
     return (kept.yardBlock = same ? null : blockFromJson(townWallBlockJson(name, modelId, markers, open, then), townWallBlockIndex(mapId)));
   };
@@ -1136,7 +1186,7 @@ export function registerTownWall(dfLocation, templateNames, io, open, made = und
     const wall = kept.of();
     if (wall === null && kept.wall === undefined) { if (key) _waiting.set(key, kept); return townWallBlockJson(name, null, [], open); }
     if (key && _waiting.get(key) === kept) _waiting.delete(key);
-    return townWallBlockJson(name, modelId, wall?.markers ?? [], open, wall ? gateFurniture(wall, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, wall, rmbOf)) : null);
+    return townWallBlockJson(name, modelId, wall?.markers ?? [], open, wall ? gateFurniture(wall, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, wall, rmbOf), townGateOutside(dfLocation, wall, townPaths(dfLocation), rmbOf)) : null);
   }, townWallBlockIndex(mapId));
   return true;
 }

@@ -26,7 +26,7 @@ export const IT_GATE_FILE = /^(WALLAA(?:08|09|10|11))(?:\.[A-Z0-9]+)?\.RMB\.json
 /** OW-HUBS (FIELD BUGS 2026-10-04e): whether a town stands a carriage at its gate - one of its exterior blocks is a
  *  gate the mod edits (`IT_GATE_FILE`, read off the block's own name: 'WALLAA08.RMB', or a composite on it). Pure; the
  *  mod's switch is the caller's (systems/immersiveTravel.js immersiveTravelLoaded). */
-export const hasCarriageGate = (loc) => !!loc?.capital || (loc?.exterior?.exteriorData?.blockNames ?? []).some((n) => IT_GATE_FILE.test(`${String(n ?? '').toUpperCase()}.json`) || isWallCarrier(n));   // TS7: or the carrier of a wall on its outline (world/townWalls.js gateFurniture); CAPITAL-CARRIAGES: or a capital past the Bay (world/capitalCarriages.js)
+export const hasCarriageGate = (loc) => (loc?.exterior?.exteriorData?.blockNames ?? []).some((n) => IT_GATE_FILE.test(`${String(n ?? '').toUpperCase()}.json`) || isWallCarrier(n));   // TS7: or the carrier of a wall on its outline (world/townWalls.js gateFurniture); a capital's: world/capitalCarriages.js isCarriageTown
 /** CAPITAL-CARRIAGES: each gate block's frame - its gate model's (446) origin in the block's own metres (x east, z north) and
  *  its outward normal, measured on the freeware (TS7's frames: the subrecord's place, the model 1.6 m in from it). The
  *  mod's records are carried from here to a capital's gate (world/capitalCarriages.js). */

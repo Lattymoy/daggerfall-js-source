@@ -8,11 +8,11 @@
 // water and its rim (the rim's ground is blended, not flat). Pure: the host hands the footprint (world/capitalModels.js).
 
 import { BLOCK_M } from './blockHash.js';
-import { capitalDims, inCapitalRim, planCell, planRows, planCols } from './tamrielCapitals.js';
+import { CAPITALS, capitalDims, capitalCentre, inCapitalRim, planCell, planRows, planCols } from './tamrielCapitals.js';
 import { onCapitalApproach, capitalArrival, APPROACH_HALF } from './capitalApproaches.js';
-import { carriageRecordsOf, IT_GATE_FRAMES } from './immersiveTravelGates.js';
+import { carriageRecordsOf, IT_GATE_FRAMES, hasCarriageGate } from './immersiveTravelGates.js';
 import { GATE_CLEAR } from './townWalls.js';
-import { CAPITAL_RELIEFS } from './terrain/capitalRelief.js';
+import { CAPITAL_RELIEFS, reliefDrawnAt } from './terrain/capitalRelief.js';
 
 /** Daggerfall's gate block on each side of a walled city's ring (Town-Shapes TS7: WALLAA08 faces north, 09 east, 10 south,
  *  11 west) - a capital's gate on a side takes that gate's records first. */
@@ -26,6 +26,8 @@ const OPEN_CELLS = Object.freeze(['G', 'O']);
 export const CARRIAGE_LEVEL = 0.4;
 /** The footprint's cell, metres (world/capitalModels.js capitalFootprint: 64 to a block). */
 const CELL = BLOCK_M / 64;
+/** A thing's centre and eight points round it at its reach (a share of it). */
+const REACH_RING = Object.freeze([[0, 0], ...Array.from({ length: 8 }, (_, i) => Object.freeze([Math.cos((i * Math.PI) / 4), Math.sin((i * Math.PI) / 4)]))]);
 
 /** Whether no cell `test` marks lies within `reach` of (x, z): each 1.6 m cell asked at its centre. */
 function clearOf(test, x, z, reach) {
@@ -73,14 +75,17 @@ export function capitalCarriages(cap, { footprintOf = () => null, records = carr
   if (!Object.values(SIDE_GATES).some((g) => records(g))) return [];   // the mod not loaded: no footprint built for nothing
   const D = capitalDims(cap), way = onCapitalApproach(cap, D), relief = CAPITAL_RELIEFS[cap.relief] ?? null;
   const [ax, ar] = cap.anchor, rows = planRows(cap), cols = planCols(cap);
-  const heightAt = (x, z) => (relief ? relief.height(x, z) - relief.flat : 0);
-  const ground = (x, z) => {
+  // AUDIT CAPITAL-CARRIAGES L4: the ground as the terrain draws it (its vertices'), not the relief's own law between them
+  const heightAt = (x, z) => (relief ? reliefDrawnAt(relief, x, z) - relief.flat : 0);
+  // AUDIT CAPITAL-CARRIAGES L1/L7: off the rim and on the capital's own flat ground (`flatAt` - the Imperial City's far shore
+  // rises to the land's own) under its whole reach, not its centre alone
+  const ground = (x, z, reach) => {
     const r = Math.floor(z / BLOCK_M + ar), c = Math.floor(x / BLOCK_M + ax);
     if (r < 0 || c < 0 || r >= rows || c >= cols || !OPEN_CELLS.includes(planCell(cap, r, c))) return false;
-    if (inCapitalRim(cap, x + ax * BLOCK_M, z + ar * BLOCK_M)) return false;
+    if (REACH_RING.some(([a, b]) => inCapitalRim(cap, x + a * reach + ax * BLOCK_M, z + b * reach + ar * BLOCK_M) || (cap.flatAt && !cap.flatAt(x + a * reach, z + b * reach)))) return false;
     return !relief || relief.height(x, z) > 1e-3;
   };
-  const level = (x, z, reach) => !relief || [[reach, 0], [-reach, 0], [0, reach], [0, -reach]].every(([a, b]) => Math.abs(heightAt(x + a, z + b) - heightAt(x, z)) <= CARRIAGE_LEVEL);
+  const level = (x, z, reach) => !relief || REACH_RING.every(([a, b]) => Math.abs(heightAt(x + a * reach, z + b * reach) - heightAt(x, z)) <= CARRIAGE_LEVEL);
   const out = [];
   for (const { side, at, out: o } of capitalGatePoints(cap)) {
     const fp = footprintOf(at[0], at[1]);
@@ -93,7 +98,7 @@ export function capitalCarriages(cap, { footprintOf = () => null, records = carr
       const place = (it, da, db) => {
         const a = it.at[0] + da, b = it.at[1] + db, reach = it.model ? GATE_CLEAR.model : GATE_CLEAR.flat;
         const x = at[0] + a * up[0] + b * po[0], z = at[1] - (a * up[1] + b * po[1]);
-        const ok = b > reach && Math.abs(a) >= APPROACH_HALF + reach && ground(x, z) && clearOf(fp, x, z, reach) && clearOf(way, x, z, reach) && (!it.model || level(x, z, reach));
+        const ok = b > reach && Math.abs(a) >= APPROACH_HALF + reach && ground(x, z, reach) && clearOf(fp, x, z, reach) && clearOf(way, x, z, reach) && (!it.model || level(x, z, reach));
         return ok ? [x, z] : null;
       };
       for (const gate of [SIDE_GATES[face], ...Object.values(SIDE_GATES).filter((g) => g !== SIDE_GATES[face])]) {
@@ -113,10 +118,13 @@ export function capitalCarriages(cap, { footprintOf = () => null, records = carr
   return out;
 }
 
-/** The nearest shift [along, out] at which `ok` holds - diamonds of GATE_CLEAR.step out to its most, in or out of the
- *  gate; null for none. */
+/** How far (metres, along and out together) a capital's gate things move to stand: twice TS7's (GATE_CLEAR.most) - AUDIT
+ *  CAPITAL-CARRIAGES L4: Solitude's level stand starts 20 m along from its gate, clear of the road's shoulder. */
+export const CARRIAGE_MOST = 2 * GATE_CLEAR.most;
+/** The nearest shift [along, out] at which `ok` holds - diamonds of GATE_CLEAR.step out to CARRIAGE_MOST, in or out of
+ *  the gate; null for none. */
 function nearestStand(ok) {
-  const { step, most } = GATE_CLEAR;
+  const { step } = GATE_CLEAR, most = CARRIAGE_MOST;
   for (let r = 0; r <= most + 1e-9; r += step) {
     for (let a = -r; a <= r + 1e-9; a += step) {
       const b = r - Math.abs(a);
@@ -161,4 +169,18 @@ export function capitalGateThings(cap, o) {
     recordsAt: (cx, r, at) => carriageRecordsIn(stands.filter((s) => { const [c, q] = carriageCellOf(cap, s); return c === cx && q === r; }), at),
     on: (x, z) => cells.has(key(Math.floor(x / CELL), Math.floor(z / CELL))),
   };
+}
+
+/** AUDIT CAPITAL-CARRIAGES L6: the slices of a capital its road gates stand in - the Imperial City's west slice for Talos
+ *  Bridge's landing, of its 625; a harbour's sea slice none. @param {any} cap */
+export function capitalCarriageSlices(cap) {
+  const D = capitalDims(cap), S = 8 * BLOCK_M;
+  return new Set(capitalGatePoints(cap).map(({ at }) => Math.floor((at[1] + cap.anchor[1] * BLOCK_M) / S) * D.w + Math.floor((at[0] + cap.anchor[0] * BLOCK_M) / S)));
+}
+/** Whether a town stands a carriage at its gate (OW-HUBS' wheel, scenes/mapPlacesHost.js carriageTown): a capital's slice
+ *  with a road gate in it, else its blocks' word (immersiveTravelGates.js hasCarriageGate). The mod's switch is the caller's. */
+export function isCarriageTown(loc) {
+  const cap = loc?.capital ? CAPITALS[loc.capital.k] : null;
+  if (!cap) return hasCarriageGate(loc);
+  return capitalCarriageSlices(cap).has(loc.capital.s ?? capitalCentre(cap));
 }

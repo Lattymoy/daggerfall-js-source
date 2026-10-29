@@ -68,6 +68,7 @@ import {
   FALINESTI_BLOCKS, TORVAL_PLAN, TORVAL_DISTRICTS, TORVAL_BLOCKS, HELSTROM_PLAN, HELSTROM_DISTRICTS, HELSTROM_BLOCKS, CAPITAL_RIM_M, CAPITAL_RIM_TILES,
   ALINOR_HARBOUR, TORVAL_DOCKS, districtAt, MOURNHOLD_GATES, ALINOR_GATES, TORVAL_GATES, HELSTROM_GATES,
 } from './capitalPlans.js';
+import { rumareFlatAt } from './rumareWaters.js';   // AUDIT CAPITAL-CARRIAGES L1
 import { onCapitalApproach, capitalApproachCells, capitalGateSlice, APPROACH_TILE } from './capitalApproaches.js';   // ROAD-FOLLOW: the road on from the span's edge to the gate
 
 // The capitals' lane and the test of a map id (AUDIT RELEASE R2-9: a module of their own, the deeds' to read)
@@ -250,6 +251,7 @@ export const CAPITALS = Object.freeze([
     sliceMarkers: imperialSliceMarkers,   // AUDIT TESA II C7: every slice its own start markers (each worked when first read)
     gates: Object.freeze(['W']),   // TESA14: Talos Bridge, west to the mainland
     gateAt: Object.freeze({ W: Object.freeze(bridgeLine(IMPERIAL)[1]) }),   // ROAD-FOLLOW: Talos Bridge's landing (world/capitalApproaches.js)
+    flatAt: rumareFlatAt,   // AUDIT CAPITAL-CARRIAGES L1: its own level ground - its far shore rises to the land's own (world/rumareWaters.js)
     harbour: Object.freeze([(IMPERIAL_SPAN - 1) / 2, Math.floor(IMPERIAL.waterfront.pierTo / 819.2 + IMPERIAL_SPAN / 2)]),   // NIBEN-SEA: its harbour; RUMARE-WATER: the Waterfront's own slice, its quay and its piers' ends, the lake's way to the canal open (capitalCanalOpen)
     anchor: Object.freeze([IMPERIAL_SPAN * 4, IMPERIAL_SPAN * 4]), markers: Object.freeze([[220, 0], [-220, 0], [0, 220], [0, -220]]), blocks: null, models: Object.freeze(IMPERIAL_PARTS.map((p) => p.id)), drawn: Object.freeze(Object.values(IMPERIAL_MODELS)) }),   // TS5: its markers on the plaza round the tower; its landmarks' parts the slices' models, the whole ones drawn once
   capital({ key: 'solitude', tag: 'SO', name: 'Solitude', province: 'Skyrim', shore: true, plan: SOLITUDE_PLAN, districts: SOLITUDE_DISTRICTS,
