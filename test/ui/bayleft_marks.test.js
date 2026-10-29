@@ -149,7 +149,7 @@ test('BAY-LEFT-MAPS C1: the held map reads no mark against the Bay\'s 1000 x 500
   const poll = src.slice(src.indexOf('  _refreshParty() {'), src.indexOf('    this._partyKey = key;'));
   assert.doesNotMatch(poll, /this\._size\b(?!, sheet)/, 'no reader bound by this._size (the quests\' size is their fallback beside the box)');
   assert.match(poll, /const sheet = this\._marksBox\(\);/);
-  assert.equal([...poll.matchAll(/, sheet[,)]/g)].length, 16, 'sixteen readers over the one box - the gates, the rings, the bounties, the lairs, the lodes, the POIs, the raids, the stars, the quests, the coin, the travellers and the party');
+  assert.equal([...poll.matchAll(/, sheet[,)]/g)].length, 17, 'seventeen readers over the one box - the gates, the rings, the bounties, the lairs, the lodes, the POIs, the raids, the stars, the fissures, the quests, the coin, the travellers and the party');   // PIN MOVED (STOREFRONT): the season\'s Brass Fissures
 });
 
 const fresh = () => { delete globalThis.localStorage; _resetWaypoints(); };

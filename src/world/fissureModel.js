@@ -5,9 +5,9 @@
 // wreckage round it (cogs on their edges, a split pipe, a fallen pillar). Its own frame: x along the crack, z across, y up
 // from the heart - the host turns it by its yaw. Every shape is its own rolls (seasonWorld.js fissureRoll): every screen
 // makes the same. Pure. Not a DFU member. Ledger A (STOREFRONT).
-import { faces } from '../gate/gateModel.js';
+import { faces } from './gate/gateModel.js';
 import { FISSURE_ARCHIVE, FISSURE_REC as REC } from './fissureArt.js';
-import { fissureRoll } from '../../systems/pass/seasonWorld.js';
+import { fissureRoll } from '../systems/pass/seasonWorld.js';
 
 /** The crack: its length, its widest, and how far it wanders either side of its axis. */
 export const FISSURE_LEN = 13;

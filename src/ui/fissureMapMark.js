@@ -4,8 +4,8 @@
 // the star's violet and the Abyss Dungeon's gold; and the reader of the host's marks (scenes/seasonHost.js mapMarks),
 // the raids' own (ui/eventMapMarks.js readRaidMarksIn) with the Heart Fissure told apart. Its own leaf.
 // Not a DFU member. Ledger A (STOREFRONT).
-import { readRaidMarksIn } from '../eventMapMarks.js';
-import { FISSURE_TEXT } from '../../systems/pass/seasonWords.js';
+import { readRaidMarksIn } from './eventMapMarks.js';
+import { FISSURE_TEXT } from '../systems/pass/seasonWords.js';
 
 /** The fissure's brass, and its crack's blue. */
 export const FISSURE_BRASS_CSS = '#d9a441';

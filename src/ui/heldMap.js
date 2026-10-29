@@ -221,7 +221,7 @@ import { retroScreenRect } from '../systems/retroMode.js';   // DISC25-B: DFU's 
 import { TRAVEL_VIEW_BUTTON } from '../scenes/travelView.js';   // TV1: the Overworld door's words (ETHER-OW: one home with the Eltheric chart's)
 import { STAR_VIOLET_CSS } from './starfall/starMapMark.js';   // STAR6: a fallen star's violet
 import { STAR_CARD_TEXT } from '../systems/starfall/starWords.js';   // STAR6: its legend's word
-import { readFissureMarksIn, FISSURE_BRASS_CSS, fissureLegendText } from './season/fissureMapMark.js';   // STOREFRONT: the season's Brass Fissures
+import { readFissureMarksIn, FISSURE_BRASS_CSS, fissureLegendText } from './fissureMapMark.js';   // STOREFRONT: the season's Brass Fissures
 import { capturePointer } from './pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
 
 export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;

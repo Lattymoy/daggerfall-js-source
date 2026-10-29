@@ -99,7 +99,7 @@ their sum. The share is on top of the day's bound, so it speeds every player.
   region, four pixels apart: every machine finds the same. A fissure gives way to the day's gate on its pixel or beside
   it. World of Daggerfall's rock keeps 26 m off it, and the grass off its scorch. On the map each is a brass cog crossed
   by a blue crack, a Heart Fissure's larger and ringed, its card naming its town and what waits there.
-- **A fissure, built** (`world/season/fissureModel.js`, its art `fissureArt.js`, pseudo-archive 38341): a scorched oval
+- **A fissure, built** (`world/fissureModel.js`, its art `fissureArt.js`, pseudo-archive 38341): a scorched oval
   on the land, the crack's black depths with the aetherium's blue in them, short cracks off it, slabs of earth heaved up
   along both lips; round it a toothed cog past each end and one off the south lip, a split copper pipe, and a fallen
   brass pillar with its capital - the Sky-Ketch's metals. The slabs and wreckage are solid. Its three vents breathe

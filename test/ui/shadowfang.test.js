@@ -144,7 +144,7 @@ test('SHADOW-FANG grant: SirMcMobdon alone holds it, case-folded, title and glyp
   assert.equal(titleWorn(row('SirMcMobdon', { title: 'shadowfang' }), env), 'shadowfang');
   assert.equal(equipRefusal('shadowfang', row('SirMcMobdon'), env), null, 'theirs to wear');
   assert.equal(equipRefusal('apostle', row('SirMcMobdon'), env), 'not-held');
-  assert.deepEqual(wardrobeOf(row('sirmcmobdon', { title: 'shadowfang' }), env, nowS), { titles: ['developer', 'shadowfang'], title: 'shadowfang', glyphs: ['dev', 'shadowfang'], auras: ['shadowcloak', 'seraphwings'], aura: null, insignia: [], icons: [], icon: null, armoryHeld: [], armory: null });   // STAFF-PANEL1 (PIN MOVED): the developer's beside, the Shadow Fang still worn; PIN MOVED (WITCH1): and no profile icon; WB9g: and no insignia bought; SHADOW-CLOAK (PIN MOVED): the list holds the Holo Shadow Cloak now, held but not worn until they put it on; ARMORY (PIN MOVED): no Aura Armory piece held or worn
+  assert.deepEqual(wardrobeOf(row('sirmcmobdon', { title: 'shadowfang' }), env, nowS), { titles: ['developer', 'shadowfang'], title: 'shadowfang', glyphs: ['dev', 'shadowfang'], auras: ['shadowcloak', 'seraphwings'], aura: null, insignia: [], icons: [], icon: null, armoryHeld: [], armory: null, effectsHeld: { kill: [], portal: [], mount: [] }, effects: null })   // PIN MOVED (STOREFRONT): and the effects held and worn;   // STAFF-PANEL1 (PIN MOVED): the developer's beside, the Shadow Fang still worn; PIN MOVED (WITCH1): and no profile icon; WB9g: and no insignia bought; SHADOW-CLOAK (PIN MOVED): the list holds the Holo Shadow Cloak now, held but not worn until they put it on; ARMORY (PIN MOVED): no Aura Armory piece held or worn
   for (const h of ['Dutchess', 'SquidKamer', 'Lattymoy', 'Stranger']) {
     assert.ok(!titlesHeld(row(h), env).includes('shadowfang'), `${h} does not hold it`);
     assert.ok(!glyphsOf(row(h), env, nowS).includes('shadowfang'));
@@ -181,8 +181,12 @@ test('SHADOW-FANG token and relay: a token may carry the title and the glyph and
   // 639 of 640 once the crystalfist glyph joined, so the NEXT word into the vocabulary trips this pin rather than a hello
   const seatT = TITLES.filter(titleClaimed).reduce((a, t) => (t.length > a.length ? t : a), '');   // PIN MOVED (CHAP4c): the longest claimed title - a chapter's seat's now, the seats' before
   const aura = AURAS.reduce((a, x) => (x.length > a.length ? x : a), '');
-  const widest = await mintToken({ s: 'a'.repeat(40), n: 'W'.repeat(NAME_MAX), k: 'linked', t: seatT, ts: [0xffffffff, 9999], g: [...GLYPHS], au: aura, mu: nowS + 10 ** 9, lv: RENOWN_MAX, ...guild, rc: 1, rb: [15, 14], ar: ARENA_RATING_MAX, cl: CHARACTER_LEVEL_MAX }, kp.privateKey, { subtle, nowS });
-  assert.ok(widest.split('.')[1].length > 512, `past the old bound (${widest.split('.')[1].length})`);
+  const widestClaims = { s: 'a'.repeat(40), n: 'W'.repeat(NAME_MAX), k: 'linked', t: seatT, ts: [0xffffffff, 9999], g: [...GLYPHS], au: aura, mu: nowS + 10 ** 9, lv: RENOWN_MAX, ...guild, rc: 1, rb: [15, 14], ar: ARENA_RATING_MAX, cl: CHARACTER_LEVEL_MAX };
+  const widest = await mintToken(widestClaims, kp.privateKey, { subtle, nowS });
+  // PIN MOVED (STOREFRONT): the glyphs are signed as their mask (`gb`), so the token itself is back under the old 512;
+  // the claims as the old mint wrote them, every glyph's word, are what the old bound refused
+  const asWords = Buffer.from(JSON.stringify(widestClaims)).toString('base64url').length;
+  assert.ok(asWords > 512, `as words, past the old bound (${asWords})`);
   assert.ok(TOKEN_RE.test(widest), `every claim at once passes the hello (${widest.split('.')[1].length} of 640)`);
   assert.ok(widest.length <= 1024);
   assert.deepEqual((await verifyToken(widest, pub, { subtle, nowS })).claims.rb, [15, 14]);

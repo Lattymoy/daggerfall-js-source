@@ -55,7 +55,7 @@ import { wheelPath } from '../carriageWheel.js';   // OW-HUBS: a carriage town's
 import { paintVendorMark } from '../vendor/vendorMapMark.js';   // HOME-VENDOR: the trader's waypoint's coin
 import { seatMapMark, SEAT_RING_SIEGE } from '../../net/townSeatLaw.js';   // SEAT1a: how a seat is marked - its ring, a crown, a second ring; SEAT1c: held, Contested, a siege week
 import { STAR_VIOLET_CSS } from '../starfall/starMapMark.js';   // STAR6: a fallen star's violet
-import { FISSURE_BRASS_CSS, FISSURE_AETHER_CSS } from '../season/fissureMapMark.js';   // STOREFRONT: a Brass Fissure's brass and its crack's blue
+import { FISSURE_BRASS_CSS, FISSURE_AETHER_CSS } from '../fissureMapMark.js';   // STOREFRONT: a Brass Fissure's brass and its crack's blue
 
 // ── THE INK (skin): the pen and its washes ───────────────────────────────────────────────
 /** THE TWO GROUNDS EVERY COLOUR ON THIS SHEET IS MIXED FROM. The pen

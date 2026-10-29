@@ -1,7 +1,7 @@
 // STOREFRONT (2026-10-29, the brief: "world changes with new dwemer enemies/boss/weapon"; bible/06-Systems/Battle-Pass.md
 // section 6): THE SEASON IN THE WORLD, END TO END - its law (systems/pass/seasonWorld.js: the tremor's clock, the stage's
 // Brass Fissures over the gate's scan, their camps on the camp law), the Resonant Maul (systems/pass/resonantMaul.js:
-// lawful, unrolled), a fissure made (world/season/fissureModel.js, fissureArt.js), and the host (scenes/seasonHost.js) on
+// lawful, unrolled), a fissure made (world/fissureModel.js, fissureArt.js), and the host (scenes/seasonHost.js) on
 // the world's bindings by name: the pass's notices, the tremor felt, a fissure built where the law puts it, breathing and
 // humming, its camp stood and shared, cleared and quiet, the Colossus and its Maul once a day, the gate given way to,
 // the map's cards and the rock's clearings; the held map's brass cog; and the world host's wiring. tools/mutants/storefront.json.
@@ -22,13 +22,13 @@ import { RESONANT_MAUL, mintResonantMaul } from '../../src/systems/pass/resonant
 import { itemFindings } from '../../src/systems/item/itemLaw.js';
 import { applyRarity, legendariesFor, powerOf, LEGENDARY_POWERS } from '../../src/systems/loot/lootRarity.js';
 import { codexRows } from '../../src/systems/loot/lootCodex.js';
-import { buildFissureModel, fissureLayout, fissureVents, FISSURE_LEN } from '../../src/world/season/fissureModel.js';
-import { fissureArt, FISSURE_ARCHIVE, FISSURE_REC, FISSURE_ART_SIZE } from '../../src/world/season/fissureArt.js';
+import { buildFissureModel, fissureLayout, fissureVents, FISSURE_LEN } from '../../src/world/fissureModel.js';
+import { fissureArt, FISSURE_ARCHIVE, FISSURE_REC, FISSURE_ART_SIZE } from '../../src/world/fissureArt.js';
 import { pseudoArchiveOwner } from '../../src/world/eliteGates/pseudoArchives.js';
 import { createSeasonHost, SEASON_QUIET_MS, SEASON_ORPHAN_MS, SEASON_LEAVE_M, SEASON_MAUL_STORE, COLOSSUS_HEALTH, COLOSSUS_TRAITS, TREMOR_KICK_MS, fissureBucket } from '../../src/scenes/seasonHost.js';
 import { TREMOR_TEXT, COLOSSUS_TEXT, FISSURE_TEXT } from '../../src/systems/pass/seasonWords.js';
 import { gateClearSet, FISSURE_ROCK_M } from '../../src/world/gate/gateClearance.js';
-import { readFissureMarksIn } from '../../src/ui/season/fissureMapMark.js';
+import { readFissureMarksIn } from '../../src/ui/fissureMapMark.js';
 import { paintFissureMark } from '../../src/ui/ink/inkMap.js';
 import { midScreenText } from '../../src/ui/midScreenText.js';
 import { reportPlayerKill } from '../../src/systems/playerKills.js';

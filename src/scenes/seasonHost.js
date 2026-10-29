@@ -10,8 +10,8 @@ import { PASS_EVENT_TEXT, passGrantName, passChallengeText } from '../ui/passTex
 import { seasonStageAt, tremorAt, stageFissures, fissureUnderGate, fissureRoster, COLOSSUS_MOBILE } from '../systems/pass/seasonWorld.js';
 import { TREMOR_TEXT, FISSURE_TEXT, COLOSSUS_TEXT } from '../systems/pass/seasonWords.js';
 import { mintResonantMaul } from '../systems/pass/resonantMaul.js';
-import { buildFissureModel, fissureVents, FISSURE_BARE_R } from '../world/season/fissureModel.js';
-import { fissureArt, FISSURE_ARCHIVE } from '../world/season/fissureArt.js';
+import { buildFissureModel, fissureVents, FISSURE_BARE_R } from '../world/fissureModel.js';
+import { fissureArt, FISSURE_ARCHIVE } from '../world/fissureArt.js';
 import { findGateSite } from '../systems/gate/gateSite.js';
 import { gateAt } from '../net/gate/gateLaw.js';
 import { promoteRaidLeader } from '../systems/eliteFoes.js';

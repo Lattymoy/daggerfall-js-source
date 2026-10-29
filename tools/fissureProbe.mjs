@@ -19,8 +19,8 @@ const shotsAt = process.argv.includes('--shots') ? process.argv[process.argv.ind
 const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=640 height=480></canvas><script type=module>
-import { buildFissureModel, fissureLayout } from '/src/world/season/fissureModel.js';
-import { fissureArt } from '/src/world/season/fissureArt.js';
+import { buildFissureModel, fissureLayout } from '/src/world/fissureModel.js';
+import { fissureArt } from '/src/world/fissureArt.js';
 const F = { n: 1, stage: 2, region: 17, k: 0 };
 const h = (x, z) => 0.04 * x + 0.12 * Math.sin(z * 0.5);
 const floorM = buildFissureModel(F, h, { solid: false }), solidM = buildFissureModel(F, h, { ground: false });

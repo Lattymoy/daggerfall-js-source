@@ -5,8 +5,8 @@
 // with the aetherium's blue rising out of it, the heaved slabs' soil and rock. The wreckage wears the Sky-Ketch's metals
 // (world/ketch/ketchArt.js), painted by its painters under this archive - the Ketch's upload is its own.
 // Pure. Not a DFU member. Ledger A (STOREFRONT).
-import { image, putTexel, noiseField, ramp, paletteOf, quantize } from '../superDungeon/sdPixelKit.js';
-import { ketchBrassArt, ketchGearArt, ketchCopperArt, ketchStoneArt } from '../ketch/ketchArt.js';
+import { image, putTexel, noiseField, ramp, paletteOf, quantize } from './superDungeon/sdPixelKit.js';
+import { ketchBrassArt, ketchGearArt, ketchCopperArt, ketchStoneArt } from './ketch/ketchArt.js';
 
 /** The fissure's pseudo-archive (registered in world/eliteGates/pseudoArchives.js). */
 export const FISSURE_ARCHIVE = 38341;

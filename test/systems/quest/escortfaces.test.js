@@ -320,5 +320,5 @@ test('FE1 save: the envelope carries escortingFaces beside quest/talk/travelMap'
     'the restore arm, null clearing');
   const bridge = read('src/scenes/quest/questBridge.js');
   // AUDIT QUESTLINES LINES-7 (PIN MOVED): the bridge's passthrough hears a questline step gone without its end first
-  assert.match(bridge, /onQuestEnded: \(q\) => \{ questlines\?\.runner\?\.dropped\?\.\(q\); festivalQuestEnded\(q\); ctx\.onQuestEnded\?\.\(q\); \},/, 'the bridge passthrough (PIN MOVED, WITCH1: a quest done asks a festival find on the way)');
+  assert.match(bridge, /onQuestEnded: \(q\) => \{ questlines\?\.runner\?\.dropped\?\.\(q\); festivalQuestEnded\(q\); passQuestEnded\(q\); ctx\.onQuestEnded\?\.\(q\); \},/, 'the bridge passthrough (PIN MOVED, WITCH1: a quest done asks a festival find on the way; STOREFRONT: and a season find)');
 });

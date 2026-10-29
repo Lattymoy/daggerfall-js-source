@@ -410,7 +410,7 @@
   },
   {
     "name": "STOREFRONT-the-pipe-on-the-pillar",
-    "file": "src/world/season/fissureModel.js",
+    "file": "src/world/fissureModel.js",
     "old": "pipe: [-Math.PI / 2 - 0.75, 0.22]",
     "new": "pipe: [Math.PI / 2, 0.35]",
     "tests": [
@@ -419,7 +419,7 @@
   },
   {
     "name": "STOREFRONT-the-crack-unlit",
-    "file": "src/world/season/fissureArt.js",
+    "file": "src/world/fissureArt.js",
     "old": "    if (v < 0.08) return [ramp(R.deep, 0.2 * g, x, y), ramp(R.aether, 0.85 + 0.15 * g, x, y)];",
     "new": "    if (v < 0.08) return [ramp(R.deep, 0.2 * g, x, y), BLACK];",
     "tests": [
