@@ -11,7 +11,7 @@ import { synthTown } from '../../lwTown.mjs';
 import { synthMap, livingMap } from '../../lwRoads.mjs';
 import { skipReal, hostTown, townsOf, LOCATION_TYPES } from '../../lwRealTown.mjs';
 import {
-  CENSUS_MAX, CENSUS_PER_BLOCK, CENSUS_CAP, CROWD_FROM_BLOCKS, CROWD_MAX, censusMaxOf, crowdOf, householdCensus, townCensus,
+  CENSUS_MAX, CENSUS_PER_BLOCK, CENSUS_CAP, CROWD_FROM_BLOCKS, CENSUS_CROWD_MAX, censusMaxOf, houseCrowdOf, householdCensus, townCensus,
   travellerRoster, travellerCounts, roadCounts, moreCounts, wideCounts, WIDE_JOBS, TRAVELLER_JOBS, ROAD_JOBS, MORE_JOBS, isWidePlace, isHome,
 } from '../../../src/systems/livingWorld/census.js';
 import { LivingTown, livingStreetCap, STREET_PER_BLOCK, STREET_MAX, walkNear } from '../../../src/systems/livingWorld/livingTown.js';
@@ -32,15 +32,15 @@ const O = () => ({ mpm: CALENDAR_MPM, memo: new Map() });
 const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
 const houses = (n, from = 5000) => Array.from({ length: n }, (_, k) => ({ key: from + k, type: k < 2 ? BUILDING_TYPES.Tavern : BUILDING_TYPES.House1, quality: 15 }));
 
-test('LW-DENSE the census by the town\'s size: CENSUS_PER_BLOCK a block of its grid, never under CENSUS_MAX nor over CENSUS_CAP; from CROWD_FROM_BLOCKS its houses fuller, crowdOf more each to CROWD_MAX (mutants: the per block, the floor, the cap, the crowd\'s start, its rise, its top)', () => {
-  assert.deepEqual([CENSUS_MAX, CENSUS_PER_BLOCK, CENSUS_CAP, CROWD_FROM_BLOCKS, CROWD_MAX], [260, 10, 520, 16, 2]);
+test('LW-DENSE the census by the town\'s size: CENSUS_PER_BLOCK a block of its grid, never under CENSUS_MAX nor over CENSUS_CAP; from CROWD_FROM_BLOCKS its houses fuller, houseCrowdOf more each to CENSUS_CROWD_MAX (mutants: the per block, the floor, the cap, the crowd\'s start, its rise, its top)', () => {
+  assert.deepEqual([CENSUS_MAX, CENSUS_PER_BLOCK, CENSUS_CAP, CROWD_FROM_BLOCKS, CENSUS_CROWD_MAX], [260, 10, 520, 16, 2]);
   const sizes = [1, 4, 9, 16, 26, 36, 42, 52, 64, 100];
   assert.deepEqual(sizes.map((blocks) => censusMaxOf({ mapId: 1, blocks })), [260, 260, 260, 260, 260, 360, 420, 520, 520, 520]);
-  assert.deepEqual(sizes.map((blocks) => crowdOf({ mapId: 1, blocks })), [0, 0, 0, 0, 0.625, 1.25, 1.625, 2, 2, 2]);
-  assert.equal(crowdOf({ mapId: 1, blocks: 15 }), 0, 'under sixteen blocks: as it was');
+  assert.deepEqual(sizes.map((blocks) => houseCrowdOf({ mapId: 1, blocks })), [0, 0, 0, 0, 0.625, 1.25, 1.625, 2, 2, 2]);
+  assert.equal(houseCrowdOf({ mapId: 1, blocks: 15 }), 0, 'under sixteen blocks: as it was');
 });
 
-test('LW-DENSE the crowd: a city\'s houses hold their crowdOf share more of the town\'s common work, homed there, minted after everyone the town kept before as households (\'h\', their slots after) - every id before them unchanged, every id the wire\'s; a town under sixteen blocks as it was, to the person (mutants: the crowd unminted, its homes, its jobs, the ids moved, the cap)', () => {
+test('LW-DENSE the crowd: a city\'s houses hold their houseCrowdOf share more of the town\'s common work, homed there, minted after everyone the town kept before as households (\'h\', their slots after) - every id before them unchanged, every id the wire\'s; a town under sixteen blocks as it was, to the person (mutants: the crowd unminted, its homes, its jobs, the ids moved, the cap)', () => {
   const city = houses(160);
   const small = householdCensus({ mapId: 9, blocks: 16 }, city);   // the common work's weights a city's from sixteen blocks
   const big = householdCensus({ mapId: 9, blocks: 42 }, city);
@@ -51,11 +51,11 @@ test('LW-DENSE the crowd: a city\'s houses hold their crowdOf share more of the 
   const homes = new Set(city.filter((b) => isHome(b.type)).map((b) => b.key));
   const crowdJobs = new Set(['labourer', 'farmer', 'fisher', 'crafter', 'homemaker', 'beggar']);
   assert.ok(big.slice(small.length).every((r) => homes.has(r.home) && r.work === null && crowdJobs.has(r.job)), 'the crowd: at a house, at the common work');
-  // a city whose houses leave room under its cap: each house about its crowdOf share more
+  // a city whose houses leave room under its cap: each house about its houseCrowdOf share more
   const fewer = houses(60, 7000);
   const plain = householdCensus({ mapId: 11, blocks: 15 }, fewer), full = householdCensus({ mapId: 11, blocks: 32 }, fewer);
   const extra = full.length - plain.length, per = extra / (fewer.length - 2);
-  assert.ok(Math.abs(per - crowdOf({ mapId: 11, blocks: 32 })) < 0.25, `the crowd ${per.toFixed(2)} a house (crowdOf ${crowdOf({ mapId: 11, blocks: 32 })})`);
+  assert.ok(Math.abs(per - houseCrowdOf({ mapId: 11, blocks: 32 })) < 0.25, `the crowd ${per.toFixed(2)} a house (houseCrowdOf ${houseCrowdOf({ mapId: 11, blocks: 32 })})`);
   assert.deepEqual(full.slice(0, plain.length).map((r) => r.id), plain.map((r) => r.id));
   assert.deepEqual(householdCensus({ mapId: 11, blocks: 32 }, fewer).map((r) => r.name), full.map((r) => r.name), 'the same for every reader');
   // the town whole: the watch and the travellers after the households, as before

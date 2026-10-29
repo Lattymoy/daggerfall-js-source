@@ -268,7 +268,7 @@ import { createCardTableHud, cardHudModel, eventLine, showdownWinners, HOLDEM_RE
 import { tablePlaces, CardScene } from '../world/card/cardScene.js';   // CARDS3: the cards on the cloth
 import { hashSeed, chipDiscs, CARD_W, CARD_L } from '../world/card/cardMotion.js';   // CARDS3: and its throws' seeds (AUDIT CARDS-2 L9: the town's too)
 import { createCardTableDraw, cardMatrix } from '../render/cardTableDraw.js';   // CARDS3: and their bodies on the GL
-import { residentName } from '../systems/livingWorld/census.js';   // CARDS4: the tavern's regulars, named as the living world names its people
+import { seededPersonName } from '../characters/personNames.js';   // CARDS4: the tavern's regulars, named as the living world names its people (REGION-NAMES)
 import { registerPlayerHurtListener } from '../characters/playerEntity.js';   // CARDS2b: a hit stands you up
 import { BUILDING_TYPES, isResidence, isTavern } from '../world/buildingNames.js';   // ROAD-B B4: IsTavern joins IsResidence at the door latch
 import { getInteractionMode, setInteractionMode } from '../player/interactionMode.js';   // R1: PlayerActivate.currentMode, the one home
@@ -874,7 +874,7 @@ export function createWorldModes(host) {
   const cardTableKey = () => `${homeTownOf(interiorBuilding) >>> 0}:${(interiorBuilding?.buildingKey ?? 0) >>> 0}:${cardSeat?.table ?? 0}`;
   /** AUDIT KG II C9: the tavern's own key - its regulars' (the same at each of its tables). */
   const cardTavernKey = () => `${homeTownOf(interiorBuilding) >>> 0}:${(interiorBuilding?.buildingKey ?? 0) >>> 0}`;
-  const tavernRegulars = (n) => regularSeeds(n).map((r) => residentName(r.seed, r.bank, r.gender));
+  const tavernRegulars = (n) => regularSeeds(n).map((r) => seededPersonName(r.seed, r.bank, r.gender, { region: interiorBuilding?.regionIndex ?? -1 }));
   /** CARDS4b: each regular's seed, bank and gender - the namer's own, so the same seed dresses him (world/card/cardRegulars.js). */
   const regularSeeds = (n) => {
     const b = interiorBuilding, bank = host.provinceBank?.() ?? getNameBankOfRegion(b?.regionIndex ?? 0);   // AUDIT-TESA A2-5: past the Bay the province's

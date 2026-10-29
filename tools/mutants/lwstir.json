@@ -155,8 +155,8 @@
   {
     "name": "LW-STIR-quarrel-stranger",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "    const others = stays.filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId && !y.who.guard && meets(x, y));",
-    "new": "    const others = stays.filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && !y.who.guard && meets(x, y));",
+    "old": "    const others = metBy(x).filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId && !y.who.guard);",
+    "new": "    const others = metBy(x).filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && !y.who.guard);",
     "tests": [
       "test/systems/livingWorld/lwstir_street.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "LW-STIR-quarrel-watch",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "    const others = stays.filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId && !y.who.guard && meets(x, y));",
-    "new": "    const others = stays.filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId && meets(x, y));",
+    "old": "    const others = metBy(x).filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId && !y.who.guard);",
+    "new": "    const others = metBy(x).filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId);",
     "tests": [
       "test/systems/livingWorld/lwstir_street.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "LW-STIR-quarrel-working",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "    const others = stays.filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId && !y.who.guard && meets(x, y));",
-    "new": "    const others = stays.filter((y) => !y.duty && y.who.id !== x.who.id && y.who.town === mapId && !y.who.guard && meets(x, y));",
+    "old": "    const others = metBy(x).filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId && !y.who.guard);",
+    "new": "    const others = metBy(x).filter((y) => !y.duty && y.who.id !== x.who.id && y.who.town === mapId && !y.who.guard);",
     "tests": [
       "test/systems/livingWorld/lwstir_street.test.js"
     ]

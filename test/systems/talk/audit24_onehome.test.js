@@ -18,6 +18,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { staticNpcData, staticNpcName, positionHash } from '../../../src/characters/staticNpc.js';
 import * as BRIDGE from '../../../src/scenes/quest/questBridge.js';
 import { GENDERS, getNameBank, fullName } from '../../../src/characters/nameHelper.js';
+import { personName } from '../../../src/characters/personNames.js';
 import { srand } from '../../../src/formats/dfRandom.js';
 
 const ROOT = new URL('../../../', import.meta.url);
@@ -248,7 +249,7 @@ test('audit24 wave24: GetDisplayName names the NPC from the seed, and the click 
   // compute the expectation FIRST: staticNpcName re-seeds, so reading
   // fullName after it would draw from the state it left behind
   srand(female.nameSeed);
-  const expected = fullName(getNameBank('Breton'), GENDERS.Female);
+  const expected = personName(getNameBank('Breton'), GENDERS.Female);   // REGION-NAMES: PIN MOVED - FullName's draw, the person named off it
   assert.equal(staticNpcName(female), expected,
     'and it is srand(nameSeed) then FullName(bank, gender), on the nose');
 

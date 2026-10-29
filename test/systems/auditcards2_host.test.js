@@ -57,7 +57,7 @@ function host({ gold = 5000, online = false, realmAct = null, seats = 4, peers =
     player: { pos: [0, 0, 0], eyeAt: () => [0, 1.6, 0] },
     host: { realmAct, relock: () => said.push('<relock>'), seatedPeers: () => peers },
     say: (s) => said.push(s), cam: { yaw: 0, pitch: 0, pos: null },
-    getNameBankOfRegion: () => 0, residentName: (seed, bank, g) => `R${seed}:${g}`,
+    getNameBankOfRegion: () => 0, seededPersonName: (seed, bank, g) => `R${seed}:${g}`,   // REGION-NAMES: PIN MOVED - the regulars named through personNames.js
     stakesFor: sess.stakesFor, buyInRange: sess.buyInRange, goldAmount: court.goldAmount,
     holdCursor, renderer: {},
     createCardTableDraw: () => { draws.made++; return { draw() { draws.drawn++; }, destroy() { draws.destroyed++; } }; },

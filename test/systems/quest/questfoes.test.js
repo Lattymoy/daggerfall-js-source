@@ -14,7 +14,8 @@ import { fileURLToPath } from 'node:url';
 
 import { loadQuestTables } from '../../../src/systems/quest/tables.js';
 import { QuestMachine } from '../../../src/systems/quest/machine.js';
-import { GENDERS } from '../../../src/characters/nameHelper.js';
+import { GENDERS, fullName, getNameBankOfRegion } from '../../../src/characters/nameHelper.js';
+import { personName } from '../../../src/characters/personNames.js';   // REGION-NAMES
 import { srand } from '../../../src/formats/dfRandom.js';
 
 const VENDOR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'vendor', 'dfu-quests');
@@ -408,7 +409,13 @@ test('name determinism: the srand chains draw the exact classic names', () => {
   // humanoid: seed floor(.9995*1000)=999 -> srand(999) -> fullName
   const m1 = makeMachine(makeWorld());
   const q1 = schedule(m1, ['Foe _mage_ is Mage', '', 'variable _pad_'], () => 0.9995);
-  assert.equal(q1.getResource({ name: 'mage' }).displayName, 'Chird-e', 'srand(999) + the Breton bank, verbatim');
+  // REGION-NAMES: PIN MOVED - DFU's FullName off srand(999) is still drawn first, verbatim, and the foe is named by
+  // their people's customs after it (personNames.js personName)
+  const mage = q1.getResource({ name: 'mage' });
+  srand(999);
+  assert.equal(fullName(getNameBankOfRegion(0), mage.humanoidGender), 'Chird-e', 'srand(999) + the region\'s bank, verbatim');
+  srand(999);
+  assert.equal(mage.displayName, personName(getNameBankOfRegion(0), mage.humanoidGender), 'named after that draw');
   // monster: srand(999 + randomRange(1,1000000) drawn from a KNOWN
   // DFRandom state) -> monsterName on the reseeded chain
   srand(4242);

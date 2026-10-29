@@ -15,7 +15,7 @@ import { synthTown, closeTown } from '../../lwTown.mjs';
 import { townPlaces, harbourDock, streetGeometry, STAND_REACH_M } from '../../../src/systems/livingWorld/places.js';
 import { circleStands, circleMiddle, aloneStand, CIRCLE_APART, STAND_BEARINGS, STAND_SOUND_M, STAND_MARGIN_M, ALONE_NEED_M, ALONE_FAR_M } from '../../../src/systems/livingWorld/meetups.js';
 import { LivingTown } from '../../../src/systems/livingWorld/livingTown.js';
-import { ResidentWalker, STAND_FRAME, IDLE_SHIFT_FRAMES } from '../../../src/characters/residentWalker.js';   // LW-TALK: PIN MOVED - standing, the wheel's still frame
+import { ResidentWalker, standFrameOf, shiftFramesOf } from '../../../src/characters/residentWalker.js';   // LW-TALK: PIN MOVED - standing, the wheel's still frame
 import { PERSON_MOVE_SPEED, MOVE_RECORDS } from '../../../src/characters/mobile/mobilePerson.js';
 import { CityNavigation, NAV_CELL } from '../../../src/world/city/cityNavigation.js';
 import { DAY_MIN, isOutdoor } from '../../../src/systems/livingWorld/dayPlan.js';
@@ -252,7 +252,7 @@ test('LW-STAND the pause: a resident in view whose next walk is not searched yet
       if (!t.town.where(p.living.res, read, false)?.pending) continue;
       if (!began.has(p)) began.set(p, read);
       assert.equal(p.moving, false, `${p.living.res.id}: stands, not a walk on the spot`);
-      if (!p.armed) assert.ok(MOVE_RECORDS.includes(out.record) && (out.frame === STAND_FRAME || (p.stir === 'shift' && IDLE_SHIFT_FRAMES.includes(out.frame))), 'standing: the walk wheel\'s still frame');   // LW-TALK: PIN MOVED - the idle record is the politeness gate's alone; STAND-LIFE: PIN MOVED - or a shift of weight under way
+      if (!p.armed) assert.ok(MOVE_RECORDS.includes(out.record) && (out.frame === standFrameOf(out.record, p.guard) || (p.stir === 'shift' && !!shiftFramesOf(out.record, p.guard)?.includes(out.frame))), 'standing: the walk wheel\'s still frame');   // LW-TALK: PIN MOVED - the idle record is the politeness gate's alone; STAND-LIFE: PIN MOVED - or a shift of weight under way; AUDIT STAND-LIFE B4: PIN MOVED - the record's own stand (a side one's legs together)
       assert.deepEqual([p.pos[0], p.pos[2]], at.get(p), 'where they were');
       assert.ok(Math.abs(read - began.get(p)) < 1e-6, `${p.living.res.id}: the walk's clock held while it waits (${(read - began.get(p)).toFixed(3)} min on)`);
     }

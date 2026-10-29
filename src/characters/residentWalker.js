@@ -33,10 +33,24 @@ export const STAND_FRAME = 0;
  *  shift of weight (the wheel's next two frames and back, at IDLE_SHIFT_FPS). */
 export const IDLE_EVERY_S = Object.freeze([3, 7]);
 export const IDLE_GLANCE_S = 1.6;
-export const IDLE_GLANCE_YAW = 0.7;
+export const IDLE_GLANCE_YAW = 0.85;   // AUDIT STAND-LIFE B5: past the wheel's 45-degree sector, so a glance always shows (0.7 drew nothing new one time in nine)
 export const IDLE_SHIFT_FPS = 3;
 /** The frames a shift of weight steps through, from STAND_FRAME and back to it. */
 export const IDLE_SHIFT_FRAMES = Object.freeze([1, 2, 1]);
+/** AUDIT STAND-LIFE B4: a side or three-quarter record's frame 0 is a full stride, and its frames 1-2 a stride walked on
+ *  the spot - so one stands there on SIDE_STAND_FRAME (passing: the legs together) and shifts to the other passing frame
+ *  and back (SIDE_SHIFT_FRAMES); the front and back records (SHIFT_RECORDS: the legs pass in depth) as before. The
+ *  watch's axe is drawn on frames 0 and 2 alone (TEXTURE.399): it stands on 0, shifts to 2 front and back, and only
+ *  glances side on. */
+export const SIDE_STAND_FRAME = 1;
+export const SIDE_SHIFT_FRAMES = Object.freeze([3, 3]);
+export const GUARD_SHIFT_FRAMES = Object.freeze([2, 2]);
+export const SHIFT_RECORDS = Object.freeze(new Set([0, 4]));
+/** The frame a stand holds on walk record `rec`, and the frames its shift of weight steps through (null: it glances
+ *  alone). @param {number} rec @param {boolean} [guard] */
+export const standFrameOf = (rec, guard = false) => (SHIFT_RECORDS.has(rec) || guard ? STAND_FRAME : SIDE_STAND_FRAME);
+/** @param {number} rec @param {boolean} [guard] @returns {readonly number[] | null} */
+export const shiftFramesOf = (rec, guard = false) => (guard ? (SHIFT_RECORDS.has(rec) ? GUARD_SHIFT_FRAMES : null) : SHIFT_RECORDS.has(rec) ? IDLE_SHIFT_FRAMES : SIDE_SHIFT_FRAMES);
 
 /** STAND-LIFE: bodies made, so each body's stream starts apart. */
 let _bodies = 0;
@@ -90,10 +104,12 @@ export class ResidentWalker extends MobilePerson {
     this._stirRng = (Math.imul(++_bodies, 0x9e3779b1) ^ (opts.archive | 0)) >>> 0;
     /** @type {number|undefined} the talk seed the stream was last seeded off */
     this._stirOf = undefined;
+    /** AUDIT STAND-LIFE B5: one of a circle or an incident at their spot (livingTown.js sets it) - they never glance away */
+    this.attending = false;
   }
 
   /** STAND-LIFE: the way the body is drawn facing - its yaw, turned by a glance while one is under way. */
-  get shownYaw() { return this.stir === 'glance' ? this.yaw + this._stirSide * IDLE_GLANCE_YAW : this.yaw; }
+  get shownYaw() { return this.stir === 'glance' && !this.attending ? this.yaw + this._stirSide * IDLE_GLANCE_YAW : this.yaw; }
 
   /** STAND-LIFE: the body's own next draw in [0, 1) - seeded off its talk seed once it is someone, so a resident keeps
    *  their own rhythm and two bodies made together never stir as one. */
@@ -118,16 +134,19 @@ export class ResidentWalker extends MobilePerson {
     }
     this._stirNext -= dt;
     if (this._stirNext > 0) return;
-    this.stir = this._stirDraw() < 0.5 ? 'glance' : 'shift';
+    // AUDIT STAND-LIFE B5: one attending a talk shifts their weight, never glances away from it
+    this.stir = this._stirDraw() < 0.5 && !this.attending ? 'glance' : 'shift';
     this._stirSide = this._stirDraw() < 0.5 ? -1 : 1;
     this._stirT = 0;
   }
 
-  /** STAND-LIFE: the frame a stand shows - STAND_FRAME, or the shift's step under way. @param {number} n the record's frames */
-  _standFrame(n) {
-    if (this.stir !== 'shift' || n < 2) return Math.min(STAND_FRAME, n - 1);
-    const i = Math.min(IDLE_SHIFT_FRAMES.length - 1, Math.floor(this._stirT * IDLE_SHIFT_FPS));
-    return IDLE_SHIFT_FRAMES[i] % n;
+  /** STAND-LIFE: the frame a stand shows - STAND_FRAME, or the shift's step under way; AUDIT STAND-LIFE B4: a side record
+   *  SIDE_STAND_FRAME, still (the watch's STAND_FRAME). @param {number} n the record's frames @param {number} [rec] */
+  _standFrame(n, rec = 0) {
+    const stand = standFrameOf(rec, this.guard), frames = shiftFramesOf(rec, this.guard);
+    if (this.stir !== 'shift' || !frames || n < 4) return Math.min(stand, n - 1);
+    const i = Math.min(frames.length - 1, Math.floor(this._stirT * IDLE_SHIFT_FPS));
+    return frames[i] % n;
   }
 
   /** The facing the watch's conversion and a guard's spawn read (G1). */
@@ -204,6 +223,6 @@ export class ResidentWalker extends MobilePerson {
     const o = mobileOrientation(st === 'stand' ? this.shownYaw : this.yaw, this.pos, cameraPos);
     const rec = MOVE_RECORDS[o];
     const n = Math.max(1, this.frameCount(rec, this.archive));
-    return this._frameOut(rec, st === 'stand' ? this._standFrame(n) : this.frame % n, MOVE_FLIPS[o]);
+    return this._frameOut(rec, st === 'stand' ? this._standFrame(n, rec) : this.frame % n, MOVE_FLIPS[o]);
   }
 }

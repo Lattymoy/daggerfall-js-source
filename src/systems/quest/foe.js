@@ -20,7 +20,8 @@ import { QuestResource, matchFirst } from './questResource.js';
 import { Symbol as QuestSymbol } from './symbol.js';
 import { parseInt as questParseInt } from './parseUtils.js';
 import { foesTable } from './tables.js';
-import { GENDERS, getNameBankOfRegion, fullName, monsterName } from '../../characters/nameHelper.js';
+import { GENDERS, getNameBankOfRegion, monsterName } from '../../characters/nameHelper.js';
+import { personName } from '../../characters/personNames.js';   // REGION-NAMES
 import { srand, randomRange } from '../../formats/dfRandom.js';
 import { enemyDisplayName, isClassEnemyId } from '../../characters/enemy/enemyBasics.js';
 import { getLocalizedEnemyName } from '../textManager.js';   // L10N3e: the type name shown
@@ -220,7 +221,7 @@ export class Foe extends QuestResource {
     }
     this.humanoidGender = this._rolls()() < 0.55 ? GENDERS.Male : GENDERS.Female;
     srand(this._range(1000));
-    this.displayName = fullName(getNameBankOfRegion(world.currentRegionIndex()), this.humanoidGender);
+    this.displayName = personName(getNameBankOfRegion(world.currentRegionIndex()), this.humanoidGender);
   }
 
   // ---- the save envelope (Q4-iv; Foe.cs SaveData_v2) ----

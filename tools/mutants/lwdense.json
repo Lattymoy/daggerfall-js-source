@@ -32,8 +32,8 @@
   {
     "name": "LW-DENSE-crowd-start",
     "file": "src/systems/livingWorld/census.js",
-    "old": "  return b < CROWD_FROM_BLOCKS ? 0 : Math.min(CROWD_MAX, (b - CROWD_FROM_BLOCKS) / CROWD_FROM_BLOCKS);",
-    "new": "  return b < 9 ? 0 : Math.min(CROWD_MAX, (b - CROWD_FROM_BLOCKS) / CROWD_FROM_BLOCKS);",
+    "old": "  return b < CROWD_FROM_BLOCKS ? 0 : Math.min(CENSUS_CROWD_MAX, (b - CROWD_FROM_BLOCKS) / CROWD_FROM_BLOCKS);",
+    "new": "  return b < 9 ? 0 : Math.min(CENSUS_CROWD_MAX, (b - CROWD_FROM_BLOCKS) / CROWD_FROM_BLOCKS);",
     "tests": [
       "test/systems/livingWorld/lwdense_town.test.js",
       "test/systems/livingWorld/lw1_livingWorld.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "LW-DENSE-crowd-rise",
     "file": "src/systems/livingWorld/census.js",
-    "old": "  return b < CROWD_FROM_BLOCKS ? 0 : Math.min(CROWD_MAX, (b - CROWD_FROM_BLOCKS) / CROWD_FROM_BLOCKS);",
-    "new": "  return b < CROWD_FROM_BLOCKS ? 0 : Math.min(CROWD_MAX, (b - CROWD_FROM_BLOCKS) / 32);",
+    "old": "  return b < CROWD_FROM_BLOCKS ? 0 : Math.min(CENSUS_CROWD_MAX, (b - CROWD_FROM_BLOCKS) / CROWD_FROM_BLOCKS);",
+    "new": "  return b < CROWD_FROM_BLOCKS ? 0 : Math.min(CENSUS_CROWD_MAX, (b - CROWD_FROM_BLOCKS) / 32);",
     "tests": [
       "test/systems/livingWorld/lwdense_town.test.js",
       "test/systems/livingWorld/lw1_livingWorld.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "LW-DENSE-crowd-top",
     "file": "src/systems/livingWorld/census.js",
-    "old": "export const CROWD_MAX = 2;",
-    "new": "export const CROWD_MAX = 3;",
+    "old": "export const CENSUS_CROWD_MAX = 2;",
+    "new": "export const CENSUS_CROWD_MAX = 3;",
     "tests": [
       "test/systems/livingWorld/lwdense_town.test.js",
       "test/systems/livingWorld/lw1_livingWorld.test.js"

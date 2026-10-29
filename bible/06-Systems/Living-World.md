@@ -2130,10 +2130,16 @@ as one of Daggerfall's still pictures (LW-LOOKS), and of the 63 pictures the kin
 the freeware's TEXTURE files): a beggar, a labourer, a fisher, every woman at a stall or a temple door stood frozen.
 
 - **The stir** (`characters/residentWalker.js` IDLE_EVERY_S, IDLE_GLANCE_S, IDLE_GLANCE_YAW, IDLE_SHIFT_FPS,
-  IDLE_SHIFT_FRAMES, `shownYaw`). Every 3 to 7 seconds one standing glances aside (0.7 radians for 1.6 s, drawn on the
+  IDLE_SHIFT_FRAMES, `shownYaw`). Every 3 to 7 seconds one standing glances aside (0.85 radians for 1.6 s, drawn on the
   wheel the way they glance) or shifts their weight (the wheel's frames 1, 2, 1 at 3 a second), then stands again. The
   rhythm is the body's own, seeded off its talk seed, so two bodies made together never stir as one. The yaw a circle
   or an incident reads is unchanged; only the picture glances. The politeness gate's idle record is as it was.
+- **By facing** (AUDIT FULLER-LW B4, B5: `standFrameOf`, `shiftFramesOf`, SIDE_STAND_FRAME, SIDE_SHIFT_FRAMES,
+  GUARD_SHIFT_FRAMES). A side or three-quarter record's frame 0 is a full stride, and 1 to 2 a stride on the spot: one
+  stands there on frame 1, the legs together, and shifts to 3 and back. The front and back as above. The watch's axe is
+  drawn on frames 0 and 2 alone: it stands on 0, shifts to 2 front and back, and only glances side on. A glance turns
+  past the wheel's 45-degree sector, so it always shows. One in a circle or an incident at their spot (`attending`)
+  shifts their weight and never glances away from the talk.
 - **The still pictures that move** (`systems/livingWorld/looks.js` MOVING_STILLS, `stillFlatOf`). A still picture
   stands only where the game's art moves: two of a merchant's, one of a priest's, two of the court's of each sex. A
   kind or a sex with none keeps themselves and stirs. The blacksmith at his anvil moves too and is left out: a market's
@@ -2157,10 +2163,10 @@ a block and a village seventeen, and Ripmarket's and Tuntale's squares stood at 
 - **The census** (`census.js` CENSUS_PER_BLOCK, CENSUS_CAP, `censusMaxOf`). Ten a block of the town's grid, never
   fewer than 260 nor more than 520. The common hands once trimmed are kept on, in their order, so the first 260 of a
   town are the same people.
-- **The crowd** (`census.js` CROWD_FROM_BLOCKS, CROWD_MAX, `crowdOf`). From 16 blocks a town's houses are fuller: each
-  holds `crowdOf` more on average, rising to two more at 32 blocks, of the town's common work, on a stream of their own.
-  They are households (`h`), their slots after everyone kept before: no id moves, and every id is one the wire's
-  LIVING_ID_RE takes.
+- **The crowd** (`census.js` CROWD_FROM_BLOCKS, CENSUS_CROWD_MAX, `houseCrowdOf`). From 16 blocks a town's houses are fuller: each
+  holds `houseCrowdOf` more on average, rising to two more at 32 blocks, of the town's common work, on a stream of their own.
+  They are households (`h`), their slots after everyone kept before: no id moves, and on the Bay every id is one the
+  wire's LIVING_ID_RE takes (a capital's quarters' `q` ids are not: below).
 - **The street** (`livingTown.js` STREET_PER_BLOCK, STREET_MAX, `livingStreetCap`). DFU's cap under 16 blocks; from
   there three a block to 160, never under DFU's.
 - **Measured** on the freeware's towns (the street about the square, 10 seconds in, 20 of frames read):
@@ -2184,16 +2190,25 @@ a block and a village seventeen, and Ripmarket's and Tuntale's squares stood at 
   (main 22-25; budget 60), its frames while stood at most 12 ms (budget 20), every frame after at most 9.3 ms (main 3.4;
   budget 12), a frame's mean 0.4-0.7 ms (main 0.2). Its near ones on the street in 1 s (main 1.5 s), a city of 36 blocks
   1.5 s (main 1 s). Every street budget holds.
-- **Recorded, not fixed.** LW16's carried word, worked a slice a frame: its worst slice is one town's day of trips, so a
-  roster grown by the fourth rank raised it from 15.3 ms to 21.6 ms. Its budget is 10 ms, and main is over it already.
-  Slicing a town's trips by resident is LW16's own change.
+- **The carried word, a traveller a slice** (AUDIT FULLER-LW A7, `trips.js townTripsSteps`). LW16's word worked a town
+  about's whole day of trips in one slice, and the fourth rank made that slice dearer. Its towns about are now worked a
+  traveller at a time, the same trips. Measured cold over the synthetic map's 81 towns, a quiet machine, four runs: the
+  worst slice 5.7-15.4 ms before, 4.3-6.2 ms after (budget 10 ms).
+- **The day's deal** (AUDIT FULLER-LW A7, `stir.js` `metBy`). Each stay looked over every stay at its spot for those it
+  meets; now only those begun a longest stay before it to its end, in the same order. The same 1,174 incidents over ten
+  days of the city of 64 blocks, a day's deal 8.2-10.3 ms before, 7.4-8.3 ms after.
+- **Measured, the way in** (the city of 64 blocks, 623 people, a quiet machine): 36-49 ms (one run 71), its days'
+  plans 18-35 ms of it; budget 60. A frame at its square of 131 people 0.70 ms on average, 2.6 ms at the 95th. The
+  street's search was rewritten for speed and measured no faster, so it was left as it was; its answers are pinned
+  (`lwperf_fuller.test.js`).
 - **Pinned** by `test/systems/livingWorld/lwdense_town.test.js` (the census, the crowd, the street, the game's own towns) and
   `tools/mutants/lwdense.json`. PIN MOVED: `lw1_livingWorld` (a city's cap by its size, its first 260 as they were),
   `lwstir_street` (a fuller square meets AUDIT LW-STIR B5 more often - pinned exactly: FACE_M apart where a place before
   the one who keeps their stand is free, else from their own).
 - **Recorded.** The capitals' quarters keep their own census each (`q`), and the wire's LIVING_ID_RE takes no `q` id:
   a capital's resident the watch stands for online sends no `lr` (the record is refused whole). Before this slice;
-  the relay's next release.
+  the relay's next release. A town of quarters keeps CENSUS_CAP a quarter, so an Imperial City slice holds more than
+  520 (598 in slice 112).
 
 ## LW-ANTICS - the street's shenanigans (2026-10-28)
 
@@ -2203,13 +2218,17 @@ first five: a round keeps the incident it always had, and a newer one takes only
 in no other at once (`antics: false` deals the first five alone, and the pin holds them equal).
 
 - **A cutpurse** (`lightFingered`, CUTPURSE_HANDS, CUTPURSE_SHARE, CUTPURSE_CROWD; `cutpurseScripts`). A sixth of the
-  town's beggars and labourers are light of finger; by day, at a spot of four or more, a third of their stays end in a
-  purse lifted from one standing there, near the end of their stay so they leave after it. The robbed shout; the watch
-  on duty standing by gives chase (`chaseLines`), else they shout after the thief (`gotAwayLines`).
+  town's beggars and labourers are light of finger; by day at the lift's own minute, at a spot of four or more, a third
+  of their stays end in a purse lifted from one standing there. It falls at the end of the thief's stay, the one robbed
+  staying on, so the run ends it (AUDIT FULLER-LW A1). The robbed shout; the watch on duty standing by gives chase
+  (`chaseLines`: caught, the purse is given back and the thief sent off), else they shout after the thief
+  (`gotAwayLines`).
 - **The run** (`cutpurseRun`, CHASE_M, CAUGHT_M; `livingTown.js _runOf`, `_chaseWayOf`). From the first shout the
-  cutpurse runs 12 m from their stand, away from the one robbed, along the first of eight bearings the street holds
-  clear, at a frightened run's pace; the watchman runs after them 0.6 s later, a little faster, and holds them a metre
-  off, the cutpurse turned to him. Said on the run (`speech`).
+  cutpurse runs 12 m from their stand toward where they walk next, or off to that side of the one robbed, along the
+  first of eight bearings the street holds clear, at a frightened run's pace; in a lane, as far as it holds (RUN_MIN_M,
+  4 m, or no run). The watchman runs after them 0.6 s later, a little faster, and holds them a metre off, the cutpurse
+  turned to him. Said on the run (`speech`). Their words over, the thief stands where the run ended to the end of the
+  stay, and takes up their next walk where its line passes within JOIN_M of them (`_heldRun`, `_ranTo`).
 - **Of an evening** two of the town at dice (DICE_SHARE 0.05 of one's stays with another, the watch off duty too) or a
   warmer word (FLIRT_SHARE 0.02, never the watch); a priest at their own temple's door with one there preaches
   (SERMON_SHARE 0.8, `spotIncidents`' `spot`); a courier at their stint cries the news (`newsCries`). Their words go through the text core (`lines.js` `spoken`, `lw.*` keys).
@@ -2233,11 +2252,14 @@ on patrol a shift beside its four gate posts, and the watch spoke to the town on
 - **More patrols** (`census.js watchExtraOf`, `townWatchCount`; `dayPlan.js watchDuty`). A pair more a shift from 25
   blocks, two from 40, three from 60. A watchman whose rank passes the shift's strength walks one of them, in pairs,
   each pair a beat of its own after the shift's own patrols: no post and no gate's law moves. Daggerfall's watch is 48
-  (24 before), twelve a shift.
-- **The watch's word** (`stir.js` WATCH_WORD_SHARE; `lines.js` `watchWords`, `watchBuys`, `moveAlong`). Of the watch's
-  stops on its rounds where one of the town stands, 0.45 have a word with them: its talk, a bite bought at a stall
-  (the keeper keeping their stall), a beggar moved along at their pitch. The first of a pair speaks; never to a
-  stranger (LW-STIR's challenge is theirs), never at a stop that stopped one.
+  (24 before), twelve a shift. Each patrol's beat is a district apart from the shift's earlier ones (`patrolBeat`;
+  AUDIT FULLER-LW B8).
+- **The watch's word** (`stir.js` WATCH_WORD_SHARE, FOOD_SELLERS, MORNING_HOURS; `lines.js` `watchWords`,
+  `morningWatchWords`, `watchBuys`, `moveAlong`, `beggarWords`). Of the watch's stops on its rounds where one of the
+  town stands, 0.45 have a word with them: its talk (the morning's in the morning alone), a bite bought at a stall of
+  food (a fisher's, a farmer's, a carter's, a merchant's), a word with a beggar - moved along at the end of their pitch,
+  and they go. The first of a pair speaks; never to a stranger (LW-STIR's challenge is theirs), never at a stop that
+  stopped one, one word a day between a watchman and one of the town.
 - **The chase** of a cutpurse (LW-ANTICS) is the watch's too; and the watch off duty dices with the town.
 - **Measured** (`tools/livingStirProbe.mjs`): the synthetic town of 45 blocks 20 words of the watch a day (7.7 before
   its extra patrols).

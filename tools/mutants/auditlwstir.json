@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-LWSTIR-B4-still-kept",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": " && !(this._stirring(res.id) && this._inStir.get(res.id)?.spot === w.e.at) ? stillRoleOf(res, w.e)",
-    "new": " ? stillRoleOf(res, w.e)",
+    "old": "const attending = this._inCircle.get(res.id)?.spot === w.e.at || (this._stirring(res.id) && this._inStir.get(res.id)?.spot === w.e.at);",
+    "new": "const attending = this._inCircle.get(res.id)?.spot === w.e.at;",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "AUDIT-LWSTIR-D-challenge-one-tried",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "      if (laid.length > n) { stopped.add(s.who.id); break; }   // one stop of a stranger a day at the spot",
-    "new": "      if (laid.length > n) { stopped.add(s.who.id); } break;   // one stop of a stranger a day at the spot",
+    "old": "      if (laid.length > n) { stopped.add(s.who.id); stoppedAt.add(`${g.who.id}|${g.t0}`); break; }   // one stop of a stranger a day at the spot",
+    "new": "      if (laid.length > n) { stopped.add(s.who.id); stoppedAt.add(`${g.who.id}|${g.t0}`); } break;   // one stop of a stranger a day at the spot",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -552,8 +552,8 @@
   {
     "name": "AUDIT-LWSTIR-D-challenge-no-break",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "      if (laid.length > n) { stopped.add(s.who.id); break; }   // one stop of a stranger a day at the spot",
-    "new": "      if (laid.length > n) { stopped.add(s.who.id); }   // one stop of a stranger a day at the spot",
+    "old": "      if (laid.length > n) { stopped.add(s.who.id); stoppedAt.add(`${g.who.id}|${g.t0}`); break; }   // one stop of a stranger a day at the spot",
+    "new": "      if (laid.length > n) { stopped.add(s.who.id); stoppedAt.add(`${g.who.id}|${g.t0}`); }   // one stop of a stranger a day at the spot",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -562,8 +562,8 @@
   {
     "name": "AUDIT-LWSTIR-D-plea-duty-unread",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "if (y.duty || y.kind === 'beg' || y.who.id === x.who.id || !meets(x, y)) continue;",
-    "new": "if (y.kind === 'beg' || y.who.id === x.who.id || !meets(x, y)) continue;",
+    "old": "        if (y.duty || y.kind === 'beg' || y.who.id === x.who.id) continue;",
+    "new": "        if (y.kind === 'beg' || y.who.id === x.who.id) continue;",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"

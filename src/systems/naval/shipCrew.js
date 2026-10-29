@@ -32,7 +32,8 @@
 // brings a hand or two more over the rail. Only a post's best holder aboard counts - a hand ashore with the captain
 // (CREW-COMPANIONS) works no post at sea - so a veteran lost is a loss, and the plain law holds: no post, no worth.
 import { srand, getSeed, setSeed } from '../../formats/dfRandom.js';
-import { fullName, getNameBankOfRegion, GENDERS } from '../../characters/nameHelper.js';
+import { getNameBankOfRegion, GENDERS } from '../../characters/nameHelper.js';
+import { personName } from '../../characters/personNames.js';   // REGION-NAMES
 import { REGION_NAMES } from '../../formats/mapsFile.js';
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { MOBILE } from './navalBoarding.js';
@@ -229,7 +230,7 @@ export function handName(seed, hire, gender, regionIndex = 17, bank = null) {
   try {
     srand(s || 1);
     const b = Number.isInteger(bank) ? /** @type {number} */ (bank) : getNameBankOfRegion(regionIndex >= 0 && regionIndex < REGION_NAMES.length ? regionIndex : 17);
-    return fullName(b, gender === 'female' ? GENDERS.Female : GENDERS.Male);
+    return personName(b, gender === 'female' ? GENDERS.Female : GENDERS.Male, { region: regionIndex });   // REGION-NAMES: the waters' region's
   } finally { setSeed(saved); }
 }
 

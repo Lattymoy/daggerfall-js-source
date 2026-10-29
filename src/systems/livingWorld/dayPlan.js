@@ -120,19 +120,36 @@ export function watchDuty(res, places, day, size = 1) {
  *  patrol's own, so both of a pair walk it. The first cut drew a guard's stops from the whole town, and in a great
  *  city a leg ran past an hour of the clock: the beat ran out of stops it could reach hours before the shift's end.
  *  @param {Places} places @param {number} town @param {number} company @param {number} patrol @param {number} day
- *  @param {number} shift @returns {Spot[]} */
+ *  @param {number} shift @returns {readonly Spot[]} */
 export function patrolBeat(places, town, company, patrol, day, shift) {
+  let kept = _beats.get(places);
+  if (!kept) _beats.set(places, kept = new Map());
+  const key = `${town}|${company}|${patrol}|${day}|${shift}`;
+  const had = kept.get(key);
+  if (had) return had;
+  // AUDIT WATCH-LIFE B8: a district of its own - the spots of the shift's earlier patrols left out, where the town has
+  // a beat's worth besides (two of a city's extra patrols walked one beat in 7 shifts of 100)
+  const taken = new Set();
+  for (let q = 0; q < patrol; q++) for (const sp of patrolBeat(places, town, company, q, day, shift)) taken.add(sp);
   const rng = lwRng(town, 0x62656174, company, patrol, day, shift);   // 'beat'
-  const pool = [...places.exits, ...places.social, ...places.market];
-  if (!pool.length) return [];
+  const all = [...places.exits, ...places.social, ...places.market];
+  if (!all.length) return [];
+  const free = taken.size ? all.filter((sp) => !taken.has(sp)) : all;
+  const pool = free.length >= 4 ? free : all;
   const anchor = pool[Math.floor(rng() * pool.length)];
   const n = Math.min(pool.length, rollInt(rng, 4, 6));
   const gap = (/** @type {Spot} */ a) => Math.abs(a.cell[0] - anchor.cell[0]) + Math.abs(a.cell[1] - anchor.cell[1]);
   const near = pool.map((sp) => ({ sp, d: gap(sp) })).sort((a, b) => a.d - b.d || (a.sp.key < b.sp.key ? -1 : a.sp.key > b.sp.key ? 1 : 0)).slice(0, n).map((x) => x.sp);
   const cx = near.reduce((a, sp) => a + sp.x, 0) / near.length, cz = near.reduce((a, sp) => a + sp.z, 0) / near.length;
   const bearing = (/** @type {Spot} */ sp) => Math.atan2(sp.x - cx, sp.z - cz);
-  return near.sort((a, b) => bearing(a) - bearing(b) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+  const out = Object.freeze(near.sort((a, b) => bearing(a) - bearing(b) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)));
+  if (kept.size > 512) kept.clear();
+  kept.set(key, out);
+  return out;
 }
+/** AUDIT WATCH-LIFE B8: the beats dealt, by the town's places (a later patrol's reads the earlier ones').
+ *  @type {WeakMap<object, Map<string, readonly Spot[]>>} */
+const _beats = new WeakMap();
 
 /**
  * WATCH-DAY: A PATROL'S STOPS laid on the clock, from the beat's `first` spot at `from` to `until`: each a stay of

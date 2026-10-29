@@ -248,6 +248,8 @@ on:
       - "src/characters/nameHelper.js"
       - "src/characters/paperdoll/paperdoll.js"
       - "src/characters/paperdoll/paperdollArt.js"
+      - "src/characters/personNames.js"
+      - "src/characters/regionNames.js"
       - "src/characters/thunderlockIds.js"
       - "src/characters/weaponStates.js"
       - "src/characters/weapons.js"

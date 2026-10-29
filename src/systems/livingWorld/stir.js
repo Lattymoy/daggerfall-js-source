@@ -18,7 +18,7 @@ import { TAVERN_DRINK } from './dayPlan.js';
 import {
   GATE_SCRIPTS, CHALLENGE_SCRIPTS, QUARREL_SCRIPTS, BREAK_UP_LINES, HAGGLE_SCRIPTS, PLEA_SCRIPTS,
   WATCH_HOURS, WATCH_CALLS, STALL_CRIES, BEGGAR_CRIES, DRINKING_SONGS, fillLine, firstNameOf,
-  watchWords, watchBuys, moveAlong, cutpurseScripts, chaseLines, gotAwayLines, diceScripts, sermonScripts, flirtScripts, newsCries,
+  watchWords, morningWatchWords, watchBuys, moveAlong, beggarWords, theDivines, cutpurseScripts, chaseLines, gotAwayLines, diceScripts, sermonScripts, flirtScripts, newsCries,
 } from './lines.js';
 
 /** How long the two of an incident take to come together before its first line, and stand so after its last (real
@@ -60,6 +60,12 @@ export const ANTIC_KINDS = Object.freeze(['watchword', 'cutpurse', 'dice', 'serm
 export const CHASE_M = 12;
 export const CAUGHT_M = 1;
 const LIGHT = new Set(['beggar', 'labourer']);
+/** AUDIT LW-ANTICS B10: the stalls that sell a bite - a labourer's or a courier's stint is no stall of food. */
+export const FOOD_SELLERS = Object.freeze(new Set(['fisher', 'farmer', 'carter', 'merchant']));
+/** AUDIT LW-ANTICS B6: the hours the watch's morning words are said in ("Morning, {b}. Quiet night?"). */
+export const MORNING_HOURS = Object.freeze([5, 11]);
+/** The hour of the day at minute `t`. @param {number} t */
+const hourOf = (t) => (((t % 1440) + 1440) % 1440) / 60;
 /** LW-ANTICS: whether one of the town is light of finger - their own draw, the same every day. @param {StirWho} who */
 export const lightFingered = (who) => LIGHT.has(who.job) && !who.guard && (lwSeed(textSeed(who.id), 0x6c696768) % 100000) / 100000 < CUTPURSE_HANDS;   // 'ligh'
 /** A stranger's humour that day: the shares of civil, curt and hostile - a sellsword's and a sailor's rougher. */
@@ -91,11 +97,11 @@ export const SONG_SHARE = 0.35;
 /** @typedef {{ by: 'a'|'b'|'g', text: string, loud: boolean }} StirLine */
 /** @typedef {{ kind: 'gate'|'challenge'|'quarrel'|'haggle'|'plea'|'watchword'|'cutpurse'|'dice'|'sermon'|'flirt', spot: string, members: StirWho[], anchor: 0|1,
  *   guard: StirWho | null, mood: string | null, script: readonly StirLine[], seed: number, round: number, t0: number,
- *   from: number, end: number, loudFrom: number }} Incident -
+ *   from: number, end: number, loudFrom: number, god?: string | null }} Incident -
  *  `members` [a, b], the two; `anchor` which of them keeps their own stand - the watch at its post, a beggar, a stall's
  *  keeper, else the one there first - the other coming to stand before them; `guard` the watch who steps in (a
  *  quarrel's); `round` the spot's talk round it falls in, whole (meetups.js spotRound); `t0` they begin to come
- *  together, `from` its first line, `end` it is over; `loudFrom` its first shouted line (Infinity: none) */
+ *  together, `from` its first line, `end` it is over; `loudFrom` its first shouted line (Infinity: none); `god` a sermon's */
 
 /** The draw in [0, 1) of a seed's parts. @param {...number} parts */
 const draw = (...parts) => (lwSeed(...parts) % 100000) / 100000;
@@ -171,7 +177,7 @@ export function gateWord(spotKey, day, inT, perS) {
  * places at the spot stand as they are through it. Pure over the stays, the spot's key, the day, the town and the
  * clock's rate (`perS`: its minutes a real second; a line `lineMin`). ANTIC_KINDS after these, in rounds none took.
  * @param {string} spotKey @param {readonly SpotStay[]} given @param {number} day @param {number} mapId
- * @param {number} lineMin @param {number} perS @param {{ building?: number|null } | null} [spot] its building (a sermon's)
+ * @param {number} lineMin @param {number} perS @param {{ building?: number|null, god?: string|null } | null} [spot] its door's
  * @param {{ antics?: boolean }} [o] - `antics` false: the first five alone (the pins' read of them)
  * @returns {Incident[]}
  */
@@ -210,6 +216,8 @@ export function spotIncidents(spotKey, given, day, mapId, lineMin, perS, spot = 
   /** of two who meet at the spot, the one there first (their stay's start, then the lower id): 0 `x`, 1 `y` */
   const first = (/** @type {SpotStay} */ x, /** @type {SpotStay} */ y) => /** @type {0|1} */ (y.t0 < x.t0 || (y.t0 === x.t0 && byId(y, x) < 0) ? 1 : 0);
   const stopped = new Set();
+  /** AUDIT LW-ANTICS A3: the watch's stops that stopped a stranger (its man and the stop's start) - no word there */
+  const stoppedAt = new Set();
   // the gate: the halted strangers of each arrival, one of them questioned by the post keeping the gate through it
   /** @type {Map<number, SpotStay[]>} */
   const halted = new Map();
@@ -238,7 +246,7 @@ export function spotIncidents(spotKey, given, day, mapId, lineMin, perS, spot = 
       const [o0, o1] = overlap(g, s);
       const n = laid.length;
       lay('challenge', g.who, s.who, first(g, s), script, lwSeed(seed, textSeed(s.who.id), 1), o0, o1, mood);
-      if (laid.length > n) { stopped.add(s.who.id); break; }   // one stop of a stranger a day at the spot
+      if (laid.length > n) { stopped.add(s.who.id); stoppedAt.add(`${g.who.id}|${g.t0}`); break; }   // one stop of a stranger a day at the spot
     }
   }
   // two at the spot together: a plea, a haggle, a quarrel - one a day between the same two at one spot
@@ -247,13 +255,23 @@ export function spotIncidents(spotKey, given, day, mapId, lineMin, perS, spot = 
   const met = new Set();
   const pairOf = (/** @type {StirWho} */ a, /** @type {StirWho} */ b) => (a.id < b.id ? `${a.id}|${b.id}` : `${b.id}|${a.id}`);
   const meets = (/** @type {SpotStay} */ x, /** @type {SpotStay} */ y) => { const [o0, o1] = overlap(x, y); return o1 > o0; };
+  // LW-PERF (AUDIT FULLER-LW A7): the stays that meet one, in the clock's order - from those begun a longest stay before
+  // it to its end, never the whole day's at the spot again for each (a city's square of a thousand stays: n squared)
+  const longest = stays.reduce((m, y) => Math.max(m, y.t1 - y.t0), 0);
+  const metBy = (/** @type {SpotStay} */ x) => {
+    let lo = 0, hi = stays.length;
+    while (lo < hi) { const m = (lo + hi) >> 1; if (stays[m].t0 < x.t0 - longest) lo = m + 1; else hi = m; }
+    const out = [];
+    for (let i = lo; i < stays.length && stays[i].t0 < x.t1; i++) if (meets(x, stays[i])) out.push(stays[i]);
+    return out;
+  };
   for (const x of stays) {
     if (x.duty) continue;
     const seed = lwSeed(spotSeed, day, textSeed(x.who.id), Math.round(x.t0));
     if (x.kind === 'beg') {
       // a beggar asks one standing near: PLEA_SHARE of each who stands there with them
-      for (const y of stays) {
-        if (y.duty || y.kind === 'beg' || y.who.id === x.who.id || !meets(x, y)) continue;
+      for (const y of metBy(x)) {
+        if (y.duty || y.kind === 'beg' || y.who.id === x.who.id) continue;
         const pair = pairOf(x.who, y.who), ps = lwSeed(spotSeed, day, textSeed(pair));
         if (met.has(pair) || draw(ps, 0x706c6561) >= PLEA_SHARE) continue;   // 'plea'
         met.add(pair);
@@ -265,7 +283,7 @@ export function spotIncidents(spotKey, given, day, mapId, lineMin, perS, spot = 
       continue;
     }
     if (x.kind === 'stall') continue;   // a stall is haggled at, by one come to it
-    const stalls = stays.filter((y) => y.kind === 'stall' && !y.duty && y.who.id !== x.who.id && meets(x, y));
+    const stalls = metBy(x).filter((y) => y.kind === 'stall' && !y.duty && y.who.id !== x.who.id);
     if (stalls.length && draw(seed, 0x68616767) < HAGGLE_SHARE) {   // 'hagg'
       // one come to a spot with stalls haggles at one of them: HAGGLE_SHARE of their stays there
       const y = stalls[lwSeed(seed, 0x61742020) % stalls.length];   // 'at  '
@@ -281,7 +299,7 @@ export function spotIncidents(spotKey, given, day, mapId, lineMin, perS, spot = 
     // own draw, the other the draw's of those there with them (a busy spot's falling out grows with its people, not
     // with their pairs: dealt by the pair, an evening's spot of ten fell out three times in half an hour)
     if (x.who.town !== mapId || x.who.guard) continue;
-    const others = stays.filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId && !y.who.guard && meets(x, y));
+    const others = metBy(x).filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId && !y.who.guard);
     if (!others.length) continue;
     const y = others[lwSeed(seed, 0x77697468) % others.length];   // 'with'
     const [o0, o1] = overlap(x, y);
@@ -298,55 +316,72 @@ export function spotIncidents(spotKey, given, day, mapId, lineMin, perS, spot = 
   const busy = (/** @type {number} */ t) => stays.filter((s) => s.t0 <= t && s.t1 > t).length;
   // the watch on its rounds has a word with one of the town standing at its stop - a bite at a stall, a beggar moved on
   for (const g of withAntics ? stays : []) {
-    if (!g.duty || g.kind !== 'watch' || g.pair === 1 || stopped.has(g.who.id)) continue;
+    if (!g.duty || g.kind !== 'watch' || g.pair === 1 || stoppedAt.has(`${g.who.id}|${g.t0}`)) continue;
     const seed = lwSeed(spotSeed, day, textSeed(g.who.id), Math.round(g.t0), 0x776f7264);   // 'word'
     if (draw(seed) >= WATCH_WORD_SHARE) continue;
-    const them = stays.filter((s) => !s.duty && s.kind !== 'gate' && s.who.town === mapId && !s.who.guard && meets(g, s))
+    const them = metBy(g).filter((s) => !s.duty && s.kind !== 'gate' && s.who.town === mapId && !s.who.guard && !met.has(pairOf(g.who, s.who)))
       .map((s) => ({ s, k: lwSeed(seed, textSeed(s.who.id), Math.round(s.t0)) })).sort((x, y) => x.k - y.k || byId(x.s, y.s));
     const y = them[0]?.s;
     if (!y) continue;
-    const pool = y.kind === 'stall' ? watchBuys() : y.kind === 'beg' ? moveAlong() : watchWords();
+    met.add(pairOf(g.who, y.who));   // AUDIT LW-ANTICS B9: one word a day between a watchman and one of the town at a spot
     const [o0, o1] = overlap(g, y);
-    lay('watchword', g.who, y.who, y.kind === 'stall' || y.kind === 'beg' ? 1 : first(g, y), pick(pool, seed), lwSeed(seed, 1), o0, o1, null, null, BREAK_UP_LINES, null, antics);
+    // AUDIT LW-ANTICS B9: a beggar moved along goes - the words at the end of their pitch, the watch there through it;
+    // one who stays on has a word that keeps them there (beggarWords); B10: a bite only at a stall of food; B6: the
+    // morning's words in the morning
+    const gone = y.kind === 'beg' ? pick(moveAlong(), seed) : null;
+    const goneLen = gone ? gather + gone.length * lineMin + after : 0;
+    if (gone && g.t1 >= y.t1 && y.t1 - o0 > goneLen) {
+      lay('watchword', g.who, y.who, 1, gone, lwSeed(seed, 1), Math.max(o0, y.t1 - goneLen), y.t1, null, null, BREAK_UP_LINES, null, antics);
+      continue;
+    }
+    const buys = y.kind === 'stall' && FOOD_SELLERS.has(y.who.job);
+    const h = hourOf(o0);
+    const pool = buys ? watchBuys() : y.kind === 'beg' ? beggarWords() : h >= MORNING_HOURS[0] && h < MORNING_HOURS[1] ? [...morningWatchWords(), ...watchWords()] : watchWords();
+    lay('watchword', g.who, y.who, buys || y.kind === 'beg' ? 1 : first(g, y), pick(pool, seed), lwSeed(seed, 1), o0, o1, null, null, BREAK_UP_LINES, null, antics);
   }
   for (const x of withAntics ? stays : []) {
     if (x.duty) continue;
     const seed = lwSeed(spotSeed, day, textSeed(x.who.id), Math.round(x.t0), 0x616e7463);   // 'antc'
-    const hour = ((((x.t0 % 1440) + 1440) % 1440) / 60);
-    // a purse lifted by day at a crowded spot, near the end of the cutpurse's stay (they leave after it): the watch on
-    // duty standing by gives chase (chaseLines), else the robbed shout after them (gotAwayLines)
-    if (x.who.town === mapId && lightFingered(x.who) && hour >= 9 && hour < 18 && draw(seed, 0x63757470) < CUTPURSE_SHARE) {   // 'cutp'
-      const marks = stays.filter((y) => !y.duty && y.kind !== 'beg' && y.who.id !== x.who.id && !y.who.guard && meets(x, y));
+    // a purse lifted by day at a crowded spot at the end of the cutpurse's stay, the one robbed staying on (AUDIT
+    // LW-ANTICS A1: so the run ends the thief's stay, never a walk back to them): the watch on duty standing by gives
+    // chase (chaseLines), else the robbed shout after them (gotAwayLines); A9: by day at the lift's own minute
+    if (x.who.town === mapId && lightFingered(x.who) && draw(seed, 0x63757470) < CUTPURSE_SHARE) {   // 'cutp'
+      const marks = metBy(x).filter((y) => !y.duty && y.kind !== 'beg' && y.who.id !== x.who.id && !y.who.guard);
       const y = marks[lwSeed(seed, 0x6d61726b) % Math.max(1, marks.length)];   // 'mark'
       const len = gather + (cutpurseScripts()[0].length + chaseLines()[0].length + 1) * lineMin + after;
-      const [o0, o1] = y ? overlap(x, y) : [0, 0];
+      const [o0] = y ? overlap(x, y) : [0];
+      const at = Math.max(o0, x.t1 - len), h = hourOf(at);
       const pair = y ? pairOf(x.who, y.who) : '';
-      if (y && !met.has(pair) && busy(Math.max(o0, x.t1 - len)) >= CUTPURSE_CROWD && o1 - o0 > len) {
+      if (y && !met.has(pair) && h >= 9 && h < 18 && y.t1 >= x.t1 && busy(at) >= CUTPURSE_CROWD && x.t1 - o0 > len) {
         met.add(pair);
         const ps = lwSeed(spotSeed, day, textSeed(pair), 0x63757470);
-        lay('cutpurse', x.who, y.who, 1, pick(cutpurseScripts(), ps), ps, Math.max(o0, Math.min(x.t1, o1) - len), o1, null, watch, chaseLines(), gotAwayLines(), antics);
+        lay('cutpurse', x.who, y.who, 1, pick(cutpurseScripts(), ps), ps, at, x.t1, null, watch, chaseLines(), gotAwayLines(), antics);
         continue;
       }
     }
     // a priest at their own temple's door with one there: a sermon
     if (x.who.job === 'priest' && x.kind === 'social' && spot?.building != null && x.who.work === spot.building && draw(seed, 0x7365726d) < SERMON_SHARE) {   // 'serm'
-      const them = stays.filter((y) => !y.duty && y.who.id !== x.who.id && meets(x, y));
+      const them = metBy(x).filter((y) => !y.duty && y.who.id !== x.who.id);
       const y = them[lwSeed(seed, 0x68656172) % Math.max(1, them.length)];   // 'hear'
       if (y && !met.has(pairOf(x.who, y.who))) {
         met.add(pairOf(x.who, y.who));
         const [o0, o1] = overlap(x, y);
+        const n = antics.length;
         lay('sermon', x.who, y.who, 0, pick(sermonScripts(), seed), lwSeed(seed, 2), o0, o1, null, null, BREAK_UP_LINES, null, antics);
+        if (antics.length > n) antics[n].god = spot?.god ?? null;   // AUDIT LW-ANTICS B7: the temple's own god
         continue;
       }
     }
-    // of an evening, two of the town (the watch off duty too) at dice - else a warmer word
-    if (x.who.town !== mapId || x.kind === 'stall' || x.kind === 'beg' || x.kind === 'gate' || hour < 18) continue;
-    const others = stays.filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId && meets(x, y));
+    // of an evening, two of the town (the watch off duty too) at dice - else a warmer word; AUDIT LW-ANTICS A9: the
+    // evening of their meeting, not of the stay's start
+    if (x.who.town !== mapId || x.kind === 'stall' || x.kind === 'beg' || x.kind === 'gate' || hourOf(x.t1) < 18) continue;
+    const others = metBy(x).filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId);
     if (!others.length) continue;
     const y = others[lwSeed(seed, 0x77697468) % others.length];   // 'with'
     const pair = pairOf(x.who, y.who), ps = lwSeed(spotSeed, day, textSeed(pair), 0x616e7463);
     if (met.has(pair)) continue;
     const [o0, o1] = overlap(x, y);
+    if (hourOf(o0) < 18 && hourOf(o1) >= 18) continue;   // met before six: not yet the evening's (a stay over the evening's start)
     const r = draw(seed, 0x64696365);   // 'dice'
     if (r < DICE_SHARE) { met.add(pair); lay('dice', x.who, y.who, first(x, y), pick(diceScripts(), ps), ps, o0, o1, null, null, BREAK_UP_LINES, null, antics); }
     else if (r < DICE_SHARE + FLIRT_SHARE && !x.who.guard && !y.who.guard) { met.add(pair); lay('flirt', x.who, y.who, first(x, y), pick(flirtScripts(), ps), ps, o0, o1, null, null, BREAK_UP_LINES, null, antics); }
@@ -363,17 +398,18 @@ export function spotIncidents(spotKey, given, day, mapId, lineMin, perS, spot = 
   return out.sort((p, q) => p.t0 - q.t0 || p.seed - q.seed);
 }
 
-/** LW-ANTICS: A CUTPURSE'S RUN - how far from their stand the cutpurse of `inc` has run at minute `t` (CHASE_M at most,
- *  from its first shout, at a frightened run's pace `speed` m/s; `perS` the clock's minutes a real second), and how far
- *  behind them the watch stepping in runs (CAUGHT_M once caught). Null: no run now. Pure.
- *  @param {Incident} inc @param {number} t @param {number} perS @param {number} speed
+/** LW-ANTICS: A CUTPURSE'S RUN - how far from their stand the cutpurse of `inc` has run at minute `t` (`reach` at most,
+ *  CHASE_M unless the street holds less - AUDIT LW-ANTICS A2; from its first shout, at a frightened run's pace `speed`
+ *  m/s; `perS` the clock's minutes a real second), and how far behind them the watch stepping in runs (CAUGHT_M once
+ *  caught). Null: no run now. Pure.
+ *  @param {Incident} inc @param {number} t @param {number} perS @param {number} speed @param {number} [reach]
  *  @returns {{ thief: number, guard: number, running: boolean } | null} */
-export function cutpurseRun(inc, t, perS, speed) {
+export function cutpurseRun(inc, t, perS, speed, reach = CHASE_M) {
   if (inc.kind !== 'cutpurse' || !(perS > 0) || t < inc.loudFrom || t >= inc.end) return null;
   const s = (t - inc.loudFrom) / perS;
-  const thief = Math.min(CHASE_M, speed * s);
+  const thief = Math.min(reach, speed * s);
   const guard = inc.guard ? Math.max(0, Math.min(thief - CAUGHT_M, speed * Math.max(0, s - 0.6) * 1.15)) : 0;
-  return { thief, guard, running: thief < CHASE_M || (!!inc.guard && guard < thief - CAUGHT_M - 1e-6) };
+  return { thief, guard, running: thief < reach || (!!inc.guard && guard < thief - CAUGHT_M - 1e-6) };
 }
 
 /** LW-STIR: whether an incident's people are any of `ids`. @param {Incident} inc @param {Set<string>} ids */
@@ -396,7 +432,7 @@ export function stirLine(inc, t, lineMin, ctx = {}) {
   if (!who) return null;
   const place = (inc.kind === 'gate' || inc.kind === 'challenge') && ctx.home ? ctx.home
     : ctx.places?.length ? ctx.places[lwSeed(inc.seed, 0x706c6163) % ctx.places.length] : null;   // 'plac'
-  const text = fillLine(line.text, { town: ctx.town, region: ctx.region, place, a: firstNameOf(inc.members[0].name), b: firstNameOf(inc.members[1].name) });
+  const text = fillLine(line.text, { town: ctx.town, region: ctx.region, place, god: inc.god ?? (inc.kind === 'sermon' ? theDivines() : null), a: firstNameOf(inc.members[0].name), b: firstNameOf(inc.members[1].name) });
   return { who, text, loud: line.loud, index };
 }
 

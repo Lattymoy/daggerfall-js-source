@@ -17,8 +17,9 @@
 // Slot ids are the town's and the slot's: `L<mapId>.<slot>` for a household, `L<mapId>.t<slot>` for a traveller,
 // `L<mapId>.w<slot>` for the watch - the same person for every reader, the key a relation is saved under (relations.js).
 import { PERSON_TEXTURES, PERSON_FACE_RECORDS, NUM_PERSON_FACE_VARIANTS, GUARD_TEXTURE, walkerRace, spriteRaceOf } from '../../characters/mobile/mobilePerson.js';
-import { folkOfArea, folkOfRegion, folkRace, folkNameBank, withZone } from '../../characters/provinceFolk.js';   // PROVINCE-FOLK
+import { folkOfArea, folkOfRegion, folkRace, folkNameBank, withZone, folkKeyOf } from '../../characters/provinceFolk.js';   // PROVINCE-FOLK
 import { fullName, GENDERS } from '../../characters/nameHelper.js';
+import { seededPersonName } from '../../characters/personNames.js';   // REGION-NAMES: a resident named by their people's customs and their town's
 import { nameBankOfArea } from '../../characters/areaNameBank.js';   // WW1: an area's people - the region's bank on the Bay
 import { srand, getSeed, setSeed } from '../../formats/dfRandom.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
@@ -34,18 +35,18 @@ export const CENSUS_MAX = 260;
  *  Trimmed at CENSUS_MAX, a city of 42 blocks kept six a block and a village seventeen. */
 export const CENSUS_PER_BLOCK = 10;
 export const CENSUS_CAP = 520;
-/** LW-DENSE: from CROWD_FROM_BLOCKS a town's houses are fuller - each holds crowdOf(town) more on average, to CROWD_MAX
+/** LW-DENSE: from CROWD_FROM_BLOCKS a town's houses are fuller - each holds houseCrowdOf(town) more on average, to CENSUS_CROWD_MAX
  *  at twice that size: minted after everyone the town kept before, on a roll of their own ('c'), so no id moves. */
 export const CROWD_FROM_BLOCKS = 16;
-export const CROWD_MAX = 2;
+export const CENSUS_CROWD_MAX = 2;
 /** LW-DENSE: the crowd's stream, apart from the households' ('cr'), so every one minted before is as they were. */
 const CROWD_SALT = 0x6372;
 /** @param {LwTown} town */
 export const censusMaxOf = (town) => Math.max(CENSUS_MAX, Math.min(CENSUS_CAP, CENSUS_PER_BLOCK * Math.max(1, town.blocks | 0)));
 /** @param {LwTown} town */
-export const crowdOf = (town) => {
+export const houseCrowdOf = (town) => {
   const b = Math.max(1, town.blocks | 0);
-  return b < CROWD_FROM_BLOCKS ? 0 : Math.min(CROWD_MAX, (b - CROWD_FROM_BLOCKS) / CROWD_FROM_BLOCKS);
+  return b < CROWD_FROM_BLOCKS ? 0 : Math.min(CENSUS_CROWD_MAX, (b - CROWD_FROM_BLOCKS) / CROWD_FROM_BLOCKS);
 };
 
 /** The climate's People -> the billboard tables' race: the walkers' one table (characters/mobile/mobilePerson.js, REGIONAL-FOLK). */
@@ -166,7 +167,7 @@ export function mintResident(town, roll, slot, job, at = {}) {
   return {
     id: `L${town.mapId >>> 0}.${roll === 'h' ? '' : roll}${slot}${gen == null ? '' : `~${gen}`}`,
     town: town.mapId >>> 0, slot, roll,
-    name: residentName(seed ^ 0x5eed1e55, people ? folkNameBank(race) : nameBankOfArea(town.area ?? town.region ?? -1), gender),   // WW1: the region's bank on the Bay; PROVINCE-FOLK: past it their own people's
+    name: seededPersonName(seed ^ 0x5eed1e55, people ? folkNameBank(race) : nameBankOfArea(town.area ?? town.region ?? -1), gender, { race, region: town.area ?? town.region ?? -1, home: folkKeyOf(people) }),   // WW1: the region's bank on the Bay; PROVINCE-FOLK: past it their own people's; REGION-NAMES: their customs, their town's region's
     gender, sex: female ? 'female' : 'male', race, variant,
     archive: guard ? GUARD_TEXTURE : set[variant], face, guard, job,
     // WATCH-DAY: a watchman's own clothes, for off duty - one of his people's outfits, drawn on its own stream so the
@@ -375,8 +376,8 @@ export function householdCensus(town, buildings, { quarter = 0 } = {}) {
   // trimmed: the trades kept whole, the common hands to the cap - LW-DENSE: the town's, by its size
   const max = censusMaxOf(town);
   const keep = placed.concat(common.slice(0, Math.max(0, max - placed.length)));
-  // LW-DENSE: a city's houses fuller - each house its crowdOf share more, of the common work, after everyone kept above
-  const crowd = crowdOf(town);
+  // LW-DENSE: a city's houses fuller - each house its houseCrowdOf share more, of the common work, after everyone kept above
+  const crowd = houseCrowdOf(town);
   if (crowd > 0 && keep.length < max) {
     const crng = seededRng(quarter ? lwSeed(town.mapId >>> 0, CROWD_SALT, quarter) : lwSeed(town.mapId >>> 0, CROWD_SALT));
     for (const h of houses) {

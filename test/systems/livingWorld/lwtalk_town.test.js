@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { synthTown, closeTown } from '../../lwTown.mjs';
 import { LivingTown, GREET_REST_MIN, keepUnits, TALK_PULL_M } from '../../../src/systems/livingWorld/livingTown.js';
-import { ResidentWalker, STAND_FRAME, IDLE_GLANCE_YAW } from '../../../src/characters/residentWalker.js';
+import { ResidentWalker, IDLE_GLANCE_YAW, standFrameOf } from '../../../src/characters/residentWalker.js';
 import { PERSON_IDLE_RECORD, PERSON_GUARD_IDLE_RECORD, MOVE_RECORDS, MOVE_FLIPS, PERSON_MOVE_SPEED, PERSON_IDLE_DISTANCE } from '../../../src/characters/mobile/mobilePerson.js';
 import { mobileOrientation } from '../../../src/characters/mobile/mobileUnit.js';
 import {
@@ -59,7 +59,8 @@ test('LW-TALK the facing: a resident standing keeps the way they face - the walk
     const o = mobileOrientation(yaw, p.pos, eye);
     for (let i = 0; i < 8; i++) {
       const out = p.update(0.25, eye, false);
-      assert.deepEqual([out.record, out.frame, out.flip], [MOVE_RECORDS[o], STAND_FRAME, MOVE_FLIPS[o]], `yaw ${yaw}: the way they face, held`);
+      // AUDIT STAND-LIFE B4: PIN MOVED - held on the record's own stand (a side one's legs together, SIDE_STAND_FRAME)
+      assert.deepEqual([out.record, out.frame, out.flip], [MOVE_RECORDS[o], standFrameOf(MOVE_RECORDS[o]), MOVE_FLIPS[o]], `yaw ${yaw}: the way they face, held`);
     }
     assert.equal(p.update(0.1, eye, true).record, PERSON_IDLE_RECORD, 'the gate: turned to the player');
   }

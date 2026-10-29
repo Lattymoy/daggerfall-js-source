@@ -2,7 +2,7 @@
   {
     "name": "STAND-LIFE-stir-unrun",
     "file": "src/characters/residentWalker.js",
-    "old": "    this.stir = this._stirDraw() < 0.5 ? 'glance' : 'shift';",
+    "old": "    this.stir = this._stirDraw() < 0.5 && !this.attending ? 'glance' : 'shift';",
     "new": "    this.stir = null;",
     "tests": [
       "test/systems/livingWorld/standlife_street.test.js",
@@ -12,7 +12,7 @@
   {
     "name": "STAND-LIFE-glance-unturned",
     "file": "src/characters/residentWalker.js",
-    "old": "  get shownYaw() { return this.stir === 'glance' ? this.yaw + this._stirSide * IDLE_GLANCE_YAW : this.yaw; }",
+    "old": "  get shownYaw() { return this.stir === 'glance' && !this.attending ? this.yaw + this._stirSide * IDLE_GLANCE_YAW : this.yaw; }",
     "new": "  get shownYaw() { return this.yaw; }",
     "tests": [
       "test/systems/livingWorld/standlife_street.test.js",
@@ -22,8 +22,8 @@
   {
     "name": "STAND-LIFE-shift-unstepped",
     "file": "src/characters/residentWalker.js",
-    "old": "    if (this.stir !== 'shift' || n < 2) return Math.min(STAND_FRAME, n - 1);",
-    "new": "    if (true) return Math.min(STAND_FRAME, n - 1);",
+    "old": "    if (this.stir !== 'shift' || !frames || n < 4) return Math.min(stand, n - 1);",
+    "new": "    if (true) return Math.min(stand, n - 1);",
     "tests": [
       "test/systems/livingWorld/standlife_street.test.js",
       "test/systems/livingWorld/lwlooks_town.test.js"

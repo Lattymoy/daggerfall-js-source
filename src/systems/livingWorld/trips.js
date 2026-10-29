@@ -1076,6 +1076,25 @@ export function townTrips(town, t, world, o) {
   return out;
 }
 
+/**
+ * LW16 (AUDIT FULLER-LW A7): townTrips a traveller at a time - each one's trips of the day asked (memoTrip keeps them in
+ * the book), a yield after each, then townTrips itself with its book warm. The carried word works the towns about this
+ * way: its slice is one traveller's ways, never a whole town's day (27 ms cold for one town). The same trips.
+ * @param {LwTown} town @param {number} t @param {TripWorld} world @param {{ mpm: number, memo?: Map<string, any> }} o
+ * @returns {Generator<void, Trip[]|undefined, void>}
+ */
+export function* townTripsSteps(town, t, world, o) {
+  const scale = paceScale(o.mpm), day = Math.floor(t / DAY_MIN);
+  if (o.memo && !o.memo.get(`town:${town.mapId}:${day}`)) {
+    for (const res of world.rosterOf(town)) {
+      if (!(rowOf(TRIP_CHANCE, ROAD_TRIP_CHANCE, res.job) > 0)) continue;
+      for (const k of cyclesAbout(res, town, cycleOf(res, day, scale).k, world, scale)) { const holder = world.holderOf ? world.holderOf(res, k) : res; if (holder) memoTrip(holder, town, k, world, o); }
+      yield;
+    }
+  }
+  return townTrips(town, t, world, o);
+}
+
 /** The jobs that ride in a merchant's train when it sets out the day they do, for the town they go to. */
 const JOINS = new Set(['pilgrim', 'courier', 'pedlar']);
 
