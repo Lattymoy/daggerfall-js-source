@@ -5,3 +5,5 @@
 export const DWARVEN_DRAGON_ID = 512;
 /** Its pictures' archive: past Enemy Expansion's 1500-1708, a stand-in (no TEXTURE file carries it). */
 export const DWARVEN_DRAGON_ARCHIVE = 1800;
+/** The Aetherbright's wash over the brass, until its own palette (DRAGON7) - the boss's and a tamed rider's alike. */
+export const AETHERBRIGHT_WASH = Object.freeze([0.62, 0.82, 1.2]);

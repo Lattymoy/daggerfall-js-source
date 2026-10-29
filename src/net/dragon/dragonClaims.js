@@ -6,6 +6,7 @@
 // every DRAGON_CLAIM_RETRY_MS while kept. An answer that settles it lets it go; one that does not keeps it. The service
 // says when the hoard is THIS claim's (`spoils`) and when the kill tamed a dragon (`tamed`, told at every answer while its
 // row stands, so a lost one is told again). Pure - the call, the store and the clocks are handed in. Ledger A (DRAGON).
+import { t } from '../../systems/textManager.js';   // AUDIT DRAGON: the card's row in the player's language
 import { readDragonReceipt } from './dragonReceipt.js';
 import { DRAGON_CLAIM_TEXT } from '../../systems/dragon/dragonWords.js';
 import { noteAct } from '../../systems/questlines/qlActs.js';
@@ -110,4 +111,10 @@ export function createDragonClaims({ claim, store = null, nowS = () => Math.floo
     flush,
     kept,
   };
+}
+/** AUDIT DRAGON: the dragons slain as the account card's row says it (the serpent's serpentRecordText): a count, none yet, or
+ *  null for a service from before it. @param {any} rec */
+export function dragonRecordText(rec) {
+  if (!rec || typeof rec !== 'object' || !Number.isSafeInteger(rec.slain) || rec.slain < 0) return null;
+  return rec.slain > 0 ? String(rec.slain) : t('dragon.card.none', 'None yet');
 }

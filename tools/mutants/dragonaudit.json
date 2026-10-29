@@ -1,0 +1,209 @@
+[
+  {
+    "name": "AUDIT-DRAGON-the-fraction-forgotten",
+    "file": "src/net/dragon/dragonBrain.js",
+    "old": " if (!(f.max > 0)) f.idle = frac; }",
+    "new": " }",
+    "tests": [
+      "test/net/dragon/dragonaudit_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-grounded-at-the-throw",
+    "file": "src/net/dragon/dragonBrain.js",
+    "old": "export const dragonGroundedAt = (f, now) => (f.md === DRAGON_MODE.ground ? now >= (f.ma ?? 0) : now < (f.ma ?? 0));",
+    "new": "export const dragonGroundedAt = (f) => f.md === DRAGON_MODE.ground;",
+    "tests": [
+      "test/net/dragon/dragonaudit_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-the-states-time-dropped",
+    "file": "src/net/dragon/dragonBrain.js",
+    "old": " ma: f.ma ?? 0,",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragonaudit_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-the-span-dropped-at-the-word",
+    "file": "src/net/dragon/dragonBrain.js",
+    "old": "const blowWord = (b) => ({ k: 'atk', i: b.i, a: b.a, at: b.at, wu: b.wu, s: b.s, ...(b.sp ? { sp: b.sp } : {}) });",
+    "new": "const blowWord = (b) => ({ k: 'atk', i: b.i, a: b.a, at: b.at, wu: b.wu, s: b.s });",
+    "tests": [
+      "test/net/dragon/dragonaudit_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-the-span-dropped-at-the-wire",
+    "file": "src/net/wire.js",
+    "old": "  return { i: b.i, a: b.a, at: b.at, wu: b.wu, s: b.s.map((st) => [...st]), ...(b.sp ? { sp: b.sp } : {}) };",
+    "new": "  return { i: b.i, a: b.a, at: b.at, wu: b.wu, s: b.s.map((st) => [...st]) };",
+    "tests": [
+      "test/net/dragon/dragonaudit_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-the-seats-time",
+    "file": "src/net/dragon/dragonBrain.js",
+    "old": "p.stoodMs >= SEAT_KEEP_MS;",
+    "new": "p.stoodMs >= 15_000;",
+    "tests": [
+      "test/net/dragon/dragonaudit_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-none-swept",
+    "file": "server/src/dragonFights.js",
+    "old": "  for (const [k, v] of kept) { last = k; if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k); }",
+    "new": "  for (const [k] of kept) { last = k; }",
+    "tests": [
+      "test/net/dragon/dragonaudit_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-the-live-one-swept",
+    "file": "server/src/dragonFights.js",
+    "old": "  for (const [k, v] of kept) { last = k; if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k); }",
+    "new": "  for (const [k] of kept) { last = k; dead.push(k); }",
+    "tests": [
+      "test/net/dragon/dragonaudit_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-no-retry",
+    "file": "server/src/dragonFights.js",
+    "old": "    if (f.fell && !f.said) at = Math.min(at, now + DRAGON_TELL_RETRY_MS);",
+    "new": "    if (false) at = Math.min(at, now + DRAGON_TELL_RETRY_MS);",
+    "tests": [
+      "test/net/dragon/dragonaudit_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-the-cache-unbounded",
+    "file": "server/src/dragonFights.js",
+    "old": "noRcpt: new Bounded(HUB_KEEP_MAX) });",
+    "new": "noRcpt: new Map() });",
+    "tests": [
+      "test/net/dragon/dragonaudit_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-the-gate-its-own-number",
+    "file": "src/net/wire.js",
+    "old": "export const DRAGON_RELAY_MIN = DRAGON_RIDE_RELAY_MIN;",
+    "new": "export const DRAGON_RELAY_MIN = 281;",
+    "tests": [
+      "test/net/dragon/dragon2_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-the-route-unlisted",
+    "file": "server-account/src/service.js",
+    "old": "  '/v1/dragon/tames',   // AUDIT DRAGON: the tames the service drew, read back\n",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragonaudit_account.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-the-record-off-the-cards",
+    "file": "server-account/src/index.js",
+    "old": "serpents: await serpentRecordOf(ctx, who.player.id), dragons: await dragonRecordOf(ctx, who.player.id), sds:",
+    "new": "serpents: await serpentRecordOf(ctx, who.player.id), sds:",
+    "tests": [
+      "test/net/dragon/dragonaudit_account.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-a-line-for-none",
+    "file": "src/ui/profileWindow.js",
+    "old": "  return Number.isSafeInteger(n) && n > 0 ? t('dragon.card.profile', 'Dragons slain: {n}', { n }) : null;",
+    "new": "  return Number.isSafeInteger(n) ? t('dragon.card.profile', 'Dragons slain: {n}', { n }) : null;",
+    "tests": [
+      "test/net/dragon/dragonaudit_account.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-the-recall-unasked",
+    "file": "src/scenes/dragonRewards.js",
+    "old": "    if (!(host.dragonMountOnline ?? DRAGON_MOUNT_ONLINE) || !characterId || !account.tames) return;\n    const r = await account.tames().catch(() => null);",
+    "new": "    return;\n    const r = await account.tames().catch(() => null);",
+    "tests": [
+      "test/net/dragon/dragonaudit_account.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-another-characters-recalled",
+    "file": "src/scenes/dragonRewards.js",
+    "old": "m && TAME_ID_RE.test(m.id) && m.character === characterId && !have.has(m.id)",
+    "new": "m && TAME_ID_RE.test(m.id) && !have.has(m.id)",
+    "tests": [
+      "test/net/dragon/dragonaudit_account.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-the-line-promising-a-ride",
+    "file": "src/systems/dragon/dragonWords.js",
+    "old": "  tamed: () => (DRAGON_MOUNT_ONLINE ? t('dragon.claim.tamed',",
+    "new": "  tamed: () => (true ? t('dragon.claim.tamed',",
+    "tests": [
+      "test/net/dragon/dragonaudit_account.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-the-riders-look-unread",
+    "file": "src/net/remotePlayers.js",
+    "old": "    if (shown.rd === POSE_RIDE.Dragon) entry.batch.tint = shown.rc === 1 ? AETHERBRIGHT_WASH : null;   // AUDIT DRAGON: a tamed Aetherbright keeps its colours on every screen\n",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragonaudit_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-the-bar-over-the-serpents",
+    "file": "src/scenes/dragonHost.js",
+    "old": "      if ((bar || barUp) && !barBlocked()) { drawBar(bar, { hidden: barHidden() }); barUp = !!bar; }",
+    "new": "      if (bar || barUp) { drawBar(bar, { hidden: barHidden() }); barUp = !!bar; }",
+    "tests": [
+      "test/scenes/dragon3_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-the-bar-left-up",
+    "file": "src/scenes/dragonHost.js",
+    "old": "    away(offline) { if (barUp) { drawBar(null); barUp = false; } host.leave(offline); },",
+    "new": "    away(offline) { host.leave(offline); },",
+    "tests": [
+      "test/scenes/dragon3_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-the-fight-off-the-street",
+    "file": "src/scenes/dragonHost.js",
+    "old": "      try { fight = street() ? host.frame() : (host.leave(), false); }",
+    "new": "      try { fight = host.frame(); }",
+    "tests": [
+      "test/scenes/dragon3_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-dropped-not-set-down",
+    "file": "src/player/dragonRide.js",
+    "old": "  if (what === 'landed' && wasAloft && !mounted && !grounded) _settling = true;   // off it in the air: set down\n",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-the-flight-unheard",
+    "file": "src/player/mountRig.js",
+    "old": "  onDragonFlight((what) => audio.playOneShot(",
+    "new": "  void ((what) => audio.playOneShot(",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  }
+]

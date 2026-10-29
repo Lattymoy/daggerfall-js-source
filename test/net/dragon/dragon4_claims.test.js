@@ -5,6 +5,7 @@
 // until it is bound. tools/mutants/dragon4.json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { createDragonClaims, dragonClaimVerdict, DRAGON_CLAIMS_KEY } from '../../../src/net/dragon/dragonClaims.js';
 import { rollDragonSpoils, dragonSpoilsList, DRAGON_GOLD_PER_LEVEL, DRAGON_SPOILS_LEGENDARY } from '../../../src/systems/dragon/dragonSpoils.js';
 import { createDragonRewards, DRAGON_TAMES_KEY } from '../../../src/scenes/dragonRewards.js';
@@ -99,10 +100,11 @@ test('DRAGON4 the rewards: a counted receipt\'s hoard into the pack through the 
 test('DRAGON4 world: the host\'s wiring - a receipt the link hears to the rewards, the world\'s pack door, the relay\'s clock and the chat\'s line handed in, its claims ticked in every mode, its hoard\'s crash door at a stand-up and the realm save\'s two hooks (mutants: each wire cut)', async () => {
   const { hostText } = await import('../../hostText.mjs');
   const w = hostText('src/scenes/world.js');
+  const h = readFileSync(new URL('../../../src/scenes/dragonHost.js', import.meta.url), 'utf8');
+  assert.ok(h.includes('onReceipt: (r) => host?.receipt(r) });'), 'PIN MOVED (AUDIT DRAGON): the receipt from the link, in the sky the dragon\'s host makes');
+  assert.ok(h.includes('host.tick();   // DRAGON4: its receipts offered in their time, in any mode'), 'PIN MOVED (AUDIT DRAGON): ticked in the sky\'s online frame');
   for (const wired of [
-    'onReceipt: (r) => dragonSky?.receipt(r) })',
     'takeSpoil, relayNowS, chatNotice: (text) => chatNotice(text),',
-    'dragonSky.tick();',
     'dragonSky?.recoverSpoils(who, _spoilsInSave);',
     '...(dragonSky?.spoilsHeld(who) ?? [])',
     'dragonSky?.spoilsSaved(who, ids);',

@@ -344,7 +344,7 @@ test('WB5b the seams: the gate link tells every receipt it folds; the world host
   assert.match(w, /\n    onReceipt: \(r\) => \{ gateClaims\?\.add\(r\); grantSpoilsOutside\(r\); \},/);
   assert.match(w, /\n    gateClaims\?\.tick\(\);   \/\/ WB5b/);
   assert.match(w, /duels: _profileSub \? profileDuelLine\(rec\) : null, \.\.\.profileRecordLines\(rec\) \};/);   // AUDIT SD II (L5 F1, PIN MOVED): and the towns, the serpents and the Hours, off the same record; KETCH (PIN MOVED): all of the record's lines through one door (ui/profileWindow.js profileRecordLines) - the gates', the voyages' with them
-  assert.deepEqual(Object.keys(profileRecordLines({})), ['gates', 'raids', 'serpents', 'hours', 'stars', 'voyages']);
+  assert.deepEqual(Object.keys(profileRecordLines({})), ['gates', 'raids', 'serpents', 'dragons', 'hours', 'stars', 'voyages']);   // AUDIT DRAGON (PIN MOVED): the dragons slain, after the serpents
   assert.ok(w.indexOf('const gateClaims = ') < w.indexOf('const gateLink = '), 'the queue stands before the link that feeds it');
 });
 

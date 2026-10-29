@@ -23,7 +23,7 @@ import { sceneCompassWord } from '../systems/compassWords.js';
 import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
 import { stateAnims, PRIMARY_ATTACK_ANIM_SPEED, HURT_ANIM_SPEED } from '../characters/mobile/mobileUnit.js';
 import { mobileBillboardSize } from '../world/rmbFlats.js';
-import { DWARVEN_DRAGON_ID, DWARVEN_DRAGON_ARCHIVE } from '../characters/dwarvenDragonId.js';
+import { DWARVEN_DRAGON_ID, DWARVEN_DRAGON_ARCHIVE, AETHERBRIGHT_WASH } from '../characters/dwarvenDragonId.js';
 import { playerEntity, hurtPlayer, surfacePlayer } from '../characters/playerEntity.js';
 import { playerPainVoice, playPlayerVoice } from './hostCombat.js';
 import { flashPlayerDamage } from '../ui/damageFlash.js';
@@ -33,6 +33,9 @@ import { TELEGRAPH_STYLE, TELEGRAPH_EDGE, TELEGRAPH_POOL, TELEGRAPH_KIND } from 
 import { DragonTelegraphPass, drapeBounds, drapeGrid } from '../render/dragon/dragonTelegraph.js';
 import { dragonName, dragonTitle, DRAGON_WORDS, DRAGON_BLOW_NAMES, DRAGON_NO_TEXT } from '../systems/dragon/dragonWords.js';
 import { createDragonRewards } from './dragonRewards.js';   // DRAGON4: its receipts carried, its hoard given, a tame kept
+import { createDragonSites } from '../systems/dragon/dragonSite.js';   // AUDIT DRAGON: the sky made whole here (createDragonSky)
+import { createDragonLink } from '../net/dragon/dragonLink.js';
+import { dragonBarModel } from '../ui/dragonBar.js';
 
 /** Its drawn size over its sprite's own (a wingspan near 19 m), how far it is drawn and heard, and the sighting's reach (m). */
 export const DRAGON_SCALE = 1.6;
@@ -58,7 +61,7 @@ export const DRAGON_HITS_QUEUED = 8;
 /** A target's id in the shots' field and a missile's marks. */
 export const DRAGON_TARGET = 'dragon:0';
 /** The Aetherbright's wash until its own palette (DRAGON7), its remains' (its glow out), and the blows' colours by element. */
-export const AETHER_WASH = Object.freeze([0.62, 0.82, 1.2]);
+export const AETHER_WASH = AETHERBRIGHT_WASH;   // AUDIT DRAGON: one home, the peers' riders read it too
 export const REMAINS_WASH = Object.freeze([0.42, 0.4, 0.38]);
 const COLOR_OF = Object.freeze({ fire: [1.0, 0.45, 0.1], shock: [0.6, 0.7, 1.0], null: [1.0, 0.62, 0.22] });
 const STYLE_OF = Object.freeze({ fire: TELEGRAPH_STYLE.fire, shock: TELEGRAPH_STYLE.shock });
@@ -400,3 +403,33 @@ export function createDragonHost(deps) {
   };
 }
 
+/**
+ * AUDIT DRAGON (HOST-SPLIT: bootWorld kept the dragon's frame, its away and its bar's state): THE WORLD'S DRAGON, MADE
+ * WHOLE - its sites over the gate's scans, the cell's link and its host, its online frame and its away, so the world
+ * host wires it and holds none of it. `bayScan`/`theatres` the gate's; `street()` on the street with a character up;
+ * `barBlocked()` another boss's bar up (the serpent's); `barHidden()`; `drawBar(model, opts)` the gate's bar; `makeHost` the tests'.
+ * @param {any} deps createDragonHost's, and those
+ */
+export function createDragonSky({ bayScan, theatres, street, barBlocked = () => false, barHidden = () => false, drawBar, makeHost = createDragonHost, ...deps }) {
+  const sites = createDragonSites({ bayScan, theatres });
+  /** @type {any} */
+  let host = null;
+  const link = createDragonLink({ now: deps.now, say: (code) => host?.refused(code), site: () => host?.site() ?? null, onReceipt: (r) => host?.receipt(r) });
+  host = makeHost({ ...deps, link, sites });
+  let barUp = false;
+  return Object.assign(host, {
+    /** A word of its cell's (or my receipt from the hub). @param {any} w */
+    word: (w) => link.word(w),
+    /** The online frame's (after the serpent's): on the street, to the dead too, its sky, its fight and its bar. */
+    onlineFrame() {
+      host.tick();   // DRAGON4: its receipts offered in their time, in any mode
+      let fight = false;
+      try { fight = street() ? host.frame() : (host.leave(), false); } catch (e) { console.warn('[dragon] frame', e?.message ?? e); }
+      const bar = fight ? dragonBarModel(host.bar()) : null;
+      if ((bar || barUp) && !barBlocked()) { drawBar(bar, { hidden: barHidden() }); barUp = !!bar; }
+    },
+    /** No online frame: its bar put away; offline, its fight forgotten. @param {boolean} [offline] */
+    away(offline) { if (barUp) { drawBar(null); barUp = false; } host.leave(offline); },
+    barUp: () => barUp,
+  });
+}

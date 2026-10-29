@@ -4,6 +4,7 @@
 // in the player's language. Each goes through the text core (`t`) when it is read, never at import. Not a DFU member.
 // Ledger A (DRAGON).
 import { t } from '../textManager.js';
+import { DRAGON_MOUNT_ONLINE } from './dragonMount.js';
 
 /** Its names by look (0 the brass, 1 the Aetherbright), and its epithet. */
 export const dragonName = (b) => (b ? t('dragon.name.shiny', 'The Aetherbright Dragon') : t('dragon.name', 'The Dwarven Dragon'));
@@ -70,7 +71,8 @@ export const DRAGON_SPOILS_TEXT = Object.freeze({
 export const DRAGON_CLAIM_TEXT = Object.freeze({
   recorded: (n) => t('dragon.claim.recorded', 'The dragon\'s fall is on your record. Dragons slain: {n}.', { n }),
   guest: () => t('dragon.claim.guest', 'This dragon is not on your record yet: only registered accounts keep one. Add a username this week and it counts.'),
-  tamed: () => t('dragon.claim.tamed', 'Its core still turns. The Dwarven Dragon is yours.'),
+  // AUDIT DRAGON: while the mount waits (DRAGON_MOUNT_ONLINE off - REST6's law), the line says so, never a dragon not given
+  tamed: () => (DRAGON_MOUNT_ONLINE ? t('dragon.claim.tamed', 'Its core still turns. The Dwarven Dragon is yours.') : t('dragon.claim.tamedWaits', 'Its core still turns. The Dwarven Dragon is yours to ride after a later update.')),
   /** DRAGON5: bound into the pack. */
   bound: () => t('dragon.claim.bound', 'The Dwarven Dragon is yours. Ride it from the Transport window.'),
 });

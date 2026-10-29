@@ -448,10 +448,7 @@ import { createSerpentOmen, insideSerpentRing, SERPENT_OMEN_SETTLE_MS } from '..
 import { worldSerpentSite } from '../systems/serpent/serpentSite.js';   // SERPENT1: where it rises - on a packet lane, in open sea; WW7-12: the world's lanes', or the hub's word of it
 import { createSerpentLink } from '../net/serpent/serpentLink.js'; import { readSerpentReceipt } from '../net/serpent/serpentReceipt.js';   // SERPENT1: the cell's words of its fight, folded; a receipt's day, seed and earning
 import { createSerpentHost } from './serpentHost.js';   // SERPENT1: the client's half of the fight - the `in`, the volleys, the blows on my ship, the coil and the whirl
-import { createDragonHost, dragonBoxesWith } from './dragonHost.js';   // DRAGON3: the Dwarven Dragon on this screen - its sky, its fight, its blows on me and mine on it
-import { createDragonLink } from '../net/dragon/dragonLink.js';   // DRAGON3: the cell's words for this machine's site
-import { createDragonSites } from '../systems/dragon/dragonSite.js';   // DRAGON3: where it comes down - the gate's scans
-import { dragonBarModel } from '../ui/dragonBar.js';   // DRAGON3: its bar in brass
+import { createDragonSky, dragonBoxesWith } from './dragonHost.js';   // DRAGON3: the Dwarven Dragon on this screen - its sky, its fight, its blows on me and mine on it (AUDIT DRAGON: made whole there)
 import { SerpentRenderer } from '../render/serpentRender.js';   // SERPENT1: its body over and under the sea, its telegraphs, the maelstrom and the venom
 import { createSdFightLink } from '../net/superDungeon/sdFightLink.js';   // SD8c: the realm's fight as the page holds it
 import { createSdRemnantBlows } from './superDungeon/sdRemnantBlows.js';   // SD8d: its blows on me - seen, heard, judged on my feet
@@ -20298,7 +20295,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     online.onSdReceipt = (r, room) => { sdClaims?.add(r); sdSpoilsReceipt(r, room); };   // SD9b: my Hour receipt (my realm's at the fall, the hub's at a hello) - to the account service, kept until it is counted; SD9e: and its spoils
     online.onEg = (w, room) => egClient?.word(w, room);   // EG-PLAY: my breach room's word - its state, its fights, my receipts
     online.onKetch = (w) => ketch?.word(w);   // KETCH: my ship's room's word - its voyage, its fights, its cells, my receipt
-    online.onDragon = (w) => { if (w?.k === 'bd') bossCountFell(!!dragonSky?.near()); else dragonLink?.word(w); };   // DRAGON3: a dragon's cell's word, or my receipt from the hub; INT11: the relay's count's fall of me
+    online.onDragon = (w) => { if (w?.k === 'bd') bossCountFell(!!dragonSky?.near()); else dragonSky?.word(w); };   // DRAGON3: a dragon's cell's word, or my receipt from the hub; INT11: the relay's count's fall of me
     online.onSerpent = (w) => { if (w?.k === 'bd') serpentHost?.wrecked?.(w); else serpentLink?.word(w); };   // SERPENT1: the sea serpent's cell's word (on my cell's socket or a halo's) - its fight, its swim, its blows, my receipt
     online.onRaid = (f, room) => raidRelayWord(f, room);   // RAID3: a town cell's word about its raid - the ledger, the cleanse, my receipt
     online.onRite = (w) => riteHost?.onBroken(w);   // WB12d: the hub's broken rite
@@ -23605,10 +23602,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // DRAGON3 (bible/11-Multiplayer/Dwarven-Dragon.md): THE DWARVEN DRAGON - where it comes down (the gate's scans), the cell's
   // words for this machine's site, and its host (scenes/dragonHost.js). Online alone: the relay runs its fight. The Bay's
   // scan is read once its slices are whole, never forced in a frame (AUDIT WB C7).
-  const dragonSites = params.has('online') ? createDragonSites({ bayScan: () => (warmGateScan(), _gateScan), theatres: () => theatreGates }) : null;
-  const dragonLink = dragonSites ? createDragonLink({ now: () => Date.now() + _sharedOffsetMs, say: (code) => dragonSky?.refused(code), site: () => dragonSky?.site() ?? null, onReceipt: (r) => dragonSky?.receipt(r) }) : null;
-  dragonSky = dragonLink ? createDragonHost({
-    now: () => Date.now() + _sharedOffsetMs, link: dragonLink, sites: dragonSites,
+  dragonSky = params.has('online') ? createDragonSky({
+    bayScan: () => (warmGateScan(), _gateScan), theatres: () => theatreGates,
+    street: () => (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned, barBlocked: () => _serpentBarUp, barHidden: () => gamePaused() || !!townTalk.hudHidden, drawBar: drawGateBossBar,
+    now: () => Date.now() + _sharedOffsetMs,
     online: { ready: (cell) => !!online?.dragonReady?.(cell), send: (w, cell) => !!online?.sendDragon?.(w, cell) },
     local: (nx, nz) => state.localFromWorld(nx, nz), native: (x, z) => { const w = state.worldCoords([x, 0, z]); return [w.x, w.z]; },
     ground: (x, z) => surfaceAt(x, z), feet: () => player.feetAt(), eye: () => cam.pos, level: () => playerEntity.level ?? 1,
@@ -23616,18 +23613,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     say: (text, sec) => townTalk.say(text, sec), mid: (text, sec) => setMidScreenText(text, sec),
     takeSpoil, relayNowS, chatNotice: (text) => chatNotice(text),   // DRAGON4: its rewards' (scenes/dragonRewards.js) - the pack's door, the relay's clock, the chat's line (declared below: read at the call)
   }) : null;
-  let _dragonBarUp = false;
-  /** The dragon's frame (the online frame's, after the serpent's): on the street, to the dead too, its sky, its fight and its bar. */
-  const dragonFrame = () => {
-    if (!dragonSky) return;
-    dragonSky.tick();   // DRAGON4: its receipts offered in their time, in any mode
-    let fight = false;
-    try { fight = (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned ? dragonSky.frame() : (dragonSky.leave(), false); } catch (e) { console.warn('[dragon] frame', e?.message ?? e); }
-    const bar = fight ? dragonBarModel(dragonSky.bar()) : null;
-    if ((bar || _dragonBarUp) && !_serpentBarUp) { drawGateBossBar(bar, { hidden: gamePaused() || !!townTalk.hudHidden }); _dragonBarUp = !!bar; }
-  };
-  /** No online frame: its bar put away; offline, its fight forgotten. */
-  const dragonAway = (offline) => { if (_dragonBarUp) { drawGateBossBar(null); _dragonBarUp = false; } dragonSky?.leave(offline); };
   /** SERPENT1: the compass's mark - where it hunts, in THIS scene, while it swims and the player stands in its ring. */
   const serpentCompassMark = () => {
     const sw = serpentOmen?.swimming?.();
@@ -27693,7 +27678,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     _mailFrameAt = performance.now();   // MAIL1: the letterbox looks while this lane runs - SCALE4c: on the heartbeat (its part, above), before the dead return as the chat's heartbeat is
     gateFrame();   // WB1: the Oblivion Gate's omen - its line when a new moment comes, before the dead return (the omen speaks to the dead too)
     serpentFrame();   // SERPENT1: the sea serpent's sighting (to the dead too), and on the street its fight and its bar
-    dragonFrame();   // DRAGON3: the Dwarven Dragon in the sky, and on the street its fight and its bar
+    dragonSky?.onlineFrame();   // DRAGON3: the Dwarven Dragon in the sky, and on the street its fight and its bar
     sdFrame();   // SD2b: the Hollow stood or taken down, its find, its lines - SD2d: in every mode, so its end reaches a player inside it
     egFrame();   // EG-PLAY: an Elite Breach - its call, its halls, its fight, its tracker, its receipts - in every mode
     try { ketch?.frame(); } catch (e) { console.warn('[kt] frame', e?.message ?? e); }   // KETCH: the voyage's words, the sky, the ship aboard, the receipts - in every mode
@@ -31278,7 +31263,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     saddleDrawPanel();   // STEED-UI: the saddle panel, as the helm's below - every mode, so a door takes it down
     csaDrawHelmPanel();   // CSA-L: the helm panel, once a frame in every mode
     spoilsRecoverFrame();   // WB5: a boss's spoils no save holds, back to their character as it stands up - before it can save, online or not
-    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else { if (_peerCandleLights.length) peerCandlesFrame([], dt);   /* PEERLIGHT2: offline, no one's candle stays lit */ serpentAway(!onlineOn); /* SERPENT1: its bar put away - offline, my ship let go of its coil */ dragonAway(!onlineOn); /* DRAGON3: and the dragon's */ sdFightAway(); /* SD8c: and the Remnant's */ if (!onlineOn && modes?.gateArenaDay?.() != null) { ejectFromCourt(COURT_TEXT.collapse); gateCourt?.leave(); /* AUDIT SS: and its floor into the pack - online, the frame's own court does it */ } if (player.arena) player.arena = modes?.gateArenaDay?.() != null ? courtRing() : null; if (!player.arena) player.arena = arenaBouts.ring(); /* ARENA2: my bout's ring on the arena's sand */ siegeHud?.hide(); /* AUDIT-SEATS C1: no online frame (a load, a spawn), no battle's tick - its HUD hidden, never frozen; the next tick draws it again */ }   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone; WB3b: the court's is its floor's, and offline there is no court   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
+    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else { if (_peerCandleLights.length) peerCandlesFrame([], dt);   /* PEERLIGHT2: offline, no one's candle stays lit */ serpentAway(!onlineOn); /* SERPENT1: its bar put away - offline, my ship let go of its coil */ dragonSky?.away(!onlineOn); /* DRAGON3: and the dragon's */ sdFightAway(); /* SD8c: and the Remnant's */ if (!onlineOn && modes?.gateArenaDay?.() != null) { ejectFromCourt(COURT_TEXT.collapse); gateCourt?.leave(); /* AUDIT SS: and its floor into the pack - online, the frame's own court does it */ } if (player.arena) player.arena = modes?.gateArenaDay?.() != null ? courtRing() : null; if (!player.arena) player.arena = arenaBouts.ring(); /* ARENA2: my bout's ring on the arena's sand */ siegeHud?.hide(); /* AUDIT-SEATS C1: no online frame (a load, a spawn), no battle's tick - its HUD hidden, never frozen; the next tick draws it again */ }   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone; WB3b: the court's is its floor's, and offline there is no court   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
     deadlandsAirFrame();   // WB6b: after the court's ways out have run, online or not - the frame it is gone is the frame its air falls silent
     sdAirFrame();   // SD14b: and the Hour's, the same way
     if (onlineOn && playerSpawned && (seatOut() || townTalk.overlay instanceof DeathScreen || modes?.deathUp?.())) { siegeHud?.hide(); siegeNpcs?.leave(); }   // AUDIT SEATS-2 C4: the dead and a tab out of the seat draw no battle - the online frame returns before its tick

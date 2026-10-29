@@ -5,7 +5,7 @@
 // Crash Landing, where every blow lands heavier. Its blows are the Spire's shape stamps (net/eliteGates/egShape.js), each
 // held to its escape floor; its numbers are the gate's level-claim law. Pure: `rng` handed in. Ledger A (DRAGON).
 import { egBlowOf, shDisc, shLane, shCone, shRing, egStampOk } from '../eliteGates/egShape.js';
-import { clampLv, dpsRef, BUCKET_RATE_X, BUCKET_DEPTH_X, HIT_CAP_X, HIT_KINDS, MELEE_REACH, POSE_SLACK, THREAT_PICK, THREAT_DECAY } from '../gate/gateBrain.js';
+import { clampLv, dpsRef, BUCKET_RATE_X, BUCKET_DEPTH_X, HIT_CAP_X, HIT_KINDS, MELEE_REACH, POSE_SLACK, THREAT_PICK, THREAT_DECAY, SEAT_KEEP_MS } from '../gate/gateBrain.js';
 import { DRAGON_BRAIN_V } from './dragonLaw.js';
 import { DRAGON_BODY_R, CIRCLE_ALT, ROOST_R, ROOST_ALT, WALK_V, DRAGON_ARENA_R, lineLeg, orbitLeg, orbitFrom, fallLeg, climbLeg, planAt, planEnd, legOf } from './dragonBody.js';
 import { DRAGON_LEGS_MAX, DRAGON_CHART_MAX } from '../wire.js';   // the most legs a state names, the chart's rows - the wire's own bounds
@@ -128,7 +128,7 @@ export function newDragonFight({ w, b, sx, sz, now, leaveAt, roost }) {
   return {
     v: DRAGON_BRAIN_V, w, b: b ? 1 : 0, sx, sz, startedAt: now, beatAt: now, leaveAt, openUntil: now + DRAGON_OPENING_MS,
     players: /** @type {Record<string, any>} */ ({}), threat: /** @type {Record<string, number>} */ ({}), target: null,
-    max: 0, hp: 0, ph: 1, shieldUntil: 0, md: DRAGON_MODE.air, mdUntil: 0,
+    max: 0, hp: 0, ph: 1, shieldUntil: 0, md: DRAGON_MODE.air, ma: 0, mdUntil: 0,
     legs: [orbitFrom(p, now, 55, roost.sd, CIRCLE_ALT, DRAGON_OPENING_MS)],
     blows: /** @type {any[]} */ ([]), seq: 0, busyUntil: now + DRAGON_OPENING_MS, last: /** @type {number[]} */ ([]), airCount: 0, airBeforeLand: AIR_BLOWS_MIN,
     hpSaidAt: 0, hpSaid: -1, stSaidAt: now, liveMs: 0, fell: /** @type {any} */ (null), gone: /** @type {any} */ (null),
@@ -137,9 +137,14 @@ export function newDragonFight({ w, b, sx, sz, now, leaveAt, roost }) {
 
 /** Where the dragon stands at `t` (the site's frame). @param {any} f @param {number} t */
 export const dragonPlaceAt = (f, t) => planAt(f.legs, t) ?? { x: 0, z: 0, a: CIRCLE_ALT, yw: 0 };
-/** Does a fighter have a real part in it - a blow worth its earned share, or a quarter of a minute stood? */
-export const dragonHasPart = (p) => p.dealt >= DRAGON_DEALT_SHARE * p.share || p.stoodMs >= 30_000;
-const standsAt = (f) => (f.max > 0 ? Math.max(0, Math.min(1, f.hp / f.max)) : 1);
+/** Does a fighter have a real part in it - a blow worth its earned share, or the gate's SEAT_KEEP_MS stood (half a minute)? */
+export const dragonHasPart = (p) => p.dealt >= DRAGON_DEALT_SHARE * p.share || p.stoodMs >= SEAT_KEEP_MS;
+/** Is it on the ground at `now` - its mode as of the time it takes hold (`ma`: a Crash Landing's landing, a Takeoff Gust's
+ *  lift), so a blow in its dive is an airborne one. @param {any} f @param {number} now */
+export const dragonGroundedAt = (f, now) => (f.md === DRAGON_MODE.ground ? now >= (f.ma ?? 0) : now < (f.ma ?? 0));
+/** AUDIT DRAGON: THE FRACTION IT STANDS AT - while every share is out of it, the fraction it stood at as the last left
+ *  (`idle`, the gate's AUDIT WBX2 M2): a return, or a newcomer, never heals it. */
+const standsAt = (f) => (f.max > 0 ? Math.max(0, Math.min(1, f.hp / f.max)) : Number.isFinite(f.idle) ? f.idle : 1);
 
 /**
  * A fighter in: the gate's join, the dragon's numbers. A late one's share joins at the fraction the dragon stands at, its
@@ -159,7 +164,7 @@ export function joinDragonFight(f, sub, name, lv, now, admits, present = null) {
     bucketAt: now, rate: DRAGON_HIT_HZ_MAX, rateAt: now, stoodMs: 0, joinedAt: now, seenAt: now, retired: false, hits: 0, best: 0 };
   return true;
 }
-function shareOut(f, share) { const frac = standsAt(f); f.max = Math.max(0, f.max - share); f.hp = f.max * frac; }
+function shareOut(f, share) { const frac = standsAt(f); f.max = Math.max(0, f.max - share); f.hp = f.max * frac; if (!(f.max > 0)) f.idle = frac; }
 /** A fighter gone DRAGON_ABSENT_RETIRE_MS: its share out of the health, at the fraction it stands at. */
 export function retireDragonShare(f, p) { if (p.retired) return; shareOut(f, p.share); p.retired = true; }
 /** ...and back in as it returns, at the fraction it stands at - a return never heals it. */
@@ -191,7 +196,7 @@ export function applyDragonHit(f, sub, d, r, pose, now) {
   if (p.rate < 1) return 0;
   p.rate -= 1;
   if (!pose || !Number.isFinite(pose.x) || !Number.isFinite(pose.z)) return 0;
-  const at = dragonPlaceAt(f, now), grounded = f.md === DRAGON_MODE.ground, gap = dist(pose.x, pose.z, at.x, at.z) - DRAGON_BODY_R;
+  const at = dragonPlaceAt(f, now), grounded = dragonGroundedAt(f, now), gap = dist(pose.x, pose.z, at.x, at.z) - DRAGON_BODY_R;
   if (r === HIT_KINDS.Melee ? !grounded || gap > MELEE_REACH + POSE_SLACK : gap > DRAGON_SHOT_R) return 0;
   p.seenAt = now; restoreDragonShare(f, p);
   const ref = dpsRef(p.lv);
@@ -250,7 +255,7 @@ export function dragonResume(f, now) {
 }
 
 const mvWord = (f) => ({ k: 'mv', legs: f.legs });
-const blowWord = (b) => ({ k: 'atk', i: b.i, a: b.a, at: b.at, wu: b.wu, s: b.s });
+const blowWord = (b) => ({ k: 'atk', i: b.i, a: b.a, at: b.at, wu: b.wu, s: b.s, ...(b.sp ? { sp: b.sp } : {}) });   // AUDIT DRAGON: a sweep's span (the Strafing Run's) rides with it
 
 /** The fighters about it now: living bodies of the fight within DRAGON_ENGAGE_R of its body. */
 function fightersAbout(f, bodies, at) {
@@ -400,6 +405,7 @@ function crash(f, now, at, T, rng) {
   f.legs = [lineLeg(now, lead, [at.x, at.z, at.a], [l[0], l[1], 25], yw), lineLeg(now + lead, blow.at - (now + lead), [l[0], l[1], 25], [l[0], l[1], 0], yw, 1),
     lineLeg(blow.at, 0, [l[0], l[1], 0], [l[0], l[1], 0], yw)];
   f.md = DRAGON_MODE.ground;
+  f.ma = blow.at;   // AUDIT DRAGON: on the ground from its landing, never its dive
   f.mdUntil = blow.at + (f.ph >= 3 ? GROUNDED_MS_P3 : GROUNDED_MS);
   f.airCount = 0;
   f.airBeforeLand = AIR_BLOWS_MIN + (rng() < 0.5 ? 1 : 0);
@@ -437,6 +443,7 @@ function gust(f, now, at, rng) {
   f.legs = [lineLeg(now, blow.at - now, [at.x, at.z, 0], [at.x, at.z, 0], at.yw), lineLeg(blow.at, GUST_CLIMB_MS, [at.x, at.z, 0], [at.x, at.z, CIRCLE_ALT], at.yw)];
   f.legs.push(orbitFrom({ x: at.x, z: at.z, a: CIRCLE_ALT }, blow.at + GUST_CLIMB_MS, 55, sideOf(rng)));
   f.md = DRAGON_MODE.air;
+  f.ma = blow.at;   // on the ground until its wings lift it
   f.busyUntil = blow.at + GUST_CLIMB_MS + RECOVER_AIR_MS;
   return [{ k: 'mv', legs: f.legs }, blowWord(blow), { k: 'md', m: DRAGON_MODE.air, at: blow.at, until: 0 }];
 }
@@ -446,7 +453,7 @@ function gust(f, now, at, rng) {
 export function dragonStateOf(f) {
   return {
     k: 'st', w: f.w, b: f.b, sx: f.sx, sz: f.sz, ph: f.ph, h: Math.round(f.hp), m: Math.round(f.max), md: f.md, mu: f.mdUntil, sh: f.shieldUntil,
-    legs: f.legs.slice(-DRAGON_LEGS_MAX), blows: f.blows.slice(-DRAGON_BLOWS_KEPT).map((b) => ({ i: b.i, a: b.a, at: b.at, wu: b.wu, s: b.s })),
+    legs: f.legs.slice(-DRAGON_LEGS_MAX), blows: f.blows.slice(-DRAGON_BLOWS_KEPT).map((b) => ({ i: b.i, a: b.a, at: b.at, wu: b.wu, s: b.s, ...(b.sp ? { sp: b.sp } : {}) })), ma: f.ma ?? 0,
     n: Object.values(f.players).filter((p) => !p.retired).length, lv: f.leaveAt, op: f.openUntil,
     fell: f.fell ? { at: f.fell.at, top: f.fell.top, n: f.fell.n } : null, gone: f.gone ? f.gone.at : null,
   };

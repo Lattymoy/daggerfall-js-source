@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { DRAGON_MOUNT_TEMPLATE, DRAGON_MOUNT_ONLINE, newDragonMount, hasDragon, dragonMountOf, dragonLookOfItem, dragonMountWellFormed } from '../../../src/systems/dragon/dragonMount.js';
 import { createDragonFlight, TAKEOFF_HOLD_S, DRAGON_FLY_SPEED, LEVITATE_PACE, DRAGON_LAND_AFTER_S, DRAGON_GLIDE_SINK } from '../../../src/systems/dragon/dragonFlight.js';
-import { dragonAloft, setDragonWinded, onDragonFlight, _resetDragonRide, DRAGON_CATCH_S } from '../../../src/player/dragonRide.js';
+import { dragonAloft, onDragonFlight, _resetDragonRide, DRAGON_CATCH_S, DRAGON_SET_DOWN_SINK } from '../../../src/player/dragonRide.js';
 import { createDragonSaddle } from '../../../src/player/dragonSaddle.js';
 import { TRANSPORT_MODES, isRiding, isHorseRide, toggleMount, rideBaseFor, DF_RIDE_BASE } from '../../../src/systems/transport.js';
 import { PlayerMotor, LEVITATE_MOVE_SPEED, flySpeedMult } from '../../../src/player/motor.js';
@@ -111,7 +111,25 @@ test('DRAGON5 the flight on the real motor: held jump up, 25 m/s forward aloft, 
   c.setTransportMode(TRANSPORT_MODES.Dragon);
   for (let i = 0; i < Math.ceil(DRAGON_CATCH_S * 60) + 2; i++) { c.levitating = dragonAloft(); c.update(1 / 60, input({}), 0, 0); }
   assert.equal(dragonAloft(), true, 'caught');
-  setDragonWinded(() => false);
+  _resetDragonRide();
+  // AUDIT DRAGON: off it in the air (a flag's dismount, Foot picked) the rider is set down - never dropped - and jump
+  // held slows the sink, never stops it
+  const s = new PlayerMotor(new Collider(() => 0));
+  s.pos = [0, 0, 0]; s.grounded = true;
+  s.setTransportMode(TRANSPORT_MODES.Dragon);
+  const fly = (n, o) => { for (let i = 0; i < n; i++) { s.levitating = dragonAloft(); s.update(1 / 60, input(o), 0, 0); } };
+  fly(30, { jump: true, up: true }); fly(120, { up: true });
+  const high = s.pos[1];
+  assert.ok(high > 20, `up ${high.toFixed(1)} m`);
+  s.setTransportMode(TRANSPORT_MODES.Foot);
+  let worst = 0;
+  const down = (o) => { s.levitating = dragonAloft(); s.update(1 / 60, input(o), 0, 0); worst = Math.max(worst, s.landedFallDistance || 0); };
+  for (let i = 0; i < 1800 && !s.grounded; i++) down({ jump: true, up: true });
+  assert.equal(s.grounded, true, 'set down, jump held or not');
+  down({}); down({});   // the motor lands a fall the step after the ground meets it
+  assert.equal(worst, 0, 'no fall');
+  assert.equal(dragonAloft(), false, 'and on the ground, on foot');
+  assert.equal(DRAGON_SET_DOWN_SINK, 2);
   _resetDragonRide();
   assert.match(src('src/scenes/shared.js'), /\|\| staffFly\(\) \|\| freeFlight\(\) \|\| dragonAloft\(\);/, 'the hosts\' levitation term');
 });
@@ -219,4 +237,19 @@ test('DRAGON5 the bind: a tame the service drew becomes its character\'s Dwarven
     assert.equal(playerEntity.items.length, 1);
     assert.deepEqual(on.tames(), [], 'and it is let go');
   } finally { playerEntity.items = was.items; playerEntity.characterId = was.id; }
+});
+
+test('AUDIT DRAGON the rig hears the flight: its takeoff the dragon\'s roar an octave down, its landing the body\'s thud pitched down, on the mount\'s volume (mutants: the flight unheard)', () => {
+  _resetDragonRide();
+  const shots = [];
+  const player = { grounded: true, transportMode: TRANSPORT_MODES.Foot, standing: true, setTransportMode(m) { this.transportMode = m; } };
+  createMountRig({ renderer: {}, canvas: {}, fetchBytes: async () => { throw new Error('none'); }, palette: null, audio: { playOneShot: (clip, vol, pitch) => shots.push([clip, pitch]), setLoop() {} }, player, playerEntity: { items: [] }, showOverlay() {} });
+  const m = new PlayerMotor(new Collider(() => 0));
+  m.pos = [0, 0, 0]; m.grounded = true;
+  m.setTransportMode(TRANSPORT_MODES.Dragon);
+  const input = (o) => ({ forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, ...o });
+  for (let i = 0; i < 40; i++) { m.levitating = dragonAloft(); m.update(1 / 60, input({ jump: true, up: true }), 0, 0); }
+  for (let i = 0; i < 300; i++) { m.levitating = dragonAloft(); m.update(1 / 60, input({ down: true }), 0, 0); }
+  assert.deepEqual(shots.map((s) => s[1]), [0.5, 0.6], 'the takeoff, then the landing');
+  _resetDragonRide();
 });

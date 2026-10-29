@@ -6477,8 +6477,10 @@ export const DRAGON_OUT_KINDS = Object.freeze(['st', 'mv', 'atk', 'hp', 'ph', 'm
 /** The dragon frames' own bucket: its blow rate (net/dragon/dragonBrain.js DRAGON_HIT_HZ_MAX, 4), the `in`, slack. */
 export const DRAGON_HZ_MAX = 8;
 export const dragonGate = (bucket, nowMs) => tokenGate(bucket, nowMs, DRAGON_HZ_MAX);
-/** The first relay that keeps a dragon's fight; an older one closes the socket on the frame, so a client says none to it. */
-export const DRAGON_RELAY_MIN = 281;
+/** The first relay that keeps a dragon's fight; an older one closes the socket on the frame, so a client says none to it.
+ *  The ride's own number: the ride and the fight landed in one relay (AUDIT DRAGON: a copy stood at 281 when a merge
+ *  moved the ride's to 284, and opened the frame to three relays that close on it). */
+export const DRAGON_RELAY_MIN = DRAGON_RIDE_RELAY_MIN;
 export const relaySupportsDragon = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= DRAGON_RELAY_MIN; };
 /** The door between a dragon's cell and the hub: the kill and its receipts. */
 export const DRAGON_INTERNAL_FELL = '/internal/dragon/fell';
@@ -6536,7 +6538,8 @@ const dgLegs = (legs) => { if (!Array.isArray(legs) || !legs.length || legs.leng
 function dgBlow(b) {
   if (!b || typeof b !== 'object' || !Number.isSafeInteger(b.i) || b.i < 1 || !intIn(b.a, 0, DRAGON_BLOW_KINDS - 1) || !dgMs(b.at) || !dgMs(b.wu) || b.wu > 60_000) return null;
   if (!Array.isArray(b.s) || !b.s.length || b.s.length > 10 || !b.s.every((st) => egStampOk(st, DRAGON_XZ_BOUND))) return null;
-  return { i: b.i, a: b.a, at: b.at, wu: b.wu, s: b.s.map((st) => [...st]) };
+  if (b.sp !== undefined && (!dgMs(b.sp) || b.sp > 10_000)) return null;   // AUDIT DRAGON: a sweep's span, judged over its length
+  return { i: b.i, a: b.a, at: b.at, wu: b.wu, s: b.s.map((st) => [...st]), ...(b.sp ? { sp: b.sp } : {}) };
 }
 const dgTop = (top) => (Array.isArray(top) ? top.slice(0, DRAGON_TOP_MAX).filter((n) => typeof n === 'string' && n).map(sanitizeName) : []);
 function dgChart(dm) {
@@ -6579,7 +6582,8 @@ function dragonOutOf(m) {
       const fell = m.fell == null ? null : dgFell(m.fell);
       if (m.fell != null && !fell) return null;
       if (!(m.gone == null || dgMs(m.gone))) return null;
-      return { k: 'st', b: m.b, ph: m.ph, h: m.h, m: m.m, md: m.md, mu: m.mu, sh: m.sh, legs, blows, n: m.n, lv: m.lv, op: m.op, fell, gone: m.gone ?? null };
+      if (m.ma !== undefined && !dgMs(m.ma)) return null;
+      return { k: 'st', b: m.b, ph: m.ph, h: m.h, m: m.m, md: m.md, ...(m.ma !== undefined ? { ma: m.ma } : {}), mu: m.mu, sh: m.sh, legs, blows, n: m.n, lv: m.lv, op: m.op, fell, gone: m.gone ?? null };   // AUDIT DRAGON: `ma`, when its mode takes hold
     }
     case 'mv': { const legs = dgLegs(m.legs); return legs ? { k: 'mv', legs } : null; }
     case 'atk': { const b = dgBlow(m); return b ? { k: 'atk', ...b } : null; }

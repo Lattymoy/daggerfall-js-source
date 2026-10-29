@@ -129,6 +129,11 @@
   "tr": "d4a7074f1fb9",
   "by": "claude-in-session"
  },
+ "account.card.dragons": {
+  "en": "cb9a068536d4",
+  "tr": "752d752caa0a",
+  "by": "claude-in-session"
+ },
  "account.card.duels": {
   "en": "566afa7e4088",
   "tr": "e1f0ce71aba2",
@@ -10834,6 +10839,16 @@
   "tr": "a4ddc388aa38",
   "by": "claude-in-session"
  },
+ "dragon.card.none": {
+  "en": "80e9901fb4fa",
+  "tr": "563aeedf4e63",
+  "by": "claude-in-session"
+ },
+ "dragon.card.profile": {
+  "en": "8c6a1479e254",
+  "tr": "25b3d4343707",
+  "by": "claude-in-session"
+ },
  "dragon.circles": {
   "en": "d034b72a1d02",
   "tr": "69791196937f",
@@ -10862,6 +10877,11 @@
  "dragon.claim.tamed": {
   "en": "72cdda38b046",
   "tr": "9da6f336c003",
+  "by": "claude-in-session"
+ },
+ "dragon.claim.tamedWaits": {
+  "en": "30f86d32ffd5",
+  "tr": "6513cb4178b5",
   "by": "claude-in-session"
  },
  "dragon.fell": {

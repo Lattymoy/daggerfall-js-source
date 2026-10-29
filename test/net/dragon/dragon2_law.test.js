@@ -17,7 +17,7 @@ import { HIT_KINDS, dpsRef, BUCKET_DEPTH_X, HIT_CAP_X } from '../../../src/net/g
 import { gameDayAt, GATE_LANE_SPAN, gateLaneOf } from '../../../src/net/gate/gateLaw.js';
 import {
   GATE_LANES_OPEN, validDragonIn, validDragonOut, parseClient, DRAGON_KINDS, DRAGON_OUT_KINDS, DRAGON_NO_WORDS, DRAGON_LEGS_MAX,
-  DRAGON_BLOWS_WIRE_MAX, DRAGON_BLOW_KINDS, DRAGON_CHART_MAX, DRAGON_RECEIPT_WIRE_MAX, relaySupportsDragon, DRAGON_RELAY_MIN, RELAY_VERSION,
+  DRAGON_BLOWS_WIRE_MAX, DRAGON_BLOW_KINDS, DRAGON_CHART_MAX, DRAGON_RECEIPT_WIRE_MAX, relaySupportsDragon, DRAGON_RELAY_MIN, DRAGON_RIDE_RELAY_MIN, RELAY_VERSION,
 } from '../../../src/net/wire.js';
 import { DRAGON_RECEIPT_V, DRAGON_RECEIPT_TTL_S, DRAGON_RECEIPT_MAX, dragonReceiptValid, mintDragonReceipt, readDragonReceipt, verifyDragonReceipt } from '../../../src/net/dragon/dragonReceipt.js';
 import { mintSerpentReceipt, verifySerpentReceipt } from '../../../src/net/serpent/serpentReceipt.js';
@@ -267,6 +267,8 @@ test('DRAGON2 wire: the client says two things, `in` and `hit`, projected field 
   assert.ok('error' in parseClient(JSON.stringify({ t: 'dragon', k: 'hit', d: 9, r: 1 }), { hasHello: false }));
   assert.equal(relaySupportsDragon(RELAY_VERSION), true);
   assert.equal(relaySupportsDragon(`world${DRAGON_RELAY_MIN - 1}`), false);
+  assert.equal(DRAGON_RELAY_MIN, DRAGON_RIDE_RELAY_MIN, 'AUDIT DRAGON: one relay, one number - the fight\'s gate is the ride\'s');
+  assert.equal(relaySupportsDragon('world283'), false, 'PVP-SAFE-HIT\'s relay closes the socket on the frame');
   assert.deepEqual([DRAGON_BLOWS_WIRE_MAX, DRAGON_BLOW_KINDS], [B.DRAGON_BLOWS_KEPT, B.DRAGON_BLOWS.length]);
   const { f, words } = runFight({ ms: 4 * 60_000 });
   const site = { w: W, sx: 1e6, sz: 2e6 };

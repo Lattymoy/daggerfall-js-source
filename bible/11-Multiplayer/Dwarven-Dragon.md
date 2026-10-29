@@ -209,13 +209,16 @@ A tamed dragon is a third mount beside the horse and the cart (`06-Systems/Horse
   down to land.
 - **Walk or fly.** On the ground it is ridden as a horse (`player/motor.js` ride base 375). **Hold jump** for
   `TAKEOFF_HOLD_S` (0.4 s) to take off. In the air it flies 25 m/s where the player looks; jump climbs, crouch dives,
-  and it lands when it meets the ground. It flies outdoors only: a door dismounts as a horse's does.
+  and it lands when it meets the ground. It flies outdoors only: a door dismounts as a horse's does. Off it in the air
+  (a flag's dismount, Foot picked) the rider is set down, sinking to the ground with no fall (`DRAGON_SET_DOWN_SINK`).
+  Its takeoff is its roar an octave down, its landing the body's thud.
 - **Seen by others**: the pose's ride is `POSE_RIDE.Dragon` (3), its look `rc` (1 the Aetherbright), so every other
   screen draws the rider as the dragon, in the air where it flies.
 - **On the travel map**: `transportModifier` 64, twice the horse's 128 (`systems/travel/travel.js`), and every pixel
   flown at that rate, sea and mountain alike, in a straight line - no ship needed and no road followed.
 - **Kept**: it cannot be dropped, sold, traded or lost to a death, the Wild included. The account service holds every
-  dragon item to its `dragon_mounts` row (the judge's provenance law), so a dragon no tame made is a finding.
+  dragon item to its `dragon_mounts` row (the judge's provenance law), so a dragon no tame made is a finding. The
+  service's rows are the record (`/v1/dragon/tames`); a device's list is a copy, joined to them before a bind.
 
 ## 11. The Aetherbright - the shiny
 
@@ -300,6 +303,20 @@ Dragon row; the pose's ride and look. Pinned by `test/net/dragon/dragon5_mount.t
 PINS MOVED by DRAGON5a: the item law at 15 (seven pins, LAW_SERVICE's 15 acct217's, and its seven mutant records),
 the modes and groups (`tr1`, `int1`), the rig's horse-only lines (eight pins, `horsevoice`), the levitation term
 (`staff1`, `audit_seats_client`), the footsteps (`if1`), the pose (`hcc_park`, `coats1`).
+
+**AUDIT DRAGON (2026-10-29, the owner: "Can we audit everything and ensure perfection").** An independent review of the
+whole arc found fifteen, each fixed at its root. The relay: the fight's gate is the ride's number (it stood at 281 and
+opened the frame to relays that close on it); a fight whose shares all retired stands where the last left (the gate's
+`idle`); the ground counts from the landing (`ma`, on the state word too); the Strafing Run's sweep rides the wire; a
+kill whose receipts failed is tried again; the hub sweeps its receipts and bounds its cache. The client: the sky made
+whole in `scenes/dragonHost.js` (`createDragonSky`, bootWorld 35,258); a rider set down, never dropped; the flight
+heard; an Aetherbright rider washed blue on every screen; the tamed line honest while the mount waits.
+
+The service: its tames read back (`/v1/dragon/tames`), so none is lost with a device's storage, and the dragons slain on
+both cards. The pass against this page found `05-Combat/Power-Ceiling.md` section 9 without the owner's word on the
+pace; it is quoted. The serpent's beat shares the kill's retry gap; it is reported, not changed here. Pinned by
+`test/net/dragon/dragonaudit_relay.test.js` (6), `dragonaudit_account.test.js` (4), `dragonaudit_client.test.js` (1) and
+tests in `dragon5_mount` and `dragon3_host`; `tools/mutants/dragonaudit.json`. world284 re-hashed in place.
 
 Two calls of its own. The tame binds at the claim's answer or the next stand-up, not at the remains: the answer comes
 seconds after the kill, so a walk back added nothing. And DRAGON_MOUNT_ONLINE is off for this release (REST6's law,

@@ -24,7 +24,7 @@ export const DRAGON_TAMES_MAX = 8;
 const TAME_ID_RE = /^dg[0-9a-f]{16}$/;
 
 /**
- * THE REWARDS: `{ receipt(r), tick(), recover(who, inSave), held(who), saved(who, ids), tames(), boundTame(id), bind(who), claims, spoils }`.
+ * THE REWARDS: `{ receipt(r), tick(), recover(who, inSave), held(who), saved(who, ids), tames(), boundTame(id), bind(who), recall(who), claims, spoils }`.
  * @param {any} host the dragon host's bindings by name
  */
 export function createDragonRewards(host) {
@@ -72,6 +72,17 @@ export function createDragonRewards(host) {
     if (bound) host.chatNotice?.(DRAGON_CLAIM_TEXT.bound());
     return bound;
   }
+  /** AUDIT DRAGON: THE SERVICE IS THE RECORD - its tames for a character joined to the device's copy, so a tame drawn while
+   *  the mount waited is never lost with a device's storage. Asked only while the mount is on. */
+  async function recall(characterId) {
+    if (!(host.dragonMountOnline ?? DRAGON_MOUNT_ONLINE) || !characterId || !account.tames) return;
+    const r = await account.tames().catch(() => null);
+    const list = r?.ok && Array.isArray(r.data?.tames) ? r.data.tames : [];
+    const have = new Set(readTames().map((x) => x.id));
+    const add = list.filter((m) => m && TAME_ID_RE.test(m.id) && m.character === characterId && !have.has(m.id))
+      .map((m) => ({ id: m.id, look: m.look === 1 ? 1 : 0, character: m.character, w: Number.isSafeInteger(m.watch) ? m.watch : null }));
+    if (add.length) writeTames([...readTames(), ...add]);
+  }
   const claims = createDragonClaims({
     claim: account.claim, me: account.me, nowS: () => host.relayNowS?.() ?? null, store,
     say: (text) => host.chatNotice?.(text), onSpoils: (entry) => grant(entry), onTamed: (t, entry) => tamed(t, entry),
@@ -86,7 +97,7 @@ export function createDragonRewards(host) {
       try {
         if (recoverSpoils(store, (p) => host.takeSpoil?.(p), { who: characterId, saves: enumerateSaves().info.values(), onHanded: (rec) => spoils.adopt(rec), key: DRAGON_SPOILS_KEYS.store, inSave })) setMidScreenText(DRAGON_SPOILS_TEXT.recovered());
       } catch (e) { console.warn('[dragon] spoils', e?.message ?? e); }
-      try { bind(characterId); } catch (e) { console.warn('[dragon] bind', e?.message ?? e); }   // DRAGON5: a tame drawn while another stood
+      recall(characterId).then(() => bind(characterId)).catch((e) => console.warn('[dragon] bind', e?.message ?? e));   // DRAGON5: a tame drawn while another stood; AUDIT DRAGON: or kept only by the service
     },
     /** The realm save's hooks: the records whose pieces are in the pack, and those a landed checkpoint holds. */
     held: (characterId) => { try { return spoils.heldIds?.(characterId) ?? []; } catch { return []; } },
@@ -95,6 +106,7 @@ export function createDragonRewards(host) {
     tames: () => readTames(),
     boundTame(id) { writeTames(readTames().filter((x) => x.id !== id)); },
     bind,
+    recall,
     claims,
     spoils,
   };

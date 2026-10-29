@@ -177,8 +177,8 @@
   {
     "name": "DRAGON3-the-world-forgets-its-word",
     "file": "src/scenes/world.js",
-    "old": "    online.onDragon = (w) => { if (w?.k === 'bd') bossCountFell(!!dragonSky?.near()); else dragonLink?.word(w); };",
-    "new": "    online.onDragon = (w) => {};",
+    "old": "    online.onDragon = (w) => { if (w?.k === 'bd') bossCountFell(!!dragonSky?.near()); else dragonSky?.word(w); };",
+    "new": "    online.onDragon = (w) => { if (w?.k === 'bd') bossCountFell(!!dragonSky?.near()); };",
     "tests": ["test/scenes/dragon3_host.test.js"]
   },
   {

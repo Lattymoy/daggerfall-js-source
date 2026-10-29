@@ -163,7 +163,7 @@ test('DRAGON3 host: THE FALL - it falls where it was, said once; it lies deactiv
 test('DRAGON3 world: the host\'s wiring - its sites, link and host made online; the session\'s word to its link, my fall by its count; its body in the shots\' and missiles\' fields beside the serpent\'s; a grounded swing after the duel\'s; an enemy near; its flats and its telegraphs on the street; its frame and its away (mutants: each wire cut)', () => {
   const w = hostText('src/scenes/world.js');
   for (const wired of [
-    "online.onDragon = (w) => { if (w?.k === 'bd') bossCountFell(!!dragonSky?.near()); else dragonLink?.word(w); };",
+    "online.onDragon = (w) => { if (w?.k === 'bd') bossCountFell(!!dragonSky?.near()); else dragonSky?.word(w); };",   // PIN MOVED (AUDIT DRAGON): the sky's own word door
     'boxMarks: () => dragonBoxesWith(dragonSky, serpentHost?.handBoxes?.() ?? null),',
     'castAtBox: (sp, q, caster) => dragonSky?.cast(sp, q, caster) ?? serpentSpell.cast(sp, q, caster),',
     'boxTargets: dragonBoxesWith(dragonSky, serpentHost?.handBoxes?.() ?? null),',
@@ -172,11 +172,31 @@ test('DRAGON3 world: the host\'s wiring - its sites, link and host made online; 
     'const navalHostileNear = () => !!naval?.hostileNear() || !!dragonSky?.near();',
     "if (dragonSky && _mode() === 'exterior') livePersonBatches.push(...dragonSky.batches());",
     "if (dragonSky && _mode() === 'exterior') { try { dragonSky.drawMarks(); }",
-    'dragonFrame();', 'dragonAway(!onlineOn);',
-    "const dragonSites = params.has('online') ? createDragonSites({ bayScan: () => (warmGateScan(), _gateScan), theatres: () => theatreGates }) : null;",
+    'dragonSky?.onlineFrame();', 'dragonSky?.away(!onlineOn);',   // PIN MOVED (AUDIT DRAGON): its frame and away the sky's (createDragonSky)
+    "dragonSky = params.has('online') ? createDragonSky({", 'bayScan: () => (warmGateScan(), _gateScan), theatres: () => theatreGates,',
+    "street: () => (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned, barBlocked: () => _serpentBarUp, barHidden: () => gamePaused() || !!townTalk.hudHidden, drawBar: drawGateBossBar,",
   ]) assert.ok(w.includes(wired), wired);
   const o = readFileSync('src/net/online.js', 'utf8');
   assert.match(o, /if \(primary\) this\.dragonOk = relaySupportsDragon\(relayV\);/);
   assert.match(o, /if \(r && \(isSocialRoom\(room\) \? r\.k === 'rcpt' : isCellRoom\(room\)\)\) this\._deliver\('dragon', \(\) => this\.onDragon\?\.\(r, room\)\);/);
   assert.match(o, /const w = validDragonIn\(word\);\n\s+if \(!w \|\| !this\.dragonReady\(cell\)\) return false;/);
+});
+
+test('AUDIT DRAGON the sky made whole (HOST-SPLIT): its online frame ticks its claims, runs its fight on the street alone (leaving it off the street), draws its bar unless another boss\'s is up, and its away puts the bar away; bootWorld keeps none of its state (mutants: the bar over the serpent\'s; the bar left up; the fight off the street)', async () => {
+  const { createDragonSky } = await import('../../src/scenes/dragonHost.js');
+  const drawn = [];
+  let street = true, blocked = false, fight = true;
+  const calls = { tick: 0, frame: 0, leave: [] };
+  const fake = { tick: () => calls.tick++, frame: () => { calls.frame++; return fight; }, leave: (o) => calls.leave.push(!!o), bar: () => ({ name: 'D', title: '', hp: 0.5, max: 1, ph: 1, md: 0, fell: null, gone: null, atk: null, n: 1, mu: 0, lv: 0, t: 0 }) };
+  const sky = createDragonSky({ bayScan: () => null, theatres: () => [], street: () => street, barBlocked: () => blocked, drawBar: (m) => drawn.push(m ? 'bar' : null), now: () => 0, makeHost: () => fake });
+  sky.onlineFrame();
+  assert.deepEqual([calls.tick, calls.frame, drawn], [1, 1, ['bar']], 'on the street: ticked, fought, its bar drawn');
+  blocked = true; sky.onlineFrame();
+  assert.deepEqual(drawn, ['bar'], 'the serpent\'s bar up: none drawn over it');
+  blocked = false; street = false; sky.onlineFrame();
+  assert.deepEqual([calls.frame, calls.leave, drawn.at(-1)], [2, [false], null], 'off the street: left, its bar put away');
+  street = true; sky.onlineFrame(); sky.away(true);
+  assert.deepEqual([drawn.at(-1), calls.leave.at(-1)], [null, true], 'away: the bar put away, offline its fight forgotten');
+  const w = hostText('src/scenes/world.js');
+  assert.ok(!w.includes('_dragonBarUp') && !w.includes('const dragonFrame') && !w.includes('createDragonLink('), 'the world host holds none of its state');
 });

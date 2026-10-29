@@ -12,7 +12,7 @@ import { mintDragonReceipt, readDragonReceipt } from '../../src/net/dragon/drago
 import { bodyCensus } from '../../src/net/bossBody.js';
 import { validDragonOut, cellRoomOfWire, SOCIAL_ROOM, DRAGON_INTERNAL_FELL, DRAGON_TELL_RETRY_MS, DRAGON_FIGHT_KEY, DRAGON_FIGHTS_KEY, DRAGON_RC_PREFIX } from '../../src/net/wire.js';
 import { junkOutsideCover } from './cellNodes.js';
-import { ROOM_CALL_MS } from './relayScale.js';
+import { ROOM_CALL_MS, Bounded, HUB_KEEP_MAX } from './relayScale.js';
 
 /** A fight is forgotten this long after it ends; the cell's other duties run this often while one beats (ms). */
 export const DRAGON_KEEP_MS = 2 * 60 * 60 * 1000;
@@ -24,7 +24,7 @@ const storeKey = (id) => `${DRAGON_FIGHT_KEY}:${id}`;
 const say = (room, ws, w) => room._send(ws, JSON.stringify({ t: 'dragon', ...w }));
 
 /** The room's dragon state, made on first use. @param {any} room */
-const dg = (room) => (room._dg ??= { fights: undefined, savedAt: new Map(), falling: new Map(), armedTo: 0, restAt: 0, noRcpt: new Set() });
+const dg = (room) => (room._dg ??= { fights: undefined, savedAt: new Map(), falling: new Map(), armedTo: 0, restAt: 0, noRcpt: new Bounded(HUB_KEEP_MAX) });   // AUDIT DRAGON: the serpent's bound (SCALE5a), never a set emptied whole
 
 /** The fights this cell holds, by id - the instance's while it is awake, else storage's (woken past their checkpoints). */
 export async function dragonFights(room) {
@@ -197,7 +197,8 @@ export async function dragonTick(room) {
     const heard = [...room._all()].some(([, b]) => hears(id, f, b));
     const lying = f.fell && f.said && now < f.fell.at + DRAGON_REMAINS_MS;
     if (lying && heard && now - (f.stSaidAt ?? 0) >= dragonBrain.DRAGON_STATE_SEND_MS) { f.stSaidAt = now; fan(room, id, f, [DRAGON_SEAM.stateOf(f)]); }   // its remains told to who comes near, as its fight was
-    if (f.said && !f.told) at = Math.min(at, now + DRAGON_TELL_RETRY_MS);
+    if (f.fell && !f.said) at = Math.min(at, now + DRAGON_TELL_RETRY_MS);   // AUDIT DRAGON: a kill whose receipts failed to mint is tried again, never left to the fight's end
+    else if (f.said && !f.told) at = Math.min(at, now + DRAGON_TELL_RETRY_MS);
     else if (heard && !f.fell && !f.gone) { at = Math.min(at, now + dragonBrain.DRAGON_TICK_MS); live = true; }
     else if (lying) at = Math.min(at, now + dragonBrain.DRAGON_STATE_SEND_MS);
     else at = Math.min(at, end);
@@ -307,8 +308,18 @@ export async function dragonReceiptTo(room, ws, sub, now) {
   const s = dg(room);
   if (s.noRcpt.has(sub)) return;
   const k = DRAGON_RC_PREFIX + sub, kept = await room.state.storage.get(k);
-  if (!kept || typeof kept !== 'object') { if (s.noRcpt.size > 4096) s.noRcpt.clear(); s.noRcpt.add(sub); return; }
+  if (!kept || typeof kept !== 'object') { s.noRcpt.set(sub, 1); return; }
   if (!(Number.isFinite(kept.e) && now < kept.e * 1000) || typeof kept.r !== 'string') { await room.state.storage.delete(k); return; }
   say(room, ws, { k: 'rcpt', r: kept.r });
+}
+/** AUDIT DRAGON: THE HUB'S SWEEP OF THE DRAGON'S RECEIPTS (the serpent's AUDIT SERPENT S5 twin) - one page after `cur`,
+ *  every receipt expired added to `dead` for the sweep's one delete, so an account that never comes back leaves none.
+ *  Answers `{ last, full }` - the page's last key, and whether it was a full page (the sweep goes on).
+ *  @param {any} room @param {number} now @param {string | null} cur @param {string[]} dead @param {number} page */
+export async function sweepDragonReceipts(room, now, cur, dead, page) {
+  const kept = await room.state.storage.list({ prefix: DRAGON_RC_PREFIX, limit: page, ...(cur ? { startAfter: cur } : {}) });
+  let last = null;
+  for (const [k, v] of kept) { last = k; if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k); }
+  return { last, full: kept.size >= page };
 }
 export { DRAGON_INTERNAL_FELL };

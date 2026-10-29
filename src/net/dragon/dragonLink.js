@@ -32,13 +32,13 @@ const keep = (blows, now) => blows.filter((q) => now < q.at + (q.sp ?? 0) + BLOW
 export function foldDragon(s, w, now) {
   if (!w) return s;
   if (w.k === 'st') {
-    return { w: w.w, b: w.b, sx: w.sx, sz: w.sz, ph: w.ph, hp: w.h, max: w.m, md: w.md, ma: s.w === w.w && s.md === w.md ? s.ma : 0, mu: w.mu, sh: w.sh,
+    return { w: w.w, b: w.b, sx: w.sx, sz: w.sz, ph: w.ph, hp: w.h, max: w.m, md: w.md, ma: Number.isFinite(w.ma) ? w.ma : s.w === w.w && s.md === w.md ? s.ma : 0, mu: w.mu, sh: w.sh,
       legs: [...w.legs], blows: keep(w.blows, now), n: w.n, lv: w.lv, op: w.op, fell: w.fell, gone: w.gone, heardAt: now };
   }
   if (s.w === null || w.w !== s.w) return s;
   switch (w.k) {
     case 'mv': return { ...s, legs: [...w.legs], heardAt: now };
-    case 'atk': return s.blows.some((q) => q.i === w.i) ? s : { ...s, blows: keep([...s.blows, { i: w.i, a: w.a, at: w.at, wu: w.wu, s: w.s }], now), heardAt: now };
+    case 'atk': return s.blows.some((q) => q.i === w.i) ? s : { ...s, blows: keep([...s.blows, { i: w.i, a: w.a, at: w.at, wu: w.wu, s: w.s, ...(w.sp ? { sp: w.sp } : {}) }], now), heardAt: now };
     case 'hp': return { ...s, hp: w.h, max: w.m, ...(w.n !== undefined ? { n: w.n } : {}), heardAt: now };
     case 'ph': return { ...s, ph: w.n, sh: w.until, heardAt: now };
     case 'md': return { ...s, md: w.m, ma: w.at, mu: w.until, heardAt: now };
