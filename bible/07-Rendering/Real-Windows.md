@@ -280,5 +280,14 @@ was taken on the receiver (pools two mip levels too soft) and the outline was a 
 counted one window twice; slivers took light slots; a mover left its light behind; the outside was read twice a frame
 while the view out drew; the off door still measured glass; a panel dropped the frame's window light.
 
-**Pins.** `test/render/wl1_windowlight.test.js` (W1-W22; the corpus test gated on ARENA2_PATH); mutants
-`tools/mutants/wl1.json` (84: 83 dead, one equivalent as recorded); PROBE `tools/windowLightProbe.mjs`.
+**WL1 on main (2026-10-29).** WL1 merged while its suite still ran, and 14 tests failed on main, so nothing deployed.
+One was a real cost: a flat read the sun map in its fragment shader for the sun through glass, where TREES1 and
+LA-COST3 hold that read to once a quad. The flat's vertex stage now reads it when `uWinOn` is 2 (a window's sun stands
+in the map, indoors, where the flat's own sun is none), and the billboard program's block (`windowLightGlsl`, `shadow:
+'flat'`) takes that word and reads no map. WL1's renderer fields are optional on the methods a harness drives without
+the constructor, as their neighbours' are. `exteriorGlass.js` names its speck fill `fillPaneSpecks` (audit24: one name,
+one meaning). The rest were pins whose quoted text WL1 moved, re-aimed as PIN MOVED.
+
+**Pins.** `test/render/wl1_windowlight.test.js` (W1-W22; the corpus test gated on ARENA2_PATH); LA-COST3's window sun
+(`test/render/la_cost.test.js`); mutants `tools/mutants/wl1.json` (87: 86 dead, one equivalent as recorded); PROBE
+`tools/windowLightProbe.mjs`.
