@@ -128,14 +128,17 @@ test('SHIP-NAMES THE ARTICLE: a name in the possessive takes none ("Dagon\'s Too
 });
 
 test('SHIP-NAMES HER CAPTAIN IS THE ONE SHE HAD: her name off its own stream, her captain is drawn as he always was - the seeds\' captains as the record named them, the global stream put back as it stood; her name as this record names it', () => {
+  // REGION-NAMES: PIN MOVED - her captain off the same draw, named by the waters' people's customs (personNames.js):
+  // the classic FullName was Ysona Wicksley, Dunyctor Gaerston, Barbayne Moorhart, Chrystorya Mastercroft, Bedane
+  // Kinghart, Carolona Hawkfield and Theodyn Moorhouse; the galleon's captain keeps his
   const CASES = [
-    ['merchantCoaster', 1, null, 'The Abibon-Gora Heron', 'Ysona Wicksley'],
+    ['merchantCoaster', 1, null, 'The Abibon-Gora Heron', 'Eloise Wrenley'],
     ['merchantGalleon', 0xabc123, null, 'The Wayrest Trader', 'Dunyctor Gaerston'],
-    ['pirateSloop', 2, null, "Azura's Grin", 'Barbayne Moorhart'],
-    ['pirateBrig', 0x51f00e, null, 'The Neckseeker', 'Chrystorya Mastercroft'],
-    ['navyCutter', 3, 'Wayrest', "Eadwyre's Fury", 'Bedane Kinghart'],
-    ['navyCutter', 4, 'Sentinel', 'The Eagle of Cybiades', 'Carolona Hawkfield'],
-    ['navyCutter', 5, 'Daggerfall', 'The Daggerfall Resolute', 'Theodyn Moorhouse'],
+    ['pirateSloop', 2, null, "Azura's Grin", 'Solene Vaillanne'],
+    ['pirateBrig', 0x51f00e, null, 'The Neckseeker', 'Eloise de Loreau'],
+    ['navyCutter', 3, 'Wayrest', "Eadwyre's Fury", 'Renaud Beloux'],
+    ['navyCutter', 4, 'Sentinel', 'The Eagle of Cybiades', 'Isaure Wickridge'],
+    ['navyCutter', 5, 'Daggerfall', 'The Daggerfall Resolute', 'Osbert Vaillfort'],
   ];
   srand(4242);
   const before = getSeed();

@@ -2,7 +2,7 @@
   {
     "name": "LW-FIX3-census-search",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "      if (w.pending) { const gap = walkGap(w.e, playerPos); if (gap < LIVING_RANGE + WALK_STRAY_M) pending.push({ res, gap }); continue; }\n",
+    "old": "      if (w.pending) { if (walkGap(w.e, playerPos) < LIVING_RANGE + WALK_STRAY_M) pending.push({ res, near: walkNear(w.e, t, playerPos) }); continue; }\n",
     "new": "",
     "tests": [
       "test/systems/livingWorld/lwfix3_town.test.js",

@@ -75,6 +75,12 @@ export const STILL_FLATS = Object.freeze({
   court: Object.freeze({ male: Object.freeze([[180, 2], [183, 4], [175, 14], [182, 15], [183, 5], [182, 40]]), female: Object.freeze([[180, 1], [182, 47], [184, 5], [184, 29], [182, 27]]) }),
 });
 
+/** STAND-LIFE (the owner: "Living world NPCs should not turn into static sprites when stopping"): of STILL_FLATS, the
+ *  pictures whose record moves, read off the freeware's TEXTURE files - every other one is a single frame. Only these
+ *  are stood: a kind or a sex with none keeps themselves, and their stand stirs (characters/residentWalker.js). The
+ *  crafter's one, the blacksmith at his anvil (182.59), is left out: a market's crafters would all be him at once. */
+export const MOVING_STILLS = Object.freeze(new Set(['180.3', '182.0', '181.2', '180.2', '175.14', '180.1', '182.47']));
+
 /** The stalls' keepers by trade, and their kind of still picture - a courier, who keeps a labourer's day (dayPlan.js),
  *  none: the one at a stall with a class of their own keeps it. */
 const STALL_ROLE = Object.freeze({ merchant: 'merchant', crafter: 'crafter', fisher: 'fisher', labourer: 'labourer' });
@@ -96,12 +102,14 @@ export function stillRoleOf(res, e) {
 }
 
 /**
- * LW-LOOKS: THE STILL PICTURE a resident stands as for `role` - their seed's among their kind's of their sex (every kind
- * has both). @param {{ id: string, sex: 'male'|'female' }} res @param {keyof typeof STILL_FLATS} role
- * @returns {{ archive: number, record: number }}
+ * LW-LOOKS: THE STILL PICTURE a resident stands as for `role` - their seed's among their kind's of their sex, of the ones
+ * that move (STAND-LIFE, MOVING_STILLS); null where their kind and sex have none (they keep themselves).
+ * @param {{ id: string, sex: 'male'|'female' }} res @param {keyof typeof STILL_FLATS} role
+ * @returns {{ archive: number, record: number } | null}
  */
 export function stillFlatOf(res, role) {
-  const list = STILL_FLATS[role][res.sex === 'female' ? 'female' : 'male'];
+  const list = STILL_FLATS[role][res.sex === 'female' ? 'female' : 'male'].filter(([a, r]) => MOVING_STILLS.has(`${a}.${r}`));
+  if (!list.length) return null;
   const [archive, record] = list[lwSeed(textSeed(res.id), 0x7374696c) % list.length];   // 'stil'
   return { archive, record };
 }

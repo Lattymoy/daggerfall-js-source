@@ -100,6 +100,12 @@ export function watchDuty(res, places, day, size = 1) {
   const shift = (company + day) % WATCH_ROTATION;
   const exits = [...places.exits].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
   const posts = size >= 3 ? Math.min(exits.length, size - 2) : 0;
+  // WATCH-LIFE: a rank past the shift's strength is a city's extra patrol (census.js watchExtraOf) - in pairs, each pair a
+  // beat of its own after the shift's own patrols'
+  if (rank >= size && size >= 1) {
+    const i = rank - size;
+    return { shift, company, rank, kind: 'patrol', post: null, patrol: Math.ceil(Math.max(1, size - posts) / 2) + Math.floor(i / 2), pair: /** @type {0|1} */ (i % 2) };
+  }
   if (rank >= 2 && rank - 2 < posts) {
     const turn = lwSeed(res.town, 0x706f7374, company, day) % exits.length;   // 'post'
     return { shift, company, rank, kind: 'post', post: exits[(rank - 2 + turn) % exits.length], patrol: -1, pair: null };
@@ -114,19 +120,36 @@ export function watchDuty(res, places, day, size = 1) {
  *  patrol's own, so both of a pair walk it. The first cut drew a guard's stops from the whole town, and in a great
  *  city a leg ran past an hour of the clock: the beat ran out of stops it could reach hours before the shift's end.
  *  @param {Places} places @param {number} town @param {number} company @param {number} patrol @param {number} day
- *  @param {number} shift @returns {Spot[]} */
+ *  @param {number} shift @returns {readonly Spot[]} */
 export function patrolBeat(places, town, company, patrol, day, shift) {
+  let kept = _beats.get(places);
+  if (!kept) _beats.set(places, kept = new Map());
+  const key = `${town}|${company}|${patrol}|${day}|${shift}`;
+  const had = kept.get(key);
+  if (had) return had;
+  // AUDIT WATCH-LIFE B8: a district of its own - the spots of the shift's earlier patrols left out, where the town has
+  // a beat's worth besides (two of a city's extra patrols walked one beat in 7 shifts of 100)
+  const taken = new Set();
+  for (let q = 0; q < patrol; q++) for (const sp of patrolBeat(places, town, company, q, day, shift)) taken.add(sp);
   const rng = lwRng(town, 0x62656174, company, patrol, day, shift);   // 'beat'
-  const pool = [...places.exits, ...places.social, ...places.market];
-  if (!pool.length) return [];
+  const all = [...places.exits, ...places.social, ...places.market];
+  if (!all.length) return [];
+  const free = taken.size ? all.filter((sp) => !taken.has(sp)) : all;
+  const pool = free.length >= 4 ? free : all;
   const anchor = pool[Math.floor(rng() * pool.length)];
   const n = Math.min(pool.length, rollInt(rng, 4, 6));
   const gap = (/** @type {Spot} */ a) => Math.abs(a.cell[0] - anchor.cell[0]) + Math.abs(a.cell[1] - anchor.cell[1]);
   const near = pool.map((sp) => ({ sp, d: gap(sp) })).sort((a, b) => a.d - b.d || (a.sp.key < b.sp.key ? -1 : a.sp.key > b.sp.key ? 1 : 0)).slice(0, n).map((x) => x.sp);
   const cx = near.reduce((a, sp) => a + sp.x, 0) / near.length, cz = near.reduce((a, sp) => a + sp.z, 0) / near.length;
   const bearing = (/** @type {Spot} */ sp) => Math.atan2(sp.x - cx, sp.z - cz);
-  return near.sort((a, b) => bearing(a) - bearing(b) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+  const out = Object.freeze(near.sort((a, b) => bearing(a) - bearing(b) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)));
+  if (kept.size > 512) kept.clear();
+  kept.set(key, out);
+  return out;
 }
+/** AUDIT WATCH-LIFE B8: the beats dealt, by the town's places (a later patrol's reads the earlier ones').
+ *  @type {WeakMap<object, Map<string, readonly Spot[]>>} */
+const _beats = new WeakMap();
 
 /**
  * WATCH-DAY: A PATROL'S STOPS laid on the clock, from the beat's `first` spot at `from` to `until`: each a stay of
@@ -232,20 +255,29 @@ function doorKinds(places) {
     }
     const spots = [...new Set([...places.doors.values(), ...places.social, ...(places.corners ?? []), ...(places.squares ?? []), ...places.market])].sort((a, b) => a.key.localeCompare(b.key));
     const orders = [...halls].filter(([f]) => ORDER_FACTIONS.has(f)).flatMap(([, list]) => list);
-    k = { tavern, temple, halls, orders, shops, houses, outfitters, rank: new Map(spots.map((s, i) => [s, i])) };
+    k = { tavern, temple, halls, orders, shops, houses, outfitters, rank: new Map(spots.map((s, i) => [s, i])),
+      social: [...places.social, ...(places.corners ?? [])], market: [...places.market, ...(places.squares ?? [])] };   // LW-DENSE: kept, for nearestOf's
     doorKindsOf.set(places, k);
   }
   return k;
 }
 
+/** LW-DENSE: each kept list's spots by nearness, kept by the spot they are near (a household's people share a home). */
+const nearestKept = new WeakMap();
 /** The spots of `list` by manhattan nearness to `from` (the first the nearest), the key's order breaking a tie; with no
- *  `from`, as they stand. @param {Places} places @param {readonly Spot[]} list @param {Spot|null} from */
+ *  `from`, as they stand. LW-DENSE: a list of doorKinds' kept by `from` - read, never changed (a city of 520 sorted its
+ *  shops for each of them in the first frame). @param {Places} places @param {readonly Spot[]} list @param {Spot|null} from */
 function nearestOf(places, list, from) {
-  const out = [...list];
-  if (!from) return out;
+  if (!from) return [...list];
+  let byFrom = nearestKept.get(list);
+  if (!byFrom) { byFrom = new WeakMap(); nearestKept.set(list, byFrom); }
+  let out = byFrom.get(from);
+  if (out) return out;
   const fx = from.cell[0], fy = from.cell[1], rank = doorKinds(places).rank;
-  return out.sort((a, b) => (Math.abs(a.cell[0] - fx) + Math.abs(a.cell[1] - fy)) - (Math.abs(b.cell[0] - fx) + Math.abs(b.cell[1] - fy))
-    || (rank.get(a) ?? 0) - (rank.get(b) ?? 0));
+  out = Object.freeze([...list].sort((a, b) => (Math.abs(a.cell[0] - fx) + Math.abs(a.cell[1] - fy)) - (Math.abs(b.cell[0] - fx) + Math.abs(b.cell[1] - fy))
+    || (rank.get(a) ?? 0) - (rank.get(b) ?? 0)));
+  byFrom.set(from, out);
+  return out;
 }
 
 /** LW-SPREAD: the share of a town who keep to its square from wherever they live (the rest keep to it where it is one of
@@ -414,10 +446,10 @@ function favouritesNow(res, places, home) {
   const byNear = (/** @type {readonly Spot[]} */ list) => nearestOf(places, list, home);
   const sq = squareOf(res, places);
   const own = (/** @type {Spot|null} */ s) => (s?.kind === 'square' ? sq : s);
-  const social = byNear([...places.social, ...(places.corners ?? [])]);   // a corner of the town a social spot as any
+  const social = byNear(kinds.social);   // a corner of the town a social spot as any
   const s1 = places.square && rng() < SQUARE_LIKE ? sq : own(near(social, SOCIAL_NEAR));
   const s2 = own(near(social.filter((s) => own(s) !== s1), SOCIAL_NEAR)) ?? s1;
-  const market = byNear([...places.market, ...(places.squares ?? [])]);   // a shop's front, or the square where the stalls stand - by its points, the more of them the more of the market
+  const market = byNear(kinds.market);   // a shop's front, or the square where the stalls stand - by its points, the more of them the more of the market
   return {
     social: [s1, s2].filter(Boolean),
     tavern: near(byNear(kinds.tavern)),

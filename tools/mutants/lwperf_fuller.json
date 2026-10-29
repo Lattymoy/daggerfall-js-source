@@ -1,0 +1,47 @@
+[
+  {
+    "name": "AUDIT-FULLER-LW-A7-steps-no-yield",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      for (const k of cyclesAbout(res, town, cycleOf(res, day, scale).k, world, scale)) { const holder = world.holderOf ? world.holderOf(res, k) : res; if (holder) memoTrip(holder, town, k, world, o); }\n      yield;",
+    "new": "      for (const k of cyclesAbout(res, town, cycleOf(res, day, scale).k, world, scale)) { const holder = world.holderOf ? world.holderOf(res, k) : res; if (holder) memoTrip(holder, town, k, world, o); }",
+    "tests": [
+      "test/systems/livingWorld/lwperf_fuller.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FULLER-LW-A7-steps-warm-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (o.memo && !o.memo.get(`town:${town.mapId}:${day}`)) {",
+    "new": "  if (o.memo) {",
+    "tests": [
+      "test/systems/livingWorld/lwperf_fuller.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FULLER-LW-A7-metby-window-start",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "if (stays[m].t0 < x.t0 - longest) lo = m + 1; else hi = m;",
+    "new": "if (stays[m].t0 < x.t0) lo = m + 1; else hi = m;",
+    "tests": [
+      "test/systems/livingWorld/lwperf_fuller.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FULLER-LW-A7-metby-window-end",
+    "file": "src/systems/livingWorld/stir.js",
+    "old": "for (let i = lo; i < stays.length && stays[i].t0 < x.t1; i++)",
+    "new": "for (let i = lo; i < stays.length && stays[i].t0 < x.t0; i++)",
+    "tests": [
+      "test/systems/livingWorld/lwperf_fuller.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FULLER-LW-A7-host-steps",
+    "file": "src/scenes/world.js",
+    "old": "if ((yield* townTripsSteps(near, noon, livingTripWorld, o)) === undefined) out.partial = true; yield; }",
+    "new": "if (townTrips(near, noon, livingTripWorld, o) === undefined) out.partial = true; yield; }",
+    "tests": [
+      "test/systems/livingWorld/lwperf_fuller.test.js"
+    ]
+  }
+]

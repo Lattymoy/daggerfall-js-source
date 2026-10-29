@@ -43,12 +43,21 @@ export function tavernDay(build, blocks) {
     clock: () => clock.t, rate: () => RATE, mpm: MPM });
   const tavern = buildings.find((b) => b.type === BUILDING_TYPES.Tavern).key;
   const most = Object.fromEntries(PARTS.map(([name]) => [name, 0]));
+  const mostOut = Object.fromEntries(PARTS.map(([name]) => [name, 0]));   // LW-WIDE: those who neither lodge there - nor work there
   let long = 0;
   for (let day = 100; day < 105; day++) {
-    for (const [name, h0, h1] of PARTS) for (let m = h0 * 60; m < h1 * 60; m++) most[name] = Math.max(most[name], town.insideAt(tavern, day * DAY_MIN + m).length);
-    for (const res of town.peopleOf(day)) for (const e of town.planOf(res, day)) if (e.kind === 'tavern' && e.at?.building === tavern && e.t1 - e.t0 >= 240 && res.work !== tavern && res.home !== tavern) long++;
+    for (const [name, h0, h1] of PARTS) {
+      for (let m = h0 * 60; m < h1 * 60; m++) {
+        const ins = town.insideAt(tavern, day * DAY_MIN + m);
+        most[name] = Math.max(most[name], ins.length);
+        mostOut[name] = Math.max(mostOut[name], ins.filter((x) => x.res.home !== tavern && x.res.work !== tavern).length);
+      }
+    }
+    // LW-WIDE: an afternoon sat out - a stay of four hours begun before five (an adventurer's evening there is three to five
+    // hours by its day, dayPlan.js, and the town of nine blocks keeps three of them now)
+    for (const res of town.peopleOf(day)) for (const e of town.planOf(res, day)) if (e.kind === 'tavern' && e.at?.building === tavern && e.t1 - e.t0 >= 240 && (((e.t0 % DAY_MIN) + DAY_MIN) % DAY_MIN) < 17 * 60 && res.work !== tavern && res.home !== tavern) long++;
   }
-  return { people: town.peopleOf(100).length, most, long };
+  return { people: town.peopleOf(100).length, most, mostOut, long };
 }
 
 /** The hall sounded and twelve stood in it, left astir `seconds` real seconds, the player at the way in looking out.

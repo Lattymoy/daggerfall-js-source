@@ -31,7 +31,8 @@
 // stream and the global stream put back after, so naming a ship moves no other system's rolls.
 
 import { srand, getSeed, setSeed } from '../../formats/dfRandom.js';
-import { fullName, getNameBankOfRegion, GENDERS } from '../../characters/nameHelper.js';
+import { getNameBankOfRegion, GENDERS } from '../../characters/nameHelper.js';
+import { personName } from '../../characters/personNames.js';   // REGION-NAMES: a captain named by the waters' customs
 import { REGION_NAMES } from '../../formats/mapsFile.js';
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { t } from '../textManager.js';   // FISH-BOATS: the fishing boats' class names in the player's language
@@ -646,7 +647,7 @@ export function shipNames(shipClass, seed, { regionIndex = 17, crown: crownIn = 
   let captain;
   try {
     srand((seed >>> 0) || 1);
-    captain = fullName(Number.isInteger(bank) ? /** @type {number} */ (bank) : getNameBankOfRegion(regionIndex >= 0 && regionIndex < REGION_NAMES.length ? regionIndex : 17), rng() < 0.5 ? GENDERS.Male : GENDERS.Female);
+    captain = personName(Number.isInteger(bank) ? /** @type {number} */ (bank) : getNameBankOfRegion(regionIndex >= 0 && regionIndex < REGION_NAMES.length ? regionIndex : 17), rng() < 0.5 ? GENDERS.Male : GENDERS.Female, { region: regionIndex });
   } finally { setSeed(saved); }
   return { name, captain, crown: crown?.name ?? null };
 }

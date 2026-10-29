@@ -155,8 +155,8 @@
   {
     "name": "LW-STIR-quarrel-stranger",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "    const others = stays.filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId && !y.who.guard && meets(x, y));",
-    "new": "    const others = stays.filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && !y.who.guard && meets(x, y));",
+    "old": "    const others = metBy(x).filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId && !y.who.guard);",
+    "new": "    const others = metBy(x).filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && !y.who.guard);",
     "tests": [
       "test/systems/livingWorld/lwstir_street.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "LW-STIR-quarrel-watch",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "    const others = stays.filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId && !y.who.guard && meets(x, y));",
-    "new": "    const others = stays.filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId && meets(x, y));",
+    "old": "    const others = metBy(x).filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId && !y.who.guard);",
+    "new": "    const others = metBy(x).filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId);",
     "tests": [
       "test/systems/livingWorld/lwstir_street.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "LW-STIR-quarrel-working",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "    const others = stays.filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId && !y.who.guard && meets(x, y));",
-    "new": "    const others = stays.filter((y) => !y.duty && y.who.id !== x.who.id && y.who.town === mapId && !y.who.guard && meets(x, y));",
+    "old": "    const others = metBy(x).filter((y) => !y.duty && y.kind !== 'stall' && y.kind !== 'beg' && y.who.id !== x.who.id && y.who.town === mapId && !y.who.guard);",
+    "new": "    const others = metBy(x).filter((y) => !y.duty && y.who.id !== x.who.id && y.who.town === mapId && !y.who.guard);",
     "tests": [
       "test/systems/livingWorld/lwstir_street.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "LW-STIR-quarrel-by-pair",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "    const y = others[lwSeed(seed, 0x77697468) % others.length];   // 'with'\n    const [o0, o1] = overlap(x, y);\n    const evening = ((((o0 % 1440) + 1440) % 1440) >= 18 * 60) && (x.who.drink ?? 0) > DRINKER && (y.who.drink ?? 0) > DRINKER;\n    if (draw(seed, 0x71727265) >= QUARREL_SHARE * (evening ? QUARREL_EVENING : 1)) continue;   // 'qrre'\n    const pair = pairOf(x.who, y.who), ps = lwSeed(spot, day, textSeed(pair));\n    if (met.has(pair)) continue;\n    met.add(pair);\n    lay('quarrel', x.who, y.who, first(x, y), pick(QUARREL_SCRIPTS, ps), ps, o0, o1, null, watch);   // the one who falls out, the aggrieved",
-    "new": "    for (const y of others) {\n      const [o0, o1] = overlap(x, y);\n      const evening = ((((o0 % 1440) + 1440) % 1440) >= 18 * 60) && (x.who.drink ?? 0) > DRINKER && (y.who.drink ?? 0) > DRINKER;\n      if (draw(lwSeed(seed, textSeed(y.who.id)), 0x71727265) >= QUARREL_SHARE * (evening ? QUARREL_EVENING : 1)) continue;\n      const pair = pairOf(x.who, y.who), ps = lwSeed(spot, day, textSeed(pair));\n      if (met.has(pair)) continue;\n      met.add(pair);\n      lay('quarrel', x.who, y.who, first(x, y), pick(QUARREL_SCRIPTS, ps), ps, o0, o1, null, watch);\n    }",
+    "old": "    const y = others[lwSeed(seed, 0x77697468) % others.length];   // 'with'\n    const [o0, o1] = overlap(x, y);\n    const evening = ((((o0 % 1440) + 1440) % 1440) >= 18 * 60) && (x.who.drink ?? 0) > DRINKER && (y.who.drink ?? 0) > DRINKER;\n    if (draw(seed, 0x71727265) >= QUARREL_SHARE * (evening ? QUARREL_EVENING : 1)) continue;   // 'qrre'\n    const pair = pairOf(x.who, y.who), ps = lwSeed(spotSeed, day, textSeed(pair));\n    if (met.has(pair)) continue;\n    met.add(pair);\n    lay('quarrel', x.who, y.who, first(x, y), pick(QUARREL_SCRIPTS, ps), ps, o0, o1, null, watch);   // the one who falls out, the aggrieved",
+    "new": "    for (const y of others) {\n      const [o0, o1] = overlap(x, y);\n      const evening = ((((o0 % 1440) + 1440) % 1440) >= 18 * 60) && (x.who.drink ?? 0) > DRINKER && (y.who.drink ?? 0) > DRINKER;\n      if (draw(lwSeed(seed, textSeed(y.who.id)), 0x71727265) >= QUARREL_SHARE * (evening ? QUARREL_EVENING : 1)) continue;\n      const pair = pairOf(x.who, y.who), ps = lwSeed(spotSeed, day, textSeed(pair));\n      if (met.has(pair)) continue;\n      met.add(pair);\n      lay('quarrel', x.who, y.who, first(x, y), pick(QUARREL_SCRIPTS, ps), ps, o0, o1, null, watch);\n    }",
     "tests": [
       "test/systems/livingWorld/lwstir_street.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "LW-STIR-both-stand",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "        if (line && line.who.id === id && inc.members.every((m) => standing.has(m.id)) && standing.has(id)) {",
-    "new": "        if (line && line.who.id === id && standing.has(id)) {",
+    "old": "        if (line && line.who.id === id && inc.members.every((m) => by.has(m.id)) && by.has(id)) {",
+    "new": "        if (line && line.who.id === id && by.has(id)) {",
     "tests": [
       "test/systems/livingWorld/lwstir_street.test.js"
     ]

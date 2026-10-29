@@ -12,7 +12,8 @@
 // differ between one building and the next.
 
 import { srand } from '../formats/dfRandom.js';
-import { fullName, getNameBankOfRegion, BANK_TYPES, GENDERS } from './nameHelper.js';
+import { getNameBankOfRegion, BANK_TYPES, GENDERS } from './nameHelper.js';
+import { personName } from './personNames.js';   // REGION-NAMES: a key - by its bank's culture alone
 import { RACES } from '../systems/races.js';
 // ONE HOME for FactionFile.FactionTypes (FactionFile.cs:530-546) - the
 // enum the parser already mints. Individual is 4; 3 is Subgroup.
@@ -259,7 +260,7 @@ export function staticNpcName(data, { getFaction = null, nameBank = null } = {})
   // (:328). The string compare here was propping up the stale
   // staticNpcData above, which wrote 'female'/'male'; that one is gone
   // and this is the C# line.
-  const drawn = fullName(bank, data.gender);
+  const drawn = personName(bank, data.gender);   // REGION-NAMES: DFU's draw, then its culture's name off it (a key: no region)
   // QUEST-NAME-ONE (a departure): a quest Person's stand answers to the
   // Person's own name (systems/quest/person.js personOwnName, carried as
   // `personName` by the stand's one builder) - the name its quest's
