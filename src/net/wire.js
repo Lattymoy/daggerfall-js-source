@@ -6275,7 +6275,7 @@ export const SERPENT_FELLS_KEY = 'serpentfells';
 export const SERPENT_FELLS_MAX = 8;
 export const SERPENT_RC_PREFIX = 'serpentrc:';
 /** The room's refusals, in words (the `no` kind) - a closed list. 'reload': a game older than the brain's law. */
-export const SERPENT_NO_WORDS = Object.freeze(['the serpent is gone', 'the storm has closed its waters', 'too far from its waters', 'the waters are full', 'slain', 'reload']);
+export const SERPENT_NO_WORDS = Object.freeze(['the serpent is gone', 'the storm has closed its waters', 'too far from its waters', 'the waters are full', 'it is already slain', 'reload']);
 /** A level claim, a hull claim, the brain's law's number, one volley's damage on the wire (the brain caps it far lower). */
 export const SERPENT_LV_WIRE_MAX = 999;
 export const SERPENT_HULL_MAX = 4;
