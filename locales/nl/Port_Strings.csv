@@ -1195,6 +1195,7 @@ gfx.fix.win.close,"Sluit alle Chrome-vensters. Blijft het pictogram bij de klok 
 gfx.fix.win.run,"Druk op Win+R, plak dit pad en druk op Enter:"
 gfx.fix.win.start,"Start Chrome opnieuw."
 growth.spec.why.chosenMentor,"Je specialisatie. De krachten ervan werken voor {pct}% terwijl je mentor bent van een groep van lager niveau."
+helm.heavy,"Te zwaar. Maak je rugzak, je wagen of het ruim lichter"
 holdings.horse.boons.hungry,"Hongerig, maar nog geen straf."
 holdings.horse.boons.starving,"Uitgehongerd - geen galop tot het eet. Voer het."
 holdings.wagon.boons.failing,"Valt uit elkaar, maar rijdt nog op volle snelheid."

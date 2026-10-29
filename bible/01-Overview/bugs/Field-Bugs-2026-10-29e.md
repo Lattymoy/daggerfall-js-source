@@ -21,9 +21,9 @@ for good: she spun, or drifted one way, and no rudder or oar took them off. Part
 FIXED. The load still slows her way and her helm coming on, and never her coming to rest - let go, eased, or with the
 helm put against her swing, which takes her through 0 at the light rate and the other way at the load's
 (`systems/comeSailAway/ladenRest.js` swingStep, wayRests; the runtime's rates take the step's `rest`). A way wanted
-across her line, her oars' slide, gathers at the load's rate. A hull stopped dead says "You're going to need a bigger
-boat" every round she is asked to move, never one with no hold (the Carrack under Classic). Ledger A carries the
-departure.
+across her line, her oars' slide, gathers at the load's rate. Ledger A carries the departure. What her load is, the
+helm's panel says while it holds her (HEAVY-HINT, `Field-Bugs-2026-10-29d.md`, which also stopped weighing a wagon
+left ashore - CARGO-ASHORE); this record's own repeat of the mid-screen word was dropped for it at the merge of main.
 
 FOUND - THE KEYS. No host let go of a held key when the page lost focus. A D held across an alt-tab swung the helm on,
 and A could not stop it: MoveRight is asked first, at the oars and under sail. `ui/input.js` `letGoOnBlur` gives every
@@ -33,17 +33,17 @@ runs (the automap's held keys too); a mouse button is left to its own mouseup. T
 
 THE FOUR HOSTS. `world.js` wired (it carries `worldModes.js`' and its dungeons' keys); `exterior.js` wired;
 `dungeon.js`, the standalone dungeon that builds `dungeonContext.js`, wired; `interior.js` wired. Each is one call:
-`bootWorld` 35,315 to 35,316 (its ceiling raised by one), `bootExterior` 5,074 to 5,075, and the helm's runtime
-`createComeSailAwayRuntime` 2,502 to 2,506 - its call sites; the rules live in the leaf.
+measured on the merge of main: `bootWorld` 35,313 to 35,314, `bootExterior` 5,074 to 5,075, and the helm's runtime
+`createComeSailAwayRuntime` 2,513 to 2,517 - its call sites; the rules live in the leaf.
 
 NOT CHANGED - A CONTROLLER. A stick past its dead zone sends a whole MoveLeft or MoveRight (`systems/gamepad.js`
 `movementAxes`, DFU's InputManager), so a worn stick holds the rudder over. ASKED OF THE REPORTER: whether a controller
 is plugged in, what the pack, wagon and gold weigh, and whether "bigger boat" showed. A raised Gamepad Stick Deadzone is
 the way round a drifting stick.
 
-Pins: `test/systems/comeSailAway/laden_rest.test.js` (9: Classic and Responsive, oars and canvas, let go and against,
-part laden and dead, the slide, the word), `test/ui/keys_blur.test.js` (4). Mutants: `tools/mutants/laden_rest.json`
-(22, one equivalent), `tools/mutants/keys_blur.json` (9).
+Pins: `test/systems/comeSailAway/laden_rest.test.js` (8: Classic and Responsive, oars and canvas, let go and against,
+part laden and dead, the slide), `test/ui/keys_blur.test.js` (4). Mutants: `tools/mutants/laden_rest.json` (19, one
+equivalent), `tools/mutants/keys_blur.json` (9).
 
 ## 2. The Hearth Offering a sibling could not set out (HEARTH-SIBLING)
 
@@ -81,7 +81,7 @@ no living character plays, from a roster the realm answered, under **Families wi
 The cap's refusal names the way past it. The device's own copy stays, for the Hall of Ancestors.
 
 Pins: `test/server/family_remove.test.js` (7, the real Worker), `test/systems/legacy/family_remove_menu.test.js` (4).
-Mutants: `tools/mutants/family_remove.json` (14). Account acct220, no migration.
+Mutants: `tools/mutants/family_remove.json` (14). Account acct221 (acct220 on its branch, past UNION-CHILDREN's at the merge), no migration.
 
 ## 4. Alinor's furniture (BUILT-IN-MODS, BED-TURN)
 

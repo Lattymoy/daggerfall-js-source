@@ -2,7 +2,8 @@
 // LADEN-REST (the port's own; FIELD BUGS 2026-10-29e, "sometimes my bnoat begins to spin"): WHEN A LADEN HULL COMES TO
 // REST AT THE LIGHT RATE. Come Sail Away scales every rate by the cargo mod, the rate a swing and a way are taken off by
 // too, so a load at twice her hold (a mod of 0) kept both for good. The runtime (comeSailAway.js) asks these and takes the
-// load's share off its rates while she rests. A leaf: it imports nothing.
+// load's share off its rates while she rests. A leaf: it imports nothing. What her load is, the helm's panel says while it
+// holds her (HEAVY-HINT, bible/01-Overview/bugs/Field-Bugs-2026-10-29d.md).
 const f = Math.fround;
 
 /** Her swing's step: toward `swing`, resting while it eases or is let go - AUDIT FB1029e S1: and while the helm is put
@@ -18,7 +19,3 @@ export function swingStep(/** @type {number} */ swing, /** @type {number} */ cur
 export const wayRests = (/** @type {number} */ wanted, /** @type {number} */ was, /** @type {number} */ dot) => wanted < was
   && (wanted === 0 || dot >= f(f(wanted * was) * 0.999));
 
-/** Whether a hull's load word is said again this round: stopped dead (`mod` 0) with a hold to weigh against (AUDIT FB1029e
- *  S2: never the Carrack under Classic, which has none) while she is asked to move - her oars, her canvas or her helm. */
-export const deadWordDue = (/** @type {number} */ mod, /** @type {number} */ threshold, /** @type {any} */ state) => mod === 0 && threshold > 0
-  && (state.oarThrottle !== 0 || state.sailPosition !== 0 || state.TurnTarget !== 0);

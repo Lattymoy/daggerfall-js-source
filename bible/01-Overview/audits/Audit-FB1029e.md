@@ -23,7 +23,8 @@ at the load's with the helm put against it - 5 to 11 times slower, the reporter'
 light rate, then the other way at the load's (`ladenRest.js` swingStep).
 
 **S2 = T12 (MEDIUM). The word every round** for an empty Carrack under Classic (no hold, so mod 0 at any weight), over
-other mid-screen text. Now only for a hull with a hold, while she is asked to move (deadWordDue).
+other mid-screen text. Fixed on the branch (only a hull with a hold, while asked to move); at the merge of main the
+repeat was dropped whole for main's HEAVY-HINT, the helm panel's line while her load holds her.
 
 **S3 (MEDIUM). The blur skipped every host's own release** - townTalk's, the mode machine's, an overlay's held set: the
 automap kept moving with no key down. The blur now gives each held key its keyup at the document; the automap's held
@@ -87,7 +88,7 @@ withoutLine) and pinned. **T5, T11.** Two offering and two family survivors, pin
 call at the top of the scope. **T9.** The ledger row names its hosts, pins and mutants. **T10.** "Below 0 she crawls"
 (the mod is never below 0), struck.
 
-Mutants: `tools/mutants/audit_fb1029e.json` (22, one equivalent), and the lists of the record grown: laden_rest 22 (one
+Mutants: `tools/mutants/audit_fb1029e.json` (22, one equivalent), and the lists of the record grown: laden_rest 19 (one
 equivalent), keys_blur 9, family_remove 14, hearth_sibling 7, builtin_mods 13. Re-aimed by content: `csa_sailing.json`,
 `witch1.json`, `fb1014_innbeds.json`, `hostsplit.json`, `int_lane4.json`, `legacy7.json`, `realm1.json`,
 `navaudit_helm.json`.

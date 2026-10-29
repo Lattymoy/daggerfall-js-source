@@ -1,8 +1,8 @@
 // LADEN-REST (FIELD BUGS 2026-10-29e, "sometimes i cant moove, sometimes my bnoat begins to spin, sometimes it takes a
 // direction and slowly waddles there"): the load slows her way and her helm, never her coming to rest. Come Sail Away
 // scaled the rate a swing and a way are taken off by the load too, so a load at twice her hold (a mod of 0) kept the
-// swing and the way she had when it was weighed, for good. The real runtime (test/csaScene.mjs). AUDIT FB1029e S1, S2,
-// S5, S6: a helm put against her swing, the Responsive helm, her canvas, a slide, and an empty Carrack under Classic.
+// swing and the way she had when it was weighed, for good. The real runtime (test/csaScene.mjs). AUDIT FB1029e S1, S5,
+// S6: a helm put against her swing, the Responsive helm, her canvas and a slide.
 // Mutants: tools/mutants/laden_rest.json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -11,7 +11,7 @@ import { BOAT_ACTIONS } from '../../../src/systems/comeSailAway/comeSailAway.js'
 
 const way = (s) => Math.hypot(...s.rt.state.MoveVectorCurrent);
 
-test('LADEN-REST a swing and a way the load stopped dead are taken off - the rudder let go, the oars at rest - and she says why every round', () => {
+test('LADEN-REST a swing and a way the load stopped dead are taken off - the rudder let go, the oars at rest - and she says why', () => {
   const s = scene();
   const b = s.helm(s.place(0));
   s.held.add('MoveRight');
@@ -35,8 +35,7 @@ test('LADEN-REST a swing and a way the load stopped dead are taken off - the rud
   for (let i = 0; i < 8; i++) s.frame();
   assert.equal(Math.abs(s.rt.state.TurnCurrent), 0, 'dead in the water: no swing gathered');
   assert.equal(way(s), 0, 'and no way');
-  s.rt.OnNewMagicRound();
-  assert.deepEqual(s.out.mid.slice(said).map(([t]) => t), ["You're going to need a bigger boat", "You're going to need a bigger boat"], 'said every round she lies dead');
+  assert.deepEqual(s.out.mid.slice(said).map(([t]) => t), ["You're going to need a bigger boat"], 'said as she was weighed');
   assert.ok(b);
 });
 
@@ -139,21 +138,6 @@ test('LADEN-REST (AUDIT FB1029e S5) a slide wanted across her way gathers at the
   const light = slide(0), laden = slide(250);
   assert.ok(light.gain > 0 && laden.mod > 0 && laden.mod < 1, `${light.gain} ${laden.mod}`);
   assert.ok(laden.gain <= light.gain * laden.mod + 1e-4, `her way's step into the slide, ${laden.gain}, is no more than ${laden.mod} of a light one (${light.gain})`);
-});
-
-test('LADEN-REST (AUDIT FB1029e S2) the dead hull\'s word is said again only while she is asked to move, and never for a hull with no hold', () => {
-  const words = (hull, { ahead }) => {
-    const s = scene();
-    s.deps.entity.carriedWeight = () => (hull === 4 ? 0 : 5000);
-    s.helm(s.place(hull));
-    if (ahead) s.frame({ press: ['MoveForwards'] });
-    const from = s.out.mid.length;
-    for (let i = 0; i < 4; i++) s.rt.OnNewMagicRound();
-    return s.out.mid.slice(from).length;
-  };
-  assert.equal(words(0, { ahead: true }), 4, 'asked to move: every round');
-  assert.equal(words(0, { ahead: false }), 0, 'at rest: once, at the helm');
-  assert.equal(words(4, { ahead: true }), 0, 'the Carrack under Classic has no hold - the mod\'s own, never said every round');
 });
 
 test('LADEN-REST her oars still pulling ahead when the load stops her dead: her way comes off all the same', () => {

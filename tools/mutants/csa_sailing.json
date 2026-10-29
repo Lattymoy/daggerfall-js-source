@@ -273,12 +273,11 @@
   {
     "name": "CSA-D-cargo-said-every-time",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    if (state.lastWeight !== num || deadWordDue(state.boatCargoMod, threshold, state)) {",
+    "old": "    if (state.lastWeight !== num) {",
     "new": "    if (true) {",
     "tests": [
       "test/systems/comeSailAway/csa_sailing.test.js"
-    ],
-    "note": "Re-aimed by content (AUDIT FB1029e)."
+    ]
   },
   {
     "name": "CSA-D-cargo-bigger-boat-half",

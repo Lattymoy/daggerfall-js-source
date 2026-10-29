@@ -10,8 +10,9 @@
 import { TextureFile, LAST_CLASSIC_TEXTURE_ARCHIVE } from '../formats/textureFile.js'; import { changeMask } from '../formats/baseImageFile.js';   // HM1: the item icons' removeMask (one line: the cites below stand)
 import { FlatsFile } from '../formats/flatsFile.js';   // NPC1: captions + portrait indices
 import { isExteriorWindow } from '../world/climateSwaps.js';
-import { standInWindowMask } from '../world/imperialWindows.js';   // BLD: a stand-in wall that carries its own glass
-import { isInteriorGlassArchive, interiorGlassMask } from '../world/interior/interiorGlass.js';   // RW1: an interior's own glass
+import { exteriorWindowMask } from '../world/exteriorGlass.js';   // WL1: a window DFU names whose glass is painted in its own colour
+import { standInWindowMask, facadeGlass } from '../world/imperialWindows.js';   // BLD: a stand-in wall that carries its own glass
+import { isInteriorGlassArchive, interiorGlassMask, interiorWindowOf } from '../world/interior/interiorGlass.js';   // RW1: an interior's own glass
 import { isEmissive, FIRE_WALLS_ARCHIVE, FIRE_WALL_COLOR, FIRE_WALL_SCALE } from '../world/emissiveTextures.js';   // TextureReader's auto-emissive table (lit lanterns, fireplaces, fire daedra)
 import { dfMeshToModel } from '../world/meshReader.js'; import { patchSeams } from '../world/arch3dSeams.js';   // DUNGEON-SEAMS (one line: the cites below stand)
 import { fetchBytes, texName } from './shared.js';
@@ -36,6 +37,9 @@ export { LAST_CLASSIC_TEXTURE_ARCHIVE };   // DS1's, kept here for its importers
 export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes }) {
   const textureFiles = new Map();
   const texturePromises = new Map();
+  // WL1 (render/windowLight.js): which pictures may hold glass, asked before they are up - a mesh measures its windows at
+  // its upload, under its own records, while its climate's picture of each may come later
+  if (renderer) renderer.glassKeyTest = (a, r) => isExteriorWindow(a, r) || interiorWindowOf(a)?.record === r || !!facadeGlass(a, r);
 
   // NPC1: FLATS.CFG, warmed once and shared. It answers two questions
   // about any billboard in the world - what the flat is CALLED (the
@@ -252,7 +256,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // their own painting) takes the same window mask, lit by the window style after dark as a classic window is.
     const ownGlass = t.vendor ? standInWindowMask(archive, record) : null;
     if (isExteriorWindow(archive, record) && !t.vendor) {
-      renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap), { replacement, window: true });   // RW1: DFU's window mask - the rooms' glass from the street, the street's from inside (render/realWindows.js)
+      renderer.uploadEmissionTexture(archive, record, exteriorWindowMask(archive, record, bitmap, t), { replacement, window: true });   // RW1: DFU's window mask - the rooms' glass from the street, the street's from inside (render/realWindows.js); WL1: the twelve DFU names whose glass is not 0xff, read off their own colour (world/exteriorGlass.js)
     } else if (ownGlass) {
       renderer.uploadEmissionTexture(archive, record, ownGlass, { replacement, window: true });
     } else if (isEmissive(archive, record)) {

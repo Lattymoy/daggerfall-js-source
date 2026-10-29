@@ -70,16 +70,6 @@
     "note": "her way comes on at the light rate"
   },
   {
-    "name": "LADEN-REST-said-once",
-    "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "if (state.lastWeight !== num || deadWordDue(state.boatCargoMod, threshold, state)) {",
-    "new": "if (state.lastWeight !== num) {",
-    "tests": [
-      "test/systems/comeSailAway/laden_rest.test.js"
-    ],
-    "note": "a dead hull says why once"
-  },
-  {
     "name": "AUDIT-FB1029e-S1-counter-at-the-load",
     "file": "src/systems/comeSailAway/ladenRest.js",
     "old": "  const against = swing * current < 0 && mod < 1;",
@@ -108,26 +98,6 @@
       "test/systems/comeSailAway/laden_rest.test.js"
     ],
     "note": "a swing let go comes off at the load's rate"
-  },
-  {
-    "name": "AUDIT-FB1029e-S2-said-at-rest",
-    "file": "src/systems/comeSailAway/ladenRest.js",
-    "old": "  && (state.oarThrottle !== 0 || state.sailPosition !== 0 || state.TurnTarget !== 0);",
-    "new": "  && true;",
-    "tests": [
-      "test/systems/comeSailAway/laden_rest.test.js"
-    ],
-    "note": "said every round with her oars at rest"
-  },
-  {
-    "name": "AUDIT-FB1029e-S2-said-no-hold",
-    "file": "src/systems/comeSailAway/ladenRest.js",
-    "old": "=> mod === 0 && threshold > 0\n",
-    "new": "=> mod === 0\n",
-    "tests": [
-      "test/systems/comeSailAway/laden_rest.test.js"
-    ],
-    "note": "the Carrack under Classic said every round"
   },
   {
     "name": "AUDIT-FB1029e-S5-slide-light",

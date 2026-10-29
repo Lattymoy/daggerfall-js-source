@@ -169,7 +169,7 @@ test('PASSAGE-HANDS: the helm panel at a booked ship\'s helm under way is a pass
   const draw = mount(scope, fn('  function csaDrawHelmPanel() {'), 'csaDrawHelmPanel');
   scope.csaRuntime.state.CurrentBoat = { hull: 1, charter: { to: { name: 'Wayrest', px: 859, py: 244 }, ship: 'The Fair Silk' } };
   draw();
-  assert.deepEqual([drawn.at(-1).helm, drawn.at(-1).aboard], [null, { hull: 1, passage: { ship: 'The Fair Silk', port: 'Wayrest' }, dial: { timeDial: true, timeScale: 2, timeScaleIndex: 1, timeScaleMax: 3 } }], 'a passenger\'s card, the helm\'s dial on it');
+  assert.deepEqual([drawn.at(-1).helm, drawn.at(-1).aboard], [null, { hull: 1, passage: { ship: 'The Fair Silk', port: 'Wayrest' }, heavy: false, dial: { timeDial: true, timeScale: 2, timeScaleIndex: 1, timeScaleMax: 3 } }], 'a passenger\'s card, the helm\'s dial on it (AUDIT FB1029d B5: and whether her load holds her)');
   assert.deepEqual(passengerButtons(drawn.at(-1).aboard).map((b) => b.act), ['slower', 'normal', 'faster', 'leave'], 'what a passenger keeps, on the card: the dial and Leave');
   assert.deepEqual(passengerButtons({ dial: { timeDial: false } }).map((b) => b.act), ['leave'], 'online the dial does not turn (HELM-TIME-ONLINE): Leave alone');
   // and the panel paints the card - its title, and the buttons a mouse or a finger keeps

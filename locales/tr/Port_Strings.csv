@@ -450,6 +450,7 @@ gfx.fix.win.close,"Tüm Chrome pencerelerini kapatın. Simgesi saatin yanında k
 gfx.fix.win.run,"Win+R tuşlarına basın, şu yolu yapıştırın ve Enter'a basın:"
 gfx.fix.win.start,"Chrome'u yeniden başlatın."
 growth.spec.why.chosenMentor,"Uzmanlığınız. Daha düşük seviyeli bir gruba mentorluk yaparken güçleri %{pct} oranında etki eder."
+helm.heavy,"Çok ağır. Çantanı, arabanı ya da ambarı hafiflet"
 holdings.horse.boons.hungry,"Aç, ama henüz bir cezası yok."
 holdings.horse.boons.starving,"Açlıktan bitkin - yiyene kadar dörtnala koşmaz. Onu besle."
 holdings.wagon.boons.failing,"Dağılmak üzere, ama hâlâ tam hızla gider."
