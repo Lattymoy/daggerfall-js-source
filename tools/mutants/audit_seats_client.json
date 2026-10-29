@@ -943,8 +943,8 @@
   {
     "name": "AUDITSEATS-G5-levitate-ward-throws",
     "file": "src/characters/playerEntity.js",
-    "old": "try { return !!_levitateWard?.(); } catch { return false; }",
-    "new": "try { return !!_levitateWard?.(); } catch { return true; }",
+    "old": "try { return !!_levitateWard?.() || pvpLevitateBarred(); } catch { return false; }",
+    "new": "try { return !!_levitateWard?.() || pvpLevitateBarred(); } catch { return true; }",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]

@@ -31729,6 +31729,26 @@
   "tr": "88afd8723074",
   "by": "claude-in-session"
  },
+ "pvp.rules.buff": {
+  "en": "9f3a9d316466",
+  "tr": "05496907b195",
+  "by": "claude-in-session"
+ },
+ "pvp.rules.dispel": {
+  "en": "8e3f1f549d0f",
+  "tr": "5615c4ce2673",
+  "by": "claude-in-session"
+ },
+ "pvp.rules.levitate": {
+  "en": "c2c65e915090",
+  "tr": "5ed10f12ffaa",
+  "by": "claude-in-session"
+ },
+ "pvp.rules.rest": {
+  "en": "3d7bdfbb40bd",
+  "tr": "f0d514405cb9",
+  "by": "claude-in-session"
+ },
  "pvp.villain.label": {
   "en": "d0bfd20b8baf",
   "tr": "3f5ed906543a",

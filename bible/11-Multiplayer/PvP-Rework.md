@@ -182,3 +182,21 @@ Not built yet: the account service keeps no meter. It must take the receipt's `v
 meter into the identity token for the relay to read on entry, and lower it by 1 for each monster at or above the level
 less 1, 200 for a helpful quest and 500 for a raid (none while red). Until then the meter lives in the relay's memory
 alone. A departure: DFU has no PvP.
+
+## PVP-RULES: a flagged fighter's limits
+
+"when u get aggroed or flag up change speed levciataion all that jazz", "sleep need disable", "sleep spell as well": while
+my flag is up in the open zone (aggro is a flag up, its skull gold), the law holds me
+(`pvpRules.js:"export const pvpLimited = () =>"`, wired by `pvpRulesHost.js:"export function createPvpRulesHost("`).
+Levitate lifts nothing and is not cast; the fall it ends costs no health, once
+(`pvpRules.js:"export function pvpLevitateBarred() {"`, spent at `shared.js:"if (inOutdoorWater || takePvpFallSpare()) return;"`).
+The flag going up ends every PvE buff - Fortify, Shield, the Resists, the concealments, Jumping, Climbing, Slowfall, Free
+Action, Water Walking, Regenerate - a worn item's, a curse's and a duel's left whole
+(`pvpRules.js:"export function stripPvpBuffs(entity, edge) {"`). While it is up none is cast on myself but Shield, the
+fight's own (`pvpRules.js:"export function pvpSpellRefusal(sp, limited = pvpLimited()) {"`), and the rest window stays shut.
+
+The pace on foot and the jump are held to an unbuffed best, Speed and Running 100 and Jumping 100 with Athleticism
+(`pvpRules.js:"export const PVP_LIMITS = Object.freeze({ mps: 11.71, jump: 1.6 });"`, read at
+`motor.js:"export function registerMoveCap(name, fn) {"`); a mount's pace is its own. Paralyze never reaches a player:
+PVP-SPELLS lands a Damage or a Heal Health alone. A beast's change raises no flag - the flag host's own `set` alone sends
+it. All of it is the client's: the relay refs only blows. A departure: DFU has no PvP.

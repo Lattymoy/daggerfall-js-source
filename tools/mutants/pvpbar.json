@@ -65,8 +65,8 @@
   {
     "name": "PVP-BAR-the-wire-kind",
     "file": "src/net/wire.js",
-    "old": "'down', 'grace', 'flag', 'bar']);",
-    "new": "'down', 'grace', 'flag']);",
+    "old": "'down', 'grace', 'flag', 'bar', 'vil']);",
+    "new": "'down', 'grace', 'flag', 'vil']);",
     "tests": [
       "test/net/pvpbar.test.js"
     ]
@@ -146,7 +146,7 @@
   {
     "name": "PVP-BAR-the-page-veil-unworn",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "if (look?.kind === 'plain' || (bits & 7) === 7 || skullOf(id) !== 'gold') return look;",
+    "old": "if (look?.kind === 'plain' || (bits & 7) === 7 || !['gold', 'red'].includes(skullOf(id) ?? '')) return look;",
     "new": "return look;",
     "tests": [
       "test/net/pvpbar.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "PVP-BAR-the-page-staff-veiled",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "if (look?.kind === 'plain' || (bits & 7) === 7 || skullOf(id) !== 'gold') return look;",
-    "new": "if (look?.kind === 'plain' || skullOf(id) !== 'gold') return look;",
+    "old": "if (look?.kind === 'plain' || (bits & 7) === 7 || !['gold', 'red'].includes(skullOf(id) ?? '')) return look;",
+    "new": "if (look?.kind === 'plain' || !['gold', 'red'].includes(skullOf(id) ?? '')) return look;",
     "tests": [
       "test/net/pvpbar.test.js"
     ]

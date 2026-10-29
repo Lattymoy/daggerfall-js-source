@@ -262,8 +262,8 @@
   {
     "name": "ARENA-LADDER-kit-engine-unasked",
     "file": "src/scenes/hostMagic.js",
-    "old": "why = spellRefusal?.(sp) ?? sandSpellRefusal(sp);",
-    "new": "why = spellRefusal?.(sp) ?? null;",
+    "old": "why = spellRefusal?.(sp) ?? sandSpellRefusal(sp) ??",
+    "new": "why = spellRefusal?.(sp) ?? null ??",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
