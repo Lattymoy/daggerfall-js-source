@@ -13,6 +13,7 @@ import { DYE_COLORS, DYE_TARGETS, getDyeColorTable } from './dyes.js';
 import { SKILLS } from '../systems/skills.js';   // GetWeaponSkillIDAsShort's return set
 import { SOUND } from '../systems/soundClips.js';   // F023: GetEquipSound's clips (soundClips is a leaf)
 import { THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE, PISTOLET_SPAN } from './thunderlockIds.js';
+import { HAND_WRAPS_TEMPLATE } from './handWrapsIds.js';
 import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js';   // RRI1: a custom weapon class answers its own skill, damage and equip sound (virtuals)   // the port's own weapon - a leaf, so no cycle (see the file)
 
 export const WEAPONS = Object.freeze({
@@ -187,6 +188,7 @@ export function weaponSkillUsed(templateIndex) {
   // any of them learning that a new weapon exists.
   if (templateIndex === THUNDERLOCK_TEMPLATE) return SKILLS.Archery;
   if (templateIndex === PISTOLET_TEMPLATE) return SKILLS.Archery;   // PISTOLET: fired, and it spends the Pellet - the same answer
+  if (templateIndex === HAND_WRAPS_TEMPLATE) return SKILLS.HandToHand;   // HAND-WRAPS: the fists' own skill
   const cls = customItemClass(templateIndex);   // RRI1: GetWeaponSkillUsed
   if (cls?.weaponSkillUsed) return SKILLS[cls.weaponSkillUsed];
   return WEAPON_SKILL_USED.get(templateIndex) ?? null;

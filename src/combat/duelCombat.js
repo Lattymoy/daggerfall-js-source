@@ -20,6 +20,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no other players. Ledger A (ONLINE).
 import { calculateAttackDamage, baseDamageMax, damageModifier, WEAPON_MATERIAL_MODIFIER } from './formulas.js';
+import { isHandWraps } from '../characters/handWrapsIds.js';   // HAND-WRAPS (AUDIT B): a fist in wraps strikes as the bare hand
 import { weaponDamageMods } from '../systems/entityMods.js';
 import { SWING_MODS, WEAPON_REACH } from './playerWeapon.js';
 import { createWeapon } from './enemyEquipment.js';
@@ -95,9 +96,9 @@ export function duelAttackerOf(entity, weapon = null) {
 }
 
 /** THE WEAPON, as the wire carries it (`w`): template, material and condition as a percentage - null for a bare hand
- *  (a werecreature's claws strike as the bare hand: playerWeapon.js strikingWeapon hands none). */
+ *  (a werecreature's claws strike as the bare hand: playerWeapon.js strikingWeapon hands none; HAND-WRAPS: so do the wraps). */
 export function duelWeaponOf(item) {
-  if (!item || !Number.isInteger(item.templateIndex) || item.templateIndex < 0 || item.templateIndex > DUEL_TEMPLATE_MAX) return null;
+  if (!item || isHandWraps(item) || !Number.isInteger(item.templateIndex) || item.templateIndex < 0 || item.templateIndex > DUEL_TEMPLATE_MAX) return null;
   const max = Number(item.maxCondition), cur = Number(item.currentCondition);
   const c = max > 0 && Number.isFinite(cur) ? clamp(Math.round((100 * cur) / max), 0, 100) : 100;
   return { t: item.templateIndex, m: clamp(item.material ?? 0, 0, DUEL_MATERIAL_MAX), c };

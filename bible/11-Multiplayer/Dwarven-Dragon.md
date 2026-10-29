@@ -402,7 +402,7 @@ mutate its other side (`DRAGON5c-the-oil-kept-off-online`, `AUDIT-DRAGON-the-wai
 of its reference damage (`dpsRef`, 5 + level), but the gate's bucket lets it deal three times that, fifteen deep: one
 fighter at the cap took its share in about a minute, and more fighters only brought more shares. `DRAGON_TTK_S` is 720:
 twelve minutes at the reference, about four at the cap - over the Ketch Warden's 600 (KETCH-LONGER, the same finding),
-the rarest world boss the longest fight. Relay world289 (`DRAGON_RIDE_RELAY_MIN` stays 288). PINS MOVED: the relay
+the rarest world boss the longest fight. Relay world290, world289 on its branch until HAND-WRAPS took it (`DRAGON_RIDE_RELAY_MIN` stays 288). PINS MOVED: the relay
 version's (each note before the last), `dragon2_law`'s; `DRAGON2-the-share-the-gates` mutates 720 to 600.
 
 **DRAGON7 - the Aetherbright (2026-10-29).** `characters/dwarvenDragonShiny.js` turns each PLTE colour at load - the brass

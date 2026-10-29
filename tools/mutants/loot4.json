@@ -83,8 +83,8 @@
   {
     "name": "LOOT4-the-slayer-on-every-foe",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  for (const a of linesOf(weapon, 'slayer')) if (a.param === group) pct += a.value;",
-    "new": "  for (const a of linesOf(weapon, 'slayer')) pct += a.value;",
+    "old": "  for (const a of linesOf(held, 'slayer')) if (a.param === group) pct += a.value;",
+    "new": "  for (const a of linesOf(held, 'slayer')) pct += a.value;",
     "tests": [
       "test/systems/loot4_procs.test.js"
     ]

@@ -162,6 +162,7 @@ export function blowK({ kind = 'melee', weapon = null, claws = false, round = fa
     case SKILLS.Axe: k = TELL.K_AXE; break;
     case SKILLS.LongBlade: k = TELL.K_LONG_BLADE; break;
     case SKILLS.ShortBlade: k = TELL.K_SHORT_BLADE; break;
+    case SKILLS.HandToHand: return TELL.K_HANDS;   // HAND-WRAPS (AUDIT B6): a fist in wraps weighs a fist
     case SKILLS.Archery: return TELL.K_ARROW;   // a bow swung, or a shaft a foe loosed (its blow carries the bow)
     default: k = TELL.K_LONG_BLADE;   // a weapon the table does not know: a sword's weight
   }
