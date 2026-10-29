@@ -521,11 +521,12 @@
   {
     "name": "REZ-BLOODLINE-the-window-not-the-screens",
     "file": "src/systems/legacy/revived.js",
-    "old": "export const REZ_HOLD_S = 150;",
-    "new": "export const REZ_HOLD_S = 120;",
+    "old": "export const REZ_HOLD_S = 90;",
+    "new": "export const REZ_HOLD_S = 60;",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DEATH-15): the window 90 s now the zone's wait is a minute (150 while it held two)."
   },
   {
     "name": "REZ-BLOODLINE-the-session-asks-no-hold",

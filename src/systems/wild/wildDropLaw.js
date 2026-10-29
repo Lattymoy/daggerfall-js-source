@@ -177,11 +177,11 @@ const dropWorth = (/** @type {any} */ it) => { const l = liquidWorthOf(it); retu
  * policies are spent: one on a piece no pick named, in a hall that searches no body or past the remains' bound, stays.
  * AUDIT FOE-KEEPS LETTERS-TENTH: `letters` true (the fallen's word, WILD_FALL_LETTERS; a seizure's) - each letter of
  * credit in the bag pays a tenth of its worth into the same pile (`gold.letters`, by its id) and stays where it lies;
- * false, the letters drop whole as any piece (LETTERS-DROP), for a game from before the word. PVP-REWARD: `bag` false, none.
+ * false, the letters drop whole as any piece (LETTERS-DROP), for a game from before the word. PVP-REWARD: `bag` false, none; `purse` false, no coin.
  * @param {any} entity @param {number} [w] @param {(item: any) => boolean} [keep] @param {number[] | null} [wt]
- * @param {{ letters?: boolean, insured?: (item: any) => boolean, bag?: boolean }} [opts]
+ * @param {{ letters?: boolean, insured?: (item: any) => boolean, bag?: boolean, purse?: boolean }} [opts]
  */
-export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { letters = false, insured = UNINSURED, bag: drops = true } = {}) {
+export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { letters = false, insured = UNINSURED, bag: drops = true, purse: coins = true } = {}) {
   /** @type {string[]} AUDIT PVP-EASE L1-3: the policies this death spends - what it would have taken, kept */
   const saved = insured === UNINSURED ? [] : wildSaved(entity, w, keep, wt, letters, insured, drops);
   const bag = Array.isArray(entity?.items) ? entity.items : [];
@@ -194,7 +194,7 @@ export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { l
   const killer = took.length > 0;
   // the gold, second: the purse's share
   const purse0 = Math.max(0, Math.floor(entity?.goldPieces ?? 0));
-  const coin = takeWildGold(entity);
+  const coin = coins ? takeWildGold(entity) : null;
   /** @type {{ purse: number, letters?: Record<string, number> }} */
   const gold = { purse: coin ? purse0 - Math.max(0, Math.floor(entity.goldPieces ?? 0)) : 0 };
   // LETTERS-TENTH (the fallen's word, `letters`): each letter's tenth into the same pile, the letter kept where it lies
@@ -311,6 +311,27 @@ function lettersTenth(/** @type {any[][]} */ lists, /** @type {(item: any) => bo
   }
   return out;
 }
+/** PVP-NO-TENTH (the owner: "=10% if they domt have initem to roll on", "Letter only pay out 10% if they have not enough
+ *  gold"): THE LAST ROLL - a tenth of the purse and the letters together, out of the purse first, the letters (bag order,
+ *  each kept where it lies) paying only what the purse cannot. `letters` false (a tab from before the word): the purse
+ *  alone. Answers `{ pile, gold }` - `gold` as takeWildDeath's (`purse`, `letters` by id); `pile` null when nothing. */
+export function takeWildLastRoll(/** @type {any} */ entity, keep = (/** @type {any} */ _it) => false, { letters = false } = {}) {
+  const have = Math.max(0, Math.floor(entity?.goldPieces ?? 0));
+  const paper = letters && Array.isArray(entity?.items) ? entity.items.filter((/** @type {any} */ it) => shareLetter(it) && !keep(it)) : [];
+  const n = Math.floor((have + paper.reduce((/** @type {number} */ g, /** @type {any} */ it) => g + it.value, 0)) / WILD_GOLD_DIVISOR);
+  const purse = Math.min(have, n);
+  if (entity && purse > 0) entity.goldPieces = have - purse;
+  /** @type {{ purse: number, letters?: Record<string, number> }} */ const gold = { purse };
+  let owed = n - purse;
+  for (const it of paper) {
+    if (owed <= 0) break;
+    const k = Math.min(it.value, owed);
+    it.value -= k; owed -= k;
+    (gold.letters ??= {})[it.uid] = k;
+  }
+  return { pile: n > 0 ? goldStack(n) : null, gold };
+}
+
 /** INT9 (AUDIT): WHAT THE SERVICE TOOK, as the fallen's game finds it again - a piece's own marks (`g` group, `t`
  *  template, `m` material, `u` its id, `p` its craft's provenance, `n` its stack, `f` where it lay). */
 export const wildTookOf = (/** @type {any[]} */ taken, /** @type {string[]} */ from) => taken.map((it, i) => ({ g: it.group ?? null, t: it.templateIndex ?? null, m: it.material ?? 0, u: typeof it.uid === 'string' ? it.uid : null, p: typeof it.provenance === 'string' ? it.provenance : null, n: Math.max(1, Math.floor(it.stackCount ?? 1)), f: from[i] })).filter((x) => x.f !== 'gold');
