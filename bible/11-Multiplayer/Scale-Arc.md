@@ -4673,7 +4673,12 @@ to the primary, and a session's own lookup that misses there asks the primary (B
 read no replica may serve (the yards, the layouts, the seats' list, the towns' shares) is shed as before. SHED-LONG's
 rollback measured a replica queue longer than the primary's at a time the replica was not idle; here it was.
 
-Pins: `test/server/shed_replica.test.js` (1); `tools/mutants/shed_replica.json` (3, all dead). PIN MOVED:
+**BUSY-HEART's two stay shed** (`service.js` `SHED_NO_REPLICA`). The heartbeat writes its beat on every ask and the
+motherlodes their claim and pick; on a replica's session those writes are still the overloaded primary's. The first
+build moved them too, and `test/net/busy_heart.test.js` failed `main`'s verify, so acct212 did not deploy.
+
+Pins: `test/server/shed_replica.test.js` (1), `test/net/busy_heart.test.js` (its service pin, unchanged);
+`tools/mutants/shed_replica.json` (6, all dead). PIN MOVED:
 `test/net/busy_gate.test.js` and `test/net/slow_shed.test.js` shed the towns' layouts, a busy read no replica may serve;
 `test/server/keep_mark.test.js` reads a town on a session that says no position; BUSYGATE-shed-unread and SCALE4d's two
 records re-aimed at the line they mutate; the version pins to acct212.

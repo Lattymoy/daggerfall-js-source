@@ -102,7 +102,7 @@
   {
     "name": "BUSYGATE-shed-unread",
     "file": "server-account/src/index.js",
-    "old": "    if (shed && db === env.DB) return overloaded(origin);\n",
+    "old": "    if (shed && !anyReplica) return overloaded(origin);\n",
     "new": "",
     "tests": [
       "test/net/busy_gate.test.js"
