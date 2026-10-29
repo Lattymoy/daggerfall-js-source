@@ -60,7 +60,7 @@ for (const s of sites) {
   console.log(`site ${s.i}: ${s.kind} at [${s.x}, ${s.y}, ${s.z}] r ${s.r}, vault [${s.vault.join(', ')}]`);
   const at = (p) => page.evaluate(([x, y, z]) => window.__player.warp(x, y + 0.05, z), p);
   // the vantage: inside the ward on its +x side, looking back at the heart and down at the floor
-  const look = async () => { await at([s.x + s.r + 1, s.y, s.z]); await page.evaluate((p) => window.__pose(...p, Math.PI / 2, -0.55), [s.x + s.r + 1, s.y + 1.6, s.z]); };
+  const look = async () => { await at([s.x + s.r + 1, s.y, s.z]); await page.evaluate((p) => window.__pose(...p, -Math.PI / 2, -0.5), [s.x + s.r + 1, s.y + 1.6, s.z]); };
   // near, then in
   await at([s.x + s.r + 5, s.y, s.z]); await frames(6);
   console.log(`  near: "${await say()}"`);
