@@ -46,13 +46,17 @@ export function passLevelOf(/** @type {unknown} */ xp, /** @type {any} */ season
 export const passOpen = (/** @type {any} */ season, /** @type {number} */ nowMs) => !!season && Number.isFinite(nowMs) && nowMs >= season.fromMs && nowMs < season.toMs;
 
 // ═══ THE FINDS ═══════════════════════════════════════════════════════════════════════════════════════════════════════
-/** The experience a deed gives, by its source - a foe by its kind (systems/pass/passFoes.js), an act by its family
- *  (systems/questlines/qlActs.js ACT_KINDS), a quest done and a bounty paid. `construct` is the season's own foe. */
+/** The experience a deed gives, by its source - a foe by its kind (systems/pass/passClient.js passFoeSource), an act by
+ *  its family (systems/questlines/qlActs.js ACT_KINDS), a quest done and a bounty paid. `construct` is the season's own foe. */
 export const PASS_SOURCES = Object.freeze({
   foe: 12, undead: 15, daedra: 15, elite: 60, construct: 40,
   gather: 8, make: 12, loot: 10, tavern: 50, sea: 40, world: 120, endgame: 300, quest: 150, bounty: 150,
 });
 export const isPassSource = (/** @type {unknown} */ s) => typeof s === 'string' && Object.hasOwn(PASS_SOURCES, s);
+/** The Rourken's works, the season's constructs wherever they are met (Daggerfall Enemy Expansion's Centurion Sphere,
+ *  Iron Golem and Steam Centurion - scenes/ketch/ketchFight.js KT_LOOKS): a `construct` find, and the Resonant Maul's
+ *  quarry (systems/pass/resonantMaul.js). */
+export const PASS_CONSTRUCT_MOBILES = Object.freeze([289, 270, 290]);
 /** A UTC day's bounds an account: the asks heard, and the experience found before a booster's share (a booster's share
  *  is on top, so a booster speeds every player, the one who plays all day too). */
 export const PASS_DAY_ASKS = 2000;

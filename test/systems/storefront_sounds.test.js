@@ -13,8 +13,8 @@ import { KILL_EFFECTS, PORTAL_SKINS } from '../../src/net/effectLaw.js';
 
 const file = (f) => new URL(`../../public/sfx/${f}`, import.meta.url);
 
-test('STOREFRONT the clips: a kill effect\'s and a portal skin\'s each, a key and a file of ours in DAGGER.SND\'s 11025 Hz unsigned 8-bit mono, the tool writing the shipped bytes; each between a second and two (mutants: a clip unlisted; a file the tool would not write)', () => {
-  assert.deepEqual(Object.keys(STOREFRONT_SFX), [...KILL_EFFECTS.map((k) => `storefront:kill-${k}`), ...PORTAL_SKINS.map((k) => `storefront:portal-${k}`)]);
+test('STOREFRONT the clips: a kill effect\'s and a portal skin\'s each, the season\'s tremor and hum, a key and a file of ours in DAGGER.SND\'s 11025 Hz unsigned 8-bit mono, the tool writing the shipped bytes; each between a second and two (mutants: a clip unlisted; a file the tool would not write)', () => {
+  assert.deepEqual(Object.keys(STOREFRONT_SFX), [...KILL_EFFECTS.map((k) => `storefront:kill-${k}`), ...PORTAL_SKINS.map((k) => `storefront:portal-${k}`), 'storefront:season-tremor', 'storefront:season-hum']);
   assert.deepEqual(Object.values(STOREFRONT_SFX).sort(), CLIPS.map(([n]) => `${n}.wav`).sort(), 'the tool bakes what the runtime asks for');
   for (const [name] of CLIPS) {
     assert.ok(existsSync(file(`${name}.wav`)), name);

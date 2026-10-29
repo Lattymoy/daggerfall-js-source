@@ -568,7 +568,8 @@ export const TITLE_EDGE = Object.freeze({
 const rgb3 = (/** @type {readonly number[]} */ c) => Object.freeze(c.slice(0, 3));
 /** STOREFRONT: a plate's `style` names its painter (ui/titleFlame.js PLATE_PAINTERS), `ink` its letters' dark edge and
  *  `glow` the light round them (RGB). A painter reads `haze`, `root` and `tips` its own way; `rim` is a fire's gold edge. */
-const plate = (/** @type {Record<string, any>} */ spec) => Object.freeze({ w: 128, h: 48, frames: 24, ...spec });
+/** @template {Record<string, any>} T @param {T} spec @returns {Readonly<{ w: number, h: number, frames: number } & T>} */
+const plate = (spec) => Object.freeze({ w: 128, h: 48, frames: 24, ...spec });
 const ramp4 = (/** @type {ReadonlyArray<readonly number[]>} */ cs) => Object.freeze(cs.map(rgb3));
 export const TITLE_FLAME = Object.freeze({
   genesis: Object.freeze({

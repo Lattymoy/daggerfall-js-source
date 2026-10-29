@@ -5,8 +5,7 @@
 // WB9g (2026-09-30): and the aura this player wears at their feet (ownAura) - the same stored word, the same reading.
 // NAME-AS (2026-10-12): and when this device last chose the name its player wears online (ownNameAsAt) - the same.
 // WITCH1 (2026-10-20): and the profile icon this player wears (ownIcon) - the same.
-// ARMORY (2026-10-28): and the Aura Armory kit this player wears (ownArmory) - the same.
-// STOREFRONT (2026-10-29): and the effects kit - kill effect, portal skin, mount look (ownEffects) - the same.
+// ARMORY (2026-10-28): and the Aura Armory kit this player wears (ownArmory); STOREFRONT: and the effects kit (ownEffects).
 import { storedSession, SESSION_KEY } from '../net/accountClient.js';
 import { appStorage } from './appStorage.js';
 import { werewolfSkinOf } from '../characters/werewolfSkin.js';

@@ -72,8 +72,8 @@
   {
     "name": "WIKIMAID-button-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
-    "new": "lilacwarren: 'aegis', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
+    "old": "lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', aetheriumgilded: 'numidiumecho' });",
+    "new": "lilacwarren: 'aegis', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', aetheriumgilded: 'numidiumecho' });",
     "tests": [
       "test/net/wikimaid.test.js"
     ],

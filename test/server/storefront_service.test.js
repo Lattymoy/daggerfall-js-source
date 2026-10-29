@@ -73,6 +73,15 @@ test('STOREFRONT the law: a bundle\'s worth is what it gives; its price for an a
   assert.deepEqual(shopHeldIds({ shop_held: 'bundle:seasonalcollector' }).filter((id) => id.startsWith('pass') || id.startsWith('boost')), ['pass:s1premium', 'pass:s1deluxe', 'boost:s1heart'], 'the Collector holds the Deluxe, the Premium it holds, and the Heart Booster');
   assert.equal(shopPriceFor({ shop_held: 'pass:s1premium' }, 'pass:s1deluxe'), Math.round(4999 * 2000 / 4999), 'the Premium held: the Deluxe for its own share');
   assert.equal(shopPriceFor({ shop_held: 'glyph:oblivion' }, 'kill:pyre'), 2999, 'a ware that gives nothing is its own price');
+  // every giver, with every part of what it gives held: a price between Stripe's floor and its own, or none once all is
+  for (const w of SHOP_WARES.filter((x) => x.gives.length)) {
+    for (let mask = 0; mask < 1 << w.gives.length; mask++) {
+      const held = w.gives.filter((_, i) => mask & (1 << i));
+      const price = shopPriceFor({ shop_held: held.filter((id) => !SHOP_WARES.find((x) => x.id === id)?.bit).join(' '), shop_wares: held.reduce((a, id) => a | (SHOP_WARES.find((x) => x.id === id)?.bit ?? 0), 0) }, w.id);
+      if (held.length === w.gives.length && !w.extra) assert.equal(price, null, `${w.id}: all it gives held`);
+      else assert.ok(price >= SHOP_MIN_CENTS && price <= w.cents, `${w.id} holding ${held.join(',') || 'nothing'}: ${price}`);
+    }
+  }
   assert.deepEqual(shopOnSaleOf('glyph:oblivion,aura:dominion,kill:pyre'), ['kill:pyre'], 'a bundle\'s own wares are never sold alone');
 });
 

@@ -46,6 +46,14 @@ export function passBoostText(/** @type {string} */ id) {
   const share = t('pass.boost.share', '{pct}% more season experience from every deed, for the whole season.', { pct: Math.round((b.mult - 1) * 100) });
   return b.levels ? `${share} ${t('pass.boost.levels', 'And {n} levels at once.', { n: b.levels })}` : share;
 }
+/** The season's notices in the world (scenes/seasonHost.js): a level reached with its rewards, a challenge paid, the day's
+ *  experience spent. */
+export const PASS_EVENT_TEXT = Object.freeze({
+  level: (/** @type {number} */ level) => t('pass.event.level', 'Season level {level}!', { level }),
+  rewards: (/** @type {string} */ list) => t('pass.event.rewards', 'New in your wardrobe: {list}.', { list }),
+  challenge: (/** @type {string} */ text) => t('pass.event.challenge', 'Season challenge done: {text}.', { text }),
+  full: () => t('pass.event.full', 'You have found all the season experience you can today. More tomorrow.'),
+});
 /** Each grant's kind, as a reward chip says it. */
 const KIND_WORD = Object.freeze({
   title: () => t('pass.kind.title', 'Title'), glyph: () => t('pass.kind.glyph', 'Glyph'), icon: () => t('pass.kind.icon', 'Portrait'),

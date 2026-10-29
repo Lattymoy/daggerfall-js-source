@@ -1,7 +1,8 @@
 // @ts-check
 // STOREFRONT (2026-10-29; bible/06-Systems/Storefront.md sections 4 and 5): THE EFFECTS' OWN SOUNDS - a kill effect's and
 // a portal skin's, ours outright (tools/storefrontSfx.mjs -> public/sfx/fx-*.wav, baked to DAGGER.SND's own 11025 Hz
-// 8-bit mono, provenance in public/sfx/SOURCES.md), registered on the bus under string keys the climb's way. A clip is
+// 8-bit mono, provenance in public/sfx/SOURCES.md) - and the season's tremor and fissure - registered on the bus under
+// string keys the climb's way. A clip is
 // loaded the first time it is asked for; one asked while it loads plays when it lands, if it lands soon, else not at
 // all - a late sound is a wrong one. Not a DFU member: DAGGER.SND has no portal of stone or brass.
 import { APP_ROOT } from './appRoot.js';
@@ -16,12 +17,14 @@ export const STOREFRONT_SFX = Object.freeze({
   'storefront:portal-daedric': 'fx-portal-daedric.wav',
   'storefront:portal-aetheric': 'fx-portal-aetheric.wav',
   'storefront:portal-brass': 'fx-portal-brass.wav',
+  'storefront:season-tremor': 'fx-season-tremor.wav',   // the season's tremor (scenes/seasonHost.js)
+  'storefront:season-hum': 'fx-season-hum.wav',   // a Brass Fissure, heard from beside it
 });
 /** A sound asked for while its clip loads plays if the clip lands within this (ms). */
 export const STOREFRONT_SFX_LATE_MS = 350;
 
 export const storefrontSfxUrl = (/** @type {string} */ file) => new URL(`sfx/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
-/** @type {Map<any, Map<string, Promise<boolean>>>} each bus's loads, by key */
+/** @type {WeakMap<any, Map<string, Promise<boolean>>>} each bus's loads, by key */
 const _loads = new WeakMap();
 /** Load one clip onto a bus, once. Answers whether it stands. */
 export function loadStorefrontSound(/** @type {any} */ audio, /** @type {string} */ key, { fetchBytes = null } = {}) {

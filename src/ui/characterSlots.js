@@ -3,10 +3,9 @@
 // morrowind/sprite"; bible/04-Characters/Aura-Armory.md section 10) - THE CHARACTER on the signed-in profile: its stage
 // (render/characterStage.js, its body and plate as the world draws them) between its slots - the armory's five, the
 // aura, the plate over the head and the portrait. A slot pressed opens its picker; a choice pointed at is TRIED ON the
-// stage, pressed is worn through the account flow's own doors. The canvas and stage outlive the card's repaints. The
-// stage, bodies and catalogue come in from enhancedMenu.js, so the card's module stays light. STOREFRONT (2026-10-29):
-// and the effects under the stage - the kill effect and the portals tried on ON the stage (render/effectStage.js), the
-// mount look on its horse beside the choices (ui/mountPreview.js). Not a DFU member.
+// stage, pressed is worn through the account flow's own doors; the canvas and stage outlive the card's repaints (they
+// come in from enhancedMenu.js, so this module stays light). STOREFRONT: and the effects - a kill effect and a portal
+// tried on ON the stage (render/effectStage.js), a mount look on its horse (ui/mountPreview.js). Not a DFU member.
 import { t } from '../systems/textManager.js';
 import { TITLE_TEXT, AURA_TEXT, badgeClass, glyphBadges, glyphArtNode } from './playerBadge.js';
 import { setTitleFlame } from './titleFlame.js';

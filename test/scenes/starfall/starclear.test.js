@@ -259,7 +259,7 @@ test('STAR-CLEAR on the player\'s map: of the festival\'s real stars, the mod\'s
 test('STAR-CLEAR by source: the world host hands the starfall host\'s stars to the clearing\'s one set beside the arches\', and the build and the sweep read that set (mutants: the host never hands its stars)', () => {
   const w = hostText('src/scenes/world.js');
   assert.match(w, /const _gateClearSetOf = gateClearMemo\(\);/, 'the set\'s memo, the module\'s');
-  assert.match(w, /return _gateClearSetOf\(_gateClearOf\.clear, egClient\?\.archClears\(\) \?\? null, starfall\?\.starClears\(\) \?\? null\);/, 'the gate, the arches and the stars');
+  assert.match(w, /return _gateClearSetOf\(_gateClearOf\.clear, egClient\?\.archClears\(\) \?\? null, starfall\?\.starClears\(\) \?\? null, passSeason\?\.fissureClears\(\) \?\? null\);/, 'the gate, the arches and the stars - PIN MOVED (STOREFRONT): and the season\'s fissures');
   assert.match(w, /const gateClear = host\._gateClearNow\(\);/, 'the build reads the set');
   assert.match(w, /function sweepGateClear\(\) \{\n\s*const clear = _gateClearNow\(\);/, 'the sweep reads the set');
   const src = readFileSync(join(ROOT, 'src/scenes/starfall/starfallHost.js'), 'utf8');

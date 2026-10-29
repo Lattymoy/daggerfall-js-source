@@ -1,11 +1,10 @@
 // @ts-check
 // STOREFRONT (2026-10-29, the owner: "Portal effects would influence both companion and portal stone portals and kill
 // effects would be a brand new feature"; bible/06-Systems/Storefront.md): THE EFFECTS' LAW - the account's worn effects
-// that are not on the body: a kill effect (drawn where a foe my blow killed falls), a portal skin (my companions' portals
-// and my Portal Stone's gate) and a mount look (the horse I ride). One kit a token carries, `fx`: a character a slot, in
-// EFFECT_SLOTS' order, `0` for none - the Aura Armory's kit law (armoryLaw.js). Read by the token (identityToken.js), the
-// wire (wire.js badged), the account service (titles.js), the shop (shopLaw.js) and every face that draws or lists one.
-// Imports nothing, so the relay's and the worker's graphs stay flat. Pure. Not a DFU member. Ledger A (STOREFRONT).
+// off the body: a kill effect (where a foe my blow killed falls), a portal skin (my companions' portals and my Portal
+// Stone's gate) and a mount look (the horse I ride). One kit a token carries, `fx`: a character a slot in EFFECT_SLOTS'
+// order, `0` for none - the Aura Armory's kit law. Read by the token, the wire, the account service, the shop and every
+// face that draws one. Imports nothing, so the relay's and the worker's graphs stay flat. Pure. Ledger A (STOREFRONT).
 
 /** The slots, in the kit's order. */
 export const EFFECT_SLOTS = Object.freeze(['kill', 'portal', 'mount']);

@@ -187,6 +187,8 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/sfx/fx-portal-daedric.wav', 'OURS - STOREFRONT: synthesised from noise and sine by tools/storefrontSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/fx-portal-aetheric.wav', 'OURS - STOREFRONT: synthesised from noise and sine by tools/storefrontSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/fx-portal-brass.wav', 'OURS - STOREFRONT: synthesised from noise and sine by tools/storefrontSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/fx-season-tremor.wav', 'OURS - STOREFRONT: synthesised from noise and sine by tools/storefrontSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/fx-season-hum.wav', 'OURS - STOREFRONT: synthesised from noise and sine by tools/storefrontSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/climb-grab-1.wav', 'OURS - CLIMB4: synthesised from noise and sine by tools/climbSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/climb-grab-2.wav', 'OURS - CLIMB4: synthesised from noise and sine by tools/climbSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/climb-catch.wav', 'OURS - CLIMB4: synthesised from noise and sine by tools/climbSfx.mjs, deterministically; no recording in it at all'],

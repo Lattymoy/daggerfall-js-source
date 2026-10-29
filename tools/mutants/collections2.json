@@ -92,8 +92,8 @@
   {
     "name": "C2-retired-obtainable",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop']);",
-    "new": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop', 'retired']);",
+    "old": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop', 'store', 'pass']);",
+    "new": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop', 'store', 'pass', 'retired']);",
     "tests": [
       "test/ui/collections2.test.js"
     ],
@@ -348,8 +348,8 @@
   {
     "name": "C2A-closed-obtainable",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop']);",
-    "new": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop', 'closed']);",
+    "old": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop', 'store', 'pass']);",
+    "new": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop', 'store', 'pass', 'closed']);",
     "tests": [
       "test/ui/collections2.test.js"
     ],

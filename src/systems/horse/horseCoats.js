@@ -45,9 +45,6 @@
 // top, in PATTERN_SCALE_PX - so a walk frame carries them with the body; a mirrored view mirrors them, as the other
 // flank. A sprite is one picture a side, so a flank's patches and the chest's are not one body's - each side is its own.
 //
-// STOREFRONT (2026-10-29; bible/06-Systems/Storefront.md section 7): A MOUNT LOOK, the account's - a fifth part laid over
-// the other four (MOUNT_DYES), never the item's and never on the wire's code: the signed token carries it, and each
-// screen lays it on locally (`withMountLook`; `wireHorseLook` takes it off a code bound for the wire).
 // Pure: no DOM, no renderer, no clock. Not a DFU member: Daggerfall has one horse. Ledger A (COATS1).
 import { TRANSPORT_HORSE } from '../item/itemTemplates.js';
 import { MOUNT_LOOKS } from '../../net/effectLaw.js';   // STOREFRONT: the account's mount looks, in the kit's order
@@ -61,7 +58,10 @@ export const HORSE_PATTERN_MAX = HORSE_PATTERNS.length - 1;
 /** The legs (`horseLegs`), the first the coat's own. */
 export const HORSE_LEGS = Object.freeze(['plain', 'socks', 'stockings']);
 export const HORSE_LEGS_MAX = HORSE_LEGS.length - 1;
-/** STOREFRONT: the mount looks (`mount`), the first none - the account's (net/effectLaw.js MOUNT_LOOKS), laid over the coat. */
+/** STOREFRONT (2026-10-29; bible/06-Systems/Storefront.md section 7): THE MOUNT LOOKS (`mount`), the first none - the
+ *  account's (net/effectLaw.js MOUNT_LOOKS): a fifth part laid over the other four, never the item's and never on the
+ *  wire's code - the signed token carries it, and each screen lays it on locally (`withMountLook`; `wireHorseLook`
+ *  takes it off a code bound for the wire). */
 export const HORSE_MOUNTS = Object.freeze(['none', ...MOUNT_LOOKS]);
 export const HORSE_MOUNT_MAX = HORSE_MOUNTS.length - 1;
 /** The highest seed (`horseSeed`); 0 is no seed - a horse not yet born, or the art as drawn. */

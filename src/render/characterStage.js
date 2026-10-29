@@ -137,9 +137,8 @@ export function proxyMesh(/** @type {ArrayLike<number>} */ pts, /** @type {Recor
 
 /**
  * THE STAGE on `canvas`: `body` drawn with `aura` at its feet and `kit` on it until stopped - a Morrowind body (fpArm
- * stage(): { kind: 'mw', width, height, data, proj, view, eye, bones, head }), a sprite ({ kind: 'sprite', width, height,
- * colors, mpp, base, shift }, its rows bottom first) or the stand-in (null). Answers { setBody, setKit, setAura, setEffect,
- * headAt, stop, alive, step }, null with no WebGL2; `headAt()` the plate's anchor in CSS px (ui/nameLayer.js's), or null.
+ * stage()), a sprite (its rows bottom first) or the stand-in (null). Answers { setBody, setKit, setAura, setEffect, headAt,
+ * stop, alive, step }, null with no WebGL2; `headAt()` the plate's anchor in CSS px (ui/nameLayer.js's), or null.
  * @param {HTMLCanvasElement} canvas
  * @param {{ body?: any, kit?: string|null, aura?: string|null, now?: () => number, clear?: number[], ground?: number[], pitch?: number,
  *   cue?: ((slot: string, key: string|null) => void)|null }} [o] `cue` an effect's loop beginning (STOREFRONT: its sound)

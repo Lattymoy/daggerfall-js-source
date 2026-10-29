@@ -94,8 +94,9 @@ test('STOREFRONT whose look: mine off my token\'s kit, a peer\'s off its own, on
 test('STOREFRONT the beat: a horse in a look throws its beat through the running host\'s engine as an ambient burst - a stride\'s beat at a gallop, slower at a walk, a slow breath standing; its mane only where it is seen; a rider gone lets it go; the shop\'s and profile\'s horse draw a look each (mutants: a beat with no look; the mane in first person; a rider never let go)', () => {
   const beats = [];
   const fx = createMountFx({ door: () => ({ burst: (recipe, at, o) => { beats.push({ recipe, ...o }); return true; } }) });
-  const run = (pace, mane = true, n = 100) => { beats.length = 0; for (let i = 0; i < n; i++) fx.step('r', 'dawnfire', [0, 0, 0], 0, pace, 0.02, { mane }); return beats.length; };
+  const run = (pace, mane = true, n = 100, dt = 0.02) => { beats.length = 0; fx.sweep(); fx.sweep(); for (let i = 0; i < n; i++) fx.step('r', 'dawnfire', [0, 0, 0], 0, pace, dt, { mane }); return beats.length; };
   assert.equal(run(2), Math.floor(2 / MOUNT_FX_BEAT_S[2]));
+  assert.equal(run(2, true, 100, 0.03), Math.floor(3 / MOUNT_FX_BEAT_S[2]), 'a frame that does not divide the beat: it keeps its time');
   assert.ok(run(1) < run(2) && run(0) < run(1), 'a gallop\'s beat, a walk\'s, a breath');
   assert.ok(beats.every((b) => b.recipe === 'mount-dawnfire' && b.ambient && b.dir.length === 2));
   run(2, false);

@@ -4,9 +4,8 @@
 //  - THE FRAME: every portal is kept in the WORLD frame (`native` - the wire's and the camps' [x, y, z]) and put into
 //    the scene's each frame (`toScene`), so the floating origin's recenter moves nothing here and a portal far behind
 //    a teleport is still where it was. Every distance here is measured in the SCENE's metres.
-//  - THE LOOK: COMPANION-PORTAL's vortex (scenes/portalFx.js), this pool's own set, FIXED where it opened and HELD for
-//    the portal's time (`holdMs`), so it tears open, stands, and seals as its time runs out - STOREFRONT: in its
-//    opener's portal skin (scenes/portalSkins.js), mine or a peer's (net/peer/peerEffects.js).
+//  - THE LOOK: COMPANION-PORTAL's vortex (portalFx.js), FIXED where it opened and HELD for the portal's time (`holdMs`):
+//    it tears open, stands and seals as its time runs out - STOREFRONT: in its opener's portal skin, mine or a peer's.
 //  - THE STEP: `tick(feet)` asks every portal whether the feet stepped in this frame (portalStepIn: outside, then
 //    inside) and hands the first to `onEnter` - the host's arrival - unless the host's `hold()` keeps it shut (said
 //    through `onRefused`, save a busy host's own frames). THE STEP IS FORGOTTEN across a gap - frames not ticked (a

@@ -9,11 +9,11 @@
 The owner, 2026-10-29, with a developer's notes from the Discord: *"Battle Pass should not be just a Battle Pass. It
 should be thematic Battle Pass like a 'Dwemer's breach'. And the whole world should change a little in relation to this.
 Like new dwemer enemies, new boss, new weapon"*; *"Battle Pass is the MOST profitable but at the same time MOST DANGEROUS
-in terms of outflow of players"*; *"Some theme, some trailer, a new cool weapon or set of armour, unique pet, unique
-skin. And of course - booster to boost your BP progression. Maybe run a test BP for a 2 months (like 10 November to 10
-Jan) and come up with an idea, furnish the world with appropriate decorations or effects, enemies and dungeons, and
-divide the Battle Pass into 3 stages (20 days each)"*. The pass card: a Premium Pass at $29.99 with a fifty-level track,
-and a Deluxe at $49.99 with everything in Premium and its own rewards unlocked at once.
+in terms of outflow of players"*; *"booster to boost your BP progression. Maybe run a test BP for a 2 months (like 10
+November to 10 Jan) ... and divide the Battle Pass into 3 stages (20 days each)"*.
+
+The pass card: a Premium Pass at $29.99 with a fifty-level track, and a Deluxe at $49.99 with everything in Premium and
+its own rewards unlocked at once.
 
 ## 2. The season
 
@@ -23,8 +23,8 @@ sky, and brass comes up out of them.
 
 | Stage | Days | Levels open | The world |
 | --- | --- | --- | --- |
-| I. The Tremor | 10 Nov - 29 Nov | 1-17 | the ground shakes; Brass Fissures open in the wilds; Spheres and brass Spiders climb out |
-| II. The Brass Halls | 30 Nov - 19 Dec | 18-34 | more Fissures; Steam Centurions walk with them |
+| I. The Tremor | 10 Nov - 29 Nov | 1-17 | the ground shakes; two Brass Fissures open in each region's wilds; Spheres and Iron Golems climb out |
+| II. The Brass Halls | 30 Nov - 19 Dec | 18-34 | three Fissures a region; Steam Centurions walk with them |
 | III. The Heart Wakes | 20 Dec - 8 Jan | 35-50 | each region's Heart Fissure wakes the Brass Colossus |
 
 A level past the open stage's top is banked: its experience is kept and counts the day the next stage opens. So a player
@@ -87,18 +87,41 @@ their sum. The share is on top of the day's bound, so it speeds every player.
 
 ## 6. The world
 
-- **The tremor.** Every hour on the shared clock the ground shakes for every player in the open world at once: a rumble,
-  the camera's shake, dust off the walls, and a line in the chat. The shakes grow by the stage.
-- **Brass Fissures.** A few to each region, in the wilds and off the roads, the same places on every machine (seeded by
-  the region and the stage): a crack in the ground venting steam, its lip glowing aetherium blue by night, brass wreckage
-  round it - cogs, a split pipe, a fallen pillar - and a hum as you near. Marked on the map while their stage is open.
-- **The constructs.** Round an open Fissure the Rourken's works walk: the Dwarven Sphere and the brass Spider from the
-  first stage, the Steam Centurion from the second - Daggerfall Enemy Expansion's own constructs (Ketch's KT_LOOKS) on
-  the surface. Each is a find of 40.
-- **The Brass Colossus.** From the third stage each region's Heart Fissure wakes a Steam Centurion grown to a giant's
-  size, washed in brass, a boss with its own traits. Its fall drops **the Resonant Maul**.
-- **The Resonant Maul.** A Dwarven warhammer of the Legendary rung with one power, sideways and inside THE CEILING HOLDS:
-  Resonance, its blows on a construct a share harder - the Wyrd's Raiment's Tallow-Ward, for brass instead of the dead.
+`src/scenes/seasonHost.js`, on the bindings the world host shares with the Starfall's host; its law is
+`src/systems/pass/seasonWorld.js`. Online alone, as the season is.
+
+- **The tremor.** The first six seconds of every hour on the shared clock, in the open world: the camera kicked every
+  350 ms under the player's own shake cap, swelling and dying away, harder each stage (1.5, 2.5, 4 - a gun's shot is 3);
+  a rumble (`fx-season-tremor`), dust and grit shaken up about the feet, and the stage's line in the event board's news,
+  a kind of its own (`season`, news alone, as the festival's).
+- **Brass Fissures.** Two to each Bay region in the first stage, three in the second and third, on pixels the Oblivion
+  Gate's scan finds suitable (land, no place near, a town close), drawn by hash from the season, the stage and the
+  region, four pixels apart: every machine finds the same. A fissure gives way to the day's gate on its pixel or beside
+  it. World of Daggerfall's rock keeps 26 m off it, and the grass off its scorch. On the map each is a brass cog crossed
+  by a blue crack, a Heart Fissure's larger and ringed, its card naming its town and what waits there.
+- **A fissure, built** (`world/season/fissureModel.js`, its art `fissureArt.js`, pseudo-archive 38341): a scorched oval
+  on the land, the crack's black depths with the aetherium's blue in them, short cracks off it, slabs of earth heaved up
+  along both lips; round it a toothed cog past each end and one off the south lip, a split copper pipe, and a fallen
+  brass pillar with its capital - the Sky-Ketch's metals. The slabs and wreckage are solid. Its three vents breathe
+  steam, its blue lights the ground, and its hum (`fx-season-hum`) is heard beside it.
+- **The constructs.** Each fissure's camp is Daggerfall Enemy Expansion's: the Centurion Sphere (289), the Iron Golem
+  (270) and, from the second stage, the Steam Centurion (290) - Ketch's KT_LOOKS, on the surface. The first player
+  within 90 m springs it on the camp law (`px,py:brass.<stage>.<k>`, reader-checked - no relay change); every other
+  screen sees the owner's. One woken wakes the camp. Each is a find of 40. Cleared, a fissure is quiet for that
+  character twenty minutes.
+- **The Brass Colossus.** In the third stage each region's first fissure is its Heart Fissure: two Spheres and a Golem,
+  and at the middle a Steam Centurion made a raid leader (half again its size, an elite's health and blows, its name),
+  three times that health, and Warded, Stormproof and Blade-turning - bring a hammer. Every screen names it by its site
+  (`.h`); its bar stands while it is near. A character whose blow landed on it takes **the Resonant Maul** when it
+  falls, once a UTC day.
+- **The Resonant Maul** (`src/systems/pass/resonantMaul.js`). A Dwarven warhammer of the Legendary rung: +30% damage, +12
+  Strength, +25 Blunt Weapon, Resist Shock while held, and Resonance - +40% against the season's constructs, a bane under
+  Dragonsbane's 50, inside THE CEILING HOLDS. **Unrolled**: lawful wherever the item law reads it (the account service's
+  judge included), but no warhammer's roll lands on it, so every seeded roll draws from the pool it drew from before.
+
+**Departures from the first draft.** Daggerfall Enemy Expansion has no brass spider (271 is the Blood Spider; the Ketch's
+spider is a classic mobile tinted, and the surface has no tint), so the first stage's second construct is the Iron Golem.
+The Colossus is not washed in brass for the same reason: its size, name, traits and bar say what it is.
 
 ## 7. The window
 

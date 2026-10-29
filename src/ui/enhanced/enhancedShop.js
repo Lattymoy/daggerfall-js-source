@@ -225,12 +225,8 @@ export function shopMark(/** @type {Document} */ doc, { onOpen, open = false }) 
   return b;
 }
 
-/**
- * THE WINDOW. `flow()` the visit's account flow (ui/accountFlow.js), read once when first asked; `keep` the caller's record
- * of the tab open (`keep.cat`) and the carousel's panel (`keep.slide`), so a face rebuilt around it reopens there. `focus` -
- * just opened: the focus goes in. Answers { root, stop, draw, close }: `draw` updates it in place (the flow's every
- * change); `stop` lets the previews and the carousel's clock go. `preview(canvas, aura, kit)` starts an aura's stage or an
- * armory piece's, `effectPreview(canvas, slot, key, cue)` a kill effect's or a portal skin's, each or null.
+/** THE WINDOW. `flow()` the visit's account flow; `keep` the tab and the carousel's panel, so a face rebuilt reopens there.
+ *  Answers { root, stop, draw, close }: `draw` updates it in place, `stop` lets the previews and the clock go.
  * @param {Document} doc
  * @param {{ flow: () => any, onClose: () => void, keep?: { cat?: string, slide?: number }, focus?: boolean, now?: () => number,
  *   preview?: (canvas: HTMLCanvasElement, aura: string|null, kit?: string|null) => Promise<{ stop: () => void }|null>,

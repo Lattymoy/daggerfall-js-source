@@ -11,6 +11,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dungeonQuestSpawnSpots } from '../../src/systems/quest/place.js';
+import { standBountyDungeonPack } from '../../src/scenes/bountyDungeonPack.js';
 
 const W = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
 const DC = readFileSync(new URL('../../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
@@ -35,15 +36,11 @@ test('BOUNTY-LAIR: the quest spawn markers, in the scene\'s frame - 199.11 alone
   assert.match(DC, /\n\s*questSpawnSpots: \(\) => dungeonQuestSpawnSpots\(dungeon\.blocks\),/, 'the dungeon context answers them for its own blocks');
 });
 
-/** The host's own `_standBountyDungeonPack`, lifted off world.js, over a dungeon context of the test's making. */
+/** The host's own pack (scenes/bountyDungeonPack.js - out of bootWorld, HOST-SPLIT), over a dungeon context of the test's
+ *  making: DFU's placement stood in by a spot beside the anchor. */
 function standPack(d, feet) {
-  const m = /\n {2}(const _standBountyDungeonPack = \(\{ mobileType, count \}\) => \{\n[\s\S]*?\n {2}\};)\n/.exec(W);
-  assert.ok(m, '_standBountyDungeonPack moved');
-  // eslint-disable-next-line no-new-func
-  const make = new Function('_dungeonPool', 'enchantFeet', 'exteriorFoes', 'placeFoeEnv', 'entityOccupancy', 'LOOSE_FOE_PLACE_ATTEMPTS', 'placeFoeFreely', 'ENEMY_BASICS',
-    `${m[1]}\nreturn _standBountyDungeonPack;`);
-  return make(() => d, () => feet, { newCampId: () => 7 }, (o) => o, () => () => false, 3,
-    (env) => ({ x: env.playerFeet[0] + 1, y: env.playerFeet[1] - 0.9, z: env.playerFeet[2] }), {});
+  const place = { env: (o) => o, occupancy: () => () => false, attempts: 3, freely: (env) => ({ x: env.playerFeet[0] + 1, y: env.playerFeet[1] - 0.9, z: env.playerFeet[2] }) };
+  return (pack) => standBountyDungeonPack({ pool: d, feet, newCampId: () => 7, place }, pack);
 }
 const pool = (foeFeet, spots) => ({
   collider: {}, spawnLooseFoe: async () => ({ entity: {} }),
@@ -72,4 +69,9 @@ test('BOUNTY-LAIR: past the band the farthest marker; and a dungeon with no ques
   const older = standPack(pool([[0, 0, 35]], null), feet)({ mobileType: 1, count: 1 });
   assert.deepEqual([older.dx, older.dz], [0, 35], 'a context with no answer: the foes');
   assert.equal(standPack(pool([], []), feet)({ mobileType: 1, count: 1 }), null, 'nothing anywhere: no pack');
+});
+
+test('BOUNTY-LAIR: the world host wires the pack with its dungeon pool, the hunter\'s feet and the pool\'s camp counter (HOST-SPLIT: out of bootWorld)', () => {
+  assert.match(W, /standDungeonPack: \(o\) => standBountyDungeonPack\(\{ pool: _dungeonPool\(\), feet: enchantFeet\(\), newCampId: \(\) => exteriorFoes\.newCampId\(\) \}, o\),/);
+  assert.doesNotMatch(W, /_standBountyDungeonPack/, 'one home');
 });

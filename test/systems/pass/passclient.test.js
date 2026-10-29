@@ -103,3 +103,15 @@ test('STOREFRONT the pass\'s words and card: each challenge said with its count,
   assert.deepEqual(c.challenges[0], { key: 'tremor-foes', n: 100, paid: true }, 'a count no higher than the challenge asks');
   assert.equal(c.challenges.length, PASS_CHALLENGES.length);
 });
+
+test('STOREFRONT a find asked before the season is read: the season read first, so the level it reaches is told (mutant: the find before the read)', async () => {
+  _resetPassClientForTests();
+  const svc = service(), events = [];
+  const slowMine = svc.api.mine;
+  svc.api.mine = () => new Promise((r) => setTimeout(() => r(slowMine()), 15));
+  bindPass({ online: () => true, nowMs: () => IN, onEvent: (e) => events.push(e), api: svc.api });
+  reportPlayerKill({ mobileType: PASS_CONSTRUCT_MOBILES[0] });   // before the bind's read lands
+  await new Promise((r) => setTimeout(r, 80));
+  assert.deepEqual(events.filter((e) => e.kind === 'level').map((e) => e.level), [1]);
+  _resetPassClientForTests();
+});

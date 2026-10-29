@@ -2,7 +2,8 @@
 //
 // OURS, the lock's way (tools/lockSfx.mjs): built from noise and sine with the shared kit (tools/sfxSynth.mjs) and put
 // through the one bake - tools/sndify.mjs, down to DAGGER.SND's own 11025 Hz unsigned 8-bit mono. DAGGER.SND has no
-// body turning to ash and no gate of stone or brass opening; these eight are the kill effects' and the portal skins':
+// body turning to ash, no gate of stone or brass opening and no earthquake; these ten are the kill effects', the portal
+// skins' and the season's (scenes/seasonHost.js):
 //
 //   fx-kill-ashen      a breath of ash: a soft rush falling away, embers ticking as they cool
 //   fx-kill-voidrend   the void tearing: a swell drawn in, a hollow thump, a low beating ring
@@ -12,6 +13,8 @@
 //   fx-portal-daedric  the daedric stone: a deep rumble and iron grinding, a rush of fire
 //   fx-portal-aetheric the aetheric stone: a rising run of bell notes over a swell
 //   fx-portal-brass    the brass gate: a blast of steam, the cogs clanking home, a tonal hum
+//   fx-season-tremor   the season's tremor: a deep roll of the ground, stones rattling, brass grinding far below
+//   fx-season-hum      a Brass Fissure: steam hissing from the crack over a low brass hum that beats
 //
 //     node tools/storefrontSfx.mjs             # writes public/sfx/fx-*.wav
 //     node tools/storefrontSfx.mjs --measure   # and prints each clip's attack, crest, tail and brightness
@@ -172,6 +175,32 @@ function brass() {
   return softClip(out, 1.2);
 }
 
+/** TREMOR: the ground rolling - a sub rumble swelling and dying, stones rattling in it, brass grinding far under. */
+function tremor() {
+  const rand = rng(0x7e4a0);
+  const out = buf(2.1);
+  const rumble = biquad(noise(seconds(2.0), rand), { type: 'lowpass', f0: 90, q: 0.8 });
+  const r = rough(rumble.length, rand, 6);
+  envelope(rumble, (i) => { const u = i / rumble.length; return Math.min(1, u * 4) * Math.pow(1 - u, 1.2) * (0.6 + 0.4 * r[i]); });
+  mix(out, unit(rumble), 0, 1);
+  grit(out, rand, { count: 34, from: 0.15, to: 1.6, lo: 900, hi: 2600, tauLo: 0.002, tauHi: 0.006, gain: 0.22 });
+  mix(out, groan(rand, 1.4, { rate: (u) => 18 - 8 * u, bands: [[240, 3, 1], [480, 4, 0.4]], env: (u) => Math.sin(Math.PI * u), noiseGain: 0.3 }), 0.3, 0.32);
+  return softClip(out, 1.35);
+}
+
+/** HUM: a fissure heard from beside it - steam hissing out of the crack over a low brass hum beating against itself. */
+function hum() {
+  const rand = rng(0x4e3a1);
+  const out = buf(2.0);
+  mix(out, beat(2.0, 110, 1.6, 2.5, 300), 0, 0.6);
+  mix(out, beat(2.0, 165, 2.3, 2.5, 300), 0, 0.3);
+  const hiss = biquad(noise(seconds(2.0), rand), { type: 'bandpass', f0: 3000, q: 0.7 });
+  const r = rough(hiss.length, rand, 4);
+  envelope(hiss, (i) => { const u = i / hiss.length; return Math.min(1, u * 5) * Math.min(1, (1 - u) * 5) * (0.5 + 0.5 * r[i]); });
+  mix(out, unit(hiss), 0, 0.35);
+  return softClip(out, 1.1);
+}
+
 // ---- write ----------------------------------------------------------
 /** [name, make, the bake's peak] - every clip, in the header's order. */
 export const CLIPS = [
@@ -183,6 +212,8 @@ export const CLIPS = [
   ['fx-portal-daedric', daedric, 0.86],
   ['fx-portal-aetheric', aetheric, 0.78],
   ['fx-portal-brass', brass, 0.82],
+  ['fx-season-tremor', tremor, 0.88],
+  ['fx-season-hum', hum, 0.7],
 ];
 
 /** One clip's bytes, as the shipped file holds them past its 44-byte header. */

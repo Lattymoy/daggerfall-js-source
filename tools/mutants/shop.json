@@ -191,8 +191,8 @@
   {
     "name": "SHOP-flame-gutter-filled",
     "file": "src/ui/titleFlame.js",
-    "old": "  const GUTTER = 2;",
-    "new": "  const GUTTER = 0;",
+    "old": "const GUTTER = 2;",
+    "new": "const GUTTER = 0;",
     "tests": [
       "test/ui/shop_window.test.js"
     ]

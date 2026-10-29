@@ -4,6 +4,7 @@
 // noise, into a strip of frames (flameSheetPixels, pure, so a pin can read it), and every DOM face shows it as one CSS
 // background stepped a frame at a time - a background-position animation, no script a frame, however many names burn.
 // The frames loop whole: the noise is periodic round the strip and over the loop, so the plate tiles and never jumps.
+// STOREFRONT (2026-10-29, bible/06-Systems/Storefront.md section 6): a plate a style, each its own painter (PLATE_PAINTERS).
 import { TITLE_FLAME } from './playerBadge.js';
 
 /** A seeded number in 0..1 for an integer pair - the lattice's own, so a sheet is the same on every machine. */

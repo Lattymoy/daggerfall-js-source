@@ -37,6 +37,7 @@ export const KFX_LIGHT = Object.freeze({
   'portal-daedric-open': Object.freeze({ color: [2.0, 0.55, 0.2], range: 8, life: 0.8 }),
   'portal-aetheric-open': Object.freeze({ color: [1.3, 0.9, 1.9], range: 8, life: 1.0 }),
   'portal-brass-open': Object.freeze({ color: [0.6, 1.3, 2.0], range: 7, life: 0.7 }),
+  'fissure-wake': Object.freeze({ color: [0.6, 1.3, 2.0], range: 14, life: 1.2 }),   // STOREFRONT: a Brass Fissure's constructs climbing out
   ashen: Object.freeze({ color: [1.5, 0.75, 0.3], range: 5, life: 0.5 }),
   voidrend: Object.freeze({ color: [1.1, 0.55, 1.8], range: 7, life: 1.3 }),
   pyre: Object.freeze({ color: [2.2, 0.75, 0.2], range: 9, life: 1.6 }),
@@ -48,18 +49,14 @@ const UP = Object.freeze([0, 1, 0]);
 const ease = (/** @type {number} */ u) => 1 - Math.pow(1 - u, 3);
 const lerp = (/** @type {number} */ a, /** @type {number} */ b, /** @type {number} */ t) => a + (b - a) * t;
 
-/**
- * A particle as the recipes write it - every field the simulation reads, with its default.
- * @typedef {{ p: number[], v: number[], age: number, life: number, s0: number, s1: number, rot: number, spin: number,
+/** A particle as the recipes write it - every field the simulation reads, with its default.
+ *  @typedef {{ p: number[], v: number[], age: number, life: number, s0: number, s1: number, rot: number, spin: number,
  *   shape: number, c0: number[], c1: number[], a0: number, a1: number, add: boolean, g: number, drag: number, gy: number,
  *   bounce: number, rest: boolean, streak: number, seed: number, heat: number, swirl: any, h0: number, h1: number,
- *   fadeIn: number, flutter: number, twin: any }} Part
- */
+ *   fadeIn: number, flutter: number, twin: any }} Part */
 
-/**
- * THE SIMULATION - every live burst's parts and lights. `start` begins one, `step` flies them, `build` writes this
- * frame's instances, the blended layer first (`alpha`, `nAlpha`) and the added (`add`, `nAdd`). Floating-origin safe.
- */
+/** THE SIMULATION - every live burst's parts and lights: `start` begins one, `step` flies them, `build` writes this
+ *  frame's instances, the blended layer first (`alpha`, `nAlpha`) and the added (`add`, `nAdd`). Floating-origin safe. */
 export class KillFx {
   constructor({ rng = Math.random, reduced = false } = {}) {
     this.rng = rng;
@@ -454,7 +451,43 @@ const RECIPES = Object.freeze({
       fx.part(b, { p: [at[0], gy + 0.03 + k * 0.01, at[2]], age: -k * 0.18, life: 0.9, s0: w * 0.4, s1: 4 + k * 0.8, shape: KFX_SHAPE.ring, c0: [0.6, 0.9, 1.0], c1: [0.25, 0.55, 1.0], a0: (fx.reduced ? 0.35 : 0.85) * (1 - k * 0.2) });
     }
   },
-});/** Every recipe's name - the kill looks', the portal skins' bursts and the mount looks' beats (the tests walk them). */
+
+  // ═══ THE SEASON'S (scenes/seasonHost.js): a Brass Fissure's vents and its waking, and the tremor ═══
+  /** A FISSURE'S VENT: steam rising off the crack in a slow column, the aetherium's light in it. */
+  'fissure-steam'(/** @type {any} */ { fx, b, at, gy }) {
+    for (let i = 0; i < 3; i++) {
+      fx.part(b, { p: [at[0] + fx.r(-0.3, 0.3), gy + 0.1, at[2] + fx.r(-0.3, 0.3)], v: [fx.r(-0.15, 0.15), fx.r(1.0, 1.8), fx.r(-0.15, 0.15)], age: -i * 0.35, life: fx.r(2.6, 3.6), s0: 0.35, s1: 1.7,
+        shape: KFX_SHAPE.smoke, c0: [0.9, 0.93, 0.96], c1: [0.78, 0.82, 0.88], a0: 0.36, a1: 0, add: false, drag: 0.5, fadeIn: 0.4, rot: fx.r(0, TAU), spin: fx.r(-0.3, 0.3) });
+    }
+    fx.part(b, { p: [at[0], gy + 0.15, at[2]], v: [0, fx.r(0.3, 0.6), 0], life: fx.r(1.0, 1.6), s0: 0.12, s1: 0.05, c0: [0.55, 0.85, 1.0], c1: [0.25, 0.55, 1.0], a0: 0.6, a1: 0, flutter: 0.6, heat: 0.6 });
+  },
+  /** A FISSURE WAKING: a blast of steam out of the crack, its light flaring, sparks off the brass as the constructs climb out. */
+  'fissure-wake'(/** @type {any} */ { fx, b, at, gy, n }) {
+    for (let i = 0, N = n(12); i < N; i++) {
+      fx.part(b, { p: [at[0] + fx.r(-3, 3), gy + 0.2, at[2] + fx.r(-0.6, 0.6)], v: [fx.r(-0.5, 0.5), fx.r(2.5, 4.5), fx.r(-0.5, 0.5)], life: fx.r(1.8, 2.6), s0: 0.6, s1: 2.6, shape: KFX_SHAPE.smoke,
+        c0: [0.92, 0.95, 0.98], c1: [0.78, 0.82, 0.88], a0: 0.5, a1: 0, add: false, drag: 1.2, rot: fx.r(0, TAU), spin: fx.r(-0.5, 0.5) });
+    }
+    for (let i = 0, N = n(36); i < N; i++) {
+      fx.part(b, { p: [at[0] + fx.r(-3, 3), gy + 0.3, at[2]], v: [fx.r(-2, 2), fx.r(2, 5), fx.r(-2, 2)], life: fx.r(0.4, 0.8), s0: 0.016, s1: 0.004, shape: KFX_SHAPE.spark,
+        c0: [1, 0.88, 0.5], c1: [0.5, 0.8, 1.0], a0: 1, a1: 0.3, drag: 1.2, g: 6, streak: 0.04, heat: 0.8 });
+    }
+    fx.part(b, { p: [at[0], gy + 0.04, at[2]], life: 0.9, s0: 1, s1: 9, shape: KFX_SHAPE.ring, c0: [0.6, 0.9, 1.0], c1: [0.25, 0.55, 1.0], a0: fx.reduced ? 0.3 : 0.8 });
+  },
+  /** THE TREMOR: dust shaken up off the ground about the feet, and grit falling. */
+  'tremor-dust'(/** @type {any} */ { fx, b, at, gy, n }) {
+    for (let i = 0, N = n(6); i < N; i++) {
+      const a = fx.r(0, TAU), r = fx.r(1.5, 6);
+      fx.part(b, { p: [at[0] + Math.cos(a) * r, gy + 0.1, at[2] + Math.sin(a) * r], v: [fx.r(-0.3, 0.3), fx.r(0.3, 0.8), fx.r(-0.3, 0.3)], life: fx.r(1.6, 2.4), s0: 0.3, s1: 1.2, shape: KFX_SHAPE.smoke,
+        c0: [0.62, 0.56, 0.46], c1: [0.55, 0.5, 0.42], a0: 0.3, a1: 0, add: false, drag: 1.0, fadeIn: 0.2, rot: fx.r(0, TAU), spin: fx.r(-0.4, 0.4) });
+    }
+    for (let i = 0, N = n(10); i < N; i++) {
+      const a = fx.r(0, TAU), r = fx.r(0.5, 5);
+      fx.part(b, { p: [at[0] + Math.cos(a) * r, gy + 0.05, at[2] + Math.sin(a) * r], v: [fx.r(-0.4, 0.4), fx.r(1, 2.2), fx.r(-0.4, 0.4)], life: fx.r(0.8, 1.2), s0: fx.r(0.02, 0.04), s1: 0.02, shape: KFX_SHAPE.shard,
+        c0: [0.36, 0.3, 0.24], c1: [0.3, 0.25, 0.2], a0: 1, a1: 0.8, add: false, g: 9.8, gy, bounce: 0.3, spin: fx.r(-10, 10), rot: fx.r(0, TAU) });
+    }
+  },
+});
+/** Every recipe's name - the kill looks', the portal skins' bursts, the mount looks' beats and the season's (the tests walk them). */
 export const KFX_RECIPES = Object.freeze(Object.keys(RECIPES));
 
 

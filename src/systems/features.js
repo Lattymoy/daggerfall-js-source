@@ -119,6 +119,8 @@ export const EVENT_KINDS = Object.freeze({
   star: Object.freeze({ row: true, single: false, get label() { return t('events.kind.star', 'Starfall'); } }),
   raid: Object.freeze({ row: true, single: false, get label() { return t('events.kind.raid', 'Town Raid'); } }),
   festival: Object.freeze({ row: false, single: true, get label() { return t('events.kind.festival', 'Witches\' Festival'); } }),
+  // STOREFRONT (bible/06-Systems/Battle-Pass.md section 6): the season's tremors and its Colossus - news alone, as the festival's
+  season: Object.freeze({ row: false, single: true, get label() { return t('events.kind.season', 'Season'); } }),
 });
 /** The kinds in the board's order. */
 export const EVENT_KIND_ORDER = Object.freeze(Object.keys(EVENT_KINDS));

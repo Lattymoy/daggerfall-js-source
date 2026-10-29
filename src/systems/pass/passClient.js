@@ -11,15 +11,14 @@ import { registerPlayerKillListener } from '../playerKills.js';
 import { hearActs, ACT_KINDS } from '../questlines/qlActs.js';
 import { KNIGHT_CITY_WATCH } from '../../characters/mobile/mobileTypes.js';
 import { foeFindSource } from '../festival/festivalFoes.js';
-import { isPassSource, passSeasonAt, PASS_REWARDS, PASS_DAY_XP } from '../../net/battlePassLaw.js';
+import { isPassSource, passSeasonAt, PASS_REWARDS, PASS_DAY_XP, PASS_CONSTRUCT_MOBILES } from '../../net/battlePassLaw.js';
 import { utcDay } from '../../net/marksLaw.js';
 
 /** The kill listener's and the act hearer's name. */
 export const PASS_FIND = 'pass-find';
-/** The Rourken's works, the season's constructs wherever they are met (Daggerfall Enemy Expansion's Centurion Sphere,
- *  Iron Golem and Steam Centurion - scenes/ketch/ketchFight.js KT_LOOKS). A body the season stood is marked
- *  `passConstruct` as well (scenes/seasonHost.js). */
-export const PASS_CONSTRUCT_MOBILES = Object.freeze([289, 270, 290]);
+/** The season's constructs (net/battlePassLaw.js) - a body the season stood is marked `passConstruct` as well
+ *  (scenes/seasonHost.js). */
+export { PASS_CONSTRUCT_MOBILES };
 
 const NO_DOORS = Object.freeze({ online: () => false, nowMs: () => Date.now(), onEvent: (/** @type {any} */ _e) => {} });
 /** @type {any} */ let _doors = NO_DOORS;
@@ -90,6 +89,7 @@ let _chain = Promise.resolve();
 export function askPassFind(/** @type {string} */ source) {
   if (!isPassSource(source) || !passLive()) return Promise.resolve(0);
   const run = async () => {
+    if (!passState()) await refreshPass();   // a level reached is told against the level before it: read it first
     const r = await _api.find(source).catch(() => null);
     if (!r?.ok) return 0;
     learn(r.data, true);

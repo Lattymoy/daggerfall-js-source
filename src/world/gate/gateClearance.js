@@ -113,6 +113,10 @@ export const EG_ARCH_ROCK_M = 14;
  *  STAR_BARE_R, 9.6), the ring its coven stands on (systems/starfall/starfallClient.js STAR_STAND_R, out to 20) and room
  *  past the ring to walk round a foe stood at its edge (the gate's own room, GATE_CLEAR_M's). */
 export const STAR_ROCK_M = 28;
+/** STOREFRONT: a Brass Fissure's clearing about its heart, metres - its scorched ground and wreckage (world/season/
+ *  fissureModel.js, out to about 9) and the ring its constructs stand on (scenes/seasonHost.js SEASON_RING_M, out to 10),
+ *  with the gate's room past it. */
+export const FISSURE_ROCK_M = 26;
 /** EG-F: the key joining a set's members' keys. */
 export const CLEAR_KEY_JOIN = '|';
 /** EG-F, STAR-CLEAR: one kind of member's clearings, `{ key, px, py, x, z, r }` each, in its ids' order - `id` its id's
@@ -127,31 +131,30 @@ function membersFrom(items, id, prefix, r) {
   }
   return out;
 }
-/**
- * EG-F: THE CLEARINGS NOW - the gate's (gateClearFor's, or null), each standing arch's (`{ b, px, py, x, z }`, its pixel
- * and its foot there, the gate's spot's frame) and STAR-CLEAR each fallen star's (`{ s, px, py, x, z }` - `s` its
- * `<night>.<k>`, its heart in its pixel's frame), one clearing: null for none, the gate's own record for the gate alone,
- * else `{ key, list }` - the members' keys joined (the gate's first, the arches' by breach id, the stars' by theirs). Pure.
+/** EG-F: THE CLEARINGS NOW - the gate's (gateClearFor's, or null), each standing arch's (`{ b, px, py, x, z }`), STAR-CLEAR
+ *  each fallen star's (`{ s, px, py, x, z }`) and STOREFRONT each Brass Fissure's (`{ f, px, py, x, z }`) - each its pixel
+ *  and its heart there - one clearing: null for none, the gate's own record for the gate alone, else `{ key, list }`, the
+ *  members' keys joined (the gate's first, then each kind's by its id). Pure.
  * @param {ReturnType<typeof gateClearFor>} gate @param {ReadonlyArray<{b: string, px: number, py: number, x: number, z: number}>} [arches]
  * @param {ReadonlyArray<{s: string, px: number, py: number, x: number, z: number}>} [stars]
- */
-export function gateClearSet(gate, arches = [], stars = []) {
+ * @param {ReadonlyArray<{f: string, px: number, py: number, x: number, z: number}>} [fissures] */
+export function gateClearSet(gate, arches = [], stars = [], fissures = []) {
   /** @type {any[]} */
-  const list = [...(gate ? [gate] : []), ...membersFrom(arches, 'b', 'eg:', EG_ARCH_ROCK_M), ...membersFrom(stars, 's', 'star:', STAR_ROCK_M)];
+  const list = [...(gate ? [gate] : []), ...membersFrom(arches, 'b', 'eg:', EG_ARCH_ROCK_M), ...membersFrom(stars, 's', 'star:', STAR_ROCK_M), ...membersFrom(fissures, 'f', 'brass:', FISSURE_ROCK_M)];
   if (!list.length) return null;
   if (list.length === 1 && list[0] === gate) return gate;
   return Object.freeze({ key: list.map((c) => c.key).join(CLEAR_KEY_JOIN), list: Object.freeze(list) });
 }
 /**
- * STAR-CLEAR: THE SET, MADE AGAIN ONLY WHEN WHAT IT IS MADE OF MOVES - `(gate, arches, stars)` answers gateClearSet's set
- * for them, the same object while each of the three is the same (the gate's record, the arches' and the stars' lists are
- * each kept by their owners while they stand), so a pixel's build and the frame's sweep read one set (the world host's
- * memo, EG-F, moved here with the stars).
+ * STAR-CLEAR: THE SET, MADE AGAIN ONLY WHEN WHAT IT IS MADE OF MOVES - `(gate, arches, stars, fissures)` answers
+ * gateClearSet's set for them, the same object while each is the same (the gate's record, the arches', the stars' and the
+ * fissures' lists are each kept by their owners while they stand), so a pixel's build and the frame's sweep read one set
+ * (the world host's memo, EG-F, moved here with the stars).
  */
 export function gateClearMemo() {
-  let g = null, a = null, s = null, set = null;
-  return (gate, arches, stars) => {
-    if (gate !== g || arches !== a || stars !== s) { g = gate; a = arches; s = stars; set = gateClearSet(gate, arches ?? [], stars ?? []); }
+  let g = null, a = null, s = null, b = null, set = null;
+  return (gate, arches, stars, fissures = null) => {
+    if (gate !== g || arches !== a || stars !== s || fissures !== b) { g = gate; a = arches; s = stars; b = fissures; set = gateClearSet(gate, arches ?? [], stars ?? [], fissures ?? []); }
     return set;
   };
 }

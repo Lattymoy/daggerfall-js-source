@@ -127,7 +127,7 @@ export const portalLife = ({ short = false, holdMs = null } = {}) => PORTAL_MS.o
  * @param {{ renderer: any, audio?: any, now?: () => number }} deps
  */
 export function createPortalSet({ renderer, audio = null, now = () => performance.now() }) {
-  /** @type {{ at: number, feet: number[], short: boolean, holdMs: number | null, fixed: boolean, batch: any, origin: number[] }[]} */
+  /** @type {{ at: number, feet: number[], short: boolean, holdMs: number | null, fixed: boolean, batch: any, origin: number[], look?: any, dress?: any[], breath?: number }[]} */
   const list = [];
   let eye = null;
   let soundAt = -Infinity;   // QUIET-COMPANIONS: the set's last portal sound

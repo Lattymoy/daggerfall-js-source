@@ -124,13 +124,13 @@ export function shopHeldOf(/** @type {unknown} */ bits) {
 export function shopHeldDirect(/** @type {unknown} */ row) {
   const bits = typeof row === 'object' && row ? /** @type {any} */ (row).shop_wares : row;
   const text = typeof row === 'object' && row ? /** @type {any} */ (row).shop_held : '';
-  const ids = new Set(shopHeldOf(bits));
+  const ids = /** @type {Set<string>} */ (new Set(shopHeldOf(bits)));
   if (typeof text === 'string') for (const id of text.split(' ')) if (SHOP_HELD_ID_RE.test(id) && shopWareById(id)) ids.add(id);
   return SHOP_WARES.filter((w) => ids.has(w.id)).map((w) => w.id);
 }
 /** STOREFRONT: EVERYTHING A ROW HOLDS - what it holds directly and, through every giver it holds, what that gives. Pure. */
 export function shopHeldIds(/** @type {unknown} */ row) {
-  const out = new Set(shopHeldDirect(row));
+  const out = /** @type {Set<string>} */ (new Set(shopHeldDirect(row)));
   const stack = [...out];
   while (stack.length) {
     const w = shopWareById(stack.pop());
