@@ -16,6 +16,7 @@ import { peerBodyYaw } from '../net/peer/peerClimb.js';
 import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { mwViewBodyBones, mwViewSpriteFigure, mwViewSpriteFacing } from '../player/mwView.js';
 import { ownAura, ownArmory, ownEffects } from '../systems/ownGlyphs.js';
+import { bindPeerEffects } from '../net/peer/peerEffects.js';   // STOREFRONT: each peer's worn effects, for a face that holds only its id
 import { getPref } from '../systems/uiPrefs.js';
 
 /** ARMORY: the "Others' armory" choice (systems/features.js 'armory-others') - every peer's pieces, those within this many
@@ -36,6 +37,7 @@ export const auraSeedOf = (/** @type {string} */ id) => { let h = 2166136261; fo
  */
 export function createAuraHost(deps) {
   const { renderer } = deps;
+  bindPeerEffects((id) => deps.online()?.effectsOf?.(id) ?? null);   // STOREFRONT: a peer's gate and spared revenant in its own portal skin
   /** The aura the last minted token said, and the kit (undefined until a service that says one) - a wear since is said
    *  again at the next frame (AURA-LIVE). */
   let auraHeard, armoryHeard, effectsHeard;   // STOREFRONT: and the effects kit, said again the same way

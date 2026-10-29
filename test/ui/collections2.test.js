@@ -145,6 +145,13 @@ const CATALOGUE = {
   'armory:burningcrown': 'broker open', 'armory:emberheart': 'broker open', 'armory:ashbound': 'broker open', 'armory:cinderstride': 'broker open',
   'armory:breachbrand': 'broker open', 'armory:eternalhalo': 'shop shop', 'armory:eternalsigil': 'shop shop', 'armory:eternalarmlets': 'shop shop',
   'armory:eternalgreaves': 'shop shop', 'armory:eternaledge': 'shop shop',
+  /* STOREFRONT (PIN MOVED): the shop's name visuals and its bundles' four, sold for good; Season One's on the Battle Pass */
+  'title:dawnbringer': 'shop store', 'title:voidwalker': 'shop store', 'title:eternalchampion': 'shop store', 'aura:dominion': 'shop store',
+  'glyph:oblivion': 'shop store', 'glyph:gatesigil': 'shop store', 'glyph:gearcrown': 'shop store',
+  'title:brassbound': 'pass pass', 'title:tremorborn': 'pass pass', 'title:tonalarchitect': 'pass pass', 'title:brasswright': 'pass pass',
+  'title:heartwaker': 'pass pass', 'title:numidiumecho': 'pass pass', 'aura:aetherium': 'pass pass', 'aura:aetheriumgilded': 'pass pass',
+  'icon:centurion': 'pass pass', 'icon:aetherium': 'pass pass', 'icon:lexicon': 'pass pass', 'icon:spider': 'pass pass', 'icon:sphere': 'pass pass',
+  'icon:colossus': 'pass pass', 'icon:gearheart': 'pass pass', 'icon:numidium': 'pass pass', 'glyph:tonalfork': 'pass pass', 'glyph:cog': 'pass pass',
 };
 
 // ── THE CATALOGUE ──────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -155,7 +162,7 @@ test('COLLECTIONS-II THE CATALOGUE IS WHOLE AND AS RECORDED: every title, aura, 
   const got = {};
   for (const kind of W.WARDROBE_KINDS) for (const e of W.wardrobeEntries(kind)) got[`${kind}:${e.key}`] = [e.src, e.avail, ...(e.scope ? [e.scope] : [])].join(' ');
   assert.deepEqual(got, CATALOGUE);
-  assert.deepEqual(W.WARDROBE_SOURCES.map(([id]) => id), ['spire', 'abyss', 'serpent', 'broker', 'questlines', 'hunt', 'mastery', 'festival', 'seats', 'chapters', 'ranked', 'world', 'account', 'shop', 'patrons', 'staff', 'bestowed'] /* PIN MOVED (SHOP): the shop before the patrons */, 'play\'s first, what no play earns last');   // PIN MOVED (HUNTERS-MARK, MARKS-OF-MASTERY): The Hunt and Marks of Mastery, play's own, after the questlines
+  assert.deepEqual(W.WARDROBE_SOURCES.map(([id]) => id), ['spire', 'abyss', 'serpent', 'broker', 'questlines', 'hunt', 'mastery', 'festival', 'pass', 'seats', 'chapters', 'ranked', 'world', 'account', 'shop', 'patrons', 'staff', 'bestowed'] /* PIN MOVED (SHOP): the shop before the patrons */ /* PIN MOVED (STOREFRONT): the Battle Pass after the festival, a season's play */, 'play\'s first, what no play earns last');   // PIN MOVED (HUNTERS-MARK, MARKS-OF-MASTERY): The Hunt and Marks of Mastery, play's own, after the questlines
   for (const kind of W.WARDROBE_KINDS) for (const e of W.wardrobeEntries(kind)) {
     const how = e.how();
     assert.ok(typeof how === 'string' && how.length > 12, `${kind}:${e.key} says how`);

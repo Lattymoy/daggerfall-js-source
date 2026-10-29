@@ -19,25 +19,56 @@ import { postHead } from '../../src/net/postLaw.js';
 import { POST_BODY_MAX, POST_SUBJECT_MAX, POST_BATCH_RE } from '../../src/net/postLaw.js';
 
 const { subtle } = globalThis.crypto;
-const ON = { STRIPE_SECRET_KEY: 'sk_test_shop', STRIPE_WEBHOOK_SECRET: 'whsec_shop', SHOP_ON_SALE: 'title:genesis,glyph:origin,aura:eternal,armory:eternalset,armory:eternalhalo,armory:eternalsigil,armory:eternalarmlets,armory:eternalgreaves,armory:eternaledge' };   // ARMORY (PIN MOVED): the deploy's list, the Aura Armory's Eternal line with it
+const ON = { STRIPE_SECRET_KEY: 'sk_test_shop', STRIPE_WEBHOOK_SECRET: 'whsec_shop', SHOP_ON_SALE: SHOP_WARES.filter((w) => w.alone).map((w) => w.id).join(',') };   // ARMORY (PIN MOVED): the deploy's list, the Aura Armory's Eternal line with it; STOREFRONT: every ware sold alone
+/** STOREFRONT: inside Season One's days - its passes and boosters on sale (bible/06-Systems/Battle-Pass.md), a clock the
+ *  season's windows never make a test depend on. */
+const IN_SEASON = Date.UTC(2026, 10, 20, 12);
+const SOLD = SHOP_WARES.filter((w) => w.alone);
 const AFTER = 1_900_000_000;
 const row = (o = {}) => ({ id: 'acct-buyer', handle: 'Buyer', created_at: AFTER, registered_at: AFTER, ...o });
 
 // ── THE LAW ─────────────────────────────────────────────────────────
 
-test('SHOP: the wares are the owner\'s three at the owner\'s prices, each a bit of its own, each in the vocabulary (mutants: a price moved; two bits shared; a key off the vocabulary)', () => {
-  assert.deepEqual(SHOP_WARES.map((w) => [w.id, w.cents, w.bit, w.category, w.preAlpha]), [
-    ['title:genesis', 500, 1, 'titles', true],
-    ['glyph:origin', 200, 2, 'glyphs', true],
-    ['aura:eternal', 2000, 4, 'auras', true],
+test('SHOP: the wares at the owner\'s and the sheet\'s prices, the owner\'s nine each a bit of its own, the rest held by id, each in the vocabulary (mutants: a price moved; two bits shared; a key off the vocabulary)', () => {
+  // STOREFRONT (PIN MOVED, bible/06-Systems/Storefront.md section 2): the sheet's rows by section - each [id, price, bit,
+  // section, pre-alpha, tier, sold alone]; the owner's nine keep their bits, every ware since is held by its id
+  assert.deepEqual(SHOP_WARES.map((w) => [w.id, w.cents, w.bit, w.category, w.preAlpha, w.tier, w.alone]), [
+    ['pass:s1premium', 2999, 0, 'pass', false, 'premium', true],
+    ['pass:s1deluxe', 4999, 0, 'pass', false, 'exclusive', true],
+    ['kill:ashen', 999, 0, 'kills', false, 'standard', true],
+    ['kill:voidrend', 1999, 0, 'kills', false, 'premium', true],
+    ['kill:pyre', 2999, 0, 'kills', false, 'exclusive', true],
+    ['portal:runic', 1499, 0, 'portals', false, 'standard', true],
+    ['portal:daedric', 2999, 0, 'portals', false, 'premium', true],
+    ['portal:aetheric', 4999, 0, 'portals', false, 'exclusive', true],
+    ['mount:spectral', 1999, 0, 'mounts', false, 'standard', true],
+    ['mount:dawnfire', 3499, 0, 'mounts', false, 'premium', true],
+    ['mount:warhorse', 5999, 0, 'mounts', false, 'exclusive', true],
+    ['title:genesis', 500, 1, 'names', true, null, true],
+    ['glyph:origin', 200, 2, 'names', true, null, true],
+    ['title:dawnbringer', 699, 0, 'names', false, 'standard', true],
+    ['title:voidwalker', 1299, 0, 'names', false, 'premium', true],
+    ['title:eternalchampion', 2499, 0, 'names', false, 'exclusive', true],
+    ['glyph:oblivion', 499, 0, 'names', false, null, false],
+    ['glyph:gatesigil', 499, 0, 'names', false, null, false],
+    ['glyph:gearcrown', 499, 0, 'names', false, null, false],
+    ['aura:eternal', 2000, 4, 'auras', true, null, true],
+    ['aura:dominion', 2499, 0, 'auras', false, null, false],
     // ARMORY (PIN MOVED, bible/04-Characters/Aura-Armory.md section 4): the Aura Armory's Eternal line - the set whole at $20
     // (the owner: "The store set should be $20"), and a piece a slot at $6
-    ['armory:eternalset', 2000, 256, 'armory', true],
-    ['armory:eternalhalo', 600, 8, 'armory', true],
-    ['armory:eternalsigil', 600, 16, 'armory', true],
-    ['armory:eternalarmlets', 600, 32, 'armory', true],
-    ['armory:eternalgreaves', 600, 64, 'armory', true],
-    ['armory:eternaledge', 600, 128, 'armory', true],
+    ['armory:eternalset', 2000, 256, 'armory', true, null, true],
+    ['armory:eternalhalo', 600, 8, 'armory', true, null, true],
+    ['armory:eternalsigil', 600, 16, 'armory', true, null, true],
+    ['armory:eternalarmlets', 600, 32, 'armory', true, null, true],
+    ['armory:eternalgreaves', 600, 64, 'armory', true, null, true],
+    ['armory:eternaledge', 600, 128, 'armory', true, null, true],
+    ['bundle:daedricchampion', 5999, 0, 'bundles', false, 'exclusive', true],
+    ['bundle:portalmaster', 4999, 0, 'bundles', false, 'premium', true],
+    ['bundle:lordofoblivion', 11999, 0, 'bundles', false, 'exclusive', true],
+    ['bundle:seasonalcollector', 6499, 0, 'bundles', false, 'exclusive', true],
+    ['boost:s1cog', 499, 0, 'boosts', false, 'standard', true],
+    ['boost:s1tonal', 1299, 0, 'boosts', false, 'premium', true],
+    ['boost:s1heart', 2499, 0, 'boosts', false, 'exclusive', true],
   ]);
   assert.equal(SHOP_BITS_ALL, 511);
   assert.ok(shopVocabularyOk());
@@ -45,7 +76,7 @@ test('SHOP: the wares are the owner\'s three at the owner\'s prices, each a bit 
   assert.deepEqual(shopHeldOf(512), [], 'a bit no ware has holds nothing');
   for (const bad of [null, undefined, '', -1, 1.5, 'x']) assert.deepEqual(shopHeldOf(bad), []);
   assert.deepEqual(shopKeysOf(7, 'glyph'), ['origin']);
-  assert.deepEqual(shopOnSaleOf(' aura:eternal , nope:x,title:genesis'), ['title:genesis', 'aura:eternal'], 'in the wares\' order, unknown words dropped');
+  assert.deepEqual(shopOnSaleOf(' aura:eternal , nope:x,title:genesis,glyph:oblivion'), ['title:genesis', 'aura:eternal'], 'in the wares\' order, unknown words and a bundle\'s own ware dropped');
   assert.deepEqual(shopOnSaleOf(''), []);
   assert.equal(shopPriceText(500), '$5.00');
   assert.equal(shopPriceText(2000), '$20.00');
@@ -153,15 +184,18 @@ async function stand(extra = ON) {
   return { ...s, get, account, press, hook, bits, orders, post, ticketOf };
 }
 
-test('SHOP, end to end: the account read carries the card - every ware, on sale, not held, a Buy link to the service\'s own page; a guest none, and no link at all while the shop is off (mutants: a guest given a link; the card told on while off)', async () => {
+test('SHOP, end to end: the account read carries the card - every ware sold alone, on sale, not held, a Buy link to the service\'s own page; a guest none, and no link at all while the shop is off (mutants: a guest given a link; the card told on while off)', async (t) => {
+  t.mock.timers.enable({ apis: ['Date'], now: IN_SEASON });
   const { account, registered, guest } = await stand();
   const me = await registered('Buyer');
   const card = (await account(me)).shop;
   assert.equal(card.on, true);
-  assert.deepEqual(card.wares.map((w) => [w.id, w.sale, w.held, typeof w.buy]), SHOP_WARES.map((w) => [w.id, true, false, 'string']));   // ARMORY (PIN MOVED): every ware, the Eternal line's five with the three
+  // ARMORY (PIN MOVED): every ware, the Eternal line's five with the three; STOREFRONT (PIN MOVED): every ware sold alone, at its price
+  assert.deepEqual(card.wares.map((w) => [w.id, w.sale, w.held, typeof w.buy, w.cents]), SOLD.map((w) => [w.id, true, false, 'string', w.cents]));
+  assert.deepEqual(card.featured, ['pass:s1premium', 'pass:s1deluxe'], 'the live season\'s passes lead the carousel');
   assert.match(card.wares[0].buy, /^https:\/\/accounts\.invalid\/v1\/shop\/buy\?t=/);
   assert.ok(!card.wares[0].buy.includes(me.id) && !card.wares[0].buy.includes(ON.STRIPE_SECRET_KEY), 'the ticket names nobody in clear');
-  assert.deepEqual(clientCard(card).wares.map((w) => !!w.buy), SHOP_WARES.map(() => true), 'and the client reads it back whole');
+  assert.deepEqual(clientCard(card).wares.map((w) => !!w.buy), SOLD.map(() => true), 'and the client reads it back whole');
   assert.ok((await account(await guest())).shop.wares.every((w) => w.buy === null), 'a guest cannot buy');
   const off = await stand({});
   const someone = await off.registered('Someone');
@@ -227,7 +261,7 @@ test('SHOP, end to end: Stripe\'s signed word that the checkout is paid grants t
   assert.match(letters[0].body, /Eternal \(aura\) is yours, on every character of your account\./);
   const a = await account(me);
   assert.ok(a.wardrobe.auras.includes('eternal'), 'held on the account read at once');
-  assert.deepEqual(a.shop.wares.find((w) => w.id === 'aura:eternal'), { id: 'aura:eternal', sale: true, held: true, buy: null }, 'and no second Buy');
+  assert.deepEqual(a.shop.wares.find((w) => w.id === 'aura:eternal'), { id: 'aura:eternal', sale: true, held: true, buy: null, cents: 2000 }, 'and no second Buy');
   // told twice AT ONCE (the completed word and the delayed method's, both read the order open): the batch's guard holds
   const st2 = stripe();
   try { await press(await ticketOf(me, 'title:genesis')); } finally { st2.restore(); }
@@ -340,13 +374,15 @@ test('SHOP: the card the client reads keeps only the shop\'s own wares and https
 test('SHOP: the account card is answered for every row, even one the service read before the migration (no shop_wares); its Buy key derived once a read, its three tickets sealed under it (mutants: a key a ticket)', async () => {
   let derived = 0;
   const counted = new Proxy(subtle, { get: (o, k) => (k === 'deriveKey' ? (...a) => { derived++; return o.deriveKey(...a); } : o[k].bind(o)) });
-  const card = await shopCardOf({ id: 'p', handle: 'Old' }, ON, { subtle: counted, rand: (b) => globalThis.crypto.getRandomValues(b), nowS: AFTER, origin: 'https://a.invalid' });
-  assert.equal(card.wares.length, SHOP_WARES.length);   // ARMORY (PIN MOVED): nine wares, the Eternal set and its five with them
+  const nowS = IN_SEASON / 1000;   // STOREFRONT: inside the season, its wares on sale
+  const card = await shopCardOf({ id: 'p', handle: 'Old' }, ON, { subtle: counted, rand: (b) => globalThis.crypto.getRandomValues(b), nowS, origin: 'https://a.invalid' });
+  assert.equal(card.wares.length, SOLD.length);   // ARMORY (PIN MOVED): nine wares, the Eternal set and its five with them; STOREFRONT (PIN MOVED): every ware sold alone
   assert.ok(card.wares.every((w) => w.held === false && typeof w.buy === 'string'));
   assert.equal(derived, 1);
-  assert.equal(new Set(card.wares.map((w) => w.buy)).size, SHOP_WARES.length, 'a ticket each, each its own');
+  assert.equal(new Set(card.wares.map((w) => w.buy)).size, SOLD.length, 'a ticket each, each its own');
   derived = 0;
-  await shopCardOf({ id: 'p', handle: 'Old', shop_wares: SHOP_BITS_ALL }, ON, { subtle: counted, rand: (b) => globalThis.crypto.getRandomValues(b), nowS: AFTER, origin: 'https://a.invalid' });
+  const everything = { id: 'p', handle: 'Old', shop_wares: SHOP_BITS_ALL, shop_held: SOLD.filter((w) => !w.bit).map((w) => w.id).join(' ') };
+  await shopCardOf(everything, ON, { subtle: counted, rand: (b) => globalThis.crypto.getRandomValues(b), nowS, origin: 'https://a.invalid' });
   assert.equal(derived, 0, 'nothing to buy, nothing derived');
 });
 

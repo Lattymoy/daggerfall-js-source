@@ -198,6 +198,7 @@
 // Every rate whole over the clock (sageRatesWhole), every puff's life too. No host changed.
 //
 // Not a DFU member. Ledger A (WB).
+import { DAEDRIC_COAL, DAEDRIC_CRIMSON, DAEDRIC_FIRE, DAEDRIC_GOLD, AETHERIUM_DEEP, AETHERIUM_BLUE, AETHERIUM_GLOW, DWEMER_BRASS, DWEMER_SHINE, NUMIDIUM_GOLD } from '../ui/playerBadge.js';   // STOREFRONT: the Dominion's Daedric fire, the coils' aetherium and brass
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram, compiledPass } from './glProgram.js';
 import { wrapAngle } from '../world/mat4.js';
@@ -1002,6 +1003,54 @@ export const ETERNAL_RGB = Object.freeze({
   violet: Object.freeze(GENESIS_VIOLET.slice(0, 3)), heart: Object.freeze(GENESIS_HEART.slice(0, 3)), core: Object.freeze(GENESIS_CORE.slice(0, 3)),
 });
 
+/** STOREFRONT (2026-10-29, bible/06-Systems/Storefront.md section 8): THE DAEDRIC DOMINION, the bundles' aura and the
+ *  sixteenth kind - a ring of Daedric script burning crimson on a band of black at the feet, letter by letter, black thorns
+ *  out from it and embers rising. Premultiplied (AURA_LOOK `shade`), so its black covers the ground it lies on. */
+export const DOMINION_R = 0.82;          // the ring the script runs on, m
+export const DOMINION_BAND_M = 0.11;     // the black band, out and in from the ring, m
+export const DOMINION_RUNES = 14;        // the script's letters round it
+export const DOMINION_THORNS = 7;        // the black thorns out across the ground
+export const DOMINION_THORN_M = 0.3;     // a thorn's reach past the band, m
+export const DOMINION_H = 1.5;           // the wall: the veil low, the embers past the chest
+export const DOMINION_EMBERS = 22;
+/** Each letter's strokes, a bit each (dominionLetter): the stem, the top and foot bars, two diagonals, a hook, a side. */
+export const DOMINION_SCRIPT = Object.freeze([11, 21, 37, 13, 67, 25, 41, 7, 81, 35, 19, 73, 45, 29]);
+/** Its rates: the script's turn, a letter burning bright in turn round it, the band's breath, the embers' rise; and its
+ *  veil's flow in lattice cells a second - each whole over the clock. */
+export const DOMINION_HZ = Object.freeze({ turn: 1 / 30, write: 1 / 5, breath: 1 / 4, ember: 1 / 5 });
+export const DOMINION_FLOW = Object.freeze({ veil: 0.5 });
+export const dominionRatesWhole = () => [...Object.values(DOMINION_HZ), ...Object.values(DOMINION_FLOW)].every((r) => r > 0 && Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
+/** The Daedric fire's four (ui/playerBadge.js DAEDRIC_*): the coal, its crimson, the fire and its gold. */
+export const DOMINION_RGB = Object.freeze({
+  coal: Object.freeze(DAEDRIC_COAL.slice(0, 3)), crimson: Object.freeze(DAEDRIC_CRIMSON.slice(0, 3)), fire: Object.freeze(DAEDRIC_FIRE.slice(0, 3)), gold: Object.freeze(DAEDRIC_GOLD.slice(0, 3)),
+});
+/** Which letter of the script stands at the ground's angle `a` at the clock `t` - the shader's own pick. Pure. */
+export const dominionRuneAt = (a, t) => ((Math.floor((a - Math.PI * 2 * DOMINION_HZ.turn * t) / (Math.PI * 2 / DOMINION_RUNES) + 0.5) % DOMINION_RUNES) + DOMINION_RUNES) % DOMINION_RUNES;
+
+/** STOREFRONT (bible/06-Systems/Battle-Pass.md section 3): THE AETHERIUM COIL, level 50's, and THE GILDED COIL, the Deluxe
+ *  Pass's - kinds seventeen and eighteen, one look in two palettes: a strand of aetherium light wound HELIX_TURNS times
+ *  about the body from the feet to the crown, a ribbon of brass wound with it half a turn round, the light running up it
+ *  as the coil turns; its foot a ring at the feet in a pool of blue. The gilded's brass is gold and its light the
+ *  brighter, gold motes rising through it. Added whole, kindled up. */
+export const HELIX_R = 0.62;             // the coil about the body, m - clear of the shoulders
+export const HELIX_H = 2.1;              // its height, past the crown
+export const HELIX_TURNS = 3;
+export const HELIX_W = Object.freeze({ strand: 0.018, brass: 0.024 });   // the strand's core and the brass ribbon's half-width, m
+export const HELIX_MOTES = 18;
+/** Its rates: the coil's turn, the light running up it, the motes' rise - each whole over the clock. */
+export const HELIX_HZ = Object.freeze({ turn: 1 / 6, run: 1 / 3, mote: 1 / 5 });
+export const helixRatesWhole = () => Object.values(HELIX_HZ).every((r) => r > 0 && Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
+/** The two palettes: the aetherium's deep, blue and glow and the brass and its shine (ui/playerBadge.js); the gilded's
+ *  brass the polished shine and its shine the Echo of Numidium's gold, `bright` its light's share over the plain's. */
+export const HELIX_RGB = Object.freeze({
+  deep: Object.freeze(AETHERIUM_DEEP.slice(0, 3)), blue: Object.freeze(AETHERIUM_BLUE.slice(0, 3)), glow: Object.freeze(AETHERIUM_GLOW.slice(0, 3)),
+  brass: Object.freeze(DWEMER_BRASS.slice(0, 3)), shine: Object.freeze(DWEMER_SHINE.slice(0, 3)), bright: 1,
+});
+export const GILDED_RGB = Object.freeze({ ...HELIX_RGB, brass: Object.freeze(DWEMER_SHINE.slice(0, 3)), shine: Object.freeze(NUMIDIUM_GOLD.slice(0, 3)), bright: 1.3 });
+/** The strand's place round the body at height share `v` and clock `t`, a share of a turn 0..1 - the shader's own
+ *  (`fn`Wall); the brass is half a turn from it. Pure. */
+export const helixStrandAt = (v, t) => ((((v * HELIX_TURNS + HELIX_HZ.turn * t) % 1) + 1) % 1);
+
 /** AEGIS: HOW EACH AURA IS DRAWN - its kind in the shader (`uAura`), its ring's radius, its wall's height and how many
  *  symbols float off it (the third draw - none for the fire). A pin walks AURAS and requires one each. SHADOW-CLOAK: and,
  *  for the cloak alone, the mesh its wall is (`mesh` - the shaped cloth, not the strip) and that it SHADES: it darkens
@@ -1023,6 +1072,9 @@ export const AURA_LOOK = Object.freeze({
   witchfire: Object.freeze({ kind: 13, ringR: WITCHFIRE_R, flameH: WITCHFIRE_H, glyphs: 0 }),
   eternal: Object.freeze({ kind: 15, ringR: ETERNAL_POOL_R, flameH: ETERNAL_TOP, glyphs: ETERNAL_CARDS, mesh: 'cape', shade: true }),   // SHOP: the cape of fire on the cloak's mesh, its wisps and embers the third draw - premultiplied, so its mantle covers
   sagesmoke: Object.freeze({ kind: 14, ringR: SAGE_RUNE_R, flameH: SAGE_WALL_H, glyphs: SAGE_CARDS, shade: true }),   // NIRNROOT-SAGE: the runes and the smoke's shade at the feet, the runes' light and the low smoke on the strip, the smoke's puffs and the nirnroots the third draw - premultiplied, so the smoke covers   // WITCH1: the green fire and its candles at the feet, its tongues and violet motes on the strip   // WIKIMAID: the ring and the tracks at the feet, the sparkles on the strip, the rabbits the third draw - premultiplied, so a rabbit stays lilac
+  dominion: Object.freeze({ kind: 16, ringR: DOMINION_R, flameH: DOMINION_H, glyphs: 0, shade: true }),   // STOREFRONT: the script's black band covers, its embers on the strip
+  aetherium: Object.freeze({ kind: 17, ringR: HELIX_R, flameH: HELIX_H, glyphs: 0 }),   // STOREFRONT: the coil on the strip, added whole
+  aetheriumgilded: Object.freeze({ kind: 18, ringR: HELIX_R, flameH: HELIX_H, glyphs: 0 }),
 });
 /** The look a wearer's aura is drawn with - Dagon's Fire for one that names none (the fire was the only aura before). */
 export const auraLookOf = (aura) => (typeof aura === 'string' && Object.hasOwn(AURA_LOOK, aura) ? AURA_LOOK[aura] : AURA_LOOK.dagonfire);
@@ -2690,6 +2742,144 @@ vec4 warrenBunny(vec2 uv, vec3 s) {
   return vec4(col * cover, cover);
 }
 `;
+/** STOREFRONT: THE DAEDRIC DOMINION - a ground (`p` metres about the feet) and a wall (the strip: `q` = (u round, v up)),
+ *  each PREMULTIPLIED: its black band, its shadow and its thorns cover the ground, the script's fire and the embers are
+ *  added. A letter's strokes are segments in its box along the ring (dominionLetter), DOMINION_SCRIPT its bits. */
+const DOMINION_LW = 0.07, DOMINION_LH = 0.065, DOMINION_STROKE = 0.0085;
+const DOMINION_GLSL = `
+const vec3 DM_COAL = ${v3(DOMINION_RGB.coal)};
+const vec3 DM_CRIMSON = ${v3(DOMINION_RGB.crimson)};
+const vec3 DM_FIRE = ${v3(DOMINION_RGB.fire)};
+const vec3 DM_GOLD = ${v3(DOMINION_RGB.gold)};
+const int DOMINION_SCRIPT[${DOMINION_RUNES}] = int[${DOMINION_RUNES}](${DOMINION_SCRIPT.join(', ')});
+float dominionBreath() { return 0.85 + 0.15 * sin(uTime * TAU ${hzGlsl(DOMINION_HZ.breath)}); }
+float dominionSeg(vec2 p, vec2 a, vec2 b) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h); }
+// a letter (p metres in its box: x along the ring, y out from it) - the distance to its nearest stroke, by its code's bits
+float dominionLetter(vec2 p, int code) {
+  float d = 1e3;
+  vec2 T = vec2(0.0, ${g3(DOMINION_LH)}), B = vec2(0.0, -${g3(DOMINION_LH)}), TL = vec2(-${g3(DOMINION_LW)}, ${g3(DOMINION_LH)}), TR = vec2(${g3(DOMINION_LW)}, ${g3(DOMINION_LH)});
+  vec2 BL = vec2(-${g3(DOMINION_LW)}, -${g3(DOMINION_LH)}), BR = vec2(${g3(DOMINION_LW)}, -${g3(DOMINION_LH)});
+  if ((code & 1) != 0) d = min(d, dominionSeg(p, B, T));
+  if ((code & 2) != 0) d = min(d, dominionSeg(p, TL, TR));
+  if ((code & 4) != 0) d = min(d, dominionSeg(p, BL, BR));
+  if ((code & 8) != 0) d = min(d, dominionSeg(p, BL, TR));
+  if ((code & 16) != 0) d = min(d, dominionSeg(p, TL, BR));
+  if ((code & 32) != 0) d = min(d, dominionSeg(p, vec2(0.0), vec2(${g3(DOMINION_LW)}, ${g3(DOMINION_LH * 0.5)})));
+  if ((code & 64) != 0) d = min(d, dominionSeg(p, vec2(-${g3(DOMINION_LW)}, -${g3(DOMINION_LH * 0.5)}), vec2(-${g3(DOMINION_LW)}, ${g3(DOMINION_LH * 0.5)})));
+  return d;
+}
+vec4 dominionGround(vec2 p) {
+  float r = length(p);
+  if (r > uGroundR) discard;
+  float px = turnPixel(), breath = dominionBreath(), across = r - uRingR;
+  // THE DOMINION'S SHADOW from the feet to past the band, its edge soft; the band itself near black
+  float band = 1.0 - smoothstep(${g3(DOMINION_BAND_M - 0.01)}, ${g3(DOMINION_BAND_M + 0.015)}, abs(across));
+  float cover = max(0.55 * (1.0 - smoothstep(${g3(DOMINION_BAND_M)}, ${g3(DOMINION_BAND_M + 0.3)}, across)), 0.9 * band);
+  vec3 col = DM_COAL * band * 0.8;   // the band's black, a coal's red in it
+  // never the angle at the middle, where atan(0, 0) is no number (the resonance's AUDIT)
+  if (r > 0.05) {
+    float a = atan(p.y, p.x), cell = TAU / ${g1(DOMINION_RUNES)};
+    float turn = a - uTime * TAU ${hzGlsl(DOMINION_HZ.turn)};
+    float k = floor(turn / cell + 0.5), ki = mod(k, ${g1(DOMINION_RUNES)});
+    float d = dominionLetter(vec2((turn - k * cell) * uRingR, across), DOMINION_SCRIPT[int(ki)]);
+    // THE SCRIPT: each letter crimson fire, one burning bright after another round the ring as if being written
+    float ink = clamp((${g3(DOMINION_STROKE)} - d) / px + 0.5, 0.0, 1.0);
+    float burn = 0.45 + 0.55 * exp(-fract(uTime ${hzGlsl(DOMINION_HZ.write)} - ki / ${g1(DOMINION_RUNES)}) * 4.0);
+    col += (DM_CRIMSON + DM_FIRE * 0.6 * burn) * ink * burn * breath + DM_FIRE * exp(-d * d / 0.0005) * 0.3 * burn * band;
+    // THE BAND'S EDGES, a line of crimson either side
+    col += DM_CRIMSON * turnBand(abs(across), ${g3(DOMINION_BAND_M - 0.007)}, ${g3(DOMINION_BAND_M + 0.003)}, px) * 0.8 * breath;
+    // THE THORNS: black spikes out from the band, tapering to their tips, an ember line up each
+    float sa = (fract(a / TAU * ${g1(DOMINION_THORNS)} + 0.5) - 0.5) * TAU * r / ${g1(DOMINION_THORNS)};
+    float reach = (across - ${g3(DOMINION_BAND_M)}) / ${g3(DOMINION_THORN_M)};
+    float thorn = reach > 0.0 && reach < 1.0 ? clamp((0.05 * (1.0 - reach) - abs(sa)) / px + 0.5, 0.0, 1.0) : 0.0;
+    cover = max(cover, 0.9 * thorn);
+    col += DM_FIRE * 0.35 * thorn * clamp((0.006 - abs(sa)) / px + 0.5, 0.0, 1.0) * breath;
+    // FIRE THROUGH THE BLACK within the band: thin seams of it, faint
+    float c1 = vnoiseP(vec2(fract(a / TAU) * 24.0 + floor(uSeed * 7.0), r * 9.0), vec2(24.0, 64.0));
+    col += DM_FIRE * pow(1.0 - abs(c1 * 2.0 - 1.0), 14.0) * (1.0 - smoothstep(uRingR - 0.25, uRingR - 0.08, r)) * smoothstep(0.12, 0.3, r) * 0.35 * breath;
+  }
+  return vec4(col, cover) * uKindle * (1.0 - smoothstep(uGroundR - 0.2, uGroundR, r));
+}
+vec4 dominionWall(vec2 q) {
+  float u = q.x, v = q.y, y = v * uFlameH;
+  // THE VEIL: a dark-red smoke rolling off the band, gone by the knee
+  float n = fbmP(vec2(u * ${AURA_ROUND.flames.toFixed(1)} + floor(uSeed * 5.0), v * 3.0 - uTime * ${DOMINION_FLOW.veil.toFixed(3)}), vec2(${AURA_ROUND.flames.toFixed(1)}, ${(DOMINION_FLOW.veil * AURA_CLOCK_PERIOD).toFixed(1)}));
+  float veil = (1.0 - smoothstep(0.0, 0.4, y)) * smoothstep(0.35, 0.7, n);
+  vec3 col = DM_CRIMSON * 0.3 * veil;
+  // THE EMBERS rising off the script past the chest, each at its own place and pace, swaying as they climb
+  float circ = TAU * uRingR, embers = 0.0;
+  for (int m = 0; m < ${DOMINION_EMBERS}; m++) {
+    float fm = float(m);
+    float h1 = fract(sin(fm * 61.17 + 2.3) * 43758.5453), h2 = fract(sin(fm * 23.71 + 5.9) * 24634.6345);
+    float mv = fract(uTime ${hzGlsl(DOMINION_HZ.ember)} * (1.0 + mod(fm, 3.0)) + h2);
+    vec2 dm = vec2((fract(u - h1 + 0.5) - 0.5) * circ + 0.06 * sin(TAU * (mv * 2.0 + h1)), (v - mv) * uFlameH);
+    embers += exp(-dot(dm, dm) / 0.0003) * (1.0 - mv) * smoothstep(0.0, 0.06, mv);
+  }
+  col += (DM_FIRE * 0.9 + DM_GOLD * 0.35) * embers;
+  // kindled UP: the veil and the embers rising from the feet
+  return vec4(col, 0.45 * veil) * clamp((uKindle * 1.25 - v) / 0.15, 0.0, 1.0);
+}
+`;
+/** STOREFRONT: THE COILS' SHARED WORK - how far a point of the strip is from the strand (or, `phase` 0.5, the brass half
+ *  a turn round), in metres square to it, and the light running up it. */
+const HELIX_HELPERS = `
+const float HELIX_STRAND = ${g3(HELIX_W.strand)}, HELIX_BRASS = ${g3(HELIX_W.brass)};
+float helixAcross(float u, float v, float phase) {
+  float circ = TAU * uRingR, along = ${g1(HELIX_TURNS)} * circ;
+  float du = fract(u - v * ${g1(HELIX_TURNS)} - uTime ${hzGlsl(HELIX_HZ.turn)} + phase + 0.5) - 0.5;
+  return du * circ * uFlameH / sqrt(uFlameH * uFlameH + along * along);
+}
+float helixRun(float v) { return 0.7 + 0.3 * sin(TAU * (v * 2.0 - uTime ${hzGlsl(HELIX_HZ.run)})); }
+`;
+/** STOREFRONT: A COIL'S LOOK in a palette (`rgb`: HELIX_RGB or GILDED_RGB) - `fn`Ground and `fn`Wall; its motes the
+ *  aetherium's glow, or (`gold`) the gilding's shine and brighter. */
+const helixLook = (fn, P, rgb, { gold = false } = {}) => `
+const vec3 ${P}_BLUE = ${v3(rgb.blue)};
+const vec3 ${P}_GLOW = ${v3(rgb.glow)};
+const vec3 ${P}_BRASS = ${v3(rgb.brass)};
+const vec3 ${P}_SHINE = ${v3(rgb.shine)};
+const float ${P}_BRIGHT = ${g3(rgb.bright)};
+vec3 ${fn}Ground(vec2 p) {
+  float r = length(p);
+  if (r > uGroundR) discard;
+  float px = turnPixel();
+  // THE POOL of blue the coil throws, brightest at the feet; THE COIL'S FOOT, a ring of brass with the light inside it
+  vec3 col = ${P}_BLUE * exp(-r * r / 0.35) * 0.28;
+  col += ${P}_BRASS * turnBand(r, uRingR - 0.018, uRingR + 0.018, px) * 0.75;
+  col += ${P}_GLOW * exp(-pow((r - uRingR + 0.045) / 0.012, 2.0)) * 0.45 * helixRun(0.0);
+  if (r > 0.05) {
+    // where the strand and the brass leave the ground, turning with the coil
+    float a = atan(p.y, p.x), circ = TAU * uRingR, rr = r - uRingR;
+    float s1 = (fract(a / TAU - uTime ${hzGlsl(HELIX_HZ.turn)} + 0.5) - 0.5) * circ, s2 = (fract(a / TAU - uTime ${hzGlsl(HELIX_HZ.turn)}) - 0.5) * circ;
+    col += ${P}_GLOW * exp(-(s1 * s1 + rr * rr) / 0.0012) * 0.9 + ${P}_SHINE * exp(-(s2 * s2 + rr * rr) / 0.0012) * 0.6;
+  }
+  return col * ${P}_BRIGHT * uKindle * (1.0 - smoothstep(uGroundR - 0.25, uGroundR, r));
+}
+vec3 ${fn}Wall(vec2 q) {
+  float u = q.x, v = q.y, d1 = helixAcross(u, v, 0.0), d2 = helixAcross(u, v, 0.5);
+  // THE STRAND: a white-blue core in its glow, the light running up it
+  float w2 = HELIX_STRAND * HELIX_STRAND;
+  vec3 col = (${P}_GLOW * exp(-d1 * d1 / w2) * 0.85 + ${P}_BLUE * exp(-d1 * d1 / (9.0 * w2)) * 0.4) * helixRun(v);
+  // THE BRASS wound with it: a ribbon, its middle catching the light
+  float ribbon = clamp((HELIX_BRASS - abs(d2)) / 0.004 + 0.5, 0.0, 1.0);
+  col += (${P}_BRASS * 0.55 + ${P}_SHINE * 0.35 * pow(max(1.0 - abs(d2) / HELIX_BRASS, 0.0), 3.0)) * ribbon;
+  // its two ends fading out at the feet and over the crown
+  col *= smoothstep(0.0, 0.12, v) * (1.0 - smoothstep(0.85, 1.0, v));
+  // THE MOTES rising through it, each at its own place and pace
+  float circ = TAU * uRingR, motes = 0.0;
+  for (int m = 0; m < ${HELIX_MOTES}; m++) {
+    float fm = float(m);
+    float h1 = fract(sin(fm * 37.91 + 1.1) * 43758.5453), h2 = fract(sin(fm * 19.37 + 2.7) * 24634.6345);
+    float mv = fract(uTime ${hzGlsl(HELIX_HZ.mote)} * (1.0 + mod(fm, 2.0)) + h2);
+    vec2 dm = vec2((fract(u - h1 + 0.5) - 0.5) * circ, (v - mv) * uFlameH);
+    motes += exp(-dot(dm, dm) / 0.00025) * (1.0 - mv) * smoothstep(0.0, 0.06, mv);
+  }
+  col += ${gold ? `${P}_SHINE * 0.95` : `${P}_GLOW * 0.45`} * motes;
+  // kindled UP: the coil wound up from the feet
+  return col * ${P}_BRIGHT * clamp((uKindle * 1.25 - v) / 0.15, 0.0, 1.0);
+}
+`;
+const HELIX_GLSL = HELIX_HELPERS + helixLook('helix', 'HX', HELIX_RGB) + helixLook('gilded', 'GX', GILDED_RGB, { gold: true });
 export const AURA_VS = HEAD + `layout(location = 0) in vec2 aP;   // the ground: a corner -1..1; the flames: x the step round 0..1, y up 0..1; a symbol: x its number * 2 + the corner's u, y its v
 uniform mat4 uVP;
 uniform int uKind;      // 0 the ground, 1 the flames, 2 the ward's floating symbols (AEGIS)
@@ -2891,7 +3081,7 @@ export const AURA_FS = HEAD + `in vec2 vP;
 in vec3 vWorld;
 in vec3 vS;             // AEGIS: a floating symbol's age, rune and number
 uniform int uKind;
-uniform int uAura;      // AEGIS: 0 Dagon's Fire, 1 the Oblivion Ward, 2 the Golden Radiance (AURA_LOOK - PRIMARCH), 3 the Holo Shadow Cloak (SHADOW-CLOAK), 4 the Seraph Wings (SERAPH-WINGS), 5 the Crystal Resonance (CRYSTAL-FIST), 6 The Turning Hour (SD9c), 7 The First Hour (HOURS-FIRST), 8 The Maelstrom (SERPENT5), 9 Beaconlight, 10 The Burning Stair, 11 Firstlight (EG-E2), 12 the Lilac Warren (WIKIMAID), 13 Witchfire (WITCH1), 14 Sage's Smoke (NIRNROOT-SAGE), 15 Eternal (SHOP)
+uniform int uAura;      // AEGIS: 0 Dagon's Fire, 1 the Oblivion Ward, 2 the Golden Radiance (AURA_LOOK - PRIMARCH), 3 the Holo Shadow Cloak (SHADOW-CLOAK), 4 the Seraph Wings (SERAPH-WINGS), 5 the Crystal Resonance (CRYSTAL-FIST), 6 The Turning Hour (SD9c), 7 The First Hour (HOURS-FIRST), 8 The Maelstrom (SERPENT5), 9 Beaconlight, 10 The Burning Stair, 11 Firstlight (EG-E2), 12 the Lilac Warren (WIKIMAID), 13 Witchfire (WITCH1), 14 Sage's Smoke (NIRNROOT-SAGE), 15 Eternal (SHOP), 16 the Daedric Dominion, 17 the Aetherium Coil, 18 the Gilded Coil (STOREFRONT)
 uniform vec3 uAt;       // PRIMARCH: the feet - the axis the radiance's column stands on
 uniform float uYaw;     // SHADOW-CLOAK: the wearer's facing - the cloak's opening is at their front
 uniform int uSide;      // SHADOW-CLOAK: which side of the cloth this draw lays - 0 its lining (front faces culled), 1 its outside (back faces culled)
@@ -2909,8 +3099,11 @@ uniform vec3 uCamPos;
 out vec4 o;
 ${FOG_FACTOR_GLSL}${AURA_NOISE_GLSL}
 const float TAU = 6.283185307179586;
-${WARD_GLSL}${RADIANCE_GLSL}${RESONANCE_GLSL}${TURNING_GLSL}${MAELSTROM_GLSL}${SPIRE_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_FS_GLSL}${ETERNAL_SHAPE_GLSL}${ETERNAL_FS_GLSL}${WING_SHARED_GLSL}${WING_FS_GLSL}${WARREN_GLSL}${WITCH_GLSL}${SAGE_GLSL}
+${WARD_GLSL}${RADIANCE_GLSL}${RESONANCE_GLSL}${TURNING_GLSL}${MAELSTROM_GLSL}${SPIRE_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_FS_GLSL}${ETERNAL_SHAPE_GLSL}${ETERNAL_FS_GLSL}${WING_SHARED_GLSL}${WING_FS_GLSL}${WARREN_GLSL}${WITCH_GLSL}${SAGE_GLSL}${DOMINION_GLSL}${HELIX_GLSL}
 void main() {
+  if (uAura == 16) { vec4 c = uKind == 0 ? dominionGround(vP) : dominionWall(vP); float f = fogFactorAt(vWorld); o = vec4(c.rgb * f, c.a * f); return; }   // STOREFRONT: the Daedric Dominion, premultiplied (AURA_LOOK shade), kindled within
+  if (uAura == 17) { vec3 c = uKind == 0 ? helixGround(vP) : helixWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // STOREFRONT: the Aetherium Coil, added whole, kindled within
+  if (uAura == 18) { vec3 c = uKind == 0 ? gildedGround(vP) : gildedWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // STOREFRONT: the Gilded Coil, as the Aetherium Coil is drawn
   if (uAura == 15) { vec4 c = uKind == 0 ? eternalGround(vP) : uKind == 1 ? eternalWall(vP) : eternalCard(vP, vS); float f = fogFactorAt(vWorld); o = vec4(c.rgb * f, c.a * f); return; }   // SHOP: Eternal, premultiplied (AURA_LOOK shade), kindled within
   if (uAura == 14) { vec4 c = uKind == 0 ? sageGround(vP) : uKind == 1 ? sageWall(vP) : sageCard(vP, vS); float f = fogFactorAt(vWorld); o = vec4(c.rgb * f, c.a * f); return; }   // NIRNROOT-SAGE: premultiplied (AURA_LOOK shade), fogged to nothing; kindled within (the shade and the runes fade in, the low smoke rises, the puffs and the nirnroots by node's law)
   if (uAura == 13) { vec3 c = uKind == 0 ? witchGround(vP) : witchWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // WITCH1: Witchfire, added whole, kindled within

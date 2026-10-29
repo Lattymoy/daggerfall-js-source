@@ -89,10 +89,10 @@ test('WITCH1 THE WARES: every one in the window\'s order and its price; the acco
 });
 
 test('WITCH1 THE TOKEN\'S VOCABULARY: Witchwarden and Hearthkeeper last among the titles, Witchfire last among the auras, the four icons; a claim naming an icon it does not hold is refused whole', () => {
-  assert.deepEqual(TITLES.slice(-21, -19) /* PIN MOVED (SHOP): Genesis joined the list last */ /* PIN MOVED (HUNTERS-MARK): the Marks of Mastery's sixteen joined the list last */ /* PIN MOVED (NIRNROOT-SAGE): the Nirnroot Sage joined the list last */, ['witchwarden', 'hearthkeeper']);   // PIN MOVED (KETCH): the Skyfarer joined the list after them
-  assert.equal(AURAS.at(-3) /* PIN MOVED (SHOP): Eternal joined the list last */ /* PIN MOVED (NIRNROOT-SAGE): Sage's Smoke joined the list last */, 'witchfire');
-  assert.deepEqual(ICONS, ['tallowskull', 'twinmoons', 'wyrdcauldron', 'soulcake']);
-  assert.deepEqual(FESTIVAL_ICONS, ICONS);
+  assert.deepEqual(TITLES.slice(-30, -28) /* PIN MOVED (STOREFRONT): the shop's three name visuals and the Battle Pass's six joined the list last */ /* PIN MOVED (SHOP): Genesis joined the list last */ /* PIN MOVED (HUNTERS-MARK): the Marks of Mastery's sixteen joined the list last */ /* PIN MOVED (NIRNROOT-SAGE): the Nirnroot Sage joined the list last */, ['witchwarden', 'hearthkeeper']);   // PIN MOVED (KETCH): the Skyfarer joined the list after them
+  assert.equal(AURAS.at(-6) /* PIN MOVED (STOREFRONT): the Daedric Dominion and the two coils joined the list last */ /* PIN MOVED (SHOP): Eternal joined the list last */ /* PIN MOVED (NIRNROOT-SAGE): Sage's Smoke joined the list last */, 'witchfire');
+  assert.deepEqual(ICONS, ['tallowskull', 'twinmoons', 'wyrdcauldron', 'soulcake', 'centurion', 'aetherium', 'lexicon', 'spider', 'sphere', 'colossus', 'gearheart', 'numidium']);   // PIN MOVED (STOREFRONT): Season One's eight portraits joined the list last
+  assert.deepEqual(FESTIVAL_ICONS, ICONS.slice(0, 4));   // PIN MOVED (STOREFRONT): the festival's four first, Season One's after them
   const nowS = Math.floor(Date.now() / 1000);
   const base = { s: 'acct-alice', n: 'Alice', k: 'linked', i: nowS, e: nowS + 60 };
   assert.equal(claimsValid(base), true);

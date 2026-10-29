@@ -329,7 +329,7 @@ const LOOSE_PUPPETS_MAX = Math.max(24, CELL_LOOSE_PUPPETS);
 export const LAYOUT_MISMATCH_TEXT = 'Another player here has this dungeon laid out differently, maybe from an older version of the game. Reload the page so you all see the same monsters.';
 import { partyFoeLoses, partyFoeHits, partyFoeHeals, noteFighter, foeFighters, takeWholeBlow, PARTY_ME } from '../systems/party/partyScale.js';   // PSCALE1: a shared foe weighs whoever fights it
 import { renownFoeStruck, renownFoeDied, renownFoeCarry, renownFoeRevived } from '../net/renownTracker.js';   // RENOWN1: a foe the player fought pays its Renown XP when it dies, by any hand   // AUDIT RENOWN1 GAME-10: a rebuilt foe keeps my blows, a revived one forgets them
-import { reportPlayerKill } from '../systems/playerKills.js';   // SET2: my own kills, told
+import { reportPlayerKill, killFxOf } from '../systems/playerKills.js';   // SET2: my own kills, told
 import { hearEliteFoesIn } from '../systems/questlines/qlEliteFoe.js';   // QL11: an elite foe of an Elite dungeon, slain - the act's own module (AUDIT QUESTLINES ACTS-8)
 import { sparedByPlayer } from '../combat/friendlyFire.js';   // AUDIT CC-B6: the thrown torch's pass
 /** AUDIT SET P-M3: a kill the host's record names me for - its kind, as the exterior owner's `slain` word says it. */
@@ -2149,7 +2149,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (id === 'spare') {
       const sp = beginSpare(playerEntity, f, { now: Date.now() });
       if (!sp) return false;
-      portals.open(at);
+      portals.openMine(at);   // STOREFRONT: my spared revenant's portal, in the skin I wear
       fateSay(sp.event);
       return true;
     }
@@ -2201,19 +2201,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     else f._mout = kneelPose(f, eye, now);
     return f.dead ? 'gone' : 'held';
   }
-  /** COMPANION-PORTAL: the place's portal work for the companion layer (crewAshore.js `place.fx`). */
+  /** COMPANION-PORTAL: the place's portal work for the companion layer (crewAshore.js `place.fx`) - STOREFRONT: in the skin I wear. */
   const companionFx = {
-    arrive(rec) { if (!rec?.ai) return; portals.open(rec.ai.feet); rec.portalFx = { dir: 'in', at: Date.now(), delay: 220, ms: 640 }; },
+    arrive(rec) { if (!rec?.ai) return; portals.openMine(rec.ai.feet); rec.portalFx = { dir: 'in', at: Date.now(), delay: 220, ms: 640 }; },
     leave(rec, done) {
       if (!rec?.ai || rec.dead) { done(); return; }
-      portals.open(rec.ai.feet);
+      portals.openMine(rec.ai.feet);
       rec.portalFx = { dir: 'out', at: Date.now(), delay: 180, ms: 600 };
       rec.leaving = { at: Date.now(), done };
     },
     jump(rec, from) {
       if (!rec?.ai) return;
-      portals.open(from, { short: true });
-      portals.open(rec.ai.feet, { short: true, quiet: true });
+      portals.openMine(from, { short: true });
+      portals.openMine(rec.ai.feet, { short: true, quiet: true });
       rec.portalFx = { dir: 'in', at: Date.now(), delay: 140, ms: 480 };
     },
   };
@@ -5827,7 +5827,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
     // AUDIT SET P-M3: THE HOST'S WORD THAT MY BLOW KILLED IT (its record's `v`, roomRecord's) - read before the death below
     // lays the body, once: the frame after finds the foe dead
-    if (r.d === 1 && !f.dead && r.v != null && r.v === (opts.selfId?.() ?? null)) reportPlayerKill(f.entity, REMOTE_KILL);
+    if (r.d === 1 && !f.dead && r.v != null && r.v === (opts.selfId?.() ?? null)) reportPlayerKill(f.entity, { ...REMOTE_KILL, fx: killFxOf(f) });   // STOREFRONT: and where it falls
     if (r.d === 1 && !f.dead && r.v != null && r.v === (opts.selfId?.() ?? null)) egFindStruck(f.entity, roomLootOn() && roomCanonOfFoe(f) != null).catch(() => {});   // EG-E3: my blow killed an elite - my client asks the find (systems/eliteGates/egFind.js); a room's body's key to my pack (PARTY-LOOT)
     // LOOT7-CHECK DUNGEON-DIED: ...and the kill notice with it - the striker's own, said at the striker (damageFoe's death
     // arm speaks none for a peer's blow at the host); a death the host's record names nobody for is the host's to say
@@ -6950,7 +6950,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       foe._killedBy = fromPlayer && peer && typeof peerId === 'string' ? peerId : null;   // AUDIT SET P-M3: whose blow - the joiner's own record says so (roomRecord's `v`)
       foe._killedAt = performance.now();   // AUDIT FINAL F7: ...for KILLED_BY_MS
       foe.dead = true;
-      if (fromPlayer && !peer) reportPlayerKill(foe.entity, { kind });   // SET2: MY blow killed it (a set's "each kill")
+      if (fromPlayer && !peer) reportPlayerKill(foe.entity, { kind, fx: killFxOf(foe) });   // SET2: MY blow killed it (a set's "each kill"); STOREFRONT: and where it falls
       renownFoeDied(foe);   // RENOWN1: whoever struck last - it pays me if a blow of mine is recent
       // E-slice: EnemyDeath:132-136 - the targeting foe's death
       // clears the alert (survivors re-raise it next update).

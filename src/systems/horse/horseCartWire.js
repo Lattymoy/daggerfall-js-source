@@ -36,7 +36,7 @@ import { wagonKindCode, wagonKindOfCode } from '../wagon/wagonKinds.js';
 import { validPassengers, validPeerId, MAX_SEATS } from '../wagon/wagonSeats.js';
 import { wagonLookCode, wagonLookOfCode, WAGON_LOOK_CODE_MAX } from '../wagon/wagonLooks.js';
 import { caravanEntryCode, caravanEntryOfCode, caravanGuildTag, CARAVAN_GUILD_CODE } from '../caravanVisit.js';
-import { horseLookCode, horseLookOfCode, HORSE_LOOK_CODE_MAX } from './horseCoats.js';
+import { horseLookCode, horseLookOfCode, HORSE_LOOK_CODE_MAX, wireHorseLook } from './horseCoats.js';
 
 // COATS1 (2026-10-11): AND THE HORSES' LOOK. An owner's horses wear their look (systems/horse/horseCoats.js - coat, pattern,
 // legs and the horse's own seed), so the word says it - `hc`, the look's code, at the record's top beside `n` (absent:
@@ -100,7 +100,7 @@ export function hccWireRecord(view, toWire = (p) => p) {
   }
   const n = hccHorseNameOnWire(view.name);
   if (n && out.h) out.n = n;
-  const hc = horseLookCode(horseLookOfCode(view.look ?? 0));   // COATS1
+  const hc = wireHorseLook(view.look ?? 0);   // COATS1; STOREFRONT: never my mount look - the token says that
   if (hc && (out.w || out.h)) out.hc = hc;
   return out.w || out.h || out.go || out.pn ? out : null;
 }

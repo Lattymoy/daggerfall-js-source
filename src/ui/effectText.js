@@ -31,10 +31,10 @@ export const EFFECT_LOOK = Object.freeze({
   'portal:daedric': () => t('effect.look.daedric', 'A jagged arch of black iron thrusts up round a crimson vortex. Its runes crawl, embers rise, and it opens in a burst.'),
   'portal:aetheric': () => t('effect.look.aetheric', 'Crystal shards rise off the ground and gather into a turning ring. It opens with a chime of its own.'),
   'portal:brass': () => t('effect.look.brass', 'A ring of brass cogs turns round a blue aetherium core. Steam vents at its foot.'),
-  'mount:warhorse': () => t('effect.look.warhorse', 'Your horse wears black and crimson barding of light. Its mane burns, smoke rolls off its hooves, and its eyes glow like coals.'),
-  'mount:spectral': () => t('effect.look.spectral', 'Your horse turns to a blue ghost. Its mane and tail flow like light, and its hooves leave glowing prints.'),
-  'mount:dawnfire': () => t('effect.look.dawnfire', 'Your horse runs with a mane and tail of golden fire. Sun motes drift round it, and its hoofprints burn.'),
-  'mount:automaton': () => t('effect.look.automaton', 'Your horse wears brass plates and turning cogs. Steam vents from its flanks, and its eyes glow aetherium blue.'),
+  'mount:warhorse': () => t('effect.look.warhorse', 'Your horse turns black and crimson under scaled barding with burning edges. Its mane burns, and smoke and embers roll off its hooves.'),
+  'mount:spectral': () => t('effect.look.spectral', 'Your horse turns to a pale blue ghost that fades at the legs. Light wisps off it, and its hooves leave glowing prints.'),
+  'mount:dawnfire': () => t('effect.look.dawnfire', 'Your horse turns radiant gold, its legs burning up from the hooves. Its mane is golden fire, and its hoofprints burn.'),
+  'mount:automaton': () => t('effect.look.automaton', 'Your horse wears riveted brass plates set with aetherium studs. Sparks fly off its hooves, and steam breathes from its chest.'),
 });
 /** Each slot's word. */
 export const EFFECT_SLOT_TEXT = Object.freeze({

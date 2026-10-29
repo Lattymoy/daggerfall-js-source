@@ -181,7 +181,7 @@ test('CARDS2b by source: the pose the seat says, the request to the peers\' rigs
   const frameAt = w.indexOf('    sceneToOnline = nativeFrame ? campToWire');
   assert.ok(frameAt > 0 && at > frameAt, 'after the frame is known');   // AUDIT CARDS E8: never vacuous on a -1
   const st = w.indexOf('    if (seated) arm.st = seated.st;');
-  assert.ok(st > 0 && st > w.indexOf('      ...climbPoseOf(player),   // CLIMB5:') && st < w.indexOf('    else online.sendPose({ ...pose, ...arm, ...poseFx() });'), 'the seat byte on the arm, before it is sent');
+  assert.ok(st > 0 && st > w.indexOf('      ...climbPoseOf(player),   // CLIMB5:') && st < w.indexOf('    else online.sendPose({ ...pose, ...arm, ...poseFx(sceneToOnline) });'), 'the seat byte on the arm, before it is sent');
   const pb = read('src/net/peer/peerBodies.js');
   has(pb, '    b.cam.seat = peer.shown.st ? seatFor(b, f, b.yaw, peer.shown.st) : null;', 'the peer\'s body seated at its drawn feet and facing');
 });

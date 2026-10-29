@@ -84,7 +84,8 @@ import { createStreetCorpsePrefabs } from './corpsePrefabHost.js';   // DEX5 / A
 import { rollCorpseKit, savedSummon, restoredSummon } from '../systems/foeLootCap.js';   // KIT-ROLL: a plain foe's kit, laddered at its death by every body door; AUDIT RPT1026 F4: a summon's mark through a save
 import { floorLanding } from '../player/enterExit.js';   // REVENANT-FATE (the 2026-10-02 audit): a flyer kneels, and its pile lies, on the ground below
 import { renownFoeStruck, renownFoeDied } from '../net/renownTracker.js';   // RENOWN1: a foe the player fought pays its Renown XP when it dies, by any hand
-import { reportPlayerKill } from '../systems/playerKills.js';   // SET2: my own kills, told
+import { reportPlayerKill, killFxOf } from '../systems/playerKills.js';   // SET2: my own kills, told
+import { peerEffectWorn } from '../net/peer/peerEffects.js';   // STOREFRONT: a peer's spared revenant rises through its owner's portal skin
 import { partyFoeLoses, partyFoeHits, partyFoeHeals, noteFighter, foeFighters, foeFightersUpTo, takeWholeBlow, PARTY_ME } from '../systems/party/partyScale.js';   // PSCALE1: a shared foe weighs whoever fights it
 import { stampWonWeapons, lootRarityOn } from '../systems/loot/lootRarity.js';   // SIGIL1: a body's weapons won online; BAL3: the ladder's switch, the wilds' threat's
 import { corpseName, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js'; import { questFoeSubs } from '../systems/quest/questFoeLine.js';   // QUEST-FOE-LINE: a quest's foe says whose it is; WORLD-HOVER: "<who> (dead)", the mod's own word (.cs:526); H2: and a LIVE one's, when it is not hostile (.cs:304-312)
@@ -1075,7 +1076,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         say?.(SOUL_TRAP_TEXT.trapSuccess);
       }
       f.dead = true;
-      if (fromPlayer && !peer) reportPlayerKill(f.entity, { kind });   // SET2: MY blow killed it (a set's "each kill")
+      if (fromPlayer && !peer) reportPlayerKill(f.entity, { kind, fx: killFxOf(f) });   // SET2: MY blow killed it (a set's "each kill"); STOREFRONT: and where it falls, before its flat goes
       renownFoeDied(f);   // RENOWN1: whoever struck last - it pays me if a blow of mine is recent
       f.corpse = true;
       f._diedAt = _now();   // AUDIT WORLD6b-iii(c) C5: the roll keeps the newest bodies
@@ -1490,7 +1491,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (id === 'spare') {
       const s = beginSpare(playerEntity, f, { now: Date.now(), rolls });
       if (!s) return false;
-      portals.open(at);
+      portals.openMine(at);   // STOREFRONT: my spared revenant's portal, in the skin I wear
       revenantSay(s.event, say);
       return true;
     }
@@ -1546,19 +1547,19 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (typeof dropLoot === 'function' && items.length) { try { dropLoot(items, feet); playRareDrop?.(audio, feet, items); } catch (e) { console.warn('[revenant] the pile would not drop', e?.message ?? e); } }
     else if (items.length) { f.entity.items = items; f.corpse = true; f._diedAt = _now(); mintCorpse(f); }   // no pile door: a body holds it
   }
-  /** COMPANION-PORTAL: the place's portal work for the companion layer (crewAshore.js `place.fx`). */
+  /** COMPANION-PORTAL: the place's portal work for the companion layer (crewAshore.js `place.fx`) - STOREFRONT: in the skin I wear. */
   const companionFx = {
-    arrive(rec) { if (!rec?.ai) return; portals.open(rec.ai.feet); rec.portalFx = { dir: 'in', at: Date.now(), delay: 220, ms: 640 }; },
+    arrive(rec) { if (!rec?.ai) return; portals.openMine(rec.ai.feet); rec.portalFx = { dir: 'in', at: Date.now(), delay: 220, ms: 640 }; },
     leave(rec, done) {
       if (!rec?.ai || rec.dead) { done(); return; }
-      portals.open(rec.ai.feet);
+      portals.openMine(rec.ai.feet);
       rec.portalFx = { dir: 'out', at: Date.now(), delay: 180, ms: 600 };
       rec.leaving = { at: Date.now(), done };
     },
     jump(rec, from) {
       if (!rec?.ai) return;
-      portals.open(from, { short: true });
-      portals.open(rec.ai.feet, { short: true, quiet: true });
+      portals.openMine(from, { short: true });
+      portals.openMine(rec.ai.feet, { short: true, quiet: true });
       rec.portalFx = { dir: 'in', at: Date.now(), delay: 140, ms: 480 };
     },
   };
@@ -1626,7 +1627,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         f._mout = f.mobile.update(dt, { moving: f.ai.moving, striking: edge && !f.attack.firedRanged, rangedStriking: edge && !!f.attack.firedRanged, hurting: f.ai.hurtKnock || _pb.staggered, casting: !!f._castPending, hold: _pb.hold }, f.ai.yaw, f.ai.feet, eye);   // TELL8: the held arm, the cancel, the spent pose, the stagger's Hurt
         if ((f._pupYield || f._pupExec) && f.mobile.heldPose) f._mout = f.mobile.heldPose('hurt', -1, f.ai.yaw, f.ai.feet, eye ?? f.ai.feet);   // REVENANT-FATE: its owner's kneels - so it kneels here
         else if (f._pupSpare && f.mobile.heldPose) f._mout = f.mobile.heldPose('idle', 0, f.ai.yaw, f.ai.feet, eye ?? f.ai.feet);   // ...and rises, sworn, into the light
-        if (f._pupSpare && !f._pupSpareGate) { f._pupSpareGate = true; portals.open(f.ai.feet, { quiet: true }); }   // its portal, seen here too
+        if (f._pupSpare && !f._pupSpareGate) { f._pupSpareGate = true; portals.open(f.ai.feet, { quiet: true, skin: peerEffectWorn(f.puppet, 'portal') }); }   // its portal, seen here too - STOREFRONT: in its owner's skin
         f._castPending = false;
         f.quietVoice = f.mobileType === KNIGHT_CITY_WATCH && !!oneVoice();   // HALT-ONE: a peer's watchman, in the living watch's lane
         if (edge && f.ai._tac?.state !== 'windup') playEnemyClip(audio, f.sounds.attack(), f.ai.feet, acuteHearingMultiplier(playerEntity));   // TELL8: a wind-up's swing is its cues'
@@ -3052,7 +3053,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS) return false;
       f._struckAt = null;
       playerWeaponKillReported(playerEntity, { mobileType: f.mobileType });
-      reportPlayerKill(f.entity, { kind: 'remote' });   // SET2: the owner's word that my blow killed its foe
+      reportPlayerKill(f.entity, { kind: 'remote', fx: killFxOf(f) });   // SET2: the owner's word that my blow killed its foe; STOREFRONT: where it falls
       return true;
     }
     // WATCH1: the number names one of my foes or one of my watchmen (one counter, so never both); a watchman's blow

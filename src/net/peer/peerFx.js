@@ -25,6 +25,13 @@
 // one of its own when the hit frame lands); for hu, the same Hit1..5 ring at the peer's body, as I hear my own. A
 // count seen for the first time (a late joiner, a peer walking into view) plays nothing - an old blow is not replayed.
 
+import { effectWorn } from '../effectLaw.js';   // STOREFRONT: a peer's kill effect, by the kit its token signed
+import { playerDoor } from '../../systems/playerDoor.js';   // STOREFRONT: played through the running host's magic engine
+import { getPref } from '../../systems/uiPrefs.js';   // STOREFRONT: the "Others' kill effects" choice
+import { createMountFx } from '../../systems/horse/mountFx.js';   // STOREFRONT: a riding peer's mount look in the world
+import { POSE_RIDE } from '../wire.js';
+import { peerMoving } from './peerClimb.js';
+
 export const HIT_CLIP_FIRST = 108;   // soundClips SOUND.Hit1
 export const HIT_CLIP_LAST = 112;    // Hit5
 const U16 = 65535;
@@ -54,7 +61,9 @@ export function peerHeard(run) {
 }
 
 // ── the sender ──────────────────────────────────────────────────────
-const mine = { hk: 0, hp: null, hb: 0, hq: 0, hu: 0, uq: 0 };
+/** STOREFRONT: `xk` my kills with an effect played, `xs` the last one's place in the scene (sent in the wire's frame,
+ *  `xp`, once the pose's own mapping is in hand) and `xh` the body's height in decimetres. */
+const mine = { hk: 0, hp: null, hb: 0, hq: 0, hu: 0, uq: 0, xk: 0, xs: /** @type {number[]|null} */ (null), xp: /** @type {number[]|null} */ (null), xh: 18 };
 
 /** A blow of mine landed at `pos` (scene frame) - the splash seam's word. `toWire` maps scene to the wire frame. */
 export function noteMyBlow(pos, bloodIndex, hit, toWire) {
@@ -72,19 +81,44 @@ export function noteMyHurt(share = null) {
   mine.hu = (mine.hu + 1) % (U16 + 1) || 1;
   mine.uq = Number.isFinite(share) ? Math.max(0, Math.min(100, Math.round(share * 100))) : 20;
 }
+/** STOREFRONT (bible/06-Systems/Storefront.md section 4): my kill effect played where a body fell (`at` the scene's,
+ *  `h` its height in metres) - the others play it there too, in the effect my token names. */
+export function noteMyKill(/** @type {number[]} */ at, /** @type {number} */ h) {
+  if (!at || !at.every?.(Number.isFinite)) return;
+  mine.xk = (mine.xk + 1) % (U16 + 1) || 1;
+  mine.xs = [at[0], at[1], at[2]];
+  mine.xp = null;
+  mine.xh = Math.max(1, Math.min(120, Math.round((Number.isFinite(h) ? h : 1.8) * 10)));
+}
 /** Is this one-shot the "a blow landed on me" ring. */
 export const isHurtClip = (clip, volume, playerHitVolume = 1) => clip >= HIT_CLIP_FIRST && clip <= HIT_CLIP_LAST && volume === playerHitVolume;
 
-/** The pose's fields - absent while their counts are 0. */
-export function poseFx() {
+/** The pose's fields - absent while their counts are 0. `toWire` the pose's own mapping from the scene (STOREFRONT: a
+ *  kill's place is put in the wire's frame the first time a pose carries it). */
+export function poseFx(/** @type {((q: number[]) => number[])|null} */ toWire = null) {
   const out = {};
   if (mine.hk && mine.hp) { out.hk = mine.hk; out.hp = mine.hp.slice(); out.hb = mine.hb; out.hq = mine.hq; }
   if (mine.hu) { out.hu = mine.hu; out.uq = mine.uq; }
+  if (mine.xk && !mine.xp && mine.xs && typeof toWire === 'function') { const w = toWire(mine.xs); if (Array.isArray(w) && w.every(Number.isFinite)) mine.xp = [w[0], w[1], w[2]]; }
+  if (mine.xk && mine.xp) { out.xk = mine.xk; out.xp = mine.xp.slice(); out.xh = mine.xh; }
   return out;
 }
-export function _resetPeerFxForTests() { mine.hk = 0; mine.hp = null; mine.hb = 0; mine.hq = 0; mine.hu = 0; mine.uq = 0; }
+export function _resetPeerFxForTests() { mine.hk = 0; mine.hp = null; mine.hb = 0; mine.hq = 0; mine.hu = 0; mine.uq = 0; mine.xk = 0; mine.xs = null; mine.xp = null; mine.xh = 18; }
+/** STOREFRONT: the "Others' kill effects" choice (systems/features.js 'killfx-others') - every peer's, those within
+ *  this many metres of my eye, or none. */
+export const KILL_FX_NEAR_M = 20;
+export const killFxOthersOf = (/** @type {unknown} */ v) => (v === 'near' || v === 'none' ? v : 'all');
 
 // ── the receiver ────────────────────────────────────────────────────
+
+/** STOREFRONT: a peer's kill effect, through the running host's magic engine - by the "Others' kill effects" choice. */
+function playPeerKill(/** @type {{ at: number[], kill: string, h: number }} */ q) {
+  const mode = killFxOthersOf(getPref('killFxOthers'));
+  if (mode === 'none') return;
+  const door = playerDoor(), eye = door?.eye?.() ?? null;
+  if (mode === 'near' && eye && Math.hypot(q.at[0] - eye[0], q.at[1] - eye[1], q.at[2] - eye[2]) > KILL_FX_NEAR_M) return;
+  door?.killFx?.(q.kill, q.at, { h: q.h, w: q.h * 0.45 });
+}
 
 /**
  * `play.blow({ at, bloodIndex, share })` and `play.hurt({ at })`, at scene positions; `toScene(p)` maps the wire
@@ -94,21 +128,35 @@ export function _resetPeerFxForTests() { mine.hk = 0; mine.hp = null; mine.hb = 
  *   toScene?: (p: {x: number, y: number, z: number}) => any, now?: () => number}} [opts]
  */
 export function createPeerFxPlayer({ play, toScene, now = () => performance.now() / 1000 } = {}) {
-  const seen = new Map();   // id -> { hk, hu, tick, bt, ut }
+  const seen = new Map();   // id -> { hk, hu, xk, tick, bt, ut, kt }
   const queue = [];         // { due, at, bloodIndex, share }
   const recent = [];        // { t, pos }
   let tick = 0;             // AUDIT MERGE-PLUS B3: frames drawn - an entry not refreshed on the last one is a peer gone
+  const mounts = createMountFx();   // STOREFRONT: a riding peer's mount look, its beat (systems/horse/mountFx.js)
   return {
-    update(id, pose, feet, height = 0) {
+    update(id, pose, feet, height = 0, kit = null) {
       if (!pose || !id) return;
-      const hk = pose.hk | 0, hu = pose.hu | 0;
+      const hk = pose.hk | 0, hu = pose.hu | 0, xk = pose.xk | 0;
       const s = seen.get(id);
       // AUDIT MERGE-PLUS B3: A PEER WHO WENT AWAY AND CAME BACK IS SEEN FOR THE FIRST TIME AGAIN. Only a peer still in the
       // room was forgotten when it fell from view; one that left kept its entry, and on its return (a party mate out of
       // a dungeon) its last blow and hurt played again, at a point long stale - the replay this file refuses.
-      if (!s || s.tick < tick - 1) { seen.set(id, { hk, hu, tick }); return; }
+      if (!s || s.tick < tick - 1) { seen.set(id, { hk, hu, xk, tick }); return; }
       s.tick = tick;
       const t = now();
+      // STOREFRONT: on a horse (never the cart), the mount look their token names throws its beat under them
+      const ridden = pose.rd === POSE_RIDE.Horse && !pose.wb ? effectWorn(kit, 'mount') : null;
+      mounts.step(id, ridden, feet, pose.yaw, peerMoving(pose) ? (pose.mv === 2 ? 2 : 1) : 0, t - (s.ft ?? t));
+      s.ft = t;
+      // STOREFRONT: a kill of theirs with an effect played - the effect their token names (`kit`, net/effectLaw.js), where
+      // their pose says the body fell; no faster than a blow lands, and only by the player's own "Others'" choice
+      if (xk && xk !== s.xk) {
+        s.xk = xk;
+        const look = effectWorn(kit, 'kill');
+        const xp = Array.isArray(pose.xp) && pose.xp.length === 3 && pose.xp.every(Number.isFinite) ? pose.xp : null;
+        const at = look && xp ? toScene?.({ x: xp[0], y: xp[1], z: xp[2] }) : null;
+        if (at && !(t - (s.kt ?? -Infinity) < FX_MIN_GAP_S)) { s.kt = t; queue.push({ due: t + FX_DELAY_S, at, kill: look, h: Math.max(1, pose.xh | 0) / 10 }); }
+      }
       if (hk && hk !== s.hk) {
         s.hk = hk;
         const hp = Array.isArray(pose.hp) && pose.hp.length === 3 && pose.hp.every(Number.isFinite) ? pose.hp : null;
@@ -138,6 +186,7 @@ export function createPeerFxPlayer({ play, toScene, now = () => performance.now(
     },
     frame() {
       tick++;
+      mounts.sweep();   // STOREFRONT: a rider not seen this frame lets its beat go
       if (seen.size > 64) for (const [id, s] of seen) if (s.tick < tick - 1) seen.delete(id);   // AUDIT MERGE-PLUS B3: bounded
       if (!queue.length) return;
       const t = now();
@@ -146,6 +195,7 @@ export function createPeerFxPlayer({ play, toScene, now = () => performance.now(
         const q = queue[i];
         if (q.due > t) continue;
         queue.splice(i, 1);
+        if (q.kill) { playPeerKill(q); continue; }   // STOREFRONT: a kill effect is never a splash's duplicate
         const dup = recent.some((r) => t - r.t <= DEDUPE_S + FX_DELAY_S && Math.hypot(r.pos[0] - q.at[0], r.pos[1] - q.at[1], r.pos[2] - q.at[2]) <= DEDUPE_M);
         if (!dup) peerHeard(() => (q.hurt ? play?.hurt : play?.blow)?.({ at: q.at, bloodIndex: q.bloodIndex, share: q.share }));   // the owner drew and rang it already; EG-ZH: a peer's ring, as the place hears it
       }

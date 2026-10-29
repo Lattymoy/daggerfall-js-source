@@ -89,6 +89,11 @@ export const GLYPH_LABEL = localizedTable({   // L10N4: each word a getter, read
   wikimaid: () => t('account.glyph.wikimaid', 'WikiMaid'),   // WIKIMAID: the rabbit in its maid's headdress, beside SylviaBun's name
   nirnrootsage: () => t('account.glyph.nirnrootsage', 'Nirnroot Sage'),   // NIRNROOT-SAGE: the nirnroot sprig, beside Blob-Marley's name
   origin: () => t('account.glyph.origin', 'Origin'),   // SHOP: the ouroboros dragon, the shop's pre-alpha glyph
+  oblivion: () => t('account.glyph.oblivion', 'Oblivion Sigil'),   // STOREFRONT: the bundles' three
+  gatesigil: () => t('account.glyph.gatesigil', 'Gate Sigil'),
+  gearcrown: () => t('account.glyph.gearcrown', 'Brass Crown'),
+  tonalfork: () => t('account.glyph.tonalfork', 'Tonal Fork'),   // STOREFRONT: the Battle Pass's two
+  cog: () => t('account.glyph.cog', 'Dwemer Cog'),
 });
 
 /** ACC4: THE TWO FACTS MAC ASKED FOR, as words. Pure, so node pins

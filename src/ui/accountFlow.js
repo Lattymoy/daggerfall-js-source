@@ -59,6 +59,7 @@ import { armoryPieceName } from './armoryText.js';   // ARMORY: a piece's name i
 import { effectKitOk, effectWorn } from '../net/effectLaw.js';   // STOREFRONT: the effects kit a wardrobe states
 import { effectName, effectsHeldOf } from './effectText.js';   // STOREFRONT: an effect's name in the card's note
 import { shopCardOf, shopWareById, SHOP_WARE_NAME } from '../net/shopLaw.js';   // SHOP: the shop's card on the account read
+import { passCardOf } from '../net/battlePassLaw.js';   // STOREFRONT: and the season's card beside it
 
 /** SHOP: a ware's name as the arrival's note says it - a piece's and an effect's in the player's language (STOREFRONT),
  *  the rest the shop's own. */
@@ -201,6 +202,9 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
     shop: /** @type {any} */ (null),
     /** SHOP: the ware whose payment page the player went to, until the account read says it is held */
     shopWaiting: /** @type {string|null} */ (null),
+    /** STOREFRONT: the season's card (net/battlePassLaw.js passCardOf) - the account's level, tracks and challenges - or
+     *  null (nobody signed in, a guest, a service from before acct211) */
+    pass: /** @type {any} */ (null),
     /** a sentence for the player, never a machine word */
     error: '',
     /** a sentence that is NOT a failure - "your password was changed" */
@@ -258,7 +262,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
     self.account = null;
     self.wardrobe = null;   // ACC3c: a wardrobe outliving its account is a title drawn for nobody
     self.patreon = null; self.patreonWaiting = false;   // PATREON-LINK: and a link for nobody
-    self.shop = null; self.shopWaiting = null;   // SHOP: and a Buy link for nobody
+    self.shop = null; self.shopWaiting = null; self.pass = null;   // SHOP: and a Buy link for nobody; STOREFRONT: nor a season's card
     self.busy = false;
     go('out', { error: message });
     return false;
@@ -331,6 +335,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
     self.wardrobe = r.data.wardrobe ?? null;
     self.patreon = r.data.patreon ?? null;   // PATREON-LINK: the card's Patreon row, or none from a service before it
     self.shop = shopCardOf(r.data.shop);   // SHOP: the shop's card, or none from a service before it
+    self.pass = passCardOf(r.data.pass);   // STOREFRONT: the season's card, or none
     go('in');
   };
 
@@ -375,6 +380,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
     self.wardrobe = d.wardrobe ?? null;
     self.patreon = d.patreon ?? null;
     self.shop = shopCardOf(d.shop);
+    self.pass = passCardOf(d.pass);   // STOREFRONT
     // SHOP: back from paying, the ware the read says is held now - said once, where the player looks
     if (self.shopWaiting && self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held)) {
       self.note = t('account.flow.shopArrived', '{name} is on your account. A receipt is in your mailbox.', { name: arrivedName(String(self.shopWaiting)) });
@@ -831,7 +837,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
       self.account = null;
       self.wardrobe = null;
       self.patreon = null; self.patreonWaiting = false;   // PATREON-LINK
-      self.shop = null; self.shopWaiting = null;   // SHOP
+      self.shop = null; self.shopWaiting = null; self.pass = null;   // SHOP; STOREFRONT
       self.busy = false;
       go('out', { note: all ? t('account.flow.signedOutAll', 'Signed out everywhere.') : t('account.flow.signedOut', 'Signed out.') });
     }

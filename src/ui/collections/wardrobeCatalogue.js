@@ -28,6 +28,7 @@ import { professionName } from '../../net/professionLaw.js';
 import { shopWareById, shopPriceText } from '../../net/shopLaw.js';   // SHOP: a ware's price, the shop's own
 import { ARMORY_KEYS, ARMORY_PIECES, armoryPieceOf, armoryKitPieces } from '../../net/armoryLaw.js';   // ARMORY: the Aura Armory's pieces and the kit worn
 import { ARMORY_LOOK, armoryPieceName } from '../armoryText.js';
+import { PASS_REWARDS, PASS_DELUXE, passSeasonById } from '../../net/battlePassLaw.js';   // STOREFRONT: a pass reward's level and track, and its season's days
 
 /** The kinds, in the Collections page's order, and the wardrobe's list that holds each (accountFlow.js wardrobe) - ARMORY:
  *  the Aura Armory's pieces after the auras. */
@@ -47,6 +48,7 @@ export const WARDROBE_SOURCES = Object.freeze([
   wordPair('hunt', () => t('coll.src.hunt', 'The Hunt')),   // HUNTERS-MARK: the bounty boards' clears
   wordPair('mastery', () => t('coll.src.mastery', 'Marks of Mastery')),   // MARKS-OF-MASTERY: a profession's Master
   wordPair('festival', () => t('coll.src.festival', 'The Witches’ Festival')),
+  wordPair('pass', () => t('coll.src.pass', 'The Battle Pass')),   // STOREFRONT: a season's track
   wordPair('seats', () => t('coll.src.seats', 'The Seats')),
   wordPair('chapters', () => t('coll.src.chapters', 'The Guild Chapters')),
   wordPair('ranked', () => t('coll.src.ranked', 'The Arena and the Card Tables')),
@@ -74,9 +76,9 @@ export const sourceName = (/** @type {string} */ id) => WARDROBE_SOURCES.find(([
  *             a guest from before the cutoff earns it by registering, a character from before it brings it along)
  *   retired   given once and closed (a first company's name)
  */
-export const WARDROBE_AVAIL = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'offseason', 'patron', 'dormant', 'auto', 'staff', 'bestowed', 'closed', 'retired', 'shop']);   // SHOP: `shop`, sold in the shop while the pre-alpha lasts (wrangler.toml SHOP_ON_SALE)
+export const WARDROBE_AVAIL = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'offseason', 'patron', 'dormant', 'auto', 'staff', 'bestowed', 'closed', 'retired', 'shop', 'store', 'pass']);   // SHOP: `shop`, sold in the shop while the pre-alpha lasts (wrangler.toml SHOP_ON_SALE)
 /** The availabilities a player can act on now - the page's "Obtainable" filter. */
-export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop']);
+export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop', 'store', 'pass']);   // STOREFRONT: `store` sold in the shop for good, `pass` while its season runs (wardrobeAvail)
 /** Each availability's tag (a chip on the row), as a player reads it. */
 export const AVAIL_TAG = Object.freeze({
   open: () => t('coll.avail.open', 'Obtainable'),
@@ -92,6 +94,8 @@ export const AVAIL_TAG = Object.freeze({
   closed: () => t('coll.avail.closed', 'Closed'),
   retired: () => t('coll.avail.retired', 'No longer obtainable'),
   shop: () => t('coll.avail.shop', 'In the shop'),
+  store: () => t('coll.avail.shop', 'In the shop'),
+  pass: () => t('coll.avail.pass', 'Battle Pass'),
 });
 /** Each availability in a sentence (the row opened whole). `date` the open festival's last day, in words. */
 export const AVAIL_LINE = Object.freeze({
@@ -108,6 +112,8 @@ export const AVAIL_LINE = Object.freeze({
   closed: () => t('coll.availLine.closed', 'Closed to newcomers: only someone who played before it closed can still bring it to an account.'),
   retired: () => t('coll.availLine.retired', 'It can no longer be obtained. Those who hold it keep it.'),
   shop: () => t('coll.availLine.shop', 'Sold in the shop during the pre-alpha only. Those who buy it keep it.'),
+  store: () => t('coll.availLine.store', 'Sold in the shop. Those who buy it keep it.'),
+  pass: () => t('coll.availLine.pass', 'Earned on the Battle Pass while its season runs. Those who earn it keep it.'),
 });
 
 // ── the numbers the service keeps to itself (the pin holds each to its table) ─────────────────────────────────────────
@@ -127,6 +133,21 @@ export const TABLE_CHAMPION_FLOOR = Object.freeze({ iliacchampion: Object.freeze
 /** SHOP: a ware's words of how - the gem on the pause face, its price the shop's own (net/shopLaw.js SHOP_WARES). */
 const shop = (/** @type {string} */ id) => () => t('coll.how.shop', 'Buy it from the shop, the gem on the pause screen, for {price}. All proceeds go to the costs of developing DFO Online.', { price: shopPriceText(shopWareById(id)?.cents ?? 0, intlLocale()) });
 const bestowed = () => t('coll.how.bestowed', 'Made for one player and granted to them by name.');
+/** STOREFRONT: a ware the shop sells only inside its bundles (net/shopLaw.js `alone` false). */
+const bundled = () => t('coll.how.bundle', 'Comes only in a bundle from the shop, the gem on the pause screen. All proceeds go to the costs of developing DFO Online.');
+/** STOREFRONT: a Battle Pass reward's words of how - its level and its track, or the Deluxe Pass that gives it, read off
+ *  the season's own law (net/battlePassLaw.js PASS_REWARDS, PASS_DELUXE). */
+const passReward = (/** @type {string} */ grant) => () => {
+  for (const rewards of Object.values(PASS_REWARDS)) {
+    const r = rewards.find((x) => x.grant === grant);
+    if (r) return r.track === 'free'
+      ? t('coll.how.passFree', 'Reach level {level} of the Battle Pass in its season. Its free track gives it to every registered account.', { level: r.level })
+      : t('coll.how.passPremium', 'Reach level {level} of the Battle Pass in its season, on the premium track that the Premium or the Deluxe Pass opens.', { level: r.level });
+  }
+  return Object.values(PASS_DELUXE).some((d) => d.grants.includes(grant)) ? t('coll.how.passDeluxe', 'Comes with the Deluxe Pass, bought from the shop, the gem on the pause screen, while its season runs.') : '';
+};
+/** STOREFRONT: Season One's - its availability read against its days (wardrobeAvail). */
+const S1 = Object.freeze({ season: 's1' });
 /** ARMORY: an Eternal piece's words of how - alone at its price, or with the four others in the Eternal Set. */
 const shopPiece = (/** @type {string} */ id) => () => t('coll.how.shopPiece', 'Buy it from the shop, the gem on the pause screen, for {price}, or with the other four in The Eternal Set for {set}. All proceeds go to the costs of developing DFO Online.', { price: shopPriceText(shopWareById(id)?.cents ?? 0, intlLocale()), set: shopPriceText(shopWareById('armory:eternalset')?.cents ?? 0, intlLocale()) });
 const patron = (/** @type {string} */ tier) => () => t('coll.how.patron', 'Support DFO Online on Patreon at the {tier} tier, then link Patreon from your profile - or be granted it by name.', { tier: TITLE_TEXT[/** @type {keyof typeof TITLE_TEXT} */ (tier)] });
@@ -171,7 +192,7 @@ const questline = (/** @type {string} */ title) => () => {
     : t('coll.how.questline', 'Finish the questline {line}, open from level {level}. Offered by {giver}.', { line: l.title(), giver: l.giver(), level: l.opens.level ?? 1 });   // AUDIT COLLECTIONS-II (lane 4): the giver last - a giver is a name and its office, and an office left open ran into the words after it
 };
 
-/** @typedef {{ src: string, avail: string, how: () => string, look?: () => string, note?: () => string, with?: ReadonlyArray<string>, via?: string, scope?: string }} WardrobeEntry */
+/** @typedef {{ src: string, avail: string, how: () => string, look?: () => string, note?: () => string, with?: ReadonlyArray<string>, via?: string, scope?: string, season?: string }} WardrobeEntry */
 /** One entry: `with` what comes beside it (`kind:key`, all of them each way); `via` the title whose holding it follows (High
  *  Master, only ever signed in a Chapter Master's place - never held, never worn, never counted on its own); `note` its
  *  own availability sentence where the kind's would mislead (Spire Champion); `scope: 'character'` a thing the
@@ -254,6 +275,16 @@ export const WARDROBE = Object.freeze({
     ...MASTERS,   // MARKS-OF-MASTERY: a profession's Master each
     serpenthunter: E('serpent', 'open', sea('serpenthunter')),   // MARKS-OF-MASTERY: sailing's, off the relay's serpent receipts
     deepbane: E('serpent', 'open', sea('deepbane')),
+    // STOREFRONT: the shop's three name visuals, Season One's five and the Deluxe Pass's own
+    dawnbringer: E('shop', 'store', shop('title:dawnbringer')),
+    voidwalker: E('shop', 'store', shop('title:voidwalker')),
+    eternalchampion: E('shop', 'store', shop('title:eternalchampion')),
+    brassbound: E('pass', 'pass', passReward('title:brassbound'), S1),
+    tremorborn: E('pass', 'pass', passReward('title:tremorborn'), S1),
+    tonalarchitect: E('pass', 'pass', passReward('title:tonalarchitect'), S1),
+    brasswright: E('pass', 'pass', passReward('title:brasswright'), S1),
+    heartwaker: E('pass', 'pass', passReward('title:heartwaker'), S1),
+    numidiumecho: E('pass', 'pass', passReward('title:numidiumecho'), S1),
   }),
   aura: Object.freeze({
     dagonfire: E('broker', 'open', broker('aura:dagonfire'), { look: () => t('coll.look.dagonfire', 'A ring of Oblivion’s fire burning on the ground at your feet.') }),
@@ -272,12 +303,18 @@ export const WARDROBE = Object.freeze({
     witchfire: E('festival', 'seasonal', wyrd('aura:witchfire'), { look: () => t('coll.look.witchfire', 'A coven’s green fire round your feet, tallow candles burning in its ring.') }),
     sagesmoke: E('bestowed', 'bestowed', bestowed, { with: ['title:nirnrootsage', 'glyph:nirnrootsage'], look: () => t('coll.look.sagesmoke', 'Smoke billowing about you, nirnroots circling your waist and small green runes glowing round your feet.') }),
     eternal: E('shop', 'shop', shop('aura:eternal'), { look: () => t('coll.look.eternal', 'A cape of blue-violet fire on your back, flowing as you move, wisps of flame trailing behind you.') }),   // SHOP
+    // STOREFRONT: the bundles' Dominion, and the Battle Pass's coil and its gilded twin
+    dominion: E('shop', 'store', bundled, { look: () => t('coll.look.dominion', 'A ring of Daedric script burning crimson on black at your feet, black thorns out from it and embers rising.') }),
+    aetherium: E('pass', 'pass', passReward('aura:aetherium'), { ...S1, look: () => t('coll.look.aetherium', 'A coil of aetherium-blue light wound with brass, turning about you from your feet to over your head.') }),
+    aetheriumgilded: E('pass', 'pass', passReward('aura:aetheriumgilded'), { ...S1, look: () => t('coll.look.aetheriumgilded', 'The Aetherium Coil gilded and brighter, gold motes rising through it.') }),
   }),
   icon: Object.freeze({
     tallowskull: E('festival', 'seasonal', wyrd('icon:tallowskull')),
     twinmoons: E('festival', 'seasonal', wyrd('icon:twinmoons')),
     wyrdcauldron: E('festival', 'seasonal', wyrd('icon:wyrdcauldron')),
     soulcake: E('festival', 'seasonal', () => t('coll.how.soulcake', 'Take {n} Soul Cakes from other players’ Hearth Offerings during the Witches’ Festival.', { n: SOULCAKE_TAKEN })),
+    // STOREFRONT: Season One's eight portraits
+    ...Object.fromEntries(['centurion', 'aetherium', 'lexicon', 'spider', 'sphere', 'colossus', 'gearheart', 'numidium'].map((k) => [k, E('pass', 'pass', passReward(`icon:${k}`), S1)])),
   }),
   glyph: Object.freeze({
     sprout: E('account', 'auto', () => t('coll.how.sprout', 'Every new account shows it for its first two weeks.')),
@@ -308,6 +345,11 @@ export const WARDROBE = Object.freeze({
     wikimaid: E('bestowed', 'bestowed', bestowed, { with: ['title:wikimaid', 'aura:lilacwarren'] }),
     nirnrootsage: E('bestowed', 'bestowed', bestowed, { with: ['title:nirnrootsage', 'aura:sagesmoke'] }),
     origin: E('shop', 'shop', shop('glyph:origin')),   // SHOP: the pre-alpha glyph, the ouroboros dragon
+    oblivion: E('shop', 'store', bundled),   // STOREFRONT: the bundles' three, and the Battle Pass's two
+    gatesigil: E('shop', 'store', bundled),
+    gearcrown: E('shop', 'store', bundled),
+    tonalfork: E('pass', 'pass', passReward('glyph:tonalfork'), S1),
+    cog: E('pass', 'pass', passReward('glyph:cog'), S1),
   }),
   // ARMORY (bible/04-Characters/Aura-Armory.md section 4): the Dagonfire line the Sigil Broker sells, the Eternal line the shop
   armory: Object.freeze(Object.fromEntries(ARMORY_PIECES.map((p) => [p.key, p.source === 'broker'
@@ -364,8 +406,13 @@ export function wardrobeCount(/** @type {string} */ kind, /** @type {any} */ war
   return { held: counted.filter((e) => wardrobeHeld(kind, e.key, wardrobe)).length, total: counted.length };
 }
 
-/** THE AVAILABILITY NOW: a seasonal entry's resolved against the festival's dates (net/festivalLaw.js FESTIVALS). */
-export function wardrobeAvail(/** @type {{ avail: string }} */ e, nowMs = Date.now()) {
+/** THE AVAILABILITY NOW: a seasonal entry's resolved against the festival's dates (net/festivalLaw.js FESTIVALS), a pass
+ *  reward's against its season's (net/battlePassLaw.js PASS_SEASONS). */
+export function wardrobeAvail(/** @type {{ avail: string, season?: string }} */ e, nowMs = Date.now()) {
+  if (e.avail === 'pass') {   // STOREFRONT: a season's - not yet before its days, gone after them
+    const s = passSeasonById(e.season);
+    return !s || nowMs >= s.toMs ? 'retired' : nowMs < s.fromMs ? 'dormant' : 'pass';
+  }
   if (e.avail !== 'seasonal') return e.avail;
   return festivalAt(nowMs) ? 'seasonal' : 'offseason';
 }

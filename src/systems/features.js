@@ -568,6 +568,16 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced', 'classic']),
     control: Object.freeze({ store: 'prefs', key: 'armoryOthers', initial: 'all', online: 'player', tiers: Object.freeze([tier('all', () => t('features.armoryOthers.all', 'All')), tier('near', () => t('features.armoryOthers.near', 'Near')), tier('none', () => t('features.armoryOthers.none', 'None'))]) }),
   }),
+  // STOREFRONT (2026-10-29; bible/06-Systems/Storefront.md sections 4 and 7): WHOSE KILL EFFECTS AND MOUNT LOOKS ARE
+  // DRAWN - every other player's, those near, or none (net/peer/peerFx.js, scenes/auraHost.js). One's own always is.
+  Object.freeze({
+    id: 'killfx-others',
+    group: 'sight',
+    get title() { return t('features.killFxOthers.title', 'Others\' effects'); },
+    get note() { return t('features.killFxOthers.note', 'Whose kill effects and mount looks are shown. Near shows the players close to you. Your own always show.'); },
+    kinds: Object.freeze(['enhanced', 'classic']),
+    control: Object.freeze({ store: 'prefs', key: 'killFxOthers', initial: 'all', online: 'player', tiers: Object.freeze([tier('all', () => t('features.killFxOthers.all', 'All')), tier('near', () => t('features.killFxOthers.near', 'Near')), tier('none', () => t('features.killFxOthers.none', 'None'))]) }),
+  }),
   // WATER-NEXT (2026-10-07, the overhaul's plan: "a cheaper setting for a weak GPU"): HOW MUCH THE WATER DRAWS. Full
   // copies the frame under the water once a frame (the look through it, the depth it measures) and keeps the ripple
   // field; Simple does neither - the bed, the swell, the foam and the body stand, the blend does the looking-through.

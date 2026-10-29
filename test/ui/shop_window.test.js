@@ -7,9 +7,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { SHOP_WARES, SHOP_WARE_NAME, shopOnSaleOf } from '../../src/net/shopLaw.js';
+import { SHOP_WARES, SHOP_WARE_NAME, shopOnSaleOf, shopWareById } from '../../src/net/shopLaw.js';
 import { SHOP_PROCEEDS, SHOP_COSMETIC } from '../../server-account/src/shop.js';   // the service's English, the window's through the text core
-import { shopWareState, shopWhoText, shopWindow, shopMark, shopWareTag, shopWareName, SHOP_CSS, SHOP_LOOK } from '../../src/ui/enhanced/enhancedShop.js';
+import { shopWareState, shopWhoText, shopWindow, shopMark, shopWareTag, shopWareName, SHOP_CSS, SHOP_LOOK, shopCarouselOf, shopBundleRows, shopHeldAny, shopSections, shopUntilText, CAROUSEL_TURN_MS, carouselTurns } from '../../src/ui/enhanced/enhancedShop.js';
+import { effectName } from '../../src/ui/effectText.js';   // STOREFRONT: an effect's name, the client's own
 import { postHead } from '../../src/net/postLaw.js';
 import { AccountFlow } from '../../src/ui/accountFlow.js';
 import { SESSION_KEY } from '../../src/net/accountClient.js';
@@ -101,7 +102,10 @@ test('SHOP: the window\'s disclaimer is the service\'s, word for word - the proc
 
 test('SHOP: each ware\'s name is the one every face says - the title\'s, the aura\'s, the glyph\'s label - and the service\'s English is the same (mutants: a name drifting between the receipt and the window)', () => {
   for (const w of SHOP_WARES) {
-    const face = w.kind === 'title' ? TITLE_TEXT[w.key] : w.kind === 'aura' ? AURA_TEXT[w.key] : w.kind === 'armory' ? armoryPieceName(w.key) : GLYPH_LABEL[w.key];   // PIN MOVED (ARMORY): a piece's name, the client's own (ui/armoryText.js)
+    // PIN MOVED (ARMORY): a piece's name, the client's own (ui/armoryText.js); STOREFRONT: an effect's (ui/effectText.js), and
+    // a pass's, a bundle's and a booster's the window's own - each the service's English, word for word
+    const face = w.kind === 'title' ? TITLE_TEXT[w.key] : w.kind === 'aura' ? AURA_TEXT[w.key] : w.kind === 'armory' ? armoryPieceName(w.key) : w.kind === 'glyph' ? GLYPH_LABEL[w.key]
+      : ['kill', 'portal', 'mount'].includes(w.kind) ? effectName(w.kind, w.key) : shopWareName(w);
     assert.equal(SHOP_WARE_NAME[w.id], face, w.id);
     assert.equal(shopWareName(w), face);
     assert.ok(typeof SHOP_LOOK[w.id] === 'function' && SHOP_LOOK[w.id]().length > 20, `${w.id}: a sentence of its look`);
@@ -111,8 +115,8 @@ test('SHOP: each ware\'s name is the one every face says - the title\'s, the aur
 // ── WHAT A PANEL OFFERS ───────────────────────────────────────────────
 
 test('SHOP: a panel offers Buy only to a registered account, signed in, on a shop that takes payments, for a ware on sale and not held; held, it offers Wear; else it says why (mutants: Buy to a guest; Buy off sale; Buy held)', () => {
-  const g = SHOP_WARES[0];
-  assert.deepEqual(shopWareState(flowIn(), g), { state: 'buy', buy: 'https://accounts.invalid/v1/shop/buy?t=genesis' });
+  const g = shopWareById('title:genesis');   // PIN MOVED (STOREFRONT): the catalogue opens with the Battle Pass now
+  assert.deepEqual(shopWareState(flowIn(), g), { state: 'buy', buy: 'https://accounts.invalid/v1/shop/buy?t=genesis', cents: 500 });
   assert.equal(shopWareState(flowIn(card({ [g.id]: { held: true, buy: null } }), { wardrobe: { titles: ['genesis'], title: 'genesis' } }), g).state, 'held');
   assert.equal(shopWareState(flowIn(card({ [g.id]: { held: true, buy: null } }), { wardrobe: { titles: ['genesis'], title: 'genesis' } }), g).worn, true);
   assert.equal(shopWareState(flowIn(card({ [g.id]: { sale: false, buy: null } })), g).state, 'gone');
@@ -122,7 +126,7 @@ test('SHOP: a panel offers Buy only to a registered account, signed in, on a sho
   assert.equal(shopWareState({ stage: 'out' }, g).state, 'out');
   assert.equal(shopWareState({ stage: 'loading' }, g).state, 'reading');
   assert.equal(shopWareState(null, g).state, 'reading');
-  const glyph = SHOP_WARES.find((w) => w.kind === 'glyph');
+  const glyph = shopWareById('glyph:origin');
   const held = card({ [glyph.id]: { held: true, buy: null } });
   assert.equal(shopWareState(flowIn(held, { wardrobe: { glyphs: ['origin'], glyphsOff: [] } }), glyph).worn, true);
   assert.equal(shopWareState(flowIn(held, { wardrobe: { glyphs: ['origin'], glyphsOff: ['origin'] } }), glyph).worn, false, 'a glyph taken off is not worn');
@@ -131,16 +135,20 @@ test('SHOP: a panel offers Buy only to a registered account, signed in, on a sho
   assert.match(shopWhoText(flowIn(card(), { account: { handle: null } })), /guest/);
 });
 
-test('SHOP: the window - a tab a category with its count, a panel a ware with its price and its press; Buy a plain link the flow is told was followed; a tab pressed draws its own wares; held, Wear presses the flow\'s own equip (mutants: Buy a button that fetches; the tab never redrawn; Wear never pressed)', () => {
+test('SHOP: the window - a tab a section with its count, a panel a ware with its price and its press; Buy a plain link the flow is told was followed; a tab pressed draws its own wares; held, Wear presses the flow\'s own equip (mutants: Buy a button that fetches; the tab never redrawn; Wear never pressed)', () => {
   const doc = fakeDoc();
   let opened = null, equipped = null;
   const flow = flowIn();
   flow.shopOpened = (id) => { opened = id; };
   const keep = {};
-  const w = shopWindow(doc, { flow: () => flow, onClose() {}, keep, focus: false, preview: async () => null });
-  assert.deepEqual(all(w.root, 'sh-tab').map((t) => t.textContent), ['Titles1', 'Glyphs1', 'Auras1', 'Aura Armory6']);   // PIN MOVED (ARMORY): the Eternal set and its five pieces, a tab of their own, last
+  const w = shopWindow(doc, { flow: () => flow, onClose() {}, keep, focus: false, preview: async () => null, effectPreview: async () => null });
+  // PIN MOVED (STOREFRONT): the sheet's sections, each its wares sold alone - a bundle's glyphs and aura are its alone
+  assert.deepEqual(all(w.root, 'sh-tab').map((t) => t.textContent), ['Battle Pass2', 'Kill Effects3', 'Portal Skins3', 'Mounts3', 'Name Visuals5', 'Auras1', 'Aura Armory6', 'Bundles4', 'Pass Boosters3']);
   assert.equal(all(w.root, 'sh-tab')[0].attrs['aria-selected'], 'true');
-  assert.deepEqual(all(w.root, 'sh-price').map((p) => p.textContent), ['$5.00']);
+  assert.deepEqual(all(w.root, 'sh-price').map((p) => p.textContent), ['$29.99', '$49.99']);
+  all(w.root, 'sh-tab')[4].click();
+  assert.equal(keep.cat, 'names', 'the tab kept, for a face rebuilt around the window');
+  assert.deepEqual(all(w.root, 'sh-price').map((p) => p.textContent), ['$5.00', '$2.00', '$6.99', '$12.99', '$24.99']);
   const buy = all(w.root, 'sh-buy')[0];
   assert.equal(buy.tag, 'a');
   assert.equal(buy.href, 'https://accounts.invalid/v1/shop/buy?t=genesis');
@@ -148,8 +156,7 @@ test('SHOP: the window - a tab a category with its count, a panel a ware with it
   assert.equal(buy.rel, 'noopener');
   buy.click();
   assert.equal(opened, 'title:genesis');
-  all(w.root, 'sh-tab')[2].click();
-  assert.equal(keep.cat, 'auras', 'the tab kept, for a face rebuilt around the window');
+  all(w.root, 'sh-tab')[5].click();
   assert.deepEqual(all(w.root, 'sh-price').map((p) => p.textContent), ['$20.00']);
   assert.equal(all(w.root, 'sh-auracanvas').length, 1, 'the aura on its own stage');
   // held: Owned, and Wear the flow's own press
@@ -161,8 +168,8 @@ test('SHOP: the window - a tab a category with its count, a panel a ware with it
   all(w.root, 'sh-wear')[0].click();
   assert.equal(equipped, 'eternal');
   // rebuilt on its tab
-  const again = shopWindow(doc, { flow: () => flow, onClose() {}, keep, focus: false, preview: async () => null });
-  assert.equal(all(again.root, 'sh-tab')[2].attrs['aria-selected'], 'true');
+  const again = shopWindow(doc, { flow: () => flow, onClose() {}, keep, focus: false, preview: async () => null, effectPreview: async () => null });
+  assert.equal(all(again.root, 'sh-tab')[5].attrs['aria-selected'], 'true');
   w.stop(); again.stop();
 });
 
@@ -195,16 +202,17 @@ test('SHOP: the tab strip by keys - an arrow steps to the next category and wrap
   const strip = all(w.root, 'sh-tabs')[0], tabs = () => all(w.root, 'sh-tab');
   const key = (k) => { let stopped = false; for (const f of strip.listeners.keydown ?? []) f({ key: k, preventDefault() {}, stopPropagation() { stopped = true; } }); return stopped; };
   const open = () => tabs().findIndex((t) => t.attrs['aria-selected'] === 'true');
-  assert.deepEqual(tabs().map((t) => t.tabIndex), [0, -1, -1, -1]);   // PIN MOVED (ARMORY): four tabs
+  const first = [0, -1, -1, -1, -1, -1, -1, -1, -1];   // PIN MOVED (STOREFRONT): nine sections
+  assert.deepEqual(tabs().map((t) => t.tabIndex), first);
   assert.equal(key('ArrowRight'), true, 'the strip keeps its keys');
   assert.equal(open(), 1);
   assert.equal(doc.activeElement, tabs()[1], 'the focus on the tab opened');
-  key('End'); assert.equal(open(), 3);
+  key('End'); assert.equal(open(), 8);
   key('ArrowRight'); assert.equal(open(), 0, 'round from the last to the first');
-  key('ArrowLeft'); assert.equal(open(), 3);
+  key('ArrowLeft'); assert.equal(open(), 8);
   key('Home'); assert.equal(open(), 0);
   assert.equal(key('Enter'), false, 'any other key is the page\'s');
-  assert.deepEqual(tabs().map((t) => t.tabIndex), [0, -1, -1, -1]);   // PIN MOVED (ARMORY): four tabs
+  assert.deepEqual(tabs().map((t) => t.tabIndex), first);
   w.stop();
 });
 
@@ -238,7 +246,7 @@ test('SHOP: the pause face wires the gem at the end of the row of marks and its 
 
 test('SHOP: the account flow carries the shop\'s card off the account read, says where the player went, and says the ware landed when the read on the way back holds it; signing out forgets it (mutants: the card never read; the landing never said)', async () => {
   const reads = [
-    { account: { id: 'a1', name: 'Aelwyn', kind: 'linked', handle: 'Aelwyn' }, wardrobe: { titles: [], glyphs: [] }, devices: [], shop: card() },
+    { account: { id: 'a1', name: 'Aelwyn', kind: 'linked', handle: 'Aelwyn' }, wardrobe: { titles: [], glyphs: [] }, devices: [], shop: card(), pass: { season: 's1', open: true, stage: 0, xp: 7400, level: 7, top: 17, tracks: { premium: false }, mult: 1, today: 400, challenges: [] } },
     { account: { id: 'a1', name: 'Aelwyn', kind: 'linked', handle: 'Aelwyn' }, wardrobe: { titles: ['genesis'], glyphs: [] }, devices: [], shop: card({ 'title:genesis': { held: true, buy: null } }) },
   ];
   let n = 0;
@@ -253,18 +261,21 @@ test('SHOP: the account flow carries the shop\'s card off the account read, says
   const flow = AccountFlow({ io: { fetch, base: 'https://accounts.invalid' }, storage });
   await flow.start();
   assert.equal(flow.shop.on, true);
-  assert.equal(flow.shop.wares[0].buy, 'https://accounts.invalid/v1/shop/buy?t=genesis');
+  const genesis = () => flow.shop.wares.find((/** @type {any} */ x) => x.id === 'title:genesis');   // PIN MOVED (STOREFRONT): by its id
+  assert.equal(genesis().buy, 'https://accounts.invalid/v1/shop/buy?t=genesis');
+  assert.equal(flow.pass.level, 7, 'STOREFRONT: the season\'s card beside it');
   flow.shopOpened('title:genesis');
   assert.equal(flow.shopWaiting, 'title:genesis');
   assert.equal(flow.note, 'Finish paying in your browser, then come back here.');
   assert.equal(await flow.refresh(), true);
-  assert.equal(flow.shop.wares[0].held, true);
+  assert.equal(genesis().held, true);
   assert.equal(flow.shopWaiting, null);
   assert.equal(flow.note, 'Genesis is on your account. A receipt is in your mailbox.');
   flow.shopOpened('title:nonsense');
   assert.equal(flow.shopWaiting, null, 'no ware, no waiting');
   await flow.signOut();
   assert.equal(flow.shop, null);
+  assert.equal(flow.pass, null, 'and the season\'s card');
 });
 
 // ── THE MAILBOX'S RECEIPT ─────────────────────────────────────────────
@@ -292,17 +303,24 @@ test('SHOP: Collections says how each ware is had - from the Shop, at its price,
   const onSale = shopOnSaleOf(/^SHOP_ON_SALE = "([^"]*)"$/m.exec(toml)?.[1]);
   // ARMORY: a set is no entry of its own - its pieces are, each naming the set and its price
   const set = SHOP_WARES.find((w) => w.id === 'armory:eternalset');
-  for (const w of SHOP_WARES.filter((x) => x !== set)) {
+  // PIN MOVED (STOREFRONT): the wardrobe's kinds alone (an effect, a pass, a bundle and a booster are none of it); a ware
+  // past the pre-alpha's is `store`, and one sold only in a bundle is had while a bundle that gives it is on sale
+  const wardrobeKinds = new Set(['title', 'aura', 'armory', 'glyph']);
+  for (const w of SHOP_WARES.filter((x) => x !== set && wardrobeKinds.has(x.kind))) {
     const e = wardrobeEntry(w.kind, w.key);
     assert.equal(e.src, 'shop', w.id);
     if (w.kind === 'armory') assert.match(e.how(), /The Eternal Set for \$20\.00/, `${w.id}: the set beside it`);
-    assert.equal(e.avail, onSale.includes(w.id) ? 'shop' : 'retired', `${w.id}: its availability follows the sale list`);
-    assert.match(e.how(), new RegExp(`\\$${(w.cents / 100).toFixed(2).replace('.', '\\.')}`), `${w.id}: its price`);
+    const sold = w.alone ? onSale.includes(w.id) : SHOP_WARES.some((b) => b.gives.includes(w.id) && onSale.includes(b.id));
+    assert.equal(e.avail, sold ? (w.preAlpha ? 'shop' : 'store') : 'retired', `${w.id}: its availability follows the sale list`);
+    if (w.alone) assert.match(e.how(), new RegExp(`\\$${(w.cents / 100).toFixed(2).replace('.', '\\.')}`), `${w.id}: its price`);
+    else assert.match(e.how(), /^Comes only in a bundle from the shop/, `${w.id}: its bundles, no price of its own`);
     assert.match(e.how(), /All proceeds go to the costs of developing DFO Online\./);
   }
-  assert.ok(AVAIL_NOW.includes('shop'));
+  assert.ok(AVAIL_NOW.includes('shop') && AVAIL_NOW.includes('store'));
   assert.equal(AVAIL_TAG.shop(), 'In the shop');
+  assert.equal(AVAIL_TAG.store(), 'In the shop');
   assert.match(AVAIL_LINE.shop(), /pre-alpha only/);
+  assert.doesNotMatch(AVAIL_LINE.store(), /pre-alpha/, 'a ware sold for good says so');
   assert.ok(WARDROBE_SOURCES.some(([id]) => id === 'shop'));
   assert.ok(wardrobeEntry('aura', 'eternal').look().length > 20);
 });
@@ -320,7 +338,7 @@ test('SHOP: Genesis - its letters the fire\'s pale heart, 44 or more from every 
   assert.equal(p.backgroundImage, '', 'the fire is the class\'s - never clipped into the letters');
   assert.equal(p.color, '#d6b8ff');
   assert.match(p.textShadow, /#0b0620/, 'edged dark, so they read over the fire');
-  assert.deepEqual(Object.keys(TITLE_FLAME), ['genesis']);
+  assert.deepEqual(Object.keys(TITLE_FLAME), ['genesis', 'dawnbringer', 'voidwalker', 'eternalchampion', 'heartwaker', 'numidiumecho']);   // PIN MOVED (STOREFRONT): the name visuals' plates and the pass's two
   const doc = fakeDoc();
   const node = doc.createElement('div');
   node.ownerDocument = doc;
@@ -350,8 +368,9 @@ test('SHOP: Genesis\'s plate is painted a frame an idle moment, never the sheet 
     assert.ok(first instanceof Promise && second === first, 'asked twice while painting, painted once');
     assert.equal(doc.head.children.length, 0, 'nothing laid before the frames are painted');
     await first;
-    assert.equal(idles, spec.frames, 'a frame an idle moment');
-    assert.equal(painted.length, 1);
+    const plates = Object.values(TITLE_FLAME);   // PIN MOVED (STOREFRONT): every plate's sheet laid together, each a frame an idle moment
+    assert.equal(idles, plates.reduce((n, p) => n + p.frames, 0), 'a frame an idle moment');
+    assert.equal(painted.length, plates.length);
     assert.equal(painted[0].height, spec.h * spec.frames);
     assert.equal(doc.head.children.filter((c) => c.id === FLAME_STYLE_ID).length, 1);
     assert.ok(doc.head.children[0].textContent.includes('data:image/png;base64,AAAA'));
@@ -536,4 +555,97 @@ test('SHOP: the aura\'s stage - a floor and a stand-in figure whose shoulders ar
   const paces = [...Array(90).keys()].map((k) => previewStroll(k / 10).pace);
   assert.ok(paces.some((p) => p === 0) && Math.max(...paces) > PREVIEW_STROLL.pace * 0.9, 'it stops, and it walks');
   assert.ok(new Set([...Array(130).keys()].map((k) => previewStroll(k / 10).yaw.toFixed(2))).size > 20, 'and it turns');
+});
+
+// ── STOREFRONT: THE CAROUSEL, THE BUNDLES, THE PASS ───────────────────
+
+test('STOREFRONT the carousel: the card\'s featured wares a slide each, in its order, the dots a button each; arrows, dots, the arrow keys and a swipe step it; it turns every eight seconds and never while paused, pointed at, focused or for less motion; the featured window and a limited one said; none featured, none shown (mutants: the clock turning while held; the slide not kept; a featured ware never said)', () => {
+  const NOW = Date.UTC(2026, 10, 14, 12);
+  const shop = card({ 'kill:pyre': { until: Date.UTC(2026, 10, 17), limited: true }, 'portal:aetheric': { until: Date.UTC(2026, 10, 27) } });
+  shop.featured = ['pass:s1premium', 'kill:pyre', 'portal:aetheric', 'glyph:oblivion'];
+  const flow = flowIn(shop);
+  assert.deepEqual(shopCarouselOf(flow).map((w) => w.id), ['pass:s1premium', 'kill:pyre', 'portal:aetheric'], 'a ware never sold alone is never featured');
+  assert.deepEqual(shopCarouselOf(flowIn(null)), []);
+  const doc = fakeDoc(), keep = {};
+  const w = shopWindow(doc, { flow: () => flow, onClose() {}, keep, focus: false, now: () => NOW, preview: async () => null, effectPreview: async () => null, reduced: false });
+  const car = all(w.root, 'sh-carousel')[0];
+  assert.equal(car.attrs['aria-roledescription'], 'carousel');
+  const slide = () => all(car, 'sh-slide')[0];
+  assert.equal(slide().attrs['data-ware'], 'pass:s1premium');
+  assert.equal(slide().attrs['aria-label'], '1 of 3');
+  assert.equal(all(car, 'sh-cdot').length, 3);
+  all(car, 'sh-cnext')[0].click();
+  assert.equal(slide().attrs['data-ware'], 'kill:pyre');
+  assert.equal(all(slide(), 'sh-until')[0].textContent, 'Limited: sold only until Nov 16. 3 days left.');
+  assert.equal(keep.slide, 1, 'the slide kept, for a face rebuilt around the window');
+  all(car, 'sh-cprev')[0].click(); all(car, 'sh-cprev')[0].click();
+  assert.equal(slide().attrs['data-ware'], 'portal:aetheric', 'round from the first to the last');
+  assert.match(all(slide(), 'sh-until')[0].textContent, /^Featured until Nov 26\./);
+  all(car, 'sh-cdot')[0].click();
+  assert.equal(slide().attrs['data-ware'], 'pass:s1premium');
+  assert.equal(all(car, 'sh-cdot')[0].attrs['aria-pressed'], 'true');
+  for (const f of car.listeners.keydown) f({ key: 'ArrowRight', preventDefault() {}, stopPropagation() {} });
+  assert.equal(slide().attrs['data-ware'], 'kill:pyre');
+  const host = all(car, 'sh-cslides')[0];
+  for (const f of host.listeners.pointerdown) f({ clientX: 200 });
+  for (const f of host.listeners.pointerup) f({ clientX: 120 });
+  assert.equal(slide().attrs['data-ware'], 'portal:aetheric', 'a swipe left: the next');
+  // the clock's rule
+  const held = { n: 3, paused: false, reduced: false, hovered: false, focusedIn: false, since: 0 };
+  assert.equal(CAROUSEL_TURN_MS, 8000);
+  assert.equal(carouselTurns(held, 7999), false);
+  assert.equal(carouselTurns(held, 8000), true);
+  for (const k of ['paused', 'reduced', 'hovered', 'focusedIn']) assert.equal(carouselTurns({ ...held, [k]: true }, 9000), false, k);
+  assert.equal(carouselTurns({ ...held, n: 1 }, 9000), false, 'one slide never turns');
+  all(car, 'sh-cpause')[0].click();
+  assert.equal(all(car, 'sh-cpause')[0].textContent, 'Play', 'paused: the press plays it again');
+  w.stop();
+  const none = shopWindow(fakeDoc(), { flow: () => flowIn(), onClose() {}, focus: false, preview: async () => null, effectPreview: async () => null });
+  assert.ok(String(all(none.root, 'sh-carousel')[0].className).includes('sh-empty'), 'nothing featured: no carousel');
+  none.stop();
+});
+
+test('STOREFRONT the bundles: a bundle\'s panel lists what it gives, each held one marked (a ware sold alone by the card, a bundle\'s glyph or aura by the wardrobe), its worth bought alone, and the price this account pays beside the list price struck through (mutants: a held piece unmarked; the account\'s price never shown)', () => {
+  const flow = flowIn(card({ 'bundle:daedricchampion': { cents: 3000 }, 'kill:pyre': { held: true, buy: null } }), { wardrobe: { titles: [], glyphs: ['oblivion'], auras: [], effectsHeld: { kill: ['pyre'], portal: [], mount: [] } } });
+  const w = shopWareById('bundle:daedricchampion');
+  assert.deepEqual(shopBundleRows(flow, w).map((r) => [r.id, r.held]), [['aura:dominion', false], ['kill:pyre', true], ['title:eternalchampion', false], ['glyph:oblivion', true]]);
+  assert.equal(shopHeldAny(flow, 'glyph:oblivion'), true);
+  assert.equal(shopHeldAny(flow, 'aura:dominion'), false);
+  const win = shopWindow(fakeDoc(), { flow: () => flow, onClose() {}, keep: { cat: 'bundles' }, focus: false, preview: async () => null, effectPreview: async () => null });
+  const panel = all(win.root, 'sh-panel').find((p) => p.attrs['data-ware'] === 'bundle:daedricchampion');
+  assert.equal(all(panel, 'sh-content').length, 4);
+  assert.equal(all(panel, 'sh-content-held').length, 2);
+  assert.equal(all(panel, 'sh-worth')[0].textContent, 'Worth $84.96 bought alone.');
+  assert.equal(all(panel, 'sh-price')[0].textContent, '$30.00');
+  assert.equal(all(panel, 'sh-was')[0].textContent, '$59.99', 'the list price struck through beside it');
+  assert.equal(all(panel, 'sh-tier')[0].textContent, 'Exclusive');
+  win.stop();
+});
+
+test('STOREFRONT the Battle Pass section: the season\'s story and its three stages, the account\'s level and its experience to the next, the track (a column a level with a reward, the premium row locked without the pass), the Deluxe\'s own, the open stage\'s five challenges with their counts; a season not begun sells nothing yet and says when (mutants: the premium row open to a free account; another stage\'s challenges; the season\'s wares "no longer sold")', () => {
+  const NOW = Date.UTC(2026, 10, 14, 12);
+  const pass = { season: 's1', open: true, stage: 0, xp: 7400, level: 7, top: 17, tracks: { free: true, premium: false, deluxe: false }, mult: 1.25, today: 640, dayMax: 2000,
+    challenges: [{ key: 'tremor-foes', n: 40, paid: false }, { key: 'tremor-tavern', n: 3, paid: true }] };
+  const flow = flowIn(card(), { pass });
+  const w = shopWindow(fakeDoc(), { flow: () => flow, onClose() {}, focus: false, now: () => NOW, preview: async () => null, effectPreview: async () => null });
+  const sec = all(w.root, 'sh-pass')[0];
+  assert.equal(all(sec, 'sh-passname')[0].textContent, "Dwemer's Breach");
+  assert.deepEqual(all(sec, 'sh-stagename').map((n) => n.textContent), ['The Tremor', 'The Brass Halls', 'The Heart Wakes']);
+  assert.ok(String(all(sec, 'sh-stagechip')[0].className).includes('sh-stage-open'));
+  assert.equal(all(sec, 'sh-passlevel')[0].textContent, 'Level 7 of 50');
+  assert.match(all(sec, 'sh-passline')[0].textContent, /^Today: 640 of 2,000 experience\. Your booster adds 25%\.$/);
+  assert.equal(all(sec, 'sh-xpfill')[0].style.width, '40%');
+  assert.equal(all(sec, 'sh-trackcol').length, 11, 'a column a level with a reward (1, 5, 10 and every fifth to 50)');
+  assert.ok(all(sec, 'sh-track-premium').every((c) => String(c.className).includes('sh-locked')), 'no premium: its row locked');
+  assert.equal(all(sec, 'sh-reached').length, 2, 'levels 1 and 5 reached');
+  assert.equal(all(all(sec, 'sh-deluxe')[0], 'sh-reward').length, 3);
+  assert.deepEqual(all(sec, 'sh-cwhat').map((n) => n.textContent), ['Kill 100 foes', 'Destroy 25 Dwemer constructs', 'Gather 60 times', 'Win 3 tavern games', 'Win 1 endgame fights: a breach, a Redoubt, the Serpent or a star']);
+  assert.equal(all(sec, 'sh-paid').length, 1);
+  w.stop();
+  // before the season: on sale when it opens
+  const early = flowIn(card({ 'pass:s1premium': { sale: false, buy: null } }));
+  assert.deepEqual(shopWareState(early, shopWareById('pass:s1premium'), Date.UTC(2026, 9, 30)), { state: 'soon', buy: null, cents: 2999, opens: Date.UTC(2026, 10, 10) });
+  assert.equal(shopWareState(early, shopWareById('pass:s1premium'), Date.UTC(2027, 0, 20)).state, 'gone', 'after it: no longer sold');
+  assert.deepEqual(shopSections(flowIn(null)), ['pass', 'kills', 'portals', 'mounts', 'names', 'auras', 'armory', 'bundles', 'boosts']);
+  assert.equal(shopUntilText(Date.UTC(2026, 10, 15), false, Date.UTC(2026, 10, 14, 20)), 'Featured until Nov 14. Ends today.');
 });

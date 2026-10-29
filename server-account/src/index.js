@@ -1380,6 +1380,7 @@ const service = {
           // pledge holds, and the link to follow (a state sealed for this account, under the origin that served this)
           patreon: await patreonCardOf(who.player, env, { subtle, rand, nowS, origin: url.origin }),
           shop: await shopCardOf(who.player, env, { subtle, rand, nowS, origin: url.origin }),   // SHOP: the wares, what is held, and a Buy link each
+          pass: await passOf(ctx, who.player, env).then((c) => ('error' in c ? null : c)),   // STOREFRONT: the season's card - a guest's, or none, null
         }, 200, origin);
       }
 

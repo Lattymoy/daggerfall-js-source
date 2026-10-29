@@ -104,6 +104,7 @@ import { readWagonLook, wagonLookOfCode, WAGON_OUTSIDE_LOOKS, CARAVAN_INSIDE_LOO
 import { validWagonKind, wagonHitchOf, WAGON_KINDS, wagonHorsesOf } from '../systems/wagon/wagonKinds.js';
 import { CARAVAN_TEXT } from '../systems/caravanRoom.js';
 import { recolorHorse, horseLookCode, horseLookOfCode, lookSuffix } from '../systems/horse/horseCoats.js';   // COATS1: the horses' looks, dyed as they upload
+import { ownMountLook, peerMountLook } from '../systems/horse/mountLook.js';   // STOREFRONT: and the owners' mount looks over them
 import { DECOR_DRAW, DECOR_SHADOW, DECOR_SKIP, castOnly } from './decor/decorRoom.js';   // PERF-TEAMS: the host's view verdict (world.js yardCull), as the merchant yards' wagons take it; PERF-WAGON: and the one maps-alone renderer
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
@@ -524,7 +525,7 @@ export function createHorseCartPool({
     for (const [c] of old.slice(0, _looksUp.size - HORSE_LOOKS_KEPT)) dropLook(c);
   }
   /** COATS1: the look an owner's horses wear ('' mine, a peer's key - theirs off their word, the bay before one says). */
-  const lookOfOwner = (owner) => horseLookCode(horseLookOfCode(owner === '' ? horseLook?.() : _peers.get(owner)?.horseLook ?? 0));
+  const lookOfOwner = (owner) => horseLookCode(horseLookOfCode(owner === '' ? ownMountLook(horseLook?.()) : peerMountLook(_peers.get(owner)?.ownerId ?? owner, _peers.get(owner)?.horseLook ?? 0)));   // STOREFRONT: each in its owner's mount look
   const horseArt = { ensureStationary, ensureWalk, hasWalk: () => _walkReady, ensureLook: ensureHorseLook };
 
   // ── the runtime's physics

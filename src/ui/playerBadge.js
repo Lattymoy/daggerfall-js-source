@@ -53,6 +53,7 @@ import { TITLES, GLYPHS, SEAT_TITLES, CHAPTER_TITLES } from '../net/identityToke
 import { chapterTitleText } from '../net/npcChapterLaw.js';   // CHAP4c: a chapter's seat's title, worded off its claim
 import { seatTitleText } from '../net/townSeatLaw.js';   // SEAT1c: a seat title in words, off its claim
 import { setTitleFlame } from './titleFlame.js';   // SHOP: a flame title's plate, on the faces paintTitle paints
+import { t } from '../systems/textManager.js';   // STOREFRONT: the new titles' and auras' words, in the player's language
 
 /** SEAT1c: THE PLACE A SEAT TITLE NAMES - the client's own seat by key (`{ name, region }`), or null. The host sets it
  *  once its seats are derived (scenes/world.js); until then, and offline, a seat title reads its plain word. */
@@ -159,6 +160,17 @@ export const TITLE_TEXT = Object.freeze({
   serpenthunter: 'Serpent Hunter',
   deepbane: 'Bane of the Deep',
   genesis: 'Genesis',   // SHOP (2026-10-28): the shop's pre-alpha title, the owner's word for it
+  // STOREFRONT (2026-10-29, bible/06-Systems/Storefront.md section 6, Battle-Pass.md section 3): the shop's three name
+  // visuals, Season One's five and the Deluxe Pass's own - read through the text core, so a getter each (localizedStrings' shape)
+  get dawnbringer() { return t('account.title.dawnbringer', 'Dawnbringer'); },
+  get voidwalker() { return t('account.title.voidwalker', 'Voidwalker'); },
+  get eternalchampion() { return t('account.title.eternalchampion', 'Eternal Champion'); },
+  get brassbound() { return t('account.title.brassbound', 'Brassbound'); },
+  get tremorborn() { return t('account.title.tremorborn', 'Tremor-Born'); },
+  get tonalarchitect() { return t('account.title.tonalarchitect', 'Tonal Architect'); },
+  get brasswright() { return t('account.title.brasswright', 'Brasswright'); },
+  get heartwaker() { return t('account.title.heartwaker', 'Heart-Waker'); },
+  get numidiumecho() { return t('account.title.numidiumecho', 'Echo of Numidium'); },
 });
 
 /** WB9g (2026-09-30, Mac: "an animated burning ground aura that circles the ground where your character stands"): AN
@@ -180,6 +192,10 @@ export const AURA_TEXT = Object.freeze({
   witchfire: 'Witchfire',   // WITCH1: a coven's green fire round the feet, tallow candles in its ring, bought from a Wyrd Sister
   eternal: 'Eternal',   // SHOP: a cape of blue-violet fire flowing down the back, the shop's pre-alpha aura
   sagesmoke: "Sage's Smoke",   // NIRNROOT-SAGE: smoke billowing about the Nirnroot Sage, nirnroots circling the waist, green runes round the feet, granted with the title
+  // STOREFRONT: the bundles' Daedric script ring, and the Battle Pass's coil and its gilded Deluxe twin
+  get dominion() { return t('account.aura.dominion', 'Daedric Dominion'); },
+  get aetherium() { return t('account.aura.aetherium', 'Aetherium Coil'); },
+  get aetheriumgilded() { return t('account.aura.aetheriumgilded', 'Gilded Coil'); },
 });
 
 /** SHADOW-FANG (2026-09-26, Mac): "SirMcMobdon gets a brand new
@@ -325,6 +341,37 @@ export const GENESIS_BLUE = Object.freeze([0.247, 0.388, 1, 1]);       // #3f63f
 export const GENESIS_VIOLET = Object.freeze([0.561, 0.357, 1, 1]);     // #8f5bff
 export const GENESIS_HEART = Object.freeze([0.839, 0.722, 1, 1]);      // #d6b8ff
 export const GENESIS_CORE = Object.freeze([0.957, 0.933, 1, 1]);       // #f4eeff
+/** STOREFRONT (2026-10-29, bible/06-Systems/Storefront.md section 6): THE NAME VISUALS' PAINT. Dawnbringer: a sunrise -
+ *  the dusk under it, the low sun's ember, its gold (the title's one colour) and a ray's pale light. */
+export const SUNRISE_DUSK = Object.freeze([0.18, 0.071, 0.024, 1]);   // #2e1206
+export const SUNRISE_EMBER = Object.freeze([1, 0.478, 0.18, 1]);     // #ff7a2e
+export const SUNRISE_GOLD = Object.freeze([0.929, 0.765, 0.141, 1]); // #edc324
+export const SUNRISE_RAY = Object.freeze([1, 0.953, 0.769, 1]);      // #fff3c4
+/** Voidwalker: the void's black, its violet and its glow, and the starlight drawn into it - the title's one colour. */
+export const VOID_DEEP = Object.freeze([0.031, 0.012, 0.102, 1]);    // #08031a
+export const VOID_VIOLET = Object.freeze([0.416, 0.169, 0.851, 1]);  // #6a2bd9
+export const VOID_GLOW = Object.freeze([0.655, 0.482, 1, 1]);        // #a77bff
+export const VOID_STAR = Object.freeze([0.976, 0.929, 0.988, 1]);    // #f9edfc
+/** THE DAEDRIC FIRE: Eternal Champion's plate and the Daedric Dominion's ring (render/auraRing.js DOMINION_RGB), the
+ *  Oblivion and Gate Sigils - a coal, its crimson, the fire, the gold edge and the heart (the title's one colour). */
+export const DAEDRIC_COAL = Object.freeze([0.122, 0.008, 0.02, 1]);  // #1f0205
+export const DAEDRIC_CRIMSON = Object.freeze([0.765, 0.071, 0.169, 1]);   // #c3122b
+export const DAEDRIC_FIRE = Object.freeze([1, 0.294, 0.169, 1]);     // #ff4b2b
+export const DAEDRIC_GOLD = Object.freeze([1, 0.788, 0.302, 1]);     // #ffc94d
+export const DAEDRIC_HEART = Object.freeze([0.988, 0.729, 0.612, 1]);   // #fcba9c
+/** STOREFRONT (bible/06-Systems/Battle-Pass.md): SEASON ONE'S DWEMER PAINT - brass in four tones and the aetherium's
+ *  blue in three, each title one of them, 40 or more from every other title's colour (render/auraRing.js COIL_RGB). */
+export const DWEMER_BRONZE = Object.freeze([0.361, 0.239, 0.071, 1]);   // #5c3d12
+export const DWEMER_BRASS = Object.freeze([0.788, 0.588, 0.227, 1]);    // #c9963a
+export const DWEMER_SHINE = Object.freeze([0.953, 0.843, 0.541, 1]);    // #f3d78a
+export const DWEMER_ANTIQUE = Object.freeze([0.659, 0.459, 0.106, 1]);  // #a8751b - Brassbound
+export const DWEMER_DUST = Object.freeze([0.576, 0.553, 0.424, 1]);     // #938d6c - Tremor-Born, the dust the tremor raises
+export const DWEMER_COPPER = Object.freeze([0.694, 0.306, 0.047, 1]);   // #b14e0c - Brasswright, the smith's copper
+export const AETHERIUM_DEEP = Object.freeze([0.047, 0.208, 0.322, 1]);  // #0c3552
+export const AETHERIUM_BLUE = Object.freeze([0.247, 0.722, 1, 1]);      // #3fb8ff
+export const AETHERIUM_TONE = Object.freeze([0.271, 0.8, 0.859, 1]);    // #45ccdb - Tonal Architect
+export const AETHERIUM_GLOW = Object.freeze([0.624, 0.976, 0.988, 1]);  // #9ff9fc - Heart-Waker
+export const NUMIDIUM_GOLD = Object.freeze([0.988, 0.929, 0.376, 1]);   // #fced60 - Echo of Numidium
 
 /** A title's colour, RGBA 0..1 - the same shape SOC4's PARTY_GREEN is
  *  in, so `nameLayer.cssRgba` turns it into CSS and `drawText` takes it
@@ -452,6 +499,16 @@ export const TITLE_RGBA = Object.freeze({
   serpenthunter: Object.freeze([0.2, 0.835, 0.706, 1]),         // #33d5b4
   deepbane: Object.freeze([0.118, 0.353, 0.553, 1]),            // #1e5a8d
   genesis: GENESIS_HEART,   // SHOP: the flame's heart - its letters over the plate, and the colour a face with no plate uses
+  // STOREFRONT: a plate title's letters, or a brass title's own tone - each 40 or more from every other title's
+  dawnbringer: SUNRISE_GOLD,
+  voidwalker: VOID_STAR,
+  eternalchampion: DAEDRIC_HEART,
+  brassbound: DWEMER_ANTIQUE,
+  tremorborn: DWEMER_DUST,
+  tonalarchitect: AETHERIUM_TONE,
+  brasswright: DWEMER_COPPER,
+  heartwaker: AETHERIUM_GLOW,
+  numidiumecho: NUMIDIUM_GOLD,
 });
 
 /** SHADOW-FANG: A TITLE DRAWN AS A GRADIENT - its stops, RGBA 0..1, left
@@ -471,6 +528,16 @@ export const TITLE_GRADIENT = Object.freeze({
   witchwarden: Object.freeze([WITCH_MOSS, WITCH_FIRE, WITCH_GLOW]),   // WITCH1: the moor's moss into the coven's fire into its heart
   genesis: Object.freeze([GENESIS_BLUE, GENESIS_VIOLET, GENESIS_HEART]),   // SHOP: the classic face's letters, the fire's blue into its heart
   nirnrootsage: Object.freeze([NIRN_LEAF, NIRN_GLOW, NIRN_HAZE]),   // NIRNROOT-SAGE: "Nirnroot" out of the leaf into its glow, "Sage" into the smoke's haze
+  // STOREFRONT: a plate title's letters on the classic face, and Season One's brass, a blue end where the aetherium is
+  dawnbringer: Object.freeze([SUNRISE_EMBER, SUNRISE_GOLD, SUNRISE_RAY]),
+  voidwalker: Object.freeze([VOID_VIOLET, VOID_GLOW, VOID_STAR]),
+  eternalchampion: Object.freeze([DAEDRIC_CRIMSON, DAEDRIC_GOLD, DAEDRIC_HEART]),
+  brassbound: Object.freeze([DWEMER_ANTIQUE, DWEMER_SHINE, AETHERIUM_BLUE]),
+  tremorborn: Object.freeze([DWEMER_DUST, DWEMER_BRASS, DWEMER_SHINE]),
+  tonalarchitect: Object.freeze([DWEMER_BRASS, AETHERIUM_TONE, AETHERIUM_GLOW]),
+  brasswright: Object.freeze([DWEMER_COPPER, DWEMER_BRASS, DWEMER_SHINE]),
+  heartwaker: Object.freeze([DWEMER_BRASS, AETHERIUM_BLUE, AETHERIUM_GLOW]),
+  numidiumecho: Object.freeze([DWEMER_BRASS, NUMIDIUM_GOLD, AETHERIUM_GLOW]),
 });
 
 /** PENITENT: THE EDGE A GRADIENT TITLE WEARS, where it is not the title's
@@ -490,6 +557,8 @@ export const TITLE_EDGE = Object.freeze({
   witchwarden: Object.freeze([0, 0, 0, 1]),   // WITCH1: its heart end is pale - edged in black, as the WikiMaid's
   nirnrootsage: Object.freeze([0, 0, 0, 1]),   // NIRNROOT-SAGE: its haze end is pale - edged in black, as the Witchwarden's
   genesis: Object.freeze([0, 0, 0, 1]),   // SHOP: its heart end is pale - edged in black
+  // STOREFRONT: each has a pale stop - edged in black
+  ...Object.fromEntries(['dawnbringer', 'voidwalker', 'eternalchampion', 'brassbound', 'tremorborn', 'tonalarchitect', 'brasswright', 'heartwaker', 'numidiumecho'].map((k) => [k, Object.freeze([0, 0, 0, 1])])),
 });
 
 /** SHOP: A TITLE DRAWN ON A FLAME PLATE (ui/titleFlame.js) - the fire behind its letters on every DOM face, a sheet of
@@ -497,11 +566,46 @@ export const TITLE_EDGE = Object.freeze({
  *  `tongues` across a frame and `embers` rising, over a `haze` of smoke (RGB and its cover) the whole plate over. The
  *  letters are the title's heart, edged dark (titlePaint). */
 const rgb3 = (/** @type {readonly number[]} */ c) => Object.freeze(c.slice(0, 3));
+/** STOREFRONT: a plate's `style` names its painter (ui/titleFlame.js PLATE_PAINTERS), `ink` its letters' dark edge and
+ *  `glow` the light round them (RGB). A painter reads `haze`, `root` and `tips` its own way; `rim` is a fire's gold edge. */
+const plate = (/** @type {Record<string, any>} */ spec) => Object.freeze({ w: 128, h: 48, frames: 24, ...spec });
+const ramp4 = (/** @type {ReadonlyArray<readonly number[]>} */ cs) => Object.freeze(cs.map(rgb3));
 export const TITLE_FLAME = Object.freeze({
   genesis: Object.freeze({
     w: 128, h: 48, frames: 24, seconds: 1.6, seed: 7, tongues: 5, embers: 12, haze: Object.freeze([...GENESIS_DEEP.slice(0, 3), 0.62]),
     root: Object.freeze([GENESIS_DEEP, GENESIS_BLUE, GENESIS_ROOT, GENESIS_CORE].map(rgb3)),
     tips: Object.freeze([GENESIS_DEEP, GENESIS_VIOLET, GENESIS_HEART, GENESIS_CORE].map(rgb3)),
+    style: 'fire', ink: '#0b0620', glow: rgb3(GENESIS_VIOLET),
+  }),
+  // STOREFRONT (Storefront.md section 6): gold rays rising behind the word
+  dawnbringer: plate({
+    style: 'rays', seconds: 2.4, seed: 13, tongues: 7, embers: 10, haze: Object.freeze([...SUNRISE_DUSK.slice(0, 3), 0.7]),
+    root: ramp4([SUNRISE_DUSK, SUNRISE_EMBER, SUNRISE_GOLD, SUNRISE_RAY]), tips: ramp4([SUNRISE_EMBER, SUNRISE_GOLD, SUNRISE_RAY, SUNRISE_RAY]),
+    ink: '#2a1003', glow: rgb3(SUNRISE_EMBER),
+  }),
+  // a violet void with stars drawn into it
+  voidwalker: plate({
+    style: 'void', seconds: 3.2, seed: 29, tongues: 4, embers: 16, haze: Object.freeze([...VOID_DEEP.slice(0, 3), 0.86]),
+    root: ramp4([VOID_DEEP, VOID_VIOLET, VOID_GLOW, VOID_STAR]), tips: ramp4([VOID_GLOW, VOID_STAR, VOID_STAR, VOID_STAR]),
+    ink: '#05010f', glow: rgb3(VOID_GLOW),
+  }),
+  // crimson fire under a gold edge - Genesis's fire, its palette the Daedric
+  eternalchampion: plate({
+    style: 'fire', seconds: 1.6, seed: 11, tongues: 5, embers: 14, haze: Object.freeze([...DAEDRIC_COAL.slice(0, 3), 0.66]),
+    root: ramp4([DAEDRIC_COAL, DAEDRIC_CRIMSON, DAEDRIC_FIRE, DAEDRIC_GOLD]), tips: ramp4([DAEDRIC_COAL, DAEDRIC_CRIMSON, DAEDRIC_FIRE, DAEDRIC_HEART]),
+    rim: rgb3(DAEDRIC_GOLD), ink: '#1a0204', glow: rgb3(DAEDRIC_FIRE),
+  }),
+  // Battle-Pass.md section 3: level 50's - a slow pulse of aetherium light through brass
+  heartwaker: plate({
+    style: 'pulse', frames: 32, seconds: 4, seed: 41, tongues: 3, embers: 0, haze: Object.freeze([...DWEMER_BRONZE.slice(0, 3), 0.92]),
+    root: ramp4([DWEMER_BRONZE, DWEMER_ANTIQUE, DWEMER_BRASS, DWEMER_SHINE]), tips: ramp4([AETHERIUM_DEEP, AETHERIUM_BLUE, AETHERIUM_GLOW, AETHERIUM_GLOW]),
+    ink: '#071a26', glow: rgb3(AETHERIUM_BLUE),
+  }),
+  // the Deluxe Pass's: gear teeth turning along a brass plate's edges, a blue glow between them
+  numidiumecho: plate({
+    style: 'gears', seconds: 3, seed: 53, tongues: 16, embers: 8, haze: Object.freeze([...DWEMER_BRONZE.slice(0, 3), 0.92]),
+    root: ramp4([DWEMER_BRONZE, DWEMER_ANTIQUE, DWEMER_BRASS, DWEMER_SHINE]), tips: ramp4([AETHERIUM_DEEP, AETHERIUM_BLUE, AETHERIUM_GLOW, AETHERIUM_GLOW]),
+    ink: '#1e1404', glow: rgb3(AETHERIUM_BLUE),
   }),
 });
 
@@ -542,6 +646,12 @@ export const GLYPH_RGBA = Object.freeze({
   wikimaid: TITLE_RGBA.wikimaid,       // WIKIMAID: the rabbit in the title's lilac - the maid's frill is its detail, below
   nirnrootsage: TITLE_RGBA.nirnrootsage,   // NIRNROOT-SAGE: the sprig in the title's glow - its veins and the bud's heart are its details, below
   origin: GENESIS_HEART,   // SHOP: the dragon's edge in the Genesis fire's heart - its body is the gradient below
+  // STOREFRONT: the bundles' three in the Daedric fire and Season One's brass, and the pass's two
+  oblivion: DAEDRIC_FIRE,
+  gatesigil: DAEDRIC_CRIMSON,
+  gearcrown: DWEMER_BRASS,
+  tonalfork: AETHERIUM_TONE,
+  cog: DWEMER_BRASS,
 });
 
 /** SHADOW-FANG: A GLYPH FILLED WITH A GRADIENT - its title's two stops,
@@ -599,6 +709,18 @@ export const GLYPH_DETAIL = Object.freeze({
     Object.freeze({ path: 'M8 6.63Q8.22 8.53 9.81 8.75Q8.22 8.97 8 10.88Q7.78 8.97 6.19 8.75Q7.78 8.53 8 6.63Z', rgba: GENESIS_VIOLET }),
     Object.freeze({ path: 'M8 7.3Q8.15 8.6 9.23 8.75Q8.15 8.9 8 10.2Q7.85 8.9 6.77 8.75Q7.85 8.6 8 7.3Z', rgba: GENESIS_CORE }),
   ]),
+  // STOREFRONT: the Oblivion Sigil's burning eye and its slit; the Gate Sigil's portal and the swirl in it; the Brass
+  // Crown's aetherium gem; the Dwemer Cog's aetherium hub - each inside its shape, crossing nothing
+  oblivion: Object.freeze([
+    Object.freeze({ path: 'M8 4.9Q11 8 8 11.1Q5 8 8 4.9Z', rgba: DAEDRIC_GOLD }),
+    Object.freeze({ path: 'M8 6.2Q8.8 8 8 9.8Q7.2 8 8 6.2Z', rgba: DAEDRIC_COAL }),
+  ]),
+  gatesigil: Object.freeze([
+    Object.freeze({ path: 'M5.1 15.6V8.7Q5.3 5.8 8 4.8Q10.7 5.8 10.9 8.7V15.6Z', rgba: DAEDRIC_FIRE }),
+    Object.freeze({ path: 'M8 8.2Q10.2 9 9.6 11.6Q8.8 13.6 6.6 12.8Q8.6 12.6 8.9 11.2Q9.2 9.4 8 8.2Z', rgba: DAEDRIC_GOLD }),
+  ]),
+  gearcrown: Object.freeze({ path: 'M8 12.25L9.1 13.3L8 14.35L6.9 13.3Z', rgba: AETHERIUM_BLUE }),
+  cog: Object.freeze({ path: 'M8 6.7A1.3 1.3 0 1 1 8 9.3A1.3 1.3 0 1 1 8 6.7Z', rgba: AETHERIUM_BLUE }),
 });
 /** WIKIMAID: A GLYPH'S DETAILS AS A LIST - one shape (the wolf's eye, the penitent's sword, the aegis's tendrils) or
  *  several in their order (the WikiMaid's ears, lace and face), so every face that draws a glyph walks one shape the same
@@ -654,6 +776,11 @@ export const GLYPH_MARK = Object.freeze({
   wikimaid: 'V',      // WIKIMAID: the rabbit's two ears, up
   nirnrootsage: 'Y',  // NIRNROOT-SAGE: a sprig - its stem, and a leaf up each side
   origin: 'Q',        // SHOP: a ring with its tail - the dragon coiled on itself
+  oblivion: 'X',      // STOREFRONT: the sigil's spikes crossing
+  gatesigil: 'n',     // the gate's arch
+  gearcrown: 'm',     // the crown's points
+  tonalfork: 'y',     // the fork's two tines on its stem
+  cog: '0',           // a ring with its hole
 });
 
 /** The printable range the classic font covers. ACC1d-MARK's own bound,
@@ -746,12 +873,23 @@ export const GLYPH_PATH = Object.freeze({
   // claws; its body tapering to the tail. One outline round the ring, never crossing itself, with the claws beside it,
   // in M, L, Q and Z alone. Seen in Chromium at 13 to 420 px over a night sky, a day sky, stone, grass and snow.
   origin: 'M10.67 6.81Q10.3 5.6 9.35 5.05L8.05 4.45L8.55 4.2L9.75 4.25L10.15 3.95L9.35 3.6L8.6 3.55L7.75 3.3Q8.4 2.55 9.6 2.45L10.85 2L13.9 0.25L12 2.35L15.35 1.75L12.85 3.15L14.15 3.85L13.21 5.49L13.35 5.66L13.54 6.05L13.7 6.45L13.83 6.85L13.94 7.27L14.2 7.66L14.41 7.85L14.61 8.06L14.55 8.29L14.37 8.53L14.18 8.75L14.06 8.96L14.05 9.17L14.02 9.38L13.99 9.59L13.95 9.8L14.07 10.04L14.18 10.29L14.28 10.55L14.14 10.74L13.9 10.9L13.66 11.04L13.48 11.19L13.38 11.37L13.28 11.56L13.17 11.74L13.06 11.91L13.07 12.17L13.07 12.43L13.06 12.7L12.86 12.83L12.59 12.88L12.33 12.93L12.11 13.01L11.95 13.14L11.79 13.27L11.63 13.4L11.46 13.51L11.37 13.75L11.27 13.98L11.15 14.2L10.92 14.25L10.66 14.21L10.41 14.17L10.19 14.16L9.99 14.23L9.8 14.29L9.6 14.34L9.41 14.39L9.23 14.56L9.05 14.71L8.86 14.87L8.64 14.83L8.42 14.71L8.2 14.59L8 14.51L7.8 14.5L7.6 14.48L7.4 14.46L7.2 14.42L6.99 14.5L6.76 14.57L6.54 14.62L6.35 14.51L6.19 14.33L6.03 14.15L5.87 14.01L5.69 13.93L5.52 13.84L5.35 13.74L5.18 13.64L4.96 13.62L4.74 13.59L4.52 13.54L4.38 13.38L4.29 13.17L4.21 12.95L4.12 12.77L3.98 12.63L3.86 12.48L3.74 12.33L3.62 12.17L3.44 12.07L3.26 11.95L3.08 11.82L3.02 11.63L3.01 11.4L3 11.19L2.97 10.99L2.91 10.81L2.85 10.63L2.79 10.44L2.74 10.26L2.7 10.07L2.64 9.69L2.61 9.32L2.6 8.94L2.61 8.56L2.66 8.19L2.73 7.82L2.82 7.46L2.94 7.11L3.09 6.77Q2.5 6.6 1.1 5.9L2.2 5Q1.75 4.05 0.2 3.9L1.45 3.35Q1.55 2 0.25 0.7L3.15 0.45L3.55 2.6L5.61 4.26L5.61 4.26L5.94 4.12L6.28 4.02L6.62 3.93L6.96 3.88L7.31 3.85L7.66 3.85L7.92 3.96L8.3 3.95L7.92 4.06L7.68 4.17L7.37 4.24L7.06 4.33L6.76 4.43L6.47 4.56L6.2 4.7L5.93 4.85L5.67 5.03L5.43 5.22L5.21 5.42L5 5.64L4.8 5.87L4.63 6.11L4.47 6.37L4.33 6.63L4.21 6.9L4.1 7.18L4.02 7.46L3.96 7.74L3.92 8.03L3.89 8.32L3.89 8.61L3.91 8.89L3.95 9.18L4 9.45L4.08 9.73L4.17 9.99L4.28 10.25L4.41 10.5L4.56 10.74L4.72 10.96L4.89 11.18L5.08 11.38L5.28 11.56L5.5 11.73L5.72 11.89L5.95 12.03L6.19 12.15L6.44 12.25L6.69 12.34L6.95 12.4L7.21 12.45L7.48 12.48L7.74 12.5L8 12.49L8.26 12.47L8.52 12.43L8.77 12.37L9.01 12.29L9.25 12.2L9.49 12.09L9.71 11.96L9.92 11.82L10.12 11.67L10.31 11.51L10.49 11.33L10.65 11.14L10.8 10.94L10.94 10.73L11.05 10.51L11.16 10.29L11.24 10.06L11.32 9.83L11.37 9.59L11.41 9.35L11.43 9.11L11.43 8.87L11.42 8.63L11.39 8.39L11.34 8.16L11.28 7.93L11.2 7.71L11.11 7.49L11 7.29L10.88 7.09L10.75 6.9ZM13.27 11.1L14.31 11.83L13.47 11.91L13.97 12.63L13.07 12.43L13.34 13.07L12.35 12.53ZM5.79 13.72L5.07 14.76L5.01 13.94L4.3 14.44L4.51 13.55L3.89 13.83L4.43 12.85Z',
+  // STOREFRONT (Storefront.md section 6): THE OBLIVION SIGIL - a ring with eight spikes, the long four square to it;
+  // its eye is GLYPH_DETAIL's. Stroked
+  oblivion: 'M8 2.8A5.2 5.2 0 1 1 8 13.2A5.2 5.2 0 1 1 8 2.8M8 2.8V0.6M8 13.2V15.4M2.8 8H0.6M13.2 8H15.4M4.32 4.32L3.33 3.33M11.68 4.32L12.67 3.33M4.32 11.68L3.33 12.67M11.68 11.68L12.67 12.67',
+  // THE GATE SIGIL - an Oblivion gate's pointed arch, its spurs out at the shoulders, open below; filled, its portal a detail
+  gatesigil: 'M1.4 15.6L2.4 6.4L1 4.6L3.3 4.5Q4.9 1.5 8 0.4Q11.1 1.5 12.7 4.5L15 4.6L13.6 6.4L14.6 15.6H11.3V8.6Q11.1 5.3 8 4.2Q4.9 5.3 4.7 8.6V15.6Z',
+  // THE BRASS CROWN - three points tipped with balls over a band, gear teeth under it; filled, one way round
+  gearcrown: 'M2.2 12.6L1.4 5.2L4.8 8.4L8 3.2L11.2 8.4L14.6 5.2L13.8 12.6ZM2.2 12.6H13.8V14H2.2ZM2.8 14H4.3V15.4H2.8ZM5.6 14H7.1V15.4H5.6ZM8.9 14H10.4V15.4H8.9ZM11.7 14H13.2V15.4H11.7ZM0.5 4.6A0.9 0.9 0 1 1 2.3 4.6A0.9 0.9 0 1 1 0.5 4.6ZM7.1 2.5A0.9 0.9 0 1 1 8.9 2.5A0.9 0.9 0 1 1 7.1 2.5ZM13.7 4.6A0.9 0.9 0 1 1 15.5 4.6A0.9 0.9 0 1 1 13.7 4.6Z',
+  // Battle-Pass.md section 3: THE TONAL FORK - a tuning fork, its tines up, and its note ringing either side; stroked
+  tonalfork: 'M5.4 1.2V7.2Q5.4 10.2 8 10.2Q10.6 10.2 10.6 7.2V1.2M8 10.2V15.2M2.6 3.4Q1.2 5.6 2.6 7.8M13.4 3.4Q14.8 5.6 13.4 7.8',
+  // THE DWEMER COG - eight teeth round a hole, the hole wound the other way; filled, its hub a detail
+  cog: 'M6.26 2.36L6.49 0.55L9.51 0.55L9.74 2.36L10.26 2.55L10.75 2.78L12.2 1.67L14.33 3.8L13.22 5.25L13.45 5.74L13.64 6.26L15.45 6.49L15.45 9.51L13.64 9.74L13.45 10.26L13.22 10.75L14.33 12.2L12.2 14.33L10.75 13.22L10.26 13.45L9.74 13.64L9.51 15.45L6.49 15.45L6.26 13.64L5.74 13.45L5.25 13.22L3.8 14.33L1.67 12.2L2.78 10.75L2.55 10.26L2.36 9.74L0.55 9.51L0.55 6.49L2.36 6.26L2.55 5.74L2.78 5.25L1.67 3.8L3.8 1.67L5.25 2.78L5.74 2.55ZM8 5.6A2.4 2.4 0 1 0 8 10.4A2.4 2.4 0 1 0 8 5.6Z',
 });
 
 /** Is this glyph DRAWN as an outline rather than filled? The sprout is
  *  a shape and the brackets are strokes; said here so the layer does
  *  not have to know which is which by name. */
-export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true, dm: true, disciple: true, apostle: true, hierophant: true, shadowfang: false, penitent: true, herald: true, tower: false, crownDF: false, crownWR: false, crownSN: false, laurel: true, aegis: true, primarch: false, crystalfist: false, wikimaid: false, nirnrootsage: false, crownSK: false, crownMW: false, crownSU: false, crownVW: false, crownEW: false, crownBM: false, crownCY: false, origin: false });   // NIRNROOT-SAGE: the sprig filled; WIKIMAID: the rabbit filled; SEAT1c: the seats' four filled; ARENA4: the laurel's branches stroked; AEGIS: the pillars and the ring stroked; PRIMARCH: the cross filled; CRYSTAL-FIST: the slashes filled; WIKIMAID: the rabbit filled; SEAT1c: the seats' four filled; ARENA4: the laurel's branches stroked; AEGIS: the pillars and the ring stroked; PRIMARCH: the cross filled; CRYSTAL-FIST: the slashes filled
+export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true, dm: true, disciple: true, apostle: true, hierophant: true, shadowfang: false, penitent: true, herald: true, tower: false, crownDF: false, crownWR: false, crownSN: false, laurel: true, aegis: true, primarch: false, crystalfist: false, wikimaid: false, nirnrootsage: false, crownSK: false, crownMW: false, crownSU: false, crownVW: false, crownEW: false, crownBM: false, crownCY: false, origin: false, oblivion: true, gatesigil: false, gearcrown: false, tonalfork: true, cog: false });   // NIRNROOT-SAGE: the sprig filled; WIKIMAID: the rabbit filled; SEAT1c: the seats' four filled; ARENA4: the laurel's branches stroked; AEGIS: the pillars and the ring stroked; PRIMARCH: the cross filled; CRYSTAL-FIST: the slashes filled; WIKIMAID: the rabbit filled; SEAT1c: the seats' four filled; ARENA4: the laurel's branches stroked; AEGIS: the pillars and the ring stroked; PRIMARCH: the cross filled; CRYSTAL-FIST: the slashes filled
 
 /**
  * The title a peer wears, ready to draw: `{ key, text, rgba }`, or
@@ -809,9 +947,11 @@ export function titlePaint(badge) {
   if (!badge) return out;
   out.color = cssRgba(badge.rgba) ?? '';
   // SHOP: a flame title's letters are its heart over the plate (ui/titleFlame.js, the class setTitleFlame gives), edged
-  // dark all round and lit violet - the fire is behind them, never clipped into them
+  // dark all round and lit - the fire is behind them, never clipped into them. STOREFRONT: each plate's own ink and glow
   if (badge.flame) {
-    out.textShadow = '0 1px 0 #0b0620, 1px 0 0 #0b0620, -1px 0 0 #0b0620, 0 -1px 0 #0b0620, 0 0 .35em rgba(143,91,255,.9)'; out.fontWeight = '500';
+    const spec = /** @type {{ ink?: string, glow?: readonly number[] }} */ (TITLE_FLAME[/** @type {keyof typeof TITLE_FLAME} */ (badge.key)] ?? {});
+    const ink = spec.ink ?? '#0b0620', g = (spec.glow ?? GENESIS_VIOLET).map((c) => Math.round(c * 255));
+    out.textShadow = `0 1px 0 ${ink}, 1px 0 0 ${ink}, -1px 0 0 ${ink}, 0 -1px 0 ${ink}, 0 0 .35em rgba(${g[0]},${g[1]},${g[2]},.9)`; out.fontWeight = '500';
     return out;
   }
   if (Array.isArray(badge.gradient) && badge.gradient.length > 1) {
@@ -874,7 +1014,7 @@ export const badgeClass = (kind, key) => `${kind}-${key}`;
  *  the Gatebreaker's, the Oblivion Ward the Aegis of Oblivion's, the Golden Radiance the Primarch's (PRIMARCH), the Holo
  *  Shadow Cloak the Shadow Fang's black and crimson (SHADOW-CLOAK), the Seraph Wings the Founder's gold - the wings' own, where
  *  the developer's paint is a red (SERAPH-WINGS), the Crystal Resonance the Crystal Fist's purple (CRYSTAL-FIST). A pin walks AURA_TEXT and requires an entry. */
-export const AURA_PAINT = Object.freeze({ dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });   // NIRNROOT-SAGE: Sage's Smoke in the Nirnroot Sage's leaf into glow into haze   // WITCH1: Witchfire in the Witchwarden's green   // WIKIMAID: the Lilac Warren in the WikiMaid's amethyst into blush; HOURS-FIRST: The First Hour in Hour's First's rose gold; SERPENT5: The Maelstrom in the Coilbreaker's sea; EG-E2: the Spire's three each in its title's paint
+export const AURA_PAINT = Object.freeze({ dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', aetheriumgilded: 'numidiumecho' });   // NIRNROOT-SAGE: Sage's Smoke in the Nirnroot Sage's leaf into glow into haze   // WITCH1: Witchfire in the Witchwarden's green   // WIKIMAID: the Lilac Warren in the WikiMaid's amethyst into blush; HOURS-FIRST: The First Hour in Hour's First's rose gold; SERPENT5: The Maelstrom in the Coilbreaker's sea; EG-E2: the Spire's three each in its title's paint
 /** SHADOW-FANG: `titlePaint`'s properties as CSS declarations, the colour
  *  left to the button (its border is drawn in it) - so a gradient title's
  *  word on the card is the SAME paint as over a head, not a second one. */

@@ -93,9 +93,9 @@ const find = (n, cls) => {
 // ── THE VOCABULARY AND ITS FACE ─────────────────────────────────────
 
 test('NIRNROOT-SAGE vocabulary: the title and the glyph join the closed lists last, the aura joins AURAS last; "Nirnroot Sage" and "Sage\'s Smoke" in words, the glyph named on the account card; the title a gradient - the leaf into the glow into the haze, #2e9e57, #7affb0, #e2f0e8 - edged in black, its one colour the glow, apart from every title\'s; the glyph in the glow, filled; `Y` on the classic face; the smoke\'s button in the Sage\'s paint; the wire keeps all three (mutants: the gradient\'s stops, its order, the edge, the one colour, the glyph\'s colour, the mark, the fill, the button\'s paint, the words)', () => {
-  assert.equal(TITLES.at(-18) /* PIN MOVED (SHOP): Genesis joined the list last */ /* PIN MOVED (HUNTERS-MARK): the Marks of Mastery's sixteen joined the list last */, 'nirnrootsage', 'the vocabulary\'s newest');
+  assert.equal(TITLES.at(-27) /* PIN MOVED (STOREFRONT): the shop's three name visuals and the Battle Pass's six joined the list last */ /* PIN MOVED (SHOP): Genesis joined the list last */ /* PIN MOVED (HUNTERS-MARK): the Marks of Mastery's sixteen joined the list last */, 'nirnrootsage', 'the vocabulary\'s newest');
   assert.equal(GLYPHS.slice(0, GLYPHS.indexOf('crownSK')).at(-1) /* PIN MOVED (NIRNROOT-SAGE x TESA, the merge): the Nirnroot Sage's sprig joined after the wikimaid, before the crowns */, 'nirnrootsage');   // PIN MOVED (WW7-3): the provinces' seven crowns joined the list after it
-  assert.equal(AURAS.at(-2) /* PIN MOVED (SHOP): Eternal joined the list last */, 'sagesmoke');
+  assert.equal(AURAS.at(-5) /* PIN MOVED (STOREFRONT): the Daedric Dominion and the two coils joined the list last */ /* PIN MOVED (SHOP): Eternal joined the list last */, 'sagesmoke');
   assert.equal(TITLE_TEXT.nirnrootsage, 'Nirnroot Sage', 'the owner\'s word for it');
   assert.equal(AURA_TEXT.sagesmoke, 'Sage\'s Smoke');
   assert.equal(GLYPH_LABEL.nirnrootsage, 'Nirnroot Sage', 'named on the account card');

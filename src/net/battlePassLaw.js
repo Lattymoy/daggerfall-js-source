@@ -184,3 +184,25 @@ export const PASS_ALL_GRANTS = Object.freeze([...new Set([
   ...Object.values(PASS_REWARDS).flatMap((rs) => rs.map((r) => r.grant)),
   ...Object.values(PASS_DELUXE).flatMap((d) => d.grants),
 ])]);
+
+/**
+ * THE PASS'S CARD as the account read carries it (`/v1/account`'s `pass`, server-account/src/battlePass.js passOf),
+ * checked on the way in: the season shown, whether finds are asked, the open stage, the account's experience, level and
+ * the open top, its tracks and booster, today's experience, and each challenge's count. Null for anything else. Pure.
+ * @param {any} c
+ */
+export function passCardOf(c) {
+  const season = c && typeof c === 'object' ? passSeasonById(c.season) : null;
+  if (!season) return null;
+  const whole = (/** @type {unknown} */ v, /** @type {number} */ max) => (Number.isSafeInteger(v) && /** @type {number} */ (v) >= 0 && /** @type {number} */ (v) <= max ? /** @type {number} */ (v) : 0);
+  const rows = Array.isArray(c.challenges) ? c.challenges : [];
+  return {
+    season: season.id, open: c.open === true,
+    stage: Number.isInteger(c.stage) && c.stage >= -1 && c.stage < season.stages.length ? c.stage : -1,
+    xp: whole(c.xp, PASS_LEVELS * PASS_XP_PER_LEVEL * 10), level: whole(c.level, PASS_LEVELS), top: whole(c.top, PASS_LEVELS),
+    tracks: { free: true, premium: c.tracks?.premium === true || c.tracks?.deluxe === true, deluxe: c.tracks?.deluxe === true },
+    mult: Number.isFinite(c.mult) && c.mult >= 1 && c.mult <= 4 ? c.mult : 1,
+    today: whole(c.today, PASS_DAY_XP * 4), dayMax: PASS_DAY_XP,
+    challenges: PASS_CHALLENGES.map((k) => { const g = rows.find((/** @type {any} */ x) => x?.key === k.key); return { key: k.key, n: Math.min(whole(g?.n, 1e6), k.n), paid: g?.paid === true }; }),
+  };
+}

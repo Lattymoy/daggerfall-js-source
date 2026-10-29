@@ -45,8 +45,12 @@
 // top, in PATTERN_SCALE_PX - so a walk frame carries them with the body; a mirrored view mirrors them, as the other
 // flank. A sprite is one picture a side, so a flank's patches and the chest's are not one body's - each side is its own.
 //
+// STOREFRONT (2026-10-29; bible/06-Systems/Storefront.md section 7): A MOUNT LOOK, the account's - a fifth part laid over
+// the other four (MOUNT_DYES), never the item's and never on the wire's code: the signed token carries it, and each
+// screen lays it on locally (`withMountLook`; `wireHorseLook` takes it off a code bound for the wire).
 // Pure: no DOM, no renderer, no clock. Not a DFU member: Daggerfall has one horse. Ledger A (COATS1).
 import { TRANSPORT_HORSE } from '../item/itemTemplates.js';
+import { MOUNT_LOOKS } from '../../net/effectLaw.js';   // STOREFRONT: the account's mount looks, in the kit's order
 
 /** The coats, in the order the Stable lists them and the item keeps them (`horseCoat`); the first the bay as drawn. */
 export const HORSE_COATS = Object.freeze(['bay', 'chestnut', 'black', 'grey', 'dun', 'buckskin', 'palomino']);
@@ -57,6 +61,9 @@ export const HORSE_PATTERN_MAX = HORSE_PATTERNS.length - 1;
 /** The legs (`horseLegs`), the first the coat's own. */
 export const HORSE_LEGS = Object.freeze(['plain', 'socks', 'stockings']);
 export const HORSE_LEGS_MAX = HORSE_LEGS.length - 1;
+/** STOREFRONT: the mount looks (`mount`), the first none - the account's (net/effectLaw.js MOUNT_LOOKS), laid over the coat. */
+export const HORSE_MOUNTS = Object.freeze(['none', ...MOUNT_LOOKS]);
+export const HORSE_MOUNT_MAX = HORSE_MOUNTS.length - 1;
 /** The highest seed (`horseSeed`); 0 is no seed - a horse not yet born, or the art as drawn. */
 export const HORSE_SEED_MAX = 65535;
 /** What each is called on the Stable card. */
@@ -127,21 +134,35 @@ const pick = (weights, r) => {
   return 0;
 };
 
-/** A look, checked: `{ coat, pattern, legs, seed }`, each a value the law knows, else 0. */
+/** A look, checked: `{ coat, pattern, legs, seed }`, each a value the law knows, else 0 - and STOREFRONT's `mount` with
+ *  them only while one is laid over it (an item's look never carries one). */
 export function readHorseLook(v) {
   const o = v && typeof v === 'object' ? v : {};
-  return { coat: index(o.coat, HORSE_COAT_MAX), pattern: index(o.pattern, HORSE_PATTERN_MAX), legs: index(o.legs, HORSE_LEGS_MAX), seed: index(o.seed, HORSE_SEED_MAX) };
+  const mount = index(o.mount, HORSE_MOUNT_MAX);
+  return { coat: index(o.coat, HORSE_COAT_MAX), pattern: index(o.pattern, HORSE_PATTERN_MAX), legs: index(o.legs, HORSE_LEGS_MAX), seed: index(o.seed, HORSE_SEED_MAX), ...(mount ? { mount } : {}) };
 }
 const C = HORSE_COATS.length, P = HORSE_PATTERNS.length, L = HORSE_LEGS.length;
-/** The look as the wire says it: one number, 0 the bay as drawn. */
-export const horseLookCode = (look) => { const l = readHorseLook(look); return l.coat + C * (l.pattern + P * (l.legs + L * l.seed)); };
-/** The highest code a look can be. */
-export const HORSE_LOOK_CODE_MAX = C * P * L * (HORSE_SEED_MAX + 1) - 1;
+/** The codes of the item's four parts - the wire's - and STOREFRONT's mount look over them, its highest factor. */
+const BASE = C * P * L * (HORSE_SEED_MAX + 1);
+/** The look as one number, 0 the bay as drawn - the wire's (no mount look) under BASE. */
+export const horseLookCode = (look) => { const l = readHorseLook(look); return l.coat + C * (l.pattern + P * (l.legs + L * l.seed)) + BASE * (l.mount ?? 0); };
+/** The highest code the WIRE may say: the item's four parts (a mount look is the token's, never a peer's word). */
+export const HORSE_LOOK_CODE_MAX = BASE - 1;
+/** STOREFRONT: the highest code a screen draws - a mount look laid over it. */
+export const HORSE_LOOK_WORN_MAX = BASE * HORSE_MOUNTS.length - 1;
 /** The look a code names - the bay as drawn for anything the law does not know. */
 export function horseLookOfCode(code) {
-  if (!Number.isInteger(code) || code < 0 || code > HORSE_LOOK_CODE_MAX) return readHorseLook(null);
-  return readHorseLook({ coat: code % C, pattern: Math.floor(code / C) % P, legs: Math.floor(code / (C * P)) % L, seed: Math.floor(code / (C * P * L)) });
+  if (!Number.isInteger(code) || code < 0 || code > HORSE_LOOK_WORN_MAX) return readHorseLook(null);
+  const b = code % BASE;
+  return readHorseLook({ coat: b % C, pattern: Math.floor(b / C) % P, legs: Math.floor(b / (C * P)) % L, seed: Math.floor(b / (C * P * L)), mount: Math.floor(code / BASE) });
 }
+/** STOREFRONT: a code with mount look `key` laid over it (net/effectLaw.js MOUNT_LOOKS; null or unknown: none). */
+export const withMountLook = (/** @type {unknown} */ code, /** @type {unknown} */ key) => {
+  const l = horseLookOfCode(Number.isInteger(code) ? /** @type {number} */ (code) : 0);
+  return horseLookCode({ ...l, mount: Math.max(0, HORSE_MOUNTS.indexOf(/** @type {string} */ (key))) });
+};
+/** STOREFRONT: a code as the wire says it - its mount look taken off. */
+export const wireHorseLook = (/** @type {unknown} */ code) => horseLookCode({ ...horseLookOfCode(Number.isInteger(code) ? /** @type {number} */ (code) : 0), mount: 0 });
 /** A look or its code, as a look. */
 const lookOf = (v) => (typeof v === 'number' ? horseLookOfCode(v) : readHorseLook(v));
 /** A look in words: "chestnut", "black pinto with socks", "dapple grey with stockings". */
@@ -417,6 +438,71 @@ function dyeInto(out, src, o, dye, hueJ, valJ, white, dark, whiteFloor = 0) {
   }
 }
 
+// ── STOREFRONT: the mount looks ─────────────────────────────────────────────────────────────────────────────────────
+
+/** The see-through share of the Spectral Steed's hide (its holes, a sprite's alone - the 3D horse keeps its alpha). */
+export const SPECTRAL_HOLES = 0.16;
+/** How high the Dawnfire Charger's burning legs climb from the hooves, as a share of the hide's height. */
+export const DAWNFIRE_LEGS = 0.3;
+/** The Daedric Warhorse's barding: the share of the hide's height it covers, from the top down. */
+export const BARDING_BAND = Object.freeze([0.06, 0.56]);
+
+/**
+ * A MOUNT LOOK laid over a hide pixel the coat has dyed (`out` at `o`): `u`, `v` the hide's frame (PATTERN_SCALE_PX
+ * units from its left and down from its top), `dn` the share of the hide's height down from its top (`1 - dn` over the
+ * hooves), `px`, `py` the pixel's own grid, `legs` whether hooves are drawn. Answers the pixel's alpha: 255, or 0 for a
+ * Spectral Steed's hole. Each look's light is the coat's own light, so the art's shading stays its shading.
+ */
+function mountInto(out, o, mount, seed, u, v, dn, px, py, legs) {
+  const s = seed | 0, H = hsv(out[o], out[o + 1], out[o + 2]), s0 = H[1], lum = H[2];
+  switch (HORSE_MOUNTS[mount]) {
+    case 'spectral': {   // a pale blue ghost, light flowing along it, wisps of it see-through and the legs fading out
+      const f = noise(u * 2.2 + v * 0.6, v * 9, s + 31), line = smooth(0.6, 0.68, f) - smooth(0.68, 0.76, f);
+      rgbInto(out, o, 192 + 16 * noise(u * 3, v * 3, s + 32), clamp01(0.4 - 0.25 * line), clamp01(0.34 + 0.75 * lum + 0.42 * line));
+      const fade = smooth(0.66, 0.98, dn), wisp = noise(u * 3.5 + v, v * 5, s + 33);
+      return wisp < SPECTRAL_HOLES + 0.45 * fade && hash3(px, py, s + 34) < 0.35 + 0.6 * fade ? 0 : 255;
+    }
+    case 'dawnfire': {   // the coat turned radiant gold, a sheen moving over it, the legs burning up from the hooves
+      const sheen = 0.14 * smooth(0.5, 0.9, noise(u * 4, v * 4, s + 41));
+      rgbInto(out, o, 43 + 5 * noise(u * 2, v * 2, s + 43), clamp01(0.42 + 0.3 * s0), clamp01(0.3 + 0.95 * lum + sheen));
+      const up = 1 - dn, top = DAWNFIRE_LEGS * (0.65 + 0.7 * noise(u * 16, up * 10, s + 42));
+      if (legs && up < top) {
+        const t = Math.pow(up / top, 0.7), flick = noise(u * 30, up * 30, s + 44);
+        rgbInto(out, o, 6 + 42 * t, clamp01(1 - 0.3 * t), clamp01(0.82 + 0.18 * flick));
+      }
+      return 255;
+    }
+    case 'warhorse': {   // the coat gone black and crimson, scaled barding over the back with its edges burning
+      const b = (dn - BARDING_BAND[0]) / (BARDING_BAND[1] - BARDING_BAND[0]);
+      if (b < 0 || b > 1) {
+        const ridge = Math.abs(noise(u * 6, v * 6, s + 51) - 0.5) < 0.02;   // ember veins under the hide
+        if (ridge) rgbInto(out, o, 14, 0.9, clamp01(0.42 + 0.4 * lum));
+        else rgbInto(out, o, 352, 0.5, clamp01(0.05 + 0.36 * lum));
+        return 255;
+      }
+      if (b > 0.95) { rgbInto(out, o, 26, 0.85, clamp01(0.5 + 0.45 * lum)); return 255; }   // its lower edge, a gold-crimson trim
+      const rows = 4, row = Math.floor(b * rows), cu = fract(u * 5 + (row % 2) * 0.5) - 0.5, cv = fract(b * rows);
+      const d = Math.hypot(cu, (cv - 0.12) * 0.85);   // a scale: an arc hanging from its row, the next row over its top
+      const edge = 1 - smooth(0.04, 0.1, Math.abs(d - 0.5)), glow = 0.6 + 0.4 * noise(u * 8, b * 8, s + 52);
+      if (edge > 0.5) rgbInto(out, o, 8 + 10 * glow, 0.95, clamp01(0.45 + 0.45 * glow * edge + 0.1 * lum));
+      else rgbInto(out, o, 356, 0.4, clamp01((0.06 + 0.28 * lum) * (0.7 + 0.5 * cv)));   // dark iron, shadowed under the scale above
+      return 255;
+    }
+    case 'automaton': {   // brass plates, their seams dark and riveted, a few rivets aetherium blue
+      const row = Math.floor(dn * 4.5), gu = fract(u * 5 + (row % 2) * 0.5 + 0.12 * noise(u * 2, dn * 2, s + 61)), gv = fract(dn * 4.5);
+      const du = Math.min(gu, 1 - gu), dv = Math.min(gv, 1 - gv);
+      const sheen = 0.18 * Math.pow(Math.sin(u * 9 + v * 3) * 0.5 + 0.5, 6);
+      if (Math.hypot(du * 1.2, dv) < 0.06) {   // a rivet at a plate's corner - one in four an aetherium stud
+        const cell = hash3(Math.floor(u * 5 + 0.5), row, s + 63);
+        if (cell < 0.25) rgbInto(out, o, 198, 0.8, 1); else rgbInto(out, o, 44, 0.25, clamp01(0.75 + 0.25 * lum));
+      } else if (du < 0.045 || dv < 0.055) rgbInto(out, o, 34, 0.55, clamp01(0.07 + 0.28 * lum));   // a seam
+      else rgbInto(out, o, 41 + 4 * noise(u * 3, v * 3, s + 62), 0.6, clamp01(0.24 + 0.85 * lum + sheen));
+      return 255;
+    }
+    default: return 255;
+  }
+}
+
 /** Whether a pixel is the hide's (THE DYE's first two rules): warm, coloured, and - where a saddle is drawn (`tack`) -
  *  not the tack's leather. */
 export function isCoatPixel(r, g, b, tack = true) {
@@ -462,6 +548,7 @@ export function recolorHorse(image, look, { bottomFirst = true, legs = true, tac
       if (l.pattern) { const M = markingAt(l.pattern, l.seed, (x - x0) / unit, down / unit, x - x0, down); white = M[0]; dark = M[1]; }
       if (band > 0 && up < band * (0.8 + 0.4 * hash3(x - x0, 0, l.seed + 13))) white = 1;   // the legs' white, its top ragged
       dyeInto(out, src, i * 4, dye, hueJ, valJ, white, dark);
+      if (l.mount && !mountInto(out, i * 4, l.mount, l.seed, (x - x0) / unit, down / unit, down / hideH, x, r, legs)) out[i * 4 + 3] = 0;   // STOREFRONT: the mount look over the coat
     }
   }
   const Ctor = /** @type {any} */ (image.colors).constructor;
@@ -669,5 +756,6 @@ export function dyeHorseTexelRows(src, out, width, look, map, r0, r1) {
     else if (pattern === 'roan') white = roanFleck(s, x, y, field);
     if (band > 0 && map.up[i] < band * (0.8 + 0.4 * rag)) white = 1;   // the legs' white, its top ragged
     dyeInto(out, src, o, dye, hueJ, valJ, white, dark, WHITE_FLOOR_3D);
+    if (l.mount) { const k = P[q + 2] >= P[q + 5] && P[q + 2] >= P[q + 8] ? 0 : P[q + 5] >= P[q + 8] ? 3 : 6; mountInto(out, o, l.mount, s, P[q + k], P[q + k + 1], 1 - map.up[i], x, y, true); }   // STOREFRONT: on the face it most faces; its alpha the 3D horse's own
   }
 }

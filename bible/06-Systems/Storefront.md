@@ -54,7 +54,8 @@ an account is its price times the share of its worth not yet held, never under S
 Champion bought by someone who holds the Daedric Pyre costs less by the Pyre's share. The Eternal Set follows the same
 law, a departure from ARMORY's full $20 for a buyer who held pieces (`04-Characters/Aura-Armory.md`).
 
-**Bundle-only wares.** The Daedric Dominion aura and four glyphs are sold only inside a bundle. Each has a worth, so a
+**Bundle-only wares.** The Daedric Dominion aura and three glyphs (the Oblivion Sigil, the Gate Sigil and the Brass
+Crown) are sold only inside a bundle. Each has a worth, so a
 bundle's price can be weighed, and is never sold alone.
 
 ## 3.1 Featured, and limited
@@ -85,15 +86,19 @@ my token carries which effect (`fx`), so nobody can show one they do not own.
 | Daedric Pyre | Exclusive | a Daedric sigil burns into the ground, a pillar of crimson fire takes the body, embers storm upward, a scorch sigil fades |
 | Tonal Shatter | the pass | brass cogs and gear teeth burst out, steam jets, a blue tonal ring rolls out over the ground |
 
-Drawn by `render/killFxPass.js` from `scenes/killFx.js`'s simulation, owned by each host's magic engine
-(`scenes/hostMagic.js`), so all four hosts step, shift, clear and draw it with the impact sparks. "Others' kill effects"
-(Features: all, near, none) chooses whose are drawn. Reduced flashes (the HUD's flash setting) dim the flash.
+`render/killFx.js` holds the simulation (`KillFx`) and its pass (`KillFxPass`). Each host's magic engine
+(`scenes/hostMagic.js`) owns one, so all four hosts step, shift, clear and draw it with the impact sparks. Each look rings
+its own sound (`tools/storefrontSfx.mjs`, `public/sfx/fx-kill-*.wav`). "Others' kill effects" (Features: all, near, none)
+chooses whose are drawn. Where the browser asks for less motion (`prefers-reduced-motion`), the flashes are dimmer.
 
 ## 5. Portal skins
 
-A portal skin is every portal of mine: my companions' arrivals, leavings and catch-ups (COMPANION-PORTAL), and my Portal
-Stone's gate (PORTAL1). A peer's portals wear the peer's own: a gate by its opener's token, a companion's by its
-owner's. Drawn on the pools' own billboards (`scenes/portalFx.js`), so every host draws it as it drew the violet one.
+A portal skin is every portal of mine: my companions' arrivals, leavings and catch-ups (COMPANION-PORTAL), my spared
+revenant's rise, my Portal Stone's gate (PORTAL1) and an Elite Breach call's portal at my feet. A peer's wear the peer's
+own, by its token (`net/peer/peerEffects.js`): its gate, and its spared revenant's rise. Drawn on the pools' own
+billboards (`scenes/portalFx.js`, the skins' art `scenes/portalSkins.js`), so every host draws it as it drew the violet
+one. A skin opens with its own burst and sound (`fx-portal-*.wav`), and the Daedric, Aetheric and Brass skins breathe
+embers, motes and steam while they stand.
 
 | Skin | Tier | The sheet's words | What stands |
 | --- | --- | --- | --- |
@@ -110,11 +115,20 @@ fire under a gold edge). The bundle glyphs: the Oblivion Sigil, the Gate Sigil a
 
 ## 7. Mount looks
 
-A mount look is drawn on the horse I ride, over its coat (the coat stays the player's free choice, Horse-Coats.md), and
-seen by every player through the token: **Spectral Steed** (the horse a translucent blue ghost, its mane and tail
-flowing light, its hooves leaving glowing prints), **Dawnfire Charger** (a golden fire mane and tail, sun motes, burning
-hoofprints), **Daedric Warhorse** (black and crimson barding light over the body, a burning mane, smoke off the hooves,
-eyes like coals). The pass's Brass Automaton is the season's.
+A mount look is the account's and is laid over the horse I ride: the riding view, Eye of the Beholder's riders, the 3D
+horse and my standing horse. It is a fifth part of the horse's look, dyed as a coat is dyed (`systems/horse/horseCoats.js`,
+COATS1). The coat stays the player's free choice on the Stable card and comes back when the look is taken off.
+
+| Look | Tier | What it is |
+| --- | --- | --- |
+| Spectral Steed | Standard | a pale blue ghost, light flowing along it, see-through at its legs; glowing prints and wisps |
+| Dawnfire Charger | Premium | radiant gold, the legs burning up from the hooves; a mane of golden fire, sun motes, burning prints |
+| Daedric Warhorse | Exclusive | black and crimson under scaled barding with burning edges; a burning mane, smoke and embers off the hooves |
+| Brass Automaton | the Deluxe Pass | riveted brass plates set with aetherium studs; sparks off the hooves, steam from the chest |
+
+The look rides no wire of its own: the horse's code on the wire is the item's four parts (`wireHorseLook`), and each
+screen lays a rider's look on from its token (`systems/horse/mountLook.js`). The beat - hoofprints, a mane, steam - is the
+kill effects' engine's, as ambient bursts that never take a kill's place (`systems/horse/mountFx.js`).
 
 ## 8. Bundles
 
@@ -132,16 +146,28 @@ under its worth too.
 ## 9. The window
 
 The shop's window (`ui/enhanced/enhancedShop.js`): the title, the proceeds' disclaimer first, then **the carousel** - a
-panel a featured ware, large, live (its effect playing on its stage), with how long it stays featured and whether it
-is limited - turning every eight seconds, stopped while pointed at or focused, never turning for less motion; its dots
-and arrows, the arrow keys and a swipe step it. Under it the sections' tabs, each section's panels, the account's line
-and the foot. A bundle's panel lists what it gives, each held one marked, the price it costs this account and its worth.
+panel a featured ware, large, live, with how long it stays featured and whether it is limited. It turns every eight
+seconds (`carouselTurns`), never while pointed at, focused or paused (its Pause button), never for less motion. Its
+arrows, its dots, the arrow keys and a swipe step it. Only the panel shown runs its stage. Under it the sections' tabs
+(a section with nothing on the card is not shown), each section's panels, the account's line and the foot.
+
+A panel's stage is live: a title on its plate, a glyph, an aura or a piece on the stand-in, a kill effect or a portal
+skin played on the character's stage with the stand-in figure (`render/effectStage.js`), a horse in its mount look
+(`ui/mountPreview.js`). A panel says its tier, its featured window and the price this account pays, the list price
+struck through beside it where it is less. A bundle's panel lists what it gives, each held one marked, and its worth.
+An effect's sound is heard when the player points at its stage or chooses its slide, never on every loop.
+
+**The profile** (`ui/characterSlots.js`, PROFILE-SLOTS) has three more slots under its stage: Kill effect, Portals and
+Mount. A kill effect pointed at plays on the character, which burns away in its colour and comes back; a portal skin
+opens behind the character (none worn: the violet vortex); a mount look stands on its horse over the choices. One not
+held is tried on and told how it is had; one held is worn through the flow's own door.
 
 ## 10. Online
 
 The token's new claim is `fx`, the effects kit: three characters, the kill effect, the portal skin and the mount look,
 `0` for none, omitted when none is worn (`net/effectLaw.js`). The relay badges it on a peer's row beside the aura and
-the armory kit. The pose carries `kc` (my kills, a count), `kp` (the last one's place) and `ks` (the body's height).
+the armory kit. The pose carries `xk` (my kills with an effect, a count), `xp` (the last one's place) and `xh` (the body's
+height, in tenths of a metre).
 
 ## 11. Not built, and why
 

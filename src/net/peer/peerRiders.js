@@ -34,6 +34,7 @@ import { decodePng } from '../../systems/textureReplacement.js';
 import { isLayeredKey, decodeLayered, outfitOfItems, layeredGenderOf, LAYERED_OWN } from '../../player/eyeOfTheBeholder/layeredArmor.js';   // WORN-ARMOUR: a walker in the armour it wears
 import { modSetting } from '../../systems/modSettings.js';   // LAYERED-PEERS: whether this player wears Layered Gearing
 import { POSE_RIDE } from '../wire.js';
+import { peerMountLook } from '../../systems/horse/mountLook.js';   // STOREFRONT: a rider's horse in its mount look
 import {
   isRearView, createLanternArt, loadLanternArt, createSpriteLantern, stepSpriteLantern, spriteStride, hangSpriteLantern,
   mintSpriteLantern, dropSpriteLantern,
@@ -341,7 +342,7 @@ export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, deco
     // PR-WW1: the form picks the lycan archive (tableArchive: 112380, or 112381 for the wereboar); a mounted table
     // still reads the rider's own set
     const yaw = peerBodyYaw(pose), view = viewOf(yaw, feet, eye);   // AUDIT CLIMB-ARC N2: a beast on the wall faces it
-    const s = spriteFor(table, view, r.frame, { onHorse: pose.rv | 0, lycanthropyType: beast, horse: pose.rc | 0 });   // COATS1: `rc` the look their horse wears
+    const s = spriteFor(table, view, r.frame, { onHorse: pose.rv | 0, lycanthropyType: beast, horse: peerMountLook(peer.id, pose.rc | 0) });   // COATS1: `rc` the look their horse wears; STOREFRONT: their mount look over it
     if (!s) return;
     faceDrawn(r, view, yaw, feet, eye);   // SPRITE-FACE: the way it is drawn facing, for an aura on it
     // PR-WW1: the transformed forms take the saddle's size (sizeMod - one constant serves both)

@@ -15,6 +15,12 @@
 //  - ITS LIFE: it opens (PORTAL_MS.open, a tear widening), holds, and closes (PORTAL_MS.close); a `short` one (the far
 //    end of a catch-up's jump) holds less. A sound (the magic school's cast, the classic SPELL_CAST_SOUND's) as it opens.
 
+import { portalSkinOf, dressPlace } from './portalSkins.js';   // STOREFRONT: a wearer's portal skin - its frames and what stands about it
+import { playerDoor } from '../systems/playerDoor.js';   // STOREFRONT: a skin's bursts, through the running host's magic engine
+import { ownEffects } from '../systems/ownGlyphs.js';   // STOREFRONT: my own portals wear my skin
+import { effectWorn } from '../net/effectLaw.js';
+import { playStorefrontSound } from '../systems/storefrontSounds.js';   // STOREFRONT: a skin's own sound
+
 export const PORTAL_ARCHIVE = 'fxportal';
 export const PORTAL_FRAMES = 12;
 export const PORTAL_FPS = 14;
@@ -70,6 +76,27 @@ export function portalFrame(k, n = PORTAL_FRAMES, w = PORTAL_TEX.w, h = PORTAL_T
 }
 
 const _uploaded = new WeakSet();
+/** STOREFRONT: the skins' frames, uploaded once a renderer a skin - its vortex and each piece that stands about it. */
+const _skinsUp = new WeakMap();
+export function ensureSkinArt(/** @type {any} */ renderer, /** @type {string} */ skin) {
+  const look = portalSkinOf(skin);
+  if (!look || !renderer || typeof renderer.uploadTexture !== 'function') return;
+  let done = _skinsUp.get(renderer);
+  if (!done) { done = new Set(); _skinsUp.set(renderer, done); }
+  if (done.has(skin)) return;
+  done.add(skin);
+  const up = (/** @type {string} */ archive, /** @type {any} */ paint, /** @type {number} */ n, /** @type {{ w: number, h: number }} */ tex) => {
+    for (let k = 0; k < n; k++) {
+      const c32 = paint(k, n, tex.w, tex.h);
+      renderer.uploadTexture(archive, String(k), c32);
+      renderer.uploadEmissionTexture?.(archive, String(k), c32, { white: true });
+    }
+  };
+  up(look.archive, look.paint, look.frames, look.tex);
+  for (const d of look.dress) up(d.archive, d.paint, d.frames, d.tex);
+}
+/** STOREFRONT: the portal skin I wear now (net/effectLaw.js), or null - my companions' portals and my gate wear it. */
+export const ownPortalSkin = () => effectWorn(ownEffects(), 'portal');
 /** The frames, uploaded once per renderer - albedo and the same picture as its emission (self-lit). */
 export function ensurePortalArt(renderer) {
   if (!renderer || _uploaded.has(renderer) || typeof renderer.uploadTexture !== 'function') return;
@@ -104,19 +131,55 @@ export function createPortalSet({ renderer, audio = null, now = () => performanc
   const list = [];
   let eye = null;
   let soundAt = -Infinity;   // QUIET-COMPANIONS: the set's last portal sound
-  /** PORTAL1: `holdMs` a hold of its own; `fixed` stands it where it opened (a gate in the world, not a body's back). */
-  function open(feet, { short = false, quiet = false, holdMs = null, fixed = false } = {}) {
+  /** PORTAL1: `holdMs` a hold of its own; `fixed` stands it where it opened (a gate in the world, not a body's back).
+   *  STOREFRONT: `skin` the wearer's portal skin (scenes/portalSkins.js), null for the violet vortex. */
+  function open(feet, { short = false, quiet = false, holdMs = null, fixed = false, skin = null } = {}) {
     if (!renderer?.createBillboardBatch || !feet) return null;
     ensurePortalArt(renderer);
+    const look = portalSkinOf(skin);
+    if (look) ensureSkinArt(renderer, /** @type {string} */ (skin));
     const at = [feet[0], feet[1] - 0.05, feet[2]];
-    const batch = renderer.createBillboardBatch(PORTAL_ARCHIVE, '0', { w: PORTAL_SIZE.w, h: PORTAL_SIZE.h }, [[0, 0, 0]], { dynamic: true });
+    const batch = renderer.createBillboardBatch(look ? look.archive : PORTAL_ARCHIVE, '0', { w: PORTAL_SIZE.w, h: PORTAL_SIZE.h }, [[0, 0, 0]], { dynamic: true });
     batch.origin = [at[0], at[1], at[2]];
     batch.noShadow = true;
     batch.conceal = { mode: 3, alpha: 0, t: 0, phase: 0 };
-    const p = { at: now(), feet: at, short, holdMs: Number.isFinite(holdMs) ? holdMs : null, fixed, batch, origin: batch.origin };
+    const p = { at: now(), feet: at, short, holdMs: Number.isFinite(holdMs) ? holdMs : null, fixed, batch, origin: batch.origin, look, dress: look ? dressOf(look) : [], breath: 0 };
     list.push(p);
+    if (look) { try { playerDoor()?.burst?.(look.open, [at[0], at[1] + 0.05, at[2]], { h: PORTAL_SIZE.h, w: PORTAL_SIZE.w }); } catch { /* no burst here */ } }
+    if (!quiet && look && p.at - soundAt >= PORTAL_SOUND_GAP_MS) { soundAt = p.at; playStorefrontSound(audio, look.sound, at, 0.9, { maxDistance: 24 }); }   // STOREFRONT: a skin's own
     if (!quiet && p.at - soundAt >= PORTAL_SOUND_GAP_MS) { soundAt = p.at; try { audio?.play3dId?.(PORTAL_SOUND, at, 0.9, { maxDistance: 24 }); } catch { /* silent */ } }   // a sound ID (DAGGER.SND's), not an index - AUDIT 58's law
     return p;
+  }
+  /** STOREFRONT: the pieces a skin stands about its portal, each its own billboard, hidden until placed. */
+  function dressOf(/** @type {any} */ look) {
+    const out = [];
+    for (const d of look.dress) for (let i = 0; i < d.count; i++) {
+      const b = renderer.createBillboardBatch(d.archive, '0', { w: d.size.w, h: d.size.h }, [[0, 0, 0]], { dynamic: true });
+      b.origin = [0, -1e4, 0]; b.noShadow = true; b.conceal = { mode: 3, alpha: 0, t: 0, phase: 0 };
+      out.push({ d, i, batch: b, phase: (i * 0.37) % 1 });
+    }
+    return out;
+  }
+  function dropDress(/** @type {any} */ p) { for (const q of p.dress ?? []) { try { renderer.destroyBillboardBatch(q.batch); } catch { /* gone */ } } p.dress = []; }
+  /** STOREFRONT: a skinned portal's frame and the pieces about it, `age` ms into its life, `k` how open it stands. */
+  function tickSkin(/** @type {any} */ p, /** @type {number} */ age, /** @type {number} */ k, /** @type {number[]|null} */ viewEye) {
+    const look = p.look;
+    p.batch.record = String(Math.floor((age / 1000) * look.fps) % look.frames);
+    const mid = [p.origin[0], p.origin[1] + PORTAL_SIZE.h * 0.5, p.origin[2]];
+    const ex = viewEye ? mid[0] - viewEye[0] : 0, ez = viewEye ? mid[2] - viewEye[2] : 1, L = Math.hypot(ex, ez) || 1;
+    const right = [ez / L, 0, -ex / L], back = [ex / L, 0, ez / L];
+    const closing = age > portalLife({ short: p.short, holdMs: p.holdMs }) - PORTAL_MS.close;
+    for (const q of p.dress) {
+      const pl = dressPlace(q.d, q.i, age / 1000, k, q.d.place === 'arch' ? [mid[0] + back[0] * 0.08, mid[1], mid[2] + back[2] * 0.08] : mid, right, closing);
+      q.batch.origin[0] = pl.at[0]; q.batch.origin[1] = pl.at[1]; q.batch.origin[2] = pl.at[2];
+      q.batch.size = { w: q.d.size.w * pl.scale * (pl.spin < 0 ? -1 : 1), h: q.d.size.h * pl.scale };
+      q.batch.record = String(Math.floor((age / 1000 + q.phase) * q.d.fps) % q.d.frames);
+      q.batch.conceal.alpha = clamp01(pl.scale * 1.2);
+    }
+    if (look.ambient && k > 0.8 && !closing && age - p.breath >= look.ambient.every * 1000) {
+      p.breath = age;
+      try { playerDoor()?.burst?.(look.ambient.recipe, [p.origin[0], p.origin[1] + 0.05, p.origin[2]], { h: PORTAL_SIZE.h, w: PORTAL_SIZE.w, ambient: true }); } catch { /* no breath here */ }
+    }
   }
   /** One frame: each portal's size, frame and glow; the closed ones freed. `viewEye` the camera (it stands behind). */
   function tick(viewEye = null) {
@@ -126,7 +189,7 @@ export function createPortalSet({ renderer, audio = null, now = () => performanc
       const p = list[i];
       const age = t - p.at;
       const { open: k, done } = portalOpenAt(age, { short: p.short, holdMs: p.holdMs });
-      if (done) { try { renderer.destroyBillboardBatch(p.batch); } catch { /* gone */ } list.splice(i, 1); continue; }
+      if (done) { dropDress(p); try { renderer.destroyBillboardBatch(p.batch); } catch { /* gone */ } list.splice(i, 1); continue; }   // STOREFRONT: and the pieces about it
       const w = PORTAL_SIZE.w * Math.max(0.04, Math.min(1, k * 1.25 - 0.1)), hgt = PORTAL_SIZE.h * Math.max(0.12, Math.min(1.06, 0.35 + k * 0.7));
       p.batch.size = { w, h: hgt };
       p.batch.record = String(Math.floor((age / 1000) * PORTAL_FPS) % PORTAL_FRAMES);
@@ -138,19 +201,22 @@ export function createPortalSet({ renderer, audio = null, now = () => performanc
         p.origin[0] = p.feet[0] + (dx / L) * PORTAL_BACK; p.origin[2] = p.feet[2] + (dz / L) * PORTAL_BACK;
       }
       p.origin[1] = p.feet[1] + (PORTAL_SIZE.h - hgt) * 0.5;   // it opens about its middle
+      if (p.look) tickSkin(p, age, k, eye);   // STOREFRONT: its own frames, and what stands about it - placed off this frame's origin
     }
   }
   return {
     open,
     tick,
-    /** The portals' batches, drawn with the pool's. */
-    batches: () => (list.length ? list.map((p) => p.batch) : NONE),
+    /** STOREFRONT: a portal of MINE - my companions', my spared revenant's - in the skin I wear. */
+    openMine: (/** @type {number[]} */ feet, /** @type {any} */ o = {}) => open(feet, { ...o, skin: ownPortalSkin() }),
+    /** The portals' batches, drawn with the pool's - STOREFRONT: and the pieces a skin stands about each. */
+    batches: () => (list.length ? list.flatMap((p) => (p.dress?.length ? [p.batch, ...p.dress.map((q) => q.batch)] : [p.batch])) : NONE),
     /** The floating origin moved: every portal with it (exteriorFoes.js offsetAll). */
-    offsetAll(o) { for (const p of list) { p.feet[0] += o[0]; p.feet[1] += o[1]; p.feet[2] += o[2]; } },
+    offsetAll(o) { for (const p of list) { p.feet[0] += o[0]; p.feet[1] += o[1]; p.feet[2] += o[2]; for (const q of p.dress ?? []) { q.batch.origin[0] += o[0]; q.batch.origin[1] += o[1]; q.batch.origin[2] += o[2]; } } },
     /** PORTAL1: one portal out at once, its batch freed (a gate whose word was replaced or ran out). */
-    remove(p) { const i = list.indexOf(p); if (i < 0) return; try { renderer.destroyBillboardBatch(p.batch); } catch { /* gone */ } list.splice(i, 1); },
+    remove(p) { const i = list.indexOf(p); if (i < 0) return; dropDress(p); try { renderer.destroyBillboardBatch(p.batch); } catch { /* gone */ } list.splice(i, 1); },
     /** How many stand (tests, the pool's sweep). */
     get count() { return list.length; },
-    clear() { for (const p of list) { try { renderer.destroyBillboardBatch(p.batch); } catch { /* gone */ } } list.length = 0; },
+    clear() { for (const p of list) { dropDress(p); try { renderer.destroyBillboardBatch(p.batch); } catch { /* gone */ } } list.length = 0; },
   };
 }
