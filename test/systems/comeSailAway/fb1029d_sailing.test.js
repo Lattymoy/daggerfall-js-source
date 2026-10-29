@@ -35,11 +35,12 @@ function sailed(s, boat) {
 test('WIND-FIRST + NO-PIXEL the report: a boat of mine with no map pixel, a building entered and left - the door lays the outdoors\' wind and a Small Ship under sail makes way (it held the indoors\' none: 0 knots on every ship)', () => {
   const s = mk();
   const ship = s.place(2, 0);
-  const lost = s.place(1, 0, [300, 34, 200]);
+  const lost = s.place(1, 0, [2 * 819.2 + 300, 34, 200]);   // AUDIT FB1029d C2: two pixels east of the player's own
   lost.MapPixel = null;
   assert.doesNotThrow(() => door(s), 'the door\'s visibility reads her');
   assert.ok(mag(s.rt.state.windVectorCurrent) > 0.5, `a wind outdoors (${mag(s.rt.state.windVectorCurrent).toFixed(2)})`);
-  assert.deepEqual(lost.MapPixel, { X: 10, Y: 20 }, 'NO-PIXEL: she takes the pixel she stands on');
+  assert.deepEqual(lost.MapPixel, { X: 12, Y: 20 }, 'NO-PIXEL: she takes the pixel she stands on, not the player\'s');
+  assert.equal(lost.GameObject.activeSelf, false, 'and two pixels off she is out of sight');
   const kn = sailed(s, ship);
   assert.ok(kn > 2, `under sail at ${kn.toFixed(2)} kn`);
 });
@@ -55,10 +56,10 @@ test('WIND-FIRST + NO-PIXEL past the Bay: the same door at the Imperial City\'s 
   s.deps.currentMapPixel = () => ({ X: px, Y: py });
   const at = (dx) => [t.position[0] + 100 + dx, 34, t.position[2] + 100];   // inside her pixel: map y falls as z grows
   const ship = s.rt.PlaceBoat(at(0), [0, 0, 1], 2, 0, t);
-  const lost = s.rt.PlaceBoat(at(200), [0, 0, 1], 1, 0, t);
+  const lost = s.rt.PlaceBoat(at(2 * 819.2), [0, 0, 1], 1, 0, t);   // AUDIT FB1029d C2: two pixels east of the player's
   lost.MapPixel = null;
   assert.doesNotThrow(() => door(s));
-  assert.deepEqual(lost.MapPixel, { X: px, Y: py }, 'hers, past the Bay');
+  assert.deepEqual(lost.MapPixel, { X: px + 2, Y: py }, 'hers, past the Bay');
   assert.ok(mag(s.rt.state.windVectorCurrent) > 0.5, 'a wind outdoors');
   const kn = sailed(s, ship);
   assert.ok(kn > 2, `under sail at ${kn.toFixed(2)} kn`);
@@ -77,14 +78,14 @@ test('WIND-FIRST: a door whose boats cannot be read at all still lays its wind f
 
 test('WIND-FIRST + NO-PIXEL a load: a save made indoors with a boat of no pixel loads outdoors - the restore stands her where she lies and SAIL-WIND\'s check lays a wind before the boats are shown', () => {
   const a = mk();
-  const b = a.place(1, 0, [300, 34, 200]);
+  const b = a.place(1, 0, [2 * 819.2 + 300, 34, 200]);   // AUDIT FB1029d C2: two pixels east of the player's own
   b.MapPixel = null;
   a.world.inside = true; a.rt.OnTransition();
   const save = JSON.parse(JSON.stringify(a.rt.getSaveData()));
   assert.deepEqual([save.placedBoats[0].MapPixel, save.windVector], [null, { x: 0, y: 0, z: 0 }], 'the record: no pixel, the indoors\' none');
   const s = mk();
   assert.doesNotThrow(() => { s.rt.restoreSaveData(JSON.parse(JSON.stringify(save))); s.rt.OnLoad(); });
-  assert.deepEqual(s.rt.AllBoats[0].MapPixel, { X: 10, Y: 20 });
+  assert.deepEqual(s.rt.AllBoats[0].MapPixel, { X: 12, Y: 20 });
   assert.ok(mag(s.rt.state.windVectorCurrent) > 0.5, 'a wind outdoors');
   // and a load whose boats cannot be read still lays it (SAIL-WIND's check is OnLoad's first)
   const t = mk();

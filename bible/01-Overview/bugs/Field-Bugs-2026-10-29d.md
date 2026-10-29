@@ -4,7 +4,7 @@ The Discord, ItMustBeMonday, handed over by the owner as a screenshot: "Seeing a
 moment" - "Basically someone in Iliac bay, can't sail no speed With the wind. Another person next to them can. Tried
 different ships and all sorts". The owner, on the first reading: "People are having trouble sailing, period." Read on
 main's `5a77fc2f2` with the freeware's data (`tools/fetch-data.sh`). The pins are `fb1029d_sailing.test.js`, the
-mutants `tools/mutants/fb1029d_sailing.json` (12, all dead).
+mutants `tools/mutants/fb1029d_sailing.json` (12, all dead). Read cold in `01-Overview/audits/Audit-FB1029d.md`.
 
 | | Report | What it was | Done |
 |---|---|---|---|
@@ -15,7 +15,8 @@ fixed, and each one alone gives the report's words.
 
 ## WIND-FIRST and NO-PIXEL: a door lays its wind before it shows its boats (1)
 
-`src/systems/comeSailAway/comeSailAway.js` (OnTransition, OnLoad, pixelOf, pixelUnderOn).
+`src/systems/comeSailAway/comeSailAway.js` (OnTransition, OnLoad, pixelOf), `src/systems/comeSailAway/csaPixel.js`
+(boatPixel, pixelUnderOn).
 
 FOUND. Come Sail Away lays no wind indoors, and a door out lays the outdoors' wind in OnTransition (ComeSailAway.cs
 1978-1985). The C# shows the boats first and lays the wind after. The boats' visibility reads each boat's map pixel,
@@ -35,13 +36,16 @@ OnPositionUpdate asks each boat's visibility, so every boat after her in the lis
 
 THE LAW NOW. A door lays its wind before its boats are shown, and OnLoad checks SAIL-WIND's none before them too: the
 wind reads no boat, so no boat can strand it. A boat with no pixel takes the pixel she stands on, read off the player's
-terrain as `recoverLostBoats` reads one (`pixelUnderOn`, the one home of that sum now), else the player's own. Indoors
-she takes the player's pixel. Port-Ledger A says so (WIND-FIRST, NO-PIXEL).
+terrain as `recoverLostBoats` reads one (`csaPixel.js`, the one home of that sum now), and keeps it. Indoors, or with
+no terrain, the player's pixel answers that one read and is never kept on her (AUDIT FB1029d A1). Every read of her
+pixel goes through it. A wind of nought the frame finds outdoors is the door's wind laid, and logged (WIND-HELD).
+Port-Ledger A says so (WIND-FIRST, NO-PIXEL).
 
 `tools/sailDrive.mjs` had judged only states with a wind already up, so a wind of nought outdoors was the one stop it
-could not see. It judges every state with sails set outdoors now, may take a boat's pixel away, and logs a step that
-throws and drives on, as the host does. Seed 7, 80 runs: on main 1 stop (the door threw, the wind `[0, 0, 0]`, 0 way),
-on the fix none.
+could not see. It judges every state with sails set outdoors now. With `--lost` it may take a boat's pixel away, and
+it logs and counts each runtime call that throws and drives on, as the host does. The new drive over main's runtime,
+`--lost`, seed 7, 80 runs: 1 stop (the door threw, the wind `[0, 0, 0]`, 0 way) and 141 calls thrown. On the fix,
+seed 1, 300 runs: none of either.
 
 ## CARGO-ASHORE: a wagon ashore is no ship's load (1)
 
@@ -54,30 +58,37 @@ oars or sail. In DFU the wagon is always with its owner and holds 750 kg. Here H
 the Stable keeps it, a team follows on foot, and WAGONS1's Open Wagon holds 1,500 kg and the Caravan 2,000. Every one
 of those loads weighed on every ship, wherever the wagon stood.
 
-Measured, 120 kg carried, 15 s under sail from rest (m/s): a full Small Cart left the Rowboat and the Large Boat dead.
+Measured on the Responsive helm, 120 kg carried, 15 s from rest (m/s): a full Small Cart left the Rowboat dead at her
+oars and the Large Boat dead under sail.
 A full Open Wagon also cut the Small Ship from 9.72 to 1.99. A full Caravan stopped the Small Ship too and cut the Large
 Galley from 4.86 to 2.28 and the Carrack from 11.66 to 5.48. The only word was three seconds mid-screen as the helm was
 taken ("You're going to need a bigger boat"). It is the same law ETHER-STRAND read and could not reproduce
 (`Field-Bugs-2026-10-12d.md` 4: "All other ships including rowboats were now non-functional").
 
 THE LAW NOW. The wagon's load weighs on her only while the wagon is in its owner's keeping - Horse Cart and Cargo's
-WithPlayer, not stabled. Parked, stabled or following on foot, it stays ashore. With the mod off the cart goes where
-its owner goes, as in DFU. The host says the load aboard, so the runtime's law is the mod's line. Port-Ledger A says
-so.
+WithPlayer, not stabled, and not parked by the frame's next look (AUDIT FB1029d B2). Parked, stabled or following on
+foot, it stays ashore, and so do the opt-in horse and cart items (B6). With the mod off the cart goes where its owner
+goes, as in DFU. The host says the load aboard, so the runtime's law is the mod's line. Port-Ledger A says so.
+
+DECLARED. A wagon parked at one port and summoned at the next comes, as Horse Cart and Cargo's summon reads no
+distance: it sailed weighing nothing. That is the mod's summon, unchanged. No pair is mounted, summoned or sent away on
+a Come Sail Away deck (B1), so it is not summoned into the sea.
 
 ## HEAVY-HINT: the helm says a load that holds her, while it holds her (1)
 
 `src/ui/enhanced/enhancedHelm.js` (helmHint, helmHeavyText - `helm.heavy`), the runtime's helmPanelState `heavy`.
 
-While her load holds her to half her way or less (the cargo law's worse word), the helm panel's line says so under her
-name, on a touch screen too: "Too heavy. Lighten your pack, your wagon or the hold". In irons is said first.
+While her load holds her under half her way (the cargo law's worse word), the helm panel's line says so under her
+name, on a touch screen and a passenger's card too: "Too heavy. Lighten your pack, your wagon or the hold". In irons is
+said first. The Classic helm's Carrack, dead by her missing hold, is not told so (AUDIT FB1029d B3).
 
 ## The hosts
 
 THE FOUR HOSTS. `scenes/world.js` holds the sea and the helm: wired (the wagon's seam). `scenes/exterior.js` FLAGGED
 (it stands no Come Sail Away runtime), `scenes/worldModes.js` and `scenes/dungeonContext.js` raise the doors' events
-and are unchanged - the order is the runtime's own. Every province alike: no law here reads a region or the Bay, and
-the door's pin stands in Cyrodiil beside the Bay's.
+and are unchanged - the order is the runtime's own. Every province alike: no law this record adds reads a region or the
+Bay, and the door's pin stands in Cyrodiil beside the Bay's. UpdateWind's own flip of the wind's side south of row 250
+is the mod's Bay reading every province's row (the direction alone), not changed here: Audit-FB1029d says so.
 
 ## Pins
 

@@ -346,8 +346,8 @@
   {
     "name": "CSA-C-inside-any-boat-stands",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "        if (allBoat.inside && inDungeon() && pixelOf(allBoat).X === cur.X && allBoat.MapPixel.Y === cur.Y) {",
-    "new": "        if (pixelOf(allBoat).X === cur.X && allBoat.MapPixel.Y === cur.Y) {",
+    "old": "        if (allBoat.inside && inDungeon() && pixelOf(allBoat).X === cur.X && pixelOf(allBoat).Y === cur.Y) {",
+    "new": "        if (pixelOf(allBoat).X === cur.X && pixelOf(allBoat).Y === cur.Y) {",
     "tests": [
       "test/systems/comeSailAway/csa_placing.test.js"
     ],
@@ -356,7 +356,7 @@
   {
     "name": "CSA-C-single-visibility-skips-nodes",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    } else if (!boat.GameObject.activeSelf) setBoatActive(boat, true);\n    UpdateBoatNodesAtMapPixel(boat, boat.MapPixel);",
+    "old": "    } else if (!boat.GameObject.activeSelf) setBoatActive(boat, true);\n    UpdateBoatNodesAtMapPixel(boat, pixelOf(boat));   // AUDIT FB1029d A3: a dungeon's boat with none, read outdoors",
     "new": "    } else if (!boat.GameObject.activeSelf) setBoatActive(boat, true);",
     "tests": [
       "test/systems/comeSailAway/csa_placing.test.js"

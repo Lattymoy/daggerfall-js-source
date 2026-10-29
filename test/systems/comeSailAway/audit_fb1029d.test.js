@@ -4,13 +4,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { scene } from '../../csaScene.mjs';
+import { scene, terrain } from '../../csaScene.mjs';
 import { makeWorld } from '../../hccWorld.mjs';
 import { withHudPage, childOf } from '../../hudPage.mjs';
 import { WAGON_MODE, HORSE_MODE, TRANSPORT, HCC_TEXT } from '../../../src/systems/horse/horseCartLaw.js';
 import { IRONS_TEXT, IRONS_TELL_S } from '../../../src/systems/comeSailAway/comeSailAway.js';
 import { passengerCard } from '../../../src/scenes/naval/passageHelm.js';
-import { drawEnhancedHelm, hideEnhancedHelm, helmHeavyText } from '../../../src/ui/enhanced/enhancedHelm.js';
+import { drawEnhancedHelm, hideEnhancedHelm, helmHeavyText, buildHelmPreview } from '../../../src/ui/enhanced/enhancedHelm.js';
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const mk = (handling = 'responsive') => { const s = scene({ float: Array(80).fill(1.5), int: Array(80).fill(0) }); s.deps.handling = () => handling; return s; };
@@ -30,6 +30,29 @@ test('AUDIT FB1029d B1: on a Come Sail Away deck no pair is summoned, sent away 
   h.w.deck = false;
   assert.equal(h.rt.summonTransport().ok, true, 'ashore it answers');
   assert.match(src('src/scenes/world.js'), /onDeck: \(\) => !!\(csaBoatUnderMe\(\) \?\? _csaBuckets\.get\(player\.groundKey\)\?\.boat\),/, 'the host: my helm\'s boat, another\'s I stand aboard, or one under my feet');
+});
+
+test('AUDIT FB1029d B1: from a deck the Transport window mounts no horse left beside her and drives no wagon parked by her - ashore both answer (mutants: the mount checks\' deck refusals)', () => {
+  for (const deck of [false, true]) {
+    const h = makeWorld({ cart: false });
+    h.step();
+    h.rt.tryUseTransport(TRANSPORT.Horse);
+    h.step();
+    h.w.mode = TRANSPORT.Foot;
+    h.step();
+    assert.equal(h.state().HorseMode, HORSE_MODE.LooseStationary);
+    h.w.deck = deck;
+    assert.equal(h.rt.tryUseTransport(TRANSPORT.Horse).succeeded, !deck, `the horse, deck ${deck}`);
+    const c = makeWorld();
+    c.step();
+    c.rt.tryUseTransport(TRANSPORT.Cart);
+    c.step(2);
+    c.w.mode = TRANSPORT.Foot;
+    c.step();
+    assert.equal(c.state().Mode, WAGON_MODE.Deployed);
+    c.w.deck = deck;
+    assert.equal(c.rt.tryUseTransport(TRANSPORT.Cart).succeeded, !deck, `the wagon, deck ${deck}`);
+  }
 });
 
 test('AUDIT FB1029d B2: a cart left for the helm is parked by the next frame - its load is off her from the helm\'s first weighing, not the next magic round (mutants: the keeping read before the park)', () => {
@@ -75,6 +98,7 @@ test('AUDIT FB1029d B3 + B8: the helm\'s line says a load under half her way, ne
   };
   assert.deepEqual(heavyAt(1.6), [0.4, true]);
   assert.deepEqual(heavyAt(1.5), [0.5, false], 'at half: "draws a little lower", not "a bigger boat"');
+  assert.deepEqual(heavyAt(1.45), [0.55, false], 'C3: over half');
   assert.deepEqual(heavyAt(1.4), [0.6, false]);
   const c = mk('classic');
   c.helm(c.place(4, 0));
@@ -103,5 +127,73 @@ test('AUDIT FB1029d B5: a passenger on a booked ship her load holds is told so o
   await withHudPage(null, (doc) => {
     const root = drawEnhancedHelm({ helm: null, aboard: card }, {}, { doc });
     assert.equal(childOf(childOf(childOf(root, 'helmpanel-bar'), 'helmpanel-title'), 'helmpanel-hint').textContent, helmHeavyText());
+  }, { teardown: hideEnhancedHelm });
+});
+
+const TS = 819.2;
+/** A scene over two built pixels, the player standing on `at` (C1's and A1's): (10, 20) and (14, 20). */
+function twoPixels() {
+  const ts = [terrain(10, 20), terrain(14, 20)];
+  const s = scene({ terrains: ts, float: Array(80).fill(1.5), int: Array(80).fill(0) });
+  s.deps.handling = () => 'responsive';
+  let px = { X: 10, Y: 20 };
+  s.deps.currentMapPixel = () => ({ ...px });
+  s.deps.playerTerrain = () => ts.find((t) => t.mapPixelX === px.X && t.mapPixelY === px.Y) ?? null;
+  return { s, go: (p) => { px = p; } };
+}
+
+test('AUDIT FB1029d A1 + A2: a record of a boat with no pixel loaded in an inn keeps no guess - the player\'s pixel answers indoors and is never saved, and her own is read the first time she is asked outdoors (mutants: the guess kept; the guard dropped)', () => {
+  const herPlace = [4 * TS + 100, 34, 200];   // inside (14, 20), four pixels east of the inn's
+  const rec = (() => { const { s } = twoPixels(); const b = s.place(1, 0, herPlace); b.MapPixel = null; return JSON.parse(JSON.stringify(s.rt.getSaveData())); })();
+  const { s, go } = twoPixels();
+  s.world.inside = true;
+  s.rt.restoreSaveData(JSON.parse(JSON.stringify(rec)));
+  s.rt.OnLoad();
+  const b = s.rt.AllBoats[0];
+  assert.deepEqual([b.MapPixel, s.rt.getSaveData().placedBoats[0].MapPixel], [null, null], 'indoors: no guess on her, none saved');
+  s.world.inside = false;
+  s.rt.OnTransition();
+  assert.deepEqual(b.MapPixel, { X: 14, Y: 20 }, 'out of the door: the pixel she stands on');
+  go({ X: 14, Y: 20 });
+  s.rt.OnPositionUpdate([0, 0, 0]);
+  assert.equal(b.GameObject.activeSelf, true, 'at her own pixel she is shown (the inn\'s pixel had hidden her for good)');
+});
+
+test('AUDIT FB1029d A3 + C1: a dungeon\'s boat with no pixel stands in the dungeon she is in, and outdoors throws nowhere and is given no outdoor pixel; a boat placed on a terrain the streamer no longer holds takes hers at once (mutants: the dungeon arm\'s bare MapPixel; the fallback; the inside guard; the placing\'s read; A5 the console\'s)', () => {
+  const { s } = twoPixels();
+  const d = s.place(1, 0, [3000, 34, 3000]);
+  d.inside = true; d.MapPixel = null;
+  const far = s.place(1, 0, [3100, 34, 3000]);
+  far.inside = true; far.MapPixel = { X: 14, Y: 20 };   // another dungeon's boat: her own pixel answers, never the player's
+  s.world.inside = true;
+  assert.doesNotThrow(() => s.rt.OnTransition());
+  assert.deepEqual([d.GameObject.activeSelf, d.MapPixel], [true, null], 'in her dungeon: shown by the player\'s pixel, none kept');
+  assert.equal(far.GameObject.activeSelf, false, 'a boat of another dungeon stays hidden here');
+  assert.doesNotThrow(() => s.rt.UpdateBoatVisibilityOf(d));
+  assert.match(s.rt.console.printboats(), /^0 - .+ at 10, 20\n1 - .+ at 14, 20\n$/, 'A5: the console lists her at the pixel she is read at');
+  s.world.inside = false;
+  assert.doesNotThrow(() => s.rt.OnPositionUpdate([0, 0, 0]), 'outdoors: a recentre passes her');
+  assert.deepEqual([d.GameObject.activeSelf, d.MapPixel], [false, null], 'hidden, and no outdoor pixel laid on a dungeon\'s boat');
+  const gone = terrain(12, 20);   // a terrain the streamer does not hold: GetMapPixelFromTerrain answers none
+  const p = s.rt.PlaceBoat([2 * TS + 100, 34, 200], [0, 0, 1], 1, 0, gone);
+  assert.deepEqual(p.MapPixel, { X: 12, Y: 20 });
+});
+
+test('AUDIT FB1029d WIND-HELD (lane A, not proven at the door): a wind of nought found outdoors - a door whose host chain stopped before OnTransition - is the door\'s wind laid the next frame, and logged (mutants: the frame\'s law dropped)', () => {
+  const s = mk();
+  s.place(2, 0);
+  s.world.inside = true; s.rt.OnTransition();
+  s.world.inside = false;   // the mode is the street's; OnTransition never came
+  s.frame();
+  assert.ok(Math.hypot(...s.rt.state.windVectorCurrent) > 0.5, 'a wind outdoors');
+  assert.ok(s.out.log.some((l) => /WIND OF NOUGHT OUTDOORS/.test(l)), 'and the path said');
+  s.world.inside = true; s.rt.OnTransition(); s.frame();
+  assert.deepEqual(s.rt.state.windVectorCurrent, [0, 0, 0], 'indoors the mod\'s none stands');
+});
+
+test('AUDIT FB1029d C3: the HUD\'s preview of the helm panel says the keys, never a load (mutants: the preview heavy)', async () => {
+  await withHudPage(null, (doc) => {
+    const p = buildHelmPreview(doc);
+    assert.notEqual(childOf(childOf(childOf(p, 'helmpanel-bar'), 'helmpanel-title'), 'helmpanel-hint').textContent, helmHeavyText());
   }, { teardown: hideEnhancedHelm });
 });

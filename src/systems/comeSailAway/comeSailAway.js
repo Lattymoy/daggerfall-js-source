@@ -168,6 +168,7 @@ import { peaceShare } from './peaceWay.js';   // PEACE-WAY: her way out of a fig
 import { createBoatLives } from '../../scenes/comeSailAway/farLife.js';   // BOAT-OWN: her Animators and particle systems by her range, the far law
 import { deckPressed } from '../../scenes/comeSailAway/peerHulls.js';   // AUDIT FB1026d II E2: the deck a ladder set me on
 import { windStaleOutdoors } from './csaLoadWind.js';   // SAIL-WIND: a load outdoors never keeps the indoors' none
+import { boatPixel, pixelUnderOn } from './csaPixel.js';   // NO-PIXEL: a boat with no map pixel takes the one she stands on
 
 export const COME_SAIL_AWAY_VENDOR = 'come-sail-away';
 /**
@@ -1693,6 +1694,9 @@ export function createComeSailAwayRuntime(deps) {
     if (state.wasPaused) latchTravelling();
     if (state.wasPaused && f(deps.timeScale?.() ?? 1) !== 1 && !state.isTravelling) ResetTimeScale();
     state.wasPaused = false;
+    // AUDIT FB1029d WIND-HELD: outdoors UpdateWind never lays a wind of nought, so one found here came by a door whose
+    // host chain stopped before OnTransition (or a restore that threw before OnLoad) - the door's wind laid, and logged
+    if (windStaleOutdoors(deps.isPlayerInside(), state.windVectorCurrent)) { log('COME SAIL AWAY - A WIND OF NOUGHT OUTDOORS: THE DOOR\'S WIND LAID'); UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny); }
     recoverLostBoats();   // FIELD BUGS 29h (LOST-BOAT): the port's own
     // AUDIT HELM-SIGHT A1: a helm still held from another pixel when the frame runs again is one no landing let go - a
     // party's journey to a pixel this client does not stream (world.js _streamedLanding takes the landing's word away).
@@ -1721,7 +1725,7 @@ export function createComeSailAwayRuntime(deps) {
     if (t0 == null) return;
     for (const boat of [...state.AllBoats]) {
       if (boat.groundAsked || boat.inside || boat === state.CurrentBoat || !boat.GameObject?.activeSelf) continue;
-      const p = boat.GameObject.position, under = pixelUnderOn(t0, p);
+      const p = boat.GameObject.position, under = pixelUnderOn(t0, p, TERRAIN_EDGE);
       const t = deps.terrainAt(under.X, under.Y);
       if (t == null) continue;   // its ground not built yet: asked when it is
       boat.groundAsked = true;
@@ -1731,18 +1735,8 @@ export function createComeSailAwayRuntime(deps) {
       PackBoat(boat, true, true);   // HOLD-WEIGHT: lost, packed whatever her hold weighs
     }
   }
-  /** The map pixel under scene point `p`, off terrain `t0`'s own: map x grows with the scene's x, map y against its z. */
-  const pixelUnderOn = (t0, p) => ({ X: t0.mapPixelX + Math.floor((p[0] - t0.position[0]) / TERRAIN_EDGE), Y: t0.mapPixelY - Math.floor((p[2] - t0.position[2]) / TERRAIN_EDGE) });
-  /** NO-PIXEL (FIELD BUGS 2026-10-29d, a departure): a boat with no map pixel - placed on a terrain the streamer no longer
-   *  held (GetMapPixelFromTerrain's null), or saved so - takes the pixel she stands on, off the player's terrain, else the
-   *  player's own. The C# reads her pixel's X and throws: the visibility, a recentre's shift and a restore stopped at her. */
-  function pixelOf(boat) {
-    if (boat.MapPixel == null) {
-      const t0 = boat.inside || deps.isPlayerInside() ? null : deps.playerTerrain?.();
-      boat.MapPixel = t0 ? pixelUnderOn(t0, boat.GameObject.position) : deps.currentMapPixel();
-    }
-    return boat.MapPixel;
-  }
+  /** NO-PIXEL (csaPixel.js says why): a boat's pixel, the one she stands on where she has none - never a throw. */
+  const pixelOf = (boat) => boatPixel(boat, deps, TERRAIN_EDGE);
   /** CSA-G: `if (TravelOptions != null)` its isTravelActive message (4921-4934), which Update's unpause reset reads;
    *  wasTravelling follows it and is read nowhere (kept). */
   function latchTravelling() {
@@ -2745,7 +2739,7 @@ export function createComeSailAwayRuntime(deps) {
     if (deps.isPlayerInside() && !deps.keepExteriorBoats?.()) {
       for (const allBoat of state.AllBoats) {
         const cur = deps.currentMapPixel();
-        if (allBoat.inside && inDungeon() && pixelOf(allBoat).X === cur.X && allBoat.MapPixel.Y === cur.Y) {
+        if (allBoat.inside && inDungeon() && pixelOf(allBoat).X === cur.X && pixelOf(allBoat).Y === cur.Y) {
           if (!allBoat.GameObject.activeSelf) setBoatActive(allBoat, true);
         } else if (allBoat.GameObject.activeSelf) setBoatActive(allBoat, false);
       }
@@ -2758,7 +2752,7 @@ export function createComeSailAwayRuntime(deps) {
         if (allBoat2.GameObject.activeSelf) setBoatActive(allBoat2, false);
       } else {
         if (!allBoat2.GameObject.activeSelf) setBoatActive(allBoat2, true);
-        UpdateBoatNodesAtMapPixel(allBoat2, allBoat2.MapPixel);
+        UpdateBoatNodesAtMapPixel(allBoat2, pixelOf(allBoat2));
       }
     }
     if (list.length <= 0) return;
@@ -2772,7 +2766,7 @@ export function createComeSailAwayRuntime(deps) {
     if (boat == null) return;
     if (deps.isPlayerInside() && !deps.keepExteriorBoats?.()) {
       const cur = deps.currentMapPixel();
-      if (boat.inside && inDungeon() && pixelOf(boat).X === cur.X && boat.MapPixel.Y === cur.Y) {
+      if (boat.inside && inDungeon() && pixelOf(boat).X === cur.X && pixelOf(boat).Y === cur.Y) {
         if (!boat.GameObject.activeSelf) setBoatActive(boat, true);
       } else if (boat.GameObject.activeSelf) setBoatActive(boat, false);
       return;
@@ -2780,7 +2774,7 @@ export function createComeSailAwayRuntime(deps) {
     if (boat.inside || pixelsApart(deps.currentMapPixel(), pixelOf(boat)) > 1) {   // NO-PIXEL
       if (boat.GameObject.activeSelf) setBoatActive(boat, false);
     } else if (!boat.GameObject.activeSelf) setBoatActive(boat, true);
-    UpdateBoatNodesAtMapPixel(boat, boat.MapPixel);
+    UpdateBoatNodesAtMapPixel(boat, pixelOf(boat));   // AUDIT FB1029d A3: a dungeon's boat with none, read outdoors
   }
 
   /** OnPositionUpdate (1987-2010): FloatingOrigin moved the world. FIELD-CSA1 (the port's own): EVERY boat rides it, in
@@ -3094,8 +3088,8 @@ export function createComeSailAwayRuntime(deps) {
     if (state.AllBoats.length < 1) return 'No placed boats!';
     let text = '';
     for (let i = 0; i < state.AllBoats.length; i++) {
-      const boat = state.AllBoats[i];
-      text = `${text}${i} - ${HULL_NAMES[boat.hull]} at ${boat.MapPixel.X}, ${boat.MapPixel.Y}\n`;
+      const boat = state.AllBoats[i], px = pixelOf(boat);   // AUDIT FB1029d A5 (NO-PIXEL): the C# throws at a boat with none
+      text = `${text}${i} - ${HULL_NAMES[boat.hull]} at ${px.X}, ${px.Y}\n`;
     }
     return text;
   }
