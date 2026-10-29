@@ -870,7 +870,7 @@ import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/
 import { createHeartbeat, whileLive } from '../net/heartbeat.js';   // SCALE4c: the beat, the letterbox and the town's board in one request
 import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
 import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus (RENOWN3: read against my Renown)
-import { villainMonsterLowers, villainQuestLowers } from '../systems/wild/villainLaw.js';   // PVP-VILLAIN-KEEP: a monster at my level and a quest lower the villain meter
+import { villainMonsterLowers, villainQuestLowers, isVillain } from '../systems/wild/villainLaw.js';   // PVP-VILLAIN-KEEP: a monster at my level and a quest lower the villain meter
 import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry, renownStruckAt, renownReportSoon } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
 import { createHallBook, hallFactionsOf, chapterFactionOf, parseHallCommand, hallAuditLines } from '../net/npcHallBook.js';   // CHAP2a: a town's guild halls, witnessed as I walk in; AUDIT CHAP2 E1: a developer's /hall
@@ -1245,6 +1245,8 @@ import { createWildGrace } from '../systems/wild/wildGrace.js';   // ZONE-GRACE:
 import { createPvpKitBar } from '../ui/pvpKitBar.js';   // PVP-KIT: the PvP spell bar
 import { createPvpFlagHost } from './pvpFlagHost.js';   // PVP-FLAG: the open zone's flag, on this page
 import { createPvpRulesHost } from './pvpRulesHost.js';   // PVP-RULES: a flagged fighter's limits
+import { createPvpGuardsHost } from './pvpGuardsHost.js';   // PVP-GUARDS: the watch hunts a villain in town
+import { peaceFor } from '../systems/wild/villainHunt.js';   // PVP-GUARDS: a villain has no peace in the streets
 import { createMarketPieces } from './marketPiecesHost.js';   // HOST-SPLIT
 import { createRaidHost } from './raidHost.js';   // HOST-SPLIT
 import { createSpawnGroundHost } from './spawnGroundHost.js';   // HOST-SPLIT
@@ -21168,7 +21170,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   setWildInsureBook(wildInsure);
   wildInsure.read();
   const wildGrace = createWildGrace({ me: () => online?.id ?? null, say: (l) => { setMidScreenText(l); townTalk.say(l); } });   // ZONE-GRACE (systems/wild/wildGrace.js)
-  const pvpFlag = createPvpRulesHost(createPvpFlagHost(() => online, playerEntity, setMidScreenText, townTalk), player, playerEntity, setMidScreenText).flag;   // PVP-FLAG (scenes/pvpFlagHost.js); PVP-RULES (scenes/pvpRulesHost.js): a flagged fighter's limits
+  const pvpFlag = createPvpGuardsHost(createPvpRulesHost(createPvpFlagHost(() => online, playerEntity, setMidScreenText, townTalk), player, playerEntity, setMidScreenText), () => [cityGuards, walkMode && playerSpawned ? player.pos : cam.pos, cam.yaw, modes?.mode ?? 'exterior', settledAt(campToWire(player.feetAt()), locationIndex)], playerEntity, setMidScreenText).flag;   // PVP-FLAG (scenes/pvpFlagHost.js); PVP-RULES (scenes/pvpRulesHost.js): a flagged fighter's limits; PVP-GUARDS (scenes/pvpGuardsHost.js): the watch hunts a villain in town
   const pvpKit = createPvpKitBar(() => [online, magic, modes?.mode, allyTargetPick, cam, socialFwd], pvpFlag, playerEntity);   // PVP-KIT: the PvP spell bar on keys 3 to 0 (ui/pvpKitBar.js)
   const _duelSent = new Map();   // my blow's number -> { kind, weapon } - what it was
   let _duelLastWeapon = null;    // INT8: the weapon of my last strike - the referee's word on it names no number
@@ -21975,7 +21977,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (died) _wdunCrows.set(h, Date.now() + WILD_REMAINS_MS);
     socialLink()?.sendWdun?.({ k: died ? 'die' : 'out', h });
   };
-  const wildCan = () => !!online?.wildOk && online.status === 'open' && wildHere() && (wildOutdoors() ? !settledAt(campToWire(player.feetAt()), locationIndex) : modes?.mode === 'dungeon') && playerEntity.health > 0 && !modes?.deathUp?.();   // PVPDUNGEON: players fight in the zone's dungeons too - ZONE-SAFE (systems/wild/zoneSafe.js): never outdoors in a settlement's streets
+  const wildCan = () => !!online?.wildOk && online.status === 'open' && wildHere() && (wildOutdoors() ? !peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), isVillain(pvpFlag.villainy())) : modes?.mode === 'dungeon') && playerEntity.health > 0 && !modes?.deathUp?.();   // PVPDUNGEON: players fight in the zone's dungeons too - ZONE-SAFE (systems/wild/zoneSafe.js): never outdoors in a settlement's streets
   /** Is this player one I may fight (and be fought by): standing in the zone, and never KIN - net/wild/wildRef.js wildKin, the
    *  referee's own law: my party, or one under its truce; my duel's opponent (a duel's blows are the duel's own); or, MAC'S
    *  DECISION (2026-10-14, "Guildmates are friends"), one of my guild - its tag as the relay stamped it, mine as the hub
@@ -21984,7 +21986,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const wildFair = (peerId) => {
     if (!peerId || !wildCan()) return false;
     if (wildKin({ party: !!social?.isPartyPeer(peerId) || _wildTruce.holds(peerId, Date.now()), duel: duelMgr.live && duelMgr.opponent === peerId, guilds: [myGuildTag(), online?.guildTagOf?.(peerId) ?? null] })) return false;
-    return pvpFlag.fair(peerId) && (modes?.mode === 'dungeon' || (wildAtWire(duelWorldOf(peerId)) && !settledAt(duelWorldOf(peerId), locationIndex)));   // PVP-FLAG: my flag up - ZONE-SAFE: never a body in a settlement's streets - AUDIT FB1018 L3-5: in a dungeon a peer's pose is the dungeon's own frame - the place is the zone (wildCan's wildHere, the door's pixel), and the room is that place's
+    return pvpFlag.fair(peerId) && (modes?.mode === 'dungeon' || (wildAtWire(duelWorldOf(peerId)) && !peaceFor(settledAt(duelWorldOf(peerId), locationIndex), pvpFlag.skullOf(peerId) === 'red')));   // PVP-FLAG: my flag up - ZONE-SAFE: never a body in a settlement's streets - AUDIT FB1018 L3-5: in a dungeon a peer's pose is the dungeon's own frame - the place is the zone (wildCan's wildHere, the door's pixel), and the room is that place's
   };
   /** PARTY-TRUCE: the row a party's walk asks with when it ends in the zone or at its edge - the walk is the one door
    *  into it no journey's gate asks (wildJourney: "The Overworld map's journeys are walked, never asked"). */
@@ -22370,7 +22372,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         wildSay(zoneWord('ringCross')(ring, deeper));
       }
       // ZONE-SAFE (systems/wild/zoneSafe.js): a settlement's streets crossed in the zone, said - in a building the word I had
-      zoneSafeFrame(here, here && wildOutdoors() && settledAt(campToWire(player.feetAt()), locationIndex), wildSay, modes?.mode === 'interior');
+      zoneSafeFrame(here, here && wildOutdoors() && peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), isVillain(pvpFlag.villainy())), wildSay, modes?.mode === 'interior');
     }
     // WILD-LINE-HOLD (2026-10-08, the owner: "the warning message for the zone doesnt stay long enough right now only a
     // part of a second"): the label counts GAME seconds (ui/midScreenText.js tick, at the time scale), and the zone is

@@ -279,6 +279,30 @@ tenth and the letters' tenth went to the remains until PVP-NO-TENTH, below; the 
 premium stays a fifth of `itemWorth` (`wildInsureLaw.js:"export const WILD_INSURE_DIVISOR = 5;"`), which counts the
 piece's price and its lines' worth. The service is acct214 (acct211 on its branch). A departure: DFU has no PvP.
 
+## PVP-GUARDS: the watch hunts a villain in town
+
+"Guards constantly come after a villain", "like my self coming for me": while I am red on the villain meter in a
+settlement's streets of the open zone, the watch sends two guards at once, one more each 30 s, six at most
+(`villainHunt.js:"export const VILLAIN_HUNT = Object.freeze({ first: 2, stepMs: 30_000, max: 6, taken: 0.05 });"`). Each comes on
+the watch's ring at my level, my mirror turned to a guard's use (`villainHunt.js:"export function villainMirror(villain, { skill = skillValue, stat = liveStat } = {}) {"`):
+every weapon skill my best attack skill (any weapon, Hand-to-Hand, Archery or Destruction), my Critical Strike, and
+Dodging the best of my Dodging, Restoration and Alteration, since a guard casts nothing. DFU has no Block skill: a
+shield's block reads six attributes, and each of mine that beats the guard's own is its. It keeps its own kit.
+
+"they have 95 % resistance": a hunter takes 5% of every hit, at least 1, at the watch's one damage door
+(`cityGuards.js:"damage = hunterTaken(g.entity, damage);"`). It is no crime's watch, so the crime's clearing does not
+send it away; once I leave the streets, fall or am red no more, every hunter walks away
+(`pvpGuardsHost.js:"export function createPvpGuardsHost("`), as DFU's watch does at the location's edge.
+
+"a villain can always take damage in a town": the streets keep no peace for a villain
+(`villainHunt.js:"export const peaceFor = "`). Red, my word on the zone stays 1 there, and a red body there is fair to
+every door of mine. A player in the streets is still at peace, so it cannot strike one: the relay has no map. Guards are
+this client's NPCs, so the hunt is the client's, on the meter the relay already says (`wref` `vil`); a villain who
+enters the zone in a town is hunted from its first step out of the streets. THE FOUR HOSTS: `world.js` wired;
+`exterior.js`, `worldModes.js` (a building) and `dungeonContext.js` hunt no one. Orsinium waits. A departure from
+PlayerEntity.SpawnCityGuards (`PlayerEntity.cs:625-694`): DFU sends 2-5 once for a crime, at my level plus 3-6, every
+skill level x 5 + 30, and its watch resists nothing.
+
 ## PVP-RISE: a death's wait like PvE's
 
 "Need to have to eake up im nearest town", "Jist like pve deaths": a death in the zone rises at the nearest town or temple

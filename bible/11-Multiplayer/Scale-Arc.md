@@ -4708,3 +4708,19 @@ batch sizes moved), `test/server/witch1_festival.test.js` (ORPHAN-GATE), `test/s
 `test/net/busy_gate.test.js` and `test/server/admitline.test.js` (the header exposed). Mutants: `tools/mutants/`
 `mint_title_gate.json`, `tomb_rides.json`, `orphan_gate.json`, `retry_seen.json`; CHAP4C-MINT-WORN, HOMESSHED-gates-own-trip,
 PRIMARYFOLD-door-asks-no-stream and AUDIT-LEGACY-III-O12-the-mint-refused re-aimed. The version pins to acct213.
+
+## CRAFT-SET and DECOR-SEEK: built (2026-10-29, this branch - acct216, no migration, no relay change)
+
+After acct213 the database still stalled for a minute every 10 to 20 minutes. The 10:02 UTC hour named the cause: the
+Work tab's eligible read (`writs.js` eligibleHere) ran 871 ms on average and read about 6.4M rows a run, and
+`/v1/writs/list` read 1.01 billion rows in 221 asks.
+
+- **CRAFT-SET** (`professions.js` craftedBySql): the read asked, for each candidate piece, whether any of the account's
+  crafts named it as its first or second piece - a scan of every craft, once a piece. The crafts are now one
+  uncorrelated IN list, read once a statement. A crafting writ's piece check (`craftWrits.js` pieceOkSql) reads it too.
+- **DECOR-SEEK**: `json_extract(item, '$.pv') = p.provenance` gives the comparison the column's TEXT affinity, so
+  `idx_home_decor_pv` was scanned whole once a piece. `+p.provenance` drops the affinity and the index is searched. The
+  eligible read, pieceOkSql and the market's pieceWaysRead take it.
+
+The answers are the same. A bench of 3,000 crafts, 50,000 decor rows and 20 commissions ran 15.9 s, now 13 ms. Pins:
+`test/server/craft_set.test.js`; mutants: `tools/mutants/craft_set.json`. The version pins to acct216.
