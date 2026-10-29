@@ -61,16 +61,25 @@ async function toPause(page) {
   });
   await page.waitForSelector('.px-shopmark', { timeout: 15000 });
 }
-/** Whether a canvas has drawn anything but its clear colour. */
-const canvasLit = (page, sel) => page.evaluate((s) => [...document.querySelectorAll(s)].map((c) => {
-  try {
-    const t = document.createElement('canvas'); t.width = c.width; t.height = c.height;
-    const g = t.getContext('2d'); g.drawImage(c, 0, 0);
-    const d = g.getImageData(0, 0, t.width, t.height).data;
-    let lit = 0; for (let i = 0; i < d.length; i += 16) if (d[i] + d[i + 1] + d[i + 2] > 120) lit++;
-    return lit;
-  } catch { return -1; }
-}), sel);
+/** How much of each canvas is lit, read off the screen: a stage's context keeps no drawing buffer (characterStage.js,
+ *  preserveDrawingBuffer false), so the canvas copied between frames is its cleared buffer, whatever it showed. */
+const canvasLit = async (page, sel) => {
+  const out = [];
+  for (const el of await page.locator(sel).all()) {
+    const png = (await el.screenshot()).toString('base64');
+    out.push(await page.evaluate(async (b64) => {
+      const img = new Image();
+      img.src = `data:image/png;base64,${b64}`;
+      await img.decode();
+      const t = document.createElement('canvas'); t.width = img.width; t.height = img.height;
+      const g = t.getContext('2d'); g.drawImage(img, 0, 0);
+      const d = g.getImageData(0, 0, t.width, t.height).data;
+      let lit = 0; for (let i = 0; i < d.length; i += 16) if (d[i] + d[i + 1] + d[i + 2] > 120) lit++;
+      return lit;
+    }, png));
+  }
+  return out;
+};
 
 const browser = await chromium.launch({ ...(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {}), args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 for (const [label, opts] of [['desktop', { viewport: { width: 1280, height: 900 } }], ['phone', devices['iPhone 13']]]) {
