@@ -2991,39 +2991,46 @@ the street - and took the lot from every house. But a ring block's houses back o
 backyards with garden walls, sheds and wells (`world/imperialFabric.js` makeBlock): those houses had ground of their
 own, and lost it too.
 
-**As built** (`world/imperialBackyards.js` fabricBackyard; `scenes/homeYards.js` lotOfFrame):
-- **Whose**: a house with one street front. A corner house meets its court at a point and a row through a narrow block
-  has a street behind it: both keep the door's box (W1).
-- **Where**: the court its back wall stands on - of two courts over one point where neighbourhoods meet, the one with an
-  edge along that wall. Its own width, 0.4 m in from each party wall; from 0.3 m off its back wall to the first garden
-  wall, shed, well, back range or house; on its own side of the court's mitres, 0.4 m short of them, so no two yards
-  meet.
-- **Its shape**: the biggest rectangle of that ground, turned with its house. The city's streets are turned, and a box
-  on the world's axes held a third less ground, and none behind one house in nine. The survey reads the ground every
-  half metre, then walks the rectangle's edges every 5 cm: nothing in a court is narrower than a step, so what stands
-  between its points reaches in across an edge alone.
+**As built** (`world/imperialBackyards.js` fabricBackyard; `scenes/homeYards.js` lotOfFrame), as AUDIT IC-BACKYARD left it
+(`../01-Overview/audits/Audit-IC-Backyard.md`):
+- **Whose**: a house with one street front. A corner house's back and a row's are a neighbour's wall or a street: both
+  keep the door's box (W1). Asked first - a row's street once stood over another block's court across it (63,114 #0).
+- **Where**: its own width, 0.4 m in from each party wall; from 0.3 m off its back wall to the first garden wall, shed,
+  well's roof, back range or house; and only the ground nearer its back wall than any other building standing before
+  that wall's line, by 0.4 m - the houses across the court and on its other sides, and where two neighbourhoods meet,
+  the other's houses standing in its court. Its own side stands behind that line (a curved side's within a metre); a
+  back range stops a yard and claims none. Every house parted alike, no two yards meet.
+- **Its shape**: the biggest rectangle of that ground, turned with its house - the city's streets are turned, and a box
+  on the world's axes holds about a quarter less ground. The survey reads the ground every half metre, then walks the
+  rectangle's edges every 5 cm: nothing standing in a court is narrower than a step, so what stands between its points
+  reaches in across an edge alone.
 - **Its reach**: every corner within 36 m of the door - the decorator's free eye starts there and flies 40 m
   (`scenes/decor/decorTool.js` DECOR_FLY_LEASH), over the roof.
-- **Opened at the door**: no street reaches a court, so the owner opens the decorator at the door (the lot's `access`).
-  The lot's line is the fabric's (`alone`): no midline to the neighbours' doors.
-- **A Bay house's lot is unchanged**, and the frame names its block and record (`scenes/pixelBuild.js`) - the yard is
-  worked when a yard is made, not with the pixel.
+- **Opened at the door**: no street reaches a court, so the owner opens the decorator at the door (the lot's `access`),
+  and a line says the yard is the court behind the house (`decor.yard.behind`). The lot's line is the fabric's
+  (`alone`): no midline to the neighbours' doors.
+- **Worked when first read**: the frame names its block and record (`scenes/pixelBuild.js`); a lot is worked the first
+  time it is read - the owner's at its door, a stranger's never.
+- **The fabric's ground, read whole** (`world/imperialFabric.js`): a garden wall, shed, well or dead end stands in every
+  cell its ground reaches (a long block had laid its court in a cell without them); and a court on the ground (`lawn`)
+  reaches the line its ring's back walls stand on - a polar block's outer arc, an organic one's warped line - where its
+  chords left a strip of street inside the ring. The skyline keeps the chords.
+- **Past the Bay**: only the Imperial City stands terraced fabric houses. Every other capital and town stands
+  Daggerfall's own blocks, whose houses keep the Bay's lot, their ground grown 6 m - URBANIZER's fences over a town past
+  the Bay (`world/urban/townFabric.js`) unread by it, as before. A court's trees stand in some yards: ignored, as a Bay
+  lot ignores a town's.
 - **The four hosts**: `scenes/world.js` wired (its pixel build and its yards); `scenes/exterior.js` (the bench) stands no
   online homes; `scenes/worldModes.js` and `scenes/dungeonContext.js` stand no street. Deploy: the page and the desktop
   build - neither service's bundle reaches these files.
 
-**The sweep** (175 cells in 2 x 2 patches across the plan): 6,116 buildings, 4,575 with one street front, 3,632 yards -
-the median 32 m2, the largest 196 m2; none on ground but court at 10 cm, none meeting another, none past its reach.
-Found at it: two courts over one point at a seam (the first one taken gave two yards the same ground); a garden wall's
-end between the survey's points; a row whose back, a street, stood over another block's court across it (two of 12,506
-houses with more than one front, kept yardless by the one-front rule); the reach cuts one yard in 5,424.
-
-Pinned by `test/world/worldWide/ic_backyard.test.js` (5: the law over a corner of two neighbourhoods and the two houses
-above; the record's origin against `world/rmbLayout.js`'s own; the turned lot, its marks, its box and its line beside a
-Bay house's; the owner opening it at the door); the moved pins in `audit_tamrielwide.test.js` (A1),
-`fb1009_yardfoot.test.js`, `fb1012b_yardline.test.js` and `audit_rpt1026_world.test.js` (PIN MOVED (IC-BACKYARD)).
-Mutants: `tools/mutants/ic_backyard.json` (15); `audit_tamrielwide.json` (three) and `fb1011b.json` (one) re-aimed by
-content - every one dead.
+Pinned by `test/world/worldWide/ic_backyard.test.js` (6: the law over a corner of two organic neighbourhoods, a seam, a
+court with a well, the house its reach cuts and a row - no two yards within 0.25 m, the PATCH's yards as built; the
+record's origin against `world/rmbLayout.js`'s own; the turned lot, its marks, box, roads and line beside a Bay house's;
+the owner opening it at the door, told once where it is, a stranger's never surveyed; the fabric's ground at lane L's
+points); the moved pins in `audit_tamrielwide.test.js` (A1), `fb1009_yardfoot.test.js`, `fb1012b_yardline.test.js` and
+`audit_rpt1026_world.test.js` (PIN MOVED (IC-BACKYARD)). Mutants: `tools/mutants/ic_backyard.json` (26); re-aimed by
+content `audit_tamrielwide.json` (three), `fb1011b.json` (two), `fb1009_yardfoot.json`, `icgrand.json` and
+`icstairs.json` (one each) - every one dead.
 
 ## Pins
 
