@@ -211,7 +211,7 @@ test('PVP-SKULL THE PAGE (scenes/pvpFlagHost.js, ui/pvpSkull.js, ui/nameLayer.js
   f.heard({ k: 'hp', by: 'peer-me', to: 'peer-x' });
   assert.equal(f.mySkull(), 'gold');
   const mask = f.mask((p) => (p.id === 'peer-gone' ? null : p));
-  assert.deepEqual(mask({ id: 'peer-x', name: 'A' }), { id: 'peer-x', name: 'A', skull: 'white' });
+  assert.deepEqual(mask({ id: 'peer-x', name: 'A' }), { id: 'peer-x', name: 'A', skull: 'white', near: true }, 'PVP-CONE: and my foe, near');
   assert.deepEqual(mask({ id: 'peer-q', name: 'B' }), { id: 'peer-q', name: 'B' });
   assert.equal(mask({ id: 'peer-gone' }), null);
   assert.equal(SKULL_ROWS.length, 16);
@@ -220,7 +220,7 @@ test('PVP-SKULL THE PAGE (scenes/pvpFlagHost.js, ui/pvpSkull.js, ui/nameLayer.js
   assert.deepEqual(Object.fromEntries(Object.entries(SKULL_TINTS).map(([k, v]) => [k, v[0]])), { white: '#ece6d6', gold: '#e8b62c', red: '#d42a1e' }, 'the mockup\'s bone in each');
   assert.equal(skullSrc('none'), '');
   assert.deepEqual([skullGlow('white'), !!skullGlow('gold'), !!skullGlow('red')], ['', true, true]);
-  assert.ok(rd('src/scenes/world.js').includes('      mask: pvpFlag.mask(wildNameMask),'));
+  assert.ok(rd('src/scenes/world.js').includes('      mask: pvpFlag.mask(wildNameMask, social),'));
   assert.ok(rd('src/ui/nameLayer.js').includes("put(tag, 'skullOf', p.skull ?? '',"));
 });
 

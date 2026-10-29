@@ -134,3 +134,16 @@ step outside was close and just now (`zoneEdge.js:"export const ZONE_EDGE = Obje
 the referee grants an entry's safe passage on it alone (`wildRef.js:"else if (!x.down && !rose && ed && now"`). A
 teleport, a dungeon left, a town's streets left (the streets say 0 to the referee) and a rise grant none. The relay has
 no map, so the word is the client's own, as the streets' peace is.
+
+## PVP-CONE: names near the crosshair
+
+"Was thinking we needed to make them not visible less u look within a angle", and "Yes" to everywhere: another player's
+tag - its skull, its bars and its bubble with it - shows only within about 20 degrees of the crosshair, full inside 17
+and gone past 23 (`nameCone.js:"export const NAME_CONE = Object.freeze({ deg: 20, band: 6, fadeMs: 250 });"`). Each name
+point carries its angle off the camera's forward (`remotePlayers.js:"off: nameOffDeg(view, head)"`), and the DOM layer
+eases the whole tag toward the cone's answer over 250 ms, so a tag never pops (`nameLayer.js:"tag.cone = nameConeStep("`).
+
+My party and my foe - a peer I struck or was struck by within the flag's lock - always show
+(`pvpFlagHost.js:"const foeOf = (id) =>"`), passed through the name mask the host already wore. The client draws it;
+the relay sends every name as before. The classic bitmap face, which only headless probes draw, keeps every name. The
+Overworld's travel marks are left as they were. A departure: DFU has no player names.
