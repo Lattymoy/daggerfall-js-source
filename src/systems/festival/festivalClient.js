@@ -24,7 +24,7 @@
 import { accountFestival, equipTitle, equipAura, equipIcon, adoptIdentity, storedSession, serviceBase, readAccount, accountRefusalText } from '../../net/accountClient.js';
 import { appStorage } from '../appStorage.js';
 import { registerPlayerKillListener } from '../playerKills.js';
-import { hearActs, ACT_KINDS } from '../questlines/qlActs.js';
+import { hearActs, ACT_KINDS, ACT_NOT_FOUND } from '../questlines/qlActs.js';
 import { registerModSaveData } from '../modSaveData.js';
 import { KNIGHT_CITY_WATCH } from '../../characters/mobile/mobileTypes.js';
 import { festivalOpen, isFindSource, wareById, accountWare, bowlWare, festivalWaresHeld, SALE_RID_RE, FIND_CAKES_PER_DAY } from '../../net/festivalLaw.js';
@@ -201,9 +201,8 @@ registerPlayerKillListener(FESTIVAL_FIND, (/** @type {any} */ entity) => {
 });
 /** ONE DEED, ONE FIND: an elite foe's fall is its kill's find (`elite`, above), never its act's too; and the acts one
  *  receipt says together - a breach closed with its rite broken, a Valkynaz's Redoubt taken - ask one find of their family,
- *  not one each (the acts a turn says are one deed). AUDIT STAR8 T1: and a Wyrd Sister's window opened is no deed at all -
- *  a press at her door is never a Soul Cake. */
-const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain', 'wyrd-met']);
+ *  not one each (the acts a turn says are one deed). The acts that are no deed at all are the leaf's one list
+ *  (qlActs.js ACT_NOT_FOUND), the pass's too. */
 let _actTurn = /** @type {Set<string>|null} */ (null);
 hearActs(FESTIVAL_FIND, (/** @type {string} */ kind) => {
   const g = ACT_KINDS[/** @type {keyof typeof ACT_KINDS} */ (kind)];

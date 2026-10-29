@@ -5282,7 +5282,7 @@ party.travel.followOnceAble,"Ще последвате {leader}, щом може
 party.travel.noRoomBeside,"До {leader} нямаше място. Пристигате в {place}."
 party.travel.theLeader,"водача"
 party.travel.yourLeader,"вашия водач"
-pass.boost.levels,"И веднага {n, plural, one {# ниво} other {# нива}}."
+pass.boost.levels,"И веднага {n, plural, one {# ниво} other {# нива}}. Нивата след отворения етап се пазят за следващия."
 pass.boost.share,"{pct}% повече сезонен опит от всяко дело, за целия сезон."
 pass.ch.constructs,"Унищожете {n, plural, one {# двемерски конструкт} other {# двемерски конструкта}}"
 pass.ch.elites,"Убийте {n, plural, one {# елитен противник или шампион} other {# елитни противници или шампиони}}"

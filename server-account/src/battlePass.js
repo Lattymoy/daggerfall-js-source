@@ -30,7 +30,9 @@ const COLS = 'shop_wares, shop_held';
 /**
  * THE ACCOUNT'S SEASON, for the pass's panel: the season shown (the open one, else the next, else the last), its stage and
  * the level its experience reaches now, the open stage's top, the tracks it plays and its booster's share, the day's
- * experience and the stage's challenges with their counts. A guest's is refused.
+ * experience and the stage's challenges with their counts. A guest's is refused. AUDIT PASS 2: `open` is the switch's
+ * word for this account alone - the season's days are the law both ends read, and a page that read `open` before the
+ * opening kept it after.
  * @param {{ db: any, nowS: number }} ctx @param {any} player @param {any} env
  */
 export async function passOf({ db, nowS }, player, env) {
@@ -45,7 +47,7 @@ export async function passOf({ db, nowS }, player, env) {
   const r = row?.results?.[0] ?? {}, held = shopHeldIds(r), xp = int(r.xp), nowMs = nowS * 1000;
   const got = new Map((counts?.results ?? []).map((/** @type {any} */ c) => [c.challenge, c]));
   return {
-    season: season.id, open: passOpenFor(player, env) && !!passSeasonAt(nowMs), stage: passStageAt(season, nowMs),
+    season: season.id, open: passOpenFor(player, env), stage: passStageAt(season, nowMs),
     xp, level: passLevelOf(xp, season, nowMs), top: passTopAt(season, nowMs), perLevel: PASS_XP_PER_LEVEL, levels: PASS_LEVELS,
     tracks: passTracks(season.id, held), mult: passMult(season.id, held),
     today: int(day?.results?.[0]?.xp), dayMax: PASS_DAY_XP,
@@ -57,7 +59,8 @@ export async function passOf({ db, nowS }, player, env) {
  * A FIND: a deed's experience for `body.source` (battlePassLaw.js PASS_SOURCES), in ONE TRANSACTION - the day's row takes the ask
  * under PASS_DAY_ASKS and the base under PASS_DAY_XP (its `last` the base it took, every SET reading the old row), the
  * account's experience takes that base and the booster's share of it, each open challenge of its source counts one and
- * pays once on the deed that completes it. `{ gained, xp, level, today, done: [challenge keys paid] }`.
+ * pays once on the deed that completes it. `{ gained, xp, level, today, done: [challenge keys paid], season, tracks, mult }`
+ * - AUDIT PASS 8: the tracks with it, so a level reached after a purchase is told with the premium rewards on it.
  * @param {{ db: any, nowS: number }} ctx @param {any} player @param {any} body @param {any} env
  */
 export async function findPass(ctx, player, body, env) {
@@ -73,7 +76,8 @@ export async function findPass(ctx, player, body, env) {
   const ask = await db.prepare(`INSERT INTO pass_days (account, season, day, asks, xp, last) VALUES (?1, ?2, ?3, 1, 0, 0)
     ON CONFLICT (account, season, day) DO UPDATE SET asks = asks + 1 WHERE asks < ?4 RETURNING asks`).bind(player.id, season.id, day, PASS_DAY_ASKS).first();
   if (!ask) return { error: 'capped' };
-  const mult = passMult(season.id, shopHeldIds(await db.prepare(`SELECT ${COLS} FROM players WHERE id = ?1`).bind(player.id).first()));
+  const held = shopHeldIds(await db.prepare(`SELECT ${COLS} FROM players WHERE id = ?1`).bind(player.id).first());
+  const mult = passMult(season.id, held);
   const base = PASS_SOURCES[/** @type {keyof typeof PASS_SOURCES} */ (source)];
   const mine = PASS_CHALLENGES.filter((c) => c.stage === stage && c.sources.includes(source));
   const where = 'account = ?1 AND season = ?2';
@@ -93,5 +97,5 @@ export async function findPass(ctx, player, body, env) {
   const last = int(end.last);
   const gained = last + Math.floor(last * (mult - 1)) + mine.filter((c) => done.includes(c.key)).reduce((a, c) => a + c.xp, 0);
   const xp = int(end.xp), today = int(end.today);
-  return { gained, xp, level: passLevelOf(xp, season, nowS * 1000), today, ...(today >= PASS_DAY_XP ? { capped: true } : {}), done };
+  return { gained, xp, level: passLevelOf(xp, season, nowS * 1000), today, ...(today >= PASS_DAY_XP ? { capped: true } : {}), done, season: season.id, tracks: passTracks(season.id, held), mult };
 }

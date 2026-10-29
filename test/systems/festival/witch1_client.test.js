@@ -112,6 +112,15 @@ test('AUDIT STAR8 T1 A WYRD SISTER\'S WINDOW OPENED IS NO FIND: `wyrd-met` (The 
   assert.deepEqual(asked.filter(([n]) => n === 'find').map(([, s]) => s), ['world', 'sea']);
 });
 
+test('AUDIT PASS 1: the Ketch\'s lift ridden and a cell banked are no Soul Cake - said again at will, no receipt behind them; the Warden felled is the endgame\'s find (mutants: the lift a find; a cell a find)', async () => {
+  const { api, asked } = fakeApi({ find: { ok: true, data: { found: 0, cakes: 0 } } });
+  bind(api);
+  for (const kind of ['ketch-boarded', 'ketch-cell-banked', 'ketch-boarded']) { noteAct(kind); await new Promise((r) => setTimeout(r, 0)); }
+  noteAct('warden-felled');
+  await askFind('sea');   // the queue drains in order
+  assert.deepEqual(asked.filter(([n]) => n === 'find').map(([, s]) => s), ['endgame', 'sea']);
+});
+
 test('WITCH1 A SALE: asked by its own id, the piece minted on the answer; a lost answer (no line, or the service\'s fault) kept on the save and asked again by the same id, landing once', async () => {
   const sold = new Map();
   const buy = (ware, rid) => {
