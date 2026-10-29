@@ -121,11 +121,11 @@ test('YC4 a home cell order outside the hub is junk, and a carrier past HOME_CEL
   for (let c = 1; c <= 4 * HOME_CELL_ORDER_HZ_MAX; c++) {
     await hub.raw(h, JSON.stringify({ t: 'hcell', order: await mintHomeCellOrder({ s: 'acct-0001', m: 7, c, v: 1 }, hk.privateKey, { subtle, nowS }) }));
   }
-  t.mock.timers.tick(HOME_CELL_FAN_MS);
-  const said = cellFrames(h).flatMap((m) => m.l);
-  assert.ok(said.length >= 1 && said.length < 4 * HOME_CELL_ORDER_HZ_MAX, `metered: ${said.length} of ${4 * HOME_CELL_ORDER_HZ_MAX} in one instant`);
+  // in the same instant: the home cell meter is spent, the yards' is not
   const yardOrder = await mintYardOrder({ s: 'acct-0001', m: 7, c: 30, v: 1 }, hk.privateKey, { subtle, nowS });
   await hub.raw(h, JSON.stringify({ t: 'yard', order: yardOrder }));
   t.mock.timers.tick(HOME_CELL_FAN_MS);
+  const said = cellFrames(h).flatMap((m) => m.l);
+  assert.ok(said.length >= 1 && said.length < 4 * HOME_CELL_ORDER_HZ_MAX, `metered: ${said.length} of ${4 * HOME_CELL_ORDER_HZ_MAX} in one instant`);
   assert.deepEqual(yardFrames(h).flatMap((m) => m.l), [[7, 30, 1]], 'a spent home cell meter spends no yard order');
 });

@@ -36,8 +36,7 @@ import { HUB_SHARD_ROOMS, isHubShard, HUB_FIND_Q_MAX, REGION_SHARD_ROOMS } from 
 //                                                       dev glyph, in the HUB alone; kind '' ends it (EVENT_HZ_MAX)
 //                    {t:'home', order}                  QUEST-HOME: a HOME order the account service signed - a town's buildings homes
 //                                                       now and none - carried by whoever acted, in the HUB alone; the hub believes
-//                                                       the signature, never the carrier (HOME_ORDER_HZ_MAX); YC2's {t:'yard', order} likewise (net/yardWordLaw.js), and
-//                                                       YC4's {t:'hcell', order} (net/homeCellWordLaw.js)
+//                                                       the signature, never the carrier (HOME_ORDER_HZ_MAX); YC2's {t:'yard', order} likewise (net/yardWordLaw.js), YC4's {t:'hcell', order} too
 //                    {t:'world', data, final?}          the room's memory, from its host alone (WORLD1); final once, the farewell
 //                    {t:'foes', data}                   the host's live foes, FOES_HZ_MAX a second at most (WORLD2)
 //                    {t:'hit', data}                    a blow on the host's foe, from anyone but the host (WORLD2)
@@ -86,8 +85,7 @@ import { HUB_SHARD_ROOMS, isHubShard, HUB_FIND_Q_MAX, REGION_SHARD_ROOMS } from 
 //                                                       or ended; a late joiner reads it off the hub welcome's `ev` ({kind, at}, absent: none)
 //                    {t:'home', l:[{m, u, d, i}]}       QUEST-HOME: homes that moved - town m's buildings u homes now, d none, i the
 //                                                       order's second - to every hub socket at the order, and the held words of the
-//                                                       last HOME_WORDS_KEEP_MS on a hub welcome; YC2's {t:'yard', l:[[m, c, v]]} likewise, none held (yardWords.js), and
-//                                                       YC4's {t:'hcell', l:[[m, c, v]]} (homeCellWords.js)
+//                                                       last HOME_WORDS_KEEP_MS on a hub welcome; YC2's {t:'yard', l:[[m, c, v]]} likewise, none held (yardWords.js), YC4's {t:'hcell', l} too
 //                    {t:'host', id}                     the room's host changed (WORLD1)
 //                    {t:'world', id, data}              the room's memory, to a socket whose welcome carried none (AUDIT WORLD34 C1)
 //                    {t:'foes', id, data}               the host's live foes, to everyone but the host (WORLD2)

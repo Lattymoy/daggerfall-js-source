@@ -10,11 +10,8 @@ import { isSocialRoom } from '../../src/net/wire.js';
 import { verifyOrder } from '../../src/net/identityToken.js';
 import { homeCellGate, HOME_CELL_FAN_MS, HOME_CELL_WORDS_MAX } from '../../src/net/homeCellWordLaw.js';
 
-/** @typedef {[number, number, number]} HomeCellWord `[m, c, v]`: town `m`'s home cell `c` at version `v`. */
-
 /**
- * A carried `{t:'hcell', order}` (wire.js parseClient), on socket `ws` whose attachment is `a`: metered before the
- * signature is asked (AUDIT 68), refused outside the hub, dropped silently when it does not verify (the mute arm's way).
+ * A carried `{t:'hcell', order}`: metered first (AUDIT 68), junk outside the hub, dropped silently if it does not verify.
  * @param {any} room the relay's Room
  * @param {any} ws
  * @param {any} a
@@ -33,6 +30,8 @@ export async function takeHomeCellOrder(room, ws, a, m, now) {
   if (!verified.ok) return;
   oweHomeCellWord(room, [verified.claims.m, verified.claims.c, verified.claims.v], now);
 }
+
+/** @typedef {[number, number, number]} HomeCellWord `[m, c, v]`: town `m`'s home cell `c` at version `v`. */
 
 /**
  * A verified word owed to the next fan - the highest version of its cell kept - and the fan armed.

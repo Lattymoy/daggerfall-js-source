@@ -1,0 +1,142 @@
+[
+  {
+    "name": "YC4-the-rule-not-widened",
+    "file": "src/net/identityToken.js",
+    "old": "const isCellOrder = c.o === 'yard' || c.o === 'hcell';",
+    "new": "const isCellOrder = c.o === 'yard';",
+    "tests": [
+      "test/server/home_cell_order.test.js"
+    ],
+    "note": "a home cell order refused for carrying its own town, cell and version"
+  },
+  {
+    "name": "YC4-the-version-0-let-in",
+    "file": "src/net/identityToken.js",
+    "old": "return Number.isSafeInteger(c.v) && c.v > 0;",
+    "new": "return Number.isSafeInteger(c.v) && c.v >= 0;",
+    "tests": [
+      "test/server/home_cell_order.test.js"
+    ],
+    "note": "an order for version 0, which no cell that moved stands at"
+  },
+  {
+    "name": "YC4-the-mint-another-kind",
+    "file": "src/net/identityToken.js",
+    "old": "const claims = { o: 'hcell', s, m, c, v, i: nowS, e: nowS + ttlS };",
+    "new": "const claims = { o: 'yard', s, m, c, v, i: nowS, e: nowS + ttlS };",
+    "tests": [
+      "test/server/home_cell_order.test.js"
+    ],
+    "note": "a home cell order minted as a yard order: a page asks the wrong cell"
+  },
+  {
+    "name": "YC4-the-list-kept-in-the-answer",
+    "file": "server-account/src/index.js",
+    "old": "return { ...r, homeCellOrders };",
+    "new": "return { ...r, homeCellsMoved: moved, homeCellOrders };",
+    "tests": [
+      "test/server/home_cell_order.test.js"
+    ],
+    "note": "the service's internal list leaves it beside the orders"
+  },
+  {
+    "name": "YC4-the-order-another-version",
+    "file": "server-account/src/index.js",
+    "old": "homeCellOrders.push(await mintHomeCellOrder({ s, m: mapId, c: cell, v: ver }",
+    "new": "homeCellOrders.push(await mintHomeCellOrder({ s, m: mapId, c: cell, v: ver + 1 }",
+    "tests": [
+      "test/server/home_cell_order.test.js"
+    ],
+    "note": "an order names a version the cell was never built at"
+  },
+  {
+    "name": "YC4-the-welcome-unsaid",
+    "file": "server/src/index.js",
+    "old": "{ [YARD_WELCOME_FIELD]: 1, [HOME_CELL_WELCOME_FIELD]: 1 }",
+    "new": "{ [YARD_WELCOME_FIELD]: 1 }",
+    "tests": [
+      "test/net/homecell_relay.test.js"
+    ],
+    "note": "no client carries an order: the hub never says it hears them"
+  },
+  {
+    "name": "YC4-the-hub-reads-a-yard-order",
+    "file": "server/src/homeCellWords.js",
+    "old": "kind: 'hcell' });",
+    "new": "kind: 'yard' });",
+    "tests": [
+      "test/net/homecell_relay.test.js"
+    ],
+    "note": "a yard order fanned as a home cell word, and every home cell order dropped"
+  },
+  {
+    "name": "YC4-the-hub-alone-dropped",
+    "file": "server/src/homeCellWords.js",
+    "old": "  if (!isSocialRoom(a.key)) {\n    room._junk(ws);",
+    "new": "  if (false) {\n    room._junk(ws);",
+    "tests": [
+      "test/net/homecell_relay.test.js"
+    ],
+    "note": "a town room fans home cell words to its own sockets alone"
+  },
+  {
+    "name": "YC4-the-meter-shared-with-the-yards",
+    "file": "server/src/homeCellWords.js",
+    "old": "'hcbucket', 'hcdrops'",
+    "new": "'ydbucket', 'yddrops'",
+    "tests": [
+      "test/net/homecell_relay.test.js"
+    ],
+    "note": "a carrier's home cell orders spend its yard orders' meter"
+  },
+  {
+    "name": "YC4-the-highest-version-not-kept",
+    "file": "server/src/homeCellWords.js",
+    "old": "if ((owed.get(key)?.[2] ?? 0) >= word[2]) return;",
+    "new": "if (false) return;",
+    "tests": [
+      "test/net/homecell_relay.test.js"
+    ],
+    "note": "a late order for an older version says the cell went back"
+  },
+  {
+    "name": "YC4-the-fan-unmetered",
+    "file": "server/src/homeCellWords.js",
+    "old": "(room._homeCellAt ?? -Infinity) + HOME_CELL_FAN_MS - now",
+    "new": "(room._homeCellAt ?? -Infinity) - now",
+    "tests": [
+      "test/net/homecell_relay.test.js"
+    ],
+    "note": "a frame for every order: the fan is no longer once a second"
+  },
+  {
+    "name": "YC4-the-frame-one-past-its-bound",
+    "file": "src/net/homeCellWordLaw.js",
+    "old": "m.l.length > HOME_CELL_WORDS_MAX",
+    "new": "m.l.length > HOME_CELL_WORDS_MAX + 1",
+    "tests": [
+      "test/net/homecell_relay.test.js"
+    ],
+    "note": "a frame past HOME_CELL_WORDS_MAX words taken"
+  },
+  {
+    "name": "YC4-the-word-version-0",
+    "file": "src/net/homeCellWordLaw.js",
+    "old": "if (!Number.isSafeInteger(v) || v <= 0) return null;",
+    "new": "if (!Number.isSafeInteger(v) || v < 0) return null;",
+    "tests": [
+      "test/net/homecell_relay.test.js"
+    ],
+    "note": "a word for version 0 taken"
+  },
+  {
+    "name": "YC4-the-client-frame-unbounded",
+    "file": "src/net/wire.js",
+    "old": "if (!hasHello) return { error: 'hcell before hello' };\n    return typeof m.order === 'string' && m.order.length > 0 && m.order.length <= 1024",
+    "new": "if (!hasHello) return { error: 'hcell before hello' };\n    return typeof m.order === 'string' && m.order.length > 0 && m.order.length <= 1025",
+    "tests": [
+      "test/net/homecell_relay.test.js"
+    ],
+    "note": "an order past 1,024 characters taken to the signature check"
+  }
+]
