@@ -116,7 +116,8 @@ test('EV5: the wiring - three lit shaders, the latched flat tint, the studio, th
   // second copy of its body - dynamicMoonlight carries the null guard,
   // so the arm a future host forgets lives in one place.
   // PIN MOVED (NIGHT-FOG): the term's body is the controller's `moonNow`, which the lit fog asks too (systems/weather/nightFog.js)
-  assert.match(shared, /const moonNow = \(\) => \(enhancedSky\?\.state \? moonlightTerm\(enhancedSky\.state\) : dynamicMoonlight\(dynamicMoons\)\);/,
+  // PIN MOVED (SKYRIM-AURORA): and the aurora's light added to it (scenes/auroraHost.js withAuroraLight - null with none)
+  assert.match(shared, /const moonNow = \(\) => withAuroraLight\(enhancedSky\?\.state \? moonlightTerm\(enhancedSky\.state\) : dynamicMoonlight\(dynamicMoons\), aurora\?\.light \?\? null\);/,
     'classic answers null - the 1:1 lane keeps the hard-off night');
   assert.match(shared, /moonlight\(\) \{ return moonNow\(\); \},/, 'and the world light asks the same term');
   // and the export itself answers, rather than merely being named: the

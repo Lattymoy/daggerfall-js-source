@@ -61,8 +61,31 @@ in the north. Each arc is a thin sheet cut by moving rays, with a wide glow abou
 
 Each sample is widened by its own step (its variance plus the step squared over 12, its light kept), so the march does
 not stipple. Detail fades where a texel spans it, at the edge-on east and west. The horizon's longer path lifts it by
-1.5 at most. The light rolls off toward 0.95, so a corona overhead never clips flat, and a 1/255 dither keeps the dark
+1.5 at most, and it fades into the haze over the last seven degrees. The light rolls off toward 0.95, so a corona overhead never clips flat, and a 1/255 dither keeps the dark
 sky free of bands. A ray that passes every arc's reach skips the march. A Hollow's brass air dims it.
+
+## Its light on the land
+
+The owner, the same day: "It should reflect and light the ground". The aurora's light rides the sky's moonlight term
+(`scenes/auroraHost.js` withAuroraLight): `AURORA_LIGHT` (0.012, 0.06, 0.042) by the frame's weight is added to its
+ambient lift. A moonless night under an aurora gets a term with no key. Every reader of the moonlight takes it, with no
+host line: the land's and the flats' ambient, the water's body and the night air (NIGHT-FOG). At full strength it is a
+green lift of a fifth of the night's own 0.25. It is ambient alone: the aurora lights from a whole quarter of the sky,
+so it casts no key.
+
+## In the water
+
+Every third frame the pass marches a small dome map by direction (`AURORA_DOME`: 256 x 64, azimuth across, height up,
+six steps). The sky controller hands it with the water's sky (`waterSky`'s `aurora`), and `waterUniforms` forwards it.
+The water reads it along its reflected ray (`render/waterSurface.js` auroraDomeUv) and adds it as the glints are added,
+at its Fresnel or `AURORA_MIRROR` (0.3), whichever is more. Calm water at night shows the curtains as it shows a lamp;
+the bare Fresnel, a few hundredths looking down, hid them. The map is by direction, so a reflection a frame or two old
+still lines up. The renderer binds it on unit 19, its own, and holds the black texel there while there is none.
+
+Found on the way: the water's snow-lines sampler got its unit only on a frame with snow, so a frame without one left it
+on unit 0 beside the tile array, and the draw was refused. The fixed-city bench and the water lab hand no snow frame,
+so their water never drew. Both water programs now send their fixed samplers when they are built, and both units hold
+the black texel from the start (`renderer.js` `_waterSamplerUnits`).
 
 ## Its clock
 
@@ -76,7 +99,8 @@ the curtains never jump. The first version ran on each machine's own clock and j
 The quality tier is the clouds' (`render/volumetricClouds.js` QUALITY): `lo` 6 steps into a half-size map, `default`
 10 into a half-size map, `hi` 12 into a three-quarter map. Measured on SwiftShader at 400 x 240, a whole-sky view north,
 the median of seven: the dome 21.1 ms, the first version's full-size march 48.1, `lo` 9.7, `default` 11.5. `hi` measured
-about 2.1 times the dome in a run beside other work. `?aurora=off` is the way out.
+about 2.1 times the dome in a run beside other work. The dome map adds 16,384 texels at six steps every third frame,
+under a hundredth of the `default` march at 1080p. `?aurora=off` is the way out.
 
 ## The four hosts (Home.md)
 
@@ -90,7 +114,7 @@ The classic lane keeps Daggerfall's painted sky, untouched: the controller build
 
 ## Its compile
 
-Where the driver compiles beside the frames (KHR_parallel_shader_compile), its two programs are started at the boot's
+Where the driver compiles beside the frames (KHR_parallel_shader_compile), its three programs are started at the boot's
 idle (`render/playPrograms.js`), last in the queue: they are met only under Skyrim's night sky, and the door never
 waits, so a late one fades in. Elsewhere the first frame that wants it builds it, as every pass's does.
 
@@ -99,10 +123,14 @@ waits, so a late one fades in. Elsewhere the first frame that wants it builds it
 - `?aurora=off` builds nothing. `?aurora=on` or a number 0..1 stands it at that weight anywhere, at any hour.
 - The sky lab: `sky.html?hour=23&aurora=1&hang=1.5` draws it over either sky (`&sky=dynamic`), under the clouds, on the
   `?clouds=` tier's march; `?still` holds its curtains.
-- `tools/auroraProbe.mjs` boots the game in the Bay at night with the clock held, then jumps to Solitude. Not yet run to
-  completion.
+- The water lab: `water.html?hour=23&aurora=1&hang=-3&yaw=180&pitch=-5&height=6` - the aurora over the sky, in the water
+  and in the land's light.
+- `tools/auroraProbe.mjs` boots the game in the Bay at night with the clock held, then jumps to Solitude. Run at
+  9b9a2c5df1 on the freeware, headless on SwiftShader (a boot of 52 minutes, the jump 24 more): the Bay's north sky's
+  mean green 6.43, Solitude's 32.94 north, 74.43 overhead and 23.43 south; no page error. It passes at 3 over the Bay.
 - `test/world/skyrimaurora.test.js` pins the law, the place on the traced map (with ARENA2), the sea, the clock, the
-  pass, the door and the wiring. `tools/mutants/skyrimaurora.json` holds 65 mutants, all dead.
+  pass, the dome map, the land's light, the water's mirror, the door and the wiring. `tools/mutants/skyrimaurora.json`
+  holds 87 mutants, all dead.
 
 ## AUDIT SKYRIM-AURORA (2026-10-29)
 
@@ -115,5 +143,6 @@ dials, the traced map, the producer's own door and the mutants.
 
 ## Not carried
 
-The water does not mirror it, and it does not light the ground. The pass's `dispose` is for an owner that tears it
-down; the sky controller holds it for the page's life, as it holds the sky's other passes.
+The far ring's sea mirrors no aurora. It lies kilometres off and is seen at a few degrees, so it reflects only the sky
+just over the horizon, where the aurora has faded into the haze. The aurora casts no key light. The pass's `dispose` is
+for an owner that tears it down; the sky controller holds it for the page's life, as it holds the sky's other passes.

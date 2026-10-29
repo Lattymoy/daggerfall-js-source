@@ -6,7 +6,7 @@
 // driver has its program, its curtains on the sky's walk clock. `?aurora=off` builds nothing; `?aurora=on` or a number
 // in 0..1 stands it at that weight anywhere, at any hour (the sky lab and the probes).
 import { compiledPass } from '../render/glProgram.js';
-import { AuroraPass, AURORA_PROGRAMS, AURORA_QUALITY } from '../render/auroraPass.js';
+import { AuroraPass, AURORA_PROGRAMS, AURORA_QUALITY, AURORA_LIGHT } from '../render/auroraPass.js';
 import { WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';
 import { auroraSky, auroraDark, AURORA_DIALS, NO_AURORA } from '../world/tamriel/skyrimAurora.js';
 import { pixelHere } from '../characters/provinceFolk.js';
@@ -26,6 +26,15 @@ export function auroraDoor(v) {
   return Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : null;
 }
 
+/** The sky's moonlight term (render/enhancedSky.js moonlightTerm: {dir, scale, color, ambient}, or null) with the aurora's
+ *  light added to its ambient - a moonless night under an aurora answers a term with no key. Every reader of the moonlight
+ *  (the land's ambient, the water's body, the night air) takes it so. @param {any} moon @param {ArrayLike<number>|null} light */
+export function withAuroraLight(moon, light) {
+  if (!light) return moon;
+  if (!moon) return { dir: [0, 1, 0], scale: 0, color: [0, 0, 0], ambient: [light[0], light[1], light[2]] };
+  return { ...moon, ambient: [moon.ambient[0] + light[0], moon.ambient[1] + light[1], moon.ambient[2] + light[2]] };
+}
+
 /** The sky's aurora, or null where the door turns it off.
  *  @param {any} gl @param {URLSearchParams} params
  *  @param {{ here?: () => ({ x: number, y: number } | null), clock?: () => number, quality?: string }} [opts] the player's
@@ -36,11 +45,24 @@ export function createAuroraHost(gl, params, { here = pixelHere, clock = () => (
   const tier = AURORA_QUALITY[/** @type {keyof typeof AURORA_QUALITY} */ (quality)] ?? AURORA_QUALITY.default;
   const pass = compiledPass(gl, AURORA_PROGRAMS, () => new AuroraPass(gl, tier), (e) => console.warn('[aurora] its program failed - no aurora is drawn', e?.message ?? e));
   let sky = 0, dark = 0, seconds = 0, hang = /** @type {number} */ (AURORA_DIALS.hangNorth), last = /** @type {number|null} */ (null);
+  const light = new Float32Array(3), skyMap = { tex: /** @type {any} */ (null) };
   return {
     tier,
     /** the weight the last `use` left, 0..1 */
     get weight() { return sky * dark; },
     get hang() { return hang; },
+    /** The ambient the aurora adds to the land's light this frame ([r, g, b], AURORA_LIGHT by its weight), or null. */
+    get light() {
+      const w = sky * dark;
+      if (!(w >= AURORA_DRAWN_FROM)) return null;
+      for (let c = 0; c < 3; c++) light[c] = AURORA_LIGHT[c] * w;
+      return light;
+    },
+    /** The dome map the water reflects ({ tex }, render/auroraPass.js AuroraPass domeTex), or null while none is drawn. */
+    get skyMap() {
+      skyMap.tex = sky * dark >= AURORA_DRAWN_FROM ? pass()?.domeTex ?? null : null;
+      return skyMap.tex ? skyMap : null;
+    },
     /** The frame's sky: its minute of the day, the sky's own clock, the eased cloud cover, whether the weather leaves the
      *  night sky out, whether the sky draws its own cloud decks, and the walk clock's game minutes (the curtains' time).
      *  The first call after a `jump` takes it whole. */

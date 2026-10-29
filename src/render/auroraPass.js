@@ -1,11 +1,10 @@
 // @ts-check
-// SKYRIM-AURORA (bible/07-Rendering/Skyrim-Aurora.md): the aurora's pass, over whichever sky the enhanced lane draws
-// and under its clouds (scenes/shared.js createSkyController draw). Its curtains are vertical sheets running east-west,
-// hung north of the eye; each ray is marched up through them from their lower hem, so a curtain overhead fans to the
-// zenith and a far one stands low over the north horizon. Each sample is widened by its own step (the march never
-// stipples) and fine detail fades where a pixel spans it. The march draws into a map at a share of the world image's
-// size (it is soft), and one triangle at the far plane ADDS the map to the sky (one, one): the stars and the moons show
-// through, the land stands over it. Page-lifetime, as the sky's other passes.
+// SKYRIM-AURORA (bible/07-Rendering/Skyrim-Aurora.md): the aurora's pass, over the enhanced lane's sky and under its
+// clouds (scenes/shared.js createSkyController draw). Its curtains are vertical sheets running east-west, hung north of
+// the eye; each ray is marched up through them from their lower hem, each sample widened by its step, fine detail faded
+// where a texel spans it. The march draws into a map at a share of the world image, and one triangle at the far plane
+// ADDS it to the sky (one, one): the stars show through, the land stands over it. Every few frames a small dome map is
+// marched by direction too, for the water to reflect. Page-lifetime, as the sky's other passes.
 import { buildProgram } from './glProgram.js';
 import { createRenderTarget, withTarget } from './renderTarget.js';
 
@@ -37,6 +36,9 @@ export const AURORA_REACH = AURORA_WAVES.reduce((s, w) => s + w[0], 0) + 1.4;
 export const AURORA_HEM = Object.freeze([0.25, 1.0, 0.55]);
 export const AURORA_CROWN = Object.freeze([0.1, 0.6, 0.9]);
 export const AURORA_GLOW = Object.freeze([0.08, 0.25, 0.85]);
+/** THE LAND'S LIGHT: the ambient a full aurora adds to the land's, the water's body's and the night air's (scenes/auroraHost.js
+ *  withAuroraLight, through the sky's moonlight term) - a green lift a fifth of the night's own 0.25. */
+export const AURORA_LIGHT = Object.freeze([0.012, 0.06, 0.042]);
 /** The light at a full weight, the brightest it rolls off toward, and the most the horizon's long path lifts it. */
 export const AURORA_GAIN = 0.42;
 export const AURORA_PEAK = 0.95;
@@ -52,11 +54,10 @@ out vec2 vNdc;
 void main() { vNdc = aPos; gl_Position = vec4(aPos, 1.0, 1.0); }`;
 
 const [W0, W1, W2] = AURORA_WAVES;
-/** The march, into the map: every texel written (0 where it is dark), nothing blended. */
-export const AURORA_FS = `#version 300 es
-precision highp float;
+// The march along one direction (x east, y up, z north), shared by the screen's map and the dome's: the aurora's light
+// there, 0 where it is dark. pix: the radians a texel spans.
+const AURORA_ALONG = `precision highp float;
 in vec2 vNdc;
-uniform float uYaw, uPitch, uTanHalfFov, uAspect;
 uniform float uWeight;   // 0..1, the frame's aurora (scenes/auroraHost.js)
 uniform float uHang;     // how far north of the eye the middle arc hangs, in hem heights
 uniform vec3 uWave;      // the three waves' phases, radians (the clock's, wrapped on the CPU)
@@ -64,7 +65,6 @@ uniform vec2 uDrift;     // the swell's and the hem's phases, radians
 uniform vec3 uRayLo, uRayHi, uRayF;   // each arc's rays' noise rows (wrapped) and the blend between them
 uniform float uPixel;    // radians a texel of the map spans
 uniform float uSteps;    // the march's steps (the quality tier's)
-out vec4 outColor;
 
 float hash12(vec2 p) {
   vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -94,14 +94,8 @@ vec2 arcAt(vec2 Q, float k, float rowLo, float rowHi, float rowF, vec4 inv, floa
   }
   return vec2(sheet, exp(-a2 * inv.z) * inv.w) * swell;
 }
-void main() {
-  outColor = vec4(0.0, 0.0, 0.0, 1.0);
-  vec3 ray = normalize(vec3(vNdc.x * uTanHalfFov * uAspect, vNdc.y * uTanHalfFov, 1.0));
-  float cp = cos(uPitch), sp = sin(uPitch);
-  vec3 r1 = vec3(ray.x, ray.y * cp + ray.z * sp, -ray.y * sp + ray.z * cp);
-  float cy = cos(uYaw), sy = sin(uYaw);
-  vec3 dir = normalize(vec3(r1.x * cy + r1.z * sy, r1.y, -r1.x * sy + r1.z * cy));
-  if (dir.y <= 0.0) return;   // the ground's texels cost nothing
+vec3 auroraAlong(vec3 dir) {
+  if (dir.y <= 0.0) return vec3(0.0);   // the ground's texels cost nothing
   float up = max(dir.y, 0.035);
   vec2 q0 = dir.xz / up;   // where the ray crosses the hem's height
   // what a texel spans on the hem's plane, hem heights - steepest at the horizon - against each detail's frequency
@@ -111,7 +105,7 @@ void main() {
   float hemH = 1.0 + 0.22 * sin(q0.x * 0.8 + uDrift.y) + 0.3 * (1.0 - lodH) * (rowNoise(q0.x * 1.7, 3.0) - 0.5);   // a hem that rises and falls
   // the march's reach north and south; a ray that passes every arc's waves and glow by far is dark
   float yLo = min(q0.y * hemH, q0.y * (hemH + ${f(AURORA_DEPTH)})), yHi = max(q0.y * hemH, q0.y * (hemH + ${f(AURORA_DEPTH)}));
-  if (yHi < uHang - ${f(AURORA_ARC_GAP + AURORA_REACH)} || yLo > uHang + ${f(AURORA_ARC_GAP + AURORA_REACH)}) return;
+  if (yHi < uHang - ${f(AURORA_ARC_GAP + AURORA_REACH)} || yLo > uHang + ${f(AURORA_ARC_GAP + AURORA_REACH)}) return vec3(0.0);
   float jitter = hash12(gl_FragCoord.xy);
   float step2 = length(q0) * ${f(AURORA_DEPTH)} / uSteps;
   float sVar = ${f(AURORA_SHEET_VAR)} + step2 * step2 / 12.0, gVar = ${f(AURORA_GLOW_VAR)} + step2 * step2 / 12.0;
@@ -126,12 +120,37 @@ void main() {
     float hem = smoothstep(0.0, 0.06 + 1.0 / uSteps, hn) * exp(-hn * 2.4);   // brightest at the lower hem, thinning upward - its edge a step wide at least
     col += (mix(${v3(AURORA_HEM)}, ${v3(AURORA_CROWN)}, smoothstep(0.2, 0.85, hn)) * s.x + ${v3(AURORA_GLOW)} * 0.12 * s.y) * hem;
   }
-  // a longer path through the sheets near the horizon, lifted at most ${AURORA_HORIZON_LIFT}x and fading into its haze
-  col *= ${f(AURORA_GAIN)} * 12.0 / uSteps * uWeight * min(inversesqrt(up), ${f(AURORA_HORIZON_LIFT)}) * smoothstep(0.02, 0.2, dir.y);
+  // a longer path through the sheets near the horizon, lifted at most ${AURORA_HORIZON_LIFT}x and fading into its haze in the
+  // last seven degrees
+  col *= ${f(AURORA_GAIN)} * 12.0 / uSteps * uWeight * min(inversesqrt(up), ${f(AURORA_HORIZON_LIFT)}) * smoothstep(0.01, 0.12, dir.y);
   float m = max(col.g, col.b);   // a soft knee to the brightest, so a corona overhead never clips flat
   col *= m > 1e-5 ? ${f(AURORA_PEAK)} * (1.0 - exp(-m / ${f(AURORA_PEAK)})) / m : 1.0;
   col += (jitter - 0.5) / 255.0 * step(0.004, col.g + col.b);   // no bands in the dark sky's few levels
-  outColor = vec4(max(col, 0.0), 1.0);
+  return max(col, 0.0);
+}`;
+
+/** The march for the screen, into the map at the world image's share: every texel written, nothing blended. */
+export const AURORA_FS = `#version 300 es
+${AURORA_ALONG}
+uniform float uYaw, uPitch, uTanHalfFov, uAspect;
+out vec4 outColor;
+void main() {
+  vec3 ray = normalize(vec3(vNdc.x * uTanHalfFov * uAspect, vNdc.y * uTanHalfFov, 1.0));
+  float cp = cos(uPitch), sp = sin(uPitch);
+  vec3 r1 = vec3(ray.x, ray.y * cp + ray.z * sp, -ray.y * sp + ray.z * cp);
+  float cy = cos(uYaw), sy = sin(uYaw);
+  outColor = vec4(auroraAlong(normalize(vec3(r1.x * cy + r1.z * sy, r1.y, -r1.x * sy + r1.z * cy))), 1.0);
+}`;
+
+/** The march by direction, into the dome map the water reflects (render/waterSurface.js AURORA_DOME_UV_GLSL reads it): a
+ *  texel's azimuth across, its height up. */
+export const AURORA_DOME_FS = `#version 300 es
+${AURORA_ALONG}
+out vec4 outColor;
+void main() {
+  vec2 uv = vNdc * 0.5 + 0.5;
+  float az = (uv.x - 0.5) * 6.2831853, y = uv.y, c = sqrt(max(0.0, 1.0 - y * y));
+  outColor = vec4(auroraAlong(vec3(sin(az) * c, y, cos(az) * c)), 1.0);
 }`;
 
 /** The map ADDED to the sky at the far plane. */
@@ -142,9 +161,14 @@ uniform sampler2D uMap;
 out vec4 outColor;
 void main() { outColor = vec4(texture(uMap, vNdc * 0.5 + 0.5).rgb, 0.0); }`;
 
-export const AURORA_UNIFORMS = Object.freeze(['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uWeight', 'uHang', 'uWave', 'uDrift', 'uRayLo', 'uRayHi', 'uRayF', 'uPixel', 'uSteps']);
-/** The pass's two programs, as render/playPrograms.js starts them at the boot's idle and its door builds them. */
-export const AURORA_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([VS, AURORA_FS])), Object.freeze(/** @type {const} */ ([VS, AURORA_ADD_FS]))]);
+/** The march's uniforms, both programs': the screen's camera besides. */
+export const AURORA_ALONG_UNIFORMS = Object.freeze(['uWeight', 'uHang', 'uWave', 'uDrift', 'uRayLo', 'uRayHi', 'uRayF', 'uPixel', 'uSteps']);
+export const AURORA_UNIFORMS = Object.freeze(['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', ...AURORA_ALONG_UNIFORMS]);
+/** The pass's three programs, as render/playPrograms.js starts them at the boot's idle and its door builds them. */
+export const AURORA_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([VS, AURORA_FS])), Object.freeze(/** @type {const} */ ([VS, AURORA_ADD_FS])), Object.freeze(/** @type {const} */ ([VS, AURORA_DOME_FS]))]);
+/** THE DOME MAP the water reflects: its size (azimuth x height), its march's steps, and every how many frames it is
+ *  marched again (the curtains move slowly; a reflection a few frames old is the same). */
+export const AURORA_DOME = Object.freeze({ width: 256, height: 64, steps: 6, every: 3 });
 
 /** The phases the clock gives at `seconds` (the sky's walk clock), wrapped here in double precision so the shader's
  *  never jump: the three waves' and [the swell's, the hem's] in radians, and each arc's rays' noise rows - the two
@@ -168,8 +192,11 @@ export class AuroraPass {
     this.scale = Math.max(0.25, Math.min(1, quality.scale));
     this.program = buildProgram(gl, VS, AURORA_FS, 'aurora');
     this.addProgram = buildProgram(gl, VS, AURORA_ADD_FS, 'aurora add');
+    this.domeProgram = buildProgram(gl, VS, AURORA_DOME_FS, 'aurora dome');
     this.u = {};
     for (const name of AURORA_UNIFORMS) this.u[name] = gl.getUniformLocation(this.program, name);
+    this.du = {};
+    for (const name of AURORA_ALONG_UNIFORMS) this.du[name] = gl.getUniformLocation(this.domeProgram, name);
     this.uMap = gl.getUniformLocation(this.addProgram, 'uMap');
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
@@ -181,6 +208,27 @@ export class AuroraPass {
     gl.bindVertexArray(null);
     /** the march's map, made at the first draw and again when the world image's size changes */
     this.map = /** @type {ReturnType<typeof createRenderTarget>|null} */ (null);
+    /** the dome map the water reflects (AURORA_DOME), made at the first draw; `domeDrawn` once it holds a march */
+    this.dome = /** @type {ReturnType<typeof createRenderTarget>|null} */ (null);
+    this.domeDrawn = false;
+    this._domeTurn = 0;
+  }
+
+  /** The dome map's texture once a march is in it, or null - the water's reflection (render/waterSurface.js). */
+  get domeTex() { return this.domeDrawn ? this.dome?.tex ?? null : null; }
+
+  /** The march's uniforms on the program whose table `u` is: the weight, the arcs, the clock's phases, the texel's span. */
+  _along(u, weight, hang, ph, pixel, steps) {
+    const gl = this.gl;
+    gl.uniform1f(u.uWeight, Math.min(1, weight));
+    gl.uniform1f(u.uHang, hang);
+    gl.uniform3f(u.uWave, ph.wave[0], ph.wave[1], ph.wave[2]);
+    gl.uniform2f(u.uDrift, ph.drift[0], ph.drift[1]);
+    gl.uniform3f(u.uRayLo, ph.lo[0], ph.lo[1], ph.lo[2]);
+    gl.uniform3f(u.uRayHi, ph.hi[0], ph.hi[1], ph.hi[2]);
+    gl.uniform3f(u.uRayF, ph.share[0], ph.share[1], ph.share[2]);
+    gl.uniform1f(u.uPixel, pixel);
+    gl.uniform1f(u.uSteps, steps);
   }
 
   /** The map for a world image `w` x `h`, made or made again at the tier's share of it. */
@@ -210,17 +258,19 @@ export class AuroraPass {
       gl.useProgram(this.program);
       gl.uniform1f(u.uYaw, yaw); gl.uniform1f(u.uPitch, pitch);
       gl.uniform1f(u.uTanHalfFov, tanHalf); gl.uniform1f(u.uAspect, aspect);
-      gl.uniform1f(u.uWeight, Math.min(1, weight));
-      gl.uniform1f(u.uHang, hang);
-      gl.uniform3f(u.uWave, ph.wave[0], ph.wave[1], ph.wave[2]);
-      gl.uniform2f(u.uDrift, ph.drift[0], ph.drift[1]);
-      gl.uniform3f(u.uRayLo, ph.lo[0], ph.lo[1], ph.lo[2]);
-      gl.uniform3f(u.uRayHi, ph.hi[0], ph.hi[1], ph.hi[2]);
-      gl.uniform3f(u.uRayF, ph.share[0], ph.share[1], ph.share[2]);
-      gl.uniform1f(u.uPixel, 2 * tanHalf / map.height);
-      gl.uniform1f(u.uSteps, this.steps);
+      this._along(u, weight, hang, ph, 2 * tanHalf / map.height, this.steps);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     });
+    // the dome map the water reflects, every few frames: by direction, so a reflection a frame or two old still lines up
+    if (this._domeTurn++ % AURORA_DOME.every === 0 || !this.domeDrawn) {
+      this.dome ??= createRenderTarget(gl, AURORA_DOME.width, AURORA_DOME.height, { wrapS: 'REPEAT' });
+      withTarget(gl, this.dome, viewport, () => {
+        gl.useProgram(this.domeProgram);
+        this._along(this.du, weight, hang, ph, TAU / AURORA_DOME.width, AURORA_DOME.steps);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      });
+      this.domeDrawn = true;
+    }
     gl.useProgram(this.addProgram);
     gl.depthMask(false);
     gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);   // only where nothing nearer has drawn - z is the far plane
@@ -238,14 +288,16 @@ export class AuroraPass {
     gl.depthMask(true);
   }
 
-  /** EVERY ALLOCATION HAS AN OWNER: the programs, the triangle, its VAO and the map - for an owner that tears it down;
+  /** EVERY ALLOCATION HAS AN OWNER: the programs, the triangle, its VAO and both maps - for an owner that tears it down;
    *  the sky controller holds it for the page's life, as it holds the sky's other passes. */
   dispose() {
     const gl = this.gl;
     gl.deleteProgram(this.program);
     gl.deleteProgram(this.addProgram);
+    gl.deleteProgram(this.domeProgram);
     gl.deleteBuffer(this.vb);
     gl.deleteVertexArray(this.vao);
     this._freeMap();
+    if (this.dome) { gl.deleteTexture(this.dome.tex); gl.deleteFramebuffer(this.dome.fbo); this.dome = null; this.domeDrawn = false; }
   }
 }

@@ -24,7 +24,7 @@ import { dreadGrade, DREAD_SKY_WORD } from '../world/dreadSky.js';   // EVENT1: 
 import { sunbabyHaze, sunbabyWaterSky } from '../world/sunbabySky.js';   // SUNBABY1: the sun baby's haze and the sky the water mirrors under it
 import { sdBrassGrade } from '../systems/superDungeon/sdOmen.js';   // SD19: the brass air near a standing Hollow
 import { SunbabySkyRenderer } from '../render/sunbabySkyRenderer.js';   // SUNBABY1: its flower sky, over every sky
-import { createAuroraHost } from './auroraHost.js';   // SKYRIM-AURORA: Skyrim's aurora over the lane's night sky
+import { createAuroraHost, withAuroraLight } from './auroraHost.js';   // SKYRIM-AURORA: Skyrim's aurora over the lane's night sky, its light and its reflection
 import { QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
 import { createCloudsArrival } from '../render/cloudsArrival.js';   // CLOUD-COMPILE: the clouds built once their programs are done
 import { canopyWaterSky } from '../world/jungle/jungleCanopy.js';   // VALENWOOD-CANOPY: the sky the water mirrors under a closed canopy
@@ -318,9 +318,11 @@ export function createSkyController(gl, params) {
   const dreaded = (ws) => brassed(sunbabyWaterSky(dreadW > 0 ? { zenith: dreadGrade(ws.zenith, dreadW), horizon: dreadGrade(ws.horizon, dreadW) } : ws, sunbabyW, sunbabyEvil));   // SUNBABY2: the wrath's sky
   /** VALENWOOD-CANOPY: and under a closed canopy, the leaves' (world/jungle/jungleCanopy.js canopyWaterSky). */
   const leaved = (ws) => canopyWaterSky(ws, canopyLeaves);
+  /** SKYRIM-AURORA: and the aurora's dome map, for the water to reflect (render/waterSurface.js) - null under none. */
+  const auroraIn = (ws) => ({ ...ws, aurora: aurora?.skyMap ?? null });
   /** EV5: the moons' term (`moonlight` below) - the dome's own state; DS1: the same term from the mod's own moons - where
    *  its orbit puts them, lit by DFU's phase - so the world's night agrees with the sky it stands under. */
-  const moonNow = () => (enhancedSky?.state ? moonlightTerm(enhancedSky.state) : dynamicMoonlight(dynamicMoons));
+  const moonNow = () => withAuroraLight(enhancedSky?.state ? moonlightTerm(enhancedSky.state) : dynamicMoonlight(dynamicMoons), aurora?.light ?? null);   // SKYRIM-AURORA: and the aurora's light
   // NIGHT-FOG (systems/weather/nightFog.js): THE FOG IS LIT BY THE LIGHT THE LAND IS LIT BY - on the enhanced lane the
   // frame's fog is never darker than air lit by the open air's light (the hour and the weather's sunlight scale the last
   // use() was handed, the player's Night Brightness, the moons); the classic panorama keeps SetSkyFogColor verbatim, and
@@ -524,16 +526,17 @@ export function createSkyController(gl, params) {
      *  horizon this frame ({zenith, horizon}, 0..1 rgb), from the SAME
      *  state the dome is drawn from; under the mod, the mod's fog colour
      *  at the horizon and its dome fill above; null under the classic
-     *  sky, which draws no water surface. */
+     *  sky, which draws no water surface. SKYRIM-AURORA: and `aurora`,
+     *  the aurora's dome map ({ tex }) or null. */
     waterSky() {
-      if (enhancedSky?.state) return leaved(dreaded({ zenith: enhancedSky.state.zenith, horizon: enhancedSky.state.horizon }));
+      if (enhancedSky?.state) return auroraIn(leaved(dreaded({ zenith: enhancedSky.state.zenith, horizon: enhancedSky.state.horizon })));
       if (dynamicSky) {
         // WATER-AUDIT (L3): the mod publishes ONE colour (its fog colour is
         // its clear colour is its fill), so a zenith is DERIVED from it -
         // darker and bluer, the way any day sky deepens overhead - rather
         // than a second copy of the horizon that made the reflection flat
         const h = dynamic?.fogColor ?? dynamicSky.clearColor;
-        return leaved(dreaded({ zenith: [h[0] * 0.55, h[1] * 0.65, h[2] * 0.85], horizon: h }));   // EVENT1: graded under the dread on this lane too
+        return auroraIn(leaved(dreaded({ zenith: [h[0] * 0.55, h[1] * 0.65, h[2] * 0.85], horizon: h })));   // EVENT1: graded under the dread on this lane too
       }
       return null;
     },

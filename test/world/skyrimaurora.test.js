@@ -13,9 +13,10 @@ import {
 import {
   AuroraPass, AURORA_FS, AURORA_ADD_FS, AURORA_UNIFORMS, AURORA_PROGRAMS, AURORA_QUALITY, AURORA_MAX_STEPS, AURORA_DEPTH, AURORA_ARC_GAP,
   AURORA_RAY_ROWS, AURORA_ARC_ROW, AURORA_WAVES, AURORA_RATES, AURORA_SHEET_VAR, AURORA_GLOW_VAR, AURORA_REACH, AURORA_HEM, AURORA_CROWN,
-  AURORA_GLOW, AURORA_GAIN, AURORA_PEAK, AURORA_HORIZON_LIFT, auroraPhases,
+  AURORA_GLOW, AURORA_GAIN, AURORA_PEAK, AURORA_HORIZON_LIFT, auroraPhases, AURORA_DOME_FS, AURORA_DOME, AURORA_LIGHT,
 } from '../../src/render/auroraPass.js';
-import { createAuroraHost, auroraDoor, AURORA_EASE_S, AURORA_DRAWN_FROM } from '../../src/scenes/auroraHost.js';
+import { waterUniforms, waterSurfaceFs, AURORA_SKY_UNIT, AURORA_DOME_UV_GLSL, AURORA_MIRROR } from '../../src/render/waterSurface.js';
+import { createAuroraHost, auroraDoor, withAuroraLight, AURORA_EASE_S, AURORA_DRAWN_FROM } from '../../src/scenes/auroraHost.js';
 import { THEATRE_KEYS, theatreAt } from '../../src/world/worldWide/worldGrid.js';
 import { pictureToBay, setTamrielFit } from '../../src/world/tamriel/tamrielFrame.js';
 import { setTamrielTrace } from '../../src/world/tamriel/tamrielLand.js';
@@ -170,19 +171,21 @@ test('SKYRIM-AURORA THE PASS\'S DIALS: the tiers, the curtains, the clock, the c
   assert.deepEqual([AURORA_SHEET_VAR, AURORA_GLOW_VAR], [1 / 24, 1 / 5]);
   assert.deepEqual([[...AURORA_HEM], [...AURORA_CROWN], [...AURORA_GLOW]], [[0.25, 1, 0.55], [0.1, 0.6, 0.9], [0.08, 0.25, 0.85]]);
   assert.deepEqual([AURORA_GAIN, AURORA_PEAK, AURORA_HORIZON_LIFT], [0.42, 0.95, 1.5]);
+  assert.deepEqual({ ...AURORA_DOME }, { width: 256, height: 64, steps: 6, every: 3 });
+  assert.deepEqual([[...AURORA_LIGHT], AURORA_MIRROR, AURORA_SKY_UNIT], [[0.012, 0.06, 0.042], 0.3, 19]);
   // the skip: the waves' amplitudes summed, and the glow out to where it is under 1/100 (exp(-2.5 * 1.4^2))
   close(AURORA_REACH, 0.55 + 0.3 + 0.35 + 1.4, 1e-12);
   assert.ok(Math.exp(-2.5 * 1.4 * 1.4) < 0.01);
   for (const line of [
-    'if (yHi < uHang - 3.9 || yLo > uHang + 3.9) return;',   // the skip, at the gap and the reach
+    'if (yHi < uHang - 3.9 || yLo > uHang + 3.9) return vec3(0.0);',   // the skip, at the gap and the reach
     'float sVar = 0.041667 + step2 * step2 / 12.0, gVar = 0.2 + step2 * step2 / 12.0;',   // each sample widened by its step
     'float hem = smoothstep(0.0, 0.06 + 1.0 / uSteps, hn) * exp(-hn * 2.4);',
     'col *= m > 1e-5 ? 0.95 * (1.0 - exp(-m / 0.95)) / m : 1.0;',   // the roll-off
     'col += (jitter - 0.5) / 255.0 * step(0.004, col.g + col.b);',   // the dither
-    'min(inversesqrt(up), 1.5) * smoothstep(0.02, 0.2, dir.y);',   // the horizon's lift, capped
+    'min(inversesqrt(up), 1.5) * smoothstep(0.01, 0.12, dir.y);',   // the horizon's lift, capped, faded in the last seven degrees
     'float lodR = smoothstep(0.25, 0.6, span * 7.0 / 6.2832), lodW = smoothstep(0.25, 0.6, span * 2.9 / 6.2832);',
-    'if (dir.y <= 0.0) return;',   // the ground's texels cost nothing
-  ]) assert.ok(AURORA_FS.includes(line), line);
+    'if (dir.y <= 0.0) return vec3(0.0);',   // the ground's texels cost nothing
+  ]) for (const fs of [AURORA_FS, AURORA_DOME_FS]) assert.ok(fs.includes(line), line);
 });
 
 test('SKYRIM-AURORA THE CLOCK: the phases wrapped in double precision on the CPU - every wave and drift in [0, 2pi), each arc\'s rays on two whole rows of the noise\'s 256 and the share between them, seamless where the rows wrap (mutants: a phase unwrapped; the rows\' wrap lost)', () => {
@@ -202,39 +205,49 @@ test('SKYRIM-AURORA THE CLOCK: the phases wrapped in double precision on the CPU
   assert.deepEqual(auroraPhases(NaN), auroraPhases(0), 'no clock is the clock at 0');
 });
 
-test('SKYRIM-AURORA THE PASS: nothing at weight 0; above it the march into its map (nothing blended, the frame and the world rect given back), then one triangle at the far plane ADDING the map to the sky with the buffer\'s alpha untouched - every state put back, every allocation let go (mutants: drawn at 0; blended over by alpha; the depth written; the depth test left as found)', () => {
+test('SKYRIM-AURORA THE PASS: nothing at weight 0; above it the march into its map and every third frame the dome map (nothing blended, the frame and the world rect given back), then one triangle at the far plane ADDING the map to the sky with the buffer\'s alpha untouched - every state put back, every allocation let go (mutants: drawn at 0; blended over by alpha; the depth written; the depth test left as found)', () => {
   const { gl, calls } = fakeGl();
-  const p = new AuroraPass(gl, AURORA_QUALITY.lo);
+  const p = new AuroraPass(gl, AURORA_QUALITY.default);
   calls.length = 0;
   p.draw(0.3, 0.2, 1.1, 16 / 9, 0, 1, 0, [0, 0, 200, 100]);
   assert.deepEqual(calls, [], 'no aurora, no pass');
   p.draw(0.3, 0.2, 1.1, 16 / 9, 0.6, 1.5, 0, [10, 20, 200, 100]);
   const at = (k, ...a) => calls.findIndex((c) => c[0] === k && a.every((v, i) => c[i + 1] === v));
   const all = (k, ...a) => calls.map((c, i) => (c[0] === k && a.every((v, j) => c[j + 1] === v) ? i : -1)).filter((i) => i >= 0);
-  const [march, add] = all('drawArrays', 'TRIANGLES', 0, 3);
-  assert.ok(march >= 0 && add > march, 'the march, then the add');
+  const [march, dome, add] = all('drawArrays', 'TRIANGLES', 0, 3);
+  assert.ok(march >= 0 && dome > march && add > dome, 'the march, the dome map, then the add');
+  assert.ok(at('texImage2D', 'TEXTURE_2D', 0, 'RGBA8', 256, 64) >= 0 && at('texParameteri', 'TEXTURE_2D', 'TEXTURE_WRAP_S', 'REPEAT') >= 0, 'the dome map, wrapping round the azimuth');
+  assert.ok(calls.slice(march, dome).some((c) => c[0] === 'viewport' && c[1] === 0 && c[2] === 0 && c[3] === 256 && c[4] === 64));
+  assert.deepEqual(calls.filter((c) => c[0] === 'uniform1f' && c[1] === 'uSteps').map((c) => c[2]), [10, 6], 'the tier\'s steps on the screen, the dome map\'s own');
   assert.ok(at('texImage2D', 'TEXTURE_2D', 0, 'RGBA8', 100, 50) >= 0, 'the map at the tier\'s half of the world rect');
   assert.ok(at('bindFramebuffer', 'FRAMEBUFFER') < march && at('viewport', 0, 0, 100, 50) < march);
   assert.ok(at('disable', 'BLEND') < march && at('disable', 'DEPTH_TEST') < march, 'the march blends nothing');
-  const between = calls.slice(march, add);
+  const between = calls.slice(dome, add);
+  assert.ok(p.domeTex, 'the dome map is the water\'s once drawn');
   assert.ok(between.some((c) => c[0] === 'bindFramebuffer' && c[2] === null), 'the frame given back');
   assert.ok(between.some((c) => c[0] === 'viewport' && c[1] === 10 && c[2] === 20 && c[3] === 200 && c[4] === 100), 'and the world rect');
   const addState = (k, ...a) => between.some((c) => c[0] === k && a.every((v, i) => c[i + 1] === v));
   for (const [k, ...a] of [['blendFuncSeparate', 'ONE', 'ONE', 'ZERO', 'ONE'], ['enable', 'BLEND'], ['enable', 'DEPTH_TEST'], ['depthFunc', 'LEQUAL'], ['depthMask', false]]) assert.ok(addState(k, ...a), `the add: ${k} ${a}`);
   assert.deepEqual(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uWeight'), ['uniform1f', 'uWeight', 0.6]);
   assert.deepEqual(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uHang'), ['uniform1f', 'uHang', 1.5]);
-  assert.deepEqual(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uSteps'), ['uniform1f', 'uSteps', 6]);
+  assert.deepEqual(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uSteps'), ['uniform1f', 'uSteps', 10]);
   close(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uPixel')[2], 2 * Math.tan(0.55) / 50, 1e-12);
   const after = calls.slice(add);
   for (const [k, ...a] of [['disable', 'BLEND'], ['enable', 'CULL_FACE'], ['depthFunc', 'LESS'], ['depthMask', true], ['bindTexture', 'TEXTURE_2D', null]]) assert.ok(after.some((c) => c[0] === k && a.every((v, i) => c[i + 1] === v)), `${k} ${a} put back`);
   calls.length = 0;
   p.draw(0.3, 0.2, 1.1, 16 / 9, 0.6, 1.5, 0, [10, 20, 200, 100]);
   assert.equal(at('texImage2D', 'TEXTURE_2D', 0, 'RGBA8', 100, 50), -1, 'the map kept while the rect holds');
+  assert.equal(all('drawArrays', 'TRIANGLES', 0, 3).length, 2, 'the dome map not marched again on the next frame');
+  calls.length = 0;
+  p.draw(0.3, 0.2, 1.1, 16 / 9, 0.6, 1.5, 0, [10, 20, 200, 100]);
+  p.draw(0.3, 0.2, 1.1, 16 / 9, 0.6, 1.5, 0, [10, 20, 200, 100]);
+  assert.equal(all('drawArrays', 'TRIANGLES', 0, 3).length, 5, 'and again on the third');
   calls.length = 0;
   p.dispose();
-  assert.deepEqual(calls.map((c) => c[0]), ['deleteProgram', 'deleteProgram', 'deleteBuffer', 'deleteVertexArray', 'deleteTexture', 'deleteFramebuffer']);
+  assert.deepEqual(calls.map((c) => c[0]), ['deleteProgram', 'deleteProgram', 'deleteProgram', 'deleteBuffer', 'deleteVertexArray', 'deleteTexture', 'deleteFramebuffer', 'deleteTexture', 'deleteFramebuffer']);
+  assert.equal(p.domeTex, null);
   for (const u of AURORA_UNIFORMS) assert.match(AURORA_FS, new RegExp(`uniform \\w+[^;]*\\b${u}\\b`), u);
-  assert.deepEqual(AURORA_PROGRAMS.map((pr) => pr[1]), [AURORA_FS, AURORA_ADD_FS]);
+  assert.deepEqual(AURORA_PROGRAMS.map((pr) => pr[1]), [AURORA_FS, AURORA_ADD_FS, AURORA_DOME_FS]);
 });
 
 test('SKYRIM-AURORA THE DOOR: the sky\'s aurora at the player\'s pixel, whole at first and after a jump, eased over 6 real seconds after that - times the dark at the frame\'s own minute, so a rest into the day takes it at once; a bad frame never latches it; `?aurora=` off, on or a weight anywhere (mutants: the ease skipped; the first use eased from 0; the dark eased; the jump unread; the NaN kept; the door unread)', () => {
@@ -318,4 +331,62 @@ test('SKYRIM-AURORA THE SKY CONTROLLER: built on the enhanced lane alone at the 
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.ok(!/aurora/i.test(rd(host)), `${host} carries none of it`);
   assert.match(rd('src/characters/provinceFolk.js'), /export const pixelHere = \(\) => \(_pixelOf \? _pixelOf\(null\) : null\);/, 'the world host\'s own place door');
   assert.match(rd('src/tools/skyLab.js'), /const auroraW = Number\(auroraDoor\(params\.get\('aurora'\)\)\) \|\| 0;/, 'the lab reads the game\'s door');
+});
+
+test('SKYRIM-AURORA THE DOME MAP: a texel\'s direction and a direction\'s texel are one law - the dome\'s march and the water\'s read agree, north at the middle, east a quarter on (mutants: the azimuth turned; the height read as an angle)', () => {
+  // the two GLSL texts, read in JS: the dome's texel -> direction, and auroraDomeUv's direction -> uv
+  assert.match(AURORA_DOME_FS, /float az = \(uv\.x - 0\.5\) \* 6\.2831853, y = uv\.y, c = sqrt\(max\(0\.0, 1\.0 - y \* y\)\);\s*outColor = vec4\(auroraAlong\(vec3\(sin\(az\) \* c, y, cos\(az\) \* c\)\), 1\.0\);/);
+  assert.equal(AURORA_DOME_UV_GLSL, 'vec2 auroraDomeUv(vec3 R) { return vec2(atan(R.x, R.z) * 0.15915494 + 0.5, R.y); }');
+  const dirOf = (u, v) => { const az = (u - 0.5) * 6.2831853, c = Math.sqrt(Math.max(0, 1 - v * v)); return [Math.sin(az) * c, v, Math.cos(az) * c]; };
+  const uvOf = (R) => [Math.atan2(R[0], R[2]) * 0.15915494 + 0.5, R[1]];
+  for (const [u, v] of [[0.5, 0.3], [0.75, 0.1], [0.2, 0.8], [0.02, 0.5]]) {
+    const back = uvOf(dirOf(u, v));
+    close(back[0], u, 1e-6); close(back[1], v, 1e-12);
+  }
+  assert.deepEqual(dirOf(0.5, 0).map((x) => +x.toFixed(6)), [0, 0, 1], 'north at the middle');
+  assert.deepEqual(dirOf(0.75, 0).map((x) => +Math.abs(x).toFixed(6)), [1, 0, 0], 'east a quarter on');
+  assert.ok(dirOf(0.75, 0)[0] > 0);
+});
+
+test('SKYRIM-AURORA THE LAND\'S LIGHT: the aurora\'s light rides the sky\'s moonlight term - added to its ambient, a moonless night given a term with no key, none with no aurora (mutants: the light dropped; the key lit; the moon\'s own ambient lost)', () => {
+  const moon = { dir: [0.3, 0.8, 0.5], scale: 0.2, color: [0.8, 0.85, 1], ambient: [0.01, 0.02, 0.03] };
+  assert.equal(withAuroraLight(moon, null), moon);
+  assert.equal(withAuroraLight(null, null), null);
+  const lit = withAuroraLight(moon, [0.012, 0.06, 0.042]);
+  assert.deepEqual([lit.dir, lit.scale, lit.color], [moon.dir, moon.scale, moon.color]);
+  lit.ambient.forEach((a, c) => close(a, moon.ambient[c] + [0.012, 0.06, 0.042][c], 1e-12));
+  assert.deepEqual(moon.ambient, [0.01, 0.02, 0.03], 'the moon\'s own term untouched');
+  const moonless = withAuroraLight(null, [0.012, 0.06, 0.042]);
+  assert.equal(moonless.scale, 0, 'no key');
+  assert.deepEqual(moonless.ambient, [0.012, 0.06, 0.042]);
+  // the door's light: AURORA_LIGHT by the frame's weight, none under the threshold
+  let ms = 0;
+  const host = /** @type {NonNullable<ReturnType<typeof createAuroraHost>>} */ (createAuroraHost(null, new URLSearchParams('aurora=0.5'), { clock: () => ms }));
+  assert.equal(host.light, null, 'nothing before the first frame');
+  host.use(MIDNIGHT, NIGHT_SKY, 0.32, true);
+  [...host.light].forEach((a, c) => close(a, AURORA_LIGHT[c] * 0.5, 1e-7));
+  assert.equal(host.skyMap, null, 'no gl, no dome map');
+  const shared = rd('src/scenes/shared.js');
+  assert.match(shared, /const moonNow = \(\) => withAuroraLight\(enhancedSky\?\.state \? moonlightTerm\(enhancedSky\.state\) : dynamicMoonlight\(dynamicMoons\), aurora\?\.light \?\? null\);/, 'every reader of the moonlight - the land, the water\'s body, the night air');
+});
+
+test('SKYRIM-AURORA THE WATER\'S MIRROR: the sky controller hands the dome map with the water\'s sky, waterUniforms forwards it, the water reads it along its reflected ray at its Fresnel or AURORA_MIRROR, added as a glint - and the renderer binds it on its own unit, the black texel without one (mutants: the map unhanded; the mirror at the bare Fresnel; the unit shared)', () => {
+  const shared = rd('src/scenes/shared.js');
+  assert.match(shared, /const auroraIn = \(ws\) => \(\{ \.\.\.ws, aurora: aurora\?\.skyMap \?\? null \}\);/);
+  assert.equal((shared.match(/return auroraIn\(leaved\(dreaded\(/g) ?? []).length, 2, 'on both lanes');
+  const tex = { k: 'tex' };
+  assert.equal(waterUniforms({ sky: { zenith: [0, 0, 0], horizon: [0, 0, 0], aurora: { tex } } }).aurora, tex);
+  assert.equal(waterUniforms({ sky: { zenith: [0, 0, 0], horizon: [0, 0, 0] } }).aurora, null);
+  const fs = waterSurfaceFs();
+  assert.ok(fs.includes(AURORA_DOME_UV_GLSL));
+  assert.ok(fs.includes('if (uAuroraSkyOn == 1) auroraRefl = textureLod(uAuroraSky, auroraDomeUv(R), 0.0).rgb * step(0.0, R.y) * max(F, 0.30);'));
+  assert.ok(fs.includes('own += auroraRefl * (1.0 - foam);'));
+  const r = rd('src/render/renderer.js');
+  assert.match(r, /_bindAuroraSky\(L, tex\) \{\s*const gl = this\.gl, on = tex \? 1 : 0, want = tex \?\? this\._blackTex;\s*if \(L\.auroraOn !== on\) \{ gl\.uniform1i\(L\.auroraSkyOn, on\); L\.auroraOn = on; \}\s*if \(this\._auroraBound === want\) return;\s*this\._activeTexture\(gl\.TEXTURE0 \+ AURORA_SKY_UNIT\);\s*gl\.bindTexture\(gl\.TEXTURE_2D, want\);/);
+  assert.match(r, /this\._bindRipples\(L\);\s*this\._bindAuroraSky\(L, u\.aurora\);/);
+  // both programs' fixed samplers sent at their build - the snow lines' too: a frame with no snow had left it on unit 0
+  // beside the tile array - and both units holding the black texel from the start
+  assert.match(r, /_waterSamplerUnits\(P, L\) \{\s*this\._use\(P\);\s*this\.gl\.uniform1i\(L\.snow\.lines, SNOW_LINES_UNIT\); L\.snowUnit = true;\s*this\.gl\.uniform1i\(L\.auroraSky, AURORA_SKY_UNIT\);/);
+  assert.equal((r.match(/this\._waterSamplerUnits\(this\.waterSurfaceProgram(Lane)?, this\._ws(Lane)?\);/g) ?? []).length, 2, 'the classic water and the lane\'s');
+  assert.match(r, /for \(const unit of \[SNOW_LINES_UNIT, AURORA_SKY_UNIT\]\) \{ this\._activeTexture\(gl\.TEXTURE0 \+ unit\); gl\.bindTexture\(gl\.TEXTURE_2D, this\._blackTex\); \}/);
 });
