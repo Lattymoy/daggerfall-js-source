@@ -1,7 +1,7 @@
 # YARD-CELL - a town's yards kept, synced and stood by block (2026-10-26)
 
-**Status: YC1 BUILT (section 10), the owner's final approval given 2026-10-26; YC5 BUILT (section 12); YC2, YC3 and
-YC4 to come.** The plan was
+**Status: YC1 BUILT (section 10), the owner's final approval given 2026-10-26; YC2 BUILT (section 11); YC5 BUILT
+(section 12); YC3 BUILT (section 13); YC4 to come.** The plan was
 revised with the owner's answers before it was approved. The plan replaces the whole-town yard snapshot that YARD-SNAP (`Scale-Arc.md`) built and
 YARD-TOWN (`06-Systems/Online-Arc.md`, merged as #1276) bounded at 6,500 pieces a town.
 
@@ -129,7 +129,7 @@ CREATE TABLE home_yard_cells (
 - **Kept for rollback, dropped later.** `home_yards`, `home_yards_ver` and their triggers stay until YC1 has been
   live without a rollback. Nothing builds a town row any more; the old triggers still move the town's version, so
   acct192's read (the rows as they stand where the built row is behind) stays correct if the service is rolled back.
-  YC3 drops them.
+  YC3 dropped them (migration 0193, section 13).
 - **The number.** 0190 and acct208 (0176 and acct193 when this was written, renumbered past main's numbers at the merges, last past TESA's 0183 to 0188 and acct205, SHOP's 0189 and acct206 and SHOP-LOCAL's acct207) are the next free ones on main. #1184 carries 0174-0177 and acct189 on its
   branch and renumbers at its merge, as its own pages say; whichever lands second renumbers.
 
@@ -698,3 +698,18 @@ time: base 2.5 ms a frame, 1.1 of it draw submission; YC5 1.4 ms, 0.1 of it subm
 **Tests.** `test/scenes/yardblock.test.js` runs real pools on a block's door: one merge a block, a piece going and
 landing, the range's crossings, the budget and its order, the cull and the recentre, the flats and a yard leaving.
 `tools/mutants/yardblock.json` (14) and `yardmerge.json` (53, 8 re-aimed at the moved code): all dead.
+
+## 13. YC3 - built (2026-10-29): the town-wide yard tables dropped
+
+YC1 and YC2 merged on 2026-10-28, and the account service has deployed from main since. Nothing rolled it back. So
+migration 0193 drops `home_yards`, `home_yards_ver` and 0136's three triggers on `home_decor` (`home_yards_in`,
+`home_yards_out`, `home_yards_moved`). Nothing in the service read or built them after YC1. A yard write now moves its
+cell's version alone, one trigger instead of two.
+
+- **No code changed.** The account service moves to acct215 for the migration alone, as TAMRIEL-POST did. No relay
+  or site change.
+- **What it gives up.** A service rolled back to before YC1 (acct192) reads `home_yards` and no longer finds it. A
+  rollback past YC1 is now a rollback of the schema too.
+- **Tests.** `test/server/yard_cells.test.js`'s oracle no longer checks the town version (the net it checked is
+  gone). `test/server/decoraccess.test.js` holds its "a chest does not rebuild the yards" check on the cell's row in
+  place of the town's.
