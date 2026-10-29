@@ -126,11 +126,12 @@ test('WILD-INSURE A POLICY\'S PIECE HELD, AUDIT PVP-EASE L1-2 (wildInsureLaw.js 
 });
 
 /** Riadne's realm character in the real service, Borin her killer; her record the game's own. */
-async function stood({ axeWorn = true } = {}) {
+async function stood({ axeWorn = true, bare = false } = {}) {
   const svc = await standService();
   const ria = await svc.registered('Riadne'), bo = await svc.registered('Borin'), cy = await svc.registered('Cyrus');
   const p = pack();
-  if (!axeWorn) unequipItem(p.e, p.axe);   // PVP-REWARD: the sword her one worn piece
+  if (!axeWorn || bare) unequipItem(p.e, p.axe);   // PVP-REWARD: the sword her one worn piece
+  if (bare) unequipItem(p.e, p.sword);   // PVP-NO-TENTH: nothing worn - the last roll
   const R = await seatRealm(svc.env, ria.secret, 'Riadne', recordOfE(p.e));
   const record = () => recordOf(svc.env, R.id);
   const insure = (keys, o = {}) => quiet(() => svc.call('/v1/wild/insure', { realm: R.at(), keys, ...o }, ria.secret));
@@ -225,6 +226,52 @@ test('WILD-INSURE THE SERVICE, A KILL (server-account/src/wild.js wildFall) - PI
   const lr = await late.fall({ w: -1 });
   assert.ok(lr.body.took.some((x) => x.t === LONGSWORD), 'not in force: the sword taken');
   assert.equal(state(late, lk), 'active', 'and not spent');
+});
+
+test('PVP-NO-TENTH THE SERVICE (server-account/src/wild.js wildFall, the owner: "No gold dropped on death", "=10% if they domt have initem to roll on", "Letter only pay out 10% if they have not enough gold"): a kill with a worn piece to take or a policy to pay takes no gold and lowers no letter; with neither, the last roll - a tenth of her coin and letters together, the purse first - escrowed for the killer alone: coin where it fits his weight, else one letter of credit, said as the last roll, never hers to take back; a room that signs no collect takes none (mutants: the tenth taken at every kill; the last roll past a piece; the letters before the purse; the last roll unsaid; no collect still taking)', async () => {
+  const { seatRealm: seat, layRecord } = await import('../../realmSeat.mjs');
+  // a worn piece to take: the axe goes, the purse and the letter whole, nothing else in the remains
+  const w = await stood();
+  const sk = ledgerKeyOf(w.sword);
+  assert.equal((await w.insure([sk])).status, 200);
+  w.settle();
+  const gold0 = w.record().goldPieces;
+  const wr = await w.fall({ w: -1 });
+  assert.equal(wr.status, 200, JSON.stringify(wr.body));
+  assert.deepEqual([wr.body.items.length, wr.body.gold.purse, wr.body.gold.letters, wr.body.last], [1, 0, undefined, undefined], 'the axe alone');
+  const letterOf = (rec) => rec.items.find((it) => it.templateIndex === LETTER_OF_CREDIT_TEMPLATE)?.value;
+  assert.deepEqual([w.record().goldPieces, letterOf(w.record())], [gold0, 3000], 'her purse and her letter whole');
+  // nothing worn, no policy: the last roll - 2,000 coin and a 3,000 letter, a tenth of 5,000 out of the purse alone
+  const b = await stood({ bare: true });
+  const none = await b.fall({ by: b.cy, r: '0123456789c0', collect: false });   // another hand: never the repeat shield
+  assert.deepEqual([none.body.items, none.body.gold.purse, b.record().goldPieces], [[], 0, 2000], 'a room that signs no collect: nothing taken');
+  const lr = await b.fall({ r: '0123456789c1' });
+  assert.equal(lr.status, 200, JSON.stringify(lr.body));
+  assert.deepEqual([lr.body.wi, lr.body.last, lr.body.gold.purse, lr.body.gold.letters, lr.body.items.map((it) => [it.group, it.stackCount]), lr.body.escrow], [0, true, 500, undefined, [['Currency', 500]], undefined], 'a tenth of her wealth, the purse paying it all - the killer\'s alone');
+  assert.deepEqual([b.record().goldPieces, letterOf(b.record())], [1500, 3000], 'the letter untouched while the purse can pay');
+  const reclaim = await quiet(() => b.svc.call('/v1/wild/reclaim', { r: '0123456789c1', realm: b.R.at() }, b.ria.secret));
+  assert.equal(reclaim.body.error, 'no-escrow', 'never hers to take back');
+  const BO = await seat(b.svc.env, b.bo.secret, 'Borin', { name: 'Borin', level: 9, items: [], wagonItems: [], goldPieces: 10 });
+  const pay = async (r, free) => quiet(async () => b.svc.call('/v1/wild/collect', { receipt: await mintWildCollect({ r, k: b.bo.id, c: BO.id }, b.svc.gatePriv, { subtle, nowS: nowS() }), realm: BO.at(), free }, b.bo.secret));
+  const coin = await pay('0123456789c1', 500 * 0.0025);
+  assert.equal(coin.status, 200, JSON.stringify(coin.body));
+  assert.deepEqual([coin.body.item.stackCount, coin.body.last], [500, true], 'coin, said as the last roll');
+  const boRec = () => JSON.parse(new TextDecoder().decode(b.svc.env.SAVES._map.get(b.svc.env.DB._raw.prepare('SELECT obj FROM realm_characters WHERE id = ?').get(BO.id).obj)));
+  assert.equal(boRec().goldPieces, 510, 'into his purse');
+  // a thin purse: 100 coin and the 3,000 letter - a tenth of 3,100, the purse's 100 and the letter the 210 it cannot
+  const t = await stood({ bare: true });
+  const thin = t.record();
+  thin.goldPieces = 100;
+  layRecord(t.svc.env, t.R.id, thin);
+  const tr = await t.fall({ r: '0123456789c2' });
+  assert.equal(tr.status, 200, JSON.stringify(tr.body));
+  const lk = thin.items.find((it) => it.templateIndex === LETTER_OF_CREDIT_TEMPLATE).uid;
+  assert.deepEqual([tr.body.gold.purse, tr.body.gold.letters, tr.body.items[0].stackCount], [100, { [lk]: 210 }, 310], 'the purse first, the letter the rest');
+  assert.deepEqual([t.record().goldPieces, letterOf(t.record())], [0, 2790]);
+  const TB = await seat(t.svc.env, t.bo.secret, 'Borin', { name: 'Borin', level: 9, items: [], wagonItems: [], goldPieces: 10 });
+  const paper = await quiet(async () => t.svc.call('/v1/wild/collect', { receipt: await mintWildCollect({ r: '0123456789c2', k: t.bo.id, c: TB.id }, t.svc.gatePriv, { subtle, nowS: nowS() }), realm: TB.at(), free: 0 }, t.bo.secret));
+  assert.equal(paper.status, 200, JSON.stringify(paper.body));
+  assert.deepEqual([paper.body.item.templateIndex, paper.body.item.value, paper.body.last], [LETTER_OF_CREDIT_TEMPLATE, 310, true], 'too heavy: one letter for the whole');
 });
 
 test('WILD-INSURE THE CAP, AUDIT PVP-EASE L1-2 + L4-2 (server-account/src/wildInsure.js): a policy whose piece the record holds nowhere lapses at the next insure, in its batch, and never counts toward WILD_INSURE_MAX - thirty-two policies on pieces sold never shut the door (mutants: the lapse unwritten; every active policy counted)', async () => {

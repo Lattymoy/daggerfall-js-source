@@ -42,8 +42,10 @@ export function createWildEscrowHost({ townTalk, session, modes, wildAccount, ch
     // PVP-REWARD: a policy's gold comes as coin, or as a letter of credit where the coin would overweight me
     if (isGoldPieces(item)) addGoldPieces(playerEntity, item.stackCount ?? 1);
     else addItem((playerEntity.items ??= []), item);
-    townTalk.say(isGoldPieces(item) ? WILD_TEXT.policyGold(item.stackCount ?? 1)
-      : item.templateIndex === LETTER_OF_CREDIT_TEMPLATE ? WILD_TEXT.policyLetter(item.value ?? 0) : WILD_TEXT.collected(itemLongName(item)));
+    // PVP-NO-TENTH: the last roll's gold (`last`) said as its own
+    const words = d.last ? [WILD_TEXT.lastGold, WILD_TEXT.lastLetter] : [WILD_TEXT.policyGold, WILD_TEXT.policyLetter];
+    townTalk.say(isGoldPieces(item) ? words[0](item.stackCount ?? 1)
+      : item.templateIndex === LETTER_OF_CREDIT_TEMPLATE ? words[1](item.value ?? 0) : WILD_TEXT.collected(itemLongName(item)));
   };
   const wildEscrowBack = (r, d) => {
     const e = _wildEscrows.get(r);

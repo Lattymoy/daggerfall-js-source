@@ -640,8 +640,8 @@
   {
     "name": "INT9-AUDIT-SVC-THE-TOOK-UNSAID",
     "file": "server-account/src/wild.js",
-    "old": "  const tk = { took: wildTookOf(drop.taken, drop.from), gold: drop.gold, ...(spent.length ? { insured: spent } : {}) };",
-    "new": "  const tk = { took: [], gold: { purse: 0, cart: 0 }, ...(spent.length ? { insured: spent } : {}) };",
+    "old": "  const tk = { took: wildTookOf(drop.taken, drop.from), gold: drop.gold, ...(spent.length ? { insured: spent } : {}), ...(lastGold > 0 ? { last: 1 } : {}) };",
+    "new": "  const tk = { took: [], gold: { purse: 0, cart: 0 }, ...(spent.length ? { insured: spent } : {}), ...(lastGold > 0 ? { last: 1 } : {}) };",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]

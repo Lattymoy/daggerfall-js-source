@@ -7,9 +7,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { pvpRewardRoll, pvpRollIndex, pvpInsuredFor, pvpPolicyGold, pvpPolicyGoldOf, pvpGoldPaid, pvpLetterOf } from '../../../src/systems/wild/pvpReward.js';
-import { takeWildDeath, wornOffer } from '../../../src/systems/wild/wildDropLaw.js';
+import { takeWildDeath, takeWildLastRoll, wornOffer } from '../../../src/systems/wild/wildDropLaw.js';
 import { GOLD_PIECE_WEIGHT_KG, LETTER_OF_CREDIT_TEMPLATE, goldStack } from '../../../src/systems/inventory.js';
-import { WILD_TEXT } from '../../../src/systems/wild/wildZone.js';
+import { WILD_TEXT, setWildDeath, wildDeathLines } from '../../../src/systems/wild/wildZone.js';
 import { WILD_REF } from '../../../src/net/wild/wildRef.js';
 import { WILD_BODY_MS } from '../../../src/net/wild/wildFight.js';
 
@@ -78,4 +78,37 @@ test('PVP-REWARD THE HOST AND THE WORDS: no worn offer at my death; my collect s
   assert.equal(WILD_TEXT.policyLetter(1200), 'All their gear was insured. The coin was too heavy, so you take a letter of credit for 1,200 gold.');
   assert.equal(WILD_REF.pickMs, 10_000);
   assert.equal(WILD_BODY_MS, WILD_REF.pickMs);
+});
+
+test('PVP-NO-TENTH THE LAST ROLL (wildDropLaw.js takeWildLastRoll; the owner: "=10% if they domt have initem to roll on", "Letter only pay out 10% if they have not enough gold"): a tenth of the coin and the letters together, the purse first, the letters in bag order paying only what it cannot, each kept where it lies; a letter the ledger or a policy holds pays nothing; a tab from before the word, the purse alone; no other kill takes coin (mutants: the letters before the purse; the letters left out of the sum; the purse taken at every kill)', () => {
+  const letter = (v, uid) => ({ group: 'MiscItems', templateIndex: LETTER_OF_CREDIT_TEMPLATE, value: v, uid });
+  const rich = { goldPieces: 5000, items: [letter(20_000, '00000000000000b1')] };
+  const a = takeWildLastRoll(rich, () => false, { letters: true });
+  assert.deepEqual([a.pile.stackCount, a.gold, rich.goldPieces, rich.items[0].value], [2500, { purse: 2500 }, 2500, 20_000], 'the purse pays it all');
+  const thin = { goldPieces: 100, items: [letter(500, '00000000000000b1'), letter(3000, '00000000000000b2')] };
+  const b = takeWildLastRoll(thin, () => false, { letters: true });
+  assert.deepEqual([b.pile.stackCount, b.gold, thin.goldPieces, thin.items.map((it) => it.value)], [360, { purse: 100, letters: { '00000000000000b1': 260 } }, 0, [240, 3000]], 'a tenth of 3,600: the purse, then the first letter');
+  const held = { goldPieces: 0, items: [letter(500, '00000000000000b1'), letter(3000, '00000000000000b2')] };
+  const c = takeWildLastRoll(held, (it) => it.uid === '00000000000000b2', { letters: true });
+  assert.deepEqual([c.pile.stackCount, c.gold], [50, { purse: 0, letters: { '00000000000000b1': 50 } }], 'the held letter neither counted nor paying');
+  const old = { goldPieces: 100, items: [letter(3000, '00000000000000b1')] };
+  assert.deepEqual([takeWildLastRoll(old).gold, old.items[0].value], [{ purse: 10 }, 3000], 'no word: the purse alone');
+  assert.equal(takeWildLastRoll({ goldPieces: 9, items: [] }).pile, null, 'nothing to take');
+  const e = { items: pack(), goldPieces: 500 };
+  const d = takeWildDeath(e, 1, () => false, null, { bag: false, purse: false });
+  assert.deepEqual([d.from, d.gold.purse, e.goldPieces], [['bag'], 0, 500], 'a kill with a piece: the piece alone');
+});
+
+test('PVP-NO-TENTH THE WORDS AND THE HOST: the killer told the last roll\'s gold as its own, coin or letter; the fallen told what it took, never that it lies where she fell (mutants: the last roll said as a policy; the killer\'s record counted as dropped)', () => {
+  const eh = rd('src/scenes/wildEscrowHost.js'), dh = rd('src/scenes/wildDropHost.js');
+  assert.ok(eh.includes('const words = d.last ? [WILD_TEXT.lastGold, WILD_TEXT.lastLetter] : [WILD_TEXT.policyGold, WILD_TEXT.policyLetter];'));
+  assert.ok(dh.includes('dropped: d.order ? n - (d.wi === 0 ? 1 : 0) : 0,'), 'the killer\'s one record is no drop');
+  assert.equal(WILD_TEXT.lastGold(1200), 'They had no gear to take and no insurance. You take 1,200 gold, a tenth of their wealth.');
+  assert.equal(WILD_TEXT.lastLetter(1200), 'They had no gear to take and no insurance. The coin was too heavy, so you take a letter of credit for 1,200 gold.');
+  setWildDeath({ killer: 'Borin', dropped: 0, last: 1200, letters: Object.assign([], { letters: { n: 1, gold: 900 } }) });
+  assert.deepEqual(wildDeathLines().slice(0, 2), [WILD_TEXT.deathPvp('Borin'), 'Borin took 1,200 gold, a tenth of your coin and letters of credit. You had no gear to take and no insurance.']);
+  assert.ok(!wildDeathLines().some((l) => /lies where you fell/.test(l)), 'no letters\' tenth said to lie on the ground');
+  setWildDeath(null);
+  assert.equal(WILD_TEXT.deathLast(null, 50), 'Your killer took 50 gold, a tenth of your coin and letters of credit. You had no gear to take and no insurance.');
+  assert.equal(WILD_TEXT.deathLast('Borin', 0), '');
 });

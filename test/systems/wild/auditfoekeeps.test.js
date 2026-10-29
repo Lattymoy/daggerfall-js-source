@@ -248,7 +248,9 @@ test('AUDIT FOE-KEEPS LETTERS-TENTH (the owner left it to the audit: "Your choic
   assert.equal(wildFallWords().letters, WILD_FALL_LETTERS);   // PIN MOVED (STORE-KEEPS): the words carry no wagon
 });
 
-test('AUDIT FOE-KEEPS LETTERS-TENTH THROUGH THE SERVICE: the fallen\'s own ask with the word takes the letter\'s tenth off the record and answers it by the letter\'s id; asked again, the same; without the word, the letter whole; a seizure - which no game applies - takes the tenth (mutants: the service\'s word unread; the answer\'s letters unsaid; a seizure taking it whole)', async () => {
+// PIN MOVED (PVP-NO-TENTH): a kill takes a tenth only as its last roll - no worn piece, no policy, a room that collects -
+// and the purse pays first, the letter only what the purse cannot
+test('AUDIT FOE-KEEPS LETTERS-TENTH THROUGH THE SERVICE: the fallen\'s own ask with the word takes the letter\'s share of the last roll off the record and answers it by the letter\'s id; asked again, the same; without the word, the purse alone and the letter whole; a seizure - which no game applies - takes the share (mutants: the service\'s word unread; the answer\'s letters unsaid; a seizure taking it whole)', async () => {
   const { standService } = await import('../../accountDb.mjs');
   const { seatRealm } = await import('../../realmSeat.mjs');
   const { mintWildReceipt, WILD_FALL_GRACE_S } = await import('../../../src/net/wild/wildReceipt.js');
@@ -262,28 +264,28 @@ test('AUDIT FOE-KEEPS LETTERS-TENTH THROUGH THE SERVICE: the fallen\'s own ask w
     const R = await seatRealm(svc.env, ria.secret, 'Riadne', { name: 'Riadne', level: 9, goldPieces: 1000, items: [{ ...letterOfCredit(50_000), uid: '00000000000000c1' }], wagonItems: [] });
     const rec = () => JSON.parse(new TextDecoder().decode(svc.env.SAVES._map.get(svc.env.DB._raw.prepare('SELECT obj FROM realm_characters WHERE id = ?').get(R.id).obj)));
     const receipt = (o = {}) => mintWildReceipt({ f: ria.id, c: R.id, k: bo.id, r: '0123456789d1', w: -1, ...o }, svc.gatePriv, { subtle: globalThis.crypto.subtle, nowS: o.nowS ?? nowS() });
-    const fall = (body, who = ria) => svc.call('/v1/wild/fall', { room: CELL, ...body }, who.secret);
+    const fall = (body, who = ria) => svc.call('/v1/wild/fall', { room: CELL, collect: 1, ...body }, who.secret);
     return { R, bo, rec, receipt, fall };
   };
   const s = await stand();
   const rc = await s.receipt();
   const res = await s.fall({ receipt: rc, realm: s.R.at(), packs: 1, letters: 1 });
   assert.equal(res.status, 200, JSON.stringify(res.body));
-  assert.deepEqual(res.body.gold, { purse: 100, cart: 0, letters: { '00000000000000c1': 5_000 } });
+  assert.deepEqual(res.body.gold, { purse: 1_000, cart: 0, letters: { '00000000000000c1': 4_100 } }, 'a tenth of 51,000: the purse whole, the letter the rest');
   assert.deepEqual(res.body.took, [], 'no piece taken');
-  assert.equal(res.body.items.find((it) => it.group === 'Currency').stackCount, 5_100, 'the remains\' gold');
-  assert.deepEqual([s.rec().goldPieces, s.rec().items.map((it) => it.value)], [900, [45_000]], 'off the record, the letter kept');
+  assert.equal(res.body.items.find((it) => it.group === 'Currency').stackCount, 5_100, 'the killer\'s gold');
+  assert.deepEqual([s.rec().goldPieces, s.rec().items.map((it) => it.value)], [0, [45_900]], 'off the record, the letter kept');
   const again = await s.fall({ receipt: rc, realm: s.R.at(), packs: 1, letters: 1 });
   assert.deepEqual(again.body.gold, res.body.gold, 'asked again, the same answer');
   // a tab from before the word
   const o = await stand();
   const od = (await o.fall({ receipt: await o.receipt(), realm: o.R.at(), packs: 1 })).body;
-  assert.equal(od.gold.letters, undefined);
+  assert.deepEqual([od.gold.letters, od.gold.purse, o.rec().goldPieces], [undefined, 100, 900], 'the purse\'s tenth alone');
   assert.deepEqual([od.took, o.rec().items.map((it) => it.value)], [[], [50_000]], 'the letter kept whole - the bag drops nothing (PIN MOVED, PVP-REWARD: it dropped whole, as that game would apply)');
   // the killer's seizure past the grace
   const k = await stand();
   const sz = await k.fall({ receipt: await k.receipt({ nowS: nowS() - WILD_FALL_GRACE_S - 1 }) }, k.bo);
   assert.equal(sz.status, 200, JSON.stringify(sz.body));
-  assert.deepEqual(sz.body.gold.letters, { '00000000000000c1': 5_000 });
-  assert.deepEqual(k.rec().items.map((it) => it.value), [45_000]);
+  assert.deepEqual(sz.body.gold.letters, { '00000000000000c1': 4_100 });
+  assert.deepEqual(k.rec().items.map((it) => it.value), [45_900]);
 });

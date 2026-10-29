@@ -32329,6 +32329,16 @@
   "tr": "e53459a7cbd9",
   "by": "claude-in-session"
  },
+ "pvp.reward.last": {
+  "en": "49c2e92f9f2b",
+  "tr": "fafd651b0ec8",
+  "by": "claude-in-session"
+ },
+ "pvp.reward.lastLetter": {
+  "en": "ec3bfa57616d",
+  "tr": "e605c9eb2aab",
+  "by": "claude-in-session"
+ },
  "pvp.reward.letter": {
   "en": "fc09df17c400",
   "tr": "b4a66839d5b6",
@@ -40277,6 +40287,16 @@
  "wild.death.kept": {
   "en": "5677b5a00569",
   "tr": "e4f8fe616da0",
+  "by": "claude-in-session"
+ },
+ "wild.death.last": {
+  "en": "def48a037ba0",
+  "tr": "e6482d419b4a",
+  "by": "claude-in-session"
+ },
+ "wild.death.lastAnon": {
+  "en": "df4817909891",
+  "tr": "0480ea52b55e",
   "by": "claude-in-session"
  },
  "wild.death.letters": {
