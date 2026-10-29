@@ -102,8 +102,8 @@
   {
     "name": "STAFF-PANEL-SPEED-realm-economy-audit-after",
     "file": "server-account/src/staffEconomy.js",
-    "old": "Promise.all([economy(db, nowS, days), audit('economy-read'",
-    "new": "Promise.all([await economy(db, nowS, days), audit('economy-read'",
+    "old": "Promise.all([staffKept(ctx, `econ:economy:${days}`",
+    "new": "Promise.all([await staffKept(ctx, `econ:economy:${days}`",
     "why": "the economy's audit row a trip of its own after the reads",
     "tests": [
       "test/server/staffpanelspeedrealm.test.js"
