@@ -109,8 +109,8 @@ page draws no serpent: a province's sheet shows little of the open sea it hunts.
 its edge - the same list in the same order on every game that stands the land past the Bay with its picture (`whole()`).
 A game that does not cannot roll it: it takes the hub's word of the site the accounts agree on (section 14, *Where it lies*)
 and names none till it has one. The day
-rolls a lane (`serpentLaneOf`) and a place along that lane's way (`serpentAlongOf`, inside `SERPENT_ALONG`, 0.3 to
-0.7 of its length). A place is kept only where the sea is open all round it: every map pixel within `SITE_CLEAR_PX`
+tries lanes best first (`serpentLaneScore`, section 18), at a place along each way (`serpentAlongAt`, 0.3 to 0.7 of
+its length). A place is kept only where the sea is open all round it: every map pixel within `SITE_CLEAR_PX`
 (1) must be the ocean's water (the lanes' own `open` law, never a lake). If not, the place slides along the way up to
 `SITE_SLIDE` (0.16) each side. A lane shorter than `SITE_LANE_MIN_M` (six map pixels) is skipped. After
 `SERPENT_LANE_TRIES` (24) lanes with no site, there is no serpent that day, and the omen stays silent rather than name
@@ -504,6 +504,9 @@ After the kill the bar holds a moment and fades.
 
 ## 11. Versions and deploy order
 
+- **AUDIT TAMRIEL-WIDE E3's relay: `world280`** (section 18). The `site` word carries `sl`, and the hub folds its own
+  site law's words alone, into its own record. Deploy the relay first, then the site: a new build on an older relay
+  joins the older law's vote. Until the site deploys the herald names no place.
 - **WW7-12's relay: `world260`** (WORLD-WIDE's, undeployed - its row re-hashed in place). The hub's `at`: the agreed site
   told to every game online as it moves and at each hello (`net/serpent/serpentHerald.js` serpentAtWord, `server/src/index.js`
   _serpentAtTell, _serpentAtTo; `net/wire.js` the kind - an older client drops it). Deploy the relay with the client; a client
@@ -952,3 +955,21 @@ HOURS-FIRST, CHAP4c, CHAP6e, LAMP-KEEPER II), and every record that named the li
 
 See also: `World-Bosses.md` (the gate, whose law this follows at sea), `03-World/Naval-Combat.md` (the guns, the
 hull and the seams it reaches).
+
+## 18. The site's law (AUDIT TAMRIEL-WIDE E3, 2026-10-28)
+
+The day picked its lane by index (`serpentRoll(day, 100 + i) % n`, n the world's lanes). Any lane added anywhere moved
+nearly every day's site: SEA-SQUARE and COAST-PORT took the lanes from 440 to 450 and moved 24 of 24 days, the Bay's
+too. The `site` word named no law, so during a deploy old and new tabs rose the serpent at two sites, and the hub posts
+a kill at the one most accounts named alone.
+
+Now each lane is scored by its ends' world keys and the best is tried first
+(`serpentSite.js:"export function serpentLaneTries(day, lanes)"`), its place along its own. A lane added moves only the
+days it wins: ten taken out of the freeware's 450 moved 4, 1 and 1 of 60 days, each a day a lane taken out had won,
+where the index moved 60 of 60. This change moved every day's site once more. The word says its law
+(`serpentLaw.js:"export const SERPENT_SITE_LAW = 2;"`), and the hub folds its own law's words alone
+(`serpentHerald.js:"export const serpentSiteWordOk = (m, nowMs) =>"`) into its own record, `serpentsite.2`.
+
+Pins: `test/world/worldWide/audit_tamrielwide_relay.test.js` E3 (2). Mutants: `tools/mutants/audit_tamrielwide_relay.json` (8, dead). PIN MOVED: `serpent1_law`, `serpent1_client` (a port's pixel),
+`serpent2_herald` and `ww7_longer` (the law's word and record). Re-aimed by content: `serpent2.json`
+SERPENT2-any-day-site-kept and SERPENT2-place-sent-raw. Relay world280.
