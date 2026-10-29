@@ -27,6 +27,7 @@ import { isArenaUndercroft } from '../world/arena/arenaCity.js';   // ARENA-FIX 
 import { undercroftPopulation, chainTag, deepFoesOf, undercroftHallNear } from '../world/arena/arenaUndercroft.js';   // ARENA2: the arena floor's instance - what the sand will not allow
 import { ARENA_TEXT } from '../systems/arena/arenaText.js';   // WB3b: the Burning Court - what the Deadlands will not allow
 import { dungeonFirePlan, colliderFireProbe, inFireWard, DUNGEON_FIRE_FLAT, fireLayoutInputs, isPalaceLayout } from '../world/dungeon/dungeonFires.js';   // REST3: the dungeon's own campfires
+import { standDungeonFlora } from '../world/dungeon/dungeonFlora.js';   // the seabed under a flooded block's water
 import { withFireMarks } from '../ui/nodeMarks.js';   // REST3: the campfires on the compass
 import { expandMacros } from '../systems/talk/talkSession.js';   // MACRO1: the global symbols every TEXT.RSC box passes through (MacroHelper)
 import { executeConsoleCommand } from '../systems/consoleCommands.js';   // E3: the probe door runs the real database
@@ -1089,6 +1090,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       dungeonHearths.push({ x: p[0], y: cy, z: p[2], foot: p[1], w: size.w, h: size.h, placed: true, archive, record });
     }
   }
+  await standDungeonFlora({ blocks: dungeon.blocks, collider, getTexture, flatGroups, seed: dfLocation?.dungeon?.recordElement?.header?.locationId ?? 0 });   // the seabed's flats under every flooded block's water, batched with the layout's own
   // AUDIT REST II F5: THE FIRES THAT KEEP A CAMPFIRE'S PROMISES - the ward (encounterSpot), the compass (withFireMarks)
   // and the held map (`fires`) read this list: the law's placed fires, and the layout's own fire it took for the
   // entrance's (AUDIT REST-PARTY C5 - it counts toward N, so it stands for a fire the law did not place). Read only the

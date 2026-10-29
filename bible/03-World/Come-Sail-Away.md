@@ -234,7 +234,7 @@ ARENA2 it is given before it writes anything, and refuses what fails:
 - **Records 0 and 1 are the author's.** No record covers record 0 (a
   52x41 splash) or any of record 1's twenty-four frames (the wind widget's
   arrow, `windDirectionWidgetTextures`, four blues on a clear canvas) by
-  Detailed Ships' search (`findClassicSource`: a record within a pixel of
+  the classic-source search (`tools/lib/classicSource.mjs` `findClassicSource`: a record within a pixel of
   the size, at every offset), neither whole nor cut to its visible box,
   and no square record matches more than 17% of the visible pixels of any
   block of them (`tools/lib/classicBlocks.mjs`). They are carried as

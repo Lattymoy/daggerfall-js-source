@@ -41,11 +41,11 @@ export { makeLocationKey };
 export const assetInjectionOn = () => getBool('Enhancements', 'AssetInjection');
 /**
  * WD3: THE DOOR'S GATE. DFU's is AssetInjection alone, and offline it stays so. ONLINE THE GROUND IS THE ROOM'S: the
- * world-data mods the room owns (systems/online/onlineLane.js ONLINE_ROOM_MOD_KEYS - Beautiful Villages and Cities, Detailed
- * Ships, Roleplay & Realism's fort) stand buildings, decks and walls every player walks, and a player's Replace Game
- * Artwork switched off stood none of them on that one screen - a departure (Port-Ledger, WD3): online the door is open
- * whatever the switch says, which keeps the textures and the music it gates elsewhere. Each mod's own switch still
- * decides its files.
+ * world-data mods the room owns (systems/online/onlineLane.js ONLINE_ROOM_MOD_KEYS - Beautiful Villages and Cities,
+ * Roleplay & Realism's fort) and the port's ship refit stand buildings, decks and walls every player walks, and a
+ * player's Replace Game Artwork switched off stood none of them on that one screen - a departure (Port-Ledger, WD3):
+ * online the door is open whatever the switch says, which keeps the textures and the music it gates elsewhere. Each
+ * mod's own switch still decides its files.
  */
 // WD3 (AUDIT WD3 P2/P3): READ ONCE FOR THE GAME. DFU reads AssetInjection at startup - a change waits for a restart -
 // and the boot's location index keeps a pack's grids, whose new blocks only the door can serve: a gate turned shut
@@ -518,7 +518,7 @@ export function getDFBlockReplacementData(block, blockName) {
     if (variant === NO_VARIANT) cacheBlock(blockName, NO_REPLACEMENT);
     return null;
   }
-  // WD1 (Aquatic Sprites' three wet blocks): the whole DFBlock, RdbBlock and RdiBlock included (:363-369) - the
+  // WD1: the whole DFBlock, RdbBlock and RdiBlock included (:363-369) - the
   // AUDIT-RR2 G14 refusal of RDB/RDI files is lifted now that the converters below read both halves
   const dfBlock = blockFromJson(json, block, blockName);
   if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);   // :382-384 - RMB blocks only

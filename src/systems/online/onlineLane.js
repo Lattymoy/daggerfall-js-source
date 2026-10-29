@@ -318,14 +318,6 @@ export const ONLINE_ROOM_MOD_KEYS = Object.freeze({
   // through each other's boulders - the roads' own reason, word for
   // word. Its one switch is the room's.
   'world-of-daggerfall': Object.freeze({ Enabled: true, Mountains: false }),   // WOD-PEAKS: and its spires the room's too - they level the ground and stand rock
-  // DS1 (2026-09-25): the third floor. Every owner's ship stands at the SAME
-  // map pixel - (2,2) for the small, (5,5) for the large (banking.js
-  // SHIP_COORDS) - so a room's sailors share one deck, and Detailed Ships
-  // stands collidable railings, crates, tenders and rigging on it. Two
-  // players who disagree would walk two decks and pass through each
-  // other's crates; the switch is the room's. (Below decks opens no room -
-  // worldModes' ship interior is the player's own.)
-  'detailed-ships': Object.freeze({ Enabled: true }),
   // WD3 (2026-10-01, Mac: "ensure this doesn't conflict or regress anything (For example housing customization)"): the
   // towns themselves. Beautiful Villages and Beautiful Cities lay 7,727 of Daggerfall's places out again - new streets,
   // new walls, every building where its block now stands - so two players who disagree walk two towns, one through the
@@ -471,7 +463,6 @@ export const ONLINE_PLAYERS_OWN_MODS = [
   'horse-cart-and-cargo',   // HCC: whose horse and wagon stand where is the player's own; the others only SEE them (the online half rides the pose and the cell's frame, never a switch of the room's ground)
   'warm-ashes-ships',       // WA1: my own voyage's ambush - my quest, my crew and pirates (a spawner's foes, WORLD2: a peer on the same deck sees them fight), my lent ship; the pirate vessels are my blocks' variant and stand 40-140 m off in open water, where a peer without them sees sea
   'foraging',               // FORAGE1: my own tools, my own pack, my own quests - a use, a food, a fetch quest all run on my save
-  'aquatic-sprites',        // AS1: 119 flats of scenery in three flooded dungeon blocks - no collider, no action, no marker; a peer without them walks the same rooms (the editor's seven sub-degree turns of a room model are under half a degree)
   'low-poly-trees',         // LPT1: how the wilderness's trees are DRAWN - a 3D tree or its far picture where the same flat stands; the tree's cover, its sway, its Logging node and its fall are the flat's own, so a peer without it walks the same wood
   'project-legacy',         // LEGACY1: my own family - its record, its births and its deaths are my characters'; the heirloom is an item in my save, and its power is folded where it is worn
   'physical-items',         // PI1: how MY loot lies - my own bodies' items stood round them (a peer's body shows none: its list is its owner's), my own shift-drops a pile as any drop is; a take off a dungeon's body is the room's word as the quick door's is (dungeonContext.js publishLoot), so what any peer reads of a container is the same switch on or off

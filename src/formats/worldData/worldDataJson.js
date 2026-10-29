@@ -1,7 +1,7 @@
 // WD1 (2026-09-25): A CLASSIC BLOCK IN DFU'S WORLD-DATA JSON, AND THE
 // DIFF THAT CARRIES A MOD'S EDIT OF IT.
 //
-// Aquatic Sprites, Detailed Ships and Warm Ashes - Ships ship their world
+// Warm Ashes - Ships and Immersive Travel ship their world
 // data the way DFU's World Data Editor writes it: the WHOLE block (or the
 // whole building record), serialised by FullSerializer from the DFBlock
 // DFU read out of the player's BLOCKS.BSA, with the author's edits in it.

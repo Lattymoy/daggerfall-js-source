@@ -178,7 +178,7 @@ test('AUDIT-RR2 G13: a building entry sets WorldDataVariants\' last key to THIS 
 
 test('AUDIT-RR2 G14/G16/G19: an RDB/RDI JSON is served whole since WD1 (never with a null body); the variant arm takes every asset the suffix finds (:284-292); the padded building rows are None', () => {
   const s = rd('src/formats/worldData/worldDataReplacement.js');
-  // G14 was the refusal of an RDB/RDI file the converter could not read; WD1 (Aquatic Sprites) ported the RDB
+  // G14 was the refusal of an RDB/RDI file the converter could not read; WD1 ported the RDB
   // and RDI halves, so the block is converted whole and only an RMB takes the building replacements (:382-384)
   // PIN MOVED (AUDIT QA2 B1): the served name rides with the block - the port's curations key on the name the town lays
   assert.match(s, /const dfBlock = blockFromJson\(json, block, blockName\);\s+if \(blockName\.endsWith\('\.RMB'\)\) replaceRmbBlockBuildingData\(blockName, block, dfBlock\);/);

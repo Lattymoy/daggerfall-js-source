@@ -9499,16 +9499,6 @@
   "tr": "5e809b2e8fa6",
   "by": "claude-in-session"
  },
- "credits.aquaticSprites.terms": {
-  "en": "25f24874f144",
-  "tr": "9590a8dee9ce",
-  "by": "claude-in-session"
- },
- "credits.aquaticSprites.what": {
-  "en": "ece4a3a65979",
-  "tr": "abdd97b24ecd",
-  "by": "claude-in-session"
- },
  "credits.author.andContributors": {
   "en": "5aeb443464d2",
   "tr": "3edc64fb0d88",
@@ -9617,16 +9607,6 @@
  "credits.daggerfall.what": {
   "en": "76f60d40344d",
   "tr": "063ced38e1d5",
-  "by": "claude-in-session"
- },
- "credits.detailedShips.terms": {
-  "en": "d5fb971400e5",
-  "tr": "2fb241736452",
-  "by": "claude-in-session"
- },
- "credits.detailedShips.what": {
-  "en": "612b38bc06a8",
-  "tr": "0fb4a66681eb",
   "by": "claude-in-session"
  },
  "credits.dex.terms": {
@@ -19930,8 +19910,8 @@
   "by": "claude-in-session"
  },
  "menu.online.groundNote": {
-  "en": "4cbea68e150c",
-  "tr": "51aaa0b22b0a",
+  "en": "3e3556cb0512",
+  "tr": "263b642b36f1",
   "by": "claude-in-session"
  },
  "menu.online.lockNote": {
@@ -19955,8 +19935,8 @@
   "by": "claude-in-session"
  },
  "menu.online.modsNote": {
-  "en": "1195346cb9a8",
-  "tr": "fabc8dc48014",
+  "en": "c94c6f3265c3",
+  "tr": "8781ab7794a2",
   "by": "claude-in-session"
  },
  "menu.online.needsAccount": {
@@ -21334,11 +21314,6 @@
   "tr": "8f1aeebf857b",
   "by": "claude-in-session"
  },
- "mods.aquaticSprites.Enabled.description": {
-  "en": "4d8dc0bd3968",
-  "tr": "d10f6098c738",
-  "by": "claude-in-session"
- },
  "mods.betterAmbience.BetterFootsteps.armorVolume.description": {
   "en": "ea78623b8aa0",
   "tr": "75403d71c5be",
@@ -21717,11 +21692,6 @@
  "mods.daggerfallEnemyExpansion.title": {
   "en": "b7c44fa76f13",
   "tr": "b7c44fa76f13",
-  "by": "claude-in-session"
- },
- "mods.detailedShips.Enabled.description": {
-  "en": "a76a3c98fb54",
-  "tr": "f799597e006b",
   "by": "claude-in-session"
  },
  "mods.diverseWeapons.Enabled.description": {

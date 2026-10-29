@@ -46,10 +46,10 @@ export const DECOR_ID_RE = /^[A-Za-z0-9_-]{1,24}$/;
  *  past them (Roleplay & Realism's weapons and armour, 513 to 526; Climates & Calories', 532 to 539), so a mounted
  *  weapon of theirs shows its own picture.
  *  DECOR-MODFLATS (2026-09-27, Discord: "Above #49 decorations stopped working. Most sprites decorations are invisable
- *  above this number"): or a MOD's, to five digits. The catalogue is read out of the world's own blocks, and the ships
- *  Detailed Ships lays in them carry its own flats (archives 1210 and 1230) and the DET flats the port stands in (10009
- *  to 10027) - "Decoration 49" onward, numbered after the classic ones. The bound refused every one: the piece being
- *  placed was never a piece, so its picture never stood and Place did nothing. */
+ *  above this number"): or a MOD's, to five digits. The catalogue holds the town mods' flats (archives 1210 and 1230)
+ *  and the DET flats the port stands in (10009 to 10028) - "Decoration 49" onward, numbered after the classic ones.
+ *  The bound refused every one: the piece being placed was never a piece, so its picture never stood and Place did
+ *  nothing. */
 export const DECOR_MODEL_MAX = 999_999;
 export const DECOR_ARCHIVE_MAX = 99_999;
 export const DECOR_RECORD_MAX = 511;

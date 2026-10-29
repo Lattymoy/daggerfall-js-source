@@ -1,7 +1,7 @@
 # World-data patches (WD1, 2026-09-25)
 
-Three of the sea mods Mac handed over on 2026-09-25 (Aquatic Sprites,
-Detailed Ships, Warm Ashes - Ships) are pure Daggerfall Unity *world
+Three of the sea mods Mac handed over on 2026-09-25 (Warm Ashes - Ships, and
+two removed on 2026-10-29 at their author's request) are pure Daggerfall Unity *world
 data*: whole blocks and whole building records as DFU's World Data Editor
 writes them - the classic block, read out of the player's `BLOCKS.BSA`,
 with the author's edits in it. Most of every such file is the classic
@@ -43,13 +43,13 @@ port serves them:
   (`BlocksFile.cs`), so an editor round trip writes the automap with its
   `0xFB` ground-flat bytes zeroed. Both Warm Ashes `_base` variants are
   the classic ship block and those two bytes and nothing else.
-- **The RDB root list is re-grouped** (Aquatic Sprites: sixteen roots
+- **The RDB root list is re-grouped** (a wet dungeon block: sixteen roots
   written as ten; the six dropped were empty).
 - **Rotations make a round trip through Unity's Euler angles**: 512
   comes back as -1536 (the same angle) and a handful of room models move
   by one to three units of 2048.
 - **Record counts in the headers are not kept in step with the arrays**
-  (Detailed Ships' building files say one exterior model and carry 92).
+  (a ship's building file said one exterior model and carried 92).
   DFU lays out by the arrays; so does the port.
 
 ## What WD1 also ported

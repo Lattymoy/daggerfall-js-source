@@ -19,8 +19,6 @@ import { _resetDetStandIns, MeshBuilder } from '../../src/world/detStandIns.js';
 import { customModelFor, customModelNeeds, hasCustomModel, _resetCustomModels } from '../../src/world/customModels.js';
 import { _resetFlatFields } from '../../src/world/flatFields.js';
 import { addVendorTextures, clearVendorTextures } from '../../src/systems/textureReplacement.js';
-import { _resetDetailedShipsArt, DETAILED_SHIPS_VENDOR } from '../../src/systems/detailedShips.js';
-import { unregisterBillboardXml } from '../../src/world/billboardXml.js';
 import { _resetModSettings } from '../../src/systems/modSettings.js';
 import { createDataPipeline } from '../../src/scenes/dataPipeline.js';
 import { color32Bytes } from '../../src/render/renderer.js';
@@ -32,8 +30,7 @@ const U = GLOBAL_SCALE;
 const RD = 512 / 90;   // Daggerfall's angle units a degree
 
 function resetAll() {
-  _resetTownStandIns(); _resetDetStandIns(); _resetCustomModels(); _resetFlatFields(); clearVendorTextures();
-  _resetDetailedShipsArt(); unregisterBillboardXml(DETAILED_SHIPS_VENDOR); _resetModSettings();
+  _resetTownStandIns(); _resetDetStandIns(); _resetCustomModels(); _resetFlatFields(); clearVendorTextures(); _resetModSettings();
 }
 
 /** A stand-in 445 in dfMeshToModel's shape: a wall `len` units long on x (centred), `thick` across z (centred), `high`
