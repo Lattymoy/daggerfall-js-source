@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PVP_SET, kitEntry, madeOf, makeKit, unmakeKit, pvpStoreOf, pvpStoreFromV1, pvpSlotMarks, pvpSetLockLine, kitTag, kitCostLine } from '../../../src/systems/wild/pvpSet.js';
+import { PVP_SET, kitEntry, kitMadeOf, makeKit, unmakeKit, pvpStoreOf, pvpStoreFromV1, pvpSlotMarks, pvpSetLockLine, kitTag, kitCostLine } from '../../../src/systems/wild/pvpSet.js';
 import { KIT_DEFAULT_BAR } from '../../../src/systems/wild/pvpKit.js';
 import {
   HOTBAR_CAPACITY, useHotbarSet, hotbarSetName, setHotbarSlot, clearHotbarSlot, swapHotbarSlots, hotbarEntry, lockHotbarSet,
@@ -27,11 +27,11 @@ const memory = () => { const m = new Map(); globalThis.localStorage = { getItem:
 
 test('PVP-SET THE MADE LIST: toolkit spells only, each once, at most 24; a spell made twice is one; a full list refuses (mutants: a spell made twice; the cap unread)', () => {
   assert.equal(PVP_SET.slots, HOTBAR_CAPACITY, 'the set is the hotbar\'s whole');
-  assert.deepEqual(madeOf([fire, fire, { id: 'nope' }, null, heal]), [fire, heal]);
+  assert.deepEqual(kitMadeOf([fire, fire, { id: 'nope' }, null, heal]), [fire, heal]);
   assert.deepEqual(makeKit([fire], fire), [fire]);
   assert.deepEqual(makeKit([fire], { id: 'resist', pick: 1 }), [fire, { id: 'resist', pick: 1, icon: 1 }]);
   const full = Array.from({ length: PVP_SET.made }, (_, i) => ({ id: 'heal', pick: null, icon: i }));
-  assert.equal(madeOf([...full, fire]).length, PVP_SET.made);
+  assert.equal(kitMadeOf([...full, fire]).length, PVP_SET.made);
   assert.equal(makeKit(full, fire), null, 'full');
   assert.deepEqual(unmakeKit([fire, heal], 0), [heal]);
   assert.deepEqual(kitEntry({ id: 'fortify', pick: 3 }), { type: 'kit', kit: { id: 'fortify', pick: 3, icon: 45 }, name: 'Fortify Agility' });
