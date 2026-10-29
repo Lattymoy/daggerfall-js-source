@@ -111,10 +111,10 @@ export function relinkGame(minter, main, links) {
  *  the host's half above - so bootWorld wires one object. `follow(sub)` is a /tp's follow-on (mob, 06:01Z: "tp should
  *  auto follow form thier view"), taken only where a Staff Panel has spoken on this page: with none, no token comes.
  *  `relink` the door's STAFF-HIDE-TOGGLE word (relinkGame, over the host's minter and links).
- *  @param {{ main: () => any, prepare: (d: any) => Promise<any>, mode: () => string, pixel: () => { x: number, y: number }, toScene: (p: any) => number[] | null, relink?: () => void, win?: any, Session?: any, entity?: any, maps?: () => any }} deps */
-export function staffFollowOnPage({ main, prepare, mode, pixel, toScene, relink = undefined, win = globalThis.window, Session = undefined, entity = playerEntity, maps = keptMaps }) {
+ *  @param {{ main: () => any, prepare: (d: any) => Promise<any>, mode: () => string, pixel: () => { x: number, y: number }, toScene: (p: any) => number[] | null, relink?: () => void, win?: any, Session?: any, entity?: any, maps?: () => any, pull?: ((sub: string) => Promise<string>) | null }} deps */
+export function staffFollowOnPage({ main, prepare, mode, pixel, toScene, relink = undefined, win = globalThis.window, Session = undefined, entity = playerEntity, maps = keptMaps, pull = null }) {
   // STAFF-MAP: the region map's link, its answers to the panel, and Hide me's relink remaking it too
-  const door = staffHookDoor(win, () => hook, { relink: relink ? () => { relink(); map.relink(); } : relink, mapOf: () => map, placesOf: () => ({ maps: maps(), pixel: pixel() }), pilot: (m) => pilot.word(m) });   // STAFF-EVENT: the Events page's place picker; STAFF-PILOT: Play as boss
+  const door = staffHookDoor(win, () => hook, { relink: relink ? () => { relink(); map.relink(); } : relink, mapOf: () => map, placesOf: () => ({ maps: maps(), pixel: pixel() }), pilot: (m) => pilot.word(m), pull });   // STAFF-PULL: the panel's Bring to me; STAFF-EVENT: the Events page's place picker; STAFF-PILOT: Play as boss
   const hook = createStaffHook({ main, askToken: door.askToken, ...(Session ? { Session } : {}) });
   const map = createStaffMap({ main, post: door.post, ...(Session ? { Session } : {}) });
   // FOLLOW-HIDDEN-REJOIN: whether the game is hidden now, read off each token its presence session mints (noteHidden wraps once)
