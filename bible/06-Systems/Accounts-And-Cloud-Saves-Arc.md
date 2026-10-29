@@ -6199,3 +6199,25 @@ Daggerfall Unity has no accounts, titles, glyphs or auras, so there is no DFU me
   nirnroots and the puffs are cards square to the eye, so straight down from overhead a nirnroot is edge on; a close
   third-person camera thins the nearest puffs as the first person's rule reaches it; like every aura it stands on a
   wearer turned beast and on a rider.
+
+### NIRN-LEAF — the nirnroot redrawn as a serrated leaf (2026-10-29, the owner)
+
+The owner, over a shot of Sage's Smoke at night and Skyrim's nirnroot: "replace this with nicer nirnroot more marijuan
+style". The glyph and the aura's nirnroots are one path (`GLYPH_PATH.nirnrootsage`), so both change together.
+
+- **The shape** (`src/ui/playerBadge.js`): the sprig with its bulb is gone. A nirnroot LEAF in its place - a fan of seven
+  slender leaflets out of one point low in the box (`SAGE_FAN`, 8 by 12.4), the middle one the tallest (to 0.8), the
+  pairs either side shorter and lower, the last pair drooping past level; every leaflet serrated, its teeth leaning to
+  its tip; a short stem below. One outline of 151 edges, never crossing itself.
+- **Its details**: the VEINS in the haze, pale as Skyrim's nirnroot's (a midrib up every leaflet, and side veins off the
+  five long ones), then the STEM's core in the deep green. The bulb's heart is gone with the bulb.
+- **The aura** (`src/render/auraRing.js` sageCard): teal at the fan's heart out to pale mint at the tips
+  (`SAGE_LEAF_RGB`, over `SAGE_FAN_R` from the fan's point), the veins the haze, the stem's core the deep green; the
+  glow about it is as it was. The palette `NIRN_*` and the title are unchanged.
+- Pins: `test/net/nirnrootsage.test.js` - the shape test (the seven leaflets at their angles, open air between them,
+  serrated, the stem, the veins inside the leaf, the stem's core inside the stem) and the nirnroot RUN (teal at the
+  heart, mint at the tip, a midrib the haze, the stem's core the deep green) rewritten for the leaf.
+  `tools/mutants/nirnrootsage.json`: the six records that quoted the sprig re-aimed by content at the leaf, and one new
+  (the leaf one colour).
+- **Seen** in headless Chromium's WebGL2 (`tools/auraProbe.mjs`, 101/101): the leaves round the waist in the smoke, over
+  the runes. Not seen in a running game client.

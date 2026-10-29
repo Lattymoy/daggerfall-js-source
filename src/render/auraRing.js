@@ -910,6 +910,13 @@ export const SAGE_RGB = Object.freeze({
   leaf: Object.freeze(NIRN_LEAF.slice(0, 3)), glow: Object.freeze(NIRN_GLOW.slice(0, 3)), haze: Object.freeze(NIRN_HAZE.slice(0, 3)),
   deep: Object.freeze(NIRN_DEEP.slice(0, 3)), smoke: Object.freeze(NIRN_SMOKE.slice(0, 3)),
 });
+/** NIRN-LEAF (2026-10-29, the owner: "nicer nirnroot more marijuana style", after Skyrim's pale teal nirnroot): a
+ *  nirnroot leaf's own colours, RGB 0..1 - a cool TEAL at the fan's heart, out to a pale MINT at the leaflets' tips. */
+export const SAGE_LEAF_RGB = Object.freeze({ heart: Object.freeze([0.2, 0.66, 0.52]), tip: Object.freeze([0.66, 0.97, 0.84]) });
+/** Where the leaflets meet in the glyph's 16-unit box (GLYPH_PATH.nirnrootsage), and the tallest one's reach from it -
+ *  the leaf's colour runs heart to tip over it. */
+export const SAGE_FAN = Object.freeze([8, 12.4]);
+export const SAGE_FAN_R = 11.7;
 /** A share 0..1 off two numbers - node's alone (the AUDIT A2 law: the GPU is handed what this says, never asked it). */
 const sageHash = (a, b) => { const x = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return x - Math.floor(x); };
 /** NIRNROOT-SAGE: PUFF m AT THE CLOCK `t` - where it is about the feet (`x`, `y`, `z`, m), its size (m), its `age` (0 rising
@@ -2460,7 +2467,7 @@ vec3 witchWall(vec2 q) {
 }
 `;
 
-const SAGE_EDGES = glyphEdges(GLYPH_PATH.nirnrootsage), SAGE_VEIN_EDGES = glyphEdges(GLYPH_DETAIL.nirnrootsage[0].path), SAGE_BUD_EDGES = glyphEdges(GLYPH_DETAIL.nirnrootsage[1].path);
+const SAGE_EDGES = glyphEdges(GLYPH_PATH.nirnrootsage), SAGE_VEIN_EDGES = glyphEdges(GLYPH_DETAIL.nirnrootsage[0].path), SAGE_STEM_EDGES = glyphEdges(GLYPH_DETAIL.nirnrootsage[1].path);
 /** NIRNROOT-SAGE: a shape's distance in its box, named, over its edges - negative inside, filled even-odd (warrenD's law). */
 const edgeDGlsl = (fn, name, edges) => `${glyphEdgesGlsl(name, edges)}
 float ${fn}(vec2 g) {
@@ -2477,10 +2484,12 @@ const vec3 SG_GLOW = ${v3(SAGE_RGB.glow)};
 const vec3 SG_HAZE = ${v3(SAGE_RGB.haze)};
 const vec3 SG_DEEP = ${v3(SAGE_RGB.deep)};
 const vec3 SG_SMOKE = ${v3(SAGE_RGB.smoke)};
+const vec3 SG_TEAL = ${v3(SAGE_LEAF_RGB.heart)};
+const vec3 SG_MINT = ${v3(SAGE_LEAF_RGB.tip)};
 const int SAGE_SCRIPT[${SAGE_RUNES}] = int[${SAGE_RUNES}](${SAGE_SCRIPT.join(', ')});
 ${edgeDGlsl('sageRootD', 'SAGE_EDGES', SAGE_EDGES)}
 ${edgeDGlsl('sageVeinD', 'SAGE_VEIN_EDGES', SAGE_VEIN_EDGES)}
-${edgeDGlsl('sageBudD', 'SAGE_BUD_EDGES', SAGE_BUD_EDGES)}
+${edgeDGlsl('sageStemD', 'SAGE_STEM_EDGES', SAGE_STEM_EDGES)}
 float sageBreath() { return 0.85 + 0.15 * sin(uTime * TAU ${hzGlsl(SAGE_HZ.breath)}); }
 // a rune's stroke lit - the ward's inked, in the nirnroot's greens: a pale heart, the glow's body, a leaf-green halo
 vec3 sageInked(float d, float w) {
@@ -2555,8 +2564,9 @@ vec4 sageCard(vec2 uv, vec3 s) {
     col = mix(col, SG_GLOW * 0.75, (1.0 - age) * (1.0 - age) * (1.0 - uv.y) * 0.5);
     return vec4(col * a, a);
   }
-  // A NIRNROOT: the badge's own sprig (GLYPH_PATH.nirnrootsage, in its box with room about it, SAGE_ROOT_PAD) - leaf green at
-  // its foot into its glow at the bulb, its veins the deep green, the bulb's heart the haze; its glow about it, added
+  // A NIRNROOT: the badge's own leaf (GLYPH_PATH.nirnrootsage, in its box with room about it, SAGE_ROOT_PAD) - teal at the
+  // fan's heart out to mint at its tips (NIRN-LEAF), its veins the haze, its stem's core the deep green; its glow about
+  // it, added
   vec2 g = (vec2(uv.x, 1.0 - uv.y) - 0.5) * ${g3(16 * SAGE_ROOT_PAD)} + 8.0;
   float px = turnPixel() * ${g3((16 * SAGE_ROOT_PAD) / SAGE_ROOT_M)};   // a pixel, in the box's units
   float d = sageRootD(g);
@@ -2565,9 +2575,9 @@ vec4 sageCard(vec2 uv, vec3 s) {
   float edge = smoothstep(0.0, 0.08, min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y)));
   vec3 halo = SG_GLOW * exp(-out1 * out1 / 2.5) * 0.35 * sageBreath() * edge;
   if (body <= 0.0) return vec4(halo, 0.0);
-  vec3 col = mix(SG_LEAF, SG_GLOW, 1.0 - smoothstep(4.0, 15.0, g.y));
-  col = mix(col, SG_DEEP, clamp(0.5 - sageVeinD(g) / px, 0.0, 1.0));
-  col = mix(col, SG_HAZE, clamp(0.5 - sageBudD(g) / px, 0.0, 1.0));
+  vec3 col = mix(SG_TEAL, SG_MINT, smoothstep(0.05, 0.95, length(g - vec2(${g3(SAGE_FAN[0])}, ${g3(SAGE_FAN[1])})) / ${g3(SAGE_FAN_R)}));
+  col = mix(col, SG_HAZE, 0.8 * clamp(0.5 - sageVeinD(g) / px, 0.0, 1.0));
+  col = mix(col, SG_DEEP, clamp(0.5 - sageStemD(g) / px, 0.0, 1.0));
   return vec4(col * body + halo * (1.0 - body), body);
 }
 `;
