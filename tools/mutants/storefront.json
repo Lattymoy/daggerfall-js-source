@@ -347,11 +347,11 @@
   },
   {
     "name": "STOREFRONT-a-maul-every-fall",
-    "file": "src/scenes/seasonHost.js",
-    "old": "    if (kept[id] === day) return;\n",
-    "new": "",
+    "file": "server-account/src/seasonClaim.js",
+    "old": "'INSERT OR IGNORE INTO season_mauls",
+    "new": "'INSERT OR REPLACE INTO season_mauls",
     "tests": [
-      "test/scenes/season_world.test.js"
+      "test/server/seasonmaul_service.test.js"
     ]
   },
   {

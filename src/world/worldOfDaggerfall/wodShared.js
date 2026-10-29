@@ -29,6 +29,9 @@ export const starSiteId = (px, py, n, k, part = '') => `${px},${py}:star.${n}.${
 export const brassSiteId = (px, py, stage, k, part = '') => `${px},${py}:brass.${stage}.${k}${part ? `.${part}` : ''}`;
 /** STOREFRONT: whether a site is a Brass Fissure's - its constructs' or its Colossus's (brassSiteId). */
 export const isBrassSite = (site) => typeof site === 'string' && /:brass\.[0-2]\.\d(?:\.h)?$/.test(site);
+/** STOREFRONT (AUDIT LANE 5): whether a site is a Heart Fissure's Colossus's (`.h`) - its traits the season's three
+ *  (systems/bossTraits.js bossTraitsMost). */
+export const isColossusSite = (site) => typeof site === 'string' && /:brass\.[0-2]\.\d\.h$/.test(site);
 /** The most sites one frame may name, as tags or as the sprung list. */
 export const WOD_SITES_MAX = 64;
 /** A reader's allowance for one owner's camp foes - apart from CELL_PUPPETS_MAX, as the watch's is (WATCH1): a camp

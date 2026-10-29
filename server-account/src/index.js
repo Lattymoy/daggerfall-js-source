@@ -288,6 +288,7 @@ import { startsEg } from './egStarts.js';   // EG-F: the start window's prefligh
 import { claimLamp } from './lamp.js';
 import { festivalOf, findFestival, buyFestival, festivalTown, setOffering, fillOffering, takeInOffering, takeFromOffering, FEST_STATUS } from './festival.js';   // WITCH1: the Witches' Festival   // LAMP-KEEPER II: I Love Lamp, laid on the row
 import { passOf, findPass, BATTLE_PASS_STATUS } from './battlePass.js';   // STOREFRONT: the Battle Pass - the account's season and a deed's find
+import { claimMaul, SEASON_MAUL_STATUS } from './seasonClaim.js';   // AUDIT LANE 5: the Resonant Maul's day
 import { claimQl, QL_STATUS } from './questlines.js';   // QL12: a questline's step claimed - what the service witnessed, paid
 import { voteHome } from './homeVotes.js';   // HOME-VOTE: a town's word on a player's house
 import { claimHome, releaseHome, setHomeEntry, homesInTown, homesOf, setHomeLook, homeLayoutsKept, arenaMoveHome, arenaMovesOf, arenaMoveSeen, holdDeed, inheritHome } from './homes.js';   // HOME1: the online homes' routes; HOME-LOOK: its outside; WD3: the towns' layouts; ARENA4b: the homes the arena displaced, moved; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held
@@ -2352,6 +2353,15 @@ const service = {
         if (request.method !== 'POST') return no('method', 405, origin);
         const r = path === '/v1/pass/mine' ? await passOf(ctx, who.player, env) : await findPass(ctx, who.player, body, env);
         if ('error' in r) return json({ error: r.error }, BATTLE_PASS_STATUS[/** @type {keyof typeof BATTLE_PASS_STATUS} */ (r.error)] ?? 400, origin);
+        return json(r, 200, origin);
+      }
+
+      if (path === '/v1/season/maul') {
+        // AUDIT LANE 5 (bible/06-Systems/Battle-Pass.md section 6): THE RESONANT MAUL'S DAY - a yes once a UTC day an account,
+        // inside the Heart stage; the page mints the Maul on it alone (seasonClaim.js).
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const r = await claimMaul(ctx, who.player, body);
+        if ('error' in r) return json({ error: r.error }, SEASON_MAUL_STATUS[/** @type {keyof typeof SEASON_MAUL_STATUS} */ (r.error)] ?? 400, origin);
         return json(r, 200, origin);
       }
 

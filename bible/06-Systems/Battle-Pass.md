@@ -88,7 +88,8 @@ their sum. The share is on top of the day's bound, so it speeds every player.
 ## 6. The world
 
 `src/scenes/seasonHost.js`, on the bindings the world host shares with the Starfall's host; its law is
-`src/systems/pass/seasonWorld.js`. Online alone, as the season is.
+`src/systems/pass/seasonWorld.js`. Online alone, as the season is, and nothing of it stands before the relay's clock is
+heard (`relayNowS`).
 
 - **The tremor.** The first six seconds of every hour on the shared clock, in the open world: the camera kicked every
   350 ms under the player's own shake cap, swelling and dying away, harder each stage (1.5, 2.5, 4 - a gun's shot is 3);
@@ -96,8 +97,9 @@ their sum. The share is on top of the day's bound, so it speeds every player.
   a kind of its own (`season`, news alone, as the festival's).
 - **Brass Fissures.** Two to each Bay region in the first stage, three in the second and third, on pixels the Oblivion
   Gate's scan finds suitable (land, no place near, a town close), drawn by hash from the season, the stage and the
-  region, four pixels apart: every machine finds the same. A fissure gives way to the day's gate on its pixel or beside
-  it. World of Daggerfall's rock keeps 26 m off it, and the grass off its scorch. On the map each is a brass cog crossed
+  region, four pixels apart and 12 m past Basic Roads' road and track bands (`FISSURE_ROAD_M`; the host reads the
+  vendored roads before it stands any): every machine finds the same. A fissure gives way to the day's gate on its pixel
+  or beside it. World of Daggerfall's rock keeps 26 m off it, and the grass off its scorch. On the map each is a brass cog crossed
   by a blue crack, a Heart Fissure's larger and ringed, its card naming its town and what waits there.
 - **A fissure, built** (`world/fissureModel.js`, its art `fissureArt.js`, pseudo-archive 38341): a scorched oval
   on the land, the crack's black depths with the aetherium's blue in them, short cracks off it, slabs of earth heaved up
@@ -107,13 +109,17 @@ their sum. The share is on top of the day's bound, so it speeds every player.
 - **The constructs.** Each fissure's camp is Daggerfall Enemy Expansion's: the Centurion Sphere (289), the Iron Golem
   (270) and, from the second stage, the Steam Centurion (290) - Ketch's KT_LOOKS, on the surface. The first player
   within 90 m springs it on the camp law (`px,py:brass.<stage>.<k>`, reader-checked - no relay change); every other
-  screen sees the owner's. One woken wakes the camp. Each is a find of 40. Cleared, a fissure is quiet for that
-  character twenty minutes.
+  screen sees the owner's. One woken wakes the camp. Each is a find of 40. A camp is cleared on a screen whose last
+  standing foes of it are all bodies now, whoever stood it; that character's fissure is then quiet twenty minutes, kept in
+  the device's store across a reload (`dagger:fissureQuiet`). A camp gone without a body is no clear.
 - **The Brass Colossus.** In the third stage each region's first fissure is its Heart Fissure: two Spheres and a Golem,
   and at the middle a Steam Centurion made a raid leader (half again its size, an elite's health and blows, its name),
-  three times that health, and Warded, Stormproof and Blade-turning - bring a hammer. Every screen names it by its site
-  (`.h`); its bar stands while it is near. A character whose blow landed on it takes **the Resonant Maul** when it
-  falls, once a UTC day.
+  three times that health, and Warded, Stormproof and Blade-turning - bring a hammer; never the street's elite roll.
+  Every screen names it by its site (`.h`), stands its three traits (`systems/bossTraits.js` bossTraitsMost) and bars
+  it while it is near, and says its fall, with a body. A character whose blow landed on it then asks the account service
+  for **the Resonant Maul** (`POST /v1/season/maul`, `server-account/src/seasonClaim.js`): yes once a UTC day an account,
+  inside the Heart stage, on the service's clock. The Maul is minted on that yes alone: offline, signed out or refused,
+  none.
 - **The Resonant Maul** (`src/systems/pass/resonantMaul.js`). A Dwarven warhammer of the Legendary rung: +30% damage, +12
   Strength, +25 Blunt Weapon, Resist Shock while held, and Resonance - +40% against the season's constructs, a bane under
   Dragonsbane's 50, inside THE CEILING HOLDS. **Unrolled**: lawful wherever the item law reads it (the account service's
@@ -122,6 +128,22 @@ their sum. The share is on top of the day's bound, so it speeds every player.
 **Departures from the first draft.** Daggerfall Enemy Expansion has no brass spider (271 is the Blood Spider; the Ketch's
 spider is a classic mobile tinted, and the surface has no tint), so the first stage's second construct is the Iron Golem.
 The Colossus is not washed in brass for the same reason: its size, name, traits and bar say what it is.
+
+**AUDIT LANE 5 (2026-10-29).** The season in the world read cold; thirteen findings, each fixed and pinned
+(`seasonaudit_world.test.js`, `seasonmaul_service.test.js`, `seasonclear.test.js`, `fissureroads.test.js`). The Maul's
+once-a-day bound was the page's store: a blocked store, a private window, a second browser or a clock set ahead each gave
+another. Every reader capped a raid leader at two traits, so every copy and heir lost Blade-turning. One Colossus in
+twenty stood the street's single elite trait. A camp taken down without a body counted as a fall. The quiet held only on
+the stander's page, in memory. The clearings made each pixel's flats ask all 130 members; a box now asks the members on
+its own pixels (`world/gate/gateClearance.js` setNear), the same boxes clearing: 4,000 flats 53 ms to 0.7 ms, the sweep
+453 ms to 11 ms.
+
+**A camp's stander walking off gives it up** (past `SEASON_LEAVE_M`, 260 m), with no hand-over: a Colossus half fought
+stands again whole for the next player about ten seconds later. Kept on purpose, as the Starfall's leash (AUDIT STARFALL
+C2): one owner holds a site, and the camp law hands a site's foes over only where the owner's pools go down at once (a
+teleport, a death, the page's going - `handOverSiteFoes`). A walk-off hand-over would leave the walker's word on the site
+while its heir stood it. It costs the fighters the damage done, never the Maul or the quiet, and a reset Colossus is
+no easier.
 
 ## 7. The window
 

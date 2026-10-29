@@ -26,7 +26,8 @@ The law is `src/systems/bossTraits.js`, pure but for the language.
 | `thorned` | Thorned | a fifth of every weapon blow that lands on it (`THORN_SHARE`) comes back at its striker | spells, or a healer |
 
 The two weapon resistances never stand together (`rollBossTraits`; a mask off the wire is trimmed as it is read -
-`bossTraitsOfMask`: one trait an elite, two a raid's leader, never the pair, AUDIT WORLD-EVENTS L2-11). A kill (a
+`bossTraitsOfMask` by `bossTraitsMost`: one trait an elite, two a raid's leader, never the pair, AUDIT WORLD-EVENTS L2-11 -
+and three for the season's Brass Colossus, a leader on a Heart Fissure's `.h` site, AUDIT LANE 5). A kill (a
 Disintegrate, a Razor's whole-health strike - AUDIT PSCALE1 DOORS-1) is no blow, nor is a fall or a SetHealth(0) (AUDIT
 WORLD-EVENTS L2-5, L2-10): no trait touches them.
 

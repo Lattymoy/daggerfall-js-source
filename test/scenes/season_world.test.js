@@ -25,7 +25,7 @@ import { codexRows } from '../../src/systems/loot/lootCodex.js';
 import { buildFissureModel, fissureLayout, fissureVents, FISSURE_LEN } from '../../src/world/fissureModel.js';
 import { fissureArt, FISSURE_ARCHIVE, FISSURE_REC, FISSURE_ART_SIZE } from '../../src/world/fissureArt.js';
 import { pseudoArchiveOwner } from '../../src/world/eliteGates/pseudoArchives.js';
-import { createSeasonHost, SEASON_QUIET_MS, SEASON_ORPHAN_MS, SEASON_LEAVE_M, SEASON_MAUL_STORE, COLOSSUS_HEALTH, COLOSSUS_TRAITS, TREMOR_KICK_MS, fissureBucket } from '../../src/scenes/seasonHost.js';
+import { createSeasonHost, SEASON_QUIET_MS, SEASON_ORPHAN_MS, SEASON_LEAVE_M, COLOSSUS_HEALTH, COLOSSUS_TRAITS, TREMOR_KICK_MS, fissureBucket } from '../../src/scenes/seasonHost.js';
 import { TREMOR_TEXT, COLOSSUS_TEXT, FISSURE_TEXT } from '../../src/systems/pass/seasonWords.js';
 import { gateClearSet, FISSURE_ROCK_M } from '../../src/world/gate/gateClearance.js';
 import { readFissureMarksIn } from '../../src/ui/fissureMapMark.js';
@@ -181,7 +181,9 @@ const memStorage = () => { const m = new Map(); return { getItem: (k) => m.get(k
 /** A world with one player and the host on its bindings: a pixel 1000 m, the ground flat, a renderer and a collider that keep
  *  what they are told. */
 function world({ t = HEART_T, online = true } = {}) {
-  const w = { t, feet: null, said: [], tells: [], shakes: [], bursts: [], heard: [], taken: [], sprung: new Set(), peer: new Set(), peerAgo: 0, forgot: [], storage: memStorage(), struck: true };
+  const w = { t, feet: null, said: [], tells: [], shakes: [], bursts: [], heard: [], taken: [], sprung: new Set(), peer: new Set(), peerAgo: 0, forgot: [], storage: memStorage(), struck: true, asks: [], days: new Set() };
+  /** the service's Maul door, its day's law (server-account/src/seasonClaim.js - test/server/seasonmaul_service.test.js) */
+  const maulApi = { claim: async (rid) => { w.asks.push(rid); const day = Math.floor(w.t / 86_400_000); if (w.days.has(day)) return { ok: false, error: 'taken', status: 409 }; w.days.add(day); return { ok: true, data: { day } }; } };
   w.foes = pool();
   w.meshes = []; w.draws = []; w.adds = []; w.removes = [];
   w.renderer = { meshes: w.meshes, createMesh(m) { const mesh = { m }; w.meshes.push(mesh); return mesh; }, destroyMesh(m) { m.gone = true; }, uploadTexture() {}, uploadEmissionTexture() {}, drawMesh(mesh) { w.draws.push(mesh); } };
@@ -190,11 +192,12 @@ function world({ t = HEART_T, online = true } = {}) {
     renderer: w.renderer,
     state: { pixelTranslation: (px, py, out) => { out[0] = px * 1000; out[1] = 0; out[2] = py * 1000; return out; } },
     exteriorFoes: w.foes, gateScanOf: () => SCAN, warmGateScan: () => {}, surfaceAt: () => 0,
-    player: { feetAt: () => w.feet }, walkMode: true, playerSpawned: true, get online() { return online ? {} : null; }, collider: w.col, _sharedOffsetMs: 0,
+    player: { feetAt: () => w.feet }, walkMode: true, playerSpawned: true, get online() { return online ? {} : null; }, collider: w.col, _sharedOffsetMs: 0, relayNowS: () => Math.floor(w.t / 1000),
     _wodPeerSprung: w.peer, wodPeerHeldAgo: () => w.peerAgo, wodForgetPeer: (s) => { w.forgot.push(s); w.peer.delete(s); },
     wodSprang: (s) => w.sprung.add(s), wodUnsprang: (s) => w.sprung.delete(s),
     chatNotice: (s) => w.tells.push(s), say: (s) => w.said.push(s), shake: (k) => w.shakes.push(k), burst: (r, at, o) => { w.bursts.push([r, o?.ambient ?? false]); return true; },
     struckAt: () => (w.struck ? 1 : null), take: (item) => w.taken.push(item), who: () => 'acct|char', storage: w.storage, bindPass: false,
+    maulApi, rid: () => `${w.asks.length}`.padStart(16, '0'), wait: async () => {}, roads: null,
     audio: { buffers: new Map([['storefront:season-hum', {}], ['storefront:season-tremor', {}]]), play3d: (k, at) => w.heard.push(k) },
     labGrassField: { invalidate() {} }, gamePaused: () => false, townTalk: { hudHidden: false },
   });
@@ -279,30 +282,30 @@ test('STOREFRONT a fissure\'s camp: sprung by the first player near, its constru
   assert.ok(!w.sprung.has(f.site), 'and its site nobody\'s');
 });
 
-test('STOREFRONT the Colossus falls: a character whose blow landed takes the Resonant Maul, once a UTC day, its line said; one who never struck it takes nothing; a camp cleared is quiet a while, then stands again (mutants: a Maul a fall; a Maul unstruck; the camp stood again at once)', async () => {
+test('STOREFRONT the Colossus falls: a character whose blow landed takes the Resonant Maul on the service\'s yes, once a UTC day, its line said; one who never struck it asks nothing; a camp cleared is quiet a while, then stands again (mutants: a Maul unstruck; the camp stood again at once)', async () => {
   const w = world(); clock(w);
   const f = w.sites().find((s) => s.heart);
   w.at(f, 30); await w.beat();
   const kill = () => { for (const x of w.foes.foes) { x.dead = true; x.corpse = {}; } };
-  kill(); w.host.frame();
+  kill(); w.host.frame(); await settle();
   assert.equal(w.taken.length, 1);
   assert.equal(w.taken[0].legendary, RESONANT_MAUL.id);
   assert.ok(w.said.includes(COLOSSUS_TEXT.falls()));
-  assert.deepEqual(JSON.parse(w.storage.getItem(SEASON_MAUL_STORE)), { 'acct|char': Math.floor(w.t / 86_400_000) });
+  assert.equal(w.asks.length, 1, 'the service asked once');
   w.t += 6000; await w.beat();
   assert.equal(w.foes.stood.length, 4, 'cleared: quiet');
   w.t += SEASON_QUIET_MS; await w.beat();
   assert.equal(w.foes.stood.length, 8, 'stood again');
   w.foes.foes = w.foes.foes.filter((x) => !x.dead);
-  kill(); w.host.frame();
-  assert.equal(w.taken.length, 1, 'once a day');
-  w.t += 86_400_000; w.foes.foes = []; await w.beat(); kill(); w.host.frame();
+  kill(); w.host.frame(); await settle();
+  assert.equal(w.taken.length, 1, 'once a day: the service said no');
+  w.t += 86_400_000; w.foes.foes = []; await w.beat(); kill(); w.host.frame(); await settle();
   assert.equal(w.taken.length, 2, 'the next day');
   const u = world(); clock(u); u.struck = false;
   u.at(f, 30); await u.beat();
   for (const x of u.foes.foes) { x.dead = true; x.corpse = {}; }
-  u.host.frame();
-  assert.equal(u.taken.length, 0, 'never struck');
+  u.host.frame(); await settle();
+  assert.deepEqual([u.taken.length, u.asks.length], [0, 0], 'never struck: nothing asked');
 });
 
 test('STOREFRONT the host\'s map, clearings and gate: a card each fissure of the stage, the Heart Fissure\'s its own; the rock\'s clearings one frozen list while the stage stands; a fissure beside the day\'s gate neither built nor stood, its card saying so; off line nothing (mutants: the clearings made every frame; the gate ignored)', async () => {
