@@ -146,8 +146,8 @@ test('SEA-BOUNTY the service, end to end over its routes and real records: a kil
   h.raw('UPDATE realm_characters SET held = ?1 WHERE id = ?2', 'law', h.R.pat.id);
   assert.equal((await h.post('pat', 'kim', 500)).body.error, 'trade-held', 'a held record hands no gold toward another\'s hand');
   h.raw('UPDATE realm_characters SET held = NULL WHERE id = ?1', h.R.pat.id);
-  assert.equal(h.gold('val'), 4500, 'three falls at kim\'s hand, a tenth of her purse at the first');   // PIN MOVED (FOE-KEEPS, bible/11-Multiplayer/Wild-Zone.md section 4): a tenth, the usual death's share - it was half (625); PIN MOVED (REPEAT-SHIELD, 2026-10-26): the second and third inside half an hour took nothing (it was 3,645)
-  assert.equal((await h.post('val', 'kim', 5000)).body.error, 'realm-gold', 'more than her record holds');   // PIN MOVED (FOE-KEEPS): her 3,645 - it was 1,000 past her 625; PIN MOVED (REPEAT-SHIELD): her 4,500
+  assert.equal(h.gold('val'), 5000, 'three falls at kim\'s hand, her purse whole');   // PIN MOVED (PVP-NO-TENTH): a kill takes no tenth (a last roll only where the room collects)   // PIN MOVED (FOE-KEEPS, bible/11-Multiplayer/Wild-Zone.md section 4): a tenth, the usual death's share - it was half (625); PIN MOVED (REPEAT-SHIELD, 2026-10-26): the second and third inside half an hour took nothing (it was 3,645)
+  assert.equal((await h.post('val', 'kim', 5001)).body.error, 'realm-gold', 'more than her record holds');   // PIN MOVED (PVP-NO-TENTH): past her 5,000   // PIN MOVED (FOE-KEEPS): her 3,645 - it was 1,000 past her 625; PIN MOVED (REPEAT-SHIELD): her 4,500
   assert.equal((await h.post('val', 'kim', 500)).status, 200, 'the victim posts too');
   assert.equal((await h.board('kim')).mine, 2500, 'kim sees the bounty on her own head');
   assert.equal((await h.board('pat')).wanted[0].bounty, 2500);

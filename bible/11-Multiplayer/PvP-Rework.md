@@ -246,6 +246,14 @@ reports its pool's share of my health, 10 to 25 (`pvpGuard.js:"export function p
 referee takes that part of PVP-SHIELD's 25% and 35% off (the `vit` report's `sh`). Speed is Fortify Speed on Fortify's
 numbers. Inside a zone dungeon the bar is off. A departure: DFU has no PvP.
 
+PVP-KIT-REZ (the owner, 2026-10-29: "Add resurrection to the. Mages tool belt"): Resurrect is a slot spell at 25% of
+maximum magicka (`pvpKit.js:"resurrect: Object.freeze({ cost: 25, icon: 10 }),"`). It is the shop's own Resurrection,
+by touch (`pvpKit.js:"case 'resurrect': return [{ ...resurrectionSpell().effects[0] }];"`), with no 15 m gift: it goes
+through RESURRECT1's path, a fallen party member's body within RESURRECT_REACH
+(`hostMagic.js:"try { bodies = fallenTarget(eye, dir, RESURRECT_REACH) ?? null; } catch { return null; }"`). The host
+hands only party members' bodies (`world.js:"const mate = cAcct ? social.others().find((m) => m.acct === cAcct) : null; if (!mate) continue;"`),
+and the fallen player's own client rises only on its party's call. A departure: DFU has no raise-dead effect.
+
 ## PVP-REWARD: one random piece, or one policy's gold
 
 "they only get a piece that isnt insured", "random roll on uninsure peices": a kill in the open zone gives its killer one
@@ -264,8 +272,8 @@ coin where it fits, else a letter of credit for the whole - the trade window's o
 (`pvpReward.js:"export const pvpGoldPaid ="`). A tab that says no weight gets the letter.
 
 "get rid of the bag drop": no bag piece drops at a kill
-(`server-account/src/wild.js:"drop = takeWildDeath(save, w, keep, wt, { letters, insured, bag: false });"`). The purse's
-tenth and the letters' tenth still go to the remains; the cart and the packs stay storage. A villain has no insurance:
+(`server-account/src/wild.js:"drop = takeWildDeath(save, w, keep, wt, { insured, bag: false, purse: false });"`). The purse's
+tenth and the letters' tenth went to the remains until PVP-NO-TENTH, below; the cart and the packs stay storage. A villain has no insurance:
 `pvpReward.js:"export const pvpInsuredFor ="` takes `villain`: "villian lose insurance" - a fallen whose kept meter is red holds no policy
 (`wild.js:"{ villain: isVillain(Number(row.villainy)) }"`). "Insurance cost 20%": a
 premium stays a fifth of `itemWorth` (`wildInsureLaw.js:"export const WILD_INSURE_DIVISOR = 5;"`), which counts the
@@ -294,3 +302,36 @@ enters the zone in a town is hunted from its first step out of the streets. THE 
 `exterior.js`, `worldModes.js` (a building) and `dungeonContext.js` hunt no one. Orsinium waits. A departure from
 PlayerEntity.SpawnCityGuards (`PlayerEntity.cs:625-694`): DFU sends 2-5 once for a crime, at my level plus 3-6, every
 skill level x 5 + 30, and its watch resists nothing.
+
+## PVP-RISE: a death's wait like PvE's
+
+"Need to have to eake up im nearest town", "Jist like pve deaths": a death in the zone rises at the nearest town or temple
+outside it (Wild-Zone.md THE RISE, as before), after the online PvE wait of 60 s
+(`wildZone.js:"export const WILD_DEATH_HOLD_S = 60;"`), not two minutes. The referee keeps the fighter down as long
+(`wildRef.js:"riseMs: 60_000,"`, the wire's `down` word at most `wire.js:"export const WILD_DOWN_MS_MAX = 60_000;"`). A
+departure: DFU has no PvP.
+
+DEATH-15 ("Change that to 15 second on death", "For both"; the owner chose to keep the Resurrect minute): online, in
+the zone or out of it, Enter rises once `deathScreen.js:"export const DEATH_RISE_MIN_S = 15;"` have passed (a rejoin's
+served time counts, `canRise`); until then the screen says only the count. The rest of the minute is for a party
+member's Resurrect, and the body still lies the minute. The raise window is the longest screen and half a minute,
+`revived.js:"export const REZ_HOLD_S = 90;"` (150 while the zone held two minutes). Relay world282. A departure: DFU
+rises after its three seconds.
+
+## PVP-NO-TENTH: no tenth at a kill, gold as the last roll
+
+"No gold dropped on death pvp detached gives gold as a last roll if no item or insurance", "No only the insurance": a
+player kill takes no tenth of the purse and lowers no letter, and nothing lies in the remains for anyone
+(`server-account/src/wild.js:"drop = takeWildDeath(save, w, keep, wt, { insured, bag: false, purse: false });"`). The roll
+is a worn piece, else one policy's gold, else THE LAST ROLL - only with no worn piece to take and no policy to pay
+(`wild.js:"const lastRoll = !burnt && collect && roll === null;"`). "Only give them some of their total or letter of
+credit or gold what ever =10%", "Letter only pay out 10% if they have not enough gold": a tenth of the coin and the
+letters together, the purse first, the letters (bag order) paying only what it cannot
+(`wildDropLaw.js:"export function takeWildLastRoll("`).
+
+The gold goes to the killer the way a policy's gold does: escrowed, his alone in the remains, never the fallen's to take
+back, collected as coin where it fits his free weight, else one letter of credit for the whole. The collect says it is
+the last roll (`wild.js:"return parse(fall?.tk)?.last ? { ...paid, last: true } : paid;"`), and so does each side's text
+(`wildZone.js:"lastGold: (n) =>"`, `wildZone.js:"deathLast: (name, gold) =>"`). A held record, a REPEAT-SHIELD kill
+and a room that signs no collect take nothing. A foe's death keeps everything, as FOE-KEEPS says. The service is
+acct215. A departure: DFU has no PvP.

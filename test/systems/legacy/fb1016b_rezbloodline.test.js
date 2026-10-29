@@ -769,12 +769,12 @@ test('REZ-BLOODLINE AUDIT R2 the online death screen counts the wall clock, as t
         legacyT -= dt;
         if (legacyT <= 0) { legacyT = 1; r.host.tick(); }   // legacyStep: once a second of the same dt
         assert.equal(r.host.raisable(), true, `${fps} fps: raisable while the screen stands (${((Date.now() - start) / 1000).toFixed(1)} s, "RISING IN ${screen.respawnIn}")`);
-        if (f === Math.round(fps * 60)) said = screen.respawnIn;
+        if (f === Math.round(fps * 30)) said = screen.respawnIn;   // PIN MOVED (PVP-RISE): the zone's wait is a minute now
       }
       const wall = (Date.now() - start) / 1000;
       assert.ok(reset && wall <= WILD_DEATH_HOLD_S + 1, `${fps} fps: the screen goes at ${wall.toFixed(1)} s on the wall`);
       assert.ok(wall * 1000 < REZ_HOLD_MS, 'inside the window');
-      assert.equal(said, WILD_DEATH_HOLD_S - 60, 'a minute in, it says a minute left');
+      assert.equal(said, WILD_DEATH_HOLD_S - 30, 'half a minute in, it says half a minute left');
     } finally {
       setWildDeath(null);
     }
