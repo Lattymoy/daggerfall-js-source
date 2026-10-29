@@ -9,6 +9,6 @@
   { "name": "PVP-CONE-foe-unnoted", "file": "src/scenes/pvpFlagHost.js", "old": "foes.set(g.by === me() ? g.to : g.by, fightAt);", "new": "", "tests": ["test/ui/pvpcone.test.js"] },
   { "name": "PVP-CONE-foe-one-side", "file": "src/scenes/pvpFlagHost.js", "old": "foes.set(g.by === me() ? g.to : g.by, fightAt);", "new": "foes.set(g.to, fightAt);", "tests": ["test/ui/pvpcone.test.js"] },
   { "name": "PVP-CONE-lock-unread", "file": "src/scenes/pvpFlagHost.js", "old": "now() - foes.get(id) < PVP_FLAG.lockMs", "new": "now() - foes.get(id) <= PVP_FLAG.lockMs", "tests": ["test/ui/pvpcone.test.js"] },
-  { "name": "PVP-CONE-party-unasked", "file": "src/scenes/pvpFlagHost.js", "old": "foeOf(p.id) || !!social?.isPartyPeer?.(p.id)", "new": "foeOf(p.id)", "tests": ["test/ui/pvpcone.test.js"] },
+  { "name": "PVP-CONE-party-unasked", "file": "src/scenes/pvpFlagHost.js", "old": "near = foeOf(p.id) || party;", "new": "near = foeOf(p.id);", "tests": ["test/ui/pvpcone.test.js"] },
   { "name": "PVP-CONE-near-unworn", "file": "src/scenes/pvpFlagHost.js", "old": "return q && near ? { ...q, near } : q;", "new": "return q;", "tests": ["test/ui/pvpcone.test.js"] }
 ]

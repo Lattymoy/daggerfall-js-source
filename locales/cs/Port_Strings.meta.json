@@ -32884,6 +32884,51 @@
   "tr": "d2f47e6a37d2",
   "by": "claude-in-session"
  },
+ "pvp.hud.combat": {
+  "en": "7ce396856a34",
+  "tr": "139b07212434",
+  "by": "claude-in-session"
+ },
+ "pvp.hud.hitYou": {
+  "en": "973fa5230574",
+  "tr": "fada4343d48d",
+  "by": "claude-in-session"
+ },
+ "pvp.hud.hitYouAnon": {
+  "en": "d0f7fda33bcc",
+  "tr": "f8ac183e183f",
+  "by": "claude-in-session"
+ },
+ "pvp.hud.hits": {
+  "en": "3bab063067c5",
+  "tr": "f61b498d5c6d",
+  "by": "claude-in-session"
+ },
+ "pvp.hud.secs": {
+  "en": "4a84fdfdafe6",
+  "tr": "4a84fdfdafe6",
+  "by": "claude-in-session"
+ },
+ "pvp.hud.youHit": {
+  "en": "2c6723f82a00",
+  "tr": "52e373984381",
+  "by": "claude-in-session"
+ },
+ "pvp.hud.youHitAnon": {
+  "en": "bdc46419a474",
+  "tr": "145c72aec580",
+  "by": "claude-in-session"
+ },
+ "pvp.kill.slew": {
+  "en": "bf078f118b7c",
+  "tr": "5776fd8d90b4",
+  "by": "claude-in-session"
+ },
+ "pvp.kill.slewAnon": {
+  "en": "efc7038115e6",
+  "tr": "3d9a1d95d79e",
+  "by": "claude-in-session"
+ },
  "pvp.kit.absorb": {
   "en": "ae56f146b0ea",
   "tr": "e59b8042d122",
@@ -33034,14 +33079,39 @@
   "tr": "e7bbc661c218",
   "by": "claude-in-session"
  },
+ "pvp.level30.go": {
+  "en": "1498207a9a7d",
+  "tr": "d7db398f8533",
+  "by": "claude-in-session"
+ },
  "pvp.level30.no": {
   "en": "8de95fd5b412",
   "tr": "83c307121b10",
   "by": "claude-in-session"
  },
+ "pvp.level30.owed": {
+  "en": "f8019869d872",
+  "tr": "85e5a5111ba6",
+  "by": "claude-in-session"
+ },
  "pvp.level30.warn": {
   "en": "6c45d870e1ce",
   "tr": "6e1c98bbf0ce",
+  "by": "claude-in-session"
+ },
+ "pvp.lock.over": {
+  "en": "cd159dde2417",
+  "tr": "5ece96aca1b4",
+  "by": "claude-in-session"
+ },
+ "pvp.lock.portal": {
+  "en": "4baeb4383361",
+  "tr": "6cd5e416d9a3",
+  "by": "claude-in-session"
+ },
+ "pvp.lock.rest": {
+  "en": "6b832df48830",
+  "tr": "82b2f6b6a14d",
   "by": "claude-in-session"
  },
  "pvp.potion.health": {
@@ -41152,6 +41222,16 @@
  "wild.death.shield": {
   "en": "a0bb6c5a792b",
   "tr": "8648c15e3d1e",
+  "by": "claude-in-session"
+ },
+ "wild.death.slain": {
+  "en": "269aea5f257c",
+  "tr": "fa7ec921c42f",
+  "by": "claude-in-session"
+ },
+ "wild.death.slainAnon": {
+  "en": "391965b8cc34",
+  "tr": "c91f1a8cd950",
   "by": "claude-in-session"
  },
  "wild.escrow.collectLate": {

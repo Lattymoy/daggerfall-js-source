@@ -10,7 +10,8 @@ import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { PORTAL_HOLD_TEXT, PORTAL_TEXT, portalHold, portalStonePlace, spendPortalStone } from '../systems/portalStone.js';
 import { travelMapDoorReady } from '../ui/travel/travelMapDoor.js';
 import { teleportJourney } from '../systems/travel/pastBayTravel.js';   // PORTAL-BAY: the teleport's law past the Bay
-import { pvpFlagOn } from './pvpFlagHost.js';   // PVP-FLAG: unflagged, a stone is free of the zone's law
+import { pvpFlagOn, pvpFightLeft, pvpLockSay } from './pvpFlagHost.js';   // PVP-FLAG: unflagged, a stone is free of the zone's law
+import { pvpPortalLockText, pvpLockSecs } from '../ui/pvpHud.js';   // PVP-HUD
 
 /** @param {any} host */
 export function createPortalStoneHost(host) {
@@ -25,6 +26,13 @@ export function createPortalStoneHost(host) {
    *  teleportJourney), each said where it refuses. True when refused. */
   // PVP-FLAG (the owner: "with no flagg we will allow player to use portal stone anywwere"): unflagged, the zone's law is not asked
   const zoneRefused = (to = null) => pvpFlagOn() && host.wildTeleportRefused(to);
+  /** PVP-HUD (the mockup: "You are in combat. Wait {s} s to use a Portal Stone."): flagged, the combat lock holds the
+   *  stone - the seconds left said mid-screen. True when refused. */
+  const lockRefused = () => {
+    const s = pvpFlagOn() ? pvpLockSecs(pvpFightLeft()) : 0;
+    if (s) pvpLockSay(pvpPortalLockText(s));
+    return s > 0;
+  };
   const teleportRefused = (to) => zoneRefused(to) || host.veilRefused(to) || !host.wildTravelGate(to, 0, teleportJourney).ok;
   /** PORTAL1 (systems/portalStone.js): THE HOLDS, here - portalHold's ladder over this host's own words: dead or a move
    *  under way, my duel (an arena bout's hold with it), a siege's room (its wards: Teleport, Recall and Levitate do
@@ -53,6 +61,7 @@ export function createPortalStoneHost(host) {
    *  refusal said. */
   function openPortalStone(item, list) {
     const refuse = (line) => { townTalk.say(line); return false; };
+    if (lockRefused()) return false;
     const why = portalDoorRefusal();
     if (why) return refuse(why);
     if (zoneRefused() || host.veilRefused()) return false;   // AUDIT CAPTAIN'S SEA P6: past the Veil its map's every place is across it - AUDIT TESA II Z5: and a stone's portal is a teleport (PVPDUNGEONS: "of any kind"), never out of the open zone
@@ -78,7 +87,7 @@ export function createPortalStoneHost(host) {
    *  faded there (AUDIT PORTAL1 U4: every pick on it flashed the screen black). */
   function standPortal(pick, item, live) {
     if (hudFade.backgroundColor[3] > 0 && !hudFade.fadeInProgress) hudFade.fadeHUDFromBlack();
-    if (!pick?.pixel) return;
+    if (!pick?.pixel || lockRefused()) return;
     const why = portalDoorRefusal();
     if (why) { townTalk.say(why); return; }
     if (teleportRefused(pick.pixel)) return;   // AUDIT CAPTAIN'S SEA P6 - AUDIT TESA II Z5: never into the open zone (the guild's teleport's and Recall's law) - PORTAL-BAY: the teleport's whole gate, before a stone is spent
@@ -109,5 +118,5 @@ export function createPortalStoneHost(host) {
       finally { hccRuntimeOn()?.handlePostFastTravel(); }
     }).catch((e) => { console.warn('[portal] the arrival failed:', e?.message ?? e); hudFade.clearFade(); });
   }
-  return { openPortalStone, portalArrive, portalHoldNow };
+  return { openPortalStone, portalArrive, portalHoldNow, lockRefused };
 }

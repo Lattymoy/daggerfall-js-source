@@ -194,6 +194,10 @@ export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
 .dfname-bar.off { display: none; }
 .dfname-bar-s { height: .14em; background: #3d7be0; }
 .dfname-bar-h { height: .32em; background: #d42a1e; }
+/* PVP-HUD (the mockup): a flagged player's bar under 20% health flashes. */
+.dfname-bar.low { animation: dfname-low .5s steps(2) infinite; }
+@keyframes dfname-low { 50% { border-color: #ff9a8a; background: #7a1a12; } }
+@media (prefers-reduced-motion: reduce) { .dfname-bar.low { animation: none; border-color: #ff9a8a; } }
 /* ACC3 - THE GLYPHS, right of the name. Sized off the label's own em so
    they shrink with distance exactly as the name does, and drawn in
    currentColor so ui/playerBadge.js is the only place a colour is
@@ -253,6 +257,10 @@ export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
 .dfname-ribbon.off { display: none; }
 `;
 
+/** PVP-HUD: a bar flashes under PVP_BAR_LOW per cent of health, never at 0 (fallen). */
+export const PVP_BAR_LOW = 20;
+export const pvpBarLow = (/** @type {{ h: number } | null | undefined} */ b) => !!b && b.h > 0 && b.h < PVP_BAR_LOW;
+
 /** The sheet, once (ui/partyPanel.js injectPartyStyle's own shape). */
 export function injectNameStyle(doc = document) {
   if (doc.getElementById?.(NAME_STYLE_ID)) return;
@@ -295,7 +303,7 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
   const put = (tag, slot, v, write) => { if (tag[slot] !== v) { tag[slot] = v; write(v); } };
   /** PVP-BAR: the bar shown at its health and Shield (per cent), or hidden where the point carries none. */
   const paintBar = (tag, b) => {
-    setCls(tag.bar, b ? 'dfname-bar' : 'dfname-bar off');
+    setCls(tag.bar, !b ? 'dfname-bar off' : pvpBarLow(b) ? 'dfname-bar low' : 'dfname-bar');
     if (!b) return;
     tag.barH.style.width = `${Math.max(0, Math.min(100, b.h))}%`;
     tag.barS.style.width = `${Math.max(0, Math.min(100, b.s ?? 0))}%`;

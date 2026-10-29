@@ -10,7 +10,8 @@ import { noteCaps } from '../ui/capsFix.js';
 import { skullSrc } from '../ui/pvpSkull.js';
 import { CONCEAL_MODE } from '../systems/combatVisuals.js';   // PVP-BAR
 import { isVillain } from '../systems/wild/villainLaw.js';   // PVP-VILLAIN
-import { wildHere } from '../systems/wild/wildZone.js';   // PVP-FLAG-ZONE
+import { wildHere, WILD_TEXT } from '../systems/wild/wildZone.js';   // PVP-FLAG-ZONE
+import { createPvpHud, pvpHitLine, pvpHitsAdd, pvpLockOverText, pvpSlewText, PVP_SAY_S } from '../ui/pvpHud.js';   // PVP-HUD
 
 /** PVP-BAR: a concealed player in a PvP fight - a faint body that keeps its skull and bar (the name is taken). */
 export const PVP_FIGHT_VEIL = Object.freeze({ mode: CONCEAL_MODE.reveal, alpha: 0.3, t: 0, phase: 0, named: true });
@@ -26,12 +27,13 @@ const SKULL_EDGE = Object.freeze({ off: '#5a4a30', white: '#8a7246', gold: '#e8b
 /**
  * The host's own (positional, so the wiring is one line of it): its live link, the player, the mid-screen line and the
  * town talk a line is said on.
- * @param {() => any} online @param {any} player @param {(line: string) => void} midScreen @param {{ say: (line: string) => void }} talk
+ * @param {() => any} online @param {any} player @param {(line: string, s?: number) => void} midScreen @param {{ say: (line: string) => void }} talk
  * @param {{ doc?: Document | null, now?: () => number, zone?: () => boolean }} [o]
  */
 export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeof document === 'undefined' ? null : document, now = Date.now, zone = wildHere } = {}) {
   const level = () => Math.trunc(player?.level || 1);
   const say = (line) => { midScreen(line); talk.say(line); };
+  const sayLock = (line) => { midScreen(line, PVP_SAY_S); talk.say(line); };   // PVP-HUD: a combat timer's line, 3 s
   let on = false, fightAt = -Infinity, button = /** @type {HTMLButtonElement | null} */ (null);
   const peers = new Map();   // PVP-SKULL: a flagged peer's id -> when its aggro ends (gold until then)
   const bars = new Map();   // PVP-BAR: a flagged peer's id -> its bar `{ h, s }`, per cent
@@ -39,6 +41,14 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
   const foes = new Map();   // PVP-CONE: a peer I struck or was struck by -> when
   const reds = new Set();   // PVP-VILLAIN: the flagged peers the referee says are villains
   let villainy = /** @type {number | null} */ (null);   // my own meter, the referee's word (null: not heard)
+  const names = new Map();   // PVP-HUD: a peer's id -> the name my name layer last showed (a stranger's none)
+  let hitLines = /** @type {string[]} */ ([]), wasLock = false, hud = /** @type {any} */ (null);
+  const nameOf = (id) => names.get(id) ?? null;
+  const noteName = (id, n) => {
+    if (!n || n === WILD_TEXT.stranger) { names.delete(id); return; }
+    names.set(id, n);
+    if (names.size > 64) names.delete(names.keys().next().value);
+  };
   const me = () => online()?.id ?? null;
   /** PVP-FLAG-ZONE (the owner: "or i can flag anywerte"): the flag is the zone's alone - Cyrodiil, the open sea, their halls. */
   const here = () => !!online()?.wildOk && !!zone();
@@ -54,13 +64,20 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
       filter: kind ? '' : 'grayscale(1) brightness(0.6)', boxShadow: kind === 'gold' ? `0 0 0 3px ${SKULL_EDGE.gold}55` : '' });
     button.title = on ? t('pvp.flag.onTitle', 'PvP on (Caps Lock)') : t('pvp.flag.offTitle', 'PvP off (Caps Lock)');
     button.setAttribute('aria-label', button.title);
+    hud?.draw({ kind, left: pvpAggroLeft(fightAt, now()), shown: here(), hits: hitLines });
+  };
+  /** PVP-HUD: the lock's end said once, and the panel's lines cleared with it. */
+  const beat = () => {
+    const lock = pvpAggroLeft(fightAt, now()) > 0;
+    if (wasLock && !lock) { hitLines = []; sayLock(pvpLockOverText()); }
+    wasLock = lock;
   };
   const set = (v) => { on = v; online()?.setWildFlag?.(v); paint(); };
   /** Caps Lock or the button: up at once from level 30, down at once outside the lock. */
   const toggle = () => {
     if (!on && !zone()) return false;   // PVP-FLAG-ZONE: up only in the zone
     const why = pvpFlagRefusal({ on: !on, level: level(), fightAt, now: now(), red: isVillain(villainy) });
-    if (why) { say(why); return false; }
+    if (why) { (on && pvpAggroLeft(fightAt, now()) > 0 ? sayLock : say)(why); return false; }
     set(!on);
     say(on ? t('pvp.flag.on', 'PvP is on. Flagged players can attack you.') : t('pvp.flag.off', 'PvP is off.'));
     return true;
@@ -81,8 +98,14 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     }
     if (g?.k === 'vil') { villainy = g.n; paint(); return true; }   // PVP-VILLAIN: my meter, for the sheet
     if (g?.k === 'bar') { bars.set(g.id, { h: g.h, s: g.s ?? 0 }); return true; }   // PVP-BAR: the referee's word on a flagged fighter's bar
+    if (g?.k === 'fell' && g.by === me() && g.id !== me()) { sayLock(pvpSlewText(nameOf(g.id))); return false; }   // PVP-HUD: my kill, named
     if (g?.k !== 'hp') return false;
-    if (g.by === me() || g.to === me()) { fightAt = now(); foes.set(g.by === me() ? g.to : g.by, fightAt); }
+    if (g.by === me() || g.to === me()) {
+      fightAt = now(); wasLock = true;
+      foes.set(g.by === me() ? g.to : g.by, fightAt);
+      hitLines = pvpHitsAdd(hitLines, pvpHitLine(g, me(), nameOf));   // PVP-HUD: the last hits panel
+      paint();
+    }
     for (const [id, hp, max] of g.h ?? []) if (max > 0) bars.set(id, { h: hp > 0 ? Math.max(1, Math.min(100, Math.round((100 * hp) / max))) : 0, s: bars.get(id)?.s ?? 0 });   // PVP-BAR: a blow's own count, at once
     return false;
   };
@@ -99,14 +122,20 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     Object.assign(button.style, { position: 'fixed', top: '50%', right: '8px', transform: 'translateY(-50%)', zIndex: '40', width: '36px', height: '36px', backgroundColor: '#2a241c', backgroundSize: '24px', backgroundRepeat: 'no-repeat', backgroundPosition: 'center', imageRendering: 'pixelated', border: '2px solid', cursor: 'pointer', display: 'none' });
     button.addEventListener('click', () => toggle());
     doc.body?.appendChild(button);
+    if (doc.body && typeof doc.createElementNS === 'function') hud = createPvpHud(doc, () => { beat(); paint(); });   // PVP-HUD: the ring, the banner, the last hits
     paint();
-    setInterval(() => { leave(); if (button) { button.style.display = here() ? 'block' : 'none'; paint(); } }, 1000);   // where the zone's law reaches; the aggro's end
+    setInterval(() => { beat(); leave(); if (button) { button.style.display = here() ? 'block' : 'none'; paint(); } }, 1000);   // where the zone's law reaches; the aggro's end
   }
   const api = {
     on: () => on,
     toggle,
     leave,
     heard,
+    beat,
+    sayLock,
+    /** PVP-HUD: the last hits panel's lines, newest first. */
+    hits: () => hitLines,
+    nameOf,
     /** Wrap the host's `wref` door: the flag's words taken here, every word handed on. */
     wrap: (inner) => (g, room) => { if (!heard(g)) inner(g, room); },
     /** May I strike a player: my own flag up (theirs never shields them). */
@@ -125,11 +154,12 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     mask: (inner, social = null) => (p) => {
       const q = inner ? inner(p) : p;
       if (!p) return q;   // AUDIT FB1029f R4: no board's point rides the names' pass now
-      const k = skullOf(p.id), near = foeOf(p.id) || !!social?.isPartyPeer?.(p.id);
+      const k = skullOf(p.id), party = !!social?.isPartyPeer?.(p.id), near = foeOf(p.id) || party;
+      const shown = k && (!q || now() - (veiled.get(p.id) ?? -Infinity) < VEIL_FRAME_MS) ? nameless(q ?? p) : q;
+      noteName(p.id, shown?.name);   // PVP-HUD: the last hits name whom the layer names
       if (!k) return q && near ? { ...q, near } : q;
       const bar = bars.get(p.id);
-      const shown = !q || now() - (veiled.get(p.id) ?? -Infinity) < VEIL_FRAME_MS ? nameless(q ?? p) : q;
-      return { ...shown, skull: k, ...(bar ? { bar } : {}), ...(near ? { near } : {}) };
+      return { ...shown, ...(party ? {} : { skull: k }), ...(bar ? { bar } : {}), ...(near ? { near } : {}) };   // PVP-HUD: my party, green with its bar, no skull
     },
     /** PVP-BAR (the owner: "They always have some body just fiant"): a concealed peer in a PvP fight (its skull gold) is
      *  drawn faint, never nowhere - `look` is combatVisuals.js peerDraw's answer for its pose's `cv`. */
@@ -150,5 +180,9 @@ export const pvpFlagOn = () => _current?.on() ?? true;   // no host (a headless 
 export const pvpSkullOf = (id) => _current?.skullOf(id) ?? null;
 /** PVP-CONE: is a peer my foe of the last minute, for a door outside the host. */
 export const pvpFoeOf = (id) => !!_current?.foeOf(id);
+/** PVP-HUD: the combat lock left on me, ms (0 none, or no host), for a door outside the host (scenes/portalStoneHost.js). */
+export const pvpFightLeft = () => _current?.fightLeft() ?? 0;
+/** PVP-HUD: a combat timer's line, mid-screen 3 s and in the talk, for a door outside the host. */
+export const pvpLockSay = (line) => { _current?.sayLock(line); };
 /** PVP-VILLAIN: my villain meter for the character sheet (ui/pvpVillainBar.js), or null - none heard. */
 export const pvpVillainy = () => _current?.villainy() ?? null;
