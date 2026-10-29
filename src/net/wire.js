@@ -1704,7 +1704,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world290';   // world290: DRAGON-HARDER (2026-10-29, the owner: "The dragon is way too easy to kill"; world289 on its branch, renumbered past HAND-WRAPS' world289 at the merge of main; bible/11-Multiplayer/Dwarven-Dragon.md DRAGON-HARDER; NOT YET DEPLOYED): net/dragon/dragonBrain.js DRAGON_TTK_S 200 to 720 - a fighter's share of the dragon's health, twelve minutes at reference damage; the pose law and the dragon's frame unchanged, so DRAGON_RIDE_RELAY_MIN stays 288 (HAND-WRAPS' world289 keeps rd 3 too). Deploy the relay before clients.
+export const RELAY_VERSION = 'world290';   // world290: DRAGON-HARDER (2026-10-29, the owner: "The dragon is way too easy to kill"; world289 on its branch, renumbered past HAND-WRAPS' world289 at the merge of main; bible/11-Multiplayer/Dwarven-Dragon.md DRAGON-HARDER; NOT YET DEPLOYED): net/dragon/dragonBrain.js DRAGON_TTK_S 200 to 720 - a fighter's share of the dragon's health, twelve minutes at reference damage; and DRAGON-HIDDEN (the owner: "people are able to predict the dragon spawn by looking at source code") - every dragon roll a watch's seed, HMAC of GATE_SIGNING_KEY (net/dragon/dragonSeed.js JOINS THE BUNDLE), told on `ask` once its landing is past, so DRAGON_RELAY_MIN is 290; the pose law unchanged, so DRAGON_RIDE_RELAY_MIN stays 288 (HAND-WRAPS' world289 keeps rd 3 too). Deploy the relay before clients.
 // world289: HAND-WRAPS (world286 on its branch, renumbered past FB1029 GROUND's world286, FRONTS' world287 and DRAGON's world288 at the merge of main; 2026-10-29, AUDIT HAND-WRAPS B2; bible/05-Combat/Hand-Wraps.md; NOT YET DEPLOYED): LOOT_HELLO_LAW 1 to 2 - a build that reads the Hand Wraps (template 563); while `lootDoor` is on, a loot room refuses an older one, which would drop a pair from a shared container. Deploy the relay first, then the site.
 // world288: DRAGON (2026-10-29, bible/11-Multiplayer/Dwarven-Dragon.md; NOT YET DEPLOYED; world281, world283, world284, world285, world286 then world287 on its branch, renumbered past the PvP rework's world281 and world282, PVP-SAFE-HIT's world283, AUDIT TAMRIEL-WIDE's world284, CAPE-TOGGLE's world285, FB1029 GROUND's world286 and FRONTS' world287 at the merges of main): the pose's `rd` keeps 3, a rider on the Dwarven Dragon (POSE_RIDE.Dragon, DRAGON_RIDE_RELAY_MIN), and the Dwarven Dragon's fight (server/src/dragonFights.js, its cell's words and its z1 receipts). Deploy the relay first.
 // world287: FRONTS (world286 on its branch, renumbered past FB1029 GROUND's world286 at the merge of main; 2026-10-29, the owner: "events are way overdone with their spawning"; bible/03-World/World-Wide.md FRONTS; NOT YET DEPLOYED): net/frontLaw.js JOINS THE BUNDLE - past the Bay two provinces stir a game day, and only they open a gate (gateLaw.js isGateDay), land a star (starfallLaw.js starInWindow), roll raid slots (raid/raidLaw.js raidDaySlots) or raise a Hollow, at most two of those standing (superDungeon/sdLaw.js sdDue, sdRise; the hub's _sdHeldPast). AUDIT FRONTS (re-hashed in place, undeployed): the hub beats the provinces that waited longest first (sdBeatOrder), arms a turn that ended mid-census, and its Hollow cards name the next's turn and a free place (sdRiseNotBefore). The Bay's lane unchanged. The site may deploy first: it sends nothing world287 alone reads (bible/03-World/World-Wide.md FRONTS, the deploy).
@@ -6481,19 +6481,19 @@ function serpentOutOf(m) {
 // (2026-10-29, bible/11-Multiplayer/Dwarven-Dragon.md sections 4-8.) ONE FRAME TYPE, `dragon`, with a kind, to the CELL the
 // dragon's site stands in (the serpent's law): the client says `in` (the watch, the site's native point, the brain's law,
 // its level) and `hit` (a blow's damage and kind); the cell says the rest. Every fight word names its site (`sx`/`sz`) so a
-// client folds its own dragon's alone. Every time on these frames is the RELAY's clock.
+// client folds its own dragon's alone. Every time on these frames is the RELAY's clock. DRAGON-HIDDEN: `ask` (a watch) to the
+// client's own cell, answered `omen` (the watch's seed - net/dragon/dragonSeed.js - once its landing is past).
 /** What a client may say to the dragon's cell. */
-export const DRAGON_KINDS = Object.freeze(['in', 'hit']);
+export const DRAGON_KINDS = Object.freeze(['in', 'hit', 'ask']);
 /** What the cell (or the hub) says back: the whole state, its plan, a blow begun, its health, a phase, a mode (air or
  *  ground), the kill, its leaving, a refusal, a receipt. */
-export const DRAGON_OUT_KINDS = Object.freeze(['st', 'mv', 'atk', 'hp', 'ph', 'md', 'fell', 'gone', 'no', 'rcpt', 'bd']);   // `bd`: the relay's count of my body felled me (net/bossBody.js)
+export const DRAGON_OUT_KINDS = Object.freeze(['st', 'mv', 'atk', 'hp', 'ph', 'md', 'fell', 'gone', 'no', 'rcpt', 'bd', 'omen']);   // `bd`: the relay's count of my body felled me (net/bossBody.js); `omen`: DRAGON-HIDDEN
 /** The dragon frames' own bucket: its blow rate (net/dragon/dragonBrain.js DRAGON_HIT_HZ_MAX, 4), the `in`, slack. */
 export const DRAGON_HZ_MAX = 8;
 export const dragonGate = (bucket, nowMs) => tokenGate(bucket, nowMs, DRAGON_HZ_MAX);
 /** The first relay that keeps a dragon's fight; an older one closes the socket on the frame, so a client says none to it.
- *  The ride's own number: the ride and the fight landed in one relay (AUDIT DRAGON: a copy stood at 281 when a merge
- *  moved the ride's to 284, and opened the frame to three relays that close on it). */
-export const DRAGON_RELAY_MIN = DRAGON_RIDE_RELAY_MIN;
+ *  DRAGON-HIDDEN: the first that answers `ask`, past the ride's (the fight's rolls are the relay's secret since). */
+export const DRAGON_RELAY_MIN = 290;
 export const relaySupportsDragon = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= DRAGON_RELAY_MIN; };
 /** The door between a dragon's cell and the hub: the kill and its receipts. */
 export const DRAGON_INTERNAL_FELL = '/internal/dragon/fell';
@@ -6526,9 +6526,10 @@ const dgHp = (v) => Number.isSafeInteger(v) && v >= 0 && v <= DRAGON_HP_MAX;
 const dgYaw = (v) => finite(v) && Math.abs(v) <= 4;
 const dgAlt = (v) => finite(v) && v >= -10 && v <= 1000;
 
-/** A client's dragon word, projected: `{k:'in', w, bv, lv, sx, sz}` or `{k:'hit', d, r}` - or null. */
+/** A client's dragon word, projected: `{k:'in', w, bv, lv, sx, sz}`, `{k:'hit', d, r}` or `{k:'ask', w}` - or null. */
 export function validDragonIn(m) {
   if (!m || typeof m !== 'object' || !DRAGON_KINDS.includes(m.k)) return null;
+  if (m.k === 'ask') return Number.isSafeInteger(m.w) && m.w >= 0 ? { k: 'ask', w: m.w } : null;   // DRAGON-HIDDEN: a watch's omen
   if (m.k === 'in') {
     if (!Number.isSafeInteger(m.w) || m.w < 0 || !intIn(m.bv, 0, 999) || !intIn(m.lv, 1, DRAGON_LV_WIRE_MAX)) return null;
     if (!finite(m.sx) || !finite(m.sz) || Math.abs(m.sx) > POSE_BOUND || Math.abs(m.sz) > POSE_BOUND) return null;
@@ -6578,6 +6579,7 @@ export function validDragonOut(m) {
   if (m.k === 'no') return DRAGON_NO_WORDS.includes(m.m) ? { k: 'no', m: m.m } : null;
   if (m.k === 'bd') return { k: 'bd' };   // no fields - the fall is mine, the socket's own
   if (m.k === 'rcpt') return typeof m.r === 'string' && m.r.length <= DRAGON_RECEIPT_WIRE_MAX && DRAGON_RECEIPT_RE.test(m.r) ? { k: 'rcpt', r: m.r } : null;
+  if (m.k === 'omen') return Number.isSafeInteger(m.w) && m.w >= 0 && (m.s === null || (Number.isSafeInteger(m.s) && m.s >= 0 && m.s <= 0xffffffff)) ? { k: 'omen', w: m.w, s: m.s } : null;   // DRAGON-HIDDEN: null - no dragon this relay
   const site = dgSite(m);
   if (!site || !Number.isSafeInteger(m.w) || m.w < 0) return null;
   const w = dragonOutOf(m);

@@ -47,11 +47,12 @@
   {
     "name": "DRAGON7-the-sky-drawn-brass",
     "file": "src/scenes/dragonHost.js",
-    "old": "draw(act, pos, p.yw, mine ? s.b : dragonLookOf(d.w), glint, t);",
+    "old": "draw(act, pos, p.yw, mine ? s.b : dragonLookOf(d), glint, t);",
     "new": "draw(act, pos, p.yw, mine ? s.b : 0, glint, t);",
     "tests": [
       "test/net/dragon/dragon7_aetherbright.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed."
   },
   {
     "name": "DRAGON7-the-batch-kept-across-a-look",

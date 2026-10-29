@@ -17,7 +17,9 @@ import { createDragonHost } from '../../../src/scenes/dragonHost.js';
 import { createDragonLink } from '../../../src/net/dragon/dragonLink.js';
 import { createDragonSaddle } from '../../../src/player/dragonSaddle.js';
 import { pixelCentreNative } from '../../../src/systems/dragon/dragonSite.js';
-import { isDragonWatch, dragonTimes, dragonLookOf } from '../../../src/net/dragon/dragonLaw.js';
+import { isDragonOmen, dragonTimes, dragonLookOf } from '../../../src/net/dragon/dragonLaw.js';
+/** DRAGON-HIDDEN: a watch's omen under the tests' seed, as its cell would tell it. */
+const om = (w, s = 0x5eed1234) => ({ w, s });
 import { orbitLeg } from '../../../src/net/dragon/dragonBody.js';
 import { validDragonOut } from '../../../src/net/wire.js';
 import { RemotePlayers } from '../../../src/net/remotePlayers.js';
@@ -87,17 +89,18 @@ function screen(W, t0, me, o = {}) {
   const S = { t: t0, me };
   const link = createDragonLink({ now: () => S.t, site: () => S.host.site(), say: () => {} });
   S.host = createDragonHost({
-    now: () => S.t, link, sites: { of: (w) => (w === W ? site : null) }, online: { ready: () => true, send: () => true },
+    now: () => S.t, link, sites: { of: (o) => (o.w === W ? site : null) }, online: { ready: () => true, send: () => true },
     local: (nx, nz) => [nx / M, nz / M], native: (x, z) => [x * M, z * M], ground: () => 0,
     feet: () => [site.sx / M + S.me[0], 0, site.sz / M + S.me[1]], eye: () => [site.sx / M + S.me[0], 1.6, site.sz / M + S.me[1]], level: () => 20,
     player: () => ({ health: 100, maxHealth: 200, level: 20 }), hurt: () => {}, save: () => 50, mid: () => {}, say: () => {}, audio: { play3d: () => {} }, ...o,
   });
   S.st = (x = {}) => link.word(validDragonOut({ t: 'dragon', w: W, sx: site.sx, sz: site.sz, k: 'st', b: 0, ph: 1, h: 1000, m: 1000, md: 0, mu: 0, sh: 0, legs: [orbitLeg(dragonTimes(W).landAt, 0, 0, 55, 0, 1, 30)], blows: [], n: 1, lv: dragonTimes(W).leaveAt, op: 0, fell: null, gone: null, ...x }));
   S.run = (ms, step = 50) => { for (let k = 0; k < ms; k += step) { S.host.frame(); S.t += step; } };
+  S.host.omen(om(W));   // DRAGON-HIDDEN: its cell's answer to the `ask`
   S.host.frame();
   return S;
 }
-const watch = (look) => { let w = 500_000; while (!(isDragonWatch(w) && dragonLookOf(w) === look)) w++; return w; };
+const watch = (look) => { let w = 500_000; while (!(isDragonOmen(om(w)) && dragonLookOf(om(w)) === look)) w++; return w; };
 const draws = () => {
   const made = [], gone = [];
   const tex = { getFrameCount: () => 8, getSize: () => ({ width: 471, height: 262 }), getScale: () => ({ width: 0, height: 0 }) };

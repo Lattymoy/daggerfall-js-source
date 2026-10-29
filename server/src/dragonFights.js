@@ -6,7 +6,8 @@
 // few hooks that call in here; the state rides the room under `_dg`.
 import { DRAGON_SEAM } from '../../src/net/bossSeam.js';
 import * as dragonBrain from '../../src/net/dragon/dragonBrain.js';
-import { dragonAt, dragonHolds, dragonAdmits, dragonFightId, dragonLookOf, DRAGON_SITES_MAX, DRAGON_NATIVE_PER_M, DRAGON_BRAIN_MIN, DRAGON_REMAINS_MS } from '../../src/net/dragon/dragonLaw.js';
+import { dragonHolds, dragonAdmits, dragonFightId, dragonLookOf, dragonTimes, dragonSeedTold, dragonWatchesAbout, DRAGON_SITES_MAX, DRAGON_NATIVE_PER_M, DRAGON_BRAIN_MIN, DRAGON_REMAINS_MS } from '../../src/net/dragon/dragonLaw.js';
+import { dragonWatchKeyOf, dragonWatchSeed } from '../../src/net/dragon/dragonSeed.js';
 import { roostLeg } from '../../src/net/dragon/dragonBody.js';
 import { mintDragonReceipt, readDragonReceipt } from '../../src/net/dragon/dragonReceipt.js';
 import { bodyCensus } from '../../src/net/bossBody.js';
@@ -24,7 +25,20 @@ const storeKey = (id) => `${DRAGON_FIGHT_KEY}:${id}`;
 const say = (room, ws, w) => room._send(ws, JSON.stringify({ t: 'dragon', ...w }));
 
 /** The room's dragon state, made on first use. @param {any} room */
-const dg = (room) => (room._dg ??= { fights: undefined, savedAt: new Map(), falling: new Map(), armedTo: 0, restAt: 0, noRcpt: new Bounded(HUB_KEEP_MAX) });   // AUDIT DRAGON: the serpent's bound (SCALE5a), never a set emptied whole
+const dg = (room) => (room._dg ??= { fights: undefined, savedAt: new Map(), falling: new Map(), armedTo: 0, restAt: 0, key: undefined, seeds: new Map(), noRcpt: new Bounded(HUB_KEEP_MAX) });   // AUDIT DRAGON: the serpent's bound (SCALE5a), never a set emptied whole
+
+/** DRAGON-HIDDEN: watch `w`'s omen `{w, s}` - its seed the relay's secret (net/dragon/dragonSeed.js), kept for the watches
+ *  about - or null: no GATE_SIGNING_KEY, no dragon. @param {any} room @param {number} w */
+export async function dragonOmenOf(room, w) {
+  const s = dg(room);
+  if (s.key === undefined) {
+    s.key = await dragonWatchKeyOf(room.env?.GATE_SIGNING_KEY, { subtle: crypto.subtle });
+    if (!s.key) console.warn('[dragon] no GATE_SIGNING_KEY - no dragon comes down here');
+  }
+  if (!s.key) return null;
+  if (!s.seeds.has(w)) { s.seeds.set(w, await dragonWatchSeed(s.key, w, { subtle: crypto.subtle })); if (s.seeds.size > 4) s.seeds.delete(s.seeds.keys().next().value); }
+  return { w, s: s.seeds.get(w) };
+}
 
 /** The fights this cell holds, by id - the instance's while it is awake, else storage's (woken past their checkpoints). */
 export async function dragonFights(room) {
@@ -112,6 +126,7 @@ function roomFor(room, fights, w) {
  * @param {any} room @param {any} ws @param {any} a @param {any} m @param {number} now
  */
 export async function dragonWord(room, ws, a, m, now) {
+  if (m.k === 'ask') { await dragonAsk(room, ws, a, m, now); return; }
   if (a.ly) { if (m.k === 'in') say(room, ws, { k: 'no', m: 'full' }); return; }
   const fights = await dragonFights(room);
   if (m.k === 'in') { await dragonIn(room, ws, a, m, now, fights); return; }
@@ -127,17 +142,27 @@ export async function dragonWord(room, ws, a, m, now) {
   if (!f.fell && !f.gone) await arm(room, now);
 }
 
+/** DRAGON-HIDDEN: an `ask` - watch `w`'s omen, told once a socket a watch, and only for a watch about whose landing is
+ *  past (never one to come); its seed null where this relay holds no secret. */
+async function dragonAsk(room, ws, a, m, now) {
+  if (!dragonWatchesAbout(now).includes(m.w) || !dragonSeedTold(m.w, now)) return;
+  if (a.dga?.includes(m.w)) return;
+  room._setAttach(ws, { ...(room._all().get(ws) ?? a), dga: [m.w, ...(a.dga ?? [])].slice(0, 2) });
+  const o = await dragonOmenOf(room, m.w);
+  say(room, ws, { k: 'omen', w: m.w, s: o ? o.s : null });
+}
+
 /** An `in`: its receipt again to one who has it; refused for an older game, a watch the clock is not about, a site in
  *  another cell, a pose past DRAGON_ADMIT_R, a fourth site; else joined, and the whole state told either way. */
 async function dragonIn(room, ws, a, m, now, fights) {
   const no = (why) => say(room, ws, { k: 'no', m: why });
-  const t = dragonAt(now), id = dragonFightId(m.w, m.sx, m.sz);
+  const o = dragonWatchesAbout(now).includes(m.w) ? await dragonOmenOf(room, m.w) : null, t = dragonTimes(m.w), id = dragonFightId(m.w, m.sx, m.sz);
   let f = fights.get(id) ?? null;
   if (f?.rc?.[a.sub]) say(room, ws, { k: 'rcpt', r: f.rc[a.sub] });
   const was = fightBy(fights, a.sub);
   if (!(m.bv >= DRAGON_BRAIN_MIN)) { if (was) was[1].players[a.sub].stale = true; no('reload'); return; }
   if (was?.[1].players[a.sub]?.stale) delete was[1].players[a.sub].stale;
-  if (m.w !== t.w || !dragonHolds(t.w, now)) { if (f) say(room, ws, { ...DRAGON_SEAM.stateOf(f) }); if (!f?.rc?.[a.sub]) no('gone'); return; }   // a fallen one's remains still lie: its state tells them
+  if (!dragonHolds(o, now)) { if (f) say(room, ws, { ...DRAGON_SEAM.stateOf(f) }); if (!f?.rc?.[a.sub]) no('gone'); return; }   // a fallen one's remains still lie: its state tells them
   if (junkOutsideCover(room, ws, a, cellRoomOfWire(m.sx, m.sz))) return;
   if (!a.pose || a.pose.dd) return;
   const at = frameOf(f ?? { sx: m.sx, sz: m.sz }, a.pose);
@@ -146,11 +171,11 @@ async function dragonIn(room, ws, a, m, now, fights) {
   if (mine && mine[0] !== id && mine[1].w === t.w) { no('full'); return; }
   let born = false;
   if (!f) {
-    if (!dragonAdmits(t.w, now)) { no('gone'); return; }
+    if (!dragonAdmits(o, now)) { no('gone'); return; }
     const free = roomFor(room, fights, t.w);
     if (free === null) { no('full'); return; }
     if (free !== true) await forget(room, fights, free);
-    f = DRAGON_SEAM.new({ w: t.w, b: dragonLookOf(t.w), sx: m.sx, sz: m.sz, now, leaveAt: t.leaveAt, roost: roostLeg(t.w) });
+    f = DRAGON_SEAM.new({ w: t.w, b: dragonLookOf(o), sx: m.sx, sz: m.sz, now, leaveAt: t.leaveAt, roost: roostLeg(o) });
     fights.set(id, f);
     await index(room, fights);
     born = true;
@@ -160,7 +185,7 @@ async function dragonIn(room, ws, a, m, now, fights) {
   for (const [, sock] of room._all()) if (sock.id && sock.sub) present.add(sock.sub);
   const joined = !f.players[a.sub];
   const lv = Number.isSafeInteger(a.cl) && a.cl >= 1 ? Math.min(m.lv, a.cl) : m.lv;
-  const ok = DRAGON_SEAM.join(f, a.sub, a.name ?? '', lv, now, present, { admits: dragonAdmits(t.w, now) });
+  const ok = DRAGON_SEAM.join(f, a.sub, a.name ?? '', lv, now, present, { admits: dragonAdmits(o, now) });
   say(room, ws, { ...DRAGON_SEAM.stateOf(f) });
   if (!ok) { no(f.fell ? 'slain' : Object.keys(f.players).length >= dragonBrain.DRAGON_FIGHTERS_MAX ? 'full' : 'gone'); return; }
   room._trailSeed(ws, a, now);
@@ -288,7 +313,8 @@ async function kinShare(room, body, rc, now) {
     .filter((e) => Array.isArray(e) && typeof e[0] === 'string' && e[0] && !rc.has(e[0]) && Number.isInteger(e[1]));
   if (!kin.length) return;
   const dealers = new Set();
-  for (const [sub, v] of rc) if (readDragonReceipt(v.r)?.x === 'dealt') dealers.add(sub);
+  let look = 0;   // DRAGON-HIDDEN: its look as a dealer's own receipt carries it - the hub rolls no watch
+  for (const [sub, v] of rc) { const c = readDragonReceipt(v.r); if (c?.x === 'dealt') { dealers.add(sub); look = c.b === 1 ? 1 : 0; } }
   if (!dealers.size) return;
   const recs = await room._accts(kin.map((e) => e[0]));
   const parties = await room._partiesOf([...recs.values()].map((r) => r.party).filter((pid) => typeof pid === 'string'));
@@ -297,7 +323,7 @@ async function kinShare(room, body, rc, now) {
     const party = parties.get(recs.get(sub)?.party);
     if (!party?.members?.some((m) => m !== sub && dealers.has(m))) continue;
     try {
-      const r = await mintDragonReceipt({ q: body.w, b: dragonLookOf(body.w), s: sub, c: rand32(), x: 'stood', l: lv }, key, { subtle: crypto.subtle, nowS });
+      const r = await mintDragonReceipt({ q: body.w, b: look, s: sub, c: rand32(), x: 'stood', l: lv }, key, { subtle: crypto.subtle, nowS });
       const c = readDragonReceipt(r);
       if (c) rc.set(sub, { r, e: c.e });
     } catch (e) { console.warn('[dragon] kin receipt refused', e?.message ?? e); }

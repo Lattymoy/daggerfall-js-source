@@ -10,7 +10,9 @@ import { createDragonHost, DRAGON_TARGET, DRAGON_IN_RESEND_MS, DRAGON_IN_RETRY_M
 import { installDwarvenDragon } from '../../src/characters/dwarvenDragon.js';
 import { createDragonLink } from '../../src/net/dragon/dragonLink.js';
 import { pixelCentreNative } from '../../src/systems/dragon/dragonSite.js';
-import { isDragonWatch, dragonTimes, DRAGON_BRAIN_V, DRAGON_REMAINS_MS } from '../../src/net/dragon/dragonLaw.js';
+import { isDragonOmen, dragonTimes, DRAGON_BRAIN_V, DRAGON_REMAINS_MS } from '../../src/net/dragon/dragonLaw.js';
+/** DRAGON-HIDDEN: a watch's omen under the tests' seed, as its cell would tell it. */
+const om = (w, s = 0x5eed1234) => ({ w, s });
 import { orbitLeg, lineLeg, fallLeg, planAt } from '../../src/net/dragon/dragonBody.js';
 import { DRAGON_ADMIT_R, DRAGON_BLOW } from '../../src/net/dragon/dragonBrain.js';
 import { HIT_KINDS } from '../../src/net/gate/gateBrain.js';
@@ -20,7 +22,7 @@ import { hostText } from '../hostText.mjs';
 
 installDwarvenDragon({ fetchBytes: async () => new Uint8Array(0) });   // its row, as the game's boot registers it (scenes/shared.js)
 let W = 500_000;
-while (!isDragonWatch(W)) W++;
+while (!isDragonOmen(om(W))) W++;
 const TT = dragonTimes(W);
 const SITE = { w: W, lane: 0, px: 205, py: 214, ...pixelCentreNative(205, 214), near: 'Here' };
 const CELL = cellRoomOfWire(SITE.sx, SITE.sz);
@@ -31,7 +33,7 @@ function screen(t0, me = [0, -200], o = {}) {
   const link = createDragonLink({ now: () => S.t, site: () => S.host.site(), say: (c) => S.host.refused(c) });
   S.link = link;
   S.host = createDragonHost({
-    now: () => S.t, link, sites: { of: (w) => (w === W ? SITE : null) },
+    now: () => S.t, link, sites: { of: (o) => (o.w === W ? SITE : null) },
     online: { ready: () => S.ready, send: (w, cell) => { S.sent.push({ ...w, cell }); return true; } },
     local: (nx, nz) => [nx / M, nz / M], native: (x, z) => [x * M, z * M],
     ground: () => 0, feet: () => [SITE.sx / M + S.me[0], 0, SITE.sz / M + S.me[1]], eye: () => [SITE.sx / M + S.me[0], 1.6, SITE.sz / M + S.me[1]], level: () => 20,
@@ -43,6 +45,7 @@ function screen(t0, me = [0, -200], o = {}) {
   S.run = (ms, step = 50) => { let r; for (let k = 0; k < ms; k += step) { r = S.host.frame(); S.t += step; } return r; };
   /** As the cell says it: a whole state every five seconds (DRAGON_STATE_SEND_MS). */
   S.heard = (ms, x = {}) => { for (let k = 0; k < ms; k += 5000) { S.st(x); S.run(Math.min(5000, ms - k)); } };
+  S.host.omen(om(W));   // DRAGON-HIDDEN: its cell's answer to the `ask`
   S.host.frame();   // the site found: the link folds its words from here
   return S;
 }
