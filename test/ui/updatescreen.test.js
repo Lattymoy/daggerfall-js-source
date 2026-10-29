@@ -112,5 +112,5 @@ test('UPDATE-FORCE: Reload Now goes at once; a busy that throws counts as not bu
 
 test('UPDATE-FORCE: the host starts it where the build poll finds a new build, with the online save and the death and duel hold', () => {
   const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(w, /buildUpdateSeen\(tag, BUILD_TAG\) === 'changed'\) startForcedUpdate\(\{ notice: chatNotice, save: onlineCheckpoint, busy: \(\) => !!duelMgr\?\.duel \|\| townTalk\.overlay instanceof DeathScreen \|\| !!modes\?\.deathUp\?\.\(\) \|\| successionOpen\(\) \}\)/);
+  assert.match(w, /buildUpdateSeen\(tag, BUILD_TAG\) === 'changed' && startForcedUpdate\(\{ notice: chatNotice, save: onlineCheckpoint, busy: \(\) => !!duelMgr\?\.duel \|\| townTalk\.overlay instanceof DeathScreen \|\| !!modes\?\.deathUp\?\.\(\) \|\| successionOpen\(\) \}\)/);
 });

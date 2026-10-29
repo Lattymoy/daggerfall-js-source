@@ -243,7 +243,7 @@ test('SRV-N: the host wires BOTH arms and puts a notice on EVERY tab - the prese
   assert.match(w, /online\.onRelay\s*=\s*onRelayVersion/, 'and so does the presence session, which is usually first back after a deploy');
   assert.match(w, /relayVersionSeen\(v\)\s*===\s*'changed'/, 'ONE detector behind both arms, or two sockets say it twice');
   assert.match(w, /chatNotice\(relayRestartText\(\)\)/);   // L10N4 (PIN MOVED): RELAY_RESTART_TEXT through its reader, in the player's language
-  assert.match(w, /=== 'changed'\) startForcedUpdate\(\{ notice: chatNotice, save: onlineCheckpoint, busy: /);   // UPDATE-FORCE (PIN MOVED): the warning, the save and the reload
+  assert.match(w, /=== 'changed' && startForcedUpdate\(\{ notice: chatNotice, save: onlineCheckpoint, busy: /);   // UPDATE-FORCE (PIN MOVED): the warning, the save and the reload
   // A NOTICE IS NOT A ROOM'S EVENT. It is kept on every one of the log's
   // tabs rather than pushed to the active one, so a later row in CHAT_TABS
   // gets it for free and a player reading one tab is never guessing.

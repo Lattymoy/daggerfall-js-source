@@ -26973,11 +26973,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // latch - and the fetch is cancelled on a deadline now besides.
     if (now - _buildPolledAt < BUILD_POLL_MS) return;
     _buildPolledAt = now;
-    const href = globalThis.location?.href ?? '';
-    fetchLiveBuildTag(href).then((tag) => {
-      // UPDATE-FORCE: the minute's warning, then the screen - held while a death screen or a duel is up
-      if (buildUpdateSeen(tag, BUILD_TAG) === 'changed') startForcedUpdate({ notice: chatNotice, save: onlineCheckpoint, busy: () => !!duelMgr?.duel || townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() || successionOpen() });
-    }, () => {});   // `fetchLiveBuildTag` swallows its own throws; this is the belt for a rejection it cannot see
+    // UPDATE-FORCE: the minute's warning, then the screen - held while a death screen or a duel is up
+    fetchLiveBuildTag(globalThis.location?.href ?? '').then((tag) => buildUpdateSeen(tag, BUILD_TAG) === 'changed' && startForcedUpdate({ notice: chatNotice, save: onlineCheckpoint, busy: () => !!duelMgr?.duel || townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() || successionOpen() }), () => {});   // `fetchLiveBuildTag` swallows its own throws; this is the belt for a rejection it cannot see
   };
   // ═══ CHAT-CHAN — THE FOUR CHANNELS, AT THE HOST ═══════════════════
   //
