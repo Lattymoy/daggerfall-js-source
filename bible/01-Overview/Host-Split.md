@@ -825,3 +825,13 @@ mutant re-aimed under it). The tool re-aimed ten mutant records over the moved l
 `portships.json`'s); the pins that read the moved lines off world.js's own text read the host whole (`hostText`:
 `shiplife.test.js`, `sealanes.test.js`, `auditholdings.test.js`, `etherplaces.test.js` - PIN MOVED, PORT-SHIPS).
 
+## NOTICE-PANEL - the boards out of the hosts, the town panel a module (2026-10-29)
+
+The owner's board change (`01-Overview/bugs/Field-Bugs-2026-10-29b.md` NOTICE-PANEL) took the town boards out of every
+host. `bootWorld` lost the board split's memo, the board's town, the count over the boards, the town map's board marks
+and the ray's board targets; the town panel went in as `scenes/townPanelHost.js` `createTownPanelHost`, a module the host
+wires (fishHost.js's shape) - `settlementHere`, the construction and one frame call. `createWorldModes` lost the board's
+press, its ray family and its plaque; `bootExterior` its boards. `bootWorld` 35,315 -> 35,247, `createWorldModes` 11,018
+-> 10,984 and `bootExterior` 5,074 -> 5,068 logical lines, each ceiling lowered (`test/scenes/hostceiling.test.js`, its
+mutant re-aimed under it).
+

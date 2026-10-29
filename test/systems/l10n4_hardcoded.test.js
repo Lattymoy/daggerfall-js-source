@@ -333,7 +333,7 @@ const HARDCODED = {
   'src/scenes/windfallHost.js': 5,
   'src/scenes/vendorHost.js': 7,   // VENDOR-LOST: the home traders' words, moved verbatim out of world.js
   'src/scenes/world.js': 315,   // ZONE-HOMES: -1, the zone's house refusal through zoneSafe.js's t(). SHARED-HEALTH: -2, the battles' readouts print no 'Your vitality' line (my own health is my bar). THE SIXTH MERGE OF MAIN INTO #1184: MENTOR2 (main's): -1, mentoring's end through mentorText.js's t(). THE FOURTH MERGE OF MAIN INTO #1184: 319 measured on the merged host (RPT1026-MARKET's Collect through t() on main). BAY-LEFT-SEA: -4, the market's pieces' words moved verbatim to scenes/marketPiecesHost.js (HOST-SPLIT). TESA x MAIN (the merge of main into TESA, AUDIT RELEASE R3): 325 measured - TESA's -6 (the quick save's words moved whole to scenes/worldQuickSave.js) on main's 331. VENDOR-LOST: -7, the home traders' words moved verbatim to vendorHost.js; QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
-  'src/scenes/worldModes.js': 82,   // the fourth merge of main: 82 measured (main's own)
+  'src/scenes/worldModes.js': 80,   // NOTICE-PANEL: 82 -> 80, the board's two plaque words out with its press. The fourth merge of main: 82 measured (main's own)
   'src/systems/aetheric.js': 168,   // SEA-SET: +17, the Eltheric Tidemail's nine names and lore, as the Weave's - the records' own data, minted onto the item; WITCH1: the Wyrd's Raiment's nine pieces, each its name and its affixes' names (+18) - an item's canonical name, as every Aetheric set's; STAR7: +18, the Starspun Weave's nine names and lore - the records' own data, minted onto the item, never read at load
   'src/systems/alchemyItems.js': 3,
   'src/systems/allyCast.js': 5,
@@ -586,7 +586,7 @@ const HARDCODED = {
   'src/systems/windfall.js': 23,
   'src/systems/windfallEffects.js': 7,
   'src/systems/worldTick.js': 4,
-  'src/systems/worldTooltips.js': 13,
+  'src/systems/worldTooltips.js': 12,   // NOTICE-PANEL: 13 -> 12, BULLETIN_BOARD_TEXT out with the board's plaque
   'src/tools/abyssLab.js': 2,
   'src/tools/cardsLab.js': 5,
   'src/tools/depthCopyCheck.js': 8,
@@ -777,7 +777,7 @@ const HARDCODED = {
   'src/ui/temperatureCard.js': 8,
   'src/ui/textFont.js': 4,
   'src/ui/touch/touchButtons.js': 10,
-  'src/ui/town/townMapMarks.js': 2,
+  'src/ui/town/townMapMarks.js': 1,   // NOTICE-PANEL: 2 -> 1, the board's mark and its label out
   'src/ui/travel/travelMapWindow.js': 14,
   'src/ui/travel/travelPopUp.js': 5,
   'src/ui/travel/travelViewHud.js': 22,

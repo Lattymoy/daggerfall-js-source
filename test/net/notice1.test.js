@@ -296,7 +296,6 @@ import { createNoticeBook, parseNoteCommand, mintNoticeRid, NOTICE_SEEN_KEY, NOT
 import { noticeCards, timeLeftText, snippetOf, NOTICE_SEALS } from '../../src/ui/noticeWindow.js';
 import { REFUSALS, accountRefusalText } from '../../src/net/accountClient.js';
 import { HOST_COMMANDS } from '../../src/net/chatCommands.js';
-import { RemotePlayers } from '../../src/net/remotePlayers.js';
 import { ACCEPTED } from '../../src/net/legalLaw.js';   // MERGE 2: TERMS1 - a request that makes an account carries the versions ticked
 import { r2, seatRealm } from '../realmSeat.mjs';   // MERGE 2: a founding is a realm character's (AUDIT REALM2 S2)
 import { GUILD_FOUND_GOLD } from '../../src/net/guild/guildLaw.js';
@@ -409,17 +408,16 @@ test('NOTICE1 the cards hang in their order - the rumour first, the bounty board
   assert.equal(snippetOf('a\n\nb\nc\nd\ne\nf'), 'a\nb\nc\nd');
 });
 
-test('NOTICE1 the wiring: a rumour board carries its town to the press online; the press opens the Notice Board only once the service said it is open, else DFU\'s box and a read; offline the board carries nothing and is DFU\'s byte for byte; one door, one mount', () => {
+test('NOTICE1 the wiring (NOTICE-PANEL, PIN MOVED: the town panel is the board\'s press now): the panel\'s Notice Board carries its town to the press; the press opens the Notice Board only once the service said it is open, else DFU\'s box and a read; offline it is DFU\'s byte for byte; one door, one mount', () => {
   const w = src('src/scenes/world.js');
-  const m = src('src/scenes/worldModes.js');
-  assert.match(w, /\.\.\.\(!bountyAt\.has\(i\) && noticeTown \? \{ notice: noticeTown, named: noticeBook\.open === true \} : \{\}\),/, 'every board that is not a bounty board');   // ONE-BOARD REVERTED (PIN MOVED)
-  assert.match(w, /const noticeTown = noticeBook && p\.location \? noticeTownOf\(p\.px, p\.py, bountyAt\.size > 0\) : null;/, 'online alone (the book is online\'s)');
+  const h = src('src/scenes/townPanelHost.js');
+  assert.match(w, /openNotice: \(town, rumour\) => openNoticeBoard\(town, rumour\),/, 'the panel\'s press');
   assert.match(w, /const noticeBook = params\.has\('online'\)\s*\n\s*\? createNoticeBook\(/);
   assert.match(w, /if \(noticeBook\.open !== true\) \{ noticeBook\.read\(town\.mapId\); return false; \}/, 'not yet open: DFU\'s box, and the read that settles it');
-  const arm = m.slice(m.indexOf('function activateBulletinBoard('), m.indexOf('\n  }\n', m.indexOf('function activateBulletinBoard(')));
-  const bountyAt = arm.indexOf('openBountyBoard?.('), noticeAt = arm.indexOf('openNoticeBoard?.('), boxAt = arm.indexOf('townTalk?.showOverlay?.(new ChoiceWindow');
-  assert.ok(bountyAt > 0 && noticeAt > bountyAt && boxAt > noticeAt, 'the bounty board first, then the Notice Board, then DFU\'s box');
-  assert.match(arm, /rows\.map\(\(r\) => r\.text\)\.filter\(\(t, i\) => !\(i === 0 && t === locationName\)\)/, 'the rumour pinned first, its name row the window\'s heading');
+  const arm = h.slice(h.indexOf('function openNotice('), h.indexOf('\n  }\n', h.indexOf('function openNotice(')));
+  const noticeAt = arm.indexOf('host.openNotice?.('), boxAt = arm.indexOf('host.showBox?.(new ChoiceWindow');
+  assert.ok(noticeAt > 0 && boxAt > noticeAt, 'the Notice Board first, then DFU\'s box');
+  assert.match(arm, /rows\.map\(\(r\) => r\.text\)\.filter\(\(t, i\) => !\(i === 0 && t === town\.shown\)\)/, 'the rumour pinned first, its name row the window\'s heading');
   // THE ONE CONSTRUCTION SEAM: one constructor, one mount
   const all = ['src/scenes/world.js', 'src/scenes/worldModes.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js'].map(src).join('\n');
   assert.equal((all.match(/createNoticeOverlay\(/g) ?? []).length, 1, 'the board is built in one place');
@@ -430,24 +428,15 @@ test('NOTICE1 the wiring: a rumour board carries its town to the press online; t
   const door = src('src/ui/noticeDoor.js');
   const close = door.slice(door.indexOf('const close = () => {'), door.indexOf('\n  };', door.indexOf('const close = () => {')));
   assert.ok(close.indexOf('host.remove()') < close.indexOf('fired = true') && close.indexOf('fired = true') < close.indexOf('deps.onClose?.()'));
-  assert.doesNotMatch(src('src/scenes/exterior.js'), /noticeBook|openNoticeBoard/, 'the fixed city keeps DFU\'s board');
+  assert.doesNotMatch(src('src/scenes/exterior.js'), /noticeBook|openNoticeBoard/, 'the fixed city runs no Notice Board');
 });
 
-test('NOTICE1 the count over a board rides the names\' pass - asked with the face\'s own pixels, never on a covered frame, and a throw there never costs the names; the name layer wears it as a board, not a person', () => {
-  const rendered = [];
-  const layer = { render: (o) => { rendered.push(o.points.map((p) => p.id)); return 0; } };
-  const self = { namePoints: () => [{ id: 'peer-1', x: 1, y: 1 }] };
-  let asked = null;
-  RemotePlayers.prototype.nameFrame.call(self, { layer, w: 640, h: 480, extra: (o) => { asked = o; return [{ id: 'board:1:0', kind: 'board', name: '3 new', x: 5, y: 5 }]; } });
-  assert.deepEqual(rendered.at(-1), ['peer-1', 'board:1:0']);
-  assert.deepEqual([asked.w, asked.h], [640, 480]);
-  let coveredAsks = 0;
-  RemotePlayers.prototype.nameFrame.call(self, { layer, covered: true, extra: () => { coveredAsks++; return [{ id: 'board:9:9', kind: 'board', name: '1 new', x: 1, y: 1 }]; } });
-  assert.deepEqual([rendered.at(-1), coveredAsks], [[], 0], 'covered: nothing, and the extra never asked');
-  RemotePlayers.prototype.nameFrame.call(self, { layer, extra: () => { throw new Error('a bad label'); } });
-  assert.deepEqual(rendered.at(-1), ['peer-1'], 'a throw costs the label, never the names');
-  assert.match(src('src/ui/nameLayer.js'), /setCls\(tag\.node, p\.kind === 'board' \? 'dfname dfname-board' : 'dfname'\);/);
-  assert.match(src('src/scenes/world.js'), /extra: noticeCountPoints,/);
+test('NOTICE1 the count of new notes (NOTICE-PANEL, PIN MOVED): no count floats over a board, for no board stands - the town panel\'s Notice Board carries it (boardLaw unseenText), and the names\' pass carries no label of the host\'s', () => {
+  assert.match(src('src/scenes/townPanelHost.js'), /unseen: unseenText\(host\.unseen\?\.\(town\.mapId\) \?\? 0\)/);
+  assert.match(src('src/scenes/world.js'), /unseen: \(mapId\) => \(noticeBook\?\.open === true \? noticeBook\.unseen\(mapId\) : 0\),/, 'while the board is open to this account');
+  assert.doesNotMatch(src('src/net/remotePlayers.js'), /\bextra\b.*NOTICE1|typeof extra === 'function'/);
+  assert.doesNotMatch(src('src/ui/nameLayer.js'), /dfname-board/);
+  assert.doesNotMatch(src('src/scenes/world.js'), /noticeCountPoints/);
 });
 
 test('NOTICE1b\'s measure (tools/boardCount.mjs): a hub\'s boards are the models its blocks place that the town sign wears, split as BOUNTY1 splits them - a hub with none is the list NOTICE1b stands boards in', async () => {

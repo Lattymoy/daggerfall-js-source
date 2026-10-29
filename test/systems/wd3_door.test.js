@@ -319,11 +319,10 @@ test('WD3 a guild hall entry naming a guild this game carries none of (AUDIT WD3
 test('WD3 a town\'s buildings wear its LOCATION\'s climate, the terrain its pixel\'s (AUDIT WD3 G5) - DaggerfallLocation\'s ClimateUse.UseLocation; one and the same for every classic town, a world-data file\'s own for the towns it names another for', () => {
   const W = hostText('src/scenes/world.js');
   assert.match(W, /const townClimateBase = dfLocation\?\.climate\?\.climateType \?\? climateBase;/);
-  // PIN MOVED (GOTHWAY-BOARDS): the fourth is Gothway Garden's own bounty boards at its north entrance (`gpuB`), the
-  // blocks' board model stood by the town and dressed in the town's climate as the block's own boards are
-  // PIN MOVED (URBANIZER U3): the fifth is a town past the Bay's fabric (`gpuF`), Daggerfall's fence and crate in it
-  // dressed in the town's climate as its blocks' own models are
-  assert.equal((W.match(/remapSubMeshes\([a-zA-Z]+\.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase\)/g) ?? []).length, 5, 'every town mesh');
+  // PIN MOVED (URBANIZER U3): one is a town past the Bay's fabric (`gpuF`), Daggerfall's fence and crate in it dressed in
+  // the town's climate as its blocks' own models are. PIN MOVED (NOTICE-PANEL): four - Gothway Garden's own boards
+  // (`gpuB`) went with every town's
+  assert.equal((W.match(/remapSubMeshes\([a-zA-Z]+\.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase\)/g) ?? []).length, 4, 'every town mesh');
   assert.match(W, /getWindmillMeshes\(townClimateBase,/);
   assert.match(W, /recordIndex: placed\.recordIndex, climateBase: townClimateBase, season: INTERIOR_SEASON,/, 'and the interiors entered from them');
   assert.doesNotMatch(W, /texRemap, climateArchive, pipeline/);

@@ -567,7 +567,7 @@ account.refusal.titheThisWeek,"Tiondet har redan satts den här veckan. Det kan 
 account.refusal.toSelf,"Du kan inte skicka ett brev till dig själv."
 account.refusal.tooLarge,"Den sparningen är för stor för att säkerhetskopieras."
 account.refusal.tooManyCharacters,"Du har så många onlinerollfigurer som ett konto får ha. Radera en för att få plats."
-account.refusal.tooManyLineages,"Du har så många släkter som ett konto får ha online."
+account.refusal.tooManyLineages,"Du har så många släkter som ett konto får ha online. Glöm en gammal släkt nedan för att göra plats."
 account.refusal.tooManySaves,"Din molnsäkerhetskopia är full. Radera en sparning där för att få plats."
 account.refusal.townUnwalked,"Gå på en stads gator innan du rapporterar den."
 account.refusal.townsClosed,"Städernas ekonomi är stängd tills vidare."

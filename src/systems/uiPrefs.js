@@ -226,6 +226,9 @@ export const PREF_DEFAULTS = Object.freeze({
   // CAPE-TOGGLE (2026-10-29): the inventory's Cape switch - my worn cloak and my aura drawn, for me and everyone
   // (systems/capeShown.js). The pack's own switch, so it is no Features row.
   capeShown: true,
+  // NOTICE-PANEL (2026-10-29): the town panel under the compass folded to the town's name (ui/hud/townPanel.js) - its
+  // heading's own switch, so it is no Features row.
+  townPanelFolded: false,
   // MIDI-OUT1 (2026-10-11, a player asking for MIDI out): the Web MIDI output the music plays on, by its name - '' is
   // none, the game's own synth (systems/midiOut.js). A device, not a taste, so it is no Features row.
   midiOut: '',

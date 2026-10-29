@@ -567,7 +567,7 @@ account.refusal.titheThisWeek,"De Tiende is deze week al vastgesteld. Ze kan na 
 account.refusal.toSelf,"Je kunt geen brief naar jezelf sturen."
 account.refusal.tooLarge,"Dat opgeslagen spel is te groot voor een back-up."
 account.refusal.tooManyCharacters,"Je hebt zoveel online personages als een account mag hebben. Verwijder er een om ruimte te maken."
-account.refusal.tooManyLineages,"Je hebt zoveel families als een account online mag hebben."
+account.refusal.tooManyLineages,"Je hebt zoveel families als een account online mag hebben. Vergeet hieronder een oude familie om ruimte te maken."
 account.refusal.tooManySaves,"Je cloudback-up is vol. Verwijder daar een opgeslagen spel om ruimte te maken."
 account.refusal.townUnwalked,"Loop door de straten van een stad voordat je haar meldt."
 account.refusal.townsClosed,"De economie van de steden is voorlopig gesloten."

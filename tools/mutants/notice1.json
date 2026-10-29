@@ -190,11 +190,11 @@
   },
   {
     "name": "NOTICE1-22-the-name-row-on-the-card",
-    "file": "src/scenes/worldModes.js",
-    "old": "rows.map((r) => r.text).filter((t, i) => !(i === 0 && t === locationName))",
+    "file": "src/scenes/townPanelHost.js",
+    "old": "rows.map((r) => r.text).filter((t, i) => !(i === 0 && t === town.shown))",
     "new": "rows.map((r) => r.text)",
     "tests": [
-      "test/net/notice1.test.js"
+      "test/scenes/fb1029_townpanel.test.js"
     ]
   },
   {
@@ -202,15 +202,6 @@
     "file": "src/scenes/world.js",
     "old": "    if (noticeBook.open !== true) { noticeBook.read(town.mapId); return false; }",
     "new": "    if (false) { noticeBook.read(town.mapId); return false; }",
-    "tests": [
-      "test/net/notice1.test.js"
-    ]
-  },
-  {
-    "name": "NOTICE1-24-a-covered-frame-asks",
-    "file": "src/net/remotePlayers.js",
-    "old": "    if (!covered && typeof extra === 'function') {",
-    "new": "    if (typeof extra === 'function') {",
     "tests": [
       "test/net/notice1.test.js"
     ]

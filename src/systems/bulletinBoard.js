@@ -4,38 +4,17 @@
 // current location's name heads a parchment, with the first rumour
 // the mill considers fit for a SIGN written under it.
 //
-// The pieces this file owns are the two that are pure - the reach
-// gate and the token composition. The rumour itself is the mill's
-// (rumorMill.getNewsOrRumorsForBulletinBoard, TalkManager.cs:1355-
-// 1386, ported since TK-i); the ray that finds the board and the box
-// that shows it are the scene host's.
+// This file owns the token composition, which is pure. The rumour
+// itself is the mill's (rumorMill.getNewsOrRumorsForBulletinBoard,
+// TalkManager.cs:1355-1386, ported since TK-i); the box that shows
+// it is the scene host's.
 //
-// THE REACH: :709-713 gates on MobileNPCActivationDistance - 256
-// classic units, TWICE a door's, the same reach a wandering
-// townsperson answers from - and a board further than that consumes
-// the click with the refusal rather than falling through to whatever
-// stands behind it. The ray that reaches it is the ordinary
-// activation ray (RayDistance), so the gate is a SEPARATE test from
-// the pick, exactly as C# tests hit.distance after the raycast.
+// NOTICE-PANEL (2026-10-29, a departure): no board stands in a town -
+// the town panel's Notice Board is the press (scenes/townPanelHost.js),
+// so DFU's reach gate (:709-713, MobileNPCActivationDistance) has no
+// ray to gate and went with the boards.
 
-import { MOBILE_NPC_ACTIVATION_DISTANCE, TOO_FAR_AWAY_TEXT } from '../player/activate.js';
 import { RSC, TOKEN_TEXT } from '../formats/textRsc.js';
-
-/** PlayerActivate.cs:709-710 - `hit.distance > MobileNPCActivationDistance`. */
-export const BULLETIN_BOARD_ACTIVATION_DISTANCE = MOBILE_NPC_ACTIVATION_DISTANCE;
-
-/** TextManager 'youAreTooFarAway' (Internal_Strings.csv:22), the
- *  mid-screen refusal :712 - the string as the table spells it,
- *  ellipsis and all.
- *
- *  AUDIT 58 (talk lane) CLOSED THE STRAY THIS NOTE RECORDED: the
- *  string is ONE key, so it is now one constant, in PlayerActivate's
- *  own module (player/activate.js). scenes/townTalk.js's three reach
- *  refusals spoke the same key as 'You are too far away.' with a full
- *  stop; they import this same value now, and test/systems/audit23_ui.test.js's
- *  literal pins moved with them. Re-exported here because this file's
- *  own consumers (and its pin) name it. */
-export { TOO_FAR_AWAY_TEXT };
 
 const text = (s) => ({ formatting: TOKEN_TEXT, text: s, x: 0, y: 0 });
 const justifyCenter = () => ({ formatting: RSC.JustifyCenter, text: '', x: 0, y: 0 });

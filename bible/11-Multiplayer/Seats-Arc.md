@@ -221,9 +221,8 @@ DECIDED (Mac, the Holdings plan: "the holder's banners and colours in the city")
 - **The anchors**, derived from the town's own RMB layout (`src/world/rmbLayout.js`), at most 8 a town:
   1. one beside each city gate model (the gate's two posts, the banner on the town side);
   2. two flanking the palace's door (the building record's position and facing);
-  3. one pennant above each Notice Board - a town's rumour boards, every board BOUNTY1 did not take for its bounty
-     board (PROF0 10.1, `systems/bounty/bountyBoard.js` questBoardIndices; AUDIT 28: this said "each bulletin board";
-     ONE-BOARD made it one a town, reverted - Professions-Arc 10.11);
+  3. ~~one pennant above each Notice Board~~ - NOTICE-PANEL (2026-10-29) took it with the boards: no board stands to
+     fly it over (`01-Overview/bugs/Field-Bugs-2026-10-29b.md`);
   4. crown seats: two more at the castle's entrance in the city.
 - **The banner**: the port's own cloth quad, 1 wide by 3 tall (in DFU's scale, a man's height and a half), its
   field the holder's first colour, a border in the second, the device centred; it sways on the weather's wind
@@ -797,8 +796,8 @@ lanterns, staged by each client while a Festival rules at the town - the holder'
 nothing on the relay or the service (`scenes/seatFestival.js`; the buff stays `systems/seatEdicts.js`'s). DECIDED: the
 music is DFU's own tavern playlist (SongManager's TavernSongs - song_square_2, song_tavern, song_folk1-3; FM
 song_fm_sqr_2), the day's song as a tavern picks it, heard in the town's streets by day and night (a building keeps its
-own); the banners are the holder's on the seat banners' cloth, two beside each tavern's door and a pennant over each
-board BOUNTY1 took, at most 6 more; the lanterns are lights in the street's own lantern pool, one before every banner
+own); the banners are the holder's on the seat banners' cloth, two beside each tavern's door (NOTICE-PANEL: the
+boards' pennants went with them), at most 6 more; the lanterns are lights in the street's own lantern pool, one before every banner
 the town flies, lit dusk to dawn with its lamps - a glow, no lantern sprite drawn. The stage follows the Turning while
 the player stays in town: a seats' list read in an earlier seat week is stale, and the book reads it again once the
 week turns (Curfew alike).

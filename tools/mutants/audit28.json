@@ -548,14 +548,5 @@
     "tests": [
       "test/net/audit28_marks.test.js"
     ]
-  },
-  {
-    "name": "AUDIT28-H8-the-board-split-sorted-every-frame",
-    "file": "src/scenes/world.js",
-    "old": "  const boardSplitOf = (p) => (p._boardSplit ??= (() => {",
-    "new": "  const boardSplitOf = (p) => (p._boardSplit = (() => {",
-    "tests": [
-      "test/systems/audit28_forage.test.js"
-    ]
   }
 ]

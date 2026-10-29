@@ -19674,6 +19674,11 @@
   "tr": "89f9c1ceae91",
   "by": "claude-in-session"
  },
+ "menu.hud.piece.town": {
+  "en": "44a78a1f2065",
+  "tr": "b587a7fd99bb",
+  "by": "claude-in-session"
+ },
  "menu.hud.preview.events": {
   "en": "ce6d32fffa51",
   "tr": "9faee7c63e80",
@@ -40022,6 +40027,16 @@
  "town.econ.trend.rising": {
   "en": "26b01983c6f4",
   "tr": "cd8668d70ea0",
+  "by": "claude-in-session"
+ },
+ "town.panel.bounty": {
+  "en": "9892acbb907d",
+  "tr": "8ff5ef887c76",
+  "by": "claude-in-session"
+ },
+ "town.panel.notice": {
+  "en": "69f02605072e",
+  "tr": "dbb83ac94321",
   "by": "claude-in-session"
  },
  "trade.counter.cost.get": {

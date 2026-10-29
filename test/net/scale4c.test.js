@@ -405,7 +405,7 @@ test('SCALE4c D: the world host makes ONE heartbeat on the device\'s session, th
   assert.doesNotMatch(street, /noticeBook\??\.read\(/, 'the street frame no longer reads the board itself');
   // PIN MOVED (AUDIT SCALE B7): once a second by the wall clock - the frame's dt is clamped, and at four frames a second
   // or fewer its "second" outran FRAME_LIVE_MS
-  assert.match(street, /const stampAt = performance\.now\(\);\s*if \(noticeBook && \(!_noticeTown \|\| stampAt - _noticeTown\.at >= 1000\)\) \{ const town = noticeTownHere\(\); _noticeTown = \{ mapId: town \? town\.mapId : null, at: stampAt \}; \}/);
+  assert.match(street, /const stampAt = performance\.now\(\);\s*if \(noticeBook && \(!_noticeTown \|\| stampAt - _noticeTown\.at >= 1000\)\) \{ const town = townPanel\.town\(\); _noticeTown = \{ mapId: town \? town\.mapId : null, at: stampAt \}; \}/);   // PIN MOVED (NOTICE-PANEL): the settlement the town panel is for
   const live = Number(w.match(/const FRAME_LIVE_MS = (\d+);/)?.[1]);
   assert.ok(live > 1000 && live <= 5000, `FRAME_LIVE_MS ${live}: past the stamp's second, and a stilled frame's parts drop out within seconds`);
   assert.match(w, /_mailFrameAt = performance\.now\(\);/);

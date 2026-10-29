@@ -86,7 +86,8 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and PROFILE-SLOTS' THREE (`characterSlots.js`: the profile's Character section - the eight slots round the character's stage, a picker each, a choice tried on and worn; `profileBody.js`: the body that stage draws, Morrowind's or the sprite the world draws; `namePlate.js`: the world's plate over its head, still - `04-Characters/Aura-Armory.md` section 10);
 - and VULKAN-FLIP's GUARD (`vulkanBackdrop.js`: the desktop app on Vulkan drops every window's backdrop blur, which its compositor drew upside down - `01-Overview/Desktop-App.md` VULKAN-FLIP);
 - and SHADER-EASE GFX-BAR's ONE (`gfxPrepBar.js`: the boot menus' graphics bar and Fix stutter panel - `10-UI/Loading-Screens.md`);
-464 modules
+- and NOTICE-PANEL's ONE (`hud/townPanel.js`: the town's panel under the compass, its Notice Board and Bounty Board - `01-Overview/bugs/Field-Bugs-2026-10-29b.md`);
+465 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

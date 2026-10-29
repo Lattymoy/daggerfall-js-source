@@ -57,18 +57,13 @@ test('ONE-BOARD the rumour board nearest the town\'s middle (the siege field\'s 
   assert.equal(noticeBoardIndex(null), -1);
 });
 
-test('ONE-BOARD REVERTED the hosts (2026-10-07, Mac: revert "just that change"): the press, the count over the board, the town the player stands in, the town map and a seat\'s pennant are every board BOUNTY1 did not take again, each named on hover while the board is open (mutants: the bounty boards taken too; the count over one; the town underfoot with every board a bounty board; the pennant over the bounty boards)', () => {
+test('ONE-BOARD REVERTED the hosts (2026-10-07, Mac) - NOTICE-PANEL (2026-10-29, the owner: "remove the notice board prop from all cities", PIN MOVED): no board stands, so no press, no count over one, no mark on the town map and no pennant over one; the town panel is the one Notice Board of every settlement', () => {
   const w = hostText('src/scenes/world.js');
   assert.doesNotMatch(w, /noticeBoardOf|noticeBoardIndex/, 'no one-board law in the host');
-  assert.match(w, /\.\.\.\(!bountyAt\.has\(i\) && noticeTown \? \{ notice: noticeTown, named: noticeBook\.open === true \} : \{\}\),/);
-  const count = w.slice(w.indexOf('const noticeCountPoints = ('), w.indexOf('const partyMarkers = ('));
-  assert.match(count, /const bountyAt = boardSplitOf\(p\);\n\s*if \(bountyAt\.size >= p\.boards\.length\) continue;/);
-  assert.match(count, /if \(bountyAt\.has\(i\)\) return;/, 'the count over every Notice Board in range');
-  assert.match(w, /const bountyAt = boardSplitOf\(p\);\n\s*return bountyAt\.size < p\.boards\.length \? noticeTownOf\(p\.px, p\.py, bountyAt\.size > 0\) : null;/);
-  assert.match(w, /return town \? townBoardRows\(p, bountyAt, noticeBook\.unseen\(town\.mapId\)\) : \[\];/);
-  assert.match(w, /boards: pixelBoards, bounty: pixelBoardSplit,/, 'the pennants: every rumour board\'s');
-  assert.match(src('src/scenes/seatBanners.js'), /boards\.forEach\(\(b, i\) => \{ if \(!bounty\.has\(i\)\) add\(boardPennantAnchor\(b\)\); \}\);/);
-  assert.match(src('src/scenes/worldModes.js'), /const NOTICE_BOARD_TEXT = 'Notice Board';/);
+  assert.doesNotMatch(w, /noticeCountPoints|noticeTownHere|townBoardMarks|townBoardRows|boardTargets/, 'the boards\' press, count, town and marks are gone');
+  assert.match(w, /const townPanel = createTownPanelHost\(\{/, 'the town panel instead');
+  assert.doesNotMatch(src('src/scenes/seatBanners.js'), /boardPennantAnchor|bounty\.has/, 'no pennant over a board');
+  assert.doesNotMatch(src('src/scenes/worldModes.js'), /NOTICE_BOARD_TEXT|BOUNTY_BOARD_TEXT/, 'and no plaque names one');
 });
 
 test('BOARD-UI the Notices tab: the town\'s and the server\'s word under "News", then the players\' notes under their count; the tab names how many are new since this device last read the board (mutants: one grid; the count unsaid; the old notes counted; the read said twice)', async () => {

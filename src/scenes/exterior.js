@@ -703,7 +703,6 @@ export async function bootExterior(canvas, renderer, params, status) {
   const ambientAnimals = [];    // A4: archive-201 town animals as audio sources
   const exteriorNpcFlats = [];  // AUDIT 26 (F019): the flats RMBLayout stands as StaticNPCs
   const locStandFlats = [];  // STAND-FLAT / STAND-HORSE: the town horses and the people no StaticNPC holds - a batch each
-  const bulletinBoards = [];    // the blocks' BULLETIN BOARDS (model 41739), world-frame boxes
   const cityGates = [];         // AUDIT 64 F14: {gate, entry, matrix, bucketKey} - DaggerfallCityGate's placements
   /** AUDIT 64 F11: RMBLayout's StaticBuilding array (:864-882) - ONE
    *  per building subrecord, off the first model of that record that
@@ -733,6 +732,9 @@ export async function bootExterior(canvas, renderer, params, status) {
       // departure; the 1:1 lane must not see it.
       if (placed.enhancedOnly && !isEnhanced()) continue;
       if (isHouseSign(placed, b, (id) => cpuModels.get(id)?.doors)) continue;   // HOUSE-SIGN: a shop's sign at a house's door does not stand
+      // NOTICE-PANEL: a town's board (RMBLayout's standalone 41739) does not stand. FLAGGED: the bench stands no town panel.
+      // It runs no account service and no rumour mill, the panel's two halves (scenes/townPanelHost.js)
+      if (isBulletinBoard(placed.modelIdNum)) continue;
       const mesh = gpuMeshes.get(placed.modelIdNum);
       if (!mesh) continue;
       const matrix = multiply(originMatrix, placed.matrix);
@@ -767,14 +769,6 @@ export async function bootExterior(canvas, renderer, params, status) {
       collider.addMesh(bucketKey, cpu.positions, cpu.indices, matrix, null, null, false, sightMarksOf(placed.modelIdNum, cpu));   // SIGN-PASS: a sign's board met by every ray, by no body
       if (isCityGate(placed.modelIdNum)) {
         cityGates.push({ gate: makeCityGate(placed.modelIdNum), entry, matrix, bucketKey });
-      }
-      // THE BULLETIN BOARDS. RMBLayout stands model 41739 STANDALONE
-      // (:857, :935) so it can carry DaggerfallBulletinBoard (:966-970)
-      // - the component PlayerActivate's ray looks for (:393-398).
-      // World-frame here, like this host's doors and its street NPCs.
-      if (isBulletinBoard(placed.modelIdNum)) {
-        const b3 = transformedAabb(archAabb(placed.modelIdNum, cpu.positions), matrix);
-        bulletinBoards.push({ min: [b3[0], b3[1], b3[2]], max: [b3[3], b3[4], b3[5]] });
       }
       colliderTris += cpu.indices.length / 3;
       // Building models expose their static doors for E-transitions
@@ -4585,22 +4579,11 @@ export async function bootExterior(canvas, renderer, params, status) {
     // the same list the activation ray reads for a building's people,
     // one mode up (PlayerActivate.ActivateStaticNPC :741-767).
     npcTargets: () => exteriorNpcs,
-    // ...and the town signs, in the same ray (PlayerActivate.cs:314,
-    // :393-398). This probe host runs no rumor mill, so it hands over
-    // no `bulletinBoardNews` and the board opens on the location name
-    // alone - which is the arm C# itself takes when the mill has
-    // nothing fit for a sign (:727 guards only the second half).
-    boardTargets: () => bulletinBoards,
     monumentTargets: () => lefay.targets(),   // LEFAY1: the monument to Julian LeFay, in the street's one ray
     activateMonument: (key, mode, verb) => lefay.activate(key, mode, verb),   // LEFAY1: read it, or throw it a flower
-    // ...and that name is not free: the heading is PlayerGPS
-    // .CurrentLocalizedLocationName (PlayerActivate.cs:721), which
-    // worldModes reads off `buildingDirectory` (:1649) and nowhere
-    // else. Without this key the "location name alone" arm above drew
-    // a BLANK parchment - one empty row, the starter label shifted off
-    // (bulletinBoard.js:"if (rows.length && rows[0].text === '')"). This host knows its own location outright,
-    // so it hands over the same bag the world host builds - the mapId,
-    // region and port-town byte are the host's real ones.
+    // PlayerGPS's building directory: this host knows its own location
+    // outright, so it hands over the same bag the world host builds -
+    // the mapId, region and port-town byte are the host's real ones.
     buildingDirectory: () => ({
       // AUDIT 64 F26: ...and `buildings` is no longer empty. DFU's
       // StreamingWorld.GetCurrentBuildingDirectory hands back the whole

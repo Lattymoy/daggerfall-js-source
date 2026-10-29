@@ -9,6 +9,8 @@ with the freeware's data (`tools/fetch-data.sh`). The mutants are `tools/mutants
 | 2 | "Falling Star Elite Boss Softlock" - an Unquiet Elite Daedra Lord ran off, became a revenant, and the event stuck on its master | A world boss could wear the mark and run; a master gone with no body was still the master | STAR-MASTER-FLED |
 | 3 | "Families (bloodline) max" - "I have no characters anymore and I still cannot make another bloodline", and "being able to remove old families" | Every Bloodline or Enduring birth founds a line, the realm holds 40, and nothing let one go | FAMILY-FORGET |
 | 4 | "You (almost) literally cannot go to Sethrakul fights beyond the bay, sometimes" - "You get told you're going to the E-O instead", and "it takes forever to get to the fights that aren't near to the shore" | The crossing's waters covered the sea past the Bay's rows; a voyage was asked to cross on its way; the voyage planner's floods sailed a "Λ" | SEA-ROWS, SEA-TAUT |
+| 5 | "Bounty Boards missing from Alinor and other settlements" | Daggerfall stands its board only in a city wall's blocks: no hamlet, no village and no capital past the Bay stood one | NOTICE-PANEL |
+| 6 | The owner: "remove the notice board prop from all cities", for "a detailed drop down from the compass that shows the town name, guild control, prosperity and clickable notice board button" in "any settlement, city or town" | - | NOTICE-PANEL |
 
 ## The phone's boot (WEBKIT-TLA)
 
@@ -76,3 +78,25 @@ chose: no serpent site and no far lane is in them now. The floods count a step's
 pulled taut across open water (`seaTaut`): median 1.001, p90 1.004, no leg ashore on the kernel's ground (SEA-SQUARE's
 pin). Pinned by `test/world/ethersea.test.js`, `test/systems/naval/auditcaptsea.test.js` and
 `test/systems/travel/fb1029_seataut.test.js`.
+
+## The boards (NOTICE-PANEL)
+
+FOUND. A town's boards are Daggerfall's own model 41739, which RMBLayout stands alone so a press finds it. On the
+freeware's BLOCKS.BSA only 4 of the 12 WALL kinds place one, at a walled city's gates, and no other kind does. So all
+410 of the Bay's cities stood boards, and none of its 1,200 hamlets or 1,834 villages. Alinor is laid from district
+kinds and blocks of its own, with no WALL block. BOUNTY1 made half a town's boards its bounty boards, so a place with no
+board had neither board.
+
+CHANGED, a departure from DFU (`01-Overview/Port-Ledger.md` section A). No board stands in any town. The town's panel
+hangs under the compass while the player is in a city, hamlet or village - on its streets or in its buildings, never
+below - and goes when they leave (`ui/hud/townPanel.js`, `scenes/townPanelHost.js`). It names the town; then its guild
+control (a seat's own card, or its area's holder - none where no seat can hold the region); then its economy, prices
+and reason (`townEconLaw.js` townPanelLinesOf). Under them stand the Notice Board, with its count of new notes, and the
+Bounty Board. Offline, or before the service says the board is open, the Notice Board is DFU's rumour box. The panel
+folds to the name, moves in the HUD editor, and stands aside for the journey bar, the helm and an arena bout.
+
+KEPT. The boards' places, for the siege field's Market alone: every machine lays the same field, so a battle's banners
+stand where they stood. REMOVED with the boards: the street's press and its plaque, the count over a board, the town
+map's board mark, a seat's pennant and a Festival's banner over a board, and Gothway Garden's two boards (its Bounty
+Board is on the panel). The bench stands no board and no panel (FLAGGED). Pinned by
+`test/scenes/fb1029_townpanel.test.js` and `test/systems/bulletinboard.test.js`.

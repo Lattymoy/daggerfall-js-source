@@ -95,12 +95,11 @@ test('AUDIT BOUNTY1 B4: the relay pins say who moved it - BOUNTY1 + AUDIT 28 (wo
   }
 });
 
-test('AUDIT BOUNTY1 B5: the board\'s press and its plaque ride the streaming host alone; the fixed city and the standalone dungeon keep DFU\'s board', () => {
+test('AUDIT BOUNTY1 B5: the board\'s press rides the streaming host alone (NOTICE-PANEL, PIN MOVED: the town panel\'s Bounty Board, no board in the street); the fixed city and the standalone dungeon keep none', () => {
   const m = read('src/scenes/worldModes.js');
-  assert.match(m, /if \(aabb\.bounty && openBountyBoard\?\.\(aabb\.bounty\)\) return;/, 'a bounty board\'s press opens the window, before the rumour');
-  assert.match(m, /title: bd\?\.bounty \? BOUNTY_BOARD_TEXT : bd\?\.named \? NOTICE_BOARD_TEXT : BULLETIN_BOARD_TEXT/, 'and names itself on hover (ONE-BOARD: a Notice Board too, while it is open)');
+  assert.doesNotMatch(m, /openBountyBoard|BOUNTY_BOARD_TEXT|board:\$\{i\}/, 'no board in the street\'s ray, nor its plaque');
   const w = read('src/scenes/world.js');
-  assert.match(w, /openBountyBoard: \(town\) => bountyHost\?\.openBoard\(town\) \?\? false,/, 'the streaming host hands the press to the bounty host');
-  assert.match(w, /\.\.\.\(bountyAt\.has\(i\) \? \{ bounty: \{ px: p\.px, py: p\.py, name: p\.location \} \} : \{\}\),/, 'and marks the half of the boards that post bounties');
-  for (const f of ['src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) assert.doesNotMatch(read(f), /bountyHost|openBountyBoard/, `${f}: no bounty board`);
+  assert.match(w, /openBounty: \(town\) => bountyHost\?\.openBoard\(town\) \?\? false,/, 'the streaming host hands the panel\'s press to the bounty host');
+  assert.match(w, /bounty: \(\) => !!bountyHost,/, 'and offers it in every settlement where hunts are kept');
+  for (const f of ['src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) assert.doesNotMatch(read(f), /bountyHost|openBountyBoard|createTownPanelHost/, `${f}: no bounty board`);
 });
