@@ -17,7 +17,8 @@ import { pvpShielded } from '../../src/combat/pvpGuard.js';
 import { PVP_SHIELD, shieldedBlow } from '../../src/net/siege/refereeHealthShare.js';
 import { PVP_HIT } from '../../src/net/siege/siegeRef.js';
 import { validVitIn, validDuelData, validSiegeIn, VIT_GUARD_MAX, PVP_ELEMENTS } from '../../src/net/wire.js';
-import { createRefereeHealthMirror } from '../../src/net/siege/refereeHealthMirror.js';
+import { createRefereeHealthMirror, createPlayerHealthMirror } from '../../src/net/siege/refereeHealthMirror.js';
+import { PVP_BUFF_ROUNDS, capPvpBuffs } from '../../src/combat/pvpBuffs.js';
 
 const stats = (v) => ({ strength: v, intelligence: 50, willpower: v, agility: 50, endurance: v, personality: 50, speed: 50, luck: 50 });
 const body = (v = 50) => ({ isPlayer: true, level: 5, stats: stats(v), skills: {}, items: [], health: 50, maxHealth: 60 });
@@ -163,4 +164,24 @@ test('PVP-SHIELD: a live Shield on a player is reported (`sh`), and the referee 
   const m = createRefereeHealthMirror({ read: () => ({ health: 50, maxHealth: 100 }), write: () => {}, send: (r) => { sent.push(r); return true; }, now: () => t, shield: () => sh });
   m.frame(true); sh = true; t += 1000; m.frame(true);
   assert.deepEqual(sent.map((r) => r.sh), [0, 1], 'a Shield cast is reported at once');
+});
+
+test('PVP-BUFFS: in a fight my own buffs run a minute at most - a worn item\'s effect and a foe\'s harm left whole, and nothing cut outside a fight (mutants: the cap unread; a worn item cut; harm cut; cut outside a fight)', () => {
+  assert.equal(PVP_BUFF_ROUNDS, 12);
+  const effects = () => [
+    { kind: 'fortifyAttribute', roundsRemaining: 300 },
+    { kind: 'shield', roundsRemaining: 8 },
+    { kind: 'elementalResistance', roundsRemaining: 90, heldItem: { id: 1 } },
+    { kind: 'continuousDamage', roundsRemaining: 40 },
+    { kind: 'regenerate', roundsRemaining: 60, ended: true },
+  ];
+  const e = { ...body(), activeEffects: effects() };
+  assert.equal(capPvpBuffs(e), 1);
+  assert.deepEqual(e.activeEffects.map((a) => a.roundsRemaining), [12, 8, 90, 40, 60]);
+  const me = { ...body(), health: 50, maxHealth: 100, activeEffects: effects() };
+  const m = createPlayerHealthMirror(me, () => ({ sendVit: () => true }));
+  m.frame(false);
+  assert.equal(me.activeEffects[0].roundsRemaining, 300, 'out of a fight: whole');
+  m.frame(true);
+  assert.equal(me.activeEffects[0].roundsRemaining, 12, 'in a fight: a minute');
 });

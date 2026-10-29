@@ -45,3 +45,10 @@ reported (`sh`, `pvpGuard.js:"export const pvpShielded = (entity) =>"`), and the
 off a shaft (`refereeHealthShare.js:"export const PVP_SHIELD = Object.freeze("`) - the plan's "Shields max 25%". Aim and
 movement decide the rest; staff fights tune these numbers.
 
+
+## PVP-BUFFS: a buff runs a minute in a fight
+
+The plan's "buffs last 1 min": each frame a refereed fight may hold the player (the health mirror's `active`), a spell
+effect it cast for itself is cut to `pvpBuffs.js:"export const PVP_BUFF_ROUNDS = 12;"` magic rounds - a round is a game
+minute, five seconds at DFU's 12x. A worn item's effect (`heldItem`) and a foe's harm are left whole
+(`pvpBuffs.js:"export function capPvpBuffs("`). A departure: DFU has no PvP.

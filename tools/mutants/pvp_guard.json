@@ -187,5 +187,41 @@
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
+  },
+  {
+    "name": "PVP-BUFFS-the-cap-unread",
+    "file": "src/combat/pvpBuffs.js",
+    "old": "    a.roundsRemaining = rounds;",
+    "new": "",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BUFFS-a-worn-item-cut",
+    "file": "src/combat/pvpBuffs.js",
+    "old": "if (a.ended || a.heldItem || HARM.has(a.kind)",
+    "new": "if (a.ended || HARM.has(a.kind)",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BUFFS-harm-cut",
+    "file": "src/combat/pvpBuffs.js",
+    "old": "if (a.ended || a.heldItem || HARM.has(a.kind)",
+    "new": "if (a.ended || a.heldItem",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BUFFS-cut-outside-a-fight",
+    "file": "src/net/siege/refereeHealthMirror.js",
+    "old": "    if (active) capPvpBuffs(player);",
+    "new": "    capPvpBuffs(player);",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
   }
 ]

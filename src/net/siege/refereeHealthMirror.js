@@ -10,6 +10,7 @@
 import { HEALTH_SHARE_WHOLE, PVP_RESTORATION_MAX } from './refereeHealthShare.js';
 import { SKILLS, skillValue } from '../../systems/skills.js';
 import { pvpArmorKept, pvpWardKept, pvpShielded } from '../../combat/pvpGuard.js';
+import { capPvpBuffs } from '../../combat/pvpBuffs.js';
 
 /** The fewest milliseconds between two reports: four a second, well under the relay's gate for this frame. */
 export const HEALTH_REPORT_MS = 250;
@@ -143,11 +144,12 @@ export function createRefereeHealthMirror({ read, write, send, now = () => Date.
 /**
  * The world host's mirror: the player entity's health read and written, the reports on the online session's own room
  * socket. A word never kills - a player at none stays at none, and the zone's fall is its own word (forcePlayerDeath).
+ * PVP-BUFFS: each frame a fight may hold me, my own buffs are cut to a minute (combat/pvpBuffs.js).
  * @param {any} player   the player entity
  * @param {() => { sendVit?: (report: any) => boolean } | null | undefined} onlineOf   the session now, if any
  */
 export function createPlayerHealthMirror(player, onlineOf) {
-  return createRefereeHealthMirror({
+  const mirror = createRefereeHealthMirror({
     read: () => player,
     write: (health) => {
       if (player.health > 0) player.health = health;
@@ -158,4 +160,10 @@ export function createPlayerHealthMirror(player, onlineOf) {
     ward: () => pvpWardKept(player),
     shield: () => pvpShielded(player),
   });
+  const frame = mirror.frame;
+  mirror.frame = (active) => {
+    if (active) capPvpBuffs(player);
+    frame(active);
+  };
+  return mirror;
 }
