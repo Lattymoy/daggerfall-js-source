@@ -97,7 +97,10 @@ export const LEECH_CAST_AMOUNT = 16;          // HealthLeech.cs:29
 export const LEECH_WEAPON_AMOUNT = 8;         // HealthLeech.cs:30
 export const DURABILITY_LOSS_ON_USE = 10;     // CastWhenUsed.cs:30
 export const DURABILITY_LOSS_ON_STRIKE = 10;  // CastWhenStrikes.cs:30
-export const HELD_DEGRADE_RATE = 4;           // CastWhenHeld.cs:27
+// HELD-WEAR (2026-10-28, Dudey: "Item durability drain is too fast from cast while held enchant"; a DEPARTURE, Port-Ledger A):
+// DFU wears a held piece 1 condition every 4 rounds (CastWhenHeld.cs:27). Online a round is 5 real seconds, so that was
+// 3 points a real minute. Now 1 every 36 rounds: 1 every 3 real minutes. Resting is unchanged.
+export const HELD_DEGRADE_RATE = 36;          // CastWhenHeld.cs:27 has 4
 export const HELD_DEGRADE_RATE_RESTING = 60;  // CastWhenHeld.cs:28
 export const EXTRA_SPELL_PTS_MAX_INCREASE = 75;   // ExtraSpellPts.cs:84
 export const ENHANCE_SKILL_MOD = 15;          // EnhancesSkill.cs:28
@@ -317,7 +320,7 @@ export function heldEquipIsFree(item, nowMinutes) {
   return since >= 0 && since < REROLL_MINIMUM_HOURS * MINUTES_PER_HOUR;
 }
 /** (2) The equip bill never breaks the piece: it stops at 1 condition. What wears a held piece out is its wear while
- *  worn (the MagicRound arm, 1 every 4 rounds), as DFU's own comment says it should "die of use".
+ *  worn (the MagicRound arm, 1 every HELD_DEGRADE_RATE rounds), as DFU's own comment says it should "die of use".
  *  (3) LEGEND-HELD (FIELD BUGS 2026-10-11b, Boar: "Equipping legendary shield Aegis of Dawn damage it by 1/3 of its
  *  durability"; Mac: "I dont care about DFU parity"; a DEPARTURE, Port-Ledger A): a Legendary's equip bills nothing -
  *  its held spell is its record's (the Loot arc's), and the Aegis's Spell Resistance cost a leather buckler a third of
@@ -424,7 +427,7 @@ export function repairsObjectsTarget(items, { allowMagicRepairs = false } = {}) 
 }
 /** MEND-TIERS: a piece's tier for the tick - 0 worn, 1 worn and wearing itself (wearsItself), 2 carried. While a worn
  *  piece that wears itself is below its condition the pack waits, Mac's accepted trade-off: Cast When Held wears a point
- *  on every tick's round out of rest (HELD_DEGRADE_RATE is CONDITION_PER_ROUNDS) and an all-the-time Item Deteriorates
+ *  on a tick's round out of rest (HELD_DEGRADE_RATE is a multiple of CONDITION_PER_ROUNDS) and an all-the-time Item Deteriorates
  *  on every one, so while such a piece is worn the tick holds it and the pack is not mended. */
 const mendTier = (it) => (wearsItself(it) ? 1 : it.equipSlot != null ? 0 : 2);
 /** MEND-STARVE: a WORN piece whose own held enchantment wears it a point on the rounds Repairs Objects mends - Cast When
@@ -465,7 +468,7 @@ const REGISTRY = new Map([
    *  instantiateHeldSpell - the spell rides target.activeEffects
    *  pinned to the item; the dispatcher's Unequipped arm strips it);
    *  RerollEffect recasts it fresh with no durability hit; MagicRound
-   *  degrades 1 per 4 rounds (60 while resting) - the magic-item wear
+   *  degrades 1 per HELD_DEGRADE_RATE rounds (60 while resting; HELD-WEAR) - the magic-item wear
    *  law that makes a Cast-When-Held ring die of use. */
   [T.CastWhenHeld, {
     flags: PAYLOAD.Equipped | PAYLOAD.MagicRound | PAYLOAD.RerollEffect,

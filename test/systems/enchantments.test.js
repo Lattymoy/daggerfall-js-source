@@ -89,15 +89,15 @@ test('E1 pump: RegensHealth cadence + conditions; UserTakesDamage bills through 
   assert.equal(broken.health, 20);
 });
 
-test('E1 pump: CastWhenHeld wear (4 normal / 60 resting), HealthLeech\'s daily law, RepairsObjects\' one item', () => {
+test('E1 pump: CastWhenHeld wear (36 normal - HELD-WEAR / 60 resting), HealthLeech\'s daily law, RepairsObjects\' one item', () => {
   // AUDIT 26 F126: the wear is the PLAYER's - activeMagicItemsInRound
   // is filled solely under `if (IsPlayerEntity)`
   // (EntityEffectManager.cs:1744-1755), so only a player's held item
   // takes it.
   const held = item(T.CastWhenHeld, 4);
   const w = wearer([held], { isPlayer: true });
-  for (let r = 1; r <= 8; r++) enchantmentMagicRound(w, r, {});
-  assert.equal(held.currentCondition, 98, '1 point per 4 rounds');
+  for (let r = 1; r <= 72; r++) enchantmentMagicRound(w, r, {});
+  assert.equal(held.currentCondition, 98, '1 point per 36 rounds (HELD-WEAR; DFU has 4)');
   const resting = item(T.CastWhenHeld, 4);
   const w2 = wearer([resting], { isPlayer: true });
   for (let r = 1; r <= 120; r++) enchantmentMagicRound(w2, r, { nowMinutes: r, ctx: { isResting: () => true } });
