@@ -65,3 +65,28 @@ test('YC4 over the real Worker: a home write answers a signed order for the cell
   assert.equal(refused.body?.homeCellOrders, undefined);
   assert.equal(refused.body?.homeCellsMoved, undefined);
 });
+
+test('YC4 a guild hall bought and sold moves its cell as a home write does: each answers a signed order for the hall\'s cell, the Guild tab\'s sale (no building in its body) too; another guild act answers none (mutants: the hall routes unsigned, the sale\'s building unread)', async (t) => {
+  t.mock.method(Date, 'now', () => T0 * 1000);
+  const svc = await standService();
+  const gm = await svc.registered('Gwen', { renown: 12 });
+  assert.equal((await svc.found(gm, { name: 'The Silver Hand', tag: 'SH' })).status, 200);
+  assert.equal((await svc.call('/v1/guilds/deposit', { character: gm.character, gold: 60_000, realm: gm.at(), region: 17 }, gm.secret)).status, 200);
+  const claimsOf = (body) => Promise.all((body.homeCellOrders ?? []).map(async (o) => (await verifyOrder(o, svc.identityPublic, { subtle, nowS: T0 + 1, kind: 'hcell' })).claims));
+  const hall = { mapId: 7, buildingKey: 300, region: 17, price: 20_000, layout: null };
+
+  const bought = await svc.call('/v1/guilds/hall/buy', { character: gm.character, ...hall }, gm.secret);
+  assert.equal(bought.status, 200, JSON.stringify(bought.body));
+  const onBuy = await claimsOf(bought.body);
+  assert.deepEqual(onBuy.map((c) => [c.o, c.s, c.m, c.c]), [['hcell', gm.id, 7, yardCellOf(300)]], 'the hall\'s cell, signed');
+
+  const sold = await svc.call('/v1/guilds/hall/sell', { character: gm.character }, gm.secret);
+  assert.equal(sold.status, 200, JSON.stringify(sold.body));
+  const onSell = await claimsOf(sold.body);
+  assert.deepEqual(onSell.map((c) => [c.m, c.c]), [[7, yardCellOf(300)]], 'the tab\'s sale names the hall\'s cell off its answer');
+  assert.ok(onSell[0].v > onBuy[0].v, 'the sale climbs the version');
+
+  const mine = await svc.call('/v1/guilds/mine', { character: gm.character }, gm.secret);
+  assert.equal(mine.status, 200);
+  assert.equal(mine.body.homeCellOrders, undefined, 'a guild read moves no cell');
+});

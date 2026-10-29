@@ -734,6 +734,15 @@ async function withHomeCells(r, db, path, body, s, env, subtle, nowS) {
   return { ...r, homeCellOrders };
 }
 
+/** YC4: a hall bought or sold moved its home's cell as any home write does (withHomeCells) - the building its answer
+ *  names (`moved`), since the Guild tab's sale names none in its body. Any other guild act answers no home cell order. */
+async function hallCellsOf(r, db, path, s, env, subtle, nowS) {
+  if (path !== '/v1/guilds/hall/buy' && path !== '/v1/guilds/hall/sell') return r;
+  const [move] = Array.isArray(r?.moved) ? r.moved : [];
+  const buildingKey = move?.on?.[0] ?? move?.off?.[0];
+  return withHomeCells(r, db, path, { mapId: move?.mapId, buildingKey }, s, env, subtle, nowS);
+}
+
 async function homeOrdersOf(r, s, env, subtle, nowS) {
   const { moved, ...answer } = r ?? {};
   if (!Array.isArray(moved) || !moved.length) return answer;
@@ -1999,7 +2008,10 @@ const service = {
         }[path];
         if (!act) return no('not-found', 404, origin);
         const r = await act({ ...ctx, env, bucket: env.SAVES }, who.player, body);   // REALM P2.2: a realm character's record is in R2; AUDIT 28 M5: the switch says whether the Marks show
-        if (!('error' in r)) return json(await homeOrdersOf(await guildOrdersOf(r, who.player.id, env, subtle, nowS), who.player.id, env, subtle, nowS), 200, origin);   // QUEST-HOME: a hall bought or sold
+        if (!('error' in r)) {
+          const signed = await hallCellsOf(await guildOrdersOf(r, who.player.id, env, subtle, nowS), ctx.db, path, who.player.id, env, subtle, nowS);   // YC4: a hall's cell, as a home's
+          return json(await homeOrdersOf(signed, who.player.id, env, subtle, nowS), 200, origin);   // QUEST-HOME: a hall bought or sold
+        }
         if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);   // REALM P2.2: the service's own, as a checkpoint's
         if (r.error === 'home-layout') return json({ error: 'home-layout', layout: r.layout ?? null }, 409, origin);   // AUDIT PRE-MERGE 1003 WD1: the town's layout, as /v1/homes/claim answers it
         // AUDIT2 GUILD2 S2/S7: the word the filter caught (`why`, the door's own field for a refusal's reason), and when the
