@@ -67,6 +67,12 @@ test('DLV6 THE LAB\'S HAND: I stand where my Rebuild left me (`?at=`), else at t
     const add = lab.draft().add;
     assert.deepEqual(add.map((a) => a.at), [[10, 2.45, 10], [10, 3.2, 10], [10, 4.2, 10]], 'on the floor, and a light 2.2 m over me');
     assert.deepEqual([add[0].model, add[1].flat, add[2].light], [41300, [199, 0], 6]);
+    const input = (n, value) => (n?.tag === 'input' && n.value === value ? n : (n?.kids ?? []).map((k) => input(k, value)).find(Boolean));
+    input(doc.body, '41300').value = '99999';
+    await find(doc.body, 'Model here').onclick();
+    assert.equal(lab.draft().add.length, 3, 'a model the data lacks: refused');
+    const said = (n) => (n?.className?.startsWith?.('say') && n.textContent.includes('not in your game') ? n : (n?.kids ?? []).map(said).find(Boolean));
+    assert.ok(said(doc.body), 'and said so');
     find(doc.body, 'Rebuild').onclick();
     assert.deepEqual(rebuilt.at, [10, 2, 10], 'the Rebuild told where I stand');
   } finally { lab.destroy(); }
