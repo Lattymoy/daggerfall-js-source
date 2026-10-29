@@ -6,7 +6,7 @@ import { equipTableOf, EQUIP_SLOTS } from '../systems/equip.js';
 import { rriNativeMaterialValue } from '../systems/roleplayRealismItems/rriItems.js';
 import { registerSpellCostMod } from '../systems/spellcost.js';
 import { registerCastSpeedMod } from '../systems/castSpeed.js';
-import { inPvpFight } from './pvpPotions.js';
+import { playerInPvpFight } from './pvpPotions.js';
 
 /** Per cent a piece adds to a spell's cost and takes off the cast rate, by DFU's ArmorTypes (Leather 0, Chain 1, Plate 2). */
 export const PVP_ARMOUR_CAST = Object.freeze({ cost: Object.freeze([0, 3, 6]), slow: Object.freeze([0, 1.5, 3]) });
@@ -27,9 +27,9 @@ export function pvpArmourCast(entity) {
 }
 
 /** The cost door: a player's cast in a fight, by its armour. */
-export const pvpArmourCastCost = (entity, sp) => (inPvpFight() ? sp * (1 + pvpArmourCast(entity).cost / 100) : sp);
+export const pvpArmourCastCost = (entity, sp) => (playerInPvpFight() ? sp * (1 + pvpArmourCast(entity).cost / 100) : sp);
 /** The rate door: the percent off a player's cast rate in a fight. */
-export const pvpArmourCastSpeed = (entity) => (inPvpFight() && entity?.isPlayer ? -pvpArmourCast(entity).slow : 0);
+export const pvpArmourCastSpeed = (entity) => (playerInPvpFight() && entity?.isPlayer ? -pvpArmourCast(entity).slow : 0);
 
 export const PVP_ARMOUR_CAST_MOD = 'pvp-armour-cast';
 registerSpellCostMod(PVP_ARMOUR_CAST_MOD, pvpArmourCastCost);

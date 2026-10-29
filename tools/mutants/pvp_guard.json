@@ -337,7 +337,7 @@
   {
     "name": "PVP-ARMOUR-CAST-always",
     "file": "src/combat/pvpArmourCasting.js",
-    "old": "(inPvpFight() ? sp * (1 + pvpArmourCast(entity).cost / 100) : sp)",
+    "old": "(playerInPvpFight() ? sp * (1 + pvpArmourCast(entity).cost / 100) : sp)",
     "new": "(true ? sp * (1 + pvpArmourCast(entity).cost / 100) : sp)",
     "tests": [
       "test/combat/pvp_guard.test.js"

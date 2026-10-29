@@ -19,7 +19,7 @@ const last = new Map();
 
 /** The health mirror's word each frame (net/siege/refereeHealthMirror.js): may a refereed fight hold the player? */
 export function setPvpFight(active) { fight = !!active; }
-export const inPvpFight = () => fight;
+export const playerInPvpFight = () => fight;
 
 /** 'health', 'magicka' or 'other', by the first effect of the bottle's recipe; null for no recipe. Pure. */
 export function pvpPotionKind(item) {

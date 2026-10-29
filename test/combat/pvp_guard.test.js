@@ -19,7 +19,7 @@ import { PVP_SHIELD, shieldedBlow } from '../../src/net/siege/refereeHealthShare
 import { PVP_HIT } from '../../src/net/siege/siegeRef.js';
 import { validVitIn, validDuelData, validSiegeIn, VIT_GUARD_MAX, PVP_ELEMENTS } from '../../src/net/wire.js';
 import { createRefereeHealthMirror, createPlayerHealthMirror } from '../../src/net/siege/refereeHealthMirror.js';
-import { PVP_POTION_MS, pvpPotionKind, pvpPotionRefusal, pvpPotionDrunk, pvpPotionBundle, inPvpFight, resetPvpPotions } from '../../src/combat/pvpPotions.js';
+import { PVP_POTION_MS, pvpPotionKind, pvpPotionRefusal, pvpPotionDrunk, pvpPotionBundle, playerInPvpFight, resetPvpPotions } from '../../src/combat/pvpPotions.js';
 import { POTION_RECIPES, potionRecipeKey } from '../../src/systems/potionRecipes.js';
 import { useItem } from '../../src/systems/useItem.js';
 import { TEMPLATES } from '../../src/systems/item/itemKinds.js';
@@ -206,7 +206,7 @@ test('PVP-POTIONS: in a fight each potion kind (health, magicka, other) waits 15
   const me = { ...body(), health: 50, maxHealth: 100, activeEffects: [] };
   const mirror = createPlayerHealthMirror(me, () => ({ sendVit: () => true }));
   mirror.frame(true);
-  assert.equal(inPvpFight(), true, 'the mirror says when a fight may hold the player');
+  assert.equal(playerInPvpFight(), true, 'the mirror says when a fight may hold the player');
   pvpPotionDrunk(heal, 1000);
   assert.equal(pvpPotionRefusal(heal, 1000 + PVP_POTION_MS - 1), 'You can drink another health potion in 1 s.');
   assert.equal(pvpPotionRefusal(heal, 1000 + PVP_POTION_MS), null, '15 s on: free');
