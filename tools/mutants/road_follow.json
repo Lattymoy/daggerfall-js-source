@@ -40,10 +40,11 @@
   {
     "name": "RF-the-kinds-unread",
     "file": "src/systems/travel/roadLine.js",
-    "old": "  if (kind !== kinds[i] || (kind !== 'road' && kind !== 'track')) return null;",
-    "new": "  if (kind !== 'road' && kind !== 'track') return null;",
+    "old": "  if (!PAINTED.includes(a) || !PAINTED.includes(b)) return null;",
+    "new": "  if (!PAINTED.includes(a)) return null;",
     "tests": [
-      "test/systems/travel/road_follow.test.js"
+      "test/systems/travel/road_follow.test.js",
+      "test/systems/travel/road_smooth.test.js"
     ]
   },
   {

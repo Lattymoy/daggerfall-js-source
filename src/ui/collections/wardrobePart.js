@@ -18,6 +18,7 @@
 // opened a panel, a tag a chip, Wear the kit's button - this sheet writes geometry and the words' colours alone.
 import { t } from '../../systems/textManager.js';
 import { titleBadge, paintTitle, glyphBadges, glyphSvgNode, TITLE_RGBA, TITLE_GRADIENT, AURA_PAINT, cssRgba } from '../playerBadge.js';
+import { armoryPieceOf } from '../../net/armoryLaw.js';   // ARMORY: a piece's slot and line
 import { profileIconNode } from '../profileIcons.js';
 import { inkColour, GRIMOIRE_DRESS } from '../grimoireDress.js';   // AUDIT COLLECTIONS-II (lane 3): a painted word inked on the Grimoire's page
 import {
@@ -155,7 +156,8 @@ function paintedWord(el, /** @type {string} */ kind, /** @type {string} */ key, 
   const cell = el('span', cls);
   const plate = el('span', 'coll-plate');
   const word = el('span', 'coll-word', wardrobeName(kind, key));
-  const paintKey = kind === 'title' ? key : kind === 'aura' ? AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (key)] : null;
+  const paintKey = kind === 'title' ? key : kind === 'aura' ? AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (key)]
+    : kind === 'armory' ? AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (armoryPieceOf(key)?.line ?? 'eternal')] : null;   // ARMORY: a piece in its line's aura's paint
   if (paintKey && word.style) {
     paintTitle(word, titleBadge({ title: paintKey }), kind === 'title');   // SHOP: a title's flame plate, never an aura's word
     if (globalThis.document?.documentElement?.dataset?.plusDress === GRIMOIRE_DRESS) inkPaint(word);
@@ -197,6 +199,7 @@ let _ringSerial = 0;
  *  its painted word. */
 function pictureOf(/** @type {any} */ doc, /** @type {string} */ kind, /** @type {string} */ key, size = 24) {
   if (kind === 'aura') return auraRingNode(doc, key, size + 8);
+  if (kind === 'armory') return auraRingNode(doc, armoryPieceOf(key)?.line ?? 'eternal', size + 8);   // ARMORY: its line's ring - the piece itself is the world's
   if (kind === 'icon') return profileIconNode(doc, key, 'coll-icon', size);
   if (kind === 'glyph') {
     const g = glyphBadges({ glyphs: [key] })[0];
@@ -380,6 +383,7 @@ const revealOpened = () => {
 export const WARDROBE_KIND_WORD = Object.freeze({
   title: () => t('coll.kind.title', 'Title'),
   aura: () => t('coll.kind.aura', 'Aura'),
+  armory: () => t('coll.kind.armory', 'Aura Armory'),
   icon: () => t('coll.kind.icon', 'Icon'),
   glyph: () => t('coll.kind.glyph', 'Glyph'),
 });
@@ -387,7 +391,7 @@ export const WARDROBE_KIND_WORD = Object.freeze({
 /** The press that wears it, takes it off, shows or hides it - the flow's own, its answer the service's. Null without a
  *  signed-in flow. */
 function wearPress(el, /** @type {any} */ e, /** @type {any} */ wardrobe, /** @type {any} */ flow) {
-  const press = { title: 'equip', aura: 'wearAura', icon: 'wearIcon', glyph: 'toggleGlyph' }[/** @type {'title'|'aura'|'icon'|'glyph'} */ (e.kind)];
+  const press = { title: 'equip', aura: 'wearAura', armory: 'wearArmory', icon: 'wearIcon', glyph: 'toggleGlyph' }[/** @type {'title'|'aura'|'armory'|'icon'|'glyph'} */ (e.kind)];
   if (flow?.stage !== 'in' || typeof flow[press] !== 'function') return null;
   const worn = wardrobeWorn(e.kind, e.key, wardrobe);
   const word = e.kind === 'glyph'
@@ -400,6 +404,6 @@ function wearPress(el, /** @type {any} */ e, /** @type {any} */ wardrobe, /** @t
   // (the flow refuses one too)
   b.setAttribute('aria-disabled', flow.busy ? 'true' : 'false');
   b.setAttribute('data-focus', `coll-wear-${e.kind}-${e.key}`);
-  b.onclick = () => { if (flow.busy) return; _noteKind = e.kind; Promise.resolve(flow[press](e.key)).catch(() => {}); };
+  b.onclick = () => { if (flow.busy) return; _noteKind = e.kind; Promise.resolve(e.kind === 'armory' ? flow[press](armoryPieceOf(e.key)?.slot, e.key) : flow[press](e.key)).catch(() => {}); };   // ARMORY: a piece in its slot
   return b;
 }

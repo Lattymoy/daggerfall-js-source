@@ -572,6 +572,16 @@ export const FEATURES = Object.freeze([
     // this page's), so off online brings back Daggerfall's flat tile and the Deep Waters sea's own scrolling texture.
     control: Object.freeze({ store: 'prefs', key: 'enhancedWater', initial: true, online: 'player' }),   // WATER1: on by default like the other enhanced visuals; `?water=off` the kill door
   }),
+  // ARMORY (2026-10-28; bible/04-Characters/Aura-Armory.md section 7): WHOSE AURA ARMORY PIECES ARE DRAWN - every other
+  // player's, those near, or none (scenes/auraHost.js). One's own always is. For a weak machine in a crowd.
+  Object.freeze({
+    id: 'armory-others',
+    group: 'sight',
+    get title() { return t('features.armoryOthers.title', 'Others\' Aura Armory'); },
+    get note() { return t('features.armoryOthers.note', 'Whose Aura Armory pieces are shown. Near shows the players close to you. Your own pieces always show.'); },
+    kinds: Object.freeze(['enhanced', 'classic']),
+    control: Object.freeze({ store: 'prefs', key: 'armoryOthers', initial: 'all', online: 'player', tiers: Object.freeze([tier('all', () => t('features.armoryOthers.all', 'All')), tier('near', () => t('features.armoryOthers.near', 'Near')), tier('none', () => t('features.armoryOthers.none', 'None'))]) }),
+  }),
   // WATER-NEXT (2026-10-07, the overhaul's plan: "a cheaper setting for a weak GPU"): HOW MUCH THE WATER DRAWS. Full
   // copies the frame under the water once a frame (the look through it, the depth it measures) and keeps the ripple
   // field; Simple does neither - the bed, the swell, the foam and the body stand, the blend does the looking-through.

@@ -79,7 +79,7 @@ test('OW-PLACE-WALK the hand-off: Begin on a city, a mark, a quest\'s place or a
 
   const quest = heldMap();
   const qp = quest._questPlace({ px: 1590, py: -260, placeName: 'The Haunt' });
-  assert.equal(qp.place, true, 'a quest\'s place past the Bay');
+  assert.equal(qp.door, true, 'a quest\'s place past the Bay - PIN MOVED (TRAVEL-EVERYWHERE): walked to its door where the world does not know it (`door`), the Bay\'s journey where it does (`place`, test/ui/travel_everywhere.test.js)');
   quest._select(qp);
   quest._openPanel('travel');
   assert.equal(begin(quest).pick.place, true);

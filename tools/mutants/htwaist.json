@@ -422,7 +422,7 @@
   {
     "name": "HT-WAIST-the-portrait-swings",
     "file": "src/combat/fpArm.js",
-    "old": "        if (t.hipHang) t.hipHang.rot.set(PLUMB);   // HT-WAIST: a still portrait, a plumb lantern (the hip lantern's rider re-swings it)\n",
+    "old": "      if (t.hipHang) t.hipHang.rot.set(PLUMB);   // HT-WAIST: a still portrait, a plumb lantern (the hip lantern's rider re-swings it)\n",
     "new": "",
     "tests": [
       "test/combat/htwaist_mwbody.test.js"

@@ -68,7 +68,7 @@ function recordingCtx() {
   });
 }
 
-test('BAY-LEFT-MAPS C9 THE FIND BOX PAST THE BAY: with the continent on, a place past the Bay is found by its name, named by its province\'s region, and picked as START3 picks a place past the Bay (no journey: TESA-NO-FAST); with the Bay\'s sheet alone none is; the index is read again when the continent comes on (mutants: the rows unread; the index kept for good; the pick the Bay\'s; the focus dropped)', () => {
+test('BAY-LEFT-MAPS C9 THE FIND BOX PAST THE BAY: with the continent on, a place past the Bay is found by its name, named by its province\'s region, and picked as START3 picks a place past the Bay (TRAVEL-EVERYWHERE: a place where the world knows it); with the Bay\'s sheet alone none is; the index is read again when the continent comes on (mutants: the rows unread; the index kept for good; the pick the Bay\'s; the focus dropped)', () => {
   skin('enhanced');
   globalThis.document = fakeDocument();
   setCapitalsStanding(true);

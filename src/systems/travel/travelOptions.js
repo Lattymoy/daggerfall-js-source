@@ -49,7 +49,7 @@ import {
   mapPixelWorldOrigin, normalisedYaw, directionOfYaw, targetPixel, countSetBits,
   playerOnPathAt, pathsDataPoint, roadsDataPoint, nextPathDirection,
 } from './travelPaths.js';
-import { TravelAutopilot, rectOf, rectMinMax, rectContains, rectCentre, ARRIVAL_BUFFER } from './travelAutopilot.js';
+import { TravelAutopilot, rectOf, rectMinMax, rectContains, rectCentre, ARRIVAL_BUFFER, LANE_CORNER_TURN } from './travelAutopilot.js';
 import { TOWN_PACE_MAX } from './townWalk.js';   // OW-TOWN-WALK: a town's streets walked at a town's pace
 import { TRAVEL_OPTIONS_TEXT as T, TRAVEL_NAV_TEXT, format, localize } from './travelOptionsText.js';
 import { hasPortFor } from './travelPorts.js';   // SEAT2b part two: HasPort, or a members' Harbour at a seat
@@ -95,6 +95,8 @@ export const SEA_LEG_LO = (32768 - SEA_LEG_SIZE) / 2;
 export const SEA_SPOT_SIZE = 2048;
 /** OWS2: the legs sailed (systems/travel/travelRoute.js SEA_KINDS less the landfall, whose mark is ashore). */
 const SEA_LEG_KINDS = Object.freeze(['sea', 'embark']);
+/** ROAD-SMOOTH: the most legs a frame may end and go on from (update) - past it the frame stands, the rest the next's. */
+export const LEG_CHAIN_MAX = 8;
 
 /** :1200 - the avoid roll is luck + Stealth - 50, capped by the
  *  MaxChanceToAvoidEncounter setting. (The mod's own readme says
@@ -761,14 +763,14 @@ export function createTravelOptions(deps = {}) {
       const rect = deps.locationWorldRect?.(r.summary);
       if (rect) {
         st.autopilot = new TravelAutopilot(r.summary.pixel, rect, routeLegSpeed(r.legs.at(-1)?.kind ?? 'road'),
-          { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles, path: finalPath(r, rectCentre(rect), true) });   // OW-ROAD-TRUE: up the road into the place (AUDIT OW-REVISITED L2-1: and on to its middle)
+          { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles, path: finalPath(r, rectCentre(rect), true), cornerTurn: LANE_CORNER_TURN, walk: st.autopilot?.walk });   // OW-ROAD-TRUE: up the road into the place (AUDIT OW-REVISITED L2-1: and on to its middle); ROAD-SMOOTH: the same body's walk
         st.autopilot.onArrival = () => arriveRoute(r.quiet);
         return;
       }
     }
     if (final && r.point) {
       st.autopilot = new TravelAutopilot(r.point.pixel, spotRect(r.point, SEA_LEG_KINDS.includes(r.legs.at(-1)?.kind)), routeLegSpeed(r.legs.at(-1)?.kind ?? 'open'),
-        { path: finalPath(r, r.point, false) });   // AUDIT OW-REVISITED L2-2: a spot's last road run walked on the road, then off it
+        { path: finalPath(r, r.point, false), cornerTurn: LANE_CORNER_TURN, walk: st.autopilot?.walk });   // AUDIT OW-REVISITED L2-2: a spot's last road run walked on the road, then off it
       st.autopilot.onArrival = () => arriveRoute(r.quiet);
       return;
     }
@@ -790,8 +792,11 @@ export function createTravelOptions(deps = {}) {
       : leg.kind === 'sea' || leg.kind === 'embark' ? rectOf(w.x + SEA_LEG_LO, w.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE) : leg.at ? spotRect(leg.at) : leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(o.x + MID_LO, o.z + MID_LO, P_SIZE, P_SIZE);   // ROAD-FOLLOW: a curve's apex
     const lane = routeLane(r, Math.min(r.i, r.legs.length - 1));   // OW-ROAD-TRUE: a road's leg walks its line
     const path = lane?.pts ?? null;   // ROAD-FOLLOW: on the curves past the Bay
-    if (st.autopilot == null) st.autopilot = new TravelAutopilot(leg, rect, routeLegSpeed(leg.kind), { lane, path });
-    else st.autopilot.initTargetRect(leg, rect, routeLegSpeed(leg.kind), { lane, path });
+    // ROAD-SMOOTH: the line the next leg walks, so a leg that ends inside a curve is walked on through it
+    const after = lane && r.i + 1 < r.legs.length ? routeLane(r, r.i + 1) : null;
+    const line = { lane, path, ahead: after ? after.pts?.slice(1) ?? [[after.bx, after.bz]] : null, cornerTurn: LANE_CORNER_TURN };
+    if (st.autopilot == null) st.autopilot = new TravelAutopilot(leg, rect, routeLegSpeed(leg.kind), line);
+    else st.autopilot.initTargetRect(leg, rect, routeLegSpeed(leg.kind), line);
     st.autopilot.onArrival = () => {
       if (st.route !== r) return;
       r.i++;
@@ -1329,6 +1334,9 @@ export function createTravelOptions(deps = {}) {
     if (st.autopilot) {
       const p = pos();
       drive = st.autopilot.update({ worldX: p.x, worldZ: p.z, mapPixelX: mp.x, mapPixelY: mp.y });
+      // ROAD-SMOOTH: a routed leg's end is no stop - the next leg's drive is this frame's (the host walks no step on an
+      // arrival, so the walk stood a frame at every leg); the mod's own journeys keep theirs
+      for (let k = 0; drive.arrived && st.route && st.autopilot && k < LEG_CHAIN_MAX; k++) drive = st.autopilot.update({ worldX: p.x, worldZ: p.z, mapPixelX: mp.x, mapPixelY: mp.y });
       // :1343-1345 - the autopilot runs even while the game is paused
       // (the travel map is open over it), and nothing else does.
       if (frame.gamePaused) return { drive, handled: true };

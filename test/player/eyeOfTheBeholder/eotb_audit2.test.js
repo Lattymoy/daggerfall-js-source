@@ -590,10 +590,12 @@ test('EOTB-FLIP: a decoded PNG is turned into the world billboard\'s row order O
 });
 
 test('EOTB-FLIP: the body\'s decode is the dropped torch\'s door - decodePng, then the converter - and never a canvas of its own', () => {
-  const body = rd('src/player/eyeOfTheBeholder/eotbBody.js');
+  // PIN MOVED (PROFILE-SLOTS): the door is eotbSprite.js's, the body's (and the profile's stage's) one decode
+  const body = rd('src/player/eyeOfTheBeholder/eotbSprite.js');
+  assert.match(rd('src/player/eyeOfTheBeholder/eotbBody.js'), /decode = decodeSprite/);
   assert.match(body, /export async function decodeSprite\(url\) \{\s*(?:if \(isLayeredKey\(url\)\)[^\n]*\s*)?return worldOrderColors\(await decodeServedPng\(url\), \{ owned: true \}\);[^\n]*\s*\}/,
     'FIRST-VISIT: the decode workers\' fetch and decode (vanillaEnhancedPack.js decodeServedPng - decodePng\'s own, off this thread), then worldOrderColors');
-  assert.ok(!/getImageData|new Image\(|OffscreenCanvas/.test(body), 'no canvas door of its own');
+  assert.ok(!/getImageData|new Image\(|OffscreenCanvas/.test(body + rd('src/player/eyeOfTheBeholder/eotbBody.js')), 'no canvas door of its own');
   assert.match(rd('src/player/eyeOfTheBeholder/eotbSprite.js'), /import \{ toColor32, toColor32OrderInPlace \} from '\.\.\/\.\.\/formats\/color32Order\.js';/, 'the converter is the tree\'s (PERF-PEERS5: its in-place twin beside it)');
   assert.match(rd('src/scenes/droppedTorches.js'), /return toColor32\(await decodePng\(new Uint8Array\(await res\.arrayBuffer\(\)\)\)\);/, 'and the torch still takes it too');
   assert.deepEqual(MATERIAL.shade, { mode: 4, alpha: 0.6 });

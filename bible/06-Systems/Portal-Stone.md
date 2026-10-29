@@ -274,7 +274,7 @@ Bay jumped; 1800,600 said the refusal, jumped nowhere and left the screen at ful
 zone's own verdict (its into-and-out-of law stays PVPDUNGEONS', `wildTeleportRefused`; the Veil's stays the Veil's), and
 `wildTravelGate` takes the law as its third argument - a journey's (`pastBayJourney`) unless the caller is a teleport.
 teleportTo and Recall hand `teleportJourney`; fast travel, a party's journey to its leader, a rider's in a wagon and the
-Overworld keep TESA-NO-FAST's refusal unchanged. The stone's host asks ONE gate (`portalStoneHost.js` teleportRefused -
+Overworld pass since TRAVEL-EVERYWHERE. The stone's host asks ONE gate (`portalStoneHost.js` teleportRefused -
 teleportTo's own three, in its order) where a refusal still costs nothing: at the pick, before a stone is spent, and at
 the step, BEFORE the black - said, and the screen never blacked. teleportTo answers whether it arrived, and an arrival
 that does not come (the world moved on between the step and the teleport) lifts the black. A stone's portal to a city past
@@ -296,9 +296,9 @@ Asked, after PORTAL-BAY, whether the stone should reach any point past the Bay (
 bay"*), the owner chose: *"Anywhere on land"*. And for how: *"No band aids for any of this."*
 
 **A departure from TESA-NO-FAST, for the Portal Stone alone** (`01-Overview/Port-Ledger.md`, PORTAL-ANYWHERE). TESA13 kept a
-portal's ends past the Bay to the cities; the stone's map now picks any land there. The guild's teleport map keeps TESA13
-(its picks the cities), the travel map and every journey keep TESA-NO-FAST (no journey past the Bay - P4's gate,
-unchanged), and the Bay's own map is the Bay's (its places are the stone's picks there; a bare pixel of the Bay's
+portal's ends past the Bay to the cities; the stone's map now picks any land there. The guild's teleport map picks no
+bare land (TRAVEL-EVERYWHERE, 2026-10-28: any place past the Bay, as a Bay place is), every journey past the Bay is a Bay
+journey since TRAVEL-EVERYWHERE retired TESA-NO-FAST (`03-World/Arena-Provinces.md`), and the Bay's own map is the Bay's (its places are the stone's picks there; a bare pixel of the Bay's
 wilderness is not one).
 
 - **The pick** (`ui/heldMap.js` `_pickAt`): the stone's door builds its map with `portalLandPastBay`

@@ -434,8 +434,8 @@
   {
     "name": "MA-P7-the-card-keeps-its-listener",
     "file": "src/ui/enhanced/enhancedAccount.js",
-    "old": "    off = () => win.removeEventListener('focus', onFocus);",
-    "new": "    off = () => {};",
+    "old": "    off = () => { win.removeEventListener('focus', onFocus); charSlots.dispose(); };",
+    "new": "    off = () => { charSlots.dispose(); };",
     "tests": [
       "test/systems/memaudit.test.js"
     ]

@@ -1523,7 +1523,7 @@ client completely freezes for about 5-10 seconds".*
 **Found.** The aura pass (`render/auraRing.js`) was built in play at its first use, outside SHADER-STALL's door.
 `drawAuras` made it the first frame a wearer stood within `AURA_RANGE_M` of the eye, and its constructor's
 `buildProgram` read the link, which waits for the whole compile. Its one program carries every look: 81 KB of fragment
-shader, 1,158 lines, 19 loops. The travel view draws no aura (`world.js:"if (!online || travelView?.active) return;"`),
+shader, 1,158 lines, 19 loops. The travel view draws no aura (`auraHost.js:"if (!online || deps.travelActive()) return;"`),
 so a player who rode the Overworld to a crowd met the build on the frame the view came down. A crowd at a Breach nearly
 always holds a wearer. The pass was tried once a page, and Chromium's shader cache answers a source it has compiled
 before (57 ms on a reload), so the freeze came once, on the first session after a change to the aura's shaders.
@@ -1536,7 +1536,7 @@ before (57 ms on a reload), so the freeze came once, on the first session after 
 - The world builds the pass through `compiledPass` and never asks it as needed. An aura is cosmetic, so a wearer stands
   without it while its program compiles. The capes' pose and swing are stepped meanwhile. Without the extension, the
   pass is built at its first wearer as before. SUPERSEDED in part at AURA-SPLIT: the world's door
-  (`world.js:"const auraPassOf = compiledPass(renderer.gl, [],"`) waits on no program, and each look's waits at its own.
+  (`auraHost.js:"const auraPassOf = compiledPass(renderer.gl, [],"`) waits on no program, and each look's waits at its own.
 
 bootWorld lost 3 logical lines (its ceiling 36,256 -> 36,253, `test/scenes/hostceiling.test.js`; 36,287 -> 36,284 at the
 merge of main past STAFF-PANEL5's wiring).
@@ -1589,7 +1589,7 @@ the one program that every player's shader cache keyed.
   frame; the capes' pose and swing are stepped meanwhile.
 - The wearers are drawn farthest first, as before. A look's program is bound again only where the look changes, and is
   handed the draw's camera, clock and fog once a draw (`_bind`).
-- The world's door waits on no program (`world.js:"const auraPassOf = compiledPass(renderer.gl, [],"`): it builds the
+- The world's door waits on no program (`auraHost.js:"const auraPassOf = compiledPass(renderer.gl, [],"`): it builds the
   pass at the first wearer in range, and a throw costs the auras, never the game.
 - Without `KHR_parallel_shader_compile`, each look is built at its first draw and waits for that look's compile alone.
 

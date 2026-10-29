@@ -140,7 +140,8 @@ stand her - as a spent packet (AUDIT BAY A18).
 
 START2 (2026-10-24, `06-Systems/Alternate-Starts-Arc.md` section 10): A PROVINCE'S COMMISSION IS THE CROWN'S WRIT OF
 PASSAGE TO DAGGERFALL. The commission a province's start ends with sends its bearer to the city of Daggerfall from as far
-as Black Marsh, and TESA-NO-FAST leaves a journey past the Bay walked or sailed; its letter says the rest: "This letter is
+as Black Marsh (written under TESA-NO-FAST, which left a journey past the Bay walked or sailed; retired by
+TRAVEL-EVERYWHERE, 2026-10-28); its letter says the rest: "This letter is
 Our writ of passage. Any master in a harbor of the Empire will carry you to Daggerfall at Our expense." Her master's list
 (`passageHost.js` offer) asks the world's `writ(port)` (`scenes/startsHost.js` writ) of each port: the city of Daggerfall
 - by its name and its region, never a namesake - while a start's quest runs with its seal broken (AUDIT STARTS: the seal

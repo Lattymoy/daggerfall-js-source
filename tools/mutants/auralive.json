@@ -73,17 +73,17 @@
   },
   {
     "name": "AURALIVE-the-host-never-asks",
-    "file": "src/scenes/world.js",
-    "old": "mine !== _auraHeard && online.rehello?.()",
-    "new": "mine !== _auraHeard && false",
+    "file": "src/scenes/auraHost.js",
+    "old": "if (online.rehello?.()) { auraHeard = mine; armoryHeard = kit; }",
+    "new": "if (false) { auraHeard = mine; armoryHeard = kit; }",
     "tests": [
       "test/net/auralive.test.js"
     ]
   },
   {
     "name": "AURALIVE-the-mint-unheard",
-    "file": "src/scenes/world.js",
-    "old": "if (who && 'aura' in who) _auraHeard = who.aura ?? null;",
+    "file": "src/scenes/auraHost.js",
+    "old": "      if (who && 'aura' in who) auraHeard = who.aura ?? null;\n",
     "new": "",
     "tests": [
       "test/net/auralive.test.js"
@@ -100,9 +100,9 @@
   },
   {
     "name": "AURALIVE-the-pool-forgets-at-once",
-    "file": "src/scenes/world.js",
-    "old": "if (t - w.seen > AURA_FORGET_S) _auraPool.delete(id);",
-    "new": "if (w.seen !== t) _auraPool.delete(id);",
+    "file": "src/scenes/auraHost.js",
+    "old": "if (t - w.seen > AURA_FORGET_S) pool.delete(id);",
+    "new": "if (w.seen !== t) pool.delete(id);",
     "tests": [
       "test/net/auralive.test.js"
     ]

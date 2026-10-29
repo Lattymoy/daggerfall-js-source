@@ -22,7 +22,7 @@ import { checkLocationDiscovered as travelCheckDiscovered } from '../ui/travel/t
 import { locationSummaryAt as travelLocationSummaryAt } from '../systems/map/mapDirectory.js';
 import { wildHallAt } from '../systems/wild/wildDungeons.js';
 import { settlementPixels, TV_FAR_RANGE, TV_FAR_TYPES } from '../systems/travel/travelFarPlaces.js';   // BAY-LEFT-MAPS: TV5's towns
-import { pastBayPlacesIn } from '../world/pastBayPlaces.js';   // BAY-LEFT-MAPS: the countryside the roads' regions laid
+import { pastBayPlacesIn, setPastBayPlaceLaw } from '../world/pastBayPlaces.js';   // BAY-LEFT-MAPS: the countryside the roads' regions laid; TRAVEL-EVERYWHERE: the law the held map asks
 import { isCapitalPlaceId } from '../world/capitalLane.js';   // BAY-LEFT-MAPS: a capital once, by its centre
 import { MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from '../formats/mapsTables.js';   // BAY-LEFT-MAPS: the Bay's pixel ids, under its 1000 x 500
 import { locationWorldRect } from '../world/streamingWorld.js';   // BAY-LEFT-MAPS: a pending place's rect, off its row's grid
@@ -156,5 +156,6 @@ export function createMapPlaces(host) {
     const s = tvPlaceSummary(x, y);
     return s ? { locationType: s.locationType ?? s.loc?.mapTableData?.locationType, mapId: s.mapId, discovered: true } : null;
   };
+  setPastBayPlaceLaw(tvPlaceSummary);   // TRAVEL-EVERYWHERE: the held map's places past the Bay are this law's (world/pastBayPlaces.js)
   return { carriageTown, tvEtherPlace, tvKnownGen, tvPlaceSummary, tvFarSettlements, junctionPlaceAt };
 }

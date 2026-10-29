@@ -5,7 +5,7 @@
 // its own hosted page, so no card number ever reaches this service, and Stripe's signed word on a payment is the one
 // thing that grants: the ware's bit on the row and a receipt in the mailbox, in one batch.
 // Off until the deploy puts both Stripe secrets (shopOn) - the window then shows the wares with nothing to buy.
-import { SHOP_WARES, SHOP_CURRENCY, SHOP_WARE_NAME, SHOP_KIND_NAME, SHOP_ORDER_ID_RE, shopWareById, shopHeldOf, shopOnSaleOf, shopPriceText, shopReceiptBatch } from '../../src/net/shopLaw.js';
+import { SHOP_WARES, SHOP_CURRENCY, SHOP_WARE_NAME, SHOP_KIND_NAME, SHOP_ORDER_ID_RE, shopWareById, shopOwns, shopOnSaleOf, shopPriceText, shopReceiptBatch } from '../../src/net/shopLaw.js';
 import { POST_SENDER } from '../../src/net/postLaw.js';
 import { sealKey, sealUnder, openWith } from './sealed.js';
 import { patreonPage, patreonHtml } from './patreon.js';
@@ -69,11 +69,11 @@ export const wareLine = (/** @type {any} */ w) => `${SHOP_WARE_NAME[/** @type {k
  */
 export async function shopCardOf(/** @type {any} */ player, /** @type {any} */ env, { subtle, rand, nowS, origin }) {
   const on = shopOn(env);
-  const sale = shopOnSale(env), held = shopHeldOf(player?.shop_wares);
+  const sale = shopOnSale(env);
   const wares = [];
   let key = null;   // derived once a read, at its first Buy link - every account read asks this
   for (const w of SHOP_WARES) {
-    const isHeld = registered(player) && held.includes(w.id), onSale = sale.includes(w.id);
+    const isHeld = registered(player) && shopOwns(player?.shop_wares, w.id), onSale = sale.includes(w.id);   // ARMORY: a set's pieces, or the set's through its pieces
     if (on && onSale && !isHeld && registered(player)) key ??= await sealKey(subtle, String(env.STRIPE_SECRET_KEY), SEAL_SALT, 'buy');
     const buy = key && onSale && !isHeld
       ? `${origin}${SHOP_BUY_PATH}?t=${await sealUnder(key, { p: player.id, w: w.id, x: nowS + SHOP_TICKET_S }, { subtle, rand })}`
@@ -199,7 +199,7 @@ export async function shopCheckout(ctx, env, claims, { fetch, origin }) {
   if (!shopOnSale(env).includes(ware.id)) return { page: 'sold' };
   const player = await db.prepare('SELECT id, handle, shop_wares FROM players WHERE id = ?1').bind(claims.p).first();
   if (!registered(player)) return { page: 'account' };
-  if (shopHeldOf(player.shop_wares).includes(ware.id)) return { page: 'held' };
+  if (shopOwns(player.shop_wares, ware.id)) return { page: 'held' };
   const open = await db.prepare("SELECT stripe_url FROM shop_orders WHERE player = ?1 AND ware = ?2 AND status = 'open' AND expires_at > ?3 AND stripe_url IS NOT NULL ORDER BY created_at DESC LIMIT 1")
     .bind(player.id, ware.id, nowS + 60).first();
   if (open?.stripe_url) return { url: open.stripe_url };
@@ -435,7 +435,7 @@ export async function shopDoor(ctx, env, path, { method, url, bytes, signature, 
     if (!shopOnSale(env).includes(ware.id)) return shopHtml(SHOP_PAGES.sold, 410);
     const player = await ctx.db.prepare('SELECT id, handle, shop_wares FROM players WHERE id = ?1').bind(claims.p).first();
     if (!registered(player)) return shopHtml(SHOP_PAGES.account, 403);
-    if (shopHeldOf(player.shop_wares).includes(ware.id)) return shopHtml(SHOP_PAGES.held, 409);
+    if (shopOwns(player.shop_wares, ware.id)) return shopHtml(SHOP_PAGES.held, 409);
     return shopHtml(shopConfirmPage({ handle: player.handle, ware, ticket }));   // NOTHING IS WRITTEN on a GET
   }
   if (method !== 'POST') return { json: { error: 'method' }, status: 405 };

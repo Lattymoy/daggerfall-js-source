@@ -13,8 +13,8 @@
 // journey's walked line lay off the painted road, where the plan's own steps were 97 to 100 per cent road (VOYAGER's
 // OPEN (1) named it; curveApex was never wired).
 //
-// THE LAW: a route's pixel past the Bay that it turns in, on one road (or one track) in and out, is walked on the curve
-// its byte draws between the two edges it crosses - the leg that ends there ends at the curve's middle (its apex, on the
+// THE LAW: a route's pixel past the Bay that it turns in, by a road or a track in and out, is walked on the curve a
+// byte draws between the two edges it crosses (ROAD-SMOOTH: the road's or the track's) - the leg ends at its apex (on the
 // road) and the leg after it starts there and walks the curve's second half before its straight run. A pair the byte
 // draws no curve for (a T's stem met square, a turn at a junction sharper than 45 degrees) is walked through the middle,
 // as the painter draws it there; a way straight through, the Bay's pixels and the route's two ends are the middles they
@@ -30,6 +30,8 @@ import { MP_WORLD_UNITS } from '../../world/road/pathData.js';
 /** A tile's native units (a pixel's 32768 over its 128 tiles). */
 const TILE_UNITS = MP_WORLD_UNITS / CURVE_DIM;
 const MID = CURVE_DIM / 2;
+/** The kinds of ground a byte paints a way on. */
+const PAINTED = Object.freeze(['road', 'track']);
 /** The bit of the step (dx, dy) out of a pixel (map y south). */
 const BIT_OF = new Map(DIR_DELTA.map(([bit, dx, dy]) => [`${dx},${dy}`, bit]));
 /** Each bit's edge point in a pixel's tile frame (x east, y north) - roadCurves.js's own EXIT. */
@@ -68,23 +70,27 @@ export const nativeOfTile = (px, py, tx, ty) => /** @type {[number, number]} */ 
 
 /**
  * THE CURVE A ROUTE WALKS THROUGH ITS PIXEL `i` (not its first or last), native: the painted curve between the edges it
- * comes in and goes out by, where the pixel is past the Bay and the steps in and out are one road's (or one track's) -
- * else null (the lane's middle is on the painted road there).
+ * comes in and goes out by, where the pixel is past the Bay and the steps in and out are a road's or a track's (ROAD-SMOOTH:
+ * either kind's paint) - else null (the lane's middle is on the painted road there, or no curve runs through).
  * @param {{x:number,y:number}[]} pixels @param {string[]} kinds @param {number} i
  * @param {{ byteAt?: (kind: string, x: number, y: number) => number, past?: (x: number, y: number) => boolean }} [o]
  * @returns {Array<[number, number]>|null}
  */
 export function routeCurveAt(pixels, kinds, i, { byteAt = arenaRoadByte, past = (x, y) => !inBay(x, y) } = {}) {
   if (i <= 0 || i >= pixels.length - 1) return null;
-  const kind = kinds[i - 1];
-  if (kind !== kinds[i] || (kind !== 'road' && kind !== 'track')) return null;
+  const a = kinds[i - 1], b = kinds[i];
+  if (!PAINTED.includes(a) || !PAINTED.includes(b)) return null;
   const p = pixels[i];
   if (!past(p.x, p.y)) return null;
   const inBit = stepBit(p, pixels[i - 1]), outBit = stepBit(p, pixels[i + 1]);
-  const bits = byteAt(kind === 'road' ? 'roads' : 'tracks', p.x, p.y);
-  if (!(bits & inBit) || !(bits & outBit)) return null;
-  const tiles = curveThrough(bits, inBit, outBit);
-  return tiles ? tiles.map(([tx, ty]) => nativeOfTile(p.x, p.y, tx, ty)) : null;
+  // ROAD-SMOOTH: the curve either kind paints through the two edges - the step in's kind first, then the other's: a route
+  // that steps off a road onto a track (or back) where one is painted through both walks it, not the middle off both
+  for (const kind of new Set([a, b, a === 'road' ? 'track' : 'road'])) {
+    const bits = byteAt(kind === 'road' ? 'roads' : 'tracks', p.x, p.y);
+    const tiles = bits & inBit && bits & outBit ? curveThrough(bits, inBit, outBit) : null;
+    if (tiles) return tiles.map(([tx, ty]) => nativeOfTile(p.x, p.y, tx, ty));
+  }
+  return null;
 }
 
 /**

@@ -242,6 +242,12 @@ import '../../systems/featureLanes.js';   // FT18: the wind, the quick slots and
 import { AccountFlow } from '../accountFlow.js';
 import { accountCard } from './enhancedAccount.js';
 import { skinCard } from '../skinCard.js';   // DISC23-B2: the skin, on the profile
+import { startCharacterStage } from '../../render/characterStage.js';   // PROFILE-SLOTS: the character on its stage, on the profile
+import { profileBodies } from '../profileBody.js';   // PROFILE-SLOTS: its Morrowind body in a game, its sprite everywhere
+import { wardrobeEntry } from '../collections/wardrobeCatalogue.js';   // PROFILE-SLOTS: how a piece not held is had
+import { injectNameStyle } from '../nameLayer.js';   // PROFILE-SLOTS: the world's name sheet, for the plate over the stage's head
+import { NAME_GAP_PX } from '../../net/remotePlayers.js';   // PROFILE-SLOTS: and the world's clearance under it
+import { outfitOfSlots, outfitOfItems } from '../../player/eyeOfTheBeholder/layeredArmor.js';   // PROFILE-SLOTS: the armour a sprite in Layered Gearing wears
 import { saveTile, cloudStateOf, saveFromCard, newerBackup } from '../saveTile.js';   // TILE1 (Mac: "a detailed tile based design for your saves... showing your portrait and character information"), and ACC2c's card-shaped save
 import { loadFace } from '../facePortrait.js';
 import { timersMark, timersWindow, anchorBeside } from './enhancedTimers.js';   // TIMERS1: the hourglass beside the profile mark, and its window
@@ -564,6 +570,8 @@ let realmLineIds = null;
 let realmLinesAsked = false;
 export function takePickedSaveName() { const n = _pickedSaveName; _pickedSaveName = null; return n; }
 
+/** PROFILE-SLOTS: a save's worn armour as an outfit code (layeredArmor.js outfitOfItems), or null for none it can read. */
+const outfitOf = (items) => { try { return Array.isArray(items) ? outfitOfItems(items) : null; } catch { return null; } };
 /** One slot as the cards draw it: the character's line and numbers, and the slot's own name. */
 function saveOf(entry) {
   const snap = entry.snap;
@@ -582,6 +590,7 @@ function saveOf(entry) {
     race: typeof snap.race === 'string' ? snap.race : null,
     gender: snap.gender === 'female' ? 'female' : 'male',
     faceIndex: Number.isInteger(snap.faceIndex) ? snap.faceIndex : 0,
+    outfit: outfitOf(snap.items),   // PROFILE-SLOTS: the armour the profile's sprite wears in Layered Gearing
     career: snap.career?.name ?? null,
     level: snap.level ?? null,
     health: snap.health, maxHealth: snap.maxHealth,
@@ -1194,11 +1203,14 @@ function accountBody() {
   if (fresh) acctFlow = newAccountFlow(() => acctPaint?.());
   // PROFILE-MENU: the card's plate wears the corner mark's portrait and says whose face it is - the same character
   // the mark shows (profileCharacter), its face asked for as a COPY (the mark and a save tile may draw this very face)
+  injectNameStyle(document);   // PROFILE-SLOTS: the plate over the character's stage wears the world's name sheet
   const save = profileCharacter();
   const card = accountCard(document, acctFlow, {
     onClose: closeAccount,
     face: save ? loadFace(save, { scale: 2, copy: true }) : null,
     character: save ? `Playing ${characterLine(save)}` : null,
+    // PROFILE-SLOTS: the character the card is about, as the world draws it - its Morrowind body where one stands (paused)
+    slots: { start: startCharacterStage, bodies: profileBodies({ arm: mode === 'pause' ? fpArm : null, who: () => bodyWho(save) }), entryOf: wardrobeEntry, gap: NAME_GAP_PX },
   });
   acctPaint = card.paint;
   acctOff?.(); acctOff = card.off ?? null;
@@ -1209,6 +1221,17 @@ function accountBody() {
   // AUDIT RECOVERY-SET B1: asked once per window, not once per render.
   if (fresh) Promise.resolve(acctFlow.start()).catch(() => {});
   return host;
+}
+
+/** PROFILE-SLOTS: the body and armour the profile's sprite is drawn in - the character played, paused; the save's, at
+ *  the door (its items' worn pieces). */
+function bodyWho(save) {
+  if (mode === 'pause' && playerEntity?.race) {
+    let slots = null;
+    try { slots = equipTableOf(playerEntity); } catch { slots = null; }
+    return { gender: playerEntity.gender, outfit: outfitOfSlots(slots) };
+  }
+  return save ? { gender: save.gender, outfit: save.outfit ?? null } : null;
 }
 
 /** Is there a session on this device? A storage read, no network - so

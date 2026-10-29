@@ -1,0 +1,562 @@
+[
+  {
+    "name": "ARMORY-an-empty-kit-a-claim",
+    "file": "src/net/armoryLaw.js",
+    "old": "    any = true;\n  }\n  return any;",
+    "new": "    any = true;\n  }\n  return true;",
+    "tests": [
+      "test/render/armory.test.js",
+      "test/server/armory_service.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-kit-of-any-length",
+    "file": "src/net/armoryLaw.js",
+    "old": "kit.length !== ARMORY_SLOTS.length) return false;",
+    "new": "kit.length < ARMORY_SLOTS.length) return false;",
+    "tests": [
+      "test/render/armory.test.js",
+      "test/server/armory_service.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-slot-changed-beside-the-one-asked",
+    "file": "src/net/armoryLaw.js",
+    "old": "(p ? p.code : ARMORY_EMPTY) + base.slice(i + 1);",
+    "new": "(p ? p.code : ARMORY_EMPTY) + ARMORY_EMPTY.repeat(ARMORY_SLOTS.length - i - 1);",
+    "tests": [
+      "test/render/armory.test.js",
+      "test/server/armory_service.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-piece-no-longer-held-signed",
+    "file": "src/net/armoryLaw.js",
+    "old": ".filter((k) => k && held.includes(k)));",
+    "new": ".filter((k) => k));",
+    "tests": [
+      "test/render/armory.test.js",
+      "test/server/armory_service.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-any-string-badged",
+    "file": "src/net/wire.js",
+    "old": "if (armoryKitOk(from?.ak)) row.ak = from.ak;",
+    "new": "if (from?.ak) row.ak = from.ak;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-token-kit-unchecked",
+    "file": "src/net/identityToken.js",
+    "old": "if (c.ak !== undefined && !armoryKitOk(c.ak)) return false;",
+    "new": "",
+    "tests": [
+      "test/net/identitytoken.test.js",
+      "test/server/armory_service.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-piece-not-held-worn",
+    "file": "server-account/src/titles.js",
+    "old": "return armoryHeld(player).includes(p.key) ? null : 'armory-not-held';",
+    "new": "return null;",
+    "tests": [
+      "test/server/armory_service.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-piece-in-another-slot-worn",
+    "file": "server-account/src/titles.js",
+    "old": "if (!p || p.slot !== slot) return 'no-piece';",
+    "new": "if (!p) return 'no-piece';",
+    "tests": [
+      "test/server/armory_service.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-staff-taken-for-the-head",
+    "file": "src/render/armoryPose.js",
+    "old": "first = runAt(r0, headMin);",
+    "new": "first = runAt(r0);",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-sprites-forearm-measured",
+    "file": "src/render/armoryPose.js",
+    "old": "out.card = true; out.limbs = 'upper';",
+    "new": "out.card = true; out.limbs = 'full';",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-yaw-unturned",
+    "file": "src/render/armoryPose.js",
+    "old": "o[o3] = at[0] + c * p[i] + s * p[i + 2]",
+    "new": "o[o3] = at[0] + p[i]",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-riders-greaves-drawn",
+    "file": "src/render/armoryPass.js",
+    "old": "if (w.mounted && slot === 'legs') return out;",
+    "new": "",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-sunk-chest-drawn",
+    "file": "src/render/armoryPass.js",
+    "old": "if (pose.sunk && slot !== 'head') return out;",
+    "new": "",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-forearm-drawn-on-a-card",
+    "file": "src/render/armoryPass.js",
+    "old": "        if (full) tube(0, el, wa, 0.054, 0.046);",
+    "new": "        tube(0, el, wa, 0.054, 0.046);",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-wearer-past-range-drawn",
+    "file": "src/render/armoryPass.js",
+    "old": "if (w._d <= ARMORY_RANGE_M) out.push(w);",
+    "new": "out.push(w);",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-trail-never-written",
+    "file": "src/render/armoryPass.js",
+    "old": "trail[slot * 4 + 2] = p[2]; trail[slot * 4 + 3] = t;",
+    "new": "trail[slot * 4 + 2] = p[2];",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-my-head-under-my-crown",
+    "file": "src/render/armoryPass.js",
+    "old": "if (!(kindle > 0) || w.atHead) continue;",
+    "new": "if (!(kindle > 0)) continue;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-beast-dressed",
+    "file": "src/render/armoryPass.js",
+    "old": "w.kindle : 1)) * (w.torn >= 0 ? 0 : 1);",
+    "new": "w.kindle : 1));",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-depth-left-unwritten",
+    "file": "src/render/armoryPass.js",
+    "old": "      gl.enable(gl.CULL_FACE);\n      gl.depthMask(true);",
+    "new": "      gl.enable(gl.CULL_FACE);",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-kit-never-said-again",
+    "file": "src/scenes/auraHost.js",
+    "old": " || (armoryHeard !== undefined && kit !== armoryHeard)) {",
+    "new": ") {",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-piece-over-the-element",
+    "file": "src/systems/weaponGlow.js",
+    "old": "  if (i >= 0) return glowSpec(PROC_ELEMENTS[i], glowLevel(_total));\n  const worn = armoryWeaponLook();",
+    "new": "  const worn = armoryWeaponLook();\n  if (worn) return glowSpec(worn, ARMORY_LEVEL);\n  if (i >= 0) return glowSpec(PROC_ELEMENTS[i], glowLevel(_total));",
+    "tests": [
+      "test/systems/weaponglow1.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-arcane-over-the-piece",
+    "file": "src/systems/weaponGlow.js",
+    "old": "  if (worn) return glowSpec(worn, ARMORY_LEVEL);\n  return arcane",
+    "new": "  if (worn && !(arcane && isEnchanted(item))) return glowSpec(worn, ARMORY_LEVEL);\n  return arcane",
+    "tests": [
+      "test/systems/weaponglow1.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-edge-read-as-the-brand",
+    "file": "src/systems/weaponGlow.js",
+    "old": "ARMORY_GLOW = Object.freeze({ breachbrand: 'brand', eternaledge: 'edge' });",
+    "new": "ARMORY_GLOW = Object.freeze({ breachbrand: 'brand', eternaledge: 'brand' });",
+    "tests": [
+      "test/systems/weaponglow1.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-left-out-of-the-boot",
+    "file": "src/render/playPrograms.js",
+    "old": ", ...ARMORY_PROGRAMS, ...FIRE_PROGRAMS",
+    "new": ", ...FIRE_PROGRAMS",
+    "tests": [
+      "test/render/auditshaderstall.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-peers-morrowind-bones-unread",
+    "file": "src/scenes/auraHost.js",
+    "old": "if (body && poseFromBones(body.bones, w.pose)) {",
+    "new": "if (body && poseFromBones(body, w.pose)) {",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-peers-body-stood-where-the-pose-is",
+    "file": "src/scenes/auraHost.js",
+    "old": "if (body.feet && Number.isFinite(body.yaw)) { w.at[0] = body.feet[0];",
+    "new": "if (false) { w.at[0] = body.feet[0];",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-sigils-back-inside-the-torso",
+    "file": "src/render/armoryPass.js",
+    "old": "-(pose.card ? 0.24 : 0.27) * s)",
+    "new": "-(pose.card ? 0.24 : 0.2) * s)",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-band-under-the-blade",
+    "file": "src/render/weaponPiecePreview.js",
+    "old": "    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);\n",
+    "new": "",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-body-kit-on-the-blades-stage",
+    "file": "src/systems/weaponGlow.js",
+    "old": ".every(([s, k]) => s === 'weapon' || !k)",
+    "new": ".every(() => true)",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-arrival-in-english",
+    "file": "src/ui/accountFlow.js",
+    "old": "String(self.shopWaiting).startsWith('armory:') ? armoryPieceName(String(self.shopWaiting).slice(7)) : ",
+    "new": "",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-broker-price-cut",
+    "file": "src/net/insignia.js",
+    "old": "export const ARMORY_BROKER_PRICE = 75;",
+    "new": "export const ARMORY_BROKER_PRICE = 25;",
+    "tests": [
+      "test/server/armory_service.test.js",
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-an-eternal-piece-at-the-broker",
+    "file": "src/net/insignia.js",
+    "old": "...ARMORY_PIECES.filter((p) => p.source === 'broker').map(",
+    "new": "...ARMORY_PIECES.map(",
+    "tests": [
+      "test/server/armory_service.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-broker-piece-never-held",
+    "file": "server-account/src/titles.js",
+    "old": "insigniaKeys(player?.insignia, 'armory')",
+    "new": "insigniaKeys(player?.insignia, 'aura')",
+    "tests": [
+      "test/server/armory_service.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-set-priced-as-the-singles",
+    "file": "src/net/shopLaw.js",
+    "old": "ware('armory', 'eternalset', 2000, 256)",
+    "new": "ware('armory', 'eternalset', 3000, 256)",
+    "tests": [
+      "test/server/armory_service.test.js",
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-set-giving-one-piece",
+    "file": "src/net/armoryLaw.js",
+    "old": "(ARMORY_SETS[/** @type {keyof typeof ARMORY_SETS} */ (key)]).map((p) => p.key)",
+    "new": "(ARMORY_SETS[/** @type {keyof typeof ARMORY_SETS} */ (key)]).slice(0, 1).map((p) => p.key)",
+    "tests": [
+      "test/server/armory_service.test.js",
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-set-holding-nothing",
+    "file": "src/net/shopLaw.js",
+    "old": "(kind === 'armory' ? armoryWarePieces(w.key) : [w.key])",
+    "new": "[w.key]",
+    "tests": [
+      "test/server/armory_service.test.js",
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-single-sold-over-the-set",
+    "file": "src/net/shopLaw.js",
+    "old": "return gives.length > 0 && gives.every(",
+    "new": "return gives.length > 1 && gives.every(",
+    "tests": [
+      "test/server/armory_service.test.js",
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-four-singles-the-set",
+    "file": "src/net/shopLaw.js",
+    "old": "gives.every((k) => shopKeysOf(bits, 'armory').includes(k))",
+    "new": "gives.some((k) => shopKeysOf(bits, 'armory').includes(k))",
+    "tests": [
+      "test/server/armory_service.test.js",
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-kit-worn-with-a-piece-not-held",
+    "file": "server-account/src/accounts.js",
+    "old": "const why = key ? armoryRefusal(slot, key, player) : null;",
+    "new": "const why = key && slot === 'head' ? armoryRefusal(slot, key, player) : null;",
+    "tests": [
+      "test/server/armory_service.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-kit-of-no-piece-worn",
+    "file": "server-account/src/accounts.js",
+    "old": "if (kit !== null && !armoryKitOk(kit)) return { error: 'no-piece' };",
+    "new": "",
+    "tests": [
+      "test/server/armory_service.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-broker-piece-worn-off-another-slot",
+    "file": "src/scenes/brokerInsignia.js",
+    "old": "armoryKitPieces(ins.armory)[piece.slot] === o.key",
+    "new": "armoryKitPieces(ins.armory).head === o.key",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-broker-piece-sent-to-the-auras-door",
+    "file": "src/scenes/brokerInsignia.js",
+    "old": ": offer.kind === 'armory' ? equipArmory(io, armoryPieceOf(offer.key)?.slot, want) : equipAura(io, want));",
+    "new": ": equipAura(io, want));",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-set-worn-a-piece-at-a-time",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "else if (w.kind === 'armory' && setOf(w)) fl.wearArmoryKit?.(",
+    "new": "else if (false) fl.wearArmoryKit?.(",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-set-worn-with-a-piece-off",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "return armoryWarePieces(w.key).every((k) => kit[",
+    "new": "return armoryWarePieces(w.key).some((k) => kit[",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-shield-taken-for-the-arm",
+    "file": "src/render/armoryPose.js",
+    "old": "      else e += slope;",
+    "new": "      else e = near.hi;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-staff-in-front-the-head",
+    "file": "src/render/armoryPose.js",
+    "old": "      if (thin >= 3) break;\n",
+    "new": "",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-arms-off-the-table-again",
+    "file": "src/render/armoryPose.js",
+    "old": "const arms = mk?.arms;",
+    "new": "const arms = null;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-crowns-tip-at-its-band",
+    "file": "src/render/armoryPass.js",
+    "old": "(C.brow + C.band + C.flame) * s",
+    "new": "(C.brow + C.band) * s",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-halos-motes-left-out",
+    "file": "src/render/armoryPass.js",
+    "old": "(H.orbit * H.r * Math.sqrt(Math.max(0, 1 - axis[1] * axis[1])) + H.bob + H.mote) * s",
+    "new": "0",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-staff-taken-for-a-leg",
+    "file": "src/render/armoryPose.js",
+    "old": "Math.abs((x0 + x1) / 2 - axis) <= bodyOff + 8 * A && !shaft(r, x0, x1))",
+    "new": "Math.abs((x0 + x1) / 2 - axis) <= bodyOff + 8 * A)",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-body-sought-at-the-pictures-middle",
+    "file": "src/render/armoryPose.js",
+    "old": "const axis = legW ? legSum / legW : mid;",
+    "new": "const axis = mid;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-side-views-arms-read",
+    "file": "src/render/armoryPose.js",
+    "old": "export const spriteArmsSeen = (/** @type {number|undefined} */ view) => view !== 2;",
+    "new": "export const spriteArmsSeen = (/** @type {number|undefined} */ view) => true;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-legs-off-the-table-again",
+    "file": "src/render/armoryPose.js",
+    "old": "const legs = mk?.legs;",
+    "new": "const legs = null;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-robe-one-leg",
+    "file": "src/render/armoryPose.js",
+    "old": "return wd >= 2 * legMin + 2 ? [",
+    "new": "return false ? [",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-embers-on-the-middle",
+    "file": "src/render/armoryPass.js",
+    "old": "[0, 0, 0], 0, w.pose.card ? right : null));",
+    "new": "[0, 0, 0], 0, null));",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-peers-embers-off-no-right",
+    "file": "src/scenes/auraHost.js",
+    "old": "peerPose(d.id, w); armoryMotionStep(w, t, right);",
+    "new": "peerPose(d.id, w); armoryMotionStep(w, t);",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-art-unread",
+    "file": "src/render/armoryPose.js",
+    "old": "const A = art > 0 ? art : 1, sc =",
+    "new": "const A = 1, sc =",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-poses-rows-the-pictures-pixels",
+    "file": "src/render/armoryPose.js",
+    "old": "  const art = fig.marks?.art > 0 ? fig.marks.art : 1;   // a record drawn at another scale",
+    "new": "  const art = 1;   // a record drawn at another scale",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-capes-rows-the-pictures-pixels",
+    "file": "src/render/auraRing.js",
+    "old": " * (fig.marks?.art > 0 ? fig.marks.art : 1), at = (px) => fig.base + px * m,",
+    "new": ", at = (px) => fig.base + px * m,",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-world-body-reads-at-the-sets-scale",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "{ arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }",
+    "new": "{ arms: spriteArmsSeen(s.view) }",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-arms-read-at-the-sets-rows",
+    "file": "src/render/armoryPose.js",
+    "old": "rows = at0.map((r) => Math.round(r * A));",
+    "new": "rows = at0;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  }
+]

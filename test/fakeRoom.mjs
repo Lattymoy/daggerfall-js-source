@@ -102,13 +102,14 @@ export function roomSigner(env, now = () => Date.now()) {
     if (who.rc !== undefined) claims.rc = who.rc;   // REALM-DOOR: whether the service found the named character the realm's
     if (who.ci !== undefined) claims.ci = who.ci;   // AUDIT LEGACY III O1: and which realm character it is
     if (who.au !== undefined) claims.au = who.au;   // WB9g: the aura worn
+    if (who.ak !== undefined) claims.ak = who.ak;   // ARMORY: the Aura Armory's kit worn
     if (who.rb !== undefined) claims.rb = who.rb;   // SEASON1 part two: a Season's banner ribbon
     if (who.ar !== undefined) claims.ar = who.ar;   // ARENA4: the season's arena rating the service signed in
     if (who.cl !== undefined) claims.cl = who.cl;   // ARENA4b: the named character's level the service signed in
     if (who.wa !== undefined) claims.wa = who.wa;   // INT7: the realm character's arms the service signed in (beside `rc` 1)
     for (const k of ['hn', 'hc', 'hb', 'hg']) if (who[k] !== undefined) claims[k] = who[k];   // LEGACY7: the realm character's house the service signed in
     if (who.hd !== undefined) claims.hd = who.hd;   // STAFF-PANEL5-HIDDEN: a hidden staff spectator's mark
-    const key = `${claims.s}|${claims.n}|${claims.k}|${claims.t ?? ''}|${(claims.ts ?? []).join('/')}|${(claims.g ?? []).join('+')}|${claims.mu ?? ''}|${claims.fz ?? ''}|${claims.lv ?? ''}|${claims.gi ?? ''}|${claims.gm ?? ''}|${claims.rc ?? ''}|${claims.ci ?? ''}|${claims.au ?? ''}|${(claims.rb ?? []).join('/')}|${claims.ar ?? ''}|${claims.cl ?? ''}|${claims.hn ?? ''}|${claims.hc ?? ''}|${claims.hb ?? ''}|${claims.hg ?? ''}|${claims.hd ?? ''}`;
+    const key = `${claims.s}|${claims.n}|${claims.k}|${claims.t ?? ''}|${(claims.ts ?? []).join('/')}|${(claims.g ?? []).join('+')}|${claims.mu ?? ''}|${claims.fz ?? ''}|${claims.lv ?? ''}|${claims.gi ?? ''}|${claims.gm ?? ''}|${claims.rc ?? ''}|${claims.ci ?? ''}|${claims.au ?? ''}|${claims.ak ?? ''}|${(claims.rb ?? []).join('/')}|${claims.ar ?? ''}|${claims.cl ?? ''}|${claims.hn ?? ''}|${claims.hc ?? ''}|${claims.hb ?? ''}|${claims.hg ?? ''}|${claims.hd ?? ''}`;
     const nowS = Math.floor(now() / 1000);
     const kept = lastI.get(key) ?? { last: undefined, used: new Set() };
     let i = nowS - 1;

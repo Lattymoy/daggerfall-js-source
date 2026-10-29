@@ -336,10 +336,13 @@ test('PR-BOW1b: the wiring, by source - poseAssembly folds through foldPieceBoun
   assert.match(pose, /assembly\.bounds = pieces\.length \? foldPieceBounds\(pieces\) : null;/, 'the one walk');
   const arm = rd('src/combat/fpArm.js');
   const fig = arm.slice(arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {'), arm.indexOf('    status() {'));
-  const flags = fig.indexOf("if (r.slot === 'weapon') r.hidden = false;");
+  // PIN MOVED (PROFILE-SLOTS): the flags are posePortrait's, which figure() runs before it frames
+  const posed = arm.slice(arm.indexOf('  function posePortrait() {'), arm.indexOf('  function portraitModel(yaw) {'));
+  const flags = fig.indexOf('if (!posePortrait()) return null;');
   const frame = fig.indexOf('const win = portraitWindow(thirdMesh.ranges, model, figureBodyBox);');
-  assert.ok(flags > 0 && frame > flags, 'the portrait is framed AFTER it decides what it shows');
-  assert.ok(!/meshBounds\(t\.arm\.pieces\)/.test(fig), 'and never over every piece');
+  assert.ok(posed.includes("if (r.slot === 'weapon') r.hidden = false;"), 'the portrait decides what it shows');
+  assert.ok(flags >= 0 && frame > flags, 'the portrait is framed AFTER it decides what it shows');
+  assert.ok(!/meshBounds\(t\.arm\.pieces\)/.test(fig + posed), 'and never over every piece');
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeon.js']) {
     assert.match(rd(host), /mwViewDrawBody\(canvas, \{ proj, view, eye(: mwv\.eye)?, feet: player\.bodyFeetAt\(\), yaw: player\.bodyYawFor\(cam\.yaw\), viewYaw: cam\.yaw(, face: tvFace)? \}\)/, `${host} draws the body through mwView`);
   }
