@@ -143,7 +143,7 @@ mints, so the room's words are now read through the wire's own law before the ho
 
 A cold lane read the record's law, the made block, the splice, the anchors, the fires, the lab and the four shipped
 records, and measured them on the freeware's data: 2,232 spawned-style clones spliced. Each finding is fixed where it
-began and pinned (`test/world/dlv56_audit.test.js`, `tools/mutants/dlv56.json`, 43 records, every one dead).
+began and pinned (`test/world/dlv56_audit.test.js`, `tools/mutants/dlv56.json`, 47 records, every one dead).
 
 | ID | Sev | Finding | Fix |
 |---|---|---|---|
@@ -157,6 +157,8 @@ began and pinned (`test/world/dlv56_audit.test.js`, `tools/mutants/dlv56.json`, 
 | H8 | Medium | **A chain's head could be dropped** (138 levers, wheels and teleport doors), and a flat drop could take a quest marker or the start marker that carries the water level. | What acts and what an action names are kept; editor markers by name alone; the way in never. |
 | H9 | Minor | The lab judged a 3 m ward by its own law, the game by the large one. | An anchor gives way to a fire or the way in by its own ward's law (8 m and 12 m for 3 m; 12 m and 20 m for 4 m). |
 | H10 | Low | The lab laid its draft as the start, so its base's exit door stood; the bench's spawn laid whole; a base missing crashed unnamed; 51.2 sat in two blocks; an empty `at` field read 0; an added model took a base reference's `DOR`; a mod's block of the base's name was read; two anchors stood 8 m apart; the way in was never asked; a 0 could ship. | Each fixed: never the start; built as the world builds it; named; half-open; refused; its own reference; BLOCKS.BSA's own; one anchor a block; asked; refused. |
+| H11 | Medium | **Found in the real game after the audit** (`tools/delveProbe.mjs --lab`): the lab stood a draft with no spot on its first anchor's heart, so the ward woke at the boot. | The bench reads `?at` alone; the host's `firstFloor` gives the grid's floor nearest the first site, on its storey and a step past every ward (`inWard`). |
+| H12 | Medium | **Found by CI:** a played page imported the lab's panel from `src/tools/`, which AUDIT ANTICHEAT A2's sweep leaves out on the premise that none does; the lab read storage past the seam. | The panel stands with the bench that mounts it (`scenes/delve/delveLab.js`, `delveBench.js` mountLabPanel and labStand); storage through `appStorage`. |
 
 - **NOT A FINDING.** The fire law keeps 12 m from an anchor that a fire or the way in then stands down: a campfire
   fewer in a block whose encounter gave way, never one in a ward.
@@ -172,4 +174,10 @@ of other lists whose code this pass moved, re-aimed by content and run again (`s
 survives on main too (`world/prefabColliders.js`, untouched here) and is left to its own list.
 
 DLV4: `test/net/delve/dlv4_law.test.js`, `test/scenes/delve/dlv4_host.test.js`, `test/render/delvecrystalscale.test.js`;
-`tools/mutants/dlv4.json`, 116 records, every one dead.
+`tools/mutants/dlv4.json`, 119 records, every one dead.
+
+DLV3: `test/net/delve/dlv3_relay.test.js`, `test/scenes/delve/dlv3_online.test.js`, `test/scenes/delve/dlv3_e2e.test.js`,
+`test/tooling/dlv3_probe.test.js`; `tools/mutants/dlv3.json`, 154 records, every one dead.
+
+DLV5 and DLV6: `test/world/dlv5_curated.test.js`, `test/world/dlv6_blocks.test.js`, `test/world/dlv56_audit.test.js`;
+`tools/mutants/dlv5.json`, `dlv6.json` and `dlv56.json`, 45, 28 and 47 records, every one dead.

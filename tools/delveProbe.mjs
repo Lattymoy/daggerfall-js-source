@@ -185,7 +185,9 @@ for (const s of sites) {
     if (!struck) await fail(`site ${s.i}: no swing ever landed on a piece`);
   } else if (s.kind === 'brazier') {
     await at([s.x + 1.8, s.y, s.z]); await frames(4 * 10 + 40);
+    let quiet = Date.now();
     while (!(await state())[s.i].won && Date.now() - t0 < 600_000) {
+      if (Date.now() - quiet > 30_000) { quiet = Date.now(); console.log(`  still: ${JSON.stringify((await state())[s.i])} "${await say()}" at ${JSON.stringify(await page.evaluate(() => window.__player.pos.map((v) => Math.round(v * 10) / 10)))}`); }
       await heal(); await closeWindows(); await killMine();
       const st = (await state())[s.i];
       if (st.p !== 6) { await frames(10); continue; }
@@ -210,7 +212,7 @@ for (const s of sites) {
       console.log(`  weight ${j}: ${(await state())[s.i].wt[j] === 2 ? 'on its plate' : 'NOT set'}`);
     }
     await at(plates[2]);
-    for (let k = 0; k < 30 && !(await state())[s.i].won; k++) await frames(10);
+    for (let k = 0; k < 30 && !(await state())[s.i].won; k++) { await frames(10); if (k % 5 === 4) console.log(`  still: ${JSON.stringify((await state())[s.i])} "${await say()}"`); }
   } else if (s.kind === 'hold' || s.kind === 'vigil') {
     let shotWave = false, quiet = Date.now();
     while (!(await state())[s.i].won && Date.now() - t0 < 900_000) {

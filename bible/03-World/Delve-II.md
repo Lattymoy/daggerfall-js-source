@@ -235,13 +235,14 @@ party's puzzle. Offline the same law runs in the client, its ledger saved with t
   site does (a 4 m ward 12 m and 20 m, a 3 m one 8 m and 12 m); one crowded gives way, and the law finds a site in its
   place. The campfire law stands none within DFIRE.anchorM (12 m) of one (`dungeonFires.js`). A record drops its
   base's own fire within that reach.
-- **THE TOOL.** `delve.html` lists the shipped blocks and the drafts this browser keeps, each by its id, and begins a
-  new one. The bench's lab (`?dungeon=lab`) lays the draft (number 0) with four borders of a real dungeon of its type
-  round it, as the game lays it (never as the start). Its panel sets a model or a flat on the floor at the player's
-  feet (its foot read from the player's data - `scenes/delve/delveBench.js` labFoot), a light over them, a marker, a
-  drop, an anchor or its vault. Rebuild keeps the draft, never one the law refuses, and lays it again with the player
-  where they stood; Check asks the host's `landing`; Export gives the record with every type and its own number. The
-  bench's `?spawn=px,py` builds a named dungeon cloned on a pixel, as the world builds a spawn.
+- **THE TOOL.** `delve.html` lists the shipped blocks and this browser's drafts, each by its id, and begins a new
+  one. The bench's lab (`?dungeon=lab`) lays the draft (number 0) with four borders of a real dungeon of its type round
+  it, as the game lays it (never as the start). Its panel (`scenes/delve/delveLab.js`) sets a model or a flat on the
+  floor at the player's feet (its foot read from the player's data - `delveBench.js` labFoot), a light over them, a
+  marker, a drop, an anchor or its vault. Rebuild keeps the draft, never one the law refuses, and lays it again with
+  the player where they stood - with no spot, a step past the first ward, whose heart would wake it. Check asks the
+  host's `landing`; Export gives the record with every type and its number.
+- **THE BENCH.** `?spawn=px,py` builds a named dungeon cloned on a pixel, as the world builds a spawn.
 - **THE LOOK.** Daggerfall's own models and flats, and code-painted pieces under DF-LOOK (`01-Overview/DF-Art.md`):
   no render of game data ships (Port-Doctrine).
 

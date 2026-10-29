@@ -283,7 +283,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/scenes/arena/` | The Arena: bouts, the ladder, the league (`11-Multiplayer/Arena.md`) - the hosts' wiring. |
 | `src/scenes/comeSailAway/` | Come Sail Away's boats (`03-World/Come-Sail-Away.md`) - the hosts' wiring. |
 | `src/scenes/decor/` | Decorating a home in the hosts: the base, the room, the tool. |
-| `src/scenes/delve/` | DELVE II, the dungeons' encounters (`03-World/Delve-II.md`) - the host the dungeon context wires: the plan, the seven kinds' foes, plates, carried pieces and breakable crystals, their props and marks, and the vault. |
+| `src/scenes/delve/` | DELVE II, the dungeons' encounters (`03-World/Delve-II.md`) - the host the dungeon context wires: the plan, the seven kinds' foes, plates, carried pieces and breakable crystals, their props and marks, and the vault; the bench's own places and the curated blocks' lab (`delveBench.js`, `delveLab.js`). |
 | `src/scenes/deepWater/` | Deep Waters in the hosts: the host, swimming, the player, the fish, encounters, decor and loot. |
 | `src/scenes/eliteGates/` | The Elite Breach (`11-Multiplayer/Elite-Gates.md`, `Elite-Gates-Look.md`, `Elite-Gates-Ascent.md`) - the hosts' wiring: the client, the call and the arch, the fight, the spans, the circle's host and its swap, the look drawn. |
 | `src/scenes/gate/` | The Oblivion Gate, the world boss on the shared clock (`11-Multiplayer/World-Bosses.md`) - the hosts' wiring. |
