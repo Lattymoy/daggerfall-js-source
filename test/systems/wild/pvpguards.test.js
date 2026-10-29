@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { VILLAIN_HUNT, HUNT_ATTACK_SKILLS, HUNT_WEAPON_SKILLS, HUNT_DEFENCE_SKILLS, HUNT_BLOCK_STATS, huntDue, villainMirror, mirrorOnto,
-  hunterTaken, villainHunted, peaceFor } from '../../../src/systems/wild/villainHunt.js';
+  hunterTaken, villainHunted, peaceFor, streetsStrike } from '../../../src/systems/wild/villainHunt.js';
 import { createPvpGuardsHost, PVP_GUARDS_TEXT, PVP_GUARDS_POLL_MS } from '../../../src/scenes/pvpGuardsHost.js';
 import { createCityGuards } from '../../../src/scenes/cityGuards.js';
 import { SKILLS, skillValue } from '../../../src/systems/skills.js';
@@ -183,12 +183,12 @@ test('PVP-GUARDS NO PEACE FOR A VILLAIN (scenes/world.js wildCan, wildFair, the 
     settledAt: (p) => inTown(p), campToWire: (p) => p, player: { feetAt: () => scope.me }, locationIndex: index, modes: { mode: 'exterior', deathUp: () => false },
     playerEntity: { health: 50 }, me: streets, peers: new Map([['red', streets], ['plain', streets], ['out', open]]), red: false,
     wildKin: () => false, social: { isPartyPeer: () => false }, _wildTruce: { holds: () => false }, duelMgr: { live: false }, myGuildTag: () => null,
-    wildAtWire: (p) => !!p, duelWorldOf: (id) => scope.peers.get(id) ?? null, peaceFor, isVillain,
+    wildAtWire: (p) => !!p, duelWorldOf: (id) => scope.peers.get(id) ?? null, peaceFor, isVillain, streetsStrike, zoneSafe: () => false,   // PVP-SAFE-HIT: pvpsafehit.test.js strikes from the streets
     pvpFlag: { fair: () => true, villainy: () => (scope.red ? VILLAIN.red : 100), skullOf: (id) => (id === 'red' ? 'red' : 'white') },
   };
-  const body = `${lineOf('  const wildCan = () =>')}${blockOf('  const wildFair = (peerId) => {')}`;
+  const body = `${lineOf('  const wildCan = (streets = false) =>')}${blockOf('  const wildFair = (peerId) => {')}`;
   const { wildCan, wildFair } = new Function('S', `with (S) { ${body}\n return { wildCan, wildFair }; }`)(scope);
-  assert.equal(wildCan(), false, 'in the streets, no villain: my word is 0');
+  assert.equal(wildCan(), false, 'in the streets, no villain: my word is not 1');
   scope.red = true;
   assert.equal(wildCan(), true, 'a villain in the streets: my word stays 1');
   scope.red = false; scope.me = open;

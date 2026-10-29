@@ -772,7 +772,7 @@ test('INT9 THE CLIENT: a blow rolled on my own sheet and sent as a number; no de
   const w = hostText('src/scenes/world.js'), o = rd('src/net/online.js');
   assert.ok(o.includes('if (primary) this.wildOk = relaySupportsWildRef(relayV);'), 'a relay that referees the zone, or none of it');
   assert.ok(o.includes("} else if (m.t === 'wref') {"));
-  assert.ok(w.includes('online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere() && wildOutdoors(), player.pos, Date.now()));'));   // PIN MOVED (AUDIT FOE-KEEPS E2): and left dying
+  assert.ok(w.includes('online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere() && wildOutdoors(), player.pos, Date.now()));'));   // PIN MOVED (AUDIT FOE-KEEPS E2): and left dying
   assert.ok(w.includes("const n = wildFight.blow(to, 'strike', { by, p: campToWire(player.feetAt()), d: Math.trunc(r.dmg),"));
   assert.ok(!w.includes('resolveDuelStrike(d, playerEntity'), 'the defender resolves nothing');
   assert.ok(w.includes('      forcePlayerDeath(playerEntity);\n'), 'the referee\'s fall, a death');
@@ -902,4 +902,19 @@ test('SHARED-HEALTH (review) THE HUB IS TOLD ONLY WHAT MOVED: a report that chan
   step(300);
   await r.raw(b, JSON.stringify({ t: 'vit', n: 3, s: 4000, seen: [[word.e, word.w]] }));
   assert.equal(puts, 1, 'a loss is kept at the hub');
+}));
+
+test('PVP-SAFE-HIT THE RELAY (server/src/index.js _wildZoneWord, net/wild/wildRef.js wildStreetsBar): a word that I stand in the safe streets (`sf` 1) reaches the referee - no blow lands on me there, mine lands on no one but a villain, and the word without it is the open zone again (mutants: `sf` dropped at the dispatcher; the referee\'s bar unread)', () => withZone(async ({ say, join, step }) => {
+  const a = await join('peer-0001', -1), b = await join('peer-0002', 1, { rc: 1, ci: RC });
+  await say(a, { k: 'zone', z: 1 });
+  await say(b, { k: 'zone', z: 1, sf: 1 });
+  step(300);
+  await say(a, { k: 'strike', to: 'peer-0002', n: 1, by: 'melee', p: W(-1), d: 999 });
+  assert.equal(refs(b, 'hp').length, 0, 'in the streets, no villain: no blow lands on me');
+  await say(b, { k: 'strike', to: 'peer-0001', n: 1, by: 'melee', p: W(1), d: 999 });
+  assert.equal(refs(a, 'hp').length, 0, 'and mine lands on no one but a villain');
+  await say(b, { k: 'zone', z: 1 });
+  step(300);
+  await say(a, { k: 'strike', to: 'peer-0002', n: 2, by: 'melee', p: W(-1), d: 999 });
+  assert.equal(refs(b, 'hp').length, 1, 'out of the streets, the zone\'s blows land');
 }));

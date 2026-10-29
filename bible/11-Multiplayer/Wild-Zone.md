@@ -134,7 +134,7 @@ border east (WILD-KEEPOUT, WILD-KEEPOUT2), read off the map files by `wildMaskOf
 Two players standing in the zone may strike each other - never KIN: a member of my party or one under its truce, my
 duel's opponent, or - MAC'S DECISION (2026-10-14, "Guildmates are friends") - a member of my guild - in the
 open country but never in the streets of a city, a town or a village (ZONE-SAFE, section 26) and, since PVPDUNGEON (2026-10-08, the owner: "players should be able to attack each other in dungeons
-too in the pvp zone"), in its dungeons (`wildCan`, `world.js:"const wildCan = ()"`) - in its dungeons only since
+too in the pvp zone"), in its dungeons (`wildCan`, `world.js:"const wildCan = (streets"`) - in its dungeons only since
 AUDIT FB1018 L3-5 (`01-Overview/audits/Audit-Field-Bugs-2026-10-18.md`): wildFair had asked whether the PEER's pose
 stands in the zone, and a dungeon's pose is the dungeon's own frame, which the map reads as its corner pixel, so every
 peer underground was refused. In a dungeon a room's peer is fair by the place now (the place is the zone: wildCan's
@@ -148,7 +148,7 @@ arms its token signs, the reach from the places the relay believes; the referee'
 a fall. There is no floor - a blow can kill. AUDIT FOE-KEEPS E2 (the owner, 2026-10-24, asked: "Credit the last
 player"): A DEATH THE REFEREE DID NOT SEE - a foe's, a fall's, the sea's - within `WILD_REF.creditMs` (10 s, pinned equal
 to `WILD_KILL_CREDIT_MS`) of a fair player's blow is that player's kill: my own cell's socket says I left the zone dying
-(`zone` 0 with `dd`, `world.js:"online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0,"`) and the relay makes
+(`zone` 0 with `dd`, `world.js:"setWildZone?.(wildCan() ? 1 : wildCan(true)"`) and the relay makes
 the fall as a blow's (`wildRef.js:"export function wildCredit"`, `server/src/index.js:"async _wildCredit(st, a, now)"`) -
 said to the room, signed after the killer's pick or at once where no body is searched, and taken as any kill is. Since
 FOE-KEEPS a death to a foe drops nothing, so a player losing a fight denied its winner everything by dying to a foe, a
@@ -1273,12 +1273,13 @@ town. The open country, the roads, the dungeons (a city's own too) and the zone'
   in the open country, 5,929 of MAPS.BSA's 15,251 rows against the settlements' 3,444, so as towns they would stand a
   refuge on every road. They keep the zone's watch (section 3, ZONE-WATCH). A lair, a graveyard, a coven, a cult's
   shrine and a poor home are neither.
-- MY WORD (`world.js:"const wildCan = () =>"`): outdoors in a settlement's streets I may fight no one, so my word on the
-  zone to the referee is 0 (INT9 - `world.js:"online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0,"`) and
+- MY WORD (`world.js:"const wildCan = (streets"`): outdoors in a settlement's streets I may fight no one, so my word on the
+  zone to the referee is 0 (INT9 - `world.js:"setWildZone?.(wildCan() ? 1 : wildCan(true)"`) and
   the referee, which lands a blow only where both fighters said they stand in the zone
   (`wildRef.js:"export function wildBlow"`), refuses every blow and cast into the streets and out of them. A fighter who steps into the streets is
   away from the zone as the referee reads it: whole again `WILD_REF.riseMs` later. THE RELAY IS UNCHANGED (no wire, no
   relay version): it has no map, and the defender's own word protects the defender (section 22's known limits).
+  Now 2 there: a villain is fair from them (PvP-Rework.md PVP-SAFE-HIT).
 - EVERY DOOR (`world.js:"const wildFair = (peerId) => {"`): no body whose shown pose stands in a settlement's streets is
   fair, so the melee arm, the arrows and the cast engine's marks pass it by; underground the zone fights as it did - a
   body's pose there is the dungeon's own frame, never a street.
