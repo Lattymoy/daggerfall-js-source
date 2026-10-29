@@ -1,0 +1,62 @@
+[
+  {
+    "name": "MARKSPERVIEW-not-inked",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  paintPastBayMarks(ctx, view, past);\n",
+    "new": "",
+    "tests": [
+      "test/ui/marksperview.test.js"
+    ],
+    "why": "MARKS-PER-VIEW: the over part inks the places past the Bay"
+  },
+  {
+    "name": "MARKSPERVIEW-over-the-fog",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  paintPastBayMarks(ctx, view, past);\n  // ZONE-NAMES-OVER: what the window lays over the land and under its names (the open zone's fog and red line - WILD1\n  // had them under the place marks; laid after this layer, the fog's 0.78 hid Cyrodiil's every name)\n  opts.under?.();",
+    "new": "  // ZONE-NAMES-OVER: what the window lays over the land and under its names (the open zone's fog and red line - WILD1\n  // had them under the place marks; laid after this layer, the fog's 0.78 hid Cyrodiil's every name)\n  opts.under?.();\n  paintPastBayMarks(ctx, view, past);",
+    "tests": [
+      "test/ui/marksperview.test.js"
+    ],
+    "why": "MARKS-PER-VIEW: under the open zone's fog, as the road tiles had them"
+  },
+  {
+    "name": "MARKSPERVIEW-continent-unread",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  if (opts.continent) return;\n  const { paperW, paperH } = opts;\n  const pad = MARK_REACH_PX / view.scale;",
+    "new": "  const { paperW, paperH } = opts;\n  const pad = MARK_REACH_PX / view.scale;",
+    "tests": [
+      "test/ui/marksperview.test.js"
+    ],
+    "why": "MARKS-PER-VIEW: none out on the continent"
+  },
+  {
+    "name": "MARKSPERVIEW-no-pad",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  const near = { ox: view.ox - pad, oy: view.oy - pad, scale: view.scale };\n  const marks = tamrielMarksIn(near,",
+    "new": "  const near = { ox: view.ox, oy: view.oy, scale: view.scale };\n  const marks = tamrielMarksIn(near,",
+    "tests": [
+      "test/tesa15_mapfidelity.test.js"
+    ],
+    "why": "MARKS-PER-VIEW: a glyph that reaches in from just outside the view is inked"
+  },
+  {
+    "name": "MARKSPERVIEW-back-in-the-tiles",
+    "file": "src/ui/tamrielInk.js",
+    "old": "    if (band === 'near' && waters) paintBridges(ctx, view, paperW, paperH, waters, filters);   // ROAD-LOOK: and their bridges over the rivers\n  }\n}",
+    "new": "    if (band === 'near' && waters) paintBridges(ctx, view, paperW, paperH, waters, filters);   // ROAD-LOOK: and their bridges over the rivers\n  }\n  paintPastBayMarks(ctx, view, opts);\n}",
+    "tests": [
+      "test/tesa15_mapfidelity.test.js"
+    ],
+    "why": "MARKS-PER-VIEW: the road tiles ink no mark"
+  },
+  {
+    "name": "MARKSPERVIEW-view-word-unread",
+    "file": "src/ui/heldMap.js",
+    "old": "settling ? 1 : 0, viewWord].join('|');",
+    "new": "settling ? 1 : 0].join('|');",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ],
+    "why": "MARKS-PER-VIEW: a place landing in the view repaints the over part"
+  }
+]

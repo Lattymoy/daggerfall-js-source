@@ -119,8 +119,8 @@
   {
     "name": "TESA13-no-halo",
     "file": "src/ui/tamrielInk.js",
-    "old": "        paintGlyph(ctx, marks[i].kind, at[i][0], at[i][1], halo, halo ? undefined : opts.inks?.[marks[i].kind]);",
-    "new": "        if (!halo) paintGlyph(ctx, marks[i].kind, at[i][0], at[i][1], halo, halo ? undefined : opts.inks?.[marks[i].kind]);",
+    "old": "for (let i = 0; i < marks.length; i++) paintGlyph(ctx, marks[i].kind, at[i][0], at[i][1], halo, halo ? undefined : opts.inks?.[marks[i].kind]);",
+    "new": "for (let i = 0; i < marks.length; i++) if (!halo) paintGlyph(ctx, marks[i].kind, at[i][0], at[i][1], halo, halo ? undefined : opts.inks?.[marks[i].kind]);",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "TESA13-no-hue",
     "file": "src/ui/tamrielInk.js",
-    "old": "        paintGlyph(ctx, marks[i].kind, at[i][0], at[i][1], halo, halo ? undefined : opts.inks?.[marks[i].kind]);",
-    "new": "        paintGlyph(ctx, marks[i].kind, at[i][0], at[i][1], halo, undefined);",
+    "old": "for (let i = 0; i < marks.length; i++) paintGlyph(ctx, marks[i].kind, at[i][0], at[i][1], halo, halo ? undefined : opts.inks?.[marks[i].kind]);",
+    "new": "for (let i = 0; i < marks.length; i++) paintGlyph(ctx, marks[i].kind, at[i][0], at[i][1], halo, undefined);",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "TESA13-marks-on-the-continent",
     "file": "src/ui/tamrielInk.js",
-    "old": "  if (!opts.continent) {\n    yield;\n    const pad = MARK_REACH_PX",
-    "new": "  if (true) {\n    yield;\n    const pad = MARK_REACH_PX",
+    "old": "  if (opts.continent) return;\n  const { paperW, paperH } = opts;\n  const pad = MARK_REACH_PX",
+    "new": "  const { paperW, paperH } = opts;\n  const pad = MARK_REACH_PX",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]

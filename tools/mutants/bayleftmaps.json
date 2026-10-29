@@ -672,8 +672,8 @@
   {
     "name": "BLM-C11-the-tiles'-marks-unfiltered",
     "file": "src/ui/tamrielInk.js",
-    "old": "band, filters, portsOnly: !!opts.portsOnly, frame: opts.frame ?? null });",
-    "new": "band, filters, frame: opts.frame ?? null });",
+    "old": "filters: opts.filters ?? {}, portsOnly: !!opts.portsOnly, frame: opts.frame ?? null });",
+    "new": "filters: opts.filters ?? {}, frame: opts.frame ?? null });",
     "tests": [
       "test/ui/bayleft_find.test.js"
     ]

@@ -275,8 +275,8 @@
   {
     "name": "TESA15-a-glyph-cut",
     "file": "src/ui/tamrielInk.js",
-    "old": "    const pad = MARK_REACH_PX / view.scale;",
-    "new": "    const pad = 0;",
+    "old": "  const pad = MARK_REACH_PX / view.scale;",
+    "new": "  const pad = 0;",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa13_mapink.test.js"

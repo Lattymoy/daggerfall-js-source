@@ -1423,7 +1423,10 @@ export class HeldMapWindow {
           paintOver(ctx);
           return;
         }
-        const subKey = [env.view.ox, env.view.oy, env.view.scale, env.band, env.paperW, env.paperH, env.dpr, sheet.staticKey(), settling ? 1 : 0].join('|');
+        // MARKS-PER-VIEW: the over layer inks the places past the Bay - a landing in the view repaints it, one elsewhere
+        // does not (AUDIT TESA II M9)
+        const viewWord = pastBayStamp(env.view.ox, env.view.oy, env.view.ox + env.paperW / env.view.scale, env.view.oy + env.paperH / env.view.scale);
+        const subKey = [env.view.ox, env.view.oy, env.view.scale, env.band, env.paperW, env.paperH, env.dpr, sheet.staticKey(), settling ? 1 : 0, viewWord].join('|');
         if (subKey !== this._sheetLayersKey) {
           this._sheetLayersKey = subKey;
           paintUnder(subs.underCtx);

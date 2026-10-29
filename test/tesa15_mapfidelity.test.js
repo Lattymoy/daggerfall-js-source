@@ -16,7 +16,7 @@ import {
 import {
   resetPastBayPlaces, addPastBayPlaces, pastBayPlacesIn, pastBayPlacesStamp, pastBayPlacesVersion, packPastBayPlaces, unpackPastBayPlaces,
 } from '../src/world/pastBayPlaces.js';
-import { arenaRoadInkAt, arenaRoadsIn, arenaRoadInk, arenaRoadSteps, pastBayStamp, paintPastBay, MARK_REACH_PX, DOTS_BELOW } from '../src/ui/tamrielInk.js';
+import { arenaRoadInkAt, arenaRoadsIn, arenaRoadInk, arenaRoadSteps, pastBayStamp, paintPastBay, paintPastBayMarks, MARK_REACH_PX, DOTS_BELOW } from '../src/ui/tamrielInk.js';
 import { createTamrielTiles, levelOf, TILE_PX, LEVEL_STEPS, TILES_KEPT, TILE_BUDGET_MS } from '../src/ui/tamrielTiles.js';
 import { buildTamrielRegion, regionLattice, regionOf } from '../src/world/tamrielRoads.js';
 import { createRoadsWorkerState } from '../src/world/tamrielRoadsWorker.js';
@@ -341,7 +341,7 @@ test('TESA15 the tiles: where a canvas gives no 2D context the view is painted s
   assert.deepEqual(painted, [[sheet, { ox: 1, oy: 2, scale: 3 }, 40, 50]]);
 });
 
-test('TESA15 the painter: at far each pixel\'s steps, in to the Bay\'s scale the walked chains; a mark whose glyph reaches the view from just outside it is painted too, so a tile\'s edge cuts no glyph (mutant: the band\'s choice, the pad)', () => {
+test('TESA15 the painter: at far each pixel\'s steps, in to the Bay\'s scale the walked chains; a mark whose glyph reaches the view from just outside it is painted too (PIN MOVED, MARKS-PER-VIEW: paintPastBayMarks, on the view; the road tiles ink none) (mutant: the band\'s choice, the pad)', () => {
   const layer = { roads: run(new Map(), 0, 40, -30), tracks: new Map(), join: new Map() };
   setArenaRoads(layer);
   const lines = (band) => { const c = []; const g = new Proxy({}, { get: (_, k) => (k === 'measureText' ? () => ({ width: 0 }) : (...a) => c.push([k, a])), set: () => true }); paintPastBay(g, { ox: -10, oy: -60, scale: 4 }, { paperW: 400, paperH: 400, band }); return c.filter(([k]) => k === 'lineTo').length; };
@@ -376,6 +376,8 @@ test('TESA15 the painter: at far each pixel\'s steps, in to the Bay\'s scale the
   const ctx = new Proxy({}, { get: (_, k) => (k === 'measureText' ? () => ({ width: 0 }) : (...a) => calls.push([k, a])), set: () => true });
   const view = { ox: 100, oy: -100, scale: 4 };
   paintPastBay(ctx, view, { paperW: 400, paperH: 400, band: 'near', placesIn });
+  assert.deepEqual([asked.length, calls.filter(([k]) => k === 'moveTo').length], [0, 0], 'MARKS-PER-VIEW: the road tiles\' painter asks for no place and inks no glyph');
+  paintPastBayMarks(ctx, view, { paperW: 400, paperH: 400, band: 'near', placesIn });
   const pad = MARK_REACH_PX / view.scale;
   assert.deepEqual(asked[0], [Math.floor(100 - pad), Math.floor(-100 - pad), Math.ceil(100 + 400 / 4 + pad), Math.ceil(-100 + 400 / 4 + pad)]);
   const [x] = toPaper(view, 99.5, -49.5);

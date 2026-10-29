@@ -2248,6 +2248,24 @@ tile owed, its words by its version, kept apart and let go on close, the window'
 hands the base). The four hosts: the held map is the world host's alone (`ui/heldMap.js`); `scenes/exterior.js`,
 `scenes/worldModes.js` and `scenes/dungeonContext.js` open no map past the Bay.
 
+## MARKS-PER-VIEW - the marks past the Bay inked on the view (2026-10-29)
+
+The owner saw icons past the Bay out of place after a zoom. The countryside's and the lairs' marks were painted into the
+road tiles. For the frames after every zoom each tile is a stand-in from another level (ZOOM-FAST), so its marks were
+drawn 0.6 to 1.5 times their size. Across a band they were the last band's set: mid's dungeons over a far view, near's
+homes missing. The Bay's own marks were right on every frame.
+
+- **The fix:** `paintPastBayMarks` (`ui/tamrielInk.js`) inks them on the view in the continent's 'over' part, over the
+  province borders and under the open zone's fog, where the tiles had them. The road tiles hold the roads, the tracks
+  and the waters alone. The over part's key takes the view's own word (`pastBayStamp` over the view), so a place landing
+  in the view repaints it and one elsewhere does not (AUDIT TESA II M9).
+- **Pins:** `test/ui/marksperview.test.js` (the order, none on the continent), `test/ui/audittesa2m_window.test.js` (a
+  landing in the view repaints the over part). PIN MOVED: `test/tesa15_mapfidelity.test.js` (the pad, on the new
+  painter; the road painter inks none), `test/ui/bayleft_find.test.js` (the Ports filter), `test/world/worldWide/wwc2_zone.test.js`
+  (the marks between the borders and the fog).
+- **Mutants:** `tools/mutants/marksperview.json` (6, all dead). Re-aimed by content and judged dead: `tesa13.json`'s
+  three on the marks, `tesa15.json`'s a-glyph-cut, `bayleftmaps.json`'s C11 tiles' marks.
+
 ## MAP-WATERS - Cyrodiil's rivers and its lakes' smooth shores on the held map (2026-10-26)
 
 The coordinator, after stream G's terrain: *"The held map should draw G's Cyrodiil rivers and smoothed lake shores:

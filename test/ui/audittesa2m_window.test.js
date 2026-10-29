@@ -261,6 +261,18 @@ test('AUDIT TESA II M9: a region landing far off the view repaints the window - 
   }
 }));
 
+test('MARKS-PER-VIEW: a place landing IN the view repaints the over part, which inks the places past the Bay - one far off still repaints no part (AUDIT TESA II M9) (mutant: the view\'s word out of the parts\' key)', withMap(async () => {
+  const { win } = openMap();
+  win._setView({ ox: -589, oy: -600, scale: 0.9 });
+  setArenaRoads({ roads: new Map(), tracks: new Map(), join: new Map() });
+  await paintSettled(win);
+  const over = win._subLayers.over.id;
+  addPastBayPlaces([{ x: -400, y: -400, type: LOCATION_TYPES.HomeFarms }]);
+  win._sheet.tick(0.016);
+  log = []; win._paint();
+  assert.ok(log.filter(([c]) => c === over).length > 0, 'the over part inked again');
+}));
+
 test('AUDIT TESA II M11: on the Bay alone the sheet makes no kept parts of its own size; the road ink\'s caches are let go when the window shuts (mutants: the parts always made; the release unwired)', withMap(async () => {
   const { win } = openMap();
   win._subLayers = null; win._sheetLayersKey = '';   // the rest view's (it reaches past the Bay's foot) let go

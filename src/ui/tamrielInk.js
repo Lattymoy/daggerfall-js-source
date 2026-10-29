@@ -905,10 +905,9 @@ export const onContinent = (scale, bayFit) => scale < bayFit * CONTINENT_BELOW;
  *  that reaches into it is painted too, so a tile's edge cuts no glyph. */
 export const MARK_REACH_PX = 10;
 /**
- * TESA15: THE ROADS, THE TRACKS AND THE PLACES PAST THE BAY in a view - the Bay's own pens, band and filters (inkMap
- * strokePaths), and in to the Bay's own scale (never out on the continent) the countryside's and the lairs' marks off
- * `placesIn`, every halo before every glyph (MAP-FIELD6), each kind in its classic dot's hue where there is a palette
- * (MAP-KEY). The one painter of them: the window's kept tiles (ui/tamrielTiles.js) are its paint, a tile's view at a time.
+ * TESA15: THE ROADS, THE TRACKS AND THE WATERS PAST THE BAY in a view - the Bay's own pens, band and filters (inkMap
+ * strokePaths). The places' marks are paintPastBayMarks', on the view (MARKS-PER-VIEW). The one painter of them: the
+ * window's kept tiles (ui/tamrielTiles.js) are its paint, a tile's view at a time.
  * AUDIT TESA II M10: handed a tile's `job` it answers its paint as steps (pastBayJob) - the tile painted a step at a time
  * under the frame's budget, each translucent pass laid on the job's scratch and down whole - and with none paints whole.
  * @param {CanvasRenderingContext2D} ctx @param {{ox:number,oy:number,scale:number}} view
@@ -924,11 +923,10 @@ export function paintPastBay(ctx, view, opts, job = null) {
   ctx.restore();
   return undefined;
 }
-/** AUDIT TESA II M10: how much of a tile's paint is one step of it - rects or segments a pass, glyphs of the marks - so a
+/** AUDIT TESA II M10: how much of a tile's paint is one step of it - rects or segments a pass - so a
  *  frame's budget (ui/tamrielTiles.js TILE_BUDGET_MS) is read between steps, not only between tiles: out on the continent
  *  one tile was a path of 302,205 rects (the freeware's network, the contain view at one device pixel a point). */
 export const PAST_BAY_STEP = 2048;
-export const PAST_BAY_MARKS_STEP = 512;
 /** MAP-WHOLE: a rasterised dot's share of a step against a path's rect - a few typed-array writes where the canvas walked
  *  a sub-path (measured on a CPU canvas: 300,000 dots 28 ms against 370-1,500 ms); a step of the raster is eight times
  *  PAST_BAY_STEP dots. */
@@ -973,7 +971,7 @@ function rasterPass(ctx, job, style, paperW) {
   };
 }
 
-/** The paint as steps (paintPastBay): the roads and the tracks a pass a kind, then the marks' halos and their glyphs. */
+/** The paint as steps (paintPastBay): the waters, then the roads and the tracks a pass a kind. */
 function* pastBayJob(ctx, view, opts, job) {
   const { paperW, paperH } = opts;
   const band = opts.band ?? zoomBand(view.scale), filters = opts.filters ?? {};
@@ -1047,19 +1045,25 @@ function* pastBayJob(ctx, view, opts, job) {
     strokePaths(penOf(ctx, view, paperW, paperH).stroke, arenaRoadsIn(view.ox, view.oy, x1, y1), band, filters);
     if (band === 'near' && waters) paintBridges(ctx, view, paperW, paperH, waters, filters);   // ROAD-LOOK: and their bridges over the rivers
   }
-  if (!opts.continent) {
-    yield;
-    const pad = MARK_REACH_PX / view.scale;
-    const near = { ox: view.ox - pad, oy: view.oy - pad, scale: view.scale };
-    const marks = tamrielMarksIn(near, opts.placesIn ?? null, { paperW: paperW + 2 * MARK_REACH_PX, paperH: paperH + 2 * MARK_REACH_PX, band, filters, portsOnly: !!opts.portsOnly, frame: opts.frame ?? null });   // BAY-LEFT-MAPS C11: the Ports filter
-    const at = marks.map((m) => toPaper(view, m.x, m.y));
-    // MAP-FIELD6: every halo before every glyph - each its own path, so the steps change nothing of how they lie
-    for (const halo of [true, false]) {
-      for (let i = 0; i < marks.length; i++) {
-        paintGlyph(ctx, marks[i].kind, at[i][0], at[i][1], halo, halo ? undefined : opts.inks?.[marks[i].kind]);
-        if ((i + 1) % PAST_BAY_MARKS_STEP === 0 && job) yield;
-      }
-    }
+}
+
+/**
+ * MARKS-PER-VIEW: the countryside's and the lairs' marks past the Bay, inked on the view itself as the Bay's are. In the
+ * road tiles a stand-in drew them at its own level's size, and across a band the last band's set, for the frames after
+ * every zoom. Every halo before every glyph (MAP-FIELD6); none out on the continent.
+ * @param {CanvasRenderingContext2D} ctx @param {{ox:number,oy:number,scale:number}} view
+ * @param {{ paperW: number, paperH: number, band?: string, continent?: boolean, filters?: any, inks?: any, portsOnly?: boolean,
+ *   placesIn?: ?PlacesIn, frame?: ?{ x0: number, y0: number, w: number, h: number } }} opts
+ */
+export function paintPastBayMarks(ctx, view, opts) {
+  if (opts.continent) return;
+  const { paperW, paperH } = opts;
+  const pad = MARK_REACH_PX / view.scale;
+  const near = { ox: view.ox - pad, oy: view.oy - pad, scale: view.scale };
+  const marks = tamrielMarksIn(near, opts.placesIn ?? null, { paperW: paperW + 2 * MARK_REACH_PX, paperH: paperH + 2 * MARK_REACH_PX, band: opts.band ?? zoomBand(view.scale), filters: opts.filters ?? {}, portsOnly: !!opts.portsOnly, frame: opts.frame ?? null });   // BAY-LEFT-MAPS C11: the Ports filter
+  const at = marks.map((m) => toPaper(view, m.x, m.y));
+  for (const halo of [true, false]) {
+    for (let i = 0; i < marks.length; i++) paintGlyph(ctx, marks[i].kind, at[i][0], at[i][1], halo, halo ? undefined : opts.inks?.[marks[i].kind]);
   }
 }
 
@@ -1237,6 +1241,8 @@ export function paintTamrielInk(ctx, view, ink, opts) {
   // map. The 43 biome zones' borders stood here a day and were withdrawn (2026-10-25, the owner: "Those are just random
   // lines"): unnamed, wandering through the land, they told a player nothing
   provinceLines(ctx, view, paperW, paperH, ink.borders);
+  // MARKS-PER-VIEW: the places' marks over the borders and under the open zone's fog, where the road tiles had them
+  paintPastBayMarks(ctx, view, past);
   // ZONE-NAMES-OVER: what the window lays over the land and under its names (the open zone's fog and red line - WILD1
   // had them under the place marks; laid after this layer, the fog's 0.78 hid Cyrodiil's every name)
   opts.under?.();
