@@ -32919,11 +32919,6 @@
   "tr": "06cde76b08c5",
   "by": "claude-in-session"
  },
- "pvp.kit.cost": {
-  "en": "1dcf44fc4a34",
-  "tr": "e644bc0dd29f",
-  "by": "claude-in-session"
- },
  "pvp.kit.cure": {
   "en": "741ccd1eaaed",
   "tr": "94603b522719",
@@ -32962,11 +32957,6 @@
  "pvp.kit.heal": {
   "en": "c166015199fe",
   "tr": "a3db5be7ed7b",
-  "by": "claude-in-session"
- },
- "pvp.kit.help": {
-  "en": "48cf8423570c",
-  "tr": "297b09b0bc1c",
   "by": "claude-in-session"
  },
  "pvp.kit.icon": {
@@ -33042,11 +33032,6 @@
  "pvp.kit.speedAttr": {
   "en": "2d2cb022bc3d",
   "tr": "caf2511abfd8",
-  "by": "claude-in-session"
- },
- "pvp.kit.spell": {
-  "en": "2747aac69844",
-  "tr": "eb11b8a75473",
   "by": "claude-in-session"
  },
  "pvp.kit.strength": {
@@ -33132,6 +33117,76 @@
  "pvp.rules.ride": {
   "en": "c174608598e9",
   "tr": "09657b238336",
+  "by": "claude-in-session"
+ },
+ "pvp.set.area": {
+  "en": "2745debaa64a",
+  "tr": "2745debaa64a",
+  "by": "claude-in-session"
+ },
+ "pvp.set.book": {
+  "en": "4ae8ead59009",
+  "tr": "a9064d4b1506",
+  "by": "claude-in-session"
+ },
+ "pvp.set.cost": {
+  "en": "43d2201525a1",
+  "tr": "ac169e417fe6",
+  "by": "claude-in-session"
+ },
+ "pvp.set.full": {
+  "en": "edfd05ea6f02",
+  "tr": "69baeb46a04a",
+  "by": "claude-in-session"
+ },
+ "pvp.set.gift": {
+  "en": "11e419e034da",
+  "tr": "d0a7b3caa03d",
+  "by": "claude-in-session"
+ },
+ "pvp.set.hint": {
+  "en": "435724b66a3d",
+  "tr": "3b0f8acde40f",
+  "by": "claude-in-session"
+ },
+ "pvp.set.locked": {
+  "en": "38129ae0ca8c",
+  "tr": "ae14c3ee211e",
+  "by": "claude-in-session"
+ },
+ "pvp.set.make": {
+  "en": "60656d0bf900",
+  "tr": "7f550c85c090",
+  "by": "claude-in-session"
+ },
+ "pvp.set.makeIt": {
+  "en": "a94431ee22f0",
+  "tr": "8df3de46b5ef",
+  "by": "claude-in-session"
+ },
+ "pvp.set.pick": {
+  "en": "40c77c73bdf4",
+  "tr": "afb9bdb515fe",
+  "by": "claude-in-session"
+ },
+ "pvp.set.remove": {
+  "en": "e963907dac5c",
+  "tr": "9d053c98fde4",
+  "by": "claude-in-session"
+ },
+ "pvp.set.title": {
+  "en": "1995c625e529",
+  "tr": "ca518b2fcb56",
+  "by": "claude-in-session"
+ },
+ "pvp.set.touch": {
+  "en": "e3f139abb7a5",
+  "tr": "ca1873cae04d",
+  "by": "claude-in-session"
+ },
+ "pvp.set.yours": {
+  "en": "7b6f26f19aca",
+  "tr": "045e58dbe693",
   "by": "claude-in-session"
  },
  "pvp.villain.label": {

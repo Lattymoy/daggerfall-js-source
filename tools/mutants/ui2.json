@@ -38,8 +38,8 @@
   {
     "name": "UI2-the-saved-icon-dropped",
     "file": "src/systems/quickslots.js",
-    "old": "hotbar[i] = { type: 'spell', index: e.index, name: e.name, ...iconOf(e) };",
-    "new": "hotbar[i] = { type: 'spell', index: e.index, name: e.name };",
+    "old": "hotbarSets.main[i] = { type: 'spell', index: e.index, name: e.name, ...iconOf(e) };",
+    "new": "hotbarSets.main[i] = { type: 'spell', index: e.index, name: e.name };",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
