@@ -86,6 +86,7 @@ Four read-only audits covered the relay (`server/src/index.js`), the account ser
 | LODE-HERD | The account database overloaded at 00:00 UTC (2026-10-29): every Motherlodes read before the day's mark ran the pick's scan, 33 of 1.8 s in a minute. One read a minute holds the day's claim and picks; the rest answer none; the clock picks unclaimed | No | **Built** (2026-10-29; acct210, acct209 on its branch) |
 | HUNT-LEAN | The overload of the evening of 2026-10-28: the hunt's read, new on 2026-10-27, was some 5 primary statements a player every two minutes, a rate window's write among them. It writes nothing now, a replica serves it, it stands back in an overload, and the book asks every ten minutes | No | **Built** (2026-10-29; acct210, acct209 on its branch) |
 | GROUND-KEPT | The overload held past midnight (2026-10-29, 01:00 UTC, 22% of requests 503): a writ board read scanned its region's witnessed ground - 123,000 rows in 409 ms - twice a read where the day's writs had not posted, 684 times an hour on the primary. An isolate keeps a region's ground ten minutes; none is never kept | No | **Built** (2026-10-29; acct210, acct209 on its branch) |
+| KEEP-MARK | The overload held after LODE-HERD, HUNT-LEAN and GROUND-KEPT deployed (2026-10-29, 47-55% of requests 503): the read replicas served 0% of statements from 01:15, against a fifth to a half while the service was well. A shed or refused replica read said no bookmark and a read past its wait timed out, and the page forgets its bookmark on both (AUDIT SCALE II A-6, C-7) - so every next read started at the primary. Such an answer hands back the bookmark it carried; a read that timed out keeps the page's | No | **Built** (2026-10-29; acct211) |
 | SCALE6 | Abuse and backups: Turnstile on guest creation, /64 IPv6 rate keys, bans, report and ignore, `ALLOWED_ORIGIN`, R2 snapshots, a hub export | Some | Alongside |
 
 **Relay deploy policy (SCALE):** relay changes are batched into as few deploys as possible, each in a window announced beforehand. A deploy drops every player, and until SCALE2 every reconnect is a D1 write storm.
@@ -4623,3 +4624,30 @@ the one primary, which is the owner's to choose.
 `test/server/lode_herd.test.js` (4); `tools/mutants/lode_herd.json` (9, all dead); `test/server/ground_kept.test.js`
 (2); `tools/mutants/ground_kept.json` (3, all dead). PIN MOVED: the version pins to
 acct210; `test/net/busy_gate.test.js` and `test/server/scale4g.test.js` name the hunt's read.
+
+## KEEP-MARK: built (2026-10-29, this branch - acct211, no migration, no relay change)
+
+Read again at 02:20 UTC, after acct210, the site and the relay's world280 had all deployed: 47-55% of requests still
+answered 503, and the primary served some 13,000 reads a minute where it had served 30,000 before 01:15. No heavy
+statement was left. The service's own metrics (`double7`, the statements a replica served) named the loop: the
+replicas' share was 20-45% while 503s stayed under a tenth, and 0% in every stretch the overload held - 23:45 to 00:25,
+00:50 to 01:05, and from 01:15 on.
+
+A replica serves a read only on the session of the bookmark the page carries; with none, the session starts at the
+primary (REPLICA_CONSTRAINT). And the page lets its bookmark go on a read answered with none (AUDIT SCALE II C-7) and on
+a call that could not be made (A-6). An overload answers exactly so: BUSY-GATE's shed and a refused statement's 503 run
+no session that says a position, and a read past its fifteen seconds times out. So the overload took every page's
+bookmark, every read went to the primary, and the primary stayed past its ceiling.
+
+- **The service** (`index.js` service.fetch): a replica read whose session says no position hands back the
+  `x-d1-bookmark` it carried. The page already holds that position, so nothing it reads changes; it keeps it. A route
+  that is no replica read says none; a malformed bookmark is never said back. Every page open now benefits.
+- **The page** (`net/accountClient.js` call): a bookmark read that timed out keeps the bookmark, as the session pass is
+  kept through a timeout (AUDIT PLAN-1000 E7). A call that could not be made still lets it go (A-6: a service rolled
+  back past the header), and so does a write that timed out - a read answered while it was out may stand before it.
+
+C-7 holds: a service rolled back past SCALE4g says no bookmark at all, and the page lets its own go.
+
+Pins: `test/server/keep_mark.test.js` (2); `tools/mutants/keep_mark.json` (3, all dead). PIN MOVED: the version pins to
+acct211.
+
