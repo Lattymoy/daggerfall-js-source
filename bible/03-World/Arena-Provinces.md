@@ -2266,6 +2266,22 @@ homes missing. The Bay's own marks were right on every frame.
 - **Mutants:** `tools/mutants/marksperview.json` (6, all dead). Re-aimed by content and judged dead: `tesa13.json`'s
   three on the marks, `tesa15.json`'s a-glyph-cut, `bayleftmaps.json`'s C11 tiles' marks.
 
+## TILE-EXACT - the land past the Bay's tiles at the view's own scale (2026-10-29)
+
+The owner saw the lines past the Bay blurry next to the Bay's, most of all between zoom levels. The kept tiles were
+painted at a quarter-doubling level and drawn resampled to the view's scale: 1.05 to 1.06 times at rest at scales 2.5, 6
+and 10 (measured in the game), smoothing on. The Bay's own ink is stroked at the view's scale.
+
+- **The fix:** `ui/tamrielTiles.js` paints a view's tiles at its own scale and lays each pixel for pixel, smoothing off,
+  its origin the grid's so a neighbour starts TILE_PX on. A stand-in is found by scale, not by a level's id: the kept
+  tiles of the key nearest the view's scale within STAND_IN levels (two doublings), resampled while the zoom settles.
+  The base keeps its quarter-doubling level.
+- **Pins:** `test/ui/tileexact.test.js` (the scale, the 1:1 lay at one and two device pixels a point, the stand-in's reach
+  and choice). PIN MOVED: `test/ui/audittesa2m_tiles.test.js` (M1's view at 1.42, M3's view painted at 1.2).
+- **Mutants:** `tools/mutants/tileexact.json` (7: 6 dead, the origin's form equivalent as recorded). Re-aimed by content
+  and judged dead: `audittesa2m.json`'s M1, `tesa15.json`'s no-stand-in. Retired with the law they held:
+  `audittesa2m.json`'s M3 float id and `tesa15.json`'s the-level-the-scale.
+
 ## MAP-WATERS - Cyrodiil's rivers and its lakes' smooth shores on the held map (2026-10-26)
 
 The coordinator, after stream G's terrain: *"The held map should draw G's Cyrodiil rivers and smoothed lake shores:

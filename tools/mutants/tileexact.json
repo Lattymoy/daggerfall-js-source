@@ -1,0 +1,73 @@
+[
+  {
+    "name": "TILEEXACT-quantized-again",
+    "file": "src/ui/tamrielTiles.js",
+    "old": "      const level = view.scale, span = TILE_PX / (level * dpr);",
+    "new": "      const level = levelOf(view.scale), span = TILE_PX / (level * dpr);",
+    "tests": [
+      "test/ui/tileexact.test.js"
+    ],
+    "why": "TILE-EXACT: painted at the view's own scale"
+  },
+  {
+    "name": "TILEEXACT-smoothing-on",
+    "file": "src/ui/tamrielTiles.js",
+    "old": "      ctx.imageSmoothingEnabled = false;\n      ctx.drawImage(t.canvas, Math.round(tx * TILE_PX",
+    "new": "      ctx.drawImage(t.canvas, Math.round(tx * TILE_PX",
+    "tests": [
+      "test/ui/tileexact.test.js"
+    ],
+    "why": "TILE-EXACT: laid pixel for pixel, smoothing off"
+  },
+  {
+    "name": "TILEEXACT-smoothing-kept-off",
+    "file": "src/ui/tamrielTiles.js",
+    "old": "      ctx.imageSmoothingEnabled = smooth;\n      return;",
+    "new": "      return;",
+    "tests": [
+      "test/ui/tileexact.test.js"
+    ],
+    "why": "TILE-EXACT: the sheet's smoothing given back"
+  },
+  {
+    "name": "TILEEXACT-origin-per-tile",
+    "file": "src/ui/tamrielTiles.js",
+    "old": "Math.round(tx * TILE_PX - view.ox * o) / dpr,",
+    "new": "Math.round((t.x0 - view.ox) * o) / dpr,",
+    "tests": [
+      "test/ui/tileexact.test.js"
+    ],
+    "why": "TILE-EXACT: span * scale * dpr is TILE_PX to an ulp, so both roundings agree on any view a test can make; the grid form makes it exact, not likely",
+    "equivalent": true
+  },
+  {
+    "name": "TILEEXACT-resampled-anyway",
+    "file": "src/ui/tamrielTiles.js",
+    "old": "    if (t.level === view.scale) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/ui/tileexact.test.js"
+    ],
+    "why": "TILE-EXACT: a tile at the view's scale laid 1:1"
+  },
+  {
+    "name": "TILEEXACT-reach",
+    "file": "src/ui/tamrielTiles.js",
+    "old": "      if (d > STAND_IN / LEVEL_STEPS || d > bd) continue;",
+    "new": "      if (d > bd) continue;",
+    "tests": [
+      "test/ui/tileexact.test.js"
+    ],
+    "why": "TILE-EXACT: a stand-in within two doublings"
+  },
+  {
+    "name": "TILEEXACT-not-nearest",
+    "file": "src/ui/tamrielTiles.js",
+    "old": "      if (d > STAND_IN / LEVEL_STEPS || d > bd) continue;",
+    "new": "      if (d > STAND_IN / LEVEL_STEPS) continue;",
+    "tests": [
+      "test/ui/tileexact.test.js"
+    ],
+    "why": "TILE-EXACT: the nearest kept scale stands in"
+  }
+]

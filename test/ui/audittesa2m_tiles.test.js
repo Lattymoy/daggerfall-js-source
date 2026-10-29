@@ -61,7 +61,7 @@ function run(map, x0, x1, y) {
 test('AUDIT TESA II M1: a still view whose tiles outnumber TILES_KEPT (a 2560 x 1440 screen at two pixels a point) settles - painted once, none owed, none let go that it draws (mutant: the cap the count alone)', () => {
   let t = 0, paints = 0;
   const tiles = createTamrielTiles({ paint: () => { paints++; t += 1; }, stamp: () => 'w', make: fakeCanvas, now: () => t });
-  const view = { ox: -1234.37, oy: -567.89, scale: 1.3 };
+  const view = { ox: -1234.37, oy: -567.89, scale: 1.42 };   // PIN MOVED (TILE-EXACT): 1.3 is 160 tiles at its own scale, the count itself
   const o = { paperW: 1984, paperH: 1210, dpr: 2, key: 'mid' };
   let frames = 0;
   while (frames < 200) { tiles.draw(ctx2d(), view, o); frames++; if (!tiles.takePending()) break; t += 8; }
@@ -79,7 +79,7 @@ test('AUDIT TESA II M3: a stand-in is found at every level a zoom crosses - half
   const seen = [];
   const at12 = createTamrielTiles({ paint: (c, v) => { seen.push(v.scale); }, stamp: () => 'w', make: fakeCanvas, now: () => 0 });
   at12.draw(ctx2d(), { ox: 0, oy: 0, scale: 1.2 }, { paperW: 300, paperH: 200, dpr: 1, key: 'k' });
-  assert.ok(seen.length && seen.every((v) => v === levelOf(1.2) && v !== 1.2), 'a view at 1.2 painted at its level, 2^0.25');
+  assert.ok(seen.length && seen.every((v) => v === 1.2), 'PIN MOVED (TILE-EXACT): a view at 1.2 painted at 1.2, its own scale');
   for (const [s0, s1] of [[1, 2 ** 0.5], [0.125, 2 ** -2.5], [0.25, 2 ** -1.5], [0.5, 2 ** -0.5], [2 ** -2.75, 2 ** -2.25]]) {
     const tiles = createTamrielTiles({ paint: () => {}, stamp: () => 'w', make: fakeCanvas, now: () => 0 });
     const o = { paperW: 1150, paperH: 720, dpr: 1, key: 'far|1|{}|null' };

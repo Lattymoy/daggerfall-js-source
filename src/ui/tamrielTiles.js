@@ -5,10 +5,10 @@
 // The held map paints its static ink again on every frame its view moves (heldMap.js: the kept layer's key is the view).
 // Past the Bay that ink is the whole network TESA14 lays - 37,000 road chains and 115,000 track chains on the freeware's
 // continent, and every place the regions laid - and stroked whole it is a quarter of a second a frame out on the
-// continent. So it is painted once onto TILES of TILE_PX device pixels at the view's LEVEL (its scale, LEVEL_STEPS levels
-// a doubling) and the kept tiles are drawn: a pan is a drawImage a tile. A tile is painted again when what it shows moves
-// - its word (`stamp`: the roads' installs and the places' adds over its pixels, ui/tamrielInk.js pastBayStamp) or the
-// paint's own key (the band, the filters, the hues) - and TILES_KEPT are kept, the one drawn longest ago let go first.
+// continent. So it is painted once onto TILES of TILE_PX device pixels at the view's own scale (TILE-EXACT, 2026-10-29: it
+// was LEVEL_STEPS levels a doubling, drawn up to a twelfth off) and the kept tiles are drawn: a pan is a drawImage a
+// tile. A tile is painted again when what it shows moves - its word (`stamp`: the roads' installs and the places' adds
+// over its pixels, ui/tamrielInk.js pastBayStamp) or the paint's own key (the band, the filters, the hues) - and TILES_KEPT are kept, the one drawn longest ago let go first.
 // A frame paints the tiles nearest the view's middle first until TILE_BUDGET_MS is spent (one at the least); a tile still
 // owed meanwhile shows what is kept of it - its last paint, else the nearest level's within STAND_IN - and the window paints
 // again next frame (takePending). ZOOM-FAST (2026-10-24, the owner: "The map also is slow to load when zooming in and
@@ -22,7 +22,7 @@ import { createCoverage } from './inkRaster.js';   // MAP-WHOLE: a job's coverag
 
 /** A tile's side, device pixels. */
 export const TILE_PX = 256;
-/** Levels a doubling of the scale - a tile is drawn at most a twelfth larger or smaller than it was painted. */
+/** Levels a doubling of the scale - the base's level, and how far a stand-in is sought (STAND_IN). */
 export const LEVEL_STEPS = 4;
 /** How many tiles are kept: three screens at a 1280 x 800 paper and twice the pixels. */
 export const TILES_KEPT = 160;
@@ -39,10 +39,8 @@ export const baseLevelIndex = (dpr = 1) => tileLevelIndex(BASE_SCALE / dpr);
 
 /** How many levels either side a tile owed looks for a stand-in - two doublings. */
 export const STAND_IN = 2 * LEVEL_STEPS;
-const STAND_IN_ORDER = Array.from({ length: STAND_IN }, (_, i) => [-(i + 1), i + 1]).flat();
-/** AUDIT TESA II M3: a scale's level as its whole number of quarter-doublings - the id a tile is kept under. A stand-in's
- *  level was `level * 2 ** (k / LEVEL_STEPS)`, a float an ulp off the one levelOf mints for a quarter of the levels it
- *  sought (0.25 -> 2^-1.5: 0.12499999999999997 against 0.125), so no tile was found there; both are this integer now. */
+/** AUDIT TESA II M3: a scale's level as its whole number of quarter-doublings - the base's id. TILE-EXACT: the view's
+ *  tiles are kept under their own scale, and a stand-in is found by its scale, not by an id. */
 export const tileLevelIndex = (scale) => Math.round(Math.log2(scale) * LEVEL_STEPS);
 /** The level a scale is painted at: the nearest of LEVEL_STEPS a doubling. */
 export const levelOf = (scale) => 2 ** (tileLevelIndex(scale) / LEVEL_STEPS);
@@ -58,7 +56,7 @@ export const levelOf = (scale) => 2 ** (tileLevelIndex(scale) / LEVEL_STEPS);
  */
 export function createTamrielTiles({ paint, stamp, make = () => document.createElement('canvas'), now = () => performance.now(), kept = TILES_KEPT }) {
   /** A tile: `canvas` its last whole paint (null before the first), `word` that paint's word, `job` a paint under way.
-   *  @type {Map<string, { canvas: any, word: ?string, job: any, x0: number, y0: number, span: number }>} */
+   *  @type {Map<string, { canvas: any, word: ?string, job: any, x0: number, y0: number, span: number, key?: string, level?: number, dpr?: number }>} */
   const tiles = new Map();
   /** MAP-WHOLE: the base's tiles (BASE_SCALE), its own map - never let go while the window is open (clear lets it go),
    *  never counted against TILES_KEPT; `baseFor` the base's key, level and frame it was asked for. */
@@ -84,8 +82,18 @@ export function createTamrielTiles({ paint, stamp, make = () => document.createE
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
     return c;
   };
-  /** A kept tile onto the sheet at its own rectangle - its edges on whole device pixels, so tiles meet without a seam. */
+  /** A kept tile onto the sheet at its own rectangle - its edges on whole device pixels, so tiles meet without a seam.
+   *  TILE-EXACT: a tile painted at the view's own scale is laid pixel for pixel, smoothing off - a resample blurred every
+   *  line past the Bay against the Bay's own. Its origin is the grid's, so a neighbour starts TILE_PX on exactly. */
   function place(ctx, view, dpr, t) {
+    if (t.level === view.scale) {
+      const o = view.scale * dpr, tx = Math.round(t.x0 / t.span), ty = Math.round(t.y0 / t.span);
+      const smooth = ctx.imageSmoothingEnabled;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(t.canvas, Math.round(tx * TILE_PX - view.ox * o) / dpr, Math.round(ty * TILE_PX - view.oy * o) / dpr, TILE_PX / dpr, TILE_PX / dpr);
+      ctx.imageSmoothingEnabled = smooth;
+      return;
+    }
     const s = view.scale, snap = (v) => Math.round(v * dpr) / dpr;
     const x0 = snap((t.x0 - view.ox) * s), y0 = snap((t.y0 - view.oy) * s);
     const x1 = snap((t.x0 + t.span - view.ox) * s), y1 = snap((t.y0 + t.span - view.oy) * s);
@@ -107,9 +115,9 @@ export function createTamrielTiles({ paint, stamp, make = () => document.createE
   }
   /** What is kept of a tile not yet painted at this level: the nearest level's tiles over it, up to STAND_IN levels either
    *  side (two doublings: a zoom's jump), clipped to it - MAP-WHOLE: and past them the base's. */
-  function stand(ctx, view, dpr, key, n, x0, y0, span) {
-    if (standUnder(ctx, view, dpr, key, n, x0, y0, span)) return true;
-    if (prevKey !== null && prevKey !== key && standUnder(ctx, view, dpr, prevKey, n, x0, y0, span, true)) return true;   // ZOOM-FAST: the last key's
+  function stand(ctx, view, dpr, key, x0, y0, span) {
+    if (standUnder(ctx, view, dpr, key, x0, y0, span)) return true;
+    if (prevKey !== null && prevKey !== key && standUnder(ctx, view, dpr, prevKey, x0, y0, span)) return true;   // ZOOM-FAST: the last key's
     return standBase(ctx, view, dpr, x0, y0, span);
   }
   /** MAP-WHOLE: the base's tiles over a rectangle, clipped to it - whatever level and key the view is at. */
@@ -131,25 +139,27 @@ export function createTamrielTiles({ paint, stamp, make = () => document.createE
     if (clipped) ctx.restore();
     return clipped;
   }
-  /** A stand-in under one key - its own level too where the key is another's (a band crossed, the level unmoved). */
-  function standUnder(ctx, view, dpr, key, n, x0, y0, span, same = false) {
-    for (const k of same ? [0, ...STAND_IN_ORDER] : STAND_IN_ORDER) {
-      const other = 2 ** ((n + k) / LEVEL_STEPS), os = TILE_PX / (other * dpr);
-      const found = [];
-      for (let ty = Math.floor(y0 / os); ty <= Math.floor((y0 + span) / os); ty++) {
-        for (let tx = Math.floor(x0 / os); tx <= Math.floor((x0 + span) / os); tx++) { const t = tiles.get(idOf(key, n + k, dpr, tx, ty)); if (t?.canvas) found.push(t); }
-      }
-      if (!found.length) continue;
-      const s = view.scale;
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect((x0 - view.ox) * s, (y0 - view.oy) * s, span * s, span * s);
-      ctx.clip();
-      for (const t of found) place(ctx, view, dpr, t);
-      ctx.restore();
-      return true;
+  /** A stand-in under one key: its kept tiles over the rectangle at the scale nearest the view's, within STAND_IN levels.
+   *  TILE-EXACT: found by scale, as tiles are kept at the scale each view rested at. */
+  function standUnder(ctx, view, dpr, key, x0, y0, span) {
+    let best = [], bd = Infinity;
+    for (const t of tiles.values()) {
+      if (!t.canvas || t.key !== key || t.dpr !== dpr) continue;
+      if (t.x0 >= x0 + span || t.x0 + t.span <= x0 || t.y0 >= y0 + span || t.y0 + t.span <= y0) continue;
+      const d = Math.abs(Math.log2(t.level / view.scale));
+      if (d > STAND_IN / LEVEL_STEPS || d > bd) continue;
+      if (d < bd) { bd = d; best = []; }
+      best.push(t);
     }
-    return false;
+    if (!best.length) return false;
+    const s = view.scale;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect((x0 - view.ox) * s, (y0 - view.oy) * s, span * s, span * s);
+    ctx.clip();
+    for (const t of best) place(ctx, view, dpr, t);
+    ctx.restore();
+    return true;
   }
   return {
     /**
@@ -165,7 +175,7 @@ export function createTamrielTiles({ paint, stamp, make = () => document.createE
       if (key !== curKey) { prevKey = curKey; curKey = key; }
       if (usable === null) { const c = make(); usable = !!c?.getContext?.('2d'); if (usable) spare.push(c); }
       if (!usable) { const it = paint(ctx, view, paperW, paperH, opts); if (it && typeof it.next === 'function') for (const _ of it) { /* whole */ } return false; }
-      const n = tileLevelIndex(view.scale), level = 2 ** (n / LEVEL_STEPS), span = TILE_PX / (level * dpr);
+      const level = view.scale, span = TILE_PX / (level * dpr);   // TILE-EXACT: painted at the view's own scale
       const x1 = view.ox + paperW / view.scale, y1 = view.oy + paperH / view.scale;
       const mx = (view.ox + x1) / 2, my = (view.oy + y1) / 2;
       const want = [];
@@ -203,7 +213,7 @@ export function createTamrielTiles({ paint, stamp, make = () => document.createE
               const x0 = tx * bspan, y0 = ty * bspan, id = `${tx}|${ty}`, word = stamp(x0, y0, x0 + bspan, y0 + bspan);
               let t = baseTiles.get(id);
               if (!t || t.word !== word || t.job) t = turn(t, x0, y0, bspan, bl, word, base.paint);
-              if (t) baseTiles.set(id, t);
+              if (t) { t.level = bl; baseTiles.set(id, t); }
               if (!t?.canvas || t.job || t.word !== word) whole = false;
             }
           }
@@ -211,15 +221,15 @@ export function createTamrielTiles({ paint, stamp, make = () => document.createE
         }
       }
       for (const [tx, ty] of want) {
-        const x0 = tx * span, y0 = ty * span, id = idOf(key, n, dpr, tx, ty);
+        const x0 = tx * span, y0 = ty * span, id = idOf(key, level, dpr, tx, ty);
         const word = stamp(x0, y0, x0 + span, y0 + span);
         let t = tiles.get(id);
         if (!t || t.word !== word || t.job) t = turn(t, x0, y0, span, level, word, opts);
         // AUDIT TESA II M1: every tile the frame draws to the back of the line - a fresh one, a stale one showing its last
         // paint, a partial one - so the let-go below never takes one the view is still drawing
-        if (t) { tiles.delete(id); tiles.set(id, t); }
+        if (t) { t.key = key; t.level = level; t.dpr = dpr; tiles.delete(id); tiles.set(id, t); }
         if (t?.canvas) place(ctx, view, dpr, t);
-        else if (stand(ctx, view, dpr, key, n, x0, y0, span)) stood++;
+        else if (stand(ctx, view, dpr, key, x0, y0, span)) stood++;
         else holes++;
       }
       // AUDIT TESA II M1: kept to TILES_KEPT, or to the view's own count where it wants more - a still view whose tiles

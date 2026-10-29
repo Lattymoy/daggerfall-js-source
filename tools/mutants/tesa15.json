@@ -293,17 +293,6 @@
     ]
   },
   {
-    "name": "TESA15-the-level-the-scale",
-    "file": "src/ui/tamrielTiles.js",
-    "old": "const n = tileLevelIndex(view.scale), level = 2 ** (n / LEVEL_STEPS), span = TILE_PX / (level * dpr);",
-    "new": "const n = tileLevelIndex(view.scale), level = view.scale, span = TILE_PX / (level * dpr);",
-    "tests": [
-      "test/tesa15_mapfidelity.test.js",
-      "test/tesa13_mapink.test.js",
-      "test/ui/audittesa2m_tiles.test.js"
-    ]
-  },
-  {
     "name": "TESA15-the-word-unread",
     "file": "src/ui/tamrielTiles.js",
     "old": "        if (!t || t.word !== word || t.job) t = turn(t, x0, y0, span, level, word, opts);",
@@ -379,13 +368,13 @@
   {
     "name": "TESA15-no-stand-in",
     "file": "src/ui/tamrielTiles.js",
-    "old": "        else if (stand(ctx, view, dpr, key, n, x0, y0, span)) stood++;\n",
+    "old": "        else if (stand(ctx, view, dpr, key, x0, y0, span)) stood++;\n",
     "new": "",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa13_mapink.test.js"
     ],
-    "note": "Re-aimed by content (MAP-WHOLE): the stand-in answers whether it stood, the draw counting it."
+    "note": "Re-aimed by content (MAP-WHOLE: the stand-in answers whether it stood; TILE-EXACT: found by scale, no level index)."
   },
   {
     "name": "TESA15-no-fallback",

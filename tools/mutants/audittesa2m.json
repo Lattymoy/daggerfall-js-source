@@ -12,21 +12,13 @@
   {
     "name": "AUDITTESA2M-M1-a-drawn-tile-not-to-the-back",
     "file": "src/ui/tamrielTiles.js",
-    "old": "if (t) { tiles.delete(id); tiles.set(id, t); }",
-    "new": "if (t && t.word === word && !t.job) { tiles.delete(id); tiles.set(id, t); }",
+    "old": "if (t) { t.key = key; t.level = level; t.dpr = dpr; tiles.delete(id); tiles.set(id, t); }",
+    "new": "if (t) { t.key = key; t.level = level; t.dpr = dpr; } if (t && t.word === word && !t.job) { tiles.delete(id); tiles.set(id, t); }",
     "tests": [
       "test/ui/audittesa2m_tiles.test.js",
       "test/tesa15_mapfidelity.test.js"
-    ]
-  },
-  {
-    "name": "AUDITTESA2M-M3-the-stand-in-level-a-float",
-    "file": "src/ui/tamrielTiles.js",
-    "old": "const t = tiles.get(idOf(key, n + k, dpr, tx, ty));",
-    "new": "const t = tiles.get(idOf(key, Math.log2(2 ** (n / LEVEL_STEPS) * 2 ** (k / LEVEL_STEPS)) * LEVEL_STEPS, dpr, tx, ty));",
-    "tests": [
-      "test/ui/audittesa2m_tiles.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (TILE-EXACT: a tile carries its key, scale and dpr for the stand-in scan)."
   },
   {
     "name": "AUDITTESA2M-M10-the-steps-unread",
