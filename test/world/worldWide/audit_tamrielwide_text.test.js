@@ -164,9 +164,10 @@ test('AUDIT TAMRIEL-WIDE D4: the death screen names no place - the tale\'s end a
   } finally { if (saved === undefined) delete globalThis.document; else globalThis.document = saved; }
 });
 
-test('AUDIT TAMRIEL-WIDE D5: the travel map\'s page promises fast travel on the Bay alone and the Overworld past it; the arena\'s names its one city, as TUT1 allows (mutants: either line as it was)', () => {
+test('AUDIT TAMRIEL-WIDE D5: the travel map\'s page promises a journey to any place, past the Bay too (TRAVEL-EVERYWHERE); the arena\'s names its one city, as TUT1 allows (mutants: the travel line kept to the Bay; the arena line as it was)', () => {
   const travel = tutorialById('travel-map').body.join(' '), arena = tutorialById('arena').body.join(' ');
-  assert.match(travel, /Choose a place in the Iliac Bay: the journey takes days in the game but a moment for you\. Past the Bay, you go there on the Overworld\./);
+  assert.match(travel, /opens the map of the whole land\. Choose a place to travel there\./);
+  assert.doesNotMatch(travel, /Past the Bay|in the Iliac Bay/, 'no journey kept to the Bay');
   assert.doesNotMatch(arena, /province's capital/, 'one arena, not one a province');
   assert.match(arena, /^The one arena stands in the westernmost of the Iliac Bay's three crown cities\./);
 });

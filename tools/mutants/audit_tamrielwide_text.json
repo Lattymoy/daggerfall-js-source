@@ -117,14 +117,14 @@
     "note": "A rise in Skyrim is the Bay's again."
   },
   {
-    "name": "AUDIT-TW-D5-the-travel-page-as-it-was",
+    "name": "AUDIT-TW-D5-the-travel-page-kept-to-the-bay",
     "file": "src/systems/tutorialCatalogue.js",
-    "old": "'{TravelMap} opens the map. Choose a place in the Iliac Bay: the journey takes days in the game but a moment for you. Past the Bay, you go there on the Overworld.',",
-    "new": "'{TravelMap} opens the map of the whole land. Choose a place to travel there. The journey takes days in the game but only a moment for you.',",
+    "old": "'{TravelMap} opens the map of the whole land. Choose a place to travel there. The journey takes days in the game but only a moment for you.',",
+    "new": "'{TravelMap} opens the map. Choose a place in the Iliac Bay: the journey takes days in the game but a moment for you. Past the Bay, you go there on the Overworld.',",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],
-    "note": "The page promises fast travel to a place past the Bay again."
+    "note": "The page keeps the travel map's journey to the Bay, as before TRAVEL-EVERYWHERE."
   },
   {
     "name": "AUDIT-TW-D5-the-arena-page-as-it-was",

@@ -91,6 +91,16 @@
     "note": "The host never hands the zone its callers' landings."
   },
   {
+    "name": "AUDIT-TW-E1-the-cabins-landing-unread",
+    "file": "src/scenes/world.js",
+    "old": "wildTeleportRefused(boatPixelOf(boat), boat.GameObject ? campToWire(boat.GameObject.position) : null)",
+    "new": "wildTeleportRefused(boatPixelOf(boat), null)",
+    "tests": [
+      "test/systems/comeSailAway/sailingcabins.test.js"
+    ],
+    "note": "The bank cabin asks the open zone of her pixel alone, as before E1: a hull moored beside a village's walls read as open country."
+  },
+  {
     "name": "AUDIT-TW-E2-the-feet-unread",
     "file": "src/characters/provinceFolk.js",
     "old": "export const nativeAt = (feet = null) => folkWhere(feet)?.[0][0] ?? null;",
