@@ -108,6 +108,37 @@ the crystal seam. Fixed where each began, each pinned and its mutants dead (`too
 | P1 | Minor | The host judged my blows and acts in the ward by the disc alone, my words by the disc and a line to the heart. | One reading for all three (`holds`). |
 | P2 | Nit | The brazier's flame stood at 0.8 m, in the pedestal: its top face is 36 units, 0.9 m, over its lowest point. | Measured from ARENA2 and pinned. |
 
+## G - DLV3, the encounters online (2026-10-29)
+
+A cold lane read the relay's room, the wire, the session, the link and the host's online paths with the code alone, and
+drove each finding through the real Room (`test/fakeRoom.mjs`) and the real host wired to it. Two were found before it,
+in the session. Each is fixed where it began and pinned; the pins that missed them fed the host frames the room never
+mints, so the room's words are now read through the wire's own law before the host hears them
+(`test/scenes/delve/dlv3_e2e.test.js`).
+
+| ID | Sev | Finding | Fix |
+|---|---|---|---|
+| G1 | Major | **The Seals could never be won online.** The law kept their window in `wz`, a wave's size, and the wire, which bounds `wz` so, dropped every state of a risen site. | The window is the ledger's own `sw`; the page reads it off the law (`sealWindowMs`), so the wire says nothing new. |
+| G2 | Major | **Any page could replace the room's plan**, and every honest page was then stood down for the whole visit. | The room keeps four plans side by side, each with its own ledgers; past four, the least used with nothing at stake gives way, or the page waits and says its plan again. Each frame names its plan (`ph`). |
+| G3 | Major | **A second Vigil went dark with no blow struck**: the page's blow count ran on from the first attempt. | A fresh attempt online starts the page's counts from nothing, as offline. |
+| G4 | Major | **The foes' machine flipped on every word** at a puzzle: a machine with no foes host said it held none. | A named machine keeps holding them. |
+| G5 | Minor | A frame that returned early (a silent hub, a vault's ask) dropped what the site's step had moved. | The step is said and kept first. |
+| G6 | Minor | A stranger's every word asked the hub. | The hub's no is kept 30 s and its silence 5 s; the stranger's page is told once and holds its words there until the site's state moves. |
+| G7 | Minor | A mentor's lower level was overridden by the token's. | The lower of the two, as the serpent's. |
+| G8 | Minor | Online, the wrong plate stayed red through the replay. | Its mark is timed on the page's own clock. |
+| G9 | Minor | Twelve mutant records no longer applied and two named two sites. | Re-aimed by content; the frame's shared end is one function. |
+| G10 | Minor | A frame that waited on the hub could fold into a ledger another frame had begun. | It folds only into the ledger it read. |
+| G11 | Minor | A machine leaving by a door handed its wave to an heir while the next machine stood the wave again; one named with nothing left never said it clear. | An encounter's foe is never handed on; the next machine counts on from the room's deaths and says a spent wave clear. |
+| G12 | Minor | One page could hold every site of a room. | One running attempt an account, told so. |
+| G13 | Major | **After a reconnect, a word went down a socket not yet welcomed**, and the relay closes the socket for it. | Ready only on a welcomed socket (SD-HELLO). |
+| G14 | Minor | The pose made current before a word was not the one `sendPose` says: a body lying down was said standing. | One home for the pose frame's body (`_poseOut`). |
+| G15 | Nit | The room told a guest it had no party. A guest's token names an account, which the hub's party may hold. | The hub is asked of every account; the dead branch is gone. |
+
+- **NOT A FINDING.** A window held open online does not stop the words: online the world runs on under a window
+  (WINDOW-ONLINE), and so do the encounters. The token's level now stamped in a world room reaches the grant's `l`,
+  which the levelled kinds alone read (`enc`, `camp`, `band`, `encr`), and no stand in a dungeon asks one: its every
+  ask names its own kind (`loose`, `quest`, `rev`, `ally`, `delve` - scenes/dungeonContext.js spawnLooseFoe).
+
 ## Pins and mutants
 
 `test/net/delve/dlv1_law.test.js`, `test/world/dlv1_sites.test.js`, `test/systems/delve/dlv2_words.test.js`,

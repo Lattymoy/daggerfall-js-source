@@ -110,6 +110,12 @@ export const DELVE_VAULT_TEXT = Object.freeze({
   sealedSeals: () => t('delve.vault.sealedSeals', 'Break the seals to open it'),
   open: () => t('delve.vault.open', 'Vault'),
   locked: () => t('delve.vault.locked', 'The vault is sealed.'),
+  notYours: () => t('delve.vault.notYours', 'Only those who won this vault may open it.'),
+});
+/** Online: why the room does not count my word at a site (DLV3). */
+export const DELVE_ROOM_TEXT = Object.freeze({
+  others: () => t('delve.room.others', 'Another party holds this encounter.'),
+  held: () => t('delve.room.held', 'You hold another encounter here. Finish it or leave it first.'),
 });
 
 /** How long a mid-screen line stands (s): a running line, and the near line and the end, read slower. */

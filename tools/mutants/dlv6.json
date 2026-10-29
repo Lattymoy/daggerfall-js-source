@@ -1,0 +1,202 @@
+[
+  {
+    "name": "DLV6-light-uncounted",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "a.marker !== undefined, a.light !== undefined].filter(Boolean).length;",
+    "new": "a.marker !== undefined].filter(Boolean).length;",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "a light add refused as naming nothing"
+  },
+  {
+    "name": "DLV6-light-unbounded",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "a.light >= CURATED_LIGHT_M[0] && a.light <= CURATED_LIGHT_M[1]",
+    "new": "a.light > 0",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "any reach"
+  },
+  {
+    "name": "DLV6-light-units",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "Math.round(m / (GLOBAL_SCALE * 3))",
+    "new": "Math.round(m / GLOBAL_SCALE)",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "the host's range * 3 forgotten"
+  },
+  {
+    "name": "DLV6-light-made-a-flat",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "type: RDB_RESOURCE_TYPES.Light, resources:",
+    "new": "type: RDB_RESOURCE_TYPES.Flat, resources:",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "no light, a flat of archive 0"
+  },
+  {
+    "name": "DLV6-light-radius-zero",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "lightResource: { ...lightNone(), radius: lightRadiusOf(a.light) }",
+    "new": "lightResource: lightNone()",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "a light of no reach"
+  },
+  {
+    "name": "DLV6-spawn-at-unread",
+    "file": "src/scenes/delve/delveBench.js",
+    "old": "if (at.length === 3 && at.every(Number.isFinite)) return at;",
+    "new": "",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "the Rebuild's spot forgotten"
+  },
+  {
+    "name": "DLV6-spawn-anchor-unread",
+    "file": "src/scenes/delve/delveBench.js",
+    "old": "const a = draft?.anchors?.[0]?.at;",
+    "new": "const a = null;",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "a lab with an anchor stood at the start"
+  },
+  {
+    "name": "DLV6-foot-sign",
+    "file": "src/scenes/delve/delveBench.js",
+    "old": "return Number.isFinite(lo) ? -lo : null;",
+    "new": "return Number.isFinite(lo) ? lo : null;",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "a model sunk"
+  },
+  {
+    "name": "DLV6-foot-flat-whole",
+    "file": "src/scenes/delve/delveBench.js",
+    "old": "classicBillboardSize(t, item.flat[1]).h / 2",
+    "new": "classicBillboardSize(t, item.flat[1]).h",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "a flat lifted its whole height"
+  },
+  {
+    "name": "DLV6-foot-record-unbounded",
+    "file": "src/scenes/delve/delveBench.js",
+    "old": "t && item.flat[1] < (t.recordCount ?? 0) ?",
+    "new": "t ?",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "a record past its archive"
+  },
+  {
+    "name": "DLV6-foot-model-unknown",
+    "file": "src/scenes/delve/delveBench.js",
+    "old": "if (k < 0) return null;",
+    "new": "",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "a model the data lacks set anyway"
+  },
+  {
+    "name": "DLV6-panel-foot-unread",
+    "file": "src/tools/delveLab.js",
+    "old": "putAt('add', item, [p[0], p[1] + up, p[2]]);",
+    "new": "putAt('add', item, p);",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "the lab's thing sunk at my feet"
+  },
+  {
+    "name": "DLV6-panel-foot-refusal",
+    "file": "src/tools/delveLab.js",
+    "old": "if (up == null) { tell(`${JSON.stringify(item)}: not in your game's data`, true); return; }",
+    "new": "",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "a thing the data lacks put anyway"
+  },
+  {
+    "name": "DLV6-panel-light-at-feet",
+    "file": "src/tools/delveLab.js",
+    "old": "putAt('add', { light: Number(reach.value) }, [p[0], p[1] + Number(over.value), p[2]]);",
+    "new": "putAt('add', { light: Number(reach.value) }, p);",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "a light on the floor"
+  },
+  {
+    "name": "DLV6-panel-rebuild-where",
+    "file": "src/tools/delveLab.js",
+    "old": "types: [Number(type.value)] }, at())),",
+    "new": "types: [Number(type.value)] }, [0, 0, 0])),",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "the Rebuild told nothing of where I stand"
+  },
+  {
+    "name": "DLV6-bench-spawn-unsaid",
+    "file": "src/scenes/delve/delveBench.js",
+    "old": "draft, spawn: labSpawn(params, draft) };",
+    "new": "draft };",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "the bench told no spot"
+  },
+  {
+    "name": "DLV6-fires-anchors-unread",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": ".filter((c) => anchors.every((a) => d2(a.at, c.pos) >= SQ(DFIRE.anchorM)))",
+    "new": "",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "a campfire in a designed ward"
+  },
+  {
+    "name": "DLV6-fires-anchor-reach",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "  anchorM: 12,",
+    "new": "  anchorM: 6,",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "a campfire 7 m from the heart"
+  },
+  {
+    "name": "DLV6-anchor-crowded-stands",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "kinds.includes(a.kind) && fires.every((q) => d2(q, a.at) >= SQ(DSITE.fireM)))",
+    "new": "kinds.includes(a.kind))",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "an anchor a neighbour's brazier crowds stood anyway"
+  },
+  {
+    "name": "DLV6-record-unlisted",
+    "file": "src/world/dungeon/curatedRecords.js",
+    "old": "checkedRecords([CRYPT_HALL, MINE_GALLERY, DESECRATED_CHAPEL, THRONE_HALL])",
+    "new": "checkedRecords([CRYPT_HALL, MINE_GALLERY, THRONE_HALL])",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "a shipped block left out"
+  }
+]

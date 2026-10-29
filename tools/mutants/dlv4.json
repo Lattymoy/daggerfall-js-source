@@ -205,8 +205,8 @@
   {
     "name": "DLV4-seal-work",
     "file": "src/net/delve/delveLaw.js",
-    "old": "export const SEAL_WORK_MS = 24_000;",
-    "new": "export const SEAL_WORK_MS = 12_000;",
+    "old": "export const SEAL_WORK_MS = 40_000;",
+    "new": "export const SEAL_WORK_MS = 20_000;",
     "tests": [
       "test/net/delve/dlv4_law.test.js"
     ]
@@ -395,8 +395,8 @@
   {
     "name": "DLV4-sink-never",
     "file": "src/net/delve/delveLaw.js",
-    "old": "    else if (led.kind === 'seals' && led.p === DP.work && led.ec >= led.ws + led.wz)",
-    "new": "    else if (led.kind === 'seals' && led.p === DP.work && led.ec >= led.ws + 10 * led.wz)",
+    "old": "    else if (led.kind === 'seals' && led.p === DP.work && led.ec >= led.ws + led.sw)",
+    "new": "    else if (led.kind === 'seals' && led.p === DP.work && led.ec >= led.ws + 10 * led.sw)",
     "tests": [
       "test/net/delve/dlv4_law.test.js"
     ]
@@ -791,8 +791,8 @@
   {
     "name": "DLV4-host-relic-hunted-idle",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "return runs.filter((r) => r.relic && r.led && r.led.p !== DP.idle && r.led.p !== DP.won).map((r) => r.relic);",
-    "new": "return runs.filter((r) => r.relic).map((r) => r.relic);",
+    "old": "return runs.filter((r) => r.relic && r.led && r.led.p !== DP.idle && r.led.p !== DP.won && foesMine(r)).map((r) => r.relic);",
+    "new": "return runs.filter((r) => r.relic && foesMine(r)).map((r) => r.relic);",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]

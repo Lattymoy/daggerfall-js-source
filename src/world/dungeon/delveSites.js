@@ -9,6 +9,8 @@ import { hash32 } from '../blockHash.js';
 import { dungeonStart, enemyMarks, itemMarks, isPalaceLayout, isBorderBlock, colliderFireProbe, blockWaterY, DFIRE } from './dungeonFires.js';
 import { RDB_SIDE } from '../rdbLayout.js';
 import { DELVE_KINDS, DELVE_KIND_NAMES, DELVE_FAMILIES, DELVE_HEART_VAULTS, LITANY_RING_M, litanyCount } from '../../net/delve/delveLaw.js';
+import { curatedAnchors } from './curatedBlocks.js';   // DLV5: a curated block's encounters, designed
+import { curatedRecordsLive } from './curatedRecords.js';
 
 /** @typedef {{ r: number, flatNy: number, levelM: number, rings: readonly number[], ceilingM: number, enclosedM: number,
  *   enclosedRays: number, gridM: number, doorM: number, enemyM: number, itemM: number, startM: number, fireM: number,
@@ -184,13 +186,14 @@ export function chooseSites(valid, /** @type {{ seed?: number, start?: number[] 
 }
 
 /** THE KINDS: drawn off the seed, a site at a time, from `kinds` (the ones built); two sites or more hold one of each
- *  family where both are offered - the first site's family drawn, the second the other. Pure. */
-export function siteKinds(count, seed, kinds = DELVE_KIND_NAMES) {
+ *  family where both are offered - the first site's family drawn, the second the other. `first` the kinds already
+ *  stood (DLV5: a curated block's anchors), which the draw goes on from. Pure. */
+export function siteKinds(count, seed, kinds = DELVE_KIND_NAMES, first = []) {
   const pool = DELVE_KIND_NAMES.filter((k) => kinds.includes(k));
-  if (!pool.length) return [];
+  if (!pool.length) return [...first].slice(0, count);
   const fam = DELVE_FAMILIES.filter((f) => pool.some((k) => DELVE_KINDS[k].family === f));
-  const out = [];
-  for (let i = 0; i < count; i++) {
+  const out = [...first];
+  for (let i = out.length; i < count; i++) {
     const h = hash32(seed >>> 0, i, SITE_SALT + 1);
     let f = fam[h % fam.length];
     if (i === 1 && fam.length > 1) f = fam.find((x) => x !== DELVE_KINDS[out[0]].family) ?? f;
@@ -224,29 +227,38 @@ export function tooNearTaken(pos, taken) {
 /** THE WHOLE LAW, for the scene: `blocks` the layout's, `probe` the collider's answers (colliderSiteProbe), `doors` its
  *  doors and `fires` its campfires (dungeonFires.js fireLayoutInputs and the fire plan), `seed` its locationId, `tier`
  *  dungeonTier's word, `kinds` those built, `none` a dungeon that stands none (the caller's: the Hold, a made level, the
- *  Abyss Hollow). The large rooms first, then the small ones for what they leave short. Answers `{ sites, candidates,
- *  valid, small }` - the sites as delveLaw.js reads them, and the census's counts (`small` the second pass's sites).
+ *  Abyss Hollow), `anchors` a curated block's (curatedBlocks.js curatedAnchors - they stand first, as designed). The large
+ *  rooms first, then the small ones for what they leave short. Answers `{ sites, candidates, valid, small, anchored }` - the
+ *  sites as delveLaw.js reads them, and the census's counts (`small` the second pass's sites).
  *  @typedef {{ blocks?: any[], probe?: any, doors?: number[][], fires?: number[][], seed?: number, tier?: string,
- *   kinds?: readonly string[], none?: boolean, tally?: Record<string, any> | null }} PlanOpts */
-export function delveSitePlan(/** @type {PlanOpts} */ { blocks, probe, doors = [], fires = [], seed = 0, tier = 'regular', kinds = DELVE_KIND_NAMES, none = false, tally = null } = {}) {
-  const count = none ? 0 : delveSiteCount(blocks);
+ *   kinds?: readonly string[], none?: boolean, tally?: Record<string, any> | null, anchors?: any[] }} PlanOpts */
+export function delveSitePlan(/** @type {PlanOpts} */ { blocks, probe, doors = [], fires = [], seed = 0, tier = 'regular', kinds = DELVE_KIND_NAMES, none = false, tally = null, anchors = curatedAnchors(blocks, curatedRecordsLive()) } = {}) {
+  // DLV5: a curated block's anchors stand first, as designed (its kinds the ones built); the law finds the rest of the count.
+  // DLV6: one a fire crowds gives way, as a found site would (a neighbour block's brazier; the campfires keep clear of them)
+  const fixed = none ? [] : anchors.filter((a) => kinds.includes(a.kind) && fires.every((q) => d2(q, a.at) >= SQ(DSITE.fireM)));
+  const count = none ? 0 : Math.max(0, delveSiteCount(blocks) - fixed.length);
   const cands = siteCandidates(blocks);
-  if (count <= 0) return { sites: [], candidates: cands.length, valid: 0, small: 0 };
+  if (count <= 0 && !fixed.length) return { sites: [], candidates: cands.length, valid: 0, small: 0, anchored: 0 };
   const start = dungeonStart(blocks);
   const marks = { probe, doors, enemies: enemyMarks(blocks), items: itemMarks(blocks), fires, start, tier };
-  const valid = landDelveSites(cands, { ...marks, tally });
-  const large = chooseSites(valid, { seed, start, count }).map((c) => ({ c, r: DSITE.r }));
+  const held = fixed.map((a) => a.at);
+  const valid = count > 0 ? landDelveSites(cands, { ...marks, tally }).filter((c) => !tooNearTaken(c.pos, held)) : [];
+  const large = chooseSites(valid, { seed, start, count, taken: held }).map((c) => ({ c, r: DSITE.r }));
   let small = [];
   if (large.length < count) {
-    const taken = large.map(({ c }) => c.pos);
+    const taken = [...held, ...large.map(({ c }) => c.pos)];
     const cands2 = siteCandidates(blocks, DSITE_SMALL.gridM).filter((c) => !tooNearTaken(c.pos, taken));   // never to be chosen: never probed
     const spots = landDelveSites(cands2, { ...marks, tally: tally ? (tally.small ??= {}) : null, law: DSITE_SMALL });
     small = chooseSites(spots, { seed, start, count: count - large.length, taken }).map((c) => ({ c, r: DSITE_SMALL.r }));
   }
   const chosen = [...large, ...small];
-  const kindOf = siteKinds(chosen.length, seed, kinds);
-  const sites = chosen.map(({ c, r }, i) => ({
-    i, kind: kindOf[i], x: cm(c.pos[0]), y: cm(c.pos[1]), z: cm(c.pos[2]), r, tier, vault: vaultSpot(c.pos, c.walls, r, kindOf[i]),
-  }));
-  return { sites, candidates: cands.length, valid: valid.length, small: small.length };
+  const kindOf = siteKinds(fixed.length + chosen.length, seed, kinds, fixed.map((a) => a.kind));
+  const sites = [
+    ...fixed.map((a, i) => ({ i, kind: a.kind, x: cm(a.at[0]), y: cm(a.at[1]), z: cm(a.at[2]), r: a.r, tier, vault: a.vault.map(cm) })),
+    ...chosen.map(({ c, r }, k) => {
+      const i = fixed.length + k;
+      return { i, kind: kindOf[i], x: cm(c.pos[0]), y: cm(c.pos[1]), z: cm(c.pos[2]), r, tier, vault: vaultSpot(c.pos, c.walls, r, kindOf[i]) };
+    }),
+  ];
+  return { sites, candidates: cands.length, valid: valid.length, small: small.length, anchored: fixed.length };
 }

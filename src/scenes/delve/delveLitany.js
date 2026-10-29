@@ -9,13 +9,14 @@ import { CRYSTAL_CLIPS } from '../../world/gate/gateBoss.js';
 
 /** A plate's look: dark (waiting), shown (its turn in the order played), lit (worked), wrong (the one stepped on wrongly). */
 export const PLATE_LOOK = Object.freeze({ dark: 0, shown: 1, lit: 2, wrong: 3 });
-/** The wrong plate's look lasts this long (ms, the encounter clock's). */
+/** The wrong plate's look lasts this long (ms, on the clock its caller reads). */
 export const PLATE_WRONG_MS = 700;
 
 /** Each plate's look, off the ledger (null: none started) at the encounter clock `ec`; `wrong` the last wrong plate and
- *  when, or null; filled into `out` (kept by the caller). Pure but for `out`. @param {any} led @param {number} k
- *  @param {{ j: number, at: number }|null} wrong @param {number[]} [out] */
-export function plateLooks(led, k, wrong = null, out = []) {
+ *  when, or null, on clock `t` (the ledger's own by default; the host's, which a room's state never re-anchors - AUDIT
+ *  DLV3 8); filled into `out` (kept by the caller). Pure but for `out`. @param {any} led @param {number} k
+ *  @param {{ j: number, at: number }|null} wrong @param {number[]} [out] @param {number} [t] */
+export function plateLooks(led, k, wrong = null, out = [], t = led?.ec ?? 0) {
   out.length = k;
   out.fill(PLATE_LOOK.dark);
   if (!led) return out;
@@ -26,7 +27,7 @@ export function plateLooks(led, k, wrong = null, out = []) {
   } else if (led.p === DP.work) {
     for (let n = 0; n < led.next; n++) out[led.order[n]] = PLATE_LOOK.lit;
   }
-  if (wrong && led.ec - wrong.at < PLATE_WRONG_MS && wrong.j >= 0 && wrong.j < k) out[wrong.j] = PLATE_LOOK.wrong;
+  if (wrong && t >= wrong.at && t - wrong.at < PLATE_WRONG_MS && wrong.j >= 0 && wrong.j < k) out[wrong.j] = PLATE_LOOK.wrong;
   return out;
 }
 

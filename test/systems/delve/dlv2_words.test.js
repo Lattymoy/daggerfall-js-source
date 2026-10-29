@@ -19,7 +19,7 @@ test('DLV2 THE WORDS: each its own key in the text core, said short - no line pa
   const src = rd('src/systems/delve/delveWords.js');
   const keys = [...src.matchAll(/t\('(delve\.[a-zA-Z.]+)'/g)].map((m) => m[1]);
   assert.equal(keys.length, new Set(keys).size, 'one key a line');
-  assert.equal(keys.length, 63, 'DLV4: the Hold\'s and the Litany\'s twenty, and the five new kinds\' forty-three');
+  assert.equal(keys.length, 66, 'DLV4: the Hold\'s and the Litany\'s twenty, and the five new kinds\' forty-three; DLV3: a won vault not mine, another party\'s site and my own elsewhere');
   for (const k of keys) assert.match(rd('locales/en/Port_Strings.csv'), new RegExp(`^${k.replace(/\./g, '\\.')},`, 'm'), `${k} is in the English table`);
   for (const s of lines()) {
     assert.ok(typeof s === 'string' && s.length > 0);

@@ -821,8 +821,8 @@
   {
     "name": "DLV1-the-plan-ignoring-none",
     "file": "src/world/dungeon/delveSites.js",
-    "old": "const count = none ? 0 : delveSiteCount(blocks);",
-    "new": "const count = delveSiteCount(blocks);",
+    "old": "const count = none ? 0 : Math.max(0, delveSiteCount(blocks) - fixed.length);",
+    "new": "const count = Math.max(0, delveSiteCount(blocks) - fixed.length);",
     "tests": [
       "test/world/dlv1_sites.test.js"
     ]

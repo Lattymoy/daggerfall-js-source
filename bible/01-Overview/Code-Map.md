@@ -420,7 +420,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/world/card/` | The card table in the world: the tables, the scene, the regulars, a hand and its motion. |
 | `src/world/city/` | A city's gates, lights and navigation - its models and assembly. |
 | `src/world/deepWater/` | Deep Waters in the world: the sea floor and its bathymetry, the surface, swimming, the look and the bake. |
-| `src/world/dungeon/` | A dungeon's build: its layout, lights, textures, fires, encounter sites, label and end. |
+| `src/world/dungeon/` | A dungeon's build: its layout, lights, textures, fires, encounter sites, curated blocks (DELVE II's, `curated*.js` - their records in `src/assets/delve/`), label and end. |
 | `src/world/eliteGates/` | The Elite Breach in the world (`11-Multiplayer/Elite-Gates.md`, `Elite-Gates-Look.md`, `Elite-Gates-Ascent.md`): the halls, the ground, the ruin, the vista and the underside, the platforms, the rooms, the kit and its art, the air and the lamps - its models and assembly. |
 | `src/world/gate/` | The Oblivion Gate in the world: the arena, the art, the boss, the model, the clearance and the spew. |
 | `src/world/interior/` | Interiors: layout, lights, glass - its models and assembly. |

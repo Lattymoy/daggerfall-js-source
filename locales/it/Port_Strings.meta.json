@@ -10669,6 +10669,16 @@
   "tr": "48319024680d",
   "by": "claude-in-session"
  },
+ "delve.room.held": {
+  "en": "7e90d6f7e50b",
+  "tr": "fb4dad9f4fac",
+  "by": "claude-in-session"
+ },
+ "delve.room.others": {
+  "en": "c101bce16699",
+  "tr": "81440a843429",
+  "by": "claude-in-session"
+ },
  "delve.seals.broke": {
   "en": "cb378d98c75f",
   "tr": "092ebc86bc6a",
@@ -10717,6 +10727,11 @@
  "delve.vault.locked": {
   "en": "0589f271d648",
   "tr": "0e2ca0add955",
+  "by": "claude-in-session"
+ },
+ "delve.vault.notYours": {
+  "en": "e4879fdb3cf3",
+  "tr": "ee2830fd60bb",
   "by": "claude-in-session"
  },
  "delve.vault.open": {
@@ -11835,8 +11850,8 @@
   "by": "claude-in-session"
  },
  "features.dungeonEncounters.note": {
-  "en": "2c6e2d436602",
-  "tr": "28a5ff034006",
+  "en": "3ebac791d784",
+  "tr": "c074fec67f73",
   "by": "claude-in-session"
  },
  "features.dungeonEncounters.title": {

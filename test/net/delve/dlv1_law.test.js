@@ -101,14 +101,14 @@ test('DLV1 THE WARD AND THE PLATE: the disc and 2 m, 3 m up or down; a plate wit
   assert.equal(plateAt(plates, 10, -2, 20), -1, 'the heart is no plate');
 });
 
-test('DLV1 THE PLAN\'S HASH: every site\'s index, kind, heart, radius and vault to the centimetre move it; under half a centimetre does not; the order of the sites counts (mutants: the vault left out; y left out; the count left out)', () => {
+test('DLV1 THE PLAN\'S HASH: every site\'s index, kind, heart, radius, vault to the centimetre and tier move it; under half a centimetre does not; the order of the sites counts (mutants: the vault left out; y left out; the count left out; the tier left out)', () => {
   const a = site(), b = site({ i: 1, kind: 'litany', x: 70, z: 20, vault: [73.4, -2, 20] });
   const h = delvePlanHash([a, b]);
   assert.equal(h, delvePlanHash([site(), site({ i: 1, kind: 'litany', x: 70, z: 20, vault: [73.4, -2, 20] })]), 'the same every call');
   assert.equal(typeof h, 'number');
   const moved = [
     [{ ...a, i: 2 }, b], [{ ...a, kind: 'litany' }, b], [{ ...a, x: 10.01 }, b], [{ ...a, y: -2.01 }, b], [{ ...a, z: 20.01 }, b], [{ ...a, r: 5 }, b],
-    [{ ...a, vault: [13.41, -2, 20] }, b], [{ ...a, vault: [13.4, -1.99, 20] }, b], [{ ...a, vault: [13.4, -2, 20.01] }, b], [b, a], [a],
+    [{ ...a, vault: [13.41, -2, 20] }, b], [{ ...a, vault: [13.4, -1.99, 20] }, b], [{ ...a, vault: [13.4, -2, 20.01] }, b], [{ ...a, tier: 'elite' }, b], [b, a], [a],
   ];
   for (const sites of moved) assert.notEqual(delvePlanHash(sites), h);
   assert.equal(delvePlanHash([{ ...a, x: 10.004 }, b]), h, 'under half a centimetre');

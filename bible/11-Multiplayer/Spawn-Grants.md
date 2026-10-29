@@ -497,8 +497,8 @@ wired), the relay's law row; mutant records re-aimed where their text moved (`sc
 
 ## 14. GRANT4: every source's grant (BUILT 2026-10-18)
 
-- **The kinds** (GRANT_KINDS, fifteen): `enc`, `camp`, `band`, `bounty`, `loose`, `site`, `managed`, `giant`, `rev`,
-  `quest`, `ally`, `watch`, `kept`, GRANT8's `encr` (section 16), and STAR-TUNE's `star` - a fallen star's coven, its
+- **The kinds** (GRANT_KINDS, sixteen): `enc`, `camp`, `band`, `bounty`, `loose`, `site`, `managed`, `giant`, `rev`,
+  `quest`, `ally`, `watch`, `kept`, GRANT8's `encr` (section 16), STAR-TUNE's `star` - a fallen star's coven, its
   law's largest wave in one grant (`net/starfall/starfallLaw.js` STAR_WAVE_MAX, twenty-four), its own bucket, the open
   country's alone (`bible/11-Multiplayer/Starfall.md` section 4) - asked only of a relay that mints it (AUDIT STAR-TUNE
   F1, `STAR_GRANT_RELAY_MIN` 238, `relaySupportsStarGrant`; an older relay is asked the stand's own kind). A stand's kind
@@ -509,6 +509,10 @@ wired), the relay's law row; mutant records re-aimed where their text moved (`sc
   stand roll no marks (GRANT_MARKLESS), and a reader believes theirs (grantMarksAllow): their own law decides them, and
   their kind's bucket bounds them. `kept` is a stand whose elite or champion its caller set - a foe a save brought back, a
   search party's leader - so a grant's marks never contradict a mark its caller decided.
+- **The dungeon's kind** (DELVE II DLV3, `03-World/Delve-II.md` section 7): `delve`, a dungeon encounter's foes - its
+  law's largest wave in one grant (HOLD_WAVE_MAX, twelve), a world room's alone (GRANT_ROOM_KINDS: the open country
+  refuses it `kind`), asked only by a host linked to a relay that keeps the encounters (`world284`); grantKindOf names
+  it before a loose stand.
 - **The building's lane**: world.js hands the grants' host to the building's pool with its net (interiorFoesNet's
   `grants`), so a building's own stands ask, carry and read as the street's. The relay takes a world room's asks
   (`_grantHere`: the socket stands in its room; `streamsFoes` everywhere a cell was): its grant names no pixel (`[0, 0]` -

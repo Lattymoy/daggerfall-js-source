@@ -35,6 +35,7 @@ import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks 
 import { isEnhanced } from '../systems/uiSkin.js';   // AUDIT 62 F10: the dial button's own skin gate
 import { BlocksFile } from '../formats/blocksFile.js';
 import { bindWorldDataBlocks } from '../formats/worldData/worldDataReplacement.js';   // RR3b
+import { benchLocation, labFoot, LAB_DRAFT_KEY } from './delve/delveBench.js';   // DELVE II (DLV5): the bench's own places
 import { loadModWorldData } from './modWorldData.js';   // RR3b
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile } from '../formats/mapsFile.js';
@@ -128,7 +129,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const maps = new MapsFile();
   maps.load(mapsBytes, climateBytes, politicBytes);
 
-  const dfLocation = maps.getLocationByName(regionName, dungeonName);
+  const bench = benchLocation(params, maps);   // DELVE II (DLV5): a spawned dungeon (`?spawn=`) or the lab's block (`?dungeon=lab`)
+  const dfLocation = bench?.location ?? maps.getLocationByName(regionName, dungeonName);
   if (!dfLocation) throw new Error(`location not found: ${regionName}/${dungeonName}`);
 
   status(`laying out ${dungeonName}`);
@@ -198,7 +200,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // This is the host the enter-marker preference was written for; DE1
   // found it applied to the door transition as well, which is the
   // other member and takes the start marker.
-  const spawn = loadedPos ?? ctx.startSpawn() ?? [0, 2, 0];   // U21: a loaded game resumes where it was saved
+  const spawn = loadedPos ?? bench?.spawn ?? ctx.startSpawn() ?? [0, 2, 0];   // U21: a loaded game resumes where it was saved; DLV6: the lab where its Rebuild left me, or at its first anchor
   const cam = { pos: spawn, yaw: 0, pitch: 0 };
   const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
   const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration
@@ -234,6 +236,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), enhancedJumping: () => isEnhancedJumping(playerEntity), carriedWeight: () => carriedWeight(playerEntity), climbing: climbingDeps(playerEntity), parkour: parkourDeps(playerEntity, (l) => ctx.hudSay?.(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing (no HUD seam in the standalone host); motorStats = the LIVE entity
   _motorRef = player;   // DC1: the motorState seam binds here
+  if (bench?.draft) void import('../tools/delveLab.js').then(({ mountDelveLab }) => mountDelveLab({ draft: bench.draft, feet: () => [...player.pos], landing: (at, r) => ctx.delve?.()?.landing(at, r) ?? { ok: false, rule: 'none' }, foot: labFoot(arch, pipeline.getTexture), rebuild: (d, at) => { try { localStorage.setItem(LAB_DRAFT_KEY, JSON.stringify(d)); } catch { /* no storage: the draft lasts the page */ } location.search = `?dungeon=lab&class=1&novideo&at=${at.join(',')}`; } }));   // DELVE II (DLV5, DLV6): the lab's panel (delve.html)
     const _footsteps = new FootstepMachine();   // FS-slice
     immersiveFootsteps.onTransitionDungeonInterior();   // IF1: the standalone dungeon boot IS the dungeon transition (UpdateFootsteps_OnTransitionDungeonInterior)
     betterAmbience.onTransition({ dungeon: { regionName: dfLocation.regionName, name: dfLocation.name, inCastle: () => !!ctx.insideDungeonCastle?.(), exitPos: ctx.enterMarker ? [ctx.enterMarker.x, ctx.enterMarker.y, ctx.enterMarker.z] : null } });   // BA1: the boot is the dungeon transition here too

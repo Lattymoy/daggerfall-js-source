@@ -156,8 +156,9 @@ The Brazier Rite and the Seals rise 3 s after the first step in, and count the p
   One player carries two weights and stands on the third. A weight lifted off a plate goes back on it only when its
   carrier steps off and on again.
 - **THE SEALS** (break them all in time - the crystals' law). Three to six seals (`2 + ceil(n / 2)`) rise 3 m round the
-  heart, each a Dagon's crystal's health for the party (`crystalHpFor`). Break all within 24 s plus law 7's floor of
-  their route. Failed, they sink and rise again 10 s later, counted anew.
+  heart, each a Dagon's crystal's health for the party (`crystalHpFor`). Break all within 40 s plus law 7's floor of
+  their route (measured: 24 s could not be won at a level-1 character's own blows - section 14). Failed, they sink and
+  rise again 10 s later, counted anew.
 
 A carried piece goes home - the flame to the heart, a weight to its gate - when its carrier speaks or lets go from
 outside the ward, or falls silent for 15 s, so nobody stays burdened past the ward. An account's level is the one its
@@ -181,27 +182,32 @@ No puzzle hurts a player for a wrong answer, and none is the clock: no dial, no 
 ## 7. Online (DLV3)
 
 The relay reads no game data (Port-Doctrine), so it cannot place a site. Every client can, and law 4 makes them agree.
+As built (2026-10-29): `server/src/delveRoom.js`, the `dv` frame (`net/wire.js` validDelveIn and validDelveOut), the
+session's door (`net/online.js` sendDelve), the one link (`net/delve/delveLink.js`) and the host's online half
+(`scenes/delve/delveOnline.js`, `delveHost.js`).
 
-- **THE PLAN.** Each client sends the hash of its site plan with every word. The relay keeps the first plan heard in
-  the room - the sites' centres and their pieces' spots, a few hundred bytes - and refuses words under another hash. A
-  client whose plan differs gets no encounter and says so (LAYOUT_MISMATCH's rule for foes).
-- **THE LEDGER.** One for each started site, in the dungeon room's storage beside its world memory: the owner account,
-  the phase, the wave and its deaths, the pieces' state, the earners. Starfall's machine: an encounter clock that runs
-  only while the owning party stands at the site, floors on every clear, a word heard late moved as if on time.
-- **THE PARTY.** The first word's speaker owns the site. A word from another account counts only if the hub says it is
-  of the owner's party (`_instanceKinOf`, SD-PARTY's door). A wave's attempt that fails (section 5.1), a puzzle let
-  go (section 5.2) or a ledger never woken in 60 s drops the ledger, and the site is free. The fold that ends one moves
-  nothing more. Accounts are kept in a map with no prototype, and a word heard late moves no time back.
-- **REACH.** A puzzle's step, carry or break is judged against the plan's spots and the speaker's last pose the room
-  heard. A carried piece is set down no sooner than the fastest build carrying could walk it there (`ktLeastMs`, the
-  Ketch's step law), so no player is ever refused. THE DELVE PACE is the other bound: a window's floor (law 7).
-- **THE WAVES.** A machine of the owning party stands the foes (Starfall's camp law) under a grant kind of its own,
-  `delve`, sized to the law (12 a grant). It says the deaths of each wave; the relay bounds a clear by
-  `starClearFloorMs` and a captain's fall by a least time.
+- **THE PLAN.** A page says its plan - its sites, a few hundred bytes, and their hash - until the room answers. The
+  room keeps up to four plans side by side (DELVE_PLANS_MAX), each with its own ledgers, so a page of another build or
+  a forged plan plays alone and never stands another down. Past four, the least used with nothing at stake gives way;
+  with all at stake the page waits and says its plan again every 3 s. A word under a plan the room does not keep asks
+  for it, and every frame the room says names its plan (`ph`).
+- **THE LEDGER.** One for each started site, in the room's storage (`dv:p:` and `dv:l:`, never `world:`), stepped by
+  the next word heard at its site, whoever says it. It is read back after a hibernation, and forgotten with the room's
+  memory. Its law is the client's own (`net/delve/delveLaw.js`).
+- **THE PARTY.** The first word's speaker owns the site. Another account's word counts only if the hub says it is of
+  the owner's party (`_instanceKinOf`, SD-PARTY's door; a guest's as any member's). The hub's no is kept 30 s and its
+  silence 5 s. A stranger is told once, and its page holds its words there until the site's state moves. An account
+  runs one attempt at a time in a room.
+- **REACH AND LEVEL.** A step, carry or blow is judged from the pose the room last heard; the page makes it current
+  before each word, as `sendPose` says it. The level is the token's, or a word's lower one (a mentor's).
+- **THE WAVES.** The room names the foes' machine: the first word in the ward offers it, and a named machine keeps
+  holding them. It stands the foes under the `delve` grant kind (12 a grant, a world room's alone). Named mid-wave, it
+  stands the rest and counts on from the room's deaths. An encounter's foe is never handed on at a door.
 - **THE VAULT.** Won, the ledger names its earners: the owning party's members who stood at the site in its last 15 s.
-  Each opens its own share; the room remembers who has, until the respawn.
+  Each asks the room for its share once; the share is rolled on the earner's machine when the room says yes.
 - **INSTANCES.** An instanced dungeon (`Instances.md`) is a room like any other: the ledger lives in it.
-- A relay version (`world###`) and a client gate (`DELVE_RELAY_MIN`); an older relay stands no site online.
+- `world284` (DELVE_RELAY_MIN): a page at an older relay stands no site online. Online a window does not hold the
+  world (WINDOW-ONLINE), and the encounters run on under it.
 
 Strangers in the room may fight a wave's foes (they are hostile to all) and earn nothing; they may not work another
 party's puzzle. Offline the same law runs in the client, its ledger saved with the dungeon.
@@ -210,15 +216,26 @@ party's puzzle. Offline the same law runs in the client, its ledger saved with t
 
 - **WHERE.** Only in dungeons the game lays out itself: spawned (`world/spawnedDungeons.js`), Elite and the lairs past
   the Bay (`world/tamrielDungeons.js`). Never in Daggerfall's 4,232, never in the Abyss Hollow (its own law).
-- **WHAT.** A curated block is an RDB block in DFU's World Data JSON (`formats/worldData/worldDataReplacement.js`
-  `rdbBlockFromJson`), registered at a reserved index range (`registerPortBlockFamily`, as the capitals and town walls
-  are). It names Daggerfall's models and flats by id, rebuilt from the player's own files, so no game data enters the
-  repository (WD1's rule). It carries every editor marker a block needs (start, foes, treasure, quest) and a side table
-  of its encounter anchors, so its encounters are designed, not found.
-- **HOW IN.** A game-made dungeon's plan takes curated blocks by a seeded law over its type's own pool, never the
-  starting block. Its room key is already its own, so no Daggerfall dungeon's online room moves.
-- **THE TOOL.** A lab page (`delve.html`, as `spire.html` and `abyss.html` are) to lay a block out of Daggerfall's
-  models, set its markers and anchors, walk it, and export its JSON. There is no block editor in the tree today.
+- **WHAT.** A real interior block of the player's own BLOCKS.BSA - its `base` - with objects taken out by name
+  (`drop`: a marker, a flat or a model within a reach, never one an action chains), Daggerfall's models, flats,
+  editor markers and lights added (`add`: a light by its reach, 1 to 12 m, as the base's own lights are read), and its
+  encounters' anchors. A record of ours (`src/assets/delve/<id>.json`, the law
+  `world/dungeon/curatedBlocks.js`), made when first read as a capital's castle halls are (`registerPortBlockOf`, at
+  907000 and its number). DEPARTURE from the plan's whole World Data JSON: made of a base, its edges meet its
+  neighbours as the base's do, and no block of the game's enters the repository (WD1's rule).
+- **HOW IN.** A game-made dungeon whose type's pool holds a block takes one at CURATED_CHANCE (a half), in place of one
+  interior block that is not the start, all drawn off its own map id (`world/dungeon/curatedSplice.js`) where the
+  dungeon is laid (`dungeonLayout.js`, after a smaller size is drawn). Its room key is already its own, so no
+  Daggerfall dungeon's online room moves. Its anchors stand first in the site law, as designed; the law finds the rest.
+- **THE FIRES.** An anchor keeps the site law's 12 m from every fire, as a found site does. The campfire law stands
+  none within DFIRE.anchorM of one (`dungeonFires.js`); an anchor that a layout fire crowds (a neighbour block's
+  brazier) gives way, and the law finds a site in its place. A record drops its base's own fire within that reach.
+- **THE TOOL.** `delve.html` opens the bench's lab (`?dungeon=lab`): the draft (number 0) the start, four borders of
+  a real dungeon of its type round it. Its panel sets a model or a flat on the floor at the player's feet (its foot
+  read from the player's own data - `scenes/delve/delveBench.js` labFoot), a light over them, a marker, a drop, an
+  anchor or its vault. It lays the block again with the player where they stood (`?at=`, else the first anchor), asks
+  the site law of every anchor (the host's `landing`), and exports the record. The bench's `?spawn=px,py` stands a
+  named dungeon cloned on a pixel, as the world clones a spawn.
 - **THE LOOK.** Daggerfall's own models and flats, and code-painted pieces under DF-LOOK (`01-Overview/DF-Art.md`):
   no render of game data ships (Port-Doctrine).
 
@@ -229,7 +246,7 @@ party's puzzle. Offline the same law runs in the client, its ledger saved with t
 | DLV0 | This record | merged |
 | DLV1 | The law: `net/delve/delveLaw.js` (kinds, numbers, the ledger machine, its words, earned) and `world/dungeon/delveSites.js` (the site law); the census probe | DONE 2026-10-28: `test/net/delve/dlv1_law.test.js` and `test/world/dlv1_sites.test.js`, their mutants dead (`tools/mutants/dlv1.json`); the census in section 4 |
 | DLV2 | Offline in the game: `scenes/delve/delveHost.js` wired by `buildDungeonContext`; the Hold and the Litany; the vault; the HUD's words; the Features row `dungeon-encounters`; the Ledger A row | DONE 2026-10-29: stood and won in the real game; save and load; frame cost measured (section 12). AUDIT DELVE II the same day. An Elite stands online alone, so DLV3 stands it |
-| DLV3 | Online: the relay's ledger, the party's door, the plan's hash, the `delve` grant kind | a party of two wins both kinds; a stranger refused; a relay version |
+| DLV3 | Online: the relay's ledger, the party's door, the plan's hash, the `delve` grant kind | DONE 2026-10-29: `test/net/delve/dlv3_relay.test.js` (the room through the real Room: a party of three with a guest wins a Hold and opens its shares, a stranger refused, the plans side by side), `test/scenes/delve/dlv3_online.test.js`, `test/scenes/delve/dlv3_e2e.test.js` (the real host on the real Room, every kind); `tools/mutants/dlv3.json`; `world284`; AUDIT DLV3 (`01-Overview/audits/Audit-Delve-II.md` G) |
 | DLV4 | The Wellsprings, the Vigil, the Brazier Rite, the Weighing, the Seals; their audit | every kind stood, won and failed, solo and in a party |
 | DLV5 | Curated blocks: the format, the registry, the splice law, the lab page | a curated block stood in a spawned dungeon, its encounter designed |
 | DLV6 | The first curated blocks, their set pieces; AUDIT DLV5-6 | as the owner plays them |
@@ -243,7 +260,9 @@ real game over the freeware's data, and a frame-cost measure (`npm run perf`) be
   under its 8,463 ceiling): the build after its api, the frame and the marks in drawFoes, the vault's arms in takeLoot
   and lootContents, the save's word in its world record and its restore, the stamp the two replace doors carry, the
   destroy, and the probes' door. The rest is `scenes/delve/`.
-- `scenes/world.js`: WIRED at DLV3 - the online link (the ledger's frames), through a module it constructs.
+- `scenes/world.js`: WIRED at DLV3 - one line, `online.onDelve = wireDelve(online)` (`net/delve/delveLink.js`): the
+  session's words to the host that hears them. The context carries DLV3 in existing lines, no logical line added:
+  `delve` in its loose stand's options and grant ask, and `f._delve` on the line that never hands a revenant on.
 - `scenes/worldModes.js`: WIRED at DLV2 - `delve:` joins its press arm's prefixes (no logical line); the rest is the
   context's.
 - `scenes/exterior.js`: FLAGGED - the fixed city stands no dungeon.
@@ -287,3 +306,21 @@ The dev bench's `?class`, `?nofoes`, `?spell` and `?weapon` stood inside a comme
 boot opened the wizard and stood no layout foe. They are one option a line now, and `tools/delveProbe.mjs` drives the
 real game through a dungeon's sites on them.
 
+
+## 13. DLV3: what stands (2026-10-29)
+
+The encounters stand online. The dungeon's room keeps each site's ledger, and each page says its words to it and reads
+its state back. The row's note says a party wins an encounter together online.
+
+| Piece | How |
+|---|---|
+| The frame | `dv`. From a page: `pl` its plan, `w` a word at a site, `a` an act, `x` a blow, `v` a vault's ask - 8 a second at most (the relay's bucket 16 deep). From the room: `dl` a site's state with my own part (`me`), `ev` what moved it, `v` a vault's answer, `pl?`, `no` |
+| The view | the room's state made a ledger-shaped view (`delveView`), so the looks read it as they read a ledger offline: each phase from 0 on its own clock, run on between states |
+| The word | every second near a site, at once when it changes: my screen's ward (`iw`), the plate stepped (said a second while the room's pose catches up), the Vigil's blows on my machine |
+| Acts and blows | said to the room, never folded at home; an act said again after 600 ms unmoved |
+| The machine | the room's word (`me.fm`); named mid-wave it stands the rest, named no more its own crumble |
+| The vault | an earner's press asks the room; its yes rolls the share on my machine (PARTY-LOOT's base) |
+| A save | online the room keeps the won sites: a save keeps none, and a load restores none |
+| The session | a word leaves a welcomed socket in a dungeon's room at a relay that keeps them, its pose made current first |
+| The grant | `delve`: 12 a grant, a third a second, 8 deep, hostile - a world room's alone |
+| The relay | `world284`; a page at an older one stands no site online |

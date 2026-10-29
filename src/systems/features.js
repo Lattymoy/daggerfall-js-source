@@ -396,14 +396,14 @@ export const FEATURES = Object.freeze([
   }),
   // DELVE II (DLV2, 2026-10-28, the owner: "coming upon a wave based encounter, or puzzle solving like you find in some of
   // our world events"; bible/03-World/Delve-II.md): THE DUNGEONS' ENCOUNTERS - one of seven kinds, fought or worked out
-  // in a room the layout already has, each opening a vault (scenes/delve/delveHost.js). On by default; online (DLV3) the room's sites will
-  // stand for everyone in it, so the lane forces it on there - until then none stands online.
+  // in a room the layout already has, each opening a vault (scenes/delve/delveHost.js). On by default; online (DLV3) the
+  // room keeps the sites and they stand for everyone in it, so the lane forces it on there.
   Object.freeze({
     id: 'dungeon-encounters',
     group: 'world',
     get title() { return t('features.dungeonEncounters.title', 'Dungeon encounters'); },
-    get note() { return t('features.dungeonEncounters.note', 'Some dungeon rooms hold a ward to defend against waves of foes, or plates to step on in '
-      + 'order. Win one to open its vault. For now they stand only in a game that is not online.'); },
+    get note() { return t('features.dungeonEncounters.note', 'Some dungeon rooms hold an encounter: a ward to hold against foes, sources or seals to '
+      + 'break, or a puzzle to work out. Win one to open its vault. Online, your party wins it together.'); },
     get effect() { return t('features.effect.nextDungeon', 'Takes effect on the next dungeon you enter.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'dungeonEncounters', initial: true, online: true }),   // scenes/delve/delveHost.js DELVE_PREF

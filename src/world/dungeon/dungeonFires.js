@@ -29,6 +29,8 @@ import { GLOBAL_SCALE } from '../meshReader.js';
 import { RDB_SIDE } from '../rdbLayout.js';
 import { isDungeonExitDoor } from './dungeonLayout.js';   // AUDIT REST-PARTY C6: the doors the law keeps clear of are the host's
 import { transformPoint } from '../mat4.js';   // AUDIT REST II F7: a door's face centre, as dungeonLayout's own overlap test reads it
+import { curatedAnchors } from './curatedBlocks.js';
+import { curatedRecordsLive } from './curatedRecords.js';
 
 /** The flame a placed fire draws: TEXTURE.210 record 1, the camp's own (survival/camp.js FIRE_FLAT). */
 export const DUNGEON_FIRE_FLAT = Object.freeze({ archive: 210, record: 1 });
@@ -54,6 +56,7 @@ export const DFIRE = Object.freeze({
   spacingM: 80,       // about a block and a half
   storeyM: 6,         // the height band that stands in for a storey (automapFloors builds off the draw, after these)
   wardM: 15,          // no wandering spawn stands this near a placed fire (OPEN 9)
+  anchorM: 12,        // DELVE II (DLV6): from a curated block's encounter - the site law's own fire rule (delveSites.js DSITE.fireM)
   ceilingM: 10,       // a ceiling within this far over it: inside a room, never on a room's roof
   enclosedM: 30,      // ...and walls round it - at least `enclosedRays` of the eight rays meet one within this far
   enclosedRays: 4,
@@ -353,15 +356,15 @@ export const inFireWard = (fires, spot) => !!spot && (fires ?? []).some((q) => S
  * dungeon's door positions, `existing` its own fires, `seed` its locationId, `elite` an elite copy, `cold` a Super
  * dungeon (SD4a, bible/11-Multiplayer/Super-Dungeons.md section 5 - none, and the layout's own brazier by the door is
  * no campfire of the law's). An arena stands none (the caller says so); a palace none (AUDIT REST II F2,
- * layoutFireCount). Returns `{ fires, doorFire, candidates,
- * valid }`: the fires placed ([[x, y, z], ...], in pick order), the layout fire adopted as the entrance's or null (F5),
- * and the candidates' and the landed ones' counts (tools/dungeonFireProbe.mjs reports them off this one call).
+ * layoutFireCount); none within DFIRE.anchorM of a curated block's encounter (`anchors`, DLV6). Returns `{ fires,
+ * doorFire, candidates, valid }`: the fires placed ([[x, y, z], ...], in pick order), the layout fire adopted as the
+ * entrance's or null (F5), and the candidates' and the landed ones' counts (tools/dungeonFireProbe.mjs reports them).
  */
-export function dungeonFirePlan({ blocks, probe, doors = [], existing = [], seed = 0, elite = false, cold = false } = {}) {
+export function dungeonFirePlan({ blocks, probe, doors = [], existing = [], seed = 0, elite = false, cold = false, anchors = curatedAnchors(blocks, curatedRecordsLive()) } = {}) {
   if (cold) return { fires: [], doorFire: null, candidates: 0, valid: 0 };   // SD4a: a Super dungeon - the Hour is cold, no ray cast
   const count = layoutFireCount(blocks, elite);
   const cands = fireCandidates(blocks);
-  const valid = count > 0 ? landCandidates(cands, { probe, doors, enemies: enemyMarks(blocks), items: itemMarks(blocks) }) : [];
+  const valid = count > 0 ? landCandidates(cands, { probe, doors, enemies: enemyMarks(blocks), items: itemMarks(blocks) }).filter((c) => anchors.every((a) => d2(a.at, c.pos) >= SQ(DFIRE.anchorM))) : [];
   const { fires, doorFire } = chooseFirePlan(valid, { seed, existing, start: dungeonStart(blocks), count });
   return { fires, doorFire, candidates: cands.length, valid: valid.length };
 }

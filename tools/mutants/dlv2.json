@@ -164,8 +164,8 @@
   {
     "name": "DLV2-online-stood",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "      if (dead || none || online() || !feet) return;",
-    "new": "      if (dead || none || !feet) return;",
+    "old": "const down = () => dead || none || (online() && !linked());",
+    "new": "const down = () => dead || none;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "DLV2-vault-never-rolled",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "r.won = true; r.vault = rollVault(rollPile, lv());",
-    "new": "r.won = true; r.vault = [];",
+    "old": "r.won = true; r.vault = online() ? null : rollVault(rollPile, lv());",
+    "new": "r.won = true; r.vault = online() ? null : [];",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "DLV2-save-under-another-plan",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "if (!s || s.h !== hash || !Array.isArray(s.won)) return;",
-    "new": "if (!s || !Array.isArray(s.won)) return;",
+    "old": "if (!s || s.h !== hash || !Array.isArray(s.won) || online()) return;",
+    "new": "if (!s || !Array.isArray(s.won) || online()) return;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "DLV2-destroy-keeps-the-doors",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "      unTargets?.(); unNamer?.();\n",
-    "new": "",
+    "old": "      unTargets?.(); unNamer?.(); unHear?.();",
+    "new": "      unHear?.();",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "DLV2-a-load-keeps-revived-foes",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "for (const r of runs) { r.foes?.crumble(); r.wakers?.crumble();",
-    "new": "for (const r of runs) { r.wakers?.crumble();",
+    "old": "for (const r of runs) { r.foes?.crumble(); r.wakers?.crumble(); r.led = null; r.won = false;",
+    "new": "for (const r of runs) { r.wakers?.crumble(); r.led = null; r.won = false;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -596,7 +596,7 @@
   {
     "name": "DLV2-a-sealed-vault-listed",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "return r?.won && !dead && !online() ? r.vault ?? [] : null;",
+    "old": "return r?.won && !down() ? r.vault ?? [] : null;",
     "new": "return r ? r.vault ?? [] : null;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
@@ -659,8 +659,8 @@
   {
     "name": "DLV2-a-nan-clock",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "now += Number.isFinite(dt) ? Math.min(Math.max(0, dt), 1) * 1000 : 0;",
-    "new": "now += Math.min(Math.max(0, dt), 1) * 1000;",
+    "old": "const ms = Number.isFinite(dt) ? Math.min(Math.max(0, dt), 1) * 1000 : 0;",
+    "new": "const ms = Math.min(Math.max(0, dt), 1) * 1000;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]

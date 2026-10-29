@@ -1,17 +1,18 @@
 // @ts-check
-// DELVE II (bible/03-World/Delve-II.md, DLV2 and DLV4; the owner, 2026-10-28: "coming upon a wave based encounter, or
-// puzzle solving like you find in some of our world events"): A DUNGEON'S ENCOUNTERS, STOOD. The site law's plan made once
-// as the dungeon is built (world/dungeon/delveSites.js), each site's ledger run on the player's own words, blows and acts
-// (net/delve/delveLaw.js - offline the player is the whole party and the machine that stands the foes), the foes
-// (delveHold.js), the plates (delveLitany.js), the pieces struck, guarded and carried (delveBodies.js), the marks and the
-// chest (delvePieces.js), the new kinds' looks (delveProps.js) and the vault. scenes/dungeonContext.js wires it in a few
-// lines (HOST-SPLIT). Offline alone until DLV3: online it stands nothing. Not a DFU member (Ledger A: DELVE II).
-import { delveSitePlan, colliderSiteProbe } from '../../world/dungeon/delveSites.js';
-import { fireLayoutInputs } from '../../world/dungeon/dungeonFires.js';
+// DELVE II (bible/03-World/Delve-II.md, DLV2 to DLV4; the owner, 2026-10-28: "coming upon a wave based encounter, or
+// puzzle solving like you find in some of our world events"): A DUNGEON'S ENCOUNTERS, STOOD. The site law's plan made as
+// the dungeon is built (world/dungeon/delveSites.js); offline each ledger run here on my own words, blows and acts
+// (net/delve/delveLaw.js), online the room's (server/src/delveRoom.js), its state read as a ledger (delveOnline.js) and my
+// words said to it (net/delve/delveLink.js) - the foes stood only while the room names my machine. The foes (delveHold.js),
+// plates (delveLitany.js), pieces (delveBodies.js), marks and chest (delvePieces.js), looks (delveProps.js) and the vault;
+// scenes/dungeonContext.js wires it in a few lines (HOST-SPLIT). Not a DFU member (Ledger A: DELVE II).
+import { delveSitePlan, colliderSiteProbe, landDelveSites, DSITE, DSITE_SMALL } from '../../world/dungeon/delveSites.js';
+import { fireLayoutInputs, enemyMarks, itemMarks, blockWaterY } from '../../world/dungeon/dungeonFires.js';
+import { RDB_SIDE } from '../../world/rdbLayout.js';
 import {
   newDelveLedger, foldDelveWord, foldDelveHit, foldDelveAct, inWard, plateAt, delvePlates, delvePlanHash, DP, FLAME, WEIGHT,
   HOLD_WAVES, DELVE_WARD_PAD_M, DELVE_KIND_NAMES, DELVE_REACH_M, SPRING_POUR_MS, SPRING_ALIVE, DRIFT_MAX, DRIFT_EVERY_MS,
-  VIGIL_LIGHT, isWaveKind, springSpots, springCount, brazierSpots, weightSpots, weighPlates, driftSpots,
+  VIGIL_LIGHT, isWaveKind, springSpots, springCount, brazierSpots, weightSpots, weighPlates, driftSpots, holdCaptainTraits,
 } from '../../net/delve/delveLaw.js';
 import { createHoldFoes, HOLD_RANK_STEP_M } from './delveHold.js';
 import { plateLooks, shownPlate, createPlateSteps, DELVE_SOUNDS } from './delveLitany.js';
@@ -20,9 +21,12 @@ import { createDelveProps, pieceCrystals, siteFlames, weightPlaces, sourceLook, 
 import { breakTargets, createStandIns, makeRelic, createDelveCarry, delveCrystalOf, delveHuntSite } from './delveBodies.js';
 import {
   DELVE_NEAR_TEXT, DELVE_HOLD_TEXT, DELVE_LITANY_TEXT, DELVE_VAULT_TEXT, DELVE_SPRINGS_TEXT, DELVE_VIGIL_TEXT, DELVE_BRAZIER_TEXT,
-  DELVE_WEIGHING_TEXT, DELVE_SEALS_TEXT, DELVE_CARRY_TEXT, DELVE_PIECE_TEXT, DELVE_SAY_S, DELVE_SAY_LONG_S,
+  DELVE_WEIGHING_TEXT, DELVE_SEALS_TEXT, DELVE_CARRY_TEXT, DELVE_PIECE_TEXT, DELVE_ROOM_TEXT, DELVE_SAY_S, DELVE_SAY_LONG_S,
 } from '../../systems/delve/delveWords.js';
 import { rollVault } from '../../systems/delve/delveVault.js';
+import { delveWireReady, sendDelveWord, attachDelveHearer } from '../../net/delve/delveLink.js';
+import { DELVE_ACTS, DELVE_NO, DELVE_HIT_MAX } from '../../net/wire.js';
+import { delvePlanWire, delveView, delveWordKey, DELVE_WORD_MS, DELVE_ACT_AGAIN_MS, DELVE_PLAN_AGAIN_MS, DELVE_HELD_SAY_MS } from './delveOnline.js';
 import { dungeonTier } from '../../systems/dungeon/dungeonTier.js';
 import { madeLevelOf } from '../../systems/madeLevel.js';
 import { isPrivateersHold } from '../../systems/startDungeon.js';
@@ -140,7 +144,8 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
   const seed = (location?.dungeon?.recordElement?.header?.locationId ?? 0) >>> 0;
   const tier = location?.elite === true ? 'elite' : 'regular';
   const { doors, existing } = none ? { doors: [], existing: [] } : fireLayoutInputs(blocks, hearths);
-  const plan = none ? { sites: [] } : delveSitePlan({ blocks, probe: colliderSiteProbe(api.collider), doors, fires: [...existing, ...fires], seed, tier, kinds: delveKindsFor(location) });
+  const probe = none ? null : colliderSiteProbe(api.collider);
+  const plan = none ? { sites: [] } : delveSitePlan({ blocks, probe, doors, fires: [...existing, ...fires], seed, tier, kinds: delveKindsFor(location) });
   const hash = delvePlanHash(plan.sites);
   const pieces = createDelvePieces({ renderer: deps.renderer ?? null, meshes: deps, draws: api.dynamicDraws, collider: api.collider });
   const props = createDelveProps({
@@ -152,9 +157,17 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
   const standIns = createStandIns();
   let now = 0, dead = false, chestsStood = false, hitQ = 0, lastFeet = /** @type {number[]|null} */ (null), lastYaw = 0, weapon = /** @type {any} */ (null);
   const myFeet = [0, 0, 0];
+  // DLV3: online, the room's - the plan said until it answers, a refusal of it (another plan stands) standing all down
+  let planSaidAt = -Infinity, planHeard = false, refused = false;
+  /** Online at a relay that keeps the encounters: the room's ledgers, read and said. */
+  const linked = () => online() && !refused && delveWireReady();
+  /** Nothing stands: torn down, no site, or online at a relay that keeps none. */
+  const down = () => dead || none || (online() && !linked());
+  /** My machine stands this site's foes: offline always, online while the room names it. */
+  const foesMine = (r) => !online() || !!r.me?.fm;
   const lv = () => effectiveLevel(player());
   const foeHost = {
-    spawn: (type, at, opts) => api.spawnLooseFoe(type, at, opts),
+    spawn: (type, at, opts) => api.spawnLooseFoe(type, at, linked() ? { ...opts, delve: true } : opts),   // DLV3: online, the encounter's own grant kind
     remove: (f) => api.removeLooseFoe(f),
     pick: () => chooseRandomEnemy({ ...place, dungeonType: location?.mapTableData?.dungeonType, playerLevel: lv(), local: true }),
     elites: () => elitesAllowed({ inRoom: online() }),
@@ -180,6 +193,10 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
       // said, the crystals' list kept
       relic: /** @type {any} */ (null), byFall: false, offPlate: -1, hb: 0, broke: /** @type {number[]} */ ([]), rose: 0, poured: /** @type {number[]} */ ([]), driftAt: 0, lowSaid: false,
       crystals: /** @type {any[]} */ ([]),
+      // DLV3: online, the room's last state of it and my part (`me`), my word's key and moment, my last act's, the step
+      // said while the room's pose catches up, and whether my machine stood its foes
+      st: /** @type {any} */ (null), me: /** @type {any} */ (null), wordKey: '', wordAt: -Infinity, actKey: '', actAt: -Infinity,
+      step: { p: -1, until: 0 }, fm: false, apart: /** @type {any} */ (null), heldAt: -Infinity, knBase: 0, knWave: 0, clearWave: 0,
     };
     if (site.kind === 'vigil') r.relic = makeRelic(site, () => { if (r.led && r.led.p !== DP.idle) r.hb++; });
     return r;
@@ -205,9 +222,9 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
       case 'gather':
         say(kind === 'vigil' ? DELVE_VIGIL_TEXT.gather() : kind === 'brazier' ? DELVE_BRAZIER_TEXT.gather() : kind === 'seals' ? DELVE_SEALS_TEXT.gather() : DELVE_HOLD_TEXT.gather());
         sound(DELVE_SOUNDS.wake, site); break;
-      case 'wave': r.foes?.on(ev); say(DELVE_HOLD_TEXT.wave(ev.w, HOLD_WAVES)); break;
+      case 'wave': r.knBase = 0; r.knWave = 0; r.clearWave = 0; if (foesMine(r)) r.foes?.on(ev); say(DELVE_HOLD_TEXT.wave(ev.w, HOLD_WAVES)); break;
       case 'breath': say(kind === 'vigil' ? DELVE_VIGIL_TEXT.breath() : DELVE_HOLD_TEXT.breath()); break;
-      case 'captain': r.foes?.on(ev); say(DELVE_HOLD_TEXT.captain()); sound(DELVE_SOUNDS.wake, site); break;
+      case 'captain': if (foesMine(r)) r.foes?.on(ev); say(DELVE_HOLD_TEXT.captain()); sound(DELVE_SOUNDS.wake, site); break;
       case 'spring': r.poured = []; r.broke = []; say(DELVE_SPRINGS_TEXT.spring()); sound(DELVE_SOUNDS.rise, site); break;
       case 'seals': r.rose = now / 1000; r.broke = []; say(DELVE_SEALS_TEXT.seals(ev.n)); sound(DELVE_SOUNDS.rise, site); break;
       case 'broke':
@@ -222,8 +239,8 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
         if (kind === 'brazier') { r.driftAt = now; say(DELVE_BRAZIER_TEXT.work(ev.n)); } else if (kind === 'weighing') say(DELVE_WEIGHING_TEXT.work()); else say(DELVE_LITANY_TEXT.work());
         break;
       case 'lit': sound(DELVE_SOUNDS.chime(ev.next), site); break;
-      case 'wrong': r.wrong = { j: ev.j, at: r.led?.ec ?? 0 }; sound(DELVE_SOUNDS.wrong, site); say(DELVE_LITANY_TEXT.wrong()); break;
-      case 'wake': say(DELVE_LITANY_TEXT.wake()); r.wakers?.on({ k: 'wave', w: (r.led?.shows ?? 0) + 1, wz: ev.n }); break;
+      case 'wrong': r.wrong = { j: ev.j, at: now }; sound(DELVE_SOUNDS.wrong, site); say(DELVE_LITANY_TEXT.wrong()); break;   // on my clock: a room's state re-anchors its own
+      case 'wake': say(DELVE_LITANY_TEXT.wake()); if (foesMine(r)) r.wakers?.on({ k: 'wave', w: (r.led?.shows ?? 0) + 1, wz: ev.n }); break;
       case 'take': say(kind === 'brazier' ? DELVE_BRAZIER_TEXT.take() : DELVE_WEIGHING_TEXT.take()); break;
       case 'light': {
         sound(DELVE_SOUNDS.ignite, site);
@@ -236,26 +253,40 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
       case 'set': case 'back': sound(DELVE_SOUNDS.thud, site); break;
       case 'held': say(DELVE_WEIGHING_TEXT.held()); sound(DELVE_SOUNDS.chime(3), site); break;
       case 'unheld': say(DELVE_WEIGHING_TEXT.unheld()); break;
-      case 'won':
-        r.foes?.on(ev); r.wakers?.crumble(); r.won = true; r.vault = rollVault(rollPile, lv()); carry.set(false);
+      case 'won':   // online the share is rolled when the room says it is mine to open (hear: `v`)
+        r.foes?.on(ev); r.wakers?.crumble(); r.won = true; r.vault = online() ? null : rollVault(rollPile, lv()); carry.set(false);
         say(wonLine(kind), DELVE_SAY_LONG_S); sound(DELVE_SOUNDS.won, site);
         break;
       default: break;
     }
   }
   const fold = (r, evs) => { for (const ev of evs) onEvent(r, ev); };
-  /** An act of mine at a site (take, light, drop, set), at my feet. */
+  /** An act of mine at a site (take, light, drop, set), at my feet - online said to the room, once, and again after
+   *  DELVE_ACT_AGAIN_MS while its state has not moved. Answers whether it went. */
   const act = (r, a, j = -1, feet = lastFeet) => {
-    if (r.led && feet) fold(r, foldDelveAct(r.led, r.site, ME, { a, j }, { party: true, inWard: holds(r.site, feet), pose: feet, nowMs: now }));
+    if (!r.led || !feet) return false;
+    if (!online()) { fold(r, foldDelveAct(r.led, r.site, ME, { a, j }, { party: true, inWard: holds(r.site, feet), pose: feet, nowMs: now })); return true; }
+    const key = `${a}|${j}`;
+    if (key === r.actKey && now - r.actAt < DELVE_ACT_AGAIN_MS) return true;
+    r.actKey = key; r.actAt = now;
+    return sendDelveWord({ k: 'a', h: hash, i: r.site.i, a: DELVE_ACTS.indexOf(a), j });
   };
 
-  function frameSite(r, feet) {
+  /** Whether I am near a site (its near line's reach), and its near line said once. */
+  function nearSite(r, feet) {
     const { site } = r;
     const dx = feet[0] - site.x, dz = feet[2] - site.z, near = site.r + DELVE_WARD_PAD_M + DELVE_NEAR_M;
-    if (!r.said && !r.won && dx * dx + dz * dz <= near * near && Math.abs(feet[1] - site.y) <= 3) {
+    const is = dx * dx + dz * dz <= near * near && Math.abs(feet[1] - site.y) <= 3;
+    if (is && !r.said && !r.won) {
       r.said = true;
-      say(nearLine(site, site.kind === 'wellsprings' ? springCount(seed, site.i) : r.plates?.length ?? 0, look), DELVE_SAY_LONG_S);
+      say(nearLine(site, site.kind === 'wellsprings' ? r.led?.k || springCount(seed, site.i) : r.plates?.length ?? 0, look), DELVE_SAY_LONG_S);
     }
+    return is;
+  }
+  function frameSite(r, feet) {
+    const { site } = r;
+    if (online()) { frameSiteOnline(r, feet); return; }
+    nearSite(r, feet);
     if (r.won) return;
     const iw = holds(site, feet);
     if (r.dark && !iw) r.dark = false;   // a ward gone dark wakes again only to a step back in
@@ -269,19 +300,73 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
     fold(r, foldDelveWord(r.led, ME, '', w, r.ctx));
     if (!r.led) return;
     kindFrame(r, feet, iw, plate);
-    if (!r.led) return;
-    const sp = shownPlate(r.led);
-    if (sp >= 0 && sp !== r.shown) sound(DELVE_SOUNDS.chime(r.led.order.indexOf(sp) + 1), site);
+    if (r.led) siteTail(r, iw);
+  }
+  /** Both ways' frame's end: an order's plate chimed as it is shown, and a defender out of a running ward told once. */
+  function siteTail(r, iw) {
+    const { site, led } = r;
+    const sp = shownPlate(led);
+    if (sp >= 0 && sp !== r.shown) sound(DELVE_SOUNDS.chime(led.order.indexOf(sp) + 1), site);
     r.shown = sp;
-    const running = isWaveKind(site.kind) && r.led.p !== DP.idle && r.led.p !== DP.won;
-    if (running && !iw && now - r.led.inAt >= DELVE_AWAY_SAY_MS && !r.away) { r.away = true; say(DELVE_HOLD_TEXT.away()); }
+    const running = isWaveKind(site.kind) && led.p !== DP.idle && led.p !== DP.won;
+    if (running && !iw && now - led.inAt >= DELVE_AWAY_SAY_MS && !r.away) { r.away = true; say(DELVE_HOLD_TEXT.away()); }
     if (iw) r.away = false;
+  }
+  /** DLV3: A SITE A FRAME, ONLINE - the room's ledger read (its view, r.led), my machine taking up the foes the room names
+   *  it for (the rest of a running wave, the captain) or letting its own go, and my word said: every DELVE_WORD_MS while I
+   *  am near, stand its foes or carry its piece, at once when it changes. A step on a plate is said a second, while the
+   *  room's pose of me catches up. With no foes' machine heard, a word from the ward offers mine. */
+  function frameSiteOnline(r, feet) {
+    const { site } = r;
+    const near = nearSite(r, feet);
+    const led = r.led, iw = holds(site, feet), plate = r.plates ? plateAt(r.plates, feet[0], feet[1], feet[2]) : -1;
+    const fm = !!r.me?.fm;
+    if (fm && !r.fm) takeFoes(r); else if (!fm && r.fm) { r.foes?.crumble(); r.wakers?.crumble(); }
+    r.fm = fm;
+    if (led && iw) led.inAt = now;
+    if (fm) { r.foes?.frame(); r.wakers?.frame(); }
+    const w = r.word;
+    w.lv = lv(); w.hb = Math.min(r.hb, 9999); w.iw = iw ? 1 : 0; w.o = 0; w.kw = 0; w.kn = 0; w.wc = 0; w.cf = 0;
+    const stepped = r.steps ? r.steps.at(iw ? plate : -1) : -1;
+    if (stepped >= 0) r.step = { p: stepped, until: now + 1_000 };
+    w.st = r.step.p >= 0 && now < r.step.until && plate === r.step.p ? r.step.p : -1;
+    if (fm) { if (r.foes) handedWord(r, w); else w.o = 1; }   // named: kept - a puzzle's machine has no foes host to say it (AUDIT DLV3 4)
+    else if (iw && !r.won && (!led || !led.fo)) w.o = 1;   // the waking word offers it too: the first to speak keeps them, as offline
+    if ((near || fm || mine()?.r === r) && !r.apart) {
+      const key = delveWordKey({ i: site.i, ...w });
+      if (key !== r.wordKey || now - r.wordAt >= DELVE_WORD_MS) { if (sendDelveWord({ k: 'w', h: hash, i: site.i, ...w })) { r.wordKey = key; r.wordAt = now; } }
+    }
+    if (!led || r.won) return;
+    kindFrame(r, feet, iw, plate);
+    siteTail(r, iw);
+  }
+  /** DLV3: my machine named for a site's foes mid-attempt: the rest of its running wave stood (the room counted the
+   *  others' downed), or its captain - the pours and the drift go on from now. A wave with no rest is clear (AUDIT DLV3
+   *  P2: the machine before me left before it said so). */
+  function takeFoes(r) {
+    const led = r.led;
+    r.poured = []; r.driftAt = now; r.knBase = 0; r.knWave = 0; r.clearWave = 0;
+    if (!led || !r.foes) return;
+    if (led.p === DP.wave) {
+      const rest = Math.max(0, led.wz - led.kn);
+      r.knBase = led.kn; r.knWave = led.w;
+      if (rest > 0) r.foes.on({ k: 'wave', w: led.w, wz: rest }); else r.clearWave = led.w;
+    } else if (led.p === DP.captain) r.foes.on({ k: 'captain', traits: holdCaptainTraits(r.site.tier) });
+  }
+  /** My machine's word: its own count, on from the room's when it took the wave over mid-way. */
+  function handedWord(r, w) {
+    r.foes.word(w);
+    const led = r.led;
+    if (led?.p !== DP.wave || led.w !== r.knWave) return;
+    if (r.clearWave === led.w) { w.kw = led.w; w.kn = led.wz; w.wc = led.w; return; }
+    if (w.kw === led.w) w.kn = Math.min(led.wz, w.kn + r.knBase);
   }
   /** DLV4's kinds, a frame: the sources' pours, the relic's light, the rite's drift and its flame taken and set to the
    *  braziers as I walk to them, a weight set on a free plate I step onto. */
   function kindFrame(r, feet, iw, plate) {
     const { site, led } = r;
     if (site.kind === 'wellsprings' && led.p === DP.spring) {
+      if (!foesMine(r)) return;
       const due = Math.floor((led.ec - led.ss) / SPRING_POUR_MS) + 1;
       springSpots(site, led.k).forEach((p, j) => {
         if (!(led.hp[j] > 0) || (r.poured[j] ?? 0) >= due) return;
@@ -291,7 +376,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
     } else if (site.kind === 'vigil' && led.p !== DP.idle && !r.lowSaid && led.lt <= VIGIL_LIGHT / 4) {
       r.lowSaid = true; say(DELVE_VIGIL_TEXT.low());
     } else if (site.kind === 'brazier' && led.p === DP.work) {
-      if (r.foes && now - r.driftAt >= DRIFT_EVERY_MS && r.foes.driftLive() < DRIFT_MAX && foeHost.pick() >= 0) {
+      if (r.foes && foesMine(r) && now - r.driftAt >= DRIFT_EVERY_MS && r.foes.driftLive() < DRIFT_MAX && foeHost.pick() >= 0) {
         r.driftAt = now;
         const spots = driftSpots(site);
         r.foes.drift(spots[Math.floor(Math.random() * spots.length)]);
@@ -326,7 +411,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
    *  hands' burden, a blow or a readied weapon letting the piece go where I stand. */
   const want = new Set();
   /** My carried piece let go where I stand (a blow on me, a readied weapon): answers whether it went. */
-  const dropMine = () => { const h = mine(); if (!h) return false; act(h.r, h.j < 0 ? 'drop' : 'set', h.j, lastFeet); return !mine(); };
+  const dropMine = () => { const h = mine(); if (!h) return false; const went = act(h.r, h.j < 0 ? 'drop' : 'set', h.j, lastFeet); return online() ? went : !mine(); };   // online: the word left, the room's state follows
   function frameProps(feet) {
     const held = mine();
     want.clear();
@@ -351,7 +436,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
   const unTargets = none ? null : api.addActivationTargets?.(() => targets());
   const unNamer = none ? null : api.addActivationNamer?.((key) => nameOf(key));
   function targets() {
-    if (dead || online()) return [];
+    if (down()) return [];
     const out = [];
     for (const r of runs) {
       const aabb = pieces.chest(r.site.i);
@@ -383,17 +468,67 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
     return out;
   }
 
+  /** DLV3: THE ROOM'S WORD (net/wire.js validDelveOut): a site's state made its view, what moved it, a vault's answer -
+   *  my plan's alone - the plan asked for again, or a refusal. */
+  function hear(w) {
+    if (dead || none || !online()) return;
+    if (w.k === 'pl?') { planHeard = false; planSaidAt = -Infinity; return; }
+    if (w.k === 'no') { refusal(w); return; }
+    if (w.ph !== hash) return;   // another plan's (a page of another build): nothing of it is mine
+    const r = runs[w.i];
+    if (!r) return;
+    if (w.k === 'dl') {
+      planHeard = true; refused = false;
+      if (r.apart && w.p !== r.apart.p) r.apart = null;   // the site's state moved: my word may count again
+      r.st = w; r.me = w.me;
+      const was = r.led;
+      r.led = delveView(r.site, w, r.led);
+      if (!was && r.led) { r.away = false; r.hb = 0; r.lowSaid = false; }   // a fresh attempt: my counts from nothing, as offline's (AUDIT DLV3 3)
+      r.won = w.p === DP.won;
+      if (!r.won) r.vault = null;
+      r.rest = w.p === DP.idle && w.rs > 0 ? now + w.rs : 0;
+    } else if (w.k === 'ev') { for (const e of w.ev) onEvent(r, e); }
+    else if (w.k === 'v') {
+      if (!w.ok) { api.hudSay?.(DELVE_VAULT_TEXT.notYours()); return; }
+      r.vault = rollVault(rollPile, lv());   // my share: the pile's own roll, on my machine (PARTY-LOOT's base)
+      if (!quickLootTake(`${DELVE_KEY}vault:${r.site.i}`, { items: () => r.vault }, player(), setMidScreenText, { took: showPickups })) api.openLootList?.(r.vault);
+    }
+  }
+  /** A refusal: no room yet for my plan (every site stands down here, and the plan is said again in DELVE_PLAN_AGAIN_MS
+   *  - AUDIT DLV3 2: never for good), a site another party holds or my own attempt at another (said once, and my word
+   *  there held back until its state moves - AUDIT DLV3 6), the hub silent (the next word asks again). */
+  function refusal(w) {
+    if (w.m === DELVE_NO.plan) { standDown(); planHeard = false; planSaidAt = now; return; }
+    const r = runs[w.i];
+    if (!r) return;
+    if (w.m === DELVE_NO.party && !r.apart) { r.apart = { p: r.led?.p ?? DP.idle }; say(DELVE_ROOM_TEXT.others()); }
+    else if (w.m === DELVE_NO.held && now - r.heldAt >= DELVE_HELD_SAY_MS) { r.heldAt = now; say(DELVE_ROOM_TEXT.held()); }   // my word goes on: the other may end any time
+  }
+  /** No room for my plan: every site stands down here, its foes and pieces gone, until the room keeps it. */
+  function standDown() {
+    refused = true;
+    for (const r of runs) { r.foes?.crumble(); r.wakers?.crumble(); r.led = null; }
+    carry.set(false);
+  }
+  const unHear = none ? null : attachDelveHearer(hear);
+
   return {
     /** The plan's sites (the probes' and the tests'). */
     sites: plan.sites,
     /** The encounters' clock and every site's ledger, once a frame (scenes/dungeonContext.js drawFoes - both dungeon hosts).
      *  `dt` seconds; `feet` the player's; `yaw` their facing (radians - a carried piece is held before them); `pw` their
-     *  weapon (a carry puts it up). Under a window drawFoes is not called, and the encounters wait. The chests stand on
-     *  the first frame offline (online stands nothing). */
+     *  weapon (a carry puts it up). Under a window offline drawFoes is not called and the encounters wait; online the
+     *  world runs on under it (WINDOW-ONLINE, scenes/windowWorld.js) and so do they. The chests stand on the first frame
+     *  offline, online once the room keeps the plan. */
     frame(dt, feet, yaw = 0, pw = null) {
-      if (dead || none || online() || !feet) return;
-      if (!chestsStood) { chestsStood = true; for (const r of runs) pieces.standChest(r.site.i, r.site.vault, chestYaw(r.site)); }
-      now += Number.isFinite(dt) ? Math.min(Math.max(0, dt), 1) * 1000 : 0;
+      if (dead || none || !feet) return;
+      const ms = Number.isFinite(dt) ? Math.min(Math.max(0, dt), 1) * 1000 : 0;
+      now += ms;
+      // DLV3: the plan said until the room answers - while it has no room for it too, so a page stood down stands again
+      if (online() && delveWireReady() && !planHeard && now - planSaidAt >= DELVE_PLAN_AGAIN_MS && plan.sites.length) { planSaidAt = now; sendDelveWord(delvePlanWire(plan.sites, hash, tier)); }
+      if (down()) return;
+      if (!chestsStood && (!online() || planHeard)) { chestsStood = true; for (const r of runs) pieces.standChest(r.site.i, r.site.vault, chestYaw(r.site)); }   // online: once the room keeps the plan
+      if (online()) for (const r of runs) if (r.led && r.led.p !== DP.won) r.led.ec += ms;   // each view's clock run on between its states
       myFeet[0] = feet[0]; myFeet[1] = feet[1]; myFeet[2] = feet[2];   // my own copy: the motor's feet are its live Float32Array
       lastFeet = myFeet; lastYaw = Number.isFinite(yaw) ? yaw : 0; weapon = pw;
       for (const r of runs) frameSite(r, myFeet);
@@ -403,12 +538,12 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
     /** The marks on the floors near the eye and the pieces' crystals, after the last opaque flat (drawFoes' late slot).
      *  Nothing made a frame. */
     drawPass(proj, view, eye) {
-      if (dead || none || online() || !eye) return false;
+      if (down() || !eye) return false;
       list.length = 0; crystalList.length = 0;
       for (const r of runs) {
         const { site } = r, dx = eye[0] - site.x, dz = eye[2] - site.z;
         if (dx * dx + dz * dz > DELVE_DRAW_M * DELVE_DRAW_M) continue;
-        const looks = site.kind === 'litany' ? plateLooks(r.led, r.plates.length, r.wrong, r.looks) : site.kind === 'weighing' ? weighLooks(r) : r.looks;
+        const looks = site.kind === 'litany' ? plateLooks(r.led, r.plates.length, r.wrong, r.looks, now) : site.kind === 'weighing' ? weighLooks(r) : r.looks;
         siteShapes(site, r.led, looks, { won: r.won, sealed: !r.won, s: now / 1000, seed }, r.shapes);
         list.push(r.entry);
         for (const q of pieceCrystals(site, r.led, { look, seed, s: now / 1000, broke: r.broke, rose: r.rose, won: r.won }, r.crystals)) crystalList.push(q);
@@ -418,7 +553,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
     },
     /** DLV4: the pieces a blow can break now, as the context's crystal seam reads them (gateCrystalBodies). */
     breakables() {
-      if (dead || none || online()) return [];
+      if (down()) return [];
       const out = [];
       for (const r of runs) if (!r.won && r.led) breakTargets(r.site, r.led, standIns, out);
       return out;
@@ -427,15 +562,16 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
      *  what lands. Answers whether it landed. */
     hit(c, d, kind) {
       const at = delveCrystalOf(c), run = at ? runs[at.i] : null;
-      if (!run?.led || dead || online() || !lastFeet) return false;
+      if (!run?.led || down() || !lastFeet || !(d > 0)) return false;
+      if (online()) return sendDelveWord({ k: 'x', h: hash, i: at.i, j: at.j, d: Math.min(DELVE_HIT_MAX, d), r: kind, q: (++hitQ) & 0x7fffffff });   // the room's caps decide: it went
       const led = run.led, was = led.hp[at.j];
       fold(run, foldDelveHit(led, run.site, ME, { j: at.j, d, r: kind, q: ++hitQ }, { party: true, inWard: holds(run.site, lastFeet), pose: lastFeet, nowMs: now }));
       return led.hp[at.j] < was;   // whether it landed (AUDIT DLV4 F12: a refused blow keeps no spell's rounds on the piece)
     },
     /** DLV4: the bodies the dungeon's foes may hunt beside the party - a Vigil's relic while it runs. */
     wards() {
-      if (dead || none || online()) return [];
-      return runs.filter((r) => r.relic && r.led && r.led.p !== DP.idle && r.led.p !== DP.won).map((r) => r.relic);
+      if (down()) return [];
+      return runs.filter((r) => r.relic && r.led && r.led.p !== DP.idle && r.led.p !== DP.won && foesMine(r)).map((r) => r.relic);   // online: hunted by my machine's foes alone
     },
     /** A press on a vault or a weight (the context's takeLoot, `delve:`): in Info mode its name; a weight taken up (a press
      *  with one in my hands sets it down where I stand); a sealed vault said so; a won one quick loot's take
@@ -444,7 +580,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
       const wk = delveKeyWeight(key);
       if (wk) {
         const r = runs[wk.i];
-        if (!r || dead || online()) return 0;
+        if (!r || down()) return 0;
         if (mode === 'info') { api.hudSay?.(DELVE_PIECE_TEXT.weight()); return 1; }
         const h = mine();
         if (h && h.r === r && h.j >= 0) act(r, 'set', h.j);
@@ -456,8 +592,12 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
         return 1;
       }
       const r = runs[delveKeySite(key)];
-      if (!r || dead || online()) return 0;
+      if (!r || down()) return 0;
       if (mode === 'info') { api.hudSay?.(nameOf(key)?.title ?? ''); return 1; }
+      if (online() && r.won && !r.vault) {   // DLV3: my share asked of the room - an earner's, once
+        if (r.me?.ea) sendDelveWord({ k: 'v', h: hash, i: r.site.i }); else api.hudSay?.(DELVE_VAULT_TEXT.notYours());
+        return 1;
+      }
       if (!r.won || !r.vault) { api.hudSay?.(DELVE_VAULT_TEXT.locked()); return 1; }
       if (quickLootTake(key, { items: () => r.vault }, player(), setMidScreenText, { took: showPickups })) return 1;
       api.openLootList?.(r.vault);
@@ -466,17 +606,17 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
     /** What a won vault holds, for the plaque (the context's lootContents, `delve:`); a sealed one names, never lists. */
     contents(key) {
       const r = runs[delveKeySite(key)];
-      return r?.won && !dead && !online() ? r.vault ?? [] : null;
+      return r?.won && !down() ? r.vault ?? [] : null;
     },
     /** What a save keeps (in the world record - the dungeon's, kept only while in it): the plan's hash and each won
      *  site's vault. A running attempt is never saved. */
-    snapshot: () => ({ h: hash, won: runs.filter((r) => r.won).map((r) => ({ i: r.site.i, items: (r.vault ?? []).map((it) => ({ ...it })) })) }),
+    snapshot: () => ({ h: hash, won: online() ? [] : runs.filter((r) => r.won).map((r) => ({ i: r.site.i, items: (r.vault ?? []).map((it) => ({ ...it })) })) }),   // online the room keeps them
     /** A save's word laid back - under the same plan alone. Every running attempt ends first, and every living foe one
      *  stood goes - a foe the save held alive stood up again by the world record's own restore among them. */
     restore(s) {
       for (const r of runs) { r.foes?.crumble(); r.wakers?.crumble(); r.led = null; r.won = false; r.vault = null; r.said = false; r.away = false; r.dark = false; r.steps?.reset(); r.wrong = null; r.shown = -1; r.rest = 0; r.broke = []; r.hb = 0; r.byFall = false; r.offPlate = -1; }
       carry.set(false);
-      if (!s || s.h !== hash || !Array.isArray(s.won)) return;
+      if (!s || s.h !== hash || !Array.isArray(s.won) || online()) return;
       for (const w of s.won) { const r = runs[w?.i]; if (r) { r.won = true; r.vault = Array.isArray(w.items) ? w.items.map((it) => ({ ...it })) : []; } }
     },
     /** The ledgers, for the tests and the probes. */
@@ -486,11 +626,19 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
     })),
     /** A site's ledger as it stands, for the probes to read (never to write). */
     ledger: (i) => runs[i]?.led ?? null,
+    /** DLV5: the site law's landing at `at` for a ward of `r` - as the plan judged every spot it found, the start's rule
+     *  aside (a curated block is never the start): `{ ok }` or the rule broken (the lab's check, delve.html). */
+    landing(at, r) {
+      if (!probe) return { ok: false, rule: 'none' };
+      const tally = {}, b = blocks.find((x) => at[0] >= x.originX && at[0] < x.originX + RDB_SIDE && at[2] >= x.originZ && at[2] < x.originZ + RDB_SIDE);
+      const got = landDelveSites([{ pos: at, water: b ? blockWaterY(b.layout) : -Infinity }], { probe, doors, enemies: enemyMarks(blocks), items: itemMarks(blocks), fires: [...existing, ...fires], start: null, tally, law: r === DSITE.r ? DSITE : DSITE_SMALL, tier });
+      return got.length ? { ok: true, y: got[0].pos[1] } : { ok: false, rule: Object.keys(tally)[0] ?? 'floor' };
+    },
     /** Where a site's weights' homes, plates and braziers stand (the probes'). */
     spots: (i) => { const s = plan.sites[i]; return s ? { weights: weightSpots(s), plates: weighPlates(s), braziers: brazierSpots(s, runs[i].led?.k || 3) } : null; },
     destroy() {
       dead = true;
-      unTargets?.(); unNamer?.();
+      unTargets?.(); unNamer?.(); unHear?.();
       carry.destroy();
       pieces.destroy();
       props.destroy();

@@ -6,6 +6,7 @@
 // set), its vault pressed, the frame's cost measured, every page error a failure. Pictures at each stage.
 //
 //   node tools/delveProbe.mjs [region] [dungeon] [shots-dir] [--look]      e.g.  Daggerfall "Bedard Laboratory" /tmp/delve
+//   node tools/delveProbe.mjs --lab=<id> [shots-dir]                       a shipped curated block, in the bench's lab
 //   CHROMIUM=/path/to/chrome                                               a browser of the machine's own
 //
 // `--look`: each site's marks pictured at rest and woken, nothing fought. Exits 1 on a page error, a site never stood,
@@ -17,9 +18,10 @@ import { litanyPlates, springSpots, sealSpots, brazierSpots, weightSpots, weighP
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const LOOK = process.argv.includes('--look');
-const DEBUG = !!process.env.DELVE_DEBUG;
 const DPS = process.argv.includes('--dps');   // the character's own damage a second on the first piece it strikes   // each swing said: the host's hits, the pieces, where I stand
-const [region = 'Daggerfall', name = 'Bedard Laboratory', shots = null] = process.argv.slice(2).filter((a) => a !== '--look' && a !== '--dps');
+const LAB = process.argv.find((a) => a.startsWith('--lab='))?.slice(6) ?? null;   // DLV6: a shipped curated block, laid in the bench's lab (`?dungeon=lab&lab=<id>`)
+const rest = process.argv.slice(2).filter((a) => a !== '--look' && a !== '--dps' && !a.startsWith('--lab='));
+const [region = 'Daggerfall', name = 'Bedard Laboratory', shots = null] = LAB ? ['', `lab ${LAB}`, rest[0] ?? null] : rest;
 if (shots) mkdirSync(shots, { recursive: true });
 const server = await createServer({ server: { port: 5231, strictPort: true, hmr: false, watch: null }, logLevel: 'error' });   // an edit to the tree mid-run reloads no page
 await server.listen();
@@ -29,7 +31,7 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.message)));
 const fail = async (why) => { console.log(`FAIL: ${why}`); await browser.close(); await server.close(); process.exit(1); };
 
-const q = new URLSearchParams({ region, dungeon: name });
+const q = new URLSearchParams(LAB ? { dungeon: 'lab', lab: LAB } : { region, dungeon: name });
 await page.goto(`http://localhost:5231/play/?shot&play&nomenu&novideo&class=1&${q}`);   // class=1: the headless character (no wizard)
 await page.waitForFunction(() => window.__frame > 10, null, { timeout: 240000 });
 const frames = async (n) => {
@@ -74,7 +76,9 @@ await page.evaluate(() => {
 });
 // THE CHARACTER KEPT WHOLE: the probe measures the encounters, not the bench character's life - healed every 50 ms in the
 // page (a level-1 character dies to a Wellsprings' pours between the probe's steps), said here so no reading forgets it
-await page.evaluate(() => { setInterval(() => { const p = window.__playerEntity; if (p && p.health > 0) p.health = p.maxHealth; }, 50); });
+// a wave's three blows can land in one frame under the software rasteriser (a frame is 0.1 s of the game's time), so the
+// pool is past any wave's reach: nothing the encounters size reads it (the pieces are sized by level - Delve-II.md 5)
+await page.evaluate(() => { setInterval(() => { const p = window.__playerEntity; if (p && p.health > 0) { p.maxHealth = Math.max(p.maxHealth, 100_000); p.health = p.maxHealth; } }, 50); });
 console.log('(the character is kept whole by the probe)');
 const sites = await page.evaluate(() => window.__delve()?.sites ?? null);
 if (!sites) await fail('no encounter host on the context');
@@ -95,6 +99,12 @@ for (const s of sites) {
   console.log(`  in: "${await say()}"  ${JSON.stringify((await state())[s.i])}`);
   await look(); await frames(4);
   await shot(`site${s.i}-in`);
+  if (LAB) {   // DLV6: the set pieces round the ward - from its heart, eye height, each of the four ways
+    for (const [tag, yaw] of [['north', Math.PI], ['east', Math.PI / 2], ['south', 0], ['west', -Math.PI / 2]]) {
+      await page.evaluate(([x, y, z, w]) => window.__pose(x, y, z, w, -0.12), [s.x, s.y + 1.6, s.z, yaw]); await frames(3);
+      await shot(`site${s.i}-set-${tag}`);
+    }
+  }
   if (LOOK) { await at([s.x + s.r + 5, s.y, s.z]); await frames(4); continue; }
   const t0 = Date.now();
   const killMine = () => page.evaluate((i) => {
@@ -105,55 +115,63 @@ for (const s of sites) {
     }
     return k;
   }, s.i);
-  /** The player's own swing at a piece, from a step off it, facing it - the crystal seam's real door. */
-  const swingAt = async (p) => {
-    const dx = s.x - p[0], dz = s.z - p[2], d = Math.hypot(dx, dz) || 1, a = [p[0] + (dx / d) * 1.2, p[1], p[2] + (dz / d) * 1.2];   // on the heart's side, where a defender stands
+  /** Stood a step off a piece on the heart's side, looking at its middle, the weapon readied - as a defender stands. */
+  const aimAt = async (p) => {
+    const dx = s.x - p[0], dz = s.z - p[2], d = Math.hypot(dx, dz) || 1, a = [p[0] + (dx / d) * 1.2, p[1], p[2] + (dz / d) * 1.2];
     await at(a);
-    // looking at the piece's middle, as a player must (the swing meets a body in view - a source is shorter than the eye)
     await page.evaluate(([x, y, z, tx, tz, mid]) => window.__pose(x, y + 1.6, z, Math.atan2(tx - x, tz - z), -Math.atan2(y + 1.6 - mid, Math.hypot(tx - x, tz - z))), [a[0], a[1], a[2], p[0], p[2], p[1] + 0.8]);
-    if (DEBUG) await page.evaluate(() => { const h = window.__delve(); if (h.__hits) return; h.__hits = []; const f = h.hit.bind(h); h.hit = (...a) => { const r = f(...a); h.__hits.push([...a, r]); return r; }; });
-    const hand = () => page.evaluate(() => { const w = window.__combat.weapon(); return w ? { sheathed: !!w.sheathed, state: w.machine?.state ?? null, cd: window.__playerEntity?.equipCountdown ?? 0 } : null; });
-    for (let k = 0; k < 40 && (await hand())?.sheathed; k++) { if (k === 0) await page.evaluate(() => window.__combat.toggleSheath()); await frames(5); }   // the game boots sheathed: drawn once, never put up again
-    for (let k = 0; k < 40 && (await hand())?.cd > 0; k++) await frames(5);   // the equip countdown run out
-    const was = await hand();
-    await heal();
-    await page.evaluate(() => window.__combat.clickAttack());
-    await frames(6); await closeWindows(); await frames(18);   // the first blow opens its tutorial page mid-swing
-    if (DEBUG) console.log(`  swing ${JSON.stringify(was)}: ${await page.evaluate(() => { const h = window.__delve(); const o = JSON.stringify({ hits: h.__hits.splice(0), pieces: h.breakables().map((q) => [q.c, q.feet, q.height, q.radius]), pos: window.__player.pos, eye: window.__player.eye, ray: window.__ray?.() ?? null, near: JSON.parse(window.__foes()).filter((f) => !f.dead && f.pos && Math.hypot(f.pos[0] - window.__player.pos[0], f.pos[2] - window.__player.pos[2]) < 3).map((f) => [f.type, f.pos]) }); return o; })}`);
+    const hand = () => page.evaluate(() => { const w = window.__combat.weapon(); return w ? { sheathed: !!w.sheathed, cd: window.__playerEntity?.equipCountdown ?? 0 } : null; });
+    for (let k = 0; k < 40 && (await hand())?.sheathed; k++) { if (k === 0) await page.evaluate(() => window.__combat.toggleSheath()); await frames(5); }
+    for (let k = 0; k < 40 && (await hand())?.cd > 0; k++) await frames(5);
   };
   /** THE MEASURE (Delve-II.md section 5: "measured in the game before they ship"): the character's own damage a second on
    *  piece `j` - a swing pressed every frame for 150 frames, the game's own pace deciding when one starts. A frame's step
-   *  is the bench's 0.1 s at most (scenes/dungeon.js), so under 10 frames a second 150 frames are 15 s of the game's time. */
+   *  is the bench's 0.1 s at most (scenes/dungeon.js), so under 10 frames a second 150 frames are 15 s of the game's time.
+   *  A window that opens mid-measure (the first swing's tutorial page) pauses the game: that measure is cut and taken again. */
   const measureDps = async (j) => {
-    const r = await page.evaluate(async ([i, jj]) => {
-      const h = window.__delve(), w0 = performance.now(), f0 = window.__frame;
-      let dmg = 0, n = 0, presses = 0;
-      const f = h.hit.bind(h);
-      h.hit = (c, d, k) => { const ok = f(c, d, k); if (ok) { dmg += d; n++; } return ok; };
-      while (window.__frame < f0 + 150) { window.__playerEntity.health = window.__playerEntity.maxHealth; window.__combat.clickAttack(); presses++; await new Promise((res) => requestAnimationFrame(res)); }
-      h.hit = f;
-      void i; void jj;
-      return { dmg, n, presses, frames: window.__frame - f0, wallS: (performance.now() - w0) / 1000, lv: window.__playerEntity.level };
-    }, [s.i, j]);
+    let r = null;
+    for (let k = 0; k < 4 && !(r && !r.cut); k++) {
+      await closeWindows();
+      r = await page.evaluate(async () => {
+        const h = window.__delve(), w0 = performance.now(), f0 = window.__frame;
+        let dmg = 0, n = 0, presses = 0, cut = false;
+        const f = h.hit.bind(h);
+        h.hit = (c, d, kk) => { const ok = f(c, d, kk); if (ok) { dmg += d; n++; } return ok; };
+        while (window.__frame < f0 + 150) {
+          if (window.__overlay?.()) { cut = true; break; }
+          window.__playerEntity.health = window.__playerEntity.maxHealth; window.__combat.clickAttack(); presses++; await new Promise((res) => requestAnimationFrame(res));
+        }
+        h.hit = f;
+        return { dmg, n, presses, cut, frames: window.__frame - f0, wallS: (performance.now() - w0) / 1000, lv: window.__playerEntity.level };
+      });
+    }
+    if (r.cut) { console.log('  dps: not measured - a window kept opening'); return; }
+    void j;
     const fps = r.frames / r.wallS, gameS = fps < 10 ? r.frames * 0.1 : r.wallS;
     console.log(`  dps: ${(r.dmg / gameS).toFixed(2)} at level ${r.lv} (${r.n} blows, ${r.dmg} in ${gameS.toFixed(1)} s of the game's time, ${fps.toFixed(1)} frames a second)`);
   };
   if (s.kind === 'wellsprings' || s.kind === 'seals') {
-    let struck = 0;
-    let quiet = Date.now();
-    while (!(await state())[s.i].won && Date.now() - t0 < 600_000) {
-      if (Date.now() - quiet > 30_000) { quiet = Date.now(); console.log(`  still: ${JSON.stringify((await state())[s.i])} "${await say()}"`); }
-      await heal(); await closeWindows(); await killMine();
+    // a piece struck as a player strikes it: stood on the heart's side, looking at it, a swing pressed every frame (the
+    // game's own pace deciding when one starts) - in the page, a round trip a burst, not a swing
+    let struck = 0, measured = false, quiet = Date.now();
+    while (!(await state())[s.i].won && Date.now() - t0 < 2_400_000) {
+      if (Date.now() - quiet > 60_000) { quiet = Date.now(); console.log(`  still: ${JSON.stringify((await state())[s.i])} "${await say()}"`); }
+      await closeWindows(); await killMine();
       const st = (await state())[s.i];
-      if (st.p === 1 || st.p === 9 || st.p === 4) { await at([s.x, s.y, s.z]); await frames(10); continue; }   // rising, sunk, or the captain (struck below)
+      if (st.p === 1 || st.p === 9 || st.p === 4) { await at([s.x, s.y, s.z]); await frames(10); continue; }   // rising, sunk, or the captain (felled by killMine)
       const spots = s.kind === 'seals' ? sealSpots(s, st.k) : springSpots(s, st.k);
       const j = st.hp.findIndex((h) => h > 0);
       if (j < 0) { await frames(5); continue; }
-      const before = st.hp[j];
-      await swingAt(spots[j]);
-      const after = (await state())[s.i].hp[j];
-      if (after < before) { struck++; if (struck === 1) await shot(`site${s.i}-struck`); console.log(`  piece ${j}: ${before} -> ${after} (the swing's own blow)`); }
-      if (after < before && struck === 1 && DPS) await measureDps(j);
+      await aimAt(spots[j]);
+      if (DPS && !measured) { measured = true; await measureDps(j); continue; }
+      const r = await page.evaluate(async ([i, jj]) => {
+        const h = window.__delve(), before = h.state()[i].hp[jj], f0 = window.__frame;
+        while (window.__frame < f0 + 60 && h.state()[i].hp[jj] > 0 && !h.state()[i].won) { window.__combat.clickAttack(); await new Promise((res) => requestAnimationFrame(res)); }
+        const st = h.state()[i];
+        return { before, after: st.hp[jj] ?? null, p: st.p };
+      }, [s.i, j]);
+      if (r.after == null) console.log(`  piece ${j}: ${r.before} -> gone with its phase (${r.p}: the window ran out, or the pieces fell)`);   // a sink clears the pieces
+      else if (r.after < r.before) { struck++; if (struck === 1) await shot(`site${s.i}-struck`); console.log(`  piece ${j}: ${r.before} -> ${r.after}`); }
     }
     if (!struck) await fail(`site ${s.i}: no swing ever landed on a piece`);
   } else if (s.kind === 'brazier') {

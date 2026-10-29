@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Delve lab</title>
+  <style>
+    html, body { margin: 0; background: #0e1013; color: #e9e4d9; font: 14px system-ui, sans-serif; }
+    main { max-width: 640px; margin: 0 auto; padding: 16px; }
+    h1 { font-size: 18px; } h2 { font-size: 15px; color: #c08a3e; margin-top: 24px; }
+    p, li { color: #c9c3b8; line-height: 1.5; } a { color: #c08a3e; }
+    label { display: block; margin: 8px 0 2px; } input, select, button { font: inherit; padding: 4px 6px; max-width: 100%; }
+    .bad { color: #e07a5f; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Delve lab - curated blocks</h1>
+    <p>A curated block is a real interior block of your own game files with things taken out, things added and its
+      encounters placed by hand (bible/03-World/Delve-II.md, section 8). The lab opens it in the game's dungeon bench:
+      walk it, put things at your feet from the panel, rebuild, and export the record into src/assets/delve/.</p>
+    <h2>The shipped blocks</h2>
+    <ul id="shipped"></ul>
+    <h2>A new block</h2>
+    <form id="new">
+      <label for="id">Its id (a-z, 0-9 and -)</label><input id="id" value="my-hall" required />
+      <label for="base">Its base: an interior block of BLOCKS.BSA</label><input id="base" value="N0000023.RDB" required />
+      <label for="type">The dungeon type it joins</label><select id="type"></select>
+      <p><button type="submit">Open it in the lab</button> <span id="say" class="bad"></span></p>
+    </form>
+  </main>
+  <script type="module" src="/src/tools/delveLabPage.js"></script>
+</body>
+</html>

@@ -1704,7 +1704,8 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world283';   // world283: PVP-SAFE-HIT (2026-10-29, NOT YET DEPLOYED): a non-villain in a settlement's streets of the zone says it (`zone` with `sf` 1, WILD_STREETS_RELAY_MIN) - the referee lands its blow on a red villain alone and no blow on it (net/wild/wildRef.js wildStreetsBar). Deploy the relay first, then the site.
+export const RELAY_VERSION = 'world284';   // world284: DELVE II DLV3 (2026-10-29, NOT YET DEPLOYED): a dungeon's room keeps its encounters (`dv`, DELVE_RELAY_MIN - server/src/delveRoom.js, net/delve/delveLaw.js joins the bundle), the `delve` grant kind (a world room's alone, GRANT_ROOM_KINDS) and the token's level stamped in a dungeon's room. Deploy the relay first, then the site.
+// world283: PVP-SAFE-HIT (2026-10-29, NOT YET DEPLOYED): a non-villain in a settlement's streets of the zone says it (`zone` with `sf` 1, WILD_STREETS_RELAY_MIN) - the referee lands its blow on a red villain alone and no blow on it (net/wild/wildRef.js wildStreetsBar). Deploy the relay first, then the site.
 // world282: PVP-FOLLOWUP (2026-10-29, the PvP rework's follow-up; NOT YET DEPLOYED): PVP-RISE - the zone's death wait a minute (WILD_DEATH_HOLD_S 60, WILD_REF.riseMs and the `down` word's ceiling 60 s, were two minutes); Enter rises after 15 s (DEATH-15). Deploy the relay first, then the site.
 // world281: PVP-REWORK STAGE 1 with STAFF-PULL and SD-SOLO-40 (the stp frame carries pull and landed - staff bring a player to them, net/staffTeleport.js, server/src/staffTeleport.js routeStaffPull, from #1360's world276; a shared solo Shattered Hour holds 40, net/superDungeon/sdLaw.js SD_PUB_SEATS) (2026-10-28, the PvP rework; NOT YET DEPLOYED; world280 on its branch, renumbered past ARMORY) - the referee's pool is the player's real health (the `vit` report's `x`, at most 3,000) and Restoration (`r`); one blow or cast takes at most 45% of it (PVP-HIT), BAL8's 180 in 5 s retired; casts 1.9 a second (PVP-CASTS); a fight's heals 25-35% a 15 s (PVP-HEAL), duels included; a player's blow passes the struck player's armour first (PVP-GUARD, the report's `g`), a player's spell its resistance by element (PVP-WARD, the report's `w` and a cast's `el`, never past 85%); a Shield on a player takes 25% off a swing and 35% off a shaft (PVP-SHIELD, the report's `sh` - PVP-KIT: a Shield's share, 10-25, of those), one hit at most 34% (the triangle). Deploy the relay first, then the site.
 // world280: ARMORY (2026-10-28, the owner: "Aura armory ... customize your character without changing your overall sprite"; bible/04-Characters/Aura-Armory.md; NOT YET DEPLOYED): a token's armory kit, `ak` (net/armoryLaw.js, which joins the bundle), refused unless it is five known pieces, each of its slot, and badged on a peer's row like the aura (readArmory); the weapon glow's two armory words, brand2 and edge2 (LOOK_GLOW_RE). Deploy the relay first. (world277 on its branch, renumbered past WILD-REMAINS-LOSS's world277 at the merge of main, and world278 past FB1028's world278 and AUDIT FB1028's world279 at the next.)
@@ -2357,7 +2358,7 @@ export function inRangeOf(roomKey, from) {
   return (to) => !!to && Math.max(Math.abs(fx - Math.floor(to.x / PIXEL_UNITS)), Math.abs(fy - Math.floor(to.z / PIXEL_UNITS))) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'ban'|'renown'|'guild'|'guildout'|'home'|'yard'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'caravan'|'look'|'gate'|'grant'|'siege'|'arena'|'raid'|'raidtowns'|'sev'|'rite'|'star'|'ow'|'trav'|'amap'|'stp'|'cfg'|'find'|'serpent'|'sd'|'kt'|'eg'|'wild'|'vit'|'wdun'|'holdem'|'iliac'|'gambit'|'lease', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'ban'|'renown'|'guild'|'guildout'|'home'|'yard'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'caravan'|'look'|'gate'|'grant'|'siege'|'arena'|'raid'|'raidtowns'|'sev'|'rite'|'star'|'ow'|'trav'|'amap'|'stp'|'cfg'|'find'|'serpent'|'sd'|'kt'|'eg'|'wild'|'vit'|'wdun'|'holdem'|'iliac'|'gambit'|'lease'|'dv', ...}
  *  or {error} - the caller closes on an error. INSPECT1: every arm below, named - this line had fallen seven behind
  *  (test/net/auditworld2.test.js derives the list from the arms now, so it cannot fall behind again - the merge with
  *  main's HCC-PARK was its first catch: the park arm, unnamed). */
@@ -2495,6 +2496,11 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (!hasHello) return { error: 'star before hello' };
     const r = validStarIn(m);
     return r ? { t: 'star', ...r } : { error: 'bad star' };
+  }
+  if (m.t === 'dv') {   // DELVE II (DLV3): a word at a dungeon's encounter, to its room - projected by validDelveIn; the room's ledger (net/delve/delveLaw.js) judges where and when
+    if (!hasHello) return { error: 'dv before hello' };
+    const r = validDelveIn(m);
+    return r ? { t: 'dv', ...r } : { error: 'bad dv' };
   }
   if (m.t === 'kt') {   // KETCH: a word aboard a crew's ship - projected by validKetchIn; the ship's director (net/ketch/ketchBrain.js) judges it
     if (!hasHello) return { error: 'kt before hello' };
@@ -6071,6 +6077,141 @@ export const STAR_RC_PREFIX = 'starrc:';
 export const starReceiptKeyOf = (acct) => `${STAR_RC_PREFIX}${acct}`;
 export const STAR_RC_KEEP = 9;
 export const STAR_RC_KEEP_MS = 24 * 60 * 60 * 1000;
+
+// ═══ DELVE II (DLV3): A DUNGEON'S ENCOUNTERS, KEPT BY ITS ROOM ═════════════════════════════════════════════
+//
+// (bible/03-World/Delve-II.md section 7.) Every client in a dungeon's room makes the same plan of its encounters. The
+// room keeps the first plan it hears (`pl`) and each started site's ledger (net/delve/delveLaw.js), folding the owning
+// party's words (`w`), acts (`a`) and blows (`x`); it says the ledger back (`dl`, each socket its own `me`) with what
+// moved it (`ev`), and an earner asks to open its share (`v`). No law imported: its bounds are pinned equal by test.
+/** The first relay that keeps a dungeon's encounters. An older one CLOSES the socket on `dv`, so a client says none. */
+export const DELVE_RELAY_MIN = 284;
+export const relaySupportsDelve = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= DELVE_RELAY_MIN; };
+/** A socket's `dv` words a second: a word each site a second, an act, and a hand of four blows - a second's slack. */
+export const DELVE_HZ_MAX = 8;
+export const delveGate = (bucket, nowMs) => tokenGate(bucket, nowMs, DELVE_HZ_MAX);
+/** The relay's bucket is deeper than the client's - the same rate, twice the burst (the rite's AUDIT WB12d L4). */
+export const DELVE_RELAY_BURST = 16;
+export const delveRelayGate = (bucket, nowMs) => tokenGate(bucket, nowMs, DELVE_HZ_MAX, DELVE_RELAY_BURST);
+/** A plan's most sites (delveSites.js DSITE.max is three; a curated block's anchors may add), and a site's number's
+ *  bound - the crystal seam numbers sixteen a site (scenes/delve/delveBodies.js delveCrystalC). */
+export const DELVE_SITES_WIRE_MAX = 8;
+export const DELVE_SITE_I_MAX = 15;
+/** The law's bounds, pinned equal: the kinds (DELVE_KIND_NAMES), the phases (DP), a level, a wave's count and size, the
+ *  pieces a site stands (a Litany's five, the seals' six), a Vigil's blows (STAR_BLOWS_WIRE_MAX), a ward's radius. */
+export const DELVE_KINDS_WIRE = 7;
+export const DELVE_PHASE_WIRE_MAX = 9;
+export const DELVE_LEVEL_MAX = 99;
+export const DELVE_WAVES_WIRE = 3;
+export const DELVE_WAVE_WIRE_MAX = 12;
+export const DELVE_PIECES_MAX = 6;
+export const DELVE_BLOWS_WIRE_MAX = 9999;
+export const DELVE_R_MAX = 8;
+/** A dungeon's coordinates (m), far past any layout's, and a blow's most (a crystal's whole is far under it). */
+const DELVE_AT_MAX = 100_000;
+export const DELVE_HIT_MAX = 100_000;
+/** An act's word on the wire: take, light, drop, set (delveLaw.js foldDelveAct's `a`). */
+export const DELVE_ACTS = Object.freeze(['take', 'light', 'drop', 'set']);
+/** Why the room refused a word: no room for another plan yet, not of the owning party, the hub silent on the party, the
+ *  speaker's own attempt running at another site. */
+export const DELVE_NO = Object.freeze({ plan: 0, party: 1, busy: 2, held: 3 });
+const atOk = (v) => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= DELVE_AT_MAX;
+const hashOk = (v) => Number.isInteger(v) && v >= 0 && v <= 0xffffffff;
+const siteIOk = (v) => intIn(v, 0, DELVE_SITE_I_MAX);
+/** A plan's site on the wire: `[i, kind id, x, y, z, r, vault x, y, z]`, or null. */
+function delveSiteWire(q) {
+  if (!Array.isArray(q) || q.length !== 9 || !siteIOk(q[0]) || !intIn(q[1], 1, DELVE_KINDS_WIRE)) return null;
+  if (![2, 3, 4, 6, 7, 8].every((k) => atOk(q[k])) || !(typeof q[5] === 'number' && q[5] > 0 && q[5] <= DELVE_R_MAX)) return null;
+  return [q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7], q[8]];
+}
+/**
+ * A client's `dv` word, projected - or null: `pl` the plan (`h` its hash, `e` 1 an Elite dungeon's, `s` its sites, each
+ * index once); `w` a word at site `i` (`lv` the level, `o` 1 while my machine stands its foes, `kw`/`kn` the deaths of
+ * wave `kw`, `wc` the wave seen cleared, `cf` 1 its captain fallen, `st` the plate stepped on, `hb` the Vigil's blows
+ * landed, `iw` 1 while my screen sees me in its ward - the room believes it only where my pose agrees); `a` an act (`a` its DELVE_ACTS index, `j` its piece); `x` a blow on piece `j` (`d` its number, `r` its kind,
+ * `q` its sequence); `v` the ask to open site `i`'s vault. Each under the plan's hash `h`.
+ * @param {any} m
+ */
+export function validDelveIn(m) {
+  if (!m || typeof m !== 'object' || !hashOk(m.h)) return null;
+  if (m.k === 'pl') {
+    if (!flag(m.e) || !Array.isArray(m.s) || m.s.length < 1 || m.s.length > DELVE_SITES_WIRE_MAX) return null;
+    const s = m.s.map(delveSiteWire);
+    if (s.some((q) => !q) || new Set(s.map((q) => q[0])).size !== s.length) return null;
+    return { k: 'pl', h: m.h, e: m.e, s };
+  }
+  if (!siteIOk(m.i)) return null;
+  if (m.k === 'w') {
+    if (!intIn(m.lv, 1, DELVE_LEVEL_MAX) || !flag(m.o) || !intIn(m.kw, 0, DELVE_WAVES_WIRE) || !intIn(m.kn, 0, DELVE_WAVE_WIRE_MAX)) return null;
+    if (!intIn(m.wc, 0, DELVE_WAVES_WIRE) || !flag(m.cf) || !intIn(m.st, -1, DELVE_PIECES_MAX - 1) || !intIn(m.hb, 0, DELVE_BLOWS_WIRE_MAX) || !flag(m.iw)) return null;
+    return { k: 'w', h: m.h, i: m.i, lv: m.lv, o: m.o, kw: m.kw, kn: m.kn, wc: m.wc, cf: m.cf, st: m.st, hb: m.hb, iw: m.iw };
+  }
+  if (m.k === 'a') return intIn(m.a, 0, DELVE_ACTS.length - 1) && intIn(m.j, -1, DELVE_PIECES_MAX - 1) ? { k: 'a', h: m.h, i: m.i, a: m.a, j: m.j } : null;
+  if (m.k === 'x') {
+    if (!intIn(m.j, 0, DELVE_PIECES_MAX - 1) || !(typeof m.d === 'number' && m.d > 0 && m.d <= DELVE_HIT_MAX) || !intIn(m.r, 0, 2) || !intIn(m.q, 0, 0x7fffffff)) return null;
+    return { k: 'x', h: m.h, i: m.i, j: m.j, d: m.d, r: m.r, q: m.q };
+  }
+  if (m.k === 'v') return { k: 'v', h: m.h, i: m.i };
+  return null;
+}
+const pieceHp = (v) => Array.isArray(v) && v.length <= DELVE_PIECES_MAX && v.every((x) => intIn(x, 0, DELVE_HIT_MAX));
+/** A weight on the wire: `[where, plate, x, z]` (delveLaw.js WEIGHT's places, -1 no plate). */
+const weightWire = (t) => Array.isArray(t) && t.length === 4 && intIn(t[0], 0, 3) && intIn(t[1], -1, 2) && atOk(t[2]) && atOk(t[3]);
+/**
+ * The room's `dv` word, projected - or null: `dl` a site's ledger as a screen reads it (delveLaw.js delveState) with
+ * this socket's own `me` (`fm` 1 my machine stands its foes, `hd` the piece I carry: -2 none, -1 the flame, else a
+ * weight; `ea` 1 I earned its vault and have not opened it; `pa` 1 I am of its party), `rs` the ms until a won site
+ * stands again; `ev` what moved site `i`; `v` a vault's answer (`ok` 1 open your share) - each under its plan's hash
+ * `ph` (`h` is a state's pieces' health); `pl?` asks for my plan; `no` a refusal (DELVE_NO), at site `i` if it names one.
+ * @param {any} m
+ */
+export function validDelveOut(m) {
+  if (!m || typeof m !== 'object' || m.t !== 'dv') return null;
+  if (m.k === 'pl?') return { k: 'pl?' };
+  if (m.k === 'no') return intIn(m.m, 0, 3) && (m.i === undefined || siteIOk(m.i)) ? { k: 'no', m: m.m, ...(m.i === undefined ? {} : { i: m.i }) } : null;
+  if (!siteIOk(m.i) || !hashOk(m.ph)) return null;
+  if (m.k === 'v') return flag(m.ok) ? { k: 'v', ph: m.ph, i: m.i, ok: m.ok } : null;
+  if (m.k === 'ev') {
+    if (!Array.isArray(m.ev) || m.ev.length > 16 || !m.ev.every((e) => e && typeof e === 'object' && typeof e.k === 'string' && e.k.length <= 12)) return null;
+    return { k: 'ev', ph: m.ph, i: m.i, ev: m.ev.map((e) => delveEventWire(e)).filter(Boolean) };
+  }
+  if (m.k !== 'dl') return null;
+  if (!intIn(m.kd, 1, DELVE_KINDS_WIRE) || !intIn(m.p, 0, DELVE_PHASE_WIRE_MAX) || !intIn(m.w, 0, DELVE_WAVES_WIRE) || !intIn(m.wz, 0, DELVE_WAVE_WIRE_MAX)) return null;
+  if (!intIn(m.kn, 0, DELVE_WAVE_WIRE_MAX) || !(Number.isSafeInteger(m.wl) && m.wl >= -1) || !intIn(m.nd, 0, 16) || !flag(m.fo) || !intIn(m.nx, 0, DELVE_PIECES_MAX)) return null;
+  const me = m.me;
+  if (!me || typeof me !== 'object' || !flag(me.fm) || !intIn(me.hd, -2, 2) || !flag(me.ea) || !flag(me.pa) || !(Number.isSafeInteger(m.rs) && m.rs >= 0)) return null;
+  const out = { k: 'dl', ph: m.ph, i: m.i, kd: m.kd, p: m.p, w: m.w, wz: m.wz, kn: m.kn, wl: m.wl, nd: m.nd, fo: m.fo, nx: m.nx, rs: m.rs, me: { fm: me.fm, hd: me.hd, ea: me.ea, pa: me.pa } };
+  if (m.n !== undefined && !intIn(m.n, 0, DELVE_PIECES_MAX)) return null;
+  if (m.h !== undefined && !pieceHp(m.h)) return null;
+  if (m.hx !== undefined && !intIn(m.hx, 0, DELVE_HIT_MAX)) return null;
+  if (m.lt !== undefined && !intIn(m.lt, 0, 100)) return null;
+  if (m.lb !== undefined && !intIn(m.lb, 0, 15)) return null;
+  if (m.fl !== undefined && !intIn(m.fl, 0, 2)) return null;
+  if (m.fx !== undefined && !(Array.isArray(m.fx) && (m.fx.length === 0 || (m.fx.length === 3 && m.fx.every(atOk))))) return null;
+  if (m.wt !== undefined && !(Array.isArray(m.wt) && m.wt.length <= 3 && m.wt.every(weightWire))) return null;
+  if (m.hd !== undefined && !(Number.isSafeInteger(m.hd) && m.hd >= -1)) return null;
+  if (m.or !== undefined && !(Array.isArray(m.or) && m.or.length <= DELVE_PIECES_MAX && m.or.every((x) => intIn(x, 0, DELVE_PIECES_MAX - 1)))) return null;
+  for (const f of ['n', 'h', 'hx', 'lt', 'lb', 'fl', 'fx', 'wt', 'hd', 'or']) if (m[f] !== undefined) out[f] = Array.isArray(m[f]) ? m[f].map((x) => (Array.isArray(x) ? [...x] : x)) : m[f];
+  return out;
+}
+/** An event the room says moved a site, projected to the fields the host reads (delveLaw.js's events), or null. */
+function delveEventWire(e) {
+  const out = { k: e.k };
+  for (const f of ['w', 'wz', 'n', 'h', 'j', 'p', 'next', 'wl', 'rest']) if (e[f] !== undefined) { if (!(Number.isSafeInteger(e[f]) && Math.abs(e[f]) <= DELVE_AT_MAX)) return null; out[f] = e[f]; }
+  if (e.order !== undefined) { if (!(Array.isArray(e.order) && e.order.length <= DELVE_PIECES_MAX && e.order.every((x) => intIn(x, 0, DELVE_PIECES_MAX - 1)))) return null; out.order = [...e.order]; }
+  if (e.traits !== undefined) { if (!intIn(e.traits, 0, 4)) return null; out.traits = e.traits; }
+  for (const f of ['outlasted', 'springs', 'dark']) if (e[f] !== undefined) { if (typeof e[f] !== 'boolean') return null; out[f] = e[f]; }
+  return out;
+}
+/** Where a room keeps its encounters (never `world:` - that prefix is swept): each plan by its hash, and a ledger a site
+ *  of a plan. */
+export const DELVE_PLAN_PREFIX = 'dv:p:';
+export const delvePlanKey = (h) => `${DELVE_PLAN_PREFIX}${h}`;
+export const DELVE_LEDGER_PREFIX = 'dv:l:';
+export const delveLedgerKey = (h, i) => `${DELVE_LEDGER_PREFIX}${h}:${i}`;
+/** A won site stands won this long (systems/dungeon/dungeonRespawn.js: twenty minutes, an Elite dungeon forty). */
+export const DELVE_RESPAWN_MS = 20 * 60 * 1000;
+export const DELVE_RESPAWN_ELITE_MS = 40 * 60 * 1000;
 
 // ═══ OW6L: THE OVERWORLD'S LEDGER, KEPT BY THE RELAY ═════════════════════════════════════════════
 //

@@ -151,8 +151,10 @@ export const sealCount = (n) => Math.min(6, 2 + Math.ceil(delveParty(n) / 2));
 export const SEAL_RING_M = 3;
 /** Their health: Dagon's crystals' law (net/gate/gateBrain.js crystalHpFor) - the party's eight seconds between them. */
 export const sealHp = (lvs, k) => crystalHpFor(lvs ?? [], k);
-/** The window: this long to break them, and the route between them walked at the delve pace (law 7). */
-export const SEAL_WORK_MS = 24_000;
+/** The window: this long to break them, and the route between them walked at the delve pace (law 7). MEASURED: a
+ *  level-1 character's own blows land 2.5 a second (tools/delveProbe.mjs --dps), so a solo's three seals - the floor's
+ *  20 each - take 24 s of swinging alone; at 24 s the real game never won them (DLV4's probe, Delve-II.md section 14). */
+export const SEAL_WORK_MS = 40_000;
 /** Failed, they sink, and rise again this long after. */
 export const SEAL_SINK_MS = 10_000;
 export const SEAL_R = 0.7;
@@ -260,14 +262,15 @@ const within = (spot, pose, m) => !!spot && !!pose && Math.hypot(pose[0] - spot[
 const flatM = (from, spot) => Math.hypot(from[0] - spot[0], from[1] - spot[2]);
 
 // ═══ THE PLAN'S HASH ═════════════════════════════════════════════════════════════════════════════════════════════════
-/** One number for a whole plan - every site's index, kind, heart, radius and vault to the centimetre - so a room keeps
- *  the first plan heard and refuses a word under another (section 7). Pure. @param {DelveSite[]} sites */
+/** One number for a whole plan - every site's index, kind, heart, radius, vault to the centimetre and its tier (an Elite
+ *  dungeon's Litany and captain differ) - so a room keeps the first plan heard and refuses a word under another
+ *  (section 7). Pure. @param {DelveSite[]} sites */
 export function delvePlanHash(sites) {
   let h = gateHash(0x44_4c_56, (sites ?? []).length);
   for (const s of sites ?? []) {
     const v = s.vault ?? [0, 0, 0];
     h = gateHash(h, s.i, delveKind(s.kind)?.id ?? 0, Math.round(s.x * 100), Math.round(s.y * 100), Math.round(s.z * 100), Math.round(s.r * 100),
-      Math.round(v[0] * 100), Math.round(v[1] * 100), Math.round(v[2] * 100));
+      Math.round(v[0] * 100), Math.round(v[1] * 100), Math.round(v[2] * 100), s.tier === 'elite' ? 1 : 0);
   }
   return h;
 }
@@ -280,7 +283,7 @@ export const DP = Object.freeze({ idle: 0, gather: 1, wave: 2, breath: 3, captai
  *  when, the Vigil's blows its machine has been credited, and the gate's hand and purse once it strikes a piece (spendBlow,
  *  spendPurse). Kept in a map with no prototype.
  *  @typedef {{ nm: string, lv: number, last: number, inAt: number, pl: number, plAt: number, hb: number, rate?: number, rateAt?: number, bucket?: number, bucketAt?: number, clipped?: number, dealt?: number, bq?: any, bqAt?: number, bqWho?: string[] }} DelveAccount
- *  @typedef {{ s: number, kind: string, tier: string, seed: number, own: string, p: number, ec: number, stepAt: number, nearAt: number, inAt: number, bornAt: number, n: number, w: number, wz: number, kn: number, gs: number, ws: number, bs: number, cs: number, fo: string, foAt: number, k: number, order: number[], next: number, sh: number, shows: number, wonAt: number, earned: string[], a: Record<string, DelveAccount>,
+ *  @typedef {{ s: number, kind: string, tier: string, seed: number, own: string, p: number, ec: number, stepAt: number, nearAt: number, inAt: number, bornAt: number, n: number, w: number, wz: number, sw: number, kn: number, gs: number, ws: number, bs: number, cs: number, fo: string, foAt: number, k: number, order: number[], next: number, sh: number, shows: number, wonAt: number, earned: string[], a: Record<string, DelveAccount>,
  *   ss: number, hp: number[], hx: number, lt: number, hb: number, bt: number, btAt: number, lb: number, fl: number, fc: string, ft: number, fw: number, fp: number[], fx: number[], hs: number, su: number,
  *   wt: Array<{ s: number, by: string, p: number, x: number, y: number, z: number, ta: number, tp: number[] }> }} DelveLedger */
 
@@ -291,7 +294,7 @@ export function newDelveLedger(site, own, seed, nowMs) {
   const k = site.kind === 'litany' ? litanyCount(site.tier) : site.kind === 'wellsprings' ? springCount(seed, site.i) : 0;
   return {
     s: site.i, kind: site.kind, tier: site.tier, seed: seed >>> 0, own, p: DP.idle, ec: 0, stepAt: nowMs, nearAt: -Infinity, inAt: -Infinity,
-    bornAt: nowMs, n: 1, w: 0, wz: 0, kn: 0, gs: 0, ws: 0, bs: 0, cs: 0, fo: '', foAt: 0,
+    bornAt: nowMs, n: 1, w: 0, wz: 0, sw: 0, kn: 0, gs: 0, ws: 0, bs: 0, cs: 0, fo: '', foAt: 0,
     k, order: site.kind === 'litany' ? litanyOrder(seed, site.i, k) : [], next: 0, sh: 0, shows: 0, wonAt: 0, earned: [], a: Object.create(null),
     ss: 0, hp: [], hx: 0, lt: VIGIL_LIGHT, hb: 0, bt: STAR_BLOWS_BURST, btAt: nowMs, lb: 0, fl: FLAME.heart, fc: '', ft: 0, fw: 0, fp: [0, 0], fx: [0, 0, 0],
     wt: site.kind === 'weighing' ? Array.from({ length: WEIGHTS }, homeWeight) : [], hs: -1, su: 0,
@@ -346,11 +349,11 @@ function puzzleStands(led, at, end, ev) {
   led.k = sealCount(party);
   led.hx = sealHp(levelsInWard(led, wallAt(led, at, end)), led.k);
   led.hp = Array.from({ length: led.k }, () => led.hx);
-  led.wz = sealWindowMs(led.k);
-  ev.push({ k: 'seals', n: led.k, h: led.hx, wl: led.wz });
+  led.sw = sealWindowMs(led.k);   // the window its own field: `wz` is a wave's size, and the wire bounds it so (AUDIT DLV3 1)
+  ev.push({ k: 'seals', n: led.k, h: led.hx, wl: led.sw });
 }
 /** The phase a kind's gathering ends in, and how long it lasts. */
-const gatherMs = (kind) => (kind === 'brazier' || kind === 'seals' ? PUZZLE_RISE_MS : HOLD_GATHER_MS);
+export const gatherMs = (kind) => (kind === 'brazier' || kind === 'seals' ? PUZZLE_RISE_MS : HOLD_GATHER_MS);
 function gatherEnds(led, at, end, ev) {
   if (led.kind === 'wellsprings') springsStand(led, at, end, ev);
   else if (led.kind === 'brazier' || led.kind === 'seals') puzzleStands(led, at, end, ev);
@@ -359,7 +362,7 @@ function gatherEnds(led, at, end, ev) {
 /** Back to nothing: a wave's attempt ended (`outlasted` - by its captain's time; `more` what else the end says), a puzzle
  *  let go. The caller drops the ledger, and the fold that ended it moves nothing more. */
 function reset(led, why, ev, outlasted = false, more = null) {
-  Object.assign(led, { p: DP.idle, ec: 0, w: 0, wz: 0, kn: 0, gs: 0, ws: 0, bs: 0, cs: 0, fo: '', foAt: 0, next: 0, sh: 0 });
+  Object.assign(led, { p: DP.idle, ec: 0, w: 0, wz: 0, sw: 0, kn: 0, gs: 0, ws: 0, bs: 0, cs: 0, fo: '', foAt: 0, next: 0, sh: 0 });
   Object.assign(led, { ss: 0, hp: [], hx: 0, lt: VIGIL_LIGHT, hb: 0, lb: 0, fl: FLAME.heart, fc: '', hs: -1, su: 0 });
   if (led.wt.length) led.wt = led.wt.map(homeWeight);
   ev.push({ ...(outlasted ? { k: why, outlasted: true } : { k: why }), ...more });
@@ -397,7 +400,7 @@ export function stepDelve(led, nowMs) {
     } else if (led.p === DP.captain && led.ec >= led.cs + HOLD_CAPTAIN_MAX_MS) { reset(led, 'failed', ev, true); break; }
     else if (led.p === DP.spring && led.ec >= led.ss + SPRING_MAX_MS) { reset(led, 'failed', ev, true, { springs: true }); break; }
     else if (led.p === DP.show && led.ec >= led.sh + litanyShowMs(led.k)) { led.p = DP.work; led.next = 0; ev.push({ k: 'work' }); }
-    else if (led.kind === 'seals' && led.p === DP.work && led.ec >= led.ws + led.wz) { led.p = DP.sunk; led.su = led.ws + led.wz; led.hp = []; ev.push({ k: 'sink' }); }
+    else if (led.kind === 'seals' && led.p === DP.work && led.ec >= led.ws + led.sw) { led.p = DP.sunk; led.su = led.ws + led.sw; led.hp = []; ev.push({ k: 'sink' }); }
     else if (led.p === DP.sunk && led.ec >= led.su + SEAL_SINK_MS) puzzleStands(led, led.su + SEAL_SINK_MS, end, ev);
     else break;
   }
@@ -626,7 +629,7 @@ export function delvePhaseLeft(led) {
   if (led.p === DP.captain) return Math.max(0, led.cs + HOLD_CAPTAIN_MAX_MS - led.ec);
   if (led.p === DP.show) return Math.max(0, led.sh + litanyShowMs(led.k) - led.ec);
   if (led.p === DP.spring) return Math.max(0, led.ss + SPRING_MAX_MS - led.ec);
-  if (led.p === DP.work && led.kind === 'seals') return Math.max(0, led.ws + led.wz - led.ec);
+  if (led.p === DP.work && led.kind === 'seals') return Math.max(0, led.ws + led.sw - led.ec);
   if (led.p === DP.sunk) return Math.max(0, led.su + SEAL_SINK_MS - led.ec);
   return -1;
 }

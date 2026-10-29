@@ -41,7 +41,7 @@ test('DLV4 THE NUMBERS: two to four sources pouring every 12 s, three alive each
   assert.deepEqual([FLAME_LIFE_MS, FLAME_LIES_MS, DRIFT_MAX, DRIFT_EVERY_MS, PUZZLE_RISE_MS], [20_000, 10_000, 2, 15_000, 3_000]);
   assert.deepEqual([WEIGH_RING_M, WEIGHTS, WEIGH_HOLD_MS, WEIGH_FRESH_MS], [3, 3, 3_000, 2_500]);
   assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 8].map(sealCount), [3, 3, 4, 4, 5, 5, 6, 6]);
-  assert.deepEqual([SEAL_RING_M, SEAL_WORK_MS, SEAL_SINK_MS], [3, 24_000, 10_000]);
+  assert.deepEqual([SEAL_RING_M, SEAL_WORK_MS, SEAL_SINK_MS], [3, 40_000, 10_000]);
   assert.equal(DELVE_BURDEN, KT_CARRY_PACE); assert.equal(DELVE_BURDEN, 0.72);
   assert.equal(DELVE_REACH_M, 1.2);
 });
@@ -76,7 +76,7 @@ test('DLV4 THE PIECES\' SPOTS: sources and braziers on the ward\'s gates (two so
   assert.deepEqual(delvePlates(site({ kind: 'seals' })), []);
 });
 
-test('DLV4 THE SEALS\' WINDOW: 24 s and the errand floor of their route - the heart to the first, then round the ring (mutants: the route\'s first leg; the work\'s seconds)', () => {
+test('DLV4 THE SEALS\' WINDOW: 40 s and the errand floor of their route - the heart to the first, then round the ring (mutants: the route\'s first leg; the work\'s seconds)', () => {
   const p = sealSpots(site({ x: 0, y: 0, z: 0 }), 4);
   let d = 3;
   for (let j = 1; j < 4; j++) d += Math.hypot(p[j][0] - p[j - 1][0], p[j][2] - p[j - 1][2]);

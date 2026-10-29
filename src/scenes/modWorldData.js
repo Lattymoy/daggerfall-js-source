@@ -16,6 +16,7 @@ import { configureLayoutPins, vendorsPinnedIn } from '../systems/layoutPins.js';
 import { installTownStandIns } from '../world/townStandIns.js';   // WD3: the peer mods' pieces the town packs place, the port's own
 import { installArena } from '../world/arena/arenaCity.js';   // ARENA1: the Arena of Daggerfall - the port's own block, the city's edit and the colosseum
 import { installCapitals } from '../world/capitalModels.js';   // TESA10: the capitals' blocks, landmarks and pictures
+import { installCuratedBlocks } from '../world/dungeon/curatedInstall.js';   // DELVE II (DLV5): the curated blocks
 import { installTownOutline } from '../world/townOutline.js';   // TOWN-SHAPES TS3: the open cell a town past the Bay leaves
 import { installUrbanArt } from '../world/urban/urbanArt.js';   // URBANIZER: the towns' own pictures - their streets' stone, their walls, the capitals' brick, half-timber and ashlar
 import { installImmersiveTravelGates } from '../world/immersiveTravelGates.js';   // IT1: the carriages, on whichever gate is served
@@ -56,6 +57,7 @@ export async function loadModWorldData() {
     await installArena();   // ARENA1: behind no switch and no door - the arena stands in every layout (world/arena/arenaCity.js)
     installCapitals();   // TESA10: the same - the capitals' blocks and landmarks (world/capitalModels.js)
     installTownOutline();   // TOWN-SHAPES TS3: the same - the open cell of a town past the Bay (world/townOutline.js)
+    installCuratedBlocks();   // DELVE II (DLV5): the same - the curated blocks, each made of its base (world/dungeon/curatedInstall.js)
     installUrbanArt();   // URBANIZER: the same - the towns' own pictures (world/urban/urbanArt.js)
     const door = latchWorldDataDoor();   // WD3 (AUDIT WD3 P2/P3): Replace Game Artwork (online, the room) read once for the game
     let n = 0;
