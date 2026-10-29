@@ -17,9 +17,9 @@
 // THE KINDS ARE THE THREE DFU NAMES TOWNS (DFRegion.LocationTypes TownCity, TownHamlet, TownVillage). A DEPARTURE FROM
 // DFU's IsPlayerInTown (PlayerGPS.cs:504-527), which counts four more for its rest and its watch - HomeFarms, HomeWealthy,
 // Tavern, ReligionTemple (systems/nearbyObjects.js TOWN_LOCATION_TYPES): a farmstead, a manor, a roadside inn and a
-// temple each stand alone in the open country, and MAPS.BSA holds 5,929 of them against 3,444 settlements (410 cities,
-// 1,200 towns, 1,834 villages, of its 15,251 rows) - counted as towns they would stand a refuge on every road of the
-// zone. They are DFU's towns still: the zone's watch answers a blow struck at one (ZONE-WATCH, scenes/world.js
+// temple each stand alone in the open country: Cyrodiil's countryside rolls them beside its hamlets and villages
+// (world/tamrielCountry.js COUNTRY_TYPES), as the Bay's MAPS.BSA holds 5,929 of them against 3,444 settlements - counted
+// as towns they would stand a refuge on every road of the zone. They are DFU's towns still: the zone's watch answers a blow struck at one (ZONE-WATCH, scenes/world.js
 // zoneWatchCall). A dungeon, a graveyard, a coven, a cult's shrine and a poor home are neither.
 //
 // WHO SAYS IT: each client of itself and of the bodies it sees. My word on the zone to the relay's referee is 2 in a

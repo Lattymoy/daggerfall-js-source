@@ -923,7 +923,7 @@ export const FEATURES = Object.freeze([
     group: 'interface',
     get title() { return t('features.tamrielMap.title', 'Tamriel on the map'); },
     get note() { return t('features.tamrielMap.note', 'The enhanced map zooms out to all of Tamriel: its provinces, cities, mountains and seas, '
-      + 'hand-drawn and joined to the Bay’s own coast. With Land beyond the Bay on, fast travel reaches its places too.'); },
+      + 'hand-drawn and joined to the Bay’s own coast. With Land beyond the Bay on, fast travel reaches them, except into or out of Cyrodiil online.'); },   // AUDIT TAMRIEL-WIDE III F3: the open zone's own law (wildZone.js wildJourney)
     get effect() { return t('features.effect.nextMap', 'Takes effect the next time a map is opened.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'tamrielMap', initial: true, online: 'player' }),

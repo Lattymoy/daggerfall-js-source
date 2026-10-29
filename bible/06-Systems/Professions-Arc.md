@@ -2371,8 +2371,8 @@ As built:
   ground, the one its facts were witnessed under. **Deploy**: the account service (acct217) before the site; an
   older service refuses a whole id (`bad-node`, `bad-pixels`). The deploys run the relay, then the account, then the
   site (AUDIT TAMRIEL-WIDE II R3). The relay is unchanged. **Pinned**:
-  `test/world/worldWide/audit_tamrielwide_account.test.js` (4 of its 7), `tools/mutants/audit_tamrielwide_account.json`
-  (6 of its 17), all dead.
+  `test/world/worldWide/audit_tamrielwide_account.test.js` (4 of its 8), `tools/mutants/audit_tamrielwide_account.json`
+  (7 of its 20, II A1's with them), all dead.
 
 ## 24. PROF3 - Smithing: the anvil, quality and provenance, as built (SHIPPED 2026-09-28, at `dev`)
 

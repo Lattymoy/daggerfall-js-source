@@ -14103,8 +14103,16 @@ bound in its header and `STAFF_HELP_LINES`; the client's `/staff` drops it (`sta
 anyway, for B1, B2, B5 and E3 (AUDIT TAMRIEL-WIDE II A5), so folding the grammar back into `staffCommands.js` waits
 for no release now - it is left as a cleanup. Its place line now says what the search reaches: any place on the Bay,
 and past it the cities and towns the map names (the registry's listed places), not every place. Pinned:
-`test/world/worldWide/audit_tamrielwide_account.test.js` (3 of its 7), `tools/mutants/audit_tamrielwide_account.json`
-(11 of its 17), all dead. STAFF1's host pin and its `STAFF1-ungated` record read `parseStaffLine` now (PIN MOVED).
+`test/world/worldWide/audit_tamrielwide_account.test.js` (4 of its 8, II A3/A4's with them), `tools/mutants/audit_tamrielwide_account.json`
+(13 of its 20), all dead. STAFF1's host pin and its `STAFF1-ungated` record read `parseStaffLine` now (PIN MOVED).
+
+STAFF-PULL (2026-10-28, with the PvP rework at world281; the owner: "tpa player so tp them to us"): `/tpa <player>`,
+and the Staff Panel's Bring to me, bring a player to where the staff member stands - an Admin's or Shadow Fang's alone,
+asked of the signed token by the relay (`server/src/staffTeleport.js` routeStaffPull); the player's game lands through
+`scenes/staffPullHost.js`. The `pull` carries the staff member's place as a staff destination (`net/staffTeleport.js`
+validStaffDestination), a pixel of the world's grid, so it reaches every province as `/tp` does; a pit past the Bay
+goes only to world284 or later (AUDIT TAMRIEL-WIDE III M1). No record had said so (III P3/T13). Pinned:
+`test/net/staffpull.test.js`, and a pull from Skyrim in `audit_tamrielwide_iii.test.js`.
 
 ## VOICE1 reverted (2026-09-28, Mac: "Do not merge voice chat. Please revert voice chat but keep other changes") - world124 again
 

@@ -19,13 +19,17 @@ export const BAY_OWN = 'BAY-OWN:';
 
 // The spellings. A pixel's coordinate is `py`, `mapPixelY`, `loc.y`; the Bay's width is 1000 or a constant naming it
 // (MapsFile's MaxMapPixelX, WOODS' MAP_WIDTH, the frame's BAY_W). AUDIT TAMRIEL-WIDE II T2: the named constants, the
-// reversed and bracketed forms and a zero-padded mask, which the first patterns missed.
+// reversed and bracketed forms and a zero-padded mask, which the first patterns missed. AUDIT TAMRIEL-WIDE III P5/T9: the
+// Bay's width by its other names (roadNetwork.js MAP_W, staffCommands.js TP_MAP_W), and a bound handed to a call.
 const Y = String.raw`(?:[\w.]*\.p?y|[a-z]?[a-z]?y\d?|\w*Y\d?)`;
 const X = String.raw`(?:[\w.]*\.p?x|[a-z]?[a-z]?x\d?|\w*X\d?)`;
-const WIDE = String.raw`(?:1000|MAP_WIDTH|MAX_MAP_PIXEL_X|BAY_W)`;
+const WIDE = String.raw`(?:1000|MAP_WIDTH|MAX_MAP_PIXEL_X|BAY_W|MAP_W|TP_MAP_W)`;
 const AT = String.raw`(?:p?[xy]\d?|m[xy]|b[xy]|[nqtcgw][xy]|mapX|mapY|mapPixelX|mapPixelY|pixelX|pixelY|[a-z]+\.p?[xy])`;
-const EDGE = String.raw`(?:1000|999|500|499|(?:MAP_WIDTH|MAP_HEIGHT|MAX_MAP_PIXEL_X|MAX_MAP_PIXEL_Y|BAY_W|BAY_H)(?:\s*-\s*1)?)`;
+const EDGE = String.raw`(?:1000|999|500|499|(?:MAP_WIDTH|MAP_HEIGHT|MAX_MAP_PIXEL_X|MAX_MAP_PIXEL_Y|BAY_W|BAY_H|MAP_W|MAP_H|TP_MAP_W|TP_MAP_H)(?:\s*-\s*1)?)`;
 const CMP = String.raw`(?:<=|>=|<|>)`;
+/** A coordinate handed to a call with the Bay's edge as its bound: `integer(a.MapX, 999)`, `ok(px, 999)`, `intIn(px, 0, 999)`. */
+const ARG_COORD = String.raw`[\w.]*(?:\b[pmbnqtcgw]?[xy]\d?|Map[XY]|Pixel[XY]|map[XY]|pixel[XY])`;
+const ARG_BOUND = String.raw`\(\s*${ARG_COORD}\s*,\s*(?:0\s*,\s*)?(?:999|499)\s*\)`;
 
 /** Each idiom: what it matches, and what answers for the whole world instead. */
 export const IDIOMS = Object.freeze([
@@ -52,7 +56,7 @@ export const IDIOMS = Object.freeze([
   {
     id: 'bay-bound',
     // a coordinate against the Bay's edge, either way round - not one that is a difference (a time, a height)
-    re: new RegExp(String.raw`(?<![-+*/%.]\s*)\b${AT}\s*${CMP}\s*${EDGE}(?!\s*[-+*/])\b|\b${EDGE}\s*${CMP}\s*${AT}\b`),
+    re: new RegExp(String.raw`(?<![-+*/%.]\s*)\b${AT}\s*${CMP}\s*${EDGE}(?!\s*[-+*/])\b|\b${EDGE}\s*${CMP}\s*${AT}\b|${ARG_BOUND}`),
     use: 'worldPixelOk (net/wire.js) for a bound, inBay (world/tamriel/tamrielFrame.js) for the Bay\'s own data',
   },
   {
@@ -62,7 +66,7 @@ export const IDIOMS = Object.freeze([
   },
   {
     id: 'region-62',
-    re: /\b(?:region\w*|reg|r)\s*(?:<|>=|<=|>)\s*6[12]\b/i,
+    re: /\b(?:region\w*|reg|r)\s*(?:<|>=|<=|>)\s*6[12]\b|\(\s*[\w.]*region\w*\s*,\s*(?:0\s*,\s*)?6[12]\s*\)/i,
     use: 'BAY_REGION_COUNT or theatreOfRegion (formats/mapsTables.js): the provinces are regions 62..70',
   },
 ]);

@@ -8,7 +8,8 @@ is broken. The rule makes new work answer for all of Tamriel, and a test holds i
 
 **Status: DONE (2026-10-29).** Twenty-seven findings, each reproduced by its lane and verified again against the tree
 before it was fixed: 23 fixed, one stands, one open, and two the owner's calls (below). The PR itself was then read cold
-(AUDIT TAMRIEL-WIDE II, at the end): 25 findings, 20 fixed and 5 recorded.
+(AUDIT TAMRIEL-WIDE II, at the end): 25 findings, 21 fixed and 4 recorded. Read cold a third time on the integrated
+tree (AUDIT TAMRIEL-WIDE III, after it): 15 findings, all fixed.
 
 ## The baseline
 
@@ -50,7 +51,7 @@ loses data; MEDIUM: wrong in a corner a player reaches; LOW: the record, a cost,
 | B1 | MEDIUM | SD-PARTY's one life and one win a Hollow kept nothing in a province's Hollow: the hub read the Bay lane's record | FIXED - the hub reads the slot's lane (`server/src/sdCopy.js`; `11-Multiplayer/Super-Dungeons.md`), world284 |
 | B2 | MEDIUM | Staff `/tp @player` refused a player in an Ocean Hole's abyss past the Bay (its pit bounded to 0..999) | FIXED - the pit bounded by `worldPixelOk` (`net/staffTeleport.js`; `03-World/Ocean-Holes.md`), world284 |
 | B3 = C3 | MEDIUM | Two dungeons past the Bay shared one dungeon-vein identity (`mapId & 0xfffff`): an Eltheric ruin and a lair, two abysses | FIXED - a place the port made keys by its whole id (`scenes/dungeonIdentity.js`; `06-Systems/Professions-Arc.md`), acct217 |
-| B4 = C7 | LOW | Staff `/tp x y`, `/tp <place>` and the staff flat map knew the Bay's grid alone | FIXED - the world's grid and the registry (`scenes/staffTp.js`; `06-Systems/Online-Arc.md`); the relay's own copy waits for its next version |
+| B4 = C7 | LOW | Staff `/tp x y`, `/tp <place>` and the staff flat map knew the Bay's grid alone | FIXED - the world's grid and the registry (`scenes/staffTp.js`; `06-Systems/Online-Arc.md`); folding the relay's own copy back is a cleanup (II A5) |
 | B5 | LOW | The hub's cleansed raids list held 64, two days of the Bay's raids; the world's lanes roll some 300 | FIXED - two days of every lane's slots, 576 (`net/wire.js` RAID_CLEANS_MAX; `03-World/Raiding-Parties.md`), world284 |
 | B6 | - | The house cap (HOUSES-3) is three a region, and past the Bay a region is a province | THE OWNER'S CALL |
 | C1 | MEDIUM | No raid past the Bay was told: the raid host's region was -1 there (`politicClaimed`, the Bay's 62) | FIXED - a province's politic is its region's |
@@ -83,9 +84,10 @@ merge. The note now says fast travel reaches the land past the Bay with the land
 page keeps main's own line, true again. E1's bank cabin pin gained the producer's `campToWire` and asserts the landing.
 ARMORY (#1392), LODE-HERD (#1394), KEEP-MARK (#1395) and SHED-REPLICA (#1398) took world280 and acct209 to acct212, so this PR held world281 and acct213.
 
-**The second and third merges of main (2026-10-29).** By the second OVERLOAD-EASE 2 (#1405), the PvP rework (#1389), its follow-up (#1407) and OVERLOAD-EASE 3 (#1413) had taken world281,
-world282 and acct213 to acct216, so this PR held world283 and acct217. PVP-SAFE-HIT (#1414) took world283 at the third, so this PR ships world284
-and acct217, and `SERPENT_SITE_RELAY_MIN` moved to 284 with it (II R2).
+**The last two merges of main (`bcd8ba2a6`, `beb8d8ac8`, 2026-10-29).** By the first, OVERLOAD-EASE 2 (#1405), the PvP
+rework (#1389), its follow-up (#1407) and OVERLOAD-EASE 3 (#1413) had taken world281, world282 and acct213 to acct216,
+so this PR held world283 and acct217. PVP-SAFE-HIT (#1414) took world283 by the second, so this PR ships world284 and
+acct217, and `SERPENT_SITE_RELAY_MIN` moved to 284 with it (II R2). The two resolved 82 and 46 conflicted files.
 
 ## The suite
 
@@ -101,6 +103,10 @@ The relay (world284: the hub's lane keys, the abyss bound, the cleanses list, th
 service (acct217: an older one refuses a dungeon's whole id), then the site - the order the deploys run, as
 `account-deploy.yml` waits for the relay's version (II R3). C3 needs only the account before the site.
 
+The desktop release (`release-desktop.yml`) waits on `verify` alone, so it can reach players before the relay and the
+service (`Audit-Release-R3.md` step 5). Then a new build says no abyss pit past the Bay to an older hub (III M1), and an
+older service refuses C3's whole dungeon id until it deploys: "There is nothing here to gather." for a vein past the Bay.
+
 ## Left for the owner, and open
 
 - **B6** - three houses a region, and past the Bay a region is a province: a cap per province, or a cap per region of
@@ -112,8 +118,8 @@ service (acct217: an older one refuses a dungeon's whole id), then the site - th
 - `HOME_TOWN_MAX`'s margin: an Imperial City slice holds up to 3,487 buildings and 2,773 houses.
 - `net/staffCommands.js`, in the relay's bundle, still states the Bay's bound; folding `scenes/staffTp.js` back into it
   is a cleanup now, as this PR ships world284 anyway (II A5).
-- The audit's second round leaves five (II, below): W4's cost, a small settlement's dungeon anchor, an old tab's veins,
-  the hover's kind words, and the service's missing lot law.
+- The audit's second round records four (II, below): W4's cost, a small settlement's dungeon anchor, an old tab's veins
+  and the hover's kind words. W1's note leaves the service's missing lot law.
 
 ## TAMRIEL-WIDE - the rule
 
@@ -178,3 +184,35 @@ records. Each reproduced a finding before reporting it, and each was verified ag
 The pins are in the four `audit_tamrielwide*.test.js` files and `test/tooling/tamrielwide.test.js`, the mutants in
 their lists - every one dead. The service has no yard lot law of its own, so an older client can still place by a
 terraced house (W1); that is the service's to hold, as it was before A1.
+
+## AUDIT TAMRIEL-WIDE III - the integrated tree read cold (2026-10-29)
+
+The owner, of this PR: *"Pick up this PR and audit it"*. Main had merged twelve pull requests under it - the PvP rework,
+its follow-ups, the guards, the safe streets, STAFF-PULL, the overload and perf fixes - and two merges of main had
+renumbered its releases. Four cold lanes read a frozen worktree of its head (`beb8d8ac8`): M the merges, P main's PvP
+and staff work against the rule, F the PR's own fixes and patch notes on the integrated tree, T the text and the
+records. Each reproduced a finding before reporting it, and each was verified again before its fix; V1 was found in that
+verification. Five of the fifteen are main's code read under this PR's rule (F1, P2, P3, P4, T8).
+
+| Id | Sev | Finding | Verdict |
+|---|---|---|---|
+| F1 | HIGH | Unflagged, a Portal Stone into or out of Cyrodiil's open country was spent, then refused: the stone asked the zone by PVP-FLAG, and `teleportTo` asked again without it | FIXED - the arrival tells `teleportTo` the zone was asked (`zoneFree`) |
+| M1 | MEDIUM | A new build sent an abyss pit past the Bay (B2) to a hub before world284, which refuses the frame and closes the socket - a desktop build can meet one | FIXED - `STAFF_ABYSS_WORLD_RELAY_MIN` 284: the answer says `unavailable`, no pull goes |
+| P1 | MEDIUM | The device kept one copy of a Hollow for every theatre: a province's Hollow forgot the Bay's, and a party split | FIXED - one kept copy a lane (`sdCopyKeyOf`), the Bay's under its old key |
+| P2 | MEDIUM | PVP-EDGE read a building's door in the zone as a walk over its edge: a shop left in Cyrodiil granted a minute's safe passage | FIXED - the edge reads the zone's pixel alone |
+| T8 | MEDIUM | The level-30 warning named "the sea" a PvP zone; only the open Eltheric Ocean past Veilhaven is one | FIXED - "(Cyrodiil, the open Eltheric Ocean)", the owner's other words kept, every language drafted again |
+| V1 | MEDIUM | Staff `/tp` blacked the screen and left it black when `teleportTo` refused - a pixel of Cyrodiil's open country, which B4/C7 now reaches | FIXED - the refusal lifts it (`bootWorld` +1, its ceiling with it) |
+| F2 | LOW | C6's patch note held only with Map Backgrounds on, which ships off | FIXED in the PR's notes |
+| F3 | LOW | The map's note promised fast travel to the land past the Bay; online, none crosses into or out of Cyrodiil | FIXED - the note says so, every language; the PR's notes too |
+| F4 = M2 | LOW | E1's note and record said every teleport in the zone lands in a town's streets; an unflagged stone goes anywhere | FIXED - the notes and `Wild-Zone.md` name the stone |
+| P3 = T13 | LOW | STAFF-PULL had no record of where `/tpa` reaches, and no pin past the Bay | FIXED - `Online-Arc.md`, a pull from Skyrim pinned |
+| P4 | LOW | `PvP-Rework.md` kept "Orsinium waits" and "the streets say 0"; `zoneSafe.js` justified its kinds by MAPS.BSA, which Cyrodiil has no rows of | FIXED - Cyrodiil's countryside roll named |
+| P5 = T9 | LOW | The gate missed `MAP_W`, `MAP_H`, `TP_MAP_W`, `TP_MAP_H` and a bound handed to a call (`ok(px, 999)`, `integer(x, 61)`) | FIXED - the spellings read, the baseline measured again: 161 lines in 55 files |
+| T10 | LOW | Round II's tallies said 20 fixed and 5 recorded; its table holds 21 and 4 | FIXED |
+| T11 = M3 | LOW | The records called the last two merges the second and third | FIXED - named by commit |
+| T12 | LOW | `Online-Arc.md` and `Professions-Arc.md` gave the account pins' old counts | FIXED |
+
+The pins are in `test/world/worldWide/audit_tamrielwide_iii.test.js` and `test/tooling/tamrielwide.test.js`, the
+mutants in `tools/mutants/audit_tamrielwide_iii.json` (9) and `tamrielwide.json` (4 more) - every one dead, with the
+eight records the fixes re-aimed. `audit18_bible_docs` reads `src/firstVisitPins.js`, a generated file main's
+`Performance-Priority.md` names: it fails in a fresh worktree until that file is built, as on main.

@@ -188,5 +188,45 @@
       "test/tooling/tamrielwide.test.js"
     ],
     "note": "AUDIT TAMRIEL-WIDE II T4: a marker anywhere on the line, a string's too, exempts again."
+  },
+  {
+    "name": "TAMRIEL-WIDE-20-the-width-by-its-other-names",
+    "file": "tools/tamrielWide.mjs",
+    "old": "const WIDE = String.raw`(?:1000|MAP_WIDTH|MAX_MAP_PIXEL_X|BAY_W|MAP_W|TP_MAP_W)`;",
+    "new": "const WIDE = String.raw`(?:1000|MAP_WIDTH|MAX_MAP_PIXEL_X|BAY_W)`;",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "AUDIT TAMRIEL-WIDE III P5/T9: py * MAP_W + px, roadNetwork.js's name for the Bay's width, passes the gate again."
+  },
+  {
+    "name": "TAMRIEL-WIDE-21-the-edge-by-its-other-names",
+    "file": "tools/tamrielWide.mjs",
+    "old": "BAY_W|BAY_H|MAP_W|MAP_H|TP_MAP_W|TP_MAP_H)(?:\\s*-\\s*1)?)`;",
+    "new": "BAY_W|BAY_H)(?:\\s*-\\s*1)?)`;",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "AUDIT TAMRIEL-WIDE III P5/T9: px >= TP_MAP_W and x < MAP_W pass the gate again."
+  },
+  {
+    "name": "TAMRIEL-WIDE-22-a-bound-handed-to-a-call",
+    "file": "tools/tamrielWide.mjs",
+    "old": "|\\b${EDGE}\\s*${CMP}\\s*${AT}\\b|${ARG_BOUND}`),",
+    "new": "|\\b${EDGE}\\s*${CMP}\\s*${AT}\\b`),",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "AUDIT TAMRIEL-WIDE III P5/T9: ok(px, 999) and intIn(px, 0, 999) pass the gate again."
+  },
+  {
+    "name": "TAMRIEL-WIDE-23-a-region-bound-handed-to-a-call",
+    "file": "tools/tamrielWide.mjs",
+    "old": "6[12]\\b|\\(\\s*[\\w.]*region\\w*\\s*,\\s*(?:0\\s*,\\s*)?6[12]\\s*\\)/i,",
+    "new": "6[12]\\b/i,",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "AUDIT TAMRIEL-WIDE III P5/T9: integer(a.TemplateRegionIndex, 61) passes the gate again."
   }
 ]

@@ -16,13 +16,17 @@ test('TAMRIEL-WIDE each idiom is caught in the shapes the tree writes it, and th
   const caught = {
     'pixel-id': ['const key = py * 1000 + px;', 'return mapPixelY * 1000 + mapPixelX;', 'm.get(loc.y * 1000 + loc.x)', 'const id = x + y * 1000;',
       // AUDIT TAMRIEL-WIDE II T2: bracketed, reversed, and the width by its constant's name
-      'const k = (py * 1000) + px;', 'const k = px + 1000 * py;', 'const i = py * MAP_WIDTH + px;', 'a[y * BAY_W + x]'],
+      'const k = (py * 1000) + px;', 'const k = px + 1000 * py;', 'const i = py * MAP_WIDTH + px;', 'a[y * BAY_W + x]',
+      // AUDIT TAMRIEL-WIDE III P5/T9: the width by its other names
+      'const i = 4 * (py * MAP_W + px);', 'arr[mapPixelX + (mapPixelY * MAP_W)]'],
     'pixel-mask': ['const id = loc.mapTableData.mapId & 0xfffff;', 'return (id >>> 0) & 0xFFFFF;', 'mapDict.get(id & 0x000fffff)', 'const low = mapId % 0x100000;'],
     'region-count': ['for (let r = 0; r < maps.regionCount; r++) {', 'if (region >= regionCount) return null;', 'r < (maps?.regionCount ?? 0)'],
     'bay-bound': ['if (px < 0 || px >= 1000) return;', 'py > 499', 'mapPixelX <= 999', 'x >= 1000 || y >= 500', 'p.x < 1000',
-      'if (px >= MAP_WIDTH) return;', 'y < MAX_MAP_PIXEL_Y', 'if (tx >= 1000) return;', 'if (1000 <= px) return;'],
+      'if (px >= MAP_WIDTH) return;', 'y < MAX_MAP_PIXEL_Y', 'if (tx >= 1000) return;', 'if (1000 <= px) return;',
+      // AUDIT TAMRIEL-WIDE III P5/T9: the edge by its other names, and a bound handed to a call
+      'if (px >= TP_MAP_W || py >= TP_MAP_H) return;', 'x < MAP_W', 'if (ok(px, 999) && ok(py, 499)) {', 'intIn(px, 0, 999)', '!integer(a.TemplateMapX, 999)'],
     'bay-clamp': ['const x = Math.min(999, px);', 'Math.max(0, Math.min(MAP_W - 1 - px, ix))', 'Math.min(MAP_H - 1, y)', 'const x = Math.min(px, 999);'],
-    'region-62': ['if (region >= 62) return null;', 'regionIndex > 61', 'for (let r = 0; r < 62; r++) {'],
+    'region-62': ['if (region >= 62) return null;', 'regionIndex > 61', 'for (let r = 0; r < 62; r++) {', '!integer(a.TemplateRegionIndex, 61)'],
   };
   for (const [id, lines] of Object.entries(caught)) for (const line of lines) assert.equal(countIn(line)[id], 1, `${id}: ${line}`);
   const world = [
@@ -31,6 +35,8 @@ test('TAMRIEL-WIDE each idiom is caught in the shapes the tree writes it, and th
     'const k = discoveryKeyOf(mapId);', 'const v = bits & 0xffff;', 'Math.min(width - 1, x)',
     // AUDIT TAMRIEL-WIDE II T3: a difference is no coordinate - a time, a height - and a product of two numbers no key
     'M.hits = M.hits.filter((x) => now - x < 1000);', 'if (u.y - d.y < 500) continue;', 'const t = delay * 1000 + maxJitter;', 'const ms = days * 1000 + extra;',
+    // AUDIT TAMRIEL-WIDE III P5/T9: a bound handed to a call that is no coordinate, and the world's own bound
+    '!integer(a.TemplateLocationIndex, 65535)', 'clamp(count, 999)', 'intIn(px, -WORLD_PX, WORLD_PX)', 'const MAP_WIDE = 5;',
   ];
   for (const line of world) assert.deepEqual(countIn(line), {}, line);
 });

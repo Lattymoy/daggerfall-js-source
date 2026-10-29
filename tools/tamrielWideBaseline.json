@@ -7,13 +7,20 @@
   "src/systems/livingWorld/beyondWays.js": 1,
   "src/systems/naval/harbourBook.js": 1,
   "src/ui/travel/travelMapWindow.js": 3,
+  "src/world/arenaRoads.js": 1,
+  "src/world/deepWater/deepWatersBake.js": 1,
   "src/world/deepWater/deepWatersBakeCache.js": 1,
   "src/world/deepWater/deepWatersClient.js": 1,
+  "src/world/landforms.js": 9,
+  "src/world/road/cyrodiilRoads.js": 1,
+  "src/world/road/pathData.js": 1,
   "src/world/road/roadLand.js": 3,
   "src/world/road/roadNetwork.js": 19,
   "src/world/roadsProducer.js": 1,
   "src/world/spawnedDungeons.js": 1,
   "src/world/tamriel/bayFitKept.js": 1,
+  "src/world/tamrielRoads.js": 3,
+  "src/world/terrain/terrainGen.js": 1,
   "src/world/terrain/terrainHelper.js": 4,
   "src/world/townWalls.js": 1
  },
@@ -48,23 +55,35 @@
  },
  "bay-bound": {
   "src/net/nodeLaw.js": 2,
+  "src/net/staffCommands.js": 1,
+  "src/net/staffEvent/staffEventLaw.js": 2,
+  "src/net/staffTeleport.js": 1,
+  "src/net/townEconLaw.js": 1,
   "src/net/townSeatLaw.js": 2,
+  "src/net/wire.js": 1,
   "src/scenes/livingWorld/livingIndex.js": 1,
   "src/scenes/snowfallHost.js": 1,
   "src/scenes/tamrielRoadsHost.js": 2,
   "src/scenes/world.js": 4,
+  "src/systems/map/mapDirectory.js": 1,
   "src/systems/naval/harbourBook.js": 1,
   "src/systems/weather/airGround.js": 1,
   "src/systems/weather/weatherMap.js": 1,
   "src/ui/tamrielInk.js": 1,
   "src/ui/travel/travelMapWindow.js": 4,
+  "src/world/deepWater/deepWatersBake.js": 1,
   "src/world/ethericSea.js": 1,
+  "src/world/landforms.js": 10,
+  "src/world/road/pathData.js": 1,
+  "src/world/road/roadBand.js": 2,
   "src/world/road/roadNetwork.js": 2,
   "src/world/spawnedDungeons.js": 1,
   "src/world/streamingWorld.js": 2,
   "src/world/tamriel/bayFitKept.js": 1,
   "src/world/tamriel/tamrielRaster.js": 1,
   "src/world/tamrielCountry.js": 2,
+  "src/world/tamrielRoads.js": 1,
+  "src/world/terrain/terrainGen.js": 1,
   "src/world/terrain/terrainHelper.js": 4
  },
  "bay-clamp": {
@@ -73,5 +92,7 @@
   "src/world/road/roadClearance.js": 1,
   "src/world/road/roadNetwork.js": 4
  },
- "region-62": {}
+ "region-62": {
+  "src/net/staffTeleport.js": 1
+ }
 }

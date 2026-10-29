@@ -13978,11 +13978,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   }
 
   /** G5's teleport (below). PORTAL-BAY (bible/06-Systems/Portal-Stone.md): answers whether the player arrived - a caller
-   *  that blacked the screen first (a stone's portal, scenes/portalStoneHost.js portalArrive) lifts it on false. */
-  async function teleportTo(pick) {
+   *  that blacked the screen first (a stone's portal, scenes/portalStoneHost.js portalArrive) lifts it on false.
+   *  `zoneFree`: the caller asked the zone's law itself (AUDIT TAMRIEL-WIDE III F1: an unflagged stone's, PVP-FLAG). */
+  async function teleportTo(pick, { zoneFree = false } = {}) {
     if (worldMoveBusy()) return false;   // AUDIT 68 S22
     if (_teleporting) return false;
-    if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return false;   // PVPDUNGEONS: the guild's teleport never into, out of or inside the zone - AUDIT CAPTAIN'S SEA P6: nor across the Veil
+    if ((!zoneFree && wildTeleportRefused(pick.pixel)) || veilRefused(pick.pixel)) return false;   // PVPDUNGEONS: the guild's teleport never into, out of or inside the zone - AUDIT CAPTAIN'S SEA P6: nor across the Veil
     const wildTrip = wildTravelGate(pick.pixel, 0, teleportJourney);   // WILD3: the guild's teleport is a fast journey too - PORTAL-BAY: under the teleport's law past the Bay (systems/travel/pastBayTravel.js teleportJourney: a teleport is never refused as a journey)
     if (!wildTrip.ok) return false;
     wildTravelPaid(wildTrip);
@@ -19877,7 +19878,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
     if (_teleporting || worldMoveBusy()) { say('You cannot teleport right now.'); return; }
     hudFade.smashHUDToBlack();   // teleportTo's arrival lifts it (the Teleport window's own order, ui/teleportPopUp.js)
-    teleportTo(pick).catch((e) => { console.error('[staff] /tp failed:', e); hudFade.clearFade(); say('The teleport failed.'); });
+    teleportTo(pick).then((ok) => ok || hudFade.clearFade())   // AUDIT TAMRIEL-WIDE III V1: a refusal (the zone's, a move in flight) lifts the black it said over
+      .catch((e) => { console.error('[staff] /tp failed:', e); hudFade.clearFade(); say('The teleport failed.'); });
   }
   // AUDIT ONLINE 3 (the second read) B-F2-1: the minter on the sessions' clock - on Date.now a clock set back held a dead token fresh
   // (every new room's hello refused 'token expired', terminal) or a failed mint's hold for the length of the step
@@ -22386,7 +22388,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     try { giantNoticeFrame(); } catch (e) { console.warn('[giants] notice', e?.message ?? e); }   // GIANT-FALL
     wildFight.tick();
     for (const peer of [..._wildBodies.keys()]) if (!wildFight.body(peer)) wildBodyGone(peer);
-    online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere() && wildOutdoors(), player.pos, Date.now()));   // INT9: my word on the zone, for its referee - standing in it, alive, where it fights (AUDIT FOE-KEEPS E2: and left dying, its kill credit)
+    online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere(), player.pos, Date.now()));   // INT9: my word on the zone, for its referee - standing in it, alive, where it fights (AUDIT FOE-KEEPS E2: and left dying, its kill credit)
     healthMirror.frame(wildCan(true) || !!duelMgr.live || inSiegeRoom());   // SHARED-HEALTH: my health to whichever referee holds my fight
     wildDepositFrame(); wildSeizeFrame(); wildHudFrame();   // INT9: a drop's deposit, a fall to seize, the referee's readout
     wildEscrow.frame();   // MAC (2026-10-14, the two-phase handoff): my piece in escrow asked back, my collect carried

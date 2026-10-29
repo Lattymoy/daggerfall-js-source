@@ -1270,8 +1270,8 @@ town. The open country, the roads, the dungeons (a city's own too) and the zone'
   `zoneSafe.js:"export const SETTLEMENT_TYPES"`: TownCity, TownHamlet, TownVillage. DEPARTURE (Ledger A, ZONE-SAFE):
   DFU's IsPlayerInTown (`PlayerGPS.cs:504-527`) counts four more for its rest and its watch - HomeFarms, HomeWealthy,
   Tavern, ReligionTemple - and they are no settlement: a farmstead, a manor, a roadside inn and a temple each stand alone
-  in the open country, 5,929 of MAPS.BSA's 15,251 rows against the settlements' 3,444, so as towns they would stand a
-  refuge on every road. They keep the zone's watch (section 3, ZONE-WATCH). A lair, a graveyard, a coven, a cult's
+  in the open country, in Cyrodiil's roll too (`tamrielCountry.js:"export const COUNTRY_TYPES"`), so as towns they
+  would stand a refuge on every road. They keep the zone's watch (section 3, ZONE-WATCH). A lair, a graveyard, a coven, a cult's
   shrine and a poor home are neither.
 - MY WORD (`world.js:"const wildCan = (streets"`): outdoors in a settlement's streets I may fight no one, so my word on the
   zone to the referee is 0 (INT9 - `world.js:"setWildZone?.(wildCan() ? 1 : wildCan(true)"`) and
@@ -1403,7 +1403,8 @@ journey's law a teleport also passed, and the teleport map's press.
 - WHERE IT LANDS (AUDIT TAMRIEL-WIDE E1, 2026-10-28): a Recall, a party's jump to its leader and a ship's cabin land
   at a point, not at a city - the arriving end is that point in a settlement's streets (`systems/wild/zoneSafe.js`
   landsSettled, settledAt's own law over a pixel not built), so a Mark beside a village's walls is the open country. A
-  guild's and a stone's pick land at the city, and keep the pixel's test.
+  guild's and a stone's pick land at the city, and keep the pixel's test. Unflagged, a stone asks none (PVP-FLAG; III
+  F1/M2).
 - KNOWN LIMIT: the refusal's words are English alone, as they were (`test/systems/l10n4_hardcoded.test.js` counts them).
 
 Pins: `test/systems/wild/wildcityport.test.js` (the law over every kind of place, the streets, a building, a dungeon),
