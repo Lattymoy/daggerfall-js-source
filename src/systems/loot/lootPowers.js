@@ -236,8 +236,9 @@ export function lootBlow(weapon, damage, attacker, target, info) {
   let out = damage;
   const group = foeGroup(target);
   let pct = 0, flat = 0;
-  for (const a of linesOf(weapon, 'slayer')) if (a.param === group) pct += a.value;
-  for (const a of linesOf(weapon, 'elemental')) flat += Math.floor(a.value * elementShare(target, a.param));
+  const lined = weapon ?? info?.wraps ?? null;   // HAND-WRAPS: a fist's blow carries its wraps' lines (combat/formulas.js)
+  for (const a of linesOf(lined, 'slayer')) if (a.param === group) pct += a.value;
+  for (const a of linesOf(lined, 'elemental')) flat += Math.floor(a.value * elementShare(target, a.param));
   // LOOT5: the powers that ride this blow
   const now = _now();
   // KETCH: BROADSIDE'S ANSWER - a foe the Ketchmaster's Word marked takes the other hand's next blow harder, whatever that
@@ -273,7 +274,7 @@ export function lootStrike(attacker, target, damage, weapon, info = null) {
   // (dungeonContext.js swingOnBoss), and lootBlow already refuses a warded foe: nothing landed, so nothing answers it
   if (!mine(attacker) || !(damage > 0) || !target || target.isPlayer || target.warded) return;
   let pct = 0;
-  for (const a of linesOf(weapon, 'leech')) pct += a.value;
+  for (const a of linesOf(weapon ?? info?.wraps ?? null, 'leech')) pct += a.value;   // HAND-WRAPS: the wraps' leech on a fist's blow
   pct = Math.min(LEECH_CAP, pct);   // BAL7
   if (pct > 0) healMine(attacker, (damage * pct) / 100);
   // LOOT5: the powers that answer a blow that landed. TWO-HANDS (AUDIT 2): a charge a power takes per blow - Conduit's

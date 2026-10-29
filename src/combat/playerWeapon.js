@@ -39,6 +39,7 @@ import { equipDelayFor } from '../systems/equip.js';               // a12: Toggl
 import { getBool, getFloat, getInt } from '../systems/settings/settings.js';   // AUDIT 28 W2b: MeleeAttackFriendlyProtection; W11: WeaponAttackThreshold, WeaponSwingMode
 import { blowReaches, blowMult, scaleBlowDamage, playerBody, tellTechniqueLanded } from './technique/techniqueBlow.js';   // TECH1: a technique's blow - its shape and its weight, a leaf; MARTIAL3: and its landing told
 import { HANDS_MODE, handsModeOf, strikeHandOf, twoHanded, offHandToHit, OFF_HAND_BLOW, offHandBurden, offHandHold, DUAL, gunHandOf, mixedStrike, otherHand, MIXED } from './twoHands/handsLaw.js';   // TWO-HANDS: which hand strikes, and what the off hand costs; MIXED-PAIR: a blade and a gun
+import { isHandWraps } from '../characters/handWrapsIds.js';   // HAND-WRAPS: both fists wear the wraps
 import { getItemHands } from '../systems/equip.js';   // TWO-HANDS: a hand's item as the law reads it (one-handed or not)
 import { readSwing } from './swingLaw.js';   // TWO-HANDS: the striking weapon's weight and the Strength, for the off hand's burden
 import { liveStat } from '../systems/statMods.js';   // TWO-HANDS: the off hand's sureness reads the live Agility
@@ -429,7 +430,13 @@ export class PlayerWeapon {
     return twoHanded(this.handsMode) && this.strike && this.machine.state !== 'Idle' ? this.strike.hand : this.leadHand;
   }
   /** TWO-HANDS: a hand's item, as UpdateHands cached it (null for an empty hand or a shield). */
-  handItem(hand) { return (hand === 'L' ? this.currentLeftHandWeapon : this.currentRightHandWeapon) ?? null; }
+  handItem(hand) {
+    const own = (hand === 'L' ? this.currentLeftHandWeapon : this.currentRightHandWeapon) ?? null;
+    if (own || this.handsMode !== HANDS_MODE.Fists) return own;
+    // HAND-WRAPS: with both fists up, an empty hand beside the Hand Wraps strikes with them
+    const other = (hand === 'L' ? this.currentRightHandWeapon : this.currentLeftHandWeapon) ?? null;
+    return isHandWraps(other) ? other : null;
+  }
   /** TWO-HANDS (AUDIT): the strike in flight is the OFF hand's - the blow a player-vs-player arm rolls carries the off
    *  hand's terms as resolveHit's does (combat/duelCombat.js resolveDuelStrike `off`). */
   get offStrike() { return !!(this.handsMode === HANDS_MODE.Dual && this.strike && this.machine.state !== 'Idle' && this.strike.off); }

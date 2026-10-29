@@ -12,7 +12,7 @@ corrections are made below, and its fixes are their own pull request.
 | | Report | What it was | Done |
 |---|---|---|---|
 | 1 | Lee: Westhead Moor - "Weird crop hovering, giant craters and cliffs on the outskirts.." | TS2's town ground: the sea kept a sample from a town raised over it, an ease of twelve samples whatever the height, the pixel's edge band easing the town's own ground, and a crop field's record tile alone on the outline | FIXED (TOWN-GROUND) |
-| 2 | Lee: "the shipyard moved from the North side of town to the West side" | TS7 placed the Bay's yards on the walk grid | KEPT (the owner's decision) |
+| 2 | Lee: "the shipyard moved from the North side of town to the West side" | TS7 placed the Bay's yards on the walk grid | KEPT, then MOVED NORTH (WESTHEAD-NORTH, the owner, 2026-10-29) |
 | 3 | Pergo: "Can confirm." - a cobbled cliff dropping to the water at night | 1 | FIXED (TOWN-GROUND) |
 | 4 | Urmanin: "They did NOT check how their new generated topology would work in the vanilla map" | 1, measured over every town of the Bay | FIXED (TOWN-GROUND) |
 | 5 | Cruor: "Bigtime Terrain Bugs: Aldwall Rock" - "big holes and uhm.. cubic mistakes ... The ports are now off a cliff instead of smooth?" | 1 | FIXED (TOWN-GROUND) |
@@ -55,6 +55,16 @@ Tests `test/world/terrain/fb1028_townground.test.js` (7) and `fb1028_townground_
 Lee and other players bought homes on Westhead Moor's north side for its shipyard, which TS7 moved to the west. The owner
 chose to keep every yard where #1184 put it and to fix only a yard that is broken. Westhead Moor's is not broken; it
 stays on the west side. No home moved: in the Bay no building moved (`03-World/Town-Shapes.md` TS2).
+
+WESTHEAD-NORTH (2026-10-29). A guild's player posted again in #feature-feedback, and the owner chose to move Westhead
+Moor's shipyard back to the north side, no other port. Before #1184 it stood at the town's north-west corner (cells 1, 437,
+turned 2). TS7's ground ends short of that corner, so it cannot stand there. It now stands on the north strip between the
+wall and the sea, at the westmost place a shipyard fits (cells 149, 401, turned 2), and its lighthouse by the old corner
+(57, 394). `world/portSites.js` PORT_PLACES_NEAR holds the town's cell, and portSite stands the place as
+near it as fits, by the sea's face and not the sea's distance. The kept record keys on the row.
+
+Tests `test/world/westheadnorth.test.js` (4, one on ARENA2; `test/bayPortGround.mjs` builds the ground). Mutants
+`tools/mutants/westheadnorth.json` (9, all dead).
 
 ## WALL-FLICKER: a wall's length clear of its tower (6)
 

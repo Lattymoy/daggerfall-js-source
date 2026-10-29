@@ -9,6 +9,7 @@
 import { clampArmorVariant, isPlate, plateMetal } from '../armorMaterials.js';   // AUDIT 23 (items-6); BAL6-GAUNTLETS: a plate piece's metal
 import { conditionMultipliersByMaterial, valueMultipliersByMaterial, WEAPONS, WEAPON_CONDITION_POOL } from '../../characters/weapons.js';   // AUDIT 23 (items-5); AUDIT 68 S27-weightForMaterial-dup: ItemBuilder's value ladder and the Weapons enum, one home each; WEAPON-POOL: the one pool
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
+import { HAND_WRAPS_TEMPLATE } from '../../characters/handWrapsIds.js';   // HAND-WRAPS: minted cloth (a leaf)
 import { WAGON_KINDS, wagonKindOf } from '../wagon/wagonKinds.js';   // WAGONS1: a wagon's picture is Mac's wagon of its kind (read at call time - wagonKinds.js reads this module's TRANSPORT_SMALL_CART)
 import TEMPLATES_JSON from '../../characters/itemTemplates.json' with { type: 'json' };
 import { playerArchiveFor, resolvePaperdollRecord } from '../../characters/paperdoll/paperdollArt.js';   // AUDIT 17f: SetRace, one home; NT3 (F006): the record law too
@@ -150,7 +151,7 @@ export function itemBaseValue(item, lookup = templateByIndex) {
  *  value (an enchantment's sum, a book's price, a recipe's) keeps it -
  *  and answers a COPY, as the copies it replaces did. */
 export function setItemFields(item) {
-  const named = { ...item, name: item.name ?? templateByIndex(item.templateIndex)?.name };
+  const named = { ...item, name: item.name ?? templateByIndex(item.templateIndex)?.name, ...(item.templateIndex === HAND_WRAPS_TEMPLATE ? { material: 0 } : {}) };   // HAND-WRAPS: cloth, no metal (a shelf mints at a random one)
   // RRI1: a custom class's CurrentVariant setter runs ONCE at the mint
   // (ApplyArmorSettings -> SetVariant): the name's prefix, and for fur
   // the material folded to Leather with `message` 1. Marked, so a

@@ -52,8 +52,8 @@
   {
     "name": "WWAUDIT-D3-the-claws-a-weapon",
     "file": "src/combat/fpArm.js",
-    "old": "  const hand = item && item.werecreatureClaws ? null : item;",
-    "new": "  const hand = item;",
+    "old": "  const hand = item && (item.werecreatureClaws || isHandWraps(item)) ? null : item;",
+    "new": "  const hand = item && isHandWraps(item) ? null : item;",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ],

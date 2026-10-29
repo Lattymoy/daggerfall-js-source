@@ -35,6 +35,7 @@ import { dfWornEquipment } from '../../formats/morrowind/mwItemMap.js';   // MW-
 import { ownWerewolfSkin } from '../../systems/ownGlyphs.js';   // SHADOW-FANG: the skin my own werewolf wears
 import { ARMOR_ENUM } from '../enemyEquipment.js';   // MW-D32
 import { loadFpsWeaponArt, drawFpsWeapon, fpsWeaponQuad, weaponTypeForItem, WEAPON_TYPES, fpLightingOn, WEAPON_FILE, plainWeaponType, isGunType, isPistoletType } from '../fpsWeapon.js';
+import { isHandWraps } from '../../characters/handWrapsIds.js';   // HAND-WRAPS: the fists' weapon
 import { spriteGlow, meshGlow } from '../../systems/weaponGlow.js';   // WEAPON-GLOW1: the held weapon's element, as each hand shows it
 import { loadThunderlockArt } from '../thunderlockArt.js';
 import { THUNDERLOCK_NUM_FRAMES } from '../../characters/weaponStates.js';   // THUNDERLOCK-ART2's audit: the cycle's length, never a literal six
@@ -2012,6 +2013,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // left blade its own
         fpArm.setWeaponGlow?.(meshGlow(armItem), armItem);
         fpArm.setOffWeaponGlow?.(offItem ? meshGlow(offItem) : null, offItem);
+        fpArm.setHandGlow?.(isHandWraps(armItem) ? meshGlow(armItem) : null);   // HAND-WRAPS: the fists wear the wraps' glow (bible/05-Combat/Hand-Wraps.md)
         // MW-D32: THE BODY FOLLOWS THE EQUIP TABLE. The same per-frame
         // read that swaps the weapon now hands the rig its worn list;
         // setWorn's fast path is one key compare, and a change - a

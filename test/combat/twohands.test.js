@@ -1107,7 +1107,7 @@ test('TWO-HANDS x WEAPON-GLOW1: each hand of a pair wears ITS OWN weapon\'s elem
   assert.ok(glowPad('fire', plain.ph) > glowPad('frost', plain.ph));
   assert.equal(box({ glowLook: ['frost', 'fire'] }).ph, plain.ph + 2 * glowPad('fire', plain.ph), 'a frost blade and a fire one: the fire\'s room');
   assert.equal(box({ glowLook: 'frost' }).ph, plain.ph + 2 * glowPad('frost', plain.ph), 'one look as before');
-  assert.match(rd('src/combat/fpArm.js'), /const padLooks = offGlow \? \[glowLook, offGlow\.look\]\.filter\(Boolean\) : glowLook;/);
+  assert.match(rd('src/combat/fpArm.js'), /const padLooks = offGlow \|\| handGlow \? \[glowLook, offGlow\?\.look, handGlow\?\.look\]\.filter\(Boolean\) : glowLook;/);   // PIN MOVED (HAND-WRAPS): and the fists' glow, padded as a blade's
   // the rig: each hand its own item's - the classic pair, each widget clone, the Morrowind arm's two blades
   const rig = rd('src/combat/weapon/weaponRig.js');
   assert.match(rig, /glowFor: \(hand\) => glowOf\(playerWeapon\.handItem\(hand\)\)/, 'the classic pair');

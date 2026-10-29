@@ -65,6 +65,7 @@
 //     (at most SPARE_MAX of them): the next peer who wears the same body -
 //     its look and its form - stands in it at once, with no build.
 import { createFpArm } from '../../combat/fpArm.js';
+import { isHandWraps } from '../../characters/handWrapsIds.js';   // HAND-WRAPS: a peer's fists glow with their wraps
 import { dfWornEquipment } from '../../formats/morrowind/mwItemMap.js';
 import { werewolfSkinOf } from '../../characters/werewolfSkin.js';   // SHADOW-FANG: a peer's wolf in the skin their signed glyphs name
 import { npcHintOf, npcKeyOf, withNpcPicks, npcFaceOf, WARDROBE_BEAST_RACES } from '../../characters/wardrobe.js';   // MWNPC17: an NPC's own garments, head and hair
@@ -880,6 +881,7 @@ export class PeerBodies {
     // template in the same hand), when MY switch shows glows; a gatherer's tool, a wolf's claws and a creature carry none
     const heldNow = hands ? (hands.dual ? hands.right : peerWeaponOf(look, shown)) : null;
     b.rig.setWeaponGlow?.(heldNow && weaponGlowOn() ? glowFromWord(heldNow.glow) : null, heldNow);   // AUDIT WEAPON-GLOW NET-1: and the weapon it is of
+    b.rig.setHandGlow?.(isHandWraps(heldNow) && weaponGlowOn() ? glowFromWord(heldNow.glow) : null);   // HAND-WRAPS: their fists in their wraps' glow
     // AUDIT MIXED-PAIR L4-3: A PAIR IN BOTH HANDS - the mode and the lead, and the left hand's weapon mirrored on its own
     // bone, through the rig's own doors (the local rig's handArm: each a fast path, the left bound once a change)
     b.rig.setHands?.({ mode: hands?.dual ? HANDS_MODE.Dual : HANDS_MODE.Single, lead: hands?.lead ?? 'R' });

@@ -29,6 +29,7 @@ import {
 import { SWING_MODS } from './playerWeapon.js';
 import { enchantChanceToHitMod } from '../systems/enchantments.js';
 import { weaponDamageMods, weaponBlowMods } from '../systems/entityMods.js';
+import { isHandWraps } from '../characters/handWrapsIds.js';   // HAND-WRAPS
 import { weaponSkillUsed, WEAPONS } from '../characters/weapons.js';
 import { skillsLevel } from '../characters/enemy/enemyEntity.js';
 import { equipTableOf, EQUIP_SLOTS } from '../systems/equip.js';
@@ -103,13 +104,14 @@ export function criticalModel(entity, core) {
 }
 
 /** Everything about the swing that does not depend on the foe. */
-function swingContext(entity, weapon, core) {
+function swingContext(entity, held, core) {
+  const wraps = isHandWraps(held) ? held : null, weapon = wraps ? null : held;   // HAND-WRAPS: the fists' blow, the wraps' lines over it (combat/formulas.js)
   const skillId = weapon ? (weaponSkillUsed(weapon.templateIndex) ?? SKILLS.HandToHand) : SKILLS.HandToHand;
   const prof = core.overhaul ? pcaaoProficiencyModifiers(entity, weapon) : proficiencyModifiers(entity, weapon);
   const racial = core.overhaul ? pcaaoRacialModifiers(entity, weapon, entity) : racialModifiers(entity, weapon);
   const isBow = !!weapon && skillId === SKILLS.Archery;
   const twoHanded = !!weapon && getItemHands(weapon) === ITEM_HANDS.Both && weapon.templateIndex !== WEAPONS.Short_Bow && weapon.templateIndex !== WEAPONS.Long_Bow;
-  return { entity, weapon, core, skillId, skill: skillValue(entity, skillId), prof, racial, isBow, twoHanded, crit: criticalModel(entity, core) };
+  return { entity, weapon, wraps, core, skillId, skill: skillValue(entity, skillId), prof, racial, isBow, twoHanded, crit: criticalModel(entity, core) };
 }
 
 /** The chance to hit: exact expectation of the core's roll, for one swing against one foe. */
@@ -146,14 +148,14 @@ function hitModel(ctx, swing, foe) {
 
 /** The blow's damage, mean and span over the weapon's integer roll range. Neutral foe (no career bonus or phobia). */
 function damageModel(ctx, swing, foe) {
-  const { entity, weapon, core, skillId, prof, racial, twoHanded, crit } = ctx;
+  const { entity, weapon, wraps, core, skillId, prof, racial, twoHanded, crit } = ctx;
   const str = liveStat(entity, 'strength');
   const dmgMods = swing.damage + prof.damageMod + racial.damageMod;
   const rolls = [];
   let strMod; let matMod = 0;
   if (!weapon) {
     const h2h = skillValue(entity, SKILLS.HandToHand);
-    for (let r = handToHandMinDamage(h2h); r <= handToHandMaxDamage(h2h); r++) rolls.push(r);
+    for (let r = handToHandMinDamage(h2h); r <= handToHandMaxDamage(h2h); r++) rolls.push(wraps ? weaponDamageMods(wraps, r) : r);
     strMod = core.overhaul ? pcaaoDamageModifier(str) : damageModifier(str);
     matMod = clawMetalDamage(entity);   // BAL6-GAUNTLETS: both cores add it where a weapon's material stands
   } else {
@@ -166,7 +168,7 @@ function damageModel(ctx, swing, foe) {
     if (!weapon) {
       if (core.overhaul && d < 1) d = 0;
       d += bonusOrPenaltyByEnemyType(entity, foe);
-      return entity.isInBeastForm ? d : weaponBlowMods(null, d, entity, foe, ESTIMATE);   // BAL10: both cores read the fists' blow modifiers now - never the beast's claws
+      return entity.isInBeastForm ? d : weaponBlowMods(null, d, entity, foe, wraps ? { ...ESTIMATE, wraps } : ESTIMATE);   // BAL10: both cores read the fists' blow modifiers now - never the beast's claws
     }
     if (d < 1) d = 0;
     d += bonusOrPenaltyByEnemyType(entity, foe);

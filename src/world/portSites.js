@@ -91,6 +91,14 @@ export const FACE_K = 2;
 export const LIGHT_APART_K = 0.5;
 export const LIGHT_APART_CAP = 40;
 
+/** WESTHEAD-NORTH (the owner, 2026-10-29, after players bought homes by its north-west shipyard): a port place that
+ *  stands as near a cell as fits (portSite's `near`, by mapId), not by the sea's distance. Westhead Moor's old corner is
+ *  off its ground since TS7, so its shipyard takes the north strip between the wall and the sea, at the westmost place
+ *  one fits. BAY-OWN: a Bay town's pre-#1184 place (bible/01-Overview/bugs/Field-Bugs-2026-10-28.md). */
+export const PORT_PLACES_NEAR = Object.freeze({
+  1368614887: Object.freeze({ shipyard: Object.freeze([156, 406]) }),   // Westhead Moor
+});
+
 /** A place's cell spans for a turn: [across x, across z]. Pure. */
 export function portSpans(kind, turn) {
   const F = PORT_FOOT[kind];
@@ -281,11 +289,12 @@ export function frontMiddle(gx, gy, nx, nz, turn) {
 /**
  * ONE PORT PLACE'S SPOT on the ground (yardGround's, the yards closed on it): the best fit, or null - `x`, `z` its middle
  * in the location frame (metres), `yaw` its turn (degrees), its cells. `field` seaField's; `apart` the shipyard's middle
- * (cells) for the lighthouse to stand off. Pure.
+ * (cells) for the lighthouse to stand off; `near` a cell its middle stands as near as fits, in place of the sea's
+ * distance (PORT_PLACES_NEAR). Pure.
  * @param {{width: number, height: number, blocked: Uint8Array, road: Uint8Array}} g @param {string} kind
- * @param {{ at: (gx: number, gy: number) => number, kind?: string }} field @param {number[]|null} [apart]
+ * @param {{ at: (gx: number, gy: number) => number, kind?: string }} field @param {number[]|null} [apart] @param {ReadonlyArray<number>|null} [near]
  */
-export function portSite(g, kind, field, apart = null) {
+export function portSite(g, kind, field, apart = null, near = null) {
   if (!g || !PORT_FOOT[kind]) return null;
   const { width: W, height: H } = g;
   const closed = summed(W, H, (x, y) => g.blocked[y * W + x]);
@@ -300,7 +309,10 @@ export function portSite(g, kind, field, apart = null) {
         const back = field.at(bx, by), depth = (turn % 2 ? nx : nz) - 1;
         // its back to the sea: its front as much farther from it as it is deep (the middle's field has no sea to face)
         let score = field.kind === 'middle' ? 0 : FACE_K * Math.max(0, depth - (field.at(fx, fy) - back));
-        if (kind === 'shipyard') score += back;
+        if (near) {
+          const dx = gx + nx / 2 - near[0], dy = gy + nz / 2 - near[1];
+          score += Math.sqrt(dx * dx + dy * dy);
+        } else if (kind === 'shipyard') score += back;
         else {
           const cx = gx + nx / 2, cy = gy + nz / 2;
           score += field.at(cx, cy);
@@ -329,15 +341,16 @@ export function portSite(g, kind, field, apart = null) {
 
 /**
  * BOTH PORT PLACES on a town's ground (the yards already closed on it): the shipyard, then the lighthouse on what is
- * left YARD_GAP_M clear of it and standing off it. `field` seaField's. Answers the sites found (none, one or both). It
- * closes `g` as it goes - a ground is placed on once. Pure.
+ * left YARD_GAP_M clear of it and standing off it. `field` seaField's; `near` a town's PORT_PLACES_NEAR row. Answers the
+ * sites found (none, one or both). It closes `g` as it goes - a ground is placed on once. Pure.
  * @param {{width: number, height: number, blocked: Uint8Array, road: Uint8Array}} g @param {{ at: (gx: number, gy: number) => number }} field
+ * @param {Readonly<Record<string, ReadonlyArray<number>>>|null} [near]
  */
-export function portSitesOn(g, field) {
+export function portSitesOn(g, field, near = null) {
   const out = [];
   let apart = null;
   for (const kind of PORT_SITE_ORDER) {
-    const s = portSite(g, kind, field, apart);
+    const s = portSite(g, kind, field, apart, near?.[kind] ?? null);
     if (!s) continue;
     out.push(s);
     closeSite(g, s);

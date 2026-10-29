@@ -1592,6 +1592,10 @@ const SNOW_UNIT_LIST = Object.entries(SNOW_UNITS);   // AUDIT ENVIRONS P1: the f
 /** WEAPON-GLOW1: the glow's seconds, wrapped where every rate in it is whole (render/weaponGlowGlsl.js). A wall clock,
  *  as the elite foes' glow is: a look, and the same look in every pass that draws one. */
 export const glowSeconds = (now = globalThis.performance?.now?.() ?? Date.now()) => (now / 1000) % GLOW_CLOCK_PERIOD;
+/** HAND-WRAPS: the ranges a glow of `slot` lights - a weapon's its slot's; the fists' ('hands') the body's hands, the
+ *  skin's 'hand' row and a worn glove's hand parts (formats/morrowind/mwItemMap.js's rows). */
+const GLOW_HAND_PARTS = new Set(['left hand', 'right hand']);
+export const inGlowSlot = (r, slot) => (slot === 'hands' ? r.slot === 'hand' || GLOW_HAND_PARTS.has(r.piece?.partName) : r.slot === slot);
 /** WEAPON-GLOW1: the Morrowind outline's draws per look, built once. */
 const _glowDraws = new Map();
 const glowDrawsFor = (look) => { let d = _glowDraws.get(look); if (!d) { d = glowRingDraws(look); _glowDraws.set(look, d); } return d; };
@@ -3831,7 +3835,7 @@ export class Renderer {
     // this body's palette is on its unit: the outline's rings BEFORE the body (at the back of the pass, so everything
     // drawn after covers them) and its charge after; each hands charProgram back for the lines that follow
     // TWO-HANDS: and a pair's LEFT blade its own (`mesh.offWeaponGlow` on the 'offweapon' ranges) - each hand its weapon's
-    const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow) && this._spriteDepth > 0 && this._studioDepth === 0 && this._glowVpH > 0 && !!mesh.ranges;
+    const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow || mesh.handGlow) && this._spriteDepth > 0 && this._studioDepth === 0 && this._glowVpH > 0 && !!mesh.ranges;
     if (glow) this._drawWeaponGlows(mesh, modelMatrix, skin, false);
     if (mesh.ranges && mesh.ranges.length) {
       for (const r of mesh.ranges) {
@@ -3893,7 +3897,7 @@ export class Renderer {
     this._close2D();   // PERF-2D: drawCharacter's own baseline - closed already, said where the draw is
     if (!g) return;
     let any = false;
-    for (const r of mesh.ranges) if (r.slot === slot && !r.hidden) { any = true; break; }
+    for (const r of mesh.ranges) if (inGlowSlot(r, slot) && !r.hidden) { any = true; break; }
     if (!any || !g.ramp || !(g.code > 0)) return;
     const gl = this.gl;
     this._ensureWeaponGlowMeshProgram();
@@ -3940,7 +3944,7 @@ export class Renderer {
       gl.depthFunc(gl.LEQUAL);
     }
     for (const r of mesh.ranges) {
-      if (r.slot !== slot || r.hidden) continue;
+      if (!inGlowSlot(r, slot) || r.hidden) continue;
       gl.uniform1f(u.useTex, r.tex ? 1 : 0);
       gl.uniform1f(u.alphaCut, r.alphaCut || 0);
       gl.bindTexture(gl.TEXTURE_2D, r.tex || this._blackTex);
@@ -3963,6 +3967,7 @@ export class Renderer {
   _drawWeaponGlows(mesh, modelMatrix, skin, charge) {
     if (mesh.weaponGlow) this._drawWeaponGlow(mesh, modelMatrix, skin, charge, 'weapon', mesh.weaponGlow);
     if (mesh.offWeaponGlow) this._drawWeaponGlow(mesh, modelMatrix, skin, charge, 'offweapon', mesh.offWeaponGlow);
+    if (mesh.handGlow) this._drawWeaponGlow(mesh, modelMatrix, skin, charge, 'hands', mesh.handGlow);   // HAND-WRAPS: the fists
   }
 
   /** WEAPON-GLOW1: the Morrowind glow's program - the character program's skinned vertex shader with the glow's shift
