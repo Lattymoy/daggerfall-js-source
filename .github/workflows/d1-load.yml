@@ -132,14 +132,42 @@ jobs:
           done
           [ "$failed" = "0" ] || echo "::warning::some readings are missing from the summary - see the warnings above"
 
-      # Readable copy: the summary again as notice annotations, which the REST API serves.
-      - name: Summary as annotations
+
+      - name: Summary as annotations 0
         if: always()
         run: |
           f="$RUNNER_TEMP/all.md"
-          [ -f "$f" ] || { echo "::notice::no summary was written"; exit 0; }
-          split -b 6000 -d "$f" "$RUNNER_TEMP/part."
-          for p in "$RUNNER_TEMP"/part.*; do
+          [ -f "$f" ] || exit 0
+          [ -d "$RUNNER_TEMP/parts" ] || { mkdir -p "$RUNNER_TEMP/parts"; split -b 3900 -a 2 -d "$f" "$RUNNER_TEMP/parts/p"; }
+          for n in $(seq 0 9); do
+            p="$RUNNER_TEMP/parts/p$(printf %02d $n)"
+            [ -f "$p" ] || exit 0
             msg=$(sed -e 's/%/%25/g' "$p" | sed -e ':a;N;$!ba;s/\n/%0A/g' | sed -e 's/\r/%0D/g')
-            echo "::notice title=$(basename "$p")::$msg"
+            echo "::notice title=p$(printf %02d $n)::$msg"
+          done
+
+      - name: Summary as annotations 1
+        if: always()
+        run: |
+          f="$RUNNER_TEMP/all.md"
+          [ -f "$f" ] || exit 0
+          [ -d "$RUNNER_TEMP/parts" ] || { mkdir -p "$RUNNER_TEMP/parts"; split -b 3900 -a 2 -d "$f" "$RUNNER_TEMP/parts/p"; }
+          for n in $(seq 10 19); do
+            p="$RUNNER_TEMP/parts/p$(printf %02d $n)"
+            [ -f "$p" ] || exit 0
+            msg=$(sed -e 's/%/%25/g' "$p" | sed -e ':a;N;$!ba;s/\n/%0A/g' | sed -e 's/\r/%0D/g')
+            echo "::notice title=p$(printf %02d $n)::$msg"
+          done
+
+      - name: Summary as annotations 2
+        if: always()
+        run: |
+          f="$RUNNER_TEMP/all.md"
+          [ -f "$f" ] || exit 0
+          [ -d "$RUNNER_TEMP/parts" ] || { mkdir -p "$RUNNER_TEMP/parts"; split -b 3900 -a 2 -d "$f" "$RUNNER_TEMP/parts/p"; }
+          for n in $(seq 20 29); do
+            p="$RUNNER_TEMP/parts/p$(printf %02d $n)"
+            [ -f "$p" ] || exit 0
+            msg=$(sed -e 's/%/%25/g' "$p" | sed -e ':a;N;$!ba;s/\n/%0A/g' | sed -e 's/\r/%0D/g')
+            echo "::notice title=p$(printf %02d $n)::$msg"
           done
