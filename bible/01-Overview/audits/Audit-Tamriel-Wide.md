@@ -6,8 +6,8 @@ broken and ensure pur future development isnt just Daggerfall anymore and is the
 Two halves. The audit reads main at `41804bd39` (#1184 merged as `1e18a8f64`, and the day's fixes after it) for what
 is broken. The rule makes new work answer for all of Tamriel, and a test holds it (TAMRIEL-WIDE, below).
 
-**Status: IN PROGRESS.** Twenty-seven findings, each reproduced by its lane and verified again against the tree before
-it was fixed. The fixes not yet landed are marked so below.
+**Status: DONE (2026-10-29).** Twenty-seven findings, each reproduced by its lane and verified again against the tree
+before it was fixed: 23 fixed, one stands, one open, and two the owner's calls (below).
 
 ## The baseline
 
@@ -44,11 +44,11 @@ loses data; MEDIUM: wrong in a corner a player reaches; LOW: the record, a cost,
 |---|---|---|---|
 | A1 | MEDIUM | An Imperial City house's yard lot was its door's box grown 6 m (a fabric house's one model is its door): the owner's own rooms, the neighbours' and the street | FIXED - a terraced house has no yard (`scenes/homeYards.js` lotOfFrame, the frame marked at the build) |
 | A2 | LOW | The capitals' yard bounds read the Imperial City's blocks off BLOCKS.BSA, which holds none of them: the test guarded nothing, the record's 23 and 794 were 0s | FIXED - counted as served; the record corrected (`11-Multiplayer/Yard-Cells.md`); HOME_TOWN_MAX's margin left open |
-| B1 | MEDIUM | SD-PARTY's one life and one win a Hollow kept nothing in a province's Hollow: the hub read the Bay lane's record | IN PROGRESS (the relay batch, world280) |
-| B2 | MEDIUM | Staff `/tp @player` refused a player in an Ocean Hole's abyss past the Bay (its pit bounded to 0..999) | IN PROGRESS (the relay batch) |
-| B3 = C3 | MEDIUM | Two dungeons past the Bay shared one dungeon-vein identity (`mapId & 0xfffff`): an Eltheric ruin and a lair, two abysses | IN PROGRESS (the account batch, acct209) |
-| B4 = C7 | LOW | Staff `/tp x y`, `/tp <place>` and the staff flat map knew the Bay's grid alone | IN PROGRESS (the account batch) |
-| B5 | LOW | The hub's cleansed raids list held 64, two days of the Bay's raids; the world's lanes roll some 300 | IN PROGRESS (the relay batch) |
+| B1 | MEDIUM | SD-PARTY's one life and one win a Hollow kept nothing in a province's Hollow: the hub read the Bay lane's record | FIXED - the hub reads the slot's lane (`server/src/sdCopy.js`; `11-Multiplayer/Super-Dungeons.md`), world280 |
+| B2 | MEDIUM | Staff `/tp @player` refused a player in an Ocean Hole's abyss past the Bay (its pit bounded to 0..999) | FIXED - the pit bounded by `worldPixelOk` (`net/staffTeleport.js`; `03-World/Ocean-Holes.md`), world280 |
+| B3 = C3 | MEDIUM | Two dungeons past the Bay shared one dungeon-vein identity (`mapId & 0xfffff`): an Eltheric ruin and a lair, two abysses | FIXED - a place the port made keys by its whole id (`scenes/dungeonIdentity.js`; `06-Systems/Professions-Arc.md`), acct209 |
+| B4 = C7 | LOW | Staff `/tp x y`, `/tp <place>` and the staff flat map knew the Bay's grid alone | FIXED - the world's grid and the registry (`scenes/staffTp.js`; `06-Systems/Online-Arc.md`); the relay's own copy waits for its next version |
+| B5 | LOW | The hub's cleansed raids list held 64, two days of the Bay's raids; the world's lanes roll some 300 | FIXED - two days of every lane's slots, 576 (`net/wire.js` RAID_CLEANS_MAX; `03-World/Raiding-Parties.md`), world280 |
 | B6 | - | The house cap (HOUSES-3) is three a region, and past the Bay a region is a province | THE OWNER'S CALL |
 | C1 | MEDIUM | No raid past the Bay was told: the raid host's region was -1 there (`politicClaimed`, the Bay's 62) | FIXED - a province's politic is its region's |
 | C2 | MEDIUM | Camps, bounty farms and trail spots stood on roads past the Bay: ROADS-CLEAR asked the Bay's pixels alone | FIXED - the curves' band past the Bay (`world/road/roadBand.js` nearRoad) |
@@ -56,22 +56,44 @@ loses data; MEDIUM: wrong in a corner a player reaches; LOW: the record, a cost,
 | C5 | LOW | A Travel Options resume past the Bay read every pixel there as sea, so it never skipped ahead | FIXED - the host's own sea (`tvWater`) |
 | C6 | LOW | Map Backgrounds gave the race's backdrop in every town, dungeon and graveyard past the Bay | FIXED - a DEPARTURE, `Port-Ledger.md` section A |
 | C8 | LOW | A harbour past the Bay is sounded later than the Bay's (`dryPixel` answers the Bay alone) | STANDS - a delay, never a wrong berth; making it answer past the Bay needs the kernel's lower bound proven under the relief and the towns' eases |
-| D1 | HIGH | The Features rows said the continent holds no towns, roads or dungeons and cannot be travelled | IN PROGRESS (the text batch); whether `tamriel-land` is forced on online is THE OWNER'S CALL |
+| D1 | HIGH | The Features rows said the continent holds no towns, roads or dungeons and cannot be travelled | FIXED - what stands there, in every language; since TRAVEL-EVERYWHERE the map's note says a journey reaches it. Whether `tamriel-land` is forced on online is THE OWNER'S CALL |
 | D2 | MEDIUM | The held map inked and named every dungeon past the Bay before it was found | FIXED - known as the Overworld knows a place (`03-World/Arena-Provinces.md` TESA13) |
-| D3 | MEDIUM | The held map past the Bay was titled "The Bay", every hover "(beyond the Bay)" | IN PROGRESS (the text batch) |
-| D4 | LOW | The death screen named the Iliac Bay wherever one died | IN PROGRESS (the text batch) |
-| D5 | LOW | Two help pages told the Bay's limits as the world's | IN PROGRESS (the text batch) |
-| D6 | LOW | Flavour lines named the Bay where the player can be anywhere | IN PROGRESS (the text batch); the live events' own words (rocket, sunbaby) THE OWNER'S CALL |
+| D3 | MEDIUM | The held map past the Bay was titled "The Bay", every hover "(beyond the Bay)" | FIXED - titled Tamriel where it shows the continent; a hover names the province (`ui/map/mapStrip.js` sheetTitle, `ui/tamrielInk.js`) |
+| D4 | LOW | The death screen named the Iliac Bay wherever one died | FIXED - the two lines name no place |
+| D5 | LOW | Two help pages told the Bay's limits as the world's | FIXED - the arena page names its one city; the travel page's own line is true again since TRAVEL-EVERYWHERE |
+| D6 | LOW | Flavour lines named the Bay where the player can be anywhere | FIXED - true wherever the player stands; the live events' own words (rocket, sunbaby) THE OWNER'S CALL |
 | D7 | LOW | Cyrodiil is the Imperial Province on some screens, Sumurset Summerset on others | THE OWNER'S CALL - one name each |
-| D8 | LOW | `start2_provinces.test.js` composed the climate alone, so every start lair read region 0 | IN PROGRESS (the text batch) |
+| D8 | LOW | `start2_provinces.test.js` composed the climate alone, so every start lair read region 0 | FIXED - composed as `world.js` composes it, each province's start lair pinned to its region |
 | E1 | MEDIUM | WILD-CITY-PORT read a teleport's landing by its pixel: a Mark beside a village's walls landed in Cyrodiil's open country | FIXED - the landing's own point (`11-Multiplayer/Wild-Zone.md` section 28) |
 | E2 | LOW | A person by a province's border took the people where the player stood when first drawn | FIXED - where they stand (`characters/provinceFolk.js` nativeAt) |
-| E3 | MEDIUM | The sea serpent's site moved with every lane added (index modulo the list), the Bay's days too; the site word carries no version | IN PROGRESS (the relay batch) |
+| E3 | MEDIUM | The sea serpent's site moved with every lane added (index modulo the list), the Bay's days too; the site word carries no version | FIXED - a lane scored by its two ends, and the word carries its law (`11-Multiplayer/Sea-Serpent.md` section 18), world280 |
 | E4 | LOW | An Imperial City home is keyed by its generator's plot order, which no stamp holds | OPEN - a fabric-law version on a home record, for the day the generator changes |
 | E5 | LOW | The line keeping a yard placed again off a port's places had no pin that failed without it | FIXED - pinned (`test/world/fb1028_walls.test.js`) |
 
-Every fix's pins are in `test/world/worldWide/audit_tamrielwide.test.js` or its system's own tests, and its mutants in
-`tools/mutants/audit_tamrielwide.json` - every one dead.
+Every fix's pins are in `test/world/worldWide/audit_tamrielwide.test.js` and its `_relay`, `_account` and `_text`
+siblings, or in its system's own tests. Its mutants are in `tools/mutants/audit_tamrielwide.json` and the three
+siblings, every one dead (the D-test mutant with the freeware data alone, as its pin is the freeware's).
+
+**After main's merge (2026-10-29).** TRAVEL-EVERYWHERE (#1390) retired TESA-NO-FAST while this audit ran, so D1's map
+note ("not by fast travel") and D5's travel line ("Past the Bay, you go there on the Overworld") were false on the
+merge. The note now says a journey reaches a place past the Bay, in every language; the travel page keeps main's own
+line, true again. E1's bank cabin pin gained the producer's `campToWire` and asserts the landing.
+
+## Deploy order
+
+The account service first (acct209: an older service refuses a dungeon's whole id), then the relay (world280: the
+hub's lane keys, the abyss bound, the cleanses list, the serpent's site law), then the site.
+
+## Left for the owner, and open
+
+- **B6** - three houses a region, and past the Bay a region is a province: a cap per province, or a cap per region of
+  its own?
+- **D1** - whether `tamriel-land` is forced on online, or stays each player's setting.
+- **D6** - the live events' own words (`rocket.rise`, `rocket.lull`, `rocket.frenzy`, `sunbabySky.js`) name the Bay.
+- **D7** - one name each: Cyrodiil or the Imperial Province, Summerset or Sumurset.
+- **E4** (open) - a fabric-law version on an Imperial City home record, for the day its generator changes.
+- `HOME_TOWN_MAX`'s margin: an Imperial City slice holds up to 3,487 buildings and 2,773 houses.
+- `net/staffCommands.js`, in the relay's bundle, shows the Bay's bound until the relay's next version.
 
 ## TAMRIEL-WIDE - the rule
 
