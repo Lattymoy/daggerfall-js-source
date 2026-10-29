@@ -507,6 +507,16 @@ function actionCodes(b, action) {
 export function keyEdges() { return { down: new Set(), up: new Set(), downFrame: new Set(), upFrame: new Set(), own: new Set() }; }
 export function noteKeyDown(edges, code, repeat = false) { if (edges && !repeat) { edges.down.add(code); edges.own?.add(code); } }
 export function noteKeyUp(edges, code) { if (!edges) return; if (edges.own && !edges.own.delete(code)) return; edges.up.add(code); }
+/** KEYS-BLUR (FIELD BUGS 2026-10-29b, "sometimes my boat begins to spin"): a page that loses focus never hears the keys
+ *  let go under it (alt-tab, an overlay's own shortcut), so a held key stayed held - a helm swung on, a body walked.
+ *  On blur, and when the page is hidden, every held key is let go as its keyup would. Answers the uninstall. */
+export function letGoOnBlur(/** @type {Set<string>} */ keys, /** @type {any} */ edges, /** @type {any} */ win = globalThis) {
+  const up = () => { for (const code of [...keys]) { keys.delete(code); noteKeyUp(edges, code); } };
+  const hidden = () => { if (win.document?.visibilityState === 'hidden') up(); };
+  win.addEventListener?.('blur', up);
+  win.document?.addEventListener?.('visibilitychange', hidden);
+  return () => { win.removeEventListener?.('blur', up); win.document?.removeEventListener?.('visibilitychange', hidden); };
+}
 /** The frame's ONE rotation. Idempotent only in the sense that a second
  *  call in the same frame would throw the frame's edges away - so it is
  *  called once, at the top of the host's frame, and never inside a gate. */

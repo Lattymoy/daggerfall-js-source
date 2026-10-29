@@ -1,0 +1,82 @@
+[
+  {
+    "name": "FAMILY-REMOVE-living-ignored",
+    "file": "server-account/src/legacy.js",
+    "old": "lineage_id = ?2 AND dead_at IS NULL)').bind(playerId, id).run();",
+    "new": "lineage_id = ?2 AND dead_at IS NULL AND 0)').bind(playerId, id).run();",
+    "tests": [
+      "test/server/family_remove.test.js"
+    ],
+    "note": "a line a living character plays is removed under it"
+  },
+  {
+    "name": "FAMILY-REMOVE-dead-hold-it",
+    "file": "server-account/src/legacy.js",
+    "old": "lineage_id = ?2 AND dead_at IS NULL)').bind(playerId, id).run();",
+    "new": "lineage_id = ?2)').bind(playerId, id).run();",
+    "tests": [
+      "test/server/family_remove.test.js"
+    ],
+    "note": "a tombstone holds its line - a one-life player's fallen never free one"
+  },
+  {
+    "name": "FAMILY-REMOVE-any-account",
+    "file": "server-account/src/legacy.js",
+    "old": "const gone = await db.prepare('DELETE FROM lineages WHERE player = ?1 AND id = ?2'",
+    "new": "const gone = await db.prepare('DELETE FROM lineages WHERE (player = ?1 OR 1) AND id = ?2'",
+    "tests": [
+      "test/server/family_remove.test.js"
+    ],
+    "note": "another account's line of the same id removed"
+  },
+  {
+    "name": "FAMILY-REMOVE-unrouted",
+    "file": "server-account/src/index.js",
+    "old": "if (path === '/v1/realm/lineage/remove') return answer(",
+    "new": "if (path === '/v1/realm/lineage/removed') return answer(",
+    "tests": [
+      "test/server/family_remove.test.js"
+    ],
+    "note": "the route answers nothing"
+  },
+  {
+    "name": "FAMILY-REMOVE-in-use-unsaid",
+    "file": "server-account/src/legacy.js",
+    "old": "return { error: had ? 'lineage-in-use' : 'no-lineage' };",
+    "new": "return { error: 'no-lineage' };",
+    "tests": [
+      "test/server/family_remove.test.js"
+    ],
+    "note": "a line still played is said to be missing"
+  },
+  {
+    "name": "FAMILY-REMOVE-spare-played",
+    "file": "src/systems/legacy/waitingHouses.js",
+    "old": "return (ids ?? []).filter((id) => !played.has(id));",
+    "new": "return (ids ?? []).filter((id) => played.has(id));",
+    "tests": [
+      "test/systems/legacy/family_remove_menu.test.js"
+    ],
+    "note": "the page offers the lines still played, never the spare"
+  },
+  {
+    "name": "FAMILY-REMOVE-route-path",
+    "file": "src/systems/realmSaves.js",
+    "old": "realmAsk(io, '/v1/realm/lineage/remove',",
+    "new": "realmAsk(io, '/v1/realm/lineage',",
+    "tests": [
+      "test/systems/legacy/family_remove_menu.test.js"
+    ],
+    "note": "the press asks the line's write route"
+  },
+  {
+    "name": "FAMILY-REMOVE-remedy-unsaid",
+    "file": "src/net/accountClient.js",
+    "old": "may hold online. Remove a family you no longer play to make room.'),",
+    "new": "may hold online.'),",
+    "tests": [
+      "test/systems/legacy/family_remove_menu.test.js"
+    ],
+    "note": "the cap's refusal names no way past it"
+  }
+]

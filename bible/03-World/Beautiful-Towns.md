@@ -495,7 +495,9 @@ layout pins above, and by four more things the stand-ins needed:
   taken-out list was refused for it, offline the piece came back at the next
   load. The name takes five digits now (`net/decorLaw.js`
   `DECOR_BASE_KEY_RE`), and every flat and model both packs' interiors lay
-  is pinned to fit it.
+  is pinned to fit it. BUILT-IN-MODS (`01-Overview/bugs/Field-Bugs-2026-10-29b.md`): the mods write most furniture as
+  scenery (ObjectType 0), which BASE-HIDE never offered - a piece is now a prop or such furniture. BED-TURN: the
+  coloured beds lie as the classic beds they replaced, turned back by the half turn their prefab faces from it.
 - **The decor preview and the ghost** draw a stand-in or an alias bed as the
   room does - both ask the pipeline (`getGpuMesh`, `cpuModels`), which
   builds an alias from the player's own ARCH3D.

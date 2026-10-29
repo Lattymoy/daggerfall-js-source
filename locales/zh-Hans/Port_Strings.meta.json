@@ -64,6 +64,11 @@
   "tr": "67758af79a4f",
   "by": "claude-in-session"
  },
+ "account.refusal.lineageInUse": {
+  "en": "b210f6197958",
+  "tr": "f247ef2a4c4c",
+  "by": "claude-in-session"
+ },
  "account.refusal.marketSellerFrozen": {
   "en": "e83eacbb66fb",
   "tr": "fe8a7d5827e1",
@@ -92,6 +97,11 @@
  "account.refusal.repairNotSet": {
   "en": "6ee1527e65ec",
   "tr": "afc0614194f6",
+  "by": "claude-in-session"
+ },
+ "account.refusal.tooManyLineages": {
+  "en": "5f69291d1652",
+  "tr": "9cf548881d77",
   "by": "claude-in-session"
  },
  "account.refusal.townUnwalked": {
@@ -3147,6 +3157,56 @@
  "menu.rail.test": {
   "en": "4fd8df831597",
   "tr": "27d2980258b0",
+  "by": "claude-in-session"
+ },
+ "menu.realm.families": {
+  "en": "862a863ff592",
+  "tr": "e5fcd6ca180d",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familiesHide": {
+  "en": "34d8b60fe253",
+  "tr": "bb0e7e01aa8d",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familiesShow": {
+  "en": "d97d1ee339e4",
+  "tr": "71b6771bc789",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyRemoved": {
+  "en": "2cbcaf937fc9",
+  "tr": "5faa9ad78fc3",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyRow": {
+  "en": "5e293ce32dbd",
+  "tr": "8aa23063d8a2",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyUnnamed": {
+  "en": "9b115c99b1da",
+  "tr": "00b56b1c9dc2",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamily": {
+  "en": "a53c064ca700",
+  "tr": "e704c8cc2014",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyAsk": {
+  "en": "5694f452ab8b",
+  "tr": "b03270451616",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyBody": {
+  "en": "eb04b71c80a7",
+  "tr": "2e5b7431c98b",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyYes": {
+  "en": "e963907dac5c",
+  "tr": "2f752c005ec5",
   "by": "claude-in-session"
  },
  "menu.realm.strandedAsk": {

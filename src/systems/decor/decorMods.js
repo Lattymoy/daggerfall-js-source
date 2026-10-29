@@ -58,7 +58,7 @@ import { TOWN_PICTURES } from '../../world/townPictures.js';
 import { DETAILED_SHIPS_DERIVED } from '../detailedShips.js';
 import { customAliasFor, hasCustomModel } from '../../world/customModels.js';
 import { hasTextureReplacement } from '../textureReplacement.js';
-import { decorKey, isDecorModEntry } from './decorCatalogue.js';   // AUDIT 05b A11: the one key a piece and its entry share
+import { decorKey, isDecorModEntry, DECOR_FURNITURE_FIRST, DECOR_FURNITURE_LAST } from './decorCatalogue.js';   // AUDIT 05b A11: the one key a piece and its entry share
 
 /** THE MODS' PIECES THAT STAND INSIDE - offered in every room (and a yard): model id or `archive_record` -> how many
  *  times the mods stand it (measured, 2026-10-05: Beautiful Villages 1.4.2, Beautiful Cities 0.5.0, Detailed Ships
@@ -106,6 +106,11 @@ export const DECOR_MOD_ROOMS = Object.freeze({
     '56790_24': 237, '56790_25': 602,
   }),
 });
+/** BUILT-IN-MODS (FIELD BUGS 2026-10-29b, "things that cannot be removed from the house I bought in Alinor"): whether a
+ *  room's model is its furniture - Daggerfall's furniture families or a piece the mods stand inside. The town mods write
+ *  most of a room's furniture as scenery (ObjectType 0), which BASE-HIDE never offered (scenes/interiorContext.js). */
+export const isRoomFurnishing = (/** @type {number} */ id) => Number.isSafeInteger(id)
+  && ((id >= DECOR_FURNITURE_FIRST && id <= DECOR_FURNITURE_LAST) || Object.hasOwn(DECOR_MOD_ROOMS.models, id));
 /** THE MODS' PIECES THAT STAND OUTSIDE ALONE - a yard's: the rocks, the market stalls, a temple column's head; the
  *  towns' fowl, sheep, cattle, horses and doves; the grain; a temple's garden rows. */
 export const DECOR_MOD_STREETS = Object.freeze({

@@ -1,0 +1,66 @@
+[
+  {
+    "name": "BUILT-IN-MODS-props-alone",
+    "file": "src/scenes/interiorContext.js",
+    "old": "const baseKey = base && (p.objectType === PROP_MODEL_TYPE || (p.objectType === 0 && isRoomFurnishing(p.modelIdNum)))",
+    "new": "const baseKey = base && (p.objectType === PROP_MODEL_TYPE)",
+    "tests": ["test/scenes/builtin_mods.test.js", "test/scenes/builtin_mods_alinor.test.js"],
+    "note": "BASE-HIDE's old gate: a town mod's furniture written as scenery is never built in"
+  },
+  {
+    "name": "BUILT-IN-MODS-any-scenery",
+    "file": "src/scenes/interiorContext.js",
+    "old": "const baseKey = base && (p.objectType === PROP_MODEL_TYPE || (p.objectType === 0 && isRoomFurnishing(p.modelIdNum)))",
+    "new": "const baseKey = base && (p.objectType === PROP_MODEL_TYPE || (p.objectType === 0))",
+    "tests": ["test/scenes/builtin_mods.test.js"],
+    "note": "a beam - the room's structure - offered as furniture"
+  },
+  {
+    "name": "BUILT-IN-MODS-shell",
+    "file": "src/scenes/interiorContext.js",
+    "old": "const baseKey = base && (p.objectType === PROP_MODEL_TYPE || (p.objectType === 0 && isRoomFurnishing(p.modelIdNum)))",
+    "new": "const baseKey = base && (p.objectType === PROP_MODEL_TYPE || (p.objectType !== 3 && isRoomFurnishing(p.modelIdNum)))",
+    "tests": ["test/scenes/builtin_mods.test.js"],
+    "note": "the room's shell (ObjectType 13) offered as furniture"
+  },
+  {
+    "name": "BUILT-IN-MODS-mod-pieces-dropped",
+    "file": "src/systems/decor/decorMods.js",
+    "old": "|| Object.hasOwn(DECOR_MOD_ROOMS.models, id));",
+    "new": ");",
+    "tests": ["test/scenes/builtin_mods.test.js"],
+    "note": "the mods' own room pieces never built in"
+  },
+  {
+    "name": "BUILT-IN-MODS-bed-rest-kept",
+    "file": "src/scenes/interiorContext.js",
+    "old": "        if (baseKey) base.furnish(baseKey, beds[beds.length - 1]);   // BUILT-IN-MODS: taken out with its rest",
+    "new": "",
+    "tests": ["test/scenes/builtin_mods.test.js"],
+    "note": "a bed taken out still rests"
+  },
+  {
+    "name": "BED-TURN-unturned",
+    "file": "src/world/interior/interiorLayout.js",
+    "old": "-(obj.yRotation + aliasTurnOf(obj.modelIdNum)) / ROTATION_DIVISOR,",
+    "new": "-obj.yRotation / ROTATION_DIVISOR,",
+    "tests": ["test/scenes/builtin_mods.test.js"],
+    "note": "the coloured beds backwards again"
+  },
+  {
+    "name": "BED-TURN-quarter",
+    "file": "src/world/townStandIns.js",
+    "old": "export const TOWN_BED_TURN = 1024;",
+    "new": "export const TOWN_BED_TURN = 512;",
+    "tests": ["test/scenes/builtin_mods.test.js"],
+    "note": "a quarter turn"
+  },
+  {
+    "name": "BED-TURN-not-registered",
+    "file": "src/world/townStandIns.js",
+    "old": "remap: bedRemap(colour), turn: TOWN_BED_TURN }",
+    "new": "remap: bedRemap(colour) }",
+    "tests": ["test/scenes/builtin_mods.test.js"],
+    "note": "the beds' alias carries no turn"
+  }
+]

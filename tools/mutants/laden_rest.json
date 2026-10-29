@@ -1,0 +1,42 @@
+[
+  {
+    "name": "LADEN-REST-load-always",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "const laden = () => (resting ? 1 : state.boatCargoMod);",
+    "new": "const laden = () => state.boatCargoMod;",
+    "tests": ["test/systems/comeSailAway/laden_rest.test.js"],
+    "note": "the mod's own: a dead hull keeps her swing and her way for good"
+  },
+  {
+    "name": "LADEN-REST-never-loaded",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "const laden = () => (resting ? 1 : state.boatCargoMod);",
+    "new": "const laden = () => 1;",
+    "tests": ["test/systems/comeSailAway/laden_rest.test.js"],
+    "note": "the load no longer slows her coming on - a dead hull gathers a swing"
+  },
+  {
+    "name": "LADEN-REST-turn-unrested",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "resting = Math.abs(swing) < Math.abs(state.TurnCurrent) && swing * state.TurnCurrent >= 0;   // LADEN-REST",
+    "new": "resting = false;   // LADEN-REST",
+    "tests": ["test/systems/comeSailAway/laden_rest.test.js"],
+    "note": "her swing comes off at the load's rate"
+  },
+  {
+    "name": "LADEN-REST-way-unrested",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "resting = vMagnitude(state.velocityTarget) < was;   // LADEN-REST",
+    "new": "resting = false;   // LADEN-REST",
+    "tests": ["test/systems/comeSailAway/laden_rest.test.js"],
+    "note": "her way comes off at the load's rate"
+  },
+  {
+    "name": "LADEN-REST-said-once",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "if (state.lastWeight !== num || state.boatCargoMod === 0) {",
+    "new": "if (state.lastWeight !== num) {",
+    "tests": ["test/systems/comeSailAway/laden_rest.test.js"],
+    "note": "a dead hull says why once"
+  }
+]

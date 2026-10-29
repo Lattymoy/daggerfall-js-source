@@ -83,12 +83,12 @@
   {
     "name": "WITCH1-a-hall-is-a-home",
     "file": "server-account/src/festival.js",
-    "old": "AND h.char_id = ?4 AND h.guild_id IS NULL)`;",
-    "new": "AND h.char_id = ?4)`;",
+    "old": "h.player = ?3 AND h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ?4))`;",
+    "new": "h.player = ?3 AND (h.deed = 0 OR h.char_id = ?4))`;",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
-    "note": "A guild hall's keeper sets an offering at its guild's door."
+    "note": "A guild hall's keeper sets an offering at its guild's door. Re-aimed by content (HEARTH-SIBLING, FIELD BUGS 2026-10-29b): the home check is the account's."
   },
   {
     "name": "WITCH1-no-take-in-after",

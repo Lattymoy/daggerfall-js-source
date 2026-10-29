@@ -1,0 +1,34 @@
+[
+  {
+    "name": "HEARTH-SIBLING-buyer-only",
+    "file": "server-account/src/festival.js",
+    "old": "h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ?4))`;",
+    "new": "h.guild_id IS NULL AND h.char_id = ?4)`;",
+    "tests": ["test/server/witch1_festival.test.js"],
+    "note": "the offering's home check asks for the buyer again - a sibling character's set-out refused"
+  },
+  {
+    "name": "HEARTH-SIBLING-deed-ignored",
+    "file": "server-account/src/festival.js",
+    "old": "h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ?4))`;",
+    "new": "h.guild_id IS NULL AND (h.deed >= 0 OR h.char_id = ?4))`;",
+    "tests": ["test/server/witch1_festival.test.js"],
+    "note": "a deed's home is any character's"
+  },
+  {
+    "name": "HEARTH-SIBLING-stored-under-setter",
+    "file": "server-account/src/festival.js",
+    "old": "SELECT ?1, ?2, ?3, ${KEEPER}, 0, ?4 WHERE changes() > 0",
+    "new": "SELECT ?1, ?2, ?3, 'char-other', 0, ?4 WHERE changes() > 0",
+    "tests": ["test/server/witch1_festival.test.js"],
+    "note": "the offering stored under its setter, not the home's buyer - it stands nowhere in the town"
+  },
+  {
+    "name": "HEARTH-SIBLING-take-in-by-character",
+    "file": "server-account/src/festival.js",
+    "old": "const key = 'map_id = ?1 AND building_key = ?2 AND player = ?3';",
+    "new": "const key = 'map_id = ?1 AND building_key = ?2 AND player = ?3 AND char_id = ?3';",
+    "tests": ["test/server/witch1_festival.test.js"],
+    "note": "take-in matches a character again"
+  }
+]

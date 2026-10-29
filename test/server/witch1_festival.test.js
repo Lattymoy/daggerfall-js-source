@@ -150,7 +150,7 @@ test('WITCH1 A SALE: the price taken only while the cakes cover it; an account w
   assert.equal((await buyFestival(ctx(AFTER_S), player(alice), { ware: 'card:warlock', rid: 'aaaaaaaaaaae' }, ON)).repeat, true);
 });
 
-test('WITCH1 THE HEARTH OFFERING: set out only at a home the character owns (never a hall), filled from the owner\'s cakes, taken from once a day by others, taken in with its cakes', async () => {
+test('WITCH1 THE HEARTH OFFERING: set out only at a home the account owns (never a hall), filled from the owner\'s cakes, taken from once a day by others, taken in with its cakes', async () => {
   const { alice, bob, player, ctx, cakes, bowls, home, row, db } = await stand();
   db._raw.prepare("INSERT INTO guilds (id, name, name_key, tag, ranks, founded_at) VALUES ('g1', 'The Coven', 'the coven', 'CVN', '[]', 1)").run();
   home(alice, MAP, HOME, CHAR);
@@ -158,7 +158,6 @@ test('WITCH1 THE HEARTH OFFERING: set out only at a home the character owns (nev
   const at = { mapId: MAP, buildingKey: HOME, character: CHAR };
   assert.deepEqual(await setOffering(ctx(), player(bob), at, ON), { error: 'home' }, 'not his home');
   assert.deepEqual(await setOffering(ctx(), player(alice), { ...at, buildingKey: HALL }, ON), { error: 'home' }, 'a guild hall is its guild\'s');
-  assert.deepEqual(await setOffering(ctx(), player(alice), { ...at, character: 'char-other' }, ON), { error: 'home' }, 'another character\'s');
   assert.deepEqual(await setOffering(ctx(), player(alice), at, ON), { error: 'item', bowls: 0 }, 'no bowl bought: the client\'s word is not a bowl');
   bowls(alice, 2);
   assert.deepEqual(await setOffering(ctx(), player(alice), at, ON), { ok: true, stock: 0, bowls: 1 });
@@ -188,6 +187,25 @@ test('WITCH1 THE HEARTH OFFERING: set out only at a home the character owns (nev
   assert.deepEqual(await takeInOffering(ctx(AFTER_S), player(alice), at), { ok: true, returned: 12, cakes: 12, bowls: 2 });
   assert.deepEqual(await takeInOffering(ctx(AFTER_S), player(alice), at), { error: 'none' });
   assert.deepEqual(await setOffering(ctx(AFTER_S), player(alice), at, ON), { error: 'closed' });
+});
+
+test('HEARTH-SIBLING: any character of the account sets the bowl out at the account\'s home, fills it and takes it in - a deed\'s home its holder\'s alone (FIELD BUGS 2026-10-29b)', async () => {
+  const { alice, bob, player, ctx, cakes, bowls, home, row, db } = await stand();
+  home(alice, MAP, HOME, CHAR);
+  home(alice, MAP, HALL, CHAR);
+  db._raw.prepare('UPDATE homes SET deed = 1 WHERE building_key = ?').run(HALL);
+  const sib = { mapId: MAP, buildingKey: HOME, character: 'char-other' };
+  bowls(alice, 2);
+  assert.deepEqual(await setOffering(ctx(), player(alice), { ...sib, buildingKey: HALL }, ON), { error: 'home' }, 'a deed\'s home is its holder\'s');
+  assert.deepEqual(await setOffering(ctx(), player(bob), sib, ON), { error: 'home' }, 'another account\'s');
+  assert.deepEqual(await setOffering(ctx(), player(alice), sib, ON), { ok: true, stock: 0, bowls: 1 });
+  assert.equal(db._raw.prepare('SELECT char_id FROM fest_offerings').get().char_id, CHAR, 'stored under the home\'s buyer');
+  assert.deepEqual(await setOffering(ctx(), player(alice), { ...sib, character: CHAR }, ON), { error: 'set' }, 'the buyer finds it set');
+  assert.equal((await festivalTown(ctx(), player(bob), { mapId: MAP }, ON)).offerings.length, 1, 'it stands in the town');
+  cakes(alice, 4);
+  assert.deepEqual(await fillOffering(ctx(), player(alice), sib, ON), { stock: 4, cakes: 0, moved: 4 });
+  assert.deepEqual(await takeInOffering(ctx(), player(alice), sib), { ok: true, returned: 4, cakes: 4, bowls: 2 });
+  assert.equal(row(alice.id).fest_bowls, 2);
 });
 
 test('WITCH1 a bowl holds OFFERING_STOCK_MAX; an empty bowl gives nothing; one taken in since is `none`', async () => {

@@ -146,6 +146,22 @@ export async function putLineage({ db, nowS }, playerId, { id, record: sent, bas
 }
 
 /**
+ * FAMILY-REMOVE (FIELD BUGS 2026-10-29b, "being able to remove old families"): a line the account no longer plays let go,
+ * so LINEAGES_MAX has room again - deleted and fallen characters never freed one. Only a line no living realm character
+ * plays: its tombstones stay, so its fallen stay claimed (realm_characters_person) if the line is ever founded again.
+ * `{ ok }`, or `lineage-in-use`, `no-lineage`, `body`.
+ * @param {any} ctx @param {string} playerId @param {{ id: unknown }} at
+ */
+export async function removeLineage({ db }, playerId, { id }) {
+  if (!playerId || typeof id !== 'string' || !LINEAGE_ID_RE.test(id)) return { error: 'body' };
+  const gone = await db.prepare('DELETE FROM lineages WHERE player = ?1 AND id = ?2'
+    + ' AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE player = ?1 AND lineage_id = ?2 AND dead_at IS NULL)').bind(playerId, id).run();
+  if (gone.meta.changes) return { ok: true };
+  const had = await db.prepare('SELECT 1 AS h FROM lineages WHERE player = ? AND id = ?').bind(playerId, id).first();
+  return { error: had ? 'lineage-in-use' : 'no-lineage' };
+}
+
+/**
  * REVIVE: THE DEATHS THE STORED COPY SAYS WERE TAKEN BACK (src/systems/legacy/revived.js - an operator's revival,
  * tools/reviveRealmCharacter.mjs, stamps the stored copy). A copy from a device that never heard of the revival carries
  * the death again, and stored, it would kill the member again (entombLineDead) - so the stored copy's stamps are taken

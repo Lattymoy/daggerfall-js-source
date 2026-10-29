@@ -17,5 +17,7 @@ export const SOUL_CAKE_LAW_ROW = Object.freeze({
   index: 2000, baseWeight: 0, hitPoints: 1, basePrice: 0, rarity: 20, bound: true, stackable: true, packOnly: true,
 });
 export const HEARTH_OFFERING_LAW_ROW = Object.freeze({
-  index: 2001, baseWeight: 2, hitPoints: 100, basePrice: 0, rarity: 20, bound: true, stackable: true, packOnly: true,
+  // HEARTH-SIBLING (FIELD BUGS 2026-10-29b, "dead weight in my inventory"): the bowl leaves the pack only to the account's
+  // own door, so it weighs nothing, as CAKE-WEIGHT made the cake.
+  index: 2001, baseWeight: 0, hitPoints: 100, basePrice: 0, rarity: 20, bound: true, stackable: true, packOnly: true,
 });

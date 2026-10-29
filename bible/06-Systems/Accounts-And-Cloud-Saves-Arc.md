@@ -5486,7 +5486,9 @@ Mac: "online integration with permadeath (Bloodline) or non-permadeath (Enduring
 - **`lineages`**: one row a family an account founded online - its id (`fam-...`, the client's), surname, model (the
   founder's, for good: `lineage-model`), record (bounded, `LINEAGE_MAX_BYTES`) and `rev`. `/v1/realm/lineages` lists
   them; `/v1/realm/lineage` writes one only past its rev, a stale write answered 409 with the stored record to merge
-  into. At most `LINEAGES_MAX` an account.
+  into. At most `LINEAGES_MAX` an account. FAMILY-REMOVE (acct220, `01-Overview/bugs/Field-Bugs-2026-10-29b.md`):
+  `/v1/realm/lineage/remove` lets go a line no living realm character plays, so a deleted or fallen house frees its slot;
+  its tombstones stay.
 - **`realm_characters.lineage_id`, `person_id`**: a character born with `{ lineage, person }` (`/v1/realm/create`) is
   that living member of the account's own line, named for good; never one another character played (`lineage-played`,
   a unique index behind it). A birth whose first save never landed is resumed, as customs' is.

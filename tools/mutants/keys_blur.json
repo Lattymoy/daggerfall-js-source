@@ -1,0 +1,34 @@
+[
+  {
+    "name": "KEYS-BLUR-blur-unheard",
+    "file": "src/ui/input.js",
+    "old": "  win.addEventListener?.('blur', up);",
+    "new": "  win.addEventListener?.('focus', up);",
+    "tests": ["test/ui/keys_blur.test.js"],
+    "note": "a blur lets nothing go"
+  },
+  {
+    "name": "KEYS-BLUR-hidden-any",
+    "file": "src/ui/input.js",
+    "old": "const hidden = () => { if (win.document?.visibilityState === 'hidden') up(); };",
+    "new": "const hidden = () => { up(); };",
+    "tests": ["test/ui/keys_blur.test.js"],
+    "note": "shown again, the keys held are let go"
+  },
+  {
+    "name": "KEYS-BLUR-no-up-edge",
+    "file": "src/ui/input.js",
+    "old": "for (const code of [...keys]) { keys.delete(code); noteKeyUp(edges, code); }",
+    "new": "for (const code of [...keys]) { keys.delete(code); }",
+    "tests": ["test/ui/keys_blur.test.js"],
+    "note": "the ring never hears the up - a release-read action never fires"
+  },
+  {
+    "name": "KEYS-BLUR-world-unwired",
+    "file": "src/scenes/world.js",
+    "old": "  letGoOnBlur(keys, latch.edge);   // KEYS-BLUR",
+    "new": "  void keys;   // KEYS-BLUR",
+    "tests": ["test/ui/keys_blur.test.js"],
+    "note": "the streaming world - the sea's host - holds a key across a blur"
+  }
+]

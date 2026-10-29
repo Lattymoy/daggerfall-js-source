@@ -39,6 +39,7 @@ import { placedTableSpot, TAVERN_CARD_TABLES } from '../world/placedCardTable.js
 import { cardTablePropModel, paintFelt, paintWood, CARD_TABLE_BOX, CARD_TABLE_ARCHIVE, FELT_RECORD, WOOD_RECORD, FELT_RGB, GOLD_FELT_RECORD, GOLD_FELT_RGB } from '../world/card/cardTableProp.js';   // TAVERN-TABLE: the card table's own prop; TAVERN-TABLES: the gold table's red felt
 import { holdemGoldTable } from '../net/holdemTable.js';   // TAVERN-TABLES: which of them plays for gold - the relay's own index
 import { classicModelIdOf } from '../world/customModels.js';   // WD3: an alias is its classic model to the beds' test
+import { isRoomFurnishing } from '../systems/decor/decorMods.js';   // BUILT-IN-MODS: a town mod's furniture written as scenery
 import { LADDER_MODEL_ID, doorWorldPosition } from '../player/enterExit.js';   // TAVERN-TABLE: a static door's place, for the card table to keep clear of
 import { MACHINERY_MODEL_ID } from '../world/windmillMesh.js';   // WM4b: the mill's machinery and its moving parts
 import { createBaseRoom, baseBucketOf } from './decor/decorBase.js';   // BASE-HIDE: a furnishable room's own pieces, one at a time
@@ -390,7 +391,10 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     // IIL1: ImproveFireplaces.cs finds its hearths by mesh id - the port keeps where they stand
     if (IIL_FIREPLACE_MODELS.has(p.modelIdNum)) iilFireplaces.push({ x: (aabb.min[0] + aabb.max[0]) / 2, y: (aabb.min[1] + aabb.max[1]) / 2, z: (aabb.min[2] + aabb.max[2]) / 2 });
     const key = `int:${pi}`;
-    const baseKey = base && p.objectType === PROP_MODEL_TYPE && p.modelIdNum !== LADDER_MODEL_ID && p.modelIdNum !== MACHINERY_MODEL_ID
+    // BUILT-IN-MODS: a piece is a prop, or furniture a town mod wrote as scenery (ObjectType 0) - DFU's prop gate still
+    // alone decides a container, a ladder and a furniture action below
+    const baseKey = base && (p.objectType === PROP_MODEL_TYPE || (p.objectType === 0 && isRoomFurnishing(p.modelIdNum)))
+      && p.modelIdNum !== LADDER_MODEL_ID && p.modelIdNum !== MACHINERY_MODEL_ID
       ? decorBaseModelKey(pi, p.modelIdNum) : null;   // BASE-HIDE: a piece its owner may take out
     drawList.push({ mesh: gpu, matrix, key, aabb });
     // PERF6: the entry stays in drawList for the automap; the main view draws the merge
@@ -457,7 +461,10 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       if (baseKey) base.furnish(baseKey, chair);
     }
     if (p.objectType !== PROP_MODEL_TYPE) {
-      if (isBedModel(classicModelIdOf(p.modelIdNum))) beds.push({ cpu, matrix });
+      if (isBedModel(classicModelIdOf(p.modelIdNum))) {
+        beds.push({ cpu, matrix });
+        if (baseKey) base.furnish(baseKey, beds[beds.length - 1]);   // BUILT-IN-MODS: taken out with its rest
+      }
       continue;
     }
     const had = [containers.length, shelves.length, beds.length];   // BASE-HIDE: which list this piece lands in, if any
