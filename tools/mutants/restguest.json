@@ -1,0 +1,79 @@
+[
+  {
+    "name": "RESTGUEST-kind-refused",
+    "file": "server-account/src/decorAccess.js",
+    "old": "const SET_KINDS = new Set([...KINDS, 'rest']);",
+    "new": "const SET_KINDS = new Set([...KINDS]);",
+    "tests": ["test/server/decoraccess.test.js"]
+  },
+  {
+    "name": "RESTGUEST-any-id",
+    "file": "server-account/src/decorAccess.js",
+    "old": "  if ((kind === 'rest') !== (id === DECOR_REST_ID)) return { error: 'bad-decor' };",
+    "new": "",
+    "tests": ["test/server/decoraccess.test.js"]
+  },
+  {
+    "name": "RESTGUEST-grant-unsaid",
+    "file": "server-account/src/decorAccess.js",
+    "old": "    if (row.kind === 'rest') rest = true;\n    else if",
+    "new": "    if (row.kind === 'rest') rest = rest;\n    else if",
+    "tests": ["test/server/decoraccess.test.js"]
+  },
+  {
+    "name": "RESTGUEST-rest-a-station",
+    "file": "server-account/src/decorAccess.js",
+    "old": "    if (row.kind === 'rest') rest = true;\n    else if (row.kind === 'storage')",
+    "new": "    if (row.kind === 'rest') rest = true;\n    if (row.kind === 'storage')",
+    "tests": ["test/server/decoraccess.test.js"]
+  },
+  {
+    "name": "RESTGUEST-hall-set",
+    "file": "server-account/src/decorAccess.js",
+    "old": "  if (kind === 'rest' && home?.guild_id != null) return { error: 'bad-decor' };\n",
+    "new": "",
+    "tests": ["test/server/decoraccess.test.js"]
+  },
+  {
+    "name": "RESTGUEST-grant-unread",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "    restAt = res.data.rest === true ? `${mapId}:${buildingKey}` : null;",
+    "new": "    restAt = null;",
+    "tests": ["test/systems/decor/restguest.test.js"]
+  },
+  {
+    "name": "RESTGUEST-any-room",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "export const decorMayRest = (mapId, buildingKey) => restAt !== null && restAt === `${mapId}:${buildingKey}`;",
+    "new": "export const decorMayRest = (mapId, buildingKey) => restAt !== null;",
+    "tests": ["test/systems/decor/restguest.test.js"]
+  },
+  {
+    "name": "RESTGUEST-host-unread",
+    "file": "src/scenes/worldModes.js",
+    "old": " || (!!interiorHome && decorMayRest(Number(homeTownOf(b)) >>> 0, b?.buildingKey)),",
+    "new": ",",
+    "tests": ["test/systems/decor/restguest.test.js"]
+  },
+  {
+    "name": "RESTGUEST-chip-hidden",
+    "file": "src/ui/decorPanel.js",
+    "old": "      rest.hidden = !browse || !restWord;",
+    "new": "      rest.hidden = true;",
+    "tests": ["test/systems/decor/restguest.test.js"]
+  },
+  {
+    "name": "RESTGUEST-write-wrong",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "op: 'set', id: DECOR_REST_ID, kind: 'rest', mode, names, realm: null });",
+    "new": "op: 'set', id: DECOR_REST_ID, kind: 'storage', mode, names, realm: null });",
+    "tests": ["test/systems/decor/restguest.test.js"]
+  },
+  {
+    "name": "RESTGUEST-refusal-kept",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "        if ((useMode.get(DECOR_REST_ID) ?? 'private') === mode) keep(cur);\n",
+    "new": "",
+    "tests": ["test/systems/decor/restguest.test.js"]
+  }
+]

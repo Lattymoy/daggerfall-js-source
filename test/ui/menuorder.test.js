@@ -109,7 +109,7 @@ test('MENU-ORDER the decorator\'s presses: a placed piece\'s each its glyph, Rem
   assert.deepEqual(['Place', 'Raise', 'Lower', 'Grid', 'Preview', 'Back'].map((w) => all(bar.root, w === 'Place' ? 'dfdecor-btn' : 'dfdecor-chip').find((c) => c.textContent === w).dataset.dficon),
     ['place', 'up', 'down', 'grid', 'decorate', 'back']);
   assert.match(text(one(bar.root, 'dfdecor-bar-keys')), /^Fly: walk keys/, 'the legend, a name and what presses it');
-  assert.deepEqual(decorBarKeys(false).map(([k]) => k), ['Fly', 'Look', 'Turn', 'Raise/lower', 'Size', 'Grid', 'Place', 'Back']);
+  assert.deepEqual(decorBarKeys(false).map(([k]) => k), ['Fly', 'Look', 'Turn', 'Raise/lower', 'Nudge', 'Size', 'Grid', 'Place', 'Back']);   // PIN MOVED (NUDGE)
   assert.ok(!decorBarKeys(false, false).some(([k]) => k === 'Size'), 'a figure: no Size');
   assert.deepEqual(decorBarKeys(true).map(([k]) => k), ['Fly', 'Look']);
   assert.equal(decorFiltersText({ kinds: new Set(), size: null, storage: null, light: null }), 'Filters');

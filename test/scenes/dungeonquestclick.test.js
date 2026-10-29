@@ -27,13 +27,16 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const wm = () => readFileSync(join(ROOT, 'src/scenes/worldModes.js'), 'utf8');
+/** PIN MOVED (HOST-SPLIT, FIELD BUGS 2026-10-29b): the target walk moved out of the host, unchanged, beside questStandBox. */
+const mount = () => readFileSync(join(ROOT, 'src/systems/quest/sceneMount.js'), 'utf8');
 
 test('DQ1: the target walk and the click each have ONE home', () => {
   const s = wm();
-  assert.equal([...s.matchAll(/const questFlatTargets = \(list\) => \{/g)].length, 1);
+  assert.equal([...mount().matchAll(/export function questFlatTargets\(list\) \{/g)].length, 1);
+  assert.equal([...s.matchAll(/questFlatTargets = /g)].length, 0, 'the host keeps no copy');
   assert.equal([...s.matchAll(/const clickQuestFlat = \(s, buildingKey\) => \{/g)].length, 1);
   // and no host builds the aabb itself any more
-  assert.equal([...s.matchAll(/key: `questflat:\$\{i\}`/g)].length, 1,
+  assert.equal([...(s + mount()).matchAll(/key: `questflat:\$\{i\}`/g)].length, 1,
     'the questflat target key is minted in exactly one place');
   // DISC29-H: the record is built in ONE place inside the click (npcData) - the stamp reads it, and so does the Info
   // look's name (StaticNPC.DisplayName off the same layout data). PIN MOVED (MWNPC8c, bible/04-Characters/
@@ -71,8 +74,8 @@ test('DQ1: a PERSON keeps the static-NPC reach; anything else takes half of it',
   // quest ITEM on the floor must not have twice DFU's reach. A
   // behaviour with NO target resource takes the 128 arm too
   // (`!(null is Person)` is true).
-  const body = wm();
-  const walk = body.slice(body.indexOf('const questFlatTargets = (list) => {'), body.indexOf('const clickQuestFlat ='));
+  const body = mount();
+  const walk = body.slice(body.indexOf('export function questFlatTargets(list) {'), body.indexOf('\n}\n', body.indexOf('export function questFlatTargets(list) {')));
   assert.match(walk, /const isPerson = s\.behaviour\?\.targetResource\?\.isPerson === true;/);
   assert.match(walk, /distance: isPerson \? STATIC_NPC_ACTIVATION_DISTANCE : DEFAULT_ACTIVATION_DISTANCE,/);
   // an unfilled, inactive or destroyed stand is not a target

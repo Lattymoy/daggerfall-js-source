@@ -91,7 +91,7 @@ test('A3b: one pistol of a pair unequipped mid-reload - the one left keeps ITS r
   assert.ok(pw._attack('StrikeDown')); assert.equal(pw.strike.hand, 'L'); runUntilIdle(pw);
   const leftLoaded = pw.handReloadUntil('L');
   pw.updateHands(null, L); pw.applyWeapon();
-  assert.equal(pw.toggleHand({ bowSwitching: false }), 'Using weapon in left hand.');
+  assert.equal(pw.usingRightHand, false, 'PIN MOVED (HAND-FOLLOWS): the lone left in use without H');
   assert.equal(pw.gunPair, false);
   pw.update(1 / 60);
   assert.ok(pw.machine.now < leftLoaded, 'still inside the left\'s reload');

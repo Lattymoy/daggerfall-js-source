@@ -57,6 +57,7 @@ import {
   homeMapIdOk, homeBuildingKeyOk, homeRegionOk, homePriceOk, homeEntryOk, homeSaleRefund, homeLookOf, homeLayoutOk, homeLayoutsMatch,
   homeInArenaCell, RENT_ANCHOR_MOVED,   // ARENA4b: the arena's cell, and a tenancy's point the move carries
   homeDeedOf,   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: the deed a record holds to a building, as the door reads it
+  homeGroundOk, homeGroundKept,   // DECOR-ROOMY: the ground a claim names, held to its price
 } from '../../src/net/homeLaw.js';
 import { PATRON_HOUR_S } from '../../src/net/patronLaw.js';   // AUDIT LW-II P7: a door opened marks its trader's patrons' hours
 import { reckonPatrons } from './market.js';   // AUDIT LW-II-2 S4: a door leaving public reckons its town first
@@ -91,11 +92,11 @@ const realmSaleOf = (row) => (Number(row.paid) > 0 ? { refund: homeSaleRefund(Nu
 // guild's hall is written with the same SQL)
 // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: the cap counts the homes a character BOUGHT - a deed held for it (holdDeed) is
 // Daggerfall's gift, bounded by the bank's own law (three a region, HOUSES-3), and costs none of a region's three
-const claimStatement = (db, player, { mapId, buildingKey, region, character, price, layout = null }, nowS, paid = 0) => db.prepare(`INSERT OR IGNORE INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at, paid, layout)
-    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${TOWN_LAYOUT_SQL}
+const claimStatement = (db, player, { mapId, buildingKey, region, character, price, layout = null, ground = null }, nowS, paid = 0) => db.prepare(`INSERT OR IGNORE INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at, paid, layout, ground)
+    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${TOWN_LAYOUT_SQL}, ?
     WHERE (SELECT COUNT(*) FROM homes WHERE player = ? AND char_id = ? AND region = ? AND deed = 0) < ?
       AND NOT EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ? AND NOT (${LAYOUT_MATCH_SQL}))`)
-  .bind(mapId, buildingKey, player.id, character, displayName(player), region, HOME_ENTRY_DEFAULT, price, nowS, paid, mapId, mapId, layout, player.id, character, region, HOME_CAP, mapId, ...layoutMatchBinds(layout));
+  .bind(mapId, buildingKey, player.id, character, displayName(player), region, HOME_ENTRY_DEFAULT, price, nowS, paid, mapId, mapId, layout, ground, player.id, character, region, HOME_CAP, mapId, ...layoutMatchBinds(layout));
 
 /** ACCOUNT-HOMES (2026-10-06): whether a home's row is the caller's account's own, for `character` to act on - any home
  *  of the account, whichever of its characters bought it; a deed the realm gave, its knight's alone; never a guild's hall
@@ -148,7 +149,7 @@ async function realmClaim(ctx, player, at, claim) {
  * @param {{mapId?: unknown, buildingKey?: unknown, region?: unknown, character?: unknown, price?: unknown, realm?: unknown}} claim
  */
 export async function claimHome(ctx, player, body = {}) {
-  const { mapId, buildingKey, region, character, price, realm = null, layout = null } = body ?? {};
+  const { mapId, buildingKey, region, character, price, realm = null, layout = null, ground = null, townBlocks = null } = body ?? {};
   const { db, nowS } = ctx;
   if (accountKind(player) !== 'linked') return { error: 'homes-need-account' };
   if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey) || !homeRegionOk(region) || !Number.isSafeInteger(price) || !(price > 0)) return { error: 'bad-home' };
@@ -181,7 +182,9 @@ export async function claimHome(ctx, player, body = {}) {
   const witnessed = await db.prepare('SELECT region FROM town_econ_towns WHERE map = ?').bind(mapId).first();
   if (witnessed && Number(witnessed.region) !== region) return { error: 'bad-home' };
   if (await overRate({ db, nowS }, `home:${player.id}`, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S)) return { error: 'home-rate' };
-  return realmClaim(ctx, player, side.at, { mapId, buildingKey, region, character, price, layout: layout ?? null });   // a realm character's side is always its record
+  // DECOR-ROOMY: the ground its price was set from, where the claim names one that agrees (an older build names none)
+  const kept = homeGroundOk(ground, townBlocks, price) ? homeGroundKept(ground) : null;
+  return realmClaim(ctx, player, side.at, { mapId, buildingKey, region, character, price, layout: layout ?? null, ground: kept });   // a realm character's side is always its record
 }
 
 // ═══ FIELD BUGS 2026-10-04d KNIGHT-HOUSE - A DEED THE REALM GAVE, HELD ═══════════════════════════════════════════════

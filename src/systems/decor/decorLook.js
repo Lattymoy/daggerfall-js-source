@@ -13,6 +13,8 @@ export const DECOR_USE_MODES = Object.freeze(['private', 'friends', 'party', 'gu
 /** The row's word, the door's shape: "Who may use: Me". */
 export const DECOR_USE_WORDS = Object.freeze({ private: 'Me', friends: 'Friends', party: 'Party', guild: 'Guild' });
 export const decorUseLabel = (mode) => t('decor.look.use', 'Who may use: {who}', { who: DECOR_USE_WORDS[mode] ?? DECOR_USE_WORDS.private });
+/** REST-GUEST: the bar's word for who may rest in the home - its owner, and whoever they name: "Who may rest: Friends". */
+export const decorRestLabel = (mode) => t('decor.look.rest', 'Who may rest: {who}', { who: DECOR_USE_WORDS[mode] ?? DECOR_USE_WORDS.private });
 export const decorUseNext = (mode) => DECOR_USE_MODES[(Math.max(0, DECOR_USE_MODES.indexOf(mode)) + 1) % DECOR_USE_MODES.length];
 /** A hall chest is the guild's. A press moves the lowest rank that may open it, and every higher rank may too. */
 export const HALL_USE_RANKS = Object.freeze([3, 2, 1, 0]);

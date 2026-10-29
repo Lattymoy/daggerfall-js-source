@@ -1,0 +1,37 @@
+[
+  {
+    "name": "HANDFOLLOWS-never",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    if (changed && !restored) this.followHeldHand();\n",
+    "new": "",
+    "tests": ["test/combat/handfollows.test.js"]
+  },
+  {
+    "name": "HANDFOLLOWS-every-frame-unchanged",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    if (changed && !restored) this.followHeldHand();\n",
+    "new": "    if (!restored) this.followHeldHand();\n",
+    "tests": ["test/combat/handfollows.test.js"]
+  },
+  {
+    "name": "HANDFOLLOWS-restore-ignored",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    if (changed && !restored) this.followHeldHand();\n",
+    "new": "    if (changed) this.followHeldHand();\n",
+    "tests": ["test/combat/handfollows.test.js"]
+  },
+  {
+    "name": "HANDFOLLOWS-restore-kept-forever",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    this.handRestored = false;\n    this.currentRightHandWeapon = rightHandItem ?? null;",
+    "new": "    this.currentRightHandWeapon = rightHandItem ?? null;",
+    "tests": ["test/combat/handfollows.test.js"]
+  },
+  {
+    "name": "HANDFOLLOWS-pose-unmarked",
+    "file": "src/combat/playerWeapon.js",
+    "old": "w.usingRightHand = !!pose.usingRightHand; w.handRestored = true; }",
+    "new": "w.usingRightHand = !!pose.usingRightHand; }",
+    "tests": ["test/combat/handfollows.test.js"]
+  }
+]

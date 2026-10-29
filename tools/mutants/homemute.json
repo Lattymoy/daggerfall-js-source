@@ -1,0 +1,101 @@
+[
+  {
+    "name": "HOMEMUTE-own-hidden",
+    "file": "src/systems/online/homeMute.js",
+    "old": "export const homeMutable = (home) => !!home && !home.own && home.mine !== true && home.deed !== true",
+    "new": "export const homeMutable = (home) => !!home && home.deed !== true",
+    "tests": [
+      "test/systems/online/homemute.test.js"
+    ]
+  },
+  {
+    "name": "HOMEMUTE-owner-unkeyed",
+    "file": "src/systems/online/homeMute.js",
+    "old": "export const homeMuteKey = (mapId, home) => `${mapId}:${home?.buildingKey}:${home?.owner ?? ''}`;",
+    "new": "export const homeMuteKey = (mapId, home) => `${mapId}:${home?.buildingKey}`;",
+    "tests": [
+      "test/systems/online/homemute.test.js"
+    ]
+  },
+  {
+    "name": "HOMEMUTE-unkept",
+    "file": "src/systems/online/homeMute.js",
+    "old": "else all.splice(at, 1);\n  keep();",
+    "new": "else all.splice(at, 1);",
+    "tests": [
+      "test/systems/online/homemute.test.js"
+    ]
+  },
+  {
+    "name": "HOMEMUTE-uncapped",
+    "file": "src/systems/online/homeMute.js",
+    "old": "  if (on) { all.push(k); if (all.length > HOME_MUTE_MAX) all.splice(0, all.length - HOME_MUTE_MAX); }",
+    "new": "  if (on) { all.push(k); }",
+    "tests": [
+      "test/systems/online/homemute.test.js"
+    ]
+  },
+  {
+    "name": "HOMEMUTE-row-stuck",
+    "file": "src/systems/online/homeMute.js",
+    "old": "  ? [homeMuted(mapId, home) ? { id: HOME_MUTE_VERB.show, label: HOME_MUTE_SHOW } : { id: HOME_MUTE_VERB.hide, label: HOME_MUTE_HIDE }]",
+    "new": "  ? [{ id: HOME_MUTE_VERB.hide, label: HOME_MUTE_HIDE }]",
+    "tests": [
+      "test/systems/online/homemute.test.js"
+    ]
+  },
+  {
+    "name": "HOMEMUTE-no-bump",
+    "file": "src/systems/online/homeMute.js",
+    "old": "  if (setHomeMuted(mapId, home, on)) host?.onlineHomes?.bump?.();",
+    "new": "  setHomeMuted(mapId, home, on);",
+    "tests": [
+      "test/systems/online/homemute.test.js"
+    ]
+  },
+  {
+    "name": "HOMEMUTE-verb-unread",
+    "file": "src/systems/online/homeMute.js",
+    "old": "  if (verb !== HOME_MUTE_VERB.hide && verb !== HOME_MUTE_VERB.show) return false;\n",
+    "new": "",
+    "tests": [
+      "test/systems/online/homemute.test.js"
+    ]
+  },
+  {
+    "name": "HOMEMUTE-yard-unread",
+    "file": "src/scenes/homeYards.js",
+    "old": "        const pieces = homeDecorShownHere(home, p.homeTown) ? cells.piecesOf(p.homeTown, bk) : null;",
+    "new": "        const pieces = cells.piecesOf(p.homeTown, bk);",
+    "tests": [
+      "test/systems/online/homemute.test.js"
+    ]
+  },
+  {
+    "name": "HOMEMUTE-paint-unread",
+    "file": "src/scenes/world.js",
+    "old": ": homeDecorShownHere(row, mapId) ? row?.look ?? null : null);",
+    "new": ": row?.look ?? null);",
+    "tests": [
+      "test/systems/online/homemute.test.js"
+    ]
+  },
+  {
+    "name": "HOMEMUTE-room-unread",
+    "file": "src/scenes/worldModes.js",
+    "old": "        const shown = homeDecorShownHere(interiorHome, homeTownOf(b));",
+    "new": "        const shown = true;",
+    "tests": [
+      "test/systems/online/homemute.test.js"
+    ]
+  },
+  {
+    "name": "HOMEMUTE-door-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "            if (pressHomeMute(verb, homeTownOf(bd), home, host, townTalk)) return true;",
+    "new": "",
+    "tests": [
+      "test/systems/online/homemute.test.js"
+    ]
+  }
+]

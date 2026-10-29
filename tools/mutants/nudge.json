@@ -1,0 +1,65 @@
+[
+  {
+    "name": "NUDGE-axis-unsnapped",
+    "file": "src/systems/decor/decorPlacer.js",
+    "old": "  return Math.abs(v[0]) >= Math.abs(v[1]) ? [Math.sign(v[0]) * sign * step, 0] : [0, Math.sign(v[1]) * sign * step];",
+    "new": "  return [v[0] * sign * step, v[1] * sign * step];",
+    "tests": ["test/systems/decor/nudge.test.js"]
+  },
+  {
+    "name": "NUDGE-sides-swapped",
+    "file": "src/systems/decor/decorPlacer.js",
+    "old": "  const sign = dir === 'left' || dir === 'back' ? -1 : 1;",
+    "new": "  const sign = dir === 'right' || dir === 'back' ? -1 : 1;",
+    "tests": ["test/systems/decor/nudge.test.js"]
+  },
+  {
+    "name": "NUDGE-unbounded",
+    "file": "src/systems/decor/decorPlacer.js",
+    "old": "      const at = (v, d) => round(Math.min(DECOR_NUDGE_MAX, Math.max(-DECOR_NUDGE_MAX, v + (Number.isFinite(d) ? d : 0))), 3);",
+    "new": "      const at = (v, d) => round(v + (Number.isFinite(d) ? d : 0), 3);",
+    "tests": ["test/systems/decor/nudge.test.js"]
+  },
+  {
+    "name": "NUDGE-unapplied",
+    "file": "src/systems/decor/decorPlacer.js",
+    "old": "      x = round(x + s.nudge[0], 3);   // NUDGE: the owner's push, after the wall's clearance - so it may clip\n      z = round(z + s.nudge[1], 3);\n",
+    "new": "",
+    "tests": ["test/systems/decor/nudge.test.js"]
+  },
+  {
+    "name": "NUDGE-before-the-wall",
+    "file": "src/systems/decor/decorPlacer.js",
+    "old": "        const out = decorWallOffset(reach(n), { door: entry.kind === 'door' });",
+    "new": "        const out = decorWallOffset(reach(n), { door: entry.kind === 'door' }) - (s.nudge[0] * n[0] + s.nudge[1] * n[1]);",
+    "tests": ["test/systems/decor/nudge.test.js"]
+  },
+  {
+    "name": "NUDGE-mount-off-the-wall",
+    "file": "src/systems/decor/decorPlacer.js",
+    "old": " + push[i] - n[i] * off);",
+    "new": " + push[i]);",
+    "tests": ["test/systems/decor/nudge.test.js"]
+  },
+  {
+    "name": "NUDGE-keys-unread",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    else if (NUDGE_WAYS[free]) nudgePiece(NUDGE_WAYS[free], e.shiftKey);\n",
+    "new": "",
+    "tests": ["test/systems/decor/nudge.test.js"]
+  },
+  {
+    "name": "NUDGE-fine-unread",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    else if (NUDGE_WAYS[free]) nudgePiece(NUDGE_WAYS[free], e.shiftKey);",
+    "new": "    else if (NUDGE_WAYS[free]) nudgePiece(NUDGE_WAYS[free]);",
+    "tests": ["test/systems/decor/nudge.test.js"]
+  },
+  {
+    "name": "NUDGE-bar-unwired",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "nudgeLeft: () => nudgePiece('left'), ",
+    "new": "",
+    "tests": ["test/systems/decor/nudge.test.js"]
+  }
+]

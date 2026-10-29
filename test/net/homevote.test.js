@@ -313,28 +313,28 @@ test('DECOR-BATCH (2026-10-16, the owner\'s screenshots of every account deploy 
   };
   const bob = aged(await svc.registered('Bob'));
   let { r, shape } = await room(bob);
-  assert.deepEqual(shape, ['batch 4'], 'shown: the room in one request - its pieces, whether it is shown, what was taken out, its revision');
+  assert.deepEqual(shape, ['batch 5'], 'shown: the room in one request - its pieces, whether it is shown, what was taken out, its revision');   // PIN MOVED (DECOR-ROOMY, FIELD BUGS 2026-10-29b): and its ground, for its cap - in the same batch
   assert.equal(r.pieces.length, 3);
   assert.deepEqual(r.hidden, ['m0:41000']);
   await shun();
   ({ r, shape } = await room(bob));
-  assert.deepEqual(shape, ['batch 4', 'batch 2'], 'shunned: and its two traders\' stock in one more - never a trip each');
+  assert.deepEqual(shape, ['batch 5', 'batch 2'], 'shunned: and its two traders\' stock in one more - never a trip each');
   assert.deepEqual(r.pieces.map((p) => p.id), ['trader'], 'the shop as it was: the trader with goods on sale');
   assert.deepEqual(r.hidden, []);
   ({ r, shape } = await room(owner));
-  assert.deepEqual(shape, ['batch 4'], 'its owner: one request');
+  assert.deepEqual(shape, ['batch 5'], 'its owner: one request');
   assert.deepEqual(r.pieces.map((p) => p.id).sort(), ['chair', 'statue', 'trader']);
   assert.deepEqual(r.hidden, ['m0:41000']);
 });
 
 test('HOME-VOTE the hosts by source: the interior stands a shunned home bare but its trader, nothing taken out; the world paints a shunned home in its town\'s own look and keeps it in the merge; the door lists the votes unlit where they are all it lists and still says "Locked"; a vote row presses the vote it says, before the lock, and a home gone is said so (AUDIT B3, B5); the Info box asks only where no plaque is drawn (B1), says the lock, and carries the door\'s rows; presses keep their order (mutants: the room stood, the look painted, the rows lit, the vote inverted, the press after the lock, the box over a drawn plaque, the order dropped, the way in dropped)', () => {
   const m = src('src/scenes/worldModes.js');
-  assert.match(m, /const shown = homeDecorShown\(interiorHome\);\n\s*const pieces = r\.data\.pieces\.map\(decorPieceOf\)\.filter\(\(p\) => p && \(shown \|\| decorStaysShunned\(p\)\)\);/);
-  assert.match(m, /if \(!shown\) \{ interiorCtx\?\.base\?\.setHidden\(\[\]\); return; \}   \/\/ HOME-VOTE: the room as Daggerfall furnished it\n\s*interiorCtx\?\.base\?\.setHidden\(Array\.isArray\(r\.data\.hidden\)/);
-  assert.match(m, /const rows = \[\.\.\.\(homeVisitorRows\(home, homeDoorFor\(bd, home\)\) \?\? \[\]\), \.\.\.\(worldPlaqueOn\(\) \? homeVoteRows\(home\) : \[\]\)\];/);
+  assert.match(m, /const shown = homeDecorShownHere\(interiorHome, homeTownOf\(b\)\);[^\n]*\n\s*const pieces = r\.data\.pieces\.map\(decorPieceOf\)\.filter\(\(p\) => p && \(shown \|\| decorStaysShunned\(p\)\)\);/);
+  assert.match(m, /if \(!shown\) \{ interiorCtx\?\.base\?\.setHidden\(\[\]\); return; \}   \/\/ HOME-VOTE: the room as Daggerfall furnished it\n\s*standRoomHidden\(interiorCtx\?\.base, Array\.isArray\(r\.data\.hidden\)/);   // PIN MOVED (HOME-MUTE, DOOR-KEPT - FIELD BUGS 2026-10-29b): nor for me, a home I hid; the room's doors stood with its list
+  assert.match(m, /const rows = \[\.\.\.\(homeVisitorRows\(home, homeDoorFor\(bd, home\)\) \?\? \[\]\), \.\.\.\(worldPlaqueOn\(\) \? \[\.\.\.homeVoteRows\(home\), \.\.\.homeMuteRows\(home, homeTownOf\(bd\)\)\] : \[\]\)\];/);   // PIN MOVED (HOME-MUTE): and the row that hides it for me
   assert.match(m, /_doorText = homeVoteDoorText\(_doorText, bd, home, verbs\);[^\n]*\n\s*if \(verbs\) _doorText = \{ \.\.\._doorText, actions: verbs \};/);
   assert.match(m, /const voteOnly = isHomeVoteVerb\(verbs\?\.\[0\]\?\.id\);/, 'AUDIT D1: unlit when the first row is a vote\'s');
-  assert.match(m, /const lines = \[\.\.\.\(voteOnly && homeDoorFor\(bd, home\) === 'locked' \? \['Locked'\] : \[\]\), \.\.\.homeVoteLines\(home\)\];/);
+  assert.match(m, /const lines = \[\.\.\.\(voteOnly && homeDoorFor\(bd, home\) === 'locked' \? \['Locked'\] : \[\]\), \.\.\.homeVoteLines\(home\), \.\.\.homeMuteLines\(home, homeTownOf\(bd\)\)\];/);   // PIN MOVED (HOME-MUTE, FIELD BUGS 2026-10-29b): and its line where I hid it
   assert.match(m, /return voteOnly \? \{ \.\.\.said, actionsUnlit: true \} : said;/);
   assert.match(m, /if \(isHomeVoteVerb\(verb\)\) \{ if \(homeVotePressable\(home, homeVoteOfVerb\(verb\)\)\) pressHomeVote\(bd, homeVoteOfVerb\(verb\)\); else if \(!home\) townTalk\?\.say\?\.\(HOME_VOTE_GONE_LINE\); return true; \}/);   // PIN MOVED (AUDIT HOME-VOTE II A3): a take-back where I may vote no more
   const press = m.indexOf('if (isHomeVoteVerb(verb)) {');
@@ -348,8 +348,8 @@ test('HOME-VOTE the hosts by source: the interior stands a shunned home bare but
   assert.match(m, /townTalk\?\.say\?\.\(r\.ok \? homeVotedLine\(r\.vote, r\.score\) : homeVoteRefusalLine\(r\.error\) \?\? accountRefusalText\(r\.error\)\);/, 'AUDIT D6: the vote\'s own words first');
   assert.match(src('src/systems/quickLoot.js'), /export const plaqueListing = \(\) => !!\(_actionIds && _actionIds\.length && _sel\);/);
   const w = src('src/scenes/world.js');
-  assert.match(w, /: homeDecorShown\(row\) \? row\?\.look \?\? null : null\);/);
-  assert.match(w, /\(\(row\?\.look && homeDecorShown\(row\)\) \|\| row\?\.mine \|\| row\?\.keeper\)\) merged = true;/);
+  assert.match(w, /: homeDecorShownHere\(row, mapId\) \? row\?\.look \?\? null : null\);/);   // PIN MOVED (HOME-MUTE, FIELD BUGS 2026-10-29b): nor for me, a home I hid
+  assert.match(w, /\(\(row\?\.look && homeDecorShownHere\(row, p\.homeTown\)\) \|\| row\?\.mine \|\| row\?\.keeper\)\) merged = true;/);
 });
 
 test('HOME-VOTE AUDIT II the service: a vote taken back past the hour\'s bar is never refused (A2); a vote names the owner its door read and lands only on that owner\'s house - one sold and bought again takes none, a cast vote naming nobody is no vote (A4); a write that found nothing to vote on is answered as it found it, never re-asked into an `ok` (A5); a knight\'s deed house is none to vote on (B5); a restore puts a home back without its score (A6) (mutants: the bar on a take-back, the owner unread, the follow-up re-asking, the deed votable, the score restored)', async (t) => {

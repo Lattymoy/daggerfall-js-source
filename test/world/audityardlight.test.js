@@ -9,7 +9,8 @@
 // three axes. The rig is world.js's own night composition over a real Renderer (test/yardLightRig.mjs).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { yardLampOf, yardLampSlot, yardLampRows, YARD_LAMP, YARD_LAMPS_MAX, YARD_LAMP_RAISE } from '../../src/scenes/homeYards.js';
+import { yardLampOf, yardLampSlot, yardLampRows, YARD_LAMP, YARD_LAMPS_MAX } from '../../src/scenes/homeYards.js';
+import { DECOR_LAMP_FLAME } from '../../src/scenes/decor/decorRoom.js';   // PIN MOVED (LAMP-FLAME)
 import { collectCityLights, CITY_LIGHT_RANGE } from '../../src/world/city/cityLights.js';
 import { collectBlockFlats, BLOCK_FLATS_OFFSET_Y } from '../../src/world/rmbFlats.js';
 import { GLOBAL_SCALE } from '../../src/world/meshReader.js';
@@ -74,9 +75,9 @@ test('AUDIT YARD-LIGHT L4: the yards\' lamps become the night\'s scene lights th
   assert.deepEqual([second.length, second[1] === first[0], second[2] === first[1], rows.length], [3, true, true, 2], 'the same rows, the boat\'s light kept ahead of them');
 });
 
-test('AUDIT YARD-LIGHT L5: a yard\'s lamp hangs where the town hangs its own over a picture - the real collectors: the town\'s light stands YARD_LAMP_RAISE above its billboard\'s top (blockFlatsOffsetY sinks the flat and not its light), and the yard\'s does the same over its own (mutant: AUDITYL-raise-dropped)', () => {
+test('AUDIT YARD-LIGHT L5, PIN MOVED (LAMP-FLAME): the town\'s light stands 0.15 m above its billboard\'s top (blockFlatsOffsetY sinks the flat and not its light) - a yard\'s lamp hangs at its own lamp instead, as a room hangs a placed one (mutant: AUDITYL-raise-dropped)', () => {
   assert.equal(BLOCK_FLATS_OFFSET_Y, -6);
-  assert.equal(YARD_LAMP_RAISE, 6 * GLOBAL_SCALE);
+  const raise = 6 * GLOBAL_SCALE;
   const block = { rmbBlock: {
     miscFlatObjectRecords: [{ textureArchive: 210, textureRecord: 29, xPos: 100, yPos: -40, zPos: 200, factionID: 0, flags: 0, position: 0 }],
     misc3dObjectRecords: [], subRecords: [],
@@ -85,13 +86,13 @@ test('AUDIT YARD-LIGHT L5: a yard\'s lamp hangs where the town hangs its own ove
   const size = sized(24, 112);
   const [light] = collectCityLights(block, () => size);
   const flat = collectBlockFlats(block, 504).find((f) => f.archive === 210);
-  assert.ok(Math.abs(light.y - (flat.y + size.h) - YARD_LAMP_RAISE) < 1e-9, 'the town: its light over its billboard\'s top');
-  assert.ok(Math.abs(yardLampOf({ id: 'p', flat: [210, 29], scale: 1 }, size).lift - (size.h + YARD_LAMP_RAISE)) < 1e-9, 'the yard: the same over its own');
+  assert.ok(Math.abs(light.y - (flat.y + size.h) - raise) < 1e-9, 'the town: its light over its billboard\'s top');
+  assert.ok(Math.abs(yardLampOf({ id: 'p', flat: [210, 29], scale: 1 }, size).lift - size.h * DECOR_LAMP_FLAME[29]) < 1e-9, 'the yard: at its lamp');
 });
 
 test('AUDIT YARD-LIGHT L6: a scaled lamp is the lamp scaled - its light\'s height over its foot and its reach alike, so it lights its ground as the town\'s lamp lights its own at every scale; the world host takes the town\'s flicker at the lamp\'s reach (mutants: AUDITYL-reach-unscaled, AUDITYL-raise-unscaled, AUDITYL-reach-unread)', () => {
   const foot = (k) => {
-    const law = yardLampOf({ id: 'p', flat: [210, 29], scale: k }, sized(24, 112, k));
+    const law = yardLampOf({ id: 'p', flat: [210, 20], scale: k }, sized(24, 112, k));   // PIN MOVED (LAMP-FLAME): a torch whose light DFU's offset hangs, scaled with it
     return { range: law.light.range, lift: law.lift, att: (1 - law.lift / law.light.range) ** 2 };
   };
   const one = foot(1);
@@ -115,7 +116,7 @@ test('AUDIT YARD-LIGHT (the lenses\' gaps): many lamps in many yards - each yard
     sizes: { 210: [24, 112] },
   });
   await w.run();
-  const y = r6(sized(24, 112).h + YARD_LAMP_RAISE);
+  const y = r6(sized(24, 112).h * DECOR_LAMP_FLAME[29]);   // PIN MOVED (LAMP-FLAME)
   const lamps = w.yards.lamps();
   assert.deepEqual(lamps.map((l) => [l.decor, ...at(l)]), [['a1', 16, y, 12], ['a2', 4, y, 12], ['b1', 45, y, 9], ['b2', 35, y, 13]], 'both yards, both lamps each, each in its own frame');
   w.shift[0] = -100; w.shift[1] = 7; w.shift[2] = 250;

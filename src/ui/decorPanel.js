@@ -1462,6 +1462,8 @@ export function createDecorPanel({
 export const DECOR_KEYS_WORD = 'Keys';
 /** MENU-ORDER: each of the bar's presses its picture. */
 const DECOR_BAR_ICONS = Object.freeze({ place: 'place', turnLeft: 'turn-left', turnRight: 'turn-right', raise: 'up', lower: 'down',
+  nudgeLeft: 'nudge-left', nudgeRight: 'nudge-right', nudgeForward: 'nudge-fwd', nudgeBack: 'nudge-back',   // NUDGE
+  rest: 'bed',   // REST-GUEST
   smaller: 'smaller', bigger: 'bigger', grid: 'grid', preview: 'decorate', catalog: 'list', back: 'back' });
 /** MENU-ORDER: THE BAR'S LEGEND - each key's name and what presses it, a pair a line (a finger's two: the stick and
  *  Fly, and the look). DECOR-FIGURE: `sized` false tells no Size key. */
@@ -1469,6 +1471,7 @@ export function decorBarKeys(touch, sized = true) {
   if (touch) return [['Fly', t('decor.bar.keys.flyTouch', 'the stick, and hold Fly up or Fly down')], ['Look', t('decor.bar.keys.lookTouch', 'drag: the piece stands where you look')]];
   return [['Fly', t('decor.bar.keys.fly', 'walk keys, Jump up, Crouch down, Run faster')], ['Look', t('decor.bar.keys.look', 'mouse')],
     ['Turn', t('decor.bar.keys.turn', 'wheel or Turn Left/Right (Shift for fine turns; turn a picture half round to flip it)')], ['Raise/lower', t('decor.bar.keys.raise', 'Float Up/Down')],
+    ['Nudge', t('decor.bar.keys.nudge', 'Numpad 4, 6, 8 and 2 (Shift for fine steps)')],   // NUDGE
     ...(sized ? [['Size', '- and =']] : []), ['Grid', '/'], ['Place', t('decor.bar.keys.place', 'click or Interact')], ['Back', t('decor.bar.keys.back', 'right click or Escape')]];
 }
 
@@ -1476,7 +1479,8 @@ export function decorBarKeys(touch, sized = true) {
  * THE BAR, while a piece is being placed. `show(info)` / `hide()`; `info` is { name, price, why, snap, sized } (DECOR-FIGURE:
  * `sized` false hides Smaller and Bigger - a figure stands at its own size) and, for a move
  * (DECOR1e), `priceText` - free, or what a resize costs or gives back. The buttons are
- * the keys' twins: `on` holds place, back, turnLeft, turnRight, raise, lower, smaller, bigger, grid - and, on a touch
+ * the keys' twins: `on` holds place, back, turnLeft, turnRight, raise, lower, nudgeLeft, nudgeRight, nudgeForward,
+ * nudgeBack, smaller, bigger, grid - and, on a touch
  * screen (DECOR1e), `fly(dir)`: Fly up (1) or Fly down (-1) held, 0 let go. A touch screen's bar stands at the top,
  * clear of the stick and the layer's buttons along the bottom.
  * @param {{ on: Record<string, (dir?: number) => void>, touch?: boolean, doc?: any }} opts
@@ -1511,6 +1515,9 @@ export function createDecorBar({ on, touch = false, doc = document }) {
   const preview = b('Preview', 'preview');
   const catalog = b('Catalogue', 'catalog');
   catalog.hidden = true;
+  // REST-GUEST: who may rest in the owner's home, while browsing it - a press moves it on
+  const rest = b('', 'rest');
+  rest.hidden = true;
   const confirm = b('Confirm', 'confirm', 'dfdecor-btn');
   const discard = b('Discard', 'discard');
   confirm.hidden = true;
@@ -1535,8 +1542,10 @@ export function createDecorBar({ on, touch = false, doc = document }) {
   const place = b('Place', 'place', 'dfdecor-btn');
   const turnLeft = b('Turn left', 'turnLeft'), turnRight = b('Turn right', 'turnRight');
   const raise = b('Raise', 'raise'), lower = b('Lower', 'lower');
-  const flightBtns = [place, turnLeft, turnRight, raise, lower, smaller, bigger, grid, preview];
-  btns.append(place, sep(), turnLeft, turnRight, sep(), raise, lower, sep(), smaller, bigger, grid, preview);
+  // NUDGE: the level push, as the eye sees it - a step left, right, away and back
+  const nudges = [b(t('decor.bar.nudgeLeft', 'Nudge left'), 'nudgeLeft'), b(t('decor.bar.nudgeRight', 'Nudge right'), 'nudgeRight'), b(t('decor.bar.nudgeAway', 'Nudge away'), 'nudgeForward'), b(t('decor.bar.nudgeBack', 'Nudge back'), 'nudgeBack')];   // L10N4
+  const flightBtns = [place, turnLeft, turnRight, raise, lower, ...nudges, smaller, bigger, grid, preview];
+  btns.append(place, sep(), turnLeft, turnRight, sep(), raise, lower, sep(), ...nudges, sep(), smaller, bigger, grid, preview);
   if (touch) btns.append(hold('Fly up', 1), hold('Fly down', -1));
   // MENU-ORDER: the keys' legend folded behind one press - the pictured buttons are the bar; the words wait to be asked
   const keysChip = el('button', 'dfdecor-chip dfdecor-keys-toggle', DECOR_KEYS_WORD);
@@ -1544,14 +1553,14 @@ export function createDecorBar({ on, touch = false, doc = document }) {
   keysChip.dataset.dficon = 'list';
   keysChip.setAttribute('aria-pressed', 'false');
   keysChip.addEventListener('click', () => { const on = root.dataset.keys !== '1'; root.dataset.keys = on ? '1' : '0'; keysChip.setAttribute('aria-pressed', on ? 'true' : 'false'); });
-  btns.append(sep(), catalog, confirm, discard, b('Back', 'back'), keysChip);
+  btns.append(sep(), catalog, rest, confirm, discard, b('Back', 'back'), keysChip);
   root.append(what, tally, why, btns, keys);   // MENU-ORDER: the presses first, the legend under them when asked
   swallowPresses(root);
   doc.body?.append(root);
   let alive = true;
   return {
     root,
-    show({ name, price, priceText = null, why: whyText = null, snap = false, sized = true, preview: frozen = false, browse = false, draft = false, count = null, cap = null }) {
+    show({ name, price, priceText = null, why: whyText = null, snap = false, sized = true, preview: frozen = false, browse = false, draft = false, count = null, cap = null, rest: restWord = null }) {
       if (!alive) return;
       const tail = priceText != null ? priceText : decorPriceText(price);
       const w = tail ? `${name} - ${tail}` : String(name ?? '');
@@ -1561,10 +1570,12 @@ export function createDecorBar({ on, touch = false, doc = document }) {
       // DECOR-FIGURE: one of Daggerfall's people stands at its own size - no Smaller, no Bigger, no Size key told
       if (!browse && !!smaller.hidden === sized) { smaller.hidden = !sized; bigger.hidden = !sized; drawKeys(sized); }
       catalog.hidden = !browse;
+      rest.hidden = !browse || !restWord;   // REST-GUEST: the owner's own home alone
+      if (restWord && rest.textContent !== restWord) rest.textContent = restWord;
       confirm.hidden = !draft;
       discard.hidden = !draft;
       for (const n of flightBtns) n.hidden = browse ? true : n.hidden;
-      if (!browse) for (const n of [place, turnLeft, turnRight, raise, lower, grid, preview]) n.hidden = false;
+      if (!browse) for (const n of [place, turnLeft, turnRight, raise, lower, ...nudges, grid, preview]) n.hidden = false;
       for (const s of seps) s.hidden = !!browse;
       const y = whyText ?? '';
       if (why.textContent !== y) why.textContent = y;

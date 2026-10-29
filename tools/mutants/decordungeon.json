@@ -94,11 +94,12 @@
   {
     "name": "DECORDUNGEON-kind-unset",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    if (c.from === 'dungeon' && (kind === 'furniture' || kind === 'decor')) kind = 'dungeon';\n",
+    "old": "    else if (c.from === 'dungeon' && plain) kind = 'dungeon';\n",
     "new": "",
     "tests": [
       "test/systems/decor/decordungeon.test.js"
-    ]
+    ],
+    "note": "DECOR-KINDS (FIELD BUGS 2026-10-29b, PIN MOVED): re-aimed by content - a piece is filed by what it is first."
   },
   {
     "name": "DECORDUNGEON-numbered-mixed",

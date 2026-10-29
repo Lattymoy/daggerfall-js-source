@@ -371,3 +371,41 @@ test('DECOR-BATCH a standing poll is the revision row', async () => {
   assert.equal(empty.rev, 0);
   assert.equal(empty.pieces, undefined);
 });
+
+test('REST-GUEST (FIELD BUGS 2026-10-29b, the housing thread\'s item 8: "Allow friends and guild members to rest in your house"): the home\'s own row says who besides its owner may rest - friends named, the party, the guild - and the grants answer it to the guest; never on a piece\'s id, never a hall\'s; the owner always may; a sale clears it (mutants: RESTGUEST-kind-refused, RESTGUEST-any-id, RESTGUEST-grant-unsaid, RESTGUEST-rest-a-station, RESTGUEST-hall-set)', async () => {
+  const { env, call, registered } = await stand();
+  const aldric = await registered('Aldric');
+  const mara = await registered('Mara');
+  const A = await seatRealm(env, aldric, 'Aldric', RICH('Aldric'));
+  const M = await seatRealm(env, mara, 'Mara', RICH('Mara'));
+  assert.equal((await call('POST', '/v1/homes/claim', home(A.id, A.at()), aldric)).status, 200);
+  const grants = async (who, secret) => (await call('POST', '/v1/homes/decor/use', { ...HOME, character: who, op: 'grants' }, secret)).body;
+  assert.equal((await grants(A.id, aldric)).rest, true, 'the owner always may');
+  assert.equal((await grants(M.id, mara)).rest, false, 'a stranger may not');
+  const set = (body) => call('POST', '/v1/homes/decor/use', { ...HOME, character: A.id, op: 'set', id: '_rest', kind: 'rest', ...body }, aldric);
+  const named = await set({ mode: 'chosen_friends', names: ['Mara'] });
+  assert.equal(named.status, 200, JSON.stringify(named.body));
+  assert.deepEqual(named.body.names, ['Mara']);
+  const g = await grants(M.id, mara);
+  assert.equal(g.rest, true, 'Mara, named, may rest');
+  assert.deepEqual([g.station, g.storage], [[], []], 'and nothing else of the home is hers');
+  assert.deepEqual((await grants(A.id, aldric)).use, [{ id: '_rest', mode: 'friends' }], 'the owner reads the row back');
+  assert.equal((await set({ mode: 'private', names: [] })).status, 200);
+  assert.equal((await grants(M.id, mara)).rest, false, 'and no longer');
+  assert.equal((await call('POST', '/v1/homes/decor/use', { ...HOME, character: A.id, op: 'set', id: 'p1', kind: 'rest', mode: 'guild' }, aldric)).body.error, 'bad-decor', 'rest is the home\'s row alone');
+  assert.equal((await call('POST', '/v1/homes/decor/use', { ...HOME, character: A.id, op: 'set', id: '_rest', kind: 'storage', mode: 'guild' }, aldric)).body.error, 'bad-decor', 'and its id is no piece\'s');
+  assert.equal((await call('POST', '/v1/homes/decor/use', { ...HOME, character: M.id, op: 'set', id: '_rest', kind: 'rest', mode: 'guild' }, mara)).body.error, 'no-home', 'a guest sets nothing');
+  // the guild
+  const owner = env.DB._raw.prepare('SELECT player FROM homes WHERE map_id = ?').get(HOME.mapId).player;
+  const mate = env.DB._raw.prepare('SELECT id FROM players WHERE handle_lc = ?').get('mara').id;
+  env.DB._raw.prepare(`INSERT INTO guilds (id, name, name_key, tag, ranks, treasury, founded_at) VALUES ('g1', 'The Hall', 'the hall', 'HALL', '[]', 0, 1)`).run();
+  env.DB._raw.prepare('INSERT INTO guild_members (player, char_id, guild_id, rank, name, joined_at) VALUES (?, ?, \'g1\', 0, \'Aldric\', 1)').run(owner, A.id);
+  env.DB._raw.prepare('INSERT INTO guild_members (player, char_id, guild_id, rank, name, joined_at) VALUES (?, ?, \'g1\', 1, \'Mara\', 1)').run(mate, M.id);
+  assert.equal((await set({ mode: 'guild', names: [] })).status, 200);
+  assert.equal((await grants(M.id, mara)).rest, true, 'a guildmate may');
+  // a hall's members rest there already: its row is never set
+  env.DB._raw.prepare("UPDATE homes SET guild_id = 'g1' WHERE map_id = ?").run(HOME.mapId);
+  assert.equal((await set({ mode: 'guild', names: [], rank: 1 })).body.error, 'bad-decor', 'never a hall\'s, whatever rank it names');
+  env.DB._raw.prepare('UPDATE homes SET guild_id = NULL WHERE map_id = ?').run(HOME.mapId);
+  assert.match(src('server-account/migrations/0194_decor_rest.sql'), /kind\s+TEXT NOT NULL CHECK \(kind IN \('storage', 'station', 'rest'\)\)/);
+});

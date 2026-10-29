@@ -111,11 +111,12 @@ test('DECOR-DUNGEON the collector: a dungeon block gives its furnishings - the t
 });
 
 test('DECOR-DUNGEON the catalogue: what stands in a dungeon and in no house is Dungeon furniture unless the game files it (a light stays a light, a prisoner a Vendor); a room\'s names never move for the dungeons read - theirs are numbered after; and every room offers them (mutants: DECORDUNGEON-kind-unset, DECORDUNGEON-numbered-mixed)', () => {
-  assert.equal(DECOR_KINDS.dungeon, 'Dungeon furniture');
+  assert.equal(DECOR_KINDS.dungeon, 'Dungeon pieces');   // PIN MOVED (DECOR-KINDS, FIELD BUGS 2026-10-29b): its furniture and statues are filed as what they are
   const room = rmb([41120], [[210, 99], [210, 98]], [], [[182, 5]]);
-  const cat = decorCatalogue(collectDecor([room, DUNGEON, rdb([[41121]], [['m', 0], ['f', 210, 50], ['f', 182, 1]])]));
+  const cat = decorCatalogue(collectDecor([room, DUNGEON, rdb([[41121], [74072, 'BCX']], [['m', 0], ['m', 1], ['f', 210, 50], ['f', 182, 1], ['f', 254, 3]])]));
   const by = Object.fromEntries(cat.map((e) => [e.key, e]));
-  assert.deepEqual(['m41123', 'm62324', 'f100.2', 'm41121'].map((k) => by[k].kind), ['dungeon', 'dungeon', 'dungeon', 'dungeon']);
+  assert.deepEqual(['m41123', 'm62324', 'f100.2', 'm41121'].map((k) => by[k].kind), ['furniture', 'statues', 'dungeon', 'furniture']);   // PIN MOVED (DECOR-KINDS): the throne is furniture, the statue a statue; the chains stay the dungeon's
+  assert.deepEqual(['m74072', 'f254.3'].map((k) => by[k].kind), ['dungeon', 'dungeon'], 'DECOR-KINDS: a coffin, and a picture nothing names, are the dungeon\'s still');
   assert.deepEqual(['f210.0', 'f182.3', 'm41120'].map((k) => by[k].kind), ['light', 'people', 'furniture'], 'filed as the game files it; the room\'s chair is the room\'s');
   assert.deepEqual([by['f210.0'].name, by['f210.0'].from], ['Bowl with fire', 'dungeon'], 'a light Daggerfall Unity names keeps its name');
   // the room's names, read alone and with the dungeons: the same - the dungeons' are numbered after them

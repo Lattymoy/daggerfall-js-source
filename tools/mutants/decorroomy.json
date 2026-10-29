@@ -1,0 +1,254 @@
+[
+  {
+    "name": "DECORROOMY-flat-cap",
+    "file": "src/net/decorLaw.js",
+    "old": "  return Math.min(DECOR_CAP_MAX, Math.max(DECOR_CAP, n));",
+    "new": "  return DECOR_CAP;",
+    "tests": [
+      "test/server/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-no-max",
+    "file": "src/net/decorLaw.js",
+    "old": "  return Math.min(DECOR_CAP_MAX, Math.max(DECOR_CAP, n));",
+    "new": "  return Math.max(DECOR_CAP, n);",
+    "tests": [
+      "test/server/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-no-step",
+    "file": "src/net/decorLaw.js",
+    "old": "Math.floor((DECOR_CAP * groundM2) / DECOR_CAP_GROUND_M2 / DECOR_CAP_STEP) * DECOR_CAP_STEP",
+    "new": "Math.floor((DECOR_CAP * groundM2) / DECOR_CAP_GROUND_M2)",
+    "tests": [
+      "test/server/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-price-unheld",
+    "file": "src/net/homeLaw.js",
+    "old": "&& homeOnlinePrice(ground, townBlocks) === price;",
+    "new": "&& price > 0;",
+    "tests": [
+      "test/server/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-ground-unbounded",
+    "file": "src/net/homeLaw.js",
+    "old": "ground > 0 && ground <= HOME_GROUND_MAX",
+    "new": "ground > 0",
+    "tests": [
+      "test/server/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-claim-unkept",
+    "file": "server-account/src/homes.js",
+    "old": "  const kept = homeGroundOk(ground, townBlocks, price) ? homeGroundKept(ground) : null;",
+    "new": "  const kept = null;",
+    "tests": [
+      "test/server/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-claim-unheld",
+    "file": "server-account/src/homes.js",
+    "old": "  const kept = homeGroundOk(ground, townBlocks, price) ? homeGroundKept(ground) : null;",
+    "new": "  const kept = typeof ground === 'number' ? homeGroundKept(ground) : null;",
+    "tests": [
+      "test/server/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-batch-flat",
+    "file": "server-account/src/decorBatch.js",
+    "old": "(hall ? DECOR_HALL_CAP : decorCapOf(home.ground))",
+    "new": "(hall ? DECOR_HALL_CAP : decorCapOf(null))",
+    "tests": [
+      "test/server/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-place-flat",
+    "file": "server-account/src/decor.js",
+    "old": "  const roomCap = S.seat ? S.cap : decorCapOf(",
+    "new": "  const roomCap = S.seat ? S.cap : DECOR_CAP ?? decorCapOf(",
+    "tests": [
+      "test/server/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-list-unsaid",
+    "file": "server-account/src/decor.js",
+    "old": "  const cap = home?.guild_id != null ? DECOR_HALL_CAP : decorCapOf(home?.ground);",
+    "new": "  const cap = home?.guild_id != null ? DECOR_HALL_CAP : DECOR_CAP;",
+    "tests": [
+      "test/server/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-hall-cap",
+    "file": "server-account/src/decor.js",
+    "old": "  const cap = home?.guild_id != null ? DECOR_HALL_CAP : decorCapOf(home?.ground);",
+    "new": "  const cap = decorCapOf(home?.ground);",
+    "tests": [
+      "test/server/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-ground-op-unwired",
+    "file": "server-account/src/decorAccess.js",
+    "old": "  if (body.op === 'ground') return setHomeGround(ctx, player, body);   // DECOR-ROOMY\n",
+    "new": "",
+    "tests": [
+      "test/server/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-ground-anyone",
+    "file": "server-account/src/decorAccess.js",
+    "old": "  if (!(await owns(db, mapId, buildingKey, player, character))?.owns) return { error: 'no-home' };\n  const home = await db.prepare('SELECT price, ground, guild_id",
+    "new": "  const home = await db.prepare('SELECT price, ground, guild_id",
+    "tests": [
+      "test/server/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-ground-rewritten",
+    "file": "server-account/src/decorAccess.js",
+    "old": "  if (home.ground != null) return { ok: true, ground: home.ground };\n",
+    "new": "",
+    "tests": [
+      "test/server/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-ground-unheld",
+    "file": "server-account/src/decorAccess.js",
+    "old": "  if (!homeGroundOk(ground, townBlocks, home.price)) return { error: 'bad-home' };\n",
+    "new": "",
+    "tests": [
+      "test/server/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-cap-unread",
+    "file": "src/systems/decor/homeDecorCap.js",
+    "old": "  room = Number.isSafeInteger(data?.cap) && data.cap > 0 ? { key, cap: data.cap } : null;",
+    "new": "  room = null;",
+    "tests": [
+      "test/systems/decor/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-any-room",
+    "file": "src/systems/decor/homeDecorCap.js",
+    "old": "(room && room.key === keyOf(mapId, buildingKey) ? room.cap : null)",
+    "new": "(room ? room.cap : null)",
+    "tests": [
+      "test/systems/decor/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-ground-unsent",
+    "file": "src/systems/decor/homeDecorCap.js",
+    "old": "  if (data?.measured !== false || !(ground > 0) || typeof homeDecor?.use !== 'function') return;",
+    "new": "  return;",
+    "tests": [
+      "test/systems/decor/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-guest-sends",
+    "file": "src/systems/decor/homeDecorCap.js",
+    "old": "  if (data?.measured !== false || !(ground > 0) || typeof homeDecor?.use !== 'function') return;",
+    "new": "  if (data?.measured !== false || typeof homeDecor?.use !== 'function') return;",
+    "tests": [
+      "test/systems/decor/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-answer-unread",
+    "file": "src/systems/decor/homeDecorCap.js",
+    "old": "room = { key, cap: decorCapOf(res.data.ground) };",
+    "new": "room = room;",
+    "tests": [
+      "test/systems/decor/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-buy-drops",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "    const r = await homes.claim({ mapId, buildingKey, region, price, layout, ground });",
+    "new": "    const r = await homes.claim({ mapId, buildingKey, region, price, layout });",
+    "tests": [
+      "test/systems/decor/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-registry-drops",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "...(ground ? { ground: ground[0], townBlocks: ground[1] } : {})",
+    "new": "...{}",
+    "tests": [
+      "test/systems/decor/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-body-drops",
+    "file": "src/net/accountClient.js",
+    "old": "...(ground != null ? { ground, townBlocks } : {})",
+    "new": "...{}",
+    "tests": [
+      "test/systems/decor/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-own-flat",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (pool.size() >= capHere(r) || !deps.packHas?.(item)) return false;",
+    "new": "    if (pool.size() >= DECOR_CAP || !deps.packHas?.(item)) return false;",
+    "tests": [
+      "test/systems/decor/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-host-room",
+    "file": "src/scenes/worldModes.js",
+    "old": "cap: homeDecorCap(Number(homeTownOf(b)) >>> 0, b.buildingKey) ?? undefined };",
+    "new": "cap: undefined };",
+    "tests": [
+      "test/systems/decor/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-host-house",
+    "file": "src/scenes/worldModes.js",
+    "old": "    return { kind: 'house', where: 'Your house', cap: decorCapOf(houseFootprintM2(b)) };",
+    "new": "    return { kind: 'house', where: 'Your house' };",
+    "tests": [
+      "test/systems/decor/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-host-unnoted",
+    "file": "src/scenes/worldModes.js",
+    "old": "        noteHomeDecorList(Number(homeTownOf(b)) >>> 0, b.buildingKey, r.data, interiorHome?.own ? houseFootprintM2(b) : null,",
+    "new": "        noteHomeDecorList(Number(homeTownOf(b)) >>> 0, b.buildingKey, r.data, null,",
+    "tests": [
+      "test/systems/decor/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "DECORROOMY-host-buy",
+    "file": "src/scenes/worldModes.js",
+    "old": "      ground: [houseFootprintM2(bd), bd.townBlocks ?? 0],",
+    "new": "      ground: null,",
+    "tests": [
+      "test/systems/decor/decorroomy.test.js"
+    ]
+  }
+]

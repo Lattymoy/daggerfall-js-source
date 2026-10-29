@@ -41,6 +41,7 @@ import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../../player/activate
 import { billboardSize } from '../../world/rmbFlats.js';
 import { armFlatAnim } from '../../render/flatAnimation.js';
 import { collectInteriorLights } from '../../world/interior/interiorLights.js';
+import { LIGHTS_ARCHIVE } from '../../world/city/cityLights.js';   // LAMP-FLAME: a lamp's light at its flame
 import { decorIsMount, decorIsTrophy, decorMountFrame, DECOR_MOUNT_LIFT, decorFlatMirrored, decorDrawnScale, decorIsFigure } from '../../net/decorLaw.js';   // DECOR-FIGURE: a figure at its own size; MWNPC18: and in its body
 import { figureLook, personActor } from '../../characters/peopleBodies.js';   // MWNPC18: a placed figure, read for its Morrowind body
 import { decorMountDye, decorMountDyeTarget, decorMountItem } from '../../systems/decor/decorItems.js';
@@ -51,6 +52,7 @@ import { decorIsDoor } from '../../systems/decor/decorDoorways.js';   // HOME-DO
 import { drawnFlat } from '../../characters/nudeFlats.js';   // NUDE-DECOR: a nude figure stands as its clothed stand-in while Show Nudity is off
 import { StaticBatchBuilder, keyResolver } from '../../render/staticBatch.js';   // YARD-MERGE: a yard's models as one mesh, as a town's statics are
 import { lateSolidsOf } from '../../player/lateSolid.js';   // DECOR-CLEAR: a piece landing round the body is withheld until it is clear
+import { setBatchDissolve } from '../../systems/dissolve.js';   // DECOR-GHOST: a held flat's grains
 import { decorHearth } from '../../systems/decor/decorUse.js';   // DECOR-USE: a placed fire is one of the room's hearths
 import { loadTrophyArt } from './trophyArt.js';   // HUNTERS-MARK: a mounted trophy's plaque
 
@@ -125,7 +127,7 @@ const RAW_KEY = keyResolver(null);
  *  made relative to one origin and moved by the recentre as one). Pure. */
 export function decorMergeable(e, o) {
   const cpu = e?.mesh;
-  return !!(e.gpu && !e.door && cpu?.positions && cpu.indices && cpu.normals && cpu.uvs && cpu.subMeshes?.length
+  return !!(e.gpu && !e.door && !e.quiet && cpu?.positions && cpu.indices && cpu.normals && cpu.uvs && cpu.subMeshes?.length
     && e.o[0] === o[0] && e.o[1] === o[1] && e.o[2] === o[2]);
 }
 /** YARD-MERGE: the entries' models as ONE mesh in createMesh's shape, relative to origin `o` - each piece's own matrix
@@ -153,7 +155,7 @@ const FLAT_ALONE = ['frame', 'lptProto', 'tint', 'dye', 'conceal', 'hitFlash', '
  */
 export function decorFlatMergeKey(e, o) {
   const b = e?.batch;
-  if (!b || e.anims || e.mount || decorIsFigure(e.piece)) return null;
+  if (!b || e.quiet || e.anims || e.mount || decorIsFigure(e.piece)) return null;   // DECOR-GHOST: a held piece draws alone
   if (b._quads !== 1 || b._dyn || b._scales) return null;
   for (const k of FLAT_ALONE) if (b[k] != null) return null;
   if (e.o[0] !== o[0] || e.o[1] !== o[1] || e.o[2] !== o[2]) return null;
@@ -207,13 +209,29 @@ export function standDecorMerge(renderer, into, keyed, o) {
   return { mesh, flatGroups };
 }
 
-/** Where a lit piece's light hangs above its base: a TEXTURE.210 light where the room's own light of that record hangs
- *  (interiorLights.js - the flame, not the foot), any other flat at its middle, a model at its origin. */
+/** DECOR-GHOST (FIELD BUGS 2026-10-29b, the housing thread's item 21: "Bonus points if the original part would become
+ *  semi-transparent while we're moving it"): the share of a moved piece drawn where it stood, and its flat's pale edge. */
+export const DECOR_HELD_SHOWN = 0.4;
+export const DECOR_HELD_EDGE = Object.freeze([0.75, 0.85, 1]);
+
+/** LAMP-FLAME: where the flame or lamp of a TEXTURE.210 record stands, a share of its picture's height from its base -
+ *  measured off the art for the records whose DFU light (AddLight's "todo" arms, and the short-chain lantern's missing
+ *  offset) hangs in the chain or the post. The unlit chandeliers 7 and 10 take their lit twins' (23 and 9). */
+export const DECOR_LAMP_FLAME = Object.freeze({ 7: 0.45, 10: 0.61, 12: 0.32, 16: 0.65, 18: 0.64, 19: 0.69, 26: 0.23, 28: 0.87, 29: 0.81 });
+
+/** Where a lit piece's light hangs above its base: a TEXTURE.210 light at its flame (DECOR_LAMP_FLAME, else where the
+ *  room's own light of that record hangs - interiorLights.js), scaled with the piece; any other flat at its middle, a
+ *  model at its origin. */
 export function decorLightLift(piece, size) {
   if (!piece.flat) return 0;
   if (!size) return null;
-  const [own] = collectInteriorLights([{ archive: piece.flat[0], record: piece.flat[1], x: 0, y: 0, z: 0 }], () => size);
-  return own ? own.y : size.h / 2;
+  if (piece.flat[0] !== LIGHTS_ARCHIVE) return size.h / 2;
+  const flame = DECOR_LAMP_FLAME[piece.flat[1]];
+  if (flame != null) return size.h * flame;
+  // AddLight's offsets are metres at the picture's own size: a piece grown or shrunk moves its light with it
+  const k = decorDrawnScale(piece) > 0 ? decorDrawnScale(piece) : 1;
+  const [own] = collectInteriorLights([{ archive: piece.flat[0], record: piece.flat[1], x: 0, y: 0, z: 0 }], () => ({ w: size.w / k, h: size.h / k }));
+  return own ? own.y * k : size.h / 2;
 }
 
 /** DECOR2c: a mount's quad in THIS visit's frame - its centre, its frame, and its four corners (bottom-left first,
@@ -583,10 +601,23 @@ export function createDecorRoom({
     return e?.piece ?? null;
   }
 
-  /** A piece being moved stays in the room and is not drawn, so only the piece in hand shows. */
+  /** A piece being moved stays in the room as its ghost (DECOR-GHOST: DECOR_HELD_SHOWN of it, no shadow, no light,
+   *  nothing to point at), so the owner sees where it stood while the piece in hand shows where it goes. */
   function hold(id, on) {
     const e = standing.get(id);
-    if (e) e.quiet = !!on;
+    if (!e) return;
+    e.quiet = !!on;
+    if (e.batch) setBatchDissolve(e.batch, on ? 1 - DECOR_HELD_SHOWN : 0, DECOR_HELD_EDGE);
+    if (e.merged) (merge?.letGo ?? unmerge)();   // a merge would draw it whole: it stands on its own while held
+    changed();
+  }
+  /** DECOR-GHOST: a held model, its share of its fragments through the renderer's dither - unseen with none, as before. */
+  function drawHeld(r, e, texRemap) {
+    if (!r?.setDissolve) return 0;
+    r.setDissolve(DECOR_HELD_SHOWN);
+    r.drawMesh?.(e.gpu, e.matrix, texRemap);
+    r.setDissolve(1);
+    return 1;
   }
 
   /**
@@ -649,7 +680,8 @@ export function createDecorRoom({
       else if (seen === DECOR_DRAW) { r?.drawMesh?.(merged.gpu, merged.matrix, texRemap); n += merged.n; }
     }
     for (const e of standing.values()) {
-      if (e.quiet || !e.gpu || e.merged) continue;
+      if (!e.gpu || e.merged) continue;
+      if (e.quiet) { n += drawHeld(r, e, texRemap); continue; }   // DECOR-GHOST
       const seen = cull && e.box ? cull(e.wbox ??= transformedAabb(e.box, e.matrix)) : DECOR_DRAW;
       if (seen === DECOR_SKIP) continue;
       if (seen === DECOR_SHADOW) { r?.recordShadowMesh?.(e.gpu, e.matrix, texRemap); continue; }
@@ -672,7 +704,7 @@ export function createDecorRoom({
     // YARD-MERGE: a group's batch while any of its flats is big enough to see - its flats not again on their own
     for (const g of flatGroups) if (g.members.some(seen)) out.push(g.batch);
     for (const e of standing.values()) {
-      if (e.quiet || !e.batch || e.merged || !seen(e)) continue;
+      if (!e.batch || e.merged || (e.quiet && !e.batch.dissolve) || !seen(e)) continue;   // DECOR-GHOST: a held flat, dissolved
       out.push(e.batch);
     }
     return out;

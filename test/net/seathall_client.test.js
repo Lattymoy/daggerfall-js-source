@@ -142,7 +142,7 @@ test('SEAT-HALL the hosts by source: the visit\'s palace latched at the door for
   assert.match(m, /if \(c && \(\(interiorHome\?\.hall && interiorHome\.member\) \|\| interiorSeatHall\?\.member\)\) \{ openHallChest\(\); return true; \}/);
   assert.match(m, /const isHallBoard = \(piece\) => \(!!interiorHome\?\.hall \|\| !!interiorSeatHall\) && piece\?\.model === BULLETIN_BOARD_MODEL_ID && !piece\.item;/);
   assert.match(m, /const hallNameHere = \(\) => interiorHome\?\.hall\?\.name \?\? interiorSeatHall\?\.name \?\? '';/);
-  assert.match(m, /homeBed: homeBedIsMine\(interiorHome, Math\.floor\(Date\.now\(\) \/ 1000\)\) \|\| !!interiorSeatHall\?\.member,/);
+  assert.match(m, /homeBed: homeBedIsMine\(interiorHome, Math\.floor\(Date\.now\(\) \/ 1000\)\) \|\| !!interiorSeatHall\?\.member(?:,| \|\| \(!!interiorHome && decorMayRest\()/);   // PIN MOVED (REST-GUEST, FIELD BUGS 2026-10-29b): a guest its owner named after
   // PIN MOVED (DOMAIN2, HOST-SPLIT): the seat's halls moved out of bootWorld, into their own host (scenes/seatHallHost.js)
   const w = src('src/scenes/seatHallHost.js');
   const here = w.slice(w.indexOf('    here(mapId) {'), w.indexOf('    crown(mapId, instance = null) {'));

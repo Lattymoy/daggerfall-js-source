@@ -66,11 +66,12 @@
   {
     "name": "DECOROUTDOOR-outside-indoors",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    && (!e.outside || !!room?.yard || e.kind === 'outdoor')\n",
+    "old": "    && (!e.outside || !!room?.yard || !!e.inRoom)   // DECOR-KINDS: the street's plain pieces, filed now as what they are\n",
     "new": "",
     "tests": [
       "test/systems/decor/decoroutdoor.test.js"
-    ]
+    ],
+    "note": "DECOR-KINDS (FIELD BUGS 2026-10-29b, PIN MOVED): re-aimed by content - a piece is filed by what it is first."
   },
   {
     "name": "DECOROUTDOOR-any-climate",
