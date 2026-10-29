@@ -1,0 +1,32 @@
+[
+ {
+  "name": "GROUNDKEPT-kept-unread",
+  "file": "server-account/src/professions.js",
+  "old": "  if (kept && now - kept.at < REGION_GROUND_KEEP_MS) return kept.ground;\n",
+  "new": "",
+  "tests": [
+   "test/server/ground_kept.test.js"
+  ],
+  "note": "every board read of a region whose writs never post scans its ground - 123,000 rows, 409 ms"
+ },
+ {
+  "name": "GROUNDKEPT-keep-unbounded",
+  "file": "server-account/src/professions.js",
+  "old": "  if (kept && now - kept.at < REGION_GROUND_KEEP_MS) return kept.ground;",
+  "new": "  if (kept) return kept.ground;",
+  "tests": [
+   "test/server/ground_kept.test.js"
+  ],
+  "note": "an isolate's ground never read again - the writs drawn from ground days old"
+ },
+ {
+  "name": "GROUNDKEPT-none-kept",
+  "file": "server-account/src/professions.js",
+  "old": "    if (ground.length) {\n      if (!groundKept.has(root))",
+  "new": "    if (true) {\n      if (!groundKept.has(root))",
+  "tests": [
+   "test/server/ground_kept.test.js"
+  ],
+  "note": "a region read before its ground was witnessed posts nothing for the keep"
+ }
+]

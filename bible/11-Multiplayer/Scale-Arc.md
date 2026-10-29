@@ -85,6 +85,7 @@ Four read-only audits covered the relay (`server/src/index.js`), the account ser
 | FOES-HOLD | Where a room's full frames alone are more than its budget, a first frame the budget refuses is HELD for its turn: one line, one turn a sender, a newer full frame in its sender's place, nothing of a sender overtaking its own, no delta past a held frame, a held sender beaten so its readers keep it, a leaving sender's handovers tried before its leave - the star's large owner heard as often as the rest (0% before) | Yes, once (with FOES-FIRST's) | **Built** (2026-10-21, relay world239, NOT YET DEPLOYED) |
 | LODE-HERD | The account database overloaded at 00:00 UTC (2026-10-29): every Motherlodes read before the day's mark ran the pick's scan, 33 of 1.8 s in a minute. One read a minute holds the day's claim and picks; the rest answer none; the clock picks unclaimed | No | **Built** (2026-10-29; acct209) |
 | HUNT-LEAN | The overload of the evening of 2026-10-28: the hunt's read, new on 2026-10-27, was some 5 primary statements a player every two minutes, a rate window's write among them. It writes nothing now, a replica serves it, it stands back in an overload, and the book asks every ten minutes | No | **Built** (2026-10-29; acct209) |
+| GROUND-KEPT | The overload held past midnight (2026-10-29, 01:00 UTC, 22% of requests 503): a writ board read scanned its region's witnessed ground - 123,000 rows in 409 ms - twice a read where the day's writs had not posted, 684 times an hour on the primary. An isolate keeps a region's ground ten minutes; none is never kept | No | **Built** (2026-10-29; acct209) |
 | SCALE6 | Abuse and backups: Turnstile on guest creation, /64 IPv6 rate keys, bans, report and ignore, `ALLOWED_ORIGIN`, R2 snapshots, a hub export | Some | Alongside |
 
 **Relay deploy policy (SCALE):** relay changes are batched into as few deploys as possible, each in a window announced beforehand. A deploy drops every player, and until SCALE2 every reconnect is a D1 write storm.
@@ -4567,7 +4568,7 @@ FOLLOW-DROP's "draws the target where they stand" - a target with nobody near bu
 hidden, or out of its room) is lone, and the follow draws it where its last pose put it, never more than a lone
 minute's walk behind; with the staff game standing in the cell, shown, where it stands, as before.
 
-## LODE-HERD and HUNT-LEAN: built (2026-10-29, this branch - acct209, no migration, no relay change)
+## LODE-HERD, HUNT-LEAN and GROUND-KEPT: built (2026-10-29, this branch - acct209, no migration, no relay change)
 
 Reported 2026-10-29: "People are experiencing server issues." Read off the live service with the account's Cloudflare
 token: the account database answered `D1 DB is overloaded. Requests queued for too long.` through the evening, and the
@@ -4596,6 +4597,20 @@ to 31% of them in the first minutes of 2026-10-29 - the token's mint among them.
   (`busyLaw.js` BUSY_READS), and the hunt book asks it every ten minutes (`huntBook.js` HUNT_STATE_MS, two before): a
   clear's own answer carries the state, so the poll only catches another tab's clears.
 
+### GROUND-KEPT (read again at 01:20 UTC, 2026-10-29)
+
+The overload did not ease past midnight as it had on other nights: 22% of requests answered 503 from 01:00, four sign-ins
+in ten answered. D1's query insights for the hour named one statement first - `professions.js` regionGround, the writ
+board's read of its region's witnessed ground: 684 runs at 409 ms and 123,000 rows each, from some 300
+`/v1/writs/list` reads. A board read scans it in `postWrits` until the day's writs are posted and in `postMemberWrits`
+until a member's writ is; a post the overload refused marks nothing, and ground with no material in it (open sea)
+never posts, so each read scanned again. The table's day had posted 17 regions by 01:20, against 40 the day before.
+
+- **GROUND-KEPT** (`professions.js` regionGround): an isolate keeps a region's ground REGION_GROUND_KEEP_MS (ten
+  minutes) by the binding (DB_ROOT, `homes.js` homeLayoutsKept's way), and asks in flight share one read. Ground of none
+  is never kept - a region posts the moment its ground is witnessed. The writs are drawn once a day, so ground ten
+  minutes old draws the same day.
+
 ### Left for the owner
 
 The overload is the primary's ceiling, not one route: some 45,000 to 50,000 statements a minute at the evening's peak,
@@ -4605,5 +4620,6 @@ the one primary, which is the owner's to choose.
 
 ### Pins
 
-`test/server/lode_herd.test.js` (4); `tools/mutants/lode_herd.json` (9, all dead). PIN MOVED: the version pins to
+`test/server/lode_herd.test.js` (4); `tools/mutants/lode_herd.json` (9, all dead); `test/server/ground_kept.test.js`
+(2); `tools/mutants/ground_kept.json` (3, all dead). PIN MOVED: the version pins to
 acct209; `test/net/busy_gate.test.js` and `test/server/scale4g.test.js` name the hunt's read.
