@@ -73,7 +73,7 @@ export const CATEGORIES = Object.freeze([
       "GUI/QuestRumorWeight", "GUI/EnableQuestDebugger"]),
     sec("dungeons", "Dungeons", [
       "feat:smaller-dungeons", "Experimental/SmallerDungeons", "feat:medium-dungeons", "feat:world-dungeon-sizes", "feat:varied-dungeon-monsters",
-      "Enhancements/AlternateRandomEnemySelection", "feat:mod-aquatic-sprites"]),
+      "Enhancements/AlternateRandomEnemySelection"]),
     sec("loot", "Loot & items", [
       "feat:quick-loot", "feat:loot-rarity", "feat:mod-unleveledloot", "feat:mod-roleplay-realism-items", "feat:mod-physical-items"]),
     sec("light", "Your light", [
@@ -117,7 +117,7 @@ export const CATEGORIES = Object.freeze([
     sec("travel", "Travel", [
       "feat:mod-travel-options", "feat:mod-immersive-travel", "feat:mod-horse-cart-and-cargo", "feat:horse-care", "feat:wagon-upkeep"]),
     sec("sea", "The sea & ships", [
-      "feat:mod-come-sail-away", "feat:mod-detailed-ships", "feat:mod-warm-ashes-ships", "feat:mod-iliac-puddle-no-more", "feat:mod-ocean-holes"]),
+      "feat:mod-come-sail-away", "feat:mod-warm-ashes-ships", "feat:mod-iliac-puddle-no-more", "feat:mod-ocean-holes"]),
   ]),
   tab("interface", "Interface", [
     // L10N1b: the language the game's words are shown in, and under it a Daggerfall Unity translation pack (L10N3b)

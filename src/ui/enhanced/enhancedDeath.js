@@ -33,7 +33,7 @@ import { PIXEL_STACK } from '../pixelifyFive.js';
 import { isOnlinePage } from '../../systems/online/onlineLane.js';
 import { deathPenaltyLine } from '../../systems/deathPenalty.js';   // DEATH-PENALTY: the line about the loss
 import { armDrawWatchdog, disarmDraw } from '../drawWatchdog.js';
-import { wildDeathLines } from '../../systems/wild/wildZone.js';   // WILD1: a death in the open zone says what it cost
+import { wildDeathLines, wildDeathSlain } from '../../systems/wild/wildZone.js';   // WILD1: a death in the open zone says what it cost
 import { t } from '../../systems/textManager.js';   // L10N4: the death screen's words in the player's language
 
 export const ENHANCED_DEATH_ID = 'enhanced-death';
@@ -120,12 +120,12 @@ export function drawEnhancedDeath(screen, fade = 0) {
     if (c && c.textContent !== text) c.textContent = text;
   }
   // WILD1: the zone's block - the lines once they are known. DEATH-15: "Rise now" once Enter rises, zone or not
-  const lines = wildDeathLines(screen.wild ?? null);
+  const slain = wildDeathSlain(screen.wild ?? null), lines = [slain, ...wildDeathLines(screen.wild ?? null)].filter(Boolean);   // PVP-HUD: "Slain by" first
   const w = node.querySelector('.dth-wild');
   const key = lines.join('|');
   if (w && w.dataset.key !== key) {
     w.dataset.key = key;
-    w.replaceChildren(...lines.map((l, i) => el('p', i === 0 && screen.wild?.killer ? 'dth-wild-line dth-wild-claim' : 'dth-wild-line', l)));
+    w.replaceChildren(...lines.map((l, i) => el('p', i === (slain ? 1 : 0) && screen.wild?.killer ? 'dth-wild-line dth-wild-claim' : i === 0 && slain ? 'dth-wild-line dth-wild-slain' : 'dth-wild-line', l)));
     w.hidden = !lines.length;
   }
   const keys = node.querySelector('.dth-keys');
@@ -225,6 +225,7 @@ button.dth-key:focus-visible { outline: 1px solid rgba(142,27,20,0.8); outline-o
 .dth-wild-line { margin: 0; font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; font-size: clamp(13px, 1.6vw, 16px);
   line-height: 1.45; letter-spacing: 0.05em; color: #b3a893; text-shadow: 2px 2px 0 #000; }
 .dth-wild-claim { color: #d0563f; }
+.dth-wild-slain { color: #e8c9a0; font-size: clamp(15px, 1.9vw, 19px); }
 .dth-keys[hidden] { display: none; }
 
 @media (prefers-reduced-motion: reduce) {

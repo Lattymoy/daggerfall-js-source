@@ -458,6 +458,7 @@ import { SITE_TYPES } from '../systems/quest/place.js';
 import { personOwnName } from '../systems/quest/person.js';   // QUEST-NAME-ONE: a quest stand answers to its Person's own name
 import { placeFoeFreely, questStandBox, rideSceneMarker, markerScenePosition, siteMarkerSpots, standSpot, buildingStandSpot, MARKER_FLOOR_REACH, freeQuestStand } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called; TOTEM-CAGE: a stand's box where it IS; QUEST-MARKERS: the building's backstop; FB1020c CROWD-CLEAR: a Person clear of the room's people
 import { chestIdentity, matchChests } from './chestRecords.js';   // HOLD-KEPT: a house chest's record by which chest it is
+import { createArrivalSetDown } from './arrivalSetDown.js';   // HOLD-KEPT ON ARRIVAL: what a restored room cannot hold, set down where the player stands
 import { placeFoeEnv, placeRoomQuestFoe, entityOccupancy, questFoeGender, reviveQuestBehaviour as reviveQuestBehaviourFromSave, heldSpots, holdSpotWhile, restandMendedQuestFoe } from './quest/questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)   // AUDIT 63 F24: SerializableEnemy.cs:206-217 re-adds the component on restore
 import { standLooseFoe } from './hostEnchant.js';   // ROAD-G G1: SoulBound's break release / the Sanguine Rose, inside a building
 import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemy/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag // WORLD-HOVER H2: GetLocalizedEnemyName - Entity.Name for a live one (.cs:310)
@@ -1724,6 +1725,7 @@ export function createWorldModes(host) {
    *  NO pixel key - that argument is `TrackLooseObject`, and DFU puts
    *  it behind `!IsPlayerInside`. */
   const interiorDropped = createDroppedLoot({ renderer, getTexture, uploadRecordFrame });
+  const arrivalSetDown = createArrivalSetDown({ dropPile: (items, feet) => interiorDropped.dropPile(items, feet), say: (line) => say(line) });   // AUDIT SHIP-REFIT: held while a room restores, landed once the player stands
   // PI1 (Physical Items, scenes/physicalItemsLayer.js): THE ROOM'S HALF of the layer - the room's collider, the room's
   // foes' bodies (the pool lives as long as the interior does), the pack's wearer, the take's hooks and the outer host's
   // reveal for a map. Read at the frame.
@@ -4929,6 +4931,7 @@ export function createWorldModes(host) {
    *  which is every first visit. */
   function restoreInteriorScene() {
     _keptHidden = [];   // BASE-HIDE: this visit's
+    arrivalSetDown.reset();   // AUDIT SHIP-REFIT: nothing held from another room
     _sceneHeldForLayout = null;
     // WAGONS2 (AUDIT): a PRIVATE ROOM THAT TRAVELS - a ship's cabin, a caravan - is no town's: its room is the same in
     // every layout, so the town it stands in this visit neither stamps its scene nor holds it back (a ship furnished in
@@ -4956,20 +4959,15 @@ export function createWorldModes(host) {
       if (!data) return;
     }
     const chestOf = matchChests(data.lootContainers, interiorCtx.containers, buildingOrigin());   // HOLD-KEPT: a chest by what it is, not where it fell in the list
-    let setDown = 0;
     for (const c of data.lootContainers) {
       const [kind, i] = c.key.split(':');
       const target = kind === 'shelf' ? interiorCtx.shelves?.[+i] : chestOf.get(c);
       // ARENA2: A HOUSE THE ARENA MOVED brought its chests', its storage pieces' and its floor's things in its first
       // container (systems/arena/arenaMove.js emptyArenaScene, `crate`): a house with none has them set down as a crate where
       // its owner first walks in - a pile of their own, in the building's frame, cached with the floor from here on.
-      // HOLD-KEPT: and so is what any chest held that no chest of this visit stands for - never dropped
-      if (!target && kind === 'container' && c.items?.length) {
-        const o = buildingOrigin(), f = player.pos;
-        data.droppedPiles = [...(data.droppedPiles ?? []), { pos: [f[0] - o[0], f[1] - o[1], f[2] - o[2]], items: c.items.map((it) => ({ ...it })) }];
-        if (!c.crate) setDown++;
-        continue;
-      }
+      // HOLD-KEPT: and so is what any chest held that no chest of this visit stands for - never dropped. AUDIT SHIP-REFIT:
+      // held, and set down where the player stands once stood (scenes/arrivalSetDown.js) - the restore runs before that
+      if (!target && kind === 'container' && c.items?.length) { arrivalSetDown.hold(c.items, { crate: !!c.crate }); continue; }
       // `items: null` is a shelf that was never opened - restoring it
       // as null keeps the LAZY stock, which is what makes a first
       // browse still roll fresh goods after an uneventful visit.
@@ -4983,7 +4981,6 @@ export function createWorldModes(host) {
       if (target && kind === 'container') target.openedOn = c.openedOn ?? 0;   // UXB1-O: a record cached before it carries none - never searched
     }
     interiorLootAside(interiorCtx, _intShared);   // OUTDOOR-LOOT: the cache has laid a stranger's cupboard the list of an earlier visit - online that is no one's word, the room's is
-    if (setDown) say('A chest that stood here is gone. What it held was set down at your feet.');   // HOLD-KEPT
     interiorCtx.guildShelves = data.guildShelves ?? {};   // GUILD-SHELF: a stale day's shelf is left for guildShelf to replace at the next open
     // #32: through the system's own restore, which settles the matrix
     // and the collider bucket (syncRestored) - a door restored open
@@ -5006,7 +5003,7 @@ export function createWorldModes(host) {
     const place = data.frame === 'building'
       ? (p) => [p[0] + o[0], p[1] + o[1], p[2] + o[2]]
       : (p) => [p[0], host.restandSceneHeight ? host.restandSceneHeight(p[1], p[0], p[2], was) : p[1], p[2]];
-    interiorDropped.restorePiles(data.droppedPiles ? data.droppedPiles.map((p) => ({ ...p, pos: place(p.pos) })) : data.droppedPiles);
+    interiorDropped.restorePiles(data.droppedPiles ? arrivalSetDown.unburied(data.droppedPiles.map((p) => ({ ...p, pos: place(p.pos) })), interiorCtx.collider) : data.droppedPiles);   // AUDIT SHIP-REFIT: a pile furniture now stands over is held for the arrival
     interiorTorches.restore(data.droppedTorches, place);   // HT1: a scene cached before this shipped carries none - cleared, as the piles are
     // DECOR1c: what the owner placed in the offline house or ship (the building's frame, as every piece is - the pool
     // stands it on this visit's origin), projected by the law on the way in; and what the storage pieces hold. An online
@@ -8771,6 +8768,7 @@ export function createWorldModes(host) {
       // a click.
       const spot = restore?.pos ?? floored;
       player.spawn(spot[0], spot[1], spot[2]);
+      arrivalSetDown.land(spot);   // AUDIT SHIP-REFIT: what the restore held, set down where the player now stands
       interiorNav.mount(ctx, spot);   // INDOOR-WATCH: the room's mesh, anchored on the arrival, the ways in and the doors' watch spots
       _hccLanded = true; host.horseCart?.()?.handleSuccessfulInteriorTransition({ type: 'ToBuildingInterior', buildingKey: interiorBuilding?.buildingKey ?? 0 });   // HCC: OnTransitionInterior [IL_99ac] - the wagon parks, the horse waits, the access id is this building's
       setMode('interior');

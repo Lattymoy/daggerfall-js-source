@@ -52,7 +52,7 @@ furniture chain, and AUDIT 64 F17 put that chain behind DFU's prop gate (`Dagger
 built for it (`worldModes.js` interiorTargets). DFU's gate is furniture's actions (containers, shelves); a bed is a mod's
 custom activation, keyed on the model id alone (`RoleplayRealism.cs:126-128`), and DFU stands a custom-activation model
 on its own whatever its ObjectType (the CombineRMB note in the builder). Of the 39 bed placements in the vendored world
-data, 34 are ObjectType 0 and 4 are ObjectType 4 (Roleplay Realism's RRFORT01, Detailed Ships' two cabins); the
+data, 34 are ObjectType 0 and 4 are ObjectType 4 (Roleplay Realism's RRFORT01, the ship mod's two cabins); the
 reporter's building could not be read here (no ARENA2), and the dungeon builder already lists its beds with no ObjectType
 test (`dungeonContext.js`).
 

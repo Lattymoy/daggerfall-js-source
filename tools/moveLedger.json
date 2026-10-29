@@ -1730,7 +1730,6 @@
   ["test/dress_standing.test.js","test/systems/dress_standing.test.js"],
   ["test/droppedloot.test.js","test/scenes/droppedloot.test.js"],
   ["test/dropsaudit.test.js","test/ui/enhanced/dropsaudit.test.js"],
-  ["test/ds1_detailedShips.test.js","test/world/ds1_detailedShips.test.js"],
   ["test/ds2_cloudsUnderMod.test.js","test/render/ds2_cloudsUnderMod.test.js"],
   ["test/dsh1_horizon.test.js","test/render/dsh1_horizon.test.js"],
   ["test/dsize1_mediumdungeons.test.js","test/systems/quest/dsize1_mediumdungeons.test.js"],

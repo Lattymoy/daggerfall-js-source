@@ -379,26 +379,6 @@ export const CREDITS = Object.freeze({
       terms: 'Used with permission: Mac is Lattymoy, the mod\u2019s first-named author. Rebuilt from the released mod with its bugs fixed.',
       vendor: Object.freeze(['project-legacy']),
     }),
-    Object.freeze({
-      title: 'Aquatic Sprites',
-      version: '1.0',
-      author: 'Cliffworms',
-      get what() { return t('credits.aquaticSprites.what', 'Weed, coral and shells: underwater sprites that come with Daggerfall but were never used. 119 of them are placed in 3 flooded dungeon areas, exactly where the author put them.'); },
-      get terms() { return t('credits.aquaticSprites.terms', 'Used with the author’s permission, under terms that ask only for credit: “The mod may be distributed/translated without my authorization as long as I am credited as the author.” The dungeon areas are rebuilt from your own game files.'); },
-      get contact() { return t('credits.contact.nexus', '{author}, through the Nexus page ({page})', { author: 'Cliffworms', page: 'daggerfallunity mod 276' }); },
-      vendor: Object.freeze(['aquatic-sprites']),
-      link: 'https://www.nexusmods.com/daggerfallunity/mods/276',
-    }),
-    Object.freeze({
-      title: 'Detailed Ships',
-      version: '1.0.0',
-      author: 'Cliffworms',
-      get what() { return t('credits.detailedShips.what', 'The 2 ships you can own, rebuilt inside and out. On deck: rigging, crates and barrels, tenders, rudders and railings. Below: your quarters, the crew’s, a kitchen, a cargo hold, an armory and a shrine to Kynareth, with sailors to talk to. The Kynareth statue is by King of Worms and Zoran, as the author’s readme credits it. Pieces the mod borrows from Ninelan’s Daggerfall Expanded Textures are replaced with stand-ins made for this game.'); },
-      get terms() { return t('credits.detailedShips.terms', 'Used with the author’s permission, under terms that ask only for credit: “The mod may be distributed/translated without my authorization as long as I am credited as the author.” The ships and the original pictures are rebuilt from your own game files.'); },
-      get contact() { return t('credits.contact.nexus', '{author}, through the Nexus page ({page})', { author: 'Cliffworms', page: 'daggerfallunity mod 1080' }); },
-      vendor: Object.freeze(['detailed-ships']),
-      link: 'https://www.nexusmods.com/daggerfallunity/mods/1080',
-    }),
     // WD3: carademono's two town mods, one entry each (two vendors, two pages).
     Object.freeze({
       title: 'Beautiful Villages of Daggerfall',

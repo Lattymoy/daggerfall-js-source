@@ -303,7 +303,7 @@ test('DECOR2c a mount in an online home: the service keeps a weapon or shield hu
   assert.deepEqual((await call('POST', '/v1/homes/decor', HOME, mara)).body.pieces, [axe], 'every visitor reads it hung');
   const past = piece({ id: 'w2', model: null, flat: [100_000, 0], item: { t: 120, g: 3, m: null, v: null, a: null, p: null }, paid: 0 });   // DECOR-MODFLATS: past a mod's five digits
   assert.equal((await call('POST', '/v1/homes/decor/place', at({ piece: past }), aldric)).body.error, 'bad-decor');
-  // DECOR-MODFLATS: a mod's flat - Detailed Ships' own, "Decoration 49" onward - is a piece to the service too
+  // DECOR-MODFLATS: a mod's flat - the town items', "Decoration 49" onward - is a piece to the service too
   const ship = piece({ id: 'w3', model: null, flat: [1210, 1], paid: 20 });
   const shipped = (await call('POST', '/v1/homes/decor/place', at({ piece: ship }), aldric)).body;
   assert.deepEqual([shipped.ok, shipped.piece, shipped.gold], [true, ship, -20]);

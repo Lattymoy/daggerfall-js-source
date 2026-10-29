@@ -13,7 +13,7 @@
 //   repository at the commit the README names; test/systems/dex0_record.test.js proves the two agree).
 // - The pictures. Every texture of every archive the mod's own tables draw (MaleTexture, FemaleTexture, a corpse
 //   archive, ClassicClassBase's and ClassicMonsterReplacement's swaps, the troll corpse prefab's two records) is
-//   measured against every record of every TEXTURE file (DS1's search, tools/detailedShipsAssets.mjs) and goes to
+//   measured against every record of every TEXTURE file (tools/lib/classicSource.mjs) and goes to
 //   exactly one of three places:
 //     DERIVED - a picture a classic record covers (DERIVED_SHARE of its visible pixels or more): rebuilt from the
 //       player's own record when the archive loads, never shipped (formats/derivedTexture.js), as a spec in
@@ -52,7 +52,7 @@ import { composeDerivedPicture, deriveSpec } from '../src/formats/derivedTexture
 import { readCsvTable, parseCsInt } from '../src/systems/enemyExpansion/dexCsv.js';
 import { readPng } from './pngIO.mjs';
 import { encodeSprite, sameOnScreen } from './diverseWeaponsExtract.mjs';
-import { classicRecords, findClassicSource } from './detailedShipsAssets.mjs';
+import { classicRecords, findClassicSource } from './lib/classicSource.mjs';
 import { isMain } from './lib/isMain.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -72,12 +72,13 @@ export const TABLE_TEXT = 'src/systems/enemyExpansion/dexTableText.js';
 export const REPAINTED_ARCHIVES = Object.freeze([1504, 1505, 1509, 1511, 1512, 1530, 1531, 1532, 1533, 1609]);
 
 // ---- AUDIT DEX B1: THE SILHOUETTE GUARD -----------------------------------------------------------------------------
-// A copy is found by its colours (a record's pixels exactly, or DERIVED_SHARE of them - DS1's search) and a repaint was
-// found by the hand list above alone, so a repaint the list missed passed as the authors' own art. Paint changes a
-// sprite's colours and keeps its outline, so every picture the tool would ship is measured by its outline too - its
-// alpha mask against every TEXTURE frame's of its size (or of half it, a sprite drawn at twice), either way round, as
-// the share of their union both cover (IoU) - and an archive whose pictures follow Daggerfall's outlines is refused
-// unless REPAINTED_ARCHIVES carries it (the fourth exception) or SILHOUETTE_ALLOWED does, with the owner's reason.
+// A copy is found by its colours (a record's pixels exactly, or DERIVED_SHARE of them - tools/lib/classicSource.mjs)
+// and a repaint was found by the hand list above alone, so a repaint the list missed passed as the authors' own art.
+// Paint changes a sprite's colours and keeps its outline, so every picture the tool would ship is measured by its
+// outline too - its alpha mask against every TEXTURE frame's of its size (or of half it, a sprite drawn at twice),
+// either way round, as the share of their union both cover (IoU) - and an archive whose pictures follow Daggerfall's
+// outlines is refused unless REPAINTED_ARCHIVES carries it (the fourth exception) or SILHOUETTE_ALLOWED does, with the
+// owner's reason.
 // Both ways, as doctrine.test.js holds its rows: a listed archive the measure does not find is refused too, so neither
 // list says more than the measure. On the 1.3.4 bundle the repaints trace a frame on 77-100% of their pictures (1505,
 // the archive the list missed, on all sixty, at 0.63-0.89 - 56 of them over TEXTURE.482); the demo's Bat on 53% (it is

@@ -11,7 +11,7 @@
 //
 // - `Textures/112395_0-0.png`, `Textures/112395_1-<frame>.png` - the splash
 //   and the wind widget's 24 frames: the author's own drawings. Each is held
-//   to Detailed Ships' bar first (no record within a pixel of its size covers
+//   to the classic-record search first (no record within a pixel of its size covers
 //   DERIVED_SHARE of it - the picture whole, and cut to its visible box, so a
 //   small sprite on a clear canvas is judged at its own size) and to the
 //   block search (tools/lib/classicBlocks.mjs: no square record that is not
@@ -68,7 +68,7 @@ import { DFPalette } from '../src/formats/dfPalette.js';
 import { TextureFile } from '../src/formats/textureFile.js';
 import { ImgFile } from '../src/formats/imgFile.js';
 import { classicRecordRgba, composeTiledPicture, deriveTiledPaint } from '../src/formats/derivedTexture.js';
-import { classicRecords, findClassicSource } from './detailedShipsAssets.mjs';
+import { classicRecords, findClassicSource } from './lib/classicSource.mjs';
 import { bestClassicBlock, isDerivedBlock, cropToVisible } from './lib/classicBlocks.mjs';
 import { encodeIndexedPng, pictureColours } from './lib/indexedPng.mjs';
 import { fsb5ToOgg } from './lib/fsb5Vorbis.mjs';

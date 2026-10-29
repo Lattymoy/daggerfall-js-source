@@ -33,7 +33,7 @@ the station, the popup's onService, the probe door and both popups' own pushes. 
 
 ## DECOR-MODFLATS: "Decoration 49" onward (1)
 
-The decorate catalogue is read out of the world's own blocks, and the ships Detailed Ships lays in them carry its own
+The decorate catalogue is read out of the world's own blocks, and the ships a mod then laid in them carried its own
 flats (archives 1210 and 1230) and the DET flats the port stands in (10009 to 10027) - 83 decorations in the live
 game where the retail blocks alone give 28, measured in a browser over the retail data. A decoration is named by its
 place in id order, so the mods' pictures were "Decoration 49" onward, after 254's, the last classic one. Two things
@@ -49,7 +49,7 @@ stopped them:
   and its picture decodes in its own time, so a row asked before the scan had decoded its archive could be answered
   none for good. The door waits for the picture now, landed or missed (a throw included).
 
-`test/systems/decor/decormodflats.test.js` (5); the account service's own acceptance of a Detailed Ships flat, `test/server/decor1.test.js`.
+`test/systems/decor/decormodflats.test.js` (5); the account service's own acceptance of a mod's flat, `test/server/decor1.test.js`.
 
 ## DECOR-FLIP: a picture turned half round faces the other way (2)
 
