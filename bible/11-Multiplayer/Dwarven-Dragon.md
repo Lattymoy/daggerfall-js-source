@@ -182,7 +182,7 @@ stand-up when another stood then (`scenes/dragonRewards.js` bind), once DRAGON_M
 
 - **The body** is the Dwarven Dragon's own sprite (`characters/dwarvenDragon.js`, archive 1800) at `DRAGON_SCALE`,
   its walk while it moves, its attack frames at a landing, its hurt frame when a share of its health goes, and the
-  Aetherbright's palette when it is the shiny (section 11; until DRAGON7 a blue wash). Aloft it stands at its altitude
+  Aetherbright's palette when it is the shiny (section 11). Aloft it stands at its altitude
   over the land under it.
 - **The telegraphs** are the gate's renderer (`render/gate/gateTelegraph.js`) laid on a grid draped over the land's
   heights, so a shape on a hillside follows the hill instead of cutting through it.
@@ -346,3 +346,13 @@ merged bundle's hash, 11fe794e); acct219 and migration 0193 stand. `DRAGON_RIDE_
 world285 still clamps `rd` 3), and the fight's gate with it. PINS MOVED: the relay version's (fifty files, the dragon's
 note before CAPE-TOGGLE's), CAPE-TOGGLE's own (`capetoggle`), the gates' refusals (`dragonride_wire`, `dragon2_law`),
 and three mutant records on the version lines.
+
+**DRAGON7 - the Aetherbright (2026-10-29).** `characters/dwarvenDragonShiny.js` turns each PLTE colour at load - the brass
+and copper to aetherium's blue, the wings' olive membrane to its violet, the greys cooled - and writes the chunk's CRC
+again. Archive 1801 is 1800's ninety files so turned; no picture ships. One home for a look's pictures
+(`dwarvenDragonId.js` dragonArchiveOf): the boss draws from it, in the sky too before a fight is mine (it was brass there
+until its state came); a peer's rider stands in a bundle of its own (`remotePlayers.js` `_mobileFor`'s skin); the tamed
+mount's pack picture and its rider's saddle are its look's. The wash is gone. Pinned by
+`test/net/dragon/dragon7_aetherbright.test.js` (7); `tools/mutants/dragon7.json`, 11 dead. PINS MOVED: the picture count
+and the shipped files (`dwarvenDragon`, `doctrine`), the registry's words (`l10n4_hardcoded`), the audit's wash
+(`dragonaudit_client`).

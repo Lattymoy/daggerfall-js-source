@@ -28,7 +28,7 @@ import { drawText, measureText } from '../ui/text.js';
 import { titleBadge, glyphMarks, gradientAt } from '../ui/playerBadge.js';   // ACC3: what a title and a glyph LOOK like - one home, both faces (the DOM layer reads the same module)
 import { projectToScreen } from '../player/tapRay.js'; import { multiply } from '../world/mat4.js';   // one home (audit24 onehome): the touch layer's own projection
 import { LOOK_ITEM_FIELDS, LOOK_GROUPS, LOOK_GLOW_SLOTS, lookGlowOk, POSE_RIDE } from './wire.js';   // the look's vocabulary: the wire's own; WEAPON-GLOW1: and a weapon's glow; DRAGON1: the dragon's ride
-import { DWARVEN_DRAGON_ID, AETHERBRIGHT_WASH } from '../characters/dwarvenDragonId.js';   // DRAGON1: the sprite a dragon's rider stands as; AUDIT DRAGON: an Aetherbright's wash
+import { DWARVEN_DRAGON_ID, dragonArchiveOf } from '../characters/dwarvenDragonId.js';   // DRAGON1: the sprite a dragon's rider stands as; DRAGON7: an Aetherbright's own pictures
 import { appearanceOf, validWireAppearance } from './appearanceLaw.js';   // APPEARANCES: a worn piece's look, said and read
 import { meshGlow, glowWord } from '../systems/weaponGlow.js';   // WEAPON-GLOW1: a held weapon's glow, said on the look
 import { renownText } from './renown.js';   // RENOWN1: Renown's words, left of the name in the bitmap face too
@@ -749,13 +749,13 @@ export class RemotePlayers {
    *  sat on the paperdoll fallback (the documented "composing" state) forever, not just for the one frame it was
    *  meant to. The promise now carries the type/gender it is building for, exactly as a landed bundle already does,
    *  so the SAME check above recognizes and returns an in-flight build instead of restarting it. */
-  _mobileFor(peerId, mobileType, gender) {
+  _mobileFor(peerId, mobileType, gender, skin = null) {   // DRAGON7: `skin` an archive in place of the row's (an Aetherbright rider's)
     const have = this._mobiles.get(peerId);
     if (have && have.failedUntil != null) {
       if (this._now() < have.failedUntil) return null;
       this._mobiles.delete(peerId);
     } else if (have) {
-      if (have.mobileType === mobileType && have.gender === gender) return have;
+      if (have.mobileType === mobileType && have.gender === gender && (have.skin ?? null) === skin) return have;
       // a ready bundle, OR A BUILD ALREADY IN FLIGHT, for the WRONG type/gender - fall through and rebuild, same as
       // a look-key miss for a doll
     }
@@ -763,7 +763,7 @@ export class RemotePlayers {
     // and every frame after, instead of being mistaken for "no build yet" and restarted. Object.assign rather than
     // two property writes because a bare `p.mobileType = ...` is a write to a property Promise does not declare, and
     // `npm run types` refuses it (TS2339); assigning at the point of creation gives the binding the tagged type.
-    const p = Object.assign(this._buildMobile(mobileType, gender).catch(() => null), { mobileType, gender });
+    const p = Object.assign(this._buildMobile(mobileType, gender, skin).catch(() => null), { mobileType, gender, skin });
     this._mobiles.set(peerId, p);
     p.then((bundle) => {
       if (this._mobiles.get(peerId) !== p) return;   // SLAM12's own race: a peer released or rebuilt while this was in flight
@@ -804,7 +804,7 @@ export class RemotePlayers {
     idle(step, { timeout: 2000 });
   }
 
-  async _buildMobile(mobileType, gender) {
+  async _buildMobile(mobileType, gender, skin = null) {
     const { deps } = this;
     const basics = ENEMY_BASICS[mobileType];
     if (!deps?.getTexture || !deps?.uploadRecordFrame || !basics?.maleTexture) {
@@ -822,7 +822,7 @@ export class RemotePlayers {
       }
       return null;
     }
-    const archive = gender === 'female' && basics.femaleTexture ? basics.femaleTexture : basics.maleTexture;
+    const archive = skin ?? (gender === 'female' && basics.femaleTexture ? basics.femaleTexture : basics.maleTexture);
     const tex = await deps.getTexture(archive);
     if (!tex) {
       if (!this._warnedMissing) this._warnedMissing = new Set();
@@ -834,7 +834,7 @@ export class RemotePlayers {
       return null;
     }
     const mobileUnit = new MobileUnit(mobileType, basics, (rec) => tex.getFrameCount(rec), Math.random, gender);
-    return { mobileType, gender, mobileUnit, archive, tex, height: 0, lastAn: null, lastCn: null };
+    return { mobileType, gender, skin, mobileUnit, archive, tex, height: 0, lastAn: null, lastCn: null };
   }
 
   /** The looks the scene needs right now: the ones the last sync ASKED FOR - drawn, or composing and not yet handed
@@ -958,7 +958,7 @@ export class RemotePlayers {
       // DRAGON1 (bible/11-Multiplayer/Dwarven-Dragon.md section 10): a dragon's rider stands as the Dwarven Dragon's own
       // sprite, its rider in the art, whatever the 'Other players' card says (a build without the dragon: as before)
       const mobileType = beast ? (beast === 2 ? MOBILE_TYPES.Wereboar : MOBILE_TYPES.Werewolf) : peer.shown.rd === POSE_RIDE.Dragon && ENEMY_BASICS[DWARVEN_DRAGON_ID] ? DWARVEN_DRAGON_ID : spritesOn && peer.look ? classMobileType(peer.look.class) : null;
-      const bundle = mobileType != null && ENEMY_BASICS[mobileType] ? this._mobileFor(peer.id, mobileType, peer.look?.gender === 'female' ? 'female' : 'male') : null;
+      const bundle = mobileType != null && ENEMY_BASICS[mobileType] ? this._mobileFor(peer.id, mobileType, peer.look?.gender === 'female' ? 'female' : 'male', mobileType === DWARVEN_DRAGON_ID ? dragonArchiveOf(peer.shown.rc) : null) : null;
       if (bundle && typeof bundle.then !== 'function') { this._syncMobilePeer(peer, bundle, toScene, dt, eye, veil); continue; }
       // BEAST-PEER (2026-09-26, Mac: "Wereform uses daggerfall paperdoll when others see you transform"): A BEAST IS
       // NEVER THE PERSON. The doll is the peer's HUMAN paperdoll, and it stood for a beast whenever the beast's art was
@@ -1271,7 +1271,6 @@ export class RemotePlayers {
     const sink = seatedSink(shown);   // CARDS2c: seated, sunk by the seat's drop
     entry.batch.origin[0] = f[0]; entry.batch.origin[1] = f[1] - sink; entry.batch.origin[2] = f[2];
     entry.batch.conceal = veil;   // INVIS-LOOK
-    if (shown.rd === POSE_RIDE.Dragon) entry.batch.tint = shown.rc === 1 ? AETHERBRIGHT_WASH : null;   // AUDIT DRAGON: a tamed Aetherbright keeps its colours on every screen
     if (!veil || veil.named) this._shown.push({ peer, height: entry.height - sink });
   }
 

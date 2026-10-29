@@ -135,8 +135,8 @@
   {
     "name": "DRAGON3-the-remains-never",
     "file": "src/scenes/dragonHost.js",
-    "old": "    batch.tint = act.act === 'remains' ? REMAINS_WASH : s?.b ? AETHER_WASH : null;",
-    "new": "    batch.tint = s?.b ? AETHER_WASH : null;",
+    "old": "    batch.tint = act.act === 'remains' ? REMAINS_WASH : null;",
+    "new": "    batch.tint = null;",
     "tests": ["test/scenes/dragon3_host.test.js"]
   },
   {

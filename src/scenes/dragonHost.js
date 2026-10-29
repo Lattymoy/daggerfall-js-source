@@ -23,7 +23,7 @@ import { sceneCompassWord } from '../systems/compassWords.js';
 import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
 import { stateAnims, PRIMARY_ATTACK_ANIM_SPEED, HURT_ANIM_SPEED } from '../characters/mobile/mobileUnit.js';
 import { mobileBillboardSize } from '../world/rmbFlats.js';
-import { DWARVEN_DRAGON_ID, DWARVEN_DRAGON_ARCHIVE, AETHERBRIGHT_WASH } from '../characters/dwarvenDragonId.js';
+import { DWARVEN_DRAGON_ID, dragonArchiveOf } from '../characters/dwarvenDragonId.js';
 import { playerEntity, hurtPlayer, surfacePlayer } from '../characters/playerEntity.js';
 import { playerPainVoice, playPlayerVoice } from './hostCombat.js';
 import { flashPlayerDamage } from '../ui/damageFlash.js';
@@ -60,8 +60,8 @@ export const DRAGON_HIT_GAP_MS = 260;
 export const DRAGON_HITS_QUEUED = 8;
 /** A target's id in the shots' field and a missile's marks. */
 export const DRAGON_TARGET = 'dragon:0';
-/** The Aetherbright's wash until its own palette (DRAGON7), its remains' (its glow out), and the blows' colours by element. */
-export const AETHER_WASH = AETHERBRIGHT_WASH;   // AUDIT DRAGON: one home, the peers' riders read it too
+/** Its remains' wash (its glow out), and the blows' colours by element. The Aetherbright wears its own palette (DRAGON7:
+ *  archive 1801, characters/dwarvenDragonShiny.js), never a wash. */
 export const REMAINS_WASH = Object.freeze([0.42, 0.4, 0.38]);
 const COLOR_OF = Object.freeze({ fire: [1.0, 0.45, 0.1], shock: [0.6, 0.7, 1.0], null: [1.0, 0.62, 0.22] });
 const STYLE_OF = Object.freeze({ fire: TELEGRAPH_STYLE.fire, shock: TELEGRAPH_STYLE.shock });
@@ -124,7 +124,8 @@ export function createDragonHost(deps) {
   let hpSeen = null, hurtAt = -Infinity, roomAt = -Infinity, heardHurt = -Infinity;
   let siteY = null, live = null, foe = null, box = null;
   let queue = [], sentAt = -Infinity;
-  let tex = null, batch = null, pass;
+  const texs = new Map();   // DRAGON7: an archive's texture, asked once - the brass's and the Aetherbright's
+  let batch = null, batchArchive = null, pass;
   const _batches = [], _shapes = [], _slots = [];
   let _standIn = null;
   const standIn = () => (_standIn ??= bossStandIn({ mobile: DWARVEN_DRAGON_ID }, dragonName(0), () => { const s = deps.link.state(); return live?.mine ? wordShare(s.hp, s.max) : null; }));
@@ -247,24 +248,29 @@ export function createDragonHost(deps) {
     }
     _shapes.push({ sh, mesh: m.mesh });
   }
-  /** The texture its frames upload from, asked once. */
-  function texture() {
+  /** The texture an archive's frames upload from, asked once. @param {number} archive */
+  function texture(archive) {
+    const tex = texs.get(archive);
     if (tex && !(tex instanceof Promise)) return tex.failed ? null : tex;
-    if (!tex && deps.getTexture) tex = Promise.resolve().then(() => deps.getTexture(DWARVEN_DRAGON_ARCHIVE)).then((x) => { tex = x ? { tex: x } : { failed: true }; }, (e) => { tex = { failed: true }; console.warn('[dragon] its sprite', e?.message ?? e); });
+    if (!tex && deps.getTexture) {
+      texs.set(archive, Promise.resolve().then(() => deps.getTexture(archive)).then((x) => { texs.set(archive, x ? { tex: x } : { failed: true }); }, (e) => { texs.set(archive, { failed: true }); console.warn('[dragon] its sprite', e?.message ?? e); }));
+    }
     return null;
   }
-  /** Its body drawn: the frame its act shows my eye, at its feet and DRAGON_SCALE, washed for its look and its remains. */
-  function draw(act, feet, yaw, s, glint, t) {
-    const T = texture(), r = deps.renderer;
+  /** Its body drawn: the frame its act shows my eye, at its feet and DRAGON_SCALE, in its look's pictures (DRAGON7), washed
+   *  for its remains. */
+  function draw(act, feet, yaw, look, glint, t) {
+    const archive = dragonArchiveOf(look), T = texture(archive), r = deps.renderer;
     if (!T || !r?.createBillboardBatch) return;
     const fr = bossFrame(act, yaw, feet, deps.eye?.() ?? feet, (rec) => T.tex.getFrameCount?.(rec) ?? 1);
     const rkey = `${fr.record}#${fr.frame}`;
-    if (!r.textures?.has?.(`${DWARVEN_DRAGON_ARCHIVE}_${rkey}`)) deps.uploadRecordFrame?.(DWARVEN_DRAGON_ARCHIVE, fr.record, fr.frame);
+    if (!r.textures?.has?.(`${archive}_${rkey}`)) deps.uploadRecordFrame?.(archive, fr.record, fr.frame);
     const sz = mobileBillboardSize(T.tex, fr.record), k = DRAGON_SCALE;
-    if (!batch) { batch = r.createBillboardBatch(DWARVEN_DRAGON_ARCHIVE, rkey, { w: sz.w * k, h: sz.h * k }, [[0, 0, 0]]); batch.origin = [0, 0, 0]; }
+    if (batch && batchArchive !== archive) { r.destroyBillboardBatch?.(batch); batch = null; }   // another watch's dragon, another look
+    if (!batch) { batch = r.createBillboardBatch(archive, rkey, { w: sz.w * k, h: sz.h * k }, [[0, 0, 0]]); batch.origin = [0, 0, 0]; batchArchive = archive; }
     setBatchHitFlash(batch, gateHitFlash(hurtAt, roomAt, t));
     setBatchGlint(batch, glint);
-    batch.tint = act.act === 'remains' ? REMAINS_WASH : s?.b ? AETHER_WASH : null;
+    batch.tint = act.act === 'remains' ? REMAINS_WASH : null;
     batch.record = rkey;
     batch.size = { w: (fr.flip ? -sz.w : sz.w) * k, h: sz.h * k };
     if (batch.bounds) batch.bounds[3] = Math.hypot(sz.w, sz.h) * 0.5 * k;
@@ -313,7 +319,7 @@ export function createDragonHost(deps) {
       if (!(mine && (s.fell || s.gone)) && seen <= DRAGON_ROAR_R && roarSlot !== slot) { roarSlot = slot; play(cueOf('roar'), pos); }
       if (seen <= DRAGON_SIGHT_R) {
         const glint = act.act === 'windup' ? [...(COLOR_OF[DRAGON_BLOWS[blow?.a]?.el] ?? COLOR_OF.null), Math.min(1, 0.4 + (act.k ?? 0) * 0.6)] : mine && t < s.sh ? [1, 0.86, 0.5, 0.45] : null;
-        draw(act, pos, p.yw, mine ? s : null, glint, t);
+        draw(act, pos, p.yw, mine ? s.b : dragonLookOf(d.w), glint, t);   // DRAGON7: its look in the sky too, before any fight is mine
       }
       // my blows' marks: its body while it fights me, within a shot's reach; grounded, a swing's too
       if (mine && !s.fell && !s.gone && far <= DRAGON_FAN_R) {

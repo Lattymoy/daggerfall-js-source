@@ -25,7 +25,7 @@ test('DWARVEN-DRAGON its id and archive are its own: a monster past every classi
 });
 
 test('DWARVEN-DRAGON install registers its row, career and name once', () => {
-  assert.equal(installDwarvenDragon({ fetchBytes: async () => new Uint8Array(0) }), DWARVEN_DRAGON_FRAMES.reduce((a, b) => a + b, 0));
+  assert.equal(installDwarvenDragon({ fetchBytes: async () => new Uint8Array(0) }), 2 * DWARVEN_DRAGON_FRAMES.reduce((a, b) => a + b, 0));   // PIN MOVED (DRAGON7): the brass's and the Aetherbright's (1801, the same files turned)
   assert.equal(installDwarvenDragon(), 0, 'once');
   assert.equal(ENEMY_BASICS[String(DWARVEN_DRAGON_ID)].maleTexture, DWARVEN_DRAGON_ARCHIVE);
   assert.equal(customCareerTemplate(DWARVEN_DRAGON_ID)?.name, 'Dwarven Dragon');
@@ -33,7 +33,7 @@ test('DWARVEN-DRAGON install registers its row, career and name once', () => {
 });
 
 test('DWARVEN-DRAGON every picture ships, each record\'s frames one size, the attack\'s blow one of its frames', () => {
-  const entries = dwarvenDragonSpriteEntries({ fetchBytes: async () => new Uint8Array(0) });
+  const entries = dwarvenDragonSpriteEntries({ fetchBytes: async () => new Uint8Array(0) }).filter((e) => e.archive === DWARVEN_DRAGON_ARCHIVE);   // PIN MOVED (DRAGON7): the files that ship - the Aetherbright's 1801 is these turned at load
   assert.equal(entries.length, DWARVEN_DRAGON_FRAMES.reduce((a, b) => a + b, 0));
   const sizes = new Map();
   for (const e of entries) {

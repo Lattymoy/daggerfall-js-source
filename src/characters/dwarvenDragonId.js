@@ -5,5 +5,8 @@
 export const DWARVEN_DRAGON_ID = 512;
 /** Its pictures' archive: past Enemy Expansion's 1500-1708, a stand-in (no TEXTURE file carries it). */
 export const DWARVEN_DRAGON_ARCHIVE = 1800;
-/** The Aetherbright's wash over the brass, until its own palette (DRAGON7) - the boss's and a tamed rider's alike. */
-export const AETHERBRIGHT_WASH = Object.freeze([0.62, 0.82, 1.2]);
+/** DRAGON7: the Aetherbright's pictures - 1800's under its own palette (characters/dwarvenDragonShiny.js), never a wash. */
+export const AETHERBRIGHT_ARCHIVE = 1801;
+/** The archive a dragon of `look` is drawn from: 1 the Aetherbright, anything else the brass - the boss's, a peer's
+ *  rider's and the tamed mount's icon alike. @param {number | null | undefined} look */
+export const dragonArchiveOf = (look) => (look === 1 ? AETHERBRIGHT_ARCHIVE : DWARVEN_DRAGON_ARCHIVE);

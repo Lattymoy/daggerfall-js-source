@@ -164,8 +164,8 @@
   {
     "name": "AUDIT-DRAGON-the-riders-look-unread",
     "file": "src/net/remotePlayers.js",
-    "old": "    if (shown.rd === POSE_RIDE.Dragon) entry.batch.tint = shown.rc === 1 ? AETHERBRIGHT_WASH : null;   // AUDIT DRAGON: a tamed Aetherbright keeps its colours on every screen\n",
-    "new": "",
+    "old": "mobileType === DWARVEN_DRAGON_ID ? dragonArchiveOf(peer.shown.rc) : null)",
+    "new": "mobileType === DWARVEN_DRAGON_ID ? null : null)",
     "tests": [
       "test/net/dragon/dragonaudit_client.test.js"
     ]

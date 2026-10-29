@@ -5,8 +5,8 @@
 // stored), worthless to the wealth measure, and named by the tame the account service drew (server-account/src/dragons.js
 // `dragon_mounts`), which the judge holds it to. Its row registers at import, so the item law knows it headless. Not a
 // DFU member: Daggerfall has no flying mount. Ledger A (DRAGON).
-import { registerCustomTemplates } from '../item/itemTemplates.js';
-import { DWARVEN_DRAGON_ARCHIVE } from '../../characters/dwarvenDragonId.js';
+import { registerCustomTemplates, registerOwnItemImage } from '../item/itemTemplates.js';
+import { DWARVEN_DRAGON_ARCHIVE, dragonArchiveOf } from '../../characters/dwarvenDragonId.js';
 
 export const DRAGON_MOUNT_TEMPLATE = 1820;
 export const DRAGON_MOUNT_GROUP = 'Transportation';
@@ -37,6 +37,8 @@ export const dragonMountOf = (/** @type {any[] | null | undefined} */ items) => 
 export const hasDragon = (/** @type {any[] | null | undefined} */ items) => !!dragonMountOf(items);
 /** A dragon item's look: 1 the Aetherbright, else the brass. */
 export const dragonLookOfItem = (/** @type {any} */ it) => (it?.dragonLook === 1 ? 1 : 0);
+// DRAGON7: an Aetherbright's pack picture is its own colours (archive 1801), the brass's its row's
+registerOwnItemImage(DRAGON_MOUNT_TEMPLATE, (it) => ({ archive: dragonArchiveOf(dragonLookOfItem(it)), record: DRAGON_MOUNT_ICON[1] }));
 /** Whether a dragon item is one a tame made: its own template and a tame's id (the judge asks the service's row). */
 export const dragonMountWellFormed = (/** @type {any} */ it) => isDragonMount(it) && typeof it.dragonId === 'string' && DRAGON_ID_RE.test(it.dragonId)
   && (it.dragonLook === undefined || it.dragonLook === 1);

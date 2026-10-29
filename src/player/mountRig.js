@@ -31,6 +31,7 @@
 // that does nothing.
 
 import { TRANSPORT_MODES, isRiding, isHorseRide, hasHorse, hasCart, hasDragon } from '../systems/transport.js';
+import { dragonMountOf, dragonLookOfItem } from '../systems/dragon/dragonMount.js';   // DRAGON7: the ridden dragon's look, for its saddle's colours
 import { createDragonSaddle } from './dragonSaddle.js';   // DRAGON5: the tamed dragon's saddle over the view
 import { onDragonFlight } from './dragonRide.js';   // AUDIT DRAGON: its takeoff and its landing heard
 import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
@@ -135,7 +136,7 @@ export function createMountRig({
   }
   setPitchFloorProvider(() => (enhancedRiding?.() && isHorseRide(player.transportMode) && !paused() ? _terrainAngle + RR_RIDING.pitchMaxOffset : null));   // AUDIT-RR2 G26: the else arm (`IsGamePaused || !IsRiding`, :122-131) resets PitchMaxLimit every frame
   let art = null;                          // TR2: the four CFA frames of the mount under you
-  const saddle = createDragonSaddle({ renderer });   // DRAGON5: a dragon's rider sees its saddle, never a horse's neck
+  const saddle = createDragonSaddle({ renderer, look: () => dragonLookOfItem(dragonMountOf(playerEntity?.items ?? [])) });   // DRAGON5: a dragon's rider sees its saddle, never a horse's neck; DRAGON7: in its look's colours
   // AUDIT DRAGON: its takeoff is the dragon's own roar (a Dragonling's bark an octave down, scenes/dragonHost.js's voice),
   // its landing the body's thud pitched down - on the mount's volume
   onDragonFlight((what) => audio.playOneShot(what === 'took-off' ? ENEMY_BASICS[DRAGONLING]?.barkSound ?? SOUND.BodyFall : SOUND.BodyFall, RIDING_VOLUME_SCALE * horseVolume(), what === 'took-off' ? 0.5 : 0.6));
