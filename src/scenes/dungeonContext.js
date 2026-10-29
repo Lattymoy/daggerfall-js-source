@@ -8179,8 +8179,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // before the water and the screen quads that end the world pass (WATER-D1's law, below)
     _npcLane?.drawVeiled();   // MWNPC5b: the concealed foes' bodies, translucent - after the last opaque flat, as the peers' below
     opts.lateWorldDraw?.();
-    delve.drawPass(proj, view, eye);   // DELVE II: the wards' and plates' marks on their floors, after the last opaque flat
     senseFrame(eye);   // SENSE1: the look round - asked for (Info mode), then lit; after the last opaque flat, as the nodes' glow is
+    delve.drawPass(proj, view, eye);   // DELVE II: the wards' and plates' marks on their floors, after the last opaque flat (the look round's glow before them)
     // WATER-D1 (2026-09-21, LostMyLeg: "you can see 2 Watertiles/textures
     // floating around ... the console says 2 Water in every dungeon";
     // Mac's AIWATER report before it: "shown well below the floor, in

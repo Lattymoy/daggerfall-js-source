@@ -345,7 +345,7 @@ test('DLV2 THE WIRING (HOST-SPLIT): the context builds it after its api, ticks i
   const ctx = rd('src/scenes/dungeonContext.js');
   assert.match(ctx, /const delve = createDelveHost\(\{ api, deps, location: dfLocation, blocks: dungeon\.blocks, hearths: dungeonHearths, fires: dungeonFires, player: \(\) => playerEntity, rollPile: \(\) => rollPileItems\(\), online: onlineRoom \}\);\n {2}return api;/);
   assert.match(ctx, /camps\.tick\(dt\);[^\n]*\n {4}delve\.frame\(dt, playerFeet\);/);
-  assert.match(ctx, /opts\.lateWorldDraw\?\.\(\);\n {4}delve\.drawPass\(proj, view, eye\);/);
+  assert.match(ctx, /opts\.lateWorldDraw\?\.\(\);\n {4}senseFrame\(eye\);[^\n]*\n {4}delve\.drawPass\(proj, view, eye\);/);
   assert.match(ctx, /if \(kind === 'delve'\) return delve\.press\(key, mode\);/);
   assert.match(ctx, /delve: delve\.snapshot\(\),/);
   assert.match(ctx, /if \(truncate\) delve\.restore\(w\.delve\);/);
