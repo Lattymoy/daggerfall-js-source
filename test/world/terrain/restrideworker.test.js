@@ -50,7 +50,7 @@ test('PERF-EXT26: restrideGrid is the one grid law - the kernel builds its grid 
     }
   }
   const src = readFileSync(new URL('../../../src/world/terrain/terrainGen.js', import.meta.url), 'utf8');
-  assert.match(src, /const grid = restrideGrid\(\{ woods, px, py, stride, samples, landforms, bed: bed \? tilemapBytes : null \}\);/, 'the build runs the same law (LANDFORM1-3: with the landforms it shaped the samples by)');   // PIN MOVED (AUDIT WATER-NEXT P1): and the bed with it
+  assert.match(src, /const grid = restrideGrid\(\{ woods, px, py, stride, samples, landforms, bed: bed \? tilemapBytes : null, meets: meetsOf\(meets, landforms\) \}\);/, 'the build runs the same law (LANDFORM1-3: with the landforms it shaped the samples by)');   // PIN MOVED (FB1029 ACROSS-EDGE): and the town meets   // PIN MOVED (AUDIT WATER-NEXT P1): and the bed with it
 });
 
 test('PERF-EXT26: the REAL worker shell answers a grid job by its id, the bytes the main thread builds, its arrays transferred - and a grid before init says so under its id', async () => {
@@ -129,9 +129,11 @@ test('PERF-EXT26: the host sends every promotion to a worker that is up - on the
   const off = WORLD.slice(WORLD.indexOf('  function promoteOffThread(p) {'), WORLD.indexOf('  function restrideTerrain('));
   assert.match(off, /if \(built\.get\(key\) !== p\) return;[^\n]*\n    if \(strideFor\(p\.px, p\.py\) === p\._stride\) return;/, 'nothing is sent for a pixel gone or no longer promoted');
   // PIN MOVED (AUDIT WATER-NEXT P1/H1): the bed rides the job, and a cap's TileMap that moved meanwhile is carved by
-  assert.match(off, /terrainGen\.grid\(\{ px: p\.px, py: p\.py, stride: 1, samples: p\.samples, landform, bed: bedBytes \}\)\.then\(\(grid\) => \{[^\n]*\n      if \(built\.get\(key\) !== p\) return;[^\n]*\n      if \(strideFor\(p\.px, p\.py\) !== 1 \|\| p\._stride === 1\) return;[^\n]*\n      if \(waterOn && bedBytesOf\(p\) !== bedBytes\) grid = [^\n]*\n      restrideTerrain\(p, 1, grid\);/, 'the reply lands only on the pixel that asked, still wanting stride 1');
+  // PIN MOVED (FB1029 ACROSS-EDGE): the promotion's ground is gridGround's - the pixel, its samples and its town meets
+  assert.match(off, /terrainGen\.grid\(\{ \.\.\.gridGround\(p\), stride: 1, landform, bed: bedBytes \}\)\.then\(\(grid\) => \{[^\n]*\n      if \(built\.get\(key\) !== p\) return;[^\n]*\n      if \(strideFor\(p\.px, p\.py\) !== 1 \|\| p\._stride === 1\) return;[^\n]*\n      if \(waterOn && bedBytesOf\(p\) !== bedBytes\) grid = [^\n]*\n      restrideTerrain\(p, 1, grid\);/, 'the reply lands only on the pixel that asked, still wanting stride 1');
+  // PIN MOVED (FB1029 ACROSS-EDGE): the pixel's ground gridGround's, its town meets with it
   // PIN MOVED (BAY-LEFT-GROUND, D1): and the sites past the Bay beside the Bay's (test/world/terrain/bayleftground_sites.test.js)
-  assert.match(WORLD, /  function restrideTerrain\(p, stride, grid = restrideGrid\(\{ woods, px: p\.px, py: p\.py, stride, samples: p\.samples, landform, roads: terrainGen\.roads\(\), sites: _landformSites, beyond: beyondSites\.beyond\(\), climates: _landformClimates, bed: waterOn \? bedBytesOf\(p\) : null \}\)\) \{/, 'one swap, the grid from the worker or built here by the same law (LANDFORM1-3: the build\'s ghost rows)');
+  assert.match(WORLD, /  function restrideTerrain\(p, stride, grid = restrideGrid\(\{ \.\.\.gridGround\(p\), woods, stride, landform, roads: terrainGen\.roads\(\), sites: _landformSites, beyond: beyondSites\.beyond\(\), climates: _landformClimates, bed: waterOn \? bedBytesOf\(p\) : null \}\)\) \{/, 'one swap, the grid from the worker or built here by the same law (LANDFORM1-3: the build\'s ghost rows)');
   assert.match(WORLD, /else \{ restridePending\.delete\(`\$\{p\.px\},\$\{p\.py\}`\); restrideTerrain\(p, want\); \}\n      \}\n      if \(terrainGen\.threaded\) spendRestrides\(\);/, 'the crossing frame sends them, ahead of the new pixels\' jobs');
   assert.doesNotMatch(WORLD, /buildTerrainGrid\(p\.samples/, 'the host keeps no second spelling of the grid');
 });

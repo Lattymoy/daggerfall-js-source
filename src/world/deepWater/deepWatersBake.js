@@ -460,6 +460,7 @@ export const meetClass = (c, met) => (c === PIXEL_SEA && met ? PIXEL_MIXED : c);
 export function bakeMeetsAt(woods, locationRectAt) {
   const kept = new Map();
   const meetOf = (x, y) => {
+    // BAY-OWN: a meet is a Bay town's (MAPS.BSA), on the bake's own grid of the Bay
     const k = y * MAP_W + x;
     if (!kept.has(k)) { const r = locationRectAt(x, y), S = r?.meets && r.shape ? generateSamples(woods, x, y) : null; kept.set(k, S ? townMeetOf(S, r.shape, S) : null); }
     return kept.get(k);
@@ -467,6 +468,7 @@ export function bakeMeetsAt(woods, locationRectAt) {
   return (px, py) => {
     let out = null;
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      // BAY-OWN: the bake's own grid, the Bay's - a meet past it there is none
       const x = px + dx, y = py + dy, m = x >= 0 && y >= 0 && x < MAP_W && y < MAP_H ? meetOf(x, y) : null;
       if (m) (out ??= []).push({ px: x, py: y, meet: m });
     }

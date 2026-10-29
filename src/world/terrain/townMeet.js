@@ -14,7 +14,7 @@ export const MEET_REACH = 120;
 /** The least a town must miss its edge by to raise it, metres - under it the town's own ease stands as it was. */
 export const MEET_MIN_M = 0.5;
 /** A pixel's sides, and the sample (x, y) the k-th of each edge is (y north). */
-export const SIDES = Object.freeze(['N', 'E', 'S', 'W']);
+export const MEET_SIDES = Object.freeze(['N', 'E', 'S', 'W']);
 const edgeAt = (side, k, span) => (side === 'N' ? [k, span] : side === 'S' ? [k, 0] : side === 'E' ? [span, k] : [0, k]);
 
 /**
@@ -32,7 +32,7 @@ export function townMeetOf(S, shape, ground, hDim = HEIGHTMAP_DIMENSION) {
   /** @type {Record<string, ?{ R: Float32Array, E: Float32Array }>} */
   const edges = {};
   let any = false;
-  for (const side of SIDES) {
+  for (const side of MEET_SIDES) {
     const E = new Float32Array(hDim), R = new Float32Array(hDim);
     let moved = false, beyond = false;
     for (let k = 0; k <= span; k++) {
@@ -52,7 +52,7 @@ function eachRaised(px, py, meets, span, fn) {
   for (const { px: qx, py: qy, meet } of meets ?? []) {
     if (!meet || Math.abs(qx - px) > 1 || Math.abs(qy - py) > 1) continue;
     const ox = (qx - px) * span, oy = (py - qy) * span;
-    for (const side of SIDES) {
+    for (const side of MEET_SIDES) {
       const edge = meet.edges[side];
       if (!edge) continue;
       for (let k = 0; k <= span; k++) if (edge.R[k] !== edge.E[k]) { const [ex, ey] = edgeAt(side, k, span); fn(ox + ex, oy + ey, edge.R[k]); }
