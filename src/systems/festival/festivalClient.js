@@ -101,12 +101,14 @@ function learn(/** @type {any} */ d) {
   const items = _doors.entity()?.items;
   if (Number.isSafeInteger(d.cakes) && d.cakes >= 0) {
     _state = { ..._state, cakes: d.cakes };
-    if (Array.isArray(items) && restackSoulCakes(items, d.cakes)) _doors.saved();
+    // OVERLOAD-EASE (2026-10-29): a restack is no save - the stack mirrors the service's count (bound, worth nothing) and
+    // the next answer lays it again; every find queued a realm checkpoint
+    if (Array.isArray(items)) restackSoulCakes(items, d.cakes);
     moved = true;
   }
   if (Number.isSafeInteger(d.bowls) && d.bowls >= 0) {
     _state = { ..._state, bowls: d.bowls };
-    if (Array.isArray(items) && restackHearthOfferings(items, d.bowls)) _doors.saved();
+    if (Array.isArray(items)) restackHearthOfferings(items, d.bowls);   // OVERLOAD-EASE: as the cakes
     moved = true;
   }
   if (Array.isArray(d.wares)) { _state = { ..._state, wares: festivalWaresHeld(d.wares.join(' ')) }; moved = true; }
