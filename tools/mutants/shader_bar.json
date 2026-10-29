@@ -112,7 +112,7 @@
   {
     "name": "GB-enhanced-menu-unwired",
     "file": "src/main.js",
-    "old": "      await gfxPrep(true);   // before the menu: the panel's key listener is laid first\n      return runEnhancedMenu();",
+    "old": "    await gfxBar;\n    choice = await runCinematicFrontDoor(",
     "new": "      return runEnhancedMenu();",
     "tests": [
       "test/ui/gfxprepbar.test.js"
@@ -122,7 +122,7 @@
   {
     "name": "GB-classic-menu-left-up",
     "file": "src/main.js",
-    "old": "  const action = await runMenu(canvas, renderer, status);\n  gfxPrep(false);",
+    "old": "  const action = await runMenu(canvas, renderer, status).finally(() => gfxPrep(false));",
     "new": "  const action = await runMenu(canvas, renderer, status);",
     "tests": [
       "test/ui/gfxprepbar.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "GB-main-menu-first",
     "file": "src/main.js",
-    "old": "      await gfxPrep(true);   // before the menu: the panel's key listener is laid first",
-    "new": "      void gfxPrep(true);   // before the menu: the panel's key listener is laid first",
+    "old": "    await gfxBar;\n    choice = await runCinematicFrontDoor(",
+    "new": "    choice = await runCinematicFrontDoor(",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
@@ -198,5 +198,15 @@
       "test/render/shadermount.test.js"
     ],
     "note": "GFX-BAR: the bar told the mount set is queued before it is"
+  },
+  {
+    "name": "FS-tab-leaves-panel",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "    if (e.type === 'keydown' && e.key === 'Tab') {",
+    "new": "    if (e.type === 'keydown' && e.key === 'Tab' && false) {",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "FIX-STUTTER: Tab moves the focus to a menu door behind the panel"
   }
 ]

@@ -136,6 +136,11 @@ export function mountGfxPrep({ gl, doc = document, win = globalThis, nav = win.n
     if (!shade) return;
     e.stopImmediatePropagation();
     if (e.type === 'keydown' && e.key === 'Escape') { e.preventDefault(); closePanel(); }
+    if (e.type === 'keydown' && e.key === 'Tab') {   // the focus stays in the panel: never a menu door behind it
+      e.preventDefault();
+      const keys = /** @type {Element[]} */ ([...shade.querySelectorAll('button')]), at = doc.activeElement ? keys.indexOf(doc.activeElement) : -1;
+      /** @type {HTMLElement|undefined} */ (keys[(at + (e.shiftKey ? -1 : 1) + keys.length) % keys.length])?.focus?.();
+    }
   };
   for (const type of ['keydown', 'keyup']) win.addEventListener?.(type, onKey, true);
   doc.body.append(root);
@@ -145,6 +150,7 @@ export function mountGfxPrep({ gl, doc = document, win = globalThis, nav = win.n
   const paint = () => {
     bar.hidden = state.phase === 'idle';
     bar.classList.toggle('gone', state.phase === 'gone');
+    if (state.phase === 'gone') return;   // it fades as it stood: a bar that gave up never says ready
     label.textContent = state.phase === 'filling' ? w.preparing : w.ready;
     const pct = state.total ? Math.round((100 * state.done) / state.total) : 0;
     fill.style.width = `${state.phase === 'filling' ? pct : 100}%`;

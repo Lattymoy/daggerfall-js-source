@@ -240,6 +240,16 @@ test('SHADER-EASE MOUNT-START: the mount set waits for the batch ahead of the cl
   assert.equal(mountSettled(), true, 'and none is to come');
 });
 
+test('SHADER-EASE MOUNT-START: a pass the host built before the queue came is never started again (mutant: the queue relinks it)', async () => {
+  const rec = recordingGl();
+  const r = new Renderer(rec.canvas);
+  const sky = rec.built(() => new SkyRenderer(rec.gl));   // the host mounted first: built cold
+  const before = rec.linked.length;
+  const list = withPrefs(ALL_ON, () => mountPrograms(r, '?sky=enhanced'));
+  await withPrefs(ALL_ON, () => startMountPrograms(r, '?sky=enhanced', async () => {}));
+  assert.equal(rec.linked.length - before, list.length - sky.length, 'each but the built sky started once');
+});
+
 test('SHADER-EASE QUEUE-ORDER: the play queue holds the nodes\' glow and the sea fight\'s effects, as their builds compile them, and ends with the auras\' and the armory\'s (mutants: the glow left out; the long ones first again; a pair drifted)', () => {
   const rec = recordingGl();
   const glow = rec.built(() => new NodeGlowRenderer(rec.gl));

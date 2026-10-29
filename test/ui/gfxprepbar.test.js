@@ -141,6 +141,7 @@ function fakeDom() {
       remove() { if (n.parent) n.parent.children.splice(n.parent.children.indexOf(n), 1); n.parent = null; },
       all() { return [n, ...n.children.flatMap((c) => c.all())]; },
       querySelector(sel) { return n.all().find((c) => c !== n && c.className.split(' ').includes(sel.slice(1))) ?? null; },
+      querySelectorAll(tag) { return n.all().filter((c) => c !== n && c.tagName === tag.toUpperCase()); },
       text() { return n.all().map((c) => c.textContent).join(' '); },
     };
     return n;
@@ -223,6 +224,10 @@ test('FIX-STUTTER the panel: the button opens it with the paths and a Copy each;
   assert.equal(doc.activeElement?.className, 'dfgfx-close', 'Close takes the focus');
   assert.equal(press('ArrowDown').stopped, true, 'the menu under it hears nothing');
   assert.equal(press('ArrowDown', 'keyup').stopped, true);
+  const tab = press('Tab');
+  assert.ok(tab.prevented, 'Tab stays in the panel');
+  assert.equal(doc.activeElement?.tagName, 'BUTTON');
+  assert.ok(g.panel().all().includes(doc.activeElement), 'on one of the panel\'s own buttons');
   const esc = press('Escape');
   assert.ok(esc.stopped && esc.prevented);
   assert.equal(g.panel(), null);
@@ -265,9 +270,9 @@ test('GFX-BAR and FIX-STUTTER words: every one within PLAIN-TEXT', () => {
 
 test('GFX-BAR wiring: main.js raises the bar with each boot menu and drops it once the menu is left', () => {
   const main = readFileSync(new URL('../../src/main.js', import.meta.url), 'utf8');
-  assert.match(main, /const gfxBar = import\('\.\/ui\/gfxPrepBar\.js'\);/, 'loaded at boot, so the bar is up before the menu');
-  assert.match(main, /const gfxPrep = \(on\) => gfxBar\.then\(\(m\) => \(on \? m\.gfxPrepUp\(renderer\.gl\) : m\.gfxPrepDown\(\)\)\)\.catch\(\(\) => \{\}\);/);
-  assert.match(main, /runCinematicFrontDoor\(async \(\) => \{\s*status\('main menu'\);\s*await gfxPrep\(true\);[^\n]*\n\s*return runEnhancedMenu\(\);/, 'the bar\'s key listener laid before the menu\'s');
+  assert.match(main, /const gfxBar = import\('\.\/ui\/gfxPrepBar\.js'\)\.then\(\(m\) => \{ gfxMod = m; \}\)\.catch\(\(\) => \{\}\);/, 'loaded at boot');
+  assert.match(main, /const gfxPrep = \(on\) => \{ try \{ if \(on\) gfxMod\?\.gfxPrepUp\(renderer\.gl\); else gfxMod\?\.gfxPrepDown\(\); \}/, 'mounted at once: no wait between it and the menu');
+  assert.match(main, /await gfxBar;\s*choice = await runCinematicFrontDoor\(\(\) => \{\s*status\('main menu'\);\s*gfxPrep\(true\);[^\n]*\n\s*return runEnhancedMenu\(\);/, 'the callback stays synchronous: the intro finds the menu host in the same step');
   assert.match(main, /\}\)\.finally\(detachMenuPad\);[^\n]*\n\s*gfxPrep\(false\);/);
-  assert.match(main, /await gfxPrep\(true\);\s*const action = await runMenu\(canvas, renderer, status\);\s*gfxPrep\(false\);/);
+  assert.match(main, /await gfxBar;\s*gfxPrep\(true\);\s*const action = await runMenu\(canvas, renderer, status\)\.finally\(\(\) => gfxPrep\(false\)\);/);
 });

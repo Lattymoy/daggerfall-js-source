@@ -234,5 +234,15 @@
       "test/render/shadermount.test.js"
     ],
     "note": "MOUNT-START: ?world beside a city door is the world host (main.js reads ?world first)"
+  },
+  {
+    "name": "SM-queue-relinks-built",
+    "file": "src/render/glProgram.js",
+    "old": "  for (const [k] of keyed) if (!started.has(k) && !taken.has(k)) started.set(k, queued());",
+    "new": "  for (const [k] of keyed) if (!started.has(k)) started.set(k, queued());",
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
+    "note": "MOUNT-START: a queue after the host mounted links its built passes again"
   }
 ]
