@@ -272,12 +272,13 @@
   },
   {
     "name": "SERPENT2-any-day-site-kept",
-    "file": "server/src/index.js",
-    "old": "    if (!serpentSiteDayOk(m.d, now)) return;\n",
-    "new": "",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "m?.sl === SERPENT_SITE_LAW && serpentSiteDayOk(m.d, nowMs);",
+    "new": "m?.sl === SERPENT_SITE_LAW;",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE E3): the hub's day check is serpentHerald.js serpentSiteWordOk's, with the site law."
   },
   {
     "name": "SERPENT2-site-axes-swapped",
@@ -336,11 +337,12 @@
   {
     "name": "SERPENT2-place-sent-raw",
     "file": "src/net/online.js",
-    "old": "sz: Math.round(sz), pl: gatePlaceWire(place) }",
-    "new": "sz: Math.round(sz), pl: place }",
+    "old": "sz: Math.round(sz), pl: gatePlaceWire(place), sl: SERPENT_SITE_LAW }",
+    "new": "sz: Math.round(sz), pl: place, sl: SERPENT_SITE_LAW }",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE E3): the word carries its site law."
   },
   {
     "name": "SERPENT2-point-unrounded",

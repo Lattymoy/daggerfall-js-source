@@ -14,7 +14,7 @@
 // Not a DFU member: Daggerfall has no world events. Ledger A (SUPER-DUNGEONS).
 import { sdPhase, sdStands, sdMarked, sdNameIn, sdWhere, SD_COLLAPSE_MS } from '../../net/superDungeon/sdLaw.js';
 import { timerText } from '../eventTimers.js';
-import { pixelOfLoc } from './sdSite.js';
+import { cityPixelOf } from './sdSite.js';
 import { MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS } from '../rumorMill.js';
 import { sdMarksOf, sdEndingOf, sdOmensOf } from '../../net/superDungeon/sdMarks.js';   // SD18c: the Ending a Hollow keeps, by its slot
 
@@ -155,7 +155,7 @@ export const sdRumorLine = (city, ending = null) => `They say the air goes brass
 export function sdRumor(rec, hollow, now, here, session, { rolls = Math.random } = {}) {
   const phase = sdPhase(rec, now);
   if (!rec || (phase !== 'risen' && phase !== 'found') || !hollow?.site?.city || hollow.s !== rec.s || !here || !session) return null;
-  const c = pixelOfLoc(hollow.site.city);
+  const c = cityPixelOf(hollow.site.city);
   if (here.px !== c.px || here.py !== c.py) return null;
   if (!((session.numAnswersGivenTellMeAboutOrRumors | 0) < MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS || session.isSpyMaster)) return null;
   if (!(rolls() < SD_RUMOR_CHANCE)) return null;

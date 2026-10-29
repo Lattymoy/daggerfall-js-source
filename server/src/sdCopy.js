@@ -4,8 +4,8 @@
 // word, _instanceKinOf); the hub silent is busy. The hub keeps one life and one win an account a Hollow across copies:
 // a realm asks it before a newcomer and tells it each death, kept with the copy it was in - SD-BACK: that copy takes the
 // dead back, no other does. SD-SOLO: a shared Hour (`p<n>`) admits anyone to SD_PUB_SEATS; the Worker finds the open one.
-import { SD_KEY, sdReceiptKey, SOCIAL_ROOM, SD_TELL_RETRY_MS } from '../../src/net/wire.js';
-import { sdOwnerOfRoom, sdRoomKey, sdPubOwner, isSdPubOwner, SD_NO_FALLEN, SD_PUB_SEATS, SD_PUB_MAX } from '../../src/net/superDungeon/sdLaw.js';
+import { SD_KEY, sdReceiptKey, sdLaneKey, SOCIAL_ROOM, SD_TELL_RETRY_MS } from '../../src/net/wire.js';
+import { sdOwnerOfRoom, sdRoomKey, sdPubOwner, isSdPubOwner, sdLaneOf, SD_NO_FALLEN, SD_PUB_SEATS, SD_PUB_MAX } from '../../src/net/superDungeon/sdLaw.js';
 import { instanceOwnerOf } from '../../src/net/instanceRoom.js';
 import { ROOM_CALL_MS } from './relayScale.js';
 
@@ -15,8 +15,9 @@ export const SD_NO_PARTY = 'This Hour belongs to another party.';
 export const SD_NO_WON = 'You have already broken this Hour.';
 /** The hub's internal door a realm asks and tells of an account's life and win this Hollow. */
 export const SD_INTERNAL_ACCT = '/internal/sd/acct';
-/** Where the hub keeps an account's death in this Hollow - `{ s, d: 1 }` (one Hollow stands at a time). */
-export const sdAcctKey = (sub) => `sdac:${sub}`;
+/** Where the hub keeps an account's death in its lane's Hollow - `{ s, d: 1, o }` (one Hollow stands a lane at a time).
+ *  AUDIT TAMRIEL-WIDE B1: a lane past the Bay's under `sdac:<sub>.<lane>` (sdReceiptKey's law); the Bay's as it was. */
+export const sdAcctKey = (sub, lane = 0) => (lane ? `sdac:${sub}.${lane}` : `sdac:${sub}`);
 const SUB_RE = /^[A-Za-z0-9_-]{4,64}$/;
 
 /**
@@ -71,19 +72,21 @@ export function sdAcctTell(room, key, sub) {
 }
 
 /** THE HUB'S ANSWER. `may`: 'won' for an account holding this slot's receipt, 'down' for one that died in another copy;
- *  `down` kept, with its copy (the first death's). A word for another slot than the hub's record is ok and kept nowhere.
+ *  `down` kept, with its copy (the first death's). A word for another slot than its lane's record is ok and kept nowhere.
+ *  AUDIT TAMRIEL-WIDE B1: the slot's own lane's record, death and receipt (WW5's keys) - it read the Bay's alone.
  *  @param {any} room the hub @param {Request} request */
 export async function sdAcctInternal(room, request) {
   let body = null;
   try { body = await request.json(); } catch { body = null; }
   const c = validSdAcct(body);
   if (!c) return Response.json({ ok: false }, { status: 400 });
-  const rec = await room.state.storage.get(SD_KEY);
+  const lane = sdLaneOf(c.s);
+  const rec = await room.state.storage.get(sdLaneKey(SD_KEY, lane));
   if (!rec || rec.s !== c.s) return Response.json({ ok: true });
-  const d = await room.state.storage.get(sdAcctKey(c.a));
+  const d = await room.state.storage.get(sdAcctKey(c.a, lane));
   const mine = d && d.s === c.s ? d : null;
-  if (c.op === 'down') { if (!mine) await room.state.storage.put(sdAcctKey(c.a), { s: c.s, d: 1, o: c.o }); return Response.json({ ok: true }); }
-  const rc = await room.state.storage.get(sdReceiptKey(c.a));
+  if (c.op === 'down') { if (!mine) await room.state.storage.put(sdAcctKey(c.a, lane), { s: c.s, d: 1, o: c.o }); return Response.json({ ok: true }); }
+  const rc = await room.state.storage.get(sdReceiptKey(c.a, lane));
   if (rc && typeof rc === 'object' && rc.s === c.s) return Response.json({ ok: true, w: 'won' });
   return Response.json({ ok: true, ...(mine && mine.o !== c.o ? { w: 'down' } : {}) });
 }

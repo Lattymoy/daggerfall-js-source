@@ -23,9 +23,9 @@ import { capitalPlaceId, capitalSpan, CAPITALS } from '../../../src/world/tamrie
 import { portIdOf } from '../../../src/world/worldWide/worldPorts.js';
 import { CROSS_LANE_PATH_PX, createWorldLanes, worldLaneWater, BEYOND_LANE_MAX_PX } from '../../../src/scenes/naval/worldLanes.js';
 import { validSerpentOut, SOCIAL_ROOM, POSE_BOUND } from '../../../src/net/wire.js';
-import { serpentAtWord, agreedSerpentSite } from '../../../src/net/serpent/serpentHerald.js';
+import { serpentAtWord, agreedSerpentSite, SERPENT_SITE_RECORD } from '../../../src/net/serpent/serpentHerald.js';
 import { foldGateSite } from '../../../src/net/gate/gateHerald.js';
-import { serpentTimes, serpentRing, SERPENT_EVERY_DAYS } from '../../../src/net/serpent/serpentLaw.js';
+import { serpentTimes, serpentRing, SERPENT_EVERY_DAYS, SERPENT_SITE_LAW } from '../../../src/net/serpent/serpentLaw.js';
 import { createSerpentLink, SERPENT_STATE_EMPTY } from '../../../src/net/serpent/serpentLink.js';
 import { worldSerpentSite, siteOfWord, findSerpentSite, sitePixelOfNative } from '../../../src/systems/serpent/serpentSite.js';
 import { setTamrielTrace } from '../../../src/world/tamriel/tamrielLand.js';
@@ -333,7 +333,7 @@ async function withHub(fn) {
   Date.now = () => clock;
   console.warn = () => {};
   const join = async (n) => { const ws = r.connect(); await r.hello(ws, `peer-${n}`, null, { name: n, acct: `acct-${n}`, asecret: `secret-of-acct-${n}` }); clock += 10; return ws; };
-  const site = (ws, d, s) => r.raw(ws, JSON.stringify({ t: 'serpent', k: 'site', d, ...s }));
+  const site = (ws, d, s) => r.raw(ws, JSON.stringify({ t: 'serpent', k: 'site', d, ...s, sl: SERPENT_SITE_LAW }));   // PIN MOVED (AUDIT TAMRIEL-WIDE E3): a word of the hub's own site law
   try { await fn({ r, join, site, set: (t) => { clock = t; } }); } finally { Date.now = realNow; console.warn = warn; }
 }
 const ats = (ws) => ws.sent.filter((w) => w.t === 'serpent' && w.k === 'at');
@@ -358,7 +358,7 @@ test('WW7-12 THE HUB TELLS: every game online hears where the accounts agree the
     set(serpentTimes(DAY + SERPENT_EVERY_DAYS).omenAt);
     const g = await join('g');
     assert.deepEqual(ats(g), [], 'its day gone: a hello hears none');
-    assert.equal(r.store.get('serpentsite').d, DAY);
+    assert.equal(r.store.get(SERPENT_SITE_RECORD).d, DAY);   // PIN MOVED (AUDIT TAMRIEL-WIDE E3): the record its site law's
   });
   const s = rd('server/src/index.js');
   assert.match(s, /this\._serpentSiteRec = rec;\n\s*this\._serpentAtTell\(had, rec, now\);/);

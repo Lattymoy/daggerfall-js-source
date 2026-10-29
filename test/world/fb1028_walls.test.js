@@ -516,6 +516,16 @@ test('AUDIT FB1028 YARDS the law: on the ground as it stands now a yard whose pl
   for (const [i, a] of kept.entries()) for (const b of kept.slice(i + 1)) assert.ok(apart(a, b), `${a.kind} clear of ${b.kind}`);
 });
 
+test('AUDIT TAMRIEL-WIDE E5: a yard placed again keeps off a port\'s places - a shipyard standing where the broken stable would go sends the stable elsewhere, clear of it (mutant: the ports\' ground left open)', () => {
+  const yl = grassTown(), was = ys.townGroundOf(yl, {}), sites = [...ys.yardSitesOn(was), ...ys.craftYardSitesOn(was)];
+  const now = () => ys.townGroundOf(yl, {}, shutOver(sites[0]));
+  const alone = runAll(ys.keptSitesSteps(now(), sites, []))[0];
+  const port = { kind: 'shipyard', gx: alone.gx, gy: alone.gy, nx: alone.nx, nz: alone.nz, turn: 0 };
+  const kept = runAll(ys.keptSitesSteps(now(), sites, [port]));
+  assert.equal(kept[0].kind, 'stable', 'the stable placed again');
+  assert.ok(apart(kept[0], port), `clear of the shipyard (${siteStr(kept[0])} against ${siteStr(port)})`);
+});
+
 test('AUDIT FB1028 YARDS the host: the pixel\'s build hands townPlacesFor the yards\' shut carrying the walkers\' as its `now`; townPlacesFor places the yards on #1184\'s ground and moves only the one the town as it stands breaks - the host\'s own lines run on a synthetic town (mutants: the walkers\' shut not carried; the yards\' shut read as now)', async () => {
   const pb = hostText('src/scenes/pixelBuild.js'), w = hostText('src/scenes/world.js');
   const l0 = pb.indexOf('    const walkShut = dfLocation ?'), l1 = pb.indexOf('\n', pb.indexOf('    const yardShut = dfLocation ?', l0));

@@ -110,8 +110,8 @@
   {
     "name": "MAP-WATERS-word-blind",
     "file": "src/ui/tamrielInk.js",
-    "old": "return `${r}|${p}|${watersInkVersion()}`;",
-    "new": "return `${r}|${p}`;",
+    "old": "return `${r}|${p}|${watersInkVersion()}|${discoveryGeneration()}`;",
+    "new": "return `${r}|${p}|${discoveryGeneration()}`;",
     "tests": [
       "test/ui/mapwaters.test.js"
     ]

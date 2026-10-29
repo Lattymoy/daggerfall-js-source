@@ -1,0 +1,206 @@
+[
+  {
+    "name": "AUDIT-TW-C3-the-mask-kept-past-the-bay",
+    "file": "src/scenes/dungeonIdentity.js",
+    "old": "export const dungeonIdOf = (mapId) => discoveryKeyOf(mapId);",
+    "new": "export const dungeonIdOf = (mapId) => mapId & 0xfffff;",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js"
+    ],
+    "note": "An isle's ruin and a lair, or two abysses, are one vein again."
+  },
+  {
+    "name": "AUDIT-TW-C3-the-template's-ground-past-the-bay",
+    "file": "src/scenes/dungeonIdentity.js",
+    "old": "  const g = pit ? groundAt(pit[0], pit[1]) : null;",
+    "new": "  const g = null;",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js"
+    ],
+    "note": "An abyss past the Bay names its borrowed template's climate and region again."
+  },
+  {
+    "name": "AUDIT-TW-C3-the-pit's-region-unread",
+    "file": "src/scenes/dungeonIdentity.js",
+    "old": "region: g ? g.region : loc.regionIndex ?? null",
+    "new": "region: loc.regionIndex ?? null",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js"
+    ],
+    "note": "An abyss past the Bay names its pit's climate but its template's region."
+  },
+  {
+    "name": "AUDIT-TW-C3-the-host's-own-mask-back",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      return dungeonIdentity(dfLocation);",
+    "new": "      return { id: dfLocation.mapTableData.mapId & 0xfffff, climate: dfLocation.climate?.worldClimate ?? null, region: dfLocation.regionIndex ?? null };",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js"
+    ],
+    "note": "The dungeon host names a dungeon by DFU's mask past the Bay again."
+  },
+  {
+    "name": "AUDIT-TW-C3-the-20-bit-bound-kept",
+    "file": "src/net/nodeLaw.js",
+    "old": "export const DUNGEON_ID_MAX = 0xffffffff;",
+    "new": "export const DUNGEON_ID_MAX = 0xfffff;",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js",
+      "test/net/prof2_law.test.js"
+    ],
+    "note": "The service refuses a dungeon past the Bay by its whole id."
+  },
+  {
+    "name": "AUDIT-TW-C3-the-key's-seven-digits-kept",
+    "file": "src/net/nodeLaw.js",
+    "old": "const DVEIN_KEY_RE = /^dvein:(\\d{1,10}):(\\d{1,6}):(\\d{1,2})$/;",
+    "new": "const DVEIN_KEY_RE = /^dvein:(\\d{1,7}):(\\d{1,6}):(\\d{1,2})$/;",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js"
+    ],
+    "note": "A whole id's vein key does not parse: every vein past the Bay is a bad node."
+  },
+  {
+    "name": "AUDIT-TW-B4-the-bay's-grammar-first",
+    "file": "src/scenes/staffTp.js",
+    "old": "  if (!m) return parseStaffCommand(text, now);",
+    "new": "  return parseStaffCommand(text, now);",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js"
+    ],
+    "note": "/tp 2700 187 is refused as off the Bay's map again."
+  },
+  {
+    "name": "AUDIT-TW-B4-a-minus-a-place's-name",
+    "file": "src/scenes/staffTp.js",
+    "old": "const TP_XY = /^\\/tp\\s+(-?\\d+)\\s+(-?\\d+)$/i;",
+    "new": "const TP_XY = /^\\/tp\\s+(\\d+)\\s+(\\d+)$/i;",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js"
+    ],
+    "note": "/tp 1688 -488 is a place search again."
+  },
+  {
+    "name": "AUDIT-TW-B4-the-bound-unread",
+    "file": "src/scenes/staffTp.js",
+    "old": "  if (!worldPixelOk(px) || !worldPixelOk(py)) return parseStaffCommand('/tp');",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js"
+    ],
+    "note": "A pixel off the world's grid is taken for a teleport."
+  },
+  {
+    "name": "AUDIT-TW-B4-the-help's-bay-bound",
+    "file": "src/scenes/staffTp.js",
+    "old": "export const staffHelpLines = () => STAFF_HELP_LINES.map((l) => l.replace(BAY_BOUND, ''));",
+    "new": "export const staffHelpLines = () => STAFF_HELP_LINES;",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js"
+    ],
+    "note": "/staff says a map pixel is x 0-999, y 0-499."
+  },
+  {
+    "name": "AUDIT-TW-B4-the-host's-bay-grammar",
+    "file": "src/scenes/world.js",
+    "old": "(parseDragonCommand(text) ?? parseStaffLine(",
+    "new": "(parseDragonCommand(text) ?? parseStaffCommand(",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js",
+      "test/net/staff1.test.js"
+    ],
+    "note": "The chat reads a staff line with the Bay's grammar again."
+  },
+  {
+    "name": "AUDIT-TW-C7-the-registry-unread",
+    "file": "src/scenes/staffTp.js",
+    "old": "  for (const p of registry?.all() ?? []) if (",
+    "new": "  for (const p of []) if (",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js"
+    ],
+    "note": "/tp Solitude finds no place."
+  },
+  {
+    "name": "AUDIT-TW-C7-its-bay-rows-read",
+    "file": "src/scenes/staffTp.js",
+    "old": "if (p.theatre !== BAY_THEATRE && !held.has(",
+    "new": "if (!held.has(",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js"
+    ],
+    "note": "The registry's Bay rows join the search after the location index's."
+  },
+  {
+    "name": "AUDIT-TW-C7-a-held-pixel-twice",
+    "file": "src/scenes/staffTp.js",
+    "old": "p.theatre !== BAY_THEATRE && !held.has(`${p.px},${p.py}`)",
+    "new": "p.theatre !== BAY_THEATRE",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js"
+    ],
+    "note": "A place past the Bay that TESA stood is listed twice."
+  },
+  {
+    "name": "AUDIT-TW-C7-the-host's-registry-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "registry: worldPlaces }), c.place);",
+    "new": "registry: null }), c.place);",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js"
+    ],
+    "note": "The world host's /tp searches no place past the Bay."
+  },
+  {
+    "name": "AUDIT-TW-C7-the-bay's-map-scanned",
+    "file": "src/scenes/staffFlatMapHost.js",
+    "old": "  const f = isProvinceRegion(r) ? tamrielFrameInBay() : { x0: 0, y0: 0, w: MAP_W, h: MAP_H };",
+    "new": "  const f = { x0: 0, y0: 0, w: MAP_W, h: MAP_H };",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js",
+      "test/scenes/staffFlatMap.test.js"
+    ],
+    "note": "A province's flat map draws nothing."
+  },
+  {
+    "name": "AUDIT-TW-C7-the-coarse-reach-ungrown",
+    "file": "src/scenes/staffFlatMapHost.js",
+    "old": "grow = coarse ? MARGIN + COARSE : MARGIN;",
+    "new": "grow = MARGIN;",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js",
+      "test/scenes/staffFlatMap.test.js"
+    ],
+    "note": "A province's box can cut its land at the edge."
+  },
+  {
+    "name": "AUDIT-TW-II-A1-nine-digits-read",
+    "file": "src/net/nodeLaw.js",
+    "old": "const DVEIN_KEY_RE = /^dvein:(\\d{1,10}):(\\d{1,6}):(\\d{1,2})$/;",
+    "new": "const DVEIN_KEY_RE = /^dvein:(\\d{1,9}):(\\d{1,6}):(\\d{1,2})$/;",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js"
+    ],
+    "note": "A vein key of ten digits refused: every abyss past the Bay answers bad-node."
+  },
+  {
+    "name": "AUDIT-TW-II-A3-the-step-ungrown",
+    "file": "src/scenes/staffFlatMapHost.js",
+    "old": "grow = coarse ? MARGIN + COARSE : MARGIN;",
+    "new": "grow = coarse ? MARGIN + COARSE - 1 : MARGIN;",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js"
+    ],
+    "note": "The flat map's box a pixel short of its margin at a coarse sample's edge (Sumurset Isle, Cyrodiil)."
+  },
+  {
+    "name": "AUDIT-TW-II-A4-the-box-kept-across-fits",
+    "file": "src/scenes/staffFlatMapHost.js",
+    "old": "if (kept && kept.fit === fit) return kept.box;",
+    "new": "if (kept) return kept.box;",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js"
+    ],
+    "note": "A province's box kept from another fit of the picture."
+  }
+]

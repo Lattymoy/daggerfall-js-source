@@ -188,7 +188,7 @@
   {
     "name": "PVP-EDGE-the-host-unsaid",
     "file": "src/scenes/world.js",
-    "old": ", zoneEdgeSee(wildHere() && wildOutdoors(), player.pos, Date.now()));",
+    "old": ", zoneEdgeSee(wildHere(), player.pos, Date.now()));",
     "new": ");",
     "tests": ["test/net/pvpflag.test.js"]
   }

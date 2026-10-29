@@ -105,7 +105,7 @@ export function createPortalStoneHost(host) {
     Promise.resolve().then(async () => {
       if (worldMoveBusy() || host._teleporting) { hudFade.clearFade(); return; }
       hccRuntimeOn()?.handlePreFastTravel();
-      try { if (!(await teleportTo(g.dest))) hudFade.clearFade(); }   // PORTAL-BAY: no arrival (the world moved on in between) lifts the black - never a black screen over a refusal
+      try { if (!(await teleportTo(g.dest, { zoneFree: !pvpFlagOn() }))) hudFade.clearFade(); }   // AUDIT TAMRIEL-WIDE III F1: the zone asked above, by the flag - the stone already spent   // PORTAL-BAY: no arrival (the world moved on in between) lifts the black - never a black screen over a refusal
       finally { hccRuntimeOn()?.handlePostFastTravel(); }
     }).catch((e) => { console.warn('[portal] the arrival failed:', e?.message ?? e); hudFade.clearFade(); });
   }
