@@ -133,6 +133,25 @@ jobs:
           [ "$failed" = "0" ] || echo "::warning::some readings are missing from the summary - see the warnings above"
 
 
+      # STAFF-SPEED (2026-10-29, investigation only): the staff panel's own routes, by route and status, with wall time
+      - name: Staff routes
+        if: always()
+        run: |
+          set -uo pipefail
+          acct=$(grep -oP '^account_id\s*=\s*"\K[^"]+' server-account/wrangler.toml)
+          q="SELECT blob1 AS route, blob3 AS status, blob4 AS word, SUM(_sample_interval) AS n, quantileWeighted(0.5)(double1, _sample_interval) AS p50_ms, quantileWeighted(0.95)(double1, _sample_interval) AS p95_ms, SUM(double5 * _sample_interval) / SUM(_sample_interval) AS wait_ms_avg, SUM(double3 * _sample_interval) / SUM(_sample_interval) AS stmts_avg FROM daggerfall_accounts WHERE timestamp > NOW() - INTERVAL '${HOURS}' HOUR AND startsWith(blob1, '/v1/staff/') GROUP BY route, status, word ORDER BY n DESC LIMIT 60 FORMAT TabSeparated"
+          curl -sS --max-time 60 -X POST "https://api.cloudflare.com/client/v4/accounts/$acct/analytics_engine/sql" -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" --data-binary "$q" > "$RUNNER_TEMP/staff.tsv" || true
+          msg=$(head -c 3900 "$RUNNER_TEMP/staff.tsv" | sed -e 's/%/%25/g' | sed -e ':a;N;$!ba;s/\n/%0A/g')
+          echo "::notice title=staff::$msg"
+          q2="SELECT toStartOfInterval(timestamp, INTERVAL '5' MINUTE) AS t, SUM(_sample_interval) AS n, quantileWeighted(0.5)(double1, _sample_interval) AS p50_ms, quantileWeighted(0.95)(double1, _sample_interval) AS p95_ms, SUM(if(startsWith(blob3,'5'),1,0) * _sample_interval) AS e5xx FROM daggerfall_accounts WHERE timestamp > NOW() - INTERVAL '${HOURS}' HOUR AND startsWith(blob1, '/v1/staff/') GROUP BY t ORDER BY t DESC LIMIT 60 FORMAT TabSeparated"
+          curl -sS --max-time 60 -X POST "https://api.cloudflare.com/client/v4/accounts/$acct/analytics_engine/sql" -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" --data-binary "$q2" > "$RUNNER_TEMP/staff2.tsv" || true
+          msg=$(head -c 3900 "$RUNNER_TEMP/staff2.tsv" | sed -e 's/%/%25/g' | sed -e ':a;N;$!ba;s/\n/%0A/g')
+          echo "::notice title=staff-time::$msg"
+          q3="SELECT blob1 AS route, SUM(_sample_interval) AS n, quantileWeighted(0.5)(double1, _sample_interval) AS p50_ms, quantileWeighted(0.95)(double1, _sample_interval) AS p95_ms, SUM(if(startsWith(blob3,'5'),1,0) * _sample_interval) AS e5xx FROM daggerfall_accounts WHERE timestamp > NOW() - INTERVAL '${HOURS}' HOUR GROUP BY route ORDER BY n DESC LIMIT 25 FORMAT TabSeparated"
+          curl -sS --max-time 60 -X POST "https://api.cloudflare.com/client/v4/accounts/$acct/analytics_engine/sql" -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" --data-binary "$q3" > "$RUNNER_TEMP/all3.tsv" || true
+          msg=$(head -c 3900 "$RUNNER_TEMP/all3.tsv" | sed -e 's/%/%25/g' | sed -e ':a;N;$!ba;s/\n/%0A/g')
+          echo "::notice title=all-routes::$msg"
+
       - name: Summary as annotations 0
         if: always()
         run: |
