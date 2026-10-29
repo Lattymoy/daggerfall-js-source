@@ -47,12 +47,12 @@
   {
     "name": "IC-GRAND-no-yard",
     "file": "src/world/imperialFabric.js",
-    "old": "  return { plots, court, square: false, park: false, corners, yards, sheds, wells, deadEnds };",
-    "new": "  return { plots, court, square: false, park: false, corners, yards: [], sheds, wells, deadEnds };",
+    "old": "  return { plots, court, lawn, square: false, park: false, corners, yards, sheds, wells, deadEnds };",
+    "new": "  return { plots, court, lawn, square: false, park: false, corners, yards: [], sheds, wells, deadEnds };",
     "tests": [
       "test/world/icgrand_fabric.test.js"
     ],
-    "note": "PIN MOVED (IC-GRAND's courts, 2026-10-26): re-aimed by content - a court's yards laid round its back range or across it, the block's answer the one place both reach."
+    "note": "PIN MOVED (IC-GRAND's courts, 2026-10-26): re-aimed by content - a court's yards laid round its back range or across it, the block's answer the one place both reach. AUDIT IC-BACKYARD (PIN MOVED): re-aimed by content - the block's answer carries its court laid out to its ring (`lawn`) too."
   },
   {
     "name": "IC-GRAND-no-dead-end",

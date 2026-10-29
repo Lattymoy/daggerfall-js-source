@@ -123,32 +123,32 @@
   {
     "name": "AUDIT-TW-A1-the-mark-unread",
     "file": "src/scenes/homeYards.js",
-    "old": "(frame?.terraced ? yardLot(frame.at, frame.box, 0) : yardLot(",
-    "new": "(false ? yardLot(frame.at, frame.box, 0) : yardLot(",
+    "old": "  if (!frame?.terraced) return yardLot(",
+    "new": "  if (true) return yardLot(",
     "tests": [
       "test/world/worldWide/audit_tamrielwide.test.js"
     ],
-    "note": "An Imperial City house's lot is grown round its door again: pieces in its walls and the street."
+    "note": "An Imperial City house's lot is grown round its door again: pieces in its walls and the street. IC-BACKYARD (PIN MOVED): re-aimed by content - lotOfFrame reads the mark first, then the court behind."
   },
   {
     "name": "AUDIT-TW-A1-the-host-mark-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "terraced: isFabricDoorId(placed.modelIdNum) });",
-    "new": "terraced: false });",
+    "old": "terraced: isFabricDoorId(placed.modelIdNum), block:",
+    "new": "terraced: false, block:",
     "tests": [
       "test/world/worldWide/audit_tamrielwide.test.js"
     ],
-    "note": "The build never marks a fabric house, so its lot is grown round its door."
+    "note": "The build never marks a fabric house, so its lot is grown round its door. IC-BACKYARD (PIN MOVED): re-aimed by content - the frame carries its block and record after the mark."
   },
   {
     "name": "AUDIT-TW-II-W1-a-terraced-lot-none",
     "file": "src/scenes/homeYards.js",
-    "old": "(frame?.terraced ? yardLot(frame.at, frame.box, 0) :",
-    "new": "(frame?.terraced ? null :",
+    "old": "turn: yard.turn, alone: true, access: door.lot } : door;",
+    "new": "turn: yard.turn, alone: true, access: door.lot } : null;",
     "tests": [
       "test/world/worldWide/audit_tamrielwide.test.js"
     ],
-    "note": "A terraced house keeps no lot: what its owner set down before A1 is drawn and cannot be taken back."
+    "note": "A terraced house keeps no lot: what its owner set down before A1 is drawn and cannot be taken back. IC-BACKYARD (PIN MOVED): re-aimed by content - a terraced house with no court of its own keeps its door's box."
   },
   {
     "name": "AUDIT-TW-II-W2-the-yard-figure-feet-dropped",

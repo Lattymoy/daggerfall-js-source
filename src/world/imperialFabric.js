@@ -340,7 +340,7 @@ export function fabricKeptClear(x, z) {
  *  street (`out`, bit i the edge from corner i to i + 1), its eave's height and its roof ('flat', or 'gable' with its ridge
  *  along its edge 0 - `ridge` its height), its pictures, and its features. */
 /** @typedef {{ q: number[][], out: number, h: number, roof: string, ridge: number, wall: string, ground: string, roofTex: string,
- *   ledge: boolean, balcony: number, tower: boolean, key: number, sw: number[] }} Plot */
+ *   ledge: boolean, balcony: number, tower: boolean, key: number, sw: number[], back?: boolean }} Plot */
 
 /** A street line's middle and half-width, either side of a block, as the block's own bounds along an axis. */
 function blockBounds(h, axis, i) {
@@ -394,7 +394,7 @@ function pieces(len, lo, hi, ...k) {
  * by buildings on its four streets round a court where it is wide enough, else a row through it; or none, a square (the
  * style's one in so many) or the park. Each building's height a walk round the ring in half storeys, at most one off the
  * one before (ROOF_STEP); its roof flat or pitched by the neighbourhood's share; its pictures the style's.
- * @returns {{ plots: Plot[], court: number[][] | null, square: boolean, park: boolean, corners: number[][], yards?: Array<{ a: number[], b: number[] }>, sheds?: number[][], wells?: number[][], deadEnds?: Array<{ a: number[], b: number[] }> }}
+ * @returns {{ plots: Plot[], court: number[][] | null, lawn?: number[][] | null, square: boolean, park: boolean, corners: number[][], yards?: Array<{ a: number[], b: number[] }>, sheds?: number[][], wells?: number[][], deadEnds?: Array<{ a: number[], b: number[] }> }}
  */
 function makeBlock(h, i, j) {
   const U = blockBounds(h, 0, i), V = blockBounds(h, 1, j);
@@ -452,6 +452,10 @@ function makeBlock(h, i, j) {
     });
   });
   const court = solid ? null : [P(D, D), P(Ls - D, D), P(Ls - D, Lt - D), P(D, Lt - D)];
+  // AUDIT IC-BACKYARD L3: THE COURT ON THE GROUND reaches the ring's back walls - each edge (a chord) laid out to the
+  // farthest the line its houses' back walls stand on bows past it: a polar block's outer houses stand on an arc, an organic
+  // one's on a warped line, and the strip between them and the chord read as street inside the ring (a grid's: the court)
+  const lawn = court && courtGround(court, [(f) => P(D + (Ls - 2 * D) * f, D), (f) => P(Ls - D, D + (Lt - 2 * D) * f), (f) => P(Ls - D - (Ls - 2 * D) * f, Lt - D), (f) => P(D, Lt - D - (Lt - 2 * D) * f)]);
   // IC-GRAND (the coordinator's review of the renders: "Courtyards should be courtyard-sized (yards, gardens, sheds, wells,
   // trees)"): A WIDE COURT BUILT IN - a court BACK.min or more across both ways stands a back range in its middle (the house
   // behind the house, a workshop, a coach house), BACK.gap in from the ring all round - the yards round it - split across
@@ -501,7 +505,29 @@ function makeBlock(h, i, j) {
     const dir = e === 0 ? [0, -1] : e === 1 ? [1, 0] : e === 2 ? [0, 1] : [-1, 0];
     deadEnds.push({ a: P(cs, ct2), b: P(cs + dir[0] * out, ct2 + dir[1] * out) });
   }
-  return { plots, court, square: false, park: false, corners, yards, sheds, wells, deadEnds };
+  return { plots, court, lawn, square: false, park: false, corners, yards, sheds, wells, deadEnds };
+}
+/** AUDIT IC-BACKYARD L3: a court laid out to its ring - `court` its chords, `side[e](f)` the line its back walls stand on
+ *  along edge e (f 0 to 1): each edge moved out by the most that line bows past it, the corners where the moved edges
+ *  meet; the court itself where none bows (a grid's). */
+function courtGround(court, side) {
+  const m = centroid(court), lines = [];
+  let moved = false;
+  for (let e = 0; e < 4; e++) {
+    const a = court[e], b = court[(e + 1) & 3], d = [b[0] - a[0], b[1] - a[1]], l = Math.hypot(d[0], d[1]) || 1;
+    let n = [d[1] / l, -d[0] / l];
+    if (n[0] * ((a[0] + b[0]) / 2 - m[0]) + n[1] * ((a[1] + b[1]) / 2 - m[1]) < 0) n = [-n[0], -n[1]];
+    let out = 0;
+    for (let k = 1; k < 16; k++) { const p = side[e](k / 16); out = Math.max(out, (p[0] - a[0]) * n[0] + (p[1] - a[1]) * n[1]); }
+    if (out > 1e-6) moved = true;
+    lines.push({ p: [a[0] + n[0] * out, a[1] + n[1] * out], d });
+  }
+  if (!moved) return court;
+  return lines.map((L1, e) => {
+    const L0 = lines[(e + 3) & 3], det = L0.d[0] * L1.d[1] - L0.d[1] * L1.d[0];
+    const k = ((L1.p[0] - L0.p[0]) * L1.d[1] - (L1.p[1] - L0.p[1]) * L1.d[0]) / det;
+    return [L0.p[0] + L0.d[0] * k, L0.p[1] + L0.d[1] * k];
+  });
 }
 /** A garden wall's height (a vault's), its thickness; a backyard shed's height and side. */
 export const YARD_WALL = Object.freeze({ h: 1.8, t: 0.4 });
@@ -509,8 +535,9 @@ export const SHED = Object.freeze({ h: 2.4, w: 4 });
 /** IC-GRAND: a court's back range - the least a court is across both ways before one stands in it, how far in from the ring
  *  it stands (its yards), a piece's length, the lane between two. */
 export const BACK = Object.freeze({ min: 30, gap: 9, len: 24, lane: 5 });
-/** IC-GRAND: a yard's well - its kerb's radius and height, its posts' and its little roof's height. */
-export const WELL = Object.freeze({ r: 0.9, h: 0.9, roofH: 2.8 });
+/** IC-GRAND: a yard's well - its kerb's radius and height, its posts' and its little roof's height; AUDIT IC-BACKYARD P5:
+ *  its roof's eaves past the kerb (along x) and its half-depth either side of the ridge (along z). */
+export const WELL = Object.freeze({ r: 0.9, h: 0.9, roofH: 2.8, eave: 0.5, ridge: 0.9 });
 /** IC-GRAND: a square's fountain - its basin's radius and its column's height. */
 export const SQUARE_FOUNTAIN = Object.freeze({ r: 3.2, h: 3.6 });
 /** A street's kinds by its width: an alley, a lane, a side street, a main street (its pavements). */
@@ -660,7 +687,7 @@ function makeCell(r, c) {
       // frame's far rings lay blocks hundreds of metres long past their own neighbourhood, whose courts lay `court` over
       // another's streets (no door, no walker there)
       const own = (q) => hoodAt(...centroid(q))?.key === h.key;
-      if (blk.court && nearCell(blk.court) && own(blk.court)) L.courts.push(blk.court);
+      if (blk.court && nearCell(blk.lawn) && own(blk.court)) L.courts.push(blk.lawn);   // AUDIT IC-BACKYARD L3: laid out to its ring
       if (blk.square && nearCell(blk.corners) && own(blk.corners)) {
         L.squares.push(blk.corners);
         // IC-GRAND (the review: "large empty lots ... made squares with something in them"): a fountain at its middle
@@ -674,12 +701,14 @@ function makeCell(r, c) {
       // IC-GRAND: a near block's garden walls, dead ends, sheds and wells close the cell's ground where they stand in it
       // (the ground's own list); the block whose middle stands in the cell draws them (a piece across a cell's edge closed
       // on both sides, drawn once)
-      if (!mine && !nearCell(blk.corners)) continue;
+      // AUDIT IC-BACKYARD L2: and a piece of any block near it whose ground reaches the cell - a long block (a polar far
+      // ring's, an oblique one) lays its court in a cell its corners are far from, which read `court` in its sheds and walls
+      const whole = mine || nearCell(blk.corners), reaches = (a, b, pad) => whole || segRect(a, b, x0, z0, x1, z1) <= pad;
       const G = L.ground;
-      for (const y of blk.yards ?? []) if (clearPts(h, [y.a, y.b])) { G.yards.push(y); if (mine) L.yards.push(y); }
-      for (const s of blk.sheds ?? []) if (clearPts(h, [s])) { G.sheds.push(s); if (mine) L.sheds.push(s); }
-      for (const w of blk.wells ?? []) if (clearPts(h, [w])) { G.wells.push(w); if (mine) L.wells.push(w); }
-      for (const d of blk.deadEnds ?? []) if (clearPts(h, [d.a, d.b])) { G.deadEnds.push(d); if (mine) L.deadEnds.push(d); }
+      for (const y of blk.yards ?? []) if (reaches(y.a, y.b, YARD_WALL.t / 2 + 0.3) && clearPts(h, [y.a, y.b])) { G.yards.push(y); if (mine) L.yards.push(y); }
+      for (const s of blk.sheds ?? []) if (reaches(s, s, (SHED.w / 2 + 0.2) * Math.SQRT2) && clearPts(h, [s])) { G.sheds.push(s); if (mine) L.sheds.push(s); }
+      for (const w of blk.wells ?? []) if (reaches(w, w, Math.hypot(WELL.r + WELL.eave, WELL.ridge) + 0.3) && clearPts(h, [w])) { G.wells.push(w); if (mine) L.wells.push(w); }
+      for (const d of blk.deadEnds ?? []) if (reaches(d.a, d.b, 0.6) && clearPts(h, [d.a, d.b])) { G.deadEnds.push(d); if (mine) L.deadEnds.push(d); }
     }
   }
   _ways.set(L, ways);

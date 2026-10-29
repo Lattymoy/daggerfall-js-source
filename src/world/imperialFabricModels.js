@@ -360,9 +360,9 @@ function buildWell(mb, at) {
     mb.tri(stone, W(x, WELL.h, z), W(p0[0], WELL.h, p0[1]), W(p1[0], WELL.h, p1[1]), [0, 1, 0]);
   }
   for (const side of [1, -1]) post(mb, timber, x + side * (r + 0.1), z, 0.18, 0, WELL.roofH);
-  const e = r + 0.5, y0 = WELL.roofH, y1 = WELL.roofH + 0.7;
+  const e = r + WELL.eave, y0 = WELL.roofH, y1 = WELL.roofH + 0.7;
   for (const side of [1, -1]) {
-    const a = [x - e, z + side * 0.9], b = [x + e, z + side * 0.9];
+    const a = [x - e, z + side * WELL.ridge], b = [x + e, z + side * WELL.ridge];
     mb.quad(roof, W(a[0], y0, a[1]), W(b[0], y0, b[1]), W(b[0], y1, z), W(a[0], y1, z), WN(0, 0.79, side * 0.62), [[0, -1], [1, -1], [1, 0], [0, 0]]);   // BLD: its top row at the ridge
   }
 }

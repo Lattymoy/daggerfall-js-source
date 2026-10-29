@@ -131,16 +131,17 @@ test('AUDIT TAMRIEL-WIDE E2: a person by a province\'s border is of the people w
   assert.match(readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8'), /return personLook\(pn, staticNpcData\([^\n]*, dict\.get\(pn\.factionID\) \?\? null, feet\);/);
 });
 
-test('AUDIT TAMRIEL-WIDE A1: an Imperial City house has no yard - its plot is its building, its frame the door\'s - while a Bay house\'s lot is the one it was; the pixel\'s build marks a fabric house terraced (mutants: the mark unread; the host\'s mark dropped)', () => {
+test('AUDIT TAMRIEL-WIDE A1: an Imperial City house\'s lot is never grown round its door - its frame is the door\'s - while a Bay house\'s lot is the one it was; the pixel\'s build marks a fabric house terraced (mutants: the mark unread; the host\'s mark dropped)', () => {   // PIN MOVED (IC-BACKYARD): "has no yard" - one with a court of its own has the court behind it (ic_backyard.test.js)
   const frame = { at: [10, 0, 10], box: [9, 0, 9, 11, 4, 11], rects: [[9, 9, 11, 11]] };
   assert.deepEqual(lotOfFrame(frame), yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects), 'a house of Daggerfall\'s blocks: its lot as before');
   // PIN MOVED (AUDIT TAMRIEL-WIDE II W1): a terraced house's lot is its door's own box - no ground to place on, so what an
-  // owner set down there before is still theirs to take back from the door
+  // owner set down there before is still theirs to take back from the door. PIN MOVED (IC-BACKYARD): one with no court of
+  // its own (here, no block named)
   const terraced = lotOfFrame({ ...frame, terraced: true });
   assert.deepEqual(terraced.lot, terraced.house, 'a terraced house: its lot the door\'s own box');
   for (let x = -10; x <= 10; x += 0.5) for (let z = -10; z <= 10; z += 0.5) assert.ok(yardWhyNot([x, 0, z], terraced), `nothing places at ${x},${z}`);
   const pb = readFileSync(new URL('../../../src/scenes/pixelBuild.js', import.meta.url), 'utf8');
-  assert.match(pb, /parts: \[\[cpu, local\]\], terraced: isFabricDoorId\(placed\.modelIdNum\) \}\);/, 'the frame marked by its door model');
+  assert.match(pb, /parts: \[\[cpu, local\]\], terraced: isFabricDoorId\(placed\.modelIdNum\), block: b\.blockName, record: placed\.recordIndex \}\);/, 'the frame marked by its door model');   // PIN MOVED (IC-BACKYARD): and its block and record
 });
 
 test('AUDIT TAMRIEL-WIDE II W1: a piece an owner set down by an Imperial City house before its lot shrank is drawn, and its owner at the door opens the decorator to take it back - as at a Bay house (mutant: a terraced house\'s lot none)', async () => {
