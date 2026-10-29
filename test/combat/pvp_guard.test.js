@@ -10,7 +10,7 @@ import { pvpArmorKept, pvpWardKept } from '../../src/combat/pvpGuard.js';
 import { pvpSpellElement, pvpCastFrame } from '../../src/combat/siegeCombat.js';
 import { PVP_GUARD, PVP_WARD, guardedBlow, wardedCast, takeHealthReport, HEALTH_SHARE_WHOLE } from '../../src/net/siege/refereeHealthShare.js';
 import { SIEGE_HIT, SIEGE_UNITS_PER_M, newFighter, refereeBlow, refereeCast, pvpBlowKind } from '../../src/net/siege/siegeRef.js';
-import { savedShare } from '../../src/systems/spellcast.js';
+import { savingLands } from '../../src/systems/spellcast.js';
 import { validVitIn, validDuelData, validSiegeIn, VIT_GUARD_MAX, PVP_ELEMENTS } from '../../src/net/wire.js';
 import { createRefereeHealthMirror } from '../../src/net/siege/refereeHealthMirror.js';
 
@@ -81,7 +81,7 @@ test('PVP-GUARD: the mirror sends my shares and reports again when my armour cha
 
 test('PVP-WARD: what of a player\'s spell lands on a body - its Resist effects first, then its own saving throw: race, Willpower and gear, as a monster\'s spell meets it (mutants: the throw unread; an element\'s chance read for another)', () => {
   assert.equal(PVP_ELEMENTS, 5);
-  assert.deepEqual([5, 50, 60, 95].map(savedShare), [99.5, 60.5, 50.5, 15.5], 'the throw\'s dice, summed');
+  assert.deepEqual([5, 50, 60, 95].map(savingLands), [99.5, 60.5, 50.5, 15.5], 'the throw\'s dice, summed');
   assert.deepEqual(pvpWardKept(body()), [56, 56, 56, 56, 56], 'Willpower 50: a saving chance of 55');
   assert.deepEqual(pvpWardKept(body(100)), [51, 51, 51, 51, 51], 'Willpower 100: 60');
   assert.deepEqual(pvpWardKept({ ...body(100), raceId: 1 }), [51, 51, 51, 51, 21], 'a Breton: +30 against magic');
@@ -93,17 +93,17 @@ test('PVP-WARD: what of a player\'s spell lands on a body - its Resist effects f
   assert.deepEqual(pvpCastFrame([1, 2, 3], 50.4, { element: 1 }), { p: [1, 2, 3], d: 50, el: 1 });
 });
 
-test('PVP-WARD: the referee takes the share of the spell\'s element, never under 10 ("resist max 90"), before PVP-HIT (mutants: the ward unread; the floor unread)', () => {
-  assert.deepEqual(PVP_WARD, { min: 10, max: 100, elements: 5 });
+test('PVP-WARD: the referee takes the share of the spell\'s element, never under 15 ("85% resist"), before PVP-HIT (mutants: the ward unread; the floor unread)', () => {
+  assert.deepEqual(PVP_WARD, { min: 15, max: 100, elements: 5 });
   const now = 1_000_000;
   const a = newFighter(10, now);
   const b = newFighter(50, now); b.max = 1000; b.hp = 1000;
   assert.equal(wardedCast(b, 0, 200), 200, 'unreported: whole');
   takeHealthReport(b, { report: 1, share: HEALTH_SHARE_WHOLE, seen: [], ward: [40, 100, 100, 0, 50] }, now);
-  assert.deepEqual(b.share.ward, [40, 100, 100, 10, 50]);
+  assert.deepEqual(b.share.ward, [40, 100, 100, 15, 50]);
   const cast = (el, d, t) => refereeCast(a, b, { from: at(0), at: at(10), d, el }, t);
   assert.equal(cast(0, 200, now).dealt, 80, 'fire, 40% through');
-  assert.equal(cast(3, 200, now + 100).dealt, 20, 'shock, the floor of 10');
+  assert.equal(cast(3, 200, now + 100).dealt, 30, 'shock, the floor of 15');
   assert.equal(cast(null, 200, now + 200).dealt, 100, 'unnamed: magic');
   assert.equal(cast(1, 2000, now + 300).dealt, 450, 'then the 45% cap');
 });

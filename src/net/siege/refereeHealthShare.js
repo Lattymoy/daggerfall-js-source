@@ -40,9 +40,10 @@ export function guardedBlow(fighter, kind, want) {
   return want > 0 ? Math.max(1, Math.round((want * kept) / 100)) : 0;
 }
 
-/** PVP-WARD (the plan's "resist max 90"): the share of a player's spell a fighter's resistances let through, per cent,
- *  by DFU's element (fire, frost, poison, shock, magic). Never under `min`: no resistance takes more than 90%. */
-export const PVP_WARD = Object.freeze({ min: 10, max: 100, elements: 5 });
+/** PVP-WARD (the owner, 2026-10-29: "so 85% resist", "do it"): the share of a player's spell a fighter's resistances let
+ *  through, per cent, by DFU's element (fire, frost, poison, shock, magic). Never under `min`: no resistance, immunity
+ *  included, takes more than 85%. */
+export const PVP_WARD = Object.freeze({ min: 15, max: 100, elements: 5 });
 /** PVP-WARD: a cast of element `el` (0-4; unnamed, magic) on `fighter`, after its resistance - at least 1 where it was over 0. */
 export function wardedCast(fighter, el, want) {
   const w = fighter?.share?.ward;

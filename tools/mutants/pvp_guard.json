@@ -74,7 +74,7 @@
   {
     "name": "PVP-WARD-the-throw-unread",
     "file": "src/combat/pvpGuard.js",
-    "old": "    const lands = sc.immune ? 0 : savedShare(sc.chance);",
+    "old": "    const lands = sc.immune ? 0 : savingLands(sc.chance);",
     "new": "    const lands = 100;",
     "tests": [
       "test/combat/pvp_guard.test.js"

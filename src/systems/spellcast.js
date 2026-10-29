@@ -162,7 +162,7 @@ export function savingChance(element, effectFlags, target, modifier = 0, pierce 
 
 /** PVP-WARD: what of a spell a saving chance of `saving` lets land on average, per cent - savingThrow's dice summed (a
  *  roll over it lands whole; within 20 of it prorated; else nothing). */
-export function savedShare(saving) {
+export function savingLands(saving) {
   let sum = 0;
   for (let roll = 1; roll <= 100; roll++) sum += roll > saving ? 100 : saving - 20 <= roll ? 100 - 5 * (saving - roll) : 0;
   return sum / 100;

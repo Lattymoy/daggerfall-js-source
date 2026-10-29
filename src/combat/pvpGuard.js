@@ -8,7 +8,7 @@
 import { PCAAO_BODY_PARTS, pcaaoNaturalDamageResistance, pcaaoPartKept, pcaaoModules } from './pcaao.js';
 import { PVP_GUARD_KINDS } from '../net/siege/refereeHealthShare.js';
 import { VIT_GUARD_MAX } from '../net/wire.js';
-import { elementalResistanceChance, savingChance, savedShare, elementFlag } from '../systems/spellcast.js';
+import { elementalResistanceChance, savingChance, savingLands, elementFlag } from '../systems/spellcast.js';
 
 /** DFU's elements, fire 0, frost 1, poison 2, shock 3, magic 4. */
 const ELEMENTS = Object.freeze([0, 1, 2, 3, 4]);
@@ -24,12 +24,12 @@ export function pvpArmorKept(entity, modules = pcaaoModules()) {
 
 /** PVP-WARD (the owner: "race and willpower need to work"): what of a player's spell lands on `entity`, per cent, for each
  *  element, on average - its Resist effects' chance first, then its own saving throw (race, Willpower, career, biography,
- *  gear), as a monster's spell meets it (systems/spellcast.js savingThrow). The referee's floor of 10 is "resist max 90". */
+ *  gear), as a monster's spell meets it (systems/spellcast.js savingThrow). The referee's floor of 15 is "85% resist". */
 export function pvpWardKept(entity) {
   return ELEMENTS.map((el) => {
     const resisted = Math.min(100, elementalResistanceChance(entity, el));
     const sc = savingChance(el, elementFlag(el), entity);
-    const lands = sc.immune ? 0 : savedShare(sc.chance);
+    const lands = sc.immune ? 0 : savingLands(sc.chance);
     return Math.max(0, Math.min(100, Math.round(((100 - resisted) * lands) / 100)));
   });
 }
