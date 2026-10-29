@@ -47,11 +47,11 @@ loses data; MEDIUM: wrong in a corner a player reaches; LOW: the record, a cost,
 |---|---|---|---|
 | A1 | MEDIUM | An Imperial City house's yard lot was its door's box grown 6 m (a fabric house's one model is its door): the owner's own rooms, the neighbours' and the street | FIXED - a terraced house's lot is its door's own box, where nothing places (`scenes/homeYards.js` lotOfFrame, the frame marked at the build); what stood is taken back from the door (II W1) |
 | A2 | LOW | The capitals' yard bounds read the Imperial City's blocks off BLOCKS.BSA, which holds none of them: the test guarded nothing, the record's 23 and 794 were 0s | FIXED - counted as served; the record corrected (`11-Multiplayer/Yard-Cells.md`); HOME_TOWN_MAX's margin left open |
-| B1 | MEDIUM | SD-PARTY's one life and one win a Hollow kept nothing in a province's Hollow: the hub read the Bay lane's record | FIXED - the hub reads the slot's lane (`server/src/sdCopy.js`; `11-Multiplayer/Super-Dungeons.md`), world281 |
-| B2 | MEDIUM | Staff `/tp @player` refused a player in an Ocean Hole's abyss past the Bay (its pit bounded to 0..999) | FIXED - the pit bounded by `worldPixelOk` (`net/staffTeleport.js`; `03-World/Ocean-Holes.md`), world281 |
-| B3 = C3 | MEDIUM | Two dungeons past the Bay shared one dungeon-vein identity (`mapId & 0xfffff`): an Eltheric ruin and a lair, two abysses | FIXED - a place the port made keys by its whole id (`scenes/dungeonIdentity.js`; `06-Systems/Professions-Arc.md`), acct213 |
+| B1 | MEDIUM | SD-PARTY's one life and one win a Hollow kept nothing in a province's Hollow: the hub read the Bay lane's record | FIXED - the hub reads the slot's lane (`server/src/sdCopy.js`; `11-Multiplayer/Super-Dungeons.md`), world283 |
+| B2 | MEDIUM | Staff `/tp @player` refused a player in an Ocean Hole's abyss past the Bay (its pit bounded to 0..999) | FIXED - the pit bounded by `worldPixelOk` (`net/staffTeleport.js`; `03-World/Ocean-Holes.md`), world283 |
+| B3 = C3 | MEDIUM | Two dungeons past the Bay shared one dungeon-vein identity (`mapId & 0xfffff`): an Eltheric ruin and a lair, two abysses | FIXED - a place the port made keys by its whole id (`scenes/dungeonIdentity.js`; `06-Systems/Professions-Arc.md`), acct217 |
 | B4 = C7 | LOW | Staff `/tp x y`, `/tp <place>` and the staff flat map knew the Bay's grid alone | FIXED - the world's grid and the registry (`scenes/staffTp.js`; `06-Systems/Online-Arc.md`); the relay's own copy waits for its next version |
-| B5 | LOW | The hub's cleansed raids list held 64, two days of the Bay's raids; the world's lanes roll some 300 | FIXED - two days of every lane's slots, 576 (`net/wire.js` RAID_CLEANS_MAX; `03-World/Raiding-Parties.md`), world281 |
+| B5 | LOW | The hub's cleansed raids list held 64, two days of the Bay's raids; the world's lanes roll some 300 | FIXED - two days of every lane's slots, 576 (`net/wire.js` RAID_CLEANS_MAX; `03-World/Raiding-Parties.md`), world283 |
 | B6 | - | The house cap (HOUSES-3) is three a region, and past the Bay a region is a province | THE OWNER'S CALL |
 | C1 | MEDIUM | No raid past the Bay was told: the raid host's region was -1 there (`politicClaimed`, the Bay's 62) | FIXED - a province's politic is its region's |
 | C2 | MEDIUM | Camps, bounty farms and trail spots stood on roads past the Bay: ROADS-CLEAR asked the Bay's pixels alone | FIXED - the curves' band past the Bay (`world/road/roadBand.js` nearRoad) |
@@ -69,7 +69,7 @@ loses data; MEDIUM: wrong in a corner a player reaches; LOW: the record, a cost,
 | D8 | LOW | `start2_provinces.test.js` composed the climate alone, so every start lair read region 0 | FIXED - composed as `world.js` composes it, each province's start lair pinned to its region |
 | E1 | MEDIUM | WILD-CITY-PORT read a teleport's landing by its pixel: a Mark beside a village's walls landed in Cyrodiil's open country | FIXED - the landing's own point (`11-Multiplayer/Wild-Zone.md` section 28) |
 | E2 | LOW | A person by a province's border took the people where the player stood when first drawn | FIXED - where they stand (`characters/provinceFolk.js` nativeAt), a yard's figures too (II W2) |
-| E3 | MEDIUM | The sea serpent's site moved with every lane added (index modulo the list), the Bay's days too; the site word carries no version | FIXED - a lane scored by its two ends, and the word carries its law (`11-Multiplayer/Sea-Serpent.md` section 18), world281 |
+| E3 | MEDIUM | The sea serpent's site moved with every lane added (index modulo the list), the Bay's days too; the site word carries no version | FIXED - a lane scored by its two ends, and the word carries its law (`11-Multiplayer/Sea-Serpent.md` section 18), world283 |
 | E4 | LOW | An Imperial City home is keyed by its generator's plot order, which no stamp holds | OPEN - a fabric-law version on a home record, for the day the generator changes |
 | E5 | LOW | The line keeping a yard placed again off a port's places had no pin that failed without it | FIXED - pinned (`test/world/fb1028_walls.test.js`) |
 
@@ -81,7 +81,10 @@ siblings, every one dead (the D-test mutant with the freeware data alone, as its
 note ("not by fast travel") and D5's travel line ("Past the Bay, you go there on the Overworld") were false on the
 merge. The note now says fast travel reaches the land past the Bay with the land on, in every language; the travel
 page keeps main's own line, true again. E1's bank cabin pin gained the producer's `campToWire` and asserts the landing.
-ARMORY (#1392), LODE-HERD (#1394), KEEP-MARK (#1395) and SHED-REPLICA (#1398) took world280 and acct209 to acct212, so this PR ships world281 and acct213.
+ARMORY (#1392), LODE-HERD (#1394), KEEP-MARK (#1395) and SHED-REPLICA (#1398) took world280 and acct209 to acct212, so this PR held world281 and acct213.
+
+**The second merge of main (2026-10-29).** By then OVERLOAD-EASE 2 (#1405), the PvP rework (#1389), its follow-up (#1407) and OVERLOAD-EASE 3 (#1413) had taken world281,
+world282 and acct213 to acct216, so this PR ships world283 and acct217, and `SERPENT_SITE_RELAY_MIN` moved to 283 with it (II R2).
 
 ## The suite
 
@@ -93,8 +96,8 @@ second fails on a second boundary (301 s signed, the service's clock a second la
 
 ## Deploy order
 
-The relay (world281: the hub's lane keys, the abyss bound, the cleanses list, the serpent's site law), then the account
-service (acct213: an older one refuses a dungeon's whole id), then the site - the order the deploys run, as
+The relay (world283: the hub's lane keys, the abyss bound, the cleanses list, the serpent's site law), then the account
+service (acct217: an older one refuses a dungeon's whole id), then the site - the order the deploys run, as
 `account-deploy.yml` waits for the relay's version (II R3). C3 needs only the account before the site.
 
 ## Left for the owner, and open
@@ -107,7 +110,7 @@ service (acct213: an older one refuses a dungeon's whole id), then the site - th
 - **E4** (open) - a fabric-law version on an Imperial City home record, for the day its generator changes.
 - `HOME_TOWN_MAX`'s margin: an Imperial City slice holds up to 3,487 buildings and 2,773 houses.
 - `net/staffCommands.js`, in the relay's bundle, still states the Bay's bound; folding `scenes/staffTp.js` back into it
-  is a cleanup now, as this PR ships world281 anyway (II A5).
+  is a cleanup now, as this PR ships world283 anyway (II A5).
 - The audit's second round leaves five (II, below): W4's cost, a small settlement's dungeon anchor, an old tab's veins,
   the hover's kind words, and the service's missing lot law.
 
@@ -154,8 +157,8 @@ records. Each reproduced a finding before reporting it, and each was verified ag
 | T5 | LOW | Danish and Norwegian raid rows said "merge with the town guard" | FIXED |
 | T6 | LOW | The hover's kind word (`farm`, `city-state`) is English in every language | RECORDED - the port's location-type words, shared with the quests' text, an L10N item of their own |
 | T7 | LOW | A patch note credited the fix with the hover's province name, which it had before | FIXED in the PR's notes |
-| R1 | LOW | A build before world281 reads 64 cleanses, and the hub kept them oldest first: today's lost on release day | FIXED - the hello newest first |
-| R2 | LOW | A new build said its serpent site to any relay from world166, which folds it into the old law's vote | FIXED - `SERPENT_SITE_RELAY_MIN` 281 |
+| R1 | LOW | A build before world283 reads 64 cleanses, and the hub kept them oldest first: today's lost on release day | FIXED - the hello newest first |
+| R2 | LOW | A new build said its serpent site to any relay from world166, which folds it into the old law's vote | FIXED - `SERPENT_SITE_RELAY_MIN` 283 (281 until the second merge of main) |
 | R3 = A6 | LOW | This page gave the deploy order as account, relay, site; the deploys run relay, account, site | FIXED - the order above |
 | R4 | LOW | Until two new builds name a site, a serpent day's kill is not posted, which no record said | FIXED - recorded (`Sea-Serpent.md` section 11) |
 | R5 | LOW | Two mutants on the serpent's lane score survived: one port keyed twice, the tries unbounded | FIXED - pinned |

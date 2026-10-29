@@ -66,7 +66,7 @@ function buildFace(doc, owner) {
   let no = null;
   if (!owner.okOnly) {   // SOFTCAP3: the OK box has its one button, and it is the default
     no = doc.createElement('button');
-    no.type = 'button'; no.className = 'act primary yesnobox-no'; no.textContent = YES_NO_LABELS.no;   // the default button, marked as such
+    no.type = 'button'; no.className = 'act primary yesnobox-no'; no.textContent = owner.noLabel ?? YES_NO_LABELS.no;   // the default button, marked as such
     no.onclick = press(false);
     acts.append(no);
   }
@@ -110,9 +110,10 @@ export function releaseYesNoFace(owner) {
 export const yesNoFaceOwner = () => face?.owner ?? null;
 
 export class YesNoBoxWindow {
-  /** @param {{ rows: Array<string|{text: string, center?: boolean}>, onYes?: (() => void)|null, onNo?: (() => void)|null, okOnly?: boolean }} opts */
-  constructor({ rows, onYes = null, onNo = null, okOnly = false }) {
+  /** @param {{ rows: Array<string|{text: string, center?: boolean}>, onYes?: (() => void)|null, onNo?: (() => void)|null, okOnly?: boolean, noLabel?: string|null }} opts */
+  constructor({ rows, onYes = null, onNo = null, okOnly = false, noLabel = null }) {
     this.okOnly = !!okOnly;   // SOFTCAP3: the OK box - one button, answered as Yes (onYes)
+    this.noLabel = noLabel;   // PVP-30: the card's No in the box's own word ("Not yet"); the parchment's art keeps NO
     this.rows = rows?.length ? rows : [''];
     this.onYes = onYes;
     this.onNo = onNo;

@@ -237,11 +237,11 @@ test('SEAT1b THE RENOWN REPORT\'S REGION: XP is kept by the region it was earned
   region = 99; tr.earn(5);
   assert.equal(tr.pending(), 155);
   await tr.flush(0);
-  assert.deepEqual(sent[0], ['char-1', 100, null, 'r1', 21], 'the first region\'s XP alone');
+  assert.deepEqual(sent[0], ['char-1', 100, null, 'r1', 21, 0], 'the first region\'s XP alone');
   await tr.flush(60_000);
-  assert.deepEqual(sent[1], ['char-1', 50, null, 'r2', 22]);
+  assert.deepEqual(sent[1], ['char-1', 50, null, 'r2', 22, 0]);
   assert.equal(tr.leave(), true);
-  assert.deepEqual(sent[2], ['leave', 'char-1', 5, null, 'r3', null], 'a region past the map\'s is none');
+  assert.deepEqual(sent[2], ['leave', 'char-1', 5, null, 'r3', null, 0], 'a region past the map\'s is none');
 });
 
 test('SEAT1b THE SEAT TAB: beside the board\'s tabs while the seats are open, never at a guild\'s hall; the Charter, the week, every pledged guild under its banner (the reader\'s marked), the reader\'s lines, an Officer\'s pledge and the guildmaster\'s Tribute through the book (mutants: the tab\'s shown gate; the standings; the levers\' ranks; the phase)', async () => {

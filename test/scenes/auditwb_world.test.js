@@ -257,7 +257,7 @@ test('AUDIT WB C7 what a frame pays for: the stone\'s matrix only when it moves,
   pool.frame(0.016);
   assert.equal(pool.stands(), false, 'no GL, no pass: nothing for the host to build arguments for');
   const world = hostText('src/scenes/world.js');
-  assert.match(world, /if \(gatePool\?\.stands\(\) && gatePool\.drawPass\(proj, view, new Float32Array\(mwv\.eye\), now \/ 1000,/);
+  assert.match(world, /if \(gatePool\?\.stands\(\) && gatePool\.drawPass\(proj, view, wxEye32, now \/ 1000,/);
   const src = read('src/scenes/gate/gatePool.js');
   assert.match(src, /if \(k !== _matKey\) \{ _matKey = k; _mat = trs\(/);
   assert.match(src, /aabb: fireBox\(place, profile, fireHalfW\)/);

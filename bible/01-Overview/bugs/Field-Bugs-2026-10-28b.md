@@ -86,7 +86,7 @@ FOUND. COAST-PORT's new ports took the world's lanes from 440 to 450, and the se
 among them: the site moved on 24 of 24 serpent days, the Bay's too. The `site` word carried no version, so during the
 deploy old and new tabs rose the serpent at different sites.
 
-FIXED (relay world281). Each lane is scored by its two ends, and the word says its site law
+FIXED (relay world283). Each lane is scored by its two ends, and the word says its site law
 (`11-Multiplayer/Sea-Serpent.md` section 18). A lane added now moves only the days it wins. The fix itself moved every
 day's site one more time: of the next 24 serpent days from day 1000, all 24.
 

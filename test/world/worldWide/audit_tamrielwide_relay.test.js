@@ -1,5 +1,5 @@
 // AUDIT TAMRIEL-WIDE, the relay's findings (2026-10-28, bible/01-Overview/audits/Audit-Tamriel-Wide.md): B1, B2, B5 and
-// E3, fixed in one relay (world281). Each is run through the real hub or the real law past the Bay beside the Bay's own.
+// E3, fixed in one relay (world283). Each is run through the real hub or the real law past the Bay beside the Bay's own.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -101,7 +101,7 @@ test('AUDIT TAMRIEL-WIDE B5: the hub keeps two days of every lane\'s cleansed ra
       const late = r.connect(); await r.hello(late, 'peer-late');
       const cls = late.sent.find((m) => m.t === 'raid' && m.k === 'cls');
       assert.deepEqual(cls.l.map((e) => e[0]), [...keys].reverse(), 'every lane\'s two days, newest first');
-      // AUDIT TAMRIEL-WIDE II R1: a build before world281 stops its read at 64 - the newest it keeps are today's
+      // AUDIT TAMRIEL-WIDE II R1: a build before world283 stops its read at 64 - the newest it keeps are today's
       assert.ok(cls.l.slice(0, 64).every((e) => e[0].endsWith(`:${D}`)), 'an older build keeps today\'s cleanses');
       assert.equal(keys.length, RAID_CLEANS_MAX);
       assert.deepEqual(validRaidOut(cls).l, cls.l, 'the joiner\'s game reads every one');

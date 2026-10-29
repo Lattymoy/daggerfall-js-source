@@ -119,7 +119,7 @@ export function drawEnhancedDeath(screen, fade = 0) {
     const text = left >= 60 ? t('death.risingInClock', 'Rising in {m}:{s}', { m: Math.floor(left / 60), s: String(left % 60).padStart(2, '0') }) : t('death.risingInCount', 'Rising in {n}', { n: left });   // WILD1: two minutes read as a clock
     if (c && c.textContent !== text) c.textContent = text;
   }
-  // WILD1: the zone's block and its key - the lines once they are known, and no "Rise now" while the zone holds
+  // WILD1: the zone's block - the lines once they are known. DEATH-15: "Rise now" once Enter rises, zone or not
   const lines = wildDeathLines(screen.wild ?? null);
   const w = node.querySelector('.dth-wild');
   const key = lines.join('|');
@@ -127,9 +127,9 @@ export function drawEnhancedDeath(screen, fade = 0) {
     w.dataset.key = key;
     w.replaceChildren(...lines.map((l, i) => el('p', i === 0 && screen.wild?.killer ? 'dth-wild-line dth-wild-claim' : 'dth-wild-line', l)));
     w.hidden = !lines.length;
-    const keys = node.querySelector('.dth-keys');
-    if (keys) keys.hidden = lines.length > 0;
   }
+  const keys = node.querySelector('.dth-keys');
+  if (keys && keys.hidden !== !screen.canRise) keys.hidden = !screen.canRise;
   disarmDraw(watch);
   watch = armDrawWatchdog(STALE_MS, removeEnhancedDeath);
 }

@@ -41,6 +41,23 @@ test('KEEP-MARK: a replica read whose session says no position hands back the bo
   } finally { _resetBusyShed(); }
 });
 
+test('RETRY-SEEN: a replica read the overload refused exposes its Retry-After beside the bookmark it hands back - each header appended, neither list lost (mutant: the overload\'s Retry-After unexposed)', async () => {
+  const S = await standService();
+  const error = console.error;
+  console.error = () => {};
+  try {
+    const who = await S.registered('Wayfarer');
+    const fault = () => { throw new Error('D1_ERROR: D1 DB is overloaded. Requests queued for too long. [code: 7429]'); };
+    S.env.DB.withSession = () => ({ getBookmark: () => null, prepare: fault, batch: fault });
+    const CARRIED = MARK(0xdef);
+    const read = await send(S, '/v1/homes/town', { secret: who.secret, body: { mapId: 1 }, mark: CARRIED });
+    assert.equal(read.status, 503);
+    assert.equal(read.headers.get('x-d1-bookmark'), CARRIED);
+    const exposed = (read.headers.get('access-control-expose-headers') ?? '').split(',').map((h) => h.trim()).sort();
+    assert.deepEqual(exposed, ['retry-after', 'x-d1-bookmark'], 'both exposed, so the page reads both');
+  } finally { console.error = error; _resetBusyShed(); }
+});
+
 test('KEEP-MARK: a bookmark read that timed out keeps the page\'s bookmark; a call that could not be made, or a write that timed out, still lets it go (mutants: a timeout forgets it; a write\'s timeout keeps it)', async () => {
   const SEC = 'secret-keepmark-0123456789';
   const timeout = async () => { throw Object.assign(new Error('timed out'), { name: 'TimeoutError' }); };

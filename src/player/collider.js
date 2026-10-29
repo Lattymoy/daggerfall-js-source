@@ -981,6 +981,31 @@ export class Collider {
     this.late?.forget(bucketKey);   // ROCK-CLEAR: and its parts held back from the body - a pixel streamed out stands none of them later
   }
 
+  /** removeBucket then (for a matrix) addMesh, with the standing filing kept: a lift stands its bucket again several
+   *  times a frame, and each drop of the filing re-filed every bucket at the next query. A still bucket in the fine
+   *  cells (the lowest level, so exactly its bx/bz range) is unfiled from them and the walk; addMesh files the new one
+   *  at the walk's end, as a filing made again would. Anything else takes the plain path. */
+  restand(bucketKey, positions, indices, matrix) {
+    const bucket = this._buckets.get(bucketKey), broad = this._broad;
+    if (bucket !== undefined && broad !== null && !bucket.moves && bucket.lvl <= FILED_FINE && broad.all[bucket.ord] === bucket && !this._isHeld(bucketKey) && !framesMoved(broad)) {
+      if (bucket.lvl === FILED_FINE) {
+        for (let gx = bucket.bx0; gx <= bucket.bx1; gx++) {
+          for (let gz = bucket.bz0; gz <= bucket.bz1; gz++) {
+            const k = cellKey(gx, gz), list = broad.cells.get(k), i = list ? list.indexOf(bucket) : -1;
+            if (i >= 0) list.splice(i, 1);
+            if (list && !list.length) broad.cells.delete(k);
+          }
+        }
+      }
+      const all = broad.all;
+      all.splice(bucket.ord, 1);
+      for (let i = bucket.ord; i < all.length; i++) all[i].ord = i;
+      this._buckets.delete(bucketKey);   // so removeBucket below keeps the filing
+    }
+    this.removeBucket(bucketKey);
+    if (matrix) this.addMesh(bucketKey, positions, indices, matrix);
+  }
+
   /** AUDIT CLIMB1 F5: where a bucket stands now - `{ t, r }`, its translation and its turn (r null for an unturned
    *  one; intoBucket's convention: local = r (p - t)), copies, or null for no such bucket. The enhanced climb's move
    *  onto a mover (a boat's hull) reads it every step and rides the difference (player/parkour.js carryMove).

@@ -162,7 +162,7 @@ whether the peer's pose stands in the zone, and in a dungeon a pose is the dunge
 (`world.js:"const nativeFrame = overworld || !!privateInteriorOf(key);"`), which the map reads as its corner pixel.
 No blow, swing, shaft or spell landed between players in the zone's halls. Fixed: in a dungeon the place is the zone
 (wildCan's `wildHere`, the door's pixel) and the room is that place's, so a room's peer is fair by the place
-(`world.js:"return modes?.mode === 'dungeon' || (wildAtWire(duelWorldOf(peerId))"`; ZONE-SAFE since: and in the open never a body in a settlement's streets). Now the zone's halls fight, and
+(`world.js:"(modes?.mode === 'dungeon' || (wildAtWire(duelWorldOf(peerId))"`; ZONE-SAFE since: and in the open never a body in a settlement's streets). Now the zone's halls fight, and
 their blood is the dungeon's pool's; the duel's half keeps the one seam for a path that cannot run today. The only
 splashes `world.js` still sends straight to the street's pool are on the street's own paths: a road traveller struck
 down (refused off the exterior) and a horse's trample (asked in the exterior arm alone). Pins:

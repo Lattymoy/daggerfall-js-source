@@ -52,6 +52,7 @@ import { verifyRaidReceipt } from '../../src/net/raid/raidReceipt.js';
 import { raidDayOfKey } from '../../src/net/raid/raidLaw.js';
 import { renownForXp, renownRaidXp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, RENOWN_TRACKS_MAX } from '../../src/net/renown.js';
 import { renownCharacterOk, renownNameOf, renownTrackOf, renownHeldSql } from './renownTracks.js';
+import { villainRaidStep } from './villainy.js';   // PVP-VILLAIN-KEEP: a raid lowers the villain meter
 
 /** The raids an account is counted for in one game day. */
 export const RAID_CLAIMS_DAY_MAX = 6;
@@ -173,6 +174,7 @@ export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, c
     ...(deed ?? []),
     ...(paid?.statements ?? []),
     ...(town ?? []),
+    villainRaidStep(db, player.id, character, c.w, nonce),   // PVP-VILLAIN-KEEP: last, so no place above moves
   ]);
   const [row, decided, , , , after, count] = res;
   const spoils = thanks ? thanksAnswer(res[8], cid) : false;

@@ -5,7 +5,7 @@
 // fast back, and keeps one fighter an account. bible/11-Multiplayer/Seats-Arc.md 6.1; `06-Systems/Online-Arc.md` PVP-REF.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { siegeRoomKey, SIEGE_UNITS_PER_M, SIEGE_WAVE_MS, SIEGE_PROTECT_MS, SIEGE_FIGHTERS_MAX, siegeBlowMax } from '../../../src/net/siege/siegeRef.js';
+import { siegeRoomKey, SIEGE_UNITS_PER_M, SIEGE_WAVE_MS, SIEGE_PROTECT_MS, SIEGE_FIGHTERS_MAX, pvpHitMax } from '../../../src/net/siege/siegeRef.js';
 import { CLOSE_REPLACED } from '../../../src/net/wire.js';
 import worker from '../../../server/src/index.js';
 import { fakeRoom } from '../../fakeRoom.mjs';
@@ -60,13 +60,13 @@ test('PVP-REF THE ROOM: the Worker mints no object for a siege key a client made
   assert.equal(ws.meters.junk, 1, 'and is junk');
 });
 
-test('PVP-REF THE BLOW IN THE ROOM: judged on the striker\'s look and both last good poses - clipped to the bucket, the vitality left said to every socket (a spectator too), a weapon the look does not hold and a target out of reach landing nothing; a fall said, raised whole at its wave by the alarm, then 3 s untouched (mutants: the look; the reach; the clip; the fan; the fall; the wave)', async () => {
+test('PVP-REF THE BLOW IN THE ROOM: judged on the striker\'s look and both last good poses - clipped to 45% of the body (PVP-HIT), the vitality left said to every socket (a spectator too), a weapon the look does not hold and a target out of reach landing nothing; a fall said, raised whole at its wave by the alarm, then 3 s untouched (mutants: the look; the reach; the clip; the fan; the fall; the wave)', async () => {
   await withSiege(async ({ r, say, join, now, set, step }) => {
     const a = await join('peer-0001', 0);
     const b = await join('peer-0002', 2, { lv: 50 });
     const eye = r.connect(); await r.hello(eye, 'peer-0003', at(30), { glyphs: ['dev'], look: LOOK });   // a spectator: never says `in`
     await say(a, { k: 'in' }); await say(b, { k: 'in' });
-    const top = siegeBlowMax(123, 9);
+    const top = pvpHitMax({ max: 400 });   // PVP-HIT: 45% of the body, the weapon's bucket retired
     await say(a, { k: 'blow', to: 'peer-0002', w: 123, m: 9, d: 500, r: 0 });
     for (const ws of [a, b, eye]) assert.deepEqual(sieges(ws, 'hp').at(-1), { t: 'siege', k: 'hp', id: 'peer-0002', h: 400 - top, m: 400 }, 'clipped, and said to the room');
     assert.equal(r.room._siege.fighters['acct-peer-0001'].clipped, 500 - top);
@@ -160,7 +160,7 @@ test('SHARED-HEALTH THE SIEGE\'S ROOM (2026-10-26, Integrity-Arc.md section 5): 
     await r.raw(b, JSON.stringify({ t: 'vit', n: 1, s: 7500, seen: [] }));
     const anchored = vits(b, 'h').at(-1);
     assert.deepEqual([anchored.h, anchored.m], [300, 400], 'three quarters of its 400');
-    const top = siegeBlowMax(123, 9);
+    const top = pvpHitMax({ max: 400 });   // PVP-HIT: 45% of the body, the weapon's bucket retired
     await say(a, { k: 'blow', to: 'peer-0002', w: 123, m: 9, d: 500, r: 0 });
     assert.equal(vits(b, 'h').at(-1).h, 300 - top, 'the blow on its own health');
     r.room._siege.fighters['acct-peer-0002'].hp = 1;
@@ -172,6 +172,10 @@ test('SHARED-HEALTH THE SIEGE\'S ROOM (2026-10-26, Integrity-Arc.md section 5): 
     assert.equal(vits(b, 'h').at(-1).h, 400, 'risen at its wave: whole');
     await r.raw(eye, JSON.stringify({ t: 'vit', n: 1, s: 1, seen: [] }));
     assert.equal(vits(eye).length, 0, 'a spectator holds no pool');
+    // PVP-HEALTH: a report's real maximum is the pool's whole - out of the fight, at the same share
+    set(now() + 60_000);
+    await r.raw(b, JSON.stringify({ t: 'vit', n: 2, s: 10000, seen: [], x: 1200, r: 150 }));
+    assert.deepEqual([vits(b, 'h').at(-1).h, vits(b, 'h').at(-1).m], [1200, 1200], 'its real 1,200');
   });
 });
 

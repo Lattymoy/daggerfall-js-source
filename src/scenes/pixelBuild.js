@@ -525,7 +525,9 @@ export function createPixelBuild(host) {
       // HOME-LOOK: the town's homes, asked before its buildings are merged (a moment, never long - a town unheard by
       // then is painted when it is heard of)
       homeTown = (dfLocation.mapTableData?.mapId ?? 0) >>> 0;
-      if (onlineHomes && homeTown) {
+      // OVERLOAD-EASE (2026-10-29): a far Imperial City slice stands no buildings, and a place the boot's read says holds
+      // no home has none to paint - neither asks the service (they were most of /v1/homes/town's asks)
+      if (onlineHomes && homeTown && !farView && !onlineHomes.heardHomeless?.(homeTown)) {
         // AUDIT: a town heard before is read as it was heard (asked again behind the build; an answer that moves is
         // painted by refreshHomeLooks) - only a town never heard is waited for, a moment, never at every rebuild
         if (onlineHomes.known(homeTown)) onlineHomes.ensure(homeTown).catch(() => {});

@@ -14099,7 +14099,7 @@ draws it as it draws a Bay region. It had scanned the Bay's 1000 x 500 and drawn
 
 The grammar and the search are `scenes/staffTp.js`, read ahead of `net/staffCommands.js`. That file is in the relay's
 bundle (its `isStaff`), and this batch was written to leave the relay alone. The relay's copy still states the Bay's
-bound in its header and `STAFF_HELP_LINES`; the client's `/staff` drops it (`staffHelpLines`). The PR ships world281
+bound in its header and `STAFF_HELP_LINES`; the client's `/staff` drops it (`staffHelpLines`). The PR ships world283
 anyway, for B1, B2, B5 and E3 (AUDIT TAMRIEL-WIDE II A5), so folding the grammar back into `staffCommands.js` waits
 for no release now - it is left as a cleanup. Its place line now says what the search reaches: any place on the Bay,
 and past it the cities and towns the map names (the registry's listed places), not every place. Pinned:

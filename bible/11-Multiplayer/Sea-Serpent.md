@@ -504,9 +504,9 @@ After the kill the bar holds a moment and fades.
 
 ## 11. Versions and deploy order
 
-- **AUDIT TAMRIEL-WIDE E3's relay: `world281`** (section 18). The `site` word carries `sl`, and the hub folds its own
+- **AUDIT TAMRIEL-WIDE E3's relay: `world283`** (section 18). The `site` word carries `sl`, and the hub folds its own
   site law's words alone, into its own record. Deploy the relay first, then the site. A new build says no site to an
-  older relay (`SERPENT_SITE_RELAY_MIN` 281, AUDIT TAMRIEL-WIDE II R2), so the old law's vote is the old builds' alone.
+  older relay (`SERPENT_SITE_RELAY_MIN` 283, AUDIT TAMRIEL-WIDE II R2), so the old law's vote is the old builds' alone.
   Until two new builds name a site, the herald names no place, and that day's kill is not posted (II R4).
 - **WW7-12's relay: `world260`** (WORLD-WIDE's, undeployed - its row re-hashed in place). The hub's `at`: the agreed site
   told to every game online as it moves and at each hello (`net/serpent/serpentHerald.js` serpentAtWord, `server/src/index.js`
@@ -973,4 +973,4 @@ where the index moved 60 of 60. This change moved every day's site once more. Th
 
 Pins: `test/world/worldWide/audit_tamrielwide_relay.test.js` E3 (2). Mutants: `tools/mutants/audit_tamrielwide_relay.json` (8, dead). PIN MOVED: `serpent1_law`, `serpent1_client` (a port's pixel),
 `serpent2_herald` and `ww7_longer` (the law's word and record). Re-aimed by content: `serpent2.json`
-SERPENT2-any-day-site-kept and SERPENT2-place-sent-raw. Relay world281.
+SERPENT2-any-day-site-kept and SERPENT2-place-sent-raw. Relay world283.

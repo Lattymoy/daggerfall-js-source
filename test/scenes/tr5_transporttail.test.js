@@ -44,7 +44,7 @@ test('TR5/MAC-K3: ONE place changes the mode - and it is ONE PLACE ACROSS THE PO
   // and simply ABSENT from `scenes/exterior.js`, which had no
   // transport surface at all.
   const rig = read('src/player/mountRig.js');
-  assert.match(rig, /function setMode\(mode\) \{\s*\n\s*player\.setTransportMode\(mode\);/);
+  assert.match(rig, /function setMode\(mode\) \{\s*\n\s*if \(refused\(mode\)\) return;[^\n]*\n\s*player\.setTransportMode\(mode\);/);   // PIN MOVED (PVP-RULES): a saddle refused under the PvP flag before the one motor call
   assert.match(rig, /animator\.mount\(mode\);\s*\n\s*art = null;/, 'the art is dropped on every change');
   // The door ENDS on the art drop and the SPRITE's own load (HC1,
   // 2026-09-14: the one place loads the mount it just set, so a loaded

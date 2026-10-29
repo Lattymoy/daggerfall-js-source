@@ -29,7 +29,7 @@
  *  doors: the page asks the realm no later (scenes/legacyHost.js REZ_HOLD_MS), and the realm takes a raise no later than
  *  this past the tombstone it stamped (server-account/src/legacy.js realmRaise) - the realm's clock starts at the
  *  tombstone's landing, after the page's, so the page's window closes first. */
-export const REZ_HOLD_S = 150;
+export const REZ_HOLD_S = 90;
 
 /** The deaths taken back on a person - their `died.at`s - or none. @param {any} p @returns {number[]} */
 export const revivedOf = (p) => (Array.isArray(p?.revived) ? p.revived.filter((n) => Number.isFinite(n)) : []);

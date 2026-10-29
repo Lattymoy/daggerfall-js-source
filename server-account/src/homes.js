@@ -65,6 +65,7 @@ import { DECOR_OPS_MAX, DECOR_OPS_WINDOW_S } from '../../src/net/decorLaw.js';  
 import { hallMay } from '../../src/net/hallLaw.js';   // GUILD1d: a hall's keepers
 import { heraldryOfRow } from './halls.js';   // GUILD1d: a hall's heraldry, on its door
 import { openGatesRead } from './seatHolding.js';   // SEAT1d: Open Gates, where the town's holder proclaims it
+import { TOMB_WHERE } from './legacy.js';   // TOMB-RIDES: the door's tombstone, asked in a town's batch
 import { OWNS } from './decor.js';   // GUILD-YARD: a home's character, or a hall's keeper - as its decor asks
 import { homeMyVoteOf, homeShunned } from '../../src/net/homeVoteLaw.js';   // HOME-VOTE: the caller's own vote, as the law reads one; AUDIT A3: a shunned home
 import { LAYOUT_MATCH_SQL, layoutMatchBinds, TOWN_LAYOUT_SQL, townLayoutRefusal } from './townLayout.js';   // WD3: a town's homes in one layout (AUDIT PRE-MERGE 1003 WD1: a hall's too)
@@ -483,7 +484,13 @@ export async function homesInTown({ db, nowS = Math.floor(Date.now() / 1000) }, 
   // reader the seats are open to); each owner's own choice is kept, and its own view shows it. HOMES-SHED (2026-10-13,
   // the database overloaded from 14:11 UTC; this route the service's busiest, 88,079 asks in its hour): its read rides
   // the homes read's one request - a batch - where it was a round trip of its own before it on every ask
-  const [{ results = [] }, gates] = seats ? await db.batch([homesRead, openGatesRead(db, nowS, mapId)]) : [await homesRead.all(), null];
+  // TOMB-RIDES (bible/11-Multiplayer/Scale-Arc.md TOMB-RIDES): and the door's tombstone of the named character (AUDIT
+  // LEGACY III O12, legacy.js TOMB_WHERE) rides the same batch - the door asks it here, not on a trip of its own
+  const tombRead = me ? db.prepare(`SELECT 1 AS dead FROM realm_characters WHERE ${TOMB_WHERE}`).bind(player.id, me) : null;
+  const reads = [tombRead, homesRead, seats ? openGatesRead(db, nowS, mapId) : null].filter(Boolean);
+  const answers = reads.length > 1 ? await db.batch(reads) : [await homesRead.all()];
+  if (tombRead && answers.shift()?.results?.length) return { error: 'dead' };
+  const [{ results = [] }, gates = null] = answers;
   const open = !!gates?.results?.length;
   // HOME-VOTE (homeVotes.js): each home's score - its votes summed, kept on its row (AUDIT A2) - and the caller's own vote,
   // said where there is one

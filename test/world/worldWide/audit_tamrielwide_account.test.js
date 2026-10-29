@@ -1,6 +1,6 @@
 // AUDIT TAMRIEL-WIDE (2026-10-28; the owner: "ensure pur future development isnt just Daggerfall anymore and is the
 // entirety of tamriel") - the account service's and the staff's findings: C3, a dungeon vein's identity past the Bay
-// (acct213), and B4/C7, the staff's /tp and flat map past the Bay. Each on the real code past the Bay beside the Bay's
+// (acct217), and B4/C7, the staff's /tp and flat map past the Bay. Each on the real code past the Bay beside the Bay's
 // own answer (bible/06-Systems/Professions-Arc.md section 23, bible/06-Systems/Online-Arc.md STAFF1).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -104,7 +104,7 @@ test('AUDIT TAMRIEL-WIDE C3: the dungeon host names a dungeon by the identity\'s
   assert.match(src('src/scenes/dungeonContext.js'), /^import \{ dungeonIdentity \} from '\.\/dungeonIdentity\.js';/m);
 });
 
-// ─── THE SERVICE (acct213) ───────────────────────────────────────────
+// ─── THE SERVICE (acct217) ───────────────────────────────────────────
 
 const DAY = 86_400, MOUNTAIN = 226, WOODS = 231, ETHER = 19, SKYRIM = 64;
 let _now = utcDay(T0) * DAY + 12 * 3600;
@@ -114,7 +114,7 @@ test.after(() => { Date.now = realNow; });
 let _rid = 0;
 const rid = () => `tw-${String(++_rid).padStart(6, '0')}`;
 
-test('AUDIT TAMRIEL-WIDE C3 (acct213): the service keeps the ruin\'s and the lair\'s veins apart - the ruin witnessed for its ground, the lair\'s own claim stands, and one account takes slot 0 of each; a whole id past 32 bits is refused (mutants: the 20-bit bound kept; the key\'s seven digits kept)', async () => {
+test('AUDIT TAMRIEL-WIDE C3 (acct217): the service keeps the ruin\'s and the lair\'s veins apart - the ruin witnessed for its ground, the lair\'s own claim stands, and one account takes slot 0 of each; a whole id past 32 bits is refused (mutants: the 20-bit bound kept; the key\'s seven digits kept)', async () => {
   clock(utcDay(T0) * DAY + 12 * 3600);
   setTamrielTrace(null);
   const isle = firstRuin();
@@ -160,7 +160,8 @@ test('AUDIT TAMRIEL-WIDE B4/C7: /tp <x> <y> takes a pixel of the world\'s grid, 
   const help = staffHelpLines();
   // AUDIT TAMRIEL-WIDE II A5: the place's line says what the search reaches - every Bay place, the named ones past it
   assert.ok(help.includes('/tp <place> - to a named place: any on the Bay, past it a city or town the map names'), help.join(' | '));
-  assert.equal(help.length, 9);
+  assert.equal(help.length, 10);   // PIN MOVED (STAFF-PULL, #1389): main's /tpa line joined the list
+  assert.ok(help.includes('/tpa <player> - bring them to you (admins and Shadow Fang)'), 'STAFF-PULL\'s line kept beside the place\'s');
   assert.ok(help.includes('/tp <x> <y> - to a map pixel') && !help.some((l) => /0-999/.test(l)), 'the help names no Bay bound');
   assert.match(src('src/scenes/world.js'), /const staffCmd = isStaffT\(staffGlyphs\(\)\) \? \(parseDragonCommand\(text\) \?\? parseStaffLine\(/, 'the host reads the world\'s grammar (after DRAGON-RIDE\'s /dragon)');
   assert.match(src('src/scenes/world.js'), /if \(c\.cmd === 'staff'\) \{ for \(const line of \[\.\.\.staffHelpLines\(\), DRAGON_HELP_LINE\]\) say\(line\); return; \}/);   // and DRAGON-RIDE's line after

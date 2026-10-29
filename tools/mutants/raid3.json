@@ -382,7 +382,7 @@
   {
     "name": "RAID3-relay-hello-list-unsaid",
     "file": "server/src/index.js",
-    "old": "    { try { const l = await this._raidCleansOf(now); if (l.length) this._send(ws, JSON.stringify({ t: 'raid', k: 'cls', l: [...l].reverse() })); } catch (e) { console.warn('[hub] raid word failed', e?.message ?? e); } }   // AUDIT TAMRIEL-WIDE II R1: newest first - a build before world281 reads 64 (wire.js validRaidOut), today's\n",
+    "old": "    { try { const l = await this._raidCleansOf(now); if (l.length) this._send(ws, JSON.stringify({ t: 'raid', k: 'cls', l: [...l].reverse() })); } catch (e) { console.warn('[hub] raid word failed', e?.message ?? e); } }   // AUDIT TAMRIEL-WIDE II R1: newest first - a build before world283 reads 64 (wire.js validRaidOut), today's\n",
     "new": "",
     "tests": [
       "test/net/raid3_raidLedger.test.js"

@@ -29,7 +29,7 @@ export const STAFF_GLYPHS = Object.freeze(['dev', 'dm', 'shadowfang']);
 export const isStaff = (glyphs) => Array.isArray(glyphs) && glyphs.some((g) => STAFF_GLYPHS.includes(g));
 
 /** The staff's command names (lowercase). */
-export const STAFF_COMMANDS = Object.freeze(['tp', 'god', 'fly', 'heal', 'pos', 'staff', 'relay']);   // SCALE5b: `relay`, a developer's (net/relayCfg.js)
+export const STAFF_COMMANDS = Object.freeze(['tp', 'tpa', 'god', 'fly', 'heal', 'pos', 'staff', 'relay']);   // SCALE5b: `relay`, a developer's (net/relayCfg.js)
 /** The travel map's grid: MapsFile's 1000 x 500 pixels. */
 export const TP_MAP_W = 1000;
 export const TP_MAP_H = 500;
@@ -40,6 +40,7 @@ export const STAFF_HELP_LINES = Object.freeze([
   '/tp <place> - to a named place: any on the Bay, past it a city or town the map names',   // AUDIT TAMRIEL-WIDE II A5: what the search reaches
   '/tp <x> <y> - to a map pixel (x 0-999, y 0-499)',
   '/tp @<player> - to their exact live position',
+  '/tpa <player> - bring them to you (admins and Shadow Fang)',
   '/god [on|off] - take no damage',
   '/fly [on|off] - levitate',
   '/heal - restore health, fatigue and magicka',
@@ -51,7 +52,7 @@ const onOff = (word, was) => (word === 'on' ? true : word === 'off' ? false : wo
 
 /**
  * What a staff line IS, or null when it is not one of STAFF_COMMANDS:
- *   { cmd: 'tp', place }        { cmd: 'tp', px, py }        { cmd: 'tp', player }
+ *   { cmd: 'tp', place }        { cmd: 'tp', px, py }        { cmd: 'tp', player }      { cmd: 'tpa', player }
  *   { cmd: 'god', on }          { cmd: 'fly', on }           { cmd: 'heal' }   { cmd: 'pos' }   { cmd: 'staff' }
  *   { error }                   in words, for a line in a shape its command refuses
  * `now` is the toggles' present state ({ god, fly }), so a bare /god flips it.
@@ -77,6 +78,12 @@ export function parseStaffCommand(text, now = {}) {
       return { cmd: 'tp', px, py };
     }
     return { cmd: 'tp', place: rest.slice(0, 64) };
+  }
+  // STAFF-PULL (2026-10-28, the owner: "tpa player so tp them to us"): /tpa <player> brings that player to me - an Admin's
+  // or the Shadow Fang's alone (the relay asks), the one command that moves another player
+  if (name === 'tpa') {
+    const player = rest.replace(/^@/, '').trim().slice(0, 64);
+    return player ? { cmd: 'tpa', player } : { error: 'Usage: /tpa <player>.' };
   }
   if (name === 'god' || name === 'fly') {
     if (words.length > 1) return { error: `Usage: /${name} [on|off].` };

@@ -371,8 +371,8 @@
   {
     "name": "SC-world-slider-wind",
     "file": "src/scenes/world.js",
-    "old": "    if (shipFlagPass && shipFlagPass.draw(shipFlags.draws(), proj, view, new Float32Array(mwv.eye), now / 1000, {   // none to draw: its idle textures pruned, no pass\n      light: { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, sunScale: renderer._sunScale, moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonCol: renderer._moonColor },\n      wind: Math.min(1, wd.strength01 * wd.gust),",
-    "new": "    if (shipFlagPass && shipFlagPass.draw(shipFlags.draws(), proj, view, new Float32Array(mwv.eye), now / 1000, {   // none to draw: its idle textures pruned, no pass\n      light: { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, sunScale: renderer._sunScale, moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonCol: renderer._moonColor },\n      wind: Math.min(1, wd.slider * wd.gust),",
+    "old": "    if (shipFlagPass && shipFlagPass.draw(shipFlags.draws(), proj, view, wxEye32, now / 1000, {   // none to draw: its idle textures pruned, no pass\n      light: { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, sunScale: renderer._sunScale, moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonCol: renderer._moonColor },\n      wind: Math.min(1, wd.strength01 * wd.gust),",
+    "new": "    if (shipFlagPass && shipFlagPass.draw(shipFlags.draws(), proj, view, wxEye32, now / 1000, {   // none to draw: its idle textures pruned, no pass\n      light: { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, sunScale: renderer._sunScale, moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonCol: renderer._moonColor },\n      wind: Math.min(1, wd.slider * wd.gust),",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]

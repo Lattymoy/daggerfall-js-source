@@ -1,0 +1,62 @@
+[
+  {
+    "name": "STAFF-PULL-dm-may-pull",
+    "file": "src/net/staffTeleport.js",
+    "old": "export const staffPullAllowed = quietTeleportAllowed;",
+    "new": "export const staffPullAllowed = (glyphs) => Array.isArray(glyphs) && glyphs.length > 0;",
+    "why": "a Dungeon Master (or any glyph) brings players",
+    "tests": [
+      "test/net/staffpull.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PULL-frozen-pulled",
+    "file": "server/src/staffTeleport.js",
+    "old": "if (Number(b.fz) > Math.floor(now / 1000)) { result(ws, m.nonce, { error: 'frozen' }); return; }",
+    "new": "",
+    "why": "a frozen player is moved out of the freeze",
+    "tests": [
+      "test/net/staffpull.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PULL-stranger-lands",
+    "file": "server/src/staffTeleport.js",
+    "old": "if (!p || !p.pull || p.target !== ws || p.id !== a.id) return;",
+    "new": "if (!p || !p.pull) return;",
+    "why": "any socket answers another player's pull",
+    "tests": [
+      "test/net/staffpull.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PULL-capture-answers-pull",
+    "file": "server/src/staffTeleport.js",
+    "old": "if (!p || p.pull || p.target !== ws || p.id !== a.id) return;",
+    "new": "if (!p || p.target !== ws || p.id !== a.id) return;",
+    "why": "a capture answer passes as a landing",
+    "tests": [
+      "test/net/staffpull.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PULL-old-relay-sent-pull",
+    "file": "src/net/online.js",
+    "old": "if (m?.k === 'pull' && !this.staffPullOk) return false;",
+    "new": "",
+    "why": "an older relay is sent a kind it closes on",
+    "tests": [
+      "test/net/staffpull.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PULL-land-when-dead",
+    "file": "src/scenes/staffPullHost.js",
+    "old": "if (!alive()) throw new Error('cancelled');",
+    "new": "",
+    "why": "a death during the load still places",
+    "tests": [
+      "test/net/staffpull.test.js"
+    ]
+  }
+]
