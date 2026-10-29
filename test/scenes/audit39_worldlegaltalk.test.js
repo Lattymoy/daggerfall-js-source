@@ -399,7 +399,8 @@ test('AUDIT 39 (#111): the answer pipeline gets the region and the location read
 
 test('AUDIT 39 (#112): the NPC session gets fullName - the TWO-argument form', () => {
   const deps = literalBody(read('src/scenes/world.js'), 'const npcSession = new NPCSession({');
-  assert.match(deps, /fullName: \(nameBank, gender\) => nameHelperFullName\(nameBank, gender\)/,
+  // REGION-NAMES: PIN MOVED - FullName's draw through the Person's own door (personNames.js personName, quest/person.js)
+  assert.match(deps, /fullName: \(nameBank, gender\) => personName\(nameBank, gender\)/,
     'the entry\'s own bank, not the region\'s - talkMcp\'s one-argument form is a different object');
 });
 

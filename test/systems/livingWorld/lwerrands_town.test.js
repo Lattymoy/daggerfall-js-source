@@ -56,6 +56,7 @@ test('LW-ERRANDS a resident\'s guild: a hall\'s own members their hall; a courti
     let want = null;
     if (r.job === 'guildsman') want = places.doors.get(r.work);
     else if (r.job === 'courtier') want = nearest(halls((f) => ORDER_FACTIONS.has(f)), home);
+    else if (r.cls === M.Knight && halls((f) => ORDER_FACTIONS.has(f)).length) want = nearest(halls((f) => ORDER_FACTIONS.has(f)), home);   // LW-WIDE: a knight of the fourth rank met here - his order, as the title says
     else if ([B.Bookseller, B.Library, B.Alchemist].includes(workType) || (r.cls != null && r.cls >= M.Mage && r.cls <= M.Nightblade)) want = nearest(halls((f) => f === MAGES_GUILD), home);
     else if ([B.Armorer, B.WeaponSmith].includes(workType) || (r.cls != null && r.cls >= M.Monk && r.cls <= M.Knight)) want = nearest(halls((f) => f === FIGHTERS_GUILD), home);
     assert.equal(got, want, `${r.id} (${r.job}${r.cls != null ? `, class ${r.cls}` : ''}): ${got?.key ?? 'none'}`);

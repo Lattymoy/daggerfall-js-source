@@ -22,7 +22,7 @@
 import { lwSeed, lwRng, textSeed, rollInt, pickOf } from './seed.js';
 import { NATIVE_PIXEL } from './trips.js';
 import { DAY_MIN } from './dayPlan.js';
-import { residentName } from './census.js';
+import { seededPersonName } from '../../characters/personNames.js';   // REGION-NAMES
 import { GENDERS } from '../../characters/nameHelper.js';
 import { nameBankOfArea } from '../../characters/areaNameBank.js';   // WW1: an area's people - the region's on the Bay
 import { isBayArea, inWorldGrid, theatreAt, theatreOfArea, BAY_THEATRE } from '../../world/worldWide/worldGrid.js';
@@ -225,7 +225,7 @@ export function bandPeople(h, key, bankOf = nameBankOfArea) {
     const gender = female ? GENDERS.Female : GENDERS.Male;
     const cls = i === 0 ? pickOf(rng, [MOBILE_TYPES.Nightblade, MOBILE_TYPES.Barbarian, MOBILE_TYPES.Rogue]) : pickOf(rng, OUTLAW_CLASSES);
     const level = Math.max(1, base + (i === 0 ? 3 : rollInt(rng, -1, 2)));
-    out.push({ id: `${key}.${i}`, name: residentName(lwSeed(textSeed(key), i, 0x6e6d), bankOf(h.area), gender), cls, level, gender, sex: female ? 'female' : 'male' });
+    out.push({ id: `${key}.${i}`, name: seededPersonName(lwSeed(textSeed(key), i, 0x6e6d), bankOf(h.area), gender, { region: h.area ?? -1 }), cls, level, gender, sex: female ? 'female' : 'male' });
   }
   return out;
 }

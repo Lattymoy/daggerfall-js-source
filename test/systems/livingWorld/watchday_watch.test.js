@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { synthTown, closeTown } from '../../lwTown.mjs';
 import { townPlaces, streetGeometry } from '../../../src/systems/livingWorld/places.js';
-import { townCensus, watchRoster, watchShiftSize, townWatchCount, mintResident, WATCH_COMPANIES } from '../../../src/systems/livingWorld/census.js';
+import { townCensus, watchRoster, watchShiftSize, townWatchCount, watchExtraOf, mintResident, WATCH_COMPANIES } from '../../../src/systems/livingWorld/census.js';
 import { dayPlan, entryAt, watchDuty, patrolBeat, nightTail, morningWalk, walkMinutes, schedule, MIN_STAY, WATCH_SHIFTS, WATCH_ROTATION, DAY_MIN, DAY_START_MIN, isOutdoor } from '../../../src/systems/livingWorld/dayPlan.js';
 import { LivingTown, PAIR_SIDE_M, PAIR_BEHIND_M, WALK_FAST } from '../../../src/systems/livingWorld/livingTown.js';
 import { ResidentWalker } from '../../../src/characters/residentWalker.js';
@@ -26,9 +26,9 @@ test('WATCH-DAY the watch\'s strength: none in a hamlet, a lone patrol a shift i
   assert.equal(WATCH_COMPANIES, 4);
   assert.equal(WATCH_ROTATION, WATCH_COMPANIES);
   assert.deepEqual([1, 2, 8, 9, 17, 18, 27, 36, 45, 64].map((b) => watchShiftSize(town(b))), [0, 1, 1, 2, 2, 3, 4, 5, 6, 6]);
-  assert.deepEqual([1, 2, 9, 64].map((b) => townWatchCount(town(b))), [0, 4, 8, 24]);
+  assert.deepEqual([1, 2, 9, 64].map((b) => townWatchCount(town(b))), [0, 4, 8, 48]);   // WATCH-LIFE: PIN MOVED - a great city's three pairs more a shift (watchExtraOf)
   const roster = watchRoster(town(27));
-  assert.equal(roster.length, 16);
+  assert.equal(roster.length, 24, 'WATCH-LIFE: PIN MOVED - sixteen and a pair more a shift');
   for (const w of roster) {
     assert.equal(w.archive, GUARD_TEXTURE, 'on duty, the uniform');
     assert.ok(PERSON_TEXTURES.Breton.male.includes(w.civvies) || Object.values(PERSON_TEXTURES).some((t) => t.male.includes(w.civvies)), `${w.id}: his own clothes a man's outfit of his people`);
@@ -50,8 +50,10 @@ test('WATCH-DAY the duty: a watchman\'s shift a shift later each day (day, eveni
   assert.deepEqual(WATCH_SHIFTS.map((s) => [...s]), [[6, 14], [14, 22], [22, 30]]);
   const big = townOf(64);
   assert.equal(big.size, 6);
+  // WATCH-LIFE: PIN MOVED - the shift's own ranks (a city's extra patrols after them: lwantics_street.test.js)
+  const own = big.watch.filter((w) => Math.floor(w.slot / WATCH_COMPANIES) < big.size);
   for (const day of [100, 101, 102, 103]) {
-    const duties = big.watch.map((w) => watchDuty(w, big.places, day, big.size));
+    const duties = own.map((w) => watchDuty(w, big.places, day, big.size));
     for (let s = 0; s < 4; s++) assert.equal(duties.filter((d) => d.shift === s).length, big.size, `day ${day}: a company on shift ${s}`);
     for (const w of big.watch) assert.equal(watchDuty(w, big.places, day + 1, big.size).shift, (watchDuty(w, big.places, day, big.size).shift + 1) % 4, 'a shift later each day');
     for (let c = 0; c < 4; c++) {
@@ -66,13 +68,13 @@ test('WATCH-DAY the duty: a watchman\'s shift a shift later each day (day, eveni
   // one alone; a pair; more than the gates
   const village = townOf(4);
   assert.deepEqual(village.watch.map((w) => watchDuty(w, village.places, 100, 1)).map((d) => [d.kind, d.pair]), [['patrol', null], ['patrol', null], ['patrol', null], ['patrol', null]]);
-  const make = (blocks) => { const tw = townOf(blocks); return tw.watch.map((w) => watchDuty(w, tw.places, 100, tw.size)).filter((d) => d.company === 0).map((d) => [d.kind, d.patrol, d.pair]); };
+  const make = (blocks) => { const tw = townOf(blocks); return tw.watch.filter((w) => Math.floor(w.slot / WATCH_COMPANIES) < tw.size).map((w) => watchDuty(w, tw.places, 100, tw.size)).filter((d) => d.company === 0).map((d) => [d.kind, d.patrol, d.pair]); };   // WATCH-LIFE: PIN MOVED - the shift's own ranks
   const P = ['post', -1, null];
   assert.deepEqual(make(9), [['patrol', 0, 0], ['patrol', 0, 1]], 'nine blocks: a pair');
   assert.deepEqual(make(18), [['patrol', 0, 0], ['patrol', 0, 1], P], 'eighteen: a pair and a gate');
   assert.deepEqual(make(36), [['patrol', 0, 0], ['patrol', 0, 1], P, P, P], 'thirty-six: a pair and three gates');
   const fewGates = { ...big.places, exits: big.places.exits.slice(0, 2) };
-  const d6 = big.watch.map((w) => watchDuty(w, fewGates, 100, 6)).filter((d) => d.company === 0);
+  const d6 = own.map((w) => watchDuty(w, fewGates, 100, 6)).filter((d) => d.company === 0);
   assert.deepEqual(d6.map((d) => [d.kind, d.patrol, d.pair]), [['patrol', 0, 0], ['patrol', 0, 1], ['post', -1, null], ['post', -1, null], ['patrol', 1, 0], ['patrol', 1, 1]], 'two gates: two posts, and a second pair');
 });
 
@@ -111,7 +113,7 @@ test('WATCH-DAY the night over the turn: a night\'s watchman stands at the day\'
     const nt = nightTail(w, tw.places, 100, tw.size, MPM);
     assert.equal(nt.at, end.at);
   }
-  assert.equal(nights, tw.size);
+  assert.equal(nights, tw.size + watchExtraOf(tw.t));   // WATCH-LIFE: PIN MOVED - and a city's extra patrols'
   // a town with no spots for a beat: nobody on watch at the turn, the morning begun at home and off duty
   const bare = { ...tw.places, exits: [], social: [], market: [] };
   for (const w of tw.watch.filter((x) => watchDuty(x, bare, 100, 2).shift === 2)) {
@@ -285,7 +287,7 @@ test('WATCH-DAY in a great city (eight blocks by eight, a walk across it near th
       assert.equal(stays.at(-1).t1, Math.min(s1, D1), `${w.id} day ${day}: kept to the shift's end`);
     }
   }
-  assert.equal(shifts, 8 * 18);
+  assert.equal(shifts, 8 * 3 * (tw.size + watchExtraOf(tw.t)));   // WATCH-LIFE: PIN MOVED - eighteen a day and the city's extra patrols
   assert.ok(across && early >= 4, `walks out begun the night before (${early})`);
   // the town draws it: the walker on his way either side of 04:00, never a step longer than his pace
   const lt = new LivingTown(tw.nav, { town: town(64), buildings: tw.buildings, doors: tw.doors, makePerson: (archive, guard) => new ResidentWalker(tw.nav, { archive, guard, frameCount: () => 4, groundY: () => 0 }), clock: () => 0, rate: () => RATE, mpm: MPM });

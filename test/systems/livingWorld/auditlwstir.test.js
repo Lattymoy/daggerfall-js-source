@@ -374,7 +374,9 @@ test('AUDIT LW-STIR B7: one of an incident is its own after its words - walking 
         const e = lt.entryOf(res, t)?.e;
         if (e?.kind !== 'walk' || e.to?.key === inc.spot) continue;
         lt._now = t; lt._tick([0, 0, 0], 0);
-        if (lt._inStir.get(m.id)?.inc !== inc) break;
+        // AUDIT LW-ANTICS A1: PIN MOVED - walking on to another spot, they are the incident's no longer (it held them the
+        // round through, and the census filed them under it over the one they came to)
+        assert.notEqual(lt._inStir.get(m.id)?.inc, inc, `${m.id}: gone on, no longer the ${inc.kind}'s`);
         lt._greetings = []; lt._greeted.delete(m.id);
         const w = lt.where(res, t, false);
         const person = { pos: [w?.x ?? 0, 0, w?.z ?? 0], yaw: 0, moving: false, living: { id: m.id } };

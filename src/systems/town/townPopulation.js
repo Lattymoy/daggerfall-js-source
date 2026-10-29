@@ -15,7 +15,8 @@
 
 import { PERSON_TEXTURES, PERSON_FACE_RECORDS, NUM_PERSON_FACE_VARIANTS, GUARD_TEXTURE, MobilePerson, spriteRaceOf } from '../../characters/mobile/mobilePerson.js';
 import { NAV_CELL } from '../../world/city/cityNavigation.js';
-import { fullName, getNameBank, GENDERS } from '../../characters/nameHelper.js';
+import { getNameBank, GENDERS } from '../../characters/nameHelper.js';
+import { personName } from '../../characters/personNames.js';   // REGION-NAMES: a walker named by their people's customs and their region's
 import { folkRace, folkNameBank } from '../../characters/provinceFolk.js';   // PROVINCE-FOLK: past the Bay, each walker one of the province's people
 
 export const POP_TICKS_PER_SECOND = 10;
@@ -47,7 +48,7 @@ export class TownPopulation {
    * @param opts { totalBlocks, race, makePerson(archive, guard) ->
    *   MobilePerson (the scene owns textures/collider/ground), rand }
    */
-  constructor(nav, { totalBlocks, race = 'Breton', nameBank = null, folk = null, makePerson, rand = Math.random, suppressSpawns = () => false } = {}) {
+  constructor(nav, { totalBlocks, race = 'Breton', nameBank = null, folk = null, region = -1, home = null, makePerson, rand = Math.random, suppressSpawns = () => false } = {}) {
     // V4: PopulationManager.cs:174-176 - a racial override can
     // suppress population (the transformed lycanthrope); the gate
     // holds the PROMOTE arm (:186-191), so pending walkers wait and
@@ -61,6 +62,7 @@ export class TownPopulation {
     // characters/mobile/mobilePerson.js walkerRace); null falls back to the race bank.
     this.nameBank = nameBank;
     this.folk = folk;   // PROVINCE-FOLK: the province's people past the Bay (characters/provinceFolk.js), null on the Bay
+    this.where = { region, home };   // REGION-NAMES: the town's region and whose people, for its walkers' names
     this.makePerson = makePerson;
     this.rand = rand;
     this.maxPopulation = maxPopulationFor(totalBlocks);
@@ -100,7 +102,7 @@ export class TownPopulation {
     if (Math.floor(this.rand() * GUARD_CHANCE_DENOM) === 0) {
       person.setIdentity(GUARD_TEXTURE, true);
       person.gender = GENDERS.Male;
-      person.nameNPC = fullName(bank, GENDERS.Male);
+      person.nameNPC = personName(bank, GENDERS.Male, { race: own ?? this.race, ...this.where });
       this._setFaceRecord(person, GENDERS.Male, 0, sprite);   // the guard arm is personOutfitVariant 0 (:147-149)
       return;
     }
@@ -110,7 +112,7 @@ export class TownPopulation {
     const variant = Math.floor(this.rand() * genderTable.length);   // personOutfitVariant
     person.setIdentity(genderTable[variant], false);
     person.gender = female ? GENDERS.Female : GENDERS.Male;
-    person.nameNPC = fullName(bank, person.gender);
+    person.nameNPC = personName(bank, person.gender, { race: own ?? this.race, ...this.where });
     this._setFaceRecord(person, person.gender, variant, sprite);
   }
 
