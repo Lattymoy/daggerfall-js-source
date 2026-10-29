@@ -398,6 +398,8 @@ import { egResume, egHoldDone, egRelease, egBeatGap, egReceiptSeed, EG_LIVE_MAX,
 import { egEnd, egGeo } from '../../src/net/eliteGates/egBrain.js';
 import { egHallOf, egCircleOfHall, EG_LAST_WORD_MS, EG_ABSENT_TRIAL_MS } from '../../src/net/eliteGates/egLaw.js';   // AUDIT EG III: and a closed socket's body held for the absence's window
 import { mintEgReceipt } from '../../src/net/eliteGates/egReceipt.js';
+import { dragonWord, dragonTick, dragonTrails, dragonFellInternal, dragonReceiptTo, mergeBeats, DRAGON_REST_MS, DRAGON_INTERNAL_FELL } from './dragonFights.js';   // DRAGON2: the Dwarven Dragon's fight, the relay's half
+import { dragonGate } from '../../src/net/wire.js';   // DRAGON2: its frames' own bucket
 // EG-ZA (2026-10-12, Mac: "I said I want everything"; Elite-Gates.md sections 22 and 23): A KEY IS NEVER LOST - the hub's
 // open retried and its call told the room, an open the room never took voided by the room (its tombstone first), a client's
 // void of a stake no call answered, every receipt held at the hub (`egrc:<sub>`) until its account says it is counted, a
@@ -1081,6 +1083,7 @@ export class Room {
     if (path === GATE_INTERNAL_COURT) return this._gateCourtInternal(request);   // GATE-COURTS: a court's kill, told the first court's book
     if (path === GATE_INTERNAL_PARTY) return this._gatePartyInternal(request);   // GATE-COURTS: the book asking the hub an account's party
     if (path === SERPENT_INTERNAL_FELL) return this._serpentFellInternal(request);   // SERPENT1: the serpent's kill, said to the hub
+    if (path === DRAGON_INTERNAL_FELL) return dragonFellInternal(this, request);   // DRAGON2: a dragon's kill and its receipts, to the hub
     if (path === RAID_INTERNAL_CLEAN) return this._raidCleanInternal(request);   // RAID3: a raid's cleanse, said to the hub
     if (path === SEV_INTERNAL_BOOK) return staffBookInternal(this);   // STAFF-EVENT: a cell asking the hub for the book of staff events
     if (path === SEV_INTERNAL_TELL) return staffTellInternal(this, request);   // STAFF-EVENT: a cell telling the hub an event's meter
@@ -1415,6 +1418,7 @@ export class Room {
     { try { const g = await this._serpentFellsOf(); if (g && serpentHolds(g.d, now)) for (const fell of g.list) this._send(ws, JSON.stringify({ t: 'serpent', ...fell })); } catch (e) { console.warn('[hub] serpent word failed', e?.message ?? e); } }
     { try { await this._serpentAtTo(ws, now); } catch (e) { console.warn('[hub] serpent site word failed', e?.message ?? e); } }   // WW7-12: and where the accounts agree it lies
     if (sub) { try { await this._serpentReceiptTo(ws, sub, now); } catch (e) { console.warn('[hub] serpent receipt failed', e?.message ?? e); } }
+    if (sub) { try { await dragonReceiptTo(this, ws, sub, now); } catch (e) { console.warn('[hub] dragon receipt failed', e?.message ?? e); } }   // DRAGON2: and a dragon's, while it is good
     // AUDIT WB A4: and this account's receipt, while it is good (spent, it goes)
     if (sub) { try { await this._gateReceiptTo(ws, sub, now); } catch (e) { console.warn('[hub] gate receipt failed', e?.message ?? e); } }
     // SD9a: and this account's Hour receipt, while it is good (spent, it goes)
@@ -3231,10 +3235,10 @@ export class Room {
     // SERPENT1: A CELL WITH A SERPENT'S FIGHT beats it - and its other duties (a rite's tell, its raids' ends) still run,
     // every SERPENT_REST_MS while the fight beats and on every firing once it is over, under one alarm: the soonest of the
     // beat and what they arm
-    const sp = await this._serpentTick();
+    const sp = mergeBeats(await this._serpentTick(), await dragonTick(this));   // DRAGON2: and a dragon's fight, on the same alarm
     if (sp) {
       const now = Date.now();
-      if (!sp.live || !(now < this._serpentRestAt)) { this._serpentRestAt = now + SERPENT_REST_MS; await this._alarmRest(); }
+      if (!sp.live || !(now < this._serpentRestAt)) { this._serpentRestAt = now + Math.min(SERPENT_REST_MS, DRAGON_REST_MS); await this._alarmRest(); }
       const rest = await this.state.storage.getAlarm();
       await this.state.storage.setAlarm(Math.min(sp.at, Number.isFinite(rest) && rest > now ? rest : Infinity));
       return;
@@ -4474,6 +4478,13 @@ export class Room {
       }
       if (!isCellRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }
       try { await this._serpentFrame(ws, a, m, now); } catch (e) { console.warn('[serpent] word failed', e?.message ?? e); }
+      return;
+    }
+    if (m.t === 'dragon') {   // DRAGON2: a word on the Dwarven Dragon's fight, to its site's cell (server/src/dragonFights.js)
+      const now = Date.now();
+      if (!this._spend(ws, now, dragonGate, 'dragonBucket', 'dragonDrops', 'too many dragon frames')) return;
+      if (!isCellRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }
+      try { await dragonWord(this, ws, a, m, now); } catch (e) { console.warn('[dragon] word failed', e?.message ?? e); }
       return;
     }
     if (m.t === 'rite') {
@@ -7396,6 +7407,7 @@ export class Room {
     if (isGateRoom(a.key)) { const f = this._fight; return !!f?.players?.[sub] && !f.fell && !f.wrath; }
     if (isSdRoom(a.key)) { const f = this._sdFight; return !!f?.players?.[sub] && !f.fell && !f.lost; }
     if (isKetchRoom(a.key)) { const V = this._kt; return !!V?.players?.[sub] && !V.said; }   // KETCH: every member aboard, until the Warden's fall is said
+    if (dragonTrails(this, sub)) return true;   // DRAGON2: a dragon's fighter, until it falls or leaves
     if (!this._serpents?.size) return false;
     for (const f of this._serpents.values()) if (f.players?.[sub] && !f.fell && !f.gone) return true;
     return false;

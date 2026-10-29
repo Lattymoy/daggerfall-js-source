@@ -177,7 +177,7 @@ const HARDCODED = {
   'src/net/vendorLaw.js': 9,
   'src/net/wedSession.js': 21,
   'src/net/wild/wildRemains.js': 3,
-  'src/net/wire.js': 27,
+  'src/net/wire.js': 26,
   'src/net/writBook.js': 1,
   'src/player/enterExit.js': 2,
   'src/player/eyeOfTheBeholder/eotbCamera.js': 4,

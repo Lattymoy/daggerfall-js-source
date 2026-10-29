@@ -68,7 +68,7 @@ No line in chat and no ring on the map. The dragon is found by being seen.
 ## 3. Seen in the sky - before anyone fights it
 
 From its landing until a player comes within `DRAGON_ADMIT_R` (600 m), the dragon roosts in the air: it circles its
-site at `ROOST_ALT` (70 m) on a path that is a function of the clock (net/dragon/dragonBody.js), so every screen draws
+site at `ROOST_ALT` (70 m) on a path that is a function of the clock (`net/dragon/dragonBody.js`), so every screen draws
 it in the same place with no frame sent.
 
 - **Drawn** to `DRAGON_SIGHT_R` (4 km), above the fog's reach, as the Dwarven Dragon's own sprite at `DRAGON_SCALE`
@@ -80,7 +80,7 @@ it in the same place with no frame sent.
 ## 4. The fight - who runs it
 
 The serpent's model (`11-Multiplayer/Sea-Serpent.md` section 6): the fight lives in the CELL ROOM its site stands in,
-never a room of its own. The brain (net/dragon/dragonBrain.js) is pure law, plugged into the boss seam
+never a room of its own. The brain (`net/dragon/dragonBrain.js`) is pure law, plugged into the boss seam
 (`net/bossSeam.js` `DRAGON_SEAM`), stepped on the cell's alarm every `DRAGON_TICK_MS` (250), checkpointed every two
 seconds, and forgotten two hours after it ends.
 
@@ -150,7 +150,7 @@ serpent's does.
 
 ## 8. The spoils and the tame
 
-**The receipt** (net/dragon/dragonReceipt.js, version `z1`): Ed25519 under the relay's one key, refused by every other
+**The receipt** (`net/dragon/dragonReceipt.js`, version `z1`): Ed25519 under the relay's one key, refused by every other
 verifier and theirs by this one. Its claims: `w` the watch, `b` the dragon (0 brass, 1 Aetherbright), `s` the account,
 `c` the hoard's seed, `x` dealt or stood, `l` the level, `i` issued, `e` a week on.
 
@@ -234,3 +234,21 @@ colours, under the player and on every other screen.
 
 The relay changes land in ONE version (world281 - every byte of the relay's bundle is hashed), and the service's in one
 (acct211). Each slice: pins in `test/`, a mutant record, its record here.
+
+## 13. The record, slice by slice
+
+**DRAGON1 - the ride seen (2026-10-29).** PR #1359 kept a copy of the ride's relay gate (world276) in
+`systems/staffDragon.js`, and the wire's half sat on #1360, which never merged. Main's relay reached world280 with no dragon
+in its pose law and clamped `rd` 3 to the cart, so other players saw an Admin on a cart. The gate now lives in
+`net/wire.js` beside `POSE_RIDE` (`DRAGON_RIDE_RELAY_MIN` 281, `relaySupportsDragonRide`), and `net/remotePlayers.js` stands
+a dragon's rider as the Dwarven Dragon, with no hooves and no Morrowind body. Pinned by `test/net/dragonride_wire.test.js`
+(the gate and the law agree at this wire's own version); `tools/mutants/dragon1.json`, 6 dead.
+
+**DRAGON2 - the fight's law and the relay's half (2026-10-29, world281).** `net/dragon/dragonLaw.js` (the watch, the look,
+the site's roll), `net/dragon/dragonBody.js` (the plan's legs), `net/dragon/dragonBrain.js` (the fight), `net/dragon/dragonReceipt.js`
+(`z1`), `net/bossRef.js` judgeDragon and `net/bossSeam.js` DRAGON_SEAM; the `dragon` frame in `net/wire.js`; the relay's half in
+`server/src/dragonFights.js`, which `server/src/index.js` calls from its dispatch, its hub route and hello, its alarm (the
+serpent's beat and the dragon's as one) and its trail. Pinned by `test/net/dragon/dragon2_law.test.js` (11) and
+`test/net/dragon/dragon2_relay.test.js` (4); `tools/mutants/dragon2.json`, 35 dead. PIN MOVED: the serpent's alarm line
+(`test/net/serpent/serpent1_relay.test.js`).
+

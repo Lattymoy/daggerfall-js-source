@@ -2360,7 +2360,7 @@ export function inRangeOf(roomKey, from) {
   return (to) => !!to && Math.max(Math.abs(fx - Math.floor(to.x / PIXEL_UNITS)), Math.abs(fy - Math.floor(to.z / PIXEL_UNITS))) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'ban'|'renown'|'guild'|'guildout'|'home'|'yard'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'caravan'|'look'|'gate'|'grant'|'siege'|'arena'|'raid'|'raidtowns'|'sev'|'rite'|'star'|'ow'|'trav'|'amap'|'stp'|'cfg'|'find'|'serpent'|'sd'|'kt'|'eg'|'wild'|'vit'|'wdun'|'holdem'|'iliac'|'gambit'|'lease', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'ban'|'renown'|'guild'|'guildout'|'home'|'yard'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'caravan'|'look'|'gate'|'grant'|'siege'|'arena'|'raid'|'raidtowns'|'sev'|'rite'|'star'|'ow'|'trav'|'amap'|'stp'|'cfg'|'find'|'serpent'|'dragon'|'sd'|'kt'|'eg'|'wild'|'vit'|'wdun'|'holdem'|'iliac'|'gambit'|'lease', ...}
  *  or {error} - the caller closes on an error. INSPECT1: every arm below, named - this line had fallen seven behind
  *  (test/net/auditworld2.test.js derives the list from the arms now, so it cannot fall behind again - the merge with
  *  main's HCC-PARK was its first catch: the park arm, unnamed). */
@@ -2488,6 +2488,11 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (!hasHello) return { error: 'serpent before hello' };
     const r = validSerpentIn(m);
     return r ? { t: 'serpent', ...r } : { error: 'bad serpent' };
+  }
+  if (m.t === 'dragon') {   // DRAGON2: a word on the Dwarven Dragon's fight, to its site's cell - projected by validDragonIn
+    if (!hasHello) return { error: 'dragon before hello' };
+    const r = validDragonIn(m);
+    return r ? { t: 'dragon', ...r } : { error: 'bad dragon' };
   }
   if (m.t === 'rite') {   // WB12d: a word at the faithful's rite, to the circle's cell - projected by validRiteIn; the cell judges where and when
     if (!hasHello) return { error: 'rite before hello' };
@@ -6270,7 +6275,7 @@ export const SERPENT_FELLS_KEY = 'serpentfells';
 export const SERPENT_FELLS_MAX = 8;
 export const SERPENT_RC_PREFIX = 'serpentrc:';
 /** The room's refusals, in words (the `no` kind) - a closed list. 'reload': a game older than the brain's law. */
-export const SERPENT_NO_WORDS = Object.freeze(['the serpent is gone', 'the storm has closed its waters', 'too far from its waters', 'the waters are full', 'it is already slain', 'reload']);
+export const SERPENT_NO_WORDS = Object.freeze(['the serpent is gone', 'the storm has closed its waters', 'too far from its waters', 'the waters are full', 'slain', 'reload']);
 /** A level claim, a hull claim, the brain's law's number, one volley's damage on the wire (the brain caps it far lower). */
 export const SERPENT_LV_WIRE_MAX = 999;
 export const SERPENT_HULL_MAX = 4;
@@ -6425,6 +6430,135 @@ function serpentOutOf(m) {
     case 'at': return Number.isSafeInteger(m.d) && m.d >= 0 && Number.isSafeInteger(m.sx) && Number.isSafeInteger(m.sz)
       && typeof m.pl === 'string' && /^[A-Za-z]/.test(m.pl) && gatePlaceWire(m.pl) === m.pl ? { k: 'at', d: m.d, pl: m.pl } : null;
     case 'rcpt': return typeof m.r === 'string' && m.r.length <= SERPENT_RECEIPT_WIRE_MAX && SERPENT_RECEIPT_RE.test(m.r) ? { k: 'rcpt', r: m.r } : null;
+    default: return null;
+  }
+}
+
+// ═══ DRAGON2: THE DWARVEN DRAGON'S FRAME ══════════════════════════════════════════════════════════
+//
+// (2026-10-29, bible/11-Multiplayer/Dwarven-Dragon.md sections 4-8.) ONE FRAME TYPE, `dragon`, with a kind, to the CELL the
+// dragon's site stands in (the serpent's law): the client says `in` (the watch, the site's native point, the brain's law,
+// its level) and `hit` (a blow's damage and kind); the cell says the rest. Every fight word names its site (`sx`/`sz`) so a
+// client folds its own dragon's alone. Every time on these frames is the RELAY's clock.
+/** What a client may say to the dragon's cell. */
+export const DRAGON_KINDS = Object.freeze(['in', 'hit']);
+/** What the cell (or the hub) says back: the whole state, its plan, a blow begun, its health, a phase, a mode (air or
+ *  ground), the kill, its leaving, a refusal, a receipt. */
+export const DRAGON_OUT_KINDS = Object.freeze(['st', 'mv', 'atk', 'hp', 'ph', 'md', 'fell', 'gone', 'no', 'rcpt', 'bd']);   // `bd`: the relay's count of my body felled me (net/bossBody.js)
+/** The dragon frames' own bucket: its blow rate (net/dragon/dragonBrain.js DRAGON_HIT_HZ_MAX, 4), the `in`, slack. */
+export const DRAGON_HZ_MAX = 8;
+export const dragonGate = (bucket, nowMs) => tokenGate(bucket, nowMs, DRAGON_HZ_MAX);
+/** The first relay that keeps a dragon's fight; an older one closes the socket on the frame, so a client says none to it. */
+export const DRAGON_RELAY_MIN = 281;
+export const relaySupportsDragon = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= DRAGON_RELAY_MIN; };
+/** The door between a dragon's cell and the hub: the kill and its receipts. */
+export const DRAGON_INTERNAL_FELL = '/internal/dragon/fell';
+export const DRAGON_TELL_RETRY_MS = 5000;
+/** A cell's storage: its fights' ids (`watch@site`), each under DRAGON_FIGHT_KEY + ':' + its id; the hub's: each account's
+ *  latest receipt. */
+export const DRAGON_FIGHT_KEY = 'dragon';
+export const DRAGON_FIGHTS_KEY = 'dragons';
+export const DRAGON_RC_PREFIX = 'dragonrc:';
+/** The room's refusals - a closed list of codes, which the client says in the player's language (systems/dragon/dragonWords.js). */
+export const DRAGON_NO_WORDS = Object.freeze(['gone', 'far', 'full', 'slain', 'reload']);
+/** A level claim, a blow's damage on the wire (the brain caps it far lower), a point about the site, a health. */
+export const DRAGON_LV_WIRE_MAX = 999;
+export const DRAGON_DMG_WIRE_MAX = 5000;
+export const DRAGON_XZ_BOUND = 5000;
+export const DRAGON_HP_MAX = 1e9;
+/** A plan's legs, a state's blows, a blow's kinds, the names a kill credits, the chart's rows (net/dragon/dragonBody.js
+ *  DRAGON_LEGS_MAX, dragonBrain.js DRAGON_BLOWS_KEPT, DRAGON_BLOWS, DRAGON_CHART_MAX - pinned equal). */
+export const DRAGON_LEGS_MAX = 8;
+export const DRAGON_BLOWS_WIRE_MAX = 12;
+export const DRAGON_BLOW_KINDS = 9;
+export const DRAGON_TOP_MAX = 3;
+export const DRAGON_CHART_MAX = 32;
+/** A receipt's bound and prefix (net/dragon/dragonReceipt.js DRAGON_RECEIPT_MAX, DRAGON_RECEIPT_V - pinned equal). */
+export const DRAGON_RECEIPT_WIRE_MAX = 512;
+const DRAGON_RECEIPT_RE = /^z1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$/;
+const dgXZ = (v) => finite(v) && Math.abs(v) <= DRAGON_XZ_BOUND;
+const dgMs = (v) => Number.isSafeInteger(v) && v >= 0;
+const dgHp = (v) => Number.isSafeInteger(v) && v >= 0 && v <= DRAGON_HP_MAX;
+const dgYaw = (v) => finite(v) && Math.abs(v) <= 4;
+const dgAlt = (v) => finite(v) && v >= -10 && v <= 1000;
+
+/** A client's dragon word, projected: `{k:'in', w, bv, lv, sx, sz}` or `{k:'hit', d, r}` - or null. */
+export function validDragonIn(m) {
+  if (!m || typeof m !== 'object' || !DRAGON_KINDS.includes(m.k)) return null;
+  if (m.k === 'in') {
+    if (!Number.isSafeInteger(m.w) || m.w < 0 || !intIn(m.bv, 0, 999) || !intIn(m.lv, 1, DRAGON_LV_WIRE_MAX)) return null;
+    if (!finite(m.sx) || !finite(m.sz) || Math.abs(m.sx) > POSE_BOUND || Math.abs(m.sz) > POSE_BOUND) return null;
+    return { k: 'in', w: m.w, bv: m.bv, lv: m.lv, sx: m.sx, sz: m.sz };
+  }
+  return finite(m.d) && m.d > 0 && m.d <= DRAGON_DMG_WIRE_MAX && intIn(m.r, 0, 2) ? { k: 'hit', d: m.d, r: m.r } : null;
+}
+/** A leg of its plan on the wire (net/dragon/dragonBody.js's shapes), or null. */
+function dgLeg(l) {
+  if (!l || typeof l !== 'object' || !dgMs(l.at)) return null;
+  if (l.k === 0) {
+    if (!dgMs(l.ms) || l.ms > 600_000 || ![l.x, l.z, l.tx, l.tz].every(dgXZ) || !dgAlt(l.a) || !dgAlt(l.ta) || !dgYaw(l.yw) || (l.e !== 0 && l.e !== 1)) return null;
+    return { k: 0, at: l.at, ms: l.ms, x: l.x, z: l.z, a: l.a, tx: l.tx, tz: l.tz, ta: l.ta, yw: l.yw, e: l.e };
+  }
+  if (l.k !== 1 || !dgXZ(l.cx) || !dgXZ(l.cz) || !finite(l.r) || l.r < 1 || l.r > 2000 || !dgYaw(l.a0) || (l.sd !== 1 && l.sd !== -1) || !dgAlt(l.a) || !dgAlt(l.ta) || !dgMs(l.ams)) return null;
+  return { k: 1, at: l.at, cx: l.cx, cz: l.cz, r: l.r, a0: l.a0, sd: l.sd, a: l.a, ta: l.ta, ams: l.ams };
+}
+const dgLegs = (legs) => { if (!Array.isArray(legs) || !legs.length || legs.length > DRAGON_LEGS_MAX) return null; const out = legs.map(dgLeg); return out.every(Boolean) ? out : null; };
+/** A blow on the wire: its number, kind, landing, wind-up and stamps (net/eliteGates/egShape.js's, checked as the Spire's are). */
+function dgBlow(b) {
+  if (!b || typeof b !== 'object' || !Number.isSafeInteger(b.i) || b.i < 1 || !intIn(b.a, 0, DRAGON_BLOW_KINDS - 1) || !dgMs(b.at) || !dgMs(b.wu) || b.wu > 60_000) return null;
+  if (!Array.isArray(b.s) || !b.s.length || b.s.length > 10 || !b.s.every((st) => egStampOk(st, DRAGON_XZ_BOUND))) return null;
+  return { i: b.i, a: b.a, at: b.at, wu: b.wu, s: b.s.map((st) => [...st]) };
+}
+const dgTop = (top) => (Array.isArray(top) ? top.slice(0, DRAGON_TOP_MAX).filter((n) => typeof n === 'string' && n).map(sanitizeName) : []);
+function dgChart(dm) {
+  if (!Array.isArray(dm)) return null;
+  const rows = dm.slice(0, DRAGON_CHART_MAX).map((r) => (r && typeof r === 'object' && typeof r.n === 'string' && intIn(r.l, 1, DRAGON_LV_WIRE_MAX) && dgHp(r.d) && intIn(r.h, 0, 1_000_000) && dgHp(r.b)
+    ? { l: r.l, n: sanitizeName(r.n), d: r.d, h: r.h, b: r.b } : null));
+  return rows.every(Boolean) ? rows : null;
+}
+function dgFell(f) {
+  if (!f || typeof f !== 'object' || !dgMs(f.at) || !intIn(f.n, 0, 100_000)) return null;
+  const dm = f.dm !== undefined ? dgChart(f.dm) : null;
+  if (f.dm !== undefined && !dm) return null;
+  return { at: f.at, top: dgTop(f.top), n: f.n, ...(dm ? { dm } : {}) };
+}
+const dgSite = (m) => (finite(m.sx) && finite(m.sz) && Math.abs(m.sx) <= POSE_BOUND && Math.abs(m.sz) <= POSE_BOUND ? { sx: m.sx, sz: m.sz } : null);
+
+/**
+ * The dragon's cell's word (or the hub's), projected for the client - the kind's own fields, bounded, or null. A fight
+ * word names its site (the cell stamps every one); a refusal and a receipt are this socket's, of no site.
+ */
+export function validDragonOut(m) {
+  if (!m || typeof m !== 'object' || !DRAGON_OUT_KINDS.includes(m.k)) return null;
+  if (m.k === 'no') return DRAGON_NO_WORDS.includes(m.m) ? { k: 'no', m: m.m } : null;
+  if (m.k === 'bd') return { k: 'bd' };   // no fields - the fall is mine, the socket's own
+  if (m.k === 'rcpt') return typeof m.r === 'string' && m.r.length <= DRAGON_RECEIPT_WIRE_MAX && DRAGON_RECEIPT_RE.test(m.r) ? { k: 'rcpt', r: m.r } : null;
+  const site = dgSite(m);
+  if (!site || !Number.isSafeInteger(m.w) || m.w < 0) return null;
+  const w = dragonOutOf(m);
+  return w ? { ...w, w: m.w, ...site } : null;
+}
+/** A fight word's own fields (validDragonOut). */
+function dragonOutOf(m) {
+  switch (m.k) {
+    case 'st': {
+      if (!intIn(m.b, 0, 1) || !intIn(m.ph, 1, 3) || !dgHp(m.h) || !dgHp(m.m) || m.h > m.m || !intIn(m.md, 0, 1) || !dgMs(m.mu) || !dgMs(m.sh) || !dgMs(m.lv) || !dgMs(m.op) || !intIn(m.n, 0, 100_000)) return null;
+      const legs = dgLegs(m.legs);
+      if (!legs || !Array.isArray(m.blows) || m.blows.length > DRAGON_BLOWS_WIRE_MAX) return null;
+      const blows = m.blows.map(dgBlow);
+      if (!blows.every(Boolean)) return null;
+      const fell = m.fell == null ? null : dgFell(m.fell);
+      if (m.fell != null && !fell) return null;
+      if (!(m.gone == null || dgMs(m.gone))) return null;
+      return { k: 'st', b: m.b, ph: m.ph, h: m.h, m: m.m, md: m.md, mu: m.mu, sh: m.sh, legs, blows, n: m.n, lv: m.lv, op: m.op, fell, gone: m.gone ?? null };
+    }
+    case 'mv': { const legs = dgLegs(m.legs); return legs ? { k: 'mv', legs } : null; }
+    case 'atk': { const b = dgBlow(m); return b ? { k: 'atk', ...b } : null; }
+    case 'hp': return dgHp(m.h) && dgHp(m.m) && m.h <= m.m && (m.n === undefined || intIn(m.n, 0, 100_000)) ? { k: 'hp', h: m.h, m: m.m, ...(m.n === undefined ? {} : { n: m.n }) } : null;
+    case 'ph': return intIn(m.n, 1, 3) && dgMs(m.until) ? { k: 'ph', n: m.n, until: m.until } : null;
+    case 'md': return intIn(m.m, 0, 1) && dgMs(m.at) && dgMs(m.until) ? { k: 'md', m: m.m, at: m.at, until: m.until } : null;
+    case 'fell': { const f = dgFell(m); return f ? { k: 'fell', ...f } : null; }
+    case 'gone': return dgMs(m.at) ? { k: 'gone', at: m.at } : null;
     default: return null;
   }
 }

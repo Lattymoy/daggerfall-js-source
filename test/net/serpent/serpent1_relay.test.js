@@ -322,7 +322,7 @@ test('SERPENT1 relay: THE CELL\'S OTHER DUTIES STILL RUN under a serpent\'s beat
     assert.ok(sweeps >= 1 && sweeps <= 3, `the rest ran ${sweeps} times in ten seconds of beats`);
     assert.ok(r.alarm.at <= now() + SERPENT_TICK_MS);
   });
-  assert.match(src('server/src/index.js'), /const sp = await this\._serpentTick\(\);\n\s+if \(sp\) \{/);
+  assert.match(src('server/src/index.js'), /const sp = mergeBeats\(await this\._serpentTick\(\), await dragonTick\(this\)\);[^\n]*\n\s+if \(sp\) \{/);   // PIN MOVED (DRAGON2): the serpent's beat and a dragon's answer the cell's alarm as one (server/src/dragonFights.js mergeBeats)
 });
 
 // ═══ THE BOOKS ═══════════════════════════════════════════════════════════════════════════════════
