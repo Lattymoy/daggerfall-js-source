@@ -247,6 +247,12 @@ into, a dungeon to go down - and the held map takes the player there.
   (`world/tamrielCapitals.js` capitalOnPixel), where the capitals' table is the Bay's 40. A departure:
   `06-Systems/Immersive-Travel.md` departure 13, `01-Overview/Port-Ledger.md` A. Ship passage already sailed to the
   ports past the Bay (WW3's ports in her master's list, LONG-VOYAGE's lanes; `test/scenes/bayleft_places.test.js`).
+- **CAPITAL-CARRIAGES, the drivers** (2026-10-29, the owner: *"Ensure all capitals and cities outside the bay properly
+  have the wagon transport at their gates"*): every city past the Bay already stood a carriage and a driver at each gate
+  of its wall (TS4, TS7 - measured over all 407 city templates cloned past the Bay). The seven capitals stood none: each
+  of their 18 road gates now stands Immersive Travel's carriage, team and driver (`world/capitalCarriages.js`). Outside
+  where the capital's ground allows it (the Imperial City, Solitude, Helstrom), else just inside the gate (Mournhold,
+  Alinor, Torval, Falinesti). `06-Systems/Immersive-Travel.md` departures 14 and 15.
 - **AUDIT TRAVEL-EVERYWHERE** (2026-10-28, the owner: "Audit this"; an independent read of the diff). (1) Begin on a
   place past the Bay the world did not know (an unfound lair, a quest's site) did nothing and said nothing: the host's
   route asked the law unnamed and found no summary. FIXED: a place is one only where known, a quest's by its naming,
@@ -2589,6 +2595,12 @@ wired). `scenes/exterior.js` (the bench) builds no capital, and `scenes/worldMod
 
 **Then**: a probe of the running game from a quick start (`tools/solitudeProbe.mjs`, `REGION`/`LOC`), and the other
 capitals on reliefs of their own if the owner wants them.
+
+**The carriage's stand** (CAPITAL-CARRIAGES, 2026-10-29): the slope under the main gate fell half a metre a metre, with
+nowhere level for Immersive Travel's carriage outside it. The Well District's ledge under the south wall is carried out
+level west of the Gate Road's last run, to 10 m past the cliff's line and 36 m along it, and banked down to the slope over
+8 m (`solitudeRelief.js` SOLITUDE_CARRIAGE_STAND, southHeight). It stays clear of the road and its shoulder: the road's
+heights are unchanged. `test/world/capitalcarriages.test.js`.
 
 ## IC-PROPS - the yards where they belong, every door its plaque, the grand city its only layout (2026-10-27)
 
