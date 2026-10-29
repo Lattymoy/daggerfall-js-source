@@ -30,7 +30,12 @@
 // picker's Ship row is dark, which is the truth rather than a button
 // that does nothing.
 
-import { TRANSPORT_MODES, isRiding, hasHorse, hasCart } from '../systems/transport.js';
+import { TRANSPORT_MODES, isRiding, isHorseRide, hasHorse, hasCart, hasDragon } from '../systems/transport.js';
+import { dragonMountOf, dragonLookOfItem } from '../systems/dragon/dragonMount.js';   // DRAGON7: the ridden dragon's look, for its saddle's colours
+import { createDragonSaddle } from './dragonSaddle.js';   // DRAGON5: the tamed dragon's saddle over the view
+import { onDragonFlight, setDragonMounter } from './dragonRide.js';   // AUDIT DRAGON: its takeoff and its landing heard; DRAGON5b: the keep's way onto it
+import { dragonKeepDoor } from '../systems/dragon/dragonKeep.js';   // DRAGON5b: the tamed dragon where it waits
+import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
 import { RidingAnimator, loadRidingArt, ridingRect, ridingLook, RIDING_VOLUME_SCALE } from '../systems/riding.js';
 import { riddenHorseLook } from '../systems/horse/horseCoats.js';   // COATS1: the ridden horse's look, which the sprite wears
 import { TransportWindow, transportArtLoaded } from '../ui/transportWindow.js';
@@ -59,6 +64,8 @@ export const rideFoot = () => _footNow?.();
 /** PVP-RULES: the bar's line now, or null. */
 export const rideBarred = () => _rideBar?.() ?? null;
 /** A saddle refused now, its line said. */
+/** The Dragonling's enemy id: its bark is the dragon's roar (scenes/dragonHost.js DRAGONLING). */
+const DRAGONLING = 34;
 const refused = (mode) => { const barred = isRiding(mode) ? rideBarred() : null; if (barred) _rideSay?.(barred); return !!barred; };
 
 /**
@@ -128,8 +135,12 @@ export function createMountRig({
     const scaleX = rect.w / art.width;
     renderer.drawScreenQuad(art.frames[r.frame], { x: rect.x, y: drawBottom, w: (art.width - band.widthTrim) * scaleX, h: c.height - drawBottom + scaleY - offset }, { u0: band.u0, v0: band.v0, u1: band.u1, v1: band.v1 }, tint);   // HORSE-LIT: the neck the sprite's own
   }
-  setPitchFloorProvider(() => (enhancedRiding?.() && isRiding(player.transportMode) && !paused() ? _terrainAngle + RR_RIDING.pitchMaxOffset : null));   // AUDIT-RR2 G26: the else arm (`IsGamePaused || !IsRiding`, :122-131) resets PitchMaxLimit every frame
+  setPitchFloorProvider(() => (enhancedRiding?.() && isHorseRide(player.transportMode) && !paused() ? _terrainAngle + RR_RIDING.pitchMaxOffset : null));   // AUDIT-RR2 G26: the else arm (`IsGamePaused || !IsRiding`, :122-131) resets PitchMaxLimit every frame
   let art = null;                          // TR2: the four CFA frames of the mount under you
+  const saddle = createDragonSaddle({ renderer, look: () => dragonLookOfItem(dragonMountOf(playerEntity?.items ?? [])) });   // DRAGON5: a dragon's rider sees its saddle, never a horse's neck; DRAGON7: in its look's colours
+  // AUDIT DRAGON: its takeoff is the dragon's own roar (a Dragonling's bark an octave down, scenes/dragonHost.js's voice),
+  // its landing the body's thud pitched down - on the mount's volume
+  onDragonFlight((what) => audio.playOneShot(what === 'took-off' ? ENEMY_BASICS[DRAGONLING]?.barkSound ?? SOUND.BodyFall : SOUND.BodyFall, RIDING_VOLUME_SCALE * horseVolume(), what === 'took-off' ? 0.5 : 0.6));
   const canvasOf = () => uiCanvas(typeof canvas === 'function' ? canvas() : canvas);   // RETRO-UI: TransportManager's screenRect is CustomScreenRect (:290-291)
 
   /**
@@ -142,9 +153,10 @@ export function createMountRig({
    * speed, the bob and the hoof loop with no horse under them.
    */
   function setMode(mode) {
+    if (mode === TRANSPORT_MODES.Dragon && !hasDragon(playerEntity?.items ?? [])) mode = TRANSPORT_MODES.Foot;   // DRAGON5: no dragon held, none ridden (a save's mode)
     if (refused(mode)) return;   // PVP-RULES: no saddle under the flag
     player.setTransportMode(mode);   // F-E3: the height action rides with the mode
-    voice.mount(isRiding(mode));   // HORSE-VOICE: a mount's whinny is the next voice; a dismount drops a spook's neigh not yet said
+    voice.mount(isHorseRide(mode));   // HORSE-VOICE: a mount's whinny is the next voice; a dismount drops a spook's neigh not yet said
     // DISC29-F (Skibbster on Discord: the gallop kept playing inside a building entered at speed): UpdateMode's first
     // act on EVERY change is "stop any riding sounds playing" (TransportManager.cs:332-336). The loop re-arms itself
     // at each clip's end, and the one thing that stopped it was this component's next frame - which a door never
@@ -166,7 +178,7 @@ export function createMountRig({
   let _lastArt = null;   // the last load landed - kept past a dismount, so its look is let go when another lands
   let _req = 0;   // the newest load asked; an older one landing late is let go, never drawn
   function loadArt(mode) {
-    _artFor = isRiding(mode) ? artKey(mode) : null;
+    _artFor = isHorseRide(mode) ? artKey(mode) : null;
     if (!_artFor) return;
     const id = ++_req;
     loadRidingArt(fetchBytes, palette, renderer, mode, lookNow(mode))
@@ -180,6 +192,7 @@ export function createMountRig({
   }
 
   _footNow = () => setMode(TRANSPORT_MODES.Foot);
+  setDragonMounter(() => setMode(TRANSPORT_MODES.Dragon));   // DRAGON5b: the keep mounts it beside me, through the one place
   return {
     setMode,
     /** For a host that needs to know whether the sprite is up. */
@@ -204,6 +217,7 @@ export function createMountRig({
       showOverlay(enhancedWindow(new TransportWindow({
         hasHorse: rt ? !!rt.canMountHorseFromTransportWindow() : hasHorse(playerEntity.items ?? []),
         hasCart: rt ? !!rt.canUseCartFromTransportWindow() : hasCart(playerEntity.items ?? []),
+        hasDragon: hasDragon(playerEntity.items ?? []),   // DRAGON5: the tamed dragon's row, for its owner
         // TR4: the row is live when a ship is owned - AND when this
         // host can actually sail it. A fixed city has nowhere to sail
         // to, so the row goes dark rather than opening onto nothing.
@@ -211,6 +225,7 @@ export function createMountRig({
         onMode: (mode) => {
           if (mode === TRANSPORT_MODES.Ship) { onShip?.(); return; }
           if (rt && (mode === TRANSPORT_MODES.Horse || mode === TRANSPORT_MODES.Cart)) { rt.tryUseTransport(mode); return; }   // HCC: HandleHorseTransportButton / HandleCartTransportButton [IL_b170, IL_b1ac]
+          if (mode === TRANSPORT_MODES.Dragon && dragonKeepDoor()) { dragonKeepDoor().ride(); return; }   // DRAGON5b: mounted beside it, else it is called to my side
           setMode(mode);   // HC1: the art loads with the mode, in the one place
         },
       }), 'transport'));
@@ -237,7 +252,7 @@ export function createMountRig({
       const horse = horseVolume();   // HORSE-VOL: the Audio tab's Horse Volume - the neigh, the voices and the hooves alike
       // HORSE-VOICE: with the port's own sounds on, the neigh's moment says a voice of the horse's mood and the hooves
       // follow the ground - off, DFU's neigh and clop exactly
-      const voiced = !!soundsOn() && isRiding(player.transportMode);
+      const voiced = !!soundsOn() && isHorseRide(player.transportMode);
       if (voiced) {
         installHorseSounds(audio);
         const shots = voice.update(dt, { neigh: r.neigh, clip: r.clip, moving: r.playing && !player.standing, running: player.isRunning, pitch: r.pitch, paused: ridePaused, breath: horseBreath?.()?.amount ?? null, foesNear });
@@ -259,18 +274,19 @@ export function createMountRig({
       // under the rider against one unit ahead, into a ring of sixteen,
       // while riding and not paused
       const enhanced = enhancedRiding?.() ?? null;
-      if (enhanced && isRiding(player.transportMode) && !ridePaused && groundHeightAt && player.pos) {
+      if (enhanced && isHorseRide(player.transportMode) && !ridePaused && groundHeightAt && player.pos) {
         const yaw = lookYaw?.() ?? 0;
         const here = groundHeightAt(player.pos[0], player.pos[2]);
         const ahead = groundHeightAt(player.pos[0] + Math.sin(yaw), player.pos[2] + Math.cos(yaw));
         if (Number.isFinite(here) && Number.isFinite(ahead)) { _terrainAngles[_sampleIdx++] = rrTerrainAngle(here, ahead); if (_sampleIdx >= RR_RIDING.samples) _sampleIdx = 0; }
       }
       // COATS1: a look chosen in the saddle (the Stable card) dresses the sprite - the old one drawn until the new is up
-      if (_artFor && isRiding(player.transportMode) && _artFor !== artKey(player.transportMode)) loadArt(player.transportMode);
+      if (_artFor && isHorseRide(player.transportMode) && _artFor !== artKey(player.transportMode)) loadArt(player.transportMode);
+      if (player.transportMode === TRANSPORT_MODES.Dragon && !ridePaused) saddle.draw(canvas);   // DRAGON5
       // COATS3D: on the Morrowind body's 3D horse, that horse is the one in first person - drawn here, in the sprite's
       // place (after the world, under the hands), and the sprite stands down
-      if (isRiding(player.transportMode) && !ridePaused && !mwViewHides().horse && mwViewDrawSaddle(typeof canvas === 'function' ? canvas() : canvas)) return r;
-      if (art && isRiding(player.transportMode) && !ridePaused && !mwViewHides().horse) {
+      if (isHorseRide(player.transportMode) && !ridePaused && !mwViewHides().horse && mwViewDrawSaddle(typeof canvas === 'function' ? canvas() : canvas)) return r;
+      if (art && isHorseRide(player.transportMode) && !ridePaused && !mwViewHides().horse) {
         // ROAD-D D10: horseOffsetHeight (TransportManager.cs :304-309)
         // - the bar the LAST drawHud drew, lifted out from under the
         // mount. Docking is not asked here; DFU's horse arm never asks.

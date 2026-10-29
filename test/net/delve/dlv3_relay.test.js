@@ -73,7 +73,7 @@ test('DLV3 THE WIRE\'S BOUNDS ARE THE LAW\'S: the kinds, the phases, a level, th
   assert.equal(relaySupportsDelve(`world${DELVE_RELAY_MIN}`), true);
   assert.equal(relaySupportsDelve(`world${DELVE_RELAY_MIN - 1}`), false);
   assert.equal(relaySupportsDelve(RELAY_VERSION), true, 'this relay keeps them');
-  assert.equal(relaySupportsDelve('world287'), false, 'the relay before it keeps none and closes the socket on `dv` - world288 is the first (world284 on its branch, renumbered past main at the merges)');
+  assert.equal(relaySupportsDelve('world288'), false, 'the relay before it keeps none and closes the socket on `dv` - world289 is the first (world284 then world288 on its branch, renumbered past main at the merges)');   // PIN MOVED (the merge of DRAGON's world288)
 });
 
 test('DLV3 A WORD ON THE WIRE: each kind projected to its own fields; a plan\'s sites each once, its numbers bounded; past a bound, nothing - and never before a hello (mutants: a plan\'s site twice; the ward\'s flag unread; a blow of nothing)', () => {

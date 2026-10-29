@@ -209,8 +209,8 @@
   {
     "name": "WEREWOLF1-wolf-kept-out-of-the-bodies",
     "file": "src/scenes/world.js",
-    "old": "const afoot = seen.filter((d) => (peerRidesIn3d(d) || !peerRiders.isRiding(d.id)) && !d.shown?.wb || (peerIsWolf(d.shown) && !d.shown.rd));",
-    "new": "const afoot = seen.filter((d) => (peerRidesIn3d(d) || !peerRiders.isRiding(d.id)) && !d.shown?.wb);",
+    "old": "const afoot = seen.filter((d) => d.shown?.rd !== POSE_RIDE.Dragon && (peerRidesIn3d(d) || !peerRiders.isRiding(d.id)) && !d.shown?.wb || (peerIsWolf(d.shown) && !d.shown.rd));",
+    "new": "const afoot = seen.filter((d) => d.shown?.rd !== POSE_RIDE.Dragon && (peerRidesIn3d(d) || !peerRiders.isRiding(d.id)) && !d.shown?.wb);",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ]

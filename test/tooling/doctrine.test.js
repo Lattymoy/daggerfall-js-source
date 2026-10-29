@@ -873,7 +873,8 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/horse/hair.png', "SUPPLIED - the owner's mane and tail picture for the Courser's nine alpha cards (COATS3D, 2026-10-11), 512x512 RGBA, as sent - no ARENA2 pixel in it"],
   // DWARVEN-DRAGON (2026-10-28): the staff's clockwork dragon's ninety sprites, archive 1800 - our own three.js renders of
   // our own model, posed by the werewolf's joint directions (no Morrowind or ARENA2 pixel; src/characters/dwarvenDragon.js).
-  ...dwarvenDragonSpriteEntries({ fetchBytes: async () => new Uint8Array(0) }).map((e) => [`public/${DWARVEN_DRAGON_ART}${e.fileName}.png`,
+  // PIN MOVED (DRAGON7): the files that ship alone - the Aetherbright's archive 1801 is these under its palette, no file of its own
+  ...dwarvenDragonSpriteEntries({ fetchBytes: async () => new Uint8Array(0) }).filter((e) => e.archive === 1800).map((e) => [`public/${DWARVEN_DRAGON_ART}${e.fileName}.png`,
     "OURS - the Dwarven Dragon's sprite (DWARVEN-DRAGON, 2026-10-28), rendered from our own model, 471x262 indexed"]),
   // DRAGON-RIDE (2026-10-28): the saddle drawn over an Admin's view on the dragon - our own model's rider view again
   ...SADDLE_PICTURES.map((n) => [`public/${DWARVEN_DRAGON_ART}${n}.png`, "OURS - the Dwarven Dragon's saddle view (DRAGON-RIDE, 2026-10-28), rendered from our own model, 320x97 indexed"]),

@@ -73,6 +73,7 @@ import { firmFirst, yieldsRay, answersPress, MOBILE_NPC_ACTIVATION_DISTANCE } fr
  * @property {boolean} horseCartWins  Horse Cart and Cargo's parked wagon, following team or standing horse beat everything above (HCC)
  * @property {boolean} gateWins       an Oblivion Gate's fire beat everything (WB2)
  * @property {boolean} brokerWins     the Sigil Broker beside it beat everything below the gate (SET7)
+ * @property {boolean} dragonWins     DRAGON5b: a tamed dragon waiting on the ground (mine, or another's - which yields) beat everything above
  * @property {boolean} boatWins       one of Come Sail Away's boats - an activation box, or the hull the ray met first - beat everything above (CSA-D)
  * @property {boolean} campWins       a camp's fire or tent beat everything above (SURV3)
  * @property {boolean} waterWins      a fountain, well or trough beat everything above (SURV3)
@@ -86,11 +87,8 @@ import { firmFirst, yieldsRay, answersPress, MOBILE_NPC_ACTIVATION_DISTANCE } fr
 /**
  * Race everything the one ray struck.
  *
- * HARD3 rewrote this block. It documented FIVE `@param`s for a function
- * with ONE - the options bag - and gave each `@returns` field a prose
- * clause where its type belongs, so every line of it described a
- * signature this function does not have. Nothing had ever read it but a
- * person, and a person reads past that.
+ * HARD3 rewrote this block: it documented five `@param`s for a function with one (the options bag), and gave
+ * each `@returns` field prose where its type belongs.
  *
  * @param {object} [opts]
  * @param {RayPick|null} [opts.corpse]  the nearest body (both pools, one pick)
@@ -102,6 +100,7 @@ import { firmFirst, yieldsRay, answersPress, MOBILE_NPC_ACTIVATION_DISTANCE } fr
  * @param {RayPick|null} [opts.water]   the nearest water source (SURV3: the mod's fountains, wells and troughs)
  * @param {RayPick|null} [opts.gate]    an Oblivion Gate's fire (WB2: scenes/gate/gatePool.js targets)
  * @param {RayPick|null} [opts.broker]  the Sigil Broker beside the gate (SET7: scenes/sigilBrokerPool.js targets)
+ * @param {RayPick|null} [opts.dragon]  DRAGON5b: a tamed dragon waiting on the ground (scenes/dragonKeepHost.js targets - another player's `yields`)
  * @param {RayPick|null} [opts.boat]    CSA-D: the nearest of a boat's colliders under the ray - one of the seven activation boxes (RegisterCustomActivation's 3.2), or the hull or a mast, which the ray meets and nothing answers
  * @param {RayPick|null} [opts.door]  FB1012d ALLY-YIELDS: the door / board / static-NPC set's own pick (worldModes
  *   exteriorActivationHit), its reach beside its distance - the hosts hand this, and `doorDistance` is its distance
@@ -110,7 +109,7 @@ import { firmFirst, yieldsRay, answersPress, MOBILE_NPC_ACTIVATION_DISTANCE } fr
  * @returns {RaceResult}
  */
 export function raceActivation({
-  corpse = null, pile = null, torch = null, wagon = null, horseCart = null, camp = null, water = null, gate = null, broker = null, boat = null, door = null, doorDistance = door?.distance ?? Infinity, personDistances = [],
+  corpse = null, pile = null, torch = null, wagon = null, horseCart = null, dragon = null, camp = null, water = null, gate = null, broker = null, boat = null, door = null, doorDistance = door?.distance ?? Infinity, personDistances = [],
 } = {}) {
   // the body and the pile, by distance, the tie to the body
   const pileNearer = !!pile && !(corpse && corpse.distance <= pile.distance);
@@ -125,6 +124,7 @@ export function raceActivation({
   const torchD = firmD(torch);
   const wagonD = firmD(wagon);
   const horseCartD = firmD(horseCart);
+  const dragonD = firmD(dragon);   // DRAGON5b: a tamed dragon waiting
   const campD = firmD(camp);
   const waterD = firmD(water);
   const gateD = firmD(gate);   // WB2: an Oblivion Gate's fire
@@ -132,7 +132,7 @@ export function raceActivation({
   const boatD = firmD(boat);   // CSA-D: a boat's box or hull
 
   // what the ground must beat: everything that is not a person
-  const nonPersonRival = Math.min(lootD, dropD, torchD, wagonD, horseCartD, campD, waterD, gateD, brokerD, boatD, doorDistance);
+  const nonPersonRival = Math.min(lootD, dropD, torchD, wagonD, horseCartD, dragonD, campD, waterD, gateD, brokerD, boatD, doorDistance);
   const rival = Math.min(nonPersonRival, ...personDistances);
 
   // ── ONE PRECEDENCE, AND IT IS `raceWinner`'S ─────────────────────
@@ -156,7 +156,7 @@ export function raceActivation({
   // the hosts' own arm order - and this function is now its first
   // reader. The plaque is its second.
   const ground = Number.isFinite(doorDistance) ? { key: GROUND_KEY, distance: doorDistance } : null;
-  const won = raceWinner({ gate, broker, camp, water, wagon, horseCart, boat, torch, corpse: body, pile: heap, ground });
+  const won = raceWinner({ gate, broker, camp, water, wagon, horseCart, dragon, boat, torch, corpse: body, pile: heap, ground });
   const is = (p) => !!won && !!p && won === p;
 
   // FB1012d ALLY-YIELDS: what the press takes if the foe arm passes a companion by - the race's winner, or a townsperson
@@ -165,7 +165,7 @@ export function raceActivation({
   // _hoverPersonPick), so the press and the plaque ask one question of one pick.
   const nearPerson = Math.min(Infinity, ...personDistances);
   const next = raceWinner({
-    gate, broker, camp, water, wagon, horseCart, boat, torch, corpse: body, pile: heap,
+    gate, broker, camp, water, wagon, horseCart, dragon, boat, torch, corpse: body, pile: heap,
     ground: door ?? ground,
     person: Number.isFinite(nearPerson) ? { key: PERSON_KEY, distance: nearPerson, reach: MOBILE_NPC_ACTIVATION_DISTANCE } : null,
   });
@@ -176,6 +176,7 @@ export function raceActivation({
     torchWins: is(torch),
     wagonWins: is(wagon),
     horseCartWins: is(horseCart),
+    dragonWins: is(dragon),   // DRAGON5b
     gateWins: is(gate),   // WB2
     brokerWins: is(broker),   // SET7
     boatWins: is(boat),   // CSA-D
@@ -251,7 +252,7 @@ export const PERSON_KEY = '__person__';
  * @returns {RayPick|null} the winning pick, with its own key and reach
  */
 export function raceWinner({
-  corpse = null, pile = null, torch = null, wagon = null, horseCart = null, camp = null, water = null, gate = null, broker = null, boat = null, ground = null,
+  corpse = null, pile = null, torch = null, wagon = null, horseCart = null, dragon = null, camp = null, water = null, gate = null, broker = null, boat = null, ground = null,
   person = null, peer = null, foe = null,
 } = {}) {
   // The tie order IS the precedence order; `<` keeps the earlier one (nearestInOrder, below).
@@ -270,10 +271,10 @@ export function raceWinner({
   // FB1012d ALLY-YIELDS: a COMPANION's hit (peacefulFoePass marks it `ally`) passes to whatever the race gives without
   // him when that answers from here (activate.js answersPress) - the press's `allyYields` over its ladder's own winner.
   if (foe?.ally === true) {
-    const next = raceWinner({ corpse, pile, torch, wagon, horseCart, camp, water, gate, broker, boat, ground, person, peer });
+    const next = raceWinner({ corpse, pile, torch, wagon, horseCart, dragon, camp, water, gate, broker, boat, ground, person, peer });
     if (answersPress(next)) return next;
   }
-  return firmFirst([gate, broker, camp, water, wagon, horseCart, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);
+  return firmFirst([gate, broker, camp, water, wagon, horseCart, dragon, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);   // DRAGON5b: the tamed dragon with the mounts, after HCC's
 }
 
 /** `raceWinner`'s ordering law over one list: nearest wins, and `<` keeps the earlier on a tie. */

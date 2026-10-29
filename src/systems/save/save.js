@@ -73,6 +73,7 @@ import { setLightSource } from '../lightSource.js';   // DISC7: the light in han
 import { renownHpOf, onlineMpOf, offlineVitals } from '../renownLayer.js';   // RENOWN1: the online layer never reaches a save (EG15: nor the folds' magicka)
 import { stashedItemLists } from '../../net/realm/realmGoldLaw.js';   // AUDIT PRE-MERGE 0929 D3: every list of the character's own things a save carries
 import { DEPOSIT_MAX, depositOrderOk } from '../../net/bagLaw.js';   // AUDIT2 BAG1: a deposit's stamp, kept to a deposit's bounds
+import { dragonKeepSaved, dragonKeepRestored } from '../dragon/dragonKeep.js';   // DRAGON5b: the tamed dragon's keep, saved with the character
 import { resetBlowEffects } from '../blowEffects.js';   // AUDIT TELL L2: a load forgets the last game's landings
 
 /** One membership book, rows copied (GuildMembership_v1's shape). */
@@ -411,6 +412,8 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // (SerializablePlayer.cs:132/:300; each item's repairData rides the
   // plain spread, present only while a job runs).
   snap.otherItems = (entity.otherItems ?? []).map((it) => ({ ...it }));
+  // DRAGON5b: the tamed dragon's keep - where it waits, its name, its saddlebags (systems/dragon/dragonKeep.js)
+  snap.dragonKeep = entity.dragonKeep ? dragonKeepSaved(entity.dragonKeep) : null;
   // P1: the scene cache and its permanent set (SaveData_v1's
   // sceneCache + permanentScenes). Without it, everything an interior
   // remembers is forgotten by a reload even though it survives a walk
@@ -889,6 +892,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.bagItems = (snap.bagItems ?? []).map((it) => setItemFields(it));   // BAG1: a save written before holds none
   entity.bagTakes = bagTakesSaved(snap.bagTakes);   // AUDIT2 BAG1: the deposits' stamps - a save written before holds none
   entity.furnishings = (snap.furnishings ?? []).map((it) => setItemFields(it));   // DECOR2b: a save written before holds none
+  entity.dragonKeep = snap.dragonKeep ? dragonKeepRestored(snap.dragonKeep, (it) => setItemFields(it)) : null;   // DRAGON5b: a save written before holds none
   entity.otherItems = (snap.otherItems ?? []).map((it) => setItemFields(it));   // R1: the in-repair collection (pre-R1 saves restore empty); JAN1: set on the way in
   // AUDIT PRE-MERGE 0929 D3: THE LOAD'S ITEM REPAIRS REACH EVERY LIST THE SAVE CARRIES - the pack, the wagon and the
   // repairer's, and every list of the character's own things outside them (net/realm/realmGoldLaw.js stashedItemLists, the
@@ -1446,6 +1450,7 @@ export function removeAllOrphanedItems(entity, getQuest) {
   count += removeOrphanedItems(entity, entity.items, getQuest);
   count += removeOrphanedItems(entity, entity.wagonItems, getQuest);
   count += removeOrphanedItems(entity, entity.bagItems ?? [], getQuest);   // BAG1: the port's own list, beside DFU's three
+  count += removeOrphanedItems(entity, entity.dragonKeep?.bags ?? [], getQuest);   // DRAGON5b: the dragon's saddlebags
   count += removeOrphanedItems(entity, entity.otherItems, getQuest);
   if (count > 0) console.log(`Removed ${count} orphaned items.`);
   return count;

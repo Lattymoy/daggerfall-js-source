@@ -1,0 +1,245 @@
+[
+  {
+    "name": "DRAGON5b-the-bags-dropped-by-the-save",
+    "file": "src/systems/dragon/dragonKeep.js",
+    "old": "  return { where: k.where, nx: k.nx, nz: k.nz, yaw: k.yaw, name: k.name, bags: (k.bags ?? []).map((it) => ({ ...it })), last: !!k.last };",
+    "new": "  return { where: k.where, nx: k.nx, nz: k.nz, yaw: k.yaw, name: k.name, bags: [], last: !!k.last };",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-a-waiting-keep-with-no-place",
+    "file": "src/systems/dragon/dragonKeep.js",
+    "old": "  k.where = where === DRAGON_WHERE.Waiting && !placed ? DRAGON_WHERE.Away : where;",
+    "new": "  k.where = where;",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-name-uncut",
+    "file": "src/systems/dragon/dragonKeep.js",
+    "old": "  return v.length > DRAGON_NAME_MAX ? v.slice(0, DRAGON_NAME_MAX).trim() : v;",
+    "new": "  return v;",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-flight-never-lands",
+    "file": "src/systems/dragon/dragonKeep.js",
+    "old": "  if (kind === 'in' && age < DRAGON_COME_MS) {",
+    "new": "  if (kind === 'in') {",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-flight-never-leaves",
+    "file": "src/systems/dragon/dragonKeep.js",
+    "old": "  if (kind === 'out' && age < DRAGON_LEAVE_MS) {",
+    "new": "  if (kind === 'out') {",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-a-call-indoors",
+    "file": "src/systems/dragon/dragonKeep.js",
+    "old": "  if (!outdoors) return DRAGON_KEEP_TEXT.outdoors;\n",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-called-beside-me",
+    "file": "src/systems/dragon/dragonKeep.js",
+    "old": "  if (near) return DRAGON_KEEP_TEXT.here(name);\n",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-an-out-of-bounds-place-read",
+    "file": "src/net/dragon/dragonKeepWire.js",
+    "old": "  if (Math.abs(p[0]) > POSE_BOUND || Math.abs(p[2]) > POSE_BOUND || Math.abs(p[1]) > POSE_Y_BOUND) return null;\n",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-name-unfiltered",
+    "file": "src/net/dragon/dragonKeepWire.js",
+    "old": "export const dragonNameOnWire = (name) => (typeof name === 'string' ? sanitizeLabel(name, DRAGON_NAME_MAX) : '');",
+    "new": "export const dragonNameOnWire = (name) => (typeof name === 'string' ? name : '');",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-age-is-news",
+    "file": "src/net/dragon/dragonKeepWire.js",
+    "old": "export const dragonKeepRecordKey = (rec) => (rec ? JSON.stringify([rec.p, rec.yw, rec.fl?.[0] ?? 0, rec.lk ?? 0, rec.n ?? '']) : '');",
+    "new": "export const dragonKeepRecordKey = (rec) => (rec ? JSON.stringify([rec.p, rec.yw, rec.fl ?? 0, rec.lk ?? 0, rec.n ?? '']) : '');",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-dismount-never-seen",
+    "file": "src/scenes/dragonKeepHost.js",
+    "old": "    else if (!riding && k.where === DRAGON_WHERE.Ridden) {",
+    "new": "    else if (false) {",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-spot-ahead-of-me",
+    "file": "src/scenes/dragonKeepHost.js",
+    "old": "    const x = f[0] - Math.sin(heading) * DRAGON_WAIT_BACK_M, z = f[2] - Math.cos(heading) * DRAGON_WAIT_BACK_M;",
+    "new": "    const x = f[0] + Math.sin(heading) * DRAGON_WAIT_BACK_M, z = f[2] + Math.cos(heading) * DRAGON_WAIT_BACK_M;",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-mount-not-seen",
+    "file": "src/scenes/dragonKeepHost.js",
+    "old": "    if (riding && k.where !== DRAGON_WHERE.Ridden) put(keepRidden(k));",
+    "new": "    if (false) put(keepRidden(k));",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-bags-opened-from-afar",
+    "file": "src/scenes/dragonKeepHost.js",
+    "old": "    if (!bagsNear(k)) return said(false, DRAGON_KEEP_TEXT.tooFar(name()));\n",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-press-modes-crossed",
+    "file": "src/scenes/dragonKeepHost.js",
+    "old": "    else if (m === ACTIVATE_MODE.Steal) openBags();\n    else if (m === ACTIVATE_MODE.Talk) sendAway();",
+    "new": "    else if (m === ACTIVATE_MODE.Talk) openBags();\n    else if (m === ACTIVATE_MODE.Steal) sendAway();",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-press-past-its-reach",
+    "file": "src/scenes/dragonKeepHost.js",
+    "old": "    if (distance > DRAGON_KEEP_REACH) { deps.say?.(DRAGON_KEEP_TEXT.tooFar(name())); return true; }\n",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-row-mounts-from-afar",
+    "file": "src/scenes/dragonKeepHost.js",
+    "old": "    if (nearMine(k, deps.feet?.()) <= DRAGON_NEAR_M + DRAGON_BODY_R) { rideDragon(); return { ok: true, text: '' }; }",
+    "new": "    { rideDragon(); return { ok: true, text: '' }; }",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-word-never-sent",
+    "file": "src/scenes/dragonKeepHost.js",
+    "old": "    if (full || key !== lastKey) { frame.dk = rec; lastKey = key; }",
+    "new": "    if (full) { frame.dk = rec; lastKey = key; }",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-a-peers-box-firm",
+    "file": "src/scenes/dragonKeepHost.js",
+    "old": "noSurface: true, yields: true }); }",
+    "new": "noSurface: true }); }",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-an-empty-name-wipes-it",
+    "file": "src/scenes/dragonKeepHost.js",
+    "old": "    const n = normalizeDragonName(input) || k.name;",
+    "new": "    const n = normalizeDragonName(input);",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-summon-key-ignores-the-last-mount",
+    "file": "src/scenes/dragonKeepHost.js",
+    "old": "    summonsFirst: () => { const k = keep(); return !!k && (k.last || !(hasHorse(items()) || hasCart(items()))); },",
+    "new": "    summonsFirst: () => { const k = keep(); return !!k && !(hasHorse(items()) || hasCart(items())); },",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-dragon-unraced",
+    "file": "src/player/activationRace.js",
+    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, dragon, boat,",
+    "new": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, boat,",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-bags-left-out-of-the-held-lists",
+    "file": "src/systems/item/possessedItems.js",
+    "old": "  out.push(...lists(save?.dragonKeep?.bags));   // DRAGON5b: the tamed dragon's saddlebags\n",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-bags-left-out-of-customs",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "  out.push(...lists(snap?.dragonKeep?.bags));   // DRAGON5b: the tamed dragon's saddlebags (systems/dragon/dragonKeep.js)\n",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-bags-not-repaired-at-load",
+    "file": "src/systems/dragon/dragonKeep.js",
+    "old": "  k.bags = Array.isArray(raw.bags) ? raw.bags.filter((it) => it && typeof it === 'object').map((it) => itemIn(it)) : [];",
+    "new": "  k.bags = Array.isArray(raw.bags) ? raw.bags.filter((it) => it && typeof it === 'object') : [];",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-a-call-onto-a-ship",
+    "file": "src/scenes/dragonKeepHost.js",
+    "old": "aboard: !!deps.aboard?.(),",
+    "new": "aboard: false,",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-host-never-says-aboard",
+    "file": "src/scenes/world.js",
+    "old": "    aboard: () => isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()) || !!(csaBoatUnderMe() ?? _csaBuckets.get(player.groundKey)?.boat) || !!naval?.aboard?.(),   // DRAGON5b: no call onto a ship - Daggerfall's, a Come Sail Away deck (the pair's rule, AUDIT FB1029d B1) or a sea ship's\n",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  }
+]
