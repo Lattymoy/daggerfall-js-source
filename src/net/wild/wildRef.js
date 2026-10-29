@@ -79,7 +79,7 @@ export const newWildRef = () => ({ fighters: new Map(), falls: new Map(), fights
 
 /**
  * A SOCKET'S WORD ON THE ZONE (`zone` - `z` true: it stands in the zone; false: it has left it): its fighter made or
- * kept (`id` its socket's id now, `lv` the Renown its token signs, `cl` its character level, `ci` its realm character, `ed` its word that it walked in over the edge, `vl` the villain meter its token signs), its place the pose it
+ * kept (`id` its socket's id now, `lv` the Renown its token signs, `cl` its character level, `ci` its realm character, `ed` its word that it walked in over the edge, `vl` the villain meter its token signs, `sf` its word that it stands in a settlement's safe streets), its place the pose it
  * stands at. A NEW fighter takes the vitality it CARRIES (`carry` - the hub's word on its last fight in another room:
  * `{ hp, max, down, downAt, at, heard }`, AUDIT INT9: a step into another cell was a fresh bar), unless that word is
  * older than WILD_REF.mendMs. A fighter down rises on its word that it stands in the zone again once WILD_REF.riseMs has
@@ -87,7 +87,7 @@ export const newWildRef = () => ({ fighters: new Map(), falls: new Map(), fights
  * sooner keeps its bar (AUDIT INT9: a word off and on was a heal). SHARED-HEALTH: a count started again waits for the player's report, which can lower it and never lift it.
  * Answers the fighter, or null (none made: a word off, a full room).
  */
-export function wildZone(st, sub, { id, lv = 1, cl = null, ci = '', carry = null, died = false, fl = null, ed = false, vl = 0 }, z, pose, now) {
+export function wildZone(st, sub, { id, lv = 1, cl = null, ci = '', carry = null, died = false, fl = null, ed = false, vl = 0, sf = false }, z, pose, now) {
   let x = st.fighters.get(sub);
   if (!x) {
     if (!z) return null;
@@ -122,7 +122,18 @@ export function wildZone(st, sub, { id, lv = 1, cl = null, ci = '', carry = null
   if (!z && x.zone) x.outAt = now;
   if (!z && died && !x.down) x.diedAt = now;   // AUDIT PVP-EASE L3-6: a death the referee kept rises by its own law (above)
   x.zone = !!z;
+  x.streets = !!z && !!sf;   // PVP-SAFE-HIT: wildStreetsBar reads it
   return x;
+}
+
+/** PVP-SAFE-HIT (the owner: "Let them hit them jit ge that back in safezone"): a fighter in a settlement's safe streets
+ *  (`streets`, its own word) and no villain on the meter this room keeps strikes a villain alone, and nobody strikes it.
+ *  A villain's word on the streets shields nothing: the meter is the referee's. Answers why a blow is refused, or null.
+ *  @param {any} a the striker @param {any} t the struck */
+export function wildStreetsBar(a, t) {
+  if (t.streets && !isVillain(t.vi)) return 'streets';
+  if (a.streets && !isVillain(a.vi) && !isVillain(t.vi)) return 'streets';
+  return null;
 }
 
 /** A fighter takes the vitality it carries from another room (`carry` - wildCarry's word, kept by the hub), unless that word
@@ -238,6 +249,8 @@ export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, 
   if (a.down || t.down) return { ok: false, dealt: 0, fell: false, fall: null, why: 'down' };
   if (kin) return { ok: false, dealt: 0, fell: false, fall: null, why: 'kin' };
   if (pvpYoung(a.cl) || pvpYoung(t.cl)) return { ok: false, dealt: 0, fell: false, fall: null, why: 'young' };   // PVP-30: under level 30 no player strikes or is struck
+  const streets = wildStreetsBar(a, t);   // PVP-SAFE-HIT: the safe streets
+  if (streets) return { ok: false, dealt: 0, fell: false, fall: null, why: streets };
   if (!a.flag) return { ok: false, dealt: 0, fell: false, fall: null, why: 'unflagged' };   // PVP-FLAG: an unflagged striker touches no player - the struck one's flag never shields it
   if (now - a.jumpAt < WILD_REF.jumpMs) return { ok: false, dealt: 0, fell: false, fall: null, why: 'jump' };
   // ZONE-GRACE: my blow on a fair player ends my safe passage; theirs keeps them from it

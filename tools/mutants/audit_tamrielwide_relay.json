@@ -199,12 +199,12 @@
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],
-    "note": "The hello says the cleanses oldest first again: a build before world283 keeps the 64 oldest and reads today's cleansed raids as standing."
+    "note": "The hello says the cleanses oldest first again: a build before world284 keeps the 64 oldest and reads today's cleansed raids as standing."
   },
   {
     "name": "AUDIT-TW-II-R2-the-site-gate-the-old-law",
     "file": "src/net/wire.js",
-    "old": "export const SERPENT_SITE_RELAY_MIN = 283;",
+    "old": "export const SERPENT_SITE_RELAY_MIN = 284;",
     "new": "export const SERPENT_SITE_RELAY_MIN = 166;",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"

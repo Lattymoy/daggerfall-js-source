@@ -22,7 +22,7 @@ import { activeSpellIcons, setZoneEntity } from '../../../src/ui/hud/hudActiveSp
 import { buildZoneLegend, ZONE_RULES } from '../../../src/ui/wild/wildZoneMap.js';
 import { hostText } from '../../hostText.mjs';
 import * as tm from '../../../src/systems/textManager.js';
-import { peaceFor } from '../../../src/systems/wild/villainHunt.js';
+import { peaceFor, streetsStrike } from '../../../src/systems/wild/villainHunt.js';
 import { isVillain } from '../../../src/systems/wild/villainLaw.js';
 
 const ARENA2 = process.env.ARENA2_PATH;
@@ -150,15 +150,16 @@ test('ZONE-SAFE THE HOST\'S DOORS (scenes/world.js wildCan, wildFair - the four 
     wildKin, social: { isPartyPeer: () => false }, _wildTruce: { holds: () => false }, duelMgr: { live: false }, myGuildTag: () => null,
     wildAtWire: (p) => !!p, pvpFlag: { fair: () => true, villainy: () => null, skullOf: () => null }, duelWorldOf: (id) => scope.peers.get(id) ?? null,
     peaceFor, isVillain,   // PVP-GUARDS: no villain here (test/systems/wild/pvpguards.test.js holds its exception)
+    streetsStrike, zoneSafe: () => scope.modes.mode === 'exterior' && scope.me === inStreets,   // PVP-SAFE-HIT: from the streets a villain alone
   };
-  const body = `${lineOf('  const wildCan = () =>')}${blockOf('  const wildFair = (peerId) => {')}`;
+  const body = `${lineOf('  const wildCan = (streets = false) =>')}${blockOf('  const wildFair = (peerId) => {')}`;
   const { wildCan, wildFair } = new Function('S', `with (S) { ${body}\n return { wildCan, wildFair }; }`)(scope);
   scope.peers.set('out', outside); scope.peers.set('in', inStreets);
   assert.ok(wildCan(), 'the open country: I fight');
   assert.ok(wildFair('out'), 'a body in the open country is fair');
   assert.ok(!wildFair('in'), 'a body in the streets is no one\'s to strike');
   scope.me = inStreets;
-  assert.ok(!wildCan(), 'in the streets: my word is 0 and I strike no one');
+  assert.ok(!wildCan(), 'in the streets: my word is not 1, and I strike no one but a villain');
   assert.ok(!wildFair('out'), 'not even one outside');
   scope.me = outside; scope.modes.mode = 'dungeon';
   assert.ok(wildCan() && wildFair('in'), 'in a dungeon the zone\'s fights are as they were - a body\'s pose there is the dungeon\'s own frame, never a street');
@@ -167,9 +168,9 @@ test('ZONE-SAFE THE HOST\'S DOORS (scenes/world.js wildCan, wildFair - the four 
   scope.modes.mode = 'interior';
   assert.ok(!wildCan(), 'under a roof no one fights');
   // the word the referee hears is wildCan's (INT9), and the dungeon's swing and casts read these same doors
-  assert.match(W, /online\?\.setWildZone\?\.\(wildCan\(\) \? 1 : 0, playerEntity\.health <= 0, zoneEdgeSee\(/);
+  assert.match(W, /online\?\.setWildZone\?\.\(wildCan\(\) \? 1 : wildCan\(true\) \? 2 : 0, playerEntity\.health <= 0, zoneEdgeSee\(/);
   assert.match(W, /wildBodies: \(\) => wildBodiesNow\(\),/);
-  assert.match(W, /const wildBodiesNow = \(\) => \{\n {4}if \(!wildCan\(\)\) return NO_BODIES;\n {4}const out = \[\];\n {4}for \(const b of peersNear\(\) \?\? \[\]\) if \(wildFair\(b\.id\)\) out\.push\(b\);/);
+  assert.match(W, /const wildBodiesNow = \(\) => \{\n {4}if \(!wildCan\(true\)\) return NO_BODIES;\n {4}const out = \[\];\n {4}for \(const b of peersNear\(\) \?\? \[\]\) if \(wildFair\(b\.id\)\) out\.push\(b\);/);
   assert.match(W, /const wildStrikeOut = \(to, by, weapon, swing, drawMs = 0, \{ off = false \} = \{\}\) => \{\n {4}if \(!wildFair\(to\)\) return false;/);
   assert.match(W, /const wildSpellOut = \(peerId, sp\) => \{\n {4}if \(!wildFair\(peerId\) \|\| !sp\?\.pvpKit\) return false;/);
 });
@@ -179,6 +180,7 @@ test('ZONE-SAFE THE TOWN WATCH NARROWED (scenes/world.js zoneWatchCall): no blow
   const scope = {
     modes: { mode: 'exterior' }, town: true, _isPlayerInTownStrict: () => scope.town, wildHere: () => true, clock: 0, performance: { now: () => scope.clock },
     setCrimeCommitted: (_e, c) => crimes.push(c), playerEntity: {}, CRIMES: { Assault: 'assault' }, _crimeResponse: () => {}, townTalk: { say: () => {} },
+    zoneSafe: () => false,   // PVP-SAFE-HIT: pvpsafehit.test.js holds the streets
   };
   const body = `${lineOf('  let _zoneWatchAt = -Infinity;')}${blockOf('  const zoneWatchCall = () => {')}`;
   const { zoneWatchCall } = new Function('S', `with (S) { ${body}\n return { zoneWatchCall }; }`)(scope);

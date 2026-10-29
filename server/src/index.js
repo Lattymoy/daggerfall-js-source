@@ -1442,7 +1442,7 @@ export class Room {
     }
     // RAID3: the raids cleansed today and yesterday - so a raid this player's machine still holds open is closed quietly,
     // never said withdrawn (the cleanse's own word went out while they were away)
-    { try { const l = await this._raidCleansOf(now); if (l.length) this._send(ws, JSON.stringify({ t: 'raid', k: 'cls', l: [...l].reverse() })); } catch (e) { console.warn('[hub] raid word failed', e?.message ?? e); } }   // AUDIT TAMRIEL-WIDE II R1: newest first - a build before world283 reads 64 (wire.js validRaidOut), today's
+    { try { const l = await this._raidCleansOf(now); if (l.length) this._send(ws, JSON.stringify({ t: 'raid', k: 'cls', l: [...l].reverse() })); } catch (e) { console.warn('[hub] raid word failed', e?.message ?? e); } }   // AUDIT TAMRIEL-WIDE II R1: newest first - a build before world284 reads 64 (wire.js validRaidOut), today's
     // AUDIT RAID R2: and this account's raid receipts the hub holds - an earner who was not in the town's cell at the
     // cleanse, or whose link dropped at it, is handed them here (the account service counts each once)
     if (sub) { try { await this._raidReceiptsTo(ws, sub, now); } catch (e) { console.warn('[hub] raid receipts failed', e?.message ?? e); } }
@@ -4298,7 +4298,7 @@ export class Room {
       const k = m.data.k;
       if (k === 'strike' || k === 'spell') { if (m.data.to === a.id) { this._junk(ws); return; } await this._wildBlow(a, m.data, now); return; }
       if (k === 'helm' || k === 'shot' || k === 'board') { await this._seaWord(a, m.data, now); return; }   // SHIP-PVP: the open sea's guns, the referee's
-      if (k === 'zone') { await this._wildZoneWord(a, m.data.z, now, m.data.dd === 1, m.data.fl ?? null, m.data.ed === 1); return; }   // AUDIT FOE-KEEPS E2: `dd`, its word that it died
+      if (k === 'zone') { await this._wildZoneWord(a, m.data.z, now, m.data.dd === 1, m.data.fl ?? null, m.data.ed === 1, m.data.sf === 1); return; }   // AUDIT FOE-KEEPS E2: `dd`, its word that it died - PVP-SAFE-HIT: `sf`, the safe streets
       if (k === 'pick') { await this._wildPickWord(a, m.data, now); return; }
       if (wildDirected(m.data)) {
         const to = m.data.to;
@@ -11412,14 +11412,14 @@ export class Room {
   /** A socket's word that it stands in the zone or has left it - and a fall signed while it was away, said again. A
    *  fighter is a realm character in play (AUDIT INT9: one with none fought and dropped nothing - its fall's receipt named
    *  no record); standing in the zone again, it takes the vitality it carries from its last fight in another room. */
-  async _wildZoneWord(a, z, now, died = false, fl = null, ed = false) {
+  async _wildZoneWord(a, z, now, died = false, fl = null, ed = false, sf = false) {
     if (!a.sub || (z === 1 && !a.ci)) return;
     const st = await this._wildSt();
     if (z !== 1 && died) await this._wildCredit(st, a, now);   // AUDIT FOE-KEEPS E2: a death within the kill credit of a player's blow
     const was = st.fighters.get(a.sub), graceWas = was?.graceUntil ?? -Infinity, wasIn = !!was?.zone;
     const carry = z === 1 && (!was || !was.zone) ? await this._wildCarryAsk(a.sub) : null;
     const flagWas = was?.flag;
-    const x = wildZone(st, a.sub, { id: a.id, lv: a.lv, cl: a.cl ?? null, ci: a.ci ?? '', carry, died, fl, ed, vl: a.vl ?? 0 }, z === 1, a.pose, now);
+    const x = wildZone(st, a.sub, { id: a.id, lv: a.lv, cl: a.cl ?? null, ci: a.ci ?? '', carry, died, fl, ed, vl: a.vl ?? 0, sf }, z === 1, a.pose, now);
     if (x) this._wildFlagSay(st, a, x, flagWas, wasIn, fl);   // PVP-FLAG
     if (x && x.graceUntil > now && x.graceUntil !== graceWas) this._wildGraceSay(a, x.graceUntil - now);   // ZONE-GRACE: safe passage begun, or carried in
     if (x && (x.zone !== wasIn || died)) this._wildCarryPut(a.sub, this._zoneCarry(st, a.sub, now, a.key));   // AUDIT PVP-EASE L3-1: an entry, a leave and a death, at the hub

@@ -1249,7 +1249,7 @@ import { createPvpKitBar } from '../ui/pvpKitBar.js';   // PVP-KIT: the PvP spel
 import { createPvpFlagHost } from './pvpFlagHost.js';   // PVP-FLAG: the open zone's flag, on this page
 import { createPvpRulesHost } from './pvpRulesHost.js';   // PVP-RULES: a flagged fighter's limits
 import { createPvpGuardsHost } from './pvpGuardsHost.js';   // PVP-GUARDS: the watch hunts a villain in town
-import { peaceFor } from '../systems/wild/villainHunt.js';   // PVP-GUARDS: a villain has no peace in the streets
+import { peaceFor, streetsStrike } from '../systems/wild/villainHunt.js';   // PVP-GUARDS: a villain has no peace in the streets - PVP-SAFE-HIT: and is fair from them
 import { createMarketPieces } from './marketPiecesHost.js';   // HOST-SPLIT
 import { createRaidHost } from './raidHost.js';   // HOST-SPLIT
 import { createSpawnGroundHost } from './spawnGroundHost.js';   // HOST-SPLIT
@@ -21973,23 +21973,23 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (died) _wdunCrows.set(h, Date.now() + WILD_REMAINS_MS);
     socialLink()?.sendWdun?.({ k: died ? 'die' : 'out', h });
   };
-  const wildCan = () => !!online?.wildOk && online.status === 'open' && wildHere() && (wildOutdoors() ? !peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), isVillain(pvpFlag.villainy())) : modes?.mode === 'dungeon') && playerEntity.health > 0 && !modes?.deathUp?.();   // PVPDUNGEON: players fight in the zone's dungeons too - ZONE-SAFE (systems/wild/zoneSafe.js): never outdoors in a settlement's streets
+  const wildCan = (streets = false) => !!online?.wildOk && online.status === 'open' && wildHere() && (wildOutdoors() ? streets || !peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), isVillain(pvpFlag.villainy())) : modes?.mode === 'dungeon') && playerEntity.health > 0 && !modes?.deathUp?.();   // PVPDUNGEON: players fight in the zone's dungeons too - ZONE-SAFE (systems/wild/zoneSafe.js): never outdoors in a settlement's streets - PVP-SAFE-HIT: `streets`, or there (wildFair then strikes a villain alone)
   /** Is this player one I may fight (and be fought by): standing in the zone, and never KIN - net/wild/wildRef.js wildKin, the
    *  referee's own law: my party, or one under its truce; my duel's opponent (a duel's blows are the duel's own); or, MAC'S
    *  DECISION (2026-10-14, "Guildmates are friends"), one of my guild - its tag as the relay stamped it, mine as the hub
    *  says it (a tag is one guild's alone). */
   const _wildTruce = createPartyTruce();   // PARTY-TRUCE: a party left is no fight for ten minutes, both ways
   const wildFair = (peerId) => {
-    if (!peerId || !wildCan()) return false;
+    if (!peerId || !wildCan(true)) return false;
     if (wildKin({ party: !!social?.isPartyPeer(peerId) || _wildTruce.holds(peerId, Date.now()), duel: duelMgr.live && duelMgr.opponent === peerId, guilds: [myGuildTag(), online?.guildTagOf?.(peerId) ?? null] })) return false;
-    return pvpFlag.fair(peerId) && (modes?.mode === 'dungeon' || (wildAtWire(duelWorldOf(peerId)) && !peaceFor(settledAt(duelWorldOf(peerId), locationIndex), pvpFlag.skullOf(peerId) === 'red')));   // PVP-FLAG: my flag up - ZONE-SAFE: never a body in a settlement's streets - AUDIT FB1018 L3-5: in a dungeon a peer's pose is the dungeon's own frame - the place is the zone (wildCan's wildHere, the door's pixel), and the room is that place's
+    return pvpFlag.fair(peerId) && (modes?.mode === 'dungeon' || (wildAtWire(duelWorldOf(peerId)) && !peaceFor(settledAt(duelWorldOf(peerId), locationIndex), pvpFlag.skullOf(peerId) === 'red'))) && streetsStrike(zoneSafe(), pvpFlag.skullOf(peerId) === 'red');   // PVP-SAFE-HIT: from the streets a villain alone - PVP-FLAG: my flag up - ZONE-SAFE: never a body in a settlement's streets - AUDIT FB1018 L3-5: in a dungeon a peer's pose is the dungeon's own frame - the place is the zone (wildCan's wildHere, the door's pixel), and the room is that place's
   };
   /** PARTY-TRUCE: the row a party's walk asks with when it ends in the zone or at its edge - the walk is the one door
    *  into it no journey's gate asks (wildJourney: "The Overworld map's journeys are walked, never asked"). */
   const wildWalkRow = (x, y) => { const m = wildMask(); return !online?.wildOk ? null : etherSea && etherWildRingAt(x, y) > 0 ? zoneWord('walkInto', ETHER_KIND) : m && wildNear(m, x, y) ? WILD_TEXT.walkInto : null; };   // wildNear: inside, or within its band - AUDIT SEA VENTURES C3: and the open sea past Veilhaven's peace
   /** The fair players' bodies in this scene (peersNear's { id, feet, height }). */
   const wildBodiesNow = () => {
-    if (!wildCan()) return NO_BODIES;
+    if (!wildCan(true)) return NO_BODIES;
     const out = [];
     for (const b of peersNear() ?? []) if (wildFair(b.id)) out.push(b);
     return out;
@@ -22004,7 +22004,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const zoneWatchCall = () => {
     const mode = modes?.mode ?? 'exterior';
     const inTown = mode === 'exterior' && _isPlayerInTownStrict();
-    if (!inTown || !wildHere()) return;
+    if (!inTown || !wildHere() || zoneSafe()) return;   // PVP-SAFE-HIT: a blow at a villain from the streets is no assault
     const now = performance.now();
     if (now - _zoneWatchAt < 10_000) return;
     _zoneWatchAt = now;
@@ -22386,8 +22386,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     try { giantNoticeFrame(); } catch (e) { console.warn('[giants] notice', e?.message ?? e); }   // GIANT-FALL
     wildFight.tick();
     for (const peer of [..._wildBodies.keys()]) if (!wildFight.body(peer)) wildBodyGone(peer);
-    online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere() && wildOutdoors(), player.pos, Date.now()));   // INT9: my word on the zone, for its referee - standing in it, alive, where it fights (AUDIT FOE-KEEPS E2: and left dying, its kill credit)
-    healthMirror.frame(wildCan() || !!duelMgr.live || inSiegeRoom());   // SHARED-HEALTH: my health to whichever referee holds my fight
+    online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere() && wildOutdoors(), player.pos, Date.now()));   // INT9: my word on the zone, for its referee - standing in it, alive, where it fights (AUDIT FOE-KEEPS E2: and left dying, its kill credit)
+    healthMirror.frame(wildCan(true) || !!duelMgr.live || inSiegeRoom());   // SHARED-HEALTH: my health to whichever referee holds my fight
     wildDepositFrame(); wildSeizeFrame(); wildHudFrame();   // INT9: a drop's deposit, a fall to seize, the referee's readout
     wildEscrow.frame();   // MAC (2026-10-14, the two-phase handoff): my piece in escrow asked back, my collect carried
     wildRemains.setRooms(online?.status === 'open' ? online.heldRooms() : []);   // HALO-REMAINS: my room and the halo's
@@ -22582,7 +22582,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const wildFight = createWildFight({
     send: (d, o) => online?.sendWild(d, o) === true,
     now: () => performance.now(),
-    can: wildCan,
+    can: () => wildCan(true),
     fair: wildFair,
     onBody: (from, body) => wildBodyArrived(from, body),
   });
