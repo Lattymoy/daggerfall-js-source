@@ -7,7 +7,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { scene } from '../../csaScene.mjs';
+import { scene, terrain } from '../../csaScene.mjs';
+import { CITIES } from '../../../src/world/tamriel/tamrielGeography.js';
+import { pictureToBay, setTamrielFit, inBay } from '../../../src/world/tamriel/tamrielFrame.js';
+import { setTamrielTrace } from '../../../src/world/tamriel/tamrielLand.js';
 import { makeWorld } from '../../hccWorld.mjs';
 import { WAGON_MODE } from '../../../src/systems/horse/horseCartLaw.js';
 import { helmHint, helmHeavyText } from '../../../src/ui/enhanced/enhancedHelm.js';
@@ -37,6 +40,26 @@ test('WIND-FIRST + NO-PIXEL the report: a boat of mine with no map pixel, a buil
   assert.doesNotThrow(() => door(s), 'the door\'s visibility reads her');
   assert.ok(mag(s.rt.state.windVectorCurrent) > 0.5, `a wind outdoors (${mag(s.rt.state.windVectorCurrent).toFixed(2)})`);
   assert.deepEqual(lost.MapPixel, { X: 10, Y: 20 }, 'NO-PIXEL: she takes the pixel she stands on');
+  const kn = sailed(s, ship);
+  assert.ok(kn > 2, `under sail at ${kn.toFixed(2)} kn`);
+});
+
+test('WIND-FIRST + NO-PIXEL past the Bay: the same door at the Imperial City\'s pixel (Cyrodiil) - the wind laid, the boat with no pixel takes hers there, the Small Ship sails', () => {
+  setTamrielTrace(null); setTamrielFit(null);   // the authored shape and fit: no player's picture in the suite
+  const c = CITIES.find((x) => x.name === 'Imperial City');
+  const [px, py] = pictureToBay(c.at[0], c.at[1]).map(Math.floor);
+  assert.equal(inBay(px, py), false, 'a pixel past the Bay');
+  const t = terrain(px, py);
+  const s = scene({ terrains: [t], float: Array(80).fill(1.5), int: Array(80).fill(0) });
+  s.deps.handling = () => 'responsive';
+  s.deps.currentMapPixel = () => ({ X: px, Y: py });
+  const at = (dx) => [t.position[0] + 100 + dx, 34, t.position[2] + 100];   // inside her pixel: map y falls as z grows
+  const ship = s.rt.PlaceBoat(at(0), [0, 0, 1], 2, 0, t);
+  const lost = s.rt.PlaceBoat(at(200), [0, 0, 1], 1, 0, t);
+  lost.MapPixel = null;
+  assert.doesNotThrow(() => door(s));
+  assert.deepEqual(lost.MapPixel, { X: px, Y: py }, 'hers, past the Bay');
+  assert.ok(mag(s.rt.state.windVectorCurrent) > 0.5, 'a wind outdoors');
   const kn = sailed(s, ship);
   assert.ok(kn > 2, `under sail at ${kn.toFixed(2)} kn`);
 });

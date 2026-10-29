@@ -76,12 +76,13 @@ name, on a touch screen too: "Too heavy. Lighten your pack, your wagon or the ho
 
 THE FOUR HOSTS. `scenes/world.js` holds the sea and the helm: wired (the wagon's seam). `scenes/exterior.js` FLAGGED
 (it stands no Come Sail Away runtime), `scenes/worldModes.js` and `scenes/dungeonContext.js` raise the doors' events
-and are unchanged - the order is the runtime's own. Every province alike: no law here reads a region or the Bay.
+and are unchanged - the order is the runtime's own. Every province alike: no law here reads a region or the Bay, and
+the door's pin stands in Cyrodiil beside the Bay's.
 
 ## Pins
 
-`test/systems/comeSailAway/fb1029b_sailing.test.js` (6): the report's door with a boat of no pixel, a Small Ship
-sailing after it; a door whose boats throw still laying its wind; a load of a record with no pixel, and a load whose
+`test/systems/comeSailAway/fb1029b_sailing.test.js` (7): the report's door with a boat of no pixel, a Small Ship
+sailing after it, and the same at the Imperial City's pixel past the Bay; a door whose boats throw still laying its wind; a load of a record with no pixel, and a load whose
 boats throw; the Open Wagon's load ashore and aboard through the host's own line, run as the game runs it; Horse Cart
 and Cargo's keeping (beside its owner, parked at a door, stabled); the helm's line. `csa_placing.test.js`'s C# throw re-aimed: a
 boat with no pixel takes hers. `tools/mutants/fb1029b_sailing.json` (12, all dead).
