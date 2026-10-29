@@ -241,4 +241,27 @@ Each has a default the slices follow until the owner says otherwise.
 - **The switch.** Default: an Enhanced Features row, on. Offline it is the player's; online the room's sites stand for
   everyone in it, whatever the row says, as a shared dungeon's foes do.
 
-Not a DFU member: DFU's dungeons hold no encounter rooms. Ledger A row DELVE II, written when DLV2 stands the first site.
+Not a DFU member: DFU's dungeons hold no encounter rooms. Ledger A row DELVE II.
+
+## 12. DLV2: what stands (2026-10-28)
+
+The encounters stand in the game offline. `scenes/delve/delveHost.js` makes the plan as the dungeon is built and runs
+each site's ledger on the player's own words: offline the player is the whole party and the machine that stands the
+foes. Online none stands until DLV3, and the row's note says so.
+
+| Piece | How |
+|---|---|
+| A wave's foes | `chooseRandomEnemy` on the dungeon's own type and the player's level, stood by `spawnLooseFoe` at the four gates (a rank 0.9 m nearer the heart each time round), facing the heart |
+| The leash | the AI's own `follow` (enemyMotor.js): the heart its leader, the ward and 2 m its leash - past it a foe drops the player and walks home |
+| The captain | an elite where elites stand (`elitesAllowed`), its boss traits the ledger's count (`giveBossTraits`) |
+| A failed attempt | its living foes crumble (`removeLooseFoe`); one that stands after is taken back |
+| The plates | shown a second each, a chime rising with the numeral; a step said once as a plate is stepped onto |
+| The marks | the gate's telegraph pass: the ward's ring and gates, the plates by their looks, the vault's seal |
+| The vault | Daggerfall's chest (41811); its roll the dungeon's own `rollPileItems`, rolled once at the win |
+| A save | the plan's hash and each won site's vault; a running attempt is never saved |
+| The clock | the dungeon's frame, so it waits under a window as the foes do |
+
+The dev bench's `?class`, `?nofoes`, `?spell` and `?weapon` stood inside a comment (FOE1's bug class): every `?dungeon=`
+boot opened the wizard and stood no layout foe. They are one option a line now, and `tools/delveProbe.mjs` drives the
+real game through a dungeon's sites on them.
+
