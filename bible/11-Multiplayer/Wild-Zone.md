@@ -216,7 +216,15 @@ out, where none can). world270 (world269 on its branch). Not a DFU member: Dagge
 ## 4. A death in the zone
 
 PVP-REWARD (2026-10-29) replaced the bag drop and the killer's pick below: a kill gives one random uninsured worn
-piece, or one policy's gold (`PvP-Rework.md` PVP-REWARD).
+piece, or one policy's gold, or its last roll (`PvP-Rework.md` PVP-REWARD).
+
+PVP-WORDS (2026-10-29): the player's words say the same. Entering, "If another player kills you, they may take one
+uninsured worn piece, or gold." (`wildZone.js:"If another player kills you, they may take one uninsured worn piece, or gold.', { zone: WILD_NAME }); },"`);
+the chips, "A player's kill may cost uninsured gear or gold."; the sea's the same (`etherWild.js:"const ETHER_WILD_TEXT"`);
+the legend, "nothing drops" (`wildZoneMap.js:"export const ZONE_RULES"`); the tutorial's page names all three rolls
+(`tutorialCatalogue.js:"t('tutorials.wildZone.body2'"`). A foe's death drops nothing and pays the usual death penalty
+at the rise (`world.js:"const goldLost = wildKilled ||"`), so its screen says "Nothing dropped. You pay the usual death
+penalty." (`wildZone.js:"deathKept: () =>"`).
 
 FOE-KEEPS (2026-10-24, the owner: "I feel like the eltheric sea can be too punishing. I dont want people to lose
 everything they have. Espcially the fact you can lose your spellbook? Ridiculous"; asked, the owner chose "Only PvP
@@ -230,7 +238,7 @@ nothing moved (`foe`, `server-account/src/wild.js:"return { error: 'foe' }"`) - 
 nothing either - and, its own rise skipping the usual tenth at any death in the zone, pays nothing until it reloads
 (AUDIT FOE-KEEPS L2, H3, P5, E4: left - a deploy's window, the gain the player's); a foe's fall the service took before the
 word is answered as it was taken. The death screen says so
-(`wildZone.js:"deathKept: () =>"`), and the zone's words say a player's kill drops what you carry, never any death
+(`wildZone.js:"deathKept: () =>"`), and the zone's words say what a player's kill takes, never any death
 (`WILD_TEXT.enter`, `chipTip`, the sea's `ETHER_WILD_TEXT`, the zone map's `ZONE_RULES`, the tutorial's page). A kill's
 gold share is a tenth (WILD GOLD, below), where it was half. The spellbook was never the zone's to take: KEPT below
 names it, and the decor law's kept-back list holds it too (`test/systems/wild/foekeeps.test.js`). Not a DFU member:

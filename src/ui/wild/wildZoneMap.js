@@ -410,7 +410,7 @@ export const ZONE_RULES = Object.freeze([
   'Other players can attack you. Only your party and guild are shown on your maps here.',
   'Foes are four times as strong, elites and champions included.',
   'Two Greater Giants roam every reach, each shown on the map.',
-  'If another player kills you, what you carry drops and lies there for 10 minutes. Potions, torches, the camp kit, your cart, your companions\' packs and insured gear are kept.',   // FOE-KEEPS: a foe's kill drops nothing; STORE-KEEPS and WILD-INSURE: storage and insured gear are kept
+  'If another player kills you, nothing drops. They may take one uninsured worn piece, or gold. Insured gear is kept, but never a villain\'s.',   // PVP-WORDS (PVP-REWARD): no bag drops; the killer's one roll
   'Travel here is slower: at most 20x in the wilds, 40x on the roads.',
 ]);
 /** AUDIT TESA II M5: THE ZONE MAP'S OWN WORDS past the Wrothgarian zone's - Cyrodiil's travel law, and what the map says
@@ -418,7 +418,7 @@ export const ZONE_RULES = Object.freeze([
  *  (scenes/world.js wildMapMask, wildHere and the halls are online's). Read when they are said, through the text core. */
 export const ZONE_MAP_TEXT = Object.freeze({
   travel: () => t('wild.legend.travel', 'No fast travel and no carriage reaches {zone} or runs inside it: walk or ride, on the Overworld map.', { zone: WILD_NAME }),
-  offline: () => t('wild.legend.offline', 'You are offline: no other player can reach you here, and the zone\'s laws - stronger foes, more loot, a player\'s kill dropping what you carry - hold only online.'),
+  offline: () => t('wild.legend.offline', 'You are offline, so no other player can reach you here. The zone\'s laws - stronger foes, more loot, what a player\'s kill takes - hold only online.'),
   chipTipOffline: () => t('wild.map.chipTipOffline', '{zone}: an open PvP zone online. Offline no other player is here, and its foes, its loot and a death are the land\'s own.', { zone: WILD_NAME }),
   door: () => t('wild.map.door', 'Open the {zone} map, with its four rings and their loot', { zone: WILD_NAME }),
   doorOffline: () => t('wild.map.doorOffline', 'Open the {zone} map, with its four rings', { zone: WILD_NAME }),

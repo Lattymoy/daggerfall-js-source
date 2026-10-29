@@ -587,20 +587,20 @@ export function createPartyTruce(ms = WILD_PARTY_TRUCE_MS) {
 
 // ── the words ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 export const WILD_TEXT = Object.freeze({
-  // FOE-KEEPS (2026-10-24, the owner: "I dont want people to lose everything they have"): only another player's kill drops
-  // what you carry (a foe's takes the usual tenth of the purse) - said so where the zone is entered, on its chip and at a
-  // foe's death; through the text core (L10N4), read when they are said (a getter: a string where the callers read one).
+  // PVP-WORDS (PVP-REWARD, 2026-10-29: no bag drops): a player's kill may take one uninsured worn piece, or gold; a foe's
+  // death pays the usual death penalty - said where the zone is entered, on its chip and at a foe's death; through the
+  // text core (L10N4), read when they are said (a getter: a string where the callers read one).
   // WW-C2: the zone is Cyrodiil's - a name, said with no article
-  get enter() { return t('wild.zone.enter', 'You enter {zone}, an open PvP zone. Foes here are four times as strong. If another player kills you, you drop what you carry.', { zone: WILD_NAME }); },
+  get enter() { return t('wild.zone.enter', 'You enter {zone}, an open PvP zone. Foes here are four times as strong. If another player kills you, they may take one uninsured worn piece, or gold.', { zone: WILD_NAME }); },
   leave: `You leave ${WILD_NAME}.`,
   chip: 'Open PvP',
-  get chipTip() { return t('wild.zone.chipTip', '{zone}: other players may attack you. Foes are four times as strong and drop up to twice the loot (25% more at the edge, twice in the heart). If another player kills you, you drop what you carry.', { zone: WILD_NAME }); },
+  get chipTip() { return t('wild.zone.chipTip', '{zone}: other players may attack you. Foes are four times as strong and drop up to twice the loot (25% more at the edge, twice in the heart). A player\'s kill may cost uninsured gear or gold.', { zone: WILD_NAME }); },
   mapKey: 'Open PvP zone',
-  deathPvp: (name) => `${name || 'Another player'} may claim one piece of your worn gear.`,
+  deathPvp: (name) => `${name || 'Another player'} may take one uninsured worn piece of yours, or gold.`,   // PVP-WORDS: the service's roll
   deathDrop: (n) => (n > 0 ? `${n} ${n === 1 ? 'thing you carried lies' : 'things you carried lie'} where you fell, for ten minutes.` : ''),
   // FOE-KEEPS: a foe's kill. AUDIT FOE-KEEPS O1, H5: it said "You keep what you carry" over the gold the same death
   // claims, and a revenant's theft at the rise - nothing DROPS, which is true of both
-  deathKept: () => t('wild.death.kept', 'Nothing dropped. Only another player\'s kill drops what you carry.'),
+  deathKept: () => t('wild.death.kept', 'Nothing dropped. You pay the usual death penalty.'),   // PVP-WORDS: no bag drops at a kill either
   // BURNT-SAID (FIELD BUGS 2026-10-18b): a held record's drop is taken and laid nowhere (Integrity-Arc, Lane 1's freeze) -
   // said, where it was said as nothing at all; and the letters of credit among what a death took, by their worth - through
   // the text core (L10N4), read when they are said
@@ -640,12 +640,12 @@ export const WILD_TEXT = Object.freeze({
   picked: (name, item) => `You take ${item} from ${name || 'the body'}.`,
   chosen: (name, item) => `You choose ${item} from ${name || 'the body'}. It comes to you from their remains.`,   // INT9: the pick is the relay's to sign
   lostPiece: (name, item) => `${name || 'Your killer'} took your ${item}.`,
-  dropLate: `What you dropped when you died in ${WILD_NAME} has left your pack. It lies where you fell.`,   // INT9 (AUDIT): a receipt that found the fallen risen
+  dropLate: `What your killer took when you died in ${WILD_NAME} has left your pack.`,   // INT9 (AUDIT): a receipt that found the fallen risen
   burntLate: () => t('wild.death.burntLate', 'What you dropped when you died in Cyrodiil has left your pack. This character\'s trading is frozen, so it was lost.'),   // BURNT-SAID: the same, for a held record
   noFight: 'You cannot attack a member of your party.',
   // PARTY-TRUCE: a party left in the zone, and a walk that leads into it
   truce: `No longer in your party. In ${WILD_NAME} you and they cannot fight for ten minutes. Then you are strangers.`,
-  walkInto: `It leads into ${WILD_NAME}, an open PvP zone. Other players may kill you there and take what you carry.`,
+  walkInto: `It leads into ${WILD_NAME}, an open PvP zone. Other players may kill you there and take a worn piece or gold.`,
   // AUDIT SEA VENTURES C6, C7: two more of the zone's own, so a ground of its own says them its way (zoneWord) - through
   // the text core (L10N4), read when they are said (a getter: a string where the callers read one)
   get unstuckOut() { return t('wild.zone.unstuckOut', '/unstuck does not work outdoors in Cyrodiil.'); },
@@ -663,7 +663,7 @@ export const WILD_TEXT = Object.freeze({
   // worth" - systems/wild/wildInsureLaw.js): the pack's card and menu (net/wild/wildInsureBook.js) and the death screen -
   // through the text core (L10N4), read when they are said
   insureAct: (gold) => t('wild.insure.act', 'Insure ({gold} gold)', { gold: Number(gold).toLocaleString('en-US') }),
-  insuredLine: () => t('wild.insure.line', 'Insured. A player\'s kill in an open PvP zone will not take it, and the policy is spent when it saves this piece.'),
+  insuredLine: () => t('wild.insure.line', 'Insured. A player\'s kill in an open PvP zone will not take it, unless you are a villain. The policy is spent when it saves this piece.'),   // PVP-WORDS: wild.js pvpInsuredFor keeps nothing of a villain's
   insuredSoon: (min) => t('wild.insure.soon', 'Insured. The policy takes effect in {min, plural, one {# minute} other {# minutes}}.', { min }),
   insureDone: (gold) => t('wild.insure.done', 'Insured for {gold} gold. The policy takes effect in two minutes.', { gold: Number(gold).toLocaleString('en-US') }),
   insureInZone: () => t('wild.insure.inZone', 'No one writes insurance inside an open PvP zone. Insure your gear before you go in.'),

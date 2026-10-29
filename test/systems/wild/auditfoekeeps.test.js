@@ -77,19 +77,19 @@ test('AUDIT FOE-KEEPS H1 H2 H4 THE HOST: the referee\'s fall goes to the zone\'s
 });
 
 test('AUDIT FOE-KEEPS O1 H5 O4 O5 N6 THE WORDS: a foe\'s death says nothing dropped - true beside the tenth it claims and a revenant\'s theft; the tutorial names both zones, the cart only while it is with you, the tenth of a kill and of any other death, in the player\'s language and within a popup\'s sixty words (TUT1); Hungarian\'s "Az" and Polish "we" (mutants: the page\'s words read once)', () => {
-  assert.equal(WILD_TEXT.deathKept(), 'Nothing dropped. Only another player\'s kill drops what you carry.');
+  assert.equal(WILD_TEXT.deathKept(), 'Nothing dropped. You pay the usual death penalty.');   // PIN MOVED (PVP-WORDS): 'Nothing dropped. Only another player\'s kill drops what you carry.'
   assert.doesNotMatch(WILD_TEXT.deathKept(), /keep/i, 'never "you keep" - the same death claims a tenth of the purse');
   const page = () => TUTORIALS.find((p) => p.id === 'wild-zone');
   assert.deepEqual(page().body, [
     // PIN MOVED (WORLD-WIDE folded into TESA, #1184): the zone Cyrodiil, in English and German alike
     'Players may fight one another in Cyrodiil and on the open Eltheric Ocean, where monsters are tougher and spoils richer.',
-    'If another player kills you there, your bag drops with a tenth of your gold, and they may take one worn item. Your cart, companions\' packs and insured gear are kept. Any other death costs the usual tenth.',
-  ]);   // PIN MOVED (STORE-KEEPS, WILD-INSURE, 2026-10-26): the cart and the packs are storage, kept; insured gear kept - PIN MOVED (TUT1): "companions' packs", the page under sixty words
+    'If another player kills you there, nothing drops. They may take one uninsured worn piece, or else one policy\'s gold, or else a tenth of your coin and letters of credit. Any other death costs the usual tenth.',
+  ]);   // PIN MOVED (PVP-WORDS, PVP-REWARD): 'If another player kills you there, your bag drops with a tenth of your gold, and they may take one worn item. ...'   // PIN MOVED (STORE-KEEPS, WILD-INSURE, 2026-10-26): the cart and the packs are storage, kept; insured gear kept - PIN MOVED (TUT1): "companions' packs", the page under sixty words
   tm.patchLocaleTable('de', 'Port_Strings', tm.loadStringTableCsv(rd('locales/de/Port_Strings.csv')));
   try {
     tm.setLocale('de');
     assert.match(page().body[0], /^In Cyrodiil und auf dem offenen Eltheric-Ozean dürfen Spieler/);
-    assert.equal(WILD_TEXT.deathKept(), 'Nichts fällt zu Boden. Was du trägst, fällt nur, wenn dich ein Spieler tötet.');
+    assert.equal(WILD_TEXT.deathKept(), 'Nichts fällt zu Boden. Du zahlst den üblichen Preis des Todes.');   // PIN MOVED (PVP-WORDS): 'Nichts fällt zu Boden. Was du trägst, fällt nur, wenn dich ein Spieler tötet.'
   } finally { tm.setLocale(tm.BASE_LOCALE); }
   assert.match(rd('locales/hu/Port_Strings.csv'), /^sea\.wild\.chipTip,"Az \{word\}-óceán /m);
   assert.match(rd('locales/pl/Port_Strings.csv'), /^wild\.zone\.enter,"Wkraczasz we \{zone\}, /m);

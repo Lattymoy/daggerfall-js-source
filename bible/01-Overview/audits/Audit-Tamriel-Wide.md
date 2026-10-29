@@ -46,7 +46,7 @@ loses data; MEDIUM: wrong in a corner a player reaches; LOW: the record, a cost,
 
 | Id | Sev | Finding | Verdict |
 |---|---|---|---|
-| A1 | MEDIUM | An Imperial City house's yard lot was its door's box grown 6 m (a fabric house's one model is its door): the owner's own rooms, the neighbours' and the street | FIXED - a terraced house's lot is its door's own box, where nothing places (`scenes/homeYards.js` lotOfFrame, the frame marked at the build); what stood is taken back from the door (II W1) |
+| A1 | MEDIUM | An Imperial City house's yard lot was its door's box grown 6 m (a fabric house's one model is its door): the owner's own rooms, the neighbours' and the street | FIXED - a terraced house's lot is its door's own box, where nothing places (`scenes/homeYards.js` lotOfFrame, the frame marked at the build); what stood is taken back from the door (II W1). IC-BACKYARD (2026-10-29, the owner: "not all houses in imperial city are void of yards"): a house with a court of its own has the court behind it (`03-World/Arena-Provinces.md`) |
 | A2 | LOW | The capitals' yard bounds read the Imperial City's blocks off BLOCKS.BSA, which holds none of them: the test guarded nothing, the record's 23 and 794 were 0s | FIXED - counted as served; the record corrected (`11-Multiplayer/Yard-Cells.md`); HOME_TOWN_MAX's margin left open |
 | B1 | MEDIUM | SD-PARTY's one life and one win a Hollow kept nothing in a province's Hollow: the hub read the Bay lane's record | FIXED - the hub reads the slot's lane (`server/src/sdCopy.js`; `11-Multiplayer/Super-Dungeons.md`), world284 |
 | B2 | MEDIUM | Staff `/tp @player` refused a player in an Ocean Hole's abyss past the Bay (its pit bounded to 0..999) | FIXED - the pit bounded by `worldPixelOk` (`net/staffTeleport.js`; `03-World/Ocean-Holes.md`), world284 |
@@ -155,7 +155,7 @@ records. Each reproduced a finding before reporting it, and each was verified ag
 
 | Id | Sev | Finding | Verdict |
 |---|---|---|---|
-| W1 | MEDIUM | A1 left the pieces an owner set down by an Imperial City house drawn, and its decorator never opened to take them back | FIXED - the lot is the door's own box: nothing places, the owner at the door opens it |
+| W1 | MEDIUM | A1 left the pieces an owner set down by an Imperial City house drawn, and its decorator never opened to take them back | FIXED - the lot is the door's own box: nothing places, the owner at the door opens it. IC-BACKYARD: the door's box where a house has no court of its own; the owner at the door opens the yard behind it where it has one |
 | T1 | MEDIUM | D5's arena page named one arena; IC-GRAND lays one in the Imperial City's Arena District too | FIXED - both named, as TUT1 allows |
 | T2 | MEDIUM | The gate missed spellings of its own idioms: a padded mask (six real lines), `MAP_WIDTH` bounds, reversed and bracketed forms | FIXED - the spellings read, the baseline measured again |
 | T- | LOW | The map's note promised fast travel past the Bay with the land off | FIXED - "with Land beyond the Bay on", in every language |

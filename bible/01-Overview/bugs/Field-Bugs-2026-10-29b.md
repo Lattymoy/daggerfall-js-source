@@ -55,7 +55,7 @@ go - a delete, a death and "let the line end" all keep the row, and it counts. A
 character met the bound with no characters left. A Casual character founds no line, so the bound never refused one;
 the report's "any gamemode" was not found in the code, and the message a Casual try showed would say what stopped it.
 
-FIXED. `POST /v1/realm/lineage/forget` lets go a line no living realm character plays (acct219, `forgetLineage`; a fall
+FIXED. `POST /v1/realm/lineage/forget` lets go a line no living realm character plays (acct220, `forgetLineage`; a fall
 a Resurrect may still take back counts as living). Its fallen's tombstones stay, so no save loads past a death. The
 Online page lists such lines under Old families, each with Forget, and the forget drops the device's copy too, so no
 push founds it again. The bound's refusal says to forget one (`06-Systems/Legacy-Arc.md` section 9). Pinned by
