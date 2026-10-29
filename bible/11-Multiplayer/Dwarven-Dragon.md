@@ -207,7 +207,7 @@ A tamed dragon is a third mount beside the horse and the cart (`06-Systems/Horse
   of it. They save with the character, and the judge, the id ledger and customs read them as a held list.
 - **Upkeep** is horse care's own law (`systems/steedCare.js`): its four stats from its seed (its tame id's last four hex),
   its bond and hunger on its item (`horseBond`, `horseFed`), its breath, in the player's tier (Off, Boons, Hard). It
-  drinks **Dwarven Oil** alone, sold at every Stable (online behind `DWARVEN_OIL_ONLINE`, REST6's law), 24 hours of it a
+  drinks **Dwarven Oil** alone, sold at every Stable (online behind `DWARVEN_OIL_ONLINE`, on since DRAGON-ON), 24 hours of it a
   flask, from the pack, then its saddlebags. Waiting or away it hunts: hungry at worst, never starving. On the ground it
   walks, and gallops on its breath; flight spends its breath too. A winded dragon will not gallop or take off, and one
   winded in the air glides down to land.
@@ -388,6 +388,15 @@ world288 (rehashed: main's bundle and the dragon's five modules); acct222 and mi
 is 288 (FRONTS' world287 still clamps `rd` 3), and the fight's gate with it. bootWorld measures 35,236: main put three
 lines in. PINS MOVED: the relay version's (each note before main's), the relay graph, the gates' refusals
 (`dragonride_wire`, `dragon2_law`), the host's ceiling, and the mutant records on those lines.
+
+**DRAGON-ON (2026-10-29, the owner, after #1396 merged: "you didnt add the actual dragon riding?").** `DRAGON_MOUNT_ONLINE`
+and `DWARVEN_OIL_ONLINE` are on: a tame binds into its character's pack at the stand-up, the transport window rides it,
+and every Stable sells the oil online. REST6's law held both off for #1396's release; on before it ships, a stale client
+(a tab open across the deploy, a desktop app not yet updated) drops the dragon. Its tame row stands, so a current
+client's next stand-up binds it again (`scenes/dragonRewards.js` recall, bind), with a fresh bond and hunger; its
+saddlebags' load is lost. PINS MOVED: the two switches, the bind's off case (`dragon5_mount`), the tamed line
+(`dragonaudit_account`), the online stock (`dragon5c_care`, `merchantyards1`); two mutants whose gate stands open now
+mutate its other side (`DRAGON5c-the-oil-kept-off-online`, `AUDIT-DRAGON-the-waiting-line-with-the-ride-on`).
 
 **DRAGON7 - the Aetherbright (2026-10-29).** `characters/dwarvenDragonShiny.js` turns each PLTE colour at load - the brass
 and copper to aetherium's blue, the wings' olive membrane to its violet, the greys cooled - and writes the chunk's CRC

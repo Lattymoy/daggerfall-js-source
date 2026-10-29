@@ -78,6 +78,6 @@ test('AUDIT DRAGON the recall: with the mount on, the service\'s tames for the s
 });
 
 test('AUDIT DRAGON the tamed line says the mount waits while it does - never a dragon this release does not give (mutants: the line promising a ride)', () => {
-  assert.equal(DRAGON_MOUNT_ONLINE, false);
-  assert.match(DRAGON_CLAIM_TEXT.tamed(), /after a later update/);
+  assert.equal(DRAGON_MOUNT_ONLINE, true);   // PIN MOVED (DRAGON-ON)
+  assert.doesNotMatch(DRAGON_CLAIM_TEXT.tamed(), /after a later update/, 'on: the line gives the dragon it gives');   // PIN MOVED (DRAGON-ON)
 });
