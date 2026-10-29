@@ -3740,8 +3740,8 @@
   "by": "claude-in-session"
  },
  "coll.src.world": {
-  "en": "45b24cf8e9dc",
-  "tr": "2c5273d6d773",
+  "en": "859abfc107a6",
+  "tr": "5896cbfb7509",
   "by": "claude-in-session"
  },
  "coll.state.character": {
@@ -4155,8 +4155,8 @@
   "by": "claude-in-session"
  },
  "credits.raidingParties.what": {
-  "en": "2b5425ccdd69",
-  "tr": "a94196c97f12",
+  "en": "bb222d9a7638",
+  "tr": "d3d16cfd39e1",
   "by": "claude-in-session"
  },
  "credits.raum.terms": {
@@ -4370,13 +4370,13 @@
   "by": "claude-in-session"
  },
  "death.line": {
-  "en": "cdd3b91f52a8",
-  "tr": "56792919e965",
+  "en": "34ce148409b8",
+  "tr": "823fadb7909b",
   "by": "claude-in-session"
  },
  "death.lineOnline": {
-  "en": "5187ab11d756",
-  "tr": "8a0292ae56ea",
+  "en": "6dce27363b1e",
+  "tr": "fcb49632814c",
   "by": "claude-in-session"
  },
  "death.risingIn": {
@@ -5400,8 +5400,8 @@
   "by": "claude-in-session"
  },
  "features.navalCombat.note": {
-  "en": "f99d78c1a1b2",
-  "tr": "06f9e78a907d",
+  "en": "944b2490617e",
+  "tr": "30cfcbd70dfe",
   "by": "claude-in-session"
  },
  "features.navalCombat.raidPrize": {
@@ -5539,6 +5539,16 @@
   "tr": "352af6ef5a59",
   "by": "claude-in-session"
  },
+ "features.tamrielLand.note": {
+  "en": "c4201ee9109a",
+  "tr": "35c5822771fa",
+  "by": "claude-in-session"
+ },
+ "features.tamrielLand.title": {
+  "en": "3bc7615ad83a",
+  "tr": "214064398a0c",
+  "by": "claude-in-session"
+ },
  "features.tamrielLands.note": {
   "en": "dc37f2698218",
   "tr": "c82678879806",
@@ -5547,6 +5557,16 @@
  "features.tamrielLands.title": {
   "en": "1e8a962cf274",
   "tr": "a4c30189281c",
+  "by": "claude-in-session"
+ },
+ "features.tamrielMap.note": {
+  "en": "36c7988dcf52",
+  "tr": "40c6c3e3cb77",
+  "by": "claude-in-session"
+ },
+ "features.tamrielMap.title": {
+  "en": "b5c1bd42eaeb",
+  "tr": "ee8ce26fd0f2",
   "by": "claude-in-session"
  },
  "features.torchesFromItems.effect": {
@@ -7072,6 +7092,41 @@
  "lw.econ.thriving.b": {
   "en": "2d8ffddfef34",
   "tr": "7cd0c13f19fa",
+  "by": "claude-in-session"
+ },
+ "map.sheet.bay": {
+  "en": "78880f8c76b4",
+  "tr": "95071261b9e5",
+  "by": "claude-in-session"
+ },
+ "map.sheet.dungeon": {
+  "en": "ef947e3aef31",
+  "tr": "907b76003367",
+  "by": "claude-in-session"
+ },
+ "map.sheet.interior": {
+  "en": "1dd68e5c21e5",
+  "tr": "5c115cf71410",
+  "by": "claude-in-session"
+ },
+ "map.sheet.tamriel": {
+  "en": "b2fa7a769061",
+  "tr": "b2fa7a769061",
+  "by": "claude-in-session"
+ },
+ "map.sheet.town": {
+  "en": "5d9c113b57b1",
+  "tr": "ca97d73fe548",
+  "by": "claude-in-session"
+ },
+ "map.tamriel.place": {
+  "en": "51513f0338a4",
+  "tr": "51513f0338a4",
+  "by": "claude-in-session"
+ },
+ "map.tamriel.placeKind": {
+  "en": "4baa9f07cc0b",
+  "tr": "4baa9f07cc0b",
   "by": "claude-in-session"
  },
  "mentor.ended": {
@@ -11960,8 +12015,8 @@
   "by": "claude-in-session"
  },
  "mods.worldEventsRaidingParties.Enabled.description": {
-  "en": "faf3c20cfa2b",
-  "tr": "b49130680152",
+  "en": "79559d752948",
+  "tr": "6df11ecea5a8",
   "by": "claude-in-session"
  },
  "mods.worldOfDaggerfall.Enabled.description": {
@@ -14110,8 +14165,8 @@
   "by": "claude-in-session"
  },
  "prof.page.notPractised": {
-  "en": "47a1cbf0da7a",
-  "tr": "77b4379521ab",
+  "en": "1da1d8e73696",
+  "tr": "2e583d5f22ae",
   "by": "claude-in-session"
  },
  "prof.page.plane.clean": {

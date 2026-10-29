@@ -291,9 +291,9 @@ test('TESA13 the marks: the hover - the nearest the view inks within CITY_HIT_PX
   assert.equal(tamrielMarkAt(10.5, 5, view, () => [{ x: 10, y: 5, type: T.HomeFarms, name: 'Bay' }], { band: 'near' }), null, 'on the Bay the Bay\'s own reads');
   const ink = buildTamrielInk();
   const text = tamrielPlaceAt(22.5, -19.5, view, ink, { placesIn, band: 'near' });
-  assert.match(text, / : The Sacred Oracle \(temple, beyond the Bay\)$/);
-  assert.match(tamrielPlaceAt(30.5, -19.5, view, ink, { placesIn, band: 'near' }), / : The Gilded Inn \(tavern, beyond the Bay\)$/);
-  assert.match(tamrielPlaceAt(26.5, -19.5, view, ink, { placesIn, band: 'near' }), / : Ashwood \(town, beyond the Bay\)$/, 'MacroHelper.LocationTypeName: a hamlet is a town');
+  assert.match(text, / : The Sacred Oracle \(temple\)$/);   // PIN MOVED (AUDIT TAMRIEL-WIDE D3): the land past the Bay is the world's, named by its province and place alone
+  assert.match(tamrielPlaceAt(30.5, -19.5, view, ink, { placesIn, band: 'near' }), / : The Gilded Inn \(tavern\)$/);
+  assert.match(tamrielPlaceAt(26.5, -19.5, view, ink, { placesIn, band: 'near' }), / : Ashwood \(town\)$/, 'MacroHelper.LocationTypeName: a hamlet is a town');
   assert.doesNotMatch(tamrielPlaceAt(22.5, -19.5, view, ink) ?? '', /Oracle/, 'no atlas: the province\'s answer');
 });
 

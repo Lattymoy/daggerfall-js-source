@@ -58,6 +58,7 @@ import { watersInk, watersInkVersion } from '../world/tamriel/watersInk.js';   /
 import { bridgesOf, inkBridgeLaw } from '../world/road/roadBridges.js';   // ROAD-LOOK: the bridges where the roads cross those rivers, marked
 import { lawLines, linkSteps, segKey, drain } from '../world/tamriel/tamrielLines.js';   // SMOOTH-LAND: the land's own lines
 import { discoveryGeneration } from '../systems/discovery.js';   // AUDIT TAMRIEL-WIDE D2: a find moves the tiles' stamp
+import { t } from '../systems/textManager.js';   // AUDIT TAMRIEL-WIDE D3: the hover in the player's language
 
 /** @typedef {{ x: number, y: number }} Pt */
 /** TESA13: the host's atlas's answer (world/tamrielAtlas.js placesIn) - the places on a rectangle's pixels. */
@@ -97,12 +98,15 @@ export const ARENA_KIND_GLYPHS = Object.freeze(Object.fromEntries(Object.entries
  *  roads' web, so each province reads distinctly from the next at every zoom (the owner's reference: a map of Tamriel each
  *  province of it cleanly parted from its neighbours). */
 export const PROVINCE_PEN = Object.freeze({ halo: 8, line: 2.6 });
-/** The words. */
+/** The words. AUDIT TAMRIEL-WIDE D3: the province and the place, as the Bay's own hover names them - the land past the Bay
+ *  is the world's, not an aside to the Bay ("(beyond the Bay)" was every hover's). A place of no province is Tamriel's. */
 export const TAMRIEL_TEXT = Object.freeze({
-  beyond: 'beyond the Bay',
+  get beyond() { return t('map.sheet.tamriel', 'Tamriel'); },
   sea: (name) => name,
-  land: (province) => `${province} (beyond the Bay)`,
-  city: (province, city, kind = null) => (kind ? `${province} : ${city} (${ARENA_KIND_WORDS[kind] ?? kind}, beyond the Bay)` : `${province} : ${city} (beyond the Bay)`),
+  land: (province) => province,
+  city: (province, city, kind = null) => (kind
+    ? t('map.tamriel.placeKind', '{province} : {place} ({kind})', { province, place: city, kind: ARENA_KIND_WORDS[kind] ?? kind })
+    : t('map.tamriel.place', '{province} : {place}', { province, place: city })),
 });
 
 // ── THE MODEL ───────────────────────────────────────────────────

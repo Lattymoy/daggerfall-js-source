@@ -57,7 +57,7 @@ export function tierBlurb(/** @type {string} */ key) {
     case 'amateur': return t('cards.kingsGambit.tier.amateur.blurb', 'A few drinks in, and barely sure of the rules.');
     case 'seasoned': return t('cards.kingsGambit.tier.seasoned.blurb', 'Plays most nights, and knows the game.');
     case 'veteran': return t('cards.kingsGambit.tier.veteran.blurb', 'A shrewd tactician who rarely makes a mistake.');
-    default: return t('cards.kingsGambit.tier.grandmaster.blurb', 'Legendary across the Iliac Bay. Bring your best army.');
+    default: return t('cards.kingsGambit.tier.grandmaster.blurb', 'Legendary across Tamriel. Bring your best army.');
   }
 }
 /** A board's name, by the law's layout key (the law keeps keys; the words are the client's - L10N4). @param {string} key */

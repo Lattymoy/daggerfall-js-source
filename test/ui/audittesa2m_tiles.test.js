@@ -256,7 +256,7 @@ test('AUDIT TESA II M14: on the Bay\'s side of the seam a glyph past the Bay ans
     assert.equal(at(1000.5)?.on, 'mark');
     const west = at(999.95);
     assert.equal(west?.on, 'mark', '4.4 paper pixels west of its centre, on the Bay\'s side');
-    assert.match(west.label, /A temple \(temple, beyond the Bay\)/);
+    assert.match(west.label, / : A temple \(temple\)$/);   // PIN MOVED (AUDIT TAMRIEL-WIDE D3): the land past the Bay is the world's, named by its province and place alone
     assert.equal(at(1000.5 - (CITY_HIT_PX + 1) / view.scale), null, 'past its reach, the Bay\'s own');
     assert.equal(tamrielHoverAt(500, 250, view, null, marks), null, 'deep in the Bay nothing');
     assert.equal(at(1003)?.on, 'land', 'past the Bay the land answers');

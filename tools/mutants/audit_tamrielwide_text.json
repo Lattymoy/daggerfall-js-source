@@ -1,0 +1,272 @@
+[
+  {
+    "name": "AUDIT-TW-D1-map-note-past-the-core",
+    "file": "src/systems/features.js",
+    "old": "    get note() { return t('features.tamrielMap.note', 'The enhanced map zooms out to all of Tamriel",
+    "new": "    get note() { return ('The enhanced map zooms out to all of Tamriel",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js"
+    ],
+    "note": "The map's note in English whatever language the player chose, as it was."
+  },
+  {
+    "name": "AUDIT-TW-D1-land-note-past-the-core",
+    "file": "src/systems/features.js",
+    "old": "    get note() { return t('features.tamrielLand.note', 'The world goes on past the Iliac Bay",
+    "new": "    get note() { return ('The world goes on past the Iliac Bay",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js"
+    ],
+    "note": "The land's note in English whatever language the player chose, as it was."
+  },
+  {
+    "name": "AUDIT-TW-D1-land-note-no-towns",
+    "file": "src/systems/features.js",
+    "old": "and its own cities, towns, roads and dungeons. Off ends the world at the Bay’s edge.'",
+    "new": "There are no towns, roads or dungeons there yet.'",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js",
+      "test/world/tamriel2.test.js"
+    ],
+    "note": "The land's note says nothing stands past the Bay again."
+  },
+  {
+    "name": "AUDIT-TW-D1-map-note-cannot-travel",
+    "file": "src/systems/features.js",
+    "old": "A place past the Bay is reached overland, not by fast travel.'",
+    "new": "You can’t travel beyond the Bay.'",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js",
+      "test/ui/tamriel.test.js"
+    ],
+    "note": "The map's note says the land past the Bay cannot be reached again."
+  },
+  {
+    "name": "AUDIT-TW-D3-the-windows-flag-unread",
+    "file": "src/ui/heldMap.js",
+    "old": "      continent: this._tamriel || this._zoneMap,   // AUDIT TAMRIEL-WIDE D3",
+    "new": "      continent: false,   // AUDIT TAMRIEL-WIDE D3",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js",
+      "test/ui/heldmap.test.js"
+    ],
+    "note": "The world sheet says The Bay over the whole continent again."
+  },
+  {
+    "name": "AUDIT-TW-D3-the-title-the-bays",
+    "file": "src/ui/map/mapStrip.js",
+    "old": "  return continent ? t('map.sheet.tamriel', 'Tamriel') : t('map.sheet.bay', 'The Bay');",
+    "new": "  return t('map.sheet.bay', 'The Bay');",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js"
+    ],
+    "note": "The strip's world tab is the Bay's whatever the sheet shows."
+  },
+  {
+    "name": "AUDIT-TW-D3-the-title-past-the-core",
+    "file": "src/ui/map/mapStrip.js",
+    "old": "continent ? t('map.sheet.tamriel', 'Tamriel') :",
+    "new": "continent ? 'Tamriel' :",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js"
+    ],
+    "note": "The continent's title in English whatever language the player chose."
+  },
+  {
+    "name": "AUDIT-TW-D3-the-lands-suffix-back",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  land: (province) => province,",
+    "new": "  land: (province) => `${province} (beyond the Bay)`,",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js",
+      "test/ui/tamriel.test.js"
+    ],
+    "note": "A province past the Bay is an aside to the Bay again."
+  },
+  {
+    "name": "AUDIT-TW-D3-the-places-suffix-back",
+    "file": "src/ui/tamrielInk.js",
+    "old": "t('map.tamriel.placeKind', '{province} : {place} ({kind})',",
+    "new": "t('map.tamriel.placeKind', '{province} : {place} ({kind}, beyond the Bay)',",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js",
+      "test/tesa13_mapink.test.js"
+    ],
+    "note": "A place past the Bay is an aside to the Bay again."
+  },
+  {
+    "name": "AUDIT-TW-D4-the-tale-in-the-bay",
+    "file": "src/ui/enhanced/enhancedDeath.js",
+    "old": "t('death.line', 'Your tale ends here.')",
+    "new": "t('death.line', 'Your tale in the Iliac Bay ends here.')",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js",
+      "test/systems/bal_arc.test.js"
+    ],
+    "note": "A death in Skyrim ends a tale in the Iliac Bay again."
+  },
+  {
+    "name": "AUDIT-TW-D4-the-rise-in-the-bay",
+    "file": "src/ui/enhanced/enhancedDeath.js",
+    "old": "'Your body falls. The world is not done with you yet.'",
+    "new": "'Your body falls. The Bay is not done with you yet.'",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js",
+      "test/systems/bal_arc.test.js"
+    ],
+    "note": "A rise in Skyrim is the Bay's again."
+  },
+  {
+    "name": "AUDIT-TW-D5-the-travel-page-as-it-was",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "'{TravelMap} opens the map. Choose a place in the Iliac Bay: the journey takes days in the game but a moment for you. Past the Bay, you go there on the Overworld.',",
+    "new": "'{TravelMap} opens the map of the whole land. Choose a place to travel there. The journey takes days in the game but only a moment for you.',",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js"
+    ],
+    "note": "The page promises fast travel to a place past the Bay again."
+  },
+  {
+    "name": "AUDIT-TW-D5-the-arena-page-as-it-was",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "'The one arena stands in the westernmost of the Iliac Bay\\'s three crown cities.",
+    "new": "'The arena stands in the province\\'s capital.",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js"
+    ],
+    "note": "The page puts an arena in every province's capital again."
+  },
+  {
+    "name": "AUDIT-TW-D6-the-serpents-bay",
+    "file": "src/net/serpent/serpentClaims.js",
+    "old": "`The sea will remember ${boss.name}'s fall.",
+    "new": "`The Bay will remember ${boss.name}'s fall.",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js",
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ],
+    "note": "A serpent slain anywhere is the Bay's to remember again."
+  },
+  {
+    "name": "AUDIT-TW-D6-the-serpents-title",
+    "file": "src/net/serpent/serpentClaims.js",
+    "old": "'The sea names you Coilbreaker.'",
+    "new": "'The Bay names you Coilbreaker.'",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js"
+    ],
+    "note": "The Old Coil's title is the Bay's again."
+  },
+  {
+    "name": "AUDIT-TW-D6-the-taverns-bay",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "every tavern in the land.'",
+    "new": "every tavern in the Bay.'",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js"
+    ],
+    "note": "A tavern past the Bay talks of the Bay's taverns again."
+  },
+  {
+    "name": "AUDIT-TW-D6-the-seas-share",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "'The sea takes its share.'",
+    "new": "'The Bay takes its share.'",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js"
+    ],
+    "note": "A crossing lost past the Bay is the Bay's again."
+  },
+  {
+    "name": "AUDIT-TW-D6-the-crews-bay",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "'Another day on the water.'",
+    "new": "'Another day on the Iliac Bay.'",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js"
+    ],
+    "note": "A crew past the Bay says it is on the Iliac Bay again."
+  },
+  {
+    "name": "AUDIT-TW-D6-the-guilds-seats",
+    "file": "src/ui/socialPanel.js",
+    "old": "hold seats across Tamriel:",
+    "new": "hold seats of the Iliac Bay:",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js",
+      "test/net/audit_guild3.test.js"
+    ],
+    "note": "The primer keeps a guild's seats to the Bay again."
+  },
+  {
+    "name": "AUDIT-TW-D6-the-carrack",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "'Only an Admiralty sells a carrack. The title goes to your Fleet.'",
+    "new": "'The only carrack for sale in the Bay. The title goes to your Fleet.'",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js"
+    ],
+    "note": "A port past the Bay sells the Bay's only carrack again."
+  },
+  {
+    "name": "AUDIT-TW-D6-the-wardrobe",
+    "file": "src/ui/collections/wardrobeCatalogue.js",
+    "old": "t('coll.src.world', 'Around Tamriel')",
+    "new": "t('coll.src.world', 'Around the Bay')",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js"
+    ],
+    "note": "The world's things come from around the Bay again."
+  },
+  {
+    "name": "AUDIT-TW-D6-the-card-table",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "'Legendary across Tamriel. Bring your best army.'",
+    "new": "'Legendary across the Iliac Bay. Bring your best army.'",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js"
+    ],
+    "note": "The grandmaster is the Bay's legend again."
+  },
+  {
+    "name": "AUDIT-TW-D6-the-raids-timer",
+    "file": "src/systems/eventTimers.js",
+    "old": "`${more} more today across Tamriel`",
+    "new": "`${more} more today across the Iliac Bay`",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js",
+      "test/ui/enhanced/timers1.test.js"
+    ],
+    "note": "The provinces' raids are counted as the Bay's again."
+  },
+  {
+    "name": "AUDIT-TW-D6-the-raids-row",
+    "file": "src/systems/modSettings.js",
+    "old": "raid towns across Tamriel for 2 hours.",
+    "new": "raid towns across the Bay for 2 hours.",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js"
+    ],
+    "note": "The raids' row keeps them to the Bay again."
+  },
+  {
+    "name": "AUDIT-TW-D6-the-sea-fights-row",
+    "file": "src/systems/features.js",
+    "old": "navies sail every sea.",
+    "new": "navies sail the Bay.",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_text.test.js"
+    ],
+    "note": "The sea fight's row keeps its ships to the Bay again."
+  },
+  {
+    "name": "AUDIT-TW-DTEST-the-lairs-region-0",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "const { c, pick } = at, regionIndex = maps.getRegionIndexAt(px, py), dungeonType",
+    "new": "const { c, pick } = at, regionIndex = 0, dungeonType",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ],
+    "note": "Every lair past the Bay stands in region 0, the Alik'r's, as START2's old pin let it. Dies with ARENA2_PATH set (the pin is the freeware's)."
+  }
+]
