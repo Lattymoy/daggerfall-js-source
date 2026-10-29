@@ -242,7 +242,7 @@ async function staleRig(t) {
   const fetch = async (u, i) => {
     const holding = hold;
     const res = await svc.fetch(u, i);
-    if (String(u).endsWith('/v1/homes/town')) {
+    if (String(u).endsWith('/v1/homes/cells')) {   // YC4: each read of the town asks its cells once
       townReads++;
       if (holding) await new Promise((go) => held.push(go));
     }

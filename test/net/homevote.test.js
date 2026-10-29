@@ -219,7 +219,7 @@ test('HOME-VOTE the registry over the real door (AUDIT D3, D8): the town read th
   const bob = aged(await svc.registered('Bob'));
   const told = [];
   let asks = 0;
-  const door = accountHomes({ fetch: (u, i) => { if (String(u).endsWith('/v1/homes/town')) asks++; return svc.fetch(u, i); }, storage: sessionStorageOf(SESSION_KEY, bob) });
+  const door = accountHomes({ fetch: (u, i) => { if (String(u).endsWith('/v1/homes/cells')) asks++; return svc.fetch(u, i); }, storage: sessionStorageOf(SESSION_KEY, bob) });   // YC4: each read of the town asks its cells once
   const homes = createOnlineHomes({ api: door, character: () => 'r-bob', onWrote: (...a) => told.push(a) });
   await homes.ensure(7);
   assert.equal(homes.homeAt(7, 300).score, 0);

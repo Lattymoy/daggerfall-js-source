@@ -311,7 +311,7 @@ test('HOMES-FORCE: a forced town read asked while another is in flight is asked 
   let hold = null;
   let townAsks = 0;
   const fetch = async (u, i) => {
-    if (new URL(u).pathname === '/v1/homes/town') {
+    if (new URL(u).pathname === '/v1/homes/cells') {   // YC4: each read of the town asks its cells once
       townAsks++;
       if (hold) { const gate = hold; hold = null; const res = await w.svc.fetch(u, i); computed(); await gate; return res; }
     }
