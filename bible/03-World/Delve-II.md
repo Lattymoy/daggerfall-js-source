@@ -331,3 +331,30 @@ its state back. The row's note says a party wins an encounter together online.
 | The session | a word leaves a welcomed socket in a dungeon's room at a relay that keeps them, its pose made current first |
 | The grant | `delve`: 12 a grant, a third a second, 8 deep, hostile - a world room's alone |
 | The relay | `world289` (world284 then world288 on its branch); a page at an older one stands no site online |
+
+## 14. DLV4: what stands (2026-10-29)
+
+Five kinds join the Hold and the Litany, in the same law (`net/delve/delveLaw.js`) and host (`scenes/delve/delveHost.js`).
+Each was woken, worked and won in the real game over the freeware's data (`tools/delveProbe.mjs`), a level-1 character
+kept whole by the probe, the dungeon's own foes near the site felled as a player would fell them, and its vault opened.
+
+| Piece | How |
+|---|---|
+| The pieces | the sources and the seals on the dungeon's crystal seam (`scenes/delve/delveBodies.js`): a blow, an arrow or a harmful spell reaches them as it reaches Dagon's crystals; the relic joins the foes' quarry, so they go for it first |
+| The props | the crystals at a room's size; Daggerfall's pedestal (74237) under each brazier and its boulder for a weight; the camp fire's flame (`scenes/delve/delveProps.js`) |
+| The carry | the Ketch's hands-full law (`player/carryStep.js`): slowed to 0.72, the weapon put up; readied again, or the carrier struck, the piece is let go where they stand |
+| The reach | a weight is taken by a press, from as far as one reaches (`DELVE_PRESS_M`: DFU's treasure distance to its box); the flame, the braziers and the plates are walked to, within 1.2 m. At 1.2 m for all, a press from 2 m took nothing and said nothing (Audit-Delve-II P3) |
+| The measure | a level-1 character's own blows land 1.3 to 3.3 a second on a seal (`--dps`, and the run's own bursts); at a 24 s window the real game never broke three, so it is 40 s and the route's floor, and three of 20 fell in their first window |
+| A party | every kind is won by a party through the real Room (`test/scenes/delve/dlv3_e2e.test.js`); failed and woken again in the law's and the host's pins |
+
+| Kind | Dungeon | Won | The vault |
+|---|---|---|---|
+| The Brazier Rite | The Pit of Jubiamorgon | 262 s, three braziers lit | 2 items |
+| The Weighing | Ruins of Wicksmith Court | 238 s, two weights set, the third plate stood on | 6 items |
+| The Seals | The House of Baron Garulaus | 285 s, three seals in their first window | 5 items |
+| The Vigil | The Aviary of Morarock | 620 s, three waves, the relic's light held | 1 item |
+
+The encounters' frame cost 0.08 to 0.20 ms at the mean on the software rasteriser at 800 x 500, their marks 0.22 ms
+where no crystal stands near the eye. The Seals' and the Vigil's marks read 8.3 and 5.0 ms at the mean, their crystals
+filling the view from 1.2 m.
+
