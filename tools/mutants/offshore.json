@@ -29,8 +29,17 @@
   {
     "name": "OFFSHORE-ROADS-place-square-wet",
     "file": "src/world/tamrielRoads.js",
-    "old": "    if (heights[i] > WATER_BYTE) water[i] = 0;",
-    "new": "    if (heights[i] > 255) water[i] = 0;",
+    "old": "        if (uu >= 0 && vv >= 0 && uu < MAP_W && vv < MAP_H && !bay[j] && heights[j] > WATER_BYTE) water[j] = 0;",
+    "new": "        if (uu >= 0 && vv >= 0 && uu < MAP_W && vv < MAP_H && !bay[j] && heights[j] > 255) water[j] = 0;",
+    "tests": [
+      "test/world/road/offshore_roads.test.js"
+    ]
+  },
+  {
+    "name": "OFFSHORE-ROADS-place-yard-own-square-alone",
+    "file": "src/world/tamrielRoads.js",
+    "old": "    for (let dv = -1; dv <= 1; dv++) {",
+    "new": "    for (let dv = 0; dv <= 0; dv++) {",
     "tests": [
       "test/world/road/offshore_roads.test.js"
     ]

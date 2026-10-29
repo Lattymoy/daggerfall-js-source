@@ -194,10 +194,17 @@ export function* tamrielRegionSteps({ region, places, nodes, obstacles, gates, h
   // the places in one order whatever order they come in (a cache hands them tile by tile, its tiles in the order it was
   // asked): the builder is order-bound - each route merges into the ones before it - and every client lays the same roads
   const ordered = places.filter((p) => inGrid(p.x, p.y) && !inBay(p.x, p.y) && !taken.has(`${p.x},${p.y}`)).sort((a, b) => a.y - b.y || a.x - b.x);
+  // OFFSHORE-ROADS: a place's own square and the squares round it are reached where their bytes are land - a place on the
+  // coast's first row whose inland neighbours other places hold has no other way out
   for (const p of ordered) {
-    const i = (p.y - gy) * MAP_W + (p.x - gx);
-    if (heights[i] > WATER_BYTE) water[i] = 0;   // OFFSHORE-ROADS: a place's own square is reached, as a node's is, where its byte is land
-    locations.push({ x: p.x - gx, y: p.y - gy, type: p.type });
+    const u = p.x - gx, v = p.y - gy;
+    for (let dv = -1; dv <= 1; dv++) {
+      for (let du = -1; du <= 1; du++) {
+        const uu = u + du, vv = v + dv, j = vv * MAP_W + uu;
+        if (uu >= 0 && vv >= 0 && uu < MAP_W && vv < MAP_H && !bay[j] && heights[j] > WATER_BYTE) water[j] = 0;
+      }
+    }
+    locations.push({ x: u, y: v, type: p.type });
   }
   // EXACT-PIECES: the core's land labelled off the bytes just read (the Bay's own pixels read here - the build reads none)
   const pieces = regionLand(region, (x, y) => (inBay(x, y) ? heightAt(x, y) : heights[(y - gy) * MAP_W + (x - gx)]));

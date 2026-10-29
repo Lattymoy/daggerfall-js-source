@@ -38,3 +38,13 @@ test('OFFSHORE-ROADS places on the shore\'s own pixels are still joined - a plac
   assert.equal(out.stats.unrouted, 0, 'the two shore hamlets joined');
   assert.ok(out.roads.size > 0);
 });
+
+test('OFFSHORE-ROADS a temple on the coast\'s first row, its inland neighbours farms, still takes its track out along the shore - the squares round a place are its yard (mutant: the place\'s own square alone)', () => {
+  const region = regionOf(regionLattice({ x0: 1000, y0: 0, w: 1600, h: 600 }), 0, 0);
+  const T = LOCATION_TYPES;
+  const shore = (x, y) => (y < 100 ? 0 : 6);
+  const places = [{ x: 1200, y: 100, type: T.ReligionTemple }, ...[1199, 1200, 1201].map((x) => ({ x, y: 101, type: T.HomeFarms }))];
+  const out = buildTamrielRegion({ region, places, nodes: [{ x: 1180, y: 106, type: T.TownCity }, { x: 1220, y: 106, type: T.TownCity }], obstacles: [], gates: [], heightAt: shore });
+  assert.equal(out.stats.unrouted, 0);
+  assert.ok(out.tracks.get((100 + 32768) * 65536 + (1200 + 32768)), 'the temple\'s track');
+});

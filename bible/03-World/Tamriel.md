@@ -1275,8 +1275,9 @@ on a byte the ground calls water. What lay in the sea was drawn there.
   The lanes and the voyages read the four corners since then; the roads read the pixel's own byte, and the shore's
   discount drew them onto the squares beside the sea: 1,287 road pixels touched a sea corner, 27 of them more than half
   under water. A region's water (`tamrielRoads.js` tamrielRegionSteps) and the named roads' land
-  (`tamrielRoadsWorker.js`) now read the four corners (`squareDry`). A place's own square is the place's, as a node's
-  is, so a hamlet on the shore is still joined. TAMRIEL_ROADS_VERSION 9: every client lays its roads again.
+  (`tamrielRoadsWorker.js`) now read the four corners (`squareDry`). A place's own square and the squares round it are
+  the place's where their bytes are land, so a temple on the coast's first row, its inland neighbours farms, keeps its
+  track. TAMRIEL_ROADS_VERSION 9: every client lays its roads again.
 
 Not in this change: the coast line past the Bay's south edge (x 137 to 185) where the ground's blend stands land the law
 calls sea (34 road pixels). It waits on the seams work on `dropEdgeRuns`.
@@ -1284,9 +1285,9 @@ calls sea (34 road pixels). It waits on the seams work on `dropEdgeRuns`.
 ### Pins
 
 - `test/ui/offshore_marks.test.js` (1): a place that stands is inked on its pixel; with nobody standing them, at its point.
-- `test/world/road/offshore_roads.test.js` (3): a square dry only with its four corners over the beach line; a road
-  along a coast on dry squares; two shore hamlets joined.
+- `test/world/road/offshore_roads.test.js` (4): a square dry only with its four corners over the beach line; a road
+  along a coast on dry squares; two shore hamlets joined; a boxed-in shore temple's track out through its yard.
 - PIN MOVED: `test/audit_tesa.test.js` (AUDIT-TESA A7-4); TAMRIEL_ROADS_VERSION in `test/tesa14_roads.test.js`,
   `test/world/road/river_fords.test.js`, `test/world/road/roadlook.test.js` and `test/world/road/voyager1_land.test.js`.
-- Mutants: `tools/mutants/offshore.json` (4, all dead). Re-aimed by content: AUDIT-TESA-A7-4-ink-at-point and
+- Mutants: `tools/mutants/offshore.json` (5, all dead). Re-aimed by content: AUDIT-TESA-A7-4-ink-at-point and
   VOYAGER1-the-version-unmoved.
