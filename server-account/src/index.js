@@ -325,6 +325,7 @@ const withSeatTitles = async (ctx, player, env) => withChapterTitles(ctx, seatsO
 const withChapterTitles = async (/** @type {any} */ ctx, /** @type {any} */ player, /** @type {any} */ env) => withMasteryMarks(ctx, chapterTitlesOpenFor(player, env)
   ? { ...player, chapterTitles: [...new Set((await chapterTitlesOfAccount(ctx.db, player.id, ctx.nowS, seasonZeroOf(env.SEASON_ZERO_WEEK))).map((t) => t.title))] } : player);
 import { huntState, huntClear, withMasteryMarks, HUNT_STATUS } from './hunts.js';   // HUNTERS-MARK: the hunt's ledger; MARKS-OF-MASTERY: the titles read off it
+import { MASTERY_MARKS } from '../../src/net/huntLaw.js';   // MINT-TITLE-GATE: the mastery titles, read at a mint only for one worn
 import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase } from './decor.js';
 import { yardCellsKept, forgetYardCell, forgetYardTown, settleYardCell } from './yardCells.js';   // YARD-CELL: a town's yards kept and read a block at a time   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
 import { commitDecorBatch } from './decorBatch.js';   // DECOR-BATCH: one Confirm for a home's draft
@@ -435,6 +436,7 @@ const thrown = (path, e, origin) => {
 const overloaded = (origin) => {
   const res = no('server', 503, origin);
   res.headers.set('retry-after', String(BUSY_RETRY_AFTER_S));
+  res.headers.append('access-control-expose-headers', 'retry-after');   // RETRY-SEEN: unexposed, a page's fetch reads it null
   return res;
 };
 /** REALM P1: each realm refusal's status - a bad shape 400 (the default), a character that is not the caller's 404, a
@@ -878,6 +880,7 @@ const service = {
       if (queued) {
         const res = json({ error: 'queue', position: queued.position, wait: queued.wait }, 503, origin);
         res.headers.set('retry-after', String(Math.ceil(queued.wait / 1000)));
+        res.headers.append('access-control-expose-headers', 'retry-after');   // RETRY-SEEN: as the overload's (overloaded)
         return res;
       }
     }
@@ -1162,7 +1165,8 @@ const service = {
       // AUDIT PLAN-1000 C4: a claim the account's rate will refuse (asked without counting - the count is the door's below,
       // after the tombstone, as ever) asks the tombstone alone
       const claimed = progressRoute && !accountRateFull(who.player.id, nowS, ACCOUNT_MAX, ACCOUNT_WINDOW_S) ? progressRoute[0] : null;
-      const door = await doorReads(db, who.player.id, { tomb: path !== '/v1/auth/token' && typeof body.character === 'string' ? body.character : null, stream: claimed });
+      // TOMB-RIDES: and a town's homes, whose read asks the tombstone in its own batch (homes.js homesInTown)
+      const door = await doorReads(db, who.player.id, { tomb: path !== '/v1/auth/token' && path !== '/v1/homes/town' && typeof body.character === 'string' ? body.character : null, stream: claimed });
       if (door.dead) return no('dead', 410, origin);
 
       // AUDIT-ACC F12: A CREDENTIAL IS NOT A LICENCE TO HAMMER. The
@@ -1241,7 +1245,13 @@ const service = {
         // SEAT1c (Seats-Arc 7.4): AND A CHARTER'S - its glyphs on every member of the named character's guild, and a seat
         // title worn only by the guildmaster character this token is minted for, with its claim (`ts`) beside it
         const seats = seatsOpenFor(who.player, env);
-        const worn = await withChapterTitles(ctx, seats ? { ...who.player, seatTitles: await seatTitlesOf(ctx.db, who.player.id) } : who.player, env);   // CHAP4c: and a chapter's
+        // MINT-TITLE-GATE (bible/11-Multiplayer/Scale-Arc.md MINT-TITLE-GATE): `worn` is read by titleWorn alone, which signs
+        // the chosen title only if titlesHeld holds it - and each family's read adds that family's titles alone (titles.js).
+        // So a family is read only when the chosen title is one of it: 2-3 statements a mint fewer for most players. A new
+        // family laid on the row for titlesHeld needs its gate here.
+        const chosen = typeof who.player.title === 'string' ? who.player.title : '';
+        let worn = seats && SEAT_TITLES.includes(chosen) ? { ...who.player, seatTitles: await seatTitlesOf(ctx.db, who.player.id) } : who.player;
+        if (CHAPTER_TITLES.includes(chosen) || MASTERY_MARKS.includes(chosen)) worn = await withChapterTitles(ctx, worn, env);   // CHAP4c: and a chapter's
         const zero = seasonZeroOf(env.SEASON_ZERO_WEEK);   // SEASON1: the Season on a title's claim
         // SCALE4f part two: THE CHARACTER'S MEMBERSHIP READ ONCE (guilds.js mintMemberOf) for the seat badge, the ribbon and the
         // guild's badge below - three reads of one row; each keeps its own law over it
@@ -1809,7 +1819,7 @@ const service = {
         if (request.method !== 'POST') return no('method', 405, origin);
         if (path === '/v1/homes/town') {
           const r = await homesInTown(ctx, who.player, body, { seats: seatsOpenFor(who.player, env) });   // SEAT1d: Open Gates
-          return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);
+          return 'error' in r ? no(r.error, r.error === 'dead' ? 410 : 400, origin) : json(r, 200, origin);   // TOMB-RIDES: the door's own 410
         }
         if (path === '/v1/homes/mine') return json(await homesOf(ctx, who.player), 200, origin);
         if ((path === '/v1/homes/decor' || path.startsWith('/v1/homes/decor/')) && body?.seat === true && !seatsOpenFor(who.player, env)) return no('seats-closed', 403, origin);   // SEAT-HALL: a palace's Charter Room while the seats are open
