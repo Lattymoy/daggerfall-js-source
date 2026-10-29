@@ -162,6 +162,9 @@ test('AUDIT-STOREFRONT II E7, E8: the profile - on a narrow card the stage stand
   const narrow = css.slice(css.indexOf('@container (max-width: 480px) {\n  .card .acctslots'));
   assert.match(narrow, /\.card \.slots-stage \{ display: contents; \}/);
   assert.ok(narrow.indexOf('.card .slots-mid { order: -2;') > 0 && narrow.indexOf('.card .slots-picker { order: -1;') > 0, 'the stage, then the picker');
+  // shown before the slots its markup puts first, the picker's words grown under a pointer must not move its row: the
+  // window keeps no scroll anchor (one chosen in markup order sat under it, and the row ran from the pointer and back)
+  assert.match(css, /\.px-win\.px-acctwin \.px-body \{[^}]*overflow-anchor: none;/);
 });
 
 test('AUDIT-STOREFRONT II B3: experience past a stage\'s top is said kept for the next stage - never at the last stage\'s, which has no next (mutants: "kept for the next" at level 50)', () => {

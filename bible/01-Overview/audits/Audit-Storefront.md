@@ -134,7 +134,7 @@ no figures should be used."** Five cold lanes read the branch at 4d881139d, each
 reporting it and to fix nothing: A the payments, B the pass, C the effects, D the season in the world, E the window and
 the profile on the Enhanced Plus kit. The track, the icons and Aurum are their own pages' (`06-Systems/Battle-Pass.md`
 section 3, `06-Systems/Aurum.md`). Each FIXED is pinned in the test it names and guarded by a mutant
-(`tools/mutants/aurum.json` for lane A, `storefront_audit2_ui.json` for E, and the lanes' own below).
+(`tools/mutants/aurum.json` for lane A, `storefront_audit2_ui.json` for E, and each other lane's below).
 
 ### A - the payments
 
@@ -148,6 +148,20 @@ Stripe tells a payment's words in no order and retries a refused one for days. P
 | A4 | LOW | A paid word told twice at once: the late copy acted on a refund it had computed from the order as it stood before the first landed, and returned a good sale | FIXED: an attempt answers only the refund it wrote; one refused by the order's guard answers none |
 | A5 | LOW | Two pages paid at once ended differently by which landed first | FIXED by A2: whichever lands second no longer matches what the row holds and is refunded, the same either way |
 
+### C - the effects
+
+Pins: `storefront_audit2_fx_veil.test.js`, `storefront_audit2_fx_magic.test.js`, `storefront_audit2_fx_dye.test.js`,
+`storefront_audit2_fx_stage.test.js`; mutants `tools/mutants/storefront_audit2_fx.json`.
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| C1 | MED | A concealed peer's mount beat was still thrown - at an empty saddle, or bright over a translucent rider | FIXED: the peers' effects take each peer's veil with its pose (`peerFx.js` update) and give a veiled or hidden rider no mount look |
+| C2 | MED | The magic torn down before its idle warm-up built a kill pass and an impact pass on the dead engine, never freed | FIXED: `destroy()` marks both broken first, so a warm after it builds nothing |
+| C3 | LOW | One failed load of the rider masks broke every mounted sprite for the session | FIXED: a failure clears the memo and answers none, and the next asks again |
+| C4 | LOW | A mane's flicker read the seed the last horse dyed left behind | FIXED: the hair's dye sets its own |
+| C5 | LOW | A profile stage started again never played the effect its slot was trying on | FIXED: the stage is told the effect as it starts |
+| C6 | LOW | The mount preview read less motion once, and stopped its clock for good under it | FIXED: read every frame, the clock kept |
+
 ### E - the window and the profile
 
 Pins: `test/ui/storefront_audit2_window.test.js`, `shop_window.test.js`.
@@ -160,7 +174,7 @@ Pins: `test/ui/storefront_audit2_window.test.js`, `shop_window.test.js`.
 | E4 | MED | The effects' colour words matched no rule outside the profile card | FIXED: one ink table (`effectText.js` effectInkCss) for the profile and the shop |
 | E5 | MED | A challenge done and the foot's payment line shared one class, so the payment line read green | FIXED: `sh-cdone` and `sh-stripe` |
 | E6 | MED | On a short screen the tabs stood below the fold; a tab pressed redrew panels out of sight | FIXED: the head, disclaimer and tabs stand over a scrolled part; a tab brings its panels into sight; short and wide layouts |
-| E7 | MED | On a narrow profile card the effect picker stood far under the stage it tries choices on | FIXED: the stage first, the picker under it |
+| E7 | MED | On a narrow profile card the effect picker stood far under the stage it tries choices on | FIXED: the stage first, the picker under it; the window keeps no scroll anchor, which, chosen in markup order, moved a row from under the pointer as its choice's words grew |
 | E8 | MED | A locked effect never said how it is had | FIXED: each effect's words of how, read off the wares and the season's law |
 | E9 | LOW | The pass track's rows were named only in a legend, its overflow had no sign, the player's place was unmarked, a cell said nothing to a screen reader | FIXED: the rows named at the left as it scrolls, the last reward reached marked and scrolled to, a padlock on a locked cell, each cell said whole |
 | E10 | LOW | The challenges' meters stood ragged, each row its own grid | FIXED: one set of columns |
@@ -173,6 +187,8 @@ Pins: `test/ui/storefront_audit2_window.test.js`, `shop_window.test.js`.
 
 ## Known, and not changed
 
+- A concealed peer who is struck still shows the hit's splash at their body (lane C): a blow lands only on someone
+  found, so the splash tells no more than the blow did. C1 is the mount's beat alone.
 - A bridle drawn in the horse's black takes the look's shade with the mane: across the hide it is drawn as the shading
   is, a dark band, and a rule that spared it blacked the small sprites' shading (V6; Storefront.md section 7).
 - A few horse pixels that every other set's rider covers keep the coat's colour under a look: no set shows them, so

@@ -2677,7 +2677,10 @@ ${SUPPORT_MARKS_CSS}
   .px-stage.px-acctstage { padding: max(10px, env(safe-area-inset-top)) 16px 10px; overflow: hidden; }
   .px-win.px-acctwin { max-height: calc(100dvh - 20px); }
 }
-.px-win.px-acctwin .px-body { padding: 22px 26px 24px; }
+.px-win.px-acctwin .px-body { padding: 22px 26px 24px;
+  overflow-anchor: none; }   /* AUDIT-STOREFRONT II (lane E 7): the narrow card shows the picker before the slots its markup puts first;
+  the browser's scroll anchor, chosen in markup order, then sat under a choice's words, and a choice's words grown moved
+  the row from under the pointer - tried on, left, tried on again. With no anchor, what grows pushes only what is below. */
 
 /* ═══ ONE AXIS ════════════════════════════════════════════════════
    Mac: "Nothing is centered". It was true and it read as rushed - a
