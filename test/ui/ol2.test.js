@@ -19,6 +19,7 @@ import { TravelPopUpWindow, ONLINE_TRAVEL_LINE, LABEL_POS } from '../../src/ui/t
 import { CLASSIC_GAME_START_TIME } from '../../src/systems/gameDate.js';
 import { ONLINE_MINUTES_PER_MS } from '../../src/net/wire.js';
 import { CLIMATES } from '../../src/formats/mapsFile.js';
+import { hostText } from '../hostText.mjs';
 
 const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
 const winDeps = (over = {}) => ({ advanceMinutes() {}, tickVitals: () => false, fullyHealed: () => false, enemiesNearby: () => false, dead: () => false, endLines: (id) => [`text:${id}`], ...over });
@@ -121,6 +122,6 @@ test('OL2 (6) + TRAVEL-FARE + LIVED1: online the trip\'s days are the traveller\
   assert.deepEqual(LABEL_POS.time, [129, 117]);
   void painted; void font; void renderer;
   assert.match(rd('src/ui/travel/travelMapWindow.js'), /noWorldTime: this\.deps\.noWorldTime,/, 'threaded through the map window');
-  assert.match(rd('src/scenes/world.js'), /noWorldTime: \(\) => sharedClockOn\(\),/, 'the world host\'s word');
+  assert.match(hostText('src/scenes/world.js'), /noWorldTime: \(\) => sharedClockOn\(\),/, 'the world host\'s word');   // PIN MOVED (HOST-SPLIT, DRAGON5b): the host read whole - the fare's deps are scenes/travelFareHost.js's
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /## OL2 \(2026-09-14\)/, 'the record');
 });

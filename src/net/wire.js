@@ -1220,7 +1220,7 @@ export const CELL_OLD_REASON = 'old cells';
  *  a container without it, and every peer landed that. A loot room's hello says it (`ll`); while `lootDoor` is on
  *  (net/relayCfg.js) the relay refuses a hello there that says less or none (LOOT_OLD_REASON). It moves, and RELAY_VERSION
  *  with it, when the item law takes a piece an older law refuses. */
-export const LOOT_HELLO_LAW = 1;
+export const LOOT_HELLO_LAW = 2;   // 2: HAND-WRAPS - the Hand Wraps (563)
 /** The most `ll` a hello may say - a later build's number, read; past it, read as none. */
 export const LOOT_HELLO_LAW_WIRE_MAX = 65535;
 /** LOOT-DOOR: the rooms whose words carry a shared list - a world room's acts (a container) and a cell's or a world
@@ -1704,8 +1704,11 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world287';   // world287: FRONTS (world286 on its branch, renumbered past FB1029 GROUND's world286 at the merge of main; 2026-10-29, the owner: "events are way overdone with their spawning"; bible/03-World/World-Wide.md FRONTS; NOT YET DEPLOYED): net/frontLaw.js JOINS THE BUNDLE - past the Bay two provinces stir a game day, and only they open a gate (gateLaw.js isGateDay), land a star (starfallLaw.js starInWindow), roll raid slots (raid/raidLaw.js raidDaySlots) or raise a Hollow, at most two of those standing (superDungeon/sdLaw.js sdDue, sdRise; the hub's _sdHeldPast). AUDIT FRONTS (re-hashed in place, undeployed): the hub beats the provinces that waited longest first (sdBeatOrder), arms a turn that ended mid-census, and its Hollow cards name the next's turn and a free place (sdRiseNotBefore). The Bay's lane unchanged. The site may deploy first: it sends nothing world287 alone reads (bible/03-World/World-Wide.md FRONTS, the deploy).
+export const RELAY_VERSION = 'world289';   // world289: HAND-WRAPS (world286 on its branch, renumbered past FB1029 GROUND's world286, FRONTS' world287 and DRAGON's world288 at the merge of main; 2026-10-29, AUDIT HAND-WRAPS B2; bible/05-Combat/Hand-Wraps.md; NOT YET DEPLOYED): LOOT_HELLO_LAW 1 to 2 - a build that reads the Hand Wraps (template 563); while `lootDoor` is on, a loot room refuses an older one, which would drop a pair from a shared container. Deploy the relay first, then the site.
+// world288: DRAGON (2026-10-29, bible/11-Multiplayer/Dwarven-Dragon.md; NOT YET DEPLOYED; world281, world283, world284, world285, world286 then world287 on its branch, renumbered past the PvP rework's world281 and world282, PVP-SAFE-HIT's world283, AUDIT TAMRIEL-WIDE's world284, CAPE-TOGGLE's world285, FB1029 GROUND's world286 and FRONTS' world287 at the merges of main): the pose's `rd` keeps 3, a rider on the Dwarven Dragon (POSE_RIDE.Dragon, DRAGON_RIDE_RELAY_MIN), and the Dwarven Dragon's fight (server/src/dragonFights.js, its cell's words and its z1 receipts). Deploy the relay first.
+// world287: FRONTS (world286 on its branch, renumbered past FB1029 GROUND's world286 at the merge of main; 2026-10-29, the owner: "events are way overdone with their spawning"; bible/03-World/World-Wide.md FRONTS; NOT YET DEPLOYED): net/frontLaw.js JOINS THE BUNDLE - past the Bay two provinces stir a game day, and only they open a gate (gateLaw.js isGateDay), land a star (starfallLaw.js starInWindow), roll raid slots (raid/raidLaw.js raidDaySlots) or raise a Hollow, at most two of those standing (superDungeon/sdLaw.js sdDue, sdRise; the hub's _sdHeldPast). AUDIT FRONTS (re-hashed in place, undeployed): the hub beats the provinces that waited longest first (sdBeatOrder), arms a turn that ended mid-census, and its Hollow cards name the next's turn and a free place (sdRiseNotBefore). The Bay's lane unchanged. The site may deploy first: it sends nothing world287 alone reads (bible/03-World/World-Wide.md FRONTS, the deploy).
 // world286: FB1029 GROUND (2026-10-29, NOT YET DEPLOYED; world284 on its branch, renumbered past world284 and world285 on main at the merge): GROUND_LAW 4 to 5 - the ground about a Bay town meets it across its pixel's edge (ACROSS-EDGE) and the Bay's paving over the sea stands dry (ROAD-DRY), so the relay refuses a ground room's hello from the old ground while `groundGate` is on; the bundle's files otherwise unchanged. world285: CAPE-TOGGLE (world284 on its branch, renumbered past AUDIT TAMRIEL-WIDE's world284 at the merge of main; 2026-10-29, the owner: "add a cape/helmet toggle option in the inventory for people"; bible/04-Characters/Cape-Toggle.md; NOT YET DEPLOYED): a look may say `hc` 1 - its player hides their capes, so a peer draws no aura on them (validLook keeps it, omitted otherwise). Deploy the relay first, then the site.
+// world285: CAPE-TOGGLE (world284 on its branch, renumbered past AUDIT TAMRIEL-WIDE's world284 at the merge of main; 2026-10-29, the owner: "add a cape/helmet toggle option in the inventory for people"; bible/04-Characters/Cape-Toggle.md; NOT YET DEPLOYED): a look may say `hc` 1 - its player hides their capes, so a peer draws no aura on them (validLook keeps it, omitted otherwise). Deploy the relay first, then the site.
 // world284: AUDIT TAMRIEL-WIDE B1, B2, B5 and E3 (world280, world281 then world283 on its branch, renumbered past ARMORY's world280, then PVP-REWORK's world281 and PVP-FOLLOWUP's world282, then PVP-SAFE-HIT's world283, at the merges of main; 2026-10-28, bible/01-Overview/audits/Audit-Tamriel-Wide.md; NOT YET DEPLOYED) - the hub keeps a death and a win in a province's Hollow under its lane's keys (server/src/sdCopy.js); a staff /tp takes an abyss whose pit stands past the Bay (net/staffTeleport.js); the hub keeps two days of every lane's cleansed raids (RAID_CLEANS_MAX 576); and a serpent's `site` word says its site law (`sl`, net/serpent/serpentLaw.js SERPENT_SITE_LAW 2), which the hub folds alone, into its own record. Deploy the relay first, then the site: a new build's sites on an older relay join the older law's vote. Until two of the new site's builds name a site, the hub folds none, its herald names no place, and that day's kill is not posted (AUDIT TAMRIEL-WIDE II R4); a new build says no site to an older relay (SERPENT_SITE_RELAY_MIN, II R2).
 // world283: PVP-SAFE-HIT (2026-10-29, NOT YET DEPLOYED): a non-villain in a settlement's streets of the zone says it (`zone` with `sf` 1, WILD_STREETS_RELAY_MIN) - the referee lands its blow on a red villain alone and no blow on it (net/wild/wildRef.js wildStreetsBar). Deploy the relay first, then the site.
 // world282: PVP-FOLLOWUP (2026-10-29, the PvP rework's follow-up; NOT YET DEPLOYED): PVP-RISE - the zone's death wait a minute (WILD_DEATH_HOLD_S 60, WILD_REF.riseMs and the `down` word's ceiling 60 s, were two minutes); Enter rises after 15 s (DEATH-15). Deploy the relay first, then the site.
@@ -2205,8 +2208,13 @@ export const POSE_SEAT_TOP_MAX = 40;
 /** CARDS2b: the pose's seat - `st` 1..POSE_SEAT_TOP_MAX while the player sits at a card table, OMITTED standing (validLook's
  *  `class` law: a standing pose keeps the bytes it had). A number out of bounds is no seat, never clamped into one. */
 const seatOf = (st) => (Number.isInteger(st) && st >= 1 && st <= POSE_SEAT_TOP_MAX ? { st } : {});
-/** RIDE: the pose's mount - `rd` 1 the horse, 2 the cart (DFU's TransportModes riding), `rv` the mounted sprite set. */
-export const POSE_RIDE = Object.freeze({ Foot: 0, Horse: 1, Cart: 2 });
+/** RIDE: the pose's mount - `rd` 1 the horse, 2 the cart (DFU's TransportModes riding), `rv` the mounted sprite set.
+ *  DRAGON1 (bible/11-Multiplayer/Dwarven-Dragon.md section 10): 3 the Dwarven Dragon, its look `rc` (1 the Aetherbright). */
+export const POSE_RIDE = Object.freeze({ Foot: 0, Horse: 1, Cart: 2, Dragon: 3 });
+/** DRAGON1: the first relay whose pose law keeps `rd` 3 - an older one clamps it to the cart. The ride's one gate, kept beside
+ *  the law it gates, so the two move together when a merge renumbers the relay. */
+export const DRAGON_RIDE_RELAY_MIN = 288;
+export const relaySupportsDragonRide = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= DRAGON_RIDE_RELAY_MIN; };
 export const POSE_RIDE_SPRITES = 5;
 // DISC7 (2026-09-23, Mac: "fix the known gaps"): `hs` - the rider is moving at LESS THAN HALF SPEED
 // (PlayerMotor.IsMovingLessThanHalfSpeed, the motor's own flag), the one fact TransportManager swaps the clop on
@@ -2218,7 +2226,7 @@ export const POSE_RIDE_SPRITES = 5;
 // so every pose before it keeps the bytes it had. A look the law does not know is a bay, never a refused pose - and
 // never clamped: a code is a horse, and the highest is no nearer one than another.
 const rideOf = (rd, rv, hs, rc) => {
-  const r = uint(rd, POSE_RIDE.Cart) ?? 0;
+  const r = uint(rd, POSE_RIDE.Dragon) ?? 0;   // DRAGON1: 3 the dragon
   const c = Number.isInteger(rc) && rc >= 1 && rc <= HORSE_LOOK_MAX ? rc : 0;
   return r ? { rd: r, rv: uint(rv, POSE_RIDE_SPRITES - 1) ?? 0, ...(uint(hs, 1) ? { hs: 1 } : {}), ...(c ? { rc: c } : {}) } : {};   // AUDIT DISC7 B8: uint's law, as rd and rv
 };
@@ -2363,7 +2371,7 @@ export function inRangeOf(roomKey, from) {
   return (to) => !!to && Math.max(Math.abs(fx - Math.floor(to.x / PIXEL_UNITS)), Math.abs(fy - Math.floor(to.z / PIXEL_UNITS))) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'ban'|'renown'|'guild'|'guildout'|'home'|'yard'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'caravan'|'look'|'gate'|'grant'|'siege'|'arena'|'raid'|'raidtowns'|'sev'|'rite'|'star'|'ow'|'trav'|'amap'|'stp'|'cfg'|'find'|'serpent'|'sd'|'kt'|'eg'|'wild'|'vit'|'wdun'|'holdem'|'iliac'|'gambit'|'lease', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'ban'|'renown'|'guild'|'guildout'|'home'|'yard'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'caravan'|'look'|'gate'|'grant'|'siege'|'arena'|'raid'|'raidtowns'|'sev'|'rite'|'star'|'ow'|'trav'|'amap'|'stp'|'cfg'|'find'|'serpent'|'dragon'|'sd'|'kt'|'eg'|'wild'|'vit'|'wdun'|'holdem'|'iliac'|'gambit'|'lease', ...}
  *  or {error} - the caller closes on an error. INSPECT1: every arm below, named - this line had fallen seven behind
  *  (test/net/auditworld2.test.js derives the list from the arms now, so it cannot fall behind again - the merge with
  *  main's HCC-PARK was its first catch: the park arm, unnamed). */
@@ -2491,6 +2499,11 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (!hasHello) return { error: 'serpent before hello' };
     const r = validSerpentIn(m);
     return r ? { t: 'serpent', ...r } : { error: 'bad serpent' };
+  }
+  if (m.t === 'dragon') {   // DRAGON2: a word on the Dwarven Dragon's fight, to its site's cell - projected by validDragonIn
+    if (!hasHello) return { error: 'dragon before hello' };
+    const r = validDragonIn(m);
+    return r ? { t: 'dragon', ...r } : { error: 'bad dragon' };
   }
   if (m.t === 'rite') {   // WB12d: a word at the faithful's rite, to the circle's cell - projected by validRiteIn; the cell judges where and when
     if (!hasHello) return { error: 'rite before hello' };
@@ -6458,6 +6471,139 @@ function serpentOutOf(m) {
     case 'at': return Number.isSafeInteger(m.d) && m.d >= 0 && Number.isSafeInteger(m.sx) && Number.isSafeInteger(m.sz)
       && typeof m.pl === 'string' && /^[A-Za-z]/.test(m.pl) && gatePlaceWire(m.pl) === m.pl ? { k: 'at', d: m.d, pl: m.pl } : null;
     case 'rcpt': return typeof m.r === 'string' && m.r.length <= SERPENT_RECEIPT_WIRE_MAX && SERPENT_RECEIPT_RE.test(m.r) ? { k: 'rcpt', r: m.r } : null;
+    default: return null;
+  }
+}
+
+// ═══ DRAGON2: THE DWARVEN DRAGON'S FRAME ══════════════════════════════════════════════════════════
+//
+// (2026-10-29, bible/11-Multiplayer/Dwarven-Dragon.md sections 4-8.) ONE FRAME TYPE, `dragon`, with a kind, to the CELL the
+// dragon's site stands in (the serpent's law): the client says `in` (the watch, the site's native point, the brain's law,
+// its level) and `hit` (a blow's damage and kind); the cell says the rest. Every fight word names its site (`sx`/`sz`) so a
+// client folds its own dragon's alone. Every time on these frames is the RELAY's clock.
+/** What a client may say to the dragon's cell. */
+export const DRAGON_KINDS = Object.freeze(['in', 'hit']);
+/** What the cell (or the hub) says back: the whole state, its plan, a blow begun, its health, a phase, a mode (air or
+ *  ground), the kill, its leaving, a refusal, a receipt. */
+export const DRAGON_OUT_KINDS = Object.freeze(['st', 'mv', 'atk', 'hp', 'ph', 'md', 'fell', 'gone', 'no', 'rcpt', 'bd']);   // `bd`: the relay's count of my body felled me (net/bossBody.js)
+/** The dragon frames' own bucket: its blow rate (net/dragon/dragonBrain.js DRAGON_HIT_HZ_MAX, 4), the `in`, slack. */
+export const DRAGON_HZ_MAX = 8;
+export const dragonGate = (bucket, nowMs) => tokenGate(bucket, nowMs, DRAGON_HZ_MAX);
+/** The first relay that keeps a dragon's fight; an older one closes the socket on the frame, so a client says none to it.
+ *  The ride's own number: the ride and the fight landed in one relay (AUDIT DRAGON: a copy stood at 281 when a merge
+ *  moved the ride's to 284, and opened the frame to three relays that close on it). */
+export const DRAGON_RELAY_MIN = DRAGON_RIDE_RELAY_MIN;
+export const relaySupportsDragon = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= DRAGON_RELAY_MIN; };
+/** The door between a dragon's cell and the hub: the kill and its receipts. */
+export const DRAGON_INTERNAL_FELL = '/internal/dragon/fell';
+export const DRAGON_TELL_RETRY_MS = 5000;
+/** A cell's storage: its fights' ids (`watch@site`), each under DRAGON_FIGHT_KEY + ':' + its id; the hub's: each account's
+ *  latest receipt. */
+export const DRAGON_FIGHT_KEY = 'dragon';
+export const DRAGON_FIGHTS_KEY = 'dragons';
+export const DRAGON_RC_PREFIX = 'dragonrc:';
+/** The room's refusals - a closed list of codes, which the client says in the player's language (systems/dragon/dragonWords.js). */
+export const DRAGON_NO_WORDS = Object.freeze(['gone', 'far', 'full', 'slain', 'reload']);
+/** A level claim, a blow's damage on the wire (the brain caps it far lower), a point about the site, a health. */
+export const DRAGON_LV_WIRE_MAX = 999;
+export const DRAGON_DMG_WIRE_MAX = 5000;
+export const DRAGON_XZ_BOUND = 5000;
+export const DRAGON_HP_MAX = 1e9;
+/** A plan's legs, a state's blows, a blow's kinds, the names a kill credits, the chart's rows (net/dragon/dragonBody.js
+ *  DRAGON_LEGS_MAX, dragonBrain.js DRAGON_BLOWS_KEPT, DRAGON_BLOWS, DRAGON_CHART_MAX - pinned equal). */
+export const DRAGON_LEGS_MAX = 8;
+export const DRAGON_BLOWS_WIRE_MAX = 12;
+export const DRAGON_BLOW_KINDS = 9;
+export const DRAGON_TOP_MAX = 3;
+export const DRAGON_CHART_MAX = 32;
+/** A receipt's bound and prefix (net/dragon/dragonReceipt.js DRAGON_RECEIPT_MAX, DRAGON_RECEIPT_V - pinned equal). */
+export const DRAGON_RECEIPT_WIRE_MAX = 512;
+const DRAGON_RECEIPT_RE = /^z1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$/;
+const dgXZ = (v) => finite(v) && Math.abs(v) <= DRAGON_XZ_BOUND;
+const dgMs = (v) => Number.isSafeInteger(v) && v >= 0;
+const dgHp = (v) => Number.isSafeInteger(v) && v >= 0 && v <= DRAGON_HP_MAX;
+const dgYaw = (v) => finite(v) && Math.abs(v) <= 4;
+const dgAlt = (v) => finite(v) && v >= -10 && v <= 1000;
+
+/** A client's dragon word, projected: `{k:'in', w, bv, lv, sx, sz}` or `{k:'hit', d, r}` - or null. */
+export function validDragonIn(m) {
+  if (!m || typeof m !== 'object' || !DRAGON_KINDS.includes(m.k)) return null;
+  if (m.k === 'in') {
+    if (!Number.isSafeInteger(m.w) || m.w < 0 || !intIn(m.bv, 0, 999) || !intIn(m.lv, 1, DRAGON_LV_WIRE_MAX)) return null;
+    if (!finite(m.sx) || !finite(m.sz) || Math.abs(m.sx) > POSE_BOUND || Math.abs(m.sz) > POSE_BOUND) return null;
+    return { k: 'in', w: m.w, bv: m.bv, lv: m.lv, sx: m.sx, sz: m.sz };
+  }
+  return finite(m.d) && m.d > 0 && m.d <= DRAGON_DMG_WIRE_MAX && intIn(m.r, 0, 2) ? { k: 'hit', d: m.d, r: m.r } : null;
+}
+/** A leg of its plan on the wire (net/dragon/dragonBody.js's shapes), or null. */
+function dgLeg(l) {
+  if (!l || typeof l !== 'object' || !dgMs(l.at)) return null;
+  if (l.k === 0) {
+    if (!dgMs(l.ms) || l.ms > 600_000 || ![l.x, l.z, l.tx, l.tz].every(dgXZ) || !dgAlt(l.a) || !dgAlt(l.ta) || !dgYaw(l.yw) || (l.e !== 0 && l.e !== 1)) return null;
+    return { k: 0, at: l.at, ms: l.ms, x: l.x, z: l.z, a: l.a, tx: l.tx, tz: l.tz, ta: l.ta, yw: l.yw, e: l.e };
+  }
+  if (l.k !== 1 || !dgXZ(l.cx) || !dgXZ(l.cz) || !finite(l.r) || l.r < 1 || l.r > 2000 || !dgYaw(l.a0) || (l.sd !== 1 && l.sd !== -1) || !dgAlt(l.a) || !dgAlt(l.ta) || !dgMs(l.ams)) return null;
+  return { k: 1, at: l.at, cx: l.cx, cz: l.cz, r: l.r, a0: l.a0, sd: l.sd, a: l.a, ta: l.ta, ams: l.ams };
+}
+const dgLegs = (legs) => { if (!Array.isArray(legs) || !legs.length || legs.length > DRAGON_LEGS_MAX) return null; const out = legs.map(dgLeg); return out.every(Boolean) ? out : null; };
+/** A blow on the wire: its number, kind, landing, wind-up and stamps (net/eliteGates/egShape.js's, checked as the Spire's are). */
+function dgBlow(b) {
+  if (!b || typeof b !== 'object' || !Number.isSafeInteger(b.i) || b.i < 1 || !intIn(b.a, 0, DRAGON_BLOW_KINDS - 1) || !dgMs(b.at) || !dgMs(b.wu) || b.wu > 60_000) return null;
+  if (!Array.isArray(b.s) || !b.s.length || b.s.length > 10 || !b.s.every((st) => egStampOk(st, DRAGON_XZ_BOUND))) return null;
+  if (b.sp !== undefined && (!dgMs(b.sp) || b.sp > 10_000)) return null;   // AUDIT DRAGON: a sweep's span, judged over its length
+  return { i: b.i, a: b.a, at: b.at, wu: b.wu, s: b.s.map((st) => [...st]), ...(b.sp ? { sp: b.sp } : {}) };
+}
+const dgTop = (top) => (Array.isArray(top) ? top.slice(0, DRAGON_TOP_MAX).filter((n) => typeof n === 'string' && n).map(sanitizeName) : []);
+function dgChart(dm) {
+  if (!Array.isArray(dm)) return null;
+  const rows = dm.slice(0, DRAGON_CHART_MAX).map((r) => (r && typeof r === 'object' && typeof r.n === 'string' && intIn(r.l, 1, DRAGON_LV_WIRE_MAX) && dgHp(r.d) && intIn(r.h, 0, 1_000_000) && dgHp(r.b)
+    ? { l: r.l, n: sanitizeName(r.n), d: r.d, h: r.h, b: r.b } : null));
+  return rows.every(Boolean) ? rows : null;
+}
+function dgFell(f) {
+  if (!f || typeof f !== 'object' || !dgMs(f.at) || !intIn(f.n, 0, 100_000)) return null;
+  const dm = f.dm !== undefined ? dgChart(f.dm) : null;
+  if (f.dm !== undefined && !dm) return null;
+  return { at: f.at, top: dgTop(f.top), n: f.n, ...(dm ? { dm } : {}) };
+}
+const dgSite = (m) => (finite(m.sx) && finite(m.sz) && Math.abs(m.sx) <= POSE_BOUND && Math.abs(m.sz) <= POSE_BOUND ? { sx: m.sx, sz: m.sz } : null);
+
+/**
+ * The dragon's cell's word (or the hub's), projected for the client - the kind's own fields, bounded, or null. A fight
+ * word names its site (the cell stamps every one); a refusal and a receipt are this socket's, of no site.
+ */
+export function validDragonOut(m) {
+  if (!m || typeof m !== 'object' || !DRAGON_OUT_KINDS.includes(m.k)) return null;
+  if (m.k === 'no') return DRAGON_NO_WORDS.includes(m.m) ? { k: 'no', m: m.m } : null;
+  if (m.k === 'bd') return { k: 'bd' };   // no fields - the fall is mine, the socket's own
+  if (m.k === 'rcpt') return typeof m.r === 'string' && m.r.length <= DRAGON_RECEIPT_WIRE_MAX && DRAGON_RECEIPT_RE.test(m.r) ? { k: 'rcpt', r: m.r } : null;
+  const site = dgSite(m);
+  if (!site || !Number.isSafeInteger(m.w) || m.w < 0) return null;
+  const w = dragonOutOf(m);
+  return w ? { ...w, w: m.w, ...site } : null;
+}
+/** A fight word's own fields (validDragonOut). */
+function dragonOutOf(m) {
+  switch (m.k) {
+    case 'st': {
+      if (!intIn(m.b, 0, 1) || !intIn(m.ph, 1, 3) || !dgHp(m.h) || !dgHp(m.m) || m.h > m.m || !intIn(m.md, 0, 1) || !dgMs(m.mu) || !dgMs(m.sh) || !dgMs(m.lv) || !dgMs(m.op) || !intIn(m.n, 0, 100_000)) return null;
+      const legs = dgLegs(m.legs);
+      if (!legs || !Array.isArray(m.blows) || m.blows.length > DRAGON_BLOWS_WIRE_MAX) return null;
+      const blows = m.blows.map(dgBlow);
+      if (!blows.every(Boolean)) return null;
+      const fell = m.fell == null ? null : dgFell(m.fell);
+      if (m.fell != null && !fell) return null;
+      if (!(m.gone == null || dgMs(m.gone))) return null;
+      if (m.ma !== undefined && !dgMs(m.ma)) return null;
+      return { k: 'st', b: m.b, ph: m.ph, h: m.h, m: m.m, md: m.md, ...(m.ma !== undefined ? { ma: m.ma } : {}), mu: m.mu, sh: m.sh, legs, blows, n: m.n, lv: m.lv, op: m.op, fell, gone: m.gone ?? null };   // AUDIT DRAGON: `ma`, when its mode takes hold
+    }
+    case 'mv': { const legs = dgLegs(m.legs); return legs ? { k: 'mv', legs } : null; }
+    case 'atk': { const b = dgBlow(m); return b ? { k: 'atk', ...b } : null; }
+    case 'hp': return dgHp(m.h) && dgHp(m.m) && m.h <= m.m && (m.n === undefined || intIn(m.n, 0, 100_000)) ? { k: 'hp', h: m.h, m: m.m, ...(m.n === undefined ? {} : { n: m.n }) } : null;
+    case 'ph': return intIn(m.n, 1, 3) && dgMs(m.until) ? { k: 'ph', n: m.n, until: m.until } : null;
+    case 'md': return intIn(m.m, 0, 1) && dgMs(m.at) && dgMs(m.until) ? { k: 'md', m: m.m, at: m.at, until: m.until } : null;
+    case 'fell': { const f = dgFell(m); return f ? { k: 'fell', ...f } : null; }
+    case 'gone': return dgMs(m.at) ? { k: 'gone', at: m.at } : null;
     default: return null;
   }
 }

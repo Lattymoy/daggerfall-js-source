@@ -1,6 +1,8 @@
 // SoundClips: enum values = DAGGER.SND record indices, verbatim from
 // DFU SoundClips.cs. Only the consumed subset lives here; grow it
 // with the consumers (the full 400+ enum stays in the source).
+import { isHandWraps } from '../characters/handWrapsIds.js';   // HAND-WRAPS: a leaf, so this stays one
+
 export const SOUND = {
   None: -1,                 // SoundClips.None (:24) - "no clip", and no valid record index
 
@@ -175,7 +177,7 @@ const SWING_BOWS = new Set([129, 130]);                         // Short Bow, Lo
 const _customSwing = new Map();
 export function registerSwingSound(templateIndex, clip) { if (clip == null) _customSwing.delete(templateIndex); else _customSwing.set(templateIndex, clip); }
 export function swingSoundFor(weapon) {
-  if (!weapon) return SOUND.SwingHighPitch;
+  if (!weapon || isHandWraps(weapon)) return SOUND.SwingHighPitch;   // HAND-WRAPS (AUDIT B7): a fist's swing, a peer's too
   if (weapon.werecreatureClaws) return SOUND.SwingHighPitch;   // V4: SetFPSWeapon's SwingWeaponSound (:339)
   const t = weapon.templateIndex;
   if (_customSwing.has(t)) return _customSwing.get(t);
@@ -211,7 +213,7 @@ export const PLAYER_HIT_VOLUME = 1;     // PlayerFootsteps.cs:334, :342
  *  barehanded -> Hit1 + [2,4). Same families for the player taking
  *  hits (PlayerFootsteps.cs). */
 export function hitSoundFor(weapon, rolls = Math.random) {
-  return SOUND.Hit1 + (weapon
+  return SOUND.Hit1 + (weapon && !isHandWraps(weapon)   // HAND-WRAPS (AUDIT B7): a fist's hit
     ? Math.floor(rolls() * 5)
     : 2 + Math.floor(rolls() * 2));
 }

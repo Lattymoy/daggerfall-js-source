@@ -177,6 +177,10 @@ second hand (`offGlowShown`: the blade bound, the pair drawn). The arm's held gl
 the right hand's, whichever hand strikes - the weapon in use changes mid-blow, and the key guard would drop it for every
 left blow). A third-person picture is padded for the larger of the two outlines.
 
+**The fists** (HAND-WRAPS, `05-Combat/Hand-Wraps.md`): the Hand Wraps glow on both fists. The classic sheet takes the
+arcane outline for an enchantment, since Melee has no magic sheet; the Morrowind hands are lit on their own ranges
+(`renderer.js` `inGlowSlot` 'hands').
+
 ## Online
 
 The affixes that decide a glow never travel, so the look says it: a weapon in a hand carries `glow`, one of twelve words (law 7's `brand2` and `edge2` since world278) -

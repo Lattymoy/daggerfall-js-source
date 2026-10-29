@@ -232,7 +232,7 @@
   {
     "name": "STAFF-PANEL6-STATUS-limit-set-slow-to-show",
     "file": "server-account/src/staffStatus.js",
-    "old": "    kept.delete('fast');",
+    "old": "    await staffKeptForget(db, ['status:fast', ...HOME_KEPT.map((id) => `home:${id}`)]).run().catch(() => null);",
     "new": "    void 0;",
     "why": "a limit set waits out the fast window",
     "tests": [
@@ -241,10 +241,10 @@
   },
   {
     "name": "STAFF-PANEL6-STATUS-cache-window-inclusive",
-    "file": "server-account/src/staffStatus.js",
-    "old": "if (k && nowS >= k.at && nowS - k.at < s) return k.value;",
-    "new": "if (k && nowS >= k.at && nowS - k.at <= s) return k.value;",
-    "why": "a part kept a second past its window",
+    "file": "server-account/src/staffKept.js",
+    "old": "if (here && nowS >= here.at && nowS - here.at < freshS) return here.value;",
+    "new": "if (here && nowS >= here.at && nowS - here.at <= freshS) return here.value;",
+    "why": "a part kept a second past its window (STAFF-SPEED-2: the kept answer's own check, staffKept.js)",
     "tests": [
       "test/server/staffpanel6status.test.js"
     ]
@@ -252,9 +252,9 @@
   {
     "name": "STAFF-PANEL6-STATUS-cache-never",
     "file": "server-account/src/staffStatus.js",
-    "old": "if (k && nowS >= k.at && nowS - k.at < s) return k.value;",
-    "new": "if (false) return k.value;",
-    "why": "every poll asks the relay and Analytics Engine again",
+    "old": "staffKept(ctx, `status:${key}`, s, s, fn);",
+    "new": "fn();",
+    "why": "every poll asks the relay and Analytics Engine again (STAFF-SPEED-2: the parts no longer kept at all)",
     "tests": [
       "test/server/staffpanel6status.test.js"
     ]

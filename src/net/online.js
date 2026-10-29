@@ -123,6 +123,7 @@ import { isKetchRoom } from './ketch/ketchLaw.js';   // KETCH: a crew's ship's r
 import { owGate, validOwIn, validOwOut, relaySupportsOverworld, OW_WORD_IDS_MAX, OW_WORD_ROWS_MAX, relaySupportsOwGraves, owGraveGate, relaySupportsOwWorld } from './wire.js';   // GRAVE-PARTY: and the graves' word's relay - AUDIT GRAVE-PARTY G3: and its own bucket
 import { validSerpentIn, validSerpentOut, serpentGate, relaySupportsSerpent, relaySupportsSerpentSite } from './wire.js';
 import { SERPENT_SITE_LAW } from './serpent/serpentLaw.js';   // SERPENT1: the sea serpent's frame, both ways   // OW6L: the overworld ledger's frame, both ways
+import { validDragonIn, validDragonOut, dragonGate, relaySupportsDragon } from './wire.js';   // DRAGON3: the Dwarven Dragon's frame, both ways
 import { owIdInCell, owRowInCell, owRowSane } from './overworldLaw.js';   // OW6L: and the cell's law, held at home before a word is said
 import { reconnectWave } from './reconnectWave.js';   // SCALE2c: a relay deploy's reconnect, spread by the hub's count
 import { readWatchReceipt } from './watchReceipt.js';   // SEAT1b: the Watch's tick, read (never judged) at home
@@ -910,6 +911,9 @@ export class OnlineSession {
     this.serpentOk = false;       // SERPENT1: the relay that welcomed my primary socket holds a serpent's fight (relaySupportsSerpent) - an older one CLOSES the socket on the frame
     this.onSerpent = null;        // SERPENT1: (word, room) => void - the serpent's cell's word (its state, its swim, its blows, my receipt) or the hub's (its kill, Bay-wide), projected by the wire's validSerpentOut
     this._serpentBucket = null;   // SERPENT1: my own serpent words out - serpentGate's law
+    this.dragonOk = false;        // DRAGON3: the relay that welcomed my primary socket holds a dragon's fight (relaySupportsDragon) - an older one CLOSES the socket on the frame
+    this.onDragon = null;         // DRAGON3: (word, room) => void - a dragon's cell's word, or the hub's (my receipt), projected by the wire's validDragonOut
+    this._dragonBucket = null;    // DRAGON3: my own dragon words out - dragonGate's law
     this._riteBucket = null;      // WB12d: my own rite words out - riteGate's law
     this.starOk = false;          // STAR3: the relay that welcomed my primary socket keeps a fallen star's ledger (relaySupportsStar) - an older one CLOSES the socket on the frame
     this.ww5Ok = false;           // WW5: and keeps a star and a Hollow past the Bay (relaySupportsWw5) - an older one refuses a star word past the Bay's map as junk, and holds no lane's Hollow
@@ -1099,6 +1103,7 @@ export class OnlineSession {
       old.sevOk = this.sevOk;   // STAFF-EVENT: and the staff events'
       old.raidWorldOk = this.raidWorldOk;   // WW6: and the raids past the Bay
       old.seaPvpOk = this.seaPvpOk;   // SHIP-PVP: and the open sea's guns'
+      old.dragonOk = this.dragonOk;   // DRAGON3: and the dragon's
       this._halo.delete(room);
       this._halo.set(this.room, old);
       old.ly = this.layer; this.layer = h.ly ?? 0; this._layerRoom = room;   // SCALE5d: each socket's layer goes with it
@@ -1108,6 +1113,7 @@ export class OnlineSession {
       this.sevOk = !!h.sevOk;   // STAFF-EVENT
       this.raidWorldOk = !!h.raidWorldOk;   // WW6
       this.seaPvpOk = !!h.seaPvpOk;   // SHIP-PVP: and the open sea's guns'
+      this.dragonOk = !!h.dragonOk;   // DRAGON3
       this.foeInventoryOk = !!h.foeInventoryOk;
       this.wildOk = !!h.wildOk;   // INT9 (AUDIT): the zone's word went with neither socket
       this.wildStreetsOk = !!h.wildStreetsOk;   // PVP-SAFE-HIT: nor the streets' word
@@ -2079,6 +2085,28 @@ export class OnlineSession {
     if (this._mine(cell)) return this.serpentOk && this.status === 'open' && !!this._ws;
     const h = this._haloFor(cell);
     return !!h?.serpentOk && h.status === 'open' && !!h.ws;
+  }
+
+  /** DRAGON3: my word on a dragon's fight (net/wire.js validDragonIn) - down the socket of the CELL its site stands in (my
+   *  own cell's or a halo's, the serpent's law), DRAGON_HZ_MAX a second, never at a relay that would close the socket for
+   *  it. TRUE MEANS THE WORD LEFT THE SOCKET. */
+  sendDragon(word, cell) {
+    const w = validDragonIn(word);
+    if (!w || !this.dragonReady(cell)) return false;
+    const ws = this._mine(cell) ? this._ws : this._haloFor(cell)?.ws;
+    const gate = dragonGate(this._dragonBucket, this._now());
+    if (!gate.pass) return false;
+    try { ws.send(JSON.stringify({ t: 'dragon', ...w })); } catch { return false; }
+    this._dragonBucket = gate.bucket; this.stats.sent++;
+    return true;
+  }
+  /** DRAGON3: whether a word to `cell` would leave a socket now - my own cell's or a halo's, open, at a relay that holds a
+   *  dragon's fight. */
+  dragonReady(cell) {
+    if (typeof cell !== 'string' || !isCellRoom(cell)) return false;
+    if (this._mine(cell)) return this.dragonOk && this.status === 'open' && !!this._ws;
+    const h = this._haloFor(cell);
+    return !!h?.dragonOk && h.status === 'open' && !!h.ws;
   }
 
   /** WB12d: my word at a breach's faithful rite (net/wire.js validRiteIn) - down the socket of the CELL its circle
@@ -3693,6 +3721,8 @@ export class OnlineSession {
       if (primary) this.serpentSiteOk = relaySupportsSerpentSite(relayV);   // SERPENT2: the hub's serpent herald
       if (primary) this.serpentOk = relaySupportsSerpent(relayV);   // SERPENT1: the cell holds a serpent's fight - an older relay closes the socket on `serpent`
       else { const h = this._halo.get(room); if (h) h.serpentOk = relaySupportsSerpent(relayV); }
+      if (primary) this.dragonOk = relaySupportsDragon(relayV);   // DRAGON3: the cell holds a dragon's fight - an older relay closes the socket on `dragon`
+      else { const h = this._halo.get(room); if (h) h.dragonOk = relaySupportsDragon(relayV); }
       if (primary) this.owOk = relaySupportsOverworld(relayV);   // OW6L: the cell keeps the overworld's ledger - an older relay closes the socket on `ow` (the word goes down the primary alone)
       if (primary) this.owGraveOk = relaySupportsOwGraves(relayV);   // GRAVE-PARTY: and its graves searched - an older relay closes the socket on `gr`
       if (primary) this.owWorldOk = relaySupportsOwWorld(relayV);   // SPAWN-WORLD: and a spawn's clocks past the Bay
@@ -3909,6 +3939,10 @@ export class OnlineSession {
       // where the accounts agree it lies (`at`)
       const r = validSerpentOut(m);
       if (r && (isSocialRoom(room) ? r.k === 'fell' || r.k === 'rcpt' || r.k === 'at' : isCellRoom(room) && r.k !== 'at')) this._deliver('serpent', () => this.onSerpent?.(r, room));
+    } else if (m.t === 'dragon') {
+      // DRAGON3: a dragon's cell's word (on any cell socket I hold), or the hub's - my receipt alone, kept for me past its kill
+      const r = validDragonOut(m);
+      if (r && (isSocialRoom(room) ? r.k === 'rcpt' : isCellRoom(room))) this._deliver('dragon', () => this.onDragon?.(r, room));
     } else if (m.t === 'wdun') {
       // PVPDUNGEONS: the hub's word on the zone's halls (the day, my locks, an entry's answer, the crows) - the hub's alone
       const w = isSocialRoom(room) ? validWdunOut(m) : null;

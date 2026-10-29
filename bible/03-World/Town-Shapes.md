@@ -973,6 +973,9 @@ reach), none over another. The 55 moved:
 | Whitewark | Stable | on a gate's new road |
 | Zenirijet | Stable | on a gate's new road |
 
+Westhead Moor's shipyard and lighthouse moved again since, on purpose: WESTHEAD-NORTH
+(`01-Overview/bugs/Field-Bugs-2026-10-28.md`).
+
 The three by the gate dressing (Y1): TS7 steps a gate's boards and carriage clear of the grown towers, up to 0.8 m
 over #1184's (Knightsgate's two). On the things as #1184 laid them, all three stables are placed on #1184's cells.
 Knightsgate's keeps them. Issaqumbaa's and Syra-Kom's lie on a gate's new road on today's ground, so they are broken and

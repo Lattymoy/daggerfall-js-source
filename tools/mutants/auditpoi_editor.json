@@ -22,7 +22,7 @@
   },
   {
     "name": "AUDITPOI-E1-the-bar-never-held",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/poiEditorMount.js",
     "old": "hotbarKeysBack = holdHotbarKeys();",
     "new": "hotbarKeysBack = null;",
     "tests": ["test/scenes/auditpoi_editor.test.js"]
@@ -43,14 +43,14 @@
   },
   {
     "name": "AUDITPOI-E2-the-panel-unbound",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/poiEditorMount.js",
     "old": "for (const ty of ['keydown', 'keyup']) panel.root.addEventListener(ty, route.onPanelKey);",
     "new": "void route.onPanelKey;",
     "tests": ["test/scenes/auditpoi_editor.test.js"]
   },
   {
     "name": "AUDITPOI-E3-the-held-keys-kept",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/poiEditorMount.js",
     "old": "const worldKeysUp = () => { keys.clear(); for (const ring of Object.values(latch.edge)) ring.clear(); };",
     "new": "const worldKeysUp = () => {};",
     "tests": ["test/scenes/auditpoi_editor.test.js"]
@@ -148,21 +148,21 @@
   },
   {
     "name": "AUDITPOI-E12-a-bench-a-saddle-a-helm-let-in",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/poiEditorMount.js",
     "old": " || !isOnFoot(player.transportMode) || !!csaRuntime?.isSailing?.()) { townTalk.say(",
     "new": ") { townTalk.say(",
     "tests": ["test/scenes/auditpoi_editor.test.js"]
   },
   {
     "name": "AUDITPOI-E13-unbuilt-ground-let-through",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/poiEditorMount.js",
     "old": "if (!Number.isFinite(below)) { panel.say(",
     "new": "if (false) { panel.say(",
     "tests": ["test/scenes/auditpoi_editor.test.js"]
   },
   {
     "name": "AUDITPOI-E13-the-rock-unchecked",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/poiEditorMount.js",
     "old": "if (heldInSolid(collider, landing)) landing = openGroundNear(",
     "new": "if (false) landing = openGroundNear(",
     "tests": ["test/scenes/auditpoi_editor.test.js"]
@@ -204,7 +204,7 @@
   },
   {
     "name": "AUDITPOI-E14-a-load-uncounted",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/poiEditorMount.js",
     "old": "gone: () => _mode() !== 'exterior' || restoresSoFar() !== openedAt,",
     "new": "gone: () => _mode() !== 'exterior',",
     "tests": ["test/scenes/auditpoi_editor.test.js"]
@@ -218,7 +218,7 @@
   },
   {
     "name": "AUDITPOI-E15-a-live-poi-clicked-for-nothing",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/poiEditorMount.js",
     "old": "editor.wantsOpen = (id) => { panel.open(id).catch(",
     "new": "const unwired = (id) => { panel.open(id).catch(",
     "tests": ["test/scenes/auditpoi_editor.test.js"]
@@ -288,7 +288,7 @@
   },
   {
     "name": "AUDITPOI-E18-the-world-hands-no-rect",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/poiEditorMount.js",
     "old": "      viewport: () => renderer.worldViewportPx,   // AUDIT POI E18",
     "new": "      // AUDIT POI E18",
     "tests": ["test/scenes/auditpoi_editor.test.js"]

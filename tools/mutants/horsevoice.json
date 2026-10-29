@@ -263,8 +263,9 @@
   {
     "name": "HORSE-VOICE-the-switch-ignored",
     "file": "src/player/mountRig.js",
-    "old": "const voiced = !!soundsOn() && isRiding(player.transportMode);",
-    "new": "const voiced = isRiding(player.transportMode);",
+    "old": "const voiced = !!soundsOn() && isHorseRide(player.transportMode);",
+    "new": "const voiced = isHorseRide(player.transportMode);",
+    "note": "Re-aimed by content (DRAGON5): a horse ride's voices alone (isHorseRide).",
     "tests": [
       "test/systems/horse/horsevoice.test.js"
     ]

@@ -28,6 +28,7 @@ import { createTravelOptions, readTravelOptionsSettings, TRAVEL_OPTIONS_VENDOR }
 import { TRAVEL_OPTIONS_TEXT } from '../../../src/systems/travel/travelOptionsText.js';
 import { mapPixelWorldOrigin } from '../../../src/systems/travel/travelPaths.js';
 import { rectOf } from '../../../src/systems/travel/travelAutopilot.js';
+import { dragonFlightPlan } from '../../../src/systems/dragon/dragonJourney.js';
 import { TravelControlUI } from '../../../src/ui/travel/travelControlUI.js';
 import { planRoute, routeLegs, routeGround, joinPoint, routeDrawPoints, roadShare, crossesWater, dryLine, TV_MOUNTAIN_CLIMATE } from '../../../src/systems/travel/travelRoute.js';
 import { planJourney } from '../../../src/systems/travel/planSlices.js';   // PLAN-SLICES
@@ -199,6 +200,7 @@ function host({ firstPerson = false, roads = false, enhanced = true } = {}) {
     wildMapMask: () => null, wildInside: () => false,   // WILD1: no open zone on this map
     wagonRiders: null,   // WAGONS2: seated in no one's wagon - the Overworld's own refusal of a rider stands unasked
     rumareSeaPixel: () => false,   // PIN MOVED (RUMARE-WATER): the voyages' sea takes the Imperial City's lake (world/rumareWaters.js) - none on this map
+    dragonMounted: () => false, dragonFlightPlan,   // PIN MOVED (DRAGON6): a journey begun on the dragon is flown (systems/dragon/dragonJourney.js) - afoot here
   };
   Object.assign(h, new Function(...Object.keys(env), HOST)(...Object.values(env)));
   Object.assign(h, { to, ui, view });

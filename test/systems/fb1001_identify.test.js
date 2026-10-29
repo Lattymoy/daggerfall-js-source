@@ -69,7 +69,8 @@ function magicDefBytes(records) {
 const FEATHERWEIGHT = { name: '%it of Featherweight', type: 0, group: 0, ench: [[T.CastWhenUsed, 37]], uses: 1500, value: 550 };
 /** DFU's own magic Broadsword, as CreateRegularMagicItem mints it: the one record, group 0's second group (Weapons), the
  *  weapon table's sixth slot (the Broadsword) at a level-1 material - and UNKNOWN, as every enchanted piece is minted. */
-const magicSword = () => createRegularMagicItem(readMagicDef(magicDefBytes([FEATHERWEIGHT])), 1, 'male', seq(0, 0.2, 0.3, 0.5));
+// PIN MOVED (HAND-WRAPS): the random weapon roll draws over 20 templates now (563 joined it), so 0.27 picks the Broadsword (0.3 the Saber)
+const magicSword = () => createRegularMagicItem(readMagicDef(magicDefBytes([FEATHERWEIGHT])), 1, 'male', seq(0, 0.2, 0.27, 0.5));
 /** The loot ladder's Rare on a Broadsword: its flavour enchantment is DFU's own, so it drops unknown (lootRarity.js). */
 const rareSword = () => applyRarity(mintCondition(setItemFields({ group: 'Weapons', templateIndex: BROADSWORD, material: 3 })), 'rare', seededRng(11));
 /** A character with the pieces it holds - a purse, and the strength a lot is weighed against. */

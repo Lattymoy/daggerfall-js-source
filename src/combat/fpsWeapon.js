@@ -32,6 +32,7 @@ import { customWeaponImage } from './diverseWeapons/diverseWeaponsAssets.js';   
 import { MATERIAL_NAMES } from '../systems/item/itemInfo.js';   // MetalTypes' names, for GetNameCifRci's suffix
 import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js';   // RRI1: GetWeaponType is a virtual a custom class answers
 import { THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE } from '../characters/thunderlockIds.js';   // the port's own weapon (a leaf - see the file)
+import { isHandWraps } from '../characters/handWrapsIds.js';   // HAND-WRAPS: the fists' weapon (a leaf)
 import { THUNDERLOCK_STRIP } from './gun/thunderlockStrip.js';   // THUNDERLOCK-ART2: each gun's cycle its strip's own frame count - leaves both
 import { PISTOL_STRIP } from './gun/pistolStrip.js';
 import { applyDyeToIndex, DYE_TARGETS } from '../characters/dyes.js';
@@ -229,6 +230,7 @@ export function weaponTypeForItem(item) {
   // transformed rig binds the WERECLAWS_ITEM marker, which is not a
   // template at all
   if (item.werecreatureClaws) return T.Werecreature;
+  if (isHandWraps(item)) return T.Melee;   // HAND-WRAPS: the bare hands' art and swing, never a magic sheet (Melee has none)
   // THE PORT'S OWN WEAPON, ahead of the verbatim switch so the switch
   // stays exactly ConvertItemToAPIWeaponType. It takes the enchanted
   // promotion the classic weapons take - there is no WEAPO1xx sheet

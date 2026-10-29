@@ -203,7 +203,7 @@ export function createTwoHands({ audio = null, envHit = null, missEffect = null,
    * dx/dy on it and the rest of the weight under the view. The art changes only there, never in sight. The hand on its
    * back stroke first, the one coming forward over it. True when it drew.
    */
-  function drawRun(renderer, canvas, fistArt, { widget = null, widgetOn = false, shown = true, tint = null, offsetHeight = 0 } = {}) {
+  function drawRun(renderer, canvas, fistArt, { widget = null, widgetOn = false, shown = true, tint = null, offsetHeight = 0, glowFor = () => null } = {}) {
     const w = st.run.w;
     if (!(w > 0) || !renderer || !canvas || !fistArt) return false;
     const hands = /** @type {const} */ (['R', 'L']).filter((hand) => hand !== st.strikeHand);   // a punch on the run is drawPair's
@@ -216,7 +216,9 @@ export function createTwoHands({ audio = null, envHit = null, missEffect = null,
         const rest = restRect(hand, canvas, { widget, widgetOn, art: fistArt, shown, offsetHeight });
         if (!rest) continue;
         const mirror = mirrorOf(hand, painted('Idle'));
-        renderer.drawScreenQuad(q.tex, { ...rest, y: rest.y + (under(rest) - rest.y) * k }, mirror ? MIRROR_UV : q.uv, tint ?? undefined);
+        const rect = { ...rest, y: rest.y + (under(rest) - rest.y) * k }, uv = mirror ? MIRROR_UV : q.uv, glow = glowFor(hand);
+        renderer.drawScreenQuad(q.tex, rect, uv, tint ?? undefined);
+        if (glow) renderer.drawScreenQuadGlow?.(q.tex, rect, uv, glow, { art: [q.rec.width, q.rec.height], view: [canvas.width, canvas.height] });   // HAND-WRAPS
       }
       return true;
     }
@@ -234,10 +236,13 @@ export function createTwoHands({ audio = null, envHit = null, missEffect = null,
       const right = { x: cx - q.rect.w / 2 - p.dx * canvas.width, y: q.rect.y + p.dy * q.rect.h, w: q.rect.w, h: q.rect.h };
       const placed = handOnLeft(hand, st.leftHanded) ? mirrorRect(right, canvas.width) : right;
       const rect = { ...placed, y: placed.y + (under(placed) - placed.y) * (1 - k) };
-      drawn.push({ tex: q.tex, uv: mirrorOf(hand, painted(RUN_PUMP.ARM_STATE)) ? MIRROR_UV : q.uv, rect, s: p.s });
+      drawn.push({ tex: q.tex, uv: mirrorOf(hand, painted(RUN_PUMP.ARM_STATE)) ? MIRROR_UV : q.uv, rect, s: p.s, glow: glowFor(hand), art: [q.rec.width, q.rec.height] });
     }
     drawn.sort((a, b) => a.s - b.s);
-    for (const h of drawn) renderer.drawScreenQuad(h.tex, h.rect, h.uv, tint ?? undefined);
+    for (const h of drawn) {
+      renderer.drawScreenQuad(h.tex, h.rect, h.uv, tint ?? undefined);
+      if (h.glow) renderer.drawScreenQuadGlow?.(h.tex, h.rect, h.uv, h.glow, { art: h.art, view: [canvas.width, canvas.height] });   // HAND-WRAPS: the running fists' wraps
+    }
     return true;
   }
 

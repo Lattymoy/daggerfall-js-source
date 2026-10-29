@@ -142,6 +142,24 @@ export function judgeGate(f, bodies, now) {
 }
 
 /**
+ * DRAGON2 - THE DWARVEN DRAGON (bible/11-Multiplayer/Dwarven-Dragon.md section 6): each blow in flight, judged at its
+ * landing on its own stamps (net/eliteGates/egShape.js egInBlow) - a plain blow's share; an element's (its shock, its fire)
+ * is the client's, whose save is its own.
+ * @param {any} f @param {Array<{sub: string, x: number, z: number, dead: boolean}>} bodies the site's frame @param {number} now
+ * @returns {Array<{sub: string, share: number}>}
+ */
+export function judgeDragon(f, bodies, now) {
+  if (f.gone || f.fell) return [];
+  const out = [], live = living(f, bodies);
+  for (const a of f.blows ?? []) {
+    if (a.bj || now < a.at + BODY_AFTER_MS) continue;
+    if (a.el != null) { a.bj = true; continue; }
+    landing(a, live, Math.min(1, Math.max(0, a.p)), (x, z) => egInBlow(a, x, z), out);
+  }
+  return out;
+}
+
+/**
  * INT12 - THE ABYSS DUNGEON: the Remnant's blow in flight, each Echo's, and the Hour's own (`f.clock` - the Pulse, the
  * End): the Stomp's disc at its landing, the Hour-Hand over its sweep (a pillar's shade spares), the Gear Volley's discs,
  * the Hour's own over the whole arena (never the Steps) - and the Reset only while its Hearts stand at its landing. A

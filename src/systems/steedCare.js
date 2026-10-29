@@ -27,8 +27,10 @@
 // so every pin written before the tiers still pins it. Everything else here is the world's, in every tier.
 
 import { isHorseItem } from './horse/horseCoats.js';
+import { isDragonMount, dragonSeedOf } from './dragon/dragonMount.js';   // DRAGON5c: the tamed dragon is cared for by this law
 import { UPKEEP_ITEM } from './upkeep/upkeepItemRows.js';
 import { HORSE_CARE_HARD } from './upkeep/upkeepTiers.js';   // HORSE-TIERS: what a law handed no rules runs
+import { t } from './textManager.js';   // DRAGON5c: the oil's words in the player's language
 
 export const STEED_STATS = Object.freeze(['speed', 'stamina', 'endurance', 'strength']);
 export const STEED_STAT_TEXT = Object.freeze({ speed: 'Speed', stamina: 'Stamina', endurance: 'Endurance', strength: 'Strength' });
@@ -48,7 +50,7 @@ function mix(a, b) {
   return (h >>> 0) / 4294967296;
 }
 /** A seed the law knows (1..65535), else 0 - a horse not yet born. */
-const seedOf = (item) => (isHorseItem(item) && Number.isInteger(item.horseSeed) && item.horseSeed >= 1 && item.horseSeed <= SEED_MAX ? item.horseSeed : 0);
+const seedOf = (item) => (isHorseItem(item) ? (Number.isInteger(item.horseSeed) && item.horseSeed >= 1 && item.horseSeed <= SEED_MAX ? item.horseSeed : 0) : dragonSeedOf(item));   // DRAGON5c: a dragon's its tame's
 
 /** The four stats a horse of `seed` is born with - `{ speed, stamina, endurance, strength }` - or null for no seed. */
 export function bornStats(seed) {
@@ -144,12 +146,20 @@ function holdStarving(item, now) {
 export const OATS_TEMPLATE = UPKEEP_ITEM.Oats;
 /** Climates & Calories' Apple, and Foraging's. */
 export const APPLE_TEMPLATES = Object.freeze([532, 1608]);
-/** What a horse eats: `hours` of food, eaten with `love` (bond a day's food x love), a `treat` given by hand alone. */
+/** DRAGON5c: Dwarven Oil, the tamed dragon's (systems/upkeep/upkeepItemRows.js). */
+export const DWARVEN_OIL_TEMPLATE = UPKEEP_ITEM.DwarvenOil;
+/** What a steed eats: `hours` of food, eaten with `love` (bond a day's food x love), a `treat` given by hand alone. A horse
+ *  eats oats and apples, the tamed dragon Dwarven Oil alone (DRAGON5c: `dragon`). */
 export const STEED_FOODS = Object.freeze({
+  [DWARVEN_OIL_TEMPLATE]: Object.freeze({ key: 'oil', get name() { return t('dragon.care.oilName', 'a flask of Dwarven Oil'); }, hours: 24, love: 1, treat: false, dragon: true }),
   [OATS_TEMPLATE]: Object.freeze({ key: 'oats', name: 'oats', hours: 24, love: 1, treat: false }),
   [APPLE_TEMPLATES[0]]: Object.freeze({ key: 'apple', name: 'an apple', hours: 4, love: 1.5, treat: true }),
   [APPLE_TEMPLATES[1]]: Object.freeze({ key: 'apple', name: 'an apple', hours: 4, love: 1.5, treat: true }),
 });
+/** Whether `steed` eats food `f`: a dragon its oil alone, a horse never the oil. */
+export const eatsFood = (steed, f) => !!f && (isDragonMount(steed) ? f.dragon === true : f.dragon !== true);
+/** Whether an item is cared for by this law: a horse, or the tamed dragon. */
+export const isSteedItem = (item) => isHorseItem(item) || isDragonMount(item);
 /** The food a horse eats this item as, or null. A quest's piece is never fed. */
 export const steedFoodOf = (item) => (item && !item.questItem && Object.hasOwn(STEED_FOODS, item.templateIndex) ? STEED_FOODS[item.templateIndex] : null);
 /** The first of `kind` ('oats' or 'apple') a pack holds, or null. */
@@ -168,7 +178,7 @@ export const STEED_TEXT = Object.freeze({
   notHere: 'Your horse is not here to feed.',
   stabled: 'Your horse is at the stable, where it is fed.',
   full: (who) => `${who} is not hungry.`,
-  noFood: (kind) => (kind === 'apple' ? 'You have no apples.' : 'You have no oats. A Stable sells them.'),
+  noFood: (kind) => (kind === 'apple' ? 'You have no apples.' : kind === 'oil' ? t('dragon.care.noOil', 'You have no Dwarven Oil. A Stable sells it.') : 'You have no oats. A Stable sells them.'),
   ate: (who, food, tier, grew) => `${who} eats ${food}${grew ? `. Your bond grows (${tier}).` : '.'}`,
   winded: 'Your horse is winded.',
   starving: 'Your horse is too weak to gallop. Feed it.',
@@ -182,11 +192,12 @@ export const STEED_TEXT = Object.freeze({
  * at most), and its bond grown by a day's bond a day's food times the food's love. A horse full (FULL_AHEAD) refuses.
  * In place: the horse and the pack keep their identity. Answers `{ ok, text, gained }` (gained in tenths). `from` the list
  * the food is taken out of (the pack, or the wagon's load - an inventory's Use), `food` the very piece (else the first).
- * @param {any[]} items @param {any} horse @param {'oats'|'apple'} kind @param {number} now @param {string} [who]
+ * @param {any[]} items @param {any} horse @param {'oats'|'apple'|'oil'} kind @param {number} now @param {string} [who]
  * @param {{ from?: any[], food?: any, rules?: any }} [o]
  */
 export function feedHorse(items, horse, kind, now, who = 'Your horse', { from = items, food = null, rules = HORSE_CARE_HARD } = {}) {
-  if (!isHorseItem(horse) || !Array.isArray(items) || !items.includes(horse)) return { ok: false, text: STEED_TEXT.noHorse, gained: 0 };
+  if (!isSteedItem(horse) || !Array.isArray(items) || !items.includes(horse)) return { ok: false, text: STEED_TEXT.noHorse, gained: 0 };   // DRAGON5c: or the dragon
+  if (!eatsFood(horse, Object.values(STEED_FOODS).find((f) => f.key === kind))) return { ok: false, text: STEED_TEXT.noFood(kind), gained: 0 };
   const piece = food && steedFoodOf(food)?.key === kind && Array.isArray(from) && from.includes(food) ? food : steedFoodIn(from, kind);
   if (!piece) return { ok: false, text: STEED_TEXT.noFood(kind), gained: 0 };
   return eat(from, horse, piece, now, rules, who);
@@ -229,32 +240,42 @@ export function tendHorses(items, now, { since = null, where = 'with', stores = 
   let changed = false, ate = 0;
   if (!Array.isArray(items) || !Number.isFinite(now)) return { changed, ate };
   for (const horse of items.filter(isHorseItem)) {
-    if (fedUntil(horse) == null) { horse.horseFed = Math.max(1, Math.round(now + NEW_HORSE_FED)); changed = true; continue; }
-    // AUDIT STEED1 (2026-10-11): a horse grazing or in the stable never starved across the span the keep last ran
-    // before (`since` - an inn's rest, a dungeon: no frame ticks indoors) - only a fade owed BEFORE it is taken; with no
-    // span known, all of it to now
-    const owedTo = since != null && since < now ? since : now;
-    if (where === 'stabled') {
-      if (/** @type {number} */ (fedUntil(horse)) < now + STABLE_TOP_UNDER) { setFed(horse, now + STABLE_FED, owedTo, rules.bondFades); changed = true; }
-      continue;
-    }
-    if (where === 'waiting') {
-      if (now - /** @type {number} */ (fedUntil(horse)) > GRAZED_BACK) { setFed(horse, now - GRAZED_BACK, owedTo, rules.bondFades); changed = true; }
-      continue;
-    }
-    if (since != null && now - since >= SKIP_MINUTES) {
-      // the skipped span: each time its food ran out inside it, a sack from the packs - eaten THEN (the fade to then taken)
-      for (let f = /** @type {number} */ (fedUntil(horse)); f < now; f = /** @type {number} */ (fedUntil(horse))) {
-        const from = steedFoodIn(items, 'oats') ? items : Array.isArray(stores) && steedFoodIn(stores, 'oats') ? stores : null;
-        if (!from) break;
-        const at = Math.max(f, since);
-        const r = eat(from, horse, steedFoodIn(from, 'oats'), at, rules);
-        if (!r.ok) break;
-        ate++; changed = true;
-      }
-    }
-    if (!rules.bondFades && holdStarving(horse, now)) changed = true;   // HORSE-TIERS: Boons owes no fade, then or later
+    const r = tendSteed(horse, items, now, { since, where, stores, rules });
+    changed = changed || r.changed; ate += r.ate;
   }
+  return { changed, ate };
+}
+/** One steed's keep - tendHorses' body, a horse on its oats. DRAGON5c: and the tamed dragon on its oil, wherever its keep
+ *  stands (`items` the pack its oil is eaten from, then `stores`). Answers `{ changed, ate }`. */
+export function tendSteed(horse, items, now, { since = null, where = 'with', stores = [], rules = HORSE_CARE_HARD } = {}) {
+  let changed = false, ate = 0;
+  if (!Number.isFinite(now)) return { changed, ate };
+  const kind = isDragonMount(horse) ? 'oil' : 'oats';
+  if (fedUntil(horse) == null) { horse.horseFed = Math.max(1, Math.round(now + NEW_HORSE_FED)); return { changed: true, ate }; }
+  // AUDIT STEED1 (2026-10-11): a horse grazing or in the stable never starved across the span the keep last ran
+  // before (`since` - an inn's rest, a dungeon: no frame ticks indoors) - only a fade owed BEFORE it is taken; with no
+  // span known, all of it to now
+  const owedTo = since != null && since < now ? since : now;
+  if (where === 'stabled') {
+    if (/** @type {number} */ (fedUntil(horse)) < now + STABLE_TOP_UNDER) { setFed(horse, now + STABLE_FED, owedTo, rules.bondFades); changed = true; }
+    return { changed, ate };
+  }
+  if (where === 'waiting') {
+    if (now - /** @type {number} */ (fedUntil(horse)) > GRAZED_BACK) { setFed(horse, now - GRAZED_BACK, owedTo, rules.bondFades); changed = true; }
+    return { changed, ate };
+  }
+  if (since != null && now - since >= SKIP_MINUTES) {
+    // the skipped span: each time its food ran out inside it, a sack from the packs - eaten THEN (the fade to then taken)
+    for (let f = /** @type {number} */ (fedUntil(horse)); f < now; f = /** @type {number} */ (fedUntil(horse))) {
+      const from = Array.isArray(items) && steedFoodIn(items, kind) ? items : Array.isArray(stores) && steedFoodIn(stores, kind) ? stores : null;
+      if (!from) break;
+      const at = Math.max(f, since);
+      const r = eat(from, horse, steedFoodIn(from, kind), at, rules);
+      if (!r.ok) break;
+      ate++; changed = true;
+    }
+  }
+  if (!rules.bondFades && holdStarving(horse, now)) changed = true;   // HORSE-TIERS: Boons owes no fade, then or later
   return { changed, ate };
 }
 
