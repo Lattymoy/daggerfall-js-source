@@ -12,8 +12,8 @@
   {
     "name": "SCALE4d-mint-on-binding",
     "file": "server-account/src/index.js",
-    "old": "    const db = routeDb(env.DB, path, request.method, d1BookmarkOf(request));",
-    "new": "    const db = path === '/v1/auth/token' ? env.DB : routeDb(env.DB, path, request.method, d1BookmarkOf(request));",
+    "old": ": routeDb(env.DB, path, request.method, d1BookmarkOf(request));",
+    "new": ": path === '/v1/auth/token' ? env.DB : routeDb(env.DB, path, request.method, d1BookmarkOf(request));",
     "tests": [
       "test/server/scale4d.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "SCALE4d-every-route-on-session",
     "file": "server-account/src/index.js",
-    "old": "    const db = routeDb(env.DB, path, request.method, d1BookmarkOf(request));",
-    "new": "    const db = routeDb(env.DB, '/v1/heartbeat', 'POST', d1BookmarkOf(request));",
+    "old": ": routeDb(env.DB, path, request.method, d1BookmarkOf(request));",
+    "new": ": routeDb(env.DB, '/v1/heartbeat', 'POST', d1BookmarkOf(request));",
     "tests": [
       "test/server/scale4d.test.js"
     ],
