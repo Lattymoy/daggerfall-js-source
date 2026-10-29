@@ -68,7 +68,7 @@ export const isBulletinBoard = (modelID) => modelID === BULLETIN_BOARD_MODEL_ID;
 /**
  * RMBLayout.GetModelScaleVector (:74-77): a model record's scale, a zero
  * (absent - every classic record) read as 1. Only a world-data JSON
- * record carries one (WD1: Detailed Ships, Warm Ashes - Ships).
+ * record carries one (WD1: Warm Ashes - Ships' small raid; WD3: the town packs).
  * @returns {[number, number, number]}
  */
 export function modelScaleVector(obj) {

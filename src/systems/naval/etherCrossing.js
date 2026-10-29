@@ -141,14 +141,15 @@ const bayAt = (at) => !at || inBay(at.px ?? at.x, at.py ?? at.y);
 export function crossingRows(way, { days = CROSS_DAYS, pvp = false } = {}, at = null) {
   const time = `${days} ${days === 1 ? 'day' : 'days'}`;
   return way === 'out'
-    ? [`The ${bayAt(at) ? 'Abecean' : 'open sea'} runs empty to every horizon, and the stars`, 'hang strangely low over the water. Sailors say that past', `here the sea is no longer the sea, but the ${ETHER_WORD}.`, '', `Set a course into the open sea? (${time}. Your ship,`, 'its crew and hold go with you.)',
+    ? [`The ${bayAt(at) ? 'Abecean' : t('sea.cross.openSea', 'open sea')} runs empty to every horizon, and the stars`, 'hang strangely low over the water. Sailors say that past', `here the sea is no longer the sea, but the ${ETHER_WORD}.`, '', `Set a course into the open sea? (${time}. Your ship,`, 'its crew and hold go with you.)',
       ...(pvp ? ['', ...questionRows(t('sea.wild.crossWarn', 'Past Veilhaven\'s peace the open sea is an open PvP zone. Other players may attack you there.'))] : [])]
-    : ['Ahead the Veil thins, and through it, faint as a memory,', bayAt(at) ? 'lie the gray waters of the Iliac Bay.' : 'lie the gray waters you set out from.', '', `Set a course for home? (${time})`];
+    : ['Ahead the Veil thins, and through it, faint as a memory,', bayAt(at) ? 'lie the gray waters of the Iliac Bay.' : t('sea.cross.homeRow', 'lie the gray waters you set out from.'), '', `Set a course for home? (${time})`];
 }
 /** What the screen says at the landfall (`at`, SEA F9's: where she comes out). */
 export const crossingWords = (way, at = null) => (way === 'out'
   ? `Three days out of sight of land, and then the stars came down to meet the sea. You have crossed into ${ETHER_SEA_NAME}. Veilhaven lies ahead.`
-  : `The Veil closes astern, and the air smells of salt and tar again. ${bayAt(at) ? 'The Iliac Bay, and home.' : 'You are back in the waters you set out from.'}`);
+  : bayAt(at) ? 'The Veil closes astern, and the air smells of salt and tar again. The Iliac Bay, and home.'
+    : t('sea.cross.landfall', 'The Veil closes astern, and the air smells of salt and tar again. You are back in the waters you set out from.'));
 /** Why a crossing is not asked (said once in those waters; AUDIT CAPTAIN'S SEA X1: asked as soon as the deck is clear,
  *  as the words promise - the refusal once marked the way asked, and the question never came back in those waters). */
 export const CROSS_REFUSED = Object.freeze({

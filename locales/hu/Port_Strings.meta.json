@@ -3859,16 +3859,6 @@
   "tr": "a356a737eb2e",
   "by": "claude-in-session"
  },
- "credits.aquaticSprites.terms": {
-  "en": "25f24874f144",
-  "tr": "97eaf4860c66",
-  "by": "claude-in-session"
- },
- "credits.aquaticSprites.what": {
-  "en": "ece4a3a65979",
-  "tr": "f8a5c89efbbf",
-  "by": "claude-in-session"
- },
  "credits.author.andContributors": {
   "en": "5aeb443464d2",
   "tr": "ba3ba841106d",
@@ -3977,16 +3967,6 @@
  "credits.daggerfall.what": {
   "en": "76f60d40344d",
   "tr": "83d60f4ad3ad",
-  "by": "claude-in-session"
- },
- "credits.detailedShips.terms": {
-  "en": "d5fb971400e5",
-  "tr": "4b6354e45a86",
-  "by": "claude-in-session"
- },
- "credits.detailedShips.what": {
-  "en": "612b38bc06a8",
-  "tr": "cec468242a91",
   "by": "claude-in-session"
  },
  "credits.dfu.what": {
@@ -6007,6 +5987,16 @@
  "holdings.wagon.boons.sound": {
   "en": "71476c661351",
   "tr": "9d6f97a0454d",
+  "by": "claude-in-session"
+ },
+ "interior.setDown.buried": {
+  "en": "8159ee0fda03",
+  "tr": "8d7a8d34f860",
+  "by": "claude-in-session"
+ },
+ "interior.setDown.chest": {
+  "en": "1f204d2ccfb2",
+  "tr": "50d928fad2a0",
   "by": "claude-in-session"
  },
  "inventory.cape.label": {
@@ -8185,8 +8175,8 @@
   "by": "claude-in-session"
  },
  "menu.online.groundNote": {
-  "en": "4cbea68e150c",
-  "tr": "320926f9f64d",
+  "en": "3e3556cb0512",
+  "tr": "4dd5fb805d37",
   "by": "claude-in-session"
  },
  "menu.online.lockNote": {
@@ -8210,8 +8200,8 @@
   "by": "claude-in-session"
  },
  "menu.online.modsNote": {
-  "en": "1195346cb9a8",
-  "tr": "c192184cecf7",
+  "en": "c94c6f3265c3",
+  "tr": "6dce7f7823f4",
   "by": "claude-in-session"
  },
  "menu.online.needsAccount": {
@@ -9584,11 +9574,6 @@
   "tr": "489d1b5905ae",
   "by": "claude-in-session"
  },
- "mods.aquaticSprites.Enabled.description": {
-  "en": "4d8dc0bd3968",
-  "tr": "9beb89bb46aa",
-  "by": "claude-in-session"
- },
  "mods.betterAmbience.BetterFootsteps.armorVolume.description": {
   "en": "ea78623b8aa0",
   "tr": "f5b0316b9bf5",
@@ -9952,11 +9937,6 @@
  "mods.comeSailAway.unread.description": {
   "en": "d94d1768b9d1",
   "tr": "9dd12d976860",
-  "by": "claude-in-session"
- },
- "mods.detailedShips.Enabled.description": {
-  "en": "a76a3c98fb54",
-  "tr": "afacc21ccfac",
   "by": "claude-in-session"
  },
  "mods.diverseWeapons.Enabled.description": {
@@ -14132,6 +14112,21 @@
  "sea.crew.title": {
   "en": "de463ba892c2",
   "tr": "6fbbdebba0da",
+  "by": "claude-in-session"
+ },
+ "sea.cross.homeRow": {
+  "en": "d138c9ff8a76",
+  "tr": "467605402a76",
+  "by": "claude-in-session"
+ },
+ "sea.cross.landfall": {
+  "en": "d0992f50ef01",
+  "tr": "c2a0063b274a",
+  "by": "claude-in-session"
+ },
+ "sea.cross.openSea": {
+  "en": "a08cbe63d371",
+  "tr": "8cf99ecf2be7",
   "by": "claude-in-session"
  },
  "sea.exchange.band": {

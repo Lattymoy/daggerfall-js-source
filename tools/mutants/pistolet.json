@@ -413,7 +413,7 @@
   {
     "name": "WR-pair-wears-the-held-glow",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "const elementGlow = hand ? glowOf(playerWeapon.handItem(hand)) : heldGlowNow();",
+    "old": "const elementGlow = hand ? handGlowOf(hand) : heldGlowNow();",
     "new": "const elementGlow = heldGlowNow();",
     "tests": [
       "test/combat/weapon/pistoletRig.test.js"

@@ -31,7 +31,7 @@ keeping as close to the original art as possible". That is Port-Doctrine's
 own case (A RENDER OF GAME DATA IS GAME DATA; `test/tooling/doctrine.test.js` holds
 `public/` to it). An author's permission cannot answer it alone, because the
 art underneath is not the author's to give. Nor can the port BUILD the
-pictures, the way DS1 and LPT1 rebuilt their borrowed pictures from the
+pictures, the way LPT1 rebuilt its borrowed pictures from the
 player's own records (`formats/derivedTexture.js`): a spec paints a copy, a
 crop or an edit laid on a record, and a repaint is none of those.
 

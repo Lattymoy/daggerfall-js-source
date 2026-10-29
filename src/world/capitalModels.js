@@ -12,6 +12,7 @@ import { registerCustomModel, customModelFor, registerCustomModelFamily } from '
 import { MeshBuilder } from './detStandIns.js';
 import { registerPortBlock, registerPortBlockOf, installWorldDataReplacement, registerPortBlockFamily } from '../formats/worldData/worldDataReplacement.js';
 import { CASTLE_BLOCKS, castleBlockOf } from './capitalCastles.js';   // WW7-4
+import { capitalGateThings } from './capitalCarriages.js';   // CAPITAL-CARRIAGES: Immersive Travel's carriages at the capitals' gates
 import { addVendorTextures } from '../systems/textureReplacement.js';
 import { CAPITALS, CAPITAL_MODELS, capitalPortBlocks, BLOCK_M, portBlockJson, miscModelAt, startMarkerAt, inCapitalRim, CAPITAL_NO_GROUND } from './tamrielCapitals.js';
 import { IMPERIAL_PARTS, IMPERIAL_MODELS, IMPERIAL_SLICE_PARTS, IMPERIAL_SPAN, IMPERIAL_LOD_PARTS, imperialSliceRect } from './imperialCity.js';   // TS5: the Imperial City's landmarks carried in parts
@@ -391,7 +392,7 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
   _installed = true;
   installWorldDataReplacement();
   // AUDIT-TESA A6-2: each block built when first read, its capital's footprint with it - the models it stands under
-  for (const b of capitalPortBlocks({ footprint: (cap) => capitalFootprint(cap) })) registerPortBlock(b.name, b.make ?? (() => b.json), b.index);   // AUDIT TESA II C8: built from `make`, no JSON kept beside its block
+  for (const b of capitalPortBlocks({ footprint: (cap) => capitalFootprint(cap), gateThings: capitalCarriagesOf })) registerPortBlock(b.name, b.make ?? (() => b.json), b.index);   // AUDIT TESA II C8: built from `make`, no JSON kept beside its block
   // WW7-4: every capital's castle's halls, a Bay palace block's copy each, its court stood down (world/capitalCastles.js)
   for (const c of CASTLE_BLOCKS) registerPortBlockOf(c.name, (blocksFile) => castleBlockOf(blocksFile?.getBlockByName(c.from), c), c.index);
   const builds = {
@@ -447,6 +448,18 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
   const pictureOf = (record) => (made ??= capitalArt()).get(record) ?? null;
   addTextures(Object.values(CAPITAL_ART).map((record) => ({ archive: CAPITAL_ARCHIVE, record, frame: 0, standIn: true, fileName: `capital-${CAPITAL_ARCHIVE}_${record}`, build: async () => pictureOf(record), cutout: isCapitalCut(record) })));   // CAPITAL-TREES: a tree's flats cut by their alpha (systems/textureReplacement.js vendorCutout)
   return true;
+}
+/** CAPITAL-CARRIAGES: a capital's carriages at its gates (world/capitalCarriages.js), stood clear of its models - the
+ *  Imperial City's of its gate's slice's (imperialSliceFootprint: its whole would build all of its parts), the rest's of
+ *  their own footprint, the one their blocks already read (`footprint`). */
+export function capitalCarriagesOf(cap, footprint) {
+  return capitalGateThings(cap, { footprintOf: carriageFootprintOf(cap, footprint) });
+}
+/** CAPITAL-CARRIAGES: the footprint a capital's gate things stand clear of near a point (anchor metres) - the Imperial
+ *  City's slice's there, the rest's whole one. */
+export function carriageFootprintOf(cap, footprint) {
+  const B = BLOCK_M, sliceAt = (x, z) => Math.floor((z / B + cap.anchor[1]) / 8) * IMPERIAL_SPAN + Math.floor((x / B + cap.anchor[0]) / 8);
+  return cap.family ? (x, z) => imperialSliceFootprint(sliceAt(x, z)) : () => footprint();
 }
 /** Test seam. */
 export function _resetCapitals() { _installed = false; _footprints.clear(); }

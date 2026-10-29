@@ -185,39 +185,6 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // AS1 (2026-09-25): AQUATIC SPRITES 1.0 (Cliffworms). No modsettings of
-  // its own - three world-data blocks, so one switch: the port's Enabled,
-  // the gate DFU's mod list is (a mod that is off is a mod DFU never
-  // loaded; scenes/modWorldData.js reads it at the door).
-  'aquatic-sprites': Object.freeze({
-    title: 'Aquatic Sprites',
-    author: 'Cliffworms',
-    keys: Object.freeze({
-      Enabled: Object.freeze({
-        default: true,
-        get description() {
-          return t('mods.aquaticSprites.Enabled.description', 'Seaweed, coral and shells in 3 flooded dungeon areas. The original game has these sprites but '
-            + 'never uses them.');
-        },
-      }),
-    }),
-  }),
-  // DS1 (2026-09-25): DETAILED SHIPS 1.0.0 (Cliffworms). No modsettings of
-  // its own - two building records and thirteen pictures - so one switch.
-  'detailed-ships': Object.freeze({
-    title: 'Detailed Ships',
-    author: 'Cliffworms',
-    keys: Object.freeze({
-      Enabled: Object.freeze({
-        default: true,
-        get description() {
-          return t('mods.detailedShips.Enabled.description', 'Your ship, rebuilt inside and out. Outside: rigging, crates and barrels, a small boat, a rudder and '
-            + 'railings. Below deck: quarters for you and the crew, a kitchen, a cargo hold, an armory, a shrine to '
-            + 'Kynareth, and sailors to talk to.');
-        },
-      }),
-    }),
-  }),
   // WD3 (2026-10-01): BEAUTIFUL VILLAGES OF DAGGERFALL 1.4.2 and BEAUTIFUL
   // CITIES OF DAGGERFALL 0.5.0 (carademono). No modsettings of their own -
   // 7,317 and 410 places laid out again, their blocks with them - so one
@@ -1722,6 +1689,12 @@ export const RETIRED_KEYS = Object.freeze([
 ]);
 function migrate(m) {
   let changed = false;
+  // a mod the port no longer carries keeps no settings: its stored entry is let go, once
+  for (const vendor of Object.keys(m ?? {})) {
+    if (Object.hasOwn(MOD_SETTINGS, vendor)) continue;
+    delete m[vendor];
+    changed = true;
+  }
   for (const { vendor, key } of RETIRED_KEYS) {
     const held = m?.[vendor];
     if (!held || !Object.hasOwn(held, key)) continue;

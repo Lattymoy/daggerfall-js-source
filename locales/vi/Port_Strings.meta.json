@@ -1749,6 +1749,16 @@
   "tr": "0c7c43e1809a",
   "by": "claude-in-session"
  },
+ "interior.setDown.buried": {
+  "en": "8159ee0fda03",
+  "tr": "134422c27dcc",
+  "by": "claude-in-session"
+ },
+ "interior.setDown.chest": {
+  "en": "1f204d2ccfb2",
+  "tr": "a018bb85308d",
+  "by": "claude-in-session"
+ },
  "inventory.cape.label": {
   "en": "cb4796c29622",
   "tr": "bceeaae472e8",
@@ -4567,6 +4577,21 @@
  "sea.crew.title": {
   "en": "de463ba892c2",
   "tr": "0cc51a7475d8",
+  "by": "claude-in-session"
+ },
+ "sea.cross.homeRow": {
+  "en": "d138c9ff8a76",
+  "tr": "9bc5c29d50f4",
+  "by": "claude-in-session"
+ },
+ "sea.cross.landfall": {
+  "en": "d0992f50ef01",
+  "tr": "70c4aeac6337",
+  "by": "claude-in-session"
+ },
+ "sea.cross.openSea": {
+  "en": "a08cbe63d371",
+  "tr": "9dff330c4210",
   "by": "claude-in-session"
  },
  "sea.exchange.band": {

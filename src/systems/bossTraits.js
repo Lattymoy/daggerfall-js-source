@@ -41,6 +41,7 @@ import { weaponSkillUsed } from '../characters/weapons.js';
 import { SKILLS } from './skills.js';
 import { eliteHash, eliteRng } from './eliteFoes.js';   // the seeded draw every client draws alike (a leaf of this one: it imports nothing of here)
 import { setTraitTitleFormat } from './foeTitle.js';   // AUDIT WORLD-EVENTS L5-12: the title's word composed in the player's language (a leaf)
+import { isHandWraps } from '../characters/handWrapsIds.js';   // HAND-WRAPS
 
 /** Every trait, in the mask's bit order (append only: the mask is on the wire). */
 export const BOSS_TRAITS = Object.freeze(['warded', 'flameproof', 'frostproof', 'venomproof', 'stormproof', 'spellproof', 'bladeturning', 'stoneskin', 'curbing', 'wrathful', 'thorned']);
@@ -156,9 +157,9 @@ export function bossWardShare(entity, nowS = _clockS) {
 }
 
 /** Is a blow a blunt one - a blunt weapon, or none (a fist, a claw)? An arrow is no blunt blow. */
-const bluntBlow = (kind, weapon) => kind === 'melee' && (!weapon || weaponSkillUsed(weapon.templateIndex) === SKILLS.BluntWeapon);
+const bluntBlow = (kind, weapon) => kind === 'melee' && (!weapon || isHandWraps(weapon) || weaponSkillUsed(weapon.templateIndex) === SKILLS.BluntWeapon);   // HAND-WRAPS (AUDIT B3): a fist in wraps is a fist
 /** Is a blow a blade's (any weapon but a blunt one) or an arrow's? */
-const bladeBlow = (kind, weapon) => kind === 'arrow' || (kind === 'melee' && !!weapon && weaponSkillUsed(weapon.templateIndex) !== SKILLS.BluntWeapon);
+const bladeBlow = (kind, weapon) => kind === 'arrow' || (kind === 'melee' && !!weapon && !isHandWraps(weapon) && weaponSkillUsed(weapon.templateIndex) !== SKILLS.BluntWeapon);
 
 /**
  * THE STRIKER'S HALF: a blow of `damage` on a foe with traits, as the striker's machine lands it - its resistances

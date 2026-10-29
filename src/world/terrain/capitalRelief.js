@@ -40,6 +40,16 @@ const smooth = (t) => { const k = t < 0 ? 0 : t > 1 ? 1 : t; return k * k * (3 -
 /** A vertex's place in a relief's anchor metres: x east from its pixel's west edge, z south from its north edge (y 0 the
  *  pixel's south edge). */
 export const reliefVertexAt = (r, x, y) => [r.x0 + (x * r.side) / T, r.z0 + ((T - y) * r.side) / T];
+/** AUDIT CAPITAL-CARRIAGES L4: the relief AS DRAWN at a point (anchor metres; metres over the sea) - its vertices' heights
+ *  across the quad's two triangles, as terrainSurface.js surfaceHeightAt splits them. Between vertices the relief's own
+ *  law and the drawn ground differ: a carriage stood level on the law sat 0.6 m into its bank. The outer band aside. */
+export function reliefDrawnAt(r, x, z) {
+  const q = r.side / T, lx = (x - r.x0) / q, lz = (r.z0 + r.side - z) / q;
+  const qx = Math.max(0, Math.min(T - 1, Math.floor(lx))), qz = Math.max(0, Math.min(T - 1, Math.floor(lz))), ax = lx - qx, az = lz - qz;
+  const h = (i, j) => r.height(...reliefVertexAt(r, i, j));
+  const h00 = h(qx, qz), h10 = h(qx + 1, qz), h01 = h(qx, qz + 1), h11 = h(qx + 1, qz + 1);
+  return az >= ax ? h00 + az * (h01 - h00) + ax * (h11 - h01) : h00 + ax * (h10 - h00) + az * (h11 - h10);
+}
 
 /**
  * THE GROUND OF A CAPITAL ON ITS RELIEF, after its flatten (every sample of its rect at its streets' level, its rim

@@ -114,7 +114,8 @@ test('APPEARANCES THE ARMS: the Morrowind rig - the player\'s, the pack\'s figur
 test('APPEARANCES THE SHEET, THE CLONE AND THE HELM: the classic first-person sheet is loaded for the look the held weapon wears, its glow and its type the weapon\'s own; the Weapon Widget\'s clone is handed the look (one copy - it compares its weapon by identity); the head\'s key reads the helm drawn (mutants: the sheet\'s piece; the clone\'s piece; the helm\'s piece)', () => {
   const rig = strip(read('src/combat/weapon/weaponRig.js'));
   assert.match(rig, /function artFor\(held\) \{\s*const plain = !!glowOf\(held\);\s*const type = heldType\(held\);\s*if \(type === WEAPON_TYPES\.None\) return null;\s*const item = drawnPiece\(held\);/);
-  assert.match(rig, /art: c \? artFor\(item\) : null, weapon: drawnPiece\(item\),\s*weaponType: heldType\(item\), material: drawnPiece\(item\)\?\.material \?\? -1, glow: glowOf\(item\),/);
+  // PIN MOVED (HAND-WRAPS, AUDIT C2): a bare fist's clone its wraps' outline
+  assert.match(rig, /art: c \? artFor\(item\) : null, weapon: drawnPiece\(item\),\s*weaponType: heldType\(item\), material: drawnPiece\(item\)\?\.material \?\? -1, glow: item \? glowOf\(item\) : handGlowOf\(hand\),/);
   assert.match(strip(read('src/characters/headPortraits.js')), /const helm = drawnPiece\(entity\?\.equip \? equipTableOf\(entity\)\?\.\[EQUIP_SLOTS\.Head\] \?\? null : null\);/);
   const sword = createWeapon(WEAPONS.Longsword, 1);
   sword.appearance = { t: WEAPONS.Katana, m: 7, v: 0 };

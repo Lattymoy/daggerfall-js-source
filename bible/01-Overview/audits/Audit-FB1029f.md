@@ -25,7 +25,7 @@ line) is main's own AUDIT FB1029e F3, the page taking `no-lineage` as removed. F
 removal) is main's choice, said on the card: "no heir of it can carry it on". **F3** held: a write whose read saw the
 line and whose UPDATE lost it to a remove got `staleLine`'s null, and the route threw a 500. It answers `no-lineage`
 now, F2's answer to a copy made from a gone line, and a founding founds (`server-account/src/legacy.js` putLineage,
-acct224). Pinned by racing the remove into the UPDATE (`test/server/family_remove.test.js`); mutants
+acct225). Pinned by racing the remove into the UPDATE (`test/server/family_remove.test.js`); mutants
 `tools/mutants/audit_fb1029f_family.json`.
 
 ## PANEL - the town panel

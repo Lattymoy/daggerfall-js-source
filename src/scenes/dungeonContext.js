@@ -27,6 +27,7 @@ import { isArenaUndercroft } from '../world/arena/arenaCity.js';   // ARENA-FIX 
 import { undercroftPopulation, chainTag, deepFoesOf, undercroftHallNear } from '../world/arena/arenaUndercroft.js';   // ARENA2: the arena floor's instance - what the sand will not allow
 import { ARENA_TEXT } from '../systems/arena/arenaText.js';   // WB3b: the Burning Court - what the Deadlands will not allow
 import { dungeonFirePlan, colliderFireProbe, inFireWard, DUNGEON_FIRE_FLAT, fireLayoutInputs, isPalaceLayout } from '../world/dungeon/dungeonFires.js';   // REST3: the dungeon's own campfires
+import { standDungeonFlora } from '../world/dungeon/dungeonFlora.js';   // the seabed under a flooded block's water
 import { withFireMarks } from '../ui/nodeMarks.js';   // REST3: the campfires on the compass
 import { expandMacros } from '../systems/talk/talkSession.js';   // MACRO1: the global symbols every TEXT.RSC box passes through (MacroHelper)
 import { executeConsoleCommand } from '../systems/consoleCommands.js';   // E3: the probe door runs the real database
@@ -1110,6 +1111,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     dungeonHearths.push(...kept);
     dungeonFires.length = 0;
   }
+  await standDungeonFlora({ blocks: dungeon.blocks, collider, getTexture, flatGroups, positionsOf: (id) => cpuModels.get(id)?.positions ?? null, seed: dfLocation?.dungeon?.recordElement?.header?.locationId ?? 0 });   // SEABED: every flooded block's seabed, batched with the layout's flats (world/dungeon/dungeonFlora.js)
 
   // Enemies (C3): the classic selection over this dungeon's markers -
   // fixed (record 16) + random (record 15, LocationId-seeded tables).
