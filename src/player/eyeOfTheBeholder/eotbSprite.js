@@ -181,9 +181,12 @@ export function spriteFor(table, orientation, frame, look = {}, { flip = false }
 export const lookedPixels = (s, image, riders = null) => (s?.horse ? recolorHorse(image, s.horse, { spare: riderSpareOf(riders, s.key, image.width, image.height), view: s.view }) : image);
 
 /** AUDIT-STOREFRONT: THE MOUNTED PICTURES' RIDERS (eotbRiderMasks.js, baked by tools/bakeEotbRiders.mjs from the five
- *  sets), loaded once, on the first dye of a mounted picture - never at boot. */
-let _riders = /** @type {Promise<Readonly<Record<string, string>>>|null} */ (null);
-export const ridersReady = () => (_riders ??= import('./eotbRiderMasks.js').then((m) => m.RIDER_MASKS));
+ *  sets), loaded once, on the first dye of a mounted picture - never at boot. `load` the import (a test hands its own). */
+let _riders = /** @type {Promise<Readonly<Record<string, string>>|null>|null} */ (null);
+const loadRiders = () => import('./eotbRiderMasks.js');
+// AUDIT-STOREFRONT II (lane C 3): a load that fails answers none - that picture dyed with no rider spared, as before the
+// masks - and is forgotten, so the next mounted picture asks again. Kept, it failed every mounted sprite for the session.
+export const ridersReady = (load = loadRiders) => (_riders ??= load().then((m) => m.RIDER_MASKS, () => { _riders = null; return null; }));
 /** A picture's rider as the dye's `spare`, on the world's rows (bottom first): 1 a pixel of his. None for a picture the
  *  masks do not hold, or hold at another size (art replaced since the bake). */
 export function riderSpareOf(riders, key, width, height) {

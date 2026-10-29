@@ -458,6 +458,9 @@ const _px = { t: 0, up: 0, ur: 0, edge: EDGE_MAX, leg: 0, hem: 0, far: 0, heart:
 export function dyeHorseHairRows(src, out, width, mount, r0, r1) {
   const look = HORSE_MOUNTS[mount], p = _px;
   p.flat = true; p.leg = 0; p.hem = 0; p.far = 6; p.heart = Infinity; p.edge = 2; p.legs = false; p.up = 1; p.ur = 0; p.face = 0;   // a strand's middle
+  // AUDIT-STOREFRONT II (lane C 4): seed 0 - one picture for every horse in the look (world/horseRig.js keeps it by look),
+  // never the flicker of whichever horse the shared record was last dyed for
+  p.seed = 0;
   for (let o = r0 * width * 4, end = r1 * width * 4; o < end; o += 4) {
     if (!src[o + 3]) continue;
     p.t = clamp01(lightOf(src[o], src[o + 1], src[o + 2]) / 0.6); p.px = (o / 4) % width; p.py = Math.floor(o / 4 / width);

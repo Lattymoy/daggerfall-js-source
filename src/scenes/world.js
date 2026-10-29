@@ -27615,7 +27615,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (!online) return;
     for (const p of online.peers.values()) {
       if (!p?.shown || !online.visible(p) || !gateCrowd.shows(p.id) || !peerRange.shows(p.id)) { peerFxPlayer.forget(p?.id); continue; }   // GATE-CROWD: no spark nor cry from a player the crowd's count leaves undrawn; PEER-RANGE: nor from one past the distance
-      peerFxPlayer.update(p.id, p.shown, onlineToScene(p.shown), peerBodies?.heightOf?.(p.id) || 0, p.fx ?? null);   // STOREFRONT: and the effects their token signed
+      peerFxPlayer.update(p.id, p.shown, onlineToScene(p.shown), peerBodies?.heightOf?.(p.id) || 0, p.fx ?? null, _hiddenPeers.has(p.id) || _veils.has(p.id));   // STOREFRONT: and the effects their token signed; AUDIT-STOREFRONT II (lane C 1): and whether the draw conceals them, so a concealed rider's mount look throws no beat - last frame's word (the effects play before the peers sync), as the cart pool's
     }
     peerFxPlayer.frame();
   };

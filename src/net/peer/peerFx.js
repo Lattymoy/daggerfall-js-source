@@ -143,7 +143,8 @@ function playPeerKill(/** @type {{ at: number[], kill: string, h: number }} */ q
 /**
  * `play.blow({ at, bloodIndex, share })` and `play.hurt({ at })`, at scene positions; `toScene(p)` maps the wire
  * frame ({x,y,z}) to the scene. `update(id, pose, feet, dt)` once a frame for each peer I can see; `frame(dt)` plays
- * what is due; `splashed(pos)` is told of every splash drawn here (the dedupe).
+ * what is due; `splashed(pos)` is told of every splash drawn here (the dedupe). An update's `veiled`: whether the draw
+ * conceals that peer (hidden, or drawn translucent).
  * @param {{play?: {blow?: (fx: any) => void, hurt?: (fx: any) => void, flinch?: (id: string) => void},
  *   toScene?: (p: {x: number, y: number, z: number}) => any, now?: () => number}} [opts]
  */
@@ -154,7 +155,7 @@ export function createPeerFxPlayer({ play, toScene, now = () => performance.now(
   let tick = 0;             // AUDIT MERGE-PLUS B3: frames drawn - an entry not refreshed on the last one is a peer gone
   const mounts = createMountFx();   // STOREFRONT: a riding peer's mount look, its beat (systems/horse/mountFx.js)
   return {
-    update(id, pose, feet, height = 0, kit = null) {
+    update(id, pose, feet, height = 0, kit = null, veiled = false) {
       if (!pose || !id) return;
       const hk = pose.hk | 0, hu = pose.hu | 0, xk = pose.xk | 0;
       const s = seen.get(id);
@@ -167,7 +168,9 @@ export function createPeerFxPlayer({ play, toScene, now = () => performance.now(
       // STOREFRONT: on a horse (never the cart), the mount look their token names throws its beat under them - by the
       // player's own "Others' effects" choice, as its dye is (systems/horse/mountLook.js peerMountLook)
       const ridden = pose.rd === POSE_RIDE.Horse && !pose.wb && othersEffectShown(feet) ? effectWorn(kit, 'mount') : null;
-      mounts.step(id, ridden, feet, pose.yaw, peerMoving(pose) ? (pose.mv === 2 ? 2 : 1) : 0, t - (s.ft ?? t));
+      // AUDIT-STOREFRONT II (lane C 1): never under a rider the draw conceals - a beat thrown at an empty saddle, or lit
+      // over a translucent one, is the rider found (its lantern's law, net/peer/peerRiders.js)
+      mounts.step(id, veiled ? null : ridden, feet, pose.yaw, peerMoving(pose) ? (pose.mv === 2 ? 2 : 1) : 0, t - (s.ft ?? t));
       s.ft = t;
       // STOREFRONT: a kill of theirs with an effect played - the effect their token names (`kit`, net/effectLaw.js), where
       // their pose says the body fell; no faster than a blow lands, only near their own feet (KILL_FX_PEER_M), and only

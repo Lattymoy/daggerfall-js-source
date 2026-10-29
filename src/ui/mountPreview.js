@@ -6,6 +6,7 @@
 // panels. Still for less motion. Not a DFU member.
 import { recolorHorse, withMountLook } from '../systems/horse/horseCoats.js';
 import { VIEW_SIDE } from '../systems/horse/mountPaint.js';
+import { prefersReducedMotion } from '../systems/hitFlash.js';   // the viewer's less motion, read live
 
 /** The picture the preview dyes (the side view) and its scale on the canvas (whole pixels, the art's own). */
 export const MOUNT_PREVIEW_FILE = 'horse3.png';
@@ -45,14 +46,20 @@ function loadArt() {
 
 /**
  * A preview: `node` its canvas, `set(key)` the look (null: the horse as drawn), `dispose()` its clock stopped.
- * @param {Document} doc @param {{ coat?: number, reduced?: boolean }} [o] `coat` the horse's own look's code under it
+ * @param {Document} doc @param {{ coat?: number, reduced?: boolean | (() => boolean) }} [o] `coat` the horse's own look's
+ * code under it; `reduced` less motion - read each frame, or fixed
  */
-export function mountPreview(doc, { coat = 0, reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches } = {}) {
+export function mountPreview(doc, { coat = 0, reduced = () => prefersReducedMotion() } = {}) {
+  // AUDIT-STOREFRONT II (lane C 6): less motion read as each frame is drawn (render/effectStage.js's way), so a player
+  // who changes it with the card open is followed - read once, the preview kept the old choice for the card's life
+  const still = typeof reduced === 'function' ? reduced : () => !!reduced;
   const canvas = doc.createElement('canvas');
   canvas.className = 'mountpreview';
   canvas.setAttribute?.('aria-hidden', 'true');
   const g = canvas.getContext?.('2d') ?? null;
   let key = /** @type {string|null} */ (null), pic = /** @type {HTMLCanvasElement|null} */ (null), raf = 0, alive = true, last = 0, owed = 0;
+  /** the picture last drawn - under less motion, with nothing moving, it is not drawn again */
+  let painted = /** @type {HTMLCanvasElement|null} */ (null);
   /** @type {{ x: number, y: number, vx: number, vy: number, age: number, life: number, c: string, s: number }[]} */
   const parts = [];
   function dye(/** @type {ImageData} */ art) {
@@ -77,11 +84,15 @@ export function mountPreview(doc, { coat = 0, reduced = !!globalThis.matchMedia?
     if (!alive || !g || canvas.isConnected === false) return;
     const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
     last = now;
+    raf = globalThis.requestAnimationFrame?.(draw) ?? 0;   // the clock runs on under less motion, so its end is seen too
+    const calm = still();
+    if (calm && !parts.length && painted === pic) return;
+    painted = pic;
     g.imageSmoothingEnabled = false;
     g.clearRect(0, 0, canvas.width, canvas.height);
     if (pic) g.drawImage(pic, 0, 0, canvas.width, canvas.height);
     const beat = key ? MOUNT_PREVIEW_BEAT[/** @type {keyof typeof MOUNT_PREVIEW_BEAT} */ (key)] : null;
-    if (beat && !reduced) {
+    if (beat && !calm) {
       owed += dt * beat.rate;
       while (owed >= 1) { owed -= 1; emit(beat, canvas.width, canvas.height); }
     }
@@ -95,7 +106,6 @@ export function mountPreview(doc, { coat = 0, reduced = !!globalThis.matchMedia?
       g.fillRect(Math.round(p.x), Math.round(p.y), Math.ceil(p.s), Math.ceil(p.s));
     }
     g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
-    if (!reduced || parts.length) raf = globalThis.requestAnimationFrame?.(draw) ?? 0;
   }
   const kick = () => { if (!raf && alive) raf = globalThis.requestAnimationFrame?.(draw) ?? 0; };
   return {

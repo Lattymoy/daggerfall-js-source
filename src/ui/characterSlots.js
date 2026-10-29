@@ -114,6 +114,8 @@ export function characterSlots(doc, flow, { start = null, bodies = null, entryOf
       const s = slotsShown(flow.wardrobe, trial);
       try { stage = start(canvas, { kit: s.kit, aura: s.aura, cue: playPreviewSound }); } catch { stage = null; }   // STOREFRONT: an effect's loop rings
       if (!stage) return;
+      // AUDIT-STOREFRONT II (lane C 5): and the effect show() asked for - it ran before this frame, with no stage to tell
+      playEffect();
       loadBody();
       const follow = () => {
         raf = 0;
@@ -164,6 +166,8 @@ export function characterSlots(doc, flow, { start = null, bodies = null, entryOf
     if (picked === 'kill' || picked === 'portal') return { slot: picked, key: effectWorn(flow.wardrobe?.effects, picked) };
     return null;
   };
+  /** The stage told the effect it plays now - by show(), and by a stage the frame it starts. */
+  const playEffect = () => { const fx = effectShown(); stage?.setEffect?.(fx?.slot ?? null, fx?.key ?? null); };
   /** STOREFRONT: the Mount slot's horse, kept for the card's life, made the first time the slot opens. */
   let mount = /** @type {ReturnType<typeof mountPreview>|null} */ (null);
   const mountKey = () => (trial?.slot === 'mount' ? trial.key : effectWorn(flow.wardrobe?.effects, 'mount'));
@@ -172,8 +176,7 @@ export function characterSlots(doc, flow, { start = null, bodies = null, entryOf
     const s = slotsShown(flow.wardrobe, trial);
     stage?.setKit(s.kit);
     stage?.setAura(s.aura);
-    const fx = effectShown();
-    stage?.setEffect?.(fx?.slot ?? null, fx?.key ?? null);
+    playEffect();
     if (picked === 'mount') mount?.set(mountKey());
     plateKey = '';
     if (lookLine) lookLine.textContent = lookText();

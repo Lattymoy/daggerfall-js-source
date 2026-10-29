@@ -1860,6 +1860,9 @@ export function createPlayerMagic({
      *  `batches` (an impact flash mid-fade) frees with the rest.
      *  Terminal: no update runs after this. */
     destroy() {
+      // AUDIT-STOREFRONT II (lane C 2): both passes broken before anything else - an idle warm still waiting (no pass
+      // built yet) then stands down, never building one on this dead engine's context
+      killBroken = fxBroken = true;
       for (const m of missiles) retireMissile(m);
       missiles.length = 0;
       candle.clear();
@@ -1867,9 +1870,9 @@ export function createPlayerMagic({
       peerCandleMounts.clear();
       clearSparks(); fx.clear();   // IMPACTFX: the bursts die with the engine
       clearKills();   // STOREFRONT: and the kill effects, ghosts and all
-      if (killPass) { const p = killPass; killPass = null; killBroken = true; p.destroy(); }
+      if (killPass) { const p = killPass; killPass = null; p.destroy(); }
       mwFx.destroy();   // MW-SPELLFX1: and the Morrowind effects, GL and all
-      if (fxPass) { const p = fxPass; fxPass = null; fxBroken = true; p.destroy(); }   // IMPACTFX: and their GL pass (the slot emptied first; a draw after this builds nothing)
+      if (fxPass) { const p = fxPass; fxPass = null; p.destroy(); }   // IMPACTFX: and their GL pass (the slot emptied first; a draw after this builds nothing)
       impacts.clear();   // AUDIT 68 S21-magic-destroy-impacts: a flash still warming its archive is marked dead, so it publishes nothing into this dead engine
       for (const b of batches) { flatAnims.remove(b); renderer.destroyBillboardBatch(b); }
       batches.length = 0;
