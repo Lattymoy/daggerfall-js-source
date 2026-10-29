@@ -362,6 +362,9 @@ Item law 15 names acct221. bootWorld measures 35,228: main took four lines out. 
 before main's), the service's tables and history (`accountworker`, `auditscale2_acct`), the gates' refusals, and the
 mutant records on the version lines.
 
+**THE MERGE OF MAIN AT 043338ef6 (2026-10-29, #1428 AUDIT FB1029d).** No version moved. bootWorld measures 35,230: main's
+deck seam put two lines in. PINS MOVED: the host's ceiling and its mutant record.
+
 **DRAGON7 - the Aetherbright (2026-10-29).** `characters/dwarvenDragonShiny.js` turns each PLTE colour at load - the brass
 and copper to aetherium's blue, the wings' olive membrane to its violet, the greys cooled - and writes the chunk's CRC
 again. Archive 1801 is 1800's ninety files so turned; no picture ships. One home for a look's pictures

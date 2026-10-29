@@ -3066,6 +3066,7 @@ guild.wayBack.shut,"Denne hallen er stengt denne Sesongen - laugets haller i and
 guild.wayBack.skills,"Det kreves også én laugsferdighet på {high} og en annen på {low}: {skills}."
 guild.wayBack.standing,"Omdømmet ditt her er {rep}. Medlemmer tas opp fra {need}."
 haul.capped,"Dagens sølvtak er nådd"
+helm.heavy,"For tungt. Lett sekken, vogna eller lasterommet"
 helm.passenger,"{ship}, på vei til {port} - skipperen hennes styrer"
 holdings.horse.boons.hungry,"Sulten, men ingen straff ennå."
 holdings.horse.boons.starving,"Utsultet - ingen galopp før den spiser. Gi den fôr."

@@ -3066,6 +3066,7 @@ guild.wayBack.shut,"Este salão está fechado nesta Temporada - os salões da gu
 guild.wayBack.skills,"Também é preciso uma habilidade da guilda em {high} e uma segunda em {low}: {skills}."
 guild.wayBack.standing,"Sua posição aqui é {rep}. Membros são aceitos a partir de {need}."
 haul.capped,"Limite diário de prata atingido"
+helm.heavy,"Pesado demais. Alivie sua mochila, sua carroça ou o porão"
 helm.passenger,"{ship}, rumo a {port} - o capitão dela está ao leme"
 holdings.horse.boons.hungry,"Com fome, mas ainda sem penalidade."
 holdings.horse.boons.starving,"Faminto - não galopa até comer. Alimente-o."

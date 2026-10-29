@@ -7284,6 +7284,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       get: () => player.transportMode, set: (m) => setTransportModeHere(m),
       hasCart: () => hasTransport(TRANSPORT_SMALL_CART), hasHorse: () => hasTransport(TRANSPORT_HORSE),
       isOnShip: () => isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()),
+      onDeck: () => !!(csaBoatUnderMe() ?? _csaBuckets.get(player.groundKey)?.boat),   // AUDIT FB1029d B1: a Come Sail Away deck under me - my helm's, another's I stand aboard, or one under my feet
     },
     teamShort: () => wagonTeamShort(playerEntity.items ?? []),   // WAGONS3: a pair's wagon takes its pair
     player: { position: hccPlayerCentre, forward: hccForward, movement: () => ({ position: hccPlayerCentre(), forward: hccForward() }) },
@@ -8066,7 +8067,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     },
     transport: {
       isFoot: () => isOnFoot(player.transportMode), setFoot: () => setTransportModeHere(TRANSPORT_MODES.Foot),
-      hasHorse: () => hasTransport(TRANSPORT_HORSE), hasCart: () => hasTransport(TRANSPORT_SMALL_CART),
+      hasHorse: () => hasTransport(TRANSPORT_HORSE) && (!hccOn() || !!hccRuntime?.horseWithPlayer?.()), hasCart: () => hasTransport(TRANSPORT_SMALL_CART) && (!hccOn() || !!hccRuntime?.wagonWithPlayer?.()),   // AUDIT FB1029d B6: the opt-in horse and cart items by their keeping, as the wagon's load
       isOnShip: () => isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()),   // CSA-F: TransportManager.IsOnShip
     },
     ship: {
@@ -8077,7 +8078,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     entity: {
       isFemale: () => playerEntity.gender === 'female',
       carriedWeight: () => carriedWeight(playerEntity), maxEncumbrance: () => entityMaxEncumbrance(playerEntity),   // HOLD-WEIGHT: PlayerEntity.MaxEncumbrance - PackBoat makes no parts heavier
-      wagonWeight: () => totalWeight(playerEntity.wagonItems ?? []),
+      wagonWeight: () => (!hccOn() || hccRuntime?.wagonWithPlayer?.() ? totalWeight(playerEntity.wagonItems ?? []) : 0),   // CARGO-ASHORE: the load aboard - a parked, stabled or following wagon stays ashore; with the mod off it goes where its owner goes
       decreaseFatigue: (n) => { if (!modes?.drainPlayerFatigue?.(n)) playerTicker.sinks.drainFatigue(n); surfacePlayer(); },   // PlayerEntity.DecreaseFatigue: the one fatigue door, its collapse at 0 with it - CSA-J (the audit): the mode's own, so a collapse indoors is the mode's (its enemies, its rest)
     },
     cargoWeight: (items) => totalWeight(items ?? []),

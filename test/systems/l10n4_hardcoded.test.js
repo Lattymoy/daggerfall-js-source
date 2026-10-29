@@ -357,7 +357,7 @@ const HARDCODED = {
   'src/systems/champions.js': 6,
   'src/systems/chargen.js': 1,
   'src/systems/cloudSaves.js': 5,
-  'src/systems/comeSailAway/comeSailAway.js': 86,
+  'src/systems/comeSailAway/comeSailAway.js': 87,   // AUDIT FB1029d WIND-HELD: +1, the log's line when the frame lays the door's wind - a developer's, never a player's
   'src/systems/comeSailAway/comeSailAwayBoat.js': 1,
   'src/systems/comeSailAway/comeSailAwayHulls.js': 3,
   'src/systems/comeSailAway/comeSailAwayItems.js': 2,
