@@ -544,6 +544,33 @@ test('AUDIT STARFALL C4 A MASTER THAT NEVER STOOD IS STOOD AGAIN: a stand that c
   Date.now = realNow;
 });
 
+test('STAR-MASTER-FLED A MASTER GONE WITHOUT A FALL IS STOOD AGAIN: one that left the pool with no body (escaped, removed) holds nothing and is stood again whole, a world boss from its landing; one that fell with a body is its fall and stands no second (Field-Bugs-2026-10-29: the star waited on an escaped master until dawn) (mutants: the gone master kept; a fall read as gone)', async () => {
+  const w = world();
+  clockOf(w);
+  const ms = w.sites(2);
+  w.t = starTimes(N, 2).fallAt + 500; w.at(2, 5); w.frame();
+  w.st(2, { p: P_BREATH, w: 4, wz: 0, b: 1, nd: 2 });
+  w.st(2, { p: P_MASTER, w: 4, wz: 0, b: 1, nd: 2 });
+  await w.beat();
+  const first = w.foes.stood.filter((f) => f?.site === ms.m);
+  assert.equal(first.length, 1, 'the master stood');
+  w.t += 30_000; await w.beat();   // the fight
+  assert.equal(w.foes.stood.filter((f) => f?.site === ms.m).length, 1, 'one standing is never stood twice');
+  first[0].dead = true; first[0].escaped = true;   // exteriorFoes.js escapeFoe: dead, no corpse
+  w.t += 100; await w.beat();
+  const masters = w.foes.stood.filter((f) => f?.site === ms.m);
+  assert.equal(masters.length, 2, 'stood again');
+  assert.equal(masters[1].entity.worldBoss, true);
+  assert.equal(w.star(2).mf, false, 'its going held nothing');
+  masters[1].dead = true; masters[1].corpse = true;
+  w.t += 100; await w.beat();
+  masters[1].corpse = false;   // its body looted away later: still its fall
+  w.t += STAR_RESTAND_MS * 3; await w.beat();
+  assert.equal(w.foes.stood.filter((f) => f?.site === ms.m).length, 2, 'a fall stands no second');
+  assert.equal(w.star(2).mf, true);
+  Date.now = realNow;
+});
+
 test('AUDIT STARFALL C5 THE FESTIVAL\'S LAST STARS STAND TO THEIR END: a star that landed inside it is drawn, timed and marked past its close, until it is gone; one landing at its close is none (mutants: the stars outliving the days)', () => {
   const end = FESTIVALS[0].toMs, n = starNightAt(end - 1);
   assert.ok(starTimes(n, 1).fallAt < end && starTimes(n, 1).endAt > end && starTimes(n, 2).fallAt >= end);

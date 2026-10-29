@@ -38,5 +38,5 @@ export function foeTitle(entity, base, { traits = true } = {}) {
   const lead = typeof entity?.raidLeader?.name === 'string' && entity.raidLeader.name ? entity.raidLeader.name : null;   // RAID5: a raid's leader, by its party's word (systems/eliteFoes.js promoteRaidLeader)
   const special = entity?.staffBoss ? `Mighty ${named}` : lead ?? (entity?.eliteFoe ? `Elite ${named}` : named);   // STAFF-EVENT: a staff event's mini boss (systems/eliteFoes.js promoteStaffBoss)
   const traited = traits && typeof entity?.bossTitle === 'string' && entity.bossTitle ? _traitTitle(entity.bossTitle, special) : special;   // BOSS-TRAITS: its first trait's word (systems/bossTraits.js giveBossTraits)
-  return entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout ? `Unquiet ${traited}` : traited;   // UNQUIET: the mark - it may rise (unquietMark.js isUnquiet's own test: AUDIT UNQUIET, never the zone's or the sand's)
+  return entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && !entity.worldBoss ? `Unquiet ${traited}` : traited;   // UNQUIET: the mark - it may rise (unquietMark.js isUnquiet's own test: AUDIT UNQUIET, never the zone's or the sand's; STAR-MASTER-FLED, nor a world boss)
 }

@@ -531,3 +531,44 @@ test('AUQ B11 THE CRAFT THROUGH THE REAL STREET POOL: a rank-II spriggan breaks 
   assert.equal(N.revenantById(r.id).rank, 3, 'ranked');
   assert.ok(shown.some((e) => e.kind === 'escape'), 'said');
 });
+
+// ── a world boss's fall is its event's (STAR-MASTER-FLED) ───────────
+
+test('STAR-MASTER-FLED NEVER A WORLD BOSS: the Starfall master (`worldBoss`), marked or not, is no candidate, wears no "Unquiet" and rises from no deed (Field-Bugs-2026-10-29: an Unquiet Elite Daedra Lord ran, became a revenant, and its star waited on it until dawn) (mutants: the candidate\'s world boss; the mark\'s; the title\'s)', () => {
+  const p = me();
+  assert.equal(N.revenantCandidate(foe()), true, 'the same foe, no world boss: a candidate');
+  assert.equal(N.revenantCandidate(foe({ worldBoss: true })), false);
+  assert.equal(N.revenantCandidate(foe({ worldBoss: true, unquiet: false, revenant: { id: 'r-1', rank: 1 } })), false, 'not even one already rising');
+  assert.equal(isUnquiet(foe({ worldBoss: true })), false);
+  assert.equal(foeTitle(foe({ worldBoss: true, champion: null, eliteFoe: true }), 'Daedra Lord'), 'Elite Daedra Lord');
+  assert.equal(foeTitle(foe({ champion: null, eliteFoe: true }), 'Daedra Lord'), 'Unquiet Elite Daedra Lord', 'one that may rise says so');
+  assert.equal(N.revenantDeed(p, foe({ worldBoss: true }), 'fled', { mobileType: M.Orc, rolls: () => 0 }), null);
+  assert.equal(N.revenantDeed(p, foe({ worldBoss: true }), 'slew', { mobileType: M.Orc, rolls: () => 0 }), null);
+  assert.equal(N.livingRevenants().length, 0);
+});
+
+test('STAR-MASTER-FLED THROUGH THE REAL STREET POOL: an elite stood by the pool and marked, at a tenth of its health on every roll\'s win, breaks and runs - and the same foe made a world boss as it lands (starfallHost.js masterOf) stands and fights (mutants: the candidate\'s world boss)', async () => {
+  const p = me();
+  const { _forceUnquietForTests } = await import('../../../src/systems/revenant/unquietMark.js');
+  _forceUnquietForTests(true);
+  const run = async (worldBoss) => {
+    const pool = rig(p);
+    const f = await pool.spawnFoe(M.Orc, [0, 0, 6], { feetGiven: true, level: 6, eliteFoe: true });
+    if (worldBoss) f.entity.worldBoss = true;
+    const step = (dt) => { T += dt; pool.update(dt, [0, 0, 3], [0, 1.6, 3]); };
+    step(0.016);
+    f.entity.health = Math.round(f.entity.maxHealth * 0.1);
+    const random = Math.random;
+    Math.random = () => 0;
+    try { step(0.016); } finally { Math.random = random; }
+    return f;
+  };
+  try {
+    const plain = await run(false);
+    assert.equal(plain.entity.unquiet, true, 'the pool drew the mark');
+    assert.equal(plain.fleeing, true, 'an elite of the street runs');
+    const master = await run(true);
+    assert.equal(!!master.fleeing, false, 'the world boss does not');
+    assert.equal(master.dead, false);
+  } finally { _forceUnquietForTests(null); }
+});
