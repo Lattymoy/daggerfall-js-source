@@ -639,7 +639,7 @@ menu.realm.familyRow,"Gia tộc {name} ({model, select, bloodline {Bloodline} ot
 menu.realm.familyUnnamed,"Không tên"
 menu.realm.removeFamily,"Xóa gia tộc"
 menu.realm.removeFamilyAsk,"Xóa gia tộc {name}?"
-menu.realm.removeFamilyBody,"Dòng dõi của gia tộc kết thúc trực tuyến và nhường chỗ cho một gia tộc mới. Những người đã ngã xuống vẫn như cũ. Nhân vật của bạn không thay đổi."
+menu.realm.removeFamilyBody,"Dòng dõi của gia tộc kết thúc trực tuyến và nhường chỗ cho một gia tộc mới. Những người đã ngã xuống vẫn như cũ, và không người thừa kế nào có thể nối tiếp. Nhân vật của bạn không thay đổi."
 menu.realm.removeFamilyYes,"Xóa"
 menu.realm.strandedAsk,"Khôi phục tiến trình chưa lưu của {name}?"
 menu.realm.strandedBody,"Thiết bị này đã giữ tiến trình của {name} chưa bao giờ đến được vương quốc. Nó sẽ được sao chép thành một nhân vật ngoại tuyến mới. Nhân vật trực tuyến của bạn không thay đổi, và mọi thứ bạn chơi trên bản sao sẽ không quay lại trực tuyến."

@@ -1791,7 +1791,7 @@ menu.realm.none,"Ei vielä verkkohahmoja. Luo sellainen tai tuo joku omistasi mu
 menu.realm.play,"Pelaa"
 menu.realm.removeFamily,"Poista suku"
 menu.realm.removeFamilyAsk,"Poistetaanko suku {name}?"
-menu.realm.removeFamilyBody,"Sen linja päättyy verkossa ja vapauttaa tilaa uudelle suvulle. Sen kaatuneet pysyvät kaatuneina. Hahmosi eivät muutu."
+menu.realm.removeFamilyBody,"Sen linja päättyy verkossa ja vapauttaa tilaa uudelle suvulle. Sen kaatuneet pysyvät kaatuneina, eikä yksikään perillinen voi jatkaa sitä. Hahmosi eivät muutu."
 menu.realm.removeFamilyYes,"Poista"
 menu.realm.strandedAsk,"Palautetaanko hahmon {name} tallentamaton edistys?"
 menu.realm.strandedBody,"Tämä laite säilytti hahmon {name} edistystä, joka ei koskaan päässyt valtakuntaan. Se kopioidaan uudeksi offline-hahmoksi. Verkkohahmosi ei muutu, eikä mitään kopiolla pelattua palaa verkkoon."

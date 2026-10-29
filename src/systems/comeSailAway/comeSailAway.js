@@ -957,8 +957,10 @@ export function createComeSailAwayRuntime(deps) {
   function UpdateBoatCargoMod(boat) {
     const { load: num, threshold } = cargoLoad(boat);
     state.boatCargoMod = mathfClamp(f(2 - f(num / threshold)), 0, 1);
-    // LADEN-REST: a hull the load has stopped dead says so every round, not once - the word was missed in two reports
-    if (state.lastWeight !== num || state.boatCargoMod === 0) {
+    // LADEN-REST: a hull the load has stopped dead says so every round she is asked to move, not once - the word was
+    // missed in two reports. AUDIT FB1029B S2: never a hull with no hold at all (the Carrack under Classic), nor one at rest
+    const asked = state.oarThrottle !== 0 || state.sailPosition !== 0 || state.TurnTarget !== 0;
+    if (state.lastWeight !== num || (state.boatCargoMod === 0 && threshold > 0 && asked)) {
       state.lastWeight = num;
       const words = cargoModWords(state.boatCargoMod);
       if (words) deps.midScreenText(words, 3);
@@ -1575,14 +1577,20 @@ export function createComeSailAwayRuntime(deps) {
       updateSails(boat);
     }
     const swing = f(state.TurnTarget * turnSpeed());
-    resting = Math.abs(swing) < Math.abs(state.TurnCurrent) && swing * state.TurnCurrent >= 0;   // LADEN-REST
-    state.TurnCurrent = mathfMoveTowards(state.TurnCurrent, swing, f(turnAccel() * dt()));
+    // LADEN-REST: a swing let go or eased comes off at the light rate - AUDIT FB1029B S1: and one the helm is put against,
+    // through 0 at the light rate and then the other way at the load's (a light hull is the mod to the letter)
+    const against = swing * state.TurnCurrent < 0 && state.boatCargoMod < 1;
+    resting = against || (Math.abs(swing) < Math.abs(state.TurnCurrent) && swing * state.TurnCurrent >= 0);
+    state.TurnCurrent = mathfMoveTowards(state.TurnCurrent, against ? 0 : swing, f(turnAccel() * dt()));
     state.velocityTarget = vScale(state.MoveVectorTarget, moveSpeed());
     // AUDIT 2 XA7: her canvas's way - gathered under canvas, lost in its share (and never more than the way she has: a
     // bump or a grounding since took its share too)
     const was = vMagnitude(state.MoveVectorCurrent);
     state.sailWay = Math.min(state.sailWay, was);
-    resting = vMagnitude(state.velocityTarget) < was;   // LADEN-REST
+    // LADEN-REST: her way comes off at the light rate along her own line - AUDIT FB1029B S5: a way wanted another way
+    // (her oars' slide) gathers at the load's
+    const wanted = vMagnitude(state.velocityTarget);
+    resting = wanted < was && (wanted === 0 || vDot(state.velocityTarget, state.MoveVectorCurrent) >= f(f(wanted * was) * 0.999));
     state.MoveVectorCurrent = vMoveTowards(state.MoveVectorCurrent, state.velocityTarget, f(moveAccel() * dt()));
     resting = false;
     const way = vMagnitude(state.MoveVectorCurrent);

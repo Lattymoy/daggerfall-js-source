@@ -109,6 +109,9 @@ export async function putLineage({ db, nowS }, playerId, { id, record: sent, bas
   if (!recordShapeOf(sent, id)) return { error: 'body' };
   if (base !== null && !(Number.isSafeInteger(base) && /** @type {number} */ (base) >= 0)) return { error: 'body' };
   const had = await db.prepare('SELECT rev, model, record FROM lineages WHERE player = ? AND id = ?').bind(playerId, id).first();
+  // AUDIT FB1029B F2: a copy made from a stored line (`base`) whose line is gone was removed (removeLineage) - never
+  // founded again unasked, a slot taken behind the player's back; only a founding (no base) founds
+  if (!had && base !== null) return { error: 'no-lineage' };
   const record = had ? withoutRevived(sent, had.record) : sent;   // REVIVE: a death the stored copy says was taken back
   const rec = recordShapeOf(record, id);
   if (!rec) return { error: 'body' };
@@ -148,14 +151,15 @@ export async function putLineage({ db, nowS }, playerId, { id, record: sent, bas
 /**
  * FAMILY-REMOVE (FIELD BUGS 2026-10-29b, "being able to remove old families"): a line the account no longer plays let go,
  * so LINEAGES_MAX has room again - deleted and fallen characters never freed one. Only a line no living realm character
- * plays: its tombstones stay, so its fallen stay claimed (realm_characters_person) if the line is ever founded again.
+ * plays, and none whose fall is held for a Resurrect (AUDIT FB1029B F1: the raise would stand her up on no line): its
+ * tombstones stay, so its fallen stay claimed (realm_characters_person) if the line is ever founded again.
  * `{ ok }`, or `lineage-in-use`, `no-lineage`, `body`.
  * @param {any} ctx @param {string} playerId @param {{ id: unknown }} at
  */
 export async function removeLineage({ db }, playerId, { id }) {
   if (!playerId || typeof id !== 'string' || !LINEAGE_ID_RE.test(id)) return { error: 'body' };
   const gone = await db.prepare('DELETE FROM lineages WHERE player = ?1 AND id = ?2'
-    + ' AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE player = ?1 AND lineage_id = ?2 AND dead_at IS NULL)').bind(playerId, id).run();
+    + ' AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE player = ?1 AND lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL))').bind(playerId, id).run();
   if (gone.meta.changes) return { ok: true };
   const had = await db.prepare('SELECT 1 AS h FROM lineages WHERE player = ? AND id = ?').bind(playerId, id).first();
   return { error: had ? 'lineage-in-use' : 'no-lineage' };

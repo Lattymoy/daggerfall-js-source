@@ -639,7 +639,7 @@ menu.realm.familyRow,"{name}家族（{model, select, bloodline {Bloodline} other
 menu.realm.familyUnnamed,"无名"
 menu.realm.removeFamily,"移除家族"
 menu.realm.removeFamilyAsk,"移除{name}家族？"
-menu.realm.removeFamilyBody,"其血脉在线上终结，为新家族腾出空间。其逝者仍为逝者。你的角色不会改变。"
+menu.realm.removeFamilyBody,"其血脉在线上终结，为新家族腾出空间。其逝者仍为逝者，也没有继承人能延续它。你的角色不会改变。"
 menu.realm.removeFamilyYes,"移除"
 menu.realm.strandedAsk,"恢复 {name} 未保存的进度？"
 menu.realm.strandedBody,"此设备保留了 {name} 从未送达领域的进度。它将被复制为新的离线角色。你的在线角色不会改变，你在副本上的游玩不会回到在线。"

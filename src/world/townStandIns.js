@@ -41,9 +41,9 @@ const U = 0.025;   // MeshReader.GlobalScale: one classic unit in metres
 // ---- the beds ---------------------------------------------------------------------------------------------------
 export const TOWN_BED_FIRST = 42069;
 /** BED-TURN (FIELD BUGS 2026-10-29b, "Beds backwards" in Alinor): the mods' bed prefab faces half a turn from Daggerfall's
- *  bed, and their rooms are turned to suit it - 244 of the 247 coloured beds laid where a classic bed stood are 1024 off
- *  its YRotation; a classic id the mods kept is 0 off in all 1,929. The alias draws Daggerfall's mesh, so the room's
- *  record is turned back by this. */
+ *  bed, and their rooms are turned to suit it. The alias draws Daggerfall's mesh, so the room's record is turned back by
+ *  this. AUDIT FB1029B H6, measured on the shell: of the 4,029 coloured beds the packs lay, 2,806 stood through the room's
+ *  walls unturned and 141 turned, none made worse. */
 export const TOWN_BED_TURN = 1024;
 export const TOWN_BED_COUNT = 18;
 /** The port's archive of recoloured bedclothes: record `colour * 3 + cloth`. */

@@ -4,7 +4,10 @@
     "file": "src/scenes/interiorContext.js",
     "old": "const baseKey = base && (p.objectType === PROP_MODEL_TYPE || (p.objectType === 0 && isRoomFurnishing(p.modelIdNum)))",
     "new": "const baseKey = base && (p.objectType === PROP_MODEL_TYPE)",
-    "tests": ["test/scenes/builtin_mods.test.js", "test/scenes/builtin_mods_alinor.test.js"],
+    "tests": [
+      "test/scenes/builtin_mods.test.js",
+      "test/scenes/builtin_mods_alinor.test.js"
+    ],
     "note": "BASE-HIDE's old gate: a town mod's furniture written as scenery is never built in"
   },
   {
@@ -12,7 +15,9 @@
     "file": "src/scenes/interiorContext.js",
     "old": "const baseKey = base && (p.objectType === PROP_MODEL_TYPE || (p.objectType === 0 && isRoomFurnishing(p.modelIdNum)))",
     "new": "const baseKey = base && (p.objectType === PROP_MODEL_TYPE || (p.objectType === 0))",
-    "tests": ["test/scenes/builtin_mods.test.js"],
+    "tests": [
+      "test/scenes/builtin_mods.test.js"
+    ],
     "note": "a beam - the room's structure - offered as furniture"
   },
   {
@@ -20,15 +25,19 @@
     "file": "src/scenes/interiorContext.js",
     "old": "const baseKey = base && (p.objectType === PROP_MODEL_TYPE || (p.objectType === 0 && isRoomFurnishing(p.modelIdNum)))",
     "new": "const baseKey = base && (p.objectType === PROP_MODEL_TYPE || (p.objectType !== 3 && isRoomFurnishing(p.modelIdNum)))",
-    "tests": ["test/scenes/builtin_mods.test.js"],
+    "tests": [
+      "test/scenes/builtin_mods.test.js"
+    ],
     "note": "the room's shell (ObjectType 13) offered as furniture"
   },
   {
     "name": "BUILT-IN-MODS-mod-pieces-dropped",
     "file": "src/systems/decor/decorMods.js",
-    "old": "|| Object.hasOwn(DECOR_MOD_ROOMS.models, id));",
-    "new": ");",
-    "tests": ["test/scenes/builtin_mods.test.js"],
+    "old": "(ROOM_PROPS.has(id) || (Object.hasOwn(DECOR_MOD_ROOMS.models, id) && !STRUCTURE.has(id)));",
+    "new": "ROOM_PROPS.has(id);",
+    "tests": [
+      "test/scenes/builtin_mods.test.js"
+    ],
     "note": "the mods' own room pieces never built in"
   },
   {
@@ -36,7 +45,9 @@
     "file": "src/scenes/interiorContext.js",
     "old": "        if (baseKey) base.furnish(baseKey, beds[beds.length - 1]);   // BUILT-IN-MODS: taken out with its rest",
     "new": "",
-    "tests": ["test/scenes/builtin_mods.test.js"],
+    "tests": [
+      "test/scenes/builtin_mods.test.js"
+    ],
     "note": "a bed taken out still rests"
   },
   {
@@ -44,7 +55,9 @@
     "file": "src/world/interior/interiorLayout.js",
     "old": "-(obj.yRotation + aliasTurnOf(obj.modelIdNum)) / ROTATION_DIVISOR,",
     "new": "-obj.yRotation / ROTATION_DIVISOR,",
-    "tests": ["test/scenes/builtin_mods.test.js"],
+    "tests": [
+      "test/scenes/builtin_mods.test.js"
+    ],
     "note": "the coloured beds backwards again"
   },
   {
@@ -52,7 +65,9 @@
     "file": "src/world/townStandIns.js",
     "old": "export const TOWN_BED_TURN = 1024;",
     "new": "export const TOWN_BED_TURN = 512;",
-    "tests": ["test/scenes/builtin_mods.test.js"],
+    "tests": [
+      "test/scenes/builtin_mods.test.js"
+    ],
     "note": "a quarter turn"
   },
   {
@@ -60,7 +75,61 @@
     "file": "src/world/townStandIns.js",
     "old": "remap: bedRemap(colour), turn: TOWN_BED_TURN }",
     "new": "remap: bedRemap(colour) }",
-    "tests": ["test/scenes/builtin_mods.test.js"],
+    "tests": [
+      "test/scenes/builtin_mods.test.js"
+    ],
     "note": "the beds' alias carries no turn"
+  },
+  {
+    "name": "AUDIT-FB1029B-H1-any-classic-id",
+    "file": "src/systems/decor/decorMods.js",
+    "old": "(ROOM_PROPS.has(id) || (Object.hasOwn",
+    "new": "((id >= 41000 && id <= 43999) || (Object.hasOwn",
+    "tests": [
+      "test/scenes/builtin_mods.test.js"
+    ],
+    "note": "a ship's rigging and the mods' beams offered as furniture"
+  },
+  {
+    "name": "AUDIT-FB1029B-H1-pillars-offered",
+    "file": "src/systems/decor/decorMods.js",
+    "old": "&& !STRUCTURE.has(id)));",
+    "new": "));",
+    "tests": [
+      "test/scenes/builtin_mods.test.js"
+    ],
+    "note": "DET's ceiling timbers offered as furniture"
+  },
+  {
+    "name": "AUDIT-FB1029B-H1-table-drifts",
+    "file": "src/systems/decor/decorMods.js",
+    "old": "  41824, 41825, 41826, 41827, 41828, 41829, 41831,",
+    "new": "  41824, 41825, 41826, 41827, 41828, 41829, 41830, 41831,",
+    "tests": [
+      "test/scenes/builtin_mods_alinor.test.js"
+    ],
+    "note": "a model Daggerfall never lays as a prop in the table"
+  },
+  {
+    "name": "AUDIT-FB1029B-H2-floorless-offered",
+    "file": "src/scenes/interiorContext.js",
+    "old": "=== Infinity) base.keep(p.key);",
+    "new": "=== -1) base.keep(p.key);",
+    "tests": [
+      "test/scenes/builtin_mods.test.js",
+      "test/scenes/builtin_mods_alinor.test.js"
+    ],
+    "note": "a piece over the void offered - taken out, a way into it"
+  },
+  {
+    "name": "AUDIT-FB1029B-H2-own-bucket",
+    "file": "src/scenes/interiorContext.js",
+    "old": "collider.raycast(p.at, [0, -1, 0], 60, { skip: [baseBucketOf(p.key)] })",
+    "new": "collider.raycast(p.at, [0, -1, 0], 60)",
+    "tests": [
+      "test/scenes/builtin_mods.test.js",
+      "test/scenes/builtin_mods_alinor.test.js"
+    ],
+    "note": "a piece reads its own triangles as its floor"
   }
 ]

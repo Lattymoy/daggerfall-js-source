@@ -241,14 +241,20 @@ export async function createRealm({ db, rand, nowS }, playerId, { name, summary 
   try {
     wrote = await db.prepare(
       'INSERT INTO realm_characters (id, player, name, summary, seq, bytes, lease, lease_at, origin_id, created_at, updated_at, lineage_id, person_id)'
-      + ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, NULL, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?',
-    ).bind(id, playerId, n, realmSummaryOf(summary), lease, nowS, nowS, nowS, born ? lineage : null, born ? person : null, playerId, REALM_CHARACTERS_MAX).run();
+      + ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, NULL, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?'
+      // AUDIT FB1029B F4: a birth lands only on a line that still stands - one removed since its check is no line
+      + ' AND (? IS NULL OR EXISTS (SELECT 1 FROM lineages WHERE player = ? AND id = ?))',
+    ).bind(id, playerId, n, realmSummaryOf(summary), lease, nowS, nowS, nowS, born ? lineage : null, born ? person : null, playerId, REALM_CHARACTERS_MAX,
+      born ? lineage : null, playerId, born ? lineage : null).run();
   } catch (e) {
     // LEGACY7: two tabs born as one person race to the unique index (migration 0084) - one wins
     if (born && /UNIQUE/i.test(String(/** @type {any} */ (e)?.message ?? e))) return { error: 'lineage-played' };
     throw e;
   }
-  if (!wrote.meta.changes) return { error: 'too-many-characters' };
+  if (!wrote.meta.changes) {
+    if (born && !(await db.prepare('SELECT 1 AS h FROM lineages WHERE player = ? AND id = ?').bind(playerId, lineage).first())) return { error: 'no-lineage' };
+    return { error: 'too-many-characters' };
+  }
   await freeOthers({ db }, playerId, id);
   return { id, lease, seq: 0 };
 }

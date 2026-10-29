@@ -1791,7 +1791,7 @@ menu.realm.none,"Nog geen online personages. Maak er een, of breng hieronder een
 menu.realm.play,"Spelen"
 menu.realm.removeFamily,"Familie verwijderen"
 menu.realm.removeFamilyAsk,"De familie {name} verwijderen?"
-menu.realm.removeFamilyBody,"Haar lijn eindigt online en maakt ruimte voor een nieuwe familie. Haar gevallenen blijven gevallen. Je personages veranderen niet."
+menu.realm.removeFamilyBody,"Haar lijn eindigt online en maakt ruimte voor een nieuwe familie. Haar gevallenen blijven gevallen, en geen erfgenaam kan haar voortzetten. Je personages veranderen niet."
 menu.realm.removeFamilyYes,"Verwijderen"
 menu.realm.strandedAsk,"Niet-opgeslagen voortgang van {name} herstellen?"
 menu.realm.strandedBody,"Dit apparaat heeft voortgang van {name} bewaard die het rijk nooit heeft bereikt. Die wordt gekopieerd als nieuw offline personage. Je online personage verandert niet, en niets wat je met de kopie speelt, komt terug online."

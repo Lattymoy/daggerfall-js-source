@@ -4160,7 +4160,7 @@ menu.realm.none,"Noch keine Online-Charaktere. Erstelle einen oder bring unten e
 menu.realm.play,"Spielen"
 menu.realm.removeFamily,"Familie entfernen"
 menu.realm.removeFamilyAsk,"Die Familie {name} entfernen?"
-menu.realm.removeFamilyBody,"Ihre Linie endet online und macht Platz für eine neue Familie. Ihre Gefallenen bleiben gefallen. Deine Charaktere ändern sich nicht."
+menu.realm.removeFamilyBody,"Ihre Linie endet online und macht Platz für eine neue Familie. Ihre Gefallenen bleiben gefallen, und kein Erbe kann sie fortführen. Deine Charaktere ändern sich nicht."
 menu.realm.removeFamilyYes,"Entfernen"
 menu.realm.strandedAsk,"Ungespeicherten Fortschritt von {name} wiederherstellen?"
 menu.realm.strandedBody,"Dieses Gerät hat Fortschritt von {name} behalten, der das Reich nie erreicht hat. Er wird als neuer Offline-Charakter kopiert. Dein Online-Charakter ändert sich nicht, und nichts, was du mit der Kopie spielst, kehrt online zurück."

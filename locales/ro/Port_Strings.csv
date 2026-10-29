@@ -4160,7 +4160,7 @@ menu.realm.none,"Încă niciun personaj online. Creează unul sau adu unul de-al
 menu.realm.play,"Joacă"
 menu.realm.removeFamily,"Elimină familia"
 menu.realm.removeFamilyAsk,"Elimini familia {name}?"
-menu.realm.removeFamilyBody,"Linia ei se încheie online și face loc unei familii noi. Căzuții ei rămân căzuți. Personajele tale nu se schimbă."
+menu.realm.removeFamilyBody,"Linia ei se încheie online și face loc unei familii noi. Căzuții ei rămân căzuți și niciun moștenitor nu o poate continua. Personajele tale nu se schimbă."
 menu.realm.removeFamilyYes,"Elimină"
 menu.realm.strandedAsk,"Recuperezi progresul nesalvat al lui {name}?"
 menu.realm.strandedBody,"Acest dispozitiv a păstrat progres pentru {name} care nu a ajuns niciodată pe tărâm. Va fi copiat ca personaj offline nou. Personajul tău online nu se schimbă, și nimic din ce joci pe copie nu se întoarce online."

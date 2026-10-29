@@ -4160,7 +4160,7 @@ menu.realm.none,"Pas encore de personnage en ligne. Créez-en un, ou faites entr
 menu.realm.play,"Jouer"
 menu.realm.removeFamily,"Retirer la famille"
 menu.realm.removeFamilyAsk,"Retirer la famille {name} ?"
-menu.realm.removeFamilyBody,"Sa lignée prend fin en ligne et libère la place d’une nouvelle famille. Ses morts restent morts. Vos personnages ne changent pas."
+menu.realm.removeFamilyBody,"Sa lignée prend fin en ligne et libère la place d’une nouvelle famille. Ses morts restent morts et aucun héritier ne peut la poursuivre. Vos personnages ne changent pas."
 menu.realm.removeFamilyYes,"Retirer"
 menu.realm.strandedAsk,"Récupérer la progression non sauvegardée de {name} ?"
 menu.realm.strandedBody,"Cet appareil a gardé une progression de {name} qui n’a jamais atteint le royaume. Elle sera copiée en tant que nouveau personnage hors ligne. Votre personnage en ligne ne change pas, et rien de ce que vous jouez sur la copie ne revient en ligne."

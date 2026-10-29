@@ -30,21 +30,22 @@
   {
     "name": "REALM1-create-keeps-others",
     "file": "server-account/src/realm.js",
-    "old": "  if (!wrote.meta.changes) return { error: 'too-many-characters' };\n  await freeOthers({ db }, playerId, id);",
-    "new": "  if (!wrote.meta.changes) return { error: 'too-many-characters' };",
+    "old": "    return { error: 'too-many-characters' };\n  }\n  await freeOthers({ db }, playerId, id);",
+    "new": "    return { error: 'too-many-characters' };\n  }",
     "tests": [
       "test/server/realm1.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FB1029B)."
   },
   {
     "name": "REALM1-no-bound",
     "file": "server-account/src/realm.js",
-    "old": "AND dead_at IS NULL) < ?',\n    ).bind(id, playerId, n,",
-    "new": "AND dead_at IS NULL) < ? + 100',\n    ).bind(id, playerId, n,",
+    "old": "AND dead_at IS NULL) < ?'\n      // AUDIT FB1029B F4",
+    "new": "AND dead_at IS NULL) < ? + 100'\n      // AUDIT FB1029B F4",
     "tests": [
       "test/server/realm1.test.js"
     ],
-    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the bound counts the living, and a birth names its line and person."
+    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the bound counts the living, and a birth names its line and person. Re-aimed by content (AUDIT FB1029B)."
   },
   {
     "name": "REALM1-customs-no-track",

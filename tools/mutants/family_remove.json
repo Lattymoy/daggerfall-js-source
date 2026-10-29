@@ -2,8 +2,8 @@
   {
     "name": "FAMILY-REMOVE-living-ignored",
     "file": "server-account/src/legacy.js",
-    "old": "lineage_id = ?2 AND dead_at IS NULL)').bind(playerId, id).run();",
-    "new": "lineage_id = ?2 AND dead_at IS NULL AND 0)').bind(playerId, id).run();",
+    "old": "lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL))').bind(playerId, id).run();",
+    "new": "lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL) AND 0)').bind(playerId, id).run();",
     "tests": [
       "test/server/family_remove.test.js"
     ],
@@ -12,7 +12,7 @@
   {
     "name": "FAMILY-REMOVE-dead-hold-it",
     "file": "server-account/src/legacy.js",
-    "old": "lineage_id = ?2 AND dead_at IS NULL)').bind(playerId, id).run();",
+    "old": "lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL))').bind(playerId, id).run();",
     "new": "lineage_id = ?2)').bind(playerId, id).run();",
     "tests": [
       "test/server/family_remove.test.js"
@@ -78,5 +78,65 @@
       "test/systems/legacy/family_remove_menu.test.js"
     ],
     "note": "the cap's refusal names no way past it"
+  },
+  {
+    "name": "AUDIT-FB1029B-F1-hold-unseen",
+    "file": "server-account/src/legacy.js",
+    "old": "lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL))').bind(playerId, id).run();",
+    "new": "lineage_id = ?2 AND (dead_at IS NULL))').bind(playerId, id).run();",
+    "tests": [
+      "test/server/family_remove.test.js"
+    ],
+    "note": "a line whose fall is held for a Resurrect removed under it"
+  },
+  {
+    "name": "AUDIT-FB1029B-F2-refounded",
+    "file": "server-account/src/legacy.js",
+    "old": "  if (!had && base !== null) return { error: 'no-lineage' };",
+    "new": "",
+    "tests": [
+      "test/server/family_remove.test.js"
+    ],
+    "note": "a copy made from a removed line founds it again"
+  },
+  {
+    "name": "AUDIT-FB1029B-F2-not-kept",
+    "file": "src/systems/legacy/realmLine.js",
+    "old": "'lineage-law', 'no-lineage']);",
+    "new": "'lineage-law']);",
+    "tests": [
+      "test/systems/legacy/family_remove_menu.test.js"
+    ],
+    "note": "a removed line re-sent at every write"
+  },
+  {
+    "name": "AUDIT-FB1029B-F4-born-on-nothing",
+    "file": "server-account/src/realm.js",
+    "old": "      + ' AND (? IS NULL OR EXISTS (SELECT 1 FROM lineages WHERE player = ? AND id = ?))',",
+    "new": "      + ' AND (? IS NULL OR 1)',",
+    "tests": [
+      "test/server/family_remove.test.js"
+    ],
+    "note": "a birth lands on a line removed since its check"
+  },
+  {
+    "name": "AUDIT-FB1029B-F5-failed-roster",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "if (!realmRows || !realmRowsOk || !realmLineIds?.length) return null;",
+    "new": "if (!realmRows || !realmLineIds?.length) return null;",
+    "tests": [
+      "test/systems/legacy/family_remove_menu.test.js"
+    ],
+    "note": "a failed roster read lists every line as played by no one"
+  },
+  {
+    "name": "AUDIT-FB1029B-F3-gone-refused",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": ".then((r) => (r?.error === 'no-lineage' ? { ok: true } : r))",
+    "new": "",
+    "tests": [
+      "test/systems/legacy/family_remove_menu.test.js"
+    ],
+    "note": "a line already gone is refused with a founding's words, its row kept"
   }
 ]

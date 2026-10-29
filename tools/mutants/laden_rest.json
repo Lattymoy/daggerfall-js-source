@@ -4,7 +4,9 @@
     "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "const laden = () => (resting ? 1 : state.boatCargoMod);",
     "new": "const laden = () => state.boatCargoMod;",
-    "tests": ["test/systems/comeSailAway/laden_rest.test.js"],
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
     "note": "the mod's own: a dead hull keeps her swing and her way for good"
   },
   {
@@ -12,31 +14,139 @@
     "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "const laden = () => (resting ? 1 : state.boatCargoMod);",
     "new": "const laden = () => 1;",
-    "tests": ["test/systems/comeSailAway/laden_rest.test.js"],
-    "note": "the load no longer slows her coming on - a dead hull gathers a swing"
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "the load no longer slows her coming on"
   },
   {
     "name": "LADEN-REST-turn-unrested",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "resting = Math.abs(swing) < Math.abs(state.TurnCurrent) && swing * state.TurnCurrent >= 0;   // LADEN-REST",
-    "new": "resting = false;   // LADEN-REST",
-    "tests": ["test/systems/comeSailAway/laden_rest.test.js"],
+    "old": "    resting = against || (Math.abs(swing) < Math.abs(state.TurnCurrent) && swing * state.TurnCurrent >= 0);",
+    "new": "    resting = false;",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
     "note": "her swing comes off at the load's rate"
   },
   {
     "name": "LADEN-REST-way-unrested",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "resting = vMagnitude(state.velocityTarget) < was;   // LADEN-REST",
-    "new": "resting = false;   // LADEN-REST",
-    "tests": ["test/systems/comeSailAway/laden_rest.test.js"],
+    "old": "    resting = wanted < was && (wanted === 0 || vDot(state.velocityTarget, state.MoveVectorCurrent) >= f(f(wanted * was) * 0.999));",
+    "new": "    resting = false;",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
     "note": "her way comes off at the load's rate"
   },
   {
     "name": "LADEN-REST-said-once",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "if (state.lastWeight !== num || state.boatCargoMod === 0) {",
+    "old": "if (state.lastWeight !== num || (state.boatCargoMod === 0 && threshold > 0 && asked)) {",
     "new": "if (state.lastWeight !== num) {",
-    "tests": ["test/systems/comeSailAway/laden_rest.test.js"],
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
     "note": "a dead hull says why once"
+  },
+  {
+    "name": "AUDIT-FB1029B-S1-counter-at-the-load",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    const against = swing * state.TurnCurrent < 0 && state.boatCargoMod < 1;",
+    "new": "    const against = false;",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "a helm put against a laden swing takes it off at the load's rate - 5 to 11 times slower than letting go"
+  },
+  {
+    "name": "AUDIT-FB1029B-S1-counter-past-zero",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "state.TurnCurrent = mathfMoveTowards(state.TurnCurrent, against ? 0 : swing, f(turnAccel() * dt()));",
+    "new": "state.TurnCurrent = mathfMoveTowards(state.TurnCurrent, swing, f(turnAccel() * dt()));",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "the light rate carries her through 0 into a swing the other way the load should slow"
+  },
+  {
+    "name": "AUDIT-FB1029B-S2-said-at-rest",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "if (state.lastWeight !== num || (state.boatCargoMod === 0 && threshold > 0 && asked)) {",
+    "new": "if (state.lastWeight !== num || (state.boatCargoMod === 0 && threshold > 0)) {",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "said every round with her oars at rest"
+  },
+  {
+    "name": "AUDIT-FB1029B-S2-said-no-hold",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "if (state.lastWeight !== num || (state.boatCargoMod === 0 && threshold > 0 && asked)) {",
+    "new": "if (state.lastWeight !== num || (state.boatCargoMod === 0 && asked)) {",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "the Carrack under Classic said every round"
+  },
+  {
+    "name": "AUDIT-FB1029B-S5-slide-light",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    resting = wanted < was && (wanted === 0 || vDot(state.velocityTarget, state.MoveVectorCurrent) >= f(f(wanted * was) * 0.999));",
+    "new": "    resting = wanted < was;",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "a way wanted across her line gathers at the light rate"
+  },
+  {
+    "name": "AUDIT-FB1029B-S6-M1-classic-alone",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "const laden = () => (resting ? 1 : state.boatCargoMod);",
+    "new": "const laden = () => (resting && !responsive() ? 1 : state.boatCargoMod);",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "the Responsive helm keeps the bug"
+  },
+  {
+    "name": "AUDIT-FB1029B-S6-M2-sail-way",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "handlingMod('SailMoveAcceleration')) * wind) * laden())",
+    "new": "handlingMod('SailMoveAcceleration')) * wind) * state.boatCargoMod)",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "her way under canvas kept for good"
+  },
+  {
+    "name": "AUDIT-FB1029B-S6-M3-oar-way",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "handlingMod('OarMoveAcceleration')) * laden())",
+    "new": "handlingMod('OarMoveAcceleration')) * state.boatCargoMod)",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "her way under oars kept for good"
+  },
+  {
+    "name": "AUDIT-FB1029B-S6-M4-oar-turn",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "handlingMod('OarTurnAcceleration')) * laden())",
+    "new": "handlingMod('OarTurnAcceleration')) * state.boatCargoMod)",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "a swing with the rudder held against it kept for good"
+  },
+  {
+    "name": "AUDIT-FB1029B-S6-M5-rest-at-zero-alone",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    resting = against || (Math.abs(swing) < Math.abs(state.TurnCurrent) && swing * state.TurnCurrent >= 0);",
+    "new": "    resting = swing === 0;",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "only a rudder let go rests her swing"
   }
 ]

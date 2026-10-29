@@ -58,13 +58,14 @@ export function waitingHouses(families, { played = () => false, settings = null 
   return out;
 }
 
-/** The words of a waiting line's card. */
 /** FAMILY-REMOVE (FIELD BUGS 2026-10-29b): the account's lines (`ids`) no living realm character plays (`rows`, the
  *  roster - each its `lineage`), the ones the Online page offers to remove. */
 export const spareLines = (/** @type {string[]} */ ids, /** @type {any[]} */ rows) => {
   const played = new Set((rows ?? []).map((r) => r?.lineage).filter(Boolean));
   return (ids ?? []).filter((id) => !played.has(id));
 };
+
+/** The words of a waiting line's card. */
 export const houseWaitsTitle = (family) => `The house of ${family?.surname || 'your family'} waits`;
 export function houseWaitsLine(family, fallen) {
   const who = fallen ? fullNameOf(fallen.given, fallen.surname) : 'Its last member';

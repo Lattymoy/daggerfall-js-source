@@ -746,7 +746,7 @@ menu.realm.familyRow,"{name} ailesi ({model, select, bloodline {Bloodline} other
 menu.realm.familyUnnamed,"Adsız"
 menu.realm.removeFamily,"Aileyi kaldır"
 menu.realm.removeFamilyAsk,"{name} ailesi kaldırılsın mı?"
-menu.realm.removeFamilyBody,"Soyu çevrim içinde sona erer ve yeni bir aileye yer açar. Ölenleri ölü kalır. Karakterlerin değişmez."
+menu.realm.removeFamilyBody,"Soyu çevrimiçi sona erer ve yeni bir aileye yer açar. Ölenleri ölü kalır ve hiçbir varis onu sürdüremez. Karakterlerin değişmez."
 menu.realm.removeFamilyYes,"Kaldır"
 menu.realm.strandedAsk,"{name} için kaydedilmemiş ilerleme kurtarılsın mı?"
 menu.realm.strandedBody,"Bu cihaz, {name} için diyara hiç ulaşmamış ilerlemeyi sakladı. Yeni bir çevrimdışı karakter olarak kopyalanacak. Çevrimiçi karakterin değişmez ve kopyada oynadığın hiçbir şey çevrimiçine geri dönmez."

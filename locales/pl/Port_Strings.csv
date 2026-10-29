@@ -1789,7 +1789,7 @@ menu.realm.none,"Brak postaci online. Utwórz jedną lub wprowadź jedną ze swo
 menu.realm.play,"Graj"
 menu.realm.removeFamily,"Usuń ród"
 menu.realm.removeFamilyAsk,"Usunąć ród {name}?"
-menu.realm.removeFamilyBody,"Jego linia kończy się online i robi miejsce na nowy ród. Jego polegli pozostają polegli. Twoje postacie się nie zmieniają."
+menu.realm.removeFamilyBody,"Jego linia kończy się online i robi miejsce na nowy ród. Jego polegli pozostają polegli i żaden dziedzic nie może jej kontynuować. Twoje postacie się nie zmieniają."
 menu.realm.removeFamilyYes,"Usuń"
 menu.realm.strandedAsk,"Odzyskać niezapisane postępy postaci {name}?"
 menu.realm.strandedBody,"To urządzenie zachowało postępy postaci {name}, które nigdy nie dotarły do królestwa. Zostaną skopiowane jako nowa postać offline. Twoja postać online się nie zmieni, a nic, co rozegrasz na kopii, nie wróci do sieci."

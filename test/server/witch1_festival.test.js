@@ -208,6 +208,27 @@ test('HEARTH-SIBLING: any character of the account sets the bowl out at the acco
   assert.equal(row(alice.id).fest_bowls, 2);
 });
 
+test('HEARTH-SIBLING (AUDIT FB1029B H4, H5) a deed\'s home is filled by its holder alone; an heir taking the home up leaves the account\'s bowl standing', async () => {
+  const { alice, bob, player, ctx, cakes, bowls, home, db } = await stand();
+  home(alice, MAP, HOME, CHAR);
+  bowls(alice, 1);
+  cakes(alice, 10);
+  const at = { mapId: MAP, buildingKey: HOME, character: CHAR };
+  assert.deepEqual(await setOffering(ctx(), player(alice), at, ON), { ok: true, stock: 0, bowls: 0 });
+  db._raw.prepare('UPDATE homes SET deed = 1 WHERE building_key = ?').run(HOME);
+  assert.deepEqual(await fillOffering(ctx(), player(alice), { ...at, character: 'char-other' }, ON), { error: 'home' }, 'a deed\'s home: never a sibling\'s');
+  assert.equal((await fillOffering(ctx(), player(alice), at, ON)).moved, OFFERING_FILL, 'its holder fills it');
+  db._raw.prepare('UPDATE homes SET deed = 0, char_id = ? WHERE building_key = ?').run('char-heir', HOME);   // homes.js inheritHome
+  assert.equal((await festivalTown(ctx(), player(bob), { mapId: MAP }, ON)).offerings.length, 1, 'still standing in the town');
+  const mine = await festivalOf(ctx(), player(alice), ON);
+  assert.deepEqual([mine.offerings.length, mine.bowls], [1, 0], 'never sent home as an orphan');
+  assert.equal((await takeFromOffering(ctx(), player(bob), { mapId: MAP, buildingKey: HOME }, ON)).ok, true, 'and others still take from it');
+  db._raw.prepare("INSERT INTO guilds (id, name, name_key, tag, ranks, founded_at) VALUES ('g1', 'The Coven', 'the coven', 'CVN', '[]', 1)").run();
+  db._raw.prepare("UPDATE homes SET guild_id = 'g1' WHERE building_key = ?").run(HOME);
+  assert.equal((await festivalTown(ctx(), player(bob), { mapId: MAP }, ON)).offerings.length, 0, 'a home become a guild\'s hall stands no account\'s bowl');
+  assert.equal((await festivalOf(ctx(), player(alice), ON)).bowls, 1, 'its bowl home');
+});
+
 test('WITCH1 a bowl holds OFFERING_STOCK_MAX; an empty bowl gives nothing; one taken in since is `none`', async () => {
   const { alice, bob, player, ctx, cakes, bowls, home, db } = await stand();
   home(alice, MAP, HOME, CHAR);

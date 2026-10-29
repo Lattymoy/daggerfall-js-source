@@ -495,6 +495,9 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     }
     if (baseKey) base.furnish(baseKey, containers[had[0]] ?? shelves[had[1]] ?? beds[had[2]] ?? null);
   }
+  // AUDIT FB1029B H2: a piece with no floor under it holds a floor's edge over the void (a mod's bench at a gap in its
+  // room's shell) - the room keeps it, so taking it out never opens a way into the void
+  for (const p of base?.list() ?? []) if (p.model != null && collider.raycast(p.at, [0, -1, 0], 60, { skip: [baseBucketOf(p.key)] }) === Infinity) base.keep(p.key);
   // Interior swing doors run on the ActionSystem (P4): the verbatim
   // -90 / 1.5 s toggle with trigger-at-open-start - inner rooms open,
   // and they are audible (DaggerfallInterior.AddActionDoors builds them

@@ -1791,7 +1791,7 @@ menu.realm.none,"Inga onlinerollfigurer än. Skapa en, eller för in en av dina 
 menu.realm.play,"Spela"
 menu.realm.removeFamily,"Ta bort släkt"
 menu.realm.removeFamilyAsk,"Ta bort släkten {name}?"
-menu.realm.removeFamilyBody,"Dess linje tar slut online och ger plats åt en ny släkt. Dess fallna förblir fallna. Dina karaktärer ändras inte."
+menu.realm.removeFamilyBody,"Dess linje tar slut online och ger plats åt en ny släkt. Dess fallna förblir fallna, och ingen arvinge kan föra den vidare. Dina karaktärer ändras inte."
 menu.realm.removeFamilyYes,"Ta bort"
 menu.realm.strandedAsk,"Återställa osparade framsteg för {name}?"
 menu.realm.strandedBody,"Den här enheten har sparat framsteg för {name} som aldrig nådde riket. De kopieras som en ny offlinerollfigur. Din onlinerollfigur ändras inte, och inget du spelar på kopian kommer tillbaka online."

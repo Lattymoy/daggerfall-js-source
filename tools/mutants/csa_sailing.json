@@ -273,11 +273,12 @@
   {
     "name": "CSA-D-cargo-said-every-time",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    if (state.lastWeight !== num || state.boatCargoMod === 0) {",
+    "old": "    if (state.lastWeight !== num || (state.boatCargoMod === 0 && threshold > 0 && asked)) {",
     "new": "    if (true) {",
     "tests": [
       "test/systems/comeSailAway/csa_sailing.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FB1029B)."
   },
   {
     "name": "CSA-D-cargo-bigger-boat-half",

@@ -1791,7 +1791,7 @@ menu.realm.none,"Még nincs online karaktered. Készíts egyet, vagy hozd be len
 menu.realm.play,"Játék"
 menu.realm.removeFamily,"Család eltávolítása"
 menu.realm.removeFamilyAsk,"Eltávolítod a(z) {name} családot?"
-menu.realm.removeFamilyBody,"A vérvonala online véget ér, és helyet ad egy új családnak. Az elesettjei elesettek maradnak. A karaktereid nem változnak."
+menu.realm.removeFamilyBody,"A vérvonala online véget ér, és helyet ad egy új családnak. Az elesettjei elesettek maradnak, és egyetlen örökös sem viheti tovább. A karaktereid nem változnak."
 menu.realm.removeFamilyYes,"Eltávolítás"
 menu.realm.strandedAsk,"Visszaállítod {name} nem mentett előrehaladását?"
 menu.realm.strandedBody,"Ez az eszköz megőrizte {name} olyan előrehaladását, amely sosem jutott el a birodalomba. Új offline karakterként lesz átmásolva. Az online karaktered nem változik, és semmi, amit a másolattal játszol, nem kerül vissza online."

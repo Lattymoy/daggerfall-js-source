@@ -4160,7 +4160,7 @@ menu.realm.none,"Ancora nessun personaggio online. Creane uno, o porta dentro un
 menu.realm.play,"Gioca"
 menu.realm.removeFamily,"Rimuovi famiglia"
 menu.realm.removeFamilyAsk,"Rimuovere la famiglia {name}?"
-menu.realm.removeFamilyBody,"La sua stirpe finisce online e lascia spazio a una nuova famiglia. I suoi caduti restano caduti. I tuoi personaggi non cambiano."
+menu.realm.removeFamilyBody,"La sua stirpe finisce online e lascia spazio a una nuova famiglia. I suoi caduti restano caduti e nessun erede può proseguirla. I tuoi personaggi non cambiano."
 menu.realm.removeFamilyYes,"Rimuovi"
 menu.realm.strandedAsk,"Recuperare i progressi non salvati di {name}?"
 menu.realm.strandedBody,"Questo dispositivo ha conservato progressi di {name} che non hanno mai raggiunto il reame. Saranno copiati come nuovo personaggio offline. Il tuo personaggio online non cambia, e niente di ciò che giochi con la copia torna online."

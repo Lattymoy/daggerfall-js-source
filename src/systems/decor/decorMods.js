@@ -58,7 +58,7 @@ import { TOWN_PICTURES } from '../../world/townPictures.js';
 import { DETAILED_SHIPS_DERIVED } from '../detailedShips.js';
 import { customAliasFor, hasCustomModel } from '../../world/customModels.js';
 import { hasTextureReplacement } from '../textureReplacement.js';
-import { decorKey, isDecorModEntry, DECOR_FURNITURE_FIRST, DECOR_FURNITURE_LAST } from './decorCatalogue.js';   // AUDIT 05b A11: the one key a piece and its entry share
+import { decorKey, isDecorModEntry } from './decorCatalogue.js';   // AUDIT 05b A11: the one key a piece and its entry share
 
 /** THE MODS' PIECES THAT STAND INSIDE - offered in every room (and a yard): model id or `archive_record` -> how many
  *  times the mods stand it (measured, 2026-10-05: Beautiful Villages 1.4.2, Beautiful Cities 0.5.0, Detailed Ships
@@ -106,11 +106,30 @@ export const DECOR_MOD_ROOMS = Object.freeze({
     '56790_24': 237, '56790_25': 602,
   }),
 });
+/** AUDIT FB1029B H1: THE MODELS DAGGERFALL LAYS AS FURNITURE (ObjectType 3) in its own rooms - measured over every
+ *  interior of BLOCKS.BSA (test/scenes/builtin_mods_alinor.test.js measures it again). The mods reuse other classic
+ *  ids as their rooms' structure and their ships' rigging (a 12.6 m beam, a mast), which are never furniture. */
+export const ROOM_PROP_MODELS = Object.freeze([
+  41000, 41001, 41002, 41003, 41004, 41005, 41006, 41007, 41008, 41009, 41010, 41011, 41012, 41013, 41014, 41015, 41016,
+  41017, 41018, 41019, 41020, 41021, 41022, 41023, 41025, 41026, 41027, 41028, 41029, 41030, 41031, 41032, 41033, 41034,
+  41035, 41036, 41037, 41039, 41040, 41041, 41042, 41044, 41045, 41046, 41047, 41048, 41049, 41050, 41051, 41100, 41101,
+  41102, 41103, 41104, 41105, 41106, 41108, 41109, 41110, 41111, 41112, 41113, 41114, 41115, 41116, 41117, 41118, 41119,
+  41120, 41121, 41122, 41123, 41124, 41125, 41126, 41127, 41128, 41300, 41302, 41309, 41409, 41800, 41801, 41802, 41803,
+  41804, 41805, 41806, 41807, 41808, 41810, 41811, 41812, 41813, 41814, 41816, 41817, 41818, 41819, 41821, 41822, 41823,
+  41824, 41825, 41826, 41827, 41828, 41829, 41831, 41832, 41833, 41834, 41901, 51109, 51115, 51116, 51117, 51118, 51119,
+  51122, 51128,
+]);
+const ROOM_PROPS = new Set(ROOM_PROP_MODELS);
+/** AUDIT FB1029B H1: the mods' room pieces that hold the room up - DET's pillars (its ceilings' timbers and rafters) and
+ *  a column's drum - never taken out. */
+export const MOD_ROOM_STRUCTURE = Object.freeze([45081, 45110, 45111, 45112, 45129, 45169]);
+const STRUCTURE = new Set(MOD_ROOM_STRUCTURE);
 /** BUILT-IN-MODS (FIELD BUGS 2026-10-29b, "things that cannot be removed from the house I bought in Alinor"): whether a
- *  room's model is its furniture - Daggerfall's furniture families or a piece the mods stand inside. The town mods write
- *  most of a room's furniture as scenery (ObjectType 0), which BASE-HIDE never offered (scenes/interiorContext.js). */
+ *  room's model is its furniture - one Daggerfall lays as a prop in its rooms, or a piece the mods stand inside that is
+ *  not their structure. The town mods write most of a room's furniture as scenery (ObjectType 0), which BASE-HIDE never
+ *  offered (scenes/interiorContext.js). */
 export const isRoomFurnishing = (/** @type {number} */ id) => Number.isSafeInteger(id)
-  && ((id >= DECOR_FURNITURE_FIRST && id <= DECOR_FURNITURE_LAST) || Object.hasOwn(DECOR_MOD_ROOMS.models, id));
+  && (ROOM_PROPS.has(id) || (Object.hasOwn(DECOR_MOD_ROOMS.models, id) && !STRUCTURE.has(id)));
 /** THE MODS' PIECES THAT STAND OUTSIDE ALONE - a yard's: the rocks, the market stalls, a temple column's head; the
  *  towns' fowl, sheep, cattle, horses and doves; the grain; a temple's garden rows. */
 export const DECOR_MOD_STREETS = Object.freeze({

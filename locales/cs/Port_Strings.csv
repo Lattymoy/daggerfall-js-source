@@ -4160,7 +4160,7 @@ menu.realm.none,"Zatím žádné online postavy. Vytvoř si jednu nebo níže p�
 menu.realm.play,"Hrát"
 menu.realm.removeFamily,"Odebrat rod"
 menu.realm.removeFamilyAsk,"Odebrat rod {name}?"
-menu.realm.removeFamilyBody,"Jeho linie online končí a uvolní místo pro nový rod. Jeho padlí zůstanou padlí. Tvé postavy se nezmění."
+menu.realm.removeFamilyBody,"Jeho linie online končí a uvolní místo pro nový rod. Jeho padlí zůstanou padlí a žádný dědic ji nemůže převzít. Tvé postavy se nezmění."
 menu.realm.removeFamilyYes,"Odebrat"
 menu.realm.strandedAsk,"Obnovit neuložený postup postavy {name}?"
 menu.realm.strandedBody,"Toto zařízení uchovalo postup postavy {name}, který se nikdy nedostal do říše. Zkopíruje se jako nová offline postava. Tvoje online postava se nezmění a nic, co na kopii odehraješ, se do online nevrátí."

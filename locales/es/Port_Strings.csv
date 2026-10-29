@@ -4160,7 +4160,7 @@ menu.realm.none,"Aún no tienes personajes en línea. Crea uno, o trae uno de lo
 menu.realm.play,"Jugar"
 menu.realm.removeFamily,"Eliminar familia"
 menu.realm.removeFamilyAsk,"¿Eliminar la familia {name}?"
-menu.realm.removeFamilyBody,"Su linaje termina en línea y deja sitio para una familia nueva. Sus caídos siguen caídos. Tus personajes no cambian."
+menu.realm.removeFamilyBody,"Su linaje termina en línea y deja sitio para una familia nueva. Sus caídos siguen caídos y ningún heredero puede continuarlo. Tus personajes no cambian."
 menu.realm.removeFamilyYes,"Eliminar"
 menu.realm.strandedAsk,"¿Recuperar el progreso sin guardar de {name}?"
 menu.realm.strandedBody,"Este dispositivo guardó progreso de {name} que nunca llegó al reino. Se copiará como un personaje sin conexión nuevo. Tu personaje en línea no cambia, y nada de lo que juegues con la copia vuelve a estar en línea."

@@ -1793,7 +1793,7 @@ menu.realm.none,"オンラインのキャラクターはまだいません。作
 menu.realm.play,"プレイ"
 menu.realm.removeFamily,"一族を削除"
 menu.realm.removeFamilyAsk,"{name}家を削除しますか？"
-menu.realm.removeFamilyBody,"その血筋はオンラインで終わり、新しい一族のための空きができます。倒れた者は倒れたままです。キャラクターは変わりません。"
+menu.realm.removeFamilyBody,"その血筋はオンラインで終わり、新しい一族のための空きができます。倒れた者は倒れたままで、跡継ぎが継ぐこともできません。キャラクターは変わりません。"
 menu.realm.removeFamilyYes,"削除"
 menu.realm.strandedAsk,"{name} の未保存の進行を復元しますか？"
 menu.realm.strandedBody,"このデバイスには、レルムに届かなかった {name} の進行が残っています。新しいオフラインのキャラクターとしてコピーされます。オンラインのキャラクターは変わらず、コピーでのプレイはオンラインには反映されません。"

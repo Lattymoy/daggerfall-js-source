@@ -4160,7 +4160,7 @@ menu.realm.none,"Belum ada karakter daring. Buat satu, atau bawa masuk salah sat
 menu.realm.play,"Main"
 menu.realm.removeFamily,"Hapus keluarga"
 menu.realm.removeFamilyAsk,"Hapus keluarga {name}?"
-menu.realm.removeFamilyBody,"Garis keturunannya berakhir secara daring dan memberi ruang bagi keluarga baru. Yang gugur tetap gugur. Karaktermu tidak berubah."
+menu.realm.removeFamilyBody,"Garis keturunannya berakhir secara daring dan memberi ruang bagi keluarga baru. Yang gugur tetap gugur, dan tak ada ahli waris yang dapat melanjutkannya. Karaktermu tidak berubah."
 menu.realm.removeFamilyYes,"Hapus"
 menu.realm.strandedAsk,"Pulihkan kemajuan {name} yang belum tersimpan?"
 menu.realm.strandedBody,"Perangkat ini menyimpan kemajuan {name} yang tidak pernah sampai ke ranah. Kemajuan itu akan disalin sebagai karakter luring baru. Karakter daringmu tidak berubah, dan apa pun yang kamu mainkan di salinan itu tidak kembali ke daring."

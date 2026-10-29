@@ -4160,7 +4160,7 @@ menu.realm.none,"No online characters yet. Make one, or bring one of yours in be
 menu.realm.play,"Play"
 menu.realm.removeFamily,"Remove family"
 menu.realm.removeFamilyAsk,"Remove the {name} family?"
-menu.realm.removeFamilyBody,"Its line ends online and frees room for a new family. Its fallen stay fallen. Your characters are not changed."
+menu.realm.removeFamilyBody,"Its line ends online and frees room for a new family. Its fallen stay fallen, and no heir of it can carry it on. Your characters are not changed."
 menu.realm.removeFamilyYes,"Remove"
 menu.realm.strandedAsk,"Recover {name}’s unsaved progress?"
 menu.realm.strandedBody,"This device kept progress for {name} that never reached the realm. It will be copied as a new offline character. Your online character does not change, and nothing you play on the copy comes back online."

@@ -4160,7 +4160,7 @@ menu.realm.none,"Ingen onlinekarakterer endnu. Lav en, eller før en af dine ind
 menu.realm.play,"Spil"
 menu.realm.removeFamily,"Fjern slægt"
 menu.realm.removeFamilyAsk,"Fjern slægten {name}?"
-menu.realm.removeFamilyBody,"Dens linje slutter online og giver plads til en ny slægt. Dens faldne forbliver faldne. Dine figurer ændres ikke."
+menu.realm.removeFamilyBody,"Dens linje slutter online og giver plads til en ny slægt. Dens faldne forbliver faldne, og ingen arving kan føre den videre. Dine figurer ændres ikke."
 menu.realm.removeFamilyYes,"Fjern"
 menu.realm.strandedAsk,"Gendan ugemte fremskridt for {name}?"
 menu.realm.strandedBody,"Denne enhed har gemt fremskridt for {name}, som aldrig nåede riget. De bliver kopieret som en ny offlinekarakter. Din onlinekarakter ændrer sig ikke, og intet, du spiller på kopien, kommer tilbage online."

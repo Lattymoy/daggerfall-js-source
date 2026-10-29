@@ -1,13 +1,16 @@
 // FAMILY-REMOVE (FIELD BUGS 2026-10-29b, a one-life player: "i have no characters anymore and i still cannot make another
 // bloodline", then "being able to remove old families"): a line no living character plays is let go, and LINEAGES_MAX has
 // room again - the REAL Worker over the REAL migrations (test/accountDb.mjs). Deleted and fallen characters never freed a
-// line, so forty one-life runs filled the account for good. Mutants: tools/mutants/family_remove.json.
+// line, so forty one-life runs filled the account for good. AUDIT FB1029B F1, F2, F4: never a line whose fall is held for
+// a Resurrect, never founded again by a copy made from it, and never born into once gone. Mutants:
+// tools/mutants/family_remove.json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { standService } from '../accountDb.mjs';
 import { freshSave } from '../realmSeat.mjs';
 import { ROUTES } from '../../server-account/src/service.js';
-import { LINEAGES_MAX } from '../../server-account/src/legacy.js';
+import { LINEAGES_MAX, putLineage, removeLineage } from '../../server-account/src/legacy.js';
+import { createRealm } from '../../server-account/src/realm.js';
 
 const record = (id, rev = 1, people = [{ id: 1 }, { id: 2 }]) => ({ v: 1, id, surname: 'Hlaalu', model: 'bloodline', rev, people });
 const famOf = (i) => `fam-k${i.toString(36)}-abc123`;
@@ -64,4 +67,52 @@ test('FAMILY-REMOVE THE BOUND HAS ROOM AGAIN: at LINEAGES_MAX a founding is refu
   assert.equal((await lines()).length, LINEAGES_MAX);
   assert.deepEqual((await call('/v1/realm/lineage/remove', { id: famOf(3) })).body, { ok: true });
   assert.deepEqual((await call('/v1/realm/lineage', { id: over, record: record(over) })).body, { ok: true, rev: 1 }, 'room for a new family');
+});
+
+test('FAMILY-REMOVE (AUDIT FB1029B F1) a line whose fall is held for a Resurrect stays - the raise would stand her up on no line; settled, it goes', async () => {
+  const { call, put, lines } = await stand();
+  const A = famOf(1);
+  await call('/v1/realm/lineage', { id: A, record: record(A) });
+  const a = (await call('/v1/realm/create', { name: 'Ysolde Hlaalu', lineage: A, person: 1 })).body;
+  assert.equal((await put(a.id, a.lease, 1)).status, 200);
+  assert.equal((await call('/v1/realm/die', { id: a.id, lease: a.lease, hold: true })).status, 200, 'the death door\'s fall, held');
+  const held = await call('/v1/realm/lineage/remove', { id: A });
+  assert.deepEqual([held.status, held.body.error], [409, 'lineage-in-use'], 'held for a Resurrect: in use');
+  assert.equal((await call('/v1/realm/die', { id: a.id, lease: a.lease })).status, 200, 'the tab went on: the window closed');
+  assert.deepEqual((await call('/v1/realm/lineage/remove', { id: A })).body, { ok: true });
+  assert.deepEqual(await lines(), []);
+});
+
+test('FAMILY-REMOVE (AUDIT FB1029B F2) a copy made from a removed line never founds it again behind the player\'s back; a founding still founds', async () => {
+  const { call, lines } = await stand();
+  const A = famOf(1);
+  await call('/v1/realm/lineage', { id: A, record: record(A) });
+  assert.deepEqual((await call('/v1/realm/lineage/remove', { id: A })).body, { ok: true });
+  const stale = await call('/v1/realm/lineage', { id: A, record: record(A, 7), base: 1 });
+  assert.deepEqual([stale.status, stale.body.error], [404, 'no-lineage'], 'made from the stored copy, which is gone');
+  assert.deepEqual(await lines(), []);
+  assert.deepEqual((await call('/v1/realm/lineage', { id: A, record: record(A, 7) })).body, { ok: true, rev: 7 }, 'a founding, no base');
+});
+
+test('FAMILY-REMOVE (AUDIT FB1029B F4) a line removed between a birth\'s check and its write takes no birth', async () => {
+  const S = await standService();
+  const g = await S.guest();
+  const db = S.env.DB, nowS = 1_800_000_000, A = famOf(1);
+  assert.deepEqual(await putLineage({ db, nowS }, g.id, { id: A, record: record(A) }), { ok: true, rev: 1 });
+  let removed = null;
+  const racing = {
+    ...db,
+    prepare(sql) {
+      const st = db.prepare(sql);
+      if (/^\s*INSERT INTO realm_characters/.test(sql) && removed == null) {
+        const bind = st.bind.bind(st);
+        st.bind = (...a) => { const b = bind(...a); const run = b.run; b.run = async () => { removed = await removeLineage({ db }, g.id, { id: A }); return run(); }; return b; };
+      }
+      return st;
+    },
+  };
+  const born = await createRealm({ db: racing, rand: (b) => globalThis.crypto.getRandomValues(b), nowS }, g.id, { name: 'Brin Hlaalu', lineage: A, person: 2 });
+  assert.deepEqual(removed, { ok: true }, 'the removal landed between the two');
+  assert.deepEqual(born, { error: 'no-lineage' });
+  assert.equal(db._raw.prepare('SELECT COUNT(*) AS n FROM realm_characters WHERE player = ?').get(g.id).n, 0, 'no character on a line that is gone');
 });
