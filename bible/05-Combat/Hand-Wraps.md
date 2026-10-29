@@ -81,9 +81,9 @@ they draw, the running hands too.
 ## The account service
 
 The item law knows template 563 (`systems/item/itemLaw.js` `CUSTOM_TEMPLATE_GROUPS`, which imports the row, so a
-headless judge knows it too). ITEM_LAW_VERSION stays 14: no pair existed for an older law to find against. The service
-that judges it is acct220: deploy the account service before the site, or an honest pair reads as a forgery. A loot
-room's hello says law 2 (`net/wire.js` `LOOT_HELLO_LAW`, world286): while `lootDoor` is on, the relay refuses an older
+headless judge knows it too). ITEM_LAW_VERSION stays 15 (DRAGON5's): no pair existed for an older law to find against. The
+service that judges it is acct224: deploy the account service before the site, or an honest pair reads as a forgery. A loot
+room's hello says law 2 (`net/wire.js` `LOOT_HELLO_LAW`, world289): while `lootDoor` is on, the relay refuses an older
 build, which would drop a pair from a shared container. Deploy the relay first, then the account service, then the site.
 
 ## THE FOUR HOSTS RULE

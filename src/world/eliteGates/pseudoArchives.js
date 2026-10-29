@@ -62,6 +62,7 @@ export const PSEUDO_ARCHIVES = Object.freeze([
   N(561, 'characters/thunderlockIds.js', 'PELLET_ARCHIVE', 'mod', "the Thunderlock's pellets"),
   N(562, 'characters/thunderlockIds.js', 'PISTOLET_ARCHIVE', 'mod', "the Dwarven Pistolet's art"),
   N(1800, 'characters/dwarvenDragonId.js', 'DWARVEN_DRAGON_ARCHIVE', 'port', "the Dwarven Dragon's sprites (past Enemy Expansion's 1500-1708)"),
+  N(1801, 'characters/dwarvenDragonId.js', 'AETHERBRIGHT_ARCHIVE', 'port', "the Aetherbright's sprites: 1800's under its own palette (DRAGON7)"),
   N(10035, 'world/townStandIns.js', 'TOWN_GARDEN_ARCHIVE', 'data', "the temples' gardens Daggerfall's blocks name"),
   N(38001, 'combat/blood/bloodArt.js', 'BLOOD_ATLAS_ARCHIVE', 'port', 'the blood atlas'),
   N(38101, 'world/gate/gateModel.js', 'GATE_ARCHIVE', 'port', "Dagon's Breach's gate stone"),

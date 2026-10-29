@@ -15,6 +15,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { SKILL_COUNT } from '../skills.js';
+import { revivedOf } from './revived.js';   // AUDIT FB1029 E-S1: a union child's death the bearer took back
 
 /** THE BLOOD: a stat's gift is `round((parent - 50) / 10)`, held to 0..3 (family.js bloodOf). */
 export const BLOOD_MAX = 3;
@@ -60,7 +61,7 @@ export function lineageLawFindings(record, stored = null) {
     for (const was of stored.people) {
       const now = byId.get(was?.id);
       if (!now) { out.add('member'); continue; }
-      if (was.died && !now.died) out.add('death');
+      if (was.died && !now.died && !((was.kind ?? 'member') === 'union' && revivedOf(now).includes(Number(was.died.at)))) out.add('death');
       if (was.retired != null && now.retired == null) out.add('retired');
     }
     const rows = new Set((Array.isArray(record?.remains) ? record.remains : []).map((/** @type {any} */ r) => r?.id));

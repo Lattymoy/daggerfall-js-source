@@ -345,7 +345,7 @@
   {
     "name": "HCC-dismount-never-parks",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if (prev === TRANSPORT.Cart && wagonState.Mode === WAGON_MODE.WithPlayer && !pee().isPlayerInside() && !hasPendingInteriorDeployment) {",
+    "old": "    if (cartParks(prev, mode)) {",
     "new": "    if (false) {",
     "tests": [
       "test/systems/horse/hcc_runtime.test.js"
@@ -354,7 +354,7 @@
   {
     "name": "HCC-horse-dismount-stays-with-player",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    } else if (prev === TRANSPORT.Horse && mode === TRANSPORT.Foot && wagonState.HorseMode === HORSE_MODE.WithPlayer && !pee().isPlayerInside() && !hasPendingInteriorHorseDeployment) {\n      deployHorseBehindPlayer();",
+    "old": "    } else if (horseParks(prev, mode)) {\n      deployHorseBehindPlayer();",
     "new": "    } else if (false) {\n      deployHorseBehindPlayer();",
     "tests": [
       "test/systems/horse/hcc_runtime.test.js"
@@ -401,8 +401,8 @@
   {
     "name": "HCC-summon-indoors",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if (pee().isPlayerInside() || tm().isOnShip()) return { ok: false, text: HCC_TEXT.summonOutdoorsOnly };",
-    "new": "    if (tm().isOnShip()) return { ok: false, text: HCC_TEXT.summonOutdoorsOnly };",
+    "old": "    if (pee().isPlayerInside() || aboard()) return { ok: false, text: HCC_TEXT.summonOutdoorsOnly };",
+    "new": "    if (aboard()) return { ok: false, text: HCC_TEXT.summonOutdoorsOnly };",
     "tests": [
       "test/systems/horse/hcc_runtime.test.js"
     ]
@@ -465,8 +465,8 @@
   {
     "name": "HCC-race-ignores-horsecart",
     "file": "src/player/activationRace.js",
-    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
-    "new": "  return firmFirst([gate, broker, camp, water, wagon, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, dragon, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);   // DRAGON5b: the tamed dragon with the mounts, after HCC's",
+    "new": "  return firmFirst([gate, broker, camp, water, wagon, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);   // DRAGON5b: the tamed dragon with the mounts, after HCC's",
     "tests": [
       "test/player/hcc_hosts.test.js"
     ]
@@ -474,8 +474,8 @@
   {
     "name": "HCC-race-horsecart-before-cart",
     "file": "src/player/activationRace.js",
-    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
-    "new": "  return firmFirst([gate, broker, camp, water, horseCart, wagon, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, dragon, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);   // DRAGON5b: the tamed dragon with the mounts, after HCC's",
+    "new": "  return firmFirst([gate, broker, camp, water, horseCart, wagon, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);   // DRAGON5b: the tamed dragon with the mounts, after HCC's",
     "tests": [
       "test/player/hcc_hosts.test.js"
     ]

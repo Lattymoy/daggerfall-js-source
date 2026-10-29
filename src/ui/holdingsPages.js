@@ -25,6 +25,9 @@ import { WAGON_MODE, HORSE_MODE, TRANSPORT, HORSE_NAME_MAX } from '../systems/ho
 import { optionPath } from './settings/settingsMap.js';   // ORG2: a switch named in a window says where it lives
 import { upkeepReach } from '../systems/upkeep/upkeepRuntime.js';   // STEED1/WAGONS4: a horse fed by hand only beside it, a kit spent only at the wagon
 import { t } from '../systems/textManager.js';   // HORSE-TIERS: Boons' two hunger lines in the player's language
+import { dragonKeepDoor, dragonCardWords, DRAGON_KEEP_CARD, DRAGON_CARE_TEXT, DRAGON_NAME_MAX } from '../systems/dragon/dragonKeep.js';   // DRAGON5b: the tamed dragon's card
+import { dragonArchiveOf } from '../characters/dwarvenDragonId.js';
+import { DRAGON_MOUNT_ICON } from '../systems/dragon/dragonMount.js';
 
 export const STABLE_PAGE_SECTIONS = Object.freeze([Object.freeze(['stable', 'Stable'])]);
 export const HOLDINGS_STYLE_ID = 'holdings-pages-css';
@@ -72,7 +75,7 @@ export function stableProviderFor({ runtime, on, hasHorse, hasCart, wagonKind = 
   return {
     stable: () => { birthHorses(items()); const v = view(); return { hcc: !!on(), hasHorse: !!hasHorse(), hasCart: !!hasCart(), view: v, kind: wagonKind() ?? null, paint: outsidePaintRow(items()), look: horseLookRows(items()), care: upkeep?.model({ near: upkeepReach(runtime, on()).near, name: v?.horseName ?? '' }) ?? null }; },   // WAGONS1: which wagon; WAGONS2: its paint; COATS1: the horse's look; STEED1/WAGONS4: their upkeep
     stableAct: (verb, arg) => {
-      if (upkeep && (verb === 'feed' || verb === 'treat' || verb === 'ride' || verb === 'kit')) {   // STEED1/WAGONS4: the upkeep's own acts, the mod on or off
+      if (upkeep && (verb === 'feed' || verb === 'treat' || verb === 'ride' || verb === 'kit' || verb === 'feedDragon')) {   // STEED1/WAGONS4: the upkeep's own acts, the mod on or off; DRAGON5c: the dragon's oil
         const r = upkeep.act(verb, arg, { ...upkeepReach(runtime, on()), pass });
         if (r.ok) onPainted();
         return r;
@@ -221,6 +224,8 @@ function bondMeter(el, meter, h) {
 /** STEED-UI: hours of food as a card says them. */
 const foodHours = (hours) => (hours >= 2 ? `${Math.floor(hours)} hours` : hours * 60 >= 2 ? `${Math.round(hours * 60)} minutes` : 'a minute');
 export const hungerLine = (h, care = null) => (h.hungerKey === 'fed' && h.fedHours > 0 ? `Fed, with food enough for ${foodHours(h.fedHours)}.` : (care?.hungerCosts === false ? HUNGER_LINE_BOONS : HUNGER_LINE)[h.hungerKey] ?? '');
+/** STEED1: a steed's bond and hunger in words (DRAGON5c: the tamed dragon's card says its own the same). */
+const bondLine = (h, care) => `${h.tier} - bond ${Math.floor(h.bond)} of 100${h.bonus ? `, +${h.bonus} to every stat` : ''}. ${hungerLine(h, care)}`;
 /** STEED1: the choice to ride horse `h` (`chooseRiddenHorse` - made the pack's first). FIELD BUGS 2026-10-16b
  *  HORSE-CARE-OFF: on every other horse's card in every tier - with its care, or (Off, any skin but the enhanced one)
  *  in a row of its own. */
@@ -237,7 +242,7 @@ function rideButton(el, h, act) {
  */
 function steedLines(el, meter, h, care, act) {
   const out = [];
-  out.push(el('span', 'hld-sub', `${h.tier} - bond ${Math.floor(h.bond)} of 100${h.bonus ? `, +${h.bonus} to every stat` : ''}. ${hungerLine(h, care)}`));
+  out.push(el('span', 'hld-sub', bondLine(h, care)));
   out.push(bondMeter(el, meter, h));
   if (h.ridden) {
     out.push(holdingMeter(el, meter, 'Breath', h.breath * 100, 100, h.breath < 0.25 || h.winded ? 'blood' : 'verdigris'));
@@ -350,6 +355,7 @@ let _said = null;   // { who: 'horse'|'wagon'|'both', ok, text } - the last act'
 let _renaming = false;   // the horse's name field open
 let _draft = '';
 let _lookOpen = '';   // UI-CALM: whose look's pickers are open - 'horse', 'wagon', or none
+let _dragonNaming = false, _dragonDraft = '';   // DRAGON5b: the dragon's name field open, and what is typed
 
 /** UI-CALM: a colour a look's swatch wears, by the name the card says - a horse's coats, a wagon's outside paints. A
  *  name with none is drawn as a word (the stepper). */
@@ -431,7 +437,10 @@ export function drawStablePage(detail, rerender, { el, divider, meter = null } =
   const m = p?.stable?.() ?? { hcc: false, hasHorse: false, hasCart: false };
   const words = stableWords(m);
   detail.append(divider('Stable'));
+  const dk = dragonKeepDoor()?.model?.() ?? null;   // DRAGON5b: the tamed dragon, its own card
+  if (dk) detail.append(dragonCard(el, meter, dk, m.care ?? null, (verb) => p?.stableAct?.(verb), rerender));   // DRAGON5c: and its care
   if (!words.horse && !words.wagon) {
+    if (dk) { if (_said) detail.append(el('p', _said.ok ? 'hld-said' : 'hld-why', _said.text)); return; }
     detail.append(el('p', 'px-note', 'You own no horse and no wagon. A city\'s or town\'s Stable sells horses to ride, and its Wagon Yard carts and wagons to carry more than you can.'));
     return;
   }
@@ -515,5 +524,63 @@ export function drawStablePage(detail, rerender, { el, divider, meter = null } =
     : `Turn on Horse Cart and Cargo (${optionPath('feat:mod-horse-cart-and-cargo')}) to have your horse and wagon stand in the world.`));
 }
 
+/**
+ * DRAGON5b: THE TAMED DRAGON'S CARD - where it is, its saddlebags' load, its look in words, and its acts (call, send
+ * away, the bags, a name), each through the keep's door (systems/dragon/dragonKeep.js) and its word said under it.
+ */
+function dragonCard(el, meter, dk, care, stableAct, rerender) {
+  const door = dragonKeepDoor();
+  const wrap = el('div', 'hld-list');
+  const act = (fn) => { const r = fn() ?? { ok: false, text: '' }; _said = r.text ? { ok: r.ok, text: r.text } : null; rerender(); };
+  const extra = [holdingMeter(el, meter, DRAGON_KEEP_CARD.load, dk.bags.kg, dk.bags.max, 'thin'), el('span', 'hld-sub', DRAGON_KEEP_CARD.look(dk.look))];
+  const h = care?.dragon ?? null;   // DRAGON5c: horse care's law on it - its bond, hunger, breath, stats, and its oil
+  if (h) {
+    extra.push(el('span', 'hld-sub', bondLine(h, care)));
+    extra.push(bondMeter(el, meter, h));
+    if (dk.where === 'ridden') {
+      extra.push(holdingMeter(el, meter, DRAGON_CARE_TEXT.breath, h.breath * 100, 100, h.breath < 0.25 || h.winded ? 'blood' : 'verdigris'));
+      if (h.winded) extra.push(el('span', 'hld-sub hld-why', DRAGON_CARE_TEXT.windedLine));
+    }
+    const row = el('div', 'hld-acts');
+    const feed = el('button', h.full ? 'act' : 'act primary', DRAGON_CARE_TEXT.feed(care.oil ?? 0));
+    feed.title = h.full ? DRAGON_CARE_TEXT.full : DRAGON_CARE_TEXT.feedTip;
+    if (!care.oil || h.full || !h.near) feed.setAttribute('aria-disabled', 'true');
+    feed.onclick = () => act(() => stableAct('feedDragon'));
+    row.append(feed);
+    extra.push(row);
+    const stats = el('div', 'hld-stats');
+    stats.append(el('span', 'hld-subhead', DRAGON_CARE_TEXT.stats));
+    for (const st of h.stats) stats.append(statMeter(el, meter, st.name, st.now, Math.max(0, st.now - st.born), 'thin', statWhy(st, h.bonus, h.penalty, h.hunger)));
+    extra.push(stats);
+  }
+  if (_dragonNaming) {
+    const field = /** @type {HTMLInputElement} */ (el('input', 'hld-field'));
+    field.type = 'text';
+    field.maxLength = DRAGON_NAME_MAX;
+    field.value = _dragonDraft;
+    field.setAttribute('aria-label', DRAGON_KEEP_CARD.field);
+    field.oninput = () => { _dragonDraft = field.value; };
+    const save = () => { _dragonNaming = false; act(() => door?.rename(_dragonDraft)); };
+    field.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } };
+    const row = el('div', 'hld-acts');
+    const ok = el('button', 'act primary', DRAGON_KEEP_CARD.setName);
+    ok.onclick = save;
+    const no = el('button', 'act', DRAGON_KEEP_CARD.keepName);
+    no.onclick = () => { _dragonNaming = false; rerender(); };
+    row.append(ok, no);
+    extra.push(field, row);
+  }
+  const acts = el('div', 'hld-acts');
+  const button = (label, primary, fn) => { const b = el('button', primary ? 'act primary' : 'act', label); b.onclick = () => act(fn); acts.append(b); };
+  if (dk.where !== 'ridden' && !dk.coming) button(DRAGON_KEEP_CARD.call, true, () => door?.call());
+  if (dk.where === 'waiting') button(DRAGON_KEEP_CARD.sendAway, false, () => door?.sendAway());
+  if (dk.near) button(DRAGON_KEEP_CARD.bags, false, () => door?.openBags());
+  if (!_dragonNaming) { const ren = el('button', 'act', DRAGON_KEEP_CARD.rename); ren.onclick = () => { _dragonNaming = true; _dragonDraft = dk.name ?? ''; _said = null; rerender(); }; acts.append(ren); }
+  extra.push(acts);
+  wrap.append(card(el, { art: { archive: dragonArchiveOf(dk.look), record: DRAGON_MOUNT_ICON[1] }, glyph: '\u25c6', name: dk.title, words: dragonCardWords(dk), sub: null, extra, rerender }).item);
+  wrap.append(el('p', 'hld-foot', DRAGON_KEEP_CARD.foot));
+  return wrap;
+}
+
 /** A visit's words forgotten (an act's answer, an open name field) - the pause menu's every mount. */
-export function resetHoldingsPages() { _said = null; _renaming = false; _draft = ''; _lookOpen = ''; }
+export function resetHoldingsPages() { _said = null; _renaming = false; _draft = ''; _lookOpen = ''; _dragonNaming = false; _dragonDraft = ''; }

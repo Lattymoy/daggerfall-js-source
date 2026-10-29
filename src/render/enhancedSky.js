@@ -328,6 +328,14 @@ export function withMoonAmbient(ambient, moon) {
   return ambient;
 }
 
+/** WL1: THE STREET LIT BY THE CLOCK, for the view out and a building's glass (render/realWindows.js) - the ambient with
+ *  secunda's lift, the key at its scale and colour, and masser's own light (the street was lit by the moon of the hour
+ *  the player went in, and a building's window took no moon at all). */
+export function lightStreetAt(r, light, moon, sunColor) {
+  r.setLighting(withMoonAmbient(light.ambient, moon), light.sun, sunColor);
+  r.setMoonlight(moon);
+}
+
 /** THE WEATHER'S HAND, EASED (ES1c). The sim flips its type on one
  *  frame - sunny to rain, between two ticks - and the sky was rebuilt
  *  from the type every frame, so the whole dome changed in the time it

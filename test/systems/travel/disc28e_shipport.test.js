@@ -27,8 +27,9 @@ import { fareText } from '../../../src/systems/party/partyTravelLaw.js';
 import { YesNoBoxWindow } from '../../../src/ui/yesNoBox.js';
 import { CLIMATES } from '../../../src/formats/mapsFile.js';
 import { codeHasOnce, codeOnly } from '../../codeOnly.mjs';
+import { hostText } from '../../hostText.mjs';
 
-const WORLD = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+const WORLD = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT, DRAGON5b): the host read whole - the fare bag is scenes/travelFareHost.js
 /** A two-space-indented function of world.js's host, whole. */
 const fnOf = (head) => {
   const i = WORLD.indexOf(head);

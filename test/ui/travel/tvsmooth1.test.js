@@ -54,7 +54,7 @@ test('ROAD-BRIDGE: one open pixel between two road legs is the road\'s; a longer
   assert.equal(bridgedRoadLeg([R(1), R(2, 'open')], 1), false, 'the last leg');
   assert.equal(bridgedRoadLeg([R(1), R(2)], 1), false, 'a road leg is no bridge');
   assert.equal(bridgedRoadLeg([R(1), R(2, 'sea'), R(3)], 1), false, 'a crossing is never the road\'s');
-  assert.match(rd('src/systems/travel/travelOptions.js'), /ROAD_LEG_KINDS\.includes\(leg\.kind\) \|\| bridgedRoadLeg\(r\.legs, at\)/, 'journeyOnRoad reads it');
+  assert.match(rd('src/systems/travel/travelOptions.js'), /ROAD_LEG_KINDS\.includes\(leg\.kind\) \|\| flownLeg\(leg\) \|\| bridgedRoadLeg\(r\.legs, at\)/, 'journeyOnRoad reads it');   // PIN MOVED (DRAGON6): a journey begun on the dragon is flown straight (systems/dragon/dragonJourney.js)
 });
 
 test('PACE-KEEP: the ground caps the dials, never writes them', () => {

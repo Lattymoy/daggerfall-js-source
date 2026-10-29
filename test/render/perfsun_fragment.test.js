@@ -102,8 +102,16 @@ test('PERF-SUN2: the sun’s shadow is not read where the sun cannot reach', () 
     // OUTPUT-IDENTICAL, and this is why: diff reaches the light exactly
     // once, multiplied by uSunScale. Gating on either factor cannot
     // change a pixel - it only skips arriving at the same zero.
-    assert.equal((src.match(/\buSunScale\s*\*\s*diff\b/g) ?? []).length, 1, `${name}: diff has exactly one consumer`);
-    assert.equal((src.match(/\bdiff\b/g) ?? []).length, 2, `${name}: ...and exactly one writer beside it`);
+    assert.equal((src.match(/\buSunScale\s*\*\s*diff\b/g) ?? []).length, 1, `${name}: diff reaches the light exactly once`);
+    // PIN MOVED (WL1): the mesh hands diff to its mock room as well (RW_MAIN_ROOM), for the sun through the glass - a
+    // second consumer, and it carries uSunScale itself (realWindows.js rwRoomOver), so the gate still moves no pixel
+    const rooms = name === 'mesh' ? 1 : 0;
+    assert.equal((src.match(/rwRoomOver\([^;]*\bdiff\)/g) ?? []).length, rooms, `${name}: the mock room's sun is the one other consumer`);
+    assert.equal((src.match(/\bdiff\b/g) ?? []).length, 2 + rooms, `${name}: ...and exactly one writer beside them`);
+    if (rooms) {
+      assert.equal((src.match(/\bsunDiff\b/g) ?? []).length, 2, 'the room reads its sunDiff once');
+      assert.match(src, /bool day = uSunScale > 0\.0;[\s\S]*vec3 skyL = day \? uSunColor \* \(uSunScale \* sunDiff \//, '...under uSunScale, behind the same gate');
+    }
   }
   // the WATER takes the uniform half only: its `shadow` is a term of its
   // own and the ndl gate would be a second question about it
@@ -140,7 +148,7 @@ test('PERF-SUN2: a FLAT has no normal, so its gate is the sun’s own share of t
   // LA-COST3 (2026-09-27): the map is read by the lane's billboard VERTEX shader now, once a quad - and the gate went
   // with it: at night that stage reads nothing either, and the fragment's cloud read stays behind the same gate
   assert.match(bb, /vec3 sunLit = dot\(uBBSun, uBBSun\) > 0\.0 \? uBBSun \* cloudShadowAt\(vBBWorld\) \* vBBSunVis : vec3\(0\.0\);/);
-  assert.match(EL_LANE.bbVs.main, /vBBSunVis = dot\(uBBSun, uBBSun\) > 0\.0 \? \(uMesh > 0\.5 \? sunShadowAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\)\) : sunShadowSoftAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\), uSize\.y\)\) : 1\.0;/, 'the vertex stage takes the same gate');   // AUDIT BANTHA1 TREE-2 (PIN MOVED): read at `sunAt` - half a unit up, or a jungle tree's crown
+  assert.match(EL_LANE.bbVs.main, /vBBSunVis = \(dot\(uBBSun, uBBSun\) > 0\.0 \|\| uWinOn == 2\) \? \(uMesh > 0\.5 \? sunShadowAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\)\) : sunShadowSoftAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\), uSize\.y\)\) : 1\.0;/, 'the vertex stage takes the same gate');   // AUDIT BANTHA1 TREE-2 (PIN MOVED): read at `sunAt` - half a unit up, or a jungle tree's crown   // PIN MOVED (WL1): and a window's sun indoors (uWinOn 2), which the flat's window light takes from here
   assert.match(bb, /uTint \+ sunLit \+ elPointFlat/, 'and it enters the sum exactly where the product did');
   assert.doesNotMatch(bb, /uBBSun \* cloudShadowAt\(vBBWorld\) \* (?:sunShadowSoftAt\(base[^)]*\)\)|vBBSunVis) \+ elPointFlat/, 'the inline product is gone');
   // the shadow is still read at the flat's BASE, once for the whole

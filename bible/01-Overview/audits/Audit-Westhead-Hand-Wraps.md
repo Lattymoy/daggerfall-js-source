@@ -43,7 +43,7 @@ reader sees a fist, and `wrapsOf(hand)` and `wraps` name them beside it.
 | # | Finding | Verdict |
 |---|---|---|
 | B1 (must) | The siege's work refused a blow in wraps (its cap read template 563 as 0) | fixed: no weapon, and `duelWeaponOf` null for them |
-| B2 (must) | The loot door's law did not move, so an older build in a room's seat dropped a pair | fixed: `LOOT_HELLO_LAW` 2, relay world286 |
+| B2 (must) | The loot door's law did not move, so an older build in a room's seat dropped a pair | fixed: `LOOT_HELLO_LAW` 2, relay world289 (world286 on the branch) |
 | B3 (must) | Bladeturning and Stoneskin read a fist in wraps as a blade | fixed |
 | B4 (must) | A Rare pair's imprint, a Legendary pair's power and a won sigil never fired | fixed: they ride the fist's blow |
 | B5 | In PvP, armour stopped a wraps blow as an edged one | fixed by B1 |

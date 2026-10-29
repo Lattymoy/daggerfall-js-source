@@ -18,8 +18,9 @@
 // record's projection (validSdRecord) is the wire's, beside the frame that carries it (SD3) - re-exported here.
 //
 // Not a DFU member: Daggerfall has no other players and no world events. Ledger A (SUPER-DUNGEONS).
-import { sanitizeName, PIXEL_UNITS, SD_REGION_COUNT, SD_SLOT_MAX, SD_FIGHTERS_MAX, SD_LANE_SPAN, sdLaneWire, sdLaneOpen, sdLaneRegionOk, SITE_EVENT_LANES, CHAT_BAY_REGIONS } from '../wire.js';
+import { sanitizeName, PIXEL_UNITS, SD_REGION_COUNT, SD_SLOT_MAX, SD_FIGHTERS_MAX, SD_LANE_SPAN, sdLaneWire, sdLaneOpen, sdLaneRegionOk, SITE_EVENT_LANES, CHAT_BAY_REGIONS, sharedClassicMinutes, wallMsForClassicMinutes } from '../wire.js';
 import { gateHash, PIXEL_M } from '../gate/gateLaw.js';
+import { frontDayOfMinute, frontNextDay, FRONT_DAY_MINUTES, FRONT_PER_DAY } from '../frontLaw.js';   // FRONTS: a province's Hollow rises on its turn alone
 
 export { SD_PHASES, SD_REGION_COUNT, SD_SLOT_MAX, SD_FIGHTERS_MAX, validSdRecord, SD_LANE_SPAN, sdLaneOpen, sdLaneRegionOk } from '../wire.js';
 
@@ -98,15 +99,52 @@ export const sdHolds = (rec, now) => { const p = sdPhase(rec, now); return p ===
 // One function per move, each refusing a move its phase does not allow - the hub calls them and stores what comes
 // back; a null is "not now", never an error.
 
+// FRONTS (bible/03-World/World-Wide.md FRONTS): a province's Hollow rises only on its province's turn (net/frontLaw.js),
+// and no more than SD_FRONT_HOLLOWS stand past the Bay at once - a Hollow stands two real days, so a turn alone would still
+// keep one in every province. The Bay's rises as before. The hub hands the count (`held`) off its lanes' records.
+/** FRONTS: the Hollows that stand past the Bay at once, at most - a day's fronts' worth. */
+export const SD_FRONT_HOLLOWS = FRONT_PER_DAY;
+/** FRONTS: the first instant from `now` on at which lane `lane` may raise a Hollow - `now` itself on its turn, and always
+ *  on the Bay's lane. @param {number} now @param {number} lane */
+export function sdFrontFrom(now, lane) {
+  const day = frontDayOfMinute(sharedClassicMinutes(now)), next = frontNextDay(day, lane);
+  return next === day ? now : Math.ceil(wallMsForClassicMinutes(next * FRONT_DAY_MINUTES)) + 1;
+}
+/** FRONTS: the Hollows standing past the Bay at `now` on a lane other than `lane` (`recs`, every lane's record).
+ *  @param {ReadonlyArray<SdRecord|null|undefined>} recs @param {number} now @param {number} lane */
+export const sdHeldPast = (recs, now, lane) => sdStandingPast(recs, now, lane).length;
+const sdStandingPast = (recs, now, lane) => (recs ?? []).filter((r) => r && sdLaneOf(r.s) > 0 && sdLaneOf(r.s) !== lane && sdStands(sdPhase(r, now)));
+/** FRONTS: may lane `lane` raise a Hollow at `now`, with `held` standing past the Bay elsewhere? */
+const sdFrontMay = (now, lane, held) => sdFrontFrom(now, lane) <= now && (lane === 0 || held < SD_FRONT_HOLLOWS);
+/** AUDIT FRONTS A1, B1: the earliest a record's lane may raise its next Hollow, from `now` on - its rest, its turn and a
+ *  free place past the Bay among `recs` (every lane's record). A bound, never a promise: a turn can pass with nothing risen.
+ *  @param {SdRecord} rec @param {number} now @param {ReadonlyArray<SdRecord|null|undefined>} recs */
+export function sdRiseNotBefore(rec, now, recs) {
+  const lane = sdLaneOf(rec.s);
+  let t = Math.max(rec.next, now);
+  for (let step = 0; lane > 0 && step < 16; step++) {
+    t = sdFrontFrom(t, lane);
+    const standing = sdStandingPast(recs, t, lane);
+    if (standing.length < SD_FRONT_HOLLOWS) return t;
+    t = Math.min(...standing.map((r) => (r.fellAt != null ? r.fellAt + SD_COLLAPSE_MS : r.until)));
+  }
+  return t;
+}
+/** AUDIT FRONTS A2: the order the director beats its lanes in - the Bay's, then the provinces whose last Hollow rose
+ *  longest ago (none yet first), so a place freed past the Bay goes to the province that waited, not the lowest lane. */
+export const sdBeatOrder = (recs) => [0, ...SD_LANES.filter((l) => l > 0).sort((a, b) => sdLastRise(recs, a) - sdLastRise(recs, b) || a - b)];
+const sdLastRise = (recs, lane) => { const r = (recs ?? []).find((x) => x && sdLaneOf(x.s) === lane); return r && r.s % SD_LANE_SPAN ? r.at : -Infinity; };
+
 /** The hub's first beat: nothing has risen, the first rise SD_FIRST_RISE_MS on. WW5: a lane's own - its zero slot. */
 export const sdFirst = (now, lane = 0) => /** @type {SdRecord} */ ({ s: lane * SD_LANE_SPAN, ph: 'gone', r: -1, at: now, until: now, next: now + SD_FIRST_RISE_MS });
 
 /** A new Hollow rises - the next slot, in the census's region (-1: the Bay's great cities). Null while the last stands
  *  or rests. WW5: on the lane `prev` is (`lane` for a lane with no record yet) - its next slot in its own span, a region
  *  its own (net/wire.js sdLaneRegionOk: a province's Hollow rises in its province, or by its great cities). */
-export function sdRise(prev, now, region, lane = prev ? sdLaneOf(prev.s) : 0) {
+export function sdRise(prev, now, region, lane = prev ? sdLaneOf(prev.s) : 0, held = 0) {
   if (prev && (sdPhase(prev, now) !== 'gone' || now < prev.next)) return null;
   if (!sdLaneOpen(lane) || (prev && sdLaneOf(prev.s) !== lane)) return null;
+  if (!sdFrontMay(now, lane, held)) return null;   // FRONTS: off its province's turn, or the provinces' Hollows all stand
   if (!Number.isSafeInteger(region) || region < -1 || region >= SD_REGION_COUNT || !sdLaneRegionOk(lane, region)) return null;
   const s = (prev?.s ?? lane * SD_LANE_SPAN) + 1;
   if (s > SD_SLOT_MAX || sdLaneOf(s) !== lane) return null;
@@ -148,16 +186,24 @@ export function sdGone(rec, now) {
  * the census), or nothing until `at`.
  * @param {SdRecord|null|undefined} rec
  * @param {number} now
+ * @param {number} [held] FRONTS: the Hollows standing past the Bay on the other lanes (sdHeldPast)
  * @returns {{ act: 'first'|'gone'|'rise'|null, at?: number }}
  */
-export function sdDue(rec, now) {
+export function sdDue(rec, now, held = 0) {
   if (!rec) return { act: 'first' };
   const p = sdPhase(rec, now);
   // AUDIT SD II (L3 F4): a FOUND Hollow's fade waits SD_FADE_GRACE_MS past its `until` - a fall told meanwhile wins (one
   // never found has no realm, and no fight to fall)
   if (p === 'gone' && rec.ph === 'found' && now < rec.until + SD_FADE_GRACE_MS) return { act: null, at: rec.until + SD_FADE_GRACE_MS };
   if (p === 'gone' && rec.ph !== 'gone' && rec.s) return { act: 'gone' };
-  if (p === 'gone') return now >= rec.next ? { act: 'rise' } : { act: null, at: rec.next };
+  if (p === 'gone' && now < rec.next) return { act: null, at: rec.next };
+  if (p === 'gone') {
+    // FRONTS: a province's rise waits for its turn - and, all the provinces' Hollows standing, for one of them to end
+    // (their own moves wake the hub then)
+    const lane = sdLaneOf(rec.s), from = sdFrontFrom(now, lane);
+    if (from > now) return { act: null, at: from };
+    return sdFrontMay(now, lane, held) ? { act: 'rise' } : { act: null };
+  }
   return { act: null, at: rec.fellAt != null ? rec.fellAt + SD_COLLAPSE_MS : rec.until };
 }
 

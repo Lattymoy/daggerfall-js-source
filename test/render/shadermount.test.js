@@ -33,6 +33,7 @@ import { NavalRenderer, NAVAL_PROGRAMS } from '../../src/render/navalRender.js';
 import { playPrograms } from '../../src/render/playPrograms.js';
 import { AURA_PROGRAMS } from '../../src/render/auraRing.js';
 import { ARMORY_PROGRAMS } from '../../src/render/armoryPass.js';
+import { AURORA_PROGRAMS } from '../../src/render/auroraPass.js';   // SKYRIM-AURORA: the sky's aurora, after them
 import { getPref, setPref } from '../../src/systems/uiPrefs.js';
 
 const COMPLETION_STATUS_KHR = 0x91B1;
@@ -169,7 +170,7 @@ test('SHADER-EASE MOUNT-START: the shadow pass\'s depth programs are on the lane
   const r = new Renderer(rec.canvas);
   const lane = laneBootPrograms(r, EL_LANE).map(keyOf);
   const depth = shadowDepthPrograms(SHADOW_PASS_VS).map(keyOf);
-  assert.equal(depth.length, 7);
+  assert.equal(depth.length, 8);   // WL1: and the glass cut's (shadowPass.js DEPTH_GLASS_FS)
   for (const k of depth) assert.ok(lane.includes(k), 'listed with the lane');
   const boot = withPrefs(ALL_ON, () => bootPrograms(r, '?sky=enhanced')).map(keyOf);
   const clouds = [...CLOUD_PROGRAMS, ...CLOUD_NOISE_PROGRAMS].map(keyOf);
@@ -258,6 +259,6 @@ test('SHADER-EASE QUEUE-ORDER: the play queue holds the nodes\' glow and the sea
   assert.deepEqual(naval, NAVAL_PROGRAMS.map(keyOf));
   const play = playPrograms().map(keyOf);
   for (const k of [...glow, ...naval]) assert.ok(play.includes(k), 'queued');
-  const tail = [...AURA_PROGRAMS, ...ARMORY_PROGRAMS].map(keyOf);
-  assert.deepEqual(play.slice(-tail.length), tail, 'the auras and the armory last');
+  const tail = [...AURA_PROGRAMS, ...ARMORY_PROGRAMS, ...AURORA_PROGRAMS].map(keyOf);   // PIN MOVED (AUDIT SKYRIM-AURORA B5): the aurora's after them
+  assert.deepEqual(play.slice(-tail.length), tail, 'the auras and the armory last, the aurora after them');
 });

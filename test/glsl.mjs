@@ -31,7 +31,8 @@
 // column-major; mat*vec, vec*mat, mat*mat, mat[i] columns), samplers as
 // opaque names, arrays (uniform and local, `float[16](...)`, .length());
 // declarations with comma lists, const, precision/#version/#extension,
-// layout(...), uniform/in/out globals; every GLSL operator with GLSL's
+// layout(...), uniform/in/out globals, a uniform block with no instance name
+// (WL1: its members are uniforms by their own names); every GLSL operator with GLSL's
 // precedence, including ++/--, compound and bitwise assignment, ?: and the
 // comma; swizzles read and write; scalar broadcast; constructors from any
 // mix of scalars/vectors/matrices; int is 32-bit signed, uint 32-bit
@@ -46,7 +47,7 @@
 // cross normalize reflect refract faceforward matrixCompMult transpose
 // lessThan(Equal) greaterThan(Equal) equal notEqual any all not.
 //
-// NOT SUPPORTED: structs, interface blocks, #define/#if (expand them
+// NOT SUPPORTED: structs, in/out blocks and named uniform blocks, #define/#if (expand them
 // first), function overloads (a second definition of a name throws),
 // non-square matrices, determinant/inverse, packing built-ins, implicit
 // conversions (GLSL ES 3.00 has none either: `float x = 1;` throws, which
@@ -159,7 +160,18 @@ class Parser {
       const line = this.peek().line, q = this.quals();
       if (this.is('struct')) this.fail('struct is not supported');
       if (this.accept(';')) continue;   // `layout(...) in;`
-      if (this.peek().k === 'id' && !isTypeName(this.peek().v) && this.is('{', 1)) this.fail('interface blocks are not supported');
+      if (this.peek().k === 'id' && !isTypeName(this.peek().v) && this.is('{', 1)) {
+        if (!q.has('uniform')) this.fail('interface blocks are not supported');
+        this.next(); this.expect('{');
+        while (!this.accept('}')) {
+          const mq = this.quals(), type = this.typeSpec(), name = this.ident();
+          items.push({ k: 'gdecl', q: new Set([...q, ...mq]), type, list: this.declRest(name), line });
+          this.expect(';');
+        }
+        if (!this.is(';')) this.fail('a named uniform block is not supported');
+        this.expect(';');
+        continue;
+      }
       const type = this.typeSpec(), name = this.ident();
       if (this.accept('(')) { items.push(this.fnRest(type, name, line)); continue; }
       items.push({ k: 'gdecl', q, type, list: this.declRest(name), line });

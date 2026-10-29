@@ -12,6 +12,7 @@
 import '../chargenDom.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (DRAGON0): bootWorld's POI editor mount moved to src/scenes/poiEditorMount.js - the host read whole
 import { readFileSync } from 'node:fs';
 import { byClass } from '../chargenDom.mjs';
 import { createPoiEditorPanel, stateText, stepText, createAssetFacts } from '../../src/ui/poi/poiEditorPanel.js';
@@ -265,7 +266,7 @@ test('POI-3b THE IMPORT: a model\'s parts held to the mesh law - one past a limi
 });
 
 test('POI-3b THE EDITOR IN THE WORLD, BY SOURCE: `?editor` alone, refused online with the other powers; the store asked who may build before anything is made; the motor held and the frame\'s eye the editor\'s while it is open; the drafts laid over the feed before the POI host reads it; the lines after the translucent pass, marked; no hand drawn; no blow on the body left standing; a draft\'s assets asked with the bearer (mutants: refused online no more; the motor stepped under the editor)', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.ok(ONLINE_REFUSED_FLAGS.includes('editor'));
   assert.match(w, /if \(params\.has\('editor'\)\) startPoiEditor\(\);/);
   assert.match(w, /poiMe\(first\)\.then\(\(r\) => \{[\s\S]{0,300}if \(!r\.data\.builder\) \{ townTalk\.say\(accountRefusalText\('poi-not-builder'\)\); return; \}\s*mountPoiEditor\(r\.data, io\);/);

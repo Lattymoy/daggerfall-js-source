@@ -20,8 +20,8 @@
   {
     "name": "CSA-D-moveaccel-coast-oars",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    const coast = f(f(f(f(HANDLING.moveAccelSail * handlingMod('SailMoveAcceleration')) * state.boatCargoMod) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.coast : 1));\n",
-    "new": "    const coast = f(f(f(f(HANDLING.moveAccelOar * handlingMod('OarMoveAcceleration')) * state.boatCargoMod) * f(b.modifierMoveAccelerationOar)) * (responsive() ? HELM_WAY.coast : 1));\n",
+    "old": "    const coast = f(f(f(f(HANDLING.moveAccelSail * handlingMod('SailMoveAcceleration')) * laden(rest)) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.coast : 1));\n",
+    "new": "    const coast = f(f(f(f(HANDLING.moveAccelOar * handlingMod('OarMoveAcceleration')) * laden(rest)) * f(b.modifierMoveAccelerationOar)) * (responsive() ? HELM_WAY.coast : 1));\n",
     "tests": [
       "test/systems/comeSailAway/csa_sailing.test.js"
     ]
@@ -742,8 +742,8 @@
   {
     "name": "CSA-D-race-boat-no-rival",
     "file": "src/player/activationRace.js",
-    "old": "Math.min(lootD, dropD, torchD, wagonD, horseCartD, campD, waterD, gateD, brokerD, boatD, doorDistance);",
-    "new": "Math.min(lootD, dropD, torchD, wagonD, horseCartD, campD, waterD, gateD, brokerD, doorDistance);",
+    "old": "Math.min(lootD, dropD, torchD, wagonD, horseCartD, dragonD, campD, waterD, gateD, brokerD, boatD, doorDistance);",
+    "new": "Math.min(lootD, dropD, torchD, wagonD, horseCartD, dragonD, campD, waterD, gateD, brokerD, doorDistance);",
     "tests": [
       "test/systems/comeSailAway/csa_sailing.test.js"
     ]
@@ -751,7 +751,7 @@
   {
     "name": "CSA-D-race-boat-before-hcc",
     "file": "src/player/activationRace.js",
-    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, boat, torch,",
+    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, dragon, boat, torch,",
     "new": "  return firmFirst([gate, broker, camp, water, wagon, boat, horseCart, torch,",
     "tests": [
       "test/systems/comeSailAway/csa_sailing.test.js"

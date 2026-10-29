@@ -1,4 +1,4 @@
-// PVP-KIT (the PvP rework, 2026-10-29): the PvP spell bar's law (systems/wild/pvpKit.js), the bar (ui/pvpKitBar.js), the
+// PVP-KIT (the PvP rework, 2026-10-29): the PvP spell bar's law (systems/wild/pvpKit.js), its cast (ui/pvpSpellMenu.js), the
 // cost door (systems/spellcost.js), the 15 m gift (scenes/hostMagic.js pvpReach), the bar's Poison Damage at a player
 // (combat/siegeCombat.js), Reflect and Absorb in the ward's report and the Shield's share (combat/pvpGuard.js, the referee).
 import { test } from 'node:test';
@@ -19,7 +19,8 @@ import { newFighter } from '../../../src/net/siege/siegeRef.js';
 import { VIT_SHIELD_MIN, VIT_SHIELD_MAX, CAST_LEVEL_MAX, validVitIn } from '../../../src/net/wire.js';
 import { createRefereeHealthMirror } from '../../../src/net/siege/refereeHealthMirror.js';
 import { SKILLS } from '../../../src/systems/skills.js';
-import { KIT_ACTIONS, castKitSlot, loadKitBar, saveKitBar } from '../../../src/ui/pvpKitBar.js';
+import { castKitSlot, loadPvpStore, PVP_KIT_STORE_V1 } from '../../../src/ui/pvpSpellMenu.js';
+import { HOTBAR_SLOT_ACTIONS } from '../../../src/systems/inputActions.js';
 import { pvpSpellRefusal } from '../../../src/systems/wild/pvpRules.js';
 import { hasResurrect, resurrectionSpell, pickFallenBody, RESURRECT_REACH, RESURRECT_TYPE, RESURRECT_SUBTYPE } from '../../../src/systems/resurrect.js';
 
@@ -106,10 +107,10 @@ test('PVP-KIT A SLOT AS SAVED: eight slots, unknown spells and picks the default
   assert.equal(kitSlotOf({ id: 'nope' }, 1).id, 'heal', 'the slot\'s default');
   const store = new Map();
   globalThis.localStorage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) };
-  saveKitBar([{ id: 'jump', icon: 4 }], 'k');
-  assert.deepEqual(loadKitBar('k')[0], { id: 'jump', pick: null, icon: 4 });
+  store.set(PVP_KIT_STORE_V1, JSON.stringify([{ id: 'jump', icon: 4 }]));
+  assert.deepEqual(loadPvpStore([], { key: 'none' }).set[2].kit, { id: 'jump', pick: null, icon: 4 }, 'an old bar is read');
   delete globalThis.localStorage;
-  assert.equal(loadKitBar('k').length, 8, 'no store: the default');
+  assert.equal(loadPvpStore([], { key: 'none' }).set.filter((e) => e?.type === 'kit').length, 8, 'no store: the default');
 });
 
 test('PVP-KIT THE PRICE AND THE WORD: the bar\'s price replaces the classic sum; under the flag every other spell is refused (mutants: the price unread; the refusal never said; a kit spell refused)', () => {
@@ -158,8 +159,10 @@ test('PVP-KIT THE REFEREE: a Shield\'s share takes that part of the strongest Sh
   assert.deepEqual(sent.map((r) => r.sh), [0, 15], 'a new share is reported at once');
 });
 
-test('PVP-KIT THE PRESS: keys 3 to 0 are the hotbar\'s slot actions; a press readies the slot\'s spell and fires it, at an ally\'s frame level when one is aimed at (mutants: the gift level unclamped; a refusal read as a cast)', () => {
-  assert.deepEqual(KIT_ACTIONS, ['QuickSpell', 'QuickOffHand', 'Hotbar5', 'Hotbar6', 'Hotbar7', 'Hotbar8', 'Hotbar9', 'Hotbar10']);
+test('PVP-KIT THE PRESS: the old bar\'s keys 3 to 0 are the PvP set\'s slots 3 to 10; a press readies the slot\'s spell and fires it, at an ally\'s frame level when one is aimed at (mutants: the gift level unclamped; a refusal read as a cast)', () => {
+  const set = loadPvpStore([]).set;
+  assert.deepEqual(HOTBAR_SLOT_ACTIONS.slice(2, 10), ['QuickSpell', 'QuickOffHand', 'Hotbar5', 'Hotbar6', 'Hotbar7', 'Hotbar8', 'Hotbar9', 'Hotbar10']);
+  assert.deepEqual(set.slice(2, 10).map((e) => e.kit.id), KIT_DEFAULT_BAR.map((s) => s.id), 'the old bar where its keys were');
   const readied = [];
   let armed = false, fired = 0;
   const magic = { readySpell: (sp) => { readied.push(sp); armed = sp.rangeType !== 0; return true; }, spellArmed: () => armed, interceptAttack: () => { fired++; return true; } };
@@ -174,16 +177,18 @@ test('PVP-KIT THE PRESS: keys 3 to 0 are the hotbar\'s slot actions; a press rea
   assert.equal(castKitSlot({ magic: { readySpell: () => false }, entity: me }, { id: 'heal' }), 'refused');
 });
 
-test('PVP-KIT THE WIRING: one host line; the cast engine reads the gift reach; only the bar\'s spells reach a player in the zone; the bar\'s gifts are a party member\'s; the hotbar stands aside (source)', () => {
+test('PVP-KIT THE WIRING: one host line; the cast engine reads the gift reach; only the bar\'s spells reach a player in the zone; the bar\'s gifts are a party member\'s; the hotbar presses a made spell (source)', () => {
   const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(w, /const pvpKit = createPvpKitBar\(\(\) => \[online, magic, modes\?\.mode, allyTargetPick, cam, socialFwd\], pvpFlag, playerEntity\);/);
+  assert.match(w, /const pvpKit = createPvpSpellMenu\(\(\) => \[online, magic, modes\?\.mode, allyTargetPick, cam, socialFwd\], pvpFlag, playerEntity\);/);
   assert.match(w, /SIEGE_SPELL_BARRED_TEXT : null\) \?\? pvpKit\.refusal\(sp\);/);
   assert.match(w, /if \(!wildFair\(peerId\) \|\| !sp\?\.pvpKit\) return false;/);
   assert.match(w, /const strangers = !!sp && !sp\.pvpKit && strangerCastable\(sp\);/);
   const h = readFileSync(new URL('../../../src/scenes/hostMagic.js', import.meta.url), 'utf8');
   assert.match(h, /const allyReach = sp\.pvpReach \?\? allyReachFor\(sp\.rangeType\);/);
   const hb = readFileSync(new URL('../../../src/ui/enhanced/enhancedHotbar.js', import.meta.url), 'utf8');
-  assert.match(hb, /if \(keyClaim\?\.\(e\)\) return;/);
+  const qs = readFileSync(new URL('../../../src/systems/quickslots.js', import.meta.url), 'utf8');
+  assert.match(qs, /if \(e\.type === 'kit'\) \{ const r = kitPress\?\.\(i, \{ \.\.\.e\.kit \}\) \?\? 'none';/);
+  assert.doesNotMatch(hb, /keyClaim/, 'no second bar takes the keys');
   const fx = readFileSync(new URL('../../../src/systems/effects.js', import.meta.url), 'utf8');
   assert.match(fx, /\|\| spell\?\.pvpKit != null;/);
 });

@@ -122,7 +122,7 @@
  {
   "name": "TS-the-lift-off-the-outline",
   "file": "src/world/landforms.js",
-  "old": "blendLocationTerrain(field, sum / field.length, locationRect, hDim, classic, true);",
+  "old": "blendLocationTerrain(field, sum / field.length, locationRect, hDim, unmet?.classic ?? classic, true, unmet?.field);",
   "new": "blendLocationTerrain(field, sum / field.length, locationRect, hDim);",
   "tests": [
    "test/world/terrain/townshapes.test.js"

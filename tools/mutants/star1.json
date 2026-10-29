@@ -56,8 +56,8 @@
   {
     "name": "STAR1-a-star-outside-the-festival",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "export const starInWindow = (n, k) => starOk(n, k) && starfallRuns(starTimes(n, k).fallAt);",
-    "new": "export const starInWindow = (n, k) => starOk(n, k);",
+    "old": "export const starInWindow = (n, k) => starOk(n, k) && starfallRuns(starTimes(n, k).fallAt) && frontStands(starFrontDay(n, k), starLaneOf(k));",
+    "new": "export const starInWindow = (n, k) => starOk(n, k) && frontStands(starFrontDay(n, k), starLaneOf(k));",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]

@@ -10,6 +10,7 @@
 import '../chargenDom.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (DRAGON0): bootWorld's POI editor mount moved to src/scenes/poiEditorMount.js - the host read whole
 import { readFileSync } from 'node:fs';
 import { poiDiff, quatAngleDeg } from '../../src/poi/poiDiff.js';
 import { diffText, packErrorText } from '../../src/poi/poiText.js';
@@ -408,7 +409,7 @@ test('POI-6 OUT AND BACK IN FROM THE PANEL: a POI\'s model saved as a .glb the i
 });
 
 test('POI-6 RECORDS: the world takes the eye to a place for the approver by the map\'s own door', () => {
-  const world = src('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /function goTo\(place\) \{\n\s+if \(!place\) return;\n\s+_teleportToPixel\(place\.px, place\.py, \[place\.x, player\.pos\[1\] \+ 1, place\.z\], \{ grounded: true \}\)/);
   assert.match(world, /createPoiEditorPanel\(\{[^}]*decodeImage: decodePoiImage, goTo \}\)/);
 });

@@ -84,9 +84,13 @@
 
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { REGION_NAMES, longitudeLatitudeToMapPixel, patchRegionIndex } from '../formats/mapsFile.js';
+import { theatreOfRegion } from '../formats/mapsTables.js';
+import { frontCardLine } from '../systems/frontWords.js';   // FRONTS: when a province's world events run, on its places' card
+import { localWhenText } from '../systems/eventTimers.js';
 import { summaryPixel } from './overworldModel.js';   // WW-C2: a place's own pixel where it carries one (a zone hall past the Bay)
 import { locationSummaryAt } from '../systems/map/mapDirectory.js';
 import { calculateTravelTime, calculateTripCost, travelDays } from '../systems/travel/travel.js';
+import { hasDragon } from '../systems/dragon/dragonMount.js';   // DRAGON6: a tamed dragon's trip is flown
 import { guildFastTravel } from '../systems/guild/guildVariants.js';   // TP1: GuildManager.FastTravel
 import {
   travelMapFilters, freshTravelMapFilters, travelMapPopUpState, freshTravelMapPopUpState, setTravelMapPopUpState, travelMapSaveData,
@@ -3161,6 +3165,7 @@ export class HeldMapWindow {
         // transports are SNAPSHOT at open - a horse bought mid-trip is
         // not a thing (DFU OnPush)
         hasHorse: readOnce(d.hasHorse), hasCart: readOnce(d.hasCart), hasShip: readOnce(d.hasShip),
+        hasDragon: hasDragon(d.playerEntity?.()?.items),   // DRAGON6: snapshot with the three
         trip: null, confirm: false, notice: null,
         // AUDIT-TO1 C2: the mod, for its ship laws - IT1: none over the mod's popup, which is DFU's
         to: it ? null : (d.travelOptions?.() ?? null),
@@ -3265,7 +3270,7 @@ export class HeldMapWindow {
       speedCautious: st.opts.speedCautious,
       sleepModeInn: st.opts.sleepModeInn,
       travelShip: st.opts.travelShip,
-      hasHorse: st.hasHorse, hasCart: st.hasCart,
+      hasHorse: st.hasHorse, hasCart: st.hasCart, hasDragon: !!st.hasDragon,   // DRAGON6
     });
     // TP1 - GuildManager.FastTravel (DaggerfallTravelPopUp.cs:284),
     // BETWEEN CalculateTravelTime and CalculateTripCost exactly as DFU
@@ -3291,6 +3296,7 @@ export class HeldMapWindow {
       // TravelTimeCalculator.cs:163 - the same Knightly Order consult
       // the native popup makes; the enhanced skin bills the same fare.
       freeTavernRooms: !!this.deps.freeTavernRooms?.(),
+      hasDragon: !!st.hasDragon,   // DRAGON6: no ship, no fare
     });
     // AUDIT-MAP D2: the mod's fare scaling (TravelTimeCalculatorTO.cs
     // :24-40), the popup's own export - the enhanced skin had billed
@@ -4288,6 +4294,14 @@ export class HeldMapWindow {
     card.append(el('p', 'hmmeta', this._selected.coords
       ? this._regionNameAt(Math.floor(this._selected.x), Math.floor(this._selected.y))
       : (REGION_NAMES[summary.regionIndex] ?? '')));
+    // FRONTS (bible/03-World/World-Wide.md FRONTS): a place past the Bay says when its province's world events run - the
+    // host's `fronts` the relay's clock, null offline and where the provinces stand no events
+    const frontNow = this.deps.fronts?.() ?? null;
+    if (frontNow != null) {
+      const region = this._selected.coords ? (this.deps.maps?.getPoliticIndex?.(Math.floor(this._selected.x), Math.floor(this._selected.y)) ?? -1) - 128 : summary.regionIndex;
+      const line = frontCardLine(frontNow, theatreOfRegion(region), (ms) => localWhenText(ms - (frontNow - Date.now())));
+      if (line) card.append(el('p', 'hmmeta hmfront', line));
+    }
     // AUDIT GUIDE K8/U15: the quests that point here, named on the card - the hover's card is the pointer's; this is
     // where a keyboard (the search, then the pick) and a finger learn them
     if (!this._selected.coords) {
