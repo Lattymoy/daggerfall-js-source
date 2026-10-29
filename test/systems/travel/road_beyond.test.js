@@ -135,6 +135,24 @@ test('ROAD-BEYOND the roads\' search walks the open ground about its ends alone,
   assert.ok(leaned.n < 2800, `${leaned.n} cells`);
 });
 
+// GREEDY-BEYOND's mutants' sweep: ROAD-FOLLOW keeps the roads' search on its roads, so one long road costs it few cells
+// leaning or not (ROAD-BEYOND-no-greed lived), and no pin asked it without a layer (-no-layer-still-searched lived)
+test('ROAD-BEYOND the roads\' search leans on its goal over a lattice of roads - the same way, at the same price, in far fewer cells than the plain A* (51,501 measured); and with no layer past the Bay it searches nothing (mutants: the greed; the layer unasked)', () => {
+  const lines = [];
+  for (let y = 100; y <= 300; y += 4) { const p = []; for (let x = 1100; x <= 1500; x++) p.push([x, y]); lines.push(roadThrough(p)); }
+  for (let x = 1100; x <= 1500; x += 4) { const p = []; for (let y = 100; y <= 300; y++) p.push([x, y]); lines.push(roadThrough(p)); }
+  const lattice = (k, x, y) => lines.reduce((b, f) => b | f(k, x, y), 0);
+  const tally = { n: 0 };
+  const r = searchByRoad({ x: 1100, y: 100 }, { x: 1500, y: 300 }, { ...bay(), beyond: lattice, tally });
+  assert.equal(r.cost, 600, 'by the roads, as short as the lattice allows');
+  assert.equal(count(r.kinds, 'road'), r.kinds.length);
+  assert.ok(tally.n < 40000, `${tally.n} cells`);
+  assert.equal(searchByRoad({ x: 1100, y: 100 }, { x: 1500, y: 300 }, { ...bay() }), null, 'no layer: no search');
+  const net = bay();
+  for (let x = 100; x <= 140; x++) net.roads[200 * MAP_W + x] = (x > 100 ? DIR.W : 0) | (x < 140 ? DIR.E : 0);
+  assert.equal(searchByRoad({ x: 100, y: 200 }, { x: 140, y: 200 }, { ...net }), null, 'nor over the Bay\'s own roads: the layer is its subject');
+});
+
 test('ROAD-BEYOND the ladder\'s rungs past the table are no wider than BEYOND_MARGIN about the ends: a causeway running off a thousand pixels is asked no further (the whole map\'s rung there allotted millions of cells for a spend that walks a hundred thousand), and the roads\' search asks a pixel\'s water only for a step its road\'s edge leaves by away from the ends (mutants: the rung, the edge)', () => {
   // the land a causeway one pixel wide along row 100 from 1100 to 3000; the goal on another
   let far = 0;
@@ -148,13 +166,15 @@ test('ROAD-BEYOND the ladder\'s rungs past the table are no wider than BEYOND_MA
   assert.ok(asks < 6 * tally.n, `${asks} asks for ${tally.n} cells (every neighbour's asked, some eight a cell)`);
 });
 
-test('ROAD-BEYOND the spend is counted: a goal past the Bay no way reaches costs at most the roads\' search, the ladder\'s whole spend and the walk\'s across country - never a rung of 200 000 four times over, twice (mutant: the ladder\'s spend)', () => {
+// PIN MOVED (GREEDY-BEYOND, bible/06-Systems/Travel-View.md): the walk across country that spends its count leans on its goal
+// once more (BEYOND_GREED), with its own count - a third BEYOND_MAX_EXPANSIONS
+test('ROAD-BEYOND the spend is counted: a goal past the Bay no way reaches costs at most the roads\' search, the ladder\'s whole spend, the walk\'s across country and its lean on the goal - never a rung of 200 000 four times over, twice (mutant: the ladder\'s spend)', () => {
   // the goal on an island of one pixel in a pond past the Bay; a road from the traveller that never reaches it
   const pond = (x, y) => Math.max(Math.abs(x - 1500), Math.abs(y - 500)) <= 6 && !(x === 1500 && y === 500);
   const pathsBeyond = roadThrough(ell());
   const tally = { n: 0 };
   assert.equal(planRoute({ x: 1100, y: 100 }, { x: 1500, y: 500 }, { ...bay(), isWater: pond, pathsBeyond, tally }), null);
-  assert.ok(tally.n <= BY_ROAD_MAX_EXPANSIONS + 2 * BEYOND_MAX_EXPANSIONS, `${tally.n} cells`);
+  assert.ok(tally.n <= BY_ROAD_MAX_EXPANSIONS + 3 * BEYOND_MAX_EXPANSIONS, `${tally.n} cells`);
 });
 
 test('ROAD-BEYOND a plan with no road past the Bay is the straight walk it is: the ladder\'s heuristic the field\'s own price there, so a walk of 600 pixels expands some cells a pixel - where a road\'s price flooded the whole box and found none in the spend (mutant: hCost)', () => {

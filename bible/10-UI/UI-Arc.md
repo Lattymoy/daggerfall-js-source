@@ -424,6 +424,16 @@ same enhanced-only gate. CHAIN-SEEN (FIELD BUGS 2026-10-19f,
 Chain Lightning's arc, Earthshaker's quake, Dragonfire's burst - ran
 no formula either, and said nothing; each raises its number so now.
 
+SPELL-NUMBERS (2026-10-28, a player: "they only show on the boss"): a
+spell runs no formula either, so its number was said only where a host
+said it by hand - the court's boss and the relay's stand-ins. The cast
+engine's foe door (`scenes/hostMagic.js` applySpellToFoe) now reports
+what MY landing struck off ANY foe (after the target's own toughness,
+`blowTaken`) through the same seam, once per landing; a peer's spell
+landed on a foe I run, a later round of a lingering spell and a landing
+that struck nothing say none. `test/scenes/spellnumbers.test.js`;
+`tools/mutants/spellnumbers.json`.
+
 
 
 ## CM1-CM11 THE CLASSIC MODALS, AND THE ONE INPUT BOX (2026-09-15 / 2026-09-21)

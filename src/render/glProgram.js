@@ -21,6 +21,9 @@
 
 /** Programs started and not yet taken, per context: `${vs}\0${fs}` -> the program and its two stages. */
 const STARTED = new WeakMap();
+// COMPILE-QUEUE (FIELD BUGS 2026-10-27b): a pair startProgramsInTurn holds for its turn, no program made yet - `wanted`
+// once a door asks for it, which brings it to the front.
+const queued = () => ({ prog: null, wanted: false });
 /** Each context's KHR_parallel_shader_compile, or null. */
 const PARALLEL = new WeakMap();
 
@@ -59,6 +62,7 @@ export function startPrograms(gl, pairs) {
   const startAll = () => keyed.map(([k, vs, fs]) => {
     let s = started.get(k);
     if (!s) started.set(k, (s = link(gl, vs, fs)));
+    else if (!s.prog) s.wanted = true;   // COMPILE-QUEUE: a queued pair waits its turn, at the front
     return s.prog;
   });
   startAll();
@@ -66,8 +70,33 @@ export function startPrograms(gl, pairs) {
   let done = false;
   return () => {
     if (done || !ext || gl.isContextLost?.()) return (done = true);
-    return (done = startAll().every((p) => gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true));
+    return (done = startAll().every((p) => p !== null && gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true));
   };
+}
+
+/** COMPILE-QUEUE (FIELD BUGS 2026-10-27b): start `pairs` one at a time, the next once the driver says the last is done
+ *  (asked after each `wait`), so a build that reads a link waits behind one of them at most, never the whole list.
+ *  Every pair is queued at once: a door that asks for one first brings it to the front, a build that wants one first
+ *  takes it, and a pair a build took is never started. Resolves when the last is done, or the context is lost; at once
+ *  where the context cannot say (no KHR_parallel_shader_compile), queuing nothing.
+ *  @param {any} gl @param {ReadonlyArray<readonly [string, string]>} pairs @param {() => Promise<unknown>} wait */
+export async function startProgramsInTurn(gl, pairs, wait) {
+  const ext = parallelCompile(gl);
+  if (!ext) return;
+  let started = STARTED.get(gl);
+  if (!started) STARTED.set(gl, (started = new Map()));
+  const keyed = pairs.map(([vs, fs]) => [`${vs}\0${fs}`, vs, fs]);
+  for (const [k] of keyed) if (!started.has(k)) started.set(k, queued());
+  const turn = () => keyed.find(([k]) => started.get(k)?.wanted) ?? keyed.find(([k]) => started.get(k)?.prog === null);
+  try {
+    for (let next = turn(); next && !gl.isContextLost?.(); next = turn()) {
+      const [k, vs, fs] = next, s = link(gl, vs, fs);
+      started.set(k, s);
+      while (started.get(k) === s && !gl.isContextLost?.() && gl.getProgramParameter(s.prog, ext.COMPLETION_STATUS_KHR) !== true) await wait();
+    }
+  } finally {
+    for (const [k] of keyed) if (started.get(k)?.prog === null) started.delete(k);   // a queue that ends early strands no pair: its door starts it
+  }
 }
 
 /** AUDIT SHADER-STALL (2026-10-20): the programs `pairs` names that were started and never taken, let go - their
@@ -81,6 +110,7 @@ export function releasePrograms(gl, pairs) {
     const k = `${vs}\0${fs}`, s = started.get(k);
     if (!s) continue;
     started.delete(k);
+    if (!s.prog) continue;   // COMPILE-QUEUE: queued and never started - its turn is dropped, nothing to free
     gl.deleteShader(s.vs); gl.deleteShader(s.fs); gl.deleteProgram(s.prog);
   }
 }
@@ -125,7 +155,7 @@ export function buildProgram(gl, vsSrc, fsSrc, label = '') {
   const started = STARTED.get(gl);
   const took = started?.get(key);
   if (took) started.delete(key);
-  const { prog, vs, fs } = took ?? link(gl, vsSrc, fsSrc);
+  const { prog, vs, fs } = took?.prog ? took : link(gl, vsSrc, fsSrc);   // COMPILE-QUEUE: a queued pair is compiled here, out of its turn
   let fault = /** @type {string|null} */ (null);
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
     for (const sh of [vs, fs]) if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) { fault = `${label ? `${label} shader: ` : ''}${gl.getShaderInfoLog(sh)}`; break; }

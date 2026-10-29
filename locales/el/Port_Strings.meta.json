@@ -4679,6 +4679,11 @@
   "tr": "113a156ae17c",
   "by": "claude-in-session"
  },
+ "enemy.dwarvenDragon": {
+  "en": "55c68ec2d30f",
+  "tr": "e04227e8aa40",
+  "by": "claude-in-session"
+ },
  "faction.province.court": {
   "en": "98410ffe452a",
   "tr": "abe111ba3eef",
@@ -6857,6 +6862,51 @@
  "lang.offer.yes": {
   "en": "5397e0583f14",
   "tr": "71b48fe0b97b",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.bloodlineOnline.final": {
+  "en": "23686618d5ae",
+  "tr": "b7c49f95f8e2",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.cost": {
+  "en": "15b0e2c26aba",
+  "tr": "5f708bf1066e",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.rise": {
+  "en": "a15fcbd02c7f",
+  "tr": "05f9c3635579",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.title": {
+  "en": "1001e6a79636",
+  "tr": "2139be5edc5c",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.what": {
+  "en": "e3ee98e35ca2",
+  "tr": "c12c8e86a768",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.wild": {
+  "en": "7367e331bcf8",
+  "tr": "315844cdfc0d",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.enduringOnline.cost": {
+  "en": "390832c2c0e5",
+  "tr": "e866cf314c4b",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.enduringOnline.heir": {
+  "en": "0e2c72bb4597",
+  "tr": "a10a9e0ca972",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.enduringOnline.toll": {
+  "en": "b5b9fbf721ef",
+  "tr": "3c59966dc1a0",
   "by": "claude-in-session"
  },
  "legacy.deed.again": {
@@ -11837,6 +11887,16 @@
  "spellbook.effect.magnitude": {
   "en": "032e12a22bdd",
   "tr": "29da84f3d8a1",
+  "by": "claude-in-session"
+ },
+ "staff.pilot.bar.health": {
+  "en": "b1462cbdd74f",
+  "tr": "06c4840f71b4",
+  "by": "claude-in-session"
+ },
+ "staff.pilot.bar.title": {
+  "en": "e85fd1b6e6c9",
+  "tr": "c82fdd1282c1",
   "by": "claude-in-session"
  },
  "staffEvent.attackArea": {

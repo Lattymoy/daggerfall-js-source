@@ -541,6 +541,8 @@
     "file": "src/systems/travel/travelRoute.js",
     "old": "endPad: VOYAGE_LANDFALL_PX * 2 });",
     "new": "endPad: 0 });",
+    "equivalent": true,
+    "why": "ROAD-BEYOND's reachOf grows the box by the rung's margin about every end past the table, and searchSteps clips the box to the two ends grown by that same margin, so a pad about an end past the table adds no cell the search may enter. Kept as the landfall's own word (GREEDY-BEYOND's mutants' sweep).",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]

@@ -10834,6 +10834,11 @@
   "tr": "27501de95c1e",
   "by": "claude-in-session"
  },
+ "enemy.dwarvenDragon": {
+  "en": "55c68ec2d30f",
+  "tr": "344ec9877ac7",
+  "by": "claude-in-session"
+ },
  "ether.cross.passengers": {
   "en": "7307eaa64a41",
   "tr": "4eafda6af67b",
@@ -16342,6 +16347,51 @@
  "lang.offer.yes": {
   "en": "5397e0583f14",
   "tr": "283c735c8901",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.bloodlineOnline.final": {
+  "en": "23686618d5ae",
+  "tr": "abeca3f23ef7",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.cost": {
+  "en": "15b0e2c26aba",
+  "tr": "b86cd92d16c0",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.rise": {
+  "en": "a15fcbd02c7f",
+  "tr": "87a97066eff5",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.title": {
+  "en": "1001e6a79636",
+  "tr": "6ba70ad9ff1c",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.what": {
+  "en": "e3ee98e35ca2",
+  "tr": "629edf9444a6",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.wild": {
+  "en": "7367e331bcf8",
+  "tr": "cc74762cca04",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.enduringOnline.cost": {
+  "en": "390832c2c0e5",
+  "tr": "404cf6f91139",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.enduringOnline.heir": {
+  "en": "0e2c72bb4597",
+  "tr": "dab4d98a44b9",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.enduringOnline.toll": {
+  "en": "b5b9fbf721ef",
+  "tr": "ad8bdd5cb149",
   "by": "claude-in-session"
  },
  "legacy.court.cooled": {
@@ -37302,6 +37352,16 @@
  "spoils.lost.mailed": {
   "en": "53d5716ff137",
   "tr": "2b4b07ae454c",
+  "by": "claude-in-session"
+ },
+ "staff.pilot.bar.health": {
+  "en": "b1462cbdd74f",
+  "tr": "7fcfc09debda",
+  "by": "claude-in-session"
+ },
+ "staff.pilot.bar.title": {
+  "en": "e85fd1b6e6c9",
+  "tr": "780b9c483337",
   "by": "claude-in-session"
  },
  "staffEvent.attackArea": {

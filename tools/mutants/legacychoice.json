@@ -162,7 +162,7 @@
   {
     "name": "LEGACY-CHOICE-no-lineage-unsaid",
     "file": "src/ui/familyPages.js",
-    "old": "    : prov.choice?.() === NO_LINEAGE ? 'This character chose to live without a house. Make a new character to found one.'\n",
+    "old": "    : prov.choice?.() === NO_LINEAGE ? 'This character plays Casual, with no family line. Make a new character to found one.'   // CASUAL-LIFE\n",
     "new": "",
     "tests": [
       "test/systems/legacychoice.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "LEGACY-CHOICE-third-tag-echoes-its-title",
     "file": "src/ui/legacy/legacyModelChoice.js",
-    "old": "[NO_LINEAGE]: 'Classic' });",
-    "new": "[NO_LINEAGE]: 'No lineage' });",
+    "old": "[NO_LINEAGE]: 'No death cost' });",
+    "new": "[NO_LINEAGE]: 'Casual' });",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
