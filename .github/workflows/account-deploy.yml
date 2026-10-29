@@ -378,6 +378,7 @@ on:
       - "src/systems/soundClips.js"
       - "src/systems/specialAdvantages.js"
       - "src/systems/spell/identifyRefund.js"
+      - "src/systems/spell/pveCast.js"
       - "src/systems/spell/spellPower.js"
       - "src/systems/spellcast.js"
       - "src/systems/spellcost.js"

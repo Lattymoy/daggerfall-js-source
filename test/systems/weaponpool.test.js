@@ -17,7 +17,7 @@ import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
 import { mintPiece } from '../../src/systems/smithItems.js';
 import { applyRarity, legendaryById } from '../../src/systems/loot/lootRarity.js';
 import { applyEnchantments } from '../../src/systems/enchanting.js';
-import { doItemEnchantmentPayloads, assignHeldSpell, PAYLOAD, ENCHANTMENT_TYPES as T } from '../../src/systems/enchantments.js';
+import { doItemEnchantmentPayloads, assignHeldSpell, PAYLOAD, HELD_DEGRADE_RATE, ENCHANTMENT_TYPES as T } from '../../src/systems/enchantments.js';
 import { classicCastingCost } from '../../src/systems/spellcost.js';
 import { damageEquipment } from '../../src/combat/formulas.js';
 
@@ -111,7 +111,7 @@ test('WEAPON-POOL: the flat costs stop picking a type - a Worm\'s Tooth (the Leg
   assert.deepEqual([held.maxCondition, held.currentCondition], [1600, 1441], 'the bill paid - it broke an iron dagger\'s 50 on the spot');
   let round = 0;
   while (owner.items.includes(held) && round < 100000) doItemEnchantmentPayloads(PAYLOAD.MagicRound, held, { entity: owner, round: ++round });
-  assert.equal(round, 1441 * 4, 'four rounds a point of what the bill left');
+  assert.equal(round, 1441 * HELD_DEGRADE_RATE, 'HELD_DEGRADE_RATE rounds a point of what the bill left (HELD-WEAR: 36)');
   // a blow wears (10 x damage + 50) / 100 - 2 at 20 damage - on DFU's own scale (WEAR-ONE)
   const archer = P(), bow = createWeapon(WEAPONS.Short_Bow, WEAPON_MATERIALS.Iron, () => 0.5);
   for (let i = 0; i < 25; i++) damageEquipment(archer, P(), 20, bow, 0, { rolls: () => 0.99 });
