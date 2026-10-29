@@ -238,7 +238,7 @@ test('RW1 x WAGONS2 (FINAL AUDIT) THE VIEW OUT IN THE WEATHER: the street behind
   assert.deepEqual(viewOutLight(noon, ns, NaN, undefined).sun, sunScale(noon), 'no word: a clear day');
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const src = read(f);
-    assert.match(src, /const light = viewOutLight\(clockMinute, getFloat\('Enhancements', 'NightAmbientLightScale', 0, 1\), weatherTerms\(\)\.sun, sky\.sunFactor\(\)\);\n\s+lightStreetAt\(r, light, sky\.moonlight\(\), SUN_RIG_COLOR\);[^\n]*\n\s+r\.setFogColor\(clockFogColor\(keptFog, keptSun, r\._sunScale\)\);/, f);   // WL1: and the moon of the hour (render/enhancedSky.js lightStreetAt)
+    assert.match(src, /const light = viewOutLight\(clockMinute, getFloat\('Enhancements', 'NightAmbientLightScale', 0, 1\), weatherTerms\(\)\.sun, sky\.sunFactor\(\)\);\n\s+lightStreetAt\(r, light, sky\.moonlight\(clockMinute\), SUN_RIG_COLOR\);[^\n]*\n\s+r\.setFogColor\(clockFogColor\(keptFog, keptSun, r\._sunScale\)\);/, f);   // WL1: and the moon of the hour (render/enhancedSky.js lightStreetAt)   // PIN MOVED (SKYRIM-AURORA audit 2): the sky's night light at the clock's minute
   }
 });
 

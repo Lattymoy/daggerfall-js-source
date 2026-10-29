@@ -518,7 +518,7 @@ test('WL1 W12: the mock rooms by day - the sun through the glass lands on the ro
   lightStreetAt(r, { ambient: new Float32Array([0.1, 0.1, 0.12]), sun: 0 }, moon, [1, 1, 1]);
   assert.equal(calls[1][1], moon, 'the hour\'s moon');
   assert.ok(near(calls[0][1][2], 0.15, 1e-6), 'its ambient lifted by the moon');
-  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(rd(host), /lightStreetAt\(r, light, sky\.moonlight\(\), SUN_RIG_COLOR\);/, host);
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(rd(host), /lightStreetAt\(r, light, sky\.moonlight\(clockMinute\), SUN_RIG_COLOR\);/, host);   // PIN MOVED (AUDIT SKYRIM-AURORA 2): the sky's night light at the clock's minute
 });
 
 test('WL1 W13 (see-through): the exterior windows whose glass is not the palette\'s 0xff - each named record\'s colours read as its panes, specks inside a pane filled, the lead and the frame kept; a record with DFU\'s own glass keeps DFU\'s mask; a record not a window none; the pipeline uploads the mask for every window record (mutants: the table, the speck fill, DFU\'s mask overridden)', () => {
