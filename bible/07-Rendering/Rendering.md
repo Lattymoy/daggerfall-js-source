@@ -131,6 +131,12 @@ directory by `test/bible/audit18_bible_docs.test.js`:
   so the driver compiles them beside the boot's own work and each pass's
   build takes its started program; `outdoorPasses` restates the switches the
   hosts read. `07-Rendering/Performance-Priority.md` BOOT-COMPILE.
+- `mountPrograms.js` - SHADER-EASE MOUNT-START: the passes the outdoor hosts
+  build at mount (`mountPrograms`), by each host's switch, queued one at a
+  time after the boot's batch (`startMountPrograms`).
+  `07-Rendering/Performance-Priority.md` SHADER-EASE MOUNT-START.
+- `idleTurn.js` - SHADER-EASE MOUNT-START: the compile queues' wait between
+  turns (`idleTurn`), shared by `playPrograms.js` and `mountPrograms.js`.
 - `bounds.js` - EL5 THE BOUNDS AND THE CULL: a bundle's bounding sphere
   (`boundsOf`, computed at upload for a mesh and each sub-mesh, a terrain
   surface, a billboard batch), the record's world sphere

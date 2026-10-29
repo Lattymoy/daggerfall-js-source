@@ -214,8 +214,8 @@
   {
     "name": "ARMORY-left-out-of-the-boot",
     "file": "src/render/playPrograms.js",
-    "old": ", ...ARMORY_PROGRAMS, ...FIRE_PROGRAMS",
-    "new": ", ...FIRE_PROGRAMS",
+    "old": ", ...ARMORY_PROGRAMS];",
+    "new": "];",
     "tests": [
       "test/render/auditshaderstall.test.js"
     ]

@@ -28,6 +28,7 @@ import { eotbBody } from '../../player/eyeOfTheBeholder/eotbBody.js';   // EOTB5
 import { eotbCamera } from '../../player/eyeOfTheBeholder/eotbCamera.js';
 import { racialFpsWeapon } from '../../systems/lycanthropy.js';   // V4: the transformed rig's claws
 import { EQUIP_SLOTS, equipTableOf, fillEquipTable } from '../../systems/equip.js';   // AUDIT 17e F17; MW-D32 the worn read; MW-EARLY: a save's worn set
+import { drawnEquipTable } from '../../systems/capeShown.js';   // CAPE-TOGGLE: the worn read as the body is drawn
 import { swapPace } from './swapPace.js';   // SWAP-PACE: the swap pause's drain, halved outside the open PvP zone
 import { setItemFields } from '../../systems/item/itemTemplates.js';   // MW-EARLY: a save's items as the restore reads them
 import { dfWornEquipment } from '../../formats/morrowind/mwItemMap.js';   // MW-D32
@@ -147,7 +148,7 @@ export function armBuildOptsOf(entity) {
     race: mwRaceId(entity.race),
     female: entity.gender === 'female',
     faceIndex: entity.faceIndex | 0,
-    armor: dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM),
+    armor: dfWornEquipment(drawnEquipTable(entity), EQUIP_SLOTS, ARMOR_ENUM),   // CAPE-TOGGLE: built as the frame tick dresses it
     weapon: worn,
     hasAmmo: hasAmmoFor(entity.items, worn),
     ammoCount: ammoCountFor(entity.items, worn),   // WS1: the quiver
@@ -2019,7 +2020,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // those clothes. D29-D31 dressed the BUILD; this dresses the
         // GAME.
         // WEREWOLF1: the form was handed over above, ahead of the gate; the wolf keeps this table for the way back.
-        if (entity) fpArm.setWorn(dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM));
+        if (entity) fpArm.setWorn(dfWornEquipment(drawnEquipTable(entity), EQUIP_SLOTS, ARMOR_ENUM));   // CAPE-TOGGLE: the table as the body is drawn
         // The held draw comes up when the machine leaves StrikeUp - the
         // arrow is loosed, so the arm's wind-up must stop holding at max
         // attack and run to its release key.

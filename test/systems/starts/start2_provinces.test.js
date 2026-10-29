@@ -629,7 +629,7 @@ async function realTamriel() {
   const { setTamrielTrace } = await import('../../../src/world/tamriel/tamrielLand.js');
   const { setTamrielFit } = await import('../../../src/world/tamriel/tamrielFrame.js');
   const { WoodsFile } = await import('../../../src/formats/woodsFile.js');
-  const { groundWoods, groundClimateIndex } = await import('../../../src/world/tamriel/tamrielGround.js');
+  const { groundWoods, groundMaps } = await import('../../../src/world/tamriel/tamrielGround.js');
   const { countryCounts, countryTemplates } = await import('../../../src/world/tamrielCountry.js');
   const { lairTemplates, lairPools } = await import('../../../src/world/tamrielDungeons.js');
   const { isMainStoryDungeon } = await import('../../../src/world/dungeon/dungeonTextures.js');
@@ -647,7 +647,9 @@ async function realTamriel() {
   const _countryCounts = countryCounts(_countryTemplates, bayClimate);
   const _lairTemplates = lairTemplates(rows, isMainStoryDungeon);
   const _lairCounts = countryCounts(_lairTemplates, bayClimate);
-  maps.getClimateIndex = groundClimateIndex(bayClimate);
+  // AUDIT TAMRIEL-WIDE D-test: composed as world.js composes it - the climate AND the politic (WW-R's), so a lair past the
+  // Bay carries its province's region; the climate alone left every lair in region 0
+  groundMaps(maps);
   const w = new WoodsFile(); w.load(await fb('WOODS.WLD'));
   const woods = groundWoods(w);
   const locationIndex = new Map();
@@ -660,7 +662,7 @@ async function realTamriel() {
   return { places, blocks, maps, woods, w, locationIndex, reset: () => { setTamrielTrace(null); setTamrielFit(null); } };
 }
 
-test('START2 on the freeware\'s Tamriel: every province\'s start dungeon is a lair of a kind its story wants, in its own province, within 35 pixels of its capital, a quest item\'s marker in it, stood in the world\'s index as its pixel\'s build stands it (mutants: the marker\'s weighing, the want order)', { skip: skipReal }, async () => {
+test('START2 on the freeware\'s Tamriel: every province\'s start dungeon is a lair of a kind its story wants, in its own province and its province\'s region, within 35 pixels of its capital, a quest item\'s marker in it, stood in the world\'s index as its pixel\'s build stands it (mutants: the marker\'s weighing, the want order; AUDIT TAMRIEL-WIDE: the politic uncomposed)', { skip: skipReal }, async () => {
   const t = await realTamriel();
   try {
     const { provinceKeyBeyondBay } = await import('../../../src/world/tamriel/tamrielLand.js');
@@ -668,8 +670,10 @@ test('START2 on the freeware\'s Tamriel: every province\'s start dungeon is a la
     const { longitudeLatitudeToMapPixel } = await import('../../../src/formats/mapsFile.js');
     const { tamrielFrameInBay } = await import('../../../src/world/tamriel/tamrielFrame.js');
     const usable = (l) => dungeonItemMarkerCount((n) => t.blocks.getBlockByName(n), l) > 0;
+    const regions = {};
     for (const start of STARTS.slice(1)) {
       const loc = t.places.startLairAt(start, usable);
+      if (loc) regions[start.key] = loc.regionIndex;
       assert.ok(loc, `${start.key}: a dungeon`);
       const p = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
       const centre = capitalPixel(CAPITALS.find((c) => c.key === start.capital));
@@ -689,6 +693,8 @@ test('START2 on the freeware\'s Tamriel: every province\'s start dungeon is a la
       assert.equal(t.places.lairLocationAt(p.x, p.y), loc, 'the one the pixel\'s build stands');
       assert.equal(t.places.startLairAt(start, usable), loc, 'and the same asked again');
     }
+    // AUDIT TAMRIEL-WIDE D-test: each lair stands in its province's region (WW-R's 62..70), never the Bay's 0, measured
+    assert.deepEqual(regions, { Skyrim: 64, Morrowind: 65, Imperial: 70, BlackMarsh: 69, Elsweyr: 68, Valenwood: 67, Sumurset: 66 });
     // a graveyard is never a start's: Solitude's nearest lairs are cemeteries, marker-free - a story that wanted one first
     // is given the next kind it wants
     const graves = { ...startByKey('Skyrim'), lair: [['Graveyard', 'Cemetery'], ['DungeonLabyrinth', 'VampireHaunt']] };

@@ -242,8 +242,8 @@
   {
     "name": "WB9g-the-session-writes-no-aura",
     "file": "src/net/accountClient.js",
-    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, nameAsAt })",
-    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, icon, nameAsAt })",
+    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, effects, nameAsAt })",
+    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, icon, armory, effects, nameAsAt })",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ],

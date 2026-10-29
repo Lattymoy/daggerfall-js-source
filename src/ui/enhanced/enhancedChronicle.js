@@ -375,7 +375,7 @@ function paint() {
     // LW7c: THE PEOPLE, by standing - friends, then enemies, then the known - each a card: the name, the town, and what
     // they are to the player (the page's own words - people.js personWords: their fate, their standing, when last seen)
     const page = model.people ?? { friends: [], enemies: [], known: [] };
-    if (!counts.people) detail.append(el('p', 'px-note', 'No one in the Bay knows you yet.'));
+    if (!counts.people) detail.append(el('p', 'px-note', 'No one knows you yet.'));
     for (const [group, rows] of /** @type {[string, any[]][]} */ ([['Friends', page.friends], ['Enemies', page.enemies], ['Known', page.known]])) {
       if (!rows.length) continue;
       const line = el('div', 'sb-frame');

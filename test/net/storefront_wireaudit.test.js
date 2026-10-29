@@ -156,17 +156,17 @@ test('THE WIRE AUDIT 5: my kill is told by the wire\'s own reach from my feet, w
 
 test('THE WIRE AUDIT 6 and 9: the relay\'s rollback floor is written where a deploy reads it, and the pose\'s kill fields are named as the code names them - `xk`, `xp`, `xh` (mutants: the floor unsaid)', () => {
   const version = rd('src/net/wire.js').split('\n').find((l) => l.startsWith('export const RELAY_VERSION = '));
-  assert.equal(RELAY_VERSION, 'world283');
-  assert.match(version, /ROLLBACK FLOOR: world283 while acct216 or later mints `gb`/);
+  assert.equal(RELAY_VERSION, 'world286');   // PIN MOVED: world286, STOREFRONT (world283 on its branch, renumbered past PVP-SAFE-HIT, AUDIT TAMRIEL-WIDE and CAPE-TOGGLE at the merge)
+  assert.match(version, /ROLLBACK FLOOR: world286 while acct219 or later mints `gb`/);
   assert.match(version, /a pose's kill \(`xk`, `xp`, `xh`\)/);
   const page = rd('bible/06-Systems/Storefront.md');
   assert.match(page, /\*\*Deploy, and the rollback floor\.\*\*/);
-  assert.match(page, /world283 is the relay's floor while acct216 or later mints/);
+  assert.match(page, /world286 is the relay's floor while acct219 or later mints/);
   assert.match(page, /\(`xk`,\n`xp`, `xh`\)/, 'section 4 names them as section 10 does');
   for (const [where, text] of [['wire.js', version], ['Storefront.md', page], ['relayversion.test.js', rd('test/net/relayversion.test.js')]]) assert.doesNotMatch(text, /`kc`, `kp`, `ks`/, `${where}: \`kc\` is a sea receipt's killer (world246), never the pose's kill`);
 });
 
-/** The glyphs the token's mask was first signed over (STOREFRONT, world283) - their places are the mask's meaning. */
+/** The glyphs the token's mask was first signed over (STOREFRONT, world286) - their places are the mask's meaning. */
 const MASKED = Object.freeze(['sprout', 'dev', 'mod', 'dm', 'disciple', 'apostle', 'hierophant', 'shadowfang', 'penitent', 'herald', 'tower', 'crownDF', 'crownWR', 'crownSN', 'laurel', 'aegis', 'primarch', 'crystalfist', 'wikimaid', 'nirnrootsage', 'crownSK', 'crownMW', 'crownSU', 'crownVW', 'crownEW', 'crownBM', 'crownCY', 'origin', 'oblivion', 'gatesigil', 'gearcrown', 'tonalfork', 'cog']);
 
 test('THE WIRE AUDIT 7: GLYPHS is appended, never reordered - the places the token\'s `gb` mask was first signed over are frozen (mutants: a glyph inserted mid-list)', () => {

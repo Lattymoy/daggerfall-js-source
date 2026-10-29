@@ -1397,9 +1397,10 @@ export function storedSession(storage) {
  *  NEVER PART OF THIS - `register`, `recover` and `newRecoveryCodes`
  *  hand them back and they are the screen's to show and the player's to
  *  write down. */
-export function keepSession(storage, { id, name, kind, sessionId, secret, glyphs, aura, icon, nameAsAt }) {
+export function keepSession(storage, { id, name, kind, sessionId, secret, glyphs, aura, icon, armory, effects, nameAsAt }) {
   try {
-    storage?.setItem?.(SESSION_KEY, JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, nameAsAt }));   // SHADOW-FANG: `glyphs` when the service has stated them (adoptIdentity) - JSON leaves it out otherwise; WB9g: `aura` likewise; WITCH1: `icon` likewise; NAME-AS: `nameAsAt` likewise
+    // ARMORY-SEEN: every field adoptIdentity writes is kept here - a field it writes and this drops never lands (AUDIT-STOREFRONT: the effects kit was one)
+    storage?.setItem?.(SESSION_KEY, JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, effects, nameAsAt }));   // SHADOW-FANG: `glyphs` when the service has stated them (adoptIdentity) - JSON leaves it out otherwise; WB9g: `aura` likewise; WITCH1: `icon` likewise; NAME-AS: `nameAsAt` likewise
     return true;
   } catch { return false; }
 }
@@ -1765,6 +1766,8 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
           ...('effects' in answer.data ? { effects: typeof answer.data.effects === 'string' ? answer.data.effects : null } : {}),
           // WITCH1: the profile icon I wear (null for the face) - absent from a service before acct165, which says nothing
           ...('icon' in answer.data ? { icon: typeof answer.data.icon === 'string' ? answer.data.icon : null } : {}),
+          // ARMORY-SEEN: the Aura Armory kit I wear (null for none) - absent from a service before acct209, which says nothing
+          ...('armory' in answer.data ? { armory: typeof answer.data.armory === 'string' ? answer.data.armory : null } : {}),
           // SEASON1 part two: a Season's banner ribbon under my own name (null for none) - absent from a service before acct58
           ...('ribbon' in answer.data ? { ribbon: Array.isArray(answer.data.ribbon) ? answer.data.ribbon : null } : {}),
           // LEGACY7: the house my realm character wears (null for none) - absent from a service before acct87

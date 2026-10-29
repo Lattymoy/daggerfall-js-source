@@ -3392,6 +3392,17 @@ export function auraCapeStep(w, posed, crouch = 1) {
   return w;
 }
 
+/** ARMORY-SEEN: whether wearer `w`'s cloth covers its body from `eye` - its aura hangs cloth on the back (`mesh` 'cloak' or
+ *  'cape', drawn premultiplied, so it covers what was drawn before it), not folded away on a rider, and the eye on the
+ *  side its back faces (`w.yaw` as auraCapeStep placed it). What the body wears is drawn under the cloth then
+ *  (scenes/auraHost.js armoryLayers). Pure. */
+export function auraClothOver(w, eye) {
+  const mesh = auraLookOf(w?.aura).mesh;
+  if ((mesh !== 'cloak' && mesh !== 'cape') || w.mounted === true || !Array.isArray(w.at) || !eye) return false;
+  const yaw = Number.isFinite(w.yaw) ? w.yaw : 0;
+  return (eye[0] - w.at[0]) * Math.sin(yaw) + (eye[2] - w.at[2]) * Math.cos(yaw) < 0;
+}
+
 /** SHADOW-CLOAK: THE CAPE'S SWING - how its hem answers its wearer's motion: the seconds of their speed it trails
  *  behind them (m per m/s, a walk's 4 m/s a hand and a half, a run's more) and the most it trails; the metres it lifts
  *  per m/s of falling and the most; the radians it lags per rad/s of turning and the most; and the spring it swings on

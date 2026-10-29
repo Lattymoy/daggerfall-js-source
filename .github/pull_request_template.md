@@ -21,6 +21,11 @@ description changes - run `node scripts/steNotes.mjs <file>` on a draft first.
 
 <!-- For reviewers: what changed, why, and the docs it touched. -->
 
+## Past the Bay
+
+<!-- TAMRIEL-WIDE (bible/01-Overview/Port-Doctrine.md): where this works in Tamriel - the Bay and every province,
+or the places it leaves out and why. Name the case past the Bay its pins hold. -->
+
 ## Verification
 
 <!-- What was run, and what could not be verified here. -->

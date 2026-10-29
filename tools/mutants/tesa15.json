@@ -451,7 +451,7 @@
   {
     "name": "TESA15-the-map-without-places",
     "file": "src/scenes/world.js",
-    "old": "      tamrielPlacesIn: tamrielLand ? pastBayPlacesIn : null,",
+    "old": "      tamrielPlacesIn: tamrielLand ? (x0, y0, x1, y1) => knownPastBayIn(x0, y0, x1, y1) : null,",
     "new": "      tamrielPlacesIn: null,",
     "tests": [
       "test/tesa15_mapfidelity.test.js",

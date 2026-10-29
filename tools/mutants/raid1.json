@@ -450,9 +450,9 @@
   {
     "name": "RAID1-host-fix8-the-sea-a-province",
     "file": "src/scenes/raidHost.js",
-    "old": "return !(etherSea && inEther(px.x, px.y)) && politicClaimed(maps.getPoliticIndex(px.x, px.y)) ? _questRegionIndex() : -1;",
+    "old": "return !(etherSea && inEther(px.x, px.y)) && (politicClaimed(pol) || isProvinceRegion(pol - 128)) ? _questRegionIndex() : -1;",
     "new": "return !(etherSea && inEther(px.x, px.y)) ? _questRegionIndex() : -1;",
-    "tests": ["test/systems/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid1_raidingParties.test.js", "test/world/worldWide/audit_tamrielwide.test.js"]
   },
   {
     "name": "RAID1-host-indoors-is-the-street",

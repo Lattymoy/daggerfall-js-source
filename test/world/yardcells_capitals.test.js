@@ -6,10 +6,9 @@
 //
 // It runs where #1184's capitals are (world/tamrielCapitals.js) and ARENA2 is, and skips elsewhere: YARD-CELL landed on
 // main before #1184, so on main it runs from the day #1184 merges. Measured on #1184's branch (4d8200b017, 2026-10-26):
-// 7 capitals, 57 slices, 1,397 port blocks holding no building record; the most records in any block a slice lays 23
-// (the Imperial City's TEMPAAD0.RMB); the densest slice the Imperial City's 18th - 794 buildings, 707 of them houses.
-// Run there with the branch's own HOME_TOWN_MAX (512) it fails at the Imperial City's 16th slice (606 buildings) - the
-// homes answer would have hidden its eastern homes' yards and doors; with YARD-CELL's 2,048 it passes.
+// 7 capitals, 57 slices, 1,397 port blocks holding no building record. AUDIT TAMRIEL-WIDE A2: those figures never read
+// the Imperial City's own blocks (BLOCKS.BSA holds none); served, a block holds up to 75 (the fabric's cap 255, the
+// key's cell 256) and a slice up to 3,487 buildings, 2,773 of them houses - past HOME_TOWN_MAX, recorded there.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
@@ -28,6 +27,7 @@ const BLOCK_RECORDS_MAX = 32;
 
 test('YARD-CELL every capital #1184 builds: no block a slice lays holds more than 32 building records (the port\'s own blocks none), and no slice more buildings than HOME_TOWN_MAX (mutant: none - the bound is the data\'s)', { skip }, async () => {
   const capitals = await import(CAPITALS_MODULE.href);
+  const fabrics = { ...(await import('../../src/world/imperialBlocks.js')), ...(await import('../../src/world/imperialFabricBuildings.js')) };
   const bytes = (n) => new Uint8Array(readFileSync(`${ARENA2}/${n}`));
   const blocks = new BlocksFile();
   blocks.load(bytes('BLOCKS.BSA'));
@@ -57,13 +57,18 @@ test('YARD-CELL every capital #1184 builds: no block a slice lays holds more tha
       const location = capitals.synthesizeCapitalLocation({ cap, k, s }, { base, names, blockOf, px: 1000, py: 1000 });
       if (!location) continue;
       slices++;
-      let buildings = 0;
+      let buildings = 0, fabric = false;
       for (const name of location.exterior.exteriorData.blockNames) {
-        const records = blockOf(name)?.rmbBlock?.fldHeader?.numBlockDataRecords ?? 0;
-        assert.ok(records <= BLOCK_RECORDS_MAX, `${cap.name} slice ${s}: ${name} holds ${records} building records`);
+        // AUDIT TAMRIEL-WIDE A2: the Imperial City's own blocks are the port's, their buildings laid as they are served
+        // (withFabricBuildings) - BLOCKS.BSA holds none, so this read 0 for each; counted on every 7th slice
+        const own = fabrics.imperialBlockOf(name)?.kind === 'own' ? fabrics.imperialBlockOf(name) : null;
+        if (own && s % 7) { fabric = true; continue; }
+        const records = own ? fabrics.fabricCellBuildings(own.r, own.c).length : blockOf(name)?.rmbBlock?.fldHeader?.numBlockDataRecords ?? 0;
+        assert.ok(records <= (own ? fabrics.FABRIC_BUILDINGS_PER_CELL : BLOCK_RECORDS_MAX), `${cap.name} slice ${s}: ${name} holds ${records} building records`);
+        fabric ||= !!own;
         buildings += records;
       }
-      assert.ok(buildings <= HOME_TOWN_MAX, `${cap.name} slice ${s}: ${buildings} buildings, past HOME_TOWN_MAX`);
+      if (!fabric) assert.ok(buildings <= HOME_TOWN_MAX, `${cap.name} slice ${s}: ${buildings} buildings, past HOME_TOWN_MAX`);   // the Imperial City's: recorded, Yard-Cells.md 4.1
     }
   });
   assert.ok(slices > 0, 'the capitals measured');

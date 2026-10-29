@@ -504,10 +504,12 @@ Departures from the plan:
 5. **`YARD_STAND_BUDGET_MS` is 3 ms**, set by check 1 below.
 
 **The capitals, measured** (section 4.1, gaps 1 and 3) on #1184's branch at 4d8200b017 with ARENA2: 7 capitals, 57
-slices, 1,397 port blocks holding no building record; the most records in any block a slice lays 23 (the Imperial
-City's TEMPAAD0.RMB), under the 32 the cells are bounded by; the densest slice the Imperial City's 18th - 794 buildings,
-707 houses - past the old HOME_TOWN_MAX of 512 (its 16th slice, 606, the first past it) and inside 2,048.
-`test/world/yardcells_capitals.test.js` holds both bounds over every slice; it skips until #1184 is on main.
+slices, 1,397 port blocks holding no building record. AUDIT TAMRIEL-WIDE A2 (2026-10-28): those counts read each
+Imperial City block off BLOCKS.BSA, which holds none of the city's own, so they were 0. Served (withFabricBuildings),
+a block holds up to 75 records (7,722 of 19,994 over 32) - inside the fabric's cap of 255 and the key's cell of 256 the
+cells are read by - and a slice up to 3,487 buildings, 2,773 of them houses (45 slices past 2,048 houses). The homes
+answer cuts at HOME_TOWN_MAX OWNED homes, so no slice is near it; raising it is a relay and account release, left open.
+`test/world/yardcells_capitals.test.js` counts the city as served.
 
 **Tests**: `test/server/yard_cells.test.js` (the law, the migration's triggers and backfill, YARD-SNAP's oracle carried
 to cells with the old town version still moving - the rollback's net, the build and the clock, a cell at the law's

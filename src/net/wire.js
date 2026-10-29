@@ -209,7 +209,7 @@ import { ribbonClaimOk } from './heraldryLaw.js';   // SEASON1 part two: a Seaso
 import { HEALTH_SHARE_WHOLE } from './siege/refereeHealthShare.js';   // SHARED-HEALTH: a report's share is in its parts - refereeHealthShare.js imports nothing, so the worker's graph stays flat
 import { GUILD_TAG_RE } from './guild/guildLaw.js';   // GUILD1c: a guild's tag is badged beside the name - guildLaw.js imports nothing, so the worker's graph stays flat
 import { homeMapIdOk, homeBuildingKeyOk, HOME_ORDER_KEYS_MAX } from './homeLaw.js';   // QUEST-HOME: a home word's town and buildings, the homes' own shapes - homeLaw.js imports nothing, so the worker's graph stays flat
-import { RAID_KEY_RE, RAID_SIG_RE, RAID_TARGET_MIN, RAID_TARGET_MAX, RAID_TYPES, RAID_WORD_KILLS_MAX, RAID_ACCOUNTS_MAX, RAID_TOP_MAX, RAID_TOWNS_SHA_RE, RAID_TOWNS_CHUNK, RAID_TOWNS_CHUNKS_MAX } from './raid/raidLaw.js';   // RAID3: a town raid's law - raidLaw.js imports nothing, so the worker's graph stays flat
+import { RAID_KEY_RE, RAID_SIG_RE, RAID_TARGET_MIN, RAID_TARGET_MAX, RAID_TYPES, RAID_WORD_KILLS_MAX, RAID_ACCOUNTS_MAX, RAID_TOP_MAX, RAID_TOWNS_SHA_RE, RAID_TOWNS_CHUNK, RAID_TOWNS_CHUNKS_MAX, RAID_SLOTS_MAX, RAID_LANES_BEYOND } from './raid/raidLaw.js';   // RAID3: a town raid's law - raidLaw.js imports nothing, so the worker's graph stays flat
 import { SIEGE_HAND_SLOTS, SIEGE_HIT, SIEGE_WORK_IDS, SIEGE_RAMS_MAX, SIEGE_WORK_TIER_MAX, siegeGateVitality, siegeRamVitality, isSiegeNpcId, SIEGE_NPC_MAX, SIEGE_NPC_KINDS, isBattleRoom } from './siege/siegeRef.js';   // PVP-REF: a siege's blow kinds - siegeRef.js imports nothing, so the worker's graph stays flat; SEAT2b part two (b): the works a blow may name; part two (c): the relay's own fighters
 import { INSTANCE_TAG_SOURCE, isInstanceRoom } from './instanceRoom.js';   // INSTANCES: an instance's room is a world room (WORLD_ROOM) with a memory of its own length (worldTtlMsFor) - instanceRoom.js imports privateInterior.js alone, which the relay walks already
 import { privateInteriorOf } from './privateInterior.js';   // SLIM-FRAME: an owned interior's poses are MapsFile's (nativePoseRoom) - privateInterior.js imports nothing, and the relay walks it already
@@ -1705,7 +1705,10 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world283';   // world283: STOREFRONT (2026-10-29, world281 on its branch, renumbered past PVP-REWORK's world281 and PVP-FOLLOWUP's world282 at the merge of main; the owner: "an overhaul to the ingame shop menu ... Portal effects ... and kill effects"; bible/06-Systems/Storefront.md, Battle-Pass.md; NOT YET DEPLOYED): a token's effects kit, `fx` (net/effectLaw.js JOINED THE BUNDLE), badged onto a peer's row with the armory's kit - both on the hello's row now; a pose's kill (`xk`, `xp`, `xh`), its place and a blow's (`hp`) rounded on the second wire as the pose's own (slimPose, the wire audit); the token's glyphs signed as their mask over GLYPHS (`gb`, read back as `g`) and a socket's attachment holding them so (packAttach); the camp law's brass sites are the readers'. Deploy the relay before the account service that mints `gb`. ROLLBACK FLOOR: world283 while acct216 or later mints `gb` - an older relay drops a `gb` token's glyphs, or refuses one with `gx`; roll the service back first and wait MAX_TTL_S (five minutes) before the relay (bible/06-Systems/Storefront.md section 10).
+export const RELAY_VERSION = 'world286';   // world286: STOREFRONT (2026-10-29, world281 then world283 on its branch, renumbered past PVP-REWORK's world281, PVP-FOLLOWUP's world282, PVP-SAFE-HIT's world283, AUDIT TAMRIEL-WIDE's world284 and CAPE-TOGGLE's world285 at the merges of main; the owner: "an overhaul to the ingame shop menu ... Portal effects ... and kill effects"; bible/06-Systems/Storefront.md, Battle-Pass.md; NOT YET DEPLOYED): a token's effects kit, `fx` (net/effectLaw.js JOINED THE BUNDLE), badged onto a peer's row with the armory's kit - both on the hello's row now; a pose's kill (`xk`, `xp`, `xh`), its place and a blow's (`hp`) rounded on the second wire as the pose's own (slimPose, the wire audit); the token's glyphs signed as their mask over GLYPHS (`gb`, read back as `g`) and a socket's attachment holding them so (packAttach); the camp law's brass sites are the readers'. Deploy the relay before the account service that mints `gb`. ROLLBACK FLOOR: world286 while acct219 or later mints `gb` - an older relay drops a `gb` token's glyphs, or refuses one with `gx`; roll the service back first and wait MAX_TTL_S (five minutes) before the relay (bible/06-Systems/Storefront.md section 10).
+// world285: CAPE-TOGGLE (world284 on its branch, renumbered past AUDIT TAMRIEL-WIDE's world284 at the merge of main; 2026-10-29, the owner: "add a cape/helmet toggle option in the inventory for people"; bible/04-Characters/Cape-Toggle.md; NOT YET DEPLOYED): a look may say `hc` 1 - its player hides their capes, so a peer draws no aura on them (validLook keeps it, omitted otherwise). Deploy the relay first, then the site.
+// world284: AUDIT TAMRIEL-WIDE B1, B2, B5 and E3 (world280, world281 then world283 on its branch, renumbered past ARMORY's world280, then PVP-REWORK's world281 and PVP-FOLLOWUP's world282, then PVP-SAFE-HIT's world283, at the merges of main; 2026-10-28, bible/01-Overview/audits/Audit-Tamriel-Wide.md; NOT YET DEPLOYED) - the hub keeps a death and a win in a province's Hollow under its lane's keys (server/src/sdCopy.js); a staff /tp takes an abyss whose pit stands past the Bay (net/staffTeleport.js); the hub keeps two days of every lane's cleansed raids (RAID_CLEANS_MAX 576); and a serpent's `site` word says its site law (`sl`, net/serpent/serpentLaw.js SERPENT_SITE_LAW 2), which the hub folds alone, into its own record. Deploy the relay first, then the site: a new build's sites on an older relay join the older law's vote. Until two of the new site's builds name a site, the hub folds none, its herald names no place, and that day's kill is not posted (AUDIT TAMRIEL-WIDE II R4); a new build says no site to an older relay (SERPENT_SITE_RELAY_MIN, II R2).
+// world283: PVP-SAFE-HIT (2026-10-29, NOT YET DEPLOYED): a non-villain in a settlement's streets of the zone says it (`zone` with `sf` 1, WILD_STREETS_RELAY_MIN) - the referee lands its blow on a red villain alone and no blow on it (net/wild/wildRef.js wildStreetsBar). Deploy the relay first, then the site.
 // world282: PVP-FOLLOWUP (2026-10-29, the PvP rework's follow-up; NOT YET DEPLOYED): PVP-RISE - the zone's death wait a minute (WILD_DEATH_HOLD_S 60, WILD_REF.riseMs and the `down` word's ceiling 60 s, were two minutes); Enter rises after 15 s (DEATH-15). Deploy the relay first, then the site.
 // world281: PVP-REWORK STAGE 1 with STAFF-PULL and SD-SOLO-40 (the stp frame carries pull and landed - staff bring a player to them, net/staffTeleport.js, server/src/staffTeleport.js routeStaffPull, from #1360's world276; a shared solo Shattered Hour holds 40, net/superDungeon/sdLaw.js SD_PUB_SEATS) (2026-10-28, the PvP rework; NOT YET DEPLOYED; world280 on its branch, renumbered past ARMORY) - the referee's pool is the player's real health (the `vit` report's `x`, at most 3,000) and Restoration (`r`); one blow or cast takes at most 45% of it (PVP-HIT), BAL8's 180 in 5 s retired; casts 1.9 a second (PVP-CASTS); a fight's heals 25-35% a 15 s (PVP-HEAL), duels included; a player's blow passes the struck player's armour first (PVP-GUARD, the report's `g`), a player's spell its resistance by element (PVP-WARD, the report's `w` and a cast's `el`, never past 85%); a Shield on a player takes 25% off a swing and 35% off a shaft (PVP-SHIELD, the report's `sh` - PVP-KIT: a Shield's share, 10-25, of those), one hit at most 34% (the triangle). Deploy the relay first, then the site.
 // world280: ARMORY (2026-10-28, the owner: "Aura armory ... customize your character without changing your overall sprite"; bible/04-Characters/Aura-Armory.md; NOT YET DEPLOYED): a token's armory kit, `ak` (net/armoryLaw.js, which joins the bundle), refused unless it is five known pieces, each of its slot, and badged on a peer's row like the aura (readArmory); the weapon glow's two armory words, brand2 and edge2 (LOOK_GLOW_RE). Deploy the relay first. (world277 on its branch, renumbered past WILD-REMAINS-LOSS's world277 at the merge of main, and world278 past FB1028's world278 and AUDIT FB1028's world279 at the next.)
@@ -2290,7 +2293,10 @@ export function validLook(look) {
   // (net/peer/peerRiders.js createPeerWalkers). OMITTED when off, `class`'s law. A relay before this one drops it: the
   // player is then seen in their set or class, as before.
   const lg = uint(look.lg, 2);
-  return { race, gender, faceIndex, ...(klass ? { class: klass } : {}), ...(eo != null ? { eo } : {}), ...(lg ? { lg } : {}), items };
+  // CAPE-TOGGLE (2026-10-29): `hc` 1 - the player hides their capes, so a peer draws no aura on them (their look already
+  // leaves the cloak out). OMITTED otherwise, `class`'s law. A relay before this one drops it: the aura is seen as before.
+  const hc = look.hc === 1;
+  return { race, gender, faceIndex, ...(klass ? { class: klass } : {}), ...(eo != null ? { eo } : {}), ...(lg ? { lg } : {}), ...(hc ? { hc: 1 } : {}), items };
 }
 /** DISC23-B's `eo` bound, widened by SKIN2: every on-foot skin - Eye Of The Beholder's sixteen sets (archives
  *  112364-112379) and Daggerfall's twenty classes after them. A literal, because the relay imports this file and not the skin table (test/net/skin2_class_skins.test.js pins it equal to
@@ -4990,7 +4996,7 @@ export function validWildData(d) {
   } else if (d.k === 'zone') {
     if (d.z !== 0 && d.z !== 1) return null;
     if (d.fl !== undefined && d.fl !== 0 && d.fl !== 1) return null;
-    out = { k: 'zone', z: d.z, ...(d.z === 0 && d.dd === 1 ? { dd: 1 } : {}), ...(d.z === 1 && d.fl !== undefined ? { fl: d.fl } : {}), ...(d.z === 1 && d.ed === 1 ? { ed: 1 } : {}) };   // INT9: my word on the zone - AUDIT FOE-KEEPS E2: `dd` 1, left it dead - PVP-FLAG: `fl`, my flag - PVP-EDGE: `ed` 1, walked in over the edge
+    out = { k: 'zone', z: d.z, ...(d.z === 0 && d.dd === 1 ? { dd: 1 } : {}), ...(d.z === 1 && d.fl !== undefined ? { fl: d.fl } : {}), ...(d.z === 1 && d.ed === 1 ? { ed: 1 } : {}), ...(d.z === 1 && d.sf === 1 ? { sf: 1 } : {}) };   // INT9: my word on the zone - AUDIT FOE-KEEPS E2: `dd` 1, left it dead - PVP-FLAG: `fl`, my flag - PVP-EDGE: `ed` 1, walked in over the edge - PVP-SAFE-HIT: `sf` 1, in a settlement's safe streets
   } else if (d.k === 'helm') {
     // SHIP-PVP: my word at my helm - my hull (-1: left it), my toughness in hundredths, my boat's uid, my hull per mille
     // AUDIT SEA VENTURES A4: a ship said is a boat the service can name - a hull with no uid (u 0) was a ship that could be
@@ -5036,6 +5042,10 @@ export const WILD_ORDER_MAX = 1024;
 /** INT9: the relay that first REFEREES the zone (net/wild/wildRef.js) - a client meeting an older one fights nobody there. */
 export const WILD_REF_RELAY_MIN = 185;   // world183, then world184, on its branch, renumbered past CHAP4c's world183 and PERF-RELAY1's world184 at the merges
 export const relaySupportsWildRef = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= WILD_REF_RELAY_MIN; };
+/** PVP-SAFE-HIT: the relay that first reads `sf` on the zone word (net/wild/wildRef.js wildStreetsBar) - an older one drops
+ *  it and would hold a player in the streets fair, so a client says 0 there to it, as before. */
+export const WILD_STREETS_RELAY_MIN = 283;
+export const relaySupportsWildStreets = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= WILD_STREETS_RELAY_MIN; };
 /** INT9: the zone referee's word kinds (`{t:'wref', k, ...}`, the relay's alone). */
 export const WILD_REF_KINDS = Object.freeze(['hp', 'fell', 'rc', 'hull', 'wreck', 'wc', 'down', 'grace', 'flag', 'bar', 'vil']);
 /** WILD-REJOIN: the longest a `down` word says a fallen has left to lie, ms (net/wild/wildRef.js WILD_REF.riseMs, pinned
@@ -5813,8 +5823,10 @@ export function validRaidTownsIn(d) {
   if (typeof d.c !== 'string' || !d.c.length || d.c.length > RAID_TOWNS_CHUNK) return null;
   return { h: d.h, n: d.n, i: d.i, c: d.c };
 }
-/** The cleanses the hub keeps for a hello (today's and yesterday's - two dozen raids a game day), and says in one `cls`. */
-export const RAID_CLEANS_MAX = 64;
+/** The cleanses the hub keeps for a hello (today's and yesterday's), and says in one `cls`. AUDIT TAMRIEL-WIDE B5: two days
+ *  of every lane's slots (raidLaw.js: the Bay's lane and each province's, RAID_SLOTS_MAX a day at most) - 64 held the
+ *  Bay's two days alone, WW6's lanes roll 286 to 334, and a joiner read the older cleanses as raids still standing. */
+export const RAID_CLEANS_MAX = 2 * RAID_SLOTS_MAX * (1 + RAID_LANES_BEYOND.length);
 /** A cell's storage keys for its raids' ledgers - AUDIT RAID R1: under the ledger's identity (raidLaw.js raidLedgerId:
  *  the key and the signature), so a word naming another tuple never finds, nor takes, the honest raid's. */
 export const RAID_LEDGER_PREFIX = 'raid:';
@@ -6292,8 +6304,9 @@ export const serpentGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SERPENT_H
 export const SERPENT_RELAY_MIN = 173;
 export const relaySupportsSerpent = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= SERPENT_RELAY_MIN; };
 /** SERPENT2: the first hub that takes a serpent's `site` (its Discord herald). An older one closes the socket on the kind
- *  it does not know, so a client says none to it. */
-export const SERPENT_SITE_RELAY_MIN = 166;
+ *  it does not know, so a client says none to it. AUDIT TAMRIEL-WIDE II R2: world284, the first that folds the site law
+ *  (`sl`) - an older hub strips it and folds this build's site into the old law's vote. */
+export const SERPENT_SITE_RELAY_MIN = 284;
 export const relaySupportsSerpentSite = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= SERPENT_SITE_RELAY_MIN; };
 /** The door between the serpent's cell and the hub: the kill said to everyone online. */
 export const SERPENT_INTERNAL_FELL = '/internal/serpent/fell';
@@ -6356,7 +6369,8 @@ export function validSerpentIn(m) {
   if (m.k === 'vt') return intIn(m.v, 0, BODY_WORD_MAX) ? { k: 'vt', v: m.v } : null;   // INT13: my hull's share, thousandths
   if (m.k === 'site') {   // SERPENT2: the day, the site's native point to the whole unit, the port it lies off (gatePlaceWire's law)
     if (!Number.isSafeInteger(m.d) || m.d < 0 || !Number.isSafeInteger(m.sx) || !Number.isSafeInteger(m.sz) || Math.abs(m.sx) > POSE_BOUND || Math.abs(m.sz) > POSE_BOUND || typeof m.pl !== 'string') return null;
-    return /^[A-Za-z]/.test(m.pl) && gatePlaceWire(m.pl) === m.pl ? { k: 'site', d: m.d, sx: m.sx, sz: m.sz, pl: m.pl } : null;
+    if (m.sl !== undefined && !intIn(m.sl, 1, 999)) return null;   // AUDIT TAMRIEL-WIDE E3: the site law it was rolled by (serpentLaw.js SERPENT_SITE_LAW); none from a build before it
+    return /^[A-Za-z]/.test(m.pl) && gatePlaceWire(m.pl) === m.pl ? { k: 'site', d: m.d, sx: m.sx, sz: m.sz, pl: m.pl, ...(m.sl !== undefined ? { sl: m.sl } : {}) } : null;
   }
   if (!Number.isSafeInteger(m.i) || m.i < 1) return null;
   if (m.k === 'esc') return { k: 'esc', i: m.i };

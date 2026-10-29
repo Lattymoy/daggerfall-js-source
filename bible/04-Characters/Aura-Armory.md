@@ -87,7 +87,9 @@ the aura (`src/net/wire.js` badged, readArmory), and the session keeps it with t
 is dressed at once.
 
 **A change reaches the room at once.** The world host compares the kit the last token said with the kit stored now,
-and says hello again on a fresh token when they differ (`net/online.js` rehello, AURA-LIVE's way).
+and says hello again on a fresh token when they differ (`net/online.js` rehello, AURA-LIVE's way). The stored session
+keeps the kit, and the minter hands on the kit each token says (ARMORY-SEEN: both had dropped it, so no player saw
+their own pieces in the world).
 
 **The service's row.** Migration 0191: `players.armory`, the kit worn, read against what is held at every ask, so a
 refunded piece is signed for no more. What is held has no column of its own: a Broker piece is its id on `insignia`, a
@@ -138,6 +140,11 @@ eye; the Eternal Sigil also burns on the back, clear of a rig's torso.
 
 **A sprite's forearm is not drawn.** A painting has no elbow or wrist to measure past the shoulder, so on a sprite an
 arm piece is drawn on the upper arm alone; the forearm draws on a rig. The legs draw from the knee down on both.
+
+**Under a cloth** (ARMORY-SEEN, `01-Overview/bugs/Field-Bugs-2026-10-29.md`). A cloak or a cape covers what is drawn
+before it, and the pieces write no depth. Where the eye sees the back of a body whose aura hangs cloth there, its pieces
+are drawn before the auras, so the cloth lies over them (`render/auraRing.js` auraClothOver, `scenes/auraHost.js`
+armoryLayers). From the front and the side they are drawn after.
 
 **Beast form** hides every piece, as it tears the cape. **A rider** keeps head, torso and arms; the legs are the
 horse's. **Sunk to the neck**, only the head piece draws. **My own first person** draws no body piece over the view.

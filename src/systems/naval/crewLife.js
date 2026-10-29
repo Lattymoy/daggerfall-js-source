@@ -133,7 +133,7 @@ export function crewRoster({ hull, seed, shipClass = null, crewShare = 1, crew =
 /** A man's own words, by what the ship is about, and by her trade where it colours them. */
 export const CREW_BLURBS = Object.freeze({
   calm: Object.freeze([
-    'Fair wind today.', 'Mind that line!', 'Smell that salt air.', 'Another day on the Iliac Bay.', 'Steady as we go.',
+    'Fair wind today.', 'Mind that line!', 'Smell that salt air.', 'Another day on the water.', 'Steady as we go.',
     'Anyone seen my pipe?', 'Wind\'s backing westerly.', 'Coil it proper, or the bosun\'ll have you.', 'Land\'s near. I can smell it.',
     'Gulls off the bow!', 'Sentinel spice fetches a fine price.', 'Wayrest by week\'s end, mark me.', 'My back\'s not what it was.',
     'Who\'s on the next watch?', 'Swab that, you lubber.', 'Calm as a Wayrest pond.', 'I\'d trade my ration for a dry bunk.',

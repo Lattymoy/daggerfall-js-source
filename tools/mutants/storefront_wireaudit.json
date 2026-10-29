@@ -169,7 +169,7 @@
   {
     "name": "WIREAUDIT-6-the-floor-unsaid",
     "file": "src/net/wire.js",
-    "old": " ROLLBACK FLOOR: world283 while acct216 or later mints `gb`",
+    "old": " ROLLBACK FLOOR: world286 while acct219 or later mints `gb`",
     "new": "",
     "tests": [
       "test/net/storefront_wireaudit.test.js"

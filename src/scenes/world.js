@@ -639,7 +639,8 @@ import { createSerpentSpell } from './gate/standInSpell.js';   // FIELD BUGS 202
 import { hasActiveEffect } from '../systems/effects.js';   // PEERLIGHT2: my Light spell, for the pose
 import { combatVisualsOn, peerDraw } from '../systems/combatVisuals.js';   // INVIS-LOOK: a concealed peer, drawn as the enhanced lane draws a concealed foe
 import { isEntityWaterWalking, assignModBundle, removeBundleNamed, WATER_WALKING_SILENT_KIND } from '../systems/effects.js';   // CSA-I: the boat's water walk
-import { pointNearPath, UNITS_PER_METRE, CAMP_ROAD_CLEAR_M } from '../world/road/roadClearance.js';   // FOREST1: and which picks are sites, and a site's footprint   // ROADS-CLEAR: WoD sites and pieces, and the camps, off the painted roads
+import { UNITS_PER_METRE, CAMP_ROAD_CLEAR_M } from '../world/road/roadClearance.js';   // FOREST1: and which picks are sites, and a site's footprint   // ROADS-CLEAR: WoD sites and pieces, and the camps, off the painted roads
+import { nearRoad } from '../world/road/roadBand.js';   // AUDIT TAMRIEL-WIDE C2: ROADS-CLEAR past the Bay
 import { gateClearFor, createGateClearSweep } from '../world/gate/gateClearance.js';   // GATE-CLEAR: WoD's rock off the day's Oblivion Gate
 import { raidMapMarks } from '../ui/eventMapMarks.js';   // EVENT-TIP: the towns under attack, on the held map
 import { StreamingWorldState, TerrainSlots, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords, SCENE_MAP_RATIO } from '../world/streamingWorld.js';   // HCC: StreamingWorld.SceneMapRatio; AUDIT BRANCH (WoD) L1-3: DFU's terrain array; AUDIT 68 S22: the load list's one order
@@ -874,7 +875,7 @@ import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/
 import { createHeartbeat, whileLive } from '../net/heartbeat.js';   // SCALE4c: the beat, the letterbox and the town's board in one request
 import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
 import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus (RENOWN3: read against my Renown)
-import { villainMonsterLowers, villainQuestLowers } from '../systems/wild/villainLaw.js';   // PVP-VILLAIN-KEEP: a monster at my level and a quest lower the villain meter
+import { villainMonsterLowers, villainQuestLowers, isVillain } from '../systems/wild/villainLaw.js';   // PVP-VILLAIN-KEEP: a monster at my level and a quest lower the villain meter
 import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry, renownStruckAt, renownReportSoon } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
 import { createHallBook, hallFactionsOf, chapterFactionOf, parseHallCommand, hallAuditLines } from '../net/npcHallBook.js';   // CHAP2a: a town's guild halls, witnessed as I walk in; AUDIT CHAP2 E1: a developer's /hall
@@ -996,7 +997,7 @@ import { createPlayerHealthMirror } from '../net/siege/refereeHealthMirror.js'; 
 import { wildHallPicks, wildHallAt, wildHallTemplateOk } from '../systems/wild/wildDungeons.js';   // PVPDUNGEONS: the day's halls, picked alike on every client   // PVPDUNGEONS
 import { setWildHere, wildHere, isWildRegion, WILD_REGION, wildInside, wildNear, setWildDeath, wildDeath, wildDeathAtHand, wildDeathKill, wildFallHeard, WILD_TEXT, WILD_DEATH_HOLD_S, WILD_NAME, ZONE_WATCH_SCALE } from '../systems/wild/wildZone.js';
 import { createPartyTruce } from '../systems/wild/wildZone.js';   // PARTY-TRUCE (FIELD BUGS 2026-10-09b)
-import { settledAt, zoneSafe, zoneSafeFrame, zonePortFree, ZONE_SAFE_TEXT } from '../systems/wild/zoneSafe.js';   // ZONE-SAFE (the owner, 2026-10-25: "All cities should be considered safe zones"): a settlement's streets are peace
+import { settledAt, zoneSafe, zoneSafeFrame, zonePortFree, teleportLanding, ZONE_SAFE_TEXT } from '../systems/wild/zoneSafe.js';   // ZONE-SAFE (the owner, 2026-10-25: "All cities should be considered safe zones"): a settlement's streets are peace
 import { zoneEdgeSee } from '../systems/wild/zoneEdge.js';   // PVP-EDGE: safe passage only for a walk in over the zone's edge
 import { GREATER_GIANT_CALL, GREATER_GIANT_CALL_AT, noteWildBlow } from '../systems/wild/wildZone.js';   // GREATER-GIANT; AUDIT PVP-EASE L2-1: the combat lock's blow
 import { wildRing, wildRingAt, wildRingName, wildRingBonus, wildZoneKind, zoneWord, zoneRingName, setWildMask, wildMask, WILD_RINGS, wildJourney, WILD_GIANT, WILD_GIANT_CHANCE, WILD_GIANT_MAX, WILD_STRANGER_M, WILD_STRANGER_SEE_M, WILD_STRANGER_SLOW_M, WILD_STRANGER_RGBA } from '../systems/wild/wildZone.js';   // WILD2: the four rings; WILD3: the journeys
@@ -1090,7 +1091,7 @@ import {
   weatherRng, fogFactor, precipitationForWeather, isDryFall,
   LightningPlayer,
 } from '../world/weather.js';
-import { PrecipitationRenderer } from '../render/precipitation.js';
+import { PrecipitationRenderer, precipWarmStep } from '../render/precipitation.js';
 import { warmPrograms } from '../render/warmPrograms.js';
 import { ROTOR_HUB, advanceRotor, mountRotor, MILL_SOUND, millSoundPosition } from '../world/windmills.js';   // WM2b: the sails; WM4c: the hum
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
@@ -1126,7 +1127,8 @@ import { createInstanceDoor } from './instanceDoor.js';   // INSTANCES: public o
 // TESTBUILD: every player may use the staff's /god (/godmode), /fly, /heal, /tp - god mode also lifts the zone's travel law and makes map journeys instant
 const TEST_GODMODE = false;
 const isStaffT = (g) => TEST_GODMODE || isStaff(g);
-import { isStaff, parseStaffCommand, STAFF_HELP_LINES, findPlace } from '../net/staffCommands.js';   // STAFF1: the staff's own commands
+import { isStaff, findPlace } from '../net/staffCommands.js';   // STAFF1: the staff's own commands
+import { parseStaffLine, staffHelpLines, staffTpPlaces } from './staffTp.js';   // AUDIT TAMRIEL-WIDE B4/C7: /tp to a pixel and a place past the Bay
 import { RELAY_CFG_KEYS, mayRelayCfg } from '../net/relayCfg.js';   // SCALE5b: the relay's settings, a developer's
 import { shardOf, isChannelBus, isChannelShard, channelOf, hubShardsSupported } from '../net/hubShards.js';
 import { cellOfRoom as layerCellOf, worldRoom as layerCellAt } from '../net/wire.js';   // SCALE5d: a crowded place's layer, my party's   // SCALE5c: the hub, sixteen ways; part two: a region's channel, four
@@ -1249,6 +1251,8 @@ import { createWildGrace } from '../systems/wild/wildGrace.js';   // ZONE-GRACE:
 import { createPvpKitBar } from '../ui/pvpKitBar.js';   // PVP-KIT: the PvP spell bar
 import { createPvpFlagHost } from './pvpFlagHost.js';   // PVP-FLAG: the open zone's flag, on this page
 import { createPvpRulesHost } from './pvpRulesHost.js';   // PVP-RULES: a flagged fighter's limits
+import { createPvpGuardsHost } from './pvpGuardsHost.js';   // PVP-GUARDS: the watch hunts a villain in town
+import { peaceFor, streetsStrike } from '../systems/wild/villainHunt.js';   // PVP-GUARDS: a villain has no peace in the streets - PVP-SAFE-HIT: and is fair from them
 import { createMarketPieces } from './marketPiecesHost.js';   // HOST-SPLIT
 import { createRaidHost } from './raidHost.js';   // HOST-SPLIT
 import { createSpawnGroundHost } from './spawnGroundHost.js';   // HOST-SPLIT
@@ -2720,7 +2724,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   void warmPrograms([
     ...renderer.warmSteps(),
     ...(renderer.lazyWarmSteps?.() ?? []),   // PERF-COMPILE1: the telegraph pass and the windows' background, at idle
-    () => { if (!precip) precip = new PrecipitationRenderer(renderer.gl, precipOpts); },
+    precipWarmStep(renderer.gl, precipOpts, () => precip, (made) => { precip = made; }),   // SHADER-EASE WARM-POLL: started, then built
   ]);
   const wisps = sky.enhanced ? new WindWispsRenderer(renderer.gl) : null;   // WIND3: built on the enhanced lane, so a shader fault is a boot fault; its row is read per frame
   const windAudio = createWindAudio();   // WIND3: the wind loop, ticked on the exterior frame and stopped on the modal one
@@ -3493,7 +3497,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const crewFlatDrawn = (f, b) => { b.castOnly = false; };
   let _crewEye = [0, 0, 0], _crewDt = 0;   // the frame's eye and clock, set before the crews are walked
   const offerCrewPerson = (f, b) => {
-    const look = b.conceal ? null : figureLook(f, yardFigureCtx);
+    const look = b.conceal ? null : figureLook(f, yardFigureCtx, b.origin);
     if (look) streetPeople.offer(personActor(f, look, b.origin, _crewEye, _crewDt), b);
     else b.castOnly = false;
   };
@@ -3506,11 +3510,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   }
   // MWNPC18: what a yard's figure is read by - FLATS.CFG and the region's race, asked only when a figure is first looked at
   const yardFigureCtx = { get flats() { return pipeline.flatsFile?.() ?? null; }, get race() { return REGION_RACES[_questRegionIndex()] + 1; } };
-  const streetLook = (pn) => {
+  const streetLook = (pn, feet) => {   // AUDIT TAMRIEL-WIDE E2: `feet` where they stand, read once with the look
     if (pn._mwLook !== undefined) return pn._mwLook;
     const dict = _questStore()?.dict ?? null;
     if (!dict) return null;   // never before the faction table: asked again
-    return personLook(pn, staticNpcData(pn, { getFaction: (id) => dict.get(id) ?? null, raceOfCurrentRegion: () => REGION_RACES[_questRegionIndex()] + 1 }), dict.get(pn.factionID) ?? null);
+    return personLook(pn, staticNpcData(pn, { getFaction: (id) => dict.get(id) ?? null, raceOfCurrentRegion: () => REGION_RACES[_questRegionIndex()] + 1 }), dict.get(pn.factionID) ?? null, feet);
   };
   /** CARDS4b: THE REGULARS AT THE CARD TABLE (world/card/cardRegulars.js) - stood by the interior host each frame on layers of
    *  their own, seated through the pose's `st` as a seated peer is; what they say, over their heads. */
@@ -4430,7 +4434,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const dwRender = deepWatersOn() ? new DeepWatersRenderer(renderer) : null;
   latchModLoaded(DEEP_WATERS_VENDOR, !!dwRender);   // AUDIT PRE-MERGE 0928 S4: the sea is built now or not at all - its fish's shelf rows answer the same (systems/deepWater/deepWatersFishItems.js)
   if (dwRender) renderer.prepareTerrainClip();   // FAR-CLIP1: the cap's clip program, built with the mod's own at mount - not inside the first frame that draws a coast
-  if (dwRender) void warmPrograms([() => dwRender._ensure()]);   // PERF-COMPILE1 (stutter): the mod's seven programs at idle - they were built inside the first frame that drew a coast, seven compiles in one frame
+  if (dwRender) void warmPrograms(dwRender.warmSteps());   // PERF-COMPILE1 (stutter): the mod's seven programs at idle - they were built inside the first frame that drew a coast, seven compiles in one frame; SHADER-EASE WARM-POLL: started, then built once the driver is done
   // DW-E2: GameManager.IsPlayingGame for the Deep Waters runtime's gates - no window up. The overlay slot (townTalk) is
   // made further down; the first pixels promote before it exists, so the question is late-bound (nothing is up yet).
   let _dwOverlayUp = () => false;
@@ -4483,7 +4487,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // OH-B / OH-C: THE PITS - Iliac Puddle No More's dependant, cut into its floors (scenes/oceanHolesHost.js says how). Its
   // switch is read once, at the world's mount, with its dependency's: no carved sea, no pits.
   const ohRender = deepWaters && oceanHolesOn(true) ? new OceanHolesRenderer(dwRender) : null;
-  if (ohRender) void warmPrograms([() => ohRender._ensure()]);   // PERF-COMPILE1 (stutter): the holes' two programs at idle, not at the first hole drawn
+  if (ohRender) void warmPrograms(ohRender.warmSteps());   // PERF-COMPILE1 (stutter): the holes' two programs at idle, not at the first hole drawn (SHADER-EASE WARM-POLL: started first)
   let _ohTime = 0;   // OceanHoles' Time.time - the game's, held by a pause (the entrance's once-a-second)
   const _ohOrigin = [0, 0, 0];
   oceanHoles = ohRender ? createOceanHoles({
@@ -6279,7 +6283,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const wc = state.worldCoords(pos);
     const p = worldCoordToMapPixel(wc.x, wc.z);
     const o = mapPixelToWorldCoords(p.x, p.y);
-    return pointNearPath(net, p.x, p.y, wc.x - o.x, wc.z - o.z, radiusM * UNITS_PER_METRE);
+    return nearRoad(net, p.x, p.y, wc.x - o.x, wc.z - o.z, radiusM * UNITS_PER_METRE);   // AUDIT TAMRIEL-WIDE C2: the curves' band past the Bay
   };
   const _inAnyLocationRect = (pos) => {
     const wc = state.worldCoords(pos);
@@ -13611,7 +13615,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (link.type !== playerEntity.ownedShip) return false;
     const boat = csaRuntime.AllBoats.find((b) => b.uid === link.uid && b.hull === link.hull && !b.inside);
     if (!boat?.MapPixel) { townTalk.say('Summon your linked ship from Holdings > Fleet, or place its parts, first.'); return true; }
-    if (!loading && (wildTeleportRefused(boatPixelOf(boat)) || veilRefused(boatPixelOf(boat)))) return true;   // AUDIT SEA VENTURES C1: a teleport to her like any - never into, out of or about the open zone, nor across the Veil (each says its own refusal)
+    if (!loading && (wildTeleportRefused(boatPixelOf(boat), boat.GameObject ? campToWire(boat.GameObject.position) : null) || veilRefused(boatPixelOf(boat)))) return true;   // AUDIT SEA VENTURES C1: a teleport to her like any - never into, out of or about the open zone, nor across the Veil (each says its own refusal)
     if (csaRuntime.isSailing() || navalHostileNear()) { townTalk.say(csaRuntime.isSailing() ? CABIN_REFUSAL.helm : CABIN_REFUSAL.enemies); return true; }   // FB1020c CABIN-FOES: nor below from a deck a hostile ship is near - the door's own law (systems/sailingCabin.js)
     modes?.forceExitToExterior({ cacheScene: !loading });
     cabinLink.close();
@@ -13812,7 +13816,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // "Anchor must be set" - the 4001 box (:268-275). The cast is
     // spent either way; DFU refunds nothing.
     if (!plan) { townTalk.say('You must set an anchor first.'); return; }
-    if (plan.kind !== 'same-interior' && (wildTeleportRefused(plan.anchor?.pixel ?? null) || veilRefused(plan.anchor?.pixel ?? null))) return;   // PVPDUNGEONS: no Recall into, out of or inside the zone - AUDIT CAPTAIN'S SEA P6: nor across the Veil
+    if (plan.kind !== 'same-interior' && (wildTeleportRefused(plan.anchor?.pixel ?? null, teleportLanding(plan.anchor)) || veilRefused(plan.anchor?.pixel ?? null))) return;   // PVPDUNGEONS: no Recall into, out of or inside the zone - AUDIT CAPTAIN'S SEA P6: nor across the Veil
     const wildTrip = plan.kind === 'same-interior' ? { ok: true, fee: 0 } : wildTravelGate(plan.anchor.pixel, 0, teleportJourney);   // WILD3: Recall is a fast journey too - PORTAL-BAY: a teleport's, under the teleport's law past the Bay (an anchor set past the Bay is reached, as the guild's teleport is)
     if (!wildTrip.ok) return;
     wildTravelPaid(wildTrip);
@@ -13936,11 +13940,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   }
 
   /** G5's teleport (below). PORTAL-BAY (bible/06-Systems/Portal-Stone.md): answers whether the player arrived - a caller
-   *  that blacked the screen first (a stone's portal, scenes/portalStoneHost.js portalArrive) lifts it on false. */
-  async function teleportTo(pick) {
+   *  that blacked the screen first (a stone's portal, scenes/portalStoneHost.js portalArrive) lifts it on false.
+   *  `zoneFree`: the caller asked the zone's law itself (AUDIT TAMRIEL-WIDE III F1: an unflagged stone's, PVP-FLAG). */
+  async function teleportTo(pick, { zoneFree = false } = {}) {
     if (worldMoveBusy()) return false;   // AUDIT 68 S22
     if (_teleporting) return false;
-    if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return false;   // PVPDUNGEONS: the guild's teleport never into, out of or inside the zone - AUDIT CAPTAIN'S SEA P6: nor across the Veil
+    if ((!zoneFree && wildTeleportRefused(pick.pixel)) || veilRefused(pick.pixel)) return false;   // PVPDUNGEONS: the guild's teleport never into, out of or inside the zone - AUDIT CAPTAIN'S SEA P6: nor across the Veil
     const wildTrip = wildTravelGate(pick.pixel, 0, teleportJourney);   // WILD3: the guild's teleport is a fast journey too - PORTAL-BAY: under the teleport's law past the Bay (systems/travel/pastBayTravel.js teleportJourney: a teleport is never refused as a journey)
     if (!wildTrip.ok) return false;
     wildTravelPaid(wildTrip);
@@ -15781,7 +15786,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // field on the network object, terrainGenClient.js).
     roads: () => { const net = terrainGen.roads(); return net?.source === 'basic-roads' ? net : null; },
     onRoad: () => travellerOnRoad(),   // RATE-LAW: a straight walk's ground - the road's rate while it runs along one
-    isWater: (x, y) => x < 0 || y < 0 || x >= 1000 || y >= 500 || woods.getHeightMapValue(x, y) <= WATER_BYTE,   // AUDIT DEEP T2-1: a road journey's resume never aims across the sea
+    isWater: (x, y) => tvWater(x, y),   // AUDIT DEEP T2-1: a road journey's resume never aims across the sea - AUDIT TAMRIEL-WIDE C5: the ground's own sea, past the Bay too
     seaWaterAt: (x, z) => tvSeaWaterAt(...state.localFromWorld(x, z)),   // FIELD BUGS 2026-10-21d PASSAGE-IN: the ground the boat floats on, native units - a sailed leg's mark
     worldPos: () => { const wc = state.worldCoords(walkMode ? player.pos : cam.pos); return { x: wc.x, z: wc.z }; },
     mapPixel: playerTravelPixel,
@@ -16170,7 +16175,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     return createTravelMapWindow({
       maps, mapDict, woods,
       roads: () => terrainGen.roads(),   // ROADS 7: the map draws the network
-      tamrielPlacesIn: tamrielLand ? pastBayPlacesIn : null,   // TESA13: the countryside and the lairs past the Bay, in the view - TESA15: the ones the roads' regions laid, all at once
+      tamrielPlacesIn: tamrielLand ? (x0, y0, x1, y1) => knownPastBayIn(x0, y0, x1, y1) : null,   // TESA13: the countryside and the lairs past the Bay, in the view - TESA15: the ones the roads' regions laid - AUDIT TAMRIEL-WIDE D2: the known ones
       tamrielPlaceName: tamrielLand ? tamrielPlaceName : null,   // TESA15: and a mark's name, as the hover asks
       // GetPlayerTravelPosition, not PlayerGPS's raw pixel: DFU's travel
       // map reads it for the crosshair (:864), the player's region
@@ -19789,7 +19794,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const say = (line) => chatLog.push(tabId, { text: line, system: true });
     if ('error' in c) { say(c.error); return; }
     if (c.cmd === 'tpa') { staffPull.command(c.player, say); return; }   // STAFF-PULL
-    if (c.cmd === 'staff') { for (const line of [...STAFF_HELP_LINES, DRAGON_HELP_LINE]) say(line); return; }
+    if (c.cmd === 'staff') { for (const line of [...staffHelpLines(), DRAGON_HELP_LINE]) say(line); return; }
     if (c.cmd === 'relay') {
       // SCALE5b: a relay setting, to the hub (net/relayCfg.js) - the Developer's alone; the hub's answer lands in this tab
       if (!mayRelayCfg(staffGlyphs())) { say('Only a developer may change the relay\'s settings.'); return; }
@@ -19821,9 +19826,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // /tp: a place by name, a map pixel, or where another player stands - the guild teleport's own arrival (teleportTo)
     let pick = null;
     if (c.place != null) {
-      const places = [...locationIndex.entries()].map(([k, loc]) => { const [px, py] = k.split(',').map(Number); return { name: loc.name, px, py }; });
-      if (_arenaTemplates) for (const a of arenaPixels()?.stood ?? []) if (!locationIndex.has(`${a.bx},${a.by}`)) places.push({ name: a.name, px: a.bx, py: a.by });   // TESA2: an Arena place, stood or not yet
-      const hit = findPlace(places, c.place);
+      // TESA2: an Arena place, stood or not yet; AUDIT TAMRIEL-WIDE B4/C7: and the registry's places past the Bay
+      const hit = findPlace(staffTpPlaces({ locationIndex, stood: _arenaTemplates ? arenaPixels()?.stood : null, registry: worldPlaces }), c.place);
       if (!hit) { say(`No place called "${c.place}".`); return; }
       pick = { pixel: { x: hit.px, y: hit.py }, name: hit.name };
     } else if (c.player != null) {
@@ -19837,7 +19841,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
     if (_teleporting || worldMoveBusy()) { say('You cannot teleport right now.'); return; }
     hudFade.smashHUDToBlack();   // teleportTo's arrival lifts it (the Teleport window's own order, ui/teleportPopUp.js)
-    teleportTo(pick).catch((e) => { console.error('[staff] /tp failed:', e); hudFade.clearFade(); say('The teleport failed.'); });
+    teleportTo(pick).then((ok) => ok || hudFade.clearFade())   // AUDIT TAMRIEL-WIDE III V1: a refusal (the zone's, a move in flight) lifts the black it said over
+      .catch((e) => { console.error('[staff] /tp failed:', e); hudFade.clearFade(); say('The teleport failed.'); });
   }
   // AUDIT ONLINE 3 (the second read) B-F2-1: the minter on the sessions' clock - on Date.now a clock set back held a dead token fresh
   // (every new room's hello refused 'token expired', terminal) or a failed mint's hold for the length of the step
@@ -20524,7 +20529,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // STAFF1 (Mac: "for developer, dungeon master and the shadow fang titles I want to add teleport, debug, and other
         // admin commands"): /tp /god /fly /heal /pos /staff (net/staffCommands.js) - asked only of a player whose own
         // glyphs are staff's, so to anyone else each is the chat's own "no such command". Each acts on the typer alone.
-        const staffCmd = isStaffT(staffGlyphs()) ? (parseDragonCommand(text) ?? parseStaffCommand(text.replace(/^\/godmode\b/i, '/god'), staffPowers())) : null;   // DRAGON-RIDE: /dragon, its own grammar   // TESTBUILD: /godmode = /god
+        const staffCmd = isStaffT(staffGlyphs()) ? (parseDragonCommand(text) ?? parseStaffLine(text.replace(/^\/godmode\b/i, '/god'), staffPowers())) : null;   // DRAGON-RIDE: /dragon, its own grammar   // TESTBUILD: /godmode = /god; AUDIT TAMRIEL-WIDE B4/C7: a pixel past the Bay
         if (staffCmd) { runStaffCommand(tabId, staffCmd); return 'error' in staffCmd ? false : true; }
         // TITLE-N (Mac: "Dungeon Master ... allows the user to use the /dm to message chat with orange text (similar to
         // /red)"): /red's law below, one frame over - parsed here and never guarded: whether this player may is the
@@ -21126,7 +21131,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   setWildInsureBook(wildInsure);
   wildInsure.read();
   const wildGrace = createWildGrace({ me: () => online?.id ?? null, say: (l) => { setMidScreenText(l); townTalk.say(l); } });   // ZONE-GRACE (systems/wild/wildGrace.js)
-  const pvpFlag = createPvpRulesHost(createPvpFlagHost(() => online, playerEntity, setMidScreenText, townTalk), player, playerEntity, setMidScreenText).flag;   // PVP-FLAG (scenes/pvpFlagHost.js); PVP-RULES (scenes/pvpRulesHost.js): a flagged fighter's limits
+  const pvpFlag = createPvpGuardsHost(createPvpRulesHost(createPvpFlagHost(() => online, playerEntity, setMidScreenText, townTalk), player, playerEntity, setMidScreenText), () => [cityGuards, walkMode && playerSpawned ? player.pos : cam.pos, cam.yaw, modes?.mode ?? 'exterior', settledAt(campToWire(player.feetAt()), locationIndex)], playerEntity, setMidScreenText).flag;   // PVP-FLAG (scenes/pvpFlagHost.js); PVP-RULES (scenes/pvpRulesHost.js): a flagged fighter's limits; PVP-GUARDS (scenes/pvpGuardsHost.js): the watch hunts a villain in town
   const pvpKit = createPvpKitBar(() => [online, magic, modes?.mode, allyTargetPick, cam, socialFwd], pvpFlag, playerEntity);   // PVP-KIT: the PvP spell bar on keys 3 to 0 (ui/pvpKitBar.js)
   const _duelSent = new Map();   // my blow's number -> { kind, weapon } - what it was
   let _duelLastWeapon = null;    // INT8: the weapon of my last strike - the referee's word on it names no number
@@ -21933,23 +21938,23 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (died) _wdunCrows.set(h, Date.now() + WILD_REMAINS_MS);
     socialLink()?.sendWdun?.({ k: died ? 'die' : 'out', h });
   };
-  const wildCan = () => !!online?.wildOk && online.status === 'open' && wildHere() && (wildOutdoors() ? !settledAt(campToWire(player.feetAt()), locationIndex) : modes?.mode === 'dungeon') && playerEntity.health > 0 && !modes?.deathUp?.();   // PVPDUNGEON: players fight in the zone's dungeons too - ZONE-SAFE (systems/wild/zoneSafe.js): never outdoors in a settlement's streets
+  const wildCan = (streets = false) => !!online?.wildOk && online.status === 'open' && wildHere() && (wildOutdoors() ? streets || !peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), isVillain(pvpFlag.villainy())) : modes?.mode === 'dungeon') && playerEntity.health > 0 && !modes?.deathUp?.();   // PVPDUNGEON: players fight in the zone's dungeons too - ZONE-SAFE (systems/wild/zoneSafe.js): never outdoors in a settlement's streets - PVP-SAFE-HIT: `streets`, or there (wildFair then strikes a villain alone)
   /** Is this player one I may fight (and be fought by): standing in the zone, and never KIN - net/wild/wildRef.js wildKin, the
    *  referee's own law: my party, or one under its truce; my duel's opponent (a duel's blows are the duel's own); or, MAC'S
    *  DECISION (2026-10-14, "Guildmates are friends"), one of my guild - its tag as the relay stamped it, mine as the hub
    *  says it (a tag is one guild's alone). */
   const _wildTruce = createPartyTruce();   // PARTY-TRUCE: a party left is no fight for ten minutes, both ways
   const wildFair = (peerId) => {
-    if (!peerId || !wildCan()) return false;
+    if (!peerId || !wildCan(true)) return false;
     if (wildKin({ party: !!social?.isPartyPeer(peerId) || _wildTruce.holds(peerId, Date.now()), duel: duelMgr.live && duelMgr.opponent === peerId, guilds: [myGuildTag(), online?.guildTagOf?.(peerId) ?? null] })) return false;
-    return pvpFlag.fair(peerId) && (modes?.mode === 'dungeon' || (wildAtWire(duelWorldOf(peerId)) && !settledAt(duelWorldOf(peerId), locationIndex)));   // PVP-FLAG: my flag up - ZONE-SAFE: never a body in a settlement's streets - AUDIT FB1018 L3-5: in a dungeon a peer's pose is the dungeon's own frame - the place is the zone (wildCan's wildHere, the door's pixel), and the room is that place's
+    return pvpFlag.fair(peerId) && (modes?.mode === 'dungeon' || (wildAtWire(duelWorldOf(peerId)) && !peaceFor(settledAt(duelWorldOf(peerId), locationIndex), pvpFlag.skullOf(peerId) === 'red'))) && streetsStrike(zoneSafe(), pvpFlag.skullOf(peerId) === 'red');   // PVP-SAFE-HIT: from the streets a villain alone - PVP-FLAG: my flag up - ZONE-SAFE: never a body in a settlement's streets - AUDIT FB1018 L3-5: in a dungeon a peer's pose is the dungeon's own frame - the place is the zone (wildCan's wildHere, the door's pixel), and the room is that place's
   };
   /** PARTY-TRUCE: the row a party's walk asks with when it ends in the zone or at its edge - the walk is the one door
    *  into it no journey's gate asks (wildJourney: "The Overworld map's journeys are walked, never asked"). */
   const wildWalkRow = (x, y) => { const m = wildMask(); return !online?.wildOk ? null : etherSea && etherWildRingAt(x, y) > 0 ? zoneWord('walkInto', ETHER_KIND) : m && wildNear(m, x, y) ? WILD_TEXT.walkInto : null; };   // wildNear: inside, or within its band - AUDIT SEA VENTURES C3: and the open sea past Veilhaven's peace
   /** The fair players' bodies in this scene (peersNear's { id, feet, height }). */
   const wildBodiesNow = () => {
-    if (!wildCan()) return NO_BODIES;
+    if (!wildCan(true)) return NO_BODIES;
     const out = [];
     for (const b of peersNear() ?? []) if (wildFair(b.id)) out.push(b);
     return out;
@@ -21964,7 +21969,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const zoneWatchCall = () => {
     const mode = modes?.mode ?? 'exterior';
     const inTown = mode === 'exterior' && _isPlayerInTownStrict();
-    if (!inTown || !wildHere()) return;
+    if (!inTown || !wildHere() || zoneSafe()) return;   // PVP-SAFE-HIT: a blow at a villain from the streets is no assault
     const now = performance.now();
     if (now - _zoneWatchAt < 10_000) return;
     _zoneWatchAt = now;
@@ -22328,7 +22333,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         wildSay(zoneWord('ringCross')(ring, deeper));
       }
       // ZONE-SAFE (systems/wild/zoneSafe.js): a settlement's streets crossed in the zone, said - in a building the word I had
-      zoneSafeFrame(here, here && wildOutdoors() && settledAt(campToWire(player.feetAt()), locationIndex), wildSay, modes?.mode === 'interior');
+      zoneSafeFrame(here, here && wildOutdoors() && peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), isVillain(pvpFlag.villainy())), wildSay, modes?.mode === 'interior');
     }
     // WILD-LINE-HOLD (2026-10-08, the owner: "the warning message for the zone doesnt stay long enough right now only a
     // part of a second"): the label counts GAME seconds (ui/midScreenText.js tick, at the time scale), and the zone is
@@ -22346,8 +22351,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     try { giantNoticeFrame(); } catch (e) { console.warn('[giants] notice', e?.message ?? e); }   // GIANT-FALL
     wildFight.tick();
     for (const peer of [..._wildBodies.keys()]) if (!wildFight.body(peer)) wildBodyGone(peer);
-    online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere() && wildOutdoors(), player.pos, Date.now()));   // INT9: my word on the zone, for its referee - standing in it, alive, where it fights (AUDIT FOE-KEEPS E2: and left dying, its kill credit)
-    healthMirror.frame(wildCan() || !!duelMgr.live || inSiegeRoom());   // SHARED-HEALTH: my health to whichever referee holds my fight
+    online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere(), player.pos, Date.now()));   // INT9: my word on the zone, for its referee - standing in it, alive, where it fights (AUDIT FOE-KEEPS E2: and left dying, its kill credit)
+    healthMirror.frame(wildCan(true) || !!duelMgr.live || inSiegeRoom());   // SHARED-HEALTH: my health to whichever referee holds my fight
     wildDepositFrame(); wildSeizeFrame(); wildHudFrame();   // INT9: a drop's deposit, a fall to seize, the referee's readout
     wildEscrow.frame();   // MAC (2026-10-14, the two-phase handoff): my piece in escrow asked back, my collect carried
     wildRemains.setRooms(online?.status === 'open' ? online.heldRooms() : []);   // HALO-REMAINS: my room and the halo's
@@ -22514,13 +22519,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     townTalk.say('The Bay\'s magic does not reach across the Veil. Only the crossing does.');
     return true;
   };
-  const wildTeleportRefused = (to = null) => {
+  const wildTeleportRefused = (to = null, landing = undefined) => {   // AUDIT TAMRIEL-WIDE E1: `landing` where it lands, when the caller knows
     if (TEST_GODMODE && staffPowers().god) return false;   // TESTBUILD
     const m = online?.wildOk ? wildMapMask() : null;
     if (m && etherSea && (etherWildRingAt(playerTravelPixel()?.x, playerTravelPixel()?.y) > 0 || (to && etherWildRingAt(to.x, to.y) > 0))) { townTalk.say(ETHER_WILD_TEXT.teleport()); return true; }   // ETHER-WILD: nor about the open sea
     if (!m) return false;
     const from = playerTravelPixel();
-    if (zonePortFree(m, from, to, wildOutdoors() ? campToWire(player.feetAt()) : null, modes?.mode, locationIndex, _locationToBuild)) return false;   // WILD-CITY-PORT: a settlement's end is free (systems/wild/zoneSafe.js)
+    if (zonePortFree(m, from, to, wildOutdoors() ? campToWire(player.feetAt()) : null, modes?.mode, locationIndex, _locationToBuild, landing)) return false;   // WILD-CITY-PORT: a settlement's end is free (systems/wild/zoneSafe.js)
     townTalk.say(`In ${WILD_NAME} you can teleport only to or from a city, town or village. Walk or ride its roads.`);   // WW-C2: Cyrodiil's
     return true;
   };
@@ -22542,7 +22547,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const wildFight = createWildFight({
     send: (d, o) => online?.sendWild(d, o) === true,
     now: () => performance.now(),
-    can: wildCan,
+    can: () => wildCan(true),
     fair: wildFair,
     onBody: (from, body) => wildBodyArrived(from, body),
   });
@@ -26067,7 +26072,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** PARTY-TRAVEL: the journey itself - the travel popup's own order (ui/travel/travelPopUp.js tick): the screen smashed to
    *  black, then fastTravelTo, whose arrival fades it back; a journey that did not go clears it. */
   const partyTravelJourney = (pick, opts, computed) => {
-    if (pick?.besideAt && (wildTeleportRefused(pick.pixel ?? null) || (!pick.veil && veilRefused(pick.pixel ?? null)))) return Promise.resolve(false);   // AUDIT CAPTAIN'S SEA P6: nor to a leader across the Veil - VEIL-PARTY: but a member following her captain's crossing (veilParty.js `veil`)   // PVPDUNGEONS: no teleport to the leader into, out of or inside the zone (a party's own journey on the zone's roads is fastTravelTo's, under wildTravelGate)
+    if (pick?.besideAt && (wildTeleportRefused(pick.pixel ?? null, teleportLanding(pick.besideAt())) || (!pick.veil && veilRefused(pick.pixel ?? null)))) return Promise.resolve(false);   // AUDIT CAPTAIN'S SEA P6: nor to a leader across the Veil - VEIL-PARTY: but a member following her captain's crossing (veilParty.js `veil`)   // PVPDUNGEONS: no teleport to the leader into, out of or inside the zone (a party's own journey on the zone's roads is fastTravelTo's, under wildTravelGate)
     hudFade.smashHUDToBlack();
     return fastTravelTo(pick, opts, computed).then((went) => { if (!went) hudFade.clearFade(); return !!went; },
       (e) => { console.error('[party-travel] the journey failed:', e); hudFade.clearFade(); return false; });
@@ -26128,6 +26133,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // location of the game's own on the pixel, no spawned dungeon - every client's map files answer alike
     // LAIR-WORLD: past the Bay, no place the build stands there (scenes/tamrielPlacesHost.js placeOnPixel); SPAWN-WORLD: nor,
     // now they stand there, a spawned dungeon's pixel
+    // BAY-OWN: the Bay's branch (onTheBay), the province's beside it
     siteOk: (x, y) => (onTheBay(x, y) ? x > 0 && y > 0 && x < 999 && y < 499 && !_bountyLocPixels.has(`${x},${y}`) && !spawnsDungeon(_spawnSalt, x, y) : !provinceQuestPlaces.placeOnPixel(x, y) && !spawnsDungeon(_spawnSalt, x, y))
       && !gateSeaPixel(maps.getClimateIndex(x, y), woods.getHeightMapValue(x, y))
       && maps.getClimateIndex(x, y) !== TV_MOUNTAIN_CLIMATE,   // BOUNTY-GROUND: never a mountain pixel - the Overworld cannot walk there
@@ -29574,7 +29580,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // but the seabed lies under the sea, and land over it cuts the veil by its own depth
     return Math.max(g, tvSeaY() + CURTAIN_FOOT_MARGIN_M);
   };
-  const { carriageTown, tvEtherPlace, tvKnownGen, tvPlaceSummary, tvFarSettlements, junctionPlaceAt } = createMapPlaces({   // HOST-SPLIT: src/scenes/mapPlacesHost.js
+  const { carriageTown, tvEtherPlace, tvKnownGen, tvPlaceSummary, tvFarSettlements, junctionPlaceAt, knownPastBayIn } = createMapPlaces({   // HOST-SPLIT: src/scenes/mapPlacesHost.js
     captainLedger, etherPlaceClone, etherSea, locationIndex, mapDict, wildActiveNow, wildHallStand,
     provinceQuestPlaces, worldPlaces,   // BAY-LEFT-MAPS: a place past the Bay stood where it was found; TV5's near query
     get _locIndexGen() { return _locIndexGen; },
@@ -33261,10 +33267,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // read at the draw, so after the walk does as well as before it)
       if (p.npcs) for (const pn of p.npcs) {
         if (!pn.standBatch) continue;
-        const look = _peopleOn && ring <= 1 ? streetLook(pn) : null;
-        if (!look) { pn.standBatch.castOnly = false; continue; }
         const f = pn._mwFeet ??= [0, 0, 0];
         f[0] = pn.x + t[0]; f[1] = pn.y + t[1]; f[2] = pn.z + t[2];
+        const look = _peopleOn && ring <= 1 ? streetLook(pn, f) : null;
+        if (!look) { pn.standBatch.castOnly = false; continue; }
         streetPeople.offer(personActor(pn, look, f, mwv.eye, dt), pn.standBatch);
         npcMarks.consider(pn, streetMarkCtx);   // NPC-MARKS
       }
@@ -33277,10 +33283,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           standingHorses.offer(sf, sf.feet, sf.yaw, sf.look, sf.batch, sf.seed);
           continue;
         }
-        const look = _peopleOn ? figureLook(sf, yardFigureCtx) : null;
-        if (!look) { sf.batch.castOnly = false; continue; }
         const f = sf._mwFeet ??= [0, 0, 0];
         f[0] = sf.x + t[0]; f[1] = sf.y + t[1]; f[2] = sf.z + t[2];
+        const look = _peopleOn ? figureLook(sf, yardFigureCtx, f) : null;
+        if (!look) { sf.batch.castOnly = false; continue; }
         streetPeople.offer(personActor(sf, look, f, mwv.eye, dt), sf.batch);
       }
       else if (p.standFlats) for (const sf of p.standFlats) if (sf.kind === 'person') sf.batch.castOnly = false;

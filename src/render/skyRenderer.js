@@ -195,6 +195,8 @@ void main() {
   outColor = vec4(brassGrade(dreadGrade(mix(color, uFogColor, uFogMix), uDread), uBrass), 1.0);
   outColor.rgb = hazeSky(outColor.rgb, dir);   // BANTHA1: the jungle's haze toward the horizon - AUDIT BANTHA1 HAZE-8: after the grades, its colour the frame's fog colour, graded once already (shared.js fogColorFor)
 }`;
+// SHADER-EASE MOUNT-START (2026-10-29): what the constructor builds, started at page load (render/mountPrograms.js).
+export const SKY_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([SKY_VS, SKY_FS]))]);
 
 export class SkyRenderer {
   constructor(gl) {

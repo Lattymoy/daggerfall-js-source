@@ -140,7 +140,7 @@ export function officeText(o) {
   const mq = o.marque;
   if (mq?.held) letters.push({ id: 'marque', title: 'Letter of marque', words: `You sail under ${mq.held.crown}'s letter.`, press: 'Held', can: false });
   else if (mq) letters.push({ id: 'marque', title: 'Letter of marque', words: mq.can ? `${o.crown}'s commission against its rivals' shipping for ${mq.days}.` : mq.why, press: `Buy - ${mq.price}`, can: !!mq.can });
-  if (o.admiralty?.open || o.admiralty?.can) letters.push({ id: 'admiralty', title: 'The Admiralty\'s carrack', words: o.admiralty.can ? 'The only carrack for sale in the Bay. The title goes to your Fleet.' : o.admiralty.why, press: `Buy - ${o.admiralty.price}`, can: !!o.admiralty.can });
+  if (o.admiralty?.open || o.admiralty?.can) letters.push({ id: 'admiralty', title: 'The Admiralty\'s carrack', words: o.admiralty.can ? 'Only an Admiralty sells a carrack. The title goes to your Fleet.' : o.admiralty.why, press: `Buy - ${o.admiralty.price}`, can: !!o.admiralty.can });
   else if (o.admiralty) letters.push({ id: 'admiralty', title: 'The Admiralty\'s carrack', words: o.admiralty.why, press: 'Commodores only', can: false });
   return { lede, board, held, letters };
 }

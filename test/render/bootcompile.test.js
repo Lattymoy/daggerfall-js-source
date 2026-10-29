@@ -104,9 +104,8 @@ test('BOOT-COMPILE: laneBootPrograms names what installing the lane builds - the
   r.setAir(true);
   r.prepareTerrainClip();
   assert.equal(rec.untaken(), 0, 'every started program was taken by its build');
-  const builtUnlisted = rec.linked.slice(afterStart);
-  assert.ok(builtUnlisted.length > 0);
-  assert.ok(builtUnlisted.every((link) => link.byShadowPass), 'only the shadow pass\'s depth programs compile on their own');
+  // PIN MOVED (SHADER-EASE MOUNT-START): the shadow pass's depth programs are listed too - nothing compiles on its own
+  assert.deepEqual(rec.linked.slice(afterStart).map((l) => l.fs.slice(0, 80)), [], 'nothing the install builds is unlisted');
   assert.deepEqual(laneBootPrograms(r, EL_LANE, { air: true, clip: true }), [], 'nothing left to start once the lane is installed');
 });
 
@@ -134,7 +133,7 @@ test('BOOT-COMPILE: the sky\'s and the grass\'s lists are what their constructor
 
 test('BOOT-COMPILE: an indoor door starts none of the outdoor passes', () => {
   for (const search of ['?interior', '?dungeon', '?dungeon&world']) {
-    assert.deepEqual(outdoorPasses(search), { clouds: false, dynamicSky: false, grass: false, terrainClip: false }, search);
+    assert.deepEqual(outdoorPasses(search), { clouds: false, dynamicSky: false, grass: false, terrainClip: false, outdoors: false, enhancedSky: false }, search);   // PIN MOVED (SHADER-EASE MOUNT-START): and no outdoor host
   }
 });
 

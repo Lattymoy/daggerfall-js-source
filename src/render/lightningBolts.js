@@ -90,6 +90,8 @@ void main() {
   float light = (core + halo) * vGlow * air * mix(0.7, 1.0, vThin);
   o = vec4(uColor * light, 1.0);
 }`;
+// SHADER-EASE MOUNT-START (2026-10-29): what the constructor builds, started at page load (render/mountPrograms.js).
+export const BOLT_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([BOLT_VS, BOLT_FS]))]);
 
 function mat4Multiply(out, a, b) {
   for (let c = 0; c < 4; c++) {

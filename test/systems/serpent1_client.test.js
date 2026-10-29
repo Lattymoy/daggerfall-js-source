@@ -41,7 +41,7 @@ const TT = serpentTimes(DAY);
 
 /** A made sea: ports on map pixels, a straight way between each pair in native units (seaLanes.js's own shape). */
 const nativeOf = (px, py) => ({ x: (px + 0.5) * PIXEL_UNITS, z: (499 - py + 0.5) * PIXEL_UNITS });
-const port = (name, px, py, region = 17) => ({ name, region, road: { x: px, y: py } });
+const port = (name, px, py, region = 17) => ({ name, region, px, py, road: { x: px, y: py } });   // PIN MOVED (AUDIT TAMRIEL-WIDE E3): a port's own pixel, as worldLanes.js's ports carry it - the day scores a lane by its ends
 const laneOf = (key, a, b) => ({ key, a, b });
 const wayOf = (lane) => {
   const pts = [nativeOf(lane.a.road.x, lane.a.road.y), nativeOf(lane.b.road.x, lane.b.road.y)];
