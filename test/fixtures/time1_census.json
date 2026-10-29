@@ -1280,6 +1280,36 @@
    "has": "drawSky: (yaw, pitch, fov, aspect, vp) => { sky.draw(yaw, pitch, fov, aspect, vp, minuteNow(), playerTicker.classicMinutes, skyMinutes());",
    "clock": "sky",
    "why": "KETCH-LOOK KL1: a made level's sky (the arena's floor, her decks) retimed to the sky's own hour"
+  },
+  {
+   "file": "src/net/starfall/starfallLaw.js",
+   "has": "export const starFrontDay = (n, k) => frontDayOfMinute(sharedClassicMinutes(starTimes(n, k).fallAt));",
+   "clock": "event",
+   "why": "the game day a star lands in - FRONTS: a province's star on its turn alone (net/frontLaw.js)"
+  },
+  {
+   "file": "src/net/superDungeon/sdLaw.js",
+   "has": "const day = frontDayOfMinute(sharedClassicMinutes(now)), next = frontNextDay(day, lane);",
+   "clock": "event",
+   "why": "the game day a Hollow's rise is asked on - FRONTS: a province's rise on its turn alone"
+  },
+  {
+   "file": "src/net/superDungeon/sdLaw.js",
+   "has": "return next === day ? now : Math.ceil(wallMsForClassicMinutes(next * FRONT_DAY_MINUTES)) + 1;",
+   "clock": "event",
+   "why": "a province's next turn as relay ms - the director's alarm (FRONTS)"
+  },
+  {
+   "file": "src/systems/frontWords.js",
+   "has": "export const frontDayAt = (now) => frontDayOfMinute(sharedClassicMinutes(now));",
+   "clock": "event",
+   "why": "the game day the Timers' fronts and the map card read (FRONTS)"
+  },
+  {
+   "file": "src/systems/frontWords.js",
+   "has": "export const frontDayStartMs = (day) => Math.round(wallMsForClassicMinutes(day * FRONT_DAY_MINUTES));",
+   "clock": "event",
+   "why": "a game day's start as relay ms - the fronts' rows' clocks (FRONTS)"
   }
  ]
 }

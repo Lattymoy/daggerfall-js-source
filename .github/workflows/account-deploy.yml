@@ -127,6 +127,7 @@ on:
       - "src/systems/gameDate.js"
       - "src/systems/textManager.js"
       - "src/net/festivalLaw.js"
+      - "src/net/frontLaw.js"
       - "src/systems/festival/festivalRows.js"
       - "src/systems/holidayTables.js"
       - "src/systems/localizedBook.js"

@@ -382,5 +382,5 @@ test('WB1 the seams: online alone, the omen before the dead return, both maps ha
   assert.match(page, /gateRingKey\(readGateMark\(this\.deps\.gate,/, 'the page rebuilds when the ring comes, goes or moves');
   // the law is the relay's to import later (WB3): it reaches for wire.js and (WB8b) the marks' leaf alone
   const law = read('src/net/gate/gateLaw.js');
-  assert.deepEqual([...law.matchAll(/^import .* from '([^']+)'/gm)].map((m) => m[1]), ['../wire.js', './gateCourts.js', './gateMods.js'], 'WB8b: and the marks\' leaf, which imports nothing - PIN MOVED: GATE-COURTS, and the courts\' leaf');
+  assert.deepEqual([...law.matchAll(/^import .* from '([^']+)'/gm)].map((m) => m[1]), ['../wire.js', './gateCourts.js', './gateMods.js', '../frontLaw.js'], 'WB8b: and the marks\' leaf, which imports nothing - PIN MOVED: GATE-COURTS, and the courts\' leaf; PIN MOVED: FRONTS, and the fronts\' leaf (net/frontLaw.js imports nothing)');
 });
