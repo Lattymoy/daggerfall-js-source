@@ -183,9 +183,14 @@ export function clipOutsideRect(chain, r = BAY_RECT) {
  *  happens to fall on the Bay's frame (the trace's land just outside it, the picture's sea just inside), the line is
  *  the frame's, not a shore's, and the Bay's own data says what is inside. The chain is cut there; a piece of one
  *  point is dropped. */
+/** EDGE-RUN: how far (map pixels) off the frame a run still lies along it. SMOOTH-LAND's lines cross between two pixel
+ *  centres, so the frame's own line lies up to half a pixel off the edge, never on it: at -0.109 it stood as a hard
+ *  line in the sea down the Bay's west edge. */
+export const EDGE_RUN_PX = 0.5;
 /** @param {Pt[]} chain @param {{x0:number,y0:number,x1:number,y1:number}} [r] */
 export function dropEdgeRuns(chain, r = BAY_RECT) {
-  const onEdge = (a, b) => (a.x === r.x0 && b.x === r.x0) || (a.x === r.x1 && b.x === r.x1) || (a.y === r.y0 && b.y === r.y0) || (a.y === r.y1 && b.y === r.y1);
+  const near = (u, v, edge) => Math.abs(u - edge) <= EDGE_RUN_PX && Math.abs(v - edge) <= EDGE_RUN_PX;
+  const onEdge = (a, b) => near(a.x, b.x, r.x0) || near(a.x, b.x, r.x1) || near(a.y, b.y, r.y0) || near(a.y, b.y, r.y1);
   const out = [];
   let run = [chain[0]];
   for (let i = 1; i < chain.length; i++) {
