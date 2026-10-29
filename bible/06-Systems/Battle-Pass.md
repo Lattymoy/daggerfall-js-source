@@ -56,7 +56,7 @@ Brass Automaton (a mount look) and Echo of Numidium (a title on an animated bras
 
 ## 4. Experience
 
-The account service holds each account's season experience (`players.pass_s1`, migration 0193) and decides every find
+The account service holds each account's season experience (`players.pass_s1`, migration 0194) and decides every find
 (`server-account/src/battlePass.js`), as it decides a Soul Cake: the page asks with a deed's source, the service answers.
 
 | Source | Experience |

@@ -123,6 +123,9 @@ import { lateSolidsOf } from '../player/lateSolid.js';   // ROCK-CLEAR: a pixel'
 import { standBridges } from '../world/road/bridgeModels.js';   // ROAD-LOOK: a road over a river wider than a ford crosses on a bridge
 import { sightMarksOf } from '../world/signSolid.js';   // FIELD BUGS 2026-10-25i SIGN-PASS: a shop's sign stops a body where it stands, never where it hangs
 
+/** WL1: the renderer's word on which pictures may hold glass, for a static batch's merge to measure their windows. */
+const windowKeys = (r) => (r?.wlGlassKey ? (a, rec) => r.wlGlassKey(a, rec) : null);
+
 /** @param {any} host */
 export function createPixelBuild(host) {
   const {
@@ -469,7 +472,7 @@ export function createPixelBuild(host) {
     // transform rides the build's own awaits) into one mesh per pixel,
     // one draw call per texture. The gates (whose mesh swaps) and the
     // mills (whose rotor turns) stay individual draws.
-    const staticBuilder = new StaticBatchBuilder();
+    const staticBuilder = new StaticBatchBuilder({ windows: windowKeys(renderer) });   // WL1: its windows' glass measured in the merge's own slices
     const resolveTexKey = keyResolver(texRemap);
     const ownTexKey = keyResolver(NO_CLIMATE_REMAP);   // ARENA1: a climate-free model (RuntimeMaterials, ApplyClimate 0) wears its own pictures in the merge
     const statics = [];   // AUDIT PRECIP HOST-7: the merge's models in its order - a re-skin merges them again through its table
@@ -602,7 +605,7 @@ export function createPixelBuild(host) {
             const bd = b.dfBlock?.rmbBlock?.fldHeader?.buildingDataList?.[placed.recordIndex] ?? null;   // YARD-LINE: whether it could hold a lot of its own
             const rects = footRectsAt(modelFeetOf(placed.modelIdNum, cpu), local);   // FB1009 HOME-FOOT: the ground its faces cover, never its box
             const f = pixelHomeFrames.get(homeKey);
-            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced: isFabricDoorId(placed.modelIdNum) });   // AUDIT RPT1026 J2: its models (hallBanners.js wallBehind)
+            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced: isFabricDoorId(placed.modelIdNum), block: b.blockName, record: placed.recordIndex });   // AUDIT RPT1026 J2: its models (hallBanners.js wallBehind); IC-BACKYARD: its block and record, its yard's
             else if (f) { for (let i = 0; i < 3; i++) { f.box[i] = Math.min(f.box[i], box[i]); f.box[i + 3] = Math.max(f.box[i + 3], box[i + 3]); } f.rects.push(...rects); f.parts?.push([cpu, local]); }
           }
           const homeRow = homeKey != null ? townHomes?.get(homeKey) ?? null : null;
@@ -1734,7 +1737,7 @@ export function createPixelBuild(host) {
       let table = turns ? await reskinRemap(p.texRemap, law, lawOf, pipeline) : p.texRemap;
       if (table !== p.texRemap && sameTable(table, p.texRemap)) table = p.texRemap;   // a season that swaps nothing here: the table, the merge and every draw's cache stand
       if (table !== p.texRemap && sk.statics) {
-        const merge = new StaticBatchBuilder(), resolve = keyResolver(table), own = keyResolver(NO_CLIMATE_REMAP);
+        const merge = new StaticBatchBuilder({ windows: windowKeys(renderer) }), resolve = keyResolver(table), own = keyResolver(NO_CLIMATE_REMAP);
         for (const [cpu, local, isOwn, nm] of sk.statics) { merge.add(cpu, local, isOwn ? own : resolve, nm); await breather.breathe(); }
         const merged = await merge.finishSliced(() => breather.breathe());   // PERF-EXT23: a unit a breath, as the build's
         made.mesh = merged ? renderer.createMesh(merged, { bounds: merged.bounds }) : null;

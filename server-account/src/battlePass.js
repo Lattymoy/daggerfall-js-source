@@ -1,6 +1,6 @@
 // @ts-check
 // STOREFRONT (2026-10-29; bible/06-Systems/Battle-Pass.md): THE BATTLE PASS AS THE SERVICE KEEPS IT - each account's
-// season experience on its row (`pass_<season>`, migration 0193), a deed's find decided here (the page asks with its
+// season experience on its row (`pass_<season>`, migration 0194), a deed's find decided here (the page asks with its
 // source, as a Soul Cake is asked), the day's bound and the stage's challenges. What the track gives is read off the row
 // at every ask (titles.js passKeys), never a letter to claim. The law both ends read is src/net/battlePassLaw.js.
 import { overAccountRate } from './accounts.js';
