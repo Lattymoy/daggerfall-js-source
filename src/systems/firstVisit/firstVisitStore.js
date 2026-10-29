@@ -8,15 +8,11 @@
 // answer is a miss, never an error.
 
 import { fnv1a } from '../../formats/fnv1a.js';
-// GENERATED (scripts/firstVisitPins.mjs) and gitignored, so read with an await: a checkout that has not generated it (a CI
-// job whose dependencies came from the cache) still loads every module, and a cache that asks for a pin then throws. On
-// the dev server each page load asks the module under a URL of its own, so the plugin computes the pins for that load -
-// a dev edit to a computation is a new key at the next load, as a deployed update is (the build, and node, take the one
-// module; Vite drops the dev branch from a build)
-const pinsModule = import.meta.env?.DEV
-  ? import(/* @vite-ignore */ `../../firstVisitPins.js?load=${Date.now()}`)
-  : import('../../firstVisitPins.js');
-const { FIRST_VISIT_PINS = null } = await pinsModule.catch(() => ({}));
+// GENERATED and gitignored (scripts/firstVisitPins.mjs: npm install, every build, each dev page load). Imported, never
+// awaited: a top-level await makes every graph that imports this one async, and WebKit before Safari 27 resolves a
+// second import() of such a graph before it has run (WebKit bug 242740) - the menu's warm-up and Play both import the
+// world, so on every iPhone bootWorld ran before its classes existed (WEBKIT-TLA, test/tree/toplevelawait.test.js).
+import { FIRST_VISIT_PINS } from '../../firstVisitPins.js';
 
 export { fnv1a };
 

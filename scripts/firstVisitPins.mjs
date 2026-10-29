@@ -9,8 +9,8 @@
 //     test reads it - and verify.yml runs this script in each job, whose dependencies a cache hit restores without
 //     `npm ci`;
 //   - every Vite build and dev server (firstVisitPinsPlugin, a vite.config.js plugin): the build writes it at its start
-//     and the bundle takes the pins computed then, never what install left; the dev server computes them for each page
-//     load (the store asks under a URL of the load's own), so a dev edit is a new key at the next load, as an update is.
+//     and the bundle takes the pins computed then, never what install left; the dev server computes them again for each
+//     page load (each page's HTML drops the module it served), so a dev edit is a new key at the next load, as an update is.
 import { writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -34,18 +34,22 @@ export function writeFirstVisitPins(root) {
 
 /** The Vite plugin: the pins computed by the build or the dev server itself (see the head of this file). */
 export function firstVisitPinsPlugin() {
-  let root = process.cwd(), building = false;
+  let root = process.cwd(), building = false, server = null;
   const norm = (p) => resolve(p).split('\\').join('/').toLowerCase();
   const isPins = (id) => norm(id.split('?')[0]) === norm(join(root, PINS_PATH));
   return {
     name: 'first-visit-pins',
     configResolved(config) { root = config.root; building = config.command === 'build'; },
+    configureServer(s) { server = s; },
     buildStart() { if (building) writeFirstVisitPins(root); },
+    // a page load drops the module it served, so its first ask loads the pins again - Vite 8 watches only what its
+    // module graph holds, so a watcher-driven refresh missed edits to files the page had not loaded
+    transformIndexHtml() {
+      const graph = server?.environments?.client?.moduleGraph;
+      for (const mod of graph?.getModulesByFile(resolve(root, PINS_PATH).split('\\').join('/')) ?? []) graph.invalidateModule(mod);
+    },
     load(id) {
       if (!isPins(id)) return null;
-      // the dev server is asked under a URL of each page load's own (firstVisitStore.js), so this runs once a load and the
-      // pins are the tree's as it stands - Vite 8 watches only what its module graph holds, so a watcher-driven refresh
-      // missed edits to files the page had not loaded
       return pinsSource(firstVisitPins(root));
     },
   };
