@@ -246,6 +246,14 @@ reports its pool's share of my health, 10 to 25 (`pvpGuard.js:"export function p
 referee takes that part of PVP-SHIELD's 25% and 35% off (the `vit` report's `sh`). Speed is Fortify Speed on Fortify's
 numbers. Inside a zone dungeon the bar is off. A departure: DFU has no PvP.
 
+PVP-KIT-REZ (the owner, 2026-10-29: "Add resurrection to the. Mages tool belt"): Resurrect is a slot spell at 25% of
+maximum magicka (`pvpKit.js:"resurrect: Object.freeze({ cost: 25, icon: 10 }),"`). It is the shop's own Resurrection,
+by touch (`pvpKit.js:"case 'resurrect': return [{ ...resurrectionSpell().effects[0] }];"`), with no 15 m gift: it goes
+through RESURRECT1's path, a fallen party member's body within RESURRECT_REACH
+(`hostMagic.js:"try { bodies = fallenTarget(eye, dir, RESURRECT_REACH) ?? null; } catch { return null; }"`). The host
+hands only party members' bodies (`world.js:"const mate = cAcct ? social.others().find((m) => m.acct === cAcct) : null; if (!mate) continue;"`),
+and the fallen player's own client rises only on its party's call. A departure: DFU has no raise-dead effect.
+
 ## PVP-REWARD: one random piece, or one policy's gold
 
 "they only get a piece that isnt insured", "random roll on uninsure peices": a kill in the open zone gives its killer one
