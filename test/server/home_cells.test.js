@@ -48,7 +48,7 @@ async function sharedOf(db, mapId, cells, nowS = T0) {
 
 const without = (row, field) => Object.fromEntries(Object.entries(row).filter(([k]) => k !== field));
 
-test('YC4 migration 0193 builds every cell holding a home in the shape the code reads, its rows the code\'s own build, its stale_at the soonest tenancy\'s end (mutants: the backfill\'s range, the stale_at\'s tenant clause)', async () => {
+test('YC4 migration 0193 builds every cell holding a home in the shape the code reads, its rows the code\'s own build, its stale_at the soonest tenancy\'s end (mutants: the backfill\'s range, the stale_at\'s listed clause)', async () => {
   const migration = readFileSync(new URL('../../server-account/migrations/0193_home_cell.sql', import.meta.url), 'utf8');
   assert.ok(migration.includes(`'${HOME_CELL_SHAPE}'`), 'the backfill writes the code\'s own shape');
   const keys = [makeBuildingKey(0, 0, 3), makeBuildingKey(0, 0, 9), makeBuildingKey(2, 7, 1), makeBuildingKey(2, 7, 255)];
@@ -372,7 +372,7 @@ test('YC4 a write route settles the cells it names: an arena move both of its ho
   assert.deepEqual(await settleHomeCellsAfter(db, '/v1/homes/transfer', { op: 'decline', id: 'd'.repeat(32) }, T0), [], 'a refused offer names no house');
 });
 
-test('YC4 over the real Worker: a claim answers the cell it moved, the cells route answers under a session and is refused without one, an entry changed is read at once (the kept cell let go), the own route answers the caller\'s home in full, and /v1/homes/town is as it was (mutants: the route\'s forget, the pass path)', async (t) => {
+test('YC4 over the real Worker: a claim answers the cell it moved, the cells route answers under a session and is refused without one, an entry changed is read at once (the kept cell let go), the own route answers the caller\'s home in full, and /v1/homes/town is as it was (mutants: the write\'s forget, a claim\'s cell)', async (t) => {
   t.mock.method(Date, 'now', () => T0 * 1000);
   const svc = await standService();
   const owner = await svc.registered('Olga');

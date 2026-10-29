@@ -202,7 +202,7 @@
   {
     "name": "YC4-own-the-tenancy-unread",
     "file": "server-account/src/homes.js",
-    "old": "      UNION SELECT building_key FROM home_rooms WHERE tenant = ?2 AND tenant_char = ?3 AND until > ?1 AND map_id = ?4\n",
+    "old": "      UNION SELECT building_key FROM home_rooms INDEXED BY idx_home_rooms_tenant WHERE tenant = ?2 AND tenant_char = ?3 AND until > ?1 AND map_id = ?4\n",
     "new": "",
     "tests": [
       "test/server/home_cells.test.js"

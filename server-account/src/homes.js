@@ -489,12 +489,12 @@ const homesReadSql = (/** @type {string} */ where) => `SELECT h.building_key, h.
 /** YC4 (bible/11-Multiplayer/Yard-Cells.md section 14.3): the homes of a town that are anything of the caller's - its
  *  account's, a hall of a guild it is in, a room it rents, a vote it cast, an open offer it made or was made, a home
  *  open to its character's guildmates - picked by the caller's own rows before any home is read. Binds as homesReadSql. */
-const OWN_KEYS_SQL = ` AND h.building_key IN (SELECT building_key FROM homes WHERE player = ?2 AND map_id = ?4
+const OWN_KEYS_SQL = ` AND h.building_key IN (SELECT building_key FROM homes INDEXED BY idx_homes_owner WHERE player = ?2 AND map_id = ?4
       UNION SELECT hh.building_key FROM guild_members k JOIN homes hh ON hh.guild_id = k.guild_id WHERE k.player = ?2 AND hh.map_id = ?4
-      UNION SELECT building_key FROM home_rooms WHERE tenant = ?2 AND tenant_char = ?3 AND until > ?1 AND map_id = ?4
+      UNION SELECT building_key FROM home_rooms INDEXED BY idx_home_rooms_tenant WHERE tenant = ?2 AND tenant_char = ?3 AND until > ?1 AND map_id = ?4
       UNION SELECT building_key FROM home_votes WHERE player = ?2 AND map_id = ?4
       UNION SELECT building_key FROM home_offers WHERE map_id = ?4 AND state = 'open' AND until > ?1 AND (buyer = ?2 OR seller = ?2)
-      UNION SELECT gh.building_key FROM guild_members b JOIN guild_members a ON a.guild_id = b.guild_id JOIN homes gh ON gh.player = a.player
+      UNION SELECT gh.building_key FROM guild_members b JOIN guild_members a ON a.guild_id = b.guild_id JOIN homes gh INDEXED BY idx_homes_owner ON gh.player = a.player
         WHERE b.player = ?2 AND b.char_id = ?3 AND gh.map_id = ?4 AND gh.guild_id IS NULL AND gh.entry = 'guild')`;
 
 /** The homes `where` names (homesReadSql), read in one batch with the named character's tombstone and the town's Open
