@@ -1157,7 +1157,7 @@ ${RW_SEED_GLSL}
 out vec4 outColor;
 void main() {
   if (occluded()) discard;   // EL6
-  if (uRoomsLit > 0.5 && rwLitSeed(normalize(vNormal), vWorldPos, uModel[3].xyz, vUV) > RW_LIT_SHARE) discard;   // the room drawn dark (render/realWindows.js): no amber halo round it
+  if (uRoomsLit > 0.5 && !rwRoomLit(rwSeedBits(normalize(vNormal), vWorldPos, uModel[3].xyz, vUV))) discard;   // the room drawn dark (render/realWindows.js): no amber halo round it
   outColor = vec4(airDecode(texture(uEmissionTex, vUV).rgb * uEmissionColor), 1.0);   // AUDIT-EL F20: linear, like the glares and the bright pass beside it
 }`;
 export const EMIT_BB_FS = `#version 300 es
