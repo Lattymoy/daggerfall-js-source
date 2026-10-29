@@ -255,7 +255,7 @@
   {
     "name": "AAC-host-casteronly-instant",
     "file": "src/scenes/hostMagic.js",
-    "old": "      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH, sp)) { sayArm('mate-aim', prevArm, pressButtonToFireSpellText()); return true; }\n",
+    "old": "      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, sp.pvpReach ?? ALLY_TOUCH_REACH, sp)) { sayArm('mate-aim', prevArm, pressButtonToFireSpellText()); return true; }\n",
     "new": "",
     "tests": [
       "test/systems/allycast.test.js"

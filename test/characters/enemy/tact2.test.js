@@ -221,7 +221,7 @@ test('TACT2: the motor and the attack read the brain - the step, the stand, the 
   const m = rd('src/characters/enemy/enemyMotor.js');
   // PIN MOVED (TELL6, bible/12-Enhanced-AI/Feud-Arc.md 8.1): a charge's run is never the detour's either
   assert.match(m, /const _took = tacticsStep\(this, dx, dz\);\n\s*if \(_took && \(!detouring \|\| this\.fleeLeft > 0 \|\| this\._tac\?\.state === 'windup' \|\| this\._tac\?\.state === 'dash'\)\) return;[^\n]*\n\s*this\._tacDir = null;\n\s*\/\/ Ranged attacks/);
-  assert.match(m, /if \(this\._tacDir\) \{ this\._tacDir = null; this\._tacBlocked = true; this\.moving = false; \}[^\n]*\n\s*else this\._findDetour\(dir2d\);/);
+  assert.match(m, /if \(this\._tacDir\) \{ this\._tacDir = null; this\._tacBlocked = true; this\.moving = false; \}[^\n]*\n\s*else this\._detourIfDue\(dir2d\);/);
   const a = rd('src/characters/enemy/enemyAttack.js');
   assert.match(a, /if \(ai\._tacStrike === false\) continue;/);
   assert.match(a, /&& ai\._tacShoot !== false && this\.rolls\(\) < BOW_SHOT_CHANCE\)/);

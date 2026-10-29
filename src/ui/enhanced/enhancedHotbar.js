@@ -683,6 +683,9 @@ const slotOfActions = (acts) => acts.map((a) => HOTBAR_SLOT_ACTIONS.indexOf(a)).
 // a digit used the body's item or spell, and was stopped before the UV dialog's 1-4 ever reached it. A hold stands the
 // keys down while it stands; holds are counted and each release is its own (player/pointerLock.js holdCursor's shape).
 const keyHolds = new Set();
+/** PVP-KIT: a claim on keys - `fn(e)` true leaves the key to its claimant (the PvP bar's 3 to 0 under the flag). */
+let keyClaim = /** @type {null | ((e: any) => boolean)} */ (null);
+export function claimHotbarKeys(fn) { keyClaim = typeof fn === 'function' ? fn : null; }
 /** The bar's keys stood down until the release this answers is called (once is enough; twice changes nothing). */
 export function holdHotbarKeys() {
   const hold = {};
@@ -703,6 +706,7 @@ function onKey(e) {
   // through to the diamond the hotbar replaces (1 drank the diamond's potion), and 5-0 did nothing. AUDIT FB1018f
   // L2-5: the pause at this press, the host's (keysPaused) - never the last frame's while a host can answer
   if (!bar || !hotbarMode()) return;
+  if (keyClaim?.(e)) return;   // PVP-KIT: a key the PvP bar takes (ui/pvpKitBar.js)
   if (dropOwners.size) { pickKey(e); return; }   // DIAMOND-HB: pack or spellbook open: slot key adds the hovered thing
   if (keysPaused()) return;
   if (keyHolds.size) return;   // AUDIT POI E1: a surface that owns the keys is up

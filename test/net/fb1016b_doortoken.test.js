@@ -16,7 +16,7 @@ import { readFileSync } from 'node:fs';
 
 import { fakeRooms, roomSigner } from '../fakeRoom.mjs';
 import { OnlineSession, roomKeyFor, TOKEN_WAIT_MS } from '../../src/net/online.js';
-import { accountTokenMinter, SESSION_KEY, TOKEN_REUSE_MS, MINT_COOL_MS } from '../../src/net/accountClient.js';
+import { accountTokenMinter, SESSION_KEY, TOKEN_REUSE_MS, MINT_COOL_MS, TOKEN_STRETCH_MS, _resetBusyForTests } from '../../src/net/accountClient.js';
 import { reconnectWave } from '../../src/net/reconnectWave.js';
 import { PIXEL_UNITS, cellHaloFor, isWorldRoom, isCellRoom } from '../../src/net/wire.js';
 import { createDoorToken, EXIT_NEAR_M, EXIT_ARM_M, DOOR_SOON_MS, EXIT_WALK_MS, DOOR_PENDING_MS } from '../../src/scenes/doorTokenHost.js';
@@ -215,7 +215,7 @@ test('DOOR-TOKEN THE LAW: `ahead(room, withinMs)` mints only when the token held
   assert.equal(m.holds('chat:world'), false, 'past the minute');
   assert.equal(m.ahead(null), true, 'none that opens it now: minted');
   await settle();
-  t += TOKEN_REUSE_MS;
+  t += TOKEN_STRETCH_MS;   // PIN MOVED (TOKEN-STRETCH): past the stretch too - a failure stretches the held token
   // a failure's hold
   fail = 'server';
   assert.equal(m.ahead(null, DOOR_SOON_MS), true);
@@ -225,6 +225,7 @@ test('DOOR-TOKEN THE LAW: `ahead(room, withinMs)` mints only when the token held
   assert.equal(m.ahead(null, DOOR_SOON_MS), false, 'the hold holds');
   assert.equal(n, k);
   t += MINT_COOL_MS * 2; fail = null;
+  _resetBusyForTests();   // PIN MOVED (TOKEN-STRETCH): the 503 above held the page's gate, which stretches the held token
   // the bound: asked every frame (100 ms) for ten minutes, with each door's margin
   for (const W of [DOOR_SOON_MS, EXIT_WALK_MS]) {
     const m2 = accountTokenMinter({ fetch, storage: signed, now: () => t });

@@ -1,0 +1,417 @@
+[
+  {
+    "name": "PVP-GUARD-a-row-swapped",
+    "file": "src/combat/pcaao.js",
+    "old": "  const rows = kind === 'unarmed' ? UNARMED_ROWS : kind === 'blunt' ? BLUNT_ROWS : EDGED_ROWS;\n  return table(rows, pcaaoArmorMaterialIdentifier(armor), 100, condOf(armor, modules), naturalDamResist);",
+    "new": "  const rows = kind === 'unarmed' ? UNARMED_ROWS : kind === 'blunt' ? EDGED_ROWS : EDGED_ROWS;\n  return table(rows, pcaaoArmorMaterialIdentifier(armor), 100, condOf(armor, modules), naturalDamResist);",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARD-the-resistance-unread",
+    "file": "src/combat/pvpGuard.js",
+    "old": "  const nat = pcaaoNaturalDamageResistance(entity);",
+    "new": "  const nat = 0;",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARD-the-guard-unread",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "  const want = shieldedBlow(to, shaft, guardedBlow(to, pvpBlowKind(held.w), Math.trunc(Number(d) || 0)));",
+    "new": "  const want = shieldedBlow(to, shaft, Math.max(0, Math.trunc(Number(d) || 0)));",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARD-blunt-read-as-edged",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "export const pvpBlowKind = (w) => (w === -1 ? 'unarmed' : PVP_BLUNT.has(w) ? 'blunt' : 'edged');",
+    "new": "export const pvpBlowKind = (w) => (w === -1 ? 'unarmed' : 'edged');",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARD-the-floor-unread",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "    share.guard = report.guard.map((n) => Math.max(PVP_GUARD.min, Math.min(PVP_GUARD.max, Math.trunc(Number(n) || 0))));",
+    "new": "    share.guard = report.guard.map((n) => Math.max(0, Math.min(PVP_GUARD.max, Math.trunc(Number(n) || 0))));",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARD-the-change-unseen",
+    "file": "src/net/siege/refereeHealthMirror.js",
+    "old": "        || `${guard()}|${ward()}|${shieldWord()}` !== lastSentGuard;",
+    "new": "        || false;",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-WARD-the-ward-unread",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "  const hurt = wardedCast(to, el, want);   // PVP-WARD: the target's resistance first",
+    "new": "  const hurt = want;   // PVP-WARD: the target's resistance first",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-WARD-the-floor-unread",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "    share.ward = report.ward.map((n) => Math.max(PVP_WARD.min, Math.min(PVP_WARD.max, Math.trunc(Number(n) || 0))));   // PVP-WARD",
+    "new": "    share.ward = report.ward.map((n) => Math.max(0, Math.min(PVP_WARD.max, Math.trunc(Number(n) || 0))));   // PVP-WARD",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-WARD-the-throw-unread",
+    "file": "src/combat/pvpGuard.js",
+    "old": "    const lands = sc.immune ? 0 : savingLands(sc.chance);",
+    "new": "    const lands = 100;",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-WARD-another-elements-chance",
+    "file": "src/combat/pvpGuard.js",
+    "old": "    const sc = savingChance(el, elementFlag(el), entity);",
+    "new": "    const sc = savingChance(0, elementFlag(0), entity);",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-WARD-the-dice-unprorated",
+    "file": "src/systems/spellcast.js",
+    "old": "roll > saving ? 100 : saving - 20 <= roll ? 100 - 5 * (saving - roll) : 0;",
+    "new": "roll > saving ? 100 : 0;",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-WARD-the-stand-in-saves",
+    "file": "src/combat/siegeCombat.js",
+    "old": "  if (harmful && !run({ ...harmful, rangeType: 0 }, {",
+    "new": "  if (harmful && !run(harmful, {",
+    "tests": [
+      "test/systems/auditcc_pvp.test.js"
+    ]
+  },
+  {
+    "name": "PVP-TRIANGLE-the-late-step-unread",
+    "file": "src/combat/pvpTriangle.js",
+    "old": "export const pvpArrowScale = (level) => ((Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.arrowLate : PVP_TRIANGLE.arrow);",
+    "new": "export const pvpArrowScale = (level) => ((Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.arrow : PVP_TRIANGLE.arrow);",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-TRIANGLE-the-spell-late-unread",
+    "file": "src/combat/pvpTriangle.js",
+    "old": "export const pvpSpellScale = (level) => ((Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.spellLate : PVP_TRIANGLE.spell);",
+    "new": "export const pvpSpellScale = (level) => ((Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.spell : PVP_TRIANGLE.spell);",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-TRIANGLE-the-arrow-unscaled",
+    "file": "src/combat/duelCombat.js",
+    "old": "  const n = d.by === 'arrow' ? Math.floor(scaled * pvpArrowScale(d.a?.pl)) : scaled;",
+    "new": "  const n = scaled;",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-TRIANGLE-the-capped-level-read",
+    "file": "src/combat/duelCombat.js",
+    "old": "pvpArrowScale(d.a?.pl))",
+    "new": "pvpArrowScale(d.a?.lv))",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-TRIANGLE-the-spell-unscaled",
+    "file": "src/combat/siegeCombat.js",
+    "old": "harm: Math.round(pvpCritHarm(harm, caster, rolls) * pvpSpellScale(level))",
+    "new": "harm: Math.round(pvpCritHarm(harm, caster, rolls))",
+    "tests": [
+      "test/systems/auditcc_pvp.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SHIELD-the-report-unread",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "  if (typeof report.shield === 'number') share.shield = report.shield;",
+    "new": "",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SHIELD-the-shaft-read-as-a-swing",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "(shaft ? PVP_SHIELD.shaft : PVP_SHIELD.melee)",
+    "new": "(PVP_SHIELD.melee)",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SHIELD-a-spent-pool-counted",
+    "file": "src/combat/pvpGuard.js",
+    "old": "a.kind === 'shield' && !a.ended && a.shieldRemaining > 0",
+    "new": "a.kind === 'shield'",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SHIELD-the-change-unseen",
+    "file": "src/net/siege/refereeHealthMirror.js",
+    "old": "`${guard()}|${ward()}|${shieldWord()}` !== lastSentGuard",
+    "new": "`${guard()}|${ward()}|0` !== lastSentGuard",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BUFFS-the-cap-unread",
+    "file": "src/combat/pvpBuffs.js",
+    "old": "    a.roundsRemaining = rounds;",
+    "new": "",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BUFFS-a-worn-item-cut",
+    "file": "src/combat/pvpBuffs.js",
+    "old": "if (a.ended || a.heldItem || HARM.has(a.kind)",
+    "new": "if (a.ended || HARM.has(a.kind)",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BUFFS-harm-cut",
+    "file": "src/combat/pvpBuffs.js",
+    "old": "if (a.ended || a.heldItem || HARM.has(a.kind)",
+    "new": "if (a.ended || a.heldItem",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-BUFFS-cut-outside-a-fight",
+    "file": "src/net/siege/refereeHealthMirror.js",
+    "old": "    if (active) capPvpBuffs(player);",
+    "new": "    capPvpBuffs(player);",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-POTIONS-the-clock-short",
+    "file": "src/combat/pvpPotions.js",
+    "old": "export const PVP_POTION_MS = 15_000;",
+    "new": "export const PVP_POTION_MS = 10_000;",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "15 s a kind"
+  },
+  {
+    "name": "PVP-POTIONS-one-kind",
+    "file": "src/combat/pvpPotions.js",
+    "old": "  return isHealHealth(e) ? 'health' : e.key === HEAL_SPELL_POINTS_KEY ? 'magicka' : 'other';",
+    "new": "  return isHealHealth(e) ? 'health' : 'other';",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "magicka keeps its own clock"
+  },
+  {
+    "name": "PVP-POTIONS-every-effect",
+    "file": "src/combat/pvpPotions.js",
+    "old": "? { ...bundle, effects: bundle.effects.slice(0, 1) } : bundle);",
+    "new": "? { ...bundle, effects: bundle.effects } : bundle);",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "first effect alone"
+  },
+  {
+    "name": "PVP-POTIONS-always-a-fight",
+    "file": "src/combat/pvpPotions.js",
+    "old": "export function setPvpFight(active) { fight = !!active; }",
+    "new": "export function setPvpFight(active) { fight = true; }",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "no clock out of a fight"
+  },
+  {
+    "name": "PVP-POTIONS-the-refusal-unasked",
+    "file": "src/systems/useItem.js",
+    "old": "  else if (isPotion(item) && pvpPotionRefusal(item)) out =",
+    "new": "  else if (isPotion(item) && false) out =",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "the bottle is kept"
+  },
+  {
+    "name": "PVP-POTIONS-the-drink-uncounted",
+    "file": "src/systems/useItem.js",
+    "old": "    pvpPotionDrunk(item);   // PVP-POTIONS",
+    "new": "    void pvpPotionDrunk;   // PVP-POTIONS",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "a drink starts its clock"
+  },
+  {
+    "name": "PVP-POTIONS-the-mirror-silent",
+    "file": "src/net/siege/refereeHealthMirror.js",
+    "old": "    setPvpFight(active);   // PVP-POTIONS",
+    "new": "    void setPvpFight;   // PVP-POTIONS",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "the mirror sets the fight"
+  },
+  {
+    "name": "PVP-POTIONS-the-bundle-whole",
+    "file": "src/scenes/hostMagic.js",
+    "old": "applySpellToPlayer(pvpPotionBundle(bundle), castingLevel(playerEntity)",
+    "new": "applySpellToPlayer(bundle, castingLevel(playerEntity)",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "the drink lands the trimmed bundle"
+  },
+  {
+    "name": "PVP-ARMOUR-CAST-plate-cheap",
+    "file": "src/combat/pvpArmourCasting.js",
+    "old": "cost: Object.freeze([0, 3, 6])",
+    "new": "cost: Object.freeze([0, 3, 3])",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "plate 6% a piece"
+  },
+  {
+    "name": "PVP-ARMOUR-CAST-chain-free",
+    "file": "src/combat/pvpArmourCasting.js",
+    "old": "cost: Object.freeze([0, 3, 6])",
+    "new": "cost: Object.freeze([0, 0, 6])",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "chain half of plate"
+  },
+  {
+    "name": "PVP-ARMOUR-CAST-no-slow",
+    "file": "src/combat/pvpArmourCasting.js",
+    "old": "slow: Object.freeze([0, 1.5, 3])",
+    "new": "slow: Object.freeze([0, 1.5, 0])",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "plate 3% slower a piece"
+  },
+  {
+    "name": "PVP-ARMOUR-CAST-always",
+    "file": "src/combat/pvpArmourCasting.js",
+    "old": "(playerInPvpFight() ? sp * (1 + pvpArmourCast(entity).cost / 100) : sp)",
+    "new": "(true ? sp * (1 + pvpArmourCast(entity).cost / 100) : sp)",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "out of a fight nothing"
+  },
+  {
+    "name": "PVP-ARMOUR-CAST-a-piece-unread",
+    "file": "src/combat/pvpArmourCasting.js",
+    "old": "const PIECES = ['Head', 'RightArm',",
+    "new": "const PIECES = ['RightArm',",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "every piece counts"
+  },
+  {
+    "name": "PVP-ARMOUR-CAST-the-material-not-the-class",
+    "file": "src/combat/pvpArmourCasting.js",
+    "old": "const kind = Math.max(0, Math.min(2, rriNativeMaterialValue(it) >> 8));",
+    "new": "const kind = Math.max(0, Math.min(2, it.material >> 8));",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "an RRI light piece is leather"
+  },
+  {
+    "name": "PVP-ARMOUR-CAST-unregistered",
+    "file": "src/net/siege/refereeHealthMirror.js",
+    "old": "import '../../combat/pvpArmourCasting.js';",
+    "new": "import '../../combat/pvpPotions.js';",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "the doors are registered"
+  },
+  {
+    "name": "PVP-SPELL-CRIT-the-chance",
+    "file": "src/combat/pvpSpellCrit.js",
+    "old": "Math.trunc(crit / (4 - luckTerm))",
+    "new": "Math.trunc(crit / 4)",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "PVP-SPELL-CRIT"
+  },
+  {
+    "name": "PVP-SPELL-CRIT-the-size",
+    "file": "src/combat/pvpSpellCrit.js",
+    "old": "mult: Math.floor(crit / 5) * 0.05 + 1",
+    "new": "mult: Math.floor(crit / 5) * 0.04 + 1",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "PVP-SPELL-CRIT"
+  },
+  {
+    "name": "PVP-SPELL-CRIT-the-roll",
+    "file": "src/combat/pvpSpellCrit.js",
+    "old": "return rolls() < chance ? harm * mult : harm;",
+    "new": "return rolls() <= chance ? harm * mult : harm;",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "PVP-SPELL-CRIT"
+  },
+  {
+    "name": "PVP-SPELL-CRIT-uncalled",
+    "file": "src/combat/siegeCombat.js",
+    "old": "harm: Math.round(pvpCritHarm(harm, caster, rolls) * pvpSpellScale(level))",
+    "new": "harm: Math.round(harm * pvpSpellScale(level))",
+    "tests": [
+      "test/systems/auditcc_pvp.test.js"
+    ],
+    "why": "PVP-SPELL-CRIT: the hosts' count crits"
+  }
+]

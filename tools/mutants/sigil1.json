@@ -484,8 +484,8 @@
   {
     "name": "SIGIL1-kill-feeds-nothing",
     "file": "src/scenes/world.js",
-    "old": "renownTracker.earn(xp); sigilDrinks(xp); seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes?.dungeonLocation : null)).catch(() => {}); });",
-    "new": "renownTracker.earn(xp); seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes?.dungeonLocation : null)).catch(() => {}); });",
+    "old": "renownTracker.earn(xp, villainMonsterLowers(playerEntity.level, renownFoeLevel(foe))); sigilDrinks(xp); seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes?.dungeonLocation : null)).catch(() => {}); });",
+    "new": "renownTracker.earn(xp, villainMonsterLowers(playerEntity.level, renownFoeLevel(foe))); seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes?.dungeonLocation : null)).catch(() => {}); });",
     "tests": [
       "test/systems/sigil/sigil1.test.js",
       "test/net/renown1.test.js",

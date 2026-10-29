@@ -187,7 +187,7 @@ test('BAL-ARCHERY: a Thunderlock reloads from live Speed, and the pump already r
   assert.equal(pw.gesture(0, 0, true, dt, 1000, { swingMode: 2, rolls: () => 0 }), null);
   const bowPw = new PlayerWeapon({ weapon: bow(), liveSpeed: 150 });
   bowPw.update(dt);
-  assert.equal(bowPw.machine.cooldown, null, 'a bow still cools by getBowCooldownTime');
+  assert.equal(bowPw.machine.cooldown, getBowCooldownTime(150), 'a bow with no wielder the port knows cools by getBowCooldownTime (BOW-LAW)');
 });
 
 test('BAL-ARCHERY: sustained damage of a Daedric Long Bow, a Daedric Longsword and a Daedric Thunderlock', () => {

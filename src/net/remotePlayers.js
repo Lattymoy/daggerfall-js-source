@@ -33,6 +33,7 @@ import { appearanceOf, validWireAppearance } from './appearanceLaw.js';   // APP
 import { meshGlow, glowWord } from '../systems/weaponGlow.js';   // WEAPON-GLOW1: a held weapon's glow, said on the look
 import { renownText } from './renown.js';   // RENOWN1: Renown's words, left of the name in the bitmap face too
 import { guildTagText } from './guild/guildLaw.js';   // GUILD1c: the guild's tag, right of the name in the bitmap face too
+import { nameOffDeg } from '../ui/nameCone.js';   // PVP-CONE: each name's angle off the crosshair
 import { ribbonRgba } from './heraldryLaw.js';   // SEASON1 part two: a Season's banner ribbon, under the name in the bitmap face too
 /** AUDIT-SEATS C12: each ribbon's two tints, parsed once - by its claim's two colour indexes (one number, no string made),
  *  for every ribboned name every frame; anything that is no claim is asked of the law itself (it answers null). */
@@ -1343,7 +1344,7 @@ export class RemotePlayers {
         title: e.peer.title ?? null, glyphs: Array.isArray(e.peer.glyphs) ? e.peer.glyphs : [], lv: e.peer.lv ?? null, gt: e.peer.gt ?? null,   // GUILD1c: and the guild's tag, the relay's stamp
         rb: e.peer.rb ?? null,   // SEASON1 part two: and a Season's banner ribbon, the relay's stamp - under the name in both faces
         house: e.peer.house ?? null,   // LEGACY7: and the house, the relay's stamp - a line under the name
-        scale: nameScaleFor(s.depth) * lens, depth: s.depth, lens });
+        scale: nameScaleFor(s.depth) * lens, depth: s.depth, lens, off: nameOffDeg(view, head) });   // PVP-CONE: its angle off the crosshair
     }
     return out;
   }

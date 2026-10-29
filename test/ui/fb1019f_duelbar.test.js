@@ -235,7 +235,7 @@ test('DUEL-BAR THE HOST, RETIRED BY SHARED-HEALTH (2026-10-26, Integrity-Arc.md 
   for (const h of ['src/scenes/worldModes.js', 'src/scenes/dungeonContext.js', 'src/scenes/exterior.js']) assert.equal(rd(h).includes('healthBar'), false, h);
 });
 
-test('SHARED-HEALTH THE DUEL ON THE REAL RELAY: the bout asks both fighters for their health; my report anchors my count at my own share; a blow on me lands on my own health as its share; the bout over, my health stays where the fight left it - a duel\'s fall is a loss, never a heal (mutants: no ask at the bout; the blow unsaid to the struck)', () => withRelayDuel(async (w) => {
+test('SHARED-HEALTH THE DUEL ON THE REAL RELAY: the bout asks both fighters for their health; my report anchors my count at my own share; a blow on me lands on my own health as its share; PVP-HEALTH: the pool is my real maximum; PVP-HEAL: a potion mid-duel heals a quarter of it at most; the bout over, my health stays where the fight left it (mutants: no ask at the bout; the blow unsaid to the struck; the heal uncapped)', () => withRelayDuel(async (w) => {
   const { a, b, say, pump, step, r, now } = w;
   const player = { health: 500, maxHealth: 1000 };   // a large health, so a fist's blow moves it by whole points
   const mirror = createRefereeHealthMirror({ read: () => player, write: (h) => { player.health = h; }, send: (rep) => { r.raw(a, JSON.stringify({ t: 'vit', ...rep })); return true; }, now });
@@ -253,7 +253,7 @@ test('SHARED-HEALTH THE DUEL ON THE REAL RELAY: the bout asks both fighters for 
   await vitPump();
   assert.ok(a.sent.some((m) => m.t === 'vit' && m.k === 'ask'), 'the bout asks for my health');
   const anchored = a.sent.filter((m) => m.t === 'vit' && m.k === 'h').at(-1);
-  assert.equal(anchored.h, WHOLE / 2, 'my count anchored at my own half');
+  assert.deepEqual([anchored.h, anchored.m], [500, 1000], 'my count anchored at my own half of my real 1,000');
   step(ROYAL_RING.countdownMs + 1);
   const wordsBefore = a.sent.filter((m) => m.t === 'vit' && m.k === 'h').length;
   await say(b, { to: 'peer-0001', s, k: 'strike', n: 1, by: 'melee', p: [P(2).x, 0, P(2).z], d: 999 });
@@ -263,15 +263,15 @@ test('SHARED-HEALTH THE DUEL ON THE REAL RELAY: the bout asks both fighters for 
   await vitPump();
   const hp = a.sent.filter((m) => m.t === 'dref' && m.k === 'hp').at(-1);
   assert.ok(hp.d > 0, 'a blow landed');
-  assert.equal(player.health, Math.round(1000 * ((WHOLE / 2 - hp.d) / WHOLE)), 'its share off my own health');
+  assert.equal(player.health, 500 - hp.d, 'off my own health');
   assert.ok(player.health < 500);
   const after = player.health;
-  // a potion mid-duel, long after the blow: a duel heals nobody, and my health is pulled back
-  step(10 * 30_000);
+  // a potion mid-duel: a quarter of my whole, and my health pulled back to it
+  step(1000);
   player.health = 1000;
   await vitPump();
-  assert.equal(player.health, after, 'no heal for the duel\'s whole length');
+  assert.equal(player.health, after + 250, 'PVP-HEAL: a quarter of the whole in the fight');
   await say(b, { to: 'peer-0001', s, k: 'end', why: 'yield' });
   await vitPump();
-  assert.equal(player.health, after, 'the bout over: my health is where the fight left it');
+  assert.equal(player.health, after + 250, 'the bout over: my health is where the fight left it');
 }));

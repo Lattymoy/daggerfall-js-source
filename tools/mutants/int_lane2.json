@@ -67,8 +67,8 @@
   {
     "name": "INT9-THE-RISE-UNREAD",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (z && x.down && now - x.downAt >= WILD_REF.riseMs) {",
-    "new": "  if (false) {",
+    "old": "  const rose = z && x.down && now - x.downAt >= WILD_REF.riseMs;",
+    "new": "  const rose = false;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -285,7 +285,7 @@
   {
     "name": "INT9-CLIENT-THE-ZONE-UNSAID",
     "file": "src/scenes/world.js",
-    "old": "    online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0);",
+    "old": "    online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere() && wildOutdoors(), player.pos, Date.now()));",
     "new": "    void 0;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
@@ -622,8 +622,8 @@
   {
     "name": "INT9-AUDIT-SVC-THE-FITTED-FEW-ASKED",
     "file": "server-account/src/wild.js",
-    "old": "  const barred = await piecesBarred(ctx.db, charId, wildDropCandidates(stored, w, wt, { insured }).map(ledgerKeyOf).filter((k) => k != null));",
-    "new": "  const barred = await piecesBarred(ctx.db, charId, takeWildDeath(JSON.parse(JSON.stringify(stored)), w, () => false, wt, { insured }).taken.map(ledgerKeyOf).filter((k) => k != null));",
+    "old": "  const barred = await piecesBarred(ctx.db, charId, [...wornOffer(stored.items).filter((it) => !insured(it)), ...wildDropCandidates(stored, -1, null, { insured })].map(ledgerKeyOf).filter((k) => k != null));",
+    "new": "  const barred = await piecesBarred(ctx.db, charId, takeWildDeath(JSON.parse(JSON.stringify(stored)), -1, () => false, null, { insured }).taken.map(ledgerKeyOf).filter((k) => k != null));",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -640,8 +640,8 @@
   {
     "name": "INT9-AUDIT-SVC-THE-TOOK-UNSAID",
     "file": "server-account/src/wild.js",
-    "old": "  const tk = { took: wildTookOf(drop.taken, drop.from), gold: drop.gold, ...(spent.length ? { insured: spent } : {}) };",
-    "new": "  const tk = { took: [], gold: { purse: 0, cart: 0 }, ...(spent.length ? { insured: spent } : {}) };",
+    "old": "  const tk = { took: wildTookOf(drop.taken, drop.from), gold: drop.gold, ...(spent.length ? { insured: spent } : {}), ...(lastGold > 0 ? { last: 1 } : {}) };",
+    "new": "  const tk = { took: [], gold: { purse: 0, cart: 0 }, ...(spent.length ? { insured: spent } : {}), ...(lastGold > 0 ? { last: 1 } : {}) };",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -722,8 +722,8 @@
   {
     "name": "INT9-AUDIT-CLIENT-THE-WORD-ON-A-HALO",
     "file": "src/net/online.js",
-    "old": "    if (this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) { this._sayZone(this._ws, v, !v && dead); this._wildZoneAt = now; }",
-    "new": "    if (this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) { this._sayZone(this._ws, v, !v && dead); this._wildZoneAt = now; }\n    for (const h of this._halo.values()) if (h.status === 'open' && h.wildOk && h.ws && this._welcomed.has(h.ws)) this._sayZone(h.ws, v);",
+    "old": "    if (this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) { this._sayZone(this._ws, v, !v && dead, entry && edge); this._wildZoneAt = now; }",
+    "new": "    if (this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) { this._sayZone(this._ws, v, !v && dead, entry && edge); this._wildZoneAt = now; }\n    for (const h of this._halo.values()) if (h.status === 'open' && h.wildOk && h.ws && this._welcomed.has(h.ws)) this._sayZone(h.ws, v);",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -869,8 +869,8 @@
   {
     "name": "INT7-AUDIT-RELAY-THE-DUELS-ARMS-UNPASSED",
     "file": "server/src/index.js",
-    "old": "    const res = duelBlow(st, a.sub, d.to, { d: d.d, r, held, wa: a.wa ?? null }, now);",
-    "new": "    const res = duelBlow(st, a.sub, d.to, { d: d.d, r, held, wa: null }, now);",
+    "old": "    const res = duelBlow(st, a.sub, d.to, { d: d.d, r, held, wa: a.wa ?? null, el: d.el ?? null }, now);   // PVP-WARD: the spell's element",
+    "new": "    const res = duelBlow(st, a.sub, d.to, { d: d.d, r, held, wa: null, el: d.el ?? null }, now);   // PVP-WARD: the spell's element",
     "tests": [
       "test/net/arena/int7_arms.test.js",
       "test/net/duel/int8_duel_ref.test.js"
@@ -888,8 +888,8 @@
   {
     "name": "INT7-AUDIT-RELAY-THE-ZONES-ARMS-UNPASSED",
     "file": "server/src/index.js",
-    "old": "{ d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key }",
-    "new": "{ d: d.d, r, held, wa: null, kin, rid, room: a.key }",
+    "old": "{ d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key, el: d.el ?? null }",
+    "new": "{ d: d.d, r, held, wa: null, kin, rid, room: a.key, el: d.el ?? null }",
     "tests": [
       "test/net/arena/int7_arms.test.js",
       "test/net/int9_wild_ref.test.js"

@@ -472,7 +472,7 @@
   {
     "name": "OVERWORLD-NAMES-the-near-unnamed",
     "file": "src/scenes/travelViewMarks.js",
-    "old": "      marks.push({ key: `peer:${d.id}`, at: [f[0], f[1] + h, f[2]], label: d.name ?? '', kind: `${party ? 'party' : 'traveller'}${isShipMark(t?.p) ? ' ship' : ''}${t?.p.tv ? ' journey' : ''}`, edge: party || !!t, badge: tvBadgeOf(d),\n        kin: travellerKin({ friend: !!host.social?.isFriendPeer(d.id), gt: d.gt }, myGt), lv: d.lv ?? null });   // OWS1: at sea (their region mark says so), a ship; OW-KIN / OW-WHO: who they are to me, and their Renown\n",
+    "old": "      marks.push({ key: `peer:${d.id}`, at: [f[0], f[1] + h, f[2]], label: d.name ?? '', kind: `${party ? 'party' : 'traveller'}${isShipMark(t?.p) ? ' ship' : ''}${t?.p.tv ? ' journey' : ''}`, edge: party || !!t, badge: tvBadgeOf(d),\n        kin: travellerKin({ friend: !!host.social?.isFriendPeer(d.id), gt: d.gt }, myGt), lv: d.lv ?? null, skull: pvpSkullOf(d.id) });   // OWS1: at sea (their region mark says so), a ship; OW-KIN / OW-WHO: who they are to me, and their Renown\n",
     "new": "",
     "tests": [
       "test/scenes/tv3_travellers.test.js"

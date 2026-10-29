@@ -42,18 +42,28 @@
   {
     "name": "BUSYGATE-never-started-again",
     "file": "src/net/accountClient.js",
-    "old": "  _busy = { n: 0, until: _busy.until };   // BUSY-GATE: an answer starts the count again; a hold already running runs out\n",
+    "old": "  if (busyRead(path, method)) _busy = { n: 0, until: _busy.until };\n",
     "new": "",
     "tests": [
       "test/net/busy_gate.test.js"
     ],
-    "note": "an answer leaves the count standing"
+    "note": "an answer leaves the count standing (BUSY-COUNT: re-aimed by content at the gated reset)"
+  },
+  {
+    "name": "BUSYGATE-any-answer-starts-again",
+    "file": "src/net/accountClient.js",
+    "old": "  if (busyRead(path, method)) _busy = { n: 0, until: _busy.until };",
+    "new": "  _busy = { n: 0, until: _busy.until };",
+    "tests": [
+      "test/net/busy_gate.test.js"
+    ],
+    "note": "BUSY-COUNT: an act's answer starts the count again - the wait never doubles through an overload"
   },
   {
     "name": "BUSYGATE-answer-cuts-hold",
     "file": "src/net/accountClient.js",
-    "old": "  _busy = { n: 0, until: _busy.until };",
-    "new": "  _busy = { n: 0, until: 0 };",
+    "old": "if (busyRead(path, method)) _busy = { n: 0, until: _busy.until };",
+    "new": "if (busyRead(path, method)) _busy = { n: 0, until: 0 };",
     "tests": [
       "test/net/busy_gate.test.js"
     ],

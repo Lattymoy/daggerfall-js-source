@@ -227,6 +227,25 @@ test('WITCH1 AN OFFERING OUTLIVES NO HOME: its home sold, it stands nowhere and 
   assert.equal(db._raw.prepare('SELECT COUNT(*) AS n FROM fest_offerings').get().n, 0);
 });
 
+test('ORPHAN-GATE an account with no offerings asks no orphan batch - no write transaction on its read - and one with an offering still brings its orphans home (mutant: the batch on every read)', async () => {
+  const { alice, player, ctx, cakes, bowls, home, db } = await stand();
+  const batches = [];
+  const batch = db.batch.bind(db);
+  db.batch = (list) => { batches.push(list.length); return batch(list); };
+  const none = await festivalOf(ctx(), player(alice), ON);
+  assert.deepEqual([none.offerings, batches], [[], []], 'no offering, no batch');
+  home(alice, MAP, HOME, CHAR);
+  bowls(alice, 1);
+  await setOffering(ctx(), player(alice), { mapId: MAP, buildingKey: HOME, character: CHAR }, ON);
+  cakes(alice, 4);
+  batches.length = 0;
+  assert.equal((await festivalOf(ctx(), player(alice), ON)).offerings.length, 1);
+  assert.deepEqual(batches, [2], 'an offering standing: its orphans asked');
+  db._raw.prepare('DELETE FROM homes WHERE map_id = ? AND building_key = ?').run(MAP, HOME);
+  const mine = await festivalOf(ctx(), player(alice), ON);
+  assert.deepEqual([mine.offerings, mine.bowls], [[], 1], 'the orphan home, and the offerings read after it');
+});
+
 test('WITCH1 A HOME CHANGES HANDS: the old owner\'s bowl goes back to them whole, credited from its own row - a read of it between the set-out\'s look and its batch pays nothing twice (AUDIT WITCH1 A1)', async () => {
   const { alice, bob, player, ctx, cakes, bowls, home, db, row } = await stand();
   home(alice, MAP, HOME, CHAR);

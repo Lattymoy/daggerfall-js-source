@@ -146,7 +146,7 @@ test('ZONE-SAFE THE HOST\'S DOORS (scenes/world.js wildCan, wildFair - the four 
     settledAt, campToWire: (p) => p, player: { feetAt: () => scope.me }, locationIndex: index, modes: { mode: 'exterior', deathUp: () => false },
     playerEntity: { health: 50 }, me: outside, peers: new Map(),
     wildKin, social: { isPartyPeer: () => false }, _wildTruce: { holds: () => false }, duelMgr: { live: false }, myGuildTag: () => null,
-    wildAtWire: (p) => !!p, duelWorldOf: (id) => scope.peers.get(id) ?? null,
+    wildAtWire: (p) => !!p, pvpFlag: { fair: () => true }, duelWorldOf: (id) => scope.peers.get(id) ?? null,
   };
   const body = `${lineOf('  const wildCan = () =>')}${blockOf('  const wildFair = (peerId) => {')}`;
   const { wildCan, wildFair } = new Function('S', `with (S) { ${body}\n return { wildCan, wildFair }; }`)(scope);
@@ -164,11 +164,11 @@ test('ZONE-SAFE THE HOST\'S DOORS (scenes/world.js wildCan, wildFair - the four 
   scope.modes.mode = 'interior';
   assert.ok(!wildCan(), 'under a roof no one fights');
   // the word the referee hears is wildCan's (INT9), and the dungeon's swing and casts read these same doors
-  assert.match(W, /online\?\.setWildZone\?\.\(wildCan\(\) \? 1 : 0, playerEntity\.health <= 0\);/);
+  assert.match(W, /online\?\.setWildZone\?\.\(wildCan\(\) \? 1 : 0, playerEntity\.health <= 0, zoneEdgeSee\(/);
   assert.match(W, /wildBodies: \(\) => wildBodiesNow\(\),/);
   assert.match(W, /const wildBodiesNow = \(\) => \{\n {4}if \(!wildCan\(\)\) return NO_BODIES;\n {4}const out = \[\];\n {4}for \(const b of peersNear\(\) \?\? \[\]\) if \(wildFair\(b\.id\)\) out\.push\(b\);/);
   assert.match(W, /const wildStrikeOut = \(to, by, weapon, swing, drawMs = 0, \{ off = false \} = \{\}\) => \{\n {4}if \(!wildFair\(to\)\) return false;/);
-  assert.match(W, /const wildSpellOut = \(peerId, sp\) => \{\n {4}if \(!wildFair\(peerId\)\) return false;/);
+  assert.match(W, /const wildSpellOut = \(peerId, sp\) => \{\n {4}if \(!wildFair\(peerId\) \|\| !sp\?\.pvpKit\) return false;/);
 });
 
 test('ZONE-SAFE THE TOWN WATCH NARROWED (scenes/world.js zoneWatchCall): no blow is struck in a settlement\'s streets nor under a roof, so the watch answers a blow at DFU\'s other towns alone - a farm, a manor, an inn, a temple - outdoors; ten times as strong as it was (mutants: the roof\'s arm back; the town unread)', () => {

@@ -55,6 +55,7 @@ import { applySpell, spellReflectedText, hasActiveEffect, isSoulTrapEffect, spel
 import { spellToFoeOwner } from '../systems/enchantments.js';   // RPT1026-FIGHTS (TRAP-TO-OWNER): the session's door to a foe another player runs
 import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { potionBundle } from '../systems/potions.js';   // U44: DrinkPotion's bundle
+import { pvpPotionBundle } from '../combat/pvpPotions.js';   // PVP-POTIONS
 import { potentEffect } from '../net/alchemyLaw.js';   // PROF12: a Potent potion's magnitudes
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { ridingDragon, dragonFire, dragonBolt, dragonVolley, DRAGON_BOLT_SPEED, DRAGON_BOLT_DAMAGE } from '../systems/staffDragon.js';   // DRAGON-RIDE: the dragon's shoulder cannons
@@ -86,6 +87,7 @@ import { blowTaken } from '../systems/blowTaken.js';   // TELL1: what a spell's 
 import { noteFeudHarm, elementFeudClass } from '../systems/feudLedger.js';   // RVN1: my spell, in its fight's ledger (a leaf)
 import { noteSkillChallenge } from '../systems/skillSoftcap.js';   // BAL9: a spell answers its foe, as a blow does
 import { sandSpellRefusal } from '../systems/arena/arenaKit.js';   // AUDIT ARENA-LADDER: the sand's kit law
+import { pvpSpellRefusal } from '../systems/wild/pvpRules.js';   // PVP-RULES: a flagged fighter's spells
 import { createMwMagicFx } from './mwMagicFx.js';   // MW-SPELLFX1: Morrowind's spell effects, drawn by every host through this engine
 import { egAllyLook } from '../ui/eliteGates/egAccess.js';   // EG-ZG (Elite-Gates.md section 25.4): THE QUIET COMPANY - another player's spell effects in a Spire trial
 import { CONCEAL_MODE } from '../systems/combatVisuals.js';   // EG-ZG: an ally's flat drawn translucent, as a revealed foe's is (alpha alone)
@@ -335,7 +337,7 @@ export function createPlayerMagic({
    *  true when it is. A host's seam that throws refuses nothing. */
   function wardedHere(sp) {
     let why = null;
-    try { why = spellRefusal?.(sp) ?? sandSpellRefusal(sp); } catch { why = null; }   // AUDIT ARENA-LADDER: and the sand's kit law, in every host (systems/arena/arenaKit.js)
+    try { why = spellRefusal?.(sp) ?? sandSpellRefusal(sp) ?? pvpSpellRefusal(sp); } catch { why = null; }   // AUDIT ARENA-LADDER: and the sand's kit law, in every host (systems/arena/arenaKit.js); PVP-RULES: and the flag's (systems/wild/pvpRules.js)
     if (!why) return false;
     readiedSpell = null; readiedFree = false; readiedCost = 0;
     say(why);
@@ -1151,7 +1153,7 @@ export function createPlayerMagic({
       say(sent ? RESURRECT_TEXT.cast(f.name) : f?.gone ? RESURRECT_TEXT.forGood(f.name) : RESURRECT_TEXT.noBody);
       return done(true);
     }
-    const allyReach = allyReachFor(sp.rangeType);
+    const allyReach = sp.pvpReach ?? allyReachFor(sp.rangeType);   // PVP-KIT: the PvP bar's gift reaches 15 m (systems/wild/pvpKit.js)
     const ally = !readiedFree && allyReach !== null && allyCastable(sp) ? allyInReach(eye, dir, allyReach) : null;
     if (ally && castAtAlly?.(ally.id, allyCastFrame(sp, castingLevel(playerEntity), ally.id))) {
       lastCastCost = cost;
@@ -1370,7 +1372,7 @@ export function createPlayerMagic({
       // the mate says "Cast Heal on Bran", and the next click resolves through releaseFrame's ally arm, or through
       // the CasterOnly arm as ever if they moved. A free ready (A7) fires on the spot as DFU's does; so does one
       // with nobody there.
-      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH, sp)) { sayArm('mate-aim', prevArm, pressButtonToFireSpellText()); return true; }
+      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, sp.pvpReach ?? ALLY_TOUCH_REACH, sp)) { sayArm('mate-aim', prevArm, pressButtonToFireSpellText()); return true; }
       // COMPANION-KIT: a CasterOnly gift ARMS with my companion under the crosshair, or near - the two arms of ALLY-CAST
       // here for a body of mine (companionMarksFor holds a free ready and a spell not his to him): the click gives it to
       // him, or, aimed anywhere else, to me.
@@ -1701,7 +1703,7 @@ export function createPlayerMagic({
       // PROF12: a Potent potion (an alchemy station's brew) lays its share on every magnitude (alchemyLaw potentEffect) -
       // AUDIT PROF12 A3: on its duration (and chance) where its magnitude is DFU's default, at the drinker's level
       const bundle = potent ? { ...plain, effects: plain.effects.map((e) => potentEffect(e, potent, castingLevel(playerEntity))) } : plain;
-      applySpellToPlayer(bundle, castingLevel(playerEntity), null,
+      applySpellToPlayer(pvpPotionBundle(bundle), castingLevel(playerEntity), null,   // PVP-POTIONS: the first effect alone in a fight with a player
         { bypassSavingThrows: true, bypassChance: true });
       audio.playOneShotId(SPELL_CAST_SOUND[bundle.element] ?? SPELL_CAST_SOUND[4], 1);   // AUDIT 58: the same ID door
       return bundle.name;

@@ -395,7 +395,7 @@ test('AUDIT RENOWN1 GAME-8: the page\'s last word - `leave` sends the held repor
   assert.equal(JSON.parse(sent.at(-1).init.body).secret, undefined, 'and never in the body');
   assert.equal((await accountCall({ fetch, base: 'https://x.invalid' }, '/v1/health')).ok, true);
   assert.match(renownRid(), RENOWN_RID_RE, 'a report\'s own id, in its shape');
-  assert.match(src('src/scenes/world.js'), /leave: \(c, xp, name, rid, region\) => renownAccount\.leave\(c, xp, name, rid, region\),/);
+  assert.match(src('src/scenes/world.js'), /leave: \(c, xp, name, rid, region, vd\) => renownAccount\.leave\(c, xp, name, rid, region, vd\),/);
 });
 
 test('AUDIT RENOWN1 UI-5/UI-7/WIRE-2c: the answer\'s plan - the order carried WHENEVER the service signed one, a rise announced against what was SAID (never against the page\'s level, which a token may have raised first), the hour\'s line only for a report the hour cut short (never at the cap, never for a repeat) (mutants: the order gated on the page\'s level; the announcement against the page\'s level; the cap line at the cap; the cap line for a repeat)', () => {

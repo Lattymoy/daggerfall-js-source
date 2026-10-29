@@ -90,6 +90,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { statsHunt } from '../bounty/huntRank.js';   // HUNTERS-MARK (Bounty-Boards.md 12.3)
+import { statsVillainy } from '../pvpVillainBar.js';   // PVP-VILLAIN
 import { fpArm, hasDaggerfallArrows } from '../../combat/fpArm.js';
 import { dressStanding } from '../../systems/clothingStanding.js';   // DRESS1 (2026-09-30, Discord): the Standing page's Dress line
 import { questRail, shelvedRail, unloggedRail, journalLines, questTitleOf, QUEST_URGENT_SECONDS, remainWords } from '../quest/questRail.js';   // MAC-K2: the ONE quest walk, shared with the chronicle
@@ -5193,6 +5194,7 @@ function statsCharacter(detail, m) {
   detail.append(meterRow(localizedText('health', 'Health'), m.health.now, m.health.max, 'blood'));
   detail.append(meterRow(localizedText('fatigue', 'Fatigue'), m.fatigue.now, m.fatigue.max, ''));
   detail.append(meterRow(localizedText('magicka', 'Magicka'), m.magicka.now, m.magicka.max, 'verdigris'));
+  statsVillainy(detail, { el, meter: pxMeter });   // PVP-VILLAIN: the villain meter, online
   detail.append(pxDivider(t('pause.stats.burden', 'Burden')));
   const g = el('div', 'px-statgrid');
   for (const [label, v] of [[t('menu.save.gold', 'Gold'), String(m.gold)], [t('pause.stats.encumbrance', 'Encumbrance'), `${m.encumbrance.now} / ${m.encumbrance.max}`]]) {
@@ -5351,7 +5353,7 @@ function statsMaster(detail, m) {
  *  unmount takes it down (the sheet's key left it over the running game, its Y still choosing a permanent path). */
 let askUp = /** @type {null | (() => void)} */ (null);
 let askSeq = 0;
-function askCard(lines, onYes) {
+function askCard(lines, onYes, { no = null } = {}) {
   askUp?.();
   const back = el('div', 'px-master-ask');
   const card = el('div', 'inputbox yesnobox');
@@ -5388,7 +5390,7 @@ function askCard(lines, onYes) {
   askUp = close;
   const bar = acts([
     { label: t('pause.ask.yes', 'Yes'), onClick: () => answer(true) },
-    { label: t('pause.ask.no', 'No'), primary: true, onClick: () => answer(false) },
+    { label: no ?? t('pause.ask.no', 'No'), primary: true, onClick: () => answer(false) },
   ]);
   bar.classList.add('yesnobox-acts');
   const hint = el('div', 'notice-hint', t('pause.ask.hint', 'Y yes · N or Enter no'));

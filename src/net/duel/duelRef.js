@@ -95,17 +95,17 @@ export const duelVitals = (bout) => [bout.a, bout.b].map((x) => [x.id, Math.max(
  * token signs (siegeRef.js refereeBlow), a cast (`r` SIEGE_HIT.Spell) to its harm's most and rate (refereeCast, never a
  * heal). Answers `{ ok, dealt, fell, bout, why }` - the vitality moved, a fall at none left.
  * @param {any} st @param {string} sub @param {string} to
- * @param {{ d?: number, r?: number, held?: any, wa?: any }} o
+ * @param {{ d?: number, r?: number, held?: any, wa?: any, el?: number|null }} o
  * @param {number} now
  */
-export function duelBlow(st, sub, to, { d = 0, r = SIEGE_HIT.Melee, held = null, wa = null } = {}, now) {
+export function duelBlow(st, sub, to, { d = 0, r = SIEGE_HIT.Melee, held = null, wa = null, el = null } = {}, now) {
   const bout = duelBoutOf(st, sub), sides = sidesOf(bout, sub);
   if (!bout || !sides) return { ok: false, dealt: 0, fell: false, bout: null, why: 'no-bout' };
   const [me, them] = sides;
   if (them.id !== to) return { ok: false, dealt: 0, fell: false, bout, why: 'not-opponent' };
   if (now < bout.startMs || now >= bout.endMs) return { ok: false, dealt: 0, fell: false, bout, why: 'not-live' };
   const res = r === SIEGE_HIT.Spell
-    ? refereeCast(me.f, them.f, { from: me.pose, at: them.pose, d }, now)
+    ? refereeCast(me.f, them.f, { from: me.pose, at: them.pose, d, el }, now)
     : refereeBlow(me.f, them.f, { from: me.pose, at: them.pose, held, d, r, wa }, now);
   return { ok: res.ok, dealt: res.dealt, fell: res.fell, bout, why: res.why };
 }

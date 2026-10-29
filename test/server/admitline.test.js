@@ -75,6 +75,7 @@ test('ADMIT-LINE: the Worker answers a held sign-in 503 `queue` with its place, 
   assert.equal(res.status, 503);
   assert.deepEqual(await res.json(), { error: 'queue', position: 42, wait: 8400 });
   assert.equal(res.headers.get('retry-after'), '9');
+  assert.match(res.headers.get('access-control-expose-headers') ?? '', /retry-after/, 'RETRY-SEEN: exposed, so the page can read it');
   assert.equal(asked, 0, 'a held sign-in costs the database nothing');
   // health is never in the line
   const health = await service.fetch(new Request('https://acct.test/v1/health'), env);

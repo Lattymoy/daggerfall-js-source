@@ -51,7 +51,8 @@ import {
 import { paintWaypointFlag, flagBox } from '../waypointFlags.js';   // WAYPOINTS: the small flags
 import { closeWaypointMenu } from '../waypointMenu.js';   // WAYPOINTS: the Overworld's menu goes down with the view
 import { appStorage } from '../../systems/appStorage.js';   // WAYPOINTS: the filter block's folded state, kept on the device
-import { QUEST_MARK_CSS } from '../quest/questMarks.js';   // OW-QUEST: the journal's gold, the held map's diamond
+import { QUEST_MARK_CSS } from '../quest/questMarks.js';
+import { skullSrc } from '../pvpSkull.js';   // PVP-SKULL: a flagged player's skull over their Overworld name   // OW-QUEST: the journal's gold, the held map's diamond
 
 export const TRAVEL_VIEW_HUD_ID = 'travel-view';
 /** The name on the screen (the code's is TRAVEL VIEW: "overworld" is the streaming world's own word in the tree). */
@@ -1179,6 +1180,14 @@ const badgeKey = (b) => {
 export const TRAVEL_VIEW_ARMS = Object.freeze({ back: 'rgba(14,16,19,0.78)', shield: 0.82, pad: 2, gap: 2 });
 /** AUDIT-SEATS: a Season's banner ribbon under the row - its field's band and its border's edge, px. */
 export const TRAVEL_VIEW_RIBBON = Object.freeze({ band: 2, edge: 1, gap: 1 });
+/** PVP-SKULL: the skull's size on the Overworld, and its image for each kind (made once; none off a page). */
+const SKULL_PX = 16;
+const skulls = new Map();
+function skullImage(kind) {
+  if (!skulls.has(kind)) skulls.set(kind, typeof Image === 'function' && skullSrc(kind) ? Object.assign(new Image(), { src: skullSrc(kind) }) : null);
+  return skulls.get(kind);
+}
+
 /**
  * OVERWORLD NAMES (2026-09-28, Mac: "Full, like in play"): A PLAYER'S NAME AS IT READS OVER THEIR HEAD IN PLAY - the
  * title its own line above, in its own colour (a gradient title across its letters); under it one row centred as the
@@ -1352,7 +1361,7 @@ function drawMarks(marks, vw, vh, dpr, feet = null) {
   showMarkTip(hover ? placed.find((q) => q.m.key === hover)?.m.tip ?? null : null, pointer, vw, vh);   // SEAT-TIP: a seat's card while its plate is under the pointer
   // the picture this frame would draw: unchanged (a camera at rest), the canvas already shows it
   const sig = [bw, bh, hover ?? ''];
-  for (const q of placed) sig.push(q.m.key, q.x, q.y, q.held ? Math.round(q.held.angle) : 999, q.m.label ?? '', q.m.sub ?? '', q.m.kind ?? '', q.bk, q.fade ? 1 : 0, q.m.kin ?? '', q.m.hub ? 1 : 0, q.m.color ?? '');   // OW-KIN, OW-HUBS; WAYPOINTS: a flag's colour
+  for (const q of placed) sig.push(q.m.key, q.x, q.y, q.held ? Math.round(q.held.angle) : 999, q.m.label ?? '', q.m.sub ?? '', q.m.kind ?? '', q.bk, q.fade ? 1 : 0, q.m.kin ?? '', q.m.hub ? 1 : 0, q.m.color ?? '', q.m.skull ?? '');   // OW-KIN, OW-HUBS; WAYPOINTS: a flag's colour; PVP-SKULL
   for (const q of placed) if (q.m.pick) nextHits.push({ key: q.m.key, ...pickBox(q, vw) });   // BOUNTY-SNAP: a bounty's on its ring alone
   hits = nextHits;
   sayPlaces(placed);
@@ -1433,6 +1442,9 @@ function drawMarks(marks, vw, vh, dpr, feet = null) {
     let ly = q.side === 3 ? y - 10 - sp.h - (sb ? sb.h : 0) : plate && !held ? y - 24 - sp.h / 2 - (sb ? sb.h : 0) : m.badge && !held ? y - (isShipKind(m) ? SHIP_MARK_RISE + 2 : NAME_ABOVE) - sp.h : y + (held ? 10 : 7);   // OWS1: over a ship, over its sail
     if (m.badge && !held) ly = clearOfNames(names, inScreen(x - sp.w / 2, sp.w, vw), ly, sp.w, sp.h);
     g.drawImage(sp.c, inScreen(x - sp.w / 2, sp.w, vw), ly, sp.w, sp.h);   // a long name held at a side edge stays on the screen
+    const sk = m.skull ? skullImage(m.skull) : null;   // PVP-SKULL: over the name, as in play
+    if (sk && !sk.complete) unmade = true;   // drawn the frame after it loads
+    else if (sk) g.drawImage(sk, inScreen(x - SKULL_PX / 2, SKULL_PX, vw), ly - SKULL_PX - 1, SKULL_PX, SKULL_PX);
     if (sb) {
       g.drawImage(sb.c, inScreen(x - sb.w / 2, sb.w, vw), ly + sp.h, sb.w, sb.h);
     }
