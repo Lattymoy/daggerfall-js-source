@@ -639,7 +639,7 @@ test('STOREFRONT the Battle Pass section: the season\'s story and its three stag
   assert.ok(all(sec, 'sh-track-premium').every((c) => String(c.className).includes('sh-locked')), 'no premium: its row locked');
   assert.equal(all(sec, 'sh-reached').length, 2, 'levels 1 and 5 reached');
   assert.equal(all(all(sec, 'sh-deluxe')[0], 'sh-reward').length, 3);
-  assert.deepEqual(all(sec, 'sh-cwhat').map((n) => n.textContent), ['Kill 100 foes', 'Destroy 25 Dwemer constructs', 'Gather 60 times', 'Win 3 tavern games', 'Win 1 endgame fights: a breach, a Redoubt, the Serpent or a star']);
+  assert.deepEqual(all(sec, 'sh-cwhat').map((n) => n.textContent), ['Kill 100 foes', 'Destroy 25 Dwemer constructs', 'Gather 60 times', 'Win 3 tavern games', 'Win 1 endgame fight: a breach, a Redoubt, the Serpent or a star']);   // PIN MOVED (STOREFRONT): a count's own plural (ui/passText.js, ICU)
   assert.equal(all(sec, 'sh-paid').length, 1);
   w.stop();
   // before the season: on sale when it opens
