@@ -23,7 +23,9 @@ test('EG-E THE HOSTS (sections 15, 19, 20, 25.4): the claim with its character a
   assert.match(w, /open: \(o\) => openEgBoard\(\{ doc: document, classic: !isEnhancedPlus\(\), fetchBoard: \(\) => _accountEg\.board\(\)/);
   assert.match(w, /setSetPowersAllies\(\{\s*near: \(m\) => \{[^\n]*p\.mate && p\.feet && Math\.hypot\([^\n]*<= m\); \},\s*shield: \(a, sp\) => castAtAllyDoor\(a\.id, allyCastFrame\(sp, castingLevel\(playerEntity\), a\.id\)\),/);
   assert.match(w, /setSpireRecovery\(\(\) => modes\?\.egHallBreach\?\.\(\) \?\? null\);/);
-  assert.match(w, /if \(egClient\?\.quiet\?\.\(\)\) return;/);
+  // PIN MOVED (ARMORY, HOST-SPLIT): the auras' gather is scenes/auraHost.js's, the trial's quiet handed to it
+  assert.match(w, /quiet: \(\) => !!egClient\?\.quiet\?\.\(\)/);
+  assert.match(readFileSync(new URL('../../../src/scenes/auraHost.js', import.meta.url), 'utf8'), /      if \(deps\.quiet\(\)\) return;/);
   assert.match(w, /now: \(\) => \(egClient \? egClient\.sharedNow\(\) : egNow\(\)\)/);
   // the client's half: the Redoubt told once a rest, the board's command, the trial's quiet
   assert.match(c, /if \(rdSeen !== E\.h\) \{ rdSeen = E\.h; redoubt\?\.\(E\.rd\);/);

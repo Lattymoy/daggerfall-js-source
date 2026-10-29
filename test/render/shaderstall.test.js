@@ -300,9 +300,10 @@ test('AURA-SPLIT the auras\' looks: one program a look - the whole source with `
   rg.draw(two, I, I, [0, 0, 0], 1);
   assert.equal(rg.drawn, 2, 'no extension: each look built at its first draw');
   assert.equal(g.count('createProgram'), 2, 'the looks drawn alone');
-  const w = read('src/scenes/world.js');
+  const w = read('src/scenes/auraHost.js');   // PIN MOVED (ARMORY, HOST-SPLIT): the world's auras are the host's module's
   assert.match(w, /const auraPassOf = compiledPass\(renderer\.gl, \[\], \(\) => new AuraRingRenderer\(renderer\.gl\),/, 'the world\'s door waits on no program');
-  assert.match(w, /const _auraPass = auraPassOf\(\);/);
+  assert.match(w, /const pass = auraPassOf\(\);/);
+  assert.equal(read('src/scenes/world.js').split('\n').filter((l) => l.split('//')[0].includes('new AuraRingRenderer(')).length, 0, 'and none in the world host itself');
   assert.equal(w.split('\n').filter((l) => l.split('//')[0].includes('new AuraRingRenderer(')).length, 1, 'built nowhere outside its door (a comment that names the build is no build)');
   assert.match(read('src/render/auraRing.js'), /const P = this\.programOf\(look\.kind\);/, 'a look never asked as needed in the draw');
   // a look that will not build: told once, its wearers stand without it, and the other looks are drawn

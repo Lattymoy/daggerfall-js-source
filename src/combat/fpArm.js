@@ -7151,68 +7151,8 @@ export function createFpArm() {
      *  the panel then keeps the classic doll (never traps). Display
      *  only by Mac's decision: unequip stays with the item list. */
     figure({ yaw = 0, height = 384 } = {}) {
-      // AUDIT 33 F1: a built body, not an ACTIVE wheel - the inventory
-      // is opened from first person, where the wheel is off.
-      if (!(built && built.ok && thirdBuilt && thirdBuilt.ok && renderer)) return null;
-      const t = thirdBuilt;
-      // PX32 (Mac: the 3D paperdoll "sometimes shows in your last
-      // animated state"): THE PORTRAIT POSES ITSELF. poseAssembly for
-      // this body runs in ONE place - stepUpper's `viewMode === 'third'`
-      // arm - and the inventory is opened from FIRST person, where that
-      // arm never runs. So figure() uploaded whatever bone matrices
-      // happened to be in t.arm from the last time the wheel was in
-      // third person, or from the build if it never was. Not a stale
-      // frame: a stale SESSION.
-      //
-      // MF1 (Mac: the model in the inventory "takes time to ... change
-      // stances and is just overall clunky"): THE PORTRAIT STANDS.
-      // PX32 posed the body at the wheel's live playhead, and in first
-      // person that playhead is a FIRST-PERSON clip: idleSource is the
-      // .1st.kf, its trackMap the ARM's tracks, its time the arm's
-      // time. The body took those tracks by bone name and stood in the
-      // arm's pose - the hands held up before a camera - shifting with
-      // the arm's idle loop and jumping on every rebuild, which is what
-      // "changes stances" looks like from the chair. The body is posed
-      // with ITS OWN sources now: the stance's idle (the DRAWN stance,
-      // since a paperdoll holds what it carries - PX26) at that clip's
-      // START, the standing frame Morrowind's own inventory doll holds.
-      // Deterministic, so the panel's cache is exact and two renders of
-      // one wardrobe are one picture.
-      const pose = portraitPose(t);
-      thirdSkinReady(t);   // MWNPC1: posed on the CPU (its exact boxes frame it), drawn through the palette
-      if (pose) {
-        if (t.hipHang) t.hipHang.rot.set(PLUMB);   // HT-WAIST: a still portrait, a plumb lantern (the hip lantern's rider re-swings it)
-        poseAssembly(t.arm, {
-          tracks: pose.source.trackMap,
-          sampleTrack,
-          time: pose.state.startTime,
-          accumRoot: t.accumRoot,
-          mirror: portraitMirror(),   // TWO-HANDS AUDIT
-        });
-      }
-      uploadThirdMesh(t);
-      // PX26 F1 (Mac: weapons and shields are not on the menu sprite):
-      // THE FIGURE IS A PORTRAIT, NOT THE WORLD. The wheel hides the
-      // weapon when it is sheathed - rule 57, right for a body standing
-      // in the world - and the inventory panel inherited that, so the
-      // sword you just equipped was invisible because you had not drawn
-      // it. A paperdoll shows what you carry. The arrow still follows
-      // its own shoot keys: a nocked arrow on a portrait is a pose, not
-      // an inventory.
-      for (const r of thirdMesh.ranges) {
-        if (r.slot === 'weapon') r.hidden = false;
-        else if (r.slot === 'offweapon') r.hidden = !(handsMode === 'dual' && t.offWeapon);   // TWO-HANDS AUDIT: the left hand's, while a pair is carried - never the last world frame's flag
-        else if (r.slot === 'arrow') r.hidden = !arrowShown;
-        else if (r.slot === 'torch') r.hidden = !torchLit;   // MW-D51: a portrait shows what you carry - the lit light, whatever the hand holds
-        else if (r.slot === HIP_LIGHT_SLOT) r.hidden = !hipLit;   // HT-WAIST: and the lantern at the waist, lit
-        else if (HOLSTER_SLOTS.includes(r.slot)) r.hidden = holsterHidden(r.slot, true, { arrowShown, tag: r.piece?.tag });   // WS1: the weapon is in the hand here, so the holster is empty; the scabbard and quiver show
-      }
-      const u = 1 / MW_UNITS_PER_METER;
-      const rs = (built && built.raceScale) || { weight: 1, height: 1 };
-      // feet at the origin, facing the viewer: drawThird's +180 makes yaw
-      // 0 face -Z in pass space, and the eye below sits on +Z.
-      const yawDeg = (yaw * 180 / Math.PI) + 180;
-      const model = multiply(trs(0, 0, 0, 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight), NIF_TO_PASS);
+      if (!posePortrait()) return null;
+      const model = portraitModel(yaw);
       // PR-BOW1b (2026-09-24): FRAMED ON WHAT IT DRAWS, AT THE BODY'S
       // SCALE - after the flags above, off the per-range boxes the upload
       // just folded (portraitWindow). It framed meshBounds over EVERY
@@ -7230,6 +7170,24 @@ export function createFpArm() {
       const eye = [center[0], center[1], center[2] + 4];
       const view = lookAt(eye, center, [0, 1, 0]);
       return renderer.renderCharacterSpriteImage(thirdMesh, model, ortho(halfW, halfH, 0.1, 8), view, pw, ph);
+    },
+
+    /** PROFILE-SLOTS (bible/04-Characters/Aura-Armory.md section 10): THE PORTRAIT ON A STAGE - figure()'s body, posed and
+     *  shown as it is there, its feet at the origin, drawn `width` by `height` by the camera `frame(bones)` answers for
+     *  `names`' bones as posed (pass space - the model's; render/characterStage.js stageCameraOfBones). Answers the
+     *  pixels with that camera (`proj`, `view`, `eye`) and the bones, so the stage's passes draw on the same body. Null
+     *  where figure() is, or with no camera. */
+    stage({ width = 320, height = 420, names = [], frame = (/** @type {any} */ _b) => null } = {}) {
+      const t = posePortrait();
+      if (!t) return null;
+      const model = portraitModel(0);   // front on: its bones in the body's frame are the model's (armBonesInBody)
+      const bones = armBonesInBody(t.arm, names, built && built.raceScale) ?? {};
+      const cam = frame(bones);
+      if (!cam?.proj || !cam.view || !cam.eye) return null;
+      const ph = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(height)));
+      const pw = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(width)));
+      const img = renderer.renderCharacterSpriteImage(thirdMesh, model, cam.proj, cam.view, pw, ph);
+      return img && { ...img, proj: cam.proj, view: cam.view, eye: cam.eye, bones };
     },
 
     status() {
@@ -7356,6 +7314,79 @@ export function createFpArm() {
       return out;
     },
   };
+
+  /** PROFILE-SLOTS: THE PORTRAIT POSED AND SHOWN - figure()'s and stage()'s one start (its laws are written where they
+   *  stand). The third-person build, posed in its stance's first frame with what a paperdoll shows shown, or null where
+   *  no body stands. */
+  function posePortrait() {
+    // AUDIT 33 F1: a built body, not an ACTIVE wheel - the inventory
+    // is opened from first person, where the wheel is off.
+    if (!(built && built.ok && thirdBuilt && thirdBuilt.ok && renderer)) return null;
+    const t = thirdBuilt;
+    // PX32 (Mac: the 3D paperdoll "sometimes shows in your last
+    // animated state"): THE PORTRAIT POSES ITSELF. poseAssembly for
+    // this body runs in ONE place - stepUpper's `viewMode === 'third'`
+    // arm - and the inventory is opened from FIRST person, where that
+    // arm never runs. So figure() uploaded whatever bone matrices
+    // happened to be in t.arm from the last time the wheel was in
+    // third person, or from the build if it never was. Not a stale
+    // frame: a stale SESSION.
+    //
+    // MF1 (Mac: the model in the inventory "takes time to ... change
+    // stances and is just overall clunky"): THE PORTRAIT STANDS.
+    // PX32 posed the body at the wheel's live playhead, and in first
+    // person that playhead is a FIRST-PERSON clip: idleSource is the
+    // .1st.kf, its trackMap the ARM's tracks, its time the arm's
+    // time. The body took those tracks by bone name and stood in the
+    // arm's pose - the hands held up before a camera - shifting with
+    // the arm's idle loop and jumping on every rebuild, which is what
+    // "changes stances" looks like from the chair. The body is posed
+    // with ITS OWN sources now: the stance's idle (the DRAWN stance,
+    // since a paperdoll holds what it carries - PX26) at that clip's
+    // START, the standing frame Morrowind's own inventory doll holds.
+    // Deterministic, so the panel's cache is exact and two renders of
+    // one wardrobe are one picture.
+    const pose = portraitPose(t);
+    thirdSkinReady(t);   // MWNPC1: posed on the CPU (its exact boxes frame it), drawn through the palette
+    if (pose) {
+      if (t.hipHang) t.hipHang.rot.set(PLUMB);   // HT-WAIST: a still portrait, a plumb lantern (the hip lantern's rider re-swings it)
+      poseAssembly(t.arm, {
+        tracks: pose.source.trackMap,
+        sampleTrack,
+        time: pose.state.startTime,
+        accumRoot: t.accumRoot,
+        mirror: portraitMirror(),   // TWO-HANDS AUDIT
+      });
+    }
+    uploadThirdMesh(t);
+    // PX26 F1 (Mac: weapons and shields are not on the menu sprite):
+    // THE FIGURE IS A PORTRAIT, NOT THE WORLD. The wheel hides the
+    // weapon when it is sheathed - rule 57, right for a body standing
+    // in the world - and the inventory panel inherited that, so the
+    // sword you just equipped was invisible because you had not drawn
+    // it. A paperdoll shows what you carry. The arrow still follows
+    // its own shoot keys: a nocked arrow on a portrait is a pose, not
+    // an inventory.
+    for (const r of thirdMesh.ranges) {
+      if (r.slot === 'weapon') r.hidden = false;
+      else if (r.slot === 'offweapon') r.hidden = !(handsMode === 'dual' && t.offWeapon);   // TWO-HANDS AUDIT: the left hand's, while a pair is carried - never the last world frame's flag
+      else if (r.slot === 'arrow') r.hidden = !arrowShown;
+      else if (r.slot === 'torch') r.hidden = !torchLit;   // MW-D51: a portrait shows what you carry - the lit light, whatever the hand holds
+      else if (r.slot === HIP_LIGHT_SLOT) r.hidden = !hipLit;   // HT-WAIST: and the lantern at the waist, lit
+      else if (HOLSTER_SLOTS.includes(r.slot)) r.hidden = holsterHidden(r.slot, true, { arrowShown, tag: r.piece?.tag });   // WS1: the weapon is in the hand here, so the holster is empty; the scabbard and quiver show
+    }
+    return t;
+  }
+  /** PROFILE-SLOTS: the portrait's model at `yaw` (0 facing the viewer), feet at the origin, at the race's scale. */
+  function portraitModel(yaw) {
+    const u = 1 / MW_UNITS_PER_METER;
+    const rs = (built && built.raceScale) || { weight: 1, height: 1 };
+    // feet at the origin, facing the viewer: drawThird's +180 makes yaw
+    // 0 face -Z in pass space, and the eye below sits on +Z.
+    const yawDeg = (yaw * 180 / Math.PI) + 180;
+    const model = multiply(trs(0, 0, 0, 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight), NIF_TO_PASS);
+    return model;
+  }
   return api;
 }
 

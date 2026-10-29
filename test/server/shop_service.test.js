@@ -19,7 +19,7 @@ import { postHead } from '../../src/net/postLaw.js';
 import { POST_BODY_MAX, POST_SUBJECT_MAX, POST_BATCH_RE } from '../../src/net/postLaw.js';
 
 const { subtle } = globalThis.crypto;
-const ON = { STRIPE_SECRET_KEY: 'sk_test_shop', STRIPE_WEBHOOK_SECRET: 'whsec_shop', SHOP_ON_SALE: 'title:genesis,glyph:origin,aura:eternal' };
+const ON = { STRIPE_SECRET_KEY: 'sk_test_shop', STRIPE_WEBHOOK_SECRET: 'whsec_shop', SHOP_ON_SALE: 'title:genesis,glyph:origin,aura:eternal,armory:eternalset,armory:eternalhalo,armory:eternalsigil,armory:eternalarmlets,armory:eternalgreaves,armory:eternaledge' };   // ARMORY (PIN MOVED): the deploy's list, the Aura Armory's Eternal line with it
 const AFTER = 1_900_000_000;
 const row = (o = {}) => ({ id: 'acct-buyer', handle: 'Buyer', created_at: AFTER, registered_at: AFTER, ...o });
 
@@ -30,11 +30,19 @@ test('SHOP: the wares are the owner\'s three at the owner\'s prices, each a bit 
     ['title:genesis', 500, 1, 'titles', true],
     ['glyph:origin', 200, 2, 'glyphs', true],
     ['aura:eternal', 2000, 4, 'auras', true],
+    // ARMORY (PIN MOVED, bible/04-Characters/Aura-Armory.md section 4): the Aura Armory's Eternal line - the set whole at $20
+    // (the owner: "The store set should be $20"), and a piece a slot at $6
+    ['armory:eternalset', 2000, 256, 'armory', true],
+    ['armory:eternalhalo', 600, 8, 'armory', true],
+    ['armory:eternalsigil', 600, 16, 'armory', true],
+    ['armory:eternalarmlets', 600, 32, 'armory', true],
+    ['armory:eternalgreaves', 600, 64, 'armory', true],
+    ['armory:eternaledge', 600, 128, 'armory', true],
   ]);
-  assert.equal(SHOP_BITS_ALL, 7);
+  assert.equal(SHOP_BITS_ALL, 511);
   assert.ok(shopVocabularyOk());
   assert.deepEqual(shopHeldOf(5), ['title:genesis', 'aura:eternal']);
-  assert.deepEqual(shopHeldOf(8), [], 'a bit no ware has holds nothing');
+  assert.deepEqual(shopHeldOf(512), [], 'a bit no ware has holds nothing');
   for (const bad of [null, undefined, '', -1, 1.5, 'x']) assert.deepEqual(shopHeldOf(bad), []);
   assert.deepEqual(shopKeysOf(7, 'glyph'), ['origin']);
   assert.deepEqual(shopOnSaleOf(' aura:eternal , nope:x,title:genesis'), ['title:genesis', 'aura:eternal'], 'in the wares\' order, unknown words dropped');
@@ -150,10 +158,10 @@ test('SHOP, end to end: the account read carries the card - every ware, on sale,
   const me = await registered('Buyer');
   const card = (await account(me)).shop;
   assert.equal(card.on, true);
-  assert.deepEqual(card.wares.map((w) => [w.id, w.sale, w.held, typeof w.buy]), [['title:genesis', true, false, 'string'], ['glyph:origin', true, false, 'string'], ['aura:eternal', true, false, 'string']]);
+  assert.deepEqual(card.wares.map((w) => [w.id, w.sale, w.held, typeof w.buy]), SHOP_WARES.map((w) => [w.id, true, false, 'string']));   // ARMORY (PIN MOVED): every ware, the Eternal line's five with the three
   assert.match(card.wares[0].buy, /^https:\/\/accounts\.invalid\/v1\/shop\/buy\?t=/);
   assert.ok(!card.wares[0].buy.includes(me.id) && !card.wares[0].buy.includes(ON.STRIPE_SECRET_KEY), 'the ticket names nobody in clear');
-  assert.deepEqual(clientCard(card).wares.map((w) => !!w.buy), [true, true, true], 'and the client reads it back whole');
+  assert.deepEqual(clientCard(card).wares.map((w) => !!w.buy), SHOP_WARES.map(() => true), 'and the client reads it back whole');
   assert.ok((await account(await guest())).shop.wares.every((w) => w.buy === null), 'a guest cannot buy');
   const off = await stand({});
   const someone = await off.registered('Someone');
@@ -333,12 +341,12 @@ test('SHOP: the account card is answered for every row, even one the service rea
   let derived = 0;
   const counted = new Proxy(subtle, { get: (o, k) => (k === 'deriveKey' ? (...a) => { derived++; return o.deriveKey(...a); } : o[k].bind(o)) });
   const card = await shopCardOf({ id: 'p', handle: 'Old' }, ON, { subtle: counted, rand: (b) => globalThis.crypto.getRandomValues(b), nowS: AFTER, origin: 'https://a.invalid' });
-  assert.equal(card.wares.length, 3);
+  assert.equal(card.wares.length, SHOP_WARES.length);   // ARMORY (PIN MOVED): nine wares, the Eternal set and its five with them
   assert.ok(card.wares.every((w) => w.held === false && typeof w.buy === 'string'));
   assert.equal(derived, 1);
-  assert.equal(new Set(card.wares.map((w) => w.buy)).size, 3, 'a ticket each, each its own');
+  assert.equal(new Set(card.wares.map((w) => w.buy)).size, SHOP_WARES.length, 'a ticket each, each its own');
   derived = 0;
-  await shopCardOf({ id: 'p', handle: 'Old', shop_wares: 7 }, ON, { subtle: counted, rand: (b) => globalThis.crypto.getRandomValues(b), nowS: AFTER, origin: 'https://a.invalid' });
+  await shopCardOf({ id: 'p', handle: 'Old', shop_wares: SHOP_BITS_ALL }, ON, { subtle: counted, rand: (b) => globalThis.crypto.getRandomValues(b), nowS: AFTER, origin: 'https://a.invalid' });
   assert.equal(derived, 0, 'nothing to buy, nothing derived');
 });
 

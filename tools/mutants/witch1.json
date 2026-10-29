@@ -143,8 +143,8 @@
   {
     "name": "WITCH1-the-peer-icon-unread",
     "file": "src/net/online.js",
-    "old": "au: readAura(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
-    "new": "au: readAura(p), rb: readRibbon(p), lv: readRenown(p),",
+    "old": "au: readAura(p), ak: readArmory(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
+    "new": "au: readAura(p), ak: readArmory(p), rb: readRibbon(p), lv: readRenown(p),",
     "tests": [
       "test/systems/festival/witch1_law.test.js"
     ],

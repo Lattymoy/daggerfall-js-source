@@ -1315,7 +1315,7 @@ export class RemotePlayers {
    * and never for the room. One ray each, against a uniform grid, after three comparisons that cost nothing.
    * @param {((head: number[], id: string) => boolean)|null} [blocked]
    */
-  namePoints(proj, view, w, h, eye, toScene = (p) => [p.x, p.y, p.z], rect = null, blocked = null) {
+  namePoints(proj, view, w, h, eye, toScene = (p) => [p.x, p.y, p.z], rect = null, blocked = null, lift = null) {
     const out = [];
     // AUDIT NAME1 F3: the frame's lens, once - it is the same for every point and it is read off the matrix the
     // sprites were projected by (nameLensScale), so a wide FOV shrinks the name exactly as it shrank the body.
@@ -1324,7 +1324,7 @@ export class RemotePlayers {
     for (const e of this._shown ?? []) {
       const f = toScene(e.peer.shown);
       if (eye) { const dx = f[0] - eye[0], dz = f[2] - eye[2]; if (dx * dx + dz * dz > NAME_RANGE * NAME_RANGE) continue; }
-      const head = [f[0], f[1] + e.height, f[2]];
+      const head = [f[0], f[1] + Math.max(e.height, lift?.(e.peer.id) ?? 0), f[2]];   // PROFILE-SLOTS: over a worn head piece's tip
       const s = projectToScreen(head, w, h, proj, view, rect, false, pv ??= multiply(proj, view));
       if (!s.front || s.x < -200 || s.x > w + 200 || s.y < -50 || s.y > h + 50) continue;
       // AUDIT NAME1 F2/F5: the peer's ID rides the sight test, because the answer is CACHED per peer and
@@ -1465,7 +1465,7 @@ export class RemotePlayers {
    *          blocked?: ((head: number[], id: string) => boolean)|null,
    *          renderer?: any, font?: any, scale?: number, hudScale?: number,
    *          extra?: ((o: {proj: any, view: any, w: number, h: number, eye: any, rect: any, blocked: any}) => any[])|null,
-   *          mask?: ((p: any) => any)|null}} [opts]   WILD3: `mask` - each name kept, replaced (a tint rides it) or taken
+   *          mask?: ((p: any) => any)|null, lift?: ((id: string) => number)|null}} [opts]   WILD3: `mask` - each name kept, replaced (a tint rides it) or taken; `lift` its head piece's tip (auraHost.js nameTopOf)
    *   `extra` - NOTICE1: the host's own labels in the names' face and law (a Notice Board's "3 new"), asked with the
    *   face's own pixels and never on a covered frame
    * @returns {number} how many names the frame drew
@@ -1473,9 +1473,9 @@ export class RemotePlayers {
   nameFrame({
     proj, view, w, h, eye, toScene = (p) => [p.x, p.y, p.z], rect = null, covered = false,
     layer = null, log = null, colorOf = null, blocked = null,
-    renderer = null, font = null, scale = 1, hudScale = 1, extra = null, mask = null,
+    renderer = null, font = null, scale = 1, hudScale = 1, extra = null, mask = null, lift = null,
   } = {}) {
-    let points = covered ? [] : this.namePoints(proj, view, w, h, eye, toScene, rect, blocked);
+    let points = covered ? [] : this.namePoints(proj, view, w, h, eye, toScene, rect, blocked, lift);
     // WILD3: the host's word on each player's name - kept, put in another's place (the open zone's "Stranger"), or taken
     if (typeof mask === 'function' && points.length) {
       points = points.map((p) => { try { return mask(p); } catch { return p; } }).filter(Boolean);
