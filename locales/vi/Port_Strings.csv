@@ -739,6 +739,8 @@ pvp.level30.warn,"Ở cấp {n}, người chơi khác có thể tấn công và 
 pvp.potion.health,"Bạn có thể uống thêm một bình máu sau {s} giây."
 pvp.potion.magicka,"Bạn có thể uống thêm một bình ma lực sau {s} giây."
 pvp.potion.other,"Bạn có thể uống thêm một bình loại này sau {s} giây."
+pvp.reward.gold,"Toàn bộ trang bị của họ đều được bảo hiểm. Bạn nhận {n} vàng từ một hợp đồng bảo hiểm."
+pvp.reward.letter,"Toàn bộ trang bị của họ đều được bảo hiểm. Tiền xu quá nặng nên bạn nhận một thư tín dụng trị giá {n} vàng."
 ql.board.head,"Cần người giúp"
 ql.board.take,"Nhận"
 ql.board.takeTitle,"Bắt đầu chuỗi nhiệm vụ này. Các bước của nó nằm ở thẻ Nhiệm vụ trong trình đơn tạm dừng."

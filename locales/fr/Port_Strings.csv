@@ -6346,6 +6346,8 @@ pvp.level30.warn,"Au niveau {n}, les autres joueurs peuvent vous attaquer et vou
 pvp.potion.health,"Tu pourras boire une autre potion de santé dans {s} s."
 pvp.potion.magicka,"Tu pourras boire une autre potion de magie dans {s} s."
 pvp.potion.other,"Tu pourras boire une autre potion de ce type dans {s} s."
+pvp.reward.gold,"Tout son équipement était assuré. Vous prenez {n} pièces d'or d'une police."
+pvp.reward.letter,"Tout son équipement était assuré. Les pièces étaient trop lourdes, vous prenez donc une lettre de crédit de {n} pièces d'or."
 ql.board.head,"On cherche de l’aide"
 ql.board.take,"Accepter"
 ql.board.takeTitle,"Commencer cette chaîne de quêtes. Ses étapes sont dans l’onglet Quêtes du menu pause."

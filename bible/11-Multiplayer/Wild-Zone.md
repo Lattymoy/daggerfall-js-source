@@ -210,6 +210,9 @@ out, where none can). world270 (world269 on its branch). Not a DFU member: Dagge
 
 ## 4. A death in the zone
 
+PVP-REWARD (2026-10-29) replaced the bag drop and the killer's pick below: a kill gives one random uninsured worn
+piece, or one policy's gold (`PvP-Rework.md` PVP-REWARD).
+
 FOE-KEEPS (2026-10-24, the owner: "I feel like the eltheric sea can be too punishing. I dont want people to lose
 everything they have. Espcially the fact you can lose your spellbook? Ridiculous"; asked, the owner chose "Only PvP
 deaths drop", "The usual tenth" and "Both zones"): ONLY A DEATH AT ANOTHER PLAYER'S HAND DROPS ANYTHING, in the
@@ -385,8 +388,8 @@ both ends read (`src/systems/wild/wildInsureLaw.js`):
 - WHAT MAY BE INSURED: a piece the ledger follows (`ledgerKeyOf` - Magic tier and up, a DFU magic item or artifact, a
   crafted piece: the policy names it by that key, as the ledger does) that a death could take (`wildCanLose`), carried
   in the pack or worn. Never a letter of credit (coin, which pays its tenth), never a piece kept anyway.
-- ITS PREMIUM: a fifth of the piece's worth (`itemWorth`, the judge's measure), rounded up - `WILD_INSURE_DIVISOR` -
-  paid as every realm act pays (`payFromSave`: the purse, its letters, the bank). Five deaths' premiums buy it again.
+- ITS PREMIUM: INSURE-40, 40% of the piece's worth (`itemWorth`), rounded up - `WILD_INSURE_DIVISOR` - paid as every
+  realm act pays (`payFromSave`: the purse, its letters, the bank).
 - WRITTEN BY THE ACCOUNT SERVICE, NEVER THE RECORD (`server-account/src/wildInsure.js`, `/v1/wild/insure`; migration
   0181, `wild_insurance`): a policy a game could write onto its own piece is one it never paid for. The premium comes off
   the record where its tab says it stands and the rows are written in the same batch (each guarded - `mustChange`), or
@@ -400,7 +403,7 @@ both ends read (`src/systems/wild/wildInsureLaw.js`):
 - IN FORCE `WILD_INSURE_SETTLE_S` (120 s) AFTER IT IS WRITTEN, against the fall's own signing (the receipt's `i`): the
   killer has `WILD_REF.pickMs` to pick and the fall is signed after it, so a policy written on the death screen keeps from
   nothing (`wildPolicyInForce`). The game writes one only outside the zone (`insureInZone`), where the walk in is longer.
-- AT A KILL (`server-account/src/wild.js:"const insured = wildInsuredBy(policies.filter((p) => wildPolicyInForce(Number(p.at), fallAt)).map((p) => String(p.key)));"`):
+- AT A KILL (`server-account/src/wild.js:"const insured = pvpInsuredFor(live.map((p) => String(p.key)), { villain: false });"`; PVP-REWARD since, `PvP-Rework.md`):
   a piece under a policy in force is kept as a piece the ledger bars is - never taken by the killer's pick, never
   dropped, never asked of the ledger - and (AUDIT PVP-EASE L1-3, L2-2, the owner: "Only when it saved the piece") A
   POLICY IS SPENT ONLY WHEN IT SAVED ITS PIECE: the worn piece the killer picked, or a bag piece the drop would have
@@ -408,10 +411,9 @@ both ends read (`src/systems/wild/wildInsureLaw.js`):
   it takes from (`wildDropLaw.js:"function wildSaved("`), spent in the fall's own batch (`spent_r`, `spent_at`). A
   policy on a worn piece no pick named, in a hall that searches no body, or past the remains' bound stays in force.
   Before the audit every policy on a piece the fallen carried or wore was spent at any kill - a hall death burnt a fifth
-  of every insured worn piece's worth for nothing. THE KILLER'S OFFER READS NO POLICY (L2-2, L2-3, L4-1): an insured worn
-  piece is offered as any other at both ends (`wornOffer`, the first dead frame's
-  `world.js:"const worn = isCellRoom(online.room) ? wornOffer(playerEntity.items) : [];"`), and a pick of one lands on
-  nothing - the piece kept, its policy spent; so no fight waits on a book the page read late or never. The answer names
+  of every insured worn piece's worth for nothing. PVP-REWARD retired the killer's offer and pick
+  (`world.js:"// PVP-REWARD: no worn offer - the account service rolls the killer's piece (systems/wild/pvpReward.js)"`),
+  so no fight waits on a book the page read late or never. The answer names
   the keys kept (`insured`); the fallen's game forgets those policies and its death screen says how many pieces insurance
   kept (`WILD_TEXT.deathInsured`). A death to a foe takes nothing and spends nothing (FOE-KEEPS); nor does a shielded
   kill (section 4c).

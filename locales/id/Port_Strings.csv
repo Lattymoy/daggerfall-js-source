@@ -6346,6 +6346,8 @@ pvp.level30.warn,"Di level {n}, pemain lain dapat menyerang dan membunuhmu di zo
 pvp.potion.health,"Kamu bisa minum ramuan kesehatan lagi dalam {s} dtk."
 pvp.potion.magicka,"Kamu bisa minum ramuan magicka lagi dalam {s} dtk."
 pvp.potion.other,"Kamu bisa minum ramuan jenis ini lagi dalam {s} dtk."
+pvp.reward.gold,"Semua perlengkapannya diasuransikan. Kamu mengambil {n} emas dari satu polis."
+pvp.reward.letter,"Semua perlengkapannya diasuransikan. Koinnya terlalu berat, jadi kamu mengambil surat kredit senilai {n} emas."
 ql.board.head,"Dicari bantuan"
 ql.board.take,"Terima"
 ql.board.takeTitle,"Mulai alur misi ini. Langkah-langkahnya ada di tab Misi di menu jeda."

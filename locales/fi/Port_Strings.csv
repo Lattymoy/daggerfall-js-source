@@ -2855,6 +2855,8 @@ pvp.level30.warn,"Tasolla {n} muut pelaajat voivat hyökätä kimppuusi ja tappa
 pvp.potion.health,"Voit juoda uuden terveysjuoman {s} s kuluttua."
 pvp.potion.magicka,"Voit juoda uuden magiajuoman {s} s kuluttua."
 pvp.potion.other,"Voit juoda uuden tämänlaisen juoman {s} s kuluttua."
+pvp.reward.gold,"Kaikki heidän varusteensa olivat vakuutettuja. Otat {n} kultaa yhdestä vakuutuksesta."
+pvp.reward.letter,"Kaikki heidän varusteensa olivat vakuutettuja. Kolikot olivat liian painavia, joten otat {n} kullan luottokirjeen."
 ql.board.head,"Apua tarvitaan"
 ql.board.take,"Ota vastaan"
 ql.board.takeTitle,"Aloita tämä tehtäväketju. Sen vaiheet ovat taukovalikon Tehtävät-välilehdellä."

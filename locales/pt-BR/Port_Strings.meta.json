@@ -31724,6 +31724,16 @@
   "tr": "5a1ebe023c01",
   "by": "claude-in-session"
  },
+ "pvp.reward.gold": {
+  "en": "77f1b3e03828",
+  "tr": "6f3508b5dd4a",
+  "by": "claude-in-session"
+ },
+ "pvp.reward.letter": {
+  "en": "fc09df17c400",
+  "tr": "83c35e9db069",
+  "by": "claude-in-session"
+ },
  "ql.board.head": {
   "en": "05d05c6f6a06",
   "tr": "7f44ea7c4dfe",

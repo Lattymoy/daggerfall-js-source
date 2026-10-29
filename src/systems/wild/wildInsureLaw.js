@@ -9,9 +9,9 @@
 //    item or artifact, a crafted piece: a policy names its piece by that key, as the ledger does) that a death in the
 //    zone could take (wildDropLaw.js wildCanLose), carried in the pack or worn. Never a letter of credit: it is coin, and
 //    pays its tenth (LETTERS-TENTH).
-//  - ITS PREMIUM: a fifth of the piece's worth (systems/item/itemLaw.js itemWorth - the judge's own measure), rounded up, at
+//  - ITS PREMIUM: INSURE-40, 40% of the piece's worth (systems/item/itemLaw.js itemWorth - its lines too), rounded up, at
 //    least one gold - paid as it is written, as every realm act pays (net/realm/realmGoldLaw.js payFromSave: the purse,
-//    its letters, then the bank). Five deaths' premiums buy the piece again.
+//    its letters, then the bank). Two and a half deaths' premiums buy the piece again.
 //  - IN FORCE WILD_INSURE_SETTLE_S after it is written, against the fall's own signing (its receipt's `i`): the killer has
 //    WILD_REF.pickMs to pick and the fall is signed after it, so a policy written on the death screen can never keep
 //    from the death it was written over. The game writes one only outside the zone (net/wild/wildInsureBook.js), where
@@ -32,9 +32,10 @@ import { ITEM_UID_RE, PROVENANCE_RE, itemWorth } from '../item/itemLaw.js';
 import { TEMPLATES } from '../item/itemKinds.js';
 import { wildCanLose } from './wildDropLaw.js';
 
-/** The premium is a piece's worth over this, rounded up - a fifth (the owner: "20% of worth"). A divisor, as the zone's
- *  gold share is one (wildDropLaw.js WILD_GOLD_DIVISOR): `w / 5` is exact for every whole worth. */
-export const WILD_INSURE_DIVISOR = 5;
+/** The premium is a piece's worth over this, rounded up - INSURE-40 (the owner raised it from "20% of worth"): 40%. A
+ *  divisor, as the zone's gold share is one (wildDropLaw.js WILD_GOLD_DIVISOR): 2.5 is exact in binary, so `w / 2.5` is a
+ *  whole number exactly where 40% of w is one, and the ceiling never rounds a hair past it. */
+export const WILD_INSURE_DIVISOR = 2.5;
 /** Seconds after it is written that a policy is in force - past WILD_REF.pickMs and the fall's signing after it
  *  (test/systems/wild/wildinsure.test.js holds the two apart). */
 export const WILD_INSURE_SETTLE_S = 120;
@@ -53,7 +54,7 @@ export function wildInsurable(item) {
   return ledgerKeyOf(item) != null && wildCanLose(item);
 }
 
-/** A policy's premium on `item`: a fifth of its worth, rounded up, at least one gold. @param {any} item */
+/** A policy's premium on `item`: 40% of its worth (INSURE-40), rounded up, at least one gold. @param {any} item */
 export const wildPremium = (item) => Math.max(1, Math.ceil(itemWorth(item) / WILD_INSURE_DIVISOR));
 
 /** Whether a policy written at `at` (epoch seconds) is in force for a fall signed at `fallAt`. */

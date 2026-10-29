@@ -6346,6 +6346,8 @@ pvp.level30.warn,"Ab Stufe {n} können andere Spieler dich in den PvP-Zonen (Cyr
 pvp.potion.health,"Du kannst in {s} s einen weiteren Heiltrank trinken."
 pvp.potion.magicka,"Du kannst in {s} s einen weiteren Magickatrank trinken."
 pvp.potion.other,"Du kannst in {s} s einen weiteren Trank dieser Art trinken."
+pvp.reward.gold,"Ihre gesamte Ausrüstung war versichert. Du nimmst {n} Gold aus einer Police."
+pvp.reward.letter,"Ihre gesamte Ausrüstung war versichert. Die Münzen waren zu schwer, also nimmst du einen Kreditbrief über {n} Gold."
 ql.board.head,"Hilfe gesucht"
 ql.board.take,"Annehmen"
 ql.board.takeTitle,"Diese Questreihe beginnen. Ihre Schritte stehen im Pausenmenü im Reiter „Quests“."

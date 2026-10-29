@@ -6346,6 +6346,8 @@ pvp.level30.warn,"På niveau {n} kan andre spillere angribe og dræbe dig i PvP-
 pvp.potion.health,"Du kan drikke endnu en helbredseliksir om {s} s."
 pvp.potion.magicka,"Du kan drikke endnu en magikaeliksir om {s} s."
 pvp.potion.other,"Du kan drikke endnu en eliksir af denne slags om {s} s."
+pvp.reward.gold,"Alt deres udstyr var forsikret. Du tager {n} guld fra én police."
+pvp.reward.letter,"Alt deres udstyr var forsikret. Mønterne var for tunge, så du tager et kreditbrev på {n} guld."
 ql.board.head,"Hjælp søges"
 ql.board.take,"Tag det"
 ql.board.takeTitle,"Begynd dette opgaveforløb. Dets trin står under fanen Opgaver i pausemenuen."

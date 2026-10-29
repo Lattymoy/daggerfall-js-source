@@ -6346,6 +6346,8 @@ pvp.level30.warn,"레벨 {n}부터는 PvP 깃발이 꺼져 있어도 PvP 지역(
 pvp.potion.health,"{s}초 후에 체력 물약을 다시 마실 수 있습니다."
 pvp.potion.magicka,"{s}초 후에 매지카 물약을 다시 마실 수 있습니다."
 pvp.potion.other,"{s}초 후에 이 종류의 물약을 다시 마실 수 있습니다."
+pvp.reward.gold,"상대의 장비가 모두 보험에 들어 있었습니다. 보험 하나에서 {n} 골드를 받습니다."
+pvp.reward.letter,"상대의 장비가 모두 보험에 들어 있었습니다. 동전이 너무 무거워서 {n} 골드짜리 신용장을 받습니다."
 ql.board.head,"도움 구함"
 ql.board.take,"맡기"
 ql.board.takeTitle,"이 연계 퀘스트를 시작합니다. 각 단계는 일시 정지 메뉴의 퀘스트 탭에 있습니다."

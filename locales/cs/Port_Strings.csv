@@ -6346,6 +6346,8 @@ pvp.level30.warn,"Na úrovni {n} tě ostatní hráči mohou napadnout a zabít v
 pvp.potion.health,"Další lektvar zdraví můžeš vypít za {s} s."
 pvp.potion.magicka,"Další lektvar magie můžeš vypít za {s} s."
 pvp.potion.other,"Další lektvar tohoto druhu můžeš vypít za {s} s."
+pvp.reward.gold,"Celá jeho výstroj byla pojištěná. Bereš si {n} zlata z jedné pojistky."
+pvp.reward.letter,"Celá jeho výstroj byla pojištěná. Mince byly příliš těžké, takže si bereš úvěrový list na {n} zlata."
 ql.board.head,"Hledá se pomoc"
 ql.board.take,"Přijmout"
 ql.board.takeTitle,"Začni tuto sérii úkolů. Její kroky najdeš na kartě Úkoly v nabídce pauzy."

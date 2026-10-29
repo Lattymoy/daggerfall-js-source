@@ -2,8 +2,8 @@
   {
     "name": "WILD-INSURE-the-premium-a-tenth",
     "file": "src/systems/wild/wildInsureLaw.js",
-    "old": "export const WILD_INSURE_DIVISOR = 5;",
-    "new": "export const WILD_INSURE_DIVISOR = 10;",
+    "old": "export const WILD_INSURE_DIVISOR = 2.5;",
+    "new": "export const WILD_INSURE_DIVISOR = 5;",
     "tests": ["test/systems/wild/wildinsure.test.js"]
   },
   {
@@ -58,8 +58,8 @@
   {
     "name": "WILD-INSURE-the-policies-unread",
     "file": "server-account/src/wild.js",
-    "old": "const insured = wildInsuredBy(policies.filter((p) => wildPolicyInForce(Number(p.at), fallAt)).map((p) => String(p.key)));",
-    "new": "const insured = wildInsuredBy([]);",
+    "old": "const insured = pvpInsuredFor(live.map((p) => String(p.key)), { villain: false });",
+    "new": "const insured = pvpInsuredFor([], { villain: false });",
     "tests": ["test/systems/wild/wildinsure.test.js"]
   },
   {

@@ -622,6 +622,9 @@ export const WILD_TEXT = Object.freeze({
     : t('wild.escrow.heldTakenAnon', 'Your killer collected your {item}.', { item: item || t('wild.escrow.gear', 'gear') })),
   collected: (item) => t('wild.escrow.collected', 'You take {item}.', { item }),
   collectLate: () => t('wild.escrow.collectLate', 'That piece was no longer held for you.'),
+  // PVP-REWARD: every piece the fallen wore was insured - the gold of one policy, as coin or as a letter of credit
+  policyGold: (n) => t('pvp.reward.gold', 'All their gear was insured. You take {n} gold from one policy.', { n: Number(n).toLocaleString('en-US') }),
+  policyLetter: (n) => t('pvp.reward.letter', 'All their gear was insured. The coin was too heavy, so you take a letter of credit for {n} gold.', { n: Number(n).toLocaleString('en-US') }),
   deathHold: `In ${WILD_NAME} the dead wait two minutes.`,
   remainsName: (name) => (name ? `${name}'s remains` : 'Remains'),
   mine: 'Your remains',

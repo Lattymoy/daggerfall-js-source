@@ -846,6 +846,8 @@ pvp.level30.warn,"{n}. seviyede, PvP bayrağın kapalı olsa bile diğer oyuncul
 pvp.potion.health,"{s} sn sonra bir sağlık iksiri daha içebilirsin."
 pvp.potion.magicka,"{s} sn sonra bir büyü iksiri daha içebilirsin."
 pvp.potion.other,"{s} sn sonra bu türden bir iksir daha içebilirsin."
+pvp.reward.gold,"Tüm teçhizatı sigortalıydı. Bir poliçeden {n} altın alıyorsun."
+pvp.reward.letter,"Tüm teçhizatı sigortalıydı. Sikkeler çok ağırdı, bu yüzden {n} altınlık bir kredi mektubu alıyorsun."
 ql.board.head,"Yardım aranıyor"
 ql.board.take,"Üstlen"
 ql.board.takeTitle,"Bu görev zincirine başla. Adımları duraklatma menüsünün Görevler sekmesinde."

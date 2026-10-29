@@ -30,8 +30,8 @@
   {
     "name": "AUDIT-PVP-EASE-L1-3-the-pick-saves-nothing",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  const would = takeWildDeath(copy, w, keep, wt, { letters });",
-    "new": "  const would = takeWildDeath(copy, -1, keep, wt, { letters });",
+    "old": "  const would = takeWildDeath(copy, w, keep, wt, { letters, bag });",
+    "new": "  const would = takeWildDeath(copy, -1, keep, wt, { letters, bag });",
     "tests": ["test/systems/wild/wildinsure.test.js"]
   },
   {

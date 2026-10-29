@@ -6346,6 +6346,8 @@ pvp.level30.warn,"At level {n}, other players can attack and kill you in the PvP
 pvp.potion.health,"You can drink another health potion in {s} s."
 pvp.potion.magicka,"You can drink another magicka potion in {s} s."
 pvp.potion.other,"You can drink another potion of this kind in {s} s."
+pvp.reward.gold,"All their gear was insured. You take {n} gold from one policy."
+pvp.reward.letter,"All their gear was insured. The coin was too heavy, so you take a letter of credit for {n} gold."
 ql.board.head,"Help wanted"
 ql.board.take,"Take it"
 ql.board.takeTitle,"Begin this questline. Its steps are on the Quests tab of the pause menu."

@@ -6346,6 +6346,8 @@ pvp.level30.warn,"La nivelul {n}, alți jucători te pot ataca și ucide în zon
 pvp.potion.health,"Poți bea o altă poțiune de viață peste {s} s."
 pvp.potion.magicka,"Poți bea o altă poțiune de magie peste {s} s."
 pvp.potion.other,"Poți bea o altă poțiune de acest fel peste {s} s."
+pvp.reward.gold,"Tot echipamentul său era asigurat. Iei {n} aur dintr-o poliță."
+pvp.reward.letter,"Tot echipamentul său era asigurat. Monedele erau prea grele, așa că iei o scrisoare de credit pentru {n} aur."
 ql.board.head,"Se caută ajutor"
 ql.board.take,"Acceptă"
 ql.board.takeTitle,"Începe această serie de misiuni. Pașii ei sunt în fila Misiuni a meniului de pauză."

@@ -2981,6 +2981,8 @@ pvp.level30.warn,"レベル{n}になると、PvPフラグがオフでも、PvP�
 pvp.potion.health,"次の体力の薬は{s}秒後に飲めます。"
 pvp.potion.magicka,"次のマジカの薬は{s}秒後に飲めます。"
 pvp.potion.other,"この種類の次の薬は{s}秒後に飲めます。"
+pvp.reward.gold,"相手の装備はすべて保険付きだった。保険一件分の{n}ゴールドを受け取る。"
+pvp.reward.letter,"相手の装備はすべて保険付きだった。硬貨が重すぎるため、{n}ゴールドの信用状を受け取る。"
 ql.board.head,"求む、助っ人"
 ql.board.take,"引き受ける"
 ql.board.takeTitle,"このクエストラインを始めます。各ステップはポーズメニューのクエストタブにあります。"

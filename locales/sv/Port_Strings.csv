@@ -2233,6 +2233,8 @@ pvp.level30.warn,"På nivå {n} kan andra spelare anfalla och döda dig i PvP-zo
 pvp.potion.health,"Du kan dricka en till hälsodryck om {s} s."
 pvp.potion.magicka,"Du kan dricka en till magikadryck om {s} s."
 pvp.potion.other,"Du kan dricka en till dryck av det här slaget om {s} s."
+pvp.reward.gold,"All deras utrustning var försäkrad. Du tar {n} guld från en försäkring."
+pvp.reward.letter,"All deras utrustning var försäkrad. Mynten var för tunga, så du tar ett kreditbrev på {n} guld."
 ql.board.head,"Hjälp sökes"
 ql.board.take,"Ta uppdraget"
 ql.board.takeTitle,"Börja den här uppdragskedjan. Stegen finns under fliken Uppdrag i pausmenyn."

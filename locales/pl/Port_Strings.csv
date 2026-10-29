@@ -2870,6 +2870,8 @@ pvp.level30.warn,"Od poziomu {n} inni gracze mogą cię zaatakować i zabić w s
 pvp.potion.health,"Kolejną miksturę zdrowia wypijesz za {s} s."
 pvp.potion.magicka,"Kolejną miksturę magii wypijesz za {s} s."
 pvp.potion.other,"Kolejną miksturę tego rodzaju wypijesz za {s} s."
+pvp.reward.gold,"Cały jego ekwipunek był ubezpieczony. Zabierasz {n} sztuk złota z jednej polisy."
+pvp.reward.letter,"Cały jego ekwipunek był ubezpieczony. Monety były za ciężkie, więc zabierasz list kredytowy na {n} sztuk złota."
 ql.board.head,"Potrzebna pomoc"
 ql.board.take,"Przyjmij"
 ql.board.takeTitle,"Rozpocznij tę serię zadań. Jej etapy są w karcie Zadania w menu pauzy."
