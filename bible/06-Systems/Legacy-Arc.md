@@ -459,9 +459,44 @@ migration `0084_legacy.sql`, acct87; `systems/legacy/realmLine.js`; `test/server
   A wedding is a fact as a death is when two copies of the line merge (`store.js mergeFacts`).
   **Departures (recorded):** the design's "both asking the priest" is the Inspect card's proposal and the other's
   prompt, inside a temple - the priest is DFU's static NPC, as section 8 says; and each house raises its own children
-  of the union (two records, two clocks - the realm keeps no shared child). A player read it as a bug ("Only one of us
-  could actually see the heirs" - FIELD BUGS 2026-10-12b): the children on both trees, seen through the marriage, is
-  planned there (UNION-CHILDREN), the owner's call.
+  of the union (two records, two clocks), and sees the other's through the marriage (UNION-CHILDREN, section 9a).
+
+## 9a. UNION-CHILDREN - the union's children on both trees (FIELD BUGS 2026-10-29, acct217)
+
+Reported in #bug-reports on 2026-10-29: "she has a child between our characters which is ready to play with the
+'Enduring' feature, but that child doesn't appear on my family tree." It was reported on 2026-10-12 too
+(`01-Overview/bugs/Field-Bugs-2026-10-12d.md`). A child was recorded on the line of the house whose clock rolled it,
+and nothing carried it to the other account. The owner chose: "Show on both trees".
+
+- **The law.** A child of a two-player union is of the house that bore them: its name, its blood, played only from that
+  line. The other house sees them through the marriage as a person of kind `union`, hung under the couple, the card
+  saying "Raised in the house of Indoril". They are never played there, never carry that mantle and never stand in that
+  world: the switch, `successors`, `homeOf` and the realm's birth take members only. Each house still rolls its own
+  children on its own clock (no shared roll), and `childrenTogether` counts a house's own (`marriage.js:"export const childrenTogether"`), so the
+  other house's six never take its places.
+- **The service.** `/v1/realm/unions` answers `children` for each union whose other line it read
+  (`server-account/src/legacy.js:"export function unionKinOf"`): the members of that line whose parents are the other's person and the spouse
+  their house recorded for this union, at most six, every name through the filter as the wedding's card. The line rides
+  the read's one statement (`server-account/src/legacy.js:"const UNIONS_SQL"`), joined by two keys, for open unions and those ended
+  within 30 days (`UNION_KIN_AFTER_END_S`: the other house hears of the end within minutes and rolls nothing after it),
+  at most six (`UNION_KIN_LINES_MAX`, one open union a living character), open first. No migration.
+- **The client.** `legacyHost.js:"const kin = s ? unionKinHeard"` hands each union's cards to `systems/legacy/unionKin.js:"export function unionKinHeard"`. A child not yet
+  recorded becomes a person of kind `union` (`union: { sid, key, house }`, the key their id on the other line); later
+  cards bring their name, face, coming of age and death, and the one played's HUD says the birth once. A child is never
+  dropped and a death never taken back: the realm refuses a copy that loses either (`legacyLaw.js`). `samePerson` tells
+  two apart by sid and key (`store.js:"!== (o.union?.sid ?? null)"`), `leanRecord` counts the blood alone (`family.js:"=> (c.kind ?? 'member')"`), and a union child
+  holds no character id (`family.js:"if (p.kind === 'union')"`). The House page and the Hall count the blood's generations.
+- **Read no more.** A union ended over 30 days ago, or one whose other character was deleted (its row no longer names
+  the line), carries no `children`; the house keeps the children it heard, as they were last heard.
+- **Mixed builds.** An older service answers no `children`, and a newer client records nothing new. An older client
+  reads the new answer as before, and a union child in its record is no member to any of its laws.
+- **Measured** (node:sqlite, every migration; `EXPLAIN QUERY PLAN`): the statements a read makes are unchanged (one);
+  each line read is two more rows, found by their primary keys. A line of a played founder and five children is 2.9 KB
+  (at most 128 KB, LINEAGE_MAX_BYTES). One open union: 0.004 ms for the old statement, 0.17 ms for the new read with
+  its cards built. Fifty unions, six of them read: 0.07 ms against 0.99 ms, 17.6 KB answered. The route is a replica
+  read, asked at the boot and every ten minutes.
+- **Pins.** `test/systems/legacy/fb1029_union.test.js` (7); `tools/mutants/fb1029_union.json` (32, all dead). PIN
+  MOVED: every version pin to acct217.
 
 ## 10. WORLD INFLUENCE
 
@@ -722,7 +757,8 @@ world, locked to its own family.
 | LEGACY-SHEET | the house on the character sheet: the model, the generation, an Enduring house's age, toll and elder's word (section 11) | built |
 | LEGACY-NAME | a house founded nameless named at its seat; a seat's house said once; the news's doubled surname (section 8) | built |
 | FAMILY-SEAT | the seat moved from the House page to the town the one played stands in; the later move stands in every merge, and the house's name with it (section 11; `01-Overview/bugs/Field-Bugs-2026-10-07b.md`, `01-Overview/audits/Audit-FB1007b.md`) | built, audited |
-| FB1012d | HEIR-CLONE (the page bearing an heir offers no Succession; a save writes only the one in the world), SEAT-HOME (the seat moved to a home of the house's own - a farm), BIRTH-START (the Online page's birth in its seat); UNION-CHILDREN planned (sections 4, 9, 10b, 11; `01-Overview/bugs/Field-Bugs-2026-10-12d.md`) | built |
+| FB1012d | HEIR-CLONE (the page bearing an heir offers no Succession; a save writes only the one in the world), SEAT-HOME (the seat moved to a home of the house's own - a farm), BIRTH-START (the Online page's birth in its seat); sections 4, 9, 10b, 11 (`01-Overview/bugs/Field-Bugs-2026-10-12d.md`) | built |
+| FB1029 | UNION-CHILDREN: a child of two players' union on both trees - the other house sees them through the marriage, under the couple, never played there; each house rolls its own (section 9a; acct217) | built |
 | LEGACY-CHOICE | the popup online: Enduring, Bloodline or no lineage at chargen, kept on the character; online a house founded at a birth alone - a character loaded with no house plays without one (section 6) | built |
 | CASUAL-LIFE | online no lineage is Casual: no house and a death that costs nothing, the Wild's own law aside (section 6) | built |
 | FAMILY-TAB | no house, no Family tab: the tab drawn while the game is played with Project Legacy (the mod on and a house for the game played); the key says why without one (section 6) | built |
