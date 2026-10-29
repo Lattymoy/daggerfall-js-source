@@ -3390,6 +3390,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     setOnRide,   // WAGONS1: the seats' word
     setPuppetSeatDraw,   // WAGONS2: a peer's seated companion, drawn in their grown wagon
     setOnEgArch,   // EG-F
+    setOnDragonKeep,   // DRAGON5b
     setOnPortals,   // PORTAL1
-    setOnDragonKeep, setOnCamps, setOnHcc, setOnDuel };   // DRAGON5b; SURV3; HCC-ONLINE
+    setOnCamps, setOnHcc, setOnDuel };   // SURV3; HCC-ONLINE
 }

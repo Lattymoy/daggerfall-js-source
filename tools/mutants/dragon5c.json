@@ -38,7 +38,7 @@
   {
     "name": "DRAGON5c-a-waiting-dragon-starved",
     "file": "src/systems/upkeep/upkeepRuntime.js",
-    "old": "  const dragonWhere = () => { const k = dragonKeep(); return !k || k.where === KEEP.Ridden ? 'with' : 'waiting'; };",
+    "old": "  const dragonWhere = () => { const k = dragonKeep(); return !k || k.where === DRAGON_WHERE.Ridden ? 'with' : 'waiting'; };",
     "new": "  const dragonWhere = () => 'with';",
     "tests": [
       "test/net/dragon/dragon5c_care.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "DRAGON5c-fed-from-afar",
     "file": "src/systems/upkeep/upkeepRuntime.js",
-    "old": "      if (!k || !(k.where === KEEP.Ridden || k.near)) return { ok: false, text: DRAGON_CARE_TEXT.notHere };\n",
+    "old": "      if (!k || !(k.where === DRAGON_WHERE.Ridden || k.near)) return { ok: false, text: DRAGON_CARE_TEXT.notHere };\n",
     "new": "",
     "tests": [
       "test/net/dragon/dragon5c_care.test.js"

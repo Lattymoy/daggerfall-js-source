@@ -31,7 +31,7 @@ import {
   FULL_AHEAD, BOND_TIERS, isSteedItem, tendSteed,
 } from '../steedCare.js';
 import { dragonMountOf } from '../dragon/dragonMount.js';   // DRAGON5c: the tamed dragon, cared for by the same law
-import { dragonKeepDoor, KEEP, DRAGON_CARE_TEXT } from '../dragon/dragonKeep.js';
+import { dragonKeepDoor, DRAGON_WHERE, DRAGON_CARE_TEXT } from '../dragon/dragonKeep.js';
 import { dragonAloft, setDragonWindedSource } from '../../player/dragonRide.js';   // DRAGON5c: its breath spent aloft, and its winded word to its flight
 import {
   wagonState, wagonSoundness, wagonCondition, wagonConditionMax, rollWear, journeyWear, createWearAccount, wearWagon,
@@ -76,8 +76,8 @@ export function createUpkeep({ items, now, horseCare = () => null, wagonUpkeep =
   let dragonBreath = freshBreath(), dragonWinded = false, wasDragon = false;
   const dragon = () => dragonMountOf(pack());
   const dragonKeep = () => dragonKeepDoor()?.model?.() ?? null;
-  const dragonWhere = () => { const k = dragonKeep(); return !k || k.where === KEEP.Ridden ? 'with' : 'waiting'; };
-  const dragonBags = () => { const k = dragonKeep(); return k && (k.where === KEEP.Ridden || k.near) ? dragonKeepDoor()?.bags?.() ?? [] : []; };
+  const dragonWhere = () => { const k = dragonKeep(); return !k || k.where === DRAGON_WHERE.Ridden ? 'with' : 'waiting'; };
+  const dragonBags = () => { const k = dragonKeep(); return k && (k.where === DRAGON_WHERE.Ridden || k.near) ? dragonKeepDoor()?.bags?.() ?? [] : []; };
   setDragonWindedSource(() => !!horseCare() && !!dragon() && dragonBreath.winded);
 
   /** A wagon's state moved down a step: said, once - Rickety, Failing. WAGON-TIERS: in its tier's words - Boons' say
@@ -312,7 +312,7 @@ export function createUpkeep({ items, now, horseCare = () => null, wagonUpkeep =
       stats: STEED_STATS.map((key) => ({ key, name: STEED_STAT_TEXT[key], born: st.born[key], now: st.stats[key] })),
       ...bondWay(st.bond), bond: st.bond, tier: st.tier, bonus: st.bonus, penalty: st.penalty, hunger: HUNGER[st.hunger].name, hungerKey: st.hunger,
       fedHours: f != null && f > t ? (f - t) / 60 : 0, full: f != null && f - t >= FULL_AHEAD,
-      breath: breathShare(dragonBreath, st.stats), winded: !!dragonBreath.winded, near: !!k && (k.where === KEEP.Ridden || !!k.near),
+      breath: breathShare(dragonBreath, st.stats), winded: !!dragonBreath.winded, near: !!k && (k.where === DRAGON_WHERE.Ridden || !!k.near),
     };
   }
 
@@ -371,7 +371,7 @@ export function createUpkeep({ items, now, horseCare = () => null, wagonUpkeep =
       if (verb === 'feedDragon') {   // DRAGON5c: a flask of Dwarven Oil, from the pack first, then its saddlebags
         const d = dragon(), k = dragonKeep();
         if (!d) return { ok: false, text: DRAGON_CARE_TEXT.none };
-        if (!k || !(k.where === KEEP.Ridden || k.near)) return { ok: false, text: DRAGON_CARE_TEXT.notHere };
+        if (!k || !(k.where === DRAGON_WHERE.Ridden || k.near)) return { ok: false, text: DRAGON_CARE_TEXT.notHere };
         const bags = dragonBags();
         const list = from ?? (its.some(isDwarvenOilItem) ? its : bags.some(isDwarvenOilItem) ? bags : its);
         return feedHorse(its, d, 'oil', t, k.title || DRAGON_CARE_TEXT.yourDragon, { from: list, food: piece, rules: care });

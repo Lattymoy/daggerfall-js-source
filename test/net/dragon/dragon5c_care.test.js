@@ -12,7 +12,7 @@ import { steedStats, horseBornStats, feedHorse, tendSteed, eatsFood, STEED_FOODS
 import { UPKEEP_ITEM, newUpkeepItem, DWARVEN_OIL_ONLINE, dwarvenOilAvailable } from '../../../src/systems/upkeep/upkeepItemRows.js';
 import { createUpkeep } from '../../../src/systems/upkeep/upkeepRuntime.js';
 import { HORSE_CARE_HARD } from '../../../src/systems/upkeep/upkeepTiers.js';
-import { setDragonKeepDoor, KEEP, DRAGON_CARE_TEXT } from '../../../src/systems/dragon/dragonKeep.js';
+import { setDragonKeepDoor, DRAGON_WHERE, DRAGON_CARE_TEXT } from '../../../src/systems/dragon/dragonKeep.js';
 import { dragonRideStep, dragonAloft, _resetDragonFlight } from '../../../src/player/dragonRide.js';
 import { TAKEOFF_HOLD_S, DRAGON_GLIDE_SINK } from '../../../src/systems/dragon/dragonFlight.js';
 import { flySink } from '../../../src/player/motor.js';
@@ -68,7 +68,7 @@ test('DRAGON5c its keep: first seen it comes fed; with its owner across a span s
 });
 
 /** The upkeep over a dragon in the pack, its keep's door a fake (`where`, `near`). */
-function care({ where = KEEP.Ridden, near = true, items = null } = {}) {
+function care({ where = DRAGON_WHERE.Ridden, near = true, items = null } = {}) {
   const pack = items ?? [newDragonMount({ id: ID }), newUpkeepItem(OIL, 4)];
   const bags = [newUpkeepItem(OIL, 2)];
   setDragonKeepDoor({ model: () => ({ where, near, title: 'Ember' }), bags: () => bags });
@@ -79,7 +79,7 @@ function care({ where = KEEP.Ridden, near = true, items = null } = {}) {
 }
 
 test('DRAGON5c the runtime\'s keep: waiting or away, ten days on, it hunts and never starves; ridden with no oil it does (mutants: a waiting dragon starved)', () => {
-  for (const [where, starves] of [[KEEP.Waiting, false], [KEEP.Away, false], [KEEP.Ridden, true]]) {
+  for (const [where, starves] of [[DRAGON_WHERE.Waiting, false], [DRAGON_WHERE.Away, false], [DRAGON_WHERE.Ridden, true]]) {
     const c = care({ where, near: false, items: [newDragonMount({ id: ID })] });
     c.up.tick(0.1, { mode: 'Foot' });   // first seen: it comes fed
     c.clock(10 * 24 * 60);
@@ -149,7 +149,7 @@ test('DRAGON5c its card and its feed: the Stable card\'s care - bond, hunger, it
   clock(24 * 60);   // a day on: hungry for more
   assert.equal(up.act('feedDragon', 0).ok, true);
   assert.equal(bags[0].stackCount ?? 1, 1, 'then its saddlebags\'');
-  const far = care({ where: KEEP.Waiting, near: false });
+  const far = care({ where: DRAGON_WHERE.Waiting, near: false });
   far.up.tick(0.1, { mode: 'Foot' });
   assert.equal(far.up.act('feedDragon', 0).ok, false);
   assert.equal(far.up.act('feedDragon', 0).text, DRAGON_CARE_TEXT.notHere);

@@ -370,6 +370,11 @@ aboard by `deps.aboard`, which the host never passed, so a dragon could be calle
 Daggerfall's ship, a Come Sail Away deck (the pair's rule, AUDIT FB1029d B1) or a sea ship's - and bootWorld measures
 35,232. Pinned in `dragon5b_keep`; `DRAGON5b-a-call-onto-a-ship` and `DRAGON5b-the-host-never-says-aboard` dead.
 
+**CI ON THE MERGES (2026-10-29).** Two of DRAGON5b's own, which the stopped local suite never reached. The keep's
+places were `KEEP`, a name `scenes/dataSource.js` already declares (audit24's one home); they are `DRAGON_WHERE`. And
+the foes module's setter joined the line PORTAL1 pins; it stands on its own line, the module's way, and that line is
+main's again.
+
 **DRAGON7 - the Aetherbright (2026-10-29).** `characters/dwarvenDragonShiny.js` turns each PLTE colour at load - the brass
 and copper to aetherium's blue, the wings' olive membrane to its violet, the greys cooled - and writes the chunk's CRC
 again. Archive 1801 is 1800's ninety files so turned; no picture ships. One home for a look's pictures

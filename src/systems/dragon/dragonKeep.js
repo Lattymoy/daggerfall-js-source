@@ -7,8 +7,8 @@
 import { t } from '../textManager.js';
 
 /** Where the dragon is. */
-export const KEEP = Object.freeze({ Ridden: 'ridden', Waiting: 'waiting', Away: 'away' });
-const WHERE = new Set(Object.values(KEEP));
+export const DRAGON_WHERE = Object.freeze({ Ridden: 'ridden', Waiting: 'waiting', Away: 'away' });
+const WHERE = new Set(Object.values(DRAGON_WHERE));
 /** HCC's own bound on a name (horseCartLaw.js HORSE_NAME_MAX). */
 export const DRAGON_NAME_MAX = 31;
 /** Its feet this far behind the rider it was left by, or lands behind, m - clear of its 4.5 m body. */
@@ -33,16 +33,16 @@ export function normalizeDragonName(s) {
 }
 
 /** A tame's first keep: away, nameless, its bags empty. */
-export const freshDragonKeep = () => ({ where: KEEP.Away, nx: 0, nz: 0, yaw: 0, name: '', bags: [], last: false });
+export const freshDragonKeep = () => ({ where: DRAGON_WHERE.Away, nx: 0, nz: 0, yaw: 0, name: '', bags: [], last: false });
 
 /** A keep read off a save, made whole: anything it does not know is the fresh keep's. Each piece in its bags through
  *  `itemIn` (the save's own repairs - save.js setItemFields). */
 export function dragonKeepRestored(raw, itemIn = (it) => it) {
   const k = freshDragonKeep();
   if (!raw || typeof raw !== 'object') return k;
-  const where = WHERE.has(raw.where) ? raw.where : KEEP.Away;
+  const where = WHERE.has(raw.where) ? raw.where : DRAGON_WHERE.Away;
   const placed = finite(raw.nx) && finite(raw.nz);
-  k.where = where === KEEP.Waiting && !placed ? KEEP.Away : where;
+  k.where = where === DRAGON_WHERE.Waiting && !placed ? DRAGON_WHERE.Away : where;
   if (placed) { k.nx = raw.nx; k.nz = raw.nz; }
   if (finite(raw.yaw)) k.yaw = raw.yaw;
   k.name = normalizeDragonName(raw.name);
@@ -60,13 +60,13 @@ export function dragonKeepSaved(k) {
 export const dragonKeepName = (k) => normalizeDragonName(k?.name) || t('dragon.keep.unnamed', 'Your dragon');
 
 /** Mounted: ridden, and the last mount (the summon key calls it first). */
-export const keepRidden = (k) => ({ ...k, where: KEEP.Ridden, flight: null, last: true });
+export const keepRidden = (k) => ({ ...k, where: DRAGON_WHERE.Ridden, flight: null, last: true });
 /** Off its back: waiting at native `nx, nz`, facing `yaw`. */
-export const keepLeft = (k, nx, nz, yaw) => ({ ...k, where: KEEP.Waiting, nx, nz, yaw, flight: null });
+export const keepLeft = (k, nx, nz, yaw) => ({ ...k, where: DRAGON_WHERE.Waiting, nx, nz, yaw, flight: null });
 /** Called: it flies in to wait at `nx, nz` facing `yaw`, from `at` (ms) - along that facing, from behind it. */
-export const keepCalled = (k, { nx, nz, yaw, at }) => ({ ...k, where: KEEP.Waiting, nx, nz, yaw, flight: { kind: 'in', at } });
+export const keepCalled = (k, { nx, nz, yaw, at }) => ({ ...k, where: DRAGON_WHERE.Waiting, nx, nz, yaw, flight: { kind: 'in', at } });
 /** Sent away from where it waits: it climbs off from `at`. */
-export const keepSentAway = (k, at) => ({ ...k, where: KEEP.Away, flight: { kind: 'out', at } });
+export const keepSentAway = (k, at) => ({ ...k, where: DRAGON_WHERE.Away, flight: { kind: 'out', at } });
 /** Another mount ridden: the summon key's word goes to the horse. */
 export const keepNotLast = (k) => (k.last ? { ...k, last: false } : k);
 
@@ -87,14 +87,14 @@ export function keepFlightAt(kind, age) {
  * away and gone). Pure.
  */
 export function keepShownAt(k, at) {
-  if (!k || (k.where !== KEEP.Waiting && k.where !== KEEP.Away)) return null;
+  if (!k || (k.where !== DRAGON_WHERE.Waiting && k.where !== DRAGON_WHERE.Away)) return null;
   const f = k.flight, age = f ? at - f.at : Infinity;
   const fl = f ? keepFlightAt(f.kind, age) : null;
-  if (k.where === KEEP.Waiting) return fl && f.kind === 'in' ? { ...fl, kind: 'in', age } : { back: 0, up: 0, moving: false, kind: null, age: 0 };
+  if (k.where === DRAGON_WHERE.Waiting) return fl && f.kind === 'in' ? { ...fl, kind: 'in', age } : { back: 0, up: 0, moving: false, kind: null, age: 0 };
   return fl && f.kind === 'out' ? { ...fl, kind: 'out', age } : null;
 }
 /** Whether it is still in the air on its way in at `at`. */
-export const keepComing = (k, at) => k?.where === KEEP.Waiting && k.flight?.kind === 'in' && at - k.flight.at < DRAGON_COME_MS;
+export const keepComing = (k, at) => k?.where === DRAGON_WHERE.Waiting && k.flight?.kind === 'in' && at - k.flight.at < DRAGON_COME_MS;
 
 /** The words of the keep. */
 export const DRAGON_KEEP_TEXT = Object.freeze({
@@ -157,9 +157,9 @@ export const DRAGON_KEEP_CARD = Object.freeze({
 /** The card's chip and line for a keep's model (scenes/dragonKeepHost.js model). Pure. */
 export function dragonCardWords(m) {
   if (!m) return null;
-  if (m.where === KEEP.Ridden) return { state: DRAGON_KEEP_CARD.riding, tone: '', line: DRAGON_KEEP_CARD.ridingLine };
+  if (m.where === DRAGON_WHERE.Ridden) return { state: DRAGON_KEEP_CARD.riding, tone: '', line: DRAGON_KEEP_CARD.ridingLine };
   if (m.coming) return { state: DRAGON_KEEP_CARD.coming, tone: '', line: DRAGON_KEEP_CARD.comingLine };
-  if (m.where === KEEP.Waiting) return { state: DRAGON_KEEP_CARD.waiting, tone: 'is-away', line: DRAGON_KEEP_CARD.waitingLine(m.far) };
+  if (m.where === DRAGON_WHERE.Waiting) return { state: DRAGON_KEEP_CARD.waiting, tone: 'is-away', line: DRAGON_KEEP_CARD.waitingLine(m.far) };
   return { state: DRAGON_KEEP_CARD.away, tone: 'is-away', line: DRAGON_KEEP_CARD.awayLine };
 }
 

@@ -14,7 +14,7 @@ import { DRAGON_BODY_R, DRAGON_BODY_H } from '../net/dragon/dragonBody.js';
 import { dragonName } from '../systems/dragon/dragonWords.js';
 import { dragonMountOf, dragonLookOfItem } from '../systems/dragon/dragonMount.js';
 import {
-  KEEP, DRAGON_WAIT_BACK_M, DRAGON_NEAR_M, DRAGON_NAME_MAX, DRAGON_BAGS_KG, DRAGON_KEEP_TEXT, DRAGON_KEEP_ROWS,
+  DRAGON_WHERE, DRAGON_WAIT_BACK_M, DRAGON_NEAR_M, DRAGON_NAME_MAX, DRAGON_BAGS_KG, DRAGON_KEEP_TEXT, DRAGON_KEEP_ROWS,
   freshDragonKeep, dragonKeepName, normalizeDragonName, keepRidden, keepLeft, keepCalled, keepSentAway, keepNotLast,
   keepShownAt, keepFlightAt, keepComing, dragonCallRefusal, setDragonKeepDoor,
 } from '../systems/dragon/dragonKeep.js';
@@ -61,7 +61,7 @@ export function createDragonKeep(deps) {
     return [x, (Number.isFinite(g) ? g : 0) + up, z];
   }
   const nearMine = (k, f) => {
-    if (!k || !f || k.where !== KEEP.Waiting) return Infinity;
+    if (!k || !f || k.where !== DRAGON_WHERE.Waiting) return Infinity;
     const [x, z] = deps.local(k.nx, k.nz);
     return Math.hypot(x - f[0], z - f[2]);
   };
@@ -83,10 +83,10 @@ export function createDragonKeep(deps) {
         if (!lastFeet || Math.hypot(f[0] - lastFeet[0], f[2] - lastFeet[2]) > 0.3) lastFeet = [f[0], f[1], f[2]];
       }
     }
-    if (riding && k.where !== KEEP.Ridden) put(keepRidden(k));
-    else if (!riding && k.where === KEEP.Ridden) {
+    if (riding && k.where !== DRAGON_WHERE.Ridden) put(keepRidden(k));
+    else if (!riding && k.where === DRAGON_WHERE.Ridden) {
       if (lastFeet && wasRiding) { const [nx, nz] = spotBehind(lastFeet); put(keepLeft(k, nx, nz, heading)); }
-      else put({ ...k, where: KEEP.Away, flight: null });   // a save read off its back with nowhere it was left
+      else put({ ...k, where: DRAGON_WHERE.Away, flight: null });   // a save read off its back with nowhere it was left
     }
     if (mode === TRANSPORT_MODES.Horse || mode === TRANSPORT_MODES.Cart) put(keepNotLast(keep()));
     wasRiding = riding;
@@ -177,7 +177,7 @@ export function createDragonKeep(deps) {
   function ride() {
     const k = keep();
     if (!k) return said(false, DRAGON_KEEP_TEXT.none);
-    if (k.where === KEEP.Ridden) return said(false, DRAGON_KEEP_TEXT.riding(name()));
+    if (k.where === DRAGON_WHERE.Ridden) return said(false, DRAGON_KEEP_TEXT.riding(name()));
     if (keepComing(k, deps.now())) return said(false, DRAGON_KEEP_TEXT.coming(name()));
     if (nearMine(k, deps.feet?.()) <= DRAGON_NEAR_M + DRAGON_BODY_R) { rideDragon(); return { ok: true, text: '' }; }
     return call();
@@ -188,7 +188,7 @@ export function createDragonKeep(deps) {
     if (!k) return said(false, DRAGON_KEEP_TEXT.none);
     if (keepComing(k, deps.now())) return said(false, DRAGON_KEEP_TEXT.coming(name()));
     const f = deps.feet?.();
-    const why = dragonCallRefusal(k, { outdoors: deps.street() && !!f, aboard: !!deps.aboard?.(), riding: k.where === KEEP.Ridden, near: nearMine(k, f) <= DRAGON_HERE_M });
+    const why = dragonCallRefusal(k, { outdoors: deps.street() && !!f, aboard: !!deps.aboard?.(), riding: k.where === DRAGON_WHERE.Ridden, near: nearMine(k, f) <= DRAGON_HERE_M });
     if (why) return said(false, why);
     const [nx, nz] = spotBehind(/** @type {number[]} */ (f));
     put(keepCalled(k, { nx, nz, yaw: heading, at: deps.now() }));
@@ -198,8 +198,8 @@ export function createDragonKeep(deps) {
   function sendAway() {
     const k = keep();
     if (!k) return said(false, DRAGON_KEEP_TEXT.none);
-    if (k.where === KEEP.Ridden) return said(false, DRAGON_KEEP_TEXT.dismount(name()));
-    if (k.where !== KEEP.Waiting) return said(false, DRAGON_KEEP_TEXT.alreadyAway(name()));
+    if (k.where === DRAGON_WHERE.Ridden) return said(false, DRAGON_KEEP_TEXT.dismount(name()));
+    if (k.where !== DRAGON_WHERE.Waiting) return said(false, DRAGON_KEEP_TEXT.alreadyAway(name()));
     put(keepSentAway(k, deps.now()));
     return said(true, DRAGON_KEEP_TEXT.away(name()));
   }
@@ -218,7 +218,7 @@ export function createDragonKeep(deps) {
     return true;
   }
   /** Whether its bags are in reach: on its back, or beside it waiting. */
-  const bagsNear = (k) => !!k && (k.where === KEEP.Ridden || (!keepComing(k, deps.now()) && nearMine(k, deps.feet?.()) <= DRAGON_NEAR_M + DRAGON_BODY_R));
+  const bagsNear = (k) => !!k && (k.where === DRAGON_WHERE.Ridden || (!keepComing(k, deps.now()) && nearMine(k, deps.feet?.()) <= DRAGON_NEAR_M + DRAGON_BODY_R));
   /** Its saddlebags, a storage beside the pack (CARGO-ANYWHERE's door: scenes/holdDoor.js). */
   function openBags() {
     const k = keep();

@@ -11,7 +11,7 @@
   {
     "name": "DRAGON5b-a-waiting-keep-with-no-place",
     "file": "src/systems/dragon/dragonKeep.js",
-    "old": "  k.where = where === KEEP.Waiting && !placed ? KEEP.Away : where;",
+    "old": "  k.where = where === DRAGON_WHERE.Waiting && !placed ? DRAGON_WHERE.Away : where;",
     "new": "  k.where = where;",
     "tests": [
       "test/net/dragon/dragon5b_keep.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "DRAGON5b-the-dismount-never-seen",
     "file": "src/scenes/dragonKeepHost.js",
-    "old": "    else if (!riding && k.where === KEEP.Ridden) {",
+    "old": "    else if (!riding && k.where === DRAGON_WHERE.Ridden) {",
     "new": "    else if (false) {",
     "tests": [
       "test/net/dragon/dragon5b_keep.test.js"
@@ -110,7 +110,7 @@
   {
     "name": "DRAGON5b-the-mount-not-seen",
     "file": "src/scenes/dragonKeepHost.js",
-    "old": "    if (riding && k.where !== KEEP.Ridden) put(keepRidden(k));",
+    "old": "    if (riding && k.where !== DRAGON_WHERE.Ridden) put(keepRidden(k));",
     "new": "    if (false) put(keepRidden(k));",
     "tests": [
       "test/net/dragon/dragon5b_keep.test.js"

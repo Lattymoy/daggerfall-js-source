@@ -8,7 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  KEEP, DRAGON_WAIT_BACK_M, DRAGON_NEAR_M, DRAGON_COME_FROM_M, DRAGON_COME_UP_M, DRAGON_COME_MS, DRAGON_LEAVE_MS, DRAGON_BAGS_KG,
+  DRAGON_WHERE, DRAGON_WAIT_BACK_M, DRAGON_NEAR_M, DRAGON_COME_FROM_M, DRAGON_COME_UP_M, DRAGON_COME_MS, DRAGON_LEAVE_MS, DRAGON_BAGS_KG,
   freshDragonKeep, dragonKeepRestored, dragonKeepSaved, normalizeDragonName, keepRidden, keepLeft, keepCalled, keepSentAway,
   keepShownAt, keepFlightAt, keepComing, dragonCallRefusal, dragonKeepDoor, dragonCardWords, DRAGON_KEEP_TEXT,
 } from '../../../src/systems/dragon/dragonKeep.js';
@@ -28,14 +28,14 @@ const ID = 'dg0123456789abcdef';
 const close = (a, b, eps = 1e-6) => Math.abs(a - b) <= eps;
 
 test('DRAGON5b the keep\'s law: fresh away and nameless; a save round-trips its place, name, bags and last mount and repairs a bad one; a name trimmed, cleaned and cut at 31 (mutants: the bags dropped, a waiting keep with no place)', () => {
-  assert.deepEqual(freshDragonKeep(), { where: KEEP.Away, nx: 0, nz: 0, yaw: 0, name: '', bags: [], last: false });
-  const k = { where: KEEP.Waiting, nx: 4000, nz: -800, yaw: 1.25, name: 'Ember', bags: [{ templateIndex: 1, stackCount: 3 }], last: true, flight: { kind: 'in', at: 5 } };
+  assert.deepEqual(freshDragonKeep(), { where: DRAGON_WHERE.Away, nx: 0, nz: 0, yaw: 0, name: '', bags: [], last: false });
+  const k = { where: DRAGON_WHERE.Waiting, nx: 4000, nz: -800, yaw: 1.25, name: 'Ember', bags: [{ templateIndex: 1, stackCount: 3 }], last: true, flight: { kind: 'in', at: 5 } };
   const saved = dragonKeepSaved(k);
   assert.equal(saved.flight, undefined, 'a flight is never saved: it ends where it lands');
-  assert.deepEqual(dragonKeepRestored(JSON.parse(JSON.stringify(saved))), { where: KEEP.Waiting, nx: 4000, nz: -800, yaw: 1.25, name: 'Ember', bags: [{ templateIndex: 1, stackCount: 3 }], last: true });
+  assert.deepEqual(dragonKeepRestored(JSON.parse(JSON.stringify(saved))), { where: DRAGON_WHERE.Waiting, nx: 4000, nz: -800, yaw: 1.25, name: 'Ember', bags: [{ templateIndex: 1, stackCount: 3 }], last: true });
   assert.notEqual(saved.bags[0], k.bags[0], 'its bags copied');
-  assert.equal(dragonKeepRestored({ where: KEEP.Waiting }).where, KEEP.Away, 'waiting nowhere is away');
-  assert.equal(dragonKeepRestored({ where: 'sky' }).where, KEEP.Away);
+  assert.equal(dragonKeepRestored({ where: DRAGON_WHERE.Waiting }).where, DRAGON_WHERE.Away, 'waiting nowhere is away');
+  assert.equal(dragonKeepRestored({ where: 'sky' }).where, DRAGON_WHERE.Away);
   assert.deepEqual(dragonKeepRestored({ bags: [null, 3, { a: 1 }] }).bags, [{ a: 1 }]);
   assert.equal(normalizeDragonName('  Ash\u0007wing  '), 'Ashwing');
   assert.equal(normalizeDragonName('x'.repeat(40)).length, 31);
@@ -52,18 +52,18 @@ test('DRAGON5b its flight: called, it comes in from 320 m behind its spot and 12
   assert.equal(keepFlightAt('out', DRAGON_LEAVE_MS), null);
   const k0 = freshDragonKeep();
   const called = keepCalled(k0, { nx: 10, nz: 20, yaw: 0.5, at: 1000 });
-  assert.equal(called.where, KEEP.Waiting);
+  assert.equal(called.where, DRAGON_WHERE.Waiting);
   assert.equal(keepComing(called, 1000 + DRAGON_COME_MS - 1), true);
   assert.equal(keepComing(called, 1000 + DRAGON_COME_MS), false);
   assert.equal(keepShownAt(called, 1000).kind, 'in');
   assert.deepEqual(keepShownAt(called, 1000 + DRAGON_COME_MS), { back: 0, up: 0, moving: false, kind: null, age: 0 }, 'on its spot');
   const gone = keepSentAway(called, 9000);
-  assert.equal(gone.where, KEEP.Away);
+  assert.equal(gone.where, DRAGON_WHERE.Away);
   assert.equal(keepShownAt(gone, 9000).kind, 'out');
   assert.equal(keepShownAt(gone, 9000 + DRAGON_LEAVE_MS), null, 'gone');
   assert.equal(keepShownAt(keepRidden(called), 9000), null, 'ridden: never drawn apart from its rider');
   assert.equal(keepRidden(called).last, true, 'the last mount');
-  assert.deepEqual(keepLeft(keepRidden(called), 1, 2, 3), { ...keepRidden(called), where: KEEP.Waiting, nx: 1, nz: 2, yaw: 3, flight: null });
+  assert.deepEqual(keepLeft(keepRidden(called), 1, 2, 3), { ...keepRidden(called), where: DRAGON_WHERE.Waiting, nx: 1, nz: 2, yaw: 3, flight: null });
 });
 
 test('DRAGON5b a call refused: indoors, aboard, riding it, or it already here - each in its own words (mutants: a call indoors)', () => {
@@ -114,12 +114,12 @@ test('DRAGON5b the keep on this screen: mounted it is ridden and the last mount;
   _resetDragonFlight();
   const { w, entity, keep, step } = world();
   step(TRANSPORT_MODES.Dragon); keep.tick();
-  assert.equal(entity.dragonKeep.where, KEEP.Ridden);
+  assert.equal(entity.dragonKeep.where, DRAGON_WHERE.Ridden);
   assert.equal(entity.dragonKeep.last, true);
   for (let z = 0; z <= 10; z += 2) { w.feet = [0, 0, z]; keep.tick(); }   // riding north
   step(TRANSPORT_MODES.Foot); keep.tick();
   const k = entity.dragonKeep;
-  assert.equal(k.where, KEEP.Waiting);
+  assert.equal(k.where, DRAGON_WHERE.Waiting);
   assert.ok(close(k.nx / 40, 0) && close(k.nz / 40, 10 - DRAGON_WAIT_BACK_M), `behind me: ${k.nx / 40}, ${k.nz / 40}`);
   assert.ok(close(k.yaw, 0));
   // far off, then called: it comes in, and the call says so
@@ -134,7 +134,7 @@ test('DRAGON5b the keep on this screen: mounted it is ridden and the last mount;
   assert.equal(keep.door.call().ok, false, 'landed beside me: already here');
   assert.equal(w.said.at(-1), DRAGON_KEEP_TEXT.here('Your dragon'));
   assert.equal(keep.door.sendAway().ok, true);
-  assert.equal(entity.dragonKeep.where, KEEP.Away);
+  assert.equal(entity.dragonKeep.where, DRAGON_WHERE.Away);
   assert.equal(keep.door.sendAway().ok, false, 'away already');
   w.street = false;
   assert.equal(keep.door.call().ok, false, 'indoors');
@@ -142,7 +142,7 @@ test('DRAGON5b the keep on this screen: mounted it is ridden and the last mount;
   w.street = true; w.aboard = true;
   assert.equal(keep.door.call().ok, false, 'aboard a ship');
   assert.equal(w.said.at(-1), DRAGON_KEEP_TEXT.aboard);
-  assert.equal(entity.dragonKeep.where, KEEP.Away, 'and it stays away');
+  assert.equal(entity.dragonKeep.where, DRAGON_WHERE.Away, 'and it stays away');
 });
 
 test('DRAGON5b ride and the press: beside it waiting the Dragon row mounts it, from afar it calls it; the press names it (Info), opens its bags (Steal), sends it away (Talk), rides it (Grab); past its reach it says go closer (mutants: the bags opened from afar, the press\'s modes crossed)', () => {
@@ -150,7 +150,7 @@ test('DRAGON5b ride and the press: beside it waiting the Dragon row mounts it, f
   const { w, entity, keep, step } = world();
   let mounted = 0;
   setDragonMounter(() => { mounted++; });
-  entity.dragonKeep = { ...freshDragonKeep(), where: KEEP.Waiting, nx: 0, nz: 400 };   // 10 m north of me
+  entity.dragonKeep = { ...freshDragonKeep(), where: DRAGON_WHERE.Waiting, nx: 0, nz: 400 };   // 10 m north of me
   keep.tick();
   assert.equal(keep.door.ride().ok, true);
   assert.equal(mounted, 1, 'beside it: the rig mounts it');
@@ -179,9 +179,9 @@ test('DRAGON5b ride and the press: beside it waiting the Dragon row mounts it, f
   assert.equal(mounted, 2);
   assert.equal(w.said.at(-1), DRAGON_KEEP_TEXT.tooFar('Ember'));
   keep.activate(mine.key, 1, ACTIVATE_MODE.Talk, null);
-  assert.equal(entity.dragonKeep.where, KEEP.Away, 'Talk sends it away');
+  assert.equal(entity.dragonKeep.where, DRAGON_WHERE.Away, 'Talk sends it away');
   // the bags from afar: refused
-  entity.dragonKeep = { ...entity.dragonKeep, where: KEEP.Waiting, flight: null, nz: 40 * 200 };
+  entity.dragonKeep = { ...entity.dragonKeep, where: DRAGON_WHERE.Waiting, flight: null, nz: 40 * 200 };
   const opened = w.windows.length;
   assert.equal(keep.door.openBags().ok, false);
   assert.equal(w.windows.length, opened);
@@ -195,7 +195,7 @@ test('DRAGON5b ride and the press: beside it waiting the Dragon row mounts it, f
 test('DRAGON5b the cell: my word rides my foes frame when it moves and on a full frame, null when none stands; a peer\'s dragon is drawn and its box yields; the summon key\'s word goes to the last mount (mutants: the word never sent, a peer\'s box firm)', async () => {
   _resetDragonFlight();
   const { w, entity, keep } = world();
-  entity.dragonKeep = { ...freshDragonKeep(), where: KEEP.Waiting, nx: 0, nz: 400, name: 'Ember' };
+  entity.dragonKeep = { ...freshDragonKeep(), where: DRAGON_WHERE.Waiting, nx: 0, nz: 400, name: 'Ember' };
   const frame = {};
   keep.word(frame, false, (p) => p);
   assert.deepEqual(frame.dk, { p: [0, 0, 10], yw: 0, n: 'Ember' });
@@ -204,7 +204,7 @@ test('DRAGON5b the cell: my word rides my foes frame when it moves and on a full
   assert.equal('dk' in again, false, 'unmoved: not said');
   keep.word(again, true, (p) => p);
   assert.deepEqual(again.dk, frame.dk, 'a full frame says it');
-  entity.dragonKeep = { ...entity.dragonKeep, where: KEEP.Away, flight: null };
+  entity.dragonKeep = { ...entity.dragonKeep, where: DRAGON_WHERE.Away, flight: null };
   const gone = {};
   keep.word(gone, false, (p) => p);
   assert.equal(gone.dk, null, 'none stands');
@@ -245,7 +245,7 @@ test('DRAGON5b the race: a dragon waiting races with the mounts - mine firm, ano
 
 test('DRAGON5b the saddlebags are held: the judge\'s and the ledger\'s lists and customs\' walk read them; the save writes the keep and reads it back (mutants: the bags left out of the held lists)', () => {
   const bag = [{ templateIndex: 1 }];
-  const save = { items: [], dragonKeep: { where: KEEP.Away, bags: bag } };
+  const save = { items: [], dragonKeep: { where: DRAGON_WHERE.Away, bags: bag } };
   assert.ok(possessedItemLists(save).includes(bag));
   assert.ok(stashedItemLists(save).includes(bag));
   const s = src('src/systems/save/save.js');
@@ -259,10 +259,10 @@ test('DRAGON5b the doors: the transport window\'s Dragon row and the summon key 
   assert.match(src('src/player/mountRig.js'), /if \(mode === TRANSPORT_MODES\.Dragon && dragonKeepDoor\(\)\) \{ dragonKeepDoor\(\)\.ride\(\); return; \}/);
   assert.match(src('src/player/mountRig.js'), /setDragonMounter\(\(\) => setMode\(TRANSPORT_MODES\.Dragon\)\);/);
   assert.match(src('src/systems/horse/horseCart.js'), /function handleSummonTransport\(\) \{ const d = dragonKeepDoor\(\); if \(d\?\.summonsFirst\(\)\) \{ d\.call\(\); return; \} say\(summonTransport\(\)\.text\); \}/);
-  assert.deepEqual(dragonCardWords({ where: KEEP.Ridden }).state, 'Riding');
-  assert.deepEqual(dragonCardWords({ where: KEEP.Waiting, coming: true }).state, 'Coming');
-  assert.match(dragonCardWords({ where: KEEP.Waiting, far: 42 }).line, /42 m away/);
-  assert.equal(dragonCardWords({ where: KEEP.Away }).state, 'Away');
+  assert.deepEqual(dragonCardWords({ where: DRAGON_WHERE.Ridden }).state, 'Riding');
+  assert.deepEqual(dragonCardWords({ where: DRAGON_WHERE.Waiting, coming: true }).state, 'Coming');
+  assert.match(dragonCardWords({ where: DRAGON_WHERE.Waiting, far: 42 }).line, /42 m away/);
+  assert.equal(dragonCardWords({ where: DRAGON_WHERE.Away }).state, 'Away');
   const w = src('src/scenes/world.js');
   for (const re of [
     /const _dragonPick = dragonSky \? pickActivatableHit\(cam\.pos, useFwd, dragonSky\.keepTargets\(\), collider\) : null;/,
