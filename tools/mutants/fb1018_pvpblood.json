@@ -32,8 +32,8 @@
   {
     "name": "PVP-BLOOD-halls-by-pose",
     "file": "src/scenes/world.js",
-    "old": "    return modes?.mode === 'dungeon' || (wildAtWire(duelWorldOf(peerId)) && !settledAt(duelWorldOf(peerId), locationIndex));",
-    "new": "    return (wildAtWire(duelWorldOf(peerId)) && !settledAt(duelWorldOf(peerId), locationIndex));",
+    "old": "    return pvpFlag.fair(peerId) && (modes?.mode === 'dungeon' || (wildAtWire(duelWorldOf(peerId)) && !settledAt(duelWorldOf(peerId), locationIndex)));",
+    "new": "    return pvpFlag.fair(peerId) && ((wildAtWire(duelWorldOf(peerId)) && !settledAt(duelWorldOf(peerId), locationIndex)));",
     "tests": [
       "test/scenes/fb1018_pvpblood.test.js"
     ],

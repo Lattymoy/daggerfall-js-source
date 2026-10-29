@@ -1,0 +1,21 @@
+// @ts-check
+// PVP-FLAG (the PvP rework, 2026-10-28/29 - the owner: "green to be no flag flagging gives a skull above your head and
+// villians get a red skull", "need to be instant", "make it a min", "u flag and un flag instanly", "u cant flag on a party
+// member"): in the open zone a player fights only another flagged player. The flag goes up at once (Caps Lock or the HUD
+// button) from level 30; it comes down at once, but never within PVP_FLAG.lockMs of the last PvP blow given or taken. A
+// party member stays kin (net/wild/wildRef.js wildKin). The relay holds the same lock (wildRef.js wildZone). Pure. A
+// departure: DFU has no PvP.
+import { t } from '../textManager.js';
+
+/** The lock after a PvP blow, the level the flag is open from. */
+export const PVP_FLAG = Object.freeze({ lockMs: 60_000, level: 30 });
+
+/** Why the flag may not go to `on` now, or null. `level` my level; `fightAt` my last PvP blow given or taken. */
+export function pvpFlagRefusal({ on, level = 1, fightAt = -Infinity, now = 0 }) {
+  if (on) return level >= PVP_FLAG.level ? null : t('pvp.flag.level', 'PvP opens at level {n}.', { n: PVP_FLAG.level });
+  const left = PVP_FLAG.lockMs - (now - fightAt);
+  return left > 0 ? t('pvp.flag.locked', 'You are in combat. You can turn PvP off in {s} s.', { s: Math.ceil(left / 1000) }) : null;
+}
+
+/** May the flag come down, by the relay's clock? Its last fight `fightAt`. */
+export const pvpFlagCanDrop = (fightAt, now) => !(now - fightAt < PVP_FLAG.lockMs);

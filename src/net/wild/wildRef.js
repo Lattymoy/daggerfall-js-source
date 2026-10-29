@@ -38,6 +38,7 @@
 // ═════════════════════════════════════════════════════════════════════
 import { SIEGE_HIT, newFighter, refereeBlow, refereeCast, refereeStep } from '../siege/siegeRef.js';
 import { resetHealthShare } from '../siege/refereeHealthShare.js';
+import { pvpFlagCanDrop } from '../../systems/wild/pvpFlag.js';   // PVP-FLAG
 
 /** The zone referee's own numbers: how long a bar carried from another room stands (`mendMs` - SHARED-HEALTH: no longer a
  *  heal; the name is kept for its pins and the client's readout, which hides a fight this quiet); how long a killer has to pick a worn piece before the fall is signed without one; the party's truce
@@ -85,7 +86,7 @@ export const newWildRef = () => ({ fighters: new Map(), falls: new Map() });
  * sooner keeps its bar (AUDIT INT9: a word off and on was a heal). SHARED-HEALTH: a count started again waits for the player's report, which can lower it and never lift it.
  * Answers the fighter, or null (none made: a word off, a full room).
  */
-export function wildZone(st, sub, { id, lv = 1, ci = '', carry = null, died = false }, z, pose, now) {
+export function wildZone(st, sub, { id, lv = 1, ci = '', carry = null, died = false, fl = null }, z, pose, now) {
   let x = st.fighters.get(sub);
   if (!x) {
     if (!z) return null;
@@ -96,6 +97,9 @@ export function wildZone(st, sub, { id, lv = 1, ci = '', carry = null, died = fa
     st.fighters.set(sub, x);
   } else if (z && !x.zone && carry && carry.at > x.outAt) takeCarry(x, carry, now);   // it fought in another room since it left this one
   x.id = id; if (ci) x.ci = ci;
+  // PVP-FLAG: a word with its flag - up at once, down only past the lock after its last fight; a word with none keeps it
+  if (fl === 0 && pvpFlagCanDrop(Math.max(x.fightAt, x.struckAt), now)) x.flag = false;
+  else if (fl === 1 || x.flag === undefined) x.flag = true;
   if (z && x.down && now - x.downAt >= WILD_REF.riseMs) { x.f = newFighter(lv, now); x.down = false; x.struckAt = -Infinity; x.graceUntil = now + WILD_GRACE.ms; }   // ZONE-GRACE: a rise
   if (z && !x.zone) {
     // SHARED-HEALTH: back after long away, the count starts again from the player's own health (its next report)
@@ -223,6 +227,7 @@ export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, 
   if (!a.zone || !t.zone) return { ok: false, dealt: 0, fell: false, fall: null, why: 'zone' };
   if (a.down || t.down) return { ok: false, dealt: 0, fell: false, fall: null, why: 'down' };
   if (kin) return { ok: false, dealt: 0, fell: false, fall: null, why: 'kin' };
+  if (!a.flag || !t.flag) return { ok: false, dealt: 0, fell: false, fall: null, why: 'unflagged' };   // PVP-FLAG: flagged on flagged alone
   if (now - a.jumpAt < WILD_REF.jumpMs) return { ok: false, dealt: 0, fell: false, fall: null, why: 'jump' };
   // ZONE-GRACE: my blow on a fair player ends my safe passage; theirs keeps them from it
   const graceEnded = a.graceUntil > now;

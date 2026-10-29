@@ -88,3 +88,15 @@ costs 42% more and casts 21% slower. PvE is left whole. A departure: DFU has no 
 Critical Strike / (4 - the Luck term) per cent, x(1 + 5% for each 5 points). Rolled once a cast on the caster's machine
 (`siegeCombat.js:"harm: Math.round(pvpCritHarm(harm, caster, rolls)"`), before PVP-TRIANGLE's scale; the referee clips.
 PvE is left whole. A departure: DFU's spells never crit.
+
+## PVP-FLAG: in the open zone only flagged players fight
+
+"u flag and un flag instanly", "we changed it to 1m", "u cant flag on a party member": Caps Lock or the top-right button
+(`pvpFlagHost.js:"export function createPvpFlagHost("`) puts the flag up at once from level 30, and takes it down at once
+unless a PvP blow fell in the last minute (`pvpFlag.js:"export const PVP_FLAG = Object.freeze({ lockMs: 60_000, level: 30 });"`).
+The zone word carries it; the referee holds the lock and says each flag to the room
+(`server/src/index.js:"_wildFlagSay(st, a, x, flagWas, wasIn, fl) {"`). A blow lands flagged on flagged alone
+(`wildRef.js:"if (!a.flag || !t.flag) return"`); party, duel and guild kin stay unhittable as before. While the flag is down
+the Portal Stone works anywhere in the zone (`portalStoneHost.js:"const zoneRefused = (to = null) =>"`). Chat types no
+capitals under the flag's Caps Lock (`capsFix.js:"export function capsFixKey(e, field) {"`). Skulls overhead
+come next. A departure: DFU has no flag.

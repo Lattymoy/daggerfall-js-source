@@ -146,7 +146,7 @@ test('ZONE-SAFE THE HOST\'S DOORS (scenes/world.js wildCan, wildFair - the four 
     settledAt, campToWire: (p) => p, player: { feetAt: () => scope.me }, locationIndex: index, modes: { mode: 'exterior', deathUp: () => false },
     playerEntity: { health: 50 }, me: outside, peers: new Map(),
     wildKin, social: { isPartyPeer: () => false }, _wildTruce: { holds: () => false }, duelMgr: { live: false }, myGuildTag: () => null,
-    wildAtWire: (p) => !!p, duelWorldOf: (id) => scope.peers.get(id) ?? null,
+    wildAtWire: (p) => !!p, pvpFlag: { fair: () => true }, duelWorldOf: (id) => scope.peers.get(id) ?? null,
   };
   const body = `${lineOf('  const wildCan = () =>')}${blockOf('  const wildFair = (peerId) => {')}`;
   const { wildCan, wildFair } = new Function('S', `with (S) { ${body}\n return { wildCan, wildFair }; }`)(scope);

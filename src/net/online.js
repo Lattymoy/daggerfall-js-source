@@ -841,6 +841,7 @@ export class OnlineSession {
     this.onWild = null;           // WILD1: (id, data, sub) => void - a directed wild frame at ME (a blow, a fallen's gear, a pick, a gift), projected by the wire's validWildData; `sub` the sender's account as the RELAY verified it
     this.onWildRoom = null;       // WILD1: (word, room) => void - my own room's word on its remains (validWildOut)
     this._wildBucket = null;      // WILD1: my own wild frames out - wildGate's law
+    this.wildFlag = 0;            // PVP-FLAG: my flag, said with every word that I stand in the zone (systems/wild/pvpFlag.js)
     this._wildZone = 0;           // INT9: my word on the open zone (1: I stand in it) - AUDIT INT9: said on my own cell's socket alone (a halo's is 0)
     this._wildZoneAt = -Infinity; // INT9 (AUDIT): when it was last said there - said again every WILD_ZONE_KEEP_MS while it stands
     this.onWildRef = null;        // INT9: (g, room) => void - the zone referee's word (net/wild/wildRef.js), projected by the wire's validWildRefOut, and the room it came from
@@ -1931,7 +1932,12 @@ export class OnlineSession {
   /** One socket told my zone word - outside the frames' shared bucket (it is said once a crossing; the relay's own bucket
    *  for the socket bounds it). */
   _sayZone(ws, z, dead = false) {
-    try { ws.send(JSON.stringify({ t: 'wild', data: { k: 'zone', z, ...(dead ? { dd: 1 } : {}) } })); this.stats.sent++; } catch { /* a closing socket: its welcome says it again */ }
+    try { ws.send(JSON.stringify({ t: 'wild', data: { k: 'zone', z, ...(dead ? { dd: 1 } : {}), ...(z === 1 ? { fl: this.wildFlag ? 1 : 0 } : {}) } })); this.stats.sent++; } catch { /* a closing socket: its welcome says it again */ }
+  }
+  /** PVP-FLAG: my flag moved - said at once where I stand in the zone (the referee holds it down inside the lock). */
+  setWildFlag(on) {
+    this.wildFlag = on ? 1 : 0;
+    if (this._wildZone === 1 && this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) { this._sayZone(this._ws, 1); this._wildZoneAt = this._now(); }
   }
 
   /** PVPDUNGEONS: a word on the zone's halls, to the hub (my social socket alone) - true when it left the socket. */
