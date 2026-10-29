@@ -345,7 +345,7 @@ test('STOREFRONT the pass\'s notices: a level reached said mid-screen with its r
   reportPlayerKill({ mobileType: PASS_CONSTRUCT_MOBILES[0] });
   await settle();
   assert.ok(mids.some((m) => String(m.text ?? m).includes('Season level 1')), JSON.stringify(mids));
-  assert.ok(tells.includes(`New in your wardrobe: ${['icon:centurion', 'icon:aetherium'].map(passGrantName).join(', ')}.`), JSON.stringify(tells));
+  assert.ok(tells.includes(`New in your wardrobe: ${['glyph:tonalfork'].map(passGrantName).join(', ')}.`), JSON.stringify(tells));   // PIN MOVED (AURUM): level one's reward the premium glyph alone
   assert.ok(tells.some((s) => s.startsWith('Season challenge done: ')));
   assert.ok(tells.some((s) => s.includes('all the season experience')));
   midScreenText.onMessage = null;

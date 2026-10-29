@@ -177,6 +177,14 @@ const REFUSAL_WORDS = {
   rehearsed: () => t('account.refusal.rehearsed', 'You have rehearsed the Spire today. A Weir Key opens it again.'),
   spent: () => t('account.refusal.spent', 'That breach is spent.'),
   taken: () => t('account.refusal.taken', 'You took the Resonant Maul today. Fell the Colossus again tomorrow for another.'),   // AUDIT-STOREFRONT: the Maul's day (seasonClaim.js)
+  // AURUM (bible/06-Systems/Aurum.md): a daily ware's refusals (server-account/src/aurum.js buyDaily)
+  'aurum-guest': () => t('account.refusal.aurumGuest', 'Aurum needs a registered account. Add a username and password first.'),
+  'aurum-closed': () => t('account.refusal.aurumClosed', 'The daily wares are closed for now.'),
+  'aurum-ware': () => t('account.refusal.aurumWare', 'That is not sold for Aurum.'),
+  'aurum-today': () => t('account.refusal.aurumToday', 'That is no longer among the daily wares. They change each day at midnight, UTC.'),
+  'aurum-held': () => t('account.refusal.aurumHeld', 'Your account holds that already.'),
+  'aurum-short': () => t('account.refusal.aurumShort', 'Your account has too little Aurum for that.'),
+  'aurum-busy': () => t('account.refusal.aurumBusy', 'The shop is busy. Try again in a moment.'),
   breach: () => t('account.refusal.breach', 'That breach is not one the Spire knows.'),
   none: () => t('account.refusal.none', 'The Spire took no key for that.'),   // AUDIT EG IV (lane3 #1): an open asked again (`again`) whose ask never reached it
   // EG-E3: a dungeon elite's find (server-account/src/eg.js findEg)
@@ -1311,6 +1319,9 @@ export const equipEffect = (io, slot, key) => call(io, '/v1/account/effect', { s
 /** WITCH1: wear one profile icon, or none (null: the character's face) - the wardrobe after the write. The service refuses
  *  `not-held` for an icon this account does not hold. */
 export const equipIcon = (io, icon) => call(io, '/v1/account/icon', { icon: icon ?? null });
+/** AURUM (bible/06-Systems/Aurum.md): a daily ware bought for Aurum - the wardrobe after it and the Aurum's card. The
+ *  service refuses `aurum-short`, `aurum-today` (no longer among the day's wares), `aurum-held` and `aurum-closed`. */
+export const buyDailyWare = (io, ware) => call(io, '/v1/aurum/buy', { ware });
 /** GLYPH-WEAR (2026-10-02, Mac: "players can also equip/unequip their glyphs"): show one glyph (`on` true) or hide it -
  *  the wardrobe after the write (`glyphs` still all that is true, `glyphsOff` the ones taken off). The service refuses
  *  `not-held` for a glyph that is not true of this account. */

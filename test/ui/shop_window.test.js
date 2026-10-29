@@ -21,6 +21,8 @@ import {
   GENESIS_DEEP, GENESIS_HEART, titleBadge, titlePaint, glyphBadges, glyphArtNode, glyphDetails,
 } from '../../src/ui/playerBadge.js';
 import { GLYPH_LABEL } from '../../src/ui/enhanced/enhancedAccount.js';
+import { ICON_TEXT } from '../../src/ui/profileIcons.js';   // AURUM: the daily wares' icons
+import { PASS_REWARDS } from '../../src/net/battlePassLaw.js';
 import { flameSheetPixels, flameFramePixels, flameCss, FLAME_CLASS, flameClassOf, setTitleFlame, ensureTitleFlames, FLAME_STYLE_ID } from '../../src/ui/titleFlame.js';
 import { wardrobeEntry, AVAIL_NOW, AVAIL_TAG, AVAIL_LINE, WARDROBE_SOURCES } from '../../src/ui/collections/wardrobeCatalogue.js';
 import {
@@ -94,8 +96,12 @@ test('SHOP: the window\'s disclaimer is the service\'s, word for word - the proc
   assert.equal(SHOP_PROCEEDS, 'All proceeds go to the costs of developing DFO Online.');
   const w = shopWindow(fakeDoc(), { flow: () => flowIn(), onClose() {}, focus: false, preview: async () => null });
   const body = w.root.children.find((c) => c.className === 'px-body');
-  const order = body.children.map((c) => c.className);
-  assert.ok(order.indexOf('sh-proceeds') >= 0 && order.indexOf('sh-proceeds') < order.indexOf('sh-tabs') && order.indexOf('sh-tabs') < order.indexOf('sh-panels'), order.join(' > '));
+  // PIN MOVED (AUDIT-STOREFRONT II, lane E 6): the featured wares and the panels scroll under the standing disclaimer and
+  // tabs - in the page's order still, the disclaimer before every ware
+  const order = []; walk(body, (n) => order.push(String(n.className)));
+  const at = (c) => order.indexOf(c);
+  assert.ok(at('sh-proceeds') >= 0 && at('sh-proceeds') < at('sh-tabs') && at('sh-tabs') < at('sh-carousel sh-empty') && at('sh-tabs') < at('sh-panels'), order.join(' > '));
+  assert.deepEqual(body.children.map((c) => c.className), ['sh-head', 'sh-proceeds', 'sh-tabs', 'sh-scroll'], 'the head, the disclaimer and the tabs stand; the rest scrolls');
   assert.equal(body.children.find((c) => c.className === 'sh-proceeds').attrs.role, 'note');
   w.stop();
 });
@@ -104,9 +110,11 @@ test('SHOP: each ware\'s name is the one every face says - the title\'s, the aur
   for (const w of SHOP_WARES) {
     // PIN MOVED (ARMORY): a piece's name, the client's own (ui/armoryText.js); STOREFRONT: an effect's (ui/effectText.js), and
     // a pass's, a bundle's and a booster's the window's own - each the service's English, word for word
+    // AURUM: a profile icon's the portrait well's (ICON_TEXT), and never the service's - an icon is sold for Aurum alone, so
+    // no payment or receipt names it
     const face = w.kind === 'title' ? TITLE_TEXT[w.key] : w.kind === 'aura' ? AURA_TEXT[w.key] : w.kind === 'armory' ? armoryPieceName(w.key) : w.kind === 'glyph' ? GLYPH_LABEL[w.key]
-      : ['kill', 'portal', 'mount'].includes(w.kind) ? effectName(w.kind, w.key) : shopWareName(w);
-    assert.equal(SHOP_WARE_NAME[w.id], face, w.id);
+      : ['kill', 'portal', 'mount'].includes(w.kind) ? effectName(w.kind, w.key) : w.kind === 'icon' ? ICON_TEXT[w.key] : shopWareName(w);
+    assert.equal(SHOP_WARE_NAME[w.id], w.cash ? face : undefined, w.id);
     assert.equal(shopWareName(w), face);
     assert.ok(typeof SHOP_LOOK[w.id] === 'function' && SHOP_LOOK[w.id]().length > 20, `${w.id}: a sentence of its look`);
   }
@@ -143,7 +151,7 @@ test('SHOP: the window - a tab a section with its count, a panel a ware with its
   const keep = {};
   const w = shopWindow(doc, { flow: () => flow, onClose() {}, keep, focus: false, preview: async () => null, effectPreview: async () => null });
   // PIN MOVED (STOREFRONT): the sheet's sections, each its wares sold alone - a bundle's glyphs and aura are its alone
-  assert.deepEqual(all(w.root, 'sh-tab').map((t) => t.textContent), ['Battle Pass2', 'Kill Effects3', 'Portal Skins3', 'Mounts3', 'Name Visuals5', 'Auras1', 'Aura Armory6', 'Bundles4', 'Pass Boosters3']);
+  assert.deepEqual(all(w.root, 'sh-tab').map((t) => t.textContent), ['Battle Pass2', 'Kill Effects3', 'Portal Skins3', 'Mounts3', 'Name Visuals5', 'Auras1', 'Aura Armory6', 'Bundles4', 'Pass Boosters3', 'Aurum4']);   // PIN MOVED (AURUM): the packs
   assert.equal(all(w.root, 'sh-tab')[0].attrs['aria-selected'], 'true');
   assert.deepEqual(all(w.root, 'sh-price').map((p) => p.textContent), ['$29.99', '$49.99']);
   all(w.root, 'sh-tab')[4].click();
@@ -202,14 +210,14 @@ test('SHOP: the tab strip by keys - an arrow steps to the next category and wrap
   const strip = all(w.root, 'sh-tabs')[0], tabs = () => all(w.root, 'sh-tab');
   const key = (k) => { let stopped = false; for (const f of strip.listeners.keydown ?? []) f({ key: k, preventDefault() {}, stopPropagation() { stopped = true; } }); return stopped; };
   const open = () => tabs().findIndex((t) => t.attrs['aria-selected'] === 'true');
-  const first = [0, -1, -1, -1, -1, -1, -1, -1, -1];   // PIN MOVED (STOREFRONT): nine sections
+  const first = [0, -1, -1, -1, -1, -1, -1, -1, -1, -1];   // PIN MOVED (STOREFRONT): nine sections; AURUM: ten, the packs'
   assert.deepEqual(tabs().map((t) => t.tabIndex), first);
   assert.equal(key('ArrowRight'), true, 'the strip keeps its keys');
   assert.equal(open(), 1);
   assert.equal(doc.activeElement, tabs()[1], 'the focus on the tab opened');
-  key('End'); assert.equal(open(), 8);
+  key('End'); assert.equal(open(), 9);
   key('ArrowRight'); assert.equal(open(), 0, 'round from the last to the first');
-  key('ArrowLeft'); assert.equal(open(), 8);
+  key('ArrowLeft'); assert.equal(open(), 9);
   key('Home'); assert.equal(open(), 0);
   assert.equal(key('Enter'), false, 'any other key is the page\'s');
   assert.deepEqual(tabs().map((t) => t.tabIndex), first);
@@ -635,17 +643,33 @@ test('STOREFRONT the Battle Pass section: the season\'s story and its three stag
   assert.equal(all(sec, 'sh-passlevel')[0].textContent, 'Level 7 of 50');
   assert.match(all(sec, 'sh-passline')[0].textContent, /^Today: 640 of 2,000 experience\. Your booster adds 25%\.$/);
   assert.equal(all(sec, 'sh-xpfill')[0].style.width, '40%');
-  assert.equal(all(sec, 'sh-trackcol').length, 11, 'a column a level with a reward (1, 5, 10 and every fifth to 50)');
-  assert.ok(all(sec, 'sh-track-premium').every((c) => String(c.className).includes('sh-locked')), 'no premium: its row locked');
-  assert.equal(all(sec, 'sh-reached').length, 2, 'levels 1 and 5 reached');
+  // PIN MOVED (AUDIT-STOREFRONT II, lane E 9): a level's head and its two cells, the rows' names standing at the left, the
+  // player's last reward reached marked, each cell said whole, a padlock on each locked
+  const heads = all(sec, 'sh-tracklevel');
+  const levels = [...new Set(PASS_REWARDS.s1.map((r) => r.level))];
+  assert.equal(heads.length, levels.length, 'a column a level with a reward');
+  assert.deepEqual(heads.map((h) => Number(h.textContent)), levels);
+  assert.deepEqual(all(sec, 'sh-tracklabel').map((n) => n.textContent), ['Level', 'Free', 'Premium']);
+  const locks = (c) => { let n = 0; walk(c, (x) => { if (x.attrs?.class === 'sh-lock') n++; }); return n; };   // an <svg>'s class is its attribute
+  assert.ok(all(sec, 'sh-track-premium').every((c) => String(c.className).includes('sh-locked') && locks(c) === 1), 'no premium: its row locked');
+  assert.equal(all(sec, 'sh-track-free').reduce((n, c) => n + locks(c), 0), 0, 'the free row never');
+  const reached = levels.filter((l) => l <= 7);
+  assert.deepEqual(heads.filter((h) => String(h.className).includes('sh-reached')).map((h) => Number(h.textContent)), reached, 'every level to 7 reached');
+  assert.deepEqual(heads.filter((h) => String(h.className).includes('sh-here')).map((h) => Number(h.textContent)), [reached.at(-1)], 'the last reached, marked');
+  assert.equal(all(sec, 'sh-track-free').filter((c) => String(c.className).includes('sh-reached')).length, reached.length);
+  const cellAt = (row, level) => all(sec, `sh-track-${row}`)[levels.indexOf(level)];
+  assert.equal(all(cellAt('premium', 1), 'sh-sr')[0].textContent, 'Level 1, Premium, locked:');
+  assert.equal(all(cellAt('free', 5), 'sh-sr')[0].textContent, 'Level 5, Free, reached:');
+  assert.equal(all(cellAt('free', 10), 'sh-sr')[0].textContent, 'Level 10, Free:');
   assert.equal(all(all(sec, 'sh-deluxe')[0], 'sh-reward').length, 3);
   assert.deepEqual(all(sec, 'sh-cwhat').map((n) => n.textContent), ['Kill 100 foes', 'Destroy 25 Dwemer constructs', 'Gather 60 times', 'Win 3 tavern games', 'Win 1 endgame fight: a breach, a Redoubt, the Serpent or a star']);   // PIN MOVED (STOREFRONT): a count's own plural (ui/passText.js, ICU)
-  assert.equal(all(sec, 'sh-paid').length, 1);
+  assert.equal(all(sec, 'sh-cdone').length, 1);   // PIN MOVED (AUDIT-STOREFRONT II, lane E 5): never the foot's payment line's class
+  assert.equal(all(w.root, 'sh-stripe').length, 1, 'the payment line, a class of its own');
   w.stop();
   // before the season: on sale when it opens
   const early = flowIn(card({ 'pass:s1premium': { sale: false, buy: null } }));
   assert.deepEqual(shopWareState(early, shopWareById('pass:s1premium'), Date.UTC(2026, 9, 30)), { state: 'soon', buy: null, cents: 2999, opens: Date.UTC(2026, 10, 10) });
   assert.equal(shopWareState(early, shopWareById('pass:s1premium'), Date.UTC(2027, 0, 20)).state, 'gone', 'after it: no longer sold');
-  assert.deepEqual(shopSections(flowIn(null)), ['pass', 'kills', 'portals', 'mounts', 'names', 'auras', 'armory', 'bundles', 'boosts']);
+  assert.deepEqual(shopSections(flowIn(null)), ['pass', 'kills', 'portals', 'mounts', 'names', 'auras', 'armory', 'bundles', 'boosts', 'aurum']);   // PIN MOVED (AURUM): the packs; the icons sold for Aurum alone, never a section
   assert.equal(shopUntilText(Date.UTC(2026, 10, 15), false, Date.UTC(2026, 10, 14, 20)), 'Featured until Nov 14. Ends today.');
 });

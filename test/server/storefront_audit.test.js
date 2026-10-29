@@ -260,7 +260,7 @@ test('AUDIT-STOREFRONT S12 the confirm page says a giver held in part - the Prem
 
 // ── S7: TWO GRANTS AT ONCE ──────────────────────────────────────────
 
-test('AUDIT-STOREFRONT S7 the Deluxe Pass and the Seasonal Collector paid at the same moment add the Deluxe\'s levels once - the second grant, refused by its row guard, is decided again on the row the first wrote (mutants: the guard dropped; the retry dropped)', async (t) => {
+test('AUDIT-STOREFRONT S7 the Deluxe Pass and the Seasonal Collector paid at the same moment add the Deluxe\'s levels once - the second grant, refused by its row guard, is decided again on the row the first wrote, and (AUDIT-STOREFRONT II A5) refunded, its page priced before the first landed (mutants: the guard dropped; the retry dropped)', async (t) => {
   t.mock.timers.enable({ apis: ['Date'], now: IN_TREMOR });
   const s = await stand();
   const me = await s.registered('Racer');
@@ -271,9 +271,13 @@ test('AUDIT-STOREFRONT S7 the Deluxe Pass and the Seasonal Collector paid at the
   try {
     rs = await Promise.all([deluxe, coll].map((o) => fulfilOrder(ctx, o.id, { intent: `pi_${o.id}`, amount: o.cents, currency: 'usd' }, { env: ON, fetch: globalThis.fetch })));
   } finally { st.restore(); }
-  assert.deepEqual(rs.map((r) => r.applied), [1, 1]);
-  assert.equal(s.rowOf(me).pass_s1, (5 + 8) * PASS_XP_PER_LEVEL, 'the Deluxe\'s five once, the Heart\'s eight');
-  assert.deepEqual(s.rowOf(me).shop_held.split(' ').sort(), ['bundle:seasonalcollector', 'pass:s1deluxe']);
+  // PIN MOVED (AUDIT-STOREFRONT II A5): both were granted - the Collector at its full price over a Deluxe already held
+  assert.deepEqual(rs.map((r) => r.applied).sort(), [0, 1], 'one granted, the other decided again and refunded');
+  const row = s.rowOf(me), held = shopHeldIds(row);
+  assert.equal(row.pass_s1, ((held.includes('pass:s1deluxe') ? 5 : 0) + (held.includes('boost:s1heart') ? 8 : 0)) * PASS_XP_PER_LEVEL, 'the levels of what is held, each once');
+  const back = s.orders(me).filter((o) => o.status === 'refunded');
+  assert.equal(back.length, 1);
+  assert.ok(['price', 'held'].includes(back[0].refund), back[0].refund);
 });
 
 // ── S8: THE DEMAND ──────────────────────────────────────────────────

@@ -87,32 +87,30 @@ export const passChallengeOf = (/** @type {unknown} */ key) => PASS_CHALLENGES.f
 
 // ═══ THE TRACKS AND THEIR REWARDS ════════════════════════════════════════════════════════════════════════════════════
 /** A reward's grant is `<kind>:<key>` - a title, a glyph, a profile icon, an aura or an effect (net/effectLaw.js `kill`,
- *  `portal`, `mount`), each the account's from the level it is reached on its track. */
+ *  `portal`, `mount`), each the account's from the level it is reached on its track - or `aurum:<n>`, Aurum counted into
+ *  the balance from that level (net/aurumLaw.js), never a thing held. */
 const reward = (/** @type {number} */ level, /** @type {string} */ track, /** @type {string} */ grant) => Object.freeze({ level, track, grant });
-/** SEASON ONE'S TRACK: the free track every registered account plays; the premium track the Premium Pass (or the
- *  Deluxe) opens, its rewards reached before the purchase given at once. */
+const free = (/** @type {number} */ level, /** @type {string} */ grant) => reward(level, 'free', grant);
+const prem = (/** @type {number} */ level, /** @type {string} */ grant) => reward(level, 'premium', grant);
+/** SEASON ONE'S TRACK (AURUM, the owner: "Ensure the reward tracks make sense. No overbundence of titles and profile
+ *  icons"): the free track every registered account plays, a reward each five levels; the premium track the Premium Pass
+ *  (or the Deluxe) opens, a reward each two levels and its glyph at once, its rewards reached before the purchase given at
+ *  once. One title, glyph and icon free, and one each premium besides the season's effects; Aurum between them; the
+ *  stages' tops (17, 34, 50) never a dead end. 525 Aurum free, 1,350 premium. */
 export const PASS_REWARDS = Object.freeze({
   s1: Object.freeze([
-    reward(1, 'free', 'icon:centurion'),
-    reward(1, 'premium', 'icon:aetherium'),
-    reward(5, 'premium', 'glyph:tonalfork'),
-    reward(10, 'free', 'title:brassbound'),
-    reward(10, 'premium', 'icon:lexicon'),
-    reward(15, 'premium', 'title:tonalarchitect'),
-    reward(20, 'free', 'glyph:cog'),
-    reward(20, 'premium', 'icon:spider'),
-    reward(25, 'premium', 'kill:tonal'),
-    reward(30, 'free', 'icon:sphere'),
-    reward(30, 'premium', 'icon:colossus'),
-    reward(35, 'premium', 'title:brasswright'),
-    reward(40, 'free', 'title:tremorborn'),
-    reward(40, 'premium', 'portal:brass'),
-    reward(45, 'premium', 'icon:gearheart'),
-    reward(50, 'free', 'icon:numidium'),
-    reward(50, 'premium', 'aura:aetherium'),
-    reward(50, 'premium', 'title:heartwaker'),
+    prem(1, 'glyph:tonalfork'), prem(2, 'aurum:50'), prem(4, 'aurum:50'), free(5, 'aurum:50'), prem(6, 'aurum:50'),
+    prem(8, 'icon:lexicon'), free(10, 'glyph:cog'), prem(10, 'aurum:75'), prem(12, 'aurum:50'), prem(14, 'aurum:50'),
+    free(15, 'aurum:50'), prem(16, 'aurum:75'), prem(18, 'aurum:75'), free(20, 'icon:aetherium'), prem(20, 'kill:tonal'),
+    prem(22, 'aurum:50'), prem(24, 'aurum:75'), free(25, 'aurum:75'), prem(26, 'aurum:50'), prem(28, 'aurum:75'),
+    free(30, 'aurum:75'), prem(30, 'portal:brass'), prem(32, 'aurum:50'), prem(34, 'aurum:100'), free(35, 'aurum:100'),
+    prem(36, 'aurum:50'), prem(38, 'aurum:75'), free(40, 'aurum:75'), prem(40, 'icon:gearheart'), prem(42, 'aurum:75'),
+    prem(44, 'aurum:75'), free(45, 'aurum:100'), prem(46, 'aurum:100'), prem(48, 'aurum:100'), free(50, 'title:tremorborn'),
+    prem(50, 'aura:aetherium'), prem(50, 'title:heartwaker'),
   ]),
 });
+/** AURUM: whether a grant is Aurum (`aurum:<n>`), and how much. Pure. */
+export const passAurumGrant = (/** @type {unknown} */ g) => (typeof g === 'string' && /^aurum:[1-9][0-9]{0,4}$/.test(g) ? Number(g.slice(6)) : 0);
 /** THE DELUXE PASS'S OWN, given at once on its purchase beside the premium track (the brief: "Optional cosmetic rewards
  *  unlocked immediately"), and the levels it gives. */
 export const PASS_DELUXE = Object.freeze({
@@ -164,16 +162,26 @@ export function passFindXp(/** @type {string} */ source, /** @type {number} */ d
   const base = Math.min(PASS_SOURCES[/** @type {keyof typeof PASS_SOURCES} */ (source)], left);
   return { base, bonus: Math.floor(base * (Math.max(1, Number(mult) || 1) - 1)) };
 }
-/** EVERY GRANT A SEASON GIVES an account: the rewards of each track it plays up to the level it reached, and the Deluxe's
- *  own - each `<kind>:<key>`, in the track's order. `xp` the season's experience. Pure. */
-export function passGrants(/** @type {string} */ season, /** @type {unknown} */ xp, /** @type {ReadonlyArray<string>} */ held, /** @type {number} */ nowMs) {
+/** The rewards an account has reached in a season: each track it plays, up to the level its experience reaches. Pure. */
+const reached = (/** @type {string} */ season, /** @type {unknown} */ xp, /** @type {ReadonlyArray<string>} */ held, /** @type {number} */ nowMs) => {
   const s = passSeasonById(season);
   if (!s) return [];
   const lv = passLevelOf(xp, s, nowMs), tr = passTracks(season, held);
-  const out = (PASS_REWARDS[/** @type {keyof typeof PASS_REWARDS} */ (season)] ?? []).filter((r) => r.level <= lv && (r.track === 'free' || (r.track === 'premium' && tr.premium))).map((r) => r.grant);
-  if (tr.deluxe) out.push(...(PASS_DELUXE[/** @type {keyof typeof PASS_DELUXE} */ (season)]?.grants ?? []));
+  return (PASS_REWARDS[/** @type {keyof typeof PASS_REWARDS} */ (season)] ?? []).filter((r) => r.level <= lv && (r.track === 'free' || (r.track === 'premium' && tr.premium)));
+};
+/** EVERY GRANT A SEASON GIVES an account: the rewards of each track it plays up to the level it reached, and the Deluxe's
+ *  own - each `<kind>:<key>`, in the track's order; never its Aurum, which is counted (passAurumOf), not held. `xp` the
+ *  season's experience. Pure. */
+export function passGrants(/** @type {string} */ season, /** @type {unknown} */ xp, /** @type {ReadonlyArray<string>} */ held, /** @type {number} */ nowMs) {
+  const out = reached(season, xp, held, nowMs).map((r) => r.grant).filter((g) => !passAurumGrant(g));
+  if (passTracks(season, held).deluxe) out.push(...(PASS_DELUXE[/** @type {keyof typeof PASS_DELUXE} */ (season)]?.grants ?? []));
   return [...new Set(out)];
 }
+/** AURUM: THE AURUM A SEASON'S TRACKS HAVE GIVEN an account - every Aurum reward reached on a track it plays, counted
+ *  afresh at every ask as the rewards are held: a Premium Pass whose payment went back takes its track's Aurum with it.
+ *  Pure. */
+export const passAurumOf = (/** @type {string} */ season, /** @type {unknown} */ xp, /** @type {ReadonlyArray<string>} */ held, /** @type {number} */ nowMs) =>
+  reached(season, xp, held, nowMs).reduce((a, r) => a + passAurumGrant(r.grant), 0);
 /** The keys of one kind (`title`, `glyph`, `icon`, `aura`, `kill`, `portal`, `mount`) every season gives an account -
  *  `seasons` its `{ [season]: xp }`. Pure. */
 export function passKeysOf(/** @type {Record<string, unknown>} */ seasons, /** @type {ReadonlyArray<string>} */ held, /** @type {string} */ kind, /** @type {number} */ nowMs) {
@@ -184,11 +192,11 @@ export function passKeysOf(/** @type {Record<string, unknown>} */ seasons, /** @
   }
   return out;
 }
-/** Every grant the pass gives, in any season and track - the keys a vocabulary must hold (pinned). */
+/** Every grant the pass gives, in any season and track - the keys a vocabulary must hold (pinned); its Aurum is none. */
 export const PASS_ALL_GRANTS = Object.freeze([...new Set([
   ...Object.values(PASS_REWARDS).flatMap((rs) => rs.map((r) => r.grant)),
   ...Object.values(PASS_DELUXE).flatMap((d) => d.grants),
-])]);
+].filter((g) => !passAurumGrant(g)))]);
 
 /**
  * THE PASS'S CARD as the account read carries it (`/v1/account`'s `pass`, server-account/src/battlePass.js passOf),

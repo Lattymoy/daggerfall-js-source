@@ -5,6 +5,7 @@
 // EFFECTS' own (a pin holds them equal). Not a DFU member.
 import { t } from '../systems/textManager.js';
 import { EFFECTS, effectOf } from '../net/effectLaw.js';
+import { SHOP_WARES } from '../net/shopLaw.js';   // AUDIT-STOREFRONT II: the shop's passes, bundles, boosters and packs, inked by kind
 
 /** Each effect's name, by `<slot>:<key>`. */
 export const EFFECT_TEXT = Object.freeze({
@@ -54,4 +55,32 @@ export function effectsHeldOf(/** @type {any} */ held) {
   for (const e of EFFECTS) out[e.slot] ??= [];
   for (const slot of Object.keys(out)) out[slot] = (Array.isArray(held?.[slot]) ? held[slot] : []).filter((/** @type {unknown} */ k) => !!effectOf(slot, k));
   return out;
+}
+
+/** AUDIT-STOREFRONT II (lane E 4): EACH EFFECT'S INK - its word's colour and glow, one home for every face that writes
+ *  one (the profile's slots, the shop's names, a bundle's pieces, the pass's rewards, the mailbox's tag). A pass, a bundle,
+ *  a booster and Aurum their kind's. The rules were the profile card's alone, so the shop's effect words stood white. */
+export const EFFECT_INK = Object.freeze({
+  'kill:ashen': ['#e4ddd2', 'rgba(255, 140, 60, 0.55)'], 'kill:voidrend': ['#d0adff', 'rgba(150, 80, 255, 0.6)'],
+  'kill:pyre': ['#ff8f52', 'rgba(255, 60, 10, 0.6)'], 'kill:tonal': ['#ffd27a', 'rgba(90, 190, 255, 0.6)'],
+  'portal:runic': ['#aee6ff', 'rgba(80, 170, 255, 0.6)'], 'portal:daedric': ['#ff6e4e', 'rgba(220, 30, 10, 0.6)'],
+  'portal:aetheric': ['#e8ccff', 'rgba(170, 110, 255, 0.6)'], 'portal:brass': ['#f0c060', 'rgba(80, 180, 255, 0.5)'],
+  'mount:warhorse': ['#ff5e40', 'rgba(200, 20, 10, 0.6)'], 'mount:spectral': ['#d2efff', 'rgba(120, 190, 255, 0.7)'],
+  'mount:dawnfire': ['#ffd56c', 'rgba(255, 150, 30, 0.6)'], 'mount:automaton': ['#ebc47c', 'rgba(90, 200, 255, 0.45)'],
+});
+export const KIND_INK = Object.freeze({
+  pass: ['#ffe2a8', 'rgba(255, 190, 80, 0.5)'], bundle: ['#ffd27a', 'rgba(255, 190, 80, 0.45)'],
+  boost: ['#9fdcff', 'rgba(90, 190, 255, 0.55)'], aurum: ['#ffe58a', 'rgba(255, 200, 80, 0.55)'],
+});
+/** The shop's other wares with an ink, by kind (net/shopLaw.js SHOP_WARES). */
+const INKED_KINDS = () => Object.fromEntries(Object.keys(KIND_INK).map((k) => [k, SHOP_WARES.filter((w) => w.kind === k).map((w) => w.key)]));
+/** The rules: the profile card's (its word inside the class's element), and the shop's (the word itself, or a reward's
+ *  name inside its chip). `kinds` the shop's other wares' keys, by kind. */
+export function effectInkCss(/** @type {Record<string, string[]>} */ kinds = INKED_KINDS()) {
+  const rule = (/** @type {string} */ c, /** @type {string[]} */ [color, glow]) =>
+    `.card .${c} .slotworn, .card .${c} .acteffectword, .${c}.sh-waretag-word, .${c}.sh-bname, .${c} .sh-rewardname { color: ${color}; text-shadow: 0 0 6px ${glow}; }`;
+  return [
+    ...Object.entries(EFFECT_INK).map(([id, ink]) => rule(`fx-${id.replace(':', '-')}`, ink)),
+    ...Object.entries(kinds).flatMap(([kind, keys]) => keys.map((key) => rule(`fx-${kind}-${key}`, KIND_INK[/** @type {keyof typeof KIND_INK} */ (kind)] ?? KIND_INK.pass))),
+  ].join('\n');
 }

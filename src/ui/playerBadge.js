@@ -161,14 +161,11 @@ export const TITLE_TEXT = Object.freeze({
   deepbane: 'Bane of the Deep',
   genesis: 'Genesis',   // SHOP (2026-10-28): the shop's pre-alpha title, the owner's word for it
   // STOREFRONT (2026-10-29, bible/06-Systems/Storefront.md section 6, Battle-Pass.md section 3): the shop's three name
-  // visuals, Season One's five and the Deluxe Pass's own - read through the text core, so a getter each (localizedStrings' shape)
+  // visuals, Season One's two and the Deluxe Pass's own - read through the text core, so a getter each (localizedStrings' shape)
   get dawnbringer() { return t('account.title.dawnbringer', 'Dawnbringer'); },
   get voidwalker() { return t('account.title.voidwalker', 'Voidwalker'); },
   get eternalchampion() { return t('account.title.eternalchampion', 'Eternal Champion'); },
-  get brassbound() { return t('account.title.brassbound', 'Brassbound'); },
   get tremorborn() { return t('account.title.tremorborn', 'Tremor-Born'); },
-  get tonalarchitect() { return t('account.title.tonalarchitect', 'Tonal Architect'); },
-  get brasswright() { return t('account.title.brasswright', 'Brasswright'); },
   get heartwaker() { return t('account.title.heartwaker', 'Heart-Waker'); },
   get numidiumecho() { return t('account.title.numidiumecho', 'Echo of Numidium'); },
 });
@@ -364,12 +361,11 @@ export const DAEDRIC_HEART = Object.freeze([0.988, 0.729, 0.612, 1]);   // #fcba
 export const DWEMER_BRONZE = Object.freeze([0.361, 0.239, 0.071, 1]);   // #5c3d12
 export const DWEMER_BRASS = Object.freeze([0.788, 0.588, 0.227, 1]);    // #c9963a
 export const DWEMER_SHINE = Object.freeze([0.953, 0.843, 0.541, 1]);    // #f3d78a
-export const DWEMER_ANTIQUE = Object.freeze([0.659, 0.459, 0.106, 1]);  // #a8751b - Brassbound
+export const DWEMER_ANTIQUE = Object.freeze([0.659, 0.459, 0.106, 1]);  // #a8751b
 export const DWEMER_DUST = Object.freeze([0.576, 0.553, 0.424, 1]);     // #938d6c - Tremor-Born, the dust the tremor raises
-export const DWEMER_COPPER = Object.freeze([0.694, 0.306, 0.047, 1]);   // #b14e0c - Brasswright, the smith's copper
 export const AETHERIUM_DEEP = Object.freeze([0.047, 0.208, 0.322, 1]);  // #0c3552
 export const AETHERIUM_BLUE = Object.freeze([0.247, 0.722, 1, 1]);      // #3fb8ff
-export const AETHERIUM_TONE = Object.freeze([0.271, 0.8, 0.859, 1]);    // #45ccdb - Tonal Architect
+export const AETHERIUM_TONE = Object.freeze([0.271, 0.8, 0.859, 1]);    // #45ccdb - the Tonal Fork
 export const AETHERIUM_GLOW = Object.freeze([0.624, 0.976, 0.988, 1]);  // #9ff9fc - Heart-Waker
 export const NUMIDIUM_GOLD = Object.freeze([0.988, 0.929, 0.376, 1]);   // #fced60 - Echo of Numidium
 
@@ -503,10 +499,7 @@ export const TITLE_RGBA = Object.freeze({
   dawnbringer: SUNRISE_GOLD,
   voidwalker: VOID_STAR,
   eternalchampion: DAEDRIC_HEART,
-  brassbound: DWEMER_ANTIQUE,
   tremorborn: DWEMER_DUST,
-  tonalarchitect: AETHERIUM_TONE,
-  brasswright: DWEMER_COPPER,
   heartwaker: AETHERIUM_GLOW,
   numidiumecho: NUMIDIUM_GOLD,
 });
@@ -532,10 +525,7 @@ export const TITLE_GRADIENT = Object.freeze({
   dawnbringer: Object.freeze([SUNRISE_EMBER, SUNRISE_GOLD, SUNRISE_RAY]),
   voidwalker: Object.freeze([VOID_VIOLET, VOID_GLOW, VOID_STAR]),
   eternalchampion: Object.freeze([DAEDRIC_CRIMSON, DAEDRIC_GOLD, DAEDRIC_HEART]),
-  brassbound: Object.freeze([DWEMER_ANTIQUE, DWEMER_SHINE, AETHERIUM_BLUE]),
   tremorborn: Object.freeze([DWEMER_DUST, DWEMER_BRASS, DWEMER_SHINE]),
-  tonalarchitect: Object.freeze([DWEMER_BRASS, AETHERIUM_TONE, AETHERIUM_GLOW]),
-  brasswright: Object.freeze([DWEMER_COPPER, DWEMER_BRASS, DWEMER_SHINE]),
   heartwaker: Object.freeze([DWEMER_BRASS, AETHERIUM_BLUE, AETHERIUM_GLOW]),
   numidiumecho: Object.freeze([DWEMER_BRASS, NUMIDIUM_GOLD, AETHERIUM_GLOW]),
 });
@@ -558,7 +548,7 @@ export const TITLE_EDGE = Object.freeze({
   nirnrootsage: Object.freeze([0, 0, 0, 1]),   // NIRNROOT-SAGE: its haze end is pale - edged in black, as the Witchwarden's
   genesis: Object.freeze([0, 0, 0, 1]),   // SHOP: its heart end is pale - edged in black
   // STOREFRONT: each has a pale stop - edged in black
-  ...Object.fromEntries(['dawnbringer', 'voidwalker', 'eternalchampion', 'brassbound', 'tremorborn', 'tonalarchitect', 'brasswright', 'heartwaker', 'numidiumecho'].map((k) => [k, Object.freeze([0, 0, 0, 1])])),
+  ...Object.fromEntries(['dawnbringer', 'voidwalker', 'eternalchampion', 'tremorborn', 'heartwaker', 'numidiumecho'].map((k) => [k, Object.freeze([0, 0, 0, 1])])),
 });
 
 /** SHOP: A TITLE DRAWN ON A FLAME PLATE (ui/titleFlame.js) - the fire behind its letters on every DOM face, a sheet of

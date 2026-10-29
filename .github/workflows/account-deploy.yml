@@ -231,6 +231,7 @@ on:
       - "src/net/armoryLaw.js"
       - "src/net/effectLaw.js"
       - "src/net/battlePassLaw.js"
+      - "src/net/aurumLaw.js"
       - "src/net/lostLaw.js"
       - "src/systems/superDungeon/sdSpoils.js"
       - "src/systems/eliteGates/egSpoils.js"

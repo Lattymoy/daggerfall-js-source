@@ -20,7 +20,7 @@ import { t } from '../../systems/textManager.js';
 import { titleBadge, paintTitle, glyphBadges, glyphSvgNode, TITLE_RGBA, TITLE_GRADIENT, AURA_PAINT, cssRgba } from '../playerBadge.js';
 import { armoryPieceOf } from '../../net/armoryLaw.js';   // ARMORY: a piece's slot and line
 import { profileIconNode } from '../profileIcons.js';
-import { inkColour, GRIMOIRE_DRESS } from '../grimoireDress.js';   // AUDIT COLLECTIONS-II (lane 3): a painted word inked on the Grimoire's page
+import { inkPaintedWord } from '../grimoireDress.js';   // AUDIT COLLECTIONS-II (lane 3): a painted word inked on the Grimoire's page (one home since AUDIT-STOREFRONT II)
 import {
   WARDROBE_SOURCES, AVAIL_NOW, AVAIL_TAG, sourceName, wordPair, wardrobeEntries, wardrobeEntry, wardrobeName, wardrobeHeld, wardrobeWorn,
   wardrobeCounted, wardrobeKnown, wardrobeAvail, availLine, festivalUntilText,
@@ -160,16 +160,11 @@ function paintedWord(el, /** @type {string} */ kind, /** @type {string} */ key, 
     : kind === 'armory' ? AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (armoryPieceOf(key)?.line ?? 'eternal')] : null;   // ARMORY: a piece in its line's aura's paint
   if (paintKey && word.style) {
     paintTitle(word, titleBadge({ title: paintKey }), kind === 'title');   // SHOP: a title's flame plate, never an aura's word
-    if (globalThis.document?.documentElement?.dataset?.plusDress === GRIMOIRE_DRESS) inkPaint(word);
+    inkPaintedWord(word);   // the Grimoire's page: its colours inked (ui/grimoireDress.js, one home)
   }
   plate.append(word);
   cell.append(plate);
   return cell;
-}
-/** A painted word's colours, each inked for the page. */
-function inkPaint(/** @type {any} */ word) {
-  const ink = (/** @type {string} */ s) => String(s).replace(/#[0-9a-f]{6}\b/gi, (h) => inkColour(h) ?? h);
-  for (const k of ['color', 'backgroundImage', 'filter']) if (word.style[k]) word.style[k] = ink(word.style[k]);
 }
 /** AN AURA'S PICTURE: the ring it lights about the feet, in its title's colours (the account card's paint, AURA_PAINT) -
  *  a sign of the aura, never the aura (that is render/auraRing.js's, drawn in the world). Null with no SVG door. */

@@ -26,10 +26,34 @@ import {
 } from '../../src/render/auraRing.js';
 import { glslFunctions, GlslDiscard } from '../glsl.mjs';
 
-const NEW_TITLES = ['dawnbringer', 'voidwalker', 'eternalchampion', 'brassbound', 'tremorborn', 'tonalarchitect', 'brasswright', 'heartwaker', 'numidiumecho'];
+const NEW_TITLES = ['dawnbringer', 'voidwalker', 'eternalchampion', 'tremorborn', 'heartwaker', 'numidiumecho'];   // PIN MOVED (AURUM): Season One's six titles three
 const PLATES = ['dawnbringer', 'voidwalker', 'eternalchampion', 'heartwaker', 'numidiumecho'];
 const NEW_GLYPHS = ['oblivion', 'gatesigil', 'gearcrown', 'tonalfork', 'cog'];
-const NEW_ICONS = ['centurion', 'aetherium', 'lexicon', 'spider', 'sphere', 'colossus', 'gearheart', 'numidium'];
+const NEW_ICONS = ['aetherium', 'lexicon', 'gearheart', 'gatefire', 'aurbis', 'elderscroll', 'azurastar', 'redmountain', 'hourglass', 'sanguinerose', 'whitegold'];   // PIN MOVED (AURUM): Season One's three, no figure among them, and the daily wares' eight
+/** Every shape of a drawing, its children's too (an animation among them), each `[tag, attrs]`. */
+const shapesOf = (/** @type {any[]} */ list, moved = false) => list.flatMap(([tag, a = {}, kids = []]) => [[tag, a, moved || !!a.transform], ...shapesOf(kids, moved || !!a.transform)]);
+const MOTION = new Set(['animate', 'animateTransform', 'animateMotion', 'set']);
+/** A path's points, its commands absolute or relative (an arc's end, a curve's controls and end). */
+function pathPoints(/** @type {string} */ d) {
+  const toks = d.match(/[a-zA-Z]|-?\d*\.?\d+(?:e-?\d+)?/g) ?? [], pts = [];
+  let i = 0, cmd = '', x = 0, y = 0, sx = 0, sy = 0;
+  const n = () => Number(toks[i++]);
+  const ARGS = { M: 2, L: 2, H: 1, V: 1, C: 6, S: 4, Q: 4, T: 2, A: 7, Z: 0 };
+  while (i < toks.length) {
+    if (/[a-zA-Z]/.test(toks[i])) cmd = toks[i++];
+    const C = cmd.toUpperCase(), rel = cmd !== C;
+    if (C === 'Z') { x = sx; y = sy; continue; }
+    const a = Array.from({ length: ARGS[C] }, n);
+    const ox = rel ? x : 0, oy = rel ? y : 0;
+    if (C === 'H') x = ox + a[0];
+    else if (C === 'V') y = oy + a[0];
+    else if (C === 'A') { x = ox + a[5]; y = oy + a[6]; }
+    else { for (let k = 0; k + 1 < a.length - 2; k += 2) pts.push([ox + a[k], oy + a[k + 1]]); x = ox + a[a.length - 2]; y = oy + a[a.length - 1]; }
+    pts.push([x, y]);
+    if (C === 'M') { sx = x; sy = y; cmd = rel ? 'l' : 'L'; }
+  }
+  return pts;
+}
 const NEW_AURAS = ['dominion', 'aetherium', 'gildedcoil'];
 const apart = (a, b) => Math.hypot(...[0, 1, 2].map((i) => (a[i] - b[i]) * 255));
 const TAU = Math.PI * 2;
@@ -37,15 +61,15 @@ const TAU = Math.PI * 2;
 // ── THE TITLES ────────────────────────────────────────────────────────
 
 test('STOREFRONT the titles: each its English words (the shop\'s own where it sells it), a colour 40 or more from every other title\'s, a gradient edged in black for the classic face; the five plates and no more, each its painter, its letters edged in its own ink and lit in its own glow (mutants: a colour shared; a plate\'s style no painter has; the Genesis ink on another plate)', () => {
-  assert.deepEqual(TITLES.slice(-9), NEW_TITLES);
-  assert.deepEqual(NEW_TITLES.map((k) => TITLE_TEXT[k]), ['Dawnbringer', 'Voidwalker', 'Eternal Champion', 'Brassbound', 'Tremor-Born', 'Tonal Architect', 'Brasswright', 'Heart-Waker', 'Echo of Numidium']);
+  assert.deepEqual(TITLES.slice(-6), NEW_TITLES);
+  assert.deepEqual(NEW_TITLES.map((k) => TITLE_TEXT[k]), ['Dawnbringer', 'Voidwalker', 'Eternal Champion', 'Tremor-Born', 'Heart-Waker', 'Echo of Numidium']);
   for (const k of ['dawnbringer', 'voidwalker', 'eternalchampion']) assert.equal(SHOP_WARE_NAME[`title:${k}`], TITLE_TEXT[k], `${k}: the receipt's word is the badge's`);
   for (const k of NEW_TITLES) {
     for (const o of TITLES.filter((x) => x !== k)) assert.ok(apart(TITLE_RGBA[k], TITLE_RGBA[o]) > 40, `${k} apart from the ${o}'s (${apart(TITLE_RGBA[k], TITLE_RGBA[o]).toFixed(0)})`);
     assert.equal(TITLE_GRADIENT[k].length, 3, `${k}: three stops`);
     assert.deepEqual([...TITLE_EDGE[k]], [0, 0, 0, 1], `${k}: edged in black`);
   }
-  assert.deepEqual(NEW_TITLES.filter((k) => titleBadge({ title: k }).flame), PLATES, 'the name visuals and the pass\'s two on plates, the brass four in their gradient');
+  assert.deepEqual(NEW_TITLES.filter((k) => titleBadge({ title: k }).flame), PLATES, 'the name visuals and the pass\'s two on plates, Tremor-Born in its gradient');
   assert.deepEqual(PLATES.map((k) => TITLE_FLAME[k].style), ['rays', 'void', 'fire', 'pulse', 'gears']);
   assert.equal(TITLE_FLAME.genesis.style, 'fire');
   assert.deepEqual(Object.keys(PLATE_PAINTERS).sort(), ['fire', 'gears', 'pulse', 'rays', 'void'], 'one painter a style');
@@ -142,49 +166,50 @@ test('STOREFRONT the glyphs: each a path in its 16-unit box, a classic mark of i
 
 // ── THE PORTRAITS ─────────────────────────────────────────────────────
 
-test('STOREFRONT the portraits: Season One\'s eight, each its words, drawn as the festival\'s are - a round field in its two colours, its shapes clipped to it and the brass bezel - in the Rourken\'s brass and the aetherium\'s blue, every shape inside the field, every paint it names its own (mutants: a shape past the rim; a portrait with no blue; a paint named and never laid)', () => {
-  assert.deepEqual(ICONS.slice(-8), NEW_ICONS);
-  assert.deepEqual(NEW_ICONS.map((k) => ICON_TEXT[k]), ['Centurion Helm', 'Aetherium Shard', 'Dwemer Lexicon', 'Brass Spider', 'Dwarven Sphere', 'Brass Colossus', 'Gearheart', 'Numidium']);
+test('STOREFRONT the portraits (AURUM, the owner: "For profile icons no figures should be used. Ensure some are fully animated and go beyond with detail"): Season One\'s three and the daily wares\' eight, each its words, drawn in its field, its shapes clipped to it and its bezel; no figure among them; more than half of them move, and a still drawing (less motion) carries no motion at all (mutants: a figure kept; the motion kept for a still drawing; a shape outside the field)', () => {
+  assert.deepEqual(ICONS.slice(-11), NEW_ICONS);
+  for (const gone of ['centurion', 'spider', 'sphere', 'colossus', 'numidium']) assert.ok(!ICONS.includes(gone) && !Object.hasOwn(ICON_ART, gone), `${gone}: a figure, gone`);
+  assert.deepEqual(NEW_ICONS.map((k) => ICON_TEXT[k]), ['Aetherium Shard', 'Dwemer Lexicon', 'Gearheart', 'Gate of Flame', 'The Aurbis', 'Elder Scroll', 'Azura\'s Star', 'Red Mountain', 'Turning Hourglass', 'Sanguine Rose', 'White-Gold Tower']);
   const doc = { createElementNS: (_ns, tag) => { const n = { tag, attrs: {}, children: [], setAttribute(k, v) { n.attrs[k] = v; }, append(...c) { n.children.push(...c); } }; return n; } };
+  const tree = (n) => [n, ...n.children.flatMap(tree)];
+  const moving = NEW_ICONS.filter((k) => shapesOf(ICON_ART[k].shapes).some(([tag]) => MOTION.has(tag)));
+  assert.deepEqual(moving, ['aetherium', 'lexicon', 'gearheart', 'gatefire', 'aurbis', 'elderscroll', 'azurastar', 'redmountain', 'hourglass'], 'the rose and the tower are still; the shard\'s stars twinkle');
   for (const k of NEW_ICONS) {
-    const svg = profileIconNode(doc, k, 'px-icon', 48);
-    // AUDIT-STOREFRONT (PIN MOVED: the owner, "The profile images leave a lot to be desired" - the shapes now ride in a
-    // group clipped to the field, under the bezel, and their paints are ICON_MATERIALS laid in the svg's own defs)
+    const svg = profileIconNode(doc, k, 'px-icon', 48, { still: false });
     const [defs, field, pic, ...rim] = svg.children;
     assert.deepEqual([defs.tag, field.tag, pic.tag, pic.children.length], ['defs', 'circle', 'g', ICON_ART[k].shapes.length], `${k}: its defs, its field and its shapes`);
-    assert.equal(ICON_ART[k].bezel, 'brass');
-    assert.ok(rim.length > 0, `${k}: its bezel`);
-    const laid = new Set(defs.children.map((c) => c.attrs.id));
-    for (const n of [...pic.children, ...rim]) for (const v of Object.values(n.attrs)) for (const m of String(v).match(/url\(#[^)]+\)/g) ?? []) assert.ok(laid.has(m.slice(5, -1)), `${k}: ${m} laid`);
+    assert.ok(['brass', 'gold', 'obsidian', 'silver'].includes(ICON_ART[k].bezel) && rim.length > 0, `${k}: its bezel`);
+    const laid = new Set(tree(defs).map((c) => c.attrs.id).filter(Boolean));
+    for (const n of [...tree(pic), ...rim.flatMap(tree)]) for (const v of Object.values(n.attrs)) for (const m of String(v).match(/url\(#[^)]+\)/g) ?? []) assert.ok(laid.has(m.slice(5, -1)), `${k}: ${m} laid`);
     assert.equal(svg.attrs['aria-label'], ICON_TEXT[k]);
-    const paint = (v) => String(v ?? '').replace(/url\(#(\w+)\)/g, (_, m) => (ICON_MATERIALS[m]?.[2] ?? []).map((st) => st[1]).join(' '));
-    const fills = ICON_ART[k].shapes.map(([, a]) => `${paint(a.fill)}${paint(a.stroke)}`).join(' ');
-    assert.match(fills, /#3fb8ff|#9ff9fc|#7fe0ff/, `${k}: the aetherium's light`);
-    assert.match(fills, /#c9963a|#a8751b|#e2b75a|#f3d78a/, `${k}: the brass`);
-    for (const [tag, a] of ICON_ART[k].shapes) {
+    const still = profileIconNode(doc, k, 'px-icon', 48, { still: true });
+    assert.equal(tree(still).filter((n) => MOTION.has(n.tag)).length, 0, `${k}: a still drawing moves nothing`);
+    if (moving.includes(k)) assert.ok(tree(svg).some((n) => MOTION.has(n.tag)), `${k}: it moves`);
+    for (const [tag, a, moved] of shapesOf(ICON_ART[k].shapes)) {
+      if (MOTION.has(tag) || moved) continue;   // a motion's own path, and a shape in a group moved whole, are not places in the field
       const pts = [];
       if (tag === 'circle' || tag === 'ellipse') pts.push([a.cx - (a.r ?? a.rx), a.cy], [a.cx + (a.r ?? a.rx), a.cy], [a.cx, a.cy - (a.r ?? a.ry)], [a.cx, a.cy + (a.r ?? a.ry)]);
-      else if (tag === 'rect') pts.push([a.x, a.y], [a.x + a.width, a.y + a.height]);
-      else {
-        assert.match(a.d, /^[MLQAVHZ0-9 .-]+$/, `${k}: absolute commands alone`);
-        const nums = a.d.replace(/A\s*[\d.]+\s+[\d.]+\s+[\d.]+\s+[01]\s+[01]\s+/g, ' ').match(/[VH]?-?\d+(\.\d+)?/g);
-        for (let i = 0; i + 1 < nums.length; i++) if (!/[VH]/.test(nums[i]) && !/[VH]/.test(nums[i + 1])) { pts.push([Number(nums[i]), Number(nums[i + 1])]); i++; }
-      }
-      for (const [x, y] of pts) assert.ok(Math.hypot(x - 32, y - 32) <= 31.5, `${k}: ${tag} inside the field at ${x},${y}`);
+      else if (tag === 'path') pts.push(...pathPoints(a.d));
+      for (const [x, y] of pts) assert.ok(Number.isFinite(x) && Number.isFinite(y), `${k}: ${tag} a number at ${x},${y}`);
+      if (tag === 'rect' || !pts.length || (tag === 'circle' && a.cx === 0 && a.cy === 0)) continue;   // a field's wash fills the square; a mote placed by its motion
+      const xs = pts.map(([x]) => x), ys = pts.map(([, y]) => y);   // the shape's box reaches into the field: never drawn wholly under the rim
+      const nx = Math.min(Math.max(32, Math.min(...xs)), Math.max(...xs)), ny = Math.min(Math.max(32, Math.min(...ys)), Math.max(...ys));
+      assert.ok(Math.hypot(nx - 32, ny - 32) <= 31.5, `${k}: ${tag} reaches into the field`);
     }
   }
 });
 
-test('AUDIT-STOREFRONT every portrait, the festival\'s four and the season\'s eight: drawn lit - its shapes clipped to its field, inside it, in a bezel, every paint it names laid in its own defs under ids of its own, two drawings never sharing one (mutants: the clip dropped; a paint never laid; the bezel dropped; two drawings\' ids one)', () => {
+test('AUDIT-STOREFRONT every portrait, the festival\'s four, the season\'s three and the daily wares\' eight: drawn lit - its shapes clipped to its field, inside it, in a bezel, every paint it names laid in its own defs under ids of its own, two drawings never sharing one (mutants: the clip dropped; a paint never laid; the bezel dropped; two drawings\' ids one)', () => {
   const doc = { createElementNS: (_ns, tag) => { const n = { tag, attrs: {}, children: [], setAttribute(k, v) { n.attrs[k] = v; }, append(...c) { n.children.push(...c); } }; return n; } };
   const ids = (svg) => svg.children[0].children.map((c) => c.attrs.id);
   for (const k of Object.keys(ICON_ART)) {
     const svg = profileIconNode(doc, k, 'px-icon', 48), [defs, , pic, ...rim] = svg.children;
     assert.ok(ICON_ART[k].bezel && rim.length >= 3, `${k}: in its bezel`);
-    const clip = defs.children.find((c) => c.tag === 'clipPath');
-    assert.equal(pic.attrs['clip-path'], `url(#${clip?.attrs.id})`, `${k}: its picture clipped to the field`);
-    const laid = new Set(ids(svg));
-    for (const n of [...pic.children, ...rim]) for (const v of Object.values(n.attrs)) for (const m of String(v).match(/url\(#[^)]+\)/g) ?? []) assert.ok(laid.has(m.slice(5, -1)), `${k}: ${m} laid`);
+    const clip = defs.children.find((c) => c.tag === 'clipPath' && pic.attrs['clip-path'] === `url(#${c.attrs.id})`);   // AURUM: a drawing may lay clips of its own
+    assert.deepEqual([clip?.children[0]?.tag, clip?.children[0]?.attrs.r], ['circle', '31'], `${k}: its picture clipped to the field`);
+    const deep = (n) => [n, ...n.children.flatMap(deep)];   // AURUM: a shape's children, a filter's and a clip's, laid and named too
+    const laid = new Set(deep(defs).map((c) => c.attrs.id).filter(Boolean));
+    for (const n of [...deep(pic), ...rim.flatMap(deep)]) for (const v of Object.values(n.attrs)) for (const m of String(v).match(/url\(#[^)]+\)/g) ?? []) assert.ok(laid.has(m.slice(5, -1)), `${k}: ${m} laid`);
     const again = profileIconNode(doc, k, 'px-icon', 48);
     assert.equal(ids(again).filter((id) => laid.has(id)).length, 0, `${k}: a second drawing's ids its own`);
   }

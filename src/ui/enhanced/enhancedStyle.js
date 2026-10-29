@@ -41,6 +41,7 @@ import { installWindowMotion } from '../windowMotion.js';   // PLUS1/WM1: window
 import { isEnhancedPlus } from '../../systems/uiSkin.js';   // PLUS1: the Plus sheet is laid only under Plus
 import { pageHas } from '../../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { paceControlsCss } from '../travel/travelPaceControls.js';   // PACE-DIALS: the Overworld block's speed dials
+import { effectInkCss } from '../effectText.js';   // AUDIT-STOREFRONT II: the effects' inks, one table for the profile and the shop
 import { SERPENT_RING_MAP_CSS } from '../serpentMapMark.js';   // SERPENT-TIMERS: the sea serpent's row marked in its waters' own colour
 import { SD_RING_MAP_CSS } from '../superDungeon/sdMapMark.js';   // SD2c: the Super dungeon's row in its omen's brass
 import { STAR_VIOLET_CSS } from '../starfall/starMapMark.js';   // STAR6: a fallen star's row in its violet
@@ -1257,21 +1258,16 @@ img.fit { image-rendering: pixelated; }   /* AUDIT UI A1: a fitted picture drawn
   background: radial-gradient(circle at 50% 60%, #1b1826 0%, #08070c 80%); }
 .card .slots-mount canvas.mountpreview { width: min(100%, 300px); height: auto; image-rendering: pixelated; }
 .card button.acteffect.locked { opacity: 0.45; border-style: dashed; }
-.card .fx-kill-ashen .slotworn, .card .fx-kill-ashen .acteffectword { color: #e4ddd2; text-shadow: 0 0 6px rgba(255, 140, 60, 0.55); }
-.card .fx-kill-voidrend .slotworn, .card .fx-kill-voidrend .acteffectword { color: #d0adff; text-shadow: 0 0 6px rgba(150, 80, 255, 0.6); }
-.card .fx-kill-pyre .slotworn, .card .fx-kill-pyre .acteffectword { color: #ff8f52; text-shadow: 0 0 6px rgba(255, 60, 10, 0.6); }
-.card .fx-kill-tonal .slotworn, .card .fx-kill-tonal .acteffectword { color: #ffd27a; text-shadow: 0 0 6px rgba(90, 190, 255, 0.6); }
-.card .fx-portal-runic .slotworn, .card .fx-portal-runic .acteffectword { color: #aee6ff; text-shadow: 0 0 6px rgba(80, 170, 255, 0.6); }
-.card .fx-portal-daedric .slotworn, .card .fx-portal-daedric .acteffectword { color: #ff6e4e; text-shadow: 0 0 6px rgba(220, 30, 10, 0.6); }
-.card .fx-portal-aetheric .slotworn, .card .fx-portal-aetheric .acteffectword { color: #e8ccff; text-shadow: 0 0 6px rgba(170, 110, 255, 0.6); }
-.card .fx-portal-brass .slotworn, .card .fx-portal-brass .acteffectword { color: #f0c060; text-shadow: 0 0 6px rgba(80, 180, 255, 0.5); }
-.card .fx-mount-warhorse .slotworn, .card .fx-mount-warhorse .acteffectword { color: #ff5e40; text-shadow: 0 0 6px rgba(200, 20, 10, 0.6); }
-.card .fx-mount-spectral .slotworn, .card .fx-mount-spectral .acteffectword { color: #d2efff; text-shadow: 0 0 6px rgba(120, 190, 255, 0.7); }
-.card .fx-mount-dawnfire .slotworn, .card .fx-mount-dawnfire .acteffectword { color: #ffd56c; text-shadow: 0 0 6px rgba(255, 150, 30, 0.6); }
-.card .fx-mount-automaton .slotworn, .card .fx-mount-automaton .acteffectword { color: #ebc47c; text-shadow: 0 0 6px rgba(90, 200, 255, 0.45); }
+${effectInkCss()}
+/* AUDIT-STOREFRONT II (lane E 7): narrow, the stage stands first and the picker right under it - a choice pointed at is
+   tried on in sight - and the slots two to a row under them */
 @container (max-width: 480px) {
-  .card .slots-stage { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .card .slots-mid { grid-column: 1 / -1; order: -1; justify-self: center; width: min(100%, 240px); }
+  .card .acctslots { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 10px; }
+  .card .acctslots > *, .card .slots-stage > .slots-mid { grid-column: 1 / -1; }
+  .card .slots-stage { display: contents; }
+  .card .acctslots > .acctsechead { order: -3; }
+  .card .slots-mid { order: -2; justify-self: center; width: min(100%, 240px); }
+  .card .slots-picker { order: -1; margin: 8px 0 12px; }
 }
 /* PATREON-LINK - THE PATRON'S ROW. Link Patreon is a LINK (the account read carries it, so the press opens it at once,
    as TERMS1's document links do), worn as an .act so it reads as the button it is; what the pledge holds is a fact

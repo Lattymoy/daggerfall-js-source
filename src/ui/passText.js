@@ -7,7 +7,7 @@ import { TITLE_TEXT, AURA_TEXT } from './playerBadge.js';
 import { ICON_TEXT } from './profileIcons.js';
 import { GLYPH_LABEL } from './enhanced/enhancedAccount.js';
 import { effectName } from './effectText.js';
-import { PASS_BOOSTS, passChallengeOf } from '../net/battlePassLaw.js';
+import { PASS_BOOSTS, passChallengeOf, passAurumGrant } from '../net/battlePassLaw.js';
 
 /** Each season's name and its story in two sentences. */
 export const PASS_SEASON_TEXT = Object.freeze({ s1: () => t('pass.season.s1', "Dwemer's Breach") });
@@ -52,20 +52,22 @@ export function passBoostText(/** @type {string} */ id) {
 export const PASS_EVENT_TEXT = Object.freeze({
   level: (/** @type {number} */ level) => t('pass.event.level', 'Season level {level}!', { level }),
   rewards: (/** @type {string} */ list) => t('pass.event.rewards', 'New in your wardrobe: {list}.', { list }),
+  aurum: (/** @type {number} */ n) => t('pass.event.aurum', '{n, number} Aurum is yours.', { n }),   // AURUM: a reward counted, never worn
   challenge: (/** @type {string} */ text) => t('pass.event.challenge', 'Season challenge done: {text}.', { text }),
   full: () => t('pass.event.full', 'You have found all the season experience you can today. More tomorrow.'),
 });
 /** Each grant's kind, as a reward chip says it. */
 const KIND_WORD = Object.freeze({
-  title: () => t('pass.kind.title', 'Title'), glyph: () => t('pass.kind.glyph', 'Glyph'), icon: () => t('pass.kind.icon', 'Portrait'),
+  title: () => t('pass.kind.title', 'Title'), glyph: () => t('pass.kind.glyph', 'Glyph'), icon: () => t('pass.kind.icon', 'Profile icon'),
   aura: () => t('pass.kind.aura', 'Aura'), kill: () => t('pass.kind.kill', 'Kill effect'), portal: () => t('pass.kind.portal', 'Portal skin'),
-  mount: () => t('pass.kind.mount', 'Mount look'),
+  mount: () => t('pass.kind.mount', 'Mount look'), aurum: () => t('pass.kind.aurum', 'Aurum'),
 });
 /** A reward's kind in words. */
 export const passGrantKind = (/** @type {string} */ grant) => KIND_WORD[/** @type {keyof typeof KIND_WORD} */ (grant.slice(0, grant.indexOf(':')))]?.() ?? '';
 /** A reward's name in the player's words, its key where it has none. */
 export function passGrantName(/** @type {string} */ grant) {
   const i = grant.indexOf(':'), kind = grant.slice(0, i), key = grant.slice(i + 1);
+  if (kind === 'aurum') return t('pass.grant.aurum', '{n, number} Aurum', { n: passAurumGrant(grant) });   // AURUM
   const table = kind === 'title' ? TITLE_TEXT : kind === 'aura' ? AURA_TEXT : kind === 'icon' ? ICON_TEXT : kind === 'glyph' ? GLYPH_LABEL : null;
   if (table) return /** @type {any} */ (table)[key] ?? key;
   return kind === 'kill' || kind === 'portal' || kind === 'mount' ? effectName(kind, key) : key;

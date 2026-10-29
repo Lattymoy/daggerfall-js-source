@@ -148,10 +148,11 @@ const CATALOGUE = {
   /* STOREFRONT (PIN MOVED): the shop's name visuals and its bundles' four, sold for good; Season One's on the Battle Pass */
   'title:dawnbringer': 'shop store', 'title:voidwalker': 'shop store', 'title:eternalchampion': 'shop store', 'aura:dominion': 'shop store',
   'glyph:oblivion': 'shop store', 'glyph:gatesigil': 'shop store', 'glyph:gearcrown': 'shop store',
-  'title:brassbound': 'pass pass', 'title:tremorborn': 'pass pass', 'title:tonalarchitect': 'pass pass', 'title:brasswright': 'pass pass',
-  'title:heartwaker': 'pass pass', 'title:numidiumecho': 'pass pass', 'aura:aetherium': 'pass pass', 'aura:gildedcoil': 'pass pass',
-  'icon:centurion': 'pass pass', 'icon:aetherium': 'pass pass', 'icon:lexicon': 'pass pass', 'icon:spider': 'pass pass', 'icon:sphere': 'pass pass',
-  'icon:colossus': 'pass pass', 'icon:gearheart': 'pass pass', 'icon:numidium': 'pass pass', 'glyph:tonalfork': 'pass pass', 'glyph:cog': 'pass pass',
+  // PIN MOVED (AURUM): Season One's titles six to three and its portraits three, no figure among them; the daily wares' eight
+  'title:tremorborn': 'pass pass', 'title:heartwaker': 'pass pass', 'title:numidiumecho': 'pass pass', 'aura:aetherium': 'pass pass', 'aura:gildedcoil': 'pass pass',
+  'icon:aetherium': 'pass pass', 'icon:lexicon': 'pass pass', 'icon:gearheart': 'pass pass', 'glyph:tonalfork': 'pass pass', 'glyph:cog': 'pass pass',
+  'icon:gatefire': 'shop daily', 'icon:aurbis': 'shop daily', 'icon:elderscroll': 'shop daily', 'icon:azurastar': 'shop daily',
+  'icon:redmountain': 'shop daily', 'icon:hourglass': 'shop daily', 'icon:sanguinerose': 'shop daily', 'icon:whitegold': 'shop daily',
 };
 
 // ── THE CATALOGUE ──────────────────────────────────────────────────────────────────────────────────────────────────────

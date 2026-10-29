@@ -4,7 +4,7 @@
 // ware is a cosmetic the ACCOUNT keeps, bought once with money: the service records the sale on the row, so what is held
 // is read off the row at every ask (server-account/src/titles.js), and the relay sees it only in the signed token.
 // Pure. Not a DFU member - Daggerfall Unity has no accounts. Ledger A (SHOP, STOREFRONT).
-import { TITLES, AURAS, GLYPHS } from './identityToken.js';
+import { TITLES, AURAS, GLYPHS, ICONS } from './identityToken.js';
 import { ARMORY_PIECES, ARMORY_NAME, ARMORY_SETS, armoryLinePieces } from './armoryLaw.js';   // ARMORY: the Aura Armory's shop pieces and its set - armoryLaw.js imports nothing
 import { EFFECTS, effectOf } from './effectLaw.js';   // STOREFRONT: the kill effects, portal skins and mount looks - a leaf
 import { passSeasonById, passOpen, PASS_BOOSTS, passMult } from './battlePassLaw.js';   // STOREFRONT: a season's wares are sold while it runs - a leaf
@@ -17,11 +17,11 @@ export const SHOP_MIN_CENTS = 50;
  *  season's ware stops selling this long before its season ends, so no page outlives it. */
 export const SHOP_CHECKOUT_MS = 31 * 60_000;
 /** The shop's sections, in the window's order (STOREFRONT: the sheet's rows; the titles and glyphs one section, the
- *  name visuals). */
-export const SHOP_CATEGORIES = Object.freeze(['pass', 'kills', 'portals', 'mounts', 'names', 'auras', 'armory', 'bundles', 'boosts']);
+ *  name visuals). AURUM (bible/06-Systems/Aurum.md): the profile icons, and the Aurum's packs last. */
+export const SHOP_CATEGORIES = Object.freeze(['pass', 'kills', 'portals', 'mounts', 'names', 'icons', 'auras', 'armory', 'bundles', 'boosts', 'aurum']);
 /** The section each kind of ware is sold in. */
 export const SHOP_KIND_CATEGORY = Object.freeze({
-  title: 'names', glyph: 'names', aura: 'auras', armory: 'armory', kill: 'kills', portal: 'portals', mount: 'mounts', pass: 'pass', boost: 'boosts', bundle: 'bundles',
+  title: 'names', glyph: 'names', icon: 'icons', aura: 'auras', armory: 'armory', kill: 'kills', portal: 'portals', mount: 'mounts', pass: 'pass', boost: 'boosts', bundle: 'bundles', aurum: 'aurum',
 });
 /** STOREFRONT: a ware's tier - the sheet's three columns. The pre-alpha wares have none (they carry their Pre-alpha mark). */
 export const SHOP_TIERS = Object.freeze(['standard', 'premium', 'exclusive']);
@@ -31,13 +31,16 @@ export const SHOP_TIERS = Object.freeze(['standard', 'premium', 'exclusive']);
  * `players.shop_wares` - the first nine only, never renumbered, since a stored bit is a sale that happened - or 0 for a
  * ware held by its id in `players.shop_held`. `gives` the wares it holds for whoever holds it; `extra` the worth of its
  * own beside them (a Deluxe Pass's). `season` the season it is sold in; `alone` false for a ware sold only in a bundle.
+ * AURUM: `cash` false for a ware sold only for Aurum (net/aurumLaw.js, the daily wares); `aurum` the Aurum a pack gives.
  * @param {string} kind @param {string} key @param {number} cents
- * @param {{ bit?: number, tier?: string|null, gives?: string[], extra?: number, season?: string|null, alone?: boolean, preAlpha?: boolean }} [o]
+ * @param {{ bit?: number, tier?: string|null, gives?: string[], extra?: number, season?: string|null, alone?: boolean, preAlpha?: boolean, cash?: boolean, aurum?: number }} [o]
  */
-const ware = (kind, key, cents, { bit = 0, tier = null, gives = [], extra = 0, season = null, alone = true, preAlpha = false } = {}) => Object.freeze({
+const ware = (kind, key, cents, { bit = 0, tier = null, gives = [], extra = 0, season = null, alone = true, preAlpha = false, cash = true, aurum = 0 } = {}) => Object.freeze({
   id: `${kind}:${key}`, kind, key, category: SHOP_KIND_CATEGORY[/** @type {keyof typeof SHOP_KIND_CATEGORY} */ (kind)], cents, bit, preAlpha, tier,
-  gives: Object.freeze([...gives]), extra, season, alone,
+  gives: Object.freeze([...gives]), extra, season, alone, cash, aurum,
 });
+/** AURUM: a profile icon sold only for Aurum - its worth in cents, should a bundle ever give it. */
+const icon = (/** @type {string} */ key, /** @type {number} */ cents, /** @type {string} */ tier) => ware('icon', key, cents, { tier, cash: false });
 const pre = (/** @type {number} */ bit) => ({ bit, preAlpha: true });
 /** THE WARES, in the window's order within each section. The pre-alpha nine are the owner's (SHOP, ARMORY); the rest are
  *  the sheet's (STOREFRONT, Storefront.md sections 2-8). */
@@ -79,6 +82,14 @@ export const SHOP_WARES = Object.freeze([
   ware('boost', 's1cog', 499, { tier: 'standard', season: 's1' }),
   ware('boost', 's1tonal', 1299, { tier: 'premium', season: 's1' }),
   ware('boost', 's1heart', 2499, { tier: 'exclusive', season: 's1' }),
+  // AURUM (bible/06-Systems/Aurum.md): the profile icons the daily wares sell, and the Aurum's packs - bought again and
+  // again, never held (shopRepeatable); a bigger pack gives more for each dollar
+  icon('gatefire', 600, 'premium'), icon('aurbis', 700, 'exclusive'), icon('elderscroll', 600, 'premium'), icon('azurastar', 600, 'premium'),
+  icon('redmountain', 700, 'exclusive'), icon('hourglass', 500, 'standard'), icon('sanguinerose', 400, 'standard'), icon('whitegold', 400, 'standard'),
+  ware('aurum', '500', 499, { tier: 'standard', aurum: 500 }),
+  ware('aurum', '1100', 999, { tier: 'standard', aurum: 1100 }),
+  ware('aurum', '2400', 1999, { tier: 'premium', aurum: 2400 }),
+  ware('aurum', '6500', 4999, { tier: 'exclusive', aurum: 6500 }),
 ]);
 /** STOREFRONT: the English names of the wares no other table names - the titles', glyphs' and aura's are the client's
  *  own (playerBadge.js TITLE_TEXT, AURA_TEXT, enhancedAccount.js GLYPH_LABEL - a pin holds them equal). */
@@ -88,6 +99,7 @@ const OWN_NAME = Object.freeze({
   'pass:s1premium': "Dwemer's Breach Premium Pass", 'pass:s1deluxe': "Dwemer's Breach Deluxe Pass",
   'bundle:daedricchampion': 'Daedric Champion', 'bundle:portalmaster': 'Portal Master', 'bundle:lordofoblivion': 'Lord of Oblivion', 'bundle:seasonalcollector': 'Seasonal Collector',
   'boost:s1cog': 'Cog Booster', 'boost:s1tonal': 'Tonal Booster', 'boost:s1heart': 'Heart Booster',
+  'aurum:500': '500 Aurum', 'aurum:1100': '1,100 Aurum', 'aurum:2400': '2,400 Aurum', 'aurum:6500': '6,500 Aurum',   // AURUM: Stripe's line and the receipt; an icon is never sold for money, so never named here
 });
 /** A ware's name and kind in English, for the service's pages, Stripe's line and the receipt. */
 export const SHOP_WARE_NAME = Object.freeze({
@@ -97,8 +109,8 @@ export const SHOP_WARE_NAME = Object.freeze({
   ...OWN_NAME,
 });
 export const SHOP_KIND_NAME = Object.freeze({
-  title: 'title', glyph: 'glyph', aura: 'aura', armory: 'Aura Armory', kill: 'kill effect', portal: 'portal skin', mount: 'mount look',
-  pass: 'Battle Pass', boost: 'Pass Booster', bundle: 'bundle',
+  title: 'title', glyph: 'glyph', icon: 'profile icon', aura: 'aura', armory: 'Aura Armory', kill: 'kill effect', portal: 'portal skin', mount: 'mount look',
+  pass: 'Battle Pass', boost: 'Pass Booster', bundle: 'bundle', aurum: 'Aurum',
 });
 /** A ware by its id (`kind:key`), or null. */
 export const shopWareById = (/** @type {unknown} */ id) => SHOP_WARES.find((w) => w.id === id) ?? null;
@@ -108,6 +120,8 @@ export const shopVocabularyOk = () => SHOP_WARES.every((w) => {
   if (w.gives.length && !w.gives.every((g) => shopWareById(g))) return false;
   if (w.kind === 'pass' || w.kind === 'boost') return !!passSeasonById(w.season);
   if (w.kind === 'bundle') return w.gives.length > 0;
+  if (w.kind === 'aurum') return Number.isSafeInteger(w.aurum) && w.aurum > 0 && w.cash;   // AURUM: a pack gives Aurum, for money
+  if (w.kind === 'icon') return ICONS.includes(w.key);
   if (w.kind === 'kill' || w.kind === 'portal' || w.kind === 'mount') return !!effectOf(w.kind, w.key);
   return ({ title: TITLES, aura: AURAS, glyph: GLYPHS, armory: [...ARMORY_PIECES.filter((p) => p.source === 'shop').map((p) => p.key), ...Object.keys(ARMORY_SETS)] })[w.kind]?.includes(w.key);
 });
@@ -115,6 +129,10 @@ export const shopVocabularyOk = () => SHOP_WARES.every((w) => {
 export const SHOP_BITS_ALL = SHOP_WARES.reduce((a, w) => a | w.bit, 0);
 /** STOREFRONT: an id in `shop_held` - a ware's own shape, so a row's text is never read past it. */
 export const SHOP_HELD_ID_RE = /^[a-z]{3,8}:[a-z0-9]{2,24}$/;
+
+/** AURUM: a ware bought again and again and never held - an Aurum pack. Its paid orders are the Aurum it gives
+ *  (net/aurumLaw.js), so a payment taken back takes them back with it. Pure. */
+export const shopRepeatable = (/** @type {unknown} */ w) => !!w && /** @type {any} */ (w).kind === 'aurum';
 
 /** The ware ids a row's `shop_wares` bits hold, in the wares' order. A bit no ware has is not held. Pure. */
 export function shopHeldOf(/** @type {unknown} */ bits) {
@@ -254,11 +272,11 @@ export function shopFeaturedNow(/** @type {ReadonlyArray<{ id: string, fromMs: n
   for (const e of list) if (nowMs >= e.fromMs && nowMs < e.toMs && !seen.has(e.id)) { seen.add(e.id); out.push(e); }
   return out;
 }
-/** WHETHER A WARE IS SOLD AT `nowMs`: sold alone, named on sale, inside its season's days, never before its first featured
- *  window (a drop is news when it lands), and - for a ware the schedule marks limited - inside one of its limited
- *  windows. Pure. */
+/** WHETHER A WARE IS SOLD FOR MONEY AT `nowMs`: sold alone and for money, named on sale, inside its season's days, never
+ *  before its first featured window (a drop is news when it lands), and - for a ware the schedule marks limited - inside
+ *  one of its limited windows. Pure. */
 export function shopSellable(/** @type {any} */ w, /** @type {ReadonlyArray<string>} */ onSale, /** @type {ReadonlyArray<any>} */ featured, /** @type {number} */ nowMs) {
-  if (!w?.alone || !onSale.includes(w.id)) return false;
+  if (!w?.alone || !w.cash || !onSale.includes(w.id)) return false;
   const season = w.season ? passSeasonById(w.season) : null;
   if (w.season && !(passOpen(season, nowMs) && passOpen(season, nowMs + SHOP_CHECKOUT_MS))) return false;   // AUDIT-STOREFRONT S10: no page outlives its season
   const mine = featured.filter((e) => e.id === w.id);

@@ -69,3 +69,61 @@ CREATE TABLE IF NOT EXISTS season_mauls (
   PRIMARY KEY (account, day),
   FOREIGN KEY (account) REFERENCES players(id) ON DELETE CASCADE
 );
+
+-- AURUM (2026-10-29, the owner: "a currency that can be earned ingame and through the past + purchased to be used to
+-- purchase a selection of rotating items daily"; bible/06-Systems/Aurum.md). An account's Aurum is counted at every ask:
+-- its paid packs (`shop_orders.aurum`), its pass tracks' rewards (src/net/aurumLaw.js aurumTrackOf) and this ledger's
+-- lines. A refund or a dispute takes a pack's Aurum back by its order's status alone.
+--   shop_orders.aurum  the Aurum a pack's order gives, set at its checkout (0 for every other ware)
+ALTER TABLE shop_orders ADD COLUMN aurum INTEGER NOT NULL DEFAULT 0;
+
+-- THE LEDGER: a line a deed struck or a ware bought, once each (the key): `deed` the week's first of a witnessed kind
+-- (ref `<kind>:<week>`, the week from Monday, UTC), `buy` a daily ware (ref its id, spent as a negative amount).
+CREATE TABLE IF NOT EXISTS aurum_ledger (
+  account TEXT NOT NULL,
+  kind    TEXT NOT NULL,
+  ref     TEXT NOT NULL,
+  amount  INTEGER NOT NULL,
+  day     INTEGER NOT NULL,
+  at      INTEGER NOT NULL,
+  PRIMARY KEY (account, kind, ref),
+  FOREIGN KEY (account) REFERENCES players(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_aurum_ledger_day ON aurum_ledger (kind, day);
+
+-- THE WEEK'S DEEDS (aurumLaw.js AURUM_DEEDS - a pin holds these amounts to it): a witnessed receipt's own row strikes its
+-- kind's Aurum once a week, in the claim's batch, so a claim rolled back strikes nothing. A gate closed by a rite is no
+-- fight; a Redoubt counts where the week paid it.
+CREATE TRIGGER IF NOT EXISTS aurum_deed_gate AFTER INSERT ON gate_kills WHEN NEW.earned != 'rite'
+BEGIN
+  INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at) VALUES (NEW.account, 'deed', 'gate:' || ((NEW.at / 86400 + 3) / 7), 30, NEW.at / 86400, NEW.at);
+END;
+CREATE TRIGGER IF NOT EXISTS aurum_deed_eg AFTER INSERT ON eg_redoubts WHEN NEW.paid = 1
+BEGIN
+  INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at) VALUES (NEW.account, 'deed', 'eg:' || ((NEW.at / 86400 + 3) / 7), 30, NEW.at / 86400, NEW.at);
+END;
+CREATE TRIGGER IF NOT EXISTS aurum_deed_serpent AFTER INSERT ON serpent_kills
+BEGIN
+  INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at) VALUES (NEW.account, 'deed', 'serpent:' || ((NEW.at / 86400 + 3) / 7), 25, NEW.at / 86400, NEW.at);
+END;
+CREATE TRIGGER IF NOT EXISTS aurum_deed_star AFTER INSERT ON stars_held
+BEGIN
+  INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at) VALUES (NEW.account, 'deed', 'star:' || ((NEW.at / 86400 + 3) / 7), 20, NEW.at / 86400, NEW.at);
+END;
+CREATE TRIGGER IF NOT EXISTS aurum_deed_raid AFTER INSERT ON raid_cleanses
+BEGIN
+  INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at) VALUES (NEW.account, 'deed', 'raid:' || ((NEW.at / 86400 + 3) / 7), 15, NEW.at / 86400, NEW.at);
+END;
+
+-- AUDIT-STOREFRONT II (A1, A3 - Stripe promises its events in no order, and retries a refused one for days): EVERY WORD
+-- ON A PAYMENT, kept by its payment_intent whether or not its order is paid yet - a full refund (`refund`, ref ''), a
+-- dispute (`dispute`, ref its id, open until it closes). A paid word that lands after reads them before it grants, and a
+-- dispute's close gives the ware back only with no refund and no other dispute open.
+CREATE TABLE IF NOT EXISTS shop_charge_words (
+  intent TEXT NOT NULL,
+  kind   TEXT NOT NULL,
+  ref    TEXT NOT NULL,
+  open   INTEGER NOT NULL DEFAULT 1,
+  at     INTEGER NOT NULL,
+  PRIMARY KEY (intent, kind, ref)
+);

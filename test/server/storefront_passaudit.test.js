@@ -87,7 +87,7 @@ test('AUDIT PASS 8: a find answers the season and its tracks - the Premium bough
   t.mock.timers.enable({ apis: ['Date'], now: IN_TREMOR });
   const s = await stand();
   const me = await s.registered('Climber');
-  s.raw.prepare('UPDATE players SET pass_s1 = ? WHERE id = ?').run(14_990, me.id);
+  s.raw.prepare('UPDATE players SET pass_s1 = ? WHERE id = ?').run(7_990, me.id);   // PIN MOVED (AURUM): the track's reward a level was 15's title
   const events = [];
   const answer = (r) => ('error' in r ? { ok: false, error: r.error } : { ok: true, data: r });
   _resetPassClientForTests();
@@ -104,7 +104,7 @@ test('AUDIT PASS 8: a find answers the season and its tracks - the Premium bough
     assert.equal(passState().tracks.premium, false);
     s.raw.prepare("UPDATE players SET shop_held = 'pass:s1premium' WHERE id = ?").run(me.id);   // paid on Stripe meanwhile
     assert.equal(await askPassFind('foe'), 12);
-    assert.deepEqual(events.filter((e) => e.kind === 'level'), [{ kind: 'level', level: 15, grants: ['title:tonalarchitect'] }]);
+    assert.deepEqual(events.filter((e) => e.kind === 'level'), [{ kind: 'level', level: 8, grants: ['icon:lexicon'] }]);
     const f = await findPass(s.ctx(), s.player(me), { source: 'foe' }, ON);
     assert.deepEqual([f.season, f.tracks.premium, f.mult], ['s1', true, 1]);
   } finally { _resetPassClientForTests(); }

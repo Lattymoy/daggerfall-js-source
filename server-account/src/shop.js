@@ -7,8 +7,9 @@
 // Off until the deploy puts both Stripe secrets (shopOn) - the window then shows the wares with nothing to buy.
 import {
   SHOP_WARES, SHOP_CURRENCY, SHOP_WARE_NAME, SHOP_KIND_NAME, SHOP_ORDER_ID_RE, shopWareById, shopOwns, shopSpent, shopOnSaleOf, shopPriceText, shopReceiptBatch,
-  shopPriceFor, shopHeldIds, shopHeldDirect, shopFeaturedOf, shopFeaturedNow, shopSellable, shopDropped, shopClosure, shopCreditOf, SHOP_CHECKOUT_MS,
+  shopPriceFor, shopHeldIds, shopHeldDirect, shopFeaturedOf, shopFeaturedNow, shopSellable, shopDropped, shopClosure, shopCreditOf, SHOP_CHECKOUT_MS, shopRepeatable,
 } from '../../src/net/shopLaw.js';
+import { aurumSwitchOf } from '../../src/net/aurumLaw.js';   // AURUM: its packs are sold while it is open to every account
 import { PASS_SEASONS, passSeasonAt, passSeasonById, passOpen, passWareXp, passWareSeason } from '../../src/net/battlePassLaw.js';   // STOREFRONT: the levels a pass or a booster gives at once
 import { passSwitchOf } from './battlePass.js';   // AUDIT-STOREFRONT S6: a season's wares are sold while its finds are open
 import { POST_SENDER } from '../../src/net/postLaw.js';
@@ -65,8 +66,11 @@ export const shopFeatured = (/** @type {any} */ env) => shopFeaturedOf(env?.SHOP
 /** AUDIT-STOREFRONT S6: a season's wares are sold only while its finds are open to every account (PASS_OPEN 'on') - a
  *  pass or a booster bought while they are shut buys nothing. */
 const seasonShut = (/** @type {any} */ env, /** @type {any} */ w) => !!w?.season && passSwitchOf(env?.PASS_OPEN) !== 'on';
+/** AURUM: an Aurum pack is sold only while Aurum is open to every account (AURUM_OPEN 'on') - Aurum nobody can spend
+ *  is no sale. */
+const aurumShut = (/** @type {any} */ env, /** @type {any} */ w) => w?.kind === 'aurum' && aurumSwitchOf(env?.AURUM_OPEN) !== 'on';
 /** STOREFRONT: whether a ware is sold at `nowS` (shopLaw.js shopSellable: on sale, in its season, inside a limited window). */
-export const shopSoldNow = (/** @type {any} */ env, /** @type {any} */ w, /** @type {number} */ nowS) => shopSellable(w, shopOnSale(env), shopFeatured(env), nowS * 1000) && !seasonShut(env, w);
+export const shopSoldNow = (/** @type {any} */ env, /** @type {any} */ w, /** @type {number} */ nowS) => shopSellable(w, shopOnSale(env), shopFeatured(env), nowS * 1000) && !seasonShut(env, w) && !aurumShut(env, w);
 /** STOREFRONT: THE CAROUSEL'S WARES at `nowS`, in order: the live season's passes first while they are sold, then the
  *  schedule's featured wares in its order - each sold now (a ware featured but off sale is not shown). */
 export function shopCarousel(/** @type {any} */ env, /** @type {number} */ nowS) {
@@ -82,8 +86,8 @@ const hex = (/** @type {Uint8Array} */ b) => Array.from(b, (v) => v.toString(16)
 /** A new order's id: 24 hex off the Worker's own randomness. */
 export const mintOrderId = (/** @type {(b: Uint8Array) => Uint8Array} */ rand) => hex(rand(new Uint8Array(12)));
 
-/** A ware's line as a person reads it: "Genesis (title)". */
-export const wareLine = (/** @type {any} */ w) => `${SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (w.id)] ?? w.key} (${SHOP_KIND_NAME[/** @type {keyof typeof SHOP_KIND_NAME} */ (w.kind)] ?? w.kind})`;
+/** A ware's line as a person reads it: "Genesis (title)" - an Aurum pack's its name alone ("500 Aurum"). */
+export const wareLine = (/** @type {any} */ w) => (w.kind === 'aurum' ? SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (w.id)] : `${SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (w.id)] ?? w.key} (${SHOP_KIND_NAME[/** @type {keyof typeof SHOP_KIND_NAME} */ (w.kind)] ?? w.kind})`);
 
 /**
  * THE SHOP'S CARD in the account read: `{ on, wares }`, each ware `{ id, sale, held, buy }` - `buy` a link to this
@@ -97,9 +101,9 @@ export async function shopCardOf(/** @type {any} */ player, /** @type {any} */ e
   const wares = [];
   let key = null;   // derived once a read, at its first Buy link - every account read asks this
   for (const w of SHOP_WARES) {
-    if (!w.alone) continue;   // STOREFRONT: a ware sold only in a bundle has no row of its own
+    if (!w.alone || !w.cash) continue;   // STOREFRONT: a ware sold only in a bundle has no row of its own; AURUM: nor one sold only for Aurum
     const isHeld = registered(player) && shopOwns(player, w.id), onSale = shopSoldNow(env, w, nowS);   // ARMORY: a set's pieces, or the set's through its pieces; STOREFRONT: a bundle's wares
-    if (!isHeld && !onSale && (!shopDropped(w, schedule, nowS * 1000) || seasonShut(env, w))) continue;   // AUDIT-STOREFRONT S2: nothing upcoming is told
+    if (!isHeld && !onSale && (!shopDropped(w, schedule, nowS * 1000) || seasonShut(env, w) || aurumShut(env, w))) continue;   // AUDIT-STOREFRONT S2: nothing upcoming is told; AURUM: no pack while Aurum is shut
     const spent = !isHeld && registered(player) && shopSpent(player, w.id);   // AUDIT-STOREFRONT S5
     if (on && onSale && !isHeld && !spent && registered(player)) key ??= await sealKey(subtle, String(env.STRIPE_SECRET_KEY), SEAL_SALT, 'buy');
     const buy = key && onSale && !isHeld && !spent
@@ -239,8 +243,8 @@ export async function shopCheckout(ctx, env, claims, { fetch, origin }) {
     .bind(player.id, ware.id, nowS + 60, cents, credit).first();
   if (open?.stripe_url) return { url: open.stripe_url };
   const id = mintOrderId(rand), expiresAt = nowS + SHOP_CHECKOUT_S;
-  await db.prepare("INSERT INTO shop_orders (id, player, ware, cents, currency, status, created_at, expires_at, credit) VALUES (?1, ?2, ?3, ?4, ?5, 'open', ?6, ?7, ?8)")
-    .bind(id, player.id, ware.id, cents, SHOP_CURRENCY, nowS, expiresAt, credit).run();
+  await db.prepare("INSERT INTO shop_orders (id, player, ware, cents, currency, status, created_at, expires_at, credit, aurum) VALUES (?1, ?2, ?3, ?4, ?5, 'open', ?6, ?7, ?8, ?9)")
+    .bind(id, player.id, ware.id, cents, SHOP_CURRENCY, nowS, expiresAt, credit, ware.aurum).run();   // AURUM: a pack's Aurum, the order's own
   const s = await stripeCheckout(fetch, env, checkoutFields({ id, player: player.id, handle: player.handle, ware, cents, origin, expiresAt }));
   if ('error' in s) {
     await db.prepare("UPDATE shop_orders SET status = 'expired', ended_at = ?2 WHERE id = ?1 AND status = 'open'").bind(id, nowS).run();
@@ -296,6 +300,7 @@ export async function stripeSignatureOk(/** @type {string} */ secret, /** @type 
 /** STOREFRONT: where a ware is used, as its receipt says it - the pass in the shop's Battle Pass, a booster at once, the
  *  rest from the profile. Pure. */
 export function receiptUse(/** @type {any} */ w) {
+  if (w.kind === 'aurum') return 'Spend it on the daily wares in the shop. They change each day at midnight, UTC.';   // AURUM
   if (w.kind === 'pass' || (w.kind === 'bundle' && w.season)) return 'Its premium track is open now: every reward you reached on it is yours. See it in the shop\'s Battle Pass.';
   if (w.kind === 'boost') return 'It works at once: more pass experience from every deed for the rest of the season.';
   return 'Wear it from your profile, or from the Collections page.';
@@ -308,7 +313,7 @@ export function receiptPost(/** @type {any} */ order, /** @type {number} */ nowS
     batch: shopReceiptBatch(order.id),
     subject: `Thank you: ${SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (w.id)]}`,
     body: [
-      `${wareLine(w)} is yours, on every character of your account.`,
+      w.kind === 'aurum' ? `${wareLine(w)} is on your account now.` : `${wareLine(w)} is yours, on every character of your account.`,   // AURUM: a pack's
       ...(w.gives.length ? ['', `It gives ${w.gives.map((/** @type {string} */ g) => SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (g)] ?? g).join(', ')}.`] : []),   // STOREFRONT: what a bundle held
       '',
       receiptUse(w),
@@ -321,17 +326,21 @@ export function receiptPost(/** @type {any} */ order, /** @type {number} */ nowS
   };
 }
 /** The letter a refund or a dispute sends, its words fixed too: what left the account with it (`gone`, ware ids - a
- *  giver's wares it covered go too), or that nothing did. Pure. */
-export function revokePost(/** @type {any} */ order, /** @type {string} */ why, /** @type {ReadonlyArray<string>} */ gone = [order.ware]) {
+ *  giver's wares it covered go too), or that nothing did. AURUM: a pack's Aurum off the balance. AUDIT-STOREFRONT II A1:
+ *  `never` for a payment taken back before its ware was put on the account. Pure. */
+export function revokePost(/** @type {any} */ order, /** @type {string} */ why, /** @type {ReadonlyArray<string>} */ gone = [order.ware], never = false) {
   const w = /** @type {any} */ (shopWareById(order.ware));
   const names = gone.map((id) => SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (id)] ?? id);
+  const off = never ? 'It was not put on your account.'
+    : shopRepeatable(w) ? `Its ${Number(order.aurum) || w.aurum} Aurum are off your balance${why === 'disputed' ? ' while the dispute stands' : ''}.`
+    // AUDIT-STOREFRONT S1: said as it stands - another order can still hold it, and a bundle can lose what it covered
+    : !names.length ? 'Your account still holds it through another order.' : `Off your account${why === 'disputed' ? ' while the dispute stands' : ''}: ${names.join(', ')}.`;
   return {
     batch: `${shopReceiptBatch(order.id)}-${why === 'disputed' ? 'disputed' : 'refunded'}`,   // a letter a reason: a dispute, then a refund, both said
     subject: `${why === 'disputed' ? 'Payment disputed' : 'Refunded'}: ${SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (w.id)]}`,
     body: [
       why === 'disputed' ? `The payment for ${wareLine(w)} was disputed.` : `The payment for ${wareLine(w)} was refunded.`,
-      // AUDIT-STOREFRONT S1: said as it stands - another order can still hold it, and a bundle can lose what it covered
-      !names.length ? 'Your account still holds it through another order.' : `Off your account${why === 'disputed' ? ' while the dispute stands' : ''}: ${names.join(', ')}.`,
+      off,
       '',
       `Order ${order.id}. Questions: ask the developers on the Discord.`,
       '',
@@ -351,9 +360,12 @@ export function restorePost(/** @type {any} */ order) {
 /** AUDIT-STOREFRONT S3: the letter a payment the service returns itself sends - for a ware held already when the payment
  *  landed (two pages paid at once), a booster a stronger one makes worth nothing, or a season's ware paid after its
  *  season. Pure. */
-export function refundPost(/** @type {any} */ order, /** @type {'held'|'spent'|'late'} */ why) {
+export function refundPost(/** @type {any} */ order, /** @type {'held'|'spent'|'late'|'price'} */ why) {
   const w = /** @type {any} */ (shopWareById(order.ware));
-  const first = { held: `Your account already held ${wareLine(w)} when this payment arrived.`, spent: `Your account already had a stronger booster than ${wareLine(w)} when this payment arrived.`, late: `The season ended before this payment for ${wareLine(w)} arrived.` };
+  const first = {
+    held: `Your account already held ${wareLine(w)} when this payment arrived.`, spent: `Your account already had a stronger booster than ${wareLine(w)} when this payment arrived.`, late: `The season ended before this payment for ${wareLine(w)} arrived.`,
+    price: `What your account holds of ${wareLine(w)} changed before this payment arrived, and its price with it.`,   // AUDIT-STOREFRONT II A2
+  };
   return {
     batch: `${shopReceiptBatch(order.id)}-refunded`,
     subject: `Refunded: ${SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (w.id)]}`,
@@ -379,11 +391,16 @@ export const orderCovers = (/** @type {any} */ order) => {
 };
 const tokensOf = (/** @type {any} */ row) => String(row?.shop_held ?? '').split(' ').filter(Boolean);
 /** THE ROW WITH AN ORDER'S WARE ON - its bit for the first nine, its id in `shop_held` for the rest (once) - and the marks
- *  off what the order covers (shopLaw.js shopLostOf). Its two columns. Pure. */
+ *  off what the order covers (shopLaw.js shopLostOf). AUDIT-STOREFRONT II A2: a mark on each ware its credit took off that
+ *  the row no longer holds - its own payment went back meanwhile, so the giver given again must not give it. An Aurum
+ *  pack is no thing held: the row as it is. Its two columns. Pure. */
 export function heldGranted(/** @type {any} */ row, /** @type {any} */ order) {
   const w = /** @type {any} */ (shopWareById(order.ware)), covers = orderCovers(order);
+  if (shopRepeatable(w)) return { shop_wares: Number(row?.shop_wares) || 0, shop_held: String(row?.shop_held ?? '') };
+  const had = shopHeldIds(row);
   const toks = tokensOf(row).filter((t) => !(t[0] === '-' && covers.includes(t.slice(1))));
   if (!w.bit && !toks.includes(w.id)) toks.push(w.id);
+  for (const c of String(order?.credit ?? '').split(' ').filter(Boolean)) if (!had.includes(c) && !toks.includes(`-${c}`)) toks.push(`-${c}`);
   return { shop_wares: (Number(row?.shop_wares) || 0) | w.bit, shop_held: toks.join(' ') };
 }
 /** THE ROW WITH AN ORDER'S WARE TAKEN BACK - its bit or id off unless another paid order (`others`) is for the same ware,
@@ -391,6 +408,7 @@ export function heldGranted(/** @type {any} */ row, /** @type {any} */ order) {
 export function heldRevoked(/** @type {any} */ row, /** @type {any} */ order, /** @type {ReadonlyArray<any>} */ others) {
   const w = /** @type {any} */ (shopWareById(order.ware));
   let toks = tokensOf(row), bits = Number(row?.shop_wares) || 0;
+  if (shopRepeatable(w)) return { shop_wares: bits, shop_held: toks.join(' ') };   // AURUM: a pack's Aurum leaves with its order's status
   if (!others.some((o) => o.ware === w.id)) {
     if (w.bit) bits &= ~w.bit;
     else toks = toks.filter((t) => t !== w.id);
@@ -463,17 +481,35 @@ async function refundOwed(/** @type {any} */ db, /** @type {any} */ env, /** @ty
   return { ok: true, applied: 0 };
 }
 
+/** AUDIT-STOREFRONT II A1, A3: WHAT STRIPE HAS SAID OF A PAYMENT, whatever its order's state - refunded in full, and the
+ *  disputes still open (`shop_charge_words`). */
+async function chargeFate(/** @type {any} */ db, /** @type {unknown} */ intent) {
+  if (typeof intent !== 'string' || !intent) return { refunded: false, disputes: 0 };
+  const r = await db.prepare(`SELECT (SELECT COUNT(*) FROM shop_charge_words WHERE intent = ?1 AND kind = 'refund') AS refunded,
+    (SELECT COUNT(*) FROM shop_charge_words WHERE intent = ?1 AND kind = 'dispute' AND open = 1) AS disputes`).bind(intent).first();
+  return { refunded: Number(r?.refunded) > 0, disputes: Number(r?.disputes) || 0 };
+}
+/** A word on a payment kept: a refund (`ref` ''), or a dispute opened (`open` 1) or closed (0) by its id. */
+const keepWord = (/** @type {any} */ db, /** @type {string} */ intent, /** @type {'refund'|'dispute'} */ kind, /** @type {string} */ ref, /** @type {number} */ open, /** @type {number} */ nowS) =>
+  db.prepare('INSERT INTO shop_charge_words (intent, kind, ref, open, at) VALUES (?1, ?2, ?3, ?4, ?5) ON CONFLICT (intent, kind, ref) DO UPDATE SET open = excluded.open, at = excluded.at')
+    .bind(intent.slice(0, 255), kind, ref.slice(0, 255), open, nowS).run();
+/** AUDIT-STOREFRONT II A2, A5: whether a giver's payment is for a price no longer its row's - what the row holds of it
+ *  changed since its checkout (a credited ware's own payment went back, or a ware it gives was bought meanwhile). Pure. */
+const creditMoved = (/** @type {any} */ row, /** @type {any} */ w, /** @type {any} */ order) => w.gives.length > 0 && shopCreditOf(row, w.id).join(' ') !== String(order.credit ?? '');
+
 /**
  * A PAYMENT TAKEN: the order paid, its ware on the row and the receipt in the mailbox - one batch, guarded on the order
  * moving from open (or expired: Stripe finished late) and on the row as read, so a webhook told twice grants once. The
- * amount and currency must be the order's. A ware held by then (two pages paid), a booster spent, or a season's ware paid
- * after it, is refunded instead (AUDIT-STOREFRONT S3, S5, S10); a grant closes the pages it made wrong. `{ ok, applied }`.
+ * amount and currency must be the order's. A ware held by then (two pages paid), a booster spent, a season's ware paid
+ * after it, or a giver whose price moved since its page opened (AUDIT-STOREFRONT II A2), is refunded instead
+ * (AUDIT-STOREFRONT S3, S5, S10); a grant closes the pages it made wrong. A payment refunded or disputed before this word
+ * landed is never granted (A1): a dispute won later gives it (restoreOrder). `{ ok, applied }`.
  * @param {{ db: any, nowS: number }} ctx @param {string} orderId @param {{ intent?: unknown, amount?: unknown, currency?: unknown }} paid
  * @param {{ env?: any, fetch?: typeof fetch }} [io] Stripe, to close pages and return payments
  */
 export async function fulfilOrder({ db, nowS }, orderId, { intent = null, amount, currency }, { env = {}, fetch } = {}) {
   if (typeof orderId !== 'string' || !SHOP_ORDER_ID_RE.test(orderId)) return { ok: true, applied: 0 };
-  const order = await db.prepare('SELECT id, player, ware, cents, currency, status, credit, refund, refund_owed, payment_intent FROM shop_orders WHERE id = ?1').bind(orderId).first();
+  const order = await db.prepare('SELECT id, player, ware, cents, currency, status, credit, refund, refund_owed, payment_intent, aurum FROM shop_orders WHERE id = ?1').bind(orderId).first();
   const w = shopWareById(order?.ware);
   if (order?.refund_owed && order.payment_intent) return refundOwed(db, env, fetch, order, order.payment_intent);   // Stripe's word again: ask it again
   if (!order?.player || !w || !['open', 'expired'].includes(order.status)) return { ok: true, applied: 0 };
@@ -482,17 +518,26 @@ export async function fulfilOrder({ db, nowS }, orderId, { intent = null, amount
     return { ok: true, applied: 0, mismatch: true };
   }
   const pi = typeof intent === 'string' ? intent.slice(0, 255) : null;
-  /** @type {'held'|'spent'|'late'|null} */ let refund = null;
   const r = await settled(db, order.id, ['open', 'expired'], async () => {
-    const row = await heldRow(db, order.player);
-    refund = shopOwns(row, w.id) ? 'held' : shopSpent(row, w.id) ? 'spent' : w.season && !passOpen(passSeasonById(w.season), nowS * 1000) ? 'late' : null;
+    const row = await heldRow(db, order.player), fate = await chargeFate(db, pi);
+    if (fate.refunded || fate.disputes) {
+      const gone = fate.refunded ? 'refunded' : 'disputed';   // AUDIT-STOREFRONT II A1: taken back before this word landed
+      await db.batch([
+        db.prepare("UPDATE shop_orders SET status = ?4, paid_at = ?2, ended_at = ?2, payment_intent = ?3 WHERE id = ?1 AND status IN ('open', 'expired')").bind(order.id, nowS, pi, gone),
+        mustChange(db),
+        postStatement(db, order.player, revokePost(order, gone, [], true), null, nowS),
+      ]);
+      return { ok: true, applied: 0 };
+    }
+    /** @type {'held'|'spent'|'late'|'price'|null} */
+    const refund = shopOwns(row, w.id) ? 'held' : shopSpent(row, w.id) ? 'spent' : w.season && !passOpen(passSeasonById(w.season), nowS * 1000) ? 'late' : creditMoved(row, w, order) ? 'price' : null;
     if (refund) {
       await db.batch([
         db.prepare("UPDATE shop_orders SET status = 'refunded', paid_at = ?2, ended_at = ?2, payment_intent = ?3, refund = ?4, refund_owed = 1 WHERE id = ?1 AND status IN ('open', 'expired')").bind(order.id, nowS, pi, refund),
         mustChange(db),
         postStatement(db, order.player, refundPost(order, refund), null, nowS),
       ]);
-      return { ok: true, applied: 0 };
+      return { ok: true, applied: 0, refund };   // AUDIT-STOREFRONT II A4: the refund this attempt wrote - an attempt refused writes none
     }
     const after = heldGranted(row, order);
     await db.batch([
@@ -505,9 +550,9 @@ export async function fulfilOrder({ db, nowS }, orderId, { intent = null, amount
     ]);
     return { ok: true, applied: 1 };
   });
-  if (refund && pi) return refundOwed(db, env, fetch, { ...order, refund }, pi);
+  if (r.refund && pi) return refundOwed(db, env, fetch, { ...order, refund: r.refund }, pi);
   if (r.applied) await closeStale({ db, nowS }, env, fetch, order.player);
-  return r;
+  return { ok: r.ok, applied: r.applied };
 }
 
 /** AUDIT-STOREFRONT S3: an account's open pages that a grant left wrong - for a ware it now holds, or at a price that is
@@ -521,18 +566,25 @@ async function closeStale(/** @type {{ db: any, nowS: number }} */ ctx, /** @typ
 /**
  * A PAYMENT TAKEN BACK (a full refund, a dispute opened): the order marked, and what it alone covered off the row - its
  * ware unless another paid order is for it, and a giver's wares no other paid order covers (AUDIT-STOREFRONT S1) - with
- * the levels they gave, and a letter saying what left. `{ ok, applied }`.
+ * the levels they gave, and a letter saying what left; then the pages priced on what left are closed (AUDIT-STOREFRONT II
+ * A2). A refund of a disputed order ends it refunded, its ware already off (A3). `{ ok, applied }`.
  * @param {{ db: any, nowS: number }} ctx @param {unknown} intent Stripe's payment @param {'refunded'|'disputed'} why
+ * @param {{ env?: any, fetch?: typeof fetch }} [io] Stripe, to close the pages left wrong
  */
-export async function revokeOrder({ db, nowS }, intent, why) {
+export async function revokeOrder({ db, nowS }, intent, why, { env = {}, fetch } = {}) {
   if (typeof intent !== 'string' || !intent) return { ok: true, applied: 0 };
-  const order = await db.prepare("SELECT id, player, ware, credit FROM shop_orders WHERE payment_intent = ?1 AND status = 'paid'").bind(intent).first();
+  const order = await db.prepare("SELECT id, player, ware, credit, status, aurum FROM shop_orders WHERE payment_intent = ?1 AND status IN ('paid', 'disputed')").bind(intent).first();
   const w = shopWareById(order?.ware);
   if (!order || !w) {
     if (why === 'refunded') await db.prepare('UPDATE shop_orders SET refund_owed = 0 WHERE payment_intent = ?1 AND refund_owed = 1').bind(intent).run();   // a refund the service asked, landed
     return { ok: true, applied: 0 };
   }
-  return settled(db, order.id, ['paid'], async () => {
+  if (order.status === 'disputed') {
+    if (why !== 'refunded') return { ok: true, applied: 0 };   // a second dispute on a payment already held by one: its word is kept
+    const r = await db.prepare("UPDATE shop_orders SET status = 'refunded', ended_at = ?2 WHERE id = ?1 AND status = 'disputed'").bind(order.id, nowS).run();
+    return { ok: true, applied: Number(r?.meta?.changes ?? 0) };
+  }
+  const r = await settled(db, order.id, ['paid'], async () => {
     const row = order.player ? await heldRow(db, order.player) : null;
     const after = row ? heldRevoked(row, order, await paidOthers(db, order)) : null;
     const had = row ? shopHeldIds(row) : [], has = after ? shopHeldIds(after) : [];
@@ -544,15 +596,24 @@ export async function revokeOrder({ db, nowS }, intent, why) {
     ]);
     return { ok: true, applied: 1 };
   });
+  if (r.applied && order.player) await closeStale({ db, nowS }, env, fetch, order.player);
+  return r;
 }
 
 /** A dispute the seller won, or an inquiry closed with no chargeback: the order paid again, what it covers back on the row
- *  and a letter saying so. `{ ok, applied }`. */
+ *  and a letter saying so - only while no refund was told of the payment and no other dispute on it stands (AUDIT-
+ *  STOREFRONT II A3: a refund ends it refunded). `{ ok, applied }`. */
 export async function restoreOrder({ db, nowS }, /** @type {unknown} */ intent) {
   if (typeof intent !== 'string' || !intent) return { ok: true, applied: 0 };
   const order = await db.prepare("SELECT id, player, ware, credit FROM shop_orders WHERE payment_intent = ?1 AND status = 'disputed'").bind(intent).first();
   const w = shopWareById(order?.ware);
   if (!order?.player || !w) return { ok: true, applied: 0 };
+  const fate = await chargeFate(db, intent);
+  if (fate.refunded) {
+    const r = await db.prepare("UPDATE shop_orders SET status = 'refunded' WHERE id = ?1 AND status = 'disputed'").bind(order.id).run();
+    return { ok: true, applied: Number(r?.meta?.changes ?? 0) };
+  }
+  if (fate.disputes) return { ok: true, applied: 0 };
   return settled(db, order.id, ['disputed'], async () => {
     const row = await heldRow(db, order.player), after = heldGranted(row, order);
     await db.batch([
@@ -596,11 +657,18 @@ export async function shopWebhook(ctx, env, body, signature, fetch) {
       const r = await ctx.db.prepare("UPDATE shop_orders SET status = 'expired', ended_at = ?2 WHERE id = ?1 AND status = 'open'").bind(id, ctx.nowS).run();
       return { ok: true, applied: Number(r?.meta?.changes ?? 0) };
     }
+    // AUDIT-STOREFRONT II A1, A3: each word kept by its payment first, so an order paid later reads it
     case 'charge.refunded':
-      return o.refunded === true ? revokeOrder(ctx, o.payment_intent, 'refunded') : { ok: true, applied: 0 };   // a part refund keeps the ware
+      if (o.refunded !== true || typeof o.payment_intent !== 'string') return { ok: true, applied: 0 };   // a part refund keeps the ware
+      await keepWord(ctx.db, o.payment_intent, 'refund', '', 1, ctx.nowS);
+      return revokeOrder(ctx, o.payment_intent, 'refunded', { env, fetch });
     case 'charge.dispute.created':
-      return revokeOrder(ctx, o.payment_intent, 'disputed');
+      if (typeof o.payment_intent !== 'string') return { ok: true, applied: 0 };
+      await keepWord(ctx.db, o.payment_intent, 'dispute', String(o.id ?? ''), 1, ctx.nowS);
+      return revokeOrder(ctx, o.payment_intent, 'disputed', { env, fetch });
     case 'charge.dispute.closed':
+      if (typeof o.payment_intent !== 'string') return { ok: true, applied: 0 };
+      await keepWord(ctx.db, o.payment_intent, 'dispute', String(o.id ?? ''), 0, ctx.nowS);
       return o.status === 'won' || o.status === 'warning_closed' ? restoreOrder(ctx, o.payment_intent) : { ok: true, applied: 0 };   // an inquiry closed: no chargeback
     default:
       return { ok: true, applied: 0 };

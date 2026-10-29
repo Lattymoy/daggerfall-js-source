@@ -466,7 +466,7 @@ export function aurasHeld(player, env, nowS = nowSecs()) {
 export const SOULCAKE_ICON = 'soulcake';
 export function iconsHeld(/** @type {any} */ player, nowS = nowSecs()) {
   if (!(typeof player?.handle === 'string' && player.handle)) return [];
-  const own = new Set([...festivalKeys(player, 'icon'), ...passKeys(player, 'icon', nowS)]);   // STOREFRONT: and the Battle Pass's portraits
+  const own = new Set([...festivalKeys(player, 'icon'), ...passKeys(player, 'icon', nowS), ...shopKeys(player, 'icon')]);   // STOREFRONT: and the Battle Pass's portraits; AURUM: and the daily wares' (shop_held)
   if (Number(player?.fest_taken) >= SOULCAKE_TAKEN) own.add(SOULCAKE_ICON);
   return ICONS.filter((i) => own.has(i));
 }

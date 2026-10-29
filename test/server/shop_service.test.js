@@ -19,11 +19,11 @@ import { postHead } from '../../src/net/postLaw.js';
 import { POST_BODY_MAX, POST_SUBJECT_MAX, POST_BATCH_RE } from '../../src/net/postLaw.js';
 
 const { subtle } = globalThis.crypto;
-const ON = { STRIPE_SECRET_KEY: 'sk_test_shop', STRIPE_WEBHOOK_SECRET: 'whsec_shop', SHOP_ON_SALE: SHOP_WARES.filter((w) => w.alone).map((w) => w.id).join(','), PASS_OPEN: 'on' };   // ARMORY (PIN MOVED): the deploy's list, the Aura Armory's Eternal line with it; STOREFRONT: every ware sold alone; AUDIT-STOREFRONT S6 (PIN MOVED): the deploy's PASS_OPEN, which a season's wares now need
+const ON = { STRIPE_SECRET_KEY: 'sk_test_shop', STRIPE_WEBHOOK_SECRET: 'whsec_shop', SHOP_ON_SALE: SHOP_WARES.filter((w) => w.alone).map((w) => w.id).join(','), PASS_OPEN: 'on', AURUM_OPEN: 'on' };   // ARMORY (PIN MOVED): the deploy's list, the Aura Armory's Eternal line with it; STOREFRONT: every ware sold alone; AUDIT-STOREFRONT S6 (PIN MOVED): the deploy's PASS_OPEN, which a season's wares now need
 /** STOREFRONT: inside Season One's days - its passes and boosters on sale (bible/06-Systems/Battle-Pass.md), a clock the
  *  season's windows never make a test depend on. */
 const IN_SEASON = Date.UTC(2026, 10, 20, 12);
-const SOLD = SHOP_WARES.filter((w) => w.alone);
+const SOLD = SHOP_WARES.filter((w) => w.alone && w.cash);   // AURUM (PIN MOVED): a ware sold for Aurum alone is never on the money card
 const AFTER = 1_900_000_000;
 const row = (o = {}) => ({ id: 'acct-buyer', handle: 'Buyer', created_at: AFTER, registered_at: AFTER, ...o });
 
@@ -69,7 +69,16 @@ test('SHOP: the wares at the owner\'s and the sheet\'s prices, the owner\'s nine
     ['boost:s1cog', 499, 0, 'boosts', false, 'standard', true],
     ['boost:s1tonal', 1299, 0, 'boosts', false, 'premium', true],
     ['boost:s1heart', 2499, 0, 'boosts', false, 'exclusive', true],
+    // AURUM (PIN MOVED, bible/06-Systems/Aurum.md): the daily wares' icons, sold for Aurum alone, and the Aurum's packs
+    ['icon:gatefire', 600, 0, 'icons', false, 'premium', true], ['icon:aurbis', 700, 0, 'icons', false, 'exclusive', true],
+    ['icon:elderscroll', 600, 0, 'icons', false, 'premium', true], ['icon:azurastar', 600, 0, 'icons', false, 'premium', true],
+    ['icon:redmountain', 700, 0, 'icons', false, 'exclusive', true], ['icon:hourglass', 500, 0, 'icons', false, 'standard', true],
+    ['icon:sanguinerose', 400, 0, 'icons', false, 'standard', true], ['icon:whitegold', 400, 0, 'icons', false, 'standard', true],
+    ['aurum:500', 499, 0, 'aurum', false, 'standard', true], ['aurum:1100', 999, 0, 'aurum', false, 'standard', true],
+    ['aurum:2400', 1999, 0, 'aurum', false, 'premium', true], ['aurum:6500', 4999, 0, 'aurum', false, 'exclusive', true],
   ]);
+  assert.deepEqual(SHOP_WARES.filter((w) => !w.cash).map((w) => w.id), SHOP_WARES.filter((w) => w.kind === 'icon').map((w) => w.id), 'AURUM: the icons alone are sold for Aurum alone');
+  assert.deepEqual(SHOP_WARES.filter((w) => w.aurum).map((w) => [w.id, w.aurum]), [['aurum:500', 500], ['aurum:1100', 1100], ['aurum:2400', 2400], ['aurum:6500', 6500]]);
   assert.equal(SHOP_BITS_ALL, 511);
   assert.ok(shopVocabularyOk());
   assert.deepEqual(shopHeldOf(5), ['title:genesis', 'aura:eternal']);

@@ -349,6 +349,10 @@ FESTIVAL_OPEN = "on"
 # STOREFRONT (bible/06-Systems/Battle-Pass.md): the Battle Pass's finds - "off", "dev" (DEVELOPER_HANDLES alone) or "on".
 # A season's own days (src/net/battlePassLaw.js PASS_SEASONS) still bound them.
 PASS_OPEN = "on"
+# AURUM (bible/06-Systems/Aurum.md): the Aurum - its daily wares and its packs - "off", "dev" (DEVELOPER_HANDLES alone) or
+# "on". Its packs are sold only "on" (and named in SHOP_ON_SALE). Shut, nothing is bought for Aurum or sold as Aurum;
+# what is struck and held is kept.
+AURUM_OPEN = "on"
 # CHAP4c (Chapters-Arc 6): THE CHAPTERS' TITLES - a seat's Master, officer and Former Master signed on the token - by
 # this switch, "on" or anything else for off. Shipped OFF: the relay must carry the five ids first (RELAY_VERSION
 # world183, which relay-deploy.yml deploys on the merge to main - AUDIT CHAP4 R2; CHAP6e's High Master and Season
@@ -468,7 +472,9 @@ PATREON_TIERS = "29666211:disciple,29666234:herald,29666221:hierophant"
 # ARMORY (2026-10-28, bible/04-Characters/Aura-Armory.md): and the Aura Armory's Eternal line, a piece a slot.
 # STOREFRONT (2026-10-29, bible/06-Systems/Storefront.md, Battle-Pass.md): and the sheet's wares - the kill effects,
 # portal skins, mount looks, name visuals, bundles, the Battle Pass and its boosters (a season's wares only in its days).
-SHOP_ON_SALE = "title:genesis,glyph:origin,aura:eternal,armory:eternalset,armory:eternalhalo,armory:eternalsigil,armory:eternalarmlets,armory:eternalgreaves,armory:eternaledge,kill:ashen,kill:voidrend,kill:pyre,portal:runic,portal:daedric,portal:aetheric,mount:spectral,mount:dawnfire,mount:warhorse,title:dawnbringer,title:voidwalker,title:eternalchampion,bundle:daedricchampion,bundle:portalmaster,bundle:lordofoblivion,bundle:seasonalcollector,pass:s1premium,pass:s1deluxe,boost:s1cog,boost:s1tonal,boost:s1heart"
+# AURUM (bible/06-Systems/Aurum.md): and the Aurum's packs, and the profile icons the daily wares sell - this one list
+# says what the daily wares may draw from too.
+SHOP_ON_SALE = "title:genesis,glyph:origin,aura:eternal,armory:eternalset,armory:eternalhalo,armory:eternalsigil,armory:eternalarmlets,armory:eternalgreaves,armory:eternaledge,kill:ashen,kill:voidrend,kill:pyre,portal:runic,portal:daedric,portal:aetheric,mount:spectral,mount:dawnfire,mount:warhorse,title:dawnbringer,title:voidwalker,title:eternalchampion,bundle:daedricchampion,bundle:portalmaster,bundle:lordofoblivion,bundle:seasonalcollector,pass:s1premium,pass:s1deluxe,boost:s1cog,boost:s1tonal,boost:s1heart,aurum:500,aurum:1100,aurum:2400,aurum:6500,icon:gatefire,icon:aurbis,icon:elderscroll,icon:azurastar,icon:redmountain,icon:hourglass,icon:sanguinerose,icon:whitegold"
 # STOREFRONT: THE LAUNCH WINDOWS - what the shop's carousel features and when, a line a window: `<ware> <from> <to>`, UTC
 # days, the last day inside; `limited` after it sells the ware only inside that window. A ware is never sold before its
 # first window opens. The live season's Battle Pass leads the carousel on its own. One drop a fortnight, as the

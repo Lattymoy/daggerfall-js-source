@@ -56,7 +56,7 @@ test('STOREFRONT the pass\'s finds: a kill of mine by the foe\'s kind - a season
   await settle();
   assert.deepEqual(svc.asked, ['construct', 'foe'], 'one body once; the watch and an ally never');
   assert.equal(passFoeSource({ passConstruct: true, mobileType: 1 }), 'construct', 'a body the season stood');
-  assert.deepEqual(events.filter((e) => e.kind === 'level'), [{ kind: 'level', level: 1, grants: ['icon:centurion', 'icon:aetherium'] }], 'level one, its free and premium rewards');
+  assert.deepEqual(events.filter((e) => e.kind === 'level'), [{ kind: 'level', level: 1, grants: ['glyph:tonalfork'] }], 'level one, its premium reward (PIN MOVED, AURUM: the free track\'s first is at five)');
   noteAct('cards-won'); noteAct('gambit-won');
   await settle();
   assert.deepEqual(svc.asked.slice(2), ['tavern'], 'one turn\'s acts of one family: one deed');
@@ -67,7 +67,7 @@ test('STOREFRONT the pass\'s finds: a kill of mine by the foe\'s kind - a season
   noteAct('breach-closed'); await settle();
   noteAct('rite-broken'); await settle();
   assert.equal(events.filter((e) => e.kind === 'full').length, 1, 'the day spent, told once');
-  assert.deepEqual(grantsAt({ season: 's1', tracks: { premium: false } }, 10), ['title:brassbound'], 'a free account\'s level ten');
+  assert.deepEqual(grantsAt({ season: 's1', tracks: { premium: false } }, 10), ['glyph:cog'], 'a free account\'s level ten (PIN MOVED, AURUM: the free track\'s glyph)');
   _resetPassClientForTests();
 });
 

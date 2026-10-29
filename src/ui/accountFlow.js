@@ -44,6 +44,7 @@
 
 import {
   openGuest, register, login, recover, readAccount, changePassword, logout, equipTitle, equipAura, equipArmory, equipArmoryKit, equipEffect, equipIcon, equipGlyph, adoptIdentity, unlinkPatreon,
+  buyDailyWare,   // AURUM: a daily ware bought
   newRecoveryCodes,   // RECOVERY-SET: a new set of recovery codes, from the profile
   chooseNameAs,   // NAME-AS: which name the room reads
   storedSession, keepSession, forgetSession, accountRefusalText, handleShapeOk,
@@ -60,6 +61,7 @@ import { effectKitOk, effectWorn } from '../net/effectLaw.js';   // STOREFRONT: 
 import { effectName, effectsHeldOf } from './effectText.js';   // STOREFRONT: an effect's name in the card's note
 import { shopCardOf, shopWareById, SHOP_WARE_NAME } from '../net/shopLaw.js';   // SHOP: the shop's card on the account read
 import { passCardOf } from '../net/battlePassLaw.js';   // STOREFRONT: and the season's card beside it
+import { aurumCardOf } from '../net/aurumLaw.js';   // AURUM: and the Aurum's
 
 /** SHOP: a ware's name as the arrival's note says it - a piece's and an effect's in the player's language (STOREFRONT),
  *  the rest the shop's own. */
@@ -67,6 +69,9 @@ const arrivedName = (/** @type {string} */ id) => {
   const [kind, key] = id.split(':');
   if (kind === 'armory') return armoryPieceName(key);
   if (kind === 'kill' || kind === 'portal' || kind === 'mount') return effectName(kind, key);
+  if (kind === 'icon') return ICON_TEXT[/** @type {keyof typeof ICON_TEXT} */ (key)] ?? key;   // AURUM: the daily wares' own
+  if (kind === 'title') return TITLE_TEXT[/** @type {keyof typeof TITLE_TEXT} */ (key)] ?? key;
+  if (kind === 'aurum') return t('account.flow.aurumPack', '{n, number} Aurum', { n: Number(key) || 0 });
   return SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (id)] ?? id;
 };
 
@@ -202,6 +207,11 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
     shop: /** @type {any} */ (null),
     /** SHOP: the ware whose payment page the player went to, until the account read says it is held */
     shopWaiting: /** @type {string|null} */ (null),
+    /** AURUM: the balance when a pack's page was followed - a pack is never held, so its arrival is the balance rising */
+    shopWaitingFrom: /** @type {number|null} */ (null),
+    /** AURUM: the Aurum's card (net/aurumLaw.js aurumCardOf) - the balance, the day's wares, the week's deeds - or null
+     *  (nobody signed in, a guest, a service from before acct220) */
+    aurum: /** @type {any} */ (null),
     /** STOREFRONT: the season's card (net/battlePassLaw.js passCardOf) - the account's level, tracks and challenges - or
      *  null (nobody signed in, a guest, a service from before acct220) */
     pass: /** @type {any} */ (null),
@@ -262,7 +272,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
     self.account = null;
     self.wardrobe = null;   // ACC3c: a wardrobe outliving its account is a title drawn for nobody
     self.patreon = null; self.patreonWaiting = false;   // PATREON-LINK: and a link for nobody
-    self.shop = null; self.shopWaiting = null; self.pass = null;   // SHOP: and a Buy link for nobody; STOREFRONT: nor a season's card
+    self.shop = null; self.shopWaiting = null; self.pass = null; self.aurum = null;   // SHOP: and a Buy link for nobody; STOREFRONT: nor a season's card; AURUM: nor a balance
     self.busy = false;
     go('out', { error: message });
     return false;
@@ -336,6 +346,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
     self.patreon = r.data.patreon ?? null;   // PATREON-LINK: the card's Patreon row, or none from a service before it
     self.shop = shopCardOf(r.data.shop);   // SHOP: the shop's card, or none from a service before it
     self.pass = passCardOf(r.data.pass);   // STOREFRONT: the season's card, or none
+    self.aurum = aurumCardOf(r.data.aurum);   // AURUM: the Aurum's card, or none
     go('in');
   };
 
@@ -357,6 +368,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
   self.shopOpened = (/** @type {string} */ id) => {
     if (self.stage !== 'in' || !shopWareById(id)) return;
     self.shopWaiting = id;
+    self.shopWaitingFrom = self.aurum?.balance ?? 0;   // AURUM: a pack arrives as the balance rising past this
     self.error = '';
     self.note = t('account.flow.shopFinish', 'Finish paying in your browser, then come back here.');
     changed();
@@ -381,10 +393,14 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
     self.patreon = d.patreon ?? null;
     self.shop = shopCardOf(d.shop);
     self.pass = passCardOf(d.pass);   // STOREFRONT
-    // SHOP: back from paying, the ware the read says is held now - said once, where the player looks
-    if (self.shopWaiting && self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held)) {
+    self.aurum = aurumCardOf(d.aurum);   // AURUM
+    // SHOP: back from paying, the ware the read says is held now - said once, where the player looks; AURUM: a pack's
+    // arrival is the balance risen past where it stood when its page was followed
+    const pack = shopWareById(self.shopWaiting)?.kind === 'aurum';
+    if (self.shopWaiting && (pack ? (self.aurum?.balance ?? -Infinity) > (self.shopWaitingFrom ?? Infinity) : self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held))) {
       self.note = t('account.flow.shopArrived', '{name} is on your account. A receipt is in your mailbox.', { name: arrivedName(String(self.shopWaiting)) });
       self.shopWaiting = null;
+      self.shopWaitingFrom = null;
     }
     if (self.patreonWaiting && self.patreon?.linked && (!was?.linked || String(was.titles) !== String(self.patreon.titles))) {
       self.patreonWaiting = false;
@@ -590,6 +606,36 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
       self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: ICON_TEXT[want] ?? want }) : t('account.flow.iconRemoved', 'Icon removed.');
       adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), effects: effectsStated(r.data), icon: iconStated(r.data), secret: asked });
       changed();
+      return true;
+    } catch {
+      return refuse(accountRefusalText('offline'));
+    }
+  };
+
+  /**
+   * AURUM (bible/06-Systems/Aurum.md) - A DAILY WARE BOUGHT FOR AURUM: it asks, the service decides (the day's wares, the
+   * balance, what is held) in one transaction, and the answer is the wardrobe after it and the Aurum's card. A ware the
+   * day no longer sells, or one held already, reads the account again so the window shows the day as it is.
+   */
+  self.buyDaily = async (/** @type {string} */ ware) => {
+    if (self.busy || self.stage !== 'in') return false;
+    const asked = secret();
+    self.busy = true; self.error = ''; self.note = ''; changed();
+    try {
+      const r = await ask(() => buyDailyWare(door(), ware));
+      if (!r) return false;
+      if (!r.ok) {
+        refuse(accountRefusalText(r.error));
+        if (r.error === 'aurum-today' || r.error === 'aurum-held') await self.refresh();
+        return false;
+      }
+      self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };
+      self.aurum = aurumCardOf(r.data.aurum) ?? self.aurum;
+      self.busy = false;
+      self.note = t('account.flow.aurumBought', '{name} is yours. Wear it from your profile.', { name: arrivedName(ware) });
+      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), effects: effectsStated(r.data), icon: iconStated(r.data), secret: asked });
+      changed();
+      void self.refresh();   // the shop's card again: the ware held there, and a bundle's price that held part of it
       return true;
     } catch {
       return refuse(accountRefusalText('offline'));
@@ -837,7 +883,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
       self.account = null;
       self.wardrobe = null;
       self.patreon = null; self.patreonWaiting = false;   // PATREON-LINK
-      self.shop = null; self.shopWaiting = null; self.pass = null;   // SHOP; STOREFRONT
+      self.shop = null; self.shopWaiting = null; self.pass = null; self.aurum = null;   // SHOP; STOREFRONT; AURUM
       self.busy = false;
       go('out', { note: all ? t('account.flow.signedOutAll', 'Signed out everywhere.') : t('account.flow.signedOut', 'Signed out.') });
     }

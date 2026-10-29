@@ -382,6 +382,7 @@ import {
   PATREON_PAGES, PATREON_TICKET_S, PATREON_HOOK_MAX_BYTES, PATREON_CALLBACK_PATH,
 } from './patreon.js';   // PATREON-LINK: a patron's own Patreon, linked
 import { SHOP_OPEN_ROUTES, SHOP_WEBHOOK_PATH, SHOP_HOOK_MAX_BYTES, shopDoor, shopCardOf } from './shop.js';   // SHOP: the shop's doors, and its card on the account read
+import { aurumCardOf, buyDaily, AURUM_STATUS } from './aurum.js';   // AURUM: the balance, the day's wares and a ware bought
 
 // THIS MODULE EXPORTS `default` AND NOTHING ELSE, and that is a
 // runtime requirement rather than a preference: in a module Worker
@@ -1404,6 +1405,7 @@ const service = {
           patreon: await patreonCardOf(who.player, env, { subtle, rand, nowS, origin: url.origin }),
           shop: await shopCardOf(who.player, env, { subtle, rand, nowS, origin: url.origin }),   // SHOP: the wares, what is held, and a Buy link each
           pass: await passOf(ctx, who.player, env).then((c) => ('error' in c ? null : c)),   // STOREFRONT: the season's card - a guest's, or none, null
+          aurum: await aurumCardOf(ctx, who.player, env),   // AURUM: the balance, the day's wares, the week's deeds - a guest's null
         }, 200, origin);
       }
 
@@ -2366,6 +2368,16 @@ const service = {
         const r = await claimMaul(ctx, who.player, body);
         if ('error' in r) return json({ error: r.error }, SEASON_MAUL_STATUS[/** @type {keyof typeof SEASON_MAUL_STATUS} */ (r.error)] ?? 400, origin);
         return json(r, 200, origin);
+      }
+
+      if (path === '/v1/aurum/buy') {
+        // AURUM (bible/06-Systems/Aurum.md): A DAILY WARE BOUGHT FOR AURUM - one transaction (aurum.js buyDaily); the answer
+        // is the wardrobe after it and the Aurum's card, so the window shows the ware held and the balance at once.
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const r = await buyDaily(ctx, who.player, body, env);
+        if ('error' in r) return json({ error: r.error, ...(Number.isSafeInteger(r.balance) ? { balance: r.balance } : {}) }, AURUM_STATUS[/** @type {keyof typeof AURUM_STATUS} */ (r.error)] ?? 400, origin);
+        const after = await withSeatTitles(ctx, r.row, env);
+        return json({ ok: true, ware: r.ware, spent: r.spent, ...accountWardrobe(after, env, nowS), aurum: await aurumCardOf(ctx, after, env) }, 200, origin);
       }
 
       if (path === '/v1/account/glyph' && request.method === 'POST') {

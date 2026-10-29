@@ -162,6 +162,15 @@ export function inkColour(c) {
   const sat = Math.max(0.55, Math.min(0.85, s));
   return hsla(h, sat, readableL(h, sat, 0.25), a);                              // a hue (a rarity, a gain, a loss): its ink
 }
+/** A WORD PAINTED ON ITSELF (ui/playerBadge.js paintTitle - a title's, an aura's), inked for the page when the dress is
+ *  worn: the ink sheet never reaches a paint written on the word. One home for every face that paints a word - the
+ *  Collections page's and (AUDIT-STOREFRONT II, lane E 3) the shop's. The word, for chaining. */
+export function inkPaintedWord(/** @type {any} */ word, doc = globalThis.document) {
+  if (doc?.documentElement?.dataset?.plusDress !== GRIMOIRE_DRESS || !word?.style) return word;
+  const ink = (/** @type {string} */ s) => String(s).replace(/#[0-9a-f]{6}\b/gi, (h) => inkColour(h) ?? h);
+  for (const k of ['color', 'backgroundImage', 'filter']) if (word.style[k]) word.style[k] = ink(word.style[k]);
+  return word;
+}
 /** INK-READ (2026-10-12, Mac: "make sure the fonts are readable the grey ones arent"): the lightness a hue's ink may have
  *  and still read at 4.5:1 on the pages' darkest tan (relative luminance 0.43): `want` or darker, a hundredth at a time
  *  - an amber at 24% stood at 3.96:1 (the credits' "by ...", the settings' heads), a teal at 25% at 3.3:1. */

@@ -8,6 +8,7 @@
 // the Starfall (HOST-SPLIT). Online alone, on the relay's clock once heard. Not a DFU member. Ledger A (STOREFRONT).
 import { bindPass } from '../systems/pass/passClient.js';
 import { PASS_EVENT_TEXT, passGrantName, passChallengeText } from '../ui/passText.js';
+import { passAurumGrant } from '../net/battlePassLaw.js';   // AURUM: a level's Aurum, told apart from what it puts in the wardrobe
 import { seasonStageAt, tremorAt, stageFissures, theatreFissures, areaBox, fissureUnderGate, fissureRoster, COLOSSUS_MOBILE } from '../systems/pass/seasonWorld.js';
 import { keptTheatreScans } from './gate/gateLanes.js';   // W14: a province's fissures over its theatre's ground, the gate's own scan
 import { createEventTheatres } from './eventTheatres.js';   // W14: a theatre's scan warmed in the idle moments (WW5's)
@@ -151,7 +152,9 @@ export function createSeasonHost(host) {
       onEvent: (e) => {
         if (e.kind === 'level') {
           setMidScreenText(PASS_EVENT_TEXT.level(e.level));
-          if (e.grants?.length) tell(PASS_EVENT_TEXT.rewards(e.grants.map(passGrantName).join(', ')));
+          const worn = (e.grants ?? []).filter((g) => !passAurumGrant(g)), aurum = (e.grants ?? []).reduce((n, g) => n + passAurumGrant(g), 0);
+          if (worn.length) tell(PASS_EVENT_TEXT.rewards(worn.map(passGrantName).join(', ')));
+          if (aurum) tell(PASS_EVENT_TEXT.aurum(aurum));   // AURUM: counted into the balance, never worn
         } else if (e.kind === 'challenge') tell(PASS_EVENT_TEXT.challenge(passChallengeText(e.key)));
         else if (e.kind === 'full') tell(PASS_EVENT_TEXT.full());
       },

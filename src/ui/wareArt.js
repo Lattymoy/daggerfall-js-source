@@ -3,20 +3,21 @@
 // A WARE'S PICTURE, one door for every face that shows one without playing it - a bundle's pieces, the Battle Pass's
 // rewards, a booster's and a pass's banners. A portrait its drawing (ui/profileIcons.js), a glyph its mark, an aura its
 // ring (collections/wardrobePart.js), an effect its emblem (ui/effectEmblems.js); a booster and a pass the season's own
-// art; a title a ribbon in its own paint. Not a DFU member.
+// art; a title a ribbon in its own paint; Aurum its coins (ui/aurumArt.js). Not a DFU member.
 import { profileIconNode } from './profileIcons.js';
 import { effectEmblemNode } from './effectEmblems.js';
 import { glyphBadges, glyphSvgNode, cssRgba, AURA_PAINT, TITLE_RGBA, TITLE_GRADIENT } from './playerBadge.js';
 import { auraRingNode } from './collections/wardrobePart.js';
 import { armoryPieceOf } from '../net/armoryLaw.js';
+import { aurumArtNode } from './aurumArt.js';   // AURUM: a pack's and a reward's picture
 
 /** The season's wares' art: a booster's by its strength, a pass by its tier - `['icon'|'glyph', key]`. */
 export const SEASON_WARE_ART = Object.freeze({
   'boost:s1cog': Object.freeze(['glyph', 'cog']),
   'boost:s1tonal': Object.freeze(['glyph', 'tonalfork']),
   'boost:s1heart': Object.freeze(['icon', 'gearheart']),
-  'pass:s1premium': Object.freeze(['icon', 'centurion']),
-  'pass:s1deluxe': Object.freeze(['icon', 'numidium']),
+  'pass:s1premium': Object.freeze(['icon', 'lexicon']),   // AURUM: no figure stands in a pass's banner any more
+  'pass:s1deluxe': Object.freeze(['mount', 'automaton']),
 });
 
 let _medal = 0;
@@ -74,7 +75,8 @@ export function wareArtNode(doc, id, size = 48, cls = 'ware-art') {
   } else if (kind === 'title') {
     const paint = /** @type {any} */ (TITLE_GRADIENT)[key]?.[0] ?? /** @type {any} */ (TITLE_RGBA)[key];
     art = typeof doc?.createElementNS === 'function' ? medallion(doc, ribbon(doc, key), cssRgba(paint) ?? '#c9a55a', size, cls, [8, 8, 48, 48]) : null;
-  } else if (kind === 'aura' || kind === 'armory') {
+  } else if (kind === 'aurum') art = aurumArtNode(doc, Number(key) || 0, size, cls);   // AURUM: a pack's, or a reward's on the pass
+  else if (kind === 'aura' || kind === 'armory') {
     const aura = kind === 'armory' ? armoryPieceOf(key)?.line ?? 'eternal' : key, ring = auraRingNode(doc, aura, 40);
     const paint = AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (aura)];
     art = ring ? medallion(doc, ring, cssRgba(TITLE_RGBA[/** @type {keyof typeof TITLE_RGBA} */ (paint)]) ?? '#c9a55a', size, cls, [8, 18, 48, 31]) : null;
