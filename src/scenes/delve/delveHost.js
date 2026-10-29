@@ -11,7 +11,7 @@ import { fireLayoutInputs } from '../../world/dungeon/dungeonFires.js';
 import {
   newDelveLedger, foldDelveWord, foldDelveHit, foldDelveAct, inWard, plateAt, delvePlates, delvePlanHash, DP, FLAME, WEIGHT,
   HOLD_WAVES, DELVE_WARD_PAD_M, DELVE_KIND_NAMES, DELVE_REACH_M, SPRING_POUR_MS, SPRING_ALIVE, DRIFT_MAX, DRIFT_EVERY_MS,
-  VIGIL_LIGHT, isWaveKind, springSpots, springCount, brazierSpots, weightSpots, weighPlates, holdGates,
+  VIGIL_LIGHT, isWaveKind, springSpots, springCount, brazierSpots, weightSpots, weighPlates, driftSpots,
 } from '../../net/delve/delveLaw.js';
 import { createHoldFoes, HOLD_RANK_STEP_M } from './delveHold.js';
 import { plateLooks, shownPlate, createPlateSteps, DELVE_SOUNDS } from './delveLitany.js';
@@ -174,9 +174,10 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
       // kept for the frame: the word, the fold's context, the looks, the marks and the pass's entry, filled in place
       word: /** @type {any} */ ({ lv: 1, o: 0, kw: 0, kn: 0, wc: 0, cf: 0, st: -1, hb: 0 }), ctx: { party: true, inWard: false, plate: -1, nowMs: 0 },
       looks: /** @type {number[]} */ ([]), shapes: /** @type {any[]} */ ([]), entry: /** @type {any} */ (null),
-      // DLV4: the relic and its blows this attempt, each piece's breaking (s), the seals' rising (s), the pours done, the
-      // last drift, the light's warning said, the crystals' list kept
-      relic: /** @type {any} */ (null), hb: 0, broke: /** @type {number[]} */ ([]), rose: 0, poured: /** @type {number[]} */ ([]), driftAt: 0, lowSaid: false,
+      // DLV4: the relic, a flame let fall that I have not stepped off yet, the plate my weight came off, the relic's blows
+      // this attempt, each piece's breaking (s), the seals' rising (s), the pours done, the last drift, the light's warning
+      // said, the crystals' list kept
+      relic: /** @type {any} */ (null), byFall: false, offPlate: -1, hb: 0, broke: /** @type {number[]} */ ([]), rose: 0, poured: /** @type {number[]} */ ([]), driftAt: 0, lowSaid: false,
       crystals: /** @type {any[]} */ ([]),
     };
     if (site.kind === 'vigil') r.relic = makeRelic(site, () => { if (r.led && r.led.p !== DP.idle) r.hb++; });
@@ -229,9 +230,9 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
         if (n > 0) say(DELVE_BRAZIER_TEXT.light(n));
         break;
       }
-      case 'drop': say(DELVE_BRAZIER_TEXT.drop()); break;
+      case 'drop': r.byFall = true; say(DELVE_BRAZIER_TEXT.drop()); break;
       case 'gutter': say(DELVE_BRAZIER_TEXT.gutter()); break;
-      case 'set': sound(DELVE_SOUNDS.thud, site); break;
+      case 'set': case 'back': sound(DELVE_SOUNDS.thud, site); break;
       case 'held': say(DELVE_WEIGHING_TEXT.held()); sound(DELVE_SOUNDS.chime(3), site); break;
       case 'unheld': say(DELVE_WEIGHING_TEXT.unheld()); break;
       case 'won':
@@ -244,7 +245,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
   const fold = (r, evs) => { for (const ev of evs) onEvent(r, ev); };
   /** An act of mine at a site (take, light, drop, set), at my feet. */
   const act = (r, a, j = -1, feet = lastFeet) => {
-    if (r.led && feet) fold(r, foldDelveAct(r.led, r.site, ME, { a, j }, { party: true, inWard: inWard(r.site, feet[0], feet[1], feet[2]), pose: feet, nowMs: now }));
+    if (r.led && feet) fold(r, foldDelveAct(r.led, r.site, ME, { a, j }, { party: true, inWard: holds(r.site, feet), pose: feet, nowMs: now }));
   };
 
   function frameSite(r, feet) {
@@ -255,7 +256,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
       say(nearLine(site, site.kind === 'wellsprings' ? springCount(seed, site.i) : r.plates?.length ?? 0, look), DELVE_SAY_LONG_S);
     }
     if (r.won) return;
-    const iw = inWard(site, feet[0], feet[1], feet[2]) && seesHeart(site, feet);
+    const iw = holds(site, feet);
     if (r.dark && !iw) r.dark = false;   // a ward gone dark wakes again only to a step back in
     if (!r.led) { if (!iw || r.dark || now < r.rest) return; r.led = newDelveLedger(site, ME, seed, now); r.away = false; r.hb = 0; r.lowSaid = false; }
     const plate = r.plates ? plateAt(r.plates, feet[0], feet[1], feet[2]) : -1;
@@ -291,24 +292,29 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
     } else if (site.kind === 'brazier' && led.p === DP.work) {
       if (r.foes && now - r.driftAt >= DRIFT_EVERY_MS && r.foes.driftLive() < DRIFT_MAX && foeHost.pick() >= 0) {
         r.driftAt = now;
-        const gates = holdGates(site);
-        r.foes.drift(gates[Math.floor(Math.random() * gates.length)]);
+        const spots = driftSpots(site);
+        r.foes.drift(spots[Math.floor(Math.random() * spots.length)]);
       }
       if (iw && led.fl !== FLAME.carried && !mine()) {
-        const at = led.fl === FLAME.lying ? led.fx : [site.x, site.y, site.z];
-        if (Math.hypot(feet[0] - at[0], feet[2] - at[2]) <= DELVE_REACH_M) act(r, 'take', -1, feet);
+        const at = led.fl === FLAME.lying ? led.fx : [site.x, site.y, site.z], d = Math.hypot(feet[0] - at[0], feet[2] - at[2]);
+        if (led.fl === FLAME.lying && r.byFall && d > DELVE_REACH_M) r.byFall = false;   // a flame let fall is taken up only once I have stepped off it
+        if (d <= DELVE_REACH_M && !(led.fl === FLAME.lying && r.byFall)) act(r, 'take', -1, feet);
       } else if (led.fl === FLAME.carried && led.fc === ME) {
         const j = brazierSpots(site, led.k).findIndex((b, k) => !(led.lb & (1 << k)) && Math.hypot(feet[0] - b[0], feet[2] - b[2]) <= DELVE_REACH_M);
         if (j >= 0) act(r, 'light', j, feet);
       }
     } else if (site.kind === 'weighing' && led.p === DP.work) {
       const j = led.wt.findIndex((t) => t.s === WEIGHT.carried && t.by === ME);
-      if (j >= 0 && plate >= 0 && !led.wt.some((t) => t.s === WEIGHT.plate && t.p === plate)) act(r, 'set', j, feet);
+      if (plate !== r.offPlate) r.offPlate = -1;   // a weight taken off a plate is set back on it only once I have stepped off it
+      if (j >= 0 && plate >= 0 && plate !== r.offPlate && !led.wt.some((t) => t.s === WEIGHT.plate && t.p === plate)) act(r, 'set', j, feet);
     }
   }
 
   /** In the ward is in its room: on the disc, or with nothing of the dungeon's between the player and the heart at the
    *  waist (the ward reaches 2 m past the disc, and a corridor behind its wall is no part of it). */
+  /** Whether I stand in a site's ward - the disc and its pad, and past the disc a clear line to the heart: one reading for
+   *  my words, my acts and my blows alike. */
+  function holds(site, feet) { return inWard(site, feet[0], feet[1], feet[2]) && seesHeart(site, feet); }
   function seesHeart(site, feet) {
     const dx = feet[0] - site.x, dz = feet[2] - site.z, d = Math.hypot(dx, dz);
     if (d <= site.r || !api.collider) return true;
@@ -370,7 +376,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
     const out = r.looks, plates = r.plates ?? [], feet = lastFeet;
     out.length = plates.length;
     for (let j = 0; j < plates.length; j++) {
-      const standing = !!feet && plateAt([plates[j]], feet[0], feet[1], feet[2]) === 0 && inWard(r.site, feet[0], feet[1], feet[2]);
+      const standing = !!feet && plateAt([plates[j]], feet[0], feet[1], feet[2]) === 0 && holds(r.site, feet);
       out[j] = r.led && (standing || r.led.wt.some((t) => t.s === WEIGHT.plate && t.p === j)) ? 1 : 0;
     }
     return out;
@@ -416,12 +422,13 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
       return out;
     },
     /** DLV4: a blow of mine on a piece (`c` its seam number, `d` its damage, `kind` the blow's) - the ledger's caps decide
-     *  what lands. Answers whether it went. */
+     *  what lands. Answers whether it landed. */
     hit(c, d, kind) {
       const at = delveCrystalOf(c), run = at ? runs[at.i] : null;
       if (!run?.led || dead || online() || !lastFeet) return false;
-      fold(run, foldDelveHit(run.led, run.site, ME, { j: at.j, d, r: kind, q: ++hitQ }, { party: true, inWard: inWard(run.site, lastFeet[0], lastFeet[1], lastFeet[2]), pose: lastFeet, nowMs: now }));
-      return true;
+      const led = run.led, was = led.hp[at.j];
+      fold(run, foldDelveHit(led, run.site, ME, { j: at.j, d, r: kind, q: ++hitQ }, { party: true, inWard: holds(run.site, lastFeet), pose: lastFeet, nowMs: now }));
+      return led.hp[at.j] < was;   // whether it landed (AUDIT DLV4 F12: a refused blow keeps no spell's rounds on the piece)
     },
     /** DLV4: the bodies the dungeon's foes may hunt beside the party - a Vigil's relic while it runs. */
     wards() {
@@ -438,7 +445,12 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
         if (!r || dead || online()) return 0;
         if (mode === 'info') { api.hudSay?.(DELVE_PIECE_TEXT.weight()); return 1; }
         const h = mine();
-        if (h && h.r === r && h.j >= 0) act(r, 'set', h.j); else if (!h) act(r, 'take', wk.j);
+        if (h && h.r === r && h.j >= 0) act(r, 'set', h.j);
+        else if (!h) {
+          const t = r.led?.wt[wk.j], from = t?.s === WEIGHT.plate ? t.p : -1;
+          act(r, 'take', wk.j);
+          if (from >= 0 && r.led?.wt[wk.j]?.s === WEIGHT.carried) r.offPlate = from;   // AUDIT DLV4 F8: off its plate, not set straight back on it
+        }
         return 1;
       }
       const r = runs[delveKeySite(key)];
@@ -460,7 +472,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
     /** A save's word laid back - under the same plan alone. Every running attempt ends first, and every living foe one
      *  stood goes - a foe the save held alive stood up again by the world record's own restore among them. */
     restore(s) {
-      for (const r of runs) { r.foes?.crumble(); r.wakers?.crumble(); r.led = null; r.won = false; r.vault = null; r.said = false; r.away = false; r.dark = false; r.steps?.reset(); r.wrong = null; r.shown = -1; r.rest = 0; r.broke = []; r.hb = 0; }
+      for (const r of runs) { r.foes?.crumble(); r.wakers?.crumble(); r.led = null; r.won = false; r.vault = null; r.said = false; r.away = false; r.dark = false; r.steps?.reset(); r.wrong = null; r.shown = -1; r.rest = 0; r.broke = []; r.hb = 0; r.byFall = false; r.offPlate = -1; }
       carry.set(false);
       if (!s || s.h !== hash || !Array.isArray(s.won)) return;
       for (const w of s.won) { const r = runs[w?.i]; if (r) { r.won = true; r.vault = Array.isArray(w.items) ? w.items.map((it) => ({ ...it })) : []; } }

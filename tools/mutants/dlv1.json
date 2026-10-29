@@ -326,8 +326,8 @@
   {
     "name": "DLV1-the-corridor-counted",
     "file": "src/net/delve/delveLaw.js",
-    "old": "if (!ctx.inWard) return ev;",
-    "new": "if (false) return ev;",
+    "old": "if (!ctx.inWard) { if (led.p === DP.work) carriedOut(led, acct, ev); return ev; }",
+    "new": "if (false) { if (led.p === DP.work) carriedOut(led, acct, ev); return ev; }",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]

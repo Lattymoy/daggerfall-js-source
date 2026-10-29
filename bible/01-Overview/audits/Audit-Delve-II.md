@@ -85,6 +85,29 @@ cost, a word or a case no player meets yet.
 - **THE COST.** The plan, every dungeon on one core: 7.4 ms at the median, 48 ms at the 99th percentile, 101 ms at
   worst - in the dungeon's load, beside a fire plan of 1.3 ms. A4's pruning took 61% off the small pass where it ran.
 
+## F - DLV4, the five new kinds (2026-10-29)
+
+A cold lane read DLV4's law and host with the code alone and drove each finding with a script; the real-game probe read
+the crystal seam. Fixed where each began, each pinned and its mutants dead (`tools/mutants/dlv4.json`).
+
+| ID | Sev | Finding | Fix |
+|---|---|---|---|
+| F0 | Major | **No blow reached a source or a seal in the real game.** The seam took `opts.gateCrystals?.() ?? delve.breakables()`, and outside a Reckoning the court answers an empty list, which `??` never passes. The tests drove `host.hit` and never met it. | The seam takes both lists, numbered apart (`dungeonCrystals`), held by a behavioural pin on the court's own answer. |
+| F1 | Major | **A flame let fall was taken up the next frame.** The host took any flame within reach, so a blow or a readied weapon never freed the hands, and each taking renewed its 20 s. | The host takes a fallen flame only once its carrier has stepped off it; the law keeps the flame's life and walk from the heart. |
+| F2 | Major | **A piece carried out of the ward stuck for up to 60 s.** A let-go from outside the ward was refused, and the flame's life ran on a clock that stops when the party is away. | A word or a let-go from outside the ward, or a carrier silent 15 s, sends the piece home; the flame lives on wall time. |
+| F3 | Minor | A lying client dropped the flame at a brazier and took it up there, skipping the step law. | A flame taken up where it lies keeps its first take's place and moment. |
+| F4 | Minor | A word could say level 1 as the pieces rose and 60 as it struck. | A record keeps the level it was made at: lower, never higher, while the attempt stands. |
+| F5 | Minor | `delveState`'s fields are not the ledger's, which the looks read. | DLV3: the client makes a ledger-shaped view of the room's word, one adapter pinned against both. |
+| F6 | Minor | The Vigil's blows were one count for every machine: a new owner's were lost. | Each account's machine is credited from its own count. |
+| F7 | Nit | The bible gave the Weighing a 3 s rise it does not have. | The sentence names the Brazier Rite and the Seals. |
+| F8 | Nit | A weight lifted off a plate was set back on it the next frame. | Set back only once its carrier steps off and on. |
+| F9 | Nit | The Vigil's rest lives in the offline host alone. | DLV3: the room keeps it with the site. |
+| F10 | Minor | The rite's foes drifted in on the gates, onto the pedestals (model 74237, 1.2 m square, 0.9 m high). | They drift in off the rim on the axes the vault does not take (`driftSpots`). |
+| F11 | Nit | Thirteen of a Wellsprings' foes may live at once (four sources' three and the captain) against a `delve` grant of 12. | No change: a grant's most is one ask's, and each pour asks its own (DLV3 sizes the kind's rate to the pours). |
+| F12 | Nit | `hit` answered true for a refused blow, so a spell kept rounds on the piece; the bible put the Seals' vault at a wall. | It answers whether the blow landed; the bible says the heart. |
+| P1 | Minor | The host judged my blows and acts in the ward by the disc alone, my words by the disc and a line to the heart. | One reading for all three (`holds`). |
+| P2 | Nit | The brazier's flame stood at 0.8 m, in the pedestal: its top face is 36 units, 0.9 m, over its lowest point. | Measured from ARENA2 and pinned. |
+
 ## Pins and mutants
 
 `test/net/delve/dlv1_law.test.js`, `test/world/dlv1_sites.test.js`, `test/systems/delve/dlv2_words.test.js`,
@@ -94,3 +117,6 @@ once recorded equivalent (`DLV2-failed-keeps-the-ledger`) dead now that a dark w
 of other lists whose code this pass moved, re-aimed by content and run again (`sense1`, `wb9f`, `worldhover`,
 `auditrest2_camps`, `navaudit_frame`): 277, dead but for one equivalent as recorded and `NAVF-grid-stop-early`, which
 survives on main too (`world/prefabColliders.js`, untouched here) and is left to its own list.
+
+DLV4: `test/net/delve/dlv4_law.test.js`, `test/scenes/delve/dlv4_host.test.js`, `test/render/delvecrystalscale.test.js`;
+`tools/mutants/dlv4.json`, 116 records, every one dead.

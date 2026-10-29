@@ -14,7 +14,7 @@ import { createHoldFoes } from '../../../src/scenes/delve/delveHold.js';
 import { DELVE_CHEST_MODEL } from '../../../src/scenes/delve/delvePieces.js';
 import {
   DP, FLAME, WEIGHT, HOLD_GATHER_MS, HOLD_CAPTAIN_MIN_MS, PUZZLE_RISE_MS, SPRING_POUR_MS, SPRING_ALIVE, VIGIL_REST_MS, DELVE_BURDEN,
-  springSpots, springCount, sealSpots, brazierSpots, weighPlates, weightSpots, newDelveLedger, foldDelveWord, stepDelve, holdGates,
+  springSpots, springCount, sealSpots, brazierSpots, weighPlates, weightSpots, newDelveLedger, foldDelveWord, stepDelve, holdGates, driftSpots, DRIFT_EVERY_MS,
 } from '../../../src/net/delve/delveLaw.js';
 import { siteKinds } from '../../../src/world/dungeon/delveSites.js';
 import { HIT_KINDS } from '../../../src/net/gate/gateBrain.js';
@@ -60,7 +60,7 @@ function dungeonOf(seed, dungeonType = DUNGEON_TYPES.Crypt) {
   const box = { positions: [-0.4, 0, -0.4, 0.4, 0.8, 0.4], indices: [0, 1, 0] };
   const deps = { getGpuMesh: async () => ({ gpu: 1 }), cpuModels: new Map([[DELVE_CHEST_MODEL, box], [DELVE_PEDESTAL_MODEL, box], [DELVE_WEIGHT_MODEL, box]]) };
   const host = createDelveHost({ api, deps, location, blocks, player: () => me, rollPile: () => [{ name: 'Silver Mace', group: 'Weapons', templateIndex: 121 }] });
-  return { host, api, me, stood, removed, pool, get targets() { return targets; } };
+  return { host, api, me, stood, removed, pool, collider: c, get targets() { return targets; } };
 }
 const seedFor = (kind) => { for (let s = 1; s < 2000; s++) if (siteKinds(1, s)[0] === kind) return s; return -1; };
 const kill = (f) => { f.entity.health = 0; f.dead = true; };
@@ -140,6 +140,39 @@ test('DLV4 THE WELLSPRINGS, WON IN A ROOM: the near line names its tombs; the so
   host.destroy();
 });
 
+test('DLV4 ONE WARD FOR WORDS, ACTS AND BLOWS: past the disc with a wall between me and the heart, my blow on a source and my press on a weight move nothing - as my word there keeps me out of the ward; in the ward they land (mutants: the blow\'s ward read without the line; the act\'s)', async () => {
+  _resetForTests();
+  const D = dungeonOf(seedFor('wellsprings')), { host } = D, s = host.sites[0];
+  await run(D, HOLD_GATHER_MS + 200, [s.x, s.y, s.z]);
+  const q = springSpots(s, host.state()[0].k)[0], dx = q[0] - s.x, dz = q[2] - s.z, d = Math.hypot(dx, dz), ux = dx / d, uz = dz / d;
+  const out = [s.x + ux * (s.r + 1), s.y, s.z + uz * (s.r + 1)], hp0 = host.state()[0].hp[0];
+  // a wall across the line, half a metre past the disc's edge (the layout's own bucket - the line reads it alone)
+  const w = [s.x + ux * (s.r + 0.5), s.z + uz * (s.r + 0.5)], px = -uz * 3, pz = ux * 3;
+  D.collider.addMesh('dungeon', [w[0] - px, -1, w[1] - pz, w[0] + px, -1, w[1] + pz, w[0] + px, 4, w[1] + pz, w[0] - px, 4, w[1] - pz], [0, 1, 2, 0, 2, 3], [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  await run(D, 100, out);
+  assert.equal(host.hit(delveCrystalC(0, 0), 10, HIT_KINDS.Shaft), false, 'refused: said so (a spell keeps no rounds on it)');
+  assert.equal(host.state()[0].hp[0], hp0, 'no line to the heart: out of the ward');
+  await run(D, 100, [s.x, s.y, s.z]);
+  assert.equal(host.hit(delveCrystalC(0, 0), 10, HIT_KINDS.Shaft), true, 'landed: said so');
+  assert.equal(host.state()[0].hp[0], hp0 - 10, 'at the heart: it lands');
+  host.destroy();
+  // a weight at its home on a gate, pressed from past the disc behind a wall, then from the disc's side of it
+  const G = dungeonOf(seedFor('weighing')), g = G.host.sites[0];
+  await run(G, 300, [g.x, g.y, g.z]);
+  const home = weightSpots(g)[0], hx = home[0] - g.x, hz = home[2] - g.z, hd = Math.hypot(hx, hz), vx = hx / hd, vz = hz / hd;
+  const wall = [g.x + vx * (g.r + 0.2), g.z + vz * (g.r + 0.2)], qx = -vz * 3, qz = vx * 3;
+  G.collider.addMesh('dungeon', [wall[0] - qx, -1, wall[1] - qz, wall[0] + qx, -1, wall[1] + qz, wall[0] + qx, 4, wall[1] + qz, wall[0] - qx, 4, wall[1] - qz], [0, 1, 2, 0, 2, 3], [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  const past = [g.x + vx * (g.r + 0.6), g.y, g.z + vz * (g.r + 0.6)];
+  assert.ok(Math.hypot(past[0] - home[0], past[2] - home[2]) <= 1.2, 'within a hand of the weight');
+  await run(G, 100, past);
+  G.host.press('delve:weight:0:0');
+  assert.equal(G.host.state()[0].wt[0], WEIGHT.home, 'no line to the heart: left at home');
+  await run(G, 100, home);
+  G.host.press('delve:weight:0:0');
+  assert.equal(G.host.state()[0].wt[0], WEIGHT.carried, 'in the ward: taken');
+  G.host.destroy();
+});
+
 test('DLV4 THE VIGIL IN A ROOM: the relic is quarry its own foes hunt first while it runs; their blows on it take its light; the light gone, it rests a minute and wakes again to a step in (mutants: the mark unset; the relic hunted idle; the rest dropped)', async () => {
   _resetForTests();
   const D = dungeonOf(seedFor('vigil')), { host } = D, s = host.sites[0], feet = [s.x, s.y, s.z];
@@ -169,7 +202,7 @@ test('DLV4 THE VIGIL IN A ROOM: the relic is quarry its own foes hunt first whil
   host.destroy();
 });
 
-test('DLV4 THE BRAZIER RITE IN A ROOM: the flame taken at the heart as I step on it, my step burdened and my weapon put up while I carry it, set to a brazier as I walk to it; a blow on me lets it fall; every brazier lit, won; the flames and the pedestals stood (mutants: the burden unregistered; the weapon left out; the blow ignored; a flame left burning at the heart)', async () => {
+test('DLV4 THE BRAZIER RITE IN A ROOM: the flame taken at the heart as I step on it, my step burdened and my weapon put up while I carry it, set to a brazier as I walk to it; a blow on me lets it fall, and it lies until I step off it and back; every brazier lit, won; the flames and the pedestals stood (mutants: the burden unregistered; the weapon left out; the blow ignored; a fallen flame taken up at once; a flame left burning at the heart)', async () => {
   _resetForTests();
   const D = dungeonOf(seedFor('brazier')), { host } = D, s = host.sites[0], heart = [s.x, s.y, s.z];
   assert.equal(s.kind, 'brazier');
@@ -190,8 +223,15 @@ test('DLV4 THE BRAZIER RITE IN A ROOM: the flame taken at the heart as I step on
     if (j === 0) {
       hurtPlayer(D.me, 5);
       assert.equal(host.state()[0].fl, FLAME.lying, 'struck: it falls where I stand');
+      await run(D, 500, [heart[0] + 0.3, heart[1], heart[2]], 0, pw);
+      assert.equal(host.state()[0].fl, FLAME.lying, 'not taken up again while I stand over it - my hands are mine to fight with');
+      assert.equal(pw.sheathed, true, 'put up as it fell, and left so');
+      pw.sheathed = false;
+      await run(D, 200, [heart[0] + 0.3, heart[1], heart[2]], 0, pw);
+      assert.equal(pw.sheathed, false, 'readied again: nothing in my hands puts it up');
+      await run(D, 100, [heart[0] + 2, heart[1], heart[2]], 0, pw);
       await run(D, 100, [heart[0] + 0.3, heart[1], heart[2]], 0, pw);
-      assert.equal(host.state()[0].fl, FLAME.carried, 'taken up again at once where it fell, beside the heart');
+      assert.equal(host.state()[0].fl, FLAME.carried, 'stepped off and back: taken up');
     }
   }
   assert.equal(host.state()[0].won, true);
@@ -203,7 +243,20 @@ test('DLV4 THE BRAZIER RITE IN A ROOM: the flame taken at the heart as I step on
   assert.equal(footSpeedMult(), 1);
 });
 
-test('DLV4 THE WEIGHING IN A ROOM: a weight pressed is taken, carried with its burden, set on the free plate I step onto; two set, and I stand on the third - held, then won (mutants: the press unread; the set on a taken plate; my own plate unread)', async () => {
+test('DLV4 THE RITE\'S DRIFT IN A ROOM: a foe drifts in every 15 s while the rite is worked, off the rim\'s free axes - never onto a brazier\'s pedestal (AUDIT DLV4 F10; mutants: the drift from the gates)', async () => {
+  _resetForTests();
+  const D = dungeonOf(seedFor('brazier')), { host } = D, s = host.sites[0];
+  const stand = [s.x + 1.8, s.y, s.z];   // in the disc, off the heart (no flame taken)
+  await run(D, PUZZLE_RISE_MS + 200, stand);
+  assert.equal(host.state()[0].p, DP.work);
+  await run(D, DRIFT_EVERY_MS + 400, stand);
+  const drifted = D.stood.filter((f) => f._delve?.drift);
+  assert.ok(drifted.length >= 1, 'one drifted in');
+  for (const f of drifted) assert.ok(driftSpots(s).some((p) => Math.hypot(p[0] - f.at[0], p[2] - f.at[2]) < 1e-6), 'off a rim spot of the law\'s');
+  host.destroy();
+});
+
+test('DLV4 THE WEIGHING IN A ROOM: a weight pressed is taken, carried with its burden, set on the free plate I step onto; lifted off a plate, set back only when I step off and on; two set, and I stand on the third - held, then won (mutants: the press unread; the set on a taken plate; a lifted weight set straight back; my own plate unread)', async () => {
   _resetForTests();
   const D = dungeonOf(seedFor('weighing')), { host } = D, s = host.sites[0];
   assert.equal(s.kind, 'weighing');
@@ -226,6 +279,13 @@ test('DLV4 THE WEIGHING IN A ROOM: a weight pressed is taken, carried with its b
     await run(D, 2_000, plates[j], 0, pw);
     assert.equal(host.state()[0].wt[j], WEIGHT.plate, `weight ${j} set on plate ${j}`);
   }
+  // a weight lifted off its plate stays in my hands while I stand on it, and goes back on when I step off and on again
+  assert.equal(host.press('delve:weight:0:1'), 1);
+  await run(D, 300, plates[1], 0, pw);
+  assert.equal(host.state()[0].wt[1], WEIGHT.carried, 'lifted off its plate: not set straight back on it');
+  await run(D, 100, [plates[1][0] + 2, plates[1][1], plates[1][2]], 0, pw);
+  await run(D, 2_000, plates[1], 0, pw);
+  assert.equal(host.state()[0].wt[1], WEIGHT.plate, 'stepped off and on: set on it again');
   await run(D, 300, plates[2], 0, pw);
   assert.equal(midScreenText.text, 'All three plates are held. Keep them held.');
   await run(D, 3_200, plates[2], 0, pw);

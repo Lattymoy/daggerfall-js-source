@@ -122,7 +122,8 @@ export const VIGIL_RELIC_H = 1.4;
 // ═══ THE BRAZIER RITE ════════════════════════════════════════════════════════════════════════════════════════════════
 /** Three braziers, four for a party of four or more (counted as the rite wakes). Pure. */
 export const braziersFor = (n) => (delveParty(n) >= 4 ? 4 : 3);
-/** A carried flame gutters out this long after it is taken; one let fall lies this long to be taken up again. */
+/** A flame lives this long off the heart (wall time from its take there: a fall and a taking up again do not renew it,
+ *  and a carrier gone silent loses it); one let fall lies this long to be taken up again. */
 export const FLAME_LIFE_MS = 20_000;
 export const FLAME_LIES_MS = 10_000;
 /** Where the flame is: at the heart, carried, or lying where its carrier let it fall. */
@@ -215,6 +216,12 @@ export function weighPlates(site) {
   const v = vaultAxis(site);
   return BEARINGS4.filter((_, j) => j !== v).slice(0, 3).map(([dx, dz]) => [cm(site.x + dx * WEIGH_RING_M), site.y, cm(site.z + dz * WEIGH_RING_M)]);
 }
+/** Where the Brazier Rite's foes drift in: the rim half a metre in on the axes the vault does not take - the gates hold
+ *  the braziers' pedestals (AUDIT DLV4 F10), and the site law asked the rim's floor at every bearing. Pure. @param {DelveSite} site */
+export function driftSpots(site) {
+  const v = vaultAxis(site), m = site.r - 0.5;
+  return BEARINGS4.filter((_, j) => j !== v).map(([dx, dz]) => [cm(site.x + dx * m), site.y, cm(site.z + dz * m)]);
+}
 /** The Weighing's weights' homes: the first three gates. Pure. @param {DelveSite} site */
 export const weightSpots = (site) => holdGates(site).slice(0, WEIGHTS);
 /** The seals' places for `k` of them, round the ring from north. Pure. @param {DelveSite} site */
@@ -270,8 +277,9 @@ export function delvePlanHash(sites) {
  *  sinking, and both ends. */
 export const DP = Object.freeze({ idle: 0, gather: 1, wave: 2, breath: 3, captain: 4, show: 5, work: 6, won: 7, spring: 8, sunk: 9 });
 /** An account: its verified name, the level and moment of its last word, its last from the ward, the plate it said and
- *  when, and the gate's hand and purse once it strikes a piece (spendBlow, spendPurse). Kept in a map with no prototype.
- *  @typedef {{ nm: string, lv: number, last: number, inAt: number, pl: number, plAt: number, rate?: number, rateAt?: number, bucket?: number, bucketAt?: number, clipped?: number, dealt?: number, bq?: any, bqAt?: number, bqWho?: string[] }} DelveAccount
+ *  when, the Vigil's blows its machine has been credited, and the gate's hand and purse once it strikes a piece (spendBlow,
+ *  spendPurse). Kept in a map with no prototype.
+ *  @typedef {{ nm: string, lv: number, last: number, inAt: number, pl: number, plAt: number, hb: number, rate?: number, rateAt?: number, bucket?: number, bucketAt?: number, clipped?: number, dealt?: number, bq?: any, bqAt?: number, bqWho?: string[] }} DelveAccount
  *  @typedef {{ s: number, kind: string, tier: string, seed: number, own: string, p: number, ec: number, stepAt: number, nearAt: number, inAt: number, bornAt: number, n: number, w: number, wz: number, kn: number, gs: number, ws: number, bs: number, cs: number, fo: string, foAt: number, k: number, order: number[], next: number, sh: number, shows: number, wonAt: number, earned: string[], a: Record<string, DelveAccount>,
  *   ss: number, hp: number[], hx: number, lt: number, hb: number, bt: number, btAt: number, lb: number, fl: number, fc: string, ft: number, fw: number, fp: number[], fx: number[], hs: number, su: number,
  *   wt: Array<{ s: number, by: string, p: number, x: number, y: number, z: number, ta: number, tp: number[] }> }} DelveLedger */
@@ -393,7 +401,8 @@ export function stepDelve(led, nowMs) {
     else if (led.p === DP.sunk && led.ec >= led.su + SEAL_SINK_MS) puzzleStands(led, led.su + SEAL_SINK_MS, end, ev);
     else break;
   }
-  if (led.kind === 'brazier' && led.p === DP.work) flameStep(led, ev);
+  if (led.kind === 'brazier' && led.p === DP.work) flameStep(led, nowMs, ev);
+  if (led.p === DP.work) carriersStep(led, nowMs, ev);
   if (led.kind === 'weighing' && led.p === DP.work) weighStep(led, nowMs, ev);
   return ev;
 }
@@ -411,10 +420,11 @@ export function foldDelveWord(led, acct, name, w, ctx) {
   if (led.p === DP.won || !ctx.party || !w || typeof w !== 'object' || !Number.isFinite(nowMs)) return [];
   const ev = stepDelve(led, nowMs);
   if (led.p === DP.won || ev.some((e) => ENDS.includes(e.k))) return ev;   // an ended ledger is dropped: the next word starts anew
-  const rec = led.a[acct] ?? (Object.keys(led.a).length < DELVE_PARTY_MAX * 2 ? (led.a[acct] = { nm: '', lv: 1, last: 0, inAt: -Infinity, pl: -1, plAt: -Infinity }) : null);
+  const rec = led.a[acct] ?? (Object.keys(led.a).length < DELVE_PARTY_MAX * 2 ? (led.a[acct] = { nm: '', lv: 0, last: 0, inAt: -Infinity, pl: -1, plAt: -Infinity, hb: 0 }) : null);
   if (!rec) return ev;
-  rec.nm = typeof name === 'string' ? name : ''; rec.lv = Math.max(1, Math.min(99, w.lv | 0)); rec.last = Math.max(rec.last, nowMs);
-  if (!ctx.inWard) return ev;   // heard, never counted: a word from outside the ward moves nothing
+  const lv = Math.max(1, Math.min(99, w.lv | 0));
+  rec.nm = typeof name === 'string' ? name : ''; rec.lv = rec.lv > 0 ? Math.min(rec.lv, lv) : lv; rec.last = Math.max(rec.last, nowMs);   // the level the record was made at, never raised while it stands (AUDIT DLV4 F4)
+  if (!ctx.inWard) { if (led.p === DP.work) carriedOut(led, acct, ev); return ev; }   // heard, never counted: a word from outside the ward moves nothing but what its speaker carries
   rec.inAt = Math.max(rec.inAt, nowMs); led.inAt = Math.max(led.inAt, nowMs); led.nearAt = Math.max(led.nearAt, nowMs);   // a word heard late moves no time back
   if (led.p === DP.idle) {
     if (led.kind === 'litany') { led.p = DP.show; led.sh = led.ec; led.shows++; ev.push({ k: 'show', order: [...led.order] }); }
@@ -442,18 +452,18 @@ function holdWord(led, acct, w, nowMs, ev) {
   if (led.p === DP.wave && w.kw === led.w && w.kn > led.kn) led.kn = Math.min(w.kn | 0, led.wz);
   if (led.p === DP.wave && w.wc === led.w && led.ec - led.ws >= starClearFloorMs(led.wz, nd)) breathStarts(led, led.ec, ev, nowMs);
   if (led.p === DP.captain && w.cf === 1 && led.ec - led.cs >= HOLD_CAPTAIN_MIN_MS) win(led, nowMs, ev);
-  if (led.kind === 'vigil') relicBlows(led, w, nowMs, ev);
+  if (led.kind === 'vigil') relicBlows(led, led.a[acct], w, nowMs, ev);
   return ev;
 }
 /** THE VIGIL'S LIGHT: the blows the foes' machine says landed on the relic this attempt, believed at the Starfall's rate
  *  (a bucket of STAR_BLOWS_BURST, STAR_BLOWS_HZ a second); the light gone, the vigil fails and the site rests. */
-function relicBlows(led, w, nowMs, ev) {
-  if (led.p === DP.won || led.p === DP.idle || !(Number.isInteger(w.hb) && w.hb > led.hb)) return;
+function relicBlows(led, rec, w, nowMs, ev) {
+  if (led.p === DP.won || led.p === DP.idle || !(Number.isInteger(w.hb) && w.hb > rec.hb)) return;
   led.bt = Math.min(STAR_BLOWS_BURST, led.bt + ((nowMs - led.btAt) / 1000) * STAR_BLOWS_HZ);
   led.btAt = nowMs;
-  const credit = Math.max(0, Math.min(w.hb - led.hb, Math.floor(led.bt)));
+  const credit = Math.max(0, Math.min(w.hb - rec.hb, Math.floor(led.bt)));   // each machine's own count (AUDIT DLV4 F6: a new one of the foes starts its own from nothing)
   if (!credit) return;
-  led.hb += credit; led.bt -= credit;
+  rec.hb += credit; led.hb += credit; led.bt -= credit;
   led.lt = Math.max(0, led.lt - credit * VIGIL_BLOW_LIGHT);
   if (led.lt <= 0) reset(led, 'failed', ev, false, { dark: true, rest: VIGIL_REST_MS });
 }
@@ -473,10 +483,24 @@ function litanyWord(led, w, plate, nowMs, ev) {
 }
 /** The Brazier Rite's flame on the clock: a carried one gutters out at FLAME_LIFE_MS, one lying at FLAME_LIES_MS - back at
  *  the heart either way. */
-function flameStep(led, ev) {
-  if ((led.fl === FLAME.carried && led.ec - led.ft >= FLAME_LIFE_MS) || (led.fl === FLAME.lying && led.ec - led.ft >= FLAME_LIES_MS)) {
-    led.fl = FLAME.heart; led.fc = ''; ev.push({ k: 'gutter' });
-  }
+function flameStep(led, nowMs, ev) {
+  if (led.fl === FLAME.heart) return;
+  if (nowMs - led.fw >= FLAME_LIFE_MS || (led.fl === FLAME.lying && nowMs - led.ft >= FLAME_LIES_MS)) flameHome(led, ev);
+}
+/** The flame back at the heart - guttered, or carried out of the ward. */
+function flameHome(led, ev) { led.fl = FLAME.heart; led.fc = ''; ev.push({ k: 'gutter' }); }
+/** A carried weight home again - its carrier out of the ward, or silent past DELVE_PRESENT_MS. */
+function weightHome(led, j, ev) { led.wt[j] = homeWeight(); ev.push({ k: 'back', j }); }
+/** THE CARRIER'S WARD: a piece carried out of the ward goes home (a let-go needs no reach, and nobody stays burdened
+ *  outside it); a carrier silent DELVE_PRESENT_MS loses it so. */
+function carriersStep(led, nowMs, ev) {
+  if (led.kind === 'brazier' && led.fl === FLAME.carried && !(nowMs - (led.a[led.fc]?.last ?? -Infinity) <= DELVE_PRESENT_MS)) flameHome(led, ev);
+  if (led.kind === 'weighing') led.wt.forEach((t, j) => { if (t.s === WEIGHT.carried && !(nowMs - (led.a[t.by]?.last ?? -Infinity) <= DELVE_PRESENT_MS)) weightHome(led, j, ev); });
+}
+/** A word from outside the ward: what its speaker carries goes home. */
+function carriedOut(led, acct, ev) {
+  if (led.kind === 'brazier' && led.fl === FLAME.carried && led.fc === acct) flameHome(led, ev);
+  if (led.kind === 'weighing') led.wt.forEach((t, j) => { if (t.s === WEIGHT.carried && t.by === acct) weightHome(led, j, ev); });
 }
 /** The Weighing judged: a plate held by a weight on it or a member of the party standing on it (its word fresh); all
  *  three held WEIGH_HOLD_MS on the encounter clock wins, any let go starts the count again. */
@@ -540,16 +564,18 @@ export function foldDelveAct(led, site, acct, act, ctx) {
   if (led.p === DP.won || !ctx.party || !act || typeof act !== 'object' || !Number.isFinite(nowMs)) return [];
   const ev = stepDelve(led, nowMs);
   if (led.p === DP.won || ev.some((e) => ENDS.includes(e.k))) return ev;
-  if (!led.a[acct] || !ctx.inWard || !Array.isArray(pose) || led.p !== DP.work) return ev;
+  if (!led.a[acct] || !Array.isArray(pose) || led.p !== DP.work) return ev;
+  if (!ctx.inWard) { if (act.a === 'drop' || act.a === 'set') carriedOut(led, acct, ev); return ev; }   // a let-go needs no reach: out of the ward, the piece goes home (AUDIT DLV4 F2)
   if (led.kind === 'brazier') flameAct(led, site, acct, act, pose, nowMs, ev);
   else if (led.kind === 'weighing') weightAct(led, site, acct, act, pose, nowMs, ev);
   return ev;
 }
 function flameAct(led, site, acct, act, pose, nowMs, ev) {
   if (act.a === 'take' && led.fl !== FLAME.carried) {
-    const at = led.fl === FLAME.lying ? led.fx : siteHeart(site);
+    const lying = led.fl === FLAME.lying, at = lying ? led.fx : siteHeart(site);
     if (!within(at, pose, DELVE_REACH_M)) return;
-    led.fl = FLAME.carried; led.fc = acct; led.ft = led.ec; led.fw = nowMs; led.fp = [at[0], at[2]];
+    led.fl = FLAME.carried; led.fc = acct;
+    if (!lying) { led.fw = nowMs; led.fp = [at[0], at[2]]; }   // taken up where it fell: its life and its walk still the heart's (AUDIT DLV4 F1, F3)
     ev.push({ k: 'take' });
   } else if (act.a === 'light' && led.fl === FLAME.carried && led.fc === acct) {
     const j = act.j, b = Number.isInteger(j) && j >= 0 && j < led.k ? brazierSpots(site, led.k)[j] : null;
@@ -558,7 +584,7 @@ function flameAct(led, site, acct, act, pose, nowMs, ev) {
     ev.push({ k: 'light', j });
     if (led.lb === (1 << led.k) - 1) win(led, nowMs, ev);
   } else if (act.a === 'drop' && led.fl === FLAME.carried && led.fc === acct) {
-    led.fl = FLAME.lying; led.fc = ''; led.ft = led.ec; led.fx = [cm(pose[0]), cm(pose[1]), cm(pose[2])];
+    led.fl = FLAME.lying; led.fc = ''; led.ft = nowMs; led.fx = [cm(pose[0]), cm(pose[1]), cm(pose[2])];
     ev.push({ k: 'drop' });
   }
 }

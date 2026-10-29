@@ -293,8 +293,9 @@ test('DLV1 THE SCREEN\'S STATE: the site, kind, phase, wave, size, deaths, time 
   for (let k = 0; k < 20; k++) say(led, `m${k}`, word(), T0 + 10 + k);
   assert.equal(Object.keys(led.a).length, 2 * DELVE_PARTY_MAX);
   assert.equal(led.a['m19'], undefined, 'the seventeenth is not kept');
-  say(led, 'acct-secret', word({ lv: 500 }), T0 + 50);
-  assert.equal(led.a['acct-secret'].lv, 99);
+  const fresh = newDelveLedger(site(), 'big', 7, T0);
+  say(fresh, 'big', word({ lv: 500 }), T0);
+  assert.equal(fresh.a.big.lv, 99, 'a level past the law clamped');
   assert.equal(led.a['acct-secret'].nm, 'n-acct-secret');
 });
 

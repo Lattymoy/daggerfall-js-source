@@ -143,27 +143,32 @@ ends the attempt: its foes crumble wherever they are, nothing is earned, and the
   that order (within 1.2 m). A lit plate may be stood on again; a wrong one darkens all and the order plays again.
   Untimed; in an Elite dungeon a wrong plate also wakes two foes of the table. A party silent at the site for 60 s lets
   it go.
-Each puzzle below rises 3 s after the first step in, and counts the party in the ward then.
+The Brazier Rite and the Seals rise 3 s after the first step in, and count the party in the ward then.
 
 - **THE BRAZIER RITE** (carry and bank - the Ketch's law). A source flame at the heart and three braziers on the
   ward's gates, four for a party of four or more. Take the flame, carry it slowed (THE BURDEN, 0.72) with the weapon
-  put up, and light a brazier within 1.2 m. A carried flame gutters back to the heart after 20 s; a carrier struck
-  drops it, and it lies 10 s to be taken up. Lit braziers stay lit. Foes of the table drift in, one each 15 s, two at
-  most.
+  put up, and light a brazier within 1.2 m. The flame lives 20 s off the heart, then gutters back to it. A carrier
+  struck drops it, and it lies 10 s to be taken up once the carrier has stepped off it; taken up, it keeps its 20 s and
+  its walk from the heart. Lit braziers stay lit. Foes of the table drift in from the rim, one each 15 s, two at most.
 - **THE WEIGHING** (plates held together - the winch's law). Three plates 3 m from the heart, on the axes the vault
   does not take. Each is held by a member standing on it (their word fresh within 2.5 s) or by a stone weight carried
   from the ward's gates (THE BURDEN again). All three held for 3 s opens the vault; any let go starts the count again.
-  One player carries two weights and stands on the third.
+  One player carries two weights and stands on the third. A weight lifted off a plate goes back on it only when its
+  carrier steps off and on again.
 - **THE SEALS** (break them all in time - the crystals' law). Three to six seals (`2 + ceil(n / 2)`) rise 3 m round the
   heart, each a Dagon's crystal's health for the party (`crystalHpFor`). Break all within 24 s plus law 7's floor of
   their route. Failed, they sink and rise again 10 s later, counted anew.
+
+A carried piece goes home - the flame to the heart, a weight to its gate - when its carrier speaks or lets go from
+outside the ward, or falls silent for 15 s, so nobody stays burdened past the ward. An account's level is the one its
+record was made at: a word may say it lower, never higher, while the attempt stands.
 
 No puzzle hurts a player for a wrong answer, and none is the clock: no dial, no hidden coupling, no riddle text.
 
 ## 6. The vault
 
 - A chest stands sealed from the dungeon's first frame (Daggerfall's own, model 41811, the Crown Hall's), solid as a
-  block's chest is: at a Hold's wall, at a Litany's heart. The encounter won, it opens. Its plaque names a sealed vault
+  block's chest is: at the Litany's and the Seals' heart, at a wall for every other kind. The encounter won, it opens. Its plaque names a sealed vault
   and what opens it, and lists a won one as a pile; quick loot takes from it; the look round calls it a find.
 - Its roll is `rollPileItems`: the dungeon's tables at its type, its Elite odds, LOOT-GATE's rarity, the online party's
   shared base (PARTY-LOOT). Offline, the player's own roll. It is never empty: a roll with no item is rolled again,

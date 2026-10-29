@@ -10,7 +10,7 @@ import {
   SPRING_MIN, SPRING_MAX, springCount, SPRING_POUR_MS, SPRING_ALIVE, SPRING_TEAM_S, springHp, SPRING_MAX_MS, SPRING_R, SPRING_H,
   VIGIL_LIGHT, VIGIL_BLOW_LIGHT, VIGIL_BREATH_LIGHT, VIGIL_REST_MS, braziersFor, FLAME_LIFE_MS, FLAME_LIES_MS, DRIFT_MAX, DRIFT_EVERY_MS, PUZZLE_RISE_MS,
   WEIGH_RING_M, WEIGHTS, WEIGH_HOLD_MS, WEIGH_FRESH_MS, sealCount, SEAL_RING_M, sealHp, SEAL_WORK_MS, SEAL_SINK_MS, sealRouteM, sealWindowMs,
-  springSpots, brazierSpots, vaultAxis, weighPlates, weightSpots, sealSpots, holdGates, delvePlates, litanyPlates, plateAt,
+  springSpots, brazierSpots, vaultAxis, weighPlates, weightSpots, sealSpots, holdGates, delvePlates, litanyPlates, plateAt, driftSpots,
   HOLD_GATHER_MS, HOLD_BREATH_MS, HOLD_WAVE_MAX_MS, HOLD_CAPTAIN_MIN_MS, DELVE_LEAVE_MS, DELVE_LET_GO_MS, holdWaveSize,
 } from '../../../src/net/delve/delveLaw.js';
 import { STAR_LIGHT, STAR_BLOW_LIGHT, STAR_BREATH_LIGHT, STAR_BLOWS_BURST, starClearFloorMs } from '../../../src/net/starfall/starfallLaw.js';
@@ -182,6 +182,30 @@ test('DLV4 THE VIGIL\'S LIGHT: the foes\' blows believed at the Starfall\'s rate
   assert.equal(L.p, DP.won); assert.equal(last.at(-1).k, 'won');
 });
 
+test('DLV4 THE VIGIL HANDED ON: each machine\'s blows are counted from its own nothing - a member who takes over the foes says its own count, and it is credited (AUDIT DLV4 F6; mutants: one count for every machine)', () => {
+  const s = site({ kind: 'vigil' }), led = newDelveLedger(s, 'A', 3, T0);
+  say(led, 'A', word({ o: 1 }), T0); say(led, 'B', word(), T0);
+  stepDelve(led, T0 + HOLD_GATHER_MS);
+  let t = T0 + HOLD_GATHER_MS;
+  say(led, 'A', word({ o: 1, hb: 4 }), t += 1_000);
+  assert.equal(led.lt, 100 - 4 * VIGIL_BLOW_LIGHT);
+  say(led, 'A', word({ o: 0, hb: 4 }), t += 1_000);   // A stands them no longer
+  say(led, 'B', word({ o: 1, hb: 0 }), t += 10);
+  say(led, 'B', word({ o: 1, hb: 3 }), t += 1_000);
+  assert.equal(led.lt, 100 - 7 * VIGIL_BLOW_LIGHT, 'B\'s three from its own nothing');
+});
+
+test('DLV4 THE RITE\'S FOES DRIFT IN off the rim: half a metre in on the axes the vault does not take - never on a gate, where a brazier\'s pedestal stands (AUDIT DLV4 F10; mutants: a gate\'s spot; the vault\'s axis)', () => {
+  const s = site({ kind: 'brazier' }), d = driftSpots(s);
+  assert.equal(d.length, 3);
+  for (const p of d) {
+    assert.ok(Math.abs(Math.hypot(p[0] - s.x, p[2] - s.z) - (s.r - 0.5)) < 0.011, 'on the rim, half a metre in');
+    assert.ok(holdGates(s).every((g) => Math.hypot(g[0] - p[0], g[2] - p[2]) > 2), 'clear of every gate');
+  }
+  const v = s.vault, toward = (p) => (p[0] - s.x) * (v[0] - s.x) + (p[2] - s.z) * (v[2] - s.z);
+  assert.ok(d.every((p) => toward(p) <= 0.01), 'none on the vault\'s axis');
+});
+
 test('DLV4 THE BRAZIER RITE, WHOLE: it rises 3 s, its braziers counted by the party then; the flame taken at the heart, carried no faster than the fastest runner bearing it, lights a brazier in reach, and goes back to the heart; every brazier lit wins (mutants: the count read early; the step law skipped; a lit brazier lit again; the flame kept after lighting)', () => {
   const s = site({ kind: 'brazier' }), led = newDelveLedger(s, 'A', 3, T0);
   assert.deepEqual(say(led, 'A', word(), T0), [{ k: 'gather' }]);
@@ -315,6 +339,61 @@ test('DLV4 A BLOW\'S CAPS: a member\'s hand (four blows a second) and purse (fif
   assert.ok(led.a.A.bucket < BUCKET_DEPTH_X * dpsRef(10));
 });
 
+test('DLV4 A LEVEL FOR THE ATTEMPT: an account\'s level is the one its record was made at - a word may say it lower, never higher, so the pieces sized as they rise and the purse its blows spend read one level (AUDIT DLV4 F4; mutants: a level raised mid-attempt)', () => {
+  const s = site(), led = newDelveLedger(s, 'A', 3, T0);
+  say(led, 'A', word({ o: 1, lv: 1 }), T0);
+  stepDelve(led, T0 + HOLD_GATHER_MS);
+  assert.equal(led.hx, springHp([1]));
+  say(led, 'A', word({ o: 1, lv: 60 }), T0 + HOLD_GATHER_MS + 10);
+  assert.equal(led.a.A.lv, 1, 'never raised while it stands');
+  hit(led, s, 'A', 0, 1e6, T0 + HOLD_GATHER_MS + 20, { pose: springSpots(s, led.k)[0] });
+  assert.equal(led.hp[0], springHp([1]) - HIT_CAP_X * dpsRef(1), 'its blow capped at the level it rose at');
+  say(led, 'A', word({ o: 1, lv: 0 }), T0 + HOLD_GATHER_MS + 30);
+  assert.equal(led.a.A.lv, 1, 'nor under one');
+});
+
+test('DLV4 THE FLAME LET FALL: taken up where it lies, it keeps its life off the heart and the walk from it - a fall and a taking up again light no brazier sooner, and a blow every few seconds never renews it (AUDIT DLV4 F1, F3; mutants: the life renewed at a taking up; the walk from where it fell)', () => {
+  const s = site({ kind: 'brazier' }), led = newDelveLedger(s, 'A', 3, T0), heart = [s.x, s.y, s.z];
+  say(led, 'A', word({ lv: 10 }), T0);
+  let t = T0 + PUZZLE_RISE_MS;
+  say(led, 'A', word({ lv: 10 }), t);
+  const b = brazierSpots(s, led.k)[0];
+  act(led, s, 'A', 'take', -1, heart, t += 10);
+  assert.equal(led.fl, FLAME.carried);
+  act(led, s, 'A', 'drop', -1, b, t += 5);   // a lying pose at the brazier
+  act(led, s, 'A', 'take', -1, b, t += 5);
+  assert.deepEqual(act(led, s, 'A', 'light', 0, b, t += 5), [], 'its walk still the heart\'s: lit no sooner than a carrier could bring it');
+  assert.equal(led.lb, 0);
+  // struck every 5 s: its life is still the heart's 20 s
+  const t0 = t;
+  for (; t < t0 + FLAME_LIFE_MS - 100; t += 5_000) { say(led, 'A', word({ lv: 10 }), t); act(led, s, 'A', 'drop', -1, heart, t + 1); act(led, s, 'A', 'take', -1, heart, t + 2); }
+  const ev = say(led, 'A', word({ lv: 10 }), t0 - 25 + FLAME_LIFE_MS + 10);
+  assert.ok(ev.some((e) => e.k === 'gutter'), 'guttered at its life off the heart');
+  assert.equal(led.fl, FLAME.heart);
+});
+
+test('DLV4 A PIECE CARRIED OUT OF THE WARD goes home: a word or a let-go from outside it sends the flame to the heart and a weight to its home - nobody stays burdened past the ward; a carrier silent 15 s loses it so (AUDIT DLV4 F2; mutants: the word out of the ward unread; the let-go out of the ward refused; the silent carrier kept)', () => {
+  const s = site({ kind: 'brazier' }), led = newDelveLedger(s, 'A', 3, T0), heart = [s.x, s.y, s.z];
+  say(led, 'A', word(), T0); say(led, 'A', word(), T0 + PUZZLE_RISE_MS);
+  act(led, s, 'A', 'take', -1, heart, T0 + PUZZLE_RISE_MS + 10);
+  assert.deepEqual(say(led, 'A', word(), T0 + PUZZLE_RISE_MS + 500, { inWard: false }), [{ k: 'gutter' }], 'a word from outside the ward: the flame home');
+  assert.equal(led.fl, FLAME.heart);
+  act(led, s, 'A', 'take', -1, heart, T0 + PUZZLE_RISE_MS + 600);
+  assert.deepEqual(foldDelveAct(led, s, 'A', { a: 'drop', j: -1 }, { party: true, inWard: false, pose: [s.x + 9, s.y, s.z], nowMs: T0 + PUZZLE_RISE_MS + 700 }), [{ k: 'gutter' }], 'let go out of the ward: home');
+  act(led, s, 'A', 'take', -1, heart, T0 + PUZZLE_RISE_MS + 800);
+  say(led, 'B', word(), T0 + PUZZLE_RISE_MS + 900);
+  assert.ok(say(led, 'B', word(), T0 + PUZZLE_RISE_MS + 800 + 15_001).some((e) => e.k === 'gutter'), 'its carrier silent 15 s: home');
+  const g = site({ kind: 'weighing' }), lw = newDelveLedger(g, 'A', 3, T0), home = weightSpots(g)[0];
+  say(lw, 'A', word(), T0);
+  act(lw, g, 'A', 'take', 0, home, T0 + 10);
+  assert.equal(lw.wt[0].s, WEIGHT.carried);
+  assert.deepEqual(say(lw, 'A', word(), T0 + 500, { inWard: false }), [{ k: 'back', j: 0 }], 'a weight carried out: home');
+  assert.equal(lw.wt[0].s, WEIGHT.home);
+  act(lw, g, 'A', 'take', 0, home, T0 + 600);
+  say(lw, 'B', word(), T0 + 700);
+  assert.ok(say(lw, 'B', word(), T0 + 500 + 15_001).some((e) => e.k === 'back'), 'its carrier silent: home');
+});
+
 test('DLV4 THE SCREEN\'S STATE BY KIND: each kind says its own pieces, no account named; the Hold\'s shape untouched (mutants: a kind\'s field missing; the carrier named)', () => {
   const W = newDelveLedger(site(), 'acct-1', 3, T0);
   say(W, 'acct-1', word({ o: 1 }), T0); stepDelve(W, T0 + HOLD_GATHER_MS);
@@ -336,11 +415,12 @@ test('DLV4 THE SCREEN\'S STATE BY KIND: each kind says its own pieces, no accoun
   assert.deepEqual(Object.keys(delveState(H, T0)), ['k', 's', 'kd', 'p', 'w', 'wz', 'kn', 'wl', 'nd', 'fo', 'nx']);
 });
 
-test('DLV4 A STRANGER AND A STRANGER\'S HANDS: no act or blow from outside the party, or from outside the ward, moves anything (mutants: the party unread on an act; the ward unread on a blow)', () => {
+test('DLV4 A STRANGER AND A STRANGER\'S HANDS: no act or blow from outside the party, from outside the ward, or from a member never heard, moves anything (mutants: the party unread on an act; an act with no record; the ward unread on a blow)', () => {
   const s = site({ kind: 'brazier' }), led = newDelveLedger(s, 'A', 3, T0);
   say(led, 'A', word(), T0); stepDelve(led, T0 + PUZZLE_RISE_MS);
   assert.deepEqual(act(led, s, 'A', 'take', -1, [10, -2, 20], T0 + PUZZLE_RISE_MS, { party: false }), []);
   assert.deepEqual(act(led, s, 'A', 'take', -1, [10, -2, 20], T0 + PUZZLE_RISE_MS, { inWard: false }), []);
+  assert.deepEqual(act(led, s, 'Q', 'take', -1, [10, -2, 20], T0 + PUZZLE_RISE_MS + 1), [], 'of the party, but no word heard from it yet: no record, no hands');
   assert.equal(led.fl, FLAME.heart);
   const W = newDelveLedger(site(), 'A', 3, T0);
   say(W, 'A', word({ o: 1 }), T0); stepDelve(W, T0 + HOLD_GATHER_MS);

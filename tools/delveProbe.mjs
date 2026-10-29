@@ -17,8 +17,9 @@ import { litanyPlates, springSpots, sealSpots, brazierSpots, weightSpots, weighP
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const LOOK = process.argv.includes('--look');
-const DEBUG = !!process.env.DELVE_DEBUG;   // each swing said: the host's hits, the pieces, where I stand
-const [region = 'Daggerfall', name = 'Bedard Laboratory', shots = null] = process.argv.slice(2).filter((a) => a !== '--look');
+const DEBUG = !!process.env.DELVE_DEBUG;
+const DPS = process.argv.includes('--dps');   // the character's own damage a second on the first piece it strikes   // each swing said: the host's hits, the pieces, where I stand
+const [region = 'Daggerfall', name = 'Bedard Laboratory', shots = null] = process.argv.slice(2).filter((a) => a !== '--look' && a !== '--dps');
 if (shots) mkdirSync(shots, { recursive: true });
 const server = await createServer({ server: { port: 5231, strictPort: true, hmr: false, watch: null }, logLevel: 'error' });   // an edit to the tree mid-run reloads no page
 await server.listen();
@@ -98,9 +99,10 @@ for (const s of sites) {
   }, s.i);
   /** The player's own swing at a piece, from a step off it, facing it - the crystal seam's real door. */
   const swingAt = async (p) => {
-    const a = [p[0] + 1.2, p[1], p[2]];
+    const dx = s.x - p[0], dz = s.z - p[2], d = Math.hypot(dx, dz) || 1, a = [p[0] + (dx / d) * 1.2, p[1], p[2] + (dz / d) * 1.2];   // on the heart's side, where a defender stands
     await at(a);
-    await page.evaluate(([x, y, z, tx, tz]) => window.__pose(x, y + 1.6, z, Math.atan2(tx - x, tz - z), -0.35), [a[0], a[1], a[2], p[0], p[2]]);
+    // looking at the piece's middle, as a player must (the swing meets a body in view - a source is shorter than the eye)
+    await page.evaluate(([x, y, z, tx, tz, mid]) => window.__pose(x, y + 1.6, z, Math.atan2(tx - x, tz - z), -Math.atan2(y + 1.6 - mid, Math.hypot(tx - x, tz - z))), [a[0], a[1], a[2], p[0], p[2], p[1] + 0.8]);
     if (DEBUG) await page.evaluate(() => { const h = window.__delve(); if (h.__hits) return; h.__hits = []; const f = h.hit.bind(h); h.hit = (...a) => { const r = f(...a); h.__hits.push([...a, r]); return r; }; });
     const hand = () => page.evaluate(() => { const w = window.__combat.weapon(); return w ? { sheathed: !!w.sheathed, state: w.machine?.state ?? null, cd: window.__playerEntity?.equipCountdown ?? 0 } : null; });
     for (let k = 0; k < 40 && (await hand())?.sheathed; k++) { if (k === 0) await page.evaluate(() => window.__combat.toggleSheath()); await frames(5); }   // the game boots sheathed: drawn once, never put up again
@@ -109,6 +111,23 @@ for (const s of sites) {
     await page.evaluate(() => window.__combat.clickAttack());
     await frames(24);
     if (DEBUG) console.log(`  swing ${JSON.stringify(was)}: ${await page.evaluate(() => { const h = window.__delve(); const o = JSON.stringify({ hits: h.__hits.splice(0), pieces: h.breakables().map((q) => [q.c, q.feet, q.height, q.radius]), pos: window.__player.pos, eye: window.__player.eye }); return o; })}`);
+  };
+  /** THE MEASURE (Delve-II.md section 5: "measured in the game before they ship"): the character's own damage a second on
+   *  piece `j` - a swing pressed every frame for 150 frames, the game's own pace deciding when one starts. A frame's step
+   *  is the bench's 0.1 s at most (scenes/dungeon.js), so under 10 frames a second 150 frames are 15 s of the game's time. */
+  const measureDps = async (j) => {
+    const r = await page.evaluate(async ([i, jj]) => {
+      const h = window.__delve(), w0 = performance.now(), f0 = window.__frame;
+      let dmg = 0, n = 0, presses = 0;
+      const f = h.hit.bind(h);
+      h.hit = (c, d, k) => { const ok = f(c, d, k); if (ok) { dmg += d; n++; } return ok; };
+      while (window.__frame < f0 + 150) { window.__playerEntity.health = window.__playerEntity.maxHealth; window.__combat.clickAttack(); presses++; await new Promise((res) => requestAnimationFrame(res)); }
+      h.hit = f;
+      void i; void jj;
+      return { dmg, n, presses, frames: window.__frame - f0, wallS: (performance.now() - w0) / 1000, lv: window.__playerEntity.level };
+    }, [s.i, j]);
+    const fps = r.frames / r.wallS, gameS = fps < 10 ? r.frames * 0.1 : r.wallS;
+    console.log(`  dps: ${(r.dmg / gameS).toFixed(2)} at level ${r.lv} (${r.n} blows, ${r.dmg} in ${gameS.toFixed(1)} s of the game's time, ${fps.toFixed(1)} frames a second)`);
   };
   if (s.kind === 'wellsprings' || s.kind === 'seals') {
     let struck = 0;
@@ -125,6 +144,7 @@ for (const s of sites) {
       await swingAt(spots[j]);
       const after = (await state())[s.i].hp[j];
       if (after < before) { struck++; if (struck === 1) await shot(`site${s.i}-struck`); console.log(`  piece ${j}: ${before} -> ${after} (the swing's own blow)`); }
+      if (after < before && struck === 1 && DPS) await measureDps(j);
     }
     if (!struck) await fail(`site ${s.i}: no swing ever landed on a piece`);
   } else if (s.kind === 'brazier') {
