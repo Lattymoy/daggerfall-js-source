@@ -21,7 +21,7 @@ import { portalStones } from '../../src/systems/gate/gateSpoils.js';
 import { PORTAL_TEXT, PORTAL_HOLD_TEXT } from '../../src/systems/portalStone.js';
 import { pastBayJourney, teleportJourney, PAST_BAY_TRAVEL_TEXT } from '../../src/systems/travel/pastBayTravel.js';
 import { wildJourney, wildInside, buildWildMask, WILD_NAME } from '../../src/systems/wild/wildZone.js';
-import { zonePortFree, landingOf } from '../../src/systems/wild/zoneSafe.js';   // WILD-CITY-PORT
+import { zonePortFree, teleportLanding } from '../../src/systems/wild/zoneSafe.js';   // WILD-CITY-PORT
 import { inEther } from '../../src/world/ethericSea.js';
 import { inBay } from '../../src/world/tamriel/tamrielFrame.js';
 import { REPOSITION } from '../../src/systems/ship.js';
@@ -113,7 +113,7 @@ function worldHost(o = {}) {
     arenaBouts: { holds: () => false }, ARENA_TEXT: { refuse: { travel: 'arena' } }, madeRuleHere: () => null, madeSay() {}, teleportPlan,
     routByJump() {}, cacheExteriorScene() {}, _wodInside: false,
     // WILD-CITY-PORT (systems/wild/zoneSafe.js zonePortFree): where I stand and the place a pixel stands - none by default
-    zonePortFree, landingOf, campToWire: (p) => p, player: { feetAt: () => [0, 0, 0] }, locationIndex: new Map(), _locationToBuild: () => null,
+    zonePortFree, teleportLanding, campToWire: (p) => p, player: { feetAt: () => [0, 0, 0] }, locationIndex: new Map(), _locationToBuild: () => null,
     ...o,
   };
   scope.wildOutdoors = () => (scope.modes?.mode ?? 'exterior') === 'exterior';

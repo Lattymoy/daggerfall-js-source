@@ -76,7 +76,7 @@ export function landsSettled(p, locAt) {
   return isSettlement(loc) && isInLocationRect(p[0], p[2], locationWorldRect(loc, px.x, px.y));
 }
 /** A Recall anchor's landing (teleportAnchor.js makeAnchor: natives on x and z), or a leader's feet - settledAt's frame. */
-export const landingOf = (a) => (a && Number.isFinite(a.nativeX) ? [a.nativeX, 0, a.nativeZ] : a && Number.isFinite(a.x) ? [a.x, a.y ?? 0, a.z] : undefined);
+export const teleportLanding = (a) => (a && Number.isFinite(a.nativeX) ? [a.nativeX, 0, a.nativeZ] : a && Number.isFinite(a.x) ? [a.x, a.y ?? 0, a.z] : undefined);
 
 // ── the frame's word: am I in the streets of one now ──
 let _safe = false;

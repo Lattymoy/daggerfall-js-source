@@ -17,7 +17,7 @@ import { addPastBayPlaces, resetPastBayPlaces } from '../../../src/world/pastBay
 import { discoverLocation, snapshotDiscovery, restoreDiscovery } from '../../../src/systems/discovery.js';
 import { pastBayStamp } from '../../../src/ui/tamrielInk.js';
 import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
-import { zonePortFree, landingOf } from '../../../src/systems/wild/zoneSafe.js';
+import { zonePortFree, teleportLanding } from '../../../src/systems/wild/zoneSafe.js';
 import { buildWildMask } from '../../../src/systems/wild/wildZone.js';
 import { locationWorldRect } from '../../../src/world/streamingWorld.js';
 import { standingRace, figureLook } from '../../../src/characters/peopleBodies.js';
@@ -97,10 +97,10 @@ test('AUDIT TAMRIEL-WIDE E1: a teleport into the open zone lands in a settlement
   const locAt = (x, y) => (x === at.x && y === at.y ? village : null);
   const r = locationWorldRect(village, at.x, at.y), cz = (r.minZ + r.maxZ) / 2;
   const free = (landing) => zonePortFree(zone, bay, at, null, undefined, new Map(), locAt, landing);
-  assert.equal(free(landingOf({ nativeX: (r.minX + r.maxX) / 2, nativeZ: cz })), true, 'a Recall to a Mark in its streets');
-  assert.equal(free(landingOf({ nativeX: r.maxX + 2 * 4096, nativeZ: cz })), false, 'a Mark two blocks past its walls, on its pixel: the open country');
-  assert.equal(free(landingOf({ x: (r.minX + r.maxX) / 2, y: 3, z: cz })), true, 'the leader\'s feet in its streets');
-  assert.equal(free(landingOf({ x: r.maxX + 2 * 4096, y: 3, z: cz })), false, 'and outside them');
+  assert.equal(free(teleportLanding({ nativeX: (r.minX + r.maxX) / 2, nativeZ: cz })), true, 'a Recall to a Mark in its streets');
+  assert.equal(free(teleportLanding({ nativeX: r.maxX + 2 * 4096, nativeZ: cz })), false, 'a Mark two blocks past its walls, on its pixel: the open country');
+  assert.equal(free(teleportLanding({ x: (r.minX + r.maxX) / 2, y: 3, z: cz })), true, 'the leader\'s feet in its streets');
+  assert.equal(free(teleportLanding({ x: r.maxX + 2 * 4096, y: 3, z: cz })), false, 'and outside them');
   assert.equal(free(undefined), true, 'a city pick (a guild\'s, a stone\'s) lands at the city: its pixel');
   assert.equal(free(null), false, 'a ship whose body is not stood');
   assert.equal(zonePortFree(zone, bay, bay, null, undefined, new Map(), locAt, null), true, 'outside the zone, as ever');
