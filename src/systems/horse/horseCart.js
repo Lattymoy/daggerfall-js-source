@@ -68,6 +68,7 @@ import { createTrailingPoseCache } from './trailingPoseCache.js';   // STALE-PAR
 import { yawed } from './horseFollow.js';   // WAGONS2: the bogie's turn
 import { quatLookRotation, quatForward, quatFromBasis, quatRotate, UNITY_QUAT_IDENTITY } from '../../world/quat.js';
 import { noteFirstUse } from '../tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { dragonKeepDoor } from '../dragon/dragonKeep.js';   // DRAGON5b: the summon key calls the tamed dragon when it was the last ridden
 
 /** KB1: the mod's two hotkeys are the port's keybinding registry's actions (systems/inputActions.js MOD_ACTIONS) -
  *  bound in the controls pane beside every other key, not parsed off the mod's own TextKeys here. */
@@ -876,7 +877,7 @@ export function createHorseCartRuntime(deps) {
     if (target === TRANSPORT.Foot) { say(HCC_TEXT.doNotOwnHorseOrWagon); return; }
     tryUseTransport(target);
   }
-  function handleSummonTransport() { say(summonTransport().text); }
+  function handleSummonTransport() { const d = dragonKeepDoor(); if (d?.summonsFirst()) { d.call(); return; } say(summonTransport().text); }   // DRAGON5b: the dragon when it was the last ridden (or there is nothing else to call)
   /** HandleSummonTransport's body, its line ANSWERED rather than said (HOLDINGS: the Stable page says it under its row,
    *  the hotkey on the HUD) - `{ ok, text }`, `ok` when something was summoned. */
   function summonTransport() {

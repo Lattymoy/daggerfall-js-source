@@ -140,6 +140,9 @@ export const realmLineages = async (/** @type {any} */ io) => {
  *  from (the list's, the last write's, the stale answer's) - none for a line founded here. */
 export const realmLineagePut = (/** @type {any} */ io, /** @type {string} */ id, /** @type {any} */ record, /** @type {number|null} */ base = null) =>
   realmAsk(io, '/v1/realm/lineage', { method: 'POST', json: base == null ? { id, record } : { id, record, base } });
+/** FAMILY-REMOVE: a line no living character plays let go, so the account has room to found another -
+ *  `{ ok }` or a refusal ('lineage-in-use', 'no-lineage'; server-account/src/legacy.js removeLineage). */
+export const realmLineageRemove = (/** @type {any} */ io, /** @type {string} */ id) => realmAsk(io, '/v1/realm/lineage/remove', { method: 'POST', json: { id } });
 /** LEGACY7: THE TOMBSTONE - the playing tab's character fallen for good, under its lease. Part three: `why` 'retired' -
  *  an elder's mantle passed, which keeps a union with another player's character (a death ends it). REZ-BLOODLINE AUDIT
  *  R1: `hold` - the death door's fall, held for a party's Resurrect (server-account/src/legacy.js realmDie). */

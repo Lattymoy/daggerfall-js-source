@@ -29,13 +29,13 @@ const horse = { group: 'Transportation', templateIndex: TRANSPORT_HORSE_TEMPLATE
 const cart = { group: 'Transportation', templateIndex: SMALL_CART_TEMPLATE };
 
 test('TR1: the modes, the two ride bases, and the ownership tests', () => {
-  assert.deepEqual({ ...TRANSPORT_MODES }, { Foot: 'Foot', Horse: 'Horse', Cart: 'Cart', Ship: 'Ship' });
+  assert.deepEqual({ ...TRANSPORT_MODES }, { Foot: 'Foot', Horse: 'Horse', Cart: 'Cart', Ship: 'Ship', Dragon: 'Dragon' });   // PIN MOVED (DRAGON5): the port's own third mount, past DFU's four
   assert.equal(DF_RIDE_BASE, DF_WALK_BASE + 225, 'dfRideBase = dfWalkBase + 225 (:33)');
   assert.equal(DF_CART_BASE, DF_WALK_BASE + 100, 'dfCartBase = dfWalkBase + 100 (:34)');
   assert.deepEqual([...HORSE_ITEM_INDEXES], [TRANSPORT_HORSE_TEMPLATE], 'horseItemIndexes seeded with Transportation.Horse (:72)');
   // ONE HOME (AUDIT 24's ratchet, which caught this slice's first cut):
   // hasHorse/hasCart are inventorySession's, re-exported here.
-  assert.match(readFileSync(join(root, 'src/systems/transport.js'), 'utf8'), /export \{ hasCart, hasHorse \};/);
+  assert.match(readFileSync(join(root, 'src/systems/transport.js'), 'utf8'), /export \{ hasCart, hasHorse, hasDragon \};/);   // PIN MOVED (DRAGON5): and the tamed dragon's, its own home's (systems/dragon/dragonMount.js)
   assert.equal(hasHorse([cart]), false); assert.equal(hasHorse([horse, cart]), true);
   assert.equal(hasCart([horse]), false); assert.equal(hasCart([cart]), true);
   assert.equal(hasHorse([]), false); assert.equal(hasCart(null), false);

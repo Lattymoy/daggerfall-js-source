@@ -35,7 +35,8 @@ So, as decided here (each decision is argued in its section):
 - **One at a time, until it is beaten.** The hub keeps ONE record (section 2). A Super dungeon stands until its boss
   falls - then it collapses - or until its time runs out unbeaten (48 hours) - then it fades. After either, the next
   one rises somewhere else. Since WW5 (section 16, WW5), one at a time in each theatre: the Bay's and each province's
-  lane keeps its own record, Cyrodiil's open zone none.
+  lane keeps its own record, Cyrodiil's open zone none - since FRONTS a province's rises on its turn, two at most
+  past the Bay (`03-World/World-Wide.md` FRONTS).
 - **"Where population is at its most" in both of its senses.** The relay counts the players in each of the Bay's 62
   regions at the moment one rises and picks the fullest (section 3); inside that region every client places it by the
   first of the region's cities, ranked as its hub is (a city, the one named for its region, then the largest), that has

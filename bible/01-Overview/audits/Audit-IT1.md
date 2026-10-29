@@ -85,7 +85,7 @@ stand.
 
 ## Not verified here
 
-No ARENA2 and no GPU in this container. The four patches now carry every round-trip change the files themselves show;
-any other (an automap byte) only `ARENA2_PATH=... node --test test/formats/worldData/it1_worlddata.test.js` can say, and
-`node tools/immersiveTravelPatches.mjs <immersivetravel.dfmod> <arena2>` writes WD1's checked diff, which the layer now
-takes. Nothing was seen in a browser.
+No GPU in this container. ARENA2-IT (2026-10-29): with the freeware ARENA2 the four patches failed their sha256 check -
+the editor had also zeroed WALLAA08's automap byte and written WALLAA09-11's rotations as their negative equivalents. They
+are WD1's checked diff now, and `ARENA2_PATH=... node --test test/formats/worldData/it1_worlddata.test.js` passes; the
+layer takes them unchanged.

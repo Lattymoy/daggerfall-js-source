@@ -359,7 +359,7 @@ test('BOSS-DOT THE HOSTS (by source - buildDungeonContext and bootWorld do not r
   assert.match(dc, /const landOnHost = \(hb, damage, r, tick = false\) => \{[^\n]*!!opts\.onHostHit\?\.\(\{ i: hb\.host, d: damage, r, tick \}\)\); \};/);   // PIN MOVED (AUDIT KETCH II STAND-IN-BAR): its answer handed through markHostStruck, the target bar's
   const w = read('src/scenes/world.js');
   assert.match(w, /const serpentSpell = createSerpentSpell\(\{ player: playerEntity, standIn: serpentStandIn, land: \(box, d\) => serpentHost\?\.handStruck\?\.\(box, d\) \}\);/);
-  assert.match(w, /castAtBox: \(sp, q, caster\) => serpentSpell\.cast\(sp, q, caster\),/);
+  assert.match(w, /castAtBox: \(sp, q, caster\) => dragonSky\?\.cast\(sp, q, caster\) \?\? serpentSpell\.cast\(sp, q, caster\),/);   // PIN MOVED (DRAGON3): the serpent's door for any mark not the Dwarven Dragon's
   assert.match(w, /_serpentFight = !!fight;\n {4}serpentSpell\.frame\(fight\);/);
   assert.equal(/function serpentSpellOn\(/.test(w), false, 'its door left bootWorld');
 });

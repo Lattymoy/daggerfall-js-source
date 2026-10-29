@@ -138,7 +138,7 @@
   {
     "name": "BOSS-DOT-the-serpents-riders-told-the-claim",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "took: standInShown(dealt, SERPENT_HIT_CAP_X * SERPENT_HAND_REF),",
+    "old": "took: standInShown(dealt, cap()),",
     "new": "took: dealt,",
     "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
     "why": "the serpent's riders told a claim no hand's purse lands"

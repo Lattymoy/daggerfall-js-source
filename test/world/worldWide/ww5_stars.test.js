@@ -288,14 +288,14 @@ test('WW5 THE THEATRES WARMED A THEATRE AT A TIME: a province\'s scan is asked o
 });
 
 /** The Starfall's host on bindings by name (star5_host.test.js's shape), a province's theatre scan beside the Bay's. */
-function starWorld({ ww5 = true, region = 17 } = {}) {
+function starWorld({ ww5 = true, region = 17, n = N } = {}) {
   const bayScan = (() => {
     const byRegion = new Map(), townAt = new Int32Array(1000 * 500).fill(-1), towns = [];
     [...new Set(STAR_COVENS.map((c) => c.region))].forEach((r, i) => { const px = []; for (let y = 20 + i * 30; y < 40 + i * 30; y++) for (let x = 300; x < 320; x++) { const id = y * 1000 + x; px.push(id); townAt[id] = towns.length; towns.push({ name: `Town ${towns.length}`, px: x, py: y, region: r }); } byRegion.set(r, Int32Array.from(px)); });
     return { byRegion, towns, townAt };
   })();
   const sk = theatreScan(3);
-  const w = { t: starTimes(N, 0).omenAt + 1000, region, said: [] };
+  const w = { t: starTimes(n, 0).omenAt + 1000, region, said: [] };
   const host = createStarfallHost({
     renderer: null, state: { pixelTranslation: (px, py, out) => { out[0] = px * 100; out[1] = 0; out[2] = py * 100; return out; } },
     exteriorFoes: null, gateScanOf: () => bayScan, warmGateScan: () => {}, surfaceAt: () => 0, player: { feetAt: () => null }, walkMode: true, playerSpawned: true,
@@ -308,17 +308,21 @@ function starWorld({ ww5 = true, region = 17 } = {}) {
 }
 
 test('WW5 THE HOST: every theatre\'s stars stand - the Bay\'s and a province\'s, each its own key; none of a province\'s on a relay that keeps none; the Timers the theatre I stand in alone (the Bay\'s at sea and in Cyrodiil); a province\'s hold said to its own theatre, the Bay\'s to everyone; the map every theatre\'s (mutants: the lanes unasked; the relay gate; the Timers every theatre\'s; the hold to everyone)', () => {
+  // PIN MOVED: FRONTS - a festival night on Skyrim's turn, all three of its stars landing (net/frontLaw.js); N is High Rock's and Summerset's
+  let NS = N;
+  while (NS < N + 48 && ![9, 10, 11].every((k) => starInWindow(NS, k))) NS++;
+  assert.ok(NS < N + 48, 'Skyrim\'s turn comes within two days of nights');
   const realNow = Date.now;
   try {
-    const { w, host, sk } = starWorld();
+    const { w, host, sk } = starWorld({ n: NS });
     Date.now = () => w.t;
     host.frame();
     const keys = host.state().map((s) => s.key);
-    const lane3 = findTheatreStarSites(N, 3, sk).filter((s) => starInWindow(s.n, s.k));
-    assert.ok(keys.some((k) => k.startsWith(`${N}.0@`)), 'the Bay\'s first star in its omen');
-    assert.ok(keys.includes(starHeldKey(N, 9, lane3[0].px, lane3[0].py)), 'Skyrim\'s first star in its omen, its own key');
+    const lane3 = findTheatreStarSites(NS, 3, sk).filter((s) => starInWindow(s.n, s.k));
+    assert.ok(keys.some((k) => k.startsWith(`${NS}.0@`)), 'the Bay\'s first star in its omen');
+    assert.ok(keys.includes(starHeldKey(NS, 9, lane3[0].px, lane3[0].py)), 'Skyrim\'s first star in its omen, its own key');
     const marks = host.mapMarks().map((m) => m.key);
-    assert.ok(marks.includes(starHeldKey(N, 9, lane3[0].px, lane3[0].py)) && marks.some((k) => k.startsWith(`${N}.0@`)), 'the map: every theatre\'s');
+    assert.ok(marks.includes(starHeldKey(NS, 9, lane3[0].px, lane3[0].py)) && marks.some((k) => k.startsWith(`${NS}.0@`)), 'the map: every theatre\'s');
     assert.ok(host.timerRows().every((r) => /^star:\d+\.[0-2]$/.test(r.id)), 'on the Bay: the Bay\'s rows alone');
     w.region = 64;   // Skyrim
     const rows = host.timerRows();
@@ -327,23 +331,27 @@ test('WW5 THE HOST: every theatre\'s stars stand - the Bay\'s and a province\'s,
     const cy = host.timerRows();
     assert.ok(cy.length > 0 && cy.every((r) => /^star:\d+\.[0-2]$/.test(r.id)), 'in Cyrodiil: the Bay\'s rows');
     // a hold past the Bay: said where it stands
-    w.t = starTimes(N, 0).fallAt + 1000; host.frame();
+    w.t = starTimes(NS, 0).fallAt + 1000; host.frame();
     w.region = 17; w.said.length = 0;
     const s9 = lane3[0];
-    host.onStar({ k: 'hd', n: N, s: 9, px: s9.px, py: s9.py, at: w.t, top: ['Ann'], c: 1 });
+    host.onStar({ k: 'hd', n: NS, s: 9, px: s9.px, py: s9.py, at: w.t, top: ['Ann'], c: 1 });
     assert.deepEqual(w.said, [], 'a province\'s hold, not news on the Bay');
     w.region = 64;
-    host.onStar({ k: 'hd', n: N, s: 10, px: lane3[1].px, py: lane3[1].py, at: w.t, top: ['Ann'], c: 1 });
+    host.onStar({ k: 'hd', n: NS, s: 10, px: lane3[1].px, py: lane3[1].py, at: w.t, top: ['Ann'], c: 1 });
     assert.equal(w.said.length, 1, 'said in its own province');
     w.region = 17;
-    const b0 = host.state().find((s) => s.key.startsWith(`${N}.0@`));
+    const b0 = host.state().find((s) => s.key.startsWith(`${NS}.0@`));
     const [bpx, bpy] = b0.key.split('@')[1].split(',').map(Number);
-    host.onStar({ k: 'hd', n: N, s: 0, px: bpx, py: bpy, at: w.t, top: ['Ann'], c: 1 });
+    host.onStar({ k: 'hd', n: NS, s: 0, px: bpx, py: bpy, at: w.t, top: ['Ann'], c: 1 });
     assert.equal(w.said.length, 2, 'the Bay\'s hold to everyone, as it always was');
-    const old = starWorld({ ww5: false });
+    const old = starWorld({ ww5: false, n: NS });
     Date.now = () => old.w.t;
     old.host.frame();
     assert.ok(old.host.state().every((s) => /^\d+\.[0-2]@/.test(s.key)), 'an older relay: the Bay\'s stars alone');
+    const off = starWorld({ n: N });   // FRONTS: Skyrim off its turn - the Bay's stars alone
+    Date.now = () => off.w.t;
+    off.host.frame();
+    assert.ok(off.host.state().length > 0 && off.host.state().every((s) => /^\d+\.[0-2]@/.test(s.key)), 'off its turn: no star of Skyrim\'s');
   } finally { Date.now = realNow; }
   const h = src('src/scenes/starfall/starfallHost.js');
   assert.match(h, /scans: \(\) => \(host\.theatreScans !== undefined \? host\.theatreScans : keptTheatreScans\(\)\),/);
@@ -357,7 +365,7 @@ test('WW5 THE HOST: every theatre\'s stars stand - the Bay\'s and a province\'s,
   }
 });
 
-test('WW5 ON THE FREEWARE\'S WORLD: the Bay\'s nights the law before WW5, star for star over the festival\'s every night (its covens, its pixels, its towns); every province\'s every night of the festival three stars, each in its own theatre on its scan\'s ground by a town of its own, its theatre\'s gate of the day kept off (TESA\'s places registered, WW7-1)', { skip: HAVE ? false : 'ARENA2_PATH not set (sh tools/fetch-data.sh)', timeout: 600_000 }, async () => {
+test('WW5 ON THE FREEWARE\'S WORLD: the Bay\'s nights the law before WW5, star for star over the festival\'s every night (its covens, its pixels, its towns); every province\'s three star sites a night (AUDIT FRONTS C12: the sites alone - which nights stand them is its turn\'s), each in its own theatre on its scan\'s ground by a town of its own, its theatre\'s gate of the day kept off (TESA\'s places registered, WW7-1)', { skip: HAVE ? false : 'ARENA2_PATH not set (sh tools/fetch-data.sh)', timeout: 600_000 }, async () => {
   const W = await ww5World();
   const from = starNightAt(FESTIVAL.fromMs), to = starNightAt(FESTIVAL.toMs);
   const bayGate = (d) => findGateSite(d, W.bayScan);

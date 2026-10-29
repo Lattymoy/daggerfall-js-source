@@ -216,11 +216,15 @@ export const ITEM_FIELDS = Object.freeze({
   horsePattern: int({ min: 1, max: 4 }),
   horseLegs: int({ min: 1, max: 2 }),
   horseSeed: int({ min: 1, max: 65535 }),
-  // STEED1 (bible/06-Systems/Horse-Care.md): a horse's bond with its owner, in tenths (systems/steedCare.js - absent,
+  // STEED1 (bible/06-Systems/Horse-Care.md; DRAGON5c: the tamed dragon's too): a horse's bond with its owner, in tenths (systems/steedCare.js - absent,
   // none) - the OWNER's mark, never carried to the next (net/realm/realmTradeLaw.js RECEIVER_MARKS); and the minute of its
   // owner's clock its food runs out (absent, never seen fed - it comes fed)
   horseBond: int({ min: 1, max: 1000 }),
   horseFed: int({ min: 1 }),
+  // DRAGON5 (bible/11-Multiplayer/Dwarven-Dragon.md section 10): a tamed dragon's tame (systems/dragon/dragonMount.js - the
+  // service's `dg` id, the judge's provenance) and its look (1 the Aetherbright; absent, the brass)
+  dragonId: str(),
+  dragonLook: int({ min: 1, max: 1 }),
   // APPEARANCES (bible/04-Characters/Wardrobe.md): the look a worn piece is drawn in (net/appearanceLaw.js) - `{ t, m, v }`, a
   // look there is, or absent. The WEARER's mark (net/realm/realmTradeLaw.js RECEIVER_MARKS): stripped off the wire
   appearance: rec(validAppearanceField),

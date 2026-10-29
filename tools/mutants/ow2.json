@@ -142,13 +142,13 @@
   {
     "name": "OW-MOUNTAINS-spot-in-the-peaks",
     "file": "src/scenes/world.js",
-    "old": "    if (!door && !water && tvRouteGround().peakAt(pix.x, pix.y)) { tvSay(TRAVEL_VIEW_TEXT.mountains); return false; }   // OW-MOUNTAINS; OW-WOD-PATH: a World of Daggerfall massif's pixel too\n",
+    "old": "    if (!door && !water && !dragonMounted() && tvRouteGround().peakAt(pix.x, pix.y)) { tvSay(TRAVEL_VIEW_TEXT.mountains); return false; }   // OW-MOUNTAINS; OW-WOD-PATH: a World of Daggerfall massif's pixel too\n",
     "new": "",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js",
       "test/systems/travel/tv6_dungeons.test.js"
     ],
-    "note": "A spot among the peaks is walked to."
+    "note": "Re-aimed by content (DRAGON6): the line the dragon's flight joins. A spot among the peaks is walked to."
   },
   {
     "name": "OW-ONLY-lower-unheard",

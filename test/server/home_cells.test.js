@@ -49,8 +49,8 @@ async function sharedOf(db, mapId, cells, nowS = T0) {
 
 const without = (row, field) => Object.fromEntries(Object.entries(row).filter(([k]) => k !== field));
 
-test('YC4 migration 0194 builds every cell holding a home in the shape the code reads, its rows the code\'s own build, its stale_at the soonest tenancy\'s end (mutants: the backfill\'s range, the stale_at\'s listed clause)', async () => {
-  const migration = readFileSync(new URL('../../server-account/migrations/0194_home_cell.sql', import.meta.url), 'utf8');
+test('YC4 migration 0195 builds every cell holding a home in the shape the code reads, its rows the code\'s own build, its stale_at the soonest tenancy\'s end (mutants: the backfill\'s range, the stale_at\'s listed clause)', async () => {
+  const migration = readFileSync(new URL('../../server-account/migrations/0195_home_cell.sql', import.meta.url), 'utf8');
   assert.ok(migration.includes(`'${HOME_CELL_SHAPE}'`), 'the backfill writes the code\'s own shape');
   const keys = [makeBuildingKey(0, 0, 3), makeBuildingKey(0, 0, 9), makeBuildingKey(2, 7, 1), makeBuildingKey(2, 7, 255)];
   const lay = (s) => {
@@ -68,9 +68,9 @@ test('YC4 migration 0194 builds every cell holding a home in the shape the code 
   raw.exec('PRAGMA foreign_keys = ON');
   const dir = new URL('../../server-account/migrations/', import.meta.url);
   const files = readdirSync(dir).filter((f) => f.endsWith('.sql')).sort();
-  for (const f of files.filter((f) => f < '0194')) raw.exec(readFileSync(new URL(f, dir), 'utf8'));
+  for (const f of files.filter((f) => f < '0195')) raw.exec(readFileSync(new URL(f, dir), 'utf8'));
   lay(standDb(raw));
-  raw.exec(readFileSync(new URL(files.find((f) => f.startsWith('0194')), dir), 'utf8'));
+  raw.exec(readFileSync(new URL(files.find((f) => f.startsWith('0195')), dir), 'utf8'));
   const backfilled = raw.prepare('SELECT cell, built, shape, rows FROM home_cells WHERE map_id = 7 ORDER BY cell').all().map((r) => ({ ...r }));
   assert.deepEqual(backfilled.map((r) => r.cell), [...new Set(keys.map(yardCellOf))].sort((a, b) => a - b), 'one row a cell holding a home');
   for (const r of backfilled) assert.equal(r.shape, HOME_CELL_SHAPE);

@@ -3,7 +3,7 @@
 --
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote
 --
--- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI). Deploy this service (acct221)
+-- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI). Deploy this service (acct223)
 -- before the site.
 --
 -- HOMES-SHED measured /v1/homes/town as the busiest route of the 2026-10-13 overload: every page asks its whole town's

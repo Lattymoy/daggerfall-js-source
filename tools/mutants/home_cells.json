@@ -1,7 +1,7 @@
 [
   {
     "name": "YC4-the-moved-trigger-blind-to-score",
-    "file": "server-account/migrations/0194_home_cell.sql",
+    "file": "server-account/migrations/0195_home_cell.sql",
     "old": "AFTER UPDATE OF map_id, building_key, owner_name, entry, look, score, guild_id, deed ON homes",
     "new": "AFTER UPDATE OF map_id, building_key, owner_name, entry, look, guild_id, deed ON homes",
     "tests": [
@@ -11,7 +11,7 @@
   },
   {
     "name": "YC4-the-moved-trigger-guard-blind-to-look",
-    "file": "server-account/migrations/0194_home_cell.sql",
+    "file": "server-account/migrations/0195_home_cell.sql",
     "old": "OR OLD.entry IS NOT NEW.entry OR OLD.look IS NOT NEW.look",
     "new": "OR OLD.entry IS NOT NEW.entry OR 0",
     "tests": [
@@ -21,7 +21,7 @@
   },
   {
     "name": "YC4-the-guild-trigger-moves-no-hall",
-    "file": "server-account/migrations/0194_home_cell.sql",
+    "file": "server-account/migrations/0195_home_cell.sql",
     "old": "FROM homes h WHERE h.guild_id = NEW.id",
     "new": "FROM homes h WHERE 0",
     "tests": [
@@ -31,7 +31,7 @@
   },
   {
     "name": "YC4-the-backfill-range-half-a-block",
-    "file": "server-account/migrations/0194_home_cell.sql",
+    "file": "server-account/migrations/0195_home_cell.sql",
     "old": "WHERE h.map_id = v.map_id AND h.building_key BETWEEN v.cell * 256 AND v.cell * 256 + 255\n    ORDER BY h.building_key)))",
     "new": "WHERE h.map_id = v.map_id AND h.building_key BETWEEN v.cell * 256 AND v.cell * 256 + 127\n    ORDER BY h.building_key)))",
     "tests": [
@@ -41,7 +41,7 @@
   },
   {
     "name": "YC4-the-backfill-stale-at-unlisted-rooms",
-    "file": "server-account/migrations/0194_home_cell.sql",
+    "file": "server-account/migrations/0195_home_cell.sql",
     "old": "AND r.listed = 1 AND r.tenant IS NOT NULL AND r.until > CAST",
     "new": "AND r.tenant IS NOT NULL AND r.until > CAST",
     "tests": [

@@ -135,7 +135,7 @@ test('VALENWOOD-CANOPY: the wiring - the sky controller keeps the leaves for the
   assert.doesNotMatch(sh, /canopySky|CanopySkyRenderer|canopyPass/, 'the ceiling retired');
   assert.match(sh, /if \(sunbabyW > 0\) sunbabySky\?\.draw\(yaw, pitch, fovY, aspect\);[^\n]*\n\s+meter\?\.mark\('world'\);/, 'the sun baby\'s sky the last over the dome');
   assert.match(sh, /const leaved = \(ws\) => canopyWaterSky\(ws, canopyLeaves\);/, 'the water\'s sky');
-  assert.equal(sh.match(/return leaved\(dreaded\(\{/g)?.length, 2, 'on either lane');
+  assert.equal(sh.match(/return auroraIn\(leaved\(dreaded\(\{/g)?.length, 2, 'on either lane');   // PIN MOVED (SKYRIM-AURORA): the aurora's dome map with it
   assert.match(sh, /setCanopy\(v\) \{\n\s+if \(v && v\[3\] > 0\) canopyLeaves\.set\(v\);\n\s+else canopyLeaves\[3\] = 0;/, 'the host\'s leaves kept, and taken back');
   const w = read('src/scenes/world.js');
   assert.match(w, /canopyLight\(etherLight\(sdBrassLight\(sunbabyLight\(/, 'the ambient');

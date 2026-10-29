@@ -413,8 +413,8 @@ test('EVENT1 host: the sky controller grades every pass and the fog by the one w
   const shared = rd('src/scenes/shared.js');
   assert.equal(DREAD_SKY_WORD, 'thunder');
   assert.match(shared, /setDread\(w, glow = 0\) \{\s*dreadW = Math\.max\(0, Math\.min\(1, Number\(w\) \|\| 0\)\);\s*\n\s*dreadGlow = [^\n]*\n\s*for \(const r of \[sky, enhancedSky, dynamicSky, clouds\]\) if \(r\) r\.dread = dreadW;/);
-  assert.match(shared, /waterSky\(\) \{\s*\n\s*if \(enhancedSky\?\.state\) return leaved\(dreaded\(/, 'the water mirrors the dread on the dome\'s lane');   // VALENWOOD-CANOPY (PIN MOVED): and the leaves over it, under a closed canopy
-  assert.match(shared, /return leaved\(dreaded\(\{ zenith: \[h\[0\] \* 0\.55/, 'and on the mod\'s');
+  assert.match(shared, /waterSky\(\) \{\s*\n\s*if \(enhancedSky\?\.state\) return auroraIn\(leaved\(dreaded\(/, 'the water mirrors the dread on the dome\'s lane');   // VALENWOOD-CANOPY (PIN MOVED): and the leaves over it, under a closed canopy; SKYRIM-AURORA (PIN MOVED): and the aurora's dome map with it
+  assert.match(shared, /return auroraIn\(leaved\(dreaded\(\{ zenith: \[h\[0\] \* 0\.55/, 'and on the mod\'s');
   assert.match(shared, /const d = dreadW > 0 \? dreadGrade\(c, dreadW\) : c;/, 'the fog');   // SD19 moved it (PIN MOVED): the brass graded over it
   assert.match(shared, /dreadGlow = dreadW > 0 \? Math\.max\(0, Math\.min\(1, Number\(glow\) \|\| 0\)\) : 0;/, 'no glow without the dread');
   assert.equal((shared.match(/\(extra\?\.flash \?\? 0\) \+ dreadGlow/g) ?? []).length, 2, 'the deck lit by the red strikes under both skies');

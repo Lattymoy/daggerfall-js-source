@@ -775,7 +775,8 @@ const REFUSAL_WORDS = {
   'lineage-person': () => t('account.refusal.lineagePerson', 'That member of the family cannot take up the line. They have died, retired, married into it, or are still a child.'),
   'lineage-played': () => t('account.refusal.lineagePlayed', 'That member of the family already has a character in the realm.'),
   'lineage-model': () => t('account.refusal.lineageModel', 'A family keeps the way of death it was founded with.'),
-  'too-many-lineages': () => t('account.refusal.tooManyLineages', 'You have as many families as an account may hold online.'),
+  'too-many-lineages': () => t('account.refusal.tooManyLineages', 'You have as many families as an account may hold online. Remove a family you no longer play to make room.'),   // FAMILY-REMOVE: and the way past it
+  'lineage-in-use': () => t('account.refusal.lineageInUse', 'A living character still plays that family.'),
   'lineage-stale': () => t('account.refusal.lineageStale', 'Your family was changed on another device. This one takes those changes in and saves again.'),
   'wed-no-line': () => t('account.refusal.wedNoLine', 'Only a character of a house (Project Legacy) can be wed in the realm.'),
   'wed-already': () => t('account.refusal.wedAlready', 'You are wed already.'),
@@ -1957,6 +1958,23 @@ export function accountStars({ fetch, storage }) {
   const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
   return {
     claim: async (receipt, character, name = null, cid = null) => { const i = io(); return i ? claimStarReceipt(i, receipt, character, name, cid) : { ok: false, error: 'no-session' }; },
+    me: () => storedSession(storage)?.id ?? null,
+  };
+}
+
+/** DRAGON4: a Dwarven Dragon's receipt the relay signed for this account, carried to the service with the character that
+ *  fought it and this device's claim id (the hoard's key) - `{ recorded, slain, spoils, tamed }`, or `{ recorded: false,
+ *  why, slain, spoils, tamed }` (`claimed`, `guest`). `tamed` the kill's tame (`{ id, look, character }`) while its row stands. */
+export const claimDragonReceipt = (io, receipt, character, name = null, cid = null) => call(io, '/v1/dragon/claim', { receipt, character, name, ...(cid ? { cid } : {}) });
+/** AUDIT DRAGON: the tames the service drew for this account - `{ tames: [{ id, character, look, watch }] }`. */
+export const dragonTamesOf = (io) => call(io, '/v1/dragon/tames', {});
+
+/** DRAGON4: THE DRAGONS' ONE CALL, bound to this device's stored session (the stars' own shape); no session, `no-session`. */
+export function accountDragons({ fetch, storage }) {
+  const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
+  return {
+    claim: async (receipt, character, name = null, cid = null) => { const i = io(); return i ? claimDragonReceipt(i, receipt, character, name, cid) : { ok: false, error: 'no-session' }; },
+    tames: async () => { const i = io(); return i ? dragonTamesOf(i) : { ok: false, error: 'no-session' }; },
     me: () => storedSession(storage)?.id ?? null,
   };
 }

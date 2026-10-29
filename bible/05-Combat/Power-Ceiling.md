@@ -168,8 +168,13 @@ The account service's routes and tables, the relay and the wire are not changed.
 ## 9. Approvals
 
 The owner's explicit approval for a new rung, a higher band, a stronger number or a higher composite is quoted here,
-with its date, before the change that uses it merges. None has been given; the ceiling stands as measured on
-2026-10-27.
+with its date, before the change that uses it merges. Apart from the one below, none has been given; the ceiling stands
+as measured on 2026-10-27.
+
+- **The tamed Dwarven Dragon's pace** (DRAGON, 2026-10-29; `11-Multiplayer/Dwarven-Dragon.md` section 10). Asked "How
+  fast should a tamed dragon mount be?", the owner chose *"Fly 25 m/s, travel 2x horse"*: "On the ground it walks and
+  gallops like a horse. In flight it goes about 1.5 times a galloping horse. On the travel map it is twice as fast as a
+  horse and flies over water and mountains in a straight line." A pace, not a power: no line, band or rung moves.
 
 ## 10. Pins
 
