@@ -408,7 +408,7 @@
   {
     "name": "WAGONS2-FINAL-a-dark-room-blooms",
     "file": "src/render/airPass.js",
-    "old": "  if (uRoomsLit > 0.5 && rwLitSeed(normalize(vNormal), vWorldPos, uModel[3].xyz, vUV) > RW_LIT_SHARE) discard;",
+    "old": "  if (uRoomsLit > 0.5 && !rwRoomLit(rwSeedBits(normalize(vNormal), vWorldPos, uModel[3].xyz, vUV))) discard;",
     "new": "",
     "tests": [
       "test/systems/wagons2_final.test.js"
