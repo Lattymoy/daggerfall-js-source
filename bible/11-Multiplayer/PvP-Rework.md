@@ -134,3 +134,27 @@ step outside was close and just now (`zoneEdge.js:"export const ZONE_EDGE = Obje
 the referee grants an entry's safe passage on it alone (`wildRef.js:"else if (!x.down && !rose && ed && now"`). A
 teleport, a dungeon left, a town's streets left (the streets say 0 to the referee) and a rise grant none. The relay has
 no map, so the word is the client's own, as the streets' peace is.
+
+## PVP-KIT: the PvP spell bar
+
+"they only get to tool kit we give", "flagged has a seperate hot barr": while my flag is up in the open zone, keys 3 to 0
+are eight slots of the toolkit (`pvpKit.js:"export const PVP_KIT = Object.freeze({ slots: 8, reachM: 15, rounds: 12, lo: 100, hi: 300 });"`),
+pressed the hotbar's way (`pvpKitBar.js:"export function castKitSlot("`). Keys 1 and 2 stay the potions'. Every other
+spell is refused under the flag, and only the bar's spells reach a player (`world.js:"if (!wildFair(peerId) || !sp?.pvpKit) return false;"`).
+"Let them set the icons for these spells": with the mouse free, a click on a slot picks its spell, its element or
+attribute and its icon, kept in the browser. Outside PvP the spell keys work as before.
+
+"They get to pick damage and its a aoe", "Just our damage formula": Damage is the classic Fireball's record at Area at
+Range in the picked element (`pvpKit.js:"const FIREBALL = Object.freeze({"`), its harm the referee's path as before
+(siegeSpellNumbers, the crit, the triangle, the ward, PVP-HIT); the bar's Poison is the one poison spell that reaches a
+player. Each cast costs its share of maximum magicka (`pvpKit.js:"export const KIT_SPELLS = Object.freeze({"`,
+`spellcost.js:"if (spell.pvpKitCost > 0) sp = Math.trunc(spell.pvpKitCost);"`), and PVP-ARMOUR-CAST still adds to it.
+
+The rest are CasterOnly gifts, a minute long, scaled with the governing school from 100 to 300. "Goo choose make it
+15m": the party member under the crosshair within 15 m takes one, else I do
+(`hostMagic.js:"const allyReach = sp.pvpReach ?? allyReachFor(sp.rangeType);"`); a stranger never does. A heal lands as
+its receiver's own rise, so PVP-HEAL's window still caps it. Resist rides PVP-WARD's report; Reflect and Absorb take
+their chance off it, never bouncing (`pvpGuard.js:"const turned = (100 - pvpReflectChance(entity))"`). A Shield
+reports its pool's share of my health, 10 to 25 (`pvpGuard.js:"export function pvpShieldShare(entity) {"`), and the
+referee takes that part of PVP-SHIELD's 25% and 35% off (the `vit` report's `sh`). Speed is Fortify Speed on Fortify's
+numbers. Inside a zone dungeon the bar is off. A departure: DFU has no PvP.

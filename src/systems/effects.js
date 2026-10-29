@@ -892,7 +892,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   const schoolOf = (e) => castSchool(caster?.entity ?? null, spell, e);
   // AUDIT SCHOOLS L2 F2, F9: never a WORN item's bundle (a Cast When Held effect keeps what it landed with until the
   // item's reroll - past a duel's start and a mentoring alike); never my own spell a foe turned back at me
-  const noSchool = ctx.heldItem != null || (ctx.reflectedCount ?? 0) > 0;
+  const noSchool = ctx.heldItem != null || (ctx.reflectedCount ?? 0) > 0 || spell?.pvpKit != null;   // PVP-KIT: the PvP bar's numbers are its own
   const potencyOf = (e, self) => (noSchool ? 1 : schoolMult(caster?.entity ?? null, target, schoolOf(e), { self }));
   /** The caster a regenerate entry keeps for its rounds' school: mine, when the school may read at all. */
   const selfSchoolCaster = () => (noSchool ? null : caster?.entity ?? null);

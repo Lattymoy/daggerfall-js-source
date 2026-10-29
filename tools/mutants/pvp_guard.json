@@ -47,7 +47,7 @@
   {
     "name": "PVP-GUARD-the-change-unseen",
     "file": "src/net/siege/refereeHealthMirror.js",
-    "old": "        || `${guard()}|${ward()}|${shield() ? 1 : 0}` !== lastSentGuard;",
+    "old": "        || `${guard()}|${ward()}|${shieldWord()}` !== lastSentGuard;",
     "new": "        || false;",
     "tests": [
       "test/combat/pvp_guard.test.js"
@@ -155,7 +155,7 @@
   {
     "name": "PVP-SHIELD-the-report-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "  if (typeof report.shield === 'boolean') share.shield = report.shield;",
+    "old": "  if (typeof report.shield === 'number') share.shield = report.shield;",
     "new": "",
     "tests": [
       "test/combat/pvp_guard.test.js"
@@ -182,7 +182,7 @@
   {
     "name": "PVP-SHIELD-the-change-unseen",
     "file": "src/net/siege/refereeHealthMirror.js",
-    "old": "`${guard()}|${ward()}|${shield() ? 1 : 0}` !== lastSentGuard",
+    "old": "`${guard()}|${ward()}|${shieldWord()}` !== lastSentGuard",
     "new": "`${guard()}|${ward()}|0` !== lastSentGuard",
     "tests": [
       "test/combat/pvp_guard.test.js"

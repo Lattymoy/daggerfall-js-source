@@ -154,23 +154,26 @@ test('PVP-TRIANGLE: an arrow at a player 1.28x, 1.67x from level 40; a harmful s
 });
 
 test('PVP-SHIELD: a live Shield on a player is reported (`sh`), and the referee takes 25% off a swing and 35% off a shaft; no Shield, nothing (mutants: the report unread; the shaft read as a swing)', () => {
-  assert.deepEqual(PVP_SHIELD, { melee: 75, shaft: 65 });
+  assert.deepEqual(PVP_SHIELD, { melee: 75, shaft: 65, min: 10, max: 25 });
   assert.equal(pvpShielded(body()), false);
   assert.equal(pvpShielded({ ...body(), activeEffects: [{ kind: 'shield', shieldRemaining: 30 }] }), true);
   assert.equal(pvpShielded({ ...body(), activeEffects: [{ kind: 'shield', shieldRemaining: 0 }, { kind: 'shield', shieldRemaining: 9, ended: true }] }), false, 'a spent or ended pool');
   const base = { n: 1, s: 5000, seen: [] };
-  assert.equal(validVitIn({ ...base, sh: 1 })?.shield, true);
+  assert.equal(validVitIn({ ...base, sh: 1 })?.shield, 25, 'an older client\'s Shield: the strongest');
+  assert.equal(validVitIn({ ...base, sh: 0 })?.shield, 0);
+  assert.equal(validVitIn({ ...base, sh: 10 })?.shield, 10, 'PVP-KIT: a share');
+  assert.equal(validVitIn({ ...base, sh: 26 }), null);
   assert.equal(validVitIn({ ...base }).shield, undefined);
   assert.equal(validVitIn({ ...base, sh: 2 }), null);
   const now = 1_000_000;
   const a = newFighter(10, now);
   const b = newFighter(50, now); b.max = 1000; b.hp = 1000;
   assert.equal(shieldedBlow(b, false, 200), 200, 'unreported: no Shield');
-  takeHealthReport(b, { report: 1, share: HEALTH_SHARE_WHOLE, seen: [], shield: true }, now);
+  takeHealthReport(b, { report: 1, share: HEALTH_SHARE_WHOLE, seen: [], shield: 25 }, now);
   const blow = (w, r, t) => refereeBlow(a, b, { from: at(0), at: at(2), held: { w, m: 0 }, d: 200, r }, t);
   assert.equal(blow(120, SIEGE_HIT.Melee, now).dealt, 150, 'a longsword: 75%');
   assert.equal(blow(130, SIEGE_HIT.Shaft, now + 1000).dealt, 130, 'an arrow: 65%');
-  takeHealthReport(b, { report: 2, share: HEALTH_SHARE_WHOLE, seen: [], shield: false }, now + 2000);
+  takeHealthReport(b, { report: 2, share: HEALTH_SHARE_WHOLE, seen: [], shield: 0 }, now + 2000);
   assert.equal(blow(120, SIEGE_HIT.Melee, now + 3000).dealt, 200, 'the Shield gone');
   let sh = false, t = 0; const sent = [];
   const m = createRefereeHealthMirror({ read: () => ({ health: 50, maxHealth: 100 }), write: () => {}, send: (r) => { sent.push(r); return true; }, now: () => t, shield: () => sh });

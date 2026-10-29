@@ -55,7 +55,7 @@ export const pvpCastFrame = (p, harm, sp) => ({ p, d: siegeCastClamp(harm, false
 export function pvpFirstEffect(sp) {
   const e = Array.isArray(sp?.effects) ? sp.effects[0] : null;
   if (!e || !Number.isInteger(e.type)) return null;
-  if (PVP_SPELL_TYPES.includes(e.type)) return sp.element === PVP_POISON_ELEMENT ? null : e;
+  if (PVP_SPELL_TYPES.includes(e.type)) return sp.element === PVP_POISON_ELEMENT && !sp.pvpKit ? null : e;   // PVP-KIT: the bar's Damage may be Poison
   return e.type === 10 && e.subType === 8 ? e : null;
 }
 

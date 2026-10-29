@@ -1241,6 +1241,7 @@ import { createPortalStoneHost } from './portalStoneHost.js';   // HOST-SPLIT
 import { createWildDropHost } from './wildDropHost.js';   // HOST-SPLIT
 import { createWildInsureBook, setWildInsureBook } from '../net/wild/wildInsureBook.js';   // WILD-INSURE: my policies on my gear
 import { createWildGrace } from '../systems/wild/wildGrace.js';   // ZONE-GRACE: safe passage, as the referee says it
+import { createPvpKitBar } from '../ui/pvpKitBar.js';   // PVP-KIT: the PvP spell bar
 import { createPvpFlagHost } from './pvpFlagHost.js';   // PVP-FLAG: the open zone's flag, on this page
 import { createMarketPieces } from './marketPiecesHost.js';   // HOST-SPLIT
 import { createRaidHost } from './raidHost.js';   // HOST-SPLIT
@@ -21160,6 +21161,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   wildInsure.read();
   const wildGrace = createWildGrace({ me: () => online?.id ?? null, say: (l) => { setMidScreenText(l); townTalk.say(l); } });   // ZONE-GRACE (systems/wild/wildGrace.js)
   const pvpFlag = createPvpFlagHost(() => online, playerEntity, setMidScreenText, townTalk);   // PVP-FLAG (scenes/pvpFlagHost.js)
+  const pvpKit = createPvpKitBar(() => [online, magic, modes?.mode, allyTargetPick, cam, socialFwd], pvpFlag, playerEntity);   // PVP-KIT: the PvP spell bar on keys 3 to 0 (ui/pvpKitBar.js)
   const _duelSent = new Map();   // my blow's number -> { kind, weapon } - what it was
   let _duelLastWeapon = null;    // INT8: the weapon of my last strike - the referee's word on it names no number
   let _duelFoe = null;      // my opponent as the HUD's target bar reads a foe ({ entity: { name, health, maxHealth }, dead })
@@ -21438,7 +21440,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** AUDIT-SEATS G5: whether I stand in a siege's own room - its wards hold there (Teleport, Recall, Levitate; the saddle). */
   const inSiegeRoom = () => !!online?.room && online.room === siegeSession?.room();
   /** AUDIT-SEATS G5: the cast engine's word on a spell here (hostMagic.js spellRefusal) - a siege's wards. */
-  const battleSpellRefusal = (sp) => (inSiegeRoom() && siegeSpellBarred(sp) ? SIEGE_SPELL_BARRED_TEXT : null);
+  const battleSpellRefusal = (sp) => (inSiegeRoom() && siegeSpellBarred(sp) ? SIEGE_SPELL_BARRED_TEXT : null) ?? pvpKit.refusal(sp);   // PVP-KIT: under the flag, the bar's spells alone
   registerLevitateWard(() => inSiegeRoom() || madeRuleHere('levitate') === 'banned');   // AUDIT-SEATS G5: a Levitate already running lifts nothing in a siege's room; SD7b: nor in the Shattered Hour - its Steps are walked, not flown; EG-PLAY: nor in an Elite Breach - its spans are walked, its void is real (EG-H2: the made level's law, OR'd into the ONE ward - Elite-Gates.md section 10.7)
   /** AUDIT-SEATS G4 (Seats-Arc 6.6, 19: "a free camera (WASD, the mouse, the pad's sticks); nothing they do reaches the
    *  fight"): whether I watch a battle - a siege or a Royal Tourney, on a spectator's pass - from its own room. */
@@ -22022,7 +22024,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** My harmful spell met a fair player (the cast engine's marks): INT9 - its harm counted on the neutral stand-in
    *  (combat/siegeCombat.js siegeSpellNumbers, a siege's way), to the referee as a cast (it clips, and bounds the rate). */
   const wildSpellOut = (peerId, sp) => {
-    if (!wildFair(peerId)) return false;
+    if (!wildFair(peerId) || !sp?.pvpKit) return false;   // PVP-KIT: only the bar's spells reach a player in the zone
     const { harm } = withoutFirmament(playerEntity, () => siegeSpellNumbers(sp, Math.max(1, Math.trunc(playerEntity.level || 1)), duelStandIn(), playerEntity));
     if (!(harm > 0)) return false;
     const n = wildFight.blow(peerId, 'spell', pvpCastFrame(campToWire(player.feetAt()), harm, sp));
@@ -27368,7 +27370,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // of mine reaches, party or not; anything else stays the party's. The receiver decides again on its side.
   const allyTargetPick = (eye, dir, reach, sp = null) => {
     if (!online) return null;
-    const strangers = !!sp && strangerCastable(sp);
+    const strangers = !!sp && !sp.pvpKit && strangerCastable(sp);   // PVP-KIT: the bar's gifts are a party member's alone
     if (!social?.party && !strangers) return null;
     const hit = pickPeerInFront(eye ?? cam.pos, dir ?? socialFwd(), giftablePeers(peersNear()), reach, rayPersonDistance);   // AUDIT SPELL-GIFT B1/B3
     if (!hit || !online.reachesPeer?.(hit.peer.id)) return null;
