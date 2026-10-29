@@ -4,6 +4,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname, resolve, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as acorn from 'acorn';
+import { topLevelAwaits, importedAwaitingChunks, noImportedTopLevelAwait } from '../../scripts/noTopLevelAwait.mjs';
 
 // WEBKIT-TLA (2026-10-29, Discord: "Game fails to load on mobile website client" - iPhone, Safari and Chrome:
 // "undefined is not a constructor (evaluating 'new YKt({woods:Dt,woodsBytes:pt})')"). A top-level await makes every
@@ -21,28 +22,28 @@ const walk = (d, out = []) => {
   return out;
 };
 
-/** The module's top-level awaits (an `await` or a `for await` outside every function) and its relative specifiers. */
+/** The module's top-level awaits (scripts/noTopLevelAwait.mjs - the build's own reader) and its relative specifiers, a
+ *  template literal with no expression among them (AUDIT FB1029e TLA-1: main.js imports `./ui/menuPad.js` so). */
 function moduleFacts(text) {
-  const ast = acorn.parse(text, { ecmaVersion: 'latest', sourceType: 'module', locations: true });
-  const awaits = [], specs = [];
-  const visit = (node, inFn) => {
+  const ast = acorn.parse(text, { ecmaVersion: 'latest', sourceType: 'module' });
+  const specs = [];
+  const visit = (node) => {
     if (!node || typeof node.type !== 'string') return;
-    if (/Function/.test(node.type) || node.type === 'StaticBlock') inFn = true;
-    if (!inFn && (node.type === 'AwaitExpression' || (node.type === 'ForOfStatement' && node.await))) awaits.push(node.loc.start.line);
     const src = (node.type === 'ImportDeclaration' || node.type === 'ExportNamedDeclaration' || node.type === 'ExportAllDeclaration' || node.type === 'ImportExpression') ? node.source : null;
-    if (src?.type === 'Literal' && typeof src.value === 'string' && src.value.startsWith('.')) specs.push(src.value.split('?')[0]);
+    const v = src?.type === 'Literal' ? src.value : src?.type === 'TemplateLiteral' && !src.expressions.length ? src.quasis[0].value.cooked : null;
+    if (typeof v === 'string' && v.startsWith('.')) specs.push(v.split('?')[0]);
     for (const k in node) {
-      const v = node[k];
-      if (Array.isArray(v)) for (const c of v) visit(c, inFn);
-      else if (v && typeof v.type === 'string') visit(v, inFn);
+      const c = node[k];
+      if (Array.isArray(c)) for (const x of c) visit(x);
+      else if (c && typeof c.type === 'string') visit(c);
     }
   };
-  visit(ast, false);
-  return { awaits, specs };
+  visit(ast);
+  return { awaits: topLevelAwaits(text), specs };
 }
 
 test('WEBKIT-TLA: no module the game imports awaits at its top level - only an entry nothing imports may (mutant: firstVisitStore.js awaiting its pins again)', () => {
-  const files = walk(join(root, 'src'));
+  const files = [...walk(join(root, 'src')), ...walk(join(root, 'vendor'))];   // AUDIT FB1029e TLA-1: the vendor code src imports ships too
   const text = new Map(files.map((f) => [f, readFileSync(f, 'utf8')]));
   const facts = (f) => moduleFacts(text.get(f));
   // only a file that says `await` can await, and only one that names an awaiting file's name can import it
@@ -56,12 +57,29 @@ test('WEBKIT-TLA: no module the game imports awaits at its top level - only an e
     }
   }
   assert.deepEqual(bad, []);
-  assert.ok(files.length > 1000 && awaiting.size >= 1, 'the tree was walked, and the entries that await were found');
+  assert.ok(files.length > 1000, 'the tree was walked');   // AUDIT FB1029e TLA-5: no tie to the entries that happen to await today
 });
 
 test('WEBKIT-TLA: the scan sees a top-level await, a top-level for await, and not an await inside a function', () => {
   assert.deepEqual(moduleFacts("const m = await import('./a.js');").awaits, [1]);
   assert.deepEqual(moduleFacts('for await (const x of xs) {}').awaits, [1]);
   assert.deepEqual(moduleFacts('async function f() { await g(); }\nconst h = async () => { await g(); };').awaits, []);
-  assert.deepEqual(moduleFacts("import { a } from './a.js?x=1';\nexport * from '../b.js';\nimport('./c.js');\nimport 'node:fs';").specs, ['./a.js', '../b.js', './c.js']);
+  assert.deepEqual(moduleFacts("import { a } from './a.js?x=1';\nexport * from '../b.js';\nimport('./c.js');\nimport 'node:fs';\nimport(`./d.js`);\nimport(`./${e}.js`);").specs, ['./a.js', '../b.js', './c.js', './d.js'], 'a template literal with no expression is a specifier');
+});
+
+test('WEBKIT-TLA (AUDIT FB1029e TLA-1): the build refuses a chunk another imports that awaits at its top level - a page\'s own entry may; the plugin rides the config (mutants: the guard unregistered; an entry refused)', () => {
+  const chunk = (fileName, code, isEntry = false) => ({ type: 'chunk', fileName, code, isEntry });
+  const bundle = {
+    a: chunk('assets/enhancedBook-x.js', 'var o=1;await Promise.resolve();export{o};'),
+    b: chunk('assets/world-y.js', 'async function f(){await g()}export{f};'),
+    c: chunk('assets/chargen-z.js', 'await import("./a.js");', true),
+    d: { type: 'asset', fileName: 'a.css', source: 'await' },
+  };
+  assert.deepEqual(importedAwaitingChunks(bundle), ['assets/enhancedBook-x.js (line 1)']);
+  const plugin = noImportedTopLevelAwait();
+  assert.equal(plugin.apply, 'build');
+  assert.throws(() => plugin.generateBundle.call({ error: (m) => { throw new Error(m); } }, {}, bundle), /WEBKIT-TLA: a chunk another imports awaits at its top level - assets\/enhancedBook-x\.js \(line 1\)/);
+  assert.doesNotThrow(() => plugin.generateBundle.call({ error: (m) => { throw new Error(m); } }, {}, { b: bundle.b, c: bundle.c }));
+  const cfg = readFileSync(join(root, 'vite.config.js'), 'utf8');
+  assert.match(cfg, /plugins: \[[^\]]*noImportedTopLevelAwait\(\)\]/, 'the game\'s build runs it');
 });

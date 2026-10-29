@@ -6487,16 +6487,18 @@ button.lv-note.lv-clickable:hover, button.lv-note.lv-clickable:focus-visible {
   color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.85);
   /* AUDIT GUIDE U8: where the compass ends at the HUD's own scale (ui/quest/questTracker.js copies --hud-scale here) - the
      travel panel's --tp-top sum, less its gap - so a scaled-up compass or foe frame never stands on the card */
-  --qt-clear: calc(18px + 28px * var(--hud-scale, 1) + 30px);
+  --qt-clear: calc(18px + 28px * var(--hud-scale, 1) + 30px + var(--qt-town, 0px));
 }
 .qtrack.touch { top: calc(max(76px, var(--qt-clear)) + env(safe-area-inset-top, 0px)); }
 @media (max-width: 900px) {
-  body:has(.hud-foe.on) .qtrack { --qt-clear: calc(18px + 28px * var(--hud-scale, 1) + 30px + 46px * var(--hud-scale, 1)); }
-  body:has(.hud-foe.on.blade) .qtrack { --qt-clear: calc(18px + 28px * var(--hud-scale, 1) + 30px + 76px * var(--hud-scale, 1)); }
+  /* NOTICE-PANEL (AUDIT FB1029e P6): the town panel under the compass, its height its own (ui/hud/townPanel.js --dftown-h) */
+  body:has(.hud .dftown-panel.on) .qtrack { --qt-town: var(--dftown-h, 0px); }
+  body:has(.hud-foe.on) .qtrack { --qt-clear: calc(18px + 28px * var(--hud-scale, 1) + 30px + 46px * var(--hud-scale, 1) + var(--qt-town, 0px)); }
+  body:has(.hud-foe.on.blade) .qtrack { --qt-clear: calc(18px + 28px * var(--hud-scale, 1) + 30px + 76px * var(--hud-scale, 1) + var(--qt-town, 0px)); }
   /* TELL9: the poise track under it - its 6px, its border and its 4px gap more; AUDIT TELL U3: and its word under it,
      13px and a 3px gap */
-  body:has(.hud-foe.on.poised) .qtrack { --qt-clear: calc(18px + 28px * var(--hud-scale, 1) + 30px + 74px * var(--hud-scale, 1)); }
-  body:has(.hud-foe.on.blade.poised) .qtrack { --qt-clear: calc(18px + 28px * var(--hud-scale, 1) + 30px + 104px * var(--hud-scale, 1)); }
+  body:has(.hud-foe.on.poised) .qtrack { --qt-clear: calc(18px + 28px * var(--hud-scale, 1) + 30px + 74px * var(--hud-scale, 1) + var(--qt-town, 0px)); }
+  body:has(.hud-foe.on.blade.poised) .qtrack { --qt-clear: calc(18px + 28px * var(--hud-scale, 1) + 30px + 104px * var(--hud-scale, 1) + var(--qt-town, 0px)); }
 }
 /* AUDIT GUIDE T1/D1, U1, U7: the card steps aside - keeping its line, so the party list never jumps - for what stands
    in its corner a while: the Overworld's block at the top of a touch screen, a narrow screen's chat lines, a journey's

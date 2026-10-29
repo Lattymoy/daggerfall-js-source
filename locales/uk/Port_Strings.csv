@@ -1024,6 +1024,7 @@ town.econ.reason.raid,"Набіг біля брам шкодить торгів�
 town.econ.trend.falling,"Ринок падає."
 town.econ.trend.flat,"Ринок без змін."
 town.econ.trend.rising,"Ринок зростає."
+town.panel.new,"{n, plural, one {# нова} few {# нові} many {# нових} other {# нової}}"
 travel.held.foes,"коли поруч вороги"
 travel.held.ground,"поки не підніметься вид світу"
 travel.held.line,"Обмежено до ×{n} з ×{of} {why}"

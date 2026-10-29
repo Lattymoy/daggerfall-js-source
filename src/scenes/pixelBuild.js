@@ -591,19 +591,16 @@ export function createPixelBuild(host) {
           if (isHouseSign(placed, b, (id) => cpuModels.get(id)?.doors)) continue;   // HOUSE-SIGN: a shop's sign at a house's door does not stand
           const gpu = await getGpuMesh(placed.modelIdNum, () => breather.breathe());   // AUDIT PRE-MERGE 1003 W6: a model built here breathes with the pixel (the colosseum's seal)
           if (!gpu) continue;
-          // NOTICE-PANEL (scenes/townPanelHost.js): a town's board (RMBLayout's standalone 41739) does not stand - the town
-          // panel under the compass is its press. Its place is kept: the siege field's Market is one (systems/siegeField.js)
-          if (isBulletinBoard(placed.modelIdNum)) {
-            const at = multiply(originMatrix, placed.matrix);
-            pixelBoards.push({ box: transformedAabb(archAabb(placed.modelIdNum, cpuModels.get(placed.modelIdNum).positions), at), local: at });
-            continue;
-          }
-          const climateFree = isClimateFreeModel(placed.modelIdNum);   // ARENA1: the colosseum - never swapped, nor a key of the pixel's table
-          if (!climateFree) await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);   // AUDIT PRECIP HOST-7: kept in the table's recipe under its climate
           const local = multiply(originMatrix, placed.matrix);
-          if (WATER_SOURCE_MODELS.includes(placed.modelIdNum)) pixelSprings.push({ pos: [local[12], local[13], local[14]], dry: false });   // SURV3: a trough is a water source
           const cpu = cpuModels.get(placed.modelIdNum);
           const box = transformedAabb(archAabb(placed.modelIdNum, cpu.positions), local);
+          // NOTICE-PANEL (scenes/townPanelHost.js): a town's board (RMBLayout's standalone 41739) does not stand - the town
+          // panel under the compass is its press. Its place is kept, the very box a drawn model's is (AUDIT FB1029e R1: one
+          // reckoning, so the siege field's Market every machine lays never drifts from where a board stood)
+          if (isBulletinBoard(placed.modelIdNum)) { pixelBoards.push({ box, local }); continue; }
+          const climateFree = isClimateFreeModel(placed.modelIdNum);   // ARENA1: the colosseum - never swapped, nor a key of the pixel's table
+          if (!climateFree) await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);   // AUDIT PRECIP HOST-7: kept in the table's recipe under its climate
+          if (WATER_SOURCE_MODELS.includes(placed.modelIdNum)) pixelSprings.push({ pos: [local[12], local[13], local[14]], dry: false });   // SURV3: a trough is a water source
           unionBox(box);
           const entry = { gpu, local, _box: box, _order: placed.modelIdNum };   // EV6: sort key
           if (climateFree) entry.texRemap = NO_CLIMATE_REMAP;   // ARENA1: drawn by its own table (an empty one - never the pixel's)
@@ -1425,8 +1422,8 @@ export function createPixelBuild(host) {
     // cleared it, so a stale roll never stands in the new world.
     const dwResult = dwNear ? await dwNear.catch(() => null) : undefined;   // DW-B: before the carry, which nothing may await past (AUDIT BRANCH (WoD) m4)
     // SEAT1a (Seats-Arc 3.4): a seat town's banner anchors - its palace's door, its gates - measured where it is built
-    // (scenes/seatBanners.js); hung while the seats are open to this account. BOUNTY1's split of the boards' places, for the
-    // siege field's Market alone (null off a seat)
+    // (scenes/seatBanners.js); hung while the seats are open to this account. BOUNTY1's split of the boards' places: the
+    // siege field's Market, and null off a seat - the palace keys, the banners and the Festival read it as the seat's word
     const pixelBoardSplit = dfLocation && locBlocks && seatAtMapId(townSeats, dfLocation.mapTableData?.mapId) ? questBoardIndices(pixelBoards) : null;
     const seatPalaceKeys = pixelBoardSplit ? palaceKeysOf(locBlocks, makeBuildingKey) : [];
     const seatTier = dfLocation ? seatAtMapId(townSeats, dfLocation.mapTableData?.mapId)?.tier ?? 'palace' : 'palace';

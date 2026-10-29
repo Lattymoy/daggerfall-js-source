@@ -15,7 +15,7 @@ import { yardGround, yardSitesOn } from '../../src/world/merchantYards/merchantY
 import { yardTownBlocks, YARD_MAP_BYTE, YARD_MAP_TYPE, YARD_MAP_BLOCK_M } from '../../src/world/merchantYards/merchantYardMap.js';
 import { CityNavigation, NAV_CELL } from '../../src/world/city/cityNavigation.js';
 import { BUILDING_TYPES } from '../../src/world/buildingNames.js';
-import { ROAD_WEIGHT } from '../../src/systems/gothwayBoards.js';
+import { ROAD_WEIGHT } from '../../src/world/city/cityNavigation.js';
 import { BUILDING_KEY_0, makeBuildingKey } from '../../src/systems/talk/talkTopics.js';
 import { TopicTree, LIST_ITEM_TYPE, QUESTION_TYPE, EN } from '../../src/systems/topicTree.js';
 import { AnswerPipeline } from '../../src/systems/answerPipeline.js';

@@ -36,3 +36,9 @@ export function crashText(err, event = null) {
   const where = event?.filename ? `\nat ${event.filename}:${event.lineno}:${event.colno}` : '';
   return frames ? `${head}\n${frames}${where}` : `${head}${where}`;
 }
+
+/** AUDIT FB1029e (the WEBKIT-TLA lane): the ResizeObserver spec reports a loop it cut short as a window error event with
+ *  NO error object - "ResizeObserver loop completed with undelivered notifications." (Chrome's older "... limit
+ *  exceeded"). The notes are delivered the next frame and nothing threw, yet WebKit raises it from the menu at boot and
+ *  the overlay said CRASH over the game. @param {{ error?: any, message?: any } | null} [event] */
+export const isBenignWindowError = (event) => event?.error == null && /^ResizeObserver loop\b/.test(String(event?.message ?? ''));

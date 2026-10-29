@@ -13,6 +13,8 @@ import { hudArranging } from './hudLayout.js';
 export const TOWN_PANEL_TEXT = Object.freeze({
   get notice() { return t('town.panel.notice', 'Notice Board'); },
   get bounty() { return t('town.panel.bounty', 'Bounty Board'); },
+  /** AUDIT FB1029e P10: the Notice Board's count of new notes, '' for none. @param {number} n */
+  unseen: (n) => (n > 0 ? t('town.panel.new', '{n, plural, one {# new} other {# new}}', { n }) : ''),
 });
 
 const STYLE_ID = 'dftown-panel-css';
@@ -24,6 +26,7 @@ export const TOWN_PANEL_CSS = `
 .dftown-panel.on { display: flex; animation: dftown-drop 160ms ease-out; }
 .dftown-panel.fixed { position: fixed; left: 50%; top: 52px; transform: translateX(-50%); z-index: 12; }
 .dftown-panel.fixed.on { animation: none; }
+.dftown-panel.fixed.at-compass { left: auto; top: auto; transform: none; transform-origin: bottom right; }
 @keyframes dftown-drop { from { opacity: 0; transform: translateY(-6px) scaleY(0.92); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .dftown-panel.on { animation: none; } }
 .dftown-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 5px 10px 4px; margin: 0 0 6px;
@@ -61,8 +64,8 @@ function el(doc, tag, cls, text = null) {
 
 /**
  * The panel: `show(view)` with `{ name, lines, unseen, bounty }` - its heading, its lines (each a string), the Notice
- * Board's count of what is new ('' none) and whether the Bounty Board is offered - and `hide()`. A press on a button is
- * the panel's alone (the hosts swing from a window mousedown); the heading folds the panel to its name.
+ * Board's count of new notes and whether the Bounty Board is offered - `hide()` and `place(anchor)`. A press on a button
+ * is the panel's alone (the hosts swing from a window mousedown); the heading folds the panel to its name.
  * @param {{ doc?: any, onNotice?: () => void, onBounty?: () => void, folded?: boolean, onFold?: (folded: boolean) => void }} [o]
  */
 export function createTownPanel({ doc = globalThis.document, onNotice = () => {}, onBounty = () => {}, folded = false, onFold = () => {} } = {}) {
@@ -87,32 +90,39 @@ export function createTownPanel({ doc = globalThis.document, onNotice = () => {}
   acts.append(notice, bounty);
   body.append(lines, acts);
   root.append(head, body);
-  const fold = (f) => { folded = !!f; root.classList.toggle('folded', folded); head.setAttribute('aria-expanded', String(!folded)); };
+  let measured = -1;
+  /** AUDIT FB1029e P6: its height, for the quest card it would stand under on a narrow screen (enhancedStyle.js --qt-town). */
+  const measure = () => { const h = Math.round(root.offsetHeight || 0); if (h !== measured) { measured = h; doc.body?.style?.setProperty?.('--dftown-h', `${h}px`); } };
+  const fold = (f) => { folded = !!f; root.classList.toggle('folded', folded); head.setAttribute('aria-expanded', String(!folded)); measure(); };
   fold(folded);
   for (const n of [head, notice, bounty]) {
     n.addEventListener('mousedown', (e) => { if (!hudArranging()) e.stopPropagation(); });
     n.addEventListener('mouseup', (e) => { if (!hudArranging()) e.stopPropagation(); });
   }
-  const press = (n, fn) => n.addEventListener('click', (e) => { if (hudArranging()) return; e.stopPropagation(); fn(); });
+  // AUDIT FB1029e P14: the press lets go of the focus - a button kept focused takes the next Space or Enter as a press
+  const press = (n, fn) => n.addEventListener('click', (e) => { if (hudArranging()) return; e.stopPropagation(); n.blur?.(); fn(); });
   press(head, () => { fold(!folded); onFold(folded); });
   press(notice, () => onNotice());
   press(bounty, () => onBounty());
-  let drawn = '';
-  /** The panel rides the compass's column where the enhanced HUD stands, else stands on its own under the top edge. */
+  let drawn = '', anchored = '';
+  /** The panel rides the compass's column where the enhanced HUD stands, else stands on its own. AUDIT FB1029e P4: seated
+   *  from its making, so the HUD's editor has it to preview before the first town. */
   const seat = () => {
     const top = doc.querySelector?.('.hud .hud-top');
     const at = top ?? doc.body;
     if (root.parentNode !== at) at?.append(root);
     root.classList.toggle('fixed', !top);
   };
+  seat();
   return {
     el: root,
     get shown() { return root.classList.contains('on'); },
     get folded() { return folded; },
-    /** @param {{ name: string, lines: string[], unseen?: string, bounty?: boolean }} view */
+    /** @param {{ name: string, lines: string[], unseen?: number, bounty?: boolean }} view */
     show(view) {
       seat();
-      const key = JSON.stringify([view.name, view.lines, view.unseen ?? '', !!view.bounty, TOWN_PANEL_TEXT.notice, TOWN_PANEL_TEXT.bounty]);
+      const unseen = TOWN_PANEL_TEXT.unseen(view.unseen ?? 0);
+      const key = JSON.stringify([view.name, view.lines, unseen, !!view.bounty, TOWN_PANEL_TEXT.notice, TOWN_PANEL_TEXT.bounty]);
       if (key !== drawn) {
         drawn = key;
         name.textContent = view.name;
@@ -120,13 +130,31 @@ export function createTownPanel({ doc = globalThis.document, onNotice = () => {}
         head.title = view.name;
         lines.replaceChildren(...view.lines.map((l) => el(doc, 'p', 'dftown-line', l)));
         noticeWord.textContent = TOWN_PANEL_TEXT.notice;
-        noticeNew.textContent = view.unseen ?? '';
+        noticeNew.textContent = unseen;
         bounty.textContent = TOWN_PANEL_TEXT.bounty;
         bounty.hidden = !view.bounty;
+        root.classList.add('on');
+        measure();
       }
       root.classList.add('on');
     },
-    hide() { root.classList.remove('on'); },
+    /** AUDIT FB1029e P4: out of town its heading is the editor's preview (hudLayout.js), never the last town's. */
+    hide() {
+      root.classList.remove('on');
+      if (drawn) { drawn = ''; name.textContent = ''; lines.replaceChildren(); }
+    },
+    /** AUDIT FB1029e P6, P13: on the classic skin the panel stands on the compass (hud.js classicCompassAnchor: its right
+     *  and bottom offsets), off the popup text it covered at the top; with no anchor, under the top edge.
+     *  @param {{ right: number, bottom: number } | null} anchor */
+    place(anchor) {
+      seat();
+      const a = anchor && root.classList.contains('fixed') ? `${anchor.right},${anchor.bottom}` : '';
+      if (a === anchored) return;
+      anchored = a;
+      root.classList.toggle('at-compass', !!a);
+      root.style.right = a ? `${anchor?.right}px` : '';
+      root.style.bottom = a ? `${anchor?.bottom}px` : '';
+    },
     dispose() { root.remove(); },
   };
 }

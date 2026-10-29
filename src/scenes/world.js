@@ -7,10 +7,10 @@
 // recenters the world (streamingWorld.js).
 
 import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
-import { wildGiantsAt, WILD_GIANT_STAND_M, WILD_GIANT_RESPAWN_MS, giantGroundBlocked } from '../systems/wild/wildGiants.js';   // ZONE-GIANTS   // GOTHWAY-BOARDS: at the north entrance
+import { wildGiantsAt, WILD_GIANT_STAND_M, WILD_GIANT_RESPAWN_MS, giantGroundBlocked } from '../systems/wild/wildGiants.js';   // ZONE-GIANTS
 import { cyrodiilMask } from '../systems/wild/cyrodiilZone.js';   // WW-C2: the open zone is Cyrodiil's
-import { createZoneHalls } from './zoneHallsHost.js';   // WW-C2: the zone's halls and their ground, out of bootWorld   // ZONE-GIANTS   // GOTHWAY-BOARDS: at the north entrance
-import { pixelKeyText } from '../world/pixelKeys.js';   // PIXEL-KEYS: a built pixel's key text made once   // GOTHWAY-NORTH: the walk grid's cell
+import { createZoneHalls } from './zoneHallsHost.js';   // WW-C2: the zone's halls and their ground, out of bootWorld   // ZONE-GIANTS
+import { pixelKeyText } from '../world/pixelKeys.js';   // PIXEL-KEYS: a built pixel's key text made once
 import { resetPlayerGpsState } from '../world/playerGps.js';   // AUDIT DEX C1: PlayerGPS.ResetState, the jump core's
 import { restAilmentLines } from '../systems/rest/restWarning.js';   // REST-WARN
 import { walkModeOn, bindWalkMode } from '../player/walkMode.js';   // PADWALK: walk mode, one button on and off
@@ -596,7 +596,7 @@ import { setClassicDialSource, refreshClassicDial } from '../ui/dialClassicArt.j
 import { overlayOpen } from '../ui/enhanced/enhancedOverlays.js';   // AUDIT DEEP2 A3: the Tab dial (and every enhanced overlay) over the travel view
 import { preloadBookArt } from '../ui/bookReader.js'; import { makeOpenBookHook } from '../ui/bookDoor.js';   // B1; EB1: the reader's ONE door
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
-import { loadHud, drawHud, hudScale } from '../ui/hud/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw; ONLINE1: the names' scale
+import { loadHud, drawHud, hudScale, classicCompassAnchor } from '../ui/hud/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw; ONLINE1: the names' scale
 import { initEscortFaces, addEscortFace, dropEscortFace, escortQuestEnded } from '../ui/hud/hudEscortFaces.js';   // FE1: the quest escorts' portrait column
 import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hud/hudLarge.js';   // U45: the classic bottom bar and its eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
 import { trackHudPointer } from '../ui/hud/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
@@ -889,7 +889,7 @@ import { seatArrivalLine, boardTithePct } from '../net/townSeatLaw.js';   // SEA
 import { createSeatHallHost } from './seatHallHost.js';   // DOMAIN2 (HOST-SPLIT): a seat's halls and the guild's castle
 import { createOnlineHomes, moveArenaHomes, homeSceneName, homeTownBlocks, homeClaimLayout, checkpointLanded, HOME_RETRY_MS } from '../systems/online/onlineHomes.js';   // HOME1: the account service's homes, one town at a time; ARENA4b: the ones the arena displaced, moved; HOME-PRICE: a town's size; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed the realm gave, held
 import { createHomesBoot } from './homesBootHost.js';   // KNIGHT-HOUSE's deed holds and ACCOUNT-HOMES' sweep, once a boot
-import { createTownPanelHost } from './townPanelHost.js';   // NOTICE-PANEL: the town panel under the compass - the boards' presses, in any settlement
+import { createTownPanelHost, panelTownOf } from './townPanelHost.js';   // NOTICE-PANEL: the town panel under the compass - the boards' presses, in any settlement
 import { clearVendorWaypoint, vendorWaypoint, vendorWaypointKey } from '../systems/vendorWaypoint.js';   // HOME-VENDOR: the trader's waypoint
 import { setVendorPage } from '../ui/vendor/vendorPage.js';   // HOME-VENDOR: the Vendor page, under the Professions
 import { setSigilOnline, setSigilRenown } from '../systems/sigil/sigil.js';   // SIGIL1: a weapon won online carries a sigil, woken by my Renown
@@ -12080,10 +12080,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     now: () => Date.now(),
   }) : null;
   let _farmSyncT = 0;   // BOUNTY-FARM: the pool is brought in line twice a second
-  /** SCALE4c: the town the street frame last found underfoot, and when (performance.now ms) - the heartbeat's board part
-   *  asks it, so the board is read exactly where and while the frame asked it before; and when the online lane last ran,
-   *  for the letterbox's part the same way. */
-  let _noticeTown = /** @type {{ mapId: number|null, at: number } | null} */ (null);
+  /** SCALE4c: when the online lane last ran, for the letterbox's heartbeat part (the board's: townPanelHost.js boardTown). */
   let _mailFrameAt = -Infinity;
   const FRAME_LIVE_MS = 2500;
   /** BOUNTY-FARM / BOUNTY-TRAIL: how near its spot (the farmhouse, the second group's) the hunter must come before the
@@ -19996,8 +19993,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     beat: () => heartbeat.beat(),
     visible: () => globalThis.document?.visibilityState !== 'hidden',
   });
-  // the town's board, read where and while the street frame finds the player in a town (the frame stamps it each second)
-  if (noticeBook) heartbeat.add('board', noticeBook.heartbeatPart(() => (_noticeTown && performance.now() - _noticeTown.at < FRAME_LIVE_MS ? _noticeTown.mapId : null)));
+  // the town's board, read where and while the town panel's frame finds the player in a town (AUDIT FB1029e P3: indoors too)
+  if (noticeBook) heartbeat.add('board', noticeBook.heartbeatPart(() => townPanel.boardTown(FRAME_LIVE_MS)));
   /** QUEST-PARTY (2026-09-26, Mac: "Party shares them"): THE PARTY'S LAW FOR A POOL'S QUEST FOES - one home for the
    *  open air's pool (onlineStart) and each building's (worldModes' interior pool, QUEST-PARTY phase 3b). A quest shared
    *  with the party streams its foes to the party, a member stands a party peer's, a peer's blow and a quest foe's hunt
@@ -26651,15 +26648,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   };
   /** NOTICE-PANEL: the settlement the player is in - a city, hamlet or village, on its streets or in its buildings, never
    *  below (the Stores' own reach, _storesReached) - or null. */
-  const settlementHere = () => {
-    const at = playerTravelPixel(), mapId = _musicLoc?.mapTableData?.mapId;
-    if (!at || !Number.isFinite(mapId) || !_storesReached()) return null;
-    const name = String(_musicLoc.name ?? '');
-    return { mapId: mapId >>> 0, px: at.x, py: at.y, name, shown: getLocalizedLocationName(mapId, name) };
-  };
+  const settlementHere = () => (_storesReached() ? panelTownOf(_musicLoc, playerTravelPixel(), getLocalizedLocationName) : null);   // AUDIT FB1029e P2, P7
   const townPanel = createTownPanelHost({   // HOST-SPLIT: src/scenes/townPanelHost.js
     town: settlementHere,
-    covered: () => townTalk.overlayActive || townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused() || !!townTalk.hudHidden || !!travelView?.active
+    covered: () => townTalk.overlayActive || townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused() || !!townTalk.hudHidden || !hudRenderEnabled() || !!travelView?.active
       || !!travelOptions?.isTravelActive || !!arenaBouts.bout() || !!csaAboard.aboard || !!csaRuntime?.state?.CurrentBoat,   // the journey bar, the versus bar, the helm stand there
     panelLines: (mapId) => townEcon.panelLinesAt(mapId),
     unseen: (mapId) => (noticeBook?.open === true ? noticeBook.unseen(mapId) : 0),
@@ -26668,6 +26660,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     showBox: (w) => townTalk.showOverlay(w),
     bounty: () => !!bountyHost,
     openBounty: (town) => bountyHost?.openBoard(town) ?? false,
+    anchor: classicCompassAnchor,   // AUDIT FB1029e P6, P13: on the classic skin, the compass's corner
   });
   const partyMarkers = () => (social?.others() ?? [])
     .filter((m) => !!m.p)
@@ -29059,8 +29052,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     activatePort: (key, mode, verb) => portHost?.activate(key, mode, verb) ?? false,   // SHIPYARDS: the shipmaster's window on its page, the crew hall's, the tower's stair
     witches,   // WITCH1: a Wyrd Sister's press and the Hearth Offerings', in the street's one ray (scenes/witchesHost.js)
     /** AUDIT 64 F11: the StaticBuildings of every built pixel, shifted
-     *  through the LIVE floating-origin translation the boards and
-     *  street NPCs ride - DFU's hit test consumes a world-space
+     *  through the LIVE floating-origin translation the street NPCs
+     *  ride - DFU's hit test consumes a world-space
      *  raycast's point (PlayerActivate.cs:314, :343). The pixel key and
      *  the pixel-local matrix ride along, because the identity lookup
      *  (buildingDataForDoor) works in the pixel's own location frame. */
@@ -32551,12 +32544,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     try { bountyHost?.tick(dt); } catch (e) { console.warn('[bounty] tick', e); }   // BOUNTY1: the hunts - packs stood and counted, a purse paid, a notice raised
     try { legacyStep(dt); } catch (e) { console.warn('[legacy] tick', e); }   // LEGACY1: the seat, the elder, the estate, a dead load
     try { gatherHost?.tick(dt); } catch (e) { console.warn('[prof] tick', e); }   // PROF1: the patches, the prompt, the act, the answers
-    // NOTICE1: the town the player stands in is read on arrival (a minute's cache, net/noticeBook.js) - so its boards'
-    // count floats over them and its board opens as the Notice Board at the first press, not the second
-    // AUDIT SCALE B7: once a second by the wall clock, not by the frame's dt - the dt is clamped at 0.1 s, so at four
-    // frames a second or fewer that "second" outran FRAME_LIVE_MS and the board's part dropped out between stamps
-    const stampAt = performance.now();
-    if (noticeBook && (!_noticeTown || stampAt - _noticeTown.at >= 1000)) { const town = townPanel.town(); _noticeTown = { mapId: town ? town.mapId : null, at: stampAt }; }   // SCALE4c: the heartbeat's board part reads it (above)
     _farmSyncT -= dt;
     if (_farmSyncT <= 0) { _farmSyncT = 0.5; try { bountyFarms?.sync(bountyHost?.farmsWanted() ?? []); } catch (e) { console.warn('[bounty] farms', e); } }   // BOUNTY-FARM: the farms brought in line with the bounties held
     if (state.failed.size) queue.push(...state.retryDue(performance.now()));   // BUILD-RETRY: a failed pixel's wait over, the stream asks for it again

@@ -41,7 +41,12 @@ Each is quoted where the code keeps it, beside the line it decided.
 
 ## 1. The board
 
-- **Half of a town's boards are its bounty boards** (`systems/bounty/bountyBoard.js` questBoardIndices). FACT: a town's blocks
+NOTICE-PANEL (2026-10-29, `01-Overview/bugs/Field-Bugs-2026-10-29e.md`; the owner: "remove the notice board prop from
+all cities"): no board stands now. Every settlement's town panel under the compass carries a Bounty Board button that
+opens this window (`scenes/townPanelHost.js`), Alinor's and a hamlet's alike. The split below places only the siege
+field's Market; the hover name and the press are gone with the boards. The rest of this section is the board's history.
+
+- **Half of a town's boards were its bounty boards** (`systems/bounty/bountyBoard.js` questBoardIndices). FACT: a town's blocks
   place its bulletin boards (`BULLETIN_BOARD_MODEL_ID`, `world/rmbLayout.js`). The boards are sorted by position (x,
   then z, then y) and every other one is taken, from the first: two give one, four give two, five give two. A town with
   one board keeps it for DFU's rumour. Every client picks the same half, whatever order its blocks were laid.

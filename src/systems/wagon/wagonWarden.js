@@ -18,7 +18,7 @@
 //
 // Not a DFU member. Ledger A (WARDEN1).
 import { LOCATION_TYPES } from '../../formats/mapsFile.js';
-import { ROAD_WEIGHT } from '../gothwayBoards.js';
+import { ROAD_WEIGHT } from '../../world/city/cityNavigation.js';
 import { WARDEN_ROAD_MS, WARDEN_LAND_REACH, WARDEN_TOWN_MAX, parkSpotOf } from '../../net/wire.js';
 
 /** The save's slot for the stamp (systems/modSaveData.js). */

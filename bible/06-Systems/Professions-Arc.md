@@ -1118,14 +1118,16 @@ Mac: **"Go"**. What the design above left open, DECIDED here (the record's, at M
   request id" was false: the notice and the take-down had none).
 - **The switch**: `BOARD_OPEN` in `server-account/wrangler.toml` - shipped at `dev`; one line opens it. The service is
   `acct18`.
-- **Boards stood for a hub - NOTICE1b.** 10.1 gives a hub whose blocks place no board one of its own, at the open block
+- **Boards stood for a hub - NOTICE1b. SUPERSEDED by NOTICE-PANEL (2026-10-29): every settlement's town panel carries
+  its Notice Board, so nothing is built.** 10.1 gave a hub whose blocks place no board one of its own, at the open block
   nearest the centre or beside the palace door. This lane holds no ARENA2, and a board stood blind through a building
   is worse than none. MEASURED next: `tools/boardCount.mjs` - Mac runs it over his own ARENA2 - lists every hub's
   boards, bounty and rumour; NOTICE1b builds only if it names a hub with none. A seat's boards come with SEAT1 (AUDIT-SEATS: no SEAT slice built a board of its own - a seat's Seat tab is at its
   town's rumour boards, and a seat town with none waits on NOTICE1b's own boards).
-- **The four hosts** (17.1): the streaming world (`scenes/world.js`) wires the boards, the press, the count and the
-  window in the overlay slot; the fixed city (`scenes/exterior.js`) keeps DFU's board (FLAGGED by name: it hands the
-  shared mode machine no `openNoticeBoard`); the building interiors and the dungeons have no boards.
+- **The four hosts** (17.1): the streaming world (`scenes/world.js`) wires the town panel (`scenes/townPanelHost.js`:
+  its Notice Board press, the count) and the window in the overlay slot - NOTICE-PANEL took the boards and their press;
+  the fixed city (`scenes/exterior.js`) stands no board and no panel (FLAGGED); the building interiors and the dungeons
+  have no boards.
 
 `test/net/notice1.test.js` (17) - the law, the schema, the switch, read and pin, take down and report, moderation and the
 mute, the recruitment note, the server's word, expiry and the hour, the book (the cache, the stale board, what was
@@ -1891,7 +1893,7 @@ of Makers; commissions; regional prices to haul between; and every seat on the m
 | **PROF0** | This record | - |
 | **MARKS1** - SHIPPED 2026-09-28 (at `dev`) | Marks: balances, the guild Marks treasury, the ledger, the Bank's exchange, the weekly report; the first faucet is the gate's receipts (Court writs come with PROF1's Stores - a writ filled from the pack would be a save item bought with Marks) | Every faucet capped and pinned; gold never becomes Marks, pinned |
 | **NOTICE1** - SHIPPED 2026-09-28 (at `dev`) | The Notice Board (10.7): a town's rumour boards open it online - every board BOUNTY1 did not take (ONE-BOARD REVERTED, 10.11; BOUNTY1's bounty boards stay the hunts), the rumour pinned first and the bounty board's line under it; the server's word; the Notices tab; player notes, their button, reports and moderation; the count over the board. The Work tab moved to PROF1 | Offline a rumour board is byte-for-byte DFU's (the ROAD A9 pins hold) |
-| **NOTICE1b** | Boards stood where a hub lacks one (10.1), if `tools/boardCount.mjs` names any; a seat's with SEAT1 | Mac's run of the measure |
+| **NOTICE1b** | SUPERSEDED (NOTICE-PANEL, 2026-10-29): no board stands; every settlement's town panel carries its Notice Board | - |
 | **PROF1** - SHIPPED 2026-09-28 (at `dev`, section 22) | The Stores; **Herbalism** with its act; the board's **Work tab**; the Professions and Stores tabs, the prompt, the meter, the toasts; the Sickle and the Basket's search; withdraw to pack; **Court writs** (section 11); FORAGE0 law 6's online exception - the six tools shelve online whatever the switch says. **Needs FORAGE1-2 (shipped)**, MARKS1 and NOTICE1 (FORAGE0 17) | An herb picked online reaches DFU's potion maker by the pack |
 | **PROF2** - SHIPPED 2026-09-28 (at `dev`, section 23) | Mining and Quarrying with their acts; the dungeon veins and the witnessed dungeon; gems; smelting at a forge (a smith's, or a home's forge station); ores and ingots (610-630) and stone (673-674); the Prospector's compass; metal and stone writs. Motherlodes and gate-touched ground are PROF2b. Needs FORAGE1-2 (shipped: the Pick-Axe) | Veins placed on rock fields; signatures by kingdom |
 | **PROF3** - SHIPPED 2026-09-28 (at `dev`, section 24) | Smithing with its act; quality; provenance; the anvil (the forge stands since PROF2); the smith's stock (the fittings the professions do not yet yield) | A crafted Mithril Longsword is DFU's, with its quality |
@@ -2844,8 +2846,8 @@ Mac's instruction - "make the decisions ... This is your baby"), and what was fo
   `list`, `buy`, `cancel`, `order`, `fill`, `unorder`, `collect`, `report`, `remove`. The law is `src/net/marketLaw.js`
   (pure, both ends): the bounds, the fees, the tax, the courier and its time, the road, the median, the kinds.
 - **The four hosts** (17.1): the streaming world wires the tab (the board's region and the hubs, the pieces minted
-  into the pack or the home's things); the fixed city keeps DFU's board (NOTICE1's flag); the interiors and dungeons
-  have no boards.
+  into the pack or the home's things); the fixed city keeps no board since NOTICE-PANEL (FLAGGED); the interiors and
+  dungeons have no boards.
 - **Done when**: a crafted Mithril Longsword listed at a board in one region is bought at a board in another by a
   second account - the courier's fee burnt, the sword on the road, then collected into the buyer's pack, DFU's own piece
   with its quality and its wear, its owner moved - and Mithril Ore bought the same way reaches the buyer's Stores after
@@ -2992,7 +2994,7 @@ As built:
   equivalent).
 - **AUDIT 31** (Online-Arc "AUDIT 31") corrected this section in place, each line marked. **The four hosts** (17.1 -
   AUDIT 31 H7: this section did not say): the streaming world wires the Auctions view as it wires the Market tab (26);
-  the fixed city keeps DFU's board; the interiors and dungeons have no boards. The done-when is
+  the fixed city keeps no board since NOTICE-PANEL; the interiors and dungeons have no boards. The done-when is
   `prof5b_service`'s DONE WHEN, through the real Worker; `prof5b_client`'s the books'.
 
 ## 28. PROF6 - Guild writs, the guild Stores and commissions, as built (SHIPPED 2026-09-29, at `dev`)

@@ -2718,8 +2718,9 @@ keeps it.
 
 WEBKIT-TLA (`01-Overview/bugs/Field-Bugs-2026-10-29e.md`): the store imports the pins and never awaits them. It read them
 with a top-level await, and WebKit before Safari 27 resolves a second `import()` of a graph that awaits before it has
-run (WebKit bug 242740): every iPhone's Play called `bootWorld` before the world chunk had made its classes.
-`test/tree/toplevelawait.test.js` refuses a top-level await in any module another imports.
+run (WebKit bug 242740): an iPhone before iOS 27 called `bootWorld` before the world chunk had made its classes.
+`test/tree/toplevelawait.test.js` refuses a top-level await in any source module another imports, and the build in any
+chunk another imports (`scripts/noTopLevelAwait.mjs`, AUDIT FB1029e TLA-1).
 
 Each key leads with its scope; writing an answer deletes every other key of its scope
 (`firstVisitStore.js staleKey`, `dataSource.js sweepDerived`), so the store holds one answer a scope and does not grow

@@ -24,7 +24,7 @@ import { stockShopShelf, SHOP_BUYS_GROUPS, shopBuysItem, TRANSPORT_HORSE, TRANSP
 import { BUILDING_TYPES } from '../../src/world/buildingNames.js';
 import { LOCATION_TYPES } from '../../src/formats/mapsFile.js';
 import { CityNavigation, NAV_CELL } from '../../src/world/city/cityNavigation.js';
-import { ROAD_WEIGHT } from '../../src/systems/gothwayBoards.js';
+import { ROAD_WEIGHT } from '../../src/world/city/cityNavigation.js';
 import { WAGON_KINDS } from '../../src/systems/wagon/wagonKinds.js';
 import { getSeed, setSeed } from '../../src/formats/dfRandom.js';
 import { trs } from '../../src/world/mat4.js';

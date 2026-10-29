@@ -74,5 +74,5 @@ if (isMain(import.meta.url)) {
   }
   const none = hubs.filter((h) => h.boards === 0);
   const failed = hubs.filter((h) => h.boards < 0);
-  console.log(`\n${hubs.length} hubs; ${none.length} with no Notice Board${none.length ? `: ${none.map((h) => h.name).join(', ')}` : ''}${failed.length ? `; ${failed.length} not measured: ${failed.map((h) => h.name).join(', ')}` : ''}.`);
+  console.log(`\n${hubs.length} hubs; ${none.length} whose blocks place no board (DFU's own - the town panel's Notice Board stands in every one)${none.length ? `: ${none.map((h) => h.name).join(', ')}` : ''}${failed.length ? `; ${failed.length} not measured: ${failed.map((h) => h.name).join(', ')}` : ''}.`);
 }

@@ -69,10 +69,10 @@ const LOC_ID = `${TOWN.regionIndex}:${TOWN.name}`;   // the talk seam's key and 
 function townHost({ dfLoc = TOWN, blocks = [block()], yards = [YARD] } = {}) {
   const h = {
     at: { x: 5, y: 5 }, shown: [], asked: [], mode: 'exterior',
-    boardSplitOf: () => new Map(), built: new Map([['5,5', { locBlocks: blocks, locOrigin: [0, 0, 0], merchantYards: yards }]]),
+    built: new Map([['5,5', { locBlocks: blocks, locOrigin: [0, 0, 0], merchantYards: yards }]]),
     cam: { pos: [10, 0, 10], yaw: 0 }, cpuModels: new Map(), getGpuMesh: () => Promise.resolve(),
     locationIndex: new Map([['5,5', dfLoc]]), maps: { getRegionName: () => 'Daggerfall' },
-    noticeBook: null, noticeTownOf: () => null, onlineHomes: { ensure: (mapId) => h.asked.push(mapId), homeAt: () => null, version: () => 0 },
+    onlineHomes: { ensure: (mapId) => h.asked.push(mapId), homeAt: () => null, version: () => 0 },
     player: { pos: [10, 0, 10] }, playerTravelPixel: () => h.at, questBuildingSource: {},
     state: { pixelTranslation: () => [0, 0, 0] },
     townTalk: { overlayActive: false, showOverlay: (w) => h.shown.push(w), directory: [] },

@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { crashText } from '../../src/ui/crashText.js';
+import { crashText, isBenignWindowError } from '../../src/ui/crashText.js';
 import { Renderer } from '../../src/render/renderer.js';
 
 test('crash report: a FIREFOX stack still names the error', () => {
@@ -249,4 +249,13 @@ test('a model missing from ARCH3D costs the placement, never the building', () =
   assert.match(dungeon, /levelModelRemap\(id, cpuModels\.get\(id\)\?\.subMeshes,/, 'ensureRemap guards its receiver');   // AUDIT PRE-MERGE 1003 W4: through the level's remap seam (levelModelRemap -> remapSubMeshes)
   const doorArm = dungeon.match(/for \(const d of b\.layout\.actionDoors\)[\s\S]*?\n {4}}/)[0];
   assert.match(doorArm, /if \(!gpu \|\| !cpu\) \{/, 'the dungeon door arm skips a missing model');
+});
+
+test('AUDIT FB1029e: the ResizeObserver spec\'s loop notice - an error event with no error object - is no crash; a real throw, a script error or any other message with no object still is (mutant: the notice an overlay again)', () => {
+  assert.equal(isBenignWindowError({ error: null, message: 'ResizeObserver loop completed with undelivered notifications.' }), true, 'WebKit\'s and Chrome\'s words');
+  assert.equal(isBenignWindowError({ message: 'ResizeObserver loop limit exceeded' }), true, 'Chrome\'s older words');
+  assert.equal(isBenignWindowError({ error: new Error('ResizeObserver loop completed'), message: 'ResizeObserver loop completed' }), false, 'a thrown error is a crash, whatever it says');
+  assert.equal(isBenignWindowError({ error: null, message: 'Script error.' }), false);
+  assert.equal(isBenignWindowError(null), false);
+  assert.match(readFileSync(new URL('../../src/main.js', import.meta.url), 'utf8'), /addEventListener\('error', \(e\) => \{ if \(!isBenignWindowError\(e\)\) crashOverlay\(crashText\(e\.error, e\) \|\| e\.message\); \}\);/);
 });

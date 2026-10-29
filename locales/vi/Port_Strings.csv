@@ -1024,6 +1024,7 @@ town.econ.reason.raid,"Một cuộc đột kích trước cổng đang làm hạ
 town.econ.trend.falling,"Thị trường đang giảm."
 town.econ.trend.flat,"Thị trường đi ngang."
 town.econ.trend.rising,"Thị trường đang tăng."
+town.panel.new,"{n, plural, other {# mới}}"
 travel.held.foes,"khi có kẻ thù ở gần"
 travel.held.ground,"cho đến khi bản đồ thế giới hiện lên"
 travel.held.line,"Giới hạn ×{n} trên ×{of} {why}"

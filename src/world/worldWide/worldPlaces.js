@@ -72,6 +72,9 @@ export function createWorldPlaces() {
   const lists = new Map();
   /** @type {Map<string, (px: number, py: number) => PlaceRow|null|undefined>} */
   const pixels = new Map();
+  /** NOTICE-PANEL (AUDIT FB1029e P1): a pixel provider's map id read back to its pixel - so a place is found by its id
+   *  before anything asked its pixel (a town's panel, its counters' prices). @type {Map<string, (mapId: number) => ({ x: number, y: number }|null)>} */
+  const pixelOfId = new Map();
   let generation = 0;
   /** @type {{ byKey: Map<number, WorldPlace>, byMapId: Map<number, WorldPlace>, list: WorldPlace[], byArea: Map<number, WorldPlace[]>, byTheatre: Map<number, WorldPlace[]>, shadowed: number } | null} */
   let idx = null;
@@ -144,6 +147,7 @@ export function createWorldPlaces() {
       /** @type {WorldPlace[]} */ const made = [];
       for (const row of rows ?? []) { const p = placeOfRow(row, source); if (p) made.push(p); }
       pixels.delete(source);
+      pixelOfId.delete(source);
       live.delete(source);
       lists.set(source, made);
       moved();
@@ -151,11 +155,14 @@ export function createWorldPlaces() {
     },
     /** A pixel provider, by its name: `at(px, py)` the place it stands on that pixel (its own pixel - an answer for
      *  another is no answer), or none. Pure and the same on every client, as a list is.
-     *  @param {string} source @param {(px: number, py: number) => PlaceRow|null|undefined} fn */
-    registerPixels(source, fn) {
+     *  `idPixel` its map id read back to the pixel it stands on (null for an id not its own), so `byMapId` finds its place
+     *  unasked. @param {string} source @param {(px: number, py: number) => PlaceRow|null|undefined} fn
+     *  @param {((mapId: number) => ({ x: number, y: number }|null))=} idPixel */
+    registerPixels(source, fn, idPixel) {
       lists.delete(source);
       live.delete(source);
       pixels.set(source, fn);
+      if (idPixel) pixelOfId.set(source, idPixel); else pixelOfId.delete(source);
       moved();
     },
     /** AUDIT TESA II P7: a LIVE list provider, by its name - `rows()` its rows as they stand now, `stamp()` a list of what
@@ -164,12 +171,13 @@ export function createWorldPlaces() {
      *  @param {string} source @param {{ stamp: () => readonly any[], rows: () => Iterable<PlaceRow> }} o */
     registerLive(source, { stamp, rows }) {
       pixels.delete(source);
+      pixelOfId.delete(source);
       lists.delete(source);
       live.set(source, { stamp, rows, seen: null });
       moved();
     },
     /** A provider's places gone. @param {string} source */
-    drop(source) { const a = lists.delete(source), b = pixels.delete(source), c = live.delete(source); if (a || b || c) moved(); },
+    drop(source) { const a = lists.delete(source), b = pixels.delete(source), c = live.delete(source); pixelOfId.delete(source); if (a || b || c) moved(); },
     /** Moves on every register and drop - and, AUDIT TESA II P7, when a live list's stamp moved. */
     generation: () => { if (live.size) sync(); return generation; },
     /** The providers, lists first, each in the order it registered. */
@@ -178,8 +186,16 @@ export function createWorldPlaces() {
     all: () => build().list,
     /** The place on a pixel, or null. */
     at,
-    /** The place of a map id - a list's, or a pixel provider's already found - or null. @param {number} mapId */
-    byMapId: (mapId) => build().byMapId.get(mapId >>> 0) ?? pixelById.get(mapId >>> 0) ?? null,
+    /** The place of a map id - a list's, or a pixel provider's (found, or read back to its pixel) - or null. @param {number} mapId */
+    byMapId(mapId) {
+      const id = mapId >>> 0, got = build().byMapId.get(id) ?? pixelById.get(id);
+      if (got) return got;
+      for (const read of pixelOfId.values()) {
+        const px = read(id), p = px ? at(px.x, px.y) : null;
+        if (p?.mapId === id) return p;
+      }
+      return null;
+    },
     /** An area's places: its lists', and past the Bay its district's pixel providers' (its district walked once a
      *  generation). @param {number} area */
     inArea(area) {

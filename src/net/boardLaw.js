@@ -106,8 +106,6 @@ export function unseenCount(board, seenAt) {
   for (const x of [...(board?.notices ?? []), ...(board?.notes ?? [])]) if (noteIsNew(x, seenAt)) n++;
   return n;
 }
-/** "3 new" - or '' for none. */
-export const unseenText = (n) => (n > 0 ? `${n} new` : '');
 
 /**
  * AUDIT 28 N15: THE SUBJECT OF A LETTER ANSWERING A NOTE - "Re: " and the note's, NEVER CUT (MAIL1's law: a subject is

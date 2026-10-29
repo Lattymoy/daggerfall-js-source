@@ -2598,6 +2598,7 @@ town.econ.reason.raid,"Μια επιδρομή στις πύλες της βλά
 town.econ.trend.falling,"Η αγορά πέφτει."
 town.econ.trend.flat,"Η αγορά σταθερή."
 town.econ.trend.rising,"Η αγορά ανεβαίνει."
+town.panel.new,"{n, plural, one {# νέα} other {# νέες}}"
 travel.held.foes,"με εχθρούς κοντά"
 travel.held.ground,"μέχρι να εμφανιστεί η προβολή κόσμου"
 travel.held.line,"Περιορισμένο σε ×{n} από ×{of} {why}"

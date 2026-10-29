@@ -16,10 +16,11 @@ import { _resetKeyForTests } from '../../server-account/src/signing.js';
 import { renownXpFor } from '../../src/net/renown.js';
 import {
   NOTES_LIVE_MAX, NOTE_DAYS, NOTE_DAY_S, BOARD_NOTES_SHOWN, BOARD_NOTICES_SHOWN, NOTES_PINNED_MAX, NOTE_REPORTS_HIDE,
-  BOARD_CACHE_MS, NOTE_BUTTONS, BOARD_SWITCH, boardSwitchOf, boardKeyOk, noteWords, noticeWords, unseenCount, unseenText,
+  BOARD_CACHE_MS, NOTE_BUTTONS, BOARD_SWITCH, boardSwitchOf, boardKeyOk, noteWords, noticeWords, unseenCount,
   NOTE_SUBJECT_MAX, NOTE_BODY_MAX, BOUNTY_BOARD_LINE,
 } from '../../src/net/boardLaw.js';
 import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX } from '../../src/net/letterLaw.js';
+import { TOWN_PANEL_TEXT } from '../../src/ui/hud/townPanel.js';
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const { subtle } = globalThis.crypto;
@@ -112,7 +113,7 @@ test('NOTICE1 the law: three live notes an account, one, three or seven days, th
   assert.equal(noticeWords({ subject: 'a', body: 'b', days: 14 }).days, 14);
   const board = { notices: [{ at: 10 }], notes: [{ at: 5 }, { at: 20 }] };
   assert.deepEqual([unseenCount(board, null), unseenCount(board, 9), unseenCount(board, 20)], [3, 2, 0]);
-  assert.deepEqual([unseenText(3), unseenText(0)], ['3 new', '']);
+  assert.deepEqual([TOWN_PANEL_TEXT.unseen(3), TOWN_PANEL_TEXT.unseen(0)], ['3 new', ''], 'said by the town panel (AUDIT FB1029e P10: in the player\'s language)');
   assert.equal(BOUNTY_BOARD_LINE, "The town's bounties are posted on its Bounty Board.");
 });
 
@@ -431,8 +432,10 @@ test('NOTICE1 the wiring (NOTICE-PANEL, PIN MOVED: the town panel is the board\'
   assert.doesNotMatch(src('src/scenes/exterior.js'), /noticeBook|openNoticeBoard/, 'the fixed city runs no Notice Board');
 });
 
-test('NOTICE1 the count of new notes (NOTICE-PANEL, PIN MOVED): no count floats over a board, for no board stands - the town panel\'s Notice Board carries it (boardLaw unseenText), and the names\' pass carries no label of the host\'s', () => {
-  assert.match(src('src/scenes/townPanelHost.js'), /unseen: unseenText\(host\.unseen\?\.\(town\.mapId\) \?\? 0\)/);
+test('NOTICE1 the count of new notes (NOTICE-PANEL, PIN MOVED): no count floats over a board, for no board stands - the town panel\'s Notice Board carries it (townPanel.js TOWN_PANEL_TEXT.unseen, AUDIT FB1029e P10), and the names\' pass carries no label of the host\'s', () => {
+  assert.match(src('src/scenes/townPanelHost.js'), /unseen: host\.unseen\?\.\(town\.mapId\) \?\? 0,/);
+  assert.match(src('src/ui/hud/townPanel.js'), /const unseen = TOWN_PANEL_TEXT\.unseen\(view\.unseen \?\? 0\);/);
+  assert.doesNotMatch(src('src/net/boardLaw.js'), /unseenText/, 'the English count word left with its last reader');
   assert.match(src('src/scenes/world.js'), /unseen: \(mapId\) => \(noticeBook\?\.open === true \? noticeBook\.unseen\(mapId\) : 0\),/, 'while the board is open to this account');
   assert.doesNotMatch(src('src/net/remotePlayers.js'), /\bextra\b.*NOTICE1|typeof extra === 'function'/);
   assert.doesNotMatch(src('src/ui/nameLayer.js'), /dfname-board/);

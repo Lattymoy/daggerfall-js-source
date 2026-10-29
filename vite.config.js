@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { landingHtml, readBuildSha } from './scripts/landingHtml.mjs';
 import { studioArtIndex } from './scripts/studioArtIndex.mjs';   // STUDIO1: the studio's listing, served and built from the folder
 import { firstVisitPinsPlugin } from './scripts/firstVisitPins.mjs';   // FIRST-VISIT: the kept answers' pins, computed by the build and the dev server
+import { noImportedTopLevelAwait } from './scripts/noTopLevelAwait.mjs';   // WEBKIT-TLA (AUDIT FB1029e TLA-1): no imported chunk awaits at its top level
 
 // Dev-only: serve ARENA2 game data at /arena2/*. The data is freeware but
 // never committed or bundled (Port-Doctrine); builds contain no game files.
@@ -286,5 +287,5 @@ export default defineConfig({
       },
     },
   },
-  plugins: [arena2DevServer(), buildTagMeta(), landingHtml(), studioArtIndex(), firstVisitPinsPlugin()],
+  plugins: [arena2DevServer(), buildTagMeta(), landingHtml(), studioArtIndex(), firstVisitPinsPlugin(), noImportedTopLevelAwait()],
 });

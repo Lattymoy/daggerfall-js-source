@@ -45,6 +45,7 @@ import { presentNpcInfoText } from '../../src/player/activate.js';
 import { TopicTree, INFO_FACTION_IDS } from '../../src/systems/topicTree.js';
 import { revealGuildHallsOnMap } from '../../src/systems/guild/guildHallReveal.js';
 import { GUILDS, joinGuild } from '../../src/systems/guild/guilds.js';
+import { panelTownOf } from '../../src/scenes/townPanelHost.js';   // NOTICE-PANEL: the settlement's own law (AUDIT FB1029e P2, P7)
 
 beforeEach(() => { tm._resetTextManagerForTests(); restoreDiscovery(null); setSpellRecordsByIndex(null); });
 
@@ -218,8 +219,8 @@ test('L10N3e scenes: the guild popup\'s %fon/%kno is the order\'s faction name a
 test('L10N3e scenes: the Notice Board\'s heading is PlayerGPS.CurrentLocalizedLocationName (PlayerActivate.cs:721) - the location by its MapId; off a settlement there is none (NOTICE-PANEL, PIN MOVED: the town panel\'s settlement, world.js settlementHere, run whole)', () => {
   const here = (inTown) => {
     const settlementHere = mount(`${declSrc('world.js', 'settlementHere')}\nreturn settlementHere;`, {
-      playerTravelPixel: () => ({ x: 207, y: 213 }), _storesReached: () => inTown, getLocalizedLocationName: tm.getLocalizedLocationName,
-      _musicLoc: { name: 'Daggerfall', mapTableData: { mapId: DAGGERFALL_MAP_ID } },
+      playerTravelPixel: () => ({ x: 207, y: 213 }), _storesReached: () => inTown, getLocalizedLocationName: tm.getLocalizedLocationName, panelTownOf,
+      _musicLoc: { name: 'Daggerfall', mapTableData: { mapId: DAGGERFALL_MAP_ID, locationType: 0 } },
     });
     const t = settlementHere();
     return t ? [t.name, t.shown] : null;

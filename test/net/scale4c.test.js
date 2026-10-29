@@ -385,7 +385,7 @@ test('SCALE4c C: the town\'s board as a part - due when the town the host stands
 
 // ═══ D. THE WORLD HOST ═══════════════════════════════════════════════════════════════════════════════════════════════
 
-test('SCALE4c D: the world host makes ONE heartbeat on the device\'s session, the play clock knocks through it, the town\'s board and the letterbox join it - each where and while its frame asked it before - and neither the street frame nor the online lane asks the service itself any more; no other host keeps any of the three (mutants: the board read in the frame again, the box polled in the lane again, the knock past the heartbeat)', () => {
+test('SCALE4c D: the world host makes ONE heartbeat on the device\'s session, the play clock knocks through it, the town\'s board and the letterbox join it - each where and while its frame asked it before - and neither the street frame nor the online lane asks the service itself any more; no other host keeps any of the three (mutants: the board read in the frame again, the box polled in the lane again, the knock past the heartbeat)', async () => {
   const w = hostText('src/scenes/world.js');
   assert.equal((w.match(/createHeartbeat\(/g) ?? []).length, 1, 'one heartbeat a page');
   // AUDIT SCALE (lane D D10, B8): the heartbeat's own sight of the page, and the hide seen at once (B1)
@@ -394,20 +394,29 @@ test('SCALE4c D: the world host makes ONE heartbeat on the device\'s session, th
   assert.match(w, /startPlayClock\(\{\s*beat: \(\) => heartbeat\.beat\(\),\s*visible: \(\) => globalThis\.document\?\.visibilityState !== 'hidden',/);
   assert.equal((w.match(/startPlayClock\(/g) ?? []).length, 1, 'one play clock');
   assert.doesNotMatch(w, /accountPlayBeat/, 'no knock past the heartbeat');
-  assert.match(w, /if \(noticeBook\) heartbeat\.add\('board', noticeBook\.heartbeatPart\(\(\) => \(_noticeTown && performance\.now\(\) - _noticeTown\.at < FRAME_LIVE_MS \? _noticeTown\.mapId : null\)\)\);/);
+  assert.match(w, /if \(noticeBook\) heartbeat\.add\('board', noticeBook\.heartbeatPart\(\(\) => townPanel\.boardTown\(FRAME_LIVE_MS\)\)\);/);   // PIN MOVED (AUDIT FB1029e P3): the town panel's frame stamps the town
   assert.match(w, /heartbeat\.add\('mail', whileLive\(mail\.heartbeatPart\(\), \(\) => performance\.now\(\) - _mailFrameAt < FRAME_LIVE_MS\)\);/);
   assert.doesNotMatch(w, /mail\??\.poll\(/, 'the lane no longer looks at the box itself');
-  // the street frame's second: the town stamped, and no read of the board of its own (AUDIT SCALE B8: the text pin
-  // passed with one put back)
-  const streetAt = w.indexOf('// NOTICE1: the town the player stands in is read on arrival');
-  const street = streetAt < 0 ? '' : w.slice(streetAt, w.indexOf('_farmSyncT -= dt;', streetAt));
-  assert.ok(street.length > 0 && street.length < 1500, 'the street frame\'s stamp found');
-  assert.doesNotMatch(street, /noticeBook\??\.read\(/, 'the street frame no longer reads the board itself');
-  // PIN MOVED (AUDIT SCALE B7): once a second by the wall clock - the frame's dt is clamped, and at four frames a second
-  // or fewer its "second" outran FRAME_LIVE_MS
-  assert.match(street, /const stampAt = performance\.now\(\);\s*if \(noticeBook && \(!_noticeTown \|\| stampAt - _noticeTown\.at >= 1000\)\) \{ const town = townPanel\.town\(\); _noticeTown = \{ mapId: town \? town\.mapId : null, at: stampAt \}; \}/);   // PIN MOVED (NOTICE-PANEL): the settlement the town panel is for
+  // PIN MOVED (AUDIT FB1029e P3): the town is stamped by the town panel's frame - above the modal gate, so in a town's
+  // buildings too - once a second by the wall clock (AUDIT SCALE B7: the frame's dt is clamped, and at four frames a
+  // second its "second" outran FRAME_LIVE_MS); no frame reads the board itself (AUDIT SCALE B8)
+  assert.deepEqual(w.match(/noticeBook\??\.read\([^)]*\)/g), ['noticeBook.read(town.mapId)'], 'no frame reads the board itself: the press alone, a board not yet open');
+  assert.match(w, /if \(noticeBook\.open !== true\) \{ noticeBook\.read\(town\.mapId\); return false; \}/);
+  assert.doesNotMatch(w, /_noticeTown/, 'the street frame stamps no town of its own');
+  const host = src('src/scenes/townPanelHost.js');
+  assert.match(host, /const STAMP_MS = 1000;/);
+  assert.match(host, /const now = host\.now \?\? \(\(\) => performance\.now\(\)\);/);
+  assert.match(host, /const town = here\(\);\s*if \(!stamp \|\| t - stamp\.at >= STAMP_MS\) stamp = \{ mapId: town \? town\.mapId : null, at: t \};\s*if \(!host\.doc && typeof document === 'undefined'\) return;/, 'stamped before the page is asked: headless too');
   const live = Number(w.match(/const FRAME_LIVE_MS = (\d+);/)?.[1]);
   assert.ok(live > 1000 && live <= 5000, `FRAME_LIVE_MS ${live}: past the stamp's second, and a stilled frame's parts drop out within seconds`);
+  // ...and driven: the town read while its frames run, none a live window after they stop
+  const { createTownPanelHost } = await import('../../src/scenes/townPanelHost.js');
+  let t = 0;
+  const panel = createTownPanelHost({ town: () => ({ mapId: 7, px: 1, py: 2, name: 'T', shown: 'T' }), covered: () => false, now: () => t });
+  panel.frame();
+  assert.equal(panel.boardTown(live), 7);
+  t += live;
+  assert.equal(panel.boardTown(live), null, 'a stilled frame\'s board drops out');
   assert.match(w, /_mailFrameAt = performance\.now\(\);/);
   for (const host of ['src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
     const h = src(host);

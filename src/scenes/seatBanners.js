@@ -10,14 +10,13 @@
 //      the same measure the guild halls' banners take
 //      (scenes/hallBanners.js hallBannerAnchors);
 //   2. one beside each city gate (world/rmbLayout.js isCityGate), on its
-//      town side, at a post.
-// NOTICE-PANEL (2026-10-29): the pennant over each rumour board went with the
-// boards - no board stands for it to fly over (scenes/townPanelHost.js).
+//      town side, at a post;
 // and CASTLE-GATE (2026-10-02): a crown seat's two more flanking its
 // castle's entrance in the city - the lowest of the pixel's dungeon-
 // entrance doors (systems/siegeField.js castleEntranceOf), after the
 // palace's two. A town that is no seat, or whose seats are not open to
-// this account, hangs none.
+// this account, hangs none. NOTICE-PANEL (2026-10-29): the pennant over each
+// rumour board went with the boards (scenes/townPanelHost.js).
 //
 // THE BANNER: while a seat is unheld, the kingdom's plain banner - the
 // crown's metal, no device; a March's its two claimants' metals; a Free

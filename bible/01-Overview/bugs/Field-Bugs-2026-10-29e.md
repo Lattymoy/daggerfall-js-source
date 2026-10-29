@@ -20,19 +20,26 @@ FOUND. The error names `new TerrainGenClient({ woods, woodsBytes })` in `bootWor
 it runs before that body. It can only run from an `import()` that resolved, so one resolved before the chunk ran.
 `firstVisitStore.js` read its generated pins with a top-level await, which makes every graph that imports it async,
 and the front door imports the world twice - the menu's warm-up and Play. WebKit's own write-up says its old loader
-resolves the second import of such a graph at once (WebKit bug 242740, fixed in Safari 27, which has not shipped).
-Every browser on an iPhone is WebKit. Desktop Chromium was unaffected.
+resolves the second import of such a graph at once (WebKit bug 242740, fixed by Safari 27's loader rewrite). Every
+browser on an iPhone is WebKit, so every iPhone before iOS 27. Desktop Chromium was unaffected.
+
+FOUND TOO (AUDIT FB1029e TLA-2). The menu's own graph holds the store's chunk, so the warm-up and the menu reach the
+awaiting store together and the warm-up's world never runs: the world chunk's body ran in no failing run, even with Play
+25 s late.
 
 MEASURED. Of every chunk the build writes, only the store's and the two prototype pages' entries awaited at the top.
-Playwright's WebKit 26.6 shows the old loader's order (three imports of an awaiting module resolve 1, 3, 2; Chromium 1,
-2, 3) but did not throw on this machine, so the field's error was not reproduced here: the cause is read from the
-bundle, the timeline (the await merged a day before the report) and WebKit's record.
+AUDIT FB1029e TLA-2 reproduced the field's error with the WebKit the repo's Playwright pins (26.0) through the real front
+door - OFFLINE, NEW GAME, BEGIN (`tools/webkitDoorProbe.mjs`): the base build threw "undefined is not a constructor
+(evaluating 'new RHt({woods:Lt,woodsBytes:Ot})')" in 4 of 6 desktop runs and on an emulated iPhone 15; this fix booted
+6 of 6, and on the iPhone.
 
 FIXED. The store imports the pins and awaits nothing. Every install, build and dev load writes or serves them, so a
 plain import always finds them. The dev server still works them out again for each page load: each page's HTML now
 drops the pins module it served, in place of the store asking under a URL of the load's own
-(`scripts/firstVisitPins.mjs`). `test/tree/toplevelawait.test.js` refuses a top-level await in any module another
-imports - only a page's own entry may await.
+(`scripts/firstVisitPins.mjs`). `test/tree/toplevelawait.test.js` refuses a top-level await in any source module another
+imports (vendor code and template-literal imports since AUDIT FB1029e TLA-1), and the build refuses one in any chunk
+another imports (`scripts/noTopLevelAwait.mjs`) - only a page's own entry may await. A new worktree writes the pins
+before it tests (`node scripts/firstVisitPins.mjs`; `npm install` does it), as the store imports them plainly.
 
 ## The Starfall's master (STAR-MASTER-FLED)
 
@@ -88,9 +95,13 @@ freeware's BLOCKS.BSA only 4 of the 12 WALL kinds place one, at a walled city's 
 kinds and blocks of its own, with no WALL block. BOUNTY1 made half a town's boards its bounty boards, so a place with no
 board had neither board.
 
-CHANGED, a departure from DFU (`01-Overview/Port-Ledger.md` section A). No board stands in any town. The town's panel
-hangs under the compass while the player is in a city, hamlet or village - on its streets or in its buildings, never
-below - and goes when they leave (`ui/hud/townPanel.js`, `scenes/townPanelHost.js`). It names the town; then its guild
+CHANGED, a departure from DFU (`01-Overview/Port-Ledger.md` section A). No board stands in any town's streets. The
+town's panel hangs under the compass (on the classic skin, on the compass in its corner) while the player is in a city,
+hamlet or village - on its streets or in its buildings, never in a dungeon, a city's castle included (DFU's
+IsPlayerInTown) - and goes when they leave (`ui/hud/townPanel.js`, `scenes/townPanelHost.js`). A capital over several
+pixels is one town, its district a line under the name.
+
+It names the town; then its guild
 control (a seat's own card, or its area's holder - none where no seat can hold the region); then its economy, prices
 and reason (`townEconLaw.js` townPanelLinesOf). Under them stand the Notice Board, with its count of new notes, and the
 Bounty Board. Offline, or before the service says the board is open, the Notice Board is DFU's rumour box. The panel

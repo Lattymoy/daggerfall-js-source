@@ -492,9 +492,9 @@
   },
   {
     "name": "AUDIT-SCALE-LANED-street-stamp-slow",
-    "file": "src/scenes/world.js",
-    "old": "stampAt - _noticeTown.at >= 1000",
-    "new": "stampAt - _noticeTown.at >= 5000",
+    "file": "src/scenes/townPanelHost.js",
+    "old": "const STAMP_MS = 1000;",
+    "new": "const STAMP_MS = 5000;",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -737,9 +737,9 @@
   },
   {
     "name": "AUDIT-SCALE-B7-stamp-by-dt",
-    "file": "src/scenes/world.js",
-    "old": "if (noticeBook && (!_noticeTown || stampAt - _noticeTown.at >= 1000))",
-    "new": "if (noticeBook && (!_noticeTown || stampAt - _noticeTown.at >= 1000 * Math.max(1, 0.1 / Math.max(dt, 1e-6) / 10)))",
+    "file": "src/scenes/townPanelHost.js",
+    "old": "const now = host.now ?? (() => performance.now());",
+    "new": "const now = host.now ?? (() => 0);",
     "tests": [
       "test/net/scale4c.test.js"
     ],

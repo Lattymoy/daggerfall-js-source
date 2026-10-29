@@ -11,7 +11,8 @@ import { fnv1a } from '../../formats/fnv1a.js';
 // GENERATED and gitignored (scripts/firstVisitPins.mjs: npm install, every build, each dev page load). Imported, never
 // awaited: a top-level await makes every graph that imports this one async, and WebKit before Safari 27 resolves a
 // second import() of such a graph before it has run (WebKit bug 242740) - the menu's warm-up and Play both import the
-// world, so on every iPhone bootWorld ran before its classes existed (WEBKIT-TLA, test/tree/toplevelawait.test.js).
+// world, so on an iPhone before iOS 27 bootWorld ran before its classes existed (WEBKIT-TLA; the build refuses one:
+// scripts/noTopLevelAwait.mjs). A new worktree writes the pins first: `node scripts/firstVisitPins.mjs`.
 import { FIRST_VISIT_PINS } from '../../firstVisitPins.js';
 
 export { fnv1a };

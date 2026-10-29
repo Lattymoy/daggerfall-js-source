@@ -59,6 +59,10 @@ export const WATER_RECORDS_ENHANCED = Object.freeze((() => {
  *  verbatim thing it is (CityNavigation.cs TileTypes). */
 export const WATER_RECORDS_CLASSIC = Object.freeze([0, 5, 6, 20, 21, 30, 31]);
 
+/** A road cell's weight (CityNavigation.cs's road family) - the yards, the monument, the warden and the town paths read
+ *  a way in by it. AUDIT FB1029e R6: its home was gothwayBoards.js, which kept nothing else once the boards went. */
+export const ROAD_WEIGHT = 15;
+
 export const NAV_CELLS_PER_BLOCK = 64;
 export const NAV_CELL = RMB_SIDE / NAV_CELLS_PER_BLOCK;   // 1.6
 export const HALF_CELL = NAV_CELL / 2;
@@ -76,7 +80,7 @@ export function tileWeight(tile, { enhancedWater = false } = {}) {
     case 3: return 4;    // Stone hurts our feet, but walkable
     case 1: return 6;    // Dirt is OK
     case 2: return 12;   // Grass is nice!
-    case 46: case 47: case 55: return 15;   // Roads are great!
+    case 46: case 47: case 55: return ROAD_WEIGHT;   // Roads are great!
     default: return 7;   // Everything else is average
   }
 }

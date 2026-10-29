@@ -187,5 +187,5 @@ test('BAY-LEFT-MAPS C7 on the player\'s data: the registry\'s 907 listed places 
     old.add(`${region}:${p.name}`);
     books.add(townBookId(region, p.name, p.mapId));
   }
-  assert.deepEqual([tesa.length, old.size, books.size], [907, 296, 907]);
+  assert.deepEqual([tesa.length, old.size, books.size], [909, 298, 909]);   // PIN MOVED (AUDIT FB1029e P1): Alinor's and Torval's sea slices, each a place and a book
 });

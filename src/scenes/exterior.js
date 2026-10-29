@@ -480,7 +480,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       for (const hf of HOLD_FLATS) archives.add(hf.archive);
     }
     for (const placed of b.layout.models) {
-      modelIds.add(placed.modelIdNum);
+      if (!isBulletinBoard(placed.modelIdNum)) modelIds.add(placed.modelIdNum);   // AUDIT FB1029e R6: no board stands, none is fetched
       // AUDIT 64 F14: a city gate swaps between BOTH variants at dawn
       // and dusk (DaggerfallCityGate.cs:29-34), so both meshes have to
       // be resident, climate-remapped and their archives fetched before
@@ -3440,8 +3440,8 @@ export async function bootExterior(canvas, renderer, params, status) {
       //   The THIRD source arm, `isBuildingQuestResource`, is
       // TalkManager's (:698-705, the `locationWasMarkedOnMapByNPC`
       // half) and stays ABSENT: it needs a topic tree, and this route
-      // runs no rumor mill or topic tree at all - the same reason its
-      // bulletin board opens on the location name alone.
+      // runs no rumor mill or topic tree at all - the same reason it
+      // stands no board and no town panel (NOTICE-PANEL).
       //   AND THAT COSTS THE WHOLE PLATE, not one clause. residenceQuestName
       // optional-calls the arm at exteriorAutomapWindow.js:"if (!r?.isQuestResource) continue;" and the
       // NEXT line is `if (!r?.isQuestResource) continue`, which skips
@@ -3971,8 +3971,8 @@ export async function bootExterior(canvas, renderer, params, status) {
   //   - THE TALK SEAMS (addQuestTopics, the six rumor doors, the four
   //     %f-faction NAME getters, removeNpcQuestor). This route runs no
   //     rumor mill, topic tree or NPC session at all - the same absence
-  //     its bulletin board records when it opens on the location name
-  //     alone. The faction-TYPE family beside them is a different
+  //     that leaves it no board and no town panel (NOTICE-PANEL).
+  //     The faction-TYPE family beside them is a different
   //     question with a different producer - the persistent store - and
   //     is mounted below.
   //   - THE ITEM SEAMS (giveItemToPlayer and its four siblings) and the

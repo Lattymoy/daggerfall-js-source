@@ -4,7 +4,7 @@
 // use as `host.<name>` - as the code read them where it was.
 import { arenaPixels, arenaPlaceOnPixel, arenaPlaces, arenaPlacesVersion } from '../world/arenaPlaces.js';
 import { arenaRoadTowns, arenaTemplateOf, synthesizeArenaLocation, arenaPlaceId } from '../world/arenaLocations.js';
-import { bayLand, countryMayStandAt, countryName, countryNameSeed, countryRates, countryStandsAt, createCountryGround, synthesizeCountryLocation, countryOrdinal, countryPlaceId, countryLocationIndex } from '../world/tamrielCountry.js';
+import { bayLand, countryMayStandAt, countryName, countryNameSeed, countryRates, countryStandsAt, createCountryGround, synthesizeCountryLocation, countryOrdinal, countryPlaceId, countryPixelOfId, countryLocationIndex } from '../world/tamrielCountry.js';
 import { capitalOnPixel, capitalPixel, synthesizeCapitalLocation, CAPITALS, capitalPlaceId, capitalSliceOrdinal, capitalSpanPixels, capitalsVersion, imperialOutskirts, capitalCentrePixel, capitalSlicePort } from '../world/tamrielCapitals.js';
 import { createTamrielRoadsHost } from './tamrielRoadsHost.js';
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
@@ -294,7 +294,7 @@ export function createTamrielPlaces(host) {
     const key = `${tamrielLandVersion()}|${arenaPlacesVersion()}|${capitalsVersion()}`;
     if (key === _registered) return false;
     _registered = key;
-    if (_countryTemplates) worldPlaces.registerPixels(TESA_SOURCES.country, countryRow);
+    if (_countryTemplates) worldPlaces.registerPixels(TESA_SOURCES.country, countryRow, countryPixelOfId);   // AUDIT FB1029e P1: its id read back to its pixel
     if (_lairTemplates) worldPlaces.registerPixels(TESA_SOURCES.lairs, lairRow);
     if (townSeats) replaceSeats(townSeats, 'tesa', tamrielSeatsOf(seatPlaces()));   // WW7-3: the seats past the Bay with their places
     return true;

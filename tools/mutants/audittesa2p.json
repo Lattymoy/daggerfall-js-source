@@ -226,7 +226,7 @@
   {
     "name": "P7-one-slice",
     "file": "src/world/pastBayRows.js",
-    "old": "for (let s = 0; s < n * n; s++) {",
+    "old": "for (let s = 0; s < D.w * D.h; s++) {",
     "new": "for (let s = 0; s < 1; s++) {",
     "tests": [
       "test/world/audittesa2p_world.test.js"
