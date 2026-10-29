@@ -214,5 +214,5 @@ verification. Five of the fifteen are main's code read under this PR's rule (F1,
 
 The pins are in `test/world/worldWide/audit_tamrielwide_iii.test.js` and `test/tooling/tamrielwide.test.js`, the
 mutants in `tools/mutants/audit_tamrielwide_iii.json` (9) and `tamrielwide.json` (4 more) - every one dead, with the
-eight records the fixes re-aimed. `audit18_bible_docs` reads `src/firstVisitPins.js`, a generated file main's
+twelve older records the fixes re-aimed. `audit18_bible_docs` reads `src/firstVisitPins.js`, a generated file main's
 `Performance-Priority.md` names: it fails in a fresh worktree until that file is built, as on main.

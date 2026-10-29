@@ -40,7 +40,7 @@ test('AUDIT TAMRIEL-WIDE D1: the Features rows for the map and the land past the
   const map = FEATURES.find((f) => f.id === 'tamriel-map'), land = FEATURES.find((f) => f.id === 'tamriel-land');
   assert.match(land.note, /its own cities, towns, roads and dungeons\./);
   assert.match(land.note, /Off ends the world at the Bay’s edge\.$/);
-  assert.match(map.note, /With Land beyond the Bay on, fast travel reaches its places too\.$/);   // AUDIT TAMRIEL-WIDE II: the land off, the world ends at the Bay
+  assert.match(map.note, /With Land beyond the Bay on, fast travel reaches them, except into or out of Cyrodiil online\.$/);   // AUDIT TAMRIEL-WIDE II: the land off, the world ends at the Bay - PIN MOVED (III F3): the open zone's own law
   for (const r of [map, land]) assert.doesNotMatch(r.note, /no towns|can.t travel/, `${r.id}: no word the land past the Bay outgrew`);
   // the law the map's note says (TRAVEL-EVERYWHERE): a journey past the Bay is the zone's verdict, as one on the Bay is
   assert.equal(pastBayJourney({ x: 200, y: 200 }, { x: 1500, y: -200 }, null, { ok: true }).ok, true, 'fast travel past the Bay');

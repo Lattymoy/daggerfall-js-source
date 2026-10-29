@@ -124,7 +124,7 @@ function worldHost(o = {}) {
     ['const wildTeleportRefused = (to = null, landing = undefined) => {', '\n  };\n', 'wildTeleportRefused'],
     ['const wildTravelGate = (to, spoken = 0, law = pastBayJourney) => {', '\n  };\n', 'wildTravelGate'],
     ['const wildTravelPaid = (j) => {', '\n  };\n', 'wildTravelPaid'],
-    ['  async function teleportTo(pick) {', '\n  }\n', 'teleportTo'],
+    ['  async function teleportTo(pick, { zoneFree = false } = {}) {', '\n  }\n', 'teleportTo'],   // PIN MOVED (AUDIT TAMRIEL-WIDE III F1): a caller's own zone verdict
     ['  async function recallToAnchor() {', '\n  }\n', 'recallToAnchor'],
   ]) scope[name] = mount(scope, cut(W_SRC, head, end), name);
   return { scope, said, jumps };
@@ -137,7 +137,7 @@ function stoneHost(W, o = {}) {
     _mode: () => 'exterior', cam: { pos: [0, 1.6, 0], yaw: 0 }, cityGuards: { guards: [] }, exteriorFoes: { foes: [] },
     collider: { surfaceHit: () => ({ dist: 1 }), raycastHit: () => null }, csaBoatUnderMe: () => null, duelEnemyNear: () => false,
     hccRuntimeOn: () => null, navalHostileNear: () => false, player: { isPlayerSwimming: false, feetAt: () => [...feet] },
-    playerTravelPixel: () => W.scope.here, teleportTo: (p) => W.scope.teleportTo(p), townTalk: W.scope.townTalk, walkMode: true,
+    playerTravelPixel: () => W.scope.here, teleportTo: (p, o) => W.scope.teleportTo(p, o), townTalk: W.scope.townTalk, walkMode: true,
     worldMoveBusy: () => W.scope.busy, _foesFullAt: 0, inSiegeRoom: () => false, playerSpawned: true, travelOptions: null, travelView: { state: 'off' },
     get _teleporting() { return W.scope._teleporting; },
     veilRefused: (to) => W.scope.veilRefused(to), wildTeleportRefused: (to) => W.scope.wildTeleportRefused(to),
@@ -385,7 +385,7 @@ test('PORTAL-BAY the wiring: the world host constructs the stone\'s host where i
   for (const name of ['_teleporting', 'veilRefused', 'wildTeleportRefused', 'wildTravelGate']) assert.match(wiring, new RegExp(`get ${name}\\(\\) \\{ return ${name}; \\}`), `${name} read live`);
   assert.match(W_SRC, /onEnter: \(g\) => portalArrive\(g\),/, 'a portal\'s step is the stone host\'s arrival');
   assert.match(W_SRC, /openPortal: \(item, list\) => openPortalStone\(item, list\),/, 'the pack\'s door');
-  assert.match(cut(W_SRC, '  async function teleportTo(pick) {', '\n  }\n'), /const wildTrip = wildTravelGate\(pick\.pixel, 0, teleportJourney\);/);
+  assert.match(cut(W_SRC, '  async function teleportTo(pick, { zoneFree = false } = {}) {', '\n  }\n'), /const wildTrip = wildTravelGate\(pick\.pixel, 0, teleportJourney\);/);
   assert.match(cut(W_SRC, '  async function recallToAnchor() {', '\n  }\n'), /: wildTravelGate\(plan\.anchor\.pixel, 0, teleportJourney\);/);
   assert.match(W_SRC, /const wildTrip = wildTravelGate\(pick\.pixel, computed\?\.piecesCost \?\? 0\);/, 'fast travel: the journey\'s law');
 });

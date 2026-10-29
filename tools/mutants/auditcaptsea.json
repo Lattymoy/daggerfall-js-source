@@ -1372,12 +1372,12 @@
   {
     "name": "ACS-P6-guild",
     "file": "src/scenes/world.js",
-    "old": "if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return false;   // PVPDUNGEONS",
-    "new": "if (wildTeleportRefused(pick.pixel)) return false;   // PVPDUNGEONS",
+    "old": "if ((!zoneFree && wildTeleportRefused(pick.pixel)) || veilRefused(pick.pixel)) return false;   // PVPDUNGEONS",
+    "new": "if ((!zoneFree && wildTeleportRefused(pick.pixel))) return false;   // PVPDUNGEONS",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ],
-    "note": "PORTAL-BAY (PIN MOVED): re-aimed by content - teleportTo answers whether it arrived (false for a refusal)"
+    "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE III): the line its fix rewrote. PORTAL-BAY (PIN MOVED): re-aimed by content - teleportTo answers whether it arrived (false for a refusal)"
   },
   {
     "name": "ACS-P6-party",

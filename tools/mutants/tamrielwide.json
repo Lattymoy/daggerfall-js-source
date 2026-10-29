@@ -32,12 +32,12 @@
   {
     "name": "TAMRIEL-WIDE-3-bay-bound-999-499-unread",
     "file": "tools/tamrielWide.mjs",
-    "old": "const EDGE = String.raw`(?:1000|999|500|499|(?:MAP_WIDTH|MAP_HEIGHT|MAX_MAP_PIXEL_X|MAX_MAP_PIXEL_Y|BAY_W|BAY_H)(?:\\s*-\\s*1)?)`;",
-    "new": "const EDGE = String.raw`(?:1000|500|(?:MAP_WIDTH|MAP_HEIGHT|MAX_MAP_PIXEL_X|MAX_MAP_PIXEL_Y|BAY_W|BAY_H)(?:\\s*-\\s*1)?)`;",
+    "old": "const EDGE = String.raw`(?:1000|999|500|499|(?:MAP_WIDTH|MAP_HEIGHT|MAX_MAP_PIXEL_X|MAX_MAP_PIXEL_Y|BAY_W|BAY_H|MAP_W|MAP_H|TP_MAP_W|TP_MAP_H)(?:\\s*-\\s*1)?)`;",
+    "new": "const EDGE = String.raw`(?:1000|500|(?:MAP_WIDTH|MAP_HEIGHT|MAX_MAP_PIXEL_X|MAX_MAP_PIXEL_Y|BAY_W|BAY_H|MAP_W|MAP_H|TP_MAP_W|TP_MAP_H)(?:\\s*-\\s*1)?)`;",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
-    "note": "The last pixel's bound, 999 and 499, unread."
+    "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE III): the line its fix rewrote. The last pixel's bound, 999 and 499, unread."
   },
   {
     "name": "TAMRIEL-WIDE-12-bay-clamp-unread",
@@ -62,12 +62,12 @@
   {
     "name": "TAMRIEL-WIDE-4-region-62-unread",
     "file": "tools/tamrielWide.mjs",
-    "old": "    re: /\\b(?:region\\w*|reg|r)\\s*(?:<|>=|<=|>)\\s*6[12]\\b/i,",
-    "new": "    re: /\\b(?:region\\w*|reg|r)\\s*(?:<|>=|<=|>)\\s*6[2]\\b/i,",
+    "old": "    re: /\\b(?:region\\w*|reg|r)\\s*(?:<|>=|<=|>)\\s*6[12]\\b|\\(\\s*[\\w.]*region\\w*\\s*,\\s*(?:0\\s*,\\s*)?6[12]\\s*\\)/i,",
+    "new": "    re: /\\b(?:region\\w*|reg|r)\\s*(?:<|>=|<=|>)\\s*6[2]\\b|\\(\\s*[\\w.]*region\\w*\\s*,\\s*(?:0\\s*,\\s*)?6[12]\\s*\\)/i,",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
-    "note": "A region against 61 unread."
+    "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE III): the line its fix rewrote. A region against 61 unread."
   },
   {
     "name": "TAMRIEL-WIDE-5-comments-counted",
@@ -132,22 +132,22 @@
   {
     "name": "TAMRIEL-WIDE-14-named-width-unread",
     "file": "tools/tamrielWide.mjs",
-    "old": "const WIDE = String.raw`(?:1000|MAP_WIDTH|MAX_MAP_PIXEL_X|BAY_W)`;",
+    "old": "const WIDE = String.raw`(?:1000|MAP_WIDTH|MAX_MAP_PIXEL_X|BAY_W|MAP_W|TP_MAP_W)`;",
     "new": "const WIDE = String.raw`(?:1000)`;",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
-    "note": "AUDIT TAMRIEL-WIDE II T2: y * MAP_WIDTH + x unread again."
+    "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE III): the line its fix rewrote. AUDIT TAMRIEL-WIDE II T2: y * MAP_WIDTH + x unread again."
   },
   {
     "name": "TAMRIEL-WIDE-15-reversed-bound-unread",
     "file": "tools/tamrielWide.mjs",
-    "old": "(?!\\s*[-+*/])\\b|\\b${EDGE}\\s*${CMP}\\s*${AT}\\b`),",
-    "new": "(?!\\s*[-+*/])\\b`),",
+    "old": "(?!\\s*[-+*/])\\b|\\b${EDGE}\\s*${CMP}\\s*${AT}\\b|${ARG_BOUND}`),",
+    "new": "(?!\\s*[-+*/])\\b|${ARG_BOUND}`),",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
-    "note": "AUDIT TAMRIEL-WIDE II T2: 1000 <= px unread again."
+    "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE III): the line its fix rewrote. AUDIT TAMRIEL-WIDE II T2: 1000 <= px unread again."
   },
   {
     "name": "TAMRIEL-WIDE-16-difference-counted",

@@ -33,13 +33,13 @@
   {
     "name": "AUDIT-TW-D1-map-note-cannot-travel",
     "file": "src/systems/features.js",
-    "old": "With Land beyond the Bay on, fast travel reaches its places too.'",
+    "old": "With Land beyond the Bay on, fast travel reaches them, except into or out of Cyrodiil online.'",
     "new": "You can’t travel beyond the Bay.'",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js",
       "test/ui/tamriel.test.js"
     ],
-    "note": "The map's note says the land past the Bay cannot be reached again."
+    "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE III): the line its fix rewrote. The map's note says the land past the Bay cannot be reached again."
   },
   {
     "name": "AUDIT-TW-D3-the-windows-flag-unread",

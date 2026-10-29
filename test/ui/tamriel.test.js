@@ -488,7 +488,7 @@ test('TAMRIEL1 switch: the Features row `tamriel-map` is on by default on the pl
   assert.deepEqual([...row.kinds], ['enhanced']);
   assert.deepEqual(row.control, { store: 'prefs', key: 'tamrielMap', initial: true, online: 'player' });
   assert.match(row.effect, /next time a map is opened/);
-  assert.match(row.note, /With Land beyond the Bay on, fast travel reaches its places too\.$/, 'the note says how the land past the Bay is reached');   // PIN MOVED (AUDIT TAMRIEL-WIDE D1): it said you cannot travel there - TRAVEL-EVERYWHERE travels there
+  assert.match(row.note, /With Land beyond the Bay on, fast travel reaches them, except into or out of Cyrodiil online\.$/, 'the note says how the land past the Bay is reached');   // PIN MOVED (AUDIT TAMRIEL-WIDE III F3)   // PIN MOVED (AUDIT TAMRIEL-WIDE D1): it said you cannot travel there - TRAVEL-EVERYWHERE travels there
   _resetForTests();
   try {
     assert.equal(tamrielMapOn(), true, 'on by default');
