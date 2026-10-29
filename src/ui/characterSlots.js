@@ -34,7 +34,7 @@ const SLOT_TEXT = Object.freeze({
   icon: () => t('account.slots.icon', 'Portrait'),
 });
 /** A slot's name in the player's words. */
-export const slotName = (/** @type {string} */ id) => SLOT_TEXT[/** @type {keyof typeof SLOT_TEXT} */ (id)]?.() ?? armorySlotName(id);
+export const characterSlotName = (/** @type {string} */ id) => SLOT_TEXT[/** @type {keyof typeof SLOT_TEXT} */ (id)]?.() ?? armorySlotName(id);
 
 /** What a wardrobe WEARS in a slot, as the tile says it: `{ word, key, kind }` - nothing worn, `key` null. Pure. */
 export function slotWorn(/** @type {any} */ w, /** @type {string} */ id) {
@@ -166,7 +166,7 @@ export function characterSlots(doc, flow, { start = null, bodies = null, entryOf
     const b = keyedAs(el('button', cls('slottile', paint, picked === s.id && 'on', !worn.key && 'empty')), `slot:${s.id}`);
     b.type = 'button';
     b.setAttribute?.('aria-pressed', picked === s.id ? 'true' : 'false');
-    b.append(el('span', 'slotname', slotName(s.id)));
+    b.append(el('span', 'slotname', characterSlotName(s.id)));
     const word = el('span', cls('slotworn', worn.kind === 'title' ? 'acttitleword' : paint && 'actauraword'), worn.word ?? t('account.slots.none', 'None'));
     if (worn.kind === 'title' && worn.key) setTitleFlame(word, worn.key);
     if (worn.kind === 'icon' && worn.key) { const art = profileIconNode(doc, worn.key, 'sloticon', 18); if (art) { art.setAttribute?.('aria-hidden', 'true'); b.append(art); } }
@@ -180,7 +180,7 @@ export function characterSlots(doc, flow, { start = null, bodies = null, entryOf
       }
       if (run.children?.length) b.append(run);
     }
-    b.title = t('account.slots.open', '{slot}: press to choose', { slot: slotName(s.id) });
+    b.title = t('account.slots.open', '{slot}: press to choose', { slot: characterSlotName(s.id) });
     b.onclick = () => { picked = s.id; trial = null; show(); repaint(); };
     return b;
   }
@@ -226,7 +226,7 @@ export function characterSlots(doc, flow, { start = null, bodies = null, entryOf
     const w = flow.wardrobe ?? {};
     const box = el('div', 'acctwear slots-picker');
     const head = el('div', 'slots-pickhead');
-    head.append(el('span', 'slots-pickname', slotName(picked)));
+    head.append(el('span', 'slots-pickname', characterSlotName(picked)));
     box.append(head);
     const row = el('div', 'acctwearrow');
     if (picked === 'plate') {

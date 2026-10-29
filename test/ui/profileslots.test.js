@@ -7,9 +7,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { CHARACTER_SLOTS, SLOTS_STAGE_PX, slotWorn, slotsShown, slotName, characterSlots } from '../../src/ui/characterSlots.js';
+import { CHARACTER_SLOTS, SLOTS_STAGE_PX, slotWorn, slotsShown, characterSlotName, characterSlots } from '../../src/ui/characterSlots.js';
 import { STAGE_FRAME, stageCamera, stageTopOf, stageCameraOfBones, proxyMesh, STAGE_PROXY, STAGE_BONES } from '../../src/render/characterStage.js';
-import { spriteLookOf, spriteScaleOf, spriteBodyOf, profileBodies, mwHeadOf, PROFILE_BODY_KINDS } from '../../src/ui/profileBody.js';
+import { profileSpriteLook, spriteScaleOf, spriteBodyOf, profileBodies, mwHeadOf, PROFILE_BODY_KINDS } from '../../src/ui/profileBody.js';
 import { armoryHeadTip, armoryDraws, ARMORY_HEAD, ARMORY_RANGE_M } from '../../src/render/armoryPass.js';
 import { createAuraHost } from '../../src/scenes/auraHost.js';
 import { newPose, poseAtRest, poseFromBones, POSE_AT, REST_POINTS, ARMORY_BONES } from '../../src/render/armoryPose.js';
@@ -48,7 +48,7 @@ function slotsDoc() {
 
 test('PROFILE-SLOTS the slots: the body\'s five down the left, over the head, the weapon, the portrait and the aura down the right - what each wears, and the stage\'s look with a choice tried on (mutants: a slot left out; a tried piece put in the wrong slot)', () => {
   assert.deepEqual(CHARACTER_SLOTS.map((s) => `${s.side}:${s.id}`), ['left:head', 'left:torso', 'left:arms', 'left:legs', 'right:plate', 'right:weapon', 'right:icon', 'right:aura']);
-  assert.deepEqual([slotName('plate'), slotName('aura'), slotName('icon'), slotName('head')], ['Over the head', 'Aura', 'Portrait', 'Head']);
+  assert.deepEqual([characterSlotName('plate'), characterSlotName('aura'), characterSlotName('icon'), characterSlotName('head')], ['Over the head', 'Aura', 'Portrait', 'Head']);
   const w = { title: 'gatebreaker', aura: 'dagonfire', icon: null, armory: 'ab000', glyphs: ['sprout', 'origin'], glyphsOff: ['origin'] };
   assert.deepEqual(slotWorn(w, 'head'), { kind: 'armory', key: 'burningcrown', word: 'Crown of the Burning Door' });
   assert.deepEqual(slotWorn(w, 'arms'), { kind: 'armory', key: null, word: null });
@@ -165,8 +165,8 @@ test('PROFILE-SLOTS the head pieces\' tips: the crown\'s flames and the halo\'s 
 
 test('PROFILE-SLOTS the bodies: Morrowind\'s where a rig stands (drawn by the stage\'s camera, its head the world\'s), the sprite the world draws - its skin or its layered gear - at the world\'s size and place (mutants: the sprite\'s offset unmirrored; the Morrowind body asked with no camera)', async () => {
   assert.deepEqual(PROFILE_BODY_KINDS, ['mw', 'sprite']);
-  assert.deepEqual(spriteLookOf({ gender: 'female', outfit: 'p6p6p6' }, { 'Graphics.OnFoot': 3 }), { onFoot: 3, wornArmour: false });
-  assert.deepEqual(spriteLookOf({ gender: 'female', outfit: 'p6p6p6' }, { 'Graphics.LayeredGear': 3 }), { onFoot: 0, wornArmour: true, gender: 'female', outfit: 'p6p6p6' }, 'Layered Gearing in the body\'s own');
+  assert.deepEqual(profileSpriteLook({ gender: 'female', outfit: 'p6p6p6' }, { 'Graphics.OnFoot': 3 }), { onFoot: 3, wornArmour: false });
+  assert.deepEqual(profileSpriteLook({ gender: 'female', outfit: 'p6p6p6' }, { 'Graphics.LayeredGear': 3 }), { onFoot: 0, wornArmour: true, gender: 'female', outfit: 'p6p6p6' }, 'Layered Gearing in the body\'s own');
   assert.equal(spriteScaleOf({ 'Animation.BillboardScale': 1.2, 'Animation.FineBillboardScale': 0.05 }), 1.25);
   const px = { width: 40, height: 100, colors: new Uint32Array(4000) };
   const b = await spriteBodyOf({ onFoot: 0 }, { decode: async () => px, urlOf: () => 'x.png' });
@@ -269,7 +269,7 @@ test('PROFILE-SLOTS the stage\'s life on the card: a stage that stopped itself (
     assert.equal(stages[0].kits.length, tried);
     halo.onfocus();
     assert.deepEqual(slots.state().trial, { slot: 'head', key: 'eternalhalo' }, 'a later focus, from the keys, tries on as ever');
-    find((n) => n.tag === 'button' && n.className.startsWith('slottile') && n.children[0]?.textContent === slotName('weapon')).onclick();
+    find((n) => n.tag === 'button' && n.className.startsWith('slottile') && n.children[0]?.textContent === characterSlotName('weapon')).onclick();
     find((n) => n.tag === 'button' && n.className.includes('actarmory') && n.children[0]?.textContent === 'Brand of the Breach').onpointerenter();
     assert.match(find((n) => n.className === 'meta slots-look').textContent, /It shows on the weapon in your hand\.$/, 'the weapon\'s piece is drawn on the held weapon, never on the stage');
     // the card's other pages took the canvas off the page: the stage stopped itself - the section back, a new one

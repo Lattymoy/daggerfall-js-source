@@ -16,7 +16,7 @@ export const PROFILE_BODY_KINDS = Object.freeze(['mw', 'sprite']);
 /** The look the world draws a character's sprite in on foot - eotbBody.js look(): the skin chosen (Graphics.OnFoot), or
  *  with Layered Gearing on (Graphics.LayeredGear) the armour it wears (`outfit`, layeredArmor.js outfitOfSlots) in the
  *  body chosen or its own (`gender`). Pure. */
-export function spriteLookOf(/** @type {{ gender?: string|null, outfit?: string|null }} */ who = {}, /** @type {Record<string, any>} */ settings = {}) {
+export function profileSpriteLook(/** @type {{ gender?: string|null, outfit?: string|null }} */ who = {}, /** @type {Record<string, any>} */ settings = {}) {
   const choice = settings['Graphics.LayeredGear'] ?? 0;
   const gender = layeredGenderOf(choice, who.gender ?? null);
   return { onFoot: settings['Graphics.OnFoot'] ?? 0, wornArmour: gender != null, ...(gender ? { gender, outfit: who.outfit || 'lll' } : {}) };
@@ -57,7 +57,7 @@ export function profileBodies({ arm = null, who = () => null, settings = () => m
     lookKey(/** @type {string} */ kind) {
       if (kind === 'mw') return 'mw';
       const s = settingsNow();
-      return `${JSON.stringify(spriteLookOf(who() ?? {}, s))}@${spriteScaleOf(s)}`;
+      return `${JSON.stringify(profileSpriteLook(who() ?? {}, s))}@${spriteScaleOf(s)}`;
     },
     async of(/** @type {string} */ kind, { width = 320, height = 420 } = {}) {
       if (kind === 'mw') {
@@ -69,7 +69,7 @@ export function profileBodies({ arm = null, who = () => null, settings = () => m
         return r?.data ? { kind: 'mw', ...r, head } : null;
       }
       const s = settingsNow();
-      try { return await spriteBodyOf(spriteLookOf(who() ?? {}, s), { scale: spriteScaleOf(s) }); } catch { return null; }
+      try { return await spriteBodyOf(profileSpriteLook(who() ?? {}, s), { scale: spriteScaleOf(s) }); } catch { return null; }
     },
   };
 }
