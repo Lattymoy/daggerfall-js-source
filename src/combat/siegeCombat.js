@@ -19,15 +19,18 @@
 //
 // Pure but for the one spell door (handed in for the pins), the stand-in and the rolls. Not a DFU member. Ledger A (EVERY
 // PALACE A SEAT's row).
-import { SIEGE_HIT, SIEGE_CASTS } from '../net/siege/siegeRef.js';
+import { SIEGE_HIT } from '../net/siege/siegeRef.js';
+import { SIEGE_DMG_WIRE_MAX, PVP_ELEMENTS } from '../net/wire.js';
 import { duelSpellOf } from './duelCombat.js';
 import { applySpell } from '../systems/effects.js';
+import { pvpSpellScale } from './pvpTriangle.js';   // PVP-TRIANGLE
+import { pvpCritHarm } from './pvpSpellCrit.js';   // PVP-SPELL-CRIT
 
 /** A blow's kind on the referee's wire: an arrow's a shaft's, anything else a swing's. */
 export const siegeBlowKind = (by) => (by === 'arrow' ? SIEGE_HIT.Shaft : SIEGE_HIT.Melee);
-/** A cast's number as it is sent - never past what the referee keeps of it (SIEGE_CASTS: 60 a harm, 40 a heal), so a
- *  Disintegrate's whole is never a frame the wire refuses. */
-export const siegeCastClamp = (n, heal = false) => Math.min(Math.max(0, Math.round(Number(n) || 0)), heal ? SIEGE_CASTS.healMax : SIEGE_CASTS.damageMax);
+/** A cast's number as it is sent - never past what the wire takes (SIEGE_DMG_WIRE_MAX). PVP-HIT: the referee clips it to
+ *  45% of the target's real health, and a heal to its window (siegeRef.js refereeCast). */
+export const siegeCastClamp = (n, _heal = false) => Math.min(Math.max(0, Math.round(Number(n) || 0)), SIEGE_DMG_WIRE_MAX);
 /** The classic effect types a battle's wards turn: Teleport (43 - Recall is its own second half) and Levitate (14). */
 export const SIEGE_BARRED_EFFECTS = Object.freeze([43, 14]);
 /** Whether a spell carries a warded effect. */
@@ -36,9 +39,29 @@ export const siegeSpellBarred = (sp) => (Array.isArray(sp?.effects) ? sp.effects
 export const SIEGE_SPELL_BARRED_TEXT = 'Teleport, Recall and Levitate do nothing on a battlefield.';
 export const SIEGE_DISMOUNT_TEXT = "You can't ride a horse on a battlefield.";
 
+/** PVP-SPELLS (the PvP rework, 2026-10-28: "paralize and dot spell dont work in pvp", "dont use them for now", "get rid of
+ *  disitigrate", "remove silence"): a spell at a player lands its FIRST effect only ("multi spell skill only use the
+ *  first"), and only Damage (4) reaches a player. Paralyze, Continuous Damage, Disintegrate, Silence and Drain (7; PVP-NO-DRAIN,
+ *  "remove drain till we can balance it") stay home until they are rebalanced. */
+export const PVP_SPELL_TYPES = Object.freeze([4]);
+/** PVP-NO-POISON ("poison need diable in pvp"): DFU's poison element (2) harms no player. A weapon's poison never rode a
+ *  PvP blow (duelCombat.js duelStub: `poisonType = -1`, no onInflictPoison). */
+export const PVP_POISON_ELEMENT = 2;
+/** PVP-WARD: the element a spell carries to the referee (DFU's 0-4, net/wire.js PVP_ELEMENTS) - magic where it names none. */
+export const pvpSpellElement = (sp) => (Number.isInteger(sp?.element) && sp.element >= 0 && sp.element < PVP_ELEMENTS ? sp.element : PVP_ELEMENTS - 1);
+/** The one effect of `sp` that counts between players - its first, if it is a PvP family or a Heal Health - or null. */
+/** PVP-WARD: a harmful cast's frame to a duel's or the zone's referee - where I stood, its harm, its element. */
+export const pvpCastFrame = (p, harm, sp) => ({ p, d: siegeCastClamp(harm, false), el: pvpSpellElement(sp) });
+export function pvpFirstEffect(sp) {
+  const e = Array.isArray(sp?.effects) ? sp.effects[0] : null;
+  if (!e || !Number.isInteger(e.type)) return null;
+  if (PVP_SPELL_TYPES.includes(e.type)) return sp.element === PVP_POISON_ELEMENT && !sp.pvpKit ? null : e;   // PVP-KIT: the bar's Damage may be Poison
+  return e.type === 10 && e.subType === 8 ? e : null;
+}
+
 /**
  * THE NUMBERS A SPELL CARRIES TO THE REFEREE: `{ harm, heal }` - what its harmful families (duelSpellOf) deal at once (at
- * its own range, its save rolled as any caster's spell's) and what its Heal Health restores (as ALLY-CAST's receiver
+ * its own range, no save rolled - PVP-WARD: the target's own throw rides its report) and what its Heal Health restores (as ALLY-CAST's receiver
  * lands a gift: a self-cast, no save), landed through `apply` (systems/effects.js applySpell) at `level` on `standIn` (the
  * neutral one, combat/duelCombat.js duelStandIn - AUDIT C&C H5: a body of the caster's own sheet saved against its spell
  * with its own willpower and race; the target's protections are not a number this client has; the referee clips), `caster`
@@ -54,10 +77,12 @@ export function siegeSpellNumbers(sp, level, standIn, caster = null, { apply = a
     try { apply(spell, level, standIn, sinks, rolls, caster ? { entity: caster } : null); } catch { return false; } finally { if (standIn) standIn.activeEffects = []; }
     return true;
   };
-  const harmful = duelSpellOf(sp);
-  if (harmful && !run(harmful, { hurt: count('harm'), heal: none, drainFatigue: none, restoreFatigue: none, drainMagicka: none, restoreMagicka: none })) harm = 0;
+  // PVP-SPELLS: the first effect alone, of the PvP families (pvpFirstEffect)
+  const first = pvpFirstEffect(sp);
+  const harmful = first && first.type !== 10 ? duelSpellOf({ ...sp, effects: [first] }) : null;
+  // PVP-WARD: no save on the stand-in - the target's own throw is in its report (combat/pvpGuard.js pvpWardKept)
+  if (harmful && !run({ ...harmful, rangeType: 0 }, { hurt: count('harm'), heal: none, drainFatigue: none, restoreFatigue: none, drainMagicka: none, restoreMagicka: none })) harm = 0;
   // its Heal Health (effects.js isHealHealth) landed as ALLY-CAST lands a gift - a self-cast (rangeType 0), no save rolled
-  const healing = (Array.isArray(sp?.effects) ? sp.effects : []).filter((e) => e && e.type === 10 && e.subType === 8);
-  if (healing.length && !run({ ...sp, rangeType: 0, effects: healing }, { hurt: none, heal: count('heal'), drainFatigue: none, restoreFatigue: none, drainMagicka: none, restoreMagicka: none })) heal = 0;
-  return { harm: Math.round(harm), heal: Math.round(heal) };
+  if (first?.type === 10 && !run({ ...sp, rangeType: 0, effects: [first] }, { hurt: none, heal: count('heal'), drainFatigue: none, restoreFatigue: none, drainMagicka: none, restoreMagicka: none })) heal = 0;
+  return { harm: Math.round(pvpCritHarm(harm, caster, rolls) * pvpSpellScale(level)), heal: Math.round(heal) };   // PVP-SPELL-CRIT, then PVP-TRIANGLE: a harm's
 }

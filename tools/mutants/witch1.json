@@ -213,8 +213,8 @@
   {
     "name": "WITCH1-offline-the-bowls-stay",
     "file": "src/scenes/witchesHost.js",
-    "old": "    if (who !== account) { account = who; heard = false; towns.clear(); for (const k of [...stood.keys()]) unstand(k); }",
-    "new": "    if (who !== account) { account = who; heard = false; towns.clear(); }",
+    "old": "      account = who; towns.clear(); for (const k of [...stood.keys()]) unstand(k);",
+    "new": "      account = who; towns.clear();",
     "tests": [
       "test/scenes/witch1_host.test.js"
     ],
@@ -303,8 +303,8 @@
   {
     "name": "WITCH1-AUDIT-the-pack-unrestacked",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "if (Array.isArray(items) && restackSoulCakes(items, d.cakes)) _doors.saved();",
-    "new": "if (false && Array.isArray(items) && restackSoulCakes(items, d.cakes)) _doors.saved();",
+    "old": "if (Array.isArray(items)) restackSoulCakes(items, d.cakes);",
+    "new": "if (false && Array.isArray(items)) restackSoulCakes(items, d.cakes);",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ],
@@ -313,8 +313,8 @@
   {
     "name": "WITCH1-AUDIT-the-bowls-unrestacked",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "if (Array.isArray(items) && restackHearthOfferings(items, d.bowls)) _doors.saved();",
-    "new": "if (false && Array.isArray(items) && restackHearthOfferings(items, d.bowls)) _doors.saved();",
+    "old": "if (Array.isArray(items)) restackHearthOfferings(items, d.bowls);",
+    "new": "if (false && Array.isArray(items)) restackHearthOfferings(items, d.bowls);",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ],

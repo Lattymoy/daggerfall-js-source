@@ -45,7 +45,7 @@ Auras, Aura Armory, Bundles and Pass Boosters. A ware has a **tier** - Standard,
 columns - shown as a mark on its panel; the pre-alpha wares keep their Pre-alpha mark instead.
 
 **Held by id.** The first nine wares are bits on `players.shop_wares`; the bits stay, since a stored bit is a sale that
-happened. Every later ware is held by its id in `players.shop_held`, space-separated in sale order (migration 0192): a
+happened. Every later ware is held by its id in `players.shop_held`, space-separated in sale order (migration 0193): a
 32-bit mask had room for 22 more, and a season alone adds five. `shopHeldIds` reads both.
 
 **A ware that gives others.** A bundle, the Deluxe Pass and the Eternal Set each give a list of wares. Holding one holds

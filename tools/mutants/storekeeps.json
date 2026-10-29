@@ -2,8 +2,8 @@
   {
     "name": "STORE-KEEPS-the-cart-lifted-again",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  const drop = takeWildDrop(bag).map((it) => /** @type {[any, string]} */ ([it, 'bag']));",
-    "new": "  const drop = [...takeWildDrop(bag), ...takeWildDrop(Array.isArray(entity?.wagonItems) ? entity.wagonItems : [])].map((it) => /** @type {[any, string]} */ ([it, 'bag']));",
+    "old": "  const drop = (drops ? takeWildDrop(bag) : []).map((it) => /** @type {[any, string]} */ ([it, 'bag']));",
+    "new": "  const drop = [...(drops ? takeWildDrop(bag) : []), ...takeWildDrop(Array.isArray(entity?.wagonItems) ? entity.wagonItems : [])].map((it) => /** @type {[any, string]} */ ([it, 'bag']));",
     "tests": ["test/systems/fb1015_cartaway.test.js", "test/systems/fb1019f_companiondrop.test.js"]
   },
   {
@@ -23,8 +23,8 @@
   {
     "name": "STORE-KEEPS-the-packs-lifted-again",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  const drop = takeWildDrop(bag).map((it) => /** @type {[any, string]} */ ([it, 'bag']));",
-    "new": "  const drop = [...takeWildDrop(bag), ...wildPacksOf(entity).flatMap((p) => takeWildDrop(p.items))].map((it) => /** @type {[any, string]} */ ([it, 'bag']));",
+    "old": "  const drop = (drops ? takeWildDrop(bag) : []).map((it) => /** @type {[any, string]} */ ([it, 'bag']));",
+    "new": "  const drop = [...(drops ? takeWildDrop(bag) : []), ...wildPacksOf(entity).flatMap((p) => takeWildDrop(p.items))].map((it) => /** @type {[any, string]} */ ([it, 'bag']));",
     "tests": ["test/systems/fb1015_cartaway.test.js", "test/systems/fb1019f_companiondrop.test.js"]
   },
   {

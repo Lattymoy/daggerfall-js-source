@@ -42,8 +42,8 @@
   {
     "name": "STORM-SHED-mint-kept-past-token",
     "file": "src/net/accountClient.js",
-    "old": "        if (era === forgets) held = { token, secret: session.secret, character: named, at: now(), rooms: new Set() };   // STORM-SHED: opened by a hello (`opened`), never by the mint\n        cool = { secret: null, fails: 0, until: -Infinity, why: null };\n",
-    "new": "        if (era === forgets) held = { token, secret: session.secret, character: named, at: now(), rooms: new Set() };   // STORM-SHED: opened by a hello (`opened`), never by the mint\n",
+    "old": "        if (era === forgets) held = { token, secret: session.secret, character: named, at: now(), sent, rooms: new Set() };   // STORM-SHED: opened by a hello (`opened`), never by the mint\n        cool = { secret: null, fails: 0, until: -Infinity, why: null };\n",
+    "new": "        if (era === forgets) held = { token, secret: session.secret, character: named, at: now(), sent, rooms: new Set() };   // STORM-SHED: opened by a hello (`opened`), never by the mint\n",
     "tests": [
       "test/net/stormshed.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "STORM-SHED-room-marked-at-mint",
     "file": "src/net/accountClient.js",
-    "old": "at: now(), rooms: new Set() };   // STORM-SHED",
-    "new": "at: now(), rooms: new Set(room != null ? [room] : []) };   // STORM-SHED",
+    "old": "at: now(), sent, rooms: new Set() };   // STORM-SHED",
+    "new": "at: now(), sent, rooms: new Set(room != null ? [room] : []) };   // STORM-SHED",
     "tests": [
       "test/net/stormshed.test.js"
     ],
@@ -268,5 +268,55 @@
       "test/net/stormshed.test.js"
     ],
     "note": "a character's harvests today read off every player's"
+  },
+  {
+    "name": "TOKEN-STRETCH-never-stretched",
+    "file": "src/net/accountClient.js",
+    "old": " || (stretching(secret) && t - held.sent < TOKEN_STRETCH_MS))",
+    "new": ")",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "a failed mint's retry mints again into the overload, the held token idle"
+  },
+  {
+    "name": "TOKEN-STRETCH-stretched-while-well",
+    "file": "src/net/accountClient.js",
+    "old": "(cool.secret === secret && (cool.fails > 0 || cool.why === 'queue')) || Date.now() < busyUntil()",
+    "new": "true",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "the token's claims four minutes old with the service well"
+  },
+  {
+    "name": "TOKEN-STRETCH-counted-from-the-answer",
+    "file": "src/net/accountClient.js",
+    "old": "t - held.sent < TOKEN_STRETCH_MS",
+    "new": "t - held.at < TOKEN_STRETCH_MS",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "a slow mint's token handed on past the relay's margin"
+  },
+  {
+    "name": "TOKEN-STRETCH-the-gate-unread",
+    "file": "src/net/accountClient.js",
+    "old": " || Date.now() < busyUntil();",
+    "new": ";",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "the first new room past the minute mints into an overload the page already heard"
+  },
+  {
+    "name": "TOKEN-STRETCH-ahead-unstretched",
+    "file": "src/net/accountClient.js",
+    "old": " && lives(by, session.secret) && ",
+    "new": " && by - held.at < TOKEN_REUSE_MS && ",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "a door mints into the overload though the held token opens its room"
   }
 ]

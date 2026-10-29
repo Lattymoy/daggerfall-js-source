@@ -31,7 +31,7 @@ import { stampItemIds } from '../../src/systems/item/itemIds.js';
 import { wildTakeTook, wildChunks } from '../../src/systems/wild/wildDeath.js';
 import { validLootList } from '../../src/systems/loot/loot.js';
 import '../../src/systems/item/itemLaw.js';   // the item law registers itself with the wire, as the game's boot does
-import { addItem, stacksWith, isGoldPieces, addGoldPieces } from '../../src/systems/inventory.js';
+import { addItem, stacksWith, isGoldPieces, addGoldPieces, goldStack } from '../../src/systems/inventory.js';
 import { planTake, applyTransfer } from '../../src/systems/item/itemTransfer.js';
 import { entityMaxEncumbrance } from '../../src/combat/formulas.js';
 import { ENCHANTMENT_TYPES, computeEnchantmentMods } from '../../src/systems/enchantments.js';
@@ -78,6 +78,10 @@ async function fall(purse) {
   stampItemIds(e);
   layRecord(svc.env, ria.character, JSON.parse(JSON.stringify(snapshotPlayer(e))));
   const rc = await mintWildReceipt({ f: ria.id, c: ria.character, k: bo.id, r: RID, w: -1 }, svc.gatePriv, { subtle, nowS: Math.floor(Date.now() / 1000) });
+  // PIN MOVED (PVP-NO-TENTH): a kill lays no gold for all now - the pile is a fall taken before it, asked again
+  const n = Math.floor(e.goldPieces / 10), at = Math.floor(Date.now() / 1000);
+  svc.env.DB._raw.prepare("INSERT INTO wild_falls (r, char_id, player, killer, at, items, kept, burnt, wi, wm, oi, wg, tk, ki) VALUES (?, ?, ?, ?, ?, ?, '[]', 0, -1, ?, ?, NULL, ?, ?)")
+    .run(RID, ria.character, ria.id, bo.id, at, JSON.stringify([goldStack(n)]), CELL, at, JSON.stringify({ took: [], gold: { purse: n } }), at);
   const res = await svc.call('/v1/wild/fall', { receipt: rc, realm: realmAt(svc.env, ria.character), room: CELL }, ria.secret);
   assert.equal(res.status, 200, JSON.stringify(res.body));
   const d = res.body;

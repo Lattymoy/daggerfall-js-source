@@ -248,7 +248,7 @@
   {
     "name": "RIBBON-wi-token-bound",
     "file": "src/net/wire.js",
-    "old": "[A-Za-z0-9_-]{1,896}\\.",
+    "old": "[A-Za-z0-9_-]{1,928}\\.",
     "new": "[A-Za-z0-9_-]{1,512}\\.",
     "tests": [
       "test/ui/shadowfang.test.js",
@@ -259,7 +259,7 @@
   {
     "name": "RIBBON-wi-token-bound-wide",
     "file": "src/net/wire.js",
-    "old": "[A-Za-z0-9_-]{1,896}\\.",
+    "old": "[A-Za-z0-9_-]{1,928}\\.",
     "new": "[A-Za-z0-9_-]{1,960}\\.",
     "tests": [
       "test/ui/shadowfang.test.js",
@@ -435,8 +435,8 @@
   {
     "name": "RIBBON-nl-order",
     "file": "src/ui/nameLayer.js",
-    "old": "    node.append(bubble, title, tag, house, ribbon);",
-    "new": "    node.append(bubble, title, ribbon, tag, house);",
+    "old": "    node.append(bubble, skull, bar, title, tag, house, ribbon);",
+    "new": "    node.append(bubble, skull, bar, title, ribbon, tag, house);",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ],

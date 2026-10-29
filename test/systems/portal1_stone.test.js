@@ -588,6 +588,8 @@ test('PORTAL1 the door, the pick and the arrival, as world.js runs them (PIN MOV
   // gate under the teleport's law past the Bay, mounted
   Object.assign(scope, { pastBayJourney, teleportJourney, wildJourney, legacyGold: () => 0 });
   scope.wildTravelGate = mount(scope, cut(w, 'const wildTravelGate = (to, spoken = 0, law = pastBayJourney) => {', '\n  };\n'), 'wildTravelGate');
+  scope.pvpFlagOn = () => true;   // PIN MOVED (PVP-FLAG): the zone's law asked of a flagged player - the page's own flag, mounted
+  scope.zoneRefused = mount(scope, cut(sh, 'const zoneRefused = (to = null) =>', ';\n'), 'zoneRefused');
   scope.teleportRefused = mount(scope, cut(sh, 'const teleportRefused = (to) =>', ';\n'), 'teleportRefused');
   scope.standPortal = mount(scope, cut(sh, 'function standPortal(pick, item, live) {', '\n  }\n'), 'standPortal');
   const openPortalStone = mount(scope, cut(sh, 'function openPortalStone(item, list) {', '\n  }\n'), 'openPortalStone');

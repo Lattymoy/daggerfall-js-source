@@ -20,7 +20,7 @@ import {
 } from '../../../src/net/duel/duelSession.js';
 import { validDuelData, DUEL_WHY } from '../../../src/net/wire.js';
 import { newDuelRef, duelNote, duelOpen, duelBlow, duelBoutOf, duelForfeit, duelStep, duelEnd, duelVitals, duelPose, DUEL_REF } from '../../../src/net/duel/duelRef.js';
-import { ROYAL_RING, SIEGE_HIT, siegeBlowMax, siegeVitality } from '../../../src/net/siege/siegeRef.js';
+import { ROYAL_RING, SIEGE_HIT, siegeBlowMax, siegeVitality, pvpHitMax } from '../../../src/net/siege/siegeRef.js';
 
 const P0 = [100000, 10, 200000];   // a world-frame point: natives on x and z, metres on y
 const RC = 'd1.receipt.sig';   // the referee's receipt, as the relay hands it (net/duel/duelReceipt.js - its own pins)
@@ -247,7 +247,7 @@ test('DUEL1 THE COUNT, THEN THE BLOWS: nothing leaves or lands for DUEL_COUNTDOW
   const n = r.m.a.blow('strike', { by: 'melee', p: r.P.a.pos, d: 999 });
   assert.equal(n, 1, 'the first blow is number one');
   r.pump();
-  const whole = siegeVitality(10), cap = siegeBlowMax(-1, 0);
+  const whole = siegeVitality(10), cap = pvpHitMax({ max: whole });   // PVP-HIT: 45% of the body
   for (const k of ['a', 'b']) assert.deepEqual(r.P[k].hps.map((g) => [g.by, g.to, g.d, g.h[1][1]]), [['peer-aaaa', 'peer-bbbb', cap, whole - cap]], `${k} hears what landed, clipped`);
   assert.equal(r.log.b.filter((f) => f.k === 'result').length, 0, 'the defender answered nothing');
   assert.deepEqual(r.m.b.live.h[1], ['peer-bbbb', whole - cap, whole], 'the bout\'s vitality on both sides');
@@ -255,7 +255,7 @@ test('DUEL1 THE COUNT, THEN THE BLOWS: nothing leaves or lands for DUEL_COUNTDOW
   r.tick(1000);
   r.m.b.blow('spell', { p: r.P.b.pos, d: 999 });
   r.pump();
-  assert.deepEqual(r.P.a.hps.at(-1).d, 60, 'a cast to sixty');
+  assert.deepEqual(r.P.a.hps.at(-1).d, cap, 'a cast to the same share (PVP-HIT)');
   assert.equal(r.P.a.hps.at(-1).r, SIEGE_HIT.Spell);
 });
 

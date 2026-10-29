@@ -29,7 +29,7 @@ test('WILD1: the zone is Cyrodiil - region 70 (WW-C2; the Wrothgarian Mountains\
   assert.ok(isWildRegion(70) && !isWildRegion(16) && !isWildRegion(-1), 'the mountains are Daggerfall\'s own again');
   assert.deepEqual([WILD_FOE_HEALTH_MULT, WILD_FOE_DAMAGE_MULT], [4, 4], '"Mobs are 4x stronger"');
   assert.deepEqual([WILD_LOOT_GOLD_MULT, WILD_LOOT_DROP_MULT, WILD_LOOT_RARE_MULT], [2, 2, 2], '"twice gold and twice the dropchance for rarity items and double drops"');
-  assert.equal(WILD_DEATH_HOLD_S, 120, '"has to wait 2mins till respawn"');
+  assert.equal(WILD_DEATH_HOLD_S, 60, 'PIN MOVED (PVP-RISE): "Jist like pve deaths" - the online PvE wait, once "has to wait 2mins till respawn"');
 });
 
 test('WILD1: the mask - inside, the band around it, its box, and its edge as closed chains of pixel corners', () => {
@@ -110,7 +110,7 @@ test('WILD1: the rise\'s clear ground - off every other body, facing open ground
   assert.deepEqual(wildSpawnSpot([3, 1, 4], { clear: () => false }).pos, [3, 1, 4], 'nothing better: the marker itself');
 });
 
-test('WILD1: the death screen holds two minutes in the zone and takes no Enter; its lines say what it cost', () => {
+test('WILD1: the death screen holds its WILD_DEATH_HOLD_S (60 s, PVP-RISE) in the zone and takes no Enter; its lines say what it cost', () => {
   const realDoc = globalThis.document;
   try {
     setWildDeath(null);
@@ -118,7 +118,7 @@ test('WILD1: the death screen holds two minutes in the zone and takes no Enter; 
     assert.equal(s.holdSeconds, ONLINE_RESPAWN_SECONDS);
     setWildDeath({ killer: 'Ria', dropped: 3 });
     assert.equal(s.holdSeconds, WILD_DEATH_HOLD_S);
-    assert.equal(s.respawnIn, 120);
+    assert.equal(s.respawnIn, WILD_DEATH_HOLD_S);   // PIN MOVED (PVP-RISE): 60, the PvE wait
     s.input('confirm');
     assert.equal(s.sequence.reset, false, 'Enter does not rise in the zone');
     assert.deepEqual(wildDeathLines(wildDeath()), ['Ria may claim one piece of your worn gear.', '3 things you carried lie where you fell, for ten minutes.', 'In Cyrodiil the dead wait two minutes.']);   // PIN MOVED (WW-C2): Cyrodiil's

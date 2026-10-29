@@ -168,7 +168,7 @@ const HARDCODED = {
   'src/net/siege/siegeRef.js': 4,
   'src/net/siege/siegeSession.js': 19,
   'src/net/social.js': 20,
-  'src/net/staffCommands.js': 10,
+  'src/net/staffCommands.js': 11,   // STAFF-PULL: /staff's /tpa line - a staff member's words, as the other /staff lines, never a player's
   'src/net/staffTeleport.js': 7,
   'src/net/tideLaw.js': 21,
   'src/net/townEconBook.js': 6,   // AUDIT TOWN-ECON 2 SVC-1: a developer's `/town audit` and `/town strike` - their usage and the audit's lines, a developer's words (as npcHallBook.js's `/hall` and townSeatBook.js's `/seat`), never a player's; BAY-LEFT-SEA (+1): the audit's next page, the same developer's

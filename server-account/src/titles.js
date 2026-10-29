@@ -420,7 +420,7 @@ export function titlesHeld(player, env, nowS = nowSecs()) {
 export const shopKeys = (/** @type {any} */ player, /** @type {string} */ kind) => (typeof player?.handle === 'string' && player.handle ? shopKeysOf(player, kind) : []);
 /** The service's clock in whole seconds - a default for a read that was never handed one. */
 const nowSecs = () => Math.floor(Date.now() / 1000);
-/** STOREFRONT (bible/06-Systems/Battle-Pass.md): each season's experience on the row (`pass_<season>`, migration 0192). */
+/** STOREFRONT (bible/06-Systems/Battle-Pass.md): each season's experience on the row (`pass_<season>`, migration 0193). */
 export const passXpOf = (/** @type {any} */ player) => Object.fromEntries(PASS_SEASONS.map((s) => [s.id, player?.[`pass_${s.id}`]]));
 /** STOREFRONT: the keys of one kind the Battle Pass gives this row - each season's tracks to the level its experience
  *  reached at `nowS` (net/battlePassLaw.js passGrants: the premium track with a pass held). A registered account's alone. */

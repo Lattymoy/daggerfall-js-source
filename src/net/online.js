@@ -73,7 +73,7 @@ import { loneStep, loneWake, loneAhead, loneSupported, aloneOf, LONE_HOLD, LONE_
 // the rest). WORLD_PUBLISH_MS is how often.
 //
 // Not a DFU member: Daggerfall Unity has no multiplayer. Ledger A row.
-import { validStaffTeleportIn, validStaffTeleportOut, staffTeleportSupported } from './staffTeleport.js';
+import { validStaffTeleportIn, validStaffTeleportOut, staffTeleportSupported, staffPullSupported } from './staffTeleport.js';
 import { validFollowOut, whereNoteDue, followSupported } from './staffFollow.js';   // STAFF-PANEL5-FOLLOW: the hub's word to a spectator, and the where note's pace
 import { validRelayCfgIn, validRelayCfgOut, relayCfgSupported } from './relayCfg.js';
 import { relaySupportsSeatLive, seatAskDue, seatStreams } from './seatLive.js';   // FIELD BUGS 2026-10-18d SEAT-LIVE: a dungeon room's seat is a live socket's
@@ -646,6 +646,7 @@ export class OnlineSession {
     this.onFollow = null;         // STAFF-PANEL5-FOLLOW: (frame) => void - the hub's `fol` to a spectator's hub link (net/staffFollow.js validFollowOut)
     this.staffTeleportOk = false;
     this.worldPixelsOk = false;   // AUDIT RELEASE R2: the relay reads a pixel past the Bay in a staff destination, an arch's site and a headstone's row (relaySupportsWorldWide) - an older one closes the socket on one
+    this.staffPullOk = false;     // STAFF-PULL: the hub carries a staff pull (the welcome's relay says)
     this._rfOn = new WeakMap();    // SCALE5b: socket -> its cell judges the poses that reach it (`rf`) - a halo's are never thinned then
     this.onFound = null;          // SCALE5c: ({q, l, busy}) => void - the hub's answer to a search of everyone online by name
     this.guildOnline = new Map(); // SCALE5c: id -> my guild's members online on every shard, as the hub last said (`sendGuildWho`)
@@ -842,6 +843,7 @@ export class OnlineSession {
     this.onWild = null;           // WILD1: (id, data, sub) => void - a directed wild frame at ME (a blow, a fallen's gear, a pick, a gift), projected by the wire's validWildData; `sub` the sender's account as the RELAY verified it
     this.onWildRoom = null;       // WILD1: (word, room) => void - my own room's word on its remains (validWildOut)
     this._wildBucket = null;      // WILD1: my own wild frames out - wildGate's law
+    this.wildFlag = 0;            // PVP-FLAG: my flag, said with every word that I stand in the zone (systems/wild/pvpFlag.js)
     this._wildZone = 0;           // INT9: my word on the open zone (1: I stand in it) - AUDIT INT9: said on my own cell's socket alone (a halo's is 0)
     this._wildZoneAt = -Infinity; // INT9 (AUDIT): when it was last said there - said again every WILD_ZONE_KEEP_MS while it stands
     this.onWildRef = null;        // INT9: (g, room) => void - the zone referee's word (net/wild/wildRef.js), projected by the wire's validWildRefOut, and the room it came from
@@ -1890,7 +1892,7 @@ export class OnlineSession {
     if (!validVitIn(report) || !this.vitOk || this.status !== 'open' || !this._ws) return false;
     const gate = vitGate(this._vitBucket, this._now());
     if (!gate.pass) return false;
-    try { this._ws.send(JSON.stringify({ t: 'vit', n: report.n, s: report.s, seen: report.seen })); } catch { return false; }
+    try { this._ws.send(JSON.stringify({ t: 'vit', n: report.n, s: report.s, seen: report.seen, ...(report.x !== undefined ? { x: report.x } : {}), ...(report.r !== undefined ? { r: report.r } : {}), ...(report.g !== undefined ? { g: report.g } : {}), ...(report.w !== undefined ? { w: report.w } : {}), ...(report.sh !== undefined ? { sh: report.sh } : {}) })); } catch { return false; }   // PVP-HEALTH: `x`, `r`; PVP-GUARD: `g`; PVP-WARD: `w`; PVP-SHIELD: `sh`
     this._vitBucket = gate.bucket; this.stats.sent++;
     return true;
   }
@@ -1921,18 +1923,25 @@ export class OnlineSession {
    *  stands in, carried across by the hub as it crosses (every halo said 1 too, and each held a whole bar of its own) -
    *  again on its welcome, at each crossing (join), and every WILD_ZONE_KEEP_MS while it stands (a relay object that
    *  restarted, or the close of a tab's other socket, forgot it). */
-  setWildZone(z, dead = false) {
+  setWildZone(z, dead = false, edge = false) {
     const v = z ? 1 : 0;
     const now = this._now();
     if (v === this._wildZone && !(v === 1 && now - this._wildZoneAt >= WILD_ZONE_KEEP_MS)) return;
+    const entry = v === 1 && this._wildZone !== 1;
     this._wildZone = v;
     // AUDIT FOE-KEEPS E2: `dead` - I left it dying, which the referee did not see (a foe, a fall, the sea): its kill credit
-    if (this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) { this._sayZone(this._ws, v, !v && dead); this._wildZoneAt = now; }
+    // PVP-EDGE: an entry walked over the edge says so (systems/wild/zoneEdge.js) - the referee's one door to safe passage
+    if (this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) { this._sayZone(this._ws, v, !v && dead, entry && edge); this._wildZoneAt = now; }
   }
   /** One socket told my zone word - outside the frames' shared bucket (it is said once a crossing; the relay's own bucket
    *  for the socket bounds it). */
-  _sayZone(ws, z, dead = false) {
-    try { ws.send(JSON.stringify({ t: 'wild', data: { k: 'zone', z, ...(dead ? { dd: 1 } : {}) } })); this.stats.sent++; } catch { /* a closing socket: its welcome says it again */ }
+  _sayZone(ws, z, dead = false, edge = false) {
+    try { ws.send(JSON.stringify({ t: 'wild', data: { k: 'zone', z, ...(dead ? { dd: 1 } : {}), ...(z === 1 ? { fl: this.wildFlag ? 1 : 0 } : {}), ...(z === 1 && edge ? { ed: 1 } : {}) } })); this.stats.sent++; } catch { /* a closing socket: its welcome says it again */ }
+  }
+  /** PVP-FLAG: my flag moved - said at once where I stand in the zone (the referee holds it down inside the lock). */
+  setWildFlag(on) {
+    this.wildFlag = on ? 1 : 0;
+    if (this._wildZone === 1 && this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) { this._sayZone(this._ws, 1); this._wildZoneAt = this._now(); }
   }
 
   /** PVPDUNGEONS: a word on the zone's halls, to the hub (my social socket alone) - true when it left the socket. */
@@ -2492,6 +2501,7 @@ export class OnlineSession {
         this.amapOk = false;   // PARTY-MAP: likewise, the welcome says
         this.staffTeleportOk = false;
         this.worldPixelsOk = false;   // AUDIT RELEASE R2: likewise
+        this.staffPullOk = false;   // STAFF-PULL: likewise
         this.followOk = false;   // STAFF-PANEL5-FOLLOW: likewise
         this.instanceOk = false;   // INSTANCES: likewise - a relay rolled back behind world208 keeps no instance
         this.guildInstanceOk = false;   // DOMAIN2: likewise - behind world260 a castle admits no member
@@ -3293,6 +3303,7 @@ export class OnlineSession {
     const m = validStaffTeleportIn(frame);
     // AUDIT RELEASE R2-1: a destination past the Bay, to a relay that reads the Bay's map alone, is the answer it can take
     if (m?.k === 'answer' && m.dest && !this.worldPixelsOk && !bayMapPixel(m.dest.pixel.x, m.dest.pixel.y)) return this._send({ t: 'stp', k: 'answer', ticket: m.ticket, error: 'unavailable' });
+    if (m?.k === 'pull' && !this.staffPullOk) return false;   // STAFF-PULL: an older hub closes on a kind it does not know
     return !!m && this._send({ t: 'stp', ...m });
   }
 
@@ -3695,6 +3706,7 @@ export class OnlineSession {
       if (primary) this.partyLeadOk = relaySupportsPartyLead(relayV);   // PARTY-LEAD
       if (primary) this.staffTeleportOk = staffTeleportSupported(relayV);
       if (primary) this.worldPixelsOk = relaySupportsWorldWide(relayV);   // AUDIT RELEASE R2
+      if (primary) this.staffPullOk = staffPullSupported(relayV);   // STAFF-PULL
       if (primary) this.followOk = followSupported(relayV);   // STAFF-PANEL5-FOLLOW
       if (primary) this.relayCfgOk = relayCfgSupported(relayV);   // SCALE5b
       if (primary) this._relayCfgV = relayV;   // HERALD-CARDS: and which of the settings it knows (relayCfg.js RELAY_CFG_KEY_MIN)

@@ -376,6 +376,10 @@ export const DETOUR_SWEEP_MAX_TRIES = 7;        // `if (count > 7) break`
 export const DETOUR_REACH = 2;                  // detourDestination = position + testMove * 2
 export const DETOUR_TIMER = 0.75;               // avoidObstaclesTimer
 export const DETOUR_ARRIVAL = 0.3;              // UpdateTimers zeroes the timer inside this
+// DETOUR-RETRY: a sweep that found no way out is not run again for this long. Each sweep is up to ten probes of
+// ~55 rays (our capsule cast is a ray bundle, DFU's one query), and a foe pinned in a corner ran one every step.
+// A departure from DFU's every-FixedUpdate retry; the foe stands still either way.
+export const DETOUR_RETRY = 0.25;
 
 /**
  * Per-foe classic AI: senses on the system timer, decisions on the
@@ -494,6 +498,7 @@ export class EnemyAI {
     this.checkingClockwiseTimer = 0;
     this.didClockwiseCheck = false;
     this.lastTimeWasStuck = -Infinity;
+    this._detourRetryAt = 0;   // DETOUR-RETRY: the clock before which a failed sweep is not run again
     this._clock = 0;   // Time.time, accumulated on the fixed step
     // EnemySenses' target-position memory (wave 35). null stands in for
     // DFU's ResetPlayerPos sentinel (float.MaxValue on all three axes),
@@ -1225,6 +1230,7 @@ export class EnemyAI {
         count++;
         if (count > DETOUR_SWEEP_MAX_TRIES) break;
       } while (this.obstacleDetected || this.fallDetected);
+      if (this.obstacleDetected || this.fallDetected) this._detourRetryAt = this._clock + DETOUR_RETRY;   // DETOUR-RETRY
     }
     // REVIEW 2026-09-05: `transform.position + testMove * reach`, kept
     // in FEET-space like every other destination on this class (the
@@ -1237,6 +1243,11 @@ export class EnemyAI {
     ];
     if (this.avoidObstaclesTimer <= 0) this.avoidObstaclesTimer = DETOUR_TIMER;
     this.lastTimeWasStuck = this._clock;
+  }
+
+  /** DETOUR-RETRY: FindDetour, unless the last sweep found no way out under DETOUR_RETRY ago. */
+  _detourIfDue(dir2d) {
+    if (this._clock >= this._detourRetryAt) this._findDetour(dir2d);
   }
 
   /** EnemyMotor.UpdateTimers (:389-410), the detour half: the timer
@@ -2109,7 +2120,7 @@ export class EnemyAI {
       // direction2d - only grounded foes flatten it (:978-979).
       this._obstacleCheck(d);
       this._fallCheck(d);
-      if (this.fallDetected || this.obstacleDetected) { this._findDetour(d); return; }
+      if (this.fallDetected || this.obstacleDetected) { this._detourIfDue(d); return; }
       let my = d[1] * this.speed * dt;
       if (my > 0 && center + WATER_HEAD_MARGIN >= waterY) my = 0;
       const moveResult = this.collider.move(this.feet, d[0] * this.speed * dt, my, d[2] * this.speed * dt, this.controllerHeight, true, FOE_KEEPS_FLOOR);
@@ -2170,7 +2181,7 @@ export class EnemyAI {
       // AttemptMove's probe (wave 34): a flyer keeps its y here too.
       this._obstacleCheck(d);
       this._fallCheck(d);
-      if (this.fallDetected || this.obstacleDetected) { this._findDetour(d); this.lastGroundedY = this.feet[1]; return; }
+      if (this.fallDetected || this.obstacleDetected) { this._detourIfDue(d); this.lastGroundedY = this.feet[1]; return; }
       const moveResult = this.collider.move(this.feet, d[0] * this.speed * dt, d[1] * this.speed * dt, d[2] * this.speed * dt, this.controllerHeight, true, FOE_KEEPS_FLOOR);
       this.isGrounded = moveResult.grounded;
       this.collidedSides = !!moveResult.sides;   // DOOR-JAM
@@ -2215,7 +2226,7 @@ export class EnemyAI {
         // does not move this step at all, it picks a way round. Gravity
         // is separate (ApplyGravity, :167) and still applies.
         if (this._tacDir) { this._tacDir = null; this._tacBlocked = true; this.moving = false; }   // TACT2: a wall or a drop behind it: it stands its ground (AUDIT TACT A1: and the brain hears of it; TACT5: for the rest of the classic tick too - never walked on the way it faces, into a detour)
-        else this._findDetour(dir2d);
+        else this._detourIfDue(dir2d);
       } else {
         const sp = this.speed * (this._tacDir ? this._tacSpeed : 1) * pace;   // TACT2: the brain's step at its share of a walk; ARENA-FIX 8: a walk to a mark at its pace (1 everywhere else - AUDIT PRE-MERGE 1003 D1: the walk's step's own, so none outlives the walk)
         dxm = dir2d[0] * sp * dt;

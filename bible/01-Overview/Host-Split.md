@@ -836,4 +836,5 @@ gate's clearings and the let-go. To pay for them, BOUNTY1's dungeon pack (`stand
 and DFU's placement its default seam. `bootWorld` 35,299 -> 35,258 logical lines, and the ceiling at it
 (`test/scenes/hostceiling.test.js`); the three BOUNTY-LAIR mutant records re-aimed at the module. `createWorldModes`,
 `buildDungeonContext` and `bootExterior` gained a field at the kill reports they already made (the kill effect's place,
-`killFxOf`), no statement.
+`killFxOf`), no statement. At the merge of main, beside its PvP wiring, `bootWorld` measures 35,282 and the ceiling
+stands there.

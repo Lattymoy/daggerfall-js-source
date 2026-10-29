@@ -38,8 +38,8 @@
   {
     "name": "RAIN-OVER-GRASS-drawn-before-the-grass",
     "file": "src/scenes/world.js",
-    "old": "    };\n    // BOLT: the burning channels",
-    "new": "    };\n    drawFalling();\n    // BOLT: the burning channels",
+    "old": "    };\n    // RAIN-LEAK, FRAME-ALLOC: one eye array",
+    "new": "    };\n    drawFalling();\n    // RAIN-LEAK, FRAME-ALLOC: one eye array",
     "tests": [
       "test/player/fb1001_puddlerain.test.js"
     ]

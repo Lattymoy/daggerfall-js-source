@@ -203,7 +203,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
     /** SHOP: the ware whose payment page the player went to, until the account read says it is held */
     shopWaiting: /** @type {string|null} */ (null),
     /** STOREFRONT: the season's card (net/battlePassLaw.js passCardOf) - the account's level, tracks and challenges - or
-     *  null (nobody signed in, a guest, a service from before acct213) */
+     *  null (nobody signed in, a guest, a service from before acct216) */
     pass: /** @type {any} */ (null),
     /** a sentence for the player, never a machine word */
     error: '',

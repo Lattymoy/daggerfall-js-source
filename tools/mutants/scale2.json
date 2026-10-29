@@ -11,8 +11,8 @@
   {
     "name": "SCALE2-A-never-reused",
     "file": "src/net/accountClient.js",
-    "old": "    if (!(now() - held.at < TOKEN_REUSE_MS)) return null;\n    return held.token;",
-    "new": "    if (!(now() - held.at < TOKEN_REUSE_MS)) return null;\n    return null;",
+    "old": "    if (!lives(now(), secret)) return null;\n    return held.token;",
+    "new": "    if (!lives(now(), secret)) return null;\n    return null;",
     "tests": [
       "test/net/scale2.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "SCALE2-A-reused-past-its-minute",
     "file": "src/net/accountClient.js",
-    "old": "    if (!(now() - held.at < TOKEN_REUSE_MS)) return null;\n",
+    "old": "    if (!lives(now(), secret)) return null;\n",
     "new": "",
     "tests": [
       "test/net/scale2.test.js"

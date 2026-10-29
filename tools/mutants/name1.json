@@ -419,8 +419,8 @@
   {
     "name": "AUDIT-NAME1-F3-lens-term-dropped",
     "file": "src/net/remotePlayers.js",
-    "old": "        scale: nameScaleFor(s.depth) * lens, depth: s.depth, lens });",
-    "new": "        scale: nameScaleFor(s.depth), depth: s.depth, lens });",
+    "old": "        scale: nameScaleFor(s.depth) * lens, depth: s.depth, lens,",
+    "new": "        scale: nameScaleFor(s.depth), depth: s.depth, lens,",
     "tests": [
       "test/net/name1_bubbles.test.js"
     ]

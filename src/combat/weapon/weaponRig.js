@@ -1530,7 +1530,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // MIXED-PAIR: and a blade-and-gun pair's hands take turns on the arm - neither hand's strike starts while it still
     // draws, winds up or looses the last (the blade's blow as much as the gun's shot)
     if (playerWeapon.mixedPair && (fpArm.active() || fpArm.thirdActive()) && fpArm.shotBusy()) return true;
-    return !!m.ranged && (m.state === 'Idle' || !!playerWeapon.pistols) && (fpArm.active() || fpArm.thirdActive()) && fpArm.shotBusy();
+    // BOW-LAW: and none while the last shot's hit still waits on its release - a silent arm never says busy, and a bow
+    // that reloads on the swing would start a shot over the held one, two draws merging into one arrow
+    return !!m.ranged && (m.state === 'Idle' || !!playerWeapon.pistols) && (fpArm.active() || fpArm.thirdActive()) && (fpArm.shotBusy() || (_heldHit && !playerWeapon.pistols));
   }
   /** AUDIT PISTOL-PORT A5: no Pistolet pull without a Pellet for it - each Pellet the pack holds may already be owed to a
    *  pistol whose hit is still to land (a pair's second shot leaves inside its first, which one machine never allowed: the

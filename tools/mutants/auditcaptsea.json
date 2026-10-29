@@ -1400,8 +1400,8 @@
   {
     "name": "ACS-P6-map-false",
     "file": "src/scenes/portalStoneHost.js",
-    "old": "    if (host.wildTeleportRefused() || host.veilRefused()) return false;",
-    "new": "    if (host.wildTeleportRefused()) return false;",
+    "old": "    if (zoneRefused() || host.veilRefused()) return false;",
+    "new": "    if (zoneRefused()) return false;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1409,8 +1409,8 @@
   {
     "name": "ACS-P6-stone",
     "file": "src/scenes/portalStoneHost.js",
-    "old": "const teleportRefused = (to) => host.wildTeleportRefused(to) || host.veilRefused(to) || ",
-    "new": "const teleportRefused = (to) => host.wildTeleportRefused(to) || ",
+    "old": "const teleportRefused = (to) => zoneRefused(to) || host.veilRefused(to) || ",
+    "new": "const teleportRefused = (to) => zoneRefused(to) || ",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ],

@@ -320,7 +320,7 @@ export function nameIsIssuable(name) {
 /**
  * The claims, as they ride. Short keys because this travels in a hello
  * on every connection and the payload is base64 on top.
- * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number, fz?: number, lv?: number, gi?: string, gt?: string, gm?: string, rc?: 0|1, ci?: string, au?: string, ak?: string, fx?: string, ar?: number, cl?: number, wa?: [number, 0|1], hn?: string, hc?: string, hb?: 1, hg?: number, hd?: 1, fo?: string}} Claims
+ * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number, fz?: number, lv?: number, gi?: string, gt?: string, gm?: string, rc?: 0|1, ci?: string, au?: string, ak?: string, fx?: string, ar?: number, cl?: number, wa?: [number, 0|1], vl?: number, hn?: string, hc?: string, hb?: 1, hg?: number, hd?: 1, fo?: string}} Claims
  *   s  the account id          n  the display name
  *   k  guest or linked         i  issued at, epoch seconds
  *   e  expires at, epoch seconds
@@ -390,6 +390,12 @@ export const characterLevelIssuable = (cl) => Number.isSafeInteger(cl) && cl >= 
 export const TOKEN_ARMS_TOP_MAX = 32;
 /** INT7: an arms claim a token may carry - `[reach, bow]`, the reach a whole number 0..TOKEN_ARMS_TOP_MAX, the bow 0 or 1. */
 export const armsIssuable = (wa) => Array.isArray(wa) && wa.length === 2 && Number.isSafeInteger(wa[0]) && wa[0] >= 0 && wa[0] <= TOKEN_ARMS_TOP_MAX && (wa[1] === 0 || wa[1] === 1);
+
+/** PVP-VILLAIN-KEEP: the villain meter's top on a token (systems/wild/villainLaw.js VILLAIN.max, pinned - this leaf imports
+ *  only the token's). */
+export const TOKEN_VILLAINY_MAX = 10_000;
+/** PVP-VILLAIN-KEEP: a villain meter a token may carry - a whole number 1..TOKEN_VILLAINY_MAX (0 is said by its absence). */
+export const villainyIssuable = (vl) => Number.isSafeInteger(vl) && vl >= 1 && vl <= TOKEN_VILLAINY_MAX;
 
 /** The account id's own shape - the same one `net/social.js` already
  *  keeps in `dagger.online.account`, so an id minted by SOC1 is an id
@@ -474,6 +480,7 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
   if (c.cl !== undefined && !characterLevelIssuable(c.cl)) return false;
   // INT7: the realm character's arms (every referee's clip): beside the realm's yes alone, of its shape or refused
   if (c.wa !== undefined && !(c.rc === 1 && armsIssuable(c.wa))) return false;
+  if (c.vl !== undefined && !(c.rc === 1 && villainyIssuable(c.vl))) return false;   // PVP-VILLAIN-KEEP: the meter, beside the realm's yes alone
   if (!houseClaimOk(c)) return false;   // LEGACY7: the house - absent for none, each field of its shape or refused
   // STAFF-PANEL5 (design doc "DFO Staff Panel: design", Invisible follow; the hidden builder's claim and the follow
   // builder's): `hd` 1 a hidden staff spectator's socket, minted only by the account service's staff doors - absent for
@@ -495,8 +502,8 @@ export const TOKEN_MAX_CHARS = 1024;
  *  every hello as 'bad token'. Every claim, a house at its bounds and the realm character (`ci`) are 778; INT7's arms
  *  (`wa`) at their widest, 794. WIKIMAID (world214): 864 - the WikiMaid's glyph took every claim at once to 808, past
  *  800, so a token wearing them all would have been refused whole. SHOP (world274): 896 - the Origin's glyph took them to
- *  867; the whole token at it is about 987 of TOKEN_MAX_CHARS. */
-export const TOKEN_BODY_MAX = 896;
+ *  867. PVP-VILLAIN-KEEP (world281): 928 - the villain meter (`vl`) took a house beside every claim but the crowns to 899. */
+export const TOKEN_BODY_MAX = 928;
 /** A token's body, the part between its version and its signature. */
 export const tokenBodyOf = (/** @type {string} */ token) => String(token ?? '').split('.')[1] ?? '';
 
@@ -504,7 +511,7 @@ export const tokenBodyOf = (/** @type {string} */ token) => String(token ?? '').
  * MINT. The account service's half - it holds the private key and
  * nothing else does.
  *
- * @param {{s:string, n:string, k:'guest'|'linked', t?:string, ts?:number[], g?:string[], mu?:number, fz?:number, lv?:number, gi?:string, gt?:string, gm?:string, rc?:0|1, ci?:string, au?:string, ak?:string, fx?:string, pi?:string, rb?:number[], gx?:string[], ar?:number, cl?:number, wa?:[number, 0|1], hn?:string, hc?:string, hb?:1, hg?:number, hd?:1, fo?:string}} who
+ * @param {{s:string, n:string, k:'guest'|'linked', t?:string, ts?:number[], g?:string[], mu?:number, fz?:number, lv?:number, gi?:string, gt?:string, gm?:string, rc?:0|1, ci?:string, au?:string, ak?:string, fx?:string, pi?:string, rb?:number[], gx?:string[], ar?:number, cl?:number, wa?:[number, 0|1], vl?:number, hn?:string, hc?:string, hb?:1, hg?:number, hd?:1, fo?:string}} who
  * @param {CryptoKey} privateKey  an Ed25519 private key
  * @param {{subtle: SubtleCrypto, nowS: number, ttlS?: number}} env
  * @returns {Promise<string>}
@@ -534,6 +541,7 @@ export async function mintToken(who, privateKey, { subtle, nowS, ttlS = MAX_TTL_
   if (who?.ar !== undefined) claims.ar = who.ar;   // ARENA4: only for a registered account - a guest mints the bytes it always did
   if (who?.cl !== undefined) claims.cl = who.cl;   // ARENA4b: only when a character was named - a mint naming none, the bytes as before
   if (who?.wa !== undefined) claims.wa = who.wa;   // INT7: only for a realm character judged since - before one, the bytes as before
+  if (who?.vl !== undefined) claims.vl = who.vl;   // PVP-VILLAIN-KEEP: only while the meter is above 0 - a meter at 0, the bytes as before
   // LEGACY7: only for a realm character of a Project Legacy line - a character of none, the bytes as before
   if (who?.hn !== undefined) { claims.hn = who.hn; for (const k of /** @type {const} */ (['hc', 'hb', 'hg'])) if (who[k] !== undefined) claims[k] = who[k]; }
   if (who?.hd !== undefined) claims.hd = who.hd;   // STAFF-PANEL5: a hidden staff spectator alone - a player mints the bytes they always did
