@@ -36,8 +36,9 @@ test('STOREFRONT the look\'s code: a mount look a fifth part, its highest factor
   assert.deepEqual(horseLookOfCode(worn), { coat: 3, pattern: 2, legs: 1, seed: 999, mount: 3 });
   assert.equal(withMountLook(worn, null), coat, 'taken off: the coat again');
   assert.match(rd('src/systems/horse/horseCartWire.js'), /const hc = wireHorseLook\(view\.look \?\? 0\);/, 'a parked team\'s word never says it');
-  // PIN MOVED (DRAGON5, at the merge of main): a tamed dragon's own look while one is ridden; a horse's is still the coat alone
-  assert.match(rd('src/scenes/world.js'), /rc: riding \? \(player\.transportMode === TRANSPORT_MODES\.Dragon \? dragonLookOfItem\(dragonMountOf\(playerEntity\.items\)\) : riddenHorseLook\(playerEntity\.items \?\? \[\]\)\) \|\| undefined : undefined,/, 'nor the pose');
+  // PIN MOVED (DRAGON5, DRAGON-BLUE, at the merges of main): a tamed dragon's own look while one is ridden, an Admin's ride's
+  // off a horse; a horse's is still the coat alone
+  assert.match(rd('src/scenes/world.js'), /rc: riding \? \(player\.transportMode === TRANSPORT_MODES\.Dragon \? dragonLookOfItem\(dragonMountOf\(playerEntity\.items\)\) : riddenHorseLook\(playerEntity\.items \?\? \[\]\)\) \|\| undefined : dragonRideLook\(\) \|\| undefined,/, 'nor the pose');
 });
 
 // AUDIT-STOREFRONT (2026-10-29): PIN MOVED - "nothing but the hide moved" left a ghost with a black mane and tail. A look

@@ -58,7 +58,7 @@ import { potionBundle } from '../systems/potions.js';   // U44: DrinkPotion's bu
 import { pvpPotionBundle } from '../combat/pvpPotions.js';   // PVP-POTIONS
 import { potentEffect } from '../net/alchemyLaw.js';   // PROF12: a Potent potion's magnitudes
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';
-import { ridingDragon, dragonFire, dragonBolt, dragonVolley, DRAGON_BOLT_SPEED, DRAGON_BOLT_DAMAGE } from '../systems/staffDragon.js';   // DRAGON-RIDE: the dragon's shoulder cannons
+import { ridingDragon, dragonFire, dragonBolt, dragonVolley, dragonAimDistance, DRAGON_BOLT_SPEED, DRAGON_BOLT_DAMAGE } from '../systems/staffDragon.js';   // DRAGON-RIDE: the dragon's shoulder cannons
 import { tallySkill } from '../systems/skills.js';
 import { morphSelf } from '../systems/lycanthropy.js';   // V2a: the MorphSelf arm the ONE cast engine wires
 import { allyCastable, allyReachFor, allyCastFrame, allyCastCasterLine, allyCastCasterLineMany, allyCastSpell, PERSON_RADIUS, ALLY_TOUCH_REACH, ALLY_ARM_RADIUS, ALLY_ARMED_LINE, COMPANION_ARMED_LINE, companionCastable, createGiftLineGate } from '../systems/allyCast.js'; import { shownSpellName } from '../systems/loot/loot.js';   // SPELL-GIFT: the arm near a mate, the line it says, and the area's one line; AUDIT WK-M4: what my companion can use; L10N3e: the caster's line names the spell as the book shows it (the frame keeps the canonical name)
@@ -1468,7 +1468,8 @@ export function createPlayerMagic({
   function fireDragon() {
     if (!lastAim || !dragonFire(performance.now())) return;
     const spell = dragonBolt();
-    for (const v of dragonVolley(lastAim.eye, lastAim.dir)) missiles.push(withBolt({ spell, cast: newCast(0), pos: v.pos, dir: v.dir, age: 0, batch: null, fromPlayer: true, ally: false, duel: false, boss: false, dragon: true, speed: DRAGON_BOLT_SPEED }));
+    const meet = dragonAimDistance(lastAim.eye, lastAim.dir, playerTargets().filter((t) => !t.dead).map((t) => t.ai));   // DRAGON-AIM: met on the body I aim at
+    for (const v of dragonVolley(lastAim.eye, lastAim.dir, meet)) missiles.push(withBolt({ spell, cast: newCast(0), pos: v.pos, dir: v.dir, age: 0, batch: null, fromPlayer: true, ally: false, duel: false, boss: false, dragon: true, speed: DRAGON_BOLT_SPEED }));
     audio.playOneShotId(SPELL_CAST_SOUND[3], 1);
   }
   function withBolt(m) {
