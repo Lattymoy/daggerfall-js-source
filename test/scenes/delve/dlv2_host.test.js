@@ -102,6 +102,28 @@ test('DLV2 THE HOLD\'S FOES: a wave stands its size at the gates, a step off the
   E.on({ k: 'wave', w: 1, wz: 4 });
   await flush();
   assert.equal(empty.stood.length, 0);
+  assert.equal(E.word().wc, 0, 'nothing stood: nothing cleared (the wave runs its 90 s)');
+  // a wave half stood: its dead are not its clear while one is still coming
+  const slow = fakeFoes(); let release = null;
+  const spawn = slow.host.spawn;
+  slow.host.spawn = (...a) => (slow.stood.length === 2 ? new Promise((r) => { release = () => r(spawn(...a)); }) : spawn(...a));
+  const S2 = createHoldFoes(s, slow.host);
+  S2.on({ k: 'wave', w: 1, wz: 3 });
+  await flush();
+  assert.equal(slow.stood.length, 2);
+  for (const f of slow.stood) f.dead = true;
+  assert.equal(S2.word().wc, 0, 'one still coming');
+  release(); await flush(); await flush();
+  assert.equal(slow.stood.length, 3);
+  slow.stood[2].dead = true;
+  assert.equal(S2.word().wc, 1);
+  // a failed attempt takes a living captain too
+  const cap2 = fakeFoes();
+  const C2 = createHoldFoes(s, cap2.host);
+  C2.on({ k: 'captain', traits: 1 });
+  await flush();
+  C2.on({ k: 'failed' });
+  assert.deepEqual(cap2.removed, [cap2.stood[0]], 'the captain crumbles with the rest');
 });
 
 test('DLV2 THE LITANY SEEN: the order shown a plate a second, the lit lit as worked, all lit when won, a wrong plate red for 0.7 s; a step said once as a plate is stepped onto (mutants: the shown step; the lit count; the wrong\'s span; a step said every frame)', () => {
@@ -126,7 +148,10 @@ test('DLV2 THE LITANY SEEN: the order shown a plate a second, the lit lit as wor
   const wrong = { j: order[3], at: led.ec };
   const red = [...lit]; red[order[3]] = PLATE_LOOK.wrong;
   assert.deepEqual(plateLooks(led, 4, wrong), red);
-  led.ec += PLATE_WRONG_MS;
+  assert.equal(PLATE_WRONG_MS, 700);
+  led.ec += 699;
+  assert.deepEqual(plateLooks(led, 4, wrong), red, 'still red at 699 ms');
+  led.ec += 1;
   assert.deepEqual(plateLooks(led, 4, wrong), lit, 'the red gone at 0.7 s');
   led.p = DP.won;
   assert.deepEqual(plateLooks(led, 4), [2, 2, 2, 2]);
@@ -221,6 +246,7 @@ test('DLV2 THE HOLD, WON IN A ROOM: the plan on the collider, the near line, the
   assert.equal(s.kind, 'hold');
   const feet = [s.x, s.y, s.z];
   // the near line, once, from the ward's edge and 6 m
+  assert.deepEqual([DELVE_NEAR_M, DELVE_AWAY_SAY_MS], [6, 2_000]);
   const near = s.r + 2 + DELVE_NEAR_M;
   host.frame(0.1, [s.x + near + 0.5, s.y, s.z]);
   assert.notEqual(midScreenText.text, 'An old ward is cut into this floor. Step inside it to wake it.');

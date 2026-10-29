@@ -366,7 +366,9 @@
     "new": "case 'failed': r.foes?.on(ev);",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "Offline a reset ledger and a new one answer every word alike - idle, the player its owner, its clocks restarted by the next word in the ward. Dropping it is the relay's law (DLV3: a failed Hold frees the site for another party), pinned there; recorded so the next reader knows which half matters."
   },
   {
     "name": "DLV2-destroy-keeps-the-doors",
