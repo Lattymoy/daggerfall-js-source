@@ -17,8 +17,11 @@ export const DRAGON_BOLT_SPEED = 120;
 export const DRAGON_BOLT_COOLDOWN_MS = 350;
 /** Where the two barrels sit from my eye: metres to each side, below, ahead. */
 export const DRAGON_BARRELS = Object.freeze({ side: 1.4, down: 0.6, ahead: 2.0 });
-/** How far down the look the two balls cross, metres. */
-export const DRAGON_BOLT_MEET = 40;
+/** How far down the look the two balls meet with nothing under my aim, metres - far enough that they fly near level
+ *  (DRAGON-AIM, 2026-10-29, mob: they crossed at a fixed 40 m and split past it). */
+export const DRAGON_BOLT_MEET = 300;
+/** DRAGON-AIM: how far off my look a body may stand and still be what I aim at, metres. */
+export const DRAGON_AIM_SLACK = 3;
 /** How long the saddle shows the firing picture after a volley, ms. */
 export const DRAGON_FIRE_SHOW_MS = 160;
 /** The saddle's two pictures under public/art/dwarven-dragon/: at rest, and the cannons firing. */
@@ -81,16 +84,33 @@ export function dragonBolt() {
   return { name: '', index: -1, element: 3, rangeType: 2, icon: 0, effects: [e, { type: -1, subType: -1 }, { type: -1, subType: -1 }] };
 }
 
+/** DRAGON-AIM: how far down the look the balls should meet - the nearest live body (`{ feet, height }`, a foe's `ai`)
+ *  within DRAGON_AIM_SLACK of the look and nearer than DRAGON_BOLT_MEET, else DRAGON_BOLT_MEET.
+ *  @param {number[]} eye @param {number[]} dir @param {Iterable<{ feet?: number[], height?: number } | null | undefined>} bodies */
+export function dragonAimDistance(eye, dir, bodies) {
+  const len = Math.hypot(dir[0], dir[1], dir[2]) || 1;
+  let best = DRAGON_BOLT_MEET;
+  for (const b of bodies) {
+    const p = b?.feet;
+    if (!Array.isArray(p) || p.length < 3) continue;
+    const c = [p[0] - eye[0], p[1] + (b.height ?? 2) / 2 - eye[1], p[2] - eye[2]];
+    const t = (c[0] * dir[0] + c[1] * dir[1] + c[2] * dir[2]) / len;
+    if (t <= 2 || t >= best) continue;
+    if (Math.hypot(c[0], c[1], c[2]) ** 2 - t * t <= DRAGON_AIM_SLACK ** 2) best = t;
+  }
+  return best;
+}
+
 /** The volley for an eye and a look: a ball from each barrel (left and right of the eye, a little below and ahead), both
- *  aimed at the point DRAGON_BOLT_MEET metres down the look, so they cross on what I aim at.
- *  @param {number[]} eye @param {number[]} dir */
-export function dragonVolley(eye, dir) {
+ *  aimed at the point `meet` metres down the look, so they meet on what I aim at (dragonAimDistance).
+ *  @param {number[]} eye @param {number[]} dir @param {number} [meet] */
+export function dragonVolley(eye, dir, meet = DRAGON_BOLT_MEET) {
   const len = Math.hypot(dir[0], dir[1], dir[2]) || 1;
   const f = [dir[0] / len, dir[1] / len, dir[2] / len];
   const flat = Math.hypot(f[0], f[2]) || 1;
   const r = [f[2] / flat, 0, -f[0] / flat];   // level, square to the look
   const { side, down, ahead } = DRAGON_BARRELS;
-  const aim = [eye[0] + f[0] * DRAGON_BOLT_MEET, eye[1] + f[1] * DRAGON_BOLT_MEET, eye[2] + f[2] * DRAGON_BOLT_MEET];
+  const aim = [eye[0] + f[0] * meet, eye[1] + f[1] * meet, eye[2] + f[2] * meet];
   return [-1, 1].map((s) => {
     const pos = [eye[0] + f[0] * ahead + r[0] * side * s, eye[1] + f[1] * ahead - down, eye[2] + f[2] * ahead + r[2] * side * s];
     const d = [aim[0] - pos[0], aim[1] - pos[1], aim[2] - pos[2]];

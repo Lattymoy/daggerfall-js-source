@@ -6,7 +6,7 @@ import {
   mayRideDragon, ridingDragon, mountDragon, landDragon, dragonFlyMult, dragonFire, dragonFiring, dragonBolt, dragonVolley,
   DRAGON_FLY_MULT, DRAGON_BOLT_DAMAGE, DRAGON_BOLT_COOLDOWN_MS, DRAGON_BOLT_MEET, _resetDragonRide,
   parseDragonCommand, DRAGON_HELP_LINE, noteDragonRelay, dragonPoseRide, DRAGON_POSE_RIDE, dragonWireCast, drawPeerCast,
-  dragonRideLook, setDragonRideLook,
+  dragonRideLook, setDragonRideLook, dragonAimDistance, DRAGON_AIM_SLACK,
 } from '../../src/systems/staffDragon.js';
 import { registerFlySpeedMod, flySpeedMult } from '../../src/player/motor.js';
 import { parseStaffCommand } from '../../src/net/staffCommands.js';
@@ -144,4 +144,18 @@ test('DRAGON-BLUE /dragon blue mounts the Aetherbright, brass the brass, and eit
   mountDragon(false);
   assert.equal(dragonRideLook(), 0, 'a bare mount is the brass');
   _resetDragonRide();
+});
+
+test('DRAGON-AIM the balls meet on the nearest body under my aim, not at a fixed distance; with none they meet far off and fly near level (mutants: the fixed meet; a body off the look taken; the farther body taken; a body behind me taken)', () => {
+  const eye = [0, 10, 0], dir = [0, 0, 1];
+  assert.equal(dragonAimDistance(eye, dir, []), DRAGON_BOLT_MEET);
+  const near = { feet: [1, 9, 25], height: 2 }, far = { feet: [0, 9, 80], height: 2 };
+  assert.ok(Math.abs(dragonAimDistance(eye, dir, [far, near]) - 25) < 1e-9, 'the nearer of two on the look');
+  assert.equal(dragonAimDistance(eye, dir, [{ feet: [DRAGON_AIM_SLACK + 1, 9, 25], height: 2 }]), DRAGON_BOLT_MEET, 'off the look');
+  assert.equal(dragonAimDistance(eye, dir, [{ feet: [0, 9, -20], height: 2 }, null, { height: 2 }]), DRAGON_BOLT_MEET, 'behind me, or no body');
+  for (const { pos, dir: d } of dragonVolley(eye, dir, 25)) {
+    const k = (25 - pos[2]) / d[2];
+    assert.ok(Math.abs(pos[0] + d[0] * k) < 1e-9 && Math.abs(pos[1] + d[1] * k - 10) < 1e-9, 'both meet at 25 m');
+  }
+  assert.ok(DRAGON_BOLT_MEET >= 200, 'with nothing aimed at, near level');
 });

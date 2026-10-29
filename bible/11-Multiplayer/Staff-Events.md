@@ -326,4 +326,7 @@ member is told so, and a player without staff glyphs never sees the command.
   `aetherbright`) mounts the Aetherbright, `/dragon brass` the brass, and either changes the look in the saddle. The look
   rides the pose's `rc` (1 the Aetherbright), as a tamed dragon's does (`Dwarven-Dragon.md` section 11), and the saddle
   takes its colours.
+- **DRAGON-AIM (2026-10-29, the owner: the shots crossed at one distance).** The balls met 40 m down the look and split
+  past it. They now meet on the nearest body within `DRAGON_AIM_SLACK` of the look (`dragonAimDistance`), else 300 m
+  away, so they fly near level.
 
