@@ -295,7 +295,7 @@ import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBob
 import { createClimbFeelHost } from '../player/climb/climbFeel.js';   // CLIMB4: the climb's camera
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hud/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, actionsOf, held, moveHeld, anyMove, swallowBrowserKey, isTextEntryTarget, mouseCode, isSwingButton, keyboardLook, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS, swingKeyHeld, bindings } from '../ui/input.js';
+import { keyEdges, noteKeyDown, noteKeyUp, letGoOnBlur, beginInputFrame, pressed, released, actionsOf, held, moveHeld, anyMove, swallowBrowserKey, isTextEntryTarget, mouseCode, isSwingButton, keyboardLook, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS, swingKeyHeld, bindings } from '../ui/input.js';
 import { useQuickslot, swapQuickslot, offHandQuickslot, spellQuickslotPress, offHandOffersSwap, tickQuickslotHold } from '../systems/quickslots.js';   // QS2/QS4: the diamond's performers   // QS6: the spell slot, the off hand's swap question, and the hold machine
 import { armUnloadGuard, releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game; AUDIT-MACL F3: ...and down for a door the game opened itself   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { hudShortcutKey, retroToggleKey, hudRenderEnabled } from '../ui/hud/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms; AUDIT PRE-MERGE 1003 U8: the arena's HUD hides with the toggle
@@ -3751,6 +3751,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // movement Set since the first host and never told the open window
   // anything; DFU's buttons hear both edges (Button.cs:79-92) and the
   // travel popup's EXIT is the deferral that needs the release.
+  letGoOnBlur(keys, latch.edge);   // KEYS-BLUR: a key held as the page lost focus is let go
   addEventListener('keyup', (e) => { keys.delete(e.code); noteKeyUp(latch.edge, e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'AltLeft') e.preventDefault(); townTalk.keyup(e); modes?.keyup?.(e); });   // ROAD-E E1: the up seam reaches BOTH slots this host feeds - the outer overlay and the mode machine's
   // U45: Actions.ActivateCursor (Enter) frees the mouse during play
   // and takes it back - PlayerMouseLook.cursorActive, which had been

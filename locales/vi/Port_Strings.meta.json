@@ -69,6 +69,11 @@
   "tr": "580dce4e0d29",
   "by": "claude-in-session"
  },
+ "account.refusal.lineageInUse": {
+  "en": "b210f6197958",
+  "tr": "53372bab8aa2",
+  "by": "claude-in-session"
+ },
  "account.refusal.marketSellerFrozen": {
   "en": "e83eacbb66fb",
   "tr": "f7bc7b4870d5",
@@ -97,6 +102,11 @@
  "account.refusal.repairNotSet": {
   "en": "6ee1527e65ec",
   "tr": "9310551f4ee6",
+  "by": "claude-in-session"
+ },
+ "account.refusal.tooManyLineages": {
+  "en": "5f69291d1652",
+  "tr": "7482a4de2d4a",
   "by": "claude-in-session"
  },
  "account.refusal.townUnwalked": {
@@ -1749,6 +1759,11 @@
   "tr": "3ab972a05b78",
   "by": "claude-in-session"
  },
+ "helm.heavy": {
+  "en": "1909b8911a74",
+  "tr": "e2048b85b144",
+  "by": "claude-in-session"
+ },
  "holdings.horse.boons.hungry": {
   "en": "11b471ca7d1e",
   "tr": "ba3e6e77ed2c",
@@ -3212,6 +3227,56 @@
  "menu.rail.test": {
   "en": "4fd8df831597",
   "tr": "721308a32391",
+  "by": "claude-in-session"
+ },
+ "menu.realm.families": {
+  "en": "862a863ff592",
+  "tr": "8d9bc144d68f",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familiesHide": {
+  "en": "34d8b60fe253",
+  "tr": "f4ea7c307120",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familiesShow": {
+  "en": "d97d1ee339e4",
+  "tr": "36fd92c123ee",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyRemoved": {
+  "en": "2cbcaf937fc9",
+  "tr": "e97533f68070",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyRow": {
+  "en": "5e293ce32dbd",
+  "tr": "7a864091d71c",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyUnnamed": {
+  "en": "9b115c99b1da",
+  "tr": "7c5b38eea4bf",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamily": {
+  "en": "a53c064ca700",
+  "tr": "0616010af6c6",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyAsk": {
+  "en": "5694f452ab8b",
+  "tr": "d0b794fb4560",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyBody": {
+  "en": "c055ce52aa9e",
+  "tr": "cef2bb90fbba",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyYes": {
+  "en": "e963907dac5c",
+  "tr": "aa1d94fc1675",
   "by": "claude-in-session"
  },
  "menu.realm.strandedAsk": {

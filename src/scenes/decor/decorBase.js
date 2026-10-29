@@ -94,6 +94,8 @@ export function createBaseRoom({ drawList, batches, lights, collider }) {
     addFlat(key, { flat, batch, light = null, at }) {
       pieces.set(key, { key, model: null, flat, at, hidden: false, draw: null, cpu: null, matrix: null, furniture: null, batch, light });
     },
+    /** AUDIT FB1029e H2: a piece the room keeps - never offered, so never taken out (its draw and its bucket stand). */
+    keep(key) { const p = pieces.get(key); if (p && !p.hidden) { if (p.furniture) delete p.furniture.baseKey; pieces.delete(key); } },
     /** The cupboard, the shelf or the bed a model is - the entry in the host's index-keyed list. */
     furnish(key, entry) { const p = pieces.get(key); if (p && entry) { p.furniture = entry; entry.baseKey = key; } },
     /** One piece the crosshair can name, or null once it is out of the room. */

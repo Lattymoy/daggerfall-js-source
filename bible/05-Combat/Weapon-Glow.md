@@ -202,7 +202,7 @@ wire's one law (`peerStubEntity`, `lookGlowOk`).
 **Relay world209** (`src/net/wire.js` RELAY_VERSION; its law row in `test/net/relayversion.test.js`; world208 on its branch, renumbered past main's INSTANCES world208 at the merge), NOT YET DEPLOYED. The
 order does not matter: an older relay builds its look items from the fields it knows and strips the word (a peer's
 weapon draws bare until the relay is deployed, and nothing else changes), and an older client never says it and drops
-it on receipt (AUDIT DOC-8). **Relay world286** (GILDED-GLOW, NOT YET DEPLOYED) takes `gilded2` the same way: until it is
+it on receipt (AUDIT DOC-8). **Relay world287** (GILDED-GLOW, NOT YET DEPLOYED; world286 on its branch, renumbered at the merge of main) takes `gilded2` the same way: until it is
 deployed a peer's Gilded weapon draws bare.
 
 ## Departures, named

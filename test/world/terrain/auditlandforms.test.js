@@ -260,8 +260,9 @@ function liftAtHost({ built = new Map(), index = new Map(), rects = new Map(), n
   const counted = (...a) => { fields.made += 1; return landformLiftField(...a); };
   // PIN MOVED (BAY-LEFT-GROUND, HOST-SPLIT and D5): scenes/groundFrameHost.js's text - the stream's frame and its reader
   // live, through `host`; the world's grid, the frame's pixel and the sites' generation its new reads
-  const host = new Function('framePixelAt', 'inWorldGrid', 'beyondSites', 'host', 'built', 'locationIndex', 'setLocationTiles', 'maps', 'blocks', 'TERRAIN_SIZE', 'heightCell', 'MAP_WIDTH', 'MAP_HEIGHT', 'landformLiftField', 'STREAMING_TERRAIN_SCALE', 'HEIGHTMAP_DIMENSION', 'terrainGen', 'landformsHere', '_liftLocationAt',
-    `${body}\nreturn { landformLiftAt, bind: (f) => { _liftLocationAt = f; } };`)(framePixelAt, inWorldGrid, { generation: () => 1 }, { state, woods }, built, index, setLocationTiles, {}, {}, TERRAIN_SIZE, heightCell, MAP_WIDTH, MAP_HEIGHT, counted, STREAMING_TERRAIN_SCALE, H, { roads: () => net.at }, () => createLandforms({ woods, roads: net.at }), (x, y) => index.get(`${x},${y}`));
+  // PIN MOVED (FB1029 ACROSS-EDGE): and the towns a pixel's ground meets - none here (scenes/townMeetsHost.js)
+  const host = new Function('framePixelAt', 'inWorldGrid', 'beyondSites', 'host', 'built', 'locationIndex', 'setLocationTiles', 'maps', 'blocks', 'TERRAIN_SIZE', 'heightCell', 'MAP_WIDTH', 'MAP_HEIGHT', 'landformLiftField', 'STREAMING_TERRAIN_SCALE', 'HEIGHTMAP_DIMENSION', 'terrainGen', 'landformsHere', '_liftLocationAt', 'townMeets', 'meetsTown',
+    `${body}\nreturn { landformLiftAt, bind: (f) => { _liftLocationAt = f; } };`)(framePixelAt, inWorldGrid, { generation: () => 1 }, { state, woods }, built, index, setLocationTiles, {}, {}, TERRAIN_SIZE, heightCell, MAP_WIDTH, MAP_HEIGHT, counted, STREAMING_TERRAIN_SCALE, H, { roads: () => net.at }, () => createLandforms({ woods, roads: net.at }), (x, y) => index.get(`${x},${y}`), null, () => false);
   const scene = (px, py, sx, sy) => { const t = state.pixelTranslation(px, py); return [t[0] + sx * heightCell, t[2] + sy * heightCell]; };
   return { ...host, scene, asked, state };
 }
@@ -1134,7 +1135,7 @@ test('AUDIT LANDFORMS II H1: THE ONE CONSTRUCTION SEAM for C1 - every height wor
   // writer outside world.js - the hosts' others hand world.js their heights, THE FOUR HOSTS in Landforms.md.)
   const TRANSIENT = new Map([
     ['if (Number.isFinite(h)) return y - (h - state.compensation[1] - now) * (r - 1) + now;', 'restandHeight itself: the read side'],
-    ['const g = h - state.compensation[1] - (landform ? landformLiftAt(x, z) : 0);', 'restandHeight\'s town move: today\'s ground in DFU\'s frame, read to tell a record #1371\'s build wrote (AUDIT FB1028)'],   // PIN MOVED (BAY-LEFT-GROUND, D5): scenes/groundFrameHost.js recordFrame's own frame
+    ['const g = h - state.compensation[1] - (landform ? landformLiftAt(x, z) : 0) - meet;', 'restandHeight\'s town move: today\'s ground in DFU\'s frame, read to tell a record #1371\'s build wrote (AUDIT FB1028)'],   // PIN MOVED (BAY-LEFT-GROUND, D5): scenes/groundFrameHost.js recordFrame's own frame; PIN MOVED (FB1029 ACROSS-EDGE): less the meets' move, which a record before law 5 takes after it
     ['const campToNatives = (pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; };', 'a recenter, this ground both ways (campToRecord is the record\'s)'],
     ['toNative: (p) => { const w = state.worldCoords(p); return [w.x, p[1] - state.compensation[1], w.z]; },', 'the sailing cabins\' live access'],
     ['const cabin = { v: 1, uid: boat.uid, hull: boat.hull, origin: [origin.x, boat.GameObject.position[1] - state.compensation[1], origin.z],', 'a boat at sea - its pixel is what is read, under the knee'],

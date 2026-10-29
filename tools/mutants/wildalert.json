@@ -102,7 +102,7 @@
   {
     "name": "WILD-town-foe-gated",
     "file": "src/scenes/world.js",
-    "old": "&& !!f.ai?.feet && !_inAnyLocationRect(f.ai.feet);",
+    "old": "&& !!f.ai?.feet && !_inAnyLocationRect(f.ai.feet, f.bountyPlace);",
     "new": "&& !!f.ai?.feet;",
     "tests": [
       "test/scenes/wildalert.test.js"
@@ -221,7 +221,7 @@
   {
     "name": "WILD-mark-over-a-town-foe",
     "file": "src/scenes/world.js",
-    "old": "        if (_inAnyLocationRect(f.ai.feet)) continue;\n        const head = ",
+    "old": "        if (_inAnyLocationRect(f.ai.feet, f.bountyPlace)) continue;   // FB1029 GRAVE-PACK: a graveyard's pack is wild\n        const head = ",
     "new": "        const head = ",
     "tests": [
       "test/scenes/wildalert.test.js"

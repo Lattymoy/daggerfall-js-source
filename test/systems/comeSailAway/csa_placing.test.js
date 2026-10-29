@@ -462,9 +462,12 @@ test('CSA-C: UpdateBoatVisibility - inside, only a boat placed inside this pixel
   assert.equal(kept.GameObject.activeSelf, false);
   assert.deepEqual(kept.NodeTileMapIndices, [5, 5, 5, 5, 5], 'hidden, and its nodes read all the same');
   s.rt.UpdateBoatVisibilityOf(null);
-  // a boat with no pixel outside: its nodes' MapPixel.X throws, as the C#'s NullReferenceException
+  // NO-PIXEL (FIELD BUGS 2026-10-29d, a departure): a boat with no pixel outside takes the pixel she stands on - the C#'s
+  // MapPixel.X threw, and a door's OnTransition stopped at her
   far.MapPixel = null;
-  assert.throws(() => s.rt.UpdateBoatVisibilityOf(far), TypeError);
+  far.GameObject.position = [3 * 819.2 + 5, 34, 10];
+  s.rt.UpdateBoatVisibilityOf(far);
+  assert.deepEqual([far.MapPixel, far.GameObject.activeSelf], [{ X: 13, Y: 20 }, false], 'three pixels off: hers, and hidden');
 });
 
 test('CSA-C: UpdateBoatNodes - inside a dungeon with water every node is water, a dry inside reads nothing; outside, Iliac Puddle No More\'s SampleHeight under 34 is water, else the tile map; the pixel form reads nothing where no terrain is built', () => {

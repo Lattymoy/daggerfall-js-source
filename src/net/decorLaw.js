@@ -376,8 +376,10 @@ export const DECOR_BASE_KEY_RE = /^(?:m(?:0|[1-9]\d{0,3}):(?:0|[1-9]\d{0,5})|f(?
 /** DOOR-KEPT (FIELD BUGS 2026-10-29f): a room's swing door taken out rides the same list (systems/decor/decorInteriorDoors.js
  *  `intdoor:<record>`), so an online home's is the service's - every visitor's and every device's - as its furniture is. */
 export const decorIsDoorKey = (key) => typeof key === 'string' && key.startsWith('intdoor:');
-/** How many built-in pieces one room may keep taken out - more than any interior lays, and a whole list at its widest
- *  (eighteen bytes a name) still one write under the service's 4 KiB body (service.js MAX_BODY_BYTES). */
+/** How many built-in pieces one room may keep taken out - more than any home lays (127 at most, measured with the town
+ *  mods' furniture built in; AUDIT FB1029e H3: a Detailed Ships cabin lays up to 456, and keeps this many out), and a
+ *  whole list at its widest (eighteen bytes a name) still one write under the service's 4 KiB body (service.js
+ *  MAX_BODY_BYTES). */
 export const DECOR_HIDDEN_CAP = 200;
 export const decorBaseModelKey = (placement, model) => `m${placement}:${model}`;
 export const decorBaseFlatKey = (flat, archive, record) => `f${flat}:${archive}.${record}`;
