@@ -2,8 +2,8 @@
   {
     "name": "LA-SHADOW1-1-the-sun-snapped-at-the-origin-again",
     "file": "src/render/shadowPass.js",
-    "old": "      sunCascadeMatrices(f.eye, f.lightDir, this._sunVPNew, this._sunAnchor, k);",
-    "new": "      sunCascadeMatrices(f.eye, f.lightDir, this._sunVPNew, undefined, k);",
+    "old": "      sunCascadeMatrices(f.eye, sunDir, this._sunVPNew, this._sunAnchor, k);",
+    "new": "      sunCascadeMatrices(f.eye, sunDir, this._sunVPNew, undefined, k);",
     "tests": [
       "test/render/la_shadow.test.js"
     ]

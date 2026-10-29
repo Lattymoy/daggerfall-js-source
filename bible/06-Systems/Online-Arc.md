@@ -10307,6 +10307,9 @@ home's alone - they are about other players.
   town to measure in - and the decorator refuses a piece off it (`placeOk`: "Outside your lot - keep it within the
   marked edge.", "That is inside your house...", "That is another building's ground."); the lot's edge is MARKED while
   a piece is placed (four upright bands on the decal pass, `lot`).
+- **IC-BACKYARD** (2026-10-29): an Imperial City house's lot is the court behind it, turned with the house and opened
+  from its door; a house with no court of its own keeps its door's box (AUDIT TAMRIEL-WIDE A1 and II W1).
+  `03-World/Arena-Provinces.md` IC-BACKYARD.
 - **The service** (`decor.js` over `migrations/0039_home_yard.sql` - `home_decor.yard`): placed with `yard`, under
   its own cap and law (a yard piece moved stays a yard's); the room's list and cap are the room's own; the town's yards
   are read together at `/v1/homes/yards`, by any session.
