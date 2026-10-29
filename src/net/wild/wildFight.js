@@ -25,7 +25,7 @@
 
 /** How long a body's offer stands at the killer's side, ms - the referee's pick window (net/wild/wildRef.js WILD_REF.pickMs,
  *  pinned equal): a pick past it reaches a fall already signed without one. */
-export const WILD_BODY_MS = 60_000;
+export const WILD_BODY_MS = 10_000;
 
 /**
  * @param {object} o

@@ -42,7 +42,7 @@ import { pvpFlagCanDrop, pvpAggroLeft, pvpYoung, PVP_FLAG } from '../../systems/
 import { isVillain, villainAfter, villainKillPoints, VILLAIN } from '../../systems/wild/villainLaw.js';   // PVP-VILLAIN
 
 /** The zone referee's own numbers: how long a bar carried from another room stands (`mendMs` - SHARED-HEALTH: no longer a
- *  heal; the name is kept for its pins and the client's readout, which hides a fight this quiet); how long a killer has to pick a worn piece before the fall is signed without one; the party's truce
+ *  heal; the name is kept for its pins and the client's readout, which hides a fight this quiet); how long a fall waits to be signed (PVP-REWARD: no pick - the service rolls the piece; the wait lets the fallen's first dead frame lay its body); the party's truce
  *  (systems/wild/wildZone.js WILD_PARTY_TRUCE_MS, pinned equal - the hub holds it for the relay); how long a fallen stays down
  *  before its word that it stands in the zone raises it (the death screen's WILD_DEATH_HOLD_S, pinned equal - AUDIT INT9:
  *  it rose on its next word, where it fell, whole), and how long one away from the zone that long comes back whole; how
@@ -50,7 +50,7 @@ import { isVillain, villainAfter, villainKillPoints, VILLAIN } from '../../syste
  *  respawn or a reconnect left its place stale for good - now it is believed, and the jumper waits); the most fighters
  *  and falls a room keeps; AUDIT FOE-KEEPS E2: how recent a fair player's blow names them the killer of a death the
  *  referee did not see (systems/wild/wildZone.js WILD_KILL_CREDIT_MS, pinned equal - "the player who brought you down"). */
-export const WILD_REF = Object.freeze({ mendMs: 30_000, pickMs: 60_000, truceMs: 10 * 60_000, riseMs: 120_000, jumpMs: 2_000, fightersMax: 200, fallsMax: 64, creditMs: 10_000 });
+export const WILD_REF = Object.freeze({ mendMs: 30_000, pickMs: 10_000, truceMs: 10 * 60_000, riseMs: 120_000, jumpMs: 2_000, fightersMax: 200, fallsMax: 64, creditMs: 10_000 });
 
 /** ZONE-GRACE (2026-10-26, the owner chose "Entry/rise grace"): safe passage's length (the owner's sixty seconds), and what
  *  an entry asks first - away from the zone this long, and no blow landed by or on the fighter this long. */

@@ -771,6 +771,8 @@ pvp.level30.warn,"到 {n} 級後，即使你的 PvP 旗幟關閉，其他玩家�
 pvp.potion.health,"{s} 秒後可再喝一瓶生命藥水。"
 pvp.potion.magicka,"{s} 秒後可再喝一瓶魔力藥水。"
 pvp.potion.other,"{s} 秒後可再喝一瓶同類藥水。"
+pvp.reward.gold,"對方的裝備全部投了保。你從一份保單中獲得 {n} 金幣。"
+pvp.reward.letter,"對方的裝備全部投了保。金幣太重，所以你獲得一張價值 {n} 金幣的信用狀。"
 pvp.rules.buff,"開啟 PvP 時無法對自己施放該法術。"
 pvp.rules.dispel,"開啟 PvP 期間，你的增益效果結束。"
 pvp.rules.levitate,"開啟 PvP 時無法懸浮。"

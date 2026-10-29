@@ -46,7 +46,7 @@ async function dies(held) {
   const R = await seatRealm(svc.env, ria.secret, 'Riadne', JSON.parse(JSON.stringify(snapshotPlayer(e))));
   if (held) svc.env.DB._raw.prepare('UPDATE realm_characters SET held = ? WHERE id = ?').run(held, R.id);
   const receipt = await mintWildReceipt({ f: ria.id, c: R.id, k: bo.id, r: '0123456789b0', w: -1 }, svc.gatePriv, { subtle: globalThis.crypto.subtle, nowS: Math.floor(Date.now() / 1000) });
-  const res = await quiet(() => svc.call('/v1/wild/fall', { room: CELL, receipt, realm: R.at() }, ria.secret));
+  const res = await quiet(() => svc.call('/v1/wild/fall', { room: CELL, receipt, realm: R.at(), letters: 1 }, ria.secret));   // PIN MOVED (PVP-REWARD): the bag drops nothing - the letters pay their tenth
   assert.equal(res.status, 200, JSON.stringify(res.body));
   const d = res.body;
   // the fallen's game, as world.js wildDropTaken: what the service took out of the pack, then the death screen's word
@@ -63,22 +63,23 @@ test('BURNT-SAID THE HELD: a held record\'s death in the zone takes both letters
   const { d, e, out, lines } = await dies('law');
   assert.equal(d.burnt, true, 'the service burns a held record\'s drop');
   assert.equal(d.order, null, 'and gives the room nothing');
-  assert.equal(letters(out).length, 2, 'both letters left the pack');
-  assert.equal(letters(e.items).length, 0);
+  // PIN MOVED (PVP-REWARD): the bag drops nothing - each letter pays its tenth and stays (LETTERS-TENTH)
+  assert.equal(letters(out).length, 0, 'no letter left the pack');
+  assert.deepEqual(letters(e.items).map((it) => it.value), [585_000, 630_000], 'each lowered by its tenth');
   assert.deepEqual(lines, [
     WILD_TEXT.deathPvp('Borin'),
     WILD_TEXT.deathBurnt(d.items.length),
-    '2 letters of credit worth 1,350,000 gold left your wallet.',
+    'A tenth of your letters of credit, 135,000 gold, lies where you fell.',
     WILD_TEXT.deathHold,
   ]);
-  assert.match(lines[1], /^3 things you carried were lost where you fell\. This character's trading is frozen, so nothing is left for anyone to take\.$/);
+  assert.match(lines[1], /^1 thing you carried was lost where you fell\. This character's trading is frozen, so nothing is left for anyone to take\.$/);
 });
 
 test('BURNT-SAID THE CLEAN: a record nobody holds lays its drop as ever - the screen says it lies where it fell, and now names the letters among it (mutants: the letters unsaid)', async () => {
   const { d, lines } = await dies(null);
   assert.equal(d.burnt, undefined);
   assert.ok(d.order, 'the room is given its order');
-  assert.deepEqual(lines, [WILD_TEXT.deathPvp('Borin'), WILD_TEXT.deathDrop(d.items.length), '2 letters of credit worth 1,350,000 gold left your wallet.', WILD_TEXT.deathHold]);
+  assert.deepEqual(lines, [WILD_TEXT.deathPvp('Borin'), WILD_TEXT.deathDrop(d.items.length), 'A tenth of your letters of credit, 135,000 gold, lies where you fell.', WILD_TEXT.deathHold]);   // PIN MOVED (PVP-REWARD): the letters' tenth, the bag kept
 });
 
 test('BURNT-SAID THE WORDS AND THE HOST: one letter, none, a forged worth; world.js hands the answer\'s burnt count and the pieces taken out, and a fall that found me risen says the held case its own way (mutants: the host unwired; the risen line the old one)', () => {

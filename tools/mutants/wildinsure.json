@@ -58,8 +58,8 @@
   {
     "name": "WILD-INSURE-the-policies-unread",
     "file": "server-account/src/wild.js",
-    "old": "const insured = wildInsuredBy(policies.filter((p) => wildPolicyInForce(Number(p.at), fallAt)).map((p) => String(p.key)));",
-    "new": "const insured = wildInsuredBy([]);",
+    "old": "const insured = pvpInsuredFor(live.map((p) => String(p.key)), { villain: false });",
+    "new": "const insured = pvpInsuredFor([], { villain: false });",
     "tests": ["test/systems/wild/wildinsure.test.js"]
   },
   {

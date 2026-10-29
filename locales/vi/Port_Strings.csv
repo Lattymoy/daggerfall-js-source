@@ -771,6 +771,8 @@ pvp.level30.warn,"Ở cấp {n}, người chơi khác có thể tấn công và 
 pvp.potion.health,"Bạn có thể uống thêm một bình máu sau {s} giây."
 pvp.potion.magicka,"Bạn có thể uống thêm một bình ma lực sau {s} giây."
 pvp.potion.other,"Bạn có thể uống thêm một bình loại này sau {s} giây."
+pvp.reward.gold,"Toàn bộ trang bị của họ đều được bảo hiểm. Bạn nhận {n} vàng từ một hợp đồng bảo hiểm."
+pvp.reward.letter,"Toàn bộ trang bị của họ đều được bảo hiểm. Tiền xu quá nặng nên bạn nhận một thư tín dụng trị giá {n} vàng."
 pvp.rules.buff,"Bạn không thể dùng phép đó lên bản thân khi bật PvP."
 pvp.rules.dispel,"Các hiệu ứng cường hóa của bạn kết thúc khi PvP bật."
 pvp.rules.levitate,"Bạn không thể bay lơ lửng khi bật PvP."

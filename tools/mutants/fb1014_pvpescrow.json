@@ -38,7 +38,7 @@
   {
     "name": "ESCROW-the-collect-never-commits",
     "file": "server-account/src/wild.js",
-    "old": "  return endEscrow(ctx, player.id, side.at, row, 'collected');",
+    "old": "  return endEscrow(ctx, player.id, side.at, row, 'collected', body?.free);",
     "new": "  return { r: row.r, item: parse(row.rec) };",
     "tests": [
       "test/systems/fb1014_pvpescrow.test.js"
@@ -110,7 +110,7 @@
   {
     "name": "ESCROW-the-escrows-never-listed",
     "file": "server-account/src/wild.js",
-    "old": "  return { escrows: results.map(escrowView) };",
+    "old": "  return { escrows: results.filter((e) => !pvpPolicyGoldOf(parse(e.rec))).map(escrowView) };   // PVP-REWARD: a policy's gold is not the fallen's",
     "new": "  return { escrows: [] };",
     "tests": [
       "test/systems/fb1014_pvpescrow.test.js"
@@ -129,8 +129,8 @@
   {
     "name": "ESCROW-the-held-records-piece-taken",
     "file": "server-account/src/wild.js",
-    "old": "  if (burnt) { w = -1; wt = null; }",
-    "new": "  if (false) { w = -1; wt = null; }",
+    "old": "  const roll = burnt ? null : pvpRewardRoll(",
+    "new": "  const roll = false ? null : pvpRewardRoll(",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]

@@ -2902,6 +2902,8 @@ pvp.level30.warn,"Od poziomu {n} inni gracze mogą cię zaatakować i zabić w s
 pvp.potion.health,"Kolejną miksturę zdrowia wypijesz za {s} s."
 pvp.potion.magicka,"Kolejną miksturę magii wypijesz za {s} s."
 pvp.potion.other,"Kolejną miksturę tego rodzaju wypijesz za {s} s."
+pvp.reward.gold,"Cały jego ekwipunek był ubezpieczony. Zabierasz {n} sztuk złota z jednej polisy."
+pvp.reward.letter,"Cały jego ekwipunek był ubezpieczony. Monety były za ciężkie, więc zabierasz list kredytowy na {n} sztuk złota."
 pvp.rules.buff,"Z włączonym PvP nie możesz rzucić tego na siebie."
 pvp.rules.dispel,"Twoje wzmocnienia kończą się, gdy PvP jest włączone."
 pvp.rules.levitate,"Z włączonym PvP nie możesz lewitować."

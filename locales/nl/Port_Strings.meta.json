@@ -11104,6 +11104,16 @@
   "tr": "e5e8271c9cdf",
   "by": "claude-in-session"
  },
+ "pvp.reward.gold": {
+  "en": "77f1b3e03828",
+  "tr": "914d8ffbb268",
+  "by": "claude-in-session"
+ },
+ "pvp.reward.letter": {
+  "en": "fc09df17c400",
+  "tr": "830c3c6d3ee8",
+  "by": "claude-in-session"
+ },
  "pvp.rules.buff": {
   "en": "9f3a9d316466",
   "tr": "2d0e6fd53812",

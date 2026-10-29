@@ -74,6 +74,8 @@ async function stand({ guildmate = false } = {}) {
   // her pack, as the game makes it, laid as her record
   const fallen = { name: 'Riadne', gender: 'female', level: 9, items: [], wagonItems: [], goldPieces: 400 };
   assignStartingGear(fallen, { classIndex: 16, rolls: seeded(3) });
+  // PIN MOVED (PVP-REWARD): the service rolls the killer's piece over her worn gear - the longsword her one worn piece
+  for (const it of [...fallen.items]) if (isEquipped(it)) unequipItem(fallen, it);
   const sword = applyRarity(createWeapon(LONGSWORD, STEEL, seeded(7)), 'magic', seeded(8));
   fallen.items.push(sword);
   assert.notEqual(equipItem(fallen, sword), null);
@@ -403,6 +405,6 @@ test('THE HANDOFF\'S DOORS: a tab asks the escrow only for a room that signs col
   assert.ok(w.includes('const held = d.wi === 0 && !!d.escrow?.r;') && w.includes('setWildDeath({ killer: dd.killer, kill: true, dropped: d.order ? n : 0, claimed, held, '), 'my death screen says my piece is held');   // PIN MOVED (AUDIT FOE-KEEPS H1): my take is a kill   // PIN MOVED (BURNT-SAID, FIELD BUGS 2026-10-18b): a held record's drop and the letters said beside it (test/systems/fb1018b_burntsaid.test.js)
   assert.ok(w.includes('if (held) host.wildEscrow.held(d.escrow, { killer: dd?.killer ?? null, name: claimed });'), 'and my tab watches it');   // PIN MOVED (HOST-SPLIT)
   assert.ok(eh.includes("call: (at) => wildAccount.reclaim({ r, realm: at }), apply: (a) => wildEscrowBack(r, a?.data ?? null)"), 'taken back as an act on my record');
-  assert.ok(eh.includes("call: (at) => wildAccount.collect({ receipt: c.cr, realm: at }), apply: (a) => wildCollected(a?.data ?? null)"), 'collected as an act on mine');
+  assert.ok(eh.includes("call: (at) => wildAccount.collect({ receipt: c.cr, realm: at, free: entityMaxEncumbrance(playerEntity) - carriedWeight(playerEntity) }), apply: (a) => wildCollected(a?.data ?? null)"), 'collected as an act on mine');   // PIN MOVED (PVP-REWARD): with the weight a policy's gold must fit
   assert.ok(eh.includes('return { held: wildEscrowHeld, collectHeard: wildCollectHeard, frame: wildEscrowFrame };'), 'the module hands back its three doors');
 }));

@@ -6378,6 +6378,8 @@ pvp.level30.warn,"På nivå {n} kan andre spillere angripe og drepe deg i PvP-so
 pvp.potion.health,"Du kan drikke en ny helseeliksir om {s} s."
 pvp.potion.magicka,"Du kan drikke en ny magikaeliksir om {s} s."
 pvp.potion.other,"Du kan drikke en ny eliksir av denne typen om {s} s."
+pvp.reward.gold,"Alt utstyret deres var forsikret. Du tar {n} gull fra én forsikring."
+pvp.reward.letter,"Alt utstyret deres var forsikret. Myntene var for tunge, så du tar et kredittbrev på {n} gull."
 pvp.rules.buff,"Du kan ikke kaste det på deg selv med PvP på."
 pvp.rules.dispel,"Styrkingene dine slutter mens PvP er på."
 pvp.rules.levitate,"Du kan ikke sveve med PvP på."

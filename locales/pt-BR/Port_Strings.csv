@@ -6378,6 +6378,8 @@ pvp.level30.warn,"No nível {n}, outros jogadores podem atacar e matar você nas
 pvp.potion.health,"Você pode beber outra poção de vida em {s} s."
 pvp.potion.magicka,"Você pode beber outra poção de magia em {s} s."
 pvp.potion.other,"Você pode beber outra poção deste tipo em {s} s."
+pvp.reward.gold,"Todo o equipamento dele estava segurado. Você pega {n} de ouro de uma apólice."
+pvp.reward.letter,"Todo o equipamento dele estava segurado. As moedas eram pesadas demais, então você pega uma carta de crédito de {n} de ouro."
 pvp.rules.buff,"Você não pode lançar isso em si mesmo com o PvP ativado."
 pvp.rules.dispel,"Seus bônus acabam enquanto o PvP está ativado."
 pvp.rules.levitate,"Você não pode levitar com o PvP ativado."

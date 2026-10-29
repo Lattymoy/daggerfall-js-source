@@ -2887,6 +2887,8 @@ pvp.level30.warn,"Tasolla {n} muut pelaajat voivat hyökätä kimppuusi ja tappa
 pvp.potion.health,"Voit juoda uuden terveysjuoman {s} s kuluttua."
 pvp.potion.magicka,"Voit juoda uuden magiajuoman {s} s kuluttua."
 pvp.potion.other,"Voit juoda uuden tämänlaisen juoman {s} s kuluttua."
+pvp.reward.gold,"Kaikki heidän varusteensa olivat vakuutettuja. Otat {n} kultaa yhdestä vakuutuksesta."
+pvp.reward.letter,"Kaikki heidän varusteensa olivat vakuutettuja. Kolikot olivat liian painavia, joten otat {n} kullan luottokirjeen."
 pvp.rules.buff,"Et voi loitsia sitä itseesi PvP päällä."
 pvp.rules.dispel,"Vahvistuksesi päättyvät, kun PvP on päällä."
 pvp.rules.levitate,"Et voi leijua PvP päällä."

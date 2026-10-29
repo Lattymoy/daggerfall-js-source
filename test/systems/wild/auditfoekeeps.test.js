@@ -279,7 +279,7 @@ test('AUDIT FOE-KEEPS LETTERS-TENTH THROUGH THE SERVICE: the fallen\'s own ask w
   const o = await stand();
   const od = (await o.fall({ receipt: await o.receipt(), realm: o.R.at(), packs: 1 })).body;
   assert.equal(od.gold.letters, undefined);
-  assert.deepEqual(od.took.map((x) => x.u), ['00000000000000c1'], 'the letter dropped whole, as that game would apply');
+  assert.deepEqual([od.took, o.rec().items.map((it) => it.value)], [[], [50_000]], 'the letter kept whole - the bag drops nothing (PIN MOVED, PVP-REWARD: it dropped whole, as that game would apply)');
   // the killer's seizure past the grace
   const k = await stand();
   const sz = await k.fall({ receipt: await k.receipt({ nowS: nowS() - WILD_FALL_GRACE_S - 1 }) }, k.bo);

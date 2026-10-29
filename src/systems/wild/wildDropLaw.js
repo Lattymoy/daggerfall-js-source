@@ -177,13 +177,13 @@ const dropWorth = (/** @type {any} */ it) => { const l = liquidWorthOf(it); retu
  * policies are spent: one on a piece no pick named, in a hall that searches no body or past the remains' bound, stays.
  * AUDIT FOE-KEEPS LETTERS-TENTH: `letters` true (the fallen's word, WILD_FALL_LETTERS; a seizure's) - each letter of
  * credit in the bag pays a tenth of its worth into the same pile (`gold.letters`, by its id) and stays where it lies;
- * false, the letters drop whole as any piece (LETTERS-DROP), for a game from before the word.
+ * false, the letters drop whole as any piece (LETTERS-DROP), for a game from before the word. PVP-REWARD: `bag` false, none.
  * @param {any} entity @param {number} [w] @param {(item: any) => boolean} [keep] @param {number[] | null} [wt]
- * @param {{ letters?: boolean, insured?: (item: any) => boolean }} [opts]
+ * @param {{ letters?: boolean, insured?: (item: any) => boolean, bag?: boolean }} [opts]
  */
-export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { letters = false, insured = UNINSURED } = {}) {
+export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { letters = false, insured = UNINSURED, bag: drops = true } = {}) {
   /** @type {string[]} AUDIT PVP-EASE L1-3: the policies this death spends - what it would have taken, kept */
-  const saved = insured === UNINSURED ? [] : wildSaved(entity, w, keep, wt, letters, insured);
+  const saved = insured === UNINSURED ? [] : wildSaved(entity, w, keep, wt, letters, insured, drops);
   const bag = Array.isArray(entity?.items) ? entity.items : [];
   const lit = Number.isSafeInteger(entity?.lightSourceIndex) && entity.lightSourceIndex >= 0 ? bag[entity.lightSourceIndex] : undefined;
   const held = (/** @type {any} */ it) => keep(it) || insured(it);   // WILD-INSURE: a policy keeps as the ledger does
@@ -207,7 +207,7 @@ export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { l
   const aside = bag.map((it, i) => (held(it) || (letters && shareLetter(it)) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null)).filter((x) => x !== null);
   for (let n = aside.length - 1; n >= 0; n--) bag.splice(/** @type {any} */ (aside[n])[0], 1);
   /** @type {[any, string][]} */
-  const drop = takeWildDrop(bag).map((it) => /** @type {[any, string]} */ ([it, 'bag']));
+  const drop = (drops ? takeWildDrop(bag) : []).map((it) => /** @type {[any, string]} */ ([it, 'bag']));
   for (const [i, it] of /** @type {[number, any][]} */ (aside)) bag.splice(Math.min(i, bag.length), 0, it);
   const worth = new Map(drop.map(([it]) => [it, dropWorth(it)]));
   drop.sort((a, b) => worth.get(b[0]) - worth.get(a[0]));   // stable: equal worth keeps the pack's order
@@ -226,9 +226,9 @@ export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { l
 
 /** AUDIT PVP-EASE L1-3: the insured pieces a death would have taken without its policies - takeWildDeath run on a copy
  *  of `entity` with none, its taken pieces' ledger keys that a policy names. @returns {string[]} */
-function wildSaved(/** @type {any} */ entity, /** @type {number} */ w, /** @type {(item: any) => boolean} */ keep, /** @type {number[] | null} */ wt, /** @type {boolean} */ letters, /** @type {(item: any) => boolean} */ insured) {
+function wildSaved(/** @type {any} */ entity, /** @type {number} */ w, /** @type {(item: any) => boolean} */ keep, /** @type {number[] | null} */ wt, /** @type {boolean} */ letters, /** @type {(item: any) => boolean} */ insured, /** @type {boolean} */ bag) {
   const copy = { items: JSON.parse(JSON.stringify(Array.isArray(entity?.items) ? entity.items : [])), goldPieces: entity?.goldPieces ?? 0 };
-  const would = takeWildDeath(copy, w, keep, wt, { letters });
+  const would = takeWildDeath(copy, w, keep, wt, { letters, bag });
   return [...new Set(would.taken.filter((it) => insured(it)).map(ledgerKeyOf).filter((k) => k != null))];
 }
 

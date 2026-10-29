@@ -2220,6 +2220,8 @@ pvp.level30.warn,"Vanaf niveau {n} kunnen andere spelers je aanvallen en doden i
 pvp.potion.health,"Je kunt over {s} s nog een gezondheidsdrankje drinken."
 pvp.potion.magicka,"Je kunt over {s} s nog een magickadrankje drinken."
 pvp.potion.other,"Je kunt over {s} s nog een drankje van deze soort drinken."
+pvp.reward.gold,"Al hun uitrusting was verzekerd. Je neemt {n} goud uit één polis."
+pvp.reward.letter,"Al hun uitrusting was verzekerd. De munten waren te zwaar, dus je neemt een kredietbrief van {n} goud."
 pvp.rules.buff,"Met PvP aan kun je dat niet op jezelf uitspreken."
 pvp.rules.dispel,"Je versterkingen eindigen zolang PvP aan staat."
 pvp.rules.levitate,"Met PvP aan kun je niet zweven."

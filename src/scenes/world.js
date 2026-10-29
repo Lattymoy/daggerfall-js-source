@@ -997,7 +997,7 @@ import { GREATER_GIANT_CALL, GREATER_GIANT_CALL_AT, noteWildBlow } from '../syst
 import { wildRing, wildRingAt, wildRingName, wildRingBonus, wildZoneKind, zoneWord, zoneRingName, setWildMask, wildMask, WILD_RINGS, wildJourney, WILD_GIANT, WILD_GIANT_CHANCE, WILD_GIANT_MAX, WILD_STRANGER_M, WILD_STRANGER_SEE_M, WILD_STRANGER_SLOW_M, WILD_STRANGER_RGBA } from '../systems/wild/wildZone.js';   // WILD2: the four rings; WILD3: the journeys
 import { etherWildRingAt, etherRisePort, etherRiseSite, etherInPeace, ETHER_KIND, ETHER_WILD_TEXT } from '../systems/wild/etherWild.js';   // ETHER-WILD: the Eltheric Ocean past Veilhaven's peace, an open PvP zone
 import { createSeaVentures, seaStormShown } from './seaVenturesHost.js';   // SEA VENTURES: the sea's vaults, its events, its bounties and boards - wired here, held there
-import { wornOffer, wildRecord, wildChunks, wildSpawnSpot, wildRisePicks } from '../systems/wild/wildDeath.js';   // WILD1: the worn offer, the deposit's chunks, the rise
+import { wildChunks, wildSpawnSpot, wildRisePicks } from '../systems/wild/wildDeath.js';   // WILD1: the deposit's chunks, the rise
 import { readWildReceipt, wildFallGraceS } from '../net/wild/wildReceipt.js';   // INT9: the relay's fall, carried to the service
 import { WILD_REF, wildKin, sameGuild } from '../net/wild/wildRef.js';   // INT9: the zone referee's numbers (its mend, for the HUD); MAC (2026-10-14): and its kin, one law with the referee's
 import { createWildFight } from '../net/wild/wildFight.js';
@@ -22285,10 +22285,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // AUDIT INT9: a cell keeps my body's socket while it lies; a hall's or a building's room keeps it only until my deposit
     // has gone (its fall is signed at once), or a moment - a ghost there held the room's world as its host
     _wildGhostEndAt = isCellRoom(online.room) ? null : Date.now() + WILD_GHOST_HOLD_MS;
-    if (fell) {
-      const worn = isCellRoom(online.room) ? wornOffer(playerEntity.items) : [];   // AUDIT PVP-EASE L2-2: an insured piece offered as any - a pick of one lands on nothing, its policy spent
-      if (worn.length) wildFight.offerWorn(fell.by, fell.r, worn.map(wildRecord));
-    }
+    // PVP-REWARD: no worn offer - the account service rolls the killer's piece (systems/wild/pvpReward.js)
     return true;
   };
   /** My body is gone (the rise, a party mate's Resurrect, the game left): the cell let go. */

@@ -227,3 +227,27 @@ their chance off it, never bouncing (`pvpGuard.js:"const turned = (100 - pvpRefl
 reports its pool's share of my health, 10 to 25 (`pvpGuard.js:"export function pvpShieldShare(entity) {"`), and the
 referee takes that part of PVP-SHIELD's 25% and 35% off (the `vit` report's `sh`). Speed is Fortify Speed on Fortify's
 numbers. Inside a zone dungeon the bar is off. A departure: DFU has no PvP.
+
+## PVP-REWARD: one random piece, or one policy's gold
+
+"they only get a piece that isnt insured", "random roll on uninsure peices": a kill in the open zone gives its killer one
+worn piece, rolled by the account service on the fallen's record, never chosen and never rolled on a game
+(`pvpReward.js:"export function pvpRewardRoll(items, { insured = () => false, keep = () => false, pick }) {"`, called at
+`server-account/src/wild.js:"const roll = burnt ? null : pvpRewardRoll(stored.items, { insured, keep, pick: (n) => pvpRollIndex(ctx.rand, n) });"`).
+The roll skips a piece a policy in force or a ledger hold keeps. The pick and the worn offer are gone: the relay signs
+a fall after `wildRef.js:"pickMs: 10_000"`, so the fallen's first dead frame lays its body first, and the service reads
+no `w`. The piece reaches the killer through the escrow and the collect. A hall's kill rolls too.
+
+"random policy gold": when every worn piece is insured, the killer gets the premium of one random policy, and that
+policy is spent; the piece stays. The gold lies in the remains as the killer's alone, held in escrow (a room that signs no
+collect pays none and spends none). It is never the fallen's: no reclaim, and no listing for her tab. "if gold will
+ovrweight a player u get a letter of credit": the killer's collect says its free weight (`free`), and the service pays
+coin where it fits, else a letter of credit for the whole - the trade window's own rule
+(`pvpReward.js:"export const pvpGoldPaid ="`). A tab that says no weight gets the letter.
+
+"get rid of the bag drop": no bag piece drops at a kill
+(`server-account/src/wild.js:"drop = takeWildDeath(save, w, keep, wt, { letters, insured, bag: false });"`). The purse's
+tenth and the letters' tenth still go to the remains; the cart and the packs stay storage. A villain has no insurance:
+`pvpReward.js:"export const pvpInsuredFor ="` takes `villain`, false until the villain meter passes it. "Insurance cost 20%": a
+premium stays a fifth of `itemWorth` (`wildInsureLaw.js:"export const WILD_INSURE_DIVISOR = 5;"`), which counts the
+piece's price and its lines' worth. The service is acct211. A departure: DFU has no PvP.

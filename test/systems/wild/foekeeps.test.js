@@ -83,7 +83,7 @@ test('FOE-KEEPS THE WORDS (wildZone.js WILD_TEXT, etherWild.js ETHER_WILD_TEXT, 
 test('FOE-KEEPS THE HOST (world.js wildDeathBegin, wildTakeDrop, the online respawn): a death to a foe asks no drop - the first dead frame shows my worn pieces to a killer and asks nothing else, and the drop is asked against a receipt alone; the rise pays the usual tenth unless a player\'s kill (mutants: the drop asked at a foe\'s death; the tenth skipped at any death in the zone; a drop asked with no receipt)', () => {
   const w = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT): wildTakeDrop in scenes/wildDropHost.js, read with its host
   const begin = /const wildDeathBegin = \(\) => \{[\s\S]*?\n {2}\};/.exec(w)?.[0] ?? '';
-  assert.ok(begin.includes('if (worn.length) wildFight.offerWorn(fell.by, fell.r, worn.map(wildRecord));'), 'the fixture: the first dead frame');
+  assert.ok(begin.includes('// PVP-REWARD: no worn offer - the account service rolls the killer\'s piece (systems/wild/pvpReward.js)'), 'the fixture: the first dead frame');   // PIN MOVED (PVP-REWARD): it offered my worn pieces
   assert.ok(!begin.includes('wildTakeDrop('), 'no drop asked at the death itself - a kill\'s waits on the relay\'s receipt');
   assert.match(w, /const wildRise = !!wildDeath\(\) \|\| wildDeathKill\(\), wildKilled = wildDeathKill\(\);[^\n]*\n\s*wildGhostEnd\(\);/, 'the kill read before the ghost ends');   // PIN MOVED (AUDIT FOE-KEEPS H1): the referee's word, never the screen's name
   assert.match(w, /const goldLost = wildKilled \|\| madeRuleHere\('deathPenalty'\) === 'none' \? 0 : applyDeathPenalty\(playerEntity\);/, 'a kill\'s tenth is in the remains; any other death pays it');
