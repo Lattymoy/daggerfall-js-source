@@ -128,7 +128,7 @@
   {
     "name": "UNQUIET-title-unsaid",
     "file": "src/systems/foeTitle.js",
-    "old": "return entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && !entity.worldBoss ? `Unquiet ${traited}` : traited;",
+    "old": "return entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && entity.eventFoe !== true ? `Unquiet ${traited}` : traited;",
     "new": "return traited;",
     "tests": [
       "test/systems/revenant/unquiet.test.js"

@@ -72,11 +72,11 @@ function client(id, { clock = { t: T.omenAt + 60_000 } } = {}) {
   p.setNet(netFor(id));
   const wod = wodLaw(id, p, () => clock.t);
   p.setOnSites((from, sites) => wod.wodPeerSites(from, sites), wod.wodSprungList);
-  const c = { id, pool: p, wod, clock, words: [], said: [], near: [] };
+  const c = { id, pool: p, wod, clock, words: [], said: [], near: [], asked: [] };
   c.host = createRiteHost({
     now: () => clock.t, omen: () => ({ site: SITE }), pixelTranslation: () => [0, 0, 0], groundAt: () => 0, feet: () => feetAt, online: () => true,
     foes: {
-      spawn: (career, [x, z], { yaw, site, transient }) => p.spawnFoe(career, [x, 0, z], { yaw, placed: true, groundAlign: { hitDist: 0.2 }, site, transient }),
+      spawn: (career, [x, z], o) => { c.asked.push(o); return p.spawnFoe(career, [x, 0, z], { ...o, placed: true, groundAlign: { hitDist: 0.2 } }); },
       list: () => p.foes, drop: (s) => p.dropSiteFoes(s), remove: (f) => p.removeFoe(f), reclaim: (s) => p.reclaimSite(s), campId: () => p.newCampId(),
     },
     peerSprang: (s) => wod.peer.has(s), peerHeldAgo: (s) => wod.heldAgo(s), forgetPeer: (s) => wod.forgetPeer(s),
@@ -226,6 +226,24 @@ test('AUDIT WB12d (C3): taken over, the faithful stay the rite\'s - where they s
   const heirs = sent[0].f.filter((r) => r.e).map((r) => r.e);
   assert.ok(heirs.length === FAITHFUL.length && heirs.every((e) => e === 'near-0002'), 'to the one within reach of them');
   assert.ok(B.pool.foes.includes(walker) && !walker.dead, 'a wanderer goes with me');
+  fresh();
+});
+
+test('STAR-MASTER-FLED (AUDIT FB1029f STAR F5) THE FAITHFUL ARE THE RITE\'S OWN: each asked of the pool as an event\'s own (`eventFoe` - no promotion draws the Unquiet mark on one), and one taken over made one too (mutants: the rite\'s stand unsaid; riteFoe\'s stamp)', async () => {
+  fresh();
+  const clock = { t: T.omenAt + 60_000 };
+  const A = client('aaaa-0001', { clock }), B = client('bbbb-0002', { clock });
+  A.at(50); await A.beat();
+  assert.equal(A.asked.length, FAITHFUL.length);
+  assert.ok(A.asked.every((o) => o.eventFoe === true), 'asked as the rite\'s own');
+  assert.ok(A.own().every((f) => f.entity.eventFoe === true));
+  await A.tell(B);
+  const hand = A.pool.handOverFrame((f) => (f.site === SITE_ID ? 'bbbb-0002' : null));
+  assert.equal(A.pool.dropOwnLive(), FAITHFUL.length);
+  B.pool.applyFoes('aaaa-0001', hand); await settle();
+  B.at(30); await B.beat();
+  assert.equal(B.own().length, FAITHFUL.length, 'B took them');
+  assert.ok(B.own().every((f) => f.entity.eventFoe === true), 'taken over: the rite\'s own too');
   fresh();
 });
 

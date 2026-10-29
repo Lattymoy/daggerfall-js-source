@@ -99,7 +99,7 @@ import { ADAPT_HOW, DESERT, deserterSplit, LOYALTY, movedLoyalty, ROUT, FESTER, 
 import { sanitizeGear, gearItems } from './revenantGear.js';   // RVN-GEAR: a sworn one's kit - its record's, read back; inventory as its pack is
 import { sanitizeErrand } from './revenantErrands.js';   // RVN-ERRAND: one abroad, read back
 import { rvnHeldStars, rvnLevelOf, rvnStarPoints, rvnLoyaltyMove, rvnXpOf } from './revenantStars.js';   // RVN-STARS: its sky and its level, read back; its loyalty's losses as its oath bears them
-import { setUnquietGate, isUnquiet } from './unquietMark.js';   // UNQUIET (section 46): the mark - who may rise
+import { setUnquietGate, isUnquiet, isEventFoe } from './unquietMark.js';   // UNQUIET (section 46): the mark - who may rise; STAR-MASTER-FLED: never an event's own
 import { BLOOD_DEEDS, deedRanks, sanitizeBlood, sanitizeTears, revenantCraft, craftPace, beginCraft, craftStep, endCraft, woundOf, withWound, sanitizeWounds, woundEffects, woundedEdge, ambitionOf, AMBITION, masteryFestersOn, plunderGold, hoardOf, DREAD, mayAscend, craftFleeWords, woundWords, ambitionRumor, HUNT, trailWarm, trailHours, sanitizeTrail, trailWords, omenWords, healsOn, trainLesson, trainedHow, trainedWords, nearestLair } from './revenantUnquiet.js';   // UNQUIET: born of flight, its craft, its wounds, its ambition, the Dread
 import { t } from '../textManager.js';   // AUDIT RVN D7: the new cards' kickers in the player's language
 import { tagHit, HIT_TAGS } from '../../ui/hitNumbers.js';   // RVN3: the "Weakness" word on my blow's number
@@ -515,7 +515,7 @@ export function revenantCandidate(entity, rec = null) {
   if (entity.retinueOf != null) return false;   // RVN6 (Feud-Arc.md 17): a band's follower is its master's, never one itself
   if (entity.wildFoe || entity.wildGiant) return false;   // PVPDUNGEONS (the owner: "No elite or any monster in the zone can be a revenant")
   if (entity.bout) return false;   // AUDIT ARENA-LADDER 2: a fighter on the sand is its bout's - an elite champion never flees it as a revenant, nor becomes one
-  if (entity.worldBoss) return false;   // STAR-MASTER-FLED (Field-Bugs-2026-10-29f): a world boss's fall is its event's - an escaped Starfall master held its star at "the master" until dawn
+  if (isEventFoe(entity)) return false;   // STAR-MASTER-FLED (Field-Bugs-2026-10-29f): an event's own foe's fall is its event's - an escaped Starfall master held its star at "the master" until dawn
   const special = !!entity.revenant || !!entity.eliteFoe || (typeof entity.champion === 'string' && !!entity.champion);
   if (!special) return false;
   // UNQUIET (section 46): a foe not yet a revenant rises only with THE MARK (unquietMark.js), and only while fewer than
@@ -530,7 +530,7 @@ export function revenantCandidate(entity, rec = null) {
 // UNQUIET (section 46): THE MARK's gate (systems/revenant/unquietMark.js) - drawn only with the arc on, not held, room for
 // another (fewer than REVENANT_MAX living), and on a foe that could ever rise (revenantCandidate's own exclusions)
 setUnquietGate((entity) => revenantOn() && !revenantHeld() && huntingRevenants().length < REVENANT_MAX
-  && !!entity && !entity.revenant && entity.retinueOf == null && !entity.wildFoe && !entity.wildGiant && !entity.bout && !entity.worldBoss
+  && !!entity && !entity.revenant && entity.retinueOf == null && !entity.wildFoe && !entity.wildGiant && !entity.bout && !isEventFoe(entity)
   && (entity.level | 0) >= REVENANT_MIN_LEVEL && entity.mobileType !== KNIGHT_CITY_WATCH && entity.team !== 'PlayerAlly' && entity.mobileTeam !== 'PlayerAlly');
 
 // ── the deeds ───────────────────────────────────────────────────────

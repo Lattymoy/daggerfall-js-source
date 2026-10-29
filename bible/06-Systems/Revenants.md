@@ -1763,11 +1763,24 @@ its band and the owner's sworn companions draw nothing here and offer the ray no
 (`net/gate/gateCrowd.js` `crowdKinHidden`; `11-Multiplayer/World-Bosses.md` section 21, CROWD-KIN). My own revenants
 are never hidden: they hunt me.
 
-## 51. A world boss is never one (STAR-MASTER-FLED, 2026-10-29)
+## 51. An event's own foe is never one (STAR-MASTER-FLED, 2026-10-29)
 
 A player's report: a Starfall's master, an Elite Daedra Lord, rolled the mark, ran at a blow, became their revenant,
-and the star waited on it at "the master" until dawn (`01-Overview/bugs/Field-Bugs-2026-10-29f.md`). A world boss's
-fall is its event's: `entity.worldBoss` (the Starfall's master, `scenes/starfall/starfallHost.js` masterOf) is no
-candidate (`revenant.js` revenantCandidate), the mark's gate never draws on one, and `unquietMark.js` isUnquiet and
-`foeTitle.js` never read one as marked - so it never breaks, routs nobody and rises from no deed, as the rite's faithful
-(U42). Pinned by `test/systems/revenant/auditunquiet.test.js` STAR-MASTER-FLED, through the real street pool too.
+and the star waited on it at "the master" until dawn (`01-Overview/bugs/Field-Bugs-2026-10-29f.md`). An event's own
+foe never rises: its fall is its event's. The Starfall's master, a staff event's mini boss and a rite's faithful carry
+`entity.eventFoe` from their stand - the pool stamps it before an elite's promotion draws the mark
+(`scenes/exteriorFoes.js` spawnFoe). One rule reads it, `unquietMark.js` isEventFoe: the mark's gate never draws on
+such a foe, `isUnquiet` and `revenant.js` revenantCandidate refuse it, and `foeTitle.js` reads the same flag, so no
+reader calls it "Unquiet" and no deed raises it. `worldBoss` stays the Starfall master's own mark, which cuts its
+finds and cards (`festivalFoes.js`, `cardSources.js`); a staff boss never carries it.
+
+AUDIT FB1029f STAR (2026-10-29) found the first fix's rule on `worldBoss` alone. The master was stamped at its landing,
+after its promotion had drawn the mark (F3); a staff event's boss still ran and rose (F4); a rite's Summoner wore
+"Unquiet" though only its record (`rec.riteRole`, U42) kept it from rising (F5). Each stand now stamps its own: the
+Starfall's (`scenes/starfall/starfallHost.js` stand, masterOf), the boss's (`systems/raidingParties.js` spawn asks
+`scenes/raidHost.js` standRaider for the boss, and `systems/eliteFoes.js` promoteStaffBoss), the faithful's
+(`scenes/riteHost.js` stand and riteFoe, through `scenes/world.js`'s deps whole). Pinned by
+`test/systems/revenant/auditunquiet.test.js` (the rule, the real street pool, F4, F5),
+`test/scenes/starfall/star5_host.test.js` (the field report through the real pool and host),
+`test/systems/staffevent_raid.test.js` and `test/net/gate/wb12d_rite_host.test.js`; mutants in
+`tools/mutants/audit_fb1029f_star.json`.

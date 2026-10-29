@@ -430,7 +430,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // CENTRE, and `hitDist` what AlignControllerToGround's ray found below
   // it (null: nothing within 3); the drop needs the capsule the sprite
   // sizes, so it lands once the sprite has.
-  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false, replacing = false, puppet = null, seq = null, level = null, placed = false, groundAlign = null, site = null, loose = false, transformY = null, team = null, transient = false, managed = false, questMarker = false, champion = undefined, revenant = null, eliteFoe = undefined, turned = false, band = true, zoneGiant = null, grantKind = null } = {}) {   // LOOT7: `champion` - a puppet's owner's word or a save's trait (null none); unsaid, an encounter's own roll
+  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false, replacing = false, puppet = null, seq = null, level = null, placed = false, groundAlign = null, site = null, loose = false, transformY = null, team = null, transient = false, managed = false, questMarker = false, champion = undefined, revenant = null, eliteFoe = undefined, turned = false, band = true, zoneGiant = null, grantKind = null, eventFoe = false } = {}) {   // LOOT7: `champion` - a puppet's owner's word or a save's trait (null none); unsaid, an encounter's own roll
     // WORLD6b: a puppet is not this cap's. AUDIT 68 review (R-scenes-loose-foe-squad-capped): nor is a `loose` stand -
     // CreateFoeSpawner's (a summoning punishment, RR's expulsion squad, a Rose's Daedroth) stands however many it is
     // told in one loop, and DFU caps none of them; the cap is the encounter rolls'
@@ -470,6 +470,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // frozen basics row (the STATIC table the ally-revert reads)
       // does not. Getting that wrong would ally every foe of the type.
       if (allied) { entity.team = 'PlayerAlly'; entity.mobileTeam = 'PlayerAlly'; }
+      if (eventFoe) entity.eventFoe = true;   // STAR-MASTER-FLED: an event's own foe (unquietMark.js isEventFoe), before any promotion draws the mark
       // ELITE FOES: one foe in twenty in the open world stands as an elite - my own foes only (a puppet's is its owner's
       // word, the record's `z`), never an ally, a quest's foe, a retype, a team a spawner set, or anything on a
       // location's ground. Off Math.random, not this pool's `rolls`, so the encounter's own dice are not moved.
