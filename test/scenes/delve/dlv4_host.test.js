@@ -173,6 +173,19 @@ test('DLV4 ONE WARD FOR WORDS, ACTS AND BLOWS: past the disc with a wall between
   G.host.destroy();
 });
 
+test('DLV4 MY FEET ARE MINE: the host keeps its own copy of the frame\'s feet - the motor\'s live Float32Array moves on after the frame, and a blow is judged where I stood in it (mutants: the motor\'s array kept)', async () => {
+  _resetForTests();
+  const D = dungeonOf(seedFor('wellsprings')), { host } = D, s = host.sites[0];
+  const feet = new Float32Array([s.x, s.y, s.z]);
+  for (let k = 0; k < HOLD_GATHER_MS + 200; k += 100) host.frame(0.1, feet);
+  await flush();
+  const hp0 = host.state()[0].hp[0];
+  feet[0] = s.x + 40;   // the motor moved on after the frame
+  assert.equal(host.hit(delveCrystalC(0, 0), 10, HIT_KINDS.Shaft), true, 'judged where I stood in the frame');
+  assert.equal(host.state()[0].hp[0], hp0 - 10);
+  host.destroy();
+});
+
 test('DLV4 THE VIGIL IN A ROOM: the relic is quarry its own foes hunt first while it runs; their blows on it take its light; the light gone, it rests a minute and wakes again to a step in (mutants: the mark unset; the relic hunted idle; the rest dropped)', async () => {
   _resetForTests();
   const D = dungeonOf(seedFor('vigil')), { host } = D, s = host.sites[0], feet = [s.x, s.y, s.z];

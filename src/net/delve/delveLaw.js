@@ -512,6 +512,9 @@ function weighStep(led, nowMs, ev) {
   if (led.ec - led.hs >= WEIGH_HOLD_MS) win(led, nowMs, ev);
 }
 
+/** A pose the law reads: three finite numbers, in any array a caller holds them in - the game's feet are a motor's
+ *  Float32Array (player/motor.js), and a NaN would walk past every reach (a comparison with it is false). */
+const posed = (p) => p != null && p.length >= 3 && Number.isFinite(p[0]) && Number.isFinite(p[1]) && Number.isFinite(p[2]);
 /** The pieces a blow can break: the Wellsprings' sources while they pour, the seals while they stand. Pure. */
 export function breakSpots(site, led) {
   if (site.kind === 'wellsprings') return springSpots(site, led.k);
@@ -532,7 +535,7 @@ export function foldDelveHit(led, site, acct, hit, ctx) {
   const ev = stepDelve(led, nowMs);
   if (led.p === DP.won || ev.some((e) => ENDS.includes(e.k))) return ev;
   const rec = led.a[acct];
-  if (!rec || !ctx.inWard || !Array.isArray(pose)) return ev;   // its word made its record: a blow from a stranger to the site is nothing
+  if (!rec || !ctx.inWard || !posed(pose)) return ev;   // its word made its record: a blow from a stranger to the site is nothing
   if (!((led.kind === 'wellsprings' && led.p === DP.spring) || (led.kind === 'seals' && led.p === DP.work))) return ev;
   const j = hit.j, q = Number.isInteger(j) ? breakSpots(site, led)[j] : null;
   if (!q || !(led.hp[j] > 0) || !Number.isFinite(hit.d) || !(hit.d > 0)) return ev;
@@ -564,7 +567,7 @@ export function foldDelveAct(led, site, acct, act, ctx) {
   if (led.p === DP.won || !ctx.party || !act || typeof act !== 'object' || !Number.isFinite(nowMs)) return [];
   const ev = stepDelve(led, nowMs);
   if (led.p === DP.won || ev.some((e) => ENDS.includes(e.k))) return ev;
-  if (!led.a[acct] || !Array.isArray(pose) || led.p !== DP.work) return ev;
+  if (!led.a[acct] || !posed(pose) || led.p !== DP.work) return ev;
   if (!ctx.inWard) { if (act.a === 'drop' || act.a === 'set') carriedOut(led, acct, ev); return ev; }   // a let-go needs no reach: out of the ward, the piece goes home (AUDIT DLV4 F2)
   if (led.kind === 'brazier') flameAct(led, site, acct, act, pose, nowMs, ev);
   else if (led.kind === 'weighing') weightAct(led, site, acct, act, pose, nowMs, ev);

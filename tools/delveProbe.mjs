@@ -44,16 +44,20 @@ for (let k = 0; k < 12; k++) {
   await page.keyboard.press('Space');
   await frames(3);
 }
-// a window the fight opens (a level gained) closes as a player would close it, said in the log
+// a window the fight opens (a level gained, the first blow's tutorial page) closes as a player would close it - a
+// tutorial page by a fresh press past its grace, any other by Escape - said in the log; one still open after that, or a
+// death, fails the probe: a game paused under a window is no measure of anything
 const closeWindows = async () => {
-  for (let k = 0; k < 6; k++) {
+  for (let k = 0; k < 12; k++) {
     const ov = JSON.parse(await page.evaluate(() => window.__overlay?.() ?? 'null') ?? 'null');
     if (!ov) return;
     console.log(`  a window: ${ov.kind ?? JSON.stringify(ov).slice(0, 80)}`);
+    if (ov.kind === 'DeathScreen') await fail('the character died - the probe heals it between its steps, and this one came between them');
     await page.waitForTimeout(700);
-    await page.keyboard.press('Escape');
+    await page.keyboard.press(ov.kind === 'TutorialBox' ? 'Space' : 'Escape');
     await frames(3);
   }
+  await fail('a window stayed open');
 };
 const say = () => page.evaluate(async () => (await import('/src/ui/midScreenText.js')).midScreenText.text);
 const state = () => page.evaluate(() => window.__delve()?.state() ?? null);
@@ -68,6 +72,10 @@ await page.evaluate(() => {
   h.frame = (...a) => { const t = performance.now(); f(...a); const ms = performance.now() - t; C.frame += ms; C.n++; C.max = Math.max(C.max, ms); };
   h.drawPass = (...a) => { const t = performance.now(); const r = d(...a); C.draw += performance.now() - t; return r; };
 });
+// THE CHARACTER KEPT WHOLE: the probe measures the encounters, not the bench character's life - healed every 50 ms in the
+// page (a level-1 character dies to a Wellsprings' pours between the probe's steps), said here so no reading forgets it
+await page.evaluate(() => { setInterval(() => { const p = window.__playerEntity; if (p && p.health > 0) p.health = p.maxHealth; }, 50); });
+console.log('(the character is kept whole by the probe)');
 const sites = await page.evaluate(() => window.__delve()?.sites ?? null);
 if (!sites) await fail('no encounter host on the context');
 console.log(`${region} / ${name}: ${sites.length} site(s)`);
@@ -108,9 +116,10 @@ for (const s of sites) {
     for (let k = 0; k < 40 && (await hand())?.sheathed; k++) { if (k === 0) await page.evaluate(() => window.__combat.toggleSheath()); await frames(5); }   // the game boots sheathed: drawn once, never put up again
     for (let k = 0; k < 40 && (await hand())?.cd > 0; k++) await frames(5);   // the equip countdown run out
     const was = await hand();
+    await heal();
     await page.evaluate(() => window.__combat.clickAttack());
-    await frames(24);
-    if (DEBUG) console.log(`  swing ${JSON.stringify(was)}: ${await page.evaluate(() => { const h = window.__delve(); const o = JSON.stringify({ hits: h.__hits.splice(0), pieces: h.breakables().map((q) => [q.c, q.feet, q.height, q.radius]), pos: window.__player.pos, eye: window.__player.eye }); return o; })}`);
+    await frames(6); await closeWindows(); await frames(18);   // the first blow opens its tutorial page mid-swing
+    if (DEBUG) console.log(`  swing ${JSON.stringify(was)}: ${await page.evaluate(() => { const h = window.__delve(); const o = JSON.stringify({ hits: h.__hits.splice(0), pieces: h.breakables().map((q) => [q.c, q.feet, q.height, q.radius]), pos: window.__player.pos, eye: window.__player.eye, ray: window.__ray?.() ?? null, near: JSON.parse(window.__foes()).filter((f) => !f.dead && f.pos && Math.hypot(f.pos[0] - window.__player.pos[0], f.pos[2] - window.__player.pos[2]) < 3).map((f) => [f.type, f.pos]) }); return o; })}`);
   };
   /** THE MEASURE (Delve-II.md section 5: "measured in the game before they ship"): the character's own damage a second on
    *  piece `j` - a swing pressed every frame for 150 frames, the game's own pace deciding when one starts. A frame's step

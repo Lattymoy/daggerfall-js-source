@@ -394,6 +394,20 @@ test('DLV4 A PIECE CARRIED OUT OF THE WARD goes home: a word or a let-go from ou
   assert.ok(say(lw, 'B', word(), T0 + 500 + 15_001).some((e) => e.k === 'back'), 'its carrier silent: home');
 });
 
+test('DLV4 A POSE IS THREE NUMBERS: the game\'s feet are a motor\'s Float32Array, and a blow or an act from one is read as any other; a pose with no number in it is no pose - a NaN walks past no reach (mutants: a typed array refused; the pose\'s numbers unread)', () => {
+  const s = site(), led = newDelveLedger(s, 'A', 3, T0);
+  say(led, 'A', word({ o: 1 }), T0); stepDelve(led, T0 + HOLD_GATHER_MS);
+  const q = springSpots(s, led.k)[0], hp0 = led.hp[0];
+  hit(led, s, 'A', 0, 5, T0 + HOLD_GATHER_MS + 1, { pose: new Float32Array(q) });
+  assert.equal(led.hp[0], hp0 - 5, 'the motor\'s own feet');
+  hit(led, s, 'A', 0, 5, T0 + HOLD_GATHER_MS + 300, { pose: [NaN, s.y, NaN] });
+  assert.equal(led.hp[0], hp0 - 5, 'a NaN pose: nothing');
+  const b = site({ kind: 'brazier' }), lb = newDelveLedger(b, 'A', 3, T0);
+  say(lb, 'A', word(), T0); say(lb, 'A', word(), T0 + PUZZLE_RISE_MS);
+  act(lb, b, 'A', 'take', -1, new Float32Array([b.x, b.y, b.z]), T0 + PUZZLE_RISE_MS + 10);
+  assert.equal(lb.fl, FLAME.carried, 'an act from the motor\'s feet');
+});
+
 test('DLV4 THE SCREEN\'S STATE BY KIND: each kind says its own pieces, no account named; the Hold\'s shape untouched (mutants: a kind\'s field missing; the carrier named)', () => {
   const W = newDelveLedger(site(), 'acct-1', 3, T0);
   say(W, 'acct-1', word({ o: 1 }), T0); stepDelve(W, T0 + HOLD_GATHER_MS);

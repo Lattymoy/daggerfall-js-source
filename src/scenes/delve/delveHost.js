@@ -151,6 +151,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
   const look = sourceLook(location?.mapTableData?.dungeonType);
   const standIns = createStandIns();
   let now = 0, dead = false, chestsStood = false, hitQ = 0, lastFeet = /** @type {number[]|null} */ (null), lastYaw = 0, weapon = /** @type {any} */ (null);
+  const myFeet = [0, 0, 0];
   const lv = () => effectiveLevel(player());
   const foeHost = {
     spawn: (type, at, opts) => api.spawnLooseFoe(type, at, opts),
@@ -393,9 +394,10 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
       if (dead || none || online() || !feet) return;
       if (!chestsStood) { chestsStood = true; for (const r of runs) pieces.standChest(r.site.i, r.site.vault, chestYaw(r.site)); }
       now += Number.isFinite(dt) ? Math.min(Math.max(0, dt), 1) * 1000 : 0;
-      lastFeet = feet; lastYaw = Number.isFinite(yaw) ? yaw : 0; weapon = pw;
-      for (const r of runs) frameSite(r, feet);
-      frameProps(feet);
+      myFeet[0] = feet[0]; myFeet[1] = feet[1]; myFeet[2] = feet[2];   // my own copy: the motor's feet are its live Float32Array
+      lastFeet = myFeet; lastYaw = Number.isFinite(yaw) ? yaw : 0; weapon = pw;
+      for (const r of runs) frameSite(r, myFeet);
+      frameProps(myFeet);
       carry.frame(now);
     },
     /** The marks on the floors near the eye and the pieces' crystals, after the last opaque flat (drawFoes' late slot).
@@ -482,6 +484,8 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
       i: r.site.i, kind: r.site.kind, won: r.won, p: r.led?.p ?? DP.idle, w: r.led?.w ?? 0, next: r.led?.next ?? 0, order: [...(r.led?.order ?? [])], vault: r.vault?.length ?? 0, chest: !!pieces.chest(r.site.i), hold: r.foes?.state() ?? null,
       k: r.led?.k ?? 0, hp: [...(r.led?.hp ?? [])], lt: r.led?.lt ?? VIGIL_LIGHT, lb: r.led?.lb ?? 0, fl: r.led?.fl ?? FLAME.heart, wt: (r.led?.wt ?? []).map((t) => t.s), hs: r.led?.hs ?? -1, rest: r.rest > now,
     })),
+    /** A site's ledger as it stands, for the probes to read (never to write). */
+    ledger: (i) => runs[i]?.led ?? null,
     /** Where a site's weights' homes, plates and braziers stand (the probes'). */
     spots: (i) => { const s = plan.sites[i]; return s ? { weights: weightSpots(s), plates: weighPlates(s), braziers: brazierSpots(s, runs[i].led?.k || 3) } : null; },
     destroy() {

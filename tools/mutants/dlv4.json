@@ -1051,5 +1051,32 @@
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
+  },
+  {
+    "name": "DLV4-typed-pose-refused",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "const posed = (p) => p != null && p.length >= 3 && Number.isFinite(p[0]) && Number.isFinite(p[1]) && Number.isFinite(p[2]);",
+    "new": "const posed = (p) => Array.isArray(p);",
+    "tests": [
+      "test/net/delve/dlv4_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV4-pose-numbers-unread",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "const posed = (p) => p != null && p.length >= 3 && Number.isFinite(p[0]) && Number.isFinite(p[1]) && Number.isFinite(p[2]);",
+    "new": "const posed = (p) => p != null && p.length >= 3;",
+    "tests": [
+      "test/net/delve/dlv4_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV4-motor-feet-kept",
+    "file": "src/scenes/delve/delveHost.js",
+    "old": "      lastFeet = myFeet; lastYaw",
+    "new": "      lastFeet = feet; lastYaw",
+    "tests": [
+      "test/scenes/delve/dlv4_host.test.js"
+    ]
   }
 ]
