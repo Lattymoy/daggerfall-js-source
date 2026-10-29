@@ -341,5 +341,14 @@
     "tests": [
       "test/server/storefront_service.test.js"
     ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-a-daily-ware-dearer-than-its-money",
+    "file": "src/net/aurumLaw.js",
+    "old": "daily('title:dawnbringer', 300, 'name')",
+    "new": "daily('title:dawnbringer', 400, 'name')",
+    "tests": [
+      "test/net/aurum_law.test.js"
+    ]
   }
 ]

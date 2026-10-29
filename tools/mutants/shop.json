@@ -378,5 +378,14 @@
     "tests": [
       "test/ui/shop_window.test.js"
     ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-a-ware-over-the-cap",
+    "file": "src/net/shopLaw.js",
+    "old": "  ware('bundle', 'lordofoblivion', 2999, { tier: 'exclusive'",
+    "new": "  ware('bundle', 'lordofoblivion', 3999, { tier: 'exclusive'",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
   }
 ]

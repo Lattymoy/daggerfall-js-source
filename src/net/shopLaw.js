@@ -41,31 +41,35 @@ const ware = (kind, key, cents, { bit = 0, tier = null, gives = [], extra = 0, s
 /** AURUM: a profile icon sold only for Aurum - its worth in cents, should a bundle ever give it. */
 const icon = (/** @type {string} */ key, /** @type {number} */ cents, /** @type {string} */ tier) => ware('icon', key, cents, { tier, cash: false });
 const pre = (/** @type {number} */ bit) => ({ bit, preAlpha: true });
+/** THE PRICE CAP (the owner, 2026-10-29: "the most expensive anything should be is $30"): no ware, bundle, pass or pack
+ *  costs more, in US cents; a pin holds every ware to it. */
+export const SHOP_PRICE_CAP = 3000;
 /** THE WARES, in the window's order within each section. The pre-alpha nine are the owner's (SHOP, ARMORY); the rest are
  *  the sheet's (STOREFRONT, Storefront.md sections 2-8). */
 export const SHOP_WARES = Object.freeze([
-  // THE BATTLE PASS (bible/06-Systems/Battle-Pass.md): the Deluxe holds the Premium and is worth $20 of its own
-  ware('pass', 's1premium', 2999, { tier: 'premium', season: 's1' }),
-  ware('pass', 's1deluxe', 4999, { tier: 'exclusive', season: 's1', gives: ['pass:s1premium'], extra: 2000 }),
-  ware('kill', 'ashen', 999, { tier: 'standard' }),
-  ware('kill', 'voidrend', 1999, { tier: 'premium' }),
-  ware('kill', 'pyre', 2999, { tier: 'exclusive' }),
-  ware('portal', 'runic', 1499, { tier: 'standard' }),
-  ware('portal', 'daedric', 2999, { tier: 'premium' }),
-  ware('portal', 'aetheric', 4999, { tier: 'exclusive' }),
-  ware('mount', 'spectral', 1999, { tier: 'standard' }),
-  ware('mount', 'dawnfire', 3499, { tier: 'premium' }),
-  ware('mount', 'warhorse', 5999, { tier: 'exclusive' }),
+  // THE BATTLE PASS (bible/06-Systems/Battle-Pass.md): the Deluxe holds the Premium and is worth $10 of its own. Every
+  // price under SHOP_PRICE_CAP (AUDIT-STOREFRONT II): the sheet's tiers kept, each ware about half the sheet's
+  ware('pass', 's1premium', 1499, { tier: 'premium', season: 's1' }),
+  ware('pass', 's1deluxe', 2499, { tier: 'exclusive', season: 's1', gives: ['pass:s1premium'], extra: 1000 }),
+  ware('kill', 'ashen', 499, { tier: 'standard' }),
+  ware('kill', 'voidrend', 999, { tier: 'premium' }),
+  ware('kill', 'pyre', 1499, { tier: 'exclusive' }),
+  ware('portal', 'runic', 799, { tier: 'standard' }),
+  ware('portal', 'daedric', 1299, { tier: 'premium' }),
+  ware('portal', 'aetheric', 1999, { tier: 'exclusive' }),
+  ware('mount', 'spectral', 999, { tier: 'standard' }),
+  ware('mount', 'dawnfire', 1499, { tier: 'premium' }),
+  ware('mount', 'warhorse', 2499, { tier: 'exclusive' }),
   ware('title', 'genesis', 500, pre(1)),
   ware('glyph', 'origin', 200, pre(2)),
-  ware('title', 'dawnbringer', 699, { tier: 'standard' }),
-  ware('title', 'voidwalker', 1299, { tier: 'premium' }),
-  ware('title', 'eternalchampion', 2499, { tier: 'exclusive' }),
-  ware('glyph', 'oblivion', 499, { alone: false }),
-  ware('glyph', 'gatesigil', 499, { alone: false }),
-  ware('glyph', 'gearcrown', 499, { alone: false }),
+  ware('title', 'dawnbringer', 399, { tier: 'standard' }),
+  ware('title', 'voidwalker', 699, { tier: 'premium' }),
+  ware('title', 'eternalchampion', 999, { tier: 'exclusive' }),
+  ware('glyph', 'oblivion', 299, { alone: false }),
+  ware('glyph', 'gatesigil', 299, { alone: false }),
+  ware('glyph', 'gearcrown', 299, { alone: false }),
   ware('aura', 'eternal', 2000, pre(4)),
-  ware('aura', 'dominion', 2499, { alone: false }),
+  ware('aura', 'dominion', 1499, { alone: false }),
   // ARMORY (bible/04-Characters/Aura-Armory.md section 4): the Eternal line - the owner: "The store set should be $20" -
   // whole at $20, and a piece a slot at $6; the Dagonfire line is the Sigil Broker's, never sold for money
   ware('armory', 'eternalset', 2000, { ...pre(256), gives: armoryLinePieces(ARMORY_SETS.eternalset).map((p) => `armory:${p.key}`) }),
@@ -74,21 +78,21 @@ export const SHOP_WARES = Object.freeze([
   ware('armory', 'eternalarmlets', 600, pre(32)),
   ware('armory', 'eternalgreaves', 600, pre(64)),
   ware('armory', 'eternaledge', 600, pre(128)),
-  ware('bundle', 'daedricchampion', 5999, { tier: 'exclusive', gives: ['aura:dominion', 'kill:pyre', 'title:eternalchampion', 'glyph:oblivion'] }),
-  ware('bundle', 'portalmaster', 4999, { tier: 'premium', gives: ['portal:daedric', 'aura:dominion', 'glyph:gatesigil'] }),
-  ware('bundle', 'lordofoblivion', 11999, { tier: 'exclusive', gives: ['mount:warhorse', 'portal:daedric', 'aura:dominion', 'kill:pyre'] }),
-  ware('bundle', 'seasonalcollector', 6499, { tier: 'exclusive', season: 's1', gives: ['pass:s1deluxe', 'boost:s1heart', 'glyph:gearcrown'] }),
-  ware('boost', 's1cog', 499, { tier: 'standard', season: 's1' }),
-  ware('boost', 's1tonal', 1299, { tier: 'premium', season: 's1' }),
-  ware('boost', 's1heart', 2499, { tier: 'exclusive', season: 's1' }),
+  ware('bundle', 'daedricchampion', 2799, { tier: 'exclusive', gives: ['aura:dominion', 'kill:pyre', 'title:eternalchampion', 'glyph:oblivion'] }),
+  ware('bundle', 'portalmaster', 1999, { tier: 'premium', gives: ['portal:daedric', 'aura:dominion', 'glyph:gatesigil'] }),
+  ware('bundle', 'lordofoblivion', 2999, { tier: 'exclusive', gives: ['mount:warhorse', 'portal:daedric', 'aura:dominion', 'kill:pyre'] }),
+  ware('bundle', 'seasonalcollector', 2999, { tier: 'exclusive', season: 's1', gives: ['pass:s1deluxe', 'boost:s1heart', 'glyph:gearcrown'] }),
+  ware('boost', 's1cog', 299, { tier: 'standard', season: 's1' }),
+  ware('boost', 's1tonal', 599, { tier: 'premium', season: 's1' }),
+  ware('boost', 's1heart', 999, { tier: 'exclusive', season: 's1' }),
   // AURUM (bible/06-Systems/Aurum.md): the profile icons the daily wares sell, and the Aurum's packs - bought again and
   // again, never held (shopRepeatable); a bigger pack gives more for each dollar
-  icon('gatefire', 600, 'premium'), icon('aurbis', 700, 'exclusive'), icon('elderscroll', 600, 'premium'), icon('azurastar', 600, 'premium'),
-  icon('redmountain', 700, 'exclusive'), icon('hourglass', 500, 'standard'), icon('sanguinerose', 400, 'standard'), icon('whitegold', 400, 'standard'),
+  icon('gatefire', 300, 'premium'), icon('aurbis', 400, 'exclusive'), icon('elderscroll', 300, 'premium'), icon('azurastar', 300, 'premium'),
+  icon('redmountain', 400, 'exclusive'), icon('hourglass', 300, 'standard'), icon('sanguinerose', 200, 'standard'), icon('whitegold', 200, 'standard'),
   ware('aurum', '500', 499, { tier: 'standard', aurum: 500 }),
   ware('aurum', '1100', 999, { tier: 'standard', aurum: 1100 }),
   ware('aurum', '2400', 1999, { tier: 'premium', aurum: 2400 }),
-  ware('aurum', '6500', 4999, { tier: 'exclusive', aurum: 6500 }),
+  ware('aurum', '3900', 2999, { tier: 'exclusive', aurum: 3900 }),
 ]);
 /** STOREFRONT: the English names of the wares no other table names - the titles', glyphs' and aura's are the client's
  *  own (playerBadge.js TITLE_TEXT, AURA_TEXT, enhancedAccount.js GLYPH_LABEL - a pin holds them equal). */
@@ -98,7 +102,7 @@ const OWN_NAME = Object.freeze({
   'pass:s1premium': "Dwemer's Breach Premium Pass", 'pass:s1deluxe': "Dwemer's Breach Deluxe Pass",
   'bundle:daedricchampion': 'Daedric Champion', 'bundle:portalmaster': 'Portal Master', 'bundle:lordofoblivion': 'Lord of Oblivion', 'bundle:seasonalcollector': 'Seasonal Collector',
   'boost:s1cog': 'Cog Booster', 'boost:s1tonal': 'Tonal Booster', 'boost:s1heart': 'Heart Booster',
-  'aurum:500': '500 Aurum', 'aurum:1100': '1,100 Aurum', 'aurum:2400': '2,400 Aurum', 'aurum:6500': '6,500 Aurum',   // AURUM: Stripe's line and the receipt; an icon is never sold for money, so never named here
+  'aurum:500': '500 Aurum', 'aurum:1100': '1,100 Aurum', 'aurum:2400': '2,400 Aurum', 'aurum:3900': '3,900 Aurum',   // AURUM: Stripe's line and the receipt; an icon is never sold for money, so never named here
 });
 /** A ware's name and kind in English, for the service's pages, Stripe's line and the receipt. */
 export const SHOP_WARE_NAME = Object.freeze({

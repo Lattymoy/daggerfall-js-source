@@ -42,15 +42,16 @@ export function aurumBonusOf(/** @type {unknown} */ id) {
 
 // ═══ SPENT: THE DAILY WARES ═══════════════════════════════════════════════════════════════════════════════════════════
 const daily = (/** @type {string} */ id, /** @type {number} */ aurum, /** @type {'effect'|'name'|'icon'} */ slot) => Object.freeze({ id, aurum, slot });
-/** WHAT THE DAILY WARES DRAW FROM, each with its price in Aurum and its slot. The shop's effects and name visuals (also
+/** WHAT THE DAILY WARES DRAW FROM, each with its price in Aurum and its slot - a ware sold for money too a little under its
+ *  price at the smallest pack's rate (SHOP_PRICE_CAP's prices, AUDIT-STOREFRONT II). The shop's effects and name visuals (also
  *  sold for money) and the profile icons sold for Aurum alone. A season's wares never: the pass is how they are had. */
 export const AURUM_DAILY = Object.freeze([
-  daily('kill:ashen', 900, 'effect'), daily('kill:voidrend', 1600, 'effect'), daily('kill:pyre', 2400, 'effect'),
-  daily('portal:runic', 1200, 'effect'), daily('portal:daedric', 2400, 'effect'), daily('portal:aetheric', 4000, 'effect'),
-  daily('mount:spectral', 1600, 'effect'), daily('mount:dawnfire', 2800, 'effect'), daily('mount:warhorse', 4800, 'effect'),
-  daily('title:dawnbringer', 600, 'name'), daily('title:voidwalker', 1000, 'name'), daily('title:eternalchampion', 2000, 'name'),
-  daily('icon:gatefire', 600, 'icon'), daily('icon:aurbis', 700, 'icon'), daily('icon:elderscroll', 600, 'icon'), daily('icon:azurastar', 600, 'icon'),
-  daily('icon:redmountain', 700, 'icon'), daily('icon:hourglass', 500, 'icon'), daily('icon:sanguinerose', 400, 'icon'), daily('icon:whitegold', 400, 'icon'),
+  daily('kill:ashen', 400, 'effect'), daily('kill:voidrend', 900, 'effect'), daily('kill:pyre', 1300, 'effect'),
+  daily('portal:runic', 700, 'effect'), daily('portal:daedric', 1200, 'effect'), daily('portal:aetheric', 1800, 'effect'),
+  daily('mount:spectral', 900, 'effect'), daily('mount:dawnfire', 1300, 'effect'), daily('mount:warhorse', 2200, 'effect'),
+  daily('title:dawnbringer', 300, 'name'), daily('title:voidwalker', 600, 'name'), daily('title:eternalchampion', 900, 'name'),
+  daily('icon:gatefire', 300, 'icon'), daily('icon:aurbis', 400, 'icon'), daily('icon:elderscroll', 300, 'icon'), daily('icon:azurastar', 300, 'icon'),
+  daily('icon:redmountain', 400, 'icon'), daily('icon:hourglass', 300, 'icon'), daily('icon:sanguinerose', 200, 'icon'), daily('icon:whitegold', 200, 'icon'),
 ]);
 /** How many of each slot a day shows, in the window's order. */
 export const AURUM_DAILY_SLOTS = Object.freeze({ effect: 2, name: 1, icon: 2 });

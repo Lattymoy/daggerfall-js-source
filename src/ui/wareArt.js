@@ -4,7 +4,7 @@
 // rewards, a booster's and a pass's banners. A portrait its drawing (ui/profileIcons.js), a glyph its mark, an aura its
 // ring (collections/wardrobePart.js), an effect its emblem (ui/effectEmblems.js); a booster and a pass the season's own
 // art; a title a ribbon in its own paint; Aurum its coins (ui/aurumArt.js). Not a DFU member.
-import { profileIconNode } from './profileIcons.js';
+import { profileIconNode, drawnIconNode } from './profileIcons.js';
 import { effectEmblemNode } from './effectEmblems.js';
 import { glyphBadges, glyphSvgNode, cssRgba, AURA_PAINT, TITLE_RGBA, TITLE_GRADIENT } from './playerBadge.js';
 import { auraRingNode } from './collections/wardrobePart.js';
@@ -21,20 +21,13 @@ export const SEASON_WARE_ART = Object.freeze({
 });
 
 let _medal = 0;
-/** A mark set in a medallion as the emblems and portraits are - a round field lit in the mark's own colour, rimmed in gold -
- *  so a glyph or an aura ring stands beside them as their equal. */
+/** A mark set in a medallion as the emblems and portraits are - a field lit in the mark's own colour, in the gold bezel
+ *  (AUDIT-STOREFRONT II: the icons' engine, ui/profileIcons.js drawnIconNode) - so a glyph, an aura ring or a title's
+ *  ribbon stands beside them as their equal. */
 function medallion(/** @type {any} */ doc, /** @type {any} */ inner, /** @type {string} */ tint, /** @type {number} */ size, /** @type {string} */ cls, frame = [12, 12, 40, 40]) {
-  const NS = 'http://www.w3.org/2000/svg';
-  const node = (/** @type {string} */ tag, /** @type {Record<string, any>} */ attrs) => { const n = doc.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v)); return n; };
-  const id = `ware-medal-${++_medal}`;
-  const svg = node('svg', { viewBox: '0 0 64 64', width: size, height: size, class: cls });
-  const defs = node('defs', {}), field = node('radialGradient', { id, cx: '50%', cy: '42%', r: '60%' });
-  field.append(node('stop', { offset: '0%', 'stop-color': tint, 'stop-opacity': 0.42 }), node('stop', { offset: '100%', 'stop-color': '#0b0a10' }));
-  defs.append(field);
   for (const [k, v] of Object.entries({ x: frame[0], y: frame[1], width: frame[2], height: frame[3] })) inner.setAttribute(k, String(v));
-  svg.append(defs, node('circle', { cx: 32, cy: 32, r: 31, fill: '#0b0a10' }), node('circle', { cx: 32, cy: 32, r: 31, fill: `url(#${id})` }), inner,
-    node('circle', { cx: 32, cy: 32, r: 31, fill: 'none', stroke: '#c9a55a', 'stroke-width': 1.5 }));
-  return svg;
+  const art = { field: [tint, '#0b0a10'], bezel: 'gold', shapes: [['circle', { cx: 32, cy: 32, r: 31, fill: '#0b0a10', opacity: 0.45 }]] };
+  return drawnIconNode(doc, art, { key: `ware-medal-${++_medal}`, cls, size, still: true, inner });
 }
 
 /** A title's ribbon - a banner with folded tails in its paint (TITLE_GRADIENT, else its one colour), a gold star on it. */

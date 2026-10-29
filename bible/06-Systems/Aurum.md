@@ -47,7 +47,7 @@ week's 120 Aurum a player can earn is held by the same checks those claims are.
 ## 4. Bought
 
 Four packs, sold through Stripe like every ware (`src/net/shopLaw.js`, kind `aurum`): 500 for $4.99, 1,100 for $9.99,
-2,400 for $19.99 and 6,500 for $49.99 - 10, 20 and 30 more in a hundred than the smallest pack's rate
+2,400 for $19.99 and 3,900 for $29.99 - 10, 20 and 30 more in a hundred than the smallest pack's rate
 (`aurumLaw.js` aurumBonusOf). A pack is never held: bought again, it gives again. Its order keeps its Aurum from its
 checkout, so a refund, a dispute and a dispute won move the balance with the order. A pack is sold only while
 `AURUM_OPEN` is `on`; `dev` opens Aurum to the developers alone, and `off` closes it.
@@ -57,7 +57,8 @@ checkout, so a refund, a dispute and a dispute won move the balance with the ord
 Each UTC day the shop sells five wares for Aurum: two effects (a kill effect, a portal skin or a mount look), one name
 visual and two profile icons, drawn from `AURUM_DAILY` (nine effects, three titles, eight icons). The effects and titles
 are sold for money too; the eight icons are sold for Aurum alone. A season's wares never come round: the pass is how
-those are had. Prices run from 400 Aurum (an icon) to 4,800 (the Daedric Warhorse).
+those are had. Prices run from 200 Aurum (an icon) to 2,200 (the Daedric Warhorse): a ware sold for money too costs a
+little under its price at the smallest pack's rate, so no daily ware is dearer than the shop's $30 cap.
 
 **The rotation** (`aurumLaw.js` aurumDailyOf) is decided the same on every machine from 1 October 2026: in each slot,
 the wares longest unseen come first, each nudged by a hash of the day so the same pairs do not come round together. Over

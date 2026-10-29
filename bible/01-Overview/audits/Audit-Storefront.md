@@ -185,6 +185,17 @@ Pins: `test/ui/storefront_audit2_window.test.js`, `shop_window.test.js`.
 | E15 | LOW | A long title in a bundle's tile shrank past reading | FIXED: never under 11 px; a long one wraps |
 | E16 | LOW | Every stage started on opening, and the carousel turned out of sight | FIXED: a stage starts in sight; the carousel stops scrolled away |
 
+### P - the owner's word on the pictures and the prices
+
+The owner, 2026-10-29: **"the glyphs for the horse and the general art of those icons is so bad. Plus the most expensive
+anything should be is $30"**. Pins: `storefront_badges.test.js`, `shop_service.test.js`, `aurum_law.test.js`.
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| P1 | HIGH | The effect emblems were flat line glyphs on a dark disc, the horses a stiff profile that ran past the rim | FIXED: all twelve drawn by the profile icons' engine (`profileIcons.js` drawnIconNode) - a bezel, a shaded field, modelled relief, motion that stops for less; the horses one head inside the rim; the daily wares' medallions on the same bezel |
+| P2 | HIGH | The Deluxe Pass, three effects, all four bundles and the largest Aurum pack cost over $30 (the Lord of Oblivion $119.99) | FIXED: every price about half the sheet's and under `SHOP_PRICE_CAP`, the tiers kept (`Storefront.md` section 2); a pin holds every ware to it |
+| P3 | LOW | The Dawnbringer cost 400 Aurum, more than its $3.99 buys at the smallest pack's rate - no pin held a daily ware under its money | FIXED: 300; a pin holds each daily ware sold for money to between three quarters of its money and its money |
+
 ## Known, and not changed
 
 - A concealed peer who is struck still shows the hit's splash at their body (lane C): a blow lands only on someone

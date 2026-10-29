@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-STOREFRONT-two-portraits-one-id",
     "file": "src/ui/profileIcons.js",
-    "old": "const id = `pxicon-${key}-${++_gradientId}`;",
-    "new": "const id = `pxicon-${key}`;",
+    "old": "const id = `${key.replace(/[^\\w-]/g, '-')}-${++_gradientId}`;",
+    "new": "const id = `${key.replace(/[^\\w-]/g, '-')}`;",
     "tests": [
       "test/ui/storefront_badges.test.js"
     ]

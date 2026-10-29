@@ -13,7 +13,7 @@ in terms of outflow of players"*; *"booster to boost your BP progression. Maybe 
 November to 10 Jan) ... and divide the Battle Pass into 3 stages (20 days each)"*.
 
 The pass card: a Premium Pass at $29.99 with a fifty-level track, and a Deluxe at $49.99 with everything in Premium and
-its own rewards unlocked at once.
+its own rewards unlocked at once. Sold here at $14.99 and $24.99, under the shop's $30 cap (`Storefront.md` section 2).
 
 ## 2. The season
 
@@ -88,15 +88,15 @@ deeds while their stage is open and pay once, beside the day's bound: 6,800 in t
 
 ## 5. Boosters
 
-The developer's "booster to boost your BP progression", sold as the sheet's three EXP Booster prices. A booster is the
+The developer's "booster to boost your BP progression", sold as the sheet's three EXP Boosters under the shop's cap. A booster is the
 season's: its share of every find's experience for the rest of it, and levels at once. The highest held counts, never
 their sum. The share is on top of the day's bound, so it speeds every player.
 
 | Booster | Price | Share | At once |
 | --- | --- | --- | --- |
-| Cog Booster | $4.99 | +25% | - |
-| Tonal Booster | $12.99 | +50% | 3 levels |
-| Heart Booster | $24.99 | +100% | 8 levels |
+| Cog Booster | $2.99 | +25% | - |
+| Tonal Booster | $5.99 | +50% | 3 levels |
+| Heart Booster | $9.99 | +100% | 8 levels |
 
 Levels given at once are experience like a find's: past the open stage's top they are kept for the next stage, as
 section 2 says - the Deluxe's five too - and a booster's look says so (`src/ui/passText.js` passBoostText, AUDIT PASS 12).

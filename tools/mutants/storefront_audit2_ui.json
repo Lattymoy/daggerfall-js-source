@@ -171,5 +171,32 @@
     "tests": [
       "test/ui/storefront_audit2_window.test.js"
     ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-emblem-horse-past-the-rim",
+    "file": "src/ui/icons/effectEmblemArt.js",
+    "old": "const FRAME = 'translate(5.4 7) scale(0.86)';",
+    "new": "const FRAME = 'translate(0 0) scale(1)';",
+    "tests": [
+      "test/ui/storefront_badges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-medallion-mark-left-out",
+    "file": "src/ui/profileIcons.js",
+    "old": "  if (inner) pic.append(inner);\n",
+    "new": "",
+    "tests": [
+      "test/ui/storefront_badges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-emblem-still-for-nobody",
+    "file": "src/ui/effectEmblems.js",
+    "old": "label: effectName(slot, key), cls, size, ...o }",
+    "new": "label: effectName(slot, key), cls, size, ...o, still: false }",
+    "tests": [
+      "test/ui/storefront_badges.test.js"
+    ]
   }
 ]

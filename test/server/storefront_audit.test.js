@@ -13,7 +13,7 @@ import { standService } from '../accountDb.mjs';
 import { fulfilOrder, STRIPE_API, STRIPE_REFUND_API, heldGranted, heldRevoked, orderCovers, revokePost, refundPost } from '../../server-account/src/shop.js';
 import { shopDemand } from '../../server-account/src/staffShop.js';
 import { effectsHeld } from '../../server-account/src/titles.js';
-import { SHOP_WARES, shopHeldIds, shopLostOf, shopCreditOf, shopClosure, shopSpent, shopPriceFor, shopCardOf as clientCard } from '../../src/net/shopLaw.js';
+import { shopWareById, SHOP_WARES, shopHeldIds, shopLostOf, shopCreditOf, shopClosure, shopSpent, shopPriceFor, shopCardOf as clientCard } from '../../src/net/shopLaw.js';
 import { passSeasonById, passTracks, PASS_XP_PER_LEVEL } from '../../src/net/battlePassLaw.js';
 import { POST_BODY_MAX, POST_SUBJECT_MAX } from '../../src/net/postLaw.js';
 
@@ -93,7 +93,7 @@ test('AUDIT-STOREFRONT S1 the law: an order covers its ware and all it gives but
   const collector = { id: 'k', ware: 'bundle:seasonalcollector', credit: 'pass:s1premium' }, prem = { id: 'q', ware: 'pass:s1premium', credit: '' };
   const passRow = heldRevoked({ shop_wares: 0, shop_held: 'pass:s1premium bundle:seasonalcollector' }, prem, [collector]);
   assert.deepEqual(passTracks('s1', shopHeldIds(passRow)), { free: true, premium: false, deluxe: true }, 'its own track, never the Premium it did not pay for');
-  assert.equal(shopPriceFor(passRow, 'pass:s1premium'), 2999, 'and the Premium is sold again whole');
+  assert.equal(shopPriceFor(passRow, 'pass:s1premium'), shopWareById('pass:s1premium').cents, 'and the Premium is sold again whole');   // PIN MOVED (AUDIT-STOREFRONT II): the law's price, under the cap
 });
 
 test('AUDIT-STOREFRONT S1 end to end: the Pyre bought, then the Daedric Champion with credit for it - a dispute on the Pyre takes it off the account and off the kit, and says so; the dispute won returns it; the Lord of Oblivion refunded takes the wares the Champion was credited for (mutants: a giver keeping a ware nobody paid for; the letter saying nothing left)', async (t) => {
@@ -146,7 +146,7 @@ test('AUDIT-STOREFRONT S3 end to end: a bundle\'s page opened, the Pyre bought, 
   const s = await stand();
   const me = await s.registered('Twice');
   const a = await s.open(me, 'bundle:daedricchampion');
-  assert.equal(a.cents, 5999);
+  assert.equal(a.cents, shopWareById('bundle:daedricchampion').cents);   // PIN MOVED (AUDIT-STOREFRONT II): the law's price
   const st = stripe();
   try {
     assert.equal((await s.paid(await s.open(me, 'kill:pyre'), st)).applied, 1);
@@ -154,7 +154,7 @@ test('AUDIT-STOREFRONT S3 end to end: a bundle\'s page opened, the Pyre bought, 
   } finally { st.restore(); }
   assert.equal(s.orders(me).find((x) => x.id === a.id).status, 'expired');
   const b = await s.open(me, 'bundle:daedricchampion');
-  assert.ok(b.cents < 5999, 'the new page at the new price');
+  assert.ok(b.cents < a.cents, 'the new page at the new price');
   const c = await s.open(me, 'title:dawnbringer');
   const st2 = stripe();
   try {

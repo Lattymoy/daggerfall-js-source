@@ -89,7 +89,7 @@ test('AUDIT-STOREFRONT S9 a featured window\'s tag and its days left are told on
 
 test('AUDIT-STOREFRONT S5 a booster the card marks spent says a stronger one is held and offers no Buy (mutants: the Cog offered beside the Heart)', () => {
   const flow = flowIn([row('boost:s1cog', { spent: true, buy: null })]);
-  assert.deepEqual(shopWareState(flow, SHOP_WARES.find((w) => w.id === 'boost:s1cog')), { state: 'spent', buy: null, cents: 499 });
+  assert.deepEqual(shopWareState(flow, SHOP_WARES.find((w) => w.id === 'boost:s1cog')), { state: 'spent', buy: null, cents: SHOP_WARES.find((w) => w.id === 'boost:s1cog').cents });   // PIN MOVED (AUDIT-STOREFRONT II): the law's price
 });
 
 test('AUDIT-STOREFRONT S11, S12, S13: the Premium\'s rewards counted off the track; a giver held in part said in a bundle\'s contents and on the confirm page; the carousel\'s dots a 24 px target each (mutants: "twenty" written; a Deluxe whose Premium is held said unowned; a 14 px dot)', () => {

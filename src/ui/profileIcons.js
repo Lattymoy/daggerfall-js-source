@@ -228,14 +228,24 @@ const namedIn = (/** @type {any[]} */ shapes) => shapes.flatMap((/** @type {any}
  */
 export function profileIconNode(doc, key, cls = 'px-icon', size = 64, { still = reducedMotion() } = {}) {
   const art = /** @type {any} */ (typeof key === 'string' && Object.hasOwn(ICON_ART, key) ? ICON_ART[/** @type {keyof typeof ICON_ART} */ (key)] : null);
+  return art ? drawnIconNode(doc, art, { key: `pxicon-${key}`, label: ICON_TEXT[/** @type {keyof typeof ICON_TEXT} */ (key)], cls, size, still }) : null;
+}
+/**
+ * THE ENGINE THE ICONS ARE DRAWN BY, one for every round picture in a bezel - the profile icons and (AUDIT-STOREFRONT II,
+ * the owner: "the general art of those icons is so bad") the effects' emblems (ui/effectEmblems.js): `art` a drawing
+ * (`{ field, bezel?, defs?, shapes }`), `key` its ids' stem, `label` its name for a screen reader.
+ * `inner` a node of the caller's own laid over the picture (a glyph's mark in its medallion).
+ * @param {any} doc @param {any} art @param {{ key: string, label?: string, cls?: string, size?: number, still?: boolean, inner?: any }} o
+ */
+export function drawnIconNode(doc, art, { key, label = '', cls = 'px-icon', size = 64, still = reducedMotion(), inner = null }) {
   if (!art || typeof doc?.createElementNS !== 'function') return null;
   const node = (/** @type {string} */ tag, /** @type {Record<string, any>} */ attrs = {}) => {
     const n = doc.createElementNS(SVG_NS, tag);
     for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
     return n;
   };
-  const svg = node('svg', { viewBox: '0 0 64 64', width: size, height: size, class: cls, role: 'img', 'aria-label': ICON_TEXT[/** @type {keyof typeof ICON_TEXT} */ (key)] });
-  const id = `pxicon-${key}-${++_gradientId}`;
+  const svg = node('svg', { viewBox: '0 0 64 64', width: size, height: size, class: cls, role: 'img', 'aria-label': label });
+  const id = `${key.replace(/[^\w-]/g, '-')}-${++_gradientId}`;
   const own = (/** @type {string} */ k, /** @type {unknown} */ v) => {
     if (typeof v !== 'string') return v;
     if (k === 'id') return `${id}-${v}`;
@@ -274,6 +284,7 @@ export function profileIconNode(doc, key, cls = 'px-icon', size = 64, { still = 
   defs.append(clip);
   const pic = node('g', { 'clip-path': `url(#${id}-clip)` });
   for (const sh of art.shapes) { const c = build(sh); if (c) pic.append(c); }
+  if (inner) pic.append(inner);
   svg.append(defs, node('circle', { cx: 32, cy: 32, r: 31, fill: `url(#${id})`, stroke: art.bezel ? 'none' : '#c9a55a', 'stroke-width': 1.5 }), pic);
   for (const sh of rim) { const c = build(sh); if (c) svg.append(c); }
   return svg;

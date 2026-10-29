@@ -218,11 +218,31 @@ test('AUDIT-STOREFRONT every portrait, the festival\'s four, the season\'s three
 test('AUDIT-STOREFRONT the effects\' emblems and every ware\'s picture: an emblem for every effect the law knows, each a round field, its shapes inside it, every paint it names its own; a picture for every piece a bundle gives and every reward the pass gives, a title its ribbon (mutants: an effect with no emblem; a glyph bare beside the medallions; a title unpictured)', () => {
   const doc = { createElementNS: (_ns, tag) => { const n = { tag, attrs: {}, style: {}, children: [], setAttribute(k, v) { n.attrs[k] = v; }, append(...c) { n.children.push(...c); } }; return n; } };
   assert.deepEqual(Object.keys(EMBLEM_ART).sort(), EFFECTS.map((e) => `${e.slot}:${e.key}`).sort(), 'an emblem an effect');
+  // PIN MOVED (AUDIT-STOREFRONT II, the owner: "the glyphs for the horse and the general art of those icons is so bad"):
+  // drawn by the profile icons' engine - a bezel, every paint laid and its own, moving, and still for less motion
+  const deep = (n) => [n, ...(n.children ?? []).flatMap(deep)];
+  const MOTION = new Set(['animate', 'animateTransform', 'animateMotion', 'set']);
   for (const id of Object.keys(EMBLEM_ART)) {
-    const [slot, key] = id.split(':'), svg = effectEmblemNode(doc, slot, key, 'x', 32);
+    const [slot, key] = id.split(':'), svg = effectEmblemNode(doc, slot, key, 'x', 32, { still: false });
     assert.equal(svg.attrs['aria-label'], effectName(slot, key));
-    const [defs, pic] = svg.children, laid = new Set(defs.children.map((c) => c.attrs.id));
-    for (const n of pic.children) for (const v of Object.values(n.attrs)) for (const m of String(v).match(/url\(#[^)]+\)/g) ?? []) assert.ok(laid.has(m.slice(5, -1)), `${id}: ${m} laid`);
+    const [defs, , pic, ...rim] = svg.children;
+    assert.ok(EMBLEM_ART[id].bezel && rim.length >= 3, `${id}: in its bezel`);
+    const laid = new Set(deep(defs).map((c) => c.attrs.id).filter(Boolean));
+    for (const n of [...deep(pic), ...rim.flatMap(deep)]) for (const v of Object.values(n.attrs)) for (const m of String(v).match(/url\(#[^)]+\)/g) ?? []) assert.ok(laid.has(m.slice(5, -1)), `${id}: ${m} laid`);
+    assert.ok(deep(pic).some((n) => MOTION.has(n.tag)), `${id}: it moves`);
+    assert.equal(deep(effectEmblemNode(doc, slot, key, 'x', 32, { still: true })).filter((n) => MOTION.has(n.tag)).length, 0, `${id}: still for less motion`);
+  }
+  // each horse drawn whole - the one head and neck, its ears and its muzzle clear of the rim, in its frame
+  const heads = Object.keys(EMBLEM_ART).filter((id) => id.startsWith('mount:')).map((id) => {
+    const frame = EMBLEM_ART[id].shapes.find((sh) => sh[0] === 'g' && /scale/.test(sh[1].transform ?? ''));
+    return { id, frame, head: frame?.[2].find((sh) => sh[0] === 'path' && sh[1].d.startsWith('M37 64'))?.[1].d };
+  });
+  assert.equal(heads.length, 4);
+  assert.equal(new Set(heads.map((h) => h.head)).size, 1, 'one horse, dressed four ways');
+  for (const { id, frame, head } of heads) {
+    assert.ok(head, `${id}: its head`);
+    const [, tx, ty, k] = /translate\(([\d.]+) ([\d.]+)\) scale\(([\d.]+)\)/.exec(frame[1].transform).map(Number);
+    for (const [x, y] of [[35.4, 2.4], [42.6, 4.2], [8.6, 46.6]]) assert.ok(Math.hypot(tx + k * x - 32, ty + k * y - 32) < 28, `${id}: (${x}, ${y}) inside the rim`);
   }
   assert.equal(effectEmblemNode(doc, 'kill', 'nope'), null);
   assert.equal(effectEmblemNode({}, 'kill', 'pyre'), null);
@@ -232,7 +252,7 @@ test('AUDIT-STOREFRONT the effects\' emblems and every ware\'s picture: an emble
     const art = wareArtNode(doc, id, 48, 'x');
     assert.ok(art && art.tag === 'svg', `${id}: its picture`);
     assert.equal(art.attrs['aria-hidden'], 'true', `${id}: the name beside it says it`);
-    if (/^(glyph|aura|title):/.test(id) && !SEASON_WARE_ART[id]) assert.equal(art.children.at(-1).attrs.stroke, '#c9a55a', `${id}: in its medallion`);
+    if (/^(glyph|aura|title):/.test(id) && !SEASON_WARE_ART[id]) assert.ok(art.children.length >= 6 && art.children[2].children.length === 2, `${id}: in its medallion - its mark over the field, in the gold bezel`);   // PIN MOVED (AUDIT-STOREFRONT II): the icons' bezel
   }
   assert.equal(wareArtNode(doc, 'bundle:portalmaster'), null, 'a bundle is its pieces');
 });

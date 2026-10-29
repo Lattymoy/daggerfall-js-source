@@ -63,19 +63,20 @@ async function stand(extra = ON) {
 // ── THE LAW ─────────────────────────────────────────────────────────
 
 test('STOREFRONT the law: a bundle\'s worth is what it gives; its price for an account is cut by the share of it held, never under Stripe\'s floor, and nothing once all of it is held; a giver held holds what it gives (mutants: the price never cut; the floor dropped; a held bundle sold again)', () => {
-  assert.equal(shopWorth('bundle:daedricchampion'), 2499 + 2999 + 2499 + 499, 'Daedric Dominion, the Pyre, Eternal Champion, the Oblivion Sigil');
-  assert.equal(shopWorth('bundle:lordofoblivion'), 5999 + 2999 + 2499 + 2999);
-  assert.equal(shopWorth('pass:s1deluxe'), 2999 + 2000, 'the Premium Pass and its own');
-  assert.equal(shopPriceFor({}, 'bundle:daedricchampion'), 5999);
+  // PIN MOVED (AUDIT-STOREFRONT II): every price under SHOP_PRICE_CAP, the bundle's arithmetic the same
+  assert.equal(shopWorth('bundle:daedricchampion'), 1499 + 1499 + 999 + 299, 'Daedric Dominion, the Pyre, Eternal Champion, the Oblivion Sigil');
+  assert.equal(shopWorth('bundle:lordofoblivion'), 2499 + 1299 + 1499 + 1499);
+  assert.equal(shopWorth('pass:s1deluxe'), 1499 + 1000, 'the Premium Pass and its own');
+  assert.equal(shopPriceFor({}, 'bundle:daedricchampion'), 2799);
   const pyre = { shop_held: 'kill:pyre' };
-  assert.equal(shopPriceFor(pyre, 'bundle:daedricchampion'), Math.round(5999 * (8496 - 2999) / 8496), 'the Pyre held: its share taken off');
-  assert.equal(shopPriceFor({ shop_held: 'kill:pyre aura:dominion title:eternalchampion' }, 'bundle:daedricchampion'), Math.max(SHOP_MIN_CENTS, Math.round(5999 * 499 / 8496)));
+  assert.equal(shopPriceFor(pyre, 'bundle:daedricchampion'), Math.round(2799 * (4296 - 1499) / 4296), 'the Pyre held: its share taken off');
+  assert.equal(shopPriceFor({ shop_held: 'kill:pyre aura:dominion title:eternalchampion' }, 'bundle:daedricchampion'), Math.max(SHOP_MIN_CENTS, Math.round(2799 * 299 / 4296)));
   assert.equal(shopPriceFor({ shop_held: 'bundle:daedricchampion' }, 'bundle:daedricchampion'), null, 'held: not sold again');
   assert.equal(shopPriceFor({ shop_held: 'kill:pyre aura:dominion title:eternalchampion glyph:oblivion' }, 'bundle:daedricchampion'), null, 'all it gives held: not sold again');
   assert.ok(shopOwns({ shop_held: 'bundle:lordofoblivion' }, 'portal:daedric'), 'a bundle held holds its portal skin');
   assert.deepEqual(shopHeldIds({ shop_held: 'bundle:seasonalcollector' }).filter((id) => id.startsWith('pass') || id.startsWith('boost')), ['pass:s1premium', 'pass:s1deluxe', 'boost:s1heart'], 'the Collector holds the Deluxe, the Premium it holds, and the Heart Booster');
-  assert.equal(shopPriceFor({ shop_held: 'pass:s1premium' }, 'pass:s1deluxe'), Math.round(4999 * 2000 / 4999), 'the Premium held: the Deluxe for its own share');
-  assert.equal(shopPriceFor({ shop_held: 'glyph:oblivion' }, 'kill:pyre'), 2999, 'a ware that gives nothing is its own price');
+  assert.equal(shopPriceFor({ shop_held: 'pass:s1premium' }, 'pass:s1deluxe'), Math.round(2499 * 1000 / 2499), 'the Premium held: the Deluxe for its own share');
+  assert.equal(shopPriceFor({ shop_held: 'glyph:oblivion' }, 'kill:pyre'), 1499, 'a ware that gives nothing is its own price');
   // every giver, with every part of what it gives held: a price between Stripe's floor and its own, or none once all is
   for (const w of SHOP_WARES.filter((x) => x.gives.length)) {
     for (let mask = 0; mask < 1 << w.gives.length; mask++) {
@@ -280,12 +281,12 @@ test('STOREFRONT the demand: a day a row over the span asked, each ware\'s order
   assert.deepEqual(d.days.map((r) => r.featured), [[], [], ['kill:pyre'], ['kill:pyre'], []]);
   const today = d.days.at(-1).wares;
   // PIN MOVED (AURUM): each cell with its Aurum buys beside its orders, and each day's wares beside its featured
-  assert.deepEqual(today['kill:pyre'], { opened: 1, paid: 1, refunded: 0, disputed: 0, cents: 2999, bought: 0, aurum: 0 });
+  assert.deepEqual(today['kill:pyre'], { opened: 1, paid: 1, refunded: 0, disputed: 0, cents: 1499, bought: 0, aurum: 0 });   // PIN MOVED (AUDIT-STOREFRONT II): the Pyre's price under the cap
   assert.deepEqual(today['portal:runic'], { opened: 1, paid: 1, refunded: 1, disputed: 0, cents: 0, bought: 0, aurum: 0 }, 'a refund paid first, its money not counted');
   assert.deepEqual(today['icon:aurbis'], { opened: 0, paid: 0, refunded: 0, disputed: 0, cents: 0, bought: 1, aurum: 700 });
   assert.deepEqual(d.days.at(-1).daily, dailyWaresAt(env, nowS), 'the day\'s wares');
   assert.equal(d.days.at(-1).daily.length, 5);
-  assert.equal(d.totals['kill:pyre'].cents, 2999);
+  assert.equal(d.totals['kill:pyre'].cents, 1499);
   assert.equal((await shopDemand(s.env.DB, {}, nowS, 9999)).days.length, DEMAND_DAYS_MAX);
   assert.ok(ECON_ROUTES.includes('/v1/staff/econ/shop'));
   assert.equal(d.names['kill:pyre'], 'Daedric Pyre');

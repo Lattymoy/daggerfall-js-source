@@ -47,7 +47,7 @@ test('AURUM the day\'s wares, cached or not: a day asked cold is the day asked a
   for (let d = AURUM_DAILY_FROM; d < AURUM_DAILY_FROM + 20; d++) assert.equal(aurumDailyOf(d, someDay).filter((id) => id.startsWith('icon:')).length, d % 2 ? 0 : 2, 'a day it may not, none');
 });
 
-test('AURUM what the daily wares sell: shop wares only, never a season\'s (the pass is how those are had), the icons for Aurum alone and every other for money too; each price a whole hundred (mutants: a pass reward in the pool; an icon sold for money)', () => {
+test('AURUM what the daily wares sell: shop wares only, never a season\'s (the pass is how those are had), the icons for Aurum alone and every other for money too; each price a whole hundred, and one sold for money too a little under its money at the smallest pack\'s rate (mutants: a pass reward in the pool; an icon sold for money; a daily ware dearer than its money)', () => {
   const seasonal = new Set(Object.values(PASS_REWARDS).flat().map((r) => r.grant));
   for (const d of AURUM_DAILY) {
     const w = shopWareById(d.id);
@@ -56,13 +56,16 @@ test('AURUM what the daily wares sell: shop wares only, never a season\'s (the p
     assert.equal(w.cash, d.slot !== 'icon', `${d.id}: an icon for Aurum alone`);
     assert.ok(Number.isSafeInteger(d.aurum) && d.aurum > 0 && d.aurum % 100 === 0);
     assert.equal(aurumPriceOf(d.id), d.aurum);
+    // AUDIT-STOREFRONT II: Aurum never the dearer way to buy a ware, nor a giveaway
+    const atBase = w.cents * AURUM_PACKS[0].aurum / AURUM_PACKS[0].cents;
+    if (w.cash) assert.ok(d.aurum < atBase && d.aurum >= 0.75 * atBase, `${d.id}: ${d.aurum} Aurum against ${atBase.toFixed(1)}`);
   }
   assert.equal(aurumPriceOf('pass:s1premium'), 0);
   assert.deepEqual(SHOP_WARES.filter((w) => !w.cash).map((w) => w.id).sort(), AURUM_DAILY.filter((d) => d.slot === 'icon').map((d) => d.id).sort(), 'every ware not sold for money is a daily icon');
 });
 
 test('AURUM the packs: four, sold for money and never held, each a larger share than the smallest - 10, 20 and 30 more in a hundred (mutants: a bonus off the wrong base; a pack held)', () => {
-  assert.deepEqual(AURUM_PACKS.map((w) => [w.id, w.aurum, w.cents]), [['aurum:500', 500, 499], ['aurum:1100', 1100, 999], ['aurum:2400', 2400, 1999], ['aurum:6500', 6500, 4999]]);
+  assert.deepEqual(AURUM_PACKS.map((w) => [w.id, w.aurum, w.cents]), [['aurum:500', 500, 499], ['aurum:1100', 1100, 999], ['aurum:2400', 2400, 1999], ['aurum:3900', 3900, 2999]]);
   assert.deepEqual(AURUM_PACKS.map((w) => aurumBonusOf(w.id)), [0, 10, 20, 30]);
   assert.equal(aurumBonusOf('kill:pyre'), 0);
   assert.ok(AURUM_PACKS.every((w) => w.cash && w.alone && !w.bit));

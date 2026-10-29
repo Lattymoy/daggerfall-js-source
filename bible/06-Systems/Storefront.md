@@ -33,6 +33,12 @@ in the shop weighed before it ships and timed to its launch window; and sales tr
 | Name Change | Not built: the owner's open question (section 11) |
 | Consumable Bundles | Not built: every consumable in the game is power (section 11) |
 
+**Nothing over $30** (the owner, 2026-10-29: *"the most expensive anything should be is $30"*). The table quotes the
+sheet's prices. Ours keep its three tiers and are about half of them, none over `SHOP_PRICE_CAP` (`src/net/shopLaw.js`):
+a kill effect $4.99 to $14.99, a portal skin $7.99 to $19.99, a mount look $9.99 to $24.99, a name visual $3.99 to
+$9.99, the passes $14.99 and $24.99, a booster $2.99 to $9.99, a bundle $19.99 to $29.99 and an Aurum pack $4.99 to
+$29.99. `test/server/shop_service.test.js` holds every ware to the cap.
+
 **Cosmetic, always.** The shop's own line is "Every item is cosmetic. It gives no power in the game." and the Terms of
 Service section 9 is "No pay-to-win rights". Renown is power (it raises health and magicka a level), so the sheet's EXP
 Boosters are built as Pass Boosters: they speed the pass's track, whose every reward is a cosmetic. THE CEILING HOLDS
@@ -176,14 +182,14 @@ dye and its beat, is drawn by the viewer's "Others' effects" choice, as its kill
 
 | Bundle | Price | Gives | Worth alone |
 | --- | --- | --- | --- |
-| Daedric Champion | $59.99 | the Daedric Dominion aura, the Daedric Pyre, Eternal Champion, the Oblivion Sigil | $84.96 |
-| Portal Master | $49.99 | the Daedric Stone, the Daedric Dominion aura, the Gate Sigil | $59.97 |
-| Lord of Oblivion | $119.99 | the Daedric Warhorse, the Daedric Stone, the Daedric Dominion aura, the Daedric Pyre | $144.96 |
-| Seasonal Collector | $64.99 | the Deluxe Pass, the Heart Booster, the Brass Crown | $79.97 |
+| Daedric Champion | $27.99 | the Daedric Dominion aura, the Daedric Pyre, Eternal Champion, the Oblivion Sigil | $42.96 |
+| Portal Master | $19.99 | the Daedric Stone, the Daedric Dominion aura, the Gate Sigil | $30.97 |
+| Lord of Oblivion | $29.99 | the Daedric Warhorse, the Daedric Stone, the Daedric Dominion aura, the Daedric Pyre | $67.96 |
+| Seasonal Collector | $29.99 | the Deluxe Pass, the Heart Booster, the Brass Crown | $37.97 |
 
-The sheet's Seasonal Collector was $79.99 with seasonal housing decorations; without them it is priced under its worth.
-The sheet's Lord of Oblivion priced a Standard mount; its mount is the Exclusive Daedric Warhorse, so the bundle is
-under its worth too.
+Each costs well under its worth (section 2's cap, AUDIT-STOREFRONT II). The sheet's Seasonal Collector also gave
+seasonal housing decorations, which are not built. The sheet's Lord of Oblivion priced a Standard mount; its mount is the
+Exclusive Daedric Warhorse, and the cap holds it at $29.99.
 
 ## 9. The window
 
@@ -209,6 +215,10 @@ player's own - the profile's body (`ui/profileBody.js`, asked once a window), th
 round the season's art - the Cog, the Tonal Fork, the Gearheart, the Centurion, Numidium - the Deluxe's own three beside
 it (`ui/wareArt.js`, one door for every picture shown without playing: an effect's emblem, `ui/effectEmblems.js`; a
 glyph, an aura or a title in its medallion). The profile's effect choices and the pass's track show the same pictures.
+
+An emblem and a medallion are drawn by the profile icons' engine (`profileIcons.js` drawnIconNode): a metal bezel, a
+shaded field and modelled relief, with motion that stops for less motion (`ui/icons/effectEmblemArt.js`). The four
+horses share one head, shaded and kept inside the rim, each with its own armour, mane and light.
 
 A panel says its tier, its featured window and the price this account pays, the list price struck through beside it
 where it is less. A bundle's panel lists what it gives, each held one marked (one held in part,

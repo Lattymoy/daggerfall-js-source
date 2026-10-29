@@ -128,9 +128,9 @@ test('AURUM the Aurum section: the balance, what Aurum is for and what it never 
   const head = all(w.root, 'sh-aurumhead')[0];
   assert.equal(all(head, 'sh-secname')[0].textContent, 'Your balance: 1,450 Aurum');
   assert.match(head.textContent, /no cash value\. It cannot be traded, and it buys no power\./);
-  assert.deepEqual(all(w.root, 'sh-aurumn').map((n) => n.textContent), ['500 Aurum', '1,100 Aurum', '2,400 Aurum', '6,500 Aurum']);
+  assert.deepEqual(all(w.root, 'sh-aurumn').map((n) => n.textContent), ['500 Aurum', '1,100 Aurum', '2,400 Aurum', '3,900 Aurum']);
   assert.deepEqual(all(w.root, 'sh-bonus').map((n) => n.textContent), ['10% more Aurum', '20% more Aurum', '30% more Aurum']);
-  assert.deepEqual(all(w.root, 'sh-price').map((n) => n.textContent), ['$4.99', '$9.99', '$19.99', '$49.99']);
+  assert.deepEqual(all(w.root, 'sh-price').map((n) => n.textContent), ['$4.99', '$9.99', '$19.99', '$29.99']);
   assert.equal(all(w.root, 'sh-buy').length, 4);
   assert.equal(all(w.root, 'sh-tier').length, 0, 'a pack\'s size is its own mark');
   w.stop();

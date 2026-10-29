@@ -153,10 +153,10 @@ test('SHOP: the window - a tab a section with its count, a panel a ware with its
   // PIN MOVED (STOREFRONT): the sheet's sections, each its wares sold alone - a bundle's glyphs and aura are its alone
   assert.deepEqual(all(w.root, 'sh-tab').map((t) => t.textContent), ['Battle Pass2', 'Kill Effects3', 'Portal Skins3', 'Mounts3', 'Name Visuals5', 'Auras1', 'Aura Armory6', 'Bundles4', 'Pass Boosters3', 'Aurum4']);   // PIN MOVED (AURUM): the packs
   assert.equal(all(w.root, 'sh-tab')[0].attrs['aria-selected'], 'true');
-  assert.deepEqual(all(w.root, 'sh-price').map((p) => p.textContent), ['$29.99', '$49.99']);
+  assert.deepEqual(all(w.root, 'sh-price').map((p) => p.textContent), ['$14.99', '$24.99']);   // PIN MOVED (AUDIT-STOREFRONT II): every price under SHOP_PRICE_CAP
   all(w.root, 'sh-tab')[4].click();
   assert.equal(keep.cat, 'names', 'the tab kept, for a face rebuilt around the window');
-  assert.deepEqual(all(w.root, 'sh-price').map((p) => p.textContent), ['$5.00', '$2.00', '$6.99', '$12.99', '$24.99']);
+  assert.deepEqual(all(w.root, 'sh-price').map((p) => p.textContent), ['$5.00', '$2.00', '$3.99', '$6.99', '$9.99']);
   const buy = all(w.root, 'sh-buy')[0];
   assert.equal(buy.tag, 'a');
   assert.equal(buy.href, 'https://accounts.invalid/v1/shop/buy?t=genesis');
@@ -614,7 +614,7 @@ test('STOREFRONT the carousel: the card\'s featured wares a slide each, in its o
 });
 
 test('STOREFRONT the bundles: a bundle\'s panel lists what it gives, each held one marked (a ware sold alone by the card, a bundle\'s glyph or aura by the wardrobe), its worth bought alone, and the price this account pays beside the list price struck through (mutants: a held piece unmarked; the account\'s price never shown)', () => {
-  const flow = flowIn(card({ 'bundle:daedricchampion': { cents: 3000 }, 'kill:pyre': { held: true, buy: null } }), { wardrobe: { titles: [], glyphs: ['oblivion'], auras: [], effectsHeld: { kill: ['pyre'], portal: [], mount: [] } } });
+  const flow = flowIn(card({ 'bundle:daedricchampion': { cents: 1628 }, 'kill:pyre': { held: true, buy: null } }), { wardrobe: { titles: [], glyphs: ['oblivion'], auras: [], effectsHeld: { kill: ['pyre'], portal: [], mount: [] } } });
   const w = shopWareById('bundle:daedricchampion');
   assert.deepEqual(shopBundleRows(flow, w).map((r) => [r.id, r.held]), [['aura:dominion', false], ['kill:pyre', true], ['title:eternalchampion', false], ['glyph:oblivion', true]]);
   assert.equal(shopHeldAny(flow, 'glyph:oblivion'), true);
@@ -623,9 +623,10 @@ test('STOREFRONT the bundles: a bundle\'s panel lists what it gives, each held o
   const panel = all(win.root, 'sh-panel').find((p) => p.attrs['data-ware'] === 'bundle:daedricchampion');
   assert.equal(all(panel, 'sh-content').length, 4);
   assert.equal(all(panel, 'sh-content-held').length, 2);
-  assert.equal(all(panel, 'sh-worth')[0].textContent, 'Worth $84.96 bought alone.');
-  assert.equal(all(panel, 'sh-price')[0].textContent, '$30.00');
-  assert.equal(all(panel, 'sh-was')[0].textContent, '$59.99', 'the list price struck through beside it');
+  // PIN MOVED (AUDIT-STOREFRONT II): the prices under SHOP_PRICE_CAP; the account's the service's, the Pyre and the Sigil held
+  assert.equal(all(panel, 'sh-worth')[0].textContent, 'Worth $42.96 bought alone.');
+  assert.equal(all(panel, 'sh-price')[0].textContent, '$16.28');
+  assert.equal(all(panel, 'sh-was')[0].textContent, '$27.99', 'the list price struck through beside it');
   assert.equal(all(panel, 'sh-tier')[0].textContent, 'Exclusive');
   win.stop();
 });
@@ -668,7 +669,7 @@ test('STOREFRONT the Battle Pass section: the season\'s story and its three stag
   w.stop();
   // before the season: on sale when it opens
   const early = flowIn(card({ 'pass:s1premium': { sale: false, buy: null } }));
-  assert.deepEqual(shopWareState(early, shopWareById('pass:s1premium'), Date.UTC(2026, 9, 30)), { state: 'soon', buy: null, cents: 2999, opens: Date.UTC(2026, 10, 10) });
+  assert.deepEqual(shopWareState(early, shopWareById('pass:s1premium'), Date.UTC(2026, 9, 30)), { state: 'soon', buy: null, cents: 1499, opens: Date.UTC(2026, 10, 10) });   // PIN MOVED (AUDIT-STOREFRONT II): under the cap
   assert.equal(shopWareState(early, shopWareById('pass:s1premium'), Date.UTC(2027, 0, 20)).state, 'gone', 'after it: no longer sold');
   assert.deepEqual(shopSections(flowIn(null)), ['pass', 'kills', 'portals', 'mounts', 'names', 'auras', 'armory', 'bundles', 'boosts', 'aurum']);   // PIN MOVED (AURUM): the packs; the icons sold for Aurum alone, never a section
   assert.equal(shopUntilText(Date.UTC(2026, 10, 15), false, Date.UTC(2026, 10, 14, 20)), 'Featured until Nov 14. Ends today.');

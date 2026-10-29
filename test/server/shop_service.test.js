@@ -14,7 +14,7 @@ import {
 } from '../../server-account/src/shop.js';
 import { titlesHeld, aurasHeld, glyphsOf, equipRefusal, auraRefusal } from '../../server-account/src/titles.js';
 import { ROUTES } from '../../server-account/src/service.js';
-import { SHOP_WARES, shopWareById, shopHeldOf, shopKeysOf, shopOnSaleOf, shopCardOf as clientCard, shopPriceText, SHOP_BITS_ALL, shopVocabularyOk } from '../../src/net/shopLaw.js';
+import { SHOP_PRICE_CAP, SHOP_WARES, shopWareById, shopHeldOf, shopKeysOf, shopOnSaleOf, shopCardOf as clientCard, shopPriceText, SHOP_BITS_ALL, shopVocabularyOk } from '../../src/net/shopLaw.js';
 import { postHead } from '../../src/net/postLaw.js';
 import { POST_BODY_MAX, POST_SUBJECT_MAX, POST_BATCH_RE } from '../../src/net/postLaw.js';
 
@@ -33,27 +33,27 @@ test('SHOP: the wares at the owner\'s and the sheet\'s prices, the owner\'s nine
   // STOREFRONT (PIN MOVED, bible/06-Systems/Storefront.md section 2): the sheet's rows by section - each [id, price, bit,
   // section, pre-alpha, tier, sold alone]; the owner's nine keep their bits, every ware since is held by its id
   assert.deepEqual(SHOP_WARES.map((w) => [w.id, w.cents, w.bit, w.category, w.preAlpha, w.tier, w.alone]), [
-    ['pass:s1premium', 2999, 0, 'pass', false, 'premium', true],
-    ['pass:s1deluxe', 4999, 0, 'pass', false, 'exclusive', true],
-    ['kill:ashen', 999, 0, 'kills', false, 'standard', true],
-    ['kill:voidrend', 1999, 0, 'kills', false, 'premium', true],
-    ['kill:pyre', 2999, 0, 'kills', false, 'exclusive', true],
-    ['portal:runic', 1499, 0, 'portals', false, 'standard', true],
-    ['portal:daedric', 2999, 0, 'portals', false, 'premium', true],
-    ['portal:aetheric', 4999, 0, 'portals', false, 'exclusive', true],
-    ['mount:spectral', 1999, 0, 'mounts', false, 'standard', true],
-    ['mount:dawnfire', 3499, 0, 'mounts', false, 'premium', true],
-    ['mount:warhorse', 5999, 0, 'mounts', false, 'exclusive', true],
+    ['pass:s1premium', 1499, 0, 'pass', false, 'premium', true],
+    ['pass:s1deluxe', 2499, 0, 'pass', false, 'exclusive', true],
+    ['kill:ashen', 499, 0, 'kills', false, 'standard', true],
+    ['kill:voidrend', 999, 0, 'kills', false, 'premium', true],
+    ['kill:pyre', 1499, 0, 'kills', false, 'exclusive', true],
+    ['portal:runic', 799, 0, 'portals', false, 'standard', true],
+    ['portal:daedric', 1299, 0, 'portals', false, 'premium', true],
+    ['portal:aetheric', 1999, 0, 'portals', false, 'exclusive', true],
+    ['mount:spectral', 999, 0, 'mounts', false, 'standard', true],
+    ['mount:dawnfire', 1499, 0, 'mounts', false, 'premium', true],
+    ['mount:warhorse', 2499, 0, 'mounts', false, 'exclusive', true],
     ['title:genesis', 500, 1, 'names', true, null, true],
     ['glyph:origin', 200, 2, 'names', true, null, true],
-    ['title:dawnbringer', 699, 0, 'names', false, 'standard', true],
-    ['title:voidwalker', 1299, 0, 'names', false, 'premium', true],
-    ['title:eternalchampion', 2499, 0, 'names', false, 'exclusive', true],
-    ['glyph:oblivion', 499, 0, 'names', false, null, false],
-    ['glyph:gatesigil', 499, 0, 'names', false, null, false],
-    ['glyph:gearcrown', 499, 0, 'names', false, null, false],
+    ['title:dawnbringer', 399, 0, 'names', false, 'standard', true],
+    ['title:voidwalker', 699, 0, 'names', false, 'premium', true],
+    ['title:eternalchampion', 999, 0, 'names', false, 'exclusive', true],
+    ['glyph:oblivion', 299, 0, 'names', false, null, false],
+    ['glyph:gatesigil', 299, 0, 'names', false, null, false],
+    ['glyph:gearcrown', 299, 0, 'names', false, null, false],
     ['aura:eternal', 2000, 4, 'auras', true, null, true],
-    ['aura:dominion', 2499, 0, 'auras', false, null, false],
+    ['aura:dominion', 1499, 0, 'auras', false, null, false],
     // ARMORY (PIN MOVED, bible/04-Characters/Aura-Armory.md section 4): the Aura Armory's Eternal line - the set whole at $20
     // (the owner: "The store set should be $20"), and a piece a slot at $6
     ['armory:eternalset', 2000, 256, 'armory', true, null, true],
@@ -62,23 +62,26 @@ test('SHOP: the wares at the owner\'s and the sheet\'s prices, the owner\'s nine
     ['armory:eternalarmlets', 600, 32, 'armory', true, null, true],
     ['armory:eternalgreaves', 600, 64, 'armory', true, null, true],
     ['armory:eternaledge', 600, 128, 'armory', true, null, true],
-    ['bundle:daedricchampion', 5999, 0, 'bundles', false, 'exclusive', true],
-    ['bundle:portalmaster', 4999, 0, 'bundles', false, 'premium', true],
-    ['bundle:lordofoblivion', 11999, 0, 'bundles', false, 'exclusive', true],
-    ['bundle:seasonalcollector', 6499, 0, 'bundles', false, 'exclusive', true],
-    ['boost:s1cog', 499, 0, 'boosts', false, 'standard', true],
-    ['boost:s1tonal', 1299, 0, 'boosts', false, 'premium', true],
-    ['boost:s1heart', 2499, 0, 'boosts', false, 'exclusive', true],
+    ['bundle:daedricchampion', 2799, 0, 'bundles', false, 'exclusive', true],
+    ['bundle:portalmaster', 1999, 0, 'bundles', false, 'premium', true],
+    ['bundle:lordofoblivion', 2999, 0, 'bundles', false, 'exclusive', true],
+    ['bundle:seasonalcollector', 2999, 0, 'bundles', false, 'exclusive', true],
+    ['boost:s1cog', 299, 0, 'boosts', false, 'standard', true],
+    ['boost:s1tonal', 599, 0, 'boosts', false, 'premium', true],
+    ['boost:s1heart', 999, 0, 'boosts', false, 'exclusive', true],
     // AURUM (PIN MOVED, bible/06-Systems/Aurum.md): the daily wares' icons, sold for Aurum alone, and the Aurum's packs
-    ['icon:gatefire', 600, 0, 'icons', false, 'premium', true], ['icon:aurbis', 700, 0, 'icons', false, 'exclusive', true],
-    ['icon:elderscroll', 600, 0, 'icons', false, 'premium', true], ['icon:azurastar', 600, 0, 'icons', false, 'premium', true],
-    ['icon:redmountain', 700, 0, 'icons', false, 'exclusive', true], ['icon:hourglass', 500, 0, 'icons', false, 'standard', true],
-    ['icon:sanguinerose', 400, 0, 'icons', false, 'standard', true], ['icon:whitegold', 400, 0, 'icons', false, 'standard', true],
+    ['icon:gatefire', 300, 0, 'icons', false, 'premium', true], ['icon:aurbis', 400, 0, 'icons', false, 'exclusive', true],
+    ['icon:elderscroll', 300, 0, 'icons', false, 'premium', true], ['icon:azurastar', 300, 0, 'icons', false, 'premium', true],
+    ['icon:redmountain', 400, 0, 'icons', false, 'exclusive', true], ['icon:hourglass', 300, 0, 'icons', false, 'standard', true],
+    ['icon:sanguinerose', 200, 0, 'icons', false, 'standard', true], ['icon:whitegold', 200, 0, 'icons', false, 'standard', true],
     ['aurum:500', 499, 0, 'aurum', false, 'standard', true], ['aurum:1100', 999, 0, 'aurum', false, 'standard', true],
-    ['aurum:2400', 1999, 0, 'aurum', false, 'premium', true], ['aurum:6500', 4999, 0, 'aurum', false, 'exclusive', true],
+    ['aurum:2400', 1999, 0, 'aurum', false, 'premium', true], ['aurum:3900', 2999, 0, 'aurum', false, 'exclusive', true],
   ]);
   assert.deepEqual(SHOP_WARES.filter((w) => !w.cash).map((w) => w.id), SHOP_WARES.filter((w) => w.kind === 'icon').map((w) => w.id), 'AURUM: the icons alone are sold for Aurum alone');
-  assert.deepEqual(SHOP_WARES.filter((w) => w.aurum).map((w) => [w.id, w.aurum]), [['aurum:500', 500], ['aurum:1100', 1100], ['aurum:2400', 2400], ['aurum:6500', 6500]]);
+  // AUDIT-STOREFRONT II (the owner, 2026-10-29: "the most expensive anything should be is $30"): no ware over the cap
+  assert.equal(SHOP_PRICE_CAP, 3000);
+  for (const w of SHOP_WARES) assert.ok(w.cents <= SHOP_PRICE_CAP, `${w.id}: ${shopPriceText(w.cents)} - over the cap`);
+  assert.deepEqual(SHOP_WARES.filter((w) => w.aurum).map((w) => [w.id, w.aurum]), [['aurum:500', 500], ['aurum:1100', 1100], ['aurum:2400', 2400], ['aurum:3900', 3900]]);
   assert.equal(SHOP_BITS_ALL, 511);
   assert.ok(shopVocabularyOk());
   assert.deepEqual(shopHeldOf(5), ['title:genesis', 'aura:eternal']);
