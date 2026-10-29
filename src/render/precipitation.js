@@ -23,7 +23,7 @@
 // cap alone - the lab's program and its 26,000 instances are built for
 // the lane that draws them, and for no other.
 
-import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
+import { buildProgram, startPrograms } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 
 const PRECIP_VS = `#version 300 es
 layout(location=0) in vec3 aSeed;   // 0..1 per particle
@@ -297,6 +297,22 @@ function mat4Multiply(out, a, b) {
     }
   }
   return out;
+}
+
+/** SHADER-EASE WARM-POLL (2026-10-29): the pairs the constructor builds for `opts`, gated as it gates them - the
+ *  classic pass always, the lab on the enhanced lane, pixel snow on that lane with its switch on. */
+export function precipPrograms(opts = {}) {
+  /** @type {Array<readonly [string, string]>} */
+  const pairs = [[PRECIP_VS, PRECIP_FS]];
+  if (opts.enhanced) pairs.push([LAB_WX_VS, LAB_WX_FS]);
+  if (opts.enhanced && opts.pixelSnow) pairs.push([PIXEL_SNOW_VS, PIXEL_SNOW_FS]);
+  return pairs;
+}
+
+/** The host's warm step for its rain (render/warmPrograms.js): the programs started, the renderer built once the
+ *  driver is done, and none built over one the weather made first. `get`/`set` are the host's own `precip`. */
+export function precipWarmStep(gl, opts, get, set) {
+  return { start: () => startPrograms(gl, precipPrograms(opts)), run: () => { if (!get()) set(new PrecipitationRenderer(gl, opts)); }, need: () => !get() };
 }
 
 export class PrecipitationRenderer {

@@ -136,6 +136,17 @@ export function compiledPass(gl, programs, make, fail = () => {}) {
   return /** @type {any} */ (Object.defineProperty(door, 'settled', { get: () => !!pass || tried }));
 }
 
+// SHADER-EASE LINK-WAIT (2026-10-29): the one LINK_STATUS read is where a cold compile holds the page's thread. A read
+// that waits past LINK_WAIT_MS is kept (the last LINK_WAIT_KEEP): which program, how long, and whether a start had it
+// ahead (`started`) - a build no warm started shows false. linkWaits() reads them.
+export const LINK_WAIT_MS = 50;
+export const LINK_WAIT_KEEP = 32;
+/** @type {Array<{ label: string, ms: number, started: boolean }>} */
+const WAITS = [];
+/** The slow LINK_STATUS reads kept, oldest first - a copy. */
+export const linkWaits = () => WAITS.slice();
+const clock = () => globalThis.performance?.now?.() ?? 0;
+
 /** Compile `vsSrc` and `fsSrc` and link them into a program, in the order
  *  every pass wrote it: createProgram, then per stage createShader,
  *  shaderSource, compileShader, the COMPILE_STATUS check and attachShader,
@@ -157,7 +168,12 @@ export function buildProgram(gl, vsSrc, fsSrc, label = '') {
   if (took) started.delete(key);
   const { prog, vs, fs } = took?.prog ? took : link(gl, vsSrc, fsSrc);   // COMPILE-QUEUE: a queued pair is compiled here, out of its turn
   let fault = /** @type {string|null} */ (null);
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+  const t0 = clock(), linked = gl.getProgramParameter(prog, gl.LINK_STATUS), ms = clock() - t0;
+  if (ms > LINK_WAIT_MS) {
+    const wait = { label: label || `${vsSrc.length}+${fsSrc.length} chars`, ms: Math.round(ms), started: !!took?.prog };
+    if (WAITS.push(wait) > LINK_WAIT_KEEP) WAITS.shift();
+  }
+  if (!linked) {
     for (const sh of [vs, fs]) if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) { fault = `${label ? `${label} shader: ` : ''}${gl.getShaderInfoLog(sh)}`; break; }
     fault ??= `${label ? `${label} link: ` : ''}${gl.getProgramInfoLog(prog)}`;
   }
