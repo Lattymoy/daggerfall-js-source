@@ -1,0 +1,179 @@
+[
+  {
+    "name": "W14-the-key-by-the-region",
+    "file": "src/systems/pass/seasonWorld.js",
+    "old": "key: `${n}.${stage}.${area}.${k}`, n, stage, region: where.region",
+    "new": "key: `${n}.${stage}.${where.region}.${k}`, n, stage, region: where.region",
+    "tests": [
+      "test/world/worldWide/season_tamriel.test.js"
+    ],
+    "note": "A province's every area is one region (WW-R's 62..69): keyed by it, two districts' fissures share a key, a quiet, a collider bucket and a clearing."
+  },
+  {
+    "name": "W14-the-pixel-the-bays",
+    "file": "src/systems/pass/seasonWorld.js",
+    "old": "scan.byArea?.get(area), worldPixelOfKey, townOf",
+    "new": "scan.byArea?.get(area), bayPixel, townOf",
+    "tests": [
+      "test/world/worldWide/season_tamriel.test.js"
+    ],
+    "note": "A province's pixel read back by MapsFile's y * 1000 + x: a world key is no Bay id."
+  },
+  {
+    "name": "W14-the-roll-the-regions",
+    "file": "src/systems/pass/seasonWorld.js",
+    "old": "const id = pixels[fissureRoll(n, stage, area, k, 100 + d) % pixels.length]",
+    "new": "const id = pixels[fissureRoll(n, stage, where.region, k, 100 + d) % pixels.length]",
+    "tests": [
+      "test/world/worldWide/season_tamriel.test.js"
+    ],
+    "note": "Every district of a province drawn by one roll; the Bay's region is its area, so the Bay is untouched."
+  },
+  {
+    "name": "W14-the-region-the-area",
+    "file": "src/systems/pass/seasonWorld.js",
+    "old": "{ region: regionOfTheatre(t), theatre: t, regionName: areaName(area) }",
+    "new": "{ region: area, theatre: t, regionName: areaName(area) }",
+    "tests": [
+      "test/world/worldWide/season_tamriel.test.js"
+    ],
+    "note": "An area is never a region (worldGrid.js): a province's fissure says its province's region, 62..69."
+  },
+  {
+    "name": "W14-the-name-lost",
+    "file": "src/systems/pass/seasonWorld.js",
+    "old": "{ region: regionOfTheatre(t), theatre: t, regionName: areaName(area) }",
+    "new": "{ region: regionOfTheatre(t), theatre: t, regionName: '' }",
+    "tests": [
+      "test/world/worldWide/season_tamriel.test.js"
+    ],
+    "note": "REGION_NAMES[area] past the Bay is nothing: the province's name is the area's (worldGrid.js areaName)."
+  },
+  {
+    "name": "W14-cyrodiil-opened",
+    "file": "src/systems/pass/seasonWorld.js",
+    "old": "if (!(t > BAY_THEATRE) || !siteEventLaneOpen(t) || isBayArea(area)) return [];",
+    "new": "if (!(t > BAY_THEATRE) || isBayArea(area)) return [];",
+    "tests": [
+      "test/world/worldWide/season_tamriel.test.js"
+    ],
+    "note": "The open zone stands no site-bound world event (net/wire.js SITE_EVENT_LANES), as the Starfall's coven nights."
+  },
+  {
+    "name": "W14-every-area-read",
+    "file": "src/systems/pass/seasonWorld.js",
+    "old": "if (ready(area)) out.push(...areaFissures(",
+    "new": "out.push(...areaFissures(",
+    "tests": [
+      "test/world/worldWide/season_tamriel.test.js"
+    ],
+    "note": "An area drawn before its roads are laid: two machines a region apart in the build stand different fissures."
+  },
+  {
+    "name": "W14-the-roads-read-on-the-bay-alone",
+    "file": "src/systems/pass/seasonWorld.js",
+    "old": "const onRoad = (paths, px, py, spot) => !!paths && nearRoad(",
+    "new": "const onRoad = (paths, px, py, spot) => !!paths && px >= 0 && py >= 0 && px < 1000 && py < 500 && nearRoad(",
+    "tests": [
+      "test/world/worldWide/season_tamriel.test.js"
+    ],
+    "note": "The shape AUDIT TAMRIEL-WIDE C2 found in the camps: Basic Roads' arms asked, the roads past the Bay never."
+  },
+  {
+    "name": "W14-the-box-short",
+    "file": "src/systems/pass/seasonWorld.js",
+    "old": "x1 = Math.max(x1, x + 1); y1 = Math.max(y1, y + 1);",
+    "new": "x1 = Math.max(x1, x); y1 = Math.max(y1, y);",
+    "tests": [
+      "test/world/worldWide/season_tamriel.test.js"
+    ],
+    "note": "The box's far row and column left out of the roads' question."
+  },
+  {
+    "name": "W14-the-model-rolls-the-region",
+    "file": "src/world/fissureModel.js",
+    "old": "fissureRoll(f.n, f.stage, f.area, f.k, 500 + j)",
+    "new": "fissureRoll(f.n, f.stage, f.region, f.k, 500 + j)",
+    "tests": [
+      "test/world/worldWide/season_tamriel.test.js"
+    ],
+    "note": "Every district's fissure of one number made alike: a province is one region."
+  },
+  {
+    "name": "W14-the-provinces-unasked",
+    "file": "src/scenes/seasonHost.js",
+    "old": "for (const [lane, lsc] of theatres.warmLanes()) parts.push(",
+    "new": "for (const [lane, lsc] of []) parts.push(",
+    "tests": [
+      "test/world/worldWide/season_tamriel.test.js"
+    ],
+    "note": "The finding itself: the season stands on the Bay alone."
+  },
+  {
+    "name": "W14-the-roads-not-waited-for",
+    "file": "src/scenes/seasonHost.js",
+    "old": "!!box && !!R?.landedIn?.(box[0], box[1], box[2], box[3])",
+    "new": "!!box",
+    "tests": [
+      "test/world/worldWide/season_tamriel.test.js"
+    ],
+    "note": "A province's fissures drawn before its roads land: they move as the roads come, and differ from a machine whose roads are laid."
+  },
+  {
+    "name": "W14-a-new-build-kept",
+    "file": "src/scenes/seasonHost.js",
+    "old": " || L.build !== build) {",
+    "new": ") {",
+    "tests": [
+      "test/world/worldWide/season_tamriel.test.js"
+    ]
+  },
+  {
+    "name": "W14-a-new-scan-kept",
+    "file": "src/scenes/seasonHost.js",
+    "old": "if (!L || L.key !== key || L.sc !== sc ||",
+    "new": "if (!L || L.key !== key ||",
+    "tests": [
+      "test/world/worldWide/season_tamriel.test.js"
+    ]
+  },
+  {
+    "name": "W14-every-theatre-drawn-at-once",
+    "file": "src/scenes/seasonHost.js",
+    "old": " || Date.now() - drew.at < SEASON_LANE_DRAW_MS) return L.list;",
+    "new": ") return L.list;",
+    "tests": [
+      "test/world/worldWide/season_tamriel.test.js"
+    ],
+    "note": "Eight theatres' draws in one frame: 8 to 44 ms on the freeware's provinces."
+  },
+  {
+    "name": "W14-the-bays-gate-for-a-province",
+    "file": "src/scenes/seasonHost.js",
+    "old": "const lane = f.theatre ?? 0;",
+    "new": "const lane = 0;",
+    "tests": [
+      "test/world/worldWide/season_tamriel.test.js"
+    ]
+  },
+  {
+    "name": "W14-the-clearings-keyed-by-their-count",
+    "file": "src/scenes/seasonHost.js",
+    "old": "const key = list.length ? list : '';",
+    "new": "const key = list.length ? `${sites.key}:${list.length}` : '';",
+    "tests": [
+      "test/world/worldWide/season_tamriel.test.js"
+    ],
+    "note": "The key the clearings had before W14: a province's scan made again with as many fissures kept the old ones' clearings."
+  },
+  {
+    "name": "W14-the-key-read-every-pixel",
+    "file": "src/world/gate/gateClearance.js",
+    "old": "if (!comeOf.has(was)) {   // W14",
+    "new": "if (true) {   // W14",
+    "tests": [
+      "test/world/worldWide/season_tamriel.test.js"
+    ],
+    "note": "The same answers: only the counted reads tell it - a set of 900 members split once a built pixel at every turn."
+  }
+]

@@ -236,11 +236,12 @@
   {
     "name": "SEASONAUDIT-the-roads-unread",
     "file": "src/systems/pass/seasonWorld.js",
-    "old": " && !onRoad(paths, id, spot)) pick = id;",
-    "new": ") pick = id;",
+    "old": " && !onRoad(paths, x, y, spot)) { pick = id;",
+    "new": ") { pick = id;",
     "tests": [
       "test/systems/pass/fissureroads.test.js"
-    ]
+    ],
+    "note": "W14: re-aimed by content - the draw now names its pixel (the Bay's by MapsFile's id, a province's by the world's key)."
   },
   {
     "name": "SEASONAUDIT-the-road-margin-dropped",
@@ -254,11 +255,12 @@
   {
     "name": "SEASONAUDIT-the-fissures-stood-before-the-roads",
     "file": "src/scenes/seasonHost.js",
-    "old": "    if (!sc || rn === undefined) return sites.list;",
-    "new": "    if (!sc) return sites.list;",
+    "old": "    if (rn === undefined) return sites.list;",
+    "new": "    if (false) return sites.list;",
     "tests": [
       "test/systems/pass/fissureroads.test.js"
-    ]
+    ],
+    "note": "W14: re-aimed by content - the Bay's scan no longer gates the theatres past it, so the roads alone do."
   },
   {
     "name": "AUDIT-STOREFRONT-the-mauls-day-no-claim",

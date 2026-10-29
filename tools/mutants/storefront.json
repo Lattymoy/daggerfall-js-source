@@ -285,11 +285,12 @@
   {
     "name": "STOREFRONT-the-fissures-bunched",
     "file": "src/systems/pass/seasonWorld.js",
-    "old": "apart(f, id % W, Math.floor(id / W), FISSURE_APART_PX)",
-    "new": "apart(f, id % W, Math.floor(id / W), 0)",
+    "old": "out.every((f) => apart(f, x, y, FISSURE_APART_PX))",
+    "new": "out.every((f) => apart(f, x, y, 0))",
     "tests": [
       "test/scenes/season_world.test.js"
-    ]
+    ],
+    "note": "W14: re-aimed by content - an area's draws (seasonWorld.js drawFissures) read a pixel by its theatre's law, the Bay's the region's as before."
   },
   {
     "name": "STOREFRONT-a-heart-every-stage",
