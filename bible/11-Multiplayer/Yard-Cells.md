@@ -723,8 +723,8 @@ cell's version alone, one trigger instead of two.
 Section 6 decided that the homes answer goes by cell and by version, as the yards did. `HOME_TOWN_MAX` is already
 2,048 (YC1), so no town is cut today. YC4 is about the answer's cost: HOMES-SHED measured `/v1/homes/town` as the
 busiest route of the 2026-10-13 overload (88,079 asks in the hour), and `Scale-Arc.md` puts its cost in its rate, not
-its read (0.6 ms a read). Every page in a town asks the whole town's homes every 60 s (`onlineHomes.js`
-HOME_TOWN_TTL_MS), and almost every answer is the one it had.
+its read (0.6 ms a read). A page asks the whole town's homes at its gate and at a home's door, at most once in 60 s
+(`onlineHomes.js` HOME_TOWN_TTL_MS), and almost every answer is the one it had.
 
 ### 14.1 The answer has two parts
 
@@ -771,9 +771,10 @@ many cells at once (a guild's heraldry, which redraws all its halls) answers no 
 ### 14.5 The client
 
 `onlineHomes.js` keeps one registry, and `homeAt` reads it as today. It merges the shared rows by cell with the
-caller's own rows by building key. It asks a town's cells with the versions it holds, every 60 s and at once on a
-home word. It asks its own part when it first asks a town, after each of its own writes, on a home word for a cell
-where it holds an own row, and every 5 minutes. Only those make the own part change, so it is asked far less than the
+caller's own rows by building key. It asks a town's cells with the versions it holds when it asks the town today (at
+its gate and at a home's door, at most once in 60 s), and at once on a home word. A word missed while the hub link was
+down is read at the next such ask. It asks its own part when it first asks a town, after each of its own writes, on a
+home word for a cell where it holds an own row, and once 5 minutes have passed. Only those make the own part change, so it is asked far less than the
 town is today. QUEST-HOME's home words (`hearHome`) still make it ask at once.
 
 The registry knows a town by its map id, not where the player stands, so it asks every cell a town can hold (65) in
