@@ -31604,6 +31604,21 @@
   "tr": "8e30b4c0cdc2",
   "by": "claude-in-session"
  },
+ "pvp.potion.health": {
+  "en": "fb48097d0f1f",
+  "tr": "c6c54612ca40",
+  "by": "claude-in-session"
+ },
+ "pvp.potion.magicka": {
+  "en": "bc4425d509d0",
+  "tr": "71d93fa6da21",
+  "by": "claude-in-session"
+ },
+ "pvp.potion.other": {
+  "en": "0c348f559c59",
+  "tr": "955599050a14",
+  "by": "claude-in-session"
+ },
  "ql.board.head": {
   "en": "05d05c6f6a06",
   "tr": "d5eab03e668e",
