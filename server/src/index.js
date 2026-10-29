@@ -8285,7 +8285,8 @@ export class Room {
         else if (f.said && !f.told) await this._serpentTellHubOnce(id, f, now);
       } catch (e) { console.warn('[serpent] beat failed', e?.message ?? e); }
       const heard = [...this._all()].some(([, b]) => this._serpentHears(id, f, b));
-      if (f.said && !f.told) at = Math.min(at, now + SERPENT_TELL_RETRY_MS);
+      if (f.fell && !f.said) at = Math.min(at, now + SERPENT_TELL_RETRY_MS);   // SERPENT-RETRY: a kill whose receipts failed to mint is tried again, never left to the fight's end (the dragon's AUDIT DRAGON twin)
+      else if (f.said && !f.told) at = Math.min(at, now + SERPENT_TELL_RETRY_MS);
       else if (heard && !f.fell && !f.gone) { at = Math.min(at, now + serpentBrain.SERPENT_TICK_MS); live = true; }
       else at = Math.min(at, end);
     }

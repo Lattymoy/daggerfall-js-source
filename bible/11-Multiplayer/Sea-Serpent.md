@@ -974,3 +974,14 @@ where the index moved 60 of 60. This change moved every day's site once more. Th
 Pins: `test/world/worldWide/audit_tamrielwide_relay.test.js` E3 (2). Mutants: `tools/mutants/audit_tamrielwide_relay.json` (8, dead). PIN MOVED: `serpent1_law`, `serpent1_client` (a port's pixel),
 `serpent2_herald` and `ww7_longer` (the law's word and record). Re-aimed by content: `serpent2.json`
 SERPENT2-any-day-site-kept and SERPENT2-place-sent-raw. Relay world284.
+
+## 19. A kill tried again (SERPENT-RETRY, 2026-10-29)
+
+The beat stepped a kill only once it was said, so a kill whose receipts failed to mint (the key store hiccuping) set
+its alarm at the fight's end, its keeping, when the fight is forgotten and no fighter is paid. The Dwarven Dragon's
+audit found the same gap in its own beat (`11-Multiplayer/Dwarven-Dragon.md` section 13). A kill not yet said is now
+tried again at SERPENT_TELL_RETRY_MS, as a said one not yet told is
+(`server/src/index.js:"if (f.fell && !f.said) at = Math.min(at, now + SERPENT_TELL_RETRY_MS);"`).
+
+Pins: `test/net/serpent/serpentretry.test.js` (1). Mutants: `tools/mutants/serpentretry.json` (1, dead). Relay world286,
+re-hashed in place (not yet deployed).

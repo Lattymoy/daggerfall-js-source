@@ -320,7 +320,7 @@ heard; an Aetherbright rider washed blue on every screen; the tamed line honest 
 
 The service: its tames read back (`/v1/dragon/tames`), so none is lost with a device's storage, and the dragons slain on
 both cards - the Inspect card the count alone (`dragonSlainOf`), never a stranger's tames. The pass against this page found `05-Combat/Power-Ceiling.md` section 9 without the owner's word on the
-pace; it is quoted. The serpent's beat shares the kill's retry gap; it is reported, not changed here. Pinned by
+pace; it is quoted. The serpent's beat shared the kill's retry gap; SERPENT-RETRY fixed it (`Sea-Serpent.md` 19). Pinned by
 `test/net/dragon/dragonaudit_relay.test.js` (6), `dragonaudit_account.test.js` (4), `dragonaudit_client.test.js` (1) and
 tests in `dragon5_mount` and `dragon3_host`; `tools/mutants/dragonaudit.json`. world284 re-hashed in place.
 
