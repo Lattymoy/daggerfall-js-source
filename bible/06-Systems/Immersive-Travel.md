@@ -146,20 +146,16 @@ popup stands.
 block as a WD1 patch (`02-Formats/World-Data-Patches.md`), rebuilt at load from
 the player's own `BLOCKS.BSA`.
 
-**BUILT WITHOUT A BLOCKS.BSA.** No ARENA2 in this container. The tool read the
-edit off the files alone: the editor appends the author's records and leaves the
-header's counts at the classic block's (2 models, 1 flat in all four), so the
-records past the counts are the author's - 6, 5, 7 and 10 of them. And the two
-round-trip changes the editor makes to every block, which the files show on
-their own (AUDIT IT1 G1): BuildingDataList written at its count where the
-classic block reads 32 slots (28 removed - Warm Ashes' patches, diffed against a
-real BSA, remove the same), and a scale of 1 on the two classic models, whose
-records carry none (6 sets). What it cannot carry is any other round-trip change
-to a classic record (an automap byte, a rotation's equivalent). The loader checks each rebuild against the
-author's sha256 and says when it differs, and `test/formats/worldData/it1_worlddata.test.js`
-checks all four with `ARENA2_PATH` set. **OWED:** that run, on a machine with
-the ARENA2 - and if it differs, `node tools/immersiveTravelPatches.mjs
-<immersivetravel.dfmod> <arena2>`, which writes WD1's own diff, checked.
+**CUT AGAINST BLOCKS.BSA (ARENA2-IT, 2026-10-29).** The first four were read off
+the files alone, with no ARENA2: the author's records past the header's counts
+(6, 5, 7 and 10) and the round trip the files show (AUDIT IT1 G1: 28 building
+slots removed, a scale on the two classic models). The run with the freeware
+ARENA2 failed all four sha256 checks: the editor had also zeroed WALLAA08's
+automap ground-flat byte and written WALLAA09-11's subrecord rotations (and on 09
+and 10 a classic model's) as their negative equivalents. The four are now WD1's
+diff (`node tools/immersiveTravelPatches.mjs <immersivetravel.dfmod> <arena2>`),
+each rebuilding the author's file sha256 for sha256; the loader checks it again,
+and `test/formats/worldData/it1_worlddata.test.js` with `ARENA2_PATH` set.
 
 **THE LAYER - A RECORDED DEPARTURE** (the owner: "Add carriages to either").
 Beautiful Cities ships the same four names, its own redrawn gates, and 52

@@ -27,6 +27,7 @@
 ["r",["RmbBlock","FldHeader","BuildingDataList",6]],
 ["r",["RmbBlock","FldHeader","BuildingDataList",5]],
 ["r",["RmbBlock","FldHeader","BuildingDataList",4]],
+["s",["RmbBlock","FldHeader","AutoMapData",3030],0],
 ["s",["RmbBlock","Misc3dObjectRecords",0,"XScale"],1],
 ["s",["RmbBlock","Misc3dObjectRecords",0,"YScale"],1],
 ["s",["RmbBlock","Misc3dObjectRecords",0,"ZScale"],1],

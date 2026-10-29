@@ -191,6 +191,7 @@ export function stashedItemLists(snap) {
   const feud = snap?.modData?.[REVENANT_VENDOR]?.list;   // ITEM-WALK C
   for (const r of Array.isArray(feud) ? feud : []) if (r?.sworn && !r.defeated) out.push(...lists(r.companion?.items));
   for (const r of Array.isArray(feud) ? feud : []) if (r?.sworn && !r.defeated && r.companion?.gear && typeof r.companion.gear === 'object') out.push(...lists(Object.values(r.companion.gear).filter((it) => it && typeof it === 'object')));   // RVN-GEAR: and the kit it wears (revenantGear.js)
+  out.push(...lists(snap?.dragonKeep?.bags));   // DRAGON5b: the tamed dragon's saddlebags (systems/dragon/dragonKeep.js)
   return out;
 }
 /** Every list of the character's own things where liquid wealth can lie, in the order customs takes from them: the

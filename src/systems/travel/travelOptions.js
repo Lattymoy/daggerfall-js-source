@@ -58,6 +58,8 @@ import { LOCATION_TYPES, CLIMATES, worldCoordToMapPixel } from '../../formats/ma
 import { joinPoint, dryLine as dryLineOf, finalRoadVia } from './travelRoute.js';   // AUDIT OW3 J3: a resume rejoins the road where the start's join did; AUDIT DEEP T2-1's law, one home (OWS2)
 import { seaLegMark, seaLegWindow, seaLegBuiltAt, SEA_LEG_UNBUILT, SEA_LEG_DRY } from './seaMark.js';
 import { legEnd, nearestOnLine, lineUpTo } from './roadLine.js';   // ROAD-FOLLOW: a road past the Bay walked on its curves   // FIELD BUGS 2026-10-21d PASSAGE-IN: a sailed leg aimed where she floats
+import { flownLeg, AIR_LEG_KIND } from '../dragon/dragonJourney.js';   // DRAGON6: a journey flown on the dragon
+import { setDragonCruise } from '../../player/dragonRide.js';   // DRAGON6: the cruise while it flies
 import { travelRateOf } from '../timeScale.js';   // RATE-LAW: the journey's rate is its ground's
 
 export const TRAVEL_OPTIONS_VENDOR = 'travel-options';
@@ -661,8 +663,10 @@ export function createTravelOptions(deps = {}) {
   /** A leg's speed, by what it walks on: a road reckless, a track or the open ground cautious (the follow key's own
    *  law, `road ? reckless : cautious`, :706); a cautious journey cautious throughout. */
   function routeLegSpeed(kind) {
-    return !st.destinationCautious && kind === 'road' ? st.settings.recklessTravelMultiplier : st.settings.cautiousTravelMultiplier;
+    return !st.destinationCautious && (kind === 'road' || kind === AIR_LEG_KIND) ? st.settings.recklessTravelMultiplier : st.settings.cautiousTravelMultiplier;   // DRAGON6: a flown leg is the road's
   }
+  /** DRAGON6: whether the leg walked now is flown (the dragon's straight leg, dragonJourney.js). */
+  const flownNow = () => !!(st.autopilot && st.route && flownLeg(st.route.legs[Math.min(st.route.i, st.route.legs.length - 1)]));
   /** The square a spot journey arrives in - one path's width (P_SIZE) about the point. OWS2: one on the water, the
    *  sea's own (SEA_SPOT_SIZE) - a boat under sail comes about in a hundred metres, and never threads a road's width. */
   const spotRect = (pt, afloat = false) => { const w = afloat ? SEA_SPOT_SIZE : P_SIZE; return rectOf(pt.x - w / 2, pt.z - w / 2, w, w); };
@@ -915,7 +919,7 @@ export function createTravelOptions(deps = {}) {
       if (r.point && r.i >= r.legs.length - 1) return !!deps.onRoad?.();
       const at = Math.min(r.i, r.legs.length - 1);
       const leg = r.legs[at];
-      return !!leg && (ROAD_LEG_KINDS.includes(leg.kind) || bridgedRoadLeg(r.legs, at));   // ROAD-BRIDGE
+      return !!leg && (ROAD_LEG_KINDS.includes(leg.kind) || flownLeg(leg) || bridgedRoadLeg(r.legs, at));   // ROAD-BRIDGE; DRAGON6: a flown leg runs at the road's rate wherever it goes
     }
     if (st.walk === 'path' || st.walk === 'ring') return true;
     return !!deps.onRoad?.();
@@ -931,7 +935,7 @@ export function createTravelOptions(deps = {}) {
     if (of === 'street') return { fwd: routeLegSpeed('road'), rate: Math.min(r.street?.pace ?? TOWN_PACE_MAX, travelRateOf(true)), sea: false };
     if (of === 'join') return { fwd: routeLegSpeed('open'), rate: travelRateOf(false), sea: false };
     const leg = r.legs[of];
-    return leg ? { fwd: routeLegSpeed(leg.kind), rate: travelRateOf(ROAD_LEG_KINDS.includes(leg.kind) || bridgedRoadLeg(r.legs, of)), sea: SEA_LEG_KINDS.includes(leg.kind) } : null;
+    return leg ? { fwd: routeLegSpeed(leg.kind), rate: travelRateOf(ROAD_LEG_KINDS.includes(leg.kind) || flownLeg(leg) || bridgedRoadLeg(r.legs, of)), sea: SEA_LEG_KINDS.includes(leg.kind) } : null;
   }
   /** RATE-LAW: the rate the journey's ground runs at (systems/timeScale.js travelRateOf) - under the ring walk's own
    *  ceiling (:34, MAX_CIRCUMNAVIGATION_ACCEL, a steering bound and no dial) - written to the panel and asked of the
@@ -1314,6 +1318,7 @@ export function createTravelOptions(deps = {}) {
       return { handled: true };
     }
     const mp = pixel();
+    setDragonCruise(flownNow());   // DRAGON6: a flown leg cruises the dragon; its end brings it down
     // :1335-1338 - H over the travel UI opens the help.
     if (frame.topWindowIsTravelUI && frame.helpKeyDown) messageBox(helpText());
 
@@ -1387,7 +1392,7 @@ export function createTravelOptions(deps = {}) {
       // :1402-1407 - the sea. OWS2 (the port's own, bible/06-Systems/Travel-View.md "OWS - the sea"): not for a traveller
       // afloat - the mod's stop is for one who walked into it ("maybe you should travel on a ship"), and one at a helm is
       // on one; the Overworld's crossing sails its sea legs
-      if ((deps.climateIndex?.() ?? 0) === CLIMATE_OCEAN && !deps.atSea?.()) { stopTravelWithMessage(T.MsgOcean); return { drive, handled: true, stopped: 'ocean' }; }
+      if ((deps.climateIndex?.() ?? 0) === CLIMATE_OCEAN && !deps.atSea?.() && !flownNow()) { stopTravelWithMessage(T.MsgOcean); return { drive, handled: true, stopped: 'ocean' }; }   // DRAGON6: nor one flown over it
       // :1409-1424 - encounters
       if (!ignoringEncounters() && deps.enemiesNearby?.()) {
         enemiesStop();

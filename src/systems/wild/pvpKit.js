@@ -1,14 +1,14 @@
 // @ts-check
 // PVP-KIT (the PvP rework, 2026-10-29 - the owner: "they only get to tool kit we give", "flagged has a seperate hot barr",
 // "They get to pick damage and its a aoe", "Just our damage formula", "Let them set the icons for these spells", "Goo
-// choose make it 15m"): THE PVP SPELL BAR'S LAW. While my flag is up in the open zone, keys 3 to 0 are eight slots of this
-// toolkit and nothing else is cast. Each slot is a classic spell record built here, so the cast engine, the ally frame and
+// choose make it 15m"): THE PVP SPELL BAR'S LAW. While my flag is up in the open zone, the hotbar's PvP set (PVP-SET,
+// systems/wild/pvpSet.js) holds this toolkit and nothing else is cast. Each slot is a classic spell record built here, so the cast engine, the ally frame and
 // the referee's path (combat/siegeCombat.js) read it as any spell. Pure. A departure: DFU has no PvP.
 import { t } from '../textManager.js';
 import { effectSchool } from '../spellcost.js';
 import { resurrectionSpell } from '../resurrect.js';
 
-/** Eight slots on keys 3 to 0; a gift goes to the party member under the crosshair within `reachM`, else to me; a buff
+/** The old bar's eight slots (keys 3 to 0, carried into the PvP set); a gift goes to the party member under the crosshair within `reachM`, else to me; a buff
  *  runs `rounds` magic rounds (a minute - combat/pvpBuffs.js PVP_BUFF_ROUNDS); scaling runs from skill `lo` to `hi`. */
 export const PVP_KIT = Object.freeze({ slots: 8, reachM: 15, rounds: 12, lo: 100, hi: 300 });
 

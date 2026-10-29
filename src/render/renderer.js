@@ -1589,7 +1589,7 @@ export const PANEL_CLEAR_RGBA = Object.freeze([49 / 255, 77 / 255, 121 / 255, 5 
 // see AUTOMAP_WATER_COLOR below for the seam DFU reads it across.
 import { WATER_MAP_COLOR } from './underwaterFog.js';
 import { WATER_SURFACE_VS, waterSurfaceFs } from './waterSurface.js';   // WATER1: the enhanced water pass over the terrain grid
-import { WATER_LAYER_UNITS, WATER_SCENE_UNIT, WATER_SCENE_DEPTH_UNIT, NO_BED_DEPTH, WATER_RIPPLE_UNIT } from './waterSurface.js';   // FIELD BUGS 2026-09-29 (the sea) #4: WATER1's offset is the sea's surface film's
+import { WATER_LAYER_UNITS, WATER_SCENE_UNIT, WATER_SCENE_DEPTH_UNIT, NO_BED_DEPTH, WATER_RIPPLE_UNIT, AURORA_SKY_UNIT } from './waterSurface.js';   // FIELD BUGS 2026-09-29 (the sea) #4: WATER1's offset is the sea's surface film's
 import { WATER_BED_GLSL, waterBedMix } from './waterBedGlsl.js';   // WATER-NEXT 2: the ground under the water is a bed
 import { packWaterMask, WATER_DRAW_MASK_TABLE } from '../world/water/waterCorners.js';   // MAC2: the corner table's one home; WATER-DRAW1: the PASS takes the draw's table, not the feet's
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
@@ -2003,6 +2003,11 @@ export class Renderer {
       gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
       new Uint8Array([0, 0, 0, 255])
     );
+    // SKYRIM-AURORA: the water's two fixed units hold the black texel until their own texture comes - the snow lines' and
+    // the aurora's dome map's - so a sampler on either never finds an empty unit
+    for (const unit of [SNOW_LINES_UNIT, AURORA_SKY_UNIT]) { this._activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, this._blackTex); }
+    this._activeTexture(gl.TEXTURE0);
+    this._auroraBound = this._blackTex;
 
     this._csStamp = 0; this._csUploaded = {}; this._csRect = new Float32Array(4);
     this.tileArrays = new Map(); // archive -> TEXTURE_2D_ARRAY
@@ -2032,6 +2037,7 @@ export class Renderer {
     this.waterSurfaceProgram = this._buildProgram(WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL));
     this.waterSurfaceProgramLane = null; this._wsLane = null;   // EL7: built with the lane
     this._ws = this._waterLocs(this.waterSurfaceProgram);
+    this._waterSamplerUnits(this.waterSurfaceProgram, this._ws);   // SKYRIM-AURORA
     this._waterSurfaceFog = this._ws.fog;
     this._csLoc.water = this._ws.cloud;
     this._waterFog = {
@@ -2657,6 +2663,7 @@ export class Renderer {
       if (lane.shadows && !this.waterSurfaceProgramLane) {
         this.waterSurfaceProgramLane = this._buildProgram(WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL, SHADOW_GLSL));
         this._wsLane = this._waterLocs(this.waterSurfaceProgramLane);
+        this._waterSamplerUnits(this.waterSurfaceProgramLane, this._wsLane);   // SKYRIM-AURORA
         const p = this.waterSurfaceProgramLane, gl = this.gl;
         this._wsLane.shadow = {
           sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'), sunTexel: gl.getUniformLocation(p, 'uSunTexel'), sunOrigin: gl.getUniformLocation(p, 'uSunOrigin'),
@@ -7581,6 +7588,27 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._rippleSpan = span; this._rippleCells = cells;
   }
 
+  /** SKYRIM-AURORA: a water program's two fixed samplers, sent once when it is built: the snow lines' unit and the aurora's
+   *  dome map's. A frame with no ground snow (Enhanced Environments off, a boot before the snow is read, the bench, the
+   *  water lab) had left the snow's on unit 0 beside the tile array - two types on one unit, and the water refused. */
+  _waterSamplerUnits(P, L) {
+    this._use(P);
+    this.gl.uniform1i(L.snow.lines, SNOW_LINES_UNIT); L.snowUnit = true;
+    this.gl.uniform1i(L.auroraSky, AURORA_SKY_UNIT);
+  }
+
+  /** SKYRIM-AURORA: the aurora's dome map on its unit (render/auroraPass.js, waterUniforms' `aurora`), or the black texel
+   *  and the switch off - each sent only when it changes: the unit is the aurora's alone (skyrimaurora.test.js holds it). */
+  _bindAuroraSky(L, tex) {
+    const gl = this.gl, on = tex ? 1 : 0, want = tex ?? this._blackTex;
+    if (L.auroraOn !== on) { gl.uniform1i(L.auroraSkyOn, on); L.auroraOn = on; }
+    if (this._auroraBound === want) return;
+    this._activeTexture(gl.TEXTURE0 + AURORA_SKY_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, want);
+    this._activeTexture(gl.TEXTURE0);
+    this._auroraBound = want;
+  }
+
   /** WATER-NEXT 4: the ripple field on its unit (uploaded when its version moved), or the switch off. */
   _bindRipples(L) {
     const gl = this.gl, r = this._ripples, cells = this._rippleCells;
@@ -8248,6 +8276,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       swell: u('uSwell'), absorb: u('uAbsorb'), open: u('uOpen'), openColor: u('uOpenColor'),   // WATER-NEXT 2
       sceneOn: u('uSceneOn'), scene: u('uScene'), sceneDepth: u('uSceneDepth'), sceneSize: u('uSceneSize'),
       rippleOn: u('uRippleOn'), ripple: u('uRipple'), rippleRect: u('uRippleRect'),   // WATER-NEXT 4
+      auroraSky: u('uAuroraSky'), auroraSkyOn: u('uAuroraSkyOn'), auroraOn: 0,   // SKYRIM-AURORA: the aurora's dome map, its switch as sent (GL's own 0)
       fog: { fogColor: u('uFogColor'), fogMode: u('uFogMode'), fogDensity: u('uFogDensity'), fogRange: u('uFogRange'), camPos: u('uCamPos'), focus: u('uFocus'), dwFog: u('uDwFog'), haze: u('uJungleHaze') },   // DW-C: and the sea's; TV1: the focus; BANTHA1: the jungle's haze
       seaHaze: u('uSeaHaze'),   // FAR-SEA1: the far ring's haze on the sea
       // VC4 recorded that the deck's shadow reached neither the grass nor the water; WATER1 closes the water half
@@ -8351,6 +8380,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform1f(L.groundEdge, this.coastEdges ? 1 : 0);   // COAST-LOOK: the sheet's shore on the ground's line (render/groundEdgeGlsl.js)
     this._bindUnderWater(L);
     this._bindRipples(L);
+    this._bindAuroraSky(L, u.aurora);   // SKYRIM-AURORA
     // the ground's own light, term for term, so the surface sits in the
     // frame the land beside it is lit in
     this._uploadCloudShadow('water');
@@ -8377,6 +8407,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform4fv(L.indirect, this._indirect);
     gl.uniform3fv(L.indirectColor, this._indirectColor);
     // AUDIT PRECIP GROUND-5: the frame's snow lines (setSnowFrame) on their unit; each row says whether it reads them
+    // (SKYRIM-AURORA: the sampler's unit is sent when the program is built - _waterSamplerUnits)
     if (this._snowFrame && this._snowTex) {
       if (!L.snowUnit) { gl.uniform1i(L.snow.lines, SNOW_LINES_UNIT); L.snowUnit = true; }   // a sampler's unit is the program's: sent once
       this._activeTexture(gl.TEXTURE0 + SNOW_LINES_UNIT);

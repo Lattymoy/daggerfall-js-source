@@ -86,6 +86,7 @@ import { hudFade } from '../fadeLayer.js';   // D4: FadeBehaviour
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded, fitBoxRows } from '../messageBox.js';
 import { drawText } from '../text.js';
 import { calculateTravelTime, calculateTripCost, travelDays } from '../../systems/travel/travel.js';
+import { hasDragon } from '../../systems/dragon/dragonMount.js';   // DRAGON6: a tamed dragon's trip is flown
 import { guildFastTravel } from '../../systems/guild/guildVariants.js';   // TP1: GuildManager.FastTravel
 import { audio } from '../../systems/audio.js';
 import { SOUND } from '../../systems/soundClips.js';
@@ -258,6 +259,7 @@ export class TravelPopUpWindow {
     this.hasHorse = own(deps.hasHorse);
     this.hasCart = own(deps.hasCart);
     this.hasShip = own(deps.hasShip);
+    this.hasDragon = hasDragon(deps.playerEntity?.()?.items);   // DRAGON6: read at OnPush as the three are
     // (:85-87)
     this.speedCautious = true;
     this.travelShip = true;
@@ -395,6 +397,7 @@ export class TravelPopUpWindow {
       travelShip: this.travelShip,
       hasHorse: this.hasHorse,
       hasCart: this.hasCart,
+      hasDragon: this.hasDragon,   // DRAGON6
     }, this.deps.getClimateIndex);
     this.travelTimeTotalMins = t.minutes;
     // TP1 - GuildManager.FastTravel (:284), between CalculateTravelTime
@@ -441,6 +444,7 @@ export class TravelPopUpWindow {
       // transport trio above: DFU asks GuildManager inside the
       // formula, so it re-answers on every toggle.
       freeTavernRooms: this.freeTavernRooms(),
+      hasDragon: this.hasDragon,   // DRAGON6: no ship, no fare
     });
     const c = this._scaleTripCost(c0);
     this.trip = { ...t, ...c };

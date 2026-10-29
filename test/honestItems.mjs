@@ -51,6 +51,7 @@ const GATE = await load('../src/systems/gate/gateSpoils.js');
 const SPOILS_POOL = await load('../src/scenes/spoilsPool.js');
 const RAID = await load('../src/systems/raidSpoils.js');
 const SERPENT = await load('../src/systems/serpent/serpentSpoils.js');
+const DRAGON = await load('../src/systems/dragon/dragonSpoils.js');   // DRAGON4: the Dwarven Dragon's hoard
 const SD = await load('../src/systems/superDungeon/sdSpoils.js');
 const SEV = await load('../src/systems/staffEventSpoils.js');   // STAFF-EVENT THE REWARD: a staff event's spoils
 const BROKER = await load('../src/systems/sigil/sigilBroker.js');
@@ -422,7 +423,7 @@ function sweep({ seeds, run, skip }) {
       }
     })));
 
-    // ── 3. the spoils: the gate's, a town's thanks, the serpent's hoard, the Hour's, a staff event's ──
+    // ── 3. the spoils: the gate's, a town's thanks, the serpent's hoard, the dragon's, the Hour's, a staff event's ──
     run('gateSpoils.rollSpoils / spoilsPool.spoilsList', (one, all) => {
       for (const s of seedsOf(S * 2)) for (const level of levels) {
         const list = SPOILS_POOL ? SPOILS_POOL.spoilsList(s, level, s % 5 === 0 ? { x: 'rite' } : s % 3 === 0 ? { r: 1 } : null) : GATE.rollSpoils(s, level).pieces.map((p) => ({ kind: 'item', item: p.item }));
@@ -437,6 +438,11 @@ function sweep({ seeds, run, skip }) {
     run('serpentSpoils.serpentSpoilsList', (one) => {
       for (const s of seedsOf(S * 2)) for (const level of levels) for (const earned of ['dealt', 'stood']) {
         for (const p of SERPENT.serpentSpoilsList(s, level, earned)) if (p.kind === 'item') { one(p.item); keep([p.item]); }
+      }
+    });
+    run('dragonSpoils.dragonSpoilsList', (one) => {
+      for (const s of seedsOf(S * 2)) for (const level of levels) for (const earned of ['dealt', 'stood']) {
+        for (const p of DRAGON.dragonSpoilsList(s, level, earned)) if (p.kind === 'item') { one(p.item); keep([p.item]); }
       }
     });
     run('sdSpoils.sdSpoilsList', (one) => {
