@@ -1,0 +1,182 @@
+[
+  {
+    "name": "FRONTS-salt",
+    "file": "src/net/frontLaw.js",
+    "old": "export const FRONT_SALT = 0x46524f4e;",
+    "new": "export const FRONT_SALT = 0x46524f4f;",
+    "tests": [
+      "test/net/fronts1_law.test.js"
+    ],
+    "why": "FRONTS: the schedule is the salt's"
+  },
+  {
+    "name": "FRONTS-one-a-day",
+    "file": "src/net/frontLaw.js",
+    "old": "export const FRONT_PER_DAY = 2;",
+    "new": "export const FRONT_PER_DAY = 1;",
+    "tests": [
+      "test/net/fronts1_law.test.js"
+    ],
+    "why": "FRONTS: two provinces a day"
+  },
+  {
+    "name": "FRONTS-turn-law",
+    "file": "src/net/frontLaw.js",
+    "old": "  if (c <= 0) return out;",
+    "new": "  if (c >= 0) return out;",
+    "tests": [
+      "test/net/fronts1_law.test.js"
+    ],
+    "why": "FRONTS: none stirs two days running"
+  },
+  {
+    "name": "FRONTS-twice-a-cycle",
+    "file": "src/net/frontLaw.js",
+    "old": "  for (let i = out.length - 1; i > 0; i--) {\n    const j = Math.floor(random() * (i + 1));",
+    "new": "  for (let i = out.length - 1; i > 0; i--) {\n    const j = Math.floor(random() * i) && i - 1;",
+    "tests": [
+      "test/net/fronts1_law.test.js"
+    ],
+    "why": "FRONTS: every province once a cycle"
+  },
+  {
+    "name": "FRONTS-bay-inside",
+    "file": "src/net/frontLaw.js",
+    "old": "export const frontStands = (day, lane) => !FRONT_PROVINCES.includes(lane) || frontLanes(day).includes(lane);",
+    "new": "export const frontStands = (day, lane) => (lane !== 9 && lane !== 0 ? !FRONT_PROVINCES.includes(lane) : lane === 9) || frontLanes(day).includes(lane);",
+    "tests": [
+      "test/net/fronts1_law.test.js"
+    ],
+    "why": "FRONTS: the Bay stands every day"
+  },
+  {
+    "name": "FRONTS-next-late",
+    "file": "src/net/frontLaw.js",
+    "old": "  for (let d = day; d < day + 2 * FRONT_CYCLE_DAYS; d++) if (frontStands(d, lane)) return d;",
+    "new": "  for (let d = day + 1; d < day + 2 * FRONT_CYCLE_DAYS; d++) if (frontStands(d, lane)) return d;",
+    "tests": [
+      "test/net/fronts1_law.test.js"
+    ],
+    "why": "FRONTS: the next turn from the day itself"
+  },
+  {
+    "name": "FRONTS-gate-unfronted",
+    "file": "src/net/gate/gateLaw.js",
+    "old": " && gateDayOf(n) % GATE_EVERY_DAYS === 0 && frontStands(gateFrontDay(n), gateLaneOf(n));",
+    "new": " && gateDayOf(n) % GATE_EVERY_DAYS === 0;",
+    "tests": [
+      "test/net/fronts1_law.test.js"
+    ],
+    "why": "FRONTS: a province's gate on its turn alone"
+  },
+  {
+    "name": "FRONTS-gate-front-day",
+    "file": "src/net/gate/gateLaw.js",
+    "old": "export const gateFrontDay = (n) => frontDayOfMinute(gateBaseMinute(n) + GATE_OPEN_MINUTE);",
+    "new": "export const gateFrontDay = (n) => gateDayOf(n);",
+    "tests": [
+      "test/net/fronts1_law.test.js"
+    ],
+    "why": "FRONTS: the front read off the day the gate opens in"
+  },
+  {
+    "name": "FRONTS-star-unfronted",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": " && starfallRuns(starTimes(n, k).fallAt) && frontStands(starFrontDay(n, k), starLaneOf(k));",
+    "new": " && starfallRuns(starTimes(n, k).fallAt);",
+    "tests": [
+      "test/net/fronts1_law.test.js"
+    ],
+    "why": "FRONTS: a province's star on its turn alone"
+  },
+  {
+    "name": "FRONTS-raid-slots",
+    "file": "src/net/raid/raidLaw.js",
+    "old": "  if (!raidLaneStands(day, lane) || !parties.length) return out;",
+    "new": "  if (!raidLaneOpen(lane) || !parties.length) return out;",
+    "tests": [
+      "test/net/fronts1_law.test.js"
+    ],
+    "why": "FRONTS: the relay's slots fronted"
+  },
+  {
+    "name": "FRONTS-raid-client",
+    "file": "src/systems/raidingParties.js",
+    "old": "export const raidsForLane = (day, lane, groups) => (raidLaneStands(day, lane) ?",
+    "new": "export const raidsForLane = (day, lane, groups) => (raidLaneOpen(lane) ?",
+    "tests": [
+      "test/net/fronts1_law.test.js"
+    ],
+    "why": "FRONTS: the client's roll fronted"
+  },
+  {
+    "name": "FRONTS-sd-turn",
+    "file": "src/net/superDungeon/sdLaw.js",
+    "old": "const sdFrontMay = (now, lane, held) => sdFrontFrom(now, lane) <= now && (lane === 0 || held < SD_FRONT_HOLLOWS);",
+    "new": "const sdFrontMay = (now, lane, held) => (lane === 0 || held < SD_FRONT_HOLLOWS);",
+    "tests": [
+      "test/net/fronts1_law.test.js"
+    ],
+    "why": "FRONTS: a province's rise on its turn"
+  },
+  {
+    "name": "FRONTS-sd-cap",
+    "file": "src/net/superDungeon/sdLaw.js",
+    "old": "const sdFrontMay = (now, lane, held) => sdFrontFrom(now, lane) <= now && (lane === 0 || held < SD_FRONT_HOLLOWS);",
+    "new": "const sdFrontMay = (now, lane, held) => sdFrontFrom(now, lane) <= now && (lane === 0 || held < 99);",
+    "tests": [
+      "test/net/fronts1_law.test.js"
+    ],
+    "why": "FRONTS: the provinces' Hollows capped"
+  },
+  {
+    "name": "FRONTS-sd-cap-bay",
+    "file": "src/net/superDungeon/sdLaw.js",
+    "old": "const sdFrontMay = (now, lane, held) => sdFrontFrom(now, lane) <= now && (lane === 0 || held < SD_FRONT_HOLLOWS);",
+    "new": "const sdFrontMay = (now, lane, held) => sdFrontFrom(now, lane) <= now && held < SD_FRONT_HOLLOWS;",
+    "tests": [
+      "test/net/fronts1_law.test.js"
+    ],
+    "why": "FRONTS: the Bay's never capped"
+  },
+  {
+    "name": "FRONTS-sd-held-bay",
+    "file": "src/net/superDungeon/sdLaw.js",
+    "old": "r && sdLaneOf(r.s) > 0 && sdLaneOf(r.s) !== lane",
+    "new": "r && sdLaneOf(r.s) >= 0 && sdLaneOf(r.s) !== lane",
+    "tests": [
+      "test/net/fronts1_law.test.js"
+    ],
+    "why": "FRONTS: the Bay's Hollow is not counted"
+  },
+  {
+    "name": "FRONTS-sd-due-turn",
+    "file": "src/net/superDungeon/sdLaw.js",
+    "old": "    if (from > now) return { act: null, at: from };",
+    "new": "    if (from > now + 1e12) return { act: null, at: from };",
+    "tests": [
+      "test/net/fronts1_law.test.js"
+    ],
+    "why": "FRONTS: the director waits for the turn"
+  },
+  {
+    "name": "FRONTS-timers",
+    "file": "src/systems/eventTimers.js",
+    "old": "  if (src?.fronts) rows.push(...frontTimerRows(now));",
+    "new": "  rows.push(...frontTimerRows(now));",
+    "tests": [
+      "test/net/fronts1_law.test.js"
+    ],
+    "why": "FRONTS: the rows where the host stands the provinces' events"
+  },
+  {
+    "name": "FRONTS-card",
+    "file": "src/systems/frontWords.js",
+    "old": "  if (frontStands(day, lane)) return t('fronts.card.now', 'World events here now');",
+    "new": "  if (!frontStands(day, lane)) return t('fronts.card.now', 'World events here now');",
+    "tests": [
+      "test/net/fronts1_law.test.js"
+    ],
+    "why": "FRONTS: the card's turn"
+  }
+]

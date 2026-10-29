@@ -74,6 +74,7 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
 | WW6 | The raids past the Bay: the raids' towns off the registry by area, the wire's world pixels; a staff town event past the Bay | BUILT (below) |
 | WW7 | The roads' PEOPLE past the Bay - not the roads: the network past the Bay is TESA's (PR #1184, TESA14 and TESA15 - laid by the Bay's own law, drawn on the map). WW7 puts the living world's travellers, patrols, bands and the Watch on it (WW7-7: the ways' planner walks the roads past the Bay) and keys the town economy by the world's key; it lands on #1184 once that merges | IN PROGRESS on #1184 (2026-10-25; section WW7 below) |
 | WORLD-LANES | The world's lanes of map ids (AUDIT BAY-LEFT items 1, 25 and 35): the spawned dungeons and their Elite tier past the Bay in the spawn lane, the Ocean Holes' pits past the Bay and past the Veil in the abyss lane; neither in the open zone | BUILT (section WORLD-LANES below) |
+| FRONTS | Two provinces a game day: the Bay's events every day, and past it only the day's two provinces start a gate, raids, stars or a Hollow, on a cycle every machine knows ahead (the owner, 2026-10-29: "events are way overdone with their spawning") | BUILT (section FRONTS below) |
 
 ## WW1 - the world's grid and its places (BUILT, 2026-10-24)
 
@@ -2192,3 +2193,67 @@ province's bank - `worldModes.js` `currentNameBank`). The plaque's person pick i
   Solitude stood four street people named alike: DFU's seed is the record's place in its block against the location,
   so a block repeated repeats its people.
 
+## FRONTS - two provinces a game day (BUILT, 2026-10-29)
+
+The owner, 2026-10-29: *"Currently with the expansion of tamriel, events are way overdone with their spawning. I like
+players planning routes to farm world events, but we need to reduce or design around this"*. Asked, the owner chose
+rotating fronts: the Bay always runs, and each game day two provinces are stirred on a cycle known ahead.
+
+**What stood.** WW2, WW5 and WW6 gave every province its own lane at the Bay's own pace. Online, a game day (two real
+hours) opened 9 gates and rolled about 147 raids (the Bay's 22, the provinces' 125). A festival night dropped 27 stars,
+9 at once, and 9 Hollows stood, since a Hollow lasts two days. There was an event in every direction, so a route was
+no choice.
+
+### The law (`net/frontLaw.js`)
+
+`frontLanes(day)` is the two provinces (lanes 1 to 8) stirred on a game day of the shared clock. A cycle is four days,
+and each province stirs once in it, in an order the cycle's number shuffles (`FRONT_SALT`). A province that closed one
+cycle is swapped out of the next one's first day, so none stirs two days running. A province waits two to seven days
+(four to fourteen real hours) between turns, and its turn moves round the real clock. `frontStands(day, lane)` is true
+for every lane outside the fronts (the Bay's, the open zone's) and for a province on its turn. It imports nothing.
+
+### What reads it
+
+- **Gates** (`gateLaw.js isGateDay`): a province's gate stands when the day it opens in (`gateFrontDay`) is its turn.
+  Every reader of a gate follows: the clock's gate (`gateAt` walks to the next that stands), the relay's door
+  (`gateAdmits`, `gateHolds`), the rite, the herald's omen and the site word.
+- **Stars** (`starfallLaw.js starInWindow`): a province's star lands on its turn. `starOk` stays the shape alone, so a
+  receipt minted before reads as it did.
+- **Raids** (`raidLaw.js raidLaneStands`): the relay's slots (`raidDaySlots`) and the client's roll (`raidsForLane`)
+  for a province on its turn alone, the old law's on it.
+- **Hollows** (`sdLaw.js sdDue`, `sdRise`): a province's rise waits for its turn and, while `SD_FRONT_HOLLOWS` (2) stand
+  past the Bay, for one to end. The hub counts them (`_sdHeldPast`). A Hollow keeps its two days.
+
+The Bay's lane is the law before in each, pinned. A game day now holds 3 gates, about 52 raids (22 and about 30), 9
+stars a festival night and at most 3 Hollows.
+
+### Planning a route
+
+The Timers window's World group shows today's fronts to the day's end and the next two days'
+(`systems/frontWords.js frontTimerRows`, read where the host stands the provinces' events, `fronts`). A place past the
+Bay says on the travel map's card if its province's events run now, or from when in the player's own clock
+(`frontCardLine`). The event board is unchanged: a front is a schedule, not a place to go.
+
+### What stays (recorded)
+
+The Sky-Ketch's stations (a voyage a week each), the serpent (one in the world), staff events (staff's call) and every
+event on the Bay. Cyrodiil's open zone stands no site-bound event, as before.
+
+### The relay (world286)
+
+`net/frontLaw.js` joins the relay's bundle and the account service's (`account-deploy.yml`'s filter); the account
+service reads no front. DEPLOY ORDER: the relay first, then the site. Until the site deploys, an older page stands a
+province's gate off its turn that the relay refuses.
+
+### THE FOUR HOSTS (Home.md)
+
+`scenes/world.js` wired: the Timers' `fronts` and the held map's `fronts` (bootWorld's ceiling 35,315 to 35,318).
+`scenes/exterior.js` FLAGGED - the fixed-city bench stands no event past the Bay. `scenes/worldModes.js` and
+`scenes/dungeonContext.js` FLAGGED - they stand no world event; their pause face reads the host's Timers source.
+
+### Pins and mutants
+
+`test/net/fronts1_law.test.js` (8): the schedule for eight days and its laws over 40,000; who stands; the gates (the
+Bay's unchanged, three a day); the stars over ten festival days; the raids against the old slots; the Hollows' turn and
+cap; the Timers and the card; the wiring. `tools/mutants/fronts.json`: 18, all dead. The WW2, WW5, WW6 and
+WW-GATES-EVERYWHERE pins moved to the provinces' turns (PIN MOVED: FRONTS).

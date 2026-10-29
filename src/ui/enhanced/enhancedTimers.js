@@ -22,7 +22,7 @@ import { t } from '../../systems/textManager.js';   // TIMERS2: the groups' word
 export const TIMER_DOOR_TEXT = Object.freeze({ board: 'Boards' });
 
 /** A row's kind -> its marker class (colour in the sheet). */
-export const TIMER_KINDS = Object.freeze(['gate', 'serpent', 'super', 'star', 'ketch', 'elite', 'raid', 'battle', 'seat', 'reset']);   // KETCH: the Sky-Ketch's; SERPENT-TIMERS: the sea serpent's; SD2c: the Super dungeon's, once found; STAR6: a fallen star's; TIMERS2: the Elite Breach's, in its arch's gold (it drew in no colour)
+export const TIMER_KINDS = Object.freeze(['gate', 'serpent', 'super', 'star', 'ketch', 'elite', 'raid', 'battle', 'seat', 'reset', 'front']);   // KETCH: the Sky-Ketch's; SERPENT-TIMERS: the sea serpent's; SD2c: the Super dungeon's, once found; STAR6: a fallen star's; TIMERS2: the Elite Breach's, in its arch's gold (it drew in no colour); FRONTS: the provinces' turn
 
 /** TIMERS2: a group's head (its title) and its button in the bar (a short word), in the player's language. */
 export const timerGroupTitle = (id) => ({

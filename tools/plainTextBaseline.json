@@ -734,7 +734,7 @@
   "src/net/provinceNodes.js": 13,
   "src/net/questlineClaims.js": 26,
   "src/net/raid/raidClaims.js": 29,
-  "src/net/raid/raidLaw.js": 47,
+  "src/net/raid/raidLaw.js": 41,
   "src/net/raid/raidReceipt.js": 15,
   "src/net/realm/realmGoldLaw.js": 37,
   "src/net/realm/realmSaveCodec.js": 19,

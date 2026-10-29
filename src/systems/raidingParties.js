@@ -97,7 +97,7 @@ import { ORDERS } from './guild/guildVariants.js';
 import { GUILDS } from './guild/guilds.js';
 import { renownStruckAt } from '../net/renownTracker.js';
 import { raidRunnerOf, validRaidWords, validRaidObjWords, RAID_WORD_STALE_MS, RAID_WORDS_MAX, RAID_CLAIM_AGE_MAX, raidTownIs } from '../world/raidShared.js';   // RAID2: the online arm's law, shared with the foes pool; WW6: a raid's town, the Bay's or past it
-import { RAID_WORD_MS, RAID_WORD_KILLS_MAX, raidSig, rollRaidTowns, raidDayRandom, raidsPerDay, raidTownsCanon, raidTownsHash, raidLaneOfRegion, raidLaneOpen, raidLaneParties, raidLaneCount, RAID_LANES_BEYOND } from '../net/raid/raidLaw.js';   // RAID3: the relay's ledger's law; RAID-ROLL: the day's roll, the relay's too; WW6: a lane a theatre
+import { RAID_WORD_MS, RAID_WORD_KILLS_MAX, raidSig, rollRaidTowns, raidDayRandom, raidsPerDay, raidTownsCanon, raidTownsHash, raidLaneOfRegion, raidLaneOpen, raidLaneStands, raidLaneParties, raidLaneCount, RAID_LANES_BEYOND } from '../net/raid/raidLaw.js';   // RAID3: the relay's ledger's law; RAID-ROLL: the day's roll, the relay's too; WW6: a lane a theatre
 import { inBay } from '../world/tamriel/tamrielFrame.js';   // WW6: the Bay's own map
 import { areaAt } from '../world/worldWide/worldGrid.js';   // WW6: the area a raid is told of past the Bay - a province's district
 import { readRaidReceipt } from '../net/raid/raidReceipt.js';
@@ -289,8 +289,9 @@ export function rollRaids(day, regions, count, random, parties = undefined) {
  *  dayRng for the raids' salt - the relay's one copy), the count off the pace. */
 export const raidsForDay = (day, regions) => rollRaids(day, regions, raidsPerDay(regions?.length ?? 0), raidDayRandom(day));
 /** WW6: A LANE'S DAY - its own generator (raidDayRandom's lane), its pace (half a raid an area, raidLaw.js raidLaneCount),
- *  its own parties - off its towns (raidLaneGroups). @param {number} day @param {number} lane @param {ReadonlyArray<any>} groups */
-export const raidsForLane = (day, lane, groups) => rollRaids(day, groups, raidLaneCount(groups?.length ?? 0), raidDayRandom(day, lane), raidLaneParties(lane));
+ *  its own parties - off its towns (raidLaneGroups). FRONTS: none on a day off its province's turn (raidLaneStands).
+ *  @param {number} day @param {number} lane @param {ReadonlyArray<any>} groups */
+export const raidsForLane = (day, lane, groups) => (raidLaneStands(day, lane) ? rollRaids(day, groups, raidLaneCount(groups?.length ?? 0), raidDayRandom(day, lane), raidLaneParties(lane)) : []);
 /** WW6: where a raid is told of (its announcement, its withdrawal, the board's card): its AREA - on the Bay its region,
  *  as RAID1 has it, past the Bay its province's district. @param {{ area?: number, regionIndex: number }} raid */
 export const raidHome = (raid) => (Number.isInteger(raid?.area) ? /** @type {number} */ (raid.area) : raid.regionIndex);
