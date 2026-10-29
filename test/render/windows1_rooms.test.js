@@ -22,7 +22,7 @@ import {
 } from '../../src/render/realWindows.js';
 import {
   ROOM_STYLES, ROOM_PIECES, ROOM_FABRICS, ROOM_LIT_SHARE, ROOM_CURTAIN_SHARE, roomStyleOf, roomPieceOf, roomFabricOf,
-  roomLitAt, roomCurtained, roomColorTable, ROOM_COLOR_SLOTS,
+  roomLitAt, roomCurtained, roomColorTable, ROOM_COLOR_SLOTS, ROOM_LIT_K, ROOM_CURTAIN_K, roomSeedBits, curtainBitsOf,
 } from '../../src/world/windowRoomArt.js';
 import { FEATURES } from '../../src/systems/features.js';
 import { GRAPHICS_PRESETS, PRESET_ROWS } from '../../src/systems/graphicsPresets.js';
@@ -121,17 +121,26 @@ test('RW1 rooms R4: the rooms painted from numbers - every style eight byte colo
   }
   assert.equal(new Set(ROOM_STYLES.map((s) => JSON.stringify(s.colors))).size, ROOM_STYLES.length, 'every room its own');
   const N = 20000, styles = new Array(ROOM_STYLES.length).fill(0), pieces = new Array(ROOM_PIECES.length).fill(0), fabs = new Array(ROOM_FABRICS.length).fill(0);
-  let lit = 0, curt = 0;
   for (let i = 0; i < N; i++) {
     const s = (i + 0.5) / N;
     styles[roomStyleOf(s)]++; pieces[roomPieceOf(s)]++; fabs[roomFabricOf(s)]++;
-    if (roomLitAt(s)) lit++; if (roomCurtained(s)) curt++;
   }
   for (const [name, h] of [['styles', styles], ['pieces', pieces], ['fabrics', fabs]]) {
     const want = N / h.length;
     h.forEach((n, k) => assert.ok(Math.abs(n - want) <= 1, `${name}[${k}] takes its share (${n} of ${want})`));
   }
-  assert.equal(lit, Math.round(N * ROOM_LIT_SHARE)); assert.equal(curt, Math.round(N * ROOM_CURTAIN_SHARE));
+  // WL1: the lit and the curtained laws are whole numbers - the shares as thresholds, exact at their edge
+  assert.deepEqual([ROOM_LIT_K, ROOM_CURTAIN_K], [Math.round(ROOM_LIT_SHARE * 2 ** 24), Math.round(ROOM_CURTAIN_SHARE * 2 ** 16)]);
+  assert.equal(roomLitAt(((ROOM_LIT_K - 1) << 8) >>> 0), true); assert.equal(roomLitAt((ROOM_LIT_K << 8) >>> 0), false);
+  assert.equal(roomCurtained(ROOM_CURTAIN_K - 1), true); assert.equal(roomCurtained(ROOM_CURTAIN_K), false);
+  // ...and the hash spreads a street's windows over them: every wall, every plane, every tile
+  let lit = 0, curt = 0, k = 0;
+  for (const [nx, nz] of [[4, 0], [-4, 0], [0, 4], [0, -4], [3, 3]]) for (let plane = -40; plane < 60; plane += 7) for (let tx = -3; tx < 9; tx++) for (let ty = 0; ty < 3; ty++) {
+    const h = roomSeedBits(nx, 0, nz, plane, tx, ty);
+    k++; if (roomLitAt(h)) lit++; if (roomCurtained(curtainBitsOf(h))) curt++;
+  }
+  assert.ok(Math.abs(lit / k - ROOM_LIT_SHARE) < 0.03, `the lit share (${lit}/${k})`);
+  assert.ok(Math.abs(curt / k - ROOM_CURTAIN_SHARE) < 0.03, `the curtained share (${curt}/${k})`);
   assert.ok(ROOM_LIT_SHARE > 0.4 && ROOM_LIT_SHARE < 0.9, 'some rooms dark, most lit');
   assert.equal(roomStyleOf(1), ROOM_STYLES.length - 1, 'a seed of one stays in the table');
   // the GLSL's RW_COL is the art's table, colour for colour
@@ -143,8 +152,9 @@ test('RW1 rooms R4: the rooms painted from numbers - every style eight byte colo
   assert.equal(Number(m[1]), want.length); assert.equal(vals.length, want.length);
   vals.forEach((v, i) => v.forEach((c, k) => assert.ok(Math.abs(c * 255 - want[i][k]) < 0.01, `colour ${i}.${k}`)));
   assert.match(glsl, new RegExp(`const float RW_NSTYLES = ${ROOM_STYLES.length}\\.0;`));
-  assert.match(glsl, /step\(s2, RW_LIT_SHARE\)/, 'the lit share the twin keeps');
-  assert.match(glsl, /const float RW_LIT_SHARE = 0\.62;/, 'WAGONS2 (FINAL AUDIT): one constant, the bloom\'s replay reads it too');
+  assert.match(glsl, /float lit = rwRoomLit\(sb\) \? night : 0\.0;/, 'the lit law the twin keeps');
+  assert.match(glsl, new RegExp(`bool rwRoomLit\\(highp uint h\\) \\{ return \\(h >> 8u\\) < ${ROOM_LIT_K}u; \\}`), 'WAGONS2 (FINAL AUDIT): one law, the bloom\'s replay reads it too; WL1: in whole numbers');
+  assert.match(glsl, /bool curtained = rwCurtained\(cb\);/, 'WL1: the curtains off their own bits');
 });
 
 test('RW1 rooms R5: the rooms are a frame\'s - an exterior frame that asks (after its beginFrame) draws its window sub-meshes as rooms, the next frame that does not draws the classic glass, a wall is never a room, and a panel bracket hands the world frame its rooms back (mutants: the frame not dropping them, \'off\' asking rooms, the panel losing them, the mode left on after the mesh)', () => {
@@ -221,7 +231,7 @@ test('RW1 rooms R6: both mesh shaders carry the one block and its four lines whe
   assert.match(RW_MAIN_CUTOUT, /if \(uCutout > 0\.5 && tex\.a < 0\.5\) discard;/, 'a cut only under the cutout flag');
   assert.match(RW_MAIN_GLASS, /if \(uWinMode > 2\.5 && rwGlass > 0\.5 && rwInRect\(gl_FragCoord\.xy\)\) discard;/);
   assert.match(RW_MAIN_GLASS, /emission \*= step\(uWinMode, 1\.5\);/, 'an interior\'s glass wears no style');
-  assert.match(RW_MAIN_ROOM, /if \(uWinMode > 0\.5 && uWinMode < 1\.5\) lit = rwRoomOver\(lit \+ emission, rwGlass, rwDp1, rwDp2, rwDuv1, rwDuv2\) - emission;/);
+  assert.match(RW_MAIN_ROOM, /if \(uWinMode > 0\.5 && uWinMode < 1\.5\) lit = rwRoomOver\(lit \+ emission, rwGlass, rwDp1, rwDp2, rwDuv1, rwDuv2, diff\) - emission;/, 'WL1: the sun\'s term on the glass rides in - the sun through the window onto the room\'s floor');
 });
 
 test('RW1 rooms R7: THE FOUR HOSTS - world.js and exterior.js ask for rooms after their exterior beginFrame and hand the modes their street; worldModes asks none (its interior is glass, its dungeon nothing); dungeonContext.js asks none; the pipeline marks DFU\'s windows as windows (mutants: a host unwired, a dungeon asking rooms, the window flag lost)', () => {
@@ -235,7 +245,7 @@ test('RW1 rooms R7: THE FOUR HOSTS - world.js and exterior.js ask for rooms afte
   }
   assert.ok(!rd('src/scenes/worldModes.js').includes('setWindowRooms('), 'the modes ask no rooms - the interior is the glass, the dungeon nothing');
   assert.ok(!rd('src/scenes/dungeonContext.js').includes('setWindowRooms('), 'the dungeon host asks none');
-  assert.match(rd('src/scenes/dataPipeline.js'), /renderer\.uploadEmissionTexture\(archive, record, t\.getWindowColors32\(bitmap\), \{ replacement, window: true \}\);/);
+  assert.match(rd('src/scenes/dataPipeline.js'), /renderer\.uploadEmissionTexture\(archive, record, exteriorWindowMask\(archive, record, bitmap, t\), \{ replacement, window: true \}\);/, 'WL1: DFU\'s mask, or the glass of a window DFU names painted in its own colour (world/exteriorGlass.js)');
 });
 
 test('RW1 rooms R8: the switch - the classic skin is Daggerfall\'s glass, the kill door wins over the row, the row is read as stored, and the row stands at Full by default (mutants: the skin gate lost, the door ignored, the default not full)', () => {

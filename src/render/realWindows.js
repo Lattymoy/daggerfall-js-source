@@ -33,8 +33,8 @@ import { getPref } from '../systems/uiPrefs.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { pageParam } from '../systems/pageQuery.js';
 import {
-  ROOM_TEXELS_PER_M, ROOM_STYLES, ROOM_PIECES, ROOM_FABRICS, ROOM_LIT_SHARE, ROOM_CURTAIN_SHARE, ROOM_HEARTH_GLOW,
-  roomColorTable,
+  ROOM_TEXELS_PER_M, ROOM_STYLES, ROOM_PIECES, ROOM_FABRICS, ROOM_HEARTH_GLOW, ROOM_SEED_START, ROOM_SEED_NQ, ROOM_SEED_BIAS,
+  ROOM_CURTAIN_SALT, ROOM_LIT_K, ROOM_CURTAIN_K, ROOM_CURTAIN_EDGE, roomColorTable,
 } from '../world/windowRoomArt.js';
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -104,6 +104,8 @@ export const ROOM_LAMP_NEAR = 1.15;
 export const ROOM_LAMP_FALLOFF = 0.45;
 /** Curtains hang this far behind the glass (of the room's depth). */
 export const ROOM_CURTAIN_Z = 0.05;
+/** WL1: the sun's share that reaches a mock room's floor through its glass (the moon's too). */
+export const ROOM_SUN_SHARE = 0.85;
 
 /** The room's depth, metres, for a tile `tileW` metres wide. */
 export function roomDepth(tileW) {
@@ -151,23 +153,38 @@ const g = (x) => {
 };
 const v3 = (c) => `vec3(${g(c[0] / 255)}, ${g(c[1] / 255)}, ${g(c[2] / 255)})`;
 
-/** WAGONS2 (FINAL AUDIT): THE ROOM'S SEED, ONE TEXT - the hash and whether a room is lit (`rwLitSeed` under
- *  ROOM_LIT_SHARE), read by the room itself and by the air pass's emission replay (render/airPass.js EMIT_MESH_FS), so
- *  the glass of a room drawn dark is never bloomed amber at night. `n` the surface normal, `wp` the world point, `origin`
- *  the model's own (uModel[3]), `uv` the picture's. */
+/** WAGONS2 (FINAL AUDIT): THE ROOM'S SEED, ONE TEXT - read by the room itself and by the air pass's emission replay
+ *  (render/airPass.js EMIT_MESH_FS), so the glass of a room drawn dark is never bloomed amber at night. WL1: the seed is
+ *  whole numbers (world/windowRoomArt.js roomSeedBits, its twin), so the window light reads the same rooms lit and
+ *  curtained (render/windowLight.js). `n` the surface normal, `wp` the world point, `origin` the model's own
+ *  (uModel[3]), `uv` the picture's. rwHash stays for the room's look. */
 export const RW_SEED_GLSL = `
 float rwHash(vec3 p) {
   p = fract(p * vec3(0.1031, 0.1030, 0.0973));
   p += dot(p, p.yxz + 33.33);
   return fract((p.x + p.y) * p.z);
 }
-float rwLitSeed(vec3 n, vec3 wp, vec3 origin, vec2 uv) {
-  vec3 nq = floor(n * 4.0 + 0.5);
-  float plane = floor(dot(n, wp - origin) * 40.0 + 0.5);
-  vec2 tile = floor(uv);
-  return rwHash(vec3(tile.y * 3.1 + nq.x, plane * 0.37, tile.x + 11.0));
+highp uint rwMix(highp uint h, highp uint k) {
+  k *= 0xcc9e2d51u; k = (k << 15u) | (k >> 17u); k *= 0x1b873593u;
+  h ^= k; h = (h << 13u) | (h >> 19u);
+  return h * 5u + 0xe6546b64u;
 }
-const float RW_LIT_SHARE = ${g(ROOM_LIT_SHARE)};
+highp uint rwFinal(highp uint h) {
+  h ^= h >> 16u; h *= 0x85ebca6bu; h ^= h >> 13u; h *= 0xc2b2ae35u; h ^= h >> 16u;
+  return h;
+}
+highp uint rwSeedBits(vec3 n, vec3 wp, vec3 origin, vec2 uv) {
+  highp ivec3 nq = ivec3(floor(n * 4.0 + 0.5)) + ${ROOM_SEED_NQ};
+  highp int plane = int(floor(dot(n, wp - origin) * 40.0 + 0.5)) + ${ROOM_SEED_BIAS};
+  highp ivec2 tile = ivec2(floor(uv)) + ${ROOM_SEED_BIAS};
+  highp uint h = ${ROOM_SEED_START >>> 0}u;
+  h = rwMix(h, uint(nq.x)); h = rwMix(h, uint(nq.y)); h = rwMix(h, uint(nq.z));
+  h = rwMix(h, uint(plane)); h = rwMix(h, uint(tile.x)); h = rwMix(h, uint(tile.y));
+  return rwFinal(h);
+}
+bool rwRoomLit(highp uint h) { return (h >> 8u) < ${ROOM_LIT_K}u; }
+highp uint rwCurtainBits(highp uint h) { return rwFinal(h ^ ${ROOM_CURTAIN_SALT >>> 0}u); }
+bool rwCurtained(highp uint c) { return (c & 65535u) < ${ROOM_CURTAIN_K}u; }
 `;
 
 /** The block: uniforms, the tables, the room. `decode` is the lane's colour decode of an sRGB constant (`c` the
@@ -250,9 +267,9 @@ vec4 rwPiece(int k, vec2 p, float cx, vec3 wood, vec3 fab, inout float glow) {
   }
   return vec4(0.0);
 }
-// THE ROOM: the glass's own colour (base: the classic glass, its style on top), the mask's share at this texel, and the
-// screen derivatives taken at the top of main. Returns what the texel shows.
-vec3 rwRoomOver(vec3 base, float glass, vec3 dp1, vec3 dp2, vec2 duv1, vec2 duv2) {
+// THE ROOM: the glass's own colour (base: the classic glass, its style on top), the mask's share at this texel, the
+// screen derivatives taken at the top of main, and the sun's term on the glass (main's diff). Returns what it shows.
+vec3 rwRoomOver(vec3 base, float glass, vec3 dp1, vec3 dp2, vec2 duv1, vec2 duv2, float sunDiff) {
   vec3 toFrag = vWorldPos - uCamPos;
   float dist = length(toFrag);
   float fade = 1.0 - smoothstep(${g(ROOM_FADE_NEAR)}, ${g(ROOM_FADE_FAR)}, dist);
@@ -291,7 +308,8 @@ vec3 rwRoomOver(vec3 base, float glass, vec3 dp1, vec3 dp2, vec2 duv1, vec2 duv2
   vec2 tile = floor(vUV);
   float s0 = rwHash(vec3(tile.x + 17.0 * nq.x + 3.0 * nq.z, tile.y + 29.0 * nq.y, plane));
   float s1 = rwHash(vec3(plane * 0.731, tile.x * 1.7 + nq.z, tile.y + 5.0));
-  float s2 = rwLitSeed(vn, vWorldPos, uModel[3].xyz, vUV);   // WAGONS2 (FINAL AUDIT): the seed the bloom's replay reads too
+  highp uint sb = rwSeedBits(vn, vWorldPos, uModel[3].xyz, vUV);   // WAGONS2 (FINAL AUDIT): the seed the bloom's replay reads too; WL1: and the window light
+  highp uint cb = rwCurtainBits(sb);
   int s = int(min(floor(s0 * RW_NSTYLES), RW_NSTYLES - 1.0));
   int piece = int(min(floor(s1 * RW_NPIECES), RW_NPIECES - 1.0));
   vec3 fab = RW_FAB[int(min(floor(fract(s1 * 7.0) * RW_NFAB), RW_NFAB - 1.0))];
@@ -322,26 +340,48 @@ vec3 rwRoomOver(vec3 base, float glass, vec3 dp1, vec3 dp2, vec2 duv1, vec2 duv2
       albedo = RW_COL[s * 8 + 3] * (1.0 - 0.3 * min(seam, 1.0));
     }
     albedo *= 0.9 + 0.1 * n;
-    if (fract(s2 * 3.0) < 0.5) albedo = mix(albedo, fab * 0.8, rwRect(p, vec4(roomW * 0.3, depth * 0.25, roomW * 0.7, depth * 0.7)));
+    if ((sb & 1u) == 1u) albedo = mix(albedo, fab * 0.8, rwRect(p, vec4(roomW * 0.3, depth * 0.25, roomW * 0.7, depth * 0.7)));
   } else {                                           // the ceiling, and its beams
     vec2 p = (floor(vec2((h.x - ${g(ROOM_BOX.x0)}) * tileW, h.z * depth) * TPM) + 0.5) / TPM;
     albedo = RW_COL[s * 8 + 5] * (0.9 + 0.1 * rwHash(vec3(p * TPM, float(s) + 2.5)));
     if (RW_PAT[s].w > 0.5 && fract(p.y / 0.9) < 0.2) albedo = RW_COL[s * 8 + 6];
   }
   // curtains, hung just behind the glass at the tile's sides
-  if (fract(s2 * 13.0) < ${g(ROOM_CURTAIN_SHARE)}) {
+  bool curtained = rwCurtained(cb);
+  float cl = ${g(ROOM_CURTAIN_EDGE[0])} + ${g(ROOM_CURTAIN_EDGE[1])} * float((cb >> 16u) & 255u) / 255.0, crr = ${g(ROOM_CURTAIN_EDGE[2])} - ${g(ROOM_CURTAIN_EDGE[3])} * float(cb >> 24u) / 255.0;
+  bool onCurtain = false;
+  if (curtained) {
     float tc = ${g(ROOM_CURTAIN_Z)} / d.z;
     vec2 pc = o.xy + d.xy * tc;
-    float cl = 0.18 + 0.14 * fract(s2 * 7.0), crr = 0.82 - 0.14 * fract(s2 * 5.0);
     if (tc < t && (pc.x < cl || pc.x > crr) && pc.y > -0.1 && pc.y < 1.05) {
       albedo = fab * (0.72 + 0.28 * abs(sin(pc.x * 60.0)));
       hz = ${g(ROOM_CURTAIN_Z)};
       glow = 0.0;
+      onCurtain = true;
     }
   }
   float night = uRoomLamp.a;
-  float lit = night * step(s2, RW_LIT_SHARE);
+  float lit = rwRoomLit(sb) ? night : 0.0;
   vec3 light = uRoomDay * (1.0 - ${g(ROOM_DAY_FALLOFF)} * hz) + uRoomLamp.rgb * (lit * (${g(ROOM_LAMP_NEAR)} - ${g(ROOM_LAMP_FALLOFF)} * hz));
+  // WL1: THE SUN THROUGH THIS WINDOW, or the moon - followed back from what the ray met to the glass; where it crosses a
+  // pane (the window's own mask) and no curtain, the face it lands on takes it at its angle and the glass's own share of
+  // the sun outside (main's diff: the cloud and, on the lane, the shadow over the facade)
+  bool day = uSunScale > 0.0;
+  vec3 S = day ? uLightDir : uMoonDir;
+  vec3 skyL = day ? uSunColor * (uSunScale * sunDiff / max(dot(vn, uLightDir), 1e-3)) : uMoonColor * uMoonScale;
+  float sn = dot(N, S);
+  if (!onCurtain && sn > 0.02 && dot(skyL, skyL) > 0.0) {
+    float lg = hz * depth / sn;
+    vec2 gp = h.xy + vec2(dot(gu, S), up * dot(gv, S)) * lg;
+    float lc = (hz - ${g(ROOM_CURTAIN_Z)}) * depth / sn;
+    float xc = h.x + dot(gu, S) * lc;
+    bool shut = curtained && lc > 0.0 && (xc < cl || xc > crr);
+    if (!shut && gp.x > 0.0 && gp.x < 1.0 && gp.y > 0.0 && gp.y < 1.0) {
+      float m = textureLod(uEmissionTex, tile + vec2(gp.x, up > 0.0 ? gp.y : 1.0 - gp.y), 0.0).r;
+      float cosr = t == tz ? sn : t == tx ? (d.x > 0.0 ? -1.0 : 1.0) * dot(gu, S) / lu : (d.y < 0.0 ? 1.0 : -1.0) * up * dot(gv, S) / lv;
+      light += skyL * (${g(ROOM_SUN_SHARE)} * m * max(cosr, 0.0));
+    }
+  }
   vec3 room = rwDecode(albedo) * light + rwDecode(${v3(ROOM_HEARTH_GLOW)}) * (glow * night);
   float F = pow(max(1.0 - nv, 0.0), 5.0);   // RW1 (AUDIT): head on, nv rounds past 1 - pow of a negative is undefined
   float r0 = mix(${g(ROOM_REFLECT_DAY)}, ${g(ROOM_REFLECT_NIGHT)}, night);
@@ -361,7 +401,7 @@ export const RW_MAIN_CUTOUT = '  if (uCutout > 0.5 && tex.a < 0.5) discard;   //
 export const RW_MAIN_GLASS = '  float rwGlass = texture(uEmissionTex, vUV).r;   // RW1: the glass mask\n'
   + '  if (uWinMode > 2.5 && rwGlass > 0.5 && rwInRect(gl_FragCoord.xy)) discard;   // RW1: an interior\'s glass, cut to the view out\n'
   + '  emission *= step(uWinMode, 1.5);   // RW1: an interior\'s glass wears no window style';
-export const RW_MAIN_ROOM = '  if (uWinMode > 0.5 && uWinMode < 1.5) lit = rwRoomOver(lit + emission, rwGlass, rwDp1, rwDp2, rwDuv1, rwDuv2) - emission;   // RW1: the room behind the glass';
+export const RW_MAIN_ROOM = '  if (uWinMode > 0.5 && uWinMode < 1.5) lit = rwRoomOver(lit + emission, rwGlass, rwDp1, rwDp2, rwDuv1, rwDuv2, diff) - emission;   // RW1: the room behind the glass; WL1: and the sun through it';
 
 // ---------------------------------------------------------------------------------------------------------------
 // THE VIEW OUT
@@ -493,7 +533,11 @@ export function createViewOut() {
  * glass on screen, or glass and no holes with the street off - the room draws as it always did), or the rectangle and
  * whether the street is in it (`view`: the glass is cut) or only the sky (a cutout's holes with the street off).
  */
-export function viewOutFrame(state, { renderer, mode, proj, view, now, scene }) {
+export function viewOutFrame(state, opts) {
+  try { return viewOut(state, opts); }
+  finally { opts.renderer.captureOutsideLight?.(opts.scene, opts.now, opts.mode); }   // WL1: the outside's light, for what the glass lets in (render/windowLight.js) - fresh from the view out when it drew, else read; and the row's word
+}
+function viewOut(state, { renderer, mode, proj, view, now, scene }) {
   const seen = renderer.takeGlassRect?.() ?? null;
   const rect = padRect(seen?.rect ?? null);
   const street = mode === 'full' && typeof scene?.draw === 'function';

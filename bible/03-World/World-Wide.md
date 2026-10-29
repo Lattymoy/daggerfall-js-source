@@ -2253,11 +2253,11 @@ event on the Bay. Cyrodiil's open zone stands no site-bound event, as before. A 
 key, never its pixel (the relay holds no picture of the provinces), so a modified client can say a stirred province's
 raid from another province's pixel - a hole before FRONTS, put to the owner (AUDIT FRONTS A3).
 
-### The relay (world286) and the deploy
+### The relay (world287 - world286 on its branch, renumbered past FB1029 GROUND at the merge of main) and the deploy
 
 `net/frontLaw.js` joins the relay's bundle and the account service's (`account-deploy.yml`'s filter); the account
-service reads no front. The site may deploy first, and on a merge it does: it sends nothing world286 alone reads, and
-until the relay follows, the old hub raises Hollows in every province. Once world286 is up, a page older than the
+service reads no front. The site may deploy first, and on a merge it does: it sends nothing world287 alone reads, and
+until the relay follows, the old hub raises Hollows in every province. Once world287 is up, a page older than the
 update - a tab left open, a desktop copy not yet restarted - stands off-turn gates, stars and raids whose words the
 relay drops; a gate, a star or a raid under way at the deploy off its province's turn is dropped the same way.
 

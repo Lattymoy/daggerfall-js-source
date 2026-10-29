@@ -19,6 +19,7 @@ import { buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';
 import { BULLETIN_BOARD_MODEL_ID, CITY_GATE_CLOSED_MODEL_ID, CITY_GATE_OPEN_MODEL_ID, isBulletinBoard, isCityGate } from '../world/rmbLayout.js';
 import { carveLefay, isLefayTown, lefayExitOf, lefaySpotOf } from '../world/lefayMonument.js';
 import { carveYards } from '../world/merchantYards/merchantYardSites.js';
+import { carveCapitalWalks } from '../world/capitalWalks.js';   // FB1029 BRIDGE-ENDS
 import { CityNavigation, NAV_CELL } from '../world/city/cityNavigation.js';
 import { collectCityLights, LIGHTS_ARCHIVE } from '../world/city/cityLights.js';
 import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';
@@ -121,7 +122,11 @@ import { wodRockUvs } from '../world/worldOfDaggerfall/wodRockUv.js';
 import { WodSpawner } from '../world/worldOfDaggerfall/wodSpawner.js';
 import { lateSolidsOf } from '../player/lateSolid.js';   // ROCK-CLEAR: a pixel's statics built round a body already standing are withheld until it is clear
 import { standBridges } from '../world/road/bridgeModels.js';   // ROAD-LOOK: a road over a river wider than a ford crosses on a bridge
+import { meetsTown } from './townMeetsHost.js';   // ACROSS-EDGE: the towns a pixel's ground meets
 import { sightMarksOf } from '../world/signSolid.js';   // FIELD BUGS 2026-10-25i SIGN-PASS: a shop's sign stops a body where it stands, never where it hangs
+
+/** WL1: the renderer's word on which pictures may hold glass, for a static batch's merge to measure their windows. */
+const windowKeys = (r) => (r?.wlGlassKey ? (a, rec) => r.wlGlassKey(a, rec) : null);
 
 /** @param {any} host */
 export function createPixelBuild(host) {
@@ -137,7 +142,8 @@ export function createPixelBuild(host) {
     seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs, standWodPile, strideFor, terrainGen, tileSide,
     townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
     worldHeight, lodStride,   // FLORA-GROUND, THE RINGS: the far ring's class (scenes/floraSeat.js warmFlora)
-    provinceAt, arenaRoadsStale, _arenaRoadsStale, swap   // IC-SWAP-BEHIND: a rebuild built behind its view (scenes/swapBehind.js); TESA: the province past the Bay, the Arena roads' stale law and its set
+    provinceAt, arenaRoadsStale, _arenaRoadsStale, swap,   // IC-SWAP-BEHIND: a rebuild built behind its view (scenes/swapBehind.js); TESA: the province past the Bay, the Arena roads' stale law and its set
+    townMeets   // ACROSS-EDGE: the towns its ground meets (scenes/townMeetsHost.js)
   } = host;
   // ROCK-CLEAR (FIELD BUGS 2026-10-19f): the world collider's one gate - every solid the build files below goes through
   // it, so a part standing round the body (a neighbour's mountain reaching into the body's pixel, a pixel built round a
@@ -327,7 +333,7 @@ export function createPixelBuild(host) {
     // ghost rows keep edge normals central differences either way.
     const stride = strideFor(px, py);
     const arenaRoadsAt = terrainGen.arenaRoadsEpoch;   // TESA4: the Arena roads' layer this job is built with
-    const { yardPaths, yardGround, samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, landProps, wodAverages, graht, beach, roadside, townGround, arenaRoads, bridges } = await terrainGen.generate({
+    const { yardPaths, yardGround, samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, landProps, wodAverages, graht, beach, roadside, townGround, arenaRoads, bridges, meets } = await terrainGen.generate({
       px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!groundLocation, climateType: climateBase,
       flattenAt: dfLocation?.capital?.flattenAt ?? null,   // TESA11: a capital over several pixels flattened to its centre's ground
       bed: waterOn,   // AUDIT WATER-NEXT P1: the bed under the water, carved on the worker with the grid
@@ -343,6 +349,7 @@ export function createPixelBuild(host) {
       // its location is a place the woods close round; GRAHT1: and the canopy's field, where its graht-oaks stand
       jungle: jungle ? jungle.job(px, py, FOREST_HIDDEN_LOCATION_TYPES.has(groundLocation?.mapTableData?.locationType)) : null,
       landform,   // LANDFORM1-3: the shaped ground, cut along the kernel's own network
+      about: townMeets?.about(px, py, meetsTown(groundLocation) ? locationRect?.shape : null) ?? null,   // ACROSS-EDGE: the towns of its 3 x 3 its ground meets
     });
     const walkShut = dfLocation ? fabricWalkShut(townWalkShut(dfLocation, townGround, paths), dfLocation) : null;
     const yardShut = dfLocation ? yardWalkShut(fabricWalkShut(townWalkShut(dfLocation, yardGround ?? townGround, yardPaths ?? paths, true), dfLocation), walkShut, dfLocation) : null;   // FB1028 YARDS: the yards' ground as #1184 stood it   // TS6-TS7: its walkers' and its yards' ground the town's own, off its wall; TS10: the paths painted on it its roads; URBANIZER U3: and off its fences and dead ends' walls
@@ -469,7 +476,7 @@ export function createPixelBuild(host) {
     // transform rides the build's own awaits) into one mesh per pixel,
     // one draw call per texture. The gates (whose mesh swaps) and the
     // mills (whose rotor turns) stay individual draws.
-    const staticBuilder = new StaticBatchBuilder();
+    const staticBuilder = new StaticBatchBuilder({ windows: windowKeys(renderer) });   // WL1: its windows' glass measured in the merge's own slices
     const resolveTexKey = keyResolver(texRemap);
     const ownTexKey = keyResolver(NO_CLIMATE_REMAP);   // ARENA1: a climate-free model (RuntimeMaterials, ApplyClimate 0) wears its own pictures in the merge
     const statics = [];   // AUDIT PRECIP HOST-7: the merge's models in its order - a re-skin merges them again through its table
@@ -877,6 +884,7 @@ export function createPixelBuild(host) {
         if (lefaySpot) carveLefay(nav, lefaySpot);   // LEFAY1: the people walk round the monument, never through it
         if (yardSites?.length) carveYards(nav, yardSites);   // MERCHANT-YARDS: and round the yards
         if (portSites?.length) carveYards(nav, portSites);   // SHIPYARDS: and round the shipyard and the lighthouse
+        carveCapitalWalks(nav, dfLocation);   // FB1029 BRIDGE-ENDS: and off a capital's works over Daggerfall's blocks
         personBatches = new Map();   // person -> batch (destroyed with the pixel)
         made.personBatches = personBatches;   // BUILD-FAIL1
         const personCollider = {
@@ -1501,6 +1509,7 @@ export function createPixelBuild(host) {
       witchHomes: witchDress?.homes ?? null, witchFloor,   // WITCH1: each home's Hearth Offering spot, and the street they stand on (scenes/witchesHost.js)
       chapterHalls: pixelChapterHalls,   // CHAP7b (above)
       beach: beach ?? null,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel with the row on - where a gathering node asks the beach line
+      meets: meets ?? null,   // ACROSS-EDGE: the meets its ground took - its ghost rows' at a restride
       px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, hearths: pixelHearths, animals: pixelAnimals, springs: pixelSprings, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season: pixelSeason,   // GR1: the placer reads the tiles and the season (PRECIP4: the pixel's)
       _snow: snowSeen,   // PRECIP4: the snow it was built under, every season it took (the sweep's - AUDIT PRECIP HOST-6)
@@ -1734,7 +1743,7 @@ export function createPixelBuild(host) {
       let table = turns ? await reskinRemap(p.texRemap, law, lawOf, pipeline) : p.texRemap;
       if (table !== p.texRemap && sameTable(table, p.texRemap)) table = p.texRemap;   // a season that swaps nothing here: the table, the merge and every draw's cache stand
       if (table !== p.texRemap && sk.statics) {
-        const merge = new StaticBatchBuilder(), resolve = keyResolver(table), own = keyResolver(NO_CLIMATE_REMAP);
+        const merge = new StaticBatchBuilder({ windows: windowKeys(renderer) }), resolve = keyResolver(table), own = keyResolver(NO_CLIMATE_REMAP);
         for (const [cpu, local, isOwn, nm] of sk.statics) { merge.add(cpu, local, isOwn ? own : resolve, nm); await breather.breathe(); }
         const merged = await merge.finishSliced(() => breather.breathe());   // PERF-EXT23: a unit a breath, as the build's
         made.mesh = merged ? renderer.createMesh(merged, { bounds: merged.bounds }) : null;

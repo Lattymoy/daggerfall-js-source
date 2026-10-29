@@ -14864,6 +14864,11 @@
   "tr": "e8f1acb815df",
   "by": "claude-in-session"
  },
+ "helm.heavy": {
+  "en": "1909b8911a74",
+  "tr": "ed5e365c5d60",
+  "by": "claude-in-session"
+ },
  "helm.passenger": {
   "en": "61953c9d9311",
   "tr": "560085879f9e",
@@ -16947,6 +16952,21 @@
  "legacy.rez.unheard": {
   "en": "9a86cc2b125e",
   "tr": "a52f8609bbde",
+  "by": "claude-in-session"
+ },
+ "legacy.union.born": {
+  "en": "39b7a548d1fb",
+  "tr": "07418eac1731",
+  "by": "claude-in-session"
+ },
+ "legacy.union.raised": {
+  "en": "7077e4aa0ab5",
+  "tr": "d4e072488f04",
+  "by": "claude-in-session"
+ },
+ "legacy.union.raisedAway": {
+  "en": "5a3c7723cbd9",
+  "tr": "ab125bf5cf33",
   "by": "claude-in-session"
  },
  "level.renown.risen": {
