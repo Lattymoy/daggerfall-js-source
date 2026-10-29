@@ -9,7 +9,8 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { installImmersiveTravelGates, carriageRecordsOf, hasCarriageGate, IT_GATE_FRAMES } from '../../src/world/immersiveTravelGates.js';
 import { capitalCarriages, capitalGatePoints, capitalGateThings, carriageRecordsIn, isCarriageTown, capitalCarriageSlices, SIDE_GATES, CARRIAGE_LEVEL, CARRIAGE_MOST } from '../../src/world/capitalCarriages.js';
-import { townWallBlockName, GATE_ROAD_CLEAR } from '../../src/world/townWalls.js';
+import { townWallBlockName, GATE_ROAD_CLEAR, townGateOutside } from '../../src/world/townWalls.js';
+import { DIR } from '../../src/world/road/roadNetwork.js';
 import { rumareFlatAt, RUMARE_LANDING } from '../../src/world/rumareWaters.js';
 import { reliefDrawnAt } from '../../src/world/terrain/capitalRelief.js';
 import { CAPITALS, capitalDims, capitalPortBlocks, inCapitalRim, planCell, capitalGardenName, capitalApproachName, synthesizeCapitalLocation, capitalCentre } from '../../src/world/tamrielCapitals.js';
@@ -393,6 +394,19 @@ test('AUDIT CAPITAL-CARRIAGES T3-T7: the Imperial City\'s stand clear of its gat
   for (const st of east) for (const it of st.items) assert.ok(CAPITAL_RELIEFS.solitude.height(it.x, it.z) > 1e-3, `Solitude's ${st.inside ? 'inside' : 'outside'}: on the sea at ${it.x}, ${it.z}`);
   const al = CAPITALS.find((c) => c.key === 'alinor'), south = capitalCarriages({ ...al, gates: ['S'], gateAt: { S: [0, 466] } }, { footprintOf: () => null });
   for (const st of south) for (const it of st.items) assert.notEqual(planCell(al, Math.floor(it.z / B + al.anchor[1]), Math.floor(it.x / B + al.anchor[0])), 'L', 'on a lake');
+  // T4: never a lake - a capital whose ground outside its north gate is all water stands its things inside, on its gardens
+  const lakeside = { key: 'lakeside', tag: 'LK', anchor: [4, 4], blocks: {}, plan: Array.from({ length: 8 }, (_, r) => Array.from({ length: 8 }, () => (r < 3 ? 'L' : 'G'))), gates: ['N'], gateAt: { N: [0, -110] } };
+  const lk = capitalCarriages(lakeside, { footprintOf: () => null });
+  assert.deepEqual(lk.map((st) => st.inside), [true], 'inside, the lake outside');
+  for (const it of lk[0].items) assert.equal(planCell(lakeside, Math.floor(it.z / B + 4), Math.floor(it.x / B + 4)), 'G');
+  // T4: never the sea - Solitude's north wall where its cliff falls to the sea, its plan's water there made garden: its
+  // things stand on no ground the relief says is the sea's (the sea lies level)
+  const cliff = capitalCarriages({ ...so, plan: so.plan.map((row, r) => (r < 2 ? row.map(() => 'G') : row)), gates: ['N'], gateAt: { N: [20, -108] } }, { footprintOf: () => null });
+  for (const st of cliff) for (const it of st.items) assert.ok(CAPITAL_RELIEFS.solitude.height(it.x, it.z) > 1e-3, `on the sea at ${it.x}, ${it.z}`);
+  // L2: a painted road's band two and a half tiles either side of its line - a 2 x 2 town, an arm in from the north
+  const town = { exterior: { exteriorData: { width: 2, height: 2, blockNames: ['X', 'X', 'X', 'X'] } }, mapTableData: { mapId: 1 } };
+  const roadOk = townGateOutside(town, { pieces: [] }, { roads: DIR.N, tracks: 0, curved: false }, () => null), mid = (64 - 48) * 6.4;
+  assert.deepEqual([roadOk(mid + 15.9, mid, 0), roadOk(mid + 16.1, mid, 0), roadOk(mid + 16.1, mid, 0.3)], [false, true, false], 'the road\'s band, and a thing\'s reach past it');
   // T5: the carriage towns as the capitals' own locations are minted (synthesizeCapitalLocation) - the Imperial City (its k
   // 0) its landing's slice and no other, a harbour's sea slice none
   const kinds = new Map([...new Set(['RESI', 'GENR', ...CAPITALS.flatMap((c) => (c.plan ?? []).flat())])].map((k) => [k, [`${k}AA00.RMB`]])), base = { name: 'B', regionIndex: 1, regionName: 'R', politic: 129, climate: { worldClimate: 231 }, hasDungeon: false, mapTableData: { mapId: 9, locationType: 0 }, exterior: { exteriorData: { blockNames: ['X'], width: 1, height: 1, mapId: 9, portTownAndUnknown: 0 }, buildings: [], recordElement: { header: { locationId: 9 } } } };
