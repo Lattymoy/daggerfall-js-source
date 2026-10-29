@@ -1116,7 +1116,8 @@ import { createInstanceDoor } from './instanceDoor.js';   // INSTANCES: public o
 // TESTBUILD: every player may use the staff's /god (/godmode), /fly, /heal, /tp - god mode also lifts the zone's travel law and makes map journeys instant
 const TEST_GODMODE = false;
 const isStaffT = (g) => TEST_GODMODE || isStaff(g);
-import { isStaff, parseStaffCommand, STAFF_HELP_LINES, findPlace } from '../net/staffCommands.js';   // STAFF1: the staff's own commands
+import { isStaff, findPlace } from '../net/staffCommands.js';   // STAFF1: the staff's own commands
+import { parseStaffLine, staffHelpLines, staffTpPlaces } from './staffTp.js';   // AUDIT TAMRIEL-WIDE B4/C7: /tp to a pixel and a place past the Bay
 import { RELAY_CFG_KEYS, mayRelayCfg } from '../net/relayCfg.js';   // SCALE5b: the relay's settings, a developer's
 import { shardOf, isChannelBus, isChannelShard, channelOf, hubShardsSupported } from '../net/hubShards.js';
 import { cellOfRoom as layerCellOf, worldRoom as layerCellAt } from '../net/wire.js';   // SCALE5d: a crowded place's layer, my party's   // SCALE5c: the hub, sixteen ways; part two: a region's channel, four
@@ -19800,7 +19801,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   function runStaffCommand(tabId, c) {
     const say = (line) => chatLog.push(tabId, { text: line, system: true });
     if ('error' in c) { say(c.error); return; }
-    if (c.cmd === 'staff') { for (const line of STAFF_HELP_LINES) say(line); return; }
+    if (c.cmd === 'staff') { for (const line of staffHelpLines()) say(line); return; }
     if (c.cmd === 'relay') {
       // SCALE5b: a relay setting, to the hub (net/relayCfg.js) - the Developer's alone; the hub's answer lands in this tab
       if (!mayRelayCfg(staffGlyphs())) { say('Only a developer may change the relay\'s settings.'); return; }
@@ -19831,9 +19832,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // /tp: a place by name, a map pixel, or where another player stands - the guild teleport's own arrival (teleportTo)
     let pick = null;
     if (c.place != null) {
-      const places = [...locationIndex.entries()].map(([k, loc]) => { const [px, py] = k.split(',').map(Number); return { name: loc.name, px, py }; });
-      if (_arenaTemplates) for (const a of arenaPixels()?.stood ?? []) if (!locationIndex.has(`${a.bx},${a.by}`)) places.push({ name: a.name, px: a.bx, py: a.by });   // TESA2: an Arena place, stood or not yet
-      const hit = findPlace(places, c.place);
+      // TESA2: an Arena place, stood or not yet; AUDIT TAMRIEL-WIDE B4/C7: and the registry's places past the Bay
+      const hit = findPlace(staffTpPlaces({ locationIndex, stood: _arenaTemplates ? arenaPixels()?.stood : null, registry: worldPlaces }), c.place);
       if (!hit) { say(`No place called "${c.place}".`); return; }
       pick = { pixel: { x: hit.px, y: hit.py }, name: hit.name };
     } else if (c.player != null) {
@@ -20534,7 +20534,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // STAFF1 (Mac: "for developer, dungeon master and the shadow fang titles I want to add teleport, debug, and other
         // admin commands"): /tp /god /fly /heal /pos /staff (net/staffCommands.js) - asked only of a player whose own
         // glyphs are staff's, so to anyone else each is the chat's own "no such command". Each acts on the typer alone.
-        const staffCmd = isStaffT(staffGlyphs()) ? parseStaffCommand(text.replace(/^\/godmode\b/i, '/god'), staffPowers()) : null;   // TESTBUILD: /godmode = /god
+        const staffCmd = isStaffT(staffGlyphs()) ? parseStaffLine(text.replace(/^\/godmode\b/i, '/god'), staffPowers()) : null;   // TESTBUILD: /godmode = /god; AUDIT TAMRIEL-WIDE B4/C7: a pixel past the Bay
         if (staffCmd) { runStaffCommand(tabId, staffCmd); return 'error' in staffCmd ? false : true; }
         // TITLE-N (Mac: "Dungeon Master ... allows the user to use the /dm to message chat with orange text (similar to
         // /red)"): /red's law below, one frame over - parsed here and never guarded: whether this player may is the
