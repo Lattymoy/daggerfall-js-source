@@ -1190,6 +1190,7 @@ gfx.fix.win.close,"Zárd be az összes Chrome-ablakot. Ha az ikonja az óra mell
 gfx.fix.win.run,"Nyomd meg a Win+R billentyűket, illeszd be ezt az utat, majd nyomj Entert:"
 gfx.fix.win.start,"Indítsd újra a Chrome-ot."
 growth.spec.why.chosenMentor,"A specializációd. Az ereje {pct}%-ban hat, amíg egy alacsonyabb szintű csapat mentora vagy."
+helm.heavy,"Túl nehéz. Könnyíts a hátizsákodon, a szekereden vagy a raktéren"
 holdings.horse.boons.hungry,"Éhes, de még nincs büntetés."
 holdings.horse.boons.starving,"Éhezik - nem vágtázik, amíg nem eszik. Etesd meg."
 holdings.wagon.boons.failing,"Szétesőben, de még teljes tempóban gurul."

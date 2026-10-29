@@ -2962,6 +2962,7 @@ guild.wayBack.shut,"Dette hus er lukket i denne Sæson - laugets huse i andre re
 guild.wayBack.skills,"Det kræver også én laugsfærdighed på {high} og en anden på {low}: {skills}."
 guild.wayBack.standing,"Din anseelse her er {rep}. Medlemmer optages fra {need}."
 haul.capped,"Dagens sølvloft er nået"
+helm.heavy,"For tungt. Let din oppakning, din vogn eller lastrummet"
 helm.passenger,"{ship}, på vej mod {port} - hendes skipper styrer"
 holdings.horse.boons.hungry,"Sulten, men endnu ingen straf."
 holdings.horse.boons.starving,"Udsultet - ingen galop, før den spiser. Giv den foder."

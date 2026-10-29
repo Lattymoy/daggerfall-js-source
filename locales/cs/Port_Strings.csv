@@ -2962,6 +2962,7 @@ guild.wayBack.shut,"Tato síň je v této Sezóně zavřená - síně cechu v ji
 guild.wayBack.skills,"Potřebuješ také jednu cechovní dovednost na {high} a druhou na {low}: {skills}."
 guild.wayBack.standing,"Tvé postavení zde je {rep}. Členy přijímají od {need}."
 haul.capped,"Denní limit stříbra je vyčerpán"
+helm.heavy,"Příliš těžké. Odlehči batoh, vůz nebo podpalubí"
 helm.passenger,"{ship}, směr {port} - kormidluje její kapitán"
 holdings.horse.boons.hungry,"Hladový, ale zatím bez postihu."
 holdings.horse.boons.starving,"Hladovějící - necválá, dokud se nenají. Nakrmte ho."

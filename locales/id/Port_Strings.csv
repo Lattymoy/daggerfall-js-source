@@ -2962,6 +2962,7 @@ guild.wayBack.shut,"Aula ini tutup Musim ini - aula serikat di wilayah lain teta
 guild.wayBack.skills,"Juga dibutuhkan satu keahlian serikat di {high} dan yang kedua di {low}: {skills}."
 guild.wayBack.standing,"Kedudukanmu di sini {rep}. Anggota diterima mulai dari {need}."
 haul.capped,"Batas perak harian tercapai"
+helm.heavy,"Terlalu berat. Ringankan tas, gerobak, atau palkamu"
 helm.passenger,"{ship}, menuju {port} - nakhodanya yang mengemudi"
 holdings.horse.boons.hungry,"Lapar, tetapi belum ada penalti."
 holdings.horse.boons.starving,"Kelaparan - tidak bisa berderap sampai ia makan. Beri makan."

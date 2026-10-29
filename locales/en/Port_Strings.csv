@@ -2962,6 +2962,7 @@ guild.wayBack.shut,"This hall is shut this Season. The guild's halls in other re
 guild.wayBack.skills,"It also asks one of its guild skills at {high} and a second at {low}: {skills}."
 guild.wayBack.standing,"Your standing here is {rep}. It takes members at {need} or more."
 haul.capped,"Daily silver cap reached"
+helm.heavy,"Too heavy. Lighten your pack, your wagon or the hold"
 helm.passenger,"{ship}, bound for {port} - her master steers"
 holdings.horse.boons.hungry,"Hungry, but no penalty yet."
 holdings.horse.boons.starving,"Starving. It will not gallop until it eats. Feed it."

@@ -2962,6 +2962,7 @@ guild.wayBack.shut,"Esta casa está cerrada esta Temporada; las casas del gremio
 guild.wayBack.skills,"También se pide una habilidad del gremio en {high} y una segunda en {low}: {skills}."
 guild.wayBack.standing,"Tu reputación aquí es {rep}. Se admiten miembros desde {need}."
 haul.capped,"Límite diario de plata alcanzado"
+helm.heavy,"Demasiado peso. Aligera tu mochila, tu carro o la bodega"
 helm.passenger,"{ship}, rumbo a {port}: su capitán lleva el timón"
 holdings.horse.boons.hungry,"Hambriento, pero aún sin penalización."
 holdings.horse.boons.starving,"Famélico: no galopa hasta que coma. Dale de comer."
