@@ -204,9 +204,9 @@ test('EL2: the receiver block and the depth shaders - six uniforms, no dynamic m
   // and handed on flat - the fragment wears it under the cloud's.
   assert.match(EL_BB_FS, /uBBSun \* cloudShadowAt\(vBBWorld\) \* vBBSunVis/);
   assert.match(EL_BB_FS, /flat in float vBBSunVis;/);
-  assert.match(EL_LANE.bbVs.main, /vec3 sunAt = vBBBase \+ vec3\(0\.0, max\(0\.5, uSunLift \* uSize\.y \* \(uMesh > 0\.5 \? aScale : abs\(aCorner\.x\) \* 2\.0\)\), 0\.0\);[^\n]*\n\s*vBBSunVis = dot\(uBBSun, uBBSun\) > 0\.0 \? \(uMesh > 0\.5 \? sunShadowAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\)\) : sunShadowSoftAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\), uSize\.y\)\) : 1\.0;/, 'the flat\'s point, the soft kernel, the night gate (LPT1, AUDIT LPT B4: a low-poly tree\'s every vertex one tap at its root - AUDIT BANTHA1 TREE-2: half a unit up, or a jungle tree\'s uSunLift share of its drawn height)');
+  assert.match(EL_LANE.bbVs.main, /vec3 sunAt = vBBBase \+ vec3\(0\.0, max\(0\.5, uSunLift \* uSize\.y \* \(uMesh > 0\.5 \? aScale : abs\(aCorner\.x\) \* 2\.0\)\), 0\.0\);[^\n]*\n\s*vBBSunVis = \(dot\(uBBSun, uBBSun\) > 0\.0 \|\| uWinOn == 2\) \? \(uMesh > 0\.5 \? sunShadowAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\)\) : sunShadowSoftAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\), uSize\.y\)\) : 1\.0;/, 'the flat\'s point, the soft kernel, the night gate (LPT1, AUDIT LPT B4: a low-poly tree\'s every vertex one tap at its root - AUDIT BANTHA1 TREE-2: half a unit up, or a jungle tree\'s uSunLift share of its drawn height)');
   assert.ok(EL_LANE.bbVs.head.includes(SHADOW_GLSL), 'the vertex stage carries the receiver block');
-  assert.match(EL_BB_FS, /elPointFlat\(vBBWorld, base\)/);
+  assert.match(EL_BB_FS, /elPointFlat\(vBBWorld, base, vBBSunVis\)/);   // PIN MOVED (WL1): and the quad's sun word, for its window light
   assert.ok(!EL_FAR_RING_FS.includes('uSunShadow'), 'the far ring receives no shadow');
   assert.equal(EL_LANE.shadows, true);
   const r = read('src/render/renderer.js');
