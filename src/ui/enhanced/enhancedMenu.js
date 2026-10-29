@@ -123,7 +123,7 @@ import { sharedClassicMinutes } from '../../net/wire.js';   // AUDIT LIVED1 G: t
 import { SKY_SEGMENTS, skyClassicMinutes, wallMsForSkyMinutes } from '../../net/skyLaw.js';   // TIME4: the sky's day, said at the door
 import {
   realmIo, realmList, realmCustoms, realmPut, realmDelete, realmUndo, realmFetch, realmRowAsSave, realmSummaryOf, realmRefusalText, takeRealmNotice,
-  sweepUnsent,
+  sweepUnsent, realmLineageRemove,
 } from '../../systems/realmSaves.js';   // REALM P1.3: the Online door lists the realm's characters, the service's
 import { applyCustoms, customsLines, crossLeveling, LEVELING_CROSS_LINE } from '../../systems/realmCustoms.js';   // REALM P1.5: an offline character comes in once, through customs
 import { REALM_COPY_SAVE_NAME, realmCopyIds } from '../../systems/realmCopyMark.js';   // a copy of a realm character never comes in
@@ -132,7 +132,7 @@ import { strandedNotice } from './strandedNotice.js';   // STRANDED: and said on
 import { bringOnlineButton } from './bringOnlineButton.js';
 import { createRealmLine } from '../../systems/legacy/realmLine.js';   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): the account's lines, read at the door
 import { loadFamily } from '../../systems/legacy/store.js';
-import { waitingHouses, takeUpLine, houseWaitsTitle, houseWaitsLine, heirButtonLabel, newbornButtonLabel } from '../../systems/legacy/waitingHouses.js';
+import { waitingHouses, spareFamilies, withoutLine, takeUpLine, houseWaitsTitle, houseWaitsLine, heirButtonLabel, newbornButtonLabel } from '../../systems/legacy/waitingHouses.js';
 import { legacySettings } from '../../systems/legacy/settings.js';   // RPT1026-MISC HEIR-WAITS: the Descendants dial a newborn heir is offered by
 import { mintCharacterId } from '../../systems/characterId.js';   // REALM P1.4: a copy to offline is a new offline character
 import { exportSavesZip, collectSlots, importSlots, entriesFromFiles, slotPathOf, TRANSFER_ZIP_NAME } from '../../systems/save/saveTransfer.js';   // SP1: saves move between the website and the app
@@ -562,6 +562,7 @@ export function takePickedLegacyBirth() { const b = _pickedLegacyBirth; _pickedL
 /** REALM P1.3: the realm's characters as the service listed them this visit (null: not asked yet), its bound, what the
  *  last act said (a refusal, customs' report, a copy's word) and whether an act is running. Per VISIT, as the cloud's. */
 let realmRows = null;
+let realmRowsOk = false;   // AUDIT FB1029e F5: the roster as the realm answered it - a failed read lists no one, and plays no line
 let realmAsked = false;
 let realmMax = 0;
 let realmWords = [];
@@ -1421,6 +1422,7 @@ function realmCard(who) {
     realmList(realmIo({ fetch: (...a) => globalThis.fetch(...a), storage: appStorage() })).then((r) => {
       realmRows = r.ok ? r.characters : [];
       if (r.ok) sweepUnsent(appStorage(), r.characters, storedSession(appStorage())?.id ?? null);   // AUDIT RESCUE-SAVE A7 + 2 B5: a copy no join can play goes
+      realmRowsOk = !!r.ok;
       realmMax = r.ok ? r.max : 0;
       if (!r.ok) realmWords = [...realmWords, realmRefusalText(r.error)];
       render();
@@ -1449,6 +1451,8 @@ function realmCard(who) {
     box.append(grid);
   } else box.append(el('p', 'meta', t('menu.realm.none', 'No online characters yet. Make one, or bring one of yours in below.')));
   for (const card of waitingHouseCards()) box.append(card);
+  const spare = spareFamiliesCard();
+  if (spare) box.append(spare);
   box.append(acts([{ label: t('menu.realm.new', 'New online character'), primary: !realmRows.length, disabled: realmBusy || realmRows.length >= realmMax, onClick: () => onAction('online-new') }]));
   return box;
 }
@@ -1481,6 +1485,35 @@ function waitingHouseCards() {
     }] : [])]));
     return card;
   });
+}
+/** FAMILY-REMOVE (FIELD BUGS 2026-10-29e, a one-life player: "being able to remove old families"): the account's lines
+ *  no living character plays, each with its Remove. Deleted and fallen characters never freed a line, so a player with
+ *  none left could found no other (LINEAGES_MAX). A waiting Succession is such a line too: removed, it is not carried on. */
+let familiesShown = false;
+function spareFamiliesCard() {
+  const spare = spareFamilies({ rows: realmRows, rowsOk: realmRowsOk, lineIds: realmLineIds, load: (id) => loadFamily(appStorage(), id) });
+  if (!spare) return null;
+  const card = el('div', 'card svfamilies');
+  card.append(el('h4', null, t('menu.realm.families', 'Families with no living character: {n, number}', { n: spare.length })));
+  card.append(acts([{ label: familiesShown ? t('menu.realm.familiesHide', 'Hide') : t('menu.realm.familiesShow', 'Show'), onClick: () => { familiesShown = !familiesShown; render(); } }]));
+  if (!familiesShown) return card;
+  for (const family of spare) {
+    const name = family.surname || t('menu.realm.familyUnnamed', 'Unnamed');
+    card.append(el('p', 'meta', t('menu.realm.familyRow', 'The {name} family ({model, select, bloodline {Bloodline} other {Enduring}})', { name, model: family.model })));
+    card.append(acts([{
+      label: t('menu.realm.removeFamily', 'Remove family'),
+      disabled: realmBusy,
+      onClick: () => ask(t('menu.realm.removeFamilyAsk', 'Remove the {name} family?', { name }),
+        t('menu.realm.removeFamilyBody', 'Its line ends online and frees room for a new family. Its fallen stay fallen, and no heir of it can carry it on. Your characters are not changed.'),
+        t('menu.realm.removeFamilyYes', 'Remove'),
+        // AUDIT FB1029e F3: a line the realm no longer holds (removed from another device, a lost answer) is gone - said so
+        () => realmAct(() => realmLineageRemove(realmIoNow(), family.id).then((r) => (r?.error === 'no-lineage' ? { ok: true } : r)), () => {
+          realmLineIds = withoutLine(realmLineIds, family.id);
+          return [t('menu.realm.familyRemoved', 'The {name} family is removed.', { name })];
+        })),
+    }]));
+  }
+  return card;
 }
 /** HOUSE-WAITS: the Succession's choice, made here - the record stored and the realm's copy written (its birth checks
  *  the person there), then the boot births them online. */

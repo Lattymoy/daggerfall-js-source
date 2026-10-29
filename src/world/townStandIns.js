@@ -40,6 +40,11 @@ const U = 0.025;   // MeshReader.GlobalScale: one classic unit in metres
 
 // ---- the beds ---------------------------------------------------------------------------------------------------
 export const TOWN_BED_FIRST = 42069;
+/** BED-TURN (FIELD BUGS 2026-10-29e, "Beds backwards" in Alinor): the mods' bed prefab faces half a turn from Daggerfall's
+ *  bed, and their rooms are turned to suit it. The alias draws Daggerfall's mesh, so the room's record is turned back by
+ *  this. AUDIT FB1029e H6, measured on the shell: of the 4,029 coloured beds the packs lay, 2,806 stood through the room's
+ *  walls unturned and 141 turned, none made worse. */
+export const TOWN_BED_TURN = 1024;
 export const TOWN_BED_COUNT = 18;
 /** The port's archive of recoloured bedclothes: record `colour * 3 + cloth`. */
 export const TOWN_BED_ARCHIVE = 38201;
@@ -1026,7 +1031,7 @@ export function installTownStandIns(isOn = () => true) {
   shareDetailedShipsArt(isOn);   // the bottles and moved classic pieces of archive 1210 the towns' shelves hold - Detailed Ships' pictures of them
   for (let k = 0; k < TOWN_BED_COUNT; k++) {
     const { model, colour } = townBedOf(TOWN_BED_FIRST + k);
-    registerModelAlias(TOWN_BED_FIRST + k, { model, remap: bedRemap(colour) }, isOn);
+    registerModelAlias(TOWN_BED_FIRST + k, { model, remap: bedRemap(colour), turn: TOWN_BED_TURN }, isOn);
   }
   for (const [id, spec] of Object.entries(TOWN_PAINTINGS)) registerCustomModel(Number(id), () => paintingModel(spec), isOn);
   for (const [id, build] of Object.entries(ROSYS_PIECES)) registerCustomModel(Number(id), build, isOn);
