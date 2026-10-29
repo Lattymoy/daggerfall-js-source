@@ -242,12 +242,13 @@ let _carry = new WeakMap();
  * here, a hand without a sigil, or a session with no Renown.
  */
 export function sigilBlow(weapon, damage, attacker, target, info = null) {
-  if (!(damage > 0) || !weapon || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer || _dueling) return damage;
-  const pct = blowRoom(sigilPercent(weapon.sigil, _renown), 'sigil');   // POWER-CEILING: its room under the blow's one product
+  const held = weapon ?? info?.wraps ?? null;   // HAND-WRAPS (AUDIT B4): a fist's blow carries its wraps' sigil
+  if (!(damage > 0) || !held || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer || _dueling) return damage;
+  const pct = blowRoom(sigilPercent(held.sigil, _renown), 'sigil');   // POWER-CEILING: its room under the blow's one product
   if (!(pct > 0)) return damage;
-  const exact = (damage * pct) / 100 + (_carry.get(weapon) ?? 0);
+  const exact = (damage * pct) / 100 + (_carry.get(held) ?? 0);
   const more = Math.floor(exact + 1e-9);
-  if (!info?.estimate) _carry.set(weapon, Math.max(0, exact - more));   // AUDIT MARTIAL L2 F7: the Stats page's estimate keeps nothing
+  if (!info?.estimate) _carry.set(held, Math.max(0, exact - more));   // AUDIT MARTIAL L2 F7: the Stats page's estimate keeps nothing
   return damage + more;
 }
 registerWeaponBlowMod('sigil', sigilBlow);

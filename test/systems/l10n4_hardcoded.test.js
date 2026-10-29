@@ -21,6 +21,7 @@ const HARDCODED = {
   'src/characters/clothing.js': 12,
   'src/characters/creatureBodies.js': 8,
   'src/characters/daedra.js': 4,
+  'src/systems/handWraps.js': 2,   // HAND-WRAPS: the template row's name, 'Hand Wraps', as the Pistolet's; its lore, an item's own record, as the guns' is
   'src/systems/staffDragon.js': 1,   // DRAGON-RIDE: /dragon's /staff line, the staff list's English as the rest of it (net/staffCommands.js)
   'src/scenes/staffDragonHost.js': 5,   // DRAGON-RIDE: /dragon's answers, said to the Admin alone, as the staff commands' own (world.js runStaffCommand)
   'src/characters/dwarvenDragon.js': 2,   // DWARVEN-DRAGON: its career's English (the save's and the staff list's - a player reads t()'s) and its census miss, never shown

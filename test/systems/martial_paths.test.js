@@ -620,7 +620,7 @@ test('MARTIAL THE SEAMS: every host\'s rig registers the powers; the one ask, th
   // BAL10: both mods' arms hand the swing reader's word on, and the sheet's estimate reads the fists' modifiers as the cores do
   assert.match(src('src/systems/roleplayRealismItems/rriKits.js'), /shortBlade: !melee && techniqueFamily\(weapon\) === 'shortBlade',/);
   assert.match(src('src/systems/roleplayRealism/rrInstall.js'), /weight, shortBlade: !!w\?\.shortBlade \}\);/);
-  assert.match(src('src/combat/combatStats.js'), /return entity\.isInBeastForm \? d : weaponBlowMods\(null, d, entity, foe, ESTIMATE\);/);   // PIN MOVED (AUDIT MARTIAL L2 F7): the estimate's own word
+  assert.match(src('src/combat/combatStats.js'), /return entity\.isInBeastForm \? d : weaponBlowMods\(null, d, entity, foe, wraps \? \{ \.\.\.ESTIMATE, wraps \} : ESTIMATE\);/);   // PIN MOVED (HAND-WRAPS): the estimate carries the Hand Wraps; PIN MOVED (AUDIT MARTIAL L2 F7): the estimate's own word
 });
 
 // AUDIT MARTIAL L5 L2: every hook back at its rest when the file ends, whatever a test left

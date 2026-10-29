@@ -101,8 +101,8 @@
   {
     "name": "POWER-CEILING-the-sigil-not-asking",
     "file": "src/systems/sigil/sigil.js",
-    "old": "  const pct = blowRoom(sigilPercent(weapon.sigil, _renown), 'sigil');",
-    "new": "  const pct = (sigilPercent(weapon.sigil, _renown));",
+    "old": "  const pct = blowRoom(sigilPercent(held.sigil, _renown), 'sigil');",
+    "new": "  const pct = (sigilPercent(held.sigil, _renown));",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]

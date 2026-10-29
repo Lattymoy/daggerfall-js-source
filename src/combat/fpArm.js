@@ -78,6 +78,7 @@ import {
   placeAtBone,   // TWO-HANDS AUDIT 2: a blade placed at rest, for the pair's guard (bladePictureHeight)
 } from '../formats/morrowind/mwFirstPerson.js';
 import { PART_BONES, dfRaceKeyOf } from '../formats/morrowind/mwNpc.js';
+import { isHandWraps } from '../characters/handWrapsIds.js';   // HAND-WRAPS: the empty hand, glowing
 import { portraitFeatures, headFeatures, hairFeatures, matchFace, FACE_MATCH_VERSION } from '../formats/morrowind/mwFaceMatch.js';
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
@@ -1482,9 +1483,11 @@ export function fpWeaponKey(item, hasAmmo) {
   // WEREWOLF1 (AUDIT D3): THE CLAWS ARE THE EMPTY HAND. V4 hands a transformed player's rig the wereclaws
   // (lycanthropy.js WERECLAWS_ITEM, material 0) - to a Morrowind arm that is hand-to-hand, the bare fist - and keyed
   // as "Iron" they were a weapon swap on every transformation (the equip replayed on a body about to be replaced).
-  const hand = item && item.werecreatureClaws ? null : item;
+  const hand = item && (item.werecreatureClaws || isHandWraps(item)) ? null : item;   // HAND-WRAPS: the empty hand too - only a glow on the fists
   return `${dfWeaponToMw(hand, WEAPONS)}:${hand ? materialName(hand) : ''}:${hasAmmo ? 1 : 0}:${dfWeaponShape(hand, WEAPONS) ?? ''}`;
 }
+/** HAND-WRAPS: the key of the empty hand - what the arm holds with the Hand Wraps on, or nothing. */
+const EMPTY_HAND_KEY = fpWeaponKey(null, false);
 
 /**
  * MW-D22: WHICH SIDE the weapon's attach bone rests on, made legible.
@@ -3709,6 +3712,11 @@ export function createFpArm() {
   // (`offKey`, setOffWeapon's) and the pair is drawn (the renderer lights each slot with its own - _drawWeaponGlows)
   let offGlowSpec = null, offGlowItem = null, offGlowKey = null;
   const offGlowShown = () => (offGlowSpec && offGlowKey != null && offGlowKey === offKey && !climbHands && handsMode === 'dual' && weaponInHand() ? offGlowSpec : null);
+  // HAND-WRAPS (bible/05-Combat/Hand-Wraps.md): THE FISTS GLOW WITH THE WRAPS' - laid on the hands' ranges (renderer.js
+  // _drawWeaponGlows 'hands') while the fists are up: drawn, empty (AUDIT C4: a swap done, no sheet held up before the
+  // first person), no spell in them, not on the stone
+  let handGlowSpec = null;
+  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);
   let torchState = null;
   let torchSource = null;
   let torchGroup = null;
@@ -6028,6 +6036,10 @@ export function createFpArm() {
     },
     /** TWO-HANDS: the glow the next draw lays on the left blade, for a pin. */
     offWeaponGlow() { return offGlowShown(); },
+    /** HAND-WRAPS: the Hand Wraps' glow on the fists (systems/weaponGlow.js meshGlow / glowFromWord), or null. */
+    setHandGlow(spec) { handGlowSpec = spec ?? null; },
+    /** HAND-WRAPS: the glow the next draw lays on the fists, for a pin. */
+    handGlow() { return handGlowShown(); },
 
     setTorch(lit) {
       const want = !!lit;
@@ -6772,6 +6784,7 @@ export function createFpArm() {
       // the frame's own window, into the rect the composite lays it on.
       lastFrame = { model: NIF_TO_PASS, view, proj, rect: win ? win.dst : { x: 0, y: 0, w: W, h: H } };
       drewLast = true;
+      mesh.handGlow = handGlowShown();   // HAND-WRAPS
       mesh.offWeaponGlow = offGlowShown();   // TWO-HANDS: the left blade's own
       mesh.weaponGlow = glowShown();   // WEAPON-GLOW1
       mesh.glowUnit = glowUnit(ph);   // AUDIT WEAPON-GLOW MW-8: the LENS's rows - a Weapon Widget scale grows the outline with the arm
@@ -6976,7 +6989,9 @@ export function createFpArm() {
       // TWO-HANDS: the left blade's own, and the picture's pad room for both outlines (drawRigSpriteBox takes the larger)
       const offGlow = offGlowShown();
       thirdMesh.offWeaponGlow = offGlow;
-      const padLooks = offGlow ? [glowLook, offGlow.look].filter(Boolean) : glowLook;
+      const handGlow = handGlowShown();   // HAND-WRAPS: the fists' own, padded as a blade's
+      thirdMesh.handGlow = handGlow;
+      const padLooks = offGlow || handGlow ? [glowLook, offGlow?.look, handGlow?.look].filter(Boolean) : glowLook;
       const halfH = ((maxZ - minZ) * u * rs.height) / 2;
       const halfW = (Math.hypot(maxX - minX, maxY - minY) * u * rs.weight) / 2;
       const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
