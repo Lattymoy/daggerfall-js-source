@@ -28,10 +28,9 @@ import { createTamrielAtlas, ATLAS_TILE } from './tamrielAtlas.js';
 import { packArenaRoads } from './arenaRoads.js';
 import { packPastBayPlaces } from './pastBayPlaces.js';
 import { MAP_W, MAP_H, drainSteps } from './road/roadNetwork.js';
-import { regionOf, tamrielRegionSteps, rollTypeAt } from './tamrielRoads.js';
+import { regionOf, tamrielRegionSteps, rollTypeAt, squareDry } from './tamrielRoads.js';
 import { planTrunkLegs } from './road/cyrodiilRoads.js';   // VOYAGER-CYRODIIL: the named roads' legs
 import { inBay } from './tamriel/tamrielFrame.js';
-import { WATER_BYTE } from './roadsProducer.js';
 
 /** The worker's state over its messages - a function, so node drives it without a worker. */
 export function createRoadsWorkerState() {
@@ -76,8 +75,8 @@ export function createRoadsWorkerState() {
         // VOYAGER-CYRODIIL: the named roads' legs, planned once on this ground (world/road/cyrodiilRoads.js) - a road stands
         // on land past the Bay and on no capital's pixel
         const held = new Set((m.obstacles ?? []).map((o) => `${o.x},${o.y}`));
-        const wet = (x, y) => !inBay(x, y) && heightAt(x, y) <= WATER_BYTE;
-        const walkable = (x, y) => !inBay(x, y) && heightAt(x, y) > WATER_BYTE && !held.has(`${x},${y}`);
+        const wet = (x, y) => !inBay(x, y) && !squareDry(heightAt, x, y);   // OFFSHORE-ROADS: a square with a sea corner
+        const walkable = (x, y) => !inBay(x, y) && squareDry(heightAt, x, y) && !held.has(`${x},${y}`);
         inputs = { ...m, heightAt, trunkLegs: planTrunkLegs(m.trunks ?? null, { heightAt, walkable, wet }) };
         return;
       }

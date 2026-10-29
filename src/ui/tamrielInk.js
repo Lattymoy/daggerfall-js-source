@@ -504,8 +504,9 @@ export function arenaInkCities(model) {
     if (inBay(x, y)) continue;
     const st = stood.get(`${p.provinceIndex}|${p.id}`), pixel = st ? { x: st.x, y: st.y } : capitalStandsAt(p);
     // AUDIT-TESA A7-4: a place on a capital's pixel (its pin, or the capital standing where the places do not) is inked
-    // there - on the city the world stands, not on its own point a pixel or more away
-    const on = pixel && (st?.pinned || !st) ? [pixel.x + 0.5, pixel.y + 0.5] : [x, y];
+    // there - on the city the world stands, not on its own point a pixel or more away. OFFSHORE-MARKS: so is every place
+    // that stands - its point was snapped to the trace's pixels, and the smooth coast puts 18 of them in the sea
+    const on = pixel ? [pixel.x + 0.5, pixel.y + 0.5] : [x, y];
     const isCapital = capital.has(`${p.province}|${p.name}`), k = isCapital ? CAPITALS.findIndex((cap) => cap.name === p.name) : -1;
     // WW7-6: its map id - the seat's key (scenes/tamrielPlacesHost.js seatPlaces: a capital's its centre's, a city's its own).
     // BAY-LEFT-MAPS (C11): whether it is a port, by its provider's word as the registry reads it (world/pastBayRows.js): the

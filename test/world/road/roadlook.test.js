@@ -408,7 +408,7 @@ test('ROAD-LOOK a carved lake is water no road crosses: the routes\' land takes 
   assert.match(s, /\n {2}for \(let i = 0; i < still\.length; i\+\+\) if \(still\[i\] && !bay\[i\]\) water\[i\] = 1;\n/, 'a lake\'s pixel the routes\' water (the Bay\'s own network\'s none of it)');
   assert.match(s, /const land = landForRoutes\(heights, water, bay, MAP_W, MAP_H, VOYAGER_DIALS, \(u, v\) => landGrain\(gx \+ u, gy \+ v\), still\);/);
   const { TAMRIEL_ROADS_VERSION, LAKE_MARGIN } = await import('../../../src/world/tamrielRoads.js');
-  assert.deepEqual([TAMRIEL_ROADS_VERSION, LAKE_MARGIN], [8, 0.25]);
+  assert.deepEqual([TAMRIEL_ROADS_VERSION, LAKE_MARGIN], [9, 0.25]);   // PIN MOVED (OFFSHORE-ROADS): 9, a square with a sea corner the routes' water
 });
 
 test('ROAD-LOOK the map marks each bridge the kernel stands: in to the Bay\'s scale (`near`) the road\'s two parapets either side of it, along it over the river\'s width - off the installed layer and the map\'s own copy of the rivers (watersInk: no level, its widths in Float32) - and no mark for a ford, a kind its filter hides, a band out from the Bay\'s scale, or a river north of the Bay\'s first row read as another pixel\'s (mutants: the ink law\'s index; the ford marked; the filter unread; the near band unasked; the key\'s row read down)', () => {

@@ -39,9 +39,10 @@ import { countryStandsAt } from './tamrielCountry.js';
 import { lairStandsAt, lairPlanned, lairBlockCount } from './tamrielDungeons.js';
 import { BIOMES_VERSION } from './tamriel/tamrielBiomes.js';   // AUDIT TESA-BIOME Z3: the zones' law decides each pixel's climate, so its places
 import { ghostfenceRoadBlocks } from './tamriel/ghostfence.js';   // GHOSTFENCE: its line no road's but at Ghostgate
+import { squareCornersAll } from './terrain/terrainSampler.js';   // OFFSHORE-ROADS: a byte is its square's south-east corner
 
 /** The regions' law's version - its cache's key moves with it. */
-export const TAMRIEL_ROADS_VERSION = 8;   // ROAD-LOOK: the carved lakes water no route crosses; EXACT-PIECES: a region's land's pieces in its answer; ROAD-GAPS: a region's networks linked where they meet; RIVER-FORDS (AUDIT RELEASE R1-3): the carved rivers crossed as fords; TESA15: a region's places in its answer, Arena's dungeons routed round; AUDIT TESA II R7 and R9: a gate stepped by every region that routes onto it, the crossings' runs held; VOYAGER1: the land's law (the grade, the height, the shore, the fords), VOYAGER-CYRODIIL: the named roads' legs
+export const TAMRIEL_ROADS_VERSION = 9;   // OFFSHORE-ROADS: a pixel whose square touches the sea is water to the routes; ROAD-LOOK: the carved lakes water no route crosses; EXACT-PIECES: a region's land's pieces in its answer; ROAD-GAPS: a region's networks linked where they meet; RIVER-FORDS (AUDIT RELEASE R1-3): the carved rivers crossed as fords; TESA15: a region's places in its answer, Arena's dungeons routed round; AUDIT TESA II R7 and R9: a gate stepped by every region that routes onto it, the crossings' runs held; VOYAGER1: the land's law (the grade, the height, the shore, the fords), VOYAGER-CYRODIIL: the named roads' legs
 /**
  * AUDIT TESA II R6: THE VERSION OF THE LAWS PAST THE BAY A REGION'S BUILD RUNS that no input of the print carries - the
  * ground's height (world/tamriel/tamrielGround.js: the authored law, the relief's, the seam's blend, the lattice hash; the
@@ -53,6 +54,10 @@ export const TAMRIEL_ROADS_VERSION = 8;   // ROAD-LOOK: the carved lakes water n
  * BIOMES_VERSION's, in the print.
  */
 export const GROUND_ROLL_VERSION = 6;   // 1 the laws as AUDIT TESA II found them; 2 its lane G's beach-line floor (BIOMES_VERSION 5); 3 CYRODIIL-SHORES: Cyrodiil's lakes' smooth shores; 4 SMOOTH-LAND: every coast and border the land's smooth law (world/tamriel/tamrielLand.js landLabelAt); 5 RUMARE-WATER: the land let down about the Imperial City at the sea (world/rumareWaters.js rumareBasin); 6 GHOSTFENCE: no countryside within the Ghostfence, no lair and no road on its line but at Ghostgate (world/tamriel/ghostfence.js)
+/** OFFSHORE-ROADS (SEA-SQUARE, Field-Bugs-2026-10-28b): is a pixel's square dry - its four corner bytes (x - 1..x,
+ *  y - 1..y, terrainSampler.js squareCornersAll) over the beach line? A road on a square with a sea corner runs partly
+ *  in the water the kernel lays there, though its own byte is land. */
+export const squareDry = (heightAt, x, y) => squareCornersAll((bx, by) => heightAt(bx, by) > WATER_BYTE, x, y);
 /** ROAD-LOOK: how near a carved lake's water (Bay pixels) a pixel's middle is the lake's to the routes - past a curve's widest
  *  swing off a pixel's middle (world/road/roadCurves.js: a bend's apex 0.125 of a pixel in) and a road's half width. */
 export const LAKE_MARGIN = 0.25;
@@ -154,13 +159,15 @@ export function* tamrielRegionSteps({ region, places, nodes, obstacles, gates, h
   const { gx, gy } = region;
   const inGrid = (x, y) => x >= gx && y >= gy && x < gx + MAP_W && y < gy + MAP_H;
   const heights = new Uint8Array(MAP_W * MAP_H), water = new Uint8Array(MAP_W * MAP_H), bay = new Uint8Array(MAP_W * MAP_H);
+  // a grid pixel's byte already read (the rows run north to south, west to east), else the ground's
+  const byteOf = (u, v) => (u >= 0 && v >= 0 && !bay[v * MAP_W + u] ? heights[v * MAP_W + u] : heightAt(gx + u, gy + v));
   for (let v = 0; v < MAP_H; v++) {
     for (let u = 0; u < MAP_W; u++) {
       const x = gx + u, y = gy + v, i = v * MAP_W + u;
       if (inBay(x, y)) { water[i] = 1; bay[i] = 1; continue; }   // the Bay's own ground is its own network's (VOYAGER1: no ford's)
       const h = heightAt(x, y);
       heights[i] = h;
-      water[i] = h <= WATER_BYTE ? 1 : 0;
+      water[i] = h > WATER_BYTE && byteOf(u - 1, v) > WATER_BYTE && byteOf(u, v - 1) > WATER_BYTE && byteOf(u - 1, v - 1) > WATER_BYTE ? 0 : 1;   // OFFSHORE-ROADS: the square's corners (squareDry), not its byte
     }
     if (v % REGION_STEP_ROWS === REGION_STEP_ROWS - 1) yield;   // AUDIT TESA II R8: a step
   }
@@ -187,7 +194,11 @@ export function* tamrielRegionSteps({ region, places, nodes, obstacles, gates, h
   // the places in one order whatever order they come in (a cache hands them tile by tile, its tiles in the order it was
   // asked): the builder is order-bound - each route merges into the ones before it - and every client lays the same roads
   const ordered = places.filter((p) => inGrid(p.x, p.y) && !inBay(p.x, p.y) && !taken.has(`${p.x},${p.y}`)).sort((a, b) => a.y - b.y || a.x - b.x);
-  for (const p of ordered) locations.push({ x: p.x - gx, y: p.y - gy, type: p.type });
+  for (const p of ordered) {
+    const i = (p.y - gy) * MAP_W + (p.x - gx);
+    if (heights[i] > WATER_BYTE) water[i] = 0;   // OFFSHORE-ROADS: a place's own square is reached, as a node's is, where its byte is land
+    locations.push({ x: p.x - gx, y: p.y - gy, type: p.type });
+  }
   // EXACT-PIECES: the core's land labelled off the bytes just read (the Bay's own pixels read here - the build reads none)
   const pieces = regionLand(region, (x, y) => (inBay(x, y) ? heightAt(x, y) : heights[(y - gy) * MAP_W + (x - gx)]));
   yield;   // a step

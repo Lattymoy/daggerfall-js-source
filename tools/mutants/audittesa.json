@@ -461,7 +461,7 @@
   {
     "name": "AUDIT-TESA-A7-4-ink-at-point",
     "file": "src/ui/tamrielInk.js",
-    "old": "const on = pixel && (st?.pinned || !st) ? [pixel.x + 0.5, pixel.y + 0.5] : [x, y];",
+    "old": "const on = pixel ? [pixel.x + 0.5, pixel.y + 0.5] : [x, y];",
     "new": "const on = [x, y];",
     "tests": [
       "test/audit_tesa.test.js"

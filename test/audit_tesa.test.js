@@ -419,7 +419,7 @@ test('AUDIT-TESA A7-4: a place on a capital\'s pixel is inked on that pixel - it
   const ink = read('src/ui/tamrielInk.js');
   // PIN MOVED (BAY-LEFT-MAPS C11, test/ui/bayleft_find.test.js): and its port as it stands (a lore port only on its shore, TESA6)
   assert.match(ink, /stood\.set\(`\$\{p\.provinceIndex\}\|\$\{p\.id\}`, \{ x: p\.bx, y: p\.by, pinned: !!p\.pinned, port: !!p\.port \}\);/);
-  assert.match(ink, /const on = pixel && \(st\?\.pinned \|\| !st\) \? \[pixel\.x \+ 0\.5, pixel\.y \+ 0\.5\] : \[x, y\];/);
+  assert.match(ink, /const on = pixel \? \[pixel\.x \+ 0\.5, pixel\.y \+ 0\.5\] : \[x, y\];/);   // PIN MOVED (OFFSHORE-MARKS, test/ui/offshore_marks.test.js): every place that stands on its pixel
   // PIN MOVED (BAY-LEFT-MAPS C11): and its port, the anchor's and the Ports filter's word
   assert.match(ink, /kind: p\.kind, x: on\[0\], y: on\[1\], pixel, mapId: k >= 0 \? capitalPlaceId\(k, 0\) : arenaPlaceId\(p\), port \}\);/);   // PIN MOVED (WW7-6): with its map id - the seat ring's key (ww7_seatrings)
 });

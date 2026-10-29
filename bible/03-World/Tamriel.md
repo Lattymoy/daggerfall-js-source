@@ -1258,3 +1258,35 @@ band aids or half assed work"*.
 
 Section A, RELIEF-PEAKS (OURS: DFU stops at the Bay's edge; the large map's law is read off DFU's own WOODS.WLD, and
 the ranges and Red Mountain are the port's own).
+
+## OFFSHORE-MARKS - places and roads past the Bay in the sea (2026-10-29)
+
+The owner, of the travel map past the Bay: roads and locations sit under the water, off the coast. Measured in node on
+the freeware's files, with the game's own road build over all 48 regions: no place stands in the sea and no road runs
+on a byte the ground calls water. What lay in the sea was drawn there.
+
+- **The marks.** `tamrielInk.js:"export function arenaInkCities(model) {"` inked a place that stands, but is not a
+  capital's pin, at its model point. That point was snapped to the trace's pixels (`tamrielPlaces.js snapToProvince`), and
+  SMOOTH-LAND cut those pixels' corners by a quarter of a pixel. So 18 of the 283 places' glyphs stood 3 to 4.5 Bay pixels
+  out in the sea, and 7 ports 7 to 114 pixels from the shore they stand on (Lilmoth, Sunhold, Dusk, Senchal, Soulrest,
+  Vivec, Taneth), their roads ending at an unmarked shore. Now every place that stands is inked on its pixel. With no
+  host standing the places, a place is inked at its point, as before.
+- **The roads.** A byte is its square's south-east corner (SEA-SQUARE, `01-Overview/bugs/Field-Bugs-2026-10-28b.md`).
+  The lanes and the voyages read the four corners since then; the roads read the pixel's own byte, and the shore's
+  discount drew them onto the squares beside the sea: 1,287 road pixels touched a sea corner, 27 of them more than half
+  under water. A region's water (`tamrielRoads.js` tamrielRegionSteps) and the named roads' land
+  (`tamrielRoadsWorker.js`) now read the four corners (`squareDry`). A place's own square is the place's, as a node's
+  is, so a hamlet on the shore is still joined. TAMRIEL_ROADS_VERSION 9: every client lays its roads again.
+
+Not in this change: the coast line past the Bay's south edge (x 137 to 185) where the ground's blend stands land the law
+calls sea (34 road pixels). It waits on the seams work on `dropEdgeRuns`.
+
+### Pins
+
+- `test/ui/offshore_marks.test.js` (1): a place that stands is inked on its pixel; with nobody standing them, at its point.
+- `test/world/road/offshore_roads.test.js` (3): a square dry only with its four corners over the beach line; a road
+  along a coast on dry squares; two shore hamlets joined.
+- PIN MOVED: `test/audit_tesa.test.js` (AUDIT-TESA A7-4); TAMRIEL_ROADS_VERSION in `test/tesa14_roads.test.js`,
+  `test/world/road/river_fords.test.js`, `test/world/road/roadlook.test.js` and `test/world/road/voyager1_land.test.js`.
+- Mutants: `tools/mutants/offshore.json` (4, all dead). Re-aimed by content: AUDIT-TESA-A7-4-ink-at-point and
+  VOYAGER1-the-version-unmoved.

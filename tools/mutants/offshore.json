@@ -1,0 +1,38 @@
+[
+  {
+    "name": "OFFSHORE-MARKS-pinned-alone-on-their-pixel",
+    "file": "src/ui/tamrielInk.js",
+    "old": "const on = pixel ? [pixel.x + 0.5, pixel.y + 0.5] : [x, y];",
+    "new": "const on = pixel && (st?.pinned || !st) ? [pixel.x + 0.5, pixel.y + 0.5] : [x, y];",
+    "tests": [
+      "test/ui/offshore_marks.test.js"
+    ]
+  },
+  {
+    "name": "OFFSHORE-ROADS-water-by-the-byte",
+    "file": "src/world/tamrielRoads.js",
+    "old": "      water[i] = h > WATER_BYTE && byteOf(u - 1, v) > WATER_BYTE && byteOf(u, v - 1) > WATER_BYTE && byteOf(u - 1, v - 1) > WATER_BYTE ? 0 : 1;",
+    "new": "      water[i] = h > WATER_BYTE ? 0 : 1;",
+    "tests": [
+      "test/world/road/offshore_roads.test.js"
+    ]
+  },
+  {
+    "name": "OFFSHORE-ROADS-own-byte-alone",
+    "file": "src/world/tamrielRoads.js",
+    "old": "export const squareDry = (heightAt, x, y) => squareCornersAll((bx, by) => heightAt(bx, by) > WATER_BYTE, x, y);",
+    "new": "export const squareDry = (heightAt, x, y) => heightAt(x, y) > WATER_BYTE;",
+    "tests": [
+      "test/world/road/offshore_roads.test.js"
+    ]
+  },
+  {
+    "name": "OFFSHORE-ROADS-place-square-wet",
+    "file": "src/world/tamrielRoads.js",
+    "old": "    if (heights[i] > WATER_BYTE) water[i] = 0;",
+    "new": "    if (heights[i] > 255) water[i] = 0;",
+    "tests": [
+      "test/world/road/offshore_roads.test.js"
+    ]
+  }
+]
