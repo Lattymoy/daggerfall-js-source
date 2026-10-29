@@ -1,6 +1,6 @@
 // STAFF-SPEED-2 (2026-10-29, the staff panel "runs slow", "slow switching pages between any of them", "server refuses a
 // lot") - THE PANEL'S HEAVY READS KEPT IN ONE ROW EVERY ISOLATE READS (server-account/src/staffKept.js, migration
-// 0194_staff_kept), on the node:sqlite database every account pin stands on (test/accountDb.mjs): fresh, the row answers
+// 0195_staff_kept), on the node:sqlite database every account pin stands on (test/accountDb.mjs): fresh, the row answers
 // and nothing is made; stale, the row answers at once and one request makes it again; past stale, or with no row, made
 // and kept before it is answered; a row too big, or no table, made every time, as before.
 import { test } from 'node:test';
@@ -115,5 +115,5 @@ test('STAFF-SPEED-2: what Home keeps is the Admins\' alone - never Reports nor a
   for (const id of HOME_KEPT) assert.ok(ids.includes(id), id);
   for (const w of HOME_WATCHES) if (HOME_KEPT.includes(w.id)) assert.equal(w.role, 'admin', w.id);
   assert.ok(!HOME_KEPT.includes('reports') && !HOME_KEPT.includes('watchlist'));
-  assert.match(readFileSync(new URL('../../server-account/migrations/0194_staff_kept.sql', import.meta.url), 'utf8'), /CREATE TABLE IF NOT EXISTS staff_kept \(\s*key\s+TEXT PRIMARY KEY/);
+  assert.match(readFileSync(new URL('../../server-account/migrations/0195_staff_kept.sql', import.meta.url), 'utf8'), /CREATE TABLE IF NOT EXISTS staff_kept \(\s*key\s+TEXT PRIMARY KEY/);
 });

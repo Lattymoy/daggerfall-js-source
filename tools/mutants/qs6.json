@@ -138,8 +138,8 @@
   {
     "name": "QS6-clearQuickslots-leaves-the-spell-slot-standing",
     "file": "src/systems/quickslots.js",
-    "old": "state[s] = null; spellState = null; hotbar.fill(null);",
-    "new": "state[s] = null; hotbar.fill(null);",
+    "old": "state[s] = null; spellState = null; hotbarSets.main.fill(null);",
+    "new": "state[s] = null; hotbarSets.main.fill(null);",
     "tests": [
       "test/systems/qs6_spellslot.test.js"
     ]

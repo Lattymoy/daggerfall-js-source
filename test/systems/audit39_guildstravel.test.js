@@ -265,7 +265,7 @@ test('F101/F115: both fast-travel callers now supply the perk', () => {
   assert.match(src('ui/travel/travelMapWindow.js'), /freeTavernRooms: this\.deps\.freeTavernRooms,/);
   // and the host answers it with the KnightlyOrder read, the one
   // hasShip's FreeShipTravel arm already makes
-  const w = src('scenes/world.js');
+  const w = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT, DRAGON5b): the host read whole - the fare bag is scenes/travelFareHost.js
   const hook = w.slice(w.indexOf('      freeTavernRooms: () => {'));
   assert.match(hook.slice(0, 800), /joinedGuildOfGroup\(activeMemberships\(playerEntity\), GUILD_GROUPS\.KnightlyOrder\)/);
   assert.match(hook.slice(0, 800), /orderRegion: townTalk\.factionDict\?\.get\(order\.factionId\)\?\.region \?\? null/,

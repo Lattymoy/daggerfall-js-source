@@ -771,8 +771,9 @@
   {
     "name": "AUDITSEATS-G4-flight",
     "file": "src/scenes/shared.js",
-    "old": "|| staffFly() || freeFlight();",
-    "new": "|| staffFly();",
+    "old": "|| staffFly() || freeFlight() || dragonAloft();",
+    "new": "|| staffFly() || dragonAloft();",
+    "note": "Re-aimed by content (DRAGON5): the term's tamed dragon after the spectator's flight.",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]

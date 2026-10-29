@@ -217,7 +217,8 @@ test('AUDIT WBX2 M9 the sweep reads its cursors in one storage read (AUDIT RAID 
   // `starrc:<sub>` (the raid's keep) - their cursor joins the one read
   // PIN MOVED (AUDIT KETCH L1-2, bible/01-Overview/audits/Audit-Ketch.md): the hub keeps an earner's Ketch receipt under
   // `ktrc:<sub>` (the Hour's keep) - its cursor joins the one read
-  assert.match(idx, /const cur = \(await this\.state\.storage\.get\(\['sweep:acct', 'sweep:party', 'sweep:gaterc', 'sweep:raidrc', 'sweep:serpentrc', 'sweep:sdrc', 'sweep:egrc', 'sweep:egcall', 'sweep:starrc', 'sweep:ktrc'\]\)\);/);
+  assert.match(idx, /const cur = \(await this\.state\.storage\.get\(\['sweep:acct', 'sweep:party', 'sweep:gaterc', 'sweep:raidrc', 'sweep:serpentrc', 'sweep:sdrc', 'sweep:egrc', 'sweep:egcall', 'sweep:starrc', 'sweep:ktrc', 'sweep:dragonrc'\]\)\);/);   // PIN MOVED (AUDIT DRAGON): and the dragon receipts' cursor
+  assert.doesNotMatch(idx, /storage\.get\('sweep:dragonrc'\)/);
   assert.doesNotMatch(idx, /storage\.get\('sweep:starrc'\)/);
   assert.doesNotMatch(idx, /storage\.get\('sweep:egrc'\)/);
   assert.doesNotMatch(idx, /storage\.get\('sweep:egcall'\)/);

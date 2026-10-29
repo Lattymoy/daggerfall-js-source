@@ -90,6 +90,7 @@ import { localWhenText } from '../systems/eventTimers.js';
 import { summaryPixel } from './overworldModel.js';   // WW-C2: a place's own pixel where it carries one (a zone hall past the Bay)
 import { locationSummaryAt } from '../systems/map/mapDirectory.js';
 import { calculateTravelTime, calculateTripCost, travelDays } from '../systems/travel/travel.js';
+import { hasDragon } from '../systems/dragon/dragonMount.js';   // DRAGON6: a tamed dragon's trip is flown
 import { guildFastTravel } from '../systems/guild/guildVariants.js';   // TP1: GuildManager.FastTravel
 import {
   travelMapFilters, freshTravelMapFilters, travelMapPopUpState, freshTravelMapPopUpState, setTravelMapPopUpState, travelMapSaveData,
@@ -3164,6 +3165,7 @@ export class HeldMapWindow {
         // transports are SNAPSHOT at open - a horse bought mid-trip is
         // not a thing (DFU OnPush)
         hasHorse: readOnce(d.hasHorse), hasCart: readOnce(d.hasCart), hasShip: readOnce(d.hasShip),
+        hasDragon: hasDragon(d.playerEntity?.()?.items),   // DRAGON6: snapshot with the three
         trip: null, confirm: false, notice: null,
         // AUDIT-TO1 C2: the mod, for its ship laws - IT1: none over the mod's popup, which is DFU's
         to: it ? null : (d.travelOptions?.() ?? null),
@@ -3268,7 +3270,7 @@ export class HeldMapWindow {
       speedCautious: st.opts.speedCautious,
       sleepModeInn: st.opts.sleepModeInn,
       travelShip: st.opts.travelShip,
-      hasHorse: st.hasHorse, hasCart: st.hasCart,
+      hasHorse: st.hasHorse, hasCart: st.hasCart, hasDragon: !!st.hasDragon,   // DRAGON6
     });
     // TP1 - GuildManager.FastTravel (DaggerfallTravelPopUp.cs:284),
     // BETWEEN CalculateTravelTime and CalculateTripCost exactly as DFU
@@ -3294,6 +3296,7 @@ export class HeldMapWindow {
       // TravelTimeCalculator.cs:163 - the same Knightly Order consult
       // the native popup makes; the enhanced skin bills the same fare.
       freeTavernRooms: !!this.deps.freeTavernRooms?.(),
+      hasDragon: !!st.hasDragon,   // DRAGON6: no ship, no fare
     });
     // AUDIT-MAP D2: the mod's fare scaling (TravelTimeCalculatorTO.cs
     // :24-40), the popup's own export - the enhanced skin had billed

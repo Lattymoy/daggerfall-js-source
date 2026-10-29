@@ -95,6 +95,9 @@ export function folkWhere(feet = null) {
   const p = _pixelOf && _regionAt ? _pixelOf(feet) : null;
   return p ? folkAt(p.x, p.y, _regionAt?.(p.x, p.y) ?? -1) : null;
 }
+/** SKYRIM-AURORA: the map pixel the player stands on, through the same door - null with no host (the fixed-city bench
+ *  sets none). The sky's aurora reads it (scenes/auroraHost.js), so no host hands the sky a pixel of its own. */
+export const pixelHere = () => (_pixelOf ? _pixelOf(null) : null);
 /** The people where the player stands. A standing person and a roster of the place read it. */
 export const folkHere = () => folkWhere(null);
 /** The place's own people's race where the player stands (Cyrodiil's Imperial, the Reach's Breton), or null on the Bay. */

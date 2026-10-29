@@ -264,6 +264,7 @@ function walkRig({ sea = () => false, means = null } = {}) {
     tvSeaBegin: (m, kinds) => armed.push([m?.how ?? null, crossesWater(kinds)]), tvSeaNoWay: () => said.push('no way'), crossesWater,
     travelPathUsesRoads: () => true, TRAVEL_PATH_TEXT: { fellBack: 'fell back' },   // OW-PATH: the Roads mode, the default
     planJourney, tvMooredDry,   // PIN MOVED (PLAN-SLICES): the walk's runner, and the moored law out of the host (systems/travel/seaAsk.js)
+    dragonMounted: () => false, dragonFlightPlan: () => null,   // PIN MOVED (DRAGON6): a journey begun on the dragon is flown - afoot here
   };
   const host = mount(env, `${fnSource('travelViewWalkTo')}\nreturn travelViewWalkTo;`);
   return { walkTo: host, begun, armed, said };

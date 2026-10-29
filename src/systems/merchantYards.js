@@ -43,7 +43,7 @@ import { setItemFields, mintCondition, TRANSPORT_HORSE } from './item/itemTempla
 import { WAGON_KIND_ORDER, newWagonItem, isWagonItem } from './wagon/wagonKinds.js';
 import { birthHorses } from './horse/horseCoats.js';   // STEED1: the stable's horses born at the yard
 import { horseBornStats, steedValue } from './steedCare.js';   // STEED1: and priced by what they are
-import { UPKEEP_ITEM, newUpkeepItem, upkeepItemsAvailable } from './upkeep/upkeepItemRows.js';   // STEED1/WAGONS4: the oats, the kits
+import { UPKEEP_ITEM, newUpkeepItem, upkeepItemsAvailable, dwarvenOilAvailable } from './upkeep/upkeepItemRows.js';   // STEED1/WAGONS4: the oats, the kits
 import { WORKBENCH_FEE } from '../net/professionLaw.js';   // CARP-YARD: the joinery's bench asks the furnisher's fee
 
 /** The two yards, in the order a town stands them. */
@@ -83,6 +83,8 @@ export const isYardTown = (loc) => YARD_TOWN_TYPES.includes(loc?.mapTableData?.l
 export const STABLE_HORSES_OFFERED = 3;
 /** STEED1 / WAGONS4: the stack a yard sells its upkeep in - the Stable's oats, the Wagon Yard's kits. */
 export const YARD_OATS_STACK = 20;
+/** DRAGON5c: the flasks of Dwarven Oil a Stable keeps. */
+export const YARD_OIL_STACK = 10;
 export const YARD_KITS_STACK = 5;
 /** A 32-bit mix of three integers (a stable's town, its day, its stall). */
 const mix3 = (a, b, c) => {
@@ -120,7 +122,7 @@ export function stableHorses(mapId, day, { owned = [], priced = false } = {}) {
 export function yardStock(kind, { mapId = 0, day = 0, online = false, owned = [], priced = false } = {}) {
   const mint = (it) => mintCondition(setItemFields(it));
   const upkeep = upkeepItemsAvailable(online);
-  if (validYardKind(kind) === 'stable') return [...stableHorses(mapId, day, { owned, priced }), ...(upkeep ? [mint(newUpkeepItem(UPKEEP_ITEM.Oats, YARD_OATS_STACK))] : [])];
+  if (validYardKind(kind) === 'stable') return [...stableHorses(mapId, day, { owned, priced }), ...(upkeep ? [mint(newUpkeepItem(UPKEEP_ITEM.Oats, YARD_OATS_STACK))] : []), ...(dwarvenOilAvailable(online) ? [mint(newUpkeepItem(UPKEEP_ITEM.DwarvenOil, YARD_OIL_STACK))] : [])];   // DRAGON5c: and the tamed dragon's oil, behind its own switch
   if (validYardKind(kind) === 'transport') return [...WAGON_KIND_ORDER.map((k) => mint(newWagonItem(k))), ...(upkeep ? [mint(newUpkeepItem(UPKEEP_ITEM.WagonKit, YARD_KITS_STACK))] : [])];
   return [];   // CARP-YARD: the joinery keeps no counter - its trade is the bench
 }

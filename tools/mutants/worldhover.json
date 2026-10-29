@@ -361,7 +361,7 @@
   {
     "name": "WORLD-HOVER-raceWinner-tie-order-inverted",
     "file": "src/player/activationRace.js",
-    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, dragon, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);   // DRAGON5b: the tamed dragon with the mounts, after HCC's",
     "new": "  return firmFirst([foe, peer, person, ground, pile, corpse, torch, boat, horseCart, wagon, water, camp, broker, gate], nearestInOrder);",
     "tests": [
       "test/systems/worldhover.test.js"
@@ -496,8 +496,8 @@
   {
     "name": "WORLD-HOVER-a-foe-beats-a-townsperson-on-a-tie",
     "file": "src/player/activationRace.js",
-    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
-    "new": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, boat, torch, corpse, pile, ground, foe, peer, person], nearestInOrder);",
+    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, dragon, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);   // DRAGON5b: the tamed dragon with the mounts, after HCC's",
+    "new": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, dragon, boat, torch, corpse, pile, ground, foe, peer, person], nearestInOrder);",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -505,8 +505,8 @@
   {
     "name": "WORLD-HOVER-a-townsperson-beats-the-door-on-a-tie",
     "file": "src/player/activationRace.js",
-    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
-    "new": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, boat, torch, corpse, pile, person, peer, ground, foe], nearestInOrder);",
+    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, dragon, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);   // DRAGON5b: the tamed dragon with the mounts, after HCC's",
+    "new": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, dragon, boat, torch, corpse, pile, person, peer, ground, foe], nearestInOrder);",
     "tests": [
       "test/systems/worldhover.test.js"
     ]

@@ -40,7 +40,7 @@ const NAMED = {
   'src/systems/eventTimers.js': 1,   // WW5: a province lane's Hollow said in its province, by the region list's own name in the player's language
   'src/systems/faction/factionStanding.js': 1,   // PROVINCE-COURTS: the Standing page's rows shown as GetFactionData shows a name
   'src/systems/faction/provinceFactions.js': 1,   // PROVINCE-COURTS: a province's court and people by the region's shown name
-  'src/systems/frontWords.js': 1,   // FRONTS: a front's province by the region's shown name
+  'src/systems/frontWords.js': 1,   // FRONTS: a front's province named in the Timers and on the map card, in the player's language
   'src/systems/hunt/trophies.js': 1,   // HUNTERS-MARK: a trophy's beast, in the player's language
   'src/systems/item/itemInfo.js': 4,
   'src/systems/loot/loot.js': 1,

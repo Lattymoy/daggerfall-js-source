@@ -1,0 +1,173 @@
+[
+  {
+    "name": "PVP-SET-a-spell-made-twice",
+    "file": "src/systems/wild/pvpSet.js",
+    "old": "  if (made.some((o) => sameKit(o, s))) return made.slice();\n",
+    "new": "",
+    "tests": [
+      "test/systems/wild/pvpset.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SET-the-cap-unread",
+    "file": "src/systems/wild/pvpSet.js",
+    "old": "return made.length < PVP_SET.made ? [...made, s] : null;",
+    "new": "return [...made, s];",
+    "tests": [
+      "test/systems/wild/pvpset.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SET-the-old-bar-off-by-one",
+    "file": "src/systems/wild/pvpSet.js",
+    "old": "const s = bar[i - PVP_SET.kitFrom];",
+    "new": "const s = bar[i];",
+    "tests": [
+      "test/systems/wild/pvpset.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SET-a-book-spell-carried",
+    "file": "src/systems/wild/pvpSet.js",
+    "old": "return main[i]?.type === 'item' ? entryOf(main[i]) : null;",
+    "new": "return main[i] ?? null;",
+    "tests": [
+      "test/systems/wild/pvpset.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SET-a-book-spell-kept",
+    "file": "src/systems/wild/pvpSet.js",
+    "old": "  if (raw?.type === 'kit' && isKit(raw.kit)) return kitEntry(raw.kit);\n",
+    "new": "  if (raw?.type === 'kit' && isKit(raw.kit)) return kitEntry(raw.kit);\n  if (raw?.type === 'spell') return raw;\n",
+    "tests": [
+      "test/systems/wild/pvpset.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SET-short-never-said",
+    "file": "src/systems/wild/pvpSet.js",
+    "old": "return { cost, short: magicka < cost,",
+    "new": "return { cost, short: false,",
+    "tests": [
+      "test/systems/wild/pvpset.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SET-the-shade-never-drains",
+    "file": "src/systems/wild/pvpSet.js",
+    "old": "(castAt + recoverMs - now) / recoverMs",
+    "new": "1",
+    "tests": [
+      "test/systems/wild/pvpset.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SET-a-made-spell-in-the-normal-set",
+    "file": "src/systems/quickslots.js",
+    "old": "return pvp && typeof entry.kit?.id === 'string' ?",
+    "new": "return typeof entry.kit?.id === 'string' ?",
+    "tests": [
+      "test/systems/wild/pvpset.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SET-a-book-spell-in-the-pvp-set",
+    "file": "src/systems/quickslots.js",
+    "old": "return pvp || !Number.isFinite(entry.index) ? null :",
+    "new": "return !Number.isFinite(entry.index) ? null :",
+    "tests": [
+      "test/systems/wild/pvpset.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SET-the-pvp-set-saved",
+    "file": "src/systems/quickslots.js",
+    "old": "out.hotbar = hotbarSets.main.map(",
+    "new": "out.hotbar = hotbar.map(",
+    "tests": [
+      "test/systems/wild/pvpset.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SET-the-lock-unread-on-a-fill",
+    "file": "src/systems/quickslots.js",
+    "old": "if (!kept || frozen()) return false;",
+    "new": "if (!kept) return false;",
+    "tests": [
+      "test/systems/wild/pvpset.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SET-the-lock-unread-on-a-clear",
+    "file": "src/systems/quickslots.js",
+    "old": "if (hotbar[i] && !frozen()) {",
+    "new": "if (hotbar[i]) {",
+    "tests": [
+      "test/systems/wild/pvpset.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SET-the-lock-unread-on-a-swap",
+    "file": "src/systems/quickslots.js",
+    "old": "if (a === b || frozen()) return;",
+    "new": "if (a === b) return;",
+    "tests": [
+      "test/systems/wild/pvpset.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SET-a-refusal-read-as-a-cast",
+    "file": "src/systems/quickslots.js",
+    "old": "r === 'refused' ? 'refused' : 'none'",
+    "new": "'none'",
+    "tests": [
+      "test/systems/wild/pvpset.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SET-the-armour-left-out",
+    "file": "src/ui/pvpSpellMenu.js",
+    "old": "calculateCastCost(kitSpellFor(entity, slot), entity).sp;",
+    "new": "calculateCastCost(kitSpellFor(entity, slot), entity, { portMods: false }).sp;",
+    "tests": [
+      "test/systems/wild/pvpset.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SET-the-set-never-swapped-in",
+    "file": "src/ui/pvpSpellMenu.js",
+    "old": "    useHotbarSet(want ? 'pvp' : 'main');\n",
+    "new": "    useHotbarSet('main');\n",
+    "tests": [
+      "test/systems/wild/pvpset.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SET-the-menu-lock-unread",
+    "file": "src/ui/pvpSpellMenu.js",
+    "old": "  lockHotbarSet(() => lockLeft() > 0);\n",
+    "new": "",
+    "tests": [
+      "test/systems/wild/pvpset.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SET-the-bar-not-held-up",
+    "file": "src/systems/uiSkin.js",
+    "old": "isEnhanced() && (hotbarForced() || HOTBAR_STYLES",
+    "new": "isEnhanced() && (HOTBAR_STYLES",
+    "tests": [
+      "test/systems/wild/pvpset.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SET-the-flag-lock-never-said",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "fightLeft: () => pvpAggroLeft(fightAt, now()),",
+    "new": "fightLeft: () => 0,",
+    "tests": [
+      "test/systems/wild/pvpset.test.js"
+    ]
+  }
+]

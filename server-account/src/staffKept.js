@@ -2,7 +2,7 @@
 // STAFF-SPEED-2 (2026-10-29, the staff panel slow on every page, "server refuses a lot"): Home, Status and Economy
 // were kept in isolate memory, and a busy Worker's next request lands in another isolate, so nearly every open read it
 // all again (live: Home p95 22 s, Economy p50 14 s, D1 answering `overloaded`).
-// So an answer is kept in `staff_kept` (migration 0194): one row a key. Inside `freshS` the row answers. Inside
+// So an answer is kept in `staff_kept` (migration 0195): one row a key. Inside `freshS` the row answers. Inside
 // `staleS` it answers at once and one request (the `busy_until` claim) makes it again after (`ctx.later`). Past that,
 // or no row, it is made before it is sent. Never kept: what one staff member sees and another does not. No table: no row.
 import { DB_ROOT } from './service.js';

@@ -649,7 +649,7 @@ test('WAGONS3 ANOTHER PLAYER ON THEIR BENCH: a peer driving a bench wagon (their
   assert.deepEqual(pool.harnessEnds('ann').map((e) => e.kind), ['trace', 'trace', 'trace', 'trace', 'rein', 'rein']);
   const w = rd('src/scenes/world.js');
   assert.match(w, /for \(const d of drawable\) if \(d\?\.shown\) _peerMapPoses\.set\(d\.id, d\.shown\);\n\s*if \(hccOn\(\)\) hcc\.driverGlue\(drawable, \{ toWire: campToWire \}\);/, 'glued after the map\'s poses - where peerAnchor reads the puller');
-  assert.match(rd('src/net/remotePlayers.js'), /const rd = \(peer\.shown\?\.rd \| 0\) \|\| \(peer\.shown\?\.bench === 2 \? 2 : 0\);/, 'the cart still heard');
+  assert.match(rd('src/net/remotePlayers.js'), /const rd = peer\.shown\?\.rd === POSE_RIDE\.Dragon \? 0 : \(peer\.shown\?\.rd \| 0\) \|\| \(peer\.shown\?\.bench === 2 \? 2 : 0\);/, 'the cart still heard');   // PIN MOVED (DRAGON1): a dragon has no hooves
   // AUDIT WAGONS3 B3: the glue runs before this pool's frame - their puller moved on this frame, and their seat goes
   // with it, never a frame behind it
   anchor = [0, 0.9, 10.6];

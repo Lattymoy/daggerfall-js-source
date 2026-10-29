@@ -327,8 +327,8 @@
   {
     "name": "OWS2-ocean-stops-sailors",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "=== CLIMATE_OCEAN && !deps.atSea?.()) {",
-    "new": "=== CLIMATE_OCEAN) {",
+    "old": "=== CLIMATE_OCEAN && !deps.atSea?.() && !flownNow()) {",
+    "new": "=== CLIMATE_OCEAN && !flownNow()) {",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "OWS2-host-plan-no-sea",
     "file": "src/scenes/world.js",
-    "old": "let plan = planRoute(from, summary.pixel, { roads: net?.roads ?? null, tracks: net?.tracks ?? null, ...tvRouteGround(), sea: tvSeaAsk(means, 'land') });",
-    "new": "let plan = planRoute(from, summary.pixel, { roads: net?.roads ?? null, tracks: net?.tracks ?? null, ...tvRouteGround() });",
+    "old": "let plan = (dragonMounted() ? dragonFlightPlan(from, summary.pixel) : null) ?? planRoute(from, summary.pixel, { roads: net?.roads ?? null, tracks: net?.tracks ?? null, ...tvRouteGround(), sea: tvSeaAsk(means, 'land') });",
+    "new": "let plan = (dragonMounted() ? dragonFlightPlan(from, summary.pixel) : null) ?? planRoute(from, summary.pixel, { roads: net?.roads ?? null, tracks: net?.tracks ?? null, ...tvRouteGround() });",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]

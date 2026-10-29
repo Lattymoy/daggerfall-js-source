@@ -65,14 +65,16 @@ export function walkTravelPath(start, end) {
  *
  * It carried an enhanced-only ROAD TERM until the road system was
  * removed whole (2026-08-29, Mac's call). With it gone this function
- * is the C# loop body and nothing else - no departure, no optional
- * arm, and the >>8 idiom throughout as the source has it.
+ * is the C# loop body, the >>8 idiom throughout as the source has it,
+ * and one arm of the port's own: a dragon's pixel is FLOWN (DRAGON6).
  */
 export function travelPixelMinutes(terrain, transportModifier, {
-  travelShip = false, sleepModeInn = false,
+  travelShip = false, sleepModeInn = false, flying = false,
 } = {}) {
   let thisMove;
-  if (terrain === CLIMATES.Ocean) {
+  if (flying) {
+    thisMove = (102 * transportModifier) >> 8;   // DRAGON6: the land's charge where nothing hinders, ((256 - 256 + 256) >> 8) - the sea's and the peaks' too
+  } else if (terrain === CLIMATES.Ocean) {
     thisMove = travelShip ? 51 : 255;
   } else {
     const idx = CLIMATE_INDICES[terrain - CLIMATES.Ocean];
@@ -82,6 +84,11 @@ export function travelPixelMinutes(terrain, transportModifier, {
   if (!sleepModeInn) thisMove = (300 * thisMove) >> 8;
   return thisMove;
 }
+
+/** DRAGON6 (2026-10-29, the owner: "This should increase overworld travel speed, fly in the air and negate road travel";
+ *  bible/11-Multiplayer/Dwarven-Dragon.md section 10): A TAMED DRAGON'S PACE ON THE MAP, twice a horse's (its 128), every
+ *  pixel FLOWN at it - sea and mountain alike, no ship taken and none paid for, no storm's sea. Not a DFU member. */
+export const DRAGON_TRANSPORT_MODIFIER = 64;
 
 /** SEASON1 part two (bible/11-Multiplayer/Seats-Arc.md 9.3: "Storm Season - sea travel slowed"): the factor on a
  *  voyage's ocean pixels by where it is bound - `fn(end)` set by the online world (scenes/world.js, the destination's
@@ -126,16 +133,16 @@ export function playerTravelPosition(player, boardShipPosition, currentPixel) {
  *  longest-axis walk, priced pixel by pixel. */
 export function calculateTravelTime(start, end, {
   speedCautious = false, sleepModeInn = false, travelShip = false,
-  hasHorse = false, hasCart = false, seaMult = seaTideAt(end),
+  hasHorse = false, hasCart = false, hasDragon = false, seaMult = seaTideAt(end),
 } = {}, getClimateIndex) {
-  const transportModifier = hasHorse ? 128 : hasCart ? 192 : 256;
+  const transportModifier = hasDragon ? DRAGON_TRANSPORT_MODIFIER : hasHorse ? 128 : hasCart ? 192 : 256;   // DRAGON6: a dragon flies
 
   let minutes = 0, oceanPixels = 0;
   for (const { x, y } of walkTravelPath(start, end)) {
     const terrain = getClimateIndex(x, y);
     if (terrain === CLIMATES.Ocean) ++oceanPixels;
-    const m = travelPixelMinutes(terrain, transportModifier, { travelShip, sleepModeInn });
-    minutes += terrain === CLIMATES.Ocean && seaMult !== 1 ? Math.floor(m * seaMult) : m;   // SEASON1 part two: a Storm Season's sea
+    const m = travelPixelMinutes(terrain, transportModifier, { travelShip: travelShip && !hasDragon, sleepModeInn, flying: hasDragon });
+    minutes += terrain === CLIMATES.Ocean && seaMult !== 1 && !hasDragon ? Math.floor(m * seaMult) : m;   // SEASON1 part two: a Storm Season's sea - flown over
   }
 
   if (!speedCautious) minutes = minutes >> 1;
@@ -151,7 +158,7 @@ export function calculateTravelTime(start, end, {
  *  caller supplies it (AUDIT 39 F101/F115 - it defaulted false on
  *  every trip, so a knight paid the inn nights DFU waives). */
 export function calculateTripCost(travelTimeMinutes, oceanPixels, {
-  sleepModeInn = false, hasShip = false, travelShip = false, freeTavernRooms = false,
+  sleepModeInn = false, hasShip = false, travelShip = false, freeTavernRooms = false, hasDragon = false,
 } = {}) {
   const hours = Math.trunc((travelTimeMinutes + 59) / 60);
   let piecesCost = 0;
@@ -161,7 +168,7 @@ export function calculateTripCost(travelTimeMinutes, oceanPixels, {
     piecesCost += 5;                      // always at least one stay at an inn
   }
   let totalCost = piecesCost;
-  if (oceanPixels > 0 && !hasShip && travelShip) totalCost += 25 * (Math.trunc(oceanPixels / 24) + 1);
+  if (oceanPixels > 0 && !hasShip && travelShip && !hasDragon) totalCost += 25 * (Math.trunc(oceanPixels / 24) + 1);   // DRAGON6: a dragon takes no ship
   return { piecesCost, totalCost };
 }
 

@@ -400,7 +400,7 @@ test('EOTB-IL: the hides - the FPV weapon and horse behind their keys, the spell
   assert.match(rig, /if \(c && !fpArm\.active\(\) && !eotbHidesSpellHands\(\)\) \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*const side = _spellHand \? spellHandSide\(\) : null;\n\s*const castHands = \(art, f\) => \(side \? drawSpellHand\(renderer, c, art, f, \{ side, tint: fpTint, guard: fpsSpellCasting\.isPlayingAnim \? 0 : _spellGuard\.hand \}\) : drawSpellCastHands\(renderer, c, art, f, \{ tint: fpTint \}\)\);\n\s*castHands\(/, 'the hands\' picture goes in third person');
   assert.equal((rig.match(/thirdPerson: fpArm\.thirdActive\(\) \|\| eotbHidesWeapon\(\)/g) ?? []).length, 2, 'the widget and the torch hand');
   assert.match(rig, /if \(eotbHidesWeapon\(\)\) return;\s*\n\s*if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}/, 'the picture goes before any first-person draw');
-  assert.match(rd('src/player/mountRig.js'), /if \(art && isRiding\(player\.transportMode\) && !ridePaused && !mwViewHides\(\)\.horse\) \{/);
+  assert.match(rd('src/player/mountRig.js'), /if \(art && isHorseRide\(player\.transportMode\) && !ridePaused && !mwViewHides\(\)\.horse\) \{/);   // PIN MOVED (DRAGON5): a horse ride's alone - a dragon's rider sees its saddle (isHorseRide)
 });
 
 // ─────────────────────────────────────────────────────────────────

@@ -21,7 +21,7 @@ const interiorSceneName = (/** @type {unknown} */ mapId, /** @type {unknown} */ 
  * wagon, the Materials Bag, the furnisher's deliveries, the repairer's shelf); what it set out in a room (DECOR2a
  * `decorOwn`) or stored there (DECOR1c `decorItems`); the chests of the rooms its deeds stand for and of the rooms it
  * rents (tavern.js - a room's chest is the renter's); a boat's hold and its cargo; a companion's pack; a sworn
- * revenant's pack. Never what lies on the ground (groundItemLists - anyone may take a pile up), and never a list the
+ * revenant's pack; a tamed dragon's saddlebags (DRAGON5b). Never what lies on the ground (groundItemLists - anyone may take a pile up), and never a list the
  * world fills: a dungeon's chest, a body, a shop's shelf.
  * @param {any} save
  */
@@ -41,6 +41,7 @@ export function possessedItemLists(save) {
   for (const c of arrayOf(save?.modData?.[NAVAL_VENDOR]?.party?.party)) out.push(...lists(/** @type {any} */ (c)?.items));
   for (const r of arrayOf(save?.modData?.[REVENANT_VENDOR]?.list)) if (/** @type {any} */ (r)?.sworn && !/** @type {any} */ (r).defeated) out.push(...lists(/** @type {any} */ (r).companion?.items));
   for (const r of arrayOf(save?.modData?.[REVENANT_VENDOR]?.list)) if (/** @type {any} */ (r)?.sworn && !/** @type {any} */ (r).defeated) out.push(...lists(Object.values(objectOf(/** @type {any} */ (r).companion?.gear)).filter((it) => it && typeof it === 'object')));   // RVN-GEAR: and the kit it wears (revenantGear.js)
+  out.push(...lists(save?.dragonKeep?.bags));   // DRAGON5b: the tamed dragon's saddlebags
   return out;
 }
 
