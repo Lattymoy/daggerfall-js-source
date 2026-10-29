@@ -248,11 +248,12 @@
   {
     "name": "IC-STAIRS-a-foreign-court",
     "file": "src/world/imperialFabric.js",
-    "old": "      if (blk.court && nearCell(blk.court) && own(blk.court)) L.courts.push(blk.court);",
-    "new": "      if (blk.court && nearCell(blk.court)) L.courts.push(blk.court);",
+    "old": "      if (blk.court && nearCell(blk.lawn) && own(blk.court)) L.courts.push(blk.lawn);",
+    "new": "      if (blk.court && nearCell(blk.lawn)) L.courts.push(blk.lawn);",
     "tests": [
       "test/world/icstairs.test.js"
-    ]
+    ],
+    "note": "AUDIT IC-BACKYARD (PIN MOVED): re-aimed by content - the court laid is the one laid out to its ring (`lawn`), its own neighbourhood's still asked by its chords."
   },
   {
     "name": "IC-STAIRS-the-street-under-it-shut",
