@@ -1139,11 +1139,6 @@
   "tr": "4462591abe6c",
   "by": "claude-in-session"
  },
- "account.refusal.decorCap": {
-  "en": "ad0a7b25f301",
-  "tr": "297604478b3f",
-  "by": "claude-in-session"
- },
  "account.refusal.decorFigure": {
   "en": "3beb231fb9ad",
   "tr": "57c5464ae5ea",
@@ -1157,6 +1152,11 @@
  "account.refusal.decorRate": {
   "en": "c2a0d6f99c79",
   "tr": "8596b9f2d067",
+  "by": "claude-in-session"
+ },
+ "account.refusal.decorRoomFull": {
+  "en": "72f4b2f577d5",
+  "tr": "9418ebbe6f3f",
   "by": "claude-in-session"
  },
  "account.refusal.decorTaken": {
@@ -4419,6 +4419,36 @@
   "tr": "85922453ea78",
   "by": "claude-in-session"
  },
+ "decor.bar.keys.nudge": {
+  "en": "428abf9c5567",
+  "tr": "ad012a9b783c",
+  "by": "claude-in-session"
+ },
+ "decor.bar.nudgeAway": {
+  "en": "db0ce1bb6fb1",
+  "tr": "e70a95014c8d",
+  "by": "claude-in-session"
+ },
+ "decor.bar.nudgeBack": {
+  "en": "3596bd668511",
+  "tr": "0f69b995184a",
+  "by": "claude-in-session"
+ },
+ "decor.bar.nudgeLeft": {
+  "en": "171b51377324",
+  "tr": "113084d5f87f",
+  "by": "claude-in-session"
+ },
+ "decor.bar.nudgeRight": {
+  "en": "b9e54bcce258",
+  "tr": "3d136d0861bb",
+  "by": "claude-in-session"
+ },
+ "decor.look.rest": {
+  "en": "bffd4f8810fb",
+  "tr": "72906329313d",
+  "by": "claude-in-session"
+ },
  "decor.yard.behind": {
   "en": "e66a9854186d",
   "tr": "c46b7c3f45e7",
@@ -6002,6 +6032,31 @@
  "holdings.wagon.boons.sound": {
   "en": "71476c661351",
   "tr": "9d6f97a0454d",
+  "by": "claude-in-session"
+ },
+ "home.mute.done": {
+  "en": "3cc8b3e4545a",
+  "tr": "acf94c1814b6",
+  "by": "claude-in-session"
+ },
+ "home.mute.hide": {
+  "en": "c0361ced4119",
+  "tr": "874150c05b90",
+  "by": "claude-in-session"
+ },
+ "home.mute.muted": {
+  "en": "a9e219fbc554",
+  "tr": "0850613df620",
+  "by": "claude-in-session"
+ },
+ "home.mute.show": {
+  "en": "f284142913e4",
+  "tr": "b7dd76205d15",
+  "by": "claude-in-session"
+ },
+ "home.mute.undone": {
+  "en": "5b03bedff4c8",
+  "tr": "c60f7f67aa90",
   "by": "claude-in-session"
  },
  "inventory.cape.label": {

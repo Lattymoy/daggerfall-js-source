@@ -58,18 +58,18 @@ the one that ground and the town's blocks set (`net/homeLaw.js` homeGroundOk). A
 wide house from a wider one, so such a home may name any ground that prices at the cap: DECOR_CAP_MAX bounds it.
 
 FIXED. A claim keeps the ground (migration 0195). A home bought before names it once, from its owner's client, at its
-first list read (`systems/decor/homeDecorCap.js`, the service's `op: 'ground'`). The list says the room's cap; a
+first list read (`systems/decor/homeDecorCap.js`, the service's `op: 'ground'`). A home the arena moves carries its ground with its price. The list says the room's cap; a
 placement and a batch hold it. An offline house holds its own ground's cap. The refusal names no number now.
 
 PINS: `test/server/decorroomy_service.test.js`, `test/systems/decor/decorroomy.test.js`. Mutants
-`tools/mutants/decorroomy.json` (28, dead).
+`tools/mutants/decorroomy.json` (29, dead).
 
 ## 3. REST-GUEST - who may rest in my home
 
 FIXED. The owner's bar in their own online home has a chip, "Who may rest", that steps through Me, Friends, Party and
 Guild. It is the home's own row among its pieces' access rows (`DECOR_REST_ID`, migration 0194), set and read as a
 chest's is (`server-account/src/decorAccess.js`). A guest the row names is told so with the room's grants, and the
-rest's bag stands their bed as the owner's: `systems/decor/decorGrants.js:"export function decorMayRest(mapId, buildingKey) {"`.
+rest's bag stands their bed as the owner's: `systems/decor/decorGrants.js:"export const decorMayRest = (mapId, buildingKey) =>"`.
 A guild's hall keeps its own law; its members already rest there.
 
 PINS: `test/systems/decor/restguest.test.js`, the REST-GUEST test in `test/server/decoraccess.test.js`. Mutants
@@ -215,3 +215,9 @@ HAND-FOLLOWS is the rig's own law (`combat/playerWeapon.js`), read by every host
 online homes stand: `scenes/world.js` (the paint, the yards) and `scenes/worldModes.js` (the room, the door).
 `scenes/exterior.js` and `scenes/dungeonContext.js` stand no online home. `questFlatTargets` moved out of
 `createWorldModes` to `systems/quest/sceneMount.js` to keep the host under its ceiling.
+
+## The words
+
+The twelve new lines (the nudges, the rest chip, HOME-MUTE's five, the full room's refusal) go through `t()` and are
+drafted in every language that keeps a table, through `tools/l10nInSession.mjs`. The old refusal, which named the one
+cap of 200, is gone from every table.

@@ -1434,11 +1434,6 @@
   "tr": "64ea00827822",
   "by": "claude-in-session"
  },
- "account.refusal.decorCap": {
-  "en": "ad0a7b25f301",
-  "tr": "4efd46df8c5e",
-  "by": "claude-in-session"
- },
  "account.refusal.decorFigure": {
   "en": "3beb231fb9ad",
   "tr": "5c3971c51a05",
@@ -1472,6 +1467,11 @@
  "account.refusal.decorRev": {
   "en": "c53a8944d37d",
   "tr": "f521243aaac9",
+  "by": "claude-in-session"
+ },
+ "account.refusal.decorRoomFull": {
+  "en": "72f4b2f577d5",
+  "tr": "5cb06f23747d",
   "by": "claude-in-session"
  },
  "account.refusal.decorShut": {
@@ -10164,6 +10164,11 @@
   "tr": "eecf6fa961cb",
   "by": "claude-in-session"
  },
+ "decor.bar.keys.nudge": {
+  "en": "428abf9c5567",
+  "tr": "273d5f4254db",
+  "by": "claude-in-session"
+ },
  "decor.bar.keys.place": {
   "en": "1ad8d981a08d",
   "tr": "1bb88acf69d2",
@@ -10177,6 +10182,26 @@
  "decor.bar.keys.turn": {
   "en": "813a657ce6c2",
   "tr": "e63dde33d418",
+  "by": "claude-in-session"
+ },
+ "decor.bar.nudgeAway": {
+  "en": "db0ce1bb6fb1",
+  "tr": "9f01988c9547",
+  "by": "claude-in-session"
+ },
+ "decor.bar.nudgeBack": {
+  "en": "3596bd668511",
+  "tr": "9798a9c76b34",
+  "by": "claude-in-session"
+ },
+ "decor.bar.nudgeLeft": {
+  "en": "171b51377324",
+  "tr": "d1750933fad4",
+  "by": "claude-in-session"
+ },
+ "decor.bar.nudgeRight": {
+  "en": "b9e54bcce258",
+  "tr": "a8884f18f613",
   "by": "claude-in-session"
  },
  "decor.draft.back": {
@@ -10247,6 +10272,11 @@
  "decor.look.hall": {
   "en": "33d519e6f945",
   "tr": "cc55da232a51",
+  "by": "claude-in-session"
+ },
+ "decor.look.rest": {
+  "en": "bffd4f8810fb",
+  "tr": "c5afb64ff9ee",
   "by": "claude-in-session"
  },
  "decor.look.takeOut": {
@@ -14927,6 +14957,31 @@
  "home.hallMenu.sell": {
   "en": "001ffcd4e666",
   "tr": "a727298b0906",
+  "by": "claude-in-session"
+ },
+ "home.mute.done": {
+  "en": "3cc8b3e4545a",
+  "tr": "19e57629fe0a",
+  "by": "claude-in-session"
+ },
+ "home.mute.hide": {
+  "en": "c0361ced4119",
+  "tr": "353363e0721c",
+  "by": "claude-in-session"
+ },
+ "home.mute.muted": {
+  "en": "a9e219fbc554",
+  "tr": "65a587102b8f",
+  "by": "claude-in-session"
+ },
+ "home.mute.show": {
+  "en": "f284142913e4",
+  "tr": "c24e40123bd8",
+  "by": "claude-in-session"
+ },
+ "home.mute.undone": {
+  "en": "5b03bedff4c8",
+  "tr": "c5e4eb9123a0",
   "by": "claude-in-session"
  },
  "housing.door.accept": {

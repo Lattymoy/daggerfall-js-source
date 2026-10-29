@@ -250,5 +250,14 @@
     "tests": [
       "test/systems/decor/decorroomy.test.js"
     ]
+  },
+  {
+    "name": "DECORROOMY-move-drops-ground",
+    "file": "server-account/src/homes.js",
+    "old": "'rent_due', 'look', 'layout', 'deed', 'ground']);",
+    "new": "'rent_due', 'look', 'layout', 'deed']);",
+    "tests": [
+      "test/net/arena4b_homes.test.js"
+    ]
   }
 ]

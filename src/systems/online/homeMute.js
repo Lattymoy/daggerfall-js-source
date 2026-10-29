@@ -7,6 +7,7 @@
 // list is keyed by the town, the building and its owner, so a new owner's home is seen again. Nothing reaches the service.
 import { homeDecorShown } from '../../net/homeVoteLaw.js';
 import { t, localizedTable } from '../textManager.js';
+import { appStorage } from '../appStorage.js';   // the app's own storage - a browser's, or the desktop shell's
 
 /** The device's list, and the most it keeps (the oldest let go past it). */
 export const HOME_MUTE_STORE = 'dfo.homeMute.v1';
@@ -24,7 +25,7 @@ export const HOME_MUTE_TEXT = /** @type {Readonly<{ hide: string, show: string, 
 
 /** @type {Storage | null} */
 let store = null;
-try { store = globalThis.localStorage ?? null; } catch { store = null; }
+try { store = appStorage() ?? null; } catch { store = null; }
 /** @type {string[] | null} the keys, oldest first */
 let list = null;
 
