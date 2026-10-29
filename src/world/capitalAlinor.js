@@ -9,9 +9,12 @@
 import { MeshBuilder } from './detStandIns.js';
 import { CAPITAL_ART, art, taper, ledge, translated, wallRun, merlons, roundTower, hall, gableRoof, darkDoor, entranceDoor, outward } from './capitalShapes.js';
 import { ALINOR } from './capitalPlans.js';
+import { BLOCK_M } from './blockHash.js';
 import { urbanArt } from './urban/urbanRecords.js';   // URBANIZER U2: the towns' own cut stone
 
 const MARBLE = art(CAPITAL_ART.marble), GOLD = art(CAPITAL_ART.gold), DARK = art(CAPITAL_ART.dark), BRIDGE = art(CAPITAL_ART.bridgeStone);
+/** A ground tile's side, metres: the bank's last tile, where the ground slopes to the river (FB1029 BRIDGE-ENDS). */
+const BANK_TILE = BLOCK_M / 16;
 /** URBANIZER U2 (world/urban/urbanArt.js): the palace's terraces, keep and wings in dressed white stone. */
 const DRESSED = urbanArt('whiteAshlar');
 
@@ -63,7 +66,8 @@ export function buildAlinorPalace(A = ALINOR) {
 /**
  * TESA-LORE: THE BRIDGES over the river through the city's south - each of white stone from bank to bank, its deck
  * rising in an arch to `bridgeRise` over the water's middle (its slope walkable), its parapets, a pier in the water at
- * each quarter.
+ * each quarter. FB1029 BRIDGE-ENDS: an abutment on each bank's last tile, which RUMARE-WATER's ground slopes a metre
+ * down to the water (terrain/capitalSea.js) - without it a 6.4 m dip opened under each end.
  */
 export function buildAlinorBridges(A = ALINOR) {
   const mb = new MeshBuilder(), R = A.river, hw = A.bridgeW / 2, N = 16;
@@ -83,6 +87,10 @@ export function buildAlinorBridges(A = ALINOR) {
       }
     }
     for (const t of [0.25, 0.5, 0.75]) { const z = R.z0 + (R.z1 - R.z0) * t; hall(mb, BRIDGE, x, z, A.bridgeW - 1, 3, -4, yAt(z) - 1.2, 0.3); }
+    for (const zc of [R.z0 - BANK_TILE / 2, R.z1 + BANK_TILE / 2]) {
+      hall(mb, BRIDGE, x, zc, A.bridgeW, BANK_TILE, -2, 0.3, 0.3);
+      for (const s of [1, -1]) hall(mb, MARBLE, x + s * (hw - 0.3), zc, 0.6, BANK_TILE, 0.3, 0.3 + A.parapet, 0.5);
+    }
   }
   return mb.build();
 }

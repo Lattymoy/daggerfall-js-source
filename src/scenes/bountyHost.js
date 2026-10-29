@@ -101,7 +101,7 @@ export const BOUNTY_REFUSALS = Object.freeze({
  *   canStand: () => boolean,                 // outdoors, awake, not on a journey, not in the water
  *   canStandDungeon?: () => boolean,         // underground, awake, no window up
  *   standPack: (o:{id:string, mobileType:number, count:number, stage:number, farm:boolean, target?:{px:number, py:number},
- *     farmKey?:string, huntKey?:string}) => ({ foes: Promise<any[]>, dx:number, dz:number } | { far:true, dx:number, dz:number } | null),
+ *     farmKey?:string, huntKey?:string, place?:{px:number, py:number}|null}) => ({ foes: Promise<any[]>, dx:number, dz:number } | { far:true, dx:number, dz:number } | null),
  *   standDungeonPack?: (o:{id:string, mobileType:number, count:number}) => ({ foes: Promise<any[]>, dx:number, dz:number } | null),
  *   foePool?: () => any[],                   // the exterior pool's live list - a pack member gone from it is gone
  *   say: (line:string) => void,
@@ -456,8 +456,9 @@ export function createBountyHost(deps) {
         }
         if (row.killed >= p.count) { pay(row.id); continue; }
         // every beast either dead or gone (culled, cleared by a load): the pack is over - what is left stands again
-        const pool = deps.foePool?.() ?? null;
-        if (pack.foes.every((f) => f._bountyCounted || f.dead || (pool && !pool.includes(f)))) { packs.delete(row.id); pack = null; }
+        // FB1029 GRAVE-PACK: an open-air pack is judged outdoors alone - below, the pool is the crypt's, not its
+        const pool = deps.foePool?.() ?? null, judged = (p.kind === 'dungeon' && !p.graveyard) || !!outside;
+        if (judged && pack.foes.every((f) => f._bountyCounted || f.dead || (pool && !pool.includes(f)))) { packs.delete(row.id); pack = null; }
       }
       if (pack) continue;
       // WHERE the pack stands: the open-ground hunt on its pixel in the open air, the dungeon hunt inside its dungeon
@@ -483,7 +484,7 @@ export function createBountyHost(deps) {
       const remaining = Math.max(1, stage === 0 ? groups[0] - row.killed : p.count - row.killed);
       const stood = underground
         ? (deps.standDungeonPack?.({ id: row.id, mobileType: p.mobileType, count: remaining }) ?? null)
-        : deps.standPack({ id: row.id, mobileType: p.mobileType, count: remaining, stage, farm: !!p.farm && stage === 0, target: p.target, farmKey: p.slotKey, huntKey: bountyHuntKey(row.id) });
+        : deps.standPack({ id: row.id, mobileType: p.mobileType, count: remaining, stage, farm: !!p.farm && stage === 0, target: p.target, farmKey: p.slotKey, huntKey: bountyHuntKey(row.id), place: p.graveyard ? p.target : null });
       if (!stood) { packs.set(`retry:${row.id}`, { at: clock + BOUNTY_RETRY_S }); continue; }
       if ('far' in stood) {
         // the group waits at its spot: name the way once, then ask again as the hunter closes in

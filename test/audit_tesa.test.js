@@ -375,7 +375,9 @@ test('AUDIT-TESA A6-3: no landmark stands in one of Daggerfall\'s blocks a capit
       // retaining wall's body under the upper blocks' lifted edge, its stairs in the lower blocks' streets - never deeper
       // than the terrain's cell, and only where those blocks' own automaps hold no house (the ARENA2 pin,
       // test/world/solitude_relief.test.js)
-      const strip = id === CAPITAL_MODELS.solitudeTerraces ? SOLITUDE_TERRACES.line.depth + 0.51 : 0.51;
+      // PIN MOVED (FB1029 BRIDGE-ENDS): Alinor's bridges' abutments stand on the bank's last ground tile, in its blocks' edge
+      // strip, on cells their automaps hold nothing on (the ARENA2 pin, test/world/fb1029_bridgeends.test.js)
+      const strip = id === CAPITAL_MODELS.solitudeTerraces ? SOLITUDE_TERRACES.line.depth + 0.51 : id === CAPITAL_MODELS.alinorBridges ? BLOCK_M / 16 + 0.01 : 0.51;
       const p = customModelFor(id).positions;
       for (let i = 0; i < p.length; i += 3) {
         const x = p[i], y = p[i + 1], z = -p[i + 2];
