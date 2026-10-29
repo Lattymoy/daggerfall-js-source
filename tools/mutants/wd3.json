@@ -207,15 +207,6 @@
     ]
   },
   {
-    "name": "WD3-SHARED-ART-UNSHARED",
-    "file": "src/systems/detailedShips.js",
-    "old": "  for (const g of _sharedArt) if (g() === true) return true;",
-    "new": "",
-    "tests": [
-      "test/world/wd3_standins.test.js"
-    ]
-  },
-  {
     "name": "WD3-HOLE-THROWS",
     "file": "src/scenes/dataPipeline.js",
     "old": "    if (!swap && t.vendor) {",
@@ -231,6 +222,33 @@
     "new": "f(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,2})\\.(?:0|[1-9]\\d{0,2}))$/;",
     "tests": [
       "test/server/basehide.test.js"
+    ]
+  },
+  {
+    "name": "PORT-STAND-INS-items-gated",
+    "file": "src/world/townStandIns.js",
+    "old": "    archive: Number(archive), record: Number(record), from: [a, r], size, gate: () => true, fileName: `town-item-${archive}_${record}`,",
+    "new": "    archive: Number(archive), record: Number(record), from: [a, r], size, gate: () => false, fileName: `town-item-${archive}_${record}`,",
+    "tests": [
+      "test/world/wd3_standins.test.js"
+    ]
+  },
+  {
+    "name": "PORT-STAND-INS-det-gated",
+    "file": "src/world/townStandIns.js",
+    "old": "  return installDetStandIns(() => true) + addVendorTextures(items.map((e) => ({ ...e, yields: true })));   // a player's own RMB Resource Pack answers first",
+    "new": "  return installDetStandIns(() => false) + addVendorTextures(items.map((e) => ({ ...e, yields: true })));   // a player's own RMB Resource Pack answers first",
+    "tests": [
+      "test/world/wd3_standins.test.js"
+    ]
+  },
+  {
+    "name": "PORT-STAND-INS-unbooted",
+    "file": "src/scenes/shared.js",
+    "old": "  installPortStandIns();   // AUDIT SHIP-REFIT: a placed decoration's DET piece or item picture stands whatever is switched on (world/townStandIns.js)\n",
+    "new": "",
+    "tests": [
+      "test/world/wd3_standins.test.js"
     ]
   }
 ]

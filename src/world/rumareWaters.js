@@ -112,8 +112,20 @@ export function rumareLandHeight(bx, by, land, natural) {
   const r = Math.hypot(x, z) - IMPERIAL.lake, side = z > 0 ? Math.abs(x) - IMPERIAL.mouth : Infinity;   // from the lake's far shore, or the mouth's side
   const s = Math.min(r, side);
   if (r <= 0 || s <= 0) return land;
-  return land + Math.max(0, natural - land) * smooth(s / (s + e));
+  const rise = land + Math.max(0, natural - land) * smooth(s / (s + e)), d = landingReach(x, z), A = RUMARE_LANDING;
+  return d >= A.bank ? rise : land + (rise - land) * smooth(d / A.bank);
 }
+
+/** AUDIT CAPITAL-CARRIAGES L1: TALOS BRIDGE'S LANDING APRON (the city's metres) - level with the city's land, banked into the
+ *  far shore's rise over `bank`, every edge on the terrain's vertex lines (6.4 m from the span's corner). The deck comes down
+ *  to 0.3 m over the city's land there (capitalImperial.js buildTalosBridge), and the shore had risen 2.5 m over it: the
+ *  deck's end and the carriage at the landing (world/capitalCarriages.js) stood in the ground. */
+export const RUMARE_LANDING = Object.freeze({ x0: -10060.8, x1: -9984, z0: -32, z1: 32, bank: 12.8 });
+/** How far a point (the city's metres) stands outside the landing's apron - 0 on it. */
+const landingReach = (x, z) => { const A = RUMARE_LANDING; return Math.hypot(Math.max(A.x0 - x, 0, x - A.x1), Math.max(A.z0 - z, 0, z - A.z1)); };
+/** Whether the city's ground at a point (its metres) is its land's own level - inside the lake's far shore, or on the
+ *  landing's apron - and not the far shore's rise, whose height is the land's own (world/capitalCarriages.js). */
+export const rumareFlatAt = (x, z) => Math.hypot(x, z) <= IMPERIAL.lake || landingReach(x, z) === 0;
 
 /** THE MOUTH'S PIXELS: the span's south edge where the Waterfront's mouth crosses it (IMPERIAL.mouth either side of its
  *  middle) - water from their middles to the canal's, so their ground is the sea's at the map's scale too

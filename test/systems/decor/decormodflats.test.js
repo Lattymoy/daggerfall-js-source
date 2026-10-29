@@ -1,13 +1,13 @@
 // DECOR-MODFLATS (2026-09-27, Discord: "Above #49 decorations stopped working. Most sprites decorations are invisable
 // above this number").
 //
-// "DECORATION 49" ONWARD WERE THE MODS' FLATS. The catalogue is read out of the world's own blocks, and the ships
-// Detailed Ships lays in them carry its own flats (archives 1210 and 1230) and the DET flats the port stands in (10009
-// to 10027). A decoration is named by its place in id order, so they were "Decoration 49" onward - after the classic
-// ones, the last of which is 254's. The piece law stopped at archive 999: the piece being placed was never a piece, so
-// its ghost never stood and Place did nothing. And their pictures in the list asked the DOM door (ui/textureCanvas.js
-// loadIcon), whose wait was four turns past the classic file's read - a mod's picture has no classic file, and decodes
-// in its own time, so it landed after the answer was read and the panel kept "none to be had" for it.
+// "DECORATION 49" ONWARD WERE THE MODS' FLATS. The catalogue holds mod flats (archives 1210 and 1230) and the DET flats
+// the port stands in (10009 to 10028). A decoration is named by its place in id order, so they were "Decoration 49"
+// onward - after the classic ones, the last of which is 254's. The piece law stopped at archive 999: the piece being
+// placed was never a piece, so its ghost never stood and Place did nothing. And their pictures in the list asked the
+// DOM door (ui/textureCanvas.js loadIcon), whose wait was four turns past the classic file's read - a mod's picture has
+// no classic file, and decodes in its own time, so it landed after the answer was read and the panel kept "none to be
+// had" for it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { decorWhatOf, decorPieceOf, DECOR_ARCHIVE_MAX } from '../../../src/net/decorLaw.js';
@@ -18,7 +18,7 @@ import { settle, toolRig, placeFrom, rmb } from '../../decorFakes.mjs';
 
 const piece = (flat) => ({ id: 'p1', model: null, flat, pos: [0, 0, 0], rot: [0, 0, 0], scale: 1, light: null, storage: false, paid: 20 });
 
-test('DECOR-MODFLATS the law: Detailed Ships\' own flats and the DET stand-ins are pieces - an archive to five digits; past them, none (mutant: the bound back at 999)', () => {
+test('DECOR-MODFLATS the law: the mods\' flats and the DET stand-ins are pieces - an archive to five digits; past them, none (mutant: the bound back at 999)', () => {
   assert.equal(DECOR_ARCHIVE_MAX, 99_999);
   for (const flat of [[1210, 1], [1230, 30], [10009, 29], [10010, 38], [10027, 14]]) {
     assert.deepEqual(decorWhatOf({ model: null, flat }), { model: null, flat }, JSON.stringify(flat));

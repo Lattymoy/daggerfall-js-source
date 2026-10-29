@@ -150,7 +150,8 @@ test('TS7 the carriages and the boards on the carrier: the mod\'s records on a g
   // the carrier: its markers first, then the gates' things
   const src = rd('src/world/townWalls.js');
   assert.match(src, /json\.RmbBlock\.MiscFlatObjectRecords = \[\.\.\.markers\.map\([^\n]+\), \.\.\.\(furniture\?\.flats \?\? \[\]\)\];/);
-  assert.match(src, /return townWallBlockJson\(name, modelId, wall\?\.markers \?\? \[\], open, wall \? gateFurniture\(wall, classicOf, carriageRecordsOf, townBlockedCells\(dfLocation, wall, rmbOf\)\) : null\);/);
+  // PIN MOVED (AUDIT CAPITAL-CARRIAGES L2): and its things outside each gate on its ground, off its roads (townGateOutside)
+  assert.match(src, /return townWallBlockJson\(name, modelId, wall\?\.markers \?\? \[\], open, wall \? gateFurniture\(wall, classicOf, carriageRecordsOf, townBlockedCells\(dfLocation, wall, rmbOf\), townGateOutside\(dfLocation, wall, townPaths\(dfLocation\), rmbOf\)\) : null\);/);
 });
 
 test('TS7 the ground under a carrier never read for the terrain (its wall made when it is laid out), a town\'s walk shut to its ground and its wall, and its yards placed on what that leaves (mutants: the carrier read; the yards unshut)', () => {

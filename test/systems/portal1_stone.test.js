@@ -590,6 +590,9 @@ test('PORTAL1 the door, the pick and the arrival, as world.js runs them (PIN MOV
   scope.wildTravelGate = mount(scope, cut(w, 'const wildTravelGate = (to, spoken = 0, law = pastBayJourney) => {', '\n  };\n'), 'wildTravelGate');
   scope.pvpFlagOn = () => true;   // PIN MOVED (PVP-FLAG): the zone's law asked of a flagged player - the page's own flag, mounted
   scope.zoneRefused = mount(scope, cut(sh, 'const zoneRefused = (to = null) =>', ';\n'), 'zoneRefused');
+  // PIN MOVED (PVP-HUD): the door and the pick ask the combat lock first - none runs in these pins (test/ui/pvphud.test.js holds it)
+  Object.assign(scope, { pvpFightLeft: () => 0, pvpLockSay: () => {}, pvpLockSecs: (ms) => (ms > 0 ? Math.ceil(ms / 1000) : 0), pvpPortalLockText: (n) => `lock ${n}` });
+  scope.lockRefused = mount(scope, cut(sh, 'const lockRefused = () => {', '\n  };\n'), 'lockRefused');
   scope.teleportRefused = mount(scope, cut(sh, 'const teleportRefused = (to) =>', ';\n'), 'teleportRefused');
   scope.standPortal = mount(scope, cut(sh, 'function standPortal(pick, item, live) {', '\n  }\n'), 'standPortal');
   const openPortalStone = mount(scope, cut(sh, 'function openPortalStone(item, list) {', '\n  }\n'), 'openPortalStone');

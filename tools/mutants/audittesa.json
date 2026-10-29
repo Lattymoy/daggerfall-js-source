@@ -111,7 +111,7 @@
   {
     "name": "AUDIT-TESA-A6-2-own-law-alone",
     "file": "src/world/tamrielCapitals.js",
-    "old": "return own.closed(dx, dz) || !!under?.(dx, dz); },",
+    "old": "return own.closed(dx, dz) || under(dx, dz); },",
     "new": "return own.closed(dx, dz); },",
     "tests": [
       "test/audit_tesa.test.js"
@@ -129,8 +129,8 @@
   {
     "name": "AUDIT-TESA-A6-2-garden-open",
     "file": "src/world/tamrielCapitals.js",
-    "old": "closed: (x, z) => on(x, z) || shut(x, z) }));",
-    "new": "closed: (x, z) => shut(x, z) }));",
+    "old": "closed: (x, z) => on(x, z) || shut(x, z) }), ...coach });",
+    "new": "closed: (x, z) => shut(x, z) }), ...coach });",
     "tests": [
       "test/audit_tesa.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "AUDIT-TESA-A6-2-install-no-footprint",
     "file": "src/world/capitalModels.js",
-    "old": "for (const b of capitalPortBlocks({ footprint: (cap) => capitalFootprint(cap) })) registerPortBlock(b.name, b.make ?? (() => b.json), b.index);",
-    "new": "for (const b of capitalPortBlocks()) registerPortBlock(b.name, b.make ?? (() => b.json), b.index);",
+    "old": "for (const b of capitalPortBlocks({ footprint: (cap) => capitalFootprint(cap), gateThings: capitalCarriagesOf })) registerPortBlock(b.name, b.make ?? (() => b.json), b.index);",
+    "new": "for (const b of capitalPortBlocks({ gateThings: capitalCarriagesOf })) registerPortBlock(b.name, b.make ?? (() => b.json), b.index);",
     "tests": [
       "test/audit_tesa.test.js"
     ]

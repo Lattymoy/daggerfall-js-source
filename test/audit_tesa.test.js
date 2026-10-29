@@ -152,7 +152,8 @@ test('AUDIT-TESA A6-2: a capital\'s gardens are its own blocks - each cell\'s, n
   // PIN MOVED (ROAD-FOLLOW): the same law in four lines - and a provisional block (a wall still waiting) not kept
   assert.match(read('src/formats/worldData/worldDataReplacement.js'), /if \(b\.block\) return b\.block;\n {2}if \(b\.make\) return \(b\.block = b\.make\(_blocksFile\)\);\n {2}const json = typeof b\.json === 'function' \? b\.json\(\) : b\.json;\n {2}const block = blockFromJson\(json, b\.index\);/);
   // PIN MOVED (AUDIT TESA II C8): the door handed `make`, which keeps nothing - no JSON beside the block it reads into
-  assert.match(read('src/world/capitalModels.js'), /for \(const b of capitalPortBlocks\(\{ footprint: \(cap\) => capitalFootprint\(cap\) \}\)\) registerPortBlock\(b\.name, b\.make \?\? \(\(\) => b\.json\), b\.index\);/);
+  // PIN MOVED (CAPITAL-CARRIAGES): and the carriages at its gates handed beside it (world/capitalCarriages.js)
+  assert.match(read('src/world/capitalModels.js'), /for \(const b of capitalPortBlocks\(\{ footprint: \(cap\) => capitalFootprint\(cap\), gateThings: capitalCarriagesOf \}\)\) registerPortBlock\(b\.name, b\.make \?\? \(\(\) => b\.json\), b\.index\);/);
   assert.notEqual(first.make(), first.make(), 'AUDIT TESA II C8: `make` builds anew, keeps none');
 });
 

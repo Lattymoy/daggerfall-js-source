@@ -137,8 +137,8 @@
   {
     "name": "PVP-BAR-the-page-stranger-dropped",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "const shown = !q ||",
-    "new": "if (!q) return q;\n      const shown = !q ||",
+    "old": "const shown = k && (!q ||",
+    "new": "if (!q) return q;\n      const shown = k && (!q ||",
     "tests": [
       "test/net/pvpbar.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "PVP-BAR-the-page-name-kept",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "now() - (veiled.get(p.id) ?? -Infinity) < VEIL_FRAME_MS ? nameless(q ?? p) : q;",
-    "new": "false ? nameless(q ?? p) : q;",
+    "old": "now() - (veiled.get(p.id) ?? -Infinity) < VEIL_FRAME_MS) ? nameless(q ?? p) : q;",
+    "new": "false) ? nameless(q ?? p) : q;",
     "tests": [
       "test/net/pvpbar.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "PVP-BAR-the-page-bar-unworn",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "skull: k, ...(bar ? { bar } : {}),",
-    "new": "skull: k,",
+    "old": "...(party ? {} : { skull: k }), ...(bar ? { bar } : {}),",
+    "new": "...(party ? {} : { skull: k }),",
     "tests": [
       "test/net/pvpbar.test.js"
     ]

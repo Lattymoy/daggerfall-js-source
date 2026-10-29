@@ -9738,7 +9738,7 @@ changes to a placed piece.
   hangings), that stands doing nothing (no action, never a door), a flat but a marker, an acting flat or nature; found
   only there, a piece is "Dungeon furniture"; every place's names are numbered after the earlier places' (a room's
   first), so no room's name moves (`01-Overview/bugs/Field-Bugs-2026-10-05b.md`). DECOR-MODS (the same record, the town
-  mods' furnishings): and the pieces it stands in for what Beautiful Villages, Beautiful Cities and Detailed Ships place
+  mods' furnishings): and the pieces it stands in for what Beautiful Villages and Beautiful Cities place
   - 297, measured over their own blocks, a room's or a street's as the mods stand them, never the town's own structure -
   named and numbered after every place of Daggerfall's (`systems/decor/decorMods.js`), every one catalogued whatever is on and
   offered while the port stands it (AUDIT 05b A3: asked as the offer is made).
@@ -13836,9 +13836,8 @@ read by the station, the popup's onService, the probe door and both popups' own 
 `ui/covenWindow.js`). `test/ui/stationrows.test.js`.
 
 **DECOR-MODFLATS ("Above #49 decorations stopped working. Most sprites decorations are invisable above this
-number").** The catalogue is read out of the world's own blocks, and the ships Detailed Ships lays in them carry its
-own flats (1210, 1230) and the DET flats the port stands in (10009 to 10027): named in id order, "Decoration 49"
-onward. The piece law's archive bound was 999, so none of them was ever a piece - no ghost drawn, and Place did
+number").** The catalogue is read out of the world's own blocks, and a mod's ships laid in them carried its own flats
+(1210, 1230) and the DET flats the port stands in (10009 to 10027): named in id order, "Decoration 49" onward. The piece law's archive bound was 999, so none of them was ever a piece - no ghost drawn, and Place did
 nothing. `DECOR_ARCHIVE_MAX` is 99,999 now (the account service reads the same law, and takes it at its deploy). And
 the panel's row pictures ask `ui/textureCanvas.js` loadIcon, which read its answer four turns after the classic file's
 read - a race a mod's picture, which has no classic file and decodes in its own time, could lose, the panel keeping the

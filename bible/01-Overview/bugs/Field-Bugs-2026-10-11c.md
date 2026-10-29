@@ -8,7 +8,7 @@ Ships section (disable all mods in that section)."
 
 | | Report | What it was | Done |
 |---|---|---|---|
-| 1 | frames fell in Chesterwark online with the World tab's "The sea & ships" on, and came back with it off | online the room holds three of the five on (`systems/online/onlineLane.js` `ONLINE_ROOM_MOD_KEYS`: Iliac Puddle No More, the Ocean Holes, Detailed Ships), so the switch that moved was Come Sail Away's (with the sea fight and the other players' boats it carries) and Warm Ashes' (a timer). Measured: with no boat owned the five cost nothing in that town; with boats owned, Come Sail Away found every boat's Animators by walking her whole tree on every frame - every boat the player had placed, wherever it lay, and every other player's boat - and its two HUDs made their keys' names ashore for windows that were not shown | fixed (SEA-TOWN) |
+| 1 | frames fell in Chesterwark online with the World tab's "The sea & ships" on, and came back with it off | online the room holds three of the five on (`systems/online/onlineLane.js` `ONLINE_ROOM_MOD_KEYS`: Iliac Puddle No More, the Ocean Holes, the ship mod of the day), so the switch that moved was Come Sail Away's (with the sea fight and the other players' boats it carries) and Warm Ashes' (a timer). Measured: with no boat owned the five cost nothing in that town; with boats owned, Come Sail Away found every boat's Animators by walking her whole tree on every frame - every boat the player had placed, wherever it lay, and every other player's boat - and its two HUDs made their keys' names ashore for windows that were not shown | fixed (SEA-TOWN) |
 
 ## How it was measured
 
@@ -76,7 +76,7 @@ Boats that STAND - the player's own on this pixel, other players' near, the sea'
 (`scenes/comeSailAway/comeSailAwayPool.js` `frame`: the walk's records, the flats, the lanterns) and its draw (each mesh's key and the
 still-batch's list made again a frame), PERF-SAILS1/2's and AUDIT NAV1 #13's ground, and their Animators' steps; the
 measured share is in the last row above. Not touched here: it is a change to the still batch's pins and not this report's
-town, which stands no boat. Online, the forced three (Iliac Puddle No More, the Ocean Holes, Detailed Ships) cost what the
+town, which stands no boat. Online, the forced three (Iliac Puddle No More, the Ocean Holes, the ship mod of the day) cost what the
 "Come Sail Away off" row and the "five off" row differ by - within this probe's noise in an inland town.
 
 Pinned by `test/systems/comeSailAway/fb1011c_seatown.test.js` (4); `tools/mutants/fb1011c_seatown.json` (8, all dead).

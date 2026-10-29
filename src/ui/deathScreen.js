@@ -37,7 +37,7 @@ import { isOnlinePage } from '../systems/online/onlineLane.js';   // DEATH4: the
 import { stateDeathLoss, deathGoldLoss, deathPenaltyLine } from '../systems/deathPenalty.js';   // DEATH-PENALTY: the screen says what the respawn is about to take
 import { isCasual } from '../systems/legacy/casual.js';   // CASUAL-LIFE: a Casual death states no loss
 import { goldPiecesOf } from '../systems/inventory.js';   // DEATH-PENALTY: the purse the loss is read off
-import { wildDeath, wildDeathLines, WILD_DEATH_HOLD_S } from '../systems/wild/wildZone.js';   // WILD1: a death in the open zone holds two minutes, Enter or not
+import { wildDeath, wildDeathLines, wildDeathSlain, WILD_DEATH_HOLD_S } from '../systems/wild/wildZone.js';   // WILD1: a death in the open zone holds two minutes, Enter or not
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 import { t } from '../systems/textManager.js';   // L10N4: the classic face's words in the player's language
 
@@ -239,7 +239,7 @@ export class DeathScreen {
     drawText(renderer, font, hint, (canvas.width - measureText(font.fnt, hint) * s) / 2, canvas.height / 2 + 6 * s, s, DIM);
     // WILD1: the zone's lines on the classic face, under the hold (the enhanced face draws its own)
     let wy = canvas.height / 2 + (this.goldLoss > 0 ? 38 : 22) * s;
-    for (const l of wildDeathLines(this.wild)) {
+    for (const l of [wildDeathSlain(this.wild), ...wildDeathLines(this.wild)].filter(Boolean)) {   // PVP-HUD: "Slain by" first
       const up = l.toUpperCase();
       drawText(renderer, font, up, (canvas.width - measureText(font.fnt, up) * s) / 2, wy, s, [0.85, 0.35, 0.25, 1]);
       wy += 12 * s;
