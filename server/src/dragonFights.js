@@ -6,7 +6,7 @@
 // few hooks that call in here; the state rides the room under `_dg`.
 import { DRAGON_SEAM } from '../../src/net/bossSeam.js';
 import * as dragonBrain from '../../src/net/dragon/dragonBrain.js';
-import { dragonAt, dragonHolds, dragonAdmits, dragonFightId, dragonLookOf, DRAGON_SITES_MAX, DRAGON_NATIVE_PER_M, DRAGON_BRAIN_MIN } from '../../src/net/dragon/dragonLaw.js';
+import { dragonAt, dragonHolds, dragonAdmits, dragonFightId, dragonLookOf, DRAGON_SITES_MAX, DRAGON_NATIVE_PER_M, DRAGON_BRAIN_MIN, DRAGON_REMAINS_MS } from '../../src/net/dragon/dragonLaw.js';
 import { roostLeg } from '../../src/net/dragon/dragonBody.js';
 import { mintDragonReceipt, readDragonReceipt } from '../../src/net/dragon/dragonReceipt.js';
 import { bodyCensus } from '../../src/net/bossBody.js';
@@ -137,7 +137,7 @@ async function dragonIn(room, ws, a, m, now, fights) {
   const was = fightBy(fights, a.sub);
   if (!(m.bv >= DRAGON_BRAIN_MIN)) { if (was) was[1].players[a.sub].stale = true; no('reload'); return; }
   if (was?.[1].players[a.sub]?.stale) delete was[1].players[a.sub].stale;
-  if (m.w !== t.w || !dragonHolds(t.w, now)) { if (!f?.rc?.[a.sub]) no('gone'); return; }
+  if (m.w !== t.w || !dragonHolds(t.w, now)) { if (f) say(room, ws, { ...DRAGON_SEAM.stateOf(f) }); if (!f?.rc?.[a.sub]) no('gone'); return; }   // a fallen one's remains still lie: its state tells them
   if (junkOutsideCover(room, ws, a, cellRoomOfWire(m.sx, m.sz))) return;
   if (!a.pose || a.pose.dd) return;
   const at = frameOf(f ?? { sx: m.sx, sz: m.sz }, a.pose);
@@ -195,8 +195,11 @@ export async function dragonTick(room) {
       else if (f.said && !f.told) await tellHub(room, id, f, now);
     } catch (e) { console.warn('[dragon] beat failed', e?.message ?? e); }
     const heard = [...room._all()].some(([, b]) => hears(id, f, b));
+    const lying = f.fell && f.said && now < f.fell.at + DRAGON_REMAINS_MS;
+    if (lying && heard && now - (f.stSaidAt ?? 0) >= dragonBrain.DRAGON_STATE_SEND_MS) { f.stSaidAt = now; fan(room, id, f, [DRAGON_SEAM.stateOf(f)]); }   // its remains told to who comes near, as its fight was
     if (f.said && !f.told) at = Math.min(at, now + DRAGON_TELL_RETRY_MS);
     else if (heard && !f.fell && !f.gone) { at = Math.min(at, now + dragonBrain.DRAGON_TICK_MS); live = true; }
+    else if (lying) at = Math.min(at, now + dragonBrain.DRAGON_STATE_SEND_MS);
     else at = Math.min(at, end);
   }
   return fights.size ? { at, live } : null;

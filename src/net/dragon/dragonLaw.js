@@ -17,6 +17,8 @@ export const DRAGON_LAND_AT_MS = 15 * 60_000;
 export const DRAGON_STAY_MS = 40 * 60_000;
 /** Its leaving - the climb out of sight - and its death's fall to the ground, ms. */
 export const DRAGON_CLIMB_MS = 15_000;
+/** A slain dragon lies deactivated this long after its fall, ms (section 7) - every screen's, and the cell's word of it. */
+export const DRAGON_REMAINS_MS = 10 * 60_000;
 /** One dragon in this many is the Aetherbright (section 11). */
 export const DRAGON_SHINY_ONE_IN = 20;
 /** The one salt every client rolls a dragon with. Changing it moves every dragon in the world. */

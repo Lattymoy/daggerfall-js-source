@@ -58,10 +58,12 @@ time alone (DRAGON-LAW, net/dragon/dragonLaw.js):
   `DRAGON_STAY_MS` (40 minutes) later, then climbs away. So at most one dragon stands at once, worldwide.
 - **The shiny.** The same hash draws one dragon in `DRAGON_SHINY_ONE_IN` (20) as Aetherbright. The fight, its receipt
   and the account's row carry it.
-- **Where.** The hash picks a theatre among those that stand (the gate's lanes, `03-World/World-Wide.md`) and a seed
-  pixel. The client finds the site over the world's own data with the gate's scan (`systems/gate/gateSite.js`: land, no
-  place in the pixel, a town two to four pixels away), its own salt, nearest the seed. The relay never reads the map:
-  it holds the site the first `in` names to the pixel the seed allows, within `DRAGON_SITE_SLACK_PX`.
+- **Where.** The hash picks a theatre among those that stand (`dragonLaneOf`, the gate's lanes,
+  `03-World/World-Wide.md`). The gate's site law finds the pixel over the world's own data (`systems/gate/gateSite.js`:
+  land, no place in the pixel, a town two to four pixels away) under a number of the dragon's own, `dragonSiteDay`, past
+  every gate day (`systems/dragon/dragonSite.js`). The site is that pixel's centre. The relay never reads the map: it
+  holds a fight at the site an `in` names in its own cell, at most `DRAGON_SITES_MAX` a watch, so a forged site stands a
+  fight of its own that nobody else draws (the serpent's AUDIT SERPENT S1 law).
 
 No line in chat and no ring on the map. The dragon is found by being seen.
 
@@ -71,11 +73,12 @@ From its landing until a player comes within `DRAGON_ADMIT_R` (600 m), the drago
 site at `ROOST_ALT` (70 m) on a path that is a function of the clock (`net/dragon/dragonBody.js`), so every screen draws
 it in the same place with no frame sent.
 
-- **Drawn** to `DRAGON_SIGHT_R` (4 km), above the fog's reach, as the Dwarven Dragon's own sprite at `DRAGON_SCALE`
-  (1.6 - a wingspan near 19 m). Its idle frame banks with its turn.
-- **Heard**: a roar every so often, placed at it, carrying `DRAGON_ROAR_R` (3 km).
-- **Told once**, the first time a player comes within `DRAGON_NOTICE_R` (1.5 km) of a roosting dragon: *"A dragon
-  circles in the sky to the north-east."* (the compass word from the player to it).
+- **Drawn** to `DRAGON_SIGHT_R` (4 km), in the view's own fog, as the Dwarven Dragon's own sprite at `DRAGON_SCALE`
+  (1.6 - a wingspan near 19 m), its idle frames in the air.
+- **Heard**: a roar once in every `DRAGON_ROAR_MS` (40 s) of the clock, placed at it, carrying `DRAGON_ROAR_R` (3 km).
+- **Told once**, after a player has been within `DRAGON_NOTICE_R` (1.5 km) of a roosting dragon for
+  `DRAGON_NOTICE_WAIT_MS` (6 s): *"A dragon circles in the sky to the north-east."* (the compass word from the player
+  to it). The wait is longer than the cell's pace for its whole state, so a dragon its cell says slain is never told.
 
 ## 4. The fight - who runs it
 
@@ -86,7 +89,7 @@ seconds, and forgotten two hours after it ends.
 
 - **The join** (`in`): the watch, the site, the brain's law `bv`, the level (never above the token's `cl`). Refused:
   an older law (*reload*); another watch or a watch with no dragon (*the dragon is gone*); a pose past
-  `DRAGON_ADMIT_R` (*too far*); a site the seed does not allow (junk); a dragon slain or gone.
+  `DRAGON_ADMIT_R` (*too far*); a site in another cell (junk); a dragon slain or gone.
 - **Every word names its fight** (`id`, the watch and the site), so a client folds its own alone (the serpent's AUDIT
   SERPENT 2 F1 law).
 - **The numbers** are the gate's level-claim law: a fighter brings `DRAGON_TTK_S` (200) seconds of
@@ -100,7 +103,7 @@ seconds, and forgotten two hours after it ends.
 
 The Dwarven Dragon fights in two places, and the fight is reading which one it is in:
 
-- **ALOFT.** It flies an orbit about its site at `CIRCLE_ALT` (30 m), banking, `ORBIT_R` 45-70 m out, at
+- **ALOFT.** It flies an orbit about its site at `CIRCLE_ALT` (30 m), banking, 55 m out, at
   `FLY_V` (18 m/s). Melee cannot reach it. Arrows and spells can. Its blows from the air are lanes and discs.
 - **GROUNDED.** After a Crash Landing it stands on the ground for `GROUNDED_MS` (12 s; 16 s in the third phase),
   walking at `WALK_V` (3.4 m/s) toward its target. Melee lands, and every blow on it lands at `GROUNDED_X` (1.3) - the
@@ -125,7 +128,7 @@ maximum health.
 | **Crash Landing** | aloft to ground | a disc 9 m where it lands | 2.2 s | 35% weight | 1+ |
 | **Claw Rake** | grounded | a cone 110°, 9 m, before it | 1.3 s | 30% weight | 1+ |
 | **Tail Sweep** | grounded | a cone 150°, 10 m, behind it | 1.4 s | 25% weight | 1+ |
-| **Takeoff Gust** | ground to aloft | a disc 11 m about it | 1.8 s | 20% weight | 1+ |
+| **Takeoff Gust** | ground to aloft | a disc 11 m about it | 2.1 s | 20% weight | 1+ |
 | **Overpressure** | aloft | a ring safe within 6 m of the point under it, to 32 m | 2.4 s | 40% fire | 2+ |
 | **Shrapnel Rain** | aloft | eight 4 m discs about the fighters | 2.2 s | 25% weight | 3 |
 
@@ -139,10 +142,10 @@ sprite holds its attack frame through the wind-up and glows the blow's colour; e
 ## 7. The fall - deactivated on the ground
 
 At nought the cell stamps the kill once (`fell`, with its three best dealers and the damage chart) and signs each
-earner's receipt. On every screen the dragon falls from where it was - out of its orbit on an arc to the ground under
-it, or where it stood - and lands with a crash, dust and its body's thud. Then it lies **deactivated**: its idle frame
-on the ground, its glow out, steam leaking from its seams, for `DRAGON_REMAINS_MS` (10 minutes). The spoils burst from
-it (section 8).
+earner's receipt. On every screen the dragon falls from where it was, straight down to the ground under it, and lands
+with its body's thud. Then it lies **deactivated** for `DRAGON_REMAINS_MS` (10 minutes): its idle frame on the ground,
+washed dark, its glow out. Its cell says its state every five seconds to anyone who comes near while it lies, and answers
+a late `in` with it, so nobody sees the clock's dragon circling over a slain one. The spoils burst from it (section 8).
 
 **Earned**: a fighter that dealt `DRAGON_DEALT_SHARE` (2.5%) of its own share is a **dealer**; one that stood within
 150 m of it for a quarter of the fight is a **stander**. A dealer's party shares its kill as a stander's, as the
@@ -178,7 +181,8 @@ claim's answer instead, straight into the pack: nothing is lost to a door.
 
 - **The body** is the Dwarven Dragon's own sprite (`characters/dwarvenDragon.js`, archive 1800) at `DRAGON_SCALE`,
   its walk while it moves, its attack frames at a landing, its hurt frame when a share of its health goes, and the
-  Aetherbright's palette when it is the shiny (section 11). Aloft it stands at its altitude over the site's ground.
+  Aetherbright's palette when it is the shiny (section 11; until DRAGON7 a blue wash). Aloft it stands at its altitude
+  over the land under it.
 - **The telegraphs** are the gate's renderer (`render/gate/gateTelegraph.js`) laid on a grid draped over the land's
   heights, so a shape on a hillside follows the hill instead of cutting through it.
 - **The bar** is the gate's boss bar in brass: its name (*the Dwarven Dragon*, or *the Aetherbright Dragon*), its
@@ -252,3 +256,16 @@ serpent's beat and the dragon's as one) and its trail. Pinned by `test/net/drago
 `test/net/dragon/dragon2_relay.test.js` (4); `tools/mutants/dragon2.json`, 35 dead. PIN MOVED: the serpent's alarm line
 (`test/net/serpent/serpent1_relay.test.js`).
 
+Its follow-up: a replace meant for the dragon's refusal codes had also rewritten the serpent's *it is already slain*
+(`SERPENT_NO_WORDS`), so the client dropped that refusal. It is restored, and the SD9a bundle pin moved
+(`test/net/superDungeon/sd9a_receipt.test.js`).
+
+**DRAGON3 - the client (2026-10-29, world281 re-hashed).** `scenes/dragonHost.js` is the dragon on this screen: its sky,
+the sighting, the `in`, its blows draped and judged on my feet, my shafts, spells and swings out to its cell, the bar's
+model, its voice, its fall and its remains. Beside it: `net/dragon/dragonLink.js` (the fold, this site's words alone),
+`systems/dragon/dragonSite.js`, `systems/dragon/dragonWords.js`, `ui/dragonBar.js` (brass) and
+`render/dragon/dragonTelegraph.js` (the gate's pass on a grid over the land). `net/online.js` carries the frame;
+`scenes/world.js` wires it within the room DRAGON0 freed (bootWorld 35,247). The relay now tells a fallen dragon's state
+while its remains lie (`DRAGON_REMAINS_MS` moved to the law). Pinned by `test/net/dragon/dragon3_client.test.js` (7),
+`test/scenes/dragon3_host.test.js` (7) and `test/net/dragon/dragon3_relay.test.js` (1); `tools/mutants/dragon3.json`, 27
+dead. PINS MOVED: the serpent's marks (`serpent4`), its spell door (`fb1019f_bossdot`), NAV-H's enemies near (`nav_h_host`).

@@ -1,0 +1,134 @@
+// DRAGON3 (bible/11-Multiplayer/Dwarven-Dragon.md sections 2, 6 and 9): THE CLIENT'S PURE HALVES - the link's fold of the cell's
+// words (net/dragon/dragonLink.js), the site over the gate's scans (systems/dragon/dragonSite.js), the bar's model
+// (ui/dragonBar.js), the draped grid (render/dragon/dragonTelegraph.js) and the sky's own law (scenes/dragonHost.js
+// dragonSkyAt, skyWatchAt). tools/mutants/dragon3.json.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { createDragonLink, foldDragon, DRAGON_STATE_EMPTY, sameDragonSite } from '../../../src/net/dragon/dragonLink.js';
+import { dragonSiteOf, pixelCentreNative, createDragonSites } from '../../../src/systems/dragon/dragonSite.js';
+import { dragonBarModel, DRAGON_PHASE_AT, DRAGON_LEAVE_WARN_MS } from '../../../src/ui/dragonBar.js';
+import { drapeGrid, drapeBounds, DRAPE_CELLS_MAX } from '../../../src/render/dragon/dragonTelegraph.js';
+import { dragonSkyAt, skyWatchAt } from '../../../src/scenes/dragonHost.js';
+import { DRAGON_NO_TEXT } from '../../../src/systems/dragon/dragonWords.js';
+import { isDragonWatch, dragonTimes, dragonSiteDay, dragonLaneOf, DRAGON_CLIMB_MS, DRAGON_REMAINS_MS } from '../../../src/net/dragon/dragonLaw.js';
+import { roostLeg, dragonLegAt, orbitLeg, CLIMB_ALT } from '../../../src/net/dragon/dragonBody.js';
+import { validDragonOut, DRAGON_NO_WORDS } from '../../../src/net/wire.js';
+import { gateNumber } from '../../../src/net/gate/gateLaw.js';
+import { sitePixelOfNative } from '../../../src/systems/serpent/serpentSite.js';
+import { TELEGRAPH_KIND } from '../../../src/render/gate/gateTelegraph.js';
+
+let W = 500_000;
+while (!isDragonWatch(W)) W++;
+const TT = dragonTimes(W);
+const SITE = { w: W, ...pixelCentreNative(205, 214) };
+const word = (o) => validDragonOut({ t: 'dragon', w: W, sx: SITE.sx, sz: SITE.sz, ...o });
+const ST = (o = {}) => word({ k: 'st', b: 0, ph: 1, h: 1000, m: 1000, md: 0, mu: 0, sh: 0, legs: [orbitLeg(TT.landAt, 0, 0, 55, 0, 1, 30)], blows: [], n: 1, lv: TT.leaveAt, op: 0, fell: null, gone: null, ...o });
+
+test('DRAGON3 link: ONLY MY SITE\'S WORDS ARE FOLDED - a whole state taken, a blow taken once, its fall kept with its chart; another site\'s word, another watch\'s, or a word with no site this machine knows changes nothing (mutants: the site unread; a blow taken twice)', () => {
+  let site = SITE;
+  const L = createDragonLink({ now: () => TT.landAt + 1000, site: () => site });
+  L.word(ST());
+  assert.equal(L.state().w, W);
+  assert.equal(L.state().hp, 1000);
+  const atk = word({ k: 'atk', i: 3, a: 1, at: TT.landAt + 3000, wu: 2000, s: [['d', 1, 2, 4]] });
+  L.word(atk); L.word(atk);
+  assert.equal(L.state().blows.length, 1, 'once');
+  L.word(validDragonOut({ t: 'dragon', ...ST({ h: 1 }), sx: SITE.sx + 40 }));
+  assert.equal(L.state().hp, 1000, 'another site');
+  L.word(validDragonOut({ t: 'dragon', ...ST({ h: 1 }), w: W + 3 }));
+  assert.equal(L.state().hp, 1000, 'another watch');
+  site = null;
+  L.word(ST({ h: 2 }));
+  assert.equal(L.state().hp, 1000, 'no site known');
+  site = SITE;
+  L.word(word({ k: 'fell', at: TT.landAt + 9000, top: ['Ama'], n: 2 }));
+  L.word(word({ k: 'fell', at: TT.landAt + 9000, top: ['Ama'], n: 2, dm: [{ n: 'Ama', l: 20, d: 900, h: 9, b: 120 }] }));
+  assert.deepEqual([L.state().hp, L.state().blows.length, L.state().fell.dm.length], [0, 0, 1], 'its fall, the chart kept when it comes');
+  assert.ok(sameDragonSite(SITE, { sx: SITE.sx + 0.3, sz: SITE.sz }) && !sameDragonSite(SITE, { sx: SITE.sx + 2, sz: SITE.sz }));
+});
+
+test('DRAGON3 link: A REFUSAL IS SAID ONCE until the fight is left, every code has its words; a receipt is kept by its watch and heard once (mutants: a refusal said each time)', () => {
+  const said = [], heard = [];
+  const L = createDragonLink({ now: () => 0, site: () => SITE, say: (c) => said.push(c), onReceipt: (r) => heard.push(r) });
+  L.word(validDragonOut({ t: 'dragon', k: 'no', m: 'far' })); L.word(validDragonOut({ t: 'dragon', k: 'no', m: 'far' }));
+  assert.deepEqual(said, ['far']);
+  L.leave();
+  L.word(validDragonOut({ t: 'dragon', k: 'no', m: 'far' }));
+  assert.deepEqual(said, ['far', 'far'], 'again once left');
+  for (const c of DRAGON_NO_WORDS) assert.ok(DRAGON_NO_TEXT[c], `words for ${c}`);
+  const body = Buffer.from(JSON.stringify({ q: W, b: 0, s: 'acct-0001', c: 7, x: 'dealt', l: 20, i: 1000, e: 2000 })).toString('base64url');
+  const r = `z1.${body}.`;
+  L.word(validDragonOut({ t: 'dragon', k: 'rcpt', r })); L.word(validDragonOut({ t: 'dragon', k: 'rcpt', r }));
+  assert.deepEqual(heard, [r]);
+  assert.equal(L.receipt(W), r);
+});
+
+test('DRAGON3 fold: the mode\'s turn is kept at its word\'s moment (`ma`), a whole state of the same mode keeps it; a word before any state is nothing', () => {
+  assert.equal(foldDragon(DRAGON_STATE_EMPTY, word({ k: 'hp', h: 1, m: 2 }), 0), DRAGON_STATE_EMPTY);
+  let s = foldDragon(DRAGON_STATE_EMPTY, ST(), 0);
+  s = foldDragon(s, word({ k: 'md', m: 1, at: 5000, until: 17000 }), 10);
+  assert.deepEqual([s.md, s.ma, s.mu], [1, 5000, 17000]);
+  s = foldDragon(s, ST({ md: 1, mu: 17000 }), 20);
+  assert.equal(s.ma, 5000);
+});
+
+test('DRAGON3 site: watch w\'s site is the gate\'s law under the dragon\'s own number - the Bay\'s scan on its lane, a theatre\'s siteOf(gateNumber(day, lane)) past it - at its pixel\'s centre, the serpent\'s pixel law\'s inverse; asked once while found, again after its retry when not (mutants: the gate\'s day; a theatre\'s number on lane 0)', () => {
+  let asked = null;
+  const scans = { bayScan: () => ({ byRegion: new Map(), towns: [], townAt: [] }), theatres: () => ({ siteOf: (n) => { asked = n; return { px: 3001, py: -40, near: 'Far' }; } }) };
+  let w = W;
+  while (dragonLaneOf(w) === 0) w++;
+  const far = dragonSiteOf(w, scans);
+  assert.equal(asked, gateNumber(dragonSiteDay(w), dragonLaneOf(w)));
+  assert.deepEqual(sitePixelOfNative(far.sx, far.sz), [3001, -40]);
+  let w0 = W;
+  while (dragonLaneOf(w0) !== 0) w0++;
+  const bay = dragonSiteOf(w0, { bayScan: () => null, theatres: () => { throw new Error('no theatre on the Bay\'s lane'); } });
+  assert.equal(bay, null, 'no scan yet');
+  let t = 0, calls = 0;
+  const S = createDragonSites({ bayScan: () => null, theatres: () => ({ siteOf: () => { calls++; return { px: 5, py: 6 }; } }) }, { now: () => t, retryMs: 1000 });
+  assert.ok(S.of(w)); assert.ok(S.of(w));
+  assert.equal(calls, 1, 'found once');
+  const N = createDragonSites({ bayScan: () => null, theatres: () => ({ siteOf: () => { calls++; return null; } }) }, { now: () => t, retryMs: 1000 });
+  calls = 0; N.of(w); N.of(w); t = 1001; N.of(w);
+  assert.equal(calls, 2, 'asked again after its retry');
+});
+
+test('DRAGON3 bar: brass, its phase marks at 66% and 33%, ALOFT or GROUNDED with its seconds, the blow named in its element\'s colour with MOVE when it holds my feet, the climb away counted in its last five minutes (mutants: MOVE never; the climb always)', () => {
+  const b = { b: 0, name: 'The Dwarven Dragon', title: 'Rourken Outrider', hp: 500, max: 1000, phase: 2, fighters: 3, warded: false, grounded: true, groundLeft: 7200,
+    atk: { key: 'breath', name: 'Scalding Breath', el: 'fire', t: 0.5, aimed: true }, fell: null, gone: null, leaveIn: DRAGON_LEAVE_WARN_MS + 1, now: 0 };
+  const m = dragonBarModel(b);
+  assert.deepEqual([m.theme, m.frac, m.marks, m.spent], ['brass', 0.5, [...DRAGON_PHASE_AT], [true, false]]);
+  assert.equal(m.host, 'Grounded 8s');
+  assert.deepEqual([m.callout.text, m.callout.color, m.callout.move], ['Scalding Breath', '#ff8a4c', true]);
+  assert.equal(m.wrath, null);
+  const late = dragonBarModel({ ...b, grounded: false, leaveIn: 61_000, atk: { ...b.atk, aimed: false } });
+  assert.deepEqual([late.host, late.wrath, late.wrathNear, late.callout.move], ['Aloft', 'It climbs away in 1:01', false, false]);
+  assert.equal(dragonBarModel(null), null);
+});
+
+test('DRAGON3 drape: the grid lies on the land - every vertex\'s height the ground\'s under it, a hole in the land the fallback\'s and said `missing`; its cells bounded; a ring\'s ground its outer circle (mutants: the ground unread)', () => {
+  const ground = (x, z) => (x > 5 ? NaN : x * 0.5 + z * 0.25);
+  const g = drapeGrid([-4, -4, 8, 4], ground, -7);
+  assert.equal(g.n % 6, 0);
+  let holes = 0;
+  for (let k = 0; k < g.n; k++) {
+    const x = g.buf[k * 3], y = g.buf[k * 3 + 1], z = g.buf[k * 3 + 2];
+    if (x > 5) { assert.equal(y, -7); holes++; } else assert.ok(Math.abs(y - (x * 0.5 + z * 0.25)) < 1e-4, `on the land at ${x},${z}`);
+  }
+  assert.ok(holes > 0 && g.missing);
+  assert.equal(drapeGrid([0, 0, 10, 10], () => 1, 0).missing, false);
+  const big = drapeGrid([0, 0, 1000, 1000], () => 0, 0);
+  assert.equal(big.n, DRAPE_CELLS_MAX * DRAPE_CELLS_MAX * 6);
+  assert.deepEqual(drapeBounds({ kind: TELEGRAPH_KIND.ring, origin: [10, 20], r0: 6, r1: 32 }).map((v) => Math.round(v)), [-26, -16, 46, 56]);
+});
+
+test('DRAGON3 sky: with no fight heard it roosts on its own clock, then climbs away from its leaving; a dragon slain late in its watch is still about while its remains may lie (mutants: the climb from nowhere; the remains forgotten at the watch\'s turn)', () => {
+  const at = TT.landAt + 123_456;
+  assert.deepEqual(dragonSkyAt(TT, at), dragonLegAt(roostLeg(W), at));
+  const up = dragonSkyAt(TT, TT.leaveAt + DRAGON_CLIMB_MS), from = dragonLegAt(roostLeg(W), TT.leaveAt), leaving = dragonSkyAt(TT, TT.leaveAt);
+  assert.ok(Math.abs(up.a - CLIMB_ALT) < 1e-6, 'it climbs out of sight');
+  assert.ok(Math.hypot(leaving.x - from.x, leaving.z - from.z) < 0.05 && Math.abs(leaving.a - from.a) < 0.05, 'from where it roosted, no jump');
+  assert.equal(skyWatchAt(TT.leaveAt + 60_000).w, W, 'past its climb, its remains may still lie');
+  const after = skyWatchAt(TT.leaveAt + DRAGON_REMAINS_MS + 1);
+  assert.notEqual(after.w, W);
+});
