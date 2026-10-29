@@ -2090,12 +2090,13 @@ export function accountFestival({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }
 }
 
 /** STOREFRONT (bible/06-Systems/Battle-Pass.md): THE BATTLE PASS (server-account/src/battlePass.js) through the one door -
- *  the account's season (`mine`) and a deed's find (`find`, by its source). `call`'s shape, never a throw. */
+ *  the account's season (`mine`) and a deed's find (`find`, by its source - AUDIT-STOREFRONT II (lane B 2): and its own
+ *  id, so a find asked again is answered as it was). `call`'s shape, never a throw. */
 export function accountBattlePass({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
   const post = waitedPost({ fetch, storage }, waitMs);
   return {
     mine: () => post('/v1/pass/mine', {}),
-    find: (/** @type {string} */ source) => post('/v1/pass/find', { source }),
+    find: (/** @type {string} */ source, /** @type {string} */ rid) => post('/v1/pass/find', { source, rid }),
     me: () => storedSession(storage)?.id ?? null,
     guest: () => (storedSession(storage)?.kind ?? null) === 'guest',
   };

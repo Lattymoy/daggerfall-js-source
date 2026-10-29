@@ -21,6 +21,16 @@ export const FISSURE_SLABS = 8;
 export const FISSURE_COGS = 3;
 /** The grass none grows on, metres from the heart. */
 export const FISSURE_BARE_R = FISSURE_SCORCH[0] + 1;
+/** The wreckage's measures, the model's and its footprints' (fissureSolids): a cog's teeth past its radius and its
+ *  thickness; the pipe's radius and its two lengths' ends along its axis; the pillar's shaft, and its capital's end and
+ *  half-width. */
+const COG_TIP = 1.12, COG_THICK = 0.18;
+const PIPE = Object.freeze({ r: 0.32, x0: -2.4, x1: 2.0 });
+const PILLAR = Object.freeze({ r: 0.45, x0: -2.2, x1: 2.0, capX: 2.75, capR: 0.62 });
+/** AUDIT-STOREFRONT II (lane D 4): how far a body stands clear of a solid piece, metres - a construct (its 0.35 m and a
+ *  hand) and the Colossus (half again its size) - and the step its stands are sought by. */
+export const FISSURE_STAND_CLEAR = Object.freeze({ foe: 0.6, colossus: 1.0 });
+const STAND_STEP = 0.25;
 /** The drape's reach (the crater's: each point the highest ground about it). */
 const REACH = 0.5;
 
@@ -85,6 +95,65 @@ export function fissureLayout(f) {
 export function fissureVents(/** @type {{ n: number, stage: number, area: number, k: number }} */ f) {
   const { spine } = fissureLayout(f);
   return [0.3, 0.55, 0.8].map((t) => { const s = spine[Math.round(t * (spine.length - 1))]; return [s.x, s.z]; });
+}
+
+/**
+ * AUDIT-STOREFRONT II (lane D 4): THE SOLID PIECES' FOOTPRINTS in the fissure's frame, each holding every face the solid
+ * model stands there: a box `{ x, z, a, hx, hz }` (a slab, a cog on its edge - half-extents along its own x and z, turned
+ * by `a` as `turn` turns) or a rod `{ x0, z0, x1, z1, r }` (the pipe, the pillar with its capital). Pure.
+ * @param {ReturnType<typeof fissureLayout>} L
+ */
+export function fissureSolids(L) {
+  const boxes = L.slabs.map((s) => ({ x: s.x, z: s.z, a: s.a, hx: s.len / 2, hz: s.wid / 2 }));
+  for (const g of L.cogs) boxes.push({ x: g.x, z: g.z, a: g.a, hx: COG_THICK / 2 + g.r * COG_TIP * Math.abs(Math.sin(g.lean)), hz: g.r * COG_TIP });
+  const rod = (o, x0, x1, r) => { const p = turn([x0, 0, 0], o.a, o.x, o.z), q = turn([x1, 0, 0], o.a, o.x, o.z); return { x0: p[0], z0: p[2], x1: q[0], z1: q[2], r }; };
+  return { boxes, rods: [rod(L.pipe, PIPE.x0, PIPE.x1, PIPE.r), rod(L.pillar, PILLAR.x0, PILLAR.capX, Math.max(PILLAR.r, PILLAR.capR))] };
+}
+/** How far the point (x, z) of the frame stands from the nearest solid footprint, metres (0 inside one). Pure. */
+export function solidClearance(/** @type {ReturnType<typeof fissureSolids>} */ S, /** @type {number} */ x, /** @type {number} */ z) {
+  let best = Infinity;
+  for (const b of S.boxes) {
+    const dx = x - b.x, dz = z - b.z, c = Math.cos(b.a), s = Math.sin(b.a);
+    const u = Math.abs(dx * c + dz * s) - b.hx, v = Math.abs(-dx * s + dz * c) - b.hz;
+    best = Math.min(best, Math.hypot(Math.max(u, 0), Math.max(v, 0)));
+  }
+  for (const r of S.rods) {
+    const ex = r.x1 - r.x0, ez = r.z1 - r.z0, t = Math.max(0, Math.min(1, ((x - r.x0) * ex + (z - r.z0) * ez) / (ex * ex + ez * ez || 1)));
+    best = Math.min(best, Math.max(0, Math.hypot(x - r.x0 - t * ex, z - r.z0 - t * ez) - r.r));
+  }
+  return best;
+}
+/**
+ * AUDIT-STOREFRONT II (lane D 4): WHERE THE CAMP STANDS, in the fissure's frame `[x, z]` - `foes`, `n` constructs on the
+ * ring's free angles (each the ring's nearest point to the heart FISSURE_STAND_CLEAR.foe clear of every solid piece and of
+ * the Colossus), as far apart as those allow; `colossus`, when asked, on the crack's axis past an end, the nearest point
+ * FISSURE_STAND_CLEAR.colossus clear. The host had laid its ring in the world's frame, turned twice by the yaw: one
+ * construct in eleven, and half the Colossi, stood in the wreckage. Pure.
+ * @param {{ n: number, stage: number, area: number, k: number }} f @param {number} n @param {{ ring?: readonly number[], colossus?: boolean }} [o]
+ */
+export function fissureStands(f, n, { ring = [7, 10], colossus = false } = {}) {
+  const L = fissureLayout(f), S = fissureSolids(L), CLEAR = FISSURE_STAND_CLEAR;
+  /** @type {number[] | null} */ let col = null;
+  const ends = [L.spine[L.spine.length - 1], L.spine[0]];
+  for (let d = STAND_STEP; colossus && !col && d <= ring[1] * 2; d += STAND_STEP) {
+    for (const e of ends) { const x = e.x + Math.sign(e.x) * d; if (solidClearance(S, x, e.z) >= CLEAR.colossus) { col = [x, e.z]; break; } }
+  }
+  const free = (x, z) => solidClearance(S, x, z) >= CLEAR.foe && (!col || Math.hypot(x - col[0], z - col[1]) >= CLEAR.colossus + CLEAR.foe + 1);
+  const ANGLES = 48, spots = [];
+  for (let k = 0; k < ANGLES; k++) {
+    const a = (k / ANGLES) * 2 * Math.PI;
+    for (let r = ring[0]; r <= ring[1] + 1e-9; r += STAND_STEP) if (free(Math.cos(a) * r, Math.sin(a) * r)) { spots.push({ a, x: Math.cos(a) * r, z: Math.sin(a) * r }); break; }
+  }
+  const apart = (p, q) => Math.abs(Math.atan2(Math.sin(p.a - q.a), Math.cos(p.a - q.a)));
+  const picked = spots.length ? [spots[0]] : [];
+  while (picked.length < Math.min(n, spots.length)) {
+    let best = null, bd = -1;
+    for (const s of spots) { if (picked.includes(s)) continue; const d = Math.min(...picked.map((p) => apart(p, s))); if (d > bd) { bd = d; best = s; } }
+    picked.push(/** @type {any} */ (best));
+  }
+  // a ring with no room (none found so far): the rest past its outer edge, on the angles the room left
+  for (let i = picked.length; i < n; i++) { const a = (i / n) * 2 * Math.PI, r = ring[1] + 4; picked.push({ a, x: Math.cos(a) * r, z: Math.sin(a) * r }); }
+  return { foes: picked.slice(0, n).map((s) => [s.x, s.z]), colossus: col };
 }
 
 /**
@@ -160,9 +229,9 @@ export function buildFissureModel(fz, heightAt = () => 0, { ground = true, solid
     }
     // THE COGS: toothed discs on their edges, a third of each in the earth, leaning
     for (const g of L.cogs) {
-      const TEETH = 16, N = TEETH * 4, T = 0.18, r = g.r;
+      const TEETH = 16, N = TEETH * 4, T = COG_THICK, r = g.r;
       const sink = h(g.x, g.z) + r * 0.62, axis = [Math.cos(g.a), 0, Math.sin(g.a)];
-      const outline = Array.from({ length: N }, (_, i) => { const q = i % 4, a = (i / N) * 2 * Math.PI, rr = q === 1 || q === 2 ? r * 1.12 : r; return [Math.cos(a) * rr, Math.sin(a) * rr]; });
+      const outline = Array.from({ length: N }, (_, i) => { const q = i % 4, a = (i / N) * 2 * Math.PI, rr = q === 1 || q === 2 ? r * COG_TIP : r; return [Math.cos(a) * rr, Math.sin(a) * rr]; });
       const at = (px, py, side) => {
         // the disc's plane holds the up axis and the horizontal one across `axis`, leaning toward `axis` by `lean`
         const across = [-axis[2], 0, axis[0]], up = [axis[0] * Math.sin(g.lean), Math.cos(g.lean), axis[2] * Math.sin(g.lean)];
@@ -199,15 +268,15 @@ export function buildFissureModel(fz, heightAt = () => 0, { ground = true, solid
       }
     };
     // THE PIPE, split: two lengths a gap apart, the shorter kicked up at its broken end
-    const P = L.pipe, pr = 0.32, py = h(P.x, P.z) + pr * 0.55;
-    column({ ...P, y: py }, -2.4, -P.gap / 2, pr, 10, REC.copper, REC.brass);
-    column({ ...P, y: py }, P.gap / 2, 2.0, pr, 10, REC.copper, REC.brass, 0.12);
+    const P = L.pipe, pr = PIPE.r, py = h(P.x, P.z) + pr * 0.55;
+    column({ ...P, y: py }, PIPE.x0, -P.gap / 2, pr, 10, REC.copper, REC.brass);
+    column({ ...P, y: py }, P.gap / 2, PIPE.x1, pr, 10, REC.copper, REC.brass, 0.12);
     // THE PILLAR: an eight-sided shaft on its side, its capital a block at one end
-    const Q = L.pillar, qr = 0.45, qy = h(Q.x, Q.z) + qr * 0.7;
-    column({ ...Q, y: qy }, -2.2, 2.0, qr, 8, REC.brass, REC.stone);
-    const cap = [[2.0, -0.62, -0.62], [2.75, -0.62, -0.62], [2.75, 0.62, -0.62], [2.0, 0.62, -0.62], [2.0, -0.62, 0.62], [2.75, -0.62, 0.62], [2.75, 0.62, 0.62], [2.0, 0.62, 0.62]]
+    const Q = L.pillar, qr = PILLAR.r, qy = h(Q.x, Q.z) + qr * 0.7, X0 = PILLAR.x1, X1 = PILLAR.capX, C = PILLAR.capR;
+    column({ ...Q, y: qy }, PILLAR.x0, PILLAR.x1, qr, 8, REC.brass, REC.stone);
+    const cap = [[X0, -C, -C], [X1, -C, -C], [X1, C, -C], [X0, C, -C], [X0, -C, C], [X1, -C, C], [X1, C, C], [X0, C, C]]
       .map(([x, y, z]) => { const q = turn([x, 0, z], Q.a, Q.x, Q.z); return [q[0], qy + y, q[2]]; });
-    const cc = (() => { const q = turn([2.375, 0, 0], Q.a, Q.x, Q.z); return [q[0], qy, q[2]]; })();
+    const cc = (() => { const q = turn([(X0 + X1) / 2, 0, 0], Q.a, Q.x, Q.z); return [q[0], qy, q[2]]; })();
     for (const [a, b, c, d] of [[0, 1, 2, 3], [4, 5, 6, 7], [0, 1, 5, 4], [3, 2, 6, 7], [0, 3, 7, 4], [1, 2, 6, 5]]) {
       outward(f, REC.stone, cap[a], cap[b], cap[c], cc, [0, 0], [1, 0], [1, 1]);
       outward(f, REC.stone, cap[a], cap[c], cap[d], cc, [0, 0], [1, 1], [0, 1]);

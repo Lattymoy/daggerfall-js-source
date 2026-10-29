@@ -5319,7 +5319,7 @@ pass.ch.elites,"Töte {n, plural, one {# Elitegegner oder Champion} other {# Eli
 pass.ch.endgame,"Gewinne {n, plural, one {# Endgame-Kampf} other {# Endgame-Kämpfe}}: einen Riss, eine Schanze, die Seeschlange oder einen Stern"
 pass.ch.foes,"Töte {n, plural, one {# Gegner} other {# Gegner}}"
 pass.ch.gather,"Sammle {n, plural, one {einmal} other {#-mal}}"
-pass.ch.make,"Fertige oder finde {n, plural, one {# Gegenstand} other {# Gegenstände}}"
+pass.ch.make,"Fertige, besetze oder schmiede {n, plural, one {# Gegenstand} other {# Gegenstände}} neu"
 pass.ch.sea,"Sammle oder siege {n, plural, one {einmal} other {#-mal}} auf See"
 pass.ch.tavern,"Gewinne {n, plural, one {# Tavernenspiel} other {# Tavernenspiele}}"
 pass.ch.world,"Schließe {n, plural, one {# Weltereignis, Quest oder Kopfgeld} other {# Weltereignisse, Quests oder Kopfgelder}} ab"

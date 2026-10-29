@@ -19,7 +19,12 @@ import { arenaRoadsVersion, keptArenaRoadsHost } from '../world/arenaRoads.js'; 
 import { loadModRoads, MOD_ROADS } from '../world/roadsProducer.js';
 import { TREMOR_TEXT, FISSURE_TEXT, COLOSSUS_TEXT } from '../systems/pass/seasonWords.js';
 import { mintResonantMaul } from '../systems/pass/resonantMaul.js';
-import { buildFissureModel, fissureVents, FISSURE_BARE_R } from '../world/fissureModel.js';
+import { ITEM_UID_RE } from '../systems/item/itemLaw.js';   // AUDIT-STOREFRONT II (lane D 2): a held Maul's id is its claim's
+import { carriedPieces } from '../systems/item/itemIds.js';
+import { textRevision } from '../systems/textManager.js';   // AUDIT-STOREFRONT II (lane D 3): the map's cards made again in another language
+import { hearRealmSaves } from './shared.js';   // AUDIT-STOREFRONT II (lane D 2): a realm checkpoint landed
+import { onSlotSaved, onSlotLoaded } from '../systems/save/saveSlots.js';
+import { buildFissureModel, fissureVents, fissureStands, FISSURE_BARE_R } from '../world/fissureModel.js';
 import { fissureArt, FISSURE_ARCHIVE } from '../world/fissureArt.js';
 import { findGateSite } from '../systems/gate/gateSite.js';
 import { gateAt } from '../net/gate/gateLaw.js';
@@ -75,6 +80,12 @@ export const SEASON_QUIET_STORE = 'dagger:fissureQuiet';
  *  with one ask's id this many times, this far apart, while no answer comes back. */
 export const SEASON_MAUL_ASKS = 3;
 export const SEASON_MAUL_ASK_MS = 4000;
+/** AUDIT-STOREFRONT II (lane D 2): a Maul the service said yes to is kept on the device from its mint until a save of the
+ *  character made after it lands (`<rid>` -> `{ day, who }`) - the claim is spent at the yes, so a page gone first lost
+ *  it. One found at the character's stand-up and not in its pack is asked again by its own id, again this long after an
+ *  ask that had no answer. */
+export const SEASON_MAUL_HELD_STORE = 'dagger:maulHeld';
+export const SEASON_MAUL_REASK_MS = 30_000;
 /** AUDIT LANE 5: Basic Roads' roads and tracks asked again this long after a load that failed (seasonWorld.js keeps the
  *  fissures off them, so none stands before they are read). */
 export const SEASON_ROADS_RETRY_MS = 30_000;
@@ -103,7 +114,8 @@ const sameMatrix = (a, b) => { if (!a || !b) return false; for (let i = 0; i < 1
  *  `exteriorFoes`, `gateScanOf`, `warmGateScan`, `surfaceAt`, `player`, `walkMode`, `playerSpawned`, `online`, `collider`,
  *  `_sharedOffsetMs`, `relayNowS`, `labGrassField`, `chatNotice`, the camp law's five, `gamePaused`, `townTalk` - and, for
  *  the tests, `audio`, `storage`, `say`, `shake`, `burst`, `struckAt`, `who`, `take`, `bindPass`, `passApi`, `maulApi`,
- *  `rid`, `wait`, `roads` and W14's `theatreScans`, `worldPlaces`, `landVersion`, `idle` and `pastBayRoads`.
+ *  `rid`, `wait`, `roads` and W14's `theatreScans`, `worldPlaces`, `landVersion`, `idle` and `pastBayRoads`. AUDIT-STOREFRONT
+ *  II (lane D 2): for the tests, `entity`, `hearRealmSaves`, `onSlotSaved` and `onSlotLoaded`.
  *  @param {any} host */
 export function createSeasonHost(host) {
   const renderer = host.renderer ?? null;
@@ -144,6 +156,7 @@ export function createSeasonHost(host) {
   const ridOf = host.rid ?? (() => [...globalThis.crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16).padStart(2, '0')).join(''));
   const wait = host.wait ?? ((/** @type {number} */ ms) => new Promise((r) => setTimeout(r, ms)));
   const hudHidden = () => !!host.gamePaused?.() || !!host.townTalk?.hudHidden;
+  const entity = () => host.entity ?? playerEntity;
 
   // ── THE PASS, bound on the world's doors ──
   if (host.bindPass !== false) {
@@ -179,6 +192,18 @@ export function createSeasonHost(host) {
   /** each lane's gate of the day, found once a day over the same scan: lane -> `{ day, sc, site }` */
   const gates = new Map();
   const clears = { key: /** @type {any} */ (''), list: /** @type {any} */ (NONE) };
+  /** AUDIT-STOREFRONT II (lane B 1, D 1): the Colossi whose fall was read, by the pool's record - a body stays one record
+   *  for its life, and a fissure's own record is made again (the relay's clock lost a moment, a walk off and back), so a
+   *  set kept on that counted one body again: its line again, and a second Maul after midnight. */
+  const fallen = new WeakSet();
+  /** AUDIT-STOREFRONT II (lane D 2): the Mauls held on the device, `<rid>` -> `{ day, who, taken, askAt }` - `taken` in this
+   *  page's pack (a save made now holds it), `askAt` when one owed may be asked again */
+  const held = new Map(readHeld());
+  const maul = { stood: /** @type {string|null} */ (null), asking: new Set() };
+  /** AUDIT-STOREFRONT II (lane D 3): the map's cards, made again only when the stage's fissures, a theatre's gate of the
+   *  day (`gates`, lane -> its site) or the words' language moved - the held map asks four times a second, and every card
+   *  made again each time grew with the stage's hundreds */
+  const cards = { list: /** @type {any} */ (null), text: -1, gates: new Map(), out: /** @type {ReadonlyArray<any>} */ (NONE) };
   const glow = { x: 0, y: 0, z: 0, range: SEASON_GLOW.range, color: SEASON_GLOW.color }, glowList = Object.freeze([glow]);
   const T3 = [0, 0, 0];
 
@@ -190,6 +215,18 @@ export function createSeasonHost(host) {
     quiet.set(quietKey(F), t);
     for (const [k, at] of [...quiet]) if (!(t - at < SEASON_QUIET_MS)) quiet.delete(k);
     try { storage?.setItem?.(SEASON_QUIET_STORE, JSON.stringify(Object.fromEntries(quiet))); } catch { /* a full store: this page keeps it */ }
+  }
+  /** @returns {Array<[string, any]>} */
+  function readHeld() {
+    try {
+      const v = JSON.parse(storage?.getItem?.(SEASON_MAUL_HELD_STORE) ?? '{}');
+      if (!v || typeof v !== 'object') return [];
+      return Object.entries(v).filter(([rid, h]) => ITEM_UID_RE.test(rid) && typeof h?.who === 'string').map(([rid, h]) => [rid, { day: h.day ?? null, who: h.who, taken: false, askAt: -Infinity }]);
+    } catch { return []; }
+  }
+  function keepHeld() {
+    const out = Object.fromEntries([...held].map(([rid, h]) => [rid, { day: h.day, who: h.who }]));
+    try { storage?.setItem?.(SEASON_MAUL_HELD_STORE, JSON.stringify(out)); } catch { /* a full store: this page keeps it */ }
   }
   /** The room's roads (systems/online/onlineLane.js forces Basic Roads on), this host's own copy of his vendored bytes. */
   function roads() {
@@ -247,6 +284,17 @@ export function createSeasonHost(host) {
   }
   /** The day's gates at `t`, each lane asked once: `gateFor(f)` a fissure's own theatre's. */
   const gatesAt = (t) => { const seen = new Map(); return (f) => { const lane = f.theatre ?? 0; if (!seen.has(lane)) seen.set(lane, gateOf(lane, t)); return seen.get(lane); }; };
+  /** AUDIT-STOREFRONT II (lane D 3): whether a lane's gate of the day moved since the cards were made - the Bay's and each
+   *  theatre's past it, kept as `cards.gates` (gateOf keeps each a day). */
+  function cardGatesMoved(t) {
+    let moved = cards.gates.size !== lanes.size + 1 || cards.gates.get(0) !== gateOf(0, t);
+    for (const lane of lanes.keys()) if (!moved && cards.gates.get(lane) !== gateOf(lane, t)) moved = true;
+    if (!moved) return false;
+    cards.gates.clear();
+    cards.gates.set(0, gateOf(0, t));
+    for (const lane of lanes.keys()) cards.gates.set(lane, gateOf(lane, t));
+    return true;
+  }
 
   // ── a fissure's place in the scene: its heart, and a point of its own frame in the world's ──
   const yawDeg = (F) => F.f.yaw * DEG;
@@ -314,7 +362,7 @@ export function createSeasonHost(host) {
       key: f.key, f, heart: [0, 0, 0], known: false, mat: null, madeAt: null, sig: new Float64Array(12).fill(NaN), sampledAt: -Infinity, sampledHeart: null,
       groundGen: 0, meshGen: -1, mesh: null, floor: null, solid: null, colliderAt: null, colliderGen: -1, bared: false,
       vents: fissureVents(f), ventAt: [-Infinity, -Infinity, -Infinity], humAt: -Infinity,
-      pending: 0, ownLive: 0, pupLive: 0, spawned: false, standAt: -Infinity, camp: null, colossus: null, counted: new WeakSet(), fellAt: NaN, live: NONE,
+      pending: 0, ownLive: 0, pupLive: 0, spawned: false, standAt: -Infinity, camp: null, colossus: null, fellAt: NaN, live: NONE,
     };
     fissures.set(f.key, F);
     return F;
@@ -357,10 +405,13 @@ export function createSeasonHost(host) {
     if (F.f.hSite) roster.push([COLOSSUS_MOBILE, F.f.hSite, true]);
     for (const s of [F.f.site, F.f.hSite]) if (s) { foes.reclaimSite?.(s); camp.sprang(s); }
     const campId = foes.newCampId?.() ?? null;
+    // AUDIT-STOREFRONT II (lane D 4): each stands on the fissure's own free ground (world/fissureModel.js fissureStands), turned
+    // into the world as its model is - the ring had been laid in the world's frame, its angle off by twice the yaw
+    const spots = fissureStands(F.f, roster.length - (F.f.hSite ? 1 : 0), { ring: SEASON_RING_M, colossus: !!F.f.hSite });
     let woke = false;
     roster.forEach(([career, site, colossus], i) => {
-      const a = F.f.yaw + (i / roster.length) * 2 * Math.PI, r = colossus ? 3 : SEASON_RING_M[0] + (SEASON_RING_M[1] - SEASON_RING_M[0]) * ((i * 0.618) % 1);
-      const x = F.heart[0] + Math.cos(a) * r, z = F.heart[2] + Math.sin(a) * r, y = groundAt(x, z);
+      const [lx, lz] = (colossus ? spots.colossus : spots.foes[i]) ?? [0, 0];
+      const [x, z] = toWorld(F, lx, lz), y = groundAt(x, z), a = Math.atan2(z - F.heart[2], x - F.heart[0]);
       if (!Number.isFinite(y)) return;
       const hit = collider()?.surfaceHit?.([x, y + 0.2, z], DOWN, 3);
       F.pending++;
@@ -409,23 +460,26 @@ export function createSeasonHost(host) {
   /** THE COLOSSUS FELL (seen once, with a body): its line said on every screen that saw it; a character whose blow landed
    *  on it asks the service for the Maul (AUDIT LANE 5) - minted on its yes alone, so offline or signed out there is none. */
   function colossusFell(F, fo, t) {
-    if (F.counted.has(fo)) return;
-    F.counted.add(fo);
+    if (fallen.has(fo)) return;
+    fallen.add(fo);
     F.fellAt = t;
     say(COLOSSUS_TEXT.falls());
     if (struckAt(fo) == null) return;
     void claimMaul().catch((e) => console.warn('[season] the Maul', e?.message ?? e));
   }
   /** The Maul asked of the service with one ask's id, asked again while no answer comes back (a lost answer is a yes to
-   *  the same id, seasonClaim.js). Answers whether it was taken. */
-  async function claimMaul() {
-    const rid = ridOf();
+   *  the same id, seasonClaim.js). Answers true when it was taken, false for a refusal, null for no answer. AUDIT-STOREFRONT
+   *  II (lane D 2): held on the device from the mint until a save made after it lands (`held`, letGo). */
+  async function claimMaul(rid = ridOf()) {
     for (let i = 0; i < SEASON_MAUL_ASKS; i++) {
       if (i) await wait(SEASON_MAUL_ASK_MS);
       const a = await maulApi.claim(rid);
       if (a?.ok) {
         const item = mintResonantMaul();
         if (!item) return false;
+        item.uid = rid;   // the piece's ledger id is its claim's: a save holding it says so at the next stand-up
+        held.set(rid, { day: a.data?.day ?? null, who: who(), taken: true, askAt: -Infinity });
+        keepHeld();
         take(item);
         setMidScreenText(COLOSSUS_TEXT.maul());
         return true;
@@ -433,7 +487,36 @@ export function createSeasonHost(host) {
       if (a?.error === 'taken') setMidScreenText(accountRefusalText('taken'));   // AUDIT-STOREFRONT: why no Maul came
       if (!(a?.error === 'offline' || a?.error === 'server' || (a?.status ?? 0) >= 500)) return false;   // a refusal: today's taken, the stage closed, no session
     }
-    return false;
+    return null;
+  }
+  const takenRids = () => [...held].filter(([, h]) => h.taken).map(([rid]) => rid);
+  /** AUDIT-STOREFRONT II (lane D 2): held Mauls a landed save holds, let go. */
+  function letGo(/** @type {string[]} */ rids) {
+    if (!rids.length) return;
+    for (const rid of rids) held.delete(rid);
+    keepHeld();
+  }
+  // AUDIT-STOREFRONT II (lane D 2): A SAVE THAT LANDS LETS ITS MAULS GO - a realm checkpoint (the Mauls in the pack as the
+  // composers' sink was handed it, once the realm says ok: scenes/shared.js hearRealmSaves) or a slot of the character
+  // written. A load in the session is a stand-up (the spoils pools' law): the pack is the loaded save's, read again.
+  (host.hearRealmSaves ?? hearRealmSaves)(() => { const mine = takenRids(); return (/** @type {any} */ r) => { if (r?.ok === true) letGo(mine); }; });
+  (host.onSlotSaved ?? onSlotSaved)((/** @type {any} */ ch) => letGo(takenRids().filter((rid) => held.get(rid)?.who.endsWith(`|${ch}`))));
+  (host.onSlotLoaded ?? onSlotLoaded)(() => { for (const h of held.values()) h.taken = false; maul.stood = null; });
+  /** AUDIT-STOREFRONT II (lane D 2): THE HELD MAULS AT THE CHARACTER'S STAND-UP - one its save holds (the piece by its id, in
+   *  its lists or stowed) let go; one it does not asked again by its own id (a refusal let go, no answer asked again). */
+  function tendMaul(t) {
+    if (!held.size || !online() || !feet()) return;
+    const w = who();
+    if (maul.stood !== w) {
+      maul.stood = w;
+      const { keys, stowed } = carriedPieces(entity());
+      letGo([...held].filter(([rid, h]) => h.who === w && !h.taken && (keys.has(rid) || stowed.has(rid))).map(([rid]) => rid));
+    }
+    for (const [rid, h] of held) {
+      if (h.who !== w || h.taken || maul.asking.has(rid) || t < h.askAt) continue;
+      maul.asking.add(rid); h.askAt = t + SEASON_MAUL_REASK_MS;
+      void claimMaul(rid).then((got) => { if (got === false) letGo([rid]); }, (e) => console.warn('[season] the Maul', e?.message ?? e)).finally(() => maul.asking.delete(rid));
+    }
   }
   /** Whether to stand the camp now - nobody's standing here (mine, a peer's copies, mine on their way), I have not seen
    *  it cleared lately, and nobody holds it: none sprang it, or its owner went quiet (the rite's law). */
@@ -490,6 +573,7 @@ export function createSeasonHost(host) {
     step() {
       frameN++;
       const t = now(), at = seasonStageAt(t);
+      tendMaul(Date.now());   // AUDIT-STOREFRONT II (lane D 2): a held Maul outlives its stage
       if (!at || !online() || !heard()) { this.destroyAll(); return; }
       const f = feet();
       quake(t, f);
@@ -554,16 +638,21 @@ export function createSeasonHost(host) {
       glow.x = best.heart[0]; glow.y = best.heart[1] + 0.6; glow.z = best.heart[2];
       return glowList;
     },
-    /** The map's cards for the stage's fissures (ui/eventMapMarks.js's shape): each its name, its town and what waits at it. */
+    /** The map's cards for the stage's fissures (ui/eventMapMarks.js's shape): each its name, its town and what waits at it -
+     *  the same frozen list while nothing they say moved (AUDIT-STOREFRONT II, lane D 3). */
     mapMarks() {
       const t = now(), at = seasonStageAt(t);
       if (!at || !online() || !heard()) return NONE;
+      const list = stageSites(at);
+      if (!cardGatesMoved(t) && list === cards.list && cards.text === textRevision()) return cards.out;
+      cards.list = list; cards.text = textRevision();
       const gateFor = gatesAt(t);
-      return stageSites(at).map((s) => {
+      cards.out = Object.freeze(list.map((s) => {
         const title = s.hSite ? FISSURE_TEXT.heart() : FISSURE_TEXT.name();
         const lines = [FISSURE_TEXT.near(s.near), s.hSite ? FISSURE_TEXT.wakes() : FISSURE_TEXT.guards(), ...(fissureUnderGate(s, gateFor(s)) ? [FISSURE_TEXT.quiet()] : [])];
         return { key: s.key, px: s.px, py: s.py, heart: !!s.hSite, label: `${title}, ${s.near}`, tip: { title, lines } };
-      });
+      }));
+      return cards.out;
     },
     /** STAR-CLEAR's law for the fissures (world/gate/gateClearance.js gateClearSet's `fissures`): `{ f, px, py, x, z }` for
      *  every fissure of the stage in every theatre - its key, its pixel and its heart there - the same frozen list while the

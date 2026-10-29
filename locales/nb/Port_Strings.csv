@@ -5319,7 +5319,7 @@ pass.ch.elites,"Drep {n, plural, one {# elite- eller mesterfiende} other {# elit
 pass.ch.endgame,"Vinn {n, plural, one {# endgame-kamp} other {# endgame-kamper}}: en rift, en Skanse, Sjøormen eller en stjerne"
 pass.ch.foes,"Drep {n, plural, one {# fiende} other {# fiender}}"
 pass.ch.gather,"Sank {n, plural, one {# gang} other {# ganger}}"
-pass.ch.make,"Lag eller finn {n, plural, one {# gjenstand} other {# gjenstander}}"
+pass.ch.make,"Lag, innfell eller omsmi {n, plural, one {# gjenstand} other {# gjenstander}}"
 pass.ch.sea,"Sank eller vinn {n, plural, one {# gang} other {# ganger}} på havet"
 pass.ch.tavern,"Vinn {n, plural, one {# spill} other {# spill}} på vertshuset"
 pass.ch.world,"Fullfør {n, plural, one {# verdenshendelse, oppdrag eller dusør} other {# verdenshendelser, oppdrag eller dusører}}"

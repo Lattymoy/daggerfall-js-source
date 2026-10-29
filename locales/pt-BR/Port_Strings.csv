@@ -5319,7 +5319,7 @@ pass.ch.elites,"Mate {n, plural, one {# inimigo de elite ou campeão} many {# de
 pass.ch.endgame,"Vença {n, plural, one {# luta de fim de jogo} many {# de lutas de fim de jogo} other {# lutas de fim de jogo}}: uma brecha, um Reduto, a Serpente ou uma estrela"
 pass.ch.foes,"Mate {n, plural, one {# inimigo} many {# de inimigos} other {# inimigos}}"
 pass.ch.gather,"Colete {n, plural, one {# vez} many {# de vezes} other {# vezes}}"
-pass.ch.make,"Fabrique ou encontre {n, plural, one {# item} many {# de itens} other {# itens}}"
+pass.ch.make,"Fabrique, engaste ou reforje {n, plural, one {# item} many {# de itens} other {# itens}}"
 pass.ch.sea,"Colete ou vença no mar {n, plural, one {# vez} many {# de vezes} other {# vezes}}"
 pass.ch.tavern,"Vença {n, plural, one {# partida} many {# de partidas} other {# partidas}} na taverna"
 pass.ch.world,"Conclua {n, plural, one {# evento mundial, missão ou recompensa} many {# de eventos mundiais, missões ou recompensas} other {# eventos mundiais, missões ou recompensas}}"

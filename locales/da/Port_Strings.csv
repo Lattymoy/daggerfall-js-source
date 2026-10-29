@@ -5319,7 +5319,7 @@ pass.ch.elites,"Dræb {n, plural, one {# elite- eller mesterfjende} other {# eli
 pass.ch.endgame,"Vind {n, plural, one {# endgame-kamp} other {# endgame-kampe}}: et brud, en Skanse, Søslangen eller en stjerne"
 pass.ch.foes,"Dræb {n, plural, one {# fjende} other {# fjender}}"
 pass.ch.gather,"Indsaml {n, plural, one {# gang} other {# gange}}"
-pass.ch.make,"Fremstil eller find {n, plural, one {# genstand} other {# genstande}}"
+pass.ch.make,"Fremstil, indfat eller omsmed {n, plural, one {# genstand} other {# genstande}}"
 pass.ch.sea,"Indsaml eller vind {n, plural, one {# gang} other {# gange}} på havet"
 pass.ch.tavern,"Vind {n, plural, one {# spil} other {# spil}} på kroen"
 pass.ch.world,"Fuldfør {n, plural, one {# verdensbegivenhed, opgave eller dusør} other {# verdensbegivenheder, opgaver eller dusører}}"

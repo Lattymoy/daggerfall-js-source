@@ -5319,7 +5319,7 @@ pass.ch.elites,"Убийте {n, plural, one {# елитен противник 
 pass.ch.endgame,"Спечелете {n, plural, one {# върхова битка} other {# върхови битки}} (пробив, Редут, Морския змей или звезда)"
 pass.ch.foes,"Убийте {n, plural, one {# противник} other {# противници}}"
 pass.ch.gather,"Събирайте ресурси {n, plural, one {# път} other {# пъти}}"
-pass.ch.make,"Изработете или намерете {n, plural, one {# предмет} other {# предмета}}"
+pass.ch.make,"Изработете, инкрустирайте или прековете {n, plural, one {# предмет} other {# предмета}}"
 pass.ch.sea,"Събирайте ресурси или печелете в морето {n, plural, one {# път} other {# пъти}}"
 pass.ch.tavern,"Спечелете {n, plural, one {# игра в кръчмата} other {# игри в кръчмата}}"
 pass.ch.world,"Завършете {n, plural, one {# световно събитие, мисия или лов за награда} other {# световни събития, мисии или лова за награди}}"

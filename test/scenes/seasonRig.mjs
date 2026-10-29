@@ -81,21 +81,33 @@ const memStorage = () => { const m = new Map(); return { getItem: (k) => m.get(k
  * the same one to a new client), `service` the Maul door's stand-in (one for every client of an account: `{ days }`).
  * `who` the quiet's `<account>|<character>` (null: the host's own, off the stored session).
  */
-export function client(id, { clock = { t: HEART_T }, storage = memStorage(), service = { days: new Set(), asks: [], down: false }, who = `${id}|char`, heard = true } = {}) {
+export function client(id, { clock = { t: HEART_T }, storage = memStorage(), service = { days: new Set(), asks: [], down: false }, who = `${id}|char`, heard = true, entity = { items: [] }, realSaves = false } = {}) {
   const f = heartOf(clock.t);
   let feetAt = null;
   const p = pool(f.px, f.py);
   p.setNet(netFor(id));
   const wod = wodLaw(id, p, () => clock.t);
   p.setOnSites((from, sites) => wod.wodPeerSites(from, sites), wod.wodSprungList);
-  const c = { id, f, pool: p, wod, clock, storage, service, said: [], bursts: [], taken: [], heard };
+  const c = { id, f, pool: p, wod, clock, storage, service, said: [], bursts: [], taken: [], heard, entity };
+  // AUDIT-STOREFRONT II (lane D 2): this page's saves - a realm checkpoint handed (`realmPut()`, answering its answer's
+  // door) or handed and answered (`realmSave(answer)`), a slot written and a slot loaded - told to its season host alone
+  // (`realSaves`: the modules' own, scenes/shared.js and saveSlots.js)
+  const saves = { realm: new Set(), slot: new Set(), loaded: new Set() };
+  c.realmPut = () => { const thens = [...saves.realm].map((fn) => fn({})).filter((then) => typeof then === 'function'); return (answer) => { for (const then of thens) then(answer); }; };
+  c.realmSave = (answer) => c.realmPut()(answer);
+  c.slotSave = (ch) => { for (const fn of saves.slot) fn(ch); };
+  c.slotLoad = (ch) => { for (const fn of saves.loaded) fn(ch); };
+  const saveDoors = realSaves ? {} : { hearRealmSaves: (fn) => saves.realm.add(fn), onSlotSaved: (fn) => saves.slot.add(fn), onSlotLoaded: (fn) => saves.loaded.add(fn) };
+  // AUDIT-STOREFRONT II (lane D 2): an ask's id the stand-in kept is answered with its day, as seasonClaim.js answers it
   const maulApi = {
     claim: async (rid) => {
       service.asks.push(rid);
       if (service.down) return { ok: false, error: 'offline' };
+      service.rids ??= new Map();
+      if (service.rids.has(rid)) return { ok: true, data: { day: service.rids.get(rid) } };
       const day = Math.floor(clock.t / 86_400_000);
       if (service.days.has(day)) return { ok: false, error: 'taken', status: 409 };
-      service.days.add(day);
+      service.days.add(day); service.rids.set(rid, day);
       return { ok: true, data: { day } };
     },
   };
@@ -106,8 +118,8 @@ export function client(id, { clock = { t: HEART_T }, storage = memStorage(), ser
     relayNowS: () => (c.heard ? Math.floor(clock.t / 1000) : null),
     _wodPeerSprung: wod.peer, wodPeerHeldAgo: (s) => wod.heldAgo(s), wodForgetPeer: (s) => wod.forgetPeer(s), wodSprang: (s) => wod.wodSprang(s), wodUnsprang: (s) => wod.unsprang(s),
     chatNotice: () => {}, say: (s) => c.said.push(s), shake: () => {}, burst: (r) => { c.bursts.push(r); return true; },
-    struckAt: (fo) => renownStruckAt(fo), take: (item) => c.taken.push(item), ...(who ? { who: () => who } : {}), storage, bindPass: false,
-    maulApi, wait: async () => {}, roads: null,
+    struckAt: (fo) => renownStruckAt(fo), take: (item) => { c.taken.push(item); entity.items.push(item); }, ...(who ? { who: () => who } : {}), storage, bindPass: false,
+    maulApi, wait: async () => {}, roads: null, entity, ...saveDoors,
     audio: { buffers: new Map(), play3d: () => {} }, labGrassField: { invalidate() {} }, gamePaused: () => false, townTalk: { hudHidden: false },
   });
   const heart = () => { const s = f.spot; return [s[0], 0, s[1]]; };

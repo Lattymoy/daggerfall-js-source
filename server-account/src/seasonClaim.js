@@ -19,14 +19,19 @@ export const SEASON_MAUL_STATUS = Object.freeze({ guest: 403, rid: 400, closed: 
 
 /**
  * THE MAUL'S CLAIM for the session's account: `{ ok: true, day }` once a UTC day - the day's row written by this ask, or
- * by an earlier ask with the same `rid` whose answer was lost - else `{ error }`: `guest` (no account to keep a day for),
- * `rid`, `closed` (outside the Heart stage) or `taken` (the day's Maul went to another ask).
+ * by an earlier ask with the same `rid` whose answer was lost (its own day's, whatever the day now) - else `{ error }`:
+ * `guest` (no account to keep a day for), `rid`, `closed` (outside the Heart stage) or `taken` (the day's Maul went to
+ * another ask).
  * @param {{ db: any, nowS: number }} ctx @param {any} player @param {any} body
  */
 export async function claimMaul({ db, nowS }, player, body) {
   if (!player?.handle) return { error: 'guest' };
   const rid = body?.rid;
   if (typeof rid !== 'string' || !MAUL_RID_RE.test(rid)) return { error: 'rid' };
+  // AUDIT-STOREFRONT II (lane D 2): an ask's id answered as it was, whatever the day or the stage now - a page gone before
+  // the save holding its Maul landed asks again by the id it kept (scenes/seasonHost.js), and the day may have turned
+  const kept = await db.prepare('SELECT day FROM season_mauls WHERE account = ?1 AND rid = ?2').bind(player.id, rid).first();
+  if (kept) return { ok: true, day: kept.day };
   const nowMs = nowS * 1000, season = passSeasonAt(nowMs);
   if (!season || season.stages[passStageAt(season, nowMs)]?.key !== MAUL_STAGE_KEY) return { error: 'closed' };
   const day = utcDay(nowS);

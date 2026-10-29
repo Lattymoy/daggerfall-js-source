@@ -56,8 +56,8 @@
   {
     "name": "SEASONAUDIT-a-lost-answer-refused",
     "file": "server-account/src/seasonClaim.js",
-    "old": "'SELECT rid FROM season_mauls WHERE account = ?1 AND day = ?2'",
-    "new": "'SELECT rid FROM season_mauls WHERE account = ?1 AND day = ?2 AND changes() > 0'",
+    "old": "  if (kept) return { ok: true, day: kept.day };",
+    "new": "  if (kept) return { error: 'taken' };",
     "tests": [
       "test/server/seasonmaul_service.test.js"
     ]

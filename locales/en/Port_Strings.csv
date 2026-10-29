@@ -5332,7 +5332,7 @@ pass.ch.elites,"Kill {n, plural, one {# elite or champion} other {# elites or ch
 pass.ch.endgame,"Win {n, plural, one {# endgame fight} other {# endgame fights}}: a breach, a Redoubt, the Serpent or a star"
 pass.ch.foes,"Kill {n, plural, one {# foe} other {# foes}}"
 pass.ch.gather,"Gather {n, plural, one {# time} other {# times}}"
-pass.ch.make,"Make or find {n, plural, one {# item} other {# items}}"
+pass.ch.make,"Make, socket or reforge {n, plural, one {# item} other {# items}}"
 pass.ch.sea,"Gather or win at sea {n, plural, one {# time} other {# times}}"
 pass.ch.tavern,"Win {n, plural, one {# tavern game} other {# tavern games}}"
 pass.ch.world,"Finish {n, plural, one {# world event, quest or bounty} other {# world events, quests or bounties}}"

@@ -224,3 +224,42 @@ and 10) are the shop's.
   `festival` - an honest page asks a Soul Cake and a pass find for one kill, so a shared bucket would refuse it. The
   rest after a shut word or a refusal is one rule for both pages, `src/net/askRest.js` (createAskRest), as the acts no
   find pays are one list. A town's `open` is no longer taken as the switch's word: it counts the festival's days too.
+
+## 9. AUDIT-STOREFRONT II, lanes B and D (2026-10-29)
+
+The pass's finds and the season in the world read cold a second time. Each finding is fixed where it starts and pinned
+by a test that failed before the fix: `test/scenes/storefront_audit2_world.test.js` and
+`test/server/storefront_audit2_pass.test.js`. The mutants are `tools/mutants/storefront_audit2_season.json` (37, all
+dead); lane 5's `SEASONAUDIT-a-lost-answer-refused` is aimed at the kept id's line now.
+
+- **B1, D1. One fall counted again.** The Colossi read were kept on the fissure's own record, which is made again when
+  the relay's clock is lost a moment or the player walks off and back. The same body then said its fall again and asked
+  for the Maul again, and after midnight the service gave a second. A fall is kept by the foe pool's record, one for the
+  body's life (`seasonHost.js:"const fallen = new WeakSet();"`).
+- **B2. A find lost to a dropped answer.** Off line or a 5xx, the find was dropped, and with no id it could not be asked
+  again safely. A find now carries its own id, sixteen hex, and is asked again with it while the service cannot be
+  reached: 4 s on, doubling to a minute, the deeds behind it waiting. The service keeps the id with its answer
+  (`pass_asks`, migration 0194), written in the find's own batch, so an id asked again is answered as it was and counted
+  once (`server-account/src/battlePass.js:"const kept = rid ? await passAskOf(db, player.id, rid) : null;"`). An
+  account's ids go two days after their own, at its first find of a later day: an hourly job would take a share of
+  every other job's statements (`cron.js` runCron).
+- **B4. The 'make' challenge said "Make or find".** It counts a piece made, a gem socketed and a piece reforged, and says
+  so now, in every language that held the row.
+- **D2. A Maul lost with its page.** The claim is spent at the service's yes, and the Maul was safe only once a save held
+  it. It is kept on the device from its mint (`dagger:maulHeld`; its id the claim's, which is the piece's ledger id too)
+  until a save of the character made after the mint lands: a realm checkpoint the composers' sink put
+  (`src/scenes/shared.js:"export function hearRealmSaves(fn)"`), or a slot written. At the next stand-up a Maul held and
+  not in the pack is asked again by its id, and the service answers a kept id with its own day, whatever the day or the
+  stage now (`server-account/src/seasonClaim.js:"if (kept) return { ok: true, day: kept.day };"`). A load in the session
+  is a stand-up, as for the spoils pools.
+- **D2, not done: a checkpoint asked at the mint.** The world host's checkpoint door is `bootWorld`'s alone, and
+  `bootWorld` stands at its ceiling (`hostceiling.test.js`). The next periodic checkpoint saves the Maul, and the
+  device's record covers a page gone before then.
+- **D3. The map's held poll made every card again**, four times a second: 0.8 ms and some 40 kB a poll for the Bay's 186,
+  more with the provinces'. The cards are made once while the stage's fissures, each theatre's gate of the day and the
+  language stand, and the map's reader keeps its marks and their key for the same list and box: 0.005 ms a poll.
+- **D4. Constructs stood in the wreckage.** The ring was laid in the world's frame while the model is turned by its yaw,
+  so its angle was off by twice the yaw: one construct in eleven, and half the Colossi, stood within a body's width of a
+  slab, a cog, the pipe or the pillar. The camp stands on the model's own free ground
+  (`fissureModel.js:"export function fissureStands("`, over footprints that hold every solid face): each construct 0.6 m
+  clear on the ring, the Colossus 1 m clear on the crack's axis past its end.

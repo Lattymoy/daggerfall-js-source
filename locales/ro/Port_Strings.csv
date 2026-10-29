@@ -5319,7 +5319,7 @@ pass.ch.elites,"Ucide {n, plural, one {# elită sau campion} few {# elite sau ca
 pass.ch.endgame,"Câștigă {n, plural, one {# luptă de final de joc} few {# lupte de final de joc} other {# de lupte de final de joc}}: o breșă, o Redută, Șarpele sau o stea"
 pass.ch.foes,"Ucide {n, plural, one {# inamic} few {# inamici} other {# de inamici}}"
 pass.ch.gather,"Culege resurse {n, plural, one {o dată} few {de # ori} other {de # de ori}}"
-pass.ch.make,"Creează sau găsește {n, plural, one {# obiect} few {# obiecte} other {# de obiecte}}"
+pass.ch.make,"Creează, încastrează sau reforjează {n, plural, one {# obiect} few {# obiecte} other {# de obiecte}}"
 pass.ch.sea,"Culege sau câștigă pe mare {n, plural, one {o dată} few {de # ori} other {de # de ori}}"
 pass.ch.tavern,"Câștigă {n, plural, one {# partidă la tavernă} few {# partide la tavernă} other {# de partide la tavernă}}"
 pass.ch.world,"Încheie {n, plural, one {# eveniment al lumii, misiune sau recompensă} few {# evenimente ale lumii, misiuni sau recompense} other {# de evenimente ale lumii, misiuni sau recompense}}"

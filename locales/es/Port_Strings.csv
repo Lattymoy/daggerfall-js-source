@@ -5319,7 +5319,7 @@ pass.ch.elites,"Mata a {n, plural, one {# enemigo de élite o campeón} many {# 
 pass.ch.endgame,"Gana {n, plural, one {# combate de final de juego} many {# de combates de final de juego} other {# combates de final de juego}}: una brecha, un Reducto, la Serpiente o una estrella"
 pass.ch.foes,"Mata a {n, plural, one {# enemigo} many {# de enemigos} other {# enemigos}}"
 pass.ch.gather,"Recolecta {n, plural, one {# vez} many {# de veces} other {# veces}}"
-pass.ch.make,"Fabrica o encuentra {n, plural, one {# objeto} many {# de objetos} other {# objetos}}"
+pass.ch.make,"Fabrica, engasta o reforja {n, plural, one {# objeto} many {# de objetos} other {# objetos}}"
 pass.ch.sea,"Recolecta o vence en el mar {n, plural, one {# vez} many {# de veces} other {# veces}}"
 pass.ch.tavern,"Gana {n, plural, one {# partida} many {# de partidas} other {# partidas}} en la taberna"
 pass.ch.world,"Completa {n, plural, one {# evento del mundo, misión o recompensa} many {# de eventos del mundo, misiones o recompensas} other {# eventos del mundo, misiones o recompensas}}"

@@ -21,7 +21,19 @@ export const PASS_FIND = 'pass-find';
  *  (scenes/seasonHost.js). */
 export { PASS_CONSTRUCT_MOBILES };
 
-const NO_DOORS = Object.freeze({ online: () => false, nowMs: () => Date.now(), onEvent: (/** @type {any} */ _e) => {} });
+/** AUDIT-STOREFRONT II (lane B 2): a find the service could not be reached for (off line, its own error) stays at the head
+ *  of the queue and is asked again with its own id - first this long after, doubling to the most - so none is lost, and
+ *  one that landed with its answer lost counts once (server-account/src/battlePass.js). */
+export const PASS_FIND_RETRY_MS = 4000;
+export const PASS_FIND_RETRY_MAX_MS = 60_000;
+/** A find's own id: sixteen hex. */
+const findRid = () => [...globalThis.crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16).padStart(2, '0')).join('');
+/** No answer from the service - asked again; any other word is the service's. */
+const unreached = (/** @type {any} */ r) => !!r && (r.error === 'offline' || r.error === 'server' || (r.status ?? 0) >= 500);
+const NO_DOORS = Object.freeze({
+  online: () => false, nowMs: () => Date.now(), onEvent: (/** @type {any} */ _e) => {},
+  wait: (/** @type {number} */ ms) => new Promise((r) => { setTimeout(r, ms); }), rid: findRid,
+});
 /** @type {any} */ let _doors = NO_DOORS;
 /** @type {any} */ let _api = null;
 /** @type {any} */ let _state = null;
@@ -43,7 +55,7 @@ function queued(/** @type {() => Promise<any>} */ fn) {
 
 /** THE HOST'S DOORS: `online()` the world plays online, `nowMs()` the shared clock, `onEvent(e)` a level reached (`{ kind:
  *  'level', level, grants }`), a challenge paid (`{ kind: 'challenge', key }`) or the day's experience spent (`{ kind:
- *  'full' }`). Null unbinds. Answers the door to the service (or null). */
+ *  'full' }`) - and, for the tests, `wait(ms)` and `rid()`. Null unbinds. Answers the door to the service (or null). */
 export function bindPass(doors = null) {
   _doors = doors ? { ...NO_DOORS, ...doors } : NO_DOORS;
   _api = doors ? (doors.api ?? accountBattlePass({ fetch: (/** @type {any} */ u, /** @type {any} */ i) => globalThis.fetch(u, i), storage: appStorage() })) : null;
@@ -98,19 +110,24 @@ async function readPass() {
 /** Ask the service for the account's season, queued with the finds. Answers whether it was heard. */
 export const refreshPass = () => queued(readPass);
 
-/** ASK FOR A FIND: `source` (battlePassLaw PASS_SOURCES), queued behind the asks before it. Answers the experience gained. */
+/** ASK FOR A FIND: `source` (battlePassLaw PASS_SOURCES), queued behind the asks before it, with its own id - asked again
+ *  with it while the service cannot be reached (AUDIT-STOREFRONT II, lane B 2). Answers the experience gained. */
 export function askPassFind(/** @type {string} */ source) {
   if (!isPassSource(source) || !passLive()) return Promise.resolve(0);
+  const rid = _doors.rid();
   return queued(async () => {
     if (!passLive()) return 0;   // a refusal ahead of it in the queue stood the page back
     // a level reached is told against the level before it: read it first; and a season said shut, again
     const due = _rest.due(passState()?.open);
     if ((due || !passState()) && !(await readPass()) && due) { _rest.unheard(); return 0; }
     if (passState()?.open === false) return 0;
-    const r = await _api.find(source).catch(() => null);
-    if (!r?.ok) { _rest.refused(r?.error); return 0; }   // the deeds after it ask nothing while it stands
-    learn(r.data, true);
-    return Number.isSafeInteger(r.data?.gained) ? r.data.gained : 0;
+    for (let i = 0; ; i++) {
+      const r = await _api.find(source, rid).catch(() => null);
+      if (r?.ok) { learn(r.data, true); return Number.isSafeInteger(r.data?.gained) ? r.data.gained : 0; }
+      if (!unreached(r)) { _rest.refused(r?.error); return 0; }   // the deeds after it ask nothing while it stands
+      await _doors.wait(Math.min(PASS_FIND_RETRY_MAX_MS, PASS_FIND_RETRY_MS * 2 ** i));
+      if (!passLive()) return 0;   // unbound, signed out or off line meanwhile: let go
+    }
   });
 }
 /** A DFU quest of mine done (scenes/quest/questBridge.js onQuestEnded), and a bounty of mine paid (scenes/bountyHost.js). */

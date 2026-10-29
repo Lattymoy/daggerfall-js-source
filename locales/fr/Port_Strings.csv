@@ -5319,7 +5319,7 @@ pass.ch.elites,"Tuez {n, plural, one {# adversaire d’élite ou champion} many 
 pass.ch.endgame,"Remportez {n, plural, one {# combat de fin de jeu} many {# de combats de fin de jeu} other {# combats de fin de jeu}} : une brèche, une Redoute, le Serpent ou une étoile"
 pass.ch.foes,"Tuez {n, plural, one {# adversaire} many {# d’adversaires} other {# adversaires}}"
 pass.ch.gather,"Récoltez {n, plural, one {# fois} many {# de fois} other {# fois}}"
-pass.ch.make,"Fabriquez ou trouvez {n, plural, one {# objet} many {# d’objets} other {# objets}}"
+pass.ch.make,"Fabriquez, sertissez ou reforgez {n, plural, one {# objet} many {# d’objets} other {# objets}}"
 pass.ch.sea,"Récoltez ou gagnez en mer {n, plural, one {# fois} many {# de fois} other {# fois}}"
 pass.ch.tavern,"Gagnez {n, plural, one {# partie} many {# de parties} other {# parties}} en taverne"
 pass.ch.world,"Terminez {n, plural, one {# événement mondial, quête ou prime} many {# d’événements mondiaux, de quêtes ou de primes} other {# événements mondiaux, quêtes ou primes}}"

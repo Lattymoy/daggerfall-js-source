@@ -28,7 +28,8 @@ const CHALLENGE_WORDS = Object.freeze({
   tavern: (n) => t('pass.ch.tavern', 'Win {n, plural, one {# tavern game} other {# tavern games}}', { n }),
   endgame: (n) => t('pass.ch.endgame', 'Win {n, plural, one {# endgame fight} other {# endgame fights}}: a breach, a Redoubt, the Serpent or a star', { n }),
   elites: (n) => t('pass.ch.elites', 'Kill {n, plural, one {# elite or champion} other {# elites or champions}}', { n }),
-  make: (n) => t('pass.ch.make', 'Make or find {n, plural, one {# item} other {# items}}', { n }),
+  // AUDIT-STOREFRONT II (lane B 4): what its sources count (battlePassLaw.js PASS_CHALLENGES `make`, `loot`) - never a find
+  make: (n) => t('pass.ch.make', 'Make, socket or reforge {n, plural, one {# item} other {# items}}', { n }),
   world: (n) => t('pass.ch.world', 'Finish {n, plural, one {# world event, quest or bounty} other {# world events, quests or bounties}}', { n }),
   sea: (n) => t('pass.ch.sea', 'Gather or win at sea {n, plural, one {# time} other {# times}}', { n }),
 });

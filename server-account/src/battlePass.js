@@ -22,10 +22,27 @@ export const passOpenFor = (/** @type {any} */ player, /** @type {any} */ env) =
   return s === 'on' || (s === 'dev' && isDeveloper(player, env));
 };
 /** The answer's status by refusal. */
-export const BATTLE_PASS_STATUS = Object.freeze({ guest: 403, closed: 409, source: 400, capped: 429, rate: 429 });
+export const BATTLE_PASS_STATUS = Object.freeze({ guest: 403, closed: 409, source: 400, capped: 429, rate: 429, rid: 400 });
+/** AUDIT-STOREFRONT II (lane B 2): a find's own id, sixteen hex (the page's draw), kept this many UTC days past its own -
+ *  a find asked again by it is answered as it was. An account's older ids go at its first find of a day (passAskSweep):
+ *  an hourly job would take a share of every other job's statements (cron.js runCron). */
+export const PASS_RID_RE = /^[0-9a-f]{16}$/;
+export const PASS_ASK_KEEP_DAYS = 2;
 
 const int = (/** @type {unknown} */ v) => (Number.isSafeInteger(Number(v)) ? Number(v) : 0);
 const COLS = 'shop_wares, shop_held';
+/** A find's answer kept under its id, as a repeat (progress.js spends nothing on one) - null when the id is new. One whose
+ *  answer was never written (its batch landed, the write after it did not) answers no gain. */
+async function passAskOf(/** @type {any} */ db, /** @type {string} */ account, /** @type {string} */ rid) {
+  const row = await db.prepare('SELECT answer FROM pass_asks WHERE account = ?1 AND rid = ?2').bind(account, rid).first();
+  if (!row) return null;
+  let a = null;
+  try { a = JSON.parse(row.answer); } catch { a = null; }
+  return { ...(a && typeof a === 'object' ? a : { gained: 0, done: [] }), repeat: true };
+}
+/** AUDIT-STOREFRONT II (lane B 2): an account's finds' ids past PASS_ASK_KEEP_DAYS before `day` - read by its own key. */
+export const passAskSweep = (/** @type {any} */ db, /** @type {string} */ account, /** @type {number} */ day) =>
+  db.prepare('DELETE FROM pass_asks WHERE account = ?1 AND day < ?2').bind(account, day - PASS_ASK_KEEP_DAYS);
 
 /**
  * THE ACCOUNT'S SEASON, for the pass's panel: the season shown (the open one, else the next, else the last), its stage and
@@ -66,6 +83,13 @@ export async function passOf({ db, nowS }, player, env) {
 export async function findPass(ctx, player, body, env) {
   const { db, nowS } = ctx;
   if (!player?.handle) return { error: 'guest' };
+  // AUDIT-STOREFRONT II (lane B 2): `body.rid` the find's own id - the page asks again with it while no answer comes back,
+  // and an id this account found by is answered as it was (`repeat`), never counted twice: its row is written in the
+  // find's batch, so a twin racing it rolls back whole. A find with no id is decided as before.
+  const rid = body?.rid;
+  if (rid !== undefined && (typeof rid !== 'string' || !PASS_RID_RE.test(rid))) return { error: 'rid' };
+  const kept = rid ? await passAskOf(db, player.id, rid) : null;
+  if (kept) return kept;
   if (!passOpenFor(player, env)) return { error: 'closed' };
   const season = passSeasonAt(nowS * 1000);
   if (!season) return { error: 'closed' };
@@ -81,21 +105,35 @@ export async function findPass(ctx, player, body, env) {
   const base = PASS_SOURCES[/** @type {keyof typeof PASS_SOURCES} */ (source)];
   const mine = PASS_CHALLENGES.filter((c) => c.stage === stage && c.sources.includes(source));
   const where = 'account = ?1 AND season = ?2';
-  const out = await db.batch([
-    db.prepare(`UPDATE pass_days SET last = MIN(?4, MAX(0, ?5 - xp)), xp = xp + MIN(?4, MAX(0, ?5 - xp)) WHERE ${where} AND day = ?3`).bind(player.id, season.id, day, base, PASS_DAY_XP),
-    db.prepare(`UPDATE players SET ${col} = ${col} + (SELECT last FROM pass_days WHERE ${where} AND day = ?3) + CAST((SELECT last FROM pass_days WHERE ${where} AND day = ?3) * ?4 AS INTEGER) WHERE id = ?1`)
-      .bind(player.id, season.id, day, mult - 1),
-    ...mine.flatMap((c) => [
-      db.prepare(`INSERT INTO pass_counts (account, season, challenge, n, paid) VALUES (?1, ?2, ?3, 1, 0) ON CONFLICT (account, season, challenge) DO UPDATE SET n = n + 1`).bind(player.id, season.id, c.key),
-      db.prepare(`UPDATE players SET ${col} = ${col} + ?4 WHERE id = ?1 AND EXISTS (SELECT 1 FROM pass_counts WHERE ${where} AND challenge = ?3 AND n >= ?5 AND paid = 0)`).bind(player.id, season.id, c.key, c.xp, c.n),
-      db.prepare(`UPDATE pass_counts SET paid = ?4 WHERE ${where} AND challenge = ?3 AND n >= ?5 AND paid = 0 RETURNING challenge`).bind(player.id, season.id, c.key, nowS, c.n),
-    ]),
-    db.prepare(`SELECT ${col} AS xp, (SELECT xp FROM pass_days WHERE ${where} AND day = ?3) AS today, (SELECT last FROM pass_days WHERE ${where} AND day = ?3) AS last FROM players WHERE id = ?1`).bind(player.id, season.id, day),
-  ]);
+  const asked = rid ? [db.prepare('INSERT INTO pass_asks (account, rid, day) VALUES (?1, ?2, ?3)').bind(player.id, rid, day)] : [];
+  let out;
+  try {
+    out = await db.batch([
+      db.prepare(`UPDATE pass_days SET last = MIN(?4, MAX(0, ?5 - xp)), xp = xp + MIN(?4, MAX(0, ?5 - xp)) WHERE ${where} AND day = ?3`).bind(player.id, season.id, day, base, PASS_DAY_XP),
+      db.prepare(`UPDATE players SET ${col} = ${col} + (SELECT last FROM pass_days WHERE ${where} AND day = ?3) + CAST((SELECT last FROM pass_days WHERE ${where} AND day = ?3) * ?4 AS INTEGER) WHERE id = ?1`)
+        .bind(player.id, season.id, day, mult - 1),
+      ...mine.flatMap((c) => [
+        db.prepare(`INSERT INTO pass_counts (account, season, challenge, n, paid) VALUES (?1, ?2, ?3, 1, 0) ON CONFLICT (account, season, challenge) DO UPDATE SET n = n + 1`).bind(player.id, season.id, c.key),
+        db.prepare(`UPDATE players SET ${col} = ${col} + ?4 WHERE id = ?1 AND EXISTS (SELECT 1 FROM pass_counts WHERE ${where} AND challenge = ?3 AND n >= ?5 AND paid = 0)`).bind(player.id, season.id, c.key, c.xp, c.n),
+        db.prepare(`UPDATE pass_counts SET paid = ?4 WHERE ${where} AND challenge = ?3 AND n >= ?5 AND paid = 0 RETURNING challenge`).bind(player.id, season.id, c.key, nowS, c.n),
+      ]),
+      db.prepare(`SELECT ${col} AS xp, (SELECT xp FROM pass_days WHERE ${where} AND day = ?3) AS today, (SELECT last FROM pass_days WHERE ${where} AND day = ?3) AS last FROM players WHERE id = ?1`).bind(player.id, season.id, day),
+      ...asked,
+      ...(ask.asks === 1 ? [passAskSweep(db, player.id, day)] : []),   // the day's first find: the account's older ids go
+    ]);
+  } catch (e) {
+    const twin = rid ? await passAskOf(db, player.id, rid) : null;   // a twin of this ask landed first: its answer is this one's
+    if (twin) return twin;
+    throw e;
+  }
   const done = mine.filter((_, i) => out[2 + i * 3 + 2]?.results?.length).map((c) => c.key);
-  const end = out[out.length - 1]?.results?.[0] ?? {};
+  const end = out[2 + mine.length * 3]?.results?.[0] ?? {};
   const last = int(end.last);
   const gained = last + Math.floor(last * (mult - 1)) + mine.filter((c) => done.includes(c.key)).reduce((a, c) => a + c.xp, 0);
   const xp = int(end.xp), today = int(end.today);
-  return { gained, xp, level: passLevelOf(xp, season, nowS * 1000), today, ...(today >= PASS_DAY_XP ? { capped: true } : {}), done, season: season.id, tracks: passTracks(season.id, held), mult };
+  const answer = { gained, xp, level: passLevelOf(xp, season, nowS * 1000), today, ...(today >= PASS_DAY_XP ? { capped: true } : {}), done, season: season.id, tracks: passTracks(season.id, held), mult };
+  if (rid) {
+    try { await db.prepare('UPDATE pass_asks SET answer = ?3 WHERE account = ?1 AND rid = ?2').bind(player.id, rid, JSON.stringify(answer)).run(); } catch { /* the find counted either way */ }
+  }
+  return answer;
 }

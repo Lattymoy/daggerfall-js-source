@@ -221,7 +221,7 @@ import { retroScreenRect } from '../systems/retroMode.js';   // DISC25-B: DFU's 
 import { TRAVEL_VIEW_BUTTON } from '../scenes/travelView.js';   // TV1: the Overworld door's words (ETHER-OW: one home with the Eltheric chart's)
 import { STAR_VIOLET_CSS } from './starfall/starMapMark.js';   // STAR6: a fallen star's violet
 import { STAR_CARD_TEXT } from '../systems/starfall/starWords.js';   // STAR6: its legend's word
-import { readFissureMarksIn, FISSURE_BRASS_CSS, fissureLegendText } from './fissureMapMark.js';   // STOREFRONT: the season's Brass Fissures
+import { readFissureMarksIn, fissureMarksKey, FISSURE_BRASS_CSS, fissureLegendText } from './fissureMapMark.js';   // STOREFRONT: the season's Brass Fissures
 import { capturePointer } from './pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
 
 export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;
@@ -2295,7 +2295,7 @@ export class HeldMapWindow {
     if (starsKey !== this._starsKey) { this._starsKey = starsKey; this._stars = stars; gateMoved = true; this._dirty = true; }
     // STOREFRONT: and the season's Brass Fissures - a stage turning, the day's gate beside one while the map stands open
     const fissures = readFissureMarksIn(this.deps.fissures, sheet);
-    const fissuresKey = raidMarksKey(fissures);
+    const fissuresKey = fissureMarksKey(fissures);   // AUDIT-STOREFRONT II (lane D 3): kept for the list it was read as
     if (fissuresKey !== this._fissuresKey) { this._fissuresKey = fissuresKey; this._fissures = fissures; gateMoved = true; this._dirty = true; }
     // GUIDE5: the quests' places ride the same poll (a step logged, a place found, the followed quest changed while the
     // map stands open); a card is bounded by the world events' own reader

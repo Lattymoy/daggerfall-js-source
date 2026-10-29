@@ -5319,7 +5319,7 @@ pass.ch.elites,"Zabij {n, plural, one {# elitního nepřítele nebo šampiona} f
 pass.ch.endgame,"Vyhraj {n, plural, one {# vrcholný boj} few {# vrcholné boje} many {# vrcholného boje} other {# vrcholných bojů}} (trhlina, Reduta, Mořský had nebo hvězda)"
 pass.ch.foes,"Zabij {n, plural, one {# nepřítele} few {# nepřátele} many {# nepřítele} other {# nepřátel}}"
 pass.ch.gather,"Sbírej suroviny {n, plural, one {jednou} few {#krát} many {#krát} other {#krát}}"
-pass.ch.make,"Vyrob nebo najdi {n, plural, one {# předmět} few {# předměty} many {# předmětu} other {# předmětů}}"
+pass.ch.make,"Vyrob, osaď nebo překuj {n, plural, one {# předmět} few {# předměty} many {# předmětu} other {# předmětů}}"
 pass.ch.sea,"Sbírej suroviny nebo vyhraj na moři {n, plural, one {jednou} few {#krát} many {#krát} other {#krát}}"
 pass.ch.tavern,"Vyhraj {n, plural, one {# hru v krčmě} few {# hry v krčmě} many {# hry v krčmě} other {# her v krčmě}}"
 pass.ch.world,"Dokonči {n, plural, one {# událost světa, úkol nebo vypsanou odměnu} few {# události světa, úkoly nebo vypsané odměny} many {# události světa, úkolu nebo vypsané odměny} other {# událostí světa, úkolů nebo vypsaných odměn}}"

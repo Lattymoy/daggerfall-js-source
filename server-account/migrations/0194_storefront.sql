@@ -43,6 +43,18 @@ CREATE TABLE IF NOT EXISTS pass_counts (
   FOREIGN KEY (account) REFERENCES players(id) ON DELETE CASCADE
 );
 
+-- AUDIT-STOREFRONT II (lane B 2): A FIND'S OWN ID, an account's (battlePass.js findPass) - written in the find's own batch,
+-- so a find asked again by it (its answer lost) is answered as it was and counts once; `answer` that answer, `day` its UTC
+-- day. An account's ids past PASS_ASK_KEEP_DAYS go with its first find of a day, read by the account's own key.
+CREATE TABLE IF NOT EXISTS pass_asks (
+  account TEXT NOT NULL,
+  rid     TEXT NOT NULL,
+  day     INTEGER NOT NULL,
+  answer  TEXT,
+  PRIMARY KEY (account, rid),
+  FOREIGN KEY (account) REFERENCES players(id) ON DELETE CASCADE
+);
+
 -- AN ORDER'S CREDIT AND ITS OWN REFUND (AUDIT-STOREFRONT S1, S3):
 --   credit       what of the ware the account held at its checkout - its price took it off, so a payment taken back
 --                never takes it (shopLaw.js shopCreditOf), space-separated ids
