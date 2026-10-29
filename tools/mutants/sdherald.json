@@ -38,8 +38,8 @@
   {
     "name": "SD-HERALD-fell-role-passed",
     "file": "src/net/superDungeon/sdHerald.js",
-    "old": "if (kind === 'fell') return sdFellPost({ rec });",
-    "new": "if (kind === 'fell') return { ...sdFellPost({ rec }), allowed_mentions: { roles: [role] } };",
+    "old": "if (kind === 'fell') return sdFellPost({ rec, next });",
+    "new": "if (kind === 'fell') return { ...sdFellPost({ rec, next }), allowed_mentions: { roles: [role] } };",
     "tests": [
       "test/net/superDungeon/sdherald.test.js"
     ]
@@ -113,7 +113,7 @@
     "name": "SD-HERALD-fell-next-stamp-until",
     "file": "src/net/superDungeon/sdHerald.js",
     "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
-    "old": "fields: [['Dungeon', name], ['Where', whereField(rec)], ['Next may rise', heraldWhen(rec.next)]],",
+    "old": "fields: [['Dungeon', name], ['Where', whereField(rec)], ['Next may rise', heraldWhen(next)]],",
     "new": "fields: [['Dungeon', name], ['Where', whereField(rec)], ['Next may rise', heraldWhen(rec.until)]],",
     "tests": [
       "test/net/superDungeon/sdherald.test.js"
@@ -267,8 +267,8 @@
   {
     "name": "SD-HERALD-refusal-marked-posted",
     "file": "server/src/index.js",
-    "old": "if (!(await this._heraldSend(sdHeraldPost(due.kind, rec, h.sdRole), 'abyss'))) { retry = now + HERALD_RETRY_MS; break; }",
-    "new": "await this._heraldSend(sdHeraldPost(due.kind, rec, h.sdRole), 'abyss');",
+    "old": "if (!(await this._heraldSend(sdHeraldPost(due.kind, rec, h.sdRole, sdRiseNotBefore(rec, now, await this._sdRecs())), 'abyss'))) { retry = now + HERALD_RETRY_MS; break; }",
+    "new": "await this._heraldSend(sdHeraldPost(due.kind, rec, h.sdRole, sdRiseNotBefore(rec, now, await this._sdRecs())), 'abyss');",
     "tests": [
       "test/net/superDungeon/sdherald.test.js"
     ]
