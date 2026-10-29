@@ -10504,6 +10504,11 @@
   "tr": "5baa98e96564",
   "by": "claude-in-session"
  },
+ "decor.yard.behind": {
+  "en": "e66a9854186d",
+  "tr": "dff82cddc526",
+  "by": "claude-in-session"
+ },
  "dex.enemy.archerRider": {
   "en": "684bf52c59e7",
   "tr": "d0e0444307f6",
@@ -14829,6 +14834,11 @@
   "tr": "4b2a3249d934",
   "by": "claude-in-session"
  },
+ "helm.heavy": {
+  "en": "1909b8911a74",
+  "tr": "49b262a3925b",
+  "by": "claude-in-session"
+ },
  "helm.passenger": {
   "en": "61953c9d9311",
   "tr": "c6b3c0831b2c",
@@ -16912,6 +16922,21 @@
  "legacy.rez.unheard": {
   "en": "9a86cc2b125e",
   "tr": "50b58a45e4c8",
+  "by": "claude-in-session"
+ },
+ "legacy.union.born": {
+  "en": "39b7a548d1fb",
+  "tr": "c6e48c850828",
+  "by": "claude-in-session"
+ },
+ "legacy.union.raised": {
+  "en": "7077e4aa0ab5",
+  "tr": "31c2c4b452be",
+  "by": "claude-in-session"
+ },
+ "legacy.union.raisedAway": {
+  "en": "5a3c7723cbd9",
+  "tr": "51c2bae96b35",
   "by": "claude-in-session"
  },
  "level.renown.risen": {

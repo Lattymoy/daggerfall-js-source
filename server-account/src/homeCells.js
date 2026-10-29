@@ -1,7 +1,7 @@
 // @ts-check
 // YC4 HOME-CELL (2026-10-29, bible/11-Multiplayer/Yard-Cells.md section 14): THE SHARED PART OF A TOWN'S HOMES, KEPT
 // AND READ ONE BLOCK AT A TIME, as yardCells.js keeps the yards. A cell is net/yardCellLaw.js yardCellOf's. Migration
-// 0193 keeps per cell home_cell_ver (`ver`, moved by triggers on homes, home_rooms and guilds; `built`; `stale_at`, when
+// 0194 keeps per cell home_cell_ver (`ver`, moved by triggers on homes, home_rooms and guilds; `built`; `stale_at`, when
 // a let room next falls vacant) and home_cells (its rows built at `built`). A home write rebuilds its cell
 // (settleHomeCellsAfter), the minute's clock moves cells past their `stale_at` and builds the rest (settleHomeCellsClock),
 // and a reader is answered the moved cells alone (homeCellsKept). The caller's own part is homes.js homesOwn.
@@ -28,7 +28,7 @@ export const staleAtSql = (/** @type {string} */ town, /** @type {string} */ cel
     WHERE r.map_id = ${town} AND r.building_key BETWEEN ${cell} * 256 AND ${cell} * 256 + 255 AND r.listed = 1 AND r.tenant IS NOT NULL AND r.until > ${now})`;
 
 /** The build's shape: its read whole and its bound. A deploy that changes it marks every cell stale in its own
- *  migration (`UPDATE home_cell_ver SET built = 0`). Migration 0193 builds every cell in this shape; its literal is
+ *  migration (`UPDATE home_cell_ver SET built = 0`). Migration 0194 builds every cell in this shape; its literal is
  *  pinned to this. */
 export const HOME_CELL_SHAPE = shapeOf('home cell: [columns...] each, NULL past the bound', cellRowsSql('?', '?', '?'), KEPT_BOARD_MAX_BYTES);
 

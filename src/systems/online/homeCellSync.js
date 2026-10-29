@@ -4,7 +4,7 @@
 // yards; the caller's own part (`/v1/homes/own`) is one read of the caller's rows. `read` answers what `/v1/homes/town`
 // answers, so the registry (onlineHomes.js) believes it by the same rules: a home's own row where the own part has one,
 // else its shared row - its entry 'public' under Open Gates unless it is a hall (homes.js homeRowOf) - with the deeds
-// the own part hides left out. A service from before acct219 answers the new routes with a refusal: from then on this
+// the own part hides left out. A service from before acct221 answers the new routes with a refusal: from then on this
 // page reads `/v1/homes/town` as before.
 
 import { yardCellOf } from '../../net/yardCellLaw.js';
@@ -32,7 +32,7 @@ export const HOME_TOWN_CELLS = Object.freeze([
   yardCellOf(HOME_KEY_MAX),
 ]);
 
-/** How a service from before acct219 refuses `/v1/homes/cells` and `/v1/homes/own`: a 404 or a 405, or - the paths
+/** How a service from before acct221 refuses `/v1/homes/cells` and `/v1/homes/own`: a 404 or a 405, or - the paths
  *  unknown to it fall through to its home write routes - the refusals those give a body with no building and no entry
  *  (`bad-entry`, `no-home`) or a guest (`homes-need-account`). Never a ban's or a freeze's 403: those pass. */
 const OLDER_SERVICE_STATUSES = new Set([404, 405]);
@@ -43,7 +43,7 @@ const OLDER_SERVICE_ERRORS = new Set(['bad-entry', 'no-home', 'homes-need-accoun
 /** @typedef {{ at: number, character: string | null, openGates: boolean, homes: any[], hidden: Set<number> }} HeldOwn  the caller's own part, as asked for `character` */
 /** @typedef {{ cells: Map<number, HeldCell>, own: HeldOwn | null, gone: Map<number, number> }} HeldTown  `gone`: building key -> when this page saw it go (ms) */
 
-/** Whether an answer is a service from before acct219 refusing a route it does not know. */
+/** Whether an answer is a service from before acct221 refusing a route it does not know. */
 function fromOlderService(/** @type {Answer | null} */ answer) {
   if (!answer || answer.ok) return false;
   return OLDER_SERVICE_STATUSES.has(Number(answer.status)) || OLDER_SERVICE_ERRORS.has(String(answer.error));

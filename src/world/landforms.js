@@ -131,6 +131,7 @@
 
 import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, EXTRA_NOISE_SCALE, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, kernelTerms, kernelWindows, sampleKernel, generateSamples, cubicInterpolator } from './terrain/terrainSampler.js';
 import { BEACH_JITTER, WORLD_MAP_TILE_DIM, blendLocationTerrain, locationFootprintRect, calcAvgMaxHeight } from './terrain/terrainTiles.js';
+import { townMeetsAbout, applyTownMeets, meetLiftAt } from './terrain/townMeet.js';   // ACROSS-EDGE: the ground meets a town across its pixel's edge
 import { blendShapedBefore } from './terrain/townBlendBefore.js';   // FB1028 TOWN-GROUND: TS2's blend before it, for a record's move alone
 import { DIR_DELTA, MAP_W, MAP_H } from './road/roadNetwork.js';
 import { perlinNoise } from './perlin.js';
@@ -1196,31 +1197,43 @@ export function landformLift(woods, px, py, sx, sy, locationRect = null, hDim = 
  * re-stands a whole save's records at once, most of them in one town. A town's is all its samples through the blend
  * (with the landforms, one kernel pass: the shaped samples and DFU's beside them, generateSamples' `classic`); in the
  * wild a sample is asked of the two kernels when a point first reads it, so a far record costs its four corners.
+ * ACROSS-EDGE: `about` the towns its 3 x 3 meets (scenes/townMeetsHost.js) - each ground with its own meets, as the stream.
  * @returns {(sx: number, sy: number) => number}
  */
-export function landformLiftField(woods, px, py, locationRect = null, hDim = HEIGHTMAP_DIMENSION, landforms = null) {
+export function landformLiftField(woods, px, py, locationRect = null, hDim = HEIGHTMAP_DIMENSION, landforms = null, about = null) {
   const span = hDim - 1;
   const lf = landforms ?? createLandforms({ woods, hDim });   // AUDIT LANDFORMS II J9: no network - the defaults, the kernel's own way
   let f;
   if (!locationRect) {
     const shaped = sampleKernel(woods, px, py, hDim, true, lf), plain = sampleKernel(woods, px, py, hDim, true, null);
+    const met = about?.length ? townMeetsAbout(about, { woods, landforms: lf, px, py, hDim }) : null;   // ACROSS-EDGE: each ground with its meets
+    const ms = meetsOf(met, true), mp = meetsOf(met, false), lifted = (m, x, y, v) => (met ? meetLiftAt(px, py, m, x, y, v, hDim) : v);
     const memo = new Map();   // a sample as generateSamples keeps it, float32 - the ground the pixel is built of
     f = (x, y) => {
       const k = x * hDim + y;
       let v = memo.get(k);
-      if (v === undefined) memo.set(k, v = (Math.fround(shaped(x, y)) - Math.fround(plain(x, y))) * MAX_TERRAIN_HEIGHT);
+      if (v === undefined) memo.set(k, v = (lifted(ms, x, y, Math.fround(shaped(x, y))) - lifted(mp, x, y, Math.fround(plain(x, y)))) * MAX_TERRAIN_HEIGHT);
       return v;
     };
   } else {
     const field = new Float32Array(hDim * hDim);
     let sum = 0;
     const classic = new Float32Array(hDim * hDim), shaped = generateSamples(woods, px, py, hDim, lf, classic);
+    const met = about?.length ? townMeetsAbout(about, { woods, landforms: lf, px, py, own: { samples: shaped, classic }, hDim }) : null;
     for (let i = 0; i < field.length; i++) sum += (field[i] = (shaped[i] - classic[i]) * MAX_TERRAIN_HEIGHT);
-    blendLocationTerrain(field, sum / field.length, locationRect, hDim, classic, true);   // TOWN-SHAPES: the outline's, the sea read on DFU's own ground
+    const unmet = met ? { field: Float32Array.from(field), classic: Float32Array.from(classic) } : null;   // ACROSS-EDGE: its level and reach read before the meets (terrainGen.js `unmet`)
+    if (met) {
+      applyTownMeets(shaped, px, py, meetsOf(met, true), hDim);
+      applyTownMeets(classic, px, py, meetsOf(met, false), hDim);
+      for (let i = 0; i < field.length; i++) field[i] = (shaped[i] - classic[i]) * MAX_TERRAIN_HEIGHT;
+    }
+    blendLocationTerrain(field, sum / field.length, locationRect, hDim, unmet?.classic ?? classic, true, unmet?.field);   // TOWN-SHAPES: the outline's, the sea read on DFU's own ground
     f = (x, y) => field[x * hDim + y];
   }
   return fieldBetween(f, span);
 }
+/** ACROSS-EDGE: the meets of one ground (townMeetsAbout's; `shaped` the landforms' pass) as applyTownMeets takes them. */
+const meetsOf = (met, shaped) => (met ?? []).map((m) => ({ px: m.px, py: m.py, meet: shaped ? m.shaped : m.plain }));
 
 /** A field of a pixel's samples (`f(x, y)`, integer samples 0..span) read between them: the read the collider's own floor
  *  takes (world.js heightAt), held to the pixel - FLORA-GROUND: the ground's one law, the drawn quad's two triangles cut on
@@ -1283,6 +1296,29 @@ export function townGroundMovedField(woods, px, py, locationRect, shapeWas = loc
 }
 
 /**
+ * ACROSS-EDGE: HOW FAR THE MEETS MOVED DFU'S OWN GROUND under a record written before MEET_FRAME_LAW 5 (world/terrain/
+ * terrainSampler.js) - the pixel's own samples with the meets of the towns about it (`about`, scenes/townMeetsHost.js)
+ * less without, each through its location's classic blend (its level read before the meets, as the stream reads it),
+ * kernel units, read between the samples as landformLiftField's is. null where no meet reaches the pixel.
+ * @param {object} woods @param {number} px @param {number} py @param {?object} locationRect @param {?Array<{ px: number, py: number, shape: Uint8Array }>} about @param {number} [hDim]
+ * @returns {?((sx: number, sy: number) => number)}
+ */
+export function townMeetMovedField(woods, px, py, locationRect, about, hDim = HEIGHTMAP_DIMENSION) {
+  if (!about?.length) return null;
+  const ground = generateSamples(woods, px, py, hDim), now = Float32Array.from(ground);
+  const met = townMeetsAbout(about, { woods, px, py, own: { samples: ground, classic: ground }, hDim });
+  if (!applyTownMeets(now, px, py, meetsOf(met, false), hDim)) return null;
+  const was = Float32Array.from(ground);
+  if (locationRect) {
+    const avg = calcAvgMaxHeight(ground)[0];
+    blendLocationTerrain(was, avg, locationRect, hDim, ground);
+    blendLocationTerrain(now, avg, locationRect, hDim, ground, false, ground);
+  }
+  const moved = now.map((v, i) => (v - was[i]) * MAX_TERRAIN_HEIGHT);
+  return fieldBetween((x, y) => moved[x * hDim + y], hDim - 1);
+}
+
+/**
  * The landforms for one world: WOODS.WLD, and the road network every terrain kernel already holds (the worker's own,
  * or the main thread's fallback copy - the same arrays). Holds no cache: a pixel's shaper builds its own path profiles
  * and drops them with the pixel, so a long walk grows nothing.
@@ -1318,7 +1354,8 @@ export function createLandforms({ woods, roads = null, sites = null, beyond = nu
   const hill = !hills ? NO_HILLS : (gx, gy, macro, low, lattice, out) => hillsAt(gx, gy, macro, low, lattice, climates, out, span);
   const cont = hills ? continentGround(woods, climates) : null;   // BREATHTAKER3: what the continent's landforms read
   const ground = { hills: !!hills, climates, cont, ranges };   // what a site's level stands on - BAY-LEFT-GROUND: past the seam the continent's; RELIEF-PEAKS: the ranges laid or not
-  return { pixel: (px, py) => pixelShaper(woods, nets, hill, ground, sites, beyond, px, py, span, half, hDim, cont), rivers: cutRivers };
+  return { pixel: (px, py) => pixelShaper(woods, nets, hill, ground, sites, beyond, px, py, span, half, hDim, cont), rivers: cutRivers,
+    inputs: { woods, roads, sites, beyond, climates, hills, ranges } };   // ACROSS-EDGE: what a town's meet on this ground is kept by (world/terrain/townMeet.js)
 }
 
 /**

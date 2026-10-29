@@ -4429,6 +4429,11 @@
   "tr": "4ae9f0912877",
   "by": "claude-in-session"
  },
+ "decor.yard.behind": {
+  "en": "e66a9854186d",
+  "tr": "09bcea651be8",
+  "by": "claude-in-session"
+ },
  "dex.enemy.archerRider": {
   "en": "684bf52c59e7",
   "tr": "ebffb1b517df",
@@ -5977,6 +5982,11 @@
  "growth.spec.why.chosenMentor": {
   "en": "54129619c117",
   "tr": "61fd3b1c5104",
+  "by": "claude-in-session"
+ },
+ "helm.heavy": {
+  "en": "1909b8911a74",
+  "tr": "5aea639b14f8",
   "by": "claude-in-session"
  },
  "holdings.horse.boons.hungry": {

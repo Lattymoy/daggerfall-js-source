@@ -107,7 +107,7 @@
     "tests": [
       "test/systems/online/homecellsync.test.js"
     ],
-    "note": "a service from before acct219 leaves every town unknown"
+    "note": "a service from before acct221 leaves every town unknown"
   },
   {
     "name": "YC4-HOME-CELL-the-own-refusal-unread",

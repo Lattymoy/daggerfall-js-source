@@ -459,7 +459,7 @@ export const SHAPE_GRADE = 0.6;
  *  land's own, as DFU's ramp keeps it, so a neighbour pixel's ground meets it. */
 export const SHAPE_EDGE_TILES = 4;
 /** FB1028: SHAPE_GRADE as a sample's rise in the kernel's normalized heights (a sample 6.4 m, a unit 1539 x 1.25 m). */
-const shapeGrade = (hDim) => SHAPE_GRADE * (TERRAIN_SIZE / (hDim - 1)) / (MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE);
+export const shapeGrade = (hDim) => SHAPE_GRADE * (TERRAIN_SIZE / (hDim - 1)) / (MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE);
 const smooth = (t) => t * t * (3 - 2 * t);
 /** AUDIT FB1028 A3: the most the ease keeps of the land's departure `d` samples out, in grades - a smooth cone: 32/3 of
  *  the smoothstep to nine samples (4/3 of the grade at its steepest), then one grade a sample. */
@@ -478,30 +478,11 @@ const SHAPE_FLOOR = Math.fround((SCALED_BEACH_ELEVATION + 1) / MAX_TERRAIN_HEIGH
  * @param {Float32Array} heightmapData mutated in place @param {Uint8Array} shape locationShapeField's
  * @param {ArrayLike<number>} ground the pixel's samples before the blend (the water's and the mean's reading)
  * @param {number} hDim @param {boolean} diff `heightmapData` a difference of grounds (landforms.js landformLiftField), never floored
- */
-function blendShapedTerrain(heightmapData, shape, ground, hDim, diff) {
-  const D = WORLD_MAP_TILE_DIM, mask = townGroundMask(shape, ground, hDim);
-  const inside = new Uint8Array(hDim * hDim);
-  for (let y = 0; y < hDim; y++) for (let x = 0; x < hDim; x++) {
-    let on = 0;
-    for (let dy = -1; dy <= 0 && !on; dy++) for (let dx = -1; dx <= 0 && !on; dx++) {
-      const tx = x + dx, ty = y + dy;
-      if (tx >= 0 && ty >= 0 && tx < D && ty < D && mask[tx + ty * D]) on = 1;
-    }
-    inside[y * hDim + x] = on;
-  }
-  let sum = 0, n = 0;
-  for (let y = 0; y < hDim; y++) for (let x = 0; x < hDim; x++) {
-    const idx = y + x * hDim;
-    if (inside[y * hDim + x] && !isWaterHeight(sampleHeight(ground[idx]))) { sum += heightmapData[idx]; n++; }
-  }
-  if (!n) return null;
-  const target = diff ? Math.fround(sum / n) : Math.max(Math.fround(sum / n), SHAPE_FLOOR);
-  const dist = tileDistance(inside, hDim, hDim);
-  // FB1028: the level the ease reads its reach off - `ground`'s own over the same land - and the grade a sample, normalized
-  let gsum = 0;
-  for (let y = 0; y < hDim; y++) for (let x = 0; x < hDim; x++) if (inside[y * hDim + x] && !isWaterHeight(sampleHeight(ground[y + x * hDim]))) gsum += ground[y + x * hDim];
-  const level = gsum / n, grade = shapeGrade(hDim), stood = tileDistance(stoodSamples(shape, mask, hDim), hDim, hDim);
+ * @param {?ArrayLike<number>} [levelOf] ACROSS-EDGE: the samples its height is read off - `heightmapData` before the meets */
+function blendShapedTerrain(heightmapData, shape, ground, hDim, diff, levelOf = null) {
+  const st = townStanding(levelOf ?? heightmapData, shape, ground, hDim, diff);
+  if (!st) return null;
+  const { target, level, dist, stood } = st, grade = shapeGrade(hDim);
   for (let y = 0; y < hDim; y++) {
     for (let x = 0; x < hDim; x++) {
       const idx = y + x * hDim, d = dist[y * hDim + x], e = Math.min(x, y, hDim - 1 - x, hDim - 1 - y);
@@ -523,6 +504,36 @@ function blendShapedTerrain(heightmapData, shape, ground, hDim, diff) {
     }
   }
   return target;
+}
+/**
+ * ACROSS-EDGE (FB1029): A SHAPED TOWN'S STANDING - the samples its ground touches (`inside`, y * hDim + x), the height
+ * blendShapedTerrain flattens `S` to (`target`), the level the ease reads its reach off over `ground` (`level`), and each
+ * sample's distance to its ground (`dist`) and to the samples its buildings stand on (`stood`). null on no land.
+ * @param {ArrayLike<number>} S @param {Uint8Array} shape @param {ArrayLike<number>} ground @param {number} [hDim] @param {boolean} [diff]
+ */
+export function townStanding(S, shape, ground, hDim = HEIGHTMAP_DIMENSION, diff = false) {
+  const D = WORLD_MAP_TILE_DIM, mask = townGroundMask(shape, ground, hDim);
+  const inside = new Uint8Array(hDim * hDim);
+  for (let y = 0; y < hDim; y++) for (let x = 0; x < hDim; x++) {
+    let on = 0;
+    for (let dy = -1; dy <= 0 && !on; dy++) for (let dx = -1; dx <= 0 && !on; dx++) {
+      const tx = x + dx, ty = y + dy;
+      if (tx >= 0 && ty >= 0 && tx < D && ty < D && mask[tx + ty * D]) on = 1;
+    }
+    inside[y * hDim + x] = on;
+  }
+  let sum = 0, n = 0;
+  for (let y = 0; y < hDim; y++) for (let x = 0; x < hDim; x++) {
+    const idx = y + x * hDim;
+    if (inside[y * hDim + x] && !isWaterHeight(sampleHeight(ground[idx]))) { sum += S[idx]; n++; }
+  }
+  if (!n) return null;
+  const target = diff ? Math.fround(sum / n) : Math.max(Math.fround(sum / n), SHAPE_FLOOR);
+  const dist = tileDistance(inside, hDim, hDim);
+  // FB1028: the level the ease reads its reach off - `ground`'s own over the same land
+  let gsum = 0;
+  for (let y = 0; y < hDim; y++) for (let x = 0; x < hDim; x++) if (inside[y * hDim + x] && !isWaterHeight(sampleHeight(ground[y + x * hDim]))) gsum += ground[y + x * hDim];
+  return { mask, inside, target, level: gsum / n, dist, stood: tileDistance(stoodSamples(shape, mask, hDim), hDim, hDim) };
 }
 /** AUDIT FB1028 A2: the samples a building, a model, a flat or a crop stands on - the corners of the town's tiles within
  *  a tile of one (a model's foot overhangs its own: Aldwall Rock's 323 by a tile) - kept at the level. Index y * hDim + x. */
@@ -640,10 +651,10 @@ export function calcAvgMaxHeight(heightmapData) {
  * @param {number} avgHeight - normalized average from calcAvgMaxHeight.
  * @param {{xMin,xMax,yMin,yMax}} locationRect - tile space.
  */
-export function blendLocationTerrain(heightmapData, avgHeight, locationRect, hDim = HEIGHTMAP_DIMENSION, ground = heightmapData, diff = false) {
+export function blendLocationTerrain(heightmapData, avgHeight, locationRect, hDim = HEIGHTMAP_DIMENSION, ground = heightmapData, diff = false, levelOf = null) {
   // TOWN-SHAPES: a town with an outline is flattened to it (blendShapedTerrain) - the height it stands at answered
   if (locationRect?.shape && hDim === HEIGHTMAP_DIMENSION) {
-    const target = blendShapedTerrain(heightmapData, locationRect.shape, ground === heightmapData ? Float32Array.from(ground) : ground, hDim, diff);
+    const target = blendShapedTerrain(heightmapData, locationRect.shape, ground === heightmapData ? Float32Array.from(ground) : ground, hDim, diff, levelOf);
     if (target !== null) return target;
   }
   const xMin = locationRect.xMin / WORLD_MAP_TILE_DIM;
