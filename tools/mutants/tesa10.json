@@ -200,8 +200,8 @@
   {
     "name": "TESA10-models-every-block",
     "file": "src/world/tamrielCapitals.js",
-    "old": "          models: cap.models.filter((id) => carriers.get(id) === cell).map((id) => miscModelAt(id, at[0], at[1])),",
-    "new": "          models: cap.models.map((id) => miscModelAt(id, at[0], at[1])),",
+    "old": "          models: [...cap.models.filter((id) => carriers.get(id) === cell).map((id) => miscModelAt(id, at[0], at[1])), ...coach.models],",
+    "new": "          models: [...cap.models.map((id) => miscModelAt(id, at[0], at[1])), ...coach.models],",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]

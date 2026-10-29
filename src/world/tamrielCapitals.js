@@ -68,6 +68,7 @@ import {
   FALINESTI_BLOCKS, TORVAL_PLAN, TORVAL_DISTRICTS, TORVAL_BLOCKS, HELSTROM_PLAN, HELSTROM_DISTRICTS, HELSTROM_BLOCKS, CAPITAL_RIM_M, CAPITAL_RIM_TILES,
   ALINOR_HARBOUR, TORVAL_DOCKS, districtAt, MOURNHOLD_GATES, ALINOR_GATES, TORVAL_GATES, HELSTROM_GATES,
 } from './capitalPlans.js';
+import { rumareFlatAt } from './rumareWaters.js';   // AUDIT CAPITAL-CARRIAGES L1
 import { onCapitalApproach, capitalApproachCells, capitalGateSlice, APPROACH_TILE } from './capitalApproaches.js';   // ROAD-FOLLOW: the road on from the span's edge to the gate
 
 // The capitals' lane and the test of a map id (AUDIT RELEASE R2-9: a module of their own, the deeds' to read)
@@ -250,6 +251,7 @@ export const CAPITALS = Object.freeze([
     sliceMarkers: imperialSliceMarkers,   // AUDIT TESA II C7: every slice its own start markers (each worked when first read)
     gates: Object.freeze(['W']),   // TESA14: Talos Bridge, west to the mainland
     gateAt: Object.freeze({ W: Object.freeze(bridgeLine(IMPERIAL)[1]) }),   // ROAD-FOLLOW: Talos Bridge's landing (world/capitalApproaches.js)
+    flatAt: rumareFlatAt,   // AUDIT CAPITAL-CARRIAGES L1: its own level ground - its far shore rises to the land's own (world/rumareWaters.js)
     harbour: Object.freeze([(IMPERIAL_SPAN - 1) / 2, Math.floor(IMPERIAL.waterfront.pierTo / 819.2 + IMPERIAL_SPAN / 2)]),   // NIBEN-SEA: its harbour; RUMARE-WATER: the Waterfront's own slice, its quay and its piers' ends, the lake's way to the canal open (capitalCanalOpen)
     anchor: Object.freeze([IMPERIAL_SPAN * 4, IMPERIAL_SPAN * 4]), markers: Object.freeze([[220, 0], [-220, 0], [0, 220], [0, -220]]), blocks: null, models: Object.freeze(IMPERIAL_PARTS.map((p) => p.id)), drawn: Object.freeze(Object.values(IMPERIAL_MODELS)) }),   // TS5: its markers on the plaza round the tower; its landmarks' parts the slices' models, the whole ones drawn once
   capital({ key: 'solitude', tag: 'SO', name: 'Solitude', province: 'Skyrim', shore: true, plan: SOLITUDE_PLAN, districts: SOLITUDE_DISTRICTS,
@@ -702,16 +704,23 @@ const TILE_CELLS = Object.freeze([-2.4, -0.8, 0.8, 2.4].flatMap((a) => [-2.4, -0
  * the world-data door is handed and keeps nothing of (AUDIT TESA II C8: the JSON was kept beside the block it was read
  * into, 15 MiB for the Imperial City), and `json`, a getter that keeps its own for the pins - the footprint with it: a
  * capital's models are built when one of its blocks is.
- * @param {{ footprint?: (cap: any) => ((x: number, z: number) => boolean) | null }} [o]
+ * @param {{ footprint?: (cap: any) => ((x: number, z: number) => boolean) | null, gateThings?: ((cap: any, footprint: () => any) => any) | null }} [o]
  * @returns {Array<{ name: string, index: number, make: () => any, json: any }>}
  */
-export function capitalPortBlocks({ footprint = null } = {}) {
+export function capitalPortBlocks({ footprint = null, gateThings = null } = {}) {
   const out = [];
   const lazy = (name, index, make) => { let json = null; out.push({ name, index, make, get json() { return (json ??= make()); } }); };
   out.push({ name: CAPITAL_BLOCKS.lake, index: CAPITAL_BLOCK_INDEX, json: portBlockJson(CAPITAL_BLOCKS.lake, { tile: () => 0 }) });
   out.push({ name: CAPITAL_BLOCKS.garden, index: CAPITAL_BLOCK_INDEX + 1, json: portBlockJson(CAPITAL_BLOCKS.garden, { tile: () => 2, tree: gardenTree }) });
   const stands = new Map();
   const standsOf = (cap) => { if (!stands.has(cap.key)) stands.set(cap.key, footprint?.(cap) ?? null); return stands.get(cap.key); };
+  // CAPITAL-CARRIAGES: `gateThings(cap, footprint)` (world/capitalCarriages.js capitalGateThings, handed by world/
+  // capitalModels.js) - the carriages at its gates, each gate's records on the block of its cell, no tree and no walker there
+  const things = new Map(), NONE = { models: [], flats: [] };
+  const thingsOf = (cap) => { if (!things.has(cap.key)) things.set(cap.key, gateThings?.(cap, () => standsOf(cap)) ?? null); return things.get(cap.key); };
+  // where a capital's models or its carriages stand (anchor metres), and a cell's carriage records
+  const standing = (cap) => { const under = standsOf(cap), coach = thingsOf(cap); return (x, z) => !!under?.(x, z) || !!coach?.on(x, z); };
+  const coachAt = (cap, cx, r) => thingsOf(cap)?.recordsAt(cx, r, [(cap.anchor[0] - cx) * BLOCK_M, (r + 1 - cap.anchor[1]) * BLOCK_M]) ?? NONE;
   /** AUDIT TESA II C1: a block's laws of its own metres at the plan's (cx, r), its rim's none - no ground, closed, no tree.
    *  ROAD-FOLLOW: and its approaches' road, rim or none (world/capitalApproaches.js), no tree on it. */
   const rimmed = (cap, cx, r, { tile, closed, tree = null }) => {
@@ -731,19 +740,19 @@ export function capitalPortBlocks({ footprint = null } = {}) {
       // the anchor in the block's own metres: where anchorMetres answers (0, 0)
       const at = [(cap.anchor[0] - cx) * BLOCK_M, (r + 1 - cap.anchor[1]) * BLOCK_M], s = Math.floor(r / 8) * D.w + Math.floor(cx / 8);
       lazy(own.name, CAPITAL_BLOCK_INDEX + out.length, () => {
-        const under = standsOf(cap), on = (x, z) => !!under?.(...anchorMetres(cap, cx, r, x, z));
+        const under = standing(cap), on = (x, z) => under(...anchorMetres(cap, cx, r, x, z)), coach = coachAt(cap, cx, r);
         return portBlockJson(own.name, {
           ...rimmed(cap, cx, r, {
             tile: (x, z) => own.tile(...anchorMetres(cap, cx, r, x, z)),
-            closed: (x, z) => { const [dx, dz] = anchorMetres(cap, cx, r, x, z); return own.closed(dx, dz) || !!under?.(dx, dz); },
+            closed: (x, z) => { const [dx, dz] = anchorMetres(cap, cx, r, x, z); return own.closed(dx, dz) || under(dx, dz); },
             // TESA11: a block's own trees where its law plants them, off the models' feet as a garden's are
             tree: own.tree ? (x, z) => (TILE_CELLS.some(([a, b]) => on(x + a, z + b)) ? -1 : own.tree(...anchorMetres(cap, cx, r, x, z))) : null,
           }),
           // TESA11: the models its slice carries, each on the first of the slice's own blocks
-          models: cap.models.filter((id) => carriers.get(id) === cell).map((id) => miscModelAt(id, at[0], at[1])),
+          models: [...cap.models.filter((id) => carriers.get(id) === cell).map((id) => miscModelAt(id, at[0], at[1])), ...coach.models],
           // AUDIT-TESA A6-1: its start markers with them, the anchor's metres (z south) to the block's (z north) - AUDIT TESA
           // II C7: every slice's carrier its slice's
-          flats: slices.get(s) === cell ? capitalSliceMarkers(cap, s).map(([dx, dz, h = 0]) => startMarkerAt(at[0] + dx, at[1] - dz, h)) : [],
+          flats: [...(slices.get(s) === cell ? capitalSliceMarkers(cap, s).map(([dx, dz, h = 0]) => startMarkerAt(at[0] + dx, at[1] - dz, h)) : []), ...coach.flats],
         });
       });
     }));
@@ -754,10 +763,10 @@ export function capitalPortBlocks({ footprint = null } = {}) {
       if (cell !== 'G') return;
       const name = capitalGardenName(cap, cx, r), G = cap.ground?.garden ?? null;
       lazy(name, CAPITAL_BLOCK_INDEX + out.length, () => {
-        const under = standsOf(cap), on = (x, z) => !!under?.(...anchorMetres(cap, cx, r, x, z));
+        const under = standing(cap), on = (x, z) => under(...anchorMetres(cap, cx, r, x, z)), coach = coachAt(cap, cx, r);
         // SOLITUDE-RELIEF: a garden on a capital's own ground its ground's - its grass the rock where it climbs, a tree only on its grass
         const tile = G ? (x, z) => G.tile(...anchorMetres(cap, cx, r, x, z)) : () => 2, shut = G ? (x, z) => G.closed(...anchorMetres(cap, cx, r, x, z)) : () => false;
-        return portBlockJson(name, rimmed(cap, cx, r, { tile, tree: (x, z) => (TILE_CELLS.some(([a, b]) => on(x + a, z + b)) || tile(x, z) !== 2 ? -1 : gardenTree(x, z)), closed: (x, z) => on(x, z) || shut(x, z) }));
+        return portBlockJson(name, { ...rimmed(cap, cx, r, { tile, tree: (x, z) => (TILE_CELLS.some(([a, b]) => on(x + a, z + b)) || tile(x, z) !== 2 ? -1 : gardenTree(x, z)), closed: (x, z) => on(x, z) || shut(x, z) }), ...coach });
       });
     }));
   }
@@ -782,7 +791,10 @@ export function capitalPortBlocks({ footprint = null } = {}) {
     for (const [r, cx] of capitalApproachCells(cap, capitalDims(cap))) {
       if (planCell(cap, r, cx) !== 'O') continue;
       const name = capitalApproachName(cap, cx, r);
-      lazy(name, CAPITAL_BLOCK_INDEX + out.length, () => portBlockJson(name, rimmed(cap, cx, r, { tile: () => CAPITAL_NO_GROUND, closed: () => false })));
+      lazy(name, CAPITAL_BLOCK_INDEX + out.length, () => {
+        const coach = thingsOf(cap), on = (x, z) => !!coach?.on(...anchorMetres(cap, cx, r, x, z));   // CAPITAL-CARRIAGES: the Imperial City's at Talos Bridge's landing
+        return portBlockJson(name, { ...rimmed(cap, cx, r, { tile: () => CAPITAL_NO_GROUND, closed: on }), ...coachAt(cap, cx, r) });
+      });
     }
   }
   return out;
