@@ -833,20 +833,22 @@
   {
     "name": "NAV1H-the-brake-unread",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    return brake > 0 ? f(Math.min(CSA_BRAKE_MAX, brake)) : moveAccelOwn();",
-    "new": "    return moveAccelOwn();",
+    "old": "    return brake > 0 ? f(Math.min(CSA_BRAKE_MAX, brake)) : moveAccelOwn(rest);",
+    "new": "    return moveAccelOwn(rest);",
     "tests": [
       "test/systems/comeSailAway/csa_wind.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FB1029B T8: the step's rest passed through)."
   },
   {
     "name": "NAV1H-the-brake-unheld",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    return brake > 0 ? f(Math.min(CSA_BRAKE_MAX, brake)) : moveAccelOwn();",
-    "new": "    return brake > 0 ? f(brake) : moveAccelOwn();",
+    "old": "    return brake > 0 ? f(Math.min(CSA_BRAKE_MAX, brake)) : moveAccelOwn(rest);",
+    "new": "    return brake > 0 ? f(brake) : moveAccelOwn(rest);",
     "tests": [
       "test/systems/comeSailAway/csa_wind.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FB1029B T8: the step's rest passed through)."
   },
   {
     "name": "NAV1H-the-brake-unwired-world",

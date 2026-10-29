@@ -229,6 +229,21 @@ test('HEARTH-SIBLING (AUDIT FB1029B H4, H5) a deed\'s home is filled by its hold
   assert.equal((await festivalOf(ctx(), player(alice), ON)).bowls, 1, 'its bowl home');
 });
 
+test('HEARTH-SIBLING (AUDIT FB1029B T5) a sibling finds the buyer\'s filled bowl set, its cakes kept; an offering is stored under its own home\'s buyer', async () => {
+  const { alice, player, ctx, cakes, bowls, home, db } = await stand();
+  home(alice, MAP, HOME, CHAR);
+  home(alice, MAP, HALL, 'char-two');
+  bowls(alice, 2); cakes(alice, 4);
+  const at = { mapId: MAP, buildingKey: HOME, character: CHAR };
+  assert.equal((await setOffering(ctx(), player(alice), at, ON)).ok, true);
+  assert.equal((await fillOffering(ctx(), player(alice), at, ON)).stock, 4);
+  assert.deepEqual(await setOffering(ctx(), player(alice), { ...at, character: 'char-other' }, ON), { error: 'set' });
+  assert.equal(db._raw.prepare('SELECT stock FROM fest_offerings WHERE building_key = ?').get(HOME).stock, 4, 'never reset');
+  assert.equal(db._raw.prepare('SELECT char_id FROM fest_offerings WHERE building_key = ?').get(HOME).char_id, CHAR, 'stored under its own home\'s buyer');
+  assert.equal((await setOffering(ctx(), player(alice), { mapId: MAP, buildingKey: HALL, character: CHAR }, ON)).ok, true);
+  assert.equal(db._raw.prepare('SELECT char_id FROM fest_offerings WHERE building_key = ?').get(HALL).char_id, 'char-two', 'the second home\'s buyer');
+});
+
 test('WITCH1 a bowl holds OFFERING_STOCK_MAX; an empty bowl gives nothing; one taken in since is `none`', async () => {
   const { alice, bob, player, ctx, cakes, bowls, home, db } = await stand();
   home(alice, MAP, HOME, CHAR);

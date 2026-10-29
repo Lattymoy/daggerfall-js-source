@@ -64,6 +64,15 @@ export const spareLines = (/** @type {string[]} */ ids, /** @type {any[]} */ row
   const played = new Set((rows ?? []).map((r) => r?.lineage).filter(Boolean));
   return (ids ?? []).filter((id) => !played.has(id));
 };
+/** FAMILY-REMOVE: the families the Online page's card offers - the spare lines whose record the device holds (`load`) -
+ *  or null for no card: none spare, or a roster the realm did not answer (`rowsOk`; AUDIT FB1029B F5). */
+export function spareFamilies(/** @type {{ rows: any[] | null, rowsOk: boolean, lineIds: string[] | null, load: (id: string) => any }} */ at) {
+  if (!at.rows || !at.rowsOk || !at.lineIds?.length) return null;
+  const families = spareLines(at.lineIds, at.rows).map(at.load).filter(Boolean);
+  return families.length ? families : null;
+}
+/** FAMILY-REMOVE: the account's lines with one removed. */
+export const withoutLine = (/** @type {string[] | null} */ ids, /** @type {string} */ id) => ids?.filter((x) => x !== id) ?? null;
 
 /** The words of a waiting line's card. */
 export const houseWaitsTitle = (family) => `The house of ${family?.surname || 'your family'} waits`;

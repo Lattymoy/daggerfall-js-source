@@ -20,8 +20,8 @@
   {
     "name": "CSA-D-moveaccel-coast-oars",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    const coast = f(f(f(f(HANDLING.moveAccelSail * handlingMod('SailMoveAcceleration')) * laden()) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.coast : 1));\n",
-    "new": "    const coast = f(f(f(f(HANDLING.moveAccelOar * handlingMod('OarMoveAcceleration')) * laden()) * f(b.modifierMoveAccelerationOar)) * (responsive() ? HELM_WAY.coast : 1));\n",
+    "old": "    const coast = f(f(f(f(HANDLING.moveAccelSail * handlingMod('SailMoveAcceleration')) * laden(rest)) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.coast : 1));\n",
+    "new": "    const coast = f(f(f(f(HANDLING.moveAccelOar * handlingMod('OarMoveAcceleration')) * laden(rest)) * f(b.modifierMoveAccelerationOar)) * (responsive() ? HELM_WAY.coast : 1));\n",
     "tests": [
       "test/systems/comeSailAway/csa_sailing.test.js"
     ]
@@ -273,7 +273,7 @@
   {
     "name": "CSA-D-cargo-said-every-time",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    if (state.lastWeight !== num || (state.boatCargoMod === 0 && threshold > 0 && asked)) {",
+    "old": "    if (state.lastWeight !== num || deadWordDue(state.boatCargoMod, threshold, state)) {",
     "new": "    if (true) {",
     "tests": [
       "test/systems/comeSailAway/csa_sailing.test.js"

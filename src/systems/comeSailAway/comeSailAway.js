@@ -150,7 +150,8 @@
 import { Boat, setLights, HULL_NAMES, HULL_PRICES, packedHullWeight, CARGO_CONTAINER_IMAGE, TRIGGER_MODEL, goModelName, meshLocalBounds, colliderBounds, animatorOf, nodeOf, AUDIO_CLIPS, SAIL_ANIMATION_SPEED } from './comeSailAwayBoat.js';
 import { hullFromMessage } from './comeSailAwayHulls.js';
 import { seaHoldShut, seaHoldShutText } from '../naval/seaHoldGuard.js';   // AUDIT SEA VENTURES B3: a wrecked ship's hold, shut while she may be boarded   // PARTS-WEIGHT: GetHullFromMessage, the leaf's
-import { firmStat } from '../firmamentLive.js';   // FIRM1: the Firmament's helmsman (sailSpeed)
+import { firmStat } from '../firmamentLive.js';
+import { swingStep, wayRests, deadWordDue } from './ladenRest.js';   // LADEN-REST: when a laden hull comes to rest at the light rate   // FIRM1: the Firmament's helmsman (sailSpeed)
 import { constantCurve, twoConstantsCurve, SPACE } from '../../world/unityParticles.js';
 import { quatEuler } from '../../world/unityAnimator.js';
 import { quatLookRotation, quatRotate, quatAngleAxis, quatMultiply, quatSlerp } from '../../world/quat.js';
@@ -718,45 +719,43 @@ export function createComeSailAwayRuntime(deps) {
   // kept for good, no sail, oar or rudder to take them off.
   let helmHanded = null;
   const responsive = () => helmHanded ?? handed();
-  /** LADEN-REST (the port's own; FIELD BUGS 2026-10-29b, "sometimes my boat begins to spin"): the load's share of a rate
-   *  her way or her swing changes by - none while she comes to rest. The mod scaled that rate too, so a load at twice her
-   *  hold (a mod of 0) kept the swing and the way she had for good: no rudder or oar could take them off. */
-  let resting = false;
-  const laden = () => (resting ? 1 : state.boatCargoMod);
+  /** LADEN-REST (systems/comeSailAway/ladenRest.js): the load's share of a rate her way or her swing changes by - none
+   *  while she comes to rest (`rest`, the step's own word). */
+  const laden = (/** @type {boolean} */ rest) => (rest ? 1 : state.boatCargoMod);
   /** moveAccel: the rate below - or, while the sea fight brakes her (BOARD-MAGNET: the grapples' haul; AUDIT NAV1's
    *  heave-to before it), its own `brake` (m/s^2, the port's seam; the mod has none), whatever her own rate, CSA_BRAKE_MAX
    *  at the most: the sea fight's number, not a multiple of a rate the Ship handling choice moves. */
-  function moveAccel() {
+  function moveAccel(rest = false) {
     const brake = Number(deps.brake?.() ?? 0);
-    return brake > 0 ? f(Math.min(CSA_BRAKE_MAX, brake)) : moveAccelOwn();
+    return brake > 0 ? f(Math.min(CSA_BRAKE_MAX, brake)) : moveAccelOwn(rest);
   }
   /** moveAccel (538-551): the oars' only while a key pulls them; with none held the sails' - a coast (kept). HELM-WAY:
    *  under the responsive helm the sails' way comes on at HELM_WAY.sailAccel of it and a coast at HELM_WAY.coast. */
-  function moveAccelOwn() {
+  function moveAccelOwn(rest = false) {
     const b = cur();
     // HELM-LADDER: the oars' rung, not a held key - AUDIT SHIPS A5: and the autorun's pull, as the oars' own law asks it
     // (UpdateSailing's arm, and the mod's autorun, which holds MoveForwards): the journey's oars came on at her coast's rate
     if (state.sailPosition === 0 && (state.oarThrottle !== 0 || !!deps.input?.toggleAutorun || (has('Run') && (has('MoveRight') || has('MoveLeft'))))) {
-      const oar = f(f(f(f(HANDLING.moveAccelOar * handlingMod('OarMoveAcceleration')) * laden()) * f(b.modifierMoveAccelerationOar)) * peace());   // PEACE-WAY: up to her way in the time she came up to her old
+      const oar = f(f(f(f(HANDLING.moveAccelOar * handlingMod('OarMoveAcceleration')) * laden(rest)) * f(b.modifierMoveAccelerationOar)) * peace());   // PEACE-WAY: up to her way in the time she came up to her old
       // AUDIT 2 XA1 (2026-10-06): under the responsive helm the oars' rate GATHERS way - a way above what they make (her
       // canvas's: no oar made it) is lost no slower than her coast. One rate for both, a galleon struck and rowing took
       // 48 s and 400 m to come down to her oars' way, four times her coast, and the journey's hand ran her aground on it
-      if (responsive() && vMagnitude(state.MoveVectorCurrent) > vMagnitude(state.velocityTarget ?? [0, 0, 0])) return Math.max(oar, coastAccel(b));
+      if (responsive() && vMagnitude(state.MoveVectorCurrent) > vMagnitude(state.velocityTarget ?? [0, 0, 0])) return Math.max(oar, coastAccel(b, rest));
       return oar;
     }
     if (state.sailPosition === 1) {
       // SAIL-FREE: under the responsive helm her way comes on in the sea's bounded wind, the wind her way is reckoned in
       const wind = responsive() ? f(galeWind(seaWind(vMagnitude(state.windVectorCurrent)))) : vMagnitude(state.windVectorCurrent);   // SERPENT4: in a gale's
-      const rate = f(f(f(f(f(f(f(HANDLING.moveAccelSail * handlingMod('SailMoveAcceleration')) * wind) * laden()) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.sailAccel : 1)) * rigOf(b)) * peace());   // HOLDINGS: her Rigging - PEACE-WAY: and her way out of a fight
+      const rate = f(f(f(f(f(f(f(HANDLING.moveAccelSail * handlingMod('SailMoveAcceleration')) * wind) * laden(rest)) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.sailAccel : 1)) * rigOf(b)) * peace());   // HOLDINGS: her Rigging - PEACE-WAY: and her way out of a fight
       return responsive() ? f(rate * f(sailFreeGain(b))) : rate;   // SAIL-FREE: her way's gain - the same handling at her new way (AUDIT SHIPS A5: her rig's)
     }
-    return coastAccel(b);
+    return coastAccel(b, rest);
   }
   /** A COAST's rate (the sails' with none set) - SAIL-FREE: her way's gain, AUDIT SHIPS A5: on the way her canvas made
    *  (AUDIT 2 XA7: in its share of her way - `sailWay`); a way her oars made, or a boat with no sails, is lost at
    *  HELM-WAY's own rate (a rowboat's oars at rest stopped her in 2 s, not 3.3). */
-  function coastAccel(b) {
-    const coast = f(f(f(f(HANDLING.moveAccelSail * handlingMod('SailMoveAcceleration')) * laden()) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.coast : 1));
+  function coastAccel(b, rest = false) {
+    const coast = f(f(f(f(HANDLING.moveAccelSail * handlingMod('SailMoveAcceleration')) * laden(rest)) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.coast : 1));
     const way = vMagnitude(state.MoveVectorCurrent), share = way > 0 ? Math.min(1, state.sailWay / way) : 0;
     if (!responsive() || !(share > 0)) return coast;
     return share >= 1 ? f(coast * f(sailFreeGain(b))) : f(coast * f(1 + (sailFreeGain(b) - 1) * share));
@@ -776,12 +775,12 @@ export function createComeSailAwayRuntime(deps) {
   const galeWind = (wind) => (state.gale ? Math.max(wind, WIND_RATED * state.gale.wind) : wind);
   const galeTurn = () => (state.gale ? state.gale.turn : 1);
   /** turnAccel (566-576). HELM-WAY: under the responsive helm a sail's helm comes over HELM_WAY.turnAccelSail times it. */
-  function turnAccel() {
+  function turnAccel(rest = false) {
     const b = cur();
     if (state.sailPosition === 0 && (has('MoveRight') || has('MoveLeft'))) {
-      return f(f(f(HANDLING.turnAccelOar * handlingMod('OarTurnAcceleration')) * laden()) * f(b.modifierTurnAccelerationOar));
+      return f(f(f(HANDLING.turnAccelOar * handlingMod('OarTurnAcceleration')) * laden(rest)) * f(b.modifierTurnAccelerationOar));
     }
-    return f(f(f(f(f(HANDLING.turnAccelSail * handlingMod('SailTurnAcceleration')) * laden()) * f(b.modifierTurnAccelerationSail)) * (responsive() ? HELM_WAY.turnAccelSail : 1)) * galeTurn());   // SERPENT4: a gale's helm
+    return f(f(f(f(f(HANDLING.turnAccelSail * handlingMod('SailTurnAcceleration')) * laden(rest)) * f(b.modifierTurnAccelerationSail)) * (responsive() ? HELM_WAY.turnAccelSail : 1)) * galeTurn());   // SERPENT4: a gale's helm
   }
   /** wakeThreshold (504): moveSpeedSail * 0.25. */
   const wakeThreshold = () => f(HANDLING.moveSpeedSail * f(0.25));
@@ -957,10 +956,8 @@ export function createComeSailAwayRuntime(deps) {
   function UpdateBoatCargoMod(boat) {
     const { load: num, threshold } = cargoLoad(boat);
     state.boatCargoMod = mathfClamp(f(2 - f(num / threshold)), 0, 1);
-    // LADEN-REST: a hull the load has stopped dead says so every round she is asked to move, not once - the word was
-    // missed in two reports. AUDIT FB1029B S2: never a hull with no hold at all (the Carrack under Classic), nor one at rest
-    const asked = state.oarThrottle !== 0 || state.sailPosition !== 0 || state.TurnTarget !== 0;
-    if (state.lastWeight !== num || (state.boatCargoMod === 0 && threshold > 0 && asked)) {
+    // LADEN-REST: a hull the load has stopped dead says so every round she is asked to move - missed in two reports
+    if (state.lastWeight !== num || deadWordDue(state.boatCargoMod, threshold, state)) {
       state.lastWeight = num;
       const words = cargoModWords(state.boatCargoMod);
       if (words) deps.midScreenText(words, 3);
@@ -1576,23 +1573,15 @@ export function createComeSailAwayRuntime(deps) {
     } else {
       updateSails(boat);
     }
-    const swing = f(state.TurnTarget * turnSpeed());
-    // LADEN-REST: a swing let go or eased comes off at the light rate - AUDIT FB1029B S1: and one the helm is put against,
-    // through 0 at the light rate and then the other way at the load's (a light hull is the mod to the letter)
-    const against = swing * state.TurnCurrent < 0 && state.boatCargoMod < 1;
-    resting = against || (Math.abs(swing) < Math.abs(state.TurnCurrent) && swing * state.TurnCurrent >= 0);
-    state.TurnCurrent = mathfMoveTowards(state.TurnCurrent, against ? 0 : swing, f(turnAccel() * dt()));
+    const swing = swingStep(f(state.TurnTarget * turnSpeed()), state.TurnCurrent, state.boatCargoMod);   // LADEN-REST
+    state.TurnCurrent = mathfMoveTowards(state.TurnCurrent, swing.toward, f(turnAccel(swing.rest) * dt()));
     state.velocityTarget = vScale(state.MoveVectorTarget, moveSpeed());
     // AUDIT 2 XA7: her canvas's way - gathered under canvas, lost in its share (and never more than the way she has: a
     // bump or a grounding since took its share too)
     const was = vMagnitude(state.MoveVectorCurrent);
     state.sailWay = Math.min(state.sailWay, was);
-    // LADEN-REST: her way comes off at the light rate along her own line - AUDIT FB1029B S5: a way wanted another way
-    // (her oars' slide) gathers at the load's
-    const wanted = vMagnitude(state.velocityTarget);
-    resting = wanted < was && (wanted === 0 || vDot(state.velocityTarget, state.MoveVectorCurrent) >= f(f(wanted * was) * 0.999));
-    state.MoveVectorCurrent = vMoveTowards(state.MoveVectorCurrent, state.velocityTarget, f(moveAccel() * dt()));
-    resting = false;
+    const rest = wayRests(vMagnitude(state.velocityTarget), was, vDot(state.velocityTarget, state.MoveVectorCurrent));   // LADEN-REST
+    state.MoveVectorCurrent = vMoveTowards(state.MoveVectorCurrent, state.velocityTarget, f(moveAccel(rest) * dt()));
     const way = vMagnitude(state.MoveVectorCurrent);
     state.sailWay = way < was ? state.sailWay * (way / was) : state.sailPosition === 1 ? state.sailWay + (way - was) : state.sailWay;
     // CSA-F: the wake (4737-4755) - played and the loops crossfaded to the fast one over the threshold, stopped and back

@@ -42,7 +42,6 @@ test('BUILT-IN-MODS a town mod\'s furniture written as scenery is a built-in pie
   ];
   const ctx = await build(records);
   assert.deepEqual(ctx.base.list().map((p) => p.key), ['m1:41100', 'm2:41101', `m3:${TOWN_BED_FIRST}`, 'm4:45190']);
-  assert.equal(ctx.containers.filter((c) => c.modelIdNum === 41101).length, 0, 'a piece written as scenery is still no container (AUDIT 64 F17)');
   assert.equal(ctx.beds.length, 1);
   ctx.base.setHidden([`m3:${TOWN_BED_FIRST}`]);
   assert.equal(ctx.beds[0].hidden, true, 'the bed out, its rest goes with it');
@@ -55,6 +54,18 @@ test('BUILT-IN-MODS a town mod\'s furniture written as scenery is a built-in pie
 test('BUILT-IN-MODS the furnishings: a model Daggerfall lays as a prop in its rooms, or a mods\' room piece - never their structure, a ship\'s rigging or a beam (AUDIT FB1029B H1)', () => {
   for (const id of [41000, 41101, 41128, 51115, TOWN_BED_FIRST, 45190, 69420]) assert.equal(isRoomFurnishing(id), true, String(id));
   for (const id of [...MOD_ROOM_STRUCTURE, 41400, 41404, 41501, 41242, 43999, 40999, 62319, 1000, 45076, NaN]) assert.equal(isRoomFurnishing(id), false, String(id));
+});
+
+test('BUILT-IN-MODS (AUDIT FB1029B T2) a chest and a shelf written as scenery are built-in pieces and never containers in an owned house; the mill\'s machinery and a type-4 piece never pieces', async () => {
+  const cpuModels = new Map();
+  const deps = { renderer: { createBillboardBatch: () => ({}), destroyBatch: () => {}, destroyMesh: () => {}, createMesh: () => ({}) },
+    getGpuMesh: async (id) => { cpuModels.set(id, id === FLOOR ? floor : model); return { gpu: id }; }, cpuModels,
+    getTexture: () => Promise.resolve(tex), uploadRecord: () => {}, uploadRecordFrame: () => {}, palette: null };
+  const records = [at(FLOOR, 13, 0), at(41003, 0, 0), at(41005, 0, 100), at(41601, 0, 200), at(41003, 4, 300), at(41003, 3, 400), at(41601, 3, 500)];
+  const ctx = await buildInteriorContext(deps, block(records), 0, 0, 300, 0, null, { baseEditable: true, houseOwned: true });
+  assert.equal(ctx.containers.length, 1, 'the prop chest alone is a container (AUDIT 64 F17)');
+  assert.deepEqual(ctx.base.list().map((p) => p.key), ['m1:41003', 'm2:41005', 'm5:41003']);
+  ctx.destroy();
 });
 
 test('BUILT-IN-MODS (AUDIT FB1029B H2) a piece with no floor under it is the room\'s - taking it out would open a way into the void', async () => {

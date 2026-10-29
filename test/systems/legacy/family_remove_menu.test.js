@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { spareLines } from '../../../src/systems/legacy/waitingHouses.js';
+import { spareLines, spareFamilies, withoutLine } from '../../../src/systems/legacy/waitingHouses.js';
 import { realmLineageRemove, realmRefusalText } from '../../../src/systems/realmSaves.js';
 import { createRealmLine } from '../../../src/systems/legacy/realmLine.js';
 
@@ -26,11 +26,23 @@ test('FAMILY-REMOVE the press asks the realm\'s route, and the cap\'s refusal na
   assert.match(src('src/ui/enhanced/enhancedMenu.js'), /const spare = spareFamiliesCard\(\);\n\s*if \(spare\) box\.append\(spare\);/);
 });
 
-test('FAMILY-REMOVE (AUDIT FB1029B F3, F5) the card stands only on a roster the realm answered, and a line the realm no longer holds is said removed', () => {
+test('FAMILY-REMOVE (AUDIT FB1029B F3, F5, T4) the card: the spare lines the device holds, none on a roster the realm did not answer; a line removed leaves the list; a line already gone is said removed', () => {
+  const load = (id) => (id === 'fam-c-cccccc' ? null : { id, surname: id.slice(4, 5) });
+  const lineIds = ['fam-a-aaaaaa', 'fam-b-bbbbbb', 'fam-c-cccccc'];
+  const rows = [{ id: 'r1', lineage: 'fam-b-bbbbbb' }];
+  assert.deepEqual(spareFamilies({ rows, rowsOk: true, lineIds, load }).map((f) => f.id), ['fam-a-aaaaaa'], 'played and unheld lines left out');
+  assert.equal(spareFamilies({ rows: [], rowsOk: false, lineIds, load }), null, 'a failed roster read: no card');
+  assert.equal(spareFamilies({ rows, rowsOk: true, lineIds: ['fam-b-bbbbbb'], load }), null, 'none spare: no card');
+  assert.equal(spareFamilies({ rows: null, rowsOk: true, lineIds, load }), null, 'the roster not yet asked: no card');
+  assert.deepEqual(withoutLine(lineIds, 'fam-a-aaaaaa'), ['fam-b-bbbbbb', 'fam-c-cccccc']);
+  assert.equal(withoutLine(null, 'fam-a-aaaaaa'), null);
   const m = src('src/ui/enhanced/enhancedMenu.js');
-  assert.match(m, /realmRows = r\.ok \? r\.characters : \[\];\n\s*realmRowsOk = !!r\.ok;/, 'a failed read is no roster');
-  assert.match(m, /if \(!realmRows \|\| !realmRowsOk \|\| !realmLineIds\?\.length\) return null;/, 'and lists no line as played by no one');
+  assert.match(m, /realmRows = r\.ok \? r\.characters : \[\];\n\s*realmRowsOk = !!r\.ok;/, 'the roster read says whether it was answered');
+  assert.match(m, /const spare = spareFamilies\(\{ rows: realmRows, rowsOk: realmRowsOk, lineIds: realmLineIds, load: \(id\) => loadFamily\(appStorage\(\), id\) \}\);\n\s*if \(!spare\) return null;/);
+  assert.match(m, /label: t\('menu\.realm\.removeFamily', 'Remove family'\),\n\s*disabled: realmBusy,/, 'never pressed while another realm act runs');
   assert.match(m, /realmLineageRemove\(realmIoNow\(\), family\.id\)\.then\(\(r\) => \(r\?\.error === 'no-lineage' \? \{ ok: true \} : r\)\)/, 'a line already gone is removed');
+  assert.match(m, /realmLineIds = withoutLine\(realmLineIds, family\.id\);/, 'and leaves the list');
+  assert.match(realmRefusalText('lineage-in-use'), /A living character still plays that family\./, 'T11: the refusal\'s own words');
 });
 
 test('FAMILY-REMOVE (AUDIT FB1029B F2) a line the realm removed is refused once, said once, and never sent again this session', async () => {

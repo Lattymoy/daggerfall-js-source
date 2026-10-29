@@ -40,20 +40,6 @@ test('LADEN-REST a swing and a way the load stopped dead are taken off - the rud
   assert.ok(b);
 });
 
-test('LADEN-REST a light load is the mod to the letter: her swing comes off at the loaded rate', () => {
-  const s = scene();
-  s.helm(s.place(0));
-  s.held.add('MoveRight');
-  for (let i = 0; i < 8; i++) s.frame();
-  s.deps.entity.carriedWeight = () => 0;
-  s.rt.OnNewMagicRound();
-  assert.equal(s.rt.state.boatCargoMod, 1);
-  const before = s.rt.state.TurnCurrent;
-  s.held.delete('MoveRight');
-  s.frame();
-  assert.ok(s.rt.state.TurnCurrent < before && s.rt.state.TurnCurrent >= 0, 'coming off');
-});
-
 test('LADEN-REST a laden helm still comes over at the load\'s rate - her swing\'s first step is the mod\'s share of a light one', () => {
   const step = (carried) => {
     const s = scene();
@@ -181,4 +167,27 @@ test('LADEN-REST her oars still pulling ahead when the load stops her dead: her 
   assert.equal(s.rt.state.oarThrottle, 1, 'the oars still at their rung');
   for (let i = 0; i < 40; i++) s.frame();
   assert.equal(way(s), 0);
+});
+
+test('LADEN-REST under her canvas a laden hull comes on at the load\'s rate - her way and her helm (AUDIT FB1029B T3)', () => {
+  const under = (carried) => {
+    const s = scene();
+    s.deps.handling = () => 'responsive';
+    s.deps.entity.carriedWeight = () => carried;
+    s.helm(s.place(2));
+    const wind = () => { s.rt.state.windVectorCurrent = [1.5, 0, 0]; s.rt.state.windVectorTarget = [1.5, 0, 0]; };
+    wind();
+    s.frame({ press: [BOAT_ACTIONS.toggleSail] });
+    const w0 = way(s);
+    wind(); s.frame();
+    const wayStep = way(s) - w0;
+    s.held.add('MoveRight');
+    const t0 = s.rt.state.TurnCurrent;
+    wind(); s.frame();
+    return { wayStep, turnStep: s.rt.state.TurnCurrent - t0, mod: s.rt.state.boatCargoMod };
+  };
+  const light = under(0), laden = under(1300);
+  assert.ok(laden.mod > 0 && laden.mod < 1 && light.wayStep > 0 && light.turnStep > 0, JSON.stringify({ light, laden }));
+  assert.ok(laden.wayStep <= light.wayStep * laden.mod + 1e-4, `her way comes on at ${laden.wayStep}, no more than ${laden.mod} of ${light.wayStep}`);
+  assert.ok(laden.turnStep <= light.turnStep * laden.mod + 1e-4, `her helm comes over at ${laden.turnStep}, no more than ${laden.mod} of ${light.turnStep}`);
 });

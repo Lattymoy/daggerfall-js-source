@@ -132,7 +132,7 @@ import { strandedNotice } from './strandedNotice.js';   // STRANDED: and said on
 import { bringOnlineButton } from './bringOnlineButton.js';
 import { createRealmLine } from '../../systems/legacy/realmLine.js';   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): the account's lines, read at the door
 import { loadFamily } from '../../systems/legacy/store.js';
-import { waitingHouses, spareLines, takeUpLine, houseWaitsTitle, houseWaitsLine, heirButtonLabel, newbornButtonLabel } from '../../systems/legacy/waitingHouses.js';
+import { waitingHouses, spareFamilies, withoutLine, takeUpLine, houseWaitsTitle, houseWaitsLine, heirButtonLabel, newbornButtonLabel } from '../../systems/legacy/waitingHouses.js';
 import { legacySettings } from '../../systems/legacy/settings.js';   // RPT1026-MISC HEIR-WAITS: the Descendants dial a newborn heir is offered by
 import { mintCharacterId } from '../../systems/characterId.js';   // REALM P1.4: a copy to offline is a new offline character
 import { exportSavesZip, collectSlots, importSlots, entriesFromFiles, slotPathOf, TRANSFER_ZIP_NAME } from '../../systems/save/saveTransfer.js';   // SP1: saves move between the website and the app
@@ -1491,9 +1491,8 @@ function waitingHouseCards() {
  *  none left could found no other (LINEAGES_MAX). A waiting Succession is such a line too: removed, it is not carried on. */
 let familiesShown = false;
 function spareFamiliesCard() {
-  if (!realmRows || !realmRowsOk || !realmLineIds?.length) return null;
-  const spare = spareLines(realmLineIds, realmRows).map((id) => loadFamily(appStorage(), id)).filter(Boolean);
-  if (!spare.length) return null;
+  const spare = spareFamilies({ rows: realmRows, rowsOk: realmRowsOk, lineIds: realmLineIds, load: (id) => loadFamily(appStorage(), id) });
+  if (!spare) return null;
   const card = el('div', 'card svfamilies');
   card.append(el('h4', null, t('menu.realm.families', 'Families with no living character: {n, number}', { n: spare.length })));
   card.append(acts([{ label: familiesShown ? t('menu.realm.familiesHide', 'Hide') : t('menu.realm.familiesShow', 'Show'), onClick: () => { familiesShown = !familiesShown; render(); } }]));
@@ -1509,7 +1508,7 @@ function spareFamiliesCard() {
         t('menu.realm.removeFamilyYes', 'Remove'),
         // AUDIT FB1029B F3: a line the realm no longer holds (removed from another device, a lost answer) is gone - said so
         () => realmAct(() => realmLineageRemove(realmIoNow(), family.id).then((r) => (r?.error === 'no-lineage' ? { ok: true } : r)), () => {
-          realmLineIds = realmLineIds?.filter((id) => id !== family.id) ?? null;
+          realmLineIds = withoutLine(realmLineIds, family.id);
           return [t('menu.realm.familyRemoved', 'The {name} family is removed.', { name })];
         })),
     }]));

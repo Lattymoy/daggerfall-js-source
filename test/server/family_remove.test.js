@@ -116,3 +116,13 @@ test('FAMILY-REMOVE (AUDIT FB1029B F4) a line removed between a birth\'s check a
   assert.deepEqual(born, { error: 'no-lineage' });
   assert.equal(db._raw.prepare('SELECT COUNT(*) AS n FROM realm_characters WHERE player = ?').get(g.id).n, 0, 'no character on a line that is gone');
 });
+
+test('FAMILY-REMOVE (AUDIT FB1029B T11) another account\'s living character of a line of the same id holds nothing of this one\'s', async () => {
+  const { S, call } = await stand();
+  const A = famOf(1);
+  await call('/v1/realm/lineage', { id: A, record: record(A) });
+  const other = await S.guest();
+  await S.call('/v1/realm/lineage', { id: A, record: record(A) }, other.secret);
+  assert.equal((await S.call('/v1/realm/create', { name: 'Ysolde Hlaalu', lineage: A, person: 1 }, other.secret)).status, 200, 'the other account plays its own line');
+  assert.deepEqual((await call('/v1/realm/lineage/remove', { id: A })).body, { ok: true }, 'this one\'s goes');
+});

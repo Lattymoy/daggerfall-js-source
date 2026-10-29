@@ -122,8 +122,8 @@
   {
     "name": "AUDIT-FB1029B-F5-failed-roster",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "if (!realmRows || !realmRowsOk || !realmLineIds?.length) return null;",
-    "new": "if (!realmRows || !realmLineIds?.length) return null;",
+    "old": "  const spare = spareFamilies({ rows: realmRows, rowsOk: realmRowsOk,",
+    "new": "  const spare = spareFamilies({ rows: realmRows, rowsOk: true,",
     "tests": [
       "test/systems/legacy/family_remove_menu.test.js"
     ],
