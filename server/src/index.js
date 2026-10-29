@@ -288,7 +288,7 @@ import { mintSerpentReceipt, readSerpentReceipt } from '../../src/net/serpent/se
 // SERPENT2 (2026-10-04, the owner: "the discord integration needs to happen"): ONE FILE JOINS THE BUNDLE -
 // net/serpent/serpentHerald.js (the serpent's Discord posts and when they are owed, pure law - it imports serpentLaw.js,
 // gateHerald.js and wire.js, all here). The hub posts off its own alarm, beside the gate's herald.
-import { serpentHeraldRole, serpentOmenPost, serpentFellPost, serpentHeraldOmenDue, serpentHeraldKill, serpentSiteDayOk, agreedSerpentSite, serpentAtWord } from '../../src/net/serpent/serpentHerald.js';
+import { serpentHeraldRole, serpentOmenPost, serpentFellPost, serpentHeraldOmenDue, serpentHeraldKill, serpentSiteWordOk, SERPENT_SITE_RECORD, agreedSerpentSite, serpentAtWord } from '../../src/net/serpent/serpentHerald.js';
 // RAID3 (2026-09-27, Mac, on World Events - Raiding Parties online: "1. Server"): TWO FILES JOIN THE BUNDLE -
 // net/raid/raidLaw.js (a town raid's ledger, pure law - it imports nothing) and net/raid/raidReceipt.js (a raid's receipt, the
 // relay's second signature under the gate's one key - it imports identityToken.js and raidLaw.js, both here).
@@ -1446,7 +1446,7 @@ export class Room {
     }
     // RAID3: the raids cleansed today and yesterday - so a raid this player's machine still holds open is closed quietly,
     // never said withdrawn (the cleanse's own word went out while they were away)
-    { try { const l = await this._raidCleansOf(now); if (l.length) this._send(ws, JSON.stringify({ t: 'raid', k: 'cls', l })); } catch (e) { console.warn('[hub] raid word failed', e?.message ?? e); } }
+    { try { const l = await this._raidCleansOf(now); if (l.length) this._send(ws, JSON.stringify({ t: 'raid', k: 'cls', l: [...l].reverse() })); } catch (e) { console.warn('[hub] raid word failed', e?.message ?? e); } }   // AUDIT TAMRIEL-WIDE II R1: newest first - a build before world284 reads 64 (wire.js validRaidOut), today's
     // AUDIT RAID R2: and this account's raid receipts the hub holds - an earner who was not in the town's cell at the
     // cleanse, or whose link dropped at it, is handed them here (the account service counts each once)
     if (sub) { try { await this._raidReceiptsTo(ws, sub, now); } catch (e) { console.warn('[hub] raid receipts failed', e?.message ?? e); } }
@@ -8611,17 +8611,17 @@ export class Room {
   // went), and the kill read off the hub's own kept kills (_serpentFellsOf - one a site), posted for the agreed site alone.
   /** The hub's record of where the serpent lies - the instance's, else storage's. */
   async _serpentSiteOf() {
-    if (this._serpentSiteRec === undefined) this._serpentSiteRec = (await this.state.storage.get('serpentsite')) ?? null;
+    if (this._serpentSiteRec === undefined) this._serpentSiteRec = (await this.state.storage.get(SERPENT_SITE_RECORD)) ?? null;
     return this._serpentSiteRec;
   }
   /** An account's word of where the serpent the clock is about lies, folded into the record (one word an account a day -
    *  net/gate/gateHerald.js foldGateSite, the site's native point in its pixel slots) and kept when it moved it. */
   async _serpentSite(sub, m, now) {
-    if (!serpentSiteDayOk(m.d, now)) return;
+    if (!serpentSiteWordOk(m, now)) return;   // AUDIT TAMRIEL-WIDE E3: its own site law's word alone
     const had = await this._serpentSiteOf();
     const rec = foldGateSite(had, m.d, sub, m.sx, m.sz, m.pl);
     if (rec === had) return;
-    await this.state.storage.put('serpentsite', rec);
+    await this.state.storage.put(SERPENT_SITE_RECORD, rec);
     this._serpentSiteRec = rec;
     this._serpentAtTell(had, rec, now);   // WW7-12: every game online told where the accounts now agree it lies
   }

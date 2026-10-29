@@ -99,7 +99,8 @@ The zone word carries it; the referee holds the lock and says each flag to the r
 
 "flaggin is so yu dont hit a player when ur trying to kill a monster": an unflagged striker touches no player
 (`wildRef.js:"if (!a.flag) return"`), and the flag never shields its bearer; party, duel and guild kin stay unhittable as before. While the flag is down
-the Portal Stone works anywhere in the zone (`portalStoneHost.js:"const zoneRefused = (to = null) =>"`). Chat types no
+the Portal Stone works anywhere in the zone (`portalStoneHost.js:"const zoneRefused = (to = null) =>"`), its arrival
+too (`portalStoneHost.js:"teleportTo(g.dest, { zoneFree: !pvpFlagOn() })"`, AUDIT TAMRIEL-WIDE III F1). Chat types no
 capitals under the flag's Caps Lock (`capsFix.js:"export function capsFixKey(e, field) {"`). Skulls overhead
 come next. A departure: DFU has no flag.
 
@@ -132,7 +133,9 @@ replaces ZONE-GRACE's rise arm (`Wild-Zone.md`); an entry from outside, away and
 "only from ebterin from the edge", "if u tp in no safe passage": the game says the zone word's `ed` only when its last
 step outside was close and just now (`zoneEdge.js:"export const ZONE_EDGE = Object.freeze({ m: 60, ms: 5_000,"`), and
 the referee grants an entry's safe passage on it alone (`wildRef.js:"else if (!x.down && !rose && ed && now"`). A
-teleport, a dungeon left, a town's streets left (the streets say 0 to the referee) and a rise grant none. The relay has
+teleport, a dungeon or a building left, a town's streets left (they are in the zone, PVP-SAFE-HIT's `sf`) and a rise
+grant none: the edge reads the zone's pixel alone (`world.js:"zoneEdgeSee(wildHere(), player.pos, Date.now())"`, AUDIT
+TAMRIEL-WIDE III P2 - a shop's door had read as the edge). The relay has
 no map, so the word is the client's own, as the streets' peace is.
 
 ## PVP-BAR: health over a flagged player
@@ -332,7 +335,7 @@ send it away; once I leave the streets, fall or am red no more, every hunter wal
 every door of mine. A player in the streets is at peace, and strikes a villain alone (PVP-SAFE-HIT, below). Guards are
 this client's NPCs, so the hunt is the client's, on the meter the relay already says (`wref` `vil`); a villain who
 enters the zone in a town is hunted from its first step out of the streets. THE FOUR HOSTS: `world.js` wired;
-`exterior.js`, `worldModes.js` (a building) and `dungeonContext.js` hunt no one. Orsinium waits. A departure from
+`exterior.js`, `worldModes.js` (a building) and `dungeonContext.js` hunt no one. A departure from
 PlayerEntity.SpawnCityGuards (`PlayerEntity.cs:625-694`): DFU sends 2-5 once for a crime, at my level plus 3-6, every
 skill level x 5 + 30, and its watch resists nothing.
 

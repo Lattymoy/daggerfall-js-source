@@ -92,9 +92,9 @@
   {
     "name": "SD-BACK-the-last-copy-kept",
     "file": "server/src/sdCopy.js",
-    "old": "if (!mine) await room.state.storage.put(sdAcctKey(c.a)",
-    "new": "await room.state.storage.put(sdAcctKey(c.a)",
-    "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
+    "old": "if (!mine) await room.state.storage.put(sdAcctKey(c.a, lane)",
+    "new": "await room.state.storage.put(sdAcctKey(c.a, lane)",
+    "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE B1): the death's key is its lane's. SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
     "tests": [
       "test/net/superDungeon/sdparty_relay.test.js"
     ]

@@ -449,7 +449,7 @@ export const CREDITS = Object.freeze({
       title: 'World Events - Raiding Parties',
       version: '1.1',
       author: 'Kamer',
-      get what() { return t('credits.raidingParties.what', 'Raids on towns. Each day knights, bandits or orcs attack towns across the Iliac Bay for 2 hours (10 real minutes online). Be in a raided town and the raiders come, with the town watch at your side. Drive off 15 to 25 of them to free the town and raise your standing with the region, its people, a knightly order and the Fighters Guild.'); },
+      get what() { return t('credits.raidingParties.what', 'Raids on towns across Tamriel. Each day knights, bandits or orcs attack for 2 hours (10 real minutes online). Drive off 15 to 25 of them, with the town watch beside you, to free the town and raise your standing.'); },
       get terms() { return t('credits.raidingParties.terms', 'Made by Kamer for this game, used with his permission, with some bugs fixed.'); },
       contact: 'DFU Discord',
       vendor: Object.freeze(['world-events-raiding-parties']),

@@ -144,7 +144,7 @@ test('ETHER-WILD: the hosts\' seams - the frame stands the sea beside the mounta
     assert.deepEqual(etherRiseSite(x, y), { mapPixel: { x: port.px, y: port.py }, kind: 'city' });
   }
   assert.deepEqual(etherRiseSite(vh.px + 1, vh.py).mapPixel, { x: vh.px, y: vh.py }, 'Veilhaven beside it');
-  const tele = w.slice(w.indexOf('const wildTeleportRefused = (to = null) => {'), w.indexOf('const wildTravelGate = '));
+  const tele = w.slice(w.indexOf('const wildTeleportRefused = (to = null, landing = undefined) => {'), w.indexOf('const wildTravelGate = '));
   assert.match(tele, /etherWildRingAt\(playerTravelPixel\(\)\?\.x, playerTravelPixel\(\)\?\.y\) > 0 \|\| \(to && etherWildRingAt\(to\.x, to\.y\) > 0\)\)\) \{ townTalk\.say\(ETHER_WILD_TEXT\.teleport\(\)\); return true; \}/);
   assert.ok(tele.indexOf('ETHER_WILD_TEXT.teleport') < tele.indexOf('if (!m) return false;'), 'asked before the mountains\' mask is');
   const atWire = w.slice(w.indexOf('const wildAtWire = (p, near = false) => {'), w.indexOf('const wildOutdoors = () =>'));

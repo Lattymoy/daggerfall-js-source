@@ -182,8 +182,9 @@ test('PROF2 law: the boulders - the climate\'s count a day, tier 1, Rough Stone;
   assert.deepEqual([...unMats].sort(), [...DUNGEON_VEINS].sort(), 'unconfirmed: every ore of the table - Dwarven Scrap and Adamantium among them - and no Moonstone');
   assert.equal(dveinKey({ dungeon: 123456, day: DAY, slot: 2 }), `dvein:123456:${DAY}:2`);
   assert.deepEqual(parseNodeKey(`dvein:123456:${DAY}:2`), { kind: 'dvein', dungeon: 123456, day: DAY, slot: 2 });
-  assert.equal(parseNodeKey(`dvein:${DUNGEON_ID_MAX + 1}:${DAY}:0`), null, 'past DFU\'s 20 bits');
-  assert.deepEqual([dungeonOk(0), dungeonOk(0xfffff), dungeonOk(-1), dungeonOk(1.5)], [true, true, false, false]);
+  // PIN MOVED (AUDIT TAMRIEL-WIDE C3): a dungeon past the Bay is its whole map id - DFU's 20 bits were the bound
+  assert.equal(parseNodeKey(`dvein:${DUNGEON_ID_MAX + 1}:${DAY}:0`), null, 'past an unsigned 32-bit id');
+  assert.deepEqual([dungeonOk(0), dungeonOk(0xfffff), dungeonOk(0xffffffff), dungeonOk(2 ** 32), dungeonOk(-1), dungeonOk(1.5)], [true, true, true, false, false, false]);
   assert.equal(dungeonVein({ dungeon: 5, day: DAY, slot: 4, climate: C.Mountain }), null);
 });
 

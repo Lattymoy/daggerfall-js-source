@@ -157,7 +157,7 @@ serpent's does.
 verifier and theirs by this one. Its claims: `q` the watch, `b` the dragon (0 brass, 1 Aetherbright), `s` the account,
 `c` the hoard's seed, `x` dealt or stood, `l` the level, `m` the relay's body count, `i` issued, `e` a week on.
 
-**The claim** (`server-account/src/dragons.js` `claimDragon`, route `/v1/dragon/claim`, migration `0193_dragon.sql`, acct217).
+**The claim** (`server-account/src/dragons.js` `claimDragon`, route `/v1/dragon/claim`, migration `0193_dragon.sql`, acct218).
 The device carries the receipt (`net/dragon/dragonClaims.js`) with the character that fought and a claim id of its own.
 The service counts one kill a (watch, account) in `dragon_kills`, and gives the hoard to the claim whose id writes the
 watch's `dragon_spoils` row, so a second browser is answered no. A guest is given its hoard and nothing else. The kill is
@@ -240,20 +240,21 @@ colours, under the player and on every other screen.
 | **DRAGON6** | the travel map: the dragon's rate, straight over sea and land | no | no |
 | **DRAGON7** | the Aetherbright: the palette, the roll, its look kept | no | no |
 
-The relay changes land in ONE version (world284 - every byte of the relay's bundle is hashed; world281, then world283,
-until the merges of main renumbered it past the PvP rework's world281 to world283), and the service's in one (acct217 - acct211 when this
-page was written, renumbered past KEEP-MARK, SHED-REPLICA, the PvP rework's acct213-acct215 and CRAFT-SET's acct216). Each slice: pins in `test/`, a mutant record, its record here.
+The relay changes land in ONE version (world285 - every byte of the relay's bundle is hashed; world281, world283, then
+world284, until the merges of main renumbered it past world281 to world284), and the service's in one (acct218 - acct211
+when this page was written, renumbered past KEEP-MARK, SHED-REPLICA, the PvP rework's acct213-acct215, CRAFT-SET's acct216
+and AUDIT TAMRIEL-WIDE's acct217). Each slice: pins in `test/`, a mutant record, its record here.
 
 ## 13. The record, slice by slice
 
 **DRAGON1 - the ride seen (2026-10-29).** PR #1359 kept a copy of the ride's relay gate (world276) in
 `systems/staffDragon.js`, and the wire's half sat on #1360, which never merged. Main's relay reached world280 with no dragon
 in its pose law and clamped `rd` 3 to the cart, so other players saw an Admin on a cart. The gate now lives in
-`net/wire.js` beside `POSE_RIDE` (`DRAGON_RIDE_RELAY_MIN` 284, `relaySupportsDragonRide`), and `net/remotePlayers.js` stands
+`net/wire.js` beside `POSE_RIDE` (`DRAGON_RIDE_RELAY_MIN` 285, `relaySupportsDragonRide`), and `net/remotePlayers.js` stands
 a dragon's rider as the Dwarven Dragon, with no hooves and no Morrowind body. Pinned by `test/net/dragonride_wire.test.js`
 (the gate and the law agree at this wire's own version); `tools/mutants/dragon1.json`, 6 dead.
 
-**DRAGON2 - the fight's law and the relay's half (2026-10-29, world284).** `net/dragon/dragonLaw.js` (the watch, the look,
+**DRAGON2 - the fight's law and the relay's half (2026-10-29, world285).** `net/dragon/dragonLaw.js` (the watch, the look,
 the site's roll), `net/dragon/dragonBody.js` (the plan's legs), `net/dragon/dragonBrain.js` (the fight), `net/dragon/dragonReceipt.js`
 (`z1`), `net/bossRef.js` judgeDragon and `net/bossSeam.js` DRAGON_SEAM; the `dragon` frame in `net/wire.js`; the relay's half in
 `server/src/dragonFights.js`, which `server/src/index.js` calls from its dispatch, its hub route and hello, its alarm (the
@@ -265,7 +266,7 @@ Its follow-up: a replace meant for the dragon's refusal codes had also rewritten
 (`SERPENT_NO_WORDS`), so the client dropped that refusal. It is restored, and the SD9a bundle pin moved
 (`test/net/superDungeon/sd9a_receipt.test.js`).
 
-**DRAGON3 - the client (2026-10-29, world284 re-hashed).** `scenes/dragonHost.js` is the dragon on this screen: its sky,
+**DRAGON3 - the client (2026-10-29, world285).** `scenes/dragonHost.js` is the dragon on this screen: its sky,
 the sighting, the `in`, its blows draped and judged on my feet, my shafts, spells and swings out to its cell, the bar's
 model, its voice, its fall and its remains. Beside it: `net/dragon/dragonLink.js` (the fold, this site's words alone),
 `systems/dragon/dragonSite.js`, `systems/dragon/dragonWords.js`, `ui/dragonBar.js` (brass) and
@@ -275,7 +276,7 @@ while its remains lie (`DRAGON_REMAINS_MS` moved to the law). Pinned by `test/ne
 `test/scenes/dragon3_host.test.js` (7) and `test/net/dragon/dragon3_relay.test.js` (1); `tools/mutants/dragon3.json`, 27
 dead. PINS MOVED: the serpent's marks (`serpent4`), its spell door (`fb1019f_bossdot`), NAV-H's enemies near (`nav_h_host`).
 
-**DRAGON4 - the hoard and the tame (2026-10-29, acct217, migration 0193; acct213 and 0192 on its branch, renumbered past the PvP rework and CRAFT-SET at the merges of main).** `server-account/src/dragons.js` `claimDragon` behind
+**DRAGON4 - the hoard and the tame (2026-10-29, acct218, migration 0193; acct213 and 0192 on its branch, renumbered past the PvP rework, CRAFT-SET and AUDIT TAMRIEL-WIDE at the merges of main).** `server-account/src/dragons.js` `claimDragon` behind
 `/v1/dragon/claim`: one kill a (watch, account), the hoard to the device that wrote its row, the tame drawn by the
 service for a dealer's first write, one a character, named at every answer while its row stands. On the device:
 `net/dragon/dragonClaims.js` (the carrier), `systems/dragon/dragonSpoils.js` (the hoard), `scenes/dragonRewards.js` (the
@@ -322,3 +323,9 @@ Two calls of its own. The tame binds at the claim's answer or the next stand-up,
 seconds after the kill, so a walk back added nothing. And DRAGON_MOUNT_ONLINE is off for this release (REST6's law,
 SHIP BEFORE ANYONE CAN SEE ONE): the tame waits on the device and in its row, and a later release turns it on. The
 classic window's Dragon row is drawn under DFU's art, a departure (MOVE00I0 has four rows).
+
+**THE MERGE OF MAIN AT 566057d51 (2026-10-29, #1386 AUDIT TAMRIEL-WIDE).** Main took world284 and acct217, so the dragon
+is world285 and acct218; migration 0193 stands. `DRAGON_RIDE_RELAY_MIN` is 285 (main's world284 still clamps `rd` 3),
+and the fight's gate with it. Item law 15 names acct218 (`tech1_roster` LAW_SERVICE). bootWorld measures 35,250: main
+took eight lines out. PINS MOVED: the relay's and the service's versions (sixty files, each note before main's), the
+ride's and the fight's gates (`dragonride_wire`, `dragon2_law`), and ten mutant records on the version lines.

@@ -13,10 +13,11 @@ const pose = (extra) => ({ x: 1, y: 2, z: 3, yaw: 0, pitch: 0, mv: 1, ...extra }
 test('DRAGON1 the gate opens on a relay of this wire, and that wire keeps rd 3 (mutants: the clamp left at the cart; the gate a version early)', () => {
   assert.equal(relaySupportsDragonRide(RELAY_VERSION), true, 'this build\'s relay keeps the dragon');
   assert.equal(validPose(pose({ rd: DRAGON_POSE_RIDE, rv: 0 }))?.rd, POSE_RIDE.Dragon, 'and its pose law says so');
-  assert.equal(DRAGON_RIDE_RELAY_MIN, 284);   // PIN MOVED: world284, DRAGON - world281 then world283 on its branch, renumbered past the PvP rework's world281 to world283 at the merges of main
+  assert.equal(DRAGON_RIDE_RELAY_MIN, 285);   // PIN MOVED: world285, DRAGON - world281, world283 then world284 on its branch, renumbered past world281 to world284 at the merges of main
   assert.equal(relaySupportsDragonRide('world280'), false, 'ARMORY\'s relay clamps 3 to the cart');
   assert.equal(relaySupportsDragonRide('world282'), false, 'PVP-FOLLOWUP\'s relay clamps 3 to the cart too');
   assert.equal(relaySupportsDragonRide('world283'), false, 'and PVP-SAFE-HIT\'s');
+  assert.equal(relaySupportsDragonRide('world284'), false, 'and AUDIT TAMRIEL-WIDE\'s');
   assert.equal(relaySupportsDragonRide(`world${DRAGON_RIDE_RELAY_MIN}`), true);
   assert.equal(relaySupportsDragonRide(null), false);
   assert.equal(relaySupportsDragonRide('world'), false);

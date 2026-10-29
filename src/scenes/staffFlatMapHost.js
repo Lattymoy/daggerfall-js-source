@@ -9,12 +9,15 @@
 // the staff view's `choose` (the tag menu). What a region's room cannot say stays unsaid on the map and said in the hint:
 // a player indoors or in a dungeon sends no mark (wire.js TV3).
 import { CHAT_REGION_COUNT } from '../net/wire.js';
-import { REGION_NAMES } from '../formats/mapsTables.js';
+import { REGION_NAMES, isProvinceRegion } from '../formats/mapsTables.js';
+import { tamrielFrameInBay, tamrielFit } from '../world/tamriel/tamrielFrame.js';   // AUDIT TAMRIEL-WIDE B4/C7: a province's frame
 import { createStaffFlatMap } from '../ui/staffFlatMap.js';
 import { t } from '../systems/textManager.js';
 
-/** The politic map's size, map pixels. */
+/** BAY-OWN: the Bay's politic map (POLITIC.PAK), map pixels - every Bay region's land is on it. */
 const MAP_W = 1000, MAP_H = 500;
+/** AUDIT TAMRIEL-WIDE B4/C7: a province's land is looked for over the continent's frame this many map pixels apart. */
+const COARSE = 8;
 /** A region's box is grown by this many map pixels each side, so its coast and borders show. */
 const MARGIN = 4;
 const RANK = Object.freeze({ high: 0, medium: 1, low: 2 });
@@ -27,18 +30,23 @@ const RANK = Object.freeze({ high: 0, medium: 1, low: 2 });
  */
 export function createStaffFlatMapHost({ map, politicAt, pixel, flagOf, words, choose, doc = globalThis.document, makeSheet = createStaffFlatMap }) {
   let region = /** @type {number|null} */ (null), open = false;
-  /** @type {Map<number, { x0: number, y0: number, x1: number, y1: number } | null>} */
+  /** @type {Map<number, { fit: any, box: { x0: number, y0: number, x1: number, y1: number } | null }>} */
   const boxes = new Map();
-  /** A region's own box on the politic map (with a margin), found once. @param {number} r */
+  /** A region's own box on the politic map (with a margin), found once a fit. AUDIT TAMRIEL-WIDE B4/C7: a province's
+   *  land is past the Bay's map, so it is looked for over the continent's frame, COARSE apart. @param {number} r */
   function boxOf(r) {
-    if (boxes.has(r)) return /** @type {any} */ (boxes.get(r));
-    let x0 = MAP_W, y0 = MAP_H, x1 = -1, y1 = -1;
-    for (let y = 0; y < MAP_H; y++) for (let x = 0; x < MAP_W; x++) {
+    const fit = tamrielFit(), kept = boxes.get(r);
+    if (kept && kept.fit === fit) return kept.box;
+    const f = isProvinceRegion(r) ? tamrielFrameInBay() : { x0: 0, y0: 0, w: MAP_W, h: MAP_H };
+    const coarse = isProvinceRegion(r), step = coarse ? COARSE : 1, grow = coarse ? MARGIN + COARSE : MARGIN;   // AUDIT TAMRIEL-WIDE II A3: past the Bay, a sample's step past its last land, then the margin
+    const fx0 = Math.floor(f.x0), fy0 = Math.floor(f.y0), fx1 = Math.ceil(f.x0 + f.w) - 1, fy1 = Math.ceil(f.y0 + f.h) - 1;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (let y = fy0; y <= fy1; y += step) for (let x = fx0; x <= fx1; x += step) {
       if (politicAt(x, y) - 128 !== r) continue;
       if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
     }
-    const box = x1 < 0 ? null : { x0: Math.max(0, x0 - MARGIN), y0: Math.max(0, y0 - MARGIN), x1: Math.min(MAP_W - 1, x1 + MARGIN), y1: Math.min(MAP_H - 1, y1 + MARGIN) };
-    boxes.set(r, box);
+    const box = x1 < x0 ? null : { x0: Math.max(fx0, x0 - grow), y0: Math.max(fy0, y0 - grow), x1: Math.min(fx1, x1 + grow), y1: Math.min(fy1, y1 + grow) };
+    boxes.set(r, { fit, box });
     return box;
   }
   const regionHere = () => { const p = pixel(); const r = p ? politicAt(p.x, p.y) - 128 : -1; return r >= 0 && r < CHAT_REGION_COUNT ? r : null; };

@@ -3167,7 +3167,7 @@ test('EM1: the strip is laid out on every paint, in paper pixels, and rides the 
     const win = open(mkWin());
     assert.ok(win._strip, 'the layout is minted even with no 2D context - the hit test is the pointer\'s');
     assert.deepEqual(win._strip.tabs.map((t) => t.sheet), ['world']);
-    assert.equal(win._strip.tabs[0].title, 'The Bay');
+    assert.equal(win._strip.tabs[0].title, 'Tamriel', 'the world sheet shows the continent (TAMRIEL1\'s switch, on by default)');   // PIN MOVED (AUDIT TAMRIEL-WIDE D3): it said The Bay over the whole continent
     assert.equal(win._strip.tabs[0].live, true);
     // the strip scales with the PAPER, not the screen
     assert.equal(win._strip.scale, stripScale(win._paper.w));
@@ -3436,7 +3436,7 @@ test('TAMRIEL1 window: the frame round the Bay - the rest at the Bay\'s fit, the
       win._setView({ ox: -1500, oy: -1200, scale: 0.4 });
       const [sx, sy] = toPaper(win._view, -800, -600);
       const label = win._hoverLabel(sx, sy);
-      assert.ok(label && /beyond the Bay|Ocean|Sea/.test(label.label), `the continent answers: ${label?.label}`);
+      assert.ok(label && /Ocean|Sea/.test(label.label), `the continent answers: ${label?.label}`);   // PIN MOVED (AUDIT TAMRIEL-WIDE D3): the Eltheric Ocean - no hover says "beyond the Bay" now
       assert.equal(label.cursor, '');
       win._pickAt(sx, sy);
       assert.equal(win._selected, null, 'not traversable: nothing picked');
