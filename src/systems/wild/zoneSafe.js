@@ -22,11 +22,11 @@
 // zone. They are DFU's towns still: the zone's watch answers a blow struck at one (ZONE-WATCH, scenes/world.js
 // zoneWatchCall). A dungeon, a graveyard, a coven, a cult's shrine and a poor home are neither.
 //
-// WHO SAYS IT: each client of itself and of the bodies it sees. My word on the zone to the relay's referee is 0 in a
-// settlement's streets (scenes/world.js wildCan -> setWildZone), so the referee - which lands a blow only where both
-// fighters said they stand in the zone (net/wild/wildRef.js) - refuses every blow and cast into the streets and out of
-// them; and every door of mine refuses a body whose shown pose stands in one (wildFair: the melee arm, the arrows, the
-// cast engine's marks). The relay has no map: the defender's own word protects the defender (section 22's known limits).
+// WHO SAYS IT: each client of itself and of the bodies it sees. My word on the zone to the relay's referee is 2 in a
+// settlement's streets (scenes/world.js wildCan -> setWildZone; 0 to a relay before world283), so the referee
+// (net/wild/wildRef.js wildStreetsBar) lands no blow on me there and mine on a red villain alone (PVP-SAFE-HIT); and every
+// door of mine refuses a body whose shown pose stands in one (wildFair: the melee arm, the arrows, the cast engine's
+// marks). The relay has no map: the defender's own word protects the defender (section 22's known limits).
 // ═══════════════════════════════════════════════════════════════════
 import { t } from '../textManager.js';
 import { LOCATION_TYPES } from '../../formats/mapsFile.js';
@@ -95,7 +95,7 @@ export const zoneSafe = () => _safe;
 // ── the words (L10N4: through the text core, read when they are said) ──
 export const ZONE_SAFE_TEXT = Object.freeze({
   get chip() { return t('wild.safe.chip', 'Safe zone'); },
-  get enter() { return t('wild.safe.enter', 'You are in the streets of a city, town or village: a safe zone. Other players cannot attack you here, and you cannot attack them.'); },
+  get enter() { return t('wild.safe.enter', 'You are in the streets of a city, town or village: a safe zone. Other players cannot attack you here. You can attack a villain.'); },
   get leave() { return t('wild.safe.leave', 'You leave the safe streets. Other players may attack you again.'); },
-  get rule() { return t('wild.safe.rule', 'Cities, towns and villages are safe zones: no player can attack another in their streets.'); },
+  get rule() { return t('wild.safe.rule', 'Cities, towns and villages are safe zones: no player can attack another in their streets. A villain is never safe, and you can attack one from the streets.'); },
 });

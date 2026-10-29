@@ -1704,7 +1704,8 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world283';   // world283: DRAGON (2026-10-29, bible/11-Multiplayer/Dwarven-Dragon.md; NOT YET DEPLOYED; world281 on its branch, renumbered past PVP-REWORK's world281 and PVP-FOLLOWUP's world282 at the merge of main): the pose's `rd` keeps 3, a rider on the Dwarven Dragon (POSE_RIDE.Dragon, DRAGON_RIDE_RELAY_MIN), and the Dwarven Dragon's fight (server/src/dragonFights.js, its cell's words and its z1 receipts). Deploy the relay first.
+export const RELAY_VERSION = 'world284';   // world284: DRAGON (2026-10-29, bible/11-Multiplayer/Dwarven-Dragon.md; NOT YET DEPLOYED; world281 then world283 on its branch, renumbered past the PvP rework's world281 and world282 and PVP-SAFE-HIT's world283 at the merges of main): the pose's `rd` keeps 3, a rider on the Dwarven Dragon (POSE_RIDE.Dragon, DRAGON_RIDE_RELAY_MIN), and the Dwarven Dragon's fight (server/src/dragonFights.js, its cell's words and its z1 receipts). Deploy the relay first.
+// world283: PVP-SAFE-HIT (2026-10-29, NOT YET DEPLOYED): a non-villain in a settlement's streets of the zone says it (`zone` with `sf` 1, WILD_STREETS_RELAY_MIN) - the referee lands its blow on a red villain alone and no blow on it (net/wild/wildRef.js wildStreetsBar). Deploy the relay first, then the site.
 // world282: PVP-FOLLOWUP (2026-10-29, the PvP rework's follow-up; NOT YET DEPLOYED): PVP-RISE - the zone's death wait a minute (WILD_DEATH_HOLD_S 60, WILD_REF.riseMs and the `down` word's ceiling 60 s, were two minutes); Enter rises after 15 s (DEATH-15). Deploy the relay first, then the site.
 // world281: PVP-REWORK STAGE 1 with STAFF-PULL and SD-SOLO-40 (the stp frame carries pull and landed - staff bring a player to them, net/staffTeleport.js, server/src/staffTeleport.js routeStaffPull, from #1360's world276; a shared solo Shattered Hour holds 40, net/superDungeon/sdLaw.js SD_PUB_SEATS) (2026-10-28, the PvP rework; NOT YET DEPLOYED; world280 on its branch, renumbered past ARMORY) - the referee's pool is the player's real health (the `vit` report's `x`, at most 3,000) and Restoration (`r`); one blow or cast takes at most 45% of it (PVP-HIT), BAL8's 180 in 5 s retired; casts 1.9 a second (PVP-CASTS); a fight's heals 25-35% a 15 s (PVP-HEAL), duels included; a player's blow passes the struck player's armour first (PVP-GUARD, the report's `g`), a player's spell its resistance by element (PVP-WARD, the report's `w` and a cast's `el`, never past 85%); a Shield on a player takes 25% off a swing and 35% off a shaft (PVP-SHIELD, the report's `sh` - PVP-KIT: a Shield's share, 10-25, of those), one hit at most 34% (the triangle). Deploy the relay first, then the site.
 // world280: ARMORY (2026-10-28, the owner: "Aura armory ... customize your character without changing your overall sprite"; bible/04-Characters/Aura-Armory.md; NOT YET DEPLOYED): a token's armory kit, `ak` (net/armoryLaw.js, which joins the bundle), refused unless it is five known pieces, each of its slot, and badged on a peer's row like the aura (readArmory); the weapon glow's two armory words, brand2 and edge2 (LOOK_GLOW_RE). Deploy the relay first. (world277 on its branch, renumbered past WILD-REMAINS-LOSS's world277 at the merge of main, and world278 past FB1028's world278 and AUDIT FB1028's world279 at the next.)
@@ -2207,7 +2208,7 @@ const seatOf = (st) => (Number.isInteger(st) && st >= 1 && st <= POSE_SEAT_TOP_M
 export const POSE_RIDE = Object.freeze({ Foot: 0, Horse: 1, Cart: 2, Dragon: 3 });
 /** DRAGON1: the first relay whose pose law keeps `rd` 3 - an older one clamps it to the cart. The ride's one gate, kept beside
  *  the law it gates, so the two move together when a merge renumbers the relay. */
-export const DRAGON_RIDE_RELAY_MIN = 283;
+export const DRAGON_RIDE_RELAY_MIN = 284;
 export const relaySupportsDragonRide = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= DRAGON_RIDE_RELAY_MIN; };
 export const POSE_RIDE_SPRITES = 5;
 // DISC7 (2026-09-23, Mac: "fix the known gaps"): `hs` - the rider is moving at LESS THAN HALF SPEED
@@ -4978,7 +4979,7 @@ export function validWildData(d) {
   } else if (d.k === 'zone') {
     if (d.z !== 0 && d.z !== 1) return null;
     if (d.fl !== undefined && d.fl !== 0 && d.fl !== 1) return null;
-    out = { k: 'zone', z: d.z, ...(d.z === 0 && d.dd === 1 ? { dd: 1 } : {}), ...(d.z === 1 && d.fl !== undefined ? { fl: d.fl } : {}), ...(d.z === 1 && d.ed === 1 ? { ed: 1 } : {}) };   // INT9: my word on the zone - AUDIT FOE-KEEPS E2: `dd` 1, left it dead - PVP-FLAG: `fl`, my flag - PVP-EDGE: `ed` 1, walked in over the edge
+    out = { k: 'zone', z: d.z, ...(d.z === 0 && d.dd === 1 ? { dd: 1 } : {}), ...(d.z === 1 && d.fl !== undefined ? { fl: d.fl } : {}), ...(d.z === 1 && d.ed === 1 ? { ed: 1 } : {}), ...(d.z === 1 && d.sf === 1 ? { sf: 1 } : {}) };   // INT9: my word on the zone - AUDIT FOE-KEEPS E2: `dd` 1, left it dead - PVP-FLAG: `fl`, my flag - PVP-EDGE: `ed` 1, walked in over the edge - PVP-SAFE-HIT: `sf` 1, in a settlement's safe streets
   } else if (d.k === 'helm') {
     // SHIP-PVP: my word at my helm - my hull (-1: left it), my toughness in hundredths, my boat's uid, my hull per mille
     // AUDIT SEA VENTURES A4: a ship said is a boat the service can name - a hull with no uid (u 0) was a ship that could be
@@ -5024,6 +5025,10 @@ export const WILD_ORDER_MAX = 1024;
 /** INT9: the relay that first REFEREES the zone (net/wild/wildRef.js) - a client meeting an older one fights nobody there. */
 export const WILD_REF_RELAY_MIN = 185;   // world183, then world184, on its branch, renumbered past CHAP4c's world183 and PERF-RELAY1's world184 at the merges
 export const relaySupportsWildRef = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= WILD_REF_RELAY_MIN; };
+/** PVP-SAFE-HIT: the relay that first reads `sf` on the zone word (net/wild/wildRef.js wildStreetsBar) - an older one drops
+ *  it and would hold a player in the streets fair, so a client says 0 there to it, as before. */
+export const WILD_STREETS_RELAY_MIN = 283;
+export const relaySupportsWildStreets = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= WILD_STREETS_RELAY_MIN; };
 /** INT9: the zone referee's word kinds (`{t:'wref', k, ...}`, the relay's alone). */
 export const WILD_REF_KINDS = Object.freeze(['hp', 'fell', 'rc', 'hull', 'wreck', 'wc', 'down', 'grace', 'flag', 'bar', 'vil']);
 /** WILD-REJOIN: the longest a `down` word says a fallen has left to lie, ms (net/wild/wildRef.js WILD_REF.riseMs, pinned
