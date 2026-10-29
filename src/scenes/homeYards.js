@@ -83,6 +83,7 @@ import { LIGHTS_ARCHIVE, CITY_LIGHT_RANGE, CITY_LIGHT_INTENSITY, CITY_LIGHT_COLO
 import { interiorLightProperties } from '../world/interior/interiorLights.js';   // a candle's own light, the same one it gives indoors
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { fabricBackyardOf } from '../world/imperialBackyards.js';   // IC-BACKYARD: an Imperial City house's yard, the court behind it
+import { t } from '../systems/textManager.js';
 import { transformedAabb } from '../render/frustum.js';   // FB1009 HOME-FOOT: a model's ground where its placement stands it
 import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a row named by its lamp
 import { createBankAccounts, BANK_REGION_COUNT, goldRegion } from '../systems/banking.js';   // the yard's wallet (homeYardWallet)
@@ -576,6 +577,7 @@ export function createHomeYards(deps) {
   let syncIn = 0;
   /** @type {any} the owner's own yard the decorator stands in, or null */
   let cur = null;
+  let panelWas = false;
 
   /** DECOR-OUTDOOR: the built pixel a yard stands in, now (a season's turn builds it again). */
   const entryOf = (y) => deps.built?.()?.get?.(`${y.px},${y.py}`) ?? null;
@@ -611,7 +613,10 @@ export function createHomeYards(deps) {
    *  kept one merges alone, as its owner writes into it. */
   function makeYard(key, p, bk, frame, kept) {
     const door = kept ? null : blocks.door(`${p.px},${p.py}:${yardCellOf(bk)}`, p.px, p.py, () => deps.translation(p.px, p.py));
-    const y = { key, px: p.px, py: p.py, mapId: p.homeTown, bk, frame, t: [...deps.translation(p.px, p.py)], sig: '', src: null, srcSig: '', kept, door, lot: lotOfFrame(frame), pool: null, entry: p, skin: p._skinGen ?? 0, trees: new Map(), treeSet: null };
+    // AUDIT IC-BACKYARD P1: its lot worked when first read - an Imperial City house's is a survey of its court, and a
+    // stranger's yard never reads its lot (ownYardHere asks a kept one's alone)
+    let lot;
+    const y = { key, px: p.px, py: p.py, mapId: p.homeTown, bk, frame, t: [...deps.translation(p.px, p.py)], sig: '', src: null, srcSig: '', kept, door, get lot() { if (lot === undefined) lot = lotOfFrame(frame); return lot; }, pool: null, entry: p, skin: p._skinGen ?? 0, trees: new Map(), treeSet: null };
     y.pool = createDecorRoom({
       meshes: deps.meshes, renderer: deps.renderer, getTexture: deps.getTexture, uploadRecord: deps.uploadRecord, uploadRecordFrame: deps.uploadRecordFrame,
       collider: () => deps.collider?.() ?? null, origin: () => originOf(y),
@@ -904,6 +909,11 @@ export function createHomeYards(deps) {
       if (again) cur = { ...cur, yard: again }; else { tool.close(); cur = null; }
     }
     tool.frame({ dt, cam, overlayUp, interior: !!cur });
+    // AUDIT IC-BACKYARD P2: a lot away from its door - an Imperial City house's court, out of sight from the street - said
+    // where it is as the decorator opens
+    const open = tool.panelOpen();
+    if (open && !panelWas && cur?.yard.lot?.access) deps.say?.(t('decor.yard.behind', 'Your yard is the court behind your house. Fly up over the roof to reach it.'));
+    panelWas = open;
   }
 
   /**

@@ -10,26 +10,6 @@
     "note": "A corner house's two street fronts read as one: its yard runs into its neighbours'."
   },
   {
-    "name": "IC-BACKYARD-the-mitre-unread",
-    "file": "src/world/imperialBackyards.js",
-    "old": "fabricGroundAt(x, z) === GROUND.court && nearestEdge(Q, qe, x, z);",
-    "new": "fabricGroundAt(x, z) === GROUND.court;",
-    "tests": [
-      "test/world/worldWide/ic_backyard.test.js"
-    ],
-    "note": "The court is not parted at its mitres: two houses round a corner of it take the same ground."
-  },
-  {
-    "name": "IC-BACKYARD-the-first-court-taken",
-    "file": "src/world/imperialBackyards.js",
-    "old": "if (d < gap) { Q = q; qe = i; gap = d; }",
-    "new": "if (d < gap && (!Q || q === Q)) { Q = q; qe = i; gap = d; }",
-    "tests": [
-      "test/world/worldWide/ic_backyard.test.js"
-    ],
-    "note": "The first court behind the wall, where another block's lies over its own: its mitres another court's."
-  },
-  {
     "name": "IC-BACKYARD-the-edges-unwalked",
     "file": "src/world/imperialBackyards.js",
     "old": "    for (let i = 0; i <= m; i++) if (!open(a + ((c - a) * i) / m, b + ((d - b) * i) / m)) return false;\n",
@@ -42,12 +22,12 @@
   {
     "name": "IC-BACKYARD-the-reach-unread",
     "file": "src/world/imperialBackyards.js",
-    "old": "return Math.hypot(x - at[0], z - at[1]) <= reach && fabricGroundAt",
-    "new": "return fabricGroundAt",
+    "old": "    if (!(Math.hypot(x - at[0], z - at[1]) <= reach)) return false;\n",
+    "new": "",
     "tests": [
       "test/world/worldWide/ic_backyard.test.js"
     ],
-    "note": "A yard past the decorator's leash from the door: its far end out of the free eye's reach."
+    "note": "A yard past the decorator's leash from the door: its far end out of the free eye's reach. AUDIT IC-BACKYARD (PIN MOVED): re-aimed by content - the reach its own line of the open test."
   },
   {
     "name": "IC-BACKYARD-the-yard-unturned",
@@ -148,5 +128,135 @@
       "test/world/worldWide/ic_backyard.test.js"
     ],
     "note": "The build never names a home's block and record: no house has a yard."
+  },
+  {
+    "name": "AUDIT-ICB-T1-the-rivals-unread",
+    "file": "src/world/imperialBackyards.js",
+    "old": "    for (const o of rivals) {",
+    "new": "    for (const o of []) {",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "No building bounds a yard: where two neighbourhoods meet, two houses take the same ground."
+  },
+  {
+    "name": "AUDIT-ICB-T1-its-own-side-counted",
+    "file": "src/world/imperialBackyards.js",
+    "old": "if (q.back || !q.q.some((v) => (v[0] - A[0]) * n[0] + (v[1] - A[1]) * n[1] > BACKYARD.front)) continue;",
+    "new": "if (q.back) continue;",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "A house's own side bounds it: its neighbours' corners eat its yard at depth."
+  },
+  {
+    "name": "AUDIT-ICB-T1-a-back-range-a-rival",
+    "file": "src/world/imperialBackyards.js",
+    "old": "if (q.back || !q.q.some(",
+    "new": "if (!q.q.some(",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "A back range claims ground: the yards round it stop half way to it."
+  },
+  {
+    "name": "AUDIT-ICB-T3-the-gap-dropped",
+    "file": "src/world/imperialBackyards.js",
+    "old": "mine = v + side;",
+    "new": "mine = v;",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "Two yards meet edge to edge at their line."
+  },
+  {
+    "name": "AUDIT-ICB-P5-the-roofs-unread",
+    "file": "src/world/imperialBackyards.js",
+    "old": "    if (roofs.some((w) => Math.abs(x - w[0]) < WELL_ROOF[0] && Math.abs(z - w[1]) < WELL_ROOF[1])) return false;\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "A yard runs under a well's roof: a piece stands into it."
+  },
+  {
+    "name": "AUDIT-ICB-T2-the-reach-halved",
+    "file": "src/world/imperialBackyards.js",
+    "old": "reach: 36, front: 1",
+    "new": "reach: 18, front: 1",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "Every yard cut at 18 m from its door."
+  },
+  {
+    "name": "AUDIT-ICB-T2-the-first-rectangle-kept",
+    "file": "src/world/imperialBackyards.js",
+    "old": "if (w >= min && d - back >= min && a > area)",
+    "new": "if (w >= min && d - back >= min && !best)",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "The first rectangle that fits, not the biggest: yards a third their size."
+  },
+  {
+    "name": "AUDIT-ICB-L1-the-rivals-near-the-wall",
+    "file": "src/world/imperialBackyards.js",
+    "old": "const far = 2 * reach + side,",
+    "new": "const far = reach,",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "Rivals gathered within the reach alone: one nearer a deep yard's far end than its wall missed."
+  },
+  {
+    "name": "AUDIT-ICB-P1-the-lot-made-at-once",
+    "file": "src/scenes/homeYards.js",
+    "old": "get lot() { if (lot === undefined) lot = lotOfFrame(frame); return lot; }",
+    "new": "lot: lotOfFrame(frame)",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "Every stranger's yard surveys its court as it is stood."
+  },
+  {
+    "name": "AUDIT-ICB-P2-the-line-unsaid",
+    "file": "src/scenes/homeYards.js",
+    "old": "    if (open && !panelWas && cur?.yard.lot?.access) deps.say?.(",
+    "new": "    if (false) deps.say?.(",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "Nothing says where the court is: the owner at the door sees only the street."
+  },
+  {
+    "name": "AUDIT-ICB-P2-the-line-every-frame",
+    "file": "src/scenes/homeYards.js",
+    "old": "    panelWas = open;\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "The line said every frame the decorator is open."
+  },
+  {
+    "name": "AUDIT-ICB-L2-the-pieces-by-their-block",
+    "file": "src/world/imperialFabric.js",
+    "old": "reaches = (a, b, pad) => whole || segRect(a, b, x0, z0, x1, z1) <= pad;",
+    "new": "reaches = () => whole;",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "A long block's court laid in a cell without its walls, sheds and wells: court ground in them."
+  },
+  {
+    "name": "AUDIT-ICB-L3-the-court-on-its-chords",
+    "file": "src/world/imperialFabric.js",
+    "old": "L.courts.push(blk.lawn);",
+    "new": "L.courts.push(blk.court);",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "A polar ring's outer arc and an organic one's warped line keep a strip of street behind their houses: no yard there."
   }
 ]

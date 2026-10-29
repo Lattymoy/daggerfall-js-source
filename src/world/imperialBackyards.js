@@ -3,10 +3,10 @@
 // works"): AN IMPERIAL CITY HOUSE'S YARD IS THE COURT BEHIND IT. AUDIT TAMRIEL-WIDE A1 left every fabric house yardless
 // (a lot grown round its door held its own rooms, its neighbours' and the street), but a ring block's houses back onto a
 // court the fabric parts with garden walls (world/imperialFabric.js makeBlock). A house with one street front owns the
-// court behind its back wall: its own width, to the first garden wall, shed, well or back range, and to the court's mitre
-// with the houses on its other sides - so no two yards meet. A corner house meets the court at a point; a row through a
-// narrow block has none. The yard is turned with its house, as the city's streets are. Pure: the same on every client.
-import { fabricCell, fabricGroundAt, outwardOf, inQuad, GROUND } from './imperialFabric.js';
+// court behind its back wall: its own width, to the first garden wall, shed, well or back range, and the ground nearer
+// it than any other building reaching into the court - so no two yards meet. A corner house and a row through a narrow
+// block have a street behind them. The yard is turned with its house, as the city's streets are. Pure: every client's.
+import { fabricCell, fabricGroundAt, outwardOf, inQuad, GROUND, WELL } from './imperialFabric.js';
 import { fabricCellBuildings, subRecordFrame } from './imperialFabricBuildings.js';
 import { imperialBlockOf } from './imperialBlocks.js';
 import { IMPERIAL_CELLS, pointSeg } from './imperialCity.js';
@@ -14,18 +14,18 @@ import { BLOCK_M } from './blockHash.js';
 import { GLOBAL_SCALE } from './meshReader.js';
 import { RMB_DIMENSION } from '../formats/blocksFile.js';
 
-/** The survey's step and its edges' walk; the gap kept off the party walls and between two yards at a mitre; the gap off
- *  the house's own back wall; a yard's smallest side; how far from its door a yard reaches (metres) - inside the
- *  decorator's leash (scenes/decor/decorTool.js DECOR_FLY_LEASH), its free eye flown from the door over the roof. */
-export const BACKYARD = Object.freeze({ step: 0.5, walk: 0.05, side: 0.4, back: 0.3, min: 2, reach: 36 });
+/** The survey's step and its edges' walk; the gap kept off the party walls and between two yards; the gap off the house's
+ *  own back wall; a yard's smallest side; how far from its door a yard reaches - inside the decorator's leash
+ *  (scenes/decor/decorTool.js DECOR_FLY_LEASH), its free eye flown from the door over the roof; how far before the line
+ *  of its back wall another building reaches to bound it - its own side's stand behind it, a curved side's within a metre
+ *  (metres). */
+export const BACKYARD = Object.freeze({ step: 0.5, walk: 0.05, side: 0.4, back: 0.3, min: 2, reach: 36, front: 1 });
 const HALF = IMPERIAL_CELLS / 2, B = BLOCK_M;
-
-/** Whether (x, z) stands nearer court Q's edge e than any other of its edges, by BACKYARD.side. */
-function nearestEdge(Q, e, x, z) {
-  const d = pointSeg(x, z, Q[e], Q[(e + 1) & 3]) + BACKYARD.side;
-  for (let k = 0; k < 4; k++) if (k !== e && pointSeg(x, z, Q[k], Q[(k + 1) & 3]) < d) return false;
-  return true;
-}
+/** AUDIT IC-BACKYARD P5: a well's roof over the ground about it (world/imperialFabricModels.js buildWell), the ground law's
+ *  pad (0.3 m) past it - a walker passes under it, a yard's piece would stand into it. */
+const WELL_ROOF = [WELL.r + WELL.eave + 0.3, WELL.ridge + 0.3];
+/** A point's distance to a quad - 0 inside it. */
+const gapTo = (q, x, z) => (inQuad(q, x, z) ? 0 : Math.min(pointSeg(x, z, q[0], q[1]), pointSeg(x, z, q[1], q[2]), pointSeg(x, z, q[2], q[3]), pointSeg(x, z, q[3], q[0])));
 
 /**
  * THE YARD of a fabric building (world/imperialFabricBuildings.js fabricCellBuildings' `b`), from `at` (its record's
@@ -41,19 +41,37 @@ export function fabricBackyard(b, at = b?.door?.at) {
   const k = (e + 2) & 3, A = p.q[k], Bq = p.q[(k + 1) & 3], n = outwardOf(p.q, k);
   const len = Math.hypot(Bq[0] - A[0], Bq[1] - A[1]), t = [(Bq[0] - A[0]) / len, (Bq[1] - A[1]) / len];
   if (!(len >= 2 * side + min)) return null;
-  // the court its back wall stands on, and that wall's edge of it: of the courts behind it, the one with an edge along the
-  // wall (where two neighbourhoods meet, another block's court can lie over its own)
-  const wall = [(A[0] + Bq[0]) / 2, (A[1] + Bq[1]) / 2], mid = [wall[0] + n[0] * (back + step), wall[1] + n[1] * (back + step)];
-  let Q = null, qe = 0, gap = Infinity;
-  for (const q of fabricCell(Math.floor(mid[1] / B + HALF), Math.floor(mid[0] / B + HALF)).courts) {
-    if (!inQuad(q, mid[0], mid[1])) continue;
-    for (let i = 0; i < 4; i++) { const d = pointSeg(wall[0], wall[1], q[i], q[(i + 1) & 3]); if (d < gap) { Q = q; qe = i; gap = d; } }
+  // AUDIT IC-BACKYARD T1: THE COURT PARTED BETWEEN THE BUILDINGS ROUND IT - every other building that stands before the
+  // line of its back wall (the houses across the court and on its other sides; where two neighbourhoods meet, the other's
+  // standing in its court), nearest first; never a back range (its ground stops a yard, it claims none). Its own side's
+  // stand behind that line, parted from it at the party walls. All within twice the reach of the door (whatever is nearer
+  // a point of the yard than its own wall), from the cells about it; and every well's roof there.
+  const far = 2 * reach + side, rivals = [], roofs = [], seen = new Set([p]);
+  for (let r = Math.floor((at[1] - far) / B + HALF); r <= Math.floor((at[1] + far) / B + HALF); r++) {
+    for (let c = Math.floor((at[0] - far) / B + HALF); c <= Math.floor((at[0] + far) / B + HALF); c++) {
+      const L = fabricCell(r, c);
+      for (const q of L.near) {
+        if (seen.has(q)) continue;
+        seen.add(q);
+        if (q.back || !q.q.some((v) => (v[0] - A[0]) * n[0] + (v[1] - A[1]) * n[1] > BACKYARD.front)) continue;
+        const xs = q.q.map((v) => v[0]), zs = q.q.map((v) => v[1]), box = [Math.min(...xs), Math.min(...zs), Math.max(...xs), Math.max(...zs)];
+        const d = Math.hypot(Math.max(box[0] - at[0], 0, at[0] - box[2]), Math.max(box[1] - at[1], 0, at[1] - box[3]));
+        if (d <= far) rivals.push({ q: q.q, box, d });
+      }
+      for (const w of L.ground.wells) if (!roofs.some((o) => o[0] === w[0] && o[1] === w[1])) roofs.push(w);
+    }
   }
-  if (!Q) return null;
+  rivals.sort((a, b) => a.d - b.d);
   /** Whether the point `u` along the wall and `v` out from it is its own open court, within reach of its door. */
   const open = (u, v) => {
-    const x = A[0] + t[0] * u + n[0] * v, z = A[1] + t[1] * u + n[1] * v;
-    return Math.hypot(x - at[0], z - at[1]) <= reach && fabricGroundAt(x, z) === GROUND.court && nearestEdge(Q, qe, x, z);
+    const x = A[0] + t[0] * u + n[0] * v, z = A[1] + t[1] * u + n[1] * v, mine = v + side;
+    if (!(Math.hypot(x - at[0], z - at[1]) <= reach)) return false;
+    if (roofs.some((w) => Math.abs(x - w[0]) < WELL_ROOF[0] && Math.abs(z - w[1]) < WELL_ROOF[1])) return false;
+    for (const o of rivals) {
+      const b = o.box;
+      if (Math.hypot(Math.max(b[0] - x, 0, x - b[2]), Math.max(b[1] - z, 0, z - b[3])) < mine && gapTo(o.q, x, z) < mine) return false;
+    }
+    return fabricGroundAt(x, z) === GROUND.court;
   };
   // its depth a step along the wall and at its far end: to the first thing standing in it (and the door farther at every
   // step out from the back wall)
