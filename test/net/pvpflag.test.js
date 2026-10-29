@@ -6,13 +6,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PVP_FLAG, pvpFlagRefusal, pvpFlagCanDrop, pvpAggroLeft } from '../../src/systems/wild/pvpFlag.js';
+import { PVP_FLAG, pvpFlagRefusal, pvpFlagCanDrop, pvpAggroLeft, pvpYoung } from '../../src/systems/wild/pvpFlag.js';
 import { newWildRef, wildZone, wildBlow, wildAggroWord, wildFlagWord, WILD_GRACE } from '../../src/net/wild/wildRef.js';
 import { SIEGE_UNITS_PER_M } from '../../src/net/siege/siegeRef.js';
 import { validWildData, validWildRefOut, worldRoom, PIXEL_UNITS } from '../../src/net/wire.js';
-import { createPvpFlagHost, pvpFlagOn } from '../../src/scenes/pvpFlagHost.js';
+import { createPvpFlagHost, pvpFlagOn, pvpSkullOf } from '../../src/scenes/pvpFlagHost.js';
 import { capsFixKey, noteCaps } from '../../src/ui/capsFix.js';
 import { SKULL_ROWS, SKULL_TINTS, skullSrc, skullGlow } from '../../src/ui/pvpSkull.js';
+import { pvp30Asks, pvp30Said, pvp30Rows, pvp30No, pvp30Box } from '../../src/ui/levelUp/pvp30Ask.js';
+import { levelUpScreenFor } from '../../src/ui/charSheetDoor.js';
 import { fakeRoom } from '../fakeRoom.mjs';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -216,4 +218,72 @@ test('PVP-SKULL THE PAGE (scenes/pvpFlagHost.js, ui/pvpSkull.js, ui/nameLayer.js
   assert.deepEqual([skullGlow('white'), !!skullGlow('gold'), !!skullGlow('red')], ['', true, true]);
   assert.ok(rd('src/scenes/world.js').includes('      mask: pvpFlag.mask(wildNameMask),'));
   assert.ok(rd('src/ui/nameLayer.js').includes("put(tag, 'skullOf', p.skull ?? '',"));
+});
+
+test('PVP-30 THE REFEREE (net/wild/wildRef.js wildZone, wildBlow): a character under level 30 by its token neither strikes nor is struck, and its flag never goes up; at 30 it is fair flagged or not; a token with no level is left to the game\'s own flag (mutants: the young unread; the struck one unasked; the flag up young)', () => {
+  assert.deepEqual([pvpYoung(29), pvpYoung(30), pvpYoung(null), pvpYoung(undefined)], [true, false, false, false]);
+  const two = (ca, cb) => {
+    const st = newWildRef();
+    wildZone(st, 'acct-a', { id: 'peer-a', lv: 10, cl: ca, ci: 'r-a', fl: 1 }, true, at(-1), 0);
+    wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, cl: cb, ci: 'r-b', fl: 0 }, true, at(1), 0);
+    for (const s of ['acct-a', 'acct-b']) st.fighters.get(s).graceUntil = -Infinity;
+    return st;
+  };
+  assert.equal(hit(two(30, 30), WILD_GRACE.ms).dealt > 0, true, 'at 30, flagged on unflagged: it lands');
+  assert.equal(hit(two(30, 29), WILD_GRACE.ms).why, 'young', 'the struck one under 30');
+  const st = two(29, 30);
+  assert.equal(st.fighters.get('acct-a').flag, false, 'a flag asked up at 29 stays down');
+  st.fighters.get('acct-a').flag = true;
+  assert.equal(hit(st, WILD_GRACE.ms).why, 'young', 'the striker under 30, its flag forced');
+  assert.equal(hit(two(null, null), WILD_GRACE.ms).dealt > 0, true, 'no level signed: the referee does not judge it');
+});
+
+test('PVP-30 THE RELAY (server/src/index.js _wildZoneWord): the token\'s character level reaches the referee; a flag asked at 29 is said down (mutants: the level unpassed; the refusal unsaid)', async () => {
+  const realNow = Date.now; let clock = 1_800_000_000_000; Date.now = () => clock;
+  try {
+    const r = fakeRoom(CELL, { now: () => clock });
+    const say = (ws, d) => r.raw(ws, JSON.stringify({ t: 'wild', data: d }));
+    const join = async (id, x, ci, charLevel) => { const ws = r.connect(); await r.hello(ws, id, P(x), { lv: 10, look: LOOK, rc: 1, ci, charLevel }); return ws; };
+    const a = await join('peer-0001', -1, 'r00000000000000000a02', 30), b = await join('peer-0002', 1, 'r00000000000000000a01', 29);
+    await say(a, { k: 'zone', z: 1, fl: 1 });
+    await say(b, { k: 'zone', z: 1, fl: 0 });
+    const was = flags(b).length;
+    await say(b, { k: 'zone', z: 1, fl: 1 });
+    assert.deepEqual(flags(b).slice(was), [['peer-0002', 0]], 'the young one\'s flag asked up: said down');
+    clock += WILD_GRACE.ms + 1;
+    await say(a, { k: 'strike', to: 'peer-0002', n: 1, by: 'melee', p: W(-1), d: 999 });
+    assert.equal(b.sent.filter((m) => m.t === 'wref' && m.k === 'hp').length, 0, 'a level 29 is never struck');
+  } finally { Date.now = realNow; }
+});
+
+test('PVP-30 THE ASK (ui/levelUp/pvp30Ask.js, ui/charSheetDoor.js, ui/growth/growthTab.js): online, the level up from 29 to 30 asks first in the owner\'s words - Yes opens the level up, Not yet leaves it owed; no rollout is built before the Yes; offline, other levels and the Oghma\'s never ask (mutants: the level; offline asked; the rollout unguarded; Yes unheard)', () => {
+  const e = { _online: true, readyToLevelUp: true, level: 29 };
+  assert.equal(pvp30Asks(e), true);
+  for (const o of [{ ...e, _online: false }, { ...e, level: 28 }, { ...e, level: 30 }, { ...e, oghmaLevelUp: true }, { ...e, readyToLevelUp: false }]) assert.equal(pvp30Asks(o), false);
+  assert.deepEqual(pvp30Rows(), ['At level 30, other players can attack and kill you in the PvP zones (Wrothgar and Cyrodiil), even when your PvP flag is off.', '', 'Continue to level 30?']);
+  assert.equal(pvp30No(), 'Not yet');
+  assert.equal(levelUpScreenFor(e), null, 'no rollout before the Yes');
+  let opened = 0;
+  const no = pvp30Box(e, () => { opened++; });
+  assert.equal(no.noLabel, 'Not yet');
+  no.answer(false);
+  assert.deepEqual([opened, pvp30Asks(e), e.readyToLevelUp], [0, true, true], 'Not yet: still owed, still asks');
+  pvp30Box(e, () => { opened++; }).answer(true);
+  assert.deepEqual([opened, pvp30Asks(e)], [1, false], 'Yes: the level up opens, asked no more');
+  pvp30Said(null);
+  const door = rd('src/ui/charSheetDoor.js'), tab = rd('src/ui/growth/growthTab.js');
+  assert.match(door, /if \(pvp30Asks\(deps\.entity\)\) return pvp30Box\(deps\.entity\);/);
+  assert.match(tab, /if \(owed && pvp30Asks\(entity\)\) \{ pvp30Page\(detail, ctx\); return; \}/);
+});
+
+test('PVP-SKULL THE OVERWORLD (scenes/travelViewMarks.js, scenes/travelView.js, ui/travel/travelViewHud.js; the owner: "overwold should show skulls"): a player\'s mark on the Overworld carries the skull the page holds for them - near, a stranger, or a region traveller - and the readout draws it over their name (mutants: the door shut; a mark bare; the carry dropped; the drawing undrawn)', () => {
+  const f = createPvpFlagHost(() => ({ id: 'peer-me', wildOk: true, setWildFlag: () => {} }), { level: 30 }, () => {}, { say: () => {} }, { doc: null, now: () => 0 });
+  f.heard({ k: 'flag', id: 'peer-x', f: 1, a: 5000 });
+  assert.deepEqual([pvpSkullOf('peer-x'), pvpSkullOf('peer-z')], ['gold', null]);
+  const marks = rd('src/scenes/travelViewMarks.js');
+  assert.equal(marks.match(/skull: pvpSkullOf\((d|t)\.id\) \}\);/g)?.length, 3, 'the stranger, the near player and the traveller');
+  assert.ok(rd('src/scenes/travelView.js').includes('...(m.skull ? { skull: m.skull } : {}) });'));
+  const hud = rd('src/ui/travel/travelViewHud.js');
+  assert.ok(hud.includes("else if (sk) g.drawImage(sk, inScreen(x - SKULL_PX / 2, SKULL_PX, vw), ly - SKULL_PX - 1, SKULL_PX, SKULL_PX);"));
+  assert.ok(hud.includes("q.m.color ?? '', q.m.skull ?? '');"), 'a skull up or down draws the picture again');
 });

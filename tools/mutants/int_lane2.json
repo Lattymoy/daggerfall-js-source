@@ -67,8 +67,8 @@
   {
     "name": "INT9-THE-RISE-UNREAD",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (z && x.down && now - x.downAt >= WILD_REF.riseMs) {",
-    "new": "  if (false) {",
+    "old": "  const rose = z && x.down && now - x.downAt >= WILD_REF.riseMs;",
+    "new": "  const rose = false;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]

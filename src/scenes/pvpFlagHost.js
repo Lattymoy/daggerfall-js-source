@@ -89,3 +89,5 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
 let _current = /** @type {any} */ (null);
 /** The page's flag, for a door outside the host (scenes/portalStoneHost.js). */
 export const pvpFlagOn = () => _current?.on() ?? true;   // no host (a headless door): flagged, as an old client is
+/** PVP-SKULL: a peer's skull for a door outside the host (scenes/travelViewMarks.js - the Overworld's marks), or null. */
+export const pvpSkullOf = (id) => _current?.skullOf(id) ?? null;

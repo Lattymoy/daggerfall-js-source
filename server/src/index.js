@@ -11418,7 +11418,7 @@ export class Room {
     const was = st.fighters.get(a.sub), graceWas = was?.graceUntil ?? -Infinity, wasIn = !!was?.zone;
     const carry = z === 1 && (!was || !was.zone) ? await this._wildCarryAsk(a.sub) : null;
     const flagWas = was?.flag;
-    const x = wildZone(st, a.sub, { id: a.id, lv: a.lv, ci: a.ci ?? '', carry, died, fl }, z === 1, a.pose, now);
+    const x = wildZone(st, a.sub, { id: a.id, lv: a.lv, cl: a.cl ?? null, ci: a.ci ?? '', carry, died, fl }, z === 1, a.pose, now);
     if (x) this._wildFlagSay(st, a, x, flagWas, wasIn, fl);   // PVP-FLAG
     if (x && x.graceUntil > now && x.graceUntil !== graceWas) this._wildGraceSay(a, x.graceUntil - now);   // ZONE-GRACE: safe passage begun, or carried in
     if (x && (x.zone !== wasIn || died)) this._wildCarryPut(a.sub, this._zoneCarry(st, a.sub, now, a.key));   // AUDIT PVP-EASE L3-1: an entry, a leave and a death, at the hub
@@ -11499,7 +11499,7 @@ export class Room {
   /** PVP-FLAG (systems/wild/pvpFlag.js): a fighter's flag said to the room when it moves (or the relay kept it up - its
    *  word refused in the lock), and every flagged fighter's said to one that has just stood in the zone. */
   _wildFlagSay(st, a, x, flagWas, wasIn, fl) {
-    if (x.flag !== flagWas || !wasIn || (fl === 0 && x.flag)) this._wildFan({ t: 'wref', k: 'flag', id: a.id, f: x.flag ? 1 : 0 });
+    if (x.flag !== flagWas || !wasIn || (fl === 0 && x.flag) || (fl === 1 && !x.flag)) this._wildFan({ t: 'wref', k: 'flag', id: a.id, f: x.flag ? 1 : 0 });
     if (wasIn || !x.zone) return;
     const mine = this._siegeSocketOf(a.sub);
     if (!mine) return;

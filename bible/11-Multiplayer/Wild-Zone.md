@@ -175,7 +175,7 @@ a temple - outdoors (its door's roof arm retired: no blow is struck under a roof
 ## 3b. Safe passage (ZONE-GRACE)
 
 ZONE-GRACE (2026-10-26, PVP-EASE above; the owner chose "Entry/rise grace"): FOR SIXTY SECONDS AFTER A FIGHTER ENTERS THE
-ZONE OR RISES FROM A FALL, NO PLAYER'S BLOW OR CAST LANDS ON IT, and its own blow or cast on a player ends it at once
+ZONE (never on a rise since PVP-DEATH, `PvP-Rework.md`), NO PLAYER'S BLOW OR CAST LANDS ON IT, and its own blow or cast on a player ends it at once
 (`WILD_GRACE`, `wildRef.js:"export const WILD_GRACE"`). It is the referee's, like every other law of the fight: a blow on a
 fighter under it is refused (`wildBlow`'s `grace`), and a striker under it loses it as its blow is judged
 (`graceEnded`). AN ENTRY GRANTS IT ONLY TO ONE AWAY AND QUIET: away from the zone `WILD_GRACE.awayMs` (30 s) and in no
@@ -190,11 +190,10 @@ gone - `_wildLeaveCarry`), at a death, when a passage ends (its blow, its take) 
 hub drops a leave said by a room the fighter has already left for another (`lr`, the room that said it - never `rk`,
 a foes frame's raid word, which the relay reads nowhere). Before the audit
 the carry was put for a struck fighter alone and read within the mend's half minute: a striker, a fighter under passage
-and a walker were granted a fresh minute at every cell they crossed, and every keepalive into a woken cell. A RISE always
-grants it (AUDIT PVP-EASE L3-6, the owner: "Yes, every rise"): a fallen standing again after `WILD_REF.riseMs` (a kill
-rises outside the zone and is granted it again at its entry), and a death the referee did not keep - a foe's, said `died`
-on its way out (`wildZone`'s `died`, carried as `dd` to the town's cell) - rising inside, at its ring's town (section 4),
-once. A TAKE ENDS IT (AUDIT PVP-EASE L3-4, the owner: "Any take ends passage"): taking from a remains - one's own or
+and a walker were granted a fresh minute at every cell they crossed, and every keepalive into a woken cell. A RISE NO LONGER
+grants it (PVP-DEATH, `PvP-Rework.md`, over AUDIT PVP-EASE L3-6's "Yes, every rise"): neither a fallen standing again
+after `WILD_REF.riseMs` nor a death the referee did not keep - a foe's, said `died` on its way out (`wildZone`'s `died`,
+carried as `dd` to the town's cell) - rising inside, at its ring's town (section 4). A TAKE ENDS IT (AUDIT PVP-EASE L3-4, the owner: "Any take ends passage"): taking from a remains - one's own or
 another's - ends the taker's passage as its blow does (`wildGraceTaken`, `_wildGraceTake`), so the rise's minute is no
 untouchable run back to the body. SHIPS' GUNS KEEP IT (AUDIT PVP-EASE L3-3): a ship whose captain is under it takes no
 shot (`seaRef.js` `seaShot`'s `grace`), a captain's own shot ends its passage, and a gunfight is a fight for both, for an

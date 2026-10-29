@@ -109,5 +109,20 @@ come next. A departure: DFU has no flag.
 (`pvpSkull.js:"export const SKULL_ROWS = Object.freeze(["`) over the name (`nameLayer.js:"put(tag, 'skullOf', p.skull ?? '',"`)
 and on the flag button - none unflagged, white flagged, gold in aggro, red a villain. The referee says a flagged fighter's
 aggro to the room on a blow, its ms left in the flag word's `a`, once each ten seconds
-(`wildRef.js:"export function wildAggroWord(x, now) {"`). A departure: DFU has no PvP mark.
+(`wildRef.js:"export function wildAggroWord(x, now) {"`). "overwold should show skulls": the Overworld's player marks
+carry it over the name too (`travelViewMarks.js:"skull: pvpSkullOf(t.id) });"`). A departure: DFU has no PvP mark.
 
+
+## PVP-30: no PvP under level 30
+
+"add a are you sure to the 29 to 30 levleing", "explain this make u able to die in pvp zones": the referee reads the
+character level the token signs (`cl`) and refuses every blow given or taken under 30, and any flag asked up
+(`wildRef.js:"if (pvpYoung(a.cl) || pvpYoung(t.cl)) return"`). A token with no level is left to the game's own flag
+refusal. Online, the level up from 29 to 30 asks first, Yes or Not yet; Not yet keeps the level owed
+(`pvp30Ask.js:"export const pvp30Asks = (e) =>"`), on the sheet's door and the Growth tab alike. A departure: DFU has no PvP.
+
+## PVP-DEATH: no safe passage after a death
+
+"when u die u need to take away player protection form ebing killed again", "they go to town in a safe zone when dead": a
+rise from a fall, or a return after a foe's kill, grants no safe passage (`wildRef.js:"const rose = z && x.down"`). This
+replaces ZONE-GRACE's rise arm (`Wild-Zone.md`); an entry from outside, away and quiet, still grants it.

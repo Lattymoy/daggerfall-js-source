@@ -23,4 +23,8 @@ export function pvpFlagRefusal({ on, level = 1, fightAt = -Infinity, now = 0 }) 
 export const pvpFlagCanDrop = (fightAt, now) => !(now - fightAt < PVP_FLAG.lockMs);
 
 /** The aggro left on a fighter, ms (0 none): its last PvP blow given or taken `fightAt`. */
+/** PVP-30: is a character at `cl` (the level its token signs) too young for PvP - no blow given or taken? A token with no
+ *  level is not judged here; the game's own flag refuses it (pvpFlagRefusal). */
+export const pvpYoung = (cl) => Number.isSafeInteger(cl) && cl < PVP_FLAG.level;
+
 export const pvpAggroLeft = (fightAt, now) => Math.max(0, Math.min(PVP_FLAG.lockMs, PVP_FLAG.lockMs - (now - fightAt)));

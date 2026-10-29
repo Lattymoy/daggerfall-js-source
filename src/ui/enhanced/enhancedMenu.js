@@ -5351,7 +5351,7 @@ function statsMaster(detail, m) {
  *  unmount takes it down (the sheet's key left it over the running game, its Y still choosing a permanent path). */
 let askUp = /** @type {null | (() => void)} */ (null);
 let askSeq = 0;
-function askCard(lines, onYes) {
+function askCard(lines, onYes, { no = null } = {}) {
   askUp?.();
   const back = el('div', 'px-master-ask');
   const card = el('div', 'inputbox yesnobox');
@@ -5388,7 +5388,7 @@ function askCard(lines, onYes) {
   askUp = close;
   const bar = acts([
     { label: t('pause.ask.yes', 'Yes'), onClick: () => answer(true) },
-    { label: t('pause.ask.no', 'No'), primary: true, onClick: () => answer(false) },
+    { label: no ?? t('pause.ask.no', 'No'), primary: true, onClick: () => answer(false) },
   ]);
   bar.classList.add('yesnobox-acts');
   const hint = el('div', 'notice-hint', t('pause.ask.hint', 'Y yes · N or Enter no'));

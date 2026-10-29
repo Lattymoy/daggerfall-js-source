@@ -38,7 +38,7 @@
 // ═════════════════════════════════════════════════════════════════════
 import { SIEGE_HIT, newFighter, refereeBlow, refereeCast, refereeStep } from '../siege/siegeRef.js';
 import { resetHealthShare } from '../siege/refereeHealthShare.js';
-import { pvpFlagCanDrop, pvpAggroLeft, PVP_FLAG } from '../../systems/wild/pvpFlag.js';   // PVP-FLAG
+import { pvpFlagCanDrop, pvpAggroLeft, pvpYoung, PVP_FLAG } from '../../systems/wild/pvpFlag.js';   // PVP-FLAG
 
 /** The zone referee's own numbers: how long a bar carried from another room stands (`mendMs` - SHARED-HEALTH: no longer a
  *  heal; the name is kept for its pins and the client's readout, which hides a fight this quiet); how long a killer has to pick a worn piece before the fall is signed without one; the party's truce
@@ -78,7 +78,7 @@ export const newWildRef = () => ({ fighters: new Map(), falls: new Map() });
 
 /**
  * A SOCKET'S WORD ON THE ZONE (`zone` - `z` true: it stands in the zone; false: it has left it): its fighter made or
- * kept (`id` its socket's id now, `lv` the Renown its token signs, `ci` its realm character), its place the pose it
+ * kept (`id` its socket's id now, `lv` the Renown its token signs, `cl` its character level, `ci` its realm character), its place the pose it
  * stands at. A NEW fighter takes the vitality it CARRIES (`carry` - the hub's word on its last fight in another room:
  * `{ hp, max, down, downAt, at, heard }`, AUDIT INT9: a step into another cell was a fresh bar), unless that word is
  * older than WILD_REF.mendMs. A fighter down rises on its word that it stands in the zone again once WILD_REF.riseMs has
@@ -86,7 +86,7 @@ export const newWildRef = () => ({ fighters: new Map(), falls: new Map() });
  * sooner keeps its bar (AUDIT INT9: a word off and on was a heal). SHARED-HEALTH: a count started again waits for the player's report, which can lower it and never lift it.
  * Answers the fighter, or null (none made: a word off, a full room).
  */
-export function wildZone(st, sub, { id, lv = 1, ci = '', carry = null, died = false, fl = null }, z, pose, now) {
+export function wildZone(st, sub, { id, lv = 1, cl = null, ci = '', carry = null, died = false, fl = null }, z, pose, now) {
   let x = st.fighters.get(sub);
   if (!x) {
     if (!z) return null;
@@ -97,17 +97,23 @@ export function wildZone(st, sub, { id, lv = 1, ci = '', carry = null, died = fa
     st.fighters.set(sub, x);
   } else if (z && !x.zone && carry && carry.at > x.outAt) takeCarry(x, carry, now);   // it fought in another room since it left this one
   x.id = id; if (ci) x.ci = ci;
-  // PVP-FLAG: a word with its flag - up at once, down only past the lock after its last fight; a word with none keeps it
-  if (fl === 0 && pvpFlagCanDrop(Math.max(x.fightAt, x.struckAt), now)) x.flag = false;
+  if (Number.isSafeInteger(cl)) x.cl = cl;   // PVP-30: the character level its token signs
+  // PVP-FLAG: a word with its flag - up at once, down only past the lock after its last fight; a word with none keeps it.
+  // PVP-30: never up under level 30
+  if (pvpYoung(x.cl)) x.flag = false;
+  else if (fl === 0 && pvpFlagCanDrop(Math.max(x.fightAt, x.struckAt), now)) x.flag = false;
   else if (fl === 1 || x.flag === undefined) x.flag = true;
-  if (z && x.down && now - x.downAt >= WILD_REF.riseMs) { x.f = newFighter(lv, now); x.down = false; x.struckAt = -Infinity; x.graceUntil = now + WILD_GRACE.ms; }   // ZONE-GRACE: a rise
+  // PVP-DEATH (the PvP rework, 2026-10-29 - the owner: "when u die u need to take away player protection form ebing killed
+  // again", "they go to town in a safe zone when dead"): a rise, or an entry after a death, has no safe passage
+  const rose = z && x.down && now - x.downAt >= WILD_REF.riseMs;
+  if (rose) { x.f = newFighter(lv, now); x.down = false; x.struckAt = -Infinity; }
   if (z && !x.zone) {
     // SHARED-HEALTH: back after long away, the count starts again from the player's own health (its next report)
     if (now - x.outAt >= WILD_REF.riseMs && !x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; resetHealthShare(x.f, now); }
-    // ZONE-GRACE: an entry - away long enough, and out of every fight long enough. AUDIT PVP-EASE L3-6 (the owner: "Yes,
-    // every rise"): or a rise from a death the referee did not keep (a foe's - `died` on its way out, `dd` carried)
-    if (!x.down && x.diedAt > -Infinity) { x.graceUntil = Math.max(x.graceUntil, now + WILD_GRACE.ms); x.diedAt = -Infinity; }
-    else if (!x.down && now - x.outAt >= WILD_GRACE.awayMs && now - Math.max(x.fightAt, x.struckAt) >= WILD_GRACE.fightMs) x.graceUntil = Math.max(x.graceUntil, now + WILD_GRACE.ms);
+    // ZONE-GRACE: an entry - away long enough, and out of every fight long enough; never after a death (PVP-DEATH, above -
+    // a foe's death, `died` on its way out or `dd` carried, as well)
+    if (!x.down && x.diedAt > -Infinity) x.diedAt = -Infinity;
+    else if (!x.down && !rose && now - x.outAt >= WILD_GRACE.awayMs && now - Math.max(x.fightAt, x.struckAt) >= WILD_GRACE.fightMs) x.graceUntil = Math.max(x.graceUntil, now + WILD_GRACE.ms);
     x.zoneAt = now;
   }
   if (!z && x.zone) x.outAt = now;
@@ -227,6 +233,7 @@ export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, 
   if (!a.zone || !t.zone) return { ok: false, dealt: 0, fell: false, fall: null, why: 'zone' };
   if (a.down || t.down) return { ok: false, dealt: 0, fell: false, fall: null, why: 'down' };
   if (kin) return { ok: false, dealt: 0, fell: false, fall: null, why: 'kin' };
+  if (pvpYoung(a.cl) || pvpYoung(t.cl)) return { ok: false, dealt: 0, fell: false, fall: null, why: 'young' };   // PVP-30: under level 30 no player strikes or is struck
   if (!a.flag) return { ok: false, dealt: 0, fell: false, fall: null, why: 'unflagged' };   // PVP-FLAG: an unflagged striker touches no player - the struck one's flag never shields it
   if (now - a.jumpAt < WILD_REF.jumpMs) return { ok: false, dealt: 0, fell: false, fall: null, why: 'jump' };
   // ZONE-GRACE: my blow on a fair player ends my safe passage; theirs keeps them from it

@@ -75,16 +75,29 @@ test('ZONE-GRACE THE LAW, NO WAY OUT OF A FIGHT: a fighter that steps out of the
   assert.equal(wildGraceLeft(st, 'acct-b', t + 2_000 + WILD_GRACE.awayMs), G);
 });
 
-test('ZONE-GRACE THE LAW, A RISE AND A CROSSING: a fallen rising on its word stands under safe passage; a cell crossed inside the zone - a new room\'s fighter with its carry - is no entry, and keeps the passage it had (mutants: the rise ungraced; a crossing a fresh passage; the passage dropped at the crossing; the carry\'s words unread)', () => {
+test('ZONE-GRACE THE LAW, A RISE AND A CROSSING: a fallen rising on its word has no safe passage (PVP-DEATH, the owner 2026-10-29: "when u die u need to take away player protection"); a cell crossed inside the zone - a new room\'s fighter with its carry - is no entry, and keeps the passage it had (mutants: the rise graced; a crossing a fresh passage; the passage dropped at the crossing; the carry\'s words unread)', () => {
   const st = enter(-G);
   let k = 0, r;
   do { r = hit(st, 1_000 + 300 * k++); } while (!r.fell && k < 400);
   assert.ok(r.fell, 'b fell');
   const fellAt = 1_000 + 300 * (k - 1);
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), fellAt + WILD_REF.riseMs);
-  assert.equal(wildGraceLeft(st, 'acct-b', fellAt + WILD_REF.riseMs), G, 'risen: a fresh passage');
+  assert.equal(wildGraceLeft(st, 'acct-b', fellAt + WILD_REF.riseMs), 0, 'risen: no passage');
+  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, false, at(1), fellAt + WILD_REF.riseMs + 1);
+  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), fellAt + 2 * WILD_REF.riseMs);
+  assert.equal(wildGraceLeft(st, 'acct-b', fellAt + 2 * WILD_REF.riseMs), G, 'a later entry from outside: its passage');
+  // a fallen gone to town, back past the rise: the rise is its entry, and no passage
+  const away = enter(-G);
+  let j = 0, q;
+  do { q = hit(away, 1_000 + 300 * j++); } while (!q.fell && j < 400);
+  const fell2 = 1_000 + 300 * (j - 1);
+  wildZone(away, 'acct-b', { id: 'peer-b', lv: 10 }, false, at(1), fell2 + 1);
+  wildZone(away, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), fell2 + WILD_REF.riseMs);
+  assert.equal(wildGraceLeft(away, 'acct-b', fell2 + WILD_REF.riseMs), 0, 'back from town and risen: no passage');
   // the crossing: the carry the hub keeps, read in the next room
-  const carry = wildCarryOf(JSON.parse(JSON.stringify(wildCarry(st, 'acct-b', fellAt + WILD_REF.riseMs + 5_000))));
+  const fresh = newWildRef();
+  wildZone(fresh, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), fellAt + WILD_REF.riseMs);
+  const carry = wildCarryOf(JSON.parse(JSON.stringify(wildCarry(fresh, 'acct-b', fellAt + WILD_REF.riseMs + 5_000))));
   assert.equal(carry.gr, fellAt + WILD_REF.riseMs + G, 'its passage carried');
   const next = newWildRef();
   wildZone(next, 'acct-b', { id: 'peer-b', lv: 10, carry }, true, at(1), fellAt + WILD_REF.riseMs + 6_000);
@@ -239,27 +252,29 @@ test('ZONE-GRACE AUDIT PVP-EASE L3-1, L3-2, L3-5 THE LAW: A CROSSING AND A WAKE 
   assert.equal(wildGraceLeft(e2, 'acct-a', 4_000), 0, 'the newer word: ended');
 });
 
-test('ZONE-GRACE AUDIT PVP-EASE L3-6 + L3-4 THE LAW: every rise in the zone grants the minute - a death to a foe too (the owner: "Yes, every rise"), carried to the town\'s cell; once; and a take from a remains ends it (the owner: "Any take ends passage") (mutants: a foe\'s rise ungraced; `dd` uncarried; granted twice; a take unread)', () => {
+test('ZONE-GRACE AUDIT PVP-EASE L3-6 + L3-4 THE LAW: no rise grants the minute - a death to a foe neither (PVP-DEATH, the owner 2026-10-29: "they go to town in a safe zone when dead"), carried to the town\'s cell; the next entry from outside does; and a take from a remains ends it (the owner: "Any take ends passage") (mutants: a foe\'s rise graced; `dd` uncarried; a take unread)', () => {
   const st = enter(-G);
   hit(st, 1_000);
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, died: true }, false, at(1), 2_000);   // a foe's kill, said on its way out
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), 12_000);
-  assert.equal(wildGraceLeft(st, 'acct-b', 12_000), G, 'risen inside the fight\'s minute: the rise\'s passage');
+  assert.equal(wildGraceLeft(st, 'acct-b', 12_000), 0, 'risen from a foe\'s kill: no passage');
   // the town in another cell
   const st2 = enter(-G);
   wildZone(st2, 'acct-b', { id: 'peer-b', lv: 10, died: true }, false, at(1), 2_000);
   const cd = wildCarryOf(wildCarry(st2, 'acct-b', 2_000));
   assert.equal(cd.dd, 2_000);
   const town = newWildRef();
-  wildZone(town, 'acct-b', { id: 'peer-b', lv: 10, carry: cd }, true, at(1), 15_000);
-  assert.equal(wildGraceLeft(town, 'acct-b', 15_000), G);
+  const back = 2_000 + WILD_GRACE.awayMs + 1;   // away and quiet long enough for an entry's passage, but a death's return
+  wildZone(town, 'acct-b', { id: 'peer-b', lv: 10, carry: cd }, true, at(1), back);
+  assert.equal(wildGraceLeft(town, 'acct-b', back), 0, 'the death carried: no passage in the town\'s cell');
   wildZone(town, 'acct-b', { id: 'peer-b', lv: 10 }, false, at(1), 16_000);
-  wildZone(town, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), 17_000);
-  assert.equal(wildGraceLeft(town, 'acct-b', 17_000), G - 2_000, 'once: a step out and in is no second rise');
+  wildZone(town, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), 17_000 + WILD_GRACE.awayMs + G);
+  assert.equal(wildGraceLeft(town, 'acct-b', 17_000 + WILD_GRACE.awayMs + G), G, 'a later entry from outside, out of the fight: its passage');
   // a take
-  assert.equal(wildGraceTaken(town, 'acct-b', 18_000), true);
-  assert.equal(wildGraceLeft(town, 'acct-b', 18_000), 0, 'its take ended it');
-  assert.equal(wildGraceTaken(town, 'acct-b', 18_000), false, 'none to end');
+  const T = 18_000 + WILD_GRACE.awayMs + G;
+  assert.equal(wildGraceTaken(town, 'acct-b', T), true);
+  assert.equal(wildGraceLeft(town, 'acct-b', T), 0, 'its take ended it');
+  assert.equal(wildGraceTaken(town, 'acct-b', T), false, 'none to end');
 });
 
 test('ZONE-GRACE AUDIT PVP-EASE L3-3 THE SEA (net/sea/seaRef.js seaShot): a ship whose captain is under safe passage takes no shot; a graced captain\'s own shot ends its passage and lands; a gunfight is a fight for both, for an entry\'s ask (mutants: the target\'s passage unread; the shooter\'s kept; the fight unmarked)', () => {
