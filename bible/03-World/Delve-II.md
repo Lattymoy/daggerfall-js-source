@@ -254,9 +254,9 @@ party's puzzle. Offline the same law runs in the client, its ledger saved with t
 | DLV1 | The law: `net/delve/delveLaw.js` (kinds, numbers, the ledger machine, its words, earned) and `world/dungeon/delveSites.js` (the site law); the census probe | DONE 2026-10-28: `test/net/delve/dlv1_law.test.js` and `test/world/dlv1_sites.test.js`, their mutants dead (`tools/mutants/dlv1.json`); the census in section 4 |
 | DLV2 | Offline in the game: `scenes/delve/delveHost.js` wired by `buildDungeonContext`; the Hold and the Litany; the vault; the HUD's words; the Features row `dungeon-encounters`; the Ledger A row | DONE 2026-10-29: stood and won in the real game; save and load; frame cost measured (section 12). AUDIT DELVE II the same day. An Elite stands online alone, so DLV3 stands it |
 | DLV3 | Online: the relay's ledger, the party's door, the plan's hash, the `delve` grant kind | DONE 2026-10-29: `test/net/delve/dlv3_relay.test.js` (the room through the real Room: a party of three with a guest wins a Hold and opens its shares, a stranger refused, the plans side by side), `test/scenes/delve/dlv3_online.test.js`, `test/scenes/delve/dlv3_e2e.test.js` (the real host on the real Room, every kind); `tools/mutants/dlv3.json`; `world289`; AUDIT DLV3 (`01-Overview/audits/Audit-Delve-II.md` G) |
-| DLV4 | The Wellsprings, the Vigil, the Brazier Rite, the Weighing, the Seals; their audit | every kind stood, won and failed, solo and in a party |
-| DLV5 | Curated blocks: the format, the registry, the splice law, the lab page | a curated block stood in a spawned dungeon, its encounter designed |
-| DLV6 | The first curated blocks, their set pieces; AUDIT DLV5-6 | as the owner plays them |
+| DLV4 | The Wellsprings, the Vigil, the Brazier Rite, the Weighing, the Seals; their audit | DONE 2026-10-29: each won in the real game (section 14); `test/net/delve/dlv4_law.test.js`, `test/scenes/delve/dlv4_host.test.js`, a party through the real Room in `dlv3_e2e`; `tools/mutants/dlv4.json`; AUDIT DLV4 (`01-Overview/audits/Audit-Delve-II.md` F) |
+| DLV5 | Curated blocks: the format, the registry, the splice law, the lab page | DONE 2026-10-29: `test/world/dlv5_curated.test.js`; a spawned clone takes its block, laid as the world lays it (`dlv56_audit`); `tools/mutants/dlv5.json` |
+| DLV6 | The first curated blocks, their set pieces; AUDIT DLV5-6 | BUILT 2026-10-29 (section 15): four blocks, `crypt-hall` won in the real game; `test/world/dlv6_blocks.test.js`, `dlv56_audit`; `tools/mutants/dlv6.json`, `dlv56.json`; AUDIT DLV5-6 (Audit-Delve-II H). Done as the owner plays them |
 
 Each slice: pins that fail under a mutation of what they pin, its mutants recorded, the bible gates, a probe in the
 real game over the freeware's data, and a frame-cost measure (`npm run perf`) before it merges.
@@ -353,8 +353,31 @@ kept whole by the probe, the dungeon's own foes near the site felled as a player
 | The Weighing | Ruins of Wicksmith Court | 238 s, two weights set, the third plate stood on | 6 items |
 | The Seals | The House of Baron Garulaus | 285 s, three seals in their first window | 5 items |
 | The Vigil | The Aviary of Morarock | 620 s, three waves, the relic's light held | 1 item |
+| The Wellsprings | Kingsly Tower | 1,915 s, both sources broken and the captain felled - on the code before DLV3's changes to the host | 2 items |
 
 The encounters' frame cost 0.08 to 0.20 ms at the mean on the software rasteriser at 800 x 500, their marks 0.22 ms
-where no crystal stands near the eye. The Seals' and the Vigil's marks read 8.3 and 5.0 ms at the mean, their crystals
-filling the view from 1.2 m.
+for the Brazier Rite and the Weighing. The Seals' marks read 8.3 ms and the Vigil's 5.0 ms at the mean, the eye 1.2 m from
+their crystals; the probe splits the pass by the eye's distance (`tools/delveProbe.mjs`), and that measure is still to be
+taken. The Wellsprings is to be won again on the code as it stands.
+
+## 15. DLV5 and DLV6: what stands (2026-10-29)
+
+Four curated blocks ship. Each is a real interior block of the player's own BLOCKS.BSA with things taken out, Daggerfall's
+own models and flats added round one encounter placed by hand, and its lights. A game-made dungeon of a block's types
+takes one in half its draws (section 8).
+
+| Block | Its base | Its types | Its encounter | Its set piece |
+|---|---|---|---|---|
+| `crypt-hall` (1) | N0000023.RDB | Crypt, Desecrated Temple, Vampire Haunt | the Hold | sarcophagi and coffins round the ward, braziers on pillars, skull candles, bones and a skeleton; the base's foes within 6 m of the ward and its fire bowl taken out |
+| `mine-gallery` (2) | W0000016.RDB | Mine | the Brazier Rite | ore carts, rocks, a log and a sawhorse, ore, pole torches; the base's two coffins, a foe and its campfire taken out |
+| `desecrated-chapel` (3) | W0000021.RDB | Desecrated Temple, Coven | the Seals | the crucified, blood on the floor, skull candles on the altar, bones and skeletons; the pews within 2 m of the ward taken out |
+| `throne-hall` (4) | N0000008.RDB | the Orc, Human, Giant and Barbarian Strongholds, the Ruined Castle | the Weighing | braziers, skulls on the mantel, bones, stocks and a cage; a foe by the throne taken out |
+
+| Piece | How |
+|---|---|
+| The records | `src/assets/delve/<id>.json`, read by `world/dungeon/curatedRecords.js`; each checked on the freeware's own geometry before it shipped - every thing on a floor, 0.5 m clear of the ward and 1.2 m of a door, each light 0.5 to 4 m over a floor, the anchor landing where the site law would stand it |
+| The lab's spot | `?at` (where a Rebuild left me), else the host's floor nearest the first encounter, on its storey and a step past every ward (`delveHost.js` firstFloor): its heart would wake the ward at the boot |
+| The lab's panel | `scenes/delve/delveLab.js`, beside the bench that mounts it (`delveBench.js` mountLabPanel) - a played page's module, read by AUDIT ANTICHEAT A2's sweep; the front page `src/tools/delveLabPage.js` is a tool's |
+| The probe | `tools/delveProbe.mjs --lab=<id>` lays a shipped block in the bench's lab and wins its encounter in the real game, its pictures from the heart each way of the compass; `--spawn=px,py` a named dungeon cloned on a pixel, as the world builds a spawn |
+| Won in the real game | `crypt-hall` in the lab: the Hold's three waves and its captain, 661 s, the vault 2 items; the set pieces seen standing (the braziers lit, the sarcophagi, the candles). The other three are checked on the freeware's geometry and their kinds won in Daggerfall's own dungeons (section 14); each is still to be won in its own block, and a spawned clone with its block (Ruins of Krofylen Court at 100,300 takes the crypt hall) is still to be probed |
 
