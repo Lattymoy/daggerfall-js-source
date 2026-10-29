@@ -17,7 +17,7 @@ const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8
 const { subtle } = globalThis.crypto;
 const W = 500_004;
 
-test('AUDIT DRAGON the service\'s tames read back: `/v1/dragon/tames` behind a session answers this account\'s alone; the account\'s own view and the Inspect card carry the dragons slain (mutants: the route unlisted; the record off the cards)', async () => {
+test('AUDIT DRAGON the service\'s tames read back: `/v1/dragon/tames` behind a session answers this account\'s alone; the account\'s own view and the Inspect card carry the dragons slain, the Inspect card never the tames (mutants: the route unlisted; the record off the cards; a stranger\'s tames told)', async () => {
   const S = await standService();
   const who = await S.registered('Wyrmward');
   const r = await mintDragonReceipt({ q: W, b: 1, s: who.id, c: 5, x: 'dealt', l: 12 }, S.gatePriv, { subtle, nowS: Math.floor(Date.now() / 1000) });
@@ -32,7 +32,11 @@ test('AUDIT DRAGON the service\'s tames read back: `/v1/dragon/tames` behind a s
   assert.deepEqual((await S.call('/v1/dragon/tames', {}, other.secret)).body.tames, [], 'another account\'s none');
   const idx = src('server-account/src/index.js');
   assert.match(idx, /serpents: await serpentRecordOf\(ctx, who\.player\.id\), dragons: await dragonRecordOf\(ctx, who\.player\.id\),/, 'the account\'s own view');
-  assert.match(idx, /serpents: await serpentRecordOf\(ctx, body\.id\), dragons: await dragonRecordOf\(ctx, body\.id\),/, 'the Inspect card\'s answer');
+  assert.match(idx, /serpents: await serpentRecordOf\(ctx, body\.id\), dragons: await dragonSlainOf\(ctx, body\.id\),/, 'the Inspect card\'s answer');
+  const card = await S.call('/v1/duel/record', { id: who.id }, other.secret);
+  assert.deepEqual(card.body.dragons, { slain: 1 }, 'a stranger is told the dragons slain, never the tames');
+  const own = await (await S.fetch('https://accounts.invalid/v1/account', { headers: { authorization: `Bearer ${who.secret}` } })).json();
+  assert.deepEqual(own.account.dragons, { slain: 1, tamed: 1 }, 'its own card, both');
   assert.match(src('server-account/src/service.js'), /'\/v1\/dragon\/tames',   \/\/ AUDIT DRAGON/);
   assert.match(src('src/net/duel/duelRecord.js'), /\.\.\.\(Number\.isSafeInteger\(d\?\.dragons\?\.slain\) \? \{ dragons: \{ slain: d\.dragons\.slain \} \} : \{\}\),/, 'and the Inspect card keeps it');
 });

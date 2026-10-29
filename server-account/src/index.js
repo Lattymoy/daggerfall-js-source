@@ -277,7 +277,7 @@ import { chapterSheet, chapterSeatsOf, chapterTitlesOpenFor, chapterTitlesOfAcco
 import { contractRegionOfRaid } from '../../src/net/writLaw.js';   // CHAP2b: the region a raid's key names   // CHAP2a: a town's guild halls, witnessed; AUDIT CHAP2 E1: audited and struck
 import { claimRaid, raidRecordOf } from './raids.js';   // RAID4: the towns defended
 import { claimSerpent, serpentRecordOf } from './serpents.js';   // SERPENT1: the serpents slain
-import { claimDragon, dragonRecordOf, dragonMountsOf } from './dragons.js';   // DRAGON4: the dragons slain, their hoards and their tames; AUDIT DRAGON: the cards' count and the tames read back
+import { claimDragon, dragonRecordOf, dragonSlainOf, dragonMountsOf } from './dragons.js';   // DRAGON4: the dragons slain, their hoards and their tames; AUDIT DRAGON: the cards' count and the tames read back
 import { claimStar, starRecordOf } from './stars.js';   // STAR7: the fallen stars held
 import { claimSd, sdRecordOf } from './sds.js';   // SD9b: the Hours broken
 import { claimKetch, ketchRecordOf } from './ketch.js';   // KETCH: the Ketchmaster's hold, once a voyage - and the voyages sailed, on the cards
@@ -1484,7 +1484,7 @@ const service = {
         const known = await db.prepare('SELECT 1 AS x FROM players WHERE id = ?1').bind(body.id).first();
         if (!known) return no('no-player', 404, origin);
         // WB5b: the gates closed ride the same answer - the Inspect card asks once and says both
-        return json({ id: body.id, ...(await duelRecordOf(ctx, body.id)), gates: await gateRecordOf(ctx, body.id), raids: await raidRecordOf(ctx, body.id), serpents: await serpentRecordOf(ctx, body.id), dragons: await dragonRecordOf(ctx, body.id), sds: await sdRecordOf(ctx, body.id), stars: await starRecordOf(ctx, body.id), ketch: await ketchRecordOf(ctx, body.id) }, 200, origin);   // RAID4: and the towns defended; SERPENT1: and the serpents slain; SD9b: and the Hours broken; STAR7: and the fallen stars held; KETCH: and the voyages sailed
+        return json({ id: body.id, ...(await duelRecordOf(ctx, body.id)), gates: await gateRecordOf(ctx, body.id), raids: await raidRecordOf(ctx, body.id), serpents: await serpentRecordOf(ctx, body.id), dragons: await dragonSlainOf(ctx, body.id), sds: await sdRecordOf(ctx, body.id), stars: await starRecordOf(ctx, body.id), ketch: await ketchRecordOf(ctx, body.id) }, 200, origin);   // RAID4: and the towns defended; SERPENT1: and the serpents slain; SD9b: and the Hours broken; STAR7: and the fallen stars held; KETCH: and the voyages sailed
       }
 
       if (path === '/v1/gate/claim' && request.method === 'POST') {

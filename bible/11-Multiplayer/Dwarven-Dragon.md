@@ -305,6 +305,11 @@ PINS MOVED by DRAGON5a: the item law at 15 (seven pins, LAW_SERVICE's 15 acct217
 the modes and groups (`tr1`, `int1`), the rig's horse-only lines (eight pins, `horsevoice`), the levitation term
 (`staff1`, `audit_seats_client`), the footsteps (`if1`), the pose (`hcc_park`, `coats1`).
 
+Two calls of its own. The tame binds at the claim's answer or the next stand-up, not at the remains: the answer comes
+seconds after the kill, so a walk back added nothing. And DRAGON_MOUNT_ONLINE is off for this release (REST6's law,
+SHIP BEFORE ANYONE CAN SEE ONE): the tame waits on the device and in its row, and a later release turns it on. The
+classic window's Dragon row is drawn under DFU's art, a departure (MOVE00I0 has four rows).
+
 **AUDIT DRAGON (2026-10-29, the owner: "Can we audit everything and ensure perfection").** An independent review of the
 whole arc found fifteen, each fixed at its root. The relay: the fight's gate is the ride's number (it stood at 281 and
 opened the frame to relays that close on it); a fight whose shares all retired stands where the last left (the gate's
@@ -314,15 +319,10 @@ whole in `scenes/dragonHost.js` (`createDragonSky`, bootWorld 35,258); a rider s
 heard; an Aetherbright rider washed blue on every screen; the tamed line honest while the mount waits.
 
 The service: its tames read back (`/v1/dragon/tames`), so none is lost with a device's storage, and the dragons slain on
-both cards. The pass against this page found `05-Combat/Power-Ceiling.md` section 9 without the owner's word on the
+both cards - the Inspect card the count alone (`dragonSlainOf`), never a stranger's tames. The pass against this page found `05-Combat/Power-Ceiling.md` section 9 without the owner's word on the
 pace; it is quoted. The serpent's beat shares the kill's retry gap; it is reported, not changed here. Pinned by
 `test/net/dragon/dragonaudit_relay.test.js` (6), `dragonaudit_account.test.js` (4), `dragonaudit_client.test.js` (1) and
 tests in `dragon5_mount` and `dragon3_host`; `tools/mutants/dragonaudit.json`. world284 re-hashed in place.
-
-Two calls of its own. The tame binds at the claim's answer or the next stand-up, not at the remains: the answer comes
-seconds after the kill, so a walk back added nothing. And DRAGON_MOUNT_ONLINE is off for this release (REST6's law,
-SHIP BEFORE ANYONE CAN SEE ONE): the tame waits on the device and in its row, and a later release turns it on. The
-classic window's Dragon row is drawn under DFU's art, a departure (MOVE00I0 has four rows).
 
 **THE MERGE OF MAIN AT 566057d51 (2026-10-29, #1386 AUDIT TAMRIEL-WIDE).** Main took world284 and acct217, so the dragon
 is world285 and acct218; migration 0193 stands. `DRAGON_RIDE_RELAY_MIN` is 285 (main's world284 still clamps `rd` 3),

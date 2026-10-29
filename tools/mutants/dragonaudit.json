@@ -117,6 +117,15 @@
     ]
   },
   {
+    "name": "AUDIT-DRAGON-a-strangers-tames-told",
+    "file": "server-account/src/index.js",
+    "old": "dragons: await dragonSlainOf(ctx, body.id)",
+    "new": "dragons: await dragonRecordOf(ctx, body.id)",
+    "tests": [
+      "test/net/dragon/dragonaudit_account.test.js"
+    ]
+  },
+  {
     "name": "AUDIT-DRAGON-a-line-for-none",
     "file": "src/ui/profileWindow.js",
     "old": "  return Number.isSafeInteger(n) && n > 0 ? t('dragon.card.profile', 'Dragons slain: {n}', { n }) : null;",

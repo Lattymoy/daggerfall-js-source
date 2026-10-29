@@ -31,11 +31,15 @@ const hoardAnswer = (res, cid) => res?.results?.[0]?.cid === cid;
 /** The watch's tame of this account, or null. */
 const tameOf = (row) => (row ? { id: row.id, look: int(row.look), character: row.char_id } : null);
 
-/** An account's dragons, for the cards: `{ slain, tamed }`. */
-export async function dragonRecordOf({ db }, playerId) {
+/** The dragons an account has slain: `{ slain }` - all another player's Inspect card is told (AUDIT DRAGON). */
+export async function dragonSlainOf({ db }, playerId) {
   const k = await db.prepare('SELECT COUNT(*) AS n FROM dragon_kills WHERE account = ?1').bind(playerId).first();
+  return { slain: int(k?.n) };
+}
+/** An account's own dragons, for its own card and its claim: `{ slain, tamed }`. */
+export async function dragonRecordOf({ db }, playerId) {
   const m = await db.prepare('SELECT COUNT(*) AS n FROM dragon_mounts WHERE account = ?1').bind(playerId).first();
-  return { slain: int(k?.n), tamed: int(m?.n) };
+  return { ...(await dragonSlainOf({ db }, playerId)), tamed: int(m?.n) };
 }
 /** An account's tamed dragons: `[{ id, character, look, watch }]` - the mount's provenance (DRAGON5). */
 export async function dragonMountsOf({ db }, playerId) {
