@@ -8,7 +8,9 @@
 -- SQLite has no ADD COLUMN IF NOT EXISTS, so a second run errors harmlessly.
 --
 --   shop_held  the wares held by id (src/net/shopLaw.js - every ware after the first nine, whose bits stay on
---              `shop_wares`), space-separated in sale order; set by a paid order and taken off by a refund (shop.js)
+--              `shop_wares`), space-separated in sale order; set by a paid order and taken off by a refund (shop.js).
+--              `-<id>` marks a ware a giver held no longer gives: its own payment went back, and the giver was sold
+--              with credit for it (shopLaw.js shopLostOf)
 --   effects    the effects kit worn (src/net/effectLaw.js: a kill effect, a portal skin, a mount look), signed as `fx`;
 --              NULL for none. Read against what is held at every ask (titles.js effectsWorn)
 --   pass_s1    Season One's experience (src/net/battlePassLaw.js) - finds, challenges and the levels a ware gives at once;
@@ -40,6 +42,16 @@ CREATE TABLE IF NOT EXISTS pass_counts (
   PRIMARY KEY (account, season, challenge),
   FOREIGN KEY (account) REFERENCES players(id) ON DELETE CASCADE
 );
+
+-- AN ORDER'S CREDIT AND ITS OWN REFUND (AUDIT-STOREFRONT S1, S3):
+--   credit       what of the ware the account held at its checkout - its price took it off, so a payment taken back
+--                never takes it (shopLaw.js shopCreditOf), space-separated ids
+--   refund       why the service returned the payment itself: 'held' (two pages paid at once), 'spent' (a stronger
+--                booster held), 'late' (a season's ware paid after it); NULL for a payment it kept
+--   refund_owed  1 while Stripe has not yet taken that refund - asked again at Stripe's next word on the order
+ALTER TABLE shop_orders ADD COLUMN credit TEXT NOT NULL DEFAULT '';
+ALTER TABLE shop_orders ADD COLUMN refund TEXT;
+ALTER TABLE shop_orders ADD COLUMN refund_owed INTEGER NOT NULL DEFAULT 0;
 
 -- THE DEMAND (Storefront.md section 3.2): the staff's sales by day read paid and opened orders by day and ware.
 CREATE INDEX IF NOT EXISTS idx_shop_orders_created ON shop_orders (created_at, ware);

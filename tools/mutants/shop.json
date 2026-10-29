@@ -29,8 +29,8 @@
   {
     "name": "SHOP-client-card-buy-held",
     "file": "src/net/shopLaw.js",
-    "old": "buy: card.on && r.sale === true && r.held !== true ? buy : null",
-    "new": "buy: card.on && r.sale === true ? buy : null",
+    "old": "buy: card.on && r.sale === true && r.held !== true && !spent ? buy : null",
+    "new": "buy: card.on && r.sale === true && !spent ? buy : null",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -110,11 +110,13 @@
   {
     "name": "SHOP-grant-guard-dropped",
     "file": "server-account/src/shop.js",
-    "old": "      db.prepare(\"UPDATE shop_orders SET status = 'paid', paid_at = ?2, payment_intent = ?3 WHERE id = ?1 AND status IN ('open', 'expired')\").bind(order.id, nowS, typeof intent === 'string' ? intent.slice(0, 255) : null),\n      mustChange(db),\n",
-    "new": "      db.prepare(\"UPDATE shop_orders SET status = 'paid', paid_at = ?2, payment_intent = ?3 WHERE id = ?1\").bind(order.id, nowS, typeof intent === 'string' ? intent.slice(0, 255) : null),\n",
+    "old": "      db.prepare(\"UPDATE shop_orders SET status = 'paid', paid_at = ?2, payment_intent = ?3 WHERE id = ?1 AND status IN ('open', 'expired')\").bind(order.id, nowS, pi),\n      mustChange(db),\n",
+    "new": "      db.prepare(\"UPDATE shop_orders SET status = 'paid', paid_at = ?2, payment_intent = ?3 WHERE id = ?1\").bind(order.id, nowS, pi),\n",
     "tests": [
       "test/server/shop_service.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "AUDIT-STOREFRONT S7: the grant's batch is guarded on the row as read too (shop.js rowWrite), and every grant moves the row - a ware already held is refunded, never granted - so a second word on the order fails that guard and settles as moved. The order's own guard stays, belt and braces: it says the rule where the order moves."
   },
   {
     "name": "SHOP-delayed-payment-granted",
@@ -137,8 +139,8 @@
   {
     "name": "SHOP-other-order-ware-taken",
     "file": "server-account/src/shop.js",
-    "old": "      AND NOT EXISTS (SELECT 1 FROM shop_orders WHERE player = ?1 AND ware = ?3 AND status = 'paid' AND id <> ?4)`).bind(order.player, w.bit, w.id, order.id)",
-    "new": "      AND ?3 = ?3 AND ?4 = ?4`).bind(order.player, w.bit, w.id, order.id)",
+    "old": "  if (!others.some((o) => o.ware === w.id)) {",
+    "new": "  if (true) {",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -272,8 +274,8 @@
   {
     "name": "SHOP-failed-grant-told-done",
     "file": "server-account/src/shop.js",
-    "old": "    throw e;   // the grant never written: a 5xx, and Stripe tells it again",
-    "new": "    return { ok: true, applied: 0 };",
+    "old": "      if (i === 2) throw e;   // never written: a 5xx, and Stripe tells it again",
+    "new": "      if (i === 2) return { ok: true, applied: 0 };",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -281,8 +283,8 @@
   {
     "name": "SHOP-revoke-letter-draws-the-ware",
     "file": "server-account/src/shop.js",
-    "old": "revokePost(order, why), null, nowS)",
-    "new": "revokePost(order, why), w.id, nowS)",
+    "old": "had.filter((id) => !has.includes(id))), null, nowS)",
+    "new": "had.filter((id) => !has.includes(id))), w.id, nowS)",
     "tests": [
       "test/server/shop_service.test.js"
     ]

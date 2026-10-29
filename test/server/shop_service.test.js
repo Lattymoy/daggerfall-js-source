@@ -19,7 +19,7 @@ import { postHead } from '../../src/net/postLaw.js';
 import { POST_BODY_MAX, POST_SUBJECT_MAX, POST_BATCH_RE } from '../../src/net/postLaw.js';
 
 const { subtle } = globalThis.crypto;
-const ON = { STRIPE_SECRET_KEY: 'sk_test_shop', STRIPE_WEBHOOK_SECRET: 'whsec_shop', SHOP_ON_SALE: SHOP_WARES.filter((w) => w.alone).map((w) => w.id).join(',') };   // ARMORY (PIN MOVED): the deploy's list, the Aura Armory's Eternal line with it; STOREFRONT: every ware sold alone
+const ON = { STRIPE_SECRET_KEY: 'sk_test_shop', STRIPE_WEBHOOK_SECRET: 'whsec_shop', SHOP_ON_SALE: SHOP_WARES.filter((w) => w.alone).map((w) => w.id).join(','), PASS_OPEN: 'on' };   // ARMORY (PIN MOVED): the deploy's list, the Aura Armory's Eternal line with it; STOREFRONT: every ware sold alone; AUDIT-STOREFRONT S6 (PIN MOVED): the deploy's PASS_OPEN, which a season's wares now need
 /** STOREFRONT: inside Season One's days - its passes and boosters on sale (bible/06-Systems/Battle-Pass.md), a clock the
  *  season's windows never make a test depend on. */
 const IN_SEASON = Date.UTC(2026, 10, 20, 12);

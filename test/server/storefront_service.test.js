@@ -6,6 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 
 import { standService } from '../accountDb.mjs';
 import { fulfilOrder, shopCardOf, STRIPE_API } from '../../server-account/src/shop.js';
@@ -16,6 +17,7 @@ import { ECON_ROUTES } from '../../server-account/src/staffEconomy.js';
 import { ROUTES } from '../../server-account/src/service.js';
 import {
   SHOP_WARES, shopPriceFor, shopWorth, shopHeldIds, shopOwns, shopFeaturedOf, shopFeaturedNow, shopSellable, shopOnSaleOf, SHOP_MIN_CENTS,
+  shopWhenOf, SHOP_CHECKOUT_MS,
 } from '../../src/net/shopLaw.js';
 import { PASS_DAY_XP, PASS_DAY_ASKS, PASS_XP_PER_LEVEL, PASS_CHALLENGES, passLevelOf, passSeasonById, passCardOf } from '../../src/net/battlePassLaw.js';
 
@@ -25,11 +27,11 @@ const S1 = passSeasonById('s1');
 const IN_TREMOR = S1.fromMs + 3 * 86_400_000 + 3_600_000;   // the first stage's fourth day
 const BEFORE = S1.fromMs - 5 * 86_400_000;
 
+let sessions = 0;   // a session id Stripe never gives twice (the column is UNIQUE: a stand-in counting from one each call broke a second order)
 function stripe() {
   const real = globalThis.fetch;
-  let n = 0;
   globalThis.fetch = async (url) => {
-    if (String(url) === STRIPE_API) { n++; return Response.json({ id: `cs_sf_${n}`, url: `https://checkout.stripe.com/c/pay/cs_sf_${n}` }); }
+    if (String(url) === STRIPE_API) { const n = ++sessions; return Response.json({ id: `cs_sf_${n}`, url: `https://checkout.stripe.com/c/pay/cs_sf_${n}` }); }
     throw new Error(`no stand-in for ${url}`);
   };
   return { restore: () => { globalThis.fetch = real; } };
@@ -85,10 +87,12 @@ test('STOREFRONT the law: a bundle\'s worth is what it gives; its price for an a
   assert.deepEqual(shopOnSaleOf('glyph:oblivion,aura:dominion,kill:pyre'), ['kill:pyre'], 'a bundle\'s own wares are never sold alone');
 });
 
-test('STOREFRONT the launch windows: SHOP_FEATURED\'s lines - a ware, its first and last UTC day, `limited` - read whole or not at all; a ware with a window is never sold before its first opens; a limited one only inside a limited window; the season\'s wares only in their season (mutants: a ware sold before its drop; a limited ware sold after; the pass sold off season)', () => {
+test('STOREFRONT the launch windows: SHOP_FEATURED\'s lines - a ware, its first and last UTC day, `limited` - read whole or not at all; a ware with a window is never sold before its first opens; a limited one only inside a limited window; the season\'s wares only in their season, never in its last half hour; a line that names a ware but does not read shuts its sale (mutants: a ware sold before its drop; a limited ware sold after; the pass sold off season; a bad line opening the sale; a page outliving the season)', () => {
   const raw = 'kill:pyre 2026-10-30 2026-11-12\nportal:aetheric 2026-11-13 2026-11-26 limited;  bundle:portalmaster 2026-11-27 2026-12-10 limited\nnope:x 2026-11-01 2026-11-02\nkill:ashen 2026-11-05 2026-11-01\nglyph:oblivion 2026-11-01 2026-11-30\nmount:warhorse 2026-12-11 2026-12-24 forever';
   const list = shopFeaturedOf(raw);
-  assert.deepEqual(list.map((e) => [e.id, e.limited]), [['kill:pyre', false], ['portal:aetheric', true], ['bundle:portalmaster', true]], 'unknown, backwards, a bundle\'s own and a stray word: refused');
+  // AUDIT-STOREFRONT S4 (PIN MOVED: the three lines that named a ware were dropped, so their wares sold with no window at all)
+  assert.deepEqual(list.filter((e) => !e.bad).map((e) => [e.id, e.limited]), [['kill:pyre', false], ['portal:aetheric', true], ['bundle:portalmaster', true]], 'unknown, backwards, a bundle\'s own and a stray word: refused');
+  assert.deepEqual(list.filter((e) => e.bad).map((e) => e.id), ['kill:ashen', 'glyph:oblivion', 'mount:warhorse'], 'a line naming a ware that does not read is kept, to shut it');
   assert.equal(list[0].fromMs, Date.UTC(2026, 9, 30));
   assert.equal(list[0].toMs, Date.UTC(2026, 10, 13), 'the last day inside');
   const onSale = SOLD.map((w) => w.id), at = (id, y, m, d) => shopSellable(SHOP_WARES.find((w) => w.id === id), onSale, list, Date.UTC(y, m, d, 12));
@@ -97,12 +101,37 @@ test('STOREFRONT the launch windows: SHOP_FEATURED\'s lines - a ware, its first 
   assert.equal(at('kill:pyre', 2027, 0, 1), true, 'a drop not limited stays on sale');
   assert.equal(at('portal:aetheric', 2026, 10, 20), true);
   assert.equal(at('portal:aetheric', 2026, 10, 27), false, 'a limited ware, after its window');
-  assert.equal(at('kill:ashen', 2026, 9, 20), true, 'a ware with no window is sold as SHOP_ON_SALE says');
+  assert.equal(at('title:genesis', 2026, 9, 20), true, 'a ware with no window is sold as SHOP_ON_SALE says');
+  assert.equal(at('kill:ashen', 2026, 10, 3), false, 'a ware whose line does not read is not sold - a typo never opens a sale');
+  assert.equal(at('mount:warhorse', 2027, 0, 1), false);
+  assert.equal(shopFeaturedNow(list, Date.UTC(2026, 10, 3)).some((e) => e.bad), false, 'nor featured');
   assert.equal(at('pass:s1premium', 2026, 10, 9), false, 'the pass before its season');
   assert.equal(at('pass:s1premium', 2026, 10, 10), true);
   assert.equal(at('boost:s1heart', 2027, 0, 9), false, 'nor after it');
+  // AUDIT-STOREFRONT S10: Stripe's page lives SHOP_CHECKOUT_MS - the season's wares stop selling that long before its end
+  const sell = (ms) => shopSellable(SHOP_WARES.find((w) => w.id === 'boost:s1cog'), onSale, list, ms);
+  assert.equal(sell(S1.toMs - SHOP_CHECKOUT_MS - 1), true);
+  assert.equal(sell(S1.toMs - SHOP_CHECKOUT_MS + 1), false, 'no page outlives its season');
+  assert.equal(sell(S1.fromMs), true, 'the margin is at the end only');
   assert.deepEqual(shopFeaturedNow(list, Date.UTC(2026, 10, 12, 12)).map((e) => e.id), ['kill:pyre']);
   assert.deepEqual(shopFeaturedNow(list, Date.UTC(2026, 10, 14)).map((e) => e.id), ['portal:aetheric'], 'the pyre\'s window ended on the 12th');
+});
+
+test('STOREFRONT the schedule\'s dates read strictly - a date that rolls over is no date, never a later one; and every line of the deploy\'s own SHOP_FEATURED reads whole (mutants: 31 November read as 1 December; a 13th month read as January; a bad live line)', () => {
+  assert.equal(shopWhenOf('2026-11-10'), Date.UTC(2026, 10, 10));
+  assert.equal(shopWhenOf('2026-11-10', true), Date.UTC(2026, 10, 11), 'a day\'s end is the next day\'s first moment');
+  assert.equal(shopWhenOf('2026-11-10T18:00Z'), Date.UTC(2026, 10, 10, 18));
+  assert.equal(shopWhenOf('2026-11-10T18:00Z', true), Date.UTC(2026, 10, 10, 18), 'an exact time is its own end');
+  for (const bad of ['2026-11-31', '2026-13-05', '2026-00-05', '2026-02-29', '2026-11-31T10:00Z', '2026-11-10T24:00Z', '2026-11-10T10:60Z', '2026-11-10T10:00:61Z', '26-11-10', '2026-11-10 ', '']) {
+    assert.ok(Number.isNaN(shopWhenOf(bad)), `${JSON.stringify(bad)} is no date`);
+  }
+  assert.equal(shopWhenOf('2028-02-29'), Date.UTC(2028, 1, 29), 'a leap day is a day');
+  const toml = readFileSync(new URL('../../server-account/wrangler.toml', import.meta.url), 'utf8');
+  const live = /^SHOP_FEATURED = """\n([\s\S]*?)"""/m.exec(toml)?.[1] ?? '';
+  const lines = live.split('\n').filter((l) => l.trim());
+  assert.ok(lines.length > 0, 'the deploy has a schedule');
+  assert.equal(shopFeaturedOf(live).length, lines.length, 'every live line names a ware');
+  assert.deepEqual(shopFeaturedOf(live).filter((e) => e.bad).map((e) => e.id), [], 'and reads whole');
 });
 
 // ── END TO END ──────────────────────────────────────────────────────
@@ -136,19 +165,25 @@ test('STOREFRONT end to end: a bundle bought by an account holding part of it - 
   assert.equal(s.rowOf(me).pass_s1, 5 * PASS_XP_PER_LEVEL, 'its levels once');
 });
 
-test('STOREFRONT end to end: a launch window on the card - a featured ware leads the carousel with its window\'s end, a limited ware off sale once its window ends; nothing featured before its window (mutants: the carousel showing a drop to come; a limited ware sold after)', async (t) => {
+test('STOREFRONT end to end: a launch window on the card - a featured ware leads the carousel with its window\'s end, a limited ware off sale once its window ends; nothing featured or told before its window, and a window\'s end only beside a sale (mutants: the carousel showing a drop to come; a limited ware sold after; a drop to come on the card; an ended window still told)', async (t) => {
   t.mock.timers.enable({ apis: ['Date'], now: Date.UTC(2026, 10, 20, 12) });
-  const s = await stand({ ...ON, SHOP_FEATURED: 'portal:aetheric 2026-11-13 2026-11-26 limited\nmount:warhorse 2026-12-11 2026-12-24' });
+  const s = await stand({ ...ON, SHOP_ON_SALE: ON.SHOP_ON_SALE.replace('mount:spectral,', ''), SHOP_FEATURED: 'portal:aetheric 2026-11-13 2026-11-26 limited\nmount:warhorse 2026-12-11 2026-12-24\nmount:spectral 2026-11-13 2026-11-26' });
   const me = await s.registered('Watcher');
   let card = (await s.account(me)).shop;
   assert.deepEqual(card.featured, ['pass:s1premium', 'pass:s1deluxe', 'portal:aetheric'], 'the season\'s passes, then the window open now - never the warhorse to come');
+  const ghost = card.wares.find((w) => w.id === 'mount:spectral');
+  assert.deepEqual([ghost.sale, ghost.until, ghost.limited], [false, undefined, undefined], 'AUDIT-STOREFRONT S9: featured now but off the sale list - its window not told');
   const aeth = card.wares.find((w) => w.id === 'portal:aetheric');
   assert.deepEqual([aeth.sale, aeth.limited, aeth.until], [true, true, Date.UTC(2026, 10, 27)]);
-  assert.equal(card.wares.find((w) => w.id === 'mount:warhorse').sale, false, 'not sold before its drop');
+  // AUDIT-STOREFRONT S2 (PIN MOVED: it stood on the card unsold, and the window called it "No longer sold")
+  assert.equal(card.wares.find((w) => w.id === 'mount:warhorse'), undefined, 'not sold, nor told, before its drop');
   t.mock.timers.setTime(Date.UTC(2026, 10, 28, 12));
   card = (await s.account(me)).shop;
   assert.equal(card.wares.find((w) => w.id === 'portal:aetheric').sale, false, 'its window ended: no longer sold');
   assert.equal(card.wares.find((w) => w.id === 'portal:aetheric').buy, null);
+  assert.deepEqual([card.wares.find((w) => w.id === 'portal:aetheric').until, card.wares.find((w) => w.id === 'portal:aetheric').limited], [undefined, undefined], 'AUDIT-STOREFRONT S9: an ended window is not told beside it');
+  t.mock.timers.setTime(Date.UTC(2026, 11, 12, 12));
+  assert.equal((await s.account(me)).shop.wares.find((w) => w.id === 'mount:warhorse').sale, true, 'its drop landed: told and sold');
 });
 
 test('STOREFRONT end to end: an effect is worn only when held - the door refuses one not held and one of another slot, writes the kit, and the next token carries it; a held effect read off a bundle (mutants: an effect worn unheld; the kit never on the token)', async (t) => {

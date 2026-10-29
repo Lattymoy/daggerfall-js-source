@@ -142,12 +142,13 @@ export function passWareSeason(/** @type {unknown} */ id) {
   for (const [s, w] of Object.entries(PASS_WARES)) if (w.premium === id || w.deluxe === id) return s;
   return null;
 }
-/** The tracks an account plays in a season, by the wares it holds (`held`, ware ids): the free track, the premium track
- *  with either pass, the deluxe's own with the Deluxe. Pure. */
+/** The tracks an account plays in a season, by the wares it holds (`held`, ware ids, as shopLaw.js shopHeldIds answers):
+ *  the free track, the premium track with the Premium Pass - a Deluxe holds it through what it gives, so one sold with
+ *  credit for a Premium whose payment went back plays without it (AUDIT-STOREFRONT S1) - the deluxe's own with the
+ *  Deluxe. Pure. */
 export function passTracks(/** @type {string} */ season, /** @type {ReadonlyArray<string>} */ held) {
   const w = PASS_WARES[/** @type {keyof typeof PASS_WARES} */ (season)];
-  const deluxe = !!w && held.includes(w.deluxe);
-  return { free: true, premium: deluxe || (!!w && held.includes(w.premium)), deluxe };
+  return { free: true, premium: !!w && held.includes(w.premium), deluxe: !!w && held.includes(w.deluxe) };
 }
 /** The booster's share an account's finds get in a season: the highest of the boosters it holds, 1 with none. Pure. */
 export function passMult(/** @type {string} */ season, /** @type {ReadonlyArray<string>} */ held) {
@@ -204,7 +205,7 @@ export function passCardOf(c) {
     season: season.id, open: c.open === true,
     stage: Number.isInteger(c.stage) && c.stage >= -1 && c.stage < season.stages.length ? c.stage : -1,
     xp: whole(c.xp, PASS_LEVELS * PASS_XP_PER_LEVEL * 10), level: whole(c.level, PASS_LEVELS), top: whole(c.top, PASS_LEVELS),
-    tracks: { free: true, premium: c.tracks?.premium === true || c.tracks?.deluxe === true, deluxe: c.tracks?.deluxe === true },
+    tracks: { free: true, premium: c.tracks?.premium === true, deluxe: c.tracks?.deluxe === true },   // the service's word (passTracks): a Deluxe can play without a Premium it lost
     mult: Number.isFinite(c.mult) && c.mult >= 1 && c.mult <= 4 ? c.mult : 1,
     today: whole(c.today, PASS_DAY_XP * 4), dayMax: PASS_DAY_XP,
     challenges: PASS_CHALLENGES.map((k) => { const g = rows.find((/** @type {any} */ x) => x?.key === k.key); return { key: k.key, n: Math.min(whole(g?.n, 1e6), k.n), paid: g?.paid === true }; }),

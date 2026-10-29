@@ -54,6 +54,13 @@ an account is its price times the share of its worth not yet held, never under S
 Champion bought by someone who holds the Daedric Pyre costs less by the Pyre's share. The Eternal Set follows the same
 law, a departure from ARMORY's full $20 for a buyer who held pieces (`04-Characters/Aura-Armory.md`).
 
+**What a payment covers** (AUDIT-STOREFRONT S1). An order keeps its **credit** - what of its ware the account held at
+checkout, which its price took off (`shopCreditOf`). It covers the rest (`orderCovers`). A payment taken back - a refund,
+a dispute - takes off what it alone covered: its ware, and each ware a giver still held would give that no other paid
+order covers. Those are marked `-<id>` in `shop_held` (`shopLostOf`), so the giver no longer gives them; a payment that
+covers one again takes its mark off. So a Pyre bought, then a Champion bought for less, then the Pyre disputed, leaves
+no Pyre. The Deluxe Pass gives the Premium the same way: a Deluxe whose Premium went back plays its own track only.
+
 **Bundle-only wares.** The Daedric Dominion aura and three glyphs (the Oblivion Sigil, the Gate Sigil and the Brass
 Crown) are sold only inside a bundle. Each has a worth, so a
 bundle's price can be weighed, and is never sold alone.
@@ -65,11 +72,26 @@ carousel shows and when: an entry a line, `<ware> <from> <to>`, the days in UTC,
 ONLY inside that window. The live season's Battle Pass leads the carousel while its season runs. Nothing is featured
 outside its window, and nothing upcoming is told: a drop is news when it lands.
 
-## 3.2 The demand
+A ware whose first window has not opened is not on the account's card at all, and Collections says it is not yet
+available (AUDIT-STOREFRONT S2). A season's days are told already, so its passes stand "On sale from" before it. The
+dates read strictly: 31 November is no date, never 1 December. A line that names a ware but does not read whole shuts
+that ware's sale (S4), and a test reads every line of the deploy's own schedule. A season's wares are sold only while
+`PASS_OPEN` is `on` (S6), and stop 31 minutes before the season ends, the life of a checkout page (S10).
 
-`/v1/staff/econ/shop` (Admins, the staff panel's economy reads) answers each day's sales a ware: orders opened, paid,
-refunded and disputed, and the money, over up to 90 days, with each day's featured windows beside them. It is the
-developer's chart: how much sold on which day, and how a launch window moved it.
+## 3.2 Payments the service returns
+
+A press of Buy at a new price closes the account's older page for that ware at Stripe, and a grant closes each open page
+it left wrong - a ware now held, a price that moved (AUDIT-STOREFRONT S3). A page paid anyway is refunded in full, by the
+service itself, under the order's own key: a ware held by then (`held`), a booster a stronger one makes worth nothing
+(`spent`, S5), a season's ware paid after its season (`late`). The order says why (`refund`) and stays `refund_owed`
+until Stripe takes it; Stripe's next word on the order asks again, and the demand lists what is still owed.
+
+## 3.3 The demand
+
+`/v1/staff/econ/shop` (Admins, the staff panel's economy reads) answers each day's sales a ware: orders opened (a press
+that reached Stripe), paid, refunded and disputed, and the money, over up to 90 days, with each day's featured windows
+beside them, and the refunds the service still owes (`refundsOwed`). It is the developer's chart: how much sold on which
+day, and how a launch window moved it.
 
 ## 4. Kill effects
 
@@ -154,8 +176,10 @@ arrows, its dots, the arrow keys and a swipe step it. Only the panel shown runs 
 A panel's stage is live: a title on its plate, a glyph, an aura or a piece on the stand-in, a kill effect or a portal
 skin played on the character's stage with the stand-in figure (`render/effectStage.js`), a horse in its mount look
 (`ui/mountPreview.js`). A panel says its tier, its featured window and the price this account pays, the list price
-struck through beside it where it is less. A bundle's panel lists what it gives, each held one marked, and its worth.
-An effect's sound is heard when the player points at its stage or chooses its slide, never on every loop.
+struck through beside it where it is less. A bundle's panel lists what it gives, each held one marked (one held in part,
+the Premium inside a Deluxe, marked so), and its worth. A featured window's tag and days left are told only beside its
+sale, and counted again at UTC midnight. A booster a stronger one makes worth nothing says so, with no Buy. An effect's
+sound is heard when the player points at its stage or chooses its slide, never on every loop.
 
 **The profile** (`ui/characterSlots.js`, PROFILE-SLOTS) has three more slots under its stage: Kill effect, Portals and
 Mount. A kill effect pointed at plays on the character, which burns away in its colour and comes back; a portal skin

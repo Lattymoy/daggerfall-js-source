@@ -335,7 +335,7 @@
   {
     "name": "ARMORY-a-single-sold-over-the-set",
     "file": "src/net/shopLaw.js",
-    "old": "    for (const g of w?.gives ?? []) if (!out.has(g)) { out.add(g); stack.push(g); }\n",
+    "old": "    for (const g of w?.gives ?? []) if (!out.has(g) && !lost.has(g)) { out.add(g); stack.push(g); }\n",
     "new": "",
     "tests": [
       "test/server/armory_service.test.js",

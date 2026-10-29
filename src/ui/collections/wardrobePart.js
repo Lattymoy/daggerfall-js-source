@@ -34,10 +34,10 @@ export const WARDROBE_FILTERS = Object.freeze([
   wordPair('now', () => t('coll.filter.now', 'Obtainable')),
 ]);
 /** Whether an entry passes a filter, against a wardrobe, now. Pure. */
-export function wardrobeFilterPasses(/** @type {string} */ filter, /** @type {any} */ e, /** @type {any} */ wardrobe, nowMs = Date.now()) {
+export function wardrobeFilterPasses(/** @type {string} */ filter, /** @type {any} */ e, /** @type {any} */ wardrobe, nowMs = Date.now(), /** @type {any} */ shop = null) {
   if (filter === 'held') return wardrobeHeld(e.kind, e.key, wardrobe);
   if (filter === 'missing') return wardrobeKnown(e) && !wardrobeHeld(e.kind, e.key, wardrobe);   // a character's own is not "missing" from an account that never keeps it
-  if (filter === 'now') return AVAIL_NOW.includes(wardrobeAvail(e, nowMs));
+  if (filter === 'now') return AVAIL_NOW.includes(wardrobeAvail(e, nowMs, shop));
   return true;
 }
 
@@ -268,7 +268,7 @@ export function drawWardrobePart(detail, rerender, kit, kind, flow) {
   // "Not held" listed everything
   if (!wardrobe && (_filter === 'held' || _filter === 'missing')) _filter = 'all';
   detail.append(filterRow(el, rerender, !!wardrobe));
-  const shown = entries.filter((e) => wardrobeFilterPasses(_filter, e, wardrobe, now));
+  const shown = entries.filter((e) => wardrobeFilterPasses(_filter, e, wardrobe, now, flow?.shop));   // AUDIT-STOREFRONT S2: the shop's own word
   if (!shown.length) { detail.append(el('p', 'px-note', t('coll.none', 'Nothing here.'))); return; }
   for (const [src] of WARDROBE_SOURCES) {
     const rows = shown.filter((e) => e.src === src);
@@ -317,7 +317,7 @@ function rowOf(ctx, e) {
   const tags = el('span', 'coll-tags');
   if (held) tags.append(el('span', `coll-tag ${worn ? 'is-worn' : 'is-held'}`, stateWord(e.kind, e, wardrobe)));
   else if (!known) tags.append(el('span', 'coll-tag is-char', t('coll.state.character', 'Per character')));
-  const avail = wardrobeAvail(e, ctx.now);
+  const avail = wardrobeAvail(e, ctx.now, ctx.flow?.shop);
   tags.append(el('span', ['coll-tag', `av-${avail}`].join(' '), AVAIL_TAG[/** @type {keyof typeof AVAIL_TAG} */ (avail)]()));
   row.append(paintedWord(el, e.kind, e.key, 'coll-nm'), tags);
   row.onclick = () => { _open = _open === id ? null : id; ctx.rerender(); if (_open) revealOpened(); };
@@ -336,7 +336,7 @@ function wholeOf(ctx, e) {
   text.append(paintedWord(el, e.kind, e.key, 'coll-bigword'));   // its name on top, every kind's (AUDIT COLLECTIONS-II lane 3: after a jump the row may be out of view)
   if (e.look) text.append(el('p', 'coll-look', e.look()));
   text.append(el('h5', null, t('coll.whole.how', 'How to get it')), el('p', 'coll-how', e.how()));
-  text.append(el('h5', null, t('coll.whole.avail', 'Availability')), el('p', 'coll-availline', availLine(e, ctx.now)));
+  text.append(el('h5', null, t('coll.whole.avail', 'Availability')), el('p', 'coll-availline', availLine(e, ctx.now, ctx.flow?.shop)));
   const held = wardrobeHeld(e.kind, e.key, wardrobe);
   if (!wardrobeKnown(e)) text.append(el('p', 'coll-own', t('coll.whole.character', 'It shows beside the name of each member of such a guild, on that character - your account does not keep it.')));
   else if (wardrobe) text.append(el('p', `coll-own${held ? '' : ' no'}`, held ? t('coll.whole.held', 'Your account holds this.') : t('coll.whole.missing', 'Your account does not hold this yet.')));

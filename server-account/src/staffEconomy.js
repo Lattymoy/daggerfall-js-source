@@ -744,7 +744,7 @@ export async function staffEconomy(ctx, env, path, body, who, audit) {
   }
 
   if (path === '/v1/staff/econ/shop') {
-    // STOREFRONT (bible/06-Systems/Storefront.md section 3.2): the shop's sales by day and ware, the featured windows beside
+    // STOREFRONT (bible/06-Systems/Storefront.md section 3.3): the shop's sales by day and ware, the featured windows beside
     const [answer] = await Promise.all([shopDemand(db, env, nowS, body.days), audit('shop-demand-read', null, { days: body.days ?? null }, { onceIn: READ_ROW_S }).run()]);
     return answer;
   }

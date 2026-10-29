@@ -99,7 +99,7 @@ test('STOREFRONT the pass\'s words and card: each challenge said with its count,
   assert.equal(passCardOf({ season: 'nope' }), null);
   const c = passCardOf({ season: 's1', open: true, stage: 9, xp: -5, level: 70, top: 17, tracks: { deluxe: true }, mult: 9, today: 50, challenges: [{ key: 'tremor-foes', n: 9999, paid: true }, { key: 'x', n: 3 }] });
   assert.deepEqual([c.stage, c.xp, c.level, c.mult], [-1, 0, 0, 1], 'a stray stage, experience, level and share refused');
-  assert.deepEqual(c.tracks, { free: true, premium: true, deluxe: true }, 'the Deluxe holds the Premium');
+  assert.deepEqual(c.tracks, { free: true, premium: false, deluxe: true }, 'the tracks as the service says them - a Deluxe whose Premium went back plays without it (AUDIT-STOREFRONT S1; PIN MOVED: the card read the Deluxe as the Premium too)');
   assert.deepEqual(c.challenges[0], { key: 'tremor-foes', n: 100, paid: true }, 'a count no higher than the challenge asks');
   assert.equal(c.challenges.length, PASS_CHALLENGES.length);
 });

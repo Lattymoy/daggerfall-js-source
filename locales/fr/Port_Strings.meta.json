@@ -38444,6 +38444,11 @@
   "tr": "1d82937cff09",
   "by": "claude-in-session"
  },
+ "shop.bundle.part": {
+  "en": "27c78f13c2ed",
+  "tr": "d37ce327bc77",
+  "by": "claude-in-session"
+ },
  "shop.bundle.worth": {
   "en": "c83af4f393f7",
   "tr": "acd44b7827bf",
@@ -38690,8 +38695,8 @@
   "by": "claude-in-session"
  },
  "shop.look.s1premium": {
-  "en": "44d41f5035e6",
-  "tr": "4b43078f343b",
+  "en": "0bcc26758a7c",
+  "tr": "89885416bc21",
   "by": "claude-in-session"
  },
  "shop.look.seasonalcollector": {
@@ -38887,6 +38892,11 @@
  "shop.state.soon": {
   "en": "f411193f1d66",
   "tr": "2aadb48d81b9",
+  "by": "claude-in-session"
+ },
+ "shop.state.spent": {
+  "en": "88bb8a3ce4ef",
+  "tr": "b74e760efddb",
   "by": "claude-in-session"
  },
  "shop.stripe": {

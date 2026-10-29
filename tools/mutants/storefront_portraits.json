@@ -1,0 +1,38 @@
+[
+  {
+    "name": "AUDIT-STOREFRONT-a-portrait-unclipped",
+    "file": "src/ui/profileIcons.js",
+    "old": "const pic = node('g', { 'clip-path': `url(#${id}-clip)` });",
+    "new": "const pic = node('g', {});",
+    "tests": [
+      "test/ui/storefront_badges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-a-paint-never-laid",
+    "file": "src/ui/profileIcons.js",
+    "old": "const g = node(mat[0], { id: `${id}-${m}`, ...mat[1] });",
+    "new": "const g = node(mat[0], { id: m, ...mat[1] });",
+    "tests": [
+      "test/ui/storefront_badges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-a-portrait-unbezelled",
+    "file": "src/ui/profileIcons.js",
+    "old": "const rim = art.bezel ? BEZEL[/** @type {keyof typeof BEZEL} */ (art.bezel)] : [];",
+    "new": "const rim = /** @type {any[]} */ ([]);",
+    "tests": [
+      "test/ui/storefront_badges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-two-portraits-one-id",
+    "file": "src/ui/profileIcons.js",
+    "old": "const id = `pxicon-${key}-${++_gradientId}`;",
+    "new": "const id = `pxicon-${key}`;",
+    "tests": [
+      "test/ui/storefront_badges.test.js"
+    ]
+  }
+]

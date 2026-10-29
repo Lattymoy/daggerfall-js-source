@@ -25,7 +25,7 @@ import { QL_SERVICE_LINES } from '../../net/questlineClaims.js';
 import { ARENA_CHAMPION_MIN_BOUTS, ARENA_CHAMPION_MIN_FOES } from '../../net/arena/arenaLaw.js';   // AUDIT COLLECTIONS-II (lane 1): the laurel's floor
 import { HUNT_TITLES, MASTERY_TITLES, SEA_TITLES } from '../../net/huntLaw.js';   // HUNTERS-MARK, MARKS-OF-MASTERY: each title's count, the service's own law
 import { professionName } from '../../net/professionLaw.js';
-import { shopWareById, shopPriceText } from '../../net/shopLaw.js';   // SHOP: a ware's price, the shop's own
+import { SHOP_WARES, shopWareById, shopPriceText, shopClosure } from '../../net/shopLaw.js';   // SHOP: a ware's price, the shop's own
 import { ARMORY_KEYS, ARMORY_PIECES, armoryPieceOf, armoryKitPieces } from '../../net/armoryLaw.js';   // ARMORY: the Aura Armory's pieces and the kit worn
 import { ARMORY_LOOK, armoryPieceName } from '../armoryText.js';
 import { PASS_REWARDS, PASS_DELUXE, passSeasonById } from '../../net/battlePassLaw.js';   // STOREFRONT: a pass reward's level and track, and its season's days
@@ -408,13 +408,22 @@ export function wardrobeCount(/** @type {string} */ kind, /** @type {any} */ war
 
 /** THE AVAILABILITY NOW: a seasonal entry's resolved against the festival's dates (net/festivalLaw.js FESTIVALS), a pass
  *  reward's against its season's (net/battlePassLaw.js PASS_SEASONS). */
-export function wardrobeAvail(/** @type {{ avail: string, season?: string }} */ e, nowMs = Date.now()) {
+export function wardrobeAvail(/** @type {{ avail: string, season?: string, kind?: string, key?: string }} */ e, nowMs = Date.now(), /** @type {any} */ shop = null) {
   if (e.avail === 'pass') {   // STOREFRONT: a season's - not yet before its days, gone after them
     const s = passSeasonById(e.season);
     return !s || nowMs >= s.toMs ? 'retired' : nowMs < s.fromMs ? 'dormant' : 'pass';
   }
+  if (e.avail === 'store' && Array.isArray(shop?.wares)) return storeAvail(`${e.kind}:${e.key}`, shop.wares);
   if (e.avail !== 'seasonal') return e.avail;
   return festivalAt(nowMs) ? 'seasonal' : 'offseason';
+}
+/** AUDIT-STOREFRONT S2: a shop ware's availability off the account's shop card (net/shopLaw.js shopCardOf) - in the shop
+ *  while it or a bundle giving it is sold, no longer once each such ware the card tells is off sale, not yet while the
+ *  card tells none of them (the service tells no drop before it lands). With no card read, the catalogue's word. Pure. */
+function storeAvail(/** @type {string} */ id, /** @type {ReadonlyArray<any>} */ rows) {
+  const givers = SHOP_WARES.filter((w) => w.alone && /** @type {string[]} */ (shopClosure(w.id)).includes(id)).map((w) => w.id);
+  const told = rows.filter((r) => givers.includes(r?.id));
+  return told.some((r) => r.sale === true) ? 'store' : told.length ? 'retired' : 'dormant';
 }
 /** The open festival's last day in the player's own words ("7 November"), or '' with none open. */
 export function festivalUntilText(nowMs = Date.now()) {
@@ -423,8 +432,8 @@ export function festivalUntilText(nowMs = Date.now()) {
   try { return new Date(f.toMs - 1).toLocaleDateString(intlLocale(), { day: 'numeric', month: 'long', timeZone: 'UTC' }); } catch { return new Date(f.toMs - 1).toISOString().slice(0, 10); }
 }
 /** An entry's availability in a sentence, now. */
-export function availLine(/** @type {{ avail: string, note?: () => string }} */ e, nowMs = Date.now()) {
+export function availLine(/** @type {{ avail: string, note?: () => string }} */ e, nowMs = Date.now(), /** @type {any} */ shop = null) {
   if (typeof e.note === 'function') return e.note();   // AUDIT COLLECTIONS-II (lane 1): an entry's own word, where its kind's would mislead
-  const a = wardrobeAvail(e, nowMs);
+  const a = wardrobeAvail(e, nowMs, shop);
   return a === 'seasonal' ? AVAIL_LINE.seasonal(festivalUntilText(nowMs)) : AVAIL_LINE[/** @type {Exclude<keyof typeof AVAIL_LINE, 'seasonal'>} */ (a)]();
 }

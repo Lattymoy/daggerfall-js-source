@@ -1,7 +1,7 @@
 // @ts-check
 // STOREFRONT (2026-10-29, the developer: "We need to track data to see how demand is changing over time ... To see how
 // much was sold in which day ... To get a feeling of what the next 'Launch window' we have"; bible/06-Systems/
-// Storefront.md section 3.2): THE SHOP'S DEMAND, an Admin's read beside the staff panel's economy. Each day a ware: the
+// Storefront.md section 3.3): THE SHOP'S DEMAND, an Admin's read beside the staff panel's economy. Each day a ware: the
 // orders opened (a press of Buy that reached Stripe), paid, refunded and disputed, and the money paid - read off
 // `shop_orders` as they stand, with each day's featured windows (SHOP_FEATURED) beside them. Writes nothing.
 import { SHOP_WARES, SHOP_WARE_NAME, shopFeaturedOf } from '../../src/net/shopLaw.js';
@@ -15,17 +15,18 @@ const dayOf = (/** @type {number} */ s) => Math.floor(s / DAY_S) * DAY_S;
 
 /**
  * THE DEMAND over the last `days` UTC days to `nowS`: `{ asOf, from, days: [{ day, featured: [ids], wares: { [id]:
- * { opened, paid, refunded, disputed, cents } } }], totals: { [id]: same }, names }` - a day with no order still has its
- * row, so a chart's axis has no gaps. Two reads, each on an index (migration 0193).
+ * { opened, paid, refunded, disputed, cents } } }], totals: { [id]: same }, names, refundsOwed }` - a day with no order
+ * still has its row, so a chart's axis has no gaps. Three reads, the first two each on an index (migration 0193).
  * @param {any} db @param {any} env @param {number} nowS @param {number} [days]
  */
 export async function shopDemand(db, env, nowS, days = DEMAND_DAYS_DEFAULT) {
   const n = Math.max(1, Math.min(DEMAND_DAYS_MAX, Math.floor(Number(days)) || DEMAND_DAYS_DEFAULT));
   const from = dayOf(nowS) - (n - 1) * DAY_S;
-  const [opened, paid] = await db.batch([
-    db.prepare('SELECT (created_at / 86400) * 86400 AS day, ware, COUNT(*) AS c FROM shop_orders WHERE created_at >= ?1 GROUP BY day, ware').bind(from),
+  const [opened, paid, owed] = await db.batch([
+    db.prepare('SELECT (created_at / 86400) * 86400 AS day, ware, COUNT(*) AS c FROM shop_orders WHERE created_at >= ?1 AND stripe_session IS NOT NULL GROUP BY day, ware').bind(from),   // AUDIT-STOREFRONT S8: a press that reached Stripe
     db.prepare(`SELECT (paid_at / 86400) * 86400 AS day, ware, status, COUNT(*) AS c, SUM(cents) AS cents FROM shop_orders
       WHERE paid_at >= ?1 AND status IN ('paid', 'refunded', 'disputed') GROUP BY day, ware, status`).bind(from),
+    db.prepare('SELECT id, ware, cents, refund, paid_at FROM shop_orders WHERE refund_owed = 1 ORDER BY paid_at LIMIT 100'),   // AUDIT-STOREFRONT S3
   ]);
   const schedule = shopFeaturedOf(env?.SHOP_FEATURED);
   /** @type {any[]} */ const rows = [];
@@ -53,5 +54,8 @@ export async function shopDemand(db, env, nowS, days = DEMAND_DAYS_DEFAULT) {
     for (const k of Object.keys(t)) t[k] += /** @type {any} */ (c)[k];
   }
   const names = Object.fromEntries(SHOP_WARES.filter((w) => w.alone).map((w) => [w.id, SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (w.id)] ?? w.id]));
-  return { asOf: nowS, from, days: rows, totals, names };
+  // AUDIT-STOREFRONT S3: the payments the service returns itself that Stripe has not taken yet - Stripe asks again on its
+  // own; one standing here for a day is an owner's refund by hand
+  const refundsOwed = (owed?.results ?? []).map((/** @type {any} */ o) => ({ order: String(o.id), ware: String(o.ware), cents: Number(o.cents) || 0, why: String(o.refund ?? ''), paidAt: Number(o.paid_at) || 0 }));
+  return { asOf: nowS, from, days: rows, totals, names, refundsOwed };
 }

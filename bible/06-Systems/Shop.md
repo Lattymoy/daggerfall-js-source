@@ -92,6 +92,8 @@ checkout moves its order from open to paid, sets the ware's bit on `players.shop
 server's post - one batch, guarded on the order moving, so a webhook told twice grants once. The amount and currency
 must be the order's. A delayed payment method waits for its own event. A full refund or a dispute takes the bit off
 (unless another paid order holds the ware) with a letter saying so; a part refund keeps it; a dispute won gives it back.
+Since STOREFRONT the grant is guarded on the row as read too, and a payment taken back takes what it alone covered, a
+giver's credited wares with it (`Storefront.md` sections 3 and 3.2).
 
 The amount checked is Stripe's subtotal, the price before any tax Stripe adds. A paid amount that is not the order's
 grants nothing and is logged: the money is taken, so it is the owner's to refund or grant. A grant the database failed

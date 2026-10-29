@@ -12,7 +12,7 @@ import {
   DAEDRIC_CRIMSON, AETHERIUM_BLUE, DWEMER_BRASS,
 } from '../../src/ui/playerBadge.js';
 import { flameSheetPixels, flameFramePixels, PLATE_PAINTERS } from '../../src/ui/titleFlame.js';
-import { ICON_TEXT, ICON_ART, profileIconNode } from '../../src/ui/profileIcons.js';
+import { ICON_TEXT, ICON_ART, ICON_MATERIALS, profileIconNode } from '../../src/ui/profileIcons.js';
 import { GLYPH_LABEL } from '../../src/ui/enhanced/enhancedAccount.js';
 import {
   AURA_LOOK, AURA_FS, AURA_GROUND_R, auraPrograms, DOMINION_R, DOMINION_BAND_M, DOMINION_RUNES, DOMINION_SCRIPT, DOMINION_RGB, dominionRatesWhole,
@@ -136,15 +136,23 @@ test('STOREFRONT the glyphs: each a path in its 16-unit box, a classic mark of i
 
 // ── THE PORTRAITS ─────────────────────────────────────────────────────
 
-test('STOREFRONT the portraits: Season One\'s eight, each its words, drawn as the festival\'s are - a round field in its two colours and its shapes - in the Rourken\'s brass and the aetherium\'s blue, every shape inside the field (mutants: a shape past the rim; a portrait with no blue)', () => {
+test('STOREFRONT the portraits: Season One\'s eight, each its words, drawn as the festival\'s are - a round field in its two colours, its shapes clipped to it and the brass bezel - in the Rourken\'s brass and the aetherium\'s blue, every shape inside the field, every paint it names its own (mutants: a shape past the rim; a portrait with no blue; a paint named and never laid)', () => {
   assert.deepEqual(ICONS.slice(-8), NEW_ICONS);
   assert.deepEqual(NEW_ICONS.map((k) => ICON_TEXT[k]), ['Centurion Helm', 'Aetherium Shard', 'Dwemer Lexicon', 'Brass Spider', 'Dwarven Sphere', 'Brass Colossus', 'Gearheart', 'Numidium']);
   const doc = { createElementNS: (_ns, tag) => { const n = { tag, attrs: {}, children: [], setAttribute(k, v) { n.attrs[k] = v; }, append(...c) { n.children.push(...c); } }; return n; } };
   for (const k of NEW_ICONS) {
     const svg = profileIconNode(doc, k, 'px-icon', 48);
-    assert.equal(svg.children.length, 2 + ICON_ART[k].shapes.length, `${k}: its defs, its field and its shapes`);
+    // AUDIT-STOREFRONT (PIN MOVED: the owner, "The profile images leave a lot to be desired" - the shapes now ride in a
+    // group clipped to the field, under the bezel, and their paints are ICON_MATERIALS laid in the svg's own defs)
+    const [defs, field, pic, ...rim] = svg.children;
+    assert.deepEqual([defs.tag, field.tag, pic.tag, pic.children.length], ['defs', 'circle', 'g', ICON_ART[k].shapes.length], `${k}: its defs, its field and its shapes`);
+    assert.equal(ICON_ART[k].bezel, 'brass');
+    assert.ok(rim.length > 0, `${k}: its bezel`);
+    const laid = new Set(defs.children.map((c) => c.attrs.id));
+    for (const n of [...pic.children, ...rim]) for (const v of Object.values(n.attrs)) for (const m of String(v).match(/url\(#[^)]+\)/g) ?? []) assert.ok(laid.has(m.slice(5, -1)), `${k}: ${m} laid`);
     assert.equal(svg.attrs['aria-label'], ICON_TEXT[k]);
-    const fills = ICON_ART[k].shapes.map(([, a]) => `${a.fill ?? ''}${a.stroke ?? ''}`).join(' ');
+    const paint = (v) => String(v ?? '').replace(/url\(#(\w+)\)/g, (_, m) => (ICON_MATERIALS[m]?.[2] ?? []).map((st) => st[1]).join(' '));
+    const fills = ICON_ART[k].shapes.map(([, a]) => `${paint(a.fill)}${paint(a.stroke)}`).join(' ');
     assert.match(fills, /#3fb8ff|#9ff9fc|#7fe0ff/, `${k}: the aetherium's light`);
     assert.match(fills, /#c9963a|#a8751b|#e2b75a|#f3d78a/, `${k}: the brass`);
     for (const [tag, a] of ICON_ART[k].shapes) {
@@ -158,6 +166,21 @@ test('STOREFRONT the portraits: Season One\'s eight, each its words, drawn as th
       }
       for (const [x, y] of pts) assert.ok(Math.hypot(x - 32, y - 32) <= 31.5, `${k}: ${tag} inside the field at ${x},${y}`);
     }
+  }
+});
+
+test('AUDIT-STOREFRONT every portrait, the festival\'s four and the season\'s eight: drawn lit - its shapes clipped to its field, inside it, in a bezel, every paint it names laid in its own defs under ids of its own, two drawings never sharing one (mutants: the clip dropped; a paint never laid; the bezel dropped; two drawings\' ids one)', () => {
+  const doc = { createElementNS: (_ns, tag) => { const n = { tag, attrs: {}, children: [], setAttribute(k, v) { n.attrs[k] = v; }, append(...c) { n.children.push(...c); } }; return n; } };
+  const ids = (svg) => svg.children[0].children.map((c) => c.attrs.id);
+  for (const k of Object.keys(ICON_ART)) {
+    const svg = profileIconNode(doc, k, 'px-icon', 48), [defs, , pic, ...rim] = svg.children;
+    assert.ok(ICON_ART[k].bezel && rim.length >= 3, `${k}: in its bezel`);
+    const clip = defs.children.find((c) => c.tag === 'clipPath');
+    assert.equal(pic.attrs['clip-path'], `url(#${clip?.attrs.id})`, `${k}: its picture clipped to the field`);
+    const laid = new Set(ids(svg));
+    for (const n of [...pic.children, ...rim]) for (const v of Object.values(n.attrs)) for (const m of String(v).match(/url\(#[^)]+\)/g) ?? []) assert.ok(laid.has(m.slice(5, -1)), `${k}: ${m} laid`);
+    const again = profileIconNode(doc, k, 'px-icon', 48);
+    assert.equal(ids(again).filter((id) => laid.has(id)).length, 0, `${k}: a second drawing's ids its own`);
   }
 });
 

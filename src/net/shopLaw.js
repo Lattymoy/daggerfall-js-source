@@ -7,12 +7,15 @@
 import { TITLES, AURAS, GLYPHS } from './identityToken.js';
 import { ARMORY_PIECES, ARMORY_NAME, ARMORY_SETS, armoryLinePieces } from './armoryLaw.js';   // ARMORY: the Aura Armory's shop pieces and its set - armoryLaw.js imports nothing
 import { EFFECTS, effectOf } from './effectLaw.js';   // STOREFRONT: the kill effects, portal skins and mount looks - a leaf
-import { passSeasonById, passOpen } from './battlePassLaw.js';   // STOREFRONT: a season's wares are sold while it runs - a leaf
+import { passSeasonById, passOpen, PASS_BOOSTS, passMult } from './battlePassLaw.js';   // STOREFRONT: a season's wares are sold while it runs - a leaf
 
 /** The currency every price is charged in, as Stripe spells it. */
 export const SHOP_CURRENCY = 'usd';
 /** STOREFRONT: the least a checkout may charge - Stripe's own floor for a dollar charge. */
 export const SHOP_MIN_CENTS = 50;
+/** How long Stripe's page stays up (ms): its own floor is thirty minutes, and a minute more covers the clocks' skew. A
+ *  season's ware stops selling this long before its season ends, so no page outlives it. */
+export const SHOP_CHECKOUT_MS = 31 * 60_000;
 /** The shop's sections, in the window's order (STOREFRONT: the sheet's rows; the titles and glyphs one section, the
  *  name visuals). */
 export const SHOP_CATEGORIES = Object.freeze(['pass', 'kills', 'portals', 'mounts', 'names', 'auras', 'armory', 'bundles', 'boosts']);
@@ -128,16 +131,45 @@ export function shopHeldDirect(/** @type {unknown} */ row) {
   if (typeof text === 'string') for (const id of text.split(' ')) if (SHOP_HELD_ID_RE.test(id) && shopWareById(id)) ids.add(id);
   return SHOP_WARES.filter((w) => ids.has(w.id)).map((w) => w.id);
 }
-/** STOREFRONT: EVERYTHING A ROW HOLDS - what it holds directly and, through every giver it holds, what that gives. Pure. */
+/** STOREFRONT (AUDIT-STOREFRONT S1): THE WARES A ROW'S GIVERS NO LONGER GIVE - `-<id>` in `shop_held`. A giver sold
+ *  with credit for a ware held then never paid for it, so when that ware's own payment goes back it leaves the row whole
+ *  (shop.js revokeOrder); a payment that covers it again takes the mark off. Pure. */
+export function shopLostOf(/** @type {unknown} */ row) {
+  const text = typeof row === 'object' && row ? /** @type {any} */ (row).shop_held : '';
+  const out = /** @type {Set<string>} */ (new Set());
+  if (typeof text === 'string') for (const t of text.split(' ')) if (t[0] === '-' && SHOP_HELD_ID_RE.test(t.slice(1)) && shopWareById(t.slice(1))) out.add(t.slice(1));
+  return out;
+}
+/** STOREFRONT: EVERYTHING A ROW HOLDS - what it holds directly and, through every giver it holds, what that gives (but a
+ *  ware it lost, shopLostOf). Pure. */
 export function shopHeldIds(/** @type {unknown} */ row) {
   const out = /** @type {Set<string>} */ (new Set(shopHeldDirect(row)));
+  const lost = shopLostOf(row);
   const stack = [...out];
   while (stack.length) {
     const w = shopWareById(stack.pop());
-    for (const g of w?.gives ?? []) if (!out.has(g)) { out.add(g); stack.push(g); }
+    for (const g of w?.gives ?? []) if (!out.has(g) && !lost.has(g)) { out.add(g); stack.push(g); }
   }
   return SHOP_WARES.filter((w) => out.has(w.id)).map((w) => w.id);
 }
+/** STOREFRONT (AUDIT-STOREFRONT S1): a ware and every ware it gives, through every giver - in the wares' order. Pure. */
+export function shopClosure(/** @type {unknown} */ id) {
+  const out = /** @type {Set<string>} */ (new Set());
+  const stack = shopWareById(id) ? [String(id)] : [];
+  while (stack.length) {
+    const x = /** @type {string} */ (stack.pop());
+    if (out.has(x)) continue;
+    out.add(x);
+    stack.push(...(shopWareById(x)?.gives ?? []));
+  }
+  return SHOP_WARES.filter((w) => out.has(w.id)).map((w) => w.id);
+}
+/** STOREFRONT (AUDIT-STOREFRONT S1): A SALE'S CREDIT - what of a giver a row holds already, which its price for the row
+ *  takes off (shopPriceFor). The order keeps it, so a payment covers only the rest (shop.js). Pure. */
+export const shopCreditOf = (/** @type {unknown} */ row, /** @type {unknown} */ id) => {
+  const held = shopHeldIds(row);
+  return shopClosure(id).filter((x) => x !== id && held.includes(x));
+};
 /** The keys of one kind (`title`, `glyph`, `aura`, `armory`, `kill`, `portal`, `mount`) a row holds, in the wares' order -
  *  a giver's never (the Eternal Set's pieces, a bundle's wares). Pure. */
 export const shopKeysOf = (/** @type {unknown} */ row, /** @type {string} */ kind) => {
@@ -160,6 +192,12 @@ export const shopOwns = (/** @type {unknown} */ row, /** @type {string} */ id) =
   const w = shopWareById(id);
   return !!w && worthLeft(w, shopHeldIds(row)) === 0;
 };
+/** AUDIT-STOREFRONT S5: WHETHER A WARE WOULD ADD NOTHING TO A ROW - a booster that gives no levels, beside one as strong
+ *  held (the highest held counts, never their sum: battlePassLaw.js passMult). It is not sold to that row. Pure. */
+export function shopSpent(/** @type {unknown} */ row, /** @type {string} */ id) {
+  const b = Object.hasOwn(PASS_BOOSTS, id) ? PASS_BOOSTS[/** @type {keyof typeof PASS_BOOSTS} */ (id)] : null;
+  return !!b && b.levels === 0 && passMult(b.season, shopHeldIds(row)) >= b.mult;
+}
 /** STOREFRONT: A WARE'S PRICE FOR A ROW - a giver's price times the share of its worth not yet held (never under
  *  SHOP_MIN_CENTS), any other ware's own; null when it is owned. The service charges it and the window shows it. Pure. */
 export function shopPriceFor(/** @type {unknown} */ row, /** @type {string} */ id) {
@@ -186,20 +224,27 @@ const DAY_MS = 86_400_000;
  *  time (`2026-11-10T18:00Z`). NaN for anything else. Pure. */
 export function shopWhenOf(/** @type {unknown} */ s, end = false) {
   if (typeof s !== 'string') return NaN;
-  const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
-  if (day) { const ms = Date.UTC(+day[1], +day[2] - 1, +day[3]); return new Date(ms).getUTCDate() === +day[3] ? ms + (end ? DAY_MS : 0) : NaN; }
-  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?Z$/.test(s) ? Date.parse(s) : NaN;
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2}))?Z)?$/.exec(s);
+  if (!m) return NaN;
+  const [y, mo, d, h = 0, mi = 0, se = 0] = m.slice(1).map((x) => (x === undefined ? undefined : +x));
+  const ms = Date.UTC(/** @type {number} */ (y), /** @type {number} */ (mo) - 1, d, h, mi, se), at = new Date(ms);
+  // AUDIT-STOREFRONT S4: a date that rolls over (a 13th month, 31 November, 24:00) is no date - never a later one
+  if (at.getUTCFullYear() !== y || at.getUTCMonth() + 1 !== mo || at.getUTCDate() !== d || at.getUTCHours() !== h || at.getUTCMinutes() !== mi || at.getUTCSeconds() !== se) return NaN;
+  return ms + (end && m[4] === undefined ? DAY_MS : 0);
 }
 /** THE FEATURED SCHEDULE, off the service's config (`SHOP_FEATURED`): an entry a line (or `;`), `<ware> <from> <to>
- *  [limited]` - `{ id, fromMs, toMs, limited }` in the config's order. An entry that does not read whole is dropped. */
+ *  [limited]` - `{ id, fromMs, toMs, limited }` in the config's order. AUDIT-STOREFRONT S4: a line naming a ware that does
+ *  not read whole is kept as `{ id, bad: true }`, which shuts that ware's sale (shopSellable) - a typo in a limited
+ *  window must never sell it for good. A line naming no ware is dropped (the live config's pin reads every line). */
 export function shopFeaturedOf(/** @type {unknown} */ raw) {
   if (typeof raw !== 'string' || !raw) return [];
   const out = [];
   for (const line of raw.split(/[;\n]/)) {
     const [id, from, to, mark, ...rest] = line.trim().split(/\s+/);
     const w = shopWareById(id), fromMs = shopWhenOf(from), toMs = shopWhenOf(to, true);
-    if (!w || !w.alone || rest.length || (mark !== undefined && mark !== 'limited') || !(toMs > fromMs)) continue;
-    out.push(Object.freeze({ id: w.id, fromMs, toMs, limited: mark === 'limited' }));
+    if (!w) continue;
+    const ok = w.alone && !rest.length && (mark === undefined || mark === 'limited') && toMs > fromMs;
+    out.push(Object.freeze(ok ? { id: w.id, fromMs, toMs, limited: mark === 'limited' } : { id: w.id, fromMs: NaN, toMs: NaN, limited: false, bad: true }));
   }
   return out;
 }
@@ -214,11 +259,22 @@ export function shopFeaturedNow(/** @type {ReadonlyArray<{ id: string, fromMs: n
  *  windows. Pure. */
 export function shopSellable(/** @type {any} */ w, /** @type {ReadonlyArray<string>} */ onSale, /** @type {ReadonlyArray<any>} */ featured, /** @type {number} */ nowMs) {
   if (!w?.alone || !onSale.includes(w.id)) return false;
-  if (w.season && !passOpen(passSeasonById(w.season), nowMs)) return false;
+  const season = w.season ? passSeasonById(w.season) : null;
+  if (w.season && !(passOpen(season, nowMs) && passOpen(season, nowMs + SHOP_CHECKOUT_MS))) return false;   // AUDIT-STOREFRONT S10: no page outlives its season
   const mine = featured.filter((e) => e.id === w.id);
+  if (mine.some((e) => e.bad)) return false;
   if (mine.length && nowMs < Math.min(...mine.map((e) => e.fromMs))) return false;
   const limits = mine.filter((e) => e.limited);
   return !limits.length || limits.some((e) => nowMs >= e.fromMs && nowMs < e.toMs);
+}
+
+/** AUDIT-STOREFRONT S2: WHETHER A WARE MAY BE TOLD at `nowMs` - its first featured window open (a drop is news when it
+ *  lands); a ware the schedule cannot read has no date to tell. A season's days are told already (the window's "On sale
+ *  from"). One told and not sold now is no longer sold; one not told is not on the card at all. Pure. */
+export function shopDropped(/** @type {any} */ w, /** @type {ReadonlyArray<any>} */ featured, /** @type {number} */ nowMs) {
+  if (!w?.alone) return false;
+  const mine = featured.filter((e) => e.id === w.id);
+  return !mine.some((e) => e.bad) && (!mine.length || nowMs >= Math.min(...mine.map((e) => e.fromMs)));
 }
 
 /** A price in words, in the player's own form where the platform can say it ("$5.00"). Pure but for Intl. */
@@ -239,7 +295,7 @@ export const shopReceiptBatch = (/** @type {string} */ orderId) => `shop-${order
 
 /**
  * THE SHOP'S CARD as the account read carries it (`/v1/account`'s `shop`), checked on the way in: `{ on, wares, featured }`
- * - `on` whether the service takes payments, each ware `{ id, sale, held, buy, cents, until, limited }` (`buy` the
+ * - `on` whether the service takes payments, each ware `{ id, sale, held, spent, buy, cents, until, limited }` (`buy` the
  * service's own https link, or null; `cents` this account's price, a giver's share; `until` the end of its featured window
  * now, or null), `featured` the carousel's ware ids in order. Null for anything else, which draws nothing to buy. Pure.
  * @param {any} card
@@ -254,7 +310,8 @@ export function shopCardOf(card) {
     const buy = typeof r.buy === 'string' && r.buy.startsWith('https://') && r.buy.length <= 2048 ? r.buy : null;
     const cents = Number.isSafeInteger(r.cents) && r.cents >= SHOP_MIN_CENTS && r.cents <= w.cents ? r.cents : w.cents;
     const until = Number.isSafeInteger(r.until) && r.until > 0 ? r.until : null;
-    wares.push({ id: w.id, sale: r.sale === true, held: r.held === true, buy: card.on && r.sale === true && r.held !== true ? buy : null, cents, until, limited: until !== null && r.limited === true });
+    const spent = r.held !== true && r.spent === true;   // AUDIT-STOREFRONT S5: a booster a stronger one held makes worth nothing
+    wares.push({ id: w.id, sale: r.sale === true, held: r.held === true, spent, buy: card.on && r.sale === true && r.held !== true && !spent ? buy : null, cents, until, limited: until !== null && r.limited === true });
   }
   const featured = (Array.isArray(card.featured) ? card.featured : []).filter((/** @type {unknown} */ id, /** @type {number} */ i, /** @type {unknown[]} */ a) => wares.some((x) => x.id === id) && a.indexOf(id) === i);
   return { on: card.on, wares, featured };

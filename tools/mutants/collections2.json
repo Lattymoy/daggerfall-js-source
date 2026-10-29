@@ -165,7 +165,7 @@
   {
     "name": "C2-the-filter-never-applied",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "  const shown = entries.filter((e) => wardrobeFilterPasses(_filter, e, wardrobe, now));",
+    "old": "  const shown = entries.filter((e) => wardrobeFilterPasses(_filter, e, wardrobe, now, flow?.shop));",
     "new": "  const shown = entries;",
     "tests": [
       "test/ui/collections2.test.js"

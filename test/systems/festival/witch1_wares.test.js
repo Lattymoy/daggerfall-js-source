@@ -142,7 +142,10 @@ test('WITCH1 THE PROFILE ICONS: each drawn in code - a round field, its rim and 
   const doc = { createElementNS: (ns, tag) => { assert.equal(ns, 'http://www.w3.org/2000/svg'); return node(tag); } };
   const svg = profileIconNode(doc, 'tallowskull', 'px-icon', 48);
   assert.deepEqual([svg.tag, svg.attrs.width, svg.attrs.class, svg.attrs['aria-label']], ['svg', '48', 'px-icon', 'Tallow Skull']);
-  assert.equal(svg.kids.length, 2 + ICON_ART.tallowskull.shapes.length, 'its defs, its field and its shapes');
+  // AUDIT-STOREFRONT (PIN MOVED: drawn again lit - its shapes in a group clipped to the field, the iron bezel over them)
+  assert.deepEqual(svg.kids.slice(0, 3).map((n) => n.tag), ['defs', 'circle', 'g'], 'its defs, its field and its shapes');
+  assert.equal(svg.kids[2].kids.length, ICON_ART.tallowskull.shapes.length);
+  assert.equal(ICON_ART.tallowskull.bezel, 'iron');
   assert.match(svg.kids[1].attrs.fill, /^url\(#pxicon-tallowskull-\d+\)$/);
   assert.equal(profileIconNode(doc, 'pumpkin'), null);
   assert.equal(profileIconNode(doc, 'toString'), null);
