@@ -102,3 +102,28 @@ test('AUDIT-STOREFRONT S11, S12, S13: the Premium\'s rewards counted off the tra
   assert.ok(page.lines.includes('Your account holds part of it already, so the price is less.'));
   assert.match(SHOP_CSS, /\.sh-cdot \{ width: 24px; height: 24px; min-width: 24px; min-height: 24px;/);
 });
+
+test('AUDIT-STOREFRONT the stages wear the player\'s body: the window asks its `wearer` once and hands every stage that draws a figure the same body - an aura\'s, a piece\'s and an effect\'s; with none, the stand-in (mutants: the body never handed on; asked a stage)', async () => {
+  const raf = globalThis.requestAnimationFrame;
+  globalThis.requestAnimationFrame = (f) => { f(0); return 1; };
+  try {
+    let asked = 0;
+    const me = { kind: 'sprite' }, got = [];
+    const wearer = () => { asked++; return Promise.resolve(me); };
+    const preview = async (_c, _a, _k, body) => { got.push(await body?.()); return { stop() {} }; };
+    const effectPreview = async (_c, _s, _k, _cue, body) => { got.push(await body?.()); return { stop() {} }; };
+    const wares = SHOP_WARES.filter((w) => w.alone).map((w) => row(w.id));
+    for (const cat of ['auras', 'kills', 'armory']) {
+      const w = shopWindow(fakeDoc(), { flow: () => flowIn(wares), onClose() {}, keep: { cat }, focus: false, preview, effectPreview, wearer, reduced: true });
+      await new Promise((r) => setTimeout(r, 0));
+      w.stop();
+    }
+    assert.ok(got.length >= 3 && got.every((b) => b === me), 'every stage given the body');
+    assert.equal(asked, 3, 'asked once a window, never a stage');
+    got.length = 0;
+    const w = shopWindow(fakeDoc(), { flow: () => flowIn(wares), onClose() {}, keep: { cat: 'kills' }, focus: false, preview, effectPreview, reduced: true });
+    await new Promise((r) => setTimeout(r, 0));
+    w.stop();
+    assert.ok(got.length > 0 && got.every((b) => b === undefined), 'no wearer: the stand-in');
+  } finally { globalThis.requestAnimationFrame = raf; }
+});

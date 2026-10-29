@@ -1234,6 +1234,15 @@ function bodyWho(save) {
   }
   return save ? { gender: save.gender, outfit: save.outfit ?? null } : null;
 }
+/** AUDIT-STOREFRONT: the body the shop's stages wear - the profile's (its Morrowind body where one stands, else its sprite),
+ *  none with no character, so the stand-in stays. */
+function shopBody() {
+  const save = profileCharacter(), who = bodyWho(save);
+  if (!who) return null;
+  const bodies = profileBodies({ arm: mode === 'pause' ? fpArm : null, who: () => who });
+  const kind = bodies.kinds()[0];
+  return kind ? bodies.of(kind) : null;
+}
 
 /** Is there a session on this device? A storage read, no network - so
  *  the door can decide whether to offer the window without waiting on
@@ -4617,7 +4626,7 @@ function renderHome() {
     else if (shopOpen) {
       // SHOP: the shop's window, on the hourglass's own stage; its flow is the visit's, read on its first open
       const shstage = el('div', 'px-stage px-timersstage px-shopstage');
-      shopView = shopWindow(document, { flow: shopFlowOf, keep: shopKeep, onClose: closeShop, focus: shopFocusIn });
+      shopView = shopWindow(document, { flow: shopFlowOf, keep: shopKeep, onClose: closeShop, focus: shopFocusIn, wearer: shopBody });
       shopFocusIn = false;
       shstage.append(shopView.root);
       home.append(shstage);

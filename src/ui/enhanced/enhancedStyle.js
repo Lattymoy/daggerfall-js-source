@@ -1331,6 +1331,7 @@ ${badgeCss()}
 .card .acctportrait svg.accticon { position: absolute; inset: 0; width: 100%; height: 100%; }   /* WITCH1: a profile icon worn fills the well */
 .card .acticon { display: inline-flex; align-items: center; gap: 6px; }   /* WITCH1: an icon's button - its picture, then its word */
 .card .acticon svg.acticonart { flex: none; width: 22px; height: 22px; }
+.card .acteffect svg.acteffectart { flex: none; width: 22px; height: 22px; margin-right: 6px; vertical-align: middle; }
 .card .acctsilhouette { position: absolute; inset: 0; }
 .card .acctsilhouette::before { content: ''; position: absolute; left: 31%; top: 16%; width: 38%; height: 40%;
   border-radius: 48% 48% 44% 44%; background: #3a424d; }

@@ -13,7 +13,8 @@ import { SHOP_WARES } from '../src/net/shopLaw.js';
 
 const BASE = process.env.PROBE_BASE ?? 'http://127.0.0.1:5199';
 const OUT = process.env.GALLERY_OUT ?? '/tmp/storefront-gallery';
-const MOMENTS = [120, 450, 900, 1600, 2600];
+const MOMENTS = (process.env.GALLERY_MOMENTS ?? '120,450,900,1600,2600').split(',').map(Number);
+const ONLY = process.env.GALLERY_ONLY ? process.env.GALLERY_ONLY.split(',') : null;   // the sections shot (a tab's `sh-tab-<id>`), all without
 mkdirSync(OUT, { recursive: true });
 
 const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS' };
@@ -38,8 +39,8 @@ await page.addInitScript(() => {
     localStorage.setItem('dagger.account.session', JSON.stringify({ id: 'a1', name: 'Aelwyn', kind: 'linked', sessionId: 's1', secret: 'probe-secret' }));
   } catch { /* storage off */ }
 });
-await page.goto(`${BASE}/play/?nointro`, { waitUntil: 'domcontentloaded' });
-await page.waitForSelector('.px-menu', { timeout: 120000 });
+await page.goto(`${BASE}/play/?nointro`, { waitUntil: 'domcontentloaded', timeout: 300000 });
+await page.waitForSelector('.px-menu', { timeout: 300000 });   // a loaded machine takes its time
 if (await page.locator('.px-acctstage').count()) await page.keyboard.press('Escape');
 await page.evaluate(async () => {
   const { openPauseFlow } = await import('/src/ui/pauseDoor.js');
@@ -53,8 +54,11 @@ await page.locator('.sh-cpause').click().catch(() => {});
 
 const tabs = await page.locator('.sh-tab').count();
 for (let i = 0; i < tabs; i++) {
+  const tabId = (await page.locator('.sh-tab').nth(i).getAttribute('id')) ?? '';
+  if (ONLY && !ONLY.includes(tabId.replace('sh-tab-', ''))) continue;
   await page.locator('.sh-tab').nth(i).click();
   await page.waitForTimeout(400);
+  if (tabId === 'sh-tab-pass') await page.locator('.sh-pass').screenshot({ path: `${OUT}/pass-section.png` }).catch(() => {});   // the track, its rewards drawn
   const panels = page.locator('.sh-panels .sh-panel');
   const n = await panels.count();
   for (let k = 0; k < n; k++) {

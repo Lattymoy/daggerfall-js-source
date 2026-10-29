@@ -15,6 +15,7 @@ import { armoryPieceName, armorySlotName, armoryLineName, ARMORY_LOOK } from './
 import { namePlateNode } from './namePlate.js';
 import { EFFECT_SLOTS, EFFECTS, effectWorn } from '../net/effectLaw.js';   // STOREFRONT: the effects' slots
 import { effectName, effectLook, effectSlotName } from './effectText.js';
+import { effectEmblemNode } from './effectEmblems.js';   // AUDIT-STOREFRONT: each choice's emblem beside its name
 import { mountPreview } from './mountPreview.js';
 import { playPreviewSound } from './effectPreviewSound.js';
 
@@ -330,6 +331,8 @@ export function characterSlots(doc, flow, { start = null, bodies = null, entryOf
       for (const e of EFFECTS.filter((x) => x.slot === picked)) {
         const own = held.includes(e.key), on = worn === e.key;
         const b = keyedAs(el('button', cls('acttitle', 'acteffect', `fx-${picked}-${e.key}`, on && 'worn', !own && 'locked')), `${picked}:${e.key}`);
+        const art = effectEmblemNode(doc, picked, e.key, 'acteffectart', 22);
+        if (art) { art.setAttribute?.('aria-hidden', 'true'); b.append(art); }
         b.append(el('span', 'acteffectword', effectName(picked, e.key)));
         b.setAttribute?.('aria-pressed', on ? 'true' : 'false');
         if (!own) b.setAttribute?.('aria-disabled', 'true');

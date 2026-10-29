@@ -173,10 +173,16 @@ seconds (`carouselTurns`), never while pointed at, focused or paused (its Pause 
 arrows, its dots, the arrow keys and a swipe step it. Only the panel shown runs its stage. Under it the sections' tabs
 (a section with nothing on the card is not shown), each section's panels, the account's line and the foot.
 
-A panel's stage is live: a title on its plate, a glyph, an aura or a piece on the stand-in, a kill effect or a portal
-skin played on the character's stage with the stand-in figure (`render/effectStage.js`), a horse in its mount look
-(`ui/mountPreview.js`). A panel says its tier, its featured window and the price this account pays, the list price
-struck through beside it where it is less. A bundle's panel lists what it gives, each held one marked (one held in part,
+A panel's stage is live: a title on its plate, a glyph, an aura or a piece worn, a kill effect or a portal skin played on
+the character's stage (`render/effectStage.js`), a horse in its mount look (`ui/mountPreview.js`). The figure is the
+player's own - the profile's body (`ui/profileBody.js`, asked once a window), the stand-in only with no character
+(AUDIT-STOREFRONT). A bundle's stage lays out its pieces, each in its picture; a booster's and a pass's banner is built
+round the season's art - the Cog, the Tonal Fork, the Gearheart, the Centurion, Numidium - the Deluxe's own three beside
+it (`ui/wareArt.js`, one door for every picture shown without playing: an effect's emblem, `ui/effectEmblems.js`; a
+glyph, an aura or a title in its medallion). The profile's effect choices and the pass's track show the same pictures.
+
+A panel says its tier, its featured window and the price this account pays, the list price struck through beside it
+where it is less. A bundle's panel lists what it gives, each held one marked (one held in part,
 the Premium inside a Deluxe, marked so), and its worth. A featured window's tag and days left are told only beside its
 sale, and counted again at UTC midnight. A booster a stronger one makes worth nothing says so, with no Buy. An effect's
 sound is heard when the player points at its stage or chooses its slide, never on every loop.

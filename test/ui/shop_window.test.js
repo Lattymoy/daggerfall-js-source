@@ -233,7 +233,7 @@ test('SHOP: the pause face wires the gem at the end of the row of marks and its 
   const m = rd('src/ui/enhanced/enhancedMenu.js');
   assert.ok(m.includes("const gem = shopGem(home, [mark, envelope, laurel]);"), 'after the laurel');
   assert.ok(m.includes("shopAnchor = anchorSeason(gem, chain, home.querySelector?.('.px-profile'), home);"), 'placed off the chain it is handed, at the row\'s end');
-  assert.ok(m.includes("shopView = shopWindow(document, { flow: shopFlowOf, keep: shopKeep, onClose: closeShop, focus: shopFocusIn });"));
+  assert.ok(m.includes("shopView = shopWindow(document, { flow: shopFlowOf, keep: shopKeep, onClose: closeShop, focus: shopFocusIn, wearer: shopBody });"), 'AUDIT-STOREFRONT (PIN MOVED): its stages wear the profile\'s body');
   assert.ok(m.includes("for (const n of [stage, home.querySelector?.('.px-profile'), mark, envelope, laurel, gem]) n?.setAttribute?.('inert', '');"));
   assert.ok(m.includes(': shopOpen && shopView ? () => closeShop()'), 'Escape');
   assert.equal(m.split('stopShop();').length - 1, 2, 'a rebuild and the unmount');

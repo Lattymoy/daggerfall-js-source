@@ -13,6 +13,12 @@ import {
 } from '../../src/ui/playerBadge.js';
 import { flameSheetPixels, flameFramePixels, PLATE_PAINTERS } from '../../src/ui/titleFlame.js';
 import { ICON_TEXT, ICON_ART, ICON_MATERIALS, profileIconNode } from '../../src/ui/profileIcons.js';
+import { EMBLEM_ART, effectEmblemNode } from '../../src/ui/effectEmblems.js';   // AUDIT-STOREFRONT
+import { wareArtNode, SEASON_WARE_ART } from '../../src/ui/wareArt.js';
+import { EFFECTS } from '../../src/net/effectLaw.js';
+import { effectName } from '../../src/ui/effectText.js';
+import { SHOP_WARES } from '../../src/net/shopLaw.js';
+import { PASS_REWARDS, PASS_DELUXE } from '../../src/net/battlePassLaw.js';
 import { GLYPH_LABEL } from '../../src/ui/enhanced/enhancedAccount.js';
 import {
   AURA_LOOK, AURA_FS, AURA_GROUND_R, auraPrograms, DOMINION_R, DOMINION_BAND_M, DOMINION_RUNES, DOMINION_SCRIPT, DOMINION_RGB, dominionRatesWhole,
@@ -182,6 +188,28 @@ test('AUDIT-STOREFRONT every portrait, the festival\'s four and the season\'s ei
     const again = profileIconNode(doc, k, 'px-icon', 48);
     assert.equal(ids(again).filter((id) => laid.has(id)).length, 0, `${k}: a second drawing's ids its own`);
   }
+});
+
+test('AUDIT-STOREFRONT the effects\' emblems and every ware\'s picture: an emblem for every effect the law knows, each a round field, its shapes inside it, every paint it names its own; a picture for every piece a bundle gives and every reward the pass gives, a title its ribbon (mutants: an effect with no emblem; a glyph bare beside the medallions; a title unpictured)', () => {
+  const doc = { createElementNS: (_ns, tag) => { const n = { tag, attrs: {}, style: {}, children: [], setAttribute(k, v) { n.attrs[k] = v; }, append(...c) { n.children.push(...c); } }; return n; } };
+  assert.deepEqual(Object.keys(EMBLEM_ART).sort(), EFFECTS.map((e) => `${e.slot}:${e.key}`).sort(), 'an emblem an effect');
+  for (const id of Object.keys(EMBLEM_ART)) {
+    const [slot, key] = id.split(':'), svg = effectEmblemNode(doc, slot, key, 'x', 32);
+    assert.equal(svg.attrs['aria-label'], effectName(slot, key));
+    const [defs, pic] = svg.children, laid = new Set(defs.children.map((c) => c.attrs.id));
+    for (const n of pic.children) for (const v of Object.values(n.attrs)) for (const m of String(v).match(/url\(#[^)]+\)/g) ?? []) assert.ok(laid.has(m.slice(5, -1)), `${id}: ${m} laid`);
+  }
+  assert.equal(effectEmblemNode(doc, 'kill', 'nope'), null);
+  assert.equal(effectEmblemNode({}, 'kill', 'pyre'), null);
+  const pieces = [...new Set(SHOP_WARES.filter((w) => w.kind === 'bundle').flatMap((w) => w.gives))];
+  const rewards = [...new Set(Object.values(PASS_REWARDS).flat().map((r) => r.grant).concat(Object.values(PASS_DELUXE).flatMap((d) => d.grants)))];
+  for (const id of [...pieces, ...rewards, 'boost:s1cog', 'boost:s1tonal', 'boost:s1heart', 'pass:s1premium', 'pass:s1deluxe']) {
+    const art = wareArtNode(doc, id, 48, 'x');
+    assert.ok(art && art.tag === 'svg', `${id}: its picture`);
+    assert.equal(art.attrs['aria-hidden'], 'true', `${id}: the name beside it says it`);
+    if (/^(glyph|aura|title):/.test(id) && !SEASON_WARE_ART[id]) assert.equal(art.children.at(-1).attrs.stroke, '#c9a55a', `${id}: in its medallion`);
+  }
+  assert.equal(wareArtNode(doc, 'bundle:portalmaster'), null, 'a bundle is its pieces');
 });
 
 // ── THE AURAS ─────────────────────────────────────────────────────────

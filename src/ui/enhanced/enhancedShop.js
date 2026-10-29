@@ -16,9 +16,10 @@ import { ARMORY_LOOK, ARMORY_SET_LOOK, armoryPieceName, armorySlotName } from '.
 import { effectWorn } from '../../net/effectLaw.js';   // STOREFRONT: the effects worn
 import { effectName, effectLook, effectSlotName } from '../effectText.js';
 import { profileIconNode } from '../profileIcons.js';
+import { wareArtNode } from '../wareArt.js';   // AUDIT-STOREFRONT: a piece's, a reward's and a banner's picture
 import { mountPreview } from '../mountPreview.js';
 import { playPreviewSound } from '../effectPreviewSound.js';
-import { PASS_SEASONS, PASS_REWARDS, PASS_DELUXE, PASS_CHALLENGES, PASS_LEVELS, PASS_XP_PER_LEVEL, PASS_BOOSTS, passSeasonById } from '../../net/battlePassLaw.js';
+import { PASS_SEASONS, PASS_REWARDS, PASS_DELUXE, PASS_CHALLENGES, PASS_LEVELS, PASS_XP_PER_LEVEL, PASS_BOOSTS, PASS_WARES, passSeasonById } from '../../net/battlePassLaw.js';
 import { PASS_SEASON_TEXT, PASS_SEASON_LOOK, PASS_STAGE_TEXT, passChallengeText, passBoostText, passGrantName, passGrantKind } from '../passText.js';
 
 /** Each section's tab, in the player's language. */
@@ -231,11 +232,11 @@ export function shopMark(/** @type {Document} */ doc, { onOpen, open = false }) 
  *  Answers { root, stop, draw, close }: `draw` updates it in place, `stop` lets the previews and the clock go.
  * @param {Document} doc
  * @param {{ flow: () => any, onClose: () => void, keep?: { cat?: string, slide?: number }, focus?: boolean, now?: () => number,
- *   preview?: (canvas: HTMLCanvasElement, aura: string|null, kit?: string|null) => Promise<{ stop: () => void }|null>,
- *   effectPreview?: (canvas: HTMLCanvasElement, slot: string, key: string, cue: (slot: string, key: string|null) => void) => Promise<{ stop: () => void }|null>,
- *   reduced?: boolean }} o
+ *   preview?: (canvas: HTMLCanvasElement, aura: string|null, kit?: string|null, body?: (() => any)|null) => Promise<{ stop: () => void }|null>,
+ *   effectPreview?: (canvas: HTMLCanvasElement, slot: string, key: string, cue: (slot: string, key: string|null) => void, body?: (() => any)|null) => Promise<{ stop: () => void }|null>,
+ *   wearer?: (() => any)|null, reduced?: boolean }} o `wearer` the player's own body for the stages (the profile's, ui/profileBody.js) - asked once
  */
-export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, preview = loadAuraPreview, effectPreview = loadEffectPreview, now = () => Date.now(), reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches }) {
+export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, preview = loadAuraPreview, effectPreview = loadEffectPreview, wearer = null, now = () => Date.now(), reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches }) {
   injectShopStyle(doc);
   const el = (/** @type {string} */ tag, /** @type {string|null} */ cls, /** @type {string|null} */ text = null) => {
     const n = doc.createElement(tag);
@@ -307,6 +308,9 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
   win.append(body);
 
   const f = () => flow();
+  /** AUDIT-STOREFRONT: the player's body, asked once a window and worn on every stage that draws a figure */
+  let bodyAsked = /** @type {Promise<any>|null} */ (null);
+  const bodyOf = wearer ? () => (bodyAsked ??= Promise.resolve().then(wearer).catch(() => null)) : null;
   let cat = shopSections(f()).includes(/** @type {any} */ (keep.cat)) ? /** @type {string} */ (keep.cat) : shopSections(f())[0] ?? SHOP_CATEGORIES[0];
   /** @type {Array<{ stop: () => void }>} the panels' live previews, let go when the panels are drawn again */
   let live = [];
@@ -351,6 +355,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     stage.addEventListener?.('pointerenter', () => { heard = w.id; });
     if (w.kind === 'title') {
       const big = paintTitle(el('div', 'sh-bigtitle', shopWareName(w)), titleBadge({ title: w.key }));
+      big.style?.setProperty?.('--n', String(shopWareName(w).length));   // AUDIT-STOREFRONT: its size fits its name to the stage (SHOP_CSS)
       const tag = el('div', 'sh-nametag');
       tag.append(paintTitle(el('div', 'sh-tagtitle', shopWareName(w)), titleBadge({ title: w.key })), nameEl());
       stage.append(big, tag);
@@ -365,31 +370,48 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
       stage.append(tag);
     } else if (w.kind === 'aura' || w.kind === 'armory') {
       const armory = w.kind === 'armory';   // ARMORY: a piece on the stand-in, worn alone
-      startCanvas(stage, (c) => preview(c, armory ? null : w.key, armory ? armoryKitOf(armoryWarePieces(w.key)) : null),
+      startCanvas(stage, (c) => preview(c, armory ? null : w.key, armory ? armoryKitOf(armoryWarePieces(w.key)) : null, bodyOf),
         armory ? t('shop.noPreviewArmory', 'This device cannot show the piece here.') : t('shop.noPreview', 'This device cannot show the aura here.'), slide);
     } else if (w.kind === 'kill' || w.kind === 'portal') {
-      startCanvas(stage, (c) => effectPreview(c, w.kind, w.key, cueOf(w.id)), t('shop.noPreviewEffect', 'This device cannot show the effect here.'), slide);
+      startCanvas(stage, (c) => effectPreview(c, w.kind, w.key, cueOf(w.id), bodyOf), t('shop.noPreviewEffect', 'This device cannot show the effect here.'), slide);
     } else if (w.kind === 'mount') {
       const m = mountPreview(doc);
       m.set(w.key);
       (slide ? slideLive : live).push({ stop: () => m.dispose() });
       stage.append(m.node);
-    } else if (w.kind === 'bundle') {
-      const list = el('ul', 'sh-bundleart');
+    } else if (w.kind === 'bundle') {   // AUDIT-STOREFRONT: its pieces laid out, each in its own picture - a title its plate
+      const list = el('ul', `sh-bundleart sh-bundle-${w.gives.length}`);
       for (const g of w.gives) {
-        const gw = shopWareById(g);
-        const li = el('li', `sh-bundlepiece fx-${gw?.kind}-${gw?.key}`);
-        const tag = shopWareTag(doc, g);
-        if (tag) li.append(tag);
+        const gw = /** @type {any} */ (shopWareById(g));
+        const li = el('li', `sh-bpiece sh-bpiece-${gw?.kind}`);
+        const pic = el('div', 'sh-bpic'), art = wareArtNode(doc, g, 64, 'sh-bart');
+        if (art) pic.append(art);
+        const name = el('span', `sh-bname fx-${gw?.kind}-${gw?.key}`, gw ? shopWareName(gw) : g);
+        if (gw?.kind === 'title') { paintTitle(name, titleBadge({ title: gw.key })); name.style?.setProperty?.('--n', String(shopWareName(gw).length)); }   // its plate fits its tile (SHOP_CSS)
+        li.append(pic, name);
+        li.append(el('span', 'sh-bkind', KIND_TEXT[/** @type {keyof typeof KIND_TEXT} */ (gw?.kind)]?.() ?? ''));
         list.append(li);
       }
       stage.append(el('div', 'sh-bundlemark', KIND_TEXT.bundle()), list);
-    } else {   // a pass or a booster: the season's banner
-      const season = passSeasonById(w.season);
-      const ban = el('div', `sh-seasonart sh-seasonart-${w.kind}`);
-      ban.append(el('div', 'sh-seasoncog'), el('div', 'sh-seasonname', season ? PASS_SEASON_TEXT[/** @type {keyof typeof PASS_SEASON_TEXT} */ (season.id)]?.() ?? season.id : ''));
-      if (w.kind === 'boost') ban.append(el('div', 'sh-boostmult', `x${PASS_BOOSTS[/** @type {keyof typeof PASS_BOOSTS} */ (w.id)]?.mult ?? 1}`));
-      else if (season) ban.append(el('div', 'sh-seasondays', `${dayText(season.fromMs)} - ${dayText(season.toMs - 1)}`));
+    } else {   // a pass or a booster: the season's banner, AUDIT-STOREFRONT its own art at its heart
+      const season = passSeasonById(w.season), boost = PASS_BOOSTS[/** @type {keyof typeof PASS_BOOSTS} */ (w.id)];
+      const ban = el('div', `sh-seasonart sh-seasonart-${w.kind} sh-seasonart-${w.key}`);
+      const halo = el('div', 'sh-seasonhalo'), art = wareArtNode(doc, w.id, 112, 'sh-seasonpic');
+      if (art) halo.append(art);
+      ban.append(halo, el('div', 'sh-seasonname', shopWareName(w)));
+      if (boost) {
+        ban.append(el('div', 'sh-boostmult', `×${boost.mult}`));
+        if (boost.levels) ban.append(el('div', 'sh-seasondays', t('pass.boost.levels', 'And {n} levels at once.', { n: boost.levels })));
+      } else if (season) {
+        const own = PASS_DELUXE[/** @type {keyof typeof PASS_DELUXE} */ (season.id)];
+        if (w.id === PASS_WARES[/** @type {keyof typeof PASS_WARES} */ (season.id)]?.deluxe && own) {   // the Deluxe's own three, shown
+          const row = el('div', 'sh-seasonown');
+          for (const g of own.grants) row.append(rewardChip(g));
+          ban.append(row);
+        }
+        ban.append(el('div', 'sh-seasondays', `${dayText(season.fromMs)} - ${dayText(season.toMs - 1)}`));
+      }
+      if (season) ban.append(el('div', 'sh-seasoncap', PASS_SEASON_TEXT[/** @type {keyof typeof PASS_SEASON_TEXT} */ (season.id)]?.() ?? season.id));
       stage.append(ban);
     }
     return stage;
@@ -510,12 +532,12 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     box.append(boosters);
     return box;
   };
-  /** A reward's chip: its picture where it has one (a portrait, a glyph), its name and kind. */
+  /** A reward's chip: its picture where it has one (AUDIT-STOREFRONT: every kind but a title - wareArtNode), its name and kind. */
   function rewardChip(/** @type {string} */ grant) {
     const i = grant.indexOf(':'), kind = grant.slice(0, i), key = grant.slice(i + 1);
     const chip = el('span', `sh-reward sh-reward-${kind} fx-${kind}-${key}`);
-    if (kind === 'icon') { const art = profileIconNode(doc, key, 'sh-rewardart', 28); if (art) { art.setAttribute?.('aria-hidden', 'true'); chip.append(art); } }
-    else if (kind === 'glyph') { const g = glyphBadges({ glyphs: [key] })[0]; const art = g ? glyphSvgNode(doc, g, 'sh-rewardart', 1.8) : null; if (art) chip.append(art); }
+    const art = wareArtNode(doc, grant, 28, 'sh-rewardart');
+    if (art) chip.append(art);
     const word = el('span', 'sh-rewardname', passGrantName(grant));
     if (kind === 'title') paintTitle(word, titleBadge({ title: key }), false);
     chip.append(word, el('span', 'sh-rewardkind', passGrantKind(grant)));
@@ -762,21 +784,28 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
   };
 }
 
-/** STOREFRONT: a kill effect's or a portal skin's stage, its module loaded on the first ask - the character's stage with
- *  the stand-in figure on it (render/characterStage.js), the effect tried on it as the profile tries one. */
-export const loadEffectPreview = (/** @type {HTMLCanvasElement} */ canvas, /** @type {string} */ slot, /** @type {string} */ key, /** @type {(slot: string, key: string|null) => void} */ cue) =>
-  import('../../render/characterStage.js').then((m) => {
-    const s = m.startCharacterStage(canvas, { cue });
+/** AUDIT-STOREFRONT: THE CHARACTER'S STAGE on a ware's canvas (render/characterStage.js), as the profile's - the stand-in
+ *  figure until `body` answers the player's own (ui/profileBody.js), or for good with none. */
+const stageWith = (/** @type {HTMLCanvasElement} */ canvas, /** @type {any} */ o, /** @type {(() => any)|null} */ body) => import('../../render/characterStage.js').then((m) => {
+  const s = m.startCharacterStage(canvas, o);
+  if (s && body) Promise.resolve().then(body).then((b) => { if (b && s.alive()) s.setBody(b); }).catch(() => {});
+  return s;
+});
+/** STOREFRONT: a kill effect's or a portal skin's stage, its module loaded on the first ask - the effect tried on the
+ *  character as the profile tries one. */
+export const loadEffectPreview = (/** @type {HTMLCanvasElement} */ canvas, /** @type {string} */ slot, /** @type {string} */ key, /** @type {(slot: string, key: string|null) => void} */ cue, /** @type {(() => any)|null} */ body = null) =>
+  stageWith(canvas, { cue }, body).then((s) => {
     if (!s) return null;
     s.setEffect(slot, key);
     return { stop: () => s.stop(), again: () => { s.setEffect(null, null); s.setEffect(slot, key); } };
   });
 
-/** An aura's stage, its module loaded on the first ask - ARMORY: a weapon piece alone on the blade's (weapon glow law 7). */
-export const loadAuraPreview = (/** @type {HTMLCanvasElement} */ canvas, /** @type {string|null} */ aura, /** @type {string|null} */ kit = null) => (aura || !kit ? Promise.resolve(null) : import('../../systems/weaponGlow.js')).then((g) => {
+/** An aura's stage, its module loaded on the first ask - worn by the character (AUDIT-STOREFRONT: the profile's stage, its
+ *  body the player's), ARMORY: a weapon piece alone on the blade's (weapon glow law 7). */
+export const loadAuraPreview = (/** @type {HTMLCanvasElement} */ canvas, /** @type {string|null} */ aura, /** @type {string|null} */ kit = null, /** @type {(() => any)|null} */ body = null) => (aura || !kit ? Promise.resolve(null) : import('../../systems/weaponGlow.js')).then((g) => {
   const look = g?.armoryWeaponStage(kit);
   if (g && look) return import('../../render/weaponPiecePreview.js').then((m) => m.startWeaponPiecePreview(canvas, g.glowSpec(look, g.ARMORY_LEVEL)));
-  return import('../../render/auraPreview.js').then((m) => m.startAuraPreview(canvas, aura, { kit }));
+  return /** @type {Promise<any>} */ (stageWith(canvas, { aura, kit }, body));
 });
 
 /** The gem, painted as the row's other marks are: twelve pixels, crisp - a cut stone in the Genesis fire's colours. */
@@ -822,7 +851,8 @@ export const SHOP_CSS = `
   border: 1px solid rgba(143,91,255,0.45); background: linear-gradient(160deg, rgba(23,11,74,0.55), rgba(10,9,16,0.9)); }
 .px-shopwin .sh-stage { position: relative; min-height: 240px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
   background: radial-gradient(ellipse at 50% 60%, rgba(63,99,255,0.18), rgba(10,9,16,0) 70%), #08070d; border: 1px solid rgba(214,184,255,0.18); overflow: hidden; }
-.px-shopwin .sh-bigtitle { font-size: 40px; letter-spacing: 0.06em; white-space: nowrap; }
+.px-shopwin .sh-stage-title { container-type: inline-size; }
+.px-shopwin .sh-bigtitle { font-size: min(40px, calc(88cqw / (var(--n, 10) * 0.7))); letter-spacing: 0.06em; white-space: nowrap; }
 .px-shopwin .sh-nametag { display: flex; flex-direction: column; align-items: center; gap: .18em; font-size: 15px; color: #e9e4d9;
   text-shadow: 0 1px 0 #000, 0 0 3px #000; }
 .px-shopwin .sh-nametag.sh-nameline { flex-direction: row; gap: .35em; }
@@ -889,7 +919,16 @@ export const SHOP_CSS = `
 .px-shopwin .sh-stage-mount canvas.mountpreview { width: min(100%, 330px); height: auto; image-rendering: pixelated; }
 .px-shopwin .sh-stage-kill, .px-shopwin .sh-stage-portal { min-height: 300px; }
 .px-shopwin .sh-bundlemark { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #ffd27a; }
-.px-shopwin .sh-bundleart { list-style: none; margin: 0; padding: 0 14px; display: flex; flex-direction: column; gap: 8px; align-items: center; font-size: 17px; }
+.px-shopwin .sh-bundleart { list-style: none; margin: 0; padding: 2px 12px 12px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; max-width: 440px; box-sizing: border-box; }
+.px-shopwin .sh-bundle-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.px-shopwin .sh-bpiece { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 5px; padding: 10px 6px 9px; text-align: center; min-width: 0;
+  background: radial-gradient(circle at 50% 34%, rgba(214,184,255,0.16), rgba(10,9,16,0) 70%), rgba(255,255,255,0.025); border: 1px solid rgba(214,184,255,0.18); border-radius: 6px; }
+.px-shopwin .sh-bpic { min-height: 64px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.65)); }
+.px-shopwin .sh-bpic .sh-bart { width: 64px; max-width: 100%; }
+.px-shopwin .sh-bpiece-title { container-type: inline-size; }
+.px-shopwin .sh-bpiece-title .sh-bname { font-size: min(13px, calc(84cqw / (var(--n, 10) * 0.7))); white-space: nowrap; padding: 1px 5px; }
+.px-shopwin .sh-bname { font-size: 13px; line-height: 1.15; color: #f1ead8; overflow-wrap: anywhere; }
+.px-shopwin .sh-bkind { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
 .px-shopwin .sh-contents { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; }
 .px-shopwin .sh-content { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 4px 8px; border-left: 2px solid rgba(214,184,255,0.45); }
 .px-shopwin .sh-content-held { border-left-color: #9fe8b4; }
@@ -897,13 +936,30 @@ export const SHOP_CSS = `
 .px-shopwin .sh-contentkind { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
 .px-shopwin .sh-contentheld { font-size: 11.5px; color: #9fe8b4; }
 .px-shopwin .sh-worth { margin: 0; font-size: 12.5px; color: #e2dccd; }
-.px-shopwin .sh-seasonart { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 26px 18px; width: 100%;
-  background: radial-gradient(circle at 50% 40%, rgba(90,190,255,0.28), rgba(10,9,16,0) 62%), linear-gradient(160deg, #3a2a12, #120d06); }
-.px-shopwin .sh-seasoncog { width: 92px; height: 92px; border-radius: 50%; background: repeating-conic-gradient(#c89a4a 0 12deg, #7a5422 12deg 24deg);
-  -webkit-mask: radial-gradient(circle, transparent 0 22%, #000 23% 62%, transparent 63% 68%, #000 69%); mask: radial-gradient(circle, transparent 0 22%, #000 23% 62%, transparent 63% 68%, #000 69%);
-  box-shadow: 0 0 22px rgba(90,190,255,0.55); animation: sh-cog 14s linear infinite; }
+.px-shopwin .sh-stage-pass, .px-shopwin .sh-stage-boost { justify-content: stretch; }
+.px-shopwin .sh-seasonart { position: relative; flex: 1; align-self: stretch; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 18px 16px; box-sizing: border-box;
+  background: radial-gradient(circle at 50% 36%, rgba(90,190,255,0.32), rgba(10,9,16,0) 60%), linear-gradient(160deg, #3a2a12, #0d0a05); }
+.px-shopwin .sh-seasonart-s1premium { background: radial-gradient(circle at 50% 36%, rgba(90,190,255,0.34), rgba(10,9,16,0) 60%), linear-gradient(160deg, #1f3a4a, #0a1016); }
+.px-shopwin .sh-seasonart-s1deluxe { background: repeating-conic-gradient(from 0deg at 50% 36%, rgba(255,226,140,0.09) 0 6deg, rgba(0,0,0,0) 6deg 18deg),
+  radial-gradient(circle at 50% 36%, rgba(255,210,122,0.38), rgba(10,9,16,0) 60%), linear-gradient(160deg, #4a3612, #120d06); }
+.px-shopwin .sh-seasonhalo { position: relative; width: 132px; height: 132px; display: grid; place-items: center; }
+.px-shopwin .sh-seasonhalo::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(90,190,255,0.32), rgba(90,190,255,0) 66%); }
+.px-shopwin .sh-seasonhalo::after { content: ''; position: absolute; inset: 2px; border-radius: 50%; border: 1px dashed rgba(243,215,138,0.5); animation: sh-cog 30s linear infinite; }
+.px-shopwin .sh-seasonart-s1deluxe .sh-seasonhalo::before { background: radial-gradient(circle, rgba(255,210,122,0.45), rgba(255,210,122,0) 66%); }
+.px-shopwin .sh-seasonpic { position: relative; width: 112px; height: 112px; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.75)); }
+.px-shopwin .sh-seasonart-s1cog .sh-seasonpic { animation: sh-cog 16s linear infinite; }
+.px-shopwin .sh-seasonart-s1tonal .sh-seasonhalo::before { animation: sh-ring 2.6s ease-out infinite; }
+.px-shopwin .sh-seasonart-s1heart .sh-seasonpic { animation: sh-beat 1.7s ease-in-out infinite; }
+@keyframes sh-ring { 0% { transform: scale(0.7); opacity: 1; } 100% { transform: scale(1.18); opacity: 0; } }
+@keyframes sh-beat { 0%, 40%, 100% { transform: scale(1); } 15% { transform: scale(1.07); } 28% { transform: scale(1.03); } }
+.px-shopwin .sh-seasonown { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; max-width: 340px; margin: 4px 0; }
+.px-shopwin .sh-seasonown .sh-reward { align-items: center; text-align: center; gap: 3px; font-size: 11.5px; line-height: 1.15; }
+.px-shopwin .sh-seasonown .sh-rewardart { width: 36px; height: 36px; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.6)); }
+.px-shopwin .sh-seasonown .sh-reward-title .sh-rewardname { font-size: 10.5px; padding: 1px 4px; }
+.px-shopwin .sh-seasonown .sh-rewardkind { display: none; }
+.px-shopwin .sh-seasoncap { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #c9a55a; }
 @keyframes sh-cog { to { transform: rotate(360deg); } }
-.px-shopwin .sh-seasonname { font-size: 26px; letter-spacing: 0.08em; color: #ffe2a8; text-shadow: 0 0 10px rgba(255,190,80,0.5); text-align: center; }
+.px-shopwin .sh-seasonname { font-size: 22px; letter-spacing: 0.06em; color: #ffe2a8; text-shadow: 0 0 10px rgba(255,190,80,0.5); text-align: center; line-height: 1.15; }
 .px-shopwin .sh-seasondays { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: #9fdcff; }
 .px-shopwin .sh-boostmult { font-size: 34px; color: #9fdcff; text-shadow: 0 0 12px rgba(90,190,255,0.7); font-variant-numeric: tabular-nums; }
 .px-shopwin .sh-pass { display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px solid rgba(255,190,80,0.5);
@@ -935,7 +991,8 @@ export const SHOP_CSS = `
 .px-shopwin .sh-rewardart { width: 28px; height: 28px; }
 .px-shopwin .sh-rewardkind { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
 .px-shopwin .sh-deluxe { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: 12.5px; color: #ffd27a; }
-.px-shopwin .sh-deluxe .sh-reward { flex-direction: row; align-items: baseline; gap: 6px; }
+.px-shopwin .sh-deluxehead { flex-basis: 100%; }
+.px-shopwin .sh-deluxe .sh-reward { flex: 1 1 150px; flex-direction: row; align-items: center; gap: 8px; }
 .px-shopwin .sh-subhead { margin: 4px 0 0; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: #c89a4a; }
 .px-shopwin .sh-challenges { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .px-shopwin .sh-challenge { display: grid; grid-template-columns: minmax(0, 1fr) 120px auto auto; align-items: center; gap: 4px 10px; font-size: 13px; color: #e2dccd; }
@@ -948,7 +1005,7 @@ export const SHOP_CSS = `
   .px-shopwin .sh-cmeter { grid-column: 1 / -1; }
   .px-shopwin .sh-stages { grid-template-columns: 1fr; }
 }
-@media (prefers-reduced-motion: reduce) { .px-shopwin .sh-slidein { animation: none; } .px-shopwin .sh-seasoncog { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .px-shopwin .sh-slidein, .px-shopwin .sh-seasonpic, .px-shopwin .sh-seasonhalo::before, .px-shopwin .sh-seasonhalo::after { animation: none; } }
 .sh-waretag { display: inline-flex; align-items: center; gap: .35em; }
 .sh-waretag-glyph { width: 1.2em; height: 1.2em; }
 .px-shopwin .sh-terms { color: #d6b8ff; }
@@ -956,7 +1013,7 @@ export const SHOP_CSS = `
   .px-shopwin .sh-panel { grid-template-columns: 1fr; }
   .px-shopwin .sh-stage { min-height: 200px; }
   .px-shopwin .sh-stage-aura, .px-shopwin .sh-stage-armory { min-height: 260px; }
-  .px-shopwin .sh-bigtitle { font-size: 30px; }
+  .px-shopwin .sh-bigtitle { font-size: min(30px, calc(88cqw / (var(--n, 10) * 0.7))); }
 }
 @media (prefers-reduced-motion: reduce) { .px-shopgem::after { animation: none; } }
 :root[data-plus-theme="stone"] .px-shopwin { --dim: #e2dccd; text-shadow: 1px 1px 0 rgba(5,6,8,0.85); }
