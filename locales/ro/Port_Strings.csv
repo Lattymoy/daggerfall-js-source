@@ -5450,7 +5450,7 @@ pass.boost.levels,"{n, plural, one {Și # nivel deodată.} few {Și # niveluri d
 pass.boost.share,"Cu {pct}% mai mult XP de sezon din fiecare faptă, tot sezonul."
 pass.ch.constructs,"Distruge {n, plural, one {# automat dwemer} few {# automate dwemer} other {# de automate dwemer}}"
 pass.ch.elites,"Ucide {n, plural, one {# elită sau campion} few {# elite sau campioni} other {# de elite sau campioni}}"
-pass.ch.endgame,"Câștigă {n, plural, one {# luptă de final de joc} few {# lupte de final de joc} other {# de lupte de final de joc}}: o breșă, o Redută, Șarpele sau o stea"
+pass.ch.endgame,"Câștigă {n, plural, one {# luptă de final de joc} few {# lupte de final de joc} other {# de lupte de final de joc}}: o breșă, o Redută, Șarpele, Dragonul pitic sau o stea"
 pass.ch.foes,"Ucide {n, plural, one {# inamic} few {# inamici} other {# de inamici}}"
 pass.ch.gather,"Culege resurse {n, plural, one {o dată} few {de # ori} other {de # de ori}}"
 pass.ch.make,"Creează, încastrează sau reforjează {n, plural, one {# obiect} few {# obiecte} other {# de obiecte}}"

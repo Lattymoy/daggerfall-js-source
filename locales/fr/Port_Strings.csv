@@ -5450,7 +5450,7 @@ pass.boost.levels,"Et {n} niveaux d’un coup. Les niveaux au-delà de l’étap
 pass.boost.share,"{pct} % d’expérience de saison en plus pour chaque exploit, pendant toute la saison."
 pass.ch.constructs,"Détruisez {n, plural, one {# automate dwemer} many {# d’automates dwemer} other {# automates dwemer}}"
 pass.ch.elites,"Tuez {n, plural, one {# adversaire d’élite ou champion} many {# d’adversaires d’élite ou champions} other {# adversaires d’élite ou champions}}"
-pass.ch.endgame,"Remportez {n, plural, one {# combat de fin de jeu} many {# de combats de fin de jeu} other {# combats de fin de jeu}} : une brèche, une Redoute, le Serpent ou une étoile"
+pass.ch.endgame,"Remportez {n, plural, one {# combat de fin de jeu} many {# de combats de fin de jeu} other {# combats de fin de jeu}} : une brèche, une Redoute, le Serpent, le Dragon nain ou une étoile"
 pass.ch.foes,"Tuez {n, plural, one {# adversaire} many {# d’adversaires} other {# adversaires}}"
 pass.ch.gather,"Récoltez {n, plural, one {# fois} many {# de fois} other {# fois}}"
 pass.ch.make,"Fabriquez, sertissez ou reforgez {n, plural, one {# objet} many {# d’objets} other {# objets}}"

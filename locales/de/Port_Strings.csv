@@ -5450,7 +5450,7 @@ pass.boost.levels,"Und {n} Stufen auf einmal. Stufen über den offenen Abschnitt
 pass.boost.share,"{pct} % mehr Saison-EP aus jeder Tat, die ganze Saison lang."
 pass.ch.constructs,"Zerstöre {n, plural, one {# Dwemer-Konstrukt} other {# Dwemer-Konstrukte}}"
 pass.ch.elites,"Töte {n, plural, one {# Elitegegner oder Champion} other {# Elitegegner oder Champions}}"
-pass.ch.endgame,"Gewinne {n, plural, one {# Endgame-Kampf} other {# Endgame-Kämpfe}}: einen Riss, eine Schanze, die Seeschlange oder einen Stern"
+pass.ch.endgame,"Gewinne {n, plural, one {# Endgame-Kampf} other {# Endgame-Kämpfe}}: einen Riss, eine Schanze, die Seeschlange, den Zwergendrachen oder einen Stern"
 pass.ch.foes,"Töte {n, plural, one {# Gegner} other {# Gegner}}"
 pass.ch.gather,"Sammle {n, plural, one {einmal} other {#-mal}}"
 pass.ch.make,"Fertige, besetze oder schmiede {n, plural, one {# Gegenstand} other {# Gegenstände}} neu"

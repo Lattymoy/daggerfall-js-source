@@ -26,7 +26,7 @@ const CHALLENGE_WORDS = Object.freeze({
   constructs: (n) => t('pass.ch.constructs', 'Destroy {n, plural, one {# Dwemer construct} other {# Dwemer constructs}}', { n }),
   gather: (n) => t('pass.ch.gather', 'Gather {n, plural, one {# time} other {# times}}', { n }),
   tavern: (n) => t('pass.ch.tavern', 'Win {n, plural, one {# tavern game} other {# tavern games}}', { n }),
-  endgame: (n) => t('pass.ch.endgame', 'Win {n, plural, one {# endgame fight} other {# endgame fights}}: a breach, a Redoubt, the Serpent or a star', { n }),
+  endgame: (n) => t('pass.ch.endgame', 'Win {n, plural, one {# endgame fight} other {# endgame fights}}: a breach, a Redoubt, the Serpent, the Dwarven Dragon or a star', { n }),
   elites: (n) => t('pass.ch.elites', 'Kill {n, plural, one {# elite or champion} other {# elites or champions}}', { n }),
   // AUDIT-STOREFRONT II (lane B 4): what its sources count (battlePassLaw.js PASS_CHALLENGES `make`, `loot`) - never a find
   make: (n) => t('pass.ch.make', 'Make, socket or reforge {n, plural, one {# item} other {# items}}', { n }),

@@ -5450,7 +5450,7 @@ pass.boost.levels,"E {n} níveis de uma vez. Os níveis além da etapa aberta fi
 pass.boost.share,"{pct}% a mais de experiência da temporada em cada feito, durante a temporada inteira."
 pass.ch.constructs,"Destrua {n, plural, one {# autômato Dwemer} many {# de autômatos Dwemer} other {# autômatos Dwemer}}"
 pass.ch.elites,"Mate {n, plural, one {# inimigo de elite ou campeão} many {# de inimigos de elite ou campeões} other {# inimigos de elite ou campeões}}"
-pass.ch.endgame,"Vença {n, plural, one {# luta de fim de jogo} many {# de lutas de fim de jogo} other {# lutas de fim de jogo}}: uma brecha, um Reduto, a Serpente ou uma estrela"
+pass.ch.endgame,"Vença {n, plural, one {# luta de fim de jogo} many {# de lutas de fim de jogo} other {# lutas de fim de jogo}}: uma brecha, um Reduto, a Serpente, o Dragão Anão ou uma estrela"
 pass.ch.foes,"Mate {n, plural, one {# inimigo} many {# de inimigos} other {# inimigos}}"
 pass.ch.gather,"Colete {n, plural, one {# vez} many {# de vezes} other {# vezes}}"
 pass.ch.make,"Fabrique, engaste ou reforje {n, plural, one {# item} many {# de itens} other {# itens}}"

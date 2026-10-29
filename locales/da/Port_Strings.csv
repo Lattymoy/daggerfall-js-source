@@ -5450,7 +5450,7 @@ pass.boost.levels,"Og {n} niveauer på én gang. Niveauer ud over den åbne etap
 pass.boost.share,"{pct}% mere sæson-XP fra hver bedrift, hele sæsonen."
 pass.ch.constructs,"Ødelæg {n, plural, one {# Dwemer-konstrukt} other {# Dwemer-konstrukter}}"
 pass.ch.elites,"Dræb {n, plural, one {# elite- eller mesterfjende} other {# elite- eller mesterfjender}}"
-pass.ch.endgame,"Vind {n, plural, one {# endgame-kamp} other {# endgame-kampe}}: et brud, en Skanse, Søslangen eller en stjerne"
+pass.ch.endgame,"Vind {n, plural, one {# endgame-kamp} other {# endgame-kampe}}: et brud, en Skanse, Søslangen, Dværgedragen eller en stjerne"
 pass.ch.foes,"Dræb {n, plural, one {# fjende} other {# fjender}}"
 pass.ch.gather,"Indsaml {n, plural, one {# gang} other {# gange}}"
 pass.ch.make,"Fremstil, indfat eller omsmed {n, plural, one {# genstand} other {# genstande}}"

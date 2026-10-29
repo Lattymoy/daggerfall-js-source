@@ -5450,7 +5450,7 @@ pass.boost.levels,"Ditambah {n} tingkat sekaligus. Tingkat yang melebihi tahap y
 pass.boost.share,"{pct}% XP musim lebih banyak dari setiap aksi, sepanjang musim."
 pass.ch.constructs,"Hancurkan {n, plural, other {# mesin Dwemer}}"
 pass.ch.elites,"Bunuh {n, plural, other {# elit atau juara}}"
-pass.ch.endgame,"Menangkan {n, plural, other {# pertarungan puncak}}: celah, Kubu, Ular Laut, atau bintang"
+pass.ch.endgame,"Menangkan {n, plural, other {# pertarungan puncak}}: celah, Kubu, Ular Laut, Naga Kurcaci, atau bintang"
 pass.ch.foes,"Bunuh {n, plural, other {# musuh}}"
 pass.ch.gather,"Kumpulkan bahan {n, plural, other {# kali}}"
 pass.ch.make,"Buat, pasangi permata, atau tempa ulang {n, plural, other {# benda}}"

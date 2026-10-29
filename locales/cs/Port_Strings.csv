@@ -5450,7 +5450,7 @@ pass.boost.levels,"A k tomu hned {n, plural, one {# úroveň} few {# úrovně} m
 pass.boost.share,"O {pct}% více sezónních zkušeností za každý čin, po celou sezónu."
 pass.ch.constructs,"Znič {n, plural, one {# dwemerský konstrukt} few {# dwemerské konstrukty} many {# dwemerského konstruktu} other {# dwemerských konstruktů}}"
 pass.ch.elites,"Zabij {n, plural, one {# elitního nepřítele nebo šampiona} few {# elitní nepřátele nebo šampiony} many {# elitního nepřítele nebo šampiona} other {# elitních nepřátel nebo šampionů}}"
-pass.ch.endgame,"Vyhraj {n, plural, one {# vrcholný boj} few {# vrcholné boje} many {# vrcholného boje} other {# vrcholných bojů}} (trhlina, Reduta, Mořský had nebo hvězda)"
+pass.ch.endgame,"Vyhraj {n, plural, one {# vrcholný boj} few {# vrcholné boje} many {# vrcholného boje} other {# vrcholných bojů}} (trhlina, Reduta, Mořský had, Trpasličí drak nebo hvězda)"
 pass.ch.foes,"Zabij {n, plural, one {# nepřítele} few {# nepřátele} many {# nepřítele} other {# nepřátel}}"
 pass.ch.gather,"Sbírej suroviny {n, plural, one {jednou} few {#krát} many {#krát} other {#krát}}"
 pass.ch.make,"Vyrob, osaď nebo překuj {n, plural, one {# předmět} few {# předměty} many {# předmětu} other {# předmětů}}"

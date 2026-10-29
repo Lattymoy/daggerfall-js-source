@@ -5450,7 +5450,7 @@ pass.boost.levels,"또한 즉시 {n}레벨이 오릅니다. 열린 단계를 넘
 pass.boost.share,"시즌 내내 모든 활동에서 시즌 경험치를 {pct}% 더 얻습니다."
 pass.ch.constructs,"드웨머 기계 {n, plural, other {#기}} 파괴"
 pass.ch.elites,"정예 또는 챔피언 {n, plural, other {#명}} 처치"
-pass.ch.endgame,"고난도 전투 {n, plural, other {#회}} 승리: 데이곤의 균열, 보루, 바다뱀, 별의 추락"
+pass.ch.endgame,"고난도 전투 {n, plural, other {#회}} 승리: 데이곤의 균열, 보루, 바다뱀, 드워프 드래곤, 별의 추락"
 pass.ch.foes,"적 {n, plural, other {#명}} 처치"
 pass.ch.gather,"채집 {n, plural, other {#회}}"
 pass.ch.make,"아이템 {n, plural, other {#개}} 제작, 보석 장착 또는 재련"

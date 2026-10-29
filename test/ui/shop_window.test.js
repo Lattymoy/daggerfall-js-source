@@ -663,7 +663,7 @@ test('STOREFRONT the Battle Pass section: the season\'s story and its three stag
   assert.equal(all(cellAt('free', 5), 'sh-sr')[0].textContent, 'Level 5, Free, reached:');
   assert.equal(all(cellAt('free', 10), 'sh-sr')[0].textContent, 'Level 10, Free:');
   assert.equal(all(all(sec, 'sh-deluxe')[0], 'sh-reward').length, 3);
-  assert.deepEqual(all(sec, 'sh-cwhat').map((n) => n.textContent), ['Kill 100 foes', 'Destroy 25 Dwemer constructs', 'Gather 60 times', 'Win 3 tavern games', 'Win 1 endgame fight: a breach, a Redoubt, the Serpent or a star']);   // PIN MOVED (STOREFRONT): a count's own plural (ui/passText.js, ICU)
+  assert.deepEqual(all(sec, 'sh-cwhat').map((n) => n.textContent), ['Kill 100 foes', 'Destroy 25 Dwemer constructs', 'Gather 60 times', 'Win 3 tavern games', 'Win 1 endgame fight: a breach, a Redoubt, the Serpent, the Dwarven Dragon or a star']);   // PIN MOVED (STOREFRONT): a count's own plural (ui/passText.js, ICU)
   assert.equal(all(sec, 'sh-cdone').length, 1);   // PIN MOVED (AUDIT-STOREFRONT II, lane E 5): never the foot's payment line's class
   assert.equal(all(w.root, 'sh-stripe').length, 1, 'the payment line, a class of its own');
   w.stop();

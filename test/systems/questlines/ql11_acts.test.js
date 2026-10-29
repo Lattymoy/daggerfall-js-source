@@ -936,7 +936,7 @@ test('AUDIT PASS 1 THE ACTS NO FIND PAYS: one list in the leaf, read by the fest
   assert.ok(Object.isFrozen(ACT_NOT_FOUND));
   for (const k of ACT_NOT_FOUND) assert.ok(Object.hasOwn(ACT_KINDS, k), `${k} is a kind`);
   assert.deepEqual(ACT_IDS.filter((k) => ACT_KINDS[k] === 'endgame' && !ACT_NOT_FOUND.includes(k)),
-    ['rite-broken', 'breach-closed', 'redoubt-taken', 'valkynaz-felled', 'hour-broken', 'serpent-slain', 'star-held', 'heart-star-held', 'warden-felled'],
+    ['rite-broken', 'breach-closed', 'redoubt-taken', 'valkynaz-felled', 'hour-broken', 'serpent-slain', 'dragon-slain', 'star-held', 'heart-star-held', 'warden-felled'],   // PIN MOVED (DRAGON4, at the merge of main): the Dwarven Dragon's fall, its z1 receipt the service records, as the Serpent's
     'a new endgame act is a receipt the service holds, or goes on the list');
   for (const f of ['src/systems/festival/festivalClient.js', 'src/systems/pass/passClient.js']) {
     const text = readFileSync(join(ROOT, f), 'utf8');
