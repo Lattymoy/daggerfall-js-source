@@ -86,7 +86,7 @@ import { createDecorDoorways, decorDoorwaysFree, decorDoorwayAimed, decorDoorFit
 import { writeDecalQuad, clearDecalQuad, DECAL_FLOATS } from '../../combat/blood/bloodDecals.js';   // HOME-DOORS: the doorways' marks, on the decal pass
 import { rentRoomsView, rentAnchorOfRoom } from '../../systems/homeRent.js';   // HOME-RENT: the owner's rooms, offered to rent
 import { goldSum, EMPIRE_ACCOUNT_WORDS } from '../../systems/homeWords.js';   // AUDIT HOME-PRICE E4: the rent's sums and account, as the door says them
-import { createDecorPlacer, decorEntrySized, decorNudgeStep, DECOR_TURN_STEP, DECOR_TURN_FINE, DECOR_RAISE_STEP, DECOR_RAISE_FINE, DECOR_NUDGE_STEP, DECOR_NUDGE_FINE, wrapTurn } from '../../systems/decor/decorPlacer.js';   // DECOR-FIGURE: whether a piece takes a size step; NUDGE: the level push
+import { createDecorPlacer, decorEntrySized, decorNudgeStep, DECOR_TURN_STEP, DECOR_TURN_FINE, DECOR_RAISE_STEP, DECOR_RAISE_FINE, DECOR_NUDGE_STEP, DECOR_NUDGE_FINE, DECOR_GRID, wrapTurn } from '../../systems/decor/decorPlacer.js';   // DECOR-FIGURE: whether a piece takes a size step; NUDGE: the level push
 import { createDecorButton, createDecorPanel, createDecorBar, createDecorHotbar, decorWhyNot } from '../../ui/decorPanel.js';
 import { DecisionBoxWindow } from '../../ui/decisionBox.js';
 import { InputMessageBoxWindow } from '../../ui/inputMessageBox.js';
@@ -1247,8 +1247,12 @@ export function createDecorTool(deps) {
     deps.say?.(`${decorRestLabel(mode)}.`);
     const circle = decorUseCircle(deps.social?.());
     const names = mode === 'friends' ? circle.friends : mode === 'party' ? circle.party : [];
+    // AUDIT FB1029f C7: the answer is this room's - a decorator opened in another home since keeps its own chip
+    const here = () => { const n = deps.room?.(); return !!n && n.mapId === r.mapId && n.buildingKey === r.buildingKey; };
     try {
+      useBusy = false;   // as cycleUse: a press on a chest while the row is written is not dropped
       const res = await deps.homeDecor.use({ mapId: r.mapId, buildingKey: r.buildingKey, character: deps.character?.(), op: 'set', id: DECOR_REST_ID, kind: 'rest', mode, names, realm: null });
+      if (!here()) return !!res?.ok;
       if (!res?.ok) {
         if ((useMode.get(DECOR_REST_ID) ?? 'private') === mode) keep(cur);
         deps.say?.(deps.refusal?.(res?.error) ?? t('decor.tool.unkept', 'It could not be kept.'));
@@ -2169,7 +2173,9 @@ export function createDecorTool(deps) {
   /** NUDGE: the piece pushed a step along the level, the way the eye sees it - never a door, which its doorway fits. */
   function nudgePiece(dir, fine = false) {
     if (!placing?.placer || placing.door) return;
-    const [dx, dz] = decorNudgeStep(placing.aimYaw ?? 0, dir, fine ? DECOR_NUDGE_FINE : DECOR_NUDGE_STEP);
+    // AUDIT FB1029f C6: on the grid, a step is the grid's - the nudge lands after the snap, so a finer one left it
+    const snapped = !!placing.placer.state?.().snap;
+    const [dx, dz] = decorNudgeStep(placing.aimYaw ?? 0, dir, snapped ? DECOR_GRID : fine ? DECOR_NUDGE_FINE : DECOR_NUDGE_STEP);
     placing.placer.nudge(dx, dz);
   }
 
@@ -2194,7 +2200,7 @@ export function createDecorTool(deps) {
     if (free === 'smaller') placing?.placer?.rescale(false);
     else if (free === 'bigger') placing?.placer?.rescale(true);
     else if (free === 'grid' && once) placing?.placer?.toggleSnap();
-    else if (NUDGE_WAYS[free]) nudgePiece(NUDGE_WAYS[free], e.shiftKey);
+    else if (NUDGE_WAYS[free]) nudgePiece(NUDGE_WAYS[free], e.shiftKey || e.ctrlKey);   // AUDIT FB1029f C6: Windows lets Shift go for a numpad key under NumLock
   }
   const suspended = () => !placing || placing.suspended;
   const now = () => deps.now?.() ?? Date.now();

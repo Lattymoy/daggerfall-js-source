@@ -4856,7 +4856,7 @@ export function createWorldModes(host) {
     const decor = interiorHome || _seatHallVisit ? interiorDecor.kept() : interiorDecor.list();   // SEAT-HALL: a palace's Charter Room is the service's too - AUDIT SEATS-3 C2: for the whole visit
     const decorItems = interiorDecor.itemsSnapshot();
     const decorOwn = interiorDecor.ownSnapshot();   // DECOR2a: the owner's own things standing here - the save's, in every room
-    const hiddenBase = [...(interiorHome || _seatHallVisit ? _keptHidden : (ctx.base?.hidden() ?? [])), ...(ctx.base?.roomDoors?.hidden?.() ?? [])];   // BASE-HIDE: an online home's list is the service's - the save's own is written back as it came. A room door taken out rides the same list.
+    const hiddenBase = interiorHome || _seatHallVisit ? _keptHidden : [...(ctx.base?.hidden() ?? []), ...(ctx.base?.roomDoors?.hidden?.() ?? [])];   // BASE-HIDE: an online home's list is the service's - the save's own is written back as it came. A room door taken out rides the same list (AUDIT FB1029f A3: an online home's doors too are the service's).
     const guildShelves = ctx.guildShelves ?? {};   // GUILD-SHELF: the day's guild shelves, as bought down - the building's, as its shop shelves are
     return { lootContainers, actionDoors, droppedPiles, droppedTorches, decor, decorItems, decorOwn, hiddenBase, frame: 'building', terrainScale: STREAMING_TERRAIN_SCALE, guildShelves };
   }
@@ -5005,7 +5005,7 @@ export function createWorldModes(host) {
     if (!(interiorHome || _seatHallVisit)) returnUnstood(interiorDecor, placed, decorPackGive, say);
     // BASE-HIDE: what the owner took out of the offline house's or ship's own furniture; an online home's comes from the
     // account service with its pieces (loadHomeDecor), and the save's own record for the building is kept to go back
-    if (interiorHome || _seatHallVisit) (_keptHidden = (data.hiddenBase ?? []).filter((k) => !String(k).startsWith('intdoor:')), interiorCtx.base?.roomDoors?.apply?.(data.hiddenBase)); else (interiorCtx.base?.setHidden(data.hiddenBase ?? []), interiorCtx.base?.roomDoors?.apply?.(data.hiddenBase));
+    if (interiorHome || _seatHallVisit) _keptHidden = data.hiddenBase ?? []; else (interiorCtx.base?.setHidden(data.hiddenBase ?? []), interiorCtx.base?.roomDoors?.apply?.(data.hiddenBase));
   }
   /** BASE-HIDE: the save's own list for an online home's building, written back as it came (the service's is the room's). */
   let _keptHidden = [];

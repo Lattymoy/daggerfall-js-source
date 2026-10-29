@@ -294,7 +294,7 @@ export function decorPlaceOf(raw) {
  *  nothing to stand (Mac: "Free and can be picked back up") and holds nothing - it IS a thing, not a place to keep
  *  things - so one that says it cost gold (half of it would come back at a sale) or holds things is no piece. */
 export function decorPieceOf(raw) {
-  if (typeof raw?.id !== 'string' || !DECOR_ID_RE.test(raw.id)) return null;
+  if (typeof raw?.id !== 'string' || !DECOR_ID_RE.test(raw.id) || raw.id === DECOR_REST_ID) return null;   // AUDIT FB1029f A5: the home's rest row's id is no piece's
   const what = decorWhatOf(raw);
   const place = decorPlaceOf(raw);
   if (!what || !place || (what.item && (place.paid !== 0 || place.storage || place.station))) return null;   // HOME-STATIONS: one's own item serves no craft

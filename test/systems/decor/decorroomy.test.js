@@ -68,3 +68,14 @@ test('DECOR-ROOMY the host: an online home\'s room holds the service\'s cap, an 
   assert.match(m, /ground: \[houseFootprintM2\(bd\), bd\.townBlocks \?\? 0\],/);
   assert.match(m, /const price = homeOnlinePrice\(houseFootprintM2\(bd\), bd\?\.townBlocks \?\? 0\);/, 'the same measure the price is');
 });
+
+test('AUDIT FB1029f A6: a ground the service refuses (a home priced by another law) is not named again every visit - asked once a session for that room (mutant: AUDITFB1029F-A6-asked-again)', async () => {
+  const sent = [];
+  const homeDecor = { use: async (b) => { sent.push(b); return { ok: false, error: 'bad-home' }; } };
+  noteHomeDecorList(9, 8, { cap: DECOR_CAP, measured: false }, 300, 1, homeDecor, 'char');
+  await settle();
+  noteHomeDecorList(9, 8, { cap: DECOR_CAP, measured: false }, 300, 1, homeDecor, 'char');
+  await settle();
+  assert.equal(sent.length, 1, 'once');
+  assert.equal(homeDecorCap(9, 8), DECOR_CAP);
+});

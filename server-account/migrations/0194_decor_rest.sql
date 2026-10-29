@@ -1,6 +1,7 @@
 -- REST-GUEST (FIELD BUGS 2026-10-29f): who besides its owner may rest in a home - the home's own row, kind 'rest', its
 -- piece id the home's (src/net/decorLaw.js DECOR_REST_ID), friends and party stored as a chest's are. The kind's CHECK
--- widened; every row carried as it stood. A sale, a transfer and a move already clear the home's rows.
+-- widened; every row carried as it stood. A home's rows end with it: a sale and a transfer clear them, a move carries
+-- the rest row, and a claim clears what no home holds (AUDIT FB1029f A1, server-account/src/accessOrphans.js).
 CREATE TABLE decor_access_next (
   map_id       INTEGER NOT NULL,
   building_key INTEGER NOT NULL,

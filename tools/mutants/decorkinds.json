@@ -2,11 +2,12 @@
   {
     "name": "DECORKINDS-flat-table",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "  return FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_WHAT[what.flat[0]] ?? null;",
-    "new": "  return FLAT_ARCHIVE_KIND[what.flat[0]] ?? null;",
+    "old": "FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_RECORD_WHAT[what.flat[0]]?.[what.flat[1]] ?? FLAT_WHAT[what.flat[0]] ?? null;",
+    "new": "FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_RECORD_WHAT[what.flat[0]]?.[what.flat[1]] ?? null;",
     "tests": [
       "test/systems/decor/decorkinds.test.js"
-    ]
+    ],
+    "note": "AUDIT FB1029f (PIN MOVED): re-aimed by content."
   },
   {
     "name": "DECORKINDS-model-table",
@@ -47,11 +48,12 @@
   {
     "name": "DECORKINDS-mods-what",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    const what = plain && !MOD_FROM.has(c.from) ? decorWhatKind(",
+    "old": "    const what = plain && c.from !== 'mod' ? decorWhatKind(",
     "new": "    const what = plain ? decorWhatKind(",
     "tests": [
       "test/systems/decor/decorkinds.test.js"
-    ]
+    ],
+    "note": "AUDIT FB1029f (PIN MOVED): re-aimed by content."
   },
   {
     "name": "DECORKINDS-room-offer",

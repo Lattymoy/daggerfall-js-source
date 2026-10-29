@@ -65,6 +65,7 @@ import { GUILD_TREASURY_MAX } from '../../src/net/guild/guildLaw.js';   // ARENA
 import { DECOR_OPS_MAX, DECOR_OPS_WINDOW_S } from '../../src/net/decorLaw.js';   // HOME-LOOK: a repaint counts as a decorator's write
 import { hallMay } from '../../src/net/hallLaw.js';   // GUILD1d: a hall's keepers
 import { heraldryOfRow } from './halls.js';   // GUILD1d: a hall's heraldry, on its door
+import { accessOrphansCleared } from './accessOrphans.js';   // AUDIT FB1029f A1: a claim clears the access rows no home holds
 import { openGatesRead } from './seatHolding.js';   // SEAT1d: Open Gates, where the town's holder proclaims it
 import { TOMB_WHERE } from './legacy.js';   // TOMB-RIDES: the door's tombstone, asked in a town's batch
 import { OWNS } from './decor.js';   // GUILD-YARD: a home's character, or a hall's keeper - as its decor asks
@@ -126,7 +127,7 @@ async function realmClaim(ctx, player, at, claim) {
   const prep = await prepareRealmRecord(ctx, player.id, at, (save) => (payFromSave(save, claim.price, claim.region) ? null : 'realm-gold'));
   if (prep.error) return prep;
   try {
-    await db.batch([...prep.steps, claimStatement(db, player, claim, nowS, claim.price), mustChange(db)]);
+    await db.batch([...prep.steps, accessOrphansCleared(db, claim.mapId, claim.buildingKey), claimStatement(db, player, claim, nowS, claim.price), mustChange(db)]);
   } catch {
     await dropIfUnnamed(db, bucket, player.id, at.id, prep.key);   // AUDIT REALM2 S3: a batch that landed and lost its answer keeps its save
     const now = await recordMovedOf(db, player.id, at);
@@ -243,7 +244,7 @@ export async function holdDeed(ctx, player, body = {}) {
   try { save = rec.ok ? JSON.parse((await realmSaveTextOf(rec.object)) ?? 'null') : null; } catch { save = null; }
   const deed = homeDeedOf(save?.houses, region, mapId, buildingKey);
   if (!deed || !homeLayoutsMatch(deed.layout ?? null, layout ?? null)) return { error: 'no-deed' };
-  await deedStatement(db, player, { mapId, buildingKey, region, character, layout: layout ?? null }, nowS).run();
+  await db.batch([accessOrphansCleared(db, mapId, buildingKey), deedStatement(db, player, { mapId, buildingKey, region, character, layout: layout ?? null }, nowS)]);   // AUDIT FB1029f A1
   const row = await db.prepare('SELECT * FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first();
   if (row) return row.player === player.id && row.char_id === character ? { ok: true, home: homeOf(row), moved: homeMoved(mapId, [buildingKey]) } : { error: 'home-taken' };   // a claim landed first; QUEST-HOME: held, a home to every page
   return (await townLayoutRefusal(db, mapId, layout ?? null)) ?? { error: 'home-taken' };   // a first home of the town, in another layout, landed first
@@ -713,10 +714,14 @@ export async function arenaMoveHome(ctx, player, { mapId, from, to, character, r
     // ONCE, in the write: a second move of the same house is the primary key's refusal, and the batch goes back
     db.prepare('INSERT INTO home_moves (map_id, old_key, new_key, player, char_id, refund, hall, moved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
       .bind(mapId, from, to, player.id, character, refund, gid != null ? 1 : 0, nowS),
+    accessOrphansCleared(db, mapId, to),   // AUDIT FB1029f A1: what an earlier home there left
     // the row whole at the new key - a building somebody owns is the primary key's refusal; the guild after the old goes
     db.prepare(`INSERT INTO homes (map_id, building_key, ${cols}, guild_id) SELECT map_id, ?, ${cols}, NULL FROM homes
         WHERE map_id = ? AND building_key = ? AND ${OWNS}`).bind(to, mapId, from, mapId, from, player.id, character),
     mustChange(db),
+    // AUDIT FB1029f A1: who may rest goes with the home (REST-GUEST); the pieces' rows go with their pieces
+    db.prepare("UPDATE decor_access SET building_key = ? WHERE map_id = ? AND building_key = ? AND kind = 'rest'").bind(to, mapId, from),
+    db.prepare('DELETE FROM decor_access WHERE map_id = ? AND building_key = ?').bind(mapId, from),
     // a tenancy running is carried, offered to nobody, its point the old building's no more
     db.prepare('UPDATE home_rooms SET building_key = ?, listed = 0, anchor = ? WHERE map_id = ? AND building_key = ? AND tenant IS NOT NULL AND until > ?')
       .bind(to, RENT_ANCHOR_MOVED, mapId, from, nowS),

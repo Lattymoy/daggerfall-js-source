@@ -33,7 +33,7 @@
     "old": "  if (L && !mayHold(L, EQUIP_SLOTS.RightHand)) return", "new": "  if (false) return",
     "tests": ["test/ui/enhanced/offhanddrop.test.js"], "why": "SWAP-HANDS puts a shield in the right hand" },
   { "name": "OFFHAND-intent-ignores-hand-law", "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  return act?.kind === 'wear' && mayHold(item, to) ? { kind: 'hand', label, to } : { kind: 'nope', label: null };", "new": "  return act?.kind === 'wear' ? { kind: 'hand', label, to } : { kind: 'nope', label: null };",
+    "old": "  const at = mayHold(item, to) ? to : [EQUIP_SLOTS.RightHand, EQUIP_SLOTS.LeftHand].find((h) => mayHold(item, h));", "new": "  const at = to;",
     "tests": ["test/ui/enhanced/offhanddrop.test.js"], "why": "a two-hander labelled Left hand, a shield Right hand" },
   { "name": "OFFHAND-drop-untargeted", "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (!isEquipped(item)) return wear(item, to);", "new": "  if (!isEquipped(item)) return wear(item);",

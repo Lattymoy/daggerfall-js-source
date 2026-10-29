@@ -57,7 +57,7 @@ const RIG = [{ sheathed: true, usingRightHand: true }, { sheathed: true, usingRi
 test('HARD2c: the WRITE differential - the old inline arithmetic, carried verbatim', () => {
   // worldModes.js:"A10: PlayerEnterExit's" and dungeonContext.js:"(PlayerEntity.cs:425-430 is the entity update)", character for
   // character as they stood before this slice.
-  const oldCompose = (w) => ({ weaponDrawn: !w.sheathed, usingRightHand: w.usingRightHand });
+  const oldCompose = (w) => ({ weaponDrawn: !w.sheathed, usingRightHand: w.usingRightHand, handKept: true });   // PIN MOVED (AUDIT FB1029f D4): and the HAND-FOLLOWS mark
   // worldQuickSave.js:"const at = playerTravelPixel(); stampLayout"'s own, which is the MERGE - `wp` is the mode host's
   // answer for the rig actually drawn, taken PER FIELD.
   const oldMerge = (wp, rig) => ({
@@ -109,13 +109,13 @@ test('HARD2c: the law itself, against SerializablePlayer.cs', () => {
   // :175-176 - weaponDrawn is the NEGATION of sheathed, the hand is not
   // negated here (the port stores the positive sense because
   // PlayerWeapon holds `usingRightHand`; it is the same bit).
-  assert.deepEqual(weaponPoseOf({ sheathed: false, usingRightHand: false }), { weaponDrawn: true, usingRightHand: false });
+  assert.deepEqual(weaponPoseOf({ sheathed: false, usingRightHand: false }), { weaponDrawn: true, usingRightHand: false, handKept: true });   // PIN MOVED (AUDIT FB1029f D4): the HAND-FOLLOWS mark
   assert.equal(weaponPoseOf(null), null, 'null in, null out - "this mode has no rig of its own to answer for"');
 
   // :420-421 - and back, as a PAIR. F25 was the second line missing.
   const rig = { sheathed: true, usingRightHand: true };
   applyWeaponPose(rig, { weaponDrawn: true, usingRightHand: false });
-  assert.deepEqual(rig, { sheathed: false, usingRightHand: false, handRestored: true }, 'both halves land, which is what AUDIT 63 F25 found missing');   // PIN MOVED (HAND-FOLLOWS, FIELD BUGS 2026-10-29f): and the hand is marked restored, so the next UpdateHands keeps it
+  assert.deepEqual(rig, { sheathed: false, usingRightHand: false, handRestored: false }, 'both halves land, which is what AUDIT 63 F25 found missing');   // PIN MOVED (HAND-FOLLOWS, FIELD BUGS 2026-10-29f): and the hand is marked restored, so the next UpdateHands keeps it
 
   // PRESENCE-GATED: a pre-field envelope leaves the live hand alone
   // rather than reading `undefined` as "sheathed, right hand".

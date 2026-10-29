@@ -1471,7 +1471,7 @@ export function decorBarKeys(touch, sized = true) {
   if (touch) return [['Fly', t('decor.bar.keys.flyTouch', 'the stick, and hold Fly up or Fly down')], ['Look', t('decor.bar.keys.lookTouch', 'drag: the piece stands where you look')]];
   return [['Fly', t('decor.bar.keys.fly', 'walk keys, Jump up, Crouch down, Run faster')], ['Look', t('decor.bar.keys.look', 'mouse')],
     ['Turn', t('decor.bar.keys.turn', 'wheel or Turn Left/Right (Shift for fine turns; turn a picture half round to flip it)')], ['Raise/lower', t('decor.bar.keys.raise', 'Float Up/Down')],
-    ['Nudge', t('decor.bar.keys.nudge', 'Numpad 4, 6, 8 and 2 (Shift for fine steps)')],   // NUDGE
+    ['Nudge', t('decor.bar.keys.nudge', 'Numpad 4, 6, 8 and 2 (Shift or Ctrl for fine steps)')],   // NUDGE
     ...(sized ? [['Size', '- and =']] : []), ['Grid', '/'], ['Place', t('decor.bar.keys.place', 'click or Interact')], ['Back', t('decor.bar.keys.back', 'right click or Escape')]];
 }
 

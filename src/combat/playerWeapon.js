@@ -176,7 +176,7 @@ export const usingRightHandFromSaveVars = (saveVars) => !saveVars?.usingLeftHand
  * leaving it to be discovered: if a caller ever does pass null, the
  * pin says what changed and when.
  */
-export const weaponPoseOf = (w) => (w ? { weaponDrawn: !w.sheathed, usingRightHand: w.usingRightHand } : null);
+export const weaponPoseOf = (w) => (w ? { weaponDrawn: !w.sheathed, usingRightHand: w.usingRightHand, handKept: true } : null);   // AUDIT FB1029f D4: a hand chosen under HAND-FOLLOWS
 
 /** RR1: WeaponManager.Sheathed / ScreenWeapon.WeaponType, asked by a law
  *  that lives nowhere near the rig (Roleplay & Realism's climbing gate
@@ -207,7 +207,9 @@ export const currentWeaponPose = () => _poseProbe?.() ?? null;
 export function applyWeaponPose(w, pose) {
   if (!w || !pose) return false;
   if (pose.weaponDrawn != null) w.sheathed = !pose.weaponDrawn;
-  if (pose.usingRightHand != null) { w.usingRightHand = !!pose.usingRightHand; w.handRestored = true; }   // HAND-FOLLOWS: the next UpdateHands keeps it
+  // HAND-FOLLOWS: the next UpdateHands keeps a hand chosen under it; AUDIT FB1029f D4: a pose from before it (`handKept`
+  // unsaid) follows once - a save made with a lone weapon left beside an empty hand in use loaded to fists
+  if (pose.usingRightHand != null) { w.usingRightHand = !!pose.usingRightHand; w.handRestored = pose.handKept === true; }
   return true;
 }
 

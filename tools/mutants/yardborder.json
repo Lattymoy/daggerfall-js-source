@@ -2,8 +2,8 @@
   {
     "name": "YARDBORDER-midline-unread",
     "file": "src/scenes/homeYards.js",
-    "old": "    && !(yardGapTo(near, x, z) < yardGapTo(own, x, z));",
-    "new": "    && true;",
+    "old": "    return !(gap2(near, x, z, mine) < mine);   // the nearer house's, a tie this one's",
+    "new": "    return true;",
     "tests": [
       "test/scenes/yardborder.test.js"
     ]
@@ -11,7 +11,7 @@
   {
     "name": "YARDBORDER-facing-uncut",
     "file": "src/scenes/homeYards.js",
-    "old": "    for (const o of own) for (const r of near) { if (r[i] >= o[j]) at.add((o[j] + r[i]) / 2); if (r[j] <= o[i]) at.add((r[j] + o[i]) / 2); }   // where two walls face\n",
+    "old": "        if (r[i] >= o[j]) facing.push((o[j] + r[i]) / 2); else if (r[j] <= o[i]) facing.push((r[j] + o[i]) / 2);\n",
     "new": "",
     "tests": [
       "test/scenes/yardborder.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "YARDBORDER-road-uncut",
     "file": "src/scenes/homeYards.js",
-    "old": "  const open = (x, z) => rects.some((r) => inRect(x, z, r)) && !holes.some((r) => x > r[0] && x < r[2] && z > r[1] && z < r[3])",
-    "new": "  const open = (x, z) => rects.some((r) => inRect(x, z, r))",
+    "old": "    if (holes.some((r) => x > r[0] && x < r[2] && z > r[1] && z < r[3])) return false;\n",
+    "new": "",
     "tests": [
       "test/scenes/yardborder.test.js"
     ]
@@ -29,17 +29,8 @@
   {
     "name": "YARDBORDER-host-lineless",
     "file": "src/scenes/homeYards.js",
-    "old": "    if (sig !== edgeMemo.sig) edgeMemo = { sig, quads: yardLotQuads(cur.lot, o, YARD_MARK_HIGH, cur.roads, cur.lines) };",
-    "new": "    if (sig !== edgeMemo.sig) edgeMemo = { sig, quads: yardLotQuads(cur.lot, o, YARD_MARK_HIGH, cur.roads) };",
-    "tests": [
-      "test/scenes/yardborder.test.js"
-    ]
-  },
-  {
-    "name": "YARDJOINED-joined-unread",
-    "file": "src/scenes/homeYards.js",
-    "old": "return inRect(u, v, lot.lot, pad) || (lot.joined ?? []).some((r) => inRect(x, z, r, pad)); };",
-    "new": "return inRect(u, v, lot.lot, pad); };",
+    "old": "quads: yardLotQuads(cur.lot, o, YARD_MARK_HIGH, cur.roads, cur.lines) };",
+    "new": "quads: yardLotQuads(cur.lot, o, YARD_MARK_HIGH, cur.roads) };",
     "tests": [
       "test/scenes/yardborder.test.js"
     ]
@@ -47,8 +38,8 @@
   {
     "name": "YARDJOINED-walls-unjoined",
     "file": "src/scenes/homeYards.js",
-    "old": "walls: [...(lot.walls ?? [lot.house]), ...mates.flatMap((m) => m.walls)] };",
-    "new": "walls: lot.walls ?? [lot.house] };",
+    "old": "  return { ...lot, walls: [...(lot.walls ?? [lot.house]), ...mates.flatMap((m) => m.walls)] };",
+    "new": "  return lot;",
     "tests": [
       "test/scenes/yardborder.test.js"
     ]
@@ -56,7 +47,7 @@
   {
     "name": "YARDJOINED-past-the-bound",
     "file": "src/scenes/homeYards.js",
-    "old": "  if (Math.abs(x) > DECOR_YARD_POS_MAX || Math.abs(z) > DECOR_YARD_POS_MAX) return YARD_OFF_LOT;   // YARD-JOINED: the service's bound\n",
+    "old": "  if (Math.abs(x) > DECOR_YARD_POS_MAX || Math.abs(z) > DECOR_YARD_POS_MAX) return YARD_OFF_LOT;   // the service's bound (net/decorLaw.js decorYardPlaceOf)\n",
     "new": "",
     "tests": [
       "test/scenes/yardborder.test.js"

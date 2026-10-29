@@ -76,3 +76,11 @@ test('EAVE-FOOT the game\'s own houses (ARENA2): model 252 and its four kin (205
   const box = localAabb(m.positions);
   assert.equal(yardWhyNot([(box[0] + box[3]) / 2, 0, (box[2] + box[5]) / 2], lot, []), YARD_IN_HOUSE, '340: its middle');
 });
+
+test('AUDIT FB1029f B7: two walls meeting at a V\'s point on a cell row are two crossings - one plane is one crossing, not one place (mutant: AUDITFB1029F-B7-crossing-by-place)', () => {
+  // a north wall notched down to a point at (0, 4), on the row of cells whose middle is z 4
+  const notch = [[-5, -5, 5, -5], [5, -5, 5, 5], [5, 5, 0, 4], [0, 4, -5, 5], [-5, 5, -5, -5]].map((w) => [...w, 0, 3]);
+  const m = model(notch, [[-5, -5, 5, 5, 3]]);
+  for (const x of [-4, -2, 2, 4]) assert.equal(covers(m, x, 4), true, `(${x}, 4) inside the walls`);
+  assert.equal(covers(m, 0, 4.6), false, 'the notch itself the yard');
+});

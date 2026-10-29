@@ -98,3 +98,21 @@ test('DECOR-GHOST a merged yard\'s piece held: the merge is let go so the ghost 
   r.frame();
   assert.equal(r.calls.filter((c) => c[0] === 'draw').length, 1, 'let go: all four merged again');
 });
+
+test('AUDIT FB1029f C5: a ghost casts no shadow (its draw says so to the sun\'s cascades), and a held figure - which the people lane lets go - is drawn as its ghost rather than left cast-only (mutants: AUDITFB1029F-C5-ghost-casts, AUDITFB1029F-C5-figure-unseen)', async () => {
+  const r = rig();
+  const opts = [];
+  const draw = r.pool.draw;
+  r.pool.put(piece('a'));
+  await settle(); await settle();
+  r.pool.hold('a', true);
+  draw({ drawMesh: (g, m, remap, o) => opts.push(o ?? null), setDissolve() {} });
+  assert.deepEqual(opts, [{ noShadow: true }]);
+  r.pool.put(piece('f', { model: null, flat: [182, 3] }));   // a vendor - a figure
+  await settle(); await settle();
+  const fig = r.pool.batches().find((b) => b.archive === 182);
+  assert.ok(fig, 'its flat stands');
+  fig.castOnly = true;   // the people lane drew its body over it last frame
+  r.pool.hold('f', true);
+  assert.equal(fig.castOnly, false, 'held: its own ghost is drawn');
+});

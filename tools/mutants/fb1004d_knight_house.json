@@ -153,12 +153,12 @@
   {
     "name": "KNIGHT-HOUSE-hold-unwritten",
     "file": "server-account/src/homes.js",
-    "old": "  await deedStatement(db, player, { mapId, buildingKey, region, character, layout: layout ?? null }, nowS).run();\n",
+    "old": "  await db.batch([accessOrphansCleared(db, mapId, buildingKey), deedStatement(db, player, { mapId, buildingKey, region, character, layout: layout ?? null }, nowS)]);   // AUDIT FB1029f A1\n",
     "new": "",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
-    "note": "The hold answers and writes nothing: the building stays claimable."
+    "note": "The hold answers and writes nothing: the building stays claimable. AUDIT FB1029f (PIN MOVED): re-aimed by content."
   },
   {
     "name": "KNIGHT-HOUSE-hold-a-bought-home",

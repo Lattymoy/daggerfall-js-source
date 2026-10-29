@@ -38,7 +38,8 @@ benches (ARCH3D 42500-42571) and 66 pieces of the house family were dungeon furn
 FIXED. `systems/decor/decorCatalogue.js:"export function decorWhatKind(what) {"` files a piece by what it is first: each
 picture archive the catalogue holds was looked at whole and named (FLAT_WHAT), the free-standing models by their editor's
 tags (MODEL_WHAT), a model of the furniture families as furniture and of the exterior family as an outdoor piece. Four
-kinds more: Statues, Tools, Animals, Remains. The plants join Trees and plants. A street's plain piece is still a room's
+kinds more: Statues, Tools, Animals, Remains. The plants join Trees and plants, as Houseplant and Crop (Daggerfall's
+own words), apart from the climate's; two mixed archives are filed record by record (AUDIT FB1029f C2, C4). A street's plain piece is still a room's
 to place (`inRoom`), whatever it is now filed as. The decorator's own lists file a piece the same way.
 
 WHY THE PINS PASSED. DECOR-DUNGEON's pin held the throne and the statue as dungeon furniture: the law as written.
@@ -55,8 +56,9 @@ FOUND. A house held DECOR_CAP, 200 pieces, whatever its size. The freeware's hou
 DECIDED. A room holds DECOR_CAP to 200 m2 of ground and as much more for each as much more, in tens, to DECOR_CAP_MAX
 (600): `net/decorLaw.js:"export function decorCapOf(groundM2) {"`. The ground is HOME-PRICE's measure, the one the
 price is set from. The service measures nothing (it has no ARENA2), so a claim's ground is kept only where the price is
-the one that ground and the town's blocks set (`net/homeLaw.js` homeGroundOk). A price at HOME_PRICE_MAX cannot tell a
-wide house from a wider one, so such a home may name any ground that prices at the cap: DECOR_CAP_MAX bounds it.
+the one that ground and the town's blocks set (`net/homeLaw.js` homeGroundOk). The price and the blocks are the
+client's word, as HOME-PRICE's price always was, so a forged client can name a wider ground (AUDIT FB1029f A2):
+DECOR_CAP_MAX bounds it, and only the service knowing each town's blocks would close it.
 
 FIXED. A claim keeps the ground (migration 0195). A home bought before names it once, from its owner's client, at its
 first list read (`systems/decor/homeDecorCap.js`, the service's `op: 'ground'`). A home the arena moves carries its ground with its price. The list says the room's cap; a
@@ -71,7 +73,8 @@ FIXED. The owner's bar in their own online home has a chip, "Who may rest", that
 Guild. It is the home's own row among its pieces' access rows (`DECOR_REST_ID`, migration 0194), set and read as a
 chest's is (`server-account/src/decorAccess.js`). A guest the row names is told so with the room's grants, and the
 rest's bag stands their bed as the owner's: `systems/decor/decorGrants.js:"export const decorMayRest = (mapId, buildingKey) =>"`.
-A guild's hall keeps its own law; its members already rest there.
+A guild's hall keeps its own law; its members already rest there. A home's rows end with it: a sale or a character's
+delete clears them, a claim clears what no home holds, an arena move carries the rest row (AUDIT FB1029f A1).
 
 PINS: `test/systems/decor/restguest.test.js`, the REST-GUEST test in `test/server/decoraccess.test.js`. Mutants
 `tools/mutants/restguest.json`, dead. PIN MOVED: the four pins that read the rest's bag (homerent, seathall_client,
@@ -84,7 +87,8 @@ saw it gone, and the service's list refused the door's name.
 
 FIXED. A door's name rides the room's one list of what is taken out (`net/decorLaw.js` DECOR_BASE_KEY_RE takes
 `intdoor:<record>`), stood whole by `scenes/decor/decorBase.js:"export function standRoomHidden(base, list) {"`. The
-decorator writes the doors and the furniture in one write.
+decorator writes the doors and the furniture in one write. The list sets the doors exactly, and an online home's save
+record is never stood, so a door put back on one device is back on every one (AUDIT FB1029f A3).
 
 PINS: the DOOR-KEPT test in `test/server/basehide.test.js`; `tools/mutants/doorkept.json`, dead.
 
@@ -102,7 +106,7 @@ PINS: `test/scenes/yardlight.test.js`, `test/world/audityardlight.test.js` (move
 ## 6. NUDGE - sideways steps, and some clipping
 
 FIXED. Four bar buttons and Numpad 4, 6, 8 and 2 push a piece along the level axis nearest the eye's left, right, away
-and back, 5 cm a step and 1 cm with Shift, at most 1 m each way (`systems/decor/decorPlacer.js:"export function decorNudgeStep(yaw, dir, step = DECOR_NUDGE_STEP) {"`).
+and back, 5 cm a step, 1 cm with Shift or Ctrl and a grid step on the grid, at most 1 m each way (`systems/decor/decorPlacer.js:"export function decorNudgeStep(yaw, dir, step = DECOR_NUDGE_STEP) {"`).
 The push is applied after WALL-CLEAR's clearance, so a piece may sit into a wall or another piece as far as its owner
 chooses (item 14). A hung piece slides along its surface.
 
@@ -116,9 +120,14 @@ twice: the 2 m under its west eave read as the house. On the same models the roo
 doubled. Of the 392 models Daggerfall's town buildings stand, the law now covers more ground on 228 (rooms read as yard) and less on 52 (eaves and overhangs).
 
 FIXED. The walls that say what is under the roof are the ground floor's, a face whose foot is below YARD_ROOF_Y, and a
-plane is one crossing: `scenes/homeYards.js:"const crossed = new Set();"`.
+plane is one crossing: `scenes/homeYards.js:"const crossed = new Set();"`. AUDIT FB1029f B7: a plane is keyed by its
+line, not where the ray crosses it, so two walls meeting at a V's point stay two crossings.
 
 WHY THE PINS PASSED. HOME-FOOT's houses were one storey, one face to a wall.
+
+NOT CHANGED (AUDIT FB1029f B8). One ray decides, so a portico open on one side reads as the house on some big manors
+(models 512, 513, 858, 729 and kin: 113 to 1,352 cells before, 330 to 1,771 after). No cheap law reads them better; a
+four-ray vote does worse overall.
 
 PINS: `test/world/eavefoot.test.js` (with models 252, 205 to 208 and 340); `tools/mutants/eavefoot.json`, dead.
 
@@ -143,22 +152,34 @@ taken out - in half-metre cells cut exactly where two walls face each other, its
 `scenes/homeYards.js:"export function yardStandEdges(lot, roads = [], lines = []) {"`. It is traced again only when
 what it is drawn from moves.
 
+AUDIT FB1029f. B1: every pair of walls was a cut, so a Hammerfell house traced for up to 4 s on the main thread; only
+walls that face are cut now, at most YARD_BORDER_CUTS_MAX of them, and Sentinel's worst trace takes 38 ms. B2: the
+trace is kept while the yard is, not signed over a pixel's lines each frame. B5: every line that can win a point of
+the lot is read. B6: past DECOR_LOT_MARKS bands, the slopes are read coarser. B10: a cut a hundredth of a metre from
+another is the same cut, so float noise draws no hairline band. On Sentinel, Daggerfall and Wayrest, no point more
+than 0.9 m from the edge disagrees with the law.
+
 PINS: `test/scenes/yardborder.test.js` (the drawn edge and the law agree over the lot); `tools/mutants/yardborder.json`,
 dead.
 
 ## 10. YARD-JOINED - two homes of one owner
 
-FIXED. An owner's homes whose lots meet join: either yard stands a piece on both lots, never in the other house, and
-no midline is drawn between them (`scenes/homeYards.js:"export function yardJoinLots(lot, mates = []) {"`). The line to
-a stranger is drawn from the nearer of the owner's houses. A guild's hall, a turned lot and a lone lot join none. A
-piece never stands past the service's bound (DECOR_YARD_POS_MAX).
+FIXED. An owner's homes whose lots meet join: no midline is drawn between them, so each yard reaches its own lot's
+edge, and the other house is still a house (`scenes/homeYards.js:"export function yardJoinLots(lot, mates = []) {"`).
+The line to a stranger is drawn from the nearer of the owner's houses. A guild's hall, a turned lot and a lone lot join
+none. A piece never stands past the service's bound (DECOR_YARD_POS_MAX).
+
+AUDIT FB1029f B3 and B4: a piece once stood on the other house's lot too. It was its own yard's, so a sale of the other
+house left it in the next owner's yard, and a joined edge reached past the service's bound. A piece stands on its own
+lot alone now. B9 (recorded): a capital's slices are each a map, so two homes across a slice's border never join.
 
 PINS: `test/scenes/yardborder.test.js` (the real decorator over two houses); `tools/mutants/yardborder.json`, dead.
 
 ## 11. DECOR-GHOST - the original while it moves
 
 FIXED. A piece picked up to move stays drawn where it stood, dithered to DECOR_HELD_SHOWN (a model through the
-renderer's dissolve, a flat through its batch's), until it is set down or the move is undone.
+renderer's dissolve, a flat through its batch's), casting no shadow, until it is set down or the move is undone. A
+hung piece shows no ghost: the decal pass has no dither (AUDIT FB1029f C5).
 
 PINS: `test/scenes/decorghost.test.js`; `tools/mutants/decorghost.json`, dead.
 
@@ -193,7 +214,7 @@ hand, else the right, and the drop then traded the whole pair. With both hands f
 weapon and moved the old off hand right.
 
 FIXED. `equipItem` takes a hand, held to one hand law (`systems/equip.js:"export function mayHold"`); the drop names it,
-and a hand that cannot hold the piece refuses it. A held piece dragged to the other hand still trades places.
+and a piece the panel's hand cannot hold goes to the hand that holds it (AUDIT FB1029f D5). A held piece dragged to the other hand still trades places.
 
 PINS: `test/ui/enhanced/offhanddrop.test.js`; `tools/mutants/offhanddrop.json`, dead.
 
@@ -205,7 +226,8 @@ the classic lane swung fists, training Hand-to-Hand.
 
 FIXED. When what the hands hold changes, an empty hand in use gives way to a lone weapon in the other
 (`combat/playerWeapon.js:"if (changed && !restored) this.followHeldHand();"`). H still picks the bare hand after, and a
-hand restored from a save is kept.
+hand restored from a save is kept - one saved before this follows once. The swap key sets the hand where the
+weapon lands, never toggles it, and its bare hands stay bare (AUDIT FB1029f D1, D2, D4).
 
 PINS: `test/combat/handfollows.test.js`; `tools/mutants/handfollows.json`, dead. PIN MOVED: the left-hand, pistolet,
 MW-HAND and JAN1 pins.

@@ -63,7 +63,7 @@ import { decorPlaque } from '../systems/decor/decorLook.js';
 import { pickActivatableHit } from '../player/activate.js';
 import { plaqueActionFor } from '../systems/quickLoot.js';
 import { YARD_RANGE_TIERS, YARD_RANGE_DEFAULT, yardRangeOf, YARD_DRAW_M } from '../net/yardRange.js';   // YARD-RANGE: how far a stranger's yard is drawn
-import { createDecorTool } from './decor/decorTool.js';
+import { createDecorTool, DECOR_LOT_MARKS } from './decor/decorTool.js';
 import { DECOR_YARD_CAP, decorYardHighOk, DECOR_YARD_HIGH_WHY, DECOR_YARD_POS_MAX } from '../net/decorLaw.js';   // YARD-HEIGHT: how high a piece stands, and its words; YARD-JOINED: how far from its house
 import { homeLookRecords } from '../world/homeLook.js';   // HOME-LOOK (AUDIT): the styles a roof's or a door's family holds
 import { onPathTile } from '../player/exteriorSurface.js';   // FB1001 ROAD-LOT: PlayerMotor.OnPathTile - Daggerfall's own road tiles
@@ -221,6 +221,16 @@ export const YARD_FOOT_CELL = 0.4;
 /** A face this high, and higher, is a roof. Ground under the part of it that hangs past the walls is still the yard. */
 export const YARD_ROOF_Y = 2;
 
+/** EAVE-FOOT: the plane an upright face stands in, seen from above as its line - its way (either end first) and its offset.
+ *  @param {number[]} w [ax, az, bx, bz] */
+function lineOf(w) {
+  const [ax, az, bx, bz] = w;
+  let dx = bx - ax, dz = bz - az;
+  const len = Math.hypot(dx, dz);
+  dx /= len; dz /= len;
+  if (dx < -1e-6 || (Math.abs(dx) <= 1e-6 && dz < 0)) { dx = -dx; dz = -dz; }
+  return `${Math.round(dx * 1000)},${Math.round(dz * 1000)},${Math.round((ax * dz - az * dx) * 100)}`;
+}
 /**
  * FB1009 HOME-FOOT (the Discord, "Property Problem": "I can't place in front of my door but I can place in front of
  * another's home"): THE GROUND A MODEL STANDS ON, seen from above - every face of it that covers ground (a roof, a
@@ -263,7 +273,7 @@ export function modelFootRects(positions, indices, cell = YARD_FOOT_CELL) {
       const q = (v) => Math.round(v * 1000);
       const ka = `${q(best[0])},${q(best[1])}`, kb = `${q(best[2])},${q(best[3])}`;
       const key = ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`;
-      if (Math.min(ay, by, cy) < YARD_ROOF_Y && !seen.has(key)) { seen.add(key); walls.push(best); }   // EAVE-FOOT: the ground floor's
+      if (Math.min(ay, by, cy) < YARD_ROOF_Y && !seen.has(key)) { seen.add(key); walls.push([...best, lineOf(best)]); }   // EAVE-FOOT: the ground floor's
       continue;   // a wall: no ground under it
     }
     const high = ay >= YARD_ROOF_Y && by >= YARD_ROOF_Y && cy >= YARD_ROOF_Y;
@@ -278,10 +288,9 @@ export function modelFootRects(positions, indices, cell = YARD_FOOT_CELL) {
   }
   const inside = (x, z) => {
     const crossed = new Set();   // EAVE-FOOT: a crossing once, however many faces stand in its plane
-    for (const [ax, az, bx, bz] of walls) {
+    for (const [ax, az, bx, bz, line] of walls) {
       if ((az > z) === (bz > z)) continue;
-      const cross = ax + ((z - az) / (bz - az)) * (bx - ax);
-      if (cross > x) crossed.add(Math.round(cross * 100));
+      if (ax + ((z - az) / (bz - az)) * (bx - ax) > x) crossed.add(line);   // AUDIT FB1029f B7: by its plane - two walls meeting at a V's point are two
     }
     return crossed.size % 2 === 1;
   };
@@ -348,30 +357,27 @@ const inRect = (x, z, r, pad = 0) => x >= r[0] - pad && x <= r[2] + pad && z >= 
 /** IC-BACKYARD: a point of a lot's frame on the lot's own axes, and back - turned with its house (`turn`, radians). */
 export const lotAxes = (lot, x, z) => { const a = lot?.turn ?? 0, c = Math.cos(a), s = Math.sin(a); return a ? [x * c + z * s, z * c - x * s] : [x, z]; };
 const lotFrame = (lot, u, v) => { const a = lot?.turn ?? 0, c = Math.cos(a), s = Math.sin(a); return a ? [u * c - v * s, u * s + v * c] : [u, v]; };
-/** Whether a point of the frame stands on the lot (within `pad` of it) - YARD-JOINED: or on a lot joined to it. */
-const onLot = (lot, x, z, pad = 0) => { const [u, v] = lotAxes(lot, x, z); return inRect(u, v, lot.lot, pad) || (lot.joined ?? []).some((r) => inRect(x, z, r, pad)); };
-/** IC-BACKYARD: the box round a lot on its frame's axes - YARD-JOINED: and round the lots joined to it. */
+/** Whether a point of the frame stands on the lot (within `pad` of it). */
+const onLot = (lot, x, z, pad = 0) => { const [u, v] = lotAxes(lot, x, z); return inRect(u, v, lot.lot, pad); };
+/** IC-BACKYARD: the box round a lot on its frame's axes. */
 export function lotBox(lot) {
-  if (lot.joined?.length) {
-    const all = [lot.lot, ...lot.joined];
-    return [Math.min(...all.map((r) => r[0])), Math.min(...all.map((r) => r[1])), Math.max(...all.map((r) => r[2])), Math.max(...all.map((r) => r[3]))];
-  }
   if (!lot.turn) return lot.lot;
   const [x0, z0, x1, z1] = lot.lot, ps = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([u, v]) => lotFrame(lot, u, v));
   return [Math.min(...ps.map((p) => p[0])), Math.min(...ps.map((p) => p[1])), Math.max(...ps.map((p) => p[0])), Math.max(...ps.map((p) => p[1]))];
 }
-/** HOME-LINE (FIELD BUGS 2026-10-11b): how far (x, z) stands from the nearest of these footprints [x0, z0, x1, z1] - 0 on
- *  one, Infinity for none. */
 /**
  * YARD-JOINED (FIELD BUGS 2026-10-29f, the housing thread's item 17: "Owning two houses next to each other should allow
- * you to build beyond the plot border"): A LOT WITH ITS OWNER'S LOTS BESIDE IT - `mates`, each `{ lot, walls }` in this
- * lot's frame. A piece may stand on any of them; their houses are the owner's houses (never stood in), and the
- * midline is drawn from all of them. A turned or a lone lot joins none.
+ * you to build beyond the plot border"): A LOT BESIDE ITS OWNER'S OTHER HOUSES - `mates`, each `{ walls }` in this lot's
+ * frame. No midline is drawn between one owner's houses, so the whole lot is the yard's up to its edge, and theirs are
+ * houses (never stood in). AUDIT FB1029f B4: a piece stands on its own lot alone - one stood on the other house's lot
+ * stayed there, its yard's, after that house was sold. A turned or a lone lot joins none.
  */
 export function yardJoinLots(lot, mates = []) {
   if (!lot || lot.turn || lot.alone || !mates?.length) return lot;
-  return { ...lot, joined: mates.map((m) => [...m.lot]), walls: [...(lot.walls ?? [lot.house]), ...mates.flatMap((m) => m.walls)] };
+  return { ...lot, walls: [...(lot.walls ?? [lot.house]), ...mates.flatMap((m) => m.walls)] };
 }
+/** HOME-LINE (FIELD BUGS 2026-10-11b): how far (x, z) stands from the nearest of these footprints [x0, z0, x1, z1] - 0 on
+ *  one, Infinity for none. */
 export const yardGapTo = (rs, x, z) => (rs ?? []).reduce((m, r) => Math.min(m, Math.hypot(Math.max(r[0] - x, 0, x - r[2]), Math.max(r[1] - z, 0, z - r[3]))), Infinity);
 /**
  * FB1001 YARD-CORNER: WHETHER THE GROUND A PIECE COVERS MEETS A RECT. `poly` is that ground - its turned box's corners in
@@ -421,7 +427,7 @@ export function yardWhyNot(pos, lot, others = [], foot = [], roads = [], lines =
   const corners = (foot ?? []).map(([dx, dz]) => [x + dx, z + dz]);
   const points = [[x, z], ...corners];
   if (!points.every(([px, pz]) => onLot(lot, px, pz))) return YARD_OFF_LOT;
-  if (Math.abs(x) > DECOR_YARD_POS_MAX || Math.abs(z) > DECOR_YARD_POS_MAX) return YARD_OFF_LOT;   // YARD-JOINED: the service's bound
+  if (Math.abs(x) > DECOR_YARD_POS_MAX || Math.abs(z) > DECOR_YARD_POS_MAX) return YARD_OFF_LOT;   // the service's bound (net/decorLaw.js decorYardPlaceOf)
   const ground = corners.length ? corners : [[x, z]];
   const meets = (r) => inRect(x, z, r) || yardFootMeets(ground, r, YARD_EDGE_PAD);   // FB1009 HOME-FOOT: its middle, or its ground
   if ((lot.walls ?? [lot.house]).some(meets)) return YARD_IN_HOUSE;
@@ -555,35 +561,63 @@ function simplifyLoop(runs, tol) {
 /** YARD-BORDER: how finely the midline is traced, and how far a drawn corner may stand from it, metres. */
 export const YARD_BORDER_CELL = 0.5;
 export const YARD_BORDER_TOL = 0.4;
+/** YARD-BORDER: the most cuts a trace takes on one axis past the half-metre cells (AUDIT FB1029f B1). */
+const YARD_BORDER_CUTS_MAX = 160;
+/** The squared distance from (x, z) to the nearest of `rs`, at most `cap` - a trace asks it of every cell. */
+function gap2(rs, x, z, cap = Infinity) {
+  let m = cap;
+  for (const r of rs) {
+    const dx = Math.max(r[0] - x, 0, x - r[2]), dz = Math.max(r[1] - z, 0, z - r[3]), d = dx * dx + dz * dz;
+    if (d < m) { m = d; if (m === 0) break; }
+  }
+  return m;
+}
 /**
  * YARD-BORDER (FIELD BUGS 2026-10-29f, the housing thread's item 16: "If two plots overlap, which they do literally all
- * the time, the borders you see are just wrong"): THE EDGE OF WHERE A PIECE MAY STAND. The marked edge was the lot's
- * rectangle while HOME-LINE gives the ground nearer another lot-holder's house (`lines`) to that house. It is now the lot
- * (YARD-JOINED: and its owner's lots joined to it) with the road and the neighbours' side of the midline taken out, as
- * yardWhyNot asks of a piece's middle - traced in YARD_BORDER_CELL cells, cut exactly where two parallel walls face each
- * other. A turned or a lone lot has no midline: its edge is yardLotEdges'.
+ * the time, the borders you see are just wrong"): THE EDGE OF WHERE A PIECE MAY STAND - the lot, with the road and the
+ * neighbours' side of HOME-LINE's midline (`lines`) taken out, as yardWhyNot asks of a piece's middle. Traced in
+ * YARD_BORDER_CELL cells, cut exactly where two walls face each other (AUDIT FB1029f B1: facing pairs alone, and no more
+ * than YARD_BORDER_CUTS_MAX - every pair cut a Hammerfell house's trace to seconds); every line that can win a point of
+ * the lot is read (B5). A turned or a lone lot has no midline: its edge is yardLotEdges'.
  */
 export function yardStandEdges(lot, roads = [], lines = []) {
   if (!lot) return [];
   if (lot.turn || lot.alone) return yardLotEdges(lot, roads);
-  const rects = [lot.lot, ...(lot.joined ?? [])];
-  const [X0, Z0, X1, Z1] = lotBox(lot);
+  const [X0, Z0, X1, Z1] = lot.lot;
   const own = lot.walls ?? [lot.house];
+  const corners = [[X0, Z0], [X1, Z0], [X0, Z1], [X1, Z1]];   // B5: one wall's farthest point of the lot is a corner
+  const far = Math.sqrt(Math.min(...own.map((r) => Math.max(...corners.map(([x, z]) => gap2([r], x, z))))));
   const reach = (r, m) => r[0] < X1 + m && r[2] > X0 - m && r[1] < Z1 + m && r[3] > Z0 - m;
-  const near = (lines ?? []).filter((r) => reach(r, 2 * YARD_MARGIN));
-  if (!near.length && rects.length === 1) return yardLotEdges(lot, roads);
+  const near = (lines ?? []).filter((r) => reach(r, far));
+  if (!near.length) return yardLotEdges(lot, roads);
   const holes = (roads ?? []).filter((r) => reach(r, 0));
+  const snap = (v) => Math.round(v * 100) / 100;   // B10: a cut a hundredth from another is the same cut
   const cuts = (lo, hi, i, j) => {
-    const at = new Set([lo, hi]);
-    for (let v = lo + YARD_BORDER_CELL; v < hi; v += YARD_BORDER_CELL) at.add(v);
-    for (const r of [...rects, ...holes]) for (const v of [r[i], r[j]]) at.add(v);
-    for (const o of own) for (const r of near) { if (r[i] >= o[j]) at.add((o[j] + r[i]) / 2); if (r[j] <= o[i]) at.add((r[j] + o[i]) / 2); }   // where two walls face
-    return [...at].filter((v) => v >= lo && v <= hi).sort((a, b) => a - b);
+    const fixed = [lo, hi, ...[lot.lot, ...holes].flatMap((r) => [r[i], r[j]])];
+    for (let k = 1; lo + k * YARD_BORDER_CELL < hi; k++) fixed.push(lo + k * YARD_BORDER_CELL);
+    const facing = [];
+    const a = 1 - i;   // the other axis: two walls face where they overlap across it
+    for (const o of own) {
+      for (const r of near) {
+        if (!(r[a] < o[a + 2] && o[a] < r[a + 2])) continue;
+        if (r[i] >= o[j]) facing.push((o[j] + r[i]) / 2); else if (r[j] <= o[i]) facing.push((r[j] + o[i]) / 2);
+      }
+    }
+    const mid = [...new Set(facing.map(snap))];
+    const all = mid.length <= YARD_BORDER_CUTS_MAX ? [...fixed, ...mid] : fixed;
+    return [...new Set(all.map(snap))].filter((v) => v >= lo && v <= hi).sort((p, q) => p - q);
   };
   const xs = cuts(X0, X1, 0, 2), zs = cuts(Z0, Z1, 1, 3);
-  const open = (x, z) => rects.some((r) => inRect(x, z, r)) && !holes.some((r) => x > r[0] && x < r[2] && z > r[1] && z < r[3])
-    && !(yardGapTo(near, x, z) < yardGapTo(own, x, z));
-  return cellLoops(xs, zs, open).flatMap((runs) => simplifyLoop(runs, YARD_BORDER_TOL));
+  const open = (x, z) => {
+    if (holes.some((r) => x > r[0] && x < r[2] && z > r[1] && z < r[3])) return false;
+    const mine = gap2(own, x, z);
+    return !(gap2(near, x, z, mine) < mine);   // the nearer house's, a tie this one's
+  };
+  const loops = cellLoops(xs, zs, open);
+  // B6: never more bands than the decal batch holds - a coarser read of the slopes where a street is crowded
+  let tol = YARD_BORDER_TOL, segs = loops.flatMap((runs) => simplifyLoop(runs, tol));
+  while (segs.length > DECOR_LOT_MARKS && tol < 4) { tol *= 2; segs = loops.flatMap((runs) => simplifyLoop(runs, tol)); }
+  return segs;
 }
 /** Whether a world point stands on the lot (or within `near` of it) - `origin` the frame's, in the world. IC-BACKYARD: or
  *  at its door, for a lot that stands away from it (`access`). */
@@ -593,7 +627,7 @@ export const yardHolds = (lot, origin, p, near = 0) => !!lot && Array.isArray(p)
  * THE LOT'S MARKED EDGE: its four sides as upright bands (the decal pass's quads - combat/blood/bloodDecals.js writeDecalQuad's
  * shape), standing on the ground, in the world (`origin` the frame's). FB1001 ROAD-LOT: with the road taken out of it
  * (`roads` - yardRoadsOf), the edge runs along the road's side: the band is where a piece may stand up to. YARD-BORDER:
- * and along the midline with a neighbour's house (`lines`), round the owner's joined lots (yardStandEdges).
+ * and along the midline with a neighbour's house (`lines` - yardStandEdges).
  */
 export function yardLotQuads(lot, origin, high = YARD_MARK_HIGH, roads = [], lines = []) {
   if (!lot) return [];
@@ -879,7 +913,7 @@ export function createHomeYards(deps) {
     const lot = yardJoinLots(y.lot, [...mates.values()]);   // YARD-JOINED
     return { yard: y, lot, others, lines, roads: yardRoadsOf(p, y.frame.at, lot), hall: !!home.hall };   // FB1001 ROAD-LOT: the road under the lot; GUILD-YARD: a hall's
   }
-  /** YARD-JOINED: the owner's other homes whose lots meet yard `y`'s (overlap or touch) - building key -> `{ lot, walls }` in
+  /** YARD-JOINED: the owner's other homes whose lots meet yard `y`'s (overlap or touch) - building key -> `{ walls }` in
    *  y's frame. A home's alone: never a guild's hall, and never a turned or a lone lot. */
   function yardMates(y, home) {
     const out = new Map();
@@ -893,17 +927,19 @@ export function createHomeYards(deps) {
       const shift = (r) => [r[0] + dx, r[1] + dz, r[2] + dx, r[3] + dz];
       const lot = shift(y2.lot.lot);
       if (!inRect((lot[0] + lot[2]) / 2, (lot[1] + lot[3]) / 2, [y.lot.lot[0] - (lot[2] - lot[0]) / 2, y.lot.lot[1] - (lot[3] - lot[1]) / 2, y.lot.lot[2] + (lot[2] - lot[0]) / 2, y.lot.lot[3] + (lot[3] - lot[1]) / 2], YARD_EDGE_PAD)) continue;
-      out.set(y2.bk, { lot, walls: (y2.lot.walls ?? [y2.lot.house]).map(shift) });
+      out.set(y2.bk, { walls: (y2.lot.walls ?? [y2.lot.house]).map(shift) });
     }
     return out;
   }
-  /** YARD-BORDER: the marked edge, traced again only when what it is drawn from moved. */
-  let edgeMemo = { sig: '', quads: [] };
+  /** YARD-BORDER: the marked edge, traced again only when the yard asked or the world under it moved - AUDIT FB1029f B2:
+   *  the yard is held while the decorator is up, so it is its own key (a signature over every line of a town's pixel
+   *  cost milliseconds a frame). */
+  let edgeMemo = { of: null, o: '', quads: [] };
   function lotQuadsHere() {
     if (!cur) return [];
     const o = originOf(cur.yard);
-    const sig = [o, cur.lot.lot, ...(cur.lot.joined ?? []), ...cur.lines, ...cur.roads].map((r) => r.map((v) => v.toFixed(2)).join(',')).join('|');
-    if (sig !== edgeMemo.sig) edgeMemo = { sig, quads: yardLotQuads(cur.lot, o, YARD_MARK_HIGH, cur.roads, cur.lines) };
+    const at = o.join(',');
+    if (edgeMemo.of !== cur || edgeMemo.o !== at) edgeMemo = { of: cur, o: at, quads: yardLotQuads(cur.lot, o, YARD_MARK_HIGH, cur.roads, cur.lines) };
     return edgeMemo.quads;
   }
 

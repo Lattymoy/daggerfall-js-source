@@ -69,3 +69,18 @@ test('REST-GUEST the owner\'s bar: browsing their own online home a chip says wh
     assert.ok(!chipNamed(b, 'Who may rest: Me') || chipNamed(b, 'Who may rest: Me').hidden, `${room.where}: none`);
   }
 });
+
+test('AUDIT FB1029f A5: the rest row\'s id is never a piece\'s - a piece named so is refused, so dropping it cannot take the home\'s rest row with it (mutant: AUDITFB1029F-A5-rest-a-piece)', async () => {
+  const { decorPieceOf } = await import('../../../src/net/decorLaw.js');
+  const piece = { model: 41000, flat: null, pos: [1, 0, 1], rot: [0, 0, 0], scale: 1, light: null, storage: false, paid: 20 };
+  assert.ok(decorPieceOf({ ...piece, id: 'p1' }));
+  assert.equal(decorPieceOf({ ...piece, id: DECOR_REST_ID }), null);
+});
+
+test('AUDIT FB1029f C7 by source: the rest chip\'s answer is its own room\'s - an answer landing after the owner opened another home\'s decorator leaves that one\'s chip - and a press on a chest while the row is written is not dropped (mutants: AUDITFB1029F-C7-any-room, AUDITFB1029F-C7-busy-held)', () => {
+  const tool = src('src/scenes/decor/decorTool.js');
+  const rest = tool.slice(tool.indexOf('  async function cycleRest() {'), tool.indexOf('  function holdDecorEscape() {'));
+  assert.match(rest, /const here = \(\) => \{ const n = deps\.room\?\.\(\); return !!n && n\.mapId === r\.mapId && n\.buildingKey === r\.buildingKey; \};/);
+  assert.match(rest, /useBusy = false;[^\n]*\n\s*const res = await deps\.homeDecor\.use\(/);
+  assert.match(rest, /if \(!here\(\)\) return !!res\?\.ok;/);
+});

@@ -8,6 +8,9 @@ import { decorCapOf } from '../../net/decorLaw.js';
 
 /** @type {{ key: string, cap: number } | null} */
 let room = null;
+/** AUDIT FB1029f A6: the rooms whose ground the service refused this session - a home priced by another law (an arena
+ *  move's, a home from before HOME-PRICE) never agrees, and is not asked again every visit. */
+const refused = new Set();
 const keyOf = (mapId, buildingKey) => `${mapId}:${buildingKey}`;
 
 /** The service's word on a room as its list stands: its cap; and, where it keeps no ground yet and the room is the
@@ -15,9 +18,10 @@ const keyOf = (mapId, buildingKey) => `${mapId}:${buildingKey}`;
 export function noteHomeDecorList(mapId, buildingKey, data, ground, townBlocks, homeDecor, character) {
   const key = keyOf(mapId, buildingKey);
   room = Number.isSafeInteger(data?.cap) && data.cap > 0 ? { key, cap: data.cap } : null;
-  if (data?.measured !== false || !(ground > 0) || typeof homeDecor?.use !== 'function') return;
+  if (data?.measured !== false || !(ground > 0) || typeof homeDecor?.use !== 'function' || refused.has(key)) return;
   const blocks = Number.isSafeInteger(townBlocks) && townBlocks >= 0 ? townBlocks : 0;
   Promise.resolve(homeDecor.use({ mapId, buildingKey, character, op: 'ground', ground, townBlocks: blocks })).then((res) => {
+    if (res?.ok === false) refused.add(key);
     if (res?.ok && room?.key === key && typeof res.data?.ground === 'number') room = { key, cap: decorCapOf(res.data.ground) };
   }, () => {});
 }

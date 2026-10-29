@@ -142,12 +142,11 @@ test('HAND-DROP: a two-hander held right - a one-hander dropped on the left hand
   });
 });
 
-test('HAND-DROP: a piece the hand cannot hold is refused there - no label, no lit panel, nothing moves', () => {
+test('HAND-DROP: a piece the panel\'s hand cannot hold goes to the hand that holds it, said so - a two-hander in both, a shield in the left (PIN MOVED, AUDIT FB1029f D5: it was refused)', () => {
   const longsword = weapon(WEAPONS.Longsword), dagger = weapon(WEAPONS.Dagger), claymore = weapon(WEAPONS.Claymore);
-  withHands({ right: longsword, left: dagger }, claymore, ({ e, drop, hand }) => {
-    assert.deepEqual(drop('lhand'), { label: '', refused: true, lit: false }, 'a two-hander on the left hand');
-    assert.deepEqual([hand(R), hand(L)], [longsword, dagger]);
-    assert.ok(inPack(e, claymore));
+  withHands({ right: longsword, left: dagger }, claymore, ({ drop, hand }) => {
+    assert.deepEqual(drop('lhand'), { label: 'Right hand', refused: false, lit: true }, 'a two-hander on the left hand');
+    assert.deepEqual([hand(R), hand(L)], [claymore, null], 'worn in both');
   });
   const longsword2 = weapon(WEAPONS.Longsword), dagger2 = weapon(WEAPONS.Dagger), claymore2 = weapon(WEAPONS.Claymore);
   withHands({ right: longsword2, left: dagger2 }, claymore2, ({ drop, hand }) => {
@@ -155,10 +154,9 @@ test('HAND-DROP: a piece the hand cannot hold is refused there - no label, no li
     assert.deepEqual([hand(R), hand(L)], [claymore2, null], 'both hands cleared for it');
   });
   const longsword3 = weapon(WEAPONS.Longsword), dagger3 = weapon(WEAPONS.Dagger), shield = kiteShield();
-  withHands({ right: longsword3, left: dagger3 }, shield, ({ e, drop, hand }) => {
-    assert.deepEqual(drop('rhand'), { label: '', refused: true, lit: false }, 'a shield on the right hand');
-    assert.deepEqual([hand(R), hand(L)], [longsword3, dagger3]);
-    assert.ok(inPack(e, shield));
+  withHands({ right: longsword3, left: dagger3 }, shield, ({ drop, hand }) => {
+    assert.deepEqual(drop('rhand'), { label: 'Left hand', refused: false, lit: true }, 'a shield on the right hand');
+    assert.deepEqual([hand(R), hand(L)], [longsword3, shield], 'in the left, the main hand untouched');
   });
   const longsword4 = weapon(WEAPONS.Longsword), dagger4 = weapon(WEAPONS.Dagger), shield2 = kiteShield();
   withHands({ right: longsword4, left: dagger4 }, shield2, ({ drop, hand }) => {

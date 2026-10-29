@@ -3,7 +3,7 @@
 // time, the borders you see are just wrong"; item 17: "Owning two houses next to each other should allow you to build
 // beyond the plot border"). HOME-LINE gives the ground between two houses to the nearer, but the edge was drawn round
 // the lot's whole rectangle; it is now drawn where a piece may stand. And two homes of one owner side by side split no
-// ground between them: either yard stands on both lots.
+// ground between them: each yard reaches its own lot's edge (AUDIT FB1029f B4: never the other's lot).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -59,22 +59,89 @@ test('YARD-BORDER a road and a midline together, and a crowded street still draw
   assert.ok(yardStandEdges(LOT, road, crowd).length <= DECOR_LOT_MARKS, 'within the marks');
 });
 
-test('YARD-JOINED the law: a lot joined to its owner\'s lot beside it - a piece stands on either, never in the other house; the midline is drawn from both houses; never past the service\'s bound (mutants: YARDJOINED-joined-unread, YARDJOINED-walls-unjoined, YARDJOINED-past-the-bound)', () => {
-  const mate = { lot: [2, -9, 22, 9], walls: [[8, -3, 16, 3]] };
+test('YARD-JOINED the law: a lot beside its owner\'s other house - no midline between them, the other house still a house, the midline with a stranger drawn from the nearer of the owner\'s houses; a piece stands on its own lot alone (AUDIT FB1029f B4), never past the service\'s bound (mutants: YARDJOINED-walls-unjoined, YARDJOINED-past-the-bound)', () => {
+  const mate = { walls: [[8, -3, 16, 3]] };
   const lot = yardJoinLots(LOT, [mate]);
-  assert.equal(yardWhyNot([7, 0, 0], lot, [], [], [], []), null, 'between the two: no midline between one owner\'s houses');
-  assert.equal(yardWhyNot([19, 0, 0], lot, [], [], [], []), null, 'on the other lot, past this one\'s edge');
-  assert.equal(yardWhyNot([12, 0, 0], lot, [], [], [], []), YARD_IN_HOUSE, 'the other house is a house');
-  assert.equal(yardWhyNot([19, 0, 0], LOT, [], [], [], []), YARD_OFF_LOT, 'unjoined, off the lot');
-  // a stranger 12 m east of the second house: the line is drawn from the nearer of the owner's houses
-  const stranger = [[20, -3, 28, 3]];
-  assert.equal(yardWhyNot([17.5, 0, 0], lot, [], [], [], stranger), null, 'nearer the owner\'s second house');
-  assert.equal(yardWhyNot([18.5, 0, 0], lot, [], [], [], stranger), homeYards.YARD_ON_OTHER, 'the stranger\'s side');
-  const segs = yardStandEdges(lot, [], []);
-  assert.ok(inside(segs, 19, 0) && inside(segs, -8, 0) && !inside(segs, 23, 0), 'the edge round both lots');
-  const far = yardJoinLots(LOT, [{ lot: [-60, -9, -2, 9], walls: [[-56, -3, -40, 3]] }]);
-  assert.equal(yardWhyNot([-DECOR_YARD_POS_MAX - 1, 0, 0], far, [], [], [], []), YARD_OFF_LOT, 'never past the service\'s bound');
-  assert.equal(yardJoinLots({ ...LOT, alone: true }, [mate]).joined, undefined, 'a lone lot joins none');
+  assert.equal(yardWhyNot([7, 0, 0], lot, [], [], [], []), null, 'between the two, past the midline: no midline between one owner\'s houses');
+  assert.equal(yardWhyNot([7, 0, 0], LOT, [], [], [], mate.walls), homeYards.YARD_ON_OTHER, 'unjoined, the neighbour\'s side');
+  assert.equal(yardWhyNot([9, 0, 0], lot, [], [], [], []), YARD_IN_HOUSE, 'the other house is a house');
+  assert.equal(yardWhyNot([12, 0, 0], lot, [], [], [], []), YARD_OFF_LOT, 'B4: never on the other house\'s lot - its sale would leave the piece there');
+  // a stranger north: (7, 8) is nearer the stranger than this house, nearer the owner's second house than the stranger
+  const stranger = [[-3, 12, 3, 18]];
+  assert.equal(yardWhyNot([7, 0, 8], LOT, [], [], [], stranger), homeYards.YARD_ON_OTHER, 'unjoined, the stranger\'s side');
+  assert.equal(yardWhyNot([7, 0, 8], lot, [], [], [], stranger), null, 'joined, nearer the owner\'s second house');
+  assert.equal(yardWhyNot([0, 0, 8.5], lot, [], [], [], stranger), homeYards.YARD_ON_OTHER, 'the stranger\'s side still');
+  const segs = yardStandEdges(lot, [], stranger);
+  assert.ok(inside(segs, 7, 0) && inside(segs, 7, 8) && !inside(segs, 0, 8.5) && !inside(segs, 12, 0), 'the edge drawn as the law stands');
+  assert.ok(!inside(yardStandEdges(LOT, [], [...stranger, ...mate.walls]), 7, 0), 'unjoined, the midline drawn');
+  const wide = yardLot([0, 0, 0], [-45, 0, -3, 45, 6, 3], YARD_MARGIN);
+  assert.equal(yardWhyNot([DECOR_YARD_POS_MAX - 1, 0, 0], wide, [], [], [], []), null, 'on a wide lot');
+  assert.equal(yardWhyNot([DECOR_YARD_POS_MAX + 1, 0, 0], wide, [], [], [], []), YARD_OFF_LOT, 'never past the service\'s bound');
+  const lone = { ...LOT, alone: true };
+  assert.equal(yardJoinLots(lone, [mate]), lone, 'a lone lot joins none');
+});
+
+/** A desert house's ground, an L of 1.6 m cells (Hammerfell's houses stand 27 to 41 rects), and its lot. */
+function desertLot() {
+  const ground = [];
+  for (let i = 0; i < 8; i++) for (let j = 0; j < 5; j++) if (!(i > 4 && j > 2)) ground.push([-6.4 + i * 1.6, -4 + j * 1.6, -4.9 + i * 1.6, -2.5 + j * 1.6]);
+  return yardLot([0, 0, 0], [-6.4, 0, -4, 6.4, 6, 4], YARD_MARGIN, ground);
+}
+/** `n` neighbours' rects 1 to 4 m a side within 30 m that `keep` takes - the same street each run. */
+function street(n, keep, seed = 7) {
+  let s = seed;
+  const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+  const out = [];
+  while (out.length < n) {
+    const x = -30 + rnd() * 60, z = -30 + rnd() * 60, w = 1 + rnd() * 3, d = 1 + rnd() * 3;
+    if (keep(x, z, w, d)) out.push([x, z, x + w, z + d]);
+  }
+  return out;
+}
+/** A trace's work: how many times it reads a neighbour's rect (counted, as a clock on a shared runner is not). */
+function workOf(lot, roads, lines) {
+  let n = 0;
+  const counted = lines.map((r) => new Proxy(r, { get: (t, k) => { if (k === '0') n += 1; return t[k]; } }));
+  const segs = yardStandEdges(lot, roads, counted);
+  return { n, segs };
+}
+
+test('AUDIT FB1029f B1: a desert house\'s trace does bounded work - cut only where two walls face, and no more cuts than YARD_BORDER_CUTS_MAX (every pair took Sentinel\'s houses seconds); a crowded street still cuts the walls that face exactly (mutants: AUDITFB1029F-B1-every-pair, AUDITFB1029F-B1-cuts-uncapped)', () => {
+  const lot = desertLot();
+  const scattered = workOf(lot, [], street(180, (x, z, w, d) => !(x + w > -12 && x < 12 && z + d > -10 && z < 10)));
+  assert.ok(scattered.n < 3e6, `a scattered street: ${scattered.n} reads (the commit's trace: 37 million)`);
+  const facing = workOf(lot, [], street(180, (x, z, w) => x > -6 && x + w < 6 && z > 10.5));
+  assert.ok(facing.n < 1e6, `a row facing the house: ${facing.n} reads (uncapped: 2 million)`);
+  // 180 small neighbours past the lot's north corners, each farther from every point of it than the house: none faces it
+  const posts = [];
+  for (let k = 0; k < 90; k++) for (const sx of [1, -1]) { const x = sx * (16.1 + 0.025 * k), z = 15.2 + (k % 10) * 0.2; posts.push([Math.min(x, x + 0.05 * sx), z, Math.max(x, x + 0.05 * sx), z + 0.05]); }
+  const segs = yardStandEdges(LOT, [], [...EAST, ...posts]);
+  assert.ok(segs.some(([ax, az, bx, bz]) => ax === MID && bx === MID && Math.min(az, bz) <= -3 && Math.max(az, bz) >= 3), 'the midline, straight along the walls that face');
+});
+
+test('AUDIT FB1029f B5 and B6: every line that can win a point of the lot is read - a long house whose ground is its two ends, a neighbour 13 m past its edge nearer its middle; and the edge never holds more bands than the decal batch, every loop drawn (mutants: AUDITFB1029F-B5-near-short, AUDITFB1029F-B5-far-at-corners, AUDITFB1029F-B6-no-coarser-read)', () => {
+  const long = yardLot([0, 0, 0], [-30, 0, -1, 30, 6, 1], YARD_MARGIN, [[-30, -1, -29, 1], [29, -1, 30, 1]]);
+  const north = [[-2, 20, 2, 22]];
+  assert.equal(yardWhyNot([0, 0, 0], long, [], [], [], north), YARD_ON_OTHER, 'the law: its middle the neighbour\'s side');
+  assert.equal(inside(yardStandEdges(long, [], north), 0, 0), false, 'and the edge says so');
+  // a path's paving stones over the yard, each a hole: 116 bands at the fine read
+  const stones = [];
+  for (const z of [-7.5, -5.5, 4.5, 6.5]) for (let x = -9; x < 5; x += 2) stones.push([x, z, x + 1, z + 1]);
+  const segs = yardStandEdges(LOT, stones, EAST);
+  assert.ok(segs.length <= DECOR_LOT_MARKS, `${segs.length} bands`);
+  const ends = new Map();
+  for (const [ax, az] of segs) ends.set(`${ax},${az}`, (ends.get(`${ax},${az}`) ?? 0) + 1);
+  for (const [, , bx, bz] of segs) ends.set(`${bx},${bz}`, (ends.get(`${bx},${bz}`) ?? 0) - 1);
+  assert.ok([...ends.values()].every((v) => v === 0), 'every loop closed');
+  assert.ok(inside(segs, -8.5, -6.2) && !inside(segs, 9, 0), 'the yard, and the neighbour\'s side');
+});
+
+test('AUDIT FB1029f B10: a cut a few micrometres from another is the same cut - Wayrest\'s house 131846, where a midline\'s tie meets three road squares\' corner, drew a hairline band twice (mutant: AUDITFB1029F-B10-cuts-unsnapped)', () => {
+  const walls = [[-4.799992942810064, -4.799995231628486, 4.80000705718993, 4.800004768371537]];
+  const lot = yardLot([0, 0, 0], [-6.7999933242797965, 0, -5.199995231628463, 6.80000705718993, 6, 5.20000438690181], YARD_MARGIN, walls);
+  const roads = [[4.800000762939476, -1.6000015258789517, 11.200000762939453, 4.799998474121082], [11.200000762939453, -1.6000015258789517, 17.60000076293943, 4.799998474121082], [4.800000762939476, 4.799998474121082, 11.200000762939453, 11.19999847412106]];
+  const segs = yardStandEdges(lot, roads, [[11.199988555908192, 11.20000438690181, 27.19998855590819, 20.800004386901833]]);
+  assert.deepEqual(segs.filter(([ax, az, bx, bz]) => Math.hypot(bx - ax, bz - az) < 0.01), [], 'no hairline band');
 });
 
 /** One client over two box houses 12 m apart (A west, B east), `owned` the keys the player's account owns. */
@@ -126,7 +193,7 @@ function yardRig(svc, town, { who, charId, key, owned }) {
   return { yards, tool, frames, ghostAt };
 }
 
-test('YARD-JOINED the real decorator: the owner of two houses side by side places from the first house\'s yard on the ground between them and past the second house, never in it; a stranger\'s house there keeps its side of the line (mutants: YARDJOINED-host-unjoined, YARDJOINED-mate-a-line, YARDJOINED-stranger-a-mate)', async (t) => {
+test('YARD-JOINED the real decorator: the owner of two houses side by side places from the first house\'s yard on the ground between them, never in the second house nor on its lot; a stranger\'s house there keeps its side of the line (mutants: YARDJOINED-host-unjoined, YARDJOINED-mate-a-line, YARDJOINED-stranger-a-mate)', async (t) => {
   t.mock.method(Date, 'now', () => T0 * 1000);
   const town = townPixel({ houses: [houseAt(40, 51.2), houseAt(52, 51.2)], ground: () => 2 });
   const [A, B] = town.keys;
@@ -139,11 +206,11 @@ test('YARD-JOINED the real decorator: the owner of two houses side by side place
   assert.equal(both.yards.here()?.yard.bk, A);
   await both.ghostAt(7, 0);
   assert.equal(both.tool.why(), null, 'between the two houses, past the midline: both are hers');
-  await both.ghostAt(17, 0);
-  assert.equal(both.tool.why(), null, 'past the second house, on its lot');
   assert.equal(await both.tool.commit(), true, 'placed, and the service keeps it');
-  await both.ghostAt(12, 0);
+  await both.ghostAt(9, 0);
   assert.equal(both.tool.why(), YARD_IN_HOUSE, 'never in the second house');
+  await both.ghostAt(17, 0);
+  assert.equal(both.tool.why(), YARD_OFF_LOT, 'AUDIT FB1029f B4: never on the second house\'s lot from the first\'s yard');
   // B a stranger's, with a piece in its yard - a yard the town stands, never the owner's to join
   const tomas = await svc.registered('Tomas');
   const b = await svc.seatHome(tomas, { mapId: 7, buildingKey: B, region: 17, price: 5000 });
@@ -159,9 +226,10 @@ test('YARD-JOINED the real decorator: the owner of two houses side by side place
   assert.equal(one.tool.why(), YARD_ON_OTHER, 'a stranger\'s house beside it keeps its side');
 });
 
-test('YARD-BORDER the host by source: the edge is traced from the lot as joined, its road and its lines, once each time they move; the owner\'s own house beside it is no line (mutant: YARDBORDER-host-lineless)', () => {
+test('YARD-BORDER the host by source: the edge is traced from the lot as joined, its road and its lines, once each time they move; the owner\'s own house beside it is no line (mutants: YARDBORDER-host-lineless, AUDITFB1029F-B2-memo-unkept)', () => {
   const y = src('src/scenes/homeYards.js');
   assert.match(y, /quads: yardLotQuads\(cur\.lot, o, YARD_MARK_HIGH, cur\.roads, cur\.lines\)/);
   assert.match(y, /lot: lotQuadsHere,/);
+  assert.match(y, /if \(edgeMemo\.of !== cur \|\| edgeMemo\.o !== at\) edgeMemo = /, 'AUDIT FB1029f B2: kept while the yard is, never signed over every line each frame');
   assert.match(y, /if \(holds && !mate\) lines\.push\(g\);/);
 });

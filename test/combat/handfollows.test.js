@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { equipItem, swapHands, unequipSlot, EQUIP_SLOTS } from '../../src/systems/equip.js';
 import { createWeaponRig } from '../../src/combat/weapon/weaponRig.js';
-import { PlayerWeapon, applyWeaponPose } from '../../src/combat/playerWeapon.js';
+import { PlayerWeapon, applyWeaponPose, weaponPoseOf } from '../../src/combat/playerWeapon.js';
 import { fpArm } from '../../src/combat/fpArm.js';
 import { tallySwingSkills } from '../../src/scenes/hostCombat.js';
 import { SKILLS } from '../../src/systems/skills.js';
@@ -82,10 +82,16 @@ test('HAND-FOLLOWS H is still the player\'s: after the hand followed, H picks th
   });
   const sword = createWeapon(W.Longsword, 0, () => 0.5);
   const w = new PlayerWeapon({});
-  applyWeaponPose(w, { weaponDrawn: true, usingRightHand: true });
+  applyWeaponPose(w, { weaponDrawn: true, usingRightHand: true, handKept: true });   // PIN MOVED (AUDIT FB1029f D4): a pose saved under HAND-FOLLOWS says so
   w.updateHands(null, sword);
   assert.equal(w.usingRightHand, true, 'the restored hand, kept as the save had it');
   const other = createWeapon(W.Broadsword, 0, () => 0.5);
   w.updateHands(null, other);
   assert.equal(w.usingRightHand, false, 'and the next change of the hands follows again');
+  // AUDIT FB1029f D4: a pose from before HAND-FOLLOWS - the report's own save, its lone weapon in the left - follows once
+  const old = new PlayerWeapon({});
+  applyWeaponPose(old, { weaponDrawn: true, usingRightHand: true });
+  old.updateHands(null, sword);
+  assert.equal(old.usingRightHand, false, 'an old save\'s lone left-hand weapon is swung');
+  assert.deepEqual(weaponPoseOf(old), { weaponDrawn: true, usingRightHand: false, handKept: true }, 'and the next save says it was chosen so');
 });

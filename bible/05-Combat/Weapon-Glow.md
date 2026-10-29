@@ -186,7 +186,7 @@ left blow). A third-person picture is padded for the larger of the two outlines.
 
 ## Online
 
-The affixes that decide a glow never travel, so the look says it: a weapon in a hand carries `glow`, one of thirteen words (law 7's `brand2` and `edge2` since world278, law 8's `gilded2` since world286) -
+The affixes that decide a glow never travel, so the look says it: a weapon in a hand carries `glow`, one of thirteen words (law 7's `brand2` and `edge2` since world278, law 8's `gilded2` since world287) -
 `fire2`, `arcane2` (`weaponGlow.js` `glowWord`; `wire.js` `LOOK_GLOW_RE`, `lookGlowOk`, `validLookItem`) - written by
 `remotePlayers.js` `composeLook` on every weapon of a player's look in a hand (`LOOK_GLOW_SLOTS`, the equip table's
 RightHand and LeftHand) from the owner's card (law 4 holds: the owner's knowledge), whatever the owner's own switch

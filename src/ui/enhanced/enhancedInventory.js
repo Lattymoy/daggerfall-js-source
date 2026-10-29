@@ -1005,7 +1005,8 @@ function handIntent(item, over, source) {
   const panel = over?.closest?.('.wornrow');
   const to = panel ? HAND_OF[panel.dataset?.fam] : undefined;
   if (to == null) return null;
-  const label = to === EQUIP_SLOTS.RightHand ? 'Right hand' : 'Left hand';
+  const labelOf = (h) => (h === EQUIP_SLOTS.RightHand ? 'Right hand' : 'Left hand');
+  const label = labelOf(to);
   if (source === 'worn') {
     if (item.equipSlot !== EQUIP_SLOTS.RightHand && item.equipSlot !== EQUIP_SLOTS.LeftHand) return null;
     if (item.equipSlot === to) return { kind: 'none', label: '' };
@@ -1013,7 +1014,11 @@ function handIntent(item, over, source) {
   }
   if (item.group !== 'Weapons' && !(item.group === 'Armor' && getEquipSlot(deps.entity, item) === EQUIP_SLOTS.LeftHand)) return null;
   const act = localPrimaryAct(item, deps.entity);
-  return act?.kind === 'wear' && mayHold(item, to) ? { kind: 'hand', label, to } : { kind: 'nope', label: null };
+  if (act?.kind !== 'wear') return { kind: 'nope', label: null };
+  // AUDIT FB1029f D5: a piece the panel's hand cannot hold goes to the hand that holds it - a two-hander dropped on the
+  // left is worn in both, a shield dropped on the right in the left - as a drop before HAND-DROP wore it
+  const at = mayHold(item, to) ? to : [EQUIP_SLOTS.RightHand, EQUIP_SLOTS.LeftHand].find((h) => mayHold(item, h));
+  return at == null ? { kind: 'nope', label: null } : { kind: 'hand', label: labelOf(at), to: at };
 }
 /** HAND-DRAG: the release - a held piece moved to the other hand, or a pack piece worn in the hand it was dropped on:
  *  HAND-DROP, one equip into that hand, so only that hand's piece comes off - not the table's first open hand. */

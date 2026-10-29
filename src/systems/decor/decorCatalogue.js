@@ -105,9 +105,18 @@ const LIGHT_NAMES = Object.freeze({
  *  crops and flowers). Where a piece is none of these, the place it was found says its kind, as before. */
 const FLAT_WHAT = Object.freeze({
   53: 'outdoor', 96: 'remains', 97: 'statues', 98: 'statues', 100: 'dungeon', 190: 'dungeon', 200: 'decor', 201: 'animals',
-  202: 'statues', 203: 'statues', 206: 'remains', 208: 'decor', 212: 'outdoor', 213: 'nature', 214: 'tools', 218: 'tools',
+  202: 'statues', 203: 'statues', 206: 'remains', 208: 'decor', 212: 'outdoor', 213: 'nature', 214: 'tools', 218: 'boxes',
   300: 'dungeon', 301: 'nature',
 });
+/** AUDIT FB1029f C4: the two mixed archives, record by record - TEXTURE.100's skulls, bones and bodies are remains (its
+ *  chains, cage, stakes and vines the dungeon's), TEXTURE.190's gargoyle and columns statues (its fires give no light). */
+const FLAT_RECORD_WHAT = Object.freeze({
+  100: Object.freeze({ 9: 'remains', 10: 'remains', 11: 'remains', 12: 'remains', 17: 'remains', 18: 'remains', 23: 'remains', 24: 'remains', 25: 'remains', 26: 'remains', 27: 'remains', 28: 'remains', 29: 'remains' }),
+  190: Object.freeze({ 10: 'statues', 11: 'statues', 12: 'statues' }),
+});
+/** AUDIT FB1029f C2: a re-filed archive's own word for one piece, as Daggerfall describes it ("Plants", "Crops", "Pots
+ *  and Pans") - a potted plant numbered among the climate's plants made two "Plant 1"s in a yard. */
+const FLAT_BASE = Object.freeze({ 213: 'Houseplant', 301: 'Crop', 218: 'Pot' });
 /** DECOR-KINDS: the free-standing pieces (DECOR_FREE_STANDING, each named there) that are statues, columns or pedestals,
  *  arms, or hangings. The rest of them - boulders, beams, coffins, the cage, the pavilion - stay a dungeon's. */
 const MODEL_WHAT = Object.freeze({
@@ -131,7 +140,7 @@ export function decorWhatKind(what) {
     return what.model >= EXTERIOR_FIRST && what.model <= EXTERIOR_LAST ? 'outdoor' : null;
   }
   if (!Array.isArray(what?.flat)) return null;
-  return FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_WHAT[what.flat[0]] ?? null;
+  return FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_RECORD_WHAT[what.flat[0]]?.[what.flat[1]] ?? FLAT_WHAT[what.flat[0]] ?? null;
 }
 
 /** A model's kind. */
@@ -331,7 +340,7 @@ export function decorCatalogue(collected) {
     // the game files it as nothing more (a bed, a chest, a shelf, a light or a treasure stays one)
     const plain = kind === 'furniture' || kind === 'decor';
     // DECOR-KINDS: then what it is - a dungeon's table is furniture, a street's sunflower a plant (decorWhatKind)
-    const what = plain && !MOD_FROM.has(c.from) ? decorWhatKind(c.model != null ? { model: c.as ?? c.model } : { flat: [c.as ?? c.flat[0], c.flat[1]] }) : null;
+    const what = plain && c.from !== 'mod' ? decorWhatKind(c.model != null ? { model: c.as ?? c.model } : { flat: [c.as ?? c.flat[0], c.flat[1]] }) : null;
     if (what) kind = what;
     // DECOR-DUNGEON: what Daggerfall stands in a dungeon and in no house, and is nothing named, is a dungeon's piece
     else if (c.from === 'dungeon' && plain) kind = 'dungeon';
@@ -343,7 +352,7 @@ export function decorCatalogue(collected) {
     const light = c.flat ? decorFlatLight(c.flat) : null;
     const own = c.base ?? (c.model != null   // DECOR-MODS: a mod's piece's own name (decorMods.js decorModNaming)
       ? (kind === 'storage' ? HOUSE_CONTAINER_NAMES[c.model] : kind === 'bed' ? 'Bed' : IIL_FIREPLACE_MODELS.has(c.model) ? 'Fireplace' : null)   // AUDIT DECOR-USE D4: Daggerfall's two fireplaces were "Furniture 26" and "27"
-      : (kind === 'light' ? LIGHT_NAMES[c.flat[1]] : kind === 'nature' && isTreeRecord(c.nature, c.flat[1]) ? 'Tree' : null));   // DECOR-OUTDOOR: a tree of its set (TREE_RECORDS), else a plant
+      : (kind === 'light' ? LIGHT_NAMES[c.flat[1]] : kind === 'nature' && isTreeRecord(c.nature, c.flat[1]) ? 'Tree' : FLAT_BASE[c.as ?? c.flat[0]] ?? null));   // AUDIT FB1029f C2   // DECOR-OUTDOOR: a tree of its set (TREE_RECORDS), else a plant
     // DECOR-OUTDOOR: a street's piece the game files as nothing more may stand in a room too (DECOR-KINDS: whatever it is);
     // the climate's nature is a yard's by its own set (decorRoomEntries)
     const inRoom = !OUTSIDE.has(c.from ?? 'room') || plain;

@@ -155,20 +155,22 @@
   {
     "name": "DECORROOMY-ground-unsent",
     "file": "src/systems/decor/homeDecorCap.js",
-    "old": "  if (data?.measured !== false || !(ground > 0) || typeof homeDecor?.use !== 'function') return;",
+    "old": "  if (data?.measured !== false || !(ground > 0) || typeof homeDecor?.use !== 'function' || refused.has(key)) return;",
     "new": "  return;",
     "tests": [
       "test/systems/decor/decorroomy.test.js"
-    ]
+    ],
+    "note": "AUDIT FB1029f (PIN MOVED): re-aimed by content."
   },
   {
     "name": "DECORROOMY-guest-sends",
     "file": "src/systems/decor/homeDecorCap.js",
-    "old": "  if (data?.measured !== false || !(ground > 0) || typeof homeDecor?.use !== 'function') return;",
-    "new": "  if (data?.measured !== false || typeof homeDecor?.use !== 'function') return;",
+    "old": "  if (data?.measured !== false || !(ground > 0) || typeof homeDecor?.use !== 'function' || refused.has(key)) return;",
+    "new": "  if (data?.measured !== false || typeof homeDecor?.use !== 'function' || refused.has(key)) return;",
     "tests": [
       "test/systems/decor/decorroomy.test.js"
-    ]
+    ],
+    "note": "AUDIT FB1029f (PIN MOVED): re-aimed by content."
   },
   {
     "name": "DECORROOMY-answer-unread",
@@ -259,5 +261,16 @@
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]
+  },
+  {
+    "name": "DECORROOMY-ground-race-guard",
+    "file": "server-account/src/decorAccess.js",
+    "old": "WHERE map_id = ? AND building_key = ? AND ground IS NULL').bind(kept, mapId, buildingKey).run();",
+    "new": "WHERE map_id = ? AND building_key = ?').bind(kept, mapId, buildingKey).run();",
+    "tests": [
+      "test/server/decorroomy_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT FB1029f A4: the race guard behind the early return - two owners' clients naming the ground at once - which a single-threaded test cannot reach; kept so a ground is only ever named once in the write itself."
   }
 ]

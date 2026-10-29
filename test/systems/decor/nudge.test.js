@@ -5,7 +5,7 @@
 // wall's clearance, so the owner may sink it into a wall as far as they choose. A hung piece slides along its surface.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createDecorPlacer, decorNudgeStep, DECOR_NUDGE_STEP, DECOR_NUDGE_FINE, DECOR_NUDGE_MAX, decorWallOffset } from '../../../src/systems/decor/decorPlacer.js';
+import { createDecorPlacer, decorNudgeStep, DECOR_NUDGE_STEP, DECOR_NUDGE_FINE, DECOR_NUDGE_MAX, DECOR_GRID, decorWallOffset } from '../../../src/systems/decor/decorPlacer.js';
 import { DECOR_FREE_KEYS } from '../../../src/scenes/decor/decorTool.js';
 import { DFICON_ROWS } from '../../../src/ui/menu/menuGlyphs.js';
 import { createDecorBar, decorBarKeys } from '../../../src/ui/decorPanel.js';
@@ -70,4 +70,20 @@ test('NUDGE the decorator: Numpad 4, 6, 8 and 2 push the piece in hand a step th
     assert.ok(chip && DFICON_ROWS[chip.dataset.dficon]?.length === 12, `${label}: pictured`);
   }
   assert.ok(decorBarKeys(false).some(([k, v]) => k === 'Nudge' && /Numpad 4, 6, 8 and 2/.test(v)));
+});
+
+test('AUDIT FB1029f C6: Ctrl is a fine step too (Windows lets Shift go for a numpad key under NumLock), and on the grid a step is the grid\'s, so a gridded piece stays on it (mutants: AUDITFB1029F-C6-ctrl-unread, AUDITFB1029F-C6-grid-unread)', async () => {
+  const rig = toolRig();
+  await placeFrom(rig, 'm41000');
+  const at = () => rig.tool.ghost().pos;
+  const start = [...at()];
+  rig.win.fire('keydown', { code: 'Numpad6', ctrlKey: true });
+  rig.frame();
+  assert.ok(near(at()[0], start[0] + DECOR_NUDGE_FINE), `Ctrl: fine (${at()})`);
+  rig.win.fire('keydown', { code: 'Slash' });   // the grid
+  rig.frame();
+  const snapped = [...at()];
+  rig.win.fire('keydown', { code: 'Numpad6' });
+  rig.frame();
+  assert.ok(near(at()[0], snapped[0] + DECOR_GRID), `gridded: a grid step (${snapped} -> ${at()})`);
 });

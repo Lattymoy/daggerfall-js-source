@@ -4430,8 +4430,8 @@
   "by": "claude-in-session"
  },
  "decor.bar.keys.nudge": {
-  "en": "428abf9c5567",
-  "tr": "e71d084f25b9",
+  "en": "7846d6e7802c",
+  "tr": "f2ebb81d9559",
   "by": "claude-in-session"
  },
  "decor.bar.nudgeAway": {
@@ -4457,6 +4457,26 @@
  "decor.look.rest": {
   "en": "bffd4f8810fb",
   "tr": "0bc27801c849",
+  "by": "claude-in-session"
+ },
+ "decor.look.who.friends": {
+  "en": "c11d5e1d35fb",
+  "tr": "a2f06a5c73b3",
+  "by": "claude-in-session"
+ },
+ "decor.look.who.guild": {
+  "en": "54241a3d0070",
+  "tr": "727d89e2d9a2",
+  "by": "claude-in-session"
+ },
+ "decor.look.who.party": {
+  "en": "60b18fc8a85f",
+  "tr": "8d91280aeecd",
+  "by": "claude-in-session"
+ },
+ "decor.look.who.private": {
+  "en": "94563ec383e2",
+  "tr": "55e9a3f996fc",
   "by": "claude-in-session"
  },
  "decor.station.cooking": {

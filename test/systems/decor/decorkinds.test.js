@@ -27,7 +27,9 @@ const street = (misc, miscFlats) => {
 test('DECOR-KINDS the law: a picture by its archive, a model by its family or its name - a classic filing first, and null where nothing says (mutants: DECORKINDS-flat-table, DECORKINDS-model-table, DECORKINDS-family-lost, DECORKINDS-exterior-lost)', () => {
   const flat = (a) => decorWhatKind({ flat: [a, 0] });
   assert.deepEqual([213, 301, 97, 98, 202, 203, 201, 96, 206, 214, 218, 200, 208, 53, 212, 100, 300].map(flat),
-    ['nature', 'nature', 'statues', 'statues', 'statues', 'statues', 'animals', 'remains', 'remains', 'tools', 'tools', 'decor', 'decor', 'outdoor', 'outdoor', 'dungeon', 'dungeon']);
+    ['nature', 'nature', 'statues', 'statues', 'statues', 'statues', 'animals', 'remains', 'remains', 'tools', 'boxes', 'decor', 'decor', 'outdoor', 'outdoor', 'dungeon', 'dungeon']);   // AUDIT FB1029f C4: TEXTURE.218, "Pots and Pans", with the boxes
+  // AUDIT FB1029f C4: the two mixed archives, record by record
+  assert.deepEqual([[100, 26], [100, 10], [100, 6], [100, 20], [190, 10], [190, 3]].map(([a, r]) => decorWhatKind({ flat: [a, r] })), ['remains', 'remains', 'dungeon', 'dungeon', 'statues', 'dungeon']);
   assert.deepEqual([210, 205, 254].map(flat), ['light', 'boxes', null], 'the game\'s own filing first; an archive nobody looked at says nothing');
   const model = (id) => decorWhatKind({ model: id });
   assert.deepEqual([41120, 41500, 42532, 42571, 43307, 62324, 74009, 74224, 99800, 74800, 74072, 60512, 51115].map(model),
@@ -52,7 +54,7 @@ test('DECOR-KINDS the catalogue: a dungeon\'s table is furniture and its statue 
   assert.deepEqual(kinds(['m42532', 'm62324', 'f206.9', 'f213.4', 'f301.3', 'f201.0', 'm43307']), ['furniture', 'statues', 'remains', 'nature', 'nature', 'animals', 'outdoor']);
   assert.deepEqual(kinds(['m74072', 'f254.2', 'm60512', 'f254.1', 'm41120', 'f210.16']), ['dungeon', 'dungeon', 'outdoor', 'decor', 'furniture', 'light'], 'nothing says: its place\'s kind');
   assert.equal(by.m45120.kind, 'mods', 'a mod\'s piece is its furnishing');
-  assert.equal(by['f213.4'].name, 'Plant', 'a potted plant is no tree');
+  assert.equal(by['f213.4'].name, 'Houseplant', 'a potted plant is no tree');   // PIN MOVED (AUDIT FB1029f C2): Daggerfall's own word, apart from the climate's plants
   const house = decorRoomEntries(cat, { kind: 'house' }, true).map((e) => e.key);
   for (const k of ['f301.3', 'f201.0', 'm43307', 'm60512', 'm42532', 'f213.4']) assert.ok(house.includes(k), `${k}: a room's to place`);
   for (const k of ['f210.16', 'f500.1']) assert.ok(!house.includes(k), `${k}: a yard's alone`);
@@ -76,4 +78,20 @@ test('DECOR-KINDS measured (ARENA2): over every block, no model of the furniture
   assert.equal(cat.filter((e) => e.kind === 'furniture' && e.model >= 42500 && e.model <= 42571).length, 48);
   assert.deepEqual(cat.filter((e) => e.flat && (e.flat[0] === 213 || e.flat[0] === 301) && e.kind !== 'nature').map((e) => e.key), []);
   for (const k of ['statues', 'tools', 'animals', 'remains']) assert.ok(cat.filter((e) => e.kind === k).length >= 10, k);
+});
+
+test('AUDIT FB1029f C2, C3 measured (ARENA2): no two pieces any room or yard is offered share a name - a potted plant and a crop numbered apart from the climate\'s plants - and a town mod\'s street piece is filed by what it stands in as (mutants: AUDITFB1029F-C2-one-plant-word, AUDITFB1029F-C3-mod-street-unfiled)', { skip: !HAS_ARENA2 && 'ARENA2_PATH not set' }, async () => {
+  const { addDecorMods } = await import('../../../src/systems/decor/decorMods.js');
+  const { DECOR_NATURE_BASES } = await import('../../../src/systems/decor/decorCatalogue.js');
+  const blocks = loadBlocks();
+  const into = new Map();
+  for (let i = 0; i < blocks.count; i++) { const b = blocks.readClassicBlock(i); if (b) collectDecor([b], into); }
+  const cat = decorCatalogue(addDecorMods(addDecorNature(into)));
+  const mods = new Set(cat.filter((e) => e.from === 'mod' || e.from === 'modstreet').map((e) => e.key));
+  for (const room of [{ kind: 'house' }, { kind: 'home', hall: true }, ...DECOR_NATURE_BASES.map((n) => ({ kind: 'home', yard: true, natureBase: n }))]) {
+    const names = decorRoomEntries(cat, room, true, mods).map((e) => e.name);
+    assert.deepEqual(names.filter((n, i) => names.indexOf(n) !== i), [], JSON.stringify(room));
+  }
+  const street = cat.filter((e) => e.from === 'modstreet');
+  assert.ok(street.some((e) => e.kind === 'animals') && street.some((e) => e.kind === 'nature'), 'a mod street\'s animals and crops are filed as such');
 });

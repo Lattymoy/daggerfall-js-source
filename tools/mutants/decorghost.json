@@ -4,48 +4,63 @@
     "file": "src/scenes/decor/decorRoom.js",
     "old": "      if (e.quiet) { n += drawHeld(r, e, texRemap); continue; }   // DECOR-GHOST",
     "new": "      if (e.quiet) continue;   // DECOR-GHOST",
-    "tests": ["test/scenes/decorghost.test.js"]
+    "tests": [
+      "test/scenes/decorghost.test.js"
+    ]
   },
   {
     "name": "DECORGHOST-dither-left-on",
     "file": "src/scenes/decor/decorRoom.js",
-    "old": "    r.drawMesh?.(e.gpu, e.matrix, texRemap);\n    r.setDissolve(1);\n",
-    "new": "    r.drawMesh?.(e.gpu, e.matrix, texRemap);\n",
-    "tests": ["test/scenes/decorghost.test.js"]
+    "old": "    r.drawMesh?.(e.gpu, e.matrix, texRemap, { noShadow: true });   // AUDIT FB1029f C5: a ghost casts nothing\n    r.setDissolve(1);\n",
+    "new": "    r.drawMesh?.(e.gpu, e.matrix, texRemap, { noShadow: true });   // AUDIT FB1029f C5: a ghost casts nothing\n",
+    "tests": [
+      "test/scenes/decorghost.test.js"
+    ],
+    "note": "AUDIT FB1029f (PIN MOVED): re-aimed by content."
   },
   {
     "name": "DECORGHOST-held-aimed",
     "file": "src/scenes/decor/decorRoom.js",
     "old": "    e.quiet = !!on;\n    if (e.batch) setBatchDissolve",
     "new": "    if (e.batch) setBatchDissolve",
-    "tests": ["test/scenes/decorghost.test.js"]
+    "tests": [
+      "test/scenes/decorghost.test.js"
+    ]
   },
   {
     "name": "DECORGHOST-flat-hidden",
     "file": "src/scenes/decor/decorRoom.js",
     "old": "      if (!e.batch || e.merged || (e.quiet && !e.batch.dissolve) || !seen(e)) continue;",
     "new": "      if (!e.batch || e.merged || e.quiet || !seen(e)) continue;",
-    "tests": ["test/scenes/decorghost.test.js"]
+    "tests": [
+      "test/scenes/decorghost.test.js"
+    ]
   },
   {
     "name": "DECORGHOST-flat-undissolved",
     "file": "src/scenes/decor/decorRoom.js",
     "old": "    if (e.batch) setBatchDissolve(e.batch, on ? 1 - DECOR_HELD_SHOWN : 0, DECOR_HELD_EDGE);\n",
     "new": "",
-    "tests": ["test/scenes/decorghost.test.js"]
+    "tests": [
+      "test/scenes/decorghost.test.js"
+    ]
   },
   {
     "name": "DECORGHOST-merge-kept",
     "file": "src/scenes/decor/decorRoom.js",
     "old": "    if (e.merged) (merge?.letGo ?? unmerge)();   // a merge would draw it whole: it stands on its own while held\n",
     "new": "",
-    "tests": ["test/scenes/decorghost.test.js"]
+    "tests": [
+      "test/scenes/decorghost.test.js"
+    ]
   },
   {
     "name": "DECORGHOST-held-merged",
     "file": "src/scenes/decor/decorRoom.js",
     "old": "  return !!(e.gpu && !e.door && !e.quiet && cpu?.positions",
     "new": "  return !!(e.gpu && !e.door && cpu?.positions",
-    "tests": ["test/scenes/decorghost.test.js"]
+    "tests": [
+      "test/scenes/decorghost.test.js"
+    ]
   }
 ]

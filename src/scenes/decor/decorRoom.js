@@ -608,6 +608,7 @@ export function createDecorRoom({
     if (!e) return;
     e.quiet = !!on;
     if (e.batch) setBatchDissolve(e.batch, on ? 1 - DECOR_HELD_SHOWN : 0, DECOR_HELD_EDGE);
+    if (on && e.batch && decorIsFigure(e.piece)) e.batch.castOnly = false;   // AUDIT FB1029f C5: a figure the people lane let go is drawn as its ghost
     if (e.merged) (merge?.letGo ?? unmerge)();   // a merge would draw it whole: it stands on its own while held
     changed();
   }
@@ -615,7 +616,7 @@ export function createDecorRoom({
   function drawHeld(r, e, texRemap) {
     if (!r?.setDissolve) return 0;
     r.setDissolve(DECOR_HELD_SHOWN);
-    r.drawMesh?.(e.gpu, e.matrix, texRemap);
+    r.drawMesh?.(e.gpu, e.matrix, texRemap, { noShadow: true });   // AUDIT FB1029f C5: a ghost casts nothing
     r.setDissolve(1);
     return 1;
   }
