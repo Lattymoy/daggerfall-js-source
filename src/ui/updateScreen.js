@@ -26,7 +26,7 @@ export const updateReloadingText = () => t('net.update.reloading', 'Reloading th
 export const updateButtonText = () => t('net.update.button', 'Reload Now');
 
 /** m:ss for a count of ms, rounded up so the clock never reads 0:00 while time is left. */
-export const clockOf = (ms) => {
+export const countdownOf = (ms) => {
   const s = Math.max(0, Math.ceil(ms / 1000));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
@@ -89,7 +89,7 @@ export function startForcedUpdate(opts = {}) {
     const saving = el('div', 'color:#d9a94e;', `● ${updateSavingText()}`);
     const reloading = el('div', 'color:#b3a58f;', `○ ${updateReloadingText()}`);
     steps.append(saving, reloading);
-    const count = el('div', 'font:22px monospace;color:#d9a94e;', clockOf(UPDATE_SCREEN_MS));
+    const count = el('div', 'font:22px monospace;color:#d9a94e;', countdownOf(UPDATE_SCREEN_MS));
     const button = el('button', BUTTON_CSS, updateButtonText());
     button.type = 'button';
     button.addEventListener('click', go);
@@ -113,7 +113,7 @@ export function startForcedUpdate(opts = {}) {
     if (phase === 'go') { go(); return; }
     if (phase === 'screen') {
       if (run.screenAt == null) showScreen(at);
-      if (run.count) run.count.textContent = clockOf(UPDATE_SCREEN_MS - (at - /** @type {number} */ (run.screenAt)));
+      if (run.count) run.count.textContent = countdownOf(UPDATE_SCREEN_MS - (at - /** @type {number} */ (run.screenAt)));
       return;
     }
     if (phase === 'hold' && run.holdSince == null) run.holdSince = at;
@@ -123,7 +123,7 @@ export function startForcedUpdate(opts = {}) {
       run.banner.style.cssText = BANNER_CSS + `z-index:${UPDATE_Z};`;
       doc.body?.append?.(run.banner);
     }
-    run.banner.textContent = phase === 'hold' ? updateHoldText() : updateBannerText(clockOf(UPDATE_WARN_MS - (at - run.startedAt)));
+    run.banner.textContent = phase === 'hold' ? updateHoldText() : updateBannerText(countdownOf(UPDATE_WARN_MS - (at - run.startedAt)));
   };
   tick();
   run.timer = win.setInterval?.(tick, UPDATE_TICK_MS);

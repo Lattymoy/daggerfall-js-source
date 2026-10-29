@@ -5,7 +5,7 @@ import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  updatePhase, clockOf, startForcedUpdate, resetForcedUpdate, forcedUpdateRunning,
+  updatePhase, countdownOf, startForcedUpdate, resetForcedUpdate, forcedUpdateRunning,
   UPDATE_WARN_MS, UPDATE_SCREEN_MS, UPDATE_HOLD_MAX_MS, UPDATE_SCREEN_ID, UPDATE_BANNER_ID,
 } from '../../src/ui/updateScreen.js';
 import { BUILD_UPDATE_TEXT, BUILD_POLL_MS } from '../../src/net/updateNotice.js';
@@ -52,11 +52,11 @@ test('UPDATE-FORCE: the phase law - a minute of warning, a hold while busy that 
 });
 
 test('UPDATE-FORCE: the clock reads m:ss and never 0:00 while time is left', () => {
-  assert.equal(clockOf(60_000), '1:00');
-  assert.equal(clockOf(58_200), '0:59');
-  assert.equal(clockOf(1), '0:01');
-  assert.equal(clockOf(0), '0:00');
-  assert.equal(clockOf(-50), '0:00');
+  assert.equal(countdownOf(60_000), '1:00');
+  assert.equal(countdownOf(58_200), '0:59');
+  assert.equal(countdownOf(1), '0:01');
+  assert.equal(countdownOf(0), '0:00');
+  assert.equal(countdownOf(-50), '0:00');
 });
 
 test('UPDATE-FORCE: a run warns, holds, shows the screen, saves, stands the guard down and reloads - once', () => {
