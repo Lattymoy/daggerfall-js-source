@@ -364,6 +364,52 @@ export function* yardSitesSteps(g) {
   return out;
 }
 
+/** FB1028 YARDS: a yard's place still good on a ground - its own cells on no road, no way and nothing shut, and its pad
+ *  round it (YARD_PAD_M) clear of every closed cell: the wall's, a house's, the ground's edge. @param {any} g @param {any} s */
+export function siteFits(g, s, gained = null) {
+  const pad = Math.ceil(YARD_PAD_M / NAV_CELL - 1e-9), W = g.width;
+  for (let y = s.gy - pad; y < s.gy + s.nz + pad; y++) for (let x = s.gx - pad; x < s.gx + s.nx + pad; x++) {
+    const own = x >= s.gx && y >= s.gy && x < s.gx + s.nx && y < s.gy + s.nz;
+    // AUDIT FB1028 B5: a cell only the wall's growth since #1184 closed (`gained`) breaks its own ground, not its pad
+    if (x < 0 || y < 0 || x >= W || y >= g.height || (g.blocked[y * W + x] && (own || !gained?.[y * W + x]))) return false;
+    if (own && (g.road[y * W + x] || g.shut?.[y * W + x])) return false;
+  }
+  return true;
+}
+
+/**
+ * FB1028 YARDS (the owner: a yard keeps its #1184 place unless that place is broken): THE YARDS KEPT, AND THE BROKEN ONES
+ * PLACED AGAIN. `sites` were placed on #1184's ground; `g` is the ground as it stands now (the new wall and roads). A yard
+ * whose place no longer fits it (siteFits) is placed again by its kind's law (lawSiteSteps) on `g`, every kept yard's and
+ * `ports`' ground closed first - so none overlaps another. A port's place is kept as it is. @param {any} g
+ * @param {any[]} sites @param {any[]} ports @returns {Generator<void, any[], void>}
+ */
+export function* keptSitesSteps(g, sites, ports = [], gained = null) {
+  const broken = sites.filter((s) => YARD_FOOT[s.kind] && !siteFits(g, s, gained));
+  if (!broken.length) return sites;
+  for (const s of [...sites, ...ports]) if (!broken.includes(s)) closeSite(g, s);
+  const out = [];
+  for (const s of sites) {
+    if (!broken.includes(s)) { out.push(s); continue; }
+    const t = yield* lawSiteSteps(g, s.kind);
+    if (t) { out.push(t); closeSite(g, t); }
+  }
+  return out;
+}
+
+/** FB1028 YARDS: keptSitesSteps on the town's ground as it stands now (`now` its shut, townGroundSteps' ground).
+ *  @param {any} yl @param {any} measures @param {any} now @param {any} ways @param {any[]} sites @param {any[]} ports */
+export function* keptTownSitesSteps(yl, measures, now, ways, sites, ports) {
+  const g = yield* townGroundSteps(yl, measures?.now ? { ...measures.now, keep: measures.keep } : measures, now, ways);   // FB1028 YARDS Y1: the gates' things as they stand
+  if (!g) return sites;
+  let gained = now?.gained?.() ?? null;
+  // FB1028 YARDS Y1: and the cells only the gates' things closed since #1184 (stood clear of the grown towers) - as B5's
+  // growth, a kept yard's pad may touch them, never its own ground
+  const was = measures?.now ? yield* townGroundSteps(yl, measures, now, ways) : null;
+  if (was) gained = g.blocked.map((v, i) => ((v && !was.blocked[i]) || gained?.[i] ? 1 : 0));
+  return yield* keptSitesSteps(g, sites, ports, gained);
+}
+
 /** CARP-YARD: THE PROFESSIONS' YARDS on a ground, in CRAFT_YARD_ORDER, each on what the last left - placed by the host
  *  AFTER the two yards and a port town's places (scenes/world.js townPlacesFor), so none of theirs moves. Pure (it closes
  *  `g` as it goes). */
@@ -526,10 +572,8 @@ export const yardMeasuresOf = (yl, measure = {}) => stepsDone(yardMeasuresSteps(
  *  @param {{boxOf?: (id: number, at: ArrayLike<number>) => (number[]|null), fieldOf?: (id: number) => any, millBox?: (at: ArrayLike<number>) => (number[]|null),
  *   flatsOf?: (block: any) => any[], closedBlock?: (block: any) => boolean}} [measure] */
 export function* yardMeasuresSteps(yl, { boxOf = () => null, fieldOf = () => null, millBox = () => null, flatsOf = () => [], closedBlock = () => false } = {}) {
-  const buildings = [], props = [], flats = [], closedBlocks = [];
-  for (const b of yl?.blocks ?? []) {
-    yield;
-    const origin = trs(b.originX, 0, b.originZ, 0, 0, 0);
+  const one = (b) => {
+    const buildings = [], props = [], flats = [], closedBlocks = [], origin = trs(b.originX, 0, b.originZ, 0, 0, 0);
     if (closedBlock(b)) closedBlocks.push([b.x, b.y]);
     for (const m of b.layout?.models ?? []) {
       const at = multiply(origin, m.matrix);
@@ -540,8 +584,17 @@ export function* yardMeasuresSteps(yl, { boxOf = () => null, fieldOf = () => nul
     }
     for (const w of b.layout?.windmills ?? []) { const box = millBox(multiply(origin, w.matrix)); if (box) buildings.push(box); }
     for (const fl of flatsOf(b) ?? []) flats.push([b.originX + fl.x, b.originZ + fl.z]);
-  }
-  return { buildings, props, flats, closedBlocks };
+    return { buildings, props, flats, closedBlocks };
+  };
+  const all = (list) => ({ buildings: list.flatMap((m) => m.buildings), props: list.flatMap((m) => m.props), flats: list.flatMap((m) => m.flats), closedBlocks: list.flatMap((m) => m.closedBlocks) });
+  const was = [];
+  for (const b of yl?.blocks ?? []) { yield; was.push(one(b)); }
+  if (!yl?.now) return all(was);
+  // FB1028 YARDS Y1: a layout with its carrier as #1184 laid it (world/townWalls.js townWallYardLayout) - and the town's
+  // as it stands, `now`, for keptTownSitesSteps; a block the two share measured once
+  const now = [];
+  for (const [i, b] of (yl.now.blocks ?? []).entries()) { yield; now.push(b === yl.blocks[i] ? was[i] : one(b)); }
+  return { ...all(was), now: all(now) };
 }
 /** AUDIT MERCHANT-YARDS G1: the ground a field of flats sows over, [x0, z0, x1, z1] - round the misc model's own point
  *  (`at`, its turn never read), half its range each way (flatFields.js sowField's `trunc(range / 2)`) and its noise.

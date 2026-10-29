@@ -84,7 +84,8 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and SHOP's TWO (`enhanced/enhancedShop.js`: the pause face's gem and the shop's window - the disclaimer, a tab a category, a panel a ware; `titleFlame.js`: the Genesis title's fire, one stepped CSS background - `06-Systems/Shop.md`);
 - and ARMORY's ONE (`armoryText.js`: the Aura Armory's slots, pieces and looks in the player's language - `04-Characters/Aura-Armory.md`);
 - and PROFILE-SLOTS' THREE (`characterSlots.js`: the profile's Character section - the eight slots round the character's stage, a picker each, a choice tried on and worn; `profileBody.js`: the body that stage draws, Morrowind's or the sprite the world draws; `namePlate.js`: the world's plate over its head, still - `04-Characters/Aura-Armory.md` section 10);
-454 modules
+- and VULKAN-FLIP's GUARD (`vulkanBackdrop.js`: the desktop app on Vulkan drops every window's backdrop blur, which its compositor drew upside down - `01-Overview/Desktop-App.md` VULKAN-FLIP);
+456 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

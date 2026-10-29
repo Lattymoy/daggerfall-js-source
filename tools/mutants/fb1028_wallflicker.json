@@ -1,0 +1,221 @@
+[
+  {
+    "name": "FB1028-no-cut",
+    "file": "src/world/townWalls.js",
+    "old": "    parts.push(tower ? part : clearOfTowers(mitreEnds(part, p, towers), bodies));",
+    "new": "    parts.push(tower ? part : mitreEnds(part, p, towers));",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ],
+    "note": "Re-aimed by content at the merge of WALL-FLICKER and the Bay's walls (FB1028): townWallModel cuts each length on its towers' middle lines (mitreEnds), then clear of their bodies (clearOfTowers)."
+  },
+  {
+    "name": "FB1028-towers-cut",
+    "file": "src/world/townWalls.js",
+    "old": "    parts.push(tower ? part : clearOfTowers(mitreEnds(part, p, towers), bodies));",
+    "new": "    parts.push(clearOfTowers(tower ? part : mitreEnds(part, p, towers), bodies));",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ],
+    "note": "Re-aimed by content at the merge of WALL-FLICKER and the Bay's walls (FB1028): townWallModel cuts each length on its towers' middle lines (mitreEnds), then clear of their bodies (clearOfTowers)."
+  },
+  {
+    "name": "FB1028-measure-unread",
+    "file": "src/world/townWalls.js",
+    "old": "bodies = corner && bendTower(corner) !== corner ? towers : [];",
+    "new": "bodies = towers;",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ],
+    "note": "Re-aimed by content at the merge of WALL-FLICKER and the Bay's walls (FB1028): townWallModel cuts each length on its towers' middle lines (mitreEnds), then clear of their bodies (clearOfTowers)."
+  },
+  {
+    "name": "FB1028-clear-none",
+    "file": "src/world/townWalls.js",
+    "old": "export const TOWER_CLEAR = 0.05;",
+    "new": "export const TOWER_CLEAR = 0;",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-clear-short",
+    "file": "src/world/townWalls.js",
+    "old": "export const TOWER_CLEAR = 0.05;",
+    "new": "export const TOWER_CLEAR = 0.03;",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-out-unread",
+    "file": "src/world/townWalls.js",
+    "old": "co = Math.abs(q[0][3] * tw.out[0] + q[0][5] * tw.out[1]) >= Math.SQRT1_2 ? TOWER_CLEAR : 0;",
+    "new": "co = 0;",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-along-unread",
+    "file": "src/world/townWalls.js",
+    "old": "    const ca = Math.abs(q[0][3] * tw.out[1] - q[0][5] * tw.out[0]) >= Math.SQRT1_2 ? TOWER_CLEAR : 0,",
+    "new": "    const ca = 0,",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-mitre-gone",
+    "file": "src/world/townWalls.js",
+    "old": "    if (Math.abs(q[0][4]) < Math.SQRT1_2) return body;",
+    "new": "    return body;",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT FB1028: townWallModel hands clearOfTowers a part mitreEnds already cut on each tower's middle line (mitrePlanes: the plane through the tower's at, normal its own along), and wallPieces ends every length and gate at its towers' middles, so nothing of a part lies in the box past that middle for this branch to cut. Kept as belt-and-braces for a part handed uncut."
+  },
+  {
+    "name": "FB1028-mitre-every-face",
+    "file": "src/world/townWalls.js",
+    "old": "    if (Math.abs(q[0][4]) < Math.SQRT1_2) return body;",
+    "new": "    if (false) return body;",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT FB1028: as FB1028-mitre-gone - mitreEnds has already cut every face of the part, level or not, on the tower's middle line, so the far-side box holds nothing to cut. It survived with ARENA2 too, and neither mutant changes any of the Bay's 410 wall models."
+  },
+  {
+    "name": "FB1028-far-side-flipped",
+    "file": "src/world/townWalls.js",
+    "old": "alongOf(tw, mx, mz) < 0 ? [0, 2 * half] : [-2 * half, 0]",
+    "new": "alongOf(tw, mx, mz) > 0 ? [0, 2 * half] : [-2 * half, 0]",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-side-unread",
+    "file": "src/world/townWalls.js",
+    "old": "    mx += P[v] / (P.length / 3); mz += P[v + 2] / (P.length / 3);",
+    "new": "    mx += 0; mz += 0;",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-reach-short",
+    "file": "src/world/townWalls.js",
+    "old": "r = 2 * Math.SQRT2 * half * T;",
+    "new": "r = half;",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ],
+    "equivalent": true,
+    "why": "Its only reader left is the first filter of the towers by the part's own box, and a length or a gate ends in its towers' middles, so its box holds them at any reach; the per-triangle reach reads the tower frame's own boxes. AUDIT FB1028: re-run on 0be4199e9's pins with ARENA2 and the synthetic towers grown, it survives, and it changes none of the Bay's 410 wall models.",
+    "note": "Re-aimed by content at the merge with the Bay's walls (FB1028): the reach takes the grown towers' `thick` (T)."
+  },
+  {
+    "name": "AUDIT-FB1028-across-ungrown",
+    "file": "src/world/townWalls.js",
+    "old": "  const across = (tw) => half * (tw.thick ?? 1), T",
+    "new": "  const across = (tw) => half, T",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-a-side-unread",
+    "file": "src/world/townWalls.js",
+    "old": "  const sides = [(v) => a(v) - a1, (v) => a0 - a(v), (v) => o(v) - o1, (v) => o0 - o(v), (v) => v[1] - CORNER_TOWER.crown];",
+    "new": "  const sides = [(v) => a(v) - a1, (v) => o(v) - o1, (v) => o0 - o(v), (v) => v[1] - CORNER_TOWER.crown];",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-crown-unread",
+    "file": "src/world/townWalls.js",
+    "old": "  const sides = [(v) => a(v) - a1, (v) => a0 - a(v), (v) => o(v) - o1, (v) => o0 - o(v), (v) => v[1] - CORNER_TOWER.crown];",
+    "new": "  const sides = [(v) => a(v) - a1, (v) => a0 - a(v), (v) => o(v) - o1, (v) => o0 - o(v)];",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-cut-misplaced",
+    "file": "src/world/townWalls.js",
+    "old": "const t = fa / (fa - fb), m = new Array(a.length);",
+    "new": "const t = 0.5, m = new Array(a.length);",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-slivers-kept",
+    "file": "src/world/townWalls.js",
+    "old": "          if (twice >= 1e-4 * Math.max(Math.hypot(...e), Math.hypot(...g), Math.hypot(c[0] - b[0], c[1] - b[1], c[2] - b[2]))) indices.push(at[0], at[k], at[k + 1]);",
+    "new": "          if (twice >= 0) indices.push(at[0], at[k], at[k + 1]);",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-always-rebuilt",
+    "file": "src/world/townWalls.js",
+    "old": "  if (!cut) return part;",
+    "new": "  if (false) return part;",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ],
+    "equivalent": true,
+    "why": "A part with a tower in reach but no triangle meeting its boxes is rebuilt with the same triangles and its own corners in the order first used - the same faces; a part no tower reaches returns before the loop."
+  },
+  {
+    "name": "FB1028-fabric-wall-unread",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "(!ground || onTownTile(ground, tilePos, x, z)) && !under?.[z * W + x] : null;",
+    "new": "(!ground || onTownTile(ground, tilePos, x, z)) : null;",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-fabric-cells-ungrown",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "townWallCells(wall, ed.width, ed.height, NAV_CELL * Math.SQRT1_2)",
+    "new": "townWallCells(wall, ed.width, ed.height, 0)",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-cells-grow-unread",
+    "file": "src/world/townWalls.js",
+    "old": "if (Math.abs(dx * ux + dz * uz) <= hl + grow && Math.abs(dx * wx + dz * wz) <= ht + grow) out[gy * W + gx] = 1;",
+    "new": "if (Math.abs(dx * ux + dz * uz) <= hl && Math.abs(dx * wx + dz * wz) <= ht) out[gy * W + gx] = 1;",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-door-unsliced",
+    "file": "src/world/townWalls.js",
+    "old": "    buildSliced: (ctx, breathe) => townWallModelSliced(kept.wall?.pieces ?? [], (id) => ctx?.classicModel?.(id) ?? null, breathe),   // WALL-FLICKER: a breath at a time\n",
+    "new": "",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-no-breath",
+    "file": "src/world/townWalls.js",
+    "old": "    if (++made % WALL_PIECES_A_BREATH === 0) yield;",
+    "new": "    if (false) yield;",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ]
+  }
+]

@@ -110,8 +110,8 @@
   {
     "name": "RVN8-offline",
     "file": "src/systems/revenant/revenant.js",
-    "old": "  if (!online || !s || !revenantOn() || !player) return null;",
-    "new": "  if (!s || !revenantOn() || !player) return null;",
+    "old": "  if (!online || !s || !revenantOn() || !player || isCasual(player)) return null;",
+    "new": "  if (!s || !revenantOn() || !player || isCasual(player)) return null;",
     "tests": [
       "test/systems/rvn8_took.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "RVN8-switch-unread",
     "file": "src/systems/revenant/revenant.js",
-    "old": "  if (!online || !s || !revenantOn() || !player) return null;",
-    "new": "  if (!online || !s || !player) return null;",
+    "old": "  if (!online || !s || !revenantOn() || !player || isCasual(player)) return null;",
+    "new": "  if (!online || !s || !player || isCasual(player)) return null;",
     "tests": [
       "test/systems/rvn8_took.test.js"
     ]

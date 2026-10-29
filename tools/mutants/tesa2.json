@@ -247,11 +247,11 @@
   {
     "name": "TESA-NO-FAST-the-cursor-points-anyway",
     "file": "src/ui/heldMap.js",
-    "old": "cursor: this.teleportationTravel && (past.city?.pixel || (this.deps.portalLandPastBay && portalLandAt(px, py))) ? 'pointer' : ''",
-    "new": "cursor: (past.city?.pixel || (this.deps.portalLandPastBay && portalLandAt(px, py))) ? 'pointer' : ''",
+    "old": "cursor: (this.teleportationTravel ? past.city?.pixel || (past.on === 'mark' && this._pastBayTownAt(past.pixel.x, past.pixel.y)) || (this.deps.portalLandPastBay && portalLandAt(px, py)) : (this._walksPastBay() || this._travelsPastBay()) && this._pastBayPressPick(mx, my)) ? 'pointer' : ''",
+    "new": "cursor: (past.city?.pixel || past.on === 'mark' || (this.deps.portalLandPastBay && portalLandAt(px, py)) || (this._walksPastBay() && past.on !== 'sea')) ? 'pointer' : ''",
     "tests": [
       "test/tesa2_arena.test.js"
     ],
-    "note": "PORTAL-ANYWHERE (PIN MOVED): re-aimed by content - the hover's pointer reads the stone's land too"
+    "note": "AUDIT TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay where the world knows it, the press's pick one method"
   }
 ]

@@ -47,8 +47,8 @@
   {
     "name": "TB-the-stands-ground-dropped",
     "file": "src/world/urban/townFabricStand.js",
-    "old": "  const onGround = ground ? (x, z) => onTownTile(ground, tilePos, x, z) : null;",
-    "new": "  const onGround = null;",
+    "old": "  const onGround = ground || under ? (x, z) => (!ground || onTownTile(ground, tilePos, x, z)) && !under?.[z * W + x] : null;",
+    "new": "  const onGround = ground || under ? (x, z) => !under?.[z * W + x] : null;",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]

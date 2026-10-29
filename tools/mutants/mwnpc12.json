@@ -47,8 +47,8 @@
  {
   "name": "MWNPC12-orc-a-breton",
   "file": "src/characters/foeBodies.js",
-  "old": "  const race = ORC_MOBILES.has(f.mobileType) ? 'Orc' : modRace(f.mobileType) ?? bay.race;",
-  "new": "  const race = modRace(f.mobileType) ?? bay.race;",
+  "old": "  const race = ORC_MOBILES.has(f.mobileType) ? 'Orc' : modRace(f.mobileType) ?? personRace(f, h, bay.race);",
+  "new": "  const race = modRace(f.mobileType) ?? personRace(f, h, bay.race);",
   "tests": [
    "test/characters/mwnpc12_steelorcs.test.js"
   ]

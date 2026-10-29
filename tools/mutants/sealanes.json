@@ -11,8 +11,8 @@
   {
     "name": "ROAD-farthest-in-ring",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "        if (d < bd) { bd = d; best = { x, y }; }",
-    "new": "        if (bd === Infinity || d > bd) { bd = d; best = { x, y }; }",
+    "old": "        if (n > br || (n === br && d < bd)) { br = n; bd = d; best = { x, y }; }",
+    "new": "        if (n > br || (n === br && (bd === Infinity || d > bd))) { br = n; bd = d; best = { x, y }; }",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -87,8 +87,8 @@
   {
     "name": "NET-inland-ports",
     "file": "src/systems/naval/seaLanes.js",
-    "old": ".map((p) => ({ ...p, road: roadsteadOf(p, open) })).filter((p) => p.road);",
-    "new": ".map((p) => ({ ...p, road: roadsteadOf(p, open) ?? { x: p.px, y: p.py } }));",
+    "old": ".map((p) => ({ ...p, road: roadsteadOf(p, open, roomy) })).filter((p) => p.road);",
+    "new": ".map((p) => ({ ...p, road: roadsteadOf(p, open, roomy) ?? { x: p.px, y: p.py } }));",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]

@@ -333,11 +333,11 @@
   {
     "name": "TAMRIEL1-window-hover-silent-beyond-the-bay",
     "file": "src/ui/heldMap.js",
-    "old": "return { label: past.label, cursor: this.teleportationTravel && (past.city?.pixel || (this.deps.portalLandPastBay && portalLandAt(px, py))) ? 'pointer' : '', ...(tip ? { tip } : {}) };",
+    "old": "return { label: past.label, cursor: (this.teleportationTravel ? past.city?.pixel || (past.on === 'mark' && this._pastBayTownAt(past.pixel.x, past.pixel.y)) || (this.deps.portalLandPastBay && portalLandAt(px, py)) : (this._walksPastBay() || this._travelsPastBay()) && this._pastBayPressPick(mx, my)) ? 'pointer' : '', ...(tip ? { tip } : {}) };",
     "new": "return null;",
     "tests": [
       "test/ui/heldmap.test.js"
     ],
-    "note": "PORTAL-ANYWHERE (PIN MOVED): re-aimed by content - the hover's pointer reads the stone's land too"
+    "note": "AUDIT TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay where the world knows it, the press's pick one method"
   }
 ]

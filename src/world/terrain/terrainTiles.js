@@ -31,9 +31,9 @@
 
 import { perlinNoise } from '../perlin.js';
 import { UMRandom } from '../../formats/umRandom.js';
-import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION } from './terrainSampler.js';
+import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from './terrainSampler.js';
 import { worldDataDoor } from '../../formats/worldData/worldDataDoor.js';   // BOOT-RECTS: whether a layout pin stands where a walk reads
-import { townTiles, townShapeField, townRound, tileDistance, shapeFieldDistance, isWallCarrier, TOWN_SHAPE, WALL_ROUND, RING } from '../townShape.js';   // TOWN-SHAPES: a town's ground its own outline
+import { townTiles, townFieldTiles, townShapeField, townRound, tileDistance, shapeFieldDistance, isWallCarrier, TOWN_SHAPE, WALL_ROUND, RING } from '../townShape.js';   // TOWN-SHAPES: a town's ground its own outline
 
 /** MeshReader.cs:487: an RMB ground record at or past this is a random marker, not a tile of the set (the tileset has
  *  56 records). AUDIT WATER-NEXT m8: ONE home - the stamp below, rmbLayout.js buildGroundTilemap, the fixed town's
@@ -365,9 +365,9 @@ export function locationShapeField(dfLocation, rmbOf, tilePos = getLocationTerra
  * occupied tiles (townTiles) on the outline's padded box (SHAPE_PAD tiles each side - its margin wanders out past the
  * blocks' squares), whether it stands on a walled round (TS4), and where the box lies in the pixel's tiles; and what
  * setLocationTiles' rect is cut from under it (`stamp`: the grid's tiles of a ground record it stamps - under
- * GROUND_RECORD_LIMIT - on the same box; `clear` its clearance, the location's type's). null where locationShapeField
- * answers none.
- * @returns {?{ padded: Uint8Array, stamp: Uint8Array, PW: number, PH: number, walled: boolean, x0: number, y0: number, clear: number }}
+ * GROUND_RECORD_LIMIT - on the same box; `clear` its clearance, the location's type's). FB1028: `fields` the tiles its
+ * fields of flats are sown over on the same box (townFieldTiles), or null. null where locationShapeField answers none.
+ * @returns {?{ padded: Uint8Array, stamp: Uint8Array, fields: ?Uint8Array, PW: number, PH: number, walled: boolean, x0: number, y0: number, clear: number }}
  */
 export function locationOutlineBasis(dfLocation, rmbOf, tilePos = getLocationTerrainTileOrigin(dfLocation)) {
   if (!dfLocation?.exterior?.exteriorData || dfLocation.capital) return null;
@@ -388,7 +388,7 @@ export function locationOutlineBasis(dfLocation, rmbOf, tilePos = getLocationTer
   }
   // TS4: a walled city past the Bay (world/townWalls.js) stands on its round - its wall's line and all inside it - and its
   // apron is its own ground
-  return { padded, stamp, PW, PH, walled: !!dfLocation.outline?.walled, x0: tilePos.x - SHAPE_PAD, y0: tilePos.y - SHAPE_PAD,
+  return { padded, stamp, fields: townFieldTiles(width, height, (bx, by) => blockAt[by * width + bx], SHAPE_PAD), PW, PH, walled: !!dfLocation.outline?.walled, x0: tilePos.x - SHAPE_PAD, y0: tilePos.y - SHAPE_PAD,
     clear: dfLocation.mapTableData?.locationType === LOCATION_TYPE_TOWN_CITY ? 3 : 2 };
 }
 
@@ -409,8 +409,10 @@ export function rectOfBasis(basis, shape) {
 /** AUDIT TESA III E1-4: the outline a basis stands under a map id (`seed`) - townShapeField over its box, laid in the
  *  pixel's 128 x 128 tiles (index x + y * 128), 0 outside. locationShapeField is this under the location's own id. */
 export function outlineOfBasis(basis, seed) {
-  const { padded, PW, PH, walled, x0, y0 } = basis;
-  const field = townShapeField(walled ? townRound(padded, PW, PH).inside : padded, PW, PH, seed >>> 0, walled ? { core: WALL_ROUND.apron } : {});
+  const { padded, fields, PW, PH, walled, x0, y0 } = basis;
+  const occ = walled ? townRound(padded, PW, PH).inside : padded;
+  // FB1028 CROP-GROUND: a field's plants stand on the plane - its tiles the town's (after the round: a wall reads none)
+  const field = townShapeField(fields ? occ.map((v, i) => v | fields[i]) : occ, PW, PH, seed >>> 0, walled ? { core: WALL_ROUND.apron } : {});
   const out = new Uint8Array(WORLD_MAP_TILE_DIM * WORLD_MAP_TILE_DIM);
   for (let y = 0; y < PH; y++) for (let x = 0; x < PW; x++) {
     const px = x0 + x, py = y0 + y;
@@ -421,8 +423,8 @@ export function outlineOfBasis(basis, seed) {
 
 /**
  * TOWN-SHAPES: A TOWN'S GROUND ON ITS LAND - its outline (`shape`, locationShapeField's) less every tile of its margin past
- * TOWN_SHAPE.seaMargin of a building that the land under it holds water (`ground`, the pixel's own samples as the kernel
- * made them, before any blend: a tile's corner sample, column-major), so a town on a shore meets the sea where the shore is.
+ * TOWN_SHAPE.seaMargin of a building whose land holds water (`ground`, the pixel's samples before any blend, column-major)
+ * - a shore town meets the sea where the shore is - or that lies nearer the pixel's edge than its ease needs (FB1028).
  * Kept on the shape for the ground it was asked of.
  * @param {Uint8Array} shape @param {ArrayLike<number>} ground @param {number} [hDim]
  * @returns {Uint8Array} 1 a tile of the town's ground (index x + y * 128)
@@ -431,28 +433,48 @@ export function townGroundMask(shape, ground, hDim = HEIGHTMAP_DIMENSION) {
   const memo = /** @type {any} */ (shape);
   if (memo._ground === ground && memo._mask) return memo._mask;
   const D = WORLD_MAP_TILE_DIM, mask = new Uint8Array(D * D);
-  const wet = (x, y) => isWaterHeight(sampleHeight(ground[Math.min(y, hDim - 1) + Math.min(x, hDim - 1) * hDim]));
+  const at = (x, y) => ground[Math.min(y, hDim - 1) + Math.min(x, hDim - 1) * hDim];
+  const wet = (x, y) => isWaterHeight(sampleHeight(at(x, y)));
+  let sum = 0, n = 0;
+  for (let i = 0; i < D * D; i++) if (shape[i] && !wet(i % D, (i - (i % D)) / D)) { sum += at(i % D, (i - (i % D)) / D); n++; }
+  const level = n ? sum / n : 0, grade = shapeGrade(hDim);
   for (let y = 0; y < D; y++) for (let x = 0; x < D; x++) {
     const v = shape[x + y * D];
     if (!v) continue;
-    mask[x + y * D] = shapeFieldDistance(v) <= TOWN_SHAPE.seaMargin || !(wet(x, y) || wet(x + 1, y + 1)) ? 1 : 0;
+    // FB1028: a margin's tile in the band the ease needs to the edge's own ground - its nearest side's sample
+    const e = Math.min(x, y, D - 1 - x, D - 1 - y), side = e === x ? at(0, y) : e === D - 1 - x ? at(hDim - 1, y) : e === y ? at(x, 0) : at(x, hDim - 1);
+    const edge = e < Math.max(SHAPE_EDGE_TILES, Math.abs(level - side) / grade);
+    mask[x + y * D] = shapeFieldDistance(v) <= TOWN_SHAPE.seaMargin || !(edge || wet(x, y) || wet(x + 1, y + 1)) ? 1 : 0;
   }
   memo._ground = ground; memo._mask = mask;
   return mask;
 }
-/** TOWN-SHAPES: how far past a town's outline its ground eases back to the land's, in samples (a tile's side) - 77 m. */
+/** TOWN-SHAPES: how far past a town's outline its ground eases back to the land's at the least, in samples (a tile's
+ *  side) - 77 m. */
 export const SHAPE_BLEND_TILES = 12;
-/** TOWN-SHAPES: the band at a pixel's edge where every blend eases out, in samples - its edge the land's own, as DFU's
- *  ramp keeps it, so a neighbour pixel's ground meets it. */
+/** FB1028: the ease's grade on the mean, metres a metre (1.5 times it at its steepest) - a town far over its sea or its
+ *  hillside eases back as far as it needs to rise no faster. */
+export const SHAPE_GRADE = 0.6;
+/** TOWN-SHAPES: the band at a pixel's edge a town's margin keeps off at the least (FB1028), in samples - its edge the
+ *  land's own, as DFU's ramp keeps it, so a neighbour pixel's ground meets it. */
 export const SHAPE_EDGE_TILES = 4;
+/** FB1028: SHAPE_GRADE as a sample's rise in the kernel's normalized heights (a sample 6.4 m, a unit 1539 x 1.25 m). */
+const shapeGrade = (hDim) => SHAPE_GRADE * (TERRAIN_SIZE / (hDim - 1)) / (MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE);
+const smooth = (t) => t * t * (3 - 2 * t);
+/** AUDIT FB1028 A3: the most the ease keeps of the land's departure `d` samples out, in grades - a smooth cone: 32/3 of
+ *  the smoothstep to nine samples (4/3 of the grade at its steepest), then one grade a sample. */
+const easeCone = (d) => (d < 9 ? (32 / 3) * smooth(d / SHAPE_BLEND_TILES) : d);
+/** AUDIT FB1028 A3 (round 2): the metres over the sea a sample under its town fades from FB1028's ease into the cone -
+ *  the cone in a port's sea kept it low further out, and the ground past a jetty's end stood over its deck. */
+const SHAPE_SHORE_M = 10;
 /** TOWN-SHAPES: the least a town stands at - a step over the beach, so a shore town's ground is dry land. */
 const SHAPE_FLOOR = Math.fround((SCALED_BEACH_ELEVATION + 1) / MAX_TERRAIN_HEIGHT);
 
 /**
  * TOWN-SHAPES (departure from BlendLocationTerrainJob; bible/03-World/Town-Shapes.md): A TOWN'S GROUND FLATTENED TO ITS OWN
- * OUTLINE - every sample a tile of its ground touches set to the town's height (the mean of the land it stands on, `ground`
- * read there, never the sea's - a step over the beach at the least), the rest eased back to the land over SHAPE_BLEND_TILES
- * and out at the pixel's edge; the sea past its margin never lifted. Answers the height it flattened to.
+ * OUTLINE at the mean of the land it stands on (never the sea's; a step over the beach at the least), the rest eased back.
+ * FB1028: the ease runs SHAPE_BLEND_TILES, or as far as SHAPE_GRADE needs, the sea's too, and never past its share of the
+ * way to the pixel's edge. Its reach is read on `ground` alone, so every blend of the pixel eases alike. Answers its height.
  * @param {Float32Array} heightmapData mutated in place @param {Uint8Array} shape locationShapeField's
  * @param {ArrayLike<number>} ground the pixel's samples before the blend (the water's and the mean's reading)
  * @param {number} hDim @param {boolean} diff `heightmapData` a difference of grounds (landforms.js landformLiftField), never floored
@@ -476,20 +498,41 @@ function blendShapedTerrain(heightmapData, shape, ground, hDim, diff) {
   if (!n) return null;
   const target = diff ? Math.fround(sum / n) : Math.max(Math.fround(sum / n), SHAPE_FLOOR);
   const dist = tileDistance(inside, hDim, hDim);
-  const wet = new Uint8Array(hDim * hDim);
-  for (let i = 0; i < wet.length; i++) wet[i] = isWaterHeight(sampleHeight(ground[i])) ? 1 : 0;
+  // FB1028: the level the ease reads its reach off - `ground`'s own over the same land - and the grade a sample, normalized
+  let gsum = 0;
+  for (let y = 0; y < hDim; y++) for (let x = 0; x < hDim; x++) if (inside[y * hDim + x] && !isWaterHeight(sampleHeight(ground[y + x * hDim]))) gsum += ground[y + x * hDim];
+  const level = gsum / n, grade = shapeGrade(hDim), stood = tileDistance(stoodSamples(shape, mask, hDim), hDim, hDim);
   for (let y = 0; y < hDim; y++) {
     for (let x = 0; x < hDim; x++) {
-      const idx = y + x * hDim, d = dist[y * hDim + x];
-      const edge = Math.min(1, Math.min(x, y, hDim - 1 - x, hDim - 1 - y) / SHAPE_EDGE_TILES);
-      let s = d === 0 ? 1 : Math.max(0, 1 - d / SHAPE_BLEND_TILES);
-      s = s * s * (3 - 2 * s);
-      if (d > TOWN_SHAPE.seaMargin && wet[idx]) s = 0;   // the sea past the town's margin is the sea
-      s *= edge * edge * (3 - 2 * edge);
+      const idx = y + x * hDim, d = dist[y * hDim + x], e = Math.min(x, y, hDim - 1 - x, hDim - 1 - y);
+      if (e === 0) continue;   // the pixel's edge the land's own, so a neighbour's ground meets it
+      // AUDIT FB1028 A3: the land keeps the least of its departure x the smoothstep and the cone, which never falls as it
+      // stands further off; the sea and its shore's first SHAPE_SHORE_M fade to FB1028's reach off its own depth, so a sea
+      // rises to its quay as before. The two agree to 41 m
+      const off = Math.abs(level - ground[idx]);
+      const cone = Math.min(smooth(Math.min(1, d / SHAPE_BLEND_TILES)), off > 0 ? easeCone(d) * grade / off : 1);
+      const shore = Math.min(1, Math.max(0, (sampleHeight(ground[idx]) - SCALED_OCEAN_ELEVATION) * STREAMING_TERRAIN_SCALE / SHAPE_SHORE_M));
+      const kept = cone * shore + (1 - shore) * (1 - smooth(Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade))));
+      // its share of the way to the edge - AUDIT FB1028 A2: in the band the seam needs, from the town's last stood sample
+      // (across the core's margin at the most), so the seam's run eases its margin there too
+      const side = e === x ? ground[y] : e === hDim - 1 - x ? ground[y + (hDim - 1) * hDim] : e === y ? ground[x * hDim] : ground[hDim - 1 + x * hDim];
+      const band = Math.max(SHAPE_EDGE_TILES, Math.abs(level - side) / grade);
+      const run = Math.min(stood[y * hDim + x], d + TOWN_SHAPE.seaMargin + 1, Math.max(d, band - e));
+      const s = run > 0 ? Math.min(1 - kept, e / (e + run)) : 1;
       if (s > 0) heightmapData[idx] = heightmapData[idx] + (target - heightmapData[idx]) * s;
     }
   }
   return target;
+}
+/** AUDIT FB1028 A2: the samples a building, a model, a flat or a crop stands on - the corners of the town's tiles within
+ *  a tile of one (a model's foot overhangs its own: Aldwall Rock's 323 by a tile) - kept at the level. Index y * hDim + x. */
+function stoodSamples(shape, mask, hDim) {
+  const D = WORLD_MAP_TILE_DIM, out = new Uint8Array(hDim * hDim);
+  for (let ty = 0; ty < D; ty++) for (let tx = 0; tx < D; tx++) {
+    if (!mask[tx + ty * D] || shapeFieldDistance(shape[tx + ty * D]) > 1) continue;
+    for (let dy = 0; dy <= 1; dy++) for (let dx = 0; dx <= 1; dx++) if (ty + dy < hDim && tx + dx < hDim) out[(ty + dy) * hDim + tx + dx] = 1;
+  }
+  return out;
 }
 /** TOWN-SHAPES: a town's tiles its outline took off its stamped ground (townGroundMask: the sea's) given back to the land -
  *  a tile setLocationTiles stamped there cleared, so the land's own tiles are laid. */

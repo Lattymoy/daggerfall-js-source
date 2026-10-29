@@ -182,11 +182,12 @@
  {
   "name": "TB-the-nearest-gate-unread",
   "file": "src/world/townWalls.js",
-  "old": "pairs.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);",
-  "new": "pairs.sort((a, b) => a[2] - b[2] || a[1] - b[1]);",
+  "old": "pairs.sort((a, b) => street(a[1]) - street(b[1]) || a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);",
+  "new": "pairs.sort((a, b) => street(a[1]) - street(b[1]) || a[2] - b[2] || a[1] - b[1]);",
   "tests": [
    "test/world/baywalls.test.js"
-  ]
+  ],
+  "note": "Re-aimed by content (AUDIT FB1028): the line names the street's gates (B2) / the wall's growth (B5)."
  },
  {
   "name": "TB-the-group-unmoved",
@@ -299,7 +300,7 @@
  {
   "name": "TB-the-walk-unshared",
   "file": "src/scenes/pixelBuild.js",
-  "old": "loc, walkShut, () => breather.breathe())",
+  "old": "loc, yardShut, () => breather.breathe())",
   "new": "loc, null, () => breather.breathe())",
   "tests": [
    "test/world/baywalls.test.js"
@@ -311,10 +312,9 @@
   "file": "src/scenes/world.js",
   "old": "        const g = await stepsBreathing(townGroundSteps(yl, measures, shut, townYardsOf(dfLocation)), breathe);",
   "new": "        const g = await stepsBreathing(townGroundSteps(yl, measures, null, townYardsOf(dfLocation)), breathe);",
-  "note": "Re-aimed by content (IC-PROPS): the call hands the town's yards' law its ways and a capital's own yards too; the mutant still drops the walk shut. Re-aimed by content (IC-STUTTER): a step at a time through the build's breather.",
+  "note": "Re-aimed by content (IC-STUTTER): the ground walked a step at a time through the build's breather.",
   "tests": [
    "test/world/baywalls.test.js"
-  ],
-  "note": "Re-aimed by content (IC-STUTTER): the ground walked a step at a time through the build's breather."
+  ]
  }
 ]

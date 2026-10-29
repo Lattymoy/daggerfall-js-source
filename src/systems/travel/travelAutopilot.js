@@ -100,6 +100,17 @@ export const LANE_LOOK_STEPS = 3;      // three frames' steps ahead at speed
  *  at any frame rate (a 30 fps x100 frame walked ten metres past a road's bend, a rider's street corner a building's
  *  width). A hitch the frame before cannot foresee is the one step not cut. */
 export const LANE_CORNER_FORCE_MIN = 0.25;
+/** ROAD-SMOOTH (bible/06-Systems/Travel-View.md ROAD-SMOOTH): the least turn at a road's line point that is a corner,
+ *  degrees. Basic Roads' kinks at a pixel's middle turn 45 or 90; a painted curve's runs turn under 4 each (roadCurves.js
+ *  CURVE_STEPS). The force is cut and the look stopped at a corner alone; a curve is walked through at speed. */
+export const LANE_CORNER_TURN = 22.5;
+
+/** The turn at point b of the runs a-b and b-c, degrees (NaN for a run of no length). */
+export function turnAt(a, b, c) {
+  const h1 = Math.atan2(b[0] - a[0], b[1] - a[1]), h2 = Math.atan2(c[0] - b[0], c[1] - b[1]);
+  const ok = (a[0] !== b[0] || a[1] !== b[1]) && (b[0] !== c[0] || b[1] !== c[1]);
+  return ok ? Math.abs(((((h2 - h1) * 180) / Math.PI + 540) % 360) - 180) : NaN;
+}
 
 /**
  * Where a body at (x, z) aims along a lane `{ ax, az, bx, bz }` (world units, a to b) looking `look` ahead: the point on
@@ -127,11 +138,12 @@ function segDistance(x, z, ax, az, bx, bz) {
  * L1-1) the body stands nearer the next run than this one - past a turn sharper than a right angle a body on the next
  * run still projects inside this one, and the walk hovered at the corner for ever (37% of the game's town ways turn so)
  * - never past the last; the aim is `look` ahead of the projection along the runs that follow, clamped to the line's
- * end. `end` once the body has passed the last run's end. A street's way through a town is walked as one line: no stop
- * at each turn.
+ * end (ROAD-SMOOTH: and on along `ahead`, the line walked after it). `end` once the body has passed the last run's end.
+ * A street's way through a town is walked as one line: no stop at each turn.
  */
-export function pathPursuit(x, z, path, seg, look) {
-  const last = path.length - 2;
+export function pathPursuit(x, z, path, seg, look, ahead = null) {
+  const last = path.length - 2, n = last + 1 + (ahead?.length ?? 0);
+  const pt = (j) => (j <= last + 1 ? path[j] : ahead[j - last - 2]);
   let k = Math.max(0, Math.min(last, seg | 0));
   let t = 0;
   for (;;) {
@@ -142,10 +154,10 @@ export function pathPursuit(x, z, path, seg, look) {
   }
   let i = k, at = Math.max(0, Math.min(1, t)), left = look;
   for (;;) {
-    const [ax, az] = path[i], [bx, bz] = path[i + 1];
+    const [ax, az] = pt(i), [bx, bz] = pt(i + 1);
     const len = Math.hypot(bx - ax, bz - az);
     const rest = (1 - at) * len;
-    if (left <= rest || i === last) {
+    if (left <= rest || i + 1 === n) {
       const u = len > 0 ? Math.min(1, at + left / len) : 1;
       return { seg: k, t, x: ax + (bx - ax) * u, z: az + (bz - az) * u, end: t >= 1 };   // past 1 only on the last run - the runs before it moved on
     }
@@ -163,8 +175,11 @@ export class TravelAutopilot {
    *  0.8 cautious by default). `grow` adds the arrival buffer, which is
    *  what the location-summary constructor does and the rect
    *  constructor does not. */
-  constructor(targetPixel, targetRect, speedMultiplier = 1, { grow = false, isLocation = false, edgeArrival = false, lane = null, path = null, lookMin = LANE_LOOK_MIN, lookMax = LANE_LOOK_MAX } = {}) {
+  constructor(targetPixel, targetRect, speedMultiplier = 1, { grow = false, isLocation = false, edgeArrival = false, lane = null, path = null, ahead = null, cornerTurn = 0, lookMin = LANE_LOOK_MIN, lookMax = LANE_LOOK_MAX, walk = null } = {}) {
     this.isLocation = !!isLocation;   // :155 - only a LOCATION destination turns the look at arrival
+    // ROAD-SMOOTH: the body's own walk - where it stood last, how far a whole frame carries it, the share of the force asked
+    // - one body's, so handed on from the autopilot of the leg before (`walk`)
+    this.walk = walk ?? { at: null, reach: 0, share: 1 };
     // TRAVEL-NAV1: the arrival buffer across a pixel edge (see update).
     this.edgeArrival = !!edgeArrival;
     this.onArrival = null;
@@ -180,13 +195,13 @@ export class TravelAutopilot {
     // Zeroing it in the re-init snapped that camera to due north.
     this.yaw = 0;          // yawVector.y
     this.pitch = 0;        // :48 - mouseLook.Pitch = 0, and :143 holds it there every frame
-    this.initTargetRect(targetPixel, targetRect, speedMultiplier, { grow, lane, path, lookMin, lookMax });
+    this.initTargetRect(targetPixel, targetRect, speedMultiplier, { grow, lane, path, ahead, cornerTurn, lookMin, lookMax });
   }
 
   /** :39-49, InitTargetRect - and :62-73's InitDestination, which is
    *  the same three lines with the buffer grown AFTER the centre is
    *  taken, so the centre stays the location's own. */
-  initTargetRect(targetPixel, targetRect, speedMultiplier, { grow = false, lane = null, path = null, lookMin = LANE_LOOK_MIN, lookMax = LANE_LOOK_MAX } = {}) {
+  initTargetRect(targetPixel, targetRect, speedMultiplier, { grow = false, lane = null, path = null, ahead = null, cornerTurn = 0, lookMin = LANE_LOOK_MIN, lookMax = LANE_LOOK_MAX } = {}) {
     this.destinationMapPixel = { x: targetPixel.x, y: targetPixel.y };
     this.destinationCentre = rectCentre(targetRect);
     this.destinationWorldRect = grow
@@ -203,7 +218,11 @@ export class TravelAutopilot {
     this.seg = 0;
     this.lookMin = lookMin;   // OW-TOWN-WALK: a street's corner is met at its corner - its look ahead a step or two, never a road's width
     this.lookMax = Math.max(lookMin, lookMax);   // AUDIT OW-REVISITED L1-2: ...and a street's never more, whatever the step (a rider's three steps cut the corner)
-    this.lastAt = null;    // OW-ROAD-TRUE: where the body stood at the last update - the frame's step, the look ahead's measure
+    // ROAD-SMOOTH: each point of the line a corner where it turns `cornerTurn` degrees or more (0: every point, a street's);
+    // its end one unless `ahead`, the line the next leg walks, goes on from it with less - then the aim looks along it too
+    const P = this.path, next = ahead?.length ? ahead.map((q) => [q[0] ?? q.x, q[1] ?? q.z]) : null;
+    this.corners = P ? P.map((q, k) => (k === 0 ? 0 : !(turnAt(P[k - 1], q, P[k + 1] ?? next?.[0] ?? q) < cornerTurn) ? 1 : 0)) : null;
+    this.ahead = P && next && !this.corners[P.length - 1] ? next : null;
   }
 
   /** :76-105, Update. Returns what the host must apply this frame:
@@ -216,6 +235,7 @@ export class TravelAutopilot {
    *  happens only when the pixel under the player changed; then the
    *  orientation and the force, every frame. */
   update({ worldX, worldZ, mapPixelX, mapPixelY }) {
+    this.measureWalk(worldX, worldZ);   // ROAD-SMOOTH: the frame's step, whichever law walks it
     if (this.path) return this.laneUpdate(worldX, worldZ);   // OW-ROAD-TRUE: a road's leg, along its lane (OW-TOWN-WALK: a street's runs)
     // TRAVEL-NAV1: THE BUFFER THAT CROSSES A PIXEL EDGE. The arrival test
     // runs only in the destination PIXEL (:80), and a location eight
@@ -255,12 +275,11 @@ export class TravelAutopilot {
    *  AUDIT OW-REVISITED: a PLACE is arrived at inside its rect alone (L2-1: its line's end, a pixel's middle, lies outside
    *  the main quest's eight off-middle dungeons and behind a body resumed past it - "arrived" fifty metres short); a line
    *  of runs only on its last (L1-9: a way that bends back passes its end's square on the far side of a building); and the
-   *  force is cut to land on the run's end (LANE_CORNER_FORCE_MIN). */
+   *  force is cut to land on the run's end (LANE_CORNER_FORCE_MIN) - ROAD-SMOOTH: where that end is a corner alone. */
   laneUpdate(worldX, worldZ) {
-    const step = this.lastAt ? Math.hypot(worldX - this.lastAt.x, worldZ - this.lastAt.z) : 0;
-    this.lastAt = { x: worldX, z: worldZ };
-    const look = Math.max(this.lookMin, Math.min(this.lookMax, LANE_LOOK_STEPS * step));
-    const p = pathPursuit(worldX, worldZ, this.path, this.seg, look);
+    const w = this.walk;
+    const look = Math.max(this.lookMin, Math.min(this.lookMax, LANE_LOOK_STEPS * w.reach));
+    const p = pathPursuit(worldX, worldZ, this.path, this.seg, look, this.ahead);
     this.seg = p.seg;
     const lastRun = p.seg >= this.path.length - 2;
     if ((lastRun && rectContains(this.destinationWorldRect, worldX, worldZ)) || (p.end && !this.isLocation)) {
@@ -270,8 +289,19 @@ export class TravelAutopilot {
     }
     this.yaw = calculateYaw(worldX, worldZ, p.x, p.z);
     const [ex, ez] = this.path[p.seg + 1], toEnd = Math.hypot(ex - worldX, ez - worldZ);
-    const cut = step > 0 && toEnd < step && p.t < 1 ? Math.max(LANE_CORNER_FORCE_MIN, toEnd / step) : 1;
+    const cut = w.reach > 0 && toEnd < w.reach && p.t < 1 && this.corners[p.seg + 1] ? Math.max(LANE_CORNER_FORCE_MIN, toEnd / w.reach) : 1;
+    w.share = cut;
     return { yaw: this.yaw, pitch: this.pitch, forward: this.speedMultiplier * cut, arrived: false };
+  }
+
+  /** ROAD-SMOOTH: the frame's step. A whole frame's reach is the step over the share of the force the walk asked, so a
+   *  frame cut at a corner shortens no look after it; a frame the body stood (a held drive, a leg's end) keeps it. */
+  measureWalk(worldX, worldZ) {
+    const w = this.walk;
+    const step = w.at ? Math.hypot(worldX - w.at.x, worldZ - w.at.z) : 0;
+    w.at = { x: worldX, z: worldZ };
+    if (step > 0) w.reach = step / w.share;
+    w.share = 1;
   }
 
   /** AUDIT OW-REVISITED L2-5: the bearing of the run a line's leg is on (degrees, the yaw's own) - what a held strafe

@@ -11,7 +11,7 @@
   {
     "name": "TESA6-no-port-said",
     "file": "src/world/arenaPlaces.js",
-    "old": "...(onShore ? { port: true } : {})",
+    "old": "...(onShore || seaBears(at[0], at[1], openSea) ? { port: true } : {})",
     "new": "...({})",
     "tests": [
       "test/tesa6_ports.test.js"

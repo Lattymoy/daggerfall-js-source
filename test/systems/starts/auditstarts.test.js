@@ -133,26 +133,40 @@ function heldMap(deps = {}) {
   return win;
 }
 
-test('AUDIT STARTS U1/U2 the held map: a quest\'s place past the Bay offers no journey on the travel map - no Travel here, and no panel by any door (TESA-NO-FAST); on the teleport map it is a portal\'s end only where it is a city\'s (TESA13), else picked and named alone, and no confirm sends the portal there (mutants: the card\'s button, the panel\'s gate, the confirm\'s gate, the city test)', () => {
+test('AUDIT STARTS U1/U2 the held map, PIN MOVED (TRAVEL-EVERYWHERE, TESA-NO-FAST retired): a quest\'s place past the Bay is travelled to as a Bay place is - Travel here on its card, its panel by every door; on the teleport map it is a portal\'s end, as a Bay place is, and bare land a portal\'s end on the stone\'s map alone - picked and named alone on the guild\'s, and no confirm sends the portal there (mutants: the card\'s button, the panel\'s gate, the confirm\'s gate, the portal test)', () => {
   skin('enhanced');
   globalThis.document = fakeDocument();
   setCapitalsStanding(true);
   try {
-    // the travel map: picked, named, no journey
-    let win = heldMap();
-    const lair = win._pastBayPick(LAIR_PX.x, LAIR_PX.y, 'The Haunt of Baringon');
-    assert.deepEqual([lair.pastBay, lair.portal], [true, false], 'a lair: no city stands on it');
+    // the travel map: picked, named, its journey offered
+    // the world's one law of a place past the Bay (scenes/mapPlacesHost.js tvPlaceSummary): the lair known by the quest's naming
+    const law = (px, py, named) => (named ? { locationType: LOCATION_TYPES.DungeonLabyrinth } : null);
+    const quest = { px: LAIR_PX.x, py: LAIR_PX.y, placeName: 'The Haunt of Baringon' };
+    let win = heldMap({ pastBayPlace: law });
+    const lair = win._questPlace(quest);
+    assert.deepEqual([lair.pastBay, lair.portal, lair.place], [true, true, true], 'a lair: a place');
     win._select(lair);
     assert.equal(win._selected?.name, 'The Haunt of Baringon');
-    assert.deepEqual(buttonsOf(win), [], 'no Travel here on its card');
+    assert.deepEqual(buttonsOf(win), ['Travel here'], 'Travel here on its card');
     win._openPanel('travel');
-    assert.equal(win._panel ?? null, null, 'nor a journey by any other door');
+    assert.equal(win._panel, 'travel', 'and its journey');
     win.dispose?.();
-    // the teleport map: a lair is picked, never a portal's end
+    // the teleport map: the lair a portal's end, bare land none on the guild's map
     const ported = [];
-    win = heldMap({ onTeleport: (p) => ported.push(p) });
+    win = heldMap({ onTeleport: (p) => ported.push(p), pastBayPlace: law });
     win.activateTeleportationTravel();
-    win._select(win._pastBayPick(LAIR_PX.x, LAIR_PX.y, 'The Haunt of Baringon'));
+    win._select(win._questPlace(quest));
+    assert.equal(win._panel, 'teleport', 'its confirm opens itself');
+    win._confirmTeleport(true);
+    for (let i = 0; i < 200 && !win.done; i++) win.tick(0.05);
+    assert.deepEqual(ported.map((p) => p.pixel), [LAIR_PX], 'and the portal goes');
+    win.dispose?.();
+    ported.length = 0;
+    win = heldMap({ onTeleport: (p) => ported.push(p), pastBayPlace: law });
+    win.activateTeleportationTravel();
+    const bare = win._pastBayPick(LAIR_PX.x, LAIR_PX.y, 'x');
+    assert.equal(bare.portal, false, 'bare land: no portal\'s end on the guild\'s map');
+    win._select(bare);
     assert.equal(win._panel ?? null, null, 'no confirm opens on it');
     assert.deepEqual(buttonsOf(win), [], 'and its card offers none');
     win._openPanel('teleport');
@@ -163,7 +177,7 @@ test('AUDIT STARTS U1/U2 the held map: a quest\'s place past the Bay offers no j
     // a city's pixel past the Bay is TESA2's portal end, as its own press picks it
     const city = tamrielInkFor(null).cities.find((c) => c.pixel);
     assert.ok(city, 'a capital the world stands');
-    win = heldMap({ onTeleport: (p) => ported.push(p) });
+    win = heldMap({ onTeleport: (p) => ported.push(p), pastBayPlace: () => ({ locationType: LOCATION_TYPES.TownCity }) });   // the world knows a city by its kind (OW-BEYOND-KNOWN)
     win.activateTeleportationTravel();
     const at = win._pastBayPick(city.pixel.x, city.pixel.y, city.name);
     assert.equal(at.portal, true, `${city.name}: a portal's end`);
@@ -694,13 +708,13 @@ function openWaterNear(p, isWater) {
   return null;
 }
 
-test('AUDIT STARTS V4/V7 on the freeware\'s Tamriel: from the nearest open water to each of the 28 ports past the Bay a voyage reaches Daggerfall, and from Daggerfall\'s each of them - ashore once, within reach of the port (on it, but where the coast stands it on water), each planned in under a second and a half (mutants: the landfall\'s goals, its pad)', { skip: skipReal }, async () => {
+test('AUDIT STARTS V4/V7 on the freeware\'s Tamriel: from the nearest open water to each of the 35 ports past the Bay a voyage reaches Daggerfall, and from Daggerfall\'s each of them - ashore once, within reach of the port (on it, but where the coast stands it on water), each planned in under a second and a half (mutants: the landfall\'s goals, its pad)', { skip: skipReal }, async () => {
   const t = await realSea();
   const { arenaPixels, setArenaStanding } = await import('../../../src/world/arenaPlaces.js');
   setArenaStanding(true);
   try {
     const ports = arenaPixels().stood.filter((p) => p.port);
-    assert.equal(ports.length, 28);
+    assert.equal(ports.length, 35);   // PIN MOVED (FIELD BUGS 2026-10-28b COAST-PORT): 28, and the seven places the sea bears on
     const home = openWaterNear(t.dp, t.rg.isWater);
     assert.ok(home, 'Daggerfall\'s harbor');
     let most = 0;   // PIN MOVED (PLAN-SLICES): a plan's cells, an op count - the journey's plan is made a slice of PLAN_FRAME_CELLS a frame, and a clock on a shared runner is a flake

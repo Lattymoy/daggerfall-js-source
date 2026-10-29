@@ -2,20 +2,22 @@
   {
     "name": "AUDIT-STARTS-U1-card-offers-a-journey",
     "file": "src/ui/heldMap.js",
-    "old": "    if (this._selected.pastBay && !(armed && this._selected.portal)) return;\n",
-    "new": "",
+    "old": "    if (this._selected.pastBay && !(armed ? this._selected.portal : this._selected.walk || this._selected.place)) return;   // OW-PAST-BAY: a walk there - TRAVEL-EVERYWHERE: or a place's journey\n",
+    "new": "    if (this._selected.pastBay && !(armed ? this._selected.portal : false)) return;   // OW-PAST-BAY: a walk there - TRAVEL-EVERYWHERE: or a place's journey\n",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
-    ]
+    ],
+    "note": "TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay is travelled to as a Bay place is"
   },
   {
     "name": "AUDIT-STARTS-U1-panel-ungated",
     "file": "src/ui/heldMap.js",
-    "old": "    if (this._selected.pastBay && !(this._zoneMap ? kind === 'travel' : kind === 'teleport' && this._selected.portal)) return;\n",
+    "old": "    if (this._selected.pastBay && !(this._zoneMap ? kind === 'travel' : kind === 'teleport' ? this._selected.portal : this._selected.walk || this._selected.place)) return;   // OW-PAST-BAY: the travel map's a walk - TRAVEL-EVERYWHERE: or a place's journey\n",
     "new": "",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
-    ]
+    ],
+    "note": "TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay is travelled to as a Bay place is"
   },
   {
     "name": "AUDIT-STARTS-U2-confirm-ungated",
@@ -29,22 +31,22 @@
   {
     "name": "AUDIT-STARTS-U2-every-place-a-portal",
     "file": "src/ui/heldMap.js",
-    "old": "const portal = !!tamrielInkFor(this._model)?.cities?.some((c) => c.pixel?.x === px && c.pixel?.y === py) || (!!this.deps.portalLandPastBay && !!portalLandAt(px, py));",
+    "old": "const portal = !!town || (!!this.deps.portalLandPastBay && !!portalLandAt(px, py));",
     "new": "const portal = true;",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ],
-    "note": "PORTAL-ANYWHERE (PIN MOVED): re-aimed by content - a quest's place is a portal's end at a city, or (the stone's map) on the land"
+    "note": "TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay is travelled to as a Bay place is"
   },
   {
     "name": "AUDIT-STARTS-U2-no-city-a-portal",
     "file": "src/ui/heldMap.js",
-    "old": "const portal = !!tamrielInkFor(this._model)?.cities?.some((c) => c.pixel?.x === px && c.pixel?.y === py) || (!!this.deps.portalLandPastBay && !!portalLandAt(px, py));",
-    "new": "const portal = false;",
+    "old": "const portal = !!town || (!!this.deps.portalLandPastBay && !!portalLandAt(px, py));",
+    "new": "const portal = !!this.deps.portalLandPastBay && !!portalLandAt(px, py);",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ],
-    "note": "PORTAL-ANYWHERE (PIN MOVED): re-aimed by content - a quest's place is a portal's end at a city, or (the stone's map) on the land"
+    "note": "TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay is travelled to as a Bay place is"
   },
   {
     "name": "AUDIT-STARTS-U4-zone-press-picks-alone",
@@ -539,6 +541,8 @@
     "file": "src/systems/travel/travelRoute.js",
     "old": "endPad: VOYAGE_LANDFALL_PX * 2 });",
     "new": "endPad: 0 });",
+    "equivalent": true,
+    "why": "ROAD-BEYOND's reachOf grows the box by the rung's margin about every end past the table, and searchSteps clips the box to the two ends grown by that same margin, so a pad about an end past the table adds no cell the search may enter. Kept as the landfall's own word (GREEDY-BEYOND's mutants' sweep).",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]

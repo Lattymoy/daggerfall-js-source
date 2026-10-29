@@ -21,6 +21,7 @@ import { readStanding, readNews, readHeard } from './influence.js';   // LEGACY6
 import { BLOOD_MAX, HEARTH_MAX, ESTATE_SHARE, ESTATE_MAX } from './legacyLaw.js';   // INT18: the family law's bounds, the realm's to ask too
 import { readHouse } from '../../net/houseLaw.js';   // LEGACY7 part three: a player spouse's house
 import { validLook } from '../../net/wire.js';   // LEGACY7 part four: a member's look, the hello's own recipe
+import { NO_LINEAGE } from './casual.js';   // CASUAL-LIFE: the answer's home is the leaf the death laws read
 
 /** COURT-DEEDS: the deeds a courtship keeps the days of (courtDeeds.js DEEDS - that module stands above this one). */
 export const COURT_DEEDS = Object.freeze(['compliment', 'gift', 'embrace', 'kiss']);
@@ -39,7 +40,7 @@ export const isModel = (m) => m === MODELS.bloodline || m === MODELS.enduring;
  *  regular option, or the option that skips the liniage system entirely"): THE THIRD ANSWER - a character who founds no
  *  house. Never a family's model: the character's own answer (`entity.legacyChoice`, saved with them), and Project
  *  Legacy sits them out for good - at their birth and at every load, in either lane. */
-export const NO_LINEAGE = 'none';
+export { NO_LINEAGE };   // CASUAL-LIFE: online it is Casual (casual.js) - no house, and a death that costs nothing
 /** A character's answer to the model question - a model, or no lineage. */
 export const isLegacyChoice = (c) => isModel(c) || c === NO_LINEAGE;
 

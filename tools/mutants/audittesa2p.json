@@ -170,62 +170,6 @@
     ]
   },
   {
-    "name": "P4-door-open",
-    "file": "src/systems/travel/pastBayTravel.js",
-    "old": "  return { ok: false, text: PAST_BAY_TRAVEL_TEXT.refused };",
-    "new": "  return zone;",
-    "tests": [
-      "test/systems/audittesa2p_laws.test.js"
-    ]
-  },
-  {
-    "name": "P4-zone-own-refused",
-    "file": "src/systems/travel/pastBayTravel.js",
-    "old": "  if (mask && from && wildInside(mask, from.x, from.y) && wildInside(mask, to.x, to.y)) return zone;   // PVPJOURNEY: the zone's own\n",
-    "new": "",
-    "tests": [
-      "test/systems/audittesa2p_laws.test.js"
-    ]
-  },
-  {
-    "name": "P4-the-bay-refused",
-    "file": "src/systems/travel/pastBayTravel.js",
-    "old": "inBay(to.x, to.y) || inEther(to.x, to.y)",
-    "new": "inEther(to.x, to.y)",
-    "tests": [
-      "test/systems/audittesa2p_laws.test.js"
-    ]
-  },
-  {
-    "name": "P4-the-veil-refused",
-    "file": "src/systems/travel/pastBayTravel.js",
-    "old": "inBay(to.x, to.y) || inEther(to.x, to.y)",
-    "new": "inBay(to.x, to.y)",
-    "tests": [
-      "test/systems/audittesa2p_laws.test.js"
-    ]
-  },
-  {
-    "name": "P4-zone-refusal-lost",
-    "file": "src/systems/travel/pastBayTravel.js",
-    "old": "if (!zone.ok || !to ||",
-    "new": "if (!to ||",
-    "tests": [
-      "test/systems/audittesa2p_laws.test.js"
-    ]
-  },
-  {
-    "name": "P4-unwired",
-    "file": "src/scenes/world.js",
-    "old": "const wildTravelGate = (to, spoken = 0, law = pastBayJourney) => {",
-    "new": "const wildTravelGate = (to, spoken = 0, law = (_f, _t, _m, z) => z) => {",
-    "tests": [
-      "test/scenes/audittesa2p_hosts.test.js",
-      "test/systems/portalbay_stone.test.js"
-    ],
-    "note": "PORTAL-BAY (PIN MOVED): re-aimed by content - the journey's law past the Bay is the gate's default third argument now (a teleport hands teleportJourney); the mutant leaves the journeys' default unasked"
-  },
-  {
     "name": "P6-mask-kept",
     "file": "src/systems/discovery.js",
     "old": "return low < BAY_PIXEL_IDS ? low : mapId >>> 0;",
@@ -361,8 +305,8 @@
   {
     "name": "P7-reach-the-bays",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX);",
-    "new": "beyondList = laneNetwork(ports.list(), worldOpen);",
+    "old": "beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true);",
+    "new": "beyondList = laneNetwork(ports.list(), worldOpen, undefined, true);",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]

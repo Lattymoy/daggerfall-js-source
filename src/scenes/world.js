@@ -135,7 +135,7 @@ import { patronWords } from '../systems/livingWorld/patrons.js';   // LW15: a pa
 import { routeOf as deepRouteOf, clearedOf as deepClearedOf, stopOfMinute, DIVE_CLEAR_MIN } from '../systems/livingWorld/deepRoute.js';   // LW14: a company's way through the deep
 import { hideoutsOf, outlawBandAt, bandTrouble } from '../systems/livingWorld/outlaws.js';   // LW12: the outlaws
 import { createWorldPlaces } from '../world/worldWide/worldPlaces.js';   // WW1: the world's places, wherever they stand
-import { pastBayJourney, teleportJourney } from '../systems/travel/pastBayTravel.js';   // AUDIT TESA II P4: no journey into the land past the Bay
+import { pastBayJourney, teleportJourney } from '../systems/travel/pastBayTravel.js';   // TRAVEL-EVERYWHERE: a journey past the Bay is the zone's to refuse alone
 import { bayPlaceRows, BAY_SOURCE } from '../world/worldWide/bayPlaces.js';   // WW1: the game's own rows, the registry's first provider
 import { createTownTable } from '../world/worldWide/townTable.js';   // WW7: a town by its map id, the Bay's and the registry's
 import { createLivingTrips } from './livingWorld/livingTrips.js';   // WW1: the living world's towns and dungeons, off the registry; WW7-7: its trips' world, everywhere
@@ -305,6 +305,7 @@ import { pastBayPlacesIn } from '../world/pastBayPlaces.js';   // TESA15: the pl
 import { provinceKeyBeyondBay } from '../world/tamriel/tamrielLand.js';   // TESA3: the province a pixel past the Bay stands on
 import { provinceByKey } from '../world/tamriel/tamrielGeography.js';   // TESA3: its name and race
 import { provinceNameBank } from '../world/tamrielPeople.js';   // TESA3: its people's names
+import { setFolkPlace, folkOfLocation } from '../characters/provinceFolk.js';   // PROVINCE-FOLK: past the Bay the foes and the standing people are the province's
 import { groundWoods, groundMaps, tamrielClimateAt, climateNeighbourIn, feltClimateIndex } from '../world/tamriel/tamrielGround.js';   // TAMRIEL2: the continent's ground round the Bay, for the kernels and the far ring; WW2: a theatre's gate's ground; WW-R: the politic map past the Bay
 import { tamrielBiomeAt, biomeStamp } from '../world/tamriel/tamrielBiomes.js';   // TESA-BIOME: each province's zones - Cyrodiil's jungle among them
 import { faunaBandAt, installTamrielFauna, bandGroundPastBay } from '../systems/tamrielFauna.js';   // TESA-BIOME: each zone's wild, on the encounter tables' door; AUDIT TESA II F6: its bands' ground
@@ -345,7 +346,7 @@ import { createWardenShows } from './wagon/wagonWardenShow.js';   // WARDEN1: th
 import { createWagonWarden, wardenTownIn, wardenTownOfPixel } from './wagon/wagonWardenHost.js';   // WARDEN1: the town watch - my wagon's stamp, the cell's words, the offline clock; AUDIT WARDEN1 D3: the town under a point, one pure home
 import { createWildEscrowHost } from './wildEscrowHost.js';   // PVP-ESCROW: the two-phase handoff's two sides, out of bootWorld (HOST-SPLIT)
 import { WARDEN_VENDOR } from '../systems/wagon/wagonWarden.js';   // WARDEN1: the stamp's save slot, and the towns a watch keeps
-import { townGroundSteps, yardSitesSteps, craftYardSitesSteps, MONUMENT_KEEP_M, yardMeasuresSteps, placedModelBox } from '../world/merchantYards/merchantYardSites.js';   // MERCHANT-YARDS: where they stand off the town's layout, and the people's navgrid carved round them; IC-STUTTER: each pass a step at a time
+import { townGroundSteps, yardSitesSteps, craftYardSitesSteps, keptTownSitesSteps, MONUMENT_KEEP_M, yardMeasuresSteps, placedModelBox } from '../world/merchantYards/merchantYardSites.js';   // MERCHANT-YARDS: where they stand off the town's layout, and the people's navgrid carved round them; IC-STUTTER: each pass a step at a time
 import { stepsBreathing } from '../world/puddleMask.js';   // IC-STUTTER: OW-HITCH's runner - a town's places through the build's breather
 import { townYardsOf } from '../world/merchantYards/townYards.js';   // IC-PROPS: what a town tells its yards' law - its fabric's ways, a capital's own yards
 import { isYardTown, yardKeeper, ALL_YARD_KINDS, YARD_BENCH } from '../systems/merchantYards.js';   // MERCHANT-YARDS: the towns that stand them, who keeps them, the town's people
@@ -609,6 +610,8 @@ import { createUseMagicItemWindow, noItemToActivateText } from '../ui/useMagicIt
 import { preloadTransportArt } from '../ui/transportWindow.js';   // TR3: the picker's art (the picker itself is the mount rig's)
 import { TRANSPORT_MODES } from '../systems/transport.js';   // TR3: what the rows offer
 import { shipTransition, REPOSITION, isOnShip, shipMemory, shipRestorePos } from '../systems/ship.js';   // TR4: board and disembark; AUDIT-TO1 D1: TransportManager.IsOnShip for the popup; AUDIT 68 S22: the memory's height, compensation-free
+import { createStaffDragonHost } from './staffDragonHost.js';   // DRAGON-RIDE: an Admin's ride on the Dwarven Dragon
+import { parseDragonCommand, DRAGON_HELP_LINE, noteDragonRelay, dragonPoseRide } from '../systems/staffDragon.js';   // DRAGON-RIDE: /dragon's grammar and its /staff line
 import { createMountRig } from '../player/mountRig.js';   // MAC-K3: the mount surface, one home for this host and the fixed-city one
 import { worldViewportRect, largeHudWorldAspect } from '../ui/hud/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass (RETRO1: and retro mode's aspect correction pillarboxes it)
 import { createLockOn, LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // TI1: touch lock-on
@@ -786,7 +789,7 @@ import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the 
 import { getBool, getInt, getFloat } from '../systems/settings/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
 import { STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, sampleKernel, RECORD_GROUND_STAMP } from '../world/terrain/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water; BAY-LEFT-GROUND: a record's ground stamp
 import { restrideGrid, gridBed } from '../world/terrain/terrainGen.js';   // PERF-EXT26: the restride's grid - the kernel's own law (EV4's ghost rows), on the worker or here
-import { getLocationTerrainTileOrigin, setLocationTiles, locationRectReader } from '../world/terrain/terrainTiles.js';
+import { getLocationTerrainTileOrigin, setLocationTiles, locationRectReader, locationFootprintRect } from '../world/terrain/terrainTiles.js';
 // The start-marker arm (StreamingWorld's PositionPlayerToLocation), the
 // law and its two location-type reads. AUDIT 64 F18/F19: DFU reaches it
 // from FIVE sites, not one, and FOUR of them are here - the court
@@ -1924,7 +1927,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // rows, before they go. The land past the Bay streamed, `?capitals` open; online too.
   const _capitalBase = tamrielLand && capitalsOn() ? capitalBase(_classicRows ?? _hubRows.map(classicRow).filter(Boolean), isMainStoryDungeon) : null;
   const _capitalNames = _capitalBase ? cityBlockNames(_classicRows ?? _hubRows.map(classicRow).filter(Boolean)) : null;
-  setCapitalsStanding(!!_capitalBase);   // TESA10d: a capital on the map (a portal's end there - TESA-NO-FAST), Arena attached or not
+  setCapitalsStanding(!!_capitalBase);   // TESA10d: a capital on the map (a portal's end there, and a journey's - TRAVEL-EVERYWHERE), Arena attached or not
   // TESA2 (world/arenaLocations.js): THE PLACES' TEMPLATES - the cities, hamlets and villages a place past the Bay may
   // clone, off the same rows (the game's own, as MAPS.BSA holds them), kept before the rows go
   const _arenaTemplates = arenaStands ? arenaTemplates(_classicRows ?? _hubRows.map(classicRow).filter(Boolean), isMainStoryDungeon) : null;
@@ -4015,7 +4018,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     try {
       const yl = loc && isEnhanced() && windmillsOn() ? loc : layoutLocation(dfLocation, maps, blocks, { enhanced: true, windmills: true });
       const measures = {
-        ...await stepsBreathing(yardMeasuresSteps(yl, {
+        ...await stepsBreathing(yardMeasuresSteps(shut?.yardLayout?.(yl) ?? yl, {   // FB1028 YARDS Y1: the gates' things as #1184 laid them
           boxOf: (id, at) => placedModelBox(id, at, {
             custom: (cid) => (hasCustomModel(cid) && !customModelNeeds(cid).length && !isCapitalLandmark(cid) ? customModelFor(cid)?.positions ?? null : null),   // BAY-LEFT-SEA: a capital's landmark by its footprint, its blocks' own (tamrielCapitals.js isCapitalLandmark)
             classic: (cid) => dfMeshSize(classicModelIdOf(cid)),
@@ -4028,7 +4031,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         }), breathe),
         keep: lefaySpot ? [[lefaySpot.x, lefaySpot.z, MONUMENT_KEEP_M]] : [],
       };
-      const mapId = (dfLocation.mapTableData?.mapId ?? 0) >>> 0, regionIndex = dfLocation.regionIndex ?? 0, race = walkerRace(people, dfLocation.regionIndex);
+      const mapId = (dfLocation.mapTableData?.mapId ?? 0) >>> 0, regionIndex = dfLocation.regionIndex ?? 0, race = walkerRace(people, dfLocation.regionIndex), folk = folkOfLocation(dfLocation);   // AUDIT PROVINCE-FOLK B6: its keepers its zone's people
       const yardTown = isYardTown(dfLocation), port = isPortTown(dfLocation, portOnSea(dfLocation));
       const sig = `${JSON.stringify(measures)}|${yardTown ? 'yards' : ''}|${port ? 'port' : ''}|${shut?.key ?? (shut ? 'shut' : '')}`;
       let memo = _yardMemo.get(mapId);
@@ -4042,16 +4045,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
           ports = keptPortSitesOn(g, seaField(g.width, g.height, townSeaOf(yl, bearing), bearing));
         }
         if (g && yardTown) sites.push(...await stepsBreathing(craftYardSitesSteps(g), breathe));   // CARP-YARD: the joinery on what the yards and the port left - none of theirs moves
-        memo = { sig, sites, ports };
+        memo = { sig, sites: g && shut?.now ? await stepsBreathing(keptTownSitesSteps(yl, measures, shut.now, townYardsOf(dfLocation), sites, ports), breathe) : sites, ports };   // FB1028 YARDS: #1184's places, a broken one placed again on the town as it stands
         _yardMemo.delete(mapId);
         _yardMemo.set(mapId, memo);
         while (_yardMemo.size > 8) _yardMemo.delete(_yardMemo.keys().next().value);
         if (yardTown && memo.sites.length < ALL_YARD_KINDS.length) console.log(`[yards] ${dfLocation.name}: no room for ${ALL_YARD_KINDS.filter((k) => !memo.sites.some((t) => t.kind === k)).join(' or ')}`);
         if (port && memo.ports.length < PORT_SITE_ORDER.length) console.log(`[port] ${dfLocation.name}: no room for its ${PORT_SITE_ORDER.filter((k) => !memo.ports.some((t) => t.kind === k)).join(' or its ')}`);
       }
-      const shipmaster = portKeeper(mapId, 'shipyard', regionIndex), crewmaster = portKeeper(mapId, 'crewhall', regionIndex), lightkeeper = portKeeper(mapId, 'lighthouse', regionIndex);
+      const shipmaster = portKeeper(mapId, 'shipyard', regionIndex, folk), crewmaster = portKeeper(mapId, 'crewhall', regionIndex, folk), lightkeeper = portKeeper(mapId, 'lighthouse', regionIndex, folk);
       return {
-        yards: memo.sites.map((t) => ({ ...t, key: `${mapId}:${t.kind}`, mapId, regionIndex, race, keeper: yardKeeper(mapId, t.kind, regionIndex) })),
+        yards: memo.sites.map((t) => ({ ...t, key: `${mapId}:${t.kind}`, mapId, regionIndex, race, keeper: yardKeeper(mapId, t.kind, regionIndex, folk) })),
         ports: memo.ports.map((t) => {
           const keeper = t.kind === 'lighthouse' ? lightkeeper : shipmaster;
           return {
@@ -6469,6 +6472,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     surfaceKind: () => _lastFootstepKind, foesNear: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]), horseBreath: () => upkeep.bar(player.transportMode),
   });
   // RR2: the seams EnhancedRiding's component reads off the scene - in a town (PlayerGPS.IsPlayerInTown(true)), the transport mode
+  const staffDragon = createStaffDragonHost({ renderer, canvas, glyphs: () => _staffGlyphs, paused: () => gamePaused() });   // DRAGON-RIDE: /dragon, the flight's pace and the saddle (its cannons are the cast engine's)
   setRrHostSeams({ inTown: () => _isPlayerInTownStrict(), transportMode: () => player.transportMode, riding: () => player.riding });
   preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
   // B1 + AUDIT B-C2: an async open must not clobber a window the
@@ -9690,7 +9694,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
     for (const s of naval?.crewShips?.() ?? []) {
       if (!near(s.key, s.pos)) continue;
-      list.push({ key: s.key, boat: s.boat, deck: csa.deckOf(s.boat.hull, s.boat.variant ?? 0), count: crewCount({ hull: s.boat.hull, shipClass: s.shipClass, crewShare: s.crewShare }), rosterOf: () => crewRoster({ hull: s.boat.hull, seed: s.seed, shipClass: s.shipClass, crewShare: s.crewShare }), seed: s.seed, faction: s.faction, battle: s.battle, struck: s.struck, way: s.way ?? null, toward: s.toward, hold: s.hold, work: s.work ?? 0 });   // SHIP-WATCH: her hurts, mended
+      list.push({ key: s.key, boat: s.boat, deck: csa.deckOf(s.boat.hull, s.boat.variant ?? 0), count: crewCount({ hull: s.boat.hull, shipClass: s.shipClass, crewShare: s.crewShare }), rosterOf: () => crewRoster({ hull: s.boat.hull, seed: s.seed, shipClass: s.shipClass, crewShare: s.crewShare }), seed: s.seed, home: s.home, faction: s.faction, battle: s.battle, struck: s.struck, way: s.way ?? null, toward: s.toward, hold: s.hold, work: s.work ?? 0 });   // SHIP-WATCH: her hurts, mended
     }
     navalCrew.sync(list);
     const grapple = b?.phase === 'grapple' ? b : null;
@@ -13967,7 +13971,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (worldMoveBusy()) return false;   // AUDIT 68 S22
     if (_teleporting) return false;
     if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return false;   // PVPDUNGEONS: the guild's teleport never into, out of or inside the zone - AUDIT CAPTAIN'S SEA P6: nor across the Veil
-    const wildTrip = wildTravelGate(pick.pixel, 0, teleportJourney);   // WILD3: the guild's teleport is a fast journey too - PORTAL-BAY: under the teleport's law past the Bay (systems/travel/pastBayTravel.js teleportJourney: a teleport is TESA-NO-FAST's own road there, never refused as a journey)
+    const wildTrip = wildTravelGate(pick.pixel, 0, teleportJourney);   // WILD3: the guild's teleport is a fast journey too - PORTAL-BAY: under the teleport's law past the Bay (systems/travel/pastBayTravel.js teleportJourney: a teleport is never refused as a journey)
     if (!wildTrip.ok) return false;
     wildTravelPaid(wildTrip);
     _teleporting = true;
@@ -16033,8 +16037,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const why = travelViewAllowed();
       if (!why.ok) { if (why.why) tvSay(why.why); return false; }
       if (!travelViewCanGo()) return false;
-      if (!coords) {
-        const summary = tvPlaceSummary(pick.pixel.x, pick.pixel.y);
+      // OW-PLACE-WALK: a place past the Bay the map hands as its pixel (`place` - a city, a mark, a quest's) is walked to as
+      // the place, to its door; its pixel's byte may be the sea (Solitude's), and the spot's walk refused it as water
+      const summary = !coords || pick.place ? tvPlaceSummary(pick.pixel.x, pick.pixel.y, !!pick.place) : null;
+      if (!coords || summary) {
         return summary ? travelViewRouteTo(summary, { roads: tvMapForcesRoads() }) : false;   // TO-ROADS x OW-PATH
       }
       const o = mapPixelToWorldCoords(pick.pixel.x, pick.pixel.y);
@@ -16053,10 +16059,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (wagonRiders?.seated()) { tvSay(TRAVEL_VIEW_TEXT.rider); return true; }
     if (coords) travelOptions.beginTravelToCoords(pick.pixel, !!opts?.speedCautious);
     else {
-      travelOptions.beginTravel({
+      travelOptions.beginTravel(pick.mapId != null ? {
         pixel: pick.pixel, name: pick.name, mapId: pick.mapId,
         regionIndex: pick.regionIndex, locationIndex: pick.locationIndex,
-      }, !!opts?.speedCautious, estimateMinutes);
+      } : tvPlaceSummary(pick.pixel.x, pick.pixel.y, !!pick.place) ?? pick, !!opts?.speedCautious, estimateMinutes);   // TRAVEL-EVERYWHERE: a place past the Bay (no MAPS.BSA id) by its own summary, which stands it (locationWorldRect)
     }
     return true;
   }
@@ -18038,6 +18044,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const px = playerTravelPixel();
     return maps.getRegionIndexAt(px.x, px.y);
   }
+  setFolkPlace((feet) => (feet && (modes?.mode ?? 'exterior') === 'exterior' ? worldCoordToMapPixel(state.worldCoords(feet).x, state.worldCoords(feet).z) : playerTravelPixel()), (x, y) => maps.getRegionIndexAt(x, y));   // PROVINCE-FOLK (characters/provinceFolk.js): the pixel under scene feet (the player's own indoors, underground and for none) - AUDIT PROVINCE-FOLK A5: a foe drawn where it stands
   /** TESA3 (bible/03-World/Arena-Provinces.md): THE PROVINCE PAST THE BAY - the province (world/tamriel/tamrielGeography.js: its
    *  key, its name, its race) a pixel beyond the Bay stands on (world/tamriel/tamrielLand.js provinceKeyBeyondBay: the trace's, or
    *  the authored shape's), or null: the Bay's own ground, the sea, past the Veil, the land beyond the Bay not streamed.
@@ -19804,7 +19811,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   function runStaffCommand(tabId, c) {
     const say = (line) => chatLog.push(tabId, { text: line, system: true });
     if ('error' in c) { say(c.error); return; }
-    if (c.cmd === 'staff') { for (const line of STAFF_HELP_LINES) say(line); return; }
+    if (c.cmd === 'staff') { for (const line of [...STAFF_HELP_LINES, DRAGON_HELP_LINE]) say(line); return; }
     if (c.cmd === 'relay') {
       // SCALE5b: a relay setting, to the hub (net/relayCfg.js) - the Developer's alone; the hub's answer lands in this tab
       if (!mayRelayCfg(staffGlyphs())) { say('Only a developer may change the relay\'s settings.'); return; }
@@ -19813,6 +19820,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (!relayCfgLink?.sendRelayCfg({ k: c.k, v: c.v })) say('The relay\'s settings need the hub online, on a relay that takes them.');
       return;
     }
+    if (c.cmd === 'dragon') return staffDragon.command(c, say);   // DRAGON-RIDE
     if (c.cmd === 'god' || c.cmd === 'fly') {
       setStaffPowers({ [c.cmd]: c.on });
       say(`${c.cmd === 'god' ? 'God mode' : 'Flying'} ${c.on ? 'on' : 'off'}.`);
@@ -20538,7 +20546,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // STAFF1 (Mac: "for developer, dungeon master and the shadow fang titles I want to add teleport, debug, and other
         // admin commands"): /tp /god /fly /heal /pos /staff (net/staffCommands.js) - asked only of a player whose own
         // glyphs are staff's, so to anyone else each is the chat's own "no such command". Each acts on the typer alone.
-        const staffCmd = isStaffT(staffGlyphs()) ? parseStaffCommand(text.replace(/^\/godmode\b/i, '/god'), staffPowers()) : null;   // TESTBUILD: /godmode = /god
+        const staffCmd = isStaffT(staffGlyphs()) ? (parseDragonCommand(text) ?? parseStaffCommand(text.replace(/^\/godmode\b/i, '/god'), staffPowers())) : null;   // DRAGON-RIDE: /dragon, its own grammar   // TESTBUILD: /godmode = /god
         if (staffCmd) { runStaffCommand(tabId, staffCmd); return 'error' in staffCmd ? false : true; }
         // TITLE-N (Mac: "Dungeon Master ... allows the user to use the /dm to message chat with orange text (similar to
         // /red)"): /red's law below, one frame over - parsed here and never guarded: whether this player may is the
@@ -22539,11 +22547,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     townTalk.say(`In ${WILD_NAME} you can teleport only to or from a city, town or village. Walk or ride its roads.`);   // WW-C2: Cyrodiil's
     return true;
   };
-  /** `law` the verdict past the Bay: a journey's (pastBayJourney, TESA-NO-FAST), or a teleport's (PORTAL-BAY:
+  /** `law` the verdict past the Bay: a journey's (pastBayJourney, TRAVEL-EVERYWHERE: the zone's), or a teleport's (PORTAL-BAY:
    *  pastBayTravel.js teleportJourney - teleportTo and a stone's pick and step, scenes/portalStoneHost.js). */
   const wildTravelGate = (to, spoken = 0, law = pastBayJourney) => {
     if (TEST_GODMODE && staffPowers().god) return { ok: true, fee: 0 };   // TESTBUILD: god mode travels anywhere, free
-    const j = law(playerTravelPixel(), to, online?.wildOk ? wildMapMask() : null, wildJourney({ from: playerTravelPixel(), to, mask: online?.wildOk ? wildMapMask() : null, lastAt: playerEntity.wildTravelAt ?? null, gold: legacyGold(playerEntity) - spoken }));   // AUDIT TESA II P4: never a journey INTO the land past the Bay (systems/travel/pastBayTravel.js - TESA-NO-FAST's law at the gate every journey passes: a party's to its leader, a rider's), the zone's own journeys its own
+    const j = law(playerTravelPixel(), to, online?.wildOk ? wildMapMask() : null, wildJourney({ from: playerTravelPixel(), to, mask: online?.wildOk ? wildMapMask() : null, lastAt: playerEntity.wildTravelAt ?? null, gold: legacyGold(playerEntity) - spoken }));   // TRAVEL-EVERYWHERE: a journey past the Bay is a Bay journey, the zone's own its own (systems/travel/pastBayTravel.js - TESA-NO-FAST retired)
     if (!j.ok) townTalk.say(j.text);
     return j;
   };
@@ -26937,7 +26945,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const channelLinksOffShards = () => { for (const link of chatLinks?.values?.() ?? []) if (isChannelShard(link.room) && !link.welcomed) link.join(channelOf(link.room)); };
   // SCALE5c: and whether the relay keeps the hub's shards, remembered for the next page (`channelLinkRoom`) - AUDIT SCALE II
   // C-2: under this relay's own key, and a relay without them takes the links off their shards
-  const onRelayVersion = (v) => { const keeps = hubShardsSupported(v); try { appStorage()?.setItem?.(hubShardsSeenKey(), keeps ? '1' : '0'); } catch { /* storage refused: the hub itself says it again */ } if (!keeps) channelLinksOffShards(); _relayKeepsRite = relaySupportsRite(v); _relayKeepsCage = relaySupportsCage(v); if (relayVersionSeen(v) === 'changed') chatNotice(relayRestartText()); };   // AUDIT BROKER-CAGE C4, C6: and whether it keeps the rite and the cage
+  const onRelayVersion = (v) => { const keeps = hubShardsSupported(v); try { appStorage()?.setItem?.(hubShardsSeenKey(), keeps ? '1' : '0'); } catch { /* storage refused: the hub itself says it again */ } if (!keeps) channelLinksOffShards(); _relayKeepsRite = relaySupportsRite(v); _relayKeepsCage = relaySupportsCage(v); noteDragonRelay(v); if (relayVersionSeen(v) === 'changed') chatNotice(relayRestartText()); };   // AUDIT BROKER-CAGE C4, C6: and whether it keeps the rite and the cage; DRAGON-RIDE: and the dragon's ride
   // SRV-N: THE BUILD POLL. The relay moves by hand and rarely; the client
   // moves on every merge, which is what "whenever we push" actually is
   // for this project. Nothing tells a tab held open across a deploy that
@@ -27906,7 +27914,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       ar: rig.shot?.n ?? 0,   // SPELLFX1: and the arrows loosed, so the peers draw the shafts
       // RIDE: the mount - the horse or the cart, outdoors (a door dismounts), and which of Eye Of The Beholder's five
       // mounted sprite sets this player chose, so the others draw the rider they drew themselves
-      rd: !riding ? 0 : player.transportMode === TRANSPORT_MODES.Cart ? 2 : 1,
+      rd: dragonPoseRide() ?? (!riding ? 0 : player.transportMode === TRANSPORT_MODES.Cart ? 2 : 1),   // DRAGON-RIDE: on the dragon, its own ride (systems/staffDragon.js - a relay that keeps it)
       rv: Math.max(0, Math.min(4, (() => { try { return modSetting('eye-of-the-beholder', 'Graphics.OnHorse') | 0; } catch { return 0; } })())),   // AUDIT RIDE: the one key, not the mod's whole settings object every frame
       rc: riding ? riddenHorseLook(playerEntity.items ?? []) || undefined : undefined,   // COATS1: the look the horse under them wears (wire.js rideOf) - absent for the bay as drawn
       hs: riding && moved && _hsLatch ? 1 : undefined,   // DISC7: the motor's half-speed flag, the one fact the peers' clop swaps on (wire.js rideOf) - latched off a moving frame (AUDIT DISC7 B2), and absent rather than 0 (B8: the wire omits it at 0)
@@ -28470,7 +28478,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     wildHallRing: () => wildHallHere()?.ring ?? 0,   // PVPDUNGEONS: its tier
     wildHallEpoch: () => { const h = wildHallHere(); return h ? (_wdunEpoch.get(h.key) ?? 0) : 0; },   // PVPDUNGEONS: its reset's epoch
     wildNoBank: () => { if (!wildHere()) return false; townTalk.say('There are no banks in the mountains.'); return true; },
-    wildNoHouse: () => { if (!wildHere()) return false; townTalk.say(`No house is for sale in ${WILD_NAME}.`); return true; },   // PVPDUNGEONS   // PVPDUNGEONS: no banks, so no houses either
     onDungeonLeave: () => { if (_wdunInside) wdunLeft(false); const n = handOverRoomFoes(); if (n) console.info(`[foes] handed ${n} quest foe(s) at the dungeon's door`); doorToken.leaving(); gatherHost?.leaveDungeon(); worldPublish(performance.now(), true); },   // WORLD1: the room's memory goes out while the dungeon still stands; QUEST-PARTY phase 3c: my shared quest's foes to the party who stay   // DOOR-TOKEN: the cell outside's token, if the walk to the door did not mint it
     // OH-D: the four DFU events There's a Hole in the Bottom of the Ocean subscribes to (its Install), raised by the doors
     onSetDungeon: (ctx) => ohAbyss?.onDungeonSet(ohDungeonOf(ctx)),   // DaggerfallDungeon.OnSetDungeon
@@ -29702,7 +29709,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (had && had.loc === loc) return had.rects;
     let rects = null;
     if (loc?.exterior?.exteriorData && loc.mapTableData) {
-      const r = built.get(key)?.locationRect ?? setLocationTiles(loc, maps, blocks, new Uint8Array(128 * 128));
+      // FAR-RINGS: past the Bay a place not built yet is rung by its footprint (LANDFORM4's, off the map table): stamping its
+      // tiles generates its blocks, and a route asks every pixel it crosses - the Imperial City's slices took 14 s in one task
+      const r = built.get(key)?.locationRect ?? (onTheBay(x, y) ? setLocationTiles(loc, maps, blocks, new Uint8Array(128 * 128)) : locationFootprintRect(loc));
       if (r && Number.isFinite(r.xMin + r.xMax + r.yMin + r.yMax)) {
         const o = mapPixelToWorldCoords(x, y);
         rects = locationRectsOf(o.x, o.z, { x: r.xMin, y: r.yMin, width: r.xMax - r.xMin, height: r.yMax - r.yMin }, loc.mapTableData.locationType === LOCATION_TYPES.TownCity, hasCustomLocationPosition(loc));
@@ -34269,6 +34278,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // host now mounts, so the mount cannot behave differently in a
         // town than it does on the road.
         mountRig.frame(dt);
+        staffDragon.frame();   // DRAGON-RIDE: the saddle, where the mount is drawn
         // RR2: EnhancedRiding.OnTriggerEnter / OnControllerColliderHit (:157-215)
         // - a galloping rider tramples the townsperson under the hooves and
         // charges down the foe in the way, once each

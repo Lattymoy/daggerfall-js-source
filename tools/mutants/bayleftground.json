@@ -537,11 +537,12 @@
   {
     "name": "BAY-LEFT-GROUND-GROUND-LAW-not-moved",
     "file": "src/net/wire.js",
-    "old": "export const GROUND_LAW = 2;",
+    "old": "export const GROUND_LAW = 4;",
     "new": "export const GROUND_LAW = 1;",
     "tests": [
       "test/net/fb1017f_groundgate.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A2-A3): GROUND_LAW 4. Re-aimed by content (FB1028 TOWN-GROUND): GROUND_LAW 3; the mutant still stands the law under BAY-LEFT-GROUND's."
   },
   {
     "name": "BAY-LEFT-GROUND-GROUND-PRINT-past-the-Bay-without-its-sites",

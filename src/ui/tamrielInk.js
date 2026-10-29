@@ -491,7 +491,7 @@ export function placeCity(city) {
  *  rectangle (the Bay's own are Daggerfall's, inked by the Bay's painter), each a capital where TAMRIEL1 named it one, by
  *  name in its province. TESA2: where a host stands the places
  *  (arenaStanding), each carries the Bay pixel it stands on (`pixel`, world/arenaPlaces.js standArenaPixels) - a portal's
- *  end on the teleport map (TESA-NO-FAST: never a journey); else `pixel` is null and a press picks nothing, as TESA1's did.
+ *  end on the teleport map and a place's journey on the travel map (TRAVEL-EVERYWHERE); else `pixel` is null and a press picks nothing, as TESA1's did.
  *  @param {NonNullable<ReturnType<typeof arenaPlaces>>} model */
 export function arenaInkCities(model) {
   const capital = new Set(CITIES.filter((c) => c.capital).map((c) => `${c.province}|${c.name}`));
@@ -794,7 +794,7 @@ export function tamrielMarkAt(mx, my, view, placesIn, opts = {}) {
   return best;
 }
 
-/** TESA10d: the pixel a city of a capital's name and province stands on - a portal's end there (TESA-NO-FAST) - the capital's, where a host stands the
+/** TESA10d: the pixel a city of a capital's name and province stands on - a portal's end there and a journey's (TRAVEL-EVERYWHERE) - the capital's, where a host stands the
  *  capitals (world/tamrielCapitals.js capitalsStanding) - or null. */
 function capitalStandsAt(city) {
   const at = capitalsStanding() ? capitalPin(city) : null;
@@ -858,7 +858,7 @@ export function buildTamrielInk({ bayCoast = [] } = {}) {
   // TESA1: the places past the Bay where the trace stands them (TESA12: the port's own); TAMRIEL1's authored cities else
   const arena = traced ? arenaPlaces() : null;
   const cities = arena ? arenaInkCities(arena) : CITIES.map((c) => {
-    const pixel = capitalStandsAt(c);   // TESA10d: a capital the world stands is inked on its pixel - on the teleport map a portal's end (TESA-NO-FAST)
+    const pixel = capitalStandsAt(c);   // TESA10d: a capital the world stands is inked on its pixel - on the teleport map a portal's end, on the travel map a journey's (TRAVEL-EVERYWHERE)
     if (pixel) return { name: c.name, province: c.province, capital: !!c.capital, kind: null, x: pixel.x + 0.5, y: pixel.y + 0.5, pixel };
     const at = placeCity(c); if (!at) return null; const [x, y] = pictureToBay(at[0], at[1]); return { name: c.name, province: c.province, capital: !!c.capital, kind: null, x, y };
   })
@@ -1311,8 +1311,8 @@ export function paintTamrielInk(ctx, view, ink, opts) {
 export function tamrielPlaceAt(mx, my, view, ink = null, marks = null) {
   return tamrielHoverAt(mx, my, view, ink, marks)?.label ?? null;
 }
-/** AUDIT TESA II M8, M14: tamrielPlaceAt's answer and what it answers ON - `{ on: 'city' | 'mark' | 'land' | 'sea', label,
- *  px, py }` (the picture point) - so the window can hand bare land its ore card as the Bay's own ground has, and ask the
+/** AUDIT TESA II M8, M14: tamrielPlaceAt's answer and what it answers ON - `{ on: 'city' | 'mark' | 'land' | 'sea', label }`,
+ *  a mark's with its `name` and world `pixel` - so the window can hand bare land its ore card as the Bay's own ground has, and ask the
  *  seam: a city's or a mark's glyph past the Bay answers within its reach though the pointer is on the Bay's side of the
  *  edge (the Bay's own reads come first; the land and the sea answer past the Bay alone).
  *  `marks.continent`: on the continent the cities' hover is the capitals', as the sheet inks them. */
@@ -1324,7 +1324,8 @@ export function tamrielHoverAt(mx, my, view, ink = null, marks = null) {
   const mark = marks ? tamrielMarkAt(mx, my, view, marks.placesIn, { ...marks, frame: ink?.frame ?? null }) : null;
   if (mark) {
     const mk = provinceKeyAt(...bayToPicture(mark.x, mark.y));
-    return { on: 'mark', label: TAMRIEL_TEXT.city(provinceByKey(mk)?.name ?? TAMRIEL_TEXT.beyond, mark.place.name ?? marks?.nameOf?.(mark.place.x, mark.place.y) ?? '', locationTypeName(mark.place.type)) };
+    const name = mark.place.name ?? marks?.nameOf?.(mark.place.x, mark.place.y) ?? '';
+    return { on: 'mark', label: TAMRIEL_TEXT.city(provinceByKey(mk)?.name ?? TAMRIEL_TEXT.beyond, name, locationTypeName(mark.place.type)), name, pixel: { x: mark.place.x, y: mark.place.y } };   // OW-PAST-BAY: the pixel a press walks to
   }
   if (inBay(mx, my)) return null;
   const [px, py] = bayToPicture(mx, my);

@@ -56,8 +56,8 @@
  {
   "name": "MWNPC10c-race-unkept",
   "file": "src/characters/foeBodies.js",
-  "old": " && rec._mwRosterRace === race) return rec._mwRosterLook;",
-  "new": ") return rec._mwRosterLook;",
+  "old": " && rec._mwRosterRace === race && rec._mwRosterHome === home) return rec._mwRosterLook;",
+  "new": " && rec._mwRosterHome === home) return rec._mwRosterLook;",
   "tests": [
    "test/characters/mwnpc10c_roads.test.js"
   ]

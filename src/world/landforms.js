@@ -130,7 +130,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, EXTRA_NOISE_SCALE, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, kernelTerms, kernelWindows, sampleKernel, generateSamples, cubicInterpolator } from './terrain/terrainSampler.js';
-import { BEACH_JITTER, WORLD_MAP_TILE_DIM, blendLocationTerrain, locationFootprintRect } from './terrain/terrainTiles.js';
+import { BEACH_JITTER, WORLD_MAP_TILE_DIM, blendLocationTerrain, locationFootprintRect, calcAvgMaxHeight } from './terrain/terrainTiles.js';
+import { blendShapedBefore } from './terrain/townBlendBefore.js';   // FB1028 TOWN-GROUND: TS2's blend before it, for a record's move alone
 import { DIR_DELTA, MAP_W, MAP_H } from './road/roadNetwork.js';
 import { perlinNoise } from './perlin.js';
 import { CLIMATES } from '../formats/mapsTables.js';
@@ -1260,6 +1261,24 @@ export function groundMovedField(woods, px, py, locationRect = null, before = gr
   let sum = 0;
   for (let i = 0; i < moved.length; i++) sum += (moved[i] = (now[i] - was[i]) * MAX_TERRAIN_HEIGHT);
   blendLocationTerrain(moved, sum / moved.length, locationRect, hDim, now, true);   // the blend's own, its sea read on today's ground
+  return fieldBetween((x, y) => moved[x * hDim + y], hDim - 1);
+}
+
+/**
+ * FB1028 TOWN-GROUND: HOW FAR DFU'S OWN GROUND UNDER A TOWN MOVED under a record written before GROUND_FRAME_LAW 4
+ * (world/terrain/terrainSampler.js) - its samples through today's town blend less through TS2's before it
+ * (terrain/townBlendBefore.js, over the outline of before: `shapeWas`), kernel units, read between the samples as
+ * landformLiftField's is. null where the rect carries no outline: no blend of a town's stood there.
+ * @param {object} woods @param {number} px @param {number} py @param {?object} locationRect @param {?Uint8Array} [shapeWas] @param {number} [hDim]
+ * @returns {?((sx: number, sy: number) => number)}
+ */
+export function townGroundMovedField(woods, px, py, locationRect, shapeWas = locationRect?.shape, hDim = HEIGHTMAP_DIMENSION) {
+  if (!locationRect?.shape || !shapeWas || hDim !== HEIGHTMAP_DIMENSION) return null;
+  const ground = generateSamples(woods, px, py, hDim), avg = calcAvgMaxHeight(ground)[0];
+  const now = Float32Array.from(ground), was = Float32Array.from(ground);
+  blendLocationTerrain(now, avg, locationRect, hDim, ground);   // the classic pass's own (terrainTiles.js generatePixelTerrain)
+  if (blendShapedBefore(was, shapeWas, ground, hDim) === null) blendLocationTerrain(was, avg, { ...locationRect, shape: null }, hDim);
+  const moved = now.map((v, i) => (v - was[i]) * MAX_TERRAIN_HEIGHT);
   return fieldBetween((x, y) => moved[x * hDim + y], hDim - 1);
 }
 

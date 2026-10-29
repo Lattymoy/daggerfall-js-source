@@ -128,7 +128,8 @@ test('MERCHANT-YARDS THE KEEPER: named on the region\'s bank on the town and the
   for (let m = 0; m < 200; m++) { const k = yardKeeper(m, 'transport', 17); seen.add(k.variant); sexes.add(k.sex); }
   assert.deepEqual([...seen].sort(), [0, 1, 2, 3], 'every outfit worn somewhere');
   assert.deepEqual([...sexes].sort(), ['female', 'male']);
-  assert.match(hostText('src/scenes/world.js'), /const mapId = \(dfLocation\.mapTableData\?\.mapId \?\? 0\) >>> 0, regionIndex = dfLocation\.regionIndex \?\? 0, race = walkerRace\(people, dfLocation\.regionIndex\);/, 'the town\'s own region - its keepers\' bank and its counter\'s');
+  // PIN MOVED (AUDIT PROVINCE-FOLK B6, bible/01-Overview/audits/Audit-Province-Folk.md): and its people, its zone's past the Bay
+  assert.match(hostText('src/scenes/world.js'), /const mapId = \(dfLocation\.mapTableData\?\.mapId \?\? 0\) >>> 0, regionIndex = dfLocation\.regionIndex \?\? 0, race = walkerRace\(people, dfLocation\.regionIndex\), folk = folkOfLocation\(dfLocation\);/, 'the town\'s own region - its keepers\' bank and its counter\'s');
 });
 
 test('MERCHANT-YARDS THE PLACE: its own ground open and off every road, a ring round it open (a road allowed there), its front onto a road; IC-PROPS: the Wagon Yard nearest the middle, the Stable at the edge by the road (mutants: a road under it; the ring unread; the front unread)', () => {
@@ -428,7 +429,7 @@ test('MERCHANT-YARDS THE FOUR HOSTS - world.js places, stands, draws and names t
   // PIN MOVED (AUDIT SHIPYARDS L3-3): a town's yards and its port's places in one pass - townPlacesFor asked once a build
   // PIN MOVED (TS7): and the town's walk shut handed on - its places on its own ground (world/townWalls.js townWalkShut)
   // PIN MOVED (IC-STUTTER): awaited, a step at a time through the build's breather
-  assert.match(world, /const places = yardTown \|\| portTown \? await townPlacesFor\(dfLocation, lefaySpot, climate\?\.people, loc, walkShut, \(\) => breather\.breathe\(\)\) : null;[^\n]*\n\s*if \(yardTown\) yardSites = places\.yards;/);
+  assert.match(world, /const places = yardTown \|\| portTown \? await townPlacesFor\(dfLocation, lefaySpot, climate\?\.people, loc, yardShut, \(\) => breather\.breathe\(\)\) : null;[^\n]*\n\s*if \(yardTown\) yardSites = places\.yards;/);   // PIN MOVED (FB1028): the yards' own shut
   assert.match(world, /const yl = loc && isEnhanced\(\) && windmillsOn\(\) \? loc : layoutLocation\(dfLocation, maps, blocks, \{ enhanced: true, windmills: true \}\);/, 'one layout for every lane (the build\'s own where it is that one)');
   // AUDIT MERCHANT-YARDS G1, G3, G4, G2: the measures the host hands yardMeasuresOf, and the sites kept per town
   // PIN MOVED (BAY-LEFT-SEA): a capital's landmark by its footprint, its blocks' own (tamrielCapitals.js isCapitalLandmark)
@@ -458,7 +459,7 @@ test('MERCHANT-YARDS THE FOUR HOSTS - world.js places, stands, draws and names t
   assert.match(host, /if \(!open\(p\.y\.site, trade, p\.y\.name\)\) midText\(YARD_TEXT\.shut\);/, 'the counter named for its keeper (AUDIT Y5)');
   assert.match(world, /showWagon: \(r, texRemap, position, rotation, kind\) => hcc\.drawShowWagon\(r, texRemap, position, rotation, kind\),/);
   assert.match(world, /race: walkerRace\(climate\?\.people, dfLocation\.regionIndex\),/, 'the walkers...');
-  assert.match(world, /race = walkerRace\(people, dfLocation\.regionIndex\);/, '...and the keepers one race law (a Redguard region\'s Redguard - REGIONAL-FOLK)');
+  assert.match(world, /race = walkerRace\(people, dfLocation\.regionIndex\), folk = folkOfLocation\(dfLocation\);/, '...and the keepers one race law (a Redguard region\'s Redguard - REGIONAL-FOLK; past the Bay the place\'s people)');   // PIN MOVED (AUDIT PROVINCE-FOLK B6)
   assert.match(modes, /for \(const t of host\.yardTargets\?\.\(\) \?\? \[\]\) targets\.push\(t\);/);
   assert.match(modes, /key\.startsWith\('yard:'\)\) \{[^\n]*\n\s*if \(_hitDist > _hitReach\) \{ setMidScreenText\(tooFarAwayText\(\)\); return true; \}\n\s*return host\.activateYard\?\.\(key, getInteractionMode\(\), plaqueActionFor\(key\)\) \?\? true;/);
   assert.match(modes, /accepts: \(it\) => \(typeof b\.accepts === 'function' \? b\.accepts\(it\) : shopBuysItem\(b\.buildingType, it\)\),/, 'the counter asks the yard what it buys');

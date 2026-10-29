@@ -39,7 +39,8 @@ import { landGroundSet } from '../world/tamriel/tamrielLands.js';   // TESA-LAND
 import { standLandProps, landFeetOff } from '../world/lands/landProps.js';   // TESA-LANDS: and its landmarks stood, its flats off their feet
 import { climateNeighbourIn } from '../world/tamriel/tamrielGround.js';
 import { getLocationTerrainTileOrigin, setLocationTiles, WORLD_MAP_TILE_DIM } from '../world/terrain/terrainTiles.js';
-import { townWalkShut } from '../world/townWalls.js';   // TS6: a town's walkers on its own ground, never through its wall; TS7: and its yards
+import { shapeBefore } from '../world/terrain/townBlendBefore.js';   // FB1028 YARDS Y2: the yards' outline as #1184 drew it
+import { townWalkShut, yardWalkShut } from '../world/townWalls.js';   // TS6: a town's walkers on its own ground, never through its wall; TS7: and its yards
 import { townGateRoads } from '../world/townGates.js';   // GATE-ROADS: a walled town's gates for their roads
 import { townFabricFor, fabricWalkShut } from '../world/urban/townFabricStand.js';   // URBANIZER U3: a town past the Bay's streets, yards and dead ends
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
@@ -93,6 +94,7 @@ import { makeBuildingKey } from '../systems/talk/talkTopics.js';
 import { makeCityGate } from '../world/city/cityGate.js';
 import { markRemapLaw, remapAsked, remapLawOf, remapSubMeshes, reskinRemap } from '../world/texRemap.js';
 import { MobilePerson, PERSON_MOVE_SPEED, walkerRace } from '../characters/mobile/mobilePerson.js';
+import { folkOfLocation } from '../characters/provinceFolk.js';   // PROVINCE-FOLK
 import { multiply, trs } from '../world/mat4.js';
 import { naturePicture, junglePicture } from '../world/naturePicture.js';
 import { onFloatingFrame } from '../player/collider.js';
@@ -277,6 +279,7 @@ export function createPixelBuild(host) {
     if (capitalViewOf(dfLocation)) for (const name of dfLocation.exterior.exteriorData.blockNames) { blocks.getBlockByName(name); await breather.breathe(); }
     if (groundLocation) locationRect = setLocationTiles(groundLocation, maps, blocks, seedTilemap);
     if (locationRect) locationRect.gateRoads = townGateRoads(groundLocation, maps, blocks);   // GATE-ROADS: its gates for the kernel to lay their roads (world/townGates.js)
+    if (locationRect?.shape) locationRect.shapeWas = shapeBefore(locationRect.shape, (groundLocation.mapTableData?.mapId ?? 0) >>> 0);   // FB1028 YARDS Y2: the outline #1184 drew, its crops none (posted: its basis is not)
     // WOD2: LocationLoader.AddLocation's DECISION (LocationLoader.cs:101-172),
     // taken here because it reads only the map data and the kernel needs
     // its rects. The region under the player is announced first
@@ -323,7 +326,7 @@ export function createPixelBuild(host) {
     // ghost rows keep edge normals central differences either way.
     const stride = strideFor(px, py);
     const arenaRoadsAt = terrainGen.arenaRoadsEpoch;   // TESA4: the Arena roads' layer this job is built with
-    const { samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, landProps, wodAverages, graht, beach, roadside, townGround, arenaRoads, bridges } = await terrainGen.generate({
+    const { yardPaths, yardGround, samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, landProps, wodAverages, graht, beach, roadside, townGround, arenaRoads, bridges } = await terrainGen.generate({
       px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!groundLocation, climateType: climateBase,
       flattenAt: dfLocation?.capital?.flattenAt ?? null,   // TESA11: a capital over several pixels flattened to its centre's ground
       bed: waterOn,   // AUDIT WATER-NEXT P1: the bed under the water, carved on the worker with the grid
@@ -340,7 +343,8 @@ export function createPixelBuild(host) {
       jungle: jungle ? jungle.job(px, py, FOREST_HIDDEN_LOCATION_TYPES.has(groundLocation?.mapTableData?.locationType)) : null,
       landform,   // LANDFORM1-3: the shaped ground, cut along the kernel's own network
     });
-    const walkShut = dfLocation ? fabricWalkShut(townWalkShut(dfLocation, townGround, paths), dfLocation) : null;   // TS6-TS7: its walkers' and its yards' ground the town's own, off its wall; TS10: the paths painted on it its roads; URBANIZER U3: and off its fences and dead ends' walls
+    const walkShut = dfLocation ? fabricWalkShut(townWalkShut(dfLocation, townGround, paths), dfLocation) : null;
+    const yardShut = dfLocation ? yardWalkShut(fabricWalkShut(townWalkShut(dfLocation, yardGround ?? townGround, yardPaths ?? paths, true), dfLocation), walkShut, dfLocation) : null;   // FB1028 YARDS: the yards' ground as #1184 stood it   // TS6-TS7: its walkers' and its yards' ground the town's own, off its wall; TS10: the paths painted on it its roads; URBANIZER U3: and off its fences and dead ends' walls
     // DW-B: HandlePromote's synchronous arm - a pixel beside the player's is
     // promoted now, on the Deep Waters worker while this build lays out, and
     // published with its seafloor (awaited below); every other one is
@@ -507,7 +511,7 @@ export function createPixelBuild(host) {
       // MERCHANT-YARDS: the town's open ground, clear of its buildings, roads and lots; SHIPYARDS: and a port town's seaward
       // ground, on what the yards left - one pass (AUDIT SHIPYARDS L3-3: the yards' and the port's each asked it whole)
       const yardTown = !farView && isYardTown(dfLocation), portTown = !farView && isPortTown(dfLocation, portOnSea(dfLocation));
-      const places = yardTown || portTown ? await townPlacesFor(dfLocation, lefaySpot, climate?.people, loc, walkShut, () => breather.breathe()) : null;   // TS7: on the town's own ground; IC-STUTTER: a step at a time through the build's breather
+      const places = yardTown || portTown ? await townPlacesFor(dfLocation, lefaySpot, climate?.people, loc, yardShut, () => breather.breathe()) : null;   // TS7: on the town's own ground; IC-STUTTER: a step at a time through the build's breather
       if (yardTown) yardSites = places.yards;
       if (portTown) portSites = places.ports;
       const tilePos = getLocationTerrainTileOrigin(dfLocation);
@@ -975,6 +979,7 @@ export function createPixelBuild(host) {
           // REGIONAL-FOLK: and a Redguard region's walkers are Redguards.
           race: walkerRace(climate?.people, dfLocation.regionIndex),
           nameBank: provinceNameBank(provinceAt(px, py)?.key) ?? getNameBankOfRegion(dfLocation.regionIndex),   // AUDIT-TESA A2-5: past the Bay the province's people, never the Bay region's
+          folk: folkOfLocation(dfLocation),   // PROVINCE-FOLK: past the Bay each walker one of the place's people (its zone's - AUDIT PROVINCE-FOLK B6), named from their own bank
           makePerson: (archive, guard) => {
             const person = new MobilePerson(nav, {
               archive, guard,

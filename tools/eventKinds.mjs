@@ -7,6 +7,7 @@
 //   node tools/eventKinds.mjs > <panel>/lib/pages/eventKinds.js
 import { ENEMY_NAMES } from '../src/characters/enemy/enemyBasics.js';
 import { dexRead } from '../src/systems/enemyExpansion/dexInstall.js';
+import { DWARVEN_DRAGON_ID, DWARVEN_DRAGON_NAME } from '../src/characters/dwarvenDragon.js';
 import { STAFF_EVENT_KINDS_BARRED } from '../src/net/staffEvent/staffEventLaw.js';
 import { isMain } from './lib/isMain.mjs';
 
@@ -19,6 +20,7 @@ export function eventKinds() {
     groups[id >= 128 ? 'People' : 'Monsters'].push([id, id === 40 ? 'Dragonling (alternate)' : name]);   // MobileTypes' second Dragonling
   });
   for (const [id, e] of dexRead({ log: () => {}, mudex: false }).enemies) groups[id >= 384 ? 'Expansion people' : 'Expansion monsters'].push([id, e.props.name]);
+  groups.Monsters.push([DWARVEN_DRAGON_ID, DWARVEN_DRAGON_NAME]);   // DWARVEN-DRAGON: the game's own, for staff
   return Object.entries(groups).map(([group, kinds]) => ({ group, kinds }));
 }
 

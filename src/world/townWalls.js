@@ -31,7 +31,8 @@
 // ═══════════════════════════════════════════════════════════════════
 import { townTiles, townRound, isWallCarrier, shutOffGround, SHAPE_TILES_PER_BLOCK, SHAPE_AUTOMAP_SIDE, WALL_ROUND } from './townShape.js';
 import { composeArenaModel } from './arena/arenaModel.js';
-import { registerPortBlock } from '../formats/worldData/worldDataReplacement.js';
+import { registerPortBlock, blockFromJson } from '../formats/worldData/worldDataReplacement.js';
+import { layoutRmbBlock } from './rmbLayout.js';   // FB1028 YARDS Y1: the carrier as #1184 laid it, for the yards' measures
 import { registerCustomModel } from './customModels.js';
 import { carriageRecordsOf } from './immersiveTravelGates.js';   // TS7: Immersive Travel's carriages, at the new gates
 import { getLocationTerrainTileOrigin } from './terrain/terrainTiles.js';   // TS7: a town's walk shut to its ground
@@ -42,6 +43,7 @@ import { DIR_DELTA } from './road/roadNetwork.js';
 import { arenaRoadByte, arenaJoinByte } from './arenaRoads.js';   // ROAD-FOLLOW: the roads past the Bay, and a crossing's join on the Bay
 import { inBay } from './tamriel/tamrielFrame.js';
 import { ROAD_RECORDS } from './road/roadEdge.js';   // GATE-ROADS: Daggerfall's paving, a town's streets
+import { subMeshDoorType, DOOR_TYPE } from './meshReader.js';   // FB1028 DOORS: a wall piece's door faces, by DFU's door law
 
 /** Daggerfall's wall pieces (ARCH3D): a tower, a length of wall (25.6 m, 9.6 m thick, its inside its local -z), a gate. */
 export const WALL_MODELS = Object.freeze({ tower: 444, wall: 445, gate: 446 });
@@ -64,6 +66,11 @@ const TILE_M = 6.4, BLOCK_M = 102.4;
  *  how far a chord may cut in from the line, in metres (the line stands 13.6 m from a house at the least, a length 4.8 m
  *  in from its middle). */
 export const TOWN_WALL = Object.freeze({ piece: 25.6, run: 2, marker: Object.freeze([15.2, -3]), sag: 3 });
+/** Half a length's thickness and of a tower's body (ARCH3D 445, 444), in metres. */
+const WALL_HALF = 4.8;
+/** FB1028 BENDS: how far a tower stands out of its wall's faces, in metres - never in a length's plane, and low enough that
+ *  a body sliding along the wall (its 0.35 m radius) rides past it. */
+export const TOWER_PROUD = 0.1;
 /** The block of a city's own that carries its wall (its south-west cell) and its index, and the wall's model id - off the
  *  low 20 bits of its map id (Arena's places: 500000 and up). */
 export const townWallBlockName = (mapId) => `TESW${((mapId >>> 0) & 0xfffff).toString(36).toUpperCase()}.RMB`;
@@ -204,10 +211,10 @@ function startAt(pts, i, s) {
  * bearing of each gate (`gates`, points in metres, from the round's middle `c` - a gate within TOWN_WALL.run + 2 lengths of
  * the one before slid on along the wall to that, one crowding the first slid back, one with no room passed over), and between
  * gates runs of whole lengths (as many as the run holds, near enough) in chords of TOWN_WALL.run, each stretched to its
- * chord; a tower at every chord's end, square to the line's bend. A line with no
- * gate is one run round, from the bearing south. Each piece's centre, its outward normal (its local +z) and its stretch.
+ * chord; a tower at every chord's end, square to the line's bend. A line with no gate is one run round, from the bearing
+ * south. Each piece's centre, its outward normal (its local +z), its stretch; FB1028: a tower's `thick`, its body across.
  * @param {Array<[number, number]>} pts @param {[number, number]} c @param {Array<[number, number]>} gates
- * @returns {Array<{ model: number, at: [number, number], out: [number, number], stretch: number }>}
+ * @returns {Array<{ model: number, at: [number, number], out: [number, number], stretch: number, thick?: number }>}
  */
 export function wallPieces(pts, c, gates, o = {}) {
   const L = o.piece ?? TOWN_WALL.piece, run = o.run ?? TOWN_WALL.run;
@@ -282,7 +289,9 @@ export function wallPieces(pts, c, gates, o = {}) {
   });
   ends.forEach((e, i) => {
     const n0 = normals[(i + normals.length - 1) % normals.length], n1 = normals[i], nx = n0[0] + n1[0], ny = n0[1] + n1[1], m = Math.hypot(nx, ny) || 1;
-    out.push({ model: WALL_MODELS.tower, at: e.p, out: /** @type {[number, number]} */ ([nx / m, ny / m]), stretch: 1 });
+    // FB1028 BENDS: its body across the wall wide enough to hold its two lengths' mitred ends, and TOWER_PROUD more
+    const half = Math.max(0.5, (nx * n1[0] + ny * n1[1]) / m), thick = (WALL_HALF / half + TOWER_PROUD) / WALL_HALF;
+    out.push({ model: WALL_MODELS.tower, at: e.p, out: /** @type {[number, number]} */ ([nx / m, ny / m]), stretch: 1, thick });
   });
   return out;
 }
@@ -333,11 +342,57 @@ export function townWall(dfLocation, templateNames, rmbOf, paths = null) {
   const roads = paths ? roadGatePoints(pts, getLocationTerrainTileOrigin(dfLocation), paths) : [];   // ROAD-FOLLOW
   // GATE-ROADS: each gate moved along the wall from its road's crossing to where it opens onto one of the town's streets
   const blockAt = (bx, by) => rmbOf(ed.blockNames[by * w + bx]);
-  const ways = roads.length ? gatesOnStreets(pts, roads, { W: w * T, H: h * T, houses: townHouses(w, h, blockAt), streets: townStreets(w, h, blockAt) }) : [];
+  const town = roads.length ? { W: w * T, H: h * T, houses: townHouses(w, h, blockAt), streets: townStreets(w, h, blockAt) } : null;
+  const onStreets = town ? gatesOnStreets(pts, roads, town) : [];
+  const streetWays = town ? streetGates(pts, town, onStreets) : [];   // FB1028 ROADS: and a gate where a street of the town's runs into the wall
+  const ways = [...onStreets, ...streetWays];
   const pieces = roads.length ? wallPieces(pts, c, ways, { onLine: true }) : wallPieces(pts, c, gates);
+  // FB1028 YARDS (the owner: every yard where #1184 stood it): the pieces as #1184 stood them - no street's gate, no tower grown
+  const was = streetWays.length ? wallPieces(pts, c, onStreets, { onLine: true }) : pieces, yardPieces = was.map((p) => ({ ...p, thick: 1 }));
+  return { line: pts, gates, frames, middle: c, pieces, markers: gateMarkers(pieces), roads, ways, streetWays, yardPieces };
+}
+/** A wall's start markers: outside each gate, Daggerfall's offset (TOWN_WALL.marker). @param {any[]} pieces */
+const gateMarkers = (pieces) => {
   const [outM, alongM] = TOWN_WALL.marker;
-  const markers = pieces.filter((p) => p.model === WALL_MODELS.gate).map((p) => /** @type {[number, number]} */ ([p.at[0] + p.out[0] * outM + p.out[1] * alongM, p.at[1] + p.out[1] * outM - p.out[0] * alongM]));
-  return { line: pts, gates, frames, middle: c, pieces, markers, roads, ways };
+  return pieces.filter((p) => p.model === WALL_MODELS.gate).map((p) => /** @type {[number, number]} */ ([p.at[0] + p.out[0] * outM + p.out[1] * alongM, p.at[1] + p.out[1] * outM - p.out[0] * alongM]));
+};
+
+/**
+ * FB1028 ROADS (the owner's staff: "a cobbled road running straight into a blank stretch of the wall"): WHERE THE TOWN'S
+ * OWN STREETS RUN INTO ITS WALL. The line stands WALL_ROUND.line from the nearest house, and a street Daggerfall laid out
+ * to its ring's gate runs on past the houses into it. Each run of the line over the town's paving (`town.streets`) whose
+ * middle is GATE_ARMS_MERGE or more along the line from every gate (`ways`) and every run taken before is a gate's point -
+ * its opening centred on it (wallPieces' `onLine`). A run nearer a gate is left: two gates stand two lengths apart at least.
+ * @param {Array<[number, number]>} pts @param {{ W: number, H: number, streets: Uint8Array }} town @param {Array<[number, number]>} ways
+ * @returns {Array<[number, number]>} */
+export function streetGates(pts, town, ways) {
+  const n = pts.length, cum = [0], STEP = 0.8;
+  for (let i = 0; i < n; i++) cum.push(cum[i] + Math.hypot(pts[(i + 1) % n][0] - pts[i][0], pts[(i + 1) % n][1] - pts[i][1]));
+  const P = cum[n];
+  if (!(P > 0)) return [];
+  const at = (u) => {
+    let lo = 0, hi = n - 1;
+    while (lo < hi) { const m = (lo + hi + 1) >> 1; if (cum[m] <= u) lo = m; else hi = m - 1; }
+    const a = pts[lo], b = pts[(lo + 1) % n], f = (u - cum[lo]) / Math.max(1e-9, cum[lo + 1] - cum[lo]);
+    return /** @type {[number, number]} */ ([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]);
+  };
+  const paved = (u) => { const [x, z] = at(u), tx = Math.floor(x / TILE_M), ty = Math.floor(z / TILE_M); return tx >= 0 && ty >= 0 && tx < town.W && ty < town.H && !!town.streets[ty * town.W + tx]; };
+  const arcOf = (q) => { let best = Infinity, arc = 0; for (let u = 0; u < P; u += STEP) { const p = at(u), d = Math.hypot(p[0] - q[0], p[1] - q[1]); if (d < best) { best = d; arc = u; } } return arc; };
+  const taken = ways.map(arcOf), out = [];
+  // the runs, from a sample off the paving (so none is split at the line's start)
+  let s0 = 0;
+  while (s0 < P && paved(s0)) s0 += STEP;
+  for (let k = 0, from = -1; k * STEP <= P; k++) {
+    const u = s0 + k * STEP, on = k * STEP < P && paved(u % P);
+    if (on && from < 0) from = u;
+    if (on || from < 0) continue;
+    const mid = (from + u - STEP) / 2;
+    from = -1;
+    if (taken.some((a) => Math.abs(((a - mid + P / 2) % P + P) % P - P / 2) < GATE_ARMS_MERGE)) continue;
+    taken.push(mid % P);
+    out.push(at(mid % P));
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------- GATE-ROADS: a gate opens onto a street
@@ -543,7 +598,9 @@ export function gateFurniture(wall, classicOf, extra = carriageRecordsOf, blocke
   const bearing = ([x, z]) => Math.atan2(z - c[1], x - c[0]);
   const pairs = [];
   gp.forEach((p, i) => frames.forEach((f, j) => pairs.push([Math.abs(Math.atan2(Math.sin(bearing(p.at) - bearing(f.at)), Math.cos(bearing(p.at) - bearing(f.at)))), i, j])));
-  pairs.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);
+  // AUDIT FB1028 B2: a road's gate takes its template gate's things first, a street's gate (streetGates) what is left
+  const street = (i) => (wall?.streetWays ?? []).some((q) => Math.hypot(q[0] - gp[i].at[0], q[1] - gp[i].at[1]) < TOWN_WALL.piece / 2) ? 1 : 0;
+  pairs.sort((a, b) => street(a[1]) - street(b[1]) || a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);
   const usedP = new Set(), usedF = new Set();
   for (const [, i, j] of pairs) {
     if (usedP.has(i) || usedF.has(j)) continue;
@@ -684,33 +741,268 @@ export function bendTower(m) {
   return made;
 }
 
+/** WALL-FLICKER (FB1028): how far past a bend tower's side a face running along that side is cut away, in metres - past
+ *  the depth buffer's step at 400 m (near 0.2 m, 24 bits). */
+export const TOWER_CLEAR = 0.05;
+/** The part of a convex polygon where `f` is 0 or more, its cut's corners interpolated (each corner [x, y, z, nx, ny, nz,
+ *  u, v]). */
+function cutTo(poly, f) {
+  const out = [], d = poly.map(f);
+  for (let i = 0; i < poly.length; i++) {
+    const j = (i + 1) % poly.length, a = poly[i], b = poly[j], fa = d[i], fb = d[j];
+    if (fa >= 0) out.push(a);
+    if ((fa > 0 && fb < 0) || (fa < 0 && fb > 0)) {
+      const t = fa / (fa - fb), m = new Array(a.length);
+      for (let k = 0; k < a.length; k++) m[k] = a[k] + (b[k] - a[k]) * t;
+      out.push(m);
+    }
+  }
+  return out;
+}
+/** A point's place in a tower's frame: along its line (its local +x) and out. */
+const alongOf = ({ at, out }, x, z) => (x - at[0]) * out[1] - (z - at[1]) * out[0];
+const outOf = ({ at, out }, x, z) => (x - at[0]) * out[0] + (z - at[1]) * out[1];
+/** A convex polygon's parts outside a box of a tower's frame (`a` along, `o` out, each [from, to]) under its crown - each
+ *  side's outside kept and the rest cut by the next: convex polygons. */
+function outsideBox(poly, tw, [a0, a1], [o0, o1]) {
+  const a = (v) => alongOf(tw, v[0], v[2]), o = (v) => outOf(tw, v[0], v[2]);
+  const sides = [(v) => a(v) - a1, (v) => a0 - a(v), (v) => o(v) - o1, (v) => o0 - o(v), (v) => v[1] - CORNER_TOWER.crown];
+  // wholly past one side: as it was; within them all: none
+  let within = true;
+  for (const f of sides) {
+    let past = true;
+    for (const v of poly) { const d = f(v); if (d < 0) past = false; if (d > 0) within = false; }
+    if (past) return [poly];
+  }
+  if (within) return [];
+  const kept = [];
+  let rest = poly;
+  for (const f of sides) {
+    const outside = cutTo(rest, f);
+    if (outside.length > 2) kept.push(outside);
+    rest = cutTo(rest, (v) => -f(v));
+    if (rest.length < 3) break;
+  }
+  return kept;
+}
+/**
+ * WALL-FLICKER: A LENGTH OR A GATE CUT CLEAR OF THE BEND TOWERS (`towers`, their pieces) - its model's parts (the carrier's
+ * metres) in a tower's body left out, a face along a side cut TOWER_CLEAR past it, a level face mitred at the tower's middle.
+ * Its end stands in the body (TS8): its faces lay in the tower's where the line runs straight, and its walk on the next
+ * one's at a sharp bend, both drawn there. A part no tower reaches is handed back as it was.
+ * @param {{ positions: Float32Array, normals: Float32Array, uvs: ArrayLike<number>, indices: ArrayLike<number>, subMeshes: any[] }} part
+ * @param {Array<{ at: [number, number], out: [number, number], thick?: number }>} towers
+ */
+export function clearOfTowers(part, towers) {
+  const P = part.positions, N = part.normals, U = part.uvs, half = (CORNER_TOWER.body[1] - CORNER_TOWER.body[0]) / 2;
+  // FB1028: a bend's tower grown across its wall (`thick`) - its body that far out of the line
+  const across = (tw) => half * (tw.thick ?? 1), T = Math.max(1, ...towers.map((tw) => tw.thick ?? 1)), r = 2 * Math.SQRT2 * half * T;
+  const corner = (i) => [P[i * 3], P[i * 3 + 1], P[i * 3 + 2], N[i * 3], N[i * 3 + 1], N[i * 3 + 2], U[i * 2], U[i * 2 + 1]];
+  let mx = 0, mz = 0, x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+  for (let v = 0; v < P.length; v += 3) {
+    mx += P[v] / (P.length / 3); mz += P[v + 2] / (P.length / 3);
+    x0 = Math.min(x0, P[v]); x1 = Math.max(x1, P[v]); z0 = Math.min(z0, P[v + 2]); z1 = Math.max(z1, P[v + 2]);
+  }
+  towers = towers.filter((tw) => tw.at[0] + r > x0 && tw.at[0] - r < x1 && tw.at[1] + r > z0 && tw.at[1] - r < z1);   // those in its reach
+  if (!towers.length) return part;
+  /** its parts outside one tower: its body (a face along a side TOWER_CLEAR past it), then a level face's on the far side of
+   *  its middle (the next piece's walk lies there, as level) */
+  const clear = (q, tw) => {
+    const ca = Math.abs(q[0][3] * tw.out[1] - q[0][5] * tw.out[0]) >= Math.SQRT1_2 ? TOWER_CLEAR : 0, co = Math.abs(q[0][3] * tw.out[0] + q[0][5] * tw.out[1]) >= Math.SQRT1_2 ? TOWER_CLEAR : 0;
+    const body = outsideBox(q, tw, [-half - ca, half + ca], [-across(tw) - co, across(tw) + co]);
+    if (Math.abs(q[0][4]) < Math.SQRT1_2) return body;
+    return body.flatMap((k) => outsideBox(k, tw, alongOf(tw, mx, mz) < 0 ? [0, 2 * half] : [-2 * half, 0], [-2 * across(tw), 2 * across(tw)]));
+  };
+  // a corner of its own kept once, as it was; a cut's corner added
+  const positions = [], normals = [], uvs = [], indices = [], subMeshes = [], own = new Int32Array(P.length / 3).fill(-1);
+  const put = (v) => { positions.push(v[0], v[1], v[2]); normals.push(v[3], v[4], v[5]); uvs.push(v[6], v[7]); return positions.length / 3 - 1; };
+  const ownAt = (i) => (own[i] >= 0 ? own[i] : (own[i] = put(corner(i))));
+  const rBody = Math.SQRT2 * (half * T + TOWER_CLEAR), near = [];
+  let cut = false;
+  for (const s of part.subMeshes) {
+    const startIndex = indices.length;
+    for (let t = 0; t < s.primitiveCount; t++) {
+      // the towers whose body (or, for a level face, its far side) its box meets
+      const i0 = part.indices[s.startIndex + t * 3], i1 = part.indices[s.startIndex + t * 3 + 1], i2 = part.indices[s.startIndex + t * 3 + 2];
+      const rr = Math.abs(N[i0 * 3 + 1]) >= Math.SQRT1_2 ? r : rBody;
+      near.length = 0;
+      for (const tw of towers) {
+        // its corners in the tower's frame: kept whole where they all lie past one side of the boxes it is cut by
+        let a0 = Infinity, a1 = -Infinity, o0 = Infinity, o1 = -Infinity;
+        for (const i of [i0, i1, i2]) { const a = alongOf(tw, P[i * 3], P[i * 3 + 2]), o = outOf(tw, P[i * 3], P[i * 3 + 2]); a0 = Math.min(a0, a); a1 = Math.max(a1, a); o0 = Math.min(o0, o); o1 = Math.max(o1, o); }
+        const reach = rr === r ? 2 * half : half + TOWER_CLEAR, reachOut = rr === r ? 2 * across(tw) : across(tw) + TOWER_CLEAR;
+        if (a0 < reach && a1 > -reach && o0 < reachOut && o1 > -reachOut) near.push(tw);
+      }
+      const ids = [i0, i1, i2];
+      if (!near.length) { indices.push(ownAt(i0), ownAt(i1), ownAt(i2)); continue; }
+      const tri = ids.map(corner), polys = near.reduce((ps, tw) => ps.flatMap((q) => clear(q, tw)), [tri]);
+      cut = true;
+      for (const q of polys) {
+        const at = q.map((v) => (tri.includes(v) ? ownAt(ids[tri.indexOf(v)]) : put(v)));
+        for (let k = 1; k + 1 < q.length; k++) {
+          // a sliver under a tenth of a millimetre across (a face on a cut's plane, as the corners' floats stand it) left out
+          const [a, b, c] = [q[0], q[k], q[k + 1]], e = [0, 1, 2].map((i) => b[i] - a[i]), g = [0, 1, 2].map((i) => c[i] - a[i]);
+          const twice = Math.hypot(e[1] * g[2] - e[2] * g[1], e[2] * g[0] - e[0] * g[2], e[0] * g[1] - e[1] * g[0]);
+          if (twice >= 1e-4 * Math.max(Math.hypot(...e), Math.hypot(...g), Math.hypot(c[0] - b[0], c[1] - b[1], c[2] - b[2]))) indices.push(at[0], at[k], at[k + 1]);
+        }
+      }
+    }
+    if (indices.length > startIndex) subMeshes.push({ ...s, startIndex, primitiveCount: (indices.length - startIndex) / 3 });
+  }
+  if (!cut) return part;
+  return { positions: new Float32Array(positions), normals: new Float32Array(normals), uvs: new Float32Array(uvs), indices: Uint32Array.from(indices), subMeshes };
+}
+
 /**
  * THE WALL'S MODEL: each piece's classic model (`classicModel(id)`, dfMeshToModel's shape - metres, its inside its local -z)
  * turned so its local +z is the piece's outward normal and its +x along the line, stretched along its length, set at its
  * centre (x east, z north, the carrier's metres) - all of them one model, a submesh a picture (composeArenaModel). TS8: a
- * tower the corner tower's body alone (bendTower).
+ * tower the corner tower's body alone (bendTower). FB1028: no door (wallDoorless); a tower grown across by `thick`; a
+ * length or a gate cut on its towers' middle lines (mitreEnds) and clear of their bodies (WALL-FLICKER, clearOfTowers).
  * @param {ReturnType<typeof wallPieces>} pieces @param {(id: number) => any} classicModel
  */
 export function townWallModel(pieces, classicModel) {
-  const parts = [];
+  const steps = townWallModelSteps(pieces, classicModel);
+  let r = steps.next();
+  while (!r.done) r = steps.next();
+  return r.value;
+}
+/** WALL-FLICKER: how many pieces of a wall are made between two breaths (the cut is several times the pieces' own work). */
+export const WALL_PIECES_A_BREATH = 16;
+/** The wall's model made a breath at a time (`breathe()` awaited every WALL_PIECES_A_BREATH pieces) - the model door's
+ *  `buildSliced` (world/customModels.js customModelBuilt), as the town's fabric is. */
+export async function townWallModelSliced(pieces, classicModel, breathe) {
+  const steps = townWallModelSteps(pieces, classicModel);
+  let r = steps.next();
+  while (!r.done) { await breathe(); r = steps.next(); }
+  return r.value;
+}
+function* townWallModelSteps(pieces, classicModel) {
+  const parts = [], towers = pieces.filter((p) => p.model === WALL_MODELS.tower);
+  const corner = classicModel(WALL_MODELS.tower), bodies = corner && bendTower(corner) !== corner ? towers : [];   // a mod's tower none
+  let made = 0;
   for (const p of pieces) {
-    const m = p.model === WALL_MODELS.tower ? bendTower(classicModel(p.model)) : classicModel(p.model);
+    if (++made % WALL_PIECES_A_BREATH === 0) yield;
+    const tower = p.model === WALL_MODELS.tower, m = wallDoorless(tower ? bendTower(classicModel(p.model)) : classicModel(p.model));
     if (!m) continue;
-    const [wx, wz] = p.out, ux = wz, uz = -wx;   // local +x: u = (w.z, -w.x), so u x up = w (no mirror)
+    const [wx, wz] = p.out, ux = wz, uz = -wx, th = tower ? p.thick ?? 1 : 1;   // local +x: u = (w.z, -w.x), so u x up = w (no mirror)
     const n = m.positions.length / 3, positions = new Float32Array(n * 3), normals = new Float32Array(n * 3);
     for (let v = 0; v < n; v++) {
-      const lx = m.positions[v * 3] * p.stretch, ly = m.positions[v * 3 + 1], lz = m.positions[v * 3 + 2];
+      const lx = m.positions[v * 3] * p.stretch, ly = m.positions[v * 3 + 1], lz = m.positions[v * 3 + 2] * th;
       positions[v * 3] = p.at[0] + lx * ux + lz * wx;
       positions[v * 3 + 1] = ly;
       positions[v * 3 + 2] = p.at[1] + lx * uz + lz * wz;
-      const nx = m.normals[v * 3] / p.stretch, ny = m.normals[v * 3 + 1], nz = m.normals[v * 3 + 2], len = Math.hypot(nx, ny, nz) || 1;
+      const nx = m.normals[v * 3] / p.stretch, ny = m.normals[v * 3 + 1], nz = m.normals[v * 3 + 2] / th, len = Math.hypot(nx, ny, nz) || 1;
       normals[v * 3] = (nx * ux + nz * wx) / len;
       normals[v * 3 + 1] = ny / len;
       normals[v * 3 + 2] = (nx * uz + nz * wz) / len;
     }
-    parts.push({ positions, normals, uvs: m.uvs, indices: m.indices, subMeshes: m.subMeshes });
+    const part = { positions, normals, uvs: m.uvs, indices: m.indices, subMeshes: m.subMeshes };
+    parts.push(tower ? part : clearOfTowers(mitreEnds(part, p, towers), bodies));
   }
   return composeArenaModel(parts);
+}
+
+/** FB1028 BENDS: the planes a length or a gate is cut on - each tower its ends stand in, on the tower's middle line across
+ *  the wall (its own `out`), the piece's side kept: two lengths meeting at a bend meet on one plane, inside the tower's
+ *  body, and neither runs on through the other or out of the tower's faces. @param {any} p @param {any[]} towers */
+export function mitrePlanes(p, towers) {
+  const hl = (TOWN_WALL.piece * p.stretch) / 2, u = [p.out[1], -p.out[0]], planes = [];
+  for (const s of [-1, 1]) {
+    const e = [p.at[0] + s * hl * u[0], p.at[1] + s * hl * u[1]];
+    const t = towers.find((q) => Math.hypot(q.at[0] - e[0], q.at[1] - e[1]) < 0.01);
+    if (!t) continue;
+    const n = [t.out[1], -t.out[0]], k = Math.sign((p.at[0] - t.at[0]) * n[0] + (p.at[1] - t.at[1]) * n[1]) || 1;
+    planes.push({ at: t.at, n: [k * n[0], k * n[1]] });
+  }
+  return planes;
+}
+/** FB1028 BENDS: a placed part (townWallModel's) cut on its piece's mitre planes - a triangle across a plane cut on it, its
+ *  normals and UVs carried along the cut; one wholly past a plane gone. A part with no plane as it is. */
+function mitreEnds(part, p, towers) {
+  const planes = mitrePlanes(p, towers);
+  if (!planes.length) return part;
+  const { positions: P, normals: N, uvs: U, indices: I } = part, n0 = P.length / 3, more = [], index = [], subMeshes = [];
+  const side = (q, pl) => (q[0] - pl.at[0]) * pl.n[0] + (q[2] - pl.at[1]) * pl.n[1];
+  const kept = new Uint8Array(n0);
+  for (let v = 0; v < n0; v++) kept[v] = planes.every((pl) => side([P[v * 3], 0, P[v * 3 + 2]], pl) >= 0) ? 1 : 0;
+  // a corner of a cut triangle: its eight values, kept as a new vertex (its index past the part's own)
+  const vert = (v) => [P[v * 3], P[v * 3 + 1], P[v * 3 + 2], N[v * 3], N[v * 3 + 1], N[v * 3 + 2], U[v * 2], U[v * 2 + 1]];
+  const add = (q) => { more.push(q); return n0 + more.length - 1; };
+  for (const s of part.subMeshes) {
+    const startIndex = index.length;
+    for (let t = 0; t < s.primitiveCount; t++) {
+      const a = I[s.startIndex + t * 3], b = I[s.startIndex + t * 3 + 1], c = I[s.startIndex + t * 3 + 2];
+      if (kept[a] && kept[b] && kept[c]) { index.push(a, b, c); continue; }   // the most of them: whole on the piece's side
+      let poly = [vert(a), vert(b), vert(c)];
+      for (const pl of planes) {
+        const cut = [];
+        poly.forEach((q, k) => {
+          const r = poly[(k + 1) % poly.length], dq = side(q, pl), dr = side(r, pl);
+          if (dq >= 0) cut.push(q);
+          if ((dq >= 0) !== (dr >= 0)) cut.push(q.map((x, j) => x + ((r[j] - x) * dq) / (dq - dr)));
+        });
+        poly = cut;
+      }
+      for (let k = 1; k + 1 < poly.length; k++) index.push(add(poly[0]), add(poly[k]), add(poly[k + 1]));
+    }
+    if (index.length > startIndex) subMeshes.push({ textureArchive: s.textureArchive, textureRecord: s.textureRecord, startIndex, primitiveCount: (index.length - startIndex) / 3 });
+  }
+  const n = n0 + more.length, positions = new Float32Array(n * 3), normals = new Float32Array(n * 3), uvs = new Float32Array(n * 2);
+  positions.set(P); normals.set(N); uvs.set(U);
+  more.forEach((q, k) => { positions.set(q.slice(0, 3), (n0 + k) * 3); normals.set(q.slice(3, 6), (n0 + k) * 3); uvs.set(q.slice(6, 8), (n0 + k) * 2); });
+  return { positions, normals, uvs, indices: Uint32Array.from(index), subMeshes };
+}
+
+const _doorless = new WeakMap();
+/**
+ * FB1028 DOORS: A LENGTH OR A GATE WITH NO DOOR. Daggerfall's wall doors (445's one, 446's two, on the wall's inside at
+ * ground level) are a Town23 building's, opening into the ring block's interior; a wall on its outline is one model of
+ * the town's own and opens into none, and at a bend its lengths' doors stood in the towers. Each door triangle is laid in
+ * the face it is cut from: the picture and UV law of a coplanar triangle of the model's that shares a corner with it.
+ * A model with no door is itself. @param {any} m dfMeshToModel's shape @returns {any}
+ */
+export function wallDoorless(m) {
+  if (!m?.positions || !m.indices || !m.subMeshes) return m;
+  let made = _doorless.get(m);
+  if (made) return made;
+  const isDoor = (s) => subMeshDoorType(s.textureArchive, s.textureRecord) !== DOOR_TYPE.NONE;
+  if (!m.subMeshes.some(isDoor)) { _doorless.set(m, m); return m; }
+  const P = m.positions, N = m.normals, U = m.uvs, at = (v) => [P[v * 3], P[v * 3 + 1], P[v * 3 + 2]];
+  const row = (v, uv) => [...at(v), N[v * 3], N[v * 3 + 1], N[v * 3 + 2], ...uv];
+  const tris = m.subMeshes.flatMap((s) => Array.from({ length: s.primitiveCount }, (_, t) => ({ s, ids: [0, 1, 2].map((k) => m.indices[s.startIndex + t * 3 + k]) })));
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2], sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const planeOf = (ids) => {
+    const [a, b, c] = ids.map(at), e = sub(b, a), f = sub(c, a), n = [e[1] * f[2] - e[2] * f[1], e[2] * f[0] - e[0] * f[2], e[0] * f[1] - e[1] * f[0]], l = Math.hypot(...n) || 1;
+    return { n: n.map((x) => x / l), d: dot(n, a) / l };
+  };
+  const byKey = new Map(), key = (s) => `${s.textureArchive}/${s.textureRecord}`;
+  for (const t of tris) {
+    if (isDoor(t.s)) continue;
+    if (!byKey.has(key(t.s))) byKey.set(key(t.s), { s: t.s, rows: [] });
+    byKey.get(key(t.s)).rows.push(t.ids.map((v) => row(v, [U[v * 2], U[v * 2 + 1]])));
+  }
+  for (const t of tris.filter((q) => isDoor(q.s))) {
+    const pl = planeOf(t.ids), corners = t.ids.map(at);
+    const coplanar = (q) => { const o = planeOf(q.ids); return dot(o.n, pl.n) > 0.999 && Math.abs(o.d - pl.d) < 0.01; };
+    const face = tris.find((q) => !isDoor(q.s) && coplanar(q) && q.ids.some((v) => corners.some((c) => Math.hypot(...sub(at(v), c)) < 1e-3)));
+    if (!face) continue;   // no face of its own to lay it in: left out
+    const [q0, q1, q2] = face.ids.map(at), e1 = sub(q1, q0), e2 = sub(q2, q0), [i0, i1, i2] = face.ids;
+    const a11 = dot(e1, e1), a12 = dot(e1, e2), a22 = dot(e2, e2), det = a11 * a22 - a12 * a12 || 1;
+    const uvAt = (p) => {
+      const r = sub(p, q0), b1 = dot(r, e1), b2 = dot(r, e2), s = (b1 * a22 - b2 * a12) / det, w = (b2 * a11 - b1 * a12) / det;
+      return [0, 1].map((j) => U[i0 * 2 + j] + s * (U[i1 * 2 + j] - U[i0 * 2 + j]) + w * (U[i2 * 2 + j] - U[i0 * 2 + j]));
+    };
+    byKey.get(key(face.s)).rows.push(t.ids.map((v) => row(v, uvAt(at(v)))));
+  }
+  const pos = [], nrm = [], uv = [], subMeshes = [];
+  for (const { s, rows } of byKey.values()) {
+    subMeshes.push({ textureArchive: s.textureArchive, textureRecord: s.textureRecord, startIndex: pos.length / 3, primitiveCount: rows.length });
+    for (const q of rows.flat()) { pos.push(q[0], q[1], q[2]); nrm.push(q[3], q[4], q[5]); uv.push(q[6], q[7]); }
+  }
+  made = { ...m, positions: new Float32Array(pos), normals: new Float32Array(nrm), uvs: new Float32Array(uv), indices: Uint32Array.from({ length: pos.length / 3 }, (_, i) => i), subMeshes, doors: [] };
+  _doorless.set(m, made);
+  return made;
 }
 
 /** A misc model or a flat at the carrier's metres (x east, z north) on the ground - DFU's record law
@@ -804,11 +1096,15 @@ export function registerTownWall(dfLocation, templateNames, io, open, made = und
   const mapId = (dfLocation?.mapTableData?.mapId ?? 0) >>> 0, name = townWallBlockName(mapId), { servedOf, classicOf } = ioOf(io);
   if (_stood.has(name)) return false;
   _stood.add(name);
+  /** @type {any} */
   const kept = { wall: made, w: dfLocation.exterior.exteriorData.width, h: dfLocation.exterior.exteriorData.height, cells: null, of: () => null, dfLocation };
   const modelId = townWallModelId(mapId);
   const rmbOf = (n) => (isWallCarrier(n) ? null : servedOf(n)?.rmbBlock ?? null);
   // the model registered when the wall is made - never one built off a wall still waiting (its mesh is kept by its id)
-  const model = () => registerCustomModel(modelId, (ctx) => townWallModel(kept.wall?.pieces ?? [], (id) => ctx?.classicModel?.(id) ?? null), () => true, { needs: Object.values(WALL_MODELS) });
+  const model = () => registerCustomModel(modelId, (ctx) => townWallModel(kept.wall?.pieces ?? [], (id) => ctx?.classicModel?.(id) ?? null), () => true, {
+    needs: Object.values(WALL_MODELS),
+    buildSliced: (ctx, breathe) => townWallModelSliced(kept.wall?.pieces ?? [], (id) => ctx?.classicModel?.(id) ?? null, breathe),   // WALL-FLICKER: a breath at a time
+  });
   // ROAD-FOLLOW: made when first read with its pixel's roads known (its gates where they come in - townWall's `paths`);
   // while they are not, none made and nothing kept, and its pixel is built again when they land (`_waiting`)
   kept.of = () => {
@@ -820,6 +1116,18 @@ export function registerTownWall(dfLocation, templateNames, io, open, made = und
     return kept.wall;
   };
   if (made !== undefined) model();
+  // FB1028 YARDS Y1: the carrier as #1184 laid it - its gates' things stood clear of that wall (yardPieces), no street's
+  // gate - or null where it lays them as today's does. The yards' measures alone read it (townWallYardLayout).
+  kept.yardCarrier = () => {
+    const wall = kept.of();
+    if (!wall?.yardPieces) return null;
+    if (kept.yardBlock !== undefined) return kept.yardBlock;
+    const was = { ...wall, pieces: wall.yardPieces, streetWays: [] }, markers = gateMarkers(was.pieces);
+    const then = gateFurniture(was, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, was, rmbOf));
+    const now = gateFurniture(wall, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, wall, rmbOf));
+    const same = JSON.stringify([then, markers]) === JSON.stringify([now, wall.markers]);
+    return (kept.yardBlock = same ? null : blockFromJson(townWallBlockJson(name, modelId, markers, open, then), townWallBlockIndex(mapId)));
+  };
   _walls.set(mapId, kept);   // TS6: its town map's and its walkers'
   // ROAD-FOLLOW: a carrier laid while its wall waits is provisional, and its pixel is owed a build once its roads land
   // (`_waiting`, townWallReadyAt); the carrier laid with its wall pays that debt
@@ -863,21 +1171,22 @@ const WALL_FOOT = Object.freeze({ thick: 9.6, tower: 9.6 });
 /**
  * TS6: THE CELLS A WALL STANDS ON - the town-map cells (64 a block side, 1.6 m) of a grid of `w` x `h` blocks each piece
  * covers, row-major from the south-west (the walk grid's own order: world/city/cityNavigation.js): a length or a gate its
- * stretched length by its thickness, a tower its square, each turned to its line (`out`, its local +z).
- * @param {{ pieces: ReturnType<typeof wallPieces> }} wall @param {number} w @param {number} h
+ * stretched length by its thickness, a tower its square, each turned to its line (`out`, its local +z); WALL-FLICKER: each
+ * grown `grow` metres every way.
+ * @param {{ pieces: ReturnType<typeof wallPieces> }} wall @param {number} w @param {number} h @param {number} [grow]
  * @returns {Uint8Array} 1 a cell of the wall's
  */
-export function townWallCells(wall, w, h) {
+export function townWallCells(wall, w, h, grow = 0) {
   const S = SHAPE_AUTOMAP_SIDE, C = BLOCK_M / S, W = w * S, H = h * S, out = new Uint8Array(W * H);
   for (const p of wall.pieces) {
     const tower = p.model === WALL_MODELS.tower;
-    const hl = (tower ? WALL_FOOT.tower : TOWN_WALL.piece * p.stretch) / 2, ht = (tower ? WALL_FOOT.tower : WALL_FOOT.thick) / 2;
+    const hl = (tower ? WALL_FOOT.tower : TOWN_WALL.piece * p.stretch) / 2, ht = (tower ? WALL_FOOT.tower * (p.thick ?? 1) : WALL_FOOT.thick) / 2;   // FB1028: a bend's tower grown across
     const [wx, wz] = p.out, ux = wz, uz = -wx, r = Math.hypot(hl, ht);
-    const x0 = Math.max(0, Math.floor((p.at[0] - r) / C)), x1 = Math.min(W - 1, Math.floor((p.at[0] + r) / C));
-    const y0 = Math.max(0, Math.floor((p.at[1] - r) / C)), y1 = Math.min(H - 1, Math.floor((p.at[1] + r) / C));
+    const x0 = Math.max(0, Math.floor((p.at[0] - r - 2 * grow) / C)), x1 = Math.min(W - 1, Math.floor((p.at[0] + r + 2 * grow) / C));
+    const y0 = Math.max(0, Math.floor((p.at[1] - r - 2 * grow) / C)), y1 = Math.min(H - 1, Math.floor((p.at[1] + r + 2 * grow) / C));
     for (let gy = y0; gy <= y1; gy++) for (let gx = x0; gx <= x1; gx++) {
       const dx = (gx + 0.5) * C - p.at[0], dz = (gy + 0.5) * C - p.at[1];
-      if (Math.abs(dx * ux + dz * uz) <= hl && Math.abs(dx * wx + dz * wz) <= ht) out[gy * W + gx] = 1;
+      if (Math.abs(dx * ux + dz * uz) <= hl + grow && Math.abs(dx * wx + dz * wz) <= ht + grow) out[gy * W + gx] = 1;
     }
   }
   return out;
@@ -891,6 +1200,23 @@ export function townWallCellsOf(dfLocation) {
   if (!kept || !dfLocation.outline?.walled) return null;
   const wall = kept.of();
   return wall ? (kept.cells ??= townWallCells(wall, kept.w, kept.h)) : null;
+}
+/** FB1028 YARDS: the cells of a city's wall as #1184 stood it (townWall's `yardPieces`) - its yards' ground. @param {any} dfLocation */
+export function townWallYardCellsOf(dfLocation) {
+  const cells = townWallCellsOf(dfLocation), held = cells ? _walls.get((dfLocation.mapTableData.mapId ?? -1) >>> 0) : null, wall = held?.of();
+  return wall?.yardPieces ? (held.yardCells ??= townWallCells({ pieces: wall.yardPieces }, held.w, held.h)) : cells;
+}
+
+/** FB1028 YARDS Y1 (the owner: every yard where #1184 stood it): a laid-out town (layoutLocation's) with its wall's
+ *  carrier as #1184 laid it (registerTownWall's yardCarrier) and today's layout as `now` - yardMeasuresSteps measures
+ *  both, the yards' ground the first. `yl` itself where the two lay the same. @param {any} yl @param {any} dfLocation */
+export function townWallYardLayout(yl, dfLocation) {
+  const mapId = (dfLocation?.mapTableData?.mapId ?? -1) >>> 0, held = _walls.get(mapId);
+  const dfBlock = held && dfLocation.outline?.walled && yl?.blocks ? held.yardCarrier?.() : null;
+  if (!dfBlock) return yl;
+  const name = townWallBlockName(mapId).toUpperCase();
+  const blocks = yl.blocks.map((b) => (String(b.blockName ?? '').toUpperCase() === name ? { ...b, dfBlock, layout: layoutRmbBlock(dfBlock, { enhanced: true, windmills: true }) } : b));
+  return { ...yl, blocks, now: yl };
 }
 
 /** PORT-SHIPS (systems/naval/harbourKeep.js): a city's wall as it was registered this session - townWall's (its line, its
@@ -985,19 +1311,32 @@ export function paveOnGrid(nav, paths, tilePos) {
  *  shut past its ground (shutOffGround; `ground` the terrain job's townGround - null, none shut) and on its wall
  *  (shutTownWall); TS10: the paths the terrain painted on its ground its roads (paveOnGrid; `paths` the job's - null,
  *  none). Its `key` says what it reads, for a memo of what was placed on it (scenes/world.js townPlacesFor): a pixel built
- *  again once the roads land places its yards again. @param {any} dfLocation @param {?Uint8Array} ground
- *  @param {?Uint8Array} [paths] */
-export const townWalkShut = (dfLocation, ground, paths = null) => {
+ *  again once the roads land places its yards again. FB1028 YARDS: `yards` shuts the wall as #1184 stood it
+ *  (townWallYardCellsOf). @param {any} dfLocation @param {?Uint8Array} ground @param {?Uint8Array} [paths] @param {boolean} [yards] */
+/** FB1028 YARDS: the yards' shut (#1184's, `was`) carrying the town's shut as it stands now (`now` - keptSitesSteps'
+ *  ground); its key both. @param {any} was @param {any} now */
+export const yardWalkShut = (was, now, dfLocation = null) => {
+  const f = (nav) => was(nav);
+  // AUDIT FB1028 B5: and the cells the wall gained since #1184 (a tower grown, a street's gate) - a kept yard's pad may
+  // touch them, never its own ground (keptSitesSteps)
+  const gained = () => { const a = townWallCellsOf(dfLocation), b = townWallYardCellsOf(dfLocation); return a && b && a !== b ? a.map((v, i) => (v && !b[i] ? 1 : 0)) : null; };
+  const nowF = Object.assign((nav) => now(nav), { key: now?.key, gained: dfLocation ? gained : () => null });
+  Object.defineProperty(f, 'now', { value: now ? nowF : now });
+  Object.defineProperty(f, 'yardLayout', { value: (/** @type {any} */ yl) => (dfLocation ? townWallYardLayout(yl, dfLocation) : yl) });   // FB1028 YARDS Y1
+  Object.defineProperty(f, 'key', { get: () => `${was.key}|now ${now?.key}` });
+  return f;
+};
+export const townWalkShut = (dfLocation, ground, paths = null, yards = false) => {
   const relief = reliefOf(dfLocation);
   const shut = (nav) => {
     const origin = getLocationTerrainTileOrigin(dfLocation);
     if (ground) shutOffGround(nav, ground, origin);
     if (paths) paveOnGrid(nav, paths, origin);
-    shutTownWall(nav, townWallCellsOf(dfLocation));
+    shutTownWall(nav, yards ? townWallYardCellsOf(dfLocation) : townWallCellsOf(dfLocation));
     if (relief) shutRelief(nav, relief);
   };
   let h = 0x811c9dc5;   // FNV-1a over the painted tiles' indices
   if (paths) for (let i = 0; i < paths.length; i++) if (paths[i]) h = Math.imul(h ^ i, 0x01000193) >>> 0;
-  shut.key = `shut|${ground ? 'ground' : ''}|${paths ? h.toString(36) : ''}`;
+  shut.key = `shut|${ground ? 'ground' : ''}|${paths ? h.toString(36) : ''}${yards ? '|yards' : ''}`;
   return shut;
 };

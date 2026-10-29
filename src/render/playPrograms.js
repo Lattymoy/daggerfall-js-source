@@ -15,7 +15,7 @@
 //
 // Loaded by the renderer's idle warm (lazyWarmSteps), off the boot's static graph - the passes' own modules are the
 // hosts' already.
-import { parallelCompile, startPrograms } from './glProgram.js';
+import { parallelCompile, startProgramsInTurn } from './glProgram.js';
 import { GATE_PASS_PROGRAMS } from './gate/gatePass.js';
 import { telegraphPrograms } from './gate/gateTelegraph.js';
 import { GATE_FX_PROGRAMS } from './gate/gateFx.js';
@@ -33,9 +33,19 @@ import { GLOW_PROGRAMS } from './ghostfenceGlow.js';
  *  fire and the fence's glow (AUDIT RED-MOUNTAIN F5). */
 export const playPrograms = () => [...GATE_PASS_PROGRAMS, ...telegraphPrograms(false), ...telegraphPrograms(true), ...GATE_FX_PROGRAMS, ...CRYSTAL_PROGRAMS, ...NODE_GLINT_PROGRAMS, ...AURA_PROGRAMS, ...ARMORY_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS];
 
-/** Start them on `gl` where its driver compiles beside the frames; answers whether it did. */
-export function startPlayPrograms(gl) {
+/** The queue's wait between turns: the browser's next idle, or a quarter second at the most (a timer where it has none,
+ *  one that never keeps a test's process alive). */
+const idleTurn = () => new Promise((resolve) => {
+  if (globalThis.requestIdleCallback) globalThis.requestIdleCallback(() => resolve(undefined), { timeout: 250 });
+  else /** @type {any} */ (setTimeout(resolve, 50)).unref?.();
+});
+
+/** Start them on `gl` where its driver compiles beside the frames; answers whether it did. COMPILE-QUEUE (FIELD BUGS
+ *  2026-10-27b, "hitch 13064 ms" on the desktop app after login): one at a time (glProgram.js startProgramsInTurn). All
+ *  at once filled the driver's few compile threads, and the warm's next build that read a link waited for nearly all of
+ *  them, in an idle callback no frame sample holds (tools/compileStallProbe.mjs queue measures both). */
+export function startPlayPrograms(gl, wait = idleTurn) {
   if (!gl || !parallelCompile(gl)) return false;
-  startPrograms(gl, playPrograms());
+  void startProgramsInTurn(gl, playPrograms(), wait);
   return true;
 }

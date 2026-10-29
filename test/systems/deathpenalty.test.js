@@ -46,7 +46,8 @@ test('it is taken by BOTH respawn paths, once - online, and offline at a Project
 test('the death screen shows the loss - wherever the death respawns (online, or a Legacy rise offline), and only when there is one', () => {
   const ds = read('src/ui/deathScreen.js');
   // PIN MOVED (BAL4, bible/05-Combat/Balance-Arc.md section 6): a Project Legacy rise offline respawns too
-  assert.match(ds, /const respawns = this\.online \|\| this\.rises;\n(?:\s*\/\/[^\n]*\n)*\s*this\.goldLoss = respawns && penalty !== false \? deathGoldLoss\(goldPiecesOf\(entity\)\) : 0;\n\s*if \(respawns\) stateDeathLoss\(this\.goldLoss\);/);   // PIN MOVED (EG-H2, bible/11-Multiplayer/Elite-Gates.md section 24): the made level's law (systems/madeLevel.js): a made level that exempts DEATH-PENALTY hands `penalty: false` - the Spire's
+  // PIN MOVED (CASUAL-LIFE, bible/06-Systems/Legacy-Arc.md section 6): and a Casual character's death states none
+  assert.match(ds, /const respawns = this\.online \|\| this\.rises;\n(?:\s*\/\/[^\n]*\n)*\s*this\.goldLoss = respawns && penalty !== false && !isCasual\(entity\) \? deathGoldLoss\(goldPiecesOf\(entity\)\) : 0;\n\s*if \(respawns\) stateDeathLoss\(this\.goldLoss\);/);   // PIN MOVED (EG-H2, bible/11-Multiplayer/Elite-Gates.md section 24): the made level's law (systems/madeLevel.js): a made level that exempts DEATH-PENALTY hands `penalty: false` - the Spire's
   assert.match(ds, /this\.rises = !this\.online && !!rises\?\.\(\);/, 'the rise is the host\'s word, offline');
   assert.match(ds, /if \(this\.goldLoss > 0\) \{[\s\S]*?'DEATH CLAIMS \{gold\} GOLD', \{ gold: this\.goldLoss \}/, 'classic face');
   const en = read('src/ui/enhanced/enhancedDeath.js');

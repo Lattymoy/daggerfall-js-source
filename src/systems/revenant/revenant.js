@@ -73,7 +73,8 @@ import { ownMinutes, skyMinutes } from '../worldTick.js';
 import { isNight } from '../../world/worldClock.js';   // RVN1: a fight begun by night
 import { tieredGear } from '../eliteFoes.js';
 import { legendaryGate, rollerLevel } from '../loot/lootLevelGate.js';   // LOOT-GATE
-import { foeSeed } from '../../characters/foeBodies.js';   // FB1012d ALLY-RACE: the person a revenant is born as - the seed its body was drawn by
+import { foeSeed, bodyRaceOf } from '../../characters/foeBodies.js';
+import { FOLK_RACE_KEYS } from '../../characters/provinceFolk.js';   // AUDIT PROVINCE-FOLK A1: a race it may be born in   // FB1012d ALLY-RACE: the person a revenant is born as - the seed its body was drawn by
 import { goldStack, isSummoned, isGoldPieces, addItem, addGoldPieces } from '../inventory.js';   // RVN11b: a deserter's pack, handed back   // RVN8: never a summoned piece or gold taken
 import { unequipItem, equipTableOf, EQUIP_SLOTS } from '../equip.js';   // RVN8: what it takes, off the hand that held it
 import { isLocked } from '../item/itemLock.js';   // RVN8: LOCK1's promise - a locked piece stays yours
@@ -83,6 +84,7 @@ import { WILD_NEVER_GROUPS } from '../wild/wildLeaf.js';   // STEED-KEPT: nor wh
 import { BOAT_TEMPLATES } from '../../net/realm/realmTradeLaw.js';   // STEED-KEPT: nor a ship's deed or parts
 import { DECOR_OWN_KEPT_BACK } from '../../net/decorLaw.js';   // STEED-KEPT: nor a deed as Daggerfall files one, nor the spellbook
 import { hudTextWhenShown } from '../notify.js';   // STEED-KEPT: a piece home again, said once the world can say it
+import { isCasual } from '../legacy/casual.js';   // CASUAL-LIFE
 import { isLetterOfCredit } from '../peerWord.js';   // LETTERS-HOME: nor a letter of credit - its worth is gold
 import { itemLongName } from '../item/itemInfo.js';   // RVN8: the piece by the name the pack shows
 import { itemValueOf } from '../item/itemTemplates.js';   // RVN8: the most valuable
@@ -230,7 +232,7 @@ export const REVENANT_EPITHETS = Object.freeze({
 /** @typedef {{ id: string, rev: number, mobileType: number, gender: 'male'|'female', given: string, epithet: string,
  *   name: string, rank: number, kills: number, escapes: number, returns: number, trait: string|null, elite: boolean,
  *   born: number, dueAt: number, out: boolean, outAt: number, defeated: boolean, defeatedAt: number|null,
- *   notice: string|null, history: RevenantDeed[], archive: number|null, personality: string, person: number,
+ *   notice: string|null, history: RevenantDeed[], archive: number|null, personality: string, person: number, race?: string|null,
  *   fate: 'executed'|'sworn'|'released'|null, sworn: boolean, swornAt: number|null, companion: RevenantCompanion|null,
  *   scars: {k: string, at: number}[], learned: string[], weak: string, weakKnown: 0|1|2, sig: string|null, kin: number[],
  *   lair: {px: number, py: number, name: string, region: number}|null, lairKnown: boolean, took: any[], wrath: number,
@@ -283,7 +285,7 @@ export const revenantPerson = (r) => (isU32(r?.person) ? r.person : hashStr(`${r
 /** RVN2: what a standing revenant carries of its record - its name and rank (FOE-TITLE, TELL's tier), what it learned and
  *  its weakness, and `edge`, what they do (systems/revenant/revenantFeud.js adaptEdge: the brain, the motor, the doors and the
  *  formulas read it there). */
-const revenantStamp = (r) => ({ id: r.id, name: r.name, rank: r.rank, learned: [...(r.learned ?? [])], weak: r.weak ?? null, edge: woundedEdge(adaptEdge(r.learned, r.weak), r.wounds), sigBlow: signatureStamp(r), person: revenantPerson(r), dread: r.dread === true });   // UNQUIET: its wounds in its edge (its poise, its saving throws); the Dread   // RVN5: its signature (rank 2 and up); FB1012d ALLY-RACE: its person, every stand
+const revenantStamp = (r) => ({ id: r.id, name: r.name, rank: r.rank, learned: [...(r.learned ?? [])], weak: r.weak ?? null, edge: woundedEdge(adaptEdge(r.learned, r.weak), r.wounds), sigBlow: signatureStamp(r), person: revenantPerson(r), race: r.race ?? null, dread: r.dread === true });   // UNQUIET: its wounds in its edge (its poise, its saving throws); the Dread   // RVN5: its signature (rank 2 and up); FB1012d ALLY-RACE: its person, every stand
 
 /** A REVENANT'S GIVEN NAME: DFU's own banks - a monster's from Monster1/Monster2, a class foe's (a person) a first
  *  name from one of the eight races' banks - drawn on a stream SEEDED by the revenant's id, the shared DFRandom put
@@ -383,6 +385,7 @@ function sanitize(r) {
     archive: Number.isInteger(r.archive) ? r.archive : null,
     personality,
     person: revenantPerson(r),   // FB1012d ALLY-RACE: its person kept (an older record's, its id's)
+    race: FOLK_RACE_KEYS.includes(r.race) ? r.race : null,   // AUDIT PROVINCE-FOLK A1: the race it was born in (none: the Bay's draw on its person)
     // REVENANT-FATE: how it ended (or did not) - executed, sworn to the player, released by the player
     fate: FATES.has(r.fate) ? r.fate : null, sworn: !!r.sworn && !r.defeated, swornAt: isNum(r.swornAt) ? r.swornAt : null,
     companion: r.sworn && !r.defeated ? sanitizeCompanion(r.companion, personality, rank) : null,
@@ -572,6 +575,7 @@ export function revenantDeed(player, entity, deedName, { mobileType = entity?.mo
       personality: personalityFor(id, mobileType),   // REVENANT-VOICE: who it is - one per id
       fate: null, sworn: false, swornAt: null, companion: null,   // REVENANT-FATE: not judged yet
       person: rec ? foeSeed(rec) : revenantPerson({ id }),   // FB1012d ALLY-RACE: the body it did the deed in is the person it stays
+      race: rec ? bodyRaceOf(rec) : null,   // AUDIT PROVINCE-FOLK A1: and the race it was drawn in there - past the Bay its place's people
       ...newFeudFields(id, mobileType, 1, entity.career ?? null),   // RVN1 (section 26): its draws (the weakness never what its career shrugs off), and nothing yet learned
       wounds: [], blood: 0, tears: 0, dread: false, trail: 0, omen: 0, woundDay: -1,   // UNQUIET: nothing left on it yet, no blood or tear-away since a rank, not the Dread; no trail, no omen, no wound to heal
     };
@@ -976,7 +980,7 @@ export function pickTaken(id, kills, weapon, items) {
 export function revenantTakes(player, { online = false } = {}) {
   const s = _lastSlew;
   _lastSlew = null;
-  if (!online || !s || !revenantOn() || !player) return null;
+  if (!online || !s || !revenantOn() || !player || isCasual(player)) return null;   // CASUAL-LIFE: a Casual death loses no piece
   const r = revenantById(s.id);
   if (!r || r.defeated || r.sworn) return null;
   if ((r.took?.length ?? 0) >= TOOK_MAX) return { r, item: null, line: null };

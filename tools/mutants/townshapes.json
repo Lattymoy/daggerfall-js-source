@@ -74,11 +74,12 @@
  {
   "name": "TS-the-sea-lifted",
   "file": "src/world/terrain/terrainTiles.js",
-  "old": "      if (d > TOWN_SHAPE.seaMargin && wet[idx]) s = 0;   // the sea past the town's margin is the sea\n",
-  "new": "",
+  "old": "      const kept = cone * shore + (1 - shore) * (1 - smooth(Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade))));",
+  "new": "      const kept = cone * shore + (1 - shore) * (1 - smooth(Math.max(0.05, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade))));",
   "tests": [
    "test/world/terrain/townshapes.test.js"
-  ]
+  ],
+  "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the cone over the level alone): the ease never quite the sea's. Re-aimed by content (AUDIT FB1028 A2-A3): the ease never quite the land's."
  },
  {
   "name": "TS-the-pixel-s-mean",
@@ -92,10 +93,12 @@
  {
   "name": "TS-the-edge-moved",
   "file": "src/world/terrain/terrainTiles.js",
-  "old": "      s *= edge * edge * (3 - 2 * edge);\n",
-  "new": "",
+  "old": "      if (e === 0) continue;   // the pixel's edge the land's own",
+  "new": "      // the pixel's edge the land's own",
+  "note": "Re-aimed (AUDIT FB1028): FB1028-the-edge-share-unread holds the ease's edge share; this one the pixel's edge left the land's.",
   "tests": [
-   "test/world/terrain/townshapes.test.js"
+   "test/world/terrain/townshapes.test.js",
+   "test/world/terrain/fb1028_townground.test.js"
   ]
  },
  {

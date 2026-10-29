@@ -63,7 +63,8 @@ import { buildLighthouseModel, buildLighthouseFire, guardBand, LIGHTHOUSE, LIGHT
 import { PORT_PAINTERS, PORT_ARCHIVE, PORT_HOW } from '../world/portArt.js';
 import { dfLook, lookSeed } from '../world/dfLook.js';   // DF-LOOK: the port's pictures in Daggerfall's colours
 import { wearPainted } from '../systems/studioArt/studioArt.js';   // STUDIO1: the studio's pictures over the painted ones (their rows top-down, as the port's are)
-import { PERSON_TEXTURES, PERSON_IDLE_RECORD, PERSON_IDLE_FPS } from '../characters/mobile/mobilePerson.js';
+import { PERSON_TEXTURES, PERSON_IDLE_RECORD, PERSON_IDLE_FPS, spriteRaceOf } from '../characters/mobile/mobilePerson.js';
+import { folkOfRegion, folkOfKey, folkRace } from '../characters/provinceFolk.js';   // PROVINCE-FOLK
 import { mobileBillboardSize } from '../world/rmbFlats.js';
 import { folkLookOf } from '../characters/folkBodies.js';
 import { personActor } from '../characters/peopleBodies.js';
@@ -166,6 +167,12 @@ export function folkOf(key, role, i) {
   const h = textSeed(`${key}|${role}|${i}`);
   const femaleShare = role === 'recruit' ? 0.35 : 0.15;
   return { sex: ((h >>> 4) & 0xff) / 256 < femaleShare ? 'female' : 'male', variant: (h >>> 13) & 3 };
+}
+/** PROVINCE-FOLK (bible/03-World/World-Wide.md): a place's person's own race past the Bay - the keeper's and the
+ *  crewmaster's their draw's (merchantYards.js townKeeper), a hand's off the place's key; null on the Bay. Pure. */
+export function raceOf(site, p) {
+  if (p.role === 'keeper' || p.role === 'crewmaster') return site?.[p.role]?.race ?? null;
+  return folkRace(folkOfKey(site?.keeper?.home) ?? folkOfRegion(site?.regionIndex ?? -1), textSeed(`${site?.key ?? ''}|${p.role}|${p.i}|folk`));   // AUDIT PROVINCE-FOLK B6: the keeper's people, the zone's
 }
 /** Everyone a place stands: `{ role, i, at: [x, y, z] in its frame, sex, variant }`. Pure. */
 export function peopleOf(site) {
@@ -312,7 +319,7 @@ export function createPortHost({
     return null;
   }
   const archiveOf = (site, p) => {
-    const T = PERSON_TEXTURES[site.race] ?? PERSON_TEXTURES.Breton;
+    const T = PERSON_TEXTURES[spriteRaceOf(p.folk, site.race)] ?? PERSON_TEXTURES.Breton;   // PROVINCE-FOLK: their own race's picture where Daggerfall draws one
     const set = T[p.sex === 'female' ? 'female' : 'male'];
     return set[(p.variant ?? 0) % set.length];
   };
@@ -374,7 +381,7 @@ export function createPortHost({
     const pl = {
       site, key: site.key, bucket: `port:${site.key}`, guardBucket: `port:${site.key}:guard`, guard: null, at: null, matrix: null, colAt: null, box: null, targets: null,
       groundY: NaN, groundAt: [NaN, NaN, -Infinity, NaN], phase: (textSeed(String(site.key)) % 6283) / 1000,
-      people: peopleOf(site).map((p) => ({ ...p, batch: null, origin: [0, 0, 0], frame: -1, keysOf: '', texKeys: [] })),
+      people: peopleOf(site).map((p) => ({ ...p, folk: raceOf(site, p), batch: null, origin: [0, 0, 0], frame: -1, keysOf: '', texKeys: [] })),   // PROVINCE-FOLK: their race, once
       lamp: [0, 0, 0], light: null, glow: null, seen: -1,
     };
     places.set(site.key, pl);
@@ -471,7 +478,7 @@ export function createPortHost({
         for (const p of pl.people) {
           const b = p.batch;
           if (!b) continue;
-          const archive = archiveOf(pl.site, p), race = pl.site.race ?? 'Breton', key = `${archive}|${race}`;
+          const archive = archiveOf(pl.site, p), race = p.folk ?? pl.site.race ?? 'Breton', key = `${archive}|${race}`;   // PROVINCE-FOLK: past the Bay their own
           if (p._mwLookKey !== key) {
             p._mwLookKey = key;
             p._mwLook = folkLookOf({ archive, personFaceRecordId: 0, gender: p.sex === 'female' ? GENDERS.Female : GENDERS.Male, guard: false }, race, textSeed(`${pl.key}|${p.role}|${p.i}`));
