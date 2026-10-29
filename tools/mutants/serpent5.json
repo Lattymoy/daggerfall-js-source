@@ -201,8 +201,8 @@
   {
     "name": "SERPENT5-AUDIT-a-pow-of-a-negative",
     "file": "src/render/auraRing.js",
-    "old": "return pow(max(0.5 + 0.5 * cos(ph), 0.0),",
-    "new": "return pow(0.5 + 0.5 * cos(ph),",
+    "old": "return pow(max(0.5 + 0.5 * cos(maelstromPhase(r, a)), 0.0),",
+    "new": "return pow(0.5 + 0.5 * cos(maelstromPhase(r, a)),",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]

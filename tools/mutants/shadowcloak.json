@@ -501,9 +501,9 @@
   },
   {
     "name": "SHADOWCLOAK-my-facing-the-views",
-    "file": "src/scenes/world.js",
-    "old": "_auraSelf.yaw = mwViewSpriteFacing()?.yaw ?? player.bodyYawFor(cam.yaw);",
-    "new": "_auraSelf.yaw = mwViewSpriteFacing()?.yaw ?? cam.yaw;",
+    "file": "src/scenes/auraHost.js",
+    "old": "self.yaw = faced?.yaw ?? player.bodyYawFor(deps.camYaw());",
+    "new": "self.yaw = faced?.yaw ?? deps.camYaw();",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
@@ -511,9 +511,9 @@
   },
   {
     "name": "SHADOWCLOAK-a-peers-facing-dropped",
-    "file": "src/scenes/world.js",
-    "old": "w.yaw = (peerWalkers?.faceOf?.(d.id) ?? peerRiders?.faceOf?.(d.id))?.yaw ?? peerBodyYaw(d.shown) ?? 0;",
-    "new": "w.yaw = 0;",
+    "file": "src/scenes/auraHost.js",
+    "old": "w.yaw = face; auraBeastStep(w, !!d.shown.wb, t);",
+    "new": "w.yaw = 0; auraBeastStep(w, !!d.shown.wb, t);",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
@@ -521,16 +521,16 @@
   },
   {
     "name": "SHADOWCLOAK-my-beast-form-ignored",
-    "file": "src/scenes/world.js",
-    "old": "auraBeastStep(_auraSelf, !!liveLycanthropy(playerEntity)?.isTransformed, t);",
-    "new": "auraBeastStep(_auraSelf, false, t);",
+    "file": "src/scenes/auraHost.js",
+    "old": "auraBeastStep(self, deps.beast(), t);",
+    "new": "auraBeastStep(self, false, t);",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
   },
   {
     "name": "SHADOWCLOAK-a-peers-beast-form-ignored",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/auraHost.js",
     "old": "auraBeastStep(w, !!d.shown.wb, t);",
     "new": "auraBeastStep(w, false, t);",
     "tests": [
@@ -756,7 +756,7 @@
   },
   {
     "name": "SHADOWCLOAK-my-bones-never-read",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/auraHost.js",
     "old": "bones: mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()) }",
     "new": "bones: null ?? auraSpriteBones(mwViewSpriteFigure()) }",
     "tests": [
@@ -766,8 +766,8 @@
   },
   {
     "name": "SHADOWCLOAK-a-peers-bones-never-read",
-    "file": "src/scenes/world.js",
-    "old": ": peerBodies?.bonesOf(w.id, CLOAK_BONES) ?? auraSpritePosed(",
+    "file": "src/scenes/auraHost.js",
+    "old": ": deps.bodies()?.bonesOf(w.id, CLOAK_BONES) ?? auraSpritePosed(",
     "new": ": null ?? auraSpritePosed(",
     "tests": [
       "test/net/shadowcloak.test.js"
@@ -776,8 +776,8 @@
   },
   {
     "name": "SHADOWCLOAK-my-crouch-ignored",
-    "file": "src/scenes/world.js",
-    "old": "w === _auraSelf ? player.height / CAPSULE_HEIGHT : 1);",
+    "file": "src/scenes/auraHost.js",
+    "old": "w === self ? player.height / CAPSULE_HEIGHT : 1);",
     "new": "1);",
     "tests": [
       "test/net/shadowcloak.test.js"
@@ -803,8 +803,8 @@
   },
   {
     "name": "SHADOWCLOAK-the-swing-never-stepped",
-    "file": "src/scenes/world.js",
-    "old": "auraMotionStep(w, auraNow); }",
+    "file": "src/scenes/auraHost.js",
+    "old": "auraMotionStep(w, now); }",
     "new": "}",
     "tests": [
       "test/net/shadowcloak.test.js"
@@ -812,27 +812,27 @@
   },
   {
     "name": "SHADOWCLOAK-the-draw-commented-out",
-    "file": "src/scenes/world.js",
-    "old": "} _auraPass?.draw(_auraDraw,",
-    "new": "} // _auraPass?.draw(_auraDraw,",
+    "file": "src/scenes/auraHost.js",
+    "old": "        pass?.draw(auraDraw, proj, view, eye, now, fogNow());",
+    "new": "        // pass?.draw(auraDraw, proj, view, eye, now, fogNow());",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
   },
   {
     "name": "SHADOWCLOAK-my-riding-ignored",
-    "file": "src/scenes/world.js",
-    "old": "_auraSelf.mounted = !!player.riding;",
-    "new": "_auraSelf.mounted = false;",
+    "file": "src/scenes/auraHost.js",
+    "old": "/** @type {any} */ (self).mounted = !!player.riding;",
+    "new": "/** @type {any} */ (self).mounted = false;",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
   },
   {
     "name": "SHADOWCLOAK-a-peers-riding-ignored",
-    "file": "src/scenes/world.js",
-    "old": "w.mounted = !!d.shown.rd;",
-    "new": "w.mounted = false;",
+    "file": "src/scenes/auraHost.js",
+    "old": "w.seen = t; w.mounted = !!d.shown.rd;",
+    "new": "w.seen = t; w.mounted = false;",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
@@ -1337,9 +1337,9 @@
   },
   {
     "name": "SHADOWCLOAK-my-step-commented-out",
-    "file": "src/scenes/world.js",
-    "old": "      _auraSelf.at[0] = f[0]; _auraSelf.at[1] = f[1]; _auraSelf.at[2] = f[2]; _auraSelf.aura = mine;",
-    "new": "      // _auraSelf.at[0] = f[0]; _auraSelf.at[1] = f[1]; _auraSelf.at[2] = f[2]; _auraSelf.aura = mine;",
+    "file": "src/scenes/auraHost.js",
+    "old": "        self.at[0] = f[0]; self.at[1] = f[1]; self.at[2] = f[2]; self.aura = mine;",
+    "new": "        // self.at[0] = f[0]; self.at[1] = f[1]; self.at[2] = f[2]; self.aura = mine;",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]

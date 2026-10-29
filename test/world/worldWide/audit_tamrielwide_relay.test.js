@@ -1,5 +1,5 @@
 // AUDIT TAMRIEL-WIDE, the relay's findings (2026-10-28, bible/01-Overview/audits/Audit-Tamriel-Wide.md): B1, B2, B5 and
-// E3, fixed in one relay (world280). Each is run through the real hub or the real law past the Bay beside the Bay's own.
+// E3, fixed in one relay (world281). Each is run through the real hub or the real law past the Bay beside the Bay's own.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 

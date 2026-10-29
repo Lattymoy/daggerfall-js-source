@@ -362,7 +362,7 @@ function dungeonLights(abyss) {
     online: { peers: new Map([['p1', { id: 'p1', shown: pose }]]), visible: () => true },
     cam: { pos: [8, 1.7, 4], yaw: 0 }, onlineToScene: (s) => [s.x, s.y, s.z], peerTorchLight, _peerCandleLights: [candle],
     performance: { now: () => 0 },
-    auraWingLights, _auraWearers: [], _auraLights: [],   // SERAPH-WINGS: the list's tail - no wings worn here
+    auraHost: { wingLights: () => [] },   // SERAPH-WINGS: the list's tail - no wings worn here (PIN MOVED, ARMORY: the auras' own host, scenes/auraHost.js)
     gateCrowd: createGateCrowd(),   // PIN MOVED (AUDIT CROWD-WIDE B3): a torch asks the crowd's count - a fresh one cuts nobody
   });
   const dgColor = new Float32Array([0.8, 0.6, 0.4]);

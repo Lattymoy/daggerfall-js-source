@@ -50,7 +50,9 @@ test('EG-G2 THE BREACH CLIENT (scenes/eliteGates/egClient.js): the mist first, t
 test('EG-G2 THE WORLD HOST AND THE DUNGEON ARM (scenes/world.js, scenes/worldModes.js): the Spire\'s sky host beside the fight\'s, in the Spire\'s haze; the auras quiet in a trial; the music handed to the fight; the dungeon arm\'s sky slot the Spire\'s own (the Hour\'s no more); the waystones\' mesh among the circle\'s draws, casting nothing; the world host\'s frame unchanged by any of it (mutants: the Hour\'s sky over the Spire; the auras drawn in a trial)', () => {
   const W = read('src/scenes/world.js');
   assert.match(W, /drawEgSky: \(\{ proj, view, eye \}\) => \{ if \(egClient\?\.drawSky\(proj, view, eye, deadlandsSeconds\(\), courtFogNow\(\), skyGain\(renderer\._fogColor, egHallFog\(modes\?\.egHallCircle\?\.\(\)\)\.color\)\)\) renderer\.markForeignPass\(\); \},/);
-  assert.match(W, /function auraFrame\(seen\) \{\n    _auraWearers\.length = 0;\n    if \(!online \|\| travelView\?\.active\) return;\n    if \(egClient\?\.quiet\?\.\(\)\) return;/, 'the auras quiet in a trial - gathered for none, so neither drawn nor lit');
+  // PIN MOVED (ARMORY, HOST-SPLIT): the gather is scenes/auraHost.js's, the trial's word handed over by the world host
+  assert.match(read('src/scenes/auraHost.js'), /auraList\.length = 0; armoryList\.length = 0; gathered\+\+;\n      const online = deps\.online\(\);\n      if \(!online \|\| deps\.travelActive\(\)\) return;\n      if \(deps\.quiet\(\)\) return;/, 'the auras quiet in a trial - gathered for none, so neither drawn nor lit; ARMORY: the Aura Armory with them');
+  assert.match(W, /quiet: \(\) => !!egClient\?\.quiet\?\.\(\)/);
   assert.match(W, /renderer, gl: renderer\.gl, getTexture, uploadRecordFrame, audio, music, link, now: \(\) => \(egClient \? egClient\.sharedNow\(\) : egNow\(\)\)/);   // PIN MOVED (EG-H1, merged): the fight on the breach's corrected clock
   const frameAt = W.indexOf('\n  function frame(now) {\n'), frameEnd = W.indexOf('\n  }\n', frameAt);
   const frame = W.slice(frameAt, frameEnd);

@@ -2,8 +2,8 @@
   {
     "name": "AS-left-out-of-the-boot",
     "file": "src/render/playPrograms.js",
-    "old": ", ...AURA_PROGRAMS, ...FIRE_PROGRAMS",
-    "new": ", ...FIRE_PROGRAMS",
+    "old": ", ...AURA_PROGRAMS, ...ARMORY_PROGRAMS",
+    "new": ", ...ARMORY_PROGRAMS",
     "tests": [
       "test/render/shaderstall.test.js",
       "test/render/auditshaderstall.test.js"
@@ -29,16 +29,16 @@
   },
   {
     "name": "AS-built-outside-the-door",
-    "file": "src/scenes/world.js",
-    "old": "const _auraPass = auraPassOf();",
-    "new": "const _auraPass = new AuraRingRenderer(renderer.gl);",
+    "file": "src/scenes/auraHost.js",
+    "old": "const pass = auraPassOf();",
+    "new": "const pass = new AuraRingRenderer(renderer.gl);",
     "tests": [
       "test/render/shaderstall.test.js"
     ]
   },
   {
     "name": "AS-the-door-waits-on-the-looks",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/auraHost.js",
     "old": "compiledPass(renderer.gl, [], () => new AuraRingRenderer(renderer.gl),",
     "new": "compiledPass(renderer.gl, AURA_PROGRAMS, () => new AuraRingRenderer(renderer.gl),",
     "tests": [

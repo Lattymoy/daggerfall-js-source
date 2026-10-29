@@ -3745,4 +3745,4 @@ winner came into a second. The hub now reads the slot's own lane (`server/src/sd
 its record, its receipt, and a death kept as `sdac:<account>.<lane>`
 (`server/src/sdCopy.js:"export const sdAcctKey = (sub, lane = 0) =>"`). The Bay's key is `sdac:<account>`, as it was.
 Pins: `test/world/worldWide/audit_tamrielwide_relay.test.js` B1 (the Bay's Hollow beside Skyrim's). Mutants: `tools/mutants/audit_tamrielwide_relay.json` (5, dead); `sdparty.json` SD-BACK-the-last-copy-kept
-re-aimed by content. Relay world280.
+re-aimed by content. Relay world281.

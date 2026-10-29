@@ -1,6 +1,6 @@
 // AUDIT TAMRIEL-WIDE (2026-10-28; the owner: "ensure pur future development isnt just Daggerfall anymore and is the
 // entirety of tamriel") - the account service's and the staff's findings: C3, a dungeon vein's identity past the Bay
-// (acct209), and B4/C7, the staff's /tp and flat map past the Bay. Each on the real code past the Bay beside the Bay's
+// (acct210), and B4/C7, the staff's /tp and flat map past the Bay. Each on the real code past the Bay beside the Bay's
 // own answer (bible/06-Systems/Professions-Arc.md section 23, bible/06-Systems/Online-Arc.md STAFF1).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -99,7 +99,7 @@ test('AUDIT TAMRIEL-WIDE C3: the dungeon host names a dungeon by the identity\'s
   assert.match(src('src/scenes/dungeonContext.js'), /^import \{ dungeonIdentity \} from '\.\/dungeonIdentity\.js';/m);
 });
 
-// ─── THE SERVICE (acct209) ───────────────────────────────────────────
+// ─── THE SERVICE (acct210) ───────────────────────────────────────────
 
 const DAY = 86_400, MOUNTAIN = 226, WOODS = 231, ETHER = 19, SKYRIM = 64;
 let _now = utcDay(T0) * DAY + 12 * 3600;
@@ -109,7 +109,7 @@ test.after(() => { Date.now = realNow; });
 let _rid = 0;
 const rid = () => `tw-${String(++_rid).padStart(6, '0')}`;
 
-test('AUDIT TAMRIEL-WIDE C3 (acct209): the service keeps the ruin\'s and the lair\'s veins apart - the ruin witnessed for its ground, the lair\'s own claim stands, and one account takes slot 0 of each; a whole id past 32 bits is refused (mutants: the 20-bit bound kept; the key\'s seven digits kept)', async () => {
+test('AUDIT TAMRIEL-WIDE C3 (acct210): the service keeps the ruin\'s and the lair\'s veins apart - the ruin witnessed for its ground, the lair\'s own claim stands, and one account takes slot 0 of each; a whole id past 32 bits is refused (mutants: the 20-bit bound kept; the key\'s seven digits kept)', async () => {
   clock(utcDay(T0) * DAY + 12 * 3600);
   setTamrielTrace(null);
   const isle = firstRuin();
