@@ -84,6 +84,9 @@
 
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { REGION_NAMES, longitudeLatitudeToMapPixel, patchRegionIndex } from '../formats/mapsFile.js';
+import { theatreOfRegion } from '../formats/mapsTables.js';
+import { frontCardLine } from '../systems/frontWords.js';   // FRONTS: when a province's world events run, on its places' card
+import { localWhenText } from '../systems/eventTimers.js';
 import { summaryPixel } from './overworldModel.js';   // WW-C2: a place's own pixel where it carries one (a zone hall past the Bay)
 import { locationSummaryAt } from '../systems/map/mapDirectory.js';
 import { calculateTravelTime, calculateTripCost, travelDays } from '../systems/travel/travel.js';
@@ -4316,6 +4319,14 @@ export class HeldMapWindow {
     card.append(el('p', 'hmmeta', this._selected.coords
       ? this._regionNameAt(Math.floor(this._selected.x), Math.floor(this._selected.y))
       : (REGION_NAMES[summary.regionIndex] ?? '')));
+    // FRONTS (bible/03-World/World-Wide.md FRONTS): a place past the Bay says when its province's world events run - the
+    // host's `fronts` the relay's clock, null offline and where the provinces stand no events
+    const frontNow = this.deps.fronts?.() ?? null;
+    if (frontNow != null) {
+      const region = this._selected.coords ? (this.deps.maps?.getPoliticIndex?.(Math.floor(this._selected.x), Math.floor(this._selected.y)) ?? -1) - 128 : summary.regionIndex;
+      const line = frontCardLine(frontNow, theatreOfRegion(region), (ms) => localWhenText(ms - (frontNow - Date.now())));
+      if (line) card.append(el('p', 'hmmeta hmfront', line));
+    }
     // AUDIT GUIDE K8/U15: the quests that point here, named on the card - the hover's card is the pointer's; this is
     // where a keyboard (the search, then the pick) and a finger learn them
     if (!this._selected.coords) {

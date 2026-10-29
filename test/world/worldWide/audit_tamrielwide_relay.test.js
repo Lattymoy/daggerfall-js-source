@@ -24,7 +24,7 @@ import { worldPixelKey } from '../../../src/world/worldWide/worldGrid.js';
 const quiet = async (fn) => { const warn = console.warn, info = console.info; console.warn = () => {}; console.info = () => {}; try { return await fn(); } finally { console.warn = warn; console.info = info; } };
 
 test('AUDIT TAMRIEL-WIDE B1: SD-PARTY\'s one life and one win hold in a province\'s Hollow as in the Bay\'s - the hub reads the slot\'s own lane\'s record, death and receipt, and keeps the Bay\'s death under its old key (mutants: the Bay\'s record read; the Bay\'s receipt read; one death key for every lane; the Bay\'s key moved)', async () => {
-  const T0 = 1_800_000_000_000;
+  const T0 = 1_800_133_050_000;   // PIN MOVED: FRONTS - on Skyrim's turn (game day 1862, net/frontLaw.js), so its Hollow rises
   const world = fakeRooms({ now: () => T0 });
   const hub = world.room(SOCIAL_ROOM);
   const env = { ROOMS: world.ROOMS };

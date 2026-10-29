@@ -165,6 +165,8 @@ binds") - THE ARROWS ARE THE HELM (DECLARED, the Port-Ledger's HELM-KEYS row):
   the Responsive one's canvas driving her up into the wind's eye (SAIL-FREE, `03-World/Come-Sail-Away.md`). AUDIT NAV2 F17: while an Overworld journey holds
   the helm (the travel view up) the panel is covered and the arrows' More sail and Less sail, and the sail toggle, stand
   down - the journey sets her sails, and the turn keys were already the view's there.
+- **A load that holds her is said there too**: under half her way, the line says her load in place of the keys while it
+  holds her (HEAVY-HINT, `01-Overview/bugs/Field-Bugs-2026-10-29d.md`).
 
 ## The sea fight at the helm (NAV-H, 2026-09-28 - for Mac's read)
 

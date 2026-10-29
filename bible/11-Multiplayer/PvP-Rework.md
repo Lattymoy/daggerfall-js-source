@@ -91,7 +91,7 @@ PvE is left whole. A departure: DFU's spells never crit.
 
 ## PVP-FLAG: in the open zone only a flagged player strikes
 
-"u flag and un flag instanly", "we changed it to 1m", "u cant flag on a party member": Caps Lock or the top-right button
+"u flag and un flag instanly", "we changed it to 1m", "u cant flag on a party member": Caps Lock or the button at the right edge
 (`pvpFlagHost.js:"export function createPvpFlagHost("`) puts the flag up at once from level 30, and takes it down at once
 unless a PvP blow fell in the last minute (`pvpFlag.js:"export const PVP_FLAG = Object.freeze({ lockMs: 60_000, level: 30,"`).
 The zone word carries it; the referee holds the lock and says each flag to the room
@@ -103,6 +103,12 @@ the Portal Stone works anywhere in the zone (`portalStoneHost.js:"const zoneRefu
 too (`portalStoneHost.js:"teleportTo(g.dest, { zoneFree: !pvpFlagOn() })"`, AUDIT TAMRIEL-WIDE III F1). Chat types no
 capitals under the flag's Caps Lock (`capsFix.js:"export function capsFixKey(e, field) {"`). Skulls overhead
 come next. A departure: DFU has no flag.
+
+"or i can flag anywerte": the flag is the zone's alone (PVP-FLAG-ZONE). Out of Cyrodiil, the open sea and their halls
+the key and the button do nothing and the button is hidden (`pvpFlagHost.js:"const here = () => !!online()?.wildOk && !!zone();"`);
+a flag carried out comes down once the lock and a villain's meter let it (`pvpFlagHost.js:"const leave = () => {"`).
+"left center or right center" (PVP-FLAG-SPOT): the button stands at the middle of the screen's right edge; flag down,
+it shows a dim skull, never a green ring (PVP-FLAG-LOOK, "The green one looks bad the other r perfect").
 
 ## PVP-SKULL: the mark over a flagged player
 
@@ -178,8 +184,10 @@ No clock, no gold and no death lower it.
 At 5,000 the killer is a villain: a red skull (`pvpFlagHost.js:"const skullOf = (id) =>"`) and a flag the referee holds
 up (`wildRef.js:"else if (isVillain(x.vi)) x.flag = true;"`). The referee counts a fall's points
 (`wildRef.js:"const vp = villainKillPoints("`), keeps the meter on the fighter and in its carry, marks the flag word `v`,
-tells the killer its meter (`wref` `vil`) and signs the points into the fall's receipt (`vp`). The pause menu's Stats page
-shows "Villainy 3,240 / 5,000" on a bar to 10,000 with a red mark at 5,000 (`pvpVillainBar.js:"export function statsVillainy("`).
+tells the killer its meter (`wref` `vil`) and signs the points into the fall's receipt (`vp`). The top of the pause menu's
+Standing page ("top of standings") shows "Villainy 3,240 / 5,000" on a bar to 10,000 with a red mark at 5,000
+(`pvpVillainBar.js:"export function statsVillainy("`), always: out of the zone the last meter this browser heard, else 0
+(`pvpVillainBar.js:"export function villainyKept(who, heard = null) {"`).
 
 PVP-VILLAIN-KEEP, below, keeps the meter on the character and lowers it. A departure: DFU has no PvP.
 

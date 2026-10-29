@@ -2239,6 +2239,11 @@
   "tr": "af0b57070615",
   "by": "claude-in-session"
  },
+ "account.refusal.lineageInUse": {
+  "en": "b210f6197958",
+  "tr": "c050f10fb928",
+  "by": "claude-in-session"
+ },
  "account.refusal.lineageLaw": {
   "en": "fcdea82bce37",
   "tr": "6c5404a6f2f1",
@@ -3885,8 +3890,8 @@
   "by": "claude-in-session"
  },
  "account.refusal.tooManyLineages": {
-  "en": "04ee7a4c73e9",
-  "tr": "8fa06d05e398",
+  "en": "5f69291d1652",
+  "tr": "4922c3684fbd",
   "by": "claude-in-session"
  },
  "account.refusal.tooManySaves": {
@@ -14014,6 +14019,36 @@
   "tr": "6c6c7ac31698",
   "by": "claude-in-session"
  },
+ "fronts.card.next": {
+  "en": "5024e013d6b4",
+  "tr": "87d6b660279c",
+  "by": "claude-in-session"
+ },
+ "fronts.card.now": {
+  "en": "2f28fa4a2817",
+  "tr": "7ba352087468",
+  "by": "claude-in-session"
+ },
+ "fronts.timers.next": {
+  "en": "7e237b9868ce",
+  "tr": "c85a600ab597",
+  "by": "claude-in-session"
+ },
+ "fronts.timers.now": {
+  "en": "ad207e489d32",
+  "tr": "8ab4f9367b80",
+  "by": "claude-in-session"
+ },
+ "fronts.timers.nowSub": {
+  "en": "92ad0d959bd5",
+  "tr": "ab63917e1ed5",
+  "by": "claude-in-session"
+ },
+ "fronts.timers.then": {
+  "en": "6b1314ffe651",
+  "tr": "b542b3cd40db",
+  "by": "claude-in-session"
+ },
  "gate.arsenal.branded": {
   "en": "7b9321e45770",
   "tr": "87c3ee222252",
@@ -15257,6 +15292,11 @@
  "haul.capped": {
   "en": "a2549d3d4b2d",
   "tr": "c20b02678b82",
+  "by": "claude-in-session"
+ },
+ "helm.heavy": {
+  "en": "1909b8911a74",
+  "tr": "492b3507994e",
   "by": "claude-in-session"
  },
  "helm.passenger": {
@@ -17342,6 +17382,21 @@
  "legacy.rez.unheard": {
   "en": "9a86cc2b125e",
   "tr": "916797c9ff90",
+  "by": "claude-in-session"
+ },
+ "legacy.union.born": {
+  "en": "39b7a548d1fb",
+  "tr": "f14462812d0e",
+  "by": "claude-in-session"
+ },
+ "legacy.union.raised": {
+  "en": "7077e4aa0ab5",
+  "tr": "6ddcb5805bd2",
+  "by": "claude-in-session"
+ },
+ "legacy.union.raisedAway": {
+  "en": "5a3c7723cbd9",
+  "tr": "1217b981b00a",
   "by": "claude-in-session"
  },
  "level.renown.risen": {
@@ -21159,6 +21214,36 @@
   "tr": "846f1ec9b9a8",
   "by": "claude-in-session"
  },
+ "menu.realm.families": {
+  "en": "862a863ff592",
+  "tr": "29c2bbaeab8f",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familiesHide": {
+  "en": "34d8b60fe253",
+  "tr": "15e95b4004e2",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familiesShow": {
+  "en": "d97d1ee339e4",
+  "tr": "17fceea68432",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyRemoved": {
+  "en": "2cbcaf937fc9",
+  "tr": "c5e83711858f",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyRow": {
+  "en": "5e293ce32dbd",
+  "tr": "6a2196c7a091",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyUnnamed": {
+  "en": "9b115c99b1da",
+  "tr": "2124527f6d22",
+  "by": "claude-in-session"
+ },
  "menu.realm.heading": {
   "en": "81480a8e85a4",
   "tr": "90fba729bd99",
@@ -21182,6 +21267,26 @@
  "menu.realm.play": {
   "en": "5d12bd53552c",
   "tr": "9782ea1881d8",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamily": {
+  "en": "a53c064ca700",
+  "tr": "e02771d2041d",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyAsk": {
+  "en": "5694f452ab8b",
+  "tr": "c43eb0681720",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyBody": {
+  "en": "c055ce52aa9e",
+  "tr": "75a9771aa6b9",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyYes": {
+  "en": "e963907dac5c",
+  "tr": "8183c2bfaed9",
   "by": "claude-in-session"
  },
  "menu.realm.strandedAsk": {

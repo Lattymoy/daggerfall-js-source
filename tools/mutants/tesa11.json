@@ -284,8 +284,8 @@
   {
     "name": "TESA11-flatten-ignored",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "    avg = flat ? flat.avg : calcAvgMaxHeight(samples)[0];",
-    "new": "    avg = calcAvgMaxHeight(samples)[0];",
+    "old": "    avg = flat ? flat.avg : calcAvgMaxHeight(unmet?.samples ?? samples)[0];",
+    "new": "    avg = calcAvgMaxHeight(unmet?.samples ?? samples)[0];",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]

@@ -95,11 +95,12 @@
   {
     "name": "LEGACY7-dead-hold-a-slot",
     "file": "server-account/src/realm.js",
-    "old": "WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?',\n    ).bind(id, playerId, n, realmSummaryOf(summary), lease, nowS, nowS, nowS, born ? lineage : null",
-    "new": "WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ?) < ?',\n    ).bind(id, playerId, n, realmSummaryOf(summary), lease, nowS, nowS, nowS, born ? lineage : null",
+    "old": "WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?'\n      // AUDIT FB1029e F4",
+    "new": "WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ?) < ?'\n      // AUDIT FB1029e F4",
     "tests": [
       "test/server/legacy7_service.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FB1029e)."
   },
   {
     "name": "LEGACY7-birth-unresumed",

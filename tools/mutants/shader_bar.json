@@ -32,12 +32,12 @@
   {
     "name": "GB-warm-flash",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "if (s.phase === 'idle') return full || total === 0 ? s :",
-    "new": "if (s.phase === 'idle') return total === 0 ? s :",
+    "old": "    if (settled && (full || total === 0)) return { ...s, phase: 'ready', done, total, fullAt: now, since: now };",
+    "new": "    if (settled && (full || total === 0)) return s;",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
-    "note": "a warm cache shows the bar on every visit"
+    "note": "GFX-ALWAYS (re-aimed): a warm cache shows no bar at all"
   },
   {
     "name": "GB-no-hold",
@@ -62,12 +62,12 @@
   {
     "name": "GB-polls-on",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "timer = state.phase === 'gone' ? null : win.setTimeout(tick, GFX_POLL_MS);",
-    "new": "timer = win.setTimeout(tick, GFX_POLL_MS);",
+    "old": "timer = state.phase === 'gone' || state.phase === 'ready' ? null : win.setTimeout(tick, GFX_POLL_MS);",
+    "new": "timer = state.phase === 'gone' ? null : win.setTimeout(tick, GFX_POLL_MS);",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
-    "note": "the poll runs on after the bar has gone"
+    "note": "GFX-ALWAYS (re-aimed): the poll runs on after the bar says ready"
   },
   {
     "name": "GB-bar-only-with-button",
@@ -112,12 +112,12 @@
   {
     "name": "GB-enhanced-menu-unwired",
     "file": "src/main.js",
-    "old": "    await gfxBar;\n    choice = await runCinematicFrontDoor(",
-    "new": "      return runEnhancedMenu();",
+    "old": "      gfxPrep(true);   // before the menu: the panel's key listener is laid first\n",
+    "new": "",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
-    "note": "no bar on the enhanced menu"
+    "note": "no bar on the enhanced menu (re-aimed by content: the old record did not parse)"
   },
   {
     "name": "GB-classic-menu-left-up",

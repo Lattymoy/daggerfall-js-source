@@ -151,7 +151,7 @@
  {
   "name": "FB1028-the-bake-unbumped",
   "file": "src/world/deepWater/deepWatersBakeCache.js",
-  "old": "export const BAKE_GENERATOR_VERSION = 4;",
+  "old": "export const BAKE_GENERATOR_VERSION = 5;",
   "new": "export const BAKE_GENERATOR_VERSION = 2;",
   "tests": [
    "test/world/terrain/fb1028_townground.test.js"
@@ -218,7 +218,7 @@
  {
   "name": "FB1028-the-ground-law-unmoved",
   "file": "src/net/wire.js",
-  "old": "export const GROUND_LAW = 4;",
+  "old": "export const GROUND_LAW = 5;",
   "new": "export const GROUND_LAW = 2;",
   "tests": [
    "test/net/fb1017f_groundgate.test.js"
@@ -298,7 +298,7 @@
  {
   "name": "AUDIT-FB1028-A2A3-the-ground-law-unmoved",
   "file": "src/net/wire.js",
-  "old": "export const GROUND_LAW = 4;",
+  "old": "export const GROUND_LAW = 5;",
   "new": "export const GROUND_LAW = 3;",
   "tests": [
    "test/net/fb1017f_groundgate.test.js"
@@ -308,7 +308,7 @@
  {
   "name": "AUDIT-FB1028-A2A3-the-bake-unbumped",
   "file": "src/world/deepWater/deepWatersBakeCache.js",
-  "old": "export const BAKE_GENERATOR_VERSION = 4;",
+  "old": "export const BAKE_GENERATOR_VERSION = 5;",
   "new": "export const BAKE_GENERATOR_VERSION = 3;",
   "tests": [
    "test/world/terrain/fb1028_townground.test.js",
@@ -319,7 +319,7 @@
  {
   "name": "FB1028-frame-stamp-at-3",
   "file": "src/world/terrain/terrainSampler.js",
-  "old": "export const GROUND_FRAME_LAW = 4;",
+  "old": "export const GROUND_FRAME_LAW = 5;",
   "new": "export const GROUND_FRAME_LAW = 3;",
   "tests": [
    "test/world/terrain/fb1028_townground_frame.test.js"
@@ -328,8 +328,8 @@
  {
   "name": "FB1028-frame-town-move-by-law-3",
   "file": "src/scenes/groundFrameHost.js",
-  "old": "!(frame >= GROUND_FRAME_LAW) ? townMove(yy, x, z) : 0)",
-  "new": "!(frame >= RELIEF_FRAME_LAW) ? townMove(yy, x, z) : 0)",
+  "old": "!(frame >= TOWN_FRAME_LAW) ? townMove(yy, x, z, meet) : 0)",
+  "new": "!(frame >= RELIEF_FRAME_LAW) ? townMove(yy, x, z, meet) : 0)",
   "tests": [
    "test/world/terrain/fb1028_townground_frame.test.js"
   ],
@@ -338,8 +338,8 @@
  {
   "name": "FB1028-frame-town-move-past-the-bay-alone",
   "file": "src/scenes/groundFrameHost.js",
-  "old": "!(frame >= GROUND_FRAME_LAW) ? townMove(yy, x, z) : 0)",
-  "new": "!(frame >= GROUND_FRAME_LAW) && !bayAt(x, z) ? townMove(yy, x, z) : 0)",
+  "old": "!(frame >= TOWN_FRAME_LAW) ? townMove(yy, x, z, meet) : 0)",
+  "new": "!(frame >= TOWN_FRAME_LAW) && !bayAt(x, z) ? townMove(yy, x, z, meet) : 0)",
   "tests": [
    "test/world/terrain/fb1028_townground_frame.test.js"
   ],
@@ -348,8 +348,8 @@
  {
   "name": "FB1028-frame-town-move-unhanded",
   "file": "src/scenes/groundFrameHost.js",
-  "old": "movedAt: groundMovedAt, townMovedAt });",
-  "new": "movedAt: groundMovedAt });",
+  "old": "movedAt: groundMovedAt, townMovedAt, meetMovedAt });",
+  "new": "movedAt: groundMovedAt, meetMovedAt });",
   "tests": [
    "test/world/terrain/fb1028_townground_frame.test.js"
   ]
@@ -366,8 +366,8 @@
  {
   "name": "FB1028-frame-move-sign",
   "file": "src/world/landforms.js",
-  "old": "  const moved = now.map((v, i) => (v - was[i]) * MAX_TERRAIN_HEIGHT);",
-  "new": "  const moved = now.map((v, i) => (was[i] - v) * MAX_TERRAIN_HEIGHT);",
+  "old": "blendLocationTerrain(was, avg, { ...locationRect, shape: null }, hDim);\n  const moved = now.map((v, i) => (v - was[i]) * MAX_TERRAIN_HEIGHT);",
+  "new": "blendLocationTerrain(was, avg, { ...locationRect, shape: null }, hDim);\n  const moved = now.map((v, i) => (was[i] - v) * MAX_TERRAIN_HEIGHT);",
   "tests": [
    "test/world/terrain/fb1028_townground_frame.test.js"
   ]

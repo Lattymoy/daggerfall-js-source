@@ -22,6 +22,7 @@ import { AURA_PROGRAMS } from '../../src/render/auraRing.js';   // AURA-STALL: t
 import { ARMORY_PROGRAMS } from '../../src/render/armoryPass.js';   // ARMORY: the armory's pieces, started with them
 import { NODE_GLOW_PROGRAMS } from '../../src/render/nodeGlow.js';   // SHADER-EASE QUEUE-ORDER
 import { NAVAL_PROGRAMS } from '../../src/render/navalRender.js';   // SHADER-EASE QUEUE-ORDER
+import { AURORA_PROGRAMS } from '../../src/render/auroraPass.js';   // SKYRIM-AURORA: the sky's aurora
 import { FIRE_PROGRAMS } from '../../src/render/redMountainFire.js';   // AUDIT RED-MOUNTAIN F5: the volcano's fire
 import { GLOW_PROGRAMS } from '../../src/render/ghostfenceGlow.js';   // and the Ghostfence's glow
 import { GATE_VEIL_PROGRAMS } from '../../src/render/gate/gateVeil.js';
@@ -122,8 +123,9 @@ test('AUDIT SHADER-STALL the passes play meets are started at the boot\'s idle w
   // PIN MOVED (AURA-STALL, #1137): and the auras' program - the first wearer in range waited its whole compile; PIN MOVED
   // (AUDIT RED-MOUNTAIN F5): and the volcano's fire and the fence's glow, drawn wherever the horizon holds them; PIN MOVED
   // (ARMORY): and the armory's eight body pieces, met wherever a wearer walks; PIN MOVED (SHADER-EASE QUEUE-ORDER): and the
-  // nodes' glow and the sea fight's effects, with the auras' and the armory's last
-  const want = [...GATE_PASS_PROGRAMS, ...telegraphPrograms(false), ...telegraphPrograms(true), ...GATE_FX_PROGRAMS, ...CRYSTAL_PROGRAMS, ...NODE_GLINT_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS, ...NODE_GLOW_PROGRAMS, ...NAVAL_PROGRAMS, ...AURA_PROGRAMS, ...ARMORY_PROGRAMS];
+  // nodes' glow and the sea fight's effects, with the auras' and the armory's last; PIN MOVED (SKYRIM-AURORA): and the
+  // sky's aurora after them - met only in Skyrim, its door never waits (AUDIT SKYRIM-AURORA B5)
+  const want = [...GATE_PASS_PROGRAMS, ...telegraphPrograms(false), ...telegraphPrograms(true), ...GATE_FX_PROGRAMS, ...CRYSTAL_PROGRAMS, ...NODE_GLINT_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS, ...NODE_GLOW_PROGRAMS, ...NAVAL_PROGRAMS, ...AURA_PROGRAMS, ...ARMORY_PROGRAMS, ...AURORA_PROGRAMS];
   assert.equal(ARMORY_PROGRAMS.length, 8, 'a program a body piece');
   assert.deepEqual(playPrograms(), want);
   const on = fakeGl();
