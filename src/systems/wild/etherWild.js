@@ -115,22 +115,22 @@ export const etherWayWord = (/** @type {string | null | undefined} */ point) => 
 
 /** The zone's words on the sea (WILD_TEXT's keys, said this ground's way) - through the text core (L10N4), read when said. */
 export const ETHER_WILD_TEXT = Object.freeze({
-  enter: () => t('sea.wild.enter', 'You sail out of Veilhaven\'s peace onto the open {word} Ocean, an open PvP zone. Foes here are four times as strong. If another player kills you, you drop what you carry.', { word: ETHER_WORD }),   // FOE-KEEPS
+  enter: () => t('sea.wild.enter', 'You sail out of Veilhaven\'s peace onto the open {word} Ocean, an open PvP zone. Foes here are four times as strong. If another player kills you, they may take one uninsured worn piece, or gold.', { word: ETHER_WORD }),   // PVP-WORDS
   leave: () => t('sea.wild.leave', 'You are in Veilhaven\'s peace. No player may attack you here.'),
   ring: (r) => t('sea.wild.ring', '{band}: {bonus}.', { band: etherRingName(r), bonus: etherRingBonus(r) }),
   ringCross: (r, deeper) => (deeper
     ? t('sea.wild.deeper', 'Deeper - {band}: {bonus}.', { band: etherRingName(r), bonus: etherRingBonus(r) })
     : t('sea.wild.shallower', 'Back toward the Veil - {band}: {bonus}.', { band: etherRingName(r), bonus: etherRingBonus(r) })),
-  chipTip: () => t('sea.wild.chipTip', 'The {word} Ocean past Veilhaven\'s peace: other players may attack you. Foes are four times as strong and drop up to twice the loot (25% more in the Shallows, twice in the Abyss). If another player kills you, you drop what you carry.', { word: ETHER_WORD }),
+  chipTip: () => t('sea.wild.chipTip', 'The {word} Ocean past Veilhaven\'s peace: other players may attack you. Foes are four times as strong and drop up to twice the loot (25% more in the Shallows, twice in the Abyss). A player\'s kill may cost uninsured gear or gold.', { word: ETHER_WORD }),
   deathHold: () => t('sea.wild.deathHold', 'Past the Veil the dead wait two minutes.'),
   teleport: () => t('sea.wild.teleport', 'You cannot teleport into, out of or about the open {word} Ocean. Sail.', { word: ETHER_WORD }),
   // AUDIT SEA VENTURES C3, C6, C7: the mountains' words the sea said - a party's walk onto it, the zone gone while still
   // past the peace (a relay lost, a save loaded in the Bay: "Veilhaven's peace" was said wherever the player stood), a
   // party left, a drop answered after the rise, /unstuck outdoors, a second revenant
-  walkInto: () => t('sea.wild.walkInto', 'It leads onto the open {word} Ocean past Veilhaven\'s peace, an open PvP zone. Other players may kill you there and take what you carry.', { word: ETHER_WORD }),
+  walkInto: () => t('sea.wild.walkInto', 'It leads onto the open {word} Ocean past Veilhaven\'s peace, an open PvP zone. Other players may kill you there and take a worn piece or gold.', { word: ETHER_WORD }),
   quiet: () => t('sea.wild.quiet', 'You are out of the open {word} Ocean\'s PvP zone. No player may attack you here.', { word: ETHER_WORD }),
   truce: () => t('sea.wild.truce', 'No longer in your party. On the open {word} Ocean you and they cannot fight for ten minutes. Then you are strangers.', { word: ETHER_WORD }),
-  dropLate: () => t('sea.wild.dropLate', 'What you dropped when you died at sea has left your pack. It lies where you fell.'),
+  dropLate: () => t('sea.wild.dropLate', 'What your killer took when you died at sea has left your pack.'),
   burntLate: () => t('sea.wild.burntLate', 'What you dropped when you died at sea has left your pack. This character\'s trading is frozen, so it was lost.'),
   unstuckOut: () => t('sea.wild.unstuckOut', '/unstuck does not work outdoors on the open {word} Ocean.', { word: ETHER_WORD }),
   revenantOne: () => t('sea.wild.revenantOne', 'Only one revenant may walk at your side on the open {word} Ocean.', { word: ETHER_WORD }),

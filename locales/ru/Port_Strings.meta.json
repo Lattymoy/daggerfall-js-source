@@ -14014,6 +14014,81 @@
   "tr": "4541b3b7e064",
   "by": "claude-in-session"
  },
+ "gfx.bar.preparing": {
+  "en": "62a6d1012582",
+  "tr": "91b075fb9373",
+  "by": "claude-in-session"
+ },
+ "gfx.bar.ready": {
+  "en": "9930ea8bc52e",
+  "tr": "8ce86d5929f5",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.button": {
+  "en": "69086bb69eff",
+  "tr": "0753ffb341b1",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.close": {
+  "en": "bbfa773e5a63",
+  "tr": "4ae50d30739d",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.copy": {
+  "en": "af74f7c5362a",
+  "tr": "4a05d8619ded",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.edge": {
+  "en": "e3fefd6f90b9",
+  "tr": "e9c21334d846",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.folders": {
+  "en": "16eb48819d73",
+  "tr": "57cb6ee7b39b",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.mac.go": {
+  "en": "794827f753d8",
+  "tr": "46bc9ec0ab3d",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.mac.quit": {
+  "en": "e3c9830d2135",
+  "tr": "1f86c41b6284",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.note": {
+  "en": "f000ca038a57",
+  "tr": "58b99f7fd6dd",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.profile": {
+  "en": "3a1ef5df59ff",
+  "tr": "a1dccf5c4dd4",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.why": {
+  "en": "4c0b60ec10d9",
+  "tr": "7fba4a0218b2",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.win.close": {
+  "en": "520764dd506b",
+  "tr": "bc427f2d44b3",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.win.run": {
+  "en": "2993606036eb",
+  "tr": "3611483ac712",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.win.start": {
+  "en": "dc9c4564afab",
+  "tr": "81355ee640c2",
+  "by": "claude-in-session"
+ },
  "growth.captain.lead": {
   "en": "34f459d40399",
   "tr": "60891ad222ea",
@@ -15602,6 +15677,16 @@
  "inventory.batch.yes": {
   "en": "fcf57649fcdb",
   "tr": "096e09dc8c0f",
+  "by": "claude-in-session"
+ },
+ "inventory.cape.label": {
+  "en": "cb4796c29622",
+  "tr": "c7d04d96e608",
+  "by": "claude-in-session"
+ },
+ "inventory.cape.title": {
+  "en": "8cd2d555af57",
+  "tr": "2077b21165c8",
   "by": "claude-in-session"
  },
  "inventory.quest.item": {
@@ -37330,8 +37415,8 @@
   "by": "claude-in-session"
  },
  "sea.wild.chipTip": {
-  "en": "9e14a86d940a",
-  "tr": "9d37139bd683",
+  "en": "88c4bc67ac34",
+  "tr": "d99ae465a28c",
   "by": "claude-in-session"
  },
  "sea.wild.crossWarn": {
@@ -37350,13 +37435,13 @@
   "by": "claude-in-session"
  },
  "sea.wild.dropLate": {
-  "en": "0a6951c155e0",
-  "tr": "66cc7df28d2a",
+  "en": "81c1d7e08802",
+  "tr": "9ffda3834094",
   "by": "claude-in-session"
  },
  "sea.wild.enter": {
-  "en": "f49115e892b2",
-  "tr": "a7eea16d7678",
+  "en": "14bca5e366ed",
+  "tr": "b1503a120232",
   "by": "claude-in-session"
  },
  "sea.wild.leave": {
@@ -37400,8 +37485,8 @@
   "by": "claude-in-session"
  },
  "sea.wild.walkInto": {
-  "en": "4a86279b0614",
-  "tr": "712e8e7dbcd3",
+  "en": "eec82857378c",
+  "tr": "7631dd11348c",
   "by": "claude-in-session"
  },
  "search.searchedBy": {
@@ -40130,8 +40215,8 @@
   "by": "claude-in-session"
  },
  "tutorials.wildZone.body2": {
-  "en": "5c2566aaad07",
-  "tr": "2c8873322539",
+  "en": "87989055cf87",
+  "tr": "ff75f9d52b75",
   "by": "claude-in-session"
  },
  "veil.party.captain": {
@@ -40355,8 +40440,8 @@
   "by": "claude-in-session"
  },
  "wild.death.kept": {
-  "en": "5677b5a00569",
-  "tr": "7f1b88b9e96a",
+  "en": "e9a05a7b45a6",
+  "tr": "b6913f3925f6",
   "by": "claude-in-session"
  },
  "wild.death.last": {
@@ -40465,8 +40550,8 @@
   "by": "claude-in-session"
  },
  "wild.insure.line": {
-  "en": "993784cd95a5",
-  "tr": "2b843f77f4c0",
+  "en": "3bd9cec6aa23",
+  "tr": "a181d0015dc2",
   "by": "claude-in-session"
  },
  "wild.insure.offline": {
@@ -40480,8 +40565,8 @@
   "by": "claude-in-session"
  },
  "wild.legend.offline": {
-  "en": "80b4064ee77c",
-  "tr": "d243ff416bca",
+  "en": "86db54caef14",
+  "tr": "a000bad5cd45",
   "by": "claude-in-session"
  },
  "wild.legend.travel": {
@@ -40530,13 +40615,13 @@
   "by": "claude-in-session"
  },
  "wild.zone.chipTip": {
-  "en": "fda83308207b",
-  "tr": "efbc49050308",
+  "en": "687871882d2f",
+  "tr": "368f9df93254",
   "by": "claude-in-session"
  },
  "wild.zone.enter": {
-  "en": "006e183d3d6a",
-  "tr": "2982610546e7",
+  "en": "d8ef5b322bf0",
+  "tr": "dbe8673a906a",
   "by": "claude-in-session"
  },
  "wild.zone.revenantOne": {

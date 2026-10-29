@@ -178,7 +178,7 @@ test('WILD-REJOIN THE PAGE: a living page told it is down - and that saw no deat
     assert.deepEqual(death, { servedS: 30, p: [1, 2, 3] });
     assert.deepEqual(presented, [t], 'put down');
     assert.deepEqual([wildDeath().served, wildDeath().killer, wildDeath().dropped, wildDeathKill()], [30, null, 0, true]);
-    assert.equal(wildDeathLines()[0], 'Another player may claim one piece of your worn gear.', 'a kill by a killer this page never heard named');
+    assert.equal(wildDeathLines()[0], 'Another player may take one uninsured worn piece of yours, or gold.', 'a kill by a killer this page never heard named');   // PIN MOVED (PVP-WORDS): 'Another player may claim one piece of your worn gear.'
     setWildDeath({ killer: null, kill: true, dropped: 4 });   // the drop's answer, later
     assert.equal(wildDeath().served, 30, 'kept through the death\'s later words');
     const screen = new DeathScreen({ online: true });
