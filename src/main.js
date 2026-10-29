@@ -68,6 +68,11 @@ async function boot() {
   // The boot's programs start compiling now, on the driver's threads, while the boot does its own work; each pass's
   // build then reads a link made meanwhile (render/bootPrograms.js). Behind a door: BOOT2's ceiling on the entry's graph.
   import('./render/bootPrograms.js').then((m) => m.startBootPrograms(renderer, location.search)).catch((err) => console.warn('[boot] the programs could not be started early:', err?.message ?? err));
+  // SHADER-EASE GFX-BAR (2026-10-29): the menus' graphics bar and Fix stutter button (ui/gfxPrepBar.js), up while one shows
+  // - mounted at once from the loaded module, so its key listener is laid before the menu's
+  let gfxMod = null;
+  const gfxBar = import('./ui/gfxPrepBar.js').then((m) => (gfxMod = m)).catch(() => null);
+  const gfxPrep = (on) => { try { if (on) gfxMod?.gfxPrepUp(renderer.gl); else gfxMod?.gfxPrepDown(); } catch { /* the menu stands without it */ } };
   import('./render/portraitRenderer.js').then(({ setPortraitRenderer }) => setPortraitRenderer(renderer)).catch(() => {});   // PORTRAIT3D: the faces' renderer, for the menu's wells that hold none (behind a door: BOOT2's ceiling)
   renderer.setRetroSource(retroFrameConfig);   // RETRO1: DFU's retro mode - asked once per world frame, so the settings screen's change lands on the next
   renderer.setRenderScaleSource(renderScaleSetting);   // PERF-SCALE: the world's share of the window's pixels - asked once per world frame, and retro wins
@@ -210,8 +215,10 @@ async function boot() {
     // choosing a game closes it before any in-game or classic video audio.
     status('introduction');
     const freeze = import.meta.env.DEV && params.has('introat') ? Number(params.get('introat')) : null;
+    await gfxBar;
     choice = await runCinematicFrontDoor(() => {
       status('main menu');
+      gfxPrep(true);   // before the menu: the panel's key listener is laid first
       return runEnhancedMenu();
     }, {
       // UXB1-A: the player's own Skip start video (uiPrefs skipStartVideo), beside the probes' one-visit ?nointro -
@@ -221,6 +228,7 @@ async function boot() {
       debug: import.meta.env.DEV && params.has('introdebug'),
       freezeAt: freeze !== null && Number.isFinite(freeze) ? Math.max(0, freeze) : null,
     }).finally(detachMenuPad);   // PAD-DOOR: the choice is made - the door's pad stops before the scene's starts
+    gfxPrep(false);
   }
   if (choice !== 'begin') {
     await ensureData();
@@ -340,7 +348,9 @@ async function boot() {
     }
   }
   const { runMenu } = await import('./scenes/menu.js');
-  const action = await runMenu(canvas, renderer, status);
+  await gfxBar;
+  gfxPrep(true);
+  const action = await runMenu(canvas, renderer, status).finally(() => gfxPrep(false));
   // Load Game rides the dungeon host's OWN quickLoad (the F12 path) -
   // dungeon.js calls ctx.quickLoad once the context is built. A
   // menu-side loader would be a second copy of a working path.

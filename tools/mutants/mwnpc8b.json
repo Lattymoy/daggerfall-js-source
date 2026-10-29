@@ -110,8 +110,8 @@
  {
   "name": "MWNPC8b-street-every-ring",
   "file": "src/scenes/world.js",
-  "old": "_peopleOn && ring <= 1 ? streetLook(pn) : null",
-  "new": "_peopleOn ? streetLook(pn) : null",
+  "old": "_peopleOn && ring <= 1 ? streetLook(pn, f) : null",
+  "new": "_peopleOn ? streetLook(pn, f) : null",
   "tests": [
    "test/scenes/mwnpc8b_streetdungeon.test.js"
   ]

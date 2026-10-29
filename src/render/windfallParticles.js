@@ -56,6 +56,8 @@ void main() {
   if (t.a < 0.5) discard;   // _Cutoff 0.5 x _TintColor.a 1
   outColor = vec4(t.rgb * uLight, 1.0);
 }`;
+// SHADER-EASE MOUNT-START (2026-10-29): what the constructor builds, started at page load (render/mountPrograms.js).
+export const WINDFALL_PARTICLE_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([VS, FS]))]);
 
 /** Floats an instance carries: x, y, z, size, rotation, tile. */
 const INSTANCE_FLOATS = 6;

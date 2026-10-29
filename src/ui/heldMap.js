@@ -1991,6 +1991,7 @@ export class HeldMapWindow {
       measure: ctx?.measureText
         ? (t) => { ctx.font = stripFont(paperW); return ctx.measureText(t).width; }
         : null,
+      continent: this._tamriel || this._zoneMap,   // AUDIT TAMRIEL-WIDE D3: the world sheet is Tamriel's where it shows the continent
     });
     const model = sheet?.ensure?.() ?? null;
     if (!ctx || !model) return;

@@ -77,6 +77,8 @@ void main() {
   vec2 grabUv = (gl_FragCoord.xy - uPort.xy) / uPort.zw + bend / max(uPort.zw, vec2(1.0));
   outColor = texture(uGrab, grabUv);
 }`;
+// SHADER-EASE MOUNT-START (2026-10-29): what the constructor builds, started at page load (render/mountPrograms.js).
+export const HEAT_HAZE_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([VS, FS]))]);
 
 /** CreateCylinderMesh: 128 sides of a unit circle, y +-70, two triangles a side - positions and indices. */
 export function hazeCylinder(segments = HAZE.cylinderSegments, half = HAZE.cylinderHalfHeight) {

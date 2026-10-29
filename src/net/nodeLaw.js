@@ -223,7 +223,7 @@ export const dveinKey = ({ dungeon, day, slot }) => `dvein:${dungeon}:${day}:${s
 export const bodyKey = ({ day, id }) => `body:${day}:${id}`;
 export const BODY_ID_RE = /^[0-9a-f]{12}$/;
 const NODE_KEY_RE = /^(tree|herb|vein|boulder):(-?\d{1,4}):(-?\d{1,4}):(\d{1,6}):(\d{1,2})$/;   // ETHER-NODES: the Eltheric's x to 8127 and its y north of the map's 0
-const DVEIN_KEY_RE = /^dvein:(\d{1,7}):(\d{1,6}):(\d{1,2})$/;
+const DVEIN_KEY_RE = /^dvein:(\d{1,10}):(\d{1,6}):(\d{1,2})$/;   // AUDIT TAMRIEL-WIDE C3: a dungeon past the Bay by its whole id
 const BODY_KEY_RE = /^body:(\d{1,6}):([0-9a-f]{12})$/;
 /** PROF8: a haul's id - `haul:<x>:<y>:<day>:<id>`, the map pixel the net was cast from, its UTC day and twelve hex
  *  digits the angler's client drew at the cast (scenes/fishHost.js). Fishing is bounded, not witnessed (PROF0 6): the
@@ -231,8 +231,9 @@ const BODY_KEY_RE = /^body:(\d{1,6}):([0-9a-f]{12})$/;
  *  writes the bound (CAP-OFF: the day's forty hauls are gone). */
 export const haulKey = ({ x, y, day, id }) => `haul:${x}:${y}:${day}:${id}`;
 const HAUL_KEY_RE = /^haul:(-?\d{1,4}):(-?\d{1,4}):(\d{1,6}):([0-9a-f]{12})$/;   // ETHER-NODES: as a node's
-/** A dungeon's identity, DFU's own: `MapTableData.MapId & 0xfffff` (formats/mapsFile.js). */
-export const DUNGEON_ID_MAX = 0xfffff;
+/** A dungeon's identity (scenes/dungeonIdentity.js): DFU's `MapTableData.MapId & 0xfffff` on the Bay, the whole map id
+ *  past it - AUDIT TAMRIEL-WIDE C3: past the Bay the low 20 bits named a ruin and a lair alike. An unsigned 32-bit id. */
+export const DUNGEON_ID_MAX = 0xffffffff;
 export const dungeonOk = (id) => Number.isSafeInteger(id) && id >= 0 && id <= DUNGEON_ID_MAX;
 /** A node id read back, or null for one out of shape. AUDIT 29 A1: only in its one spelling - `vein:010:20:...` is the
  *  same node as `vein:10:20:...` by its numbers, and the service keys the day's harvests by the string, so a node read

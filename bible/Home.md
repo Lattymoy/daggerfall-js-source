@@ -299,6 +299,18 @@ and on a contributor's machine, never on a deploy; a slice that moves code out
 lowers it in the same change. The method and the map are
 `01-Overview/Host-Split.md`.
 
+THE WORLD IS TAMRIEL (TAMRIEL-WIDE, 2026-10-28; the owner: "ensure our
+future development isnt just Daggerfall anymore and is the entirety of
+tamriel"). The Iliac Bay is one theatre of ten. A new system works in every
+province or its record says where it does not and why. It keys a pixel by
+`worldPixelKey`, bounds it by `worldPixelOk`, finds a place in `worldPlaces`
+and reads regions 0..70 - never MapsFile's `y * 1000 + x`, a walk of MAPS.BSA's
+regions or a 0..999 bound, except as the Bay's own data behind `inBay`, marked
+`BAY-OWN:` with why. Its pins hold a case past the Bay beside the Bay's.
+`test/tooling/tamrielwide.test.js` holds the tree to
+`tools/tamrielWideBaseline.json`, which only goes down
+(`01-Overview/Port-Doctrine.md`, The whole of Tamriel).
+
 ## Sections
 
 - `01-Overview/` - vision, port doctrine, phase plan, Port-Ledger (departures/quirks/unported)

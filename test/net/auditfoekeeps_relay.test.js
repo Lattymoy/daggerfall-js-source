@@ -66,7 +66,7 @@ test('AUDIT FOE-KEEPS E2 THE WIRE AND THE CLIENT: the zone word carries `dd` onl
   assert.deepEqual(validWildData({ k: 'zone', z: 0, dd: 1 }), { k: 'zone', z: 0, dd: 1 });
   assert.deepEqual(validWildData({ k: 'zone', z: 1, dd: 1 }), { k: 'zone', z: 1 }, 'never with a word that it stands in it');
   assert.deepEqual(validWildData({ k: 'zone', z: 0, dd: true }), { k: 'zone', z: 0 }, 'one shape alone');
-  assert.ok(rd('src/scenes/world.js').includes('    online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere() && wildOutdoors(), player.pos, Date.now()));'), 'the host says it');
+  assert.ok(rd('src/scenes/world.js').includes('    online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere(), player.pos, Date.now()));'), 'the host says it');
   const o = rd('src/net/online.js');
   assert.ok(o.includes("this._sayZone(this._ws, v, !v && dead, entry && edge);"));
   assert.ok(o.includes("ws.send(JSON.stringify({ t: 'wild', data: { k: 'zone', z, ...(z === 1 && sf ? { sf: 1 } : {}), ...(dead ? { dd: 1 } : {}),"));   // PIN MOVED (PVP-SAFE-HIT): the streets' `sf` first

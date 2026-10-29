@@ -820,8 +820,8 @@
   "by": "claude-in-session"
  },
  "coll.src.world": {
-  "en": "45b24cf8e9dc",
-  "tr": "7bf24c0c54e2",
+  "en": "859abfc107a6",
+  "tr": "746c5777a71f",
   "by": "claude-in-session"
  },
  "coll.state.character": {
@@ -1379,6 +1379,16 @@
   "tr": "36f5d5a177e5",
   "by": "claude-in-session"
  },
+ "features.tamrielLand.note": {
+  "en": "c4201ee9109a",
+  "tr": "b276265b2363",
+  "by": "claude-in-session"
+ },
+ "features.tamrielLand.title": {
+  "en": "3bc7615ad83a",
+  "tr": "89f0801fb8e7",
+  "by": "claude-in-session"
+ },
  "features.tamrielLands.note": {
   "en": "dc37f2698218",
   "tr": "75ddf0023d5f",
@@ -1387,6 +1397,16 @@
  "features.tamrielLands.title": {
   "en": "1e8a962cf274",
   "tr": "aca32d0b1345",
+  "by": "claude-in-session"
+ },
+ "features.tamrielMap.note": {
+  "en": "eda2af4235c1",
+  "tr": "ee01918a5e2f",
+  "by": "claude-in-session"
+ },
+ "features.tamrielMap.title": {
+  "en": "b5c1bd42eaeb",
+  "tr": "46097fabb9a3",
   "by": "claude-in-session"
  },
  "features.wagonUpkeep.boons": {
@@ -1602,6 +1622,81 @@
  "forecast.word.thunder": {
   "en": "320002f33702",
   "tr": "a6bfdb6f162f",
+  "by": "claude-in-session"
+ },
+ "gfx.bar.preparing": {
+  "en": "62a6d1012582",
+  "tr": "f16a6bf05d0f",
+  "by": "claude-in-session"
+ },
+ "gfx.bar.ready": {
+  "en": "9930ea8bc52e",
+  "tr": "cf80b17754ae",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.button": {
+  "en": "69086bb69eff",
+  "tr": "ae40e7260579",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.close": {
+  "en": "bbfa773e5a63",
+  "tr": "6c14bd7f6f9e",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.copy": {
+  "en": "af74f7c5362a",
+  "tr": "4edd1d00875d",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.edge": {
+  "en": "e3fefd6f90b9",
+  "tr": "98ee2fc5c0db",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.folders": {
+  "en": "16eb48819d73",
+  "tr": "090ae3e3e7dd",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.mac.go": {
+  "en": "794827f753d8",
+  "tr": "5afcb2d31751",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.mac.quit": {
+  "en": "e3c9830d2135",
+  "tr": "f4391672fde6",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.note": {
+  "en": "f000ca038a57",
+  "tr": "eb0434b1cb87",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.profile": {
+  "en": "3a1ef5df59ff",
+  "tr": "557b6e99d8f8",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.why": {
+  "en": "4c0b60ec10d9",
+  "tr": "954715bae2c9",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.win.close": {
+  "en": "520764dd506b",
+  "tr": "64803f6f06de",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.win.run": {
+  "en": "2993606036eb",
+  "tr": "ec05f33c48b4",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.win.start": {
+  "en": "dc9c4564afab",
+  "tr": "9ec94c9ba6c4",
   "by": "claude-in-session"
  },
  "growth.spec.why.chosenMentor": {
@@ -2819,6 +2914,41 @@
   "tr": "7fee9929b792",
   "by": "claude-in-session"
  },
+ "map.sheet.bay": {
+  "en": "78880f8c76b4",
+  "tr": "86af5652173f",
+  "by": "claude-in-session"
+ },
+ "map.sheet.dungeon": {
+  "en": "ef947e3aef31",
+  "tr": "2177a4a3026a",
+  "by": "claude-in-session"
+ },
+ "map.sheet.interior": {
+  "en": "1dd68e5c21e5",
+  "tr": "a752b496de30",
+  "by": "claude-in-session"
+ },
+ "map.sheet.tamriel": {
+  "en": "b2fa7a769061",
+  "tr": "65ecc6080f78",
+  "by": "claude-in-session"
+ },
+ "map.sheet.town": {
+  "en": "5d9c113b57b1",
+  "tr": "f15f369fc5ce",
+  "by": "claude-in-session"
+ },
+ "map.tamriel.place": {
+  "en": "51513f0338a4",
+  "tr": "51513f0338a4",
+  "by": "claude-in-session"
+ },
+ "map.tamriel.placeKind": {
+  "en": "4baa9f07cc0b",
+  "tr": "4baa9f07cc0b",
+  "by": "claude-in-session"
+ },
  "mentor.ended": {
   "en": "f1e2a03439db",
   "tr": "12bfc2ef5c41",
@@ -3855,8 +3985,8 @@
   "by": "claude-in-session"
  },
  "pvp.level30.warn": {
-  "en": "0a84a8632180",
-  "tr": "32f02ec3903a",
+  "en": "6c45d870e1ce",
+  "tr": "470a9d22452d",
   "by": "claude-in-session"
  },
  "pvp.potion.health": {

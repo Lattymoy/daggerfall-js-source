@@ -257,6 +257,7 @@ export const TUTORIALS = Object.freeze([
   page({
     id: 'travel-map', group: 'travel', title: 'The Travel Map', trigger: 'When you first open the travel map.',
     body: [
+      // AUDIT TAMRIEL-WIDE D5: true past the Bay too since TRAVEL-EVERYWHERE (pastBayTravel.js pastBayJourney)
       '{TravelMap} opens the map of the whole land. Choose a place to travel there. The journey takes days in the game but only a moment for you.',
       'You decide how fast to go, how to travel and whether to camp or stop at inns. Online, journeys over land are made along the roads instead.',
     ],
@@ -532,7 +533,9 @@ export const TUTORIALS = Object.freeze([
   page({
     id: 'arena', group: 'challenges', title: 'The Arena', trigger: 'When you first visit the arena.',
     body: [
-      'The arena stands in the province\'s capital. Speak with the Herald at the gate to fight. The recruiters will take you onto a team, and the bookmaker takes wagers.',
+      // AUDIT TAMRIEL-WIDE II T1: two arenas - Daggerfall city's and the Imperial City's Arena District (IC-GRAND;
+      // world/arena/arenaCity.js standsArena); TUT1 names no Daggerfall
+      'An arena stands in the Imperial City and in the Iliac Bay\'s westernmost crown city. Speak with the Herald at the gate to fight. The recruiters will take you onto a team, and the bookmaker takes wagers.',
       'There are ten ranks to climb, and the purse reaches 10,000 gold. One defeat ends your run, and potions are forbidden.',
     ],
   }),

@@ -218,7 +218,7 @@ export async function wildFall(ctx, player, body, { gateKey, signing }, again = 
   // WILD-INSURE: the policies in force at the fall's signing keep their pieces. PVP-VILLAIN's seam: a villain holds none
   const { results: policies = [] } = await ctx.db.prepare("SELECT key, at, premium FROM wild_insurance WHERE char_id = ?1 AND state = 'active'").bind(charId).all();
   const live = policies.filter((p) => wildPolicyInForce(Number(p.at), fallAt));
-  const insured = pvpInsuredFor(live.map((p) => String(p.key)), { villain: isVillain(Number(row.villainy)) });   // the owner: "villian lose insurance"
+  const insured = pvpInsuredFor(live.map((p) => String(p.key)), { villain: isVillain(Number(row.villainy)), among: stored.items });   // the owner: "villian lose insurance"; INSURE-ALL: a key two pieces carry keeps neither
   // AUDIT FOE-KEEPS LETTERS-TENTH: a tab that says it lowers a letter by its share (or a seizure, which no game applies) -
   // PVP-NO-TENTH: the letters pay the last roll what the purse cannot; a tab from before the word, the purse alone
   const letters = seize || body?.letters === WILD_FALL_LETTERS;
