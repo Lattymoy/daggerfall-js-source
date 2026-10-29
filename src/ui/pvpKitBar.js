@@ -43,7 +43,7 @@ export function saveKitBar(bar, key = STORE) {
 export function castKitSlot({ magic, entity, allyAimed = () => false }, slot) {
   if (!magic || !entity) return 'none';
   const s = kitSlotOf(slot);
-  const gift = s.id !== 'damage' && allyAimed(PVP_KIT.reachM);
+  const gift = s.id !== 'damage' && s.id !== 'resurrect' && allyAimed(PVP_KIT.reachM);   // PVP-KIT-REZ: a body is raised, not given a frame
   const level = Math.max(1, Math.trunc(entity.level || 1));
   const sp = kitSpell(s, { skill: skillValue(entity, kitSchool(s.id, s.pick)), level: gift ? Math.min(CAST_LEVEL_MAX, level) : level,
     maxHealth: entity.maxHealth ?? 0, maxMagicka: entity.maxMagicka ?? 0 });

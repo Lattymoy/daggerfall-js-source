@@ -10,7 +10,7 @@ import { resurrectionSpell, RESURRECT_TEXT } from '../../src/systems/resurrect.j
 import { OnlineSession } from '../../src/net/online.js';
 import { fakeSocketClass } from '../fakeSocket.mjs';
 import { RemotePlayers, CORPSE_MS } from '../../src/net/remotePlayers.js';
-import { DeathScreen, ONLINE_RESPAWN_SECONDS } from '../../src/ui/deathScreen.js';
+import { DeathScreen, ONLINE_RESPAWN_SECONDS, DEATH_RISE_MIN_S } from '../../src/ui/deathScreen.js';
 import { validFoeRecord } from '../../src/net/wire.js';
 import { createExteriorFoes } from '../../src/scenes/exteriorFoes.js';
 import { audio } from '../../src/systems/audio.js';
@@ -126,7 +126,10 @@ test('AUDIT CONTRIB A5: ONLINE the hold is the screen\'s on the CLASSIC skin too
   assert.equal(resets, 0, 'three seconds used to respawn and clear the body');
   assert.equal(ds.respawnIn, ONLINE_RESPAWN_SECONDS - 5, 'and the classic face says how long');
   ds.input('confirm');
-  assert.equal(resets, 1, 'Enter rises at once');
+  assert.equal(resets, 0, 'PIN MOVED (DEATH-15): Enter waits out the first fifteen seconds');
+  ds.tick(DEATH_RISE_MIN_S - 5);
+  ds.input('confirm');
+  assert.equal(resets, 1, 'then Enter rises at once');
   const off = new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8, onReset: () => { resets++; } });
   off.fall = false; off.online = false;
   off.tick(3.1);

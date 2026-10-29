@@ -20,6 +20,8 @@ import { VIT_SHIELD_MIN, VIT_SHIELD_MAX, CAST_LEVEL_MAX, validVitIn } from '../.
 import { createRefereeHealthMirror } from '../../../src/net/siege/refereeHealthMirror.js';
 import { SKILLS } from '../../../src/systems/skills.js';
 import { KIT_ACTIONS, castKitSlot, loadKitBar, saveKitBar } from '../../../src/ui/pvpKitBar.js';
+import { pvpSpellRefusal } from '../../../src/systems/wild/pvpRules.js';
+import { hasResurrect, resurrectionSpell, pickFallenBody, RESURRECT_REACH, RESURRECT_TYPE, RESURRECT_SUBTYPE } from '../../../src/systems/resurrect.js';
 
 const stats = (v) => ({ strength: v, intelligence: 50, willpower: v, agility: 50, endurance: v, personality: 50, speed: 50, luck: 50 });
 const body = (o = {}) => ({ isPlayer: true, level: 30, stats: stats(50), skills: {}, items: [], health: 500, maxHealth: 1000, magicka: 400, maxMagicka: 400, activeEffects: [], ...o });
@@ -29,7 +31,7 @@ const sinks = { hurt: quiet, heal: quiet, drainFatigue: quiet, restoreFatigue: q
 test('PVP-KIT THE LAW: eight slots, 15 m, a minute, skill 100 to 300; the costs and the scaling the owner approved (mutants: a cost; a scale end; the clamp; the reach)', () => {
   assert.deepEqual(PVP_KIT, { slots: 8, reachM: 15, rounds: 12, lo: 100, hi: 300 });
   assert.deepEqual(Object.fromEntries(KIT_IDS.map((id) => [id, KIT_SPELLS[id].cost])),
-    { damage: 8, heal: 12, shield: 15, resist: 12, reflect: 12, absorb: 12, fortify: 10, cure: 5, jump: 6, speed: 6 });
+    { damage: 8, heal: 12, shield: 15, resist: 12, reflect: 12, absorb: 12, fortify: 10, cure: 5, jump: 6, speed: 6, resurrect: 25 });
   const ends = (id) => [kitScale(id, 100), kitScale(id, 300)];
   assert.deepEqual(ends('heal'), [25, 35]);
   assert.deepEqual(ends('shield'), [10, 25]);
@@ -184,4 +186,42 @@ test('PVP-KIT THE WIRING: one host line; the cast engine reads the gift reach; o
   assert.match(hb, /if \(keyClaim\?\.\(e\)\) return;/);
   const fx = readFileSync(new URL('../../../src/systems/effects.js', import.meta.url), 'utf8');
   assert.match(fx, /\|\| spell\?\.pvpKit != null;/);
+});
+
+test('PVP-KIT-REZ THE SLOT: Resurrect is on the bar\'s list at 25% of maximum magicka, the shop\'s own spell by touch, no 15 m gift (mutants: the cost; not by touch; the gift reach; no effect; the name)', () => {
+  assert.ok(KIT_IDS.includes('resurrect'));
+  assert.equal(kitSlotName({ id: 'resurrect' }), 'Resurrect');
+  assert.deepEqual(kitSlotOf({ id: 'resurrect', pick: 3, icon: 99 }), { id: 'resurrect', pick: null, icon: 10 });
+  assert.equal(kitCost('resurrect', 400), 100);
+  const sp = kitSpell({ id: 'resurrect' }, { skill: 200, level: 30, maxHealth: 1000, maxMagicka: 400 });
+  assert.ok(hasResurrect(sp));
+  assert.deepEqual([sp.effects[0].type, sp.effects[0].subType], [RESURRECT_TYPE, RESURRECT_SUBTYPE]);
+  assert.deepEqual([sp.rangeType, sp.element], [resurrectionSpell().rangeType, 4], 'by touch, as the shop sells it');
+  assert.equal(sp.pvpReach, undefined, 'the reach is RESURRECT_REACH, never the gift\'s 15 m');
+  assert.equal(kitSchool('resurrect'), SKILLS.Restoration);
+  assert.equal(calculateCastCost(sp, body(), { portMods: false }).sp, 100, 'the bar\'s price');
+});
+
+test('PVP-KIT-REZ UNDER THE FLAG: neither the bar\'s law nor the flag\'s limits refuse it; a press readies it and fires it at once, no ally frame asked (mutants: an ally frame asked)', () => {
+  const sp = kitSpell({ id: 'resurrect' }, { level: 30, maxMagicka: 400 });
+  assert.equal(kitRefusal(sp, true), null);
+  assert.equal(pvpSpellRefusal(sp, true), null);
+  assert.ok(isKitSpell(sp));
+  const readied = []; let armed = false, fired = 0, asked = 0;
+  const magic = { readySpell: (s) => { readied.push(s); armed = s.rangeType !== 0; return true; }, spellArmed: () => armed, interceptAttack: () => { fired++; return true; } };
+  assert.equal(castKitSlot({ magic, entity: body({ level: 45 }), allyAimed: () => { asked++; return true; } }, { id: 'resurrect' }), 'cast');
+  assert.ok(hasResurrect(readied[0]));
+  assert.deepEqual([fired, asked], [1, 0]);
+});
+
+test('PVP-KIT-REZ A PARTY MEMBER ALONE, IN THE OLD REACH: the cast engine asks the host for fallen party members\' bodies within RESURRECT_REACH; the host hands none but a party member\'s (mutants: a stranger raised)', () => {
+  assert.equal(RESURRECT_REACH, 6);
+  const near = { feet: [0, 0, 4] }, far = { feet: [0, 0, 7] };
+  assert.equal(pickFallenBody([0, 1.6, 0], [0, -0.3, 1], [far])?.feet ?? null, null, 'past the reach');
+  assert.deepEqual(pickFallenBody([0, 1.6, 0], [0, -0.3, 1], [near, far])?.feet, near.feet);
+  const h = readFileSync(new URL('../../../src/scenes/hostMagic.js', import.meta.url), 'utf8');
+  assert.match(h, /bodies = fallenTarget\(eye, dir, RESURRECT_REACH\) \?\? null;/);
+  assert.match(h, /if \(hasResurrect\(sp\) && !readiedFree\) \{/, 'the release frame raises before any ally arm');
+  const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+  assert.match(w, /const mate = cAcct \? social\.others\(\)\.find\(\(m\) => m\.acct === cAcct\) : null; if \(!mate\) continue;/);
 });
