@@ -1,0 +1,152 @@
+[
+  {
+    "name": "IC-BACKYARD-one-front-unasked",
+    "file": "src/world/imperialBackyards.js",
+    "old": "(p.out & 15) !== 1 << e) return null;",
+    "new": "!(p.out & (1 << e))) return null;",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "A corner house's two street fronts read as one: its yard runs into its neighbours'."
+  },
+  {
+    "name": "IC-BACKYARD-the-mitre-unread",
+    "file": "src/world/imperialBackyards.js",
+    "old": "fabricGroundAt(x, z) === GROUND.court && nearestEdge(Q, qe, x, z);",
+    "new": "fabricGroundAt(x, z) === GROUND.court;",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "The court is not parted at its mitres: two houses round a corner of it take the same ground."
+  },
+  {
+    "name": "IC-BACKYARD-the-first-court-taken",
+    "file": "src/world/imperialBackyards.js",
+    "old": "if (d < gap) { Q = q; qe = i; gap = d; }",
+    "new": "if (d < gap && (!Q || q === Q)) { Q = q; qe = i; gap = d; }",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "The first court behind the wall, where another block's lies over its own: its mitres another court's."
+  },
+  {
+    "name": "IC-BACKYARD-the-edges-unwalked",
+    "file": "src/world/imperialBackyards.js",
+    "old": "    for (let i = 0; i <= m; i++) if (!open(a + ((c - a) * i) / m, b + ((d - b) * i) / m)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "A garden wall's end between the survey's points stands inside a yard's edge."
+  },
+  {
+    "name": "IC-BACKYARD-the-reach-unread",
+    "file": "src/world/imperialBackyards.js",
+    "old": "return Math.hypot(x - at[0], z - at[1]) <= reach && fabricGroundAt",
+    "new": "return fabricGroundAt",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "A yard past the decorator's leash from the door: its far end out of the free eye's reach."
+  },
+  {
+    "name": "IC-BACKYARD-the-yard-unturned",
+    "file": "src/world/imperialBackyards.js",
+    "old": "const turn = Math.atan2(-t[1], t[0]), cs",
+    "new": "const turn = 0, cs",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "The yard's box on the frame's axes round a turned strip: the house, the walls and the next yard in it."
+  },
+  {
+    "name": "IC-BACKYARD-the-door-for-the-origin",
+    "file": "src/world/imperialBackyards.js",
+    "old": "fabricBackyard(b, fabricRecordOrigin(cell.r, cell.c, b))",
+    "new": "fabricBackyard(b)",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "The yard laid from the door, not from the record's origin its frame stands at - a Daggerfall unit off."
+  },
+  {
+    "name": "IC-BACKYARD-the-yard-unread",
+    "file": "src/scenes/homeYards.js",
+    "old": "yard = door ? fabricBackyardOf(frame.block, frame.record) : null;",
+    "new": "yard = null;",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "Every Imperial City house yardless again, as A1 left it."
+  },
+  {
+    "name": "IC-BACKYARD-the-turn-unread",
+    "file": "src/scenes/homeYards.js",
+    "old": "const onLot = (lot, x, z, pad = 0) => { const [u, v] = lotAxes(lot, x, z); return inRect(u, v, lot.lot, pad); };",
+    "new": "const onLot = (lot, x, z, pad = 0) => inRect(x, z, lot.lot, pad);",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "A turned yard read on the frame's axes: pieces refused in it and stood outside it."
+  },
+  {
+    "name": "IC-BACKYARD-not-alone",
+    "file": "src/scenes/homeYards.js",
+    "old": "alone: true,",
+    "new": "alone: false,",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "The midline drawn to the neighbours' doors cuts the yard the fabric already parted."
+  },
+  {
+    "name": "IC-BACKYARD-the-access-dropped",
+    "file": "src/scenes/homeYards.js",
+    "old": "access: door.lot } : door;",
+    "new": "access: null } : door;",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "The yard opens only from inside the court, which no street reaches."
+  },
+  {
+    "name": "IC-BACKYARD-the-access-unread",
+    "file": "src/scenes/homeYards.js",
+    "old": "\n  && (onLot(lot, p[0] - origin[0], p[2] - origin[2], near) || (!!lot.access && inRect(p[0] - origin[0], p[2] - origin[2], lot.access, near)));",
+    "new": "\n  && onLot(lot, p[0] - origin[0], p[2] - origin[2], near);",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "The door's access never read: the owner at the door finds no yard."
+  },
+  {
+    "name": "IC-BACKYARD-the-marks-unturned",
+    "file": "src/scenes/homeYards.js",
+    "old": "return lot.turn ? out.map(([ax, az, bx, bz]) => [...lotFrame(lot, ax, az), ...lotFrame(lot, bx, bz)]) : out;",
+    "new": "return out;",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "The marked edge drawn on the frame's axes, off the turned yard."
+  },
+  {
+    "name": "IC-BACKYARD-the-box-unturned",
+    "file": "src/scenes/homeYards.js",
+    "old": "  if (!lot.turn) return lot.lot;",
+    "new": "  return lot.lot;",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "The road scan's box is the yard's own axes read as the frame's: the road under a turned yard unread."
+  },
+  {
+    "name": "IC-BACKYARD-the-frames-block-dropped",
+    "file": "src/scenes/pixelBuild.js",
+    "old": ", block: b.blockName, record: placed.recordIndex });",
+    "new": " });",
+    "tests": [
+      "test/world/worldWide/ic_backyard.test.js"
+    ],
+    "note": "The build never names a home's block and record: no house has a yard."
+  }
+]

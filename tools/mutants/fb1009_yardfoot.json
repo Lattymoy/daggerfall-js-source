@@ -74,11 +74,12 @@
   {
     "name": "FB1009-the-yard-made-without-its-ground",
     "file": "src/scenes/homeYards.js",
-    "old": ": yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects));",
-    "new": ": yardLot(frame.at, frame.box));",
+    "old": "  if (!frame?.terraced) return yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects);",
+    "new": "  if (!frame?.terraced) return yardLot(frame.at, frame.box);",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
-    ]
+    ],
+    "note": "IC-BACKYARD (PIN MOVED): re-aimed by content - lotOfFrame is a function now, a Bay house's lot its first line."
   },
   {
     "name": "FB1009-a-neighbour-asked-by-its-box",

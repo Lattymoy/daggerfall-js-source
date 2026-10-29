@@ -2981,6 +2981,50 @@ flights, the sweep's findings held, every building's door kept); the moved pins 
 and `test/world/icgrand_fabric.test.js` (PIN MOVED (IC-STAIRS)). Mutants: `tools/mutants/icstairs.json` (32);
 `icbld.json` re-aimed by content.
 
+## IC-BACKYARD - an Imperial City house's yard is the court behind it (2026-10-29)
+
+The owner, of AUDIT TAMRIEL-WIDE A1: *"So no houses in imperial city get outside decorations now?"*, then *"I mean not
+all houses in imperial city are void of yards"*; of which ground: *"Whatever works"*.
+
+**What was wrong.** A1 found a fabric house's yard lot was its door's box grown 6 m - its own rooms, its neighbours' and
+the street - and took the lot from every house. But a ring block's houses back onto a court the fabric parts into
+backyards with garden walls, sheds and wells (`world/imperialFabric.js` makeBlock): those houses had ground of their
+own, and lost it too.
+
+**As built** (`world/imperialBackyards.js` fabricBackyard; `scenes/homeYards.js` lotOfFrame):
+- **Whose**: a house with one street front. A corner house meets its court at a point and a row through a narrow block
+  has a street behind it: both keep the door's box (W1).
+- **Where**: the court its back wall stands on - of two courts over one point where neighbourhoods meet, the one with an
+  edge along that wall. Its own width, 0.4 m in from each party wall; from 0.3 m off its back wall to the first garden
+  wall, shed, well, back range or house; on its own side of the court's mitres, 0.4 m short of them, so no two yards
+  meet.
+- **Its shape**: the biggest rectangle of that ground, turned with its house. The city's streets are turned, and a box
+  on the world's axes held a third less ground, and none behind one house in nine. The survey reads the ground every
+  half metre, then walks the rectangle's edges every 5 cm: nothing in a court is narrower than a step, so what stands
+  between its points reaches in across an edge alone.
+- **Its reach**: every corner within 36 m of the door - the decorator's free eye starts there and flies 40 m
+  (`scenes/decor/decorTool.js` DECOR_FLY_LEASH), over the roof.
+- **Opened at the door**: no street reaches a court, so the owner opens the decorator at the door (the lot's `access`).
+  The lot's line is the fabric's (`alone`): no midline to the neighbours' doors.
+- **A Bay house's lot is unchanged**, and the frame names its block and record (`scenes/pixelBuild.js`) - the yard is
+  worked when a yard is made, not with the pixel.
+- **The four hosts**: `scenes/world.js` wired (its pixel build and its yards); `scenes/exterior.js` (the bench) stands no
+  online homes; `scenes/worldModes.js` and `scenes/dungeonContext.js` stand no street. Deploy: the page and the desktop
+  build - neither service's bundle reaches these files.
+
+**The sweep** (175 cells in 2 x 2 patches across the plan): 6,116 buildings, 4,575 with one street front, 3,632 yards -
+the median 32 m2, the largest 196 m2; none on ground but court at 10 cm, none meeting another, none past its reach.
+Found at it: two courts over one point at a seam (the first one taken gave two yards the same ground); a garden wall's
+end between the survey's points; a row whose back, a street, stood over another block's court across it (two of 12,506
+houses with more than one front, kept yardless by the one-front rule); the reach cuts one yard in 5,424.
+
+Pinned by `test/world/worldWide/ic_backyard.test.js` (5: the law over a corner of two neighbourhoods and the two houses
+above; the record's origin against `world/rmbLayout.js`'s own; the turned lot, its marks, its box and its line beside a
+Bay house's; the owner opening it at the door); the moved pins in `audit_tamrielwide.test.js` (A1),
+`fb1009_yardfoot.test.js`, `fb1012b_yardline.test.js` and `audit_rpt1026_world.test.js` (PIN MOVED (IC-BACKYARD)).
+Mutants: `tools/mutants/ic_backyard.json` (15); `audit_tamrielwide.json` (three) and `fb1011b.json` (one) re-aimed by
+content - every one dead.
+
 ## Pins
 
 `test/world/audittesa2c_capitals.test.js` (16, AUDIT TESA II lane C): the rim (eleven tiles, 70.4 m, the span's outer

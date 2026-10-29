@@ -110,12 +110,13 @@
   {
     "name": "HOMELINE-no-line",
     "file": "src/scenes/homeYards.js",
-    "old": "  if (points.some(([px, pz]) => yardGapTo(lines, px, pz) < yardGapTo(own, px, pz))) return YARD_ON_OTHER;   // HOME-LINE; YARD-LINE: a lot's holder's",
+    "old": "  if (!lot.alone && points.some(([px, pz]) => yardGapTo(lines, px, pz) < yardGapTo(own, px, pz))) return YARD_ON_OTHER;   // HOME-LINE; YARD-LINE: a lot's holder's; IC-BACKYARD: an `alone` lot's line is the fabric's",
     "new": "",
     "tests": [
       "test/scenes/fb1011b_homeline.test.js",
       "test/world/fb1009_yardfoot.test.js"
-    ]
+    ],
+    "note": "IC-BACKYARD (PIN MOVED): re-aimed by content - the midline is skipped for an `alone` lot, the fabric's own line."
   },
   {
     "name": "HOMELINE-a-tie-theirs",
@@ -129,11 +130,12 @@
   {
     "name": "HOMELINE-its-middle-alone",
     "file": "src/scenes/homeYards.js",
-    "old": "  if (points.some(([px, pz]) => yardGapTo(",
-    "new": "  if ([[x, z]].some(([px, pz]) => yardGapTo(",
+    "old": "  if (!lot.alone && points.some(([px, pz]) => yardGapTo(",
+    "new": "  if (!lot.alone && [[x, z]].some(([px, pz]) => yardGapTo(",
     "tests": [
       "test/scenes/fb1011b_homeline.test.js"
-    ]
+    ],
+    "note": "IC-BACKYARD (PIN MOVED): re-aimed by content - the midline asked of a lot that is not `alone`."
   },
   {
     "name": "FULLGUARD-no-guard",
