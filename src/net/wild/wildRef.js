@@ -50,7 +50,7 @@ import { isVillain, villainAfter, villainClamp, villainKillPoints, VILLAIN } fro
  *  respawn or a reconnect left its place stale for good - now it is believed, and the jumper waits); the most fighters
  *  and falls a room keeps; AUDIT FOE-KEEPS E2: how recent a fair player's blow names them the killer of a death the
  *  referee did not see (systems/wild/wildZone.js WILD_KILL_CREDIT_MS, pinned equal - "the player who brought you down"). */
-export const WILD_REF = Object.freeze({ mendMs: 30_000, pickMs: 10_000, truceMs: 10 * 60_000, riseMs: 120_000, jumpMs: 2_000, fightersMax: 200, fallsMax: 64, creditMs: 10_000 });
+export const WILD_REF = Object.freeze({ mendMs: 30_000, pickMs: 10_000, truceMs: 10 * 60_000, riseMs: 60_000, jumpMs: 2_000, fightersMax: 200, fallsMax: 64, creditMs: 10_000 });
 
 /** ZONE-GRACE (2026-10-26, the owner chose "Entry/rise grace"): safe passage's length (the owner's sixty seconds), and what
  *  an entry asks first - away from the zone this long, and no blow landed by or on the fighter this long. */

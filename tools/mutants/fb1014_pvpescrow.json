@@ -38,8 +38,8 @@
   {
     "name": "ESCROW-the-collect-never-commits",
     "file": "server-account/src/wild.js",
-    "old": "  return endEscrow(ctx, player.id, side.at, row, 'collected', body?.free);",
-    "new": "  return { r: row.r, item: parse(row.rec) };",
+    "old": "  const paid = await endEscrow(ctx, player.id, side.at, row, 'collected', body?.free);",
+    "new": "  const paid = { r: row.r, item: parse(row.rec) };",
     "tests": [
       "test/systems/fb1014_pvpescrow.test.js"
     ]

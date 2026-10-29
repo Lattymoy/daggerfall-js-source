@@ -62,6 +62,11 @@ and the wagon themselves never dropped - `WILD_NEVER_GROUPS`' Transportation); a
 (section 3b). What still punishes: the bag's drop, a tenth of the purse and of each letter, the killer's one worn piece,
 the two minutes down and the rise outside the zone.
 
+PVP-REWARD and PVP-NO-TENTH (2026-10-29, `PvP-Rework.md`) took the bag's drop and the tenths away. A player kill takes
+one worn piece, else one policy's gold, else its last roll: a tenth of the coin and letters together, the purse first,
+for the killer alone (`wildDropLaw.js:"export function takeWildLastRoll("`). No gold lies in the remains for anyone,
+so WILD GOLD and LETTERS-TENTH in section 4 are history at a player kill.
+
 AUDIT PVP-EASE (2026-10-26, the owner: "Can we audit this"; `01-Overview/audits/Audit-PvP-Ease.md`): four cold lanes
 read the change: 21 reported, 16 defects. All 16 are fixed. Four of them were the owner's to call, and the owner chose:
 - a COMBAT LOCK on storing for a minute after a player's blow (section 4, STORE-KEEPS - the storage had made the drop
@@ -352,7 +357,8 @@ Either death, at the first dead frame, while the room is still the player's (`wi
 - A DEATH IN A HALL (HALL-CROWS, the owner: "i dont see the crows circleling around the dungeon where i died on the
   zone map"): always locks the hall for the hour and sets the crows over it, whether or not the pack had anything to
   drop (`world.js:"if (modes?.mode === 'dungeon' && _wdunInside)"`; section 13).
-- THE WAIT: the death screen holds `WILD_DEATH_HOLD_S` (120 s) and takes no Enter; the killer's body lies as long.
+- THE WAIT: the death screen holds `WILD_DEATH_HOLD_S` (60 s, PVP-RISE: "Jist like pve deaths" - 120 s before); Enter
+  rises after 15 s (DEATH-15, PvP-Rework.md PVP-RISE); the killer's body lies as long.
 - A GAME CLOSED ON THE DEATH SCREEN (WILD-REJOIN, FIELD BUGS 2026-10-25h, a player's report: "if you die in the
   wilderness and alt f4 before you are looted you wont be able to be looted by who killed you. you can also skip the
   death timer this way"): the fall is the referee's, and the referee keeps the fighter down its two minutes

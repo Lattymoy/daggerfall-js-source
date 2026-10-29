@@ -157,7 +157,7 @@ test('STORE-KEEPS THE PACKS THROUGH THE SERVICE AND BACK (server-account/src/wil
   const fall = (body, who = ria) => quiet(() => svc.call('/v1/wild/fall', { room: worldRoom(520, 110), ...body }, who.secret));
   // her game's own words, and a tab's from before them
   assert.deepEqual(wildFallWords(), { packs: WILD_FALL_PACKS, letters: 1 });
-  const d = (await fall({ receipt: await mintWildReceipt({ f: ria.id, c: R.id, k: bo.id, r: '0123456789b1', w: -1 }, svc.gatePriv, { subtle: globalThis.crypto.subtle, nowS: now() }), realm: R.at(), ...wildFallWords() })).body;
+  const d = (await fall({ receipt: await mintWildReceipt({ f: ria.id, c: R.id, k: bo.id, r: '0123456789b1', w: -1 }, svc.gatePriv, { subtle: globalThis.crypto.subtle, nowS: now() }), realm: R.at(), collect: 1, ...wildFallWords() })).body;   // PIN MOVED (PVP-NO-TENTH): no worn piece, no policy - the last roll, where the room collects
   assert.deepEqual(d.took, [], JSON.stringify(d));   // PIN MOVED (PVP-REWARD): the bag drops nothing, and she wears nothing a kill takes
   assert.deepEqual(d.gold, { purse: 40, cart: 0 }, 'no pack\'s share');
   assert.equal(d.items.find((i) => i.group === 'Currency').stackCount, 40, 'the remains\' gold: her tenth alone');

@@ -13364,6 +13364,11 @@
   "tr": "631f2cb20057",
   "by": "claude-in-session"
  },
+ "pvp.kit.resurrect": {
+  "en": "53515d02d18f",
+  "tr": "d3066454a8b5",
+  "by": "claude-in-session"
+ },
  "pvp.kit.shield": {
   "en": "08271419319f",
   "tr": "0c7c29327450",
@@ -13432,6 +13437,16 @@
  "pvp.reward.gold": {
   "en": "77f1b3e03828",
   "tr": "3e47bc478023",
+  "by": "claude-in-session"
+ },
+ "pvp.reward.last": {
+  "en": "49c2e92f9f2b",
+  "tr": "b731c92a0544",
+  "by": "claude-in-session"
+ },
+ "pvp.reward.lastLetter": {
+  "en": "ec3bfa57616d",
+  "tr": "9b83b4a9d702",
   "by": "claude-in-session"
  },
  "pvp.reward.letter": {
@@ -14592,6 +14607,16 @@
  "wild.death.kept": {
   "en": "5677b5a00569",
   "tr": "835e7545b937",
+  "by": "claude-in-session"
+ },
+ "wild.death.last": {
+  "en": "def48a037ba0",
+  "tr": "e2a4153aa734",
+  "by": "claude-in-session"
+ },
+ "wild.death.lastAnon": {
+  "en": "df4817909891",
+  "tr": "2b5209679f5a",
   "by": "claude-in-session"
  },
  "wild.death.lettersTenth": {

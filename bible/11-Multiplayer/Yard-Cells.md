@@ -706,7 +706,7 @@ migration 0193 drops `home_yards`, `home_yards_ver` and 0136's three triggers on
 `home_yards_out`, `home_yards_moved`). Nothing in the service read or built them after YC1. A yard write now moves its
 cell's version alone, one trigger instead of two.
 
-- **No code changed.** The account service moves to acct215 for the migration alone, as TAMRIEL-POST did. No relay
+- **No code changed.** The account service moves to acct216 for the migration alone, as TAMRIEL-POST did. No relay
   or site change.
 - **What it gives up.** A service rolled back to before YC1 (acct192) reads `home_yards` and no longer finds it. A
   rollback past YC1 is now a rollback of the schema too.

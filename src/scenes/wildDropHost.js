@@ -54,7 +54,9 @@ export function createWildDropHost(host) {
     // MAC (2026-10-14, the two-phase handoff): the piece my killer claimed is in the service's escrow until they collect it
     const held = d.wi === 0 && !!d.escrow?.r;
     const insured = wildInsure?.spent(d.insured) ?? 0;   // WILD-INSURE: the keys my policies kept, spent
-    if (dd) setWildDeath({ killer: dd.killer, kill: true, dropped: d.order ? n : 0, claimed, held, burnt: d.burnt ? n : 0, letters: out, insured, shield: d.shield === true });   // BURNT-SAID (FIELD BUGS 2026-10-18b): a held record's drop said, and the letters by their worth
+    // PVP-NO-TENTH: the killer's one record lies for them alone, never said as dropped; the last roll's gold said
+    const last = d.last ? Math.max(0, Math.floor(Number(d.gold?.purse) || 0)) + (out.letters?.gold ?? 0) : 0;
+    if (dd) setWildDeath({ killer: dd.killer, kill: true, dropped: d.order ? n - (d.wi === 0 ? 1 : 0) : 0, claimed, held, burnt: d.burnt ? n : 0, letters: out, insured, shield: d.shield === true, last });   // BURNT-SAID (FIELD BUGS 2026-10-18b): a held record's drop said, and the letters by their worth
     else if (wildTookAny(out, d.gold)) townTalk.say(d.burnt ? zoneWord('burntLate', seaRoomOf(room) ? ETHER_KIND : null)() : zoneWord('dropLate', seaRoomOf(room) ? ETHER_KIND : null));   // AUDIT SEA VENTURES C7: in the words of the ground the fall was on   // AUDIT INT9: a receipt that found me risen - AUDIT FB1019f B5: a companion's coin alone said too (systems/wild/wildDeath.js wildTookAny)
     if (held) host.wildEscrow.held(d.escrow, { killer: dd?.killer ?? null, name: claimed });
     if (d.order && n && body) host.wildDeposit({ r: d.r, items: d.items, o: d.order, p: body.p, room, mine: body });
