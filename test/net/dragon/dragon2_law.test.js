@@ -268,7 +268,7 @@ test('DRAGON2 wire: the client says two things, `in` and `hit`, projected field 
   assert.equal(relaySupportsDragon(RELAY_VERSION), true);
   assert.equal(relaySupportsDragon(`world${DRAGON_RELAY_MIN - 1}`), false);
   assert.equal(DRAGON_RELAY_MIN, DRAGON_RIDE_RELAY_MIN, 'AUDIT DRAGON: one relay, one number - the fight\'s gate is the ride\'s');
-  assert.equal(relaySupportsDragon('world284'), false, 'AUDIT TAMRIEL-WIDE\'s relay closes the socket on the frame');   // PIN MOVED: world285, past the world284 of main at the merge
+  assert.equal(relaySupportsDragon('world285'), false, 'CAPE-TOGGLE\'s relay closes the socket on the frame');   // PIN MOVED: world286, past the world285 of main at the merge
   assert.deepEqual([DRAGON_BLOWS_WIRE_MAX, DRAGON_BLOW_KINDS], [B.DRAGON_BLOWS_KEPT, B.DRAGON_BLOWS.length]);
   const { f, words } = runFight({ ms: 4 * 60_000 });
   const site = { w: W, sx: 1e6, sz: 2e6 };

@@ -240,8 +240,8 @@ colours, under the player and on every other screen.
 | **DRAGON6** | the travel map: the dragon's rate, straight over sea and land | no | no |
 | **DRAGON7** | the Aetherbright: the palette, the roll, its look kept | no | no |
 
-The relay changes land in ONE version (world285 - every byte of the relay's bundle is hashed; world281, world283, then
-world284, until the merges of main renumbered it past world281 to world284), and the service's in one (acct219 - acct211
+The relay changes land in ONE version (world286 - every byte of the relay's bundle is hashed; world281, world283, world284,
+then world285, until the merges of main renumbered it past world281 to world285), and the service's in one (acct219 - acct211
 when this page was written, renumbered past KEEP-MARK, SHED-REPLICA, the PvP rework's acct213-acct215, CRAFT-SET's acct216,
 AUDIT TAMRIEL-WIDE's acct217 and INSURE-ALL's acct218). Each slice: pins in `test/`, a mutant record, its record here.
 
@@ -250,11 +250,11 @@ AUDIT TAMRIEL-WIDE's acct217 and INSURE-ALL's acct218). Each slice: pins in `tes
 **DRAGON1 - the ride seen (2026-10-29).** PR #1359 kept a copy of the ride's relay gate (world276) in
 `systems/staffDragon.js`, and the wire's half sat on #1360, which never merged. Main's relay reached world280 with no dragon
 in its pose law and clamped `rd` 3 to the cart, so other players saw an Admin on a cart. The gate now lives in
-`net/wire.js` beside `POSE_RIDE` (`DRAGON_RIDE_RELAY_MIN` 285, `relaySupportsDragonRide`), and `net/remotePlayers.js` stands
+`net/wire.js` beside `POSE_RIDE` (`DRAGON_RIDE_RELAY_MIN` 286, `relaySupportsDragonRide`), and `net/remotePlayers.js` stands
 a dragon's rider as the Dwarven Dragon, with no hooves and no Morrowind body. Pinned by `test/net/dragonride_wire.test.js`
 (the gate and the law agree at this wire's own version); `tools/mutants/dragon1.json`, 6 dead.
 
-**DRAGON2 - the fight's law and the relay's half (2026-10-29, world285).** `net/dragon/dragonLaw.js` (the watch, the look,
+**DRAGON2 - the fight's law and the relay's half (2026-10-29, world286).** `net/dragon/dragonLaw.js` (the watch, the look,
 the site's roll), `net/dragon/dragonBody.js` (the plan's legs), `net/dragon/dragonBrain.js` (the fight), `net/dragon/dragonReceipt.js`
 (`z1`), `net/bossRef.js` judgeDragon and `net/bossSeam.js` DRAGON_SEAM; the `dragon` frame in `net/wire.js`; the relay's half in
 `server/src/dragonFights.js`, which `server/src/index.js` calls from its dispatch, its hub route and hello, its alarm (the
@@ -266,7 +266,7 @@ Its follow-up: a replace meant for the dragon's refusal codes had also rewritten
 (`SERPENT_NO_WORDS`), so the client dropped that refusal. It is restored, and the SD9a bundle pin moved
 (`test/net/superDungeon/sd9a_receipt.test.js`).
 
-**DRAGON3 - the client (2026-10-29, world285).** `scenes/dragonHost.js` is the dragon on this screen: its sky,
+**DRAGON3 - the client (2026-10-29, world286).** `scenes/dragonHost.js` is the dragon on this screen: its sky,
 the sighting, the `in`, its blows draped and judged on my feet, my shafts, spells and swings out to its cell, the bar's
 model, its voice, its fall and its remains. Beside it: `net/dragon/dragonLink.js` (the fold, this site's words alone),
 `systems/dragon/dragonSite.js`, `systems/dragon/dragonWords.js`, `ui/dragonBar.js` (brass) and
@@ -340,3 +340,9 @@ characters; only the client refused it. And the flight's test reset took staffDr
 relay stays world285 and migration 0193 stands. Item law 15 names acct219. PINS MOVED: the account version's (twenty
 files, the dragon's note before INSURE-ALL's), the service's history check (`auditscale2_acct`), and eleven mutant
 records on the version lines.
+
+**THE MERGE OF MAIN AT 45342d9fa (2026-10-29, #1416 CAPE-TOGGLE).** Main took world285, so the relay is world286 (the
+merged bundle's hash, 11fe794e); acct219 and migration 0193 stand. `DRAGON_RIDE_RELAY_MIN` is 286 (CAPE-TOGGLE's
+world285 still clamps `rd` 3), and the fight's gate with it. PINS MOVED: the relay version's (fifty files, the dragon's
+note before CAPE-TOGGLE's), CAPE-TOGGLE's own (`capetoggle`), the gates' refusals (`dragonride_wire`, `dragon2_law`),
+and three mutant records on the version lines.

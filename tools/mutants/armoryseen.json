@@ -1,0 +1,83 @@
+[
+  {
+    "name": "ASEEN-keepSession-drops-the-kit",
+    "file": "src/net/accountClient.js",
+    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, nameAsAt })",
+    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, nameAsAt })",
+    "tests": [
+      "test/net/armorylive.test.js"
+    ]
+  },
+  {
+    "name": "ASEEN-the-minter-drops-the-kit",
+    "file": "src/net/accountClient.js",
+    "old": "...('armory' in answer.data ? { armory: typeof answer.data.armory === 'string' ? answer.data.armory : null } : {}),",
+    "new": "",
+    "tests": [
+      "test/net/armorylive.test.js"
+    ]
+  },
+  {
+    "name": "ASEEN-the-minter-says-none",
+    "file": "src/net/accountClient.js",
+    "old": "{ armory: typeof answer.data.armory === 'string' ? answer.data.armory : null }",
+    "new": "{ armory: null }",
+    "tests": [
+      "test/net/armorylive.test.js"
+    ]
+  },
+  {
+    "name": "ASEEN-cloth-side-reversed",
+    "file": "src/render/auraRing.js",
+    "old": "return (eye[0] - w.at[0]) * Math.sin(yaw) + (eye[2] - w.at[2]) * Math.cos(yaw) < 0;",
+    "new": "return (eye[0] - w.at[0]) * Math.sin(yaw) + (eye[2] - w.at[2]) * Math.cos(yaw) > 0;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ASEEN-any-aura-a-cloth",
+    "file": "src/render/auraRing.js",
+    "old": "if ((mesh !== 'cloak' && mesh !== 'cape') || w.mounted === true",
+    "new": "if (w.mounted === true",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ASEEN-a-rider-covered",
+    "file": "src/render/auraRing.js",
+    "old": "|| w.mounted === true || !Array.isArray(w.at) || !eye) return false;",
+    "new": "|| !Array.isArray(w.at) || !eye) return false;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ASEEN-layers-never-split",
+    "file": "src/scenes/auraHost.js",
+    "old": "(a && auraClothOver(a, eye) ? under : over).push(k);",
+    "new": "over.push(k);",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ASEEN-split-by-place",
+    "file": "src/scenes/auraHost.js",
+    "old": "const a = auras.find((w) => w.id === k.id);",
+    "new": "const a = auras[0];",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ASEEN-under-drawn-after-the-auras",
+    "file": "src/scenes/auraHost.js",
+    "old": "      drawArmory(armoryUnder, proj, view, eye, now);",
+    "new": "      armoryOver.unshift(...armoryUnder);",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  }
+]

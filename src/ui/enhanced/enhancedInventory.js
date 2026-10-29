@@ -101,6 +101,7 @@ import {
   swapHands, canSwapHands,   // SWAP-HANDS
 } from '../../systems/equip.js';
 import { armourBadge, armourPlaque, compareBlock, lineCompareBlock, wearComparison } from '../armourCard.js';   // AC-COMPARE: the doll's numbers on the map, the overall figure, the card's comparison
+import { drawnEquipTable, capeShown, setCapeShown } from '../../systems/capeShown.js';   // CAPE-TOGGLE: the Cape switch on the Cloaks panel, and the worn set as it is drawn
 import { statFlip } from '../statsCard.js';   // STATS-CARD: the paperdoll's flip side, its Stats button
 import { wildInsureBook } from '../../net/wild/wildInsureSlot.js';   // WILD-INSURE: a policy's line on the card, and its Insure act
 import { WILD_TEXT } from '../../systems/wild/wildZone.js';
@@ -771,7 +772,7 @@ const refresh = () => {
   // subscription (D36) repaints, the figure follows the action.
   const arm = deps.fpArm;
   if (arm && typeof arm.setWorn === 'function' && deps.entity) {
-    try { arm.setWorn(dfWornEquipment(equipTableOf(deps.entity), EQUIP_SLOTS, ARMOR_ENUM)); } catch { /* the rig's own card carries its reasons */ }
+    try { arm.setWorn(dfWornEquipment(drawnEquipTable(deps.entity), EQUIP_SLOTS, ARMOR_ENUM)); } catch { /* the rig's own card carries its reasons */ }   // CAPE-TOGGLE: the frame tick's table, or the two would rebuild the body by turns
     // PX26 F2: AND THE HAND. PX25 handed the rig the worn TABLE while a
     // window is up, and stopped there - so a cloak equipped in the pack
     // showed at once and a SWORD did not, because the weapon rides its
@@ -2307,8 +2308,28 @@ function equippedList() {
       for (const half of fam.pair) pair.append(wornPanel(half, byLabel, null));
       map.append(pair);
     } else map.append(wornPanel(fam, byLabel, fam.area));
+    if (fam.id === 'cloaks') map.append(capeSwitch(fam.area));   // CAPE-TOGGLE
   }
   return wrap;
+}
+
+/** CAPE-TOGGLE: THE CAPE SWITCH, an eye in the Cloaks panel's bottom-right corner - my worn cloak and my aura drawn or
+ *  hidden, for me and every player (systems/capeShown.js). A sibling in the panel's grid cell, since a filled panel is a
+ *  button and holds none; an icon of one size, clear of the count and a raised hood's chip, in every language. */
+function capeSwitch(/** @type {string} */ area) {
+  const on = capeShown();
+  const b = el('button', `worncape${on ? ' on' : ''}`);
+  b.type = 'button';
+  b.style.gridArea = area;
+  b.setAttribute('aria-pressed', String(on));
+  b.setAttribute('aria-label', t('inventory.cape.label', 'Show cape'));
+  b.title = t('inventory.cape.title', 'Shows or hides your cloak and your aura. Other players see the same.');
+  const eye = svg('svg', { viewBox: '0 0 16 16', width: 14, height: 14, 'aria-hidden': 'true' });
+  eye.append(svg('path', { d: 'M1 8 Q8 0 15 8 Q8 16 1 8 Z', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5 }), svg('circle', { cx: 8, cy: 8, r: 2.2, fill: 'currentColor' }));
+  if (!on) eye.append(svg('path', { d: 'M2 14 L14 2', stroke: 'currentColor', 'stroke-width': 1.8 }));   // struck through: hidden
+  b.append(eye);
+  b.onclick = (e) => { e?.stopPropagation?.(); setCapeShown(!capeShown()); refresh(); refreshFigure(); render(); };   // as HOOD-SAID's press: the body dressed again, the figure, the panel
+  return b;
 }
 
 /** One panel of the worn map - a family's top piece (clicking cycles it), or its empty plate. `area` is the grid
