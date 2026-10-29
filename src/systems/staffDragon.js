@@ -3,6 +3,8 @@
 // at ten times levitation's pace, the saddle is drawn over my view, and a click fires both shoulder cannons - shock
 // balls that strike monsters alone, for DRAGON_BOLT_DAMAGE each. /dragon again lands me. This page alone: the ride,
 // the pace and the balls are mine, never sent; no relay, no account change.
+import { POSE_RIDE, relaySupportsDragonRide } from '../net/wire.js';   // DRAGON1: the ride's code and its one relay gate
+
 /** The glyphs that may ride: the Developer's (the panel's Admin) and Shadow Fang's. */
 export const DRAGON_GLYPHS = Object.freeze(['dev', 'shadowfang']);
 /** Levitation's pace, times this, while I ride. */
@@ -21,13 +23,13 @@ export const DRAGON_BOLT_MEET = 40;
 export const DRAGON_FIRE_SHOW_MS = 160;
 /** The saddle's two pictures under public/art/dwarven-dragon/: at rest, and the cannons firing. */
 export const SADDLE_PICTURES = Object.freeze(['saddle-0', 'saddle-1']);
-/** The pose's ride while I ride - the wire's POSE_RIDE.Dragon from world276, which others draw as the dragon itself. An
- *  older relay clamps it to the cart, so it is said only to a relay at DRAGON_POSE_RELAY_MIN or later. */
-export const DRAGON_POSE_RIDE = 3;
-export const DRAGON_POSE_RELAY_MIN = 276;
+/** The pose's ride while I ride - the wire's POSE_RIDE.Dragon, which others draw as the dragon itself. An older relay
+ *  clamps it to the cart, so it is said only to a relay the wire's own gate names (DRAGON1: this file kept a copy of
+ *  that number, and a merge that renumbered the relay left the copy opening on relays that clamp it). */
+export const DRAGON_POSE_RIDE = POSE_RIDE.Dragon;
 let _relayKeepsRide = false;
 /** The relay's version, as each welcome says it (scenes/world.js onRelayVersion). @param {unknown} v */
-export function noteDragonRelay(v) { _relayKeepsRide = Number(/^world(\d+)$/.exec(typeof v === 'string' ? v : '')?.[1] ?? NaN) >= DRAGON_POSE_RELAY_MIN; }
+export function noteDragonRelay(v) { _relayKeepsRide = relaySupportsDragonRide(v); }
 /** My pose's `rd` while I ride on a relay that keeps it, else null (the pose's own ride stands). */
 export const dragonPoseRide = () => (_ride && _relayKeepsRide ? DRAGON_POSE_RIDE : null);
 

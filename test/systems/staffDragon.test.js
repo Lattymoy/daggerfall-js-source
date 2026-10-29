@@ -9,6 +9,7 @@ import {
 } from '../../src/systems/staffDragon.js';
 import { registerFlySpeedMod, flySpeedMult } from '../../src/player/motor.js';
 import { parseStaffCommand } from '../../src/net/staffCommands.js';
+import { DRAGON_RIDE_RELAY_MIN } from '../../src/net/wire.js';   // DRAGON1: the ride's one gate
 
 test('DRAGON-RIDE only the Developer and Shadow Fang may ride (mutants: the Dungeon Master let on; a player with no glyphs let on)', () => {
   assert.equal(mayRideDragon(['dev']), true);
@@ -74,16 +75,16 @@ test('DRAGON-RIDE /dragon\'s grammar: bare turns the ride over, on and off say s
   assert.ok(DRAGON_HELP_LINE.startsWith('/dragon '));
 });
 
-test('DRAGON-RIDE my pose says the dragon only while I ride, and only to a relay from world276 (mutants: said to an older relay, which draws a cart; said on foot)', () => {
+test('DRAGON-RIDE my pose says the dragon only while I ride, and only to a relay that keeps it (mutants: said to an older relay, which draws a cart; said on foot)', () => {
   _resetDragonRide();
-  noteDragonRelay('world276');
+  noteDragonRelay(`world${DRAGON_RIDE_RELAY_MIN}`);   // PIN MOVED: DRAGON1 (Dwarven-Dragon.md section 10) - the wire's gate, world281; it was this file's world276
   assert.equal(dragonPoseRide(), null);
   mountDragon(false);
   assert.equal(dragonPoseRide(), DRAGON_POSE_RIDE);
   assert.equal(DRAGON_POSE_RIDE, 3);
-  noteDragonRelay('world275');
+  noteDragonRelay(`world${DRAGON_RIDE_RELAY_MIN - 1}`);
   assert.equal(dragonPoseRide(), null);
-  noteDragonRelay('world277');
+  noteDragonRelay(`world${DRAGON_RIDE_RELAY_MIN + 1}`);
   assert.equal(dragonPoseRide(), DRAGON_POSE_RIDE);
   landDragon();
   assert.equal(dragonPoseRide(), null);
