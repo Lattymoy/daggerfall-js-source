@@ -1155,7 +1155,9 @@ export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = nul
     // A NETWORK FAILURE IS A REFUSAL, NOT A THROW. ONCRASH1's law on
     // this side too: a throw out of a button handler ends more than the
     // button. Every arm of this function returns the same shape.
-    forgetD1Bookmark();   // AUDIT SCALE II A-6: a call that could not be made - a preflight refusing the header among them
+    // AUDIT SCALE II A-6: a call that could not be made - a preflight refusing the header among them. KEEP-MARK: but a read
+    // that timed out keeps it, as the pass is kept (E7) - the overload's own answer, which sent every next read to the primary
+    if (!read || !passKeptThrough(e)) forgetD1Bookmark();
     if (!passKeptThrough(e)) forgetSessionPass();   // SESSION-SIGN: the same, for the pass's - but a timeout's (E7)
     // SLOW-SHED (bible/11-Multiplayer/Scale-Arc.md SLOW-SHED): A READ THE SERVICE WAS TOO SLOW TO ANSWER IS ITS OVERLOAD'S
     // WORD - its reads stand back as an overload answer stands them back. In the 18:05 overload the database answered
