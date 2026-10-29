@@ -19,8 +19,9 @@ import { litanyPlates, springSpots, sealSpots, brazierSpots, weightSpots, weighP
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const LOOK = process.argv.includes('--look');
 const DPS = process.argv.includes('--dps');   // the character's own damage a second on the first piece it strikes   // each swing said: the host's hits, the pieces, where I stand
-const LAB = process.argv.find((a) => a.startsWith('--lab='))?.slice(6) ?? null;   // DLV6: a shipped curated block, laid in the bench's lab (`?dungeon=lab&lab=<id>`)
-const rest = process.argv.slice(2).filter((a) => a !== '--look' && a !== '--dps' && !a.startsWith('--lab='));
+const LAB = process.argv.find((a) => a.startsWith('--lab='))?.slice(6) ?? null;
+const SPAWN = process.argv.find((a) => a.startsWith('--spawn='))?.slice(8) ?? null;   // DLV5: the named dungeon cloned on a pixel, built as the world builds a spawn (its curated block in its slot)   // DLV6: a shipped curated block, laid in the bench's lab (`?dungeon=lab&lab=<id>`)
+const rest = process.argv.slice(2).filter((a) => a !== '--look' && a !== '--dps' && !a.startsWith('--lab=') && !a.startsWith('--spawn='));
 const [region = 'Daggerfall', name = 'Bedard Laboratory', shots = null] = LAB ? ['', `lab ${LAB}`, rest[0] ?? null] : rest;
 if (shots) mkdirSync(shots, { recursive: true });
 const server = await createServer({ server: { port: 5231, strictPort: true, hmr: false, watch: null }, logLevel: 'error' });   // an edit to the tree mid-run reloads no page
@@ -31,7 +32,7 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.message)));
 const fail = async (why) => { console.log(`FAIL: ${why}`); await browser.close(); await server.close(); process.exit(1); };
 
-const q = new URLSearchParams(LAB ? { dungeon: 'lab', lab: LAB } : { region, dungeon: name });
+const q = new URLSearchParams(LAB ? { dungeon: 'lab', lab: LAB } : { region, dungeon: name, ...(SPAWN ? { spawn: SPAWN } : {}) });
 await page.goto(`http://localhost:5231/play/?shot&play&nomenu&novideo&class=1&${q}`);   // class=1: the headless character (no wizard)
 await page.waitForFunction(() => window.__frame > 10, null, { timeout: 240000 });
 const frames = async (n) => {   // a loop stopped (a throw in the frame ends its requestAnimationFrame chain) fails with its cause
@@ -71,10 +72,14 @@ const shot = async (tag) => { if (shots) await page.screenshot({ path: `${shots}
 await page.evaluate(() => {
   const h = window.__delve();
   if (!h) return;
-  window.__delveCost = { frame: 0, draw: 0, n: 0, max: 0 };
+  window.__delveCost = { frame: 0, draw: 0, n: 0, max: 0, near: [], far: [] };
   const C = window.__delveCost, f = h.frame.bind(h), d = h.drawPass.bind(h);
   h.frame = (...a) => { const t = performance.now(); f(...a); const ms = performance.now() - t; C.frame += ms; C.n++; C.max = Math.max(C.max, ms); };
-  h.drawPass = (...a) => { const t = performance.now(); const r = d(...a); C.draw += performance.now() - t; return r; };
+  // each pass's time kept by where the eye stood: within 5 m of a heart (its pieces' crystals filling the view) or not
+  h.drawPass = (proj, view, eye) => {
+    const t = performance.now(), r = d(proj, view, eye), ms = performance.now() - t;
+    C.draw += ms; (h.sites.some((q) => eye && Math.hypot(eye[0] - q.x, eye[2] - q.z) < 5) ? C.near : C.far).push(ms); return r;
+  };
 });
 // THE CHARACTER KEPT WHOLE: the probe measures the encounters, not the bench character's life - healed every 50 ms in the
 // page (a level-1 character dies to a Wellsprings' pours between the probe's steps), said here so no reading forgets it
@@ -278,6 +283,8 @@ for (const s of sites) {
 }
 const cost = await page.evaluate(() => window.__delveCost);
 if (cost?.n) console.log(`cost: frame ${(cost.frame / cost.n).toFixed(3)} ms mean, ${cost.max.toFixed(2)} ms worst; marks ${(cost.draw / cost.n).toFixed(3)} ms mean over ${cost.n} frames`);
+const spread = (a) => { const q = [...a].sort((x, y) => x - y), at = (k) => (q.length ? q[Math.min(q.length - 1, Math.floor(k * q.length))].toFixed(2) : '-'); return `median ${at(0.5)}, 90% ${at(0.9)}, worst ${at(1)} ms over ${q.length}`; };
+if (cost?.n) console.log(`marks by the eye: within 5 m of a heart ${spread(cost.near)}; farther ${spread(cost.far)}`);
 if (errors.length) await fail(`page errors:\n  ${errors.join('\n  ')}`);
 console.log('OK');
 await browser.close();
