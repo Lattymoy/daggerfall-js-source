@@ -835,3 +835,10 @@ press, its ray family and its plaque; `bootExterior` its boards. `bootWorld` 35,
 -> 10,984 and `bootExterior` 5,074 -> 5,068 logical lines, each ceiling lowered (`test/scenes/hostceiling.test.js`, its
 mutant re-aimed under it).
 
+## AUDIT FB1029f SEA - the crossing's said-once into its gate (2026-10-29)
+
+The audit's SEA-ROWS fixes (`03-World/Eltheric-Ocean.md` SEA-ROWS) wired two reads into `bootWorld`: the world's lanes
+and the day's serpent, handed to `systems/naval/etherCrossing.js` createCrossSea. The crossing's said-once (`_crossSaid`,
+its reset and its two marks) went into the gate it belongs with (`createCrossingGate` `refused`). `bootWorld` 35,231 ->
+35,230 logical lines on the merged host, and the ceiling at it (`test/scenes/hostceiling.test.js`, its mutant re-aimed under it).
+

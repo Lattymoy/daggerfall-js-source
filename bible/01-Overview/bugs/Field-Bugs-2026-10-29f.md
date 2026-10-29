@@ -9,7 +9,7 @@ with the freeware's data (`tools/fetch-data.sh`). The mutants are `tools/mutants
 | 1 | "Game fails to load on mobile website client" - iPhone, Safari and Chrome: "undefined is not a constructor (evaluating 'new YKt({woods:Dt,woodsBytes:pt})')" | A top-level await (FIRST-VISIT, 2026-10-28) made the world's graph async; WebKit before Safari 27 resolves a second `import()` of one before it runs | WEBKIT-TLA |
 | 2 | "Falling Star Elite Boss Softlock" - an Unquiet Elite Daedra Lord ran off, became a revenant, and the event stuck on its master | A world boss could wear the mark and run; a master gone with no body was still the master | STAR-MASTER-FLED |
 | 3 | "Families (bloodline) max" - "I have no characters anymore and I still cannot make another bloodline", and "being able to remove old families" | Every Bloodline or Enduring founding takes a place under the realm's 40, and nothing let one go | Fixed on main first: FAMILY-REMOVE (`Field-Bugs-2026-10-29e.md` 3) |
-| 4 | "You (almost) literally cannot go to Sethrakul fights beyond the bay, sometimes" - "You get told you're going to the E-O instead", and "it takes forever to get to the fights that aren't near to the shore" | The crossing's waters covered the sea past the Bay's rows; a voyage was asked to cross on its way; the voyage planner's floods sailed a "Λ" | SEA-ROWS, SEA-TAUT |
+| 4 | "You (almost) literally cannot go to Sethrakul fights beyond the bay, sometimes" - "You get told you're going to the E-O instead", and "it takes forever to get to the fights that aren't near to the shore" | The crossing's waters covered the sea the world sails past the Bay; a voyage was asked to cross on its way; the voyage planner's floods sailed a "Λ" | SEA-ROWS, SEA-TAUT |
 | 5 | "Bounty Boards missing from Alinor and other settlements" | Daggerfall stands its board only in a city wall's blocks: no hamlet, no village and no capital past the Bay stood one | NOTICE-PANEL |
 | 6 | The owner: "remove the notice board prop from all cities", for "a detailed drop down from the compass that shows the town name, guild control, prosperity and clickable notice board button" in "any settlement, city or town" | - | NOTICE-PANEL |
 
@@ -72,14 +72,20 @@ Sunhold, Silinorin and Shimmerene), and 8 of 35 far lanes sailed through them. A
 
 The slow voyages were the planner's (`06-Systems/Travel-View.md` LONG-VOYAGE). Its ends were flooded breadth first, a
 diagonal counted as one step, so open water due east sailed as a "Λ": forty voyages between open waters past the Bay
-sailed a median 1.105 of the straight line, p90 1.399. The player's other idea, the serpent kept to the Bay, would have
+sailed a median 1.173 of the straight line, p90 1.364, max 1.403 (main's planner at 043338ef6, measured again by
+AUDIT FB1029f F6: 1.105, 1.399 and 1.408 did not reproduce). The player's other idea, the serpent kept to the Bay, would have
 hidden both.
 
-FIXED. The crossing's waters are the Bay's own rows alone, and it is never asked while a journey sails to a place it
-chose: no serpent site and no far lane is in them now. The floods count a step's own length, and the sailed stretch is
-pulled taut across open water (`seaTaut`): median 1.001, p90 1.004, no leg ashore on the kernel's ground (SEA-SQUARE's
-pin). Pinned by `test/world/ethersea.test.js`, `test/systems/naval/auditcaptsea.test.js` and
-`test/systems/travel/fb1029f_seataut.test.js`.
+FIXED. The crossing's waters keep CROSS_SEA_PX (20 pixels) from the sea the world sails - every lane's way and the
+day's serpent ring - on every row (`etherCrossing.js createCrossSea`): no serpent site, ring or lane is in them, and the
+open ocean past the Bay still asks, west of Sumurset as at the Bay's mouth. Waters a journey sails into are the
+journey's: the crossing is not asked across its way or at a stop there, only where a journey arrives (Travel Options
+counts arrivals, `arrived`). With Travel Options off the check throws nothing.
+
+The floods count a step's own length, and the sailed stretch is pulled taut across open water (`seaTaut`, in the plan's
+slices): median 1.001, p90 1.004, max 1.039, no leg ashore on the kernel's ground (SEA-SQUARE's pin). Pinned by
+`test/world/ethersea.test.js`, `test/systems/naval/auditcaptsea.test.js`, `test/systems/naval/fb1029f_searows.test.js`
+and `test/systems/travel/fb1029f_seataut.test.js`.
 
 ## The boards (NOTICE-PANEL)
 

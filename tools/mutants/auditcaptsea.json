@@ -2558,25 +2558,25 @@
   {
     "name": "ACS-X1-refusal-mark",
     "file": "src/scenes/world.js",
-    "old": "    if (why) { if (_crossSaid !== way) { _crossSaid = way; townTalk.say(CROSS_REFUSED[why], 4); } return; }",
-    "new": "    if (why) { crossGate.asked(way); if (_crossSaid !== way) { _crossSaid = way; townTalk.say(CROSS_REFUSED[why], 4); } return; }",
+    "old": "    if (why) { if (crossGate.refused(way)) townTalk.say(CROSS_REFUSED[why], 4); return; }",
+    "new": "    if (why) { crossGate.asked(way); if (crossGate.refused(way)) townTalk.say(CROSS_REFUSED[why], 4); return; }",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-X1-said-once",
-    "file": "src/scenes/world.js",
-    "old": "if (_crossSaid !== way) { _crossSaid = way; townTalk.say(CROSS_REFUSED[why], 4); }",
-    "new": "if (true) { _crossSaid = way; townTalk.say(CROSS_REFUSED[why], 4); }",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "    refused(way) { if (said === way) return false; said = way; return true; },",
+    "new": "    refused(way) { said = way; return true; },",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-X1-waters-left",
-    "file": "src/scenes/world.js",
-    "old": "    if (way !== _crossSaid) _crossSaid = null;\n",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "      if (way !== said) said = null;\n",
     "new": "",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
@@ -2585,8 +2585,8 @@
   {
     "name": "ACS-X3-move-gate",
     "file": "src/scenes/world.js",
-    "old": "modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior' || travelOptions.isTravelActive) return;",
-    "new": "modes?.transitioning || _partyArrivalPending || _mode() !== 'exterior' || travelOptions.isTravelActive) return;",
+    "old": "modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior') return;",
+    "new": "modes?.transitioning || _partyArrivalPending || _mode() !== 'exterior') return;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2594,8 +2594,8 @@
   {
     "name": "ACS-X3-arrival-gate",
     "file": "src/scenes/world.js",
-    "old": "modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior' || travelOptions.isTravelActive) return;",
-    "new": "modes?.transitioning || worldMoveBusy() || _mode() !== 'exterior' || travelOptions.isTravelActive) return;",
+    "old": "modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior') return;",
+    "new": "modes?.transitioning || worldMoveBusy() || _mode() !== 'exterior') return;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2650,7 +2650,7 @@
   {
     "name": "ACS-X2-yes-refusal",
     "file": "src/scenes/world.js",
-    "old": "    if (why) { crossGate.asked(null); _crossSaid = way; townTalk.say(CROSS_REFUSED[why], 4); return; }",
+    "old": "    if (why) { crossGate.asked(null); crossGate.refused(way); townTalk.say(CROSS_REFUSED[why], 4); return; }",
     "new": "    void why;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
@@ -2722,8 +2722,8 @@
   {
     "name": "ACS-X4-out-switch",
     "file": "src/scenes/world.js",
-    "old": "crossingWayAt(p.x, p.y, etherOut && p.x < CROSS_X && !inEther(p.x, p.y) ? crossLandPx(p.x, p.y) : 0)",
-    "new": "crossingWayAt(p.x, p.y, p.x < CROSS_X && !inEther(p.x, p.y) ? crossLandPx(p.x, p.y) : 0)",
+    "old": "crossingWayAt(p.x, p.y, etherOut && p.x < CROSS_X && !inEther(p.x, p.y) ? crossLandPx(p.x, p.y) : 0, crossSeaPx)",
+    "new": "crossingWayAt(p.x, p.y, p.x < CROSS_X && !inEther(p.x, p.y) ? crossLandPx(p.x, p.y) : 0, crossSeaPx)",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2731,8 +2731,8 @@
   {
     "name": "ACS-X4-mouth-host",
     "file": "src/scenes/world.js",
-    "old": "crossingWayAt(p.x, p.y, etherOut && p.x < CROSS_X && !inEther(p.x, p.y) ? crossLandPx(p.x, p.y) : 0)",
-    "new": "crossingWayAt(p.x, p.y, etherOut && !inEther(p.x, p.y) ? crossLandPx(p.x, p.y) : 0)",
+    "old": "crossingWayAt(p.x, p.y, etherOut && p.x < CROSS_X && !inEther(p.x, p.y) ? crossLandPx(p.x, p.y) : 0, crossSeaPx)",
+    "new": "crossingWayAt(p.x, p.y, etherOut && !inEther(p.x, p.y) ? crossLandPx(p.x, p.y) : 0, crossSeaPx)",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ],

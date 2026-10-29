@@ -705,7 +705,7 @@ import { createCaptainPageHost } from './captainPageHost.js';   // CAPT-LOG / CA
 import { createDeckPlanDoor } from './deckPlanDoor.js';   // DECK-PROPS: the plan of her deck
 import { createHarbourOffice } from './harbourOffice.js';
 import { createEtherHost } from './etherHost.js';   // ETHER-SEA: the Eltheric Ocean's waters, charts, strands and legends
-import { createCrossingGate, crossingWayAt, crossingTarget, crossingRows, crossingWords, createCrossLand, CROSS_DAYS, CROSS_CHECK_S, CROSS_REFUSED, CROSS_STALE, CROSS_FAILED } from '../systems/naval/etherCrossing.js';   // ETHER-CROSSING: the voyage across
+import { createCrossingGate, crossingWayAt, crossingTarget, crossingRows, crossingWords, createCrossLand, createCrossSea, CROSS_DAYS, CROSS_CHECK_S, CROSS_REFUSED, CROSS_STALE, CROSS_FAILED } from '../systems/naval/etherCrossing.js';   // ETHER-CROSSING: the voyage across
 import { createVeilParty } from './naval/veilParty.js';   // VEIL-PARTY: a party crosses the Veil together
 import { mulberry32 } from '../combat/blood/bloodArt.js';   // CAPT-BOARD: a site's point off its seed
 import { CHART_TEMPLATE } from '../systems/naval/treasureCharts.js';   // CAPT-CHARTS: a treasure chart read   // CAPT-BOARD: the harbourmaster's board, the contracts, the letters
@@ -9349,17 +9349,18 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const crossGate = createCrossingGate();
   let _crossCheckT = 0;
   /** A map pixel's distance to the nearest land (systems/naval/etherCrossing.js createCrossLand - the map's one water law,
-   *  seaPixel; HOST-SPLIT, SEA VENTURES: out of bootWorld). */
-  const crossLandPx = createCrossLand(seaPixel);
+   *  seaPixel; HOST-SPLIT, SEA VENTURES: out of bootWorld), and SEA-ROWS: to the sea the world sails (createCrossSea - the
+   *  world's lanes and the day's serpent, read when asked: both stand further down). */
+  const crossLandPx = createCrossLand(seaPixel), crossSeaPx = createCrossSea(() => worldLanes, () => serpentOmen?.current?.()?.site);
   /** The way the helm's waters offer now: 'out' only where the crossing out is this game's (AUDIT CAPTAIN'S SEA G2), 'home'
    *  in the Veil under any skin. */
   const crossWayHere = () => {
     const p = playerTravelPixel();
-    return crossingWayAt(p.x, p.y, etherOut && p.x < CROSS_X && !inEther(p.x, p.y) ? crossLandPx(p.x, p.y) : 0);
+    return crossingWayAt(p.x, p.y, etherOut && p.x < CROSS_X && !inEther(p.x, p.y) ? crossLandPx(p.x, p.y) : 0, crossSeaPx);
   };
   /** Why the crossing may not be sailed now - CROSS_REFUSED's key (an enemy near, another player aboard) - or null. */
   const crossRefusal = () => (navalHostileNear() ? 'hostile' : csaPassengersOn(csaRuntime?.state?.CurrentBoat, veilParty.kin) > 0 ? 'passengers' : null);   // VEIL-PARTY: her party aboard crosses with her
-  let _crossBox = null, _crossSaid = null;   // the question up; the waters a refusal was said in
+  let _crossBox = null;   // the question up
   /** AUDIT CAPTAIN'S SEA X2: the question taken back unanswered - a load, a jump, a door (navalTransition). */
   function withdrawCrossing() {
     if (_crossBox && !_crossBox.done) _crossBox.withdraw();
@@ -9368,19 +9369,18 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** The helm's waters asked every CROSS_CHECK_S: a way they offer, not asked since the ship came into them, asked - or
    *  said refused once in those waters (an enemy near, another player aboard), and asked as soon as the deck is clear.
    *  AUDIT CAPTAIN'S SEA X1: a refusal marked the way asked, and the question never came back while she stayed in those
-   *  waters; X3: never while the world is being moved (a party member's helm through the arrival's wait). SEA-ROWS: nor
-   *  while a journey sails to a place it chose (a voyage to a serpent past the Bay was asked to cross on its way). */
+   *  waters; X3: never while the world is being moved (a party member's helm through the arrival's wait). SEA-ROWS: the
+   *  gate told the waters under a journey too (Travel Options, null when off) - never asked across its way or at a stop. */
   function etherCrossStep(dt) {
     if (!etherSea || _etherCrossing || !csaRuntime?.isSailing?.()) return;
     _crossCheckT -= dt;
     if (_crossCheckT > 0) return;
     _crossCheckT = CROSS_CHECK_S;
-    if (gamePaused() || _loading || townTalk.overlayActive || modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior' || travelOptions.isTravelActive) return;   // SEA-ROWS: never across a journey's way - asked where it ends
+    if (gamePaused() || _loading || townTalk.overlayActive || modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior') return;
     const way = crossWayHere();
-    if (way !== _crossSaid) _crossSaid = null;
-    if (!crossGate.offer(way)) return;
+    if (!crossGate.offer(way, travelOptions)) return;   // SEA-ROWS: a journey's waters its own, asked where it arrives
     const why = crossRefusal();
-    if (why) { if (_crossSaid !== way) { _crossSaid = way; townTalk.say(CROSS_REFUSED[why], 4); } return; }
+    if (why) { if (crossGate.refused(way)) townTalk.say(CROSS_REFUSED[why], 4); return; }
     crossGate.asked(way);
     const boat = csaRuntime.state.CurrentBoat;
     _crossBox = new YesNoBoxWindow({ rows: crossingRows(way, { pvp: _onlineWorldSession() && !!online?.wildOk }), onYes: () => { _crossBox = null; crossYes(way, boat); }, onNo: () => { _crossBox = null; } });
@@ -9395,7 +9395,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       return;
     }
     const why = crossRefusal();
-    if (why) { crossGate.asked(null); _crossSaid = way; townTalk.say(CROSS_REFUSED[why], 4); return; }
+    if (why) { crossGate.asked(null); crossGate.refused(way); townTalk.say(CROSS_REFUSED[why], 4); return; }
     etherCross(way).catch((e) => console.warn('[ether] the crossing:', e?.message ?? e));
   }
   /** THE VOYAGE: the captain and the ship at whose helm they stand carried across (out to Veilhaven's waters; home to the

@@ -11,8 +11,8 @@
   {
     "name": "CROSS-gate-unforgotten",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "      if (way !== asked) asked = null;\n",
-    "new": "",
+    "old": "      if (way !== asked || (ours && n !== arrivals)) { asked = null; ours = false; }   // left them, or a journey arrived in them\n",
+    "new": "      if (ours && n !== arrivals) { asked = null; ours = false; }   // left them, or a journey arrived in them\n",
     "tests": [
       "test/systems/naval/ethercross.test.js"
     ]
@@ -92,7 +92,7 @@
   {
     "name": "CROSS-host-window",
     "file": "src/scenes/world.js",
-    "old": "    if (gamePaused() || _loading || townTalk.overlayActive || modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior' || travelOptions.isTravelActive) return;",
+    "old": "    if (gamePaused() || _loading || townTalk.overlayActive || modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior') return;",
     "new": "    if (gamePaused() || _loading) return;",
     "tests": [
       "test/systems/naval/ethercross.test.js"
