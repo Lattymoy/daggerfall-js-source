@@ -87,6 +87,7 @@ Four read-only audits covered the relay (`server/src/index.js`), the account ser
 | HUNT-LEAN | The overload of the evening of 2026-10-28: the hunt's read, new on 2026-10-27, was some 5 primary statements a player every two minutes, a rate window's write among them. It writes nothing now, a replica serves it, it stands back in an overload, and the book asks every ten minutes | No | **Built** (2026-10-29; acct210, acct209 on its branch) |
 | GROUND-KEPT | The overload held past midnight (2026-10-29, 01:00 UTC, 22% of requests 503): a writ board read scanned its region's witnessed ground - 123,000 rows in 409 ms - twice a read where the day's writs had not posted, 684 times an hour on the primary. An isolate keeps a region's ground ten minutes; none is never kept | No | **Built** (2026-10-29; acct210, acct209 on its branch) |
 | KEEP-MARK | The overload held after LODE-HERD, HUNT-LEAN and GROUND-KEPT deployed (2026-10-29, 47-55% of requests 503): the read replicas served 0% of statements from 01:15, against a fifth to a half while the service was well. A shed or refused replica read said no bookmark and a read past its wait timed out, and the page forgets its bookmark on both (AUDIT SCALE II A-6, C-7) - so every next read started at the primary. Such an answer hands back the bookmark it carried; a read that timed out keeps the page's | No | **Built** (2026-10-29; acct211) |
+| SHED-REPLICA | KEEP-MARK deployed and the replica still served 0%: overloaded, the primary outran its replica, so no replica was as new as a page's bookmark and D1 sent every read to the primary. A replica read an isolate would shed asks any instance instead - a display its replica's lag old, never a 503; a busy read no replica may serve is shed as before | No | **Built** (2026-10-29; acct212) |
 | SCALE6 | Abuse and backups: Turnstile on guest creation, /64 IPv6 rate keys, bans, report and ignore, `ALLOWED_ORIGIN`, R2 snapshots, a hub export | Some | Alongside |
 
 **Relay deploy policy (SCALE):** relay changes are batched into as few deploys as possible, each in a window announced beforehand. A deploy drops every player, and until SCALE2 every reconnect is a D1 write storm.
@@ -4650,4 +4651,30 @@ C-7 holds: a service rolled back past SCALE4g says no bookmark at all, and the p
 
 Pins: `test/server/keep_mark.test.js` (2); `tools/mutants/keep_mark.json` (3, all dead). PIN MOVED: the version pins to
 acct211.
+
+## SHED-REPLICA: built (2026-10-29, this branch - acct212, no migration, no relay change)
+
+KEEP-MARK deployed at 02:48 UTC and the replica served no statement in the six minutes after it. D1's own analytics by
+role told why, and measured the primary besides:
+
+- **The replica is the queue's way out, and lag shuts it.** Over the thirty hours before, the replica served 35-45% of
+  the database's statements; from 01:00 on 2026-10-29, 7%, then 2%, then none. A read on a bookmark's session may be
+  served only by an instance at least as new as the bookmark. Overloaded, the primary outruns its replica, so no
+  replica is that new, and D1 sends the read to the primary - which stays overloaded.
+- **The primary itself slowed at 01:15.** The realm's death check (`SELECT 1 FROM realm_characters WHERE id = ?2 AND
+  player = ?1 AND dead_at IS NOT NULL`, the same plan, no row read) took 0.13 ms at the median from 00:30 to 01:10 and
+  0.27-0.30 ms after, while the primary answered half the statements it had - and the replica's median for it did not
+  move (0.23-0.24 ms). Nothing in the service changed at 01:15; that is the instance's own, reported to Cloudflare.
+
+**The fix** (`index.js` route): a replica read (REPLICA_ROUTES) that the isolate would shed (`shedding`: BUSY-GATE or
+SLOW-SHED open) runs on a session at any instance (REPLICA_ANY) instead, so the replica answers it whatever its lag. A
+display its replica's lag old is the trade, taken only while the primary is refusing; the writes a route makes still go
+to the primary, and a session's own lookup that misses there asks the primary (BOOKMARK-SPIRAL's fallback, kept). A busy
+read no replica may serve (the yards, the layouts, the seats' list, the towns' shares) is shed as before. SHED-LONG's
+rollback measured a replica queue longer than the primary's at a time the replica was not idle; here it was.
+
+Pins: `test/server/shed_replica.test.js` (1); `tools/mutants/shed_replica.json` (3, all dead). PIN MOVED:
+`test/net/busy_gate.test.js` and `test/net/slow_shed.test.js` shed the towns' layouts, a busy read no replica may serve;
+`test/server/keep_mark.test.js` reads a town on a session that says no position; BUSYGATE-shed-unread and SCALE4d's two
+records re-aimed at the line they mutate; the version pins to acct212.
 

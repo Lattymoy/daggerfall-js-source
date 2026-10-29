@@ -123,7 +123,9 @@ test('BUSY-GATE the service: an overloaded database met on any route opens the i
   const post = (path, body) => svc.fetch(`https://accounts.invalid${path}`, {
     method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${who.secret}` }, body: JSON.stringify(body),
   });
-  const town = () => post('/v1/homes/town', { mapId: 152, character: who.character });
+  // PIN MOVED (SHED-REPLICA, 2026-10-29): the shed's example is a busy read no replica may serve - the towns' layouts, an
+  // isolate's kept read; a replica read the shed would take asks any instance instead (test/server/shed_replica.test.js)
+  const town = () => post('/v1/homes/layouts', {});
   const live = () => svc.fetch('https://accounts.invalid/v1/seats/sieges/live', { method: 'GET' });
   const error = console.error;
   console.error = () => {};
