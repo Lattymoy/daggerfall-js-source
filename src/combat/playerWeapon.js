@@ -385,9 +385,8 @@ export class PlayerWeapon {
    * when in morrowind since its not visible"; asked, "Never on an empty hand"): THE MORROWIND LANE'S DEPARTURE. DFU
    * lets the hand in use be an empty one - H to a bare left hand is how a classic player fights with fists, and the
    * sprite shows which hand is up. The Morrowind arm draws one weapon and no second hand, so there a weapon in the
-   * hand not in use was a weapon that would not show, over fists. In that lane (the rig calls this every frame while the
-   * arm is built) the hand in use follows the weapons: an empty hand gives way to the other when it holds one.
-   * HAND-FOLLOWS: on both lanes UpdateHands asks it when what the hands hold changes.
+   * hand not in use was a weapon that would not show, over fists. In that lane every frame, and in both when the hands
+   * change (HAND-FOLLOWS), an empty hand in use gives way to the other when it holds one.
    * @returns true when the hand moved.
    */
   followHeldHand() {

@@ -5,7 +5,7 @@
     "old": "  return Math.min(DECOR_CAP_MAX, Math.max(DECOR_CAP, n));",
     "new": "  return DECOR_CAP;",
     "tests": [
-      "test/server/decorroomy.test.js"
+      "test/server/decorroomy_service.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  return Math.min(DECOR_CAP_MAX, Math.max(DECOR_CAP, n));",
     "new": "  return Math.max(DECOR_CAP, n);",
     "tests": [
-      "test/server/decorroomy.test.js"
+      "test/server/decorroomy_service.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "Math.floor((DECOR_CAP * groundM2) / DECOR_CAP_GROUND_M2 / DECOR_CAP_STEP) * DECOR_CAP_STEP",
     "new": "Math.floor((DECOR_CAP * groundM2) / DECOR_CAP_GROUND_M2)",
     "tests": [
-      "test/server/decorroomy.test.js"
+      "test/server/decorroomy_service.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "&& homeOnlinePrice(ground, townBlocks) === price;",
     "new": "&& price > 0;",
     "tests": [
-      "test/server/decorroomy.test.js"
+      "test/server/decorroomy_service.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "ground > 0 && ground <= HOME_GROUND_MAX",
     "new": "ground > 0",
     "tests": [
-      "test/server/decorroomy.test.js"
+      "test/server/decorroomy_service.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  const kept = homeGroundOk(ground, townBlocks, price) ? homeGroundKept(ground) : null;",
     "new": "  const kept = null;",
     "tests": [
-      "test/server/decorroomy.test.js"
+      "test/server/decorroomy_service.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  const kept = homeGroundOk(ground, townBlocks, price) ? homeGroundKept(ground) : null;",
     "new": "  const kept = typeof ground === 'number' ? homeGroundKept(ground) : null;",
     "tests": [
-      "test/server/decorroomy.test.js"
+      "test/server/decorroomy_service.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "(hall ? DECOR_HALL_CAP : decorCapOf(home.ground))",
     "new": "(hall ? DECOR_HALL_CAP : decorCapOf(null))",
     "tests": [
-      "test/server/decorroomy.test.js"
+      "test/server/decorroomy_service.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  const roomCap = S.seat ? S.cap : decorCapOf(",
     "new": "  const roomCap = S.seat ? S.cap : DECOR_CAP ?? decorCapOf(",
     "tests": [
-      "test/server/decorroomy.test.js"
+      "test/server/decorroomy_service.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  const cap = home?.guild_id != null ? DECOR_HALL_CAP : decorCapOf(home?.ground);",
     "new": "  const cap = home?.guild_id != null ? DECOR_HALL_CAP : DECOR_CAP;",
     "tests": [
-      "test/server/decorroomy.test.js"
+      "test/server/decorroomy_service.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  const cap = home?.guild_id != null ? DECOR_HALL_CAP : decorCapOf(home?.ground);",
     "new": "  const cap = decorCapOf(home?.ground);",
     "tests": [
-      "test/server/decorroomy.test.js"
+      "test/server/decorroomy_service.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  if (body.op === 'ground') return setHomeGround(ctx, player, body);   // DECOR-ROOMY\n",
     "new": "",
     "tests": [
-      "test/server/decorroomy.test.js"
+      "test/server/decorroomy_service.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  if (!(await owns(db, mapId, buildingKey, player, character))?.owns) return { error: 'no-home' };\n  const home = await db.prepare('SELECT price, ground, guild_id",
     "new": "  const home = await db.prepare('SELECT price, ground, guild_id",
     "tests": [
-      "test/server/decorroomy.test.js"
+      "test/server/decorroomy_service.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  if (home.ground != null) return { ok: true, ground: home.ground };\n",
     "new": "",
     "tests": [
-      "test/server/decorroomy.test.js"
+      "test/server/decorroomy_service.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  if (!homeGroundOk(ground, townBlocks, home.price)) return { error: 'bad-home' };\n",
     "new": "",
     "tests": [
-      "test/server/decorroomy.test.js"
+      "test/server/decorroomy_service.test.js"
     ]
   },
   {

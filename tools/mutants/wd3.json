@@ -227,10 +227,11 @@
   {
     "name": "WD3-BASE-NAME-THREE-DIGITS",
     "file": "src/net/decorLaw.js",
-    "old": "f(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,4})\\.(?:0|[1-9]\\d{0,2}))$/;",
-    "new": "f(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,2})\\.(?:0|[1-9]\\d{0,2}))$/;",
+    "old": "f(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,4})\\.(?:0|[1-9]\\d{0,2})|intdoor:",
+    "new": "f(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,2})\\.(?:0|[1-9]\\d{0,2})|intdoor:",
     "tests": [
       "test/server/basehide.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
   }
 ]

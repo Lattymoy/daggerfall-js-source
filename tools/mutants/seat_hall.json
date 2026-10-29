@@ -74,11 +74,12 @@
   {
     "name": "SEAT-HALL-cap-used",
     "file": "server-account/src/decor.js",
-    "old": "out ? DECOR_YARD_CAP : (guildHall ? DECOR_HALL_CAP : S.cap),",
-    "new": "out ? DECOR_YARD_CAP : DECOR_CAP,",
+    "old": "  const roomCap = S.seat ? S.cap : decorCapOf(",
+    "new": "  const roomCap = S.seat ? DECOR_CAP : decorCapOf(",
     "tests": [
       "test/net/seathall_service.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "SEAT-HALL-cap-scope",
@@ -340,11 +341,12 @@
   {
     "name": "SEAT-HALL-bed",
     "file": "src/scenes/worldModes.js",
-    "old": "Math.floor(Date.now() / 1000)) || !!interiorSeatHall?.member,",
-    "new": "Math.floor(Date.now() / 1000)) || !!interiorSeatHall?.keeper,",
+    "old": "Math.floor(Date.now() / 1000)) || !!interiorSeatHall?.member || (!!interiorHome",
+    "new": "Math.floor(Date.now() / 1000)) || !!interiorSeatHall?.keeper || (!!interiorHome",
     "tests": [
       "test/net/seathall_client.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "SEAT-HALL-keeper-rank",

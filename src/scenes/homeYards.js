@@ -230,11 +230,9 @@ export const YARD_ROOF_Y = 2;
  * their door - the door opens onto open ground inside the box (ARCH3D 600, 709 and their kin: 44% of the desert's
  * houses), so the step before the owner's own door was "inside your house" while a neighbour whose door is in its box's
  * side stood free. A face is sampled strictly inside itself, so a roof's edge on a cell's side never marks the next.
- * A roof that hangs past the walls is an eave: the ground under it is the yard. A roof with no walls under it, and
- * anything lower than the roof (a step, a porch), still covers the ground it stands on.
- * EAVE-FOOT (FIELD BUGS 2026-10-29b, "House hitboxes should only apply [to] the foundation"): the walls that say what is
- * under the roof are the ground floor's - a face whose foot is below YARD_ROOF_Y - and two faces in one plane are one
- * wall. An upper storey's wall stood over the ground wall's plane, so a point under the eave crossed that side twice.
+ * A roof past the walls is an eave, its ground the yard. A roof with no walls under it, and anything lower than the
+ * roof (a step, a porch), covers its ground. EAVE-FOOT (FIELD BUGS 2026-10-29b): only the ground floor's walls count,
+ * and a plane is one crossing - an upper storey's wall in the ground wall's plane made the eave the house.
  */
 export function modelFootRects(positions, indices, cell = YARD_FOOT_CELL) {
   let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;

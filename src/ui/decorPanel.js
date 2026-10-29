@@ -1478,10 +1478,9 @@ export function decorBarKeys(touch, sized = true) {
 /**
  * THE BAR, while a piece is being placed. `show(info)` / `hide()`; `info` is { name, price, why, snap, sized } (DECOR-FIGURE:
  * `sized` false hides Smaller and Bigger - a figure stands at its own size) and, for a move
- * (DECOR1e), `priceText` - free, or what a resize costs or gives back. The buttons are
- * the keys' twins: `on` holds place, back, turnLeft, turnRight, raise, lower, nudgeLeft, nudgeRight, nudgeForward,
- * nudgeBack, smaller, bigger, grid - and, on a touch
- * screen (DECOR1e), `fly(dir)`: Fly up (1) or Fly down (-1) held, 0 let go. A touch screen's bar stands at the top,
+ * (DECOR1e), `priceText` - free, or what a resize costs or gives back. The buttons are the keys' twins: `on` holds
+ * place, back, turnLeft, turnRight, raise, lower, nudgeLeft, nudgeRight, nudgeForward, nudgeBack, smaller, bigger, grid
+ * - and, on a touch screen (DECOR1e), `fly(dir)`: Fly up (1) or Fly down (-1) held, 0 let go. A touch screen's bar stands at the top,
  * clear of the stick and the layer's buttons along the bottom.
  * @param {{ on: Record<string, (dir?: number) => void>, touch?: boolean, doc?: any }} opts
  */

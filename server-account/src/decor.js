@@ -24,10 +24,9 @@
 // of it; the character a write names is the one whose record pays) - so
 // a piece in somebody else's home is exactly as absent as none (`no-home`
 // to place, `no-decor` to move or remove). A placement lands only while
-// the home holds fewer than its cap (DECOR-ROOMY: decorCapOf its ground,
-// DECOR_CAP for a home never measured). WHAT a piece is - a model, or a
-// flat - is written once, at the placement, into columns no later
-// statement touches: a move rewrites `place` alone.
+// the home holds fewer than its cap (DECOR-ROOMY: by its ground). WHAT
+// a piece is - a model, or a flat - is written once, at the placement,
+// into columns no later statement touches: a move rewrites `place` alone.
 // ═══════════════════════════════════════════════════════════════════
 import { accountKind, displayName, overRate } from './accounts.js';
 import { CHAR_ID_RE } from './service.js';

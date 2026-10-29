@@ -332,12 +332,12 @@
   {
     "name": "HOME-VOTE-trader-withheld",
     "file": "server-account/src/decor.js",
-    "old": "pieces: await shopOf(db, mapId, pieces), hidden: [], rev };",
-    "new": "pieces: [], hidden: [], rev };",
+    "old": "pieces: await shopOf(db, mapId, pieces), hidden: [], rev, cap };",
+    "new": "pieces: [], hidden: [], rev, cap };",
     "tests": [
       "test/net/homevote.test.js"
     ],
-    "note": "AUDIT B2: the service withholds a shunned home's shop Re-aimed at AUDIT HOME-VOTE II, by content: a stocked trader alone (A1)."
+    "note": "AUDIT B2: the service withholds a shunned home's shop Re-aimed at AUDIT HOME-VOTE II, by content: a stocked trader alone (A1). FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "HOME-VOTE-score-unsaid",
@@ -442,12 +442,12 @@
   {
     "name": "HOME-VOTE-yard-unasked",
     "file": "src/scenes/homeYards.js",
-    "old": "        const pieces = homeDecorShown(home) ? cells.piecesOf(p.homeTown, bk) : null;",
+    "old": "        const pieces = homeDecorShownHere(home, p.homeTown) ? cells.piecesOf(p.homeTown, bk) : null;",
     "new": "        const pieces = cells.piecesOf(p.homeTown, bk);",
     "tests": [
       "test/net/homevote.test.js"
     ],
-    "note": "a shunned home's yard stands for everyone Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
+    "note": "a shunned home's yard stands for everyone Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time. FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "HOME-VOTE-room-stood",
@@ -472,12 +472,12 @@
   {
     "name": "HOME-VOTE-look-painted",
     "file": "src/scenes/world.js",
-    "old": ": homeDecorShown(row) ? row?.look ?? null : null);",
+    "old": ": homeDecorShownHere(row, mapId) ? row?.look ?? null : null);",
     "new": ": row?.look ?? null);",
     "tests": [
       "test/net/homevote.test.js"
     ],
-    "note": "a shunned home's paint stands for everyone"
+    "note": "a shunned home's paint stands for everyone FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "HOME-VOTE-rows-lit",
@@ -913,12 +913,12 @@
   {
     "name": "HOME-VOTE-II-D1-votes-on-every-face",
     "file": "src/scenes/worldModes.js",
-    "old": "...(worldPlaqueOn() ? homeVoteRows(home) : [])];",
-    "new": "...homeVoteRows(home)];",
+    "old": "...(worldPlaqueOn() ? [...homeVoteRows(home), ...homeMuteRows(home, homeTownOf(bd))] : [])];",
+    "new": "...homeVoteRows(home), ...homeMuteRows(home, homeTownOf(bd))];",
     "tests": [
       "test/net/homevote.test.js"
     ],
-    "note": "AUDIT HOME-VOTE II D1: the classic face folded vote rows it never drew - a wheel notch lit one, the click cast it unseen."
+    "note": "AUDIT HOME-VOTE II D1: the classic face folded vote rows it never drew - a wheel notch lit one, the click cast it unseen. FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "HOME-VOTE-II-D1-folded-is-drawn",
@@ -953,12 +953,12 @@
   {
     "name": "DECOR-BATCH-the-room-three-trips",
     "file": "server-account/src/decor.js",
-    "old": "const [{ results = [] }, shown, hidden, revRow] = await db.batch([piecesRead, homeShownRead(db, mapId, buildingKey, player?.id), hiddenRead(db, mapId, buildingKey), revRead]);",
-    "new": "const [{ results = [] }, shown, hidden, revRow] = [await piecesRead.all(), { results: [await homeShownRead(db, mapId, buildingKey, player?.id).first()] }, { results: [await hiddenRead(db, mapId, buildingKey).first()] }, { results: [await revRead.first()] }];",
+    "old": "const [{ results = [] }, shown, hidden, revRow, capRow] = await db.batch([piecesRead, homeShownRead(db, mapId, buildingKey, player?.id), hiddenRead(db, mapId, buildingKey), revRead, capRead]);",
+    "new": "const [{ results = [] }, shown, hidden, revRow, capRow] = [await piecesRead.all(), { results: [await homeShownRead(db, mapId, buildingKey, player?.id).first()] }, { results: [await hiddenRead(db, mapId, buildingKey).first()] }, { results: [await revRead.first()] }, { results: [await capRead.first()] }];",
     "tests": [
       "test/net/homevote.test.js"
     ],
-    "note": "the room's three reads three trips in a row again - the deploy's 000"
+    "note": "the room's three reads three trips in a row again - the deploy's 000 FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "DECOR-BATCH-the-shop-a-trip-a-trader",
@@ -973,11 +973,11 @@
   {
     "name": "DECOR-BATCH-hidden-dropped",
     "file": "server-account/src/decor.js",
-    "old": "return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null), rev };",
-    "new": "return { mapId, buildingKey, pieces, hidden: [], rev };",
+    "old": "return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null), rev, cap, measured: home?.ground != null };",
+    "new": "return { mapId, buildingKey, pieces, hidden: [], rev, cap, measured: home?.ground != null };",
     "tests": [
       "test/net/homevote.test.js"
     ],
-    "note": "what the owner took out lost from the batch"
+    "note": "what the owner took out lost from the batch FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
   }
 ]

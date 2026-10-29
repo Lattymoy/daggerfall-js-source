@@ -62,12 +62,12 @@
   {
     "name": "IC-BACKYARD-the-turn-unread",
     "file": "src/scenes/homeYards.js",
-    "old": "const onLot = (lot, x, z, pad = 0) => { const [u, v] = lotAxes(lot, x, z); return inRect(u, v, lot.lot, pad); };",
-    "new": "const onLot = (lot, x, z, pad = 0) => inRect(x, z, lot.lot, pad);",
+    "old": "const onLot = (lot, x, z, pad = 0) => { const [u, v] = lotAxes(lot, x, z); return inRect(u, v, lot.lot, pad) || (lot.joined ?? []).some((r) => inRect(x, z, r, pad)); };",
+    "new": "const onLot = (lot, x, z, pad = 0) => inRect(x, z, lot.lot, pad) || (lot.joined ?? []).some((r) => inRect(x, z, r, pad));",
     "tests": [
       "test/world/worldWide/ic_backyard.test.js"
     ],
-    "note": "A turned yard read on the frame's axes: pieces refused in it and stood outside it."
+    "note": "A turned yard read on the frame's axes: pieces refused in it and stood outside it. FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "IC-BACKYARD-not-alone",

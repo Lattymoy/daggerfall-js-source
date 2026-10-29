@@ -10608,10 +10608,9 @@ lighting isnt shown lantern light anymore?"
 - **The law: an outdoor lamp IS the town's.** Daggerfall lights every TEXTURE.210 flat standing in a town block
   (RMBLayout.AddLight - `world/city/cityLights.js` collectCityLights), so a yard's lights too (`scenes/homeYards.js`
   yardLampOf): the town's lantern (YARD_LAMP - DaggerfallLight [City]: range 18, intensity 1, white - the law's numbers;
-  the frame lights it as it lights the street's, below), hung where the town hangs its own - the flat's drawn top and
-  the 0.15 m the town's billboards are sunk by and their lights are not (YARD_LAMP_RAISE: `world/rmbFlats.js`
-  BLOCK_FLATS_OFFSET_Y) - and a scaled lamp is the lamp scaled, its height and its reach alike (AUDIT YARD-LIGHT L5,
-  L6). Any other piece gives none.
+  the frame lights it as it lights the street's, below), a candle burning as a room's (CANDLE-DIM), each hung at its
+  flame (LAMP-FLAME, `scenes/decor/decorRoom.js` decorLightLift; `01-Overview/bugs/Field-Bugs-2026-10-29b.md`) - and a
+  scaled lamp is the lamp scaled, its height and its reach alike (AUDIT YARD-LIGHT L6). Any other piece gives none.
   Nothing is stored and nothing is switched: the piece still carries no light of its own, the service and its law are
   untouched, and a lamp placed before this lights as it stands.
 - **Standing.** The room's own machinery carries it (`scenes/decor/decorRoom.js` `lampOf` - a host's law over the light a
@@ -10665,8 +10664,8 @@ mutants of the 42 other lists aimed at decorRoom.js, homeYards.js, decorTool.js 
   refilled in place (PERF-LIGHTS' law), and the slot is set once, when the lamp is mounted.
 - **LOW - L5: a yard's lamp hung 0.15 m below the town's.** (B, the author) The town draws its TEXTURE.210 flats sunk
   by blockFlatsOffsetY (-6 native units, 0.15 m) and hangs their lights unsunk (RMBLayout.AddLight), so the town's light
-  stands 0.15 m above its picture's top; YARD-LIGHT hung the yard's at the top. FIXED: YARD_LAMP_RAISE, read off
-  `world/rmbFlats.js` BLOCK_FLATS_OFFSET_Y (exported for it), pinned against the real collectors.
+  stands 0.15 m above its picture's top; YARD-LIGHT hung the yard's at the top. FIXED then by YARD_LAMP_RAISE; since
+  LAMP-FLAME (FIELD BUGS 2026-10-29b) every lit piece's light hangs at its flame.
 - **LOW - L6: a scaled lamp lit away from itself.** (B) Its light hung at its scaled top but kept the town's 18 m
   reach, so the town's commonest lamp post (210.29, drawn 4 m tall) scaled four times stood its light 16 m up and lit
   its own foot a fiftieth as much as at its own size (0.012 against 0.605 on the classic falloff; 0.021 against 1.112

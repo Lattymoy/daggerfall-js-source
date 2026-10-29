@@ -167,11 +167,12 @@
   {
     "name": "JAN1-the-pair-crosses-as-the-sheath-alone",
     "file": "src/combat/playerWeapon.js",
-    "old": "  if (pose.usingRightHand != null) w.usingRightHand = !!pose.usingRightHand;",
+    "old": "  if (pose.usingRightHand != null) { w.usingRightHand = !!pose.usingRightHand; w.handRestored = true; }   // HAND-FOLLOWS: the next UpdateHands keeps it\n",
     "new": "",
     "tests": [
       "test/world/terrain/jan1_field.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "JAN1-the-walkers-stand-on-the-average-again",

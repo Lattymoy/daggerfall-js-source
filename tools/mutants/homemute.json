@@ -38,11 +38,12 @@
   {
     "name": "HOMEMUTE-row-stuck",
     "file": "src/systems/online/homeMute.js",
-    "old": "  ? [homeMuted(mapId, home) ? { id: HOME_MUTE_VERB.show, label: HOME_MUTE_SHOW } : { id: HOME_MUTE_VERB.hide, label: HOME_MUTE_HIDE }]",
-    "new": "  ? [{ id: HOME_MUTE_VERB.hide, label: HOME_MUTE_HIDE }]",
+    "old": "  ? [homeMuted(mapId, home) ? { id: HOME_MUTE_VERB.show, label: HOME_MUTE_TEXT.show } : { id: HOME_MUTE_VERB.hide, label: HOME_MUTE_TEXT.hide }]",
+    "new": "  ? [{ id: HOME_MUTE_VERB.hide, label: HOME_MUTE_TEXT.hide }]",
     "tests": [
       "test/systems/online/homemute.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-29b (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "HOMEMUTE-no-bump",

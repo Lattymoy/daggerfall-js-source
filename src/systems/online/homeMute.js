@@ -14,13 +14,13 @@ export const HOME_MUTE_MAX = 500;
 /** The door's two rows. */
 export const HOME_MUTE_VERB = Object.freeze({ hide: 'home-mute-hide', show: 'home-mute-show' });
 /** Its words: the two rows, the door's line, and what a press says. */
-export const HOME_MUTE_TEXT = localizedTable({
+export const HOME_MUTE_TEXT = /** @type {Readonly<{ hide: string, show: string, muted: string, done: string, undone: string }>} */ (localizedTable({
   hide: () => t('home.mute.hide', 'Hide its decorations (for you)'),
   show: () => t('home.mute.show', 'Show its decorations again'),
   muted: () => t('home.mute.muted', 'You hid its decorations. Only you see the change.'),
   done: () => t('home.mute.done', 'Its decorations are hidden for you.'),
   undone: () => t('home.mute.undone', 'Its decorations show for you again.'),
-});
+}));
 
 /** @type {Storage | null} */
 let store = null;
