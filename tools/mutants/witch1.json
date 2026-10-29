@@ -88,7 +88,7 @@
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
-    "note": "A guild hall's keeper sets an offering at its guild's door. Re-aimed by content (HEARTH-SIBLING, FIELD BUGS 2026-10-29b): the home check is the account's."
+    "note": "A guild hall's keeper sets an offering at its guild's door. Re-aimed by content (HEARTH-SIBLING, FIELD BUGS 2026-10-29e): the home check is the account's."
   },
   {
     "name": "WITCH1-no-take-in-after",

@@ -40,7 +40,7 @@
     "note": "take-in matches a character again"
   },
   {
-    "name": "AUDIT-FB1029B-H4-fill-anywhere",
+    "name": "AUDIT-FB1029e-H4-fill-anywhere",
     "file": "server-account/src/festival.js",
     "old": "  if (!(await db.prepare(`SELECT ${OWNED_HOME} AS own`).bind(mapId, buildingKey, player.id, character).first())?.own) return { error: 'home' };\n  const row = await db.prepare('SELECT o.stock",
     "new": "  const row = await db.prepare('SELECT o.stock",
@@ -50,7 +50,7 @@
     "note": "a sibling fills a deed's home"
   },
   {
-    "name": "AUDIT-FB1029B-H5-buyer-alone",
+    "name": "AUDIT-FB1029e-H5-buyer-alone",
     "file": "server-account/src/festival.js",
     "old": "const STANDS_ON = (/** @type {string} */ o) => `h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ${o}.char_id)`;",
     "new": "const STANDS_ON = (/** @type {string} */ o) => `h.char_id = ${o}.char_id`;",
@@ -60,7 +60,7 @@
     "note": "an heir taking the home up takes the account's bowl down"
   },
   {
-    "name": "AUDIT-FB1029B-H5-hall-stands",
+    "name": "AUDIT-FB1029e-H5-hall-stands",
     "file": "server-account/src/festival.js",
     "old": "const STANDS_ON = (/** @type {string} */ o) => `h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ${o}.char_id)`;",
     "new": "const STANDS_ON = (/** @type {string} */ o) => `(h.deed = 0 OR h.char_id = ${o}.char_id)`;",

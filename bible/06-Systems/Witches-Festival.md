@@ -122,7 +122,7 @@ Rat), the Demonologist (rare; reveal: two Imps), Tales and Tallows (a spell: a G
 
 The owner's treat bowl. THE BOWL IS THE ACCOUNT'S, as its cakes (`players.fest_bowls`): bought, it is counted; the pack's
 Hearth Offerings are its face (`restackHearthOfferings`). **Set out:** use a Hearth Offering standing at the door of a home
-the account owns (never a guild's hall; HEARTH-SIBLING, `01-Overview/bugs/Field-Bugs-2026-10-29b.md`: any of its
+the account owns (never a guild's hall; HEARTH-SIBLING, `01-Overview/bugs/Field-Bugs-2026-10-29e.md`: any of its
 characters, as ACCOUNT-HOMES, where it asked the buyer), it weighing nothing, at the spot the build kept by it (`There is no room for it by this
 door.` where it kept none) - one of the account's bowls spent. **Fill:** up to 10 cakes from your count a press, at most
 60 in the bowl. **Take:** anyone else takes one cake an offering a day - never from their own account's. **Take in:** any

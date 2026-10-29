@@ -507,9 +507,9 @@ function actionCodes(b, action) {
 export function keyEdges() { return { down: new Set(), up: new Set(), downFrame: new Set(), upFrame: new Set(), own: new Set() }; }
 export function noteKeyDown(edges, code, repeat = false) { if (edges && !repeat) { edges.down.add(code); edges.own?.add(code); } }
 export function noteKeyUp(edges, code) { if (!edges) return; if (edges.own && !edges.own.delete(code)) return; edges.up.add(code); }
-/** KEYS-BLUR (FIELD BUGS 2026-10-29b, "sometimes my boat begins to spin"): a page that loses focus never hears the keys
+/** KEYS-BLUR (FIELD BUGS 2026-10-29e, "sometimes my boat begins to spin"): a page that loses focus never hears the keys
  *  let go under it (alt-tab, an overlay's own shortcut), so a held key stayed held - a helm swung on, a body walked.
- *  On blur, and when the page is hidden, every held key gets its keyup, at the document as the pad's are (AUDIT FB1029B
+ *  On blur, and when the page is hidden, every held key gets its keyup, at the document as the pad's are (AUDIT FB1029e
  *  S3: the host's own keyup and every window's run); one no listener let go is let go here. A mouse button is left to
  *  its own mouseup, which the page still hears. Answers the uninstall. */
 export function letGoOnBlur(/** @type {Set<string>} */ keys, /** @type {any} */ edges, /** @type {any} */ win = globalThis) {

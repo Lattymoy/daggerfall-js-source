@@ -838,7 +838,7 @@
     "tests": [
       "test/systems/comeSailAway/csa_wind.test.js"
     ],
-    "note": "Re-aimed by content (AUDIT FB1029B T8: the step's rest passed through)."
+    "note": "Re-aimed by content (AUDIT FB1029e T8: the step's rest passed through)."
   },
   {
     "name": "NAV1H-the-brake-unheld",
@@ -848,7 +848,7 @@
     "tests": [
       "test/systems/comeSailAway/csa_wind.test.js"
     ],
-    "note": "Re-aimed by content (AUDIT FB1029B T8: the step's rest passed through)."
+    "note": "Re-aimed by content (AUDIT FB1029e T8: the step's rest passed through)."
   },
   {
     "name": "NAV1H-the-brake-unwired-world",

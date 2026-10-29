@@ -81,7 +81,7 @@
     "note": "the beds' alias carries no turn"
   },
   {
-    "name": "AUDIT-FB1029B-H1-any-classic-id",
+    "name": "AUDIT-FB1029e-H1-any-classic-id",
     "file": "src/systems/decor/decorMods.js",
     "old": "(ROOM_PROPS.has(id) || (Object.hasOwn",
     "new": "((id >= 41000 && id <= 43999) || (Object.hasOwn",
@@ -91,7 +91,7 @@
     "note": "a ship's rigging and the mods' beams offered as furniture"
   },
   {
-    "name": "AUDIT-FB1029B-H1-pillars-offered",
+    "name": "AUDIT-FB1029e-H1-pillars-offered",
     "file": "src/systems/decor/decorMods.js",
     "old": "&& !STRUCTURE.has(id)));",
     "new": "));",
@@ -101,7 +101,7 @@
     "note": "DET's ceiling timbers offered as furniture"
   },
   {
-    "name": "AUDIT-FB1029B-H1-table-drifts",
+    "name": "AUDIT-FB1029e-H1-table-drifts",
     "file": "src/systems/decor/decorMods.js",
     "old": "  41824, 41825, 41826, 41827, 41828, 41829, 41831,",
     "new": "  41824, 41825, 41826, 41827, 41828, 41829, 41830, 41831,",
@@ -111,7 +111,7 @@
     "note": "a model Daggerfall never lays as a prop in the table"
   },
   {
-    "name": "AUDIT-FB1029B-H2-floorless-offered",
+    "name": "AUDIT-FB1029e-H2-floorless-offered",
     "file": "src/scenes/interiorContext.js",
     "old": "=== Infinity) base.keep(p.key);",
     "new": "=== -1) base.keep(p.key);",
@@ -122,7 +122,7 @@
     "note": "a piece over the void offered - taken out, a way into it"
   },
   {
-    "name": "AUDIT-FB1029B-H2-own-bucket",
+    "name": "AUDIT-FB1029e-H2-own-bucket",
     "file": "src/scenes/interiorContext.js",
     "old": "collider.raycast(p.at, [0, -1, 0], 60, { skip: [baseBucketOf(p.key)] })",
     "new": "collider.raycast(p.at, [0, -1, 0], 60)",

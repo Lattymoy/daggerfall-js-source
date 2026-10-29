@@ -189,7 +189,7 @@ test('WITCH1 THE HEARTH OFFERING: set out only at a home the account owns (never
   assert.deepEqual(await setOffering(ctx(AFTER_S), player(alice), at, ON), { error: 'closed' });
 });
 
-test('HEARTH-SIBLING: any character of the account sets the bowl out at the account\'s home, fills it and takes it in - a deed\'s home its holder\'s alone (FIELD BUGS 2026-10-29b)', async () => {
+test('HEARTH-SIBLING: any character of the account sets the bowl out at the account\'s home, fills it and takes it in - a deed\'s home its holder\'s alone (FIELD BUGS 2026-10-29e)', async () => {
   const { alice, bob, player, ctx, cakes, bowls, home, row, db } = await stand();
   home(alice, MAP, HOME, CHAR);
   home(alice, MAP, HALL, CHAR);
@@ -208,7 +208,7 @@ test('HEARTH-SIBLING: any character of the account sets the bowl out at the acco
   assert.equal(row(alice.id).fest_bowls, 2);
 });
 
-test('HEARTH-SIBLING (AUDIT FB1029B H4, H5) a deed\'s home is filled by its holder alone; an heir taking the home up leaves the account\'s bowl standing', async () => {
+test('HEARTH-SIBLING (AUDIT FB1029e H4, H5) a deed\'s home is filled by its holder alone; an heir taking the home up leaves the account\'s bowl standing', async () => {
   const { alice, bob, player, ctx, cakes, bowls, home, db } = await stand();
   home(alice, MAP, HOME, CHAR);
   bowls(alice, 1);
@@ -229,7 +229,7 @@ test('HEARTH-SIBLING (AUDIT FB1029B H4, H5) a deed\'s home is filled by its hold
   assert.equal((await festivalOf(ctx(), player(alice), ON)).bowls, 1, 'its bowl home');
 });
 
-test('HEARTH-SIBLING (AUDIT FB1029B T5) a sibling finds the buyer\'s filled bowl set, its cakes kept; an offering is stored under its own home\'s buyer', async () => {
+test('HEARTH-SIBLING (AUDIT FB1029e T5) a sibling finds the buyer\'s filled bowl set, its cakes kept; an offering is stored under its own home\'s buyer', async () => {
   const { alice, player, ctx, cakes, bowls, home, db } = await stand();
   home(alice, MAP, HOME, CHAR);
   home(alice, MAP, HALL, 'char-two');

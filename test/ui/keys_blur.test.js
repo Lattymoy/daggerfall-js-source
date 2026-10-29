@@ -1,7 +1,7 @@
-// KEYS-BLUR (FIELD BUGS 2026-10-29b, "sometimes my bnoat begins to spin"): a page that loses focus never hears the keys
+// KEYS-BLUR (FIELD BUGS 2026-10-29e, "sometimes my bnoat begins to spin"): a page that loses focus never hears the keys
 // let go under it, so a key held across an alt-tab stayed held - a helm swung on, and the other rudder key could not
 // take it off (MoveRight is asked first). On blur, and when the page is hidden, every held key gets its keyup at the
-// document - the host's own keyup and every window's run (AUDIT FB1029B S3) - and the pad lets go of its own, so its next
+// document - the host's own keyup and every window's run (AUDIT FB1029e S3) - and the pad lets go of its own, so its next
 // tick presses again what is still down (S4). Mutants: tools/mutants/keys_blur.json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

@@ -512,7 +512,7 @@ test('AUDIT 64 F17: layoutInterior carries ObjectType, and 41409 climbs only as 
   // PIN MOVED (FIELD BUGS 2026-10-14 INN-BEDS): the gate lists a bed model before it skips - a bed is a mod's custom
   // activation (RoleplayRealism.cs:126-128), not furniture's action - and skips everything else as it did
   const gate = c.indexOf('if (p.objectType !== PROP_MODEL_TYPE) {');
-  // PIN MOVED (BUILT-IN-MODS, FIELD BUGS 2026-10-29b): and a bed written as scenery that is a built-in piece is taken out
+  // PIN MOVED (BUILT-IN-MODS, FIELD BUGS 2026-10-29e): and a bed written as scenery that is a built-in piece is taken out
   // with its rest
   assert.ok(gate >= 0 && /^if \(p\.objectType !== PROP_MODEL_TYPE\) \{\n\s*if \(isBedModel\(classicModelIdOf\(p\.modelIdNum\)\)\) \{\n\s*beds\.push\(\{ cpu, matrix \}\);\n\s*if \(baseKey\) base\.furnish\(baseKey, beds\[beds\.length - 1\]\);[^\n]*\n\s*\}\n\s*continue;\n\s*\}/.test(c.slice(gate)),
     'DaggerfallInterior.cs:500 gates the whole AddFurnitureAction chain on the same clause');

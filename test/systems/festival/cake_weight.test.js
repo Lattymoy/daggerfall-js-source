@@ -1,7 +1,7 @@
 // CAKE-WEIGHT (2026-10-27, the owner: "can soulcakes weight nothing since its an event item you cant get rid off"): THE
 // SOUL CAKE WEIGHS NOTHING - systems/festival/festivalRows.js SOUL_CAKE_LAW_ROW, read through the producer's own mint
 // (soulCake.js soulCakes, restackSoulCakes) and the pack's own scales (systems/inventory.js itemWeight, totalWeight).
-// HEARTH-SIBLING (FIELD BUGS 2026-10-29b): the Hearth Offering weighs nothing too. Mutant: tools/mutants/cake_weight.json.
+// HEARTH-SIBLING (FIELD BUGS 2026-10-29e): the Hearth Offering weighs nothing too. Mutant: tools/mutants/cake_weight.json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { soulCakes, restackSoulCakes, hearthOffering, SOUL_CAKE_ROW } from '../../../src/systems/festival/soulCake.js';

@@ -80,7 +80,7 @@
     "note": "a dead hull says why once"
   },
   {
-    "name": "AUDIT-FB1029B-S1-counter-at-the-load",
+    "name": "AUDIT-FB1029e-S1-counter-at-the-load",
     "file": "src/systems/comeSailAway/ladenRest.js",
     "old": "  const against = swing * current < 0 && mod < 1;",
     "new": "  const against = false;",
@@ -90,7 +90,7 @@
     "note": "a helm put against a laden swing takes it off at the load's rate"
   },
   {
-    "name": "AUDIT-FB1029B-S1-counter-past-zero",
+    "name": "AUDIT-FB1029e-S1-counter-past-zero",
     "file": "src/systems/comeSailAway/ladenRest.js",
     "old": "toward: against ? 0 : swing };",
     "new": "toward: swing };",
@@ -100,7 +100,7 @@
     "note": "the light rate carries her through 0 into a swing the other way"
   },
   {
-    "name": "AUDIT-FB1029B-S1-eased-unrested",
+    "name": "AUDIT-FB1029e-S1-eased-unrested",
     "file": "src/systems/comeSailAway/ladenRest.js",
     "old": "rest: against || Math.abs(swing) < Math.abs(current),",
     "new": "rest: against,",
@@ -110,7 +110,7 @@
     "note": "a swing let go comes off at the load's rate"
   },
   {
-    "name": "AUDIT-FB1029B-S2-said-at-rest",
+    "name": "AUDIT-FB1029e-S2-said-at-rest",
     "file": "src/systems/comeSailAway/ladenRest.js",
     "old": "  && (state.oarThrottle !== 0 || state.sailPosition !== 0 || state.TurnTarget !== 0);",
     "new": "  && true;",
@@ -120,7 +120,7 @@
     "note": "said every round with her oars at rest"
   },
   {
-    "name": "AUDIT-FB1029B-S2-said-no-hold",
+    "name": "AUDIT-FB1029e-S2-said-no-hold",
     "file": "src/systems/comeSailAway/ladenRest.js",
     "old": "=> mod === 0 && threshold > 0\n",
     "new": "=> mod === 0\n",
@@ -130,7 +130,7 @@
     "note": "the Carrack under Classic said every round"
   },
   {
-    "name": "AUDIT-FB1029B-S5-slide-light",
+    "name": "AUDIT-FB1029e-S5-slide-light",
     "file": "src/systems/comeSailAway/ladenRest.js",
     "old": "export const wayRests = (/** @type {number} */ wanted, /** @type {number} */ was, /** @type {number} */ dot) => wanted < was\n  && (wanted === 0 || dot >= f(f(wanted * was) * 0.999));",
     "new": "export const wayRests = (/** @type {number} */ wanted, /** @type {number} */ was, /** @type {number} */ dot) => wanted < was;",
@@ -140,7 +140,7 @@
     "note": "a way wanted across her line gathers at the light rate"
   },
   {
-    "name": "AUDIT-FB1029B-S6-M2-sail-way",
+    "name": "AUDIT-FB1029e-S6-M2-sail-way",
     "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "wind) * laden(rest))",
     "new": "wind) * state.boatCargoMod)",
@@ -150,7 +150,7 @@
     "note": "her way under canvas kept for good"
   },
   {
-    "name": "AUDIT-FB1029B-S6-M3-oar-way",
+    "name": "AUDIT-FB1029e-S6-M3-oar-way",
     "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "handlingMod('OarMoveAcceleration')) * laden(rest))",
     "new": "handlingMod('OarMoveAcceleration')) * state.boatCargoMod)",
@@ -160,7 +160,7 @@
     "note": "her way under oars kept for good"
   },
   {
-    "name": "AUDIT-FB1029B-S6-M4-oar-turn",
+    "name": "AUDIT-FB1029e-S6-M4-oar-turn",
     "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "handlingMod('OarTurnAcceleration')) * laden(rest))",
     "new": "handlingMod('OarTurnAcceleration')) * state.boatCargoMod)",
@@ -170,7 +170,7 @@
     "note": "a swing with the rudder held against it kept for good"
   },
   {
-    "name": "AUDIT-FB1029B-T3-sail-accel-light",
+    "name": "AUDIT-FB1029e-T3-sail-accel-light",
     "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "wind) * laden(rest))",
     "new": "wind) * 1)",
@@ -180,7 +180,7 @@
     "note": "her way under canvas comes on at the light rate"
   },
   {
-    "name": "AUDIT-FB1029B-T3-oar-accel-light",
+    "name": "AUDIT-FB1029e-T3-oar-accel-light",
     "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "handlingMod('OarMoveAcceleration')) * laden(rest))",
     "new": "handlingMod('OarMoveAcceleration')) * 1)",
@@ -190,7 +190,7 @@
     "note": "her way at her oars comes on at the light rate"
   },
   {
-    "name": "AUDIT-FB1029B-T3-oar-turn-light",
+    "name": "AUDIT-FB1029e-T3-oar-turn-light",
     "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "handlingMod('OarTurnAcceleration')) * laden(rest))",
     "new": "handlingMod('OarTurnAcceleration')) * 1)",
@@ -200,7 +200,7 @@
     "note": "her helm at her oars comes over at the light rate"
   },
   {
-    "name": "AUDIT-FB1029B-T3-sail-turn-light",
+    "name": "AUDIT-FB1029e-T3-sail-turn-light",
     "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "handlingMod('SailTurnAcceleration')) * laden(rest))",
     "new": "handlingMod('SailTurnAcceleration')) * 1)",
@@ -210,7 +210,7 @@
     "note": "her helm under canvas comes over at the light rate"
   },
   {
-    "name": "AUDIT-FB1029B-T3-coast-light",
+    "name": "AUDIT-FB1029e-T3-coast-light",
     "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "handlingMod('SailMoveAcceleration')) * laden(rest)) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.coast : 1));",
     "new": "handlingMod('SailMoveAcceleration')) * 1) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.coast : 1));",

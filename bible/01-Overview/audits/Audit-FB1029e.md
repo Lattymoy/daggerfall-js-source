@@ -1,10 +1,10 @@
-# AUDIT FB1029B - FIELD BUGS 2026-10-29b read cold, 2026-10-29
+# AUDIT FB1029e - FIELD BUGS 2026-10-29e read cold, 2026-10-29
 
-The owner: *"Audit this"*, of `a0fef08bf` - the four fixes of `../bugs/Field-Bugs-2026-10-29b.md` (LADEN-REST,
+The owner: *"Audit this"*, of `a0fef08bf` - the four fixes of `../bugs/Field-Bugs-2026-10-29e.md` (LADEN-REST,
 KEYS-BLUR, HEARTH-SIBLING, FAMILY-REMOVE, BUILT-IN-MODS, BED-TURN). Four cold lanes read a frozen worktree of that
 commit, each given the files and one brief (what to hunt, how to prove it), never a conclusion. Each finding was proven
 on the real code - a probe, a test that fails at the commit, or quoted lines - before it was reported, and proven again
-here before its fix. Fixes carry an `AUDIT FB1029B <id>` comment.
+here before its fix. Fixes carry an `AUDIT FB1029e <id>` comment.
 
 | Lane | Read | Found |
 |---|---|---|
@@ -87,7 +87,7 @@ withoutLine) and pinned. **T5, T11.** Two offering and two family survivors, pin
 call at the top of the scope. **T9.** The ledger row names its hosts, pins and mutants. **T10.** "Below 0 she crawls"
 (the mod is never below 0), struck.
 
-Mutants: `tools/mutants/audit_fb1029b.json` (22, one equivalent), and the lists of the record grown: laden_rest 22 (one
+Mutants: `tools/mutants/audit_fb1029e.json` (22, one equivalent), and the lists of the record grown: laden_rest 22 (one
 equivalent), keys_blur 9, family_remove 14, hearth_sibling 7, builtin_mods 13. Re-aimed by content: `csa_sailing.json`,
 `witch1.json`, `fb1014_innbeds.json`, `hostsplit.json`, `int_lane4.json`, `legacy7.json`, `realm1.json`,
 `navaudit_helm.json`.

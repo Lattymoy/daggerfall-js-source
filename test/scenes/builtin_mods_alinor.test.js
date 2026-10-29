@@ -1,7 +1,7 @@
-// BUILT-IN-MODS and BED-TURN on the player's own data (FIELD BUGS 2026-10-29b): the house a player bought in Alinor, past
+// BUILT-IN-MODS and BED-TURN on the player's own data (FIELD BUGS 2026-10-29e): the house a player bought in Alinor, past
 // the Bay, and the same mod house in a Bay town. Alinor lays Beautiful Cities' RESIGL03 (world/tamrielCapitals.js), the
 // mod's rebuild of a classic block; its first house is built through the real interior builder as an owned room: its
-// furniture written as scenery is built in now, beside its props. AUDIT FB1029B H1: the furniture table is measured
+// furniture written as scenery is built in now, beside its props. AUDIT FB1029e H1: the furniture table is measured
 // again here over every room of BLOCKS.BSA. Needs ARENA2 (sh tools/fetch-data.sh).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -68,7 +68,7 @@ test('BUILT-IN-MODS Alinor lays Beautiful Cities\' RESIGL03, and its first house
   ctx.destroy();
 });
 
-test('BUILT-IN-MODS (AUDIT FB1029B H1) the furniture table is every model Daggerfall lays as a prop in its own rooms', { skip }, () => {
+test('BUILT-IN-MODS (AUDIT FB1029e H1) the furniture table is every model Daggerfall lays as a prop in its own rooms', { skip }, () => {
   const bf = new BlocksFile(); bf.load(new Uint8Array(readFileSync(`${A}/BLOCKS.BSA`)));
   const props = new Set();
   for (let i = 0; i < bf.count; i++) {

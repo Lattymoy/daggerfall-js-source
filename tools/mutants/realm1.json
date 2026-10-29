@@ -35,17 +35,17 @@
     "tests": [
       "test/server/realm1.test.js"
     ],
-    "note": "Re-aimed by content (AUDIT FB1029B)."
+    "note": "Re-aimed by content (AUDIT FB1029e)."
   },
   {
     "name": "REALM1-no-bound",
     "file": "server-account/src/realm.js",
-    "old": "AND dead_at IS NULL) < ?'\n      // AUDIT FB1029B F4",
-    "new": "AND dead_at IS NULL) < ? + 100'\n      // AUDIT FB1029B F4",
+    "old": "AND dead_at IS NULL) < ?'\n      // AUDIT FB1029e F4",
+    "new": "AND dead_at IS NULL) < ? + 100'\n      // AUDIT FB1029e F4",
     "tests": [
       "test/server/realm1.test.js"
     ],
-    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the bound counts the living, and a birth names its line and person. Re-aimed by content (AUDIT FB1029B)."
+    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the bound counts the living, and a birth names its line and person. Re-aimed by content (AUDIT FB1029e)."
   },
   {
     "name": "REALM1-customs-no-track",

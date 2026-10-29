@@ -106,7 +106,7 @@ export const DECOR_MOD_ROOMS = Object.freeze({
     '56790_24': 237, '56790_25': 602,
   }),
 });
-/** AUDIT FB1029B H1: THE MODELS DAGGERFALL LAYS AS FURNITURE (ObjectType 3) in its own rooms - measured over every
+/** AUDIT FB1029e H1: THE MODELS DAGGERFALL LAYS AS FURNITURE (ObjectType 3) in its own rooms - measured over every
  *  interior of BLOCKS.BSA (test/scenes/builtin_mods_alinor.test.js measures it again). The mods reuse other classic
  *  ids as their rooms' structure and their ships' rigging (a 12.6 m beam, a mast), which are never furniture. */
 export const ROOM_PROP_MODELS = Object.freeze([
@@ -120,11 +120,11 @@ export const ROOM_PROP_MODELS = Object.freeze([
   51122, 51128,
 ]);
 const ROOM_PROPS = new Set(ROOM_PROP_MODELS);
-/** AUDIT FB1029B H1: the mods' room pieces that hold the room up - DET's pillars (its ceilings' timbers and rafters) and
+/** AUDIT FB1029e H1: the mods' room pieces that hold the room up - DET's pillars (its ceilings' timbers and rafters) and
  *  a column's drum - never taken out. */
 export const MOD_ROOM_STRUCTURE = Object.freeze([45081, 45110, 45111, 45112, 45129, 45169]);
 const STRUCTURE = new Set(MOD_ROOM_STRUCTURE);
-/** BUILT-IN-MODS (FIELD BUGS 2026-10-29b, "things that cannot be removed from the house I bought in Alinor"): whether a
+/** BUILT-IN-MODS (FIELD BUGS 2026-10-29e, "things that cannot be removed from the house I bought in Alinor"): whether a
  *  room's model is its furniture - one Daggerfall lays as a prop in its rooms, or a piece the mods stand inside that is
  *  not their structure. The town mods write most of a room's furniture as scenery (ObjectType 0), which BASE-HIDE never
  *  offered (scenes/interiorContext.js). */

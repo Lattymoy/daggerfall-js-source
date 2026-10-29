@@ -1,4 +1,4 @@
-// FAMILY-REMOVE (FIELD BUGS 2026-10-29b, "being able to remove old families"): the Online page offers every line no living
+// FAMILY-REMOVE (FIELD BUGS 2026-10-29e, "being able to remove old families"): the Online page offers every line no living
 // realm character plays, and its Remove asks the realm's own route. Mutants: tools/mutants/family_remove.json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -26,7 +26,7 @@ test('FAMILY-REMOVE the press asks the realm\'s route, and the cap\'s refusal na
   assert.match(src('src/ui/enhanced/enhancedMenu.js'), /const spare = spareFamiliesCard\(\);\n\s*if \(spare\) box\.append\(spare\);/);
 });
 
-test('FAMILY-REMOVE (AUDIT FB1029B F3, F5, T4) the card: the spare lines the device holds, none on a roster the realm did not answer; a line removed leaves the list; a line already gone is said removed', () => {
+test('FAMILY-REMOVE (AUDIT FB1029e F3, F5, T4) the card: the spare lines the device holds, none on a roster the realm did not answer; a line removed leaves the list; a line already gone is said removed', () => {
   const load = (id) => (id === 'fam-c-cccccc' ? null : { id, surname: id.slice(4, 5) });
   const lineIds = ['fam-a-aaaaaa', 'fam-b-bbbbbb', 'fam-c-cccccc'];
   const rows = [{ id: 'r1', lineage: 'fam-b-bbbbbb' }];
@@ -45,7 +45,7 @@ test('FAMILY-REMOVE (AUDIT FB1029B F3, F5, T4) the card: the spare lines the dev
   assert.match(realmRefusalText('lineage-in-use'), /A living character still plays that family\./, 'T11: the refusal\'s own words');
 });
 
-test('FAMILY-REMOVE (AUDIT FB1029B F2) a line the realm removed is refused once, said once, and never sent again this session', async () => {
+test('FAMILY-REMOVE (AUDIT FB1029e F2) a line the realm removed is refused once, said once, and never sent again this session', async () => {
   const mem = new Map();
   const storage = { getItem: (k) => mem.get(k) ?? null, setItem: (k, v) => mem.set(k, String(v)), removeItem: (k) => mem.delete(k) };
   const said = [];

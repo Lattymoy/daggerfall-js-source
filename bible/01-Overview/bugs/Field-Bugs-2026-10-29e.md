@@ -1,7 +1,7 @@
-# FIELD BUGS 2026-10-29b - a boat that spins, a bowl no sibling may set out, families that never free, and Alinor's furniture
+# FIELD BUGS 2026-10-29e - a boat that spins, a bowl no sibling may set out, families that never free, and Alinor's furniture
 
 Four player reports from the bug-reports channel, handed over by the owner as screenshots. Read on main's `5995d0bb9`
-with the freeware's data. The fixes were then read cold and corrected (`../audits/Audit-FB1029B.md`); this record
+with the freeware's data. The fixes were then read cold and corrected (`../audits/Audit-FB1029e.md`); this record
 states them as they stand after it. Every mutant listed is dead but the two marked equivalent.
 
 | | Report | What it was | Done |

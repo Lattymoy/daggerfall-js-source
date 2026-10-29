@@ -1,7 +1,7 @@
-// FAMILY-REMOVE (FIELD BUGS 2026-10-29b, a one-life player: "i have no characters anymore and i still cannot make another
+// FAMILY-REMOVE (FIELD BUGS 2026-10-29e, a one-life player: "i have no characters anymore and i still cannot make another
 // bloodline", then "being able to remove old families"): a line no living character plays is let go, and LINEAGES_MAX has
 // room again - the REAL Worker over the REAL migrations (test/accountDb.mjs). Deleted and fallen characters never freed a
-// line, so forty one-life runs filled the account for good. AUDIT FB1029B F1, F2, F4: never a line whose fall is held for
+// line, so forty one-life runs filled the account for good. AUDIT FB1029e F1, F2, F4: never a line whose fall is held for
 // a Resurrect, never founded again by a copy made from it, and never born into once gone. Mutants:
 // tools/mutants/family_remove.json.
 import { test } from 'node:test';
@@ -69,7 +69,7 @@ test('FAMILY-REMOVE THE BOUND HAS ROOM AGAIN: at LINEAGES_MAX a founding is refu
   assert.deepEqual((await call('/v1/realm/lineage', { id: over, record: record(over) })).body, { ok: true, rev: 1 }, 'room for a new family');
 });
 
-test('FAMILY-REMOVE (AUDIT FB1029B F1) a line whose fall is held for a Resurrect stays - the raise would stand her up on no line; settled, it goes', async () => {
+test('FAMILY-REMOVE (AUDIT FB1029e F1) a line whose fall is held for a Resurrect stays - the raise would stand her up on no line; settled, it goes', async () => {
   const { call, put, lines } = await stand();
   const A = famOf(1);
   await call('/v1/realm/lineage', { id: A, record: record(A) });
@@ -83,7 +83,7 @@ test('FAMILY-REMOVE (AUDIT FB1029B F1) a line whose fall is held for a Resurrect
   assert.deepEqual(await lines(), []);
 });
 
-test('FAMILY-REMOVE (AUDIT FB1029B F2) a copy made from a removed line never founds it again behind the player\'s back; a founding still founds', async () => {
+test('FAMILY-REMOVE (AUDIT FB1029e F2) a copy made from a removed line never founds it again behind the player\'s back; a founding still founds', async () => {
   const { call, lines } = await stand();
   const A = famOf(1);
   await call('/v1/realm/lineage', { id: A, record: record(A) });
@@ -94,7 +94,7 @@ test('FAMILY-REMOVE (AUDIT FB1029B F2) a copy made from a removed line never fou
   assert.deepEqual((await call('/v1/realm/lineage', { id: A, record: record(A, 7) })).body, { ok: true, rev: 7 }, 'a founding, no base');
 });
 
-test('FAMILY-REMOVE (AUDIT FB1029B F4) a line removed between a birth\'s check and its write takes no birth', async () => {
+test('FAMILY-REMOVE (AUDIT FB1029e F4) a line removed between a birth\'s check and its write takes no birth', async () => {
   const S = await standService();
   const g = await S.guest();
   const db = S.env.DB, nowS = 1_800_000_000, A = famOf(1);
@@ -117,7 +117,7 @@ test('FAMILY-REMOVE (AUDIT FB1029B F4) a line removed between a birth\'s check a
   assert.equal(db._raw.prepare('SELECT COUNT(*) AS n FROM realm_characters WHERE player = ?').get(g.id).n, 0, 'no character on a line that is gone');
 });
 
-test('FAMILY-REMOVE (AUDIT FB1029B T11) another account\'s living character of a line of the same id holds nothing of this one\'s', async () => {
+test('FAMILY-REMOVE (AUDIT FB1029e T11) another account\'s living character of a line of the same id holds nothing of this one\'s', async () => {
   const { S, call } = await stand();
   const A = famOf(1);
   await call('/v1/realm/lineage', { id: A, record: record(A) });

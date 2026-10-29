@@ -80,7 +80,7 @@
     "note": "the cap's refusal names no way past it"
   },
   {
-    "name": "AUDIT-FB1029B-F1-hold-unseen",
+    "name": "AUDIT-FB1029e-F1-hold-unseen",
     "file": "server-account/src/legacy.js",
     "old": "lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL))').bind(playerId, id).run();",
     "new": "lineage_id = ?2 AND (dead_at IS NULL))').bind(playerId, id).run();",
@@ -90,7 +90,7 @@
     "note": "a line whose fall is held for a Resurrect removed under it"
   },
   {
-    "name": "AUDIT-FB1029B-F2-refounded",
+    "name": "AUDIT-FB1029e-F2-refounded",
     "file": "server-account/src/legacy.js",
     "old": "  if (!had && base !== null) return { error: 'no-lineage' };",
     "new": "",
@@ -100,7 +100,7 @@
     "note": "a copy made from a removed line founds it again"
   },
   {
-    "name": "AUDIT-FB1029B-F2-not-kept",
+    "name": "AUDIT-FB1029e-F2-not-kept",
     "file": "src/systems/legacy/realmLine.js",
     "old": "'lineage-law', 'no-lineage']);",
     "new": "'lineage-law']);",
@@ -110,7 +110,7 @@
     "note": "a removed line re-sent at every write"
   },
   {
-    "name": "AUDIT-FB1029B-F4-born-on-nothing",
+    "name": "AUDIT-FB1029e-F4-born-on-nothing",
     "file": "server-account/src/realm.js",
     "old": "      + ' AND (? IS NULL OR EXISTS (SELECT 1 FROM lineages WHERE player = ? AND id = ?))',",
     "new": "      + ' AND (? IS NULL OR 1)',",
@@ -120,7 +120,7 @@
     "note": "a birth lands on a line removed since its check"
   },
   {
-    "name": "AUDIT-FB1029B-F5-failed-roster",
+    "name": "AUDIT-FB1029e-F5-failed-roster",
     "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "  const spare = spareFamilies({ rows: realmRows, rowsOk: realmRowsOk,",
     "new": "  const spare = spareFamilies({ rows: realmRows, rowsOk: true,",
@@ -130,7 +130,7 @@
     "note": "a failed roster read lists every line as played by no one"
   },
   {
-    "name": "AUDIT-FB1029B-F3-gone-refused",
+    "name": "AUDIT-FB1029e-F3-gone-refused",
     "file": "src/ui/enhanced/enhancedMenu.js",
     "old": ".then((r) => (r?.error === 'no-lineage' ? { ok: true } : r))",
     "new": "",

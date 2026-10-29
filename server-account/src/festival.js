@@ -79,7 +79,7 @@ const inDays = (/** @type {number} */ nowS) => festivalOpen(nowS * 1000);
 /** AN OFFERING OUTLIVES NO HOME: one whose home its character no longer owns (sold, moved by the arena, its character
  *  deleted - every road a home leaves by) stands nowhere (festivalTown's JOIN), and its cakes go back to its account on
  *  that account's next read of its festival (festivalOf, orphansHome) - never lost, and no road out of a home has to remember it. */
-/** AUDIT FB1029B H5: an offering stands while its account owns its home - a deed's home its buyer's alone, never a hall
+/** AUDIT FB1029e H5: an offering stands while its account owns its home - a deed's home its buyer's alone, never a hall
  *  - as OWNED_HOME asks; read by the buyer alone, an heir taking the home up took the account's bowl down. */
 const STANDS_ON = (/** @type {string} */ o) => `h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ${o}.char_id)`;
 const ORPHAN = `player = ?1 AND NOT EXISTS (SELECT 1 FROM homes h WHERE h.map_id = fest_offerings.map_id
@@ -196,7 +196,7 @@ async function saleAnswer(/** @type {any} */ db, /** @type {string} */ id, /** @
 
 // ═══ THE HEARTH OFFERINGS ════════════════════════════════════════════════════════════════════════════════════════════
 /** A home this account owns, whichever of its characters plays (ACCOUNT-HOMES - a deed's home its deed-holder's alone,
- *  as homes.js heldByAccount), never a guild's hall - the offering's own test. HEARTH-SIBLING (FIELD BUGS 2026-10-29b):
+ *  as homes.js heldByAccount), never a guild's hall - the offering's own test. HEARTH-SIBLING (FIELD BUGS 2026-10-29e):
  *  it asked for the buyer, so a sibling character could not set the account's own bowl out at the account's home. */
 const OWNED_HOME = `EXISTS (SELECT 1 FROM homes h WHERE h.map_id = ?1 AND h.building_key = ?2 AND h.player = ?3 AND h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ?4))`;
 /** The home's buyer: an offering is stored under it, so festivalTown's and ORPHAN's JOINs still find its home. */
@@ -245,7 +245,7 @@ export async function setOffering(ctx, player, body, env) {
   const home = await db.prepare(`SELECT ${OWNED_HOME} AS own, ${KEEPER} AS keeper`).bind(mapId, buildingKey, player.id, character).first();
   if (!home?.own) return { error: 'home' };
   const old = await db.prepare('SELECT player, char_id FROM fest_offerings WHERE map_id = ?1 AND building_key = ?2').bind(mapId, buildingKey).first();
-  if (old && old.player === player.id) return { error: 'set' };   // AUDIT FB1029B H5: the account's own stands there, whoever set it
+  if (old && old.player === player.id) return { error: 'set' };   // AUDIT FB1029e H5: the account's own stands there, whoever set it
   // EVERY STATEMENT ASKS THE SAME THING - this character owns the home and its account holds a bowl - of the rows as
   // they stand in this transaction: the old owner's bowl is credited from its own row (taken in or come home since, it
   // credits nothing), then gone; then one bowl spent where no offering stands, and the offering laid where it was
@@ -279,7 +279,7 @@ export async function fillOffering(ctx, player, body, env) {
   if (!inDays(nowS)) return { error: 'closed' };
   if (!homeOk(body) || !charOk(body)) return { error: 'home' };
   const { mapId, buildingKey, character } = body;
-  // AUDIT FB1029B H4: filled only at a home the set-out could stand at - a deed's home its holder's alone
+  // AUDIT FB1029e H4: filled only at a home the set-out could stand at - a deed's home its holder's alone
   if (!(await db.prepare(`SELECT ${OWNED_HOME} AS own`).bind(mapId, buildingKey, player.id, character).first())?.own) return { error: 'home' };
   const row = await db.prepare('SELECT o.stock, p.fest_cakes FROM fest_offerings o JOIN players p ON p.id = o.player WHERE o.map_id = ?1 AND o.building_key = ?2 AND o.player = ?3')
     .bind(mapId, buildingKey, player.id).first();

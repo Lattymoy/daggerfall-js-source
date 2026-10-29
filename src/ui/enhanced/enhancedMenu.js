@@ -562,7 +562,7 @@ export function takePickedLegacyBirth() { const b = _pickedLegacyBirth; _pickedL
 /** REALM P1.3: the realm's characters as the service listed them this visit (null: not asked yet), its bound, what the
  *  last act said (a refusal, customs' report, a copy's word) and whether an act is running. Per VISIT, as the cloud's. */
 let realmRows = null;
-let realmRowsOk = false;   // AUDIT FB1029B F5: the roster as the realm answered it - a failed read lists no one, and plays no line
+let realmRowsOk = false;   // AUDIT FB1029e F5: the roster as the realm answered it - a failed read lists no one, and plays no line
 let realmAsked = false;
 let realmMax = 0;
 let realmWords = [];
@@ -1486,7 +1486,7 @@ function waitingHouseCards() {
     return card;
   });
 }
-/** FAMILY-REMOVE (FIELD BUGS 2026-10-29b, a one-life player: "being able to remove old families"): the account's lines
+/** FAMILY-REMOVE (FIELD BUGS 2026-10-29e, a one-life player: "being able to remove old families"): the account's lines
  *  no living character plays, each with its Remove. Deleted and fallen characters never freed a line, so a player with
  *  none left could found no other (LINEAGES_MAX). A waiting Succession is such a line too: removed, it is not carried on. */
 let familiesShown = false;
@@ -1506,7 +1506,7 @@ function spareFamiliesCard() {
       onClick: () => ask(t('menu.realm.removeFamilyAsk', 'Remove the {name} family?', { name }),
         t('menu.realm.removeFamilyBody', 'Its line ends online and frees room for a new family. Its fallen stay fallen, and no heir of it can carry it on. Your characters are not changed.'),
         t('menu.realm.removeFamilyYes', 'Remove'),
-        // AUDIT FB1029B F3: a line the realm no longer holds (removed from another device, a lost answer) is gone - said so
+        // AUDIT FB1029e F3: a line the realm no longer holds (removed from another device, a lost answer) is gone - said so
         () => realmAct(() => realmLineageRemove(realmIoNow(), family.id).then((r) => (r?.error === 'no-lineage' ? { ok: true } : r)), () => {
           realmLineIds = withoutLine(realmLineIds, family.id);
           return [t('menu.realm.familyRemoved', 'The {name} family is removed.', { name })];

@@ -359,7 +359,7 @@ export function mintDecorId(rand = Math.random) {
  *  back at the next load. */
 export const DECOR_BASE_KEY_RE = /^(?:m(?:0|[1-9]\d{0,3}):(?:0|[1-9]\d{0,5})|f(?:0|[1-9]\d{0,3}):(?:0|[1-9]\d{0,4})\.(?:0|[1-9]\d{0,2}))$/;
 /** How many built-in pieces one room may keep taken out - more than any home lays (127 at most, measured with the town
- *  mods' furniture built in; AUDIT FB1029B H3: a Detailed Ships cabin lays up to 456, and keeps this many out), and a
+ *  mods' furniture built in; AUDIT FB1029e H3: a Detailed Ships cabin lays up to 456, and keeps this many out), and a
  *  whole list at its widest (eighteen bytes a name) still one write under the service's 4 KiB body (service.js
  *  MAX_BODY_BYTES). */
 export const DECOR_HIDDEN_CAP = 200;

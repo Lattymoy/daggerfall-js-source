@@ -1,4 +1,4 @@
-// BUILT-IN-MODS and BED-TURN (FIELD BUGS 2026-10-29b, a house bought in Alinor: "Beds backwards, and the rest just can't
+// BUILT-IN-MODS and BED-TURN (FIELD BUGS 2026-10-29e, a house bought in Alinor: "Beds backwards, and the rest just can't
 // be removed or modified in any way"). Alinor's houses are classic house blocks, most of them Beautiful Cities' rebuilds,
 // and the town mods write most of a room's furniture as scenery (ObjectType 0) - BASE-HIDE offered a prop (3) alone. Their
 // coloured beds are drawn on Daggerfall's bed mesh, which faces half a turn from the mods' own. The same blocks stand in
@@ -51,12 +51,12 @@ test('BUILT-IN-MODS a town mod\'s furniture written as scenery is a built-in pie
   plain.destroy();
 });
 
-test('BUILT-IN-MODS the furnishings: a model Daggerfall lays as a prop in its rooms, or a mods\' room piece - never their structure, a ship\'s rigging or a beam (AUDIT FB1029B H1)', () => {
+test('BUILT-IN-MODS the furnishings: a model Daggerfall lays as a prop in its rooms, or a mods\' room piece - never their structure, a ship\'s rigging or a beam (AUDIT FB1029e H1)', () => {
   for (const id of [41000, 41101, 41128, 51115, TOWN_BED_FIRST, 45190, 69420]) assert.equal(isRoomFurnishing(id), true, String(id));
   for (const id of [...MOD_ROOM_STRUCTURE, 41400, 41404, 41501, 41242, 43999, 40999, 62319, 1000, 45076, NaN]) assert.equal(isRoomFurnishing(id), false, String(id));
 });
 
-test('BUILT-IN-MODS (AUDIT FB1029B T2) a chest and a shelf written as scenery are built-in pieces and never containers in an owned house; the mill\'s machinery and a type-4 piece never pieces', async () => {
+test('BUILT-IN-MODS (AUDIT FB1029e T2) a chest and a shelf written as scenery are built-in pieces and never containers in an owned house; the mill\'s machinery and a type-4 piece never pieces', async () => {
   const cpuModels = new Map();
   const deps = { renderer: { createBillboardBatch: () => ({}), destroyBatch: () => {}, destroyMesh: () => {}, createMesh: () => ({}) },
     getGpuMesh: async (id) => { cpuModels.set(id, id === FLOOR ? floor : model); return { gpu: id }; }, cpuModels,
@@ -68,7 +68,7 @@ test('BUILT-IN-MODS (AUDIT FB1029B T2) a chest and a shelf written as scenery ar
   ctx.destroy();
 });
 
-test('BUILT-IN-MODS (AUDIT FB1029B H2) a piece with no floor under it is the room\'s - taking it out would open a way into the void', async () => {
+test('BUILT-IN-MODS (AUDIT FB1029e H2) a piece with no floor under it is the room\'s - taking it out would open a way into the void', async () => {
   const ctx = await build([at(FLOOR, 13, 0), at(41101, 0, 0), at(41100, 3, 40000)]);   // a piece on the floor; one 1 km off it
   assert.deepEqual(ctx.base.list().map((p) => p.key), ['m1:41101'], 'the piece over the void stays the room\'s');
   ctx.destroy();

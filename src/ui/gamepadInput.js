@@ -278,7 +278,7 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
   const releaseAll = (keep = null) => {
     for (const code of [...held]) if (!keep?.has(code)) { held.delete(code); dispatch('keyup', code); }
   };
-  // AUDIT FB1029B S4: the page let go of every key on blur (ui/input.js letGoOnBlur) - the pad lets go of its own too, so
+  // AUDIT FB1029e S4: the page let go of every key on blur (ui/input.js letGoOnBlur) - the pad lets go of its own too, so
   // the next tick presses again whatever is still down, never a held set the host no longer holds
   const onFocusLost = () => { if (globalThis.document?.visibilityState !== 'visible' || !globalThis.document?.hasFocus?.()) releaseAll(); };
   globalThis.window?.addEventListener?.('blur', onFocusLost);

@@ -109,7 +109,7 @@ export async function putLineage({ db, nowS }, playerId, { id, record: sent, bas
   if (!recordShapeOf(sent, id)) return { error: 'body' };
   if (base !== null && !(Number.isSafeInteger(base) && /** @type {number} */ (base) >= 0)) return { error: 'body' };
   const had = await db.prepare('SELECT rev, model, record FROM lineages WHERE player = ? AND id = ?').bind(playerId, id).first();
-  // AUDIT FB1029B F2: a copy made from a stored line (`base`) whose line is gone was removed (removeLineage) - never
+  // AUDIT FB1029e F2: a copy made from a stored line (`base`) whose line is gone was removed (removeLineage) - never
   // founded again unasked, a slot taken behind the player's back; only a founding (no base) founds
   if (!had && base !== null) return { error: 'no-lineage' };
   const record = had ? withoutRevived(sent, had.record) : sent;   // REVIVE: a death the stored copy says was taken back
@@ -149,9 +149,9 @@ export async function putLineage({ db, nowS }, playerId, { id, record: sent, bas
 }
 
 /**
- * FAMILY-REMOVE (FIELD BUGS 2026-10-29b, "being able to remove old families"): a line the account no longer plays let go,
+ * FAMILY-REMOVE (FIELD BUGS 2026-10-29e, "being able to remove old families"): a line the account no longer plays let go,
  * so LINEAGES_MAX has room again - deleted and fallen characters never freed one. Only a line no living realm character
- * plays, and none whose fall is held for a Resurrect (AUDIT FB1029B F1: the raise would stand her up on no line): its
+ * plays, and none whose fall is held for a Resurrect (AUDIT FB1029e F1: the raise would stand her up on no line): its
  * tombstones stay, so its fallen stay claimed (realm_characters_person) if the line is ever founded again.
  * `{ ok }`, or `lineage-in-use`, `no-lineage`, `body`.
  * @param {any} ctx @param {string} playerId @param {{ id: unknown }} at

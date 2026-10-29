@@ -242,7 +242,7 @@ export async function createRealm({ db, rand, nowS }, playerId, { name, summary 
     wrote = await db.prepare(
       'INSERT INTO realm_characters (id, player, name, summary, seq, bytes, lease, lease_at, origin_id, created_at, updated_at, lineage_id, person_id)'
       + ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, NULL, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?'
-      // AUDIT FB1029B F4: a birth lands only on a line that still stands - one removed since its check is no line
+      // AUDIT FB1029e F4: a birth lands only on a line that still stands - one removed since its check is no line
       + ' AND (? IS NULL OR EXISTS (SELECT 1 FROM lineages WHERE player = ? AND id = ?))',
     ).bind(id, playerId, n, realmSummaryOf(summary), lease, nowS, nowS, nowS, born ? lineage : null, born ? person : null, playerId, REALM_CHARACTERS_MAX,
       born ? lineage : null, playerId, born ? lineage : null).run();
