@@ -64,6 +64,11 @@
   "tr": "70687ae7a85b",
   "by": "claude-in-session"
  },
+ "account.refusal.lineageInUse": {
+  "en": "b210f6197958",
+  "tr": "a7e72757b5bc",
+  "by": "claude-in-session"
+ },
  "account.refusal.marketSellerFrozen": {
   "en": "e83eacbb66fb",
   "tr": "9a2be9e2ba88",
@@ -92,6 +97,11 @@
  "account.refusal.repairNotSet": {
   "en": "6ee1527e65ec",
   "tr": "5f73ca7a03d8",
+  "by": "claude-in-session"
+ },
+ "account.refusal.tooManyLineages": {
+  "en": "5f69291d1652",
+  "tr": "375dc6e596e3",
   "by": "claude-in-session"
  },
  "account.refusal.townUnwalked": {
@@ -924,6 +934,11 @@
   "tr": "4bf3a34a343c",
   "by": "claude-in-session"
  },
+ "decor.yard.behind": {
+  "en": "e66a9854186d",
+  "tr": "dabac49dbb8d",
+  "by": "claude-in-session"
+ },
  "dex.enemy.archerRider": {
   "en": "684bf52c59e7",
   "tr": "6b244f7f0578",
@@ -1702,6 +1717,11 @@
  "growth.spec.why.chosenMentor": {
   "en": "54129619c117",
   "tr": "f6549b7f0639",
+  "by": "claude-in-session"
+ },
+ "helm.heavy": {
+  "en": "1909b8911a74",
+  "tr": "a1ccf80edea8",
   "by": "claude-in-session"
  },
  "holdings.horse.boons.hungry": {
@@ -3142,6 +3162,56 @@
  "menu.rail.test": {
   "en": "4fd8df831597",
   "tr": "1c780f1daf39",
+  "by": "claude-in-session"
+ },
+ "menu.realm.families": {
+  "en": "862a863ff592",
+  "tr": "b16183f2ab5d",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familiesHide": {
+  "en": "34d8b60fe253",
+  "tr": "4f00f71b59b5",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familiesShow": {
+  "en": "d97d1ee339e4",
+  "tr": "31e3c3d5ef54",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyRemoved": {
+  "en": "2cbcaf937fc9",
+  "tr": "47b1a9560757",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyRow": {
+  "en": "5e293ce32dbd",
+  "tr": "e862183823a2",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyUnnamed": {
+  "en": "9b115c99b1da",
+  "tr": "07ba7620ab53",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamily": {
+  "en": "a53c064ca700",
+  "tr": "4d5dc21bc908",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyAsk": {
+  "en": "5694f452ab8b",
+  "tr": "9518d37b3e77",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyBody": {
+  "en": "c055ce52aa9e",
+  "tr": "6e9458a6b4d2",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyYes": {
+  "en": "e963907dac5c",
+  "tr": "a76047c49b01",
   "by": "claude-in-session"
  },
  "menu.realm.strandedAsk": {

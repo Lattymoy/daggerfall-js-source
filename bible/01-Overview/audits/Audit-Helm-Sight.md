@@ -95,7 +95,8 @@ FIELD-CSA1's row in `Port-Ledger.md` lists HELM-SIGHT's pins.
 
 ## The drive
 
-`tools/sailDrive.mjs` sails every state with her sails set, a wind and the player outdoors for 12 seconds and asks
+`tools/sailDrive.mjs` sails every state with her sails set and the player outdoors for 12 seconds (a wind of nought
+judged too since FIELD BUGS 2026-10-29d, which found the door's none so) and asks
 whether her sails still drive her (the way she is driven to, not the way she carries). Committing it found three faults
 of the scratch probe: it took the helm of a boat hidden thirty pixels off, which no ray can reach; it moved the player's
 pixel after the re-anchor, where `state.init` moves it first; and it asked the way she carried, which a ship's coast

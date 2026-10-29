@@ -30,8 +30,8 @@
   {
     "name": "AUDIT-WATER-NEXT-P1-kernel-no-bed",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: bed ? tilemapBytes : null });",
-    "new": "const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: null });",
+    "old": "const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: bed ? tilemapBytes : null, meets: meetsOf(meets, landforms) });",
+    "new": "const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: null, meets: meetsOf(meets, landforms) });",
     "tests": ["test/world/terrain/audit_waternext.test.js"]
   },
   {

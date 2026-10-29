@@ -213,7 +213,10 @@ const GOLDEN = Object.freeze({
   // before the realm opens, so the seeded die stands elsewhere when the fight begins (b0019f8f..., 140 frames before). The
   // Remnant's frames are the same: with the die seeded afresh at the fight's first hello the realm says 148 frames hashed
   // 36cc80c3ccedd3eeef2d26a35633c6778389cbb984c13413f2d1ae383613befa on the tree before WW5 and after it alike
-  sd: Object.freeze({ n: 146, h: '1e8fe66973b532178b65903095c99018a4532b20a13535c410c760f0eaa30daf' }),
+  // PIN MOVED (FRONTS, bible/03-World/World-Wide.md FRONTS): a province's Hollow rises on its turn alone, so fewer rise
+  // before the realm opens and the die stands elsewhere (1e8fe669..., 146 frames before). Seeded afresh at the fight's
+  // first hello, main and this tree say the same 142 frames, 4b91dce2...
+  sd: Object.freeze({ n: 144, h: '1932fd709a622edc5f778504dd6cbe19cdbd965fbd8170608eab87cf28b1da1c' }),
   serpent: Object.freeze({ n: 232, h: '8569aebc4ba221743d3191c8d952bcca99e72e164b032cfd37f00eb613ce3ded' }),
   // PIN MOVED (RPT1026-EVENTS ORRERY-HANDS, net/superDungeon/sdBrain.js orreryRightsSnapped): a hand's lengthening is counted for
   // the Hollow, so past the snap Ann - ten long turns behind her - waits while Bo and the keepers turn (`w`, to her alone),

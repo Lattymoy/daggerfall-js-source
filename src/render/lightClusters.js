@@ -55,6 +55,9 @@ export const CLUSTER_LIST_CAP = CLUSTER_LIST_W * CLUSTER_LIST_ROWS;
 /** The grid texture: one texel per cell, laid out (x + y * CLUSTER_X, z) - CLUSTER_X * CLUSTER_Y wide, CLUSTER_Z tall. */
 export const CLUSTER_GRID_W = CLUSTER_X * CLUSTER_Y;
 export const CLUSTER_GRID_H = CLUSTER_Z;
+/** WL1: THE TEXTURES CARRY TWO BANDS - the lanterns' (rows 0 to CLUSTER_GRID_H - 1 of the grid, the list's first
+ *  CLUSTER_LIST_ROWS rows) and the window lights' (render/windowLight.js) past them, one sampler each for both. */
+export const CLUSTER_BANDS = 2;
 /** The two texture units the world shaders read the grid and the list on - below the air's (11, 12), the shadow
  *  maps' (13, 14) and the cloud shadow's (15), above the material units. */
 // AUDIT LC1: units 9 and 10 are the grid's and the list's ALONE - both are bound as TEXTURE_2D, and a 2D array
@@ -85,7 +88,7 @@ export const clusterCellOf = (x, y, z) => x + y * CLUSTER_X + z * CLUSTER_X * CL
 
 /** The workspace a renderer keeps and the builder fills: the per-cell counts, the grid texels (offset, count as
  *  uint16 pairs), the list, and what the last build found. */
-export function createClusterSpace() {
+export function createClusterSpace(maxLights = 64) {
   return {
     counts: new Uint16Array(CLUSTER_CELLS),
     grid: new Uint16Array(CLUSTER_CELLS * 2),
@@ -93,9 +96,10 @@ export function createClusterSpace() {
     total: 0,        // list entries written
     lights: 0,       // lights that touched the grid at all
     rows: 0,         // list rows to upload
+    need: 0,         // the list entries the last build's lights asked for (over CLUSTER_LIST_CAP: it failed)
     built: false,    // the last build's answer
     _tiles: new Int16Array(4),   // AUDIT LC1: a slice's tile range, scratch
-    _box: new Int16Array(7 * 64),   // per light: x0 x1 y0 y1 z0 z1 nearFull (up to 64 lights; the lane's cap is 48)
+    _box: new Int16Array(7 * maxLights),   // per light: x0 x1 y0 y1 z0 z1 nearFull (64 by default - the lane's cap is 48; WL1 asks for its own)
   };
 }
 
@@ -189,6 +193,7 @@ export function buildLightClusters(lights, count, view, proj, space) {
     }
   }
   space.lights = touched;
+  space.need = total;   // WL1: what the lights asked for - a builder that may leave some out sizes its next try by it
   if (total > CLUSTER_LIST_CAP) return false;
   // the offsets: a prefix sum over the cells; the grid texel is (offset, count) and the count is reset to
   // serve as the write cursor

@@ -851,6 +851,15 @@ every speed and acceleration. It is weighed at the helm and every magic
 round while sailing (the world host's ticker - a round indoors is the
 mode's own clock and does not weigh it, DECLARED below).
 
+CARGO-ASHORE (FIELD BUGS 2026-10-29d, a departure): the cart's load
+counts only while the wagon is in its owner's keeping (Horse Cart and
+Cargo's WithPlayer, not stabled, its park not due) - a wagon parked,
+stabled or following on foot stays ashore, and so do the opt-in horse
+and cart items whose pair stands there (AUDIT FB1029d B6). While the
+load holds her under half her way, the helm panel's line says so
+(HEAVY-HINT), a passenger's card too. The Classic helm's Carrack, dead
+by her missing hold, is not told to lighten.
+
 ### The riders
 
 FixedUpdate casts down each live enemy's own height from its centre; a
@@ -1023,6 +1032,16 @@ end by a tenth of a radian a second (Vector3.RotateTowards, its length
 by up to one a step), until the two are equal, and then raises
 OnUpdateWind. The rain's and the snow's forces it sets on each step are
 the particles' (CSA-F).
+
+WIND-FIRST (FIELD BUGS 2026-10-29d, a departure): a door lays its wind
+before it shows its boats, and a load checks for the indoors' none
+before them too - the C# laid it after, and a boat whose visibility
+threw left that none on the open sea. NO-PIXEL: a boat with no map pixel
+takes the one she stands on, read off the player's terrain, where the C#
+threw (`csaPixel.js`); indoors or with no terrain the player's answers
+that read and is never kept on her (AUDIT FB1029d A1). WIND-HELD: a wind
+of nought the frame finds outdoors is the door's wind laid
+(`01-Overview/bugs/Field-Bugs-2026-10-29d.md`).
 
 ### The sails
 
@@ -2349,7 +2368,8 @@ on the mod's own states (`bible/10-UI/Controls.md` HELM-KEYS has the keys):
   lasts (`ui/enhanced/enhancedHelm.js helmHint`). The Classic helm's alone: under the
   Responsive one (SAIL-FREE, below) her canvas draws in the wind's eye and drives her
   up into it, so she is never in irons.
-- **The panel teaches the arrows**: its line is the helm's hand at a glance.
+- **The panel teaches the arrows**: its line is the helm's hand at a glance,
+  save while a load holds her under half her way: then it says the load (HEAVY-HINT).
   HELM-LADDER (below) moved its sails' button to the mod's own toggle.
 
 ## One ladder for W, S and the arrows (HELM-LADDER, 2026-10-04 - DECLARED)

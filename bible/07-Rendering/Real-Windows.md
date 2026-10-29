@@ -205,3 +205,89 @@ The pipeline's arm now asks it of a pack's picture of a window wall too (it was 
 the exterior arm cuts a pack's window - a repaint keeps the window where it stood. Pins: `test/render/windows1_view.test.js`
 V8 (a synthetic window wall - its panes, its lead, its frame, the wall's speckle, a half-repainted wall and a stray blob)
 and the gated corpus test; mutants `tools/mutants/windows1.json` GLASS-ALL-* (13, all dead).
+
+## WL1 (2026-10-29): the windows' light
+
+The owner: "So all windows on the outside/inside should be see through. The outside should show a mock inside. Windows
+should have shadowed lightening that shows on the ground at night and also light on the inside should show on the
+ground, all depending on time of day. Performance needs to not take a hit". Not a DFU member: DFU's windows light
+nothing. The law is `src/render/windowLight.js`; a mesh's glass, tile by tile, is `src/render/windowApertures.js`.
+
+**The light.** Each tile of window texture that holds glass is a light shaped by that glass. A fragment follows its
+ray back to the window's plane and reads the glass's mask there, so the lead and the frame fall as shadow. The edge
+softens by the source's own footprint on the glass (twice the lamp's 0.1 m radius, or the sun's 0.0093 rad, times the
+way to the glass), and the aperture test widens by the same, so a pool's outline is as soft as its lead.
+
+**Two sources.** By night on the street a lit mock room's lamp shines out: over the glass by half its height and
+0.45 m, 1.8 m behind it, 8 m of reach. In a building the outside's sun or moon shines in through the glass that faces
+it, read through the sun map where the lane draws one. Every pane glows as a small area light out to 6 m
+(`WL_SPILL_REACH`). The rooms are the mock rooms' own seed, in whole numbers on both sides (`world/windowRoomArt.js`
+roomSeedBits, realWindows.js rwSeedBits its twin): a dark room throws nothing, a curtain narrows the shape and passes
+0.3 of the glow it covers.
+
+**The block and the masks.** The lights ride one uniform block (128 lights of 7 vec4s, 14 KB, binding 3), bound from
+the renderer's first frame, and LC1's grid, in a second band of its two textures (grid rows 24 to 47, lists past
+65536). The masks are an R8 array of 64 layers of 128 x 128 on unit 24, which no other pass binds (the snow's
+pictures stand on 16 to 20 in the snow terrain program, which holds the block too); it is the one sampler added, and
+the lane's terrain and snow programs reach 15 of 16. A mask is kept with its bytes and goes up onto a layer when a
+light first reads it; with every layer taken, the one read least lately and not this frame gives way, and comes back
+when read again. An evicted picture frees its layer.
+
+**The gather.** A mesh's glass is filed in 24 m cells (`windowApertures.js` APERTURE_CELL), so a frame walks only the
+cells near the eye: a city pixel of 52,000 window tiles costs 0.6-0.8 ms a night frame with the eye in it (node, warm),
+and a placement past the 72 m reach one check. A cell's world data is built when first walked, the nearest first and at
+most 384 tiles a frame (`WL_BUILD_TILES`), and lit that frame. A frame keeps the windows drawn in the last 20 s,
+the nearest 128 of them, and fades the farthest at a cut that eases, each kind its own. A mesh drawn within 2 m of a
+placement not yet drawn that frame has moved there, so a ship's windows go with her.
+
+**The work.** A street by day has no lamp: nothing is built and `uWinOn` skips the walk. A sun beam's ball runs half
+its 24 m into the room from the glass; a pane the sun does not face is only its glow's 6 m ball. When the cells still
+ask more than the band's list holds, the nearest lights that fit stand and the cut comes in to the first left out -
+never none. Indoors the sun map is drawn only while glass the frame could light faces the sun or the moon, the panes
+cut out of it (shadowPass.js `DEPTH_GLASS_FS`, warmed with the other depth programs). A static batch measures its
+glass in its sliced merge (PERF-EXT23), a tile's two triangles mapped a millimetre apart merged into one window.
+
+**The frame's kind** (`renderer._wlKindOf`). A world frame whose host said the Real windows row (setWindowRooms, or
+captureOutsideLight) is 'street' when the window style glows and 'inside' when DFU disables it, as it does indoors; the
+view out's street is 'street'. A building's frame reads the outside through the view out's step (realWindows.js
+viewOutFrame asks `renderer.captureOutsideLight` - the exterior host's own `setup` in a bracket, every 250 ms). The view
+out's street takes the hour's moon (enhancedSky.js lightStreetAt). The mock rooms take the sun as well: followed back
+from the face a ray meets to the glass, the pane's mask lights a patch on the room's floor and walls (`ROOM_SUN_SHARE`
+0.85), none behind a curtain. `?windowlight=off` is the kill door - nothing read, measured or kept; the row Off lights
+none.
+
+**The glass DFU's rule misses.** Twelve exterior window records hold glass that is not the palette's 0xff, so they
+showed no room, no street and no glow. `tools/exteriorGlassScan.mjs`, run on a real ARENA2, finds glass in 103 of the
+104 window records DFU's table names in a building's climate; 036 #3 is a wall. `world/exteriorGlass.js` names the
+twelve's glass colours and keeps their panes (a speck inside a pane filled, a diagonal lead kept) - a DEPARTURE from
+GetWindowColors32.
+
+**THE FOUR HOSTS.** `src/scenes/exterior.js` and `src/scenes/world.js` - WIRED through the renderer (their frames, and
+their view out's street lit by lightStreetAt). `src/scenes/worldModes.js` - WIRED: the interior arm reads the outside
+through viewOutFrame; its dungeon arm FLAGGED: none. `src/scenes/dungeonContext.js` - FLAGGED: none - no window to the
+street.
+
+**Known limits.** The classic set has no sun map: the sun through glass stops a storey down (2.5 m under the glass's
+bottom, `WL_STOREY`), but passes an inner wall on its own floor, and a clerestory's patch more than a storey down is
+lost. A pane's glow is never shadowed, on either set. A lit tile is one lamp; the mock room's hearth lights nothing
+outside. A placement drawn within 2 m of one culled that frame takes its record. The gains were tuned on SwiftShader's
+synthetic street (`tools/windowLightProbe.mjs`, both sets), not on a player's machine.
+
+**AUDIT (WL1, 2026-10-29).** Three independent reads, then fixes. Found and fixed: the masks' unit was the snow's 16
+(every snow draw would have failed); the 64 mask layers lost a picture for good; the band's list overflowed in a big
+hall and every window light went out; a city pixel's 55,000 tiles cost about 6 ms a night frame; the lamp's penumbra
+was taken on the receiver (pools two mip levels too soft) and the outline was a hard step; a quad's two triangles
+counted one window twice; slivers took light slots; a mover left its light behind; the outside was read twice a frame
+while the view out drew; the off door still measured glass; a panel dropped the frame's window light.
+
+**WL1 on main (2026-10-29).** WL1 merged while its suite still ran, and 14 tests failed on main, so nothing deployed.
+One was a real cost: a flat read the sun map in its fragment shader for the sun through glass, where TREES1 and
+LA-COST3 hold that read to once a quad. The flat's vertex stage now reads it when `uWinOn` is 2 (a window's sun stands
+in the map, indoors, where the flat's own sun is none), and the billboard program's block (`windowLightGlsl`, `shadow:
+'flat'`) takes that word and reads no map. WL1's renderer fields are optional on the methods a harness drives without
+the constructor, as their neighbours' are. `exteriorGlass.js` names its speck fill `fillPaneSpecks` (audit24: one name,
+one meaning). The rest were pins whose quoted text WL1 moved, re-aimed as PIN MOVED.
+
+**Pins.** `test/render/wl1_windowlight.test.js` (W1-W22; the corpus test gated on ARENA2_PATH); LA-COST3's window sun
+(`test/render/la_cost.test.js`); mutants `tools/mutants/wl1.json` (87: 86 dead, one equivalent as recorded); PROBE
+`tools/windowLightProbe.mjs`.

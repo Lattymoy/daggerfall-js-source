@@ -238,7 +238,7 @@ test('LA-COST1: THE SECOND CALL IN A FRAME SENDS ONLY ITS OWN - a billboard call
   // must not ride onto the next frame's flats)
   // LPT1 (bible/07-Rendering/Low-Poly-Trees.md): and the low-poly trees' mesh mode and handover, set off (two more - a
   // call the trees drew in leaves the handover on for the flats after it)
-  assert.deepEqual(counts, ['billboards 111 -> 30', 'decals 86 -> 12', 'a character 87 -> 13']);   // PIN MOVED (OW-HORIZON, 2026-10-20): +1 each program's first call - the cloud deck's far law (uCloudShadowFar), sent with the map when the deck moves   // PIN MOVED (AUDIT BANTHA1 TREE-2, 2026-10-18): +1 a billboard call's first - the lane's uSunLift reset, every flat's sun at its root until a jungle batch says otherwise; BANTHA1 (2026-10-18): the jungle's haze (uJungleHaze) rides the fog's upload only while it is on, or once as it goes off - a frame outside the jungle pays no call   // PIN MOVED (VEIN-CRACKS, GATHER-FEEL II, 2026-10-13): +1 a billboard call's first - the frame block's uCrack, every flat whole until a worked vein's batch says otherwise   // PIN MOVED (VEIN-HUE, FIELD BUGS 2026-10-12b): +1 a billboard call's first - the frame block's uBatchDye, reset with the wash   // PIN MOVED (PERF-ARENA, 2026-10-10): -1 a billboard call - its two still flats share their arena's VAO, one bind where there were two   // PIN MOVED (WINDFALL1, 2026-10-08): +2 a billboard call - Windfall's two vec4s, the call's own as the wind is
+  assert.deepEqual(counts, ['billboards 112 -> 30', 'decals 87 -> 12', 'a character 88 -> 13']);   // PIN MOVED (WL1, 2026-10-29): +1 each program's first call - the window lights' switch (uWinOn), sent with the frame's block   // PIN MOVED (OW-HORIZON, 2026-10-20): +1 each program's first call - the cloud deck's far law (uCloudShadowFar), sent with the map when the deck moves   // PIN MOVED (AUDIT BANTHA1 TREE-2, 2026-10-18): +1 a billboard call's first - the lane's uSunLift reset, every flat's sun at its root until a jungle batch says otherwise; BANTHA1 (2026-10-18): the jungle's haze (uJungleHaze) rides the fog's upload only while it is on, or once as it goes off - a frame outside the jungle pays no call   // PIN MOVED (VEIN-CRACKS, GATHER-FEEL II, 2026-10-13): +1 a billboard call's first - the frame block's uCrack, every flat whole until a worked vein's batch says otherwise   // PIN MOVED (VEIN-HUE, FIELD BUGS 2026-10-12b): +1 a billboard call's first - the frame block's uBatchDye, reset with the wash   // PIN MOVED (PERF-ARENA, 2026-10-10): -1 a billboard call - its two still flats share their arena's VAO, one bind where there were two   // PIN MOVED (WINDFALL1, 2026-10-08): +2 a billboard call - Windfall's two vec4s, the call's own as the wind is
   // ...and the next frame sends them all again
   r.beginFrame(PROJ, VIEW, new Float32Array([0.3, 0.8, 0.2]), WORLD_FRAME);
   calls.length = 0; r.drawBillboards(bbs, R, UP);
@@ -514,7 +514,7 @@ test('LA-COST3: THE FLAT\'S SUN IS READ ONCE A QUAD - the lane\'s billboard vert
   const ortho = (s) => [1 / s, 0, 0, 0, 0, 0, 1 / s, 0, 0, 1 / s, 0, 0, 0, 0, 0.5, 1];
   const U = {
     uProj: Array.from(PROJ), uView: Array.from(VIEW), uRight: [1, 0, 0], uUp: [0, 1, 0], uSize: [1.25, 2.5], uFlatWind: [1.5, -0.5, 7, 0.8],
-    uCamPos: [0, 1.7, 9], uBBSun: [0.4, 0.38, 0.3], uSunShadowParams: [12, 48, 240, 1], uSunTexel: [0.0117, 0.0469, 0.2344, 0],
+    uCamPos: [0, 1.7, 9], uBBSun: [0.4, 0.38, 0.3], uWinOn: 0, uSunShadowParams: [12, 48, 240, 1], uSunTexel: [0.0117, 0.0469, 0.2344, 0],
     uSunVP: [ortho(12), ortho(48), ortho(240)], gl_Position: [0, 0, 0, 0], texture,
   };
   const corners = [[-0.5, -0.5], [-0.5, 0.5], [0.5, 0.5], [0.5, -0.5]];
@@ -542,6 +542,17 @@ test('LA-COST3: THE FLAT\'S SUN IS READ ONCE A QUAD - the lane\'s billboard vert
   const night = glslFunctions(lane, { ...U, uBBSun: [0, 0, 0], aCenter: [1, 0, -3], aCorner: [0.5, 0.5], uOrigin: [0, 0, 0], uSway: 0 }, { fp32: true });
   night.main();
   assert.equal(night.globals.vBBSunVis, 1); assert.equal(taps, 0, 'at night no map is read, at a corner or a fragment');
+  // WL1: indoors the flat's own sun is none, but a window's sun stands in the map (uWinOn 2) - the flat's window light
+  // takes the quad's one read, at the same point; a street's window lamps (1) read nothing
+  const indoors = (on) => glslFunctions(lane, { ...U, uBBSun: [0, 0, 0], uWinOn: on, aCenter: [1, 0, -3], aCorner: [0.5, 0.5], uOrigin: [0, 0, 0], uSway: 0 }, { fp32: true });
+  const lamps = indoors(1);
+  lamps.main();
+  assert.equal(lamps.globals.vBBSunVis, 1); assert.equal(taps, 0, 'a street\'s window lamps read no map');
+  const sunIn = indoors(2);
+  sunIn.main();
+  assert.ok(taps > 0, 'a window\'s sun is read at the vertex');
+  const inBase = sunIn.globals.vBBBase.map((x, i) => Math.fround(x + [0, 0.5, 0][i]));
+  assert.equal(sunIn.globals.vBBSunVis, fs.sunShadowSoftAt(inBase, [0, 1, 0], U.uSize[1]), '...the read a lit flat takes, at its base');
   // the renderer: the classic set, the shadow pass and the air pass take BB_VS; the lane's billboard program the composed text
   const { calls, canvas } = recordingGl();
   const r = new Renderer(canvas);
