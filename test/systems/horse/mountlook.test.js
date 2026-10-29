@@ -9,9 +9,10 @@ import { PNG } from 'pngjs';
 
 import {
   recolorHorse, recolorHorseTexels, horseLookCode, horseLookOfCode, withMountLook, wireHorseLook, HORSE_MOUNTS, HORSE_LOOK_CODE_MAX, HORSE_LOOK_WORN_MAX,
-  pictureHide, SPECTRAL_HOLES, BARDING_BAND,
+  pictureHide, isCoatPixel, SPECTRAL_HOLES, BARDING_BAND, POINT_ABOVE, POINT_SAT, POINT_VAL,
 } from '../../../src/systems/horse/horseCoats.js';
 import { MOUNT_LOOKS } from '../../../src/net/effectLaw.js';
+import { createHorseRig, HAIR_ROWS } from '../../../src/world/horseRig.js';
 import { ownMountLook, peerMountLook } from '../../../src/systems/horse/mountLook.js';
 import { createMountFx, MOUNT_FX_BEAT_S } from '../../../src/systems/horse/mountFx.js';
 import { MOUNT_PREVIEW_BEAT, MOUNT_PREVIEW_FILE } from '../../../src/ui/mountPreview.js';
@@ -20,7 +21,8 @@ import { SESSION_KEY } from '../../../src/net/accountClient.js';
 import { HORSE_LOOK_MAX } from '../../../src/net/wire.js';
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
-const side = () => { const raw = PNG.sync.read(readFileSync(new URL(`../../../vendor/horse-cart-and-cargo/Textures/${MOUNT_PREVIEW_FILE}`, import.meta.url))); return { width: raw.width, height: raw.height, colors: new Uint8Array(raw.data) }; };
+const picture = (p) => { const raw = PNG.sync.read(readFileSync(new URL(`../../../vendor/${p}`, import.meta.url))); return { width: raw.width, height: raw.height, colors: new Uint8Array(raw.data) }; };
+const side = () => picture(`horse-cart-and-cargo/Textures/${MOUNT_PREVIEW_FILE}`);
 const hsv = (r, g, b) => { const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0; if (d) { h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360; } return [h, mx ? d / mx : 0, mx / 255]; };
 
 test('STOREFRONT the look\'s code: a mount look a fifth part, its highest factor, so every code the wire knew is the same horse; the wire never carries one (the token does), and a screen lays it on and takes it off (mutants: the mount on the wire; a look changing the coat\'s code)', () => {
@@ -36,19 +38,31 @@ test('STOREFRONT the look\'s code: a mount look a fifth part, its highest factor
   assert.match(rd('src/scenes/world.js'), /rc: riding \? riddenHorseLook\(playerEntity\.items \?\? \[\]\) \|\| undefined : undefined,/, 'nor the pose');
 });
 
-test('STOREFRONT the dye: each look moves the hide alone - the Daedric Warhorse dark under burning barding, the Spectral Steed a pale blue ghost with holes at its legs, the Dawnfire Charger gold with burning legs, the Brass Automaton brass with aetherium studs - the tack and the mane kept; the 3D horse takes the same looks (mutants: a look that dyes the saddle; the ghost\'s holes on the 3D horse)', () => {
+// AUDIT-STOREFRONT (2026-10-29): PIN MOVED - "nothing but the hide moved" left a ghost with a black mane and tail. A look
+// now moves the hide and its points (horseCoats.js pointsOf); the saddle and the rider are still never touched.
+/** The pixels of `img` a look moved off its coat alone, other than the hide's. */
+const movedOff = (img, hidden, look, plain) => {
+  const out = [];
+  for (let i = 0; i < img.width * img.height; i++) if (!hidden.has(i) && (look.colors[i * 4] !== plain.colors[i * 4] || look.colors[i * 4 + 1] !== plain.colors[i * 4 + 1] || look.colors[i * 4 + 3] !== plain.colors[i * 4 + 3])) out.push(i);
+  return out;
+};
+const src = (img, i) => [img.colors[i * 4], img.colors[i * 4 + 1], img.colors[i * 4 + 2]];
+
+test('STOREFRONT the dye: each look moves the hide and its points - the Daedric Warhorse dark under burning barding, the Spectral Steed a pale blue ghost with holes at its legs, the Dawnfire Charger gold with burning legs, the Brass Automaton brass with aetherium studs - the tack kept; the 3D horse takes the same looks (mutants: a look that dyes the saddle; the ghost\'s holes on the 3D horse)', () => {
   const img = side();
   const hide = pictureHide(img);
   assert.ok(hide.at.length > 500);
   const hidden = new Set(hide.at);
   const coat = horseLookCode({ coat: 1, pattern: 0, legs: 0, seed: 777 });
-  const looks = Object.fromEntries(MOUNT_LOOKS.map((m) => [m, recolorHorse(img, withMountLook(coat, m))]));
-  const plain = recolorHorse(img, coat);
+  const top = { bottomFirst: false };   // the picture as mountPreview.js dyes it: row 0 its top
+  const looks = Object.fromEntries(MOUNT_LOOKS.map((m) => [m, recolorHorse(img, withMountLook(coat, m), top)]));
+  const plain = recolorHorse(img, coat, top);
+  const hideH = hide.r1 - hide.r0 + 1, belly = BARDING_BAND[1] * hideH;
   for (const m of MOUNT_LOOKS) {
-    const c = looks[m].colors;
-    let movedOut = 0;
-    for (let i = 0; i < img.width * img.height; i++) if (!hidden.has(i) && (c[i * 4] !== plain.colors[i * 4] || c[i * 4 + 3] !== plain.colors[i * 4 + 3])) movedOut++;
-    assert.equal(movedOut, 0, `${m}: nothing but the hide moved`);
+    for (const i of movedOff(img, hidden, looks[m], plain)) {
+      const [h, s, v] = hsv(...src(img, i)), down = (i - (i % img.width)) / img.width - hide.r0;
+      assert.ok((s < POINT_SAT && v < POINT_VAL) || (down > belly && isCoatPixel(...src(img, i), false)), `${m}: ${i} (h ${h.toFixed(0)}, s ${s.toFixed(2)}, v ${v.toFixed(2)}) is no point - the tack never moves`);
+    }
   }
   const mean = (m, f) => { let a = 0; for (const i of hide.at) a += f(...looks[m].colors.slice(i * 4, i * 4 + 3)); return a / hide.at.length; };
   assert.ok(mean('warhorse', (r, g, b) => hsv(r, g, b)[2]) < mean('dawnfire', (r, g, b) => hsv(r, g, b)[2]), 'the warhorse dark, the charger bright');
@@ -71,6 +85,97 @@ test('STOREFRONT the dye: each look moves the hide alone - the Daedric Warhorse 
     assert.notDeepEqual([...out.colors], [...tex.colors], `${m}: the 3D hide dyed`);
     assert.ok([3, 7, 11, 15].every((i) => out.colors[i] === 255), `${m}: no holes in the 3D horse`);
   }
+});
+
+test('AUDIT-STOREFRONT the points: a look moves the horse\'s near-black too - the ghost\'s mane and tail a deep blue, see-through as its hide is; the charger\'s the gold\'s shadow; the automaton\'s dark steel; the Warhorse keeps its black - and never a rider\'s bow rising off the neck, nor a rein hanging in the air, in either row order (mutants: the points left black; a bow dyed; a rein dyed; the ghost\'s points its hide\'s light; the charger\'s points cold; the ghost\'s points never see-through; the charger\'s far legs unburnt)', () => {
+  // a built horse: a bay hide, a tail off its croup, a bow rising off its withers, a rein hanging in the air
+  const W = 60, Hh = 40, colors = new Uint8Array(W * Hh * 4);
+  const put = (x, y, rgb) => { colors.set([...rgb, 255], (y * W + x) * 4); };
+  for (let y = 10; y < 30; y++) for (let x = 15; x < 45; x++) put(x, y, [150, 80, 40]);
+  for (let y = 10; y < 21; y++) for (let x = 45; x < 53; x++) put(x, y, [22, 20, 20]);
+  for (let y = 0; y < 10; y++) for (let x = 20; x < 23; x++) put(x, y, [24, 22, 22]);
+  for (let x = 5; x < 15; x++) put(x, 25, [20, 20, 22]);
+  const built = { width: W, height: Hh, colors };
+  const flipped = { width: W, height: Hh, colors: new Uint8Array(colors.length) };
+  for (let y = 0; y < Hh; y++) flipped.colors.set(colors.subarray(y * W * 4, (y + 1) * W * 4), (Hh - 1 - y) * W * 4);
+  const at = (img, x, y, flip) => { const o = ((flip ? Hh - 1 - y : y) * W + x) * 4; return [...img.colors.slice(o, o + 4)]; };
+  for (const [img, flip] of [[built, false], [flipped, true]]) {
+    const dyed = Object.fromEntries(MOUNT_LOOKS.map((m) => [m, recolorHorse(img, withMountLook(0, m), { bottomFirst: flip })]));
+    const tail = [];
+    for (let y = 10; y < 21; y++) for (let x = 45; x < 53; x++) tail.push([x, y]);
+    const look = (m, x, y) => at(dyed[m], x, y, flip), was = (x, y) => at(img, x, y, flip);
+    assert.ok(tail.every(([x, y]) => look('warhorse', x, y).join() === was(x, y).join()), 'the Warhorse keeps its black');
+    const hues = (m) => tail.map(([x, y]) => look(m, x, y)).filter((c) => c[3]).map((c) => hsv(c[0], c[1], c[2]));
+    const mean = (a, k) => a.reduce((t, c) => t + c[k], 0) / a.length;
+    assert.ok(mean(hues('spectral'), 0) > 190 && mean(hues('spectral'), 0) < 220, `the ghost's tail blue (${flip})`);
+    const ghostHide = hsv(...look('spectral', 30, 15).slice(0, 3));
+    assert.ok(mean(hues('spectral'), 2) < ghostHide[2], 'and deeper than its hide, so the art\'s lines still read');
+    assert.ok(mean(hues('dawnfire'), 0) > 20 && mean(hues('dawnfire'), 0) < 45 && mean(hues('dawnfire'), 1) > 0.5, 'the charger\'s the gold\'s shadow');
+    assert.ok(mean(hues('automaton'), 0) > 200 && mean(hues('automaton'), 0) < 230 && mean(hues('automaton'), 2) < 0.35, 'the automaton\'s dark steel');
+    for (const m of MOUNT_LOOKS) {
+      for (let y = 0; y < 8; y++) for (let x = 20; x < 23; x++) assert.deepEqual(look(m, x, y), was(x, y), `${m}: the bow at ${x},${y} kept`);
+      for (let x = 5; x < 14; x++) assert.deepEqual(look(m, x, 25), was(x, 25), `${m}: the rein at ${x} kept`);
+    }
+  }
+  // the shop's horse and the riders' own pictures: nothing over the hide's crest moves (a helmet, a bow); the ghost's
+  // points see-through as its hide is, the charger's burning at its legs
+  for (const f of [`horse-cart-and-cargo/Textures/${MOUNT_PREVIEW_FILE}`, ...['1-0', '2-0', '3-0'].map((k) => `eye-of-the-beholder/Textures/112382/112382_${k}.png`)]) {
+    const img = picture(f), hide = pictureHide(img), hidden = new Set(hide.at);
+    const crest = hide.r0 - Math.ceil(POINT_ABOVE * (hide.r1 - hide.r0 + 1));
+    const coat = horseLookCode({ coat: 2, pattern: 0, legs: 0, seed: 5 }), plain = recolorHorse(img, coat, { bottomFirst: false });
+    for (const m of MOUNT_LOOKS) {
+      const d = recolorHorse(img, withMountLook(coat, m), { bottomFirst: false }), moved = movedOff(img, hidden, d, plain);
+      assert.equal(moved.length > 0, m !== 'warhorse', `${f} ${m}: its points ${m === 'warhorse' ? 'kept' : 'dyed'}`);
+      assert.ok(moved.every((i) => (i - (i % img.width)) / img.width >= crest), `${f} ${m}: nothing over the crest`);
+      const lit = moved.filter((i) => d.colors[i * 4 + 3]).map((i) => hsv(d.colors[i * 4], d.colors[i * 4 + 1], d.colors[i * 4 + 2]));
+      if (m === 'spectral') assert.ok(lit.length < moved.length, `${f}: the ghost's points see-through in places`);
+      if (m === 'dawnfire') assert.ok(lit.some(([h, sat, v]) => h < 30 && sat > 0.6 && v > 0.8), `${f}: the charger's far legs burning`);
+    }
+  }
+});
+
+test('AUDIT-STOREFRONT the 3D horse\'s mane and tail: a mount look shades the hair picture as the sprites\' points, HAIR_ROWS a frame and made once a look; a coat and the Warhorse wear the art\'s (mutants: the 3D hair the art\'s on every look; a look\'s hair never asked)', async () => {
+  const made = [];
+  const renderer = {
+    createSkinnedCharacterMesh: (stream, o) => ({ vao: {}, vbo: {}, count: stream.length / o.floats, floats: o.floats, skin: { tex: {} } }),
+    createSkinPalette: () => ({ tex: {} }), releaseCharacterSkin: () => {}, updateSkinPalette: () => {}, releaseCharacterTexture: () => {},
+    createCharacterTexture: (mips) => { made.push(mips[0]); return { id: made.length }; },
+  };
+  const rig = createHorseRig({
+    renderer,
+    fetchJson: async () => JSON.parse(rd('src/assets/horse/courser.json')),
+    fetchBytes: async (u) => new Uint8Array(readFileSync(new URL(u))),
+    decode: async (b) => { const p = PNG.sync.read(Buffer.from(b)); return { width: p.width, height: p.height, data: new Uint8Array(p.data) }; },
+  });
+  await rig.load();
+  const art = made[1], h = rig.horse(1), hairAt = h.mesh.ranges.findIndex((r) => r.part === 'hair');
+  assert.ok(hairAt >= 0 && h.mesh.ranges[hairAt].tex.id === 2, 'the art\'s hair, made at load');
+  const wear = (look) => { rig.step(h, { feet: [0, 0, 0], yaw: 0, look }); return h.mesh.ranges[hairAt].tex; };
+  for (const look of [horseLookCode({ coat: 2, pattern: 0, legs: 0, seed: 3 }), withMountLook(0, 'warhorse')]) {
+    assert.equal(wear(look).id, 2);
+    for (let f = 0; f < 16; f++) rig.tick();
+    assert.equal(wear(look).id, 2, 'a coat, and the Warhorse, keep the art\'s black');
+  }
+  const ghost = withMountLook(0, 'spectral');
+  assert.equal(wear(ghost).id, 2, 'the art\'s until the shade is up');
+  for (let f = 0; f < art.height / HAIR_ROWS; f++) rig.tick();
+  const tex = wear(ghost);
+  assert.notEqual(tex.id, 2, `up in ${art.height / HAIR_ROWS} frames`);
+  const shaded = made[tex.id - 1].rgba;
+  let n = 0, blue = 0;
+  for (let o = 0; o < shaded.length; o += 4) {
+    assert.equal(shaded[o + 3], art.rgba[o + 3], 'its alpha the art\'s');
+    if (!art.rgba[o + 3]) continue;
+    n++;
+    const [hh, ss] = hsv(shaded[o], shaded[o + 1], shaded[o + 2]);
+    if (hh > 195 && hh < 215 && ss > 0.4) blue++;
+  }
+  assert.ok(blue > n * 0.95, `the ghost's hair a deep blue (${blue} of ${n})`);
+  const count = made.length;
+  wear(withMountLook(horseLookCode({ coat: 4, pattern: 1, legs: 2, seed: 9 }), 'spectral'));
+  for (let f = 0; f < 16; f++) rig.tick();
+  assert.equal(wear(withMountLook(horseLookCode({ coat: 4, pattern: 1, legs: 2, seed: 9 }), 'spectral')).id, tex.id, 'one shade a look, whatever the coat under it');
+  assert.ok(made.slice(count).every((m) => m.width !== art.width), 'and no second hair picture made');
 });
 
 test('STOREFRONT whose look: mine off my token\'s kit, a peer\'s off its own, on every horse the port draws - the riding view, the body\'s horse, the 3D horse, Eye of the Beholder\'s riders and the pool\'s standing horse; the wagon\'s team never (mutants: a peer\'s horse in my look; a host left out)', () => {

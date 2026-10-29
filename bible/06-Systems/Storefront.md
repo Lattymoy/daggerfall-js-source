@@ -141,6 +141,13 @@ A mount look is the account's and is laid over the horse I ride: the riding view
 horse and my standing horse. It is a fifth part of the horse's look, dyed as a coat is dyed (`systems/horse/horseCoats.js`,
 COATS1). The coat stays the player's free choice on the Stable card and comes back when the look is taken off.
 
+A look also dyes the horse's points: the near-black of its mane, tail and far legs, joined to the hide (AUDIT-STOREFRONT,
+`horseCoats.js:"function pointsOf("`). A coat keeps them black, which left a ghost with a black tail. Each look gives
+them its own shadow: a deep blue, the gold's shadow, dark steel. The Warhorse keeps its black. A rider's bow rising off
+the neck is not a point, and a line hanging in the air is not one. The saddle is never one. A bridle drawn in the same
+black is one: across the hide it is drawn as the shading is, and a rule that kept it blacked the small sprites' shading.
+The 3D horse's mane and tail are their own picture, shaded the same a few rows a frame (`world/horseRig.js` HAIR_ROWS).
+
 | Look | Tier | What it is |
 | --- | --- | --- |
 | Spectral Steed | Standard | a pale blue ghost, light flowing along it, see-through at its legs; glowing prints and wisps |

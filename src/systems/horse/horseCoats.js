@@ -503,6 +503,87 @@ function mountInto(out, o, mount, seed, u, v, dn, px, py, legs) {
   }
 }
 
+/** AUDIT-STOREFRONT: each look's shadow on the horse's points - `[hue, saturation, value floor, value a unit of the
+ *  art's light]`, so the art's lines still read. The Warhorse is not here: it keeps its black. */
+export const POINT_SHADES = Object.freeze({
+  spectral: Object.freeze([204, 0.5, 0.2, 0.9]),   // a deep blue - no black on a ghost
+  dawnfire: Object.freeze([32, 0.78, 0.16, 0.9]),   // the gold's shadow
+  automaton: Object.freeze([214, 0.18, 0.1, 0.95]),   // dark steel
+});
+/** Whether mount look `mount` (its index) shades the horse's points. */
+export const dyesPoints = (/** @type {number} */ mount) => Object.hasOwn(POINT_SHADES, HORSE_MOUNTS[mount] ?? '');
+/** A point (`out` at `o`, the art's light `lum`) in look `mount`'s shadow; false for a look that keeps its black. */
+function pointInto(out, o, mount, lum) {
+  const s = /** @type {Record<string, readonly number[]>} */ (POINT_SHADES)[HORSE_MOUNTS[mount]];
+  if (!s) return false;
+  rgbInto(out, o, s[0], s[1], clamp01(s[2] + s[3] * lum));
+  return true;
+}
+
+/**
+ * AUDIT-STOREFRONT: A MOUNT LOOK ON THE HORSE'S POINTS - the near-black the art paints its mane, tail, far legs and
+ * shading in (`pointsOf`), which a coat keeps black, in the look's shadow (POINT_SHADES): the ghost's see-through where
+ * its hide is, the charger's burning where its legs burn. Answers the pixel's alpha, as mountInto.
+ */
+function mountPointInto(out, o, mount, seed, u, v, dn, px, py, legs) {
+  const lum = hsv(out[o], out[o + 1], out[o + 2])[2], look = HORSE_MOUNTS[mount];
+  if (look === 'dawnfire' && legs && 1 - dn < DAWNFIRE_LEGS) return mountInto(out, o, mount, seed, u, v, dn, px, py, legs);
+  const alpha = look === 'spectral' ? mountInto(out, o, mount, seed, u, v, dn, px, py, legs) : 255;
+  pointInto(out, o, mount, lum);
+  return alpha;
+}
+
+/** AUDIT-STOREFRONT: THE 3D HORSE'S MANE AND TAIL - its hair picture's rows `r0` to `r1` (not including it), `src`'s
+ *  texels in mount look `mount`'s shadow into `out` (a copy of `src`), as the sprites' points; its alpha its own.
+ *  @param {Uint8Array} src @param {Uint8Array} out @param {number} width @param {number} mount @param {number} r0 @param {number} r1 */
+export function dyeHorseHairRows(src, out, width, mount, r0, r1) {
+  for (let o = r0 * width * 4, end = r1 * width * 4; o < end; o += 4) if (src[o + 3]) pointInto(out, o, mount, hsv(src[o], src[o + 1], src[o + 2])[2]);
+}
+/** Whether a pixel is one of the horse's points: near-black and all but grey (POINT_*), as the art paints them. */
+const isPointPixel = (r, g, b) => { const H = hsv(r, g, b); return H[1] < POINT_SAT && H[2] < POINT_VAL; };
+/** AUDIT-STOREFRONT: a point is near-black under this value and this saturation - the art's mane, tail and shading, never
+ *  a rider's leather, steel or cloth. */
+export const POINT_VAL = 0.35;
+export const POINT_SAT = 0.15;
+/** AUDIT-STOREFRONT: THE HORSE'S POINTS in a picture - its near-black pixels, and below its belly the leather-brown
+ *  its shading is painted in, joined to its hide through such pixels alone (8-connected, nearest first). Never one
+ *  climbing more than POINT_ABOVE of the hide's height over where its run left the hide (a rider's bow or spear rising
+ *  off the neck; a mane sits on it, a tail falls from the croup), nor a thin line (fewer than POINT_BODY of its
+ *  neighbours the horse's). A bridle drawn in the points' black is among them: across the hide it is drawn as the
+ *  shading is, a dark band, and a rule that spared it blacked the small sprites' shading. `down(i)` a pixel's depth. */
+function pointsOf(src, w, h, hide, tack, down, hideH) {
+  const n = w * h, horse = new Uint8Array(n), out = [];
+  for (const i of hide.at) horse[i] = 2;
+  const belly = BARDING_BAND[1] * hideH, reach = POINT_ABOVE * hideH;
+  for (let i = 0; i < n; i++) {
+    const o = i * 4;
+    if (!horse[i] && src[o + 3] && (isPointPixel(src[o], src[o + 1], src[o + 2]) || (tack && down(i) > belly && isCoatPixel(src[o], src[o + 1], src[o + 2], false)))) horse[i] = 1;
+  }
+  const near = (/** @type {number} */ p, /** @type {(q: number) => void} */ f) => {
+    const x = p % w, y = (p - x) / w;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const X = x + dx, Y = y + dy;
+      if ((dx || dy) && X >= 0 && X < w && Y >= 0 && Y < h) f(Y * w + X);
+    }
+  };
+  const body = new Uint8Array(n);
+  for (let i = 0; i < n; i++) if (horse[i] === 1) { let k = 0; near(i, (q) => { if (horse[q]) k++; }); body[i] = k >= POINT_BODY ? 1 : 0; }
+  const seen = new Uint8Array(n), base = new Float64Array(n), queue = [];
+  let from = 0;
+  const visit = (/** @type {number} */ q, /** @type {number} */ b) => {
+    if (seen[q] || !body[q] || b - down(q) > reach) return;
+    seen[q] = 1; base[q] = b; out.push(q); queue.push(q);
+  };
+  for (const i of hide.at) near(i, (q) => visit(q, down(i)));
+  while (from < queue.length) { const p = queue[from++]; near(p, (q) => visit(q, base[p])); }
+  return out;
+}
+/** AUDIT-STOREFRONT: how many of a point's eight neighbours are the horse's - a mane's, a tail's or an outline's are most;
+ *  a line drawn across the air has two or three. */
+export const POINT_BODY = 4;
+/** AUDIT-STOREFRONT: how far over the hide a run of points may climb, a share of the hide's height - a mane's crest. */
+export const POINT_ABOVE = 0.06;
+
 /** Whether a pixel is the hide's (THE DYE's first two rules): warm, coloured, and - where a saddle is drawn (`tack`) -
  *  not the tack's leather. */
 export function isCoatPixel(r, g, b, tack = true) {
@@ -550,6 +631,13 @@ export function recolorHorse(image, look, { bottomFirst = true, legs = true, tac
       dyeInto(out, src, i * 4, dye, hueJ, valJ, white, dark);
       if (l.mount && !mountInto(out, i * 4, l.mount, l.seed, (x - x0) / unit, down / unit, down / hideH, x, r, legs)) out[i * 4 + 3] = 0;   // STOREFRONT: the mount look over the coat
     }
+    if (l.mount) {   // AUDIT-STOREFRONT: and over its points, as the look will
+      const pts = pointsOfImage(image.colors, src, w, h, tack, hide, (/** @type {number} */ i) => { const r = (i - (i % w)) / w; return bottomFirst ? r1 - r : r - r0; }, hideH);
+      for (let j = 0; j < pts.length; j++) {
+        const i = pts[j], x = i % w, r = (i - x) / w, down = bottomFirst ? r1 - r : r - r0;
+        if (!mountPointInto(out, i * 4, l.mount, l.seed, (x - x0) / unit, down / unit, down / hideH, x, r, legs)) out[i * 4 + 3] = 0;
+      }
+    }
   }
   const Ctor = /** @type {any} */ (image.colors).constructor;
   const colors = Ctor === Uint8Array ? out : new Ctor(out.buffer, 0, Ctor.BYTES_PER_ELEMENT === 4 ? n : n * 4);
@@ -558,6 +646,14 @@ export function recolorHorse(image, look, { bottomFirst = true, legs = true, tac
 
 /** PERF-HIDE: each picture's hide, kept by its pixels' array - one entry a `tack` (0 without, 1 with). */
 const _hides = new WeakMap();
+/** AUDIT-STOREFRONT: and its points, found once a picture a `tack` the first time a mount look asks. */
+const _points = new WeakMap();
+function pointsOfImage(colors, src, w, h, tack, hide, down, hideH) {
+  let kept = _points.get(colors);
+  if (!kept) { kept = [null, null]; _points.set(colors, kept); }
+  const k = tack ? 1 : 0;
+  return kept[k] ?? (kept[k] = pointsOf(src, w, h, hide, tack, down, hideH));
+}
 
 /**
  * PERF-HIDE (2026-10-12, a profile of a player's client in its first seconds in the world: the wagon pool's looks dyed

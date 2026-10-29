@@ -123,8 +123,13 @@ off its own (so the art's shading is still its shading) and a value
   the mane falls in the leather band's colours).
 
 Every white is the hide's own light in white (`0.4 + 0.85 v`), so a patch in
-shadow is a shadowed white. The mane stays the art's on every look: the dye
-cannot tell a dark mane from a rider's dark steel, so it is not asked to.
+shadow is a shadowed white. The mane stays the art's on every coat: the dye
+cannot tell a dark mane from a rider's dark steel, so it is not asked to. A
+mount look does shade it (AUDIT-STOREFRONT, `Storefront.md` section 7): only
+near-black joined to the hide and never higher than the mane's crest, which
+keeps out the armoured riders' steel and cloaks in every Eye of the Beholder
+set (checked by eye, 2026-10-29). The 3D horse's mane and tail picture takes
+the same shades (`world/horseRig.js` HAIR_ROWS).
 
 A sprite is one picture a side, so a flank's patches and the chest's are not
 one body's - each view is its own, and a walk frame carries its marks with the

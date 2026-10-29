@@ -1,0 +1,119 @@
+[
+  {
+    "name": "AUDIT-STOREFRONT-the-points-left-black",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "    if (l.mount) {   // AUDIT-STOREFRONT: and over its points, as the look will",
+    "new": "    if (false) {   // AUDIT-STOREFRONT: and over its points, as the look will",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-a-bow-dyed",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "    if (seen[q] || !body[q] || b - down(q) > reach) return;",
+    "new": "    if (seen[q] || !body[q]) return;",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-a-rein-dyed",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "body[i] = k >= POINT_BODY ? 1 : 0; }",
+    "new": "body[i] = 1; }",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-ghosts-points-its-hides-light",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "  spectral: Object.freeze([204, 0.5, 0.2, 0.9]),",
+    "new": "  spectral: Object.freeze([204, 0.5, 0.75, 0.9]),",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-chargers-points-cold",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "  dawnfire: Object.freeze([32, 0.78, 0.16, 0.9]),",
+    "new": "  dawnfire: Object.freeze([214, 0.78, 0.16, 0.9]),",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-automatons-points-left-black",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "  automaton: Object.freeze([214, 0.18, 0.1, 0.95]),   // dark steel\n",
+    "new": "",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-warhorses-points-dyed",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "export const POINT_SHADES = Object.freeze({",
+    "new": "export const POINT_SHADES = Object.freeze({ warhorse: Object.freeze([0, 0, 1, 0]),",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-a-rider-taken-for-points",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "return H[1] < POINT_SAT && H[2] < POINT_VAL; };",
+    "new": "return H[2] < POINT_VAL; };",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-ghosts-points-never-see-through",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "  const alpha = look === 'spectral' ? mountInto(out, o, mount, seed, u, v, dn, px, py, legs) : 255;",
+    "new": "  const alpha = 255;",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-chargers-far-legs-unburnt",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "  if (look === 'dawnfire' && legs && 1 - dn < DAWNFIRE_LEGS) return mountInto(out, o, mount, seed, u, v, dn, px, py, legs);\n",
+    "new": "",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-3d-hair-the-arts-on-every-look",
+    "file": "src/world/horseRig.js",
+    "old": "    const hair = hairTexOf(horseLookOfCode(h.look).mount);",
+    "new": "    const hair = hairTex;",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-a-looks-hair-never-asked",
+    "file": "src/world/horseRig.js",
+    "old": "    if (hairJob?.mount !== mount) hairAsked.add(mount);\n",
+    "new": "",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-a-hair-shade-for-the-warhorse",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "export const dyesPoints = (/** @type {number} */ mount) => Object.hasOwn(POINT_SHADES, HORSE_MOUNTS[mount] ?? '');",
+    "new": "export const dyesPoints = (/** @type {number} */ mount) => mount > 0;",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  }
+]
