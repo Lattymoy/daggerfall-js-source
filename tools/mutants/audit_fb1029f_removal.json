@@ -48,5 +48,15 @@
    "test/systems/bulletinboard.test.js"
   ],
   "why": "the solids sweep reports a board's overlaps that no host stands"
+ },
+ {
+  "name": "AFB-R2-the-board-indoors",
+  "file": "src/scenes/interiorContext.js",
+  "old": "    if (isBulletinBoard(p.modelIdNum)) continue;\n",
+  "new": "",
+  "tests": [
+   "test/scenes/fb1029f_boardsindoors.test.js"
+  ],
+  "why": "a town pack's tavern, temple or gate room stands the board the owner took out of every city"
  }
 ]

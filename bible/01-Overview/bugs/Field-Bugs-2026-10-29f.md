@@ -96,7 +96,8 @@ freeware's BLOCKS.BSA only 4 of the 12 WALL kinds place one, at a walled city's 
 kinds and blocks of its own, with no WALL block. BOUNTY1 made half a town's boards its bounty boards, so a place with no
 board had neither board.
 
-CHANGED, a departure from DFU (`01-Overview/Port-Ledger.md` section A). No board stands in any town's streets. The
+CHANGED, a departure from DFU (`01-Overview/Port-Ledger.md` section A). No board stands in any town, on its streets or in
+its rooms (AUDIT FB1029f R2: the town packs' rooms placed it too). The
 town's panel hangs under the compass (on the classic skin, on the compass in its corner) while the player is in a city,
 hamlet or village - on its streets or in its buildings, never in a dungeon, a city's castle included (DFU's
 IsPlayerInTown) - and goes when they leave (`ui/hud/townPanel.js`, `scenes/townPanelHost.js`). A capital over several

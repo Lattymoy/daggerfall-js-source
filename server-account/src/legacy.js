@@ -133,7 +133,11 @@ export async function putLineage({ db, nowS }, playerId, { id, record: sent, bas
       await entombLineDead({ db, nowS }, playerId, id, had.record, /** @type {any} */ (record));
       return { ok: true, rev: rec.rev };
     }
-    return staleLine(db, playerId, id, rec.model);
+    const stale = await staleLine(db, playerId, id, rec.model);
+    if (stale) return stale;
+    // AUDIT FB1029f FAMILY F3: removed between the read and the UPDATE - F2's answer to a copy made from it (null was a
+    // 500); a founding founds
+    if (base !== null) return { error: 'no-lineage' };
   }
   const founding = lineageLawFindings(record, null);   // INT18: a founding's copy, alone
   if (founding.length) return lineageLaw(founding);

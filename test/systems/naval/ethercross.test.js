@@ -334,3 +334,15 @@ test('ETHER-CHART the doors: the travel map\'s door opens the chart past the Vei
   const none = etherOfficeText({ ...o, chart: { price: 150, fresh: 0, can: false, why: 'Every isle in these waters is already on your charts.' } });
   assert.equal(none.letters[0].words, 'Every isle in these waters is already on your charts.');
 });
+
+test('AUDIT FB1029f SEA F9: the words name the Iliac Bay only on its own map - asked west of Sumurset, landing where she set out there, they name no sea they do not mean (mutants: AFB-SEA-F9-the-bay-everywhere)', () => {
+  const bay = { px: 180, py: 300 }, past = { px: -300, py: 1500 };
+  assert.match(crossingRows('out', {}, bay)[0], /^The Abecean runs empty/);
+  assert.match(crossingRows('out', {}, { x: past.px, y: past.py })[0], /^The open sea runs empty/, 'the helm\'s pixel, as playerTravelPixel gives it');
+  assert.equal(crossingRows('home', {}, bay)[1], 'lie the gray waters of the Iliac Bay.');
+  assert.equal(crossingRows('home', {}, past)[1], 'lie the gray waters you set out from.');
+  assert.match(crossingWords('home', bay), /The Iliac Bay, and home\.$/);
+  assert.match(crossingWords('home', past), /You are back in the waters you set out from\.$/);
+  assert.doesNotMatch(crossingWords('home', past), /Iliac/);
+  for (const row of [...crossingRows('out', {}, past), ...crossingRows('home', {}, past)]) assert.ok(row.length <= 56, `a row in the box's measure: ${row}`);
+});

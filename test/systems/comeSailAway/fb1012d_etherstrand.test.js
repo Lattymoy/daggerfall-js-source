@@ -198,7 +198,7 @@ test('ETHER-STRAND the crossing says her load beneath its words - the helm\'s li
   assert.equal(cargoModWords(0.5), 'The boat draws a little lower than usual');
   assert.equal(cargoModWords(0.99), 'The boat draws a little lower than usual');
   assert.equal(cargoModWords(1), null, 'a whole hold says nothing');
-  const at = WORLD.indexOf('      setMidScreenText(crossingWords(way), 7);');
+  const at = WORLD.indexOf('      setMidScreenText(crossingWords(way, to), 7);');   // PIN MOVED (AUDIT FB1029f SEA F9): the landfall's words read where she lands
   assert.ok(at > 0, 'the crossing\'s words');
   const next = WORLD.slice(at, at + 600);
   assert.match(next, /\n      const heavy = cargoModWords\(csaRuntime\.state\.boatCargoMod\);[^\n]*\n      if \(heavy\) townTalk\.say\(heavy, 7\);/, 'her load said beneath them, on the HUD line, as long');

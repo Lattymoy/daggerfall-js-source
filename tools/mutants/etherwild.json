@@ -183,8 +183,8 @@
   {
     "name": "ETHER-WILD-crossing-warns-offline",
     "file": "src/scenes/world.js",
-    "old": "rows: crossingRows(way, { pvp: _onlineWorldSession() && !!online?.wildOk }),",
-    "new": "rows: crossingRows(way, { pvp: true }),",
+    "old": "rows: crossingRows(way, { pvp: _onlineWorldSession() && !!online?.wildOk }, ",
+    "new": "rows: crossingRows(way, { pvp: true }, ",
     "tests": [
       "test/systems/wild/etherwild.test.js"
     ]

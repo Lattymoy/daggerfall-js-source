@@ -15,17 +15,18 @@ finding was reproduced with a probe on the real code and checked again here befo
 | REMOVAL | the boards taken out: every builder, every reader, every record | 6 |
 
 Each fix in code carries an `AUDIT FB1029f <id>` comment and a pin that fails on the code as it stood. Mutants:
-`tools/mutants/audit_fb1029f_panel.json`, `_removal.json`, `_tla.json`, `_star.json` and `_sea.json`, all dead.
+`tools/mutants/audit_fb1029f_panel.json`, `_removal.json`, `_tla.json`, `_star.json`, `_sea.json` and `_family.json`, all dead.
 
-## FAMILY - withdrawn, not fixed here
+## FAMILY - withdrawn, and FAMILY-REMOVE's last finding fixed
 
 Main fixed the same report first (#1436 FAMILY-REMOVE, `../bugs/Field-Bugs-2026-10-29e.md` section 3). FAMILY-FORGET
-was withdrawn at the merge of main: one route and one list, and this PR changes no account service. Read against
-FAMILY-REMOVE, three findings still hold, and are main's to fix: a second remove of a gone line answers 404 and the page
-keeps offering it (F1); a write whose read saw the line and whose UPDATE lost it to a remove answers 500, `staleLine`'s
-null unguarded (F3); and a line whose Succession waits is offered for removal, its heirs, estate and bequest with it (F5).
-F2's main path (a stale copy founding a removed line) and F4 (a birth on a line removed mid-birth) are FAMILY-REMOVE's
-own.
+was withdrawn at the merge of main: one route and one list. Read against FAMILY-REMOVE: F1 (a second remove of a gone
+line) is main's own AUDIT FB1029e F3, the page taking `no-lineage` as removed. F5 (a waiting Succession offered for
+removal) is main's choice, said on the card: "no heir of it can carry it on". **F3** held: a write whose read saw the
+line and whose UPDATE lost it to a remove got `staleLine`'s null, and the route threw a 500. It answers `no-lineage`
+now, F2's answer to a copy made from a gone line, and a founding founds (`server-account/src/legacy.js` putLineage,
+acct224). Pinned by racing the remove into the UPDATE (`test/server/family_remove.test.js`); mutants
+`tools/mutants/audit_fb1029f_family.json`.
 
 ## PANEL - the town panel
 
@@ -53,8 +54,10 @@ every town's) are recorded. **P11** (the HUD is `aria-hidden`) is the HUD's own,
 ledger's NOTICE1, BOUNTY1, TOWN-MARKS and SEAT1a rows, NOTICE1b (superseded), Bounty-Boards, Seats-Arc, the count tools'
 verdicts and the code's comments say what stands now. **R4.** The name cone's and the PvP mask's board branches, dead,
 are gone. **R6.** `ROAD_WEIGHT` lives in `world/city/cityNavigation.js` (gothwayBoards.js retired); the bench no longer
-fetches the board's mesh; the solids sweep counts none. **R2** (a town pack's interior board, scenery never pressable)
-is kept and recorded, the owner's call. **R5** is P2.
+fetches the board's mesh; the solids sweep counts none. **R2.** The town packs' rooms
+placed the board too (a tavern's, a temple's, a manor's, a gate's), and the owner's word is every city: none stands
+indoors (`scenes/interiorContext.js`), its placement kept so a room's keys hold (`test/scenes/fb1029f_boardsindoors.test.js`).
+**R5** is P2.
 
 ## TLA - the phone's boot
 
@@ -94,6 +97,13 @@ force at 42,105 points. **F6.** The "before" figures did not reproduce: 1.173, 1
 stood. **F7.** Stale comments and the ASKED paragraph made true. **F8** (diagonal steps nearer a headland, through
 corners the `sails` law allows) is recorded.
 
-**Open, the owner's call.** The way home lands where the last crossing out set sail, and that may be west of Sumurset
-now, as on main. Its words still say "The Iliac Bay, and home." The map names those waters the Eltheric Ocean, the name
-the crossing gives the Veil's sea, so the right words need a name the world does not have yet.
+**F9.** The way home lands where the last crossing out set sail, west of Sumurset too, and its words said "The Iliac
+Bay, and home." The map names those waters the Eltheric Ocean, the crossing's name for the Veil's sea, so past the
+Bay the words name no sea: "lie the gray waters you set out from", "You are back in the waters you set out from", and
+"The open sea runs empty" for the way out (`etherCrossing.js` crossingRows, crossingWords). On the Bay's own map they
+are as they were.
+
+**Tooling.** `tools/mergeMain.mjs --sweep` renumbered both versions at every merge, and moved main's own pins past main
+where the branch never bumped one. It renumbers a kind only when the branch bumped it past the merge base (`renumbered`).
+**Main's scale records.** AUDIT-SCALE A3 and A5 survived: `0186_world_books.sql` makes 0091's indexes again, so they are
+recorded equivalent.

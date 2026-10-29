@@ -560,6 +560,8 @@
     "tests": [
       "test/net/auditscale.test.js"
     ],
+    "equivalent": true,
+    "why": "EQUIVALENT since 0186_world_books.sql (AUDIT FB1029f): it creates idx_guild_contracts_open_due and idx_guild_contracts_unreturned again, so a database built from the migrations has them without 0091's",
     "note": "the contracts' minute walking the table"
   },
   {
@@ -570,6 +572,8 @@
     "tests": [
       "test/net/auditscale.test.js"
     ],
+    "equivalent": true,
+    "why": "EQUIVALENT since 0186_world_books.sql (AUDIT FB1029f): it creates idx_market_bids_auction again, so a database built from the migrations has it without 0091's",
     "note": "an old auction's prune walking every bid"
   },
   {

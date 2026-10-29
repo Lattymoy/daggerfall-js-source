@@ -15,6 +15,7 @@
 import { crossingWaters, inVeil, inEtherLaw, landfall, HOME_WATERS, ETHER_WORD, ETHER_SEA_NAME, CROSS_LAND_PX, CROSS_SEA_PX } from '../../world/ethericSea.js';
 import { NATIVE_PIXEL } from '../seaRaiders.js';   // SEA-ROWS: a lane's way is in native units
 import { t } from '../textManager.js';   // ETHER-WILD: the open sea's warning, in the player's language (L10N4)
+import { inBay } from '../../world/tamriel/tamrielFrame.js';   // AUDIT FB1029f SEA F9: the words name the Bay only in it
 
 /** The voyage, either way (days). */
 export const CROSS_DAYS = 3;
@@ -132,19 +133,22 @@ export function questionRows(text, width = ROW_CHARS) {
 }
 /** The widest row of the question's own (its first lines' measure). */
 export const ROW_CHARS = 56;
+/** AUDIT FB1029f SEA F9: whether the words may name the Bay - `at` (the helm's waters out, the landfall's home) is on the
+ *  Bay's own map. The crossing is asked west of Sumurset too, and the way home lands where it set out. */
+const bayAt = (at) => !at || inBay(at.px ?? at.x, at.py ?? at.y);
 /** The question, in rows (ui/yesNoBox.js). ETHER-WILD (2026-10-21): `pvp` - online, where the open sea past Veilhaven's
- *  peace is an open PvP zone (systems/wild/etherWild.js) - says so before the way out is taken. */
-export function crossingRows(way, { days = CROSS_DAYS, pvp = false } = {}) {
+ *  peace is an open PvP zone (systems/wild/etherWild.js) - says so before the way out is taken. `at`: SEA F9's. */
+export function crossingRows(way, { days = CROSS_DAYS, pvp = false } = {}, at = null) {
   const time = `${days} ${days === 1 ? 'day' : 'days'}`;
   return way === 'out'
-    ? ['The Abecean runs empty to every horizon, and the stars', 'hang strangely low over the water. Sailors say that past', `here the sea is no longer the sea, but the ${ETHER_WORD}.`, '', `Set a course into the open sea? (${time}. Your ship,`, 'its crew and hold go with you.)',
+    ? [`The ${bayAt(at) ? 'Abecean' : 'open sea'} runs empty to every horizon, and the stars`, 'hang strangely low over the water. Sailors say that past', `here the sea is no longer the sea, but the ${ETHER_WORD}.`, '', `Set a course into the open sea? (${time}. Your ship,`, 'its crew and hold go with you.)',
       ...(pvp ? ['', ...questionRows(t('sea.wild.crossWarn', 'Past Veilhaven\'s peace the open sea is an open PvP zone. Other players may attack you there.'))] : [])]
-    : ['Ahead the Veil thins, and through it, faint as a memory,', 'lie the gray waters of the Iliac Bay.', '', `Set a course for home? (${time})`];
+    : ['Ahead the Veil thins, and through it, faint as a memory,', bayAt(at) ? 'lie the gray waters of the Iliac Bay.' : 'lie the gray waters you set out from.', '', `Set a course for home? (${time})`];
 }
-/** What the screen says at the landfall. */
-export const crossingWords = (way) => (way === 'out'
+/** What the screen says at the landfall (`at`, SEA F9's: where she comes out). */
+export const crossingWords = (way, at = null) => (way === 'out'
   ? `Three days out of sight of land, and then the stars came down to meet the sea. You have crossed into ${ETHER_SEA_NAME}. Veilhaven lies ahead.`
-  : 'The Veil closes astern, and the air smells of salt and tar again. The Iliac Bay, and home.');
+  : `The Veil closes astern, and the air smells of salt and tar again. ${bayAt(at) ? 'The Iliac Bay, and home.' : 'You are back in the waters you set out from.'}`);
 /** Why a crossing is not asked (said once in those waters; AUDIT CAPTAIN'S SEA X1: asked as soon as the deck is clear,
  *  as the words promise - the refusal once marked the way asked, and the question never came back in those waters). */
 export const CROSS_REFUSED = Object.freeze({

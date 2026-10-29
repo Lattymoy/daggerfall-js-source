@@ -3,7 +3,7 @@
 // tools/mutants/mergemain.json.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { hunksOf, joinHunks, mergePinLine, mergePinHunk, mergeVersionHunk, mergeImportHunk, mergeNumbersHunk, mergeTable, sweepLine, renumberNote } from '../../tools/mergeMain.mjs';
+import { hunksOf, joinHunks, mergePinLine, mergePinHunk, mergeVersionHunk, mergeImportHunk, mergeNumbersHunk, mergeTable, sweepLine, renumberNote, renumbered } from '../../tools/mergeMain.mjs';
 
 const H = (ours, theirs, base = []) => ({ ours, base, theirs, head: '<<<<<<< ours', tail: '>>>>>>> theirs' });
 
@@ -85,4 +85,10 @@ test('MERGE-MAIN a keyed table, three ways: added either side kept, deleted wher
 test('MERGE-MAIN the sweep: a pin outside the conflicts that still names an old version moved, with its clause; any other line untouched (mutants: an unnamed version swept)', () => {
   assert.equal(sweepLine("  assert.equal(RELAY_VERSION, 'world265');", 'world', [260, 265], 266, 'the merge'), "  assert.equal(RELAY_VERSION, 'world266');   // PIN MOVED: world266, the merge");
   assert.equal(sweepLine("  assert.equal(RELAY_VERSION, 'world250');", 'world', [260, 265], 266, 'the merge'), "  assert.equal(RELAY_VERSION, 'world250');");
+});
+
+test('MERGE-MAIN (AUDIT FB1029f) what a merge renumbers: a kind the branch bumped that main reached or passed - never one the branch left at the base, whose pins are main\'s (mutants: the base unread; a branch ahead of main renumbered)', () => {
+  assert.deepEqual(renumbered({ world: { base: 286, ours: 286, theirs: 288 }, acct: { base: 220, ours: 221, theirs: 222 } }), ['acct'], 'the relay never bumped here: main\'s world288 stands');
+  assert.deepEqual(renumbered({ world: { base: 286, ours: 287, theirs: 287 }, acct: { base: 220, ours: 220, theirs: 220 } }), ['world'], 'both took 287: the branch\'s goes past');
+  assert.deepEqual(renumbered({ world: { base: 286, ours: 288, theirs: 287 }, acct: { base: 220, ours: 220, theirs: 223 } }), [], 'ahead of main: nothing moves');
 });

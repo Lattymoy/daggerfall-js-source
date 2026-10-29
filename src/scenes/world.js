@@ -9388,7 +9388,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (why) { if (crossGate.refused(way)) townTalk.say(CROSS_REFUSED[why], 4); return; }
     crossGate.asked(way);
     const boat = csaRuntime.state.CurrentBoat;
-    _crossBox = new YesNoBoxWindow({ rows: crossingRows(way, { pvp: _onlineWorldSession() && !!online?.wildOk }), onYes: () => { _crossBox = null; crossYes(way, boat); }, onNo: () => { _crossBox = null; } });
+    _crossBox = new YesNoBoxWindow({ rows: crossingRows(way, { pvp: _onlineWorldSession() && !!online?.wildOk }, way === 'out' ? playerTravelPixel() : crossingTarget('home', captainLedger.crossedFrom())), onYes: () => { _crossBox = null; crossYes(way, boat); }, onNo: () => { _crossBox = null; } });
     townTalk.showOverlay(_crossBox);
   }
   /** AUDIT CAPTAIN'S SEA X2: Yes is the question as it stands NOW - the same helm, the same waters, no enemy, no passenger,
@@ -9452,7 +9452,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       captainLedger.crossed();
       if (way === 'out') captainLedger.chartIsle(veilhaven().key);   // the landfall's port, on the charts from the first
       else crossGate.asked('out');   // home in the crossing waters: not asked out again until she has left them
-      setMidScreenText(crossingWords(way), 7);
+      setMidScreenText(crossingWords(way, to), 7);   // AUDIT FB1029f SEA F9: the Bay named only where she lands in it
       const heavy = cargoModWords(csaRuntime.state.boatCargoMod);   // FB1012d ETHER-STRAND (bible/01-Overview/bugs/Field-Bugs-2026-10-12d.md): the crossing's words cover the helm's - her load said again beneath them, or the boat that came home never says why she will not move
       if (heavy) townTalk.say(heavy, 7);
       captainSay();

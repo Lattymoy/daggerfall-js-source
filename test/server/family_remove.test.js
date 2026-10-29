@@ -126,3 +126,26 @@ test('FAMILY-REMOVE (AUDIT FB1029e T11) another account\'s living character of a
   assert.equal((await S.call('/v1/realm/create', { name: 'Ysolde Hlaalu', lineage: A, person: 1 }, other.secret)).status, 200, 'the other account plays its own line');
   assert.deepEqual((await call('/v1/realm/lineage/remove', { id: A })).body, { ok: true }, 'this one\'s goes');
 });
+
+test('FAMILY-REMOVE (AUDIT FB1029f FAMILY F3) a remove that lands between a write\'s read and its UPDATE answers no-lineage, never a 500', async () => {
+  const S = await standService();
+  const g = await S.guest();
+  const db = S.env.DB, nowS = 1_800_000_000, A = famOf(1);
+  assert.deepEqual(await putLineage({ db, nowS }, g.id, { id: A, record: record(A) }), { ok: true, rev: 1 });
+  let removed = null;
+  const racing = {
+    ...db,
+    prepare(sql) {
+      const st = db.prepare(sql);
+      if (/^\s*UPDATE lineages SET record/.test(sql) && removed == null) {
+        const bind = st.bind.bind(st);
+        st.bind = (...a) => { const b = bind(...a); const run = b.run; b.run = async () => { removed = await removeLineage({ db }, g.id, { id: A }); return run(); }; return b; };
+      }
+      return st;
+    },
+  };
+  const wrote = await putLineage({ db: racing, nowS }, g.id, { id: A, record: record(A, 2), base: 1 });
+  assert.deepEqual(removed, { ok: true }, 'the removal landed between the two');
+  assert.deepEqual(wrote, { error: 'no-lineage' }, 'F2\'s answer: the copy was made from a line that is gone');
+  assert.equal(db._raw.prepare('SELECT COUNT(*) AS n FROM lineages WHERE player = ?').get(g.id).n, 0, 'not founded again');
+});
