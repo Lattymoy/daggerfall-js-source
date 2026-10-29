@@ -698,3 +698,69 @@ time: base 2.5 ms a frame, 1.1 of it draw submission; YC5 1.4 ms, 0.1 of it subm
 **Tests.** `test/scenes/yardblock.test.js` runs real pools on a block's door: one merge a block, a piece going and
 landing, the range's crossings, the budget and its order, the cull and the recentre, the flats and a yard leaving.
 `tools/mutants/yardblock.json` (14) and `yardmerge.json` (53, 8 re-aimed at the moved code): all dead.
+
+## 14. YC4 - plan (2026-10-29): the town's homes answer by cell and by version
+
+**Status: PLAN, waiting for the owner's approval. Nothing is built.**
+
+Section 6 decided that the homes answer goes by cell and by version, as the yards did. This section is the plan for
+that slice. `HOME_TOWN_MAX` is already 2,048 (YC1), so no town is cut today. YC4 is about the answer's cost: HOMES-SHED
+measured `/v1/homes/town` as the busiest route of the 2026-10-13 overload (88,079 asks in the hour), and
+`Scale-Arc.md` puts its cost in its rate, not its read (0.6 ms a read). Every page in a town asks the whole town's homes
+every 60 s (`onlineHomes.js` HOME_TOWN_TTL_MS), and almost every answer is the one it had.
+
+### 14.1 What is new: the answer has two parts
+
+The yards' answer was the same for every caller. The homes answer is not (`homes.js` homesInTown):
+
+- **Shared**, the same for every caller: `buildingKey`, `owner`, `entry`, `rent` (`vacant`, `from`), `score`, `look`
+  (none for a shunned home), `deed`, and a hall's `hall` (name, tag, heraldry).
+- **The caller's own**: `mine`, `character`, `crossed`, `refund`, `rentDue`, `tenant`, `guildmate`, `offer`,
+  `giving`, `member`, `keeper`, `hallEntry`, `hallSell`, `insider`, `vote`, a shunned home's `look` for its insiders,
+  the KNIGHT-HOUSE deed filter, and the town's `openGates`.
+
+Only the shared part can go by cell and version. The caller's own part stays one read, but of the caller's own rows.
+
+### 14.2 The shared part: cells and versions, as the yards
+
+- **Schema.** `home_cell_ver (map_id, cell, ver, built, stale_at)` and `home_cells (map_id, cell, built, shape, rows)`,
+  the shapes of 0190's two tables.
+- **Triggers move a cell's version** on a write of `homes` (insert, delete, an update of a shared column, and both
+  cells on arenaMoveHome), of `home_rooms` (listed, tenant, until, price), and of `guilds` (name, tag, heraldry: every
+  cell that holds one of its halls).
+- **Time moves vacancy too.** A room whose tenancy ends is vacant without a write. A cell's built row keeps the
+  earliest `until` of its let rooms as `stale_at`. A read at or past it treats the cell as changed and builds it again.
+- **The route.** `POST /v1/homes/cells`, `{ mapId, cells: [[cell, ver], ...] }`. It answers only the cells whose
+  version moved, under a byte budget with `more`, kept per cell in the isolate, and read on a replica with "a version
+  never goes back". It is section 3.4's route, word for word, for homes.
+
+### 14.3 The caller's own part
+
+`POST /v1/homes/town` keeps its path and answers only the caller's own part: the homes the caller owns, is a member
+of, rents, voted on, or has an open offer on, with their own fields, plus `openGates`. It reads by the caller's
+indexes, not the whole town, so its cost follows what the caller holds. It stays on the primary (its rows are the
+caller's own writes).
+
+### 14.4 The client
+
+`onlineHomes.js` keeps one registry and `homeAt` reads it as today. It merges the shared rows by cell with the
+caller's own rows by building key. It asks the cells as `yardCellSync.js` asks the yards: nearest first, with the
+versions it holds, every 60 s. It asks its own part every 60 s and after each of its own writes, as `wrote` does now.
+The hub's home words (`hearHome`) make it ask at once, as today.
+
+### 14.5 Release and old builds
+
+One release: the account service (a migration with the two tables, triggers and backfill, and the new route) before
+the site. The old full answer is not kept: an old build reads the new `/v1/homes/town` as a town where it owns
+homes and nobody else does, until the build notice reloads it (section 3.4's story). Strangers' doors show as
+nobody's home for those minutes, and a claim of one is refused by the service as today.
+
+### 14.6 Questions for the owner
+
+1. **Is YC4 worth its size now?** The read is cheap (0.6 ms), and the rate is what costs. A smaller step is to make
+   every unchanged answer free: a version for the whole town, and `/v1/homes/town` answering "unchanged" to a page
+   that holds it. That keeps one route and no cells. Cells win only in the widest towns.
+2. **Old builds** (14.5): show strangers' homes as nobody's until the reload, or keep the old full answer for one
+   release?
+3. **The push.** The hub's home words already make pages ask. Does YC4 need its own signed order, as YC2's YARD ORDER,
+   or are those words enough?
