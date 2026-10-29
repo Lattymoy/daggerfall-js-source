@@ -1,5 +1,5 @@
 // @ts-check
-// UNION-CHILDREN (FIELD BUGS 2026-10-29; bible/06-Systems/Legacy-Arc.md section 9a): a child of two players' union, as
+// UNION-CHILDREN (FIELD BUGS 2026-10-29b; bible/06-Systems/Legacy-Arc.md section 9a): a child of two players' union, as
 // the other house hears of them - the card's law, which the account service writes (server-account/src/legacy.js
 // unionKinOf) and the client reads (systems/legacy/unionKin.js). A leaf: the Worker reads it without the family's dice.
 import { houseNameOk } from '../../net/houseLaw.js';

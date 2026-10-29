@@ -1,5 +1,5 @@
 // @ts-check
-// UNION-CHILDREN (FIELD BUGS 2026-10-29; the owner: "Show on both trees"; bible/06-Systems/Legacy-Arc.md section 9a): a
+// UNION-CHILDREN (FIELD BUGS 2026-10-29b; the owner: "Show on both trees"; bible/06-Systems/Legacy-Arc.md section 9a): a
 // child of two players' union is of the house that bore them. The other house sees them through the marriage, as a
 // person of kind 'union' under the couple: never played there, never carrying its mantle, never standing in its world.
 import { personOf, newPerson, touch, fullNameOf } from './family.js';

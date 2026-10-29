@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-29 GROUND (bible/01-Overview/bugs/Field-Bugs-2026-10-29c.md): synthetic pins for the laws
+// FIELD BUGS 2026-10-29c (bible/01-Overview/bugs/Field-Bugs-2026-10-29c.md): synthetic pins for the laws
 // that moved the ground (GROUND_LAW 5). ROAD-DRY: "Large portion of road in jabivia is also a body of water" - Basic
 // Roads paves the sea and the ground there stood at the sea's own height (the freeware's causeways:
 // test/systems/travel/rpt1026_world_causeway.test.js). ACROSS-EDGE: "List of Ports with broken" - a port's quays met a

@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-29 (Discord #bug-reports, "Family between married characters not appearing for both players"):
+// FIELD BUGS 2026-10-29b (Discord #bug-reports, "Family between married characters not appearing for both players"):
 // "she has a child between our characters which is ready to play with the 'Enduring' feature, but that child doesn't
 // appear on my family tree." UNION-CHILDREN (the owner: "Show on both trees"; bible/06-Systems/Legacy-Arc.md section 9a):
 // a child of two players' union is of the house that bore them, and the other house sees them through the marriage - a

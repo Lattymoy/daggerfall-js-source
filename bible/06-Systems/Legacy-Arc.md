@@ -461,7 +461,7 @@ migration `0084_legacy.sql`, acct87; `systems/legacy/realmLine.js`; `test/server
   prompt, inside a temple - the priest is DFU's static NPC, as section 8 says; and each house raises its own children
   of the union (two records, two clocks), and sees the other's through the marriage (UNION-CHILDREN, section 9a).
 
-## 9a. UNION-CHILDREN - the union's children on both trees (FIELD BUGS 2026-10-29, acct217)
+## 9a. UNION-CHILDREN - the union's children on both trees (FIELD BUGS 2026-10-29b, acct217)
 
 Reported in #bug-reports on 2026-10-29: "she has a child between our characters which is ready to play with the
 'Enduring' feature, but that child doesn't appear on my family tree." It was reported on 2026-10-12 too

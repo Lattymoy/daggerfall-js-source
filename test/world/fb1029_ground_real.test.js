@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-29 GROUND, ACROSS-EDGE on the game's own ports (ARENA2; bible/01-Overview/bugs/Field-Bugs-2026-10-29c.md).
+// FIELD BUGS 2026-10-29c, ACROSS-EDGE on the game's own ports (ARENA2; bible/01-Overview/bugs/Field-Bugs-2026-10-29c.md).
 // The report: "List of Ports with broken" - Kalunnunu's quays stood at a 14 m cliff where its pixel's north edge stood
 // over open sea, and six of its jetties ran into a face. The ports as the stream builds them online - both town packs on
 // the world-data door, the Landforms row, Basic Roads' network, the gates' roads - each pixel with the towns of its 3 x 3
