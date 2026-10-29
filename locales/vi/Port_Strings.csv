@@ -349,6 +349,8 @@ holdings.horse.boons.starving,"Đói lả - không phi nước đại cho đến
 holdings.wagon.boons.failing,"Sắp hỏng, nhưng vẫn chạy hết tốc lực."
 holdings.wagon.boons.rickety,"Ọp ẹp, nhưng vẫn chạy hết tốc lực."
 holdings.wagon.boons.sound,"Chắc chắn - nhờ vậy chạy nhanh hơn."
+interior.setDown.buried,"Nơi bạn để lại vài món đồ giờ có đồ đạc. Chúng đã được đặt dưới chân bạn."
+interior.setDown.chest,"Chiếc rương từng ở đây đã biến mất. Những gì bên trong đã được đặt dưới chân bạn."
 inventory.cape.label,"Hiện áo choàng"
 inventory.cape.title,"Hiện hoặc ẩn áo choàng và hào quang của bạn. Người chơi khác cũng thấy như vậy."
 inventory.store.chestAct,"Hãy đóng rương trước khi làm việc đó."

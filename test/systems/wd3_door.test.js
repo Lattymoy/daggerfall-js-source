@@ -82,7 +82,7 @@ test('WD3 the door: a name two mods carry answers from the mod loaded LATER - Be
   assert.equal(markOf(getDFBlockReplacementData(7, 'FIGHBM00.RMB')), 444);
   assert.equal(worldDataVendorCarries(BC, 'FIGHBM00.RMB.json'), true);
   assert.equal(worldDataVendorCarries(BC, 'location-17-4.json'), false);
-  assert.equal(worldDataVendorCarries('detailed-ships', 'FIGHBM00.RMB.json'), false);
+  assert.equal(worldDataVendorCarries('warm-ashes-ships', 'FIGHBM00.RMB.json'), false);
 });
 
 /** A pack as formats/worldData/worldDataPack.js opens one, counting its rebuilds; `location-17-6.json` will not rebuild. */

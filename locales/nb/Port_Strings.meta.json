@@ -9509,16 +9509,6 @@
   "tr": "a933a09d26f2",
   "by": "claude-in-session"
  },
- "credits.aquaticSprites.terms": {
-  "en": "25f24874f144",
-  "tr": "03dd9b516035",
-  "by": "claude-in-session"
- },
- "credits.aquaticSprites.what": {
-  "en": "ece4a3a65979",
-  "tr": "1f7c2497ac2f",
-  "by": "claude-in-session"
- },
  "credits.author.andContributors": {
   "en": "5aeb443464d2",
   "tr": "4b465576a1c7",
@@ -9627,16 +9617,6 @@
  "credits.daggerfall.what": {
   "en": "76f60d40344d",
   "tr": "9ea664bc510a",
-  "by": "claude-in-session"
- },
- "credits.detailedShips.terms": {
-  "en": "d5fb971400e5",
-  "tr": "3b3ecea74dde",
-  "by": "claude-in-session"
- },
- "credits.detailedShips.what": {
-  "en": "612b38bc06a8",
-  "tr": "d8d8834c5e2f",
   "by": "claude-in-session"
  },
  "credits.dex.terms": {
@@ -16104,6 +16084,16 @@
   "tr": "55309abf5d9f",
   "by": "claude-in-session"
  },
+ "interior.setDown.buried": {
+  "en": "8159ee0fda03",
+  "tr": "b1d95bcadb0c",
+  "by": "claude-in-session"
+ },
+ "interior.setDown.chest": {
+  "en": "1f204d2ccfb2",
+  "tr": "f1c33f4747da",
+  "by": "claude-in-session"
+ },
  "inventory.batch.aetheric": {
   "en": "fa7822c465ea",
   "tr": "a9e7e807717f",
@@ -20575,8 +20565,8 @@
   "by": "claude-in-session"
  },
  "menu.online.groundNote": {
-  "en": "4cbea68e150c",
-  "tr": "4b7fe3a5df3d",
+  "en": "3e3556cb0512",
+  "tr": "599f49a36882",
   "by": "claude-in-session"
  },
  "menu.online.lockNote": {
@@ -20600,8 +20590,8 @@
   "by": "claude-in-session"
  },
  "menu.online.modsNote": {
-  "en": "1195346cb9a8",
-  "tr": "f1bcba1b1574",
+  "en": "c94c6f3265c3",
+  "tr": "ada65b851e59",
   "by": "claude-in-session"
  },
  "menu.online.needsAccount": {
@@ -22029,11 +22019,6 @@
   "tr": "910fff163dbd",
   "by": "claude-in-session"
  },
- "mods.aquaticSprites.Enabled.description": {
-  "en": "4d8dc0bd3968",
-  "tr": "7e04b7ae43b1",
-  "by": "claude-in-session"
- },
  "mods.betterAmbience.BetterFootsteps.armorVolume.description": {
   "en": "ea78623b8aa0",
   "tr": "08ab862ee78f",
@@ -22412,11 +22397,6 @@
  "mods.daggerfallEnemyExpansion.title": {
   "en": "b7c44fa76f13",
   "tr": "b7c44fa76f13",
-  "by": "claude-in-session"
- },
- "mods.detailedShips.Enabled.description": {
-  "en": "a76a3c98fb54",
-  "tr": "50c15ccc4078",
   "by": "claude-in-session"
  },
  "mods.diverseWeapons.Enabled.description": {

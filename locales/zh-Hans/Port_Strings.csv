@@ -349,6 +349,8 @@ holdings.horse.boons.starving,"饥肠辘辘 - 进食前无法疾驰。喂喂它�
 holdings.wagon.boons.failing,"快散架了，但仍全速前行。"
 holdings.wagon.boons.rickety,"摇摇晃晃，但仍全速前行。"
 holdings.wagon.boons.sound,"坚固 - 因此行驶得更快。"
+interior.setDown.buried,"你留下东西的地方现在摆着家具。那些东西已放在你脚下。"
+interior.setDown.chest,"原本在这里的箱子不见了。里面的东西已放在你脚下。"
 inventory.cape.label,"显示披风"
 inventory.cape.title,"显示或隐藏你的披风和光环。其他玩家看到的也一样。"
 inventory.store.chestAct,"请先关上箱子再这样做。"

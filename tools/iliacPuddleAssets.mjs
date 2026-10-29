@@ -12,7 +12,7 @@
 //   the icon's aspect at run time) decoded at its first mip, every pixel
 //   the game samples there. None is a classic record: each is measured
 //   against every record of every TEXTURE file (--arena2) by the search
-//   tools/detailedShipsAssets.mjs puts its pictures through, and the tool
+//   tools/lib/classicSource.mjs runs, and the tool
 //   refuses to write one a record covers.
 // - `ItemTemplates.json` - the mod's seven item templates, the bundle's
 //   text verbatim.
@@ -24,7 +24,7 @@ import { PNG } from 'pngjs';
 import { isMain } from './lib/isMain.mjs';
 import { readUnityBundle } from '../src/formats/unity/unityBundle.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
-import { classicRecords, findClassicSource } from './detailedShipsAssets.mjs';   // DS1's search: a record within a pixel of the picture's size, at every offset
+import { classicRecords, findClassicSource } from './lib/classicSource.mjs';   // a record within a pixel of the picture's size, at every offset
 
 /** The seven pictures PassiveFishSpeciesCatalog loads, by their bundle names. */
 export const FISH_TEXTURES = Object.freeze(['longnose_butterflyfish', 'largemouth_bass', 'canary_rockfish', 'crucian_carp', 'mackerel', 'white_zebra_angelfish', 'finulon']);

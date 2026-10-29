@@ -158,10 +158,10 @@ VAMP-HOOD.
 
 No code path the port owns shrinks a model in a dungeon. `rdbLayout.js` `getModelMatrix` is translation times three
 rotations, as DFU's; the dungeon host adds only the block's origin and bakes it into the static batch; its only
-models are the block's own placements (a custom model is one of Detailed Ships' stand-ins, none a bench); a mod's
+models are the block's own placements (a custom model is one of the DET stand-ins, none a bench); a mod's
 dungeon block from JSON carries no scale; the gibs are sprites; nothing online stands furniture in a dungeon. What is
 left is the data itself - the block may place a small furniture model at an angle, which DFU would draw the same way -
-or a place that was not a dungeon (Detailed Ships' own records squash beds into bunks and benches to 0.58 below decks).
+or a place that was not a dungeon (the ship mod of the day squashed beds into bunks and benches to 0.58 below decks).
 **Wanted: the dungeon's name, or a save standing in it**, and the block's furniture is listed against the real ARENA2
 in minutes.
 

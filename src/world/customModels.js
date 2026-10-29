@@ -3,8 +3,8 @@
 // DFU asks MeshReplacement.ImportCustomGameobject before it reads a
 // model out of ARCH3D.BSA, which is how a mod stands a model Daggerfall
 // never had. The port's mill machinery (41601) was the first such model
-// and was answered by a special case in the pipeline; Detailed Ships
-// names ten more (the pieces it borrows from Daggerfall Expanded Textures,
+// and was answered by a special case in the pipeline; the town mods name
+// many more (the pieces they borrow from Daggerfall Expanded Textures,
 // which the port stands in itself - world/detStandIns.js), so the door is
 // a registry now: a model id, a builder that answers the dfMeshToModel
 // shape (metres, Unity's frame, UVs over the named classic textures), and

@@ -94,7 +94,8 @@ test('private interiors: live-door restore resolves building locally, rejects wr
 });
 
 test('private interiors: visiting never reads or overwrites personal caches; save/Recall retains private instance', () => {
-  const fn = (name, supplied) => { const scope = { privateVisitOwner: null, interiorCabin: null, placeInstance: null, _sceneHeldForLayout: null, _visitLayout: 'classic', layoutLocationKeyOfMapId: () => 1, questSceneCtx: () => ({ mapId: -1 }), visitLayoutNow: () => 'classic', ...supplied }; return Function(...Object.keys(scope), `return (${declarations.get(name)});`)(...Object.values(scope)); };
+  // AUDIT SHIP-REFIT: each restore resets what it holds for the arrival (scenes/arrivalSetDown.js)
+  const fn = (name, supplied) => { const scope = { privateVisitOwner: null, interiorCabin: null, placeInstance: null, _sceneHeldForLayout: null, _visitLayout: 'classic', layoutLocationKeyOfMapId: () => 1, questSceneCtx: () => ({ mapId: -1 }), visitLayoutNow: () => 'classic', arrivalSetDown: { reset() {} }, ...supplied }; return Function(...Object.keys(scope), `return (${declarations.get(name)});`)(...Object.values(scope)); };
   const guard = { privateVisitRoom: room, currentInteriorScene: () => assert.fail('visitor cannot touch personal cache'), _keptHidden: [] };
   fn('cacheInteriorScene', guard)(); fn('restoreInteriorScene', guard)();
   assert.equal(fn('decorOwnerHere', { privateVisitRoom: room })(), false, 'visiting grants no furnishing/storage rights');
