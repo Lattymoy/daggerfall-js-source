@@ -98,7 +98,8 @@ test('STAFF1 host wiring by source: asked only of staff by the service\'s own gl
   // folded to /god before the parser
   assert.match(w, /\nconst TEST_GODMODE = false;\nconst isStaffT = \(g\) => TEST_GODMODE \|\| isStaff\(g\);\n/, 'TESTBUILD: the switch ships off, so isStaffT is isStaff');
   // PIN MOVED (DRAGON-RIDE): /dragon's own grammar asked first (systems/staffDragon.js - the relay reads net/staffCommands.js's bytes)
-  assert.match(w, /const staffCmd = isStaffT\(staffGlyphs\(\)\) \? \(parseDragonCommand\(text\) \?\? parseStaffCommand\(text\.replace\(\/\^\\\/godmode\\b\/i, '\/god'\), staffPowers\(\)\)\) : null;[^\n]*\n\s*if \(staffCmd\) \{ runStaffCommand\(tabId, staffCmd\); return 'error' in staffCmd \? false : true; \}/);
+  // PIN MOVED (AUDIT TAMRIEL-WIDE B4/C7): then scenes/staffTp.js parseStaffLine, a pixel past the Bay first
+  assert.match(w, /const staffCmd = isStaffT\(staffGlyphs\(\)\) \? \(parseDragonCommand\(text\) \?\? parseStaffLine\(text\.replace\(\/\^\\\/godmode\\b\/i, '\/god'\), staffPowers\(\)\)\) : null;[^\n]*\n\s*if \(staffCmd\) \{ runStaffCommand\(tabId, staffCmd\); return 'error' in staffCmd \? false : true; \}/);
   assert.ok(w.indexOf('const staffCmd = isStaffT(') < w.indexOf('const cmd = parseChatLine('), 'asked before the chat\'s own refusal');
   assert.match(w, /_staffGlyphs = Array\.isArray\(who\?\.glyphs\) \? who\.glyphs : \[\];[^\n]*\n\s*if \(!isStaffT\(_staffGlyphs\)\) setStaffPowers\(\{ god: false, fly: false \}\);/);
   assert.match(w, /const staffGlyphs = \(\) => _staffGlyphs;/);

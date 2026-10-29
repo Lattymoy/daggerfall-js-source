@@ -2247,8 +2247,8 @@ instruction), and what was found (FACT):
   (`01-Overview/bugs/Field-Bugs-2026-10-12b.md`): every wash is its hue at full spread, Lodestone wears one of its own (the
   boulder's loose stone is its lump, unwashed), and a washed vein's wash is its colour (`ORE_DYE`, `uBatchDye`: the
   lit flat's brightness in the wash's hue), not a multiply over the picture's own.
-- **The dungeon veins** (section 6): `1 + hash % 4` a dungeon a UTC day, a dungeon named by DFU's own identity
-  (`MapTableData.MapId & 0xfffff`, `mapsFile.js`), the id `dvein:<id>:<day>:<slot>`. Their table: Silver 3, Gold 4,
+- **The dungeon veins** (section 6): `1 + hash % 4` a dungeon a UTC day, a dungeon named by its identity
+  (`scenes/dungeonIdentity.js`, below), the id `dvein:<id>:<day>:<slot>`. Their table: Silver 3, Gold 4,
   Dwarven Scrap 4, Platinum 5, Adamantium 6, and Moonstone 4 in a Woodlands or HauntedWoodlands dungeon (4.1's deep
   veins); tiers 3-6 by the weights. They stand on the dungeon's own walls: from one of its foe markers (the layout's
   list, the same on every client) a ray at chest height along the slot's bearing through the dungeon's collider to the
@@ -2324,7 +2324,7 @@ As built:
   (`rocks`: the boxes of World of Daggerfall's placements named `Rocks` or `Mountains` that stood - after the road's
   clearance - `world/worldOfDaggerfall/worldOfDaggerfall.js` picks now carry their name). **The fixed city** - **FLAGGED by name**, as
   PROF1's. **Building interiors**: the forge (above). **Dungeons**: `scenes/dungeonContext.js` hands the host its
-  identity (`MapId & 0xfffff`, none for a spawned dungeon), its wall ray (`veinWall`: from a foe marker at chest
+  identity (`dungeonIdentity.js`, none for a spawned dungeon), its wall ray (`veinWall`: from a foe marker at chest
   height, a near-vertical face within 12 m) and its own flats' doors; the mode machine tells the host a dungeon was
   entered (after the flip and its lock) and left (the veins dropped while the dungeon still stands, beside the quest
   foes' hand-over); E reaches a vein before the exit's press; the dungeon rig draws the act's tool and swings nothing
@@ -2352,6 +2352,23 @@ As built:
   is the target (NODE-AIM); a vein's stone tile is never inside a rock piece (VEIN-CLEAR). The meter names the press.
   And, asked (Mac: "Hold it at nodes"), a node under the look or an act playing holds the free climb's walk-in start
   (CLIMB-NODE, `player/motor.js` _freeStart) - walking into a vein's rock to reach it had climbed the rock.
+
+- **AUDIT TAMRIEL-WIDE C3** (2026-10-28, acct209; the owner: "ensure our future development isnt just Daggerfall
+  anymore and is the entirety of tamriel"): a dungeon vein past the Bay is keyed by its whole map id. Past the Bay the
+  bits of `MapId & 0xfffff` are a lane's count, not a pixel. An Eltheric ruin and a lair shared one id (53,534 of
+  56,792 ruins; Old Aelara and the lair at (2393,-635) were both 573867), and so did two abysses: one witnessed fact
+  and one day's slots for both. The law is `scenes/dungeonIdentity.js`, `discoveryKeyOf`'s (AUDIT TESA II P6): a Bay
+  id keeps the mask byte for byte, a place the port made keys by its whole id. The service takes 0 to 0xffffffff
+  (`nodeLaw.js:"export const DUNGEON_ID_MAX = 0xffffffff;"`). The keys are TEXT: no migration, and the rows under the
+  old keys are orphaned.
+- **The abyss's ground** (AUDIT TAMRIEL-WIDE C3): an abyss past the Bay names its pit's ground, as the gathering reads
+  that pixel (`dungeonIdentity.js:"export function keptGround(x, y) {"`). Its template is picked by hash and by the
+  player's quest sites, so two players could name two grounds for one abyss. At sea past the Bay that ground is the
+  Ocean climate and region 0, the politic map's clamp, as a haul there reads it. The Bay's abyss keeps its template's
+  ground, the one its facts were witnessed under. **Deploy**: the account service (acct209) first, then the site; an
+  older service refuses a whole id (`bad-node`, `bad-pixels`). The relay is unchanged. **Pinned**:
+  `test/world/worldWide/audit_tamrielwide_account.test.js` (4 of its 7), `tools/mutants/audit_tamrielwide_account.json`
+  (6 of its 17), all dead.
 
 ## 24. PROF3 - Smithing: the anvil, quality and provenance, as built (SHIPPED 2026-09-28, at `dev`)
 
