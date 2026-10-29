@@ -262,9 +262,9 @@ export function createStandInSpell(host) {
  * its host's hand door (`land(box, dealt)` - scenes/serpentHost.js handStruck, which holds it to 5,000 and sends it); no
  * number rises, as it never did. Its Continuous Damage carried as the court's is, each round's sum to the segment the spell
  * last met. `frame(alive)` each frame of the serpent's fight: none (the fight over, my ship's deck, my death) ends its rounds.
- * @param {{ player: any, standIn: () => any, land: (box: any, d: number) => any, now?: () => number, rolls?: () => number }} o
+ * @param {{ player: any, standIn: () => any, land: (box: any, d: number) => any, now?: () => number, rolls?: () => number, cap?: () => number }} o DRAGON3: the Dwarven Dragon's door too, `cap` the gate's (standInBlowCap)
  */
-export function createSerpentSpell({ player, standIn, land, now = Date.now, rolls = Math.random }) {
+export function createSerpentSpell({ player, standIn, land, now = Date.now, rolls = Math.random, cap = () => SERPENT_HIT_CAP_X * SERPENT_HAND_REF }) {
   const rounds = createStandInRounds({ now, rolls });
   let met = null;
   return {
@@ -275,7 +275,7 @@ export function createSerpentSpell({ player, standIn, land, now = Date.now, roll
       if (kept.length) met = box;
       rounds.keep('s', kept);
       if (!(dealt >= 1)) return kept.length > 0;
-      tellSpellLanded({ caster: player, target: e, foe: null, spell: sp, r, self: false, took: standInShown(dealt, SERPENT_HIT_CAP_X * SERPENT_HAND_REF), cast: caster?.cast ?? null });   // AUDIT SCHOOLS L2 F4: told to the riders - what can land, STAND-IN-WHOLE's law
+      tellSpellLanded({ caster: player, target: e, foe: null, spell: sp, r, self: false, took: standInShown(dealt, cap()), cast: caster?.cast ?? null });   // AUDIT SCHOOLS L2 F4: told to the riders - what can land, STAND-IN-WHOLE's law
       land(box, dealt);
       return true;
     },

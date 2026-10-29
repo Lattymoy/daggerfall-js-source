@@ -61,7 +61,7 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
 | Slice | What | Status |
 |---|---|---|
 | WW1 | The world's grid (the key, the theatres, the areas) and its places (the registry, the Bay's provider); the living world's towns and dungeons off it, grouped by area | BUILT (below) |
-| WW2 | The gates in every theatre: one Oblivion Gate a game day in each theatre that holds ground for one, lane = theatre, the Bay's lane 0 its own today; the site scan over the registry; the omen, ring, plaque, chat, timers and event board per gate; the relay's rooms, the receipts and the herald per lane | BUILT (below) |
+| WW2 | The gates in every theatre: one Oblivion Gate a game day in each theatre that holds ground for one, lane = theatre, the Bay's lane 0 its own today; the site scan over the registry; the omen, ring, plaque, chat, timers and event board per gate; the relay's rooms, the receipts and the herald per lane | BUILT (below); a province's on its turn since FRONTS |
 | WW-GATES-EVERYWHERE | The gates of the eight provinces standing (the lanes WW2 built, opened); a province's kill its own province's seats'; the provinces' scans in the page's idle moments - and a Sky-Ketch station in every province at its crown capital (KETCH-EVERYWHERE, `11-Multiplayer/Sky-Ketch.md` section 22) | BUILT (below, after WW2) |
 | WW3 | The sea, whole: the packet lanes over the registry's ports on the world's water; the raiders' and the director's sea world-wide; the port test's bounds | BUILT (below) |
 | WW-R | The provinces as regions: each province past the Bay a region of its own after the Bay's 62 (the owner, 2026-10-24: "Separate regions make sense"); the politic map past the Bay; the people, the law, the banks and the regional channels a province's | BUILT (below) |
@@ -70,10 +70,11 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
 | HOVER-NAMES | The plaque's names past the Bay (the owner, 2026-10-28: "NPCs past the bay dont show name on tooltip hover"): read through and probed in the real game on the Bay and in three places past it, every walker named; not reproduced here, the probe kept for the Morrowind lane and online | PROBED (below) |
 | WW-C | Cyrodiil (the owner, 2026-10-24: "Each region becomes home to their own abundant harvesting resources with other resources sprinkled in. Cyrodil becomes the new open PvP area with the wrothgarian mountain area being retired in favor of this. Cryodil will be home to all abundent resources and everything else from the wrothgarian zone"): WW-C1 each province's ground rich in its own kinds and ore, Cyrodiil in all; WW-C2 the open zone moved from the Wrothgarian Mountains to Cyrodiil | BUILT (below) |
 | WW4 | The serpent in every sea: a serpent lane for each sea theatre | IN PART (WW7-12, below: the one serpent's site rolled over every lane of the world, the hub telling every game the site the accounts agree on; a serpent a sea theatre still planned) |
-| WW5 | The Hollows and the stars: an Abyss dungeon slot and a Starfall coven night in each theatre | BUILT (below, 2026-10-27: a coven night and a Hollow on the Bay's lane and each province's, Cyrodiil's open zone none) |
+| WW5 | The Hollows and the stars: an Abyss dungeon slot and a Starfall coven night in each theatre | BUILT (below, 2026-10-27: a coven night and a Hollow on the Bay's lane and each province's, Cyrodiil's open zone none); a province's on its turn since FRONTS |
 | WW6 | The raids past the Bay: the raids' towns off the registry by area, the wire's world pixels; a staff town event past the Bay | BUILT (below) |
 | WW7 | The roads' PEOPLE past the Bay - not the roads: the network past the Bay is TESA's (PR #1184, TESA14 and TESA15 - laid by the Bay's own law, drawn on the map). WW7 puts the living world's travellers, patrols, bands and the Watch on it (WW7-7: the ways' planner walks the roads past the Bay) and keys the town economy by the world's key; it lands on #1184 once that merges | IN PROGRESS on #1184 (2026-10-25; section WW7 below) |
 | WORLD-LANES | The world's lanes of map ids (AUDIT BAY-LEFT items 1, 25 and 35): the spawned dungeons and their Elite tier past the Bay in the spawn lane, the Ocean Holes' pits past the Bay and past the Veil in the abyss lane; neither in the open zone | BUILT (section WORLD-LANES below) |
+| FRONTS | Two provinces a game day: the Bay's events every day, and past it only the day's two provinces start a gate, raids, stars or a Hollow, on a cycle every machine knows ahead (the owner, 2026-10-29: "events are way overdone with their spawning") | BUILT (section FRONTS below) |
 
 ## WW1 - the world's grid and its places (BUILT, 2026-10-24)
 
@@ -205,7 +206,8 @@ there was a sentence no player's language had (L10N4).
 ## WW2 - the gates of every theatre (BUILT, 2026-10-24)
 
 The owner's "more than once at a time", for the Oblivion Gate: a gate a game day in EVERY theatre that holds ground
-for one, each with its own omen, ring, room, receipts and herald, the Bay's the gate it always was.
+for one, each with its own omen, ring, room, receipts and herald, the Bay's the gate it always was. Since FRONTS, a
+province's gate opens on its turn alone (FRONTS, below).
 
 ### The lanes (`net/gate/gateLaw.js`)
 
@@ -219,7 +221,8 @@ for one, each with its own omen, ring, room, receipts and herald, the Bay's the 
 - **THE STAGGER.** Lane t's day runs `GATE_LANE_STAGGER` (144 classic minutes, twelve real) behind lane t - 1's:
   `gameDayAt(nowMs, lane)`, `gateBaseMinute`, `gateTimes(n)` and `gateAt(nowMs, lane)` are each lane's own. A game
   day's ten gates open across 108 of its 120 real minutes, two or three standing (omen to wrath) at once - measured,
-  not assumed - so a player can ride from one to the next.
+  not assumed - so a player can ride from one to the next. Since FRONTS a game day opens three - the Bay's and its two
+  provinces' - one to three standing at once.
 - **THE ORDER.** Across lanes a number is not an order (lane 1's day 900 opens before the Bay's day 901, a hundred
   million past it): `gateOrder(a, b)` weighs by opening. The hub's rite ledger and a cell's ledger keep "the latest
   gate" by it.
@@ -1322,8 +1325,10 @@ Measured on the freeware's registry with TESA's places (the game's own templates
 | Black Marsh | 32 | 31 | 16 |
 | Cyrodiil | 0 | 0 | 0 |
 
-125 raids a game day past the Bay beside the Bay's 22, each province's towns at the Bay's own pace. Day 600's first
-Skyrim raid is on Torbarke (2425, 270), bandits, its key `64:-1000124:600`, its cell `world:151,16`.
+125 raids a game day past the Bay beside the Bay's 22, each province's towns at the Bay's own pace (since FRONTS, the
+day's two provinces' alone online: 29 to 33). Day 601's first
+Skyrim raid is on Falkreath (1829, 139), bandits, its key `64:-1000102:601`, its cell `world:114,8` (FRONTS: day 600 is
+Morrowind's and Summerset's turn; Torbarke on day 600 was the pin before).
 
 ### The client (`systems/raidingParties.js`, wired by `scenes/raidHost.js`)
 
@@ -2192,3 +2197,91 @@ province's bank - `worldModes.js` `currentNameBank`). The plaque's person pick i
   Solitude stood four street people named alike: DFU's seed is the record's place in its block against the location,
   so a block repeated repeats its people.
 
+## SKYRIM-AURORA - an aurora in Skyrim's sky alone (recorded, 2026-10-29)
+
+The aurora (`07-Rendering/Skyrim-Aurora.md`) is drawn where the player stands under Skyrim's sky: Skyrim's theatre,
+or at sea past the Bay the nearest land's within ten picture units (the Sea of Ghosts). Nowhere else, the Bay included.
+The owner asked for Skyrim's sky ("let's develop an aurora for the skyrim sky then"), and Skyrim is the province the
+lore gives one. Its latitude is read on the land in use, the trace once it lands. Its pins hold Skyrim and its sea
+beside the Bay, Morrowind, High Rock, Cyrodiil, High Rock's north sea and the far ocean.
+
+## FRONTS - two provinces a game day (BUILT, 2026-10-29; AUDIT FRONTS the same day)
+
+The owner, 2026-10-29: *"Currently with the expansion of tamriel, events are way overdone with their spawning. I like
+players planning routes to farm world events, but we need to reduce or design around this"*. Asked, the owner chose
+rotating fronts: the Bay always runs, and each game day two provinces are stirred on a cycle known ahead. Read cold the
+same day: `01-Overview/audits/Audit-Fronts.md`.
+
+**What stood.** WW2, WW5 and WW6 gave every province its own lane at the Bay's own pace. Online, a game day (two real
+hours) opened 9 gates and rolled about 147 raids (the Bay's 22, the provinces' 125). A festival night dropped 27 stars,
+9 at once, and 9 Hollows stood, since a Hollow lasts two real days. There was an event in every direction, so a route
+was no choice.
+
+### The law (`net/frontLaw.js`)
+
+`frontLanes(day)` is the two provinces (lanes 1 to 8) stirred on a game day of the shared clock. A cycle is four days,
+and each province stirs once in it, in an order the cycle's number shuffles (`FRONT_SALT`). A province that closed one
+cycle is swapped out of the next one's first day, so none stirs two days running. A province waits two to seven days
+(four to fourteen real hours) between turns, and its turn moves round the real clock. `frontStands(day, lane)` is true
+for every lane outside the fronts (the Bay's, the open zone's) and for a province on its turn. It imports nothing.
+
+### What reads it
+
+- **Gates** (`gateLaw.js isGateDay`): a province's gate stands when the day it opens in (`gateFrontDay`) is its turn.
+  Every reader of a gate follows: the clock's gate (`gateAt` walks to the next that stands), the relay's door
+  (`gateAdmits`, `gateHolds`), the rite, the herald's omen and the site word. Hammerfell's gate opens at 00:48, so its
+  omen (21:48) and rise come on the game day before its turn.
+- **Stars** (`starfallLaw.js starInWindow`): a province's star lands on its turn. `starOk` stays the shape alone, so a
+  receipt minted before reads as it did. Every other night's last star lands on a day's edge, so a turn can hold one or
+  two of a night's three.
+- **Raids** (`raidLaw.js raidLaneStands`): the relay's slots (`raidDaySlots`) and the client's roll (`raidsForLane`)
+  for a province on its turn alone, the old law's on it. Online alone: offline a save's days are its own, and its
+  province raids keep the mod's pace (`fronted`, AUDIT FRONTS B6).
+- **Hollows** (`sdLaw.js sdDue`, `sdRise`): a province's rise waits for its turn and, while `SD_FRONT_HOLLOWS` (2) stand
+  past the Bay, for one to end. The hub counts them (`_sdHeldPast`), beats the provinces that waited longest first
+  (`sdBeatOrder`) and arms a turn that ended while it asked the census. A Hollow keeps its two real days, so one risen
+  before the update stands to its end.
+
+The Bay's lane is the law before in each, pinned. A game day now holds 3 gates, about 53 raids (22, and 29 to 33), 9
+stars a festival night and at most 3 Hollows. A turn does not promise a Hollow: the cap is the usual state.
+
+### Planning a route
+
+The Timers window's World group shows today's fronts to the day's end and the next two days'
+(`systems/frontWords.js frontTimerRows`, read where the relay keeps the lanes past the Bay - `gateLanes.js lanesOk`). They
+are a schedule (`sched`), never counted as under way. A province's "An Abyss Dungeon rises" row says not before its turn
+and a free place (`sdRiseNotBefore`), as the Hollow's Discord cards do. A place past the Bay says on the travel map's
+card when gates, raids, stars and Abyss Dungeons start there (`frontCardLine`). Both are the enhanced skin's. The event
+board is unchanged: a front is a schedule, not a place to go.
+
+### What stays (recorded)
+
+The Sky-Ketch's stations (a voyage a week each), the serpent (one in the world), staff events (staff's call) and every
+event on the Bay. Cyrodiil's open zone stands no site-bound event, as before. A raid's or a star's lane is read off its
+key, never its pixel (the relay holds no picture of the provinces), so a modified client can say a stirred province's
+raid from another province's pixel - a hole before FRONTS, put to the owner (AUDIT FRONTS A3).
+
+### The relay (world287 - world286 on its branch, renumbered past FB1029 GROUND at the merge of main) and the deploy
+
+`net/frontLaw.js` joins the relay's bundle and the account service's (`account-deploy.yml`'s filter); the account
+service reads no front. The site may deploy first, and on a merge it does: it sends nothing world287 alone reads, and
+until the relay follows, the old hub raises Hollows in every province. Once world287 is up, a page older than the
+update - a tab left open, a desktop copy not yet restarted - stands off-turn gates, stars and raids whose words the
+relay drops; a gate, a star or a raid under way at the deploy off its province's turn is dropped the same way.
+
+### THE FOUR HOSTS (Home.md)
+
+`scenes/world.js` wired: the Timers' `fronts` and the held map's `fronts` (bootWorld's ceiling 35,315 to 35,318).
+`scenes/exterior.js` FLAGGED - the fixed-city bench stands no event past the Bay. `scenes/worldModes.js` and
+`scenes/dungeonContext.js` FLAGGED - they stand no world event; their pause face reads the host's Timers source.
+
+### Pins and mutants
+
+`test/net/fronts1_law.test.js` (11): the schedule for eight days and its laws over 40,000; who stands; the gates; the
+stars over ten festival days; the raids against the old slots, and offline; the Hollows' turn, cap, bound and fair
+order; the Timers' rows by name; the wiring. `test/ui/fronts1_card.test.js`: the card drawn. `tools/mutants/fronts.json`:
+35, all dead. The WW2, WW5, WW6 and WW-GATES-EVERYWHERE pins moved to the provinces' turns (PIN MOVED: FRONTS). EG3's
+Hollow realm re-recorded (146 to 144 frames): fewer province Hollows rise before it opens, so the seeded die stands
+elsewhere; seeded afresh at the fight's first hello, main and FRONTS say the same 142 frames. FRONTS merged before CI
+read it, so two pins moved after (PIN MOVED: FRONTS): EVENT-TIP's host pin takes the fronts' clock beside the gates,
+and L10N3e's census counts `frontWords.js`'s name lookup.

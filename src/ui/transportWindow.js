@@ -29,12 +29,12 @@
 // the row is permanently the disabled art, which is exactly what a
 // shipless player sees in DFU.
 
-import { loadImg, drawImg, nativeMetrics } from './native/nativePanel.js';
+import { loadImg, drawImg, nativeMetrics, drawRect, shadowText } from './native/nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { TRANSPORT_MODES } from '../systems/transport.js';
-import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedText, t } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
 
 /** DaggerfallUI.cs:693's localized key, and the English DFU ships. */
@@ -59,7 +59,12 @@ export const TRANSPORT_RECTS = Object.freeze({
   cart: [5, 23, 120, 7],
   ship: [5, 32, 120, 7],
   exit: [44, 42, 43, 15],
+  // DRAGON5 (bible/11-Multiplayer/Dwarven-Dragon.md section 10; a departure: DFU's MOVE00I0 has four rows): the tamed
+  // dragon's row, drawn under the panel's art for its owner alone
+  dragon: [5, 60, 120, 9],
 });
+/** DRAGON5: the Dragon row's words, in the player's language. */
+export const transportDragonText = () => t('transport.dragon', 'Dwarven Dragon');
 export const TRANSPORT_DISABLED_RECTS = Object.freeze({
   horse: [1, 10, 120, 7],
   cart: [1, 19, 120, 7],
@@ -89,7 +94,7 @@ export const transportPanelOrigin = (art) => ({
 
 export class TransportWindow {
   /**
-   * @param {{hasHorse:boolean, hasCart:boolean, shipAvailable?:boolean,
+   * @param {{hasHorse:boolean, hasCart:boolean, shipAvailable?:boolean, hasDragon?:boolean,
    *          onMode:Function, onClose?:Function}} hooks
    */
   constructor(hooks) {
@@ -103,6 +108,7 @@ export class TransportWindow {
       horse: !!hooks.hasHorse,
       cart: !!hooks.hasCart,
       ship: !!hooks.shipAvailable,
+      dragon: !!hooks.hasDragon,   // DRAGON5: no row at all without one
     });
   }
 
@@ -156,10 +162,11 @@ export class TransportWindow {
     if (hit(TRANSPORT_RECTS.cart)) { if (this.enabled.cart) this._pick(TRANSPORT_MODES.Cart); return true; }
     if (hit(TRANSPORT_RECTS.ship)) { if (this.enabled.ship) this._pick(TRANSPORT_MODES.Ship); return true; }
     if (hit(TRANSPORT_RECTS.exit)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
+    if (this.enabled.dragon && hit(TRANSPORT_RECTS.dragon)) { this._pick(TRANSPORT_MODES.Dragon); return true; }
     return true;
   }
 
-  draw(renderer, canvas) {
+  draw(renderer, canvas, font = null) {
     if (!_art) return;
     const m = nativeMetrics(canvas);
     const o = transportPanelOrigin(_art);
@@ -171,6 +178,11 @@ export class TransportWindow {
       const [sx, sy, sw, sh] = TRANSPORT_DISABLED_RECTS[row];
       const [bx, by] = TRANSPORT_RECTS[row];
       drawTransportDisabledRow(renderer, _art.disabled, m, [sx, sy, sw, sh], [o.x + bx, o.y + by]);
+    }
+    if (this.enabled.dragon && font) {
+      const [dx, dy, dw, dh] = TRANSPORT_RECTS.dragon;
+      drawRect(renderer, m, o.x + dx, o.y + dy, dw, dh, [0, 0, 0, 0.8]);
+      shadowText(renderer, font, transportDragonText(), m, o.x + dx, o.y + dy + 1, { align: 'center', w: dw });
     }
   }
 }

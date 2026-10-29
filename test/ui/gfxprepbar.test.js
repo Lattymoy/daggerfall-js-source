@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { startPrograms, startProgramsInTurn, buildProgram, startedPrograms } from '../../src/render/glProgram.js';
 import {
-  gfxProgress, gfxStep, gfxStart, chromiumWeb, mountGfxPrep, gfxWords, GFX_HOLD_MS, GFX_READY_MS, GFX_POLL_MS, GFX_GIVE_UP_MS,
+  gfxProgress, gfxStep, gfxStart, chromiumWeb, mountGfxPrep, gfxWords, GFX_HOLD_MS, GFX_POLL_MS, GFX_GIVE_UP_MS,
   CHROME_WIN, EDGE_WIN, CHROME_MAC,
 } from '../../src/ui/gfxPrepBar.js';
 import { stringBreach } from '../../tools/plainText.mjs';
@@ -73,11 +73,8 @@ test('GFX-BAR polling never asks startPrograms\' ready(): the spy list is read, 
   assert.equal(calls.program, made, 'ready() would start again a pair a build took; the bar never does');
 });
 
-test('GFX-BAR the phases: hidden on a warm cache; filling; ready once full for the hold; gone after the ready time', () => {
-  let s = gfxStart();
-  s = gfxStep(s, { done: 3, total: 3 }, 0);
-  assert.equal(s.phase, 'idle', 'already done when first seen: no bar at all');
-  s = gfxStep(s, { done: 0, total: 0 }, 10);
+test('GFX-BAR the phases: filling; ready once full for the hold; ready holds while the menu stands', () => {
+  let s = gfxStep(gfxStart(), { done: 0, total: 0 }, 10, false);
   assert.equal(s.phase, 'idle', 'nothing started yet');
   s = gfxStep(s, { done: 1, total: 4 }, 20);
   assert.equal(s.phase, 'filling');
@@ -90,8 +87,16 @@ test('GFX-BAR the phases: hidden on a warm cache; filling; ready once full for t
   assert.equal(s.phase, 'filling');
   s = gfxStep(s, { done: 9, total: 9 }, 300 + GFX_HOLD_MS);
   assert.equal(s.phase, 'ready');
-  s = gfxStep(s, { done: 9, total: 9 }, 300 + GFX_HOLD_MS + GFX_READY_MS);
-  assert.equal(s.phase, 'gone');
+  s = gfxStep(s, { done: 9, total: 9 }, 300 + GFX_HOLD_MS + GFX_GIVE_UP_MS * 2);
+  assert.equal(s.phase, 'ready', 'it never fades off the menu');
+});
+
+test('GFX-ALWAYS a warm cache, or a build done during the intro, shows ready at once - never no bar (mutant: the old hidden warm cache)', () => {
+  assert.equal(gfxStep(gfxStart(), { done: 3, total: 3 }, 0).phase, 'ready', 'already done when first seen');
+  assert.equal(gfxStep(gfxStart(), { done: 0, total: 0 }, 0).phase, 'ready', 'every program already taken');
+  const early = gfxStep(gfxStart(), { done: 3, total: 3 }, 0, false);
+  assert.equal(early.phase, 'filling', 'done, but the mount set is still to come');
+  assert.equal(gfxStep(early, { done: 3, total: 3 }, 10, true).phase, 'filling', 'the hold runs first');
 });
 
 test('GFX-BAR the phases: never ready before the mount set is queued; a driver that never says done lets the bar go (mutants: settled ignored; no give-up)', () => {
@@ -163,7 +168,7 @@ function fakeDom() {
   return { doc, win, keys, timers, press };
 }
 
-test('GFX-BAR mounted: the bar fills with the count, says ready, then fades; the poll stops once gone and on unmount', () => {
+test('GFX-BAR mounted: the bar fills with the count and says ready; the poll stops once ready and on unmount', () => {
   const { gl, done } = stubGl();
   startPrograms(gl, pairs(2, 'm'));
   const { doc, win, timers } = fakeDom();
@@ -178,15 +183,30 @@ test('GFX-BAR mounted: the bar fills with the count, says ready, then fades; the
   assert.equal(g.bar.children[1].children[0].style.width, '50%');
   done.add(progOf(gl, 1, 'm'));
   clock = 20; g.tick();
+  const n = timers.length;
   clock = 20 + GFX_HOLD_MS; g.tick();
   assert.equal(g.bar.children[0].textContent, gfxWords().ready);
-  assert.equal(g.bar.classList.contains('gone'), false);
-  const n = timers.length;
-  clock += GFX_READY_MS; g.tick();
-  assert.equal(g.bar.classList.contains('gone'), true, 'faded');
-  assert.equal(timers.length, n, 'no poll after gone');
+  assert.equal(g.bar.children[1].children[0].style.width, '100%');
+  assert.equal(g.bar.classList.contains('gone'), false, 'it stays');
+  assert.equal(timers.length, n, 'no poll after ready');
   g.unmount();
   assert.equal(g.root.parent, null);
+});
+
+test('GFX-ALWAYS mounted on a warm cache: the bar shows ready at once', () => {
+  const { gl, done } = stubGl();
+  startPrograms(gl, pairs(2, 'w'));
+  done.add(progOf(gl, 0, 'w')); done.add(progOf(gl, 1, 'w'));
+  const { doc, win, timers } = fakeDom();
+  const g = mountGfxPrep({ gl, doc, win, shell: undefined, now: () => 0, settled: () => true });
+  assert.equal(g.bar.hidden, false, 'shown');
+  assert.equal(g.bar.children[0].textContent, gfxWords().ready);
+  assert.equal(g.bar.children[1].children[0].style.width, '100%');
+  assert.equal(timers.length, 0, 'nothing left to poll');
+  g.unmount();
+  const taken = mountGfxPrep({ gl, doc, win, shell: undefined, now: () => 0, settled: () => true, list: () => [] });
+  assert.equal(taken.bar.children[1].children[0].style.width, '100%', 'every program taken: a full bar, never an empty one');
+  taken.unmount();
 });
 
 test('GFX-BAR no KHR_parallel_shader_compile (Firefox, Safari): no bar; the button alone in a Chromium tab, nothing at all elsewhere', () => {

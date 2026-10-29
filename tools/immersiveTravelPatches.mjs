@@ -16,8 +16,9 @@
 //     tool (tools/worldDataPatch.mjs makePatch) diffs each file against
 //     the classic block and refuses a patch that does not rebuild the
 //     author's file sha256 for sha256. That is the patch to ship.
-//   - WITHOUT one (this repository's containers carry no ARENA2): the edit
-//     read off the file alone. The editor appends what the author placed
+//   - WITHOUT one: the edit read off the file alone (the vendored four were
+//     first cut so, and missed the editor's automap byte and rotations -
+//     ARENA2-IT, 2026-10-29; `sh tools/fetch-data.sh` gives the ARENA2). The editor appends what the author placed
 //     and leaves the header's counts as the classic block had them
 //     (NumMisc3dObjectRecords 2, NumMiscFlatObjectRecords 1 in all four -
 //     World-Data-Patches.md: "Record counts in the headers are not kept in

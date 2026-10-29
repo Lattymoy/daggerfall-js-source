@@ -1,0 +1,245 @@
+[
+  {
+    "name": "DRAGON5-a-dragon-sellable",
+    "file": "src/systems/dragon/dragonMount.js",
+    "old": "  bound: true, packOnly: true,\n",
+    "new": "\n",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-its-id-on-a-sword",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "  if ((has(item, 'dragonId') || has(item, 'dragonLook')) && !isDragonMount(item)) out.add('dragon');\n",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-a-forged-id-lawful",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "  if (isDragonMount(item) && !dragonMountWellFormed(item)) out.add('dragon');\n",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-the-dragon-a-horse-ride",
+    "file": "src/systems/transport.js",
+    "old": "export const isHorseRide = (mode) => mode === TRANSPORT_MODES.Horse || mode === TRANSPORT_MODES.Cart;",
+    "new": "export const isHorseRide = (mode) => isRiding(mode);",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-the-key-preferring-the-dragon",
+    "file": "src/systems/transport.js",
+    "old": "  if (hasHorse(items)) return TRANSPORT_MODES.Horse;\n",
+    "new": "  if (hasDragon(items)) return TRANSPORT_MODES.Dragon;\n  if (hasHorse(items)) return TRANSPORT_MODES.Horse;\n",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-the-hold",
+    "file": "src/systems/dragon/dragonFlight.js",
+    "old": "      if (held < TAKEOFF_HOLD_S || winded) return null;",
+    "new": "      if (winded) return null;",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-the-winded-takeoff",
+    "file": "src/systems/dragon/dragonFlight.js",
+    "old": "      if (held < TAKEOFF_HOLD_S || winded) return null;",
+    "new": "      if (held < TAKEOFF_HOLD_S) return null;",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-the-landing-at-once",
+    "file": "src/systems/dragon/dragonFlight.js",
+    "old": "        return s.grounded && air >= DRAGON_LAND_AFTER_S ? (land(), 'landed') : null;",
+    "new": "        return s.grounded ? (land(), 'landed') : null;",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-the-pace",
+    "file": "src/systems/dragon/dragonFlight.js",
+    "old": "    flyMult: () => (aloft ? DRAGON_FLY_SPEED / LEVITATE_PACE : 1),",
+    "new": "    flyMult: () => 1,",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-the-ride-step-unheard",
+    "file": "src/player/motor.js",
+    "old": "    try { _rideStep?.(dt, this, input); } catch (e) { console.warn('[motor] ride step', e?.message ?? e); }",
+    "new": "    void _rideStep;",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-the-pace-unregistered",
+    "file": "src/player/dragonRide.js",
+    "old": "registerFlySpeedMod('dragonMount', flight.flyMult);",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-the-catch",
+    "file": "src/player/dragonRide.js",
+    "old": "  if (_falling >= DRAGON_CATCH_S && flight.lift()) { _falling = 0; _heard?.('took-off'); }",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-the-row-for-anyone",
+    "file": "src/ui/transportWindow.js",
+    "old": "      dragon: !!hooks.hasDragon,",
+    "new": "      dragon: true,",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-the-click-unheard",
+    "file": "src/ui/transportWindow.js",
+    "old": "    if (this.enabled.dragon && hit(TRANSPORT_RECTS.dragon)) { this._pick(TRANSPORT_MODES.Dragon); return true; }\n",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-a-saves-dragon-with-none-held",
+    "file": "src/player/mountRig.js",
+    "old": "    if (mode === TRANSPORT_MODES.Dragon && !hasDragon(playerEntity?.items ?? [])) mode = TRANSPORT_MODES.Foot;",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-the-firing-picture-ignored",
+    "file": "src/player/dragonSaddle.js",
+    "old": "      const a = art[firing ? 1 : 0];",
+    "new": "      const a = art[0];",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-the-saddle-undrawn",
+    "file": "src/player/mountRig.js",
+    "old": "      if (player.transportMode === TRANSPORT_MODES.Dragon && !ridePaused) saddle.draw(canvas);   // DRAGON5\n",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-any-id-lawful",
+    "file": "server-account/src/judge.js",
+    "old": "  return dragons.filter((d) => { const ok = have.get(d.id) === d.look && !seen.has(d.id); seen.add(d.id); return !ok; })",
+    "new": "  return dragons.filter(() => false)",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-another-characters-tame",
+    "file": "server-account/src/judge.js",
+    "old": "SELECT id, look FROM dragon_mounts WHERE account = ?1 AND char_id = ?2').bind(player, char)",
+    "new": "SELECT id, look FROM dragon_mounts WHERE account = ?1').bind(player)",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-a-second-copy",
+    "file": "server-account/src/judge.js",
+    "old": "const ok = have.get(d.id) === d.look && !seen.has(d.id);",
+    "new": "const ok = have.get(d.id) === d.look;",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-the-tame-unheard-by-the-verdict",
+    "file": "server-account/src/verdict.js",
+    "old": "  const law = judged.count + products.length + tames.length + ledger.forged.length;",
+    "new": "  const law = judged.count + products.length + ledger.forged.length;",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-the-mounts-ride-unsent",
+    "file": "src/systems/staffDragon.js",
+    "old": "export const dragonPoseRide = (mode = null) => ((_ride || mode === 'Dragon') && _relayKeepsRide ? DRAGON_POSE_RIDE : null);",
+    "new": "export const dragonPoseRide = (mode = null) => (_ride && _relayKeepsRide ? DRAGON_POSE_RIDE : null);",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-the-look-the-horses",
+    "file": "src/scenes/world.js",
+    "old": "      rc: riding ? (player.transportMode === TRANSPORT_MODES.Dragon ? dragonLookOfItem(dragonMountOf(playerEntity.items)) : riddenHorseLook(playerEntity.items ?? [])) || undefined : undefined,",
+    "new": "      rc: riding ? riddenHorseLook(playerEntity.items ?? []) || undefined : undefined,",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-bound-with-the-switch-off",
+    "file": "src/scenes/dragonRewards.js",
+    "old": "    if (!(host.dragonMountOnline ?? DRAGON_MOUNT_ONLINE) || !characterId || characterId !== who()) return false;",
+    "new": "    if (!characterId || characterId !== who()) return false;",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-a-second-dragon",
+    "file": "src/scenes/dragonRewards.js",
+    "old": "      if (!hasDragon(items)) { host.takeSpoil?.({ kind: 'item', item: newDragonMount(t) }); bound = true; }",
+    "new": "      { host.takeSpoil?.({ kind: 'item', item: newDragonMount(t) }); bound = true; }",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-another-characters-bound-here",
+    "file": "src/scenes/dragonRewards.js",
+    "old": "    if (!(host.dragonMountOnline ?? DRAGON_MOUNT_ONLINE) || !characterId || characterId !== who()) return false;",
+    "new": "    if (!(host.dragonMountOnline ?? DRAGON_MOUNT_ONLINE) || !characterId) return false;",
+    "tests": [
+      "test/net/dragon/dragon5_mount.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5-the-realm-trades-a-dragon",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": "582, 1820, 2000, 2001]);",
+    "new": "582, 2000, 2001]);",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  }
+]

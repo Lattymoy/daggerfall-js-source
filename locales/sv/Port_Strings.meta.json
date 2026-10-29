@@ -1654,6 +1654,11 @@
   "tr": "3f95f624261c",
   "by": "claude-in-session"
  },
+ "account.refusal.lineageInUse": {
+  "en": "b210f6197958",
+  "tr": "c6b4a59d2a3b",
+  "by": "claude-in-session"
+ },
  "account.refusal.lineageModel": {
   "en": "1db7f75d16bf",
   "tr": "ffa51cd2eab5",
@@ -2840,8 +2845,8 @@
   "by": "claude-in-session"
  },
  "account.refusal.tooManyLineages": {
-  "en": "04ee7a4c73e9",
-  "tr": "2dcc01e591be",
+  "en": "5f69291d1652",
+  "tr": "5e1b6d90f736",
   "by": "claude-in-session"
  },
  "account.refusal.tooManySaves": {
@@ -8884,6 +8889,36 @@
   "tr": "aabc4e17bb8b",
   "by": "claude-in-session"
  },
+ "menu.realm.families": {
+  "en": "862a863ff592",
+  "tr": "d57599a33e4b",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familiesHide": {
+  "en": "34d8b60fe253",
+  "tr": "c12e644c1eed",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familiesShow": {
+  "en": "d97d1ee339e4",
+  "tr": "8201464a0e80",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyRemoved": {
+  "en": "2cbcaf937fc9",
+  "tr": "5391a49aa943",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyRow": {
+  "en": "5e293ce32dbd",
+  "tr": "d299ccc1b7ba",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyUnnamed": {
+  "en": "9b115c99b1da",
+  "tr": "d28347628238",
+  "by": "claude-in-session"
+ },
  "menu.realm.heading": {
   "en": "81480a8e85a4",
   "tr": "aa91a8891305",
@@ -8907,6 +8942,26 @@
  "menu.realm.play": {
   "en": "5d12bd53552c",
   "tr": "530e5f498c3f",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamily": {
+  "en": "a53c064ca700",
+  "tr": "295cfc0cb77d",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyAsk": {
+  "en": "5694f452ab8b",
+  "tr": "9cb75d1ccf51",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyBody": {
+  "en": "c055ce52aa9e",
+  "tr": "6213596aae16",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyYes": {
+  "en": "e963907dac5c",
+  "tr": "da7fbe506913",
   "by": "claude-in-session"
  },
  "menu.realm.strandedAsk": {
@@ -11304,11 +11359,6 @@
   "tr": "afdea9bc0ae6",
   "by": "claude-in-session"
  },
- "pvp.kit.cost": {
-  "en": "1dcf44fc4a34",
-  "tr": "6a43c26dae69",
-  "by": "claude-in-session"
- },
  "pvp.kit.cure": {
   "en": "741ccd1eaaed",
   "tr": "b298721b07f5",
@@ -11347,11 +11397,6 @@
  "pvp.kit.heal": {
   "en": "c166015199fe",
   "tr": "33e918773ab2",
-  "by": "claude-in-session"
- },
- "pvp.kit.help": {
-  "en": "48cf8423570c",
-  "tr": "90f889de71e0",
   "by": "claude-in-session"
  },
  "pvp.kit.icon": {
@@ -11427,11 +11472,6 @@
  "pvp.kit.speedAttr": {
   "en": "2d2cb022bc3d",
   "tr": "9999d5db5769",
-  "by": "claude-in-session"
- },
- "pvp.kit.spell": {
-  "en": "2747aac69844",
-  "tr": "dc2f392b3d6a",
   "by": "claude-in-session"
  },
  "pvp.kit.strength": {
@@ -11517,6 +11557,76 @@
  "pvp.rules.ride": {
   "en": "c174608598e9",
   "tr": "9ff59825d5fc",
+  "by": "claude-in-session"
+ },
+ "pvp.set.area": {
+  "en": "2745debaa64a",
+  "tr": "3ba926791218",
+  "by": "claude-in-session"
+ },
+ "pvp.set.book": {
+  "en": "4ae8ead59009",
+  "tr": "e8ef9b2af563",
+  "by": "claude-in-session"
+ },
+ "pvp.set.cost": {
+  "en": "43d2201525a1",
+  "tr": "12589a007772",
+  "by": "claude-in-session"
+ },
+ "pvp.set.full": {
+  "en": "edfd05ea6f02",
+  "tr": "c59d5d9dd9dd",
+  "by": "claude-in-session"
+ },
+ "pvp.set.gift": {
+  "en": "11e419e034da",
+  "tr": "7365ebcb5e74",
+  "by": "claude-in-session"
+ },
+ "pvp.set.hint": {
+  "en": "435724b66a3d",
+  "tr": "f1f3100bdc8f",
+  "by": "claude-in-session"
+ },
+ "pvp.set.locked": {
+  "en": "38129ae0ca8c",
+  "tr": "7a7ec13981a9",
+  "by": "claude-in-session"
+ },
+ "pvp.set.make": {
+  "en": "60656d0bf900",
+  "tr": "ef8dc69b84f3",
+  "by": "claude-in-session"
+ },
+ "pvp.set.makeIt": {
+  "en": "a94431ee22f0",
+  "tr": "16d934869765",
+  "by": "claude-in-session"
+ },
+ "pvp.set.pick": {
+  "en": "40c77c73bdf4",
+  "tr": "80bb6b80660c",
+  "by": "claude-in-session"
+ },
+ "pvp.set.remove": {
+  "en": "e963907dac5c",
+  "tr": "da7fbe506913",
+  "by": "claude-in-session"
+ },
+ "pvp.set.title": {
+  "en": "1995c625e529",
+  "tr": "11b5cea724e2",
+  "by": "claude-in-session"
+ },
+ "pvp.set.touch": {
+  "en": "e3f139abb7a5",
+  "tr": "4c3f78f9947b",
+  "by": "claude-in-session"
+ },
+ "pvp.set.yours": {
+  "en": "7b6f26f19aca",
+  "tr": "10b0b7adba22",
   "by": "claude-in-session"
  },
  "pvp.villain.label": {
