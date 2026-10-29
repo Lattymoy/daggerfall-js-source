@@ -2197,6 +2197,14 @@ province's bank - `worldModes.js` `currentNameBank`). The plaque's person pick i
   Solitude stood four street people named alike: DFU's seed is the record's place in its block against the location,
   so a block repeated repeats its people.
 
+## SKYRIM-AURORA - an aurora in Skyrim's sky alone (recorded, 2026-10-29)
+
+The aurora (`07-Rendering/Skyrim-Aurora.md`) is drawn where the player stands under Skyrim's sky: Skyrim's theatre,
+or at sea past the Bay the nearest land's within ten picture units (the Sea of Ghosts). Nowhere else, the Bay included.
+The owner asked for Skyrim's sky ("let's develop an aurora for the skyrim sky then"), and Skyrim is the province the
+lore gives one. Its latitude is read on the land in use, the trace once it lands. Its pins hold Skyrim and its sea
+beside the Bay, Morrowind, High Rock, Cyrodiil, High Rock's north sea and the far ocean.
+
 ## FRONTS - two provinces a game day (BUILT, 2026-10-29; AUDIT FRONTS the same day)
 
 The owner, 2026-10-29: *"Currently with the expansion of tamriel, events are way overdone with their spawning. I like
@@ -2274,4 +2282,6 @@ stars over ten festival days; the raids against the old slots, and offline; the 
 order; the Timers' rows by name; the wiring. `test/ui/fronts1_card.test.js`: the card drawn. `tools/mutants/fronts.json`:
 35, all dead. The WW2, WW5, WW6 and WW-GATES-EVERYWHERE pins moved to the provinces' turns (PIN MOVED: FRONTS). EG3's
 Hollow realm re-recorded (146 to 144 frames): fewer province Hollows rise before it opens, so the seeded die stands
-elsewhere; seeded afresh at the fight's first hello, main and FRONTS say the same 142 frames.
+elsewhere; seeded afresh at the fight's first hello, main and FRONTS say the same 142 frames. FRONTS merged before CI
+read it, so two pins moved after (PIN MOVED: FRONTS): EVENT-TIP's host pin takes the fronts' clock beside the gates,
+and L10N3e's census counts `frontWords.js`'s name lookup.
