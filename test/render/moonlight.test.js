@@ -117,9 +117,10 @@ test('EV5: the wiring - three lit shaders, the latched flat tint, the studio, th
   // so the arm a future host forgets lives in one place.
   // PIN MOVED (NIGHT-FOG): the term's body is the controller's `moonNow`, which the lit fog asks too (systems/weather/nightFog.js)
   // PIN MOVED (SKYRIM-AURORA): and the aurora's light added to it (scenes/auroraHost.js withAuroraLight - null with none)
-  assert.match(shared, /const moonNow = \(\) => withAuroraLight\(enhancedSky\?\.state \? moonlightTerm\(enhancedSky\.state\) : dynamicMoonlight\(dynamicMoons\), aurora\?\.light \?\? null\);/,
+  // PIN MOVED (AUDIT SKYRIM-AURORA 2): at a view out's clock minute (`moonlight(minute)`)
+  assert.match(shared, /const moonNow = \(minute\) => withAuroraLight\(enhancedSky\?\.state \? moonlightTerm\(enhancedSky\.state\) : dynamicMoonlight\(dynamicMoons\), aurora\?\.light\(minute\) \?\? null\);/,
     'classic answers null - the 1:1 lane keeps the hard-off night');
-  assert.match(shared, /moonlight\(\) \{ return moonNow\(\); \},/, 'and the world light asks the same term');
+  assert.match(shared, /moonlight\(minute\) \{ return moonNow\(minute\); \},/, 'and the world light asks the same term');   // PIN MOVED (AUDIT SKYRIM-AURORA 2): a view out's minute
   // and the export itself answers, rather than merely being named: the
   // null arm, and byte-for-byte moonlightTerm for a state the mod's own
   // producer mints (dynamicMoonState, the shape shared.js hands it).
