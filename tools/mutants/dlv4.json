@@ -467,8 +467,8 @@
   {
     "name": "DLV4-blow-from-a-stranger",
     "file": "src/net/delve/delveLaw.js",
-    "old": "  if (!rec || !ctx.inWard || !Array.isArray(pose)) return ev;   // its word made its record",
-    "new": "  if (!rec || !Array.isArray(pose)) return ev;   // its word made its record",
+    "old": "  if (!rec || !ctx.inWard || !posed(pose)) return ev;   // its word made its record",
+    "new": "  if (!rec || !posed(pose)) return ev;   // its word made its record",
     "tests": [
       "test/net/delve/dlv4_law.test.js"
     ]
@@ -593,8 +593,8 @@
   {
     "name": "DLV4-act-from-a-stranger",
     "file": "src/net/delve/delveLaw.js",
-    "old": "  if (!led.a[acct] || !Array.isArray(pose) || led.p !== DP.work) return ev;",
-    "new": "  if (!Array.isArray(pose) || led.p !== DP.work) return ev;",
+    "old": "  if (!led.a[acct] || !posed(pose) || led.p !== DP.work) return ev;",
+    "new": "  if (!posed(pose) || led.p !== DP.work) return ev;",
     "tests": [
       "test/net/delve/dlv4_law.test.js"
     ]
