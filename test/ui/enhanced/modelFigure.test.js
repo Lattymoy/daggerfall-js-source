@@ -28,7 +28,9 @@ test('MF1: the portrait poses the body with ITS OWN stance idle, at its start, b
   const arm = read('src/combat/fpArm.js');
   const start = arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {');
   assert.ok(start > 0);
-  const fig = arm.slice(start, start + 3600);
+  // PIN MOVED (PROFILE-SLOTS): the figure poses through posePortrait, the profile's stage() through it too
+  assert.match(arm.slice(start, start + 200), /if \(!posePortrait\(\)\) return null;/);
+  const fig = arm.slice(arm.indexOf('  function posePortrait() {'), arm.indexOf('  function posePortrait() {') + 3600);
   const pose = fig.indexOf('const pose = portraitPose(t);');
   const upload = fig.indexOf('uploadThirdMesh(t);');
   assert.ok(pose > 0, 'the figure asks the body for its own pose');

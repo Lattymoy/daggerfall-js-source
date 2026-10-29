@@ -131,9 +131,9 @@
   },
   {
     "name": "SPRITEFACE-the-gather-off-the-figure",
-    "file": "src/scenes/world.js",
-    "old": "_auraSelf.yaw = mwViewSpriteFacing()?.yaw ?? player.bodyYawFor(cam.yaw);",
-    "new": "_auraSelf.yaw = mwViewSpriteFigure()?.yaw ?? player.bodyYawFor(cam.yaw);",
+    "file": "src/scenes/auraHost.js",
+    "old": "self.yaw = faced?.yaw ?? player.bodyYawFor(deps.camYaw());",
+    "new": "self.yaw = mwViewSpriteFigure()?.yaw ?? player.bodyYawFor(deps.camYaw());",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteface.test.js"
     ],
@@ -151,9 +151,9 @@
   },
   {
     "name": "SPRITEFACE-a-peers-light-off-the-pose",
-    "file": "src/scenes/world.js",
-    "old": "w.yaw = (peerWalkers?.faceOf?.(d.id) ?? peerRiders?.faceOf?.(d.id))?.yaw ?? peerBodyYaw(d.shown) ?? 0;",
-    "new": "w.yaw = peerBodyYaw(d.shown) ?? 0;",
+    "file": "src/scenes/auraHost.js",
+    "old": "const face = (walkers?.faceOf?.(d.id) ?? riders?.faceOf?.(d.id))?.yaw ?? peerBodyYaw(d.shown) ?? 0;",
+    "new": "const face = peerBodyYaw(d.shown) ?? 0;",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteface.test.js"
     ],

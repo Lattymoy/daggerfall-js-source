@@ -433,11 +433,10 @@ past the Bay - a province's start dungeon, an Arena town's guild job, any place 
   mark is read over the continent's frame (`tamrielFrameInBay`, WW2's gate rings' own bound), else over the Bay's. A
   mark keeps its place's own name (`placeName`).
 - **The press and the find** (`ui/heldMap.js` `_pastBayPick`): a press on a diamond past the Bay, and the journal's find
-  of a site there, pick the quest's place: its pixel and its name, no MAPS.BSA record under it (`pastBay`). On the travel
-  map no journey - the card offers none and no door opens one (TESA-NO-FAST: the land past the Bay is walked; AUDIT
-  STARTS U1: the card had offered "Travel here"); on the teleport map a portal's end only where it is a city's
-  (`portal`, TESA2's press - TESA13 keeps a portal's ends to the cities; U2: any quest's place had been one, the start
-  dungeon itself among them); on the zone map, whose card is down, a place inside the zone is the zone's own journey, as
+  of a site there, pick the quest's place: its pixel and its name, no MAPS.BSA record under it (`pastBay`). Since
+  TRAVEL-EVERYWHERE (2026-10-28, `03-World/Arena-Provinces.md`) it is a place by the quest's naming, as a Bay quest's is:
+  its journey on the travel map, a portal's end on the teleport map (AUDIT STARTS U1/U2 had withheld both under
+  TESA-NO-FAST, now retired); on the zone map, whose card is down, a place inside the zone is the zone's own journey, as
   a hall's is (U4, PVPJOURNEY). The find glides to it first. A sheet without the continent picks nothing.
 - **The lens past the Bay** (AUDIT STARTS U5): AUDIT GUIDE W2's "a player cannot stand in a place their map lacks" does
   not hold past the Bay - a start's dungeon stands off the classic map's table and off a map with the continent put
@@ -464,8 +463,8 @@ has every finding, its fix and its pin): 51 reported, 45 defects. What the secti
 - **`_BRISIEN`** (section 4): no cave's escape on its page, and neither its journal nor Lady Brisienna's letter tells
   the wreck as every player's.
 - **The page** (section 7): a press answers for the start whose story it drew - a phone's tap selects first.
-- **The map** (section 12): no journey past the Bay on the travel map, a portal only to a city's pixel, the zone's own
-  journey on the zone map; "(you are here)" past the Bay whatever map the player keeps.
+- **The map** (section 12): a quest's place past the Bay a place's journey and a portal's end (TRAVEL-EVERYWHERE), the
+  zone's own journey on the zone map; "(you are here)" past the Bay whatever map the player keeps.
 - **The voyages** (section 10; `Travel-View.md` LONG-VOYAGE): Daggerfall to every port and back, the landfall on dry
   ground beside a port the coast stands on water and past an off-table port's row and column, the wide box, any helm's
   crossing lanes-first, and a

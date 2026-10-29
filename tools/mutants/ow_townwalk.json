@@ -92,7 +92,7 @@
   {
     "name": "OTW-aim-stops-at-corner",
     "file": "src/systems/travel/travelAutopilot.js",
-    "old": "    if (left <= rest || i === last) {",
+    "old": "    if (left <= rest || i + 1 === n) {",
     "new": "    if (true) {",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"

@@ -52,13 +52,13 @@
   {
     "name": "IT1-6-no-capital-to-capital",
     "file": "src/systems/immersiveTravel.js",
-    "old": "  if (fromCapital && isCapital(dest.mapId)) return null;   // IL_093f-095e: capital to capital, anywhere\n",
-    "new": "",
+    "old": "  if (fromCapital && (dest.capital ?? isCapital(dest.mapId))) return null;",
+    "new": "  if (false) return null;",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js",
       "test/systems/travel/it1_heldmap.test.js"
     ],
-    "note": "Capital to capital is allowed region-locked."
+    "note": "TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay is travelled to as a Bay place is"
   },
   {
     "name": "IT1-7-capital-words-swapped",

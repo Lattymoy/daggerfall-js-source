@@ -111,32 +111,32 @@
   {
     "name": "PORTALANY-the-press-reads-no-land",
     "file": "src/ui/heldMap.js",
-    "old": "const end = this._portalCityAt(sx, sy) ?? (this.deps.portalLandPastBay ? portalLandAt(Math.floor(mx), Math.floor(my)) : null);",
-    "new": "const end = this._portalCityAt(sx, sy) ?? null;",
+    "old": "const end = this._portalCityAt(sx, sy) ?? mark ?? (this.deps.portalLandPastBay ? portalLandAt(Math.floor(mx), Math.floor(my)) : null);",
+    "new": "const end = this._portalCityAt(sx, sy) ?? mark ?? null;",
     "tests": [
       "test/systems/portalbay_stone.test.js"
     ],
-    "note": "WILD-CITY-PORT (PIN MOVED): re-aimed by content - the press's city is one method now (heldMap.js _portalCityAt), asked by ZONE-ZOOM too"
+    "note": "TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay is travelled to as a Bay place is"
   },
   {
     "name": "PORTALANY-the-guilds-map-given-the-land",
     "file": "src/ui/heldMap.js",
-    "old": "const end = this._portalCityAt(sx, sy) ?? (this.deps.portalLandPastBay ? portalLandAt(Math.floor(mx), Math.floor(my)) : null);",
-    "new": "const end = this._portalCityAt(sx, sy) ?? portalLandAt(Math.floor(mx), Math.floor(my));",
+    "old": "const end = this._portalCityAt(sx, sy) ?? mark ?? (this.deps.portalLandPastBay ? portalLandAt(Math.floor(mx), Math.floor(my)) : null);",
+    "new": "const end = this._portalCityAt(sx, sy) ?? mark ?? portalLandAt(Math.floor(mx), Math.floor(my));",
     "tests": [
       "test/systems/portalbay_stone.test.js"
     ],
-    "note": "WILD-CITY-PORT (PIN MOVED): re-aimed by content - the press's city is one method now (heldMap.js _portalCityAt), asked by ZONE-ZOOM too"
+    "note": "TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay is travelled to as a Bay place is"
   },
   {
     "name": "PORTALANY-the-hover-points-not",
     "file": "src/ui/heldMap.js",
-    "old": "cursor: (this.teleportationTravel ? past.city?.pixel || (this.deps.portalLandPastBay && portalLandAt(px, py)) : this._walksPastBay() && past.on !== 'sea') ? 'pointer' : ''",
-    "new": "cursor: (this.teleportationTravel ? past.city?.pixel : this._walksPastBay() && past.on !== 'sea') ? 'pointer' : ''",
+    "old": "cursor: (this.teleportationTravel ? past.city?.pixel || (past.on === 'mark' && this._pastBayTownAt(past.pixel.x, past.pixel.y)) || (this.deps.portalLandPastBay && portalLandAt(px, py)) : (this._walksPastBay() || this._travelsPastBay()) && this._pastBayPressPick(mx, my)) ? 'pointer' : ''",
+    "new": "cursor: (this.teleportationTravel ? past.city?.pixel || (past.on === 'mark' && this._pastBayTownAt(past.pixel.x, past.pixel.y)) : (this._walksPastBay() || this._travelsPastBay()) && this._pastBayPressPick(mx, my)) ? 'pointer' : ''",
     "tests": [
       "test/systems/portalbay_stone.test.js"
     ],
-    "note": "OW-PAST-BAY (PIN MOVED): re-aimed by content - the travel map walks past the Bay"
+    "note": "AUDIT TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay where the world knows it, the press's pick one method"
   },
   {
     "name": "PORTALANY-the-quest-place-a-city-alone",

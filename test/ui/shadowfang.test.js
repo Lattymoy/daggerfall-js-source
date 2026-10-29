@@ -144,7 +144,7 @@ test('SHADOW-FANG grant: SirMcMobdon alone holds it, case-folded, title and glyp
   assert.equal(titleWorn(row('SirMcMobdon', { title: 'shadowfang' }), env), 'shadowfang');
   assert.equal(equipRefusal('shadowfang', row('SirMcMobdon'), env), null, 'theirs to wear');
   assert.equal(equipRefusal('apostle', row('SirMcMobdon'), env), 'not-held');
-  assert.deepEqual(wardrobeOf(row('sirmcmobdon', { title: 'shadowfang' }), env, nowS), { titles: ['developer', 'shadowfang'], title: 'shadowfang', glyphs: ['dev', 'shadowfang'], auras: ['shadowcloak', 'seraphwings'], aura: null, insignia: [], icons: [], icon: null });   // STAFF-PANEL1 (PIN MOVED): the developer's beside, the Shadow Fang still worn; PIN MOVED (WITCH1): and no profile icon; WB9g: and no insignia bought; SHADOW-CLOAK (PIN MOVED): the list holds the Holo Shadow Cloak now, held but not worn until they put it on
+  assert.deepEqual(wardrobeOf(row('sirmcmobdon', { title: 'shadowfang' }), env, nowS), { titles: ['developer', 'shadowfang'], title: 'shadowfang', glyphs: ['dev', 'shadowfang'], auras: ['shadowcloak', 'seraphwings'], aura: null, insignia: [], icons: [], icon: null, armoryHeld: [], armory: null });   // STAFF-PANEL1 (PIN MOVED): the developer's beside, the Shadow Fang still worn; PIN MOVED (WITCH1): and no profile icon; WB9g: and no insignia bought; SHADOW-CLOAK (PIN MOVED): the list holds the Holo Shadow Cloak now, held but not worn until they put it on; ARMORY (PIN MOVED): no Aura Armory piece held or worn
   for (const h of ['Dutchess', 'SquidKamer', 'Lattymoy', 'Stranger']) {
     assert.ok(!titlesHeld(row(h), env).includes('shadowfang'), `${h} does not hold it`);
     assert.ok(!glyphsOf(row(h), env, nowS).includes('shadowfang'));
@@ -291,8 +291,8 @@ test('SHADOW-FANG the account card: the button keeps the plain crimson (its bord
   assert.ok(ENHANCED_CSS.includes(`.card button.acttitle.${badgeClass('tl', 'shadowfang')} { color: #d3193c; }`));
   assert.equal((badgeCss().match(/\.acttitleword/g) ?? []).length, Object.keys(TITLE_GRADIENT).length, 'only a gradient title gets a word rule - Shadow Fang\'s, and since PENITENT Penitent\'s');
   const js = rd('src/ui/enhanced/enhancedAccount.js');
-  const wardrobe = js.slice(js.indexOf('function wardrobe()'), js.indexOf('function paint()'));
-  assert.match(wardrobe, /const word = el\('span', 'acttitleword', TITLE_TEXT\[key\] \?\? key\);\n\s*setTitleFlame\(word, key\);[^\n]*\n\s*b\.append\(word\);/);   // PIN MOVED (SHOP): the word kept in hand, so a flame title's plate is set on it before it is appended
+  const wardrobe = rd('src/ui/characterSlots.js');   // PIN MOVED (PROFILE-SLOTS): the wardrobe is the character's slots' pickers
+  assert.match(wardrobe, /const word = el\('span', 'acttitleword', TITLE_TEXT\[[^\n]*?\(key\)\] \?\? key\);\n\s*setTitleFlame\(word, key\);[^\n]*\n\s*b\.append\(word\);/);   // PIN MOVED (SHOP): the word kept in hand, so a flame title's plate is set on it before it is appended
   assert.match(wardrobe, /const svg = glyphArtNode\(doc, g, 'acctglyphart', 1\.6\);/);
   assert.doesNotMatch(js, /createElementNS/, 'no svg door of the card\'s own');
 });

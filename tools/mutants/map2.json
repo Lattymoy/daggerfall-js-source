@@ -205,11 +205,12 @@
   {
     "name": "walked-only-for-coords",
     "file": "src/ui/heldMap.js",
-    "old": "    if (s && (sel.coords || isPlayerControlledTravel(s, st.opts))) {",
-    "new": "    if (s && sel.coords) {",
+    "old": "    if (s && ((sel.coords && !sel.place) || isPlayerControlledTravel(s, st.opts))) {",
+    "new": "    if (s && sel.coords && !sel.place) {",
     "tests": [
       "test/ui/heldmap.test.js"
-    ]
+    ],
+    "note": "TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay is travelled to as a Bay place is"
   },
   {
     "name": "coords-hand-no-flag",

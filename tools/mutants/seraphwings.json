@@ -345,9 +345,9 @@
   },
   {
     "name": "SERAPHWINGS-the-wings-unposed",
-    "file": "src/scenes/world.js",
-    "old": "for (const w of _auraDraw) if (auraLookOf(w.aura).mesh) {",
-    "new": "for (const w of _auraDraw) if (w.aura === 'shadowcloak') {",
+    "file": "src/scenes/auraHost.js",
+    "old": "for (const w of auraDraw) if (auraLookOf(w.aura).mesh) {",
+    "new": "for (const w of auraDraw) if (w.aura === 'shadowcloak') {",
     "tests": [
       "test/net/seraphwings.test.js"
     ]
@@ -444,7 +444,7 @@
   },
   {
     "name": "SERAPHWINGS-my-sprite-ignored",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/auraHost.js",
     "old": " ?? auraSpriteBones(mwViewSpriteFigure())",
     "new": "",
     "tests": [
@@ -453,8 +453,8 @@
   },
   {
     "name": "SERAPHWINGS-a-peers-sprite-ignored",
-    "file": "src/scenes/world.js",
-    "old": " ?? auraSpritePosed(w, peerWalkers?.figureOf(w.id) ?? peerRiders?.figureOf?.(w.id), peerWalkers?.faceOf?.(w.id) ?? peerRiders?.faceOf?.(w.id))",
+    "file": "src/scenes/auraHost.js",
+    "old": " ?? auraSpritePosed(w, walkers?.figureOf(w.id) ?? riders?.figureOf?.(w.id), walkers?.faceOf?.(w.id) ?? riders?.faceOf?.(w.id))",
     "new": "",
     "tests": [
       "test/net/seraphwings.test.js"
@@ -464,7 +464,7 @@
   {
     "name": "SERAPHWINGS-the-figure-never-kept",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      figure = last.riding || FP ? null : { base: c[1] - cam.feet[1], mpp: batchPx > 0 ? batchSize.h * grow / batchPx : 0, beast: !!last.transformed };   // SERAPH-WINGS: a rider's frame is the horse's too - no shoulders read off it; AUDIT 3: nor the first-person billboard's (the camera is in it), and its metres a pixel (the shoulders by the pixel - auraSpriteBones) and its form",
+    "old": "      figure = last.riding || FP ? null : { base: c[1] - cam.feet[1], mpp: batchPx > 0 ? batchSize.h * grow / batchPx : 0, beast: !!last.transformed, marks: batchMarks, shift: (c[0] - cam.feet[0]) * Math.cos(cam.yaw) - (c[2] - cam.feet[2]) * Math.sin(cam.yaw) };",
     "new": "",
     "tests": [
       "test/net/seraphwings.test.js"
@@ -673,7 +673,7 @@
   {
     "name": "SERAPHWINGS-the-light-never-cast",
     "file": "src/scenes/world.js",
-    "old": "for (const l of auraWingLights(_auraWearers, cam.pos, _auraLights)) _peerLights.push(l); return _peerLights;",
+    "old": "for (const l of auraHost.wingLights(cam.pos)) _peerLights.push(l); return _peerLights;",
     "new": "return _peerLights;",
     "tests": [
       "test/net/seraphwings.test.js"
@@ -700,9 +700,9 @@
   },
   {
     "name": "SERAPHWINGS-my-sprites-facing-ignored",
-    "file": "src/scenes/world.js",
-    "old": "yaw: mwViewSpriteFacing()?.yaw ?? player.bodyYawFor(cam.yaw), turn:",
-    "new": "yaw: player.bodyYawFor(cam.yaw), turn:",
+    "file": "src/scenes/auraHost.js",
+    "old": "yaw: faced?.yaw ?? player.bodyYawFor(deps.camYaw()), turn:",
+    "new": "yaw: player.bodyYawFor(deps.camYaw()), turn:",
     "tests": [
       "test/net/seraphwings.test.js"
     ],
@@ -793,8 +793,8 @@
   {
     "name": "SERAPHWINGS-a-beasts-form-lost",
     "file": "src/net/peer/peerRiders.js",
-    "old": "beast: r.form === 'beast' } : null",
-    "new": "beast: false } : null",
+    "old": "beast: r.form === 'beast', marks: r.marks ?? null",
+    "new": "beast: false, marks: r.marks ?? null",
     "tests": [
       "test/net/seraphwings.test.js"
     ]

@@ -41,7 +41,8 @@
 import { HANDLE_RE } from './handleShape.js';
 import { carryYardOrder } from './yardPush.js';   // YARD-CELL YC2
 import { SESSION_PASS_HEADER } from './sessionPassLaw.js';   // SESSION-SIGN: the pass's one name on the wire
-import { AURAS, ICONS } from './identityToken.js';   // WB9g: the auras that exist - a stored one is one of them, or none; WITCH1: and the icons
+import { AURAS, ICONS } from './identityToken.js';
+import { armoryKitOk } from './armoryLaw.js';   // ARMORY: a stored kit is a kit of known pieces, or none   // WB9g: the auras that exist - a stored one is one of them, or none; WITCH1: and the icons
 import { NAME_MAX } from './wire.js';   // NAME-AS: the wire's bound on a name, in the sentence that says a character's is past it
 import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, LETTERS_SENT_MAX, LETTERS_PAIR_MAX } from './letterLaw.js';   // MAIL1: the letter's bounds, in the refusals' own sentences
 import { banRangeText, bannedText } from './safety/safetyLaw.js';   // SAFE4: a ban's bound in its refusal's sentence, from its home; AUDIT SAFE CLIENT-2: and the ban itself
@@ -216,6 +217,10 @@ const REFUSAL_WORDS = {
   // WITCH1, the Witches' Festival (server-account/src/festival.js) - the festival's own words, its keys shared with
   // systems/festival/festivalWords.js so the sentence is one in every language
   'no-icon': () => t('account.refusal.noIcon', 'The account service does not know that icon. The game may need updating.'),
+  // ARMORY, the Aura Armory (server-account/src/accounts.js equipArmory): a piece the account does not hold, and one the
+  // service does not know or that is not of the slot asked
+  'armory-not-held': () => t('account.refusal.armoryNotHeld', 'That piece is not yours to wear.'),
+  'no-piece': () => t('account.refusal.noPiece', 'The account service does not know that piece. The game may need updating.'),
   source: () => t('account.refusal.source', 'The account service does not know that. The game may need updating.'),
   rid: () => t('account.refusal.rid', 'That request could not be read. Try again.'),
   ware: () => t('festival.refusal.ware', 'The Wyrd Sister has no such thing.'),
@@ -1030,6 +1035,7 @@ export const D1_BOOKMARK_READS = new Map([
   ['/v1/saves', 'GET'],
   ['/v1/arena/board', 'POST'],
   ['/v1/festival/town', 'POST'],   // WITCH1: a town's Hearth Offerings
+  ['/v1/hunt/state', 'POST'],   // HUNT-LEAN: a character's hunt
 ]);
 let _d1Mark = { secret: null, mark: null };
 /** AUDIT SCALE II A-2: how many times the page's bookmark has been forgotten - a read's answer is kept only under the
@@ -1289,6 +1295,11 @@ export const equipTitle = (io, title) => call(io, '/v1/account/title', { title: 
 /** WB9g: wear one of the Broker's auras, or none - `{ ok, titles, title, glyphs, auras, aura, insignia }`, the wardrobe
  *  after the write. */
 export const equipAura = (io, aura) => call(io, '/v1/account/aura', { aura: aura ?? null });
+/** ARMORY: wear one Aura Armory piece in its slot, or empty the slot (`piece` null) - the wardrobe after the write. The
+ *  service refuses `not-held` for a piece this account does not hold, and `no-piece` for one that is not of the slot. */
+export const equipArmory = (io, slot, piece) => call(io, '/v1/account/armory', { slot, piece: piece ?? null });
+/** ARMORY: a whole kit at once (the Eternal set's Wear), or `null` to bare every slot - the same door. */
+export const equipArmoryKit = (io, kit) => call(io, '/v1/account/armory', { kit: kit ?? null });
 /** WITCH1: wear one profile icon, or none (null: the character's face) - the wardrobe after the write. The service refuses
  *  `not-held` for an icon this account does not hold. */
 export const equipIcon = (io, icon) => call(io, '/v1/account/icon', { icon: icon ?? null });
@@ -1441,9 +1452,9 @@ export function keepSession(storage, { id, name, kind, sessionId, secret, glyphs
  * profile mark and the account card read it here (systems/ownGlyphs.js ownIcon).
  *
  * @param {any} storage
- * @param {{ name?: string, kind?: string, glyphs?: string[], glyphsOff?: string[], aura?: string|null, icon?: string|null, nameAsAt?: number, secret?: string }} [who]
+ * @param {{ name?: string, kind?: string, glyphs?: string[], glyphsOff?: string[], aura?: string|null, armory?: string|null, icon?: string|null, nameAsAt?: number, secret?: string }} [who]
  */
-export function adoptIdentity(storage, { name, kind, glyphs, glyphsOff, aura, icon, nameAsAt, secret } = {}) {
+export function adoptIdentity(storage, { name, kind, glyphs, glyphsOff, aura, armory, icon, nameAsAt, secret } = {}) {
   const was = storedSession(storage);
   if (!was) return false;
   if (typeof secret === 'string' && was.secret !== secret) return false;
@@ -1454,9 +1465,10 @@ export function adoptIdentity(storage, { name, kind, glyphs, glyphsOff, aura, ic
   if (Array.isArray(glyphs)) next.glyphs = glyphs.filter((g) => typeof g === 'string' && g.length <= 24 && !off.includes(g)).slice(0, 16);
   if (aura !== undefined) next.aura = typeof aura === 'string' && AURAS.includes(aura) ? aura : null;   // WB9g: one that exists, or none
   if (icon !== undefined) next.icon = typeof icon === 'string' && ICONS.includes(icon) ? icon : null;   // WITCH1: likewise
+  if (armory !== undefined) next.armory = armoryKitOk(armory) ? armory : null;   // ARMORY: likewise
   if (Number.isSafeInteger(nameAsAt) && nameAsAt > 0 && !(Number.isSafeInteger(was.nameAsAt) && was.nameAsAt >= nameAsAt)) next.nameAsAt = nameAsAt;   // NAME-AS: forward only
   const sameGlyphs = (next.glyphs ?? []).join('+') === (was.glyphs ?? []).join('+');
-  const sameAura = (next.aura ?? null) === (was.aura ?? null) && (next.icon ?? null) === (was.icon ?? null);   // WITCH1: and the icon
+  const sameAura = (next.aura ?? null) === (was.aura ?? null) && (next.icon ?? null) === (was.icon ?? null) && (next.armory ?? null) === (was.armory ?? null);   // WITCH1: and the icon; ARMORY: and the kit
   if (next.name === was.name && next.kind === was.kind && sameGlyphs && sameAura && next.nameAsAt === was.nameAsAt) return false;   // nothing to write, and a write is a storage event every open tab hears
   return keepSession(storage, next);
 }

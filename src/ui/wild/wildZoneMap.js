@@ -404,8 +404,8 @@ export function zoneMapLimits(mask, { paperW, paperH, legendW = ZONE_LEGEND_W })
 
 /** The zone's laws online, as the legend states them - AUDIT TESA II M5: its travel law is Cyrodiil's (zoneRules). The
  *  Wrothgarian zone's two said "Carriages run inside the zone every 10 minutes" and "No fast travel into or out of the
- *  zone except from the Overworld map": past the Bay no fast travel runs at all (TESA-NO-FAST - a press on Cyrodiil's
- *  ground on the zone map is no journey) and the zone's carriages have no town to run between (World-Wide.md, What stays). */
+ *  zone except from the Overworld map": the zone refuses a journey into or out of it (WILD3; TRAVEL-EVERYWHERE left that
+ *  law the zone's) and its carriages have no town to run between (World-Wide.md, What stays). */
 export const ZONE_RULES = Object.freeze([
   'Other players can attack you. Only your party and guild are shown on your maps here.',
   'Foes are four times as strong, elites and champions included.',

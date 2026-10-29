@@ -4,7 +4,11 @@
 // CLOAK_REST_POSE), and the aura drawn on it by the game's own pass. A cape's swing is the game's own (auraMotionStep)
 // fed a stroll that starts, turns and stops, so it flows as it does on a walking player. The frame is the game's,
 // mirrored as world/mat4.js's HANDEDNESS law has it, so a mark on the back reads as it does in the world.
+// ARMORY (2026-10-28; bible/04-Characters/Aura-Armory.md section 4): and an Aura Armory kit on the same figure, posed at
+// rest (render/armoryPose.js), drawn by the game's own armory pass - seen from the front, where its pieces are.
 import { AuraRingRenderer, auraMotionStep, CLOAK_REST_POSE, AURA_KINDLE_S } from './auraRing.js';
+import { ArmoryRenderer, ARMORY_TRAIL, ARMORY_STRIDE_M } from './armoryPass.js';
+import { newPose, poseAtRest } from './armoryPose.js';
 import { perspective, lookAt, mirrorProjectionX, multiply } from '../world/mat4.js';
 
 /** The stand-in figure, boxes about its feet facing +z: [x, y, z, half-width, half-height, half-depth]. Its shoulders
@@ -73,11 +77,12 @@ void main() {
 }`;
 
 /**
- * THE STAGE on `canvas`, drawing `aura` until stopped. Answers { set(aura), stop() } - or null where the canvas has no
- * WebGL2 (the window then shows the aura's words alone). A canvas taken out of the page stops its own clock.
- * @param {HTMLCanvasElement} canvas @param {string} aura @param {{ ground?: number[], clear?: number[], now?: () => number }} [o]
+ * THE STAGE on `canvas`, drawing `aura` until stopped. Answers { set(aura), setKit(kit), stop() } - or null where the
+ * canvas has no WebGL2 (the window then shows the aura's words alone). A canvas taken out of the page stops its own clock.
+ * ARMORY: `kit` an Aura Armory kit worn beside it (or alone, `aura` null) - the camera then sways round the figure's front.
+ * @param {HTMLCanvasElement} canvas @param {string|null} aura @param {{ ground?: number[], clear?: number[], now?: () => number, kit?: string|null }} [o]
  */
-export function startAuraPreview(canvas, aura, { ground = [0.11, 0.1, 0.13], clear = [0.035, 0.03, 0.055], now = () => performance.now() / 1000 } = {}) {
+export function startAuraPreview(canvas, aura, { ground = [0.11, 0.1, 0.13], clear = [0.035, 0.03, 0.055], now = () => performance.now() / 1000, kit = null } = {}) {
   /** @type {WebGL2RenderingContext|null} */
   const gl = /** @type {any} */ (canvas.getContext('webgl2', { alpha: false, antialias: true, preserveDrawingBuffer: false }));
   if (!gl) return null;
@@ -92,11 +97,15 @@ export function startAuraPreview(canvas, aura, { ground = [0.11, 0.1, 0.13], cle
   gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 24, 12);
   gl.bindVertexArray(null);
   const U = { vp: gl.getUniformLocation(prog, 'uVP'), yaw: gl.getUniformLocation(prog, 'uYaw'), eye: gl.getUniformLocation(prog, 'uEye'), ground: gl.getUniformLocation(prog, 'uGround'), floor: gl.getUniformLocation(prog, 'uFloor') };
-  let pass = null;
+  let pass = null, armory = null;
   try { pass = new AuraRingRenderer(gl); } catch { pass = null; }
+  try { armory = new ArmoryRenderer(gl); } catch { armory = null; }
   const t0 = now();
   const ghost = { at: [0, 0, 0], yaw: 0 };   // walks the stroll; the figure stays where it stands and wears its swing
   const wearer = { id: 'preview', at: [0, 0, 0], aura, seed: 0.37, kindle: 0, since: t0, yaw: 0, torn: -1, cape: CLOAK_REST_POSE, swing: null };
+  // ARMORY: the kit's wearer, at rest on the stand-in; its footfall embers left as the stroll walks and slid back under it
+  const kitWearer = { id: 'preview', at: [0, 0, 0], kit, seed: 0.37, kindle: 0, since: t0, yaw: 0, torn: -1, pose: poseAtRest(newPose()), vel: [0, 0, 0], trail: new Float32Array(ARMORY_TRAIL * 4).fill(-1), _d: 3 };
+  let walked = 0, foot = 0;
   let last = t0, raf = 0, stopped = false;
   const frame = () => {
     raf = 0;
@@ -111,7 +120,18 @@ export function startAuraPreview(canvas, aura, { ground = [0.11, 0.1, 0.13], cle
     if (Math.abs(ghost.at[0]) + Math.abs(ghost.at[2]) > 1e4) { ghost.at[0] = 0; ghost.at[2] = 0; }   // a jump the swing reads as no motion (CLOAK_SWING snap)
     auraMotionStep(ghost, t);
     wearer.yaw = st.yaw; wearer.swing = /** @type {any} */ (ghost).swing; wearer.kindle = Math.min(1, (t - wearer.since) / AURA_KINDLE_S);
-    const a = Math.PI + 0.85 * Math.sin((2 * Math.PI * (t - t0)) / 18);   // the camera sways round behind the figure, where a cape hangs
+    const fx = Math.sin(st.yaw), fz = Math.cos(st.yaw);
+    kitWearer.yaw = st.yaw; kitWearer.kindle = Math.min(1, (t - kitWearer.since) / AURA_KINDLE_S); kitWearer.vel[0] = fx * st.pace; kitWearer.vel[2] = fz * st.pace;
+    for (let i = 0; i < ARMORY_TRAIL; i++) if (kitWearer.trail[i * 4 + 3] >= 0) { kitWearer.trail[i * 4] -= fx * st.pace * dt; kitWearer.trail[i * 4 + 2] -= fz * st.pace * dt; }   // the ground slides back under the stand-in
+    walked += st.pace * dt;
+    if (walked >= ARMORY_STRIDE_M) {
+      walked -= ARMORY_STRIDE_M; foot = 1 - foot;
+      let slot = 0; for (let i = 1; i < ARMORY_TRAIL; i++) if (kitWearer.trail[i * 4 + 3] < kitWearer.trail[slot * 4 + 3]) slot = i;
+      const side = foot ? 0.09 : -0.09;
+      kitWearer.trail.set([Math.cos(st.yaw) * side, 0, -Math.sin(st.yaw) * side, t], slot * 4);
+    }
+    // the camera sways round behind the figure, where a cape hangs - ARMORY: round its front for a kit alone
+    const a = (kitWearer.kit && !wearer.aura ? 0 : Math.PI) + (kitWearer.kit && !wearer.aura ? 1.05 : 0.85) * Math.sin((2 * Math.PI * (t - t0)) / 18);
     const S = PREVIEW_STAGE, eye = [Math.sin(a) * S.dist, S.height, Math.cos(a) * S.dist];
     const proj = mirrorProjectionX(perspective(S.fov, w / h, 0.05, 50)), view = lookAt(eye, [0, S.lookY, 0], [0, 1, 0]);
     gl.viewport(0, 0, w, h);
@@ -124,7 +144,8 @@ export function startAuraPreview(canvas, aura, { ground = [0.11, 0.1, 0.13], cle
     gl.uniform1i(U.floor, 0); gl.uniform1f(U.yaw, st.yaw); gl.drawArrays(gl.TRIANGLES, mesh.floorN, mesh.count - mesh.floorN);
     gl.bindVertexArray(null);
     gl.frontFace(gl.CW);   // the game's own front face under the mirror (renderer init)
-    pass?.draw([wearer], proj, view, new Float32Array(eye), t, null);
+    if (wearer.aura) pass?.draw([wearer], proj, view, new Float32Array(eye), t, null);
+    if (kitWearer.kit) armory?.draw([kitWearer], proj, view, new Float32Array(eye), t, null);
     gl.frontFace(gl.CCW);
     raf = globalThis.requestAnimationFrame?.(frame) ?? 0;
   };
@@ -135,7 +156,9 @@ export function startAuraPreview(canvas, aura, { ground = [0.11, 0.1, 0.13], cle
   }
   raf = globalThis.requestAnimationFrame?.(frame) ?? 0;
   return {
-    set(/** @type {string} */ next) { if (next !== wearer.aura) { wearer.aura = next; wearer.since = now(); } },
+    set(/** @type {string|null} */ next) { if (next !== wearer.aura) { wearer.aura = next; wearer.since = now(); } },
+    /** ARMORY: wear another kit (null for none), kindled anew. */
+    setKit(/** @type {string|null} */ next) { if (next !== kitWearer.kit) { kitWearer.kit = next; kitWearer.since = now(); } },
     stop,
     /** for a probe: one frame drawn now */
     step: () => { if (raf) globalThis.cancelAnimationFrame?.(raf); frame(); },

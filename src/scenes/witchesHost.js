@@ -7,8 +7,8 @@
 //   THE OFFERINGS. The town the player stands in is asked for its offerings (festivalClient townOfferings - one ask in
 //   flight, again each OFFERING_REFRESH_MS and after every move of mine) while the festival is live here, or while one of
 //   the account's own stands in it (to be taken in); and each stands at its home's door where the build kept its spot
-//   (world/witchesDecor.js `homes` - clear of the walls and of the dressing; a dressed town keeps no other): the bowl on its stool
-//   under a tallow lantern (world/festivalArt.js), a batch on the pixel's own list (its frame walk draws it, destroyPixel
+//   (world/witchesDecor.js `homes` - clear of the walls and of the dressing; a dressed town keeps no other): the pumpkin on its stool
+//   under a lantern (world/festivalArt.js OFFERING_ART), a batch on the pixel's own list (its frame walk draws it, destroyPixel
 //   frees it), its lantern among the pixel's lights, lit at dusk with the town's. Its box is a target in the street's one
 //   ray (`targets`), named under the crosshair with its cakes and its rows (`hoverName`): another's "Take a Soul Cake"
 //   (once a day an offering), the owner's "Fill" and "Take in".
@@ -51,8 +51,9 @@ import { t } from '../systems/textManager.js';
 export const OFFERING_REFRESH_MS = 60_000;
 /** How near its door's middle the player stands to set an offering out there - metres. */
 export const OFFERING_SET_REACH = 4;
-/** The tallow lantern's flame, below the offering's picture's top - metres. */
-export const OFFERING_LIGHT_DROP = 0.32;
+/** The lantern's glow, below the offering's picture's top - metres (OFFERING-ART: festivalArt.js OFFERING_ART lanternY,
+ *  23 of 101 texels on a 1.7 m picture). */
+export const OFFERING_LIGHT_DROP = 0.39;
 /** An offering's target key: `witch:<mapId>:<buildingKey>`. */
 export const offeringKey = (/** @type {number} */ mapId, /** @type {number} */ buildingKey) => `witch:${mapId}:${buildingKey}`;
 
