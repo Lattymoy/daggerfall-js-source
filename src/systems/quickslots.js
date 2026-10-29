@@ -187,7 +187,7 @@ export function assignQuickslot(slot, item) {
 }
 
 export function clearQuickslot(slot) { assertSlot(slot); state[slot] = null; }
-export function clearQuickslots() { for (const s of QUICKSLOTS) state[s] = null; spellState = null; hotbar.fill(null); hotbarRev++; }   // HB1: the hotbar clears with them (a load, a new character)   // QS6: the spell slot is a slot too
+export function clearQuickslots() { for (const s of QUICKSLOTS) state[s] = null; spellState = null; hotbarSets.main.fill(null); hotbarRev++; }   // HB1: the hotbar clears with them (a load, a new character)   // QS6: the spell slot is a slot too
 
 /** The slot this item's kind is in, or null. The tooltip's buttons
  *  read it to show "Unslot" on the one that holds the item. */
@@ -905,7 +905,7 @@ export function quickslotSaveData() {
   out.spell = spellState ? { index: spellState.index, name: spellState.name } : null;
   // HB1: and the hotbar, on the same block - ten entries, each an item
   // kind or a spell index, exactly as the slots above key them.
-  out.hotbar = hotbar.map((e) => (e ? { ...e } : null));
+  out.hotbar = hotbarSets.main.map((e) => (e ? { ...e } : null));   // PVP-SET: the save keeps the normal set alone
   // PADPLUS1: the crossbar's six extra slots ride only when one is filled - a keyboard player's save is the ten it was
   if (out.hotbar.slice(HOTBAR_SIZE).every((e) => !e)) out.hotbar.length = HOTBAR_SIZE;
   return out;
@@ -925,9 +925,9 @@ export function restoreQuickslotSaveData(data) {
   if (Array.isArray(data.hotbar)) {
     data.hotbar.slice(0, HOTBAR_CAPACITY).forEach((e, i) => {
       if (!e || typeof e !== 'object' || typeof e.name !== 'string') return;
-      if (e.type === 'spell' && Number.isFinite(e.index)) hotbar[i] = { type: 'spell', index: e.index, name: e.name, ...iconOf(e) };   // UI2: and its icon
+      if (e.type === 'spell' && Number.isFinite(e.index)) hotbarSets.main[i] = { type: 'spell', index: e.index, name: e.name, ...iconOf(e) };   // UI2: and its icon
       else if (e.type === 'item' && typeof e.key === 'string' && HOTBAR_KINDS.includes(e.kind)) {
-        hotbar[i] = { type: 'item', kind: e.kind, key: e.key, name: e.name };
+        hotbarSets.main[i] = { type: 'item', kind: e.kind, key: e.key, name: e.name };
         if (OLD_BOOK_KEY.test(e.key)) _oldBookKeys = true;
       }
     });
@@ -966,8 +966,32 @@ export const HOTBAR_SIZE = 10;
 export const HOTBAR_CAPACITY = 16;
 // KB1: the key each slot answers to is its REGISTRY action's (systems/inputActions.js HOTBAR_SLOT_ACTIONS), not a
 // table here - the fixed Digit1-Digit0 list this held was a second keymap beside the controls pane's.
-const hotbar = new Array(HOTBAR_CAPACITY).fill(null);
+// PVP-SET (ui/pvpSpellMenu.js): the bar has two sets of the same slots. The PvP set is in force while my flag is up in
+// the zone; it holds toolkit spells ('kit' entries) and items, never a book spell. The save keeps the normal set alone.
+const hotbarSets = Object.freeze({ main: new Array(HOTBAR_CAPACITY).fill(null), pvp: new Array(HOTBAR_CAPACITY).fill(null) });
+let hotbar = hotbarSets.main;
 let hotbarRev = 0;   // bumped on every write, so a view can tell "changed" in one compare
+/** PVP-SET: the set in force, 'main' or 'pvp'. */
+export const hotbarSetName = () => (hotbar === hotbarSets.pvp ? 'pvp' : 'main');
+export function useHotbarSet(name) {
+  const want = name === 'pvp' ? hotbarSets.pvp : hotbarSets.main;
+  if (want !== hotbar) { hotbar = want; hotbarRev++; }
+}
+/** PVP-SET: a copy of a set's entries, and a whole set written back (a restore: no lock asked). */
+export const hotbarSetEntries = (name) => (name === 'pvp' ? hotbarSets.pvp : hotbarSets.main).map((e) => (e ? { ...e, ...(e.kit ? { kit: { ...e.kit } } : {}) } : null));
+export function restoreHotbarSet(name, entries) {
+  const set = name === 'pvp' ? hotbarSets.pvp : hotbarSets.main;
+  for (let i = 0; i < HOTBAR_CAPACITY; i++) set[i] = null;
+  (Array.isArray(entries) ? entries : []).slice(0, HOTBAR_CAPACITY).forEach((e, i) => { set[i] = settled(e, set === hotbarSets.pvp); });
+  hotbarRev++;
+}
+/** PVP-SET: the PvP set cannot change while `fn()` says so (the PvP combat lock). */
+let setLock = () => false;
+export function lockHotbarSet(fn) { setLock = typeof fn === 'function' ? fn : () => false; }
+const frozen = () => { try { return hotbar === hotbarSets.pvp && !!setLock(); } catch { return false; } };
+/** PVP-SET: the press of a 'kit' slot (`fn(i, kit)` answers 'cast', 'refused' or 'none'). */
+let kitPress = /** @type {null | ((i: number, kit: any) => string)} */ (null);
+export function setHotbarKitPress(fn) { kitPress = typeof fn === 'function' ? fn : null; }
 
 export const HOTBAR_TEXT = Object.freeze({
   emptySlot: 'That hotbar slot is empty.',
@@ -1049,7 +1073,14 @@ export function hotbarEntryForSpell(sp) {
 }
 
 const sameEntry = (a, b) => !!a && !!b && a.type === b.type
-  && (a.type === 'spell' ? a.index === b.index : a.key === b.key);
+  && (a.type === 'spell' ? a.index === b.index : a.type === 'kit' ? a.kit?.id === b.kit?.id && a.kit?.pick === b.kit?.pick : a.key === b.key);
+/** An entry as a set keeps it, or null: a spell only in the normal set, a toolkit spell only in the PvP set. */
+function settled(entry, pvp) {
+  if (entry?.type === 'spell') return pvp || !Number.isFinite(entry.index) ? null : { type: 'spell', index: entry.index, name: String(entry.name ?? ''), ...iconOf(entry) };
+  if (entry?.type === 'kit') return pvp && typeof entry.kit?.id === 'string' ? { type: 'kit', kit: { id: entry.kit.id, pick: entry.kit.pick ?? null, icon: entry.kit.icon ?? 0 }, name: String(entry.name ?? '') } : null;
+  if (entry?.type === 'item' && typeof entry.key === 'string' && HOTBAR_KINDS.includes(entry.kind)) return { type: 'item', kind: entry.kind, key: entry.key, name: String(entry.name ?? '') };
+  return null;
+}
 
 const assertHot = (i) => { if (!Number.isInteger(i) || i < 0 || i >= HOTBAR_CAPACITY) throw new Error(`hotbar: no slot ${i}`); };
 
@@ -1063,22 +1094,21 @@ export const hotbarRevision = () => hotbarRev;
  *  never shows one potion twice. */
 export function setHotbarSlot(i, entry) {
   assertHot(i);
-  if (!entry || (entry.type !== 'item' && entry.type !== 'spell')) return false;
-  for (let j = 0; j < HOTBAR_CAPACITY; j++) if (j !== i && sameEntry(hotbar[j], entry)) hotbar[j] = null;
-  hotbar[i] = entry.type === 'spell'
-    ? { type: 'spell', index: entry.index, name: String(entry.name ?? ''), ...iconOf(entry) }
-    : { type: 'item', kind: entry.kind, key: entry.key, name: String(entry.name ?? '') };
+  const kept = settled(entry, hotbar === hotbarSets.pvp);   // PVP-SET: each set takes only its own kinds
+  if (!kept || frozen()) return false;   // PVP-SET: and the PvP set none in combat
+  for (let j = 0; j < HOTBAR_CAPACITY; j++) if (j !== i && sameEntry(hotbar[j], kept)) hotbar[j] = null;
+  hotbar[i] = kept;
   hotbarRev++;
   return true;
 }
 
-export function clearHotbarSlot(i) { assertHot(i); if (hotbar[i]) { hotbar[i] = null; hotbarRev++; } }
-export function clearHotbar() { hotbar.fill(null); hotbarRev++; _oldBookKeys = false; }
+export function clearHotbarSlot(i) { assertHot(i); if (hotbar[i] && !frozen()) { hotbar[i] = null; hotbarRev++; } }
+export function clearHotbar() { if (frozen()) return; hotbar.fill(null); hotbarRev++; _oldBookKeys = false; }
 
 /** Two slots trade places - the drag from one filled slot onto another. */
 export function swapHotbarSlots(a, b) {
   assertHot(a); assertHot(b);
-  if (a === b) return;
+  if (a === b || frozen()) return;
   [hotbar[a], hotbar[b]] = [hotbar[b], hotbar[a]];
   hotbarRev++;
 }
@@ -1126,7 +1156,7 @@ export function hotbarView(entity, { readiedIndex = null, size = HOTBAR_CAPACITY
   // JSON.stringify calls) - ten slots over a late-game pack was hundreds of keyings a frame. Each record is keyed
   // once now, into the kinds the bar holds.
   const want = new Set();
-  for (const e of hotbar) if (e && e.type !== 'spell') want.add(e.key);
+  for (const e of hotbar) if (e?.type === 'item') want.add(e.key);
   const byKey = new Map();
   if (want.size) {
     for (const it of pack) {
@@ -1140,6 +1170,7 @@ export function hotbarView(entity, { readiedIndex = null, size = HOTBAR_CAPACITY
   }
   return hotbar.slice(0, size).map((e, i) => {
     if (!e) return { slot: i, empty: true };
+    if (e.type === 'kit') return { slot: i, type: 'kit', kit: { ...e.kit }, name: e.name, icon: e.kit.icon, element: e.kit.id === 'damage' ? e.kit.pick : 4, ghost: false, active: false };   // PVP-SET
     if (e.type === 'spell') {
       const spell = book.find((sp) => sp?.index === e.index) ?? null;
       return { slot: i, type: 'spell', name: shownSpellName(spell) || shownSpellName(e), index: e.index, spell,   // L10N3e: drawn, so as shown
@@ -1215,6 +1246,7 @@ export function hotbarPress(i, { entity = null, doors = {}, say = null } = {}) {
   if (_oldBookKeys) rekeyOldBooks(entity);
   const e = hotbar[i];
   if (!e) { say?.(HOTBAR_TEXT.emptySlot); return { kind: 'empty' }; }
+  if (e.type === 'kit') { const r = kitPress?.(i, { ...e.kit }) ?? 'none'; return { kind: r === 'cast' ? 'spell' : r === 'refused' ? 'refused' : 'none', name: e.name }; }   // PVP-SET
   // AUDIT CONTRIB H3: each arm answers what its PERFORMER did, not that the door was reached - the doors answer
   // `true` to the route whatever happened, and a refused press flashed gold with the item's name
   const through = (slot, entry, door, done) => {
