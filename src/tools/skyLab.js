@@ -14,6 +14,7 @@ import { weatherSunlightScale } from '../world/weather.js';
 import { CloudNoise } from '../render/cloudNoise.js';   // VC2: the noise volumes' slice viewer - ?noise=shape|detail&z=&ch=&tiles=
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome - ?clouds=off|lo|hi
 import { AuroraPass } from '../render/auroraPass.js';   // SKYRIM-AURORA
+import { auroraDoor } from '../scenes/auroraHost.js';
 
 const params = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
@@ -42,7 +43,7 @@ const $ = (id) => document.getElementById(id);
 const controls = ['hour', 'weather', 'day', 'yaw', 'pitch', 'fog'];
 for (const id of controls) if (params.has(id)) $(id).value = params.get(id);
 const still = params.has('still');
-const auroraW = params.has('aurora') ? Math.min(1, Number(params.get('aurora') || 1)) : 0;
+const auroraW = Number(auroraDoor(params.get('aurora'))) || 0;   // the game's own door: off, on or a weight
 const auroraHang = Number(params.get('hang') ?? 0.4);
 let aurora = null;
 // VC5: the panel's clouds row is the URL doors made visible - the tier

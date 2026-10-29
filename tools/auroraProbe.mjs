@@ -6,7 +6,8 @@
 //
 // Usage: ARENA2_PATH=/home/claude/dfdata/arena2 OUT=<dir> node tools/auroraProbe.mjs
 //   PORT=5184          the vite port
-//   TOD=21:30          the hour the boot starts at (the clock runs on through the boot)
+//   TOD=23:00          the hour the boot starts at
+//   TIMESCALE=0        the clock's rate (DFU's TimeScale 12; 0 holds the night through a boot of many minutes)
 //   EXTRA=&aurora=on   more of the query (a door; the law's own weight by default)
 //   BOOT_MS=3600000    how long the boot may take
 //   CHROMIUM=<path>    a browser other than the pinned Playwright's
@@ -58,7 +59,7 @@ const shoot = async (label, yaw, pitch) => {
 };
 
 const t0 = Date.now();
-await page.goto(`http://localhost:${PORT}/play/?world&shot&region=Daggerfall&loc=Daggerfall&class=1&novideo&tod=${process.env.TOD ?? '21:30'}&weather=sunny&skin=enhanced&touch=off${process.env.EXTRA ?? ''}`);
+await page.goto(`http://localhost:${PORT}/play/?world&shot&region=Daggerfall&loc=Daggerfall&class=1&novideo&tod=${process.env.TOD ?? '23:00'}&timescale=${process.env.TIMESCALE ?? '0'}&weather=sunny&skin=enhanced&touch=off${process.env.EXTRA ?? ''}`);
 for (let i = 0; ; i++) {
   if (await ev(() => window.__shotReady === true).catch(() => false)) break;
   if (i % 12 === 0) console.log(`  boot ${((Date.now() - t0) / 1000).toFixed(0)} s frame ${await ev(() => window.__frame ?? null).catch(() => null)}`);

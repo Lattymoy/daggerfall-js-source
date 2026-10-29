@@ -611,6 +611,7 @@ export function createSkyController(gl, params) {
       windModel.jump();
       dynamic?.weatherJump();   // DS1: SaveLoadManager_OnLoad's forced re-apply
       clouds?.jump();   // VC3: the profile takes the new weather whole, both maps re-marched whole
+      aurora?.jump();   // SKYRIM-AURORA: and the aurora the place it landed in
     },
     /** WEATHER2b: the sim's word changed by a CROSSING - the player walked
      *  into a cell of the field, or it drifted over them. The wind builds
@@ -709,7 +710,9 @@ export function createSkyController(gl, params) {
         const easeDt = windModel.inLead() ? dt * (WEATHER_EASE_MINUTES / windModel.leadMinutes()) : dt;   // WEATHER2b: the front's own lead - a crossing's few minutes, the day roll's three hours
         weatherRowNow = easeWeather(weatherRowNow, want, easeDt);
         weatherRowNow.wind = windModel.vector();
-        aurora?.use(minuteOfDay, skyNow, weatherRowNow.cover, showNightSky);   // SKYRIM-AURORA: the eased cover hides it as the clouds come
+        // SKYRIM-AURORA: the eased cover hides it as the clouds come; the port's dome reads no WeatherStyle (its cover is
+        // the front's), the mod's presets switch on it; and over the sky's own decks it goes sooner
+        aurora?.use(minuteOfDay, skyNow, weatherRowNow.cover, dynamic ? showNightSky : true, !cloudsShown);
         // WIND2: the cloud DRIFT is integrated here, once - the one place
         // the wind and the clock meet. Every deck reads this offset
         // instead of multiplying wind by time, which with a wind that
