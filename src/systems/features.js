@@ -395,8 +395,8 @@ export const FEATURES = Object.freeze([
     control: Object.freeze({ store: 'prefs', key: 'worldDungeonSizes', initial: false, online: true }),   // world/smallerDungeons.js WORLD_DUNGEON_SIZES_PREF; forced on online, the room's sizes
   }),
   // DELVE II (DLV2, 2026-10-28, the owner: "coming upon a wave based encounter, or puzzle solving like you find in some of
-  // our world events"; bible/03-World/Delve-II.md): THE DUNGEONS' ENCOUNTERS - a Hold or a Litany in a room the layout
-  // already has, each opening a vault (scenes/delve/delveHost.js). On by default; online (DLV3) the room's sites will
+  // our world events"; bible/03-World/Delve-II.md): THE DUNGEONS' ENCOUNTERS - one of seven kinds, fought or worked out
+  // in a room the layout already has, each opening a vault (scenes/delve/delveHost.js). On by default; online (DLV3) the room's sites will
   // stand for everyone in it, so the lane forces it on there - until then none stands online.
   Object.freeze({
     id: 'dungeon-encounters',

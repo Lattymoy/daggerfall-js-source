@@ -36,14 +36,16 @@ export const holdDowned = (f) => !!f?.dead && (f.entity?.health <= 0 || !!f.exec
 /**
  * One site's foes. `host`: `spawn(mobileType, at, opts)` the dungeon's spawnLooseFoe, `remove(f)` its removeLooseFoe,
  * `pick()` a mobile id of the dungeon's table (-1 none), `elites()` whether an elite may stand, `alive()` the context's
- * life, `foes()` its pool, `now()` the encounter clock (ms), `rolls` the dice. `frame()` reads the pool once a frame;
- * `word(out)` fills the ledger's word from it.
+ * life, `foes()` its pool, `now()` the encounter clock (ms), `rolls` the dice, `mark(f)` each foe as it stands (the
+ * Vigil's hunt its relic). `frame()` reads the pool once a frame; `word(out)` fills the ledger's word from it. DLV4: a
+ * Wellsprings' source pours one at a time (`pour`) and a rite's foes drift in (`drift`), each counted apart.
  * @param {import('../../net/delve/delveLaw.js').DelveSite} site @param {any} host
  */
 export function createHoldFoes(site, host) {
   const rolls = host.rolls ?? Math.random;
   let gen = 0, wave = 0, pending = 0, stood = 0, traits = 0, askedAt = -Infinity;
-  let live = 0, kn = 0, capLive = false, capDown = false;
+  let live = 0, kn = 0, capLive = false, capDown = false, driftLive = 0;
+  const srcLive = new Map(), srcPending = new Map();
   const ours = (f) => f?._delve?.i === site.i;
   async function standOne(pos, opts, stamp) {
     const fly = (type) => (ENEMY_BASICS[type]?.behaviour ?? 'General') === 'Flying';
@@ -57,6 +59,7 @@ export function createHoldFoes(site, host) {
     if (!f) return null;
     if (stamp.g !== gen || !host.alive()) { host.remove(f); return null; }   // the attempt ended while it stood
     f._delve = stamp;
+    host.mark?.(f);
     return f;
   }
   /** Stand `n` foes for wave `w`, each counted in flight until it stands (or never will). */
@@ -82,10 +85,21 @@ export function createHoldFoes(site, host) {
       if (e) { e.bossTraits = undefined; e.bossWard = undefined; giveBossTraits(e, rollBossTraits(traits, rolls)); }
     });
   }
+  /** One foe at `at` for source `j` (`src`) or drifting in (`drift`), counted in flight on its own until it stands. */
+  function standLoose(at, extra, inFlight) {
+    const myGen = gen, key = extra.src ?? 'drift';
+    inFlight.set(key, (inFlight.get(key) ?? 0) + 1);
+    void standOne(at, {}, { i: site.i, g: myGen, w: 0, cap: false, ...extra }).then(() => {
+      if (myGen !== gen) return;
+      inFlight.set(key, Math.max(0, (inFlight.get(key) ?? 0) - 1));
+    });
+  }
+  const driftFlight = new Map();
   /** Every living foe of this site's goes, whatever attempt stood it (a load's revived ones too). */
   function crumble() {
     gen++; pending = 0; wave = 0; stood = 0; traits = 0;
-    live = 0; kn = 0; capLive = false; capDown = false;
+    live = 0; kn = 0; capLive = false; capDown = false; driftLive = 0;
+    srcLive.clear(); srcPending.clear(); driftFlight.clear();
     for (const f of [...(host.foes() ?? [])]) if (ours(f) && !f.dead) host.remove(f);
   }
   return {
@@ -98,10 +112,13 @@ export function createHoldFoes(site, host) {
     /** The pool read once: this attempt's living foes, the wave's downed, the captain's state - and a captain gone
      *  without its fall stood again. */
     frame() {
-      live = 0; kn = 0; capLive = false; capDown = false;
+      live = 0; kn = 0; capLive = false; capDown = false; driftLive = 0;
+      srcLive.clear();
       for (const f of host.foes() ?? []) {
         const s = f?._delve;
         if (!s || s.i !== site.i || s.g !== gen) continue;
+        if (!f.dead && s.src != null) { srcLive.set(s.src, (srcLive.get(s.src) ?? 0) + 1); continue; }
+        if (!f.dead && s.drift) { driftLive++; continue; }
         if (!f.dead) { if (s.cap) capLive = true; else if (s.w === wave) live++; }
         else if (holdDowned(f)) { if (s.cap) capDown = true; else if (s.w === wave) kn++; }
       }
@@ -115,6 +132,13 @@ export function createHoldFoes(site, host) {
       out.cf = capDown ? 1 : 0;
       return out;
     },
+    /** DLV4: one foe poured from source `j` at `at`. */
+    pour(j, at) { standLoose(at, { src: j }, srcPending); },
+    /** DLV4: one foe drifting in at `at`. */
+    drift(at) { standLoose(at, { drift: true }, driftFlight); },
+    /** A source's own foes alive and on their way; the drifting ones'. */
+    sourceLive: (j) => (srcLive.get(j) ?? 0) + (srcPending.get(j) ?? 0),
+    driftLive: () => driftLive + (driftFlight.get('drift') ?? 0),
     crumble,
     foes: () => (host.foes() ?? []).filter((f) => ours(f) && f._delve.g === gen),
     /** For the tests: what it holds. */

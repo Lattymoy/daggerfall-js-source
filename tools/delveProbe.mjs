@@ -1,25 +1,28 @@
 #!/usr/bin/env node
-// DELVE II (DLV2) PROBE: a dungeon's encounters in the real game, on the freeware's data - the dungeon bench
-// (scenes/dungeon.js, `?dungeon=`) in a real browser, each site walked into and won by the probe's hand (a Hold's foes
-// struck down through the real damage door, a Litany's plates stepped in its order), its vault pressed, the frame's cost
-// of the encounters measured, every page error a failure. Pictures at each stage when a folder is given.
+// DELVE II (DLV2, DLV4) PROBE: a dungeon's encounters in the real game, on the freeware's data - the dungeon bench
+// (scenes/dungeon.js, `?dungeon=`) in a real browser, each site walked into and won by the probe's hand (a wave's foes
+// struck down through the real damage door, a Litany's plates stepped in its order, a source or a seal broken by the
+// player's own swing through the context's crystal seam, the flame carried to the braziers, the weights pressed and
+// set), its vault pressed, the frame's cost measured, every page error a failure. Pictures at each stage.
 //
 //   node tools/delveProbe.mjs [region] [dungeon] [shots-dir] [--look]      e.g.  Daggerfall "Bedard Laboratory" /tmp/delve
+//   CHROMIUM=/path/to/chrome                                               a browser of the machine's own
 //
 // `--look`: each site's marks pictured at rest and woken, nothing fought. Exits 1 on a page error, a site never stood,
 // a site never won, or a window left open.
 import { mkdirSync } from 'node:fs';
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
-import { litanyPlates } from '../src/net/delve/delveLaw.js';
+import { litanyPlates, springSpots, sealSpots, brazierSpots, weightSpots, weighPlates } from '../src/net/delve/delveLaw.js';
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const LOOK = process.argv.includes('--look');
+const DEBUG = !!process.env.DELVE_DEBUG;   // each swing said: the host's hits, the pieces, where I stand
 const [region = 'Daggerfall', name = 'Bedard Laboratory', shots = null] = process.argv.slice(2).filter((a) => a !== '--look');
 if (shots) mkdirSync(shots, { recursive: true });
-const server = await createServer({ server: { port: 5231, strictPort: true }, logLevel: 'error' });
+const server = await createServer({ server: { port: 5231, strictPort: true, hmr: false, watch: null }, logLevel: 'error' });   // an edit to the tree mid-run reloads no page
 await server.listen();
-const browser = await chromium.launch({ headless: true, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
+const browser = await chromium.launch({ headless: true, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'], ...(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {}) });   // CHROMIUM: a browser of the machine's own, as the other probes take
 const page = await browser.newPage({ viewport: { width: 800, height: 500 } });   // the software rasteriser's frames: smaller is faster
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.message)));
@@ -73,8 +76,8 @@ for (const s of sites) {
   const fps0 = await page.evaluate(() => window.__frame);
   console.log(`site ${s.i}: ${s.kind} at [${s.x}, ${s.y}, ${s.z}] r ${s.r}, vault [${s.vault.join(', ')}]`);
   const at = (p) => page.evaluate(([x, y, z]) => window.__player.warp(x, y + 0.05, z), p);
-  // the vantage: inside the ward on its +x side, looking back at the heart and down at the floor
-  const look = async () => { await at([s.x + s.r + 1, s.y, s.z]); await page.evaluate((p) => window.__pose(...p, -Math.PI / 2, -0.5), [s.x + s.r + 1, s.y + 1.6, s.z]); };
+  // the vantage: inside the disc on its +x side (a small room's wall stands just past it), looking back at the heart
+  const look = async () => { const v = s.x + s.r * 0.75; await at([v, s.y, s.z]); await page.evaluate((p) => window.__pose(...p, -Math.PI / 2, -0.5), [v, s.y + 1.6, s.z]); };
   // near, then in
   await at([s.x + s.r + 5, s.y, s.z]); await frames(6);
   console.log(`  near: "${await say()}"`);
@@ -85,9 +88,73 @@ for (const s of sites) {
   await shot(`site${s.i}-in`);
   if (LOOK) { await at([s.x + s.r + 5, s.y, s.z]); await frames(4); continue; }
   const t0 = Date.now();
-  if (s.kind === 'hold') {
-    let shotWave = false;
-    while (!(await state())[s.i].won && Date.now() - t0 < 1_800_000) {
+  const killMine = () => page.evaluate((i) => {
+    let k = 0;
+    for (const [j] of Object.entries(JSON.parse(window.__foes()))) {
+      const r = window.__foeRecord(Number(j));
+      if (r && r._delve?.i === i && !r.dead && r.entity) { window.__damageFoe(Number(j), r.entity.health + 999); k++; }
+    }
+    return k;
+  }, s.i);
+  /** The player's own swing at a piece, from a step off it, facing it - the crystal seam's real door. */
+  const swingAt = async (p) => {
+    const a = [p[0] + 1.2, p[1], p[2]];
+    await at(a);
+    await page.evaluate(([x, y, z, tx, tz]) => window.__pose(x, y + 1.6, z, Math.atan2(tx - x, tz - z), -0.35), [a[0], a[1], a[2], p[0], p[2]]);
+    if (DEBUG) await page.evaluate(() => { const h = window.__delve(); if (h.__hits) return; h.__hits = []; const f = h.hit.bind(h); h.hit = (...a) => { const r = f(...a); h.__hits.push([...a, r]); return r; }; });
+    const hand = () => page.evaluate(() => { const w = window.__combat.weapon(); return w ? { sheathed: !!w.sheathed, state: w.machine?.state ?? null, cd: window.__playerEntity?.equipCountdown ?? 0 } : null; });
+    for (let k = 0; k < 40 && (await hand())?.sheathed; k++) { if (k === 0) await page.evaluate(() => window.__combat.toggleSheath()); await frames(5); }   // the game boots sheathed: drawn once, never put up again
+    for (let k = 0; k < 40 && (await hand())?.cd > 0; k++) await frames(5);   // the equip countdown run out
+    const was = await hand();
+    await page.evaluate(() => window.__combat.clickAttack());
+    await frames(24);
+    if (DEBUG) console.log(`  swing ${JSON.stringify(was)}: ${await page.evaluate(() => { const h = window.__delve(); const o = JSON.stringify({ hits: h.__hits.splice(0), pieces: h.breakables().map((q) => [q.c, q.feet, q.height, q.radius]), pos: window.__player.pos, eye: window.__player.eye }); return o; })}`);
+  };
+  if (s.kind === 'wellsprings' || s.kind === 'seals') {
+    let struck = 0;
+    let quiet = Date.now();
+    while (!(await state())[s.i].won && Date.now() - t0 < 600_000) {
+      if (Date.now() - quiet > 30_000) { quiet = Date.now(); console.log(`  still: ${JSON.stringify((await state())[s.i])} "${await say()}"`); }
+      await heal(); await closeWindows(); await killMine();
+      const st = (await state())[s.i];
+      if (st.p === 1 || st.p === 9 || st.p === 4) { await at([s.x, s.y, s.z]); await frames(10); continue; }   // rising, sunk, or the captain (struck below)
+      const spots = s.kind === 'seals' ? sealSpots(s, st.k) : springSpots(s, st.k);
+      const j = st.hp.findIndex((h) => h > 0);
+      if (j < 0) { await frames(5); continue; }
+      const before = st.hp[j];
+      await swingAt(spots[j]);
+      const after = (await state())[s.i].hp[j];
+      if (after < before) { struck++; if (struck === 1) await shot(`site${s.i}-struck`); console.log(`  piece ${j}: ${before} -> ${after} (the swing's own blow)`); }
+    }
+    if (!struck) await fail(`site ${s.i}: no swing ever landed on a piece`);
+  } else if (s.kind === 'brazier') {
+    await at([s.x + 1.8, s.y, s.z]); await frames(4 * 10 + 40);
+    while (!(await state())[s.i].won && Date.now() - t0 < 600_000) {
+      await heal(); await closeWindows(); await killMine();
+      const st = (await state())[s.i];
+      if (st.p !== 6) { await frames(10); continue; }
+      const j = [0, 1, 2, 3].slice(0, st.k).find((k) => !(st.lb & (1 << k)));
+      await at([s.x, s.y, s.z]); await frames(6);
+      if ((await state())[s.i].fl !== 1) continue;
+      await at(brazierSpots(s, st.k)[j]); await frames(40);
+      console.log(`  brazier ${j}: lit ${(((await state())[s.i].lb >> j) & 1) === 1}`);
+    }
+  } else if (s.kind === 'weighing') {
+    const homes = weightSpots(s), plates = weighPlates(s);
+    for (let j = 0; j < 2; j++) {
+      await at(homes[j]); await frames(6);
+      await page.evaluate((k) => window.__activateKey(k), `delve:weight:${s.i}:${j}`);
+      await frames(6);
+      console.log(`  weight ${j}: ${(await state())[s.i].wt[j] === 1 ? 'taken' : 'NOT taken'}`);
+      await at(plates[j]); await frames(40);
+      console.log(`  weight ${j}: ${(await state())[s.i].wt[j] === 2 ? 'on its plate' : 'NOT set'}`);
+    }
+    await at(plates[2]);
+    for (let k = 0; k < 30 && !(await state())[s.i].won; k++) await frames(10);
+  } else if (s.kind === 'hold' || s.kind === 'vigil') {
+    let shotWave = false, quiet = Date.now();
+    while (!(await state())[s.i].won && Date.now() - t0 < 900_000) {
+      if (Date.now() - quiet > 30_000) { quiet = Date.now(); console.log(`  still: ${JSON.stringify((await state())[s.i])} "${await say()}"`); }
       await heal();
       await closeWindows();
       const killed = await page.evaluate((i) => {

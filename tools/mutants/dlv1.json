@@ -461,7 +461,7 @@
   {
     "name": "DLV1-the-litany-fails-for-leaving",
     "file": "src/net/delve/delveLaw.js",
-    "old": "if (led.kind === 'hold' && nowMs - led.inAt",
+    "old": "if (isWaveKind(led.kind) && nowMs - led.inAt",
     "new": "if (nowMs - led.inAt",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
@@ -893,7 +893,7 @@
   {
     "name": "DLV1-litany-vault-off-its-heart",
     "file": "src/world/dungeon/delveSites.js",
-    "old": "  if (kind === 'litany') return [cm(pos[0]), cm(pos[1]), cm(pos[2])];\n",
+    "old": "  if (DELVE_HEART_VAULTS.includes(kind)) return [cm(pos[0]), cm(pos[1]), cm(pos[2])];\n",
     "new": "",
     "tests": [
       "test/world/dlv1_sites.test.js"
@@ -947,8 +947,8 @@
   {
     "name": "DLV1-the-fold-runs-past-its-end",
     "file": "src/net/delve/delveLaw.js",
-    "old": "if (led.p === DP.won || ev.some((e) => ENDS.includes(e.k))) return ev;",
-    "new": "if (led.p === DP.won) return ev;",
+    "old": "if (led.p === DP.won || ev.some((e) => ENDS.includes(e.k))) return ev;   // an ended ledger is dropped: the next word starts anew",
+    "new": "if (led.p === DP.won) return ev;   // an ended ledger is dropped: the next word starts anew",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]

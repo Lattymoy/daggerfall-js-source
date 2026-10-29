@@ -122,11 +122,14 @@ threat). A dungeon whose table stands no foe stands no Hold.
   time between waves is too long"). A wave that runs 90 s gives way to the next. The last is a captain: an elite of
   the table with one boss trait, two in an Elite dungeon (BOSS-TRAITS), its fall believed no sooner than one kill's
   least time (2.5 s, the Starfall's). Not fallen in 5 minutes, it outlasts the ward and the attempt ends.
-- **THE WELLSPRINGS.** Two to four sources - a cracked tomb, a pool, a broken altar, by the dungeon's type - each
-  pouring a foe every 12 s, three of its own alive at most. Break every source, then the captain. A source's health is
-  sized to the party (the Spire's `egHpTeam` rule, `net/eliteGates/egBodies.js`).
-- **THE VIGIL.** A relic at the disc's heart with 100 light; foes go for it before the party (`huntsStar`'s rule).
-  Three waves as the Hold's; the light lost, the vigil fails and can be tried again after the respawn breath (60 s).
+- **THE WELLSPRINGS.** Two to four sources on the ward's gates (drawn off the seed and the site) - a cracked tomb, a
+  pool, a broken altar, by the dungeon's type - each pouring a foe every 12 s, three of its own alive at most. Break
+  every source, then the captain. A source's health is 12 s of the reference damage of the party in the ward as they
+  stand, at least the gate's floor (the Spire's `egHpTeam` rule, `net/eliteGates/egBodies.js`). A blow lands by Dagon's
+  crystals' caps: the member's hand and purse, a swing within reach. Unbroken in 5 minutes, they outlast the ward.
+- **THE VIGIL.** A relic at the disc's heart with the Starfall's 100 light; foes go for it before the party
+  (`huntsStar`'s rule), and their blows take its light at the Starfall's rate. Three waves as the Hold's, a breath
+  giving 15 light back; the third wave's end is the win, with no captain. The light lost, it rests 60 s.
 
 A wave's foes fight as any foe of the dungeon does (no leash: the AI's follower leash turns the Enhanced AI's fighting
 off). The ward is the disc and 2 m round it, 3 m up or down, in its own room (past the disc, a clear line to the
@@ -140,16 +143,20 @@ ends the attempt: its foes crumble wherever they are, nothing is earned, and the
   that order (within 1.2 m). A lit plate may be stood on again; a wrong one darkens all and the order plays again.
   Untimed; in an Elite dungeon a wrong plate also wakes two foes of the table. A party silent at the site for 60 s lets
   it go.
-- **THE BRAZIER RITE** (carry and bank - the Ketch's law). A source flame at the heart and three braziers at the rim,
-  four for a party of four or more. Take the flame, carry it slowed (THE BURDEN, 0.72) with the weapon put up, and
-  light a brazier. A carried flame gutters out after 20 s; a carrier struck drops it, and it lies 10 s to be taken up.
-  Lit braziers stay lit. Foes of the table drift in while it is worked, two at a time at most.
-- **THE WEIGHING** (plates held together - the winch's law). Three plates, each held by a member standing on it or by
-  a stone weight carried from the room's edge (THE BURDEN again). All three held for 3 s opens the vault. One player
-  carries two weights and stands on the third.
-- **THE SEALS** (break them all in time - the crystals' law). Three to six seals (`2 + ceil(n / 2)`) rise round the
-  disc; break all within the window, never under law 7's floor of the route between them. Failed, they sink and rise
-  again 10 s later.
+Each puzzle below rises 3 s after the first step in, and counts the party in the ward then.
+
+- **THE BRAZIER RITE** (carry and bank - the Ketch's law). A source flame at the heart and three braziers on the
+  ward's gates, four for a party of four or more. Take the flame, carry it slowed (THE BURDEN, 0.72) with the weapon
+  put up, and light a brazier within 1.2 m. A carried flame gutters back to the heart after 20 s; a carrier struck
+  drops it, and it lies 10 s to be taken up. Lit braziers stay lit. Foes of the table drift in, one each 15 s, two at
+  most.
+- **THE WEIGHING** (plates held together - the winch's law). Three plates 3 m from the heart, on the axes the vault
+  does not take. Each is held by a member standing on it (their word fresh within 2.5 s) or by a stone weight carried
+  from the ward's gates (THE BURDEN again). All three held for 3 s opens the vault; any let go starts the count again.
+  One player carries two weights and stands on the third.
+- **THE SEALS** (break them all in time - the crystals' law). Three to six seals (`2 + ceil(n / 2)`) rise 3 m round the
+  heart, each a Dagon's crystal's health for the party (`crystalHpFor`). Break all within 24 s plus law 7's floor of
+  their route. Failed, they sink and rise again 10 s later, counted anew.
 
 No puzzle hurts a player for a wrong answer, and none is the clock: no dial, no hidden coupling, no riddle text.
 
@@ -181,7 +188,8 @@ The relay reads no game data (Port-Doctrine), so it cannot place a site. Every c
   go (section 5.2) or a ledger never woken in 60 s drops the ledger, and the site is free. The fold that ends one moves
   nothing more. Accounts are kept in a map with no prototype, and a word heard late moves no time back.
 - **REACH.** A puzzle's step, carry or break is judged against the plan's spots and the speaker's last pose the room
-  heard, with `ktLeastMs`'s step law at THE DELVE PACE.
+  heard. A carried piece is set down no sooner than the fastest build carrying could walk it there (`ktLeastMs`, the
+  Ketch's step law), so no player is ever refused. THE DELVE PACE is the other bound: a window's floor (law 7).
 - **THE WAVES.** A machine of the owning party stands the foes (Starfall's camp law) under a grant kind of its own,
   `delve`, sized to the law (12 a grant). It says the deaths of each wave; the relay bounds a clear by
   `starClearFloorMs` and a captain's fall by a least time.

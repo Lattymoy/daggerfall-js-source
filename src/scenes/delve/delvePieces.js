@@ -7,7 +7,7 @@
 // off the frame (compiledPass, COMPILE-QUEUE). Not a DFU member (Ledger A: DELVE II).
 import { TELEGRAPH_KIND, TELEGRAPH_POOL, TELEGRAPH_STYLE, GateTelegraphRenderer, telegraphPrograms } from '../../render/gate/gateTelegraph.js';
 import { compiledPass } from '../../render/glProgram.js';
-import { DP, DELVE_WARD_PAD_M, LITANY_RING_M, LITANY_STAND_M, holdGates, litanyPlates } from '../../net/delve/delveLaw.js';
+import { DP, DELVE_WARD_PAD_M, LITANY_RING_M, LITANY_STAND_M, SEAL_RING_M, FLAME, VIGIL_LIGHT, holdGates, litanyPlates, springSpots, springCount, brazierSpots, weighPlates, sealSpots } from '../../net/delve/delveLaw.js';
 import { PLATE_LOOK } from './delveLitany.js';
 import { trs } from '../../world/mat4.js';
 import { worldAabb } from '../../player/activate.js';
@@ -44,11 +44,12 @@ function put(out, n, kind, x, z, r, r0, color, alpha, t, s) {
 
 /**
  * A site's marks on its floor, in its own frame (its heart the origin), filled into `out` (kept by the caller): `led` its
- * ledger (null: none started), `looks` the Litany's plates' looks (delveLitany.js plateLooks), `won` and `sealed` the
- * site's and its vault's, `s` the encounter clock (s). Answers `out`. Pure but for `out`.
+ * ledger or the room's word of it (null: none started), `looks` the plates' looks (the Litany's, delveLitany.js
+ * plateLooks; the Weighing's held), `won` and `sealed` the site's and its vault's, `s` the encounter clock (s), `seed` the
+ * dungeon's (a Wellsprings' count). Answers `out`. Pure but for `out`.
  * @param {import('../../net/delve/delveLaw.js').DelveSite} site @param {any} led @param {number[]} looks
  */
-export function siteShapes(site, led, looks, { won = false, sealed = true, s = 0 } = {}, out = []) {
+export function siteShapes(site, led, looks, { won = false, sealed = true, s = 0, seed = 0 } = {}, out = []) {
   const pulse = 0.5 + 0.5 * Math.sin(s * 4);
   let n = 0;
   if (site.kind === 'hold') {
@@ -57,7 +58,7 @@ export function siteShapes(site, led, looks, { won = false, sealed = true, s = 0
     if (!won) {
       for (const g of holdGates(site)) n = put(out, n, TELEGRAPH_KIND.disc, g[0] - site.x, g[2] - site.z, GATE_R, 0, running ? DELVE_COLORS.wake : DELVE_COLORS.ward, running ? 0.9 : 0.6, running && led.p === DP.wave ? 1 : 0, s);
     }
-  } else {
+  } else if (site.kind === 'litany') {
     n = put(out, n, TELEGRAPH_KIND.ring, 0, 0, LITANY_RING_M + LITANY_STAND_M + 0.3, LITANY_RING_M + LITANY_STAND_M + 0.3 - RING_W, won ? DELVE_COLORS.won : DELVE_COLORS.ward, won ? 0.5 : 0.7, 1, s);
     const plates = litanyPlates(site);
     for (let j = 0; j < plates.length; j++) {
@@ -67,10 +68,37 @@ export function siteShapes(site, led, looks, { won = false, sealed = true, s = 0
       else if (look === PLATE_LOOK.wrong) n = put(out, n, TELEGRAPH_KIND.disc, x, z, PLATE_R, 0, DELVE_COLORS.wrong, 1, 1, s);
       else n = put(out, n, TELEGRAPH_KIND.disc, x, z, PLATE_R, 0, DELVE_COLORS.stone, 0.6, 0, s);
     }
-  }
+  } else n = kindShapes(site, led, looks, { won, s, seed, pulse }, out, n);
   if (sealed && site.vault) n = put(out, n, TELEGRAPH_KIND.disc, site.vault[0] - site.x, site.vault[2] - site.z, SEAL_R, 0, DELVE_COLORS.seal, 0.6 + 0.4 * pulse, 0, s);
   out.length = n;
   return out;
+}
+
+/** DLV4's kinds' marks, from slot `n`: the ward's ring (the seals' about their own ring), and each piece's disc by its
+ *  state - a source pouring, the relic's light, the flame at the heart and each brazier lit, a plate held, a seal
+ *  standing. Answers the next slot. Pure but for `out`. */
+function kindShapes(site, led, looks, { won, s, seed, pulse }, out, n) {
+  const running = !!led && led.p !== DP.idle && led.p !== DP.won;
+  const disc = (p, r, col, a, fill) => { n = put(out, n, TELEGRAPH_KIND.disc, p[0] - site.x, p[2] - site.z, r, 0, col, a, fill, s); };
+  const ringR = site.kind === 'seals' ? SEAL_RING_M + LITANY_STAND_M : site.r;
+  n = put(out, n, TELEGRAPH_KIND.ring, 0, 0, ringR, ringR - RING_W, won ? DELVE_COLORS.won : running ? DELVE_COLORS.wake : DELVE_COLORS.ward, won ? 0.5 : running ? 0.75 + 0.25 * pulse : 0.7, 1, s);
+  if (won) return n;
+  if (site.kind === 'wellsprings') {
+    const pouring = running && (led.p === DP.spring || led.p === DP.captain);
+    springSpots(site, led?.k || springCount(seed, site.i)).forEach((p, j) => { if (!pouring || (led.hp?.[j] ?? 0) > 0) disc(p, GATE_R, running ? DELVE_COLORS.wake : DELVE_COLORS.ward, running ? 0.9 : 0.6, pouring ? 1 : 0); });
+  } else if (site.kind === 'vigil') {
+    holdGates(site).forEach((g) => disc(g, GATE_R, running ? DELVE_COLORS.wake : DELVE_COLORS.ward, running ? 0.9 : 0.6, running && led.p === DP.wave ? 1 : 0));
+    const low = running && (led.lt ?? VIGIL_LIGHT) <= VIGIL_LIGHT / 4;
+    disc([site.x, site.y, site.z], PLATE_R, low ? DELVE_COLORS.wrong : DELVE_COLORS.lit, low ? 0.6 + 0.4 * pulse : 0.9, running ? 1 : 0);
+  } else if (site.kind === 'brazier') {
+    if (!running || led.p !== DP.work || led.fl === FLAME.heart) disc([site.x, site.y, site.z], PLATE_R, DELVE_COLORS.shown, 0.9, running ? 1 : 0);
+    brazierSpots(site, led?.k || 3).forEach((b, j) => disc(b, PLATE_R, (led?.lb ?? 0) & (1 << j) ? DELVE_COLORS.lit : DELVE_COLORS.stone, 0.8, (led?.lb ?? 0) & (1 << j) ? 1 : 0));
+  } else if (site.kind === 'weighing') {
+    weighPlates(site).forEach((p, j) => disc(p, PLATE_R, looks[j] ? DELVE_COLORS.lit : DELVE_COLORS.stone, looks[j] ? 0.9 : 0.6, looks[j] ? 1 : 0));
+  } else if (site.kind === 'seals' && running && led.p === DP.work) {
+    sealSpots(site, led.k).forEach((p, j) => { if (led.hp?.[j] > 0) disc(p, SEAL_R, DELVE_COLORS.seal, 0.9, 1); });
+  }
+  return n;
 }
 
 /** The floor a site's marks are laid over: its ward's circle (the telegraph's one court, at the heart). Pure. */

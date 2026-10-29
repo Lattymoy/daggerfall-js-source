@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import {
   DSITE, DSITE_SMALL, delveSiteCount, colliderSiteProbe, siteCandidates, landDelveSites, chooseSites, siteKinds, delveSitePlan, boxMeetsDisc, tooNearTaken,
 } from '../../src/world/dungeon/delveSites.js';
-import { DELVE_KINDS, delvePlanHash } from '../../src/net/delve/delveLaw.js';
+import { DELVE_KIND_NAMES, DELVE_KINDS, delvePlanHash } from '../../src/net/delve/delveLaw.js';
 import { Collider } from '../../src/player/collider.js';
 import { RDB_SIDE } from '../../src/world/rdbLayout.js';
 import { GLOBAL_SCALE } from '../../src/world/meshReader.js';
@@ -161,14 +161,14 @@ test('DLV1 THE KINDS: drawn off the seed; two sites hold one of each family; a k
     firsts.add(siteKinds(1, s)[0]);
     assert.deepEqual(siteKinds(3, s).slice(0, 2), two, 'a third site does not move the first two');
   }
-  assert.equal(firsts.size, 2, 'a lone site either');
+  assert.equal(firsts.size, DELVE_KIND_NAMES.length, 'a lone site any kind (DLV4: all seven reached)');
   assert.deepEqual(siteKinds(3, 7, ['hold']), ['hold', 'hold', 'hold']);
   assert.deepEqual(siteKinds(2, 7, []), []);
   assert.deepEqual([0, 1, 2, 3, 4, 5].map((s) => siteKinds(1, s)[0]), [0, 1, 2, 3, 4, 5].map((s) => siteKinds(1, s)[0]));
   assert.deepEqual(siteKinds(3, 1234), siteKinds(3, 1234));
   assert.deepEqual([siteKinds(1, 1)[0], siteKinds(1, 2)[0], siteKinds(1, 3)[0], siteKinds(1, 4)[0]], PINNED_KINDS);
 });
-const PINNED_KINDS = ['hold', 'litany', 'hold', 'hold'];
+const PINNED_KINDS = ['wellsprings', 'litany', 'wellsprings', 'vigil'];   // DLV4: the seven kinds' draw
 
 test('DLV1 THE WHOLE PLAN: the count\'s sites, one of each family, 60 m apart, each a 4 m disc - a Hold\'s vault 3.4 m toward its nearest wall of the four axis bearings (its gates on the diagonals), a Litany\'s at its heart inside the plates; the same every call; none for the caller\'s none (mutants: the vault toward the farthest wall; the vault\'s reach; a Hold\'s vault on a diagonal; a Litany\'s off its heart; the plan ignoring none)', () => {
   const blocks = row(4);

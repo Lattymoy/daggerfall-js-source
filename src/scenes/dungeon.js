@@ -683,7 +683,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // entries, so a probe can strip the worn weapon and swing bare.
     window.__playerEntity = playerEntity;
     window.__delve = () => ctx.delve?.() ?? null;   // DELVE II probe surface (tools/delveProbe.mjs): the encounters' host
-    window.__combat = { toggleSheath: ctx.toggleSheath, clickAttack: ctx.playerClickAttack, applySpellToPlayer: ctx.applySpellToPlayer };   // S24
+    window.__combat = { toggleSheath: ctx.toggleSheath, clickAttack: ctx.playerClickAttack, applySpellToPlayer: ctx.applySpellToPlayer, weapon: () => ctx.weaponRig?.()?.playerWeapon ?? null };   // S24; DELVE II (DLV4): the hand a probe's swing is in
     window.__foes = () => JSON.stringify(ctx.foes.map((f, i) => ({
       i, type: f.mobileType, dead: !!f.dead, health: f.entity?.health,
       // V1: the DESTROY-vs-KILL discriminator. damageFoe spawns a

@@ -22,8 +22,11 @@ const word = (o = {}) => ({ lv: 10, o: 0, kw: 0, kn: 0, wc: 0, cf: 0, ...o });
 const say = (led, acct, w, nowMs, ctx = {}) => foldDelveWord(led, acct, `n-${acct}`, w, { party: true, inWard: true, plate: w.st ?? -1, nowMs, ...ctx });
 
 test('DLV1 THE KINDS: the Hold a wave on the wire as 1, the Litany a puzzle as 2; a name not its own is none (mutants: an id moved; a family swapped)', () => {
-  assert.deepEqual(DELVE_KINDS, { hold: { id: 1, family: 'wave' }, litany: { id: 2, family: 'puzzle' } });
-  assert.deepEqual(DELVE_KIND_NAMES, ['hold', 'litany']);
+  assert.deepEqual(DELVE_KINDS, {
+    hold: { id: 1, family: 'wave' }, litany: { id: 2, family: 'puzzle' }, wellsprings: { id: 3, family: 'wave' }, vigil: { id: 4, family: 'wave' },
+    brazier: { id: 5, family: 'puzzle' }, weighing: { id: 6, family: 'puzzle' }, seals: { id: 7, family: 'puzzle' },
+  }, 'DLV4: the five more kinds, numbered on');
+  assert.deepEqual(DELVE_KIND_NAMES, ['hold', 'litany', 'wellsprings', 'vigil', 'brazier', 'weighing', 'seals']);
   assert.deepEqual(DELVE_FAMILIES, ['wave', 'puzzle']);
   assert.equal(delveKind('litany'), DELVE_KINDS.litany);
   assert.equal(delveKind('toString'), null, 'an object\'s own word is no kind');
@@ -126,7 +129,7 @@ test('DLV1 A NEW LEDGER: idle, the starter its owner, the Litany\'s order drawn,
   assert.deepEqual(stepDelve(led, T0 + DELVE_LET_GO_MS - 1), [], 'idle, and kept');
   assert.deepEqual(stepDelve(led, T0 + DELVE_LET_GO_MS), [{ k: 'let' }], 'never woken in 60 s: let go - the site is free');
   assert.deepEqual(foldDelveWord(led, 'A', 'a', null, { party: true, inWard: true, nowMs: T0 }), [], 'no word, nothing');
-  assert.deepEqual(DP, { idle: 0, gather: 1, wave: 2, breath: 3, captain: 4, show: 5, work: 6, won: 7 });
+  assert.deepEqual(DP, { idle: 0, gather: 1, wave: 2, breath: 3, captain: 4, show: 5, work: 6, won: 7, spring: 8, sunk: 9 }, 'DLV4: the Wellsprings\' pouring and the seals\' sinking');
 });
 
 test('DLV1 THE HOLD, WHOLE: the ward rises, three waves each cleared no sooner than its floor, a breath between, the captain believed after 20 s, won - earned by those in the ward within 15 s (mutants: the gathering skipped; a clear before its floor; the breath shortened; four waves; the captain early; the earn window widened)', () => {

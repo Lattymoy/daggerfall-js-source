@@ -242,8 +242,8 @@
   {
     "name": "QP3C-hunt-no-party",
     "file": "src/scenes/dungeonContext.js",
-    "old": ": (ownQuestTag(rec) ? peerCandidates().filter((c) => ownShare()?.peerMayHit?.(c.id, rec)) : []))] : null,",
-    "new": ": [])] : null,",
+    "old": ": (ownQuestTag(rec) ? peerCandidates().filter((c) => ownShare()?.peerMayHit?.(c.id, rec)) : [])), ...delve.wards()] : null,",
+    "new": ": []), ...delve.wards()] : null,",
     "tests": ["test/scenes/questparty3c.test.js"]
   },
   {

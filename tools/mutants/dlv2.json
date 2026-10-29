@@ -569,7 +569,7 @@
   {
     "name": "DLV2-a-hold-without-a-table",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "? DELVE_KIND_NAMES : DELVE_KIND_NAMES.filter((k) => k !== 'hold')",
+    "old": "? DELVE_KIND_NAMES : DELVE_KIND_NAMES.filter((k) => !isWaveKind(k))",
     "new": "? DELVE_KIND_NAMES : DELVE_KIND_NAMES",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
@@ -605,8 +605,8 @@
   {
     "name": "DLV2-a-sealed-vault-unlisted-dropped",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "DELVE_VAULT_TEXT.sealedLitany()], unlisted: true };",
-    "new": "DELVE_VAULT_TEXT.sealedLitany()] };",
+    "old": "subs: [sealedLine(r.site.kind)], unlisted: true };",
+    "new": "subs: [sealedLine(r.site.kind)] };",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -641,8 +641,8 @@
   {
     "name": "DLV2-outlasted-said-as-left",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "say(ev.outlasted ? DELVE_HOLD_TEXT.outlasted() : DELVE_HOLD_TEXT.failed(), DELVE_SAY_LONG_S)",
-    "new": "say(DELVE_HOLD_TEXT.failed(), DELVE_SAY_LONG_S)",
+    "old": "  if (ev.outlasted) return DELVE_HOLD_TEXT.outlasted();\n",
+    "new": "",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -650,8 +650,8 @@
   {
     "name": "DLV2-woken-again-at-once",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "    if (!r.led) { if (!iw || r.dark) return;",
-    "new": "    if (!r.led) { if (!iw) return;",
+    "old": "    if (!r.led) { if (!iw || r.dark || now < r.rest) return;",
+    "new": "    if (!r.led) { if (!iw || now < r.rest) return;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]

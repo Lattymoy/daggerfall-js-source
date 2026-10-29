@@ -294,7 +294,7 @@ test('DLV2 THE KEY AND THE NONE: a vault\'s key its site; no site in a dungeon t
   assert.equal(delveStandsNone({ ...loc, arenaFloor: 'sand', dungeon: { recordElement: { header: { locationId: ARENA_FLOOR_LOCATION_ID } } } }), true, 'an arena\'s sand');
   assert.equal(delveStandsNone({ hasDungeon: false }), true);
   assert.equal(delveStandsNone(null), true);
-  assert.deepEqual(delveKindsFor(loc), ['litany'], 'no table to stand foes from: no Hold');
+  assert.deepEqual(delveKindsFor(loc), ['litany', 'brazier', 'weighing', 'seals'], 'no table to stand foes from: no kind fought in waves (DLV4: nor the Wellsprings or the Vigil)');
   assert.deepEqual(delveKindsFor({ ...loc, mapTableData: { dungeonType: 4 } }), DELVE_KIND_NAMES);
 });
 
@@ -543,7 +543,7 @@ test('DLV2 NONE STOOD: online (until DLV3), the row off, or a dungeon of none - 
 test('DLV2 THE WIRING (HOST-SPLIT): the context builds it after its api and before the Rift\'s stand, ticks it and draws it in drawFoes, presses its vault through takeLoot and lists it through lootContents, keeps its word in the save\'s world record (the envelope keeps what it names) and lays it back at the load, carries a replaced body\'s place, and destroys it; both dungeon hosts send `delve:` to takeLoot; the plaque lists a vault and the look round calls it a find; the row on the Dungeons tab (mutants: a press arm missing; the save unkept; the carry dropped)', () => {
   const ctx = rd('src/scenes/dungeonContext.js');
   assert.match(ctx, /const delve = createDelveHost\(\{ api, deps, location: dfLocation, blocks: dungeon\.blocks, hearths: dungeonHearths, fires: dungeonFires, player: \(\) => playerEntity, rollPile: rollPileItems, online: onlineRoom \}\);\n {2}if \(sdEnd && !_sdEndAsked\)[^\n]*\n {2}return api;/);
-  assert.match(ctx, /sweepColdPeers\(dt\);[^\n]*\n {4}delve\.frame\(dt, playerFeet\);/);
+  assert.match(ctx, /sweepColdPeers\(dt\);[^\n]*\n {4}delve\.frame\(dt, playerFeet, _fpYaw, playerWeapon\);/);   // DLV4: the facing a carried piece is held to, the weapon a carry puts up
   assert.match(ctx, /opts\.lateWorldDraw\?\.\(\);\n {4}senseFrame\(eye\);[^\n]*\n {4}delve\.drawPass\(proj, view, eye\);/);
   assert.match(ctx, /if \(kind === 'delve'\) return delve\.press\(key, mode\);/);
   assert.match(ctx, /if \(kind === 'delve'\) return delve\.contents\(key\);/);

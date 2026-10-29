@@ -659,7 +659,7 @@ test('SD8c THE HOSTS, by source: the dungeon context makes the arena\'s set in t
   assert.match(D, /if \(playerFeet && !_sdRemnantStood\) \{ _sdRemnantStood = true; sdRemnant\.stand\(\{ dynamicDraws \}\); \}/);
   assert.match(D, /sdRemnant\?\.clear\(\);/);
   assert.match(D, /const b = sdRemnant \? sdRemnant\.target\(\) : opts\.gateBoss\?\.\(\) \?\? null;/);
-  assert.match(D, /const list = sdRemnant \? sdRemnant\.heartTargets\(\) : opts\.gateCrystals\?\.\(\) \?\? null;/);
+  assert.match(D, /const list = sdRemnant \? sdRemnant\.heartTargets\(\) : dungeonCrystals\(opts\.gateCrystals\?\.\(\), delve\.breakables\(\)\);/);   // DELVE II (DLV4): outside the Hour, the court's and the encounters'
   assert.match(D, /const list = sdRemnant \? sdRemnant\.echoTargets\(\) : opts\.gateHost\?\.\(\) \?\? null;/);
   assert.match(D, /return sdRemnant \? sdRemnant\.hit\(\{ d: damage, r \}\) : !!opts\.onBossHit\?\.\(\{ d: damage, r \}\);/);
   assert.match(D, /sdRemnant \? sdRemnant\.heartHit\(\{ c: cr\.crystal, d: damage, r \}\)/);

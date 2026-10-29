@@ -5,6 +5,7 @@
 // rises with each numeral (the Examination's, ui/eliteGates/egBeats.js EG_RUNE_CHIME). Not a DFU member (Ledger A: DELVE II).
 import { DP, LITANY_SHOW_STEP_MS } from '../../net/delve/delveLaw.js';
 import { SOUND } from '../../systems/soundClips.js';
+import { CRYSTAL_CLIPS } from '../../world/gate/gateBoss.js';
 
 /** A plate's look: dark (waiting), shown (its turn in the order played), lit (worked), wrong (the one stepped on wrongly). */
 export const PLATE_LOOK = Object.freeze({ dark: 0, shown: 1, lit: 2, wrong: 3 });
@@ -46,10 +47,16 @@ export function createPlateSteps() {
 }
 
 /** THE SOUNDS: a plate's chime rising with its numeral (1 the first of the order), the wrong plate's drum, the ward's toll
- *  as it wakes and the fanfare of a win - Daggerfall's own clips (systems/soundClips.js). */
+ *  as it wakes, the fanfare of a win and the pieces' own - Daggerfall's clips (systems/soundClips.js). */
 export const DELVE_SOUNDS = Object.freeze({
   chime: (n) => Object.freeze({ rec: SOUND.MakeItem, vol: 0.7, pitch: 0.9 + 0.12 * Math.max(0, (n | 0) - 1) }),
   wrong: Object.freeze({ rec: SOUND.SelectClassDrums, vol: 1, pitch: 0.8 }),
   wake: Object.freeze({ rec: 107, vol: 0.9, pitch: 0.75 }),   // the Examination's toll (ui/eliteGates/egBeats.js EG_BEAT_SOUNDS.toll)
   won: Object.freeze({ rec: SOUND.ArenaFanfareLevelUp, vol: 0.9, pitch: 1 }),
+  // DLV4: the pieces - a source or seal rising and breaking (the Court's crystals' own, world/gate/gateBoss.js
+  // CRYSTAL_CLIPS), a brazier catching, a weight set down
+  rise: Object.freeze({ rec: CRYSTAL_CLIPS.rise, vol: 0.8, pitch: 1.2 }),
+  shatter: Object.freeze({ rec: CRYSTAL_CLIPS.shatter, vol: 0.9, pitch: 1.3 }),
+  ignite: Object.freeze({ rec: SOUND.Ignite, vol: 0.9, pitch: 1 }),
+  thud: Object.freeze({ rec: SOUND.BodyFall, vol: 0.8, pitch: 1.4 }),
 });

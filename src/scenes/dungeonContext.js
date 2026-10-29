@@ -293,6 +293,7 @@ import { orbArchiveFor, ORB_RECORD, noteOrbColour, ORB_SCALE } from '../characte
 import { bloodHit } from '../combat/blood/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { createDroppedTorches } from './droppedTorches.js';
 import { createDelveHost } from './delve/delveHost.js';   // DELVE II (DLV2, bible/03-World/Delve-II.md): the dungeon's encounters, in a module of their own
+import { isDelveCrystal, dungeonCrystals } from './delve/delveBodies.js';   // DELVE II (DLV4): the encounters' pieces on the crystal seam, and a blow on one to its host
 import { createCamps, FIRE_LIGHT_UP } from './camps.js';   // REST3: a placed fire's light stands where a camp's does   // SURV3: a fire on the dungeon floor (no tent below - the camp law says so)
 import { campWire, validCampRecord, FIRE_LIGHT_RANGE } from '../systems/survival/camp.js';   // SURV3: the room's memory carries the camps as the wire says them   // HT1: Handheld Torches' dropped lights in the dungeon   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemy/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
@@ -3564,8 +3565,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     bossMark: opts.gateBoss ? () => { const b = gateBossBody(); return b ? { feet: b.ai.feet, height: b.ai.height, radius: b.ai.radius } : null; } : null,
     castAtBoss: opts.gateBoss ? (sp, caster) => spellOnBoss(sp, caster) : null,
     // WB9c: the Reckoning's crystals as marks a harmful spell meets (a touch, a missile, a blast) - each by its number
-    crystalMarks: opts.gateCrystals ? () => gateCrystalBodies().map((q) => ({ c: q.crystal, feet: q.ai.feet, height: q.ai.height, radius: q.ai.radius })) : null,
-    castAtCrystal: opts.gateCrystals ? (sp, c, caster) => spellOnCrystal(sp, c, caster) : null,
+    crystalMarks: () => gateCrystalBodies().map((q) => ({ c: q.crystal, feet: q.ai.feet, height: q.ai.height, radius: q.ai.radius })),   // DELVE II (DLV4): a dungeon's sources and seals meet a harmful spell too
+    castAtCrystal: (sp, c, caster) => spellOnCrystal(sp, c, caster),
     // WB11c: the Legion-Lord's host as marks a harmful spell meets - each by its number and name
     hostMarks: opts.gateHost ? () => gateHostBodies().map((q) => ({ i: q.host, name: q.entity?.name ?? '', feet: q.ai.feet, height: q.ai.height, radius: q.ai.radius })) : null,
     castAtHost: opts.gateHost ? (sp, i, caster) => spellOnHost(sp, i, caster) : null,
@@ -4408,7 +4409,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the game's own law against its stand-in (world/gate/gateBoss.js crystalStandIn - unarmoured: a crystal does not dodge)
   // and its number goes out (`opts.onCrystalHit`), the relay's caps deciding what lands (net/gate/gateBrain.js applyCrystalHit).
   function gateCrystalBodies() {
-    const list = sdRemnant ? sdRemnant.heartTargets() : opts.gateCrystals?.() ?? null;   // SD8c: in the Hour, the Reset's Hearts
+    const list = sdRemnant ? sdRemnant.heartTargets() : dungeonCrystals(opts.gateCrystals?.(), delve.breakables());   // SD8c: in the Hour, the Reset's Hearts; DELVE II (DLV4): else the court's and the encounters' sources and seals
     if (!Array.isArray(list) || !list.length) return [];
     const out = [];
     for (const q of list) {
@@ -4418,7 +4419,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     return out;
   }
   /** A blow's number on a crystal, out to the relay through the court's door; answers whether it went. */
-  const landOnCrystal = (cr, damage, r) => { damage += takeOwed(cr.entity); return sdRemnant ? sdRemnant.heartHit({ c: cr.crystal, d: damage, r }) : !!opts.onCrystalHit?.({ c: cr.crystal, d: damage, r }); };   // SD8c: a Heart's, to the realm; OPEN-HAND: and the follow-up the blow owes
+  const landOnCrystal = (cr, damage, r) => { damage += takeOwed(cr.entity); return isDelveCrystal(cr.crystal) ? delve.hit(cr.crystal, damage, r) : sdRemnant ? sdRemnant.heartHit({ c: cr.crystal, d: damage, r }) : !!opts.onCrystalHit?.({ c: cr.crystal, d: damage, r }); };   // SD8c: a Heart's, to the realm; OPEN-HAND: and the follow-up the blow owes
   /** A swing of mine that met a crystal: the glass rings (the court voices it - scenes/gate/gateCourt.js), the number out. */
   function swingOnCrystal(cr, damage) {
     if (damage > 0) landOnCrystal(cr, damage, HIT_KINDS.Melee);
@@ -7403,7 +7404,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     droppedTorches.tick(dt);   // HT1: the burn, the flight, the flames
     camps.tick(dt);   // SURV3: the fires burn down
     sweepColdPeers(dt);   // AUDIT REST-PARTY B3: a room's cold fire whose owner left the room goes with them (AUDIT REST II F9: once a second, while a peer's camp stands)
-    delve.frame(dt, playerFeet);   // DELVE II: the encounters' clock and ledgers - waits under a window, as the foes do
+    delve.frame(dt, playerFeet, _fpYaw, playerWeapon);   // DELVE II: the encounters' clock and ledgers - waits under a window, as the foes do; a carried piece held before me, my weapon put up
     // PX21c / WORLD-HOVER: THE HOVER PLAQUE, from the frame function
     // both dungeon hosts already call - the splash clock's reasoning,
     // one slice on. It runs the SAME pick the take runs, so it cannot
@@ -7563,7 +7564,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // WORLD3: the peers in the room ride the list - but only for a foe the STREAM carries (AUDIT WORLD3 D1: a quest
       // spawn, a summon or an encounter past the layout's run is nobody's puppet, so a peer it picked was fought by
       // no one: the host took nothing and the peer never learned it existed)
-      candidates: foeDeps ? (streamed = false, rec = null) => [...foes.filter((f) => !f.dead && f.ai), ...((_authority && streamed) || ownLoose(rec) ? peerCandidates() : (ownQuestTag(rec) ? peerCandidates().filter((c) => ownShare()?.peerMayHit?.(c.id, rec)) : []))] : null,   // QUEST-PARTY phase 3c: my shared quest foe hunts the party it rides to; SUMMON-SYNC: my loose stand, the room it rides to
+      candidates: foeDeps ? (streamed = false, rec = null) => [...foes.filter((f) => !f.dead && f.ai), ...((_authority && streamed) || ownLoose(rec) ? peerCandidates() : (ownQuestTag(rec) ? peerCandidates().filter((c) => ownShare()?.peerMayHit?.(c.id, rec)) : [])), ...delve.wards()] : null,   // QUEST-PARTY phase 3c: my shared quest foe hunts the party it rides to; SUMMON-SYNC: my loose stand, the room it rides to
       // ROAD-B: EnemySenses.StealthCheck's first statement (:619-621).
       // This is the ONE host that can answer it true, off the same
       // block read the music and the ambient take.

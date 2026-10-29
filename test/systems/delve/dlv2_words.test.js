@@ -4,21 +4,22 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { DELVE_NEAR_TEXT, DELVE_HOLD_TEXT, DELVE_LITANY_TEXT, DELVE_VAULT_TEXT, DELVE_SAY_S, DELVE_SAY_LONG_S } from '../../../src/systems/delve/delveWords.js';
+import * as WORDS from '../../../src/systems/delve/delveWords.js';
+import { DELVE_NEAR_TEXT, DELVE_HOLD_TEXT, DELVE_SAY_S, DELVE_SAY_LONG_S } from '../../../src/systems/delve/delveWords.js';
 import { rollVault } from '../../../src/systems/delve/delveVault.js';
 
 const rd = (p) => readFileSync(new URL('../../../' + p, import.meta.url), 'utf8');
+/** Every line of every table (DLV4: the new kinds' too), each source look's near line, at the arguments they take. */
 const lines = () => [
-  DELVE_NEAR_TEXT.hold(), DELVE_NEAR_TEXT.litany(4),
-  ...Object.values(DELVE_HOLD_TEXT).map((f) => f(2, 3)), ...Object.values(DELVE_LITANY_TEXT).map((f) => f()),
-  ...Object.values(DELVE_VAULT_TEXT).map((f) => f()),
+  ...['tomb', 'pool', 'altar'].map((look) => DELVE_NEAR_TEXT.springs(look, 3)),
+  ...Object.entries(WORDS).filter(([k, v]) => /_TEXT$/.test(k) && v && typeof v === 'object').flatMap(([, table]) => Object.values(table).map((f) => f(2, 3))),
 ];
 
 test('DLV2 THE WORDS: each its own key in the text core, said short - no line past 40 words, no sentence past 25, no dash aside, numbers as numerals (mutants: a line off the text core)', () => {
   const src = rd('src/systems/delve/delveWords.js');
   const keys = [...src.matchAll(/t\('(delve\.[a-zA-Z.]+)'/g)].map((m) => m[1]);
   assert.equal(keys.length, new Set(keys).size, 'one key a line');
-  assert.equal(keys.length, 20);
+  assert.equal(keys.length, 63, 'DLV4: the Hold\'s and the Litany\'s twenty, and the five new kinds\' forty-three');
   for (const k of keys) assert.match(rd('locales/en/Port_Strings.csv'), new RegExp(`^${k.replace(/\./g, '\\.')},`, 'm'), `${k} is in the English table`);
   for (const s of lines()) {
     assert.ok(typeof s === 'string' && s.length > 0);

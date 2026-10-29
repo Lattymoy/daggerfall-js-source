@@ -32,7 +32,7 @@ test('MT-iv: the target machine rides the LAZY foe subsystem, not a static impor
     const i = DG.indexOf(guard);
     assert.ok(i > 0, `${guard} is consumed`);
   }
-  assert.ok(DG.includes('candidates: foeDeps ? (streamed = false, rec = null) => [...foes.filter((f) => !f.dead && f.ai), ...((_authority && streamed) || ownLoose(rec) ? peerCandidates() : (ownQuestTag(rec) ? peerCandidates().filter((c) => ownShare()?.peerMayHit?.(c.id, rec)) : []))] : null'),
+  assert.ok(DG.includes('candidates: foeDeps ? (streamed = false, rec = null) => [...foes.filter((f) => !f.dead && f.ai), ...((_authority && streamed) || ownLoose(rec) ? peerCandidates() : (ownQuestTag(rec) ? peerCandidates().filter((c) => ownShare()?.peerMayHit?.(c.id, rec)) : [])), ...delve.wards()] : null'),
     'and the candidate getter itself idles without the subsystem');
 });
 
@@ -40,7 +40,7 @@ test('MT-iv: the candidate list is this host\'s whole active-enemy database, fil
   // EnemySenses.cs:741-749. Unlike world.js there is nothing to join -
   // the dungeon has no guard or encounter pool - but corpses and
   // culled records must leave the database the frame they die.
-  assert.match(DG, /candidates: foeDeps \? \(streamed = false, rec = null\) => \[\.\.\.foes\.filter\(\(f\) => !f\.dead && f\.ai\), \.\.\.\(\(_authority && streamed\) \|\| ownLoose\(rec\) \? peerCandidates\(\) : \(ownQuestTag\(rec\) \? peerCandidates\(\)\.filter\(\(c\) => ownShare\(\)\?\.peerMayHit\?\.\(c\.id, rec\)\) : \[\]\)\)\] : null/);
+  assert.match(DG, /candidates: foeDeps \? \(streamed = false, rec = null\) => \[\.\.\.foes\.filter\(\(f\) => !f\.dead && f\.ai\), \.\.\.\(\(_authority && streamed\) \|\| ownLoose\(rec\) \? peerCandidates\(\) : \(ownQuestTag\(rec\) \? peerCandidates\(\)\.filter\(\(c\) => ownShare\(\)\?\.peerMayHit\?\.\(c\.id, rec\)\) : \[\]\)\), \.\.\.delve\.wards\(\)\] : null/);
   // the activity bag is PERSISTENT: spread, never mutate
   assert.match(DG, /sensesContext\(playerEntity, classicMinutesRef\.value, \{\n\s*\.\.\._activity,/,
     'the shared builder, with the bag spread rather than written through');

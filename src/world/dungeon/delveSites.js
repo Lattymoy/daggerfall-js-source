@@ -8,7 +8,7 @@
 import { hash32 } from '../blockHash.js';
 import { dungeonStart, enemyMarks, itemMarks, isPalaceLayout, isBorderBlock, colliderFireProbe, blockWaterY, DFIRE } from './dungeonFires.js';
 import { RDB_SIDE } from '../rdbLayout.js';
-import { DELVE_KINDS, DELVE_KIND_NAMES, DELVE_FAMILIES, LITANY_RING_M, litanyCount } from '../../net/delve/delveLaw.js';
+import { DELVE_KINDS, DELVE_KIND_NAMES, DELVE_FAMILIES, DELVE_HEART_VAULTS, LITANY_RING_M, litanyCount } from '../../net/delve/delveLaw.js';
 
 /** @typedef {{ r: number, flatNy: number, levelM: number, rings: readonly number[], ceilingM: number, enclosedM: number,
  *   enclosedRays: number, gridM: number, doorM: number, enemyM: number, itemM: number, startM: number, fireM: number,
@@ -200,11 +200,11 @@ export function siteKinds(count, seed, kinds = DELVE_KIND_NAMES) {
   return out;
 }
 
-/** The vault's spot: a Litany's at its heart, inside its plates' ring; a Hold's toward the nearest wall of the four axis
- *  bearings (its gates stand on the diagonals; the first on a tie), the disc less 0.6 m out. The walls are compared to
+/** The vault's spot: a Litany's or the seals' at its heart, inside its pieces' ring; every other kind's toward the nearest
+ *  wall of the four axis bearings (its gates stand on the diagonals; the first on a tie), the disc less 0.6 m out. The walls are compared to
  *  the centimetre: a nearer by less than that is a tie, never a last bit of an engine's trig. */
 function vaultSpot(pos, walls, r, kind) {
-  if (kind === 'litany') return [cm(pos[0]), cm(pos[1]), cm(pos[2])];
+  if (DELVE_HEART_VAULTS.includes(kind)) return [cm(pos[0]), cm(pos[1]), cm(pos[2])];
   let j = 0;
   for (let k = 1; k < 4; k++) if (cm(walls[k]) < cm(walls[j])) j = k;
   const g = r - 0.6;   // levelDisc asks the floor here, on all four
