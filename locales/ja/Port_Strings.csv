@@ -1195,6 +1195,7 @@ gfx.fix.win.close,"Chrome のウィンドウをすべて閉じます。時計の
 gfx.fix.win.run,"Win+R を押し、このパスを貼り付けて Enter を押します:"
 gfx.fix.win.start,"Chrome をもう一度起動します。"
 growth.spec.why.chosenMentor,"あなたの特化です。低レベルのパーティのメンター中、その力は{pct}%で働きます。"
+helm.heavy,"重すぎます。荷物、荷馬車、船倉を軽くしてください"
 holdings.horse.boons.hungry,"空腹ですが、まだペナルティはありません。"
 holdings.horse.boons.starving,"飢餓 - 食べるまで駆けません。餌をあげましょう。"
 holdings.wagon.boons.failing,"壊れかけていますが、まだ全速で進みます。"

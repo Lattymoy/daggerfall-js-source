@@ -319,8 +319,8 @@
   {
     "name": "CSA-C-visibility-reach-two",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "      if (allBoat2.inside || (allBoat2.MapPixel != null && pixelsApart(deps.currentMapPixel(), allBoat2.MapPixel) > 1)) {",
-    "new": "      if (allBoat2.inside || (allBoat2.MapPixel != null && pixelsApart(deps.currentMapPixel(), allBoat2.MapPixel) > 2)) {",
+    "old": "pixelOf(allBoat2)) > 1) {",
+    "new": "pixelOf(allBoat2)) > 2) {",
     "tests": [
       "test/systems/comeSailAway/csa_placing.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "CSA-C-inside-any-boat-stands",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "        if (allBoat.inside && inDungeon() && allBoat.MapPixel.X === cur.X && allBoat.MapPixel.Y === cur.Y) {",
-    "new": "        if (allBoat.MapPixel.X === cur.X && allBoat.MapPixel.Y === cur.Y) {",
+    "old": "        if (allBoat.inside && inDungeon() && pixelOf(allBoat).X === cur.X && allBoat.MapPixel.Y === cur.Y) {",
+    "new": "        if (pixelOf(allBoat).X === cur.X && allBoat.MapPixel.Y === cur.Y) {",
     "tests": [
       "test/systems/comeSailAway/csa_placing.test.js"
     ],

@@ -340,6 +340,7 @@ gfx.fix.win.close,"关闭所有 Chrome 窗口。如果时钟旁仍有它的图�
 gfx.fix.win.run,"按 Win+R，粘贴此路径并按 Enter："
 gfx.fix.win.start,"重新启动 Chrome。"
 growth.spec.why.chosenMentor,"你的专精。担任低等级队伍的导师时，其能力按{pct}%生效。"
+helm.heavy,"太重了。减轻背包、马车或货舱的负重"
 holdings.horse.boons.hungry,"饥饿，但还没有惩罚。"
 holdings.horse.boons.starving,"饥肠辘辘 - 进食前无法疾驰。喂喂它吧。"
 holdings.wagon.boons.failing,"快散架了，但仍全速前行。"

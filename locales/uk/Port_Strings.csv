@@ -340,6 +340,7 @@ gfx.fix.win.close,"Закрийте всі вікна Chrome. Якщо його 
 gfx.fix.win.run,"Натисніть Win+R, вставте цей шлях і натисніть Enter:"
 gfx.fix.win.start,"Знову запустіть Chrome."
 growth.spec.why.chosenMentor,"Ваша спеціалізація. Її здібності діють на {pct}%, поки ви наставник групи нижчого рівня."
+helm.heavy,"Занадто важко. Полегшіть рюкзак, візок або трюм"
 holdings.horse.boons.hungry,"Голодний, але штрафу поки немає."
 holdings.horse.boons.starving,"Виснажений голодом - не скаче чвалом, доки не поїсть. Нагодуйте його."
 holdings.wagon.boons.failing,"Розвалюється, але досі котиться на повній швидкості."

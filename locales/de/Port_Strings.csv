@@ -2965,6 +2965,7 @@ guild.wayBack.shut,"Dieses Gildenhaus ist in dieser Saison geschlossen - die Gil
 guild.wayBack.skills,"Dazu braucht es eine Gildenfertigkeit auf {high} und eine zweite auf {low}: {skills}."
 guild.wayBack.standing,"Dein Ansehen hier ist {rep}. Mitglieder werden ab {need} aufgenommen."
 haul.capped,"Tageslimit für Silber erreicht"
+helm.heavy,"Zu schwer. Erleichtere deinen Rucksack, deinen Wagen oder den Laderaum"
 helm.passenger,"{ship}, unterwegs nach {port} - ihr Kapitän steuert"
 holdings.horse.boons.hungry,"Hungrig, aber noch ohne Nachteil."
 holdings.horse.boons.starving,"Ausgehungert - kein Galopp, bis es frisst. Füttere es."

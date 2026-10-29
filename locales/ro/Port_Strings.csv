@@ -2965,6 +2965,7 @@ guild.wayBack.shut,"Acest sediu e închis în acest Sezon - sediile breslei din 
 guild.wayBack.skills,"Mai e nevoie de o abilitate de breaslă la {high} și de a doua la {low}: {skills}."
 guild.wayBack.standing,"Reputația ta aici este {rep}. Membrii sunt primiți de la {need} în sus."
 haul.capped,"Limita zilnică de argint atinsă"
+helm.heavy,"Prea greu. Ușurează-ți rucsacul, căruța sau cala"
 helm.passenger,"{ship}, cu destinația {port} - căpitanul ei ține cârma"
 holdings.horse.boons.hungry,"Flămând, dar încă fără penalizare."
 holdings.horse.boons.starving,"Înfometat - nu galopează până nu mănâncă. Hrănește-l."

@@ -225,7 +225,7 @@ test('BOAT-MARK the street\'s host by source: my boats from Come Sail Away\'s ow
   assert.match(w, /const state = new StreamingWorldState\(/, 'the streaming world the mark reads its frame from');
   // what the mark reads off a boat is the runtime's own: her pixel, her dungeon flag, whether she stands in sight
   const csa = src('src/systems/comeSailAway/comeSailAway.js');
-  assert.match(csa, /pixelsApart\(deps\.currentMapPixel\(\), allBoat2\.MapPixel\) > 1/, 'out of sight past a pixel: the mark\'s "in sight" is hers');
+  assert.match(csa, /pixelsApart\(deps\.currentMapPixel\(\), pixelOf\(allBoat2\)\) > 1/, 'out of sight past a pixel: the mark\'s "in sight" is hers (NO-PIXEL: one with none takes hers)');
   assert.match(csa, /MapPixel: b\.MapPixel \? \{ X: b\.MapPixel\.X, Y: b\.MapPixel\.Y \} : null,/, 'her pixel saved with her');
   assert.match(csa, /if \(ridesTheWorld\(allBoat\)\) OnPositionUpdateBoat\(allBoat, offset\);/, 'every boat out of sight rides the recentres');
   assert.match(csa, /const ridesTheWorld = \(boat\) => !boat\.inside \|\| boat\.GameObject\.activeSelf;/, 'a dungeon\'s boat out of sight does not');

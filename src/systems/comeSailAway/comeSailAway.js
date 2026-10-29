@@ -88,7 +88,7 @@
 //                                                 PlayerMotor.FreezeMotor, SpeedChanger.isRunning, PlayerFootsteps
 //   transport: { isFoot(), setFoot(), hasHorse(), hasCart() }       TransportManager
 //   ship: { owns(), assign('Small'|'None'), removePermanentScene(name) }   DaggerfallBankManager, the StateManager
-//   entity: { isFemale(), carriedWeight(), wagonWeight(), decreaseFatigue(n) }   PlayerEntity
+//   entity: { isFemale(), carriedWeight(), wagonWeight(), decreaseFatigue(n) }   PlayerEntity (CARGO-ASHORE: the wagon's load aboard - none ashore)
 //   HOLD-WEIGHT: entity.maxEncumbrance() -> kg   PlayerEntity.MaxEncumbrance - her parts are never made heavier than it
 //                                                 (`partsTooHeavy`); absent, no law is read and she packs as the mod packs
 //   cargoWeight(items) -> kg                      ItemCollection.GetWeight
@@ -938,7 +938,7 @@ export function createComeSailAwayRuntime(deps) {
     let num = f(deps.cargoWeight?.(boat.Cargo.Items) ?? 0);
     if (setting('Cargo.PlayerWeight', true)) num = f(num + (deps.entity?.isFemale?.() ? CARGO_WEIGHTS.female : CARGO_WEIGHTS.male));
     if (setting('Cargo.PlayerCarriedWeight', true)) num = f(num + f(deps.entity?.carriedWeight?.() ?? 0));
-    if (setting('Cargo.CartCarriedWeight', true)) num = f(num + f(deps.entity?.wagonWeight?.() ?? 0));
+    if (setting('Cargo.CartCarriedWeight', true)) num = f(num + f(deps.entity?.wagonWeight?.() ?? 0));   // CARGO-ASHORE: the host's load aboard
     if (setting('Cargo.HorseItem', false) && deps.transport?.hasHorse?.()) num = f(num + CARGO_WEIGHTS.horse);
     if (setting('Cargo.CartItem', false) && deps.transport?.hasCart?.()) num = f(num + CARGO_WEIGHTS.cart);
     // a hull with no Cargo modifier (the Carrack) divides by zero: 0 at any weight, NaN at none - kept by the mod's own
@@ -1716,9 +1716,8 @@ export function createComeSailAwayRuntime(deps) {
     if (t0 == null) return;
     for (const boat of [...state.AllBoats]) {
       if (boat.groundAsked || boat.inside || boat === state.CurrentBoat || !boat.GameObject?.activeSelf) continue;
-      const p = boat.GameObject.position, o = t0.position;
-      // the pixel under the boat, off the player's own: map x grows with the scene's x, map y against its z
-      const t = deps.terrainAt(t0.mapPixelX + Math.floor((p[0] - o[0]) / TERRAIN_EDGE), t0.mapPixelY - Math.floor((p[2] - o[2]) / TERRAIN_EDGE));
+      const p = boat.GameObject.position, under = pixelUnderOn(t0, p);
+      const t = deps.terrainAt(under.X, under.Y);
       if (t == null) continue;   // its ground not built yet: asked when it is
       boat.groundAsked = true;
       const ground = f(f(t.position[1]) + f(t.sampleHeight(p)));
@@ -1726,6 +1725,18 @@ export function createComeSailAwayRuntime(deps) {
       deps.hudText('A boat of yours was lost where no one could reach it');
       PackBoat(boat, true, true);   // HOLD-WEIGHT: lost, packed whatever her hold weighs
     }
+  }
+  /** The map pixel under scene point `p`, off terrain `t0`'s own: map x grows with the scene's x, map y against its z. */
+  const pixelUnderOn = (t0, p) => ({ X: t0.mapPixelX + Math.floor((p[0] - t0.position[0]) / TERRAIN_EDGE), Y: t0.mapPixelY - Math.floor((p[2] - t0.position[2]) / TERRAIN_EDGE) });
+  /** NO-PIXEL (FIELD BUGS 2026-10-29, a departure): a boat with no map pixel - placed on a terrain the streamer no longer
+   *  held (GetMapPixelFromTerrain's null), or saved so - takes the pixel she stands on, off the player's terrain, else the
+   *  player's own. The C# reads her pixel's X and throws: the visibility, a recentre's shift and a restore stopped at her. */
+  function pixelOf(boat) {
+    if (boat.MapPixel == null) {
+      const t0 = boat.inside || deps.isPlayerInside() ? null : deps.playerTerrain?.();
+      boat.MapPixel = t0 ? pixelUnderOn(t0, boat.GameObject.position) : deps.currentMapPixel();
+    }
+    return boat.MapPixel;
   }
   /** CSA-G: `if (TravelOptions != null)` its isTravelActive message (4921-4934), which Update's unpause reset reads;
    *  wasTravelling follows it and is read nowhere (kept). */
@@ -2662,6 +2673,7 @@ export function createComeSailAwayRuntime(deps) {
     boat.GameObject.rotation = quatLookRotation(direction);   // transform.forward = direction
     boat.MapPixel = deps.currentMapPixel();
     if (terrain != null && !sameTerrain(terrain, deps.playerTerrain())) boat.MapPixel = GetMapPixelFromTerrain(terrain);
+    pixelOf(boat);   // NO-PIXEL: a terrain the streamer no longer holds - the pixel she stands on
     UpdateBoatNodes(boat, terrain);
   }
   /** GetMapPixelFromTerrain (6489-6500): the terrain's pixel off the streaming world's own array, or null. */
@@ -2677,7 +2689,7 @@ export function createComeSailAwayRuntime(deps) {
     boat.GameObject.position = [...position];
     boat.GameObject.rotation = quatLookRotation(direction);
     boat.MapPixel = mapPixel;
-    UpdateBoatNodesAtMapPixel(boat, mapPixel);
+    UpdateBoatNodesAtMapPixel(boat, pixelOf(boat));   // NO-PIXEL: a record saved with none stands at the pixel she stands on
   }
 
   /** A node's reading at a point on one terrain (0 is water): Iliac Puddle No More's height test, else the tile map's -
@@ -2728,7 +2740,7 @@ export function createComeSailAwayRuntime(deps) {
     if (deps.isPlayerInside() && !deps.keepExteriorBoats?.()) {
       for (const allBoat of state.AllBoats) {
         const cur = deps.currentMapPixel();
-        if (allBoat.inside && inDungeon() && allBoat.MapPixel.X === cur.X && allBoat.MapPixel.Y === cur.Y) {
+        if (allBoat.inside && inDungeon() && pixelOf(allBoat).X === cur.X && allBoat.MapPixel.Y === cur.Y) {
           if (!allBoat.GameObject.activeSelf) setBoatActive(allBoat, true);
         } else if (allBoat.GameObject.activeSelf) setBoatActive(allBoat, false);
       }
@@ -2736,7 +2748,7 @@ export function createComeSailAwayRuntime(deps) {
     }
     const list = [];
     for (const allBoat2 of state.AllBoats) {
-      if (allBoat2.inside || (allBoat2.MapPixel != null && pixelsApart(deps.currentMapPixel(), allBoat2.MapPixel) > 1)) {
+      if (allBoat2.inside || pixelsApart(deps.currentMapPixel(), pixelOf(allBoat2)) > 1) {   // NO-PIXEL: hers, never a throw
         if (allBoat2.inside && !deps.persistentDungeonBoats()) list.push(allBoat2);
         if (allBoat2.GameObject.activeSelf) setBoatActive(allBoat2, false);
       } else {
@@ -2755,12 +2767,12 @@ export function createComeSailAwayRuntime(deps) {
     if (boat == null) return;
     if (deps.isPlayerInside() && !deps.keepExteriorBoats?.()) {
       const cur = deps.currentMapPixel();
-      if (boat.inside && inDungeon() && boat.MapPixel.X === cur.X && boat.MapPixel.Y === cur.Y) {
+      if (boat.inside && inDungeon() && pixelOf(boat).X === cur.X && boat.MapPixel.Y === cur.Y) {
         if (!boat.GameObject.activeSelf) setBoatActive(boat, true);
       } else if (boat.GameObject.activeSelf) setBoatActive(boat, false);
       return;
     }
-    if (boat.inside || (boat.MapPixel != null && pixelsApart(deps.currentMapPixel(), boat.MapPixel) > 1)) {
+    if (boat.inside || pixelsApart(deps.currentMapPixel(), pixelOf(boat)) > 1) {   // NO-PIXEL
       if (boat.GameObject.activeSelf) setBoatActive(boat, false);
     } else if (!boat.GameObject.activeSelf) setBoatActive(boat, true);
     UpdateBoatNodesAtMapPixel(boat, boat.MapPixel);
@@ -2828,17 +2840,19 @@ export function createComeSailAwayRuntime(deps) {
   }
 
   /** OnLoad (1943-1950). SAIL-WIND (FIELD BUGS 2026-10-21b): and a load that lands outdoors under the indoors' none asks
-   *  the door's wind (csaLoadWind.js says why). */
+   *  the door's wind (csaLoadWind.js says why) - WIND-FIRST: before the boats are shown, as OnTransition lays it. */
   function OnLoad() {
+    if (windStaleOutdoors(deps.isPlayerInside(), state.windVectorCurrent)) UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny);
     UpdateBoatVisibility();
     UpdateWaveMesh();   // `if (waveObject != null)` - Start built it
-    if (windStaleOutdoors(deps.isPlayerInside(), state.windVectorCurrent)) UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny);
   }
-  /** OnTransition (1978-1985): into or out of a building or a dungeon. */
+  /** OnTransition (1978-1985): into or out of a building or a dungeon. WIND-FIRST (FIELD BUGS 2026-10-29, a departure):
+   *  the door's wind is laid before the boats are shown, never after - it reads no boat, and a boat the visibility could
+   *  not read (NO-PIXEL) had thrown first and left the indoors' none on the open sea: no ship made way under sail. */
   function OnTransition() {
     ResetTimeScale(false);
-    UpdateBoatVisibility();
     UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny);
+    UpdateBoatVisibility();
     UpdateWaveMesh();
   }
   /** OnTeleportToCoordinates (2072-2075): the waves a tenth of a second later. */
@@ -3276,6 +3290,7 @@ export function createComeSailAwayRuntime(deps) {
         moreSail: boat.Sails.length > 0 && (state.sailPosition === 0 || (squareHandled(boat) && squareStowed(boat))), inIrons: inIrons(boat) && state.ironsFor >= IRONS_TELL_S,
         // HELM-SPEED (2026-10-06, Mac: "add a speed indicator for when you're sailing"): her way through the water (m/s)
         way: vMagnitude(state.MoveVectorCurrent),
+        heavy: state.boatCargoMod < 0.5,   // HEAVY-HINT: her load holds her to half her way or less (cargoModWords' worse word)
       };
     },
     /** AUDIT NAV2 F14 x F16: whether the helm is the responsive one (HELM-WAY) - this helm's word while one is taken,

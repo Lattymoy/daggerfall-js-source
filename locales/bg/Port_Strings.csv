@@ -2965,6 +2965,7 @@ guild.wayBack.shut,"Тази зала е затворена този Сезон 
 guild.wayBack.skills,"Нужно е и едно умение на гилдията на {high}, а второ на {low}: {skills}."
 guild.wayBack.standing,"Положението ви тук е {rep}. Членове се приемат от {need} нагоре."
 haul.capped,"Дневният лимит сребро е достигнат"
+helm.heavy,"Твърде тежко. Олекотете раницата, каруцата или трюма"
 helm.passenger,"{ship}, на път за {port} - капитанът ѝ управлява"
 holdings.horse.boons.hungry,"Гладен, но засега без наказание."
 holdings.horse.boons.starving,"Изгладнял - не препуска, докато не яде. Нахранете го."

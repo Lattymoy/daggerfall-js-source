@@ -851,6 +851,12 @@ every speed and acceleration. It is weighed at the helm and every magic
 round while sailing (the world host's ticker - a round indoors is the
 mode's own clock and does not weigh it, DECLARED below).
 
+CARGO-ASHORE (FIELD BUGS 2026-10-29, a departure): the cart's load
+counts only while the wagon is in its owner's keeping (Horse Cart and
+Cargo's WithPlayer, not stabled) - a wagon parked, stabled or following
+on foot stays ashore. While the load holds her to half her way or less,
+the helm panel's line says so (HEAVY-HINT).
+
 ### The riders
 
 FixedUpdate casts down each live enemy's own height from its centre; a
@@ -1023,6 +1029,13 @@ end by a tenth of a radian a second (Vector3.RotateTowards, its length
 by up to one a step), until the two are equal, and then raises
 OnUpdateWind. The rain's and the snow's forces it sets on each step are
 the particles' (CSA-F).
+
+WIND-FIRST (FIELD BUGS 2026-10-29, a departure): a door lays its wind
+before it shows its boats, and a load checks for the indoors' none
+before them too - the C# laid it after, and a boat whose visibility
+threw left that none on the open sea. NO-PIXEL: a boat with no map pixel
+takes the one she stands on, where the C# threw
+(`01-Overview/bugs/Field-Bugs-2026-10-29.md`).
 
 ### The sails
 

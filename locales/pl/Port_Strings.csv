@@ -1191,6 +1191,7 @@ gfx.fix.win.close,"Zamknij wszystkie okna Chrome. Jeśli jego ikona zostaje przy
 gfx.fix.win.run,"Naciśnij Win+R, wklej tę ścieżkę i naciśnij Enter:"
 gfx.fix.win.start,"Uruchom Chrome ponownie."
 growth.spec.why.chosenMentor,"Twoja specjalizacja. Jej moce działają w {pct}%, gdy jesteś mentorem drużyny o niższym poziomie."
+helm.heavy,"Za ciężko. Odciąż plecak, wóz lub ładownię"
 holdings.horse.boons.hungry,"Głodny, ale jeszcze bez kary."
 holdings.horse.boons.starving,"Wygłodzony - nie galopuje, dopóki nie zje. Nakarm go."
 holdings.wagon.boons.failing,"Rozpada się, ale wciąż jedzie pełnym tempem."

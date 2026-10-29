@@ -8070,7 +8070,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     entity: {
       isFemale: () => playerEntity.gender === 'female',
       carriedWeight: () => carriedWeight(playerEntity), maxEncumbrance: () => entityMaxEncumbrance(playerEntity),   // HOLD-WEIGHT: PlayerEntity.MaxEncumbrance - PackBoat makes no parts heavier
-      wagonWeight: () => totalWeight(playerEntity.wagonItems ?? []),
+      wagonWeight: () => (!hccOn() || hccRuntime?.wagonWithPlayer?.() ? totalWeight(playerEntity.wagonItems ?? []) : 0),   // CARGO-ASHORE: the load aboard - a parked, stabled or following wagon stays ashore; with the mod off it goes where its owner goes
       decreaseFatigue: (n) => { if (!modes?.drainPlayerFatigue?.(n)) playerTicker.sinks.drainFatigue(n); surfacePlayer(); },   // PlayerEntity.DecreaseFatigue: the one fatigue door, its collapse at 0 with it - CSA-J (the audit): the mode's own, so a collapse indoors is the mode's (its enemies, its rest)
     },
     cargoWeight: (items) => totalWeight(items ?? []),

@@ -373,7 +373,7 @@ const passengerTitle = (p) => t('helm.passenger', '{ship}, bound for {port} - he
 const HELM_PREVIEW = Object.freeze({
   hull: null, hasSails: true, sailsUp: false, squareToggle: false, squareUp: false, hasSquare: false, squareOnly: false,
   manualTrim: false, light: false, timeDial: true, timeScale: 1, timeScaleIndex: 0, timeScaleMax: 3, orders: false,
-  inIrons: false, way: 0,
+  inIrons: false, way: 0, heavy: false,
 });
 
 /** HUD-MOVE's preview (ui/hud/hudLayout.js): the panel as it stands at a helm, for the unlocked HUD while nobody is at one -
@@ -386,6 +386,9 @@ export function buildHelmPreview(doc) {
   return p.root;
 }
 
+/** HEAVY-HINT (FIELD BUGS 2026-10-29): why a laden ship makes little or no way - the cargo law weighs the captain's own
+ *  load. In the language of the moment. */
+export const helmHeavyText = () => t('helm.heavy', 'Too heavy. Lighten your pack, your wagon or the hold');
 /**
  * HELM-KEYS (2026-09-29, the player: "make the ship controls more intuitive instead of a bunch of buttons and key
  * binds"): the bar's line under its name - in irons, how she comes out (the key that strikes sail and the one that
@@ -403,6 +406,7 @@ export function helmHint(h, state = {}) {
     const strike = [key('MoveBackwards'), key(A.less)].filter(Boolean).join(' ');
     return `In irons. Strike sail${strike ? ` (${strike})` : ''} and row to turn`;
   }
+  if (h.heavy) return helmHeavyText();   // HEAVY-HINT: said while it holds her, not once as the helm is taken
   if (state.touch) return '';
   const keys = (label, ...as) => { const ks = [...new Set(as.map(key).filter(Boolean))]; return ks.length ? `${label} ${ks.join(' ')}` : ''; };
   // HELM-LADDER: W and the up arrow, S and the down arrow, one ladder - her oars, then her sails; A, D and the side arrows steer

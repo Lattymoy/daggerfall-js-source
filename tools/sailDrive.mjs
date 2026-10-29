@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // AUDIT HELM-SIGHT (bible/01-Overview/audits/Audit-Helm-Sight.md): a seeded random drive of the real Come Sail Away
-// runtime (test/csaScene.mjs) - every state with her sails set, a wind and the player outdoors is sailed 12 s, and her
-// sails must still drive her. FIELD BUGS 2026-10-27 found HELM-SIGHT with it; this is that drive, committed so its counts can be run again.
+// runtime (test/csaScene.mjs) - every state with her sails set and the player outdoors is sailed 12 s, and her sails must
+// still drive her. FIELD BUGS 2026-10-27 found HELM-SIGHT with it; this is that drive, committed so its counts can be run again.
+// FIELD BUGS 2026-10-29: a wind of nought outdoors is judged too (it was skipped, the very stop SAIL-WIND and WIND-FIRST
+// fixed), a boat may lose her pixel (NO-PIXEL), and a step that throws is logged and the drive goes on, as world.js csaCall.
 //   node tools/sailDrive.mjs [--seed N] [--runs N] [--classic]
 // Exit 1 when a run stops dead under the Responsive helm. The Classic helm stops by design (the record says where), so
 // under --classic the stops are listed and the exit is 0.
@@ -16,7 +18,7 @@ const SAIL_S = 12;
 /** Under this (m/s) her sails drive her toward nothing - asked of the way she is driven to, not the way she still carries. */
 const DEAD_MPS = 0.3;
 const OPS = ['helm', 'W', 'S', 'end', 'toggle', 'leave', 'leaveNow', 'door', 'hour', 'weather', 'saveload', 'frames', 'frames',
-  'round', 'shift', 'fasttravel', 'jump', 'startload', 'death', 'place', 'pixel', 'reanchor', 'partyLetGo'];
+  'round', 'shift', 'fasttravel', 'jump', 'startload', 'death', 'place', 'pixel', 'reanchor', 'partyLetGo', 'lostPixel'];
 
 const arg = (name, fallback) => { const i = process.argv.indexOf(name); return i > 0 ? Number(process.argv[i + 1]) : fallback; };
 /** mulberry32: one stream per seed, so a run is its seed. */
@@ -41,44 +43,47 @@ export function driveOnce(rnd, { classic = false } = {}) {
   for (let step = 0; step < STEPS; step++) {
     const op = pick(OPS);
     ops.push(op);
-    const sailing = s.rt.isSailing();
-    const live = boats.filter((b) => s.rt.AllBoats.includes(b) && b.GameObject.activeSelf);   // a helm is taken by a ray on her: in sight
-    switch (op) {
-      case 'helm': if (!sailing && !s.world.inside && live.length) s.helm(pick(live)); break;
-      case 'W': if (sailing) s.frame({ press: ['MoveForwards'] }); break;
-      case 'S': if (sailing) s.frame({ press: ['MoveBackwards'] }); break;
-      case 'end': if (sailing) s.frame({ press: [BOAT_ACTIONS.toggleSail] }); break;
-      case 'toggle': if (sailing) s.rt.ToggleSails(); break;
-      case 'leave': if (sailing) s.rt.StopSailingDelayed(); break;
-      case 'leaveNow': if (sailing) s.rt.StopSailing(); break;
-      case 'door': if (!sailing) { s.world.inside = !s.world.inside; s.rt.OnTransition(); } break;
-      case 'hour': s.world.hour = (s.world.hour + 1) % 24; s.rt.OnNewHour(); break;
-      case 'weather': s.world.weather = pick(Object.values(WEATHER_TYPE)); s.rt.OnWeatherChange(s.world.weather); break;
-      case 'saveload': {
-        const record = JSON.parse(JSON.stringify(s.rt.getSaveData()));
-        s.rt.OnStartLoad();
-        if (rnd() < 0.5) s.world.inside = !s.world.inside;
-        s.rt.restoreSaveData(record);
-        s.rt.OnLoad();
-        break;
+    try {
+      const sailing = s.rt.isSailing();
+      const live = boats.filter((b) => s.rt.AllBoats.includes(b) && b.GameObject.activeSelf);   // a helm is taken by a ray on her: in sight
+      switch (op) {
+        case 'helm': if (!sailing && !s.world.inside && live.length) s.helm(pick(live)); break;
+        case 'W': if (sailing) s.frame({ press: ['MoveForwards'] }); break;
+        case 'S': if (sailing) s.frame({ press: ['MoveBackwards'] }); break;
+        case 'end': if (sailing) s.frame({ press: [BOAT_ACTIONS.toggleSail] }); break;
+        case 'toggle': if (sailing) s.rt.ToggleSails(); break;
+        case 'leave': if (sailing) s.rt.StopSailingDelayed(); break;
+        case 'leaveNow': if (sailing) s.rt.StopSailing(); break;
+        case 'door': if (!sailing) { s.world.inside = !s.world.inside; s.rt.OnTransition(); } break;
+        case 'hour': s.world.hour = (s.world.hour + 1) % 24; s.rt.OnNewHour(); break;
+        case 'weather': s.world.weather = pick(Object.values(WEATHER_TYPE)); s.rt.OnWeatherChange(s.world.weather); break;
+        case 'saveload': {
+          const record = JSON.parse(JSON.stringify(s.rt.getSaveData()));
+          s.rt.OnStartLoad();
+          if (rnd() < 0.5) s.world.inside = !s.world.inside;
+          s.rt.restoreSaveData(record);
+          s.rt.OnLoad();
+          break;
+        }
+        case 'frames': for (let i = 0; i < 4; i++) s.frame(); break;
+        case 'round': s.rt.OnNewMagicRound(); break;
+        case 'shift': s.rt.OnPositionUpdate([pick([-TS, 0, TS]), 0, pick([-TS, 0, TS])]); break;
+        case 'fasttravel': if (!s.world.inside) { s.rt.OnPreFastTravel(); jump(pick([-30, 30]), 0); s.rt.OnPostFastTravel(); } break;
+        case 'jump': s.rt.OnPreJump(); if (!s.world.inside) jump(pick([-3, 3]), 0); break;
+        case 'startload': s.rt.OnStartLoad(); break;
+        case 'death': s.rt.OnPlayerDeath(); break;
+        case 'pixel': px.X += pick([-1, 1]); s.rt.OnPositionUpdate([0, 0, 0]); break;
+        // a party's journey (world.js fastTravelTo): the jump made with the helm held, then back on a failed landing...
+        case 'reanchor': if (!s.world.inside) { const d = pick([-30, -1, 1, 30]); jump(d, 0); heldFrame(); heldFrame(); jump(-d, 0); } break;
+        // ...or let go from the landing once it is sure
+        case 'partyLetGo': if (!s.world.inside && sailing) { jump(pick([-30, -1, 1, 30]), pick([-1, 0, 1])); heldFrame(); s.rt.OnPreFastTravel(); } break;
+        case 'place': if (!sailing && !s.world.inside && boats.length < 3) boats.push(s.place(pick([1, 2, 3, 4]), 0, [100 + boats.length * 60, 34, 200])); break;
+        case 'lostPixel': pick(boats).MapPixel = null; break;   // NO-PIXEL: a boat of mine left with no map pixel
       }
-      case 'frames': for (let i = 0; i < 4; i++) s.frame(); break;
-      case 'round': s.rt.OnNewMagicRound(); break;
-      case 'shift': s.rt.OnPositionUpdate([pick([-TS, 0, TS]), 0, pick([-TS, 0, TS])]); break;
-      case 'fasttravel': if (!s.world.inside) { s.rt.OnPreFastTravel(); jump(pick([-30, 30]), 0); s.rt.OnPostFastTravel(); } break;
-      case 'jump': s.rt.OnPreJump(); if (!s.world.inside) jump(pick([-3, 3]), 0); break;
-      case 'startload': s.rt.OnStartLoad(); break;
-      case 'death': s.rt.OnPlayerDeath(); break;
-      case 'pixel': px.X += pick([-1, 1]); s.rt.OnPositionUpdate([0, 0, 0]); break;
-      // a party's journey (world.js fastTravelTo): the jump made with the helm held, then back on a failed landing...
-      case 'reanchor': if (!s.world.inside) { const d = pick([-30, -1, 1, 30]); jump(d, 0); heldFrame(); heldFrame(); jump(-d, 0); } break;
-      // ...or let go from the landing once it is sure
-      case 'partyLetGo': if (!s.world.inside && sailing) { jump(pick([-30, -1, 1, 30]), pick([-1, 0, 1])); heldFrame(); s.rt.OnPreFastTravel(); } break;
-      case 'place': if (!sailing && !s.world.inside && boats.length < 3) boats.push(s.place(pick([1, 2, 3, 4]), 0, [100 + boats.length * 60, 34, 200])); break;
-    }
+    } catch (e) { ops.push(`threw: ${e.message}`); }   // world.js csaCall: logged, and the frame goes on
     s.frame();
     const st = s.rt.state;
-    if (s.rt.isSailing() && st.sailPosition === 1 && !s.world.inside && Math.hypot(...st.windVectorCurrent) > 0.05) {
+    if (s.rt.isSailing() && st.sailPosition === 1 && !s.world.inside) {
       for (let t = 0; t < SAIL_S; t += 0.25) s.frame();
       const driven = Math.hypot(...(st.velocityTarget ?? [0, 0, 0]));
       if (!(driven > DEAD_MPS)) return { hull: st.CurrentBoat.hull, ops, driven: +driven.toFixed(3), way: +(s.rt.helmPanelState()?.way ?? 0).toFixed(3), wind: st.windVectorCurrent.map((v) => +v.toFixed(3)) };

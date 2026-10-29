@@ -74,8 +74,8 @@
   {
     "name": "LOST-BOAT-the-pixel-row-read-with-the-scene",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "t0.mapPixelY - Math.floor((p[2] - o[2]) / TERRAIN_EDGE));",
-    "new": "t0.mapPixelY + Math.floor((p[2] - o[2]) / TERRAIN_EDGE));",
+    "old": "Y: t0.mapPixelY - Math.floor((p[2] - t0.position[2]) / TERRAIN_EDGE) });",
+    "new": "Y: t0.mapPixelY + Math.floor((p[2] - t0.position[2]) / TERRAIN_EDGE) });",
     "tests": [
       "test/systems/comeSailAway/fb0929h_lostboat.test.js"
     ]

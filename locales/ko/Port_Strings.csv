@@ -2965,6 +2965,7 @@ guild.wayBack.shut,"이 회관은 이번 시즌에 닫혀 있습니다 - 다른 
 guild.wayBack.skills,"또한 길드 기술 하나가 {high}, 다른 하나가 {low}에 이르러야 합니다: {skills}."
 guild.wayBack.standing,"이곳에서의 평판은 {rep}입니다. 평판 {need} 이상부터 회원으로 받습니다."
 haul.capped,"일일 은화 한도 도달"
+helm.heavy,"너무 무겁습니다. 배낭, 마차 또는 선창의 짐을 줄이세요"
 helm.passenger,"{ship}, {port}행 - 선장이 키를 잡고 있습니다"
 holdings.horse.boons.hungry,"배고프지만 아직 불이익은 없습니다."
 holdings.horse.boons.starving,"굶주림 - 먹을 때까지 질주하지 않습니다. 먹이를 주세요."
