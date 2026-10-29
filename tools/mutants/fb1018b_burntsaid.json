@@ -22,8 +22,8 @@
   {
     "name": "BURNT-SAID-host-unwired",
     "file": "src/scenes/wildDropHost.js",
-    "old": "claimed, held, burnt: d.burnt ? n : 0, letters: out, insured, shield: d.shield === true });",
-    "new": "claimed, held, insured, shield: d.shield === true });",
+    "old": "claimed, held, burnt: d.burnt ? n : 0, letters: out, insured, shield: d.shield === true, last });",
+    "new": "claimed, held, insured, shield: d.shield === true, last });",
     "tests": [
       "test/systems/fb1018b_burntsaid.test.js"
     ],

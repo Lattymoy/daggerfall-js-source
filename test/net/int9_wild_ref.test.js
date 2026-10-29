@@ -632,17 +632,17 @@ test('INT9 THE SERVICE, THE FALLEN\'S OWN ACT: the drop taken off the judged rec
   const res = await fall(svc, ria, { receipt: rc, realm: at });
   assert.equal(res.status, 200, JSON.stringify(res.body));
   const d = res.body;
-  assert.deepEqual(kinds(d.items), [121, 'gold'], 'the killer\'s piece (the one worn), the coin - nothing of the bag, nothing of the cart');   // PIN MOVED (STORE-KEEPS)   // PIN MOVED (PVP-REWARD): no bag drop
+  assert.deepEqual(kinds(d.items), [121], 'the killer\'s piece (the one worn) - nothing of the bag, nothing of the cart, no coin');   // PIN MOVED (PVP-NO-TENTH): no tenth   // PIN MOVED (STORE-KEEPS)   // PIN MOVED (PVP-REWARD): no bag drop
   assert.equal(d.realm.seq, at.seq + 1);
-  assert.deepEqual([d.kept, d.wi, d.gold], [[], 0, { purse: 10, cart: 0 }]);   // PIN MOVED (FOE-KEEPS): a tenth, the usual death's share - it was half; PIN MOVED (STORE-KEEPS): the cart's none
+  assert.deepEqual([d.kept, d.wi, d.gold], [[], 0, { purse: 0, cart: 0 }]);   // PIN MOVED (PVP-NO-TENTH): no tenth of the purse   // PIN MOVED (FOE-KEEPS): a tenth, the usual death's share - it was half; PIN MOVED (STORE-KEEPS): the cart's none
   assert.deepEqual(d.took.map((x) => [x.t, x.u, x.f]), [[121, '00000000000000a3', 'bag']], 'what the record lost, by the ids the game holds');   // PIN MOVED (PVP-REWARD)
   const v = await verifyOrder(d.order, svc.identityPublic, { subtle, nowS: nowS(), kind: 'remains' });
   assert.ok(v.ok, v.why);
-  assert.deepEqual([v.claims.s, v.claims.wr, v.claims.wn, v.claims.wm, v.claims.wk, v.claims.wi, v.claims.wh], [ria.id, '0123456789ab', 2, CELL, bo.id, 0, await remainsDigest(d.items, { subtle })]);   // PIN MOVED (STORE-KEEPS): three records   // PIN MOVED (PVP-REWARD): two
+  assert.deepEqual([v.claims.s, v.claims.wr, v.claims.wn, v.claims.wm, v.claims.wk, v.claims.wi, v.claims.wh], [ria.id, '0123456789ab', 1, CELL, bo.id, 0, await remainsDigest(d.items, { subtle })]);   // PIN MOVED (STORE-KEEPS): three records   // PIN MOVED (PVP-REWARD): two
   const after = saved();
   assert.deepEqual(kinds(after.items), [113, 'potion', 120], 'the record lost what the room holds - the bag kept');   // PIN MOVED (PVP-REWARD)
   assert.deepEqual(kinds(after.wagonItems), [122, 'gold'], 'and kept its cart');   // STORE-KEEPS
-  assert.equal(after.goldPieces, 91);   // PIN MOVED (FOE-KEEPS)
+  assert.equal(after.goldPieces, 101);   // PIN MOVED (FOE-KEEPS)   // PIN MOVED (PVP-NO-TENTH): the purse whole
   const again = await fall(svc, ria, { receipt: rc, realm: R.at(), room: worldRoom(PX + 16, PY) });
   assert.equal(again.status, 200);
   assert.deepEqual([again.body.items, again.body.order, again.body.realm?.seq, again.body.took], [d.items, d.order, at.seq + 1, d.took], 'the same records, the same order (its first room), and where the record stands');
@@ -746,7 +746,7 @@ test('INT9 THE SERVICE, THE LEDGER AND THE FREEZE: a piece the ledger bars from 
   const res = await fall(f.svc, f.ria, { receipt: await f.receipt(), realm: f.R.at() });
   assert.equal(res.status, 200, JSON.stringify(res.body));
   assert.deepEqual(res.body.kept, ['00000000000000a3']);
-  assert.deepEqual(kinds(res.body.items), ['gold']);   // PIN MOVED (STORE-KEEPS): no cargo   // PIN MOVED (PVP-REWARD): the barred axe the roll's last piece - nothing for the killer
+  assert.deepEqual(kinds(res.body.items), []);   // PIN MOVED (PVP-NO-TENTH): no coin   // PIN MOVED (STORE-KEEPS): no cargo   // PIN MOVED (PVP-REWARD): the barred axe the roll's last piece - nothing for the killer
   assert.deepEqual(kinds(f.saved().items), [113, 'potion', 120, 121], 'kept where it lay');
   const h = await fallen();
   h.svc.env.DB._raw.prepare("UPDATE realm_characters SET held = 'law' WHERE id = ?").run(h.R.id);
@@ -755,7 +755,7 @@ test('INT9 THE SERVICE, THE LEDGER AND THE FREEZE: a piece the ledger bars from 
   assert.deepEqual([held.body.burnt, held.body.order], [true, null], 'nothing for the room');
   // PIN MOVED (MAC, 2026-10-14, the two-phase handoff - "the fallen must lose the worn piece only once the killer actually
   // has it"): a held record's killer can never have the piece it picked, so the record keeps it; the rest is lost still
-  assert.equal(held.body.items.length, 1, 'and the death cost the drop');   // PIN MOVED (STORE-KEEPS): the gold and the magic sword, no cargo   // PIN MOVED (PVP-REWARD): the gold alone
+  assert.equal(held.body.items.length, 0, 'and pays nothing');   // PIN MOVED (PVP-NO-TENTH): no tenth lost   // PIN MOVED (STORE-KEEPS): the gold and the magic sword, no cargo   // PIN MOVED (PVP-REWARD): the gold alone
   assert.deepEqual(kinds(h.saved().items), [113, 'potion', 120, 121], 'the killer\'s piece kept - it could never reach them');
   assert.equal(held.body.wi, -1, 'no piece of the killer\'s named');
   // the sweep

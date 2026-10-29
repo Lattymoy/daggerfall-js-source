@@ -158,5 +158,5 @@ test('FIX-E: the interior slot releases what it overwrites, and the fixed city o
   assert.match(ds, /hint = 'ENTER end   F11 load'/, 'the default hint is the full one');
   // PIN MOVED (BAL4, bible/05-Combat/Balance-Arc.md section 6): offline, a Legacy rise's hint says Enter raises (riseHint);
   // L10N4: the hold's count and the hint said in the player's language (the hint kept English, shown through hintText)
-  assert.match(ds, /const hint = this\.online \? (?:\(this\.wild \? t\('death\.risingInWild', 'RISING IN \{n\}', \{ n: this\.respawnIn \}\) : )?t\('death\.risingIn', 'RISING IN \{n\}   ENTER now', \{ n: this\.respawnIn \}\)\)? : hintText\(this\.rises \? riseHint\(this\.hint\) : this\.hint\);[^\n]*\n\s*drawText\(renderer, font, hint,/, 'and the screen draws the hint it was given (AUDIT CONTRIB A5: online, the hold\'s count in its place)');
+  assert.match(ds, /const hint = this\.online \? (?:\((?:this\.wild|!this\.canRise) \? t\('death\.risingInWild', 'RISING IN \{n\}', \{ n: this\.respawnIn \}\) : )?t\('death\.risingIn', 'RISING IN \{n\}   ENTER now', \{ n: this\.respawnIn \}\)\)? : hintText\(this\.rises \? riseHint\(this\.hint\) : this\.hint\);[^\n]*\n\s*drawText\(renderer, font, hint,/, 'and the screen draws the hint it was given (AUDIT CONTRIB A5: online, the hold\'s count in its place)');
 });

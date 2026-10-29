@@ -201,7 +201,7 @@ test('BOLT wired: both exterior hosts feed their distant strikes and the storm o
     assert.ok(s.includes(`renderer.setFlashLight(sky.lightningLight() ?? boltFrame.flash${host === 'src/scenes/world.js' ? ' ?? starfall?.flash() ?? null' : ''});`));
     assert.match(s, /\{ distantStorms\.reset\(\); stormLights\.reset\(\); \}/);
     // RETRO1: with the world image's height, so a retro frame's minimum width is its own pixels
-    assert.match(s, /if \(boltsGl && boltFrame\.bolts\.length(?: && !_dwAirOff)?\) \{[^\n]*\n\s*boltsGl\.draw\(boltFrame\.bolts, proj, view, new Float32Array\([^)]+\), undefined, renderer\.worldViewportPx\?\.\[3\]\);[^\n]*\n\s*renderer\.markForeignPass\(\);/);
+    assert.match(s, /if \(boltsGl && boltFrame\.bolts\.length(?: && !_dwAirOff)?\) \{[^\n]*\n\s*boltsGl\.draw\(boltFrame\.bolts, proj, view, (?:new Float32Array\([^)]+\)|wxEye32), undefined, renderer\.worldViewportPx\?\.\[3\]\);[^\n]*\n\s*renderer\.markForeignPass\(\);/);
     // the strikes stand round, and the ribbons face, THE EYE THE VIEW IS BUILT FROM - world.js's third-person camera
     // stands metres off the head (cam.pos), and a probe's unspawned body put it a kilometre off
     const viewEye = s.match(/const view = betterAmbience\.view\(lookAt\(([\w.]+),/)[1];
@@ -210,7 +210,11 @@ test('BOLT wired: both exterior hosts feed their distant strikes and the storm o
     // measured from 1.7 m over it; the view's eye 450 m up hung every channel's foot in the air (the ribbons still face it)
     const strikeEye = host.endsWith('world.js') ? `tvf \\? cam\\.pos : ${esc}` : esc;
     assert.match(s, new RegExp(`stormLights\\.frame\\(\\{ seconds: now / 1000, eye${viewEye === 'eye' && !host.endsWith('world.js') ? '' : `: ${strikeEye}`}, distant`), host);
-    assert.match(s, new RegExp(`boltsGl\\.draw\\(boltFrame\\.bolts, proj, view, new Float32Array\\(${esc}\\)[,)]`), host);
+    if (host.endsWith('world.js')) {   // PIN MOVED (FRAME-ALLOC): the frame's one eye array, filled from the view's eye
+      assert.match(s, new RegExp(`\\n {4}const wxEye = ${esc};\\n`), host);
+      assert.match(s, /\n {4}wxEye32\[0\] = wxEye\[0\]; wxEye32\[1\] = wxEye\[1\]; wxEye32\[2\] = wxEye\[2\];\n/, host);
+      assert.match(s, /boltsGl\.draw\(boltFrame\.bolts, proj, view, wxEye32[,)]/, host);
+    } else assert.match(s, new RegExp(`boltsGl\\.draw\\(boltFrame\\.bolts, proj, view, new Float32Array\\(${esc}\\)[,)]`), host);
   }
   assert.equal(STORM_BASE_M, 500, 'the thunder profile\'s base');
   assert.match(rd('src/render/volumetricClouds.js'), /thunder: {2}Object\.freeze\(\{ base: 500,/);

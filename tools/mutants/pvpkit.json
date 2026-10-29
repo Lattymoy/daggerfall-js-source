@@ -47,8 +47,8 @@
   {
     "name": "PVP-KIT-damage-not-an-area",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "element: damage ? s.pick : 4, rangeType: damage ? 4 : 0,",
-    "new": "element: damage ? s.pick : 4, rangeType: damage ? 2 : 0,",
+    "old": "element: damage ? s.pick : 4, rangeType: damage ? 4 : rez ? 1 : 0,",
+    "new": "element: damage ? s.pick : 4, rangeType: damage ? 2 : rez ? 1 : 0,",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -65,7 +65,7 @@
   {
     "name": "PVP-KIT-the-gift-reach-unset",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "    ...(damage ? {} : { pvpReach: PVP_KIT.reachM }),\n",
+    "old": "    ...(damage || rez ? {} : { pvpReach: PVP_KIT.reachM }),\n",
     "new": "",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
@@ -274,6 +274,69 @@
     "file": "src/scenes/hostMagic.js",
     "old": "const allyReach = sp.pvpReach ?? allyReachFor(sp.rangeType);",
     "new": "const allyReach = allyReachFor(sp.rangeType);",
+    "tests": [
+      "test/systems/wild/pvpkit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-KIT-REZ-the-cost-moved",
+    "file": "src/systems/wild/pvpKit.js",
+    "old": "  resurrect: Object.freeze({ cost: 25, icon: 10 }),",
+    "new": "  resurrect: Object.freeze({ cost: 20, icon: 10 }),",
+    "tests": [
+      "test/systems/wild/pvpkit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-KIT-REZ-not-by-touch",
+    "file": "src/systems/wild/pvpKit.js",
+    "old": "rangeType: damage ? 4 : rez ? 1 : 0,",
+    "new": "rangeType: damage ? 4 : 0,",
+    "tests": [
+      "test/systems/wild/pvpkit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-KIT-REZ-given-the-gift-reach",
+    "file": "src/systems/wild/pvpKit.js",
+    "old": "...(damage || rez ? {} : { pvpReach",
+    "new": "...(damage ? {} : { pvpReach",
+    "tests": [
+      "test/systems/wild/pvpkit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-KIT-REZ-no-effect",
+    "file": "src/systems/wild/pvpKit.js",
+    "old": "    case 'resurrect': return [{ ...resurrectionSpell().effects[0] }];",
+    "new": "    case 'resurrect': return [];",
+    "tests": [
+      "test/systems/wild/pvpkit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-KIT-REZ-the-name-lost",
+    "file": "src/systems/wild/pvpKit.js",
+    "old": "  resurrect: () => t('pvp.kit.resurrect', 'Resurrect') });",
+    "new": " });",
+    "tests": [
+      "test/systems/wild/pvpkit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-KIT-REZ-an-ally-frame-asked",
+    "file": "src/ui/pvpKitBar.js",
+    "old": "s.id !== 'damage' && s.id !== 'resurrect' && allyAimed",
+    "new": "s.id !== 'damage' && allyAimed",
+    "tests": [
+      "test/systems/wild/pvpkit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-KIT-REZ-a-stranger-raised",
+    "file": "src/scenes/world.js",
+    "old": "const mate = cAcct ? social.others().find((m) => m.acct === cAcct) : null; if (!mate) continue;",
+    "new": "const mate = cAcct ? social.others().find((m) => m.acct === cAcct) ?? {} : {};",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]

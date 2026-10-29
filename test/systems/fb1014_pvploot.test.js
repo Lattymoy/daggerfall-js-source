@@ -31,10 +31,10 @@ import { assignStartingGear } from '../../src/systems/startingGear.js';
 import { equipItem, equipTableOf, isEquipped, unequipItem, wearableItem } from '../../src/systems/equip.js';
 import { snapshotPlayer } from '../../src/systems/save/save.js';
 import { stampItemIds } from '../../src/systems/item/itemIds.js';
-import { wornOffer, wildRecord, wildTakeTook, wildChunks } from '../../src/systems/wild/wildDeath.js';
+import { wornOffer, wildRecord, wildTakeTook, wildChunks, wildTookOf } from '../../src/systems/wild/wildDeath.js';
 import { validLootList } from '../../src/systems/loot/loot.js';
 import '../../src/systems/item/itemLaw.js';   // the item law registers itself with the wire, as the game's boot does
-import { addItem, stacksWith } from '../../src/systems/inventory.js';
+import { addItem, stacksWith, goldStack } from '../../src/systems/inventory.js';
 import { createWildRemains } from '../../src/net/wild/wildRemains.js';
 import { remainsNamedFor } from '../../src/net/wild/wildLaw.js';
 import { mintWildReceipt } from '../../src/net/wild/wildReceipt.js';
@@ -53,8 +53,9 @@ const LONGSWORD = 121, STEEL = 3;
  *  and lays the remains; Borin's own book asks for it. `guildmate`: Borin wears her guild's tag by the take (one joined
  *  after the fall - the referee counts a guildmate kin); `party`: the two share a party by the take (one made after the
  *  fall - the referee let the blows land); `strangerFirst`: a stranger in the cell
- *  asks for the named piece before Borin's book does. */
-async function fall({ guildmate = false, party = false, strangerFirst = false } = {}) {
+ *  asks for the named piece before Borin's book does. `tenth`: PIN MOVED (PVP-NO-TENTH) - a kill lays no coin now, so the
+ *  fall is one taken before it (the piece and her purse's tenth), asked again. */
+async function fall({ guildmate = false, party = false, strangerFirst = false, tenth = false } = {}) {
   const world = fakeRooms();
   const hub = world.room(SOCIAL_ROOM), r = world.room(CELL);
   const kp = await r.signer();   // the room verifies the service's orders with the key that signs its tokens
@@ -83,6 +84,11 @@ async function fall({ guildmate = false, party = false, strangerFirst = false } 
   assert.ok(w >= 0 && shown.filter(Boolean).length >= 1, 'her longsword offered');   // PIN MOVED (PVP-REWARD): the one worn piece
   const rc = await mintWildReceipt({ f: ria.id, c: ria.character, k: bo.id, r: RID, w, wt: [LONGSWORD, STEEL] }, svc.gatePriv, { subtle, nowS: Math.floor(Date.now() / 1000) });
 
+  if (tenth) {
+    const at = Math.floor(Date.now() / 1000), tk = { took: wildTookOf([sword], ['bag']), gold: { purse: 40 } };
+    svc.env.DB._raw.prepare("INSERT INTO wild_falls (r, char_id, player, killer, at, items, kept, burnt, wi, wm, oi, wg, tk, ki) VALUES (?, ?, ?, ?, ?, ?, '[]', 0, 0, ?, ?, ?, ?, ?)")
+      .run(RID, ria.character, ria.id, bo.id, at, JSON.stringify([{ ...wildRecord(sword), uid: 'ffffffffffffff01' }, goldStack(40)]), CELL, at, gid, JSON.stringify(tk), at);
+  }
   // her tab's act: the service takes the drop off her record; her game takes out exactly that
   const res = await svc.call('/v1/wild/fall', { receipt: rc, realm: realmAt(svc.env, ria.character), room: CELL }, ria.secret);
   assert.equal(res.status, 200, JSON.stringify(res.body));
@@ -148,7 +154,7 @@ test('PVP-LOOT: the killer\'s pick of an EQUIPPED piece lands in the killer\'s p
 
 test('PVP-LOOT: the drop stays the fallen\'s and her foes\' - her guildmate (or her party) is refused a record of it, a stranger takes it; the named piece is its killer\'s alone (mutants: the friend law dropped; the named piece anyone\'s)', async () => {
   for (const opts of [{ guildmate: true }, { party: true }]) {
-    const { d, r, kb, cs, words } = await fall(opts);
+    const { d, r, kb, cs, words } = await fall({ ...opts, tenth: true });
     const bag = d.items.findIndex((it, i) => i > 0 && it.group === 'Currency');
     assert.ok(bag > 0, 'her purse\'s tenth dropped');   // PIN MOVED (PVP-REWARD): the bag drops nothing - the purse's pile is the drop
     await r.raw(kb, JSON.stringify({ t: 'wild', data: { k: 'take', r: d.r, i: bag, n: 1 } }));
