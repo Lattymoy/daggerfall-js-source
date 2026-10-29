@@ -261,7 +261,7 @@ test('WEAPON-GLOW1: the classic hand swings the PLAIN sheet while an element sho
   assert.match(rig, /const askHeld = \(\) => \{ heldFor = heldNow\(\); heldGlow = spriteGlow\(heldFor\); \};/);   // PIN MOVED (HAND-WRAPS, AUDIT C): the held weapon, else the fist's wraps
   assert.match(rig, /const heldNow = \(\) => playerWeapon\.weapon \?\? playerWeapon\.wraps \?\? null;/);
   assert.match(rig, /const glowOf = \(item\) => \(item && item === heldFor \? heldGlow : spriteGlow\(item\)\);/, 'the weapon it was asked of, never another\'s');
-  assert.match(rig, /const heldGlowNow = \(\) => \{ if \(playerWeapon\.weapon !== heldFor\) askHeld\(\); return heldGlow; \};/);
+  assert.match(rig, /const heldGlowNow = \(\) => \{ if \(heldNow\(\) !== heldFor\) askHeld\(\); return heldGlow; \};/);   // PIN MOVED (HAND-WRAPS, AUDIT C): asked again when the held item, the wraps included, changes
   assert.match(rig, /syncWorn\(\);[^\n]*\n\s*askHeld\(\);/, 'asked once a frame, after the hand is synced');
   assert.match(rig, /const heldType = \(item\) => \(glowOf\(item\) \? plainWeaponType\(weaponTypeForItem\(item\)\) : weaponTypeForItem\(item\)\);/);
   assert.match(rig, /const plain = !!glowOf\(held\);\s*const type = heldType\(held\);/);   // PIN MOVED (APPEARANCES): the weapon held is `held` - its glow and its type the piece's own, its art the look it wears (drawnPiece)
@@ -269,11 +269,13 @@ test('WEAPON-GLOW1: the classic hand swings the PLAIN sheet while an element sho
   assert.match(rig, /loadFpsWeaponArt\(fetchBytes, palette, renderer, type, item\?\.material \?\? 0, item, \{ plain \}\)/);
   // PIN MOVED (TWO-HANDS): a clone's frame is built per hand's item (weaponRig.js cloneFrame - the one hand's, or each of
   // a pair's), its set and outline that item's own
-  assert.match(rig, /weaponType: heldType\(item\), material: drawnPiece\(item\)\?\.material \?\? -1, glow: glowOf\(item\),/, 'the clone told the set and the outline');   // PIN MOVED (APPEARANCES): the metal the look's
+  // PIN MOVED (HAND-WRAPS, AUDIT C2): a bare fist's clone its wraps' outline
+  assert.match(rig, /weaponType: heldType\(item\), material: drawnPiece\(item\)\?\.material \?\? -1, glow: item \? glowOf\(item\) : handGlowOf\(hand\),/, 'the clone told the set and the outline');   // PIN MOVED (APPEARANCES): the metal the look's
   // PIN MOVED (PISTOLET): the frame drawn through the hand's mirror (`uv`), each pistol of a pair outlined by its own
   // glow, and the field in the art's NATIVE pixels - the Thunderlock's union box, the Pistolet's own texture size (AUDIT
   // PISTOLET B4: its union box is in design pixels)
-  assert.match(rig, /renderer\.drawScreenQuad\(tex, rect, uv, lit \?\? undefined\);\s*const elementGlow = hand \? glowOf\(playerWeapon\.handItem\(hand\)\) : heldGlowNow\(\);[^\n]*\n\s*if \(elementGlow\) renderer\.drawScreenQuadGlow\?\.\(tex, rect, uv, elementGlow, \{ art: art\.native \? \[art\.native\.w, art\.native\.h\] : \[art\.unionBox\.w, art\.unionBox\.h\], view: \[canvas\.width, canvas\.height\] \}\);/, 'the Thunderlock\'s frame, then its outline - in its art\'s native pixels');
+  // PIN MOVED (HAND-WRAPS, AUDIT C2): a hand's outline its item's, or a bare fist's wraps' (weaponRig.js handGlowOf)
+  assert.match(rig, /renderer\.drawScreenQuad\(tex, rect, uv, lit \?\? undefined\);\s*const elementGlow = hand \? handGlowOf\(hand\) : heldGlowNow\(\);[^\n]*\n\s*if \(elementGlow\) renderer\.drawScreenQuadGlow\?\.\(tex, rect, uv, elementGlow, \{ art: art\.native \? \[art\.native\.w, art\.native\.h\] : \[art\.unionBox\.w, art\.unionBox\.h\], view: \[canvas\.width, canvas\.height\] \}\);/, 'the Thunderlock\'s frame, then its outline - in its art\'s native pixels');
   // PIN MOVED (SPELL-HAND): the sprite's offset is the climb's (`offsetHeight`, built once on the line above) less the
   // spell hand's guard (was: `weaponOffsetHeight() - climbDrop(...)` inline); the glow did not move
   // AUDIT SPELL-HAND L5-9: one pin, in order - the climb's offset, the guard's drop off it, the sprite drawn at their difference
