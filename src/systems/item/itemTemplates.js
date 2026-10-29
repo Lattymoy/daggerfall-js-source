@@ -151,7 +151,8 @@ export function itemBaseValue(item, lookup = templateByIndex) {
  *  value (an enchantment's sum, a book's price, a recipe's) keeps it -
  *  and answers a COPY, as the copies it replaces did. */
 export function setItemFields(item) {
-  const named = { ...item, name: item.name ?? templateByIndex(item.templateIndex)?.name, ...(item.templateIndex === HAND_WRAPS_TEMPLATE ? { material: 0 } : {}) };   // HAND-WRAPS: cloth, no metal (a shelf mints at a random one)
+  const named = { ...item, name: item.name ?? templateByIndex(item.templateIndex)?.name };
+  if (named.templateIndex === HAND_WRAPS_TEMPLATE) named.material = 0;   // HAND-WRAPS: cloth, no metal (a shelf mints at a random one)
   // RRI1: a custom class's CurrentVariant setter runs ONCE at the mint
   // (ApplyArmorSettings -> SetVariant): the name's prefix, and for fur
   // the material folded to Leather with `message` 1. Marked, so a

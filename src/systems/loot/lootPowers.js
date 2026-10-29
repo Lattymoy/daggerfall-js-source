@@ -236,17 +236,17 @@ export function lootBlow(weapon, damage, attacker, target, info) {
   let out = damage;
   const group = foeGroup(target);
   let pct = 0, flat = 0;
-  const lined = weapon ?? info?.wraps ?? null;   // HAND-WRAPS: a fist's blow carries its wraps' lines (combat/formulas.js)
-  for (const a of linesOf(lined, 'slayer')) if (a.param === group) pct += a.value;
-  for (const a of linesOf(lined, 'elemental')) flat += Math.floor(a.value * elementShare(target, a.param));
+  const held = weapon ?? info?.wraps ?? null;   // HAND-WRAPS: a fist's blow carries its wraps' lines and powers (combat/formulas.js)
+  for (const a of linesOf(held, 'slayer')) if (a.param === group) pct += a.value;
+  for (const a of linesOf(held, 'elemental')) flat += Math.floor(a.value * elementShare(target, a.param));
   // LOOT5: the powers that ride this blow
   const now = _now();
   // KETCH: BROADSIDE'S ANSWER - a foe the Ketchmaster's Word marked takes the other hand's next blow harder, whatever that
   // hand holds (the mark is the gilded pistol's; the answering weapon carries no power of it), and the mark is spent by a
   // blow that lands (an estimate spends nothing)
   const mark = _broadside.get(target);
-  if (mark && now < mark.until && weapon !== mark.by) { pct += mark.pct; if (!info?.estimate) _broadside.delete(target); }
-  for (const { power: p } of blowPowers(attacker, weapon)) {
+  if (mark && now < mark.until && held !== mark.by) { pct += mark.pct; if (!info?.estimate) _broadside.delete(target); }
+  for (const { power: p } of blowPowers(attacker, held)) {
     switch (p.kind) {
       case 'bane': if (target.affinity !== 'Human' && p.foes.includes(target.careerIndex)) pct += p.pct; break;   // a class foe's career index is its class's, never a monster's
       case 'unaware': if (info?.unaware) pct += p.pct; break;
@@ -257,13 +257,13 @@ export function lootBlow(weapon, damage, attacker, target, info) {
       case 'rage': if (share(attacker) < p.below / 100) pct += p.pct; break;
       case 'execute': if (share(target) < p.below / 100) pct += p.pct; break;
       case 'firstblood': if (!_struck.has(target)) pct += p.pct; break;
-      case 'toll': if (tollDue(weapon, p)) pct += p.pct; break;   // GILDED1: the third that lands
+      case 'toll': if (tollDue(held, p)) pct += p.pct; break;   // GILDED1: the third that lands
       case 'undertow': pct += p.pct * undertowStacks(target, now); break;   // GILDED2: the blows landed on this foe before (counted to its max at the strike)
       default: break;
     }
   }
   if (pct > 0) pct = blowRoom(pct, 'loot');   // POWER-CEILING: the loot's room under the blow's one product
-  if (pct > 0) out += shareOf(weapon ?? attacker, damage, pct, !info?.estimate);
+  if (pct > 0) out += shareOf(held ?? attacker, damage, pct, !info?.estimate);
   return out + flat;
 }
 
@@ -274,7 +274,8 @@ export function lootStrike(attacker, target, damage, weapon, info = null) {
   // (dungeonContext.js swingOnBoss), and lootBlow already refuses a warded foe: nothing landed, so nothing answers it
   if (!mine(attacker) || !(damage > 0) || !target || target.isPlayer || target.warded) return;
   let pct = 0;
-  for (const a of linesOf(weapon ?? info?.wraps ?? null, 'leech')) pct += a.value;   // HAND-WRAPS: the wraps' leech on a fist's blow
+  const held = weapon ?? info?.wraps ?? null;   // HAND-WRAPS: a fist's blow carries its wraps' leech and powers ('fists' stays the bare blow's)
+  for (const a of linesOf(held, 'leech')) pct += a.value;
   pct = Math.min(LEECH_CAP, pct);   // BAL7
   if (pct > 0) healMine(attacker, (damage * pct) / 100);
   // LOOT5: the powers that answer a blow that landed. TWO-HANDS (AUDIT 2): a charge a power takes per blow - Conduit's
@@ -283,19 +284,19 @@ export function lootStrike(attacker, target, damage, weapon, info = null) {
   // rate; the shares of the damage (a leech, a chain, an echo) already ride the blow's own damage
   const now = _now();
   const whole = info?.blow !== false;
-  for (const { power: p } of blowPowers(attacker, weapon)) {
+  for (const { power: p } of blowPowers(attacker, held)) {
     switch (p.kind) {
-      case 'chain': if (ranged(weapon)) arc(target, (damage * p.share) / 100, p.metres, p.name); break;
-      case 'quake': if (weapon && !ranged(weapon)) quake(target, (damage * p.share) / 100, p.metres, p.name); break;
+      case 'chain': if (ranged(held)) arc(target, (damage * p.share) / 100, p.metres, p.name); break;
+      case 'quake': if (held && !ranged(held)) quake(target, (damage * p.share) / 100, p.metres, p.name); break;
       case 'echo': if (_rand() * 100 < p.chance) again(target, damage, p.name); break;
       case 'fists': if (!weapon) again(target, (damage * p.share) / 100, p.name); break;   // BAL7: for half (the record's share)
       case 'conduit': if (whole) gainMana(attacker, p.mana); break;
       case 'flow': if (whole) { _s.flow = Math.min(p.max, flowStacks(now) + 1); _s.flowUntil = now + p.seconds; } break;
-      case 'toll': if (weapon) { _tolls.set(weapon, ((_tolls.get(weapon) ?? 0) + 1) % p.every); _lastToll = { foe: target, at: now, weapon }; } break;   // GILDED1
-      case 'dragonfire': if (weapon && foeGroup(target) === p.group) dragonfire(target, (damage * p.share) / 100, p.metres, p.group, p.name); break;   // GILDED2
-      case 'undertow': if (weapon && whole) _undertow.set(target, { n: Math.min(p.max, undertowStacks(target, now) + 1), until: now + p.seconds, at: now }); break;   // GILDED2
-      case 'hammerfall': if (ranged(weapon)) ring(target, (damage * p.share) / 100, p.metres, p.name); break;   // KETCH: Volendrung's Echo - the shot rings on
-      case 'broadside': if (ranged(weapon)) _broadside.set(target, { by: weapon, pct: p.pct, until: now + p.seconds }); break;   // KETCH: the Ketchmaster's Word calls the mark
+      case 'toll': if (held) { _tolls.set(held, ((_tolls.get(held) ?? 0) + 1) % p.every); _lastToll = { foe: target, at: now, weapon: held }; } break;   // GILDED1
+      case 'dragonfire': if (held && foeGroup(target) === p.group) dragonfire(target, (damage * p.share) / 100, p.metres, p.group, p.name); break;   // GILDED2
+      case 'undertow': if (held && whole) _undertow.set(target, { n: Math.min(p.max, undertowStacks(target, now) + 1), until: now + p.seconds, at: now }); break;   // GILDED2
+      case 'hammerfall': if (ranged(held)) ring(target, (damage * p.share) / 100, p.metres, p.name); break;   // KETCH: Volendrung's Echo - the shot rings on
+      case 'broadside': if (ranged(held)) _broadside.set(target, { by: held, pct: p.pct, until: now + p.seconds }); break;   // KETCH: the Ketchmaster's Word calls the mark
       default: break;
     }
   }

@@ -258,7 +258,8 @@ test('WEAPON-GLOW1: the classic hand swings the PLAIN sheet while an element sho
   assert.equal(atlasFileName(it, 'WEAPON04.CIF', true), 'LONGSWORDMAGIC.CIF');
   // the rig: one ask a frame, the art's type and key and loader all off it, the clone told the plain set
   const rig = strip(read('src/combat/weapon/weaponRig.js'));
-  assert.match(rig, /const askHeld = \(\) => \{ heldFor = playerWeapon\.weapon; heldGlow = spriteGlow\(heldFor\); \};/);
+  assert.match(rig, /const askHeld = \(\) => \{ heldFor = heldNow\(\); heldGlow = spriteGlow\(heldFor\); \};/);   // PIN MOVED (HAND-WRAPS, AUDIT C): the held weapon, else the fist's wraps
+  assert.match(rig, /const heldNow = \(\) => playerWeapon\.weapon \?\? playerWeapon\.wraps \?\? null;/);
   assert.match(rig, /const glowOf = \(item\) => \(item && item === heldFor \? heldGlow : spriteGlow\(item\)\);/, 'the weapon it was asked of, never another\'s');
   assert.match(rig, /const heldGlowNow = \(\) => \{ if \(playerWeapon\.weapon !== heldFor\) askHeld\(\); return heldGlow; \};/);
   assert.match(rig, /syncWorn\(\);[^\n]*\n\s*askHeld\(\);/, 'asked once a frame, after the hand is synced');

@@ -1486,6 +1486,8 @@ export function fpWeaponKey(item, hasAmmo) {
   const hand = item && (item.werecreatureClaws || isHandWraps(item)) ? null : item;   // HAND-WRAPS: the empty hand too - only a glow on the fists
   return `${dfWeaponToMw(hand, WEAPONS)}:${hand ? materialName(hand) : ''}:${hasAmmo ? 1 : 0}:${dfWeaponShape(hand, WEAPONS) ?? ''}`;
 }
+/** HAND-WRAPS: the key of the empty hand - what the arm holds with the Hand Wraps on, or nothing. */
+const EMPTY_HAND_KEY = fpWeaponKey(null, false);
 
 /**
  * MW-D22: WHICH SIDE the weapon's attach bone rests on, made legible.
@@ -3711,9 +3713,10 @@ export function createFpArm() {
   let offGlowSpec = null, offGlowItem = null, offGlowKey = null;
   const offGlowShown = () => (offGlowSpec && offGlowKey != null && offGlowKey === offKey && !climbHands && handsMode === 'dual' && weaponInHand() ? offGlowSpec : null);
   // HAND-WRAPS (bible/05-Combat/Hand-Wraps.md): THE FISTS GLOW WITH THE WRAPS' - laid on the hands' ranges (renderer.js
-  // _drawWeaponGlows 'hands') while the fists are up: drawn, no spell in them, not on the stone
+  // _drawWeaponGlows 'hands') while the fists are up: drawn, empty (AUDIT C4: a swap done, no sheet held up before the
+  // first person), no spell in them, not on the stone
   let handGlowSpec = null;
-  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && !spellStance() ? handGlowSpec : null);
+  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);
   let torchState = null;
   let torchSource = null;
   let torchGroup = null;

@@ -28,7 +28,7 @@ import { lootBlow } from '../../src/systems/loot/lootPowers.js';
 import { computeCombatStats } from '../../src/combat/combatStats.js';
 import { createFpArm, fpWeaponKey } from '../../src/combat/fpArm.js';
 import { inGlowSlot } from '../../src/render/renderer.js';
-import { PeerBodies, peerWeaponOf, peerBuildOpts } from '../../src/net/peer/peerBodies.js';
+import { PeerBodies, peerWeaponOf, peerBuildOpts, peerWrapsGlow } from '../../src/net/peer/peerBodies.js';
 import { paperdollItemImage } from '../../src/ui/paperDoll.js';
 import { EQUIP_SLOTS } from '../../src/systems/equip.js';
 import { fixtureBodyDeps, countingRenderer } from '../fixtures/mw/bodyRig.mjs';
@@ -66,7 +66,7 @@ test('HAND-WRAPS the row: a Weapons template of its own (563), cloth - every min
   assert.equal(paperdollItemImage({ ...w, equipSlot: EQUIP_SLOTS.RightHand }), null, 'no doll layer');
 });
 
-test('HAND-WRAPS the fists: the bare hands\' art and swing, the Hand-to-Hand skill, either hand, and both fists up - an empty hand beside the wraps strikes with them (mutants: the art a weapon\'s; the skill unmapped; the hand None; the mode Single; the empty fist bare)', () => {
+test('HAND-WRAPS the fists: the bare hands\' art and swing, the Hand-to-Hand skill, either hand, and both fists up; the weapon a fist in them strikes with is none - the wraps named beside it, an empty hand beside them striking with them too (mutants: the art a weapon\'s; the skill unmapped; the hand None; the mode Single; the wraps the weapon; the empty fist bare)', () => {
   const w = createHandWraps();
   assert.equal(weaponTypeForItem(w), WEAPON_TYPES.Melee);
   assert.equal(weaponSkillUsed(563), SKILLS.HandToHand);
@@ -77,11 +77,20 @@ test('HAND-WRAPS the fists: the bare hands\' art and swing, the Hand-to-Hand ski
   const pw = new PlayerWeapon();
   pw.updateHands(w, null); pw.applyWeapon();
   assert.equal(pw.handsMode, HANDS_MODE.Fists);
-  assert.equal(pw.handItem('R'), w);
-  assert.equal(pw.handItem('L'), w, 'the empty fist wears them');
-  assert.equal(pw.strikingWeapon, w);
+  assert.equal(pw.handItem('R'), null, 'a fist in them is a bare fist to every reader of the weapon');
+  assert.equal(pw.weapon, null);
+  assert.equal(pw.strikingWeapon, null);
+  assert.equal(pw.wrapsOf('R'), w);
+  assert.equal(pw.wrapsOf('L'), w, 'the empty fist wears them');
+  assert.equal(pw.wraps, w);
+  const a = createHandWraps(), b = createHandWraps();
+  pw.updateHands(a, b); pw.applyWeapon();
+  assert.deepEqual([pw.wrapsOf('R'), pw.wrapsOf('L')], [a, b], 'two pairs: each fist its own');
+  const blade = createWeapon(113, 0);
+  pw.updateHands(blade, w); pw.applyWeapon();
+  assert.equal(pw.wrapsOf('R'), null, 'a blade\'s hand wears none');
   pw.updateHands(null, null); pw.applyWeapon();
-  assert.equal(pw.handItem('L'), null, 'bare hands stay bare');
+  assert.deepEqual([pw.wrapsOf('R'), pw.wrapsOf('L'), pw.wraps], [null, null, null], 'bare hands stay bare');
 });
 
 test('HAND-WRAPS the blow: the fists\' damage in the stock core, the wraps\' lines over it - their weapon mods over the fists\' roll, the blow modifiers and the strike listeners told the wraps beside a weaponless blow - and an elemental line sears (mutants: the wraps kept as the weapon; the lines unread; the listeners untold)', () => {
@@ -143,11 +152,12 @@ test('HAND-WRAPS the glow: the classic fists wear the element, and the arcane ou
   assert.equal(WG.spriteGlow(createHandWraps(), { on: true }), null, 'a plain pair: none');
 });
 
-test('HAND-WRAPS the Morrowind hands: the wraps key as the empty hand; the fists\' ranges are the skin\'s hands and a glove\'s hand parts; the arm lays the glow while the fists are up - never sheathed or casting - and the rig and a peer\'s body say it (mutants: keyed as a weapon; the ranges a weapon\'s; the glow while sheathed; the rig untold)', async () => {
+test('HAND-WRAPS the Morrowind hands: the wraps key as the empty hand; the fists\' ranges are the skin\'s hands and a glove\'s hand parts; the arm lays the glow while the fists are up - never sheathed or casting - and the rig and a peer\'s body say it, a peer\'s under my switch (mutants: keyed as a weapon; the ranges a weapon\'s; the glow while sheathed; the rig untold; the switch unread)', async () => {
   const w = createHandWraps();
   assert.equal(fpWeaponKey(w, false), fpWeaponKey(null, false));
   assert.equal(inGlowSlot({ slot: 'hand' }, 'hands'), true);
-  assert.equal(inGlowSlot({ slot: 'hand (gauntlet_01)', piece: { partName: 'right hand' } }, 'hands'), true);
+  for (const slot of ['right hand (daggerfall_steel_gauntlets)', 'left hand (gauntlet_01)', 'right hand']) assert.equal(inGlowSlot({ slot }, 'hands'), true, slot);
+  for (const slot of ['right wrist (gauntlet_01)', 'handle', 'left forearm']) assert.equal(inGlowSlot({ slot }, 'hands'), false, slot);
   assert.equal(inGlowSlot({ slot: 'forearm' }, 'hands'), false);
   assert.equal(inGlowSlot({ slot: 'weapon' }, 'hands'), false);
   assert.equal(inGlowSlot({ slot: 'weapon' }, 'weapon'), true);
@@ -164,8 +174,10 @@ test('HAND-WRAPS the Morrowind hands: the wraps key as the empty hand; the fists
   assert.equal(rig.handGlow(), null, 'a spell in the hands');
   rig.readySpell(false); rig.setSheathed(true); run();
   assert.equal(rig.handGlow(), null, 'put away');
-  assert.ok(read('src/combat/weapon/weaponRig.js').includes('fpArm.setHandGlow?.(isHandWraps(armItem) ? meshGlow(armItem) : null);'));
-  assert.ok(read('src/render/renderer.js').includes("this._drawWeaponGlow(mesh, modelMatrix, skin, charge, 'hands', mesh.handGlow);"));
+  const rigText = read('src/combat/weapon/weaponRig.js');
+  assert.ok(rigText.includes('fpArm.setHandGlow?.(wrapsMeshGlow());'));
+  assert.ok(rigText.includes("const wrapsMeshGlow = () => { for (const h of ['R', 'L']) { const w = playerWeapon.wrapsOf(h); const g = w ? meshGlow(w) : null; if (g) return g; } return null; };"), 'either fist\'s pair, the first that glows');
+  assert.ok(read('src/render/renderer.js').includes("if (mesh.handGlow) this._drawWeaponGlow(mesh, modelMatrix, skin, charge, 'hands', mesh.handGlow);"));
   on();
   const worn = { templateIndex: 563, group: 'Weapons', material: 0, equipSlot: EQUIP_SLOTS.RightHand, glow: 'fire2' };
   const LOOK = { race: 'Breton', gender: 'male', faceIndex: 0, items: [worn] };
@@ -176,4 +188,10 @@ test('HAND-WRAPS the Morrowind hands: the wraps key as the empty hand; the fists
   assert.deepEqual(said.at(-1), WG.glowSpec('fire', 2), 'a peer\'s fists in their wraps\' word');
   pb._arm({ weapon: null, ammo: 0, held: false, swing: null, cast: null, rig: prig }, { wd: 1, an: 0, cn: 0 }, { ...LOOK, items: [{ ...worn, templateIndex: 120 }] });
   assert.equal(said.at(-1), null, 'a blade: none on the fists');
+  setPref('weaponGlow', false);
+  pb._arm({ weapon: peerWeaponOf(LOOK), ammo: 0, held: false, swing: null, cast: null, rig: prig }, { wd: 1, an: 0, cn: 0 }, LOOK);
+  assert.equal(said.at(-1), null, 'my glow switch off: none');
+  setPref('weaponGlow', true);
+  assert.deepEqual(peerWrapsGlow({ ...LOOK, items: [{ ...worn, equipSlot: EQUIP_SLOTS.LeftHand }] }), WG.glowSpec('fire', 2), 'in the left hand');
+  assert.deepEqual(peerWrapsGlow({ ...LOOK, items: [{ ...worn, glow: undefined }, { ...worn, equipSlot: EQUIP_SLOTS.LeftHand, glow: 'frost3' }] }), WG.glowSpec('frost', 3), 'two pairs: the one that glows');
 });

@@ -29,7 +29,7 @@ import {
 import { SWING_MODS } from './playerWeapon.js';
 import { enchantChanceToHitMod } from '../systems/enchantments.js';
 import { weaponDamageMods, weaponBlowMods } from '../systems/entityMods.js';
-import { isHandWraps } from '../characters/handWrapsIds.js';   // HAND-WRAPS
+import { isHandWraps, fistWrapsOf } from '../characters/handWrapsIds.js';   // HAND-WRAPS
 import { weaponSkillUsed, WEAPONS } from '../characters/weapons.js';
 import { skillsLevel } from '../characters/enemy/enemyEntity.js';
 import { equipTableOf, EQUIP_SLOTS } from '../systems/equip.js';
@@ -81,7 +81,8 @@ export function activeCore(modules = pcaaoModules()) {
 export function strikingWeaponOf(entity, usingRightHand = true) {
   const t = equipTableOf(entity);
   const it = t[usingRightHand ? EQUIP_SLOTS.RightHand : EQUIP_SLOTS.LeftHand];
-  return it?.group === 'Weapons' ? it : null;
+  if (it?.group === 'Weapons' && !isHandWraps(it)) return it;
+  return fistWrapsOf(it ?? null, t[usingRightHand ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null);   // HAND-WRAPS (AUDIT B10): an empty fist beside them wears them
 }
 
 const weightsOf = (table) => {

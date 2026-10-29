@@ -596,13 +596,13 @@ export function damageEquipment(attacker, target, damage, weapon, struckBodyPart
   }
 }
 
-export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, weaponAnimTime = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null, enchantCtx = null, playerReflexes = null, unaware = false, blowInfo = null, blowShare = null, blowWeight = 1 } = {}) {
+export function calculateAttackDamage(attacker, target, { weapon = null, wraps: wrapsIn = null, damageMod = 0, toHitMod = 0, backstabChance = 0, weaponAnimTime = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null, enchantCtx = null, playerReflexes = null, unaware = false, blowInfo = null, blowShare = null, blowWeight = 1 } = {}) {
   if (!attacker || !target) return 0;
   // HAND-WRAPS (bible/05-Combat/Hand-Wraps.md): the Hand Wraps' blow is the fists' - either core, the report and the
   // listeners see no weapon. What the wraps carry rides beside it: their lines (`wraps`, to the blow modifiers and the
   // strike listeners) and their Strikes payload.
-  const wraps = isHandWraps(weapon) ? weapon : null;
-  if (wraps) weapon = null;
+  const wraps = isHandWraps(weapon) ? weapon : isHandWraps(wrapsIn) ? wrapsIn : null;
+  if (isHandWraps(weapon)) weapon = null;
   // SOFTCAP1: THE FOE THIS BLOW WAS TRADED WITH, remembered on the player
   // for the tallies that follow it (hit or miss - a swing at a tough foe is
   // real use; skillSoftcap.js overcapTallyWeight). Both directions: my

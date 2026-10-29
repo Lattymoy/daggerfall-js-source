@@ -39,7 +39,7 @@ import { equipDelayFor } from '../systems/equip.js';               // a12: Toggl
 import { getBool, getFloat, getInt } from '../systems/settings/settings.js';   // AUDIT 28 W2b: MeleeAttackFriendlyProtection; W11: WeaponAttackThreshold, WeaponSwingMode
 import { blowReaches, blowMult, scaleBlowDamage, playerBody, tellTechniqueLanded } from './technique/techniqueBlow.js';   // TECH1: a technique's blow - its shape and its weight, a leaf; MARTIAL3: and its landing told
 import { HANDS_MODE, handsModeOf, strikeHandOf, twoHanded, offHandToHit, OFF_HAND_BLOW, offHandBurden, offHandHold, DUAL, gunHandOf, mixedStrike, otherHand, MIXED } from './twoHands/handsLaw.js';   // TWO-HANDS: which hand strikes, and what the off hand costs; MIXED-PAIR: a blade and a gun
-import { isHandWraps } from '../characters/handWrapsIds.js';   // HAND-WRAPS: both fists wear the wraps
+import { isHandWraps, fistWrapsOf } from '../characters/handWrapsIds.js';   // HAND-WRAPS: the wraps are no weapon; both fists wear them
 import { getItemHands } from '../systems/equip.js';   // TWO-HANDS: a hand's item as the law reads it (one-handed or not)
 import { readSwing } from './swingLaw.js';   // TWO-HANDS: the striking weapon's weight and the Strength, for the off hand's burden
 import { liveStat } from '../systems/statMods.js';   // TWO-HANDS: the off hand's sureness reads the live Agility
@@ -429,14 +429,19 @@ export class PlayerWeapon {
     if (this.gunPair && this._shotHand && this.shotHeld() === true) return this._shotHand;
     return twoHanded(this.handsMode) && this.strike && this.machine.state !== 'Idle' ? this.strike.hand : this.leadHand;
   }
-  /** TWO-HANDS: a hand's item, as UpdateHands cached it (null for an empty hand or a shield). */
+  /** TWO-HANDS: a hand's item, as UpdateHands cached it (null for an empty hand or a shield). HAND-WRAPS (AUDIT B): null
+   *  for the Hand Wraps too - a fist in them is a bare fist to every reader of the weapon; `wrapsOf` names them. */
   handItem(hand) {
     const own = (hand === 'L' ? this.currentLeftHandWeapon : this.currentRightHandWeapon) ?? null;
-    if (own || this.handsMode !== HANDS_MODE.Fists) return own;
-    // HAND-WRAPS: with both fists up, an empty hand beside the Hand Wraps strikes with them
-    const other = (hand === 'L' ? this.currentRightHandWeapon : this.currentLeftHandWeapon) ?? null;
-    return isHandWraps(other) ? other : null;
+    return isHandWraps(own) ? null : own;
   }
+  /** HAND-WRAPS: the Hand Wraps a fist strikes with (characters/handWrapsIds.js fistWrapsOf), or null. */
+  wrapsOf(hand) {
+    const R = this.currentRightHandWeapon ?? null, L = this.currentLeftHandWeapon ?? null;
+    return hand === 'L' ? fistWrapsOf(L, R) : fistWrapsOf(R, L);
+  }
+  /** HAND-WRAPS: the wraps of the hand in use - what a fist's blow carries (combat/formulas.js `wraps`) and its glow. */
+  get wraps() { return this.weapon?.werecreatureClaws ? null : this.wrapsOf(this.activeHand); }
   /** TWO-HANDS (AUDIT): the strike in flight is the OFF hand's - the blow a player-vs-player arm rolls carries the off
    *  hand's terms as resolveHit's does (combat/duelCombat.js resolveDuelStrike `off`). */
   get offStrike() { return !!(this.handsMode === HANDS_MODE.Dual && this.strike && this.machine.state !== 'Idle' && this.strike.off); }
@@ -1036,6 +1041,7 @@ export class PlayerWeapon {
     const offToHit = off ? offHandToHit(playerCombat ? liveStat(playerCombat, 'agility') : 50) : 0;
     const strike = (foe) => {
       const opts = playerAttackOptions(this.strikingWeapon, this.machine.state, backstabOf(foe), rolls);
+      if (!opts.weapon) opts.wraps = this.wraps;   // HAND-WRAPS (AUDIT B): a fist's blow carries its wraps' lines
       if (off) { opts.toHitMod += offToHit; Object.assign(opts, OFF_HAND_BLOW); }   // TWO-HANDS (AUDIT): the share inside the formula, ahead of every report; AUDIT 2: and the blow's weight
       if (techOn(foe) && Number.isFinite(tb.toHit)) opts.toHitMod += tb.toHit;   // the technique's own term beside the swing's
       const rolled = calculateAttackDamage(playerCombat, foe.entity, {

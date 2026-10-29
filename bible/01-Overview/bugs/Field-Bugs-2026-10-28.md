@@ -57,14 +57,30 @@ chose to keep every yard where #1184 put it and to fix only a yard that is broke
 stays on the west side. No home moved: in the Bay no building moved (`03-World/Town-Shapes.md` TS2).
 
 WESTHEAD-NORTH (2026-10-29). A guild's player posted again in #feature-feedback, and the owner chose to move Westhead
-Moor's shipyard back to the north side, no other port. Before #1184 it stood at the town's north-west corner (cells 1, 437,
-turned 2). TS7's ground ends short of that corner, so it cannot stand there. It now stands on the north strip between the
-wall and the sea, at the westmost place a shipyard fits (cells 149, 401, turned 2), and its lighthouse by the old corner
-(57, 394). `world/portSites.js` PORT_PLACES_NEAR holds the town's cell, and portSite stands the place as
-near it as fits, by the sea's face and not the sea's distance. The kept record keys on the row.
+Moor's shipyard back to the north side, no other port. TS7 had moved it to the west side in both of the town's layouts,
+and its old places are off TS7's ground in both.
 
-Tests `test/world/westheadnorth.test.js` (4, one on ARENA2; `test/bayPortGround.mjs` builds the ground). Mutants
-`tools/mutants/westheadnorth.json` (9, all dead).
+In Daggerfall's layout it stood at the north-west corner (cells 1, 437, turned 2). It now stands on the north strip
+between the wall and the sea, at the westmost place a shipyard fits (149, 401, turned 2), its lighthouse by the old
+corner (57, 394). The wall stands between it and the town with no gate there: the walk to it stays long, as at TS7's
+west place.
+
+In Beautiful Cities' layout (on by default, and online) it stood on the north edge (corner cell 181, 424). The audit
+found the first fix reached Daggerfall's layout alone, and the owner chose "North in both layouts". It now stands on the
+north farmland nearest its old place (265, 413, turned 1), its lighthouse at (25, 114).
+
+`world/portSites.js` PORT_PLACES_NEAR holds a row a layout, and the host hands a town the row of the layout it stands in
+(`portPlacesNear`, the layout pins). portSite stands the place as near its cell as fits, by the sea's face and not the
+sea's distance. Daggerfall's cell is an aim on the strip, not the old corner, which would pull the yard back west;
+Beautiful Cities' is its old place's middle. The kept record keys on the row's value.
+
+THE FOUR HOSTS: `scenes/world.js` places a town's ports (`townPlacesFor`), so it alone hands the row.
+`scenes/worldModes.js` presses the yards wherever they stand, `scenes/dungeonContext.js` stands no street, and
+`scenes/exterior.js` stands no port (FLAGGED, `scenes/portHost.js`).
+
+Tests `test/world/westheadnorth.test.js` (5, one on ARENA2) and `test/world/westheadnorth_bc.test.js` (1, on ARENA2;
+`test/bayPortGround.mjs` builds either layout's ground). Mutants `tools/mutants/westheadnorth.json` (16, all dead, with ARENA2 and without it). The
+audit's record: `01-Overview/audits/Audit-Westhead-Hand-Wraps.md`.
 
 ## WALL-FLICKER: a wall's length clear of its tower (6)
 

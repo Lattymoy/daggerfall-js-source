@@ -1110,8 +1110,10 @@ test('TWO-HANDS x WEAPON-GLOW1: each hand of a pair wears ITS OWN weapon\'s elem
   assert.match(rd('src/combat/fpArm.js'), /const padLooks = offGlow \|\| handGlow \? \[glowLook, offGlow\?\.look, handGlow\?\.look\]\.filter\(Boolean\) : glowLook;/);   // PIN MOVED (HAND-WRAPS): and the fists' glow, padded as a blade's
   // the rig: each hand its own item's - the classic pair, each widget clone, the Morrowind arm's two blades
   const rig = rd('src/combat/weapon/weaponRig.js');
-  assert.match(rig, /glowFor: \(hand\) => glowOf\(playerWeapon\.handItem\(hand\)\)/, 'the classic pair');
-  assert.match(rig, /function cloneFrame\(item, hand, f\) \{[^]{0,400}glow: glowOf\(item\)/, 'each clone - the one hand\'s and each of a pair\'s');
+  assert.match(rig, /glowFor: handGlowOf/, 'the classic pair');   // PIN MOVED (HAND-WRAPS, AUDIT C): a hand's weapon's glow, else its fist's wraps'
+  assert.match(rig, /const handGlowOf = \(hand\) => \{ const item = hand \? playerWeapon\.handItem\(hand\) : playerWeapon\.weapon; if \(item\) return glowOf\(item\);/, 'each hand its own item\'s first');
+  // PIN MOVED (HAND-WRAPS, AUDIT C2): a bare fist's clone its wraps' glow (test/combat/handwraps.test.js)
+  assert.match(rig, /function cloneFrame\(item, hand, f\) \{[^]{0,400}glow: item \? glowOf\(item\) : handGlowOf\(hand\)/, 'each clone - the one hand\'s and each of a pair\'s');
   assert.match(rig, /fpArm\.setWeaponGlow\?\.\(meshGlow\(armItem\), armItem\);\s*fpArm\.setOffWeaponGlow\?\.\(offItem \? meshGlow\(offItem\) : null, offItem\);/, 'the arm: the blade it holds, and the left its own');
   assert.match(rd('src/combat/weapon/weaponWidget.js'), /renderer\.drawScreenQuad\(tex, rect, uv, tint \?\? undefined\);\s*if \(ctx\.glow\) renderer\.drawScreenQuadGlow\?\.\(tex, rect, uv, ctx\.glow,/, 'a clone of a pair: its outline on its own rect and source');
 });

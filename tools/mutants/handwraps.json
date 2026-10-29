@@ -12,8 +12,8 @@
   {
     "name": "HANDWRAPS-shelf-metal",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "...(item.templateIndex === HAND_WRAPS_TEMPLATE ? { material: 0 } : {}) };",
-    "new": "...({}) };",
+    "old": "  if (named.templateIndex === HAND_WRAPS_TEMPLATE) named.material = 0;",
+    "new": "",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -111,9 +111,9 @@
   },
   {
     "name": "HANDWRAPS-bare-fist",
-    "file": "src/combat/playerWeapon.js",
-    "old": "    return isHandWraps(other) ? other : null;",
-    "new": "    return null;",
+    "file": "src/characters/handWrapsIds.js",
+    "old": "(isHandWraps(own) ? own : !own && isHandWraps(other) ? other : null);",
+    "new": "(isHandWraps(own) ? own : null);",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -122,7 +122,7 @@
   {
     "name": "HANDWRAPS-a-weapon",
     "file": "src/combat/formulas.js",
-    "old": "  if (wraps) weapon = null;",
+    "old": "  if (isHandWraps(weapon)) weapon = null;",
     "new": "",
     "tests": [
       "test/combat/handwraps.test.js"
@@ -165,9 +165,9 @@
     "old": "  const charged = weapon ?? wraps;",
     "new": "  const charged = weapon;",
     "tests": [
-      "test/combat/handwraps.test.js"
+      "test/combat/handwraps_audit.test.js"
     ],
-    "note": "the wraps' enchantment never strikes"
+    "note": "the wraps' enchantment never strikes; AUDIT D3: held by behaviour, Potent Vs on a fist"
   },
   {
     "name": "HANDWRAPS-core-untold",
@@ -192,8 +192,8 @@
   {
     "name": "HANDWRAPS-lines-unread",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  const lined = weapon ?? info?.wraps ?? null;",
-    "new": "  const lined = weapon;",
+    "old": "  const held = weapon ?? info?.wraps ?? null;   // HAND-WRAPS: a fist's blow carries its wraps' lines and powers",
+    "new": "  const held = weapon;   // HAND-WRAPS: a fist's blow carries its wraps' lines and powers",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "HANDWRAPS-sheathed",
     "file": "src/combat/fpArm.js",
-    "old": "handGlowSpec && !climbHands && !sheathed && !spellStance() ? handGlowSpec : null",
-    "new": "handGlowSpec && !climbHands && !spellStance() ? handGlowSpec : null",
+    "old": "  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);",
+    "new": "  const handGlowShown = () => (handGlowSpec && !climbHands && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "HANDWRAPS-casting",
     "file": "src/combat/fpArm.js",
-    "old": "handGlowSpec && !climbHands && !sheathed && !spellStance() ? handGlowSpec : null",
-    "new": "handGlowSpec && !climbHands && !sheathed ? handGlowSpec : null",
+    "old": "  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);",
+    "new": "  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -262,20 +262,22 @@
   {
     "name": "HANDWRAPS-ranges",
     "file": "src/render/renderer.js",
-    "old": "(slot === 'hands' ? r.slot === 'hand' || GLOW_HAND_PARTS.has(r.piece?.partName) : r.slot === slot)",
+    "old": "(slot === 'hands' ? GLOW_HAND_SLOT.test(r.slot ?? '') : r.slot === slot)",
     "new": "(r.slot === slot)",
     "tests": [
-      "test/combat/handwraps.test.js"
+      "test/combat/handwraps.test.js",
+      "test/combat/handwraps_arm.test.js"
     ],
     "note": "the hands' ranges never lit"
   },
   {
     "name": "HANDWRAPS-gloves",
     "file": "src/render/renderer.js",
-    "old": "(slot === 'hands' ? r.slot === 'hand' || GLOW_HAND_PARTS.has(r.piece?.partName) : r.slot === slot)",
-    "new": "(slot === 'hands' ? r.slot === 'hand' : r.slot === slot)",
+    "old": "const GLOW_HAND_SLOT = /^(?:(?:left|right) )?hand(?: \\(|$)/;",
+    "new": "const GLOW_HAND_SLOT = /^hand$/;",
     "tests": [
-      "test/combat/handwraps.test.js"
+      "test/combat/handwraps.test.js",
+      "test/combat/handwraps_arm.test.js"
     ],
     "note": "a gloved hand never lit"
   },
@@ -292,7 +294,7 @@
   {
     "name": "HANDWRAPS-rig",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "        fpArm.setHandGlow?.(isHandWraps(armItem) ? meshGlow(armItem) : null);",
+    "old": "        fpArm.setHandGlow?.(wrapsMeshGlow());",
     "new": "",
     "tests": [
       "test/combat/handwraps.test.js"
@@ -302,11 +304,251 @@
   {
     "name": "HANDWRAPS-peer",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    b.rig.setHandGlow?.(isHandWraps(heldNow) && weaponGlowOn() ? glowFromWord(heldNow.glow) : null);",
+    "old": "    b.rig.setHandGlow?.(hands && weaponGlowOn() ? peerWrapsGlow(look) : null);",
     "new": "",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
     "note": "a peer's fists never glow"
+  },
+  {
+    "name": "HANDWRAPS-handitem",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    return isHandWraps(own) ? null : own;",
+    "new": "    return own;",
+    "tests": [
+      "test/combat/handwraps.test.js"
+    ],
+    "note": "AUDIT B: the wraps read as the weapon"
+  },
+  {
+    "name": "HANDWRAPS-peer-left",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "for (const w of [fistWrapsOf(R, L), fistWrapsOf(L, R)])",
+    "new": "for (const w of [fistWrapsOf(R, L)])",
+    "tests": [
+      "test/combat/handwraps.test.js"
+    ],
+    "note": "AUDIT C2: a second pair's glow unread"
+  },
+  {
+    "name": "HANDWRAPS-climb",
+    "file": "src/combat/fpArm.js",
+    "old": "  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);",
+    "new": "  const handGlowShown = () => (handGlowSpec && !sheathed && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);",
+    "tests": [
+      "test/combat/handwraps_arm.test.js"
+    ],
+    "note": "AUDIT C: the glow on the stone"
+  },
+  {
+    "name": "HANDWRAPS-mid-swap",
+    "file": "src/combat/fpArm.js",
+    "old": "  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);",
+    "new": "  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && !spellStance() && !(viewMode === 'first' && held) ? handGlowSpec : null);",
+    "tests": [
+      "test/combat/handwraps_arm.test.js"
+    ],
+    "note": "AUDIT C: the fists glow round the blade still in hand"
+  },
+  {
+    "name": "HANDWRAPS-sheet",
+    "file": "src/combat/fpArm.js",
+    "old": "  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);",
+    "new": "  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY ? handGlowSpec : null);",
+    "tests": [
+      "test/combat/handwraps_arm.test.js"
+    ],
+    "note": "AUDIT C: the fists glow behind a sheet"
+  },
+  {
+    "name": "HANDWRAPS-first-mesh",
+    "file": "src/combat/fpArm.js",
+    "old": "      mesh.handGlow = handGlowShown();",
+    "new": "      mesh.handGlow = null;",
+    "tests": [
+      "test/combat/handwraps_arm.test.js"
+    ],
+    "note": "AUDIT C1: the first-person mesh never glows"
+  },
+  {
+    "name": "HANDWRAPS-third-mesh",
+    "file": "src/combat/fpArm.js",
+    "old": "      thirdMesh.handGlow = handGlow;",
+    "new": "      thirdMesh.handGlow = null;",
+    "tests": [
+      "test/combat/handwraps_arm.test.js"
+    ],
+    "note": "AUDIT C1: the third-person body never glows"
+  },
+  {
+    "name": "HANDWRAPS-gate",
+    "file": "src/render/renderer.js",
+    "old": "!!(mesh.weaponGlow || mesh.offWeaponGlow || mesh.handGlow)",
+    "new": "!!(mesh.weaponGlow || mesh.offWeaponGlow)",
+    "tests": [
+      "test/combat/handwraps_arm.test.js"
+    ],
+    "note": "AUDIT C4: the fists alone never a glowing mesh"
+  },
+  {
+    "name": "HANDWRAPS-duel",
+    "file": "src/combat/duelCombat.js",
+    "old": "  if (!item || isHandWraps(item) || !Number.isInteger(",
+    "new": "  if (!item || !Number.isInteger(",
+    "tests": [
+      "test/combat/handwraps_audit.test.js"
+    ],
+    "note": "AUDIT B: the siege's and a duel's blow a 0-0 weapon"
+  },
+  {
+    "name": "HANDWRAPS-stoneskin",
+    "file": "src/systems/bossTraits.js",
+    "old": "(!weapon || isHandWraps(weapon) || weaponSkillUsed",
+    "new": "(!weapon || weaponSkillUsed",
+    "tests": [
+      "test/combat/handwraps_audit.test.js"
+    ],
+    "note": "AUDIT B3: stoneskin blind to a fist"
+  },
+  {
+    "name": "HANDWRAPS-bladeturning",
+    "file": "src/systems/bossTraits.js",
+    "old": "!!weapon && !isHandWraps(weapon) && weaponSkillUsed",
+    "new": "!!weapon && weaponSkillUsed",
+    "tests": [
+      "test/combat/handwraps_audit.test.js"
+    ],
+    "note": "AUDIT B3: bladeturning turns a fist"
+  },
+  {
+    "name": "HANDWRAPS-tell",
+    "file": "src/ai/tells.js",
+    "old": "    case SKILLS.HandToHand: return TELL.K_HANDS;",
+    "new": "",
+    "tests": [
+      "test/combat/handwraps_audit.test.js"
+    ],
+    "note": "AUDIT B6: a fist weighed a sword"
+  },
+  {
+    "name": "HANDWRAPS-swing-sound",
+    "file": "src/systems/soundClips.js",
+    "old": "  if (!weapon || isHandWraps(weapon)) return SOUND.SwingHighPitch;",
+    "new": "  if (!weapon) return SOUND.SwingHighPitch;",
+    "tests": [
+      "test/combat/handwraps_audit.test.js"
+    ],
+    "note": "AUDIT B7: a weapon's swing"
+  },
+  {
+    "name": "HANDWRAPS-hit-sound",
+    "file": "src/systems/soundClips.js",
+    "old": "  return SOUND.Hit1 + (weapon && !isHandWraps(weapon)",
+    "new": "  return SOUND.Hit1 + (weapon",
+    "tests": [
+      "test/combat/handwraps_audit.test.js"
+    ],
+    "note": "AUDIT B7: a weapon's hit"
+  },
+  {
+    "name": "HANDWRAPS-stats-other-hand",
+    "file": "src/combat/combatStats.js",
+    "old": "  return fistWrapsOf(it ?? null, t[usingRightHand ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null);",
+    "new": "  return isHandWraps(it) ? it : null;",
+    "tests": [
+      "test/combat/handwraps_audit.test.js"
+    ],
+    "note": "AUDIT B10: the empty fist bare on the Stats page"
+  },
+  {
+    "name": "HANDWRAPS-stats-estimate",
+    "file": "src/combat/combatStats.js",
+    "old": "wraps ? { ...ESTIMATE, wraps } : ESTIMATE",
+    "new": "ESTIMATE",
+    "tests": [
+      "test/combat/handwraps_audit.test.js"
+    ],
+    "note": "AUDIT B: the estimate's lines untold"
+  },
+  {
+    "name": "HANDWRAPS-pcaao-mods",
+    "file": "src/combat/pcaao.js",
+    "old": "    if (info?.wraps) damage = weaponDamageMods(info.wraps, damage);",
+    "new": "",
+    "tests": [
+      "test/combat/handwraps_audit.test.js"
+    ],
+    "note": "AUDIT B: PCAAO's fists without the wraps' mods"
+  },
+  {
+    "name": "HANDWRAPS-leech",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  const held = weapon ?? info?.wraps ?? null;   // HAND-WRAPS: a fist's blow carries its wraps' leech and powers",
+    "new": "  const held = weapon;   // HAND-WRAPS: a fist's blow carries its wraps' leech and powers",
+    "tests": [
+      "test/combat/handwraps_audit.test.js"
+    ],
+    "note": "AUDIT B: the wraps' leech and powers dead"
+  },
+  {
+    "name": "HANDWRAPS-quake",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "case 'quake': if (held && !ranged(held))",
+    "new": "case 'quake': if (weapon && !ranged(held))",
+    "tests": [
+      "test/combat/handwraps_audit.test.js"
+    ],
+    "note": "AUDIT B: the wraps' own Earthshaker dead"
+  },
+  {
+    "name": "HANDWRAPS-sigil",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  const held = weapon ?? info?.wraps ?? null;",
+    "new": "  const held = weapon;",
+    "tests": [
+      "test/combat/handwraps_audit.test.js"
+    ],
+    "note": "AUDIT B4: the wraps' sigil dead"
+  },
+  {
+    "name": "HANDWRAPS-peer-switch",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "b.rig.setHandGlow?.(hands && weaponGlowOn() ? peerWrapsGlow(look) : null);",
+    "new": "b.rig.setHandGlow?.(hands ? peerWrapsGlow(look) : null);",
+    "tests": [
+      "test/combat/handwraps.test.js"
+    ],
+    "note": "AUDIT C3: a peer's fists glow with my switch off"
+  },
+  {
+    "name": "HANDWRAPS-law-import",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "import '../handWraps.js';   // HAND-WRAPS: the fists' weapon's row",
+    "new": "",
+    "tests": [
+      "test/combat/handwraps_audit.test.js"
+    ],
+    "note": "AUDIT B11: the account's judge refuses an honest pair"
+  },
+  {
+    "name": "HANDWRAPS-run-held",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "const held = (s) => slots?.[s] && !isHandWraps(slots[s]);",
+    "new": "const held = (s) => slots?.[s];",
+    "tests": [
+      "test/combat/handwraps_audit.test.js"
+    ],
+    "note": "AUDIT C5: no running hands in wraps"
+  },
+  {
+    "name": "HANDWRAPS-run-glow",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": ", glowFor: handGlowOf });   // HAND-WRAPS: the running fists in their wraps' glow",
+    "new": " });   // HAND-WRAPS: the running fists in their wraps' glow",
+    "tests": [
+      "test/combat/handwraps_audit.test.js"
+    ],
+    "note": "AUDIT C5: the running fists unlit"
   }
 ]

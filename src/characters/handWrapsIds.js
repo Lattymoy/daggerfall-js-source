@@ -8,3 +8,7 @@ export const HAND_WRAPS_TEMPLATE = 563;
 
 /** Whether an item (or a look's item) is a pair of Hand Wraps. */
 export const isHandWraps = (item) => !!item && item.templateIndex === HAND_WRAPS_TEMPLATE;
+
+/** The Hand Wraps a fist strikes with, given what its hand (`own`) and the other hand hold: its own pair, or with its
+ *  hand empty the other hand's - both fists are up (combat/twoHands/handsLaw.js), so both wear them. Else null. */
+export const fistWrapsOf = (own, other) => (isHandWraps(own) ? own : !own && isHandWraps(other) ? other : null);

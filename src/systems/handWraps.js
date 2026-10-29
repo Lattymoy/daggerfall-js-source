@@ -12,8 +12,8 @@ import { HAND_WRAPS_TEMPLATE, isHandWraps } from '../characters/handWrapsIds.js'
 export { HAND_WRAPS_TEMPLATE, isHandWraps };
 
 /**
- * The row, in DFU's ItemTemplates.txt columns. A Gauntlets' enchantment points (400) and a cloth's weight; priced as a
- * Dagger. Its picture in a list is the Mummy Wrappings' strip of cloth (TEXTURE.254 #41, the player's own ARENA2); it
+ * The row, in DFU's ItemTemplates.txt columns. A Gauntlets' enchantment points (400), a cloth's weight, a base price of
+ * 30. Its picture in a list is the Mummy Wrappings' strip of cloth (TEXTURE.254 #41, the player's own ARENA2); it
  * draws no layer on the doll (ui/paperDoll.js). Rarity 3: a shelf's common stock.
  */
 export const HAND_WRAPS_TEMPLATES = Object.freeze([{

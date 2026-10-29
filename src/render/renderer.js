@@ -1593,9 +1593,10 @@ const SNOW_UNIT_LIST = Object.entries(SNOW_UNITS);   // AUDIT ENVIRONS P1: the f
  *  as the elite foes' glow is: a look, and the same look in every pass that draws one. */
 export const glowSeconds = (now = globalThis.performance?.now?.() ?? Date.now()) => (now / 1000) % GLOW_CLOCK_PERIOD;
 /** HAND-WRAPS: the ranges a glow of `slot` lights - a weapon's its slot's; the fists' ('hands') the body's hands, the
- *  skin's 'hand' row and a worn glove's hand parts (formats/morrowind/mwItemMap.js's rows). */
-const GLOW_HAND_PARTS = new Set(['left hand', 'right hand']);
-export const inGlowSlot = (r, slot) => (slot === 'hands' ? r.slot === 'hand' || GLOW_HAND_PARTS.has(r.piece?.partName) : r.slot === slot);
+ *  skin's 'hand' row and a worn glove's hand parts, named `left hand (<record id>)` (formats/morrowind/mwItemMap.js's
+ *  rows; AUDIT C1: the pieces carry no part name). A glove of one mesh to the elbow lights whole. */
+const GLOW_HAND_SLOT = /^(?:(?:left|right) )?hand(?: \(|$)/;
+export const inGlowSlot = (r, slot) => (slot === 'hands' ? GLOW_HAND_SLOT.test(r.slot ?? '') : r.slot === slot);
 /** WEAPON-GLOW1: the Morrowind outline's draws per look, built once. */
 const _glowDraws = new Map();
 const glowDrawsFor = (look) => { let d = _glowDraws.get(look); if (!d) { d = glowRingDraws(look); _glowDraws.set(look, d); } return d; };

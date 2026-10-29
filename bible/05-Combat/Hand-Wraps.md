@@ -27,28 +27,42 @@ and no metal. The wraps ride beside the blow as `wraps`:
 - **Their weapon modifiers over the fists' roll** (`weaponDamageMods` - the ladder's `damage` line, an heirloom's), as a
   weapon's modifiers go over its own roll, in both cores' Hand-to-Hand arm.
 - **Their lines at the blow** (`lootPowers.js` `lootBlow`: slayer, elemental) and at the strike (`lootStrike`: leech),
-  through the blow modifiers' and the strike listeners' `info.wraps`. The fists' own powers still see a weaponless blow.
+  through the blow modifiers' and the strike listeners' `info.wraps`.
+- **Their own powers and sigil** (a Rare's imprint, Earthshaker on a fist; `sigil.js` `sigilBlow`), as a weapon's ride
+  its blow. The fists' own powers (Open Hand) still see a weaponless blow.
 - **Their Strikes payload** (Cast When Strikes, Potent Vs and the rest) on a fist's hit.
 
-A fist's blow wears nothing, as DFU's does, so the wraps never lose condition. A line's numbers are the ladder's own
-bands (`AFFIX_RANGES`), the same as on any weapon: nothing here is past the POWER-CEILING.
+A fist's blow wears nothing, as DFU's does. An enchantment's use wears the wraps as it wears a weapon (Cast When
+Strikes' `durabilityLoss`), so a pair can break and is repaired. A line's numbers are the ladder's own bands
+(`AFFIX_RANGES`), the same as on any weapon: nothing here is past the POWER-CEILING.
 
 ## The hands
 
 - `combat/fpsWeapon.js` `weaponTypeForItem`: Melee, the fists' sheet. Melee has no WEAPO1xx sheet, so the classic hand
   takes law 5's arcane outline for enchanted wraps (`systems/weaponGlow.js` `spriteGlow`).
 - `characters/weapons.js` `weaponSkillUsed`: Hand-to-Hand. `characters/equipTable.js` `getItemHands`: Either.
-- `combat/twoHands/handsLaw.js` `handsModeOf`: a hand in wraps is a fist, so both fists are up. `combat/playerWeapon.js`
-  `handItem`: with both fists up, an empty hand beside the wraps strikes with them, so both fists wear them and glow.
-- The Stats page (`combat/combatStats.js`) reads them as the fists, their modifiers over the roll.
+- `combat/twoHands/handsLaw.js` `handsModeOf`: a hand in wraps is a fist, so both fists are up.
+- `combat/playerWeapon.js` `handItem` answers null for the wraps, so `weapon` and `strikingWeapon` are the bare hand's.
+  `wrapsOf(hand)` names them (`characters/handWrapsIds.js` `fistWrapsOf`): a hand's own pair, or with the hand empty
+  the other hand's. So both fists wear one pair and glow.
+- Every reader of the weapon sees a fist: a duel's and the siege's blow (`duelWeaponOf`), a boss's Stoneskin and
+  Bladeturning (`bossTraits.js`), a foe's read of the blow (`ai/tells.js`), the swing's and the hit's sound.
+- The Stats page (`combat/combatStats.js`) reads them as the fists, their modifiers over the roll and their lines in its
+  estimate; an empty fist beside them wears them there too.
 
 ## The glow on the Morrowind hands
 
 The wraps key as the empty hand (`combat/fpArm.js` `fpWeaponKey`), so nothing is held. The arm takes the wraps' glow
-through `setHandGlow` and lays it on its meshes as `handGlow` while the fists are up: drawn, no spell readied, not
-climbing. The renderer draws it as a weapon's glow over the hands' ranges (`render/renderer.js` `inGlowSlot` 'hands': the
-skin's `hand` row and a worn glove's hand parts). The rig tells the arm each frame (`combat/weapon/weaponRig.js`), and a
-peer's body reads it off their look's `glow` word, which a weapon in a hand already carries (`net/peer/peerBodies.js`).
+through `setHandGlow` and lays it on its first- and third-person meshes as `handGlow` while the fists are up: drawn, no
+spell readied, not climbing, no sheet held up, and the empty hand's key worn (a swap from a blade has landed). Drawn
+fists put the torch away (`carriedLeftVisible`), so the glow never lights one. The renderer draws it as a weapon's glow
+over the hands' shown ranges (`render/renderer.js` `inGlowSlot` 'hands': the skin's `hand` row and a glove's `right
+hand (...)` and `left hand (...)` parts). A glove is one mesh to the elbow, so its cuff glows too.
+
+The arm has one glow for both fists: the rig gives it the first pair that
+glows, right hand first (`combat/weapon/weaponRig.js` `wrapsMeshGlow`). A peer's body reads it off their look's `glow`
+word the same way, from either hand (`net/peer/peerBodies.js` `peerWrapsGlow`). The classic hands glow in every frame
+they draw, the running hands too.
 
 ## Departures, named
 
@@ -66,9 +80,11 @@ peer's body reads it off their look's `glow` word, which a weapon in a hand alre
 
 ## The account service
 
-The item law knows template 563 (`systems/item/itemLaw.js` `CUSTOM_TEMPLATE_GROUPS`). ITEM_LAW_VERSION stays 14: no pair
-existed for an older law to find against. The service that judges it is acct220: deploy the account service before the
-site, or an honest pair reads as a forgery.
+The item law knows template 563 (`systems/item/itemLaw.js` `CUSTOM_TEMPLATE_GROUPS`, which imports the row, so a
+headless judge knows it too). ITEM_LAW_VERSION stays 14: no pair existed for an older law to find against. The service
+that judges it is acct220: deploy the account service before the site, or an honest pair reads as a forgery. A loot
+room's hello says law 2 (`net/wire.js` `LOOT_HELLO_LAW`, world286): while `lootDoor` is on, the relay refuses an older
+build, which would drop a pair from a shared container. Deploy the relay first, then the account service, then the site.
 
 ## THE FOUR HOSTS RULE
 
@@ -79,6 +95,9 @@ peer's body glows wherever `peerBodies.js` draws it.
 ## Verification
 
 `test/combat/handwraps.test.js` (7): the row and its mints, the fists, the blow in both cores, the Stats page, the
-classic glow, the Morrowind arm on the fixture rig, the renderer's ranges, and a peer's body. Its mutants:
-`tools/mutants/handwraps.json`, 31, all dead. Not run in a browser here: the glow's drawing is WEAPON-GLOW1's, pinned by
+classic glow, the Morrowind keys and ranges, and a peer's body. `test/combat/handwraps_arm.test.js` (4): the arm's two
+meshes on the retail skeleton, bare and in steel gauntlets, its gates, and the renderer's pass on a logging GL.
+`test/combat/handwraps_audit.test.js` (7): the readers that see a fist, the Stats page's hand, PCAAO's modifiers, the
+wraps' leech, power and sigil, the item law loaded alone, the running hands, and the Strikes payload. Its mutants:
+`tools/mutants/handwraps.json`, 55, all dead. The audit's record: `01-Overview/audits/Audit-Westhead-Hand-Wraps.md`. Not run in a browser here: the glow's drawing is WEAPON-GLOW1's, pinned by
 its own probe (`tools/weaponGlowProbe.mjs`).

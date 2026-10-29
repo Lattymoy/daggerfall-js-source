@@ -1,11 +1,12 @@
-// A BAY WALLED PORT'S PLACING GROUND AS THE WORLD HOST BUILDS IT (scenes/world.js townPlacesFor, scenes/pixelBuild.js),
-// off the player's own ARENA2 with the packs off (a town a home pins to Daggerfall's layout stands so online): the
-// pixel's terrain job, the yards' walk shut (TS7) and measures, the yards placed, and the sea's field. `ground()` answers a
-// fresh ground each call - a ground is placed on once. Built as test/world/fb1028_walls.test.js placedYards builds it.
+// A BAY PORT'S PLACING GROUND AS THE WORLD HOST BUILDS IT (scenes/world.js townPlacesFor, scenes/pixelBuild.js),
+// off the player's own ARENA2, the packs off (Daggerfall's layout) or on (`packs`: Beautiful Villages and Cities, as the
+// game registers them - process-wide, so a file of its own): the pixel's terrain job, the yards' walk shut (TS7) and
+// measures, the yards placed, and the sea's field. `ground()` answers a fresh ground each call - a ground is placed on once.
+// Built as test/world/fb1028_walls.test.js placedYards builds it.
 import { join } from 'node:path';
 
-/** @param {string} arena2 @param {(p: string) => Uint8Array} readFileSync @param {string} [name] */
-export async function bayPortGround(arena2, readFileSync, name) {
+/** @param {string} arena2 @param {(p: string) => Uint8Array} readFileSync @param {string} [name] @param {{ packs?: boolean }} [o] */
+export async function bayPortGround(arena2, readFileSync, name, { packs = false } = {}) {
   const R = (p) => import(new URL(`../src/${p}`, import.meta.url).href);
   const W = await R('formats/worldData/worldDataReplacement.js');
   const { MapsFile, longitudeLatitudeToMapPixel } = await R('formats/mapsFile.js');
@@ -38,18 +39,29 @@ export async function bayPortGround(arena2, readFileSync, name) {
   walls.setTownWallPaths(walls.townWallPathsReader({ bay: () => ({ roads: roadsB, tracks: tracksB }) }));
   const blocks = new BlocksFile(); blocks.load(bytes('BLOCKS.BSA'));
   W.installWorldDataReplacement(); W.bindWorldDataBlocks(blocks);
+  if (packs) {
+    const { gunzipSync } = await import('node:zlib');
+    const { setValue } = await R('systems/settings/settings.js');
+    const { openWorldDataPack } = await R('formats/worldData/worldDataPack.js');
+    setValue('Enhancements', 'AssetInjection', 'True');
+    for (const [v, priority] of [['beautiful-villages', 10], ['beautiful-cities', 20]]) {
+      const pack = JSON.parse(gunzipSync(readFileSync(new URL(`../vendor/${v}/WorldDataPack/${v}.pack.json.gz`, import.meta.url))).toString('utf8'));
+      W.registerWorldDataPack(openWorldDataPack(pack, { blocks }), () => true, { priority });
+    }
+    W.latchWorldDataDoor(); W.quietLocationOverrides(true);
+  }
   installArena({ readBin: async () => { throw new Error('no colosseum in a test'); }, log: null });
   installTownOutline();
   const maps = new MapsFile(); maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK')); maps.autoDiscard = false;
   const arch = new Arch3dFile(); arch.load(bytes('ARCH3D.BSA'));
   const woods = new WoodsFile(); woods.load(bytes('WOODS.WLD'));
   let loc = null;
-  // BAY-OWN: a Bay walled city, found in MAPS.BSA's own regions
+  // BAY-OWN: a Bay town, found in MAPS.BSA's own regions (walled on its outline in Daggerfall's layout; the packs keep their ring)
   for (let r = 0; r < maps.regionCount && !loc; r++) {
     const reg = maps.getRegion(r);
-    for (let l = 0; reg && l < reg.locationCount && !loc; l++) { const c = maps.getLocation(r, l); if (c?.name === name && c.outline?.walled && c.outline.bay) loc = c; }
+    for (let l = 0; reg && l < reg.locationCount && !loc; l++) { const c = maps.getLocation(r, l); if (c?.name === name) loc = c; }
   }
-  if (!loc) throw new Error(`no Bay walled city named ${name}`);
+  if (!loc) throw new Error(`no Bay town named ${name}`);
   const p = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude), px = p.x, py = p.y;
   const tm = new Uint8Array(128 * 128), rect = setLocationTiles(loc, maps, blocks, tm);
   rect.gateRoads = townGateRoads(loc, maps, blocks);
