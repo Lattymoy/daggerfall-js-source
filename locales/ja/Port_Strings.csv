@@ -2977,7 +2977,7 @@ pvp.flag.on,"PvPはオンです。フラグを立てたプレイヤーがあな�
 pvp.flag.onTitle,"PvPオン (Caps Lock)"
 pvp.level30.ask,"レベル{n}に上げますか？"
 pvp.level30.no,"まだ"
-pvp.level30.warn,"レベル{n}になると、PvPフラグがオフでも、PvPゾーン（WrothgarとCyrodiil）で他のプレイヤーに攻撃されて倒されることがあります。"
+pvp.level30.warn,"レベル{n}になると、PvPフラグがオフでも、PvPゾーン（Cyrodiilと外洋）で他のプレイヤーに攻撃されて倒されることがあります。"
 pvp.potion.health,"次の体力の薬は{s}秒後に飲めます。"
 pvp.potion.magicka,"次のマジカの薬は{s}秒後に飲めます。"
 pvp.potion.other,"この種類の次の薬は{s}秒後に飲めます。"

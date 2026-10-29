@@ -735,7 +735,7 @@ pvp.flag.on,"PvP đã bật. Người chơi được đánh dấu có thể tấ
 pvp.flag.onTitle,"PvP bật (Caps Lock)"
 pvp.level30.ask,"Tiếp tục lên cấp {n}?"
 pvp.level30.no,"Chưa"
-pvp.level30.warn,"Ở cấp {n}, người chơi khác có thể tấn công và giết bạn trong các vùng PvP (Wrothgar và Cyrodiil), kể cả khi cờ PvP của bạn đang tắt."
+pvp.level30.warn,"Ở cấp {n}, người chơi khác có thể tấn công và giết bạn trong các vùng PvP (Cyrodiil và biển khơi), kể cả khi cờ PvP của bạn đang tắt."
 pvp.potion.health,"Bạn có thể uống thêm một bình máu sau {s} giây."
 pvp.potion.magicka,"Bạn có thể uống thêm một bình ma lực sau {s} giây."
 pvp.potion.other,"Bạn có thể uống thêm một bình loại này sau {s} giây."
