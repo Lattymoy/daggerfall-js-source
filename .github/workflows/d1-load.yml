@@ -104,7 +104,7 @@ jobs:
             echo "$out" | jq -r --arg p "$period" --arg s "$sort" '"**D1 query insights - the statements ranked by \($s), summed (\($p))**", "",
               "| total ms | runs | avg ms | avg rows read | total rows read | total rows written | statement |", "|---:|---:|---:|---:|---:|---:|---|",
               (.[] | "| \(.totalDurationMs // .sumDurationMs // "" | tostring) | \(.numberOfTimesRun // .count // "" | tostring) | \(.avgDurationMs // "" | tostring) | \(.avgRowsRead // "" | tostring) | \(.totalRowsRead // .sumRowsRead // "" | tostring) | \(.totalRowsWritten // .sumRowsWritten // "" | tostring) | `\((.query // "") | gsub("[|`\n]"; " ") | .[0:300])` |"),
-              ""' >> "$GITHUB_STEP_SUMMARY" || echo "::warning::the insights answer was not in the shape expected"
+              ""' | tee -a "$RUNNER_TEMP/all.md" >> "$GITHUB_STEP_SUMMARY" || echo "::warning::the insights answer was not in the shape expected"
           else
             echo "::warning::wrangler d1 insights was refused - $(head -c 400 /tmp/insights.err)"
           fi
@@ -113,16 +113,16 @@ jobs:
         run: |
           set -euo pipefail
           acct=$(grep -oP '^account_id\s*=\s*"\K[^"]+' server-account/wrangler.toml)
-          echo "**Window: the last ${HOURS:-1} hour(s), to $(date -u +%H:%M) UTC**" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Window: the last ${HOURS:-1} hour(s), to $(date -u +%H:%M) UTC**" | tee -a "$RUNNER_TEMP/all.md" >> "$GITHUB_STEP_SUMMARY"
+          echo "" | tee -a "$RUNNER_TEMP/all.md" >> "$GITHUB_STEP_SUMMARY"
           failed=0
           for q in $(node tools/d1Load.mjs --names); do
             node tools/d1Load.mjs --sql "$q" "$HOURS" > "$RUNNER_TEMP/$q.sql"
             code=$(curl -sS --max-time 60 -o "$RUNNER_TEMP/$q.json" -w '%{http_code}' -X POST \
               "https://api.cloudflare.com/client/v4/accounts/$acct/analytics_engine/sql" \
               -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" --data-binary "@$RUNNER_TEMP/$q.sql") || true
-            if [ "${code:-000}" = "200" ] && node tools/d1Load.mjs --table "$q" "$RUNNER_TEMP/$q.json" >> "$GITHUB_STEP_SUMMARY"; then
-              echo "" >> "$GITHUB_STEP_SUMMARY"
+            if [ "${code:-000}" = "200" ] && node tools/d1Load.mjs --table "$q" "$RUNNER_TEMP/$q.json" | tee -a "$RUNNER_TEMP/all.md" >> "$GITHUB_STEP_SUMMARY"; then
+              echo "" | tee -a "$RUNNER_TEMP/all.md" >> "$GITHUB_STEP_SUMMARY"
             else
               failed=1
               echo "::warning::the $q question was refused (HTTP ${code:-000}) - the token needs Account Analytics: Read"
@@ -131,3 +131,15 @@ jobs:
             fi
           done
           [ "$failed" = "0" ] || echo "::warning::some readings are missing from the summary - see the warnings above"
+
+      # Readable copy: the summary again as notice annotations, which the REST API serves.
+      - name: Summary as annotations
+        if: always()
+        run: |
+          f="$RUNNER_TEMP/all.md"
+          [ -f "$f" ] || { echo "::notice::no summary was written"; exit 0; }
+          split -b 6000 -d "$f" "$RUNNER_TEMP/part."
+          for p in "$RUNNER_TEMP"/part.*; do
+            msg=$(sed -e 's/%/%25/g' "$p" | sed -e ':a;N;$!ba;s/\n/%0A/g' | sed -e 's/\r/%0D/g')
+            echo "::notice title=$(basename "$p")::$msg"
+          done
