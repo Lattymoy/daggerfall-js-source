@@ -121,7 +121,7 @@ test('WILD1: the death screen holds its WILD_DEATH_HOLD_S (60 s, PVP-RISE) in th
     assert.equal(s.respawnIn, WILD_DEATH_HOLD_S);   // PIN MOVED (PVP-RISE): 60, the PvE wait
     s.input('confirm');
     assert.equal(s.sequence.reset, false, 'Enter does not rise in the zone');
-    assert.deepEqual(wildDeathLines(wildDeath()), ['Ria may claim one piece of your worn gear.', '3 things you carried lie where you fell, for ten minutes.', 'In Cyrodiil the dead wait two minutes.']);   // PIN MOVED (WW-C2): Cyrodiil's
+    assert.deepEqual(wildDeathLines(wildDeath()), ['Ria may take one uninsured worn piece of yours, or gold.', '3 things you carried lie where you fell, for ten minutes.', 'In Cyrodiil the dead wait two minutes.']);   // PIN MOVED (WW-C2): Cyrodiil's   // PIN MOVED (PVP-WORDS): 'Ria may claim one piece of your worn gear.'
     setWildDeath({ killer: 'Ria', dropped: 0, claimed: 'Iron Helm' });
     assert.equal(wildDeathLines()[0], 'Ria took your Iron Helm.');
   } finally { setWildDeath(null); globalThis.document = realDoc; }

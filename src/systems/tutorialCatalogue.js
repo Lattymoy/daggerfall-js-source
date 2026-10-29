@@ -624,14 +624,13 @@ export const TUTORIALS = Object.freeze([
   }),
   page({
     id: 'wild-zone', group: 'online', title: 'The Open Zone', trigger: 'When you first enter the open zone.',
-    // FOE-KEEPS; AUDIT FOE-KEEPS O4: the page pops in either zone, the sea's too, and said the bag and cart lost whole at
-    // a kill - a tenth of the gold with them, and any other death there costs the usual tenth. STORE-KEEPS and WILD-INSURE
-    // (2026-10-26): the cart and the companions' packs are kept now, and so is insured gear; through the text core
-    // (L10N4), read when shown; WW-C2: the open zone is Cyrodiil's
+    // FOE-KEEPS; AUDIT FOE-KEEPS O4: the page pops in either zone, the sea's too. PVP-WORDS (PVP-REWARD, 2026-10-29): a
+    // kill drops nothing - its killer's one roll, a piece, a policy's gold or the last tenth - and any other death there
+    // costs the usual tenth; through the text core (L10N4), read when shown; WW-C2: the open zone is Cyrodiil's
     get body() {
       return [
         t('tutorials.wildZone.body1', 'Players may fight one another in Cyrodiil and on the open {word} Ocean, where monsters are tougher and spoils richer.', { word: ETHER_WORD }),
-        t('tutorials.wildZone.body2', 'If another player kills you there, your bag drops with a tenth of your gold, and they may take one worn item. Your cart, companions\' packs and insured gear are kept. Any other death costs the usual tenth.'),
+        t('tutorials.wildZone.body2', 'If another player kills you there, nothing drops. They may take one uninsured worn piece, or else one policy\'s gold, or else a tenth of your coin and letters of credit. Any other death costs the usual tenth.'),
       ];
     },
   }),
