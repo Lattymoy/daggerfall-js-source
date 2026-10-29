@@ -232,5 +232,14 @@
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"
     ]
+  },
+  {
+    "name": "DRAGON5-the-realm-trades-a-dragon",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": "582, 1820, 2000, 2001]);",
+    "new": "582, 2000, 2001]);",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
   }
 ]

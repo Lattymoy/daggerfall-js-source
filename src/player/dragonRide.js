@@ -42,4 +42,4 @@ export const dragonAloft = () => flight.aloft() || _settling;
 /** Told 'took-off' and 'landed' (the host's sound). @param {((what: 'took-off' | 'landed') => void) | null} fn */
 export function onDragonFlight(fn) { _heard = typeof fn === 'function' ? fn : null; }
 /** For tests: on the ground, and nothing heard. */
-export function _resetDragonRide() { flight.land(); _falling = 0; _settling = false; _heard = null; }
+export function _resetDragonFlight() { flight.land(); _falling = 0; _settling = false; _heard = null; }

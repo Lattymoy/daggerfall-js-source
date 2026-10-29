@@ -329,3 +329,9 @@ is world285 and acct218; migration 0193 stands. `DRAGON_RIDE_RELAY_MIN` is 285 (
 and the fight's gate with it. Item law 15 names acct218 (`tech1_roster` LAW_SERVICE). bootWorld measures 35,250: main
 took eight lines out. PINS MOVED: the relay's and the service's versions (sixty files, each note before main's), the
 ride's and the fight's gates (`dragonride_wire`, `dragon2_law`), and ten mutant records on the version lines.
+
+**CI ON DRAGON5a (2026-10-29).** The realm's trade law did not know the Dwarven Dragon is bound
+(`net/realm/realmTradeLaw.js` BOUND_TEMPLATES, now with 1820), so the service would have moved one between two realm
+characters; only the client refused it. And the flight's test reset took staffDragon's name; it is `_resetDragonFlight`
+(audit24's one home). PINS MOVED: AUDIT REALM F1's rows and registrars; five mutant records on the bound list, and
+`DRAGON5-the-realm-trades-a-dragon` dead.
