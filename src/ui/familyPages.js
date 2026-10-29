@@ -35,6 +35,7 @@ import { GIFT_GOLD, KISS_AT } from '../systems/legacy/courtDeeds.js';   // COURT
 import { FRIEND_AT } from '../systems/livingWorld/relations.js';
 import { legacySettings } from '../systems/legacy/settings.js';
 import { capturePointer } from './pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
+import { raisedWord } from '../systems/legacy/unionKin.js';   // UNION-CHILDREN: a child the other player's house raises
 
 export const FAMILY_PAGE_SECTIONS = Object.freeze([
   Object.freeze(['tree', 'Family Tree']), Object.freeze(['house', 'The House']), Object.freeze(['hall', 'Hall of Ancestors']),
@@ -192,6 +193,7 @@ export function personChips(family, p, livedNow) {
   if (!p.died && family.model === MODELS.enduring && isElder(p, p.id === family.currentId ? livedNow : p.lived)) out.push({ cls: 'elder', text: 'Elder' });
   if (p.kind === 'resident') out.push({ cls: '', text: 'Wed into the house' });
   if (p.kind === 'player') out.push({ cls: '', text: 'Wed from another house' });   // LEGACY7 part three: another player's character
+  if (p.kind === 'union') out.push({ cls: '', text: raisedWord(p) });   // UNION-CHILDREN: the other player's house raises them
   if (!p.died && p.minor) out.push({ cls: '', text: 'A child' });   // LEGACY5: played once the mantle passes to them
   if (!p.died && p.characterId == null && p.id !== family.currentId && p.kind === 'member') out.push({ cls: 'blood', text: 'Not yet played' });
   // U2: the heir answer (B12), drawn - a Bloodline member who would leave a newborn heir
@@ -632,7 +634,7 @@ export function drawHousePage(detail, rerender, { el, divider } = /** @type {any
   const fact = (k, v) => g.append(el('span', 'k', k), el('span', 'v', v));
   fact('Model', modelWord(family.model));
   fact('Seat', family.seat?.loc ? `${family.seat.loc}, ${family.seat.region}` : 'None yet (the first town you stand in)');
-  fact('Generations', String(1 + family.people.reduce((m, p) => Math.max(m, p.gen | 0), 0)));
+  fact('Generations', String(1 + family.people.reduce((m, p) => ((p.kind ?? 'member') === 'member' ? Math.max(m, p.gen | 0) : m), 0)));   // UNION-CHILDREN: the blood's
   // AUDIT LEGACY III A15/U9: both counts the blood's - the Fallen counted every spouse, and a player's character gone
   // from the realm, beside a Living that counted the blood alone
   fact('Living', String(family.people.filter((p) => isAlive(p) && p.kind === 'member').length));
@@ -702,7 +704,7 @@ export function drawHousePage(detail, rerender, { el, divider } = /** @type {any
   else if (prov.inWorld && !prov.inWorld()) detail.append(el('p', 'px-note', 'Your family is hidden because "Family In World" is off in Project Legacy\'s settings.'));
   else detail.append(el('p', 'px-note', 'Your family lives in the world while you play one of them. Talk to one to play as them.'));
   // the house's dead - the blood's, and a spouse's beside them (wed in: said so); one gone from the realm is no death
-  const fallen = family.people.filter((p) => p.died && p.died.cause !== 'gone').sort((a, b) => (b.died.at ?? 0) - (a.died.at ?? 0));
+  const fallen = family.people.filter((p) => p.died && p.died.cause !== 'gone' && p.kind !== 'union').sort((a, b) => (b.died.at ?? 0) - (a.died.at ?? 0));   // AUDIT FB1029 E-M1: a union child is the other house's dead
   if (fallen.length) {
     detail.append(el('p', 'fam-h', 'The fallen'));
     const list = el('div', 'fam-hall');
@@ -732,7 +734,7 @@ export function drawHallPage(detail, rerender, { el, divider } = /** @type {any}
   const playing = prov?.family?.()?.id ?? null;
   for (const f of all) {
     const row = el('div', 'fam-hallrow');
-    const gens = 1 + f.people.reduce((m, p) => Math.max(m, p.gen | 0), 0);
+    const gens = 1 + f.people.reduce((m, p) => ((p.kind ?? 'member') === 'member' ? Math.max(m, p.gen | 0) : m), 0);   // UNION-CHILDREN: the blood's
     const head = currentOf(f);
     row.append(el('div', 'fam-kin', `${houseTitle(f.surname)}${f.id === playing ? ' (yours)' : ''}`),
       el('div', 'fam-sub', `${modelWord(f.model)} - ${gens} ${gens === 1 ? 'generation' : 'generations'}, ${f.people.length} remembered, ${fallenOfHouse(f).length} fallen`),

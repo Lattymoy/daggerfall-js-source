@@ -2094,6 +2094,11 @@
   "tr": "da2e51f2d6a4",
   "by": "claude-in-session"
  },
+ "account.refusal.lineageInUse": {
+  "en": "b210f6197958",
+  "tr": "26c53cbabcf3",
+  "by": "claude-in-session"
+ },
  "account.refusal.lineageLaw": {
   "en": "fcdea82bce37",
   "tr": "163355efcdfe",
@@ -3735,8 +3740,8 @@
   "by": "claude-in-session"
  },
  "account.refusal.tooManyLineages": {
-  "en": "04ee7a4c73e9",
-  "tr": "c6efe0b86b98",
+  "en": "5f69291d1652",
+  "tr": "4b06a07bde57",
   "by": "claude-in-session"
  },
  "account.refusal.tooManySaves": {
@@ -14834,6 +14839,11 @@
   "tr": "2382cf580218",
   "by": "claude-in-session"
  },
+ "helm.heavy": {
+  "en": "1909b8911a74",
+  "tr": "ed31dabcc33d",
+  "by": "claude-in-session"
+ },
  "helm.passenger": {
   "en": "61953c9d9311",
   "tr": "4e2757f1a3c8",
@@ -16917,6 +16927,21 @@
  "legacy.rez.unheard": {
   "en": "9a86cc2b125e",
   "tr": "44e2a64d58e4",
+  "by": "claude-in-session"
+ },
+ "legacy.union.born": {
+  "en": "39b7a548d1fb",
+  "tr": "dd537eeee1e0",
+  "by": "claude-in-session"
+ },
+ "legacy.union.raised": {
+  "en": "7077e4aa0ab5",
+  "tr": "dcc5866b8e43",
+  "by": "claude-in-session"
+ },
+ "legacy.union.raisedAway": {
+  "en": "5a3c7723cbd9",
+  "tr": "e0637f2d72c7",
   "by": "claude-in-session"
  },
  "level.renown.risen": {
@@ -20734,6 +20759,36 @@
   "tr": "92033624f142",
   "by": "claude-in-session"
  },
+ "menu.realm.families": {
+  "en": "862a863ff592",
+  "tr": "9d0613ab27b3",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familiesHide": {
+  "en": "34d8b60fe253",
+  "tr": "4f58415a4d62",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familiesShow": {
+  "en": "d97d1ee339e4",
+  "tr": "906dc61756b8",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyRemoved": {
+  "en": "2cbcaf937fc9",
+  "tr": "9006ec749009",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyRow": {
+  "en": "5e293ce32dbd",
+  "tr": "7b6cdc4bebe3",
+  "by": "claude-in-session"
+ },
+ "menu.realm.familyUnnamed": {
+  "en": "9b115c99b1da",
+  "tr": "4b9a18b3e746",
+  "by": "claude-in-session"
+ },
  "menu.realm.heading": {
   "en": "81480a8e85a4",
   "tr": "3637518d5df3",
@@ -20757,6 +20812,26 @@
  "menu.realm.play": {
   "en": "5d12bd53552c",
   "tr": "06d92aef3735",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamily": {
+  "en": "a53c064ca700",
+  "tr": "5c70cf597202",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyAsk": {
+  "en": "5694f452ab8b",
+  "tr": "3d98eb0c1bbd",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyBody": {
+  "en": "c055ce52aa9e",
+  "tr": "61290232430a",
+  "by": "claude-in-session"
+ },
+ "menu.realm.removeFamilyYes": {
+  "en": "e963907dac5c",
+  "tr": "54e140f9f073",
   "by": "claude-in-session"
  },
  "menu.realm.strandedAsk": {

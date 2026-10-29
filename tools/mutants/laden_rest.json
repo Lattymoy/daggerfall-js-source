@@ -1,0 +1,194 @@
+[
+  {
+    "name": "LADEN-REST-load-always",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "const laden = (/** @type {boolean} */ rest) => (rest ? 1 : state.boatCargoMod);",
+    "new": "const laden = (/** @type {boolean} */ rest) => state.boatCargoMod;",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "the mod's own: a dead hull keeps her swing and her way for good"
+  },
+  {
+    "name": "LADEN-REST-never-loaded",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "const laden = (/** @type {boolean} */ rest) => (rest ? 1 : state.boatCargoMod);",
+    "new": "const laden = (/** @type {boolean} */ rest) => 1;",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "the load no longer slows her coming on"
+  },
+  {
+    "name": "LADEN-REST-inverted",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "const laden = (/** @type {boolean} */ rest) => (rest ? 1 : state.boatCargoMod);",
+    "new": "const laden = (/** @type {boolean} */ rest) => (rest ? state.boatCargoMod : 1);",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "light coming on, laden coming to rest"
+  },
+  {
+    "name": "LADEN-REST-turn-unrested",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "f(turnAccel(swing.rest) * dt())",
+    "new": "f(turnAccel(false) * dt())",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "her swing comes off at the load's rate"
+  },
+  {
+    "name": "LADEN-REST-turn-always",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "f(turnAccel(swing.rest) * dt())",
+    "new": "f(turnAccel(true) * dt())",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "her helm comes over at the light rate"
+  },
+  {
+    "name": "LADEN-REST-way-unrested",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "f(moveAccel(rest) * dt())",
+    "new": "f(moveAccel(false) * dt())",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "her way comes off at the load's rate"
+  },
+  {
+    "name": "LADEN-REST-way-always",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "f(moveAccel(rest) * dt())",
+    "new": "f(moveAccel(true) * dt())",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "her way comes on at the light rate"
+  },
+  {
+    "name": "AUDIT-FB1029e-S1-counter-at-the-load",
+    "file": "src/systems/comeSailAway/ladenRest.js",
+    "old": "  const against = swing * current < 0 && mod < 1;",
+    "new": "  const against = false;",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "a helm put against a laden swing takes it off at the load's rate"
+  },
+  {
+    "name": "AUDIT-FB1029e-S1-counter-past-zero",
+    "file": "src/systems/comeSailAway/ladenRest.js",
+    "old": "toward: against ? 0 : swing };",
+    "new": "toward: swing };",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "the light rate carries her through 0 into a swing the other way"
+  },
+  {
+    "name": "AUDIT-FB1029e-S1-eased-unrested",
+    "file": "src/systems/comeSailAway/ladenRest.js",
+    "old": "rest: against || Math.abs(swing) < Math.abs(current),",
+    "new": "rest: against,",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "a swing let go comes off at the load's rate"
+  },
+  {
+    "name": "AUDIT-FB1029e-S5-slide-light",
+    "file": "src/systems/comeSailAway/ladenRest.js",
+    "old": "export const wayRests = (/** @type {number} */ wanted, /** @type {number} */ was, /** @type {number} */ dot) => wanted < was\n  && (wanted === 0 || dot >= f(f(wanted * was) * 0.999));",
+    "new": "export const wayRests = (/** @type {number} */ wanted, /** @type {number} */ was, /** @type {number} */ dot) => wanted < was;",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "a way wanted across her line gathers at the light rate"
+  },
+  {
+    "name": "AUDIT-FB1029e-S6-M2-sail-way",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "wind) * laden(rest))",
+    "new": "wind) * state.boatCargoMod)",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "her way under canvas kept for good"
+  },
+  {
+    "name": "AUDIT-FB1029e-S6-M3-oar-way",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "handlingMod('OarMoveAcceleration')) * laden(rest))",
+    "new": "handlingMod('OarMoveAcceleration')) * state.boatCargoMod)",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "her way under oars kept for good"
+  },
+  {
+    "name": "AUDIT-FB1029e-S6-M4-oar-turn",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "handlingMod('OarTurnAcceleration')) * laden(rest))",
+    "new": "handlingMod('OarTurnAcceleration')) * state.boatCargoMod)",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "a swing with the rudder held against it kept for good"
+  },
+  {
+    "name": "AUDIT-FB1029e-T3-sail-accel-light",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "wind) * laden(rest))",
+    "new": "wind) * 1)",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "her way under canvas comes on at the light rate"
+  },
+  {
+    "name": "AUDIT-FB1029e-T3-oar-accel-light",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "handlingMod('OarMoveAcceleration')) * laden(rest))",
+    "new": "handlingMod('OarMoveAcceleration')) * 1)",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "her way at her oars comes on at the light rate"
+  },
+  {
+    "name": "AUDIT-FB1029e-T3-oar-turn-light",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "handlingMod('OarTurnAcceleration')) * laden(rest))",
+    "new": "handlingMod('OarTurnAcceleration')) * 1)",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "her helm at her oars comes over at the light rate"
+  },
+  {
+    "name": "AUDIT-FB1029e-T3-sail-turn-light",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "handlingMod('SailTurnAcceleration')) * laden(rest))",
+    "new": "handlingMod('SailTurnAcceleration')) * 1)",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "her helm under canvas comes over at the light rate"
+  },
+  {
+    "name": "AUDIT-FB1029e-T3-coast-light",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "handlingMod('SailMoveAcceleration')) * laden(rest)) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.coast : 1));",
+    "new": "handlingMod('SailMoveAcceleration')) * 1) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.coast : 1));",
+    "tests": [
+      "test/systems/comeSailAway/laden_rest.test.js"
+    ],
+    "note": "a coast's rate unladen",
+    "equivalent": true,
+    "why": "a coast is her way coming off - laden(rest) is 1 then; coming on under a coast never happens (a coast gathers no way)"
+  }
+]

@@ -89,6 +89,10 @@ function drawTerrain(r, rig, clip) {
 }
 /** A draw's uploads by uniform: the name to the last value it took. */
 const valuesOf = (d) => new Map(d.uploads.map((e) => [e.loc.name, e.args]));
+/** WL1: what a program HOLDS - every upload ever made to its own locations, the last value each. A program built at its
+ *  first draw sets its window light's sampler units in that draw (renderer.js _wlBindProgram); the plain one set them
+ *  at its own build, before any draw. */
+const heldBy = (rig, prog) => [...new Map(rig.log.filter((e) => e.k.startsWith('uniform') && e.loc.p === prog).map((e) => [e.loc.name, e.args]))].sort();
 
 /** A terrain fragment program's main(), runnable fragment by fragment: the tile byte under the fragment is `bytes`'s (a
  *  number, or a function of the cell), the tile array's sample is caught (the layer, the coordinate and the gradient
@@ -164,7 +168,7 @@ test('FAR-CLIP1: drawTerrain binds the installed set\'s clip program when asked 
   assert.notEqual(clip.prog, plain.prog);
   assert.deepEqual([rig.compiled() - boot, rig.clips()], [2, 1], 'built at the first draw that asks for it: one program, a VS and an FS');
   // a program's uniforms are its own: the whole block again, at the clip program's own locations, the same values
-  assert.deepEqual([...valuesOf(clip).keys()].sort(), [...valuesOf(plain).keys()].sort(), 'every uniform the plain program took reaches the clip program - the frame\'s block, the model, the tile size, the deck');
+  assert.deepEqual(heldBy(rig, clip.prog), heldBy(rig, plain.prog), 'every uniform the plain program took reaches the clip program - the frame\'s block, the model, the tile size, the deck');   // PIN MOVED (WL1): as the programs hold them, the units set at a build among them
   for (const [n, v] of valuesOf(plain)) assert.deepEqual(valuesOf(clip).get(n), v, `${n}: the same value`);
   for (const d of [plain, clip]) for (const e of d.uploads) assert.equal(e.loc.p, d.prog, `${e.loc.name}: an upload goes to the bound program's own location`);
   assert.equal(drawTerrain(r, rig, false).prog, plain.prog, 'a plain draw after it binds the plain program again');
@@ -183,8 +187,8 @@ test('FAR-CLIP1: drawTerrain binds the installed set\'s clip program when asked 
   assert.equal(lanePlain.fs, EL_TERRAIN_FS);
   const laneClip = drawTerrain(r, rig, true);
   assert.equal(terrainFragment(laneClip.fs)(CLIP_SENTINEL, [TILE, TILE]).discarded, true, 'the lane\'s clip program discards the byte');
-  assert.equal(rig.compiled() - beforeLane, 26 + 2, 'the lane\'s twenty-six (EL1; AUDIT BAY A12: the shadow pass\'s cutting program among them; CACHE-COPY: and the copy that puts the shadow cache into the live layers; RW1: and the caster that cuts a cutout picture\'s holes), and its clip program once asked');
-  assert.deepEqual([...valuesOf(laneClip).keys()].sort(), [...valuesOf(lanePlain).keys()].sort(), 'the lane\'s uniforms reach its clip program too');
+  assert.equal(rig.compiled() - beforeLane, 28 + 2, 'the lane\'s twenty-eight (EL1; AUDIT BAY A12: the shadow pass\'s cutting program among them; CACHE-COPY: and the copy that puts the shadow cache into the live layers; RW1: and the caster that cuts a cutout picture\'s holes; WL1: and the caster that cuts a building\'s glass out of its sun map), and its clip program once asked');
+  assert.deepEqual(heldBy(rig, laneClip.prog), heldBy(rig, lanePlain.prog), 'the lane\'s uniforms reach its clip program too');   // PIN MOVED (WL1): as the programs hold them
   assert.ok(valuesOf(laneClip).has('uELExposure') && valuesOf(laneClip).has('uSunShadow'), 'the exposure and the shadow maps among them');
   for (const d of [lanePlain, laneClip]) for (const e of d.uploads) assert.equal(e.loc.p, d.prog, `lane ${e.loc.name}: the bound program's own location`);
   // back to the classic set with a clip installed: the classic set's own clip program, then its plain one

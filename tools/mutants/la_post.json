@@ -336,8 +336,8 @@
   {
     "name": "LA-POST6-recentre-untold",
     "file": "src/render/renderer.js",
-    "old": "this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._frameStamp++; }",
-    "new": "this._shadowPass?.shiftOrigin(offset); this._frameStamp++; }",
+    "old": "this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._wl?.shift(offset); this._frameStamp++; }",
+    "new": "this._shadowPass?.shiftOrigin(offset); this._wl?.shift(offset); this._frameStamp++; }",
     "tests": [
       "test/render/la_post.test.js"
     ]

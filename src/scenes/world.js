@@ -88,7 +88,7 @@ import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, identity, UP_Y, wrapAngle } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // GHOST1: the plane extraction comes through bounds.js's `spherePlanes` now - `_planes` serves the sphere test too
 import { spherePlanes, batchVisible, setFlatLean, batchSphere } from '../render/bounds.js';   // PERF-CROWD: the batch's own bounding sphere, the test the shadow replay already uses   // GHOST1: through its ONE home, on the NORMALISED planes it needs   // EV3: the frustum
-import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
+import { withMoonAmbient, lightStreetAt } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient; WL1: the street lit by the clock
 import { FarRingRenderer, ringDisabled, ringGroundAt, RING_HAZE_HOLD, BuiltPixels } from '../render/farRing.js';   // EV8: the province's mountains on the horizon; FAR-SEA1: its haze, the sea's too; OW-HORIZON: the built pixels, counting their changes for the ring's hole
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1: the Enhanced Lighting lane, installed at mount
 import { collectBlockFlats, billboardSize, mobileBillboardSize, centredBase, classicBillboardSize } from '../world/rmbFlats.js'; // TREES-SEATED: a block's trees on the hills drawn under them; FIELD BUGS 2026-10-13e HILL-SEAT: and the pads under what its author stood on them
@@ -790,7 +790,7 @@ import { giveNavalItems } from '../systems/naval/navalTransfer.js';
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name (DaggerfallInputMessageBox)
 import { getBool, getInt, getFloat } from '../systems/settings/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
 import { STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, sampleKernel, RECORD_GROUND_STAMP } from '../world/terrain/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water; BAY-LEFT-GROUND: a record's ground stamp
-import { restrideGrid, gridBed } from '../world/terrain/terrainGen.js';   // PERF-EXT26: the restride's grid - the kernel's own law (EV4's ghost rows), on the worker or here
+import { restrideGrid, gridBed, gridGround } from '../world/terrain/terrainGen.js';   // PERF-EXT26: the restride's grid - the kernel's own law (EV4's ghost rows), on the worker or here
 import { getLocationTerrainTileOrigin, setLocationTiles, locationRectReader, locationFootprintRect } from '../world/terrain/terrainTiles.js';
 // The start-marker arm (StreamingWorld's PositionPlayerToLocation), the
 // law and its two location-type reads. AUDIT 64 F18/F19: DFU reaches it
@@ -1143,7 +1143,7 @@ import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBob
 import { createClimbFeelHost } from '../player/climb/climbFeel.js';   // CLIMB4: the climb's camera
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hud/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, actionsOf, actionOf, held, moveHeld, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS, swingKeyHeld } from '../ui/input.js';
+import { keyEdges, noteKeyDown, noteKeyUp, letGoOnBlur, beginInputFrame, pressed, released, actionsOf, actionOf, held, moveHeld, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS, swingKeyHeld } from '../ui/input.js';
 import { armUnloadGuard, releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game; AUDIT-MACL F3: ...and down for a door the game opened itself
 import { codeMeans, getBinding, codeForAction, getJoystickUIBinding, HELM_RUDDER_ACTIONS } from '../systems/inputActions.js';   // AUDIT-TO1 H2: the help's TravelMap binding, read through the store's own accessor   // FIX-E: the overlay's QuickLoad read, off the code alone   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { buttonText } from '../systems/controlsConfig.js';   // AUDIT DEEP T1-12: the travel view's hint names the bound keys as the Controls page does
@@ -5292,7 +5292,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     dwRender.drawSurfaces(_dwSurfaceList, { ...f.look, underwater: f.underwater, liftY: deepWaters.oceanLocalY + SURFACE_RENDER_Y_OFFSET, surfaceScroll: surfaceScrollAt(nowMs / 1000), surfaceTexture: _dwSurfaceTex });
     renderer.markForeignPass();   // EV6: the surfaces' programs ran behind the shadows' back
   }
-  const { groundFrameHeight, groundFrameNative, restandHeight, scaleOf } = createGroundFrame({   // HOST-SPLIT: src/scenes/groundFrameHost.js
+  const { groundFrameHeight, groundFrameNative, restandHeight, scaleOf, townMeets } = createGroundFrame({   // HOST-SPLIT: src/scenes/groundFrameHost.js; ACROSS-EDGE: and the towns a pixel's ground meets
     _liftLocationAt, blocks, built, heightAt, heightCell, landform, landformsHere, maps, terrainGen, beyondSites,
     get state() { return state; },
     get woods() { return woods; },
@@ -5489,6 +5489,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
     worldHeight, lodStride,   // FLORA-GROUND, THE RINGS: the far ring's class
     provinceAt, arenaRoadsStale, _arenaRoadsStale, swap,   // TESA: the province past the Bay, the Arena roads' stale law and its set; IC-SWAP-BEHIND: a rebuild built behind its view
+    townMeets,   // ACROSS-EDGE: the towns its ground meets (scenes/townMeetsHost.js)
     get _gateClearNow() { return _gateClearNow; },
     get _homeLookV() { return _homeLookV; }, set _homeLookV(v) { _homeLookV = v; },
     get _lookPreviewGen() { return _lookPreviewGen; },
@@ -5657,7 +5658,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (built.get(key) !== p) return;                  // evicted while it waited
     if (strideFor(p.px, p.py) === p._stride) return;   // walked back out of the near ring
     const bedBytes = waterOn ? bedBytesOf(p) : null;   // AUDIT WATER-NEXT P1: the bed carved on the worker with the grid
-    terrainGen.grid({ px: p.px, py: p.py, stride: 1, samples: p.samples, landform, bed: bedBytes }).then((grid) => {   // LANDFORM1-3: the ghost rows the build took
+    terrainGen.grid({ ...gridGround(p), stride: 1, landform, bed: bedBytes }).then((grid) => {   // LANDFORM1-3: the ghost rows the build took; ACROSS-EDGE: and its meets
       if (built.get(key) !== p) return;                              // evicted, or rebuilt, while the worker built it
       if (strideFor(p.px, p.py) !== 1 || p._stride === 1) return;   // walked back out, or promoted meanwhile
       if (waterOn && bedBytesOf(p) !== bedBytes) grid = { ...grid, bed: gridBed(grid, bedBytesOf(p), 1, grid.bed?.halo ?? null) };   // the cap's TileMap moved meanwhile: carved by the one that stands
@@ -5665,7 +5666,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }).catch((e) => console.error(`[terrain] promotion of ${key} failed:`, e));
   }
 
-  function restrideTerrain(p, stride, grid = restrideGrid({ woods, px: p.px, py: p.py, stride, samples: p.samples, landform, roads: terrainGen.roads(), sites: _landformSites, beyond: beyondSites.beyond(), climates: _landformClimates, bed: waterOn ? bedBytesOf(p) : null })) {   // PERF-EXT26: or the grid the worker built; LANDFORM1-3: the build's ghost rows; LANDFORM4/6: the same sites and climates; AUDIT WATER-NEXT P1: the bed with it
+  function restrideTerrain(p, stride, grid = restrideGrid({ ...gridGround(p), woods, stride, landform, roads: terrainGen.roads(), sites: _landformSites, beyond: beyondSites.beyond(), climates: _landformClimates, bed: waterOn ? bedBytesOf(p) : null })) {   // PERF-EXT26: or the grid the worker built; LANDFORM1-3: the build's ghost rows; LANDFORM4/6: the same sites and climates; AUDIT WATER-NEXT P1: the bed with it
     if (p.water) { renderer.destroyWaterSurface(p.water); p.water = null; }
     if (p.dwTerrain) { renderer.destroyWaterSurface(p.dwTerrain); p.dwTerrain._dead = true; p.dwTerrain = null; }   // DW-C
     renderer.destroyMesh(p.terrain);
@@ -6282,13 +6283,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const o = mapPixelToWorldCoords(p.x, p.y);
     return nearRoad(net, p.x, p.y, wc.x - o.x, wc.z - o.z, radiusM * UNITS_PER_METRE);   // AUDIT TAMRIEL-WIDE C2: the curves' band past the Bay
   };
-  const _inAnyLocationRect = (pos) => {
+  /** FB1029 GRAVE-PACK: `own` ({px, py}) is a hunt's own place, never refused - a graveyard's pack stands in its rect. */
+  const _inAnyLocationRect = (pos, own = null) => {
     const wc = state.worldCoords(pos);
     const px = worldCoordToMapPixel(wc.x, wc.z);
     for (let dy = -1; dy <= 1; dy++) {
       for (let dx = -1; dx <= 1; dx++) {
         const loc = locationIndex.get(`${px.x + dx},${px.y + dy}`);
-        if (loc?.exterior?.exteriorData && isInLocationRect(wc.x, wc.z, locationWorldRect(loc, px.x + dx, px.y + dy))) return true;
+        if (loc?.exterior?.exteriorData && !(own?.px === px.x + dx && own?.py === px.y + dy) && isInLocationRect(wc.x, wc.z, locationWorldRect(loc, px.x + dx, px.y + dy))) return true;
       }
     }
     return false;
@@ -7281,6 +7283,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       get: () => player.transportMode, set: (m) => setTransportModeHere(m),
       hasCart: () => hasTransport(TRANSPORT_SMALL_CART), hasHorse: () => hasTransport(TRANSPORT_HORSE),
       isOnShip: () => isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()),
+      onDeck: () => !!(csaBoatUnderMe() ?? _csaBuckets.get(player.groundKey)?.boat),   // AUDIT FB1029d B1: a Come Sail Away deck under me - my helm's, another's I stand aboard, or one under my feet
     },
     teamShort: () => wagonTeamShort(playerEntity.items ?? []),   // WAGONS3: a pair's wagon takes its pair
     player: { position: hccPlayerCentre, forward: hccForward, movement: () => ({ position: hccPlayerCentre(), forward: hccForward() }) },
@@ -8059,7 +8062,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     },
     transport: {
       isFoot: () => isOnFoot(player.transportMode), setFoot: () => setTransportModeHere(TRANSPORT_MODES.Foot),
-      hasHorse: () => hasTransport(TRANSPORT_HORSE), hasCart: () => hasTransport(TRANSPORT_SMALL_CART),
+      hasHorse: () => hasTransport(TRANSPORT_HORSE) && (!hccOn() || !!hccRuntime?.horseWithPlayer?.()), hasCart: () => hasTransport(TRANSPORT_SMALL_CART) && (!hccOn() || !!hccRuntime?.wagonWithPlayer?.()),   // AUDIT FB1029d B6: the opt-in horse and cart items by their keeping, as the wagon's load
       isOnShip: () => isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()),   // CSA-F: TransportManager.IsOnShip
     },
     ship: {
@@ -8070,7 +8073,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     entity: {
       isFemale: () => playerEntity.gender === 'female',
       carriedWeight: () => carriedWeight(playerEntity), maxEncumbrance: () => entityMaxEncumbrance(playerEntity),   // HOLD-WEIGHT: PlayerEntity.MaxEncumbrance - PackBoat makes no parts heavier
-      wagonWeight: () => totalWeight(playerEntity.wagonItems ?? []),
+      wagonWeight: () => (!hccOn() || hccRuntime?.wagonWithPlayer?.() ? totalWeight(playerEntity.wagonItems ?? []) : 0),   // CARGO-ASHORE: the load aboard - a parked, stabled or following wagon stays ashore; with the mod off it goes where its owner goes
       decreaseFatigue: (n) => { if (!modes?.drainPlayerFatigue?.(n)) playerTicker.sinks.drainFatigue(n); surfacePlayer(); },   // PlayerEntity.DecreaseFatigue: the one fatigue door, its collapse at 0 with it - CSA-J (the audit): the mode's own, so a collapse indoors is the mode's (its enemies, its rest)
     },
     cargoWeight: (items) => totalWeight(items ?? []),
@@ -9870,7 +9873,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         if (f.dead || !f.ai?.feet || !foeAlerted(f)) { _wildMarkAt.delete(f); continue; }
         if (!_wildMarkAt.has(f)) _wildMarkAt.set(f, t);
         if (!_wildGate && t - _wildMarkAt.get(f) > WILD_MARK_S) continue;
-        if (_inAnyLocationRect(f.ai.feet)) continue;
+        if (_inAnyLocationRect(f.ai.feet, f.bountyPlace)) continue;   // FB1029 GRAVE-PACK: a graveyard's pack is wild
         const head = [f.ai.feet[0], f.ai.feet[1] + (f.ai.height ?? CAPSULE_HEIGHT) + 0.35, f.ai.feet[2]];
         const d = Math.hypot(head[0] - eye[0], head[1] - eye[1], head[2] - eye[2]);
         if (d > WILD_MARK_RANGE) continue;
@@ -11910,7 +11913,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     let anchor = null;
     for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !anchor; i++) {
       anchor = campAnchorSpot({ feet, yawRad: hit.yawRad ?? cam.yaw, fovDegrees: fieldOfView() * 180 / Math.PI, groundAt: collider.heightAt, minDistance: hit.minDistance, maxDistance: hit.maxDistance, bearingDegrees: hit.bearingDegrees });   // CAMP-RING: each group on its own bearing
-      if (anchor && _inAnyLocationRect([anchor.x, anchor.y, anchor.z])) anchor = null;   // DISC19-F: a camp is a wilderness thing - never pitched in a town's rect from a player standing at its edge
+      if (anchor && _inAnyLocationRect([anchor.x, anchor.y, anchor.z], hit.ownPlace)) anchor = null;   // DISC19-F: a camp is a wilderness thing - never pitched in a town's rect from a player standing at its edge
       if (anchor && _nearRoad([anchor.x, anchor.y, anchor.z], (hit.spacing ?? 0) + CAMP_ROAD_CLEAR_M)) anchor = null;   // ROADS-CLEAR: pitched off the road, its whole ring clear of it
       if (anchor && _overDeepWater(anchor.x, anchor.z)) anchor = null;   // AUDIT (pre-merge) P4: never on the carved seabed - a player on the shore rolled land camps 100-150 m out, under the sea
       if (anchor && hit.spotOk && !hit.spotOk(anchor.x, anchor.z)) anchor = null;   // BOUNTY-FARM-CLEAR: the caller's own ground law (never inside a farm building)
@@ -11938,7 +11941,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // view - there is no player-relative "outside view" for a
         // point that is not the player.
         spot = placeFoeFreely(memberEnv, { minDistance: 1, maxDistance: hit.spacing, lineOfSightCheck: false });
-        if (spot && _inAnyLocationRect([spot.x, spot.y, spot.z])) spot = null;   // DISC19-F: nor a member over its line
+        if (spot && _inAnyLocationRect([spot.x, spot.y, spot.z], hit.ownPlace)) spot = null;   // DISC19-F: nor a member over its line
         if (spot && _nearRoad([spot.x, spot.y, spot.z], CAMP_ROAD_CLEAR_M)) spot = null;   // ROADS-CLEAR: nor on a road
         if (spot && _overDeepWater(spot.x, spot.z)) spot = null;   // AUDIT (pre-merge) P4: nor a member in the water
         if (spot && hit.spotOk && !hit.spotOk(spot.x, spot.z)) spot = null;   // BOUNTY-FARM-CLEAR: nor a member inside a building
@@ -12123,7 +12126,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
     return null;
   };
-  const _standBountyPack = ({ id, mobileType, count, stage = 0, farm = false, target = null, farmKey = id, huntKey = id }) => {
+  const _standBountyPack = ({ id, mobileType, count, stage = 0, farm = false, target = null, farmKey = id, huntKey = id, place = null }) => {
     const feet = player.feetAt();
     // WHERE THE GROUP WAITS: a farm bounty's first group at its farmhouse, a split hunt's second group at its trail spot,
     // every other group round the hunter as before. A spot still far off is answered `far` - the host names the way
@@ -12147,6 +12150,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       mobileTypes: Array(count).fill(mobileType), fixed: true, spacing: PACK_SPACING, alertRadius: PACK_ALERT_RADIUS,
       minDistance: spotAt ? (farm ? 10 : 0) : 60, maxDistance: spotAt ? (farm ? 24 : 8) : 110,   // in the farmyard, beside the house / on the trail's spot
       bearingDegrees: Math.random() * 360, spawnOpts: { loose: true, transient: true },
+      ownPlace: place,   // FB1029 GRAVE-PACK: a graveyard's hunt stands in its own rect - refused there, it never stood
       // BOUNTY-FARM-CLEAR (field: foes stood inside the farmhouse and could not be reached): never in a farm's building
       spotOk: (x, z) => !(bountyFarms?.inBuilding?.(x, z) ?? false),
     }, spotAt ?? feet);
@@ -17096,6 +17100,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // movement Set since the first host and never told the open window
   // anything; DFU's buttons hear both edges (Button.cs:79-92) and the
   // travel popup's EXIT is the deferral that needs the release.
+  letGoOnBlur(keys, latch.edge);   // KEYS-BLUR: a key held as the page lost focus is let go
   addEventListener('keyup', (e) => { keys.delete(e.code); noteKeyUp(latch.edge, e.code); peerMenuReader?.up(e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'Escape' && escRelock) { const r = escRelock; escRelock = null; r(); } if (e.code === 'AltLeft') e.preventDefault(); townTalk.keyup(e); modes?.keyup?.(e); });   // ROAD-E E1: the up seam reaches BOTH slots this host feeds - the outer overlay and the mode machine's
   // U45: Actions.ActivateCursor (Enter) - PlayerMouseLook.cursorActive,
   // bound since I1 with no consumer, and the flag the large HUD's
@@ -26183,7 +26188,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     canStand: () => (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned && !gamePaused() && !playerEntity.isResting
       && !travelOptions?.isTravelActive && !(walkMode && player.isPlayerSwimming) && !playerAfloat(),   // SEA-HUNT: no trail is read, no pack stood, from a deck
     standPack: (o) => _standBountyPack(o),
-    foePool: () => ((modes?.mode ?? 'exterior') === 'dungeon' ? (modes?.dungeonCtx?.foes ?? []) : exteriorFoes.foes),
+    foePool: (open = false) => (!open && (modes?.mode ?? 'exterior') === 'dungeon' ? (modes?.dungeonCtx?.foes ?? []) : exteriorFoes.foes),   // FB1029 GRAVE-PACK: an open-air pack the street's
     say: (line) => townTalk.say(line),
     showNotice: (notice) => {
       // the notice waits for the screen - the street's slot, and indoors or below the interior's and the dungeon's own
@@ -28246,7 +28251,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // WAGONS2 (FINAL AUDIT): and the weather's - the street frame's own terms (world/worldClock.js viewOutLight), so the clock's
       // air below compares a dimmed sun with a dimmed sun
       const light = viewOutLight(clockMinute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherTerms().sun, sky.sunFactor());
-      r.setLighting(withMoonAmbient(light.ambient, sky.moonlight()), light.sun, SUN_RIG_COLOR);
+      lightStreetAt(r, light, sky.moonlight(), SUN_RIG_COLOR);   // WL1: and the moon of the hour, whose light a window lets in (render/enhancedSky.js)
       r.setFogColor(clockFogColor(keptFog, keptSun, r._sunScale));   // RW1 (AUDIT): ...re-lit by the clock - the sky behind the glass with it
       r.setWindowEmission(windowEmissionRGB(windowStyleForTime(clockMinute)));
       r.setPointLights(lightsOnAt(clockMinute) ? outsideLanterns(r) : new Float32Array(0), CITY_LIGHT_COLOR_F32);   // RW1 (AUDIT): the town's lanterns by the clock - never the player's own light, which stays indoors with them
@@ -30431,7 +30436,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   const travellingOutdoors = () => wildTravelling() && (modes?.mode ?? 'exterior') === 'exterior';
   /** A foe the gate holds off me: mine (a puppet is its owner's), out in the wilderness (a town's foes keep the town's
    *  law), and not yet alerted to the fast traveller. */
-  const wildGated = (f) => _wildGate && !f.puppet && !wildFoes.alerted(f) && !!f.ai?.feet && !_inAnyLocationRect(f.ai.feet);
+  const wildGated = (f) => _wildGate && !f.puppet && !wildFoes.alerted(f) && !!f.ai?.feet && !_inAnyLocationRect(f.ai.feet, f.bountyPlace);
   /** The foes a fast traveller's stops and the view's danger count: none the gate holds. */
   const wildSeen = (foes) => (_wildGate ? foes.filter((f) => !wildGated(f)) : foes);
   /** The gate's frame, before the pools move: each of my hostile wilderness foes in reach checked (systems/wild/wildAlert.js
@@ -30445,7 +30450,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     for (const f of exteriorFoes.foes) {
       if (f.dead || f.puppet || !f.ai?.feet || !foeHostile(f)) continue;
       if (isLocalPlayerTarget(f.ai.target)) { wildFoes.alert(f, now); continue; }
-      if (_inAnyLocationRect(f.ai.feet)) continue;
+      if (_inAnyLocationRect(f.ai.feet, f.bountyPlace)) continue;
       const s = wildFoes.step(f, { distM: Math.hypot(f.ai.feet[0] - fx[0], f.ai.feet[2] - fx[2]), reachM: f.ai.sightRadius ?? SIGHT_RADIUS, stealth, scaledDt: sdt, now, seesThrough: !!f.ai.seesThroughInvisibility, concealment: hid });
       if (s.noticed) exteriorFoes.noticedPlayer?.(f, fx);   // AUDIT-F1: noticed, it comes - on me now: the "!", the clock held, the meeting
     }

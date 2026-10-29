@@ -1,0 +1,206 @@
+[
+  {
+    "name": "AUDIT-FB1029e-T-KB-world-dead-branch",
+    "file": "src/scenes/world.js",
+    "old": "  letGoOnBlur(keys, latch.edge);   // KEYS-BLUR",
+    "new": "  if (0) letGoOnBlur(keys, latch.edge);   // KEYS-BLUR",
+    "tests": [
+      "test/ui/keys_blur.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-KB-exterior-dead-branch",
+    "file": "src/scenes/exterior.js",
+    "old": "  letGoOnBlur(keys, latch.edge);   // KEYS-BLUR",
+    "new": "  if (0) letGoOnBlur(keys, latch.edge);   // KEYS-BLUR",
+    "tests": [
+      "test/ui/keys_blur.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-KB-dungeon-dead-branch",
+    "file": "src/scenes/dungeon.js",
+    "old": "  letGoOnBlur(keys, keyEdge);   // KEYS-BLUR",
+    "new": "  if (0) letGoOnBlur(keys, keyEdge);   // KEYS-BLUR",
+    "tests": [
+      "test/ui/keys_blur.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-KB-interior-dead-branch",
+    "file": "src/scenes/interior.js",
+    "old": "  letGoOnBlur(keys, null);   // KEYS-BLUR",
+    "new": "  if (0) letGoOnBlur(keys, null);   // KEYS-BLUR",
+    "tests": [
+      "test/ui/keys_blur.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-KB-hidden-unheard",
+    "file": "src/ui/input.js",
+    "old": "  win.document?.addEventListener?.('visibilitychange', hidden);",
+    "new": "  win.document?.addEventListener?.('visibilitychange', () => {});",
+    "tests": [
+      "test/ui/keys_blur.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-KB-first-key-only",
+    "file": "src/ui/input.js",
+    "old": "    for (const code of held) keyUp(code);\n    for (const code of held) if (keys.delete(code)) noteKeyUp(edges, code);",
+    "new": "    for (const code of held.slice(0, 1)) keyUp(code);\n    for (const code of held.slice(0, 1)) if (keys.delete(code)) noteKeyUp(edges, code);",
+    "tests": [
+      "test/ui/keys_blur.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-FR-living-any-account",
+    "file": "server-account/src/legacy.js",
+    "old": "(SELECT 1 FROM realm_characters WHERE player = ?1 AND lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL))",
+    "new": "(SELECT 1 FROM realm_characters WHERE lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL))",
+    "tests": [
+      "test/server/family_remove.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-FR-had-any-account",
+    "file": "server-account/src/legacy.js",
+    "old": "'SELECT 1 AS h FROM lineages WHERE player = ? AND id = ?'",
+    "new": "'SELECT 1 AS h FROM lineages WHERE (player = ? OR 1) AND id = ?'",
+    "tests": [
+      "test/server/family_remove.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-FR-status-unmapped",
+    "file": "server-account/src/index.js",
+    "old": "'no-lineage': 404, 'lineage-in-use': 409,",
+    "new": "'no-lineage': 404,",
+    "tests": [
+      "test/server/family_remove.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-FR-spare-reads-id",
+    "file": "src/systems/legacy/waitingHouses.js",
+    "old": "(rows ?? []).map((r) => r?.lineage)",
+    "new": "(rows ?? []).map((r) => r?.id)",
+    "tests": [
+      "test/systems/legacy/family_remove_menu.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-FR-menu-ignores-busy",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "      label: t('menu.realm.removeFamily', 'Remove family'),\n      disabled: realmBusy,",
+    "new": "      label: t('menu.realm.removeFamily', 'Remove family'),\n      disabled: false,",
+    "tests": [
+      "test/systems/legacy/family_remove_menu.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-FR-menu-card-never",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  if (!spare) return null;\n  const card",
+    "new": "  return null;\n  const card",
+    "tests": [
+      "test/systems/legacy/family_remove_menu.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-FR-menu-ids-kept",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "realmLineIds = withoutLine(realmLineIds, family.id);",
+    "new": "realmLineIds = realmLineIds ?? null;",
+    "tests": [
+      "test/systems/legacy/family_remove_menu.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-FR-in-use-word-dropped",
+    "file": "src/net/accountClient.js",
+    "old": "  'lineage-in-use': () => t('account.refusal.lineageInUse', 'A living character still plays that family.'),\n",
+    "new": "",
+    "tests": [
+      "test/systems/legacy/family_remove_menu.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-HS-set-old-rule",
+    "file": "server-account/src/festival.js",
+    "old": "  if (old && old.player === player.id) return { error: 'set' };",
+    "new": "  if (old && old.player === player.id && old.char_id === character) return { error: 'set' };",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-HS-keeper-any-building",
+    "file": "server-account/src/festival.js",
+    "old": "const KEEPER = '(SELECT char_id FROM homes WHERE map_id = ?1 AND building_key = ?2)';",
+    "new": "const KEEPER = '(SELECT char_id FROM homes WHERE map_id = ?1 ORDER BY building_key DESC LIMIT 1)';",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-HS-owned-any-player",
+    "file": "server-account/src/festival.js",
+    "old": "h.building_key = ?2 AND h.player = ?3 AND h.guild_id IS NULL AND (h.deed = 0",
+    "new": "h.building_key = ?2 AND h.guild_id IS NULL AND (h.deed = 0",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-HS-fill-any-player",
+    "file": "server-account/src/festival.js",
+    "old": "JOIN players p ON p.id = o.player WHERE o.map_id = ?1 AND o.building_key = ?2 AND o.player = ?3')",
+    "new": "JOIN players p ON p.id = o.player WHERE o.map_id = ?1 AND o.building_key = ?2')",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-BM-machinery-offered",
+    "file": "src/scenes/interiorContext.js",
+    "old": "      && p.modelIdNum !== LADDER_MODEL_ID && p.modelIdNum !== MACHINERY_MODEL_ID\n",
+    "new": "      && p.modelIdNum !== LADDER_MODEL_ID\n",
+    "tests": [
+      "test/scenes/builtin_mods.test.js",
+      "test/scenes/builtin_mods_alinor.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-BM-scenery-takes-prop-chain",
+    "file": "src/scenes/interiorContext.js",
+    "old": "    if (p.objectType !== PROP_MODEL_TYPE) {\n      if (isBedModel(classicModelIdOf(p.modelIdNum))) {",
+    "new": "    if (p.objectType !== PROP_MODEL_TYPE && !baseKey) {\n      if (isBedModel(classicModelIdOf(p.modelIdNum))) {",
+    "tests": [
+      "test/scenes/builtin_mods.test.js",
+      "test/scenes/builtin_mods_alinor.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1029e-T-BM-turn-switch-ignored",
+    "file": "src/world/customModels.js",
+    "old": "export const aliasTurnOf = (id) => customAliasFor(id)?.turn ?? 0;",
+    "new": "export const aliasTurnOf = (id) => _aliases.get(Number(id))?.turn ?? 0;",
+    "tests": [
+      "test/scenes/builtin_mods.test.js",
+      "test/scenes/builtin_mods_alinor.test.js"
+    ],
+    "equivalent": true,
+    "why": "the stand-ins (and their aliases) are registered only while the town packs are live, so a turn read past the switch reads none"
+  },
+  {
+    "name": "AUDIT-FB1029e-T-BM-type4-offered",
+    "file": "src/scenes/interiorContext.js",
+    "old": "(p.objectType === 0 && isRoomFurnishing(p.modelIdNum)))",
+    "new": "(p.objectType !== 13 && isRoomFurnishing(p.modelIdNum)))",
+    "tests": [
+      "test/scenes/builtin_mods.test.js",
+      "test/scenes/builtin_mods_alinor.test.js"
+    ]
+  }
+]
