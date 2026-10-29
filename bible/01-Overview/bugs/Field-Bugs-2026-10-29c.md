@@ -1,6 +1,6 @@
-# FIELD BUGS 2026-10-29 GROUND - the ground meets a town, the paving stands dry
+# FIELD BUGS 2026-10-29c - the ground meets a town, the paving stands dry
 
-Two threads of `Field-Bugs-2026-10-29.md` moved the ground, so they share one branch and one bump: GROUND_LAW 5, one
+Two threads of `Field-Bugs-2026-10-29b.md` moved the ground, so they share one branch and one bump: GROUND_LAW 5, one
 RELAY_VERSION (world284), one bake version and one recorded print. Each was read on the freeware's data
 (`tools/fetch-data.sh`) with both town packs on, as online stands them.
 

@@ -1,5 +1,5 @@
 // @ts-check
-// ROAD-DRY (FB1029, bible/01-Overview/bugs/Field-Bugs-2026-10-29-ground.md; a departure from Basic Roads and DFU,
+// ROAD-DRY (FB1029, bible/01-Overview/bugs/Field-Bugs-2026-10-29c.md; a departure from Basic Roads and DFU,
 // Port-Ledger A): Hazelnut's painter paves the sea at the sea's own height, so Deep Waters drew its water over the road.
 // A painted paving tile's corners stand at CAPITAL_LAND at the least, a capital's freeboard. Pure and worker-safe.
 import { CAPITAL_LAND } from '../terrain/capitalSea.js';

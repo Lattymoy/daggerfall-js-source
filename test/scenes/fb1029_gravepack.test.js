@@ -1,4 +1,4 @@
-// FB1029 GRAVE-PACK (bible/01-Overview/bugs/Field-Bugs-2026-10-29.md; "Bounty targets in crypt" - "The Daedroths don't
+// FB1029 GRAVE-PACK (bible/01-Overview/bugs/Field-Bugs-2026-10-29b.md; "Bounty targets in crypt" - "The Daedroths don't
 // seem to spawn inside the crypt or in the overworld around it"): a graveyard's hunt stands its pack in the open air, and
 // the camp's stand refused every spot in any location's rect - the graveyard's own, a block past its walls each side -
 // so from its door or its grounds nothing ever stood, and from a fast travel's arrival one try in six. The hunt's own place is never refused now, every other

@@ -1,6 +1,6 @@
 # AUDIT FB1029 - FIELD BUGS 2026-10-29 read cold, 2026-10-29
 
-The owner: *"Audit this"*, of BRIDGE-ENDS and GRAVE-PACK (`../bugs/Field-Bugs-2026-10-29.md`). Three cold lanes read the
+The owner: *"Audit this"*, of BRIDGE-ENDS and GRAVE-PACK (`../bugs/Field-Bugs-2026-10-29b.md`). Three cold lanes read the
 head (`52b6d5b4d`) against its base (`c1f7101c0`), each in its own worktree with the freeware's data, each given the
 files and a brief, never a conclusion. Each finding was proven on the real code - a probe on the real data, a test that
 fails at the head, or quoted lines - before it was reported. The fixes are on the same branch: B in `ee7626af5`, A and C

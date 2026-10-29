@@ -1,4 +1,4 @@
-// FB1029 BRIDGE-ENDS (bible/01-Overview/bugs/Field-Bugs-2026-10-29.md; "Alinor bridge bug - missing part of the bridge on
+// FB1029 BRIDGE-ENDS (bible/01-Overview/bugs/Field-Bugs-2026-10-29b.md; "Alinor bridge bug - missing part of the bridge on
 // both sides"): RUMARE-WATER lets a shore capital's water vertices down a metre (world/terrain/capitalSea.js), so the
 // river's bank tile slopes from the street to the waterline under each end of Alinor's bridges. Each end stands on an
 // abutment over that tile, its top a ramp from the street to the deck (AUDIT FB1029 A1: a ledge stalls the motor), and

@@ -536,4 +536,4 @@ hunt on open ground hands no place.
 
 A pack stood outside is judged by the street's pool in every mode (`foePool`'s `open`), so a trip down into the crypt
 keeps it while its beasts stand, and lets it go when they were handed off at the door. Its beasts carry the place (`bountyPlace`), so WILD-ALERT treats them as wild foes: the mark, the fast traveller's
-gate and the stealth check. Record: `01-Overview/bugs/Field-Bugs-2026-10-29.md`; AUDIT FB1029 B1-B4.
+gate and the stealth check. Record: `01-Overview/bugs/Field-Bugs-2026-10-29b.md`; AUDIT FB1029 B1-B4.

@@ -1,5 +1,5 @@
 // @ts-check
-// FB1029 BRIDGE-ENDS (AUDIT FB1029 A2; bible/01-Overview/bugs/Field-Bugs-2026-10-29.md) - A CAPITAL'S WORKS SHUT TO ITS
+// FB1029 BRIDGE-ENDS (AUDIT FB1029 A2; bible/01-Overview/bugs/Field-Bugs-2026-10-29b.md) - A CAPITAL'S WORKS SHUT TO ITS
 // WALKERS. The walkers stand on the terrain (scenes/pixelBuild.js personGroundY), and a landmark's walkable top over
 // Daggerfall's own blocks left their automaps' cells open under it: Alinor's bridges' abutments were road, the cheapest
 // ground, and the town's people walked a metre sunk in the stone. Each rect here is closed on the slice's navgrid.

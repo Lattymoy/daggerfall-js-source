@@ -19,7 +19,7 @@
 // locationShapeField), on a hillside the synthetic world's own ground is too gentle to hold (20 bytes a pixel, about 375 m
 // across it), flattened and eased as the stream lays it. TS2's 12-sample ease moves its print by 7.9 m.
 //
-// FB1029 GROUND (bible/01-Overview/bugs/Field-Bugs-2026-10-29-ground.md): AND THE TWO NEW LAWS. ACROSS-EDGE: a town on a
+// FB1029 GROUND (bible/01-Overview/bugs/Field-Bugs-2026-10-29c.md): AND THE TWO NEW LAWS. ACROSS-EDGE: a town on a
 // cliff over its sea, and the sea north of it its meet raises (the town asked of both, as the stream asks it). ROAD-DRY:
 // Basic Roads' road across a pixel of open sea, its paving lifted. The town's cell asks its own meet too.
 //

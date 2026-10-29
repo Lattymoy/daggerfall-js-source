@@ -1,5 +1,5 @@
 // @ts-check
-// ACROSS-EDGE (FB1029, bible/01-Overview/bugs/Field-Bugs-2026-10-29-ground.md): THE TOWNS A PIXEL'S GROUND MEETS - each
+// ACROSS-EDGE (FB1029, bible/01-Overview/bugs/Field-Bugs-2026-10-29c.md): THE TOWNS A PIXEL'S GROUND MEETS - each
 // Bay town of its 3 x 3 (a city, a hamlet or a village of MAPS.BSA, never a spawn or a capital) with its outline as that
 // pixel's own build stamps it, handed to the kernel (world/terrain/townMeet.js). The build, the records' frame and the
 // tools ask the same law, so every one of them meets the same towns.
