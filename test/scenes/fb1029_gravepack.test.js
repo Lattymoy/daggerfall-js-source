@@ -18,7 +18,9 @@ const world = readFileSync(new URL('../../src/scenes/world.js', import.meta.url)
 const slice = (from, to) => { const a = world.indexOf(from), b = world.indexOf(to, a); assert.ok(a > 0 && b > a, from); return world.slice(a, b); };
 const rectSrc = slice('  const _inAnyLocationRect =', '  // F062: PlayerGPS.isPlayerInLocationRect');
 const campSrc = slice('  const _standCampEncounter =', '  // BOUNTY1: A BOUNTY\'S PACK');
-const packSrc = slice('  const _standBountyPack =', '  // BOUNTY1 (Mac: "Dungeon bounties');
+// PIN MOVED (STOREFRONT HOST-SPLIT): the dungeon's pack moved out of bootWorld (scenes/bountyDungeonPack.js), so the
+// overworld pack ends where the loose foe's stand begins
+const packSrc = slice('  const _standBountyPack =', '  const _standLooseFoe =');
 
 const PX = 819.2;
 /** world.js's own rect test over `locs` ({'x,y': half width of its rect, metres, round its pixel's middle}). */
