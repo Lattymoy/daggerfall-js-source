@@ -698,6 +698,8 @@ export const ROUTES = new Set([
   '/v1/realm/undo',
   // LEGACY7: Project Legacy's lines (legacy.js) - listed, written past their rev - and a fallen character's tombstone
   '/v1/realm/lineages', '/v1/realm/lineage', '/v1/realm/die',
+  // FAMILY-REMOVE (FIELD BUGS 2026-10-29e): a line no living character plays, let go (legacy.js removeLineage)
+  '/v1/realm/lineage/remove',
   // REZ-BLOODLINE AUDIT R1 (FIELD BUGS 2026-10-16b): a party's Resurrect taking back a fall the realm holds (legacy.js realmRaise)
   '/v1/realm/raise',
   // LEGACY7 part three: a half of one wedding between two players' characters, and the account's unions
