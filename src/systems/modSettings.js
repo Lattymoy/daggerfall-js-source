@@ -271,9 +271,8 @@ export const MOD_SETTINGS = Object.freeze({
       Enabled: Object.freeze({
         default: true,
         get description() {
-          return t('mods.worldEventsRaidingParties.Enabled.description', 'Knights, bandits or orcs raid towns across the Bay for 2 hours at a time, and the town guard fights '
-            + 'beside you. Beat 15 to 25 raiders to free the town and raise your standing in the region. Online, '
-            + 'everyone in town fights the same raid.');
+          return t('mods.worldEventsRaidingParties.Enabled.description', 'Knights, bandits or orcs raid towns across Tamriel for 2 hours. With the town guard, '
+            + 'beat 15 to 25 raiders to free the town and raise your standing in the region. Online, everyone in town fights the same raid.');
         },
       }),
     }),

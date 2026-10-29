@@ -397,7 +397,7 @@ test('TESA15 the window and the world: the kept tiles over paintPastBay and the 
   assert.match(I, /if \(opts\.tiles\) opts\.tiles\.draw\(ctx, view, \{ paperW, paperH, dpr: opts\.dpr \?\? 1, key: `\$\{band\}\|\$\{continent \? 1 : 0\}\|\$\{JSON\.stringify\(past\.filters\)\}\|\$\{JSON\.stringify\(past\.inks\)\}\|\$\{past\.portsOnly \? 1 : 0\}`, paint: past, \.\.\.\(opts\.settling \? \{ budgetMs: 0, force: false \} : \{\}\), base: baseOf\(past, ink\) \}\);/, 'the key: the band, the continent, the filters, the hues, the Ports filter');   // PIN MOVED (MAP-WHOLE): and the base under every tile owed; PIN MOVED (BAY-LEFT-MAPS C11, test/ui/bayleft_find.test.js): and the Ports filter
   assert.match(W, /const tamrielRoadHeld = \(\) => \(_arenaTemplates \? arenaPixels\(\)\?\.stood\.filter\(\(p\) => arenaTemplateOf\(_arenaTemplates, p\)\)\.map\(\(p\) => \(\{ x: p\.bx, y: p\.by \}\)\) : null\) \?\? \[\];/);
   assert.match(W, /window\.__tesaPlaces = \(x0, y0, x1, y1\) => pastBayPlacesIn\(x0, y0, x1, y1\);/);
-  assert.match(W, /tamrielPlacesIn: tamrielLand \? pastBayPlacesIn : null,/, 'the map seam: the regions\' places');
+  assert.match(W, /tamrielPlacesIn: tamrielLand \? \(x0, y0, x1, y1\) => knownPastBayIn\(x0, y0, x1, y1\) : null,/, 'the map seam: the regions\' places - PIN MOVED (AUDIT TAMRIEL-WIDE D2): the known ones');
 });
 
 // ── ZOOM-FAST (2026-10-24, the owner: "The map also is slow to load when zooming in and out") ──

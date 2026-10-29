@@ -73,8 +73,8 @@
   {
     "name": "AUDIT-RPT1026-J2-the-build-hands-no-models",
     "file": "src/scenes/pixelBuild.js",
-    "old": "faction: bd?.factionId ?? 0, parts: [[cpu, local]] });",
-    "new": "faction: bd?.factionId ?? 0 });",
+    "old": "faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced:",
+    "new": "faction: bd?.factionId ?? 0, terraced:",
     "tests": [
       "test/scenes/audit_rpt1026_world.test.js"
     ],

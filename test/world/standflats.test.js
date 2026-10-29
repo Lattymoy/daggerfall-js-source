@@ -227,7 +227,7 @@ test('STAND-FLAT the streamed world by source: a town horse and a person no Stat
     'if (isStandFlat(act.archive, act.record)) p.standFlats?.push(standFlatRecord({ archive: act.archive, record: act.record, x: base[0], y: base[1], z: base[2] }, batch, standFlatId(`${p.px},${p.py}`, base[0], base[2])));'], 'a marker\'s person');
   ordered(w, ['const _peopleOn = streetPeople.frame();', 'standingHorses.begin(tvf ? null : mwViewHorseRig(), mwv.eye);', 'const framePixelWalk = () => {',
     'streetPeople.offer(personActor(pn, look, f, mwv.eye, dt), pn.standBatch);', 'if (p.standFlats && ring <= 1) for (const sf of p.standFlats) {',
-    "if (sf.kind === 'horse') {", 'standingHorses.offer(sf, sf.feet, sf.yaw, sf.look, sf.batch, sf.seed);', 'const look = _peopleOn ? figureLook(sf, yardFigureCtx) : null;',
+    "if (sf.kind === 'horse') {", 'standingHorses.offer(sf, sf.feet, sf.yaw, sf.look, sf.batch, sf.seed);', 'f[0] = sf.x + t[0]; f[1] = sf.y + t[1]; f[2] = sf.z + t[2];', 'const look = _peopleOn ? figureLook(sf, yardFigureCtx, f) : null;',   // PIN MOVED (AUDIT TAMRIEL-WIDE E2): read where they stand
     'streetPeople.offer(personActor(sf, look, f, mwv.eye, dt), sf.batch);', 'framePixelWalk();',
     'offerCrews(mwv.eye, townTalk.overlayActive ? 0 : dt, _peopleOn);', 'streetPeople.draw(canvas, proj, view, mwv.eye,', 'standingHorsesFrame(canvas, proj, view, mwv.eye, dt);',
     'renderer.drawBillboards(livePersonBatches, camRight, bbUp);'], 'the frame');
@@ -236,7 +236,7 @@ test('STAND-FLAT the streamed world by source: a town horse and a person no Stat
     'if (standingHorses.end(dt, { proj, view })) standingHorses.draw(canvas, { eye, proj, view });'], 'the horses\' end');
   ordered(w, ['function offerCrews(eye, dt, on) {', "if (!csaOn() || _mode() !== 'exterior') return;", 'csa.people(on ? offerCrewPerson : crewFlatDrawn);'], 'the crews\' offer');
   ordered(w, ['streetPeople.destroy();   // MWNPC8b', 'standingHorses.destroy();', 'csa.people(crewFlatDrawn);'], 'indoors');
-  ordered(w, ['const offerCrewPerson = (f, b) => {', 'const look = b.conceal ? null : figureLook(f, yardFigureCtx);', 'if (look) streetPeople.offer(personActor(f, look, b.origin, _crewEye, _crewDt), b);', 'else b.castOnly = false;'], 'a crew member');
+  ordered(w, ['const offerCrewPerson = (f, b) => {', 'const look = b.conceal ? null : figureLook(f, yardFigureCtx, b.origin);', 'if (look) streetPeople.offer(personActor(f, look, b.origin, _crewEye, _crewDt), b);', 'else b.castOnly = false;'], 'a crew member');
 });
 
 test('STAND-FLAT the location and the boats by source: exterior.js stands its town horses and its people no StaticNPC holds as the streamed world does; a boat\'s crew is every flat of a person\'s archive in her walk, named by her deed and their place, gone with their flat (mutants: STAND-FLAT-location-grouped, STAND-FLAT-crew-unnamed)', () => {

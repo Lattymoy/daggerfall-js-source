@@ -2,7 +2,7 @@
   {
     "name": "WCP-the-city-end-refused",
     "file": "src/systems/wild/zoneSafe.js",
-    "old": "  return here && (!inZone(to) || isSettlement(locAt(to.x, to.y)));",
+    "old": "  return here && (!inZone(to) || (landing !== undefined ? landsSettled(landing, locAt) : isSettlement(locAt(to.x, to.y))));",
     "new": "  return here && !inZone(to);",
     "tests": [
       "test/systems/wild/wildcityport.test.js",
@@ -42,7 +42,7 @@
   {
     "name": "WCP-the-old-law",
     "file": "src/scenes/world.js",
-    "old": "    if (zonePortFree(m, from, to, wildOutdoors() ? campToWire(player.feetAt()) : null, modes?.mode, locationIndex, _locationToBuild)) return false;",
+    "old": "    if (zonePortFree(m, from, to, wildOutdoors() ? campToWire(player.feetAt()) : null, modes?.mode, locationIndex, _locationToBuild, landing)) return false;",
     "new": "    if (!(from && wildInside(m, from.x, from.y)) && !(to && wildInside(m, to.x, to.y))) return false;",
     "tests": [
       "test/systems/portalbay_stone.test.js"

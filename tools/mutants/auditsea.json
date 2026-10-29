@@ -680,7 +680,7 @@
   {
     "name": "AUDIT-SEA-C1-cabin-free",
     "file": "src/scenes/world.js",
-    "old": "    if (!loading && (wildTeleportRefused(boatPixelOf(boat)) || veilRefused(boatPixelOf(boat)))) return true;",
+    "old": "    if (!loading && (wildTeleportRefused(boatPixelOf(boat), boat.GameObject ? campToWire(boat.GameObject.position) : null) || veilRefused(boatPixelOf(boat)))) return true;",
     "new": "",
     "tests": [
       "test/systems/sea/auditsea.test.js"

@@ -25,7 +25,7 @@ test('timers refresh the remaining raid count when a different raid is cleared',
   ];
   const view = timersWindow(fakeDoc(), { read: () => ({ now, region: 'Home', raids }), onClose() {} });
   try {
-    assert.equal(all(all(view.root, 'tm-raid')[0], 'tm-detail')[0].textContent, '1 more today across the Iliac Bay');
+    assert.equal(all(all(view.root, 'tm-raid')[0], 'tm-detail')[0].textContent, '1 more today across Tamriel');   // PIN MOVED (AUDIT TAMRIEL-WIDE D6): WW6's lanes raid past the Bay
     raids[1].done = true;
     view.draw();
     assert.equal(all(all(view.root, 'tm-raid')[0], 'tm-detail').length, 0, 'the cleared raid must leave the detail immediately');

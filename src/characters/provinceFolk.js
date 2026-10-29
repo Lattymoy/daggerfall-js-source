@@ -99,3 +99,6 @@ export function folkWhere(feet = null) {
 export const folkHere = () => folkWhere(null);
 /** The place's own people's race where the player stands (Cyrodiil's Imperial, the Reach's Breton), or null on the Bay. */
 export const nativeHere = () => folkHere()?.[0][0] ?? null;
+/** AUDIT TAMRIEL-WIDE E2: the own people's race where scene `feet` stand (the player's for none) - a person drawn by a
+ *  border is of their own side, on every machine. @param {number[]|null} [feet] */
+export const nativeAt = (feet = null) => folkWhere(feet)?.[0][0] ?? null;

@@ -880,13 +880,13 @@ export function createDecorRoom({
 export function offerDecorFigures(figs, lane, on, ctx, eye, dt) {
   let n = 0;
   for (const e of figs) {
-    const look = on ? figureLook(e, ctx) : null;
-    if (!look) { e.batch.castOnly = false; continue; }
     // AUDIT MWNPC16-18 D1: the piece's base - where it stands from (`o`, a restand()'s) and its place in it, made again
     // every frame as the street's people's are (world.js). The batch's origin is no base: a room's batch is minted
     // without one (its base in its vertices), and a restand() writes only the recentre's step into it
     const f = e._mwFeet ??= [0, 0, 0];
     f[0] = e.o[0] + e.piece.pos[0]; f[1] = e.o[1] + e.piece.pos[1]; f[2] = e.o[2] + e.piece.pos[2];
+    const look = on ? figureLook(e, ctx, f) : null;   // AUDIT TAMRIEL-WIDE II W2: of the people where it stands (E2)
+    if (!look) { e.batch.castOnly = false; continue; }
     lane.offer(personActor(e, look, f, eye, dt), e.batch);
     n++;
   }

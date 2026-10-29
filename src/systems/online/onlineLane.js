@@ -168,6 +168,7 @@ export const ONLINE_PLAYERS_OWN_PREFS = [
   'chatTrade', 'chatLfg',   // CHAT-TRADE: whether THIS player listens to the Trade and LFG channels - their tabs, nothing the room agrees on
   'standingAll',   // EVERY-STANDING: whether THIS player's Standing page lists every faction's number - a page they read, nothing the room agrees on
   'reducedMotion',   // EG-G1: whether THIS player's HUD stands still (ui/eliteGates/egAccess.js) - an accessibility choice, nothing the room agrees on
+  'capeShown',   // CAPE-TOGGLE: whether THIS player's cloak and aura are drawn - their own look, which the room is told (systems/capeShown.js)
 ];   // (RF4: grown by declareOnlinePrefs with the registry's 'player' answers - the dials)
 
 /** DISC22-A (2026-09-24, Mac: "repair magical items should be enabled by default and required online"): THE DFU

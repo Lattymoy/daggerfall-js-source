@@ -6,9 +6,8 @@
 // insured, the gold of one random policy, that policy spent and its piece kept. A leaf the account Worker bundles.
 // A departure: DFU has no PvP.
 import { wornOffer } from './wildDropLaw.js';
-import { ledgerKeyOf } from '../item/itemIds.js';
 import { GOLD_PIECE_WEIGHT_KG, goldStack, isGoldPieces, letterOfCredit } from '../inventory.js';
-import { wildInsuredBy } from './wildInsureLaw.js';
+import { wildInsuredBy, insureKeyOf } from './wildInsureLaw.js';
 
 /** A whole number under `n` from `rand` (crypto's getRandomValues shape - the service's `ctx.rand`). */
 export function pvpRollIndex(/** @type {(b: Uint8Array<ArrayBuffer>) => Uint8Array} */ rand, /** @type {number} */ n) {
@@ -17,12 +16,12 @@ export function pvpRollIndex(/** @type {(b: Uint8Array<ArrayBuffer>) => Uint8Arr
 }
 
 /** THE VILLAIN'S SEAM (PVP-VILLAIN, a later slice): a villain holds no insurance, so no policy keeps or pays at its fall.
- *  `keys` the policies in force. */
-export const pvpInsuredFor = (/** @type {Iterable<string>} */ keys, { villain = false } = {}) => wildInsuredBy(villain ? [] : keys);
+ *  `keys` the policies in force; `among` the fallen's pieces (INSURE-ALL: a key two carry keeps neither). */
+export const pvpInsuredFor = (/** @type {Iterable<string>} */ keys, { villain = false, among = /** @type {any[] | null} */ (null) } = {}) => wildInsuredBy(villain ? [] : keys, among);
 
 /**
  * THE ROLL over the fallen's worn pieces (`items`, wornOffer's order): `{ w }`, the place in wornOffer of one random piece
- * neither `insured` nor `keep` holds; else `{ policy }`, the ledger key of one random insured worn piece; else null.
+ * neither `insured` nor `keep` holds; else `{ policy }`, the key (insureKeyOf) of one random insured worn piece; else null.
  * `pick(n)` a whole number under n.
  * @param {any[]} items @param {{ insured?: (it: any) => boolean, keep?: (it: any) => boolean, pick: (n: number) => number }} o
  * @returns {{ w: number } | { policy: string } | null}
@@ -31,7 +30,7 @@ export function pvpRewardRoll(items, { insured = () => false, keep = () => false
   const offer = wornOffer(items);
   const open = offer.map((it, w) => (insured(it) || keep(it) ? -1 : w)).filter((w) => w >= 0);
   if (open.length) return { w: open[pick(open.length)] };
-  const keys = [...new Set(offer.filter((it) => insured(it)).map(ledgerKeyOf).filter((k) => k != null))];
+  const keys = [...new Set(offer.filter((it) => insured(it)).map(insureKeyOf).filter((k) => k != null))];
   return keys.length ? { policy: /** @type {string} */ (keys[pick(keys.length)]) } : null;
 }
 

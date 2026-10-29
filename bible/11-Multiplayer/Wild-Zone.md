@@ -216,7 +216,15 @@ out, where none can). world270 (world269 on its branch). Not a DFU member: Dagge
 ## 4. A death in the zone
 
 PVP-REWARD (2026-10-29) replaced the bag drop and the killer's pick below: a kill gives one random uninsured worn
-piece, or one policy's gold (`PvP-Rework.md` PVP-REWARD).
+piece, or one policy's gold, or its last roll (`PvP-Rework.md` PVP-REWARD).
+
+PVP-WORDS (2026-10-29): the player's words say the same. Entering, "If another player kills you, they may take one
+uninsured worn piece, or gold." (`wildZone.js:"If another player kills you, they may take one uninsured worn piece, or gold.', { zone: WILD_NAME }); },"`);
+the chips, "A player's kill may cost uninsured gear or gold."; the sea's the same (`etherWild.js:"const ETHER_WILD_TEXT"`);
+the legend, "nothing drops" (`wildZoneMap.js:"export const ZONE_RULES"`); the tutorial's page names all three rolls
+(`tutorialCatalogue.js:"t('tutorials.wildZone.body2'"`). A foe's death drops nothing and pays the usual death penalty
+at the rise (`world.js:"const goldLost = wildKilled ||"`), so its screen says "Nothing dropped. You pay the usual death
+penalty." (`wildZone.js:"deathKept: () =>"`).
 
 FOE-KEEPS (2026-10-24, the owner: "I feel like the eltheric sea can be too punishing. I dont want people to lose
 everything they have. Espcially the fact you can lose your spellbook? Ridiculous"; asked, the owner chose "Only PvP
@@ -230,7 +238,7 @@ nothing moved (`foe`, `server-account/src/wild.js:"return { error: 'foe' }"`) - 
 nothing either - and, its own rise skipping the usual tenth at any death in the zone, pays nothing until it reloads
 (AUDIT FOE-KEEPS L2, H3, P5, E4: left - a deploy's window, the gain the player's); a foe's fall the service took before the
 word is answered as it was taken. The death screen says so
-(`wildZone.js:"deathKept: () =>"`), and the zone's words say a player's kill drops what you carry, never any death
+(`wildZone.js:"deathKept: () =>"`), and the zone's words say what a player's kill takes, never any death
 (`WILD_TEXT.enter`, `chipTip`, the sea's `ETHER_WILD_TEXT`, the zone map's `ZONE_RULES`, the tutorial's page). A kill's
 gold share is a tenth (WILD GOLD, below), where it was half. The spellbook was never the zone's to take: KEPT below
 names it, and the decor law's kept-back list holds it too (`test/systems/wild/foekeeps.test.js`). Not a DFU member:
@@ -399,7 +407,7 @@ both ends read (`src/systems/wild/wildInsureLaw.js`):
 - WRITTEN BY THE ACCOUNT SERVICE, NEVER THE RECORD (`server-account/src/wildInsure.js`, `/v1/wild/insure`; migration
   0181, `wild_insurance`): a policy a game could write onto its own piece is one it never paid for. The premium comes off
   the record where its tab says it stands and the rows are written in the same batch (each guarded - `mustChange`), or
-  neither lands; a piece under a policy in force, a plain piece, a piece not carried and a premium the record cannot pay
+  neither lands; a piece under a policy in force, a non-gear piece, a piece not carried and a premium the record cannot pay
   are refused, nothing moved. A character holds `WILD_INSURE_MAX` (32) at once, `WILD_INSURE_ASK_MAX` (8) an ask - and
   (AUDIT PVP-EASE L1-2) only policies on pieces the record still holds count: one whose piece is nowhere in the record
   any more (sold, traded, salvaged, dropped before it was in force - `wildPolicyHeld`, its key anywhere in the record, so
@@ -432,6 +440,39 @@ both ends read (`src/systems/wild/wildInsureLaw.js`):
   Insure (its premium) beside the piece's own acts - the Enhanced Plus pack's card and its right-click menu
   (`ui/enhanced/enhancedInventory.js`), which reads the book through a leaf of its own (`net/wild/wildInsureSlot.js`:
   loading the pack never loads the item law's registration with it - AUDIT SET D6's honest pieces were judged by it).
+
+### INSURE-ALL: every piece of gear, at its price
+
+INSURE-ALL (2026-10-29, the owner: "make sure all equpiment cost even old ones"; reported with it: "there no cost to
+insure rares that are fully enchanted"). EVERY PIECE OF GEAR A KILL COULD TAKE MAY BE INSURED - a weapon, armour, a
+shield, jewellery, clothing (`WILD_GEAR_GROUPS`), plain or of any tier, found before the ledger or after - at a fifth of
+its worth. Before, a policy needed a ledger key, so a plain piece was never insurable and showed no price. Never a
+stack, a bound or quest piece, a letter of credit, or a piece `wildCanLose` refuses. A classic save's piece and a
+sigil's bound piece are never taken, so need none.
+
+A POLICY NAMES ITS PIECE BY `insureKeyOf` (`src/systems/wild/wildInsureLaw.js:"export function insureKeyOf(item) {"`):
+its ledger key, or a plain piece's own id. The book mints that id when the piece is insured
+(`wildInsureBook.js:"const key = wildInsureKey(item), gold = wildPremium(item), at = region();"`) and the act's first
+checkpoint carries it to the record. No ledger reads it: `ledgerKeyOf` answers null for a plain piece whatever it
+carries, so the judge, the wealth and the trade lock see the record as before (`insureall.test.js` judges it both ways).
+
+A FORGED OR COPIED ID BUYS NOTHING MORE THAN THE PLAYER'S OWN PIECE. Policies are the character's own rows. The service
+refuses a key two pieces in the pack carry (`server-account/src/wildInsure.js:"const piece = named.length === 1 ? named[0] : null;"`),
+and at a fall a key two of the fallen's pieces carry keeps neither (`wildInsuredBy`'s `among`). Every reader that names
+a policy's piece reads this key: the book's card, the service's insure, the fall's keep and spend
+(`takeWildDeath`'s `saved`, through the predicate's own `keyOf`), the kill's roll and its policy pick
+(`pvpReward.js`), and `wildPolicyHeld`. The ledger's own readers - the bar, the escrow, the remains' new ids - keep
+`ledgerKeyOf`.
+
+THE ITEM MAKER'S GOLD IS IN THE PREMIUM (`wildMakerGold`). The maker writes no `value` (`applyEnchantments`, the port of
+DFU's `SetEnchantments`, writes none), so a Rare enchanted to its full points priced as it was found: insurable on both ends, at the same price
+headless, but cheap for what it cost. The premium now adds the gold its maker-laid powers cost - each row at the
+catalogue's cost (never the row's own `enchantCost`), times `GOLD_PER_ENCHANTMENT_POINT`, a side effect at none, the
+ladder's own row at none (it is in the Rare's worth already). A DEPARTURE from the brief, which asked `itemWorth` to
+count it: `itemWorth` is the judge's wealth measure (`WEALTH_VERSION`), and moving it would move every wealth reading.
+acct217; no migration, no relay change. Deploy the account service before the site.
+
+Pins: `test/systems/wild/insureall.test.js`, `tools/mutants/insureall.json`.
 
 ## 4c. The same hand twice (REPEAT-SHIELD)
 
@@ -1092,7 +1133,7 @@ Pinned by `test/systems/wild/fb1009b_partytruce.test.js` and `test/systems/trave
 - A piece in escrow comes back only when its fallen plays again (its tab takes it back - there is no clock that moves a
   record nobody plays); until then it is the escrow's, in no record. A fallen character deleted or dead for good while
   one is held has no record to take it back into, and it stays the escrow's.
-- WILD-INSURE (section 4b): a policy names its piece by the ledger's key, so a plain piece (no key) is never insured, and
+- WILD-INSURE (section 4b): a policy names its piece by its key (INSURE-ALL: a plain piece by an id of its own), and
   a policy follows its piece only while this character's record holds it - one traded away lapses at the next insure
   (AUDIT PVP-EASE L1-2), and one traded away and back before it finds its policy as it left it. The classic face's pack
   (the native window) offers no Insure act; the Enhanced Plus pack and its right-click menu do. The card's line is the
@@ -1270,8 +1311,8 @@ town. The open country, the roads, the dungeons (a city's own too) and the zone'
   `zoneSafe.js:"export const SETTLEMENT_TYPES"`: TownCity, TownHamlet, TownVillage. DEPARTURE (Ledger A, ZONE-SAFE):
   DFU's IsPlayerInTown (`PlayerGPS.cs:504-527`) counts four more for its rest and its watch - HomeFarms, HomeWealthy,
   Tavern, ReligionTemple - and they are no settlement: a farmstead, a manor, a roadside inn and a temple each stand alone
-  in the open country, 5,929 of MAPS.BSA's 15,251 rows against the settlements' 3,444, so as towns they would stand a
-  refuge on every road. They keep the zone's watch (section 3, ZONE-WATCH). A lair, a graveyard, a coven, a cult's
+  in the open country, in Cyrodiil's roll too (`tamrielCountry.js:"export const COUNTRY_TYPES"`), so as towns they
+  would stand a refuge on every road. They keep the zone's watch (section 3, ZONE-WATCH). A lair, a graveyard, a coven, a cult's
   shrine and a poor home are neither.
 - MY WORD (`world.js:"const wildCan = (streets"`): outdoors in a settlement's streets I may fight no one, so my word on the
   zone to the referee is 0 (INT9 - `world.js:"setWildZone?.(wildCan() ? 1 : wildCan(true)"`) and
@@ -1400,6 +1441,11 @@ journey's law a teleport also passed, and the teleport map's press.
 - THE FOUR HOSTS: `scenes/world.js` WIRED (the law asked where the zone's refusal stood; bootWorld's length unchanged);
   `scenes/worldModes.js` and `scenes/dungeonContext.js` NOT WIRED - a building's and a dungeon's teleports are the world
   host's own; `scenes/exterior.js`, offline, stands no zone.
+- WHERE IT LANDS (AUDIT TAMRIEL-WIDE E1, 2026-10-28): a Recall, a party's jump to its leader and a ship's cabin land
+  at a point, not at a city - the arriving end is that point in a settlement's streets (`systems/wild/zoneSafe.js`
+  landsSettled, settledAt's own law over a pixel not built), so a Mark beside a village's walls is the open country. A
+  guild's and a stone's pick land at the city, and keep the pixel's test. Unflagged, a stone asks none (PVP-FLAG; III
+  F1/M2).
 - KNOWN LIMIT: the refusal's words are English alone, as they were (`test/systems/l10n4_hardcoded.test.js` counts them).
 
 Pins: `test/systems/wild/wildcityport.test.js` (the law over every kind of place, the streets, a building, a dungeon),

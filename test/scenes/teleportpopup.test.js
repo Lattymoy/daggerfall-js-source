@@ -155,7 +155,7 @@ test('G5: the host arm keeps the ARRIVAL and drops the JOURNEY', () => {
   // from a unit test, so it is pinned at its source: the shape a
   // future copy-paste from fastTravelTo would break.
   const src = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
-  const i = src.indexOf('async function teleportTo(pick)');
+  const i = src.indexOf('async function teleportTo(pick, { zoneFree = false } = {})');   // PIN MOVED (AUDIT TAMRIEL-WIDE III F1): a caller's own zone verdict
   assert.ok(i > 0, 'the host arm exists');
   const body = src.slice(i, src.indexOf('\n  }', i));
 
