@@ -531,5 +531,8 @@ That stand refused any spot in a location's rect (DISC19-F), and the graveyard's
 so from its door, its grounds or its arrival nothing ever stood: 0 of every try at the Crypts of Wickfield's door.
 Now the board hands the stand the hunt's own pixel (`scenes/bountyHost.js` packTick, `place`), and that location's
 rect is not refused (`_inAnyLocationRect`'s `own`). Every other location's rect, a town's among them, still is, and a
-hunt on open ground hands no place. A pack stood outside is judged by the street's pool alone, so a trip down into the
-crypt no longer forgets it. Record: `01-Overview/bugs/Field-Bugs-2026-10-29.md`.
+hunt on open ground hands no place.
+
+A pack stood outside is judged by the street's pool in every mode (`foePool`'s `open`), so a trip down into the crypt
+keeps it while its beasts stand, and lets it go when they were handed off at the door. Its beasts carry the place (`bountyPlace`), so WILD-ALERT treats them as wild foes: the mark, the fast traveller's
+gate and the stealth check. Record: `01-Overview/bugs/Field-Bugs-2026-10-29.md`; AUDIT FB1029 B1-B4.

@@ -103,7 +103,7 @@ export const BOUNTY_REFUSALS = Object.freeze({
  *   standPack: (o:{id:string, mobileType:number, count:number, stage:number, farm:boolean, target?:{px:number, py:number},
  *     farmKey?:string, huntKey?:string, place?:{px:number, py:number}|null}) => ({ foes: Promise<any[]>, dx:number, dz:number } | { far:true, dx:number, dz:number } | null),
  *   standDungeonPack?: (o:{id:string, mobileType:number, count:number}) => ({ foes: Promise<any[]>, dx:number, dz:number } | null),
- *   foePool?: () => any[],                   // the exterior pool's live list - a pack member gone from it is gone
+ *   foePool?: (open?: boolean) => any[],     // the live pool a pack is judged by - the street's for an open-air pack (`open`), else the mode's
  *   say: (line:string) => void,
  *   showNotice: (n:any) => boolean,          // raise the reward notice; false while another window holds the screen
  *   openBoardWindow: (deps:any) => void,     // raise the board's window
@@ -456,9 +456,9 @@ export function createBountyHost(deps) {
         }
         if (row.killed >= p.count) { pay(row.id); continue; }
         // every beast either dead or gone (culled, cleared by a load): the pack is over - what is left stands again
-        // FB1029 GRAVE-PACK: an open-air pack is judged outdoors alone - below, the pool is the crypt's, not its
-        const pool = deps.foePool?.() ?? null, judged = (p.kind === 'dungeon' && !p.graveyard) || !!outside;
-        if (judged && pack.foes.every((f) => f._bountyCounted || f.dead || (pool && !pool.includes(f)))) { packs.delete(row.id); pack = null; }
+        // FB1029 GRAVE-PACK: an open-air pack is judged by the street's pool in every mode - down in a crypt too
+        const pool = deps.foePool?.(!(p.kind === 'dungeon' && !p.graveyard)) ?? null;
+        if (pack.foes.every((f) => f._bountyCounted || f.dead || (pool && !pool.includes(f)))) { packs.delete(row.id); pack = null; }
       }
       if (pack) continue;
       // WHERE the pack stands: the open-ground hunt on its pixel in the open air, the dungeon hunt inside its dungeon
@@ -513,7 +513,7 @@ export function createBountyHost(deps) {
         const list = (foes ?? []).filter(Boolean);
         if (packs.get(row.id) !== entry) return;
         if (!list.length) { packs.delete(row.id); packs.set(`retry:${row.id}`, { at: clock + BOUNTY_RETRY_S }); return; }
-        for (const f of list) f.bountyId = row.id;
+        for (const f of list) { f.bountyId = row.id; f.bountyPlace = p.graveyard ? p.target : null; }   // FB1029 GRAVE-PACK: a wild foe in its place's rect
         entry.foes = list;
       }).catch(() => { if (packs.get(row.id) === entry) packs.delete(row.id); });
     }

@@ -6280,7 +6280,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const o = mapPixelToWorldCoords(p.x, p.y);
     return pointNearPath(net, p.x, p.y, wc.x - o.x, wc.z - o.z, radiusM * UNITS_PER_METRE);
   };
-  /** FB1029 GRAVE-PACK: `own` ({px, py}) is a hunt's own place, never refused - a graveyard's pack stands among its stones. */
+  /** FB1029 GRAVE-PACK: `own` ({px, py}) is a hunt's own place, never refused - a graveyard's pack stands in its rect. */
   const _inAnyLocationRect = (pos, own = null) => {
     const wc = state.worldCoords(pos);
     const px = worldCoordToMapPixel(wc.x, wc.z);
@@ -9869,7 +9869,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         if (f.dead || !f.ai?.feet || !foeAlerted(f)) { _wildMarkAt.delete(f); continue; }
         if (!_wildMarkAt.has(f)) _wildMarkAt.set(f, t);
         if (!_wildGate && t - _wildMarkAt.get(f) > WILD_MARK_S) continue;
-        if (_inAnyLocationRect(f.ai.feet)) continue;
+        if (_inAnyLocationRect(f.ai.feet, f.bountyPlace)) continue;   // FB1029 GRAVE-PACK: a graveyard's pack is wild
         const head = [f.ai.feet[0], f.ai.feet[1] + (f.ai.height ?? CAPSULE_HEIGHT) + 0.35, f.ai.feet[2]];
         const d = Math.hypot(head[0] - eye[0], head[1] - eye[1], head[2] - eye[2]);
         if (d > WILD_MARK_RANGE) continue;
@@ -26181,7 +26181,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     canStand: () => (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned && !gamePaused() && !playerEntity.isResting
       && !travelOptions?.isTravelActive && !(walkMode && player.isPlayerSwimming) && !playerAfloat(),   // SEA-HUNT: no trail is read, no pack stood, from a deck
     standPack: (o) => _standBountyPack(o),
-    foePool: () => ((modes?.mode ?? 'exterior') === 'dungeon' ? (modes?.dungeonCtx?.foes ?? []) : exteriorFoes.foes),
+    foePool: (open = false) => (!open && (modes?.mode ?? 'exterior') === 'dungeon' ? (modes?.dungeonCtx?.foes ?? []) : exteriorFoes.foes),   // FB1029 GRAVE-PACK: an open-air pack the street's
     say: (line) => townTalk.say(line),
     showNotice: (notice) => {
       // the notice waits for the screen - the street's slot, and indoors or below the interior's and the dungeon's own
@@ -30429,7 +30429,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   const travellingOutdoors = () => wildTravelling() && (modes?.mode ?? 'exterior') === 'exterior';
   /** A foe the gate holds off me: mine (a puppet is its owner's), out in the wilderness (a town's foes keep the town's
    *  law), and not yet alerted to the fast traveller. */
-  const wildGated = (f) => _wildGate && !f.puppet && !wildFoes.alerted(f) && !!f.ai?.feet && !_inAnyLocationRect(f.ai.feet);
+  const wildGated = (f) => _wildGate && !f.puppet && !wildFoes.alerted(f) && !!f.ai?.feet && !_inAnyLocationRect(f.ai.feet, f.bountyPlace);
   /** The foes a fast traveller's stops and the view's danger count: none the gate holds. */
   const wildSeen = (foes) => (_wildGate ? foes.filter((f) => !wildGated(f)) : foes);
   /** The gate's frame, before the pools move: each of my hostile wilderness foes in reach checked (systems/wild/wildAlert.js
@@ -30443,7 +30443,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     for (const f of exteriorFoes.foes) {
       if (f.dead || f.puppet || !f.ai?.feet || !foeHostile(f)) continue;
       if (isLocalPlayerTarget(f.ai.target)) { wildFoes.alert(f, now); continue; }
-      if (_inAnyLocationRect(f.ai.feet)) continue;
+      if (_inAnyLocationRect(f.ai.feet, f.bountyPlace)) continue;
       const s = wildFoes.step(f, { distM: Math.hypot(f.ai.feet[0] - fx[0], f.ai.feet[2] - fx[2]), reachM: f.ai.sightRadius ?? SIGHT_RADIUS, stealth, scaledDt: sdt, now, seesThrough: !!f.ai.seesThroughInvisibility, concealment: hid });
       if (s.noticed) exteriorFoes.noticedPlayer?.(f, fx);   // AUDIT-F1: noticed, it comes - on me now: the "!", the clock held, the meeting
     }

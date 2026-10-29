@@ -45,6 +45,7 @@ so the hunter never heard of the pack. Once a pack did stand, a trip into the cr
 against the crypt's foes.
 
 FIXED. The board hands the stand the hunt's own pixel, and that location's rect is not refused. Every other location's
-rect still is. A pack stood outside is judged outdoors alone.
+rect still is. A pack stood outside is judged by the street's pool in every mode, and its beasts carry the place, so
+WILD-ALERT treats them as wild (AUDIT FB1029 B1-B3).
 
-Tests `test/scenes/fb1029_gravepack.test.js` (3). Mutants `tools/mutants/fb1029_gravepack.json` (9, all dead).
+Tests `test/scenes/fb1029_gravepack.test.js` (6). Mutants `tools/mutants/fb1029_gravepack.json` (16, all dead).

@@ -77,45 +77,101 @@ const TOWN = { px: 300, py: 200, name: 'Eastcastle' };
 const GRAVE = '305,199', CAVE = '293,206';
 const DUNG = { [GRAVE]: 'The Crypts of Wickfield', [CAVE]: 'The Dark Hollow' };
 
-test('FB1029 GRAVE-PACK the board\'s host: a graveyard\'s hunt hands its own pixel to the stand, any other none; a pack stood outside it is kept while its hunter is down in the crypt, and its kills pay (mutants: the place unhanded; handed for every hunt; the pack judged by the crypt\'s pool)', async () => {
-  const outdoor = [], crypt = [], asked = [];
-  let outside = null, below = null, board = null;
-  const entity = { goldPieces: 0, items: [] };
-  const host = createBountyHost({
-    now: () => 900 * 1440 + 60, level: () => 20, entity: () => entity, townName: () => TOWN.name, siteOk: () => true,
+/** A board at Eastcastle with the graveyard and a cave in reach; the street's pool and the crypt's apart, as world.js's
+ *  foePool answers them (`open`: the street's in every mode). */
+function eastcastle() {
+  const h = { outdoor: [], crypt: [], asked: [], below: [], outside: null, under: null, board: null, entity: { goldPieces: 0, items: [] } };
+  const foes = (n, into) => { const list = Array.from({ length: n }, () => ({ dead: false, entity: { health: 5 } })); into.push(...list); return list; };
+  h.host = createBountyHost({
+    now: () => 900 * 1440 + 60, level: () => 20, entity: () => h.entity, townName: () => TOWN.name, siteOk: () => true,
     dungeonAt: (x, y) => DUNG[`${x},${y}`] ?? null, graveyardAt: (x, y) => (`${x},${y}` === GRAVE ? DUNG[GRAVE] : null),
-    playerPixel: () => outside, dungeonPixel: () => below, canStand: () => true, canStandDungeon: () => true,
-    standPack: (o) => { asked.push(o); const foes = Array.from({ length: o.count }, () => ({ dead: false, entity: { health: 5 } })); outdoor.push(...foes); return { foes: Promise.resolve(foes), dx: 0, dz: 80 }; },
-    standDungeonPack: () => null,
-    foePool: () => (below ? crypt : outdoor), say: () => {}, showNotice: () => true, openBoardWindow: (d) => { board = d; },
+    playerPixel: () => h.outside, dungeonPixel: () => h.under, canStand: () => true, canStandDungeon: () => true,
+    standPack: (o) => { h.asked.push(o); return { foes: Promise.resolve(foes(o.count, h.outdoor)), dx: 0, dz: 80 }; },
+    standDungeonPack: (o) => { h.below.push(o); return { foes: Promise.resolve(foes(o.count, h.crypt)), dx: 30, dz: 0 }; },
+    foePool: (open) => (h.under && !open ? h.crypt : h.outdoor), say: () => {}, showNotice: () => true, openBoardWindow: (d) => { h.board = d; },
   });
-  host.openBoard(TOWN);
-  const posts = board.rows().map((r) => r.posting);
-  const grave = posts.find((p) => p.graveyard), field = posts.find((p) => p.kind === 'field');
+  h.host.openBoard(TOWN);
+  h.posts = h.board.rows().map((r) => r.posting);
+  h.at = (p) => { h.outside = { x: p.target.px, y: p.target.py }; h.under = null; };
+  h.down = (p) => { h.outside = null; h.under = { x: p.target.px, y: p.target.py }; };
+  h.standing = (id) => (h.host.poseField().bq ?? []).some((r) => r.i === id && r.a === 1);
+  return h;
+}
+const settle = async () => { for (let i = 0; i < 3; i++) await Promise.resolve(); };
+
+test('FB1029 GRAVE-PACK the board\'s host: a graveyard\'s hunt hands its own pixel to the stand, any other none; its beasts carry the place (WILD-ALERT\'s rect reads it); a pack stood outside is kept while its hunter is down in the crypt, and its kills pay (mutants: the place unhanded; handed for every hunt; the beasts untagged; the pack judged by the crypt\'s pool)', async () => {
+  const h = eastcastle();
+  const grave = h.posts.find((p) => p.graveyard), field = h.posts.find((p) => p.kind === 'field');
   assert.ok(grave && field, 'a graveyard\'s hunt and the open ground\'s on the board');
   assert.equal(`${grave.target.px},${grave.target.py}`, GRAVE);
 
-  board.take(field.id);
-  outside = { x: field.target.px, y: field.target.py };
-  host.tick(1);
-  assert.equal(asked.length, 1);
-  assert.equal(asked[0].place, null, 'the open ground\'s hunt hands no place: every rect refused as before');
-  host.drop(field.id);
+  h.board.take(field.id);
+  h.at(field);
+  h.host.tick(1);
+  await settle();
+  assert.equal(h.asked.length, 1);
+  assert.equal(h.asked[0].place, null, 'the open ground\'s hunt hands no place: every rect refused as before');
+  assert.ok(h.outdoor.every((f) => f.bountyPlace === null), 'its beasts carry none');
+  h.host.drop(field.id);
 
-  board.take(grave.id);
-  outside = { x: grave.target.px, y: grave.target.py };
-  host.tick(1);
-  const mine = asked.filter((o) => o.id === grave.id);
+  h.board.take(grave.id);
+  h.at(grave);
+  h.host.tick(1);
+  const mine = h.asked.filter((o) => o.id === grave.id);
   assert.equal(mine.length, 1);
   assert.deepEqual(mine[0].place, grave.target, 'the graveyard\'s own pixel');
-  await Promise.resolve(); await Promise.resolve();
-  const pack = outdoor.slice(-grave.count);
-  outside = null; below = { x: grave.target.px, y: grave.target.py };
-  host.tick(1);
-  outside = { x: grave.target.px, y: grave.target.py }; below = null;
-  host.tick(1);
-  assert.equal(asked.filter((o) => o.id === grave.id).length, 1, 'kept through the crypt: never stood a second time');
+  await settle();
+  const pack = h.outdoor.slice(-grave.count);
+  for (const f of pack) assert.deepEqual(f.bountyPlace, grave.target, 'its beasts carry it');
+  h.down(grave);
+  h.host.tick(1);
+  assert.equal(h.standing(grave.id), true, 'below, its beasts still stand on the street: the pose says so');
+  h.at(grave);
+  h.host.tick(1);
+  assert.equal(h.asked.filter((o) => o.id === grave.id).length, 1, 'kept through the crypt: never stood a second time');
   for (const f of pack) { f.dead = true; f.corpse = true; }
-  host.tick(1);
-  assert.equal(entity.goldPieces, grave.gold, 'its kills pay');
+  h.host.tick(1);
+  assert.equal(h.entity.goldPieces, grave.gold, 'its kills pay');
+});
+
+test('FB1029 GRAVE-PACK AUDIT B1: a pack handed off at the crypt\'s door (online, a peer in sight) is gone from the street\'s pool - gone from the hunt at once, below, so the pose no longer holds the party\'s hunt, and it stands again on the way out (mutant: judged outdoors alone)', async () => {
+  const h = eastcastle();
+  const grave = h.posts.find((p) => p.graveyard);
+  h.board.take(grave.id);
+  h.at(grave);
+  h.host.tick(1);
+  await settle();
+  assert.equal(h.standing(grave.id), true);
+  h.down(grave);
+  h.outdoor.length = 0;   // exteriorFoes.handOver -> dropOwnLive: my pool keeps none of them
+  h.host.tick(1);
+  assert.equal(h.standing(grave.id), false, 'below, the hunt is free for a mate at the graveyard');
+  h.at(grave);
+  h.host.tick(1);
+  assert.equal(h.asked.filter((o) => o.id === grave.id).length, 2, 'out again, a pack stands');
+});
+
+test('FB1029 GRAVE-PACK AUDIT B2: a dungeon\'s hunt is judged by the dungeon\'s pool - kept while its beasts stand below, stood again when a load took them (mutants: every pack judged by the street\'s pool; by the mode\'s)', async () => {
+  const h = eastcastle();
+  const cave = h.posts.find((p) => p.kind === 'dungeon' && !p.graveyard);
+  assert.ok(cave, 'the cave\'s hunt on the board');
+  h.board.take(cave.id);
+  h.down(cave);
+  h.host.tick(1);
+  await settle();
+  assert.equal(h.below.length, 1);
+  h.host.tick(1);
+  assert.equal(h.below.length, 1, 'its beasts stand below: never stood twice');
+  h.crypt.length = 0;
+  h.host.tick(1);
+  assert.equal(h.below.length, 2, 'a load took them: the pack stands again');
+});
+
+test('FB1029 GRAVE-PACK the host\'s wiring: the pool asked is the street\'s for an open-air pack in every mode, and WILD-ALERT\'s three rect tests read a beast\'s place - its mark, the gate and the stealth check (mutants: the pool the mode\'s; a test unhanded)', () => {
+  assert.ok(world.includes("foePool: (open = false) => (!open && (modes?.mode ?? 'exterior') === 'dungeon' ? (modes?.dungeonCtx?.foes ?? []) : exteriorFoes.foes),"), 'the pool asked');
+  const marks = slice('  function wildMarksFrame(', '\n  }\n'), gate = slice('  const wildGated = (f) =>', '\n'), step = slice('  function wildFoesFrame(', '\n  }\n');
+  for (const [name, src] of [['the mark', marks], ['the gate', gate], ['the stealth check', step]]) {
+    assert.ok(src.includes('_inAnyLocationRect(f.ai.feet, f.bountyPlace)'), name);
+    assert.ok(!/_inAnyLocationRect\(f\.ai\.feet\)/.test(src), `${name}: no rect test without the place`);
+  }
 });
