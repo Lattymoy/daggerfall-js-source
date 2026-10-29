@@ -239,7 +239,7 @@ import {
   nameAsOf, wornNameOf, chooseNameAs,   // NAME-AS: the name the room reads - the account's or the character's
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
-import { mintToken, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, mintHomeOrder, mintYardOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
+import { mintToken, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, mintHomeOrder, mintYardOrder, mintHomeCellOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, SAFE_OPEN_ROUTES, STAFF_ROUTES, savePathOf, realmPathOf, poiPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining, routeDb, d1BookmarkOf, D1_BOOKMARK_RE, d1Overloaded, noteOverload, shedding, REPLICA_ROUTES, replicaDb, REPLICA_ANY, SHED_NO_REPLICA } from './service.js';   // SCALE4d: the routes a read replica may serve, and the session they are served on
 import { poiRolesOf, putPoiAsset, getPoiAsset, savePoiDraft, submitPoi, withdrawPoi, requestRetire, reviewPoi, rollbackPoi, listPoi, poiHistory, poiQueue, poiLiveFeed, poiHeldVersion, poiFeedTag, listShelf, shelfEntry, shelve, unshelve, POI_ASSET_MAX, POI_DRAFT_BODY_MAX, POI_LIVE_ASSET_MAX_AGE_S } from './poi.js';   // POI-1: the POI store - builders draft, an approver decides, the feed is what is live; POI-4b: the library's shelf
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
@@ -719,11 +719,19 @@ async function yardOrderOf(r, settled, mapId, s, env, subtle, nowS) {
   return { ...r, yardVer: settled.ver, yardOrder };
 }
 
-/** YC4 (bible/11-Multiplayer/Yard-Cells.md section 14.4): a home write's answer with the cells it moved, built again
- *  (homeCells.js settleHomeCellsAfter) - `homeCellsMoved: [{ mapId, cell, ver }]`, for the HOME CELL ORDER to sign. */
-async function withHomeCells(r, db, path, body, nowS) {
+/** YC4 (bible/11-Multiplayer/Yard-Cells.md section 14.4): a home write's answer with the cells it moved built again
+ *  (homeCells.js settleHomeCellsAfter) and a signed HOME CELL ORDER for each (`homeCellOrders`), which the acting client
+ *  carries to the hub. None if no cell moved or the service has no key: the pages' poll finds the cell. */
+async function withHomeCells(r, db, path, body, s, env, subtle, nowS) {
   const moved = await settleHomeCellsAfter(db, path, body, nowS).catch((e) => { console.warn('[homes] the cell not built', e?.message ?? e); return []; });
-  return moved.length ? { ...r, homeCellsMoved: moved } : r;
+  if (!moved.length) return r;
+  const key = await signingKey(env, subtle);
+  if (!key) return r;
+  const homeCellOrders = [];
+  for (const { mapId, cell, ver } of moved) {
+    homeCellOrders.push(await mintHomeCellOrder({ s, m: mapId, c: cell, v: ver }, key, { subtle, nowS }));
+  }
+  return { ...r, homeCellOrders };
 }
 
 async function homeOrdersOf(r, s, env, subtle, nowS) {
@@ -1854,7 +1862,7 @@ const service = {
         if (accountKind(who.player) !== 'linked') return no('homes-need-account', 403, origin);
         // REALM P2.2b: a realm character's record is in R2, and moves with the act; a sequence refused says the service's own
         const hctx = { ...ctx, bucket: env.SAVES };
-        const cellsMoved = (r) => withHomeCells(r, ctx.db, path, body, nowS);   // YC4: a home write's cells built again
+        const cellsMoved = (r) => withHomeCells(r, ctx.db, path, body, who.player.id, env, subtle, nowS);   // YC4: a home write's cells built again, and signed
         const realmNo = (r) => (r.error === 'seq' ? json({ error: 'seq', seq: r.seq }, 409, origin) : r.error === 'lease' || r.error === 'realm-gold' ? no(r.error, 409, origin) : null);
         if (path.startsWith('/v1/homes/decor/')) {
           // DECOR1: a piece placed, moved or removed - the owner's character's alone (decor.js)

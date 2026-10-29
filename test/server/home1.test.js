@@ -133,7 +133,7 @@ test('HOME1 the service: a town\'s homes are any session\'s to read (a guest\'s 
   const c = await buy(aldric, A);
   assert.equal(c.status, 200);
   // PIN MOVED (FIELD BUGS 2026-10-14 QUEST-HOME, test/net/fb1014_questhome.test.js): and the claim's home order, for every page online
-  assert.deepEqual({ ...c.body, homeOrders: undefined, homeCellsMoved: undefined }, { ok: true, home: { mapId: home().mapId, buildingKey: home().buildingKey, region: 17, character: A.id, entry: 'private', price: 42000, boughtAt: T0 }, refund: homeSaleRefund(42000), realm: { seq: 2 }, homeOrders: undefined, homeCellsMoved: undefined });   // PIN MOVED (YC4: the claim's cell); AUDIT HOME-PRICE C2: the claim says what its sale pays
+  assert.deepEqual({ ...c.body, homeOrders: undefined, homeCellOrders: undefined }, { ok: true, home: { mapId: home().mapId, buildingKey: home().buildingKey, region: 17, character: A.id, entry: 'private', price: 42000, boughtAt: T0 }, refund: homeSaleRefund(42000), realm: { seq: 2 }, homeOrders: undefined, homeCellOrders: undefined });   // PIN MOVED (YC4: the claim's cell); AUDIT HOME-PRICE C2: the claim says what its sale pays
   assert.equal(c.body.homeOrders?.length, 1);
   assert.deepEqual(await call('POST', '/v1/homes/claim', home({ buildingKey: 9 }), aldric), { status: 400, body: { error: 'realm-only' } }, 'no other id buys a house');
   // one owner a building
@@ -188,7 +188,7 @@ test('HOME1 the service: a town\'s homes are any session\'s to read (a guest\'s 
   const e1 = await call('POST', '/v1/homes/entry', { mapId: home().mapId, buildingKey: home().buildingKey, entry: 'party' }, mara);
   assert.deepEqual([e1.status, e1.body.error], [404, 'no-home'], 'another\'s home is as absent as none');
   const e2 = await call('POST', '/v1/homes/entry', { mapId: home().mapId, buildingKey: home().buildingKey, entry: 'public' }, aldric);
-  assert.deepEqual({ ...e2.body, homeCellsMoved: undefined }, { ok: true, entry: 'public', homeCellsMoved: undefined });   // PIN MOVED (YC4): and the cell the entry moved
+  assert.deepEqual({ ...e2.body, homeCellOrders: undefined }, { ok: true, entry: 'public', homeCellOrders: undefined });   // PIN MOVED (YC4): and the cell the entry moved
   assert.equal((await call('POST', '/v1/homes/town', { mapId: home().mapId }, mara)).body.homes.find((h) => h.buildingKey === home().buildingKey).entry, 'public', 'the town reads it');
   const e3 = await call('POST', '/v1/homes/entry', { mapId: home().mapId, buildingKey: home().buildingKey, entry: 'friends' }, aldric);   // GUILD1d (re-aimed by content): `guild` is an entry now
   assert.deepEqual([e3.status, e3.body.error], [400, 'bad-entry']);

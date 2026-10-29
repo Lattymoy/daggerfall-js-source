@@ -97,7 +97,7 @@ async function keysOfWrite(/** @type {any} */ db, /** @type {string} */ path, /*
 
 /**
  * After a home write route's write landed (index.js): each cell it names let go in this isolate and built again.
- * Answers the cells whose version moved, as built - the answer's `homeCellsMoved`, which a signed order will carry.
+ * Answers the cells whose version moved, as built - each one a HOME CELL ORDER in the route's answer (index.js withHomeCells).
  * @returns {Promise<HomeCellMoved[]>}
  */
 export async function settleHomeCellsAfter(/** @type {any} */ db, /** @type {string} */ path, /** @type {any} */ body, /** @type {number} */ nowS) {

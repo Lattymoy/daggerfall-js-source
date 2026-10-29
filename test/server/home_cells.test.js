@@ -15,6 +15,7 @@ import {
 import { homesInTown, homesOwn, sharedHomeOf } from '../../server-account/src/homes.js';
 import { yardCellOf } from '../../src/net/yardCellLaw.js';
 import { makeBuildingKey } from '../../src/systems/talk/talkTopics.js';
+import { verifyOrder } from '../../src/net/identityToken.js';
 
 const LOOK = JSON.stringify({ door: { climate: 'desert', record: 1 } });
 const WOLF = JSON.stringify({ field: 'azure', border: 'gold', device: 'wolf' });
@@ -380,17 +381,19 @@ test('YC4 over the real Worker: a claim answers the cell it moved, the cells rou
   const claimed = await svc.seatHome(owner, { mapId: 7, buildingKey: 300, region: 17, price: 5000 });
   assert.equal(claimed.status, 200, JSON.stringify(claimed.body));
   const cell = yardCellOf(300);
-  assert.deepEqual(claimed.body.homeCellsMoved?.map((m) => [m.mapId, m.cell]), [[7, cell]], 'the claim\'s cell, built');
+  const cellsOf = (body) => Promise.all((body.homeCellOrders ?? []).map(async (o) => (await verifyOrder(o, svc.identityPublic, { subtle: globalThis.crypto.subtle, nowS: T0 + 1, kind: 'hcell' })).claims));
+  const claimedCells = await cellsOf(claimed.body);
+  assert.deepEqual(claimedCells.map((m) => [m.m, m.c]), [[7, cell]], 'the claim\'s cell, built');
   const ask = (cells, secret) => svc.call('/v1/homes/cells', { mapId: 7, cells }, secret);
   assert.equal((await ask([[cell, 0]])).status, 401, 'owners\' handles are account data: a session');
   assert.equal((await ask([[cell, 0], [cell, 0]], stranger.secret)).status, 400, 'a malformed ask');
   const first = await ask([[cell, 0]], stranger.secret);
   assert.equal(first.status, 200);
   assert.deepEqual(first.body.cells.map((c) => c.homes), [[{ buildingKey: 300, owner: 'Olga', entry: 'private' }]]);
-  assert.equal(first.body.cells[0].ver, claimed.body.homeCellsMoved[0].ver);
+  assert.equal(first.body.cells[0].ver, claimedCells[0].v);
   const entry = await svc.call('/v1/homes/entry', { mapId: 7, buildingKey: 300, entry: 'public' }, owner.secret);
   assert.equal(entry.status, 200, JSON.stringify(entry.body));
-  assert.ok(entry.body.homeCellsMoved[0].ver > first.body.cells[0].ver, 'the entry moved the cell');
+  assert.ok((await cellsOf(entry.body))[0].v > first.body.cells[0].ver, 'the entry moved the cell');
   const after = await ask([[cell, first.body.cells[0].ver]], stranger.secret);
   assert.deepEqual(after.body.cells.map((c) => c.homes[0].entry), ['public'], 'read at once, inside HOMES_KEPT_S');
   const town = await svc.call('/v1/homes/town', { mapId: 7, character: claimed.character }, owner.secret);
