@@ -2,22 +2,22 @@
   {
     "name": "OW4D1-door-refused-in-the-peaks",
     "file": "src/scenes/world.js",
-    "old": "    if (!door && !water && tvRouteGround().peakAt(pix.x, pix.y))",
-    "new": "    if (!water && tvRouteGround().peakAt(pix.x, pix.y))",
+    "old": "    if (!door && !water && !dragonMounted() && tvRouteGround().peakAt(pix.x, pix.y))",
+    "new": "    if (!water && !dragonMounted() && tvRouteGround().peakAt(pix.x, pix.y))",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
-    "note": "AUDIT OW4 D1: a spawn's door among the peaks is refused as a spot is - its plate walks nowhere."
+    "note": "Re-aimed by content (DRAGON6): the line the dragon's flight joins. AUDIT OW4 D1: a spawn's door among the peaks is refused as a spot is - its plate walks nowhere."
   },
   {
     "name": "OW4D1-door-goal-asked",
     "file": "src/scenes/world.js",
-    "old": "let plan = planRoute(from, pix, { roads: wnet?.roads ?? null, tracks: wnet?.tracks ?? null, ...tvRouteGround(), goalExempt: !!door, sea: seaAsk });",
-    "new": "let plan = planRoute(from, pix, { roads: wnet?.roads ?? null, tracks: wnet?.tracks ?? null, ...tvRouteGround(), goalExempt: false, sea: seaAsk });",
+    "old": "let plan = (dragonMounted() ? dragonFlightPlan(from, pix) : null) ?? planRoute(from, pix, { roads: wnet?.roads ?? null, tracks: wnet?.tracks ?? null, ...tvRouteGround(), goalExempt: !!door, sea: seaAsk });",
+    "new": "let plan = (dragonMounted() ? dragonFlightPlan(from, pix) : null) ?? planRoute(from, pix, { roads: wnet?.roads ?? null, tracks: wnet?.tracks ?? null, ...tvRouteGround(), goalExempt: false, sea: seaAsk });",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
-    "note": "AUDIT OW4 D1: a door's own pixel's step is asked - a spawn on a Mountain pixel or a plateau has no way in."
+    "note": "Re-aimed by content (DRAGON6): the line the dragon's flight joins. AUDIT OW4 D1: a door's own pixel's step is asked - a spawn on a Mountain pixel or a plateau has no way in."
   },
   {
     "name": "OW4D1-spawn-walked-as-a-spot",

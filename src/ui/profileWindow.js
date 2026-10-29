@@ -148,6 +148,12 @@ export function profileSerpentLine(record) {
   const n = record && typeof record === 'object' ? record.serpents?.slain : null;
   return Number.isSafeInteger(n) && n > 0 ? `Serpents slain: ${n}` : null;
 }
+/** AUDIT DRAGON: the Dwarven Dragons they helped slay - each a kill the relay signed and the service counted once
+ *  (server-account/src/dragons.js dragonRecordOf) - off the same record, said only once there is one. */
+export function profileDragonLine(record) {
+  const n = record && typeof record === 'object' ? record.dragons?.slain : null;
+  return Number.isSafeInteger(n) && n > 0 ? t('dragon.card.profile', 'Dragons slain: {n}', { n }) : null;
+}
 /** SD9b: the Hours they broke - each a Brass Remnant's fall the relay signed and the service counted once - off the same
  *  record, said only once there is one. */
 export function profileSdLine(record) {
@@ -170,7 +176,7 @@ export function profileKetchLine(record) {
 /** KETCH: the account service's record as the Inspect card's lines - the gates closed, the towns defended, the serpents
  *  slain, the Hours broken, the stars held, the voyages sailed - one door, so the world host lays them all (it laid the
  *  stars none before it). */
-export const profileRecordLines = (record) => ({ gates: profileGateLine(record), raids: profileRaidLine(record), serpents: profileSerpentLine(record), hours: profileSdLine(record), stars: profileStarLine(record), voyages: profileKetchLine(record) });
+export const profileRecordLines = (record) => ({ gates: profileGateLine(record), raids: profileRaidLine(record), serpents: profileSerpentLine(record), dragons: profileDragonLine(record), hours: profileSdLine(record), stars: profileStarLine(record), voyages: profileKetchLine(record) });
 /** AUDIT RENOWN1 UI-3: a view with the peer's Renown as the session knows it NOW - the level rises on a renown frame
  *  while the card stands open, and the card showed the level it was opened with. A level the session does not know
  *  leaves the view's own. */
@@ -213,6 +219,7 @@ export function profileView({ name = null, peer = null, look = null, card = null
     gates: profileGateLine(record),
     raids: profileRaidLine(record),   // RAID4
     serpents: profileSerpentLine(record),   // AUDIT SERPENT D4
+    dragons: profileDragonLine(record),   // AUDIT DRAGON
     hours: profileSdLine(record),   // SD9b
     stars: profileStarLine(record),   // STAR7
     voyages: profileKetchLine(record),   // KETCH
@@ -339,7 +346,7 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
     if (v.line) head.append(el('div', 'dfprofile-line', v.line));
     // PROFILE-UI: their record - the duels (DUEL1), the gates closed (WB5b), the towns defended (RAID4), the serpents slain
     // (AUDIT SERPENT D4) - a row of plaques, each its own words, where four dim lines stood one under another
-    const facts = [['dfprofile-duels', v.duels], ['dfprofile-gates', v.gates], ['dfprofile-raids', v.raids], ['dfprofile-serpents', v.serpents], ['dfprofile-hours', v.hours], ['dfprofile-stars', v.stars], ['dfprofile-voyages', v.voyages]].filter(([, t]) => t);   // STAR7: and the fallen stars held; KETCH: and the voyages sailed
+    const facts = [['dfprofile-duels', v.duels], ['dfprofile-gates', v.gates], ['dfprofile-raids', v.raids], ['dfprofile-serpents', v.serpents], ['dfprofile-dragons', v.dragons], ['dfprofile-hours', v.hours], ['dfprofile-stars', v.stars], ['dfprofile-voyages', v.voyages]].filter(([, t]) => t);   // STAR7: and the fallen stars held; KETCH: and the voyages sailed
     if (facts.length) {
       const record = el('div', 'dfprofile-facts');
       for (const [cls, t] of facts) record.append(el('div', `dfprofile-fact ${cls}`, t));

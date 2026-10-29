@@ -51,27 +51,23 @@ a carriage (model 41214) and its team or a cart (41207, 41209, 41109), the horse
   does not print; `src/systems/immersiveTravelTables.js` carries them and
   `test/systems/guild/it1_immersivetravel.test.js` finds each one, whole, in this DLL's bytes.
 - `WorldDataPatches/WALLAA0x.RMB.json` - **the author's edit of each gate block, and only
-  the edit** (5 to 10 inserted records and 34 round-trip ops, 2,962 to 3,895 bytes against
-  the shipped 186,594 to 188,400). A whole RMB block is Daggerfall's layout - game data, which this repository
+  the edit** (5 to 10 inserted records and 35 to 38 round-trip ops, 3,185 to 4,107 bytes
+  against the shipped 186,594 to 188,400). A whole RMB block is Daggerfall's layout - game data, which this repository
   never carries (Port-Doctrine) - so each is rebuilt at load from the player's own
   `BLOCKS.BSA` and served under its own name through the world-data door
   (`src/formats/worldData/worldDataPatch.js`, `src/scenes/modWorldData.js`). Each patch records the
   sha256 of the author's file in canonical form.
 
-  **BUILT WITHOUT A BLOCKS.BSA, AND SAID SO.** The container these were made in carries
-  no ARENA2. `tools/immersiveTravelPatches.mjs` read the edit off the files alone: the
-  editor appends what the author placed and leaves the header's record counts as the
-  classic block had them (NumMisc3dObjectRecords 2, NumMiscFlatObjectRecords 1 in all
-  four), so the records past those counts are the author's. AUDIT IT1 G1 added the two
-  round-trip changes the editor makes to every block and the files show on their own:
-  BuildingDataList written at its count where the classic block reads 32 slots (28
-  removed), and a scale of 1 on the two classic models, whose records carry none (6 set).
-  What that still cannot carry is any other round-trip change to a classic record
-  (`bible/02-Formats/World-Data-Patches.md` names two: an automap ground-flat byte zeroed,
-  a rotation written as its equivalent).
-  The loader checks every rebuild against the recorded sha256 and says when it differs;
-  `test/formats/worldData/it1_worlddata.test.js` checks all four with `ARENA2_PATH` set. Run the tool again
-  with an ARENA2 to replace them with WD1's diff, checked byte for byte:
+  **CUT AGAINST BLOCKS.BSA (ARENA2-IT, 2026-10-29).** The first four were read off the
+  files alone, in a container with no ARENA2: the records past the header's counts and
+  the round trip the files show (28 building slots removed, a scale on the two classic
+  models). The run with the freeware ARENA2 (`sh tools/fetch-data.sh`) found the
+  editor's other round-trip changes, which only the classic block shows: WALLAA08's
+  automap ground-flat byte zeroed, and WALLAA09-11's subrecord rotations (and on 09 and
+  10 a classic model's) written as their negative equivalents
+  (`bible/02-Formats/World-Data-Patches.md`). These four are WD1's diff, each checked to
+  rebuild the author's file sha256 for sha256; the loader checks it again at load, and
+  `test/formats/worldData/it1_worlddata.test.js` with `ARENA2_PATH` set. To cut them again:
 
       node tools/immersiveTravelPatches.mjs <immersivetravel.dfmod> <arena2>
 

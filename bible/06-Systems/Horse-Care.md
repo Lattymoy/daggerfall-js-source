@@ -332,3 +332,11 @@ mutants `tools/mutants/horsetiers.json`.
 ## HORSE-VOICE (2026-10-24): the breath heard
 
 Horse care's breath is heard on the enhanced skin with the port's own sounds on (`systems/horse/horseVoice.js`; the record is `08-Audio/Audio.md` HORSE-VOICE). The saddle's breath (`upkeepRuntime.js` `bar` - the share, `amount`) reaches the rig as `horseBreath` (`world.js:"surfaceKind: () => _lastFootstepKind, foesNear: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]), horseBreath: () => upkeep.bar(player.transportMode),"`). A horse galloping with its breath under 0.4 breathes hard in its stride at once, where a fresh one does so only past 8 s of gallop. At the walk or standing it blows and breathes heavily every 2.2-3.4 s until the breath is back over 0.4. Its moments on DFU's neigh clock are the tired mood's, mostly blows. Off horse care there is no breath, and a long gallop leaves its own short blowing - where a rider gallops at all: with horse care off a mounted rider runs only under Roleplay & Realism's riding, so without it the gallop's breath and blowing never come (AUDIT SOUNDSCAPE H8). The walk is the slow clop's state (THE WALK), and its voices are the calm mood's: soft snorts and blows. THE FOUR HOSTS: world.js and exterior.js hand the rig the ground's kind, foes in sight and the breath; worldModes.js and dungeonContext.js stand no mount.
+
+## DRAGON5c (2026-10-29): the tamed dragon on this law
+
+The owner asked for the Dwarven Dragon's upkeep "using the same horse care system", so this law takes it whole
+(`11-Multiplayer/Dwarven-Dragon.md` section 10): its four stats from its tame id (`dragonMount.js` dragonSeedOf), its
+bond and hunger on its item, its breath kept by the upkeep beside the ridden horse's. It drinks Dwarven Oil alone
+(`steedCare.js` eatsFood) and hunts while it waits or is away, as a horse grazes. One steed's keep is `tendSteed`, the
+body `tendHorses` runs for each horse.

@@ -25,6 +25,7 @@ import { TRANSACTION_TYPE, goldRegion, EMPIRE_ACCOUNT_REGION } from '../../syste
 import { REGION_NAMES } from '../../formats/mapsFile.js';   // BANK-REGION: the account's region, by the index its row reads
 import { PURCHASE_RECTS, PURCHASE_PANEL_X, PURCHASE_PANEL_Y } from '../bankPurchaseWindow.js';
 import { TRANSPORT_MODES } from '../../systems/transport.js';
+import { transportDragonText } from '../transportWindow.js';   // DRAGON5: the Dragon row's words
 import { POTION_RECTS } from '../potionMakerWindow.js';
 import { ITEM_RECTS, TAB_PAGES } from '../item/itemMakerWindow.js';
 import { enchantmentName, enchantmentParams, enchantmentParamName, PARAM_NONE } from '../../systems/enchantmentCatalogue.js';
@@ -183,6 +184,7 @@ const transport = {
         { label: 'Horse', act: pick(TRANSPORT_MODES.Horse), disabled: !w.enabled.horse, title: w.enabled.horse ? '' : 'You own no horse' },
         { label: 'Cart', act: pick(TRANSPORT_MODES.Cart), disabled: !w.enabled.cart, title: w.enabled.cart ? '' : 'You own no cart' },
         { label: 'Ship', act: pick(TRANSPORT_MODES.Ship), disabled: !w.enabled.ship, title: w.enabled.ship ? '' : 'No ship is at hand' },
+        ...(w.enabled.dragon ? [{ label: transportDragonText(), act: pick(TRANSPORT_MODES.Dragon) }] : []),   // DRAGON5: the tamed dragon, for its owner alone
       ] }],
       foot: [{ label: 'Exit', act: () => w.input('Escape') }],
     };

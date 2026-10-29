@@ -278,11 +278,16 @@ test('AUDIT IT1 G1: the header-count edit carries the editor\'s two round-trip c
   const mod = editorBlock();
   const rebuilt = patchJson(classicOf(mod), appendedEdit(mod));
   assert.equal(sha256Canonical(rebuilt), sha256Canonical(mod));
-  // the vendored four: 28 slots removed, three scales on each of the two classic models, then the author's records
+  // the vendored four: 28 slots removed and each classic model scaled to 1, then the author's records. PIN MOVED (ARENA2-IT,
+  // 2026-10-29): WD1's diff against BLOCKS.BSA, which sets a model whose rotation the editor also wrote as one record
   for (const name of IT_GATE_BLOCKS) {
     const p = JSON.parse(read(`vendor/immersive-travel/WorldDataPatches/${name}.json`));
     assert.equal(p.ops.filter(([k, path]) => k === 'r' && path[2] === 'BuildingDataList').length, 28, name);
-    assert.equal(p.ops.filter(([k, path]) => k === 's' && /^[XYZ]Scale$/.test(path[3])).length, 6, name);
+    for (const m of [0, 1]) {
+      const sets = p.ops.filter(([k, path]) => k === 's' && path[1] === 'Misc3dObjectRecords' && path[2] === m);
+      const scaled = sets.filter(([, path]) => /^[XYZ]Scale$/.test(path[3])).length === 3 || sets.some(([, path, v]) => path.length === 3 && v.XScale === 1 && v.YScale === 1 && v.ZScale === 1);
+      assert.ok(scaled, `${name}: classic model ${m} scaled to 1`);
+    }
   }
   assert.equal(appendedPatch(mod).sha256, sha256Canonical(mod));
 });

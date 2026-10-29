@@ -21,5 +21,5 @@ test('HORSE-POV (the owner: "when using the morrowind models for the horse, the 
   } finally { mwCamera.restore({ firstPerson: true, baseDistance: base }); }
   assert.match(rd('src/player/mwView.js'), /if \(!eotbLane\(\) && mwCamera\.thirdPerson\(\)\) return \{ \.\.\.hides, horse: true \};\n\s*return benchSeated/);
   // the sprite's gate is the hides' (both arms of mountRig.frame ask it)
-  assert.match(rd('src/player/mountRig.js'), /if \(art && isRiding\(player\.transportMode\) && !ridePaused && !mwViewHides\(\)\.horse\) \{/);
+  assert.match(rd('src/player/mountRig.js'), /if \(art && isHorseRide\(player\.transportMode\) && !ridePaused && !mwViewHides\(\)\.horse\) \{/);   // PIN MOVED (DRAGON5): a horse ride's alone - a dragon's rider sees its saddle (isHorseRide)
 });
