@@ -23,7 +23,7 @@ import { firmamentBook } from '../../net/firmament/firmamentBook.js';
 import { pointsLeft } from '../../net/firmament/firmamentLaw.js';   // FIRM-STARS: the stars not yet placed, on the rail
 import { t } from '../../systems/textManager.js';
 import { atLevelCap, LEVEL_CAP } from '../../systems/levelCap.js';   // LEVEL-45 (AUDIT FB1026d II C3): the Level page at the cap
-import { pvp30Asks, pvp30Said, pvp30Rows, pvp30No } from '../levelUp/pvp30Ask.js';   // PVP-30
+import { pvp30Asks, pvp30Said, pvp30Rows, pvp30No, pvp30Owed, pvp30Go } from '../levelUp/pvp30Ask.js';   // PVP-30
 import { usesVirtueLeveling } from '../../systems/oblivionLeveling.js';   // ORL1: which bar the view of the stars reads
 import { GROWTH_PAGE_SECTIONS, SPEC_LANDINGS, growthPageAt } from './growthPages.js';   // the leaf the boot doors read
 
@@ -164,10 +164,10 @@ function levelPage(detail, ctx) {
 function pvp30Page(detail, ctx) {
   const { el, divider, entity } = ctx;
   dropStage();
-  const go = el('button', 'act primary', t('growth.level.owedHead', 'A level up is waiting'));
+  const go = el('button', 'act primary', pvp30Go());   // PVP-HUD (the mockup): "Level 29 · 1 level owed", "Go to 30"
   go.type = 'button';
   go.onclick = () => ctx.askCard(pvp30Rows(), () => { pvp30Said(entity); ctx.render(); }, { no: pvp30No() });
-  detail.append(divider(t('growth.level.title', 'Level')), el('p', 'gr-lead', pvp30Rows()[0]), go);
+  detail.append(divider(t('growth.level.title', 'Level')), el('h3', 'gr-doorhead', pvp30Owed(entity.level)), el('p', 'gr-lead', pvp30Rows()[0]), go);
 }
 
 // ── Specialisations ─────────────────────────────────────────────────

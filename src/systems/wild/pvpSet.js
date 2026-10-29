@@ -17,7 +17,7 @@ const sameKit = (a, b) => a.id === b.id && a.pick === b.pick && a.icon === b.ico
 const isKit = (raw) => !!raw && KIT_IDS.includes(raw.id);
 
 /** The menu's made spells as saved: toolkit spells only, each once, at most PVP_SET.made. */
-export function madeOf(raw) {
+export function pvpMadeOf(raw) {
   const out = [];
   for (const r of Array.isArray(raw) ? raw : []) {
     if (!isKit(r)) continue;
@@ -44,7 +44,7 @@ function entryOf(raw) {
 /** The saved record (`{ v: 2, set, made }`), or null when there is none to read. */
 export function pvpStoreOf(raw) {
   if (raw?.v !== 2 || !Array.isArray(raw.set)) return null;
-  return { set: Array.from({ length: PVP_SET.slots }, (_, i) => entryOf(raw.set[i])), made: madeOf(raw.made) };
+  return { set: Array.from({ length: PVP_SET.slots }, (_, i) => entryOf(raw.set[i])), made: pvpMadeOf(raw.made) };
 }
 /** An old save's bar (dfo.pvpKitBar.v1, eight spells on keys 3 to 0) as a set: the spells where their keys were, and
  *  the normal set's first two slots where they hold items (the potions on 1 and 2). No old bar: the default bar. */
@@ -55,7 +55,7 @@ export function pvpStoreFromV1(v1, main = []) {
     const s = bar[i - PVP_SET.kitFrom];
     return s ? kitEntry(s) : null;
   });
-  return { set, made: madeOf(bar) };
+  return { set, made: pvpMadeOf(bar) };
 }
 
 /** A made spell's tag in the menu: where it lands. */

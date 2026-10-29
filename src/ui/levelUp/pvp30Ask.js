@@ -24,6 +24,9 @@ export const pvp30Rows = () => [
   t('pvp.level30.ask', 'Continue to level {n}?', { n: PVP_FLAG.level }),
 ];
 export const pvp30No = () => t('pvp.level30.no', 'Not yet');
+/** PVP-HUD (the mockup): the sheet's line while the level is owed, and the button that asks. */
+export const pvp30Owed = (/** @type {number} */ n) => t('pvp.level30.owed', 'Level {n} · 1 level owed', { n });
+export const pvp30Go = () => t('pvp.level30.go', 'Go to {n}', { n: PVP_FLAG.level });
 
 /** The sheet door's box for `e`: Yes opens the level up, Not yet leaves it owed. */
 export const pvp30Box = (e, open = openLevelUpWindow) => new YesNoBoxWindow({ rows: pvp30Rows(), noLabel: pvp30No(), onYes: () => { pvp30Said(e); open({ defer: true }); } });
