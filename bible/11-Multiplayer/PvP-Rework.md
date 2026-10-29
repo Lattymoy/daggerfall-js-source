@@ -66,3 +66,9 @@ laid on at `hostMagic.js:"applySpellToPlayer(pvpPotionBundle(bundle)"`). A depar
 
 "remove drain till we can balance it": `siegeCombat.js:"export const PVP_SPELL_TYPES = Object.freeze([4]);"` - Damage
 alone, and a Heal Health, reach a player. Backstab was already off between players (BAL8).
+
+## PVP-NO-POISON: no poison between players
+
+"poison need diable in pvp": a Damage spell of DFU's poison element
+(`siegeCombat.js:"export const PVP_POISON_ELEMENT = 2;"`) reaches no player. A weapon's poison never rode a PvP blow:
+the striker's stub weapon carries none (`duelCombat.js:"weapon.poisonType = -1;"`).

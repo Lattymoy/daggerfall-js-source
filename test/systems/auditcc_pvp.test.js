@@ -150,6 +150,11 @@ test('AUDIT C&C H5 A SPELL\'S HARM IS COUNTED ON THE NEUTRAL STAND-IN: the caste
   const DRAIN = buildCustomSpell({ slots: [{ type: 7, subType: 0, settings: { chanceBase: 100, magnitude: { baseMin: 20, baseMax: 20, plusMin: 0, plusMax: 0, perLevel: 1 } } }], rangeType: 1, element: 4, name: 'Sap' });
   assert.deepEqual(casts(e, DRAIN, 8), [0, 0, 0, 0, 0, 0, 0, 0], 'a Drain counts nothing at a player');
   assert.equal(pvpFirstEffect(DRAIN), null, 'a Drain is no PvP effect');
+  // PVP-NO-POISON: a poison spell reaches no player; the same bolt of fire still does
+  const venom = (element) => buildCustomSpell({ slots: [{ type: 4, subType: 0, settings: { chanceBase: 100, magnitude: { baseMin: 20, baseMax: 20, plusMin: 0, plusMax: 0, perLevel: 1 } } }], rangeType: 1, element, name: 'Venom' });
+  assert.equal(pvpFirstEffect(venom(2)), null, 'poison: no PvP effect');
+  assert.equal(pvpFirstEffect(venom(0))?.type, 4, 'fire: a Damage');
+  assert.deepEqual(casts(e, venom(2), 4), [0, 0, 0, 0], 'a poison bolt counts nothing at a player');
   assert.deepEqual([99999, 12].map((n) => siegeCastClamp(n, false)), [10_000, 12], 'the number the hosts send: the wire\'s most (PVP-HIT: the referee takes 45% of the body)');
 });
 

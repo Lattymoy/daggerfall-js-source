@@ -43,6 +43,9 @@ export const SIEGE_DISMOUNT_TEXT = "You can't ride a horse on a battlefield.";
  *  first"), and only Damage (4) reaches a player. Paralyze, Continuous Damage, Disintegrate, Silence and Drain (7; PVP-NO-DRAIN,
  *  "remove drain till we can balance it") stay home until they are rebalanced. */
 export const PVP_SPELL_TYPES = Object.freeze([4]);
+/** PVP-NO-POISON ("poison need diable in pvp"): DFU's poison element (2) harms no player. A weapon's poison never rode a
+ *  PvP blow (duelCombat.js duelStub: `poisonType = -1`, no onInflictPoison). */
+export const PVP_POISON_ELEMENT = 2;
 /** PVP-WARD: the element a spell carries to the referee (DFU's 0-4, net/wire.js PVP_ELEMENTS) - magic where it names none. */
 export const pvpSpellElement = (sp) => (Number.isInteger(sp?.element) && sp.element >= 0 && sp.element < PVP_ELEMENTS ? sp.element : PVP_ELEMENTS - 1);
 /** The one effect of `sp` that counts between players - its first, if it is a PvP family or a Heal Health - or null. */
@@ -51,7 +54,8 @@ export const pvpCastFrame = (p, harm, sp) => ({ p, d: siegeCastClamp(harm, false
 export function pvpFirstEffect(sp) {
   const e = Array.isArray(sp?.effects) ? sp.effects[0] : null;
   if (!e || !Number.isInteger(e.type)) return null;
-  return PVP_SPELL_TYPES.includes(e.type) || (e.type === 10 && e.subType === 8) ? e : null;
+  if (PVP_SPELL_TYPES.includes(e.type)) return sp.element === PVP_POISON_ELEMENT ? null : e;
+  return e.type === 10 && e.subType === 8 ? e : null;
 }
 
 /**
