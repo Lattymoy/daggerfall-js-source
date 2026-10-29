@@ -187,7 +187,7 @@ export function mapPixelToLongitudeLatitude(mapPixelX, mapPixelY) {
 
 /** ID of map pixel; maps to location and quest IDs (mapId & 0xfffff). */
 export function getMapPixelID(mapPixelX, mapPixelY) {
-  return mapPixelY * 1000 + mapPixelX;
+  return mapPixelY * 1000 + mapPixelX;   // BAY-OWN: MapsFile's own pixel id (DFU's GetMapPixelID)
 }
 
 export function getPixelFromPixelID(pixelID) {
@@ -335,13 +335,13 @@ export class MapsFile {
    *  PROVINCE_REGION_NAMES), which holds no MAPS.BSA record. */
   getRegionName(region) {
     if (isProvinceRegion(region)) return REGION_NAMES[region];
-    if (region < 0 || region >= this.regionCount) return '';
+    if (region < 0 || region >= this.regionCount) return '';   // BAY-OWN: MAPS.BSA's own regions, a province's answered above
     return REGION_NAMES[region];
   }
 
   /** Index of region with specified name, or -1 - WW-R: a province's too. */
   getRegionIndex(name) {
-    for (let i = 0; i < this.regionCount; i++) {
+    for (let i = 0; i < this.regionCount; i++) {   // BAY-OWN: MAPS.BSA's own regions
       if (REGION_NAMES[i] === name) return i;
     }
     for (let i = BAY_REGION_COUNT; i < REGION_NAMES.length; i++) if (REGION_NAMES[i] === name) return i;
@@ -350,7 +350,7 @@ export class MapsFile {
 
   /** Load a region into memory and decompose it for use. */
   loadRegion(region) {
-    if (region < 0 || region >= this.regionCount) return false;
+    if (region < 0 || region >= this.regionCount) return false;   // BAY-OWN: MAPS.BSA's own regions
     // DEPARTURE (measured): C# LoadRegion has NO cache check - every call
     // discards lastRegion and re-reads the four BSA records, rebuilding
     // DFRegion (MapsFile.cs:653-680). Memoized here. The decoded region is
@@ -395,7 +395,7 @@ export class MapsFile {
 
   /** Discard a region from memory. */
   discardRegion(region) {
-    if (region < 0 || region >= this.regionCount) return;
+    if (region < 0 || region >= this.regionCount) return;   // BAY-OWN: MAPS.BSA's own regions
     this._regions[region] = null;
   }
 

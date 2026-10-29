@@ -46,7 +46,7 @@ import { MerchantRepairWindow, REPAIR_PANEL_X, REPAIR_PANEL_Y, REPAIR_PANEL_H } 
 import { REFORGE_ROW_BG } from '../../src/ui/guildServiceWindow.js';
 import { madeLevelRule } from '../../src/systems/madeLevel.js';   // EG-H2: the made level's law
 import { buildWildMask, wildInside, WILD_NAME, wildJourney } from '../../src/systems/wild/wildZone.js';
-import { zonePortFree } from '../../src/systems/wild/zoneSafe.js';   // WILD-CITY-PORT
+import { zonePortFree, teleportLanding } from '../../src/systems/wild/zoneSafe.js';   // WILD-CITY-PORT
 import { pastBayJourney, teleportJourney } from '../../src/systems/travel/pastBayTravel.js';   // PORTAL-BAY: the teleport's law past the Bay   // AUDIT TESA II Z5: the open zone's teleport law, the world's own
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -582,8 +582,8 @@ test('PORTAL1 the door, the pick and the arrival, as world.js runs them (PIN MOV
   // no zone until the pin at the end stands one
   Object.assign(scope, { wildInside, WILD_NAME, etherWildRingAt: () => 0, ETHER_WILD_TEXT: { teleport: () => 'the sea' }, staffPowers: () => ({}), TEST_GODMODE: false, wildMapMask: () => null, online: { wildOk: false } });
   // WILD-CITY-PORT (systems/wild/zoneSafe.js zonePortFree): no settlement stands anywhere in these pins
-  Object.assign(scope, { zonePortFree, wildOutdoors: () => true, campToWire: (p) => p, locationIndex: new Map(), _locationToBuild: () => null });
-  scope.wildTeleportRefused = mount(scope, cut(w, 'const wildTeleportRefused = (to = null) => {', '\n  };\n'), 'wildTeleportRefused');
+  Object.assign(scope, { zonePortFree, teleportLanding, wildOutdoors: () => true, campToWire: (p) => p, locationIndex: new Map(), _locationToBuild: () => null });
+  scope.wildTeleportRefused = mount(scope, cut(w, 'const wildTeleportRefused = (to = null, landing = undefined) => {', '\n  };\n'), 'wildTeleportRefused');
   // PIN MOVED (PORTAL-BAY): the pick and the step ask the teleport's whole gate (teleportRefused) - the world's own journey
   // gate under the teleport's law past the Bay, mounted
   Object.assign(scope, { pastBayJourney, teleportJourney, wildJourney, legacyGold: () => 0 });

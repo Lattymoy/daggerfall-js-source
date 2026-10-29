@@ -7855,8 +7855,8 @@
   "by": "claude-in-session"
  },
  "cards.kingsGambit.tier.grandmaster.blurb": {
-  "en": "e90eb9224115",
-  "tr": "20c31cf05b8f",
+  "en": "8ef61792b7ce",
+  "tr": "b9f088059c1b",
   "by": "claude-in-session"
  },
  "cards.kingsGambit.tier.grandmaster.name": {
@@ -9375,8 +9375,8 @@
   "by": "claude-in-session"
  },
  "coll.src.world": {
-  "en": "45b24cf8e9dc",
-  "tr": "000fbdd07b89",
+  "en": "859abfc107a6",
+  "tr": "1dda0e79ed62",
   "by": "claude-in-session"
  },
  "coll.state.character": {
@@ -9870,8 +9870,8 @@
   "by": "claude-in-session"
  },
  "credits.raidingParties.what": {
-  "en": "2b5425ccdd69",
-  "tr": "e15cc4f509d9",
+  "en": "bb222d9a7638",
+  "tr": "b58c651df263",
   "by": "claude-in-session"
  },
  "credits.raum.terms": {
@@ -10100,13 +10100,13 @@
   "by": "claude-in-session"
  },
  "death.line": {
-  "en": "cdd3b91f52a8",
-  "tr": "7cb48be2f02d",
+  "en": "34ce148409b8",
+  "tr": "ca1f1d66fdff",
   "by": "claude-in-session"
  },
  "death.lineOnline": {
-  "en": "5187ab11d756",
-  "tr": "522a1c2bd84b",
+  "en": "6dce27363b1e",
+  "tr": "1f2bcc9279f4",
   "by": "claude-in-session"
  },
  "death.risingIn": {
@@ -12115,8 +12115,8 @@
   "by": "claude-in-session"
  },
  "features.navalCombat.note": {
-  "en": "f99d78c1a1b2",
-  "tr": "70a31eebad71",
+  "en": "944b2490617e",
+  "tr": "9334923721bb",
   "by": "claude-in-session"
  },
  "features.navalCombat.raidPrize": {
@@ -12294,6 +12294,16 @@
   "tr": "aa70722629a5",
   "by": "claude-in-session"
  },
+ "features.tamrielLand.note": {
+  "en": "c4201ee9109a",
+  "tr": "2ce7142bcd0c",
+  "by": "claude-in-session"
+ },
+ "features.tamrielLand.title": {
+  "en": "3bc7615ad83a",
+  "tr": "0ad20ff7b20f",
+  "by": "claude-in-session"
+ },
  "features.tamrielLands.note": {
   "en": "dc37f2698218",
   "tr": "86718fa168e5",
@@ -12302,6 +12312,16 @@
  "features.tamrielLands.title": {
   "en": "1e8a962cf274",
   "tr": "c6790a62739e",
+  "by": "claude-in-session"
+ },
+ "features.tamrielMap.note": {
+  "en": "eda2af4235c1",
+  "tr": "9c42323beca1",
+  "by": "claude-in-session"
+ },
+ "features.tamrielMap.title": {
+  "en": "b5c1bd42eaeb",
+  "tr": "5b87f0a31cc9",
   "by": "claude-in-session"
  },
  "features.torchesFromItems.effect": {
@@ -18072,6 +18092,41 @@
  "madeRules.unstuckHome": {
   "en": "2fe2d2f75081",
   "tr": "5f16b4fd788d",
+  "by": "claude-in-session"
+ },
+ "map.sheet.bay": {
+  "en": "78880f8c76b4",
+  "tr": "63948d05b106",
+  "by": "claude-in-session"
+ },
+ "map.sheet.dungeon": {
+  "en": "ef947e3aef31",
+  "tr": "51ae4b051e53",
+  "by": "claude-in-session"
+ },
+ "map.sheet.interior": {
+  "en": "1dd68e5c21e5",
+  "tr": "7917ce7e7d87",
+  "by": "claude-in-session"
+ },
+ "map.sheet.tamriel": {
+  "en": "b2fa7a769061",
+  "tr": "343d1eca0726",
+  "by": "claude-in-session"
+ },
+ "map.sheet.town": {
+  "en": "5d9c113b57b1",
+  "tr": "197ab5565706",
+  "by": "claude-in-session"
+ },
+ "map.tamriel.place": {
+  "en": "51513f0338a4",
+  "tr": "51513f0338a4",
+  "by": "claude-in-session"
+ },
+ "map.tamriel.placeKind": {
+  "en": "4baa9f07cc0b",
+  "tr": "4baa9f07cc0b",
   "by": "claude-in-session"
  },
  "market.arrived.bought": {
@@ -23890,8 +23945,8 @@
   "by": "claude-in-session"
  },
  "mods.worldEventsRaidingParties.Enabled.description": {
-  "en": "faf3c20cfa2b",
-  "tr": "dd716b353df0",
+  "en": "79559d752948",
+  "tr": "4486af15d6e9",
   "by": "claude-in-session"
  },
  "mods.worldOfDaggerfall.Enabled.description": {
@@ -30690,8 +30745,8 @@
   "by": "claude-in-session"
  },
  "prof.page.notPractised": {
-  "en": "47a1cbf0da7a",
-  "tr": "99a08c6c9cf5",
+  "en": "1da1d8e73696",
+  "tr": "57e6ed302a62",
   "by": "claude-in-session"
  },
  "prof.page.plane.clean": {
@@ -32320,8 +32375,8 @@
   "by": "claude-in-session"
  },
  "pvp.level30.warn": {
-  "en": "0a84a8632180",
-  "tr": "e51a1fd34896",
+  "en": "6c45d870e1ce",
+  "tr": "6461527b7bbb",
   "by": "claude-in-session"
  },
  "pvp.potion.health": {
@@ -37830,8 +37885,8 @@
   "by": "claude-in-session"
  },
  "serpent.honour.title": {
-  "en": "429ff6532051",
-  "tr": "8f762b9a454b",
+  "en": "5380a2c35f67",
+  "tr": "2f412f8fd675",
   "by": "claude-in-session"
  },
  "settings.language.machine": {

@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 
 import {
   serpentTimes, serpentAt, serpentPhase, serpentDayAt, isSerpentDay, serpentAdmits, serpentHolds, serpentSwims, serpentMarked,
-  serpentCountdown, serpentCountdownWords, serpentClock, serpentRing, serpentRoll, serpentLaneOf, serpentAlongOf, SERPENT_ALONG,
+  serpentCountdown, serpentCountdownWords, serpentClock, serpentRing, serpentRoll, serpentLaneScore, serpentAlongAt, SERPENT_ALONG,
   serpentBossOf, serpentBossById, SERPENT_BOSSES, sightingLine, risingLine, sealLine, soundLine, slainLine, SERPENT_DAY_MINUTES,
   SERPENT_EVERY_DAYS, SERPENT_SURFACE_MS, SERPENT_DIVE_MS, SERPENT_RING_PIXELS, SERPENT_NATIVE_PER_M,
 } from '../../../src/net/serpent/serpentLaw.js';
@@ -111,13 +111,16 @@ test('SERPENT1 schedule: who may come - a newcomer from the rising until it dive
 test('SERPENT1 rolls: the lane tries and the place along each are the day\'s own hash, the place in the lane\'s middle stretch; the ring on the map holds its site (mutants: the along share outside its stretch; the ring centred on the site with no shift)', () => {
   assert.equal(serpentRoll(363, 5), serpentRoll(363, 5));
   assert.notEqual(serpentRoll(363, 5), serpentRoll(365, 5));
+  // PIN MOVED (AUDIT TAMRIEL-WIDE E3): a lane is scored by its two ends' world keys, and its place along is its own -
+  // never an index into the list (test/world/worldWide/audit_tamrielwide_relay.test.js holds the order)
   for (let i = 0; i < 50; i++) {
-    const k = serpentLaneOf(363 + 2 * i, i % 7, 41);
-    assert.ok(Number.isInteger(k) && k >= 0 && k < 41);
-    const a = serpentAlongOf(363 + 2 * i, i);
+    const k = serpentLaneScore(363 + 2 * i, 1000 + i, 2000 + i);
+    assert.ok(Number.isInteger(k) && k >= 0 && k < 2 ** 32);
+    assert.equal(k, serpentLaneScore(363 + 2 * i, 1000 + i, 2000 + i), 'every client the same');
+    const a = serpentAlongAt(363 + 2 * i, 1000 + i, 2000 + i);
     assert.ok(a >= SERPENT_ALONG[0] && a <= SERPENT_ALONG[1]);
   }
-  assert.equal(serpentLaneOf(363, 0, 0), -1, 'no lanes, no lane');
+  assert.notEqual(serpentLaneScore(363, 1, 2), serpentLaneScore(363, 1, 3), 'another lane, another score');
   assert.equal(SERPENT_NATIVE_PER_M, 32768 / GATE_PIXEL_M, 'the map pixel\'s metres the gate\'s own (AUDIT SERPENT 2: imported, never a second literal)');
   let shifted = 0;
   for (let day = 1; day < 200; day += 2) {

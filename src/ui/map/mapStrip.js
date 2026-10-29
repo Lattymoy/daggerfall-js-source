@@ -41,6 +41,7 @@
 
 import { MAP_SHEETS, sheetsFor, openOn } from '../../systems/map/mapTabs.js';
 import { PEN, HALO_PEN, NAME_FACE } from '../ink/inkMap.js';
+import { t } from '../../systems/textManager.js';   // AUDIT TAMRIEL-WIDE D3: the tabs in the player's language
 
 /** The strip's geometry, in paper pixels at `refPaper` wide, scaled
  *  from there so the tabs keep their size against the sheet rather than
@@ -60,11 +61,13 @@ export const STRIP = Object.freeze({
 /** What each sheet is CALLED on the strip. A table rather than a field
  *  on the sheet object, because the automap's own name depends on where
  *  it is read - a shop's plan is not a dungeon's - and a sheet that
- *  names itself would have to be told the context anyway. */
-export function sheetTitle(sheet, context) {
-  if (sheet === 'automap') return context === 'building' ? 'Interior' : 'Dungeon';
-  if (sheet === 'town') return 'Town';
-  return 'The Bay';
+ *  names itself would have to be told the context anyway. AUDIT
+ *  TAMRIEL-WIDE D3: the world sheet is Tamriel's where it shows the
+ *  continent (`continent`), the Bay's where it stops at the Bay's edge. */
+export function sheetTitle(sheet, context, continent = false) {
+  if (sheet === 'automap') return context === 'building' ? t('map.sheet.interior', 'Interior') : t('map.sheet.dungeon', 'Dungeon');
+  if (sheet === 'town') return t('map.sheet.town', 'Town');
+  return continent ? t('map.sheet.tamriel', 'Tamriel') : t('map.sheet.bay', 'The Bay');
 }
 
 /** The face the tabs are lettered in - the sheet's own, at the strip's
@@ -94,10 +97,10 @@ export function stripScale(paperW) {
  * and never reaches a player.
  *
  * @param {{context?: string, ids?: readonly string[], live?: string|null}} slot
- * @param {{paperW?: number, measure?: ((t: string, f: number) => number)|null}} [opts]
+ * @param {{paperW?: number, measure?: ((t: string, f: number) => number)|null, continent?: boolean}} [opts]
  * @returns {{scale:number, fontPx:number, h:number, tabs:Array<{sheet:string,title:string,x:number,y:number,w:number,h:number,live:boolean}>}}
  */
-export function stripLayout(slot, { paperW = STRIP.refPaper, measure = null } = {}) {
+export function stripLayout(slot, { paperW = STRIP.refPaper, measure = null, continent = false } = {}) {
   const context = slot?.context ?? 'wilderness';
   const live = slot?.live ?? null;
   const scale = stripScale(paperW);
@@ -113,7 +116,7 @@ export function stripLayout(slot, { paperW = STRIP.refPaper, measure = null } = 
   // MAP_SHEETS is what keeps a sheet this place does not offer - or
   // this build cannot draw - off the paper entirely.
   for (const sheet of slot?.ids ?? []) {
-    const title = sheetTitle(sheet, context);
+    const title = sheetTitle(sheet, context, continent);
     const w = width(title);
     tabs.push({ sheet, title, x, y: pad.y, w, h, live: sheet === live });
     x += w + gap;

@@ -325,8 +325,8 @@ test('AUDIT GUILD3 T6, T7: the client\'s hold codes are the service\'s, its gold
 test('AUDIT GUILD3 T9: the words, each a literal - the primer, the Overview\'s Elsewhere and its heading, every silver line\'s kind (mutants: each)', () => {
   assert.deepEqual([...GUILD_PRIMER_LINES], [
     'Guild members share a gold treasury, a silver treasury and a vault for items. A guild can also buy a hall under its own arms.',
-    'Together they can hold seats of the Iliac Bay: a palace\'s or a crown\'s Charter, contested from that town\'s Notice Board.',
-  ]);
+    'Together they can hold seats across Tamriel: a palace\'s or a crown\'s Charter, contested from that town\'s Notice Board.',
+  ]);   // PIN MOVED (AUDIT TAMRIEL-WIDE D6): a province's capital and an Arena city-state hold seats too (WW7)
   assert.equal(GUILD_ELSEWHERE_TEXT, 'Seats and sieges are run from the Seat tab of a seat town\'s Notice Board, where you can also read its Chronicle. Guild writs and contracts are posted from the Work tab of any Notice Board.');
   assert.match(src('src/ui/socialPanel.js'), /out\.push\(el\('div', 'dfsocial-sec', 'Elsewhere'\), el\('div', 'dfsocial-empty', GUILD_ELSEWHERE_TEXT\)\);/);
   assert.equal(GUILD_KEEPS_HEAD, 'Before the guild can be disbanded');

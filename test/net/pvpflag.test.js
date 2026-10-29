@@ -264,7 +264,7 @@ test('PVP-30 THE ASK (ui/levelUp/pvp30Ask.js, ui/charSheetDoor.js, ui/growth/gro
   const e = { _online: true, readyToLevelUp: true, level: 29 };
   assert.equal(pvp30Asks(e), true);
   for (const o of [{ ...e, _online: false }, { ...e, level: 28 }, { ...e, level: 30 }, { ...e, oghmaLevelUp: true }, { ...e, readyToLevelUp: false }]) assert.equal(pvp30Asks(o), false);
-  assert.deepEqual(pvp30Rows(), ['At level 30, other players can attack and kill you in the PvP zones (Cyrodiil and the sea), even with your PvP flag off.', '', 'Continue to level 30?']);
+  assert.deepEqual(pvp30Rows(), ['At level 30, other players can attack and kill you in the PvP zones (Cyrodiil, the open Eltheric Ocean), even with your PvP flag off.', '', 'Continue to level 30?']);   // PIN MOVED (AUDIT TAMRIEL-WIDE III T8): the owner's words, the sea named as the zone it is
   assert.equal(pvp30No(), 'Not yet');
   assert.equal(levelUpScreenFor(e), null, 'no rollout before the Yes');
   let opened = 0;
@@ -312,7 +312,7 @@ test('PVP-EDGE (systems/wild/zoneEdge.js, net/online.js, net/wire.js, net/wild/w
   assert.deepEqual([st.fighters.get('acct-a').graceUntil, st.fighters.get('acct-b').graceUntil], [-Infinity, WILD_GRACE.ms], 'walked in: passage; else none');
   // the wire
   assert.deepEqual(validWildData({ k: 'zone', z: 1, ed: 1 }), { k: 'zone', z: 1, ed: 1 });
-  assert.ok(rd('src/scenes/world.js').includes('online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere() && wildOutdoors(), player.pos, Date.now()));'), 'the host says each walk');
+  assert.ok(rd('src/scenes/world.js').includes('online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere(), player.pos, Date.now()));'), 'the host says each walk');
   assert.deepEqual(validWildData({ k: 'zone', z: 0, ed: 1 }), { k: 'zone', z: 0 });
   // the link: on the entry alone
   const info = console.info, warn = console.warn; console.info = () => {}; console.warn = () => {};
