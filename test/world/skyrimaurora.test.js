@@ -174,7 +174,7 @@ test('SKYRIM-AURORA THE PASS\'S DIALS: the tiers, the curtains, the clock, the c
   assert.deepEqual([[...AURORA_HEM], [...AURORA_CROWN], [...AURORA_GLOW]], [[0.25, 1, 0.55], [0.1, 0.6, 0.9], [0.08, 0.25, 0.85]]);
   assert.deepEqual([AURORA_GAIN, AURORA_PEAK, AURORA_HORIZON_LIFT], [0.42, 0.95, 1.5]);
   assert.deepEqual({ ...AURORA_DOME }, { width: 256, height: 64, steps: 6, every: 3 });
-  assert.deepEqual([[...AURORA_LIGHT], AURORA_MIRROR, AURORA_SKY_UNIT], [[0.012, 0.06, 0.042], 0.3, 24]);
+  assert.deepEqual([[...AURORA_LIGHT], AURORA_MIRROR, AURORA_SKY_UNIT], [[0.012, 0.06, 0.042], 0.3, 25]);
   // the skip: the waves' amplitudes summed, and the glow out to where it is under 1/100 (exp(-2.5 * 1.4^2))
   close(AURORA_REACH, 0.55 + 0.3 + 0.35 + 1.4, 1e-12);
   assert.ok(Math.exp(-2.5 * 1.4 * 1.4) < 0.01);
@@ -437,7 +437,7 @@ test('SKYRIM-AURORA THE WATER\'S MIRROR: the sky controller hands the dome map w
   assert.match(r, /for \(const unit of \[SNOW_LINES_UNIT, AURORA_SKY_UNIT\]\) \{ this\._activeTexture\(gl\.TEXTURE0 \+ unit\); gl\.bindTexture\(gl\.TEXTURE_2D, this\._blackTex\); \}/);
 });
 
-test('SKYRIM-AURORA THE UNIT, THE AURORA\'S ALONE: no other fixed texture unit is AURORA_SKY_UNIT - so a snow pass between two water draws leaves the dome map where the water\'s cache says it is (mutants: the unit the snow\'s far map\'s, as it first was)', () => {
+test('SKYRIM-AURORA THE UNIT, THE AURORA\'S ALONE: no other fixed texture unit is AURORA_SKY_UNIT - so a snow pass between two water draws leaves the dome map where the water\'s cache says it is (mutants: the unit the snow\'s far map\'s, as it first was; the window light\'s, as main took it)', () => {
   const dir = new URL('../../src/render/', import.meta.url);
   const others = [];
   for (const f of readdirSync(dir).filter((n) => n.endsWith('.js'))) {

@@ -89,8 +89,8 @@ the bare Fresnel, a few hundredths looking down, hid them.
 
 The map is by direction, so a reflection a frame or two old still lines up. It is handed only on a frame the aurora
 drew, and marched afresh after a frame it did not or a gap of half a real second (`AURORA_DOME_GAP_S`: an interior, a
-hitch), so the water never shows old curtains. The renderer binds it on unit 24, no other fixed unit's, and holds the
-black texel there while there is none.
+hitch), so the water never shows old curtains. The renderer binds it on unit 25, no other fixed unit's (WL1's window
+light took 24 the same day), and holds the black texel there while there is none.
 
 Found on the way: the water's snow-lines sampler got its unit only on a frame with the ground's snow. A frame without it
 left the sampler on unit 0 beside the tile array, and the water was refused. So the water never drew with Enhanced
@@ -145,7 +145,7 @@ waits, so a late one fades in. Elsewhere the first frame that wants it builds it
   It reads the sky alone, and that run came before the light and the water; the water lab shows those.
 - `test/world/skyrimaurora.test.js` pins the law, the place on the traced map (with ARENA2), the sea, the clock, the
   pass, the dome map, the land's light, the water's mirror, the unit, the door and the wiring.
-  `tools/mutants/skyrimaurora.json` holds 103 mutants, all dead.
+  `tools/mutants/skyrimaurora.json` holds 104 mutants, all dead.
 
 ## AUDIT SKYRIM-AURORA (2026-10-29)
 

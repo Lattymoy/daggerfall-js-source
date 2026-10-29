@@ -740,7 +740,7 @@
   {
     "name": "SKYRIM-AURORA-the-unit-shared",
     "file": "src/render/waterSurface.js",
-    "old": "export const AURORA_SKY_UNIT = 24;",
+    "old": "export const AURORA_SKY_UNIT = 25;",
     "new": "export const AURORA_SKY_UNIT = 0;",
     "tests": [
       "test/world/skyrimaurora.test.js"
@@ -785,7 +785,7 @@
   {
     "name": "SKYRIM-AURORA-the-unit-the-snows",
     "file": "src/render/waterSurface.js",
-    "old": "export const AURORA_SKY_UNIT = 24;",
+    "old": "export const AURORA_SKY_UNIT = 25;",
     "new": "export const AURORA_SKY_UNIT = 19;",
     "tests": [
       "test/world/skyrimaurora.test.js"
@@ -922,6 +922,15 @@
     "file": "src/render/auroraPass.js",
     "old": "    withTarget(gl, map, viewport, () => {",
     "new": "    withTarget(gl, map, [0, 0, 1, 1], () => {",
+    "tests": [
+      "test/world/skyrimaurora.test.js"
+    ]
+  },
+  {
+    "name": "SKYRIM-AURORA-the-unit-the-windows",
+    "file": "src/render/waterSurface.js",
+    "old": "export const AURORA_SKY_UNIT = 25;",
+    "new": "export const AURORA_SKY_UNIT = 24;",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
