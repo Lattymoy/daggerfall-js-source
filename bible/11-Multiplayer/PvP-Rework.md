@@ -275,9 +275,10 @@ coin where it fits, else a letter of credit for the whole - the trade window's o
 (`server-account/src/wild.js:"drop = takeWildDeath(save, w, keep, wt, { insured, bag: false, purse: false });"`). The purse's
 tenth and the letters' tenth went to the remains until PVP-NO-TENTH, below; the cart and the packs stay storage. A villain has no insurance:
 `pvpReward.js:"export const pvpInsuredFor ="` takes `villain`: "villian lose insurance" - a fallen whose kept meter is red holds no policy
-(`wild.js:"{ villain: isVillain(Number(row.villainy)) }"`). "Insurance cost 20%": a
+(`wild.js:"{ villain: isVillain(Number(row.villainy)), among: stored.items }"`). "Insurance cost 20%": a
 premium stays a fifth of `itemWorth` (`wildInsureLaw.js:"export const WILD_INSURE_DIVISOR = 5;"`), which counts the
-piece's price and its lines' worth. The service is acct214 (acct211 on its branch). A departure: DFU has no PvP.
+piece's price and its lines' worth - and, since INSURE-ALL (`Wild-Zone.md` 4b), the item maker's gold, on every piece of
+gear. The service is acct214 (acct211 on its branch). A departure: DFU has no PvP.
 
 ## PVP-RISE: a death's wait like PvE's
 
