@@ -173,8 +173,8 @@
  {
   "name": "STAR5-any-part",
   "file": "src/world/worldOfDaggerfall/wodShared.js",
-  "old": "star\\.\\d{1,10}\\.[0-2](?:\\.[mc])?)$/;",
-  "new": "star\\.\\d{1,10}\\.[0-2](?:\\.[a-z])?)$/;",
+  "old": "star\\.\\d{1,10}\\.[0-2](?:\\.[mc])?|brass\\.[0-2]\\.\\d(?:\\.h)?)$/;",
+  "new": "star\\.\\d{1,10}\\.[0-2](?:\\.[a-z])?|brass\\.[0-2]\\.\\d(?:\\.h)?)$/;",
   "tests": [
    "test/systems/starfall/star5_defense.test.js"
   ]

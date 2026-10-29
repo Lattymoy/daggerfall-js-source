@@ -101,7 +101,7 @@
   {
     "name": "SET2-the-outdoor-report-dropped",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (fromPlayer && !peer) reportPlayerKill(f.entity, { kind });   // SET2: MY blow killed it (a set's \"each kill\")\n",
+    "old": "      if (fromPlayer && !peer) reportPlayerKill(f.entity, { kind, fx: killFxOf(f) });   // SET2: MY blow killed it (a set's \"each kill\"); STOREFRONT: and where it falls, before its flat goes\n",
     "new": "",
     "tests": [
       "test/systems/set2_seams.test.js"
@@ -110,8 +110,8 @@
   {
     "name": "SET2-a-peers-kill-told-as-mine",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      if (fromPlayer && !peer) reportPlayerKill(foe.entity, { kind });",
-    "new": "      reportPlayerKill(foe.entity, { kind });",
+    "old": "      if (fromPlayer && !peer) reportPlayerKill(foe.entity, { kind, fx: killFxOf(foe) });",
+    "new": "      reportPlayerKill(foe.entity, { kind, fx: killFxOf(foe) });",
     "tests": [
       "test/systems/set2_seams.test.js"
     ]

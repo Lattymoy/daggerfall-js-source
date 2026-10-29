@@ -20,24 +20,24 @@ export const PASS_STAGE_TEXT = Object.freeze({
   halls: () => t('pass.stage.halls', 'The Brass Halls'),
   heart: () => t('pass.stage.heart', 'The Heart Wakes'),
 });
-/** Each challenge's family's words, `{n}` its count. */
+/** Each challenge's family's words, its count `n` an argument - so a language writes its own plural forms. */
 const CHALLENGE_WORDS = Object.freeze({
-  foes: () => t('pass.ch.foes', 'Kill {n} foes'),
-  constructs: () => t('pass.ch.constructs', 'Destroy {n} Dwemer constructs'),
-  gather: () => t('pass.ch.gather', 'Gather {n} times'),
-  tavern: () => t('pass.ch.tavern', 'Win {n} tavern games'),
-  endgame: () => t('pass.ch.endgame', 'Win {n} endgame fights: a breach, a Redoubt, the Serpent or a star'),
-  elites: () => t('pass.ch.elites', 'Kill {n} elites or champions'),
-  make: () => t('pass.ch.make', 'Make or find {n} items'),
-  world: () => t('pass.ch.world', 'Finish {n} world events, quests or bounties'),
-  sea: () => t('pass.ch.sea', 'Gather or win at sea {n} times'),
+  foes: (n) => t('pass.ch.foes', 'Kill {n, plural, one {# foe} other {# foes}}', { n }),
+  constructs: (n) => t('pass.ch.constructs', 'Destroy {n, plural, one {# Dwemer construct} other {# Dwemer constructs}}', { n }),
+  gather: (n) => t('pass.ch.gather', 'Gather {n, plural, one {# time} other {# times}}', { n }),
+  tavern: (n) => t('pass.ch.tavern', 'Win {n, plural, one {# tavern game} other {# tavern games}}', { n }),
+  endgame: (n) => t('pass.ch.endgame', 'Win {n, plural, one {# endgame fight} other {# endgame fights}}: a breach, a Redoubt, the Serpent or a star', { n }),
+  elites: (n) => t('pass.ch.elites', 'Kill {n, plural, one {# elite or champion} other {# elites or champions}}', { n }),
+  make: (n) => t('pass.ch.make', 'Make or find {n, plural, one {# item} other {# items}}', { n }),
+  world: (n) => t('pass.ch.world', 'Finish {n, plural, one {# world event, quest or bounty} other {# world events, quests or bounties}}', { n }),
+  sea: (n) => t('pass.ch.sea', 'Gather or win at sea {n, plural, one {# time} other {# times}}', { n }),
 });
 /** A challenge's words, its count in them - '' for a key the law does not know. */
 export function passChallengeText(/** @type {string} */ key) {
   const c = passChallengeOf(key);
   if (!c) return '';
   const fam = /** @type {keyof typeof CHALLENGE_WORDS} */ (key.slice(key.indexOf('-') + 1));
-  return CHALLENGE_WORDS[fam]?.().replace('{n}', c.n.toLocaleString()) ?? '';
+  return CHALLENGE_WORDS[fam]?.(c.n) ?? '';
 }
 /** A booster's look: its share and the levels it gives. */
 export function passBoostText(/** @type {string} */ id) {

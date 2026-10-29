@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-MERGE-PLUS-B3-a-returning-peer-not-seen-afresh",
     "file": "src/net/peer/peerFx.js",
-    "old": "if (!s || s.tick < tick - 1) { seen.set(id, { hk, hu, tick }); return; }",
-    "new": "if (!s) { seen.set(id, { hk, hu }); return; }",
+    "old": "if (!s || s.tick < tick - 1) { seen.set(id, { hk, hu, xk, tick }); return; }",
+    "new": "if (!s) { seen.set(id, { hk, hu, xk }); return; }",
     "tests": [
       "test/systems/auditmergeplus_plus.test.js"
     ]

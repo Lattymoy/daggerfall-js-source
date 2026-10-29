@@ -24,7 +24,7 @@ const NEW_TITLES = ['dawnbringer', 'voidwalker', 'eternalchampion', 'brassbound'
 const PLATES = ['dawnbringer', 'voidwalker', 'eternalchampion', 'heartwaker', 'numidiumecho'];
 const NEW_GLYPHS = ['oblivion', 'gatesigil', 'gearcrown', 'tonalfork', 'cog'];
 const NEW_ICONS = ['centurion', 'aetherium', 'lexicon', 'spider', 'sphere', 'colossus', 'gearheart', 'numidium'];
-const NEW_AURAS = ['dominion', 'aetherium', 'aetheriumgilded'];
+const NEW_AURAS = ['dominion', 'aetherium', 'gildedcoil'];
 const apart = (a, b) => Math.hypot(...[0, 1, 2].map((i) => (a[i] - b[i]) * 255));
 const TAU = Math.PI * 2;
 
@@ -185,7 +185,7 @@ test('STOREFRONT the auras: each its words and its title\'s paint, a look of its
   assert.equal(new Set(kinds).size, kinds.length, 'no two looks one kind');
   assert.deepEqual({ ...AURA_LOOK.dominion }, { kind: 16, ringR: DOMINION_R, flameH: 1.5, glyphs: 0, shade: true });
   assert.deepEqual({ ...AURA_LOOK.aetherium }, { kind: 17, ringR: HELIX_R, flameH: HELIX_H, glyphs: 0 });
-  assert.deepEqual({ ...AURA_LOOK.aetheriumgilded }, { kind: 18, ringR: HELIX_R, flameH: HELIX_H, glyphs: 0 });
+  assert.deepEqual({ ...AURA_LOOK.gildedcoil }, { kind: 18, ringR: HELIX_R, flameH: HELIX_H, glyphs: 0 });
   assert.ok(HELIX_R > 0.5 && HELIX_R < AURA_GROUND_R && HELIX_H > 1.9, 'the coil clear of the shoulders, past the crown');
   assert.equal(dominionRatesWhole(), true);
   assert.equal(helixRatesWhole(), true);
@@ -227,7 +227,7 @@ test('STOREFRONT the Daedric Dominion, the shader RUN: a letter of its script li
 });
 
 test('STOREFRONT the coils, the shader RUN: the aetherium strand blue where the coil\'s law puts it at that height and clock, the brass half a turn round from it, dark between; its foot a ring of brass at the feet; the gilded\'s brass the brighter and golder; nothing before it kindles (mutants: the strand off its law; the brass on the strand; the coil still)', () => {
-  for (const aura of ['aetherium', 'aetheriumgilded']) {
+  for (const aura of ['aetherium', 'gildedcoil']) {
     for (const [v, t] of [[0.3, 7.1], [0.55, 40.2], [0.7, 93.4]]) {
       const u = helixStrandAt(v, t);
       const strand = run(aura, 1, [u, v], { t }), brass = run(aura, 1, [(u + 0.5) % 1, v], { t }), between = run(aura, 1, [(u + 0.25) % 1, v], { t });
@@ -240,6 +240,6 @@ test('STOREFRONT the coils, the shader RUN: the aetherium strand blue where the 
     assert.deepEqual(run(aura, 1, [helixStrandAt(0.3, 7.1), 0.3], { t: 7.1, kindle: 0 }).slice(0, 3), [0, 0, 0], 'nothing before it kindles');
   }
   const v = 0.4, t = 21.3, u = (helixStrandAt(v, t) + 0.5) % 1;
-  const plain = run('aetherium', 1, [u, v], { t }), gilded = run('aetheriumgilded', 1, [u, v], { t });
+  const plain = run('aetherium', 1, [u, v], { t }), gilded = run('gildedcoil', 1, [u, v], { t });
   assert.ok(gilded[0] + gilded[1] > (plain[0] + plain[1]) * 1.3 && gilded[1] / gilded[0] > plain[1] / plain[0], 'the gilded\'s brass the brighter and golder');
 });

@@ -149,7 +149,7 @@ const CATALOGUE = {
   'title:dawnbringer': 'shop store', 'title:voidwalker': 'shop store', 'title:eternalchampion': 'shop store', 'aura:dominion': 'shop store',
   'glyph:oblivion': 'shop store', 'glyph:gatesigil': 'shop store', 'glyph:gearcrown': 'shop store',
   'title:brassbound': 'pass pass', 'title:tremorborn': 'pass pass', 'title:tonalarchitect': 'pass pass', 'title:brasswright': 'pass pass',
-  'title:heartwaker': 'pass pass', 'title:numidiumecho': 'pass pass', 'aura:aetherium': 'pass pass', 'aura:aetheriumgilded': 'pass pass',
+  'title:heartwaker': 'pass pass', 'title:numidiumecho': 'pass pass', 'aura:aetherium': 'pass pass', 'aura:gildedcoil': 'pass pass',
   'icon:centurion': 'pass pass', 'icon:aetherium': 'pass pass', 'icon:lexicon': 'pass pass', 'icon:spider': 'pass pass', 'icon:sphere': 'pass pass',
   'icon:colossus': 'pass pass', 'icon:gearheart': 'pass pass', 'icon:numidium': 'pass pass', 'glyph:tonalfork': 'pass pass', 'glyph:cog': 'pass pass',
 };

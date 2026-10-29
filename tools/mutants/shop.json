@@ -2,8 +2,8 @@
   {
     "name": "SHOP-price-moved",
     "file": "src/net/shopLaw.js",
-    "old": "  ware('title', 'genesis', 500, 1),",
-    "new": "  ware('title', 'genesis', 400, 1),",
+    "old": "  ware('title', 'genesis', 500, pre(1)),",
+    "new": "  ware('title', 'genesis', 400, pre(1)),",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SHOP-two-bits-shared",
     "file": "src/net/shopLaw.js",
-    "old": "  ware('aura', 'eternal', 2000, 4),",
-    "new": "  ware('aura', 'eternal', 2000, 2),",
+    "old": "  ware('aura', 'eternal', 2000, pre(4)),",
+    "new": "  ware('aura', 'eternal', 2000, pre(2)),",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SHOP-kind-read-as-another",
     "file": "src/net/shopLaw.js",
-    "old": "const keys = SHOP_WARES.filter((w) => w.kind === kind && held.includes(w.id)).flatMap(",
-    "new": "const keys = SHOP_WARES.filter((w) => held.includes(w.id)).flatMap(",
+    "old": "  return SHOP_WARES.filter((w) => w.kind === kind && !w.gives.length && held.includes(w.id)).map((w) => w.key);",
+    "new": "  return SHOP_WARES.filter((w) => !w.gives.length && held.includes(w.id)).map((w) => w.key);",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SHOP-handle-guard-dropped",
     "file": "server-account/src/titles.js",
-    "old": "(typeof player?.handle === 'string' && player.handle ? shopKeysOf(player?.shop_wares, kind) : [])",
-    "new": "shopKeysOf(player?.shop_wares, kind)",
+    "old": "(typeof player?.handle === 'string' && player.handle ? shopKeysOf(player, kind) : [])",
+    "new": "shopKeysOf(player, kind)",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "SHOP-sale-unchecked-at-press",
     "file": "server-account/src/shop.js",
-    "old": "  if (!shopOnSale(env).includes(ware.id)) return { page: 'sold' };\n",
+    "old": "  if (!shopSoldNow(env, ware, nowS)) return { page: 'sold' };\n",
     "new": "",
     "tests": [
       "test/server/shop_service.test.js"
@@ -83,7 +83,7 @@
   {
     "name": "SHOP-held-unchecked-at-press",
     "file": "server-account/src/shop.js",
-    "old": "  if (shopOwns(player.shop_wares, ware.id)) return { page: 'held' };\n",
+    "old": "  if (shopOwns(player, ware.id)) return { page: 'held' };\n",
     "new": "",
     "tests": [
       "test/server/shop_service.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "SHOP-other-order-ware-taken",
     "file": "server-account/src/shop.js",
-    "old": "        AND NOT EXISTS (SELECT 1 FROM shop_orders WHERE player = ?1 AND ware = ?3 AND status = 'paid' AND id <> ?4)`).bind(order.player, w.bit, w.id, order.id),",
-    "new": "        AND ?3 = ?3 AND ?4 = ?4`).bind(order.player, w.bit, w.id, order.id),",
+    "old": "      AND NOT EXISTS (SELECT 1 FROM shop_orders WHERE player = ?1 AND ware = ?3 AND status = 'paid' AND id <> ?4)`).bind(order.player, w.bit, w.id, order.id)",
+    "new": "      AND ?3 = ?3 AND ?4 = ?4`).bind(order.player, w.bit, w.id, order.id)",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SHOP-disclaimer-after-panels",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "  body.append(head, proceeds, tabs, panels, say, foot);",
-    "new": "  body.append(head, tabs, panels, proceeds, say, foot);",
+    "old": "  body.append(head, proceeds, carousel, tabs, panels, say, foot);",
+    "new": "  body.append(head, carousel, tabs, panels, proceeds, say, foot);",
     "tests": [
       "test/ui/shop_window.test.js"
     ]
@@ -164,7 +164,7 @@
   {
     "name": "SHOP-buy-to-a-guest",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "  if (!flow.account?.handle) return { state: 'guest', buy: null };\n",
+    "old": "  if (!flow.account?.handle) return { state: 'guest', buy: null, cents };\n",
     "new": "",
     "tests": [
       "test/ui/shop_window.test.js"
@@ -173,7 +173,7 @@
   {
     "name": "SHOP-buy-off-sale",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "  if (row && !row.sale) return { state: 'gone', buy: null };\n",
+    "old": "  if (row && !row.sale) return { state: 'gone', buy: null, cents };\n",
     "new": "",
     "tests": [
       "test/ui/shop_window.test.js"

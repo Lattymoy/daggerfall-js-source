@@ -825,3 +825,15 @@ mutant re-aimed under it). The tool re-aimed ten mutant records over the moved l
 `portships.json`'s); the pins that read the moved lines off world.js's own text read the host whole (`hostText`:
 `shiplife.test.js`, `sealanes.test.js`, `auditholdings.test.js`, `etherplaces.test.js` - PIN MOVED, PORT-SHIPS).
 
+
+## STOREFRONT - the dungeon pack out of bootWorld, the season's host wired (2026-10-29)
+
+The season in the world (`06-Systems/Battle-Pass.md` section 6) is a host of its own, `src/scenes/seasonHost.js`
+`createSeasonHost`, on the bindings the Starfall's host already read: one object both take (`_eventHostDeps`), so the
+season costs `bootWorld` one hook at each door it uses - its frame, its draw, its lights, the held map's cards, the
+gate's clearings and the let-go. To pay for them, BOUNTY1's dungeon pack (`standDungeonPack`) moved out whole to
+`src/scenes/bountyDungeonPack.js` `standBountyDungeonPack`, its pool, the hunter's feet and the camp counter handed in
+and DFU's placement its default seam. `bootWorld` 35,299 -> 35,258 logical lines, and the ceiling at it
+(`test/scenes/hostceiling.test.js`); the three BOUNTY-LAIR mutant records re-aimed at the module. `createWorldModes`,
+`buildDungeonContext` and `bootExterior` gained a field at the kill reports they already made (the kill effect's place,
+`killFxOf`), no statement.

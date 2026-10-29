@@ -116,7 +116,7 @@ export const PASS_REWARDS = Object.freeze({
 /** THE DELUXE PASS'S OWN, given at once on its purchase beside the premium track (the brief: "Optional cosmetic rewards
  *  unlocked immediately"), and the levels it gives. */
 export const PASS_DELUXE = Object.freeze({
-  s1: Object.freeze({ grants: Object.freeze(['aura:aetheriumgilded', 'mount:automaton', 'title:numidiumecho']), levels: 5 }),
+  s1: Object.freeze({ grants: Object.freeze(['aura:gildedcoil', 'mount:automaton', 'title:numidiumecho']), levels: 5 }),
 });
 /** THE PASS'S WARES, by season (net/shopLaw.js sells them): the Premium Pass, the Deluxe, and the three boosters - a
  *  booster's share of every find's experience for the season (the highest held counts, never their sum) and the levels it

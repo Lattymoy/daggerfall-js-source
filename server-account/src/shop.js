@@ -7,7 +7,7 @@
 // Off until the deploy puts both Stripe secrets (shopOn) - the window then shows the wares with nothing to buy.
 import {
   SHOP_WARES, SHOP_CURRENCY, SHOP_WARE_NAME, SHOP_KIND_NAME, SHOP_ORDER_ID_RE, shopWareById, shopOwns, shopOnSaleOf, shopPriceText, shopReceiptBatch,
-  shopPriceFor, shopHeldIds, shopFeaturedOf, shopFeaturedNow, shopSellable, shopWorth,
+  shopPriceFor, shopHeldIds, shopFeaturedOf, shopFeaturedNow, shopSellable,
 } from '../../src/net/shopLaw.js';
 import { PASS_SEASONS, passSeasonAt, passWareXp, passWareSeason } from '../../src/net/battlePassLaw.js';   // STOREFRONT: the levels a pass or a booster gives at once
 import { POST_SENDER } from '../../src/net/postLaw.js';

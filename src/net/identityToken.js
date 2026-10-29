@@ -227,7 +227,7 @@ export const titleClaimed = (t) => SEAT_TITLES.includes(t) || CHAPTER_TITLES.inc
  *  server-account/src/titles.js TIER_AURA: the Oblivion Ward, since PRIMARCH the Golden Radiance and since SHADOW-CLOAK
  *  the Holo Shadow Cloak and since CRYSTAL-FIST the Crystal Resonance; since SERAPH-WINGS, the developers' Seraph Wings -
  *  titles.js DEVELOPER_AURA); this list is the vocabulary both ends share. */
-export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'aetheriumgilded']);   // STOREFRONT (2026-10-29): the Daedric Dominion (the bundles' own) and the Battle Pass's Aetherium Coil and Gilded Coil, last;   // SHOP (2026-10-28): ETERNAL last - a cape of blue-violet fire hung from the shoulders and flowing down the back, the shop's pre-alpha aura, bought once;   // NIRNROOT-SAGE (2026-10-26, for Blob-Marley: "billowing smoke, circling nirn roots around midsection, small glowing green runes encircling feet"): SAGE'S SMOKE last - smoke billowing up about the body, nirnroots circling the waist, green runes glowing round the feet; the Nirnroot Sage's own, granted with its title by name, never sold;   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: "a purple aura with bunnies"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;   // EG-E2 (2026-10-12, Elite-Gates.md section 19): THE SPIRE'S THREE, last (after SERPENT5's Maelstrom, which main ships first) - Beaconlight (Kynbane's: gold-white motes), The Burning Stair (Wellhead-Walker's: falling embers) and Firstlight (First of the Spire's: a dawn-white ring), each granted with its title, never sold;   // SERPENT5 (2026-10-15, Sea-Serpent.md section 17): THE MAELSTROM last - the Old Coil's whirlpool of tide and foam about the feet, one dealing ship's serpent kill in fifty on its first write (server-account/src/serpents.js), held for good   // HOURS-FIRST (2026-10-08, Mac: "a unique different version of the aura"): THE FIRST HOUR, last - The Turning Hour's wheel in the light of the first dawn, its dial turning forward, the Hour's own mark ablaze; Hour's First's own, granted with the title by name, never rolled or sold;   // SD9c (2026-10-07, the Super Dungeons arc): THE TURNING HOUR, last - the Brass Remnant's wheel of brass gears and gold light, one kill in eight on its first write (server-account/src/sds.js), held for good; CRYSTAL-FIST (2026-10-05, the owner, for Flylighter: "a circle of tiny purple squares going up and down out of the ground"): the Crystal Resonance - the Crystal Fist's own ring of rising and falling purple squares, granted with its title by name, never sold.    // SERAPH-WINGS (2026-10-05, Mac: "I want to build an aura for the developers ... Golden Angel wings that flow"): the Seraph Wings.    // SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: "A holo shadow cloak with red accents"): the Holo Shadow Cloak - the Shadow Fang's own hooded cloak of shadow and crimson light, granted with its title by name, never sold; PRIMARCH (2026-10-04, GA00250: "can the aura be a golden light around the character?"): the Golden Radiance - the Primarch's own column of golden light about the body, granted with its title by name, never sold; AEGIS (2026-10-03): the Oblivion Ward - the Aegis of Oblivion's own ring of runes, granted with its title by name (server-account/src/titles.js TIER_AURA), never sold
+export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil']);   // STOREFRONT (2026-10-29): the Daedric Dominion (the bundles' own) and the Battle Pass's Aetherium Coil and Gilded Coil, last;   // SHOP (2026-10-28): ETERNAL last - a cape of blue-violet fire hung from the shoulders and flowing down the back, the shop's pre-alpha aura, bought once;   // NIRNROOT-SAGE (2026-10-26, for Blob-Marley: "billowing smoke, circling nirn roots around midsection, small glowing green runes encircling feet"): SAGE'S SMOKE last - smoke billowing up about the body, nirnroots circling the waist, green runes glowing round the feet; the Nirnroot Sage's own, granted with its title by name, never sold;   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: "a purple aura with bunnies"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;   // EG-E2 (2026-10-12, Elite-Gates.md section 19): THE SPIRE'S THREE, last (after SERPENT5's Maelstrom, which main ships first) - Beaconlight (Kynbane's: gold-white motes), The Burning Stair (Wellhead-Walker's: falling embers) and Firstlight (First of the Spire's: a dawn-white ring), each granted with its title, never sold;   // SERPENT5 (2026-10-15, Sea-Serpent.md section 17): THE MAELSTROM last - the Old Coil's whirlpool of tide and foam about the feet, one dealing ship's serpent kill in fifty on its first write (server-account/src/serpents.js), held for good   // HOURS-FIRST (2026-10-08, Mac: "a unique different version of the aura"): THE FIRST HOUR, last - The Turning Hour's wheel in the light of the first dawn, its dial turning forward, the Hour's own mark ablaze; Hour's First's own, granted with the title by name, never rolled or sold;   // SD9c (2026-10-07, the Super Dungeons arc): THE TURNING HOUR, last - the Brass Remnant's wheel of brass gears and gold light, one kill in eight on its first write (server-account/src/sds.js), held for good; CRYSTAL-FIST (2026-10-05, the owner, for Flylighter: "a circle of tiny purple squares going up and down out of the ground"): the Crystal Resonance - the Crystal Fist's own ring of rising and falling purple squares, granted with its title by name, never sold.    // SERAPH-WINGS (2026-10-05, Mac: "I want to build an aura for the developers ... Golden Angel wings that flow"): the Seraph Wings.    // SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: "A holo shadow cloak with red accents"): the Holo Shadow Cloak - the Shadow Fang's own hooded cloak of shadow and crimson light, granted with its title by name, never sold; PRIMARCH (2026-10-04, GA00250: "can the aura be a golden light around the character?"): the Golden Radiance - the Primarch's own column of golden light about the body, granted with its title by name, never sold; AEGIS (2026-10-03): the Oblivion Ward - the Aegis of Oblivion's own ring of runes, granted with its title by name (server-account/src/titles.js TIER_AURA), never sold
 
 /** The glyphs that exist. A glyph is not worn, it is TRUE of a player -
  *  sprout is "this account is new", dev is "this is a developer", mod is
@@ -240,6 +240,28 @@ export const GLYPHS = Object.freeze(['sprout', 'dev', 'mod', 'dm', 'disciple', '
  *  are glyphs is a minter that got greedy or a body that got edited,
  *  and either way the verifier says no. */
 export const GLYPHS_MAX = GLYPHS.length;
+/** STOREFRONT (2026-10-29): THE GLYPHS SIGNED AS A MASK - `gb`, lowercase hex over GLYPHS (four a character, the first
+ *  glyph the lowest bit of the first), its trailing zeros dropped. Every glyph's name in the body grew the token past the
+ *  verifier's bound (every claim at once was 1,057 characters of 1,024); the mask is nine characters for all 33, and a
+ *  glyph appended costs a bit. GLYPHS only grows at its end, so a mask means what it meant. The verifier reads it back
+ *  as `g`, so every reader sees the list it always did. */
+export const GLYPH_BITS_RE = new RegExp(`^[0-9a-f]{1,${Math.ceil(GLYPHS.length / 4)}}$`);
+/** A glyph list as its mask (`gb`), or '' for none. Pure. @param {ReadonlyArray<string>} list */
+export function glyphBitsOf(list) {
+  const n = new Array(Math.ceil(GLYPHS.length / 4)).fill(0);
+  for (const g of list) { const i = GLYPHS.indexOf(g); if (i >= 0) n[i >> 2] |= 1 << (i & 3); }
+  return n.map((v) => v.toString(16)).join('').replace(/0+$/, '');
+}
+/** A mask's glyphs in GLYPHS' order, or null for a mask no minter writes (a bit past the list, a trailing zero). Pure. */
+export function glyphsOfBits(/** @type {unknown} */ bits) {
+  if (typeof bits !== 'string' || !GLYPH_BITS_RE.test(bits) || bits.endsWith('0')) return null;
+  const out = [];
+  for (let c = 0; c < bits.length; c++) {
+    const v = parseInt(bits[c], 16);
+    for (let k = 0; k < 4; k++) if (v & (1 << k)) { const g = GLYPHS[c * 4 + k]; if (g === undefined) return null; out.push(g); }
+  }
+  return out;
+}
 
 /** WITCH1 (2026-10-20, the owner: "a brand new item (profile icon)"; bible/06-Systems/Witches-Festival.md): THE PROFILE
  *  ICONS THAT EXIST. An icon is WORN, one at a time, as a title is - in the profile's portrait well in place of the
@@ -412,15 +434,18 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
   if (c.fx !== undefined && !effectKitOk(c.fx)) return false;   // STOREFRONT: the effects kit worn (a kill effect, a portal skin, a mount look), the armory's law
   if (c.rb !== undefined && !ribbonClaimOk(c.rb)) return false;   // SEASON1 part two: a Season's banner ribbon - absent for none, two of the sixteen colours or refused
   if (c.g !== undefined) {
+    if (c.gb !== undefined) return false;   // STOREFRONT: one way of saying them
     if (!Array.isArray(c.g) || c.g.length > GLYPHS_MAX) return false;
     if (!c.g.every((g) => GLYPHS.includes(g))) return false;
     if (new Set(c.g).size !== c.g.length) return false;   // a repeat is a longer claim set saying one thing
   }
+  const glyphs = c.gb !== undefined ? glyphsOfBits(c.gb) : c.g;   // STOREFRONT: the mask, a mask a minter writes or refused
+  if (c.gb !== undefined && !glyphs?.length) return false;
   // GLYPH-WEAR: the glyphs taken off - a list of `g`'s own, each once; absent for none, so a service before it signs
   // nothing new. One `g` does not carry is refused: a token cannot hide what it never said was true.
   if (c.gx !== undefined) {
-    if (!Array.isArray(c.gx) || !c.gx.length || !Array.isArray(c.g)) return false;
-    if (!c.gx.every((g) => c.g.includes(g)) || new Set(c.gx).size !== c.gx.length) return false;
+    if (!Array.isArray(c.gx) || !c.gx.length || !Array.isArray(glyphs)) return false;
+    if (!c.gx.every((g) => glyphs.includes(g)) || new Set(c.gx).size !== c.gx.length) return false;
   }
   // MOD1: THE MUTE RIDES THE SIGNATURE, like the name and the badge, so
   // a player cannot talk their way out of one by reconnecting - every
@@ -492,7 +517,7 @@ export async function mintToken(who, privateKey, { subtle, nowS, ttlS = MAX_TTL_
   const claims = { s: who?.s, n: who?.n, k: who?.k, i: nowS, e: nowS + ttlS };
   if (who?.t !== undefined) claims.t = who.t;
   if (who?.ts !== undefined) claims.ts = who.ts;   // SEAT1c: a seat title's claim - beside its title alone (claimsValid)
-  if (who?.g !== undefined && who.g.length) claims.g = who.g;
+  if (who?.g !== undefined && who.g.length) claims.gb = glyphBitsOf(who.g);   // STOREFRONT: the glyphs as their mask
   if (who?.mu !== undefined) claims.mu = who.mu;   // MOD1: only while muted - an unmuted player mints the bytes they always did
   if (who?.fz !== undefined) claims.fz = who.fz;   // STAFF-PANEL5-FREEZE: only while frozen - an unfrozen player mints the bytes they always did
   if (who?.lv !== undefined) claims.lv = who.lv;   // RENOWN1: only when the client named its character
@@ -544,7 +569,9 @@ async function sealClaims(claims, privateKey, subtle) {
  * @returns {Promise<{ok: true, claims: Claims} | {ok: false, why: string}>}
  */
 export async function verifyToken(token, publicKey, { subtle, nowS, maxTtlS = MAX_TTL_S, skewS = SKEW_S }) {
-  return openSealed(token, publicKey, { subtle, nowS, skewS, valid: (c) => claimsValid(c, { maxTtlS }) });
+  const r = await openSealed(token, publicKey, { subtle, nowS, skewS, valid: (c) => claimsValid(c, { maxTtlS }) });
+  if (r.ok && r.claims.gb !== undefined) { r.claims.g = /** @type {string[]} */ (glyphsOfBits(r.claims.gb)); delete r.claims.gb; }   // STOREFRONT: read back as the list
+  return r;
 }
 
 /** The verifier's whole ladder, shared by an identity and an order so

@@ -209,7 +209,7 @@ import { leaseKeyOf, mintLease, readLease, leaseRoom, LEASE_FRAME_MIN_MS, LEASE_
  *  never once a minute (mob's load), yet one let in before the door went on at the hub is turned away within it. */
 const LEASE_OLD_ASK_MS = 10 * RELAY_CFG_TTL_MS;
 import { busOf, shardOf, regionsSharded, isChannelShard, isChannelBus, isRegionBus, isCourtCopy, courtOfCopy, upOf, HUB_INTERNAL_UP, HUB_INTERNAL_POLL, HUB_POLL_MS, HUB_OUTBOX_MAX, HUB_OUTBOX_BYTES, HUB_BATCH_MS, HUB_SYNC_MS, HUB_COUNT_MS, HUB_BATCH_MAX, CLOSE_HUB, HUB_FIND_MAX, HUB_FIND_ROOM_HZ_MAX, HUB_GUILD_WHO_MAX, HUB_WHO_KEEP_MS, HUB_FRAME_MAX, HUB_UP_HZ_MAX, HUB_UP_BURST, shardKeeps, foldFind, HUB_BATCH_BYTES, HUB_UP_QUEUE_BYTES, HUB_SILENT_MS, SHARD_LAW_KEYS, HUB_KEY_KEY } from '../../src/net/hubShards.js';   // SCALE5c: the hub, sixteen ways
-import { verifyToken, verifyOrder, verifyStakeOrderAnyAge, importPublicKeyB64, MAX_TTL_S, ORDER_TTL_S, renownIssuable, deckDigest, remainsDigest, _b64url } from '../../src/net/identityToken.js';   // MOD1: and the mute order, checked with the same key; AUDIT SAFE RELAY-10: and an order's claims read for its kind (`lawKindOf`)
+import { verifyToken, verifyOrder, verifyStakeOrderAnyAge, importPublicKeyB64, MAX_TTL_S, ORDER_TTL_S, renownIssuable, glyphBitsOf, glyphsOfBits, deckDigest, remainsDigest, _b64url } from '../../src/net/identityToken.js';   // MOD1: and the mute order, checked with the same key; AUDIT SAFE RELAY-10: and an order's claims read for its kind (`lawKindOf`)
 /** ACC1d/F8: the most spent signatures one room remembers. Every entry
  *  expires within MAX_TTL_S and the hello gate bounds how fast they can
  *  arrive, so honest traffic never comes near this; it is here so a
@@ -827,6 +827,13 @@ class ShardSocket {
   deserializeAttachment() { return this.att; }
 }
 
+/** AUDIT ATTACH (STOREFRONT, 2026-10-29): A SOCKET'S GLYPHS ON ITS ATTACHMENT AS THEIR MASK over GLYPHS (identityToken.js
+ *  glyphBitsOf - the token's own `gb`): every glyph's word took the widest attachment past half the runtime's 2048, as
+ *  the pin's note foresaw. Written packed (`_setAttach`), read back as the list wherever an attachment comes back from the
+ *  runtime, so every reader - the rights, `badged` - sees what it always did. An empty list stays as it was. */
+const packAttach = (a) => (Array.isArray(a?.glyphs) && a.glyphs.length ? (({ glyphs, ...rest }) => ({ ...rest, gb: glyphBitsOf(glyphs) }))(a) : a);
+const unpackAttach = (a) => (typeof a?.gb === 'string' ? (({ gb, ...rest }) => ({ ...rest, glyphs: glyphsOfBits(gb) ?? [] }))(a) : a);
+
 export class Room {
   constructor(state, env) {
     this._metrics = new RoomMetrics();   // SCALE2b: the room's counts, written to Analytics Engine a window at a time (relayScale.js)
@@ -1180,7 +1187,7 @@ export class Room {
     if (!this._idx) { this._idx = new Map(); this._acctIdx = null; this._subIdx = null; this._idIdx = null; this._giIdx = null; this._hostMemo = undefined; }
     let moved = false;
     if (this._idx.size) { const live = new Set(sockets); for (const ws of [...this._idx.keys()]) if (!live.has(ws) && !ws.virtual) { this._idx.delete(ws); moved = true; } }   // SCALE5c: a shard's socket is never the runtime's
-    for (const ws of sockets) if (!this._idx.has(ws)) { let a; try { a = ws.deserializeAttachment() ?? {}; } catch { a = {}; } this._enter(ws); this._idx.set(ws, a); moved = true; }
+    for (const ws of sockets) if (!this._idx.has(ws)) { let a; try { a = unpackAttach(ws.deserializeAttachment() ?? {}); } catch { a = {}; } this._enter(ws); this._idx.set(ws, a); moved = true; }
     if (moved) { this._acctIdx = null; this._subIdx = null; this._idIdx = null; this._giIdx = null; this._hostMemo = undefined; }   // SOC1: rebuilt with the index; SCALE5a: the subject index too; SCALE5b: the id index and the host
     this._idxAt = now;
     return this._idx;
@@ -1323,7 +1330,7 @@ export class Room {
     return false;
   }
   /** One socket's attachment: the index's, or the socket's own when it is already gone from the set (a closing socket still carries its id). */
-  _attach(ws) { const idx = this._all(); if (idx.has(ws)) return idx.get(ws); try { return ws.deserializeAttachment() ?? {}; } catch { return {}; } }
+  _attach(ws) { const idx = this._all(); if (idx.has(ws)) return idx.get(ws); try { return unpackAttach(ws.deserializeAttachment() ?? {}); } catch { return {}; } }
   /** SCALE2b: `lazy` - a pose's write. Every pose rewrote the socket's whole attachment (a 2 KiB JSON stored by the
    *  runtime), most of it unchanged; the index - what every reader in this object reads - takes the pose at once, and
    *  the runtime's copy, which only a wake reads, is written at most every ATTACH_LAZY_MS (and at once by any eager
@@ -1333,7 +1340,7 @@ export class Room {
     if (ws.court) { ws.att = a; return true; }   // SCALE5d part two: a copy's socket is the fight's alone - never the court's index, so no crowd walk meets it
     const now = Date.now();
     if (!lazy || !(now - (this._attachedAt.get(ws) ?? -Infinity) < ATTACH_LAZY_MS)) {
-      try { ws.serializeAttachment(a); } catch { return false; }
+      try { ws.serializeAttachment(packAttach(a)); } catch { return false; }
       this._attachedAt.set(ws, now);
     }
     const idx = this._all(), was = idx.get(ws);

@@ -133,8 +133,8 @@
   {
     "name": "WITCH1-the-relay-drops-the-icon",
     "file": "server/src/index.js",
-    "old": "au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), lv: who.lv,",
-    "new": "au: who.au, ...(who.rb ? { rb: who.rb } : {}), lv: who.lv,",
+    "old": "au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), ...(who.ak ? { ak: who.ak } : {}), ...(who.fx ? { fx: who.fx } : {}), lv: who.lv,",
+    "new": "au: who.au, ...(who.rb ? { rb: who.rb } : {}), ...(who.ak ? { ak: who.ak } : {}), ...(who.fx ? { fx: who.fx } : {}), lv: who.lv,",
     "tests": [
       "test/systems/festival/witch1_law.test.js"
     ],
@@ -143,8 +143,8 @@
   {
     "name": "WITCH1-the-peer-icon-unread",
     "file": "src/net/online.js",
-    "old": "au: readAura(p), ak: readArmory(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
-    "new": "au: readAura(p), ak: readArmory(p), rb: readRibbon(p), lv: readRenown(p),",
+    "old": "au: readAura(p), ak: readArmory(p), fx: readEffects(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
+    "new": "au: readAura(p), ak: readArmory(p), fx: readEffects(p), rb: readRibbon(p), lv: readRenown(p),",
     "tests": [
       "test/systems/festival/witch1_law.test.js"
     ],

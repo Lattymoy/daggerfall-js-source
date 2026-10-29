@@ -74,8 +74,8 @@
   {
     "name": "AURALIVE-the-host-never-asks",
     "file": "src/scenes/auraHost.js",
-    "old": "if (online.rehello?.()) { auraHeard = mine; armoryHeard = kit; }",
-    "new": "if (false) { auraHeard = mine; armoryHeard = kit; }",
+    "old": "if (online.rehello?.()) { auraHeard = mine; armoryHeard = kit; effectsHeard = fx; }",
+    "new": "if (false) { auraHeard = mine; armoryHeard = kit; effectsHeard = fx; }",
     "tests": [
       "test/net/auralive.test.js"
     ]

@@ -54,6 +54,9 @@ something a player holds.
 
 ## 4. How a piece is had, and worn
 
+> STOREFRONT (2026-10-29): in the shop's second law the Eternal set is a ware that gives its five pieces, as a bundle
+> does - holding it holds them, and its price falls by the share of them already held (`06-Systems/Storefront.md` section 3).
+
 A piece is the ACCOUNT's, as an aura is: every character on the account may wear it, and the kit worn follows the
 account. What is held is read off the account's row at every ask (`server-account/src/titles.js` armoryHeld). A guest
 holds none.

@@ -6,6 +6,8 @@
 // cogs - with where each stands as the portal opens, holds and seals. Every frame is RGBA rows from the BOTTOM up (a world
 // billboard's color32 order), so an arch's point is at its top. Pure. Not a DFU member.
 
+import { wrapAngle } from '../world/mat4.js';   // ONCRASH1 C2: the one angle wrap
+
 /** The skins (net/effectLaw.js PORTAL_SKINS). */
 export const PORTAL_SKIN_KEYS = Object.freeze(['runic', 'daedric', 'aetheric', 'brass']);
 const TAU = Math.PI * 2;
@@ -127,7 +129,7 @@ function brass(/** @type {number} */ k, /** @type {number} */ n, /** @type {numb
     // the arcs: two crooked lines from the heart, struck anew each frame
     for (let i = 0; i < 2; i++) {
       const base = hash(k, i, 41) * TAU, wob = (hash(Math.floor(r * 12), k * 3 + i, 43) - 0.5) * 0.6;
-      if (Math.abs(((a - base - wob) % TAU + TAU + Math.PI) % TAU - Math.PI) < 0.07 && r > 0.15) c = [210, 252, 255];
+      if (Math.abs(wrapAngle(a - base - wob)) < 0.07 && r > 0.15) c = [210, 252, 255];
     }
     return [...c, 255];
   });

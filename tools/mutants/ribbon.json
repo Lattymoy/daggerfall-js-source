@@ -193,8 +193,8 @@
   {
     "name": "RIBBON-ix-token",
     "file": "server-account/src/index.js",
-    "old": "          pi: iconWorn(who.player),   // WITCH1: the profile icon worn, the aura's law - absent for none (the character's face)\n          ak: armoryWorn(who.player),   // ARMORY: the Aura Armory's kit worn, the aura's law - absent for none\n          ...(rb ? { rb } : {}),\n",
-    "new": "          pi: iconWorn(who.player),   // WITCH1: the profile icon worn, the aura's law - absent for none (the character's face)\n          ak: armoryWorn(who.player),   // ARMORY: the Aura Armory's kit worn, the aura's law - absent for none\n",
+    "old": "          pi: iconWorn(who.player, nowS),   // WITCH1: the profile icon worn, the aura's law - absent for none (the character's face)\n          ak: armoryWorn(who.player),   // ARMORY: the Aura Armory's kit worn, the aura's law - absent for none\n          fx: effectsWorn(who.player, nowS),   // STOREFRONT: the effects kit worn (a kill effect, a portal skin, a mount look) - absent for none\n          ...(rb ? { rb } : {}),\n",
+    "new": "          pi: iconWorn(who.player, nowS),   // WITCH1: the profile icon worn, the aura's law - absent for none (the character's face)\n          ak: armoryWorn(who.player),   // ARMORY: the Aura Armory's kit worn, the aura's law - absent for none\n          fx: effectsWorn(who.player, nowS),   // STOREFRONT: the effects kit worn (a kill effect, a portal skin, a mount look) - absent for none\n",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ],
@@ -279,8 +279,8 @@
   {
     "name": "RIBBON-rl-attach",
     "file": "server/src/index.js",
-    "old": "au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), lv: who.lv,",
-    "new": "au: who.au, ...(who.pi ? { pi: who.pi } : {}), lv: who.lv,",
+    "old": "au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), ...(who.ak ? { ak: who.ak } : {}), ...(who.fx ? { fx: who.fx } : {}), lv: who.lv,",
+    "new": "au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.ak ? { ak: who.ak } : {}), ...(who.fx ? { fx: who.fx } : {}), lv: who.lv,",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ]
@@ -306,8 +306,8 @@
   {
     "name": "RIBBON-on-peer",
     "file": "src/net/online.js",
-    "old": "au: readAura(p), ak: readArmory(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
-    "new": "au: readAura(p), ak: readArmory(p), pi: readIcon(p), lv: readRenown(p),",
+    "old": "au: readAura(p), ak: readArmory(p), fx: readEffects(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
+    "new": "au: readAura(p), ak: readArmory(p), fx: readEffects(p), pi: readIcon(p), lv: readRenown(p),",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ]

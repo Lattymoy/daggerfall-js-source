@@ -166,7 +166,10 @@ test('OW6 camps wiring: the host stands each group under the pool\'s one counter
   const W = hostText('src/scenes/world.js');
   // MERGE 2: EVERY camp id is the counter's - the camp's stand and the bounty's dungeon pack (a copy of either on its own
   // number would share one with an heir's camp)
-  assert.deepEqual([...W.matchAll(/const campId = ([^;]+);/g)].map((m) => m[1]), ['exteriorFoes.newCampId()', 'exteriorFoes.newCampId()']);
+  // PIN MOVED (STOREFRONT, HOST-SPLIT): the dungeon pack is scenes/bountyDungeonPack.js's now, handed the pool's counter
+  assert.deepEqual([...W.matchAll(/const campId = ([^;]+);/g)].map((m) => m[1]), ['exteriorFoes.newCampId()']);
+  assert.match(W, /standBountyDungeonPack\(\{ pool: _dungeonPool\(\), feet: enchantFeet\(\), newCampId: \(\) => exteriorFoes\.newCampId\(\) \}, o\)/, 'the pack\'s camp the counter\'s');
+  assert.match(hostText('src/scenes/bountyDungeonPack.js'), /const campId = newCampId\(\);/);
   assert.doesNotMatch(W, /_nextCampId/, 'one counter, the pool\'s');
   assert.match(W, /f\.campId = campId; f\.campAlertRadius = hit\.alertRadius;\n\s*f\.campKind = hit\.kind \?\? 'pack';/);
   assert.match(W, /_standCampEncounter\(\{ kind: 'band', mobileTypes: mk\.mobileTypes,/);

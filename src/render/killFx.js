@@ -630,13 +630,13 @@ void main() {
   } else if (vShape == 5) {     // a puff of smoke or dust
     if (r >= 1.0) discard;
     float nz = fbm(vQ * 1.7 + vec2(seed * 7.0, seed * 3.0) + vec2(0.0, -u * 0.8));
-    k = smoothstep(1.0, 0.15, r) * (0.45 + 0.75 * nz);
+    k = (1.0 - smoothstep(0.15, 1.0, r)) * (0.45 + 0.75 * nz);
     col *= 0.8 + 0.35 * nz;
   } else if (vShape == 6) {     // a ring rolling out over the ground
     if (r >= 1.0) discard;
     float x = (r - 0.82) / 0.07;
     k = exp(-x * x) * (0.8 + 0.4 * vnoise(vec2(atan(vQ.y, vQ.x) * 6.0, u * 4.0)));
-    k += 0.12 * smoothstep(0.82, 0.0, r) * (1.0 - u);
+    k += 0.12 * (1.0 - smoothstep(0.0, 0.82, r)) * (1.0 - u);
   } else if (vShape == 7) {     // the Daedric sigil: three rings, eight blades between, runes round its rim, an eye
     if (r >= 1.0) discard;
     float ang = atan(vQ.y, vQ.x);
@@ -644,7 +644,7 @@ void main() {
     float sect = fract(ang * 8.0 / TAU) - 0.5;
     float blade = step(0.42, r) * step(r, 0.8) * step(abs(sect), (0.8 - r) * 0.55 + 0.012);
     float rune = step(0.82, r) * step(r, 0.91) * step(0.55, h12(vec2(floor(ang * 48.0 / TAU), 3.0))) * step(0.25, abs(fract(ang * 48.0 / TAU) - 0.5) * 2.0);
-    float eye = exp(-pow((r - 0.14) / 0.03, 2.0)) + smoothstep(0.08, 0.0, r);
+    float eye = exp(-pow((r - 0.14) / 0.03, 2.0)) + (1.0 - smoothstep(0.0, 0.08, r));
     float burn = 0.75 + 0.5 * vnoise(vec2(ang * 5.0, r * 8.0 - u * 6.0));
     k = clamp(ring + blade * 0.9 + rune * 0.8 + eye, 0.0, 1.4) * burn;
     if (k < 0.02) discard;
@@ -656,13 +656,13 @@ void main() {
     float e = (vQ.x * vQ.x) / (wob * wob) + vQ.y * vQ.y;
     if (e >= 1.0) discard;
     if (uAdd == 1) { k = exp(-pow((sqrt(e) - 0.82) / 0.12, 2.0)) * (0.8 + 0.6 * vnoise(vQ * 8.0 + u * 5.0)); heat *= k; }
-    else k = smoothstep(1.0, 0.6, e);
+    else k = 1.0 - smoothstep(0.6, 1.0, e);
   } else {                      // a beam of fire standing on its foot
     float x = abs(vQ.x), y = vQ.y * 0.5 + 0.5;
     float nz = fbm(vec2(vQ.x * 2.2 + seed * 5.0, y * 3.0 - u * 6.0));
     float wdt = 0.55 + 0.45 * nz;
     if (x > wdt) discard;
-    k = pow(1.0 - x / wdt, 1.6) * smoothstep(1.0, 0.45 + 0.25 * nz, y) * (0.6 + 0.6 * nz);
+    k = pow(1.0 - x / wdt, 1.6) * (1.0 - smoothstep(0.45 + 0.25 * nz, 1.0, y)) * (0.6 + 0.6 * nz);
     heat *= pow(1.0 - x / wdt, 3.0) * (1.0 - y);
   }
   vec3 lit = mix(col, vec3(1.0, 0.97, 0.9), clamp(heat, 0.0, 1.0) * 0.8);

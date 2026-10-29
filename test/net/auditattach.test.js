@@ -50,7 +50,9 @@ test('AUDIT ATTACH A1: the WIDEST attachment a place socket carries - the widest
   // PIN MOVED (TESA x MAIN, the merge of main into TESA): both, 1206 measured - the seven crowns (+70) and the secret (+56)
   // PIN MOVED (NIRNROOT-SAGE): the Nirnroot Sage's glyph word ('nirnrootsage', its quotes and comma) - the second merge measures all three: 1221
   // PIN MOVED (SHOP, its fold into #1184): the Origin's glyph word beside the crowns, every glyph at once - 1230, 818 under the runtime's 2048
-  assert.ok(bytes <= 1230, `the widest place attachment is ${bytes} bytes - about half the runtime's 2048 at most, so the next field is measured with room to spare`);
+  // PIN MOVED (STOREFRONT): the glyphs held as their mask over GLYPHS (server/src/index.js packAttach), as the WIKIMAID note
+  // foresaw - the armory's and the effects' kits on it too - 958, 1090 under the runtime's 2048
+  assert.ok(bytes <= 1000, `the widest place attachment is ${bytes} bytes - about half the runtime's 2048 at most, so the next field is measured with room to spare`);
   assert.ok(bytes > 500, `and it is the wide one: ${bytes} bytes`);
 }));
 
@@ -71,7 +73,8 @@ test('AUDIT ATTACH A1 (AUDIT FB1018D L4-4): THE WIDEST DUNGEON INSTANCE SOCKET -
   // PIN MOVED (TESA x MAIN, the merge of main into TESA): both, 1261 measured - the crowns and the secret on the wider key
   // PIN MOVED (NIRNROOT-SAGE): the Nirnroot Sage's glyph word, every glyph at once - the second merge measures all three: 1276
   // PIN MOVED (SHOP, its fold into #1184): the Origin's glyph word on the dungeon's wider key - 1285
-  assert.ok(bytes <= 1285, `the widest dungeon instance attachment is ${bytes} bytes`);
+  // PIN MOVED (STOREFRONT): the glyphs as their mask on the dungeon's wider key - 1013
+  assert.ok(bytes <= 1060, `the widest dungeon instance attachment is ${bytes} bytes`);
 }));
 
 // Each arm's flood, at one instant: `passes` frames through the bucket, then a strike a frame (`key`), closed past `max`.

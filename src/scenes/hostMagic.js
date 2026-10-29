@@ -1819,7 +1819,6 @@ export function createPlayerMagic({
       for (const m of peerCandleMounts.values()) m.offsetAll(offset);   // PEERLIGHT2
       impacts.offsetAll(offset);   // F033: a flash mid-animation follows the recenter too
       shiftSparks(offset); fx.shift(offset);   // IMPACTFX: and the bursts
-      killFx.shift(offset); for (const g of ghosts) { g.batch.origin[0] += offset[0]; g.batch.origin[1] += offset[1]; g.batch.origin[2] += offset[2]; }   // STOREFRONT: and the kill effects
       for (const m of missiles) {
         if (m.dead) continue;
         for (let a = 0; a < 3; a++) {
@@ -1827,6 +1826,7 @@ export function createPlayerMagic({
           if (m.firePos) m.firePos[a] += offset[a];
         }
       }
+      killFx.shift(offset); for (const g of ghosts) { g.batch.origin[0] += offset[0]; g.batch.origin[1] += offset[1]; g.batch.origin[2] += offset[2]; }   // STOREFRONT: and the kill effects
     },
     batches: () => batches,
     /** PEERLIGHT2: the others' Light spells this frame - `list` [{ id, feet, height, forward }] (scene frame), one

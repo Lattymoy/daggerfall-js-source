@@ -493,8 +493,8 @@
   {
     "name": "C2A-the-glyph-door-without-honours",
     "file": "server-account/src/arena.js",
-    "old": ", '/v1/account/glyph', '/v1/account/icon', '/v1/account/armory']);",
-    "new": ", '/v1/account/icon', '/v1/account/armory']);",
+    "old": ", '/v1/account/glyph', '/v1/account/icon', '/v1/account/armory', '/v1/account/effect']);",
+    "new": ", '/v1/account/icon', '/v1/account/armory', '/v1/account/effect']);",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -502,8 +502,8 @@
   {
     "name": "C2A-the-icon-door-without-honours",
     "file": "server-account/src/arena.js",
-    "old": ", '/v1/account/glyph', '/v1/account/icon', '/v1/account/armory']);",
-    "new": ", '/v1/account/glyph', '/v1/account/armory']);",
+    "old": ", '/v1/account/glyph', '/v1/account/icon', '/v1/account/armory', '/v1/account/effect']);",
+    "new": ", '/v1/account/glyph', '/v1/account/armory', '/v1/account/effect']);",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]

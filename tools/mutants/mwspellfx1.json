@@ -264,8 +264,8 @@
   {
     "name": "MWSPELLFX1-drawn-by-nobody",
     "file": "src/scenes/hostMagic.js",
-    "old": "      const mw = mwFx.draw();   // MW-SPELLFX1: Morrowind's spell effects, through the renderer's own particle path",
-    "new": "      const mw = false;",
+    "old": "      const mw = drawKills() + Number(mwFx.draw()) > 0;   // STOREFRONT: the kill effects; MW-SPELLFX1: Morrowind's spell effects, through the renderer's own particle path",
+    "new": "      const mw = drawKills() > 0;",
     "tests": [
       "test/formats/morrowind/mwspellfx1.test.js"
     ]

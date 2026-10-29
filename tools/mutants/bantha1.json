@@ -734,8 +734,8 @@
   {
     "name": "AUDIT-BANTHA1-HAZE-3-a-hosts-fog-without-it",
     "file": "src/scenes/hostMagic.js",
-    "old": "camPos: eye, focus: renderer._focus, haze: renderer._haze });",
-    "new": "camPos: eye, focus: renderer._focus });",
+    "old": "fxPass.draw(fx.buf, n, renderer._proj, renderer._view, eye, { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: eye, focus: renderer._focus, haze: renderer._haze });",
+    "new": "fxPass.draw(fx.buf, n, renderer._proj, renderer._view, eye, { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: eye, focus: renderer._focus });",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]

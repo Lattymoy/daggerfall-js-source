@@ -461,5 +461,60 @@
     "tests": [
       "test/systems/pass/passclient.test.js"
     ]
+  },
+  {
+    "name": "STOREFRONT-a-mask-with-a-trailing-zero-read",
+    "file": "src/net/identityToken.js",
+    "old": "  if (typeof bits !== 'string' || !GLYPH_BITS_RE.test(bits) || bits.endsWith('0')) return null;",
+    "new": "  if (typeof bits !== 'string' || !GLYPH_BITS_RE.test(bits)) return null;",
+    "tests": [
+      "test/net/storefront_wire.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-glyphs-said-two-ways",
+    "file": "src/net/identityToken.js",
+    "old": "    if (c.gb !== undefined) return false;   // STOREFRONT: one way of saying them\n",
+    "new": "",
+    "tests": [
+      "test/net/storefront_wire.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-mask-never-read-back",
+    "file": "src/net/identityToken.js",
+    "old": "  if (r.ok && r.claims.gb !== undefined) { r.claims.g = /** @type {string[]} */ (glyphsOfBits(r.claims.gb)); delete r.claims.gb; }",
+    "new": "",
+    "tests": [
+      "test/net/storefront_wire.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-woken-socket-without-its-glyphs",
+    "file": "server/src/index.js",
+    "old": "const unpackAttach = (a) => (typeof a?.gb === 'string' ? (({ gb, ...rest }) => ({ ...rest, glyphs: glyphsOfBits(gb) ?? [] }))(a) : a);",
+    "new": "const unpackAttach = (a) => a;",
+    "tests": [
+      "test/net/storefront_wire.test.js",
+      "test/net/auditattach.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-glyphs-attached-as-words",
+    "file": "server/src/index.js",
+    "old": "const packAttach = (a) => (Array.isArray(a?.glyphs) && a.glyphs.length ? (({ glyphs, ...rest }) => ({ ...rest, gb: glyphBitsOf(glyphs) }))(a) : a);",
+    "new": "const packAttach = (a) => a;",
+    "tests": [
+      "test/net/auditattach.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-class-list-read-as-english",
+    "file": "tools/l10nHardcoded.mjs",
+    "old": "          if (isProse(s) && !CLASS_LIST.test(asClasses)) out.push({ file, line: n.loc.start.line, text: s });",
+    "new": "          if (isProse(s)) out.push({ file, line: n.loc.start.line, text: s });",
+    "tests": [
+      "test/systems/l10n4_hardcoded.test.js"
+    ]
   }
 ]

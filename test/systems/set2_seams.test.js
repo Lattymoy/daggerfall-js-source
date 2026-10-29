@@ -197,10 +197,11 @@ test('SET2 the player\'s own kills: every listener told the killed entity and th
     assert.deepEqual(heard, [['wolf', 'arrow'], ['rat', 'melee']]);
   } finally { registerPlayerKillListener('set2-kill', null); registerPlayerKillListener('set2-throws', null); }
   const ext = strip(read('src/scenes/exteriorFoes.js'));
-  assert.match(ext, /f\.dead = true;\s*if \(fromPlayer && !peer\) reportPlayerKill\(f\.entity, \{ kind \}\);/, 'the outdoor pool');
-  assert.match(ext, /playerWeaponKillReported\(playerEntity, \{ mobileType: f\.mobileType \}\);\s*reportPlayerKill\(f\.entity, \{ kind: 'remote' \}\);/, 'a puppet\'s owner\'s word');
-  assert.match(strip(read('src/scenes/dungeonContext.js')), /foe\.dead = true;\s*if \(fromPlayer && !peer\) reportPlayerKill\(foe\.entity, \{ kind \}\);/, 'the dungeon');
-  assert.match(strip(read('src/scenes/cityGuards.js')), /g\.dead = true;\s*if \(fromPlayer && !peer\) reportPlayerKill\(g\.entity, \{ kind: 'melee' \}\);/, 'the watch');
+  // PIN MOVED (STOREFRONT): each pool's report carries where its kill falls (`fx`, playerKills.js killFxOf) - for a kill effect
+  assert.match(ext, /f\.dead = true;\s*if \(fromPlayer && !peer\) reportPlayerKill\(f\.entity, \{ kind, fx: killFxOf\(f\) \}\);/, 'the outdoor pool');
+  assert.match(ext, /playerWeaponKillReported\(playerEntity, \{ mobileType: f\.mobileType \}\);\s*reportPlayerKill\(f\.entity, \{ kind: 'remote', fx: killFxOf\(f\) \}\);/, 'a puppet\'s owner\'s word');
+  assert.match(strip(read('src/scenes/dungeonContext.js')), /foe\.dead = true;\s*if \(fromPlayer && !peer\) reportPlayerKill\(foe\.entity, \{ kind, fx: killFxOf\(foe\) \}\);/, 'the dungeon');
+  assert.match(strip(read('src/scenes/cityGuards.js')), /g\.dead = true;\s*if \(fromPlayer && !peer\) reportPlayerKill\(g\.entity, \{ kind: 'melee', fx: killFxOf\(g\) \}\);/, 'the watch');
 });
 
 test('SET2 a player\'s cast cost: the port\'s modifiers over it after DFU\'s floor, never under 1 - and never over a foe\'s, which the foe caster prices with the player\'s skills and so asks without them (mutants: a foe\'s cast made cheaper; the floor under 1)', () => {

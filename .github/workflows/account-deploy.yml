@@ -396,6 +396,7 @@ on:
       - "src/systems/pistolet.js"
       - "src/systems/textureReplacement.js"
       - "src/systems/thunderlock.js"
+      - "src/systems/pass/resonantMaul.js"
       - "src/systems/timeScale.js"
       - "src/systems/transport.js"
       - "src/systems/travel/travelPace.js"

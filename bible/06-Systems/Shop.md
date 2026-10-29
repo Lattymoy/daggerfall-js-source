@@ -4,6 +4,8 @@
 > (`src/net/shopLaw.js`, `server-account/src/shop.js`, `src/ui/enhanced/enhancedShop.js`) and the pins are what runs.
 > Not a DFU member: Daggerfall Unity has no accounts and no shop, so nothing here departs from it (Port-Ledger section
 > A, SHOP).
+> STOREFRONT (2026-10-29) rebuilt the catalogue, the window and the purchase path on this one - tiers, wares held by
+> id, bundles priced against what is held, the featured carousel: `06-Systems/Storefront.md`. This page stays SHOP's record.
 
 ## 1. What was asked
 

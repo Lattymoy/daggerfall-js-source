@@ -218,7 +218,8 @@ test('AURA-LIVE: the host asks for it when MY aura changes from the one the last
   assert.match(w, /online\?\.adoptIdentity\?\.\(who\); auraHost\.issued\(who\);/, 'the mint\'s token handed over');
   assert.match(h, /if \(who && 'aura' in who\) auraHeard = who\.aura \?\? null;/, 'a mint\'s token said this one');
   assert.match(h, /if \(who && 'armory' in who\) armoryHeard = who\.armory \?\? null;/, 'and its kit');
-  assert.match(h, /const mine = ownAura\(\), kit = ownArmory\(\);\n\s+if \(\(auraHeard !== undefined && mine !== auraHeard\) \|\| \(armoryHeard !== undefined && kit !== armoryHeard\)\) \{ if \(online\.rehello\?\.\(\)\) \{ auraHeard = mine; armoryHeard = kit; \} \}/, 'a change since: said again');
+  assert.match(h, /if \(who && 'effects' in who\) effectsHeard = who\.effects \?\? null;/, 'PIN MOVED (STOREFRONT): and its effects kit');
+  assert.match(h, /const mine = ownAura\(\), kit = ownArmory\(\), fx = ownEffects\(\);\n\s+if \(\(auraHeard !== undefined && mine !== auraHeard\) \|\| \(armoryHeard !== undefined && kit !== armoryHeard\) \|\| \(effectsHeard !== undefined && fx !== effectsHeard\)\) \{ if \(online\.rehello\?\.\(\)\) \{ auraHeard = mine; armoryHeard = kit; effectsHeard = fx; \} \}/, 'a change since: said again (PIN MOVED, STOREFRONT: the effects kit beside them)');
   assert.ok(w.indexOf('const auraHost = createAuraHost({') > 0 && w.indexOf('const auraHost = createAuraHost({') < w.indexOf('const adoptIssued = (who) => {'), 'built before anything can call the minter\'s hook');
   assert.doesNotMatch(w, /Others see it once you change area/);
   assert.match(w, /Wearing \$\{row\.name\}\.`/);

@@ -72,8 +72,8 @@
   {
     "name": "NIRNROOT-SAGE-button-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', aetheriumgilded: 'numidiumecho' });",
-    "new": "sagesmoke: 'witchwarden', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', aetheriumgilded: 'numidiumecho' });",
+    "old": "sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho' });",
+    "new": "sagesmoke: 'witchwarden', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho' });",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "NIRNROOT-SAGE-aura-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'witchfire', 'sagesmoke', 'eternal']);",
-    "new": "'witchfire', 'eternal']);",
+    "old": "'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil']);",
+    "new": "'witchfire', 'eternal', 'dominion', 'aetherium', 'gildedcoil']);",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -212,7 +212,7 @@
   {
     "name": "NIRNROOT-SAGE-relay-unmoved",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world280';",
+    "old": "export const RELAY_VERSION = 'world281';",
     "new": "export const RELAY_VERSION = 'world267';",
     "tests": [
       "test/net/nirnrootsage.test.js"

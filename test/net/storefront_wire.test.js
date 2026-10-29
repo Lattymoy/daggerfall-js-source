@@ -10,7 +10,8 @@ import { readFileSync } from 'node:fs';
 import {
   EFFECT_SLOTS, EFFECTS, KILL_EFFECTS, PORTAL_SKINS, MOUNT_LOOKS, effectKitOk, effectKitKeys, effectWorn, effectKitWith, effectKitHeld, effectAt, effectOf,
 } from '../../src/net/effectLaw.js';
-import { claimsValid, mintToken, verifyToken, importPublicKeyB64 } from '../../src/net/identityToken.js';
+import { fakeRoom } from '../fakeRoom.mjs';
+import { claimsValid, mintToken, verifyToken, importPublicKeyB64, glyphBitsOf, glyphsOfBits, GLYPHS, tokenBodyOf, TOKEN_BODY_MAX } from '../../src/net/identityToken.js';
 import { validPose, poseChanged, badged, readEffects, KILL_FX_HEIGHT_MAX } from '../../src/net/wire.js';
 import { lerpPose } from '../../src/net/online.js';
 import { noteMyKill, poseFx, createPeerFxPlayer, _resetPeerFxForTests, KILL_FX_NEAR_M, killFxOthersOf } from '../../src/net/peer/peerFx.js';
@@ -139,4 +140,53 @@ test('STOREFRONT a riding peer\'s mount look: its beat through the running host\
   bindPeerEffects(null);
   assert.equal(peerEffectWorn('p9', 'portal'), null, 'unbound: none');
   assert.match(rd('src/scenes/auraHost.js'), /bindPeerEffects\(\(id\) => deps\.online\(\)\?\.effectsOf\?\.\(id\) \?\? null\);/, 'the aura host binds it to the client\'s peers');
+});
+
+test('STOREFRONT the glyphs as their mask: `gb` hex over GLYPHS, four a character, its trailing zeros dropped - every subset back as it went in, in GLYPHS\' order; a mask no minter writes refused; the mint writes the mask and the verifier hands back the list; never both; a hidden glyph read against the mask (mutants: the bits shifted; a trailing zero let through; the list signed)', async () => {
+  assert.equal(glyphBitsOf([]), '');
+  assert.equal(glyphBitsOf(['sprout']), '1');
+  assert.equal(glyphBitsOf([GLYPHS[4]]), '01');
+  assert.equal(glyphBitsOf(GLYPHS).length, Math.ceil(GLYPHS.length / 4));
+  const rand = ((x) => () => { x = (x * 16807) % 2147483647; return x / 2147483647; })(11);
+  for (let i = 0; i < 200; i++) {
+    const pick = GLYPHS.filter(() => rand() < 0.3);
+    if (!pick.length) continue;
+    assert.deepEqual(glyphsOfBits(glyphBitsOf([...pick].reverse())), pick, 'back in GLYPHS\' order');
+  }
+  for (const bad of ['', '0', '10', 'g', '1'.repeat(Math.ceil(GLYPHS.length / 4) + 1), 'F', 1]) assert.equal(glyphsOfBits(bad), null, String(bad));
+  if (GLYPHS.length % 4) assert.equal(glyphsOfBits('0'.repeat(Math.ceil(GLYPHS.length / 4) - 1) + 'f'), null, 'a bit past the list');
+  const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
+  const nowS = 1_760_000_000;
+  const tok = await mintToken({ s: 'a'.repeat(40), n: 'Mac', k: 'linked', g: ['dev', 'sprout'], gx: ['dev'] }, kp.privateKey, { subtle, nowS });
+  const body = JSON.parse(Buffer.from(tokenBodyOf(tok), 'base64url').toString());
+  assert.equal(body.g, undefined, 'never the words');
+  assert.equal(body.gb, glyphBitsOf(['sprout', 'dev']));
+  const v = await verifyToken(tok, kp.publicKey, { subtle, nowS });
+  assert.ok(v.ok);
+  assert.deepEqual([v.claims.g, v.claims.gb, v.claims.gx], [['sprout', 'dev'], undefined, ['dev']], 'read back as the list');
+  const { gb: _gb, gx: _gx, ...base } = body;   // the minted claim set, its glyphs taken off
+  assert.equal(claimsValid({ ...base, gb: '1', g: ['sprout'] }), false, 'one way of saying them');
+  assert.equal(claimsValid({ ...base, gb: '10' }), false, 'a trailing zero');
+  assert.equal(claimsValid({ ...base, gb: '1', gx: ['dev'] }), false, 'a hidden glyph the mask never said');
+  assert.equal(claimsValid({ ...base, gb: '3', gx: ['dev'] }), true);
+  assert.equal(claimsValid({ ...base, g: ['sprout'] }), true, 'a token minted before still verifies until it runs out');
+  const all = await mintToken({ s: 'a'.repeat(40), n: 'W'.repeat(20), k: 'linked', g: [...GLYPHS] }, kp.privateKey, { subtle, nowS });
+  assert.ok(tokenBodyOf(all).length < TOKEN_BODY_MAX / 2, `every glyph at once: ${tokenBodyOf(all).length}`);
+  const r = rd('server/src/index.js');
+  assert.match(r, /try \{ ws\.serializeAttachment\(packAttach\(a\)\); \} catch \{ return false; \}/, 'the socket\'s attachment holds the mask');
+  assert.equal((r.match(/unpackAttach\(ws\.deserializeAttachment\(\) \?\? \{\}\)/g) ?? []).length, 2, 'and every read of one hands back the list');
+});
+
+test('STOREFRONT the mask through a hibernation: a socket\'s glyphs attached as `gb`, never as words, and read back as the list when the room wakes - on the row a newcomer is welcomed with, and in the rights they give (mutants: a woken socket without its glyphs)', async () => {
+  const room = fakeRoom('town:m9');
+  const a = room.connect();
+  await room.hello(a, 'peer-0001', null, { name: 'Mac', glyphs: ['sprout', 'dev'] });
+  assert.equal(a.closed, null);
+  assert.deepEqual([a.att.gb, a.att.glyphs], [glyphBitsOf(['sprout', 'dev']), undefined], 'attached as the mask');
+  room.wake();
+  const b = room.connect();
+  await room.hello(b, 'peer-0002');
+  const seen = b.sent.find((m) => m.t === 'welcome').peers.find((p) => p.id === 'peer-0001');
+  assert.deepEqual(seen.glyphs, ['sprout', 'dev'], 'the woken room reads the list back');
+  assert.deepEqual(room.room._attach(a).glyphs, ['sprout', 'dev'], 'and a developer is still one');
 });
