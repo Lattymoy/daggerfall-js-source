@@ -197,12 +197,14 @@ stand-up when another stood then (`scenes/dragonRewards.js` bind), once DRAGON_M
 A tamed dragon is a third mount beside the horse and the cart (`06-Systems/Horse-Care.md`,
 `06-Systems/Horse-Cart-And-Cargo.md`):
 
-- **Summoned** like the horse: the transport window's **Dragon** row, the summon key, or the Stable page's
-  **Summon**. It flies in and lands behind the player. Dismounted, it waits where it stands; **Send away** sends it
-  off until it is called.
-- **Named** from the Stable page or by activating it, its name over it to every player near.
-- **Storage**: saddlebags of `DRAGON_BAGS_KG` (1,000 kg - between the Small Cart and the Open Wagon), opened from the
-  saddle panel while mounted or within 5 m of it waiting.
+- **Summoned** like the horse: the transport window's **Dragon** row (it mounts the dragon when it waits within reach),
+  the summon key (when the dragon was the last mount, or there is no horse and no wagon), or the Stable page's **Call**.
+  It flies in from 320 m behind its spot and 120 m up and lands 7 m behind the player (`systems/dragon/dragonKeep.js`).
+  Dismounted, it waits 7 m behind where the rider stopped; **Send away** sends it climbing off until it is called.
+- **Named** from the Stable page or by activating it in Info mode, its name over it to every player near.
+- **Storage**: saddlebags of `DRAGON_BAGS_KG` (1,000 kg - between the Small Cart and the Open Wagon), a storage beside
+  the pack, opened by activating it (Steal mode or the plaque's row) or from the Stable page while mounted or within 9 m
+  of it. They save with the character, and the judge, the id ledger and customs read them as a held list.
 - **Upkeep** is horse care's own law (`systems/steedCare.js`): its four stats from its seed, its bond, its hunger and its
   breath, in the player's tier (Off, Boons, Hard). It eats **Dwarven Oil**, sold at every Stable, 24 hours of it a
   flask. Its breath is spent galloping and flying; a winded dragon cannot take off, and one winded in the air glides
@@ -360,6 +362,17 @@ mount's pack picture and its rider's saddle are its look's. The wash is gone. Pi
 `test/net/dragon/dragon7_aetherbright.test.js` (7); `tools/mutants/dragon7.json`, 11 dead. PINS MOVED: the picture count
 and the shipped files (`dwarvenDragon`, `doctrine`), the registry's words (`l10n4_hardcoded`), the audit's wash
 (`dragonaudit_client`).
+
+**DRAGON5b - the keep (2026-10-29).** `systems/dragon/dragonKeep.js` is the tamed dragon's keep on the character
+(`playerEntity.dragonKeep`, saved by `systems/save/save.js`): ridden, waiting at a native spot, or away; its name; its
+saddlebags; whether it was the last mount. `scenes/dragonKeepHost.js`, made by the dragon's sky host, sees the mount and
+the dismount on the motor's step, draws it waiting and flying in or out, answers its press and plaque (raced with the
+mounts, `player/activationRace.js`), and puts its word on my foes frame (`dk`, `net/dragon/dragonKeepWire.js` - no relay
+change). The transport window, the summon key and the Stable page ask its door. Pinned by
+`test/net/dragon/dragon5b_keep.test.js` (10); `tools/mutants/dragon5b.json`, 25 dead.
+
+PINS MOVED (DRAGON5b): the race's rows (`hard2_activationrace`), the foes frame's test (`hcc_hosts`); fourteen records
+re-aimed by content. ROOM: PARTY-TRAVEL's fare bag moved out of `bootWorld` first (`01-Overview/Host-Split.md`).
 
 **DRAGON6 - the journey flown (2026-10-29).** The travel map prices a dragon owner's trip at `DRAGON_TRANSPORT_MODIFIER`
 (64), every pixel at the land's unhindered charge, sea and peaks too: no fare, no Storm Season. Online a map's pick is the

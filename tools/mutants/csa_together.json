@@ -483,8 +483,8 @@
   {
     "name": "CSAK-host-word-no-force",
     "file": "src/scenes/world.js",
-    "old": "exteriorFoes.foesFrame(full, _hccDirty || csaMoved || csaAboardMoved || bandMoved || navalMoved || seaRaidMoved)",
-    "new": "exteriorFoes.foesFrame(full, _hccDirty || csaMoved || bandMoved || navalMoved || seaRaidMoved)",
+    "old": "exteriorFoes.foesFrame(full, _hccDirty || csaMoved || csaAboardMoved || bandMoved || navalMoved || seaRaidMoved || !!dragonSky?.keepMoved(campToWire))",
+    "new": "exteriorFoes.foesFrame(full, _hccDirty || csaMoved || bandMoved || navalMoved || seaRaidMoved || !!dragonSky?.keepMoved(campToWire))",
     "tests": [
       "test/systems/csa_together.test.js"
     ]

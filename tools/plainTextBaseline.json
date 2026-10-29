@@ -822,7 +822,7 @@
   "src/net/writLaw.js": 9,
   "src/net/yardRange.js": 1,
   "src/player/activate.js": 144,
-  "src/player/activationRace.js": 155,
+  "src/player/activationRace.js": 154,
   "src/player/bodyClamp.js": 6,
   "src/player/cameraRecoiler.js": 19,
   "src/player/cameraView.js": 4,

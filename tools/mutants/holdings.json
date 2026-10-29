@@ -38,7 +38,7 @@
   {
     "name": "HOLD-the-hotkey-says-nothing",
     "file": "src/systems/horse/horseCart.js",
-    "old": "  function handleSummonTransport() { say(summonTransport().text); }",
+    "old": "  function handleSummonTransport() { const d = dragonKeepDoor(); if (d?.summonsFirst()) { d.call(); return; } say(summonTransport().text); }   // DRAGON5b: the dragon when it was the last ridden (or there is nothing else to call)",
     "new": "  function handleSummonTransport() { summonTransport(); }",
     "tests": [
       "test/systems/horse/holdings.test.js"

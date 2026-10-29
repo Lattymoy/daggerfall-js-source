@@ -357,6 +357,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   let _onCamps = null;          // SURV3: (from, records, nowMs) - a peer's camps off their foes frame, once the frame has passed the room test
   let _onHcc = null;            // HCC-ONLINE: (from, record | null, nowMs) - a peer's horse and wagon off the same frame (systems/horse/horseCartWire.js)
   let _onHccClear = null;       // HCC-ONLINE: called wherever clearPuppets runs - the peers' teams go with the puppets
+  let _onDragonKeep = null, _onDragonKeepClear = null;   // DRAGON5b: (from, record | null, nowMs) - a peer's tamed dragon off the same frame (net/dragon/dragonKeepWire.js), and its clear
   let _onRide = null;           // WAGONS1: (from, word | null) - a peer's word on a seat in a wagon's back (systems/wagon/wagonSeats.js `wr`)
   let _puppetSeatDraw = null;   // WAGONS2: (puppet) -> { feet, g } | null - where a peer's companion seated in their wagon's back is DRAWN
   let _onRaids = null;          // RAID2: (from, word, nowMs, objectives) - a peer's word on its raids (systems/raidingParties.js raidPeerWord; RAID5: `ro`)
@@ -2265,6 +2266,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     _lostSites.clear();   // AUDIT WB12d (C1): a site a race gave away is the old world's - the epoch above already ends its spawns in flight
     _owners.clear(); _pupPending.clear(); _pupIndex.clear(); _pupKept.clear();   // AUDIT WORLD6b C10: the teardown ends the owners' records too (AUDIT DISC28 QS-J: the kept ones with them)
     _onHccClear?.();   // AUDIT HCC O2: and the peers' teams with them - a fast travel's clearLive re-anchors the origin with no offset to ride
+    _onDragonKeepClear?.();   // DRAGON5b: and their dragons
     _onDuelClear?.();   // DUEL1: and the rings they duel in
     _onCsaClear?.();   // CSA-J: and their boats
     _onCsaAboardClear?.();   // CSA-K: and their places aboard
@@ -2500,6 +2502,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   function reclaimSite(site) { _lostSites.delete(site); }
   function setOnCamps(fn) { _onCamps = typeof fn === 'function' ? fn : null; }
   function setOnHcc(fn, onClear = null) { _onHcc = typeof fn === 'function' ? fn : null; _onHccClear = typeof onClear === 'function' ? onClear : null; }   // HCC-ONLINE
+  function setOnDragonKeep(fn, onClear = null) { _onDragonKeep = typeof fn === 'function' ? fn : null; _onDragonKeepClear = typeof onClear === 'function' ? onClear : null; }   // DRAGON5b
   function setOnRide(fn) { _onRide = typeof fn === 'function' ? fn : null; }   // WAGONS1
   function setPuppetSeatDraw(fn) { _puppetSeatDraw = typeof fn === 'function' ? fn : null; }   // WAGONS2
   function setOnBands(fn) { _onBands = typeof fn === 'function' ? fn : null; }   // TV7b
@@ -2842,6 +2845,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (data.pg !== undefined) _onPortals?.(from, data.pg);   // PORTAL1: the owner's portal - a frame without it leaves the copy to run out on its own time; past the same room test
     if (data.hv !== undefined) _onHcc?.(from, data.hv, _now());   // HCC-ONLINE: the owner's horse and wagon (null: none stand) - a frame without the field leaves the last word standing; past the same room test the camps pass
     if (Array.isArray(data.c)) _onCamps?.(from, data.c, _now()); if (data.wr !== undefined) _onRide?.(from, data.wr);   // SURV3: the owner's camps ride the same frame, past the same room test - the host's pool lands them; WAGONS1: their ask for a seat in my wagon, or the seat they sit in - the same room test
+    if (data.dk !== undefined) _onDragonKeep?.(from, data.dk, _now());   // DRAGON5b: the owner's tamed dragon left in the world (null: none) - the same law
     return true;
   }
   /** One streamed record onto its puppet: the target pose - kept in the WORLD frame and converted every step (AUDIT
@@ -3338,6 +3342,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     _pupPending.clear();
     _adopted.clear();   // AUDIT (pre-merge) D2: another cell's foes are nobody's to give back here
     _onHccClear?.();   // HCC-ONLINE: the peers' teams go with their puppets (a room change, a leave)
+    _onDragonKeepClear?.();   // DRAGON5b: and their dragons
     _onDuelClear?.();   // DUEL1: and their rings
     _onCsaClear?.();   // CSA-J: and their boats
     _onCsaAboardClear?.();   // CSA-K: and their places aboard
@@ -3386,5 +3391,5 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     setPuppetSeatDraw,   // WAGONS2: a peer's seated companion, drawn in their grown wagon
     setOnEgArch,   // EG-F
     setOnPortals,   // PORTAL1
-    setOnCamps, setOnHcc, setOnDuel };   // SURV3; HCC-ONLINE
+    setOnDragonKeep, setOnCamps, setOnHcc, setOnDuel };   // DRAGON5b; SURV3; HCC-ONLINE
 }

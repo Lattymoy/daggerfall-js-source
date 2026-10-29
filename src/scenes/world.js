@@ -10322,6 +10322,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     (key) => (typeof key === 'string' && key.startsWith('water:')
       ? waterSourceHoverName(!!springAt(key)?.dry) : null),
     (key) => wagonHoverName(key),
+    (key) => dragonSky?.keepHoverName(key) ?? null,   // DRAGON5b: my tamed dragon by its name and its verbs, another's by its name
     (key) => hcc.hoverName(key),   // HCC: the horse by its name (HorseNameTooltipController's HorseTargetLabel), the wagon, a peer's by whose it is
     (key) => csaHoverName(key),   // CSA-D: a boat, by its hull's name
     // LEFAY1: the monument to Julian LeFay - its years, the flowers laid, and its rows; after the Sigil Broker's and the
@@ -19364,9 +19365,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const bandMoved = cell && bandWord(null, full);   // TV7b: a chase moves every frame, and asks for one
     const navalMoved = cell && navalWord(null, full);   // NAV-G: a volley is news at once - the sea's changed word asks for a frame
     const seaRaidMoved = cell && seaRaidWord(null, full);   // OW6: and a raider's at sea
-    const frame = cell ? ((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoes.foesFrame(full, _hccDirty || csaMoved || csaAboardMoved || bandMoved || navalMoved || seaRaidMoved) : null) : modes?.dungeonFoesFrame?.(full);
+    const frame = cell ? ((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoes.foesFrame(full, _hccDirty || csaMoved || csaAboardMoved || bandMoved || navalMoved || seaRaidMoved || !!dragonSky?.keepMoved(campToWire)) : null) : modes?.dungeonFoesFrame?.(full);
     if (!frame) return false;
     if (cell && full) frame.c = camps.wireRecords(campToWire); if (cell && (full || _hccDirty)) { frame.hv = hcc.wireRecord(campToWire); _hccDirty = false; } if (cell) duelRingWord(frame, full); if (cell) csaWord(frame, full); if (cell) csaAboardWord(frame, full); if (cell) bandWord(frame, full); if (cell) navalWord(frame, full); if (cell) seaRaidWord(frame, full); if (cell) { const rk = raidWireWord(), ro = raidObjWord(); if (rk) frame.rk = rk; if (ro) frame.ro = ro; } if (cell) portalWord(frame, full); if (cell && frame.hv !== undefined) frame.wr = wagonRiders?.word() ?? null;   // HCC-ONLINE: my horse and wagon as shown (null: none stand) ride beside the camps - on every full frame, and on a moved word between them   // AUDIT SURV B: an empty list says "none stand" - the last camp packed reaches the peers   // SURV3: my camps ride my full frame - a shared world object in the cell's own way; RAID2: my word on the raids I run or fought - my share of their deaths, and my claim; PORTAL1: my portal, on every full frame while it stands and I stand near it; WAGONS1: my ask for a seat in another's wagon, or the seat I sit in - beside my team's word, on its clock (sent whenever `hv` is)
+    if (cell) dragonSky?.keepWord(frame, full, campToWire);   // DRAGON5b: my tamed dragon left in the world, beside my team's word
     // SCALE2c: A FULL FRAME THAT SAYS NOTHING IS SAID ONCE (net/foesQuiet.js) - in a cell, after one that said the same
     const said = { full, cell, room: online.room };
     if (_foesQuiet.skip(frame, said)) { _foesFullAt = now; return false; }
@@ -20128,6 +20130,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     exteriorFoes.setOnSites((from, sites) => wodPeerSites(from, sites), wodSprungList);   // WOD7: a peer's sprung markers - mine are spent; mine ride my full frames
     exteriorFoes.setOnCamps((from, c, at) => camps.applyOwner(from, c, campToScene, at));   // SURV3: a peer's camps, off their foes frame past the pool's own room test, through validCampRecord
     exteriorFoes.setOnHcc((from, hv, at) => hcc.applyOwner(from, hv, campToScene, at), () => hcc.clearPeers());
+    exteriorFoes.setOnDragonKeep((from, dk) => dragonSky?.keepPeer(from, dk, campToScene), () => dragonSky?.keepPeersClear());   // DRAGON5b: the others' tamed dragons off their frames
     exteriorFoes.setOnRide((from, wr) => wagonRiders?.hear(from, wr));   // WAGONS1: a rider's ask, or the seat they sit in
     exteriorFoes.setPuppetSeatDraw((f) => (hccOn() && (f.companion != null || f.shipmate) ? hcc.puppetSeatDrawn(f.puppet, f.ai?.feet, f._pup?.wire ?? null) : null));   // WAGONS2: a peer's seated companion drawn in their grown wagon
     exteriorFoes.setOnBands((from, bd) => bandHear(from, bd));   // TV7b: a peer's band chases, off their foes frame past the room test
@@ -23547,6 +23550,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     ground: (x, z) => surfaceAt(x, z), feet: () => player.feetAt(), eye: () => cam.pos, level: () => playerEntity.level ?? 1,
     renderer, getTexture, uploadRecordFrame, audio,
     say: (text, sec) => townTalk.say(text, sec), mid: (text, sec) => setMidScreenText(text, sec),
+    townTalk, makeInventoryWindow,   // DRAGON5b: the keep's name box and its saddlebags' door
     takeSpoil, relayNowS, chatNotice: (text) => chatNotice(text),   // DRAGON4: its rewards' (scenes/dragonRewards.js) - the pack's door, the relay's clock, the chat's line (declared below: read at the call)
   }) : null;
   /** SERPENT1: the compass's mark - where it hunts, in THIS scene, while it swims and the player stands in its ring. */
@@ -32068,6 +32072,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           const _torchPick = pickActivatableHit(cam.pos, useFwd, droppedTorches.targets(), collider);   // HT1: the mod's RegisterCustomActivation over its six records, the same one ray
           const _wagonPick = pickActivatableHit(cam.pos, useFwd, mwViewWagonTargets(RAY_DISTANCE), collider);   // EOTB-IL: Eye Of The Beholder's cart, RegisterCustomActivation(41239, 3.2), the same one ray
           const _campPick = pickActivatableHit(cam.pos, useFwd, camps.targets(), collider);   // SURV3: a camp's fire or tent, the same one ray
+          const _dragonPick = dragonSky ? pickActivatableHit(cam.pos, useFwd, dragonSky.keepTargets(), collider) : null;   // DRAGON5b: a tamed dragon waiting, the same one ray
           const _hccPick = pickActivatableHit(cam.pos, useFwd, hcc.targets(), collider);   // HCC: the parked wagon's box, the following team's, the standing horse's (RegisterCustomActivation at 3.2), the same one ray
           const _springPick = pickActivatableHit(cam.pos, useFwd, springTargets(), collider);   // SURV3: a fountain, a well, a trough
           const _gatePick = gatePool ? pickActivatableHit(cam.pos, useFwd, [...gatePool.targets(), ...(riteHost?.targets() ?? [])], collider) : null;   // WB2: an Oblivion Gate's fire; WB12d: and the faithful's casket, on its ray
@@ -32087,6 +32092,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             torch: _torchPick,
             wagon: _wagonPick,
             horseCart: _hccPick,   // HCC
+            dragon: _dragonPick,   // DRAGON5b
             camp: _campPick,   // SURV3
             water: _springPick,   // SURV3
             gate: _gatePick,   // WB2
@@ -32141,6 +32147,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             else if (_race.campWins) { if (_campPick.distance > _campPick.reach) setMidScreenText(tooFarAwayText()); else camps.activate(_campPick.key, getInteractionMode(), plaqueActionFor(_campPick.key)); }   // REST2: the plaque's lit row
             else if (_race.waterWins) { if (_springPick.distance > _springPick.reach) setMidScreenText(tooFarAwayText()); else drinkAtSpring(_springPick.key); }
             else if (_race.wagonWins) { if (_wagonPick.distance > _wagonPick.reach) setMidScreenText(tooFarAwayText()); else mwViewWagonActivate(getInteractionMode(), { say: (l) => townTalk.say(l), openInventoryWithWagon: () => { const w = makeInventoryWindow(EOTB_WAGON_PACK); if (w) townTalk.showOverlay(w); } }); }   // DISC10-E L3: a refused pack is null
+            else if (_race.dragonWins) dragonSky.keepActivate(_dragonPick.key, _dragonPick.distance, getInteractionMode(), plaqueActionFor(_dragonPick.key));   // DRAGON5b: ride it, its bags, send it away, name it
             else if (_race.horseCartWins) { hcc.activate(_hccPick.key, _hccPick.distance, (l) => townTalk.say(l), () => setMidScreenText(tooFarAwayText()), plaqueActionFor(_hccPick.key)); }
             else if (_race.boatWins) csaActivate(_csaBoatPick);   // CSA-D: Come Sail Away's seven activations - the helm, the board, the status (the rest are their slices')   // ACT-MENU: the verb the plaque lit, where it stands   // HCC: DeployedWagonActivator / FollowingWagonActivator / StationaryHorseActivator - the runtime's own reach test and refusals
             else if (_torchNearest) { if (_torchPick.distance > _torchPick.reach) setMidScreenText(tooFarAwayText()); else droppedTorches.activate(_torchPick.key, getInteractionMode()); }   // the mod's own activation, ahead of DFU's ladder
@@ -34211,6 +34218,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             torch: pickActivatableHit(cam.pos, _hd, droppedTorches.targets(), collider),
             wagon: pickActivatableHit(cam.pos, _hd, mwViewWagonTargets(RAY_DISTANCE), collider),
             horseCart: pickActivatableHit(cam.pos, _hd, hcc.targets(), collider),   // HCC
+            dragon: dragonSky ? pickActivatableHit(cam.pos, _hd, dragonSky.keepTargets(), collider) : null,   // DRAGON5b
             camp: pickActivatableHit(cam.pos, _hd, [...camps.targets(), ...(yards?.targets() ?? [])], collider),
             water: pickActivatableHit(cam.pos, _hd, springTargets(), collider),
             gate: gatePool ? pickActivatableHit(cam.pos, _hd, [...gatePool.targets(), ...(riteHost?.targets() ?? [])], collider) : null,   // WB2; WB12d: the casket

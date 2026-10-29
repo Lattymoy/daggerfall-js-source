@@ -36,6 +36,7 @@ import { createDragonRewards } from './dragonRewards.js';   // DRAGON4: its rece
 import { createDragonSites } from '../systems/dragon/dragonSite.js';   // AUDIT DRAGON: the sky made whole here (createDragonSky)
 import { createDragonLink } from '../net/dragon/dragonLink.js';
 import { dragonBarModel } from '../ui/dragonBar.js';
+import { createDragonKeep } from './dragonKeepHost.js';   // DRAGON5b: the tamed dragon where it waits, comes and goes
 
 /** Its drawn size over its sprite's own (a wingspan near 19 m), how far it is drawn and heard, and the sighting's reach (m). */
 export const DRAGON_SCALE = 1.6;
@@ -422,13 +423,20 @@ export function createDragonSky({ bayScan, theatres, street, barBlocked = () => 
   let host = null;
   const link = createDragonLink({ now: deps.now, say: (code) => host?.refused(code), site: () => host?.site() ?? null, onReceipt: (r) => host?.receipt(r) });
   host = makeHost({ ...deps, link, sites });
+  const keep = createDragonKeep({ ...deps, street, scale: DRAGON_SCALE });   // DRAGON5b
+  const bossBatches = host.batches, _all = [];
   let barUp = false;
   return Object.assign(host, {
+    /** The boss's body and the tamed dragons' (mine waiting, and the others'), for the flats' axis. */
+    batches() { _all.length = 0; _all.push(...bossBatches(), ...keep.batches()); return _all; },
+    /** DRAGON5b: the keep's seams - my word on the foes frame, the others' in, its box, its plaque, its press. */
+    keepWord: keep.word, keepMoved: keep.moved, keepPeer: keep.peer, keepPeersClear: keep.clearPeers, keepTargets: keep.targets, keepHoverName: keep.hoverName, keepActivate: keep.activate,
     /** A word of its cell's (or my receipt from the hub). @param {any} w */
     word: (w) => link.word(w),
     /** The online frame's (after the serpent's): on the street, to the dead too, its sky, its fight and its bar. */
     onlineFrame() {
       host.tick();   // DRAGON4: its receipts offered in their time, in any mode
+      keep.tick();   // DRAGON5b: the mount and the dismount seen
       let fight = false;
       try { fight = street() ? host.frame() : (host.leave(), false); } catch (e) { console.warn('[dragon] frame', e?.message ?? e); }
       const bar = fight ? dragonBarModel(host.bar()) : null;

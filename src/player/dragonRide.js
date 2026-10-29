@@ -21,6 +21,7 @@ const flight = createDragonFlight();
 let _falling = 0;
 let _settling = false;
 let _mounted = false;
+let _mode = /** @type {string | null} */ (null);   // DRAGON5b: the last step's transport mode
 /** DRAGON6: 'cruise' while a journey flies it, 'down' from its end until the ground meets it, else null. */
 /** @type {'cruise' | 'down' | null} */
 let _cruise = null;
@@ -31,6 +32,7 @@ let _heard = null;
 /** One motor step. @param {number} dt @param {any} motor @param {any} input */
 export function dragonRideStep(dt, motor, input) {
   const mounted = motor?.transportMode === TRANSPORT_MODES.Dragon;
+  _mode = motor?.transportMode ?? null;
   const grounded = !!motor?.grounded;
   _mounted = mounted;
   _over = heightOver(motor);
@@ -66,6 +68,12 @@ export function setDragonCruise(on) {
 }
 /** Whether the rider sits the dragon (the last motor step's word) - the Overworld plans a flown journey for them. */
 export const dragonMounted = () => _mounted;
+/** DRAGON5b: the transport mode the last motor step saw (the keep watches the mount and the dismount). */
+export const rideModeNow = () => _mode;
+/** DRAGON5b: the mount rig's way onto the dragon (player/mountRig.js - the one place the mode changes), for the keep. */
+let _mountDragon = /** @type {(() => void) | null} */ (null);
+export function setDragonMounter(fn) { _mountDragon = typeof fn === 'function' ? fn : null; }
+export const rideDragon = () => _mountDragon?.();
 /** DRAGON6: whether a journey cruises it now. */
 export const dragonCruising = () => _cruise === 'cruise';
 
@@ -74,4 +82,4 @@ export const dragonAloft = () => flight.aloft() || _settling;
 /** Told 'took-off' and 'landed' (the host's sound). @param {((what: 'took-off' | 'landed') => void) | null} fn */
 export function onDragonFlight(fn) { _heard = typeof fn === 'function' ? fn : null; }
 /** For tests: on the ground, and nothing heard. */
-export function _resetDragonFlight() { flight.land(); _falling = 0; _settling = false; _heard = null; _mounted = false; _cruise = null; _over = Infinity; }
+export function _resetDragonFlight() { flight.land(); _falling = 0; _settling = false; _heard = null; _mounted = false; _mode = null; _cruise = null; _over = Infinity; }

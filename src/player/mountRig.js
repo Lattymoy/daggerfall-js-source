@@ -33,7 +33,8 @@
 import { TRANSPORT_MODES, isRiding, isHorseRide, hasHorse, hasCart, hasDragon } from '../systems/transport.js';
 import { dragonMountOf, dragonLookOfItem } from '../systems/dragon/dragonMount.js';   // DRAGON7: the ridden dragon's look, for its saddle's colours
 import { createDragonSaddle } from './dragonSaddle.js';   // DRAGON5: the tamed dragon's saddle over the view
-import { onDragonFlight } from './dragonRide.js';   // AUDIT DRAGON: its takeoff and its landing heard
+import { onDragonFlight, setDragonMounter } from './dragonRide.js';   // AUDIT DRAGON: its takeoff and its landing heard; DRAGON5b: the keep's way onto it
+import { dragonKeepDoor } from '../systems/dragon/dragonKeep.js';   // DRAGON5b: the tamed dragon where it waits
 import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
 import { RidingAnimator, loadRidingArt, ridingRect, ridingLook, RIDING_VOLUME_SCALE } from '../systems/riding.js';
 import { riddenHorseLook } from '../systems/horse/horseCoats.js';   // COATS1: the ridden horse's look, which the sprite wears
@@ -191,6 +192,7 @@ export function createMountRig({
   }
 
   _footNow = () => setMode(TRANSPORT_MODES.Foot);
+  setDragonMounter(() => setMode(TRANSPORT_MODES.Dragon));   // DRAGON5b: the keep mounts it beside me, through the one place
   return {
     setMode,
     /** For a host that needs to know whether the sprite is up. */
@@ -223,6 +225,7 @@ export function createMountRig({
         onMode: (mode) => {
           if (mode === TRANSPORT_MODES.Ship) { onShip?.(); return; }
           if (rt && (mode === TRANSPORT_MODES.Horse || mode === TRANSPORT_MODES.Cart)) { rt.tryUseTransport(mode); return; }   // HCC: HandleHorseTransportButton / HandleCartTransportButton [IL_b170, IL_b1ac]
+          if (mode === TRANSPORT_MODES.Dragon && dragonKeepDoor()) { dragonKeepDoor().ride(); return; }   // DRAGON5b: mounted beside it, else it is called to my side
           setMode(mode);   // HC1: the art loads with the mode, in the one place
         },
       }), 'transport'));
