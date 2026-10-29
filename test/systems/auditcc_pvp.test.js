@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 
 import { duelAttackerOf, duelWeaponOf, duelStandIn, DUEL_STAND_IN, resolveDuelStrike } from '../../src/combat/duelCombat.js';
-import { siegeSpellNumbers, siegeCastClamp } from '../../src/combat/siegeCombat.js';
+import { siegeSpellNumbers, siegeCastClamp, pvpFirstEffect } from '../../src/combat/siegeCombat.js';
 import { installPcaao, uninstallPcaao } from '../../src/combat/pcaao.js';
 import { playerEntity } from '../../src/characters/playerEntity.js';
 import { createCharacter, STAT_KEYS_ORDER } from '../../src/systems/chargen.js';
@@ -146,6 +146,10 @@ test('AUDIT C&C H5 A SPELL\'S HARM IS COUNTED ON THE NEUTRAL STAND-IN: the caste
   const kills = casts(e, DISINTEGRATE, 8);
   assert.deepEqual(kills, [0, 0, 0, 0, 0, 0, 0, 0], 'a Disintegrate counts nothing at a player');
   assert.deepEqual(casts(hurt, DISINTEGRATE, 8), kills, 'the caster\'s own wounds are not the count');
+  // PVP-NO-DRAIN: a Drain reaches no player until it is balanced
+  const DRAIN = buildCustomSpell({ slots: [{ type: 7, subType: 0, settings: { chanceBase: 100, magnitude: { baseMin: 20, baseMax: 20, plusMin: 0, plusMax: 0, perLevel: 1 } } }], rangeType: 1, element: 4, name: 'Sap' });
+  assert.deepEqual(casts(e, DRAIN, 8), [0, 0, 0, 0, 0, 0, 0, 0], 'a Drain counts nothing at a player');
+  assert.equal(pvpFirstEffect(DRAIN), null, 'a Drain is no PvP effect');
   assert.deepEqual([99999, 12].map((n) => siegeCastClamp(n, false)), [10_000, 12], 'the number the hosts send: the wire\'s most (PVP-HIT: the referee takes 45% of the body)');
 });
 

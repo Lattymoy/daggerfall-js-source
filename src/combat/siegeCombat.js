@@ -40,9 +40,9 @@ export const SIEGE_DISMOUNT_TEXT = "You can't ride a horse on a battlefield.";
 
 /** PVP-SPELLS (the PvP rework, 2026-10-28: "paralize and dot spell dont work in pvp", "dont use them for now", "get rid of
  *  disitigrate", "remove silence"): a spell at a player lands its FIRST effect only ("multi spell skill only use the
- *  first"), and only Damage (4) and Drain (7) reach a player. Paralyze, Continuous Damage, Disintegrate and Silence stay
- *  home until they are rebalanced. */
-export const PVP_SPELL_TYPES = Object.freeze([4, 7]);
+ *  first"), and only Damage (4) reaches a player. Paralyze, Continuous Damage, Disintegrate, Silence and Drain (7; PVP-NO-DRAIN,
+ *  "remove drain till we can balance it") stay home until they are rebalanced. */
+export const PVP_SPELL_TYPES = Object.freeze([4]);
 /** PVP-WARD: the element a spell carries to the referee (DFU's 0-4, net/wire.js PVP_ELEMENTS) - magic where it names none. */
 export const pvpSpellElement = (sp) => (Number.isInteger(sp?.element) && sp.element >= 0 && sp.element < PVP_ELEMENTS ? sp.element : PVP_ELEMENTS - 1);
 /** The one effect of `sp` that counts between players - its first, if it is a PvP family or a Heal Health - or null. */

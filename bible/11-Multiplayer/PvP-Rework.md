@@ -14,7 +14,7 @@ reference it reads. It ships in stages; this page holds what is built.
 - **PVP-HEAL.** For 30 s after a player's blow, all heals together restore 25% of the whole a 15 s, plus 1% for each 20
   Restoration past 100, to 35%. A duel heals under that cap; a siege still blocks heals by report.
 - **PVP-SCALE.** A player's blow scales with the weapon's climb and gear percent (`wp`), and skill reads to 1,000.
-- **PVP-SPELLS.** A spell at a player uses its first effect: Damage or Drain, or a heal.
+- **PVP-SPELLS.** A spell at a player uses its first effect: Damage, or a heal. Drain is off between players until it is balanced (PVP-NO-DRAIN).
 
 ## PVP-GUARD: armour against a player's blow
 
