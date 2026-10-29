@@ -1858,7 +1858,7 @@ export function createWorldModes(host) {
     return null;
   }
   // VIDEO1: painting televisions — host owns lifecycle; this file only wires (HOST-SPLIT).
-  const videoSurfaces = createInteriorVideoSurfaces(renderer, audio, () => videoInteriorBag(interiorDecor, host, interiorBuilding, cam.pos, buildingOrigin(), homeTownOf));
+  const videoSurfaces = createInteriorVideoSurfaces(renderer, audio, () => videoInteriorBag(interiorDecor, host, interiorBuilding, cam.pos, buildingOrigin(), homeTownOf, cam, canvas, fieldOfView()));
   const decorTool = createDecorTool({
     doc: typeof document !== 'undefined' ? document : null, win: typeof window !== 'undefined' ? window : null,
     canvas, touch: isTouchDevice(), renderer, pool: interiorDecor, names: decorNames,
@@ -5076,7 +5076,7 @@ export function createWorldModes(host) {
     if (piece?.station === VENDOR_STATION) { openHomeVendor(piece, id); return; }   // HOME-VENDOR: anyone may trade with it
     if (useDecorPiece(piece, interiorCamps, getInteractionMode, restFromInteriorBed, () => forgeOffered() && (interiorKeyCtx.togglePause({ at: stationDoorAt('fire') }), true))) return;   // DECOR-USE (systems/decor/decorUse.js): a placed fire or the cooking station opens what a brazier opens (a fire is nobody's), a placed bed is slept in as the room's own are (the rest window says who may)
     if (piece?.station) { useDecorStation(piece); return; }   // HOME-STATIONS
-    if (interiorHome && videoSurfaces.tryOpen(piece, id, !!interiorHome.own, say)) return;   // VIDEO1
+    if (videoSurfaces.tryOpen(piece, id, !!interiorHome?.own, say, interiorHome ? mountInterior : null)) return;   // VIDEO1
     if (piece?.storage && caravanGuestHere()) { say(homeBelongsLine({ owner: privateVisitOwner })); return; }   // WAGONS2-VISIT: a caravan's storage is its owner's, as a home's cupboards are - shut to its visitor, in its owner's name
     if (isHallBoard(piece)) { openHallBoard(); return; }   // GUILD1e: the board in a guild's hall
     if (!piece?.storage) return;

@@ -5,6 +5,7 @@ import {
   VIDEO_ACTIVATE_M, VIDEO_DEACTIVATE_M, VIDEO_ACTIVE_MAX,
 } from '../../net/videoSurfaceLaw.js';
 import { videoProviderOf } from './providerRegistry.js';
+import { holdCursor } from '../../player/pointerLock.js';
 import './directVideoAdapter.js';
 import './youtubeAdapter.js';
 
@@ -12,7 +13,7 @@ import './youtubeAdapter.js';
 export function createPlaybackManager(deps = {}) {
   const now = deps.now ?? (() => Date.now());
   const activeMax = deps.activeMax ?? VIDEO_ACTIVE_MAX;
-  /** @type {Map<string, { state: any, player: any, active: boolean, localMute: boolean, panel?: HTMLElement }>} */
+  /** @type {Map<string, { state: any, player: any, active: boolean, localMute: boolean, panel?: HTMLElement, appliedStatus?: string, cursorRelease?: (() => void) | null }>} */
   const slots = new Map();
 
   function keyOf(s) {
@@ -23,6 +24,9 @@ export function createPlaybackManager(deps = {}) {
     try { slot.player?.destroy?.(); } catch { /* */ }
     slot.player = null;
     slot.active = false;
+    slot.appliedStatus = undefined;
+    try { slot.cursorRelease?.(); } catch { /* */ }
+    slot.cursorRelease = null;
     if (slot.panel?.parentNode) slot.panel.parentNode.removeChild(slot.panel);
     slot.panel = undefined;
   }
@@ -36,9 +40,10 @@ export function createPlaybackManager(deps = {}) {
       : undefined;
     if (panel) {
       panel.className = 'df-video-yt';
-      panel.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:480px;height:270px;z-index:45;background:#000;';
+      panel.style.cssText = 'position:fixed;left:0;top:0;width:320px;height:180px;z-index:60;background:#000;pointer-events:auto;overflow:hidden;';
       (deps.document ?? document)?.body?.appendChild(panel);
       slot.panel = panel;
+      if (!slot.cursorRelease) slot.cursorRelease = holdCursor();
     }
     const player = prov.create({
       renderer: deps.renderer,
@@ -57,22 +62,27 @@ export function createPlaybackManager(deps = {}) {
   function applyState(slot) {
     const p = slot.player;
     if (!p) return;
+    const status = slot.state.status;
     const serverPos = videoPositionAt(slot.state, now());
     const local = p.getCurrentTime?.() ?? 0;
     const drift = videoDriftOf(local, serverPos);
-    if (slot.state.status === 'playing') {
+    if (status === 'playing') {
       if (drift === 'hard') p.seek?.(serverPos);
       else if (drift === 'soft' && p.setPlaybackRate) {
         try { p.setPlaybackRate(local < serverPos ? 1.05 : 0.95); } catch { /* */ }
       }
-      p.play?.();
-    } else if (slot.state.status === 'paused') {
+      // Only kick play on a status edge — every-tick play() breaks YT chrome clicks.
+      if (slot.appliedStatus !== 'playing') p.play?.();
+    } else if (status === 'paused') {
       if (drift !== 'ok') p.seek?.(serverPos);
-      p.pause?.();
+      if (slot.appliedStatus !== 'paused') p.pause?.();
     } else {
-      p.pause?.();
-      if (slot.state.status === 'stopped') p.seek?.(0);
+      if (slot.appliedStatus !== status) {
+        p.pause?.();
+        if (status === 'stopped') p.seek?.(0);
+      }
     }
+    slot.appliedStatus = status;
     const vol = (deps.muted?.() || slot.localMute) ? 0 : 1;
     p.setVolume?.(vol);
   }
@@ -84,7 +94,7 @@ export function createPlaybackManager(deps = {}) {
       const k = keyOf(state);
       let slot = slots.get(k);
       if (!slot) {
-        slot = { state, player: null, active: false, localMute: false };
+        slot = { state, player: null, active: false, localMute: false, cursorRelease: null };
         slots.set(k, slot);
       } else if (!videoRevNewer(slot.state.revision, state.revision)) {
         return;
@@ -93,6 +103,7 @@ export function createPlaybackManager(deps = {}) {
         slot.state = state;
       } else {
         slot.state = state;
+        slot.appliedStatus = undefined;   // re-apply play/pause for the new revision
       }
       if (slot.active) applyState(slot);
     },
@@ -110,6 +121,29 @@ export function createPlaybackManager(deps = {}) {
       if (!slot) return;
       slot.localMute = !!mute;
       slot.player?.setVolume?.(mute || deps.muted?.() ? 0 : 1);
+    },
+    /**
+     * Place an active YouTube panel over a screen rect (painting frame).
+     * @param {string} pieceKey
+     * @param {{ left: number, top: number, width: number, height: number } | null} rect
+     */
+    placePanel(pieceKey, rect) {
+      const slot = slots.get(pieceKey);
+      const panel = slot?.panel;
+      if (!panel) return;
+      if (!rect) { panel.style.visibility = 'hidden'; return; }
+      panel.style.visibility = 'visible';
+      panel.style.left = `${Math.round(rect.left)}px`;
+      panel.style.top = `${Math.round(rect.top)}px`;
+      panel.style.width = `${Math.round(rect.width)}px`;
+      panel.style.height = `${Math.round(rect.height)}px`;
+      const iframe = panel.querySelector?.('iframe');
+      if (iframe) {
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.width = String(Math.round(rect.width));
+        iframe.height = String(Math.round(rect.height));
+      }
     },
     /**
      * Pick nearest surfaces to activate.
@@ -152,6 +186,12 @@ export function createPlaybackManager(deps = {}) {
     },
     stateOf(pieceKey) {
       return slots.get(pieceKey)?.state ?? null;
+    },
+    /** Active YouTube piece keys (for screen layout). */
+    ytKeys() {
+      const out = [];
+      for (const [k, slot] of slots) if (slot.active && slot.panel) out.push(k);
+      return out;
     },
     slots: () => slots,
     capabilitiesOf: videoCapabilitiesOf,

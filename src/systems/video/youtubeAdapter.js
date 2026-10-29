@@ -47,13 +47,16 @@ export function createYoutubeAdapter(deps) {
       if (destroyed) return;
       host = deps.mount ?? doc.createElement('div');
       if (!host.parentNode && deps.mount == null) {
-        host.style.cssText = 'position:fixed;inset:auto;width:480px;height:270px;z-index:40;';
+        host.style.cssText = 'position:fixed;left:0;top:0;width:320px;height:180px;z-index:60;pointer-events:auto;';
         doc.body.appendChild(host);
       }
+      host.style.pointerEvents = 'auto';
       const origin = deps.origin ?? (typeof location !== 'undefined' ? location.origin : undefined);
+      const w = Math.max(320, host.clientWidth || 480);
+      const h = Math.max(180, host.clientHeight || 270);
       player = new YT.Player(host, {
-        width: 480,
-        height: 270,
+        width: w,
+        height: h,
         videoId: String(sourceId),
         playerVars: {
           enablejsapi: 1,
@@ -61,6 +64,8 @@ export function createYoutubeAdapter(deps) {
           rel: 0,
           modestbranding: 1,
           playsinline: 1,
+          controls: 1,
+          fs: 1,
         },
         events: {
           onReady: () => deps.onState?.('ready'),

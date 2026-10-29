@@ -5,18 +5,19 @@ import {
 } from '../../net/videoSurfaceLaw.js';
 import { decorMountQuad, decorMountFloats } from './decorRoom.js';
 import { createPlaybackManager } from '../../systems/video/playbackManager.js';
+import { videoProjectToScreen, videoScreenRectOfCorners } from '../../systems/video/videoPanelLayout.js';
 import { onVideoWords, carryVideoOrder, videoPushState } from '../../net/videoPush.js';
 import { DECOR_MOUNT_LIFT } from '../../net/decorLaw.js';
 import { openVideoSurfaceWindow } from '../../ui/videoSurfaceWindow.js';
 
 /** Live bag for createInteriorVideoSurfaces — kept out of createWorldModes (HOST-SPLIT). */
-export function videoInteriorBag(room, host, building, eye, origin, homeTownOf) {
+export function videoInteriorBag(room, host, building, eye, origin, homeTownOf, cam, canvas, fovYRad) {
   return {
     room, homeDecor: host?.homeDecor,
     mapId: building ? Number(homeTownOf(building)) >>> 0 : 0,
     buildingKey: building?.buildingKey ?? 0,
     character: host?.decorCharacter?.() ?? '',
-    eye, origin,
+    eye, origin, cam, canvas, fovYRad,
   };
 }
 
@@ -35,11 +36,14 @@ export function createInteriorVideoSurfaces(renderer, audio, live) {
     character: g('character', ''),
     eye: g('eye', [0, 0, 0]),
     origin: g('origin', [0, 0, 0]),
+    cam: g('cam', null),
+    canvas: g('canvas', null),
+    fovYRad: g('fovYRad', Math.PI / 3),
     disabled: () => false,
   });
 }
 
-/** @param {{ renderer: any, audio?: any, room: any, api?: any, mapId?: () => number, buildingKey?: () => number, character?: () => string, eye?: () => number[], origin?: () => number[], now?: () => number, disabled?: () => boolean, muted?: () => boolean }} deps */
+/** @param {{ renderer: any, audio?: any, room: any, api?: any, mapId?: () => number, buildingKey?: () => number, character?: () => string, eye?: () => number[], origin?: () => number[], cam?: () => any, canvas?: () => any, fovYRad?: () => number, now?: () => number, disabled?: () => boolean, muted?: () => boolean }} deps */
 export function createVideoSurfaceHost(deps) {
   const playback = createPlaybackManager({
     renderer: deps.renderer,
@@ -72,9 +76,12 @@ export function createVideoSurfaceHost(deps) {
     const character = deps.character?.();
     if (mapId == null || buildingKey == null || !character) return;
     const r = await api.videoSurfaces({ mapId, buildingKey, character });
-    if (!r?.ok || !Array.isArray(r.surfaces)) return;
+    if (!r?.ok) return;
+    const bag = r.data && typeof r.data === 'object' ? r.data : r;
+    const surfaces = bag.surfaces;
+    if (!Array.isArray(surfaces)) return;
     const seen = new Set();
-    for (const raw of r.surfaces) {
+    for (const raw of surfaces) {
       const s = videoStateOf(raw);
       if (!s) continue;
       seen.add(s.pieceId);
@@ -149,38 +156,46 @@ export function createVideoSurfaceHost(deps) {
     hearOrder(order) { carryVideoOrder(order); },
     async cmd(body) {
       const api = deps.api;
-      if (!api?.videoCmd) return { error: 'no-api' };
-      const r = await api.videoCmd(body);
-      if (r?.ok) {
-        if (r.surface) {
-          const s = videoStateOf(r.surface);
-          if (s) { byPiece.set(s.pieceId, s); playback.hear(s); ensureMount(s.pieceId); }
-        } else if (body?.id) {
-          byPiece.delete(body.id);
-          playback.clear(`${body.mapId}:${body.buildingKey}:${body.id}`);
-          dropMount(body.id);
-        }
-        if (r.videoOrder) carryVideoOrder(r.videoOrder);
+      if (!api?.videoCmd) return { ok: false, error: 'no-api' };
+      let r = await api.videoCmd(body);
+      // CAS miss: pull the live revision and retry once with it
+      if (r?.error === 'video-rev' && body?.id != null) {
+        await refreshAll();
+        const have = byPiece.get(body.id);
+        r = await api.videoCmd({ ...body, rev: have?.revision ?? 0 });
       }
-      return r;
+      if (!r?.ok) return { ok: false, error: r?.error ?? 'failed' };
+      const data = r.data && typeof r.data === 'object' ? r.data : r;
+      if (data.surface) {
+        const s = videoStateOf(data.surface);
+        if (s) { byPiece.set(s.pieceId, s); playback.hear(s); ensureMount(s.pieceId); }
+      } else if (body?.op === 'clear' && body?.id) {
+        byPiece.delete(body.id);
+        playback.clear(`${body.mapId}:${body.buildingKey}:${body.id}`);
+        dropMount(body.id);
+      }
+      if (typeof data.videoOrder === 'string') carryVideoOrder(data.videoOrder);
+      return { ok: true, surface: data.surface ?? null, videoOrder: data.videoOrder };
     },
     configured(pieceId) { return byPiece.has(pieceId); },
     stateOf(pieceId) { return byPiece.get(pieceId) ?? null; },
-    /** Open the television menu for a painting piece; true when handled. */
-    tryOpen(piece, pieceId, canControl, say) {
+    /** Open the television menu for a painting piece; true when handled. `mount` is the host overlay slot. */
+    tryOpen(piece, pieceId, canControl, say, mount) {
       if (!videoIsPaintingItem(piece?.item)) return false;
+      if (typeof mount !== 'function') { say?.('Television needs an online home.'); return true; }
       const mapId = deps.mapId?.() ?? 0;
       const buildingKey = deps.buildingKey?.() ?? 0;
       const character = deps.character?.() ?? '';
-      openVideoSurfaceWindow({
+      const win = openVideoSurfaceWindow({
         mapId, buildingKey, pieceId, character,
         state: byPiece.get(pieceId) ?? null,
         canControl: !!canControl,
         onCmd: (body) => this.cmd(body),
         onMute: (mute) => this.setLocalMute(pieceId, mute),
-        onClose: () => {},
         say,
       });
+      if (!win) return false;
+      mount(win);
       return true;
     },
     setLocalMute(pieceId, mute) {
@@ -217,6 +232,22 @@ export function createVideoSurfaceHost(deps) {
         void state;
       }
       await playback.tick(candidates);
+
+      // YouTube: sit the official iframe over the painting's screen box (never screen-centre).
+      const cam = deps.cam?.();
+      const canvas = deps.canvas?.();
+      const fov = deps.fovYRad?.() ?? Math.PI / 3;
+      const cw = canvas?.clientWidth ?? 0, ch = canvas?.clientHeight ?? 0;
+      const prefix = `${mapId}:${buildingKey}:`;
+      for (const key of playback.ytKeys()) {
+        if (!key.startsWith(prefix)) continue;
+        const pieceId = key.slice(prefix.length);
+        ensureMount(pieceId);   // wall quad for the DOM panel (YouTube is never a GL texture)
+        const m = mounts.get(pieceId);
+        if (!m?.quad?.corners || !cam || !cw) { playback.placePanel(key, null); continue; }
+        const rect = videoScreenRectOfCorners(m.quad.corners, (p) => videoProjectToScreen(p, cam, fov, cw, ch));
+        playback.placePanel(key, rect);
+      }
     },
     draw(r = deps.renderer) {
       let n = 0;

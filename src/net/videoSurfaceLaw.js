@@ -185,5 +185,9 @@ export function videoApplyCmd(prior, cmd, nowMs) {
 /** Whether this revision should replace the one held. */
 export const videoRevNewer = (have, next) => Number.isSafeInteger(next) && (!Number.isSafeInteger(have) || next > have);
 
-/** Whether a decor item descriptor is a Painting. */
-export const videoIsPaintingItem = (item) => !!item && Number.isSafeInteger(item.t) && item.t === VIDEO_PAINTING_TEMPLATE;
+/** Whether a decor item descriptor is a Painting (template 284). */
+export const videoIsPaintingItem = (item) => {
+  if (!item) return false;
+  const t = Number(item.t ?? item.templateIndex);
+  return Number.isSafeInteger(t) && t === VIDEO_PAINTING_TEMPLATE;
+};
