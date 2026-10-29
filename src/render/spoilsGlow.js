@@ -95,6 +95,8 @@ void main() {
   float light = core * (tail * (0.75 + 0.55 * glint) + 0.8 * root);
   o = vec4(uColor * light * pulse * uAlpha * fogFactorAt(vWorld), 1.0);
 }`;
+// SHADER-EASE MOUNT-START (2026-10-29): what the constructor builds, started at page load (render/mountPrograms.js).
+export const SPOILS_GLOW_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([SPOILS_GLOW_VS, SPOILS_GLOW_FS]))]);
 
 /** The line's quad: x across (-1, 1), y up (0, 1). Pure. */
 export function spoilsLineVertices() {

@@ -139,8 +139,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-F5-the-programs-not-started",
     "file": "src/render/playPrograms.js",
-    "old": ", ...FIRE_PROGRAMS, ...GLOW_PROGRAMS];",
-    "new": "];",
+    "old": ", ...FIRE_PROGRAMS, ...GLOW_PROGRAMS, ",
+    "new": ", ",
     "tests": [
       "test/world/audit_redmountain.test.js"
     ]

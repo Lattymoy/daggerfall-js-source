@@ -24,6 +24,9 @@ const STARTED = new WeakMap();
 // COMPILE-QUEUE (FIELD BUGS 2026-10-27b): a pair startProgramsInTurn holds for its turn, no program made yet - `wanted`
 // once a door asks for it, which brings it to the front.
 const queued = () => ({ prog: null, wanted: false });
+/** SHADER-EASE GFX-BAR (2026-10-29): the started and queued programs on `gl` not yet taken, as [key, program or null]
+ *  - read only, nothing linked or started (ui/gfxPrepBar.js). @param {any} gl @returns {Array<[string, any]>} */
+export const startedPrograms = (gl) => [...(STARTED.get(gl) ?? [])].map(([k, s]) => [k, s.prog]);
 /** Each context's KHR_parallel_shader_compile, or null. */
 const PARALLEL = new WeakMap();
 
@@ -97,6 +100,19 @@ export async function startProgramsInTurn(gl, pairs, wait) {
   } finally {
     for (const [k] of keyed) if (started.get(k)?.prog === null) started.delete(k);   // a queue that ends early strands no pair: its door starts it
   }
+}
+
+/** SHADER-EASE MOUNT-START (2026-10-29): whether the driver has finished each program `pairs` names that is started and
+ *  not yet taken - read only, nothing linked or started (startPrograms' `ready()` starts again a program a build took).
+ *  A pair taken or never started counts as done; true at once where the context cannot say.
+ *  @param {any} gl @param {ReadonlyArray<readonly [string, string]>} pairs @returns {boolean} */
+export function startedDone(gl, pairs) {
+  const ext = parallelCompile(gl), started = STARTED.get(gl);
+  if (!ext || !started || gl.isContextLost?.()) return true;
+  return pairs.every(([vs, fs]) => {
+    const prog = started.get(`${vs}\0${fs}`)?.prog;
+    return !prog || gl.getProgramParameter(prog, ext.COMPLETION_STATUS_KHR) === true;
+  });
 }
 
 /** AUDIT SHADER-STALL (2026-10-20): the programs `pairs` names that were started and never taken, let go - their

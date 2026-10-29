@@ -195,6 +195,8 @@ void main() {
   float light = uForm.x * ${f(NODE_GLOW_GAIN.halo)} * halo + uForm.y * ${f(NODE_GLOW_GAIN.shimmer)} * band + uForm.z * ${f(NODE_GLOW_GAIN.mote)} * motes;
   o = vec4(uColor * light * uAlpha * fogFactorAt(vWorld), 1.0);
 }`;
+// SHADER-EASE QUEUE-ORDER (2026-10-29): its first build, started in the play queue (render/playPrograms.js).
+export const NODE_GLOW_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([NODE_GLOW_VS, NODE_GLOW_FS]))]);
 
 /** The card: x across (-1, 1), y up (0, 1). Pure. */
 export function nodeGlowVertices() {

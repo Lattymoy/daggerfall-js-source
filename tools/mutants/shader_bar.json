@@ -1,0 +1,202 @@
+[
+  {
+    "name": "GB-taken-not-done",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "if (lost || p === undefined || (p !== null && gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true)) done.add(k);",
+    "new": "if (lost || (p !== null && p !== undefined && gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true)) done.add(k);",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "a program a build took is never counted: the bar stops short of full"
+  },
+  {
+    "name": "GB-queued-done",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "(p !== null && gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true)",
+    "new": "(p === null || gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true)",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "a queued pair (no program yet) counted done"
+  },
+  {
+    "name": "GB-lost-pending",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "if (lost || p === undefined ||",
+    "new": "if (p === undefined ||",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "a lost context's programs never report done: the bar stands for good"
+  },
+  {
+    "name": "GB-warm-flash",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "if (s.phase === 'idle') return full || total === 0 ? s :",
+    "new": "if (s.phase === 'idle') return total === 0 ? s :",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "a warm cache shows the bar on every visit"
+  },
+  {
+    "name": "GB-no-hold",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "return settled && now - fullAt >= GFX_HOLD_MS ?",
+    "new": "return settled ?",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "ready before the mount queue lands"
+  },
+  {
+    "name": "GB-hold-kept",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "if (!full) return { ...s, done, total, fullAt: null };",
+    "new": "if (!full) return { ...s, done, total };",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "a list that grows keeps the old hold: ready too soon"
+  },
+  {
+    "name": "GB-polls-on",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "timer = state.phase === 'gone' ? null : win.setTimeout(tick, GFX_POLL_MS);",
+    "new": "timer = win.setTimeout(tick, GFX_POLL_MS);",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "the poll runs on after the bar has gone"
+  },
+  {
+    "name": "GB-bar-only-with-button",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "if (!ext && !fixShown) return",
+    "new": "if (!fixShown) return",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "no bar in the desktop app"
+  },
+  {
+    "name": "FS-app-shows-button",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "if (shell || !nav) return false;",
+    "new": "if (!nav) return false;",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "the desktop app shows steps for a cache it clears itself"
+  },
+  {
+    "name": "FS-keys-leak",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "    e.stopImmediatePropagation();\n",
+    "new": "",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "Escape closes the panel and the menu under it hears it too"
+  },
+  {
+    "name": "FS-listener-kept",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "for (const type of ['keydown', 'keyup']) win.removeEventListener?.(type, onKey, true);",
+    "new": "",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "the key listener outlives the menu"
+  },
+  {
+    "name": "GB-enhanced-menu-unwired",
+    "file": "src/main.js",
+    "old": "      await gfxPrep(true);   // before the menu: the panel's key listener is laid first\n      return runEnhancedMenu();",
+    "new": "      return runEnhancedMenu();",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "no bar on the enhanced menu"
+  },
+  {
+    "name": "GB-classic-menu-left-up",
+    "file": "src/main.js",
+    "old": "  const action = await runMenu(canvas, renderer, status);\n  gfxPrep(false);",
+    "new": "  const action = await runMenu(canvas, renderer, status);",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "the bar stays over the world after the classic menu"
+  },
+  {
+    "name": "GB-ready-before-mount-queued",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "  return settled && now - fullAt >= GFX_HOLD_MS ?",
+    "new": "  return now - fullAt >= GFX_HOLD_MS ?",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "GFX-BAR: the bar says ready before the mount set is queued"
+  },
+  {
+    "name": "GB-never-gives-up",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "  if (s.phase === 'filling' && now - s.since >= GFX_GIVE_UP_MS) return { ...s, phase: 'gone', since: now };",
+    "new": "",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "GFX-BAR: a driver that never says done keeps the bar polling for good"
+  },
+  {
+    "name": "FS-linux-shown",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "  if (!/Windows|Macintosh|macOS/.test(platform)) return false;",
+    "new": "  void platform;",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "FIX-STUTTER: Linux and ChromeOS get steps that are not theirs"
+  },
+  {
+    "name": "FS-brave-shown",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "/Google Chrome|Microsoft Edge/.test(String(b?.brand ?? ''))",
+    "new": "/Chromium|Google Chrome|Microsoft Edge/.test(String(b?.brand ?? ''))",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "FIX-STUTTER: Brave, Opera, Vivaldi get Chrome's folders"
+  },
+  {
+    "name": "FS-menu-hears-panel-keys",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "    e.stopImmediatePropagation();\n",
+    "new": "",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "FIX-STUTTER: the menu under the panel hears its keys"
+  },
+  {
+    "name": "GB-main-menu-first",
+    "file": "src/main.js",
+    "old": "      await gfxPrep(true);   // before the menu: the panel's key listener is laid first",
+    "new": "      void gfxPrep(true);   // before the menu: the panel's key listener is laid first",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "GFX-BAR: the bar mounted after the menu, its keys laid second"
+  },
+  {
+    "name": "SM-settled-at-once",
+    "file": "src/render/bootPrograms.js",
+    "old": "  settled = false;\n",
+    "new": "  settled = true;\n",
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
+    "note": "GFX-BAR: the bar told the mount set is queued before it is"
+  }
+]
