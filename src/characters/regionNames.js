@@ -163,7 +163,7 @@ const ARGONIAN = freeze({
 });
 
 const IMPERIAL = freeze({
-  colStem: freeze(['Aul', 'Cass', 'Dec', 'Gai', 'Luc', 'Marc', 'Quint', 'Sext', 'Tib', 'Tit', 'Val', 'Vib', 'Faust', 'Corv', 'Flav', 'Hor', 'Jul', 'Lic', 'Max', 'Oct', 'Ruf', 'Sev', 'Ter', 'Vit', 'Agr', 'Caec', 'Dom', 'Fab', 'Gall', 'Hadr', 'Lent', 'Nerv', 'Petr', 'Rem', 'Serg', 'Tull', 'Varr', 'Aem', 'Clod', 'Pomp']),
+  colStem: freeze(['Aul', 'Cass', 'Dec', 'Gai', 'Luc', 'Marc', 'Quint', 'Sext', 'Tib', 'Publ', 'Val', 'Vib', 'Faust', 'Corv', 'Flav', 'Hor', 'Jul', 'Lic', 'Max', 'Oct', 'Ruf', 'Sev', 'Ter', 'Vit', 'Agr', 'Caec', 'Dom', 'Fab', 'Gall', 'Hadr', 'Lent', 'Nerv', 'Petr', 'Rem', 'Serg', 'Tull', 'Varr', 'Aem', 'Clod', 'Pomp']),
   colEndM: freeze(['us', 'ius', 'ian', 'o', 'inus', 'ianus', 'illus', 'ens']),
   colEndF: freeze(['a', 'ia', 'illa', 'ina', 'iana', 'ella', 'ilia']),
   colFam: freeze(['ius', 'inus', 'ianus', 'o', 'ilius', 'enus', 'idius', 'erius', 'ellius']),
