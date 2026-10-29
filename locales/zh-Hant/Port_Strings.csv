@@ -279,7 +279,7 @@ features.tamrielLand.note,"世界越過 Iliac 灣，延伸至整個泰姆瑞爾�
 features.tamrielLand.title,"海灣以外的土地"
 features.tamrielLands.note,"Iliac 灣以外的每個地區都有自己的地面、植物和地標：Morrowind 的灰燼與巨型蘑菇、Black Marsh 的 Hist、Summerset 的葡萄園。關閉則保留每種氣候原本的樣子。"
 features.tamrielLands.title,"泰姆瑞爾諸地"
-features.tamrielMap.note,"增強地圖可縮放至整個泰姆瑞爾：它的行省、城市、山脈與海洋，均為手繪，並與海灣本身的海岸相接。海灣以外的地方需經陸路前往，無法快速旅行。"
+features.tamrielMap.note,"增強地圖可縮放至整個泰姆瑞爾：它的行省、城市、山脈與海洋，均為手繪，並與海灣本身的海岸相接。海灣以外的地方可以快速旅行前往，與海灣之內的地方相同。"
 features.tamrielMap.title,"地圖上的泰姆瑞爾"
 features.wagonUpkeep.boons,"增益"
 features.wagonUpkeep.effect,"立即生效。連線時由每位玩家自行選擇。"

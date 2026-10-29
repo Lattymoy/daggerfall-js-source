@@ -36,15 +36,15 @@ function inLanguage(code, fn) {
 }
 const BAY = /\bBay\b|\bIliac\b/;
 
-test('AUDIT TAMRIEL-WIDE D1: the Features rows for the map and the land past the Bay say what stands there - its cities, towns, roads and dungeons, reached overland, never by fast travel - in the player\'s language; each row\'s online setting the player\'s, as before (mutants: a row\'s note in plain English again)', () => {
+test('AUDIT TAMRIEL-WIDE D1: the Features rows for the map and the land past the Bay say what stands there - its cities, towns, roads and dungeons, reached by fast travel as a Bay place is - in the player\'s language; each row\'s online setting the player\'s, as before (mutants: a row\'s note in plain English again)', () => {
   const map = FEATURES.find((f) => f.id === 'tamriel-map'), land = FEATURES.find((f) => f.id === 'tamriel-land');
   assert.match(land.note, /its own cities, towns, roads and dungeons\./);
   assert.match(land.note, /Off ends the world at the Bay’s edge\.$/);
-  assert.match(map.note, /A place past the Bay is reached overland, not by fast travel\.$/);
+  assert.match(map.note, /A place past the Bay is reached by fast travel, as a place on the Bay is\.$/);
   for (const r of [map, land]) assert.doesNotMatch(r.note, /no towns|can.t travel/, `${r.id}: no word the land past the Bay outgrew`);
-  // the law the map's note says: a journey into the land past the Bay is refused, one on the Bay is the zone's
-  assert.equal(pastBayJourney({ x: 200, y: 200 }, { x: 1500, y: -200 }, null, { ok: true }).ok, false, 'no fast travel past the Bay');
-  assert.equal(pastBayJourney({ x: 1500, y: -200 }, { x: 200, y: 200 }, null, { ok: true }).ok, true, 'a Bay place is a journey');
+  // the law the map's note says (TRAVEL-EVERYWHERE): a journey past the Bay is the zone's verdict, as one on the Bay is
+  assert.equal(pastBayJourney({ x: 200, y: 200 }, { x: 1500, y: -200 }, null, { ok: true }).ok, true, 'fast travel past the Bay');
+  assert.equal(pastBayJourney({ x: 200, y: 200 }, { x: 1500, y: -200 }, null, { ok: false }).ok, false, 'the zone still refuses');
   assert.deepEqual([map.control.online, land.control.online], ['player', 'player'], 'the online setting unchanged - the owner\'s call');
   inLanguage('de', (de) => {
     for (const k of ['tamrielMap', 'tamrielLand']) {

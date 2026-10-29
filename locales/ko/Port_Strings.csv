@@ -2405,7 +2405,7 @@ features.tamrielLand.note,"세계가 일리악 만 너머 탐리엘 전역으로
 features.tamrielLand.title,"만 너머의 땅"
 features.tamrielLands.note,"일리악 만 너머의 각 지역이 저마다의 땅, 식물, 지형지물을 갖습니다: 모로윈드의 재와 거대 버섯, 블랙 마시의 히스트, 서머셋의 포도밭. 끄면 각 기후의 원래 모습이 유지됩니다."
 features.tamrielLands.title,"탐리엘의 땅"
-features.tamrielMap.note,"향상된 지도를 탐리엘 전체까지 축소할 수 있습니다. 지방, 도시, 산맥, 바다가 손으로 그려져 만의 해안과 그대로 이어집니다. 만 너머의 장소는 빠른 이동이 아니라 육로로 갑니다."
+features.tamrielMap.note,"향상된 지도를 탐리엘 전체까지 축소할 수 있습니다. 지방, 도시, 산맥, 바다가 손으로 그려져 만의 해안과 그대로 이어집니다. 만 너머의 장소도 만 안의 장소처럼 빠른 이동으로 갈 수 있습니다."
 features.tamrielMap.title,"지도 위의 탐리엘"
 features.torchesFromItems.effect,"즉시 적용됩니다. 새 캐릭터와 상점 재고도 따릅니다."
 features.torchesFromItems.note,"던전의 빛이 항상 있는 빛 대신, 들고 다니며 타서 줄어드는 횃불, 랜턴, 양초에서 나옵니다. Daggerfall Unity에서는 기본적으로 꺼져 있습니다."

@@ -1111,7 +1111,7 @@ features.tamrielLand.note,"Świat ciągnie się za Zatoką Iliacką przez cały 
 features.tamrielLand.title,"Kraina za Zatoką"
 features.tamrielLands.note,"Każdy region za Zatoką Iliacką dostaje własną ziemię, rośliny i punkty orientacyjne: popiół i olbrzymie grzyby Morrowind, Hist Czarnego Bagna, winnice Summerset. Wyłączone zachowuje pierwotny wygląd każdego klimatu."
 features.tamrielLands.title,"Krainy Tamriel"
-features.tamrielMap.note,"Ulepszona mapa oddala się na cały Tamriel: jego prowincje, miasta, góry i morza, rysowane ręcznie i połączone z samym wybrzeżem Zatoki. Do miejsca za Zatoką dociera się lądem, nie szybką podróżą."
+features.tamrielMap.note,"Ulepszona mapa oddala się na cały Tamriel: jego prowincje, miasta, góry i morza, rysowane ręcznie i połączone z samym wybrzeżem Zatoki. Do miejsca za Zatoką dociera się szybką podróżą, tak jak do miejsca w Zatoce."
 features.tamrielMap.title,"Tamriel na mapie"
 features.torchesFromItems.effect,"Działa od razu; nowe postacie i towar w sklepach się do tego dostosują."
 features.torchesFromItems.note,"Światło w lochach pochodzi z noszonej pochodni, latarni lub świecy, która się wypala, zamiast ze światła, które zawsze masz. W Daggerfall Unity domyślnie wyłączone."

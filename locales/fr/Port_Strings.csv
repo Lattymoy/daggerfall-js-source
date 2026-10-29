@@ -2405,7 +2405,7 @@ features.tamrielLand.note,"Le monde continue au-delà de la baie d’Iliac sur t
 features.tamrielLand.title,"Terres au-delà de la Baie"
 features.tamrielLands.note,"Chaque région au-delà de la baie d’Iliac reçoit son propre sol, ses plantes et ses repères : la cendre et les champignons géants de Morrowind, les Hist du Marais Noir, les vignobles de Summerset. Désactivé conserve l’aspect d’origine de chaque climat."
 features.tamrielLands.title,"Terres de Tamriel"
-features.tamrielMap.note,"La carte améliorée s’éloigne jusqu’à tout Tamriel : ses provinces, ses villes, ses montagnes et ses mers, dessinées à la main et jointes à la côte même de la Baie. Un lieu au-delà de la Baie se rejoint par voie de terre, pas par voyage rapide."
+features.tamrielMap.note,"La carte améliorée s’éloigne jusqu’à tout Tamriel : ses provinces, ses villes, ses montagnes et ses mers, dessinées à la main et jointes à la côte même de la Baie. Un lieu au-delà de la Baie se rejoint par voyage rapide, comme un lieu de la Baie."
 features.tamrielMap.title,"Tamriel sur la carte"
 features.torchesFromItems.effect,"Prend effet immédiatement ; les nouveaux personnages et le stock des boutiques suivent."
 features.torchesFromItems.note,"Votre lumière dans les donjons vient d’une torche, d’une lanterne ou d’une bougie que vous portez, et qui se consume, au lieu d’une lumière que vous avez toujours. Désactivé par défaut dans Daggerfall Unity."

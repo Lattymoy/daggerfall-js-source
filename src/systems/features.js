@@ -907,13 +907,13 @@ export const FEATURES = Object.freeze([
   // zooms out past the Bay onto the whole continent, authored in the same hand (ui/tamrielInk.js,
   // world/tamriel/tamrielGeography.js, bible/03-World/Tamriel.md). Read where the window is built (ui/map/mapSkin.js
   // tamrielMapOn), so a change takes the next map opened; `?tamriel=off` is the kill door. AUDIT TAMRIEL-WIDE D1: a place
-  // past the Bay is walked to from the map (OW-PAST-BAY), never fast travelled to (TESA-NO-FAST), and the note says so.
+  // past the Bay is travelled to as a Bay place is (TRAVEL-EVERYWHERE), and the note says so.
   Object.freeze({
     id: 'tamriel-map',
     group: 'interface',
     get title() { return t('features.tamrielMap.title', 'Tamriel on the map'); },
     get note() { return t('features.tamrielMap.note', 'The enhanced map zooms out to all of Tamriel: its provinces, cities, mountains and seas, '
-      + 'hand-drawn and joined to the Bay’s own coast. A place past the Bay is reached overland, not by fast travel.'); },
+      + 'hand-drawn and joined to the Bay’s own coast. A place past the Bay is reached by fast travel, as a place on the Bay is.'); },
     get effect() { return t('features.effect.nextMap', 'Takes effect the next time a map is opened.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'tamrielMap', initial: true, online: 'player' }),

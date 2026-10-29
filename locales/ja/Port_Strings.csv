@@ -1115,7 +1115,7 @@ features.tamrielLand.note,"世界はイリアック湾の先へ、タムリエ�
 features.tamrielLand.title,"湾の彼方の地"
 features.tamrielLands.note,"イリアック湾の彼方の各地方が、それぞれの地面、植物、目印を得ます：モロウウィンドの灰と巨大キノコ、ブラック・マーシュのヒスト、サマーセットのブドウ畑。オフにすると各気候の元の見た目のままです。"
 features.tamrielLands.title,"タムリエルの大地"
-features.tamrielMap.note,"強化マップはタムリエル全土まで縮小できます：その地方、都市、山々、海が手描きで描かれ、湾そのものの海岸につながっています。湾の彼方の場所へは陸路で向かい、ファストトラベルでは行けません。"
+features.tamrielMap.note,"強化マップはタムリエル全土まで縮小できます：その地方、都市、山々、海が手描きで描かれ、湾そのものの海岸につながっています。湾の彼方の場所へも、湾の中の場所と同じくファストトラベルで行けます。"
 features.tamrielMap.title,"地図にタムリエル"
 features.torchesFromItems.effect,"すぐに反映されます。新しいキャラクターと店の品ぞろえにも適用されます。"
 features.torchesFromItems.note,"ダンジョンでの明かりは、常にある光ではなく、持ち歩く松明、ランタン、ろうそくから得られ、燃え尽きていきます。Daggerfall Unity では初期設定でオフです。"
