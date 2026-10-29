@@ -61,7 +61,24 @@ verdict names, and where it changed code it has a mutant in the lane's list (`to
 | P11 | LOW | The client never backed off a refusal | FIXED: PASS_REST_MS, each refusal its rest |
 | P12 | LOW | The record and the comments said what the code did not | FIXED in Battle-Pass.md sections 5, 7 and 8 |
 
+| P2b, P3b | MED | The Witches' Festival's find had the same two gaps: a stale shut read vetoed it, and it was no progression claim | FIXED with them: one rest rule for both pages (`net/askRest.js`); `/v1/festival/find` a progression route on a stream of its own. `storefront_passaudit.test.js`, `witch1_client` |
+
 Lane 4's #4, #5, #6, #7 and #10 are lane 1's S6, S5, S11, S7 and S10.
+
+### 2 - the wire
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| E1 | MED | A peer could place its kill effects anywhere, 700 m off in another's face | FIXED: a kill farther than KILL_FX_PEER_M from the peer's drawn feet is dropped, a blow past BLOW_PEER_M. `test/net/storefront_wireaudit.test.js` |
+| E2 | MED | The effects kit was lost from peer memory: a re-stood peer and an absent owner wore nothing | FIXED: the remembered row carries `fx` |
+| E3 | LOW | The "Others' effects" setting did not reach the mount looks, though its note said so (lane 3's #4) | FIXED: one law (`othersEffectShown`); the horse's dye and its beat asked it |
+| E4 | LOW | A kill's fields rode every pose for the rest of the session | FIXED: carried KILL_FX_RIDE_S, the longest a far listener waits for a pose |
+| E5 | LOW | A kill the killer's own screen did not draw was never told | FIXED: told by the wire's reach from the killer's feet, never by the draw |
+| E6 | LOW | An older relay drops a `gb` token's glyphs, or refuses it | FIXED in the record: the rollback floor (Storefront.md section 10) |
+| E7 | LOW | The glyphs' order became a wire contract with no guard | FIXED: a pin over the 33 the mask was first signed over |
+| E8 | LOW | My own glyphs' order differed from what peers see | FIXED: one order on both ends (`glyphsInOrder`) |
+| E9 | LOW | The pose's kill fields were misnamed in two places | FIXED: `xk`, `xp`, `xh` |
+| E10 | LOW | The attachment pins did not measure what they claimed | FIXED: the widest socket measured (1,704 and 1,760 bytes), the pins moved |
 
 ### 3 - the render
 
@@ -84,7 +101,7 @@ Lane 3's #4 is lane 2's #3.
 | # | Sev | Finding | Verdict |
 |---|---|---|---|
 | W1 | HIGH | The fissures' clearings made every pixel build and the clearing sweep about 100 times slower for the season | FIXED: asked by pixel (`gateClearance.js` setNear): 4,000 flats 53 ms to 0.7 ms, the season's sweep 453 ms to 11 ms. `test/world/gate/seasonclear.test.js` |
-| W2 | HIGH | The Resonant Maul was minted on the page alone; its once a day was the device's | FIXED: the service's (`POST /v1/season/maul`, `seasonClaim.js`), once a UTC day an account, a lost answer a yes again. `seasonmaul_service.test.js` |
+| W2 | HIGH | The Resonant Maul was minted on the page alone; its once a day was the device's | FIXED: the service's (`POST /v1/season/maul`, `seasonClaim.js`), once a UTC day an account, a lost answer a yes again; a progression claim on the pass's stream, so a session's secret alone is refused. `seasonmaul_service.test.js` |
 | W3 | HIGH | Every reader's copy of the Colossus lost Blade-turning: blades and arrows did double damage but on the owner's screen | FIXED: one trait cap for every reader (`bossTraitsMost`). `seasonaudit_world.test.js` |
 | W4 | MED | One Colossus in twenty stood with one random elite trait instead of the season's three | FIXED: never the street's elite roll |
 | W5 | MED | No Colossus bar but on the owner's screen | FIXED |
@@ -103,13 +120,17 @@ Lane 3's #4 is lane 2's #3.
 | V4 | MED | The stages wore a stand-in, never the player; the Pyre burned a shadow behind its pillar | FIXED: the player's own body, asked once a window |
 | V5 | LOW | A long title's big plate ran out of its stage | FIXED: fitted with container units at every width |
 | V6 | MED | A mount look dyed the hide alone: the Spectral Steed kept a black mane, tail and far legs, on the sprites and on the 3D horse | FIXED: the look shades the horse's points (`horseCoats.js` pointsOf, POINT_SHADES) and the 3D horse's hair (`horseRig.js` HAIR_ROWS); no rider's bow, steel or cloak moves. `mountlook` (PIN MOVED) |
-| V7 | - | The pass-only wares (the Tonal kill, the Brass gate, the Automaton, the season's titles, glyphs and auras) | Seen in time on the stage after R1-R10: sound, nothing changed |
+| V7 | MED | The effects kit was written to the stored session and dropped by it, so a reload wore none until the service spoke (found when main's ARMORY-SEEN pin met it at the merge) | FIXED: `keepSession` keeps it. `armorylive` |
+| V8 | - | The pass-only wares (the Tonal kill, the Brass gate, the Automaton, the season's titles, glyphs and auras) | Seen in time on the stage after R1-R10: sound, nothing changed |
 
 ## Known, and not changed
 
 - A bridle drawn in the horse's black takes the look's shade with the mane: across the hide it is drawn as the shading
   is, a dark band, and a rule that spared it blacked the small sprites' shading (V6; Storefront.md section 7).
-- The festival's own find has the same two gaps as P2 and P3 (`/v1/festival/find`, `festivalShut`): fixed with them
-  where one rule serves both, or named here.
+- A kill past 45 m of its killer is told to nobody (E5): peers refuse it under E1's tie, and a reach a shot's length
+  would let a peer lay effects in anyone's face again.
+- A blow's fields (`hk`, `hp`) still ride every pose, as PEERFX1 made them: dropping `hk` would read to the lone sleep as
+  a fight's end.
+- "Others' effects" gates the kill effects and the mount looks, not the portal skins: its note names those two.
 - `tools/storefrontProbe.mjs` reads the carousel's first slide after the window loads; on a machine slow enough that
   the carousel turns first, its arrow check fails though the arrow steps exactly one.
