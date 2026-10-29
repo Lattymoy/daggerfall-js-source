@@ -93,7 +93,7 @@ test('DRAGON5b the wire: my record\'s place, facing, flight, look and name round
 
 /** The keep's host over a flat world: natives are scene metres x 40, the ground at 0. */
 function world({ items = [newDragonMount({ id: ID })] } = {}) {
-  const w = { t: 1000, feet: [0, 0, 0], street: true, said: [], overlays: [], windows: [], batches: 0, destroyed: 0 };
+  const w = { t: 1000, feet: [0, 0, 0], street: true, aboard: false, said: [], overlays: [], windows: [], batches: 0, destroyed: 0 };
   const entity = { items };
   const renderer = {
     textures: new Map(),
@@ -102,7 +102,7 @@ function world({ items = [newDragonMount({ id: ID })] } = {}) {
   };
   const keep = createDragonKeep({
     now: () => w.t, local: (nx, nz) => [nx / 40, nz / 40], native: (x, z) => [x * 40, z * 40], ground: () => 0,
-    feet: () => w.feet, eye: () => [w.feet[0], 1.6, w.feet[2]], street: () => w.street, say: (l) => w.said.push(l),
+    feet: () => w.feet, eye: () => [w.feet[0], 1.6, w.feet[2]], street: () => w.street, aboard: () => w.aboard, say: (l) => w.said.push(l),
     renderer, getTexture: () => ({ getFrameCount: () => 4, getSize: () => ({ width: 200, height: 160 }), getScale: () => ({ width: 0, height: 0 }) }), uploadRecordFrame: () => {}, scale: 1.6,
     townTalk: { showOverlay: (o) => w.overlays.push(o) }, makeInventoryWindow: (o) => { w.windows.push(o); return { opened: o }; }, entity,
   });
@@ -139,6 +139,10 @@ test('DRAGON5b the keep on this screen: mounted it is ridden and the last mount;
   w.street = false;
   assert.equal(keep.door.call().ok, false, 'indoors');
   assert.equal(w.said.at(-1), DRAGON_KEEP_TEXT.outdoors);
+  w.street = true; w.aboard = true;
+  assert.equal(keep.door.call().ok, false, 'aboard a ship');
+  assert.equal(w.said.at(-1), DRAGON_KEEP_TEXT.aboard);
+  assert.equal(entity.dragonKeep.where, KEEP.Away, 'and it stays away');
 });
 
 test('DRAGON5b ride and the press: beside it waiting the Dragon row mounts it, from afar it calls it; the press names it (Info), opens its bags (Steal), sends it away (Talk), rides it (Grab); past its reach it says go closer (mutants: the bags opened from afar, the press\'s modes crossed)', () => {
@@ -269,6 +273,7 @@ test('DRAGON5b the doors: the transport window\'s Dragon row and the summon key 
     /frame\.wr = wagonRiders\?\.word\(\) \?\? null; if \(cell\) dragonSky\?\.keepWord\(frame, full, campToWire\);/,
     /exteriorFoes\.setOnDragonKeep\(\(from, dk\) => dragonSky\?\.keepPeer\(from, dk, campToScene\), \(\) => dragonSky\?\.keepPeersClear\(\)\);/,
     /townTalk, makeInventoryWindow,/,
+    /\n\s*aboard: \(\) => isOnShip\(playerEntity, playerEntity\.boardShipPosition \?\? null, playerTravelPixel\(\)\) \|\| !!\(csaBoatUnderMe\(\) \?\? _csaBuckets\.get\(player\.groundKey\)\?\.boat\) \|\| !!naval\?\.aboard\?\.\(\),/,
   ]) assert.match(w, re);
   assert.match(src('src/scenes/exteriorFoes.js'), /if \(data\.dk !== undefined\) _onDragonKeep\?\.\(from, data\.dk, _now\(\)\);/);
   assert.match(src('src/scenes/dragonHost.js'), /keep\.tick\(\);/);

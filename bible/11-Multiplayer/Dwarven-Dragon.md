@@ -365,6 +365,11 @@ mutant records on the version lines.
 **THE MERGE OF MAIN AT 043338ef6 (2026-10-29, #1428 AUDIT FB1029d).** No version moved. bootWorld measures 35,230: main's
 deck seam put two lines in. PINS MOVED: the host's ceiling and its mutant record.
 
+**DRAGON5b ABOARD (2026-10-29).** Reading main's deck seam against the keep found the keep's own gap: it refused a call
+aboard by `deps.aboard`, which the host never passed, so a dragon could be called onto a ship. The host now passes it -
+Daggerfall's ship, a Come Sail Away deck (the pair's rule, AUDIT FB1029d B1) or a sea ship's - and bootWorld measures
+35,232. Pinned in `dragon5b_keep`; `DRAGON5b-a-call-onto-a-ship` and `DRAGON5b-the-host-never-says-aboard` dead.
+
 **DRAGON7 - the Aetherbright (2026-10-29).** `characters/dwarvenDragonShiny.js` turns each PLTE colour at load - the brass
 and copper to aetherium's blue, the wings' olive membrane to its violet, the greys cooled - and writes the chunk's CRC
 again. Archive 1801 is 1800's ninety files so turned; no picture ships. One home for a look's pictures

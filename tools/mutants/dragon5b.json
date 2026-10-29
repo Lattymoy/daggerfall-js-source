@@ -223,5 +223,23 @@
     "tests": [
       "test/net/dragon/dragon5b_keep.test.js"
     ]
+  },
+  {
+    "name": "DRAGON5b-a-call-onto-a-ship",
+    "file": "src/scenes/dragonKeepHost.js",
+    "old": "aboard: !!deps.aboard?.(),",
+    "new": "aboard: false,",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5b-the-host-never-says-aboard",
+    "file": "src/scenes/world.js",
+    "old": "    aboard: () => isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()) || !!(csaBoatUnderMe() ?? _csaBuckets.get(player.groundKey)?.boat) || !!naval?.aboard?.(),   // DRAGON5b: no call onto a ship - Daggerfall's, a Come Sail Away deck (the pair's rule, AUDIT FB1029d B1) or a sea ship's\n",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ]
   }
 ]

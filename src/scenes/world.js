@@ -23554,6 +23554,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     renderer, getTexture, uploadRecordFrame, audio,
     say: (text, sec) => townTalk.say(text, sec), mid: (text, sec) => setMidScreenText(text, sec),
     townTalk, makeInventoryWindow,   // DRAGON5b: the keep's name box and its saddlebags' door
+    aboard: () => isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()) || !!(csaBoatUnderMe() ?? _csaBuckets.get(player.groundKey)?.boat) || !!naval?.aboard?.(),   // DRAGON5b: no call onto a ship - Daggerfall's, a Come Sail Away deck (the pair's rule, AUDIT FB1029d B1) or a sea ship's
     takeSpoil, relayNowS, chatNotice: (text) => chatNotice(text),   // DRAGON4: its rewards' (scenes/dragonRewards.js) - the pack's door, the relay's clock, the chat's line (declared below: read at the call)
   }) : null;
   /** SERPENT1: the compass's mark - where it hunts, in THIS scene, while it swims and the player stands in its ring. */
