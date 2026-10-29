@@ -13,6 +13,7 @@ import { readFileSync } from 'node:fs';
 import {
   SD_LANE_SPAN, sdLaneWire, sdSlotOk, sdLaneRegionOk, SD_LANE_KIND, sdLaneKey, sdReceiptKey, SD_KEY, SD_SLOT_KEY, SD_FOUND_KEY, SD_REGION_COUNT, CHAT_REGION_COUNT,
   validSdRecord, validSdOut, validSdIn, validSdFoundTell, SOCIAL_ROOM, SD_INTERNAL_LIVE, chatRegionRoom, worldRoom, PIXEL_UNITS, SITE_EVENT_LANES,
+  sharedClassicMinutes, wallMsForClassicMinutes,
 } from '../../../src/net/wire.js';
 import {
   sdLaneOf, SD_LANES, sdLaneRegions, sdFirst, sdRise, sdFind, sdFell, pickSdRegion, sdRoomKey, isSdRoom, sdWhere, sdFoundLine, SD_FIRST_RISE_MS, SD_LIFETIME_MS,
@@ -36,9 +37,12 @@ import { PIXEL_M } from '../../../src/net/gate/gateLaw.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
 import { codeOnly } from '../../codeOnly.mjs';
 import { HAVE, ww5World } from './ww5World.mjs';
+import { frontNextDay, frontDayOfMinute, FRONT_DAY_MINUTES } from '../../../src/net/frontLaw.js';
 
 const src = (p) => codeOnly(readFileSync(new URL('../../../' + p, import.meta.url), 'utf8'));
-const T0 = 1_800_000_000_000, M = 60_000;
+// PIN MOVED: FRONTS - five minutes into game day 1862, whose fronts are Hammerfell and Skyrim (net/frontLaw.js), so a
+// province's Hollow rises where the pins ask for one (it was 1_800_000_000_000, Hammerfell's and Elsweyr's turn)
+const T0 = 1_800_133_050_000, M = 60_000;
 const SKY = 3, SKY_S = 3 * SD_LANE_SPAN;   // Skyrim's lane, its zero slot
 
 test('WW5 THE LAW: a slot names its lane - lane t\'s are t x SD_LANE_SPAN + 1, + 2 ... (the Bay\'s the 1, 2, 3 they always were), the room `sd:<s>` nine digits at most; a lane\'s first beat its own zero; a rise its lane\'s next slot in its own region - a Bay region on the Bay\'s, its province\'s or its great cities past it, never another\'s; the census\'s pick its slot\'s lane\'s regions (a crowd in Skyrim draws Skyrim\'s Hollow, never the Bay\'s); the Bay\'s first beat and rise the law before WW5 (mutants: the span; the lane\'s zero; a Bay region on a province\'s lane; a province\'s region on the Bay\'s; the pick across lanes; the lane\'s overflow)', () => {
@@ -153,7 +157,9 @@ test('WW5 THE RELAY: the hub keeps a Hollow in every lane - each its own first b
       assert.deepEqual(fanned.find((m) => m.s === SKY_S + 1), { t: 'sd', k: 'ln', ...sky });
       const h2 = await hubber(2);
       const said = h2.sent.filter((m) => m.t === 'sd');
-      assert.deepEqual(said.map((m) => [m.k, sdLaneOf(m.s)]), [['ev', 0], ...[1, 2, 3, 4, 5, 6, 7, 8].map((l) => ['ln', l])], 'a hello: the Bay\'s first, then every lane\'s');
+      // PIN MOVED: FRONTS - the day's two provinces rise (Hammerfell's and Skyrim's turn); the rest keep their first beat
+      assert.deepEqual(said.map((m) => [m.k, sdLaneOf(m.s)]), [['ev', 0], ['ln', 2], ['ln', SKY]], 'a hello: the Bay\'s first, then every lane\'s that rose');
+      for (const lane of [1, 4, 5, 6, 7, 8]) assert.equal(hub.store.get(sdLaneKey(SD_KEY, lane)).s, lane * SD_LANE_SPAN, `lane ${lane} off its turn: no rise`);
       // the herald: each lane's rise, its province named
       await fire(hub);
       assert.ok(posts.some((p) => JSON.stringify(p).includes('somewhere in Skyrim')), 'Skyrim\'s rise posted');
@@ -185,6 +191,13 @@ test('WW5 THE RELAY: the hub keeps a Hollow in every lane - each its own first b
       hub.room._noSdRcpt.clear();
       const h3 = await hubber(1);
       assert.deepEqual(h3.sent.filter((m) => m.t === 'sd' && m.k === 'rcpt').map((m) => m.r), [rcBay], 'a hello hands each lane\'s receipt that is good');
+      // FRONTS: High Rock's next turn, Hammerfell's and Skyrim's Hollows still standing - the provinces' two, so none rises
+      const hr = frontNextDay(frontDayOfMinute(sharedClassicMinutes(clock)) + 1, 1);
+      clock = Math.ceil(wallMsForClassicMinutes(hr * FRONT_DAY_MINUTES)) + M;
+      assert.ok(clock < hub.store.get(sdLaneKey(SD_KEY, 2)).until, 'Hammerfell\'s still stands');
+      await inRegion(62, 'peer-r1', 'acct-r1'); await inRegion(62, 'peer-r2', 'acct-r2');
+      await fire(hub);
+      assert.equal(hub.store.get(sdLaneKey(SD_KEY, 1)).s, SD_LANE_SPAN, 'on its turn, capped: no rise');
     });
   } finally { Date.now = realNow; }
 });
