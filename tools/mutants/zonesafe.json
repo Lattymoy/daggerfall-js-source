@@ -92,7 +92,7 @@
   {
     "name": "ZONESAFE-wildCan-the-streets-unread",
     "file": "src/scenes/world.js",
-    "old": "(wildOutdoors() ? !peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), isVillain(pvpFlag.villainy())) : modes?.mode === 'dungeon')",
+    "old": "(wildOutdoors() ? streets || !peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), isVillain(pvpFlag.villainy())) : modes?.mode === 'dungeon')",
     "new": "(wildOutdoors() || modes?.mode === 'dungeon')",
     "tests": [
       "test/systems/wild/zonesafe.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "ZONESAFE-wildCan-the-dungeon-made-safe",
     "file": "src/scenes/world.js",
-    "old": "(wildOutdoors() ? !peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), isVillain(pvpFlag.villainy())) : modes?.mode === 'dungeon')",
-    "new": "(wildOutdoors() ? !peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), isVillain(pvpFlag.villainy())) : modes?.mode === 'dungeon' && !settledAt(campToWire(player.feetAt()), locationIndex))",
+    "old": "(wildOutdoors() ? streets || !peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), isVillain(pvpFlag.villainy())) : modes?.mode === 'dungeon')",
+    "new": "(wildOutdoors() ? streets || !peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), isVillain(pvpFlag.villainy())) : modes?.mode === 'dungeon' && !settledAt(campToWire(player.feetAt()), locationIndex))",
     "tests": [
       "test/systems/wild/zonesafe.test.js"
     ],

@@ -329,9 +329,25 @@ send it away; once I leave the streets, fall or am red no more, every hunter wal
 
 "a villain can always take damage in a town": the streets keep no peace for a villain
 (`villainHunt.js:"export const peaceFor = "`). Red, my word on the zone stays 1 there, and a red body there is fair to
-every door of mine. A player in the streets is still at peace, so it cannot strike one: the relay has no map. Guards are
+every door of mine. A player in the streets is at peace, and strikes a villain alone (PVP-SAFE-HIT, below). Guards are
 this client's NPCs, so the hunt is the client's, on the meter the relay already says (`wref` `vil`); a villain who
 enters the zone in a town is hunted from its first step out of the streets. THE FOUR HOSTS: `world.js` wired;
 `exterior.js`, `worldModes.js` (a building) and `dungeonContext.js` hunt no one. Orsinium waits. A departure from
 PlayerEntity.SpawnCityGuards (`PlayerEntity.cs:625-694`): DFU sends 2-5 once for a crime, at my level plus 3-6, every
 skill level x 5 + 30, and its watch resists nothing.
+
+## PVP-SAFE-HIT: from the streets, a villain alone
+
+"Let them hit them jit ge that back in safezone": in a settlement's streets of the open zone, a player who is no villain
+may strike a red villain, and nobody may strike that player there. My word on the zone is 2 there
+(`world.js:"online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, playerEntity.health <= 0,"`), said as 1 with
+`sf` (`online.js:"const sf = zone === 1 && this._wildStreets"`). The referee holds both sides
+(`wildRef.js:"export function wildStreetsBar(a, t) {"`): no blow lands on a fighter in the streets who is no villain on
+the meter it keeps, and one from there lands on a villain alone. A villain who says the streets is struck all the same.
+The sea's guns read the same bar (`seaRef.js:"if (wildStreetsBar(a, x)) return no('streets');"`).
+
+My doors agree: from the streets a red body alone is fair
+(`world.js:"&& streetsStrike(zoneSafe(), pvpFlag.skullOf(peerId) === 'red');"`), and a blow there calls no watch
+(`world.js:"if (!inTown || !wildHere() || zoneSafe()) return;"`). The safe line says so (`zoneSafe.js:"get enter()"`).
+A relay before world283 does not read `sf`, so it hears 0 there, as before
+(`wire.js:"export const WILD_STREETS_RELAY_MIN = 283;"`). Relay world283. A departure: DFU has no PvP.
