@@ -3193,6 +3193,8 @@ tutorials.wildZone.body1,"W Cyrodiil i na otwartym oceanie {word} gracze mogą w
 tutorials.wildZone.body2,"Jeśli zabije cię tam inny gracz, nic nie wypada. Może zabrać jeden nieubezpieczony noszony przedmiot, a jeśli go nie ma, złoto z jednej polisy, a jeśli i tego nie ma, jedną dziesiątą twoich monet i listów kredytowych. Każda inna śmierć kosztuje zwykłą dziesiątą część."
 wagon.upkeep.boons.failing,"Twój {name} się rozpada. Plac wozów lub Zestaw naprawczy do wozu go naprawi."
 wagon.upkeep.boons.rickety,"Twój {name} jest rozklekotany. Plac wozów może go naprawić."
+wild.death.away,"{name} zabił cię, gdy cię nie było."
+wild.death.awayAnon,"Zginąłeś, gdy cię nie było."
 wild.death.kept,"Nic nie wypadło. Płacisz zwykłą cenę śmierci."
 wild.death.last,"{name} zabrał {gold} sztuk złota, jedną dziesiątą twoich monet i listów kredytowych. Nie miałeś ekwipunku do zabrania ani ubezpieczenia."
 wild.death.lastAnon,"Twój zabójca zabrał {gold} sztuk złota, jedną dziesiątą twoich monet i listów kredytowych. Nie miałeś ekwipunku do zabrania ani ubezpieczenia."

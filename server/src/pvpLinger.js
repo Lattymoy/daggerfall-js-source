@@ -6,7 +6,7 @@
 // normal leave when the law says, or at once when its account says hello here again or stands in another room.
 import { wildGone } from '../../src/net/wild/wildRef.js';
 import { seaGone } from '../../src/net/sea/seaRef.js';
-import { lingerUntil, lingerOver, PVP_LINGER } from '../../src/net/wild/wildLinger.js';
+import { lingerUntil, lingerOver, lingerAwayWord, PVP_LINGER, LINGER_AWAY } from '../../src/net/wild/wildLinger.js';
 import { badged } from './relay.js';
 
 /** `_leave`, the last socket of `a`'s account here gone (`look` its look): its body kept while its lock runs. Its ship
@@ -71,9 +71,30 @@ export async function lingerHello(/** @type {any} */ room, /** @type {any} */ ws
   for (const rec of room._lingers?.values() ?? []) room._send(ws, JSON.stringify(badged({ t: 'join', id: rec.id, name: rec.att.name, look: rec.look, pose: rec.att.pose ?? null }, rec.att)));
 }
 
-/** `_wildZoneWord`: a body taken back hears the health the referee kept for it. */
-export function lingerZone(/** @type {any} */ room, /** @type {string} */ sub, /** @type {any} */ x) {
-  if (!x?.lingerBack) return;
-  x.lingerBack = false;
-  room._vitSay(sub, x.f);
+/** The room's book of players slain while away (sub -> `{ at, n }`), read from its storage once an instance life. */
+async function awayBook(/** @type {any} */ room) {
+  if (room._lingerAway) return room._lingerAway;
+  const book = new Map();
+  try { for (const [k, v] of await room.state.storage.list({ prefix: LINGER_AWAY.prefix })) book.set(k.slice(LINGER_AWAY.prefix.length), v); } catch { /* the next instance reads it again */ }
+  return (room._lingerAway = book);
+}
+
+/** PVP-LINGER-RISE: a lingering body fallen to `killer` (its attachment): its player's next word in the zone is a death. */
+export async function lingerSlain(/** @type {any} */ room, /** @type {string} */ sub, /** @type {any} */ killer, /** @type {number} */ now) {
+  const book = await awayBook(room), rec = { at: now, n: typeof killer?.name === 'string' ? killer.name : '' };
+  if (book.size >= LINGER_AWAY.max && !book.has(sub)) { const old = book.keys().next().value; book.delete(old); room.state.storage.delete(LINGER_AWAY.prefix + old).catch(() => {}); }
+  book.set(sub, rec);
+  try { await room.state.storage.put(LINGER_AWAY.prefix + sub, rec); } catch (e) { console.warn('[linger] away kept failed', e?.message ?? e); }
+}
+
+/** `_wildZoneWord`, a word that it stands in the zone: a body taken back hears the health the referee kept for it; a
+ *  player slain while away is told so, a death, before any other word of its fall. */
+export async function lingerZone(/** @type {any} */ room, /** @type {string} */ sub, /** @type {any} */ x, /** @type {number} */ now) {
+  if (x?.lingerBack) { x.lingerBack = false; room._vitSay(sub, x.f); }
+  const book = await awayBook(room), rec = book.get(sub);
+  if (!rec || room._lingers?.has(sub)) return;
+  book.delete(sub);
+  room.state.storage.delete(LINGER_AWAY.prefix + sub).catch(() => {});
+  const word = lingerAwayWord(rec, x, now), mine = word ? room._siegeSocketOf(sub) : null;
+  if (mine) room._send(mine[0], JSON.stringify(word));
 }

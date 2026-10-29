@@ -11,6 +11,19 @@ import { WILD_REF } from './wildRef.js';
  *  another room, and the most bodies a room keeps. */
 export const PVP_LINGER = Object.freeze({ maxMs: 3 * PVP_FLAG.lockMs, sayMs: 20_000, askMs: 5_000, max: 64 });
 
+/** PVP-LINGER-RISE (the owner, asked: "So u respawn in town if u get killed and log back in?"): a body killed while its
+ *  player was away is kept in its room's storage under this prefix, a week at most and 256 a room, and its player's
+ *  next word that it stands in the zone is a death: its screen this long, then the zone's rise in a town. */
+export const LINGER_AWAY = Object.freeze({ prefix: 'wildaway:', keepMs: 7 * 24 * 3_600_000, max: 256, downMs: 10_000 });
+
+/** The `down` word for a player slain while away (`rec` `{ at, n }`: when, and its killer's name; `x` its fighter), or
+ *  null when kept past LINGER_AWAY.keepMs. A fighter still down lies out the referee's own wait. */
+export function lingerAwayWord(/** @type {any} */ rec, /** @type {any} */ x, /** @type {number} */ now) {
+  if (!rec || !Number.isFinite(rec.at) || !(now - rec.at < LINGER_AWAY.keepMs)) return null;
+  const left = x?.down ? Math.ceil(WILD_REF.riseMs - (now - x.downAt)) : 0;
+  return { t: 'wref', k: 'down', ms: Math.min(WILD_REF.riseMs, Math.max(LINGER_AWAY.downMs, left)), aw: 1, ...(typeof rec.n === 'string' && rec.n ? { n: rec.n } : {}) };
+}
+
 /** The end of a fighter's lock at its close `now`, or 0: no body stays (out of the zone, down, or no PvP blow in the
  *  lock). A villain's meter alone keeps nobody: the blow is the lock. */
 export function lingerUntil(/** @type {any} */ x, /** @type {number} */ now) {

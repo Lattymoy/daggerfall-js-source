@@ -596,6 +596,8 @@ export const WILD_TEXT = Object.freeze({
   chip: 'Open PvP',
   get chipTip() { return t('wild.zone.chipTip', '{zone}: other players may attack you. Foes are four times as strong and drop up to twice the loot (25% more at the edge, twice in the heart). A player\'s kill may cost uninsured gear or gold.', { zone: WILD_NAME }); },
   mapKey: 'Open PvP zone',
+  // PVP-LINGER-RISE (the owner: "So u respawn in town if u get killed and log back in?"): my body fell while I was away
+  deathAway: (/** @type {string | null | undefined} */ name) => (name ? t('wild.death.away', 'Slain by {name} while you were away.', { name }) : t('wild.death.awayAnon', 'You were slain while you were away.')),
   deathPvp: (name) => `${name || 'Another player'} may take one uninsured worn piece of yours, or gold.`,   // PVP-WORDS: the service's roll
   deathDrop: (n) => (n > 0 ? `${n} ${n === 1 ? 'thing you carried lies' : 'things you carried lie'} where you fell, for ten minutes.` : ''),
   // FOE-KEEPS: a foe's kill. AUDIT FOE-KEEPS O1, H5: it said "You keep what you carry" over the gold the same death
@@ -757,7 +759,7 @@ export function setWildDeath(d) {
   if (!d) { _killed = false; _fell = null; }
   else if (d.kill === true || (typeof d.killer === 'string' && d.killer)) _killed = true;
   _death = d ? { killer: typeof d.killer === 'string' && d.killer ? d.killer : null, kill: _killed, dropped: Math.max(0, d.dropped | 0), claimed: typeof d.claimed === 'string' && d.claimed ? d.claimed : null, held: d.held === true,
-    burnt: Math.max(0, d.burnt | 0), letters: wildLettersOf(d.letters), insured: Math.max(0, d.insured | 0), shield: d.shield === true, last: Math.max(0, Math.floor(Number(d.last) || 0)), kind: d.kind ?? _death?.kind ?? _kind ?? WILD_KIND } : null;   // ETHER-WILD: the ground it fell on, for its words; WILD-INSURE and REPEAT-SHIELD: what kept
+    burnt: Math.max(0, d.burnt | 0), letters: wildLettersOf(d.letters), insured: Math.max(0, d.insured | 0), shield: d.shield === true, last: Math.max(0, Math.floor(Number(d.last) || 0)), away: d.away === true || (d.away === undefined && _death?.away === true), kind: d.kind ?? _death?.kind ?? _kind ?? WILD_KIND } : null;   // ETHER-WILD: the ground it fell on, for its words; WILD-INSURE and REPEAT-SHIELD: what kept
   if (_death) _death.served = served;
 }
 /** BURNT-SAID: the letters of credit among `items` - how many, and the gold they stand for. AUDIT FOE-KEEPS LETTERS-TENTH:
@@ -783,6 +785,7 @@ export const wildFallHeard = () => _fell;
 /** The death screen's lines for a death in the zone (empty for any other). */
 export function wildDeathLines(d = _death) {
   if (!d) return [];
+  if (d.away) return [WILD_TEXT.deathAway(d.killer), ...wildDeathLines({ ...d, away: false })];   // PVP-LINGER-RISE: slain while I was away
   const head = d.shield ? WILD_TEXT.deathShield()   // REPEAT-SHIELD: no claim, no drop - said in their place
     : d.killer || d.kill ? (d.claimed ? (d.held ? WILD_TEXT.deathHeld : WILD_TEXT.deathClaim)(d.killer, d.claimed) : WILD_TEXT.deathPvp(d.killer)) : WILD_TEXT.deathKept();
   return [head, WILD_TEXT.deathDrop(d.dropped), WILD_TEXT.deathInsured(d.insured ?? 0),

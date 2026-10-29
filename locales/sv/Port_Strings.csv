@@ -2556,6 +2556,8 @@ tutorials.wildZone.body1,"I Cyrodiil och på det öppna {word}-havet får spelar
 tutorials.wildZone.body2,"Om en annan spelare dödar dig där tappar du inget. Hen får ta ett oförsäkrat föremål du har på dig, annars guldet från en försäkring, annars en tiondel av dina mynt och kreditbrev. All annan död kostar den vanliga tiondelen."
 wagon.upkeep.boons.failing,"Din {name} faller isär. En Vagnsgård eller ett Vagnsreparationskit lagar den."
 wagon.upkeep.boons.rickety,"Din {name} är skranglig. En Vagnsgård kan laga den."
+wild.death.away,"Dräpt av {name} medan du var borta."
+wild.death.awayAnon,"Du dräptes medan du var borta."
 wild.death.kept,"Inget tappades. Du betalar det vanliga priset för att dö."
 wild.death.last,"{name} tog {gold} guld, en tiondel av dina mynt och kreditbrev. Du hade ingen utrustning att ta och ingen försäkring."
 wild.death.lastAnon,"Din dråpare tog {gold} guld, en tiondel av dina mynt och kreditbrev. Du hade ingen utrustning att ta och ingen försäkring."

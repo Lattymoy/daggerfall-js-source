@@ -400,3 +400,11 @@ Its account's hello in that room takes it back, with the health the referee kept
 (`pvpLinger.js:"function lingerTaken("`); a hello in another room ends it at the room's next ask of the hub. A villain
 stays only when a blow fell in the lock. A close outside the lock, a hidden socket, or the room's last socket leaves at
 once. Relay world290. A departure: DFU has no PvP.
+
+PVP-LINGER-RISE ("So u respawn in town if u get killed and log back in?"): yes. A body slain while its player is away
+is kept in its room's storage for a week (`pvpLinger.js:"export async function lingerSlain("`). The player's next word
+that it stands in the zone is a `down` word with `aw` 1 and its killer's name
+(`wildLinger.js:"export function lingerAwayWord("`): ten seconds on the death screen, or the referee's own wait if it is
+still down, then the zone's rise in the nearest town outside it, with no safe passage (PVP-DEATH). The screen says who
+killed it (`wildZone.js:"deathAway: "`). A log-in in another room, or after a week, hears nothing, and the player stands
+where the save left it. The relay says it, not the account service: no account change.

@@ -1063,6 +1063,8 @@ tutorials.wildZone.body1,"在 Cyrodiil 和開闊的 {word} 大洋上，玩家之
 tutorials.wildZone.body2,"如果你在那裡被其他玩家殺死，什麼也不會掉落。對方可以拿走你一件未投保的穿戴裝備，沒有就拿一份保單的金幣，再沒有就拿你金幣與信用狀的十分之一。其他死亡照常損失十分之一。"
 wagon.upkeep.boons.failing,"你的{name}快散架了。馬車場或馬車修理工具能修好它。"
 wagon.upkeep.boons.rickety,"你的{name}搖搖晃晃。馬車場能修好它。"
+wild.death.away,"你離開時被{name}殺死了。"
+wild.death.awayAnon,"你離開時被殺死了。"
 wild.death.kept,"沒有掉落任何東西。你照常承受死亡的代價。"
 wild.death.last,"{name} 奪走了 {gold} 金幣，即你的金幣與信用狀的十分之一。你沒有可奪取的裝備，也沒有保險。"
 wild.death.lastAnon,"殺死你的人奪走了 {gold} 金幣，即你的金幣與信用狀的十分之一。你沒有可奪取的裝備，也沒有保險。"

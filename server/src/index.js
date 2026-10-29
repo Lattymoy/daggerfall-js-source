@@ -266,7 +266,7 @@ import { newDuelRef, duelNote, duelOpen, duelBoutOf, duelBlow, duelPose, duelEnd
 import { newWildRef, wildZone, wildTokenAtt, wildPose, wildBlow, wildKin, sameGuild, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildCredit, wildFallOf, wildDownWord, wildGraceLeft, wildGraceTaken, wildAggroWord, wildFlagWord, wildBarWord, wildBarWords, wildOpenedBy, wildVillainy, wildRed, WILD_GRACE, WILD_FALL_PREFIX, WILD_REF } from '../../src/net/wild/wildRef.js';   // INT9: the open zone refereed
 import { mintWildReceipt, mintWildCollect, mintSeaWreck, WILD_RECEIPT_TTL_S, SEA_WRECK_TTL_S } from '../../src/net/wild/wildReceipt.js';   // INT9: a fall, signed; MAC (2026-10-14): and a killer's collect; SHIP-PVP: and a wreck
 import { seaHelm, seaShot, seaBoard, seaStep, seaGone, seaCarry, seaWreckOf, SEA_WRECK_PREFIX, SEA_REF } from '../../src/net/sea/seaRef.js';
-import { lingerHold, lingerTarget, lingerStep, lingerHello, lingerZone } from './pvpLinger.js';   // PVP-LINGER: a body left in its lock
+import { lingerHold, lingerTarget, lingerStep, lingerHello, lingerZone, lingerSlain } from './pvpLinger.js';   // PVP-LINGER: a body left in its lock
 /** AUDIT SEA VENTURES A8: a signed word owed an account that is away (a fall's receipt, a wreck's) kept in the room's storage
  *  under this prefix as long as a receipt lives - a relay object that slept lost it from its memory, and a captain back
  *  in the zone was handed nothing. */
@@ -11448,7 +11448,7 @@ export class Room {
     const flagWas = was?.flag;
     const x = wildZone(st, a.sub, { id: a.id, lv: a.lv, cl: a.cl ?? null, ci: a.ci ?? '', carry, died, fl, ed, vl: a.vl ?? 0, sf }, z === 1, a.pose, now);
     if (x) this._wildFlagSay(st, a, x, flagWas, wasIn, fl);   // PVP-FLAG
-    if (x && z === 1) lingerZone(this, a.sub, x);   // PVP-LINGER: a body taken back hears its health
+    if (x && z === 1) await lingerZone(this, a.sub, x, now);   // PVP-LINGER: a body taken back hears its health; PVP-LINGER-RISE: one slain away, its death
     if (x && x.graceUntil > now && x.graceUntil !== graceWas) this._wildGraceSay(a, x.graceUntil - now);   // ZONE-GRACE: safe passage begun, or carried in
     if (x && (x.zone !== wasIn || died)) this._wildCarryPut(a.sub, this._zoneCarry(st, a.sub, now, a.key));   // AUDIT PVP-EASE L3-1: an entry, a leave and a death, at the hub
     if (x && carry?.sea) x.seaCarry = carry.sea;   // AUDIT SEA VENTURES F1/A1: her ship's bar too, for her next helm word (seaRef.js seaHelm)
@@ -11521,6 +11521,7 @@ export class Room {
     await this._wildVillainy(st, res.fall, now);   // PVP-VILLAIN: the kill's points on its killer
     try { await this.state.storage.put(`${WILD_FALL_PREFIX}${rid}`, res.fall); } catch (e) { console.warn('[wild] fall kept failed', e?.message ?? e); }
     this._wildFan({ t: 'wref', k: 'fell', id: tb.id, by: a.id, r: rid });
+    if (!target[0]) await lingerSlain(this, tb.sub, a, now);   // PVP-LINGER-RISE: a body slain while its player was away
     // INT9 (AUDIT): a building's or a dungeon's room searches no body (the worn offer is the open country's) - its fall is
     // signed at once, never a minute later with the fallen gone from it
     if (!isCellRoom(a.key)) { const f = wildSignNow(st, rid); if (f) await this._wildSign(f, now); }

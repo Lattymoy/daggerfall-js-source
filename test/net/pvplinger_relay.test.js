@@ -10,7 +10,10 @@ import { SIEGE_UNITS_PER_M } from '../../src/net/siege/siegeRef.js';
 import { worldRoom, PIXEL_UNITS } from '../../src/net/wire.js';
 import { PVP_FLAG } from '../../src/systems/wild/pvpFlag.js';
 import { WILD_REF } from '../../src/net/wild/wildRef.js';
-import { PVP_LINGER, lingerUntil, lingerOver } from '../../src/net/wild/wildLinger.js';
+import { PVP_LINGER, LINGER_AWAY, lingerUntil, lingerOver, lingerAwayWord } from '../../src/net/wild/wildLinger.js';
+import { validWildRefOut } from '../../src/net/wire.js';
+import { createWildRejoin } from '../../src/systems/wild/wildRejoin.js';
+import { setWildDeath, wildDeath, wildDeathLines } from '../../src/systems/wild/wildZone.js';
 import { fakeRoom, fakeRooms } from '../fakeRoom.mjs';
 
 const { subtle } = globalThis.crypto;
@@ -152,6 +155,44 @@ test('PVP-LINGER A LOG-IN IN ANOTHER ROOM: the hub\'s carry names the room the a
     await settle();
     assert.equal(leaves(c, 'peer-0002').length, 1, 'it stands in another room: the body here goes');
   } finally { Date.now = realNow; }
+});
+
+test('PVP-LINGER-RISE THE RELAY: a body slain while its player was away is kept in the room\'s storage; the player\'s next word that it stands in the zone - a day later, the room woken anew - is a death, its killer named, said once (mutants: the slain unkept; the word unsaid; said twice)', () => withZone(async ({ r, say, join, step, hit }) => {
+  const a = await join('peer-0001', -1, { ci: RC2 }), b = await join('peer-0002', 1, { ci: RC });
+  await join('peer-0003', 30);
+  await hit(a, 'peer-0002', 1);
+  await r.drop(b);
+  let f = null;
+  for (let n = 2; n < 40 && !f; n++) { await hit(a, 'peer-0002', n); f = refs(a, 'fell')[0]; }
+  assert.ok(f, 'the body fell');
+  assert.deepEqual(r.store.get(`${LINGER_AWAY.prefix}acct-peer-0002`)?.n, 'peer-0001', 'kept in storage, its killer named');
+  step(24 * 3_600_000);
+  r.wake();
+  const b2 = r.connect();
+  await r.hello(b2, 'peer-0012', P(1), { lv: 10, look: LOOK, rc: 1, ci: RC, tokenSub: 'acct-peer-0002' });
+  await say(b2, { k: 'zone', z: 1 });
+  const downs = refs(b2, 'down');
+  assert.deepEqual(downs, [{ t: 'wref', k: 'down', ms: LINGER_AWAY.downMs, aw: 1, n: 'peer-0001' }], 'a death, slain while away');
+  assert.ok(validWildRefOut(downs[0]).aw === 1, 'the wire keeps it');
+  await say(b2, { k: 'zone', z: 1 });
+  assert.equal(refs(b2, 'down').length, 1, 'said once');
+  assert.equal(r.store.has(`${LINGER_AWAY.prefix}acct-peer-0002`), false, 'and forgotten');
+}));
+
+test('PVP-LINGER-RISE THE WORD AND THE PAGE: the word lies out at least LINGER_AWAY.downMs (the referee\'s own wait where it is still down), never past LINGER_AWAY.keepMs; a living page that hears it is dead - its screen names the killer and says it was slain while away, then the zone\'s rise (mutants: the keep unread; the wait unread; the line unsaid)', () => {
+  const rec = { at: 1_000, n: 'Borin' };
+  assert.deepEqual(lingerAwayWord(rec, null, 2_000), { t: 'wref', k: 'down', ms: LINGER_AWAY.downMs, aw: 1, n: 'Borin' });
+  assert.equal(lingerAwayWord(rec, { down: true, downAt: 1_000 }, 2_000).ms, WILD_REF.riseMs - 1_000, 'still down: the referee\'s wait');
+  assert.equal(lingerAwayWord(rec, null, 1_000 + LINGER_AWAY.keepMs), null, 'kept a week at most');
+  assert.deepEqual(validWildRefOut({ t: 'wref', k: 'down', ms: 10_000, aw: 1, n: 'Borin' }), { k: 'down', ms: 10_000, aw: 1, n: 'Borin' });
+  let presented = 0;
+  const rejoin = createWildRejoin({ now: () => 500_000, present: () => { presented++; } });
+  setWildDeath(null);
+  assert.ok(rejoin.heard({ ms: 10_000, aw: 1, n: 'Borin' }, { alive: true }));
+  assert.equal(presented, 1, 'put down');
+  assert.deepEqual([wildDeath().away, wildDeath().killer, wildDeath().kill], [true, 'Borin', true]);
+  assert.equal(wildDeathLines()[0], 'Slain by Borin while you were away.');
+  setWildDeath(null);
 });
 
 test('PVP-LINGER THE WIRING: the relay holds the body in `_leave`, finds a blow\'s target in it, beats it, and shows it at a hello - in pvpLinger.js, never `_message`', () => {
