@@ -34,9 +34,11 @@ const fail = async (why) => { console.log(`FAIL: ${why}`); await browser.close()
 const q = new URLSearchParams(LAB ? { dungeon: 'lab', lab: LAB } : { region, dungeon: name });
 await page.goto(`http://localhost:5231/play/?shot&play&nomenu&novideo&class=1&${q}`);   // class=1: the headless character (no wizard)
 await page.waitForFunction(() => window.__frame > 10, null, { timeout: 240000 });
-const frames = async (n) => {
+const frames = async (n) => {   // a loop stopped (a throw in the frame ends its requestAnimationFrame chain) fails with its cause
   const f0 = await page.evaluate(() => window.__frame);
-  await page.waitForFunction(([a, k]) => window.__frame > a + k, [f0, n], { timeout: 120000 });
+  try { await page.waitForFunction(([a, k]) => window.__frame > a + k, [f0, n], { timeout: 120000 }); } catch {
+    await fail(`the frame stopped at ${await page.evaluate(() => window.__frame)} (${n} asked after ${f0}); page errors:\n  ${errors.join('\n  ') || 'none'}`);
+  }
 };
 // the windows a first visit opens (the dungeons' tutorial box): closed, so the frame runs
 for (let k = 0; k < 12; k++) {
@@ -54,7 +56,7 @@ const closeWindows = async () => {
     const ov = JSON.parse(await page.evaluate(() => window.__overlay?.() ?? 'null') ?? 'null');
     if (!ov) return;
     console.log(`  a window: ${ov.kind ?? JSON.stringify(ov).slice(0, 80)}`);
-    if (ov.kind === 'DeathScreen') await fail('the character died - the probe heals it between its steps, and this one came between them');
+    if (ov.kind === 'DeathScreen') await fail(`the character died - its health by frame (frame, health, maximum): ${JSON.stringify(await page.evaluate(() => window.__hpTrace))}`);
     await page.waitForTimeout(700);
     await page.keyboard.press(ov.kind === 'TutorialBox' ? 'Space' : 'Escape');
     await frames(3);
@@ -79,6 +81,8 @@ await page.evaluate(() => {
 // a wave's three blows can land in one frame under the software rasteriser (a frame is 0.1 s of the game's time), so the
 // pool is past any wave's reach: nothing the encounters size reads it (the pieces are sized by level - Delve-II.md 5)
 await page.evaluate(() => { setInterval(() => { const p = window.__playerEntity; if (p && p.health > 0) { p.maxHealth = Math.max(p.maxHealth, 100_000); p.health = p.maxHealth; } }, 50); });
+// a death kept to its cause: the character's health and maximum at each frame's start, the last 12 said if it dies
+await page.evaluate(() => { const T = (window.__hpTrace = []); const tick = () => { const p = window.__playerEntity; T.push([window.__frame, p?.health, p?.maxHealth]); if (T.length > 12) T.shift(); requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
 console.log('(the character is kept whole by the probe)');
 const sites = await page.evaluate(() => window.__delve()?.sites ?? null);
 if (!sites) await fail('no encounter host on the context');
@@ -105,7 +109,7 @@ for (const s of sites) {
   await look(); await frames(4);
   await shot(`site${s.i}-in`);
   if (LAB) {   // DLV6: the set pieces round the ward - from its heart, eye height, each of the four ways
-    for (const [tag, yaw] of [['north', Math.PI], ['east', Math.PI / 2], ['south', 0], ['west', -Math.PI / 2]]) {
+    for (const [tag, yaw] of [['north', 0], ['east', Math.PI / 2], ['south', Math.PI], ['west', -Math.PI / 2]]) {
       await page.evaluate(([x, y, z, w]) => window.__pose(x, y, z, w, -0.12), [s.x, s.y + 1.6, s.z, yaw]); await frames(3);
       await shot(`site${s.i}-set-${tag}`);
     }
@@ -194,8 +198,12 @@ for (const s of sites) {
   } else if (s.kind === 'weighing') {
     const homes = weightSpots(s), plates = weighPlates(s);
     for (let j = 0; j < 2; j++) {
-      await at(homes[j]); await frames(6);
-      await page.evaluate((k) => window.__activateKey(k), `delve:weight:${s.i}:${j}`);
+      // taken as a player takes it: stood a step off it, looking at it, the activation's own ray (tryActivate -> takeLoot)
+      const w = homes[j], dx = s.x - w[0], dz = s.z - w[2], d = Math.hypot(dx, dz) || 1, a = [w[0] + (dx / d) * 1.2, w[1], w[2] + (dz / d) * 1.2];
+      await at(a); await frames(4);
+      await page.evaluate(([x, y, z, tx, tz, mid]) => window.__pose(x, y + 1.6, z, Math.atan2(tx - x, tz - z), -Math.atan2(y + 1.6 - mid, Math.hypot(tx - x, tz - z))), [a[0], a[1], a[2], w[0], w[2], w[1] + 0.25]);
+      await frames(2);
+      await page.evaluate(() => window.__activate());
       await frames(6);
       console.log(`  weight ${j}: ${(await state())[s.i].wt[j] === 1 ? 'taken' : 'NOT taken'}`);
       await at(plates[j]); await frames(40);
