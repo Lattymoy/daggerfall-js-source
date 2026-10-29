@@ -869,8 +869,8 @@
   {
     "name": "INT7-AUDIT-RELAY-THE-DUELS-ARMS-UNPASSED",
     "file": "server/src/index.js",
-    "old": "    const res = duelBlow(st, a.sub, d.to, { d: d.d, r, held, wa: a.wa ?? null }, now);",
-    "new": "    const res = duelBlow(st, a.sub, d.to, { d: d.d, r, held, wa: null }, now);",
+    "old": "    const res = duelBlow(st, a.sub, d.to, { d: d.d, r, held, wa: a.wa ?? null, el: d.el ?? null }, now);   // PVP-WARD: the spell's element",
+    "new": "    const res = duelBlow(st, a.sub, d.to, { d: d.d, r, held, wa: null, el: d.el ?? null }, now);   // PVP-WARD: the spell's element",
     "tests": [
       "test/net/arena/int7_arms.test.js",
       "test/net/duel/int8_duel_ref.test.js"
@@ -888,8 +888,8 @@
   {
     "name": "INT7-AUDIT-RELAY-THE-ZONES-ARMS-UNPASSED",
     "file": "server/src/index.js",
-    "old": "{ d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key }",
-    "new": "{ d: d.d, r, held, wa: null, kin, rid, room: a.key }",
+    "old": "{ d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key, el: d.el ?? null }",
+    "new": "{ d: d.d, r, held, wa: null, kin, rid, room: a.key, el: d.el ?? null }",
     "tests": [
       "test/net/arena/int7_arms.test.js",
       "test/net/int9_wild_ref.test.js"

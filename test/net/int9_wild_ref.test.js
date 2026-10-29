@@ -449,6 +449,15 @@ test('INT9 THE RELAY, THE FIGHT: a strike in the zone is the referee\'s - routed
   step(300);
   await say(armed, { k: 'strike', to: 'peer-0002', n: 1, w: { t: 123, m: 9, c: 100 }, by: 'melee', p: W(0), d: 999 });
   assert.equal(refs(armed, 'hp').at(-1)?.d, fist, 'PVP-HIT: a Daedric Dai-Katana takes the body\'s share, whatever its pack signs');
+  // INT7: a shaft is the signed arms' - a pack that signs no bow lands nothing, whatever its look holds; one that signs a bow lands
+  const bow = LOOK([{ templateIndex: 130, group: 'Weapons', equipSlot: 19, material: 9 }]);
+  for (const [id, wa, lands] of [['peer-0007', [5, 0], false], ['peer-0008', [5, 1], true]]) {
+    const archer = await join(id, 0, { look: bow, wa });
+    await say(archer, { k: 'zone', z: 1 });
+    step(300);
+    await say(archer, { k: 'strike', to: 'peer-0002', n: 1, w: { t: 130, m: 9, c: 100 }, by: 'arrow', p: W(0), d: 20 });
+    assert.equal(refs(archer, 'hp').length > 0, lands, lands ? 'a signed bow\'s shaft lands' : 'a shaft from no signed bow lands nothing');
+  }
   const f = await fell(a, 'peer-0002');
   assert.ok(f, 'B fell');
   assert.deepEqual([f.id, f.by], ['peer-0002', 'peer-0001']);

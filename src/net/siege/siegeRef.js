@@ -41,7 +41,7 @@
 //
 // Pure: no clock (every `now` an argument), no DOM, no network.
 // ═════════════════════════════════════════════════════════════════════
-import { newHealthShare, noteRefereeChange, healRoom, spendHeal, guardedBlow } from './refereeHealthShare.js';
+import { newHealthShare, noteRefereeChange, healRoom, spendHeal, guardedBlow, wardedCast } from './refereeHealthShare.js';
 
 /** A siege's room: `siege:<seat key>:<seat week>` - one a battle (Seats-Arc 6.2). */
 export const SIEGE_ROOM = /^siege:(0|[1-9]\d{0,9}):(0|[1-9]\d{0,5})$/;
@@ -256,10 +256,10 @@ export function refereeBlow(by, to, { from = null, at = null, held = null, d = 0
  * window; a harm to PVP-HIT's share, a heal to the target's PVP-HEAL room, never past its whole. Reach a spell's. Answers
  * `{ ok, dealt, fell, why }`.
  * @param {any} by @param {any} to
- * @param {{ from?: any, at?: any, d?: number, heal?: boolean }} o
+ * @param {{ from?: any, at?: any, d?: number, heal?: boolean, el?: number|null }} o
  * @param {number} now
  */
-export function refereeCast(by, to, { from = null, at = null, d = 0, heal = false } = {}, now) {
+export function refereeCast(by, to, { from = null, at = null, d = 0, heal = false, el = null } = {}, now) {
   if (!by || !to) return { ok: false, dealt: 0, fell: false, why: 'no-fighter' };
   if (by.down || to.down) return { ok: false, dealt: 0, fell: false, why: 'down' };
   if (!from || !at || metres(from, at) > SIEGE_REACH.spell + SIEGE_REACH.slack) return { ok: false, dealt: 0, fell: false, why: 'reach' };
@@ -279,8 +279,9 @@ export function refereeCast(by, to, { from = null, at = null, d = 0, heal = fals
   if (by.casts.length >= PVP_CASTS.max) return { ok: false, dealt: 0, fell: false, why: 'rate' };
   by.casts.push(now);
   if (now < to.safeTo) return { ok: false, dealt: 0, fell: false, why: 'protected' };
-  const got = Math.min(want, pvpHitMax(to), to.hp);   // PVP-HIT, a blow's own
-  by.clipped += want - got;
+  const hurt = wardedCast(to, el, want);   // PVP-WARD: the target's resistance first
+  const got = Math.min(hurt, pvpHitMax(to), to.hp);   // PVP-HIT, a blow's own
+  by.clipped += hurt - got;
   by.dealt += got;
   to.hp -= got;
   if (got > 0) noteRefereeChange(to, -got, now, true);

@@ -1703,7 +1703,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world280';   // world280: PVP-REWORK STAGE 1 (2026-10-28, the PvP rework; NOT YET DEPLOYED) - the referee's pool is the player's real health (the `vit` report's `x`, at most 3,000) and Restoration (`r`); one blow or cast takes at most 45% of it (PVP-HIT), BAL8's 180 in 5 s retired; casts 1.9 a second (PVP-CASTS); a fight's heals 25-35% a 15 s (PVP-HEAL), duels included; a player's blow passes the struck player's armour first (PVP-GUARD, the report's `g`). Deploy the relay first, then the site.
+export const RELAY_VERSION = 'world280';   // world280: PVP-REWORK STAGE 1 (2026-10-28, the PvP rework; NOT YET DEPLOYED) - the referee's pool is the player's real health (the `vit` report's `x`, at most 3,000) and Restoration (`r`); one blow or cast takes at most 45% of it (PVP-HIT), BAL8's 180 in 5 s retired; casts 1.9 a second (PVP-CASTS); a fight's heals 25-35% a 15 s (PVP-HEAL), duels included; a player's blow passes the struck player's armour first (PVP-GUARD, the report's `g`), a player's spell its resistance by element (PVP-WARD, the report's `w` and a cast's `el`, never past 90%). Deploy the relay first, then the site.
 // world279: AUDIT FB1028 A2-A3 (2026-10-28, bible/03-World/Town-Shapes.md TS2 at FB1028; NOT YET DEPLOYED) - GROUND_LAW 3 to 4: a town's ground moved at its pixel's seams and beside tall relief, so while `groundGate` is on the relay refuses a ground room's hello from a build on the old ground. Deploy the relay first, then the site.
 // world278: FB1028 TOWN-GROUND (2026-10-28, bible/01-Overview/bugs/Field-Bugs-2026-10-28.md; bible/03-World/Town-Shapes.md TS2; NOT YET DEPLOYED) - GROUND_LAW 2 to 3: a Bay town's ground moved at its shores and outskirts by tens of metres, so while `groundGate` is on the relay refuses a ground room's hello from a build on the old ground. Deploy the relay first, then the site.
 // world277: WILD-REMAINS-LOSS (2026-10-26; bible/01-Overview/bugs/Field-Bugs-2026-10-25h.md; world265 to world276 on its branch, renumbered past GATE-COURTS, AUDIT KETCH II, KETCH-WORDS, NIRNROOT-SAGE, BOW-TOPS, CHAT-POST, MASTER-THREE, FIELD BUGS 2026-10-26r, APPEARANCES and HUNTERS-MARK, LADDER-CUT, SD-PARTY and TESA and SHOP at the merges; NOT YET DEPLOYED) - the room loads its verifying key before it checks a deposit's remains order (a room that woke from hibernation since its last hello refused every chunk, the fallen's and its killer's alike, and the drop the service took lay nowhere), says in its log why it keeps nothing of a `fall` chunk, and names a remains for its order's fallen character (`wnm`, net/identityToken.js) whoever carries it. YARD-CELL (2026-10-26, bible/11-Multiplayer/Yard-Cells.md YC1; world266 on its branch, renumbered past main at the merges, last past TESA and SHOP; folded in place with WILD-REMAINS-LOSS, one release; NOT YET DEPLOYED) - net/homeLaw.js's HOME_TOWN_MAX 512 to 2,048 (every building a town of Daggerfall's blocks can hold; the Imperial City's slices hold up to 794 past the Bay), a law of the relay's import graph; no relay behaviour moves. YARD-CELL YC2 (2026-10-27, bible/11-Multiplayer/Yard-Cells.md section 11; world271 to world277, and acct198 to acct200 then acct205 and acct206, on its branch, renumbered past YC1 at the merges, and world278 past YC1; folded in place with WILD-REMAINS-LOSS and YARD-CELL, one release; NOT YET DEPLOYED) - THE YARD PUSH: the hub takes a carried `{t:'yard', order}` (identityToken.js kind 'yard'), verifies it and says `{t:'yard', l:[[m, c, v]]}` to every hub socket once a second at most, each cell's highest version kept (server/src/yardWords.js); its welcome says `yd: 1`, and a client carries a yard order only to a hub that said it. Deploy with the account service's acct208, before the site. SHARED-HEALTH (2026-10-26, world270 to world276 on its branch, renumbered past CHAT-POST, MASTER-THREE, RPT1026, APPEARANCES, LADDER-CUT, SD-PARTY and TESA and SHOP at the merges; folded in place with WILD-REMAINS-LOSS and YARD-CELL, one release; bible/06-Systems/Integrity-Arc.md section 5, "Decisions (2026-10-26, SHARED-HEALTH)"; NOT YET DEPLOYED) - the open zone, a duel and a siege referee the player's own health as a share of the referee's count - the `vit` frame (validVitIn, validVitOut, VIT_RELAY_MIN) carries a client's health report in and the referee's count and ask out; net/siege/refereeHealthShare.js joins the bundle (siegeRef.js logs every change to a count); the zone's 30 s refill is gone. Deploy the relay first, then the site.
@@ -4525,7 +4525,8 @@ export function validDuelData(d) {
       // INT8: the harm the caster's own game counted (combat/siegeCombat.js siegeSpellNumbers), for the referee
       const p = duelPoint(d.p);
       if (!intIn(d.n, 1, DUEL_SEQ_MAX) || !p || !intIn(d.d, 0, DUEL_DMG_MAX)) return null;
-      out.n = d.n; out.p = p; out.d = d.d; break;
+      if (d.el !== undefined && !intIn(d.el, 0, PVP_ELEMENTS - 1)) return null;   // PVP-WARD: the spell's element
+      out.n = d.n; out.p = p; out.d = d.d; if (d.el !== undefined) out.el = d.el; break;
     }
     default: return null;
   }
@@ -5078,6 +5079,8 @@ export const VIT_SEEN_MAX = 4;
 export const VIT_RESTORATION_MAX = 1000;
 /** PVP-GUARD: a report's armour shares, per cent, edged, blunt and unarmed (refereeHealthShare.js PVP_GUARD bounds them). */
 export const VIT_GUARD_MAX = 150;
+/** PVP-WARD: DFU's five elements (fire 0, frost 1, poison 2, shock 3, magic 4) - a cast's `el`, a report's `w`. */
+export const PVP_ELEMENTS = 5;
 const WORD_MAX = 0x7fffffff;
 const epochOk = (v) => Number.isSafeInteger(v) && v >= 0;
 
@@ -5098,7 +5101,8 @@ export function validVitIn(m) {
   if (m.x !== undefined && !intIn(m.x, 1, CARD_VITAL_MAX)) return null;
   if (m.r !== undefined && !intIn(m.r, 0, VIT_RESTORATION_MAX)) return null;
   if (m.g !== undefined && !(Array.isArray(m.g) && m.g.length === 3 && m.g.every((n) => intIn(n, 0, VIT_GUARD_MAX)))) return null;   // PVP-GUARD
-  return { report: m.n, share: m.s, seen, ...(m.x !== undefined ? { max: m.x } : {}), ...(m.r !== undefined ? { resto: m.r } : {}), ...(m.g !== undefined ? { guard: [...m.g] } : {}) };
+  if (m.w !== undefined && !(Array.isArray(m.w) && m.w.length === PVP_ELEMENTS && m.w.every((n) => intIn(n, 0, 100)))) return null;   // PVP-WARD
+  return { report: m.n, share: m.s, seen, ...(m.x !== undefined ? { max: m.x } : {}), ...(m.r !== undefined ? { resto: m.r } : {}), ...(m.g !== undefined ? { guard: [...m.g] } : {}), ...(m.w !== undefined ? { ward: [...m.w] } : {}) };
 }
 
 /**
@@ -5441,7 +5445,7 @@ export function validSiegeIn(m) {
   if (typeof m.to !== 'string' || !(ID_RE.test(m.to) || (work && m.k === 'blow') || npc)) return null;
   if (m.k === 'ask' || m.k === 'yes') return { k: m.k, to: m.to };
   if (!finite(m.d) || m.d <= 0 || m.d > SIEGE_DMG_WIRE_MAX) return null;
-  if (m.k === 'cast') return { k: 'cast', to: m.to, d: m.d, h: m.h === 1 ? 1 : 0 };
+  if (m.k === 'cast') return { k: 'cast', to: m.to, d: m.d, h: m.h === 1 ? 1 : 0, ...(intIn(m.el, 0, PVP_ELEMENTS - 1) ? { el: m.el } : {}) };   // PVP-WARD
   if (!(m.w === -1 || intIn(m.w, 0, 65535)) || !intIn(m.m, 0, 9)) return null;
   if (m.r !== SIEGE_HIT.Melee && m.r !== SIEGE_HIT.Shaft) return null;
   return { k: 'blow', to: m.to, w: m.w, m: m.m, d: m.d, r: m.r };

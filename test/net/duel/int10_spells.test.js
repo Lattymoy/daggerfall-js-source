@@ -52,15 +52,15 @@ test('INT10 ONE CAP: a cast between players is clipped to one cast\'s most and b
   const w = [0, 1].map((k) => wildBlow(z, 'acct-a', 'acct-b', { d: 9999, r: SIEGE_HIT.Spell, rid: `00000000000${k}` }, t0 + k * 100));
   assert.deepEqual(w.map((x) => [x.ok, x.dealt]), [[true, q], [true, q]]);
   // a heal is no blow between two who fight: the duel's and the zone's referees take none
-  assert.match(rd('src/net/duel/duelRef.js'), /\? refereeCast\(me\.f, them\.f, \{ from: me\.pose, at: them\.pose, d \}, now\)/);
-  assert.match(rd('src/net/wild/wildRef.js'), /\? refereeCast\(a\.f, t\.f, \{ from: a\.pose, at: t\.pose, d \}, now\)/);
+  assert.match(rd('src/net/duel/duelRef.js'), /\? refereeCast\(me\.f, them\.f, \{ from: me\.pose, at: them\.pose, d, el \}, now\)/);
+  assert.match(rd('src/net/wild/wildRef.js'), /\? refereeCast\(a\.f, t\.f, \{ from: a\.pose, at: t\.pose, d, el \}, now\)/);
 });
 
 test('INT10 EVERY PATH A REFEREE\'S: the caster sends a number counted on its own machine - a duel\'s, the open zone\'s (a dungeon of it too), a siege\'s - and no target\'s machine applies a peer\'s harm: a peer\'s cast at me is a gift\'s families alone (mutants: a spell sent whole for its target to apply; the receiver\'s gift filter gone)', () => {
   const w = hostText('src/scenes/world.js');
-  assert.ok(w.includes("const n = duelMgr.blow('spell', { p: campToWire(player.feetAt()), d: siegeCastClamp(harm, false) });"), 'the duel\'s');
-  assert.ok(w.includes("const n = wildFight.blow(peerId, 'spell', { p: campToWire(player.feetAt()), d: siegeCastClamp(harm, false) });"), 'the zone\'s');
-  assert.ok(w.includes('return harm > 0 && siegeSession.cast(peerId, siegeCastClamp(harm, false));'), 'a siege\'s');
+  assert.ok(w.includes("const n = duelMgr.blow('spell', pvpCastFrame(campToWire(player.feetAt()), harm, sp));"), 'the duel\'s');
+  assert.ok(w.includes("const n = wildFight.blow(peerId, 'spell', pvpCastFrame(campToWire(player.feetAt()), harm, sp));"), 'the zone\'s');
+  assert.ok(w.includes('return harm > 0 && siegeSession.cast(peerId, siegeCastClamp(harm, false), false, pvpSpellElement(sp));'), 'a siege\'s');
   assert.ok(rd('src/scenes/dungeonContext.js').includes("castAtDuel: (id, sp) => (arenaRivalBody()?.rival === id ? spellOnRival(sp) : !!opts.wildSpellOut?.(id, sp)),"), 'the zone\'s dungeons, the zone\'s own send');   // PIN MOVED (RPT1026-FIGHTS HALL-SPELLS): asked at the cast
   assert.equal(/duelSpellFromWire|spell: duelSpellOf|level: Math\.max\(1, Math\.min\(30/.test(w), false, 'no spell goes out whole for a target to apply');
   assert.ok(w.includes('const spell = allyCastSpell(d?.spell, { stranger: !mate });'), 'a peer\'s cast at me: its beneficial families alone');

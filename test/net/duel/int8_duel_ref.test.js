@@ -227,6 +227,17 @@ test('INT8 THE RELAY, THE BLOWS: a strike is the referee\'s - routed to nobody, 
   assert.equal(refs(a, 'end').length, 1, 'the bout is over: nothing more');
 }));
 
+for (const [wa, lands] of [[[16, 0], false], [[19, 1], true]]) {
+  test(`INT7 THE RELAY, A DUEL'S SHAFT: the signed arms ${JSON.stringify(wa)} - a shaft is a signed bow's, whatever the look holds (mutants: the arms unpassed)`, () => withDuel(async ({ say, join, fight }) => {
+    const bow = [{ templateIndex: 130, group: 'Weapons', equipSlot: 19, material: 9 }];
+    const a = await join('peer-0001', -2, { look: LOOK(bow), rc: 1, ci: 'r00000000000000000a01', wa });
+    const b = await join('peer-0002', 2);
+    await fight(a, b);
+    await say(a, { to: 'peer-0002', s: S, k: 'strike', n: 1, by: 'arrow', p: [P(-2).x, 0, P(-2).z], d: 20, w: { t: 130, m: 9, c: 100 } });
+    assert.equal(refs(a, 'hp').length > 0, lands);
+  }));
+}
+
 test('INT8 THE RELAY, THE END: a fighter\'s own `end` is its loss once the count has run (nobody\'s duel to walk out of); a fighter whose socket is gone loses by walkover on the next frame the room takes; a client\'s own `dref` is never routed (mutants: a yield recorded for the other; the walkover unread; a forged referee word)', () => withDuel(async ({ r, say, join, fight, step }) => {
   let a = await join('peer-0001', -2), b = await join('peer-0002', 2);
   await fight(a, b);

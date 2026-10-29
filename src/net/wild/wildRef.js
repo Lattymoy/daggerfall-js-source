@@ -214,10 +214,10 @@ const mendUnheard = (x, now) => {
  * signed into its receipt, `m`). ZONE-GRACE: a striker under safe passage loses it (`graceEnded`), and a struck one under it
  * takes nothing (`why` 'grace'). Answers `{ ok, dealt, fell, fall, why, graceEnded? }`.
  * @param {any} st @param {string} by @param {string} to
- * @param {{ d?: number, r?: number, held?: any, wa?: any, kin?: boolean, rid?: string, room?: string }} o
+ * @param {{ d?: number, r?: number, held?: any, wa?: any, kin?: boolean, rid?: string, room?: string, el?: number|null }} o
  * @param {number} now
  */
-export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, wa = null, kin = false, rid = '', room = '' } = {}, now) {
+export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, wa = null, kin = false, rid = '', room = '', el = null } = {}, now) {
   const a = st.fighters.get(by), t = st.fighters.get(to);
   if (!a || !t || by === to) return { ok: false, dealt: 0, fell: false, fall: null, why: 'no-fighter' };
   if (!a.zone || !t.zone) return { ok: false, dealt: 0, fell: false, fall: null, why: 'zone' };
@@ -230,7 +230,7 @@ export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, 
   if (t.graceUntil > now) return { ok: false, dealt: 0, fell: false, fall: null, why: 'grace', graceEnded };
   mendUnheard(a, now); mendUnheard(t, now);
   const res = r === SIEGE_HIT.Spell
-    ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d }, now)
+    ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d, el }, now)
     : refereeBlow(a.f, t.f, { from: a.pose, at: t.pose, held, d, r, wa }, now);
   if (!res.ok || !res.dealt) return { ok: res.ok, dealt: 0, fell: false, fall: null, why: res.why, graceEnded };
   t.struckAt = now; a.fightAt = now; t.fightAt = now;   // ZONE-GRACE: a fight, for an entry's ask

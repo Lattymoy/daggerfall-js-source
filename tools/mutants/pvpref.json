@@ -611,8 +611,8 @@
   {
     "name": "PVPREF-cast-uncapped",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  const got = Math.min(want, pvpHitMax(to), to.hp);   // PVP-HIT, a blow's own",
-    "new": "  const got = Math.min(want, to.hp);   // PVP-HIT, a blow's own",
+    "old": "  const got = Math.min(hurt, pvpHitMax(to), to.hp);   // PVP-HIT, a blow's own",
+    "new": "  const got = Math.min(hurt, to.hp);   // PVP-HIT, a blow's own",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -748,8 +748,8 @@
   {
     "name": "PVPREF-wire-heal-truthy",
     "file": "src/net/wire.js",
-    "old": "  if (m.k === 'cast') return { k: 'cast', to: m.to, d: m.d, h: m.h === 1 ? 1 : 0 };",
-    "new": "  if (m.k === 'cast') return { k: 'cast', to: m.to, d: m.d, h: m.h ? 1 : 0 };",
+    "old": "  if (m.k === 'cast') return { k: 'cast', to: m.to, d: m.d, h: m.h === 1 ? 1 : 0, ...(intIn(m.el, 0, PVP_ELEMENTS - 1) ? { el: m.el } : {}) };   // PVP-WARD",
+    "new": "  if (m.k === 'cast') return { k: 'cast', to: m.to, d: m.d, h: m.h ? 1 : 0, ...(intIn(m.el, 0, PVP_ELEMENTS - 1) ? { el: m.el } : {}) };   // PVP-WARD",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]

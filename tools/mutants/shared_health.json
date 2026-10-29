@@ -243,8 +243,8 @@
   {
     "name": "SHARED-HEALTH-the-zone-refill-restored",
     "file": "src/net/wild/wildRef.js",
-    "old": "  const res = r === SIEGE_HIT.Spell\n    ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d }, now)",
-    "new": "  if (now - a.struckAt >= WILD_REF.mendMs) a.f.hp = a.f.max;\n  if (now - t.struckAt >= WILD_REF.mendMs) t.f.hp = t.f.max;\n  const res = r === SIEGE_HIT.Spell\n    ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d }, now)",
+    "old": "  const res = r === SIEGE_HIT.Spell\n    ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d, el }, now)",
+    "new": "  if (now - a.struckAt >= WILD_REF.mendMs) a.f.hp = a.f.max;\n  if (now - t.struckAt >= WILD_REF.mendMs) t.f.hp = t.f.max;\n  const res = r === SIEGE_HIT.Spell\n    ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d, el }, now)",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],

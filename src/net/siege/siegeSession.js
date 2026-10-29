@@ -174,12 +174,12 @@ export function createSiegeSession({ online, pass, claims = null, hud = null, no
     /** A blow on a foe, to the referee (net/wire.js validSiegeIn's `blow`). True when it left. */
     blow(to, { w, m, d, r }) { return !!s && api.isFoe(to) && online.sendSiege({ k: 'blow', to, w, m, d, r }); },
     /** A cast on a peer - a harmful one on a foe, a heal on a side-mate. */
-    cast(to, d, heal = false) {
+    cast(to, d, heal = false, el = null) {
       if (!s || s.side === 'watch') return false;
       if (isSiegeNpcId(to)) return !heal && api.isFoe(to) && online.sendSiege({ k: 'cast', to, d, h: 0 });   // SEAT2b part two (c): no heal reaches one
       const f = s.state.roll[to];
       if (!f || (heal ? f.side !== s.side : !api.isFoe(to))) return false;
-      return online.sendSiege({ k: 'cast', to, d, h: heal ? 1 : 0 });
+      return online.sendSiege({ k: 'cast', to, d, h: heal ? 1 : 0, ...(Number.isInteger(el) ? { el } : {}) });   // PVP-WARD: the spell's element
     },
     /** SEAT2b part two (b) (6.2): THE WORK THIS FIGHTER MAY STRIKE - an attacker the Gatehouse (`gh`) while it stands
      *  unbreached, a defender the Ram (`rm`) while one stands before it - or null (a spectator, a battle without, a relay

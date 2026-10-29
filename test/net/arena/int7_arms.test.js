@@ -155,5 +155,12 @@ test('INT7 THE RELAY: a striker\'s signed arms ride its socket from the hello; P
     clock += 1000;
     await say(c, { k: 'blow', to: 'peer-0002', w: 123, m: 9, d: 500, r: 0 });
     assert.equal(hp()(b), 400 - 2 * pvpHitMax({ max: 400 }), 'a token from before the arms: the same share');
+    // a shaft is the signed arms': a bow in the look, but a pack that signs none, lands nothing
+    const BOW = { ...LOOK, items: [{ templateIndex: 130, group: 'Weapons', equipSlot: 19, material: 9 }] };
+    const d = await join('peer-0004', 3, { look: BOW, rc: 1, ci: 'r0123456789abcdef0124', wa: [16, 0] });
+    await say(d, { k: 'in' });
+    clock += 1000;
+    await say(d, { k: 'blow', to: 'peer-0002', w: 130, m: 9, d: 20, r: 1 });
+    assert.equal(hp()(b), 400 - 2 * pvpHitMax({ max: 400 }), 'no signed bow, no shaft');
   } finally { Date.now = realNow; }
 });

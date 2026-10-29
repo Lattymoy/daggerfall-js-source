@@ -1,14 +1,16 @@
 // PVP-GUARD (the PvP rework, 2026-10-28, "Real health + armour"): a player's blow on a player is taken through the struck
 // player's armour - the overhaul's reduction (combat/pcaao.js) for the blow's kind, averaged over the body parts - before
-// PVP-HIT's cap. The struck player reports the shares (`g` on the vit frame); the referee bounds them.
+// PVP-HIT's cap. The struck player reports the shares (`g` on the vit frame); the referee bounds them. PVP-WARD: its
+// resistances the same way for a player's spell, by the spell's element (`w`, and the cast's `el`).
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EQUIP_SLOTS, equipTableOf } from '../../src/systems/equip.js';
-import { pvpArmorKept } from '../../src/combat/pvpGuard.js';
-import { PVP_GUARD, guardedBlow, takeHealthReport, HEALTH_SHARE_WHOLE } from '../../src/net/siege/refereeHealthShare.js';
-import { SIEGE_HIT, SIEGE_UNITS_PER_M, newFighter, refereeBlow, pvpBlowKind } from '../../src/net/siege/siegeRef.js';
-import { validVitIn, VIT_GUARD_MAX } from '../../src/net/wire.js';
+import { pvpArmorKept, pvpWardKept } from '../../src/combat/pvpGuard.js';
+import { pvpSpellElement, pvpCastFrame } from '../../src/combat/siegeCombat.js';
+import { PVP_GUARD, PVP_WARD, guardedBlow, wardedCast, takeHealthReport, HEALTH_SHARE_WHOLE } from '../../src/net/siege/refereeHealthShare.js';
+import { SIEGE_HIT, SIEGE_UNITS_PER_M, newFighter, refereeBlow, refereeCast, pvpBlowKind } from '../../src/net/siege/siegeRef.js';
+import { validVitIn, validDuelData, validSiegeIn, VIT_GUARD_MAX, PVP_ELEMENTS } from '../../src/net/wire.js';
 import { createRefereeHealthMirror } from '../../src/net/siege/refereeHealthMirror.js';
 
 const stats = (v) => ({ strength: v, intelligence: 50, willpower: v, agility: 50, endurance: v, personality: 50, speed: 50, luck: 50 });
@@ -74,4 +76,43 @@ test('PVP-GUARD: the mirror sends my shares and reports again when my armour cha
   g = [34, 40, 30]; t += 1000; m.frame(true);
   assert.equal(sent.length, 2);
   assert.deepEqual(sent.at(-1).g, [34, 40, 30]);
+});
+
+test('PVP-WARD: the resistances a body reports - its Resist effects and its gear, per element (mutants: the gear unread; an element\'s chance read for another)', () => {
+  assert.equal(PVP_ELEMENTS, 5);
+  assert.deepEqual(pvpWardKept(body()), [100, 100, 100, 100, 100], 'none: whole');
+  const warded = { ...body(), activeEffects: [{ kind: 'elementalResistance', element: 0, chance: 60 }, { kind: 'elementalResistance', element: 3, chance: 200 }] };
+  assert.deepEqual(pvpWardKept(warded), [40, 100, 100, 0, 100], 'fire 60%, shock past whole');
+  assert.deepEqual(pvpWardKept({ ...body(), _mods: { resist: { frost: 25, magic: 15 } } }), [100, 75, 100, 100, 85], 'the gear\'s resistance');
+  assert.deepEqual([pvpSpellElement({ element: 0 }), pvpSpellElement({ element: 3 }), pvpSpellElement({}), pvpSpellElement({ element: 9 })], [0, 3, 4, 4]);
+  assert.deepEqual(pvpCastFrame([1, 2, 3], 50.4, { element: 1 }), { p: [1, 2, 3], d: 50, el: 1 });
+});
+
+test('PVP-WARD: the referee takes the share of the spell\'s element, never under 10 ("resist max 90"), before PVP-HIT (mutants: the ward unread; the floor unread)', () => {
+  assert.deepEqual(PVP_WARD, { min: 10, max: 100, elements: 5 });
+  const now = 1_000_000;
+  const a = newFighter(10, now);
+  const b = newFighter(50, now); b.max = 1000; b.hp = 1000;
+  assert.equal(wardedCast(b, 0, 200), 200, 'unreported: whole');
+  takeHealthReport(b, { report: 1, share: HEALTH_SHARE_WHOLE, seen: [], ward: [40, 100, 100, 0, 50] }, now);
+  assert.deepEqual(b.share.ward, [40, 100, 100, 10, 50]);
+  const cast = (el, d, t) => refereeCast(a, b, { from: at(0), at: at(10), d, el }, t);
+  assert.equal(cast(0, 200, now).dealt, 80, 'fire, 40% through');
+  assert.equal(cast(3, 200, now + 100).dealt, 20, 'shock, the floor of 10');
+  assert.equal(cast(null, 200, now + 200).dealt, 100, 'unnamed: magic');
+  assert.equal(cast(1, 2000, now + 300).dealt, 450, 'then the 45% cap');
+});
+
+test('PVP-WARD: the wire carries the element on a duel\'s, the zone\'s and a siege\'s cast, and five shares on the report, or refuses the frame', () => {
+  const P = [100000, 10.5, 200000], S = 'abc123def0';
+  const spell = (o) => validDuelData({ to: 'peer-0002', k: 'spell', s: S, n: 2, p: P, d: 40, ...o });
+  assert.equal(spell({ el: 3 })?.el, 3);
+  assert.equal(spell({}).el, undefined);
+  assert.equal(spell({ el: 5 }), null);
+  assert.equal(validSiegeIn({ k: 'cast', to: 'peer-0002', d: 40, h: 0, el: 2 })?.el, 2);
+  assert.equal(validSiegeIn({ k: 'cast', to: 'peer-0002', d: 40, h: 0, el: 7 })?.el, undefined, 'a siege cast without a good element is magic');
+  const base = { n: 1, s: 5000, seen: [] };
+  assert.deepEqual(validVitIn({ ...base, w: [40, 100, 100, 0, 50] })?.ward, [40, 100, 100, 0, 50]);
+  assert.equal(validVitIn({ ...base, w: [40, 100, 100, 0] }), null);
+  assert.equal(validVitIn({ ...base, w: [40, 100, 100, 0, 101] }), null);
 });

@@ -696,7 +696,7 @@ test('AUDIT-SEATS G5 THE WORLD\'S BATTLE ARMS by source: the swing and the shaft
   assert.match(w, /duelStrikeOut\('arrow', m\.weapon \?\? null, 'StrikeDown', weaponRig\.playerWeapon\?\.lastDrawMs \?\? 0, t\.id, \{ off: !!weaponRig\.playerWeapon\?\.isOffHandItem\?\.\(m\.weapon\) \}\)/);
   assert.match(w, /const duelArrowTargets = \(\) => \{\n\s*if \(!duelMgr\.fighting\) \{\n\s*const bodies = battleFoeBodies\(royalSession\?\.active\(\) \? royalSession : siegeSession\);/);
   assert.match(w, /duelMark: \(\) => \{ if \(!duelMgr\.fighting\) return siegeSpellMarks\(\);/);
-  assert.match(w, /return harm > 0 && siegeSession\.cast\(peerId, siegeCastClamp\(harm, false\)\);/);
+  assert.match(w, /return harm > 0 && siegeSession\.cast\(peerId, siegeCastClamp\(harm, false\), false, pvpSpellElement\(sp\)\);/);
   assert.match(w, /const castAtAllyDoor = \(id, frame\) => siegeHealOut\(id, frame\) \|\| !!online\?\.sendCast\?\.\(frame\);/);
   assert.match(w, /return heal > 0 && siegeSession\.cast\(id, siegeCastClamp\(heal, true\), true\);/);
   assert.match(w, /spellRefusal: \(sp\) => battleSpellRefusal\(sp\),/);

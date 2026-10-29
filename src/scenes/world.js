@@ -1207,7 +1207,7 @@ import { siegeFieldWire, royalRingWire } from '../systems/siegeField.js';   // S
 import { createRoyalSession } from '../net/royalSession.js';   // CROWN1 part two: a Royal Tourney as this client fights it
 import { createRoyalClaims, createDuelClaims } from '../net/siege/siegeClaims.js';   // CROWN1 part two: its bouts' receipts carried to the service; INT8: a duel's
 import { createSiegeHerald } from '../net/siege/siegeHerald.js';   // AUDIT-SEATS G1: the battles announced in the server's voice
-import { siegeBlowKind, siegeCastClamp, siegeSpellNumbers, siegeSpellBarred, SIEGE_SPELL_BARRED_TEXT, SIEGE_DISMOUNT_TEXT } from '../combat/siegeCombat.js';   // AUDIT-SEATS G5: a battle's shafts, spells and saddle
+import { siegeBlowKind, siegeCastClamp, siegeSpellNumbers, siegeSpellBarred, pvpCastFrame, pvpSpellElement, SIEGE_SPELL_BARRED_TEXT, SIEGE_DISMOUNT_TEXT } from '../combat/siegeCombat.js';   // AUDIT-SEATS G5: a battle's shafts, spells and saddle
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 import { startTutorialTour } from '../ui/tutorialPopup.js';   // TUT1: the welcome tour - and the popups' handler, registered by this host (the four hosts' rule)
 import { createTravelViewMarks } from './travelViewMarks.js';   // HOST-SPLIT
@@ -21297,7 +21297,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (peerId !== duelMgr.opponent) return false;
     const { harm } = withoutFirmament(playerEntity, () => siegeSpellNumbers(sp, Math.max(1, Math.trunc(playerEntity.level || 1)), duelStandIn(), playerEntity));
     if (!(harm > 0)) return false;
-    const n = duelMgr.blow('spell', { p: campToWire(player.feetAt()), d: siegeCastClamp(harm, false) });
+    const n = duelMgr.blow('spell', pvpCastFrame(campToWire(player.feetAt()), harm, sp));   // PVP-WARD: and its element
     if (n) { _duelSent.set(n, { kind: 'spell', weapon: null }); if (_duelSent.size > 64) _duelSent.delete(_duelSent.keys().next().value); }
     return !!n;
   };
@@ -21404,7 +21404,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const siegeSpellOut = (peerId, sp) => {
     if (!siegeSession?.isFoe(peerId)) return wildSpellOut(peerId, sp);   // WILD1: not the siege's - perhaps a fair player of the open zone's
     const { harm } = withoutFirmament(playerEntity, () => siegeSpellNumbers(sp, Math.max(1, Math.trunc(playerEntity.level || 1)), duelStandIn(), playerEntity));
-    return harm > 0 && siegeSession.cast(peerId, siegeCastClamp(harm, false));
+    return harm > 0 && siegeSession.cast(peerId, siegeCastClamp(harm, false), false, pvpSpellElement(sp));
   };
   /** AUDIT-SEATS G5: A GIFT OF MINE ON A SIEGE'S SIDE-MATE - its Heal Health, counted as the mate's own client would land
    *  it, to the referee as a heal (the referee holds the mate's vitality; ALLY-CAST's frame would heal their save). False
@@ -22004,7 +22004,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (!wildFair(peerId)) return false;
     const { harm } = withoutFirmament(playerEntity, () => siegeSpellNumbers(sp, Math.max(1, Math.trunc(playerEntity.level || 1)), duelStandIn(), playerEntity));
     if (!(harm > 0)) return false;
-    const n = wildFight.blow(peerId, 'spell', { p: campToWire(player.feetAt()), d: siegeCastClamp(harm, false) });
+    const n = wildFight.blow(peerId, 'spell', pvpCastFrame(campToWire(player.feetAt()), harm, sp));
     if (n) zoneWatchCall();
     return !!n;
   };
