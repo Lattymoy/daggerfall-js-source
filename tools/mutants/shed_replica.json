@@ -1,0 +1,32 @@
+[
+ {
+  "name": "SHEDREPLICA-replica-read-shed",
+  "file": "server-account/src/index.js",
+  "old": "    if (shed && db === env.DB) return overloaded(origin);",
+  "new": "    if (shed) return overloaded(origin);",
+  "tests": [
+   "test/server/shed_replica.test.js"
+  ],
+  "note": "an overloaded isolate answers half the service 503 while the replica sits idle"
+ },
+ {
+  "name": "SHEDREPLICA-primary-first",
+  "file": "server-account/src/index.js",
+  "old": "REPLICA_ROUTES.get(path) === request.method ? replicaDb(env.DB, REPLICA_ANY) :",
+  "new": "REPLICA_ROUTES.get(path) === request.method ? replicaDb(env.DB) :",
+  "tests": [
+   "test/server/shed_replica.test.js"
+  ],
+  "note": "the shed read's session starts at the primary it was shed to spare"
+ },
+ {
+  "name": "SHEDREPLICA-every-busy-read-through",
+  "file": "server-account/src/index.js",
+  "old": "    if (shed && db === env.DB) return overloaded(origin);",
+  "new": "    if (false) return overloaded(origin);",
+  "tests": [
+   "test/server/shed_replica.test.js"
+  ],
+  "note": "a busy read no replica may serve asks the overloaded primary"
+ }
+]

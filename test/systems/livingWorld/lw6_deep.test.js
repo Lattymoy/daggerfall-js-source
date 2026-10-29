@@ -6,8 +6,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { synthMap, livingMap, partiesOver } from '../../lwRoads.mjs';
-import { ownTrip, diveTrip, diversAt, remainsNear, partyAt, cycleOf, CALENDAR_MPM, DIVE_CHANCE, DIVE_RANGE_PX, DIVE_MIN, TRIP_PACE, NATIVE_PER_M } from '../../../src/systems/livingWorld/trips.js';
+import { ownTrip, diveTrip, diversAt, remainsNear, partyAt, cycleOf, CALENDAR_MPM, DIVE_CHANCE, WIDE_DIVE_CHANCE, DIVE_RANGE_PX, DIVE_MIN, TRIP_PACE, NATIVE_PER_M } from '../../../src/systems/livingWorld/trips.js';
 import { companyOfPlace, COMPANY_DIVE_CHANCE } from '../../../src/systems/livingWorld/companies.js';   // LW13: a company dives the likelier
+import { isWidePlace } from '../../../src/systems/livingWorld/census.js';   // LW-WIDE: the divers dive the likelier still
 import { troubleOf, troubledTrip, HALT_MIN } from '../../../src/systems/livingWorld/trouble.js';
 import { DIVE_NEWS, ROAD_NEWS, newsScript } from '../../../src/systems/livingWorld/lines.js';
 import { createDungeonDivers, DIVER_STAND_M, DIVER_HEEL_M, DIVER_HEEL_STEP_M } from '../../../src/scenes/dungeonDivers.js';
@@ -32,7 +33,7 @@ test('LW6 the dives: an adventurer\'s cycle a DIVE now and then (DIVE_CHANCE, it
         if (res.job !== 'adventurer') { assert.ok(!t?.dive, 'none but an adventurer dives'); continue; }
         if (!t) continue;
         trips++;
-        const chance = companyOfPlace(res, deep.world.rosterOf(town)) ? COMPANY_DIVE_CHANCE : DIVE_CHANCE;   // PIN MOVED (LW13): a company's first, the company's chance
+        const chance = isWidePlace(res, deep.world.rosterOf(town)) ? WIDE_DIVE_CHANCE : companyOfPlace(res, deep.world.rosterOf(town)) ? COMPANY_DIVE_CHANCE : DIVE_CHANCE;   // PIN MOVED (LW13): a company's first, the company's chance; LW-WIDE: PIN MOVED - a diver's, the divers'
         want += chance;
         const diving = lwRng(res.town, res.slot, k, 0x64697665)() < chance;
         if (!t.dive) {

@@ -37,7 +37,8 @@ import { stampLayout, layoutStampOfMapId, recordStands, recordHeldBack } from '.
 import { questorCandidateBuildings } from '../talk/talkTopics.js';   // QUESTOR-MOVED: the town's buildings and their people, as the questor pool reads them
 import { hasGuildService } from '../guild/guildServices.js';   // QUEST-AUDIT II HOUSE-HALL: a guild's questor known by its service
 import { FACTION_TYPES } from '../../formats/factionFile.js';
-import { getNameBankOfRegion, fullName, GENDERS } from '../../characters/nameHelper.js';
+import { getNameBankOfRegion, GENDERS } from '../../characters/nameHelper.js';
+import { personName } from '../../characters/personNames.js';   // REGION-NAMES: a key - its bank's culture, as the static NPC's (staticNpc.js)
 import { srand } from '../../formats/dfRandom.js';
 import { ORDERS } from '../guild/guildVariants.js';
 import { getLocalizedLocationName, getLocalizedRegionName } from '../textManager.js';   // L10N3e: the place names shown
@@ -642,7 +643,7 @@ export class Person extends QuestResource {
     // quest's injectable roll (0..999, the same surface).
     if (this.nameSeed === -1) this.nameSeed = this._range(1000);
     srand(this.nameSeed);
-    this.displayName = fullName(this.nameBank, this.npcGender);
+    this.displayName = personName(this.nameBank, this.npcGender);
   }
 
   /** AssignHomeTown (Person.cs:631-663): questors configure from the

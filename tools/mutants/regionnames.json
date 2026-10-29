@@ -1,0 +1,254 @@
+[
+  {
+    "name": "REGION-NAMES-gro-gra-swapped",
+    "file": "src/characters/regionNames.js",
+    "old": "${c.female ? 'gra' : 'gro'}-${c.fam()}",
+    "new": "${c.female ? 'gro' : 'gra'}-${c.fam()}",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-nord-clan-share",
+    "file": "src/characters/regionNames.js",
+    "old": "{ key: 'clan', w: (c) => (c.home === 'Skyrim' ? 0.4 : 0.15)",
+    "new": "{ key: 'clan', w: (c) => (c.home === 'Skyrim' ? 0.05 : 0.15)",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-nord-patronym-ends",
+    "file": "src/characters/regionNames.js",
+    "old": "(c.r() < 0.5 ? 'sdottir' : 'sen')",
+    "new": "(c.r() < 0.5 ? 'sdottir' : 'son')",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-nord-epithet",
+    "file": "src/characters/regionNames.js",
+    "old": "`${nordGiven(c)} the ${pick(c.r, NORD.epithet, c.fashion)}`",
+    "new": "`${nordGiven(c)} ${pick(c.r, NORD.epithet, c.fashion)}`",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-dunmer-house-after",
+    "file": "src/characters/regionNames.js",
+    "old": "make: (c) => `${pick(c.r, DUNMER.houses)} ${twoPart(c, c.female ? DUNMER.onF : DUNMER.onM, c.female ? DUNMER.endF : DUNMER.endM)}` },",
+    "new": "make: (c) => `${twoPart(c, c.female ? DUNMER.onF : DUNMER.onM, c.female ? DUNMER.endF : DUNMER.endM)} ${pick(c.r, DUNMER.houses)}` },",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-dunmer-redoran",
+    "file": "src/characters/regionNames.js",
+    "old": "houses: freeze(['Hlaalu', 'Indoril', 'Dres']),",
+    "new": "houses: freeze(['Hlaalu', 'Indoril', 'Redoran']),",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-dunmer-ashlanders-abroad",
+    "file": "src/characters/regionNames.js",
+    "old": "{ key: 'ashlander', w: (c) => (c.home === 'Morrowind' ? 0.15 : 0)",
+    "new": "{ key: 'ashlander', w: (c) => (c.home === 'Morrowind' ? 0.15 : 0.15)",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-redguard-at-as-ra",
+    "file": "src/characters/regionNames.js",
+    "old": "`${n} at-${redguardGiven(",
+    "new": "`${n} ra-${redguardGiven(",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-redguard-al-family",
+    "file": "src/characters/regionNames.js",
+    "old": "`${redguardGiven(c)} al-${pick(c.r, REDGUARD.places, c.fashion)}`",
+    "new": "`${redguardGiven(c)} al-${c.fam()}`",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-khajiit-titled-share",
+    "file": "src/characters/regionNames.js",
+    "old": "{ key: 'titled', w: (c) => (c.home === 'Elsweyr' ? 0.55 : 0.35)",
+    "new": "{ key: 'titled', w: (c) => (c.home === 'Elsweyr' ? 0.05 : 0.35)",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-khajiit-bare-root",
+    "file": "src/characters/regionNames.js",
+    "old": "if (twice || s.length < 3) s +=",
+    "new": "if (twice) s +=",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-argonian-gloss-dashes",
+    "file": "src/characters/regionNames.js",
+    "old": "`${pick(c.r, ARGONIAN.verbs, c.fashion)}-${",
+    "new": "`${pick(c.r, ARGONIAN.verbs, c.fashion)} ${",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-altmer-cities",
+    "file": "src/characters/regionNames.js",
+    "old": "of ${pick(c.r, ALTMER.cities, c.fashion)}",
+    "new": "of ${c.fam()}",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-families-region-unseeded",
+    "file": "src/characters/regionNames.js",
+    "old": "const r = stream(mixSeed(hashOf(culture), region + 0x46));",
+    "new": "const r = stream(mixSeed(hashOf(culture), 0x46));",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-family-share",
+    "file": "src/characters/regionNames.js",
+    "old": "fams && r() < REGION_FAMILY_SHARE ?",
+    "new": "fams && r() < 0.2 ?",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-fashion-region-unseeded",
+    "file": "src/characters/regionNames.js",
+    "old": "fashion: regional ? mixSeed(hashOf(own), region + 0xfa) : 0,",
+    "new": "fashion: regional ? mixSeed(hashOf(own), 0xfa) : 0,",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-bay-weight",
+    "file": "src/characters/regionNames.js",
+    "old": "{ key: 'daggerfall', w: (c) => (c.onBay ? 0.3 : 0.05)",
+    "new": "{ key: 'daggerfall', w: (c) => (c.onBay ? 0.05 : 0.05)",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-bay-regions-edge",
+    "file": "src/characters/regionNames.js",
+    "old": "onBay: regional ? region < BAY_REGIONS : home == null,",
+    "new": "onBay: regional ? region <= BAY_REGIONS : home == null,",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-classic-unguarded",
+    "file": "src/characters/regionNames.js",
+    "old": "if (k.key === 'daggerfall' || k.key === 'imperial') { if (!c.classic) return 0; }",
+    "new": "if (k.key === 'daggerfall' || k.key === 'imperial') { /* unguarded */ }",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-reach-share",
+    "file": "src/characters/regionNames.js",
+    "old": "(mixSeed(seed, 0x72656163) % 10) < 7",
+    "new": "(mixSeed(seed, 0x72656163) % 10) < 3",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-harsh-never",
+    "file": "src/characters/regionNames.js",
+    "old": "const harsh = (x, y) => CLUSTER_END.test(x) && /^[^aeiouy]/i.test(y);",
+    "new": "const harsh = () => false;",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-vowel-seam",
+    "file": "src/characters/regionNames.js",
+    "old": "const seam = same && (/[aeiouy]/i.test(b[0]) || /[^aeiouy]/i.test(b[1] ?? 'a'));",
+    "new": "const seam = same && /[^aeiouy]/i.test(b[1] ?? 'a');",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-orc-race-moved",
+    "file": "src/characters/regionNames.js",
+    "old": "Khajiit: 'khajiit', Argonian: 'argonian', Imperial: 'imperial', Orc: 'orc', Reachman: 'reach',",
+    "new": "Khajiit: 'khajiit', Argonian: 'argonian', Imperial: 'imperial', Orc: 'nord', Reachman: 'reach',",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-stream-unseeded",
+    "file": "src/characters/regionNames.js",
+    "old": "const r = stream(mixSeed(seed, hashOf(own)));",
+    "new": "const r = stream(hashOf(own));",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-orc-parts-cut",
+    "file": "src/characters/regionNames.js",
+    "old": "on: freeze(['Bag', 'Bol',",
+    "new": "on: freeze(['Bag'], ['Bol',",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-person-second-draw",
+    "file": "src/characters/personNames.js",
+    "old": "const classic = fullName(bank, gender);",
+    "new": "const classic = (fullName(bank, gender), fullName(bank, gender));",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-person-seed-not-back",
+    "file": "src/characters/personNames.js",
+    "old": "} finally { setSeed(saved); }",
+    "new": "} finally { /* kept */ }",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  },
+  {
+    "name": "REGION-NAMES-person-race-unread",
+    "file": "src/characters/personNames.js",
+    "old": "culture: cultureOfRace(race) ?? cultureOfBank(bank),",
+    "new": "culture: cultureOfBank(bank),",
+    "tests": [
+      "test/characters/regionnames.test.js"
+    ]
+  }
+]

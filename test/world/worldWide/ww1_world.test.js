@@ -23,9 +23,10 @@ import { nameBankOfArea } from '../../../src/characters/areaNameBank.js';
 import { walkerRace, raceOfPeople } from '../../../src/characters/mobile/mobilePerson.js';
 import { hideoutsOf } from '../../../src/systems/livingWorld/outlaws.js';
 import { roadBound } from '../../../src/systems/livingWorld/trips.js';
-import { mintResident, residentName } from '../../../src/systems/livingWorld/census.js';
+import { mintResident } from '../../../src/systems/livingWorld/census.js';
+import { seededPersonName } from '../../../src/characters/personNames.js';   // REGION-NAMES: PIN MOVED - the bank's draw, the person named off it
 import { lwSeed } from '../../../src/systems/livingWorld/seed.js';
-import { folkNameBank, PROVINCE_FOLK } from '../../../src/characters/provinceFolk.js';   // PROVINCE-FOLK: a resident's own people's bank
+import { folkNameBank, PROVINCE_FOLK, folkOfArea, withZone, folkKeyOf } from '../../../src/characters/provinceFolk.js';   // PROVINCE-FOLK: a resident's own people's bank
 import { GENDERS } from '../../../src/characters/nameHelper.js';
 import { createDryGround } from '../../../src/world/dryGround.js';
 import { codeOnly } from '../../codeOnly.mjs';
@@ -312,13 +313,13 @@ test('WW1 a resident past the Bay is named from its area\'s people - a Nord of S
     const seed = lwSeed(7001, 'h'.charCodeAt(0), slot);
     races.add(res.race);
     assert.ok(PROVINCE_FOLK.Skyrim.some(([r]) => r === res.race), res.race);
-    assert.equal(res.name, residentName(seed ^ 0x5eed1e55, folkNameBank(res.race), res.gender === GENDERS.Female ? GENDERS.Female : GENDERS.Male));
+    assert.equal(res.name, seededPersonName(seed ^ 0x5eed1e55, folkNameBank(res.race), res.gender === GENDERS.Female ? GENDERS.Female : GENDERS.Male, { race: res.race, region: skyrim, home: folkKeyOf(withZone(folkOfArea(skyrim), town.px, town.py)) }));
     if (res.race === 'Nord') assert.equal(folkNameBank(res.race), BANK_TYPES.Nord);
   }
   assert.ok(races.has('Nord') && races.size > 1, `Skyrim's own and its others: ${[...races]}`);
   const bay = { mapId: 7002, px: 300, py: 200, type: 0, region: 20, area: 20, people: 2, blocks: 9 };
   const res = mintResident(bay, 'h', 0, 'townsperson');
-  assert.equal(res.name, residentName(lwSeed(7002, 'h'.charCodeAt(0), 0) ^ 0x5eed1e55, getNameBankOfRegion(20), res.gender));
+  assert.equal(res.name, seededPersonName(lwSeed(7002, 'h'.charCodeAt(0), 0) ^ 0x5eed1e55, getNameBankOfRegion(20), res.gender, { race: res.race, region: 20 }));
 });
 
 test('WW1 the dry ground keeps a pixel\'s kernel by the world\'s key - a pixel and the one a thousand east and a row north are two (mutants: the Bay\'s pixel id)', () => {
