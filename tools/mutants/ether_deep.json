@@ -173,8 +173,8 @@
   {
     "name": "ED-host-unsaid",
     "file": "src/scenes/deepWater/deepWatersHost.js",
-    "old": "rects: deepWatersLocationRects(woods, locations, maps, blocks), ether, continent });",
-    "new": "rects: deepWatersLocationRects(woods, locations, maps, blocks), continent });",
+    "old": "rects: deepWatersLocationRects(woods, locations, maps, blocks, meetsTown), ether, continent });",
+    "new": "rects: deepWatersLocationRects(woods, locations, maps, blocks, meetsTown), continent });",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ]

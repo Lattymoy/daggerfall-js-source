@@ -5,6 +5,7 @@
 // the red skull on the page (scenes/pvpFlagHost.js) and the sheet's bar (ui/pvpVillainBar.js).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { VILLAIN, villainClamp, isVillain, villainKillPoints, villainAfter, villainMonsterLowers, villainQuestLowers, villainRaidLowers } from '../../src/systems/wild/villainLaw.js';
 import { newWildRef, wildZone, wildBlow, wildOpen, wildFirst, wildOpenedBy, wildVillainy, wildRed, wildFlagWord, wildAggroWord, wildCarry, wildCarryOf, wildFallOf, wildCredit, WILD_GRACE } from '../../src/net/wild/wildRef.js';
 import { PVP_FLAG, pvpFlagRefusal } from '../../src/systems/wild/pvpFlag.js';
@@ -126,7 +127,7 @@ test('PVP-VILLAIN THE WIRE (net/wire.js): the flag word\'s `v` 1 (up alone), and
 test('PVP-VILLAIN THE PAGE (scenes/pvpFlagHost.js, ui/pvpVillainBar.js): a peer the referee marks wears a red skull, my meter at 5,000 mine, my flag stays up; the sheet says "Villainy 3,240 / 5,000" on a bar to 10,000 marked at 5,000 (mutants: the red unread; my meter unheard; the drop allowed; the line)', () => {
   const said = [];
   const online = { id: 'peer-me', wildOk: true, setWildFlag: () => {} };
-  const f = createPvpFlagHost(() => online, { level: 40 }, (l) => said.push(l), { say: () => {} }, { doc: null, now: () => 0 });
+  const f = createPvpFlagHost(() => online, { level: 40 }, (l) => said.push(l), { say: () => {} }, { doc: null, now: () => 0, zone: () => true });
   assert.equal(pvpVillainy(), null, 'unheard: no bar');
   f.heard({ k: 'flag', id: 'peer-x', f: 1, v: 1 });
   f.heard({ k: 'flag', id: 'peer-y', f: 1 });
@@ -146,11 +147,16 @@ test('PVP-VILLAIN THE PAGE (scenes/pvpFlagHost.js, ui/pvpVillainBar.js): a peer 
   const node = (tag, cls, text) => ({ tag, cls, text, kids: [], style: {}, append(...k) { this.kids.push(...k); } });
   const detail = node('div');
   const meter = (now, max, tone) => ({ ...node('meter'), now, max, tone });
-  statsVillainy(detail, { el: node, meter }, null);
-  assert.equal(detail.kids.length, 0, 'none before the referee\'s word');
-  statsVillainy(detail, { el: node, meter }, 3_240);
+  statsVillainy(detail, { el: node, meter }, null, 'char-never');
+  assert.deepEqual(detail.kids[0].kids[0].kids.map((k) => k.text), ['Villainy', '0 / 5,000'], 'never heard: 0, shown');
+  detail.kids.length = 0;
+  statsVillainy(detail, { el: node, meter }, 3_240, 'char-a');
   const [row] = detail.kids, [top, bar] = row.kids;
   assert.deepEqual(top.kids.map((k) => k.text), ['Villainy', '3,240 / 5,000']);
+  const later = node('div');
+  statsVillainy(later, { el: node, meter }, null, 'char-a');
+  assert.deepEqual(later.kids[0].kids[0].kids.map((k) => k.text), ['Villainy', '3,240 / 5,000'], 'out of the zone: the last word kept');
+  assert.ok(readFileSync('src/ui/enhanced/enhancedMenu.js', 'utf8').includes("function statsStanding(detail) {\n  statsVillainy("), 'the Standing page\'s top');
   assert.deepEqual([bar.now, bar.max, bar.kids[0].style.left], [3_240, 10_000, '50%']);
   statsVillainy(detail, { el: node, meter }, 5_000);
   assert.equal(detail.kids.at(-1).text, 'You are a villain. You have a red skull, and your PvP flag stays on.');

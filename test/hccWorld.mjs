@@ -31,7 +31,7 @@ export function makeWorld({ cart = true, horse = true, settings = {}, ground = 0
   const fwd = () => [Math.sin(w.yaw), 0, Math.cos(w.yaw)];
   const deps = {
     ready: () => w.ready,
-    transport: { get: () => w.mode, set: (m) => { w.mode = m; }, hasCart: () => w.items.cart, hasHorse: () => w.items.horse, isOnShip: () => w.ship },
+    transport: { get: () => w.mode, set: (m) => { w.mode = m; }, hasCart: () => w.items.cart, hasHorse: () => w.items.horse, isOnShip: () => w.ship, onDeck: () => !!w.deck },   // AUDIT FB1029d B1: `w.deck` a Come Sail Away deck under the player
     player: { position: () => [...w.pos], forward: fwd, movement: () => ({ position: [...w.pos], forward: fwd() }) },
     gps: { worldX: () => WX0 + w.pos[0] * RATIO, worldZ: () => WZ0 + w.pos[2] * RATIO, scenePosition: () => [...w.pos], currentMapPixel: () => ({ x: 0, y: 0 }) },
     streaming: { isReady: () => true, isInit: () => false, mapPixelX: () => 0, mapPixelY: () => 0, ratio: () => RATIO },

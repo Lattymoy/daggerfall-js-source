@@ -10,6 +10,7 @@ import { noteCaps } from '../ui/capsFix.js';
 import { skullSrc } from '../ui/pvpSkull.js';
 import { CONCEAL_MODE } from '../systems/combatVisuals.js';   // PVP-BAR
 import { isVillain } from '../systems/wild/villainLaw.js';   // PVP-VILLAIN
+import { wildHere } from '../systems/wild/wildZone.js';   // PVP-FLAG-ZONE
 
 /** PVP-BAR: a concealed player in a PvP fight - a faint body that keeps its skull and bar (the name is taken). */
 export const PVP_FIGHT_VEIL = Object.freeze({ mode: CONCEAL_MODE.reveal, alpha: 0.3, t: 0, phase: 0, named: true });
@@ -18,15 +19,17 @@ const VEIL_FRAME_MS = 250;
 /** PVP-BAR: a point's whole name taken, its skull and bar kept. */
 const nameless = (p) => ({ ...p, name: '', title: null, glyphs: [], lv: null, gt: null, rb: null, house: null, tint: null });
 
-const SKULL_EDGE = Object.freeze({ off: '#4caf50', white: '#8a7246', gold: '#e8b62c', red: '#d42a1e' });
+// PVP-FLAG-LOOK (the owner: "The green one looks bad the other r perfect"): flag down, a dim skull in a bronze frame
+// as big as the others, never a small green ring.
+const SKULL_EDGE = Object.freeze({ off: '#5a4a30', white: '#8a7246', gold: '#e8b62c', red: '#d42a1e' });
 
 /**
  * The host's own (positional, so the wiring is one line of it): its live link, the player, the mid-screen line and the
  * town talk a line is said on.
  * @param {() => any} online @param {any} player @param {(line: string) => void} midScreen @param {{ say: (line: string) => void }} talk
- * @param {{ doc?: Document | null, now?: () => number }} [o]
+ * @param {{ doc?: Document | null, now?: () => number, zone?: () => boolean }} [o]
  */
-export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeof document === 'undefined' ? null : document, now = Date.now } = {}) {
+export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeof document === 'undefined' ? null : document, now = Date.now, zone = wildHere } = {}) {
   const level = () => Math.trunc(player?.level || 1);
   const say = (line) => { midScreen(line); talk.say(line); };
   let on = false, fightAt = -Infinity, button = /** @type {HTMLButtonElement | null} */ (null);
@@ -37,6 +40,8 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
   const reds = new Set();   // PVP-VILLAIN: the flagged peers the referee says are villains
   let villainy = /** @type {number | null} */ (null);   // my own meter, the referee's word (null: not heard)
   const me = () => online()?.id ?? null;
+  /** PVP-FLAG-ZONE (the owner: "or i can flag anywerte"): the flag is the zone's alone - Cyrodiil, the open sea, their halls. */
+  const here = () => !!online()?.wildOk && !!zone();
   /** PVP-SKULL: a skull's kind - none unflagged, red a villain, gold in aggro, white else. */
   const skullOf = (id) => (peers.has(id) ? (reds.has(id) ? 'red' : peers.get(id) > now() ? 'gold' : 'white') : null);
   /** PVP-CONE: a peer I struck or was struck by within PVP_FLAG.lockMs - my foe. */
@@ -45,19 +50,26 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
   const paint = () => {
     if (!button) return;
     const kind = mySkull();
-    button.textContent = kind ? '' : '○';
-    Object.assign(button.style, { backgroundImage: kind ? `url("${skullSrc(kind)}")` : '', borderColor: SKULL_EDGE[kind ?? 'off'], color: SKULL_EDGE.off,
-      boxShadow: kind === 'gold' ? `0 0 0 3px ${SKULL_EDGE.gold}55` : '' });
+    Object.assign(button.style, { backgroundImage: `url("${skullSrc(kind ?? 'white')}")`, borderColor: SKULL_EDGE[kind ?? 'off'],
+      filter: kind ? '' : 'grayscale(1) brightness(0.6)', boxShadow: kind === 'gold' ? `0 0 0 3px ${SKULL_EDGE.gold}55` : '' });
     button.title = on ? t('pvp.flag.onTitle', 'PvP on (Caps Lock)') : t('pvp.flag.offTitle', 'PvP off (Caps Lock)');
     button.setAttribute('aria-label', button.title);
   };
   const set = (v) => { on = v; online()?.setWildFlag?.(v); paint(); };
   /** Caps Lock or the button: up at once from level 30, down at once outside the lock. */
   const toggle = () => {
+    if (!on && !zone()) return false;   // PVP-FLAG-ZONE: up only in the zone
     const why = pvpFlagRefusal({ on: !on, level: level(), fightAt, now: now(), red: isVillain(villainy) });
     if (why) { say(why); return false; }
     set(!on);
     say(on ? t('pvp.flag.on', 'PvP is on. Flagged players can attack you.') : t('pvp.flag.off', 'PvP is off.'));
+    return true;
+  };
+  /** PVP-FLAG-ZONE: out of the zone the flag comes down, as soon as the lock and a villain's meter let it. */
+  const leave = () => {
+    if (!on || zone() || pvpFlagRefusal({ on: false, fightAt, now: now(), red: isVillain(villainy) })) return false;
+    set(false);
+    say(t('pvp.flag.off', 'PvP is off.'));
     return true;
   };
   /** The referee's word: a flag (mine is its to hold - a drop refused in the lock comes back up), or a blow on me or by me. */
@@ -79,19 +91,21 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
       const el = /** @type {any} */ (e.target);
       if (e.code !== 'CapsLock' || e.repeat || el?.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el?.tagName ?? '')) return;
       noteCaps('game');
-      if (online()?.wildOk) toggle();
+      if (here()) toggle();
     });
+    // PVP-FLAG-SPOT (the owner: "left center or right center"): the middle of the screen's right edge.
     button = doc.createElement('button');
     button.type = 'button';
-    Object.assign(button.style, { position: 'fixed', top: '8px', right: '8px', zIndex: '40', width: '36px', height: '36px', font: '20px serif', backgroundColor: '#2a241c', backgroundSize: '24px', backgroundRepeat: 'no-repeat', backgroundPosition: 'center', imageRendering: 'pixelated', border: '2px solid', cursor: 'pointer', display: 'none' });
+    Object.assign(button.style, { position: 'fixed', top: '50%', right: '8px', transform: 'translateY(-50%)', zIndex: '40', width: '36px', height: '36px', backgroundColor: '#2a241c', backgroundSize: '24px', backgroundRepeat: 'no-repeat', backgroundPosition: 'center', imageRendering: 'pixelated', border: '2px solid', cursor: 'pointer', display: 'none' });
     button.addEventListener('click', () => toggle());
     doc.body?.appendChild(button);
     paint();
-    setInterval(() => { if (button) { button.style.display = online()?.wildOk ? 'block' : 'none'; paint(); } }, 1000);   // where the zone's law reaches; the aggro's end
+    setInterval(() => { leave(); if (button) { button.style.display = here() ? 'block' : 'none'; paint(); } }, 1000);   // where the zone's law reaches; the aggro's end
   }
   const api = {
     on: () => on,
     toggle,
+    leave,
     heard,
     /** Wrap the host's `wref` door: the flag's words taken here, every word handed on. */
     wrap: (inner) => (g, room) => { if (!heard(g)) inner(g, room); },

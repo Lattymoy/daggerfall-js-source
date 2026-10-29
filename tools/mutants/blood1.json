@@ -2221,8 +2221,8 @@
   {
     "name": "AUDIT4-the-classic-decal-takes-the-flat-s-lanterns-again",
     "file": "src/render/renderer.js",
-    "old": "    pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];\n  }\n  vec3 iL = uIndirect.xyz - vWorld;",
-    "new": "    pointAcc += att * att * uPointColors[i];\n  }\n  vec3 iL = uIndirect.xyz - vWorld;",
+    "old": "    pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];\n  }\n  pointAcc += winLit(vWorld, n, 0.0, 1.0);   // WL1\n  vec3 iL = uIndirect.xyz - vWorld;",
+    "new": "    pointAcc += att * att * uPointColors[i];\n  }\n  pointAcc += winLit(vWorld, n, 0.0, 1.0);   // WL1\n  vec3 iL = uIndirect.xyz - vWorld;",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -2231,7 +2231,7 @@
     "name": "AUDIT4-the-lane-decal-takes-the-flat-s-lanterns-again",
     "file": "src/render/enhancedLighting.js",
     "old": "  vec3 lit = albedo * (ambient + sunLit + moonLit + elPointLitWet(vWorld, n, sheen, glint) + elIndirectLit(vWorld, n));",
-    "new": "  vec3 base = vWorld + n * 0.5; glint = vec3(0.0);\n  vec3 lit = albedo * (ambient + sunLit + moonLit + elPointFlat(vWorld, base) + elIndirectFlat(vWorld));",
+    "new": "  vec3 base = vWorld + n * 0.5; glint = vec3(0.0);\n  vec3 lit = albedo * (ambient + sunLit + moonLit + elPointFlat(vWorld, base, 1.0) + elIndirectFlat(vWorld));",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]

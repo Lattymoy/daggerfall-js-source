@@ -537,7 +537,7 @@
   {
     "name": "BAY-LEFT-GROUND-GROUND-LAW-not-moved",
     "file": "src/net/wire.js",
-    "old": "export const GROUND_LAW = 4;",
+    "old": "export const GROUND_LAW = 5;",
     "new": "export const GROUND_LAW = 1;",
     "tests": [
       "test/net/fb1017f_groundgate.test.js"
@@ -547,8 +547,8 @@
   {
     "name": "BAY-LEFT-GROUND-GROUND-PRINT-past-the-Bay-without-its-sites",
     "file": "tools/groundPrint.mjs",
-    "old": "climateType: CLIMATES.Woodlands, roads, sites, beyond, climates: null, landform: true });",
-    "new": "climateType: CLIMATES.Woodlands, roads, sites, climates: null, landform: true });",
+    "old": "roads, sites, beyond, climates: null, landform: true }).samples);",
+    "new": "roads, sites, climates: null, landform: true }).samples);",
     "tests": [
       "test/net/fb1017f_groundgate.test.js"
     ]
@@ -606,8 +606,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-lift-the-Bays-bound",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    if (!host.woods || !inWorldGrid(px, py)) return 0;",
-    "new": "    if (!host.woods || !inBay(px, py)) return 0;",
+    "old": "    if (!host.woods || !inWorldGrid(px, py)) return 0;   // BAY-LEFT-GROUND: the world's grid",
+    "new": "    if (!host.woods || !inBay(px, py)) return 0;   // BAY-LEFT-GROUND: the world's grid",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]
@@ -615,8 +615,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-lift-the-grids-bound-dropped",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    if (!host.woods || !inWorldGrid(px, py)) return 0;",
-    "new": "    if (!host.woods) return 0;",
+    "old": "    if (!host.woods || !inWorldGrid(px, py)) return 0;   // BAY-LEFT-GROUND: the world's grid",
+    "new": "    if (!host.woods) return 0;   // BAY-LEFT-GROUND: the world's grid",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]

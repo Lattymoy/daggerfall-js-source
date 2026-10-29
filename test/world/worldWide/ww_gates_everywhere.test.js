@@ -11,8 +11,9 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { webcrypto } from 'node:crypto';
 import {
-  gateNumber, gateLaneOf, gateTimes, gateAdmits, gateHolds, gateRoomKey, GATE_LANES_OPEN, gateLaneOpen, GATE_COLLAPSE_MS, gameDayAt,
+  gateNumber, gateLaneOf, gateTimes, gateAdmits, gateHolds, gateRoomKey, GATE_LANES_OPEN, gateLaneOpen, GATE_COLLAPSE_MS, gameDayAt, gateFrontDay,
 } from '../../../src/net/gate/gateLaw.js';
+import { frontStands } from '../../../src/net/frontLaw.js';
 import { gateNumberOk, gatePixelOk, gateLaneKey, gateReceiptKey, validGateIn, validRiteIn, SOCIAL_ROOM } from '../../../src/net/wire.js';
 import { agreedGateSite, omenPost } from '../../../src/net/gate/gateHerald.js';
 import { gateRegionOk, seatReportText, seatWeekOf } from '../../../src/net/townSeatLaw.js';
@@ -41,6 +42,9 @@ const ARENA2 = process.env.ARENA2_PATH ?? '';
 const HAVE = !!ARENA2 && existsSync(join(ARENA2, 'MAPS.BSA'));
 const src = (p) => codeOnly(readFileSync(new URL('../../../' + p, import.meta.url), 'utf8'));
 const PROVINCES = [1, 2, 3, 4, 5, 6, 7, 8];
+/** FRONTS (bible/03-World/World-Wide.md FRONTS): the first gate day from `d` on whose gate stands on `lane` - its province's
+ *  turn, read off the front law and the day the gate opens in (`d` itself outside the fronts). */
+const stirredDay = (d, lane) => { while (!frontStands(gateFrontDay(gateNumber(d, lane)), lane)) d++; return d; };
 const quiet = (fn) => { const warn = console.warn; console.warn = () => {}; return Promise.resolve().then(fn).finally(() => { console.warn = warn; }); };
 
 // ─── the lanes that stand ───────────────────────────────────────────────────────────────────────
@@ -50,13 +54,20 @@ test('WW-GATES-EVERYWHERE THE LANES THAT STAND: the Bay\'s and the eight provinc
   assert.equal(CYRODIIL_THEATRE, 9);
   const day = 900;
   for (const lane of [...PROVINCES, CYRODIIL_THEATRE]) {
-    const n = gateNumber(day, lane), t = gateTimes(n), open = lane !== CYRODIIL_THEATRE;
+    const n = gateNumber(stirredDay(day, lane), lane), t = gateTimes(n), open = lane !== CYRODIIL_THEATRE;   // PIN MOVED: FRONTS - each on its turn
     assert.deepEqual([gateLaneOpen(lane), gateNumberOk(n), gateAdmits(n, t.openAt + 1), gateHolds(n, t.sealAt + 1), gatePixelOk(n, -1200, 300),
       !!validGateIn({ k: 'site', d: n, px: -1200, py: 300, pl: 'Solitude, Skyrim' }), !!validGateIn({ k: 'spent', d: n }), !!validRiteIn({ d: n, px: -1200, py: 300, s: 0, f: 0 })],
     Array(8).fill(open), `lane ${lane}`);
     assert.equal(gatePixelOk(n, 500, 200), false, `lane ${lane}: never a pixel of the Bay's map`);
   }
   assert.equal(gateAdmits(gateNumber(day, 0), gateTimes(gateNumber(day, 0)).openAt + 1), true, 'the Bay\'s, as always');
+  // FRONTS: off its turn a province's gate admits and holds no one, its lane open all the same
+  for (const lane of PROVINCES) {
+    let d = day;
+    while (frontStands(gateFrontDay(gateNumber(d, lane)), lane)) d++;
+    const n = gateNumber(d, lane), t = gateTimes(n);
+    assert.deepEqual([gateLaneOpen(lane), gateAdmits(n, t.openAt + 1), gateHolds(n, t.sealAt + 1)], [true, false, false], `lane ${lane} off its turn`);
+  }
 });
 
 // ─── A2b: the seats ─────────────────────────────────────────────────────────────────────────────
@@ -117,7 +128,7 @@ test('WW-GATES-EVERYWHERE A2b THE SERVICE: a Skyrim gate\'s kill, its region Sky
 // ─── the relay: a gate past the Bay stands, is entered and falls ────────────────────────────────
 
 test('WW-GATES-EVERYWHERE THE RELAY: a Skyrim gate\'s court is minted at its opening and admits its fighters; its Warden falls, a receipt names the gate\'s number; the night\'s fall is kept on Skyrim\'s lane and handed at a hello; its site agreed by two accounts and its omen posted with its place; the open zone\'s court never minted (mutants: a province\'s lane shut)', async () => {
-  const lane = THEATRE_KEYS.indexOf('Skyrim'), DAY = 538, n = gateNumber(DAY, lane), TT = gateTimes(n);
+  const lane = THEATRE_KEYS.indexOf('Skyrim'), DAY = stirredDay(538, lane), n = gateNumber(DAY, lane), TT = gateTimes(n);   // PIN MOVED: FRONTS - a day of Skyrim's turn
   const realNow = Date.now;
   try {
     // THE WINDOW: the Worker mints the province's court at its opening, never the open zone's
@@ -359,8 +370,11 @@ test('WW-GATES-EVERYWHERE (ARENA2) A GATE STANDS IN EVERY PROVINCE: over the reg
       omen: { now: () => now, say: (text, n) => { const l = gateLaneOf(n); lanesSaid.set(l, [...(lanesSaid.get(l) ?? []), n]); }, localTime: () => '20:00' },
       bayGateSite: () => null, scans, lanesOk: () => true, here: () => here,
     });
-    for (const lane of PROVINCES) {
-      const n = gateNumber(day, lane), s = scans.siteOf(n);
+    // PIN MOVED: FRONTS - each province's gate on its turn, the lanes taken in the order their gates open, so the clock
+    // runs forward and a lane's omen speaks of no gate but the one asked of it
+    const turns = PROVINCES.map((lane) => gateNumber(stirredDay(day, lane), lane)).sort((a, b) => gateTimes(a).openAt - gateTimes(b).openAt);
+    for (const n of turns) {
+      const lane = gateLaneOf(n), s = scans.siteOf(n);
       now = gateTimes(n).openAt + 60_000; here = { x: s.px, y: s.py };
       gates.frame();
       assert.deepEqual(gates.lanes(), [0, ...PROVINCES]);
