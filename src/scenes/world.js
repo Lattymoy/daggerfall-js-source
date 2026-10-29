@@ -1050,8 +1050,8 @@ import { isShelved } from '../systems/quest/quest.js';   // QUEST-SHELF: a quest
 import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup, activeMemberships, guildInitiationQuestEnded } from '../systems/guild/guilds.js';   // V2e: the per-read vampire book pick; F96: the TG/DB initiation listener
 import { GUILD_FACTION_IDS } from '../systems/guild/guildFactions.js';   // CHAP4b: the Mages Guild's faction, for its seat's teleport
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';   // the membership book's key - the travel popup's free-ship read   // AUDIT 39 (#23): GetRegionFaction's Province filter
-import { freeShipTravel, freeTavernRooms, avoidDeath, avoidDeathText } from '../systems/guild/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip; FreeTavernRooms, the trip cost's inn nights
-import { resolveVariantGuild, orderOf } from '../systems/guild/guildVariants.js';   // TN1: GetFactionName's HolyOrder arm
+import { avoidDeath, avoidDeathText } from '../systems/guild/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip; FreeTavernRooms, the trip cost's inn nights
+import { resolveVariantGuild } from '../systems/guild/guildVariants.js';   // TN1: GetFactionName's HolyOrder arm
 import { revealGuildHallsOnMap, revealingMemberships } from '../systems/guild/guildHallReveal.js';   // AUDIT 63 F9: ThievesGuild/DarkBrotherhood RevealGuildHallOnMap; AUDIT CHAP2 D4: either book's
 // TK-i: THE RUMOR MILL - the quest machine's rumor seams stop being silent.
 import { RumorMill, tokensToString } from '../systems/rumorMill.js';
@@ -1261,6 +1261,7 @@ import { createLandformSites } from './landformSitesHost.js';   // BAY-LEFT-GROU
 import { createGroundFrame } from './groundFrameHost.js';   // HOST-SPLIT
 import { createHarbourHost } from './harbourHost.js';   // HOST-SPLIT
 import { createPoiEditorMount } from './poiEditorMount.js';   // HOST-SPLIT
+import { createTravelFareDeps } from './travelFareHost.js';   // HOST-SPLIT
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -16084,80 +16085,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     return true;
   }
 
-  /** PARTY-TRAVEL (2026-09-25): THE TRAVEL POPUP'S OWN DEP BAG - every read ui/travel/travelPopUp.js prices a trip with and
-   *  its gold check asks, lifted out of buildTravelMapWindow's bag (which spreads it, so both maps read it as before)
-   *  so the party's journeys price a trip through the SAME popup without opening a map (partyTripFare). One bag: a
-   *  fare the map charges and a fare the party's prompt names cannot drift apart. */
-  function travelFareDeps() {
-    return {
-      // TP1: the popup's GuildManager.FastTravel fold reads the
-      // player's guild memberships off the entity.
-      playerEntity: () => playerEntity,
-      // GetGoldAmount is coins PLUS letters of credit; the popup's
-      // second test and its label want the coins alone.
-      gold: () => totalGoldAmount(playerEntity),
-      goldPieces: () => goldAmount(playerEntity),
-      // Items.Contains(Transportation, Horse / Small_cart)
-      // (DaggerfallTravelPopUp.cs:216-217) - a town's Stable and Wagon
-      // Yard sell both (MERCHANT-YARDS; DFU's General Store did), so the
-      // calculator's transport modifier is real.
-      hasHorse: () => hasTransport(TRANSPORT_HORSE),
-      hasCart: () => hasTransport(TRANSPORT_SMALL_CART),
-      // `DaggerfallBankManager.OwnsShip || GuildManager.FreeShipTravel()`
-      // (DaggerfallTravelPopUp.cs:219), read at OnPush like the two
-      // above. FreeShipTravel is base-false everywhere and overridden
-      // only by the knightly orders (KnightlyOrder.cs:167-170: rank 6),
-      // so the order slot of the membership book is the only one that
-      // can answer yes; the record keys by GROUP and carries the
-      // guild's name, so the order is recoverable from it (the tavern
-      // window's free-rooms read does the same).
-      hasShip: () => {
-        if (ownsShip(playerEntity)) return true;
-        const km = joinedGuildOfGroup(activeMemberships(playerEntity), GUILD_GROUPS.KnightlyOrder);
-        const order = km?.guild?.startsWith('Order:') ? orderOf(km.guild.slice('Order:'.length)) : null;
-        return !!order && freeShipTravel(order, km);
-      },
-      // TravelTimeCalculator.cs:163 - `GetGuild(KnightlyOrder)
-      // .FreeTavernRooms()`, read inside CalculateTripCost, so the inn
-      // nights of a fare are waived for the same knight the tavern
-      // window already houses free. The order is recovered from the
-      // membership exactly as hasShip above does; the region is
-      // PlayerGPS.CurrentLocation.RegionIndex, which is 0 in open
-      // wilderness because CurrentLocation is a default struct there.
-      freeTavernRooms: () => {
-        const km = joinedGuildOfGroup(activeMemberships(playerEntity), GUILD_GROUPS.KnightlyOrder);
-        const order = km?.guild?.startsWith('Order:') ? orderOf(km.guild.slice('Order:'.length)) : null;
-        if (!order) return false;
-        const px = playerTravelPixel();
-        return freeTavernRooms(order, km, {
-          regionIndex: locationIndex.get(`${px.x},${px.y}`)?.regionIndex ?? 0,
-          orderRegion: townTalk.factionDict?.get(order.factionId)?.region ?? null,
-        });
-      },
-      diseaseCount: () => diseaseCount(playerEntity),
-      poisonCount: () => poisonCount(playerEntity),
-      noWorldTime: () => sharedClockOn(),   // OL2: online the trip takes no world time (WORLD5), and the popup says so
-      // TO1: the mod itself, and the six reads its additions to the
-      // map need. Every one is guarded on the other side - with
-      // Travel Options off `travelOptions` answers null and the map is
-      // DFU's own, whole.
-      travelOptions: () => { refreshTravelOptionsSettings(); return travelOptions; },   // TO-LIVE: the live keys as they stand at the map's open
-      // AUDIT-TO1 D1: PlayerGPS.CurrentLocation's MapId (null in open
-      // wilderness, the C#'s !Loaded) and TransportManager.IsOnShip - the
-      // two reads IsNotAtPort / HasNoOceanTravel need and never had.
-      // SHIP-PORT (2026-09-28, Discord: "a player is at a port but unable
-      // to set sail"): ON THE SHIP, the port it was boarded at. The deck is
-      // "Your Ship" (2,2 or 5,5), in neither port list, so the passage was
-      // refused from the deck ("since there's no port") while every trip
-      // from it is reckoned from the boarding pixel - and By land walked
-      // out onto the sea into the mod's ocean stop ("maybe you should
-      // travel on a ship"). The mod reads PlayerGPS.CurrentLocation and
-      // meets the same dead end; its own HasNoOceanTravel names IsOnShip,
-      // the passage from the deck it meant (DEPARTURE, Travel-Options.md).
-      currentLocationMapId: () => travelOriginMapId(),
-      isOnShip: () => isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()),
-    };
-  }
+  const { travelFareDeps } = createTravelFareDeps({   // HOST-SPLIT: src/scenes/travelFareHost.js
+    hasTransport, locationIndex, playerTravelPixel, refreshTravelOptionsSettings, townTalk, travelOriginMapId,
+    get travelOptions() { return travelOptions; },
+  });
   /** MINE-PERKS (Professions-Arc 43): THE MAPS' MOTHERLODES - a Motherlode Sense's (Mining 100) every one of the day's
    *  still to rise or standing, from the day's start (net/motherlodeBook.js sensedAll); none for anyone else, whose
    *  compass alone marks one, from its warning (LODE-MARK). */

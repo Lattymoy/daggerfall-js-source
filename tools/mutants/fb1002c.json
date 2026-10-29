@@ -145,9 +145,9 @@
   },
   {
     "name": "TOLIVE-map-unrefreshed",
-    "file": "src/scenes/world.js",
-    "old": "      travelOptions: () => { refreshTravelOptionsSettings(); return travelOptions; },",
-    "new": "      travelOptions: () => travelOptions,",
+    "file": "src/scenes/travelFareHost.js",
+    "old": "      travelOptions: () => { refreshTravelOptionsSettings(); return host.travelOptions; },",
+    "new": "      travelOptions: () => host.travelOptions,",
     "tests": [
       "test/systems/to_live.test.js"
     ]
