@@ -70,8 +70,9 @@ stands no ship.
 ## Online and Tamriel
 
 There is no switch, so every client of one build stands the same ships. Every owner's ship stands at the same map pixel
-- (2,2) small, (5,5) large (`banking.js` `SHIP_COORDS`) - so a room's sailors share one deck, and the deck is ground: the
-build says `GROUND_LAW` 5 (`net/wire.js`), and the relay turns away a build on older ground while `groundGate` is on.
+- (2,2) small, (5,5) large (`banking.js` `SHIP_COORDS`) - so a room's sailors share one deck. A tab still on an older
+build stands the old deck's crates until it updates, and draws a sailor on one a crate's height off. That is furniture,
+not ground: `GROUND_LAW` (`net/wire.js`) holds the land's heights to a print, and no town's buildings have moved it.
 Below decks opens no room. A ship is the same ship in every province: its building file names no place.
 
 ## Checked

@@ -29,6 +29,7 @@ export const SEABED = Object.freeze({
   enclosedRays: 4,
   clearM: 0.1,        // past the plant's half width, all round, from its foot to its top
   footM: 0.06,        // the lowest of those rays: over the 5 cm a level floor may rise (a stone under a fan)
+  gapM: 0.15,         // no gap between those rays, round its edge or up its height, wider than this
   perBlock: 14,
 });
 /** The seabed's flats by kind, and how often each is picked (out of the weights' sum). TEXTURE.106 record 6 is a column
@@ -60,8 +61,14 @@ const bearingsOf = (n) => {
   return Object.freeze(out.map(Object.freeze));
 };
 const BEARINGS = Object.freeze(Object.fromEntries(Object.keys(TURNS).map((n) => [n, bearingsOf(Number(n))])));
-/** The bearings a plant's clearance is read on: enough that no gap at its edge is wider than 15 cm. */
-export const clearanceBearings = (half) => BEARINGS[[8, 16, 32].find((n) => (2 * Math.PI * half) / n <= 0.15) ?? 64];
+/** The bearings a plant's clearance is read on: enough that no gap at its edge is wider than SEABED.gapM. */
+export const clearanceBearings = (half) => BEARINGS[[8, 16, 32].find((n) => (2 * Math.PI * half) / n <= SEABED.gapM) ?? 64];
+/** AUDIT SHIP-REFIT: the heights it is read at, from SEABED.footM to its top, none further apart than SEABED.gapM - rays
+ *  a fifth of its height apart passed a bar 0.45 m deep at a fan's edge. Plain arithmetic: every client's the same. */
+export const clearanceHeights = (height) => {
+  const n = Math.max(1, Math.ceil((height - SEABED.footM) / SEABED.gapM));
+  return Array.from({ length: n + 1 }, (_, i) => SEABED.footM + ((height - SEABED.footM) * i) / n);
+};
 /** Squared distance across, for a mark within SEABED.storeyM of `p`'s height; Infinity off its storey. */
 const across = (m, p) => (Math.abs(m[1] - p[1]) < SEABED.storeyM ? (m[0] - p[0]) ** 2 + (m[2] - p[2]) ** 2 : Infinity);
 const inBlock = (b, x, z) => x >= b.originX && x < b.originX + RDB_SIDE && z >= b.originZ && z < b.originZ + RDB_SIDE;
@@ -177,7 +184,7 @@ export function dungeonFloraPlan({ blocks, probe, sizeOf, doors = [], seed = 0 }
  * The rays the law reads off the dungeon's own mesh at the build - every bucket at its build pose (the fires' floor
  * rule: the law runs after every mover and door is hung and before a save moves one), so a plant stands clear of a door
  * leaf or a platform as they stand. `floor` the first surface under a point a metre over it, the dungeon's own face that looks up;
- * `room` no face inside the plant's half width from its foot to its top (clearanceBearings) nor over it, a face met from behind anywhere refused (the
+ * `room` no face inside the plant's half width from its foot to its top (clearanceBearings, clearanceHeights) nor over it, a face met from behind anywhere refused (the
  * spot is inside a solid), a ceiling within SEABED.ceilingM and walls round it.
  */
 export function colliderFloraProbe(collider) {
@@ -192,7 +199,7 @@ export function colliderFloraProbe(collider) {
       const up = met([p[0], p[1] + 0.05, p[2]], [0, 1, 0], SEABED.ceilingM);
       if (!Number.isFinite(up?.dist) || up.back || up.dist < height) return false;
       const bearings = clearanceBearings(half);
-      for (const y of [SEABED.footM, height * 0.2, height * 0.4, height * 0.6, height * 0.8, height]) {
+      for (const y of clearanceHeights(height)) {
         for (const [dx, dz] of bearings) {
           const hit = met([p[0], p[1] + y, p[2]], [dx, 0, dz], half);
           if (Number.isFinite(hit?.dist)) return false;

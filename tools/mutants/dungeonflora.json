@@ -173,7 +173,7 @@
   {
     "name": "SEABED-eight-bearings",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "export const clearanceBearings = (half) => BEARINGS[[8, 16, 32].find((n) => (2 * Math.PI * half) / n <= 0.15) ?? 64];",
+    "old": "export const clearanceBearings = (half) => BEARINGS[[8, 16, 32].find((n) => (2 * Math.PI * half) / n <= SEABED.gapM) ?? 64];",
     "new": "export const clearanceBearings = (half) => BEARINGS[8];",
     "tests": [
       "test/world/dungeonFlora.test.js"
@@ -182,7 +182,7 @@
   {
     "name": "SEABED-one-height",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "      for (const y of [SEABED.footM, height * 0.2, height * 0.4, height * 0.6, height * 0.8, height]) {",
+    "old": "      for (const y of clearanceHeights(height)) {",
     "new": "      for (const y of [height * 0.5]) {",
     "tests": [
       "test/world/dungeonFlora.test.js"
@@ -191,8 +191,8 @@
   {
     "name": "SEABED-no-foot-ray",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "      for (const y of [SEABED.footM, height * 0.2, height * 0.4, height * 0.6, height * 0.8, height]) {",
-    "new": "      for (const y of [height * 0.2, height * 0.4, height * 0.6, height * 0.8, height]) {",
+    "old": "  return Array.from({ length: n + 1 }, (_, i) => SEABED.footM + ((height - SEABED.footM) * i) / n);",
+    "new": "  return Array.from({ length: n }, (_, i) => SEABED.footM + ((height - SEABED.footM) * (i + 1)) / n);",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]
@@ -200,8 +200,17 @@
   {
     "name": "SEABED-no-top-ray",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "      for (const y of [SEABED.footM, height * 0.2, height * 0.4, height * 0.6, height * 0.8, height]) {",
-    "new": "      for (const y of [SEABED.footM, height * 0.2, height * 0.4, height * 0.6, height * 0.8]) {",
+    "old": "  return Array.from({ length: n + 1 }, (_, i) => SEABED.footM + ((height - SEABED.footM) * i) / n);",
+    "new": "  return Array.from({ length: n }, (_, i) => SEABED.footM + ((height - SEABED.footM) * i) / n);",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-heights-a-fifth",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "  const n = Math.max(1, Math.ceil((height - SEABED.footM) / SEABED.gapM));",
+    "new": "  const n = 5;",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]

@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SEABED, FLORA_KINDS, floraPick, dungeonFloraPlan, standDungeonFlora, colliderFloraProbe, clearanceBearings, floraDoors } from '../../src/world/dungeon/dungeonFlora.js';
+import { SEABED, FLORA_KINDS, floraPick, dungeonFloraPlan, standDungeonFlora, colliderFloraProbe, clearanceBearings, clearanceHeights, floraDoors } from '../../src/world/dungeon/dungeonFlora.js';
 import { RDB_SIDE } from '../../src/world/rdbLayout.js';
 import { DOOR_TYPE } from '../../src/world/meshReader.js';
 import { checkDungeonFlora } from '../../tools/dungeonFloraCheck.mjs';
@@ -128,9 +128,9 @@ test('SEABED level a metre round (no step, ramp, ledge or tabletop) and under a 
 });
 
 /** A collider of rays: the floor under every point at 0, a ceiling at `ceil`, walls `wall` m out every way, `back` if
- *  the walls are met from behind; `low` a stone { dist, top } and `over` a lintel { dist, bottom } all round; counts its
- *  rays. */
-function fakeCollider({ ceil = 5, wall = 6, back = false, ceilBack = false, pillar = null, low = null, over = null, floorKey = 'dungeon' } = {}) {
+ *  the walls are met from behind; `band` a solid { dist, from, to } all round between two heights (a stone, a bar, a
+ *  lintel); counts its rays. */
+function fakeCollider({ ceil = 5, wall = 6, back = false, ceilBack = false, pillar = null, band = null, floorKey = 'dungeon' } = {}) {
   const c = { rays: 0 };
   c.raycastHit = (from, dir, max) => {
     c.rays++;
@@ -140,7 +140,7 @@ function fakeCollider({ ceil = 5, wall = 6, back = false, ceilBack = false, pill
     else {
       hit = { dist: wall, normal: [-dir[0], 0, -dir[2]], back, key: 'dungeon' };
       if (pillar && Math.abs(Math.atan2(dir[0], dir[2]) - pillar.bearing) < pillar.halfAngle) hit = { dist: pillar.dist, normal: [0, 0, 1], back: false, key: 'dungeon' };
-      if ((low && from[1] < low.top) || (over && from[1] >= over.bottom)) hit = { dist: (low ?? over).dist, normal: [-dir[0], 0, -dir[2]], back: false, key: 'dungeon' };
+      if (band && from[1] >= band.from && from[1] < band.to) hit = { dist: band.dist, normal: [-dir[0], 0, -dir[2]], back: false, key: 'dungeon' };
     }
     return hit && hit.dist <= max ? hit : { dist: Infinity, key: null, normal: [0, 0, 0], back: false };
   };
@@ -155,16 +155,22 @@ test('SEABED the room: clear from its foot to its top on enough bearings that no
   const room = (opts, half = 0.5, height = 1) => { const col = fakeCollider(opts); return [colliderFloraProbe(col).room([0, 0, 0], half, height), col.rays]; };
   const [ok, rays] = room({});
   assert.equal(ok, true);
-  assert.equal(rays, 1 + 6 * 32 + 8, 'the ceiling, six heights of 32 bearings, the eight walls round it');
+  assert.equal(rays, 1 + 8 * 32 + 8, 'the ceiling, eight heights of 32 bearings, the eight walls round it');
   assert.equal(room({ back: true })[0], false, 'walls met from behind: inside a solid');
   assert.equal(room({ ceil: 0.9 })[0], false, 'no room over it');
   assert.equal(room({ ceilBack: true })[0], false, 'a roof met from below its top: the void between storeys');
   assert.equal(room({ wall: 0.4 })[0], false, 'a wall inside its half width');
-  // AUDIT SHIP-REFIT, the full sweep: rays from a tenth to nine tenths of its height passed a fan under a lintel and over
-  // a stone
-  assert.equal(room({ low: { dist: 0.4, top: 0.1 } })[0], false, 'a 10 cm stone at its foot');
-  assert.equal(room({ low: { dist: 0.4, top: SEABED.levelM - 0.01 } })[0], true, 'a floor risen within the level rule\'s 5 cm');
-  assert.equal(room({ over: { dist: 0.4, bottom: 0.95 } })[0], false, 'a lintel over its top');
+  // AUDIT SHIP-REFIT, the full sweep: rays a fifth of its height apart, from a tenth to nine tenths, passed a fan over a
+  // stone, under a lintel and beside a bar
+  assert.deepEqual([0.2, 1, 1.975].map((h) => clearanceHeights(h).length), [2, 8, 14]);
+  for (const h of [0.2, 1, 1.975]) {
+    const ys = clearanceHeights(h);
+    assert.ok(ys[0] === SEABED.footM && ys[ys.length - 1] === h && ys.every((y, i) => !i || y - ys[i - 1] <= SEABED.gapM), `${h} m: its foot to its top, 15 cm apart at most`);
+  }
+  assert.equal(room({ band: { dist: 0.4, from: -1, to: 0.1 } })[0], false, 'a 10 cm stone at its foot');
+  assert.equal(room({ band: { dist: 0.4, from: -1, to: SEABED.levelM - 0.01 } })[0], true, 'a floor risen within the level rule\'s 5 cm');
+  assert.equal(room({ band: { dist: 0.4, from: 0.95, to: 9 } })[0], false, 'a lintel over its top');
+  for (let from = 0; from <= 0.85; from += 0.01) assert.equal(room({ band: { dist: 0.4, from, to: from + SEABED.gapM } })[0], false, `a 15 cm bar at ${from.toFixed(2)} m`);
   // a column 1.2 m off at 337.5 degrees: between the eight bearings, found by the 64 a 2.8 m bed casts
   const pillar = { bearing: -Math.PI / 8, halfAngle: 0.08, dist: 1.2 };
   assert.equal(room({ pillar }, 1.5, 1)[0], false, 'a wide plant finds the column between eight bearings');

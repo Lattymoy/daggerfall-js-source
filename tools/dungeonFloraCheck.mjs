@@ -31,7 +31,9 @@ const SLACK = 0.02;
 const WALL_TOL = 0.05;
 const RAY16 = Array.from({ length: 16 }, (_, k) => [Math.sin((k * Math.PI) / 8), Math.cos((k * Math.PI) / 8)]);
 const RAY64 = Array.from({ length: 64 }, (_, k) => [Math.sin((k * Math.PI) / 32), Math.cos((k * Math.PI) / 32)]);
-const HEIGHTS = [0.05, 0.15, 0.3, 0.45, 0.55, 0.7, 0.85, 0.95, 0.99];   // none the law's own (a fifth, and its top)
+/** The clearance read up a plant every 5 cm - a third of the law's own gap (SEABED.gapM) - from over the level rule's
+ *  5 cm to a centimetre under its top. */
+const heightsOf = (h) => { const ys = []; for (let y = SEABED.levelM + SLACK; y < h; y += 0.05) ys.push(y); ys.push(h - 0.01); return ys; };
 const KNOWN = new Set(FLORA_KINDS.flatMap((k) => k.records.map(([a, r]) => `${a}_${r}`)));
 /** The dungeons the audit named (spills past a block, a plant on a pile or a table), and a few more of the Bay's. */
 export const NAMED_DUNGEONS = Object.freeze([
@@ -112,7 +114,7 @@ export function checkFloraDungeon({ label, blocks, getModel, sizeOf, seed }) {
     const behind = RAY16.filter(([sx, sz]) => col.raycastHit([p[0], p[1] + size.h / 2, p[2]], [sx, 0, sz], 3)?.back === true).length;
     if (up?.back || behind >= 12) out.push(`${at}: inside a solid (${behind} of 16 rays meet a face from behind)`);
     let near = Infinity;
-    for (const k of HEIGHTS) for (const [sx, sz] of RAY64) near = Math.min(near, col.raycast([p[0], p[1] + size.h * k, p[2]], [sx, 0, sz], half));
+    for (const y of heightsOf(size.h)) for (const [sx, sz] of RAY64) near = Math.min(near, col.raycast([p[0], p[1] + y, p[2]], [sx, 0, sz], half));
     if (near < half - WALL_TOL) out.push(`${at}: a wall ${near.toFixed(2)} m off, inside its ${half.toFixed(2)}`);
     for (const d of doors) { const dd = Math.hypot(d[0] - p[0], d[1] - p[1], d[2] - p[2]); if (dd < SEABED.doorM - SLACK) out.push(`${at}: a door's middle ${dd.toFixed(2)} m off`); }
     for (const m of marks) if (Math.abs(m[1] - p[1]) < SEABED.storeyM && Math.hypot(m[0] - p[0], m[2] - p[2]) < SEABED.markerM - SLACK) out.push(`${at}: a marker ${Math.hypot(m[0] - p[0], m[2] - p[2]).toFixed(2)} m off`);
