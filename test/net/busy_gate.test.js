@@ -46,15 +46,18 @@ test('BUSY-GATE the law: the reads that stand back are the fourteen display read
 
 const BASE = 'https://accounts.invalid';
 
-test('BUSY-GATE the client: an overload answer holds the reads busyLaw names for its wait - each answered `server` 503 without a request, never at once - while a write, a sign-in, the heartbeat and every other read go; the wait doubles with each overload answer in a row, never shorter than its Retry-After; an answer starts the count again and lets a hold already running run out; a 500 and `offline` hold nothing (mutants: never held; held at once; the count not kept; the Retry-After unread; the count never started again; an answer cutting the hold)', async () => {
+test('BUSY-GATE the client: an overload answer holds the reads busyLaw names for its wait - each answered `server` 503 without a request, never at once - while a write, a sign-in, the heartbeat and every other read go; the wait doubles with each overload answer in a row, never shorter than its Retry-After; a held read\'s own answer starts the count again (BUSY-COUNT: an act\'s does not) and lets a hold already running run out; a 500 and `offline` hold nothing (mutants: never held; held at once; the count not kept; the Retry-After unread; the count never started again; any answer starts it again; an answer cutting the hold)', async () => {
   _resetBusyForTests();
   let now = 1_000_000;
   const sent = [];
   /** @type {{status: number, body: any, headers: Record<string, string>}} */
   let answer = { status: 503, body: { error: 'server' }, headers: {} };
+  /** @type {Promise<void>|null} */
+  let pending = null;   // an answer kept back until it resolves
   const fetch = async (/** @type {string} */ url, /** @type {any} */ init) => {
     sent.push(url.slice(BASE.length));
     const a = answer;
+    if (pending) await pending;
     return { ok: a.status < 300, status: a.status, headers: { get: (/** @type {string} */ k) => a.headers[k.toLowerCase()] ?? null }, json: async () => a.body };
   };
   const held = [];
@@ -77,11 +80,29 @@ test('BUSY-GATE the client: an overload answer holds the reads busyLaw names for
   answer = { status: 200, body: { ok: true }, headers: {} };
   for (const p of ['/v1/homes/claim', '/v1/auth/token', '/v1/chapters/list', '/v1/market/read']) assert.equal((await call(io, p, {})).ok, true, p);
   assert.deepEqual(sent.slice(1), ['/v1/homes/claim', '/v1/auth/token', '/v1/chapters/list', '/v1/market/read']);
-  // those answers started the count again, but the hold already running runs out
+  // PIN MOVED (BUSY-COUNT, 2026-10-29): those answers leave the count standing - they kept the wait at its first step
+  // all through an overload - and the hold already running runs out
   assert.equal((await town()).busy, true, 'still held');
   now += BUSY_BASE_MS;
   answer = { status: 503, body: { error: 'server' }, headers: {} };
   assert.equal((await town()).busy, undefined, 'asked at the wait\'s end');
+  assert.equal(busyUntil(), now + 10_000, 'the count kept: the second wait');
+  // a held read's own answer starts the count again, and lets a hold already running run out
+  now = busyUntil();
+  answer = { status: 200, body: { ok: true }, headers: {} };
+  /** @type {() => void} */
+  let answered = () => {};
+  pending = new Promise((resolve) => { answered = resolve; });
+  const slow = town();   // a held read out as its wait ends, its answer slow
+  pending = null;
+  answer = { status: 503, body: { error: 'server' }, headers: {} };
+  await call(io, '/v1/homes/claim', {});   // an act's overload answer meanwhile: the third wait
+  assert.equal(busyUntil(), now + 20_000);
+  answered();
+  assert.equal((await slow).ok, true);
+  assert.equal(busyUntil(), now + 20_000, 'the hold already running runs out');
+  now = busyUntil();
+  await town();
   assert.equal(busyUntil(), now + BUSY_BASE_MS, 'the count started again: the first wait');
   // each overload answer in a row doubles it, to BUSY_MAX_MS
   for (const w of [10_000, 20_000, 40_000, 60_000, 60_000]) {
