@@ -699,7 +699,7 @@ all.
 
 - ~~**A Notice Board**~~ was a pinned card where a rumour board stood in the street, while the Notice Board was open.
   NOTICE-PANEL (2026-10-29) took the boards from the street and their mark with them: a town's Notice Board is its panel
-  under the compass now (`01-Overview/bugs/Field-Bugs-2026-10-29b.md`).
+  under the compass now (`01-Overview/bugs/Field-Bugs-2026-10-29e.md`).
 - **A player's house** is a house on its building (its place: the plates' anchor). Every online home in the
   town is marked, as its door names it: "Your home" filled in the player's ink (the caret's), another player's
   ("Gryphoth's home") in parchment - the fill says whose, not the colour alone. The house the character bought at a

@@ -2716,7 +2716,7 @@ reads its pin through `firstVisitStore.js firstVisitPin`, which throws when ther
 an update that changes a computation refreshes that cache for every player on their next launch, and one that does not
 keeps it.
 
-WEBKIT-TLA (`01-Overview/bugs/Field-Bugs-2026-10-29b.md`): the store imports the pins and never awaits them. It read them
+WEBKIT-TLA (`01-Overview/bugs/Field-Bugs-2026-10-29e.md`): the store imports the pins and never awaits them. It read them
 with a top-level await, and WebKit before Safari 27 resolves a second `import()` of a graph that awaits before it has
 run (WebKit bug 242740): every iPhone's Play called `bootWorld` before the world chunk had made its classes.
 `test/tree/toplevelawait.test.js` refuses a top-level await in any module another imports.

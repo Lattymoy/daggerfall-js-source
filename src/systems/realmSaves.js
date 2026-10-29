@@ -175,7 +175,7 @@ export const realmDelete = async (/** @type {any} */ io, /** @type {string} */ i
   if (r.ok) dropUnsent(io?.storage, id);
   return r;
 };
-/** FAMILY-FORGET (bible/01-Overview/bugs/Field-Bugs-2026-10-29b.md): a line no living realm character plays, let go
+/** FAMILY-FORGET (bible/01-Overview/bugs/Field-Bugs-2026-10-29e.md): a line no living realm character plays, let go
  *  (server-account/src/legacy.js forgetLineage), and the device's copy with it - `{ ok }`, or 'lineage-held'. */
 export const realmLineageForget = async (/** @type {any} */ io, /** @type {string} */ id) => {
   const r = await realmAsk(io, '/v1/realm/lineage/forget', { method: 'POST', json: { id } });

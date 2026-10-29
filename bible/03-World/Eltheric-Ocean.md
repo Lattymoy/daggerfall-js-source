@@ -373,7 +373,7 @@ X2 and P6, `csa_together.test.js` (the count's `skip`). THE FOUR HOSTS: `world.j
 crossing; `worldModes.js`, `dungeonContext.js` and `exterior.js` sail no crossing.
 
 
-**SEA-ROWS (`01-Overview/bugs/Field-Bugs-2026-10-29b.md`; a player: "You get told you're going to the E-O instead").**
+**SEA-ROWS (`01-Overview/bugs/Field-Bugs-2026-10-29e.md`; a player: "You get told you're going to the E-O instead").**
 The crossing's waters were written for the Bay's world, and since WW3 the sea south of its rows is sailed. On the
 freeware's world 3 of 66 serpent sites past the Bay lay in them, and 8 of 35 far lanes sailed through them (Shimmerene
 to Lillandril, 177 of its 284 pixels). They are the Bay's own rows alone now (`crossingWaters`), and hold no site or far

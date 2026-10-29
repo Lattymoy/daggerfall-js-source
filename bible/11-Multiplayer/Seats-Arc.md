@@ -222,7 +222,7 @@ DECIDED (Mac, the Holdings plan: "the holder's banners and colours in the city")
   1. one beside each city gate model (the gate's two posts, the banner on the town side);
   2. two flanking the palace's door (the building record's position and facing);
   3. ~~one pennant above each Notice Board~~ - NOTICE-PANEL (2026-10-29) took it with the boards: no board stands to
-     fly it over (`01-Overview/bugs/Field-Bugs-2026-10-29b.md`);
+     fly it over (`01-Overview/bugs/Field-Bugs-2026-10-29e.md`);
   4. crown seats: two more at the castle's entrance in the city.
 - **The banner**: the port's own cloth quad, 1 wide by 3 tall (in DFU's scale, a man's height and a half), its
   field the holder's first colour, a border in the second, the device centred; it sways on the weather's wind

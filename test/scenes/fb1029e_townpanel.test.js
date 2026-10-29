@@ -1,4 +1,4 @@
-// NOTICE-PANEL (bible/01-Overview/bugs/Field-Bugs-2026-10-29b.md row 5; the owner, 2026-10-29: "remove the notice board
+// NOTICE-PANEL (bible/01-Overview/bugs/Field-Bugs-2026-10-29e.md row 5; the owner, 2026-10-29: "remove the notice board
 // prop from all cities", its replacement "a detailed drop down from the compass that shows the town name, guild control,
 // prosperity and clickable notice board button ... always be present when inside a city and go away when leaving a
 // city. This goes for any settlement"): the view (ui/hud/townPanel.js), the host (scenes/townPanelHost.js), the lines

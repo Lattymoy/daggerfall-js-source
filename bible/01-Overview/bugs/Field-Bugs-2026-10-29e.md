@@ -1,7 +1,8 @@
-# FIELD BUGS 2026-10-29b - the phone's boot, the Starfall's master, the families' cap, the open sea and the boards
+# FIELD BUGS 2026-10-29e - the phone's boot, the Starfall's master, the families' cap, the open sea and the boards
 
 Five Discord reports and the owner's board change, handed over by the owner in a session. Read on main's `c1f7101c0`
-with the freeware's data (`tools/fetch-data.sh`). The mutants are `tools/mutants/fb1029_fieldbugs.json`.
+with the freeware's data (`tools/fetch-data.sh`). The mutants are `tools/mutants/fb1029e_fieldbugs.json`.
+(Written as page (b); #1431 took 29b and 29c and #1428 took 29d first, so this batch is (e).)
 
 | | Report | What it was | Done |
 |---|---|---|---|
@@ -59,7 +60,7 @@ FIXED. `POST /v1/realm/lineage/forget` lets go a line no living realm character 
 a Resurrect may still take back counts as living). Its fallen's tombstones stay, so no save loads past a death. The
 Online page lists such lines under Old families, each with Forget, and the forget drops the device's copy too, so no
 push founds it again. The bound's refusal says to forget one (`06-Systems/Legacy-Arc.md` section 9). Pinned by
-`test/server/fb1029_family_forget.test.js`.
+`test/server/fb1029e_family_forget.test.js`.
 
 ## The serpent past the Bay (SEA-ROWS, SEA-TAUT)
 
@@ -77,7 +78,7 @@ FIXED. The crossing's waters are the Bay's own rows alone, and it is never asked
 chose: no serpent site and no far lane is in them now. The floods count a step's own length, and the sailed stretch is
 pulled taut across open water (`seaTaut`): median 1.001, p90 1.004, no leg ashore on the kernel's ground (SEA-SQUARE's
 pin). Pinned by `test/world/ethersea.test.js`, `test/systems/naval/auditcaptsea.test.js` and
-`test/systems/travel/fb1029_seataut.test.js`.
+`test/systems/travel/fb1029e_seataut.test.js`.
 
 ## The boards (NOTICE-PANEL)
 
@@ -99,4 +100,4 @@ KEPT. The boards' places, for the siege field's Market alone: every machine lays
 stand where they stood. REMOVED with the boards: the street's press and its plaque, the count over a board, the town
 map's board mark, a seat's pennant and a Festival's banner over a board, and Gothway Garden's two boards (its Bounty
 Board is on the panel). The bench stands no board and no panel (FLAGGED). Pinned by
-`test/scenes/fb1029_townpanel.test.js` and `test/systems/bulletinboard.test.js`.
+`test/scenes/fb1029e_townpanel.test.js` and `test/systems/bulletinboard.test.js`.

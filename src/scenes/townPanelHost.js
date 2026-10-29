@@ -1,5 +1,5 @@
 // @ts-check
-// NOTICE-PANEL (bible/01-Overview/bugs/Field-Bugs-2026-10-29b.md; the owner: "remove the notice board prop from all
+// NOTICE-PANEL (bible/01-Overview/bugs/Field-Bugs-2026-10-29e.md; the owner: "remove the notice board prop from all
 // cities", its replacement "a detailed drop down from the compass ... always be present when inside a city and go away
 // when leaving a city. This goes for any settlement"): THE TOWN PANEL AS THE WORLD HOST WIRES IT (HOST-SPLIT: the module
 // the host wires, scenes/fishHost.js's shape). The view is ui/hud/townPanel.js; this says when it stands, what it says

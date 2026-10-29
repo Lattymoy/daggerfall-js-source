@@ -592,7 +592,7 @@ test('START2 LONG-VOYAGE (travelRoute.js planSeaLanes): a booked voyage whose po
   assert.deepEqual(plan.pixels.at(-1), to);
   assert.equal(plan.kinds.length, plan.pixels.length - 1);
   assert.ok(Math.min(...plan.pixels.map((p) => p.y)) < -250, 'round the wall\'s north end, past the box\'s bounds (the map and its two ends: y -100 at the least)');
-  // PIN MOVED (SEA-TAUT, Field-Bugs-2026-10-29b): a sailed step is a straight run over open water - each pixel of its line
+  // PIN MOVED (SEA-TAUT, Field-Bugs-2026-10-29e): a sailed step is a straight run over open water - each pixel of its line
   // a boat's step - and every other step one pixel
   for (let i = 1; i < plan.pixels.length; i++) {
     const a = plan.pixels[i - 1], b = plan.pixels[i];

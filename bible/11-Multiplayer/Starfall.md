@@ -370,13 +370,13 @@ the client (`scenes/starfall/starfallHost.js`):
 - **The master is a world boss.** Its body carries `entity.worldBoss` on every screen - the owner's, a handed one, a
   peer's copy - and no witch of its coven does: its fall is the star's own deed, which the festival's finds pay once as a
   held star (section 12, "one deed, one find"), never again as an elite's body.
-- **The master never runs, and one gone is stood again (STAR-MASTER-FLED, `01-Overview/bugs/Field-Bugs-2026-10-29b.md`).**
+- **The master never runs, and one gone is stood again (STAR-MASTER-FLED, `01-Overview/bugs/Field-Bugs-2026-10-29e.md`).**
   A player's report: an Unquiet Elite Daedra Lord was struck, ran, became their revenant, and the star waited on it until
   dawn - its fall counts only with a body. A world boss is no revenant now (`revenant.js` revenantCandidate, the mark's
   gate, `unquietMark.js` isUnquiet, `foeTitle.js`): it never breaks, rises from no deed and wears no "Unquiet". And a
   master gone from the pool with no fall (no body, `mf` never said) is no master: it is stood again whole, as C4 stands
   one that never stood. Pinned by `test/systems/revenant/auditunquiet.test.js` (STAR-MASTER-FLED, the real street pool)
-  and `test/scenes/starfall/star5_host.test.js`; mutants in `tools/mutants/fb1029_fieldbugs.json`.
+  and `test/scenes/starfall/star5_host.test.js`; mutants in `tools/mutants/fb1029e_fieldbugs.json`.
 
 ## 5. The relay holds the star
 

@@ -827,7 +827,7 @@ mutant re-aimed under it). The tool re-aimed ten mutant records over the moved l
 
 ## NOTICE-PANEL - the boards out of the hosts, the town panel a module (2026-10-29)
 
-The owner's board change (`01-Overview/bugs/Field-Bugs-2026-10-29b.md` NOTICE-PANEL) took the town boards out of every
+The owner's board change (`01-Overview/bugs/Field-Bugs-2026-10-29e.md` NOTICE-PANEL) took the town boards out of every
 host. `bootWorld` lost the board split's memo, the board's town, the count over the boards, the town map's board marks
 and the ray's board targets; the town panel went in as `scenes/townPanelHost.js` `createTownPanelHost`, a module the host
 wires (fishHost.js's shape) - `settlementHere`, the construction and one frame call. `createWorldModes` lost the board's

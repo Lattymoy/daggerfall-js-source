@@ -1,4 +1,4 @@
-// FAMILY-FORGET (bible/01-Overview/bugs/Field-Bugs-2026-10-29b.md; a player: "I cannot make more bloodline characters as
+// FAMILY-FORGET (bible/01-Overview/bugs/Field-Bugs-2026-10-29e.md; a player: "I cannot make more bloodline characters as
 // my 'families for this account is maxed' ... I have no characters anymore", and "being able to remove old families").
 // Every Bloodline or Enduring birth founds a line, and nothing let one go: a one-life player who deleted each character
 // reached LINEAGES_MAX and every birth past it was refused. A line no living realm character plays can now be forgotten,

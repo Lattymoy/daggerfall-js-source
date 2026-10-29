@@ -1,5 +1,5 @@
 // @ts-check
-// NOTICE-PANEL (bible/01-Overview/bugs/Field-Bugs-2026-10-29b.md; the owner: "a detailed drop down from the compass that
+// NOTICE-PANEL (bible/01-Overview/bugs/Field-Bugs-2026-10-29e.md; the owner: "a detailed drop down from the compass that
 // shows the town name, guild control, prosperity and clickable notice board button"): THE TOWN'S PANEL, hung from the
 // compass while the player is in a settlement. A view only - scenes/townPanelHost.js says what it shows and answers its
 // presses. The kit (ui/enhanced/enhancedFrame.js FRAME_ROLES) paints its frame and buttons; this sheet lays them out.

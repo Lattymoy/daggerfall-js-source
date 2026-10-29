@@ -515,7 +515,7 @@ export function revenantCandidate(entity, rec = null) {
   if (entity.retinueOf != null) return false;   // RVN6 (Feud-Arc.md 17): a band's follower is its master's, never one itself
   if (entity.wildFoe || entity.wildGiant) return false;   // PVPDUNGEONS (the owner: "No elite or any monster in the zone can be a revenant")
   if (entity.bout) return false;   // AUDIT ARENA-LADDER 2: a fighter on the sand is its bout's - an elite champion never flees it as a revenant, nor becomes one
-  if (entity.worldBoss) return false;   // STAR-MASTER-FLED (Field-Bugs-2026-10-29b): a world boss's fall is its event's - an escaped Starfall master held its star at "the master" until dawn
+  if (entity.worldBoss) return false;   // STAR-MASTER-FLED (Field-Bugs-2026-10-29e): a world boss's fall is its event's - an escaped Starfall master held its star at "the master" until dawn
   const special = !!entity.revenant || !!entity.eliteFoe || (typeof entity.champion === 'string' && !!entity.champion);
   if (!special) return false;
   // UNQUIET (section 46): a foe not yet a revenant rises only with THE MARK (unquietMark.js), and only while fewer than

@@ -145,7 +145,7 @@ export async function putLineage({ db, nowS }, playerId, { id, record: sent, bas
   return (await staleLine(db, playerId, id, rec.model)) ?? { error: 'too-many-lineages' };
 }
 
-/** FAMILY-FORGET (bible/01-Overview/bugs/Field-Bugs-2026-10-29b.md): a line its account lets go - only one no living
+/** FAMILY-FORGET (bible/01-Overview/bugs/Field-Bugs-2026-10-29e.md): a line its account lets go - only one no living
  *  realm character plays (a fall a Resurrect may still take back counts as living), so nobody loses the house they wear.
  *  The record goes and frees its place under LINEAGES_MAX; its fallen's tombstones stay, so no save loads past a death.
  *  Answers `{ ok: true }` or `{ error }`: 'body', 'lineage-held', 'no-lineage'. */

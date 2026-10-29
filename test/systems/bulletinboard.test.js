@@ -9,7 +9,7 @@
 // in every town block, and no click could reach either. What is
 // pinned here is the whole path from a mill entry to the lines the
 // box shows. NOTICE-PANEL (2026-10-29): no board stands any more - the
-// town panel's Notice Board opens the same box (test/scenes/fb1029_townpanel.test.js).
+// town panel's Notice Board opens the same box (test/scenes/fb1029e_townpanel.test.js).
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
