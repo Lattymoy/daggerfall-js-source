@@ -6,6 +6,7 @@
 // the referee's path (combat/siegeCombat.js) read it as any spell. Pure. A departure: DFU has no PvP.
 import { t } from '../textManager.js';
 import { effectSchool } from '../spellcost.js';
+import { resurrectionSpell } from '../resurrect.js';
 
 /** Eight slots on keys 3 to 0; a gift goes to the party member under the crosshair within `reachM`, else to me; a buff
  *  runs `rounds` magic rounds (a minute - combat/pvpBuffs.js PVP_BUFF_ROUNDS); scaling runs from skill `lo` to `hi`. */
@@ -36,11 +37,13 @@ export const KIT_SPELLS = Object.freeze({
   cure: Object.freeze({ cost: 5, icon: 49 }),
   jump: Object.freeze({ cost: 6, icon: 12 }),
   speed: Object.freeze({ cost: 6, scale: Object.freeze([5, 20]), icon: 25 }),
+  resurrect: Object.freeze({ cost: 25, icon: 10 }),   // PVP-KIT-REZ: the shop's Resurrection, its icon
 });
 export const KIT_IDS = Object.freeze(Object.keys(KIT_SPELLS));
 const NAMES = Object.freeze({ damage: () => t('pvp.kit.damage', 'Damage'), heal: () => t('pvp.kit.heal', 'Heal'), shield: () => t('pvp.kit.shield', 'Shield'),
   resist: () => t('pvp.kit.resist', 'Resist'), reflect: () => t('pvp.kit.reflect', 'Reflect'), absorb: () => t('pvp.kit.absorb', 'Absorb'),
-  fortify: () => t('pvp.kit.fortify', 'Fortify'), cure: () => t('pvp.kit.cure', 'Cure'), jump: () => t('pvp.kit.jump', 'Jump'), speed: () => t('pvp.kit.speed', 'Speed') });
+  fortify: () => t('pvp.kit.fortify', 'Fortify'), cure: () => t('pvp.kit.cure', 'Cure'), jump: () => t('pvp.kit.jump', 'Jump'), speed: () => t('pvp.kit.speed', 'Speed'),
+  resurrect: () => t('pvp.kit.resurrect', 'Resurrect') });
 /** The spell's word on the bar. */
 export const kitBaseName = (id) => (NAMES[id] ?? NAMES.damage)();
 
@@ -112,6 +115,7 @@ export function kitEffects(id, pick, { skill = 0, level = 1, maxHealth = 0 } = {
     case 'speed': return [buff(9, 6, 0, kitMagnitude(n, level))];
     case 'cure': return [0, 1, 2].map((sub) => buff(3, sub, 100));
     case 'jump': return [buff(27, -1)];
+    case 'resurrect': return [{ ...resurrectionSpell().effects[0] }];   // PVP-KIT-REZ: the game's own Resurrect (45,255)
     default: return [];
   }
 }
@@ -122,18 +126,19 @@ export const kitSchool = (id, pick = 0) => effectSchool(kitEffects(id, pick ?? 0
 /**
  * THE SPELL A SLOT CASTS: a classic record the cast engine readies. `skill` the governing school's live value, `level`
  * the level it lands at (an ally's frame clamps it - systems/allyCast.js allyCastFrame), `maxHealth` the health a heal or a
- * shield is a share of, `maxMagicka` the caster's. Damage flies as Area at Range; every other spell is CasterOnly, given
- * to the party member under the crosshair within PVP_KIT.reachM (`pvpReach`, scenes/hostMagic.js), else to me.
+ * shield is a share of, `maxMagicka` the caster's. Damage flies as Area at Range; Resurrect is the shop's own, by touch at
+ * a fallen party member's body within RESURRECT_REACH (scenes/hostMagic.js fallenInReach); every other spell is CasterOnly,
+ * given to the party member under the crosshair within PVP_KIT.reachM (`pvpReach`, scenes/hostMagic.js), else to me.
  */
 export function kitSpell(slot, { skill = 0, level = 1, maxHealth = 0, maxMagicka = 0 } = {}) {
   const s = kitSlotOf(slot);
-  const damage = s.id === 'damage';
+  const damage = s.id === 'damage', rez = s.id === 'resurrect';
   return {
     name: kitSlotName(s), icon: s.icon, index: -1, custom: true,
-    element: damage ? s.pick : 4, rangeType: damage ? 4 : 0,
+    element: damage ? s.pick : 4, rangeType: damage ? 4 : rez ? 1 : 0,
     effects: kitEffects(s.id, s.pick, { skill, level, maxHealth }),
     pvpKit: s.id, pvpKitCost: kitCost(s.id, maxMagicka),
-    ...(damage ? {} : { pvpReach: PVP_KIT.reachM }),
+    ...(damage || rez ? {} : { pvpReach: PVP_KIT.reachM }),
   };
 }
 
