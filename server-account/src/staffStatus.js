@@ -28,7 +28,7 @@
 //     minted and burned (market_listings, market_sales, guild_vault_log, guild_store_moves, realm_trades, marks_ledger).
 //
 // CHEAP BY CONSTRUCTION (design doc, Server load; weak spot "The panel goes blank when the database is slow"): each part
-// is kept in the isolate for its own time - STATUS_FAST_S for the database's health reads and the relay's /health,
+// is kept for its own time (STAFF-SPEED-2: in the row every isolate reads, staffKept.js) - STATUS_FAST_S for the database's health reads and the relay's /health,
 // STATUS_SLOW_S for Analytics Engine and the relay's breach list, STATUS_ACTIVITY_S for the hour's activity (the heavy
 // reads) - so a poll every ten seconds costs the session's read and, at most, the fast part's one batch. Only a part's
 // answer is kept, never a pending one: a Worker cannot hand one request's I/O to another.
@@ -56,6 +56,7 @@ import { HOME_WATCH as FREEZE_WATCH } from './staffFreeze.js';   // STAFF-PANEL5
 import { modAiOn } from './modAi.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 import { PLAY_GRACE_S } from '../../src/net/playClock.js';
+import { staffKept, staffKeptAll, staffKeptForget, _resetStaffKeptForTests } from './staffKept.js';   // STAFF-SPEED-2: kept for every isolate
 
 /** How long each part is kept in the isolate, seconds: the health reads, Analytics Engine and the relay's breach list, and
  *  the hour's activity (the design's "cache 5-10 minutes" for a heavy read). */
@@ -115,19 +116,14 @@ export function levelOf(value, limit) {
   return 'grey';
 }
 
-/** Each part's answer kept in this isolate: key -> { at, value }. shortcut: one isolate's own, so N isolates serving the
- *  panel read N times a window; a shared row if the staff grows past a handful. */
-const kept = new Map();
+/** The status's parts, each kept for its window (statusNow). */
+const STATUS_PARTS = Object.freeze(['fast', 'slow', 'activity']);
 /** Tests stand fresh isolates. */
-export const _resetStatusForTests = () => kept.clear();
-/** `fn`'s answer, kept `s` seconds. `fn` never throws - each part answers its own failure. */
-async function cached(/** @type {string} */ key, /** @type {number} */ s, /** @type {number} */ nowS, /** @type {() => Promise<any>} */ fn) {
-  const k = kept.get(key);
-  if (k && nowS >= k.at && nowS - k.at < s) return k.value;
-  const value = await fn();
-  kept.set(key, { at: nowS, value });
-  return value;
-}
+export const _resetStatusForTests = () => _resetStaffKeptForTests();
+/** `fn`'s answer, kept `s` seconds - STAFF-SPEED-2: in the row every isolate reads (staffKept.js), where it was one
+ *  isolate's own and N isolates serving the panel read N times a window. `fn` never throws - each part answers its own
+ *  failure. @param {any} ctx @param {string} key @param {number} s @param {() => Promise<any>} fn */
+const cached = (ctx, key, s, fn) => staffKept(ctx, `status:${key}`, s, s, fn);   // never answered past its window: the tiles say now
 
 /** A Cloudflare account id: 32 hex, so nothing else reaches the SQL API's address. */
 const ACCOUNT_ID = /^[0-9a-f]{32}$/;
@@ -264,9 +260,9 @@ function tile(id, label, values, limits, sources, asOf, more = {}) {
 export async function statusNow(ctx, env) {
   const { nowS } = ctx;
   const [fast, slow, act] = await Promise.all([
-    cached('fast', STATUS_FAST_S, nowS, () => fastPart(ctx, env)),
-    cached('slow', STATUS_SLOW_S, nowS, () => slowPart(ctx, env)),
-    cached('activity', STATUS_ACTIVITY_S, nowS, () => activityPart(ctx)),
+    cached(ctx, 'fast', STATUS_FAST_S, () => fastPart(ctx, env)),
+    cached(ctx, 'slow', STATUS_SLOW_S, () => slowPart(ctx, env)),
+    cached(ctx, 'activity', STATUS_ACTIVITY_S, () => activityPart(ctx)),
   ]);
   const limits = fast.limits;
   const h = fast.health;
@@ -341,6 +337,14 @@ export const STATUS_WATCH = Object.freeze({
 export const HOME_WATCHES = [REPORTS_WATCH, ECONOMY_WATCH, GAINS_WATCH, CONTESTED_WATCH, BURSTS_WATCH, MONSTERS_WATCH, FREEZE_WATCH, WATCHLIST_WATCH, STATUS_WATCH];   // the design's Home order: reports, then market and harvesting, then the rest
 
 const LEVELS = Object.freeze(['low', 'medium', 'high']);
+/** STAFF-SPEED-2 (staffKept.js): THE WATCHES HOME KEEPS FOR EVERY ISOLATE - the Admins' own, the same for every Admin (never
+ *  Reports, a claim of one's own in it, nor a member's own Watchlist), each read at its widest (HOME_TOPS' last) and cut to
+ *  the caller's `n`. Kept HOME_KEPT_S, answered up to HOME_STALE_S while one request reads it again. Every one of them
+ *  rereads at most each few minutes already in one isolate (their own `kept`): a minute kept for all is none the staler. */
+export const HOME_KEPT = Object.freeze(['economy', 'gains', 'contested', 'bursts', 'monsters', 'freeze', 'status']);
+export const HOME_KEPT_S = 60;
+export const HOME_STALE_S = 10 * 60;
+const HOME_TOP_MAX = HOME_TOPS[HOME_TOPS.length - 1];
 /**
  * HOME: the first `n` of every watch `who` may see, each with "N high of M", worst first.
  * @param {any} ctx @param {any} env @param {{ player: any, role: string }} who @param {number} n
@@ -348,9 +352,14 @@ const LEVELS = Object.freeze(['low', 'medium', 'high']);
  */
 export async function homeOf(ctx, env, who, n, watches = HOME_WATCHES) {
   const mine = watches.filter((w) => w.role === 'moderator' || who.role === 'admin');
-  const out = await Promise.all(mine.map(async (w, i) => {
+  const keeps = (/** @type {{ id: string, role: string }} */ w) => w.role !== 'moderator' && HOME_KEPT.includes(w.id) && who.role === 'admin';
+  // STAFF-SPEED-2: every kept watch's row, and the status parts its tiles read, in one statement; what is made kept in one batch
+  const keys = mine.some(keeps) ? [...mine.filter(keeps).map((w) => `home:${w.id}`), ...STATUS_PARTS.map((p) => `status:${p}`)] : [];
+  const out = await staffKeptAll(ctx, keys, (ctx) => Promise.all(mine.map(async (w, i) => {
     try {
-      const r = await w.top(ctx, env, who, n);
+      const r = keeps(w)
+        ? await staffKept(ctx, `home:${w.id}`, HOME_KEPT_S, HOME_STALE_S, () => w.top(ctx, env, who, HOME_TOP_MAX))
+        : await w.top(ctx, env, who, n);
       // a watch may say why in parts (staffRealm.js) - Home says it as one line, parts joined as the panel's lists join them
       const items = (r.items ?? []).slice(0, n).map((/** @type {any} */ x) => (Array.isArray(x.why) ? { ...x, why: x.why.join(' · ') } : x));
       return { id: w.id, label: w.label, items, high: num(r.high), total: num(r.total), more: Math.max(0, num(r.total) - items.length),
@@ -359,7 +368,7 @@ export async function homeOf(ctx, env, who, n, watches = HOME_WATCHES) {
       console.warn(`[staff-home] the ${w.id} watch`, /** @type {any} */ (e)?.message ?? e);
       return { id: w.id, label: w.label, items: [], high: 0, total: 0, more: 0, failed: true, worst: LEVELS.indexOf('medium'), i };
     }
-  }));
+  })));
   out.sort((a, b) => b.worst - a.worst || b.high - a.high || a.i - b.i);
   return { n, watches: out.map(({ worst: _w, i: _i, ...w }) => w) };
 }
@@ -390,7 +399,7 @@ export async function staffStatus(ctx, env, path, body, who, audit) {
     await audit('refused', null, { path, need: 'admin' }, { outcome: 'denied' }).run();
     return { error: 'staff-admin' };
   }
-  if (path === '/v1/staff/status') return statusNow(ctx, env);
+  if (path === '/v1/staff/status') return staffKeptAll(ctx, STATUS_PARTS.map((p) => `status:${p}`), (c) => statusNow(c, env));   // STAFF-SPEED-2: its parts' rows in one read
   if (path === '/v1/staff/limit/set') {
     const metric = typeof body.metric === 'string' && Object.hasOwn(STATUS_METRICS, body.metric) ? body.metric : null;
     const line = (/** @type {unknown} */ v) => (v == null ? null : typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : NaN);
@@ -407,7 +416,7 @@ export async function staffStatus(ctx, env, path, body, who, audit) {
             ON CONFLICT (metric) DO UPDATE SET amber = ?2, red = ?3, set_by = ?4, set_at = ?5`).bind(metric, amber, red, who.player.id, nowS),
       audit('limit-set', null, { metric, amber, red, was: was ? { amber: was.amber, red: was.red } : null }),
     ]);
-    kept.delete('fast');   // this isolate's tiles take the new line at once; another's within STATUS_FAST_S
+    await staffKeptForget(db, ['status:fast', ...HOME_KEPT.map((id) => `home:${id}`)]).run().catch(() => null);   // STAFF-SPEED-2: every isolate's tiles take the new line at once
     return { ok: true, metric, amber, red };
   }
   return { error: 'not-found' };

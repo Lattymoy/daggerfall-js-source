@@ -40,7 +40,7 @@ Aurum is read off the level reached, so it never needs claiming.
 | Hold a fallen star | 20 | `stars_held` |
 | Defend a town | 15 | `raid_cleanses` |
 
-Each is struck by a trigger on the receipt's own row (migration 0195), in the claim's own batch: a claim rolled back
+Each is struck by a trigger on the receipt's own row (migration 0196), in the claim's own batch: a claim rolled back
 strikes nothing, and no client asks for Aurum. A receipt is the relay's signed word the service already counts, so the
 week's 120 Aurum a player can earn is held by the same checks those claims are.
 

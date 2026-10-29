@@ -13,6 +13,7 @@ import { countTrips } from './staffTrips.mjs';
 import { staffWords, STAFF_SESSION_HEADER } from '../../server-account/src/staff.js';
 import { _forgetCensusForTests } from '../../server-account/src/staffCensus.js';
 import { _resetStatusForTests } from '../../server-account/src/staffStatus.js';
+import { _otherIsolateForTests } from '../../server-account/src/staffKept.js';
 import { _resetReactionsForTests } from '../../server-account/src/staffReactions.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 
@@ -164,7 +165,13 @@ test('STAFF-PANEL-SPEED: the economy in 2 trips, where it was 4 - its batch, the
   const econ = await s.trips('/v1/staff/econ/economy');
   assert.deepEqual([econ.body.richest.characters.map((c) => c.name), econ.body.richest.guilds.map((g) => g.name), econ.body.gold.held.market, econ.body.gold.leftOut.market, econ.body.marks.minted], [[], ['Wolves'], 0, 300, { patron: 50 }]);   // ECON-LEFT-OUT: Alda and Brond are held - off the richest, their market gold said apart
   assert.equal(s.rows('economy-read'), 1);
-  assert.ok(econ.trips <= 2, `economy: ${econ.trips} trips`);
+  // STAFF-SPEED-2 (staffKept.js): cold, the kept row asked first and the answer kept after - the keeping off the answer's
+  // path where the Worker has waitUntil (this harness has none, so it is counted); kept, the economy is one row's read
+  assert.ok(econ.trips <= 4, `economy: ${econ.trips} trips`);
+  _otherIsolateForTests();   // another isolate: the row every isolate reads, not this one's memory
+  const warm = await s.trips('/v1/staff/econ/economy');
+  assert.deepEqual(warm.body, econ.body, 'the kept answer is the answer');
+  assert.ok(warm.trips <= 2 && warm.statements <= 5, `economy kept: ${warm.trips} trips, ${warm.statements} statements`);
   const stream = await s.trips('/v1/staff/econ/stream');
   const sales = stream.body.rows.filter((r) => r.kind === 'sale');
   assert.deepEqual([stream.body.rows.length, sales.length, sales.map((r) => r.currency).sort().join(), sales.every((r) => r.usual === 10)], [8, 6, 'gold,gold,gold,marks,marks,marks', true]);
@@ -200,12 +207,20 @@ test('STAFF-PANEL-SPEED: Home, cold, in 5 trips where it was 13 - every watch\'s
   assert.deepEqual([by.gains.total, by.contested.total, by.bursts.total, by.monsters.total, by.monsters.high], [3, 1, 1, 2, 2]);
   assert.ok(by.economy.items.some((i) => i.name === 'Brond'), 'the one-sided trade');
   assert.equal(s.rows('home-read'), 1);
-  assert.ok(home.trips <= 5, `home: ${home.trips} trips`);
+  // STAFF-SPEED-2 (staffKept.js): cold, every kept watch's row asked in one statement first and kept in one batch after
+  assert.ok(home.trips <= 7, `home: ${home.trips} trips`);
+  _otherIsolateForTests();   // another isolate: the rows every isolate reads, not this one's memory
+  const warm = await s.trips('/v1/staff/home');
+  assert.deepEqual(warm.body, home.body, 'the kept watches are the watches');
+  assert.ok(warm.statements * 3 <= home.statements, `home kept: ${warm.statements} statements, cold ${home.statements}`);
   _resetStatusForTests();   // Home read the tiles: the status page's own read, cold
   const status = await s.trips('/v1/staff/status', { poll: true });
   assert.deepEqual(status.body.tiles.map((t) => t.id), ['players', 'load', 'activity', 'health']);
   assert.equal(status.body.tiles[2].values.sales, 6);
-  assert.ok(status.trips <= 2, `status: ${status.trips} trips`);
+  assert.ok(status.trips <= 4, `status: ${status.trips} trips`);   // STAFF-SPEED-2: and its parts' rows asked first, kept after
+  _otherIsolateForTests();
+  const kept = await s.trips('/v1/staff/status', { poll: true });
+  assert.ok(kept.trips <= 2 && kept.statements <= 2, `status kept: ${kept.trips} trips, ${kept.statements} statements`);
 });
 
 test('STAFF-PANEL-SPEED: Monster watch in 3 trips where it was 7, past one statement\'s 80 ids too (its chunks asked at once); the bot check in 3 where it was 4; Network bursts in 2 where they were 4 (mutants: each fold undone)', async () => {
