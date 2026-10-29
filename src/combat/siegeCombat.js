@@ -24,6 +24,7 @@ import { SIEGE_DMG_WIRE_MAX, PVP_ELEMENTS } from '../net/wire.js';
 import { duelSpellOf } from './duelCombat.js';
 import { applySpell } from '../systems/effects.js';
 import { pvpSpellScale } from './pvpTriangle.js';   // PVP-TRIANGLE
+import { pvpCritHarm } from './pvpSpellCrit.js';   // PVP-SPELL-CRIT
 
 /** A blow's kind on the referee's wire: an arrow's a shaft's, anything else a swing's. */
 export const siegeBlowKind = (by) => (by === 'arrow' ? SIEGE_HIT.Shaft : SIEGE_HIT.Melee);
@@ -83,5 +84,5 @@ export function siegeSpellNumbers(sp, level, standIn, caster = null, { apply = a
   if (harmful && !run({ ...harmful, rangeType: 0 }, { hurt: count('harm'), heal: none, drainFatigue: none, restoreFatigue: none, drainMagicka: none, restoreMagicka: none })) harm = 0;
   // its Heal Health (effects.js isHealHealth) landed as ALLY-CAST lands a gift - a self-cast (rangeType 0), no save rolled
   if (first?.type === 10 && !run({ ...sp, rangeType: 0, effects: [first] }, { hurt: none, heal: count('heal'), drainFatigue: none, restoreFatigue: none, drainMagicka: none, restoreMagicka: none })) heal = 0;
-  return { harm: Math.round(harm * pvpSpellScale(level)), heal: Math.round(heal) };   // PVP-TRIANGLE: a harm's
+  return { harm: Math.round(pvpCritHarm(harm, caster, rolls) * pvpSpellScale(level)), heal: Math.round(heal) };   // PVP-SPELL-CRIT, then PVP-TRIANGLE: a harm's
 }

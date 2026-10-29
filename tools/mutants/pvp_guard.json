@@ -146,8 +146,8 @@
   {
     "name": "PVP-TRIANGLE-the-spell-unscaled",
     "file": "src/combat/siegeCombat.js",
-    "old": "  return { harm: Math.round(harm * pvpSpellScale(level)), heal: Math.round(heal) };",
-    "new": "  return { harm: Math.round(harm), heal: Math.round(heal) };",
+    "old": "harm: Math.round(pvpCritHarm(harm, caster, rolls) * pvpSpellScale(level))",
+    "new": "harm: Math.round(pvpCritHarm(harm, caster, rolls))",
     "tests": [
       "test/systems/auditcc_pvp.test.js"
     ]
@@ -373,5 +373,45 @@
       "test/combat/pvp_guard.test.js"
     ],
     "why": "the doors are registered"
+  },
+  {
+    "name": "PVP-SPELL-CRIT-the-chance",
+    "file": "src/combat/pvpSpellCrit.js",
+    "old": "Math.trunc(crit / (4 - luckTerm))",
+    "new": "Math.trunc(crit / 4)",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "PVP-SPELL-CRIT"
+  },
+  {
+    "name": "PVP-SPELL-CRIT-the-size",
+    "file": "src/combat/pvpSpellCrit.js",
+    "old": "mult: Math.floor(crit / 5) * 0.05 + 1",
+    "new": "mult: Math.floor(crit / 5) * 0.04 + 1",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "PVP-SPELL-CRIT"
+  },
+  {
+    "name": "PVP-SPELL-CRIT-the-roll",
+    "file": "src/combat/pvpSpellCrit.js",
+    "old": "return rolls() < chance ? harm * mult : harm;",
+    "new": "return rolls() <= chance ? harm * mult : harm;",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "PVP-SPELL-CRIT"
+  },
+  {
+    "name": "PVP-SPELL-CRIT-uncalled",
+    "file": "src/combat/siegeCombat.js",
+    "old": "harm: Math.round(pvpCritHarm(harm, caster, rolls) * pvpSpellScale(level))",
+    "new": "harm: Math.round(harm * pvpSpellScale(level))",
+    "tests": [
+      "test/systems/auditcc_pvp.test.js"
+    ],
+    "why": "PVP-SPELL-CRIT: the hosts' count crits"
   }
 ]

@@ -28,6 +28,8 @@ import { calculateCastCost } from '../../src/systems/spellcost.js';
 import { castRate } from '../../src/systems/castSpeed.js';
 import { buildCustomSpell } from '../../src/systems/spell/spellMaker.js';
 import { setPvpFight } from '../../src/combat/pvpPotions.js';
+import { pvpSpellCrit, pvpCritHarm } from '../../src/combat/pvpSpellCrit.js';
+import { SKILLS as SK } from '../../src/systems/skills.js';
 import { PVP_BUFF_ROUNDS, capPvpBuffs } from '../../src/combat/pvpBuffs.js';
 
 const stats = (v) => ({ strength: v, intelligence: 50, willpower: v, agility: 50, endurance: v, personality: 50, speed: 50, luck: 50 });
@@ -255,4 +257,15 @@ test('PVP-ARMOUR-CAST: in a fight with a player a plate piece costs a spell 6% m
   assert.equal(castRate(bare), 1);
   resetPvpPotions();
   assert.match(readFileSync(new URL('../../src/net/siege/refereeHealthMirror.js', import.meta.url), 'utf8'), /^import '\.\.\/\.\.\/combat\/pvpArmourCasting\.js';/m, 'the doors load with the fight flag');
+});
+
+test('PVP-SPELL-CRIT: a spell at a player crits as a blow does - Critical Strike / (4 - the Luck term) per cent, x(1 + 5% each 5 points); none for no caster or no harm (mutants: the chance, the luck, the size, the roll)', () => {
+  const caster = (crit, luck) => ({ isPlayer: true, stats: { ...body().stats, luck }, skills: { [SK.CriticalStrike]: crit }, items: [] });
+  assert.deepEqual(pvpSpellCrit(caster(100, 50)), { chance: 0.25, mult: 2 });
+  assert.deepEqual(pvpSpellCrit(caster(100, 100)), { chance: 0.5, mult: 2 });
+  assert.deepEqual(pvpSpellCrit(caster(40, 50)), { chance: 0.1, mult: 1.4 });
+  assert.equal(pvpCritHarm(100, caster(100, 50), () => 0.24), 200, 'a crit');
+  assert.equal(pvpCritHarm(100, caster(100, 50), () => 0.25), 100, 'no crit');
+  assert.equal(pvpCritHarm(0, caster(100, 50), () => 0), 0);
+  assert.equal(pvpCritHarm(100, null, () => 0), 100);
 });
