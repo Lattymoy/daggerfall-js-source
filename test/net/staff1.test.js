@@ -103,6 +103,6 @@ test('STAFF1 host wiring by source: asked only of staff by the service\'s own gl
   assert.ok(w.indexOf('const staffCmd = isStaffT(') < w.indexOf('const cmd = parseChatLine('), 'asked before the chat\'s own refusal');
   assert.match(w, /_staffGlyphs = Array\.isArray\(who\?\.glyphs\) \? who\.glyphs : \[\];[^\n]*\n\s*if \(!isStaffT\(_staffGlyphs\)\) setStaffPowers\(\{ god: false, fly: false \}\);/);
   assert.match(w, /const staffGlyphs = \(\) => _staffGlyphs;/);
-  assert.match(w, /if \(_teleporting \|\| worldMoveBusy\(\)\) \{ say\('You cannot teleport right now\.'\); return; \}\n\s*hudFade\.smashHUDToBlack\(\);[^\n]*\n\s*teleportTo\(pick\)\.catch\(/);
+  assert.match(w, /if \(_teleporting \|\| worldMoveBusy\(\)\) \{ say\('You cannot teleport right now\.'\); return; \}\n\s*hudFade\.smashHUDToBlack\(\);[^\n]*\n\s*teleportTo\(pick\)\.then\(\(ok\) => ok \|\| hudFade\.clearFade\(\)\)[^\n]*\n\s*\.catch\(/);   // PIN MOVED (AUDIT TAMRIEL-WIDE III V1): a refusal lifts the black
   assert.match(rd('src/scenes/dungeonContext.js'), /playerLevitating: \(\) => hasActiveEffect\(playerEntity, 'levitate'\) && !levitateWarded\(\) \|\| staffFly\(\),/);   // PIN MOVED (AUDIT SD V L1): the ward holds the effect, never /fly
 });
