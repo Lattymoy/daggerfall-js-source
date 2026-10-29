@@ -1,0 +1,137 @@
+[
+  {
+    "name": "DRAGON6-the-sea-priced",
+    "file": "src/systems/travel/travel.js",
+    "old": "  if (flying) {\n",
+    "new": "  if (false) {\n",
+    "tests": [
+      "test/systems/travel/dragon6_flight.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON6-the-fare-taken",
+    "file": "src/systems/travel/travel.js",
+    "old": "travelShip && !hasDragon) totalCost +=",
+    "new": "travelShip) totalCost +=",
+    "tests": [
+      "test/systems/travel/dragon6_flight.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON6-the-horses-pace",
+    "file": "src/systems/travel/travel.js",
+    "old": "hasDragon ? DRAGON_TRANSPORT_MODIFIER : hasHorse",
+    "new": "hasDragon ? 128 : hasHorse",
+    "tests": [
+      "test/systems/travel/dragon6_flight.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON6-the-storm-sea",
+    "file": "src/systems/travel/travel.js",
+    "old": "seaMult !== 1 && !hasDragon ? Math.floor",
+    "new": "seaMult !== 1 ? Math.floor",
+    "tests": [
+      "test/systems/travel/dragon6_flight.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON6-the-dragon-unread",
+    "file": "src/ui/travel/travelPopUp.js",
+    "old": "this.hasDragon = hasDragon(deps.playerEntity?.()?.items);",
+    "new": "this.hasDragon = false;",
+    "tests": [
+      "test/systems/travel/dragon6_flight.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON6-the-plan-by-the-land",
+    "file": "src/scenes/world.js",
+    "old": "let plan = (dragonMounted() ? dragonFlightPlan(from, summary.pixel) : null) ?? planRoute(",
+    "new": "let plan = planRoute(",
+    "tests": [
+      "test/systems/travel/dragon6_flight.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON6-the-boat-asked",
+    "file": "src/scenes/world.js",
+    "old": "let means = dragonMounted() ? null : tvSeaMeans();",
+    "new": "let means = tvSeaMeans();",
+    "tests": [
+      "test/systems/travel/dragon6_flight.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON6-the-peaks-refused",
+    "file": "src/scenes/world.js",
+    "old": "!door && !water && !dragonMounted() && tvRouteGround()",
+    "new": "!door && !water && tvRouteGround()",
+    "tests": [
+      "test/systems/travel/dragon6_flight.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON6-the-governor-upside-down",
+    "file": "src/systems/dragon/dragonJourney.js",
+    "old": "(DRAGON_CRUISE_M - heightOver) / DRAGON_CRUISE_BAND_M",
+    "new": "(heightOver - DRAGON_CRUISE_M) / DRAGON_CRUISE_BAND_M",
+    "tests": [
+      "test/systems/travel/dragon6_flight.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON6-the-cruise-never-lifts",
+    "file": "src/player/dragonRide.js",
+    "old": "  if (_cruise === 'cruise' && mounted && !flight.aloft() && flight.lift()) _heard?.('took-off');",
+    "new": "  if (false) _heard?.('took-off');",
+    "tests": [
+      "test/systems/travel/dragon6_flight.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON6-the-hold-unread",
+    "file": "src/player/motor.js",
+    "old": "      if (this.levitating) { const hold = flyHold(); if (hold != null) my = hold; }",
+    "new": "      if (this.levitating) { const hold = flyHold(); void hold; }",
+    "tests": [
+      "test/systems/travel/dragon6_flight.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON6-the-end-leaves-it-aloft",
+    "file": "src/player/dragonRide.js",
+    "old": "_cruise === 'down' ? -1 : null",
+    "new": "_cruise === 'down' ? 0 : null",
+    "tests": [
+      "test/systems/travel/dragon6_flight.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON6-the-open-grounds-rate",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "(ROAD_LEG_KINDS.includes(leg.kind) || flownLeg(leg) || bridgedRoadLeg(r.legs, at))",
+    "new": "(ROAD_LEG_KINDS.includes(leg.kind) || bridgedRoadLeg(r.legs, at))",
+    "tests": [
+      "test/systems/travel/dragon6_flight.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON6-the-ocean-stop",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "!deps.atSea?.() && !flownNow()) { stopTravelWithMessage(T.MsgOcean)",
+    "new": "!deps.atSea?.()) { stopTravelWithMessage(T.MsgOcean)",
+    "tests": [
+      "test/systems/travel/dragon6_flight.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON6-the-cruise-unasked",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    setDragonCruise(flownNow());",
+    "new": "    void flownNow;",
+    "tests": [
+      "test/systems/travel/dragon6_flight.test.js"
+    ]
+  }
+]

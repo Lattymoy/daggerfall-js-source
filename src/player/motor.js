@@ -108,6 +108,15 @@ export function flySink() {
   for (const fn of _flySinks.values()) { try { const v = Number(fn()); if (Number.isFinite(v) && v > 0) k += v; } catch { /* a ride is not the flight's problem */ } }
   return k;
 }
+// DRAGON6 (bible/11-Multiplayer/Dwarven-Dragon.md section 10): a flown journey's HOLD - the ladder's climb (1) or dive (-1)
+// the ride's governor asks while the Overworld flies it, in place of the look's pitch and the float keys. One slot; null
+// (or none registered) is the ladder as it was.
+let _flyHold = null;
+export function registerFlyHold(fn) { _flyHold = typeof fn === 'function' ? fn : null; }
+/** The hold now, in -1..1, or null. */
+export function flyHold() {
+  try { const v = _flyHold ? _flyHold() : null; return v == null || !Number.isFinite(Number(v)) ? null : Math.max(-1, Math.min(1, Number(v))); } catch { return null; }
+}
 // KETCH (2026-10-24, bible/11-Multiplayer/Sky-Ketch.md section 6; a departure from DFU, Ledger A): THE BURDEN - a named
 // registry of modifiers on EVERY pace on foot (the walk, the run, the crouch, the sneak - never a mount's), read every step:
 // an aether cell carried in both hands slows its carrier whatever its pace. None registered, or each answering 1 (or no
@@ -3181,6 +3190,7 @@ export class PlayerMotor {
       if (this.swimming && overEncumbered && !this.climb?.isClimbing && !this.waterWalking) my -= 1;
       else if (input.up) my += 1;
       else if (input.down) my -= 1;
+      if (this.levitating) { const hold = flyHold(); if (hold != null) my = hold; }   // DRAGON6: a flown journey's cruise, the look's pitch and the keys aside
       if (this.levitating) my -= flySink();   // DRAGON5: a winded dragon glides down
       // AddMovement's THREE arms, in DFU's own order (LevitateMotor.cs
       // :116-140). AUDIT 24 player: the port had a different ladder -

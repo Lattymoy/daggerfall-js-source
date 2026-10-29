@@ -4,10 +4,12 @@
 // registerRideStep: the mode, the held jump, the ground), sets the levitating pace (registerFlySpeedMod) and the sink
 // (registerFlySink), and answers whether the rider is aloft for the hosts' levitation term (scenes/shared.js).
 // A dragon caught in the air un-flown (a cliff ridden off, a save made aloft) spreads its wings after DRAGON_CATCH_S.
-// Not a DFU member. Ledger A (DRAGON).
+// DRAGON6: an Overworld journey flown on it CRUISES - taken up, held at DRAGON_CRUISE_M over what is under it by the
+// motor's fly hold, and brought down when the journey ends. Not a DFU member. Ledger A (DRAGON).
 import { createDragonFlight } from '../systems/dragon/dragonFlight.js';
+import { cruiseHold } from '../systems/dragon/dragonJourney.js';
 import { TRANSPORT_MODES } from '../systems/transport.js';
-import { registerFlySpeedMod, registerFlySink, registerRideStep } from './motor.js';
+import { registerFlySpeedMod, registerFlySink, registerRideStep, registerFlyHold } from './motor.js';
 
 /** Airborne this long on the dragon, not flying, it takes to the air, s - longer than a mounted jump. */
 export const DRAGON_CATCH_S = 1.2;
@@ -18,6 +20,11 @@ export const DRAGON_SET_DOWN_SINK = 2;
 const flight = createDragonFlight();
 let _falling = 0;
 let _settling = false;
+let _mounted = false;
+/** DRAGON6: 'cruise' while a journey flies it, 'down' from its end until the ground meets it, else null. */
+/** @type {'cruise' | 'down' | null} */
+let _cruise = null;
+let _over = Infinity;   // m over the ground or the sea under the rider, the last step's
 /** @type {((what: 'took-off' | 'landed') => void) | null} */
 let _heard = null;
 
@@ -25,8 +32,12 @@ let _heard = null;
 export function dragonRideStep(dt, motor, input) {
   const mounted = motor?.transportMode === TRANSPORT_MODES.Dragon;
   const grounded = !!motor?.grounded;
+  _mounted = mounted;
+  _over = heightOver(motor);
+  if (_cruise === 'cruise' && mounted && !flight.aloft() && flight.lift()) _heard?.('took-off');   // DRAGON6: a flown journey takes it up
   const wasAloft = flight.aloft();
   const what = flight.step(dt, { mounted, jump: !!input?.jump, grounded });
+  if (_cruise === 'down' && !flight.aloft()) _cruise = null;
   if (what === 'landed' && wasAloft && !mounted && !grounded) _settling = true;   // off it in the air: set down
   if (_settling && (grounded || mounted)) _settling = false;
   _falling = mounted && !grounded && !flight.aloft() ? _falling + dt : 0;
@@ -36,10 +47,31 @@ export function dragonRideStep(dt, motor, input) {
 registerRideStep(dragonRideStep);
 registerFlySpeedMod('dragonMount', flight.flyMult);
 registerFlySink('dragonMount', () => (_settling ? DRAGON_SET_DOWN_SINK : flight.sink()));
+registerFlyHold(() => (!flight.aloft() || !_mounted ? null : _cruise === 'cruise' ? cruiseHold(_over) : _cruise === 'down' ? -1 : null));
+
+/** m over the ground or the sea under the motor's feet (Infinity where neither is known). @param {any} motor */
+function heightOver(motor) {
+  const p = motor?.pos;
+  if (!p) return Infinity;
+  const ground = Number(motor.collider?.heightAt?.(p[0], p[2]));
+  const sea = Number(motor.waterSurfaceY);
+  const under = Math.max(Number.isFinite(ground) ? ground : -Infinity, Number.isFinite(sea) ? sea : -Infinity);
+  return Number.isFinite(under) ? p[1] - under : Infinity;
+}
+/** DRAGON6: the Overworld's word each frame - a flown leg walked now (on) or not; off after on brings it down.
+ *  @param {boolean} on */
+export function setDragonCruise(on) {
+  if (on) { if (_mounted) _cruise = 'cruise'; }
+  else if (_cruise === 'cruise') _cruise = 'down';
+}
+/** Whether the rider sits the dragon (the last motor step's word) - the Overworld plans a flown journey for them. */
+export const dragonMounted = () => _mounted;
+/** DRAGON6: whether a journey cruises it now. */
+export const dragonCruising = () => _cruise === 'cruise';
 
 /** Whether the rider is in the air on the dragon, or being set down off it (the hosts' levitation term). */
 export const dragonAloft = () => flight.aloft() || _settling;
 /** Told 'took-off' and 'landed' (the host's sound). @param {((what: 'took-off' | 'landed') => void) | null} fn */
 export function onDragonFlight(fn) { _heard = typeof fn === 'function' ? fn : null; }
 /** For tests: on the ground, and nothing heard. */
-export function _resetDragonFlight() { flight.land(); _falling = 0; _settling = false; _heard = null; }
+export function _resetDragonFlight() { flight.land(); _falling = 0; _settling = false; _heard = null; _mounted = false; _cruise = null; _over = Infinity; }

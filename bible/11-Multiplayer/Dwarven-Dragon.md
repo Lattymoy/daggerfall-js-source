@@ -215,7 +215,11 @@ A tamed dragon is a third mount beside the horse and the cart (`06-Systems/Horse
 - **Seen by others**: the pose's ride is `POSE_RIDE.Dragon` (3), its look `rc` (1 the Aetherbright), so every other
   screen draws the rider as the dragon, in the air where it flies.
 - **On the travel map**: `transportModifier` 64, twice the horse's 128 (`systems/travel/travel.js`), and every pixel
-  flown at that rate, sea and mountain alike, in a straight line - no ship needed and no road followed.
+  flown at that rate, sea and mountain alike, in a straight line - no ship, no fare, no storm's sea.
+- **On the Overworld** (online, where a journey over land is walked, not jumped): a journey begun on the dragon is one
+  straight `air` leg (`systems/dragon/dragonJourney.js`) at the road's rate wherever it goes. The ride takes off and
+  holds `DRAGON_CRUISE_M` (60 m) over the ground or the sea under it, and comes down at the end. No peak refuses it
+  and no shore stops it.
 - **Kept**: it cannot be dropped, sold, traded or lost to a death, the Wild included. The account service holds every
   dragon item to its `dragon_mounts` row (the judge's provenance law), so a dragon no tame made is a finding. The
   service's rows are the record (`/v1/dragon/tames`); a device's list is a copy, joined to them before a bind.
@@ -356,3 +360,15 @@ mount's pack picture and its rider's saddle are its look's. The wash is gone. Pi
 `test/net/dragon/dragon7_aetherbright.test.js` (7); `tools/mutants/dragon7.json`, 11 dead. PINS MOVED: the picture count
 and the shipped files (`dwarvenDragon`, `doctrine`), the registry's words (`l10n4_hardcoded`), the audit's wash
 (`dragonaudit_client`).
+
+**DRAGON6 - the journey flown (2026-10-29).** The travel map prices a dragon owner's trip at `DRAGON_TRANSPORT_MODIFIER`
+(64), every pixel at the land's unhindered charge, sea and peaks too: no fare, no Storm Season. Online a map's pick is the
+Overworld's walked journey (OW-ONLY), so there the dragon flies: mounted, the host plans `dragonFlightPlan` - one `air`
+leg, no road, no boat - and the peaks' refusal stands aside. `travelOptions.js` runs a flown leg at the road's rate, its
+ocean stop passes it, and each frame sets the ride's cruise (`setDragonCruise`); the motor's fly hold (`cruiseHold`)
+keeps it at 60 m, then brings it down. Pinned by `test/systems/travel/dragon6_flight.test.js` (6);
+`tools/mutants/dragon6.json`, 15 dead.
+
+PINS MOVED (DRAGON6): the host's plans and peaks (`fb0929d_toroads`, `tv6_dungeons`, `ows2_crossing`, `tv2_click_to_move`,
+`ow_wod`), the road's rate (`tvsmooth1`), the ocean fare's cite (`audit26_streaming2`); ten records re-aimed by content
+(ow2, ow3j, ow4d, ows2, ratelaw, tide3).

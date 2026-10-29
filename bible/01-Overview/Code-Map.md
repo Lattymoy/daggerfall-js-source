@@ -304,7 +304,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/comeSailAway/` | Come Sail Away's boats: the boat itself, its hulls, models, items and waves, the helm's actions, the map, the wire's words and the boat's menu (`03-World/Come-Sail-Away.md`). |
 | `src/systems/decor/` | Decorating a home: the catalogue, placing, the rooms - the law. |
 | `src/systems/deepWater/` | Deep Waters' law: the swimmer, the fish as items and as rows. |
-| `src/systems/dragon/` | The Dwarven Dragon (`11-Multiplayer/Dwarven-Dragon.md`) - where it comes down, and its words. |
+| `src/systems/dragon/` | The Dwarven Dragon (`11-Multiplayer/Dwarven-Dragon.md`) - where it comes down, its words, the tamed mount, and a journey flown. |
 | `src/systems/dungeon/` | A dungeon's state: its respawn, tier, echo and sense. |
 | `src/systems/dynamicSkies/` | The Dynamic Skies mod - the law. |
 | `src/systems/eliteGates/` | The Elite Breach's law on this screen (`11-Multiplayer/Elite-Gates.md`, `Elite-Gates-Look.md`, `Elite-Gates-Ascent.md`): the Weir Key and its find, the Spire's kit and Vestiges, the lords' arms, the spoils, the score and its mix and echo. |

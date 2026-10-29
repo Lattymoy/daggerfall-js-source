@@ -221,7 +221,7 @@ test('OW-WOD-PATH: the host hands its planner the massifs less every pixel a roa
   // PIN MOVED (TV-BEYOND): the ground past the Bay handed in before the massifs (routeGround's `beyond`)
   // PIN MOVED (RUMARE-WATER): the ground's sea the Imperial City's lake too (world/rumareWaters.js rumareSeaPixel)
   assert.match(w, /WATER_BYTE, 1000, 500, \(x, y\) => !tvWater\(x, y\), undefined, rumareSeaPixel\)\)\.setRocks\(tvWodRocks\(\)\);[^\n]*\n\s*return _tvRouteGround;\n {2}\};/);
-  assert.match(w, /if \(!door && !water && tvRouteGround\(\)\.peakAt\(pix\.x, pix\.y\)\) \{ tvSay\(TRAVEL_VIEW_TEXT\.mountains\); return false; \}/);
+  assert.match(w, /if \(!door && !water && !dragonMounted\(\) && tvRouteGround\(\)\.peakAt\(pix\.x, pix\.y\)\) \{ tvSay\(TRAVEL_VIEW_TEXT\.mountains\); return false; \}/);   // PIN MOVED (DRAGON6): a journey begun on the dragon is flown straight (systems/dragon/dragonJourney.js)
 });
 
 // ── OW-TOWN-RING ────────────────────────────────────────────────────────
