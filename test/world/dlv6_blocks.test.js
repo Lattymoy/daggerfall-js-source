@@ -39,12 +39,11 @@ test('DLV6 THE LIGHT AN ADD STANDS: a reach of 1 to 12 m, alone; made a Light re
   assert.ok(Math.abs(l.range - 6) < 0.05, `read back as its reach (${l.range})`);
 });
 
-test('DLV6 THE LAB\'S HAND: I stand where my Rebuild left me (`?at=`), else at the draft\'s first anchor; a model or a flat set ON the floor at my feet - a model\'s lowest point under its origin, a flat\'s half height - one the data lacks refused; a light over me; the Rebuild told where I stand (mutants: `?at` unread; the foot\'s sign; a flat\'s whole height; the foot unread; the spot unsaid)', async () => {
+test('DLV6 THE LAB\'S HAND: I stand where my Rebuild left me (`?at=`), else on the host\'s floor by the first encounter (never its heart: it would wake the ward); a model or a flat set ON the floor at my feet - a model\'s lowest point under its origin, a flat\'s half height - one the data lacks refused; a light over me; the Rebuild told where I stand (mutants: `?at` unread; the foot\'s sign; a flat\'s whole height; the foot unread; the spot unsaid)', async () => {
   const P = (q) => new URLSearchParams(q);
   const d = { ...REC, n: 0, anchors: [{ kind: 'hold', at: [15.6, 12.8, 15.6], r: 4, vault: [12.2, 12.8, 15.6] }] };
-  assert.deepEqual(labSpawn(P('at=1.5,2,3'), d), [1.5, 2, 3]);
-  assert.deepEqual(labSpawn(P('at=1,x,3'), d), [15.6, 12.85, 15.6], 'a spot unread: the first anchor');
-  assert.equal(labSpawn(P(''), { ...d, anchors: [] }), null, 'nothing to stand on: the dungeon\'s start');
+  assert.deepEqual(labSpawn(P('at=1.5,2,3')), [1.5, 2, 3]);
+  for (const q of ['at=1,x,3', 'at=1,,3', 'at=1,2', '']) assert.equal(labSpawn(P(q)), null, `"${q}": the host's floor (delveHost.js firstFloor)`);
   const arch = { getRecordIndex: (id) => (id === 41319 ? 0 : -1), getMesh: () => ({ totalVertices: 2, totalTriangles: 0, subMeshes: [{ textureArchive: 0, textureRecord: 0, planes: [{ points: [{ x: 0, y: 18, z: 0, nx: 0, ny: 1, nz: 0, u: 0, v: 0 }, { x: 4, y: -18, z: 4, nx: 0, ny: 1, nz: 0, u: 0, v: 0 }] }], totalPrimitives: 0 }] }) };
   const tex = { recordCount: 3, getSize: () => ({ width: 40, height: 80 }), getScale: () => ({ width: 0, height: 0 }) };
   const foot = labFoot(arch, async (a) => (a === 210 ? tex : null));

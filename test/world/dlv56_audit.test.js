@@ -19,6 +19,7 @@ import { RDB_RESOURCE_TYPES } from '../../src/formats/blocksFile.js';
 import { GLOBAL_SCALE } from '../../src/world/meshReader.js';
 import { DUNGEON_TYPES } from '../../src/formats/mapsFile.js';
 import { dungeonOf, seedFor } from '../scenes/delve/delveRig.mjs';
+import { inWard, DELVE_WARD_PAD_M } from '../../src/net/delve/delveLaw.js';
 
 const SIZES = { setting: false, medium: false, world: false };
 const REC = Object.freeze({ id: 'test-hall', n: 7, base: 'N0000023.RDB', types: [DUNGEON_TYPES.Crypt], drop: [], add: [], anchors: [] });
@@ -147,7 +148,7 @@ test('AUDIT DLV5-6 THE LAW\'S OTHER RULES: a vault in the block, a rotation of t
   for (let id = 1; id <= 200; id++) { const s = curatedSlot(startLast(id), CURATED_RECORDS); if (s) assert.notEqual(s.j, 2, `id ${id}: never the start, at the list's end`); }
 });
 
-test('AUDIT DLV5-6 THE LAB\'S CHECK IS THE HOST\'S LAW: `landing` stands a ward where the site law would and names the rule it breaks; `firstFloor` the grid\'s first floor; the bench\'s `?elite` an Elite clone (mutants: the small law unread; the rule unnamed; elite unread)', async () => {
+test('AUDIT DLV5-6 THE LAB\'S CHECK IS THE HOST\'S LAW: `landing` stands a ward where the site law would and names the rule it breaks; `firstFloor` the floor nearest the first ward, a step past every ward and on its storey (its heart would wake it at the boot); the bench\'s `?elite` an Elite clone (mutants: the small law unread; the rule unnamed; the ward unread; the nearest unsorted; the storey unread; elite unread)', async () => {
   const D = dungeonOf(seedFor('hold'));
   try {
     const c = 25.6;
@@ -155,8 +156,17 @@ test('AUDIT DLV5-6 THE LAB\'S CHECK IS THE HOST\'S LAW: `landing` stands a ward 
     assert.deepEqual(D.host.landing([c, 0, c - 16.5], 3), { ok: true, y: 0 }, '3.5 m off the wall: a small ward stands');
     assert.equal(D.host.landing([c, 0, c - 16.5], 4).ok, false, '...a large one does not');
     assert.match(D.host.landing([c, 0, c - 16.5], 4).rule, /^(room|level)$/);
+    const [s0] = D.host.sites, R = s0.r + DELVE_WARD_PAD_M + 1, off = (p) => [Math.abs(p[0] - s0.x), Math.abs(p[2] - s0.z)];
     const f = D.host.firstFloor();
     assert.ok(Array.isArray(f) && Math.abs(f[1] - 0.05) < 1e-9, `on the rig's floor (${f})`);
+    assert.ok(Math.hypot(...off(f)) > R && Math.hypot(...off(f)) <= R + DSITE_SMALL.gridM * Math.SQRT2 + 1e-9, `a step past the ward, the nearest such (${f})`);
+    assert.equal(D.host.sites.some((s) => inWard(s, f[0], f[1], f[2])), false);
+    // a ledge 1.2 m up round the ward (the grid's floors near it now a storey of their own): the nearest on its storey
+    const v = [], H = R + 4, L = 1.2, q = [[-H, -H], [-H, H], [H, H], [H, -H]];
+    for (const [dx, dz] of q) v.push(s0.x + dx, L, s0.z + dz);
+    D.collider.addMesh('dungeon', v, [0, 1, 2, 0, 2, 3], [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+    const g = D.host.firstFloor();
+    assert.ok(Math.abs(g[1] - 0.05) < 1e-9 && Math.max(...off(g)) >= H - 1e-9, `the ledge passed by (${g})`);
   } finally { D.host.destroy(); }
   const { benchLocation } = await import('../../src/scenes/delve/delveBench.js');
   const tpl = { name: 'Bedard Laboratory', hasDungeon: true, climate: { worldClimate: 231 }, mapTableData: { mapId: 99, dungeonType: 0 }, exterior: { exteriorData: {} }, dungeon: { recordElement: { header: { locationId: 5 } }, blocks: [{ blockName: 'N0000001.RDB', isStartingBlock: true }, { blockName: 'B0000002.RDB' }] } };

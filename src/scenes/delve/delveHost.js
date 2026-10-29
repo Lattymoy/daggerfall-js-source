@@ -49,6 +49,8 @@ export const DELVE_PREF = 'dungeonEncounters';
 export const DELVE_KEY = 'delve:';
 /** The near line is said this far past the ward (m). */
 export const DELVE_NEAR_M = 6;
+/** DLV6: how far past a ward's edge the lab stands a player (firstFloor). */
+const LAB_STEP_M = 1;
 /** Out of a running Hold's ward this long, the player is told to go back (ms). */
 export const DELVE_AWAY_SAY_MS = 2_000;
 /** A carried flame or weight is held this far before its carrier and this high (m). */
@@ -634,11 +636,16 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
       const got = landDelveSites([{ pos: at, water: b ? blockWaterY(b.layout) : -Infinity }], { probe, doors, enemies: enemyMarks(blocks), items: itemMarks(blocks), fires: [...existing, ...fires], start: null, tally, law: r === DSITE.r ? DSITE : DSITE_SMALL, tier });
       return got.length ? { ok: true, y: got[0].pos[1] } : { ok: false, rule: Object.keys(tally)[0] ?? 'floor' };
     },
-    /** DLV6: the first floor the site law's grid finds (layout order, no border block) - where the lab stands a player whose
-     *  draft names no spot yet (scenes/dungeon.js, `?dungeon=lab`). Null with no probe or no floor. */
+    /** DLV6: where the lab stands a player its link names no spot for (scenes/dungeon.js, `?dungeon=lab`) - the site law's
+     *  grid's floor nearest the first site, on its storey and a step past every ward (`inWard`: its heart would wake it at
+     *  the boot), else the grid's first floor. Null with no probe or no floor. */
     firstFloor() {
-      for (const c of probe ? siteCandidates(blocks) : []) { const f = probe.floor(c.pos); if (f && Number.isFinite(f.y)) return [c.pos[0], f.y + 0.05, c.pos[2]]; }
-      return null;
+      const floors = [];
+      for (const c of probe ? siteCandidates(blocks, DSITE_SMALL.gridM) : []) { const f = probe.floor(c.pos); if (f && Number.isFinite(f.y)) floors.push([c.pos[0], f.y + 0.05, c.pos[2]]); }
+      const s0 = plan.sites[0], past = (p) => plan.sites.every((s) => !inWard({ ...s, r: s.r + LAB_STEP_M }, p[0], p[1], p[2]));
+      const off = (p) => Math.hypot(p[0] - s0.x, p[2] - s0.z);
+      const near = s0 ? floors.filter((p) => past(p) && Math.abs(p[1] - s0.y) < 1).sort((a, b) => off(a) - off(b)) : [];
+      return near[0] ?? floors[0] ?? null;
     },
     /** Where a site's weights' homes, plates and braziers stand (the probes'). */
     spots: (i) => { const s = plan.sites[i]; return s ? { weights: weightSpots(s), plates: weighPlates(s), braziers: brazierSpots(s, runs[i].led?.k || 3) } : null; },

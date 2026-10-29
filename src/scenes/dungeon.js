@@ -201,7 +201,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // This is the host the enter-marker preference was written for; DE1
   // found it applied to the door transition as well, which is the
   // other member and takes the start marker.
-  const spawn = loadedPos ?? bench?.spawn ?? ctx.startSpawn() ?? (bench?.draft ? ctx.delve?.()?.firstFloor?.() : null) ?? [0, 2, 0];   // U21: a loaded game resumes where it was saved; DLV6: the lab where its Rebuild left me, or at its first anchor
+  const spawn = loadedPos ?? bench?.spawn ?? ctx.startSpawn() ?? (bench?.draft ? ctx.delve?.()?.firstFloor?.() : null) ?? [0, 2, 0];   // U21: a loaded game resumes where it was saved; DLV6: the lab where its Rebuild left me, else by its first encounter, past its ward
   const cam = { pos: spawn, yaw: 0, pitch: 0 };
   const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
   const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration

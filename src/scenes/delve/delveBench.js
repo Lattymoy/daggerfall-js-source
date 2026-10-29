@@ -11,7 +11,7 @@ import { dfMeshToModel } from '../../world/meshReader.js';
 import { classicBillboardSize } from '../../world/rmbFlats.js';
 import { CURATED_RECORDS, setCuratedDraft } from '../../world/dungeon/curatedRecords.js';
 import { installCuratedBlocks } from '../../world/dungeon/curatedInstall.js';
-import { labDraftOf, labLocation, labBorders, labRound, labKept } from '../../world/dungeon/curatedLab.js';
+import { labDraftOf, labLocation, labBorders, labKept } from '../../world/dungeon/curatedLab.js';
 
 /** The lab's draft: a shipped record's (`?lab=<id>`), a kept one by its id (`?draft=<id>`), else the open one, else null. */
 export function readLabDraft(params, storage) {
@@ -34,13 +34,11 @@ export function labTemplate(maps, type) {
   }
   return null;
 }
-/** DLV6: where the lab stands me - `?at=x,y,z` (the spot its Rebuild left me on), else the draft's first anchor's heart;
- *  null leaves it to the dungeon's start (a base holds no start marker of its own). */
-export function labSpawn(params, draft) {
+/** DLV6: where the lab stands me - `?at=x,y,z`, the spot its Rebuild left me on; null leaves it to the host's floor by
+ *  the first encounter, outside its ward (scenes/delve/delveHost.js firstFloor - its heart would wake it at the boot). */
+export function labSpawn(params) {
   const raw = String(params.get('at') ?? '').split(',');
-  if (raw.length === 3 && raw.every((v) => v.trim() !== '' && Number.isFinite(Number(v)))) return raw.map(Number);   // an empty field is no 0
-  const a = draft?.anchors?.[0]?.at;
-  return a ? labRound([a[0], a[1] + 0.05, a[2]]) : null;
+  return raw.length === 3 && raw.every((v) => v.trim() !== '' && Number.isFinite(Number(v))) ? raw.map(Number) : null;   // an empty field is no 0
 }
 /**
  * DLV6: how far a thing's origin stands over its foot (m), so the lab sets it ON the floor at my feet - a model's lowest
@@ -80,7 +78,7 @@ export function benchLocation(params, maps, storage = globalThis.localStorage, b
     const template = labTemplate(maps, draft.types[0]);
     if (!template) throw new Error(`the lab's draft: no dungeon of type ${draft.types[0]} to borrow borders from`);
     installCuratedBlocks([draft]);
-    return { location: labLocation(draft, template), draft, spawn: labSpawn(params, draft) };
+    return { location: labLocation(draft, template), draft, spawn: labSpawn(params) };
   }
   if (params.has('spawn')) {
     const [px, py] = String(params.get('spawn')).split(',').map(Number);

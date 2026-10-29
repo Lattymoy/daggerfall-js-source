@@ -52,22 +52,12 @@
   {
     "name": "DLV6-spawn-at-unread",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "  if (raw.length === 3 && raw.every((v) => v.trim() !== '' && Number.isFinite(Number(v)))) return raw.map(Number);   // an empty field is no 0\n",
-    "new": "",
+    "old": "return raw.length === 3 && raw.every((v) => v.trim() !== '' && Number.isFinite(Number(v))) ? raw.map(Number) : null;",
+    "new": "return null;",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
     "why": "the Rebuild's spot forgotten"
-  },
-  {
-    "name": "DLV6-spawn-anchor-unread",
-    "file": "src/scenes/delve/delveBench.js",
-    "old": "const a = draft?.anchors?.[0]?.at;",
-    "new": "const a = null;",
-    "tests": [
-      "test/world/dlv6_blocks.test.js"
-    ],
-    "why": "a lab with an anchor stood at the start"
   },
   {
     "name": "DLV6-foot-sign",
@@ -152,7 +142,7 @@
   {
     "name": "DLV6-bench-spawn-unsaid",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "draft, spawn: labSpawn(params, draft) };",
+    "old": "draft, spawn: labSpawn(params) };",
     "new": "draft };",
     "tests": [
       "test/world/dlv6_blocks.test.js"
@@ -198,5 +188,15 @@
       "test/world/dlv6_blocks.test.js"
     ],
     "why": "a shipped block left out"
+  },
+  {
+    "name": "DLV6-spawn-empty-field",
+    "file": "src/scenes/delve/delveBench.js",
+    "old": "raw.every((v) => v.trim() !== '' && Number.isFinite(Number(v)))",
+    "new": "raw.every((v) => Number.isFinite(Number(v)))",
+    "tests": [
+      "test/world/dlv6_blocks.test.js"
+    ],
+    "why": "an empty field read as 0"
   }
 ]

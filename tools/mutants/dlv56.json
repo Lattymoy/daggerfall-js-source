@@ -424,11 +424,51 @@
   {
     "name": "DLV56-HOST-first-floor",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "if (f && Number.isFinite(f.y)) return [c.pos[0], f.y + 0.05, c.pos[2]];",
-    "new": "if (f && Number.isFinite(f.y)) return [c.pos[0], c.pos[1], c.pos[2]];",
+    "old": "floors.push([c.pos[0], f.y + 0.05, c.pos[2]]);",
+    "new": "floors.push([c.pos[0], c.pos[1], c.pos[2]]);",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
     "why": "the lab stands a fresh draft off its floor"
+  },
+  {
+    "name": "DLV56-HOST-floor-ward-unread",
+    "file": "src/scenes/delve/delveHost.js",
+    "old": "floors.filter((p) => past(p) && Math.abs(p[1] - s0.y) < 1)",
+    "new": "floors.filter((p) => Math.abs(p[1] - s0.y) < 1)",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "the lab stands me on the heart: the ward wakes at the boot"
+  },
+  {
+    "name": "DLV56-HOST-floor-step-lost",
+    "file": "src/scenes/delve/delveHost.js",
+    "old": "!inWard({ ...s, r: s.r + LAB_STEP_M }, p[0], p[1], p[2])",
+    "new": "!inWard(s, p[0], p[1], p[2])",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "stood on the ward's very edge"
+  },
+  {
+    "name": "DLV56-HOST-floor-unsorted",
+    "file": "src/scenes/delve/delveHost.js",
+    "old": ".sort((a, b) => off(a) - off(b))",
+    "new": "",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "the grid's first floor past the wards, far from the encounter"
+  },
+  {
+    "name": "DLV56-HOST-floor-storey-unread",
+    "file": "src/scenes/delve/delveHost.js",
+    "old": "past(p) && Math.abs(p[1] - s0.y) < 1)",
+    "new": "past(p))",
+    "tests": [
+      "test/world/dlv56_audit.test.js"
+    ],
+    "why": "stood on a ledge or a storey off the encounter's"
   }
 ]

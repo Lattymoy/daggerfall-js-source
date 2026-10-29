@@ -84,6 +84,11 @@ const sites = await page.evaluate(() => window.__delve()?.sites ?? null);
 if (!sites) await fail('no encounter host on the context');
 console.log(`${region} / ${name}: ${sites.length} site(s)`);
 if (!sites.length) await fail('the plan stood no site');
+if (LAB) {   // DLV6: where the lab stood me and what it said (no ward woken at the boot), then its panel off the pictures
+  const boot = await page.evaluate(() => window.__player?.pos ?? null);
+  console.log(`  lab boot: at ${JSON.stringify(boot?.map((v) => Math.round(v * 10) / 10))}, said "${await say()}", ${JSON.stringify(await state())}`);
+  await page.evaluate(() => document.getElementById('delve-lab')?.remove());
+}
 
 for (const s of sites) {
   const fps0 = await page.evaluate(() => window.__frame);
