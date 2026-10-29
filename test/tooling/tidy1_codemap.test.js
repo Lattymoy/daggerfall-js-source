@@ -42,6 +42,7 @@ test('TIDY1: Come Sail Away lives in its folder', () => {
     'comeSailAwayMap.js', 'comeSailAwayModels.js', 'comeSailAwayWaves.js', 'comeSailAwayWire.js', 'csaBoatMenu.js',
     'csaLoadWind.js',   // PIN MOVED (FIELD BUGS 2026-10-21b SAIL-WIND: a load outdoors never keeps the indoors' wind - the runtime's OnLoad seam, beside it)
     'csaPixel.js',   // PIN MOVED (AUDIT FB1029d A4, NO-PIXEL: a boat's pixel where she has none - out of the runtime's scope, beside it)
+    'ladenRest.js',   // PIN MOVED (FIELD BUGS 2026-10-29e LADEN-REST: a laden boat's swing and way still come to rest - the runtime's rates' seam, beside it)
     'peaceWay.js',   // PIN MOVED (NAVAL-REFIT PEACE-WAY: her way out of a fight - the runtime's own speed seam, beside it)
     'shipBuildsKept.js',   // PIN MOVED (FIRST-VISIT: the port ships' builds kept across launches - the models' loader's, beside it)
   ]);

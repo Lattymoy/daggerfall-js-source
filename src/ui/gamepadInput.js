@@ -278,6 +278,11 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
   const releaseAll = (keep = null) => {
     for (const code of [...held]) if (!keep?.has(code)) { held.delete(code); dispatch('keyup', code); }
   };
+  // AUDIT FB1029e S4: the page let go of every key on blur (ui/input.js letGoOnBlur) - the pad lets go of its own too, so
+  // the next tick presses again whatever is still down, never a held set the host no longer holds
+  const onFocusLost = () => { if (globalThis.document?.visibilityState !== 'visible' || !globalThis.document?.hasFocus?.()) releaseAll(); };
+  globalThis.window?.addEventListener?.('blur', onFocusLost);
+  globalThis.document?.addEventListener?.('visibilitychange', onFocusLost);
   const codeOf = (store, action) => getBinding(store, action) ?? getBinding(store, action, false);
   // PADPLUS1: a pad code down - a button, or an axis key past its half (RT as the RightClick UI button under Plus)
   const padDownIn = (axesNow, code) => !!code && (buttons.has(code) || (code.startsWith('JoystickAxis') && axisKeyDown(axesNow, parseAxisKeyName(code) ?? -1)));
@@ -760,6 +765,6 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
     usingController: () => usingController,
     cursor: () => (cursor ? [cursor[0], cursor[1]] : null),
     held: () => new Set(held),
-    dispose() { capturedHeld.clear(); padHideMouse(false); showPrompts(null); markHover(null); if (P.xbSet !== null) crossbarApi()?.setActive?.(null); cursorRelease(); cursorShow(false); cursorEl?.remove?.(); cursorEl = null; releaseAll(); setControllerLook(false); setPadFamily(null); window.removeEventListener('mousemove', onMouseMove); window.removeEventListener('keydown', onKeyDown, true); globalThis.document?.removeEventListener?.('pointerlockchange', onLockChange); },
+    dispose() { capturedHeld.clear(); padHideMouse(false); showPrompts(null); markHover(null); if (P.xbSet !== null) crossbarApi()?.setActive?.(null); cursorRelease(); cursorShow(false); cursorEl?.remove?.(); cursorEl = null; releaseAll(); setControllerLook(false); setPadFamily(null); window.removeEventListener('mousemove', onMouseMove); window.removeEventListener('keydown', onKeyDown, true); globalThis.document?.removeEventListener?.('pointerlockchange', onLockChange); globalThis.window?.removeEventListener?.('blur', onFocusLost); globalThis.document?.removeEventListener?.('visibilitychange', onFocusLost); },
   };
 }
