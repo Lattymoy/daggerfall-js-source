@@ -13,7 +13,7 @@ import { DUNGEON_TYPES } from '../formats/mapsFile.js';
 
 const CSS = `#delve-lab { position: fixed; right: 10px; top: 10px; width: min(360px, calc(100vw - 32px)); max-height: calc(100vh - 20px);
   overflow: auto; background: rgba(14, 16, 19, 0.92); color: #e9e4d9; font: 12px system-ui, sans-serif; padding: 10px;
-  border: 1px solid #2b323b; z-index: 1000; box-sizing: border-box; }
+  border: 1px solid #2b323b; z-index: 30; box-sizing: border-box; }
 #delve-lab h2 { font-size: 13px; margin: 0 0 6px; } #delve-lab h3 { font-size: 12px; margin: 10px 0 4px; color: #c08a3e; }
 #delve-lab input, #delve-lab select, #delve-lab button { font: inherit; margin: 2px 2px 2px 0; }
 #delve-lab input[type=number] { width: 5.5em; } #delve-lab .row { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }

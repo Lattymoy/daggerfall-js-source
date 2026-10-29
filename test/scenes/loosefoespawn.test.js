@@ -119,8 +119,9 @@ test('SD1: both arms still land on the floor, and still refuse an occupied spot'
 
 test('SD1: the dungeon has a BEHAVIOUR-FREE spawn door, and the quest one is built on it', () => {
   const dc = read('src/scenes/dungeonContext.js');
-  // PIN MOVED (RVN7d: a revenant's record and its lair ride a loose stand too; RVN11c: and a betrayer's turning)
-  assert.match(dc, /async function spawnLooseFoe\(mobileType, position, \{ gender = null, yawRad = null, allied = false, questSpawn = false, loadID = null, level = null, bout = null, eliteFoe = false, revenant = null, lairStand = false, turned = false \} = \{\}\)/);   // ARENA2: a bout fighter's level and its bout; SEARCH1: a searched grave's elite
+  // PIN MOVED (RVN7d: a revenant's record and its lair ride a loose stand too; RVN11c: and a betrayer's turning; DELVE II
+  // DLV3: an encounter's foe asks the `delve` grant kind online)
+  assert.match(dc, /async function spawnLooseFoe\(mobileType, position, \{ gender = null, yawRad = null, allied = false, questSpawn = false, loadID = null, level = null, bout = null, eliteFoe = false, revenant = null, lairStand = false, turned = false, delve = false \} = \{\}\)/);   // ARENA2: a bout fighter's level and its bout; SEARCH1: a searched grave's elite
   // MT-ii: BOTH per-instance fields turn, and the frozen basics row does not - AT THE BUILD (AUDIT OH-F C4: before
   // OnEnemySpawn hears the foe, and again on a rebuild from its record), both of buildFoeAt's arms
   assert.match(dc, /if \(e\?\.allied && entity\) \{ entity\.team = 'PlayerAlly'; entity\.mobileTeam = 'PlayerAlly'; \}/);
