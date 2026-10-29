@@ -2342,16 +2342,19 @@ const service = {
         }[path];
         if (!act) return no('not-found', 404, origin);
         const r = await act();
+        if (progressRoute) await progressSpent(ctx, who.player.id, path, r);   // INT17: a find's ask answered (AUDIT PASS 3)
         if ('error' in r) return json({ error: r.error, ...(Number.isSafeInteger(r.cakes) ? { cakes: r.cakes } : {}), ...(Number.isSafeInteger(r.bowls) ? { bowls: r.bowls } : {}) }, FEST_STATUS[r.error] ?? 400, origin);
         return json(r, 200, origin);
       }
 
       // ═══ STOREFRONT: THE BATTLE PASS ═══════════════════════════════════
       //
-      // bible/06-Systems/Battle-Pass.md: the account's season (its level, tracks, day and challenges), and a deed's find.
+      // bible/06-Systems/Battle-Pass.md: the account's season (its level, tracks, day and challenges), and a deed's find -
+      // AUDIT PASS 3: a progression claim, its seat asked at the door (progress.js PROGRESS_ROUTES)
       if (path === '/v1/pass/mine' || path === '/v1/pass/find') {
         if (request.method !== 'POST') return no('method', 405, origin);
         const r = path === '/v1/pass/mine' ? await passOf(ctx, who.player, env) : await findPass(ctx, who.player, body, env);
+        if (progressRoute) await progressSpent(ctx, who.player.id, path, r);   // INT17: an ask answered
         if ('error' in r) return json({ error: r.error }, BATTLE_PASS_STATUS[/** @type {keyof typeof BATTLE_PASS_STATUS} */ (r.error)] ?? 400, origin);
         return json(r, 200, origin);
       }

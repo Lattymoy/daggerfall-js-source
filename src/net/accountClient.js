@@ -1759,9 +1759,6 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
           ...(Array.isArray(answer.data.glyphsOff) ? { glyphsOff: answer.data.glyphsOff } : {}),   // absent for none
           // WB9g: the aura at my own feet (null for none) - absent from a service before acct38, which says nothing
           ...('aura' in answer.data ? { aura: typeof answer.data.aura === 'string' ? answer.data.aura : null } : {}),
-          // ARMORY: the Aura Armory's kit I wear (null for none) - the mint answers it, and it was never read here, so a kit
-          // worn since the last hello went unsaid to the room (auraHost.issued never heard one); absent before acct209
-          ...('armory' in answer.data ? { armory: typeof answer.data.armory === 'string' ? answer.data.armory : null } : {}),
           // STOREFRONT: the effects kit I wear (null for none) - absent from a service before this release, which says nothing
           ...('effects' in answer.data ? { effects: typeof answer.data.effects === 'string' ? answer.data.effects : null } : {}),
           // WITCH1: the profile icon I wear (null for the face) - absent from a service before acct165, which says nothing

@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 
 import { standService, sessionStorageOf } from '../accountDb.mjs';
 import { ROUTES } from '../../server-account/src/service.js';
+import { PROGRESS_ROUTES, progressSpentOf } from '../../server-account/src/progress.js';
 import { claimMaul, MAUL_RID_RE, MAUL_STAGE_KEY, SEASON_MAUL_STATUS } from '../../server-account/src/seasonClaim.js';
 import { accountSeasonMaul, SESSION_KEY } from '../../src/net/accountClient.js';
 import { passSeasonById } from '../../src/net/battlePassLaw.js';
@@ -60,4 +61,18 @@ test('AUDIT LANE 5 (2): the page\'s door - its session\'s account asks with the 
   assert.deepEqual([again.ok, again.error, again.status], [false, 'taken', 409]);
   const none = await accountSeasonMaul({ fetch: io.fetch, storage: { getItem: () => null } }).claim(rid(9));
   assert.deepEqual(none, { ok: false, error: 'no-session' });
+});
+
+test('AUDIT-STOREFRONT the Maul\'s day is a progression claim, as the season\'s finds are - a registered account with no seated realm character refused before the route reads a word, on the pass\'s stream; its answer spends nothing (mutants: the route no claim)', async (t) => {
+  t.mock.timers.enable({ apis: ['Date'], now: IN_HEART });
+  const s = await standService();
+  assert.deepEqual(PROGRESS_ROUTES['/v1/season/maul'], ['pass', false], 'names no character: the account\'s seat is asked');
+  const bare = await s.registered('Scripted');
+  const no = await s.call('/v1/season/maul', { rid: rid(1) }, bare.secret);
+  assert.deepEqual([no.status, no.body?.error], [403, 'progress-seat'], 'a session\'s secret alone, no game played');
+  assert.equal(s.env.DB._raw.prepare('SELECT COUNT(*) AS n FROM season_mauls').get().n, 0, 'nothing taken');
+  const me = await s.seated('Hammer');
+  const yes = await s.call('/v1/season/maul', { rid: rid(1) }, me.secret);
+  assert.equal(yes.status, 200);
+  assert.deepEqual(progressSpentOf('/v1/season/maul', yes.body), [], 'the UTC day its bound - no bucket spent');
 });

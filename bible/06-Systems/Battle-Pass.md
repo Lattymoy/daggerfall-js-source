@@ -85,6 +85,9 @@ their sum. The share is on top of the day's bound, so it speeds every player.
 | Tonal Booster | $12.99 | +50% | 3 levels |
 | Heart Booster | $24.99 | +100% | 8 levels |
 
+Levels given at once are experience like a find's: past the open stage's top they are kept for the next stage, as
+section 2 says - the Deluxe's five too - and a booster's look says so (`src/ui/passText.js` passBoostText, AUDIT PASS 12).
+
 ## 6. The world
 
 `src/scenes/seasonHost.js`, on the bindings the world host shares with the Starfall's host; its law is
@@ -116,10 +119,12 @@ heard (`relayNowS`).
   and at the middle a Steam Centurion made a raid leader (half again its size, an elite's health and blows, its name),
   three times that health, and Warded, Stormproof and Blade-turning - bring a hammer; never the street's elite roll.
   Every screen names it by its site (`.h`), stands its three traits (`systems/bossTraits.js` bossTraitsMost) and bars
-  it while it is near, and says its fall, with a body. A character whose blow landed on it then asks the account service
-  for **the Resonant Maul** (`POST /v1/season/maul`, `server-account/src/seasonClaim.js`): yes once a UTC day an account,
-  inside the Heart stage, on the service's clock. The Maul is minted on that yes alone: offline, signed out or refused,
-  none.
+  it while it is near, and says its fall, with a body.
+- **The Maul's day.** A character whose blow landed on the Colossus then asks the account service for **the Resonant
+  Maul** (`POST /v1/season/maul`, `server-account/src/seasonClaim.js`): yes once a UTC day an account, inside the Heart
+  stage, on the service's clock. The Maul is minted on that yes alone: offline, signed out or refused, none. The ask is a
+  progression claim, as the season's finds are (`progress.js` PROGRESS_ROUTES, the `pass` stream): the account's seated
+  realm character is asked, and a session's secret alone is refused (AUDIT-STOREFRONT).
 - **The Resonant Maul** (`src/systems/pass/resonantMaul.js`). A Dwarven warhammer of the Legendary rung: +30% damage, +12
   Strength, +25 Blunt Weapon, Resist Shock while held, and Resonance - +40% against the season's constructs, a bane under
   Dragonsbane's 50, inside THE CEILING HOLDS. **Unrolled**: lawful wherever the item law reads it (the account service's
@@ -147,7 +152,39 @@ no easier.
 
 ## 7. The window
 
-The shop's first section is the pass: the season's name and its stage, the days left, the level and the bar to the next,
-the fifty levels in two rows (free above, premium below) with each reward drawn in its own paint, the stage's
-challenges with their counts, and the pass's three buys and three boosters. A level reached is said once on the screen
-with its rewards.
+The shop's first section is the pass: the season's name and story and its three stages, each with the day it opens or
+the level it opens to; the account's level, the bar to the next, the day's experience and its booster's share; the track,
+a column for each level with a reward (eleven of the fifty), free above and premium below, each reward drawn in its own
+paint; the Deluxe Pass's own three; the open stage's challenges with their counts; and a button to the Pass Boosters tab.
+The Premium and Deluxe Passes are sold below the section, the three boosters on their own tab and the Seasonal Collector
+under Bundles. A level reached is said once on the screen with its rewards.
+
+## 8. AUDIT PASS (2026-10-29)
+
+The pass read cold (audit lane 4). Each finding below is fixed where it starts and pinned by a test that failed before
+the fix: `test/systems/pass/passclient.test.js`, `test/server/storefront_passaudit.test.js`, `ql11_acts.test.js` and
+`witch1_client.test.js`. The mutants are `tools/mutants/storefront_passaudit.json`. The audit's other findings (4-7
+and 10) are the shop's.
+
+- **1. The Ketch's lift and cells were endgame finds.** `ketch-boarded` and `ketch-cell-banked` are said again at will
+  with no receipt behind them: seven rides filled a day and paid an endgame challenge. The acts no find pays are now one
+  list in the leaf, `systems/questlines/qlActs.js` ACT_NOT_FOUND, read by the pass and the Witches' Festival alike (each
+  had its own copy). The Warden felled stays the Ketch's endgame find, and the questlines still hear both acts.
+- **2. A page loaded before the opening never played the season.** `open` was the switch and the season's days, read
+  once when the page bound, so `false` outlived the opening. `open` is now the switch's word alone (`battlePass.js`
+  passOf), since both ends read the days from the law. A page told the pass is shut rests ten minutes and reads it again
+  on its next deed, so a switch turned on is heard without a reload.
+- **3. A find needed no game.** `/v1/pass/find` is a progression claim (`progress.js` PROGRESS_ROUTES): asked of the
+  account's seated realm character, which an online page always holds, and spent on a stream of its own, `pass` - a
+  day's 2,000 asks for each hour of play. The silver finds' stream (twenty a day) would refuse an honest page. A line
+  staff wrote before the stream existed reads its first line for it (`06-Systems/Integrity-Arc.md` INT17).
+- **8.** A find answers its season, tracks and share, so a level reached after a purchase is told with its premium reward.
+- **9.** The read at bind runs in the finds' queue: a late answer put the level back, and the next level was said twice.
+- **11.** A refusal stands the page back (`net/askRest.js` ASK_REST_MS): the day's asks spent until the next UTC day, a
+  find called closed, a rate or an empty bucket a minute, a seat or hold refused ten minutes.
+- **12.** Section 7 says what the window draws, and section 5 that levels at once wait past the open stage's top.
+- **The Witches' Festival's twins of 2 and 3.** The festival's finds had both faults. Its `open` is now the switch's word
+  alone too (`festival.js` festivalOf), and `/v1/festival/find` is a progression claim on a stream of its own,
+  `festival` - an honest page asks a Soul Cake and a pass find for one kill, so a shared bucket would refuse it. The
+  rest after a shut word or a refusal is one rule for both pages, `src/net/askRest.js` (createAskRest), as the acts no
+  find pays are one list. A town's `open` is no longer taken as the switch's word: it counts the festival's days too.

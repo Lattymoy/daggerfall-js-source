@@ -259,5 +259,14 @@
     "tests": [
       "test/systems/pass/fissureroads.test.js"
     ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-mauls-day-no-claim",
+    "file": "server-account/src/progress.js",
+    "old": "  '/v1/season/maul': Object.freeze(['pass', false]),\n",
+    "new": "",
+    "tests": [
+      "test/server/seasonmaul_service.test.js"
+    ]
   }
 ]

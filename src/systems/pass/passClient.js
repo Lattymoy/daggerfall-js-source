@@ -8,11 +8,12 @@
 import { accountBattlePass } from '../../net/accountClient.js';
 import { appStorage } from '../appStorage.js';
 import { registerPlayerKillListener } from '../playerKills.js';
-import { hearActs, ACT_KINDS } from '../questlines/qlActs.js';
+import { hearActs, ACT_KINDS, ACT_NOT_FOUND } from '../questlines/qlActs.js';
 import { KNIGHT_CITY_WATCH } from '../../characters/mobile/mobileTypes.js';
 import { foeFindSource } from '../festival/festivalFoes.js';
 import { isPassSource, passSeasonAt, PASS_REWARDS, PASS_DAY_XP, PASS_CONSTRUCT_MOBILES } from '../../net/battlePassLaw.js';
 import { utcDay } from '../../net/marksLaw.js';
+import { createAskRest } from '../../net/askRest.js';
 
 /** The kill listener's and the act hearer's name. */
 export const PASS_FIND = 'pass-find';
@@ -30,13 +31,23 @@ const _hear = new Set();
 let _version = 0;
 const changed = () => { _version++; for (const fn of _hear) { try { fn(); } catch { /* a listener's throw is not ours */ } } };
 const account = () => _api?.me?.() ?? null;
+/** AUDIT PASS 2, 11: the page's rest after the service said shut or refused a find - the festival's rule too (net/askRest.js). */
+const _rest = createAskRest({ nowMs: () => _doors.nowMs(), account });
+let _chain = Promise.resolve();
+/** AUDIT PASS 9: ONE QUEUE - the season's reads and the finds one after another, so no answer lands over a newer one. */
+function queued(/** @type {() => Promise<any>} */ fn) {
+  const p = _chain.then(fn, fn);
+  _chain = p.catch(() => 0);
+  return p;
+}
 
 /** THE HOST'S DOORS: `online()` the world plays online, `nowMs()` the shared clock, `onEvent(e)` a level reached (`{ kind:
- *  'level', level, grants }`), a challenge paid (`{ kind: 'challenge', key, xp }`) or the day's experience spent (`{ kind:
+ *  'level', level, grants }`), a challenge paid (`{ kind: 'challenge', key }`) or the day's experience spent (`{ kind:
  *  'full' }`). Null unbinds. Answers the door to the service (or null). */
 export function bindPass(doors = null) {
   _doors = doors ? { ...NO_DOORS, ...doors } : NO_DOORS;
   _api = doors ? (doors.api ?? accountBattlePass({ fetch: (/** @type {any} */ u, /** @type {any} */ i) => globalThis.fetch(u, i), storage: appStorage() })) : null;
+  _rest.reset();
   if (doors) refreshPass().catch(() => {});
   return _api;
 }
@@ -45,12 +56,12 @@ export function hearPass(/** @type {() => void} */ fn) { _hear.add(fn); return (
 export const passVersion = () => _version;
 /** The account's season as last heard (null: unheard, or another account's). */
 export const passState = () => (_stateOf && _stateOf === account() ? _state : null);
-/** Whether this page plays the pass now: bound and online, a registered account, a season open on the shared clock,
- *  and the service not saying it is shut for this account. */
+/** Whether this page plays the pass now: bound and online, a registered account, a season open on the shared clock, and
+ *  no refusal standing it back. AUDIT PASS 2: a season the service said shut is read again (askPassFind), never shut for
+ *  the page - a page loaded before the opening or before the switch turned on asked nothing until it was reloaded. */
 export function passLive() {
   if (!_api || !_doors.online() || !account() || _api.guest?.()) return false;
-  if (!passSeasonAt(_doors.nowMs())) return false;
-  return passState()?.open !== false;
+  return !!passSeasonAt(_doors.nowMs()) && !_rest.resting();
 }
 
 /** The season's answer taken in - its level before and after told as a level reached, with the rewards on it. */
@@ -75,29 +86,32 @@ export function grantsAt(/** @type {any} */ state, /** @type {number} */ level) 
   return rewards.filter((r) => r.level === level && (r.track === 'free' || (r.track === 'premium' && state?.tracks?.premium))).map((r) => r.grant);
 }
 
-/** Ask the service for the account's season. Answers whether it was heard. */
-export async function refreshPass() {
+/** The account's season read, off the queue (its own steps call it). Answers whether it was heard. */
+async function readPass() {
   if (!_api || !account() || _api.guest?.()) return false;
   const r = await _api.mine().catch(() => null);
   if (!r?.ok) return false;
   learn(r.data, false);
+  _rest.heard(r.data?.open);
   return true;
 }
+/** Ask the service for the account's season, queued with the finds. Answers whether it was heard. */
+export const refreshPass = () => queued(readPass);
 
-let _chain = Promise.resolve();
 /** ASK FOR A FIND: `source` (battlePassLaw PASS_SOURCES), queued behind the asks before it. Answers the experience gained. */
 export function askPassFind(/** @type {string} */ source) {
   if (!isPassSource(source) || !passLive()) return Promise.resolve(0);
-  const run = async () => {
-    if (!passState()) await refreshPass();   // a level reached is told against the level before it: read it first
+  return queued(async () => {
+    if (!passLive()) return 0;   // a refusal ahead of it in the queue stood the page back
+    // a level reached is told against the level before it: read it first; and a season said shut, again
+    const due = _rest.due(passState()?.open);
+    if ((due || !passState()) && !(await readPass()) && due) { _rest.unheard(); return 0; }
+    if (passState()?.open === false) return 0;
     const r = await _api.find(source).catch(() => null);
-    if (!r?.ok) return 0;
+    if (!r?.ok) { _rest.refused(r?.error); return 0; }   // the deeds after it ask nothing while it stands
     learn(r.data, true);
     return Number.isSafeInteger(r.data?.gained) ? r.data.gained : 0;
-  };
-  const p = _chain.then(run, run);
-  _chain = p.catch(() => 0);
-  return p;
+  });
 }
 /** A DFU quest of mine done (scenes/quest/questBridge.js onQuestEnded), and a bounty of mine paid (scenes/bountyHost.js). */
 export function passQuestEnded(/** @type {any} */ q) { if (q?.questSuccess) askPassFind('quest'); }
@@ -116,9 +130,8 @@ registerPlayerKillListener(PASS_FIND, (/** @type {any} */ entity) => {
   _asked.add(entity);
   askPassFind(source);
 });
-/** ONE DEED, ONE FIND (the festival's law): an elite foe's fall is its kill's find, and the acts one turn says are one deed;
- *  a Wyrd Sister's window opened is no deed. */
-const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain', 'wyrd-met']);
+/** ONE DEED, ONE FIND (the festival's law): the acts one turn says are one deed, and the acts that are none are the leaf's
+ *  one list (qlActs.js ACT_NOT_FOUND - an elite's fall, a Wyrd Sister met, the Ketch's lift and its cells). */
 let _actTurn = /** @type {Set<string>|null} */ (null);
 hearActs(PASS_FIND, (/** @type {string} */ kind) => {
   const g = ACT_KINDS[/** @type {keyof typeof ACT_KINDS} */ (kind)];
@@ -130,4 +143,4 @@ hearActs(PASS_FIND, (/** @type {string} */ kind) => {
 });
 
 /** For the tests: forget everything. */
-export function _resetPassClientForTests() { _doors = NO_DOORS; _api = null; _state = null; _stateOf = null; _fullSaid = ''; _chain = Promise.resolve(); _hear.clear(); }
+export function _resetPassClientForTests() { _doors = NO_DOORS; _api = null; _state = null; _stateOf = null; _fullSaid = ''; _chain = Promise.resolve(); _hear.clear(); _rest.reset(); }

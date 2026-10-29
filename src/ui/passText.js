@@ -39,12 +39,13 @@ export function passChallengeText(/** @type {string} */ key) {
   const fam = /** @type {keyof typeof CHALLENGE_WORDS} */ (key.slice(key.indexOf('-') + 1));
   return CHALLENGE_WORDS[fam]?.(c.n) ?? '';
 }
-/** A booster's look: its share and the levels it gives. */
+/** A booster's look: its share and the levels it gives - AUDIT PASS 12: and that a level past the open stage's top waits
+ *  for the next stage (passLevelOf holds it there), which a paid line has to say. */
 export function passBoostText(/** @type {string} */ id) {
   const b = Object.hasOwn(PASS_BOOSTS, id) ? PASS_BOOSTS[/** @type {keyof typeof PASS_BOOSTS} */ (id)] : null;
   if (!b) return '';
   const share = t('pass.boost.share', '{pct}% more season experience from every deed, for the whole season.', { pct: Math.round((b.mult - 1) * 100) });
-  return b.levels ? `${share} ${t('pass.boost.levels', 'And {n} levels at once.', { n: b.levels })}` : share;
+  return b.levels ? `${share} ${t('pass.boost.levels', 'And {n} levels at once. Levels past the open stage are kept for the next.', { n: b.levels })}` : share;
 }
 /** The season's notices in the world (scenes/seasonHost.js): a level reached with its rewards, a challenge paid, the day's
  *  experience spent. */

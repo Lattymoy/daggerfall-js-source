@@ -17,6 +17,7 @@ import { ownIcon } from '../../../src/systems/ownGlyphs.js';
 import { FESTIVALS, wareById } from '../../../src/net/festivalLaw.js';
 import { isIliacCard } from '../../../src/systems/iliac/iliacItems.js';
 import { MOBILE_TYPES } from '../../../src/characters/mobile/mobileTypes.js';
+import { ASK_REST_MS } from '../../../src/net/askRest.js';
 
 const store = new Map();
 const mem = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => { store.set(k, String(v)); }, removeItem: (k) => { store.delete(k); } };
@@ -110,6 +111,74 @@ test('AUDIT STAR8 T1 A WYRD SISTER\'S WINDOW OPENED IS NO FIND: `wyrd-met` (The 
   noteAct('raid-repelled');   // the world's family, a deed
   await askFind('sea');   // the queue drains in order
   assert.deepEqual(asked.filter(([n]) => n === 'find').map(([, s]) => s), ['world', 'sea']);
+});
+
+test('AUDIT PASS 1: the Ketch\'s lift ridden and a cell banked are no Soul Cake - said again at will, no receipt behind them; the Warden felled is the endgame\'s find (mutants: the lift a find; a cell a find)', async () => {
+  const { api, asked } = fakeApi({ find: { ok: true, data: { found: 0, cakes: 0 } } });
+  bind(api);
+  for (const kind of ['ketch-boarded', 'ketch-cell-banked', 'ketch-boarded']) { noteAct(kind); await new Promise((r) => setTimeout(r, 0)); }
+  noteAct('warden-felled');
+  await askFind('sea');   // the queue drains in order
+  assert.deepEqual(asked.filter(([n]) => n === 'find').map(([, s]) => s), ['endgame', 'sea']);
+});
+
+test('AUDIT PASS 2, THE FESTIVAL\'S TWIN: a page the service told the festival is shut says `closed` while that word\'s rest stands, then reads it again on its next find and plays once the switch is on - never shut until a reload; one read for the rest, and a shut word kept from before a bind is read again too; a read saying open ends the rest at once (mutants: the shut word kept for the page; the shut state never read again; the read unheard; an open read leaves the rest)', async () => {
+  let on = false;
+  const { api, asked } = fakeApi({ mine: () => ({ ok: true, data: { cakes: 0, open: on } }), find: { ok: true, data: { found: 0, cakes: 0, today: 0 } } });
+  const reads = () => asked.filter(([n]) => n === 'mine').length;
+  const finds = () => asked.filter(([n]) => n === 'find').length;
+  bind(api);
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(festivalShut(), 'closed', 'the switch shut');
+  assert.equal(await askFind('foe'), 0);
+  assert.deepEqual([reads(), finds()], [1, 0], 'no read a deed while it rests');
+  on = true;   // FESTIVAL_OPEN turned on
+  mock.timers.setTime(Date.now() + ASK_REST_MS.long);
+  assert.equal(festivalShut(), null, 'the rest over: no veto');
+  await askFind('foe');
+  assert.deepEqual([reads(), finds()], [2, 1], 'read again, and found');
+  await askFind('foe');
+  assert.deepEqual([reads(), finds()], [2, 2], 'and found on, no read');
+  on = false;
+  await refreshFestival();
+  assert.equal(festivalShut(), 'closed', 'shut again');
+  on = true;
+  await refreshFestival();   // the Wyrd window's own read, say
+  assert.equal(festivalShut(), null, 'a read saying open ends the shut rest at once');
+  // a shut word kept from before a bind whose own read went unanswered: read again on the first find
+  on = false;
+  await refreshFestival();
+  const lost = fakeApi({ mine: () => ({ ok: false, error: 'offline' }), find: { ok: true, data: { found: 0, cakes: 0, today: 0 } } });
+  bind(lost.api);
+  await new Promise((r) => setTimeout(r, 0));
+  lost.asked.length = 0;
+  await askFind('foe');
+  assert.deepEqual(lost.asked.map(([n]) => n), ['mine'], 'read again before any find; unanswered, a brief rest');
+  await askFind('foe');
+  assert.equal(lost.asked.length, 1, 'not a read a deed');
+});
+
+test('AUDIT PASS 3, THE FESTIVAL\'S TWIN: a find refused stands the page back as the pass\'s does - a seat or a hold ten minutes, a rate or an empty bucket a minute; the deeds between ask nothing, queued ones too (mutants: a seat refusal asked every deed; a rate asked every deed; the refusal unheard; the queued finds past it)', async () => {
+  let refuse = null;
+  const { api, asked } = fakeApi({ mine: { ok: true, data: { cakes: 0, open: true } }, find: () => (refuse ? { ok: false, error: refuse, status: 403 } : { ok: true, data: { found: 0, cakes: 0, today: 0 } }) });
+  const finds = () => asked.filter(([n]) => n === 'find').length;
+  bind(api);
+  await new Promise((r) => setTimeout(r, 0));
+  refuse = 'progress-seat';
+  await Promise.all([askFind('foe'), askFind('foe'), askFind('foe')]);
+  assert.equal(finds(), 1, 'the finds queued behind the refusal ask nothing');
+  refuse = null;
+  mock.timers.setTime(Date.now() + ASK_REST_MS.long);
+  for (const [error, ms] of [['progress-seat', ASK_REST_MS.long], ['trade-held', ASK_REST_MS.long], ['rate', ASK_REST_MS.brief], ['progress-play', ASK_REST_MS.brief]]) {
+    refuse = error;
+    const at = finds();
+    await askFind('foe'); await askFind('foe');
+    mock.timers.setTime(Date.now() + ms - 1); await askFind('foe');
+    assert.equal(finds(), at + 1, `${error}: one ask, then rest`);
+    refuse = null;
+    mock.timers.setTime(Date.now() + 1); await askFind('foe');
+    assert.equal(finds(), at + 2, `${error}: asked again after ${ms} ms`);
+  }
 });
 
 test('WITCH1 A SALE: asked by its own id, the piece minted on the answer; a lost answer (no line, or the service\'s fault) kept on the save and asked again by the same id, landing once', async () => {

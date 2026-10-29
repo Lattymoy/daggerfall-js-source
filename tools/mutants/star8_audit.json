@@ -181,9 +181,9 @@
  },
  {
   "name": "AUDIT-STAR8-T1-the-window-a-find",
-  "file": "src/systems/festival/festivalClient.js",
-  "old": "const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain', 'wyrd-met']);",
-  "new": "const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain']);",
+  "file": "src/systems/questlines/qlActs.js",
+  "old": "export const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain', 'wyrd-met', 'ketch-boarded', 'ketch-cell-banked']);",
+  "new": "export const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain', 'ketch-boarded', 'ketch-cell-banked']);",
   "tests": [
    "test/systems/festival/witch1_client.test.js"
   ]
