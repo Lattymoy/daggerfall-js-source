@@ -14,8 +14,8 @@ import { fakeRoom } from '../fakeRoom.mjs';
 import { claimsValid, mintToken, verifyToken, importPublicKeyB64, glyphBitsOf, glyphsOfBits, GLYPHS, tokenBodyOf, TOKEN_BODY_MAX } from '../../src/net/identityToken.js';
 import { validPose, poseChanged, badged, readEffects, KILL_FX_HEIGHT_MAX } from '../../src/net/wire.js';
 import { lerpPose } from '../../src/net/online.js';
-import { noteMyKill, poseFx, createPeerFxPlayer, _resetPeerFxForTests, KILL_FX_NEAR_M, killFxOthersOf } from '../../src/net/peer/peerFx.js';
-import { bindPeerEffects, peerEffectWorn } from '../../src/net/peer/peerEffects.js';
+import { noteMyKill, poseFx, createPeerFxPlayer, _resetPeerFxForTests } from '../../src/net/peer/peerFx.js';
+import { bindPeerEffects, peerEffectWorn, KILL_FX_NEAR_M, killFxOthersOf } from '../../src/net/peer/peerEffects.js';   // PIN MOVED (the wire audit): the Others' choice is the effects' seam's, a mount look's as a kill's
 import { setPlayerDoor } from '../../src/systems/playerDoor.js';
 import { EFFECT_TEXT } from '../../src/ui/effectText.js';
 import { setPref } from '../../src/systems/uiPrefs.js';
@@ -73,13 +73,13 @@ test('STOREFRONT the token: `fx` minted from the wardrobe and verified - a kit o
 test('STOREFRONT the pose: my kill told once - its count, its place (put in the wire\'s frame the first time a pose carries it) and the body\'s height in tenths; bounded on the way in, a place out of bounds or no count no fields; a new kill is a change; eased through, its fields the newest (mutants: the place converted every pose; a kill no change; the height unbounded)', () => {
   _resetPeerFxForTests();
   assert.deepEqual(poseFx((q) => q), {}, 'nothing yet');
-  noteMyKill([10, 2, 30], 1.9);
+  noteMyKill([10, 2, 30], 1.9, [12, 2, 30]);   // PIN MOVED (the wire audit): told from my feet, beside it
   let asked = 0;
   const toWire = (q) => { asked++; return [q[0] + 1000, q[1], q[2] + 2000]; };
   assert.deepEqual(poseFx(toWire), { xk: 1, xp: [1010, 2, 2030], xh: 19 });
   assert.deepEqual(poseFx(toWire), { xk: 1, xp: [1010, 2, 2030], xh: 19 });
   assert.equal(asked, 1, 'put in the wire\'s frame once');
-  noteMyKill([0, 0, 0], 99);
+  noteMyKill([0, 0, 0], 99, [0, 0, 0]);
   assert.equal(poseFx(toWire).xh, KILL_FX_HEIGHT_MAX, 'a giant\'s height, bounded');
   const base = { x: 1, y: 2, z: 3, yaw: 0, pitch: 0 };
   assert.deepEqual(validPose({ ...base, xk: 4, xp: [1, 2, 3], xh: 17 }).xp, [1, 2, 3]);

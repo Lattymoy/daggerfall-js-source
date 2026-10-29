@@ -86,7 +86,7 @@
   {
     "name": "STOREFRONT-the-others-choice-ignored",
     "file": "src/net/peer/peerFx.js",
-    "old": "  if (mode === 'none') return;\n",
+    "old": "  if (!othersEffectShown(q.at)) return;\n",
     "new": "",
     "tests": [
       "test/net/storefront_wire.test.js"
@@ -95,8 +95,8 @@
   {
     "name": "STOREFRONT-a-mount-beat-on-the-cart",
     "file": "src/net/peer/peerFx.js",
-    "old": "const ridden = pose.rd === POSE_RIDE.Horse && !pose.wb ?",
-    "new": "const ridden = pose.rd && !pose.wb ?",
+    "old": "const ridden = pose.rd === POSE_RIDE.Horse && !pose.wb && othersEffectShown(feet) ?",
+    "new": "const ridden = pose.rd && !pose.wb && othersEffectShown(feet) ?",
     "tests": [
       "test/net/storefront_wire.test.js"
     ]

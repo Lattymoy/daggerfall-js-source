@@ -446,7 +446,7 @@ test('COATS1 the wiring: both exterior hosts bear the horses each frame; the rig
   assert.match(rd('player/eyeOfTheBeholder/eotbBody.js'), /horse: last\.horseLook \?\? 0/);
   assert.match(rd('player/eyeOfTheBeholder/eotbBody.js'), /lookedPixels\(s, img\)/);
   assert.match(rd('player/eyeOfTheBeholder/eotbBody.js'), /renderer\?\.evictTexture\?\.\(k\.replace\(':', '_'\)\)/, 'a look left behind on my own rider is let go');
-  assert.match(rd('net/peer/peerRiders.js'), /horse: peerMountLook\(peer\.id, pose\.rc \| 0\)/);   // PIN MOVED (STOREFRONT: the rider's mount look over it)
+  assert.match(rd('net/peer/peerRiders.js'), /horse: peerMountLook\(peer\.id, pose\.rc \| 0, feet\)/);   // PIN MOVED (STOREFRONT: the rider's mount look over it; the wire audit: where it stands, for the Others' effects choice)
   assert.match(rd('net/peer/peerRiders.js'), /lookedPixels\(s, raw\)/);
   assert.match(rd('scenes/world.js'), /rc: riding \? riddenHorseLook\(playerEntity\.items \?\? \[\]\) \|\| undefined : undefined/);
   assert.match(rd('world/wagonModels.js'), /horseLook: \(\) => riddenHorseLook\(items\(\)\)/, 'THE ONE CONSTRUCTION SEAM: both hosts\' pools');

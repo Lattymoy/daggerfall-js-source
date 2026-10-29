@@ -72,8 +72,8 @@
   {
     "name": "ACC3a-8-the-token-carries-what-the-caller-asked-for",
     "file": "server-account/src/index.js",
-    "old": "        const wardrobe = {\n          ...seatT,\n          g: [...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])],\n",
-    "new": "        const wardrobe = {\n          t: body.title,\n          g: body.glyphs,\n",
+    "old": "        const wardrobe = {\n          ...seatT,\n          g: glyphsInOrder([...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])]),",
+    "new": "        const wardrobe = {\n          t: body.title,\n          g: body.glyphs,",
     "tests": [
       "test/server/acc3titles.test.js",
       "test/server/accountworker.test.js"

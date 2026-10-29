@@ -96,7 +96,7 @@
 // worn by a row nobody has looked at since.
 // ═══════════════════════════════════════════════════════════════════
 
-import { TITLES, GLYPHS, AURAS, ICONS, SEAT_TITLES, CHAPTER_TITLES } from '../../src/net/identityToken.js';
+import { TITLES, GLYPHS, AURAS, ICONS, SEAT_TITLES, CHAPTER_TITLES, glyphsInOrder } from '../../src/net/identityToken.js';
 import { insigniaHeld, insigniaKeys } from '../../src/net/insignia.js';   // WB9g: the Broker's insignia - a title and an aura bought
 import { patreonTitlesOf } from './patreon.js';   // PATREON-LINK: a Patreon tier's title, held by the pledge
 import { SD_HONOUR_TITLE, SD_HONOUR_AURA } from './sds.js';   // SD9b: the Hour's grants on the row
@@ -535,8 +535,9 @@ export function auraRefusal(aura, player, env, nowS = nowSecs()) {
   return aurasHeld(player, env, nowS).includes(aura) ? null : 'not-held';
 }
 
-/** THE GLYPHS THAT ARE TRUE OF THIS PLAYER, in a fixed order. GLYPH-WEAR: a player may take one off (glyphsHidden),
- *  which hides it and nothing more - this list is still what is true, and what the rights read. */
+/** THE GLYPHS THAT ARE TRUE OF THIS PLAYER, in GLYPHS' order - the order the token's mask hands the room (STOREFRONT,
+ *  the wire audit: identityToken.js glyphsInOrder). GLYPH-WEAR: a player may take one off (glyphsHidden), which hides
+ *  it and nothing more - this list is still what is true, and what the rights read. */
 export function glyphsOf(player, env, nowS) {
   const on = [];
   if (Number.isFinite(player?.created_at) && nowS - player.created_at < SPROUT_S) on.push('sprout');
@@ -546,7 +547,7 @@ export function glyphsOf(player, env, nowS) {
   if (player?.arena?.champion === true) on.push('laurel');   // ARENA4: the laurel, true of the season's #1 while they hold it
   for (const g of shopKeys(player, 'glyph')) if (!on.includes(g)) on.push(g);   // SHOP: the Origin, bought - true of the account that paid for it
   for (const g of passKeys(player, 'glyph', nowS)) if (!on.includes(g)) on.push(g);   // STOREFRONT: the Battle Pass's, reached
-  return on;
+  return glyphsInOrder(on);
 }
 
 /** GLYPH-WEAR (2026-10-02, Mac: "can we make it where players can also equip/unequip their glyphs"): THE GLYPHS THIS
