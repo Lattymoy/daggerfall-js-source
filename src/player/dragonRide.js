@@ -28,6 +28,9 @@ let _cruise = null;
 let _over = Infinity;   // m over the ground or the sea under the rider, the last step's
 /** @type {((what: 'took-off' | 'landed') => void) | null} */
 let _heard = null;
+/** DRAGON5c: horse care's word on its breath (systems/upkeep/upkeepRuntime.js) - winded, it will not take off, and aloft it glides. */
+let _windedSrc = /** @type {(() => boolean) | null} */ (null);
+export function setDragonWindedSource(fn) { _windedSrc = typeof fn === 'function' ? fn : null; }
 
 /** One motor step. @param {number} dt @param {any} motor @param {any} input */
 export function dragonRideStep(dt, motor, input) {
@@ -36,9 +39,10 @@ export function dragonRideStep(dt, motor, input) {
   const grounded = !!motor?.grounded;
   _mounted = mounted;
   _over = heightOver(motor);
-  if (_cruise === 'cruise' && mounted && !flight.aloft() && flight.lift()) _heard?.('took-off');   // DRAGON6: a flown journey takes it up
+  const winded = !!_windedSrc?.();   // DRAGON5c
+  if (_cruise === 'cruise' && mounted && !winded && !flight.aloft() && flight.lift()) _heard?.('took-off');   // DRAGON6: a flown journey takes it up (DRAGON5c: never winded)
   const wasAloft = flight.aloft();
-  const what = flight.step(dt, { mounted, jump: !!input?.jump, grounded });
+  const what = flight.step(dt, { mounted, jump: !!input?.jump, grounded, winded });
   if (_cruise === 'down' && !flight.aloft()) _cruise = null;
   if (what === 'landed' && wasAloft && !mounted && !grounded) _settling = true;   // off it in the air: set down
   if (_settling && (grounded || mounted)) _settling = false;
@@ -49,7 +53,7 @@ export function dragonRideStep(dt, motor, input) {
 registerRideStep(dragonRideStep);
 registerFlySpeedMod('dragonMount', flight.flyMult);
 registerFlySink('dragonMount', () => (_settling ? DRAGON_SET_DOWN_SINK : flight.sink()));
-registerFlyHold(() => (!flight.aloft() || !_mounted ? null : _cruise === 'cruise' ? cruiseHold(_over) : _cruise === 'down' ? -1 : null));
+registerFlyHold(() => (!flight.aloft() || !_mounted || _windedSrc?.() ? null : _cruise === 'cruise' ? cruiseHold(_over) : _cruise === 'down' ? -1 : null));   // DRAGON5c: winded, the glide's sink rules
 
 /** m over the ground or the sea under the motor's feet (Infinity where neither is known). @param {any} motor */
 function heightOver(motor) {

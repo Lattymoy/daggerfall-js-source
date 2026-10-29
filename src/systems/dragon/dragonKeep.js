@@ -116,6 +116,24 @@ export const DRAGON_KEEP_TEXT = Object.freeze({
   bagsOf: (name) => t('dragon.keep.bagsOf', '{name}\'s saddlebags', { name }),
 });
 
+/** DRAGON5c: its care's words (systems/upkeep/upkeepRuntime.js) - horse care's, said of the dragon. */
+export const DRAGON_CARE_TEXT = Object.freeze({
+  get winded() { return t('dragon.care.winded', 'Your dragon is winded. It will not gallop or take off until it has its breath back.'); },
+  get rested() { return t('dragon.care.rested', 'Your dragon has its breath back.'); },
+  get hungry() { return t('dragon.care.hungry', 'Your dragon is hungry.'); },
+  get starving() { return t('dragon.care.starving', 'Your dragon is too weak to gallop. Feed it Dwarven Oil.'); },
+  ateOnTheRoad: (n) => t('dragon.care.ateOnTheRoad', '{n, plural, one {Your dragon drank a flask of Dwarven Oil from your packs.} other {Your dragon drank # flasks of Dwarven Oil from your packs.}}', { n }),
+  get none() { return t('dragon.care.none', 'You have no dragon.'); },
+  get notHere() { return t('dragon.care.notHere', 'Your dragon is not here to feed.'); },
+  get yourDragon() { return t('dragon.care.yourDragon', 'Your dragon'); },
+  feed: (n) => t('dragon.care.feed', 'Feed Dwarven Oil ({n})', { n }),
+  get feedTip() { return t('dragon.care.feedTip', 'A flask of Dwarven Oil, a day\'s food'); },
+  get full() { return t('dragon.care.full', 'It is not hungry'); },
+  get breath() { return t('dragon.care.breath', 'Breath'); },
+  get windedLine() { return t('dragon.care.windedLine', 'Winded. It will not gallop or take off until it has its breath back.'); },
+  get stats() { return t('dragon.care.stats', 'Stats'); },
+});
+
 /** The Stable page's card (ui/holdingsPages.js): its state's chip and line, its acts, its look. */
 export const DRAGON_KEEP_CARD = Object.freeze({
   get riding() { return t('dragon.card.riding', 'Riding'); },

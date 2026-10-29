@@ -205,10 +205,12 @@ A tamed dragon is a third mount beside the horse and the cart (`06-Systems/Horse
 - **Storage**: saddlebags of `DRAGON_BAGS_KG` (1,000 kg - between the Small Cart and the Open Wagon), a storage beside
   the pack, opened by activating it (Steal mode or the plaque's row) or from the Stable page while mounted or within 9 m
   of it. They save with the character, and the judge, the id ledger and customs read them as a held list.
-- **Upkeep** is horse care's own law (`systems/steedCare.js`): its four stats from its seed, its bond, its hunger and its
-  breath, in the player's tier (Off, Boons, Hard). It eats **Dwarven Oil**, sold at every Stable, 24 hours of it a
-  flask. Its breath is spent galloping and flying; a winded dragon cannot take off, and one winded in the air glides
-  down to land.
+- **Upkeep** is horse care's own law (`systems/steedCare.js`): its four stats from its seed (its tame id's last four hex),
+  its bond and hunger on its item (`horseBond`, `horseFed`), its breath, in the player's tier (Off, Boons, Hard). It
+  drinks **Dwarven Oil** alone, sold at every Stable (online behind `DWARVEN_OIL_ONLINE`, REST6's law), 24 hours of it a
+  flask, from the pack, then its saddlebags. Waiting or away it hunts: hungry at worst, never starving. On the ground it
+  walks, and gallops on its breath; flight spends its breath too. A winded dragon will not gallop or take off, and one
+  winded in the air glides down to land.
 - **Walk or fly.** On the ground it is ridden as a horse (`player/motor.js` ride base 375). **Hold jump** for
   `TAKEOFF_HOLD_S` (0.4 s) to take off. In the air it flies 25 m/s where the player looks; jump climbs, crouch dives,
   and it lands when it meets the ground. It flies outdoors only: a door dismounts as a horse's does. Off it in the air
@@ -373,6 +375,17 @@ change). The transport window, the summon key and the Stable page ask its door. 
 
 PINS MOVED (DRAGON5b): the race's rows (`hard2_activationrace`), the foes frame's test (`hcc_hosts`); fourteen records
 re-aimed by content. ROOM: PARTY-TRAVEL's fare bag moved out of `bootWorld` first (`01-Overview/Host-Split.md`).
+
+**DRAGON5c - its care (2026-10-29).** Horse care's law takes the dragon: `steedCare.js` reads its seed off its tame id
+(`dragonMount.js` dragonSeedOf), feeds it Dwarven Oil alone (`eatsFood`; the oil's row `upkeepItemRows.js` 1712, a Glass
+Bottle's picture) and keeps it by `tendSteed`, tendHorses' body made one steed's. `upkeepRuntime.js` keeps its breath -
+spent by a gallop, or by flight (`dragonRide.js` dragonAloft) - and answers its gallop gate, walk, pace, HUD bar, card and
+feed; its winded word reaches the flight (`setDragonWindedSource`), which then neither takes off nor cruises, and glides.
+The item law takes its bond and food on it. Pinned by `test/net/dragon/dragon5c_care.test.js` (7);
+`tools/mutants/dragon5c.json`, 20 dead.
+
+PINS MOVED (DRAGON5c): the upkeep block (`steed1_horsecare`), the Stable's stock (`merchantyards1`), the hosts' gallop
+(`steed1_horsecare`); ten records re-aimed by content; the oil's row name counted English (`l10n4_hardcoded`).
 
 **DRAGON6 - the journey flown (2026-10-29).** The travel map prices a dragon owner's trip at `DRAGON_TRANSPORT_MODIFIER`
 (64), every pixel at the land's unhindered charge, sea and peaks too: no fare, no Storm Season. Online a map's pick is the

@@ -276,6 +276,8 @@ export function createDragonKeep(deps) {
   }
   const door = {
     ride, call, sendAway, rename, openBags, model,
+    /** DRAGON5c: its saddlebags' list (the upkeep feeds it from them). */
+    bags: () => keep()?.bags ?? [],
     /** The summon key calls it first when it was the last ridden, or there is no horse and no wagon to call. */
     summonsFirst: () => { const k = keep(); return !!k && (k.last || !(hasHorse(items()) || hasCart(items()))); },
   };

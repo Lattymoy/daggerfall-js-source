@@ -291,7 +291,8 @@ export function itemFindings(v, opts = {}) {
   //    (WAGON-PRICE: one bought before the price rose stays lawful) ──
   if ((has(item, 'wagonKind') || has(item, 'wagonLook') || has(item, 'wagonEntry')) && item.templateIndex !== TRANSPORT_SMALL_CART) out.add('wagon');
   if (has(item, 'wagonKind') && item.wagonKind !== 'cart' && !(item.value >= (WAGON_KINDS[item.wagonKind]?.floor ?? Infinity))) out.add('wagon');
-  if (['horseCoat', 'horsePattern', 'horseLegs', 'horseSeed', 'horseBond', 'horseFed'].some((k) => has(item, k)) && item.templateIndex !== TRANSPORT_HORSE) out.add('horse');   // COATS1: a horse's look on DFU's Horse alone; STEED1: and its bond and its food
+  if (['horseCoat', 'horsePattern', 'horseLegs', 'horseSeed'].some((k) => has(item, k)) && item.templateIndex !== TRANSPORT_HORSE) out.add('horse');   // COATS1: a horse's look on DFU's Horse alone
+  if (['horseBond', 'horseFed'].some((k) => has(item, k)) && item.templateIndex !== TRANSPORT_HORSE && !isDragonMount(item)) out.add('horse');   // STEED1: its bond and its food; DRAGON5c: the tamed dragon's too (horse care's law)
   // ── DRAGON5: a tame's id and look on the dragon's own template alone, and that template a tame's (the judge asks its row) ──
   if ((has(item, 'dragonId') || has(item, 'dragonLook')) && !isDragonMount(item)) out.add('dragon');
   if (isDragonMount(item) && !dragonMountWellFormed(item)) out.add('dragon');

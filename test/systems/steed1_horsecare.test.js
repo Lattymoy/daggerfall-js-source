@@ -421,8 +421,8 @@ test('STEED1 THE ITEM: `horseBond` (tenths, 1..1000) and `horseFed` (a minute, 1
   assert.deepEqual(rows.filter((r) => ['Speed', 'Stamina', 'Endurance', 'Strength', 'Bond'].includes(r.label)).map((r) => [r.label, r.text]),
     [['Speed', String(born.speed)], ['Stamina', String(born.stamina)], ['Endurance', String(born.endurance)], ['Strength', String(born.strength)], ['Bond', 'Familiar (42)']]);
   assert.match(itemStatRows(oats()).map((r) => r.text).join(' '), /A day’s food for a horse/);
-  assert.deepEqual(UPKEEP_ITEM, { Oats: 1710, WagonKit: 1711 });
-  assert.deepEqual(UPKEEP_ITEM_ROWS.map((r) => [r.index, r.name, r.rarity, r.stackable]), [[1710, 'Sack of Oats', 20, true], [1711, 'Wagon Repair Kit', 20, true]]);
+  assert.deepEqual(UPKEEP_ITEM, { Oats: 1710, WagonKit: 1711, DwarvenOil: 1712 });   // PIN MOVED (DRAGON5c): the tamed dragon's Dwarven Oil, the block's third
+  assert.deepEqual(UPKEEP_ITEM_ROWS.map((r) => [r.index, r.name, r.rarity, r.stackable]), [[1710, 'Sack of Oats', 20, true], [1711, 'Wagon Repair Kit', 20, true], [1712, 'Dwarven Oil', 20, true]]);
   assert.equal(UPKEEP_ITEMS_ONLINE, true, 'UPKEEP-ONLINE: the templates shipped with #791 and every release since - online the yards sell them');
   assert.deepEqual([upkeepItemsAvailable(false), upkeepItemsAvailable(true)], [true, true]);
   assert.deepEqual(itemFindings({ ...oats(5), value: 4 }), []);
@@ -482,7 +482,7 @@ test('STEED1 THE HOSTS (world.js, exterior.js): the upkeep built before the mod\
     assert.match(s, /setGallopGate\(\(mode, mods\) => upkeep\.gallopGate\(mode, mods\)\);\n\s*registerUpkeepUses\(upkeep, \{/, host);
     assert.match(s, /player\.rideSpeedScale = upkeep\.rideScale\(player\.transportMode, wagonLoadShare\(\)\);[^\n]*\n\s*playerBlowFrame\(\{ motor: player,[^\n]*\n\s*if \(_overlayHeld[^\n]*player\.holdFrame\(\);/, `${host}: the pace before the step (and before its blow frame - TELL6e's and DISC8-G's order kept)`);
     assert.match(s, /_surfPath = !!_surf\.path;\n[\s\S]{0,400}?const odo = player\.odometer\?\.h \?\? 0, metres = _upkeepOdo == null \? 0 : Math\.max\(0, odo - _upkeepOdo\);/, `${host}: the metres off the odometer, after the surface`);
-    assert.match(s, /const galloping = !_overlayHeld && mode === TRANSPORT_MODES\.Horse && !!player\.isRunning && !player\.standing;\n\s*upkeep\.tick\(gamePaused\(\) \? 0 : dt, \{\n\s*mode, galloping, moving: !player\.standing,/, host);   // STEED-UI: the gallop named once, for the upkeep and the saddle panel
+    assert.match(s, /const galloping = !_overlayHeld && \(mode === TRANSPORT_MODES\.Horse \|\| mode === TRANSPORT_MODES\.Dragon\) && !!player\.isRunning && !player\.standing;[^\n]*\n\s*upkeep\.tick\(gamePaused\(\) \? 0 : dt, \{\n\s*mode, galloping, moving: !player\.standing,/, host);   // STEED-UI: the gallop named once, for the upkeep and the saddle panel   // PIN MOVED (DRAGON5c): the dragon gallops on horse care's breath
     assert.match(s, /running: player\.isRunning && !player\.standing && upkeep\.riderPaysGallop\(player\.transportMode\),/, `${host}: the gallop the horse's breath`);
     assert.match(s, /steed: [^\n]*upkeep\.bar\(player\.transportMode\) : null,/, `${host}: the HUD's bar`);
     assert.match(s, /upkeep, pass: upkeepPass \}\),/, `${host}: the Stable page's upkeep and its hour`);

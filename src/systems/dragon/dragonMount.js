@@ -35,6 +35,9 @@ export const isDragonMount = (/** @type {any} */ it) => it?.templateIndex === DR
 /** The first dragon in a list, or null. */
 export const dragonMountOf = (/** @type {any[] | null | undefined} */ items) => (items ?? []).find(isDragonMount) ?? null;
 export const hasDragon = (/** @type {any[] | null | undefined} */ items) => !!dragonMountOf(items);
+/** DRAGON5c: a dragon's seed for horse care's law (systems/steedCare.js bornStats) - its tame id's last four hex, 1..65535:
+ *  the dragon itself, as a horse's seed is the horse. 0 for anything else. */
+export const dragonSeedOf = (/** @type {any} */ it) => (isDragonMount(it) && typeof it.dragonId === 'string' && DRAGON_ID_RE.test(it.dragonId) ? Math.max(1, parseInt(it.dragonId.slice(-4), 16)) : 0);
 /** A dragon item's look: 1 the Aetherbright, else the brass. */
 export const dragonLookOfItem = (/** @type {any} */ it) => (it?.dragonLook === 1 ? 1 : 0);
 // DRAGON7: an Aetherbright's pack picture is its own colours (archive 1801), the brass's its row's

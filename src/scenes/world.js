@@ -31821,7 +31821,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           const odo = player.odometer?.h ?? 0, metres = _upkeepOdo == null ? 0 : Math.max(0, odo - _upkeepOdo);
           _upkeepOdo = odo;
           const mode = player.transportMode;
-          const galloping = !_overlayHeld && mode === TRANSPORT_MODES.Horse && !!player.isRunning && !player.standing;
+          const galloping = !_overlayHeld && (mode === TRANSPORT_MODES.Horse || mode === TRANSPORT_MODES.Dragon) && !!player.isRunning && !player.standing;   // DRAGON5c: the dragon gallops on horse care's breath
           upkeep.tick(gamePaused() ? 0 : dt, {
             mode, galloping, moving: !player.standing,
             metres, road: _surfPath, load: wagonLoadShare(),

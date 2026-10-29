@@ -83,7 +83,7 @@
   {
     "name": "DRAGON6-the-cruise-never-lifts",
     "file": "src/player/dragonRide.js",
-    "old": "  if (_cruise === 'cruise' && mounted && !flight.aloft() && flight.lift()) _heard?.('took-off');",
+    "old": "  if (_cruise === 'cruise' && mounted && !winded && !flight.aloft() && flight.lift()) _heard?.('took-off');",
     "new": "  if (false) _heard?.('took-off');",
     "tests": [
       "test/systems/travel/dragon6_flight.test.js"
