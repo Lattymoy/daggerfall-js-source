@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, GROUND_FRAME_LAW, RELIEF_FRAME_LAW, LIFT_FRAME_LAW, RECORD_GROUND_STAMP, generateSamples } from '../../../src/world/terrain/terrainSampler.js';
+import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, GROUND_FRAME_LAW, TOWN_FRAME_LAW, RELIEF_FRAME_LAW, LIFT_FRAME_LAW, RECORD_GROUND_STAMP, generateSamples } from '../../../src/world/terrain/terrainSampler.js';
 import { blendLocationTerrain, calcAvgMaxHeight, locationShapeField } from '../../../src/world/terrain/terrainTiles.js';
 import { townGroundMovedField } from '../../../src/world/landforms.js';
 import { shapeBefore, blendShapedBefore } from '../../../src/world/terrain/townBlendBefore.js';
@@ -46,8 +46,8 @@ function shapeOf(x0, x1, y0, y1, m) {
 }
 
 test('FB1028 the records\' frame (GROUND_FRAME_LAW 4): a record written before it rides its town\'s blend\'s move - on the Bay too, the row on or off - and one stamped 4 takes none; RELIEF-PEAKS\' move still law 3\'s and past the Bay\'s (mutants: the stamp at 3; the town\'s move by law 3; the town\'s move dropped)', () => {
-  assert.deepEqual([GROUND_FRAME_LAW, RELIEF_FRAME_LAW, LIFT_FRAME_LAW], [4, 3, 2]);
-  assert.equal(RECORD_GROUND_STAMP.groundFrame, 4);
+  assert.deepEqual([GROUND_FRAME_LAW, TOWN_FRAME_LAW, RELIEF_FRAME_LAW, LIFT_FRAME_LAW], [5, 4, 3, 2]);   // PIN MOVED (FB1029 ACROSS-EDGE): the stamp 5, the town's move its own law TOWN_FRAME_LAW 4 (test/world/fb1029_ground.test.js)
+  assert.equal(RECORD_GROUND_STAMP.groundFrame, 5);
   const now = (x) => 100 + x, town = (x) => 30 - x / 2, relief = (x) => 7 + x;   // the lift; the town's blend's move; RELIEF-PEAKS'
   const liftAt = (x) => now(x), ground = 500, off = 3.5, x = 12;   // DFU's ground today at the spot
   const state = { compensation: [0, 7, 0], localFromWorld: (nx, nz) => [nx - 100, nz - 200] };

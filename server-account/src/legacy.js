@@ -38,6 +38,7 @@ import { releaseSteps } from './ledger.js';   // INT4: a tombstone's pieces let 
 import { guildMemberDead } from './guilds.js';   // AUDIT LEGACY III O5: a tombstone's guild seat handed on
 import { lineageLawFindings } from '../../src/systems/legacy/legacyLaw.js';   // INT18: a line's copy held to the family's own law
 import { takeRevived, revivedOf, stampRevived, dropRevived, REZ_HOLD_S } from '../../src/systems/legacy/revived.js';   // REVIVE: a death taken back - the client's law; REZ-BLOODLINE AUDIT R1: and a Resurrect's, inside its window
+import { kinCard, UNION_KIN_MAX } from '../../src/systems/legacy/unionKinLaw.js';   // UNION-CHILDREN: a union child's card, both ends' law
 
 /** A family's id, as the client mints it (src/systems/legacy/family.js mintFamilyId). */
 export const LINEAGE_ID_RE = /^fam-[0-9a-z]{1,12}-[0-9a-z]{6}$/;
@@ -556,13 +557,49 @@ export async function realmWed({ db, nowS }, playerId, { id, lease, sid, partner
   return { ok: true, wed: true, union: unionView(now, playerId) };
 }
 
+/** UNION-CHILDREN: a union's children are read off the other's line while it stands and this long after it ends (the
+ *  other house hears of the end within minutes and rolls no child after it); and from at most this many lines a read,
+ *  open unions first - an account holds one open union a living character (realm.js REALM_CHARACTERS_MAX). */
+export const UNION_KIN_AFTER_END_S = 30 * 86400;
+export const UNION_KIN_LINES_MAX = 6;
+/** ?1 the account, ?2 the oldest end still read, ?3 UNION_KIN_LINES_MAX. One statement, as the read was: a line is two
+ *  rows by their keys, and only the newest unions that can still change join one. */
+const UNIONS_SQL = 'WITH u AS (SELECT * FROM realm_unions WHERE a_player = ?1 OR b_player = ?1 ORDER BY COALESCE(ended_at, wed_at) DESC, wed_at DESC LIMIT 50),'
+  + ' kin AS (SELECT sid, CASE WHEN a_player = ?1 THEN b_char ELSE a_char END AS kc FROM u'
+  + ' WHERE ended_at IS NULL OR ended_at >= ?2 ORDER BY ended_at IS NOT NULL, COALESCE(ended_at, wed_at) DESC LIMIT ?3)'
+  + ' SELECT u.*, r.person_id AS kin_person, l.record AS kin_line FROM u LEFT JOIN kin ON kin.sid = u.sid'
+  + ' LEFT JOIN realm_characters r ON r.id = kin.kc LEFT JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id'
+  + ' ORDER BY COALESCE(u.ended_at, u.wed_at) DESC, u.wed_at DESC';
+
+/**
+ * UNION-CHILDREN: THE CHILDREN OF UNION `sid` ON THE OTHER'S LINE (its stored text; `personId` the other's person): its
+ * members whose parents are that person and the spouse their house recorded for this union (`kind: 'player'`), each a
+ * card (unionKinLaw.js), every name through the filter as the wedding's card is (wedCardOf). [] when none.
+ * @param {unknown} lineText @param {unknown} personId @param {string} sid
+ */
+export function unionKinOf(lineText, personId, sid) {
+  const rec = parsed(String(lineText ?? ''));
+  const people = Array.isArray(rec?.people) ? rec.people : [];
+  if (!Number.isSafeInteger(personId)) return [];
+  const wedIn = new Set(people.filter((/** @type {any} */ p) => p?.kind === 'player' && p.realm?.sid === sid).map((/** @type {any} */ p) => p.id));
+  const h = houseOfRecord(rec, /** @type {number} */ (personId));
+  const house = h && checkName(h.hn).ok ? h.hn : null;
+  const named = (/** @type {unknown} */ v) => { const w = String(v ?? '').trim(); return w && w.split(/\s+/).every((x) => checkName(x).ok) ? w : ''; };
+  return people.filter((/** @type {any} */ p) => (p?.kind ?? 'member') === 'member' && Array.isArray(p.parents) && p.parents.includes(personId) && p.parents.some((/** @type {any} */ id) => wedIn.has(id)))
+    .slice(0, UNION_KIN_MAX)
+    .map((/** @type {any} */ p) => kinCard({ ...p, key: p.id, given: named(p.given), surname: named(p.surname), house }))
+    .filter(Boolean);
+}
+
 /** Every union of this account's characters, the latest word first - AUDIT LEGACY III O8: by when each last changed (an
  *  end, or the wedding), so the newest things a house has to hear lead the fifty: listed newest-wed first, a union
- *  older than fifty others was never listed again, and its end never reached the house. */
-export async function listUnions({ db }, /** @type {string} */ playerId) {
-  const r = await db.prepare('SELECT * FROM realm_unions WHERE a_player = ? OR b_player = ? ORDER BY COALESCE(ended_at, wed_at) DESC, wed_at DESC LIMIT 50')
-    .bind(playerId, playerId).all();
-  return (r?.results ?? []).map((/** @type {any} */ u) => unionView(u, playerId));
+ *  older than fifty others was never listed again, and its end never reached the house. UNION-CHILDREN: a union whose
+ *  line was read carries `children` (unionKinOf); one not read (ended long since, past the cap, the other's character
+ *  deleted) carries none, and its house keeps what it heard. */
+export async function listUnions({ db, nowS }, /** @type {string} */ playerId) {
+  const r = await db.prepare(UNIONS_SQL).bind(playerId, (Number(nowS) || 0) - UNION_KIN_AFTER_END_S, UNION_KIN_LINES_MAX).all();
+  return (r?.results ?? []).map((/** @type {any} */ u) => (u.kin_line == null ? unionView(u, playerId)
+    : { ...unionView(u, playerId), children: unionKinOf(u.kin_line, u.kin_person, u.sid) }));
 }
 
 /** A character's unions ended - its death ('died') or its delete ('gone'), and by whose. A statement, for the caller's

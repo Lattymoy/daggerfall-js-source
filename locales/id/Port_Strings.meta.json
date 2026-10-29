@@ -16919,6 +16919,21 @@
   "tr": "001ffa041a15",
   "by": "claude-in-session"
  },
+ "legacy.union.born": {
+  "en": "39b7a548d1fb",
+  "tr": "83a9083cf339",
+  "by": "claude-in-session"
+ },
+ "legacy.union.raised": {
+  "en": "7077e4aa0ab5",
+  "tr": "b9e9e5ef1b0b",
+  "by": "claude-in-session"
+ },
+ "legacy.union.raisedAway": {
+  "en": "5a3c7723cbd9",
+  "tr": "e08376a60423",
+  "by": "claude-in-session"
+ },
  "level.renown.risen": {
   "en": "4d843172a323",
   "tr": "31d38e07fef2",
