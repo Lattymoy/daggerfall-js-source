@@ -5194,7 +5194,6 @@ function statsCharacter(detail, m) {
   detail.append(meterRow(localizedText('health', 'Health'), m.health.now, m.health.max, 'blood'));
   detail.append(meterRow(localizedText('fatigue', 'Fatigue'), m.fatigue.now, m.fatigue.max, ''));
   detail.append(meterRow(localizedText('magicka', 'Magicka'), m.magicka.now, m.magicka.max, 'verdigris'));
-  statsVillainy(detail, { el, meter: pxMeter });   // PVP-VILLAIN: the villain meter, online
   detail.append(pxDivider(t('pause.stats.burden', 'Burden')));
   const g = el('div', 'px-statgrid');
   for (const [label, v] of [[t('menu.save.gold', 'Gold'), String(m.gold)], [t('pause.stats.encumbrance', 'Encumbrance'), `${m.encumbrance.now} / ${m.encumbrance.max}`]]) {
@@ -5495,6 +5494,7 @@ function statsSpecials(detail, m) {
 const signedRep = (v) => el('span', `v${v > 0 ? ' won' : v < 0 ? ' bad' : ''}`, v > 0 ? `+${v}` : String(v));
 
 function statsStanding(detail) {
+  statsVillainy(detail, { el, meter: pxMeter }, undefined, String(hooks.playerId?.() ?? hooks.playerName?.() ?? ''));   // PVP-VILLAIN: the villain meter, the page's top
   detail.append(pxDivider(t('pause.standing.reputation', 'Reputation')));
   const reps = playerEntity.sGroupReputations ?? [];
   const groupNames = socialGroupNames();
