@@ -9,9 +9,12 @@
 import { MeshBuilder } from './detStandIns.js';
 import { CAPITAL_ART, art, taper, ledge, translated, wallRun, merlons, roundTower, hall, gableRoof, darkDoor, entranceDoor, outward } from './capitalShapes.js';
 import { ALINOR } from './capitalPlans.js';
+import { BLOCK_M } from './blockHash.js';
 import { urbanArt } from './urban/urbanRecords.js';   // URBANIZER U2: the towns' own cut stone
 
 const MARBLE = art(CAPITAL_ART.marble), GOLD = art(CAPITAL_ART.gold), DARK = art(CAPITAL_ART.dark), BRIDGE = art(CAPITAL_ART.bridgeStone);
+/** A ground tile's side, metres: the bank's last tile, where the ground slopes to the river (FB1029 BRIDGE-ENDS). */
+const BANK_TILE = BLOCK_M / 16;
 /** URBANIZER U2 (world/urban/urbanArt.js): the palace's terraces, keep and wings in dressed white stone. */
 const DRESSED = urbanArt('whiteAshlar');
 
@@ -60,29 +63,55 @@ export function buildAlinorPalace(A = ALINOR) {
   return { ...mb.build(), doors: [entranceDoor(0, k, 5, 8, [0, 1], top)] };   // WW7-4: the palace's halls, its door on the top (world/capitalCastles.js)
 }
 
+/** FB1029 BRIDGE-ENDS: an abutment's foot over the model's origin (the street, 5 cm under it) - its top rises from 2 cm
+ *  over the street to the deck's end, a slope, never a ledge: a 0.35 m edge stalls the motor's step-up (AUDIT FB1029 A1). */
+const ABUT_FOOT = -0.03;
+/** FB1029 BRIDGE-ENDS: each bridge's two abutments, [x0, z0, x1, z1] in the anchor's metres - the bank's last ground
+ *  tile under each end, which RUMARE-WATER's ground slopes a metre down to the river (terrain/capitalSea.js). */
+export const alinorAbutments = (A = ALINOR) => A.bridges.flatMap((x) => [
+  [x - A.bridgeW / 2, A.river.z0 - BANK_TILE, x + A.bridgeW / 2, A.river.z0],
+  [x - A.bridgeW / 2, A.river.z1, x + A.bridgeW / 2, A.river.z1 + BANK_TILE],
+]);
+
 /**
  * TESA-LORE: THE BRIDGES over the river through the city's south - each of white stone from bank to bank, its deck
  * rising in an arch to `bridgeRise` over the water's middle (its slope walkable), its parapets, a pier in the water at
- * each quarter.
+ * each quarter. FB1029 BRIDGE-ENDS: each end on an abutment over the bank's last tile (alinorAbutments), its top a ramp
+ * from the street to the deck, its sides and its faces down into the ground.
  */
 export function buildAlinorBridges(A = ALINOR) {
-  const mb = new MeshBuilder(), R = A.river, hw = A.bridgeW / 2, N = 16;
+  const mb = new MeshBuilder(), R = A.river, hw = A.bridgeW / 2, N = 16, ph = A.parapet;
   const yAt = (z) => 0.3 + (A.bridgeRise - 0.3) * Math.sin((Math.PI * (z - R.z0)) / (R.z1 - R.z0));
-  for (const x of A.bridges) {
-    for (let i = 0; i < N; i++) {
-      const z0 = R.z0 + ((R.z1 - R.z0) * i) / N, z1 = R.z0 + ((R.z1 - R.z0) * (i + 1)) / N, y0 = yAt(z0), y1 = yAt(z1);
+  /** A length from za to zb in n pieces: its walk at y(z), its parapets, its underside `under` below the walk - or, with
+   *  none, its sides down to `foot`. */
+  const span = (x, za, zb, y, n, under, foot) => {
+    for (let i = 0; i < n; i++) {
+      const z0 = za + ((zb - za) * i) / n, z1 = za + ((zb - za) * (i + 1)) / n, y0 = y(z0), y1 = y(z1);
+      const b0 = under == null ? foot : y0 - under, b1 = under == null ? foot : y1 - under;
       const up = outward([x - hw, y0, z0], [x + hw, y0, z0], [x + hw, y1, z1], [x, -20, (z0 + z1) / 2]);
       mb.quad(BRIDGE, [x - hw, y0, z0], [x + hw, y0, z0], [x + hw, y1, z1], [x - hw, y1, z1], up, [[0, 0], [2, 0], [2, -1], [0, -1]]);
-      const dn = outward([x - hw, y0 - 1.2, z0], [x + hw, y0 - 1.2, z0], [x + hw, y1 - 1.2, z1], [x, 40, (z0 + z1) / 2]);
-      mb.quad(BRIDGE, [x - hw, y0 - 1.2, z0], [x + hw, y0 - 1.2, z0], [x + hw, y1 - 1.2, z1], [x - hw, y1 - 1.2, z1], dn);
+      if (under != null) {
+        const dn = outward([x - hw, b0, z0], [x + hw, b0, z0], [x + hw, b1, z1], [x, 40, (z0 + z1) / 2]);
+        mb.quad(BRIDGE, [x - hw, b0, z0], [x + hw, b0, z0], [x + hw, b1, z1], [x - hw, b1, z1], dn);
+      }
       for (const s of [1, -1]) {
-        const xo = x + s * hw, xi = x + s * (hw - 0.6), ph = A.parapet;
-        mb.quad(MARBLE, [xo, y0 - 1.2, z0], [xo, y1 - 1.2, z1], [xo, y1 + ph, z1], [xo, y0 + ph, z0], [s, 0, 0]);
+        const xo = x + s * hw, xi = x + s * (hw - 0.6);
+        mb.quad(MARBLE, [xo, b0, z0], [xo, b1, z1], [xo, y1 + ph, z1], [xo, y0 + ph, z0], [s, 0, 0]);
         mb.quad(MARBLE, [xi, y0, z0], [xi, y1, z1], [xi, y1 + ph, z1], [xi, y0 + ph, z0], [-s, 0, 0]);
         mb.quad(MARBLE, [xi, y0 + ph, z0], [xi, y1 + ph, z1], [xo, y1 + ph, z1], [xo, y0 + ph, z0], [0, 1, 0]);
       }
     }
+  };
+  for (const x of A.bridges) {
+    span(x, R.z0, R.z1, yAt, N, 1.2, null);
     for (const t of [0.25, 0.5, 0.75]) { const z = R.z0 + (R.z1 - R.z0) * t; hall(mb, BRIDGE, x, z, A.bridgeW - 1, 3, -4, yAt(z) - 1.2, 0.3); }
+    for (const [zs, ze] of [[R.z0 - BANK_TILE, R.z0], [R.z1 + BANK_TILE, R.z1]]) {
+      span(x, zs, ze, (z) => ABUT_FOOT + ((0.3 - ABUT_FOOT) * (z - zs)) / (ze - zs), 1, null, -2);
+      const out = [0, 0, Math.sign(zs - ze)];
+      mb.quad(BRIDGE, [x - hw, -2, zs], [x + hw, -2, zs], [x + hw, ABUT_FOOT, zs], [x - hw, ABUT_FOOT, zs], out);   // its foot's face, in the ground
+      for (const s of [1, -1]) mb.quad(MARBLE, [x + s * hw, ABUT_FOOT, zs], [x + s * (hw - 0.6), ABUT_FOOT, zs], [x + s * (hw - 0.6), ABUT_FOOT + ph, zs], [x + s * hw, ABUT_FOOT + ph, zs], out);   // its parapets' ends
+      mb.quad(BRIDGE, [x - hw, -2, ze], [x + hw, -2, ze], [x + hw, 0.3 - 1.2, ze], [x - hw, 0.3 - 1.2, ze], [0, 0, -out[2]]);   // under the deck's end, to the water
+    }
   }
   return mb.build();
 }

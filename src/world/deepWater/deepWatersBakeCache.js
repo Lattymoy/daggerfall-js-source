@@ -24,8 +24,8 @@ import { fnv1a } from '../../formats/fnv1a.js';
 
 /** Bump when the bake's rules change shape. 2 (AUDIT TESA III E1-4): a coastal town's blend follows its outline (TOWN-SHAPES
  *  TS2) - a bake kept before it blended the rect DFU's way. 3 (FB1028): the sea a town's ease reaches is lifted. 4 (AUDIT FB1028 A2-A3): the ease meets its seam from the stood
- *  samples and keeps the land's order. */
-export const BAKE_GENERATOR_VERSION = 4;
+ *  samples and keeps the land's order. 5 (FB1029 ACROSS-EDGE): the ground about a town rises to meet it (deepWatersBake.js bakeMeetsAt). */
+export const BAKE_GENERATOR_VERSION = 5;
 
 export { fnv1a };   // FIRST-VISIT: moved to formats/fnv1a.js, shared with the first visit's kept answers
 
@@ -36,6 +36,7 @@ export function rectsFingerprint(rows) {
   for (const r of [...rows].sort((a, b) => a[0] - b[0])) {
     for (let k = 0; k < 5; k++) { const v = r[k]; h ^= v & 0xff; h = Math.imul(h, 0x01000193); h ^= (v >>> 8) & 0xff; h = Math.imul(h, 0x01000193); h ^= (v >>> 16) & 0xff; h = Math.imul(h, 0x01000193); }
     if (r[5]) h = fnv1a(r[5], h);
+    if (r[6]) { h ^= 0x6d; h = Math.imul(h, 0x01000193); }   // ACROSS-EDGE: a town the meets read
   }
   return h >>> 0;
 }
@@ -44,7 +45,7 @@ export function rectsFingerprint(rows) {
  *  where the row carries one, so the bake's blend (deepWatersBake.js pixelWaterSampler) is the streamed build's. */
 export function rectsLookup(rows) {
   const m = new Map();
-  for (const r of rows) m.set(r[0], { xMin: r[1], xMax: r[2], yMin: r[3], yMax: r[4], ...(r[5] ? { shape: r[5] } : {}) });
+  for (const r of rows) m.set(r[0], { xMin: r[1], xMax: r[2], yMin: r[3], yMax: r[4], ...(r[5] ? { shape: r[5] } : {}), ...(r[6] ? { meets: true } : {}) });
   return (px, py) => m.get(py * 1000 + px) ?? null;
 }
 
