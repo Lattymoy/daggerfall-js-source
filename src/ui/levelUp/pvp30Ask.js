@@ -18,7 +18,7 @@ export const pvp30Said = (e) => { if (e) said.add(e); };
 
 /** The ask's rows and its No button's word. */
 export const pvp30Rows = () => [
-  t('pvp.level30.warn', 'At level {n}, other players can attack and kill you in the PvP zones (Cyrodiil and the open sea), even when your PvP flag is off.', { n: PVP_FLAG.level }),
+  t('pvp.level30.warn', 'At level {n}, other players can attack and kill you in the PvP zones (Cyrodiil and the sea), even with your PvP flag off.', { n: PVP_FLAG.level }),
   '',
   t('pvp.level30.ask', 'Continue to level {n}?', { n: PVP_FLAG.level }),
 ];

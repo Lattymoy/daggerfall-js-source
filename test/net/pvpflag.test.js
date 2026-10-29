@@ -264,7 +264,7 @@ test('PVP-30 THE ASK (ui/levelUp/pvp30Ask.js, ui/charSheetDoor.js, ui/growth/gro
   const e = { _online: true, readyToLevelUp: true, level: 29 };
   assert.equal(pvp30Asks(e), true);
   for (const o of [{ ...e, _online: false }, { ...e, level: 28 }, { ...e, level: 30 }, { ...e, oghmaLevelUp: true }, { ...e, readyToLevelUp: false }]) assert.equal(pvp30Asks(o), false);
-  assert.deepEqual(pvp30Rows(), ['At level 30, other players can attack and kill you in the PvP zones (Cyrodiil and the open sea), even when your PvP flag is off.', '', 'Continue to level 30?']);
+  assert.deepEqual(pvp30Rows(), ['At level 30, other players can attack and kill you in the PvP zones (Cyrodiil and the sea), even with your PvP flag off.', '', 'Continue to level 30?']);
   assert.equal(pvp30No(), 'Not yet');
   assert.equal(levelUpScreenFor(e), null, 'no rollout before the Yes');
   let opened = 0;
