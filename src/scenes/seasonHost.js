@@ -24,6 +24,7 @@ import { carriedPieces } from '../systems/item/itemIds.js';
 import { textRevision } from '../systems/textManager.js';   // AUDIT-STOREFRONT II (lane D 3): the map's cards made again in another language
 import { hearRealmSaves } from './shared.js';   // AUDIT-STOREFRONT II (lane D 2): a realm checkpoint landed
 import { onSlotSaved, onSlotLoaded } from '../systems/save/saveSlots.js';
+import { askCheckpoint } from '../systems/online/onlineCheckpointClock.js';   // AUDIT-STOREFRONT II (lane D 2): saved at the mint
 import { buildFissureModel, fissureVents, fissureStands, FISSURE_BARE_R } from '../world/fissureModel.js';
 import { fissureArt, FISSURE_ARCHIVE } from '../world/fissureArt.js';
 import { findGateSite } from '../systems/gate/gateSite.js';
@@ -115,7 +116,7 @@ const sameMatrix = (a, b) => { if (!a || !b) return false; for (let i = 0; i < 1
  *  `_sharedOffsetMs`, `relayNowS`, `labGrassField`, `chatNotice`, the camp law's five, `gamePaused`, `townTalk` - and, for
  *  the tests, `audio`, `storage`, `say`, `shake`, `burst`, `struckAt`, `who`, `take`, `bindPass`, `passApi`, `maulApi`,
  *  `rid`, `wait`, `roads` and W14's `theatreScans`, `worldPlaces`, `landVersion`, `idle` and `pastBayRoads`. AUDIT-STOREFRONT
- *  II (lane D 2): for the tests, `entity`, `hearRealmSaves`, `onSlotSaved` and `onSlotLoaded`.
+ *  II (lane D 2): for the tests, `entity`, `hearRealmSaves`, `onSlotSaved`, `onSlotLoaded` and `askCheckpoint`.
  *  @param {any} host */
 export function createSeasonHost(host) {
   const renderer = host.renderer ?? null;
@@ -481,6 +482,7 @@ export function createSeasonHost(host) {
         held.set(rid, { day: a.data?.day ?? null, who: who(), taken: true, askAt: -Infinity });
         keepHeld();
         take(item);
+        (host.askCheckpoint ?? askCheckpoint)();   // the realm's save holds it from the next frame, not the period's end
         setMidScreenText(COLOSSUS_TEXT.maul());
         return true;
       }

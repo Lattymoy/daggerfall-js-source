@@ -148,6 +148,17 @@ Stripe tells a payment's words in no order and retries a refused one for days. P
 | A4 | LOW | A paid word told twice at once: the late copy acted on a refund it had computed from the order as it stood before the first landed, and returned a good sale | FIXED: an attempt answers only the refund it wrote; one refused by the order's guard answers none |
 | A5 | LOW | Two pages paid at once ended differently by which landed first | FIXED by A2: whichever lands second no longer matches what the row holds and is refunded, the same either way |
 
+### B - the pass
+
+Pins: `test/server/storefront_audit2_pass.test.js`, `test/scenes/storefront_audit2_world.test.js`; mutants
+`tools/mutants/storefront_audit2_season.json`. The record is `06-Systems/Battle-Pass.md` section 9.
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| B1 | HIGH | A Colossus's fall was kept on its fissure's record, made again by a relay blip, a walk off and back or a new day: the fall said again, the Maul asked again, a second given after midnight | FIXED with D1: the fall kept by the foe pool's record, one for the body's life |
+| B2 | MED | A find dropped offline or on a 5xx was lost, and with no id could not be asked again safely | FIXED: each find carries its own id and is asked again with it; the service keeps the id with its answer (`pass_asks`, migration 0194) in the find's own batch, so a repeat is answered as it was and counted once |
+| B4 | LOW | The 'make' challenge said "Make or find" where it counts crafting, socketing and reforging | FIXED: its words, in every language that held the row |
+
 ### C - the effects
 
 Pins: `storefront_audit2_fx_veil.test.js`, `storefront_audit2_fx_magic.test.js`, `storefront_audit2_fx_dye.test.js`,
@@ -161,6 +172,18 @@ Pins: `storefront_audit2_fx_veil.test.js`, `storefront_audit2_fx_magic.test.js`,
 | C4 | LOW | A mane's flicker read the seed the last horse dyed left behind | FIXED: the hair's dye sets its own |
 | C5 | LOW | A profile stage started again never played the effect its slot was trying on | FIXED: the stage is told the effect as it starts |
 | C6 | LOW | The mount preview read less motion once, and stopped its clock for good under it | FIXED: read every frame, the clock kept |
+
+### D - the season in the world
+
+Pins: `test/scenes/storefront_audit2_world.test.js`, `test/systems/online/onlineCheckpointClock.test.js`; mutants
+`tools/mutants/storefront_audit2_season.json`.
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| D1 | HIGH | The same as B1, read from the world's side | FIXED by B1 |
+| D2 | HIGH | A Maul lost with its page: the claim spent at the service's yes, the piece safe only once a save held it | FIXED: kept on the device from the mint until a save made after it lands, asked again by its id at the next stand-up, the service answering a kept id with its own day; the mint asks a checkpoint of the next standing frame (`onlineCheckpointClock.js` askCheckpoint), with no host binding |
+| D3 | LOW | The map's held poll made every fissure's card again, four times a second | FIXED: made once while the stage, each theatre's gate of the day and the language stand: 0.8 ms a poll to 0.005 |
+| D4 | MED | The camp's ring was laid in the world's frame, off by twice the model's yaw: one construct in eleven and half the Colossi stood in the wreckage | FIXED: the camp stands on the model's own free ground, constructs 0.6 m clear, the Colossus 1 m clear past the crack's end |
 
 ### E - the window and the profile
 

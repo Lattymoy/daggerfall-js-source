@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRealmSession } from '../../../src/systems/realmSaves.js';
-import { createOnlineCheckpointClock } from '../../../src/systems/online/onlineCheckpointClock.js';
+import { createOnlineCheckpointClock, askCheckpoint } from '../../../src/systems/online/onlineCheckpointClock.js';
 import { ONLINE_CHECKPOINT_MS } from '../../../src/systems/online/onlineCheckpoint.js';
 import { realmNotSavedText } from '../../../src/systems/online/realmUnsavedNotice.js';
 
@@ -142,4 +142,36 @@ test('a start that stands at once (a town, a load) still checkpoints on its firs
   clock.frame(0);
   await settle();
   assert.equal(r.puts.length, 1);
+});
+
+test('AUDIT-STOREFRONT II (lane D 2): a checkpoint asked runs on the next standing frame though none is due, once; not before the world stands; never for a lost session (mutants: the ask unread; the ask kept; asked before the world stands)', async () => {
+  const r = realm();
+  let stands = false;
+  const { clock } = host(r, { stands: () => stands });
+  stands = true;
+  clock.frame(0);
+  await settle();
+  assert.equal(r.puts.length, 1, 'the first frame\'s');
+  r.clock.at = 1000;
+  stands = false;
+  askCheckpoint();
+  clock.frame(r.clock.at);
+  await settle();
+  assert.equal(r.puts.length, 1, 'nothing before the world stands');
+  stands = true;
+  clock.frame(r.clock.at);
+  await settle();
+  assert.equal(r.puts.length, 2, 'asked: saved, a period early');
+  clock.frame(r.clock.at + 1);
+  await settle();
+  assert.equal(r.puts.length, 2, 'once');
+  const gone = realm(() => 'lease');
+  host(gone).clock.seatLost();
+  await settle();
+  assert.deepEqual(gone.lost, ['lease']);
+  let ran = 0;
+  const lost = createOnlineCheckpointClock({ session: gone.session, checkpoint: () => { ran += 1; }, lastAt: () => 0, say: () => {} });
+  askCheckpoint();
+  lost.frame(1);
+  assert.equal(ran, 0, 'a lost session is asked nothing');
 });

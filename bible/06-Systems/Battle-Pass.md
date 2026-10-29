@@ -229,7 +229,7 @@ and 10) are the shop's.
 
 The pass's finds and the season in the world read cold a second time. Each finding is fixed where it starts and pinned
 by a test that failed before the fix: `test/scenes/storefront_audit2_world.test.js` and
-`test/server/storefront_audit2_pass.test.js`. The mutants are `tools/mutants/storefront_audit2_season.json` (37, all
+`test/server/storefront_audit2_pass.test.js`. The mutants are `tools/mutants/storefront_audit2_season.json` (42, all
 dead); lane 5's `SEASONAUDIT-a-lost-answer-refused` is aimed at the kept id's line now.
 
 - **B1, D1. One fall counted again.** The Colossi read were kept on the fissure's own record, which is made again when
@@ -252,9 +252,9 @@ dead); lane 5's `SEASONAUDIT-a-lost-answer-refused` is aimed at the kept id's li
   not in the pack is asked again by its id, and the service answers a kept id with its own day, whatever the day or the
   stage now (`server-account/src/seasonClaim.js:"if (kept) return { ok: true, day: kept.day };"`). A load in the session
   is a stand-up, as for the spoils pools.
-- **D2, not done: a checkpoint asked at the mint.** The world host's checkpoint door is `bootWorld`'s alone, and
-  `bootWorld` stands at its ceiling (`hostceiling.test.js`). The next periodic checkpoint saves the Maul, and the
-  device's record covers a page gone before then.
+- **D2, the save at the mint.** The mint asks a checkpoint of the next standing frame, so the realm holds the Maul at
+  once, not at the period's end: the checkpoint clock's own door, with no host binding
+  (`src/systems/online/onlineCheckpointClock.js:"export function askCheckpoint()"`).
 - **D3. The map's held poll made every card again**, four times a second: 0.8 ms and some 40 kB a poll for the Bay's 186,
   more with the provinces'. The cards are made once while the stage's fissures, each theatre's gate of the day and the
   language stand, and the map's reader keeps its marks and their key for the same list and box: 0.005 ms a poll.

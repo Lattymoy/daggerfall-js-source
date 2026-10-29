@@ -88,7 +88,7 @@ export function client(id, { clock = { t: HEART_T }, storage = memStorage(), ser
   p.setNet(netFor(id));
   const wod = wodLaw(id, p, () => clock.t);
   p.setOnSites((from, sites) => wod.wodPeerSites(from, sites), wod.wodSprungList);
-  const c = { id, f, pool: p, wod, clock, storage, service, said: [], bursts: [], taken: [], heard, entity };
+  const c = { id, f, pool: p, wod, clock, storage, service, said: [], bursts: [], taken: [], heard, entity, asked: 0 };
   // AUDIT-STOREFRONT II (lane D 2): this page's saves - a realm checkpoint handed (`realmPut()`, answering its answer's
   // door) or handed and answered (`realmSave(answer)`), a slot written and a slot loaded - told to its season host alone
   // (`realSaves`: the modules' own, scenes/shared.js and saveSlots.js)
@@ -119,7 +119,7 @@ export function client(id, { clock = { t: HEART_T }, storage = memStorage(), ser
     _wodPeerSprung: wod.peer, wodPeerHeldAgo: (s) => wod.heldAgo(s), wodForgetPeer: (s) => wod.forgetPeer(s), wodSprang: (s) => wod.wodSprang(s), wodUnsprang: (s) => wod.unsprang(s),
     chatNotice: () => {}, say: (s) => c.said.push(s), shake: () => {}, burst: (r) => { c.bursts.push(r); return true; },
     struckAt: (fo) => renownStruckAt(fo), take: (item) => { c.taken.push(item); entity.items.push(item); }, ...(who ? { who: () => who } : {}), storage, bindPass: false,
-    maulApi, wait: async () => {}, roads: null, entity, ...saveDoors,
+    maulApi, wait: async () => {}, roads: null, entity, ...saveDoors, askCheckpoint: () => { c.asked += 1; },
     audio: { buffers: new Map(), play3d: () => {} }, labGrassField: { invalidate() {} }, gamePaused: () => false, townTalk: { hudHidden: false },
   });
   const heart = () => { const s = f.spot; return [s[0], 0, s[1]]; };

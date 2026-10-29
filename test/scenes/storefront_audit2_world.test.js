@@ -50,7 +50,7 @@ test('AUDIT-STOREFRONT II (lane B 1, D 1): one fall is read once, whatever makes
 
 // ── D2: the Maul held until a save holds it ──────────────────────────────────────────────────────────────────────────
 
-test('AUDIT-STOREFRONT II (lane D 2): a Maul whose page went before a save held it is kept on the device and asked again by its own id at the next stand-up - past the stage too - and let go when a save made after it lands (mutants: the record never kept; the id not the piece\'s; the stand-up asking nothing; asked behind the season\'s gate; a landing that lets nothing go)', async () => {
+test('AUDIT-STOREFRONT II (lane D 2): a Maul whose page went before a save held it is kept on the device and asked again by its own id at the next stand-up - past the stage too - and let go when a save made after it lands; a checkpoint asked at the mint (mutants: the record never kept; the id not the piece\'s; the stand-up asking nothing; asked behind the season\'s gate; a landing that lets nothing go; no checkpoint asked)', async () => {
   const clock = clocked({ t: HEART_T });
   const store = memStorage(), service = { days: new Set(), asks: [], down: false };
   const A = client('aaaa-0001', { clock, storage: store, service });
@@ -60,6 +60,7 @@ test('AUDIT-STOREFRONT II (lane D 2): a Maul whose page went before a save held 
   assert.equal(A.taken[0].uid, rid, 'the piece\'s ledger id is its claim\'s');
   assert.deepEqual(Object.keys(heldOf(store)), [rid], 'held on the device from its mint');
   assert.equal(heldOf(store)[rid].who, 'aaaa-0001|char');
+  assert.equal(A.asked, 1, 'a checkpoint asked at the mint, not left to the period');
   A.realmSave({ ok: false, error: 'offline' });
   assert.deepEqual(Object.keys(heldOf(store)), [rid], 'a save that did not land lets nothing go');
   // the page goes; the save the next boot plays never held it - and the season is over by then
