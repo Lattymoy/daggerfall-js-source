@@ -56,6 +56,7 @@ import { SESSION_PASS_HEADER } from '../net/sessionPassLaw.js';   // SESSION-SIG
 import { gzipText, gunzipText, saveTextOf, canGzip, canGunzip } from '../net/realm/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { houseLine } from '../net/houseLaw.js';   // LEGACY7: the house on the roster's tile
 import { t } from './textManager.js';   // STRANDED: the world's word in the player's language
+import { dropFamily } from './legacy/store.js';   // FAMILY-FORGET: a forgotten line's copy let go
 
 
 /**
@@ -172,6 +173,13 @@ export const realmLeave = (/** @type {any} */ io, /** @type {string} */ id, /** 
 export const realmDelete = async (/** @type {any} */ io, /** @type {string} */ id) => {
   const r = await realmAsk(io, '/v1/realm/delete', { method: 'POST', json: { id } });
   if (r.ok) dropUnsent(io?.storage, id);
+  return r;
+};
+/** FAMILY-FORGET (bible/01-Overview/bugs/Field-Bugs-2026-10-29.md): a line no living realm character plays, let go
+ *  (server-account/src/legacy.js forgetLineage), and the device's copy with it - `{ ok }`, or 'lineage-held'. */
+export const realmLineageForget = async (/** @type {any} */ io, /** @type {string} */ id) => {
+  const r = await realmAsk(io, '/v1/realm/lineage/forget', { method: 'POST', json: { id } });
+  if (r.ok) dropFamily(io?.storage, id);
   return r;
 };
 /** HOUSE-LOSS: a customs whose first save never landed, undone - its home, guild place and customs given back to the

@@ -462,6 +462,14 @@ migration `0084_legacy.sql`, acct87; `systems/legacy/realmLine.js`; `test/server
   of the union (two records, two clocks - the realm keeps no shared child). A player read it as a bug ("Only one of us
   could actually see the heirs" - FIELD BUGS 2026-10-12b): the children on both trees, seen through the marriage, is
   planned there (UNION-CHILDREN), the owner's call.
+- **An old family is forgotten from the Online page** (FAMILY-FORGET, `01-Overview/bugs/Field-Bugs-2026-10-29.md`; a
+  player: "I have no characters anymore and I still cannot make another bloodline"). Every Bloodline or Enduring birth
+  founds a line, and the realm holds `LINEAGES_MAX` (40) of an account's: a one-life player who deleted each character
+  met the bound, and every new house was refused. The Online page lists the lines no living character plays under Old
+  families, each with Forget (`enhancedMenu.js` oldFamiliesCard, `waitingHouses.js` oldLines). A forget lets the
+  realm's record and the device's copy go (`realmSaves.js` realmLineageForget), so it leaves the Hall of Ancestors and
+  frees its place; its fallen stay fallen (their tombstones). The bound's refusal now says so. A Casual character
+  founds no line, so the bound never refused one.
 
 ## 10. WORLD INFLUENCE
 
