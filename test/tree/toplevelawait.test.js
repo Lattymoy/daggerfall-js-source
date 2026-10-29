@@ -23,7 +23,7 @@ const walk = (d, out = []) => {
 };
 
 /** The module's top-level awaits (scripts/noTopLevelAwait.mjs - the build's own reader) and its relative specifiers, a
- *  template literal with no expression among them (AUDIT FB1029f TLA-1: main.js imports `./ui/menuPad.js` so). */
+ *  template literal with no expression among them (AUDIT FB1029f TLA-1: main.js imports `./ui/menu/menuPad.js` so). */
 function moduleFacts(text) {
   const ast = acorn.parse(text, { ecmaVersion: 'latest', sourceType: 'module' });
   const specs = [];
