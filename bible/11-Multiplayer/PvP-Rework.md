@@ -286,5 +286,5 @@ The gold goes to the killer the way a policy's gold does: escrowed, his alone in
 back, collected as coin where it fits his free weight, else one letter of credit for the whole. The collect says it is
 the last roll (`wild.js:"return parse(fall?.tk)?.last ? { ...paid, last: true } : paid;"`), and so does each side's text
 (`wildZone.js:"lastGold: (n) =>"`, `wildZone.js:"deathLast: (name, gold) =>"`). A held record, a REPEAT-SHIELD kill
-and a room that signs no collect take nothing. A foe's death keeps everything, as FOE-KEEPS says. The service is still
-acct214. A departure: DFU has no PvP.
+and a room that signs no collect take nothing. A foe's death keeps everything, as FOE-KEEPS says. The service is
+acct215. A departure: DFU has no PvP.
