@@ -11,11 +11,12 @@
   {
     "name": "OW-PAST-BAY-the-sea-walked",
     "file": "src/ui/heldMap.js",
-    "old": "        : past?.on === 'land' && !inBay(px, py) && this._coordsAllowedHere()",
-    "new": "        : past && !inBay(px, py) && this._coordsAllowedHere()",
+    "old": "      : past?.on === 'land' && !inBay(px, py) && this._coordsAllowedHere()",
+    "new": "      : past && !inBay(px, py) && this._coordsAllowedHere()",
     "tests": [
       "test/ui/owpastbay_walk.test.js"
-    ]
+    ],
+    "note": "AUDIT TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay where the world knows it, the press's pick one method"
   },
   {
     "name": "OW-PAST-BAY-the-coordinates-law-skipped",
@@ -65,11 +66,12 @@
   {
     "name": "OW-PAST-BAY-the-pick-never-walks",
     "file": "src/ui/heldMap.js",
-    "old": "pastBay: true, portal, walk: this._walksPastBay(), place };",
-    "new": "pastBay: true, portal, walk: false, place };",
+    "old": "walk: !place && this._walksPastBay(), place, door: !bare, town };",
+    "new": "walk: false, place, door: !bare, town };",
     "tests": [
       "test/ui/owpastbay_walk.test.js"
-    ]
+    ],
+    "note": "TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay is travelled to as a Bay place is"
   },
   {
     "name": "OW-PAST-BAY-the-mark-has-no-pixel",

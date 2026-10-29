@@ -83,7 +83,7 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and TITLE-DOOR's MARK (`intro/titleHeld.js`: the page's word that the film's title stands under the menu - the film writes it when it lands, the menu reads it and draws its home over the film; `10-UI/UI-Arc.md` TITLE-DOOR);
 - and SHOP's TWO (`enhanced/enhancedShop.js`: the pause face's gem and the shop's window - the disclaimer, a tab a category, a panel a ware; `titleFlame.js`: the Genesis title's fire, one stepped CSS background - `06-Systems/Shop.md`);
 - and VULKAN-FLIP's GUARD (`vulkanBackdrop.js`: the desktop app on Vulkan drops every window's backdrop blur, which its compositor drew upside down - `01-Overview/Desktop-App.md` VULKAN-FLIP);
-451 modules
+452 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

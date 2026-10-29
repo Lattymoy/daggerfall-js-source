@@ -230,7 +230,7 @@ test('AUDIT FB1007b C2: no journey sets out from a wall - the journey would let 
   assert.equal(run(m, canGo, 'travelViewCanGo()'), false, 'the view\'s click: refused');
   assert.deepEqual(said, [TRAVEL_VIEW_TEXT.climbing]);
   const begin = cutFn(WORLD, 'function beginAcceleratedTravel(pick, opts, { coords = false, estimateMinutes = null } = {}) {');
-  const pick = { pixel: { x: 100, y: 100 }, name: 'Wayrest' };
+  const pick = { pixel: { x: 100, y: 100 }, name: 'Wayrest', mapId: 100100, regionIndex: 17, locationIndex: 3 };   // a Bay place as the map's pick carries it (heldMap.js _pickOf) - TRAVEL-EVERYWHERE: one past the Bay has no map id
   said.length = 0;
   assert.equal(run(m, begin, 'beginAcceleratedTravel(pick, {})'.replace('pick', JSON.stringify(pick))), true, 'the map\'s walked trip: answered - its callers never fall through to the fast travel');
   assert.deepEqual([said, began], [[TRAVEL_VIEW_TEXT.climbing], []], 'said, and no journey begun');

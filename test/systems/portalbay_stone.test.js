@@ -19,7 +19,7 @@ import { hudFade } from '../../src/ui/fadeLayer.js';
 import { playerEntity } from '../../src/characters/playerEntity.js';
 import { portalStones } from '../../src/systems/gate/gateSpoils.js';
 import { PORTAL_TEXT, PORTAL_HOLD_TEXT } from '../../src/systems/portalStone.js';
-import { pastBayJourney, teleportJourney, PAST_BAY_TRAVEL_TEXT } from '../../src/systems/travel/pastBayTravel.js';
+import { pastBayJourney, teleportJourney } from '../../src/systems/travel/pastBayTravel.js';
 import { wildJourney, wildInside, buildWildMask, WILD_NAME } from '../../src/systems/wild/wildZone.js';
 import { zonePortFree } from '../../src/systems/wild/zoneSafe.js';   // WILD-CITY-PORT
 import { inEther } from '../../src/world/ethericSea.js';
@@ -197,7 +197,7 @@ test('PORTAL-BAY a Portal Stone to EVERY city past the Bay the stone\'s map offe
       await settle();
       assert.deepEqual(W.jumps, [{ px: city.pixel.x, py: city.pixel.y, reposition: REPOSITION.RandomStartMarker, black: 1 }], `${city.name}: the world rebuilt at the city's pixel, landed by its start markers, under the black`);
       assert.equal(W.said.at(-1), `You arrive at ${city.name}.`, 'arrived - no refusal said');
-      assert.ok(!W.said.includes(PAST_BAY_TRAVEL_TEXT.refused), 'never the journey\'s refusal');
+      assert.deepEqual(W.said, [PORTAL_TEXT.opened(city.name), `You arrive at ${city.name}.`], 'nothing else said - no refusal');
       assert.deepEqual([hudFade.fadeInProgress, hudFade.fadeEndColor[3]], [true, 0], 'the black fading in');
       for (let i = 0; i < 100 && hudFade.fadeInProgress; i++) hudFade.tickFade(0.05);
       assert.equal(hudFade.backgroundColor[3], 0, 'and gone');
@@ -205,11 +205,11 @@ test('PORTAL-BAY a Portal Stone to EVERY city past the Bay the stone\'s map offe
       win.dispose?.();
     }
   } finally { blacks.restore(); }
-  // the journeys keep TESA-NO-FAST: the same gate under its default law refuses a journey past the Bay
+  // PIN MOVED (TRAVEL-EVERYWHERE, TESA-NO-FAST retired): the same gate under its default law lets a journey past the Bay go
   const W = worldHost();
-  assert.deepEqual(W.scope.wildTravelGate(cities[0].pixel), { ok: false, text: PAST_BAY_TRAVEL_TEXT.refused }, 'a journey (fast travel, a party\'s, a rider\'s) past the Bay is still refused');
-  assert.equal(W.said.at(-1), PAST_BAY_TRAVEL_TEXT.refused);
-  assert.equal(W.scope.wildTravelGate(cities[0].pixel, 0, teleportJourney).ok, true, 'a teleport is not');
+  assert.deepEqual(W.scope.wildTravelGate(cities[0].pixel), { ok: true, fee: 0 }, 'a journey (fast travel, a carriage\'s, a party\'s) past the Bay goes, as on the Bay');
+  assert.equal(W.said.length, 0, 'nothing said');
+  assert.equal(W.scope.wildTravelGate(cities[0].pixel, 0, teleportJourney).ok, true, 'a teleport too');
 });
 
 test('PORTAL-BAY a refused pick never fades and never spends; a refused step is refused BEFORE the black, said, and the screen never blacked; an arrival that does not come lifts the black (mutants: the step\'s gate after the black; the arrival\'s answer unread; teleportTo\'s answer)', async () => {
@@ -287,7 +287,6 @@ test('PORTAL-BAY Recall is a teleport too: an anchor set past the Bay is reached
   W.scope.playerEntity.anchorPosition = anchorAt(solitude);
   await W.scope.recallToAnchor().catch(() => {});
   assert.deepEqual(W.jumps.map((j) => [j.px, j.py]), [[solitude.x, solitude.y]], 'the anchor past the Bay reached');
-  assert.ok(!W.said.includes(PAST_BAY_TRAVEL_TEXT.refused), 'never the journey\'s refusal');
   const zone = buildWildMask({ width: 100, height: 100, ox: solitude.x - 50, oy: solitude.y - 50, inZone: () => true });
   const Z = worldHost({ stopAfterJump: true, online: { wildOk: true }, wildMapMask: () => zone });
   Z.scope.playerEntity.anchorPosition = anchorAt(solitude);
@@ -385,7 +384,7 @@ test('PORTAL-BAY the wiring: the world host constructs the stone\'s host where i
 const LAND = [{ x: 1734, y: -545, name: 'Skyrim' }, { x: 2359, y: 890, name: 'Imperial Province' }, { x: -223, y: 2006, name: 'Sumurset Isle' }];
 const SEA = { x: 240, y: 2006 };
 
-test('PORTAL-ANYWHERE the stone\'s map picks ANY land past the Bay, named by its province, and the portal goes there through the host\'s own road - the step, the world\'s teleportTo, the rebuild at that pixel under the black, "You arrive at"; the sea picks nothing and spends nothing; the guild\'s teleport map and the travel map keep TESA13 and TESA-NO-FAST (no land pick); a quest\'s place past the Bay is a portal\'s end on the stone\'s map; the hover points at it; online the zone\'s land is refused at the pick (mutants: the law\'s sea; the press\'s land unread; the guild\'s map given it; the stone\'s map not asking; the hover; the quest place)', async () => {
+test('PORTAL-ANYWHERE the stone\'s map picks ANY land past the Bay, named by its province, and the portal goes there through the host\'s own road - the step, the world\'s teleportTo, the rebuild at that pixel under the black, "You arrive at"; the sea picks nothing and spends nothing; the guild\'s teleport map and the travel map pick no bare land; a quest\'s place past the Bay is a portal\'s end (PIN MOVED, TRAVEL-EVERYWHERE: on every teleport map, as a Bay place is); the hover points at it; online the zone\'s land is refused at the pick (mutants: the law\'s sea; the press\'s land unread; the guild\'s map given it; the stone\'s map not asking; the hover; the quest place)', async () => {
   skin('enhanced');
   globalThis.document = fakeDocument();
   setCapitalsStanding(true);
@@ -433,21 +432,25 @@ test('PORTAL-ANYWHERE the stone\'s map picks ANY land past the Bay, named by its
     const win = heldMap({ onTeleport: () => assert.fail('no portal') });
     if (armed) win.activateTeleportationTravel();
     pressAt(win, LAND[0].x + 0.5, LAND[0].y + 0.5);
-    assert.deepEqual([win._selected ?? null, win._panel ?? null], [null, null], armed ? 'the guild\'s map keeps TESA13: cities alone' : 'the travel map keeps TESA-NO-FAST');
+    assert.deepEqual([win._selected ?? null, win._panel ?? null], [null, null], armed ? 'the guild\'s map: no bare land' : 'the travel map: bare land walked under Travel Options alone (OW-PAST-BAY)');
     if (armed) {
       win._view = { ox: LAND[0].x + 0.5 - 100 / 8, oy: LAND[0].y + 0.5 - 100 / 8, scale: 8 };
       assert.equal(win._hoverLabel(100, 100)?.cursor ?? '', '', 'no pointer there');
     }
     win.dispose?.();
   }
-  // a quest's place past the Bay (START3's pick): a portal's end on the stone's map, not on the guild's
+  // a quest's place past the Bay (START3's pick): a portal's end on both maps (TRAVEL-EVERYWHERE); bare land on the stone's alone
   const stoneMap = heldMap({ portalLandPastBay: true });
   stoneMap.activateTeleportationTravel();
-  assert.equal(stoneMap._pastBayPick(LAND[0].x, LAND[0].y, 'The Haunt').portal, true, 'the stone\'s map: the place\'s land a portal\'s end');
-  assert.equal(stoneMap._pastBayPick(SEA.x, SEA.y, 'Under the sea').portal, false);
-  const guildMap = heldMap({});
+  const haunt = { px: LAND[0].x, py: LAND[0].y, placeName: 'The Haunt' };
+  const law = (px, py, named) => (named ? { locationType: 4 } : null);   // the world's law: an unfound labyrinth (LOCATION_TYPES 4), named by its quest
+  assert.equal(stoneMap._questPlace(haunt).portal, true, 'the stone\'s map: the place a portal\'s end');
+  assert.equal(stoneMap._pastBayPick(LAND[0].x, LAND[0].y, 'x').portal, true, 'and its bare land');
+  assert.equal(stoneMap._pastBayPick(SEA.x, SEA.y, 'x').portal, false, 'never the sea');
+  const guildMap = heldMap({ pastBayPlace: law });
   guildMap.activateTeleportationTravel();
-  assert.equal(guildMap._pastBayPick(LAND[0].x, LAND[0].y, 'The Haunt').portal, false, 'the guild\'s: TESA13');
+  assert.equal(guildMap._questPlace(haunt).portal, true, 'the guild\'s: the quest\'s place, as a Bay place');
+  assert.equal(guildMap._pastBayPick(LAND[0].x, LAND[0].y, 'x').portal, false, 'the guild\'s: no bare land');
   stoneMap.dispose?.(); guildMap.dispose?.();
   // online, the zone's land: refused at the pick, said, nothing spent
   const imperial = LAND[1];

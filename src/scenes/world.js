@@ -135,7 +135,7 @@ import { patronWords } from '../systems/livingWorld/patrons.js';   // LW15: a pa
 import { routeOf as deepRouteOf, clearedOf as deepClearedOf, stopOfMinute, DIVE_CLEAR_MIN } from '../systems/livingWorld/deepRoute.js';   // LW14: a company's way through the deep
 import { hideoutsOf, outlawBandAt, bandTrouble } from '../systems/livingWorld/outlaws.js';   // LW12: the outlaws
 import { createWorldPlaces } from '../world/worldWide/worldPlaces.js';   // WW1: the world's places, wherever they stand
-import { pastBayJourney, teleportJourney } from '../systems/travel/pastBayTravel.js';   // AUDIT TESA II P4: no journey into the land past the Bay
+import { pastBayJourney, teleportJourney } from '../systems/travel/pastBayTravel.js';   // TRAVEL-EVERYWHERE: a journey past the Bay is the zone's to refuse alone
 import { bayPlaceRows, BAY_SOURCE } from '../world/worldWide/bayPlaces.js';   // WW1: the game's own rows, the registry's first provider
 import { createTownTable } from '../world/worldWide/townTable.js';   // WW7: a town by its map id, the Bay's and the registry's
 import { createLivingTrips } from './livingWorld/livingTrips.js';   // WW1: the living world's towns and dungeons, off the registry; WW7-7: its trips' world, everywhere
@@ -610,6 +610,8 @@ import { createUseMagicItemWindow, noItemToActivateText } from '../ui/useMagicIt
 import { preloadTransportArt } from '../ui/transportWindow.js';   // TR3: the picker's art (the picker itself is the mount rig's)
 import { TRANSPORT_MODES } from '../systems/transport.js';   // TR3: what the rows offer
 import { shipTransition, REPOSITION, isOnShip, shipMemory, shipRestorePos } from '../systems/ship.js';   // TR4: board and disembark; AUDIT-TO1 D1: TransportManager.IsOnShip for the popup; AUDIT 68 S22: the memory's height, compensation-free
+import { createStaffDragonHost } from './staffDragonHost.js';   // DRAGON-RIDE: an Admin's ride on the Dwarven Dragon
+import { parseDragonCommand, DRAGON_HELP_LINE, noteDragonRelay, dragonPoseRide } from '../systems/staffDragon.js';   // DRAGON-RIDE: /dragon's grammar and its /staff line
 import { createMountRig } from '../player/mountRig.js';   // MAC-K3: the mount surface, one home for this host and the fixed-city one
 import { worldViewportRect, largeHudWorldAspect } from '../ui/hud/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass (RETRO1: and retro mode's aspect correction pillarboxes it)
 import { createLockOn, LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // TI1: touch lock-on
@@ -1924,7 +1926,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // rows, before they go. The land past the Bay streamed, `?capitals` open; online too.
   const _capitalBase = tamrielLand && capitalsOn() ? capitalBase(_classicRows ?? _hubRows.map(classicRow).filter(Boolean), isMainStoryDungeon) : null;
   const _capitalNames = _capitalBase ? cityBlockNames(_classicRows ?? _hubRows.map(classicRow).filter(Boolean)) : null;
-  setCapitalsStanding(!!_capitalBase);   // TESA10d: a capital on the map (a portal's end there - TESA-NO-FAST), Arena attached or not
+  setCapitalsStanding(!!_capitalBase);   // TESA10d: a capital on the map (a portal's end there, and a journey's - TRAVEL-EVERYWHERE), Arena attached or not
   // TESA2 (world/arenaLocations.js): THE PLACES' TEMPLATES - the cities, hamlets and villages a place past the Bay may
   // clone, off the same rows (the game's own, as MAPS.BSA holds them), kept before the rows go
   const _arenaTemplates = arenaStands ? arenaTemplates(_classicRows ?? _hubRows.map(classicRow).filter(Boolean), isMainStoryDungeon) : null;
@@ -6469,6 +6471,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     surfaceKind: () => _lastFootstepKind, foesNear: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]), horseBreath: () => upkeep.bar(player.transportMode),
   });
   // RR2: the seams EnhancedRiding's component reads off the scene - in a town (PlayerGPS.IsPlayerInTown(true)), the transport mode
+  const staffDragon = createStaffDragonHost({ renderer, canvas, glyphs: () => _staffGlyphs, paused: () => gamePaused() });   // DRAGON-RIDE: /dragon, the flight's pace and the saddle (its cannons are the cast engine's)
   setRrHostSeams({ inTown: () => _isPlayerInTownStrict(), transportMode: () => player.transportMode, riding: () => player.riding });
   preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
   // B1 + AUDIT B-C2: an async open must not clobber a window the
@@ -13967,7 +13970,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (worldMoveBusy()) return false;   // AUDIT 68 S22
     if (_teleporting) return false;
     if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return false;   // PVPDUNGEONS: the guild's teleport never into, out of or inside the zone - AUDIT CAPTAIN'S SEA P6: nor across the Veil
-    const wildTrip = wildTravelGate(pick.pixel, 0, teleportJourney);   // WILD3: the guild's teleport is a fast journey too - PORTAL-BAY: under the teleport's law past the Bay (systems/travel/pastBayTravel.js teleportJourney: a teleport is TESA-NO-FAST's own road there, never refused as a journey)
+    const wildTrip = wildTravelGate(pick.pixel, 0, teleportJourney);   // WILD3: the guild's teleport is a fast journey too - PORTAL-BAY: under the teleport's law past the Bay (systems/travel/pastBayTravel.js teleportJourney: a teleport is never refused as a journey)
     if (!wildTrip.ok) return false;
     wildTravelPaid(wildTrip);
     _teleporting = true;
@@ -16055,10 +16058,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (wagonRiders?.seated()) { tvSay(TRAVEL_VIEW_TEXT.rider); return true; }
     if (coords) travelOptions.beginTravelToCoords(pick.pixel, !!opts?.speedCautious);
     else {
-      travelOptions.beginTravel({
+      travelOptions.beginTravel(pick.mapId != null ? {
         pixel: pick.pixel, name: pick.name, mapId: pick.mapId,
         regionIndex: pick.regionIndex, locationIndex: pick.locationIndex,
-      }, !!opts?.speedCautious, estimateMinutes);
+      } : tvPlaceSummary(pick.pixel.x, pick.pixel.y, !!pick.place) ?? pick, !!opts?.speedCautious, estimateMinutes);   // TRAVEL-EVERYWHERE: a place past the Bay (no MAPS.BSA id) by its own summary, which stands it (locationWorldRect)
     }
     return true;
   }
@@ -19799,7 +19802,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   function runStaffCommand(tabId, c) {
     const say = (line) => chatLog.push(tabId, { text: line, system: true });
     if ('error' in c) { say(c.error); return; }
-    if (c.cmd === 'staff') { for (const line of STAFF_HELP_LINES) say(line); return; }
+    if (c.cmd === 'staff') { for (const line of [...STAFF_HELP_LINES, DRAGON_HELP_LINE]) say(line); return; }
     if (c.cmd === 'relay') {
       // SCALE5b: a relay setting, to the hub (net/relayCfg.js) - the Developer's alone; the hub's answer lands in this tab
       if (!mayRelayCfg(staffGlyphs())) { say('Only a developer may change the relay\'s settings.'); return; }
@@ -19808,6 +19811,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (!relayCfgLink?.sendRelayCfg({ k: c.k, v: c.v })) say('The relay\'s settings need the hub online, on a relay that takes them.');
       return;
     }
+    if (c.cmd === 'dragon') return staffDragon.command(c, say);   // DRAGON-RIDE
     if (c.cmd === 'god' || c.cmd === 'fly') {
       setStaffPowers({ [c.cmd]: c.on });
       say(`${c.cmd === 'god' ? 'God mode' : 'Flying'} ${c.on ? 'on' : 'off'}.`);
@@ -20533,7 +20537,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // STAFF1 (Mac: "for developer, dungeon master and the shadow fang titles I want to add teleport, debug, and other
         // admin commands"): /tp /god /fly /heal /pos /staff (net/staffCommands.js) - asked only of a player whose own
         // glyphs are staff's, so to anyone else each is the chat's own "no such command". Each acts on the typer alone.
-        const staffCmd = isStaffT(staffGlyphs()) ? parseStaffCommand(text.replace(/^\/godmode\b/i, '/god'), staffPowers()) : null;   // TESTBUILD: /godmode = /god
+        const staffCmd = isStaffT(staffGlyphs()) ? (parseDragonCommand(text) ?? parseStaffCommand(text.replace(/^\/godmode\b/i, '/god'), staffPowers())) : null;   // DRAGON-RIDE: /dragon, its own grammar   // TESTBUILD: /godmode = /god
         if (staffCmd) { runStaffCommand(tabId, staffCmd); return 'error' in staffCmd ? false : true; }
         // TITLE-N (Mac: "Dungeon Master ... allows the user to use the /dm to message chat with orange text (similar to
         // /red)"): /red's law below, one frame over - parsed here and never guarded: whether this player may is the
@@ -22534,11 +22538,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     townTalk.say(`In ${WILD_NAME} you can teleport only to or from a city, town or village. Walk or ride its roads.`);   // WW-C2: Cyrodiil's
     return true;
   };
-  /** `law` the verdict past the Bay: a journey's (pastBayJourney, TESA-NO-FAST), or a teleport's (PORTAL-BAY:
+  /** `law` the verdict past the Bay: a journey's (pastBayJourney, TRAVEL-EVERYWHERE: the zone's), or a teleport's (PORTAL-BAY:
    *  pastBayTravel.js teleportJourney - teleportTo and a stone's pick and step, scenes/portalStoneHost.js). */
   const wildTravelGate = (to, spoken = 0, law = pastBayJourney) => {
     if (TEST_GODMODE && staffPowers().god) return { ok: true, fee: 0 };   // TESTBUILD: god mode travels anywhere, free
-    const j = law(playerTravelPixel(), to, online?.wildOk ? wildMapMask() : null, wildJourney({ from: playerTravelPixel(), to, mask: online?.wildOk ? wildMapMask() : null, lastAt: playerEntity.wildTravelAt ?? null, gold: legacyGold(playerEntity) - spoken }));   // AUDIT TESA II P4: never a journey INTO the land past the Bay (systems/travel/pastBayTravel.js - TESA-NO-FAST's law at the gate every journey passes: a party's to its leader, a rider's), the zone's own journeys its own
+    const j = law(playerTravelPixel(), to, online?.wildOk ? wildMapMask() : null, wildJourney({ from: playerTravelPixel(), to, mask: online?.wildOk ? wildMapMask() : null, lastAt: playerEntity.wildTravelAt ?? null, gold: legacyGold(playerEntity) - spoken }));   // TRAVEL-EVERYWHERE: a journey past the Bay is a Bay journey, the zone's own its own (systems/travel/pastBayTravel.js - TESA-NO-FAST retired)
     if (!j.ok) townTalk.say(j.text);
     return j;
   };
@@ -26935,7 +26939,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const channelLinksOffShards = () => { for (const link of chatLinks?.values?.() ?? []) if (isChannelShard(link.room) && !link.welcomed) link.join(channelOf(link.room)); };
   // SCALE5c: and whether the relay keeps the hub's shards, remembered for the next page (`channelLinkRoom`) - AUDIT SCALE II
   // C-2: under this relay's own key, and a relay without them takes the links off their shards
-  const onRelayVersion = (v) => { const keeps = hubShardsSupported(v); try { appStorage()?.setItem?.(hubShardsSeenKey(), keeps ? '1' : '0'); } catch { /* storage refused: the hub itself says it again */ } if (!keeps) channelLinksOffShards(); _relayKeepsRite = relaySupportsRite(v); _relayKeepsCage = relaySupportsCage(v); if (relayVersionSeen(v) === 'changed') chatNotice(relayRestartText()); };   // AUDIT BROKER-CAGE C4, C6: and whether it keeps the rite and the cage
+  const onRelayVersion = (v) => { const keeps = hubShardsSupported(v); try { appStorage()?.setItem?.(hubShardsSeenKey(), keeps ? '1' : '0'); } catch { /* storage refused: the hub itself says it again */ } if (!keeps) channelLinksOffShards(); _relayKeepsRite = relaySupportsRite(v); _relayKeepsCage = relaySupportsCage(v); noteDragonRelay(v); if (relayVersionSeen(v) === 'changed') chatNotice(relayRestartText()); };   // AUDIT BROKER-CAGE C4, C6: and whether it keeps the rite and the cage; DRAGON-RIDE: and the dragon's ride
   // SRV-N: THE BUILD POLL. The relay moves by hand and rarely; the client
   // moves on every merge, which is what "whenever we push" actually is
   // for this project. Nothing tells a tab held open across a deploy that
@@ -27904,7 +27908,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       ar: rig.shot?.n ?? 0,   // SPELLFX1: and the arrows loosed, so the peers draw the shafts
       // RIDE: the mount - the horse or the cart, outdoors (a door dismounts), and which of Eye Of The Beholder's five
       // mounted sprite sets this player chose, so the others draw the rider they drew themselves
-      rd: !riding ? 0 : player.transportMode === TRANSPORT_MODES.Cart ? 2 : 1,
+      rd: dragonPoseRide() ?? (!riding ? 0 : player.transportMode === TRANSPORT_MODES.Cart ? 2 : 1),   // DRAGON-RIDE: on the dragon, its own ride (systems/staffDragon.js - a relay that keeps it)
       rv: Math.max(0, Math.min(4, (() => { try { return modSetting('eye-of-the-beholder', 'Graphics.OnHorse') | 0; } catch { return 0; } })())),   // AUDIT RIDE: the one key, not the mod's whole settings object every frame
       rc: riding ? riddenHorseLook(playerEntity.items ?? []) || undefined : undefined,   // COATS1: the look the horse under them wears (wire.js rideOf) - absent for the bay as drawn
       hs: riding && moved && _hsLatch ? 1 : undefined,   // DISC7: the motor's half-speed flag, the one fact the peers' clop swaps on (wire.js rideOf) - latched off a moving frame (AUDIT DISC7 B2), and absent rather than 0 (B8: the wire omits it at 0)
@@ -34319,6 +34323,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // host now mounts, so the mount cannot behave differently in a
         // town than it does on the road.
         mountRig.frame(dt);
+        staffDragon.frame();   // DRAGON-RIDE: the saddle, where the mount is drawn
         // RR2: EnhancedRiding.OnTriggerEnter / OnControllerColliderHit (:157-215)
         // - a galloping rider tramples the townsperson under the hooves and
         // charges down the foe in the way, once each

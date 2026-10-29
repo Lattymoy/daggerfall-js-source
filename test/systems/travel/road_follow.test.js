@@ -73,12 +73,12 @@ test('ROAD-FOLLOW the law: the curve a byte draws through its pixel between the 
   assert.deepEqual(nativeOfTile(1100, 100, 64, 80), [1100 * 32768 + 64 * 256, 399 * 32768 + 80 * 256], 'tile row 0 the south edge');
   assert.deepEqual(nativeOfTile(1100, 100, 64, 64), [mapPixelWorldOrigin(1100, 100).x + 16384, mapPixelWorldOrigin(1100, 100).z + 16384], 'the middle the lane\'s');
   assert.equal(stepBit({ x: 5, y: 5 }, { x: 6, y: 4 }), DIR.NE);
-  // a route's pixel turns on its curve only where the steps in and out are one road's (or one track's): a road handing on to
-  // a track there goes through the middle, as the lane walks it
+  // a route's pixel turns on its curve where the steps in and out are a road's or a track's - PIN MOVED (ROAD-SMOOTH,
+  // road_smooth.test.js): a road handing on to a track there walks the curve either paints through both edges
   const route = [{ x: 1099, y: 100 }, { x: 1100, y: 100 }, { x: 1101, y: 99 }], o = { byteAt: () => DIR.W | DIR.NE, past: () => true };
   assert.ok(routeCurveAt(route, ['road', 'road'], 1, o), 'a road\'s bend: its curve');
   assert.ok(routeCurveAt(route, ['track', 'track'], 1, o), 'a track\'s bend: its curve');
-  assert.equal(routeCurveAt(route, ['road', 'track'], 1, o), null, 'a road on to a track: through the middle');
+  assert.ok(routeCurveAt(route, ['road', 'track'], 1, o), 'a road on to a track, both painted through the bend: its curve');
   assert.equal(routeCurveAt(route, ['open', 'open'], 1, o), null, 'the open ground: no curve');
 });
 
