@@ -101,7 +101,7 @@
   {
     "name": "AUDIT-STOREFRONT-a-drop-to-come-on-the-card",
     "file": "server-account/src/shop.js",
-    "old": "    if (!isHeld && !onSale && (!shopDropped(w, schedule, nowS * 1000) || seasonShut(env, w))) continue;   // AUDIT-STOREFRONT S2: nothing upcoming is told\n",
+    "old": "    if (!isHeld && !onSale && (!shopDropped(w, schedule, nowS * 1000) || seasonShut(env, w) || aurumShut(env, w))) continue;   // AUDIT-STOREFRONT S2: nothing upcoming is told; AURUM: no pack while Aurum is shut",
     "new": "",
     "tests": [
       "test/server/storefront_service.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-season-ware-granted-after-it",
     "file": "server-account/src/shop.js",
-    "old": "w.season && !passOpen(passSeasonById(w.season), nowS * 1000) ? 'late' : null;",
-    "new": "null;",
+    "old": "w.season && !passOpen(passSeasonById(w.season), nowS * 1000) ? 'late' : creditMoved(row, w, order) ? 'price' : null;",
+    "new": "creditMoved(row, w, order) ? 'price' : null;",
     "tests": [
       "test/server/storefront_audit.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "AUDIT-STOREFRONT-the-days-left-frozen",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "{ day = Math.floor(now() / 86_400_000); draw(); }",
-    "new": "{ day = Math.floor(now() / 86_400_000); }",
+    "old": "      day = Math.floor(now() / 86_400_000);\n      draw();\n",
+    "new": "      day = Math.floor(now() / 86_400_000);\n",
     "tests": [
       "test/ui/storefront_audit_window.test.js"
     ]

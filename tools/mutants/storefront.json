@@ -177,8 +177,8 @@
   {
     "name": "STOREFRONT-the-carousel-turning-while-held",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "c.n > 1 && !c.paused && !c.reduced && !c.hovered && !c.focusedIn && nowMs - c.since >= CAROUSEL_TURN_MS;",
-    "new": "c.n > 1 && !c.paused && !c.reduced && nowMs - c.since >= CAROUSEL_TURN_MS;",
+    "old": "c.n > 1 && !c.paused && !c.reduced && !c.hovered && !c.focusedIn && !c.hidden && nowMs - c.since >= CAROUSEL_TURN_MS;",
+    "new": "c.n > 1 && !c.paused && !c.reduced && !c.hidden && nowMs - c.since >= CAROUSEL_TURN_MS;",
     "tests": [
       "test/ui/shop_window.test.js"
     ]
@@ -439,8 +439,8 @@
   {
     "name": "STOREFRONT-the-rewards-unnamed",
     "file": "src/scenes/seasonHost.js",
-    "old": "e.grants.map(passGrantName).join(', ')",
-    "new": "e.grants.join(', ')",
+    "old": "worn.map(passGrantName).join(', ')",
+    "new": "worn.join(', ')",
     "tests": [
       "test/scenes/season_world.test.js"
     ]

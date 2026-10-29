@@ -632,7 +632,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
       self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };
       self.aurum = aurumCardOf(r.data.aurum) ?? self.aurum;
       self.busy = false;
-      self.note = t('account.flow.aurumBought', '{name} is yours. Wear it from your profile.', { name: arrivedName(ware) });
+      self.note = t('account.flow.aurumBought', '{name} is yours. Wear it here or from your profile.', { name: arrivedName(ware) });
       adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), effects: effectsStated(r.data), icon: iconStated(r.data), secret: asked });
       changed();
       void self.refresh();   // the shop's card again: the ware held there, and a bundle's price that held part of it

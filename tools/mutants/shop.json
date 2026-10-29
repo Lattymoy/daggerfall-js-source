@@ -130,8 +130,8 @@
   {
     "name": "SHOP-part-refund-revokes",
     "file": "server-account/src/shop.js",
-    "old": "return o.refunded === true ? revokeOrder(",
-    "new": "return o.amount_refunded > 0 ? revokeOrder(",
+    "old": "if (o.refunded !== true || typeof o.payment_intent !== 'string') return { ok: true, applied: 0 };   // a part refund keeps the ware",
+    "new": "if (!(o.amount_refunded > 0) || typeof o.payment_intent !== 'string') return { ok: true, applied: 0 };",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "SHOP-disclaimer-after-panels",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "  body.append(head, proceeds, carousel, tabs, panels, say, foot);",
-    "new": "  body.append(head, carousel, tabs, panels, proceeds, say, foot);",
+    "old": "  body.append(head, proceeds, tabs, scroll);",
+    "new": "  body.append(head, tabs, scroll, proceeds);",
     "tests": [
       "test/ui/shop_window.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "SHOP-landing-never-said",
     "file": "src/ui/accountFlow.js",
-    "old": "    if (self.shopWaiting && self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held)) {",
-    "new": "    if (self.shopWaiting && self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held && w.sale === 'never')) {",
+    "old": "self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held))) {",
+    "new": "self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held && w.sale === 'never'))) {",
     "tests": [
       "test/ui/shop_window.test.js"
     ]

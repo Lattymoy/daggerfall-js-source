@@ -1,0 +1,128 @@
+[
+  {
+    "name": "AUDIT-STOREFRONT-II-E1-panel-ground-painted",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": ".px-shopwin .sh-panel { padding: 12px; border-width: 2px; border-style: solid; }",
+    "new": ".px-shopwin .sh-panel { padding: 12px; border: 1px solid rgba(143,91,255,0.45); background: linear-gradient(160deg, rgba(23,11,74,0.55), rgba(10,9,16,0.9)); }",
+    "tests": ["test/ui/storefront_audit2_window.test.js"]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E1-tab-a-press",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "      const tb = /** @type {HTMLButtonElement} */ (el('button', 'sh-tab'));",
+    "new": "      const tb = /** @type {HTMLButtonElement} */ (el('button', 'act sh-tab'));",
+    "tests": ["test/ui/storefront_audit2_window.test.js"]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E1-shop-role-dropped",
+    "file": "src/ui/enhanced/enhancedFrame.js",
+    "old": "'.px-shopwin .sh-deed', '.px-shopwin .sh-tracklabel'],",
+    "new": "'.px-shopwin .sh-deed'],",
+    "tests": ["test/ui/storefront_audit2_window.test.js"]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E6-window-scrolled-whole",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  body.append(head, proceeds, tabs, scroll);",
+    "new": "  body.append(head, proceeds, carousel, tabs, panels, say, foot);",
+    "tests": ["test/ui/storefront_audit2_window.test.js", "test/ui/shop_window.test.js"]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E6-tab-panels-below-fold",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "    if (typeof panels.offsetTop === 'number') scroll.scrollTop = panels.offsetTop;",
+    "new": "",
+    "tests": ["test/ui/storefront_audit2_window.test.js"]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E16-stages-at-once",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "    if (!sight) { go(); return; }",
+    "new": "    { go(); return; }",
+    "tests": ["test/ui/storefront_audit2_window.test.js"]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E16-turning-out-of-sight",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "!c.focusedIn && !c.hidden && nowMs - c.since",
+    "new": "!c.focusedIn && nowMs - c.since",
+    "tests": ["test/ui/storefront_audit2_window.test.js"]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E14-slide-in-on-opening",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "    if (moved && !reduced) panel.classList?.toggle('sh-slidein', true);",
+    "new": "    if (!reduced) panel.classList?.toggle('sh-slidein', true);",
+    "tests": ["test/ui/storefront_audit2_window.test.js"]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E13-pause-shown-still",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "    pauseB.hidden = reduced;",
+    "new": "    pauseB.hidden = false;",
+    "tests": ["test/ui/storefront_audit2_window.test.js"]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E3-deluxe-title-never-inked",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "if (onPage) inkPaintedWord(word, doc);",
+    "new": "",
+    "tests": ["test/ui/storefront_audit2_window.test.js"]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E3-track-title-inked-on-wood",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "for (const r of rewards.filter((x) => x.level === level && x.track === row)) cell.append(rewardChip(r.grant));",
+    "new": "for (const r of rewards.filter((x) => x.level === level && x.track === row)) cell.append(rewardChip(r.grant, true));",
+    "tests": ["test/ui/storefront_audit2_window.test.js"]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E5-challenge-paid-class",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "const li = el('li', `sh-challenge${got?.paid ? ' sh-cdone' : ''}`);",
+    "new": "const li = el('li', `sh-challenge${got?.paid ? ' sh-paid' : ''}`);",
+    "tests": ["test/ui/storefront_audit2_window.test.js", "test/ui/shop_window.test.js"]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E12-held-price-full",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "    d.buyrow.className = 'sh-buyrow sh-buyrow-' + st.state;   // AUDIT-STOREFRONT II (lane E 12): held or spent, its price dimmed under its state",
+    "new": "",
+    "tests": ["test/ui/storefront_audit2_window.test.js"]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E9-here-unmarked",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "const here = card ? levels.filter((l) => l <= card.level).pop() ?? null : null;",
+    "new": "const here = null;",
+    "tests": ["test/ui/shop_window.test.js"]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E9-locked-unsaid",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "        if (locked) cell.append(lockNode());",
+    "new": "",
+    "tests": ["test/ui/shop_window.test.js"]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E8-effect-how-missing",
+    "file": "src/ui/collections/wardrobeCatalogue.js",
+    "old": "(WARDROBE[kind] ?? EFFECT_WARDROBE[kind])",
+    "new": "(WARDROBE[kind])",
+    "tests": ["test/ui/storefront_audit2_window.test.js"]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E7-picker-after-slots",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  .card .slots-picker { order: -1; margin: 8px 0 12px; }",
+    "new": "  .card .slots-picker { margin: 8px 0 12px; }",
+    "tests": ["test/ui/storefront_audit2_window.test.js"]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-B3-banked-past-the-last-stage",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": " && card.level >= card.top && card.top < PASS_LEVELS;",
+    "new": " && card.level >= card.top;",
+    "tests": ["test/ui/storefront_audit2_window.test.js"]
+  }
+]

@@ -498,12 +498,10 @@ const keepWord = (/** @type {any} */ db, /** @type {string} */ intent, /** @type
 const creditMoved = (/** @type {any} */ row, /** @type {any} */ w, /** @type {any} */ order) => w.gives.length > 0 && shopCreditOf(row, w.id).join(' ') !== String(order.credit ?? '');
 
 /**
- * A PAYMENT TAKEN: the order paid, its ware on the row and the receipt in the mailbox - one batch, guarded on the order
- * moving from open (or expired: Stripe finished late) and on the row as read, so a webhook told twice grants once. The
- * amount and currency must be the order's. A ware held by then (two pages paid), a booster spent, a season's ware paid
- * after it, or a giver whose price moved since its page opened (AUDIT-STOREFRONT II A2), is refunded instead
- * (AUDIT-STOREFRONT S3, S5, S10); a grant closes the pages it made wrong. A payment refunded or disputed before this word
- * landed is never granted (A1): a dispute won later gives it (restoreOrder). `{ ok, applied }`.
+ * A PAYMENT TAKEN: the order paid, its ware on the row, the receipt in the mailbox - one batch, guarded on the order
+ * moving from open (or expired) and the row as read, so a webhook told twice grants once; its amount the order's. A ware
+ * held by then, a booster spent, a season's ware late, or a giver whose price moved (AUDIT-STOREFRONT II A2) is refunded
+ * (S3, S5, S10); a payment refunded or disputed before this word is never granted (A1). `{ ok, applied }`.
  * @param {{ db: any, nowS: number }} ctx @param {string} orderId @param {{ intent?: unknown, amount?: unknown, currency?: unknown }} paid
  * @param {{ env?: any, fetch?: typeof fetch }} [io] Stripe, to close pages and return payments
  */

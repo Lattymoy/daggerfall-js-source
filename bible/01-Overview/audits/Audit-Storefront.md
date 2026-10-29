@@ -126,6 +126,51 @@ Lane 3's #4 is lane 2's #3.
 | V7 | MED | The effects kit was written to the stored session and dropped by it, so a reload wore none until the service spoke (found when main's ARMORY-SEEN pin met it at the merge) | FIXED: `keepSession` keeps it. `armorylive` |
 | V8 | - | The pass-only wares (the Tonal kill, the Brass gate, the Automaton, the season's titles, glyphs and auras) | Seen in time on the stage after R1-R10: sound, nothing changed |
 
+## AUDIT-STOREFRONT II (2026-10-29)
+
+The owner, of the same arc: **"1. Audit everything 2. Ensure the new UI is perfect and enhanced ui plus 3. Ensure the
+reward tracks make sense. No overbundence of titles and profile icons. 4. Implement a currency ... 5. For profile icons
+no figures should be used."** Five cold lanes read the branch at 4d881139d, each told to reproduce a finding before
+reporting it and to fix nothing: A the payments, B the pass, C the effects, D the season in the world, E the window and
+the profile on the Enhanced Plus kit. The track, the icons and Aurum are their own pages' (`06-Systems/Battle-Pass.md`
+section 3, `06-Systems/Aurum.md`). Each FIXED is pinned in the test it names and guarded by a mutant
+(`tools/mutants/aurum.json` for lane A, `storefront_audit2_ui.json` for E, and the lanes' own below).
+
+### A - the payments
+
+Stripe tells a payment's words in no order and retries a refused one for days. Pins: `test/server/storefront_audit2_pay.test.js`.
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| A1 | HIGH | A refund or a dispute told before the paid word was forgotten: the paid word, retried later, granted the ware on a payment already gone back | FIXED: every word on a payment is kept by its payment intent (`shop_charge_words`, migration 0194), whatever its order's state; the paid word reads them before it grants and ends the order refunded or disputed |
+| A2 | HIGH | A giver's price was trusted at the grant: a bundle paged with credit for a ware whose own payment went back after gave that ware unpaid; a bundle won back from a dispute did the same | FIXED: a giver whose credit no longer matches the row is refunded for its price, never granted; a giver given again marks each credited ware it no longer holds lost (`-<id>`) |
+| A3 | MED | A refund while an inquiry stood was ignored, and the inquiry's close gave the ware back on a refunded payment | FIXED: a refund ends a disputed order refunded; a dispute's close restores only with no refund kept and no other dispute open |
+| A4 | LOW | A paid word told twice at once: the late copy acted on a refund it had computed from the order as it stood before the first landed, and returned a good sale | FIXED: an attempt answers only the refund it wrote; one refused by the order's guard answers none |
+| A5 | LOW | Two pages paid at once ended differently by which landed first | FIXED by A2: whichever lands second no longer matches what the row holds and is refunded, the same either way |
+
+### E - the window and the profile
+
+Pins: `test/ui/storefront_audit2_window.test.js`, `shop_window.test.js`.
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| E1 | HIGH | The shop was not on the Enhanced Plus kit: no surface carried a role, its sheet painted its own violet grounds and borders, so no theme reached it | FIXED: every surface carries its role (`enhancedFrame.js` FRAME_ROLES) and the sheet keeps geometry and words; a pin reads the sheet and refuses a role painted |
+| E2 | MED | The Grimoire dress could not reach the presses and tabs | FIXED by E1: its presses and tab plates read the roles |
+| E3 | MED | A title's paint on a panel's page stayed light on the Grimoire's parchment | FIXED: inked where it stands on a page (`grimoireDress.js` inkPaintedWord, one home with the Collections page); on a well's wood it keeps its paint |
+| E4 | MED | The effects' colour words matched no rule outside the profile card | FIXED: one ink table (`effectText.js` effectInkCss) for the profile and the shop |
+| E5 | MED | A challenge done and the foot's payment line shared one class, so the payment line read green | FIXED: `sh-cdone` and `sh-stripe` |
+| E6 | MED | On a short screen the tabs stood below the fold; a tab pressed redrew panels out of sight | FIXED: the head, disclaimer and tabs stand over a scrolled part; a tab brings its panels into sight; short and wide layouts |
+| E7 | MED | On a narrow profile card the effect picker stood far under the stage it tries choices on | FIXED: the stage first, the picker under it |
+| E8 | MED | A locked effect never said how it is had | FIXED: each effect's words of how, read off the wares and the season's law |
+| E9 | LOW | The pass track's rows were named only in a legend, its overflow had no sign, the player's place was unmarked, a cell said nothing to a screen reader | FIXED: the rows named at the left as it scrolls, the last reward reached marked and scrolled to, a padlock on a locked cell, each cell said whole |
+| E10 | LOW | The challenges' meters stood ragged, each row its own grid | FIXED: one set of columns |
+| E11 | LOW | The window wiped the kit's ground with its own | FIXED by E1 |
+| E12 | LOW | A held or spent ware kept its price at full weight | FIXED: dimmed under its state |
+| E13 | LOW | For less motion the Pause press stood disabled | FIXED: hidden |
+| E14 | LOW | The first slide slid in on opening | FIXED: on a turn alone |
+| E15 | LOW | A long title in a bundle's tile shrank past reading | FIXED: never under 11 px; a long one wraps |
+| E16 | LOW | Every stage started on opening, and the carousel turned out of sight | FIXED: a stage starts in sight; the carousel stops scrolled away |
+
 ## Known, and not changed
 
 - A bridle drawn in the horse's black takes the look's shade with the mane: across the hide it is drawn as the shading

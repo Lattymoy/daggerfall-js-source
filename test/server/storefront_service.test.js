@@ -11,6 +11,7 @@ import { readFileSync } from 'node:fs';
 import { standService } from '../accountDb.mjs';
 import { fulfilOrder, shopCardOf, STRIPE_API } from '../../server-account/src/shop.js';
 import { shopDemand, DEMAND_DAYS_MAX } from '../../server-account/src/staffShop.js';
+import { dailyWaresAt } from '../../server-account/src/aurum.js';   // AURUM: the day's wares beside the demand
 import { passOf, findPass, BATTLE_PASS_STATUS, passSwitchOf } from '../../server-account/src/battlePass.js';
 import { effectsHeld, effectRefusal } from '../../server-account/src/titles.js';
 import { ECON_ROUTES } from '../../server-account/src/staffEconomy.js';
@@ -271,12 +272,19 @@ test('STOREFRONT the demand: a day a row over the span asked, each ware\'s order
   await s.pay(me, 'portal:runic');
   s.raw.prepare("UPDATE shop_orders SET status = 'refunded' WHERE ware = 'portal:runic'").run();
   const nowS = Math.floor(Date.now() / 1000);
-  const d = await shopDemand(s.env.DB, { SHOP_FEATURED: 'kill:pyre 2026-11-18 2026-11-19' }, nowS, 5);
+  // AURUM: a daily ware bought for Aurum today, counted beside the money's (aurum_ledger's buys)
+  s.raw.prepare("INSERT INTO aurum_ledger (account, kind, ref, amount, day, at) VALUES (?, 'buy', 'icon:aurbis', -700, ?, ?)").run(me.id, Math.floor(nowS / 86_400), nowS);
+  const env = { ...ON, SHOP_FEATURED: 'kill:pyre 2026-11-18 2026-11-19' };
+  const d = await shopDemand(s.env.DB, env, nowS, 5);
   assert.equal(d.days.length, 5, 'a row a day, none dropped');
   assert.deepEqual(d.days.map((r) => r.featured), [[], [], ['kill:pyre'], ['kill:pyre'], []]);
   const today = d.days.at(-1).wares;
-  assert.deepEqual(today['kill:pyre'], { opened: 1, paid: 1, refunded: 0, disputed: 0, cents: 2999 });
-  assert.deepEqual(today['portal:runic'], { opened: 1, paid: 1, refunded: 1, disputed: 0, cents: 0 }, 'a refund paid first, its money not counted');
+  // PIN MOVED (AURUM): each cell with its Aurum buys beside its orders, and each day's wares beside its featured
+  assert.deepEqual(today['kill:pyre'], { opened: 1, paid: 1, refunded: 0, disputed: 0, cents: 2999, bought: 0, aurum: 0 });
+  assert.deepEqual(today['portal:runic'], { opened: 1, paid: 1, refunded: 1, disputed: 0, cents: 0, bought: 0, aurum: 0 }, 'a refund paid first, its money not counted');
+  assert.deepEqual(today['icon:aurbis'], { opened: 0, paid: 0, refunded: 0, disputed: 0, cents: 0, bought: 1, aurum: 700 });
+  assert.deepEqual(d.days.at(-1).daily, dailyWaresAt(env, nowS), 'the day\'s wares');
+  assert.equal(d.days.at(-1).daily.length, 5);
   assert.equal(d.totals['kill:pyre'].cents, 2999);
   assert.equal((await shopDemand(s.env.DB, {}, nowS, 9999)).days.length, DEMAND_DAYS_MAX);
   assert.ok(ECON_ROUTES.includes('/v1/staff/econ/shop'));

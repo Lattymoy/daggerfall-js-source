@@ -1254,8 +1254,8 @@ export const SHOP_CSS = `
 .px-shopwin .sh-aurumcoin { width: 56px; height: 56px; flex: none; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6)); }
 .px-shopwin .sh-aurumwords { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .px-shopwin .sh-stages { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-.px-shopwin .sh-stagechip { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border-width: 1px; border-style: solid; font-size: 12px; color: #e2dccd; }
-.px-shopwin .sh-stagechip.sh-stage-open { box-shadow: inset 0 -3px 0 #9fdcff; }
+.px-shopwin .sh-stagechip { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 6px 8px 8px; border-width: 1px; border-style: solid; font-size: 12px; color: #e2dccd; }
+.px-shopwin .sh-stagechip.sh-stage-open::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: #9fdcff; }   /* the open stage's bar, under the chip's own ring */
 .px-shopwin .sh-stagechip.sh-stage-done { opacity: 0.6; }
 .px-shopwin .sh-stagenum { font-size: 11px; letter-spacing: 0.18em; color: #d8b56a; }
 .px-shopwin .sh-stagename { font-size: 13.5px; color: #ffe2a8; }
@@ -1292,12 +1292,12 @@ export const SHOP_CSS = `
 .px-shopwin .sh-deluxe .sh-reward { flex: 1 1 150px; flex-direction: row; align-items: center; gap: 8px; }
 .px-shopwin .sh-subhead { margin: 4px 0 0; padding-bottom: 3px; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: #d8b56a; border-bottom-width: 1px; border-bottom-style: solid; }
 /* THE OPEN STAGE'S CHALLENGES: one set of columns for every row (AUDIT-STOREFRONT II, lane E 10) */
-.px-shopwin .sh-challenges { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr) 120px 96px 118px; gap: 6px 10px; }
+.px-shopwin .sh-challenges { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr) 120px max-content max-content; gap: 6px 10px; }
 .px-shopwin .sh-challenge { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; font-size: 13px; color: #e2dccd; }
 .px-shopwin .sh-cdone .sh-cwhat { color: #9fe8b4; }
 .px-shopwin .sh-cdone .sh-cwhat::before { content: '\\2713  '; }
 .px-shopwin .sh-ccount { font-variant-numeric: tabular-nums; color: var(--dim); text-align: right; }
-.px-shopwin .sh-cxp { font-size: 12px; color: #ffd27a; text-align: right; }
+.px-shopwin .sh-cxp { font-size: 12px; color: #ffd27a; text-align: right; white-space: nowrap; }
 .px-shopwin .sh-toboosts { align-self: flex-start; min-height: 40px; padding: 0 14px; }
 .sh-waretag { display: inline-flex; align-items: center; gap: .35em; }
 .sh-waretag-glyph { width: 1.2em; height: 1.2em; }

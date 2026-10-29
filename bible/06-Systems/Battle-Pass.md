@@ -37,19 +37,32 @@ with the Premium Pass or the Deluxe; a premium reward reached before the purchas
 account's for good, on every character, held from the level reached - read off the row at every ask (ACC3's law), never
 a letter to claim.
 
+AURUM (2026-10-29, the owner: "Ensure the reward tracks make sense. No overbundence of titles and profile icons"): the
+track was cut to one title on each track and three profile icons in all, and most levels give **Aurum** instead - the
+shop's currency for its daily wares (`06-Systems/Aurum.md`). The free track gives 525 Aurum over the season, the premium
+1,350. A track's Aurum is counted from the level reached at every ask, never stored, so it leaves with the pass that
+opened it (`src/net/aurumLaw.js` aurumTrackOf). The titles Brassbound, Tonal Architect and Brasswright and the portraits
+Centurion Helm, Brass Spider, Dwarven Sphere, Brass Colossus and Numidium were cut: none had shipped.
+
 | Level | Free | Premium |
 | --- | --- | --- |
-| 1 | Centurion Helm (portrait) | Aetherium Shard (portrait) |
-| 5 | | Tonal Fork (glyph) |
-| 10 | Brassbound (title) | Dwemer Lexicon (portrait) |
-| 15 | | Tonal Architect (title) |
-| 20 | Dwemer Cog (glyph) | Brass Spider (portrait) |
-| 25 | | Tonal Shatter (kill effect) |
-| 30 | Dwarven Sphere (portrait) | Brass Colossus (portrait) |
-| 35 | | Brasswright (title) |
-| 40 | Tremor-Born (title) | Brass Gate (portal skin) |
-| 45 | | Gearheart (portrait) |
-| 50 | Numidium (portrait) | Aetherium Coil (aura), Heart-Waker (title) |
+| 1 | | Tonal Fork (glyph) |
+| 2, 4, 6 | | 50 Aurum each |
+| 5 | 50 Aurum | |
+| 8 | | Dwemer Lexicon (profile icon) |
+| 10 | Dwemer Cog (glyph) | 75 Aurum |
+| 12, 14 | | 50 Aurum each |
+| 15 | 50 Aurum | |
+| 16, 18 | | 75 Aurum each |
+| 20 | Aetherium Shard (profile icon) | Tonal Shatter (kill effect) |
+| 22, 26, 32, 36 | | 50 Aurum each |
+| 24, 28, 38, 42, 44 | | 75 Aurum each |
+| 25 | 75 Aurum | |
+| 30 | 75 Aurum | Brass Gate (portal skin) |
+| 34, 46, 48 | | 100 Aurum each |
+| 35, 45 | 100 Aurum each | |
+| 40 | 75 Aurum | Gearheart (profile icon) |
+| 50 | Tremor-Born (title) | Aetherium Coil (aura), Heart-Waker (title) |
 
 **The Deluxe Pass** gives the premium track, five levels at once, and its own three: the Gilded Coil (an aura), the
 Brass Automaton (a mount look) and Echo of Numidium (a title on an animated brass plate).
@@ -173,11 +186,14 @@ and the sweep reads a clearing's key once a turn. One theatre's fissures are dra
 ## 7. The window
 
 The shop's first section is the pass: the season's name and story and its three stages, each with the day it opens or
-the level it opens to; the account's level, the bar to the next, the day's experience and its booster's share; the track,
-a column for each level with a reward (eleven of the fifty), free above and premium below, each reward drawn in its own
-paint; the Deluxe Pass's own three; the open stage's challenges with their counts; and a button to the Pass Boosters tab.
-The Premium and Deluxe Passes are sold below the section, the three boosters on their own tab and the Seasonal Collector
+the level it opens to; the account's level, the bar to the next, the day's experience and its booster's share; the track;
+the Deluxe Pass's own three; the open stage's challenges with their counts; and a button to the Pass Boosters tab. The
+Premium and Deluxe Passes are sold below the section, the three boosters on their own tab and the Seasonal Collector
 under Bundles. A level reached is said once on the screen with its rewards.
+
+The track is a column for each level with a reward (thirty-one of the fifty), free above and premium below, each reward
+in its own paint. The rows' names stand at its left as it scrolls, the player's last reward reached is marked and
+scrolled to, and a premium cell the account has not opened carries a padlock (AUDIT-STOREFRONT II, lane E 9).
 
 ## 8. AUDIT PASS (2026-10-29)
 

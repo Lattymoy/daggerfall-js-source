@@ -27,11 +27,10 @@ export const SHOP_KIND_CATEGORY = Object.freeze({
 export const SHOP_TIERS = Object.freeze(['standard', 'premium', 'exclusive']);
 
 /**
- * One ware. `cents` its price in US cents (for a ware never sold alone, its worth inside a bundle); `bit` its bit on
- * `players.shop_wares` - the first nine only, never renumbered, since a stored bit is a sale that happened - or 0 for a
- * ware held by its id in `players.shop_held`. `gives` the wares it holds for whoever holds it; `extra` the worth of its
- * own beside them (a Deluxe Pass's). `season` the season it is sold in; `alone` false for a ware sold only in a bundle.
- * AURUM: `cash` false for a ware sold only for Aurum (net/aurumLaw.js, the daily wares); `aurum` the Aurum a pack gives.
+ * One ware. `cents` its price in US cents (a ware never sold alone: its worth in a bundle); `bit` its bit on
+ * `players.shop_wares` (the first nine only, never renumbered: a stored bit is a sale) or 0 for one held by its id in
+ * `players.shop_held`. `gives` what it holds for its holder, `extra` its own worth beside them (a Deluxe's); `season` its
+ * season; `alone` false for a bundle's alone. AURUM: `cash` false for Aurum alone (the daily wares); `aurum` a pack's.
  * @param {string} kind @param {string} key @param {number} cents
  * @param {{ bit?: number, tier?: string|null, gives?: string[], extra?: number, season?: string|null, alone?: boolean, preAlpha?: boolean, cash?: boolean, aurum?: number }} [o]
  */

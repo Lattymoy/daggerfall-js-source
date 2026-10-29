@@ -40,8 +40,9 @@ Boosters are built as Pass Boosters: they speed the pass's track, whose every re
 
 ## 3. The catalogue (`src/net/shopLaw.js`)
 
-The window's sections, in order: the Battle Pass, Kill Effects, Portal Skins, Mounts, Name Visuals (titles and glyphs),
-Auras, Aura Armory, Bundles and Pass Boosters. A ware has a **tier** - Standard, Premium or Exclusive, the sheet's three
+The window's sections, in order: the Battle Pass, the Daily Wares (AURUM: the day's wares sold for Aurum, while Aurum is
+open to the account - `06-Systems/Aurum.md`), Kill Effects, Portal Skins, Mounts, Name Visuals (titles and glyphs),
+Auras, Aura Armory, Bundles, Pass Boosters and Aurum (its four packs). A ware has a **tier** - Standard, Premium or Exclusive, the sheet's three
 columns - shown as a mark on its panel; the pre-alpha wares keep their Pre-alpha mark instead.
 
 **Held by id.** The first nine wares are bits on `players.shop_wares`; the bits stay, since a stored bit is a sale that
@@ -188,9 +189,18 @@ under its worth too.
 
 The shop's window (`ui/enhanced/enhancedShop.js`): the title, the proceeds' disclaimer first, then **the carousel** - a
 panel a featured ware, large, live, with how long it stays featured and whether it is limited. It turns every eight
-seconds (`carouselTurns`), never while pointed at, focused or paused (its Pause button), never for less motion. Its
-arrows, its dots, the arrow keys and a swipe step it. Only the panel shown runs its stage. Under it the sections' tabs
-(a section with nothing on the card is not shown), each section's panels, the account's line and the foot.
+seconds (`carouselTurns`), never while pointed at, focused, paused (its Pause button), scrolled out of sight or for
+less motion, when its Pause is not shown. Its arrows, its dots, the arrow keys and a swipe step it; a slide slides in on
+a turn, never on opening. Only the panel shown runs its stage. Then each section's panels, the account's line and the
+foot.
+
+**On the Enhanced Plus kit** (AUDIT-STOREFRONT II, lane E). Every surface carries its kit role
+(`ui/enhanced/enhancedFrame.js` FRAME_ROLES): the panels, the disclaimer, the presses, Buy, the tabs, the chips, the
+stages and meters, the head and the foot. So each theme and the Grimoire dress the shop as they dress the pause window,
+and the shop's own sheet never paints a role - a border there is its width and style alone. The head, the disclaimer and
+the tabs stand; the carousel and the section scroll under them, and a tab pressed brings its panels into sight. A live
+stage starts once it is in sight. A short screen tightens the standing part; from 1440 pixels wide the wares stand two
+to a row. A title's paint on a page is inked under the Grimoire (`grimoireDress.js` inkPaintedWord).
 
 A panel's stage is live: a title on its plate, a glyph, an aura or a piece worn, a kill effect or a portal skin played on
 the character's stage (`render/effectStage.js`), a horse in its mount look (`ui/mountPreview.js`). The figure is the
@@ -209,7 +219,9 @@ sound is heard when the player points at its stage or chooses its slide, never o
 **The profile** (`ui/characterSlots.js`, PROFILE-SLOTS) has three more slots under its stage: Kill effect, Portals and
 Mount. A kill effect pointed at plays on the character, which burns away in its colour and comes back; a portal skin
 opens behind the character (none worn: the violet vortex); a mount look stands on its horse over the choices. One not
-held is tried on and told how it is had; one held is worn through the flow's own door.
+held is tried on and told how it is had (AUDIT-STOREFRONT II, lane E 8: `wardrobeCatalogue.js` EFFECT_WARDROBE, read off
+the wares and the season's law); one held is worn through the flow's own door. On a narrow card the stage stands first
+and the picker right under it (lane E 7), so a choice pointed at is tried on in sight.
 
 ## 10. Online
 
