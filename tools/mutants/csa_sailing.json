@@ -742,8 +742,8 @@
   {
     "name": "CSA-D-race-boat-no-rival",
     "file": "src/player/activationRace.js",
-    "old": "Math.min(lootD, dropD, torchD, wagonD, horseCartD, campD, waterD, gateD, brokerD, boatD, doorDistance);",
-    "new": "Math.min(lootD, dropD, torchD, wagonD, horseCartD, campD, waterD, gateD, brokerD, doorDistance);",
+    "old": "Math.min(lootD, dropD, torchD, wagonD, horseCartD, dragonD, campD, waterD, gateD, brokerD, boatD, doorDistance);",
+    "new": "Math.min(lootD, dropD, torchD, wagonD, horseCartD, dragonD, campD, waterD, gateD, brokerD, doorDistance);",
     "tests": [
       "test/systems/comeSailAway/csa_sailing.test.js"
     ]
@@ -751,7 +751,7 @@
   {
     "name": "CSA-D-race-boat-before-hcc",
     "file": "src/player/activationRace.js",
-    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, boat, torch,",
+    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, dragon, boat, torch,",
     "new": "  return firmFirst([gate, broker, camp, water, wagon, boat, horseCart, torch,",
     "tests": [
       "test/systems/comeSailAway/csa_sailing.test.js"

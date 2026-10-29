@@ -1978,6 +1978,23 @@ export function accountStars({ fetch, storage }) {
   };
 }
 
+/** DRAGON4: a Dwarven Dragon's receipt the relay signed for this account, carried to the service with the character that
+ *  fought it and this device's claim id (the hoard's key) - `{ recorded, slain, spoils, tamed }`, or `{ recorded: false,
+ *  why, slain, spoils, tamed }` (`claimed`, `guest`). `tamed` the kill's tame (`{ id, look, character }`) while its row stands. */
+export const claimDragonReceipt = (io, receipt, character, name = null, cid = null) => call(io, '/v1/dragon/claim', { receipt, character, name, ...(cid ? { cid } : {}) });
+/** AUDIT DRAGON: the tames the service drew for this account - `{ tames: [{ id, character, look, watch }] }`. */
+export const dragonTamesOf = (io) => call(io, '/v1/dragon/tames', {});
+
+/** DRAGON4: THE DRAGONS' ONE CALL, bound to this device's stored session (the stars' own shape); no session, `no-session`. */
+export function accountDragons({ fetch, storage }) {
+  const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
+  return {
+    claim: async (receipt, character, name = null, cid = null) => { const i = io(); return i ? claimDragonReceipt(i, receipt, character, name, cid) : { ok: false, error: 'no-session' }; },
+    tames: async () => { const i = io(); return i ? dragonTamesOf(i) : { ok: false, error: 'no-session' }; },
+    me: () => storedSession(storage)?.id ?? null,
+  };
+}
+
 /** SD9b: a Brass Remnant's receipt the relay signed for this account, carried to the service - `{ recorded, slot, title,
  *  aura, broken }`, or `{ recorded: false, why }` (`claimed`, `guest`). */
 export const claimSdReceipt = (io, receipt) => call(io, '/v1/sd/claim', { receipt });

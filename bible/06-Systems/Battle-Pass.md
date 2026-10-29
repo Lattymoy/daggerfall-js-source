@@ -69,7 +69,7 @@ Brass Automaton (a mount look) and Echo of Numidium (a title on an animated bras
 
 ## 4. Experience
 
-The account service holds each account's season experience (`players.pass_s1`, migration 0194) and decides every find
+The account service holds each account's season experience (`players.pass_s1`, migration 0195) and decides every find
 (`server-account/src/battlePass.js`), as it decides a Soul Cake: the page asks with a deed's source, the service answers.
 
 | Source | Experience |
@@ -239,7 +239,7 @@ dead); lane 5's `SEASONAUDIT-a-lost-answer-refused` is aimed at the kept id's li
 - **B2. A find lost to a dropped answer.** Off line or a 5xx, the find was dropped, and with no id it could not be asked
   again safely. A find now carries its own id, sixteen hex, and is asked again with it while the service cannot be
   reached: 4 s on, doubling to a minute, the deeds behind it waiting. The service keeps the id with its answer
-  (`pass_asks`, migration 0194), written in the find's own batch, so an id asked again is answered as it was and counted
+  (`pass_asks`, migration 0195), written in the find's own batch, so an id asked again is answered as it was and counted
   once (`server-account/src/battlePass.js:"const kept = rid ? await passAskOf(db, player.id, rid) : null;"`). An
   account's ids go two days after their own, at its first find of a later day: an hourly job would take a share of
   every other job's statements (`cron.js` runCron).

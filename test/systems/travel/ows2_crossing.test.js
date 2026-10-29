@@ -285,11 +285,11 @@ test('OWS2 host wiring by source: the boat a journey crosses in; the plan asked 
   // the plans
   // THE MERGE (OW4 x OWS2): the planner's ground is routeGround's (the sea and the peaks' law, read once), the boat beside it
   // PIN MOVED (AUDIT OW5 S3): a plan that never sails is planned again on land, the moored boat left where it lies
-  assert.match(w, /let plan = planRoute\(from, summary\.pixel, \{ roads: net\?\.roads \?\? null, tracks: net\?\.tracks \?\? null, \.\.\.tvRouteGround\(\), sea: tvSeaAsk\(means, 'land'\) \}\);[^\n]*\n(?:\s*if \(!plan && !net && roadNet\)[^\n]*\n)?\s*const dry = tvMooredDry\(means, plan, [^\n]*\n\s*if \(dry\) \{ plan = dry; means = null; \}/);
+  assert.match(w, /let plan = \(dragonMounted\(\) \? dragonFlightPlan\(from, summary\.pixel\) : null\) \?\? planRoute\(from, summary\.pixel, \{ roads: net\?\.roads \?\? null, tracks: net\?\.tracks \?\? null, \.\.\.tvRouteGround\(\), sea: tvSeaAsk\(means, 'land'\) \}\);[^\n]*\n(?:\s*if \(!plan && !net && roadNet\)[^\n]*\n)?\s*const dry = tvMooredDry\(means, plan, [^\n]*\n\s*if \(dry\) \{ plan = dry; means = null; \}/);   // PIN MOVED (DRAGON6): a journey begun on the dragon is flown straight (systems/dragon/dragonJourney.js)
   // PIN MOVED (AUDIT OW5 S3): a let - a plan that never sails drops the moored boat's ask
   assert.match(w, /let seaAsk = means && \(water \|\| means\.start === 'sea' \|\| !dryLine\(from, pix, tvWater\)\) \? tvSeaAsk\(means, water \? 'sea' : 'land'\) : null;\n\s*if \(water && !seaAsk\) \{ tvSeaNoWay\(from, pix, null, null, 'sea'\); return false; \}/);
   // PIN MOVED (AUDIT OW5 S3): a let
-  assert.match(w, /let plan = planRoute\(from, pix, \{ roads: wnet\?\.roads \?\? null, tracks: wnet\?\.tracks \?\? null, \.\.\.tvRouteGround\(\), goalExempt: !!door, sea: seaAsk \}\);/);
+  assert.match(w, /let plan = \(dragonMounted\(\) \? dragonFlightPlan\(from, pix\) : null\) \?\? planRoute\(from, pix, \{ roads: wnet\?\.roads \?\? null, tracks: wnet\?\.tracks \?\? null, \.\.\.tvRouteGround\(\), goalExempt: !!door, sea: seaAsk \}\);/);   // PIN MOVED (DRAGON6): a journey begun on the dragon is flown straight (systems/dragon/dragonJourney.js)
   assert.match(w, /else if \(what\.kind === 'water'\) \{ if \(travelOptions\?\.settings\?\.targetCoordsAllowed === false\) tvSay\(TRAVEL_VIEW_TEXT\.placesOnly\); else travelViewWalkTo\(hit\.point, pix, \{ water: true \}\); \}/);
   assert.match(w, /if \(csaAboard\.aboard\) \{ tvSay\(TRAVEL_VIEW_TEXT\.passenger\); return false; \}/);
   // the frame, before the mod's own

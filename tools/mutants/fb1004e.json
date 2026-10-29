@@ -82,8 +82,8 @@
   {
     "name": "PADARRANGE-the-bar-stays-tucked",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "  bar.classList.toggle('dragging', extDragging || !!hbDrag?.moved || arranging || !!hand);",
-    "new": "  bar.classList.toggle('dragging', extDragging || !!hbDrag?.moved);",
+    "old": "  bar.classList.toggle('dragging', extDragging || !!hbDrag?.moved || arranging || !!hand || secondRaised());",
+    "new": "  bar.classList.toggle('dragging', extDragging || !!hbDrag?.moved || secondRaised());",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],

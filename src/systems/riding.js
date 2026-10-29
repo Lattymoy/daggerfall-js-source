@@ -35,7 +35,7 @@
 
 import { CfaFile } from '../formats/cfaFile.js';
 import { frameToColor32 } from '../combat/fpsWeapon.js';   // TR2: the same index-to-RGBA the weapon art uses
-import { TRANSPORT_MODES, isRiding } from './transport.js';
+import { TRANSPORT_MODES, isHorseRide } from './transport.js';
 import { recolorHorse, horseLookCode, horseLookOfCode, lookSuffix } from './horse/horseCoats.js';   // COATS1: the horse's look, dyed as it uploads
 
 /** :148-155. */
@@ -149,7 +149,7 @@ export class RidingAnimator {
     paused = false, movingLessThanHalfSpeed = true, running = false, walking = false,
     soundVolume = 1, rolls = Math.random } = {}) {
     this.now += dt;
-    if (!isRiding(mode)) return { frame: 0, clip: this.clip, playing: false, volume: 0, pitch: 1, neigh: false };
+    if (!isHorseRide(mode)) return { frame: 0, clip: this.clip, playing: false, volume: 0, pitch: 1, neigh: false };   // DRAGON5: no hooves under a dragon
     if (standingStill || !grounded || paused) {
       // :213-220 - the animation resets and the loop fades after 0.2s.
       this.lastFrameTime = 0;

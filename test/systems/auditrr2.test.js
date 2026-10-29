@@ -81,7 +81,7 @@ test('AUDIT-RR2 G3: a duplicate mapId or name is refused BEFORE any write to the
 test('AUDIT-RR2 G4/G26: the docked HUD lift is `(int)` (EnhancedRiding.cs:257) and the pitch floor rests while paused (:122-131)', () => {
   const mr = rd('src/player/mountRig.js');
   assert.match(mr, /const offset = Math\.trunc\(dockedLargeHudHeight\(\)\);/);
-  assert.match(mr, /setPitchFloorProvider\(\(\) => \(enhancedRiding\?\.\(\) && isRiding\(player\.transportMode\) && !paused\(\) \? _terrainAngle \+ RR_RIDING\.pitchMaxOffset : null\)\);/);
+  assert.match(mr, /setPitchFloorProvider\(\(\) => \(enhancedRiding\?\.\(\) && isHorseRide\(player\.transportMode\) && !paused\(\) \? _terrainAngle \+ RR_RIDING\.pitchMaxOffset : null\)\);/);   // PIN MOVED (DRAGON5): a horse ride's alone - a dragon's rider sees its saddle (isHorseRide)
 });
 
 test('AUDIT-RR2 G5/G24/G25: the charge voice plays on the foe with EnemySounds\' pitch lift, the latch IS the foe\'s pickpocket latch (:185, :204), the foe arm knocks along the controller\'s move direction (:173)', () => {

@@ -643,7 +643,7 @@ sweeps `src/` both ways and pins where each is said:
 | rite-broken, breach-closed | a gate receipt counted (`net/gate/gateClaims.js`) - `rite`, or `r: 1`; `dealt` or `stood` |
 | elite-foe-slain | an elite foe of an Elite-tier dungeon killed by the player's blow (`systems/questlines/qlEliteFoe.js`, which the dungeon host hands its place in one line - AUDIT QUESTLINES ACTS-8: the whole condition stood in buildDungeonContext) |
 | redoubt-taken, valkynaz-felled | a Redoubt receipt counted, Rehearsals excluded (`scenes/eliteGates/egClient.js`, at the module's scope - ACTS-8) |
-| hour-broken, serpent-slain | their receipts counted (`sdClaims.js`, `serpentClaims.js`) |
+| hour-broken, serpent-slain, dragon-slain | their receipts counted (`sdClaims.js`, `serpentClaims.js`, `dragonClaims.js` - DRAGON4) |
 
 AS BUILT: the design's "a wagon's load hauled (Merchant Yards)" is no act - nothing in the game finishes one (the
 yards trade horses and wagons; the trade window's wagon button does nothing), so an objective bound to it could never

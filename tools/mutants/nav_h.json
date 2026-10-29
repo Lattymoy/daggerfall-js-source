@@ -259,7 +259,7 @@
   {
     "name": "NAV-H-the-helper-never-asks",
     "file": "src/scenes/world.js",
-    "old": "  const navalHostileNear = () => !!naval?.hostileNear();",
+    "old": "  const navalHostileNear = () => !!naval?.hostileNear() || !!dragonSky?.near();",
     "new": "  const navalHostileNear = () => false;",
     "tests": [
       "test/systems/naval/nav_h_host.test.js"

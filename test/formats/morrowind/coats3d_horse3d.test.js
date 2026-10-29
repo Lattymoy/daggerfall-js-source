@@ -399,7 +399,7 @@ test('COATS3D by source: the view keeps the saddle and lifts RIDE-POV astride; t
     assert.match(s, /hcc\.draw3d\(canvas, \{ eye[^\n]*proj, view/, `${h}: the pool's 3D horses in the body pass`);
   }
   assert.match(rd('src/scenes/world.js'), /livingRoads\.drawTeams3d\(canvas, /, 'and the road\'s teams');
-  assert.match(rd('src/player/mountRig.js'), /if \(isRiding\(player\.transportMode\) && !ridePaused && !mwViewHides\(\)\.horse && mwViewDrawSaddle\([^\n]*\)\) return r;\n\s*if \(art && isRiding/, 'the 3D horse in the riding sprite\'s place, which stands down');
+  assert.match(rd('src/player/mountRig.js'), /if \(isHorseRide\(player\.transportMode\) && !ridePaused && !mwViewHides\(\)\.horse && mwViewDrawSaddle\([^\n]*\)\) return r;\n\s*if \(art && isHorseRide/, 'the 3D horse in the riding sprite\'s place, which stands down');   // PIN MOVED (DRAGON5): a horse ride's alone - a dragon's rider sees its saddle (isHorseRide)
   const fp = rd('src/combat/fpArm.js');
   assert.match(fp, /if \(cam && cam\.saddle\) \{ climbLast = null; return thirdSaddle\(cam\); \}/);
   assert.match(fp, /drawBodyPicture\(renderer, canvas, thirdMesh, model, \{ \.\.\.u, anchor: horse\.box\.anchor, hitFlash, conceal, up, fx, also: \[\{ mesh: horse\.mesh, model: horse\.model \}\], glowLook: padLooks \}/);   // PIN MOVED (WEAPON-GLOW1, AUDIT MW-3): and the held weapon's glow, whose outline the rider's picture is padded for   // PIN MOVED (TWO-HANDS x WEAPON-GLOW1): the pad's looks - the held weapon's and a pair's left blade's   // PIN MOVED (BODY-CROP x MW-DETAIL, 2026-10-22): through drawBodyPicture
@@ -524,7 +524,7 @@ test('COATS3D AUDIT the peers: a rider yielded to the 3D horse whose body did no
   riders.settle(() => false, () => true);
   assert.equal(riders.riders.has('far'), false, 'the frame its body first stands, the sprite is let go');
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const afoot = seen\.filter\(\(d\) => \(peerRidesIn3d\(d\) \|\| !peerRiders\.isRiding\(d\.id\)\) && !d\.shown\?\.wb/, 'the bodies take the rider whether or not the sprite stood in last frame - else its body would never build');
+  assert.match(w, /const afoot = seen\.filter\(\(d\) => d\.shown\?\.rd !== POSE_RIDE\.Dragon && \(peerRidesIn3d\(d\) \|\| !peerRiders\.isRiding\(d\.id\)\) && !d\.shown\?\.wb/, 'the bodies take the rider whether or not the sprite stood in last frame - else its body would never build');   // PIN MOVED (DRAGON1): a dragon's rider first left out (remotePlayers stands the dragon)
 });
 
 test('COATS3D AUDIT the sprite lane\'s rider: a look chosen fetches its mounted sprites HORSE_PRELOAD_A_FRAME a frame, never all in one task', async () => {

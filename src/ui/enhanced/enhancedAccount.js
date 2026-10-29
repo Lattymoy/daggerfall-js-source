@@ -38,6 +38,7 @@ import { marksText } from '../../net/marksLaw.js';   // MARKS1: and its Marks ro
 import { raidRecordText } from '../../net/raid/raidClaims.js';   // RAID4: and its towns-defended row
 import { t, localizedTable, intlLocale } from '../../systems/textManager.js';   // L10N4: the card's words in the player's language, read when it is drawn
 import { serpentRecordText } from '../../net/serpent/serpentClaims.js';   // AUDIT SERPENT D4: and its serpents-slain row
+import { dragonRecordText } from '../../net/dragon/dragonClaims.js';   // AUDIT DRAGON: and its dragons-slain row
 import { sdRecordText } from '../../net/superDungeon/sdClaims.js';   // SD9b: and its Hours-broken row
 import { ketchRecordText } from '../../net/ketch/ketchClaims.js';   // KETCH: and its voyages-sailed row
 import { starRecordText } from '../../net/starfall/starClaims.js';   // STAR7: and its stars-held row
@@ -580,6 +581,9 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
       // service counted once (net/serpent/serpentClaims.js carries the receipts). A service from before it says nothing.
       const serpents = serpentRecordText(flow.account.serpents);
       if (serpents) row(t('account.card.serpents', 'Serpents slain'), serpents);
+      // AUDIT DRAGON: the Dwarven Dragons this account helped slay (net/dragon/dragonClaims.js carries the receipts)
+      const dragons = dragonRecordText(flow.account.dragons);
+      if (dragons) row(t('account.card.dragons', 'Dragons slain'), dragons);
       // SD9b: the Hours this account broke - each a Brass Remnant's fall the relay signed and this service counted once
       // (net/superDungeon/sdClaims.js carries the receipts). A service from before it says nothing.
       const hours = sdRecordText(flow.account.sds);

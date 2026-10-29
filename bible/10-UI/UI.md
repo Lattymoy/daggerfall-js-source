@@ -88,7 +88,7 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and AUDIT-STOREFRONT's THREE (`effectEmblems.js`: a kill effect's, a portal skin's and a mount look's emblem, where the effect cannot play; `icons/effectEmblemArt.js`: those twelve emblems' art, drawn by the profile icons' engine; `wareArt.js`: a ware's or a reward's picture, one door for the bundles, the pass's track and the season's banners - `06-Systems/Storefront.md` section 9);
 - and AURUM's FOUR (`aurumArt.js`: the Aurum's coin and its packs' pictures; `icons/iconKit.js`: the profile icons' shared shapes and motions; `icons/seasonIconArt.js` and `icons/dailyIconArt.js`: Season One's three icons and the daily wares' eight, none a figure - `06-Systems/Aurum.md` section 7);
 - and SHADER-EASE GFX-BAR's ONE (`gfxPrepBar.js`: the boot menus' graphics bar and Fix stutter panel - `10-UI/Loading-Screens.md`);
-476 modules
+477 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

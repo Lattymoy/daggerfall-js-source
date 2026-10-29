@@ -74,7 +74,7 @@ test('AURUM the week\'s deeds: each witnessed receipt strikes its kind\'s Aurum 
   s.raw.prepare("INSERT INTO gate_kills (day, account, boss, earned, at) VALUES (9, ?, 'b', 'x', ?)").run(me.id, at + 7 * 86_400);
   assert.equal(s.lines(me).filter((l) => l.ref.startsWith('gate:')).length, 2, 'the next week, again');
   // the migration's amounts, each its kind's in the law
-  const sql = rd('server-account/migrations/0194_storefront.sql');
+  const sql = rd('server-account/migrations/0195_storefront.sql');
   for (const [k, n] of Object.entries(AURUM_DEEDS)) assert.match(sql, new RegExp(`'deed', '${k}:' \\|\\| \\(\\(NEW\\.at / 86400 \\+ 3\\) / 7\\), ${n},`), k);
 });
 

@@ -66,7 +66,7 @@
   },
   {
     "name": "SHIP-PORT-deck-reads-deck",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelFareHost.js",
     "old": "      currentLocationMapId: () => travelOriginMapId(),",
     "new": "      currentLocationMapId: () => _musicLoc?.mapTableData?.mapId ?? null,",
     "tests": [
@@ -122,7 +122,7 @@
   },
   {
     "name": "SHIP-PORT-dep-bag-kept-as-comment",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelFareHost.js",
     "old": "      currentLocationMapId: () => travelOriginMapId(),",
     "new": "      currentLocationMapId: () => _musicLoc?.mapTableData?.mapId ?? null, // currentLocationMapId: () => travelOriginMapId(),",
     "tests": [

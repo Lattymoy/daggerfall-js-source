@@ -14,6 +14,7 @@
 import '../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (DRAGON0): bootWorld's POI editor mount moved to src/scenes/poiEditorMount.js - the host read whole
 import { readFileSync } from 'node:fs';
 import { createPoiEdit, eulerOfQuat, quatOfEuler, newPart, newLight } from '../../src/poi/poiEdit.js';
 import { beginGizmoDrag, dragResult, gizmoSize, pickHandle, POI_GIZMO_PX } from '../../src/poi/poiGizmo.js';
@@ -279,7 +280,7 @@ test('AUDIT POI E18: the editor\'s lines are sized in the pixels of the rect the
   draws.length = 0;
   Wd.editor.drawLines(v.proj, v.view);
   assert.deepEqual(draws.map((o) => [o.vw, o.vh]), [[0, 0], [0, 0]], 'no rect: the pass\'s own drawing buffer');
-  assert.match(src('src/scenes/world.js'), /viewport: \(\) => renderer\.worldViewportPx,   \/\/ AUDIT POI E18/, 'the world hands it the world pass\'s rect');
+  assert.match(hostText('src/scenes/world.js'), /viewport: \(\) => renderer\.worldViewportPx,   \/\/ AUDIT POI E18/, 'the world hands it the world pass\'s rect');
 });
 
 test('AUDIT POI E16: the editor acts on its own keys alone - the browser keeps every other (find, reload, zoom, Tab, back, F5), though the world hears none of them (mutants: every chord answered taken; any key answered taken)', async () => {
@@ -334,7 +335,7 @@ test('AUDIT POI E2: a key at the panel\'s own controls is the editor\'s - "New P
   route.onPanelKey(under);
   assert.equal(!!under.stopped, false, 'the map the bar opened has its Escape');
   // the world binds it on the panel's root, for both edges
-  assert.match(src('src/scenes/world.js'), /for \(const ty of \['keydown', 'keyup'\]\) panel\.root\.addEventListener\(ty, route\.onPanelKey\);/);
+  assert.match(hostText('src/scenes/world.js'), /for \(const ty of \['keydown', 'keyup'\]\) panel\.root\.addEventListener\(ty, route\.onPanelKey\);/);
 });
 
 test('AUDIT POI E14: a release is never gated - a button let go over a window, the pointer\'s capture lost, the window\'s blur end the drag where it stands and the look; the world gone from under the editor (a mode, a load) leaves it at the next frame or event (mutants: the pointer-up over a window lost; the blur unheard; the world\'s change unasked)', async () => {
@@ -408,7 +409,7 @@ test('AUDIT POI E1: the bar\'s keys stand down while a hold stands - a digit und
 });
 
 test('AUDIT POI E1, E3, E12, E13, E14, E15 - THE WORLD\'S WIRING, BY SOURCE: the boot\'s cursor and walk toggles stand down under the editor and the bar is held while it is open; the held keys let go on the way in and out; on foot alone; \'here\' refused over unbuilt ground and moved off a rock; a mode change, a load and a death leave it; a live POI clicked opened (mutants: each line undone)', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /bindCursorToggle\(canvas, \(\) => [^\n]*\|\| !!poiEditor\?\.active\(\), \(e\) => actionsOf\(e, keys\)\);/, 'E1: Y, Ctrl+Y and Enter no longer free the cursor over the editor');
   assert.match(w, /bindWalkMode\(\(e\) => actionsOf\(e, keys\), \(\) => [^\n]*\|\| !!poiEditor\?\.active\(\)\);/, 'E1: nor flip walk mode');
   const at = w.indexOf('  function mountPoiEditor(me, io) {'), mount = w.slice(at, w.indexOf('\n  }\n', at));
@@ -419,7 +420,7 @@ test('AUDIT POI E1, E3, E12, E13, E14, E15 - THE WORLD\'S WIRING, BY SOURCE: the
   assert.match(mount, /const worldKeysUp = \(\) => \{ keys\.clear\(\); for \(const ring of Object\.values\(latch\.edge\)\) ring\.clear\(\); \};/, 'E3: the held set and every edge ring');
   assert.match(enter, /\n\s*worldKeysUp\(\);\n/, 'E3: on the way in');
   assert.match(exit, /\n\s*worldKeysUp\(\);   \/\/ AUDIT POI E3/, 'E3: and on the way out');
-  assert.match(enter, /if \(_mode\(\) !== 'exterior' \|\| travelView\?\.active \|\| !isOnFoot\(player\.transportMode\) \|\| !!csaRuntime\?\.isSailing\?\.\(\)\) \{ townTalk\.say\(/, 'E12: a bench, a saddle and a helm refused');
+  assert.match(enter, /if \(_mode\(\) !== 'exterior' \|\| host\.travelView\?\.active \|\| !isOnFoot\(player\.transportMode\) \|\| !!csaRuntime\?\.isSailing\?\.\(\)\) \{ townTalk\.say\(/, 'E12: a bench, a saddle and a helm refused');   // PIN MOVED (DRAGON0): the mount moved to src/scenes/poiEditorMount.js, travelView read live through `host`
   assert.match(exit, /if \(!Number\.isFinite\(below\)\) \{ panel\.say\([^\n]*\); return; \}/, 'E13: unbuilt ground refused, the editor still open');
   assert.ok(exit.indexOf('return; }') < exit.indexOf('window.removeEventListener'), 'E13: refused before anything is torn down');
   assert.match(exit, /if \(heldInSolid\(collider, landing\)\) landing = openGroundNear\(collider, landing\[0\], landing\[2\], \{ dry: \(floor\) => floor >= tvSeaY\(\) \}\) \?\? landing;/, 'E13: the teleport\'s own rock check');

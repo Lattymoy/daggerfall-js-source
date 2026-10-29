@@ -43,7 +43,7 @@ import { EQUIP_SLOTS } from '../characters/paperdoll/paperdoll.js';
 import { equipTableOf } from './equip.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { rriNativeMaterialValue } from './roleplayRealismItems/rriItems.js';   // DISC29-B: the class's NativeMaterialValue, the port's one reader
-import { TRANSPORT_MODES } from './transport.js';
+import { isRiding } from './transport.js';
 import { modSettingsOf, modSettingIfDeclared } from './modSettings.js';   // BA1: ModCompatibilityChecking reads Better Ambience's switch
 import { audio as defaultAudio } from './audio.js';
 import { SOUND } from './soundClips.js';
@@ -577,7 +577,7 @@ export function createImmersiveFootsteps({ audio = defaultAudio, settings = read
       plateSwayTimer += FIXED_DELTA_TIME; chainSwayTimer += FIXED_DELTA_TIME; leatherSwayTimer += FIXED_DELTA_TIME;
       volumeScale = 1;
     }
-    if (m.transportMode === TRANSPORT_MODES.Horse || m.transportMode === TRANSPORT_MODES.Cart) footstepTimer = 0;
+    if (isRiding(m.transportMode)) footstepTimer = 0;   // DRAGON5: a rider of any mount, the dragon too
     if (!s.AllowFootstepSounds) footstepTimer = 0;
     if (!s.AllowArmorSwaySounds) { plateSwayTimer = 0; chainSwayTimer = 0; leatherSwayTimer = 0; }
     // SHIP-DECK: the mod's noted IsOnShip bug is answered by the host's `deck` (determineExteriorClimateFootstep)

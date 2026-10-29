@@ -245,6 +245,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/net/safety/` | The chat's safety: the relay's stamp on a line, its feed to the reviewer, a report's law and the code of conduct (`11-Multiplayer/Chat-Safety-Arc.md`) - online - the law both ends run. |
 | `src/net/sea/` | The Eltheric Ocean's ventures (`03-World/Eltheric-Ocean.md` SEA-BOUNTY, SEA-SEASON, SHIP-PVP): the bounty board's and the season boards' law, a wreck's prize, the open sea's guns refereed - online - the law both ends run. |
 | `src/net/serpent/` | The sea serpent, the sea's world boss (`11-Multiplayer/Sea-Serpent.md`) - online - the law both ends run. |
+| `src/net/dragon/` | The Dwarven Dragon, the sky's world boss (`11-Multiplayer/Dwarven-Dragon.md`) - online - the law both ends run: its watch, its path, its brain, its receipt. |
 | `src/net/siege/` | Sieges of a seat - online - the law both ends run. |
 | `src/net/starfall/` | The Starfall, the Witches' Festival's fallen stars (`11-Multiplayer/Starfall.md`) - online - the law both ends run: the night and its stars, the defense's ledger, the receipt. |
 | `src/net/superDungeon/` | The Abyss Dungeon, the super dungeons (`11-Multiplayer/Super-Dungeons-Look.md`) - online - the law both ends run. |
@@ -267,6 +268,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 
 | Folder | What lives there |
 |---|---|
+| `src/render/dragon/` | The Dwarven Dragon (`11-Multiplayer/Dwarven-Dragon.md`) - its telegraphs, draped on the land. |
 | `src/render/eliteGates/` | The Elite Breach (`11-Multiplayer/Elite-Gates.md`, `Elite-Gates-Look.md`, `Elite-Gates-Ascent.md`) - its passes: the sky, the mist, the motes, the lines, the lamps and the stairs. |
 | `src/render/gate/` | The Oblivion Gate, the world boss on the shared clock (`11-Multiplayer/World-Bosses.md`) - its passes. |
 | `src/render/ketch/` | The Sky-Ketch (`11-Multiplayer/Sky-Ketch-Look.md`) - its passes: the gauges, every instrument aboard in one instanced draw. |
@@ -302,6 +304,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/comeSailAway/` | Come Sail Away's boats: the boat itself, its hulls, models, items and waves, the helm's actions, the map, the wire's words and the boat's menu (`03-World/Come-Sail-Away.md`). |
 | `src/systems/decor/` | Decorating a home: the catalogue, placing, the rooms - the law. |
 | `src/systems/deepWater/` | Deep Waters' law: the swimmer, the fish as items and as rows. |
+| `src/systems/dragon/` | The Dwarven Dragon (`11-Multiplayer/Dwarven-Dragon.md`) - where it comes down, its words, the tamed mount, and a journey flown. |
 | `src/systems/dungeon/` | A dungeon's state: its respawn, tier, echo and sense. |
 | `src/systems/dynamicSkies/` | The Dynamic Skies mod - the law. |
 | `src/systems/eliteGates/` | The Elite Breach's law on this screen (`11-Multiplayer/Elite-Gates.md`, `Elite-Gates-Look.md`, `Elite-Gates-Ascent.md`): the Weir Key and its find, the Spire's kit and Vestiges, the lords' arms, the spoils, the score and its mix and echo. |

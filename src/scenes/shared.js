@@ -82,6 +82,7 @@ import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 58: Player
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { SOUND } from '../systems/soundClips.js';
 import { surfacePlayer, hurtPlayer, duelSpare, staffFly, levitateWarded, freeFlight } from '../characters/playerEntity.js';   // DUEL1: the duel's floor, for its damage over time   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
+import { dragonAloft } from '../player/dragonRide.js';   // DRAGON5: the tamed dragon's flight, one home
 import { standardSpellsByIndex } from '../systems/spell/standardSpells.js';   // G4: the two magic registries, one home; DEX4a: a mod's SpellRecords.json merged, as RebuildClassicSpellsDict merges it
 import { readMagicDef } from '../formats/magicDef.js';
 import { setMagicItemTemplates, setSpellRecordsByIndex } from '../systems/loot/loot.js';
@@ -1328,7 +1329,7 @@ export function applyMotorEffectFlags(player, entity, { waterSurfaceY = null, sw
   // DW-D: Iliac Puddle No More's forge rides this ONE write - LevitateMotor.IsSwimming's setter arms CancelMovement
   // on every change, so a clear here and a forge after it would cancel the swimmer's every step (XL-1's bug again)
   player.swimming = !!swimming;
-  player.levitating = hasActiveEffect(entity, 'levitate') && !levitateWarded() || staffFly() || freeFlight();   // STAFF1: /fly   // AUDIT-SEATS G5: a siege's ward holds the effect (`&&` first: the staff's /fly is never warded)   // AUDIT-SEATS G4: a battle's spectator flies
+  player.levitating = hasActiveEffect(entity, 'levitate') && !levitateWarded() || staffFly() || freeFlight() || dragonAloft();   // DRAGON5: a tamed dragon aloft   // STAFF1: /fly   // AUDIT-SEATS G5: a siege's ward holds the effect (`&&` first: the staff's /fly is never warded)   // AUDIT-SEATS G4: a battle's spectator flies
   player.waterWalking = isEntityWaterWalking(entity);   // CSA-I: either effect that raises IsWaterWalking
   player.slowFalling = hasActiveEffect(entity, 'slowfall');
 }

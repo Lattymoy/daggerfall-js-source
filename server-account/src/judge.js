@@ -52,6 +52,7 @@ import { STAT_KEYS_ORDER } from '../../src/systems/statMods.js';
 import { pathFindings } from '../../src/systems/arcanePaths.js';   // SCHOOLS5: a save's specialisation
 import { isMasterWork, masterSignature, masterLinesOfRecord } from '../../src/net/masterLaw.js';   // MASTER-ART: a Master's work's lines, its record's
 import { readProductRecord } from '../../src/net/productRecord.js';
+import { DRAGON_MOUNT_TEMPLATE, isDragonMount, dragonMountWellFormed, dragonLookOfItem } from '../../src/systems/dragon/dragonMount.js';   // DRAGON5: a tamed dragon's provenance
 
 /** The judge's version: the item law's, and its own character law beside it. */
 export const JUDGE_VERSION = ITEM_LAW_VERSION;
@@ -221,22 +222,25 @@ export function judgeSave(save, summary = null, o = {}) {
   const findings = [];
   let count = 0;
   const keep = (/** @type {any} */ f) => { count++; if (findings.length < FINDINGS_KEPT) findings.push(f); };
-  if (!save || typeof save !== 'object' || Array.isArray(save)) return { findings: [{ code: 'save' }], count: 1, wealth: 0, items: 0, provenances: [], pieces: [], arms: [0, 0] };
+  if (!save || typeof save !== 'object' || Array.isArray(save)) return { findings: [{ code: 'save' }], count: 1, wealth: 0, items: 0, provenances: [], pieces: [], arms: [0, 0], dragons: [] };
   for (const f of characterFindings(save, summary)) keep(f);
   let items = 0;
   /** @type {{ provenance: string, t: number, m: unknown, q: unknown, w: number, l?: string }[]} */
   const provenances = [];
+  /** @type {{ id: string, look: number }[]} */
+  const dragons = [];   // DRAGON5: every tamed dragon it holds (judgeDragons reads them)
   possessedItemLists(save).forEach((list, li) => {
     list.forEach((/** @type {any} */ it, /** @type {number} */ i) => {
       items++;
       for (const code of findingsOf(it)) keep({ code, list: li, at: i, t: it?.templateIndex ?? null });
+      if (isDragonMount(it) && dragonMountWellFormed(it)) dragons.push({ id: it.dragonId, look: dragonLookOfItem(it) });
       if (typeof it?.provenance === 'string' && PROVENANCE_RE.test(it.provenance)) provenances.push({ provenance: it.provenance, t: it.templateIndex, m: it.material, q: it.quality, w: worthless(it) ? 0 : itemWorth(it), ...(isMasterWork(it) ? { l: masterSignature(it.affixes) } : {}) });   // MASTER-ART: a Master's work's lines
     });
   });
   // INT7: THE ARMS - the most reach of the weapons in the pack the law takes, and whether a lawful bow is among them
   // (net/siege/siegeRef.js armsOf); the identity mint signs them (`wa`), and every referee clips a blow between players to them
   const arms = armsOf(save.items, (it) => findingsOf(it).length === 0);
-  return { findings, count, wealth: wealthOf(save, o), items, provenances, pieces: ledgerPieces(save), arms };
+  return { findings, count, wealth: wealthOf(save, o), items, provenances, pieces: ledgerPieces(save), arms, dragons };
 }
 
 /** INT4: A PIECE'S KEY IN THE LEDGER - systems/item/itemIds.js ledgerKeyOf, its one home since AUTO-HOLD (the client's room
@@ -312,4 +316,16 @@ export async function judgeProducts(db, provenances, player = null) {
     else if (player != null && row.owner === player && Number(row.credited) === 0) arrived.push({ provenance: p, w: Number.isSafeInteger(piece.w) ? /** @type {number} */ (piece.w) : 0 });
   }
   return { findings: out, arrived };
+}
+
+/** DRAGON5 (bible/11-Multiplayer/Dwarven-Dragon.md section 10): THE TAMED DRAGONS A SAVE HOLDS, against the service's own
+ *  tames (dragons.js `dragon_mounts`): a dragon whose id the service never drew for this account and character, drawn in
+ *  another look, or held twice, is no tame ('dragon-tame').
+ *  @param {any} db @param {{ id: string, look: number }[]} dragons @param {string} player @param {string} char */
+export async function judgeDragons(db, dragons, player, char) {
+  const r = await db.prepare('SELECT id, look FROM dragon_mounts WHERE account = ?1 AND char_id = ?2').bind(player, char).all();
+  const have = new Map((r?.results ?? []).map((/** @type {any} */ m) => [m.id, Number(m.look) || 0]));
+  const seen = new Set();
+  return dragons.filter((d) => { const ok = have.get(d.id) === d.look && !seen.has(d.id); seen.add(d.id); return !ok; })
+    .map((d) => ({ code: 'dragon-tame', at: d.id, t: DRAGON_MOUNT_TEMPLATE }));
 }
