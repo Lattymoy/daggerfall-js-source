@@ -9,6 +9,7 @@ import { t } from '../systems/textManager.js';
 import { noteCaps } from '../ui/capsFix.js';
 import { skullSrc } from '../ui/pvpSkull.js';
 import { CONCEAL_MODE } from '../systems/combatVisuals.js';   // PVP-BAR
+import { isVillain } from '../systems/wild/villainLaw.js';   // PVP-VILLAIN
 
 /** PVP-BAR: a concealed player in a PvP fight - a faint body that keeps its skull and bar (the name is taken). */
 export const PVP_FIGHT_VEIL = Object.freeze({ mode: CONCEAL_MODE.reveal, alpha: 0.3, t: 0, phase: 0, named: true });
@@ -33,12 +34,14 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
   const bars = new Map();   // PVP-BAR: a flagged peer's id -> its bar `{ h, s }`, per cent
   const veiled = new Map();   // PVP-BAR: a concealed peer in a fight -> when a frame last drew it faint
   const foes = new Map();   // PVP-CONE: a peer I struck or was struck by -> when
+  const reds = new Set();   // PVP-VILLAIN: the flagged peers the referee says are villains
+  let villainy = /** @type {number | null} */ (null);   // my own meter, the referee's word (null: not heard)
   const me = () => online()?.id ?? null;
-  /** PVP-SKULL: a skull's kind - none unflagged, gold in aggro, white else. */
-  const skullOf = (id) => (peers.has(id) ? (peers.get(id) > now() ? 'gold' : 'white') : null);
+  /** PVP-SKULL: a skull's kind - none unflagged, red a villain, gold in aggro, white else. */
+  const skullOf = (id) => (peers.has(id) ? (reds.has(id) ? 'red' : peers.get(id) > now() ? 'gold' : 'white') : null);
   /** PVP-CONE: a peer I struck or was struck by within PVP_FLAG.lockMs - my foe. */
   const foeOf = (id) => foes.has(id) && now() - foes.get(id) < PVP_FLAG.lockMs;
-  const mySkull = () => (on ? (now() - fightAt < PVP_FLAG.lockMs ? 'gold' : 'white') : null);
+  const mySkull = () => (on ? (isVillain(villainy) ? 'red' : now() - fightAt < PVP_FLAG.lockMs ? 'gold' : 'white') : null);
   const paint = () => {
     if (!button) return;
     const kind = mySkull();
@@ -51,7 +54,7 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
   const set = (v) => { on = v; online()?.setWildFlag?.(v); paint(); };
   /** Caps Lock or the button: up at once from level 30, down at once outside the lock. */
   const toggle = () => {
-    const why = pvpFlagRefusal({ on: !on, level: level(), fightAt, now: now() });
+    const why = pvpFlagRefusal({ on: !on, level: level(), fightAt, now: now(), red: isVillain(villainy) });
     if (why) { say(why); return false; }
     set(!on);
     say(on ? t('pvp.flag.on', 'PvP is on. Flagged players can attack you.') : t('pvp.flag.off', 'PvP is off.'));
@@ -60,9 +63,11 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
   /** The referee's word: a flag (mine is its to hold - a drop refused in the lock comes back up), or a blow on me or by me. */
   const heard = (g) => {
     if (g?.k === 'flag') {
+      if (g.id !== me() && g.f === 1 && g.v === 1) reds.add(g.id); else reds.delete(g.id);
       if (g.id === me()) { on = g.f === 1; paint(); } else if (g.f === 1) peers.set(g.id, g.a ? now() + g.a : -Infinity); else { peers.delete(g.id); bars.delete(g.id); }
       return true;
     }
+    if (g?.k === 'vil') { villainy = g.n; paint(); return true; }   // PVP-VILLAIN: my meter, for the sheet
     if (g?.k === 'bar') { bars.set(g.id, { h: g.h, s: g.s ?? 0 }); return true; }   // PVP-BAR: the referee's word on a flagged fighter's bar
     if (g?.k !== 'hp') return false;
     if (g.by === me() || g.to === me()) { fightAt = now(); foes.set(g.by === me() ? g.to : g.by, fightAt); }
@@ -96,6 +101,8 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     skullOf,
     mySkull,
     foeOf,
+    /** PVP-VILLAIN: my villain meter as the referee last said it, or null. */
+    villainy: () => villainy,
     /** PVP-SKULL: wrap the host's name mask - each player's point wears its skull (ui/nameLayer.js draws it). PVP-BAR: and
      *  its bar. A flagged player the mask leaves nameless (the zone's stranger) or veils keeps both, without a name.
      *  PVP-CONE: my party (`social`, net/social.js) and my foe are `near`, shown off the crosshair too (ui/nameCone.js). */
@@ -111,7 +118,7 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     /** PVP-BAR (the owner: "They always have some body just fiant"): a concealed peer in a PvP fight (its skull gold) is
      *  drawn faint, never nowhere - `look` is combatVisuals.js peerDraw's answer for its pose's `cv`. */
     look: (id, bits, look) => {
-      if (look?.kind === 'plain' || (bits & 7) === 7 || skullOf(id) !== 'gold') return look;   // 7: a staff member inside its event's boss
+      if (look?.kind === 'plain' || (bits & 7) === 7 || !['gold', 'red'].includes(skullOf(id) ?? '')) return look;   // 7: a staff member inside its event's boss
       veiled.set(id, now());
       return { kind: 'conceal', visual: PVP_FIGHT_VEIL };
     },
@@ -127,3 +134,5 @@ export const pvpFlagOn = () => _current?.on() ?? true;   // no host (a headless 
 export const pvpSkullOf = (id) => _current?.skullOf(id) ?? null;
 /** PVP-CONE: is a peer my foe of the last minute, for a door outside the host. */
 export const pvpFoeOf = (id) => !!_current?.foeOf(id);
+/** PVP-VILLAIN: my villain meter for the character sheet (ui/pvpVillainBar.js), or null - none heard. */
+export const pvpVillainy = () => _current?.villainy() ?? null;

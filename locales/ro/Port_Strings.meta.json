@@ -31694,6 +31694,11 @@
   "tr": "4d23447584b6",
   "by": "claude-in-session"
  },
+ "pvp.flag.villain": {
+  "en": "b53bddeedb60",
+  "tr": "6b78e1f86741",
+  "by": "claude-in-session"
+ },
  "pvp.level30.ask": {
   "en": "1f21ace75cf7",
   "tr": "d7b86e4d95cd",
@@ -31722,6 +31727,16 @@
  "pvp.potion.other": {
   "en": "0c348f559c59",
   "tr": "9ed9b567d281",
+  "by": "claude-in-session"
+ },
+ "pvp.villain.label": {
+  "en": "d0bfd20b8baf",
+  "tr": "2c1487954256",
+  "by": "claude-in-session"
+ },
+ "pvp.villain.red": {
+  "en": "6282e7af45f6",
+  "tr": "c6763a297087",
   "by": "claude-in-session"
  },
  "ql.board.head": {

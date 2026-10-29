@@ -90,6 +90,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { statsHunt } from '../bounty/huntRank.js';   // HUNTERS-MARK (Bounty-Boards.md 12.3)
+import { statsVillainy } from '../pvpVillainBar.js';   // PVP-VILLAIN
 import { fpArm, hasDaggerfallArrows } from '../../combat/fpArm.js';
 import { dressStanding } from '../../systems/clothingStanding.js';   // DRESS1 (2026-09-30, Discord): the Standing page's Dress line
 import { questRail, shelvedRail, unloggedRail, journalLines, questTitleOf, QUEST_URGENT_SECONDS, remainWords } from '../quest/questRail.js';   // MAC-K2: the ONE quest walk, shared with the chronicle
@@ -5193,6 +5194,7 @@ function statsCharacter(detail, m) {
   detail.append(meterRow(localizedText('health', 'Health'), m.health.now, m.health.max, 'blood'));
   detail.append(meterRow(localizedText('fatigue', 'Fatigue'), m.fatigue.now, m.fatigue.max, ''));
   detail.append(meterRow(localizedText('magicka', 'Magicka'), m.magicka.now, m.magicka.max, 'verdigris'));
+  statsVillainy(detail, { el, meter: pxMeter });   // PVP-VILLAIN: the villain meter, online
   detail.append(pxDivider(t('pause.stats.burden', 'Burden')));
   const g = el('div', 'px-statgrid');
   for (const [label, v] of [[t('menu.save.gold', 'Gold'), String(m.gold)], [t('pause.stats.encumbrance', 'Encumbrance'), `${m.encumbrance.now} / ${m.encumbrance.max}`]]) {

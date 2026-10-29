@@ -263,7 +263,7 @@ import { isSiegeRoom, newFighter, armsOk, SIEGE_HIT, ROYAL_RING, isSiegeNpcId, s
 import { mintSiegeReceipt, SIEGE_RECEIPT_TTL_S, mintRoyalReceipt } from '../../src/net/siege/siegeReceipt.js';   // SEAT2a: the relay's fourth signature - a fighter's result and Honours
 import { takeHealthReport, poolWord, poolUnheard } from '../../src/net/siege/refereeHealthShare.js';   // SHARED-HEALTH: one health pool under the referee
 import { newDuelRef, duelNote, duelOpen, duelBoutOf, duelBlow, duelPose, duelEnd, duelForfeit, duelStep, duelVitals } from '../../src/net/duel/duelRef.js';   // INT8: the duel refereed
-import { newWildRef, wildZone, wildPose, wildBlow, wildKin, sameGuild, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildCredit, wildFallOf, wildDownWord, wildGraceLeft, wildGraceTaken, wildAggroWord, wildFlagWord, wildBarWord, wildBarWords, WILD_GRACE, WILD_FALL_PREFIX, WILD_REF } from '../../src/net/wild/wildRef.js';   // INT9: the open zone refereed
+import { newWildRef, wildZone, wildPose, wildBlow, wildKin, sameGuild, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildCredit, wildFallOf, wildDownWord, wildGraceLeft, wildGraceTaken, wildAggroWord, wildFlagWord, wildBarWord, wildBarWords, wildOpenedBy, wildVillainy, wildRed, WILD_GRACE, WILD_FALL_PREFIX, WILD_REF } from '../../src/net/wild/wildRef.js';   // INT9: the open zone refereed
 import { mintWildReceipt, mintWildCollect, mintSeaWreck, WILD_RECEIPT_TTL_S, SEA_WRECK_TTL_S } from '../../src/net/wild/wildReceipt.js';   // INT9: a fall, signed; MAC (2026-10-14): and a killer's collect; SHIP-PVP: and a wreck
 import { seaHelm, seaShot, seaBoard, seaStep, seaGone, seaCarry, seaWreckOf, SEA_WRECK_PREFIX, SEA_REF } from '../../src/net/sea/seaRef.js';
 /** AUDIT SEA VENTURES A8: a signed word owed an account that is away (a fall's receipt, a wreck's) kept in the room's storage
@@ -11447,6 +11447,7 @@ export class Room {
     const res = wildCredit(st, a.sub, rid, now);
     if (!res) return;
     if (res.evicted) await this._wildSign(res.evicted, now);
+    await this._wildVillainy(st, res.fall, now);   // PVP-VILLAIN
     try { await this.state.storage.put(`${WILD_FALL_PREFIX}${rid}`, res.fall); } catch (e) { console.warn('[wild] credited fall kept failed', e?.message ?? e); }
     this._wildFan({ t: 'wref', k: 'fell', id: a.id, by: res.fall.killerId, r: rid });
     if (!isCellRoom(res.fall.m || a.key)) { const f = wildSignNow(st, rid); if (f) await this._wildSign(f, now); }
@@ -11488,6 +11489,7 @@ export class Room {
     this._wildCarryPut(tb.sub, this._zoneCarry(st, tb.sub, now, a.key));   // INT9 (AUDIT): the bar it carries into the next room
     this._vitSay(tb.sub, ft.f);   // SHARED-HEALTH: the blow on the struck player's own health
     if (!res.fell) return;
+    await this._wildVillainy(st, res.fall, now);   // PVP-VILLAIN: the kill's points on its killer
     try { await this.state.storage.put(`${WILD_FALL_PREFIX}${rid}`, res.fall); } catch (e) { console.warn('[wild] fall kept failed', e?.message ?? e); }
     this._wildFan({ t: 'wref', k: 'fell', id: tb.id, by: a.id, r: rid });
     // INT9 (AUDIT): a building's or a dungeon's room searches no body (the worn offer is the open country's) - its fall is
@@ -11499,10 +11501,11 @@ export class Room {
   /** PVP-FLAG (systems/wild/pvpFlag.js): a fighter's flag said to the room when it moves (or the relay kept it up - its
    *  word refused in the lock), and every flagged fighter's said to one that has just stood in the zone. */
   _wildFlagSay(st, a, x, flagWas, wasIn, fl) {
-    if (x.flag !== flagWas || !wasIn || (fl === 0 && x.flag) || (fl === 1 && !x.flag)) this._wildFan({ t: 'wref', k: 'flag', id: a.id, f: x.flag ? 1 : 0 });
+    if (x.flag !== flagWas || !wasIn || (fl === 0 && x.flag) || (fl === 1 && !x.flag)) this._wildFan({ t: 'wref', k: 'flag', id: a.id, f: x.flag ? 1 : 0, ...(x.flag ? wildRed(x) : {}) });
     if (wasIn || !x.zone) return;
     const mine = this._siegeSocketOf(a.sub);
     if (!mine) return;
+    this._send(mine[0], JSON.stringify({ t: 'wref', k: 'vil', n: x.vi ?? 0 }));   // PVP-VILLAIN: my own meter, for the sheet
     for (const [sub, o] of st.fighters) if (sub !== a.sub && o.zone && o.flag) this._send(mine[0], JSON.stringify(wildFlagWord(o, Date.now())));
     this._wildBarsTo(st, a.sub, mine[0]);   // PVP-BAR: and each one's bar
   }
@@ -11513,6 +11516,19 @@ export class Room {
     for (const [s, o] of st.fighters) { const w = s !== sub && o.zone && o.flag ? wildBarWord(o) : null; if (w) this._send(ws, JSON.stringify(w)); }
   }
 
+  /** PVP-VILLAIN (systems/wild/villainLaw.js): a fall's points on its killer's meter - none where the fallen struck one of
+   *  the killer's party first (the hub's party word, wildOpenedBy); the meter told its killer, a new villain's red to the
+   *  room, and the meter kept at the hub for the next room. */
+  async _wildVillainy(st, fall, now) {
+    let partyFirst = false;
+    if (fall.vp > 0) for (const sub of wildOpenedBy(st, fall.fallen, now)) if (sub !== fall.killer && await this._wdunKinOf(fall.killer, sub, now)) { partyFirst = true; break; }
+    const { vi, turned } = wildVillainy(st, fall, partyFirst);
+    if (!(fall.vp > 0)) return;
+    const mine = this._siegeSocketOf(fall.killer), x = st.fighters.get(fall.killer);
+    if (mine) this._send(mine[0], JSON.stringify({ t: 'wref', k: 'vil', n: vi }));
+    if (turned && x) this._wildFan(wildFlagWord(x, now));
+    this._wildCarryPut(fall.killer, this._zoneCarry(st, fall.killer, now, fall.m));
+  }
   /** PVP-SKULL: each flagged fighter of a blow said to the room in aggro (wildRef.js wildAggroWord). */
   _wildAggroSay(st, subs, now) {
     for (const sub of subs) { const w = wildAggroWord(st.fighters.get(sub), now); if (w) this._wildFan(w); }
@@ -11562,7 +11578,7 @@ export class Room {
     let rc = null;
     // WILD-REJOIN: a fallen with no socket here has no tab to take its drop first - its killer carries the receipt at once
     const fallenGone = this._siegeSocketOf(fall.fallen) ? 0 : 1;
-    try { rc = await mintWildReceipt({ f: fall.fallen, c: fall.ci, k: fall.killer, r: fall.r, w: fall.w, wt: fall.wt, m: fall.m, kc: fall.kc, g: fallenGone }, await this._receiptKeyOf(), { subtle: globalThis.crypto.subtle, nowS: Math.floor(now / 1000) }); } catch (e) { console.warn('[wild] receipt failed', e?.message ?? e); }
+    try { rc = await mintWildReceipt({ f: fall.fallen, c: fall.ci, k: fall.killer, r: fall.r, w: fall.w, wt: fall.wt, m: fall.m, kc: fall.kc, g: fallenGone, vp: fall.vp }, await this._receiptKeyOf(), { subtle: globalThis.crypto.subtle, nowS: Math.floor(now / 1000) }); } catch (e) { console.warn('[wild] receipt failed', e?.message ?? e); }
     wildSigned(this._wildRef, fall.r);
     try { await this.state.storage.delete(`${WILD_FALL_PREFIX}${fall.r}`); } catch { /* read back and signed again: the service takes a fall once */ }
     if (!rc) return;

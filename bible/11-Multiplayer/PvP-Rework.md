@@ -161,3 +161,24 @@ My party and my foe - a peer I struck or was struck by within the flag's lock - 
 (`pvpFlagHost.js:"const foeOf = (id) =>"`), passed through the name mask the host already wore. The client draws it;
 the relay sends every name as before. The classic bitmap face, which only headless probes draw, keeps every name. The
 Overworld's travel marks are left as they were. A departure: DFU has no player names.
+
+## PVP-VILLAIN: the villain meter
+
+"if u get attacked first u dont gain any villany to kill htem", "as well as if somoe attack your party", "so u cant get
+pushed in becoming a villian its a CHOICES": each character has a meter from 0 to 10,000
+(`villainLaw.js:"export const VILLAIN = Object.freeze({"`). A kill of a flagged player adds 100 for each level the
+victim is under the killer, from 5 under; an unflagged victim adds the same and 2,000. Hits add nothing. A kill adds
+nothing where the victim struck the killer, or one of its party, first in this fight - a blow between the two inside the
+aggro's minute (`wildRef.js:"export function wildOpen("`; the party is the hub's word, `server/src/index.js:"async _wildVillainy(st, fall, now) {"`).
+No clock, no gold and no death lower it.
+
+At 5,000 the killer is a villain: a red skull (`pvpFlagHost.js:"const skullOf = (id) =>"`) and a flag the referee holds
+up (`wildRef.js:"else if (isVillain(x.vi)) x.flag = true;"`). The referee counts a fall's points
+(`wildRef.js:"const vp = villainKillPoints("`), keeps the meter on the fighter and in its carry, marks the flag word `v`,
+tells the killer its meter (`wref` `vil`) and signs the points into the fall's receipt (`vp`). The pause menu's Stats page
+shows "Villainy 3,240 / 5,000" on a bar to 10,000 with a red mark at 5,000 (`pvpVillainBar.js:"export function statsVillainy("`).
+
+Not built yet: the account service keeps no meter. It must take the receipt's `vp` onto the killer's character, sign the
+meter into the identity token for the relay to read on entry, and lower it by 1 for each monster at or above the level
+less 1, 200 for a helpful quest and 500 for a raid (none while red). Until then the meter lives in the relay's memory
+alone. A departure: DFU has no PvP.
