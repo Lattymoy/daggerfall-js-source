@@ -112,7 +112,7 @@ heard (`relayNowS`).
   a rumble (`fx-season-tremor`), dust and grit shaken up about the feet, and the stage's line in the event board's news,
   a kind of its own (`season`, news alone, as the festival's).
 - **Brass Fissures.** Two to each area in the first stage, three in the second and third: a Bay region, or a province's
-  district past the Bay (W14, below). They stand on pixels the Oblivion Gate's scan of their theatre finds suitable (land,
+  district past the Bay (W14, below). They stand on pixels the scan Dagon's Breaches use in their theatre finds suitable (land,
   no place near, a town close), drawn by hash from the season, the stage and the area, four pixels apart and 12 m past
   the roads' and tracks' bands (`FISSURE_ROAD_M`): every machine finds the same. A fissure gives way to its own
   theatre's gate of the day on its pixel or beside it. World of Daggerfall's rock keeps 26 m off it, and the grass off

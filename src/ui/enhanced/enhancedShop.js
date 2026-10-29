@@ -85,7 +85,7 @@ export const SHOP_LOOK = Object.freeze({
   'bundle:seasonalcollector': () => t('shop.look.seasonalcollector', 'The Deluxe Pass, the Heart Booster and the Brass Crown, together.'),
   ...Object.fromEntries(Object.keys(PASS_BOOSTS).map((id) => [id, () => passBoostText(id)])),
   // AURUM (bible/06-Systems/Aurum.md): the daily wares' icons, and the packs
-  'icon:gatefire': () => t('shop.look.gatefire', 'An Oblivion gate between black spires, its fire turning, embers rising. It moves.'),
+  'icon:gatefire': () => t('shop.look.gatefire', 'Dagon\'s Breach between black spires, its fire turning, embers rising. It moves.'),
   'icon:aurbis': () => t('shop.look.aurbis', 'The wheel of the heavens about Aetherius, its spheres turning in their orbits. It moves.'),
   'icon:elderscroll': () => t('shop.look.elderscroll', 'An Elder Scroll open between gilded rollers, its script lit line by line. It moves.'),
   'icon:azurastar': () => t('shop.look.azurastar', "Azura's Star turning slowly in the dusk, its heart of light pulsing. It moves."),
@@ -215,7 +215,7 @@ export function aurumTurnsText(/** @type {number} */ untilMs, /** @type {number}
 }
 /** AURUM: a week's deed, as its chip says it (net/aurumLaw.js AURUM_DEEDS, a receipt each). */
 const DEED_TEXT = Object.freeze({
-  gate: () => t('shop.deed.gate', 'Close an Oblivion Gate'), eg: () => t('shop.deed.eg', 'Take an Elite Breach Redoubt'), serpent: () => t('shop.deed.serpent', 'Kill a sea serpent'),
+  gate: () => t('shop.deed.gate', 'Close a Dagon\'s Breach'), eg: () => t('shop.deed.eg', 'Take an Elite Breach Redoubt'), serpent: () => t('shop.deed.serpent', 'Kill a sea serpent'),
   star: () => t('shop.deed.star', 'Hold a fallen star'), raid: () => t('shop.deed.raid', 'Defend a town'),
 });
 /** The line under the panels: who a purchase is for, or why nothing can be bought. Pure. */

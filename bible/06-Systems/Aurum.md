@@ -34,7 +34,7 @@ Aurum is read off the level reached, so it never needs claiming.
 
 | Deed | Aurum | The receipt that strikes it |
 | --- | --- | --- |
-| Close an Oblivion Gate | 30 | `gate_kills`, not a gate closed by a rite |
+| Close a Dagon's Breach | 30 | `gate_kills`, not a gate closed by a rite |
 | Take an Elite Breach Redoubt | 30 | `eg_redoubts` the week paid (`paid` 1) - a Rehearsal is not |
 | Kill a sea serpent | 25 | `serpent_kills` |
 | Hold a fallen star | 20 | `stars_held` |
@@ -83,7 +83,7 @@ never is, and the four packs.
 ## 7. The profile icons
 
 No icon draws a figure (`test/ui/storefront_badges.test.js` holds the art to it). The festival's four and the season's
-three were drawn again as things and places; the daily wares bring eight more - the Oblivion gate, the Aurbis, an Elder
+three were drawn again as things and places; the daily wares bring eight more - Dagon's Breach, the Aurbis, an Elder
 Scroll, Azura's Star, Red Mountain, an hourglass, a black-red rose and the White-Gold Tower - each in its bezel
 (`src/ui/icons/dailyIconArt.js`). Six of the eight move: fire turns, spheres orbit, script lights line by line, ash
 rises, and the hourglass turns over when its last grain falls. Each is drawn still for less motion

@@ -25,7 +25,7 @@ const BULB_B = 'M20.4 51 L43.6 51 C43.6 42 35.4 36.6 33 32.8 L31 32.8 C28.6 36.6
 const FLIP = { keyTimes: '0;0.86;1', calcMode: 'spline', keySplines: '0 0 1 1;0.5 0 0.5 1' };
 
 export const DAILY_ICON_ART = Object.freeze({
-  gatefire: Object.freeze({   // an Oblivion gate's black spires, the fire turning in its arch, embers rising off it
+  gatefire: Object.freeze({   // Dagon's Breach between black spires, the fire turning in its arch, embers rising off it
     field: ['#3a0a06', '#060102'],
     bezel: 'obsidian',
     defs: {
