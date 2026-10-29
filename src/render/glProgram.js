@@ -138,7 +138,7 @@ export function compiledPass(gl, programs, make, fail = () => {}) {
 
 // SHADER-EASE LINK-WAIT (2026-10-29): the one LINK_STATUS read is where a cold compile holds the page's thread. A read
 // that waits past LINK_WAIT_MS is kept (the last LINK_WAIT_KEEP): which program, how long, and whether a start had it
-// ahead (`started`) - a build no warm started shows false. linkWaits() reads them; a dev build says each one too.
+// ahead (`started`) - a build no warm started shows false. linkWaits() reads them.
 export const LINK_WAIT_MS = 50;
 export const LINK_WAIT_KEEP = 32;
 /** @type {Array<{ label: string, ms: number, started: boolean }>} */
@@ -172,8 +172,6 @@ export function buildProgram(gl, vsSrc, fsSrc, label = '') {
   if (ms > LINK_WAIT_MS) {
     const wait = { label: label || `${vsSrc.length}+${fsSrc.length} chars`, ms: Math.round(ms), started: !!took?.prog };
     if (WAITS.push(wait) > LINK_WAIT_KEEP) WAITS.shift();
-    // @ts-ignore - Vite's import.meta.env (node has none: the dev line is a dev server's alone)
-    if (import.meta.env?.DEV) console.info(`link wait: ${wait.label} ${wait.ms} ms${wait.started ? '' : ' (not started ahead)'}`);
   }
   if (!linked) {
     for (const sh of [vs, fs]) if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) { fault = `${label ? `${label} shader: ` : ''}${gl.getShaderInfoLog(sh)}`; break; }

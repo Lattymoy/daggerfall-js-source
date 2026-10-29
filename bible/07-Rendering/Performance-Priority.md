@@ -3002,8 +3002,7 @@ still warmed by a bare step: every compile and its LINK_STATUS read in one idle 
 back after each update. Each is now a named step (`DEEP_WATERS_PROGRAMS`, `OCEAN_HOLES_PROGRAMS`, `precipPrograms`,
 `precipWarmStep`): started, built once the driver says done, stood down when a draw built the pass first. Without
 KHR_parallel_shader_compile it builds at its first idle, as before. **LINK-WAIT:** `buildProgram` times its one
-LINK_STATUS read; a read over 50 ms is kept (`linkWaits()`, the last 32: label, ms, whether a start had it ahead), and a
-dev build logs it. Pins: `test/render/shaderease.test.js`. Mutants: `tools/mutants/shaderease_warmpoll.json`, 13, all
+LINK_STATUS read; a read over 50 ms is kept (`linkWaits()`, the last 32: label, ms, whether a start had it ahead). Pins: `test/render/shaderease.test.js`. Mutants: `tools/mutants/shaderease_warmpoll.json`, 13, all
 dead.
 
 ## CLOUD-COMPILE — the volumetric clouds arrive when their programs are done
