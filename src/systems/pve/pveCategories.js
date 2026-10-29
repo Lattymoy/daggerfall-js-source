@@ -2,7 +2,7 @@
 // FIXED-PVE (bible/05-Combat/Fixed-PvE.md): A FOE'S STRENGTH IS ITS LEVEL AND ITS CATEGORY, NEVER THE PLAYER'S.
 // The reference player is a planning line, not a reader of anyone: what a player of each level is expected to bring
 // in that level's band of gear. A Normal foe of a level falls to that player in NORMAL_BLOWS, and
-// takes the edge more blows to fell them (the owner's 10-30%, the middle by default). The categories stand on it.
+// takes the edge more blows to fell them (10-30%, the middle by default). The categories stand on it.
 // The two sides swing at their own tempos (stage 3): the reference player a longsword's swing at its Speed, a foe the
 // tactics brain's blow and recovery, so a foe's blow carries the gap. Starting values. Ledger A (FIXED-PVE).
 
@@ -12,8 +12,8 @@ import { TACT } from '../../ai/tactics.js';
 /** [level, what a swing lands, health it can lose] of the reference player: the middle of the six reference builds
  *  (pveBuilds.js - the test holds the two together), its damage a second times its own swing, health over its guards. */
 export const REFERENCE_PLAYER = Object.freeze([
-  Object.freeze([1, 13.7, 45]), Object.freeze([10, 25.1, 140]), Object.freeze([20, 57.3, 400]),
-  Object.freeze([30, 312, 855]), Object.freeze([40, 991, 1587]), Object.freeze([45, 1860, 2480]),
+  Object.freeze([1, 18, 45]), Object.freeze([10, 29.8, 140]), Object.freeze([20, 68.5, 400]),
+  Object.freeze([30, 356, 855]), Object.freeze([40, 1076, 1587]), Object.freeze([45, 2032, 2480]),
 ]);
 export const LEVEL_MIN = 1;
 export const LEVEL_MAX = 45;

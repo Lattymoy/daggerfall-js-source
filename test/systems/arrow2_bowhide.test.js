@@ -118,17 +118,18 @@ test('ARROW2 under DISC14-B\'s defaults (DoubleScaleTextures on): the same law -
 
 test('ARROW2: an un-draw (ActivateCenterObject at the hold frame) is no one-shot end - the bow stays shown through its cooldown, as DFU keeps it', async () => {
   const { step, m } = await bowRig({ drawback: true, widget: false });
-  let held = 0, undrawn = false, shownCooling = 0, arrows = 0;
+  let held = 0, undrawn = false, shownCooling = 0, cooling = 0, arrows = 0;
   for (let i = 0; i < 90; i++) {
     const drawn = m.state === 'StrikeUp' && m.frame === 3 && ++held > 10;
     const { evs, drawn: tex } = step(i === 0 || m.state === 'StrikeUp', 1 / 60, { cancel: drawn && !undrawn });
     if (drawn && !undrawn && m.state === 'Idle') undrawn = true;
     if (evs.includes('hit')) arrows++;
-    if (undrawn && m.now < m.cooldownUntil && tex) shownCooling++;
+    if (undrawn && m.now < m.cooldownUntil) { cooling++; if (tex) shownCooling++; }
   }
   assert.ok(undrawn, 'the draw was let go');
   assert.equal(arrows, 0, 'no arrow');
-  assert.ok(shownCooling > 30, 'the idle bow is drawn through the un-draw\'s cooldown');
+  // BOW-LAW: the reload is the swing's now, shorter than DFU's line - the bow is shown through all of it
+  assert.ok(cooling > 0 && shownCooling === cooling, `the idle bow is drawn through the un-draw's cooldown (${shownCooling} of ${cooling})`);
 });
 
 import { createWeaponMachine, machineAttack, machineStep, CLASSIC_UPDATE_INTERVAL as T16 } from '../../src/characters/weaponStates.js';

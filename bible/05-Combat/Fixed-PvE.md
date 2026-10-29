@@ -50,10 +50,22 @@ The Combat Score is the square root of offense times defense: no weight to tune.
 makes a foe imports it, and the tests hold that. The danger word reads the margin, and names what it cannot count:
 armour, magicka, and abilities it does not model.
 
-Each build is the best custom class for its job (the owner, 2026-10-28: the base game's builds are not the
-measure): 30 health a level, every attribute first, its skill and Critical Strike primary, expert in its weapon.
-What the report found: archers trail alone below level 40, as the bow's cooldown stands. Mages trail below 40 under
-the rework, whose base of Destruction x0.15 is small while the skill is low. Unyielding and Vigil make every foe past level 40 easier for a set wearer. A lone
-healer is weak, and berserker rage and the raid leader's seven abilities run hot. Boss blows come out small, because
-the builds bring no healing yet. Stage 9 adds that. The tests: `test/systems/pve/pve_sim.test.js`.
+Each build is the best custom class for its job, never the base game's: 30 health a level, every attribute first,
+its skill and Critical Strike primary, expert in its weapon. It wears the gear it would build, climbing slowly: spell
+potency to 30%, cast speed to 45%, and the Imprinted Unyielding and Vigil from level 30 (`loot/lootCodex.js`).
+Section 5's two laws are in the builds. What the report found: alone against a Normal foe of its level, each kind
+wins 69-94% below level 30 (the fist 47% at level 1, its roll still small), and every kind wins all of them from 30. A lone healer is
+weak, and berserker rage and the raid leader's seven abilities run hot. Boss blows come out small, because the builds
+bring no healing yet. Stage 9 adds that. The tests: `test/systems/pve/pve_sim.test.js`.
+
+## 5. The archer's bow and the mage's cast (BOW-LAW, PVE-CAST, 2026-10-29)
+
+Two departures that run in the game now, so that an archer and a mage keep up with a swordsman.
+
+| Law | Where | What it does |
+|---|---|---|
+| BOW-LAW | `characters/weaponStates.js` `bowReloadSeconds`, read by `combat/playerWeapon.js` and the Weapon Widget | DFU's bow waits 1.4-1.6 s a shot at any Speed (`GetBowCooldownTime`), and nothing quickens it. A player's bow now reloads on the swing law: a two-handed swing of the bow's weight against Strength, the pace powers and the 0.45 s floor, less the draw and the loose. A foe's and a stand-in's keep DFU's line |
+| PVE-CAST | `systems/spell/pveCast.js`, read by `systems/effects.js` `casterDamageScaled` | MY damage spell at a foe that is no player, online: a landing is held to Destruction x0.15 (live, gear counted) plus a start of 15 at level 1, gone by 30. Then it crits as a blow does and lands x1.1. The loot's potency still counts. The school past 100 does not, because the hold reads the skill. Duels, sieges, the Wild Zone and the arena are untouched |
+
+The tests: `test/systems/pve/pve_fixes.test.js`.
 

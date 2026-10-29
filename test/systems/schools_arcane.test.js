@@ -321,8 +321,9 @@ test('SCHOOLS3 A SIGNATURE SPELL\'S POTENCY READS ITS CAST SCHOOL: a Necromancer
   const sp = signatureSpell('necromancer');
   const landed = (spell) => { let d = 0; page(true, () => applySpell(spell, 20, foeEnt(), { hurt: (n) => { d += n; } }, () => 0.999, { entity: p })); return d; };
   const plainBolt = { ...sp, path: undefined };
-  assert.equal(landed(sp), Math.max(1, Math.round(landed(plainBolt) * 1.4)), 'Restoration\'s 140 strikes');
-  assert.match(src('src/systems/effects.js'), /casterDamageScaled\(magnitude\(e\), caster\?\.entity, target, schoolOf\(e\)\)/);
+  // PVE-CAST (systems/spell/pveCast.js): online at a foe the cast school's live skill sets the landing's hold
+  assert.ok(landed(sp) > landed(plainBolt), 'Restoration\'s 140 strikes harder than Destruction\'s 20');
+  assert.match(src('src/systems/effects.js'), /casterDamageScaled\(magnitude\(e\), caster\?\.entity, target, schoolOf\(e\), rolls\)/);
 });
 
 test('SCHOOLS3 THE RIDERS, through the cast engine\'s landing door: each signature spell of MY awake path that lands on a foe does its own - and none for a plain spell, another path\'s, a peer\'s or asleep (mutants: Siphon Life heals nothing; the half; Rift Lance reaches far; Chain Lightning a third foe; Blood Boil above the line; the Seer\'s mark forgotten; the refund dropped; a rider asleep)', () => {

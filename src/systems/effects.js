@@ -32,7 +32,8 @@
 
 import { savingThrow, rollMagnitude, EFFECT_FLAGS, careerTolerance, isDamageHealthEffect } from './spellcast.js';   // BAL9: the damage-health pair a pierce reads
 import { mentorDamageTakenMult } from './mentorMode.js';   // SOFTCAP2: a leaf
-import { spellPowerMult, spellPierce, schoolMult } from './spell/spellPower.js';   // BAL9: my damage spell's power and pierce (a leaf); SCHOOLS2: every school past 100
+import { spellPowerMult, spellPierce, schoolMult } from './spell/spellPower.js';
+import { pveCastLanding } from './spell/pveCast.js';   // PVE-CAST: the mages' rework on a PvE foe   // BAL9: my damage spell's power and pierce (a leaf); SCHOOLS2: every school past 100
 import { castSchool } from './spellcost.js';   // SCHOOLS3: the school an effect is cast in (a signature spell's path's)
 import { noteFeudHarm, elementFeudClass } from './feudLedger.js';   // RVN1: my spell's round, in its fight's ledger (a leaf)
 import { raceById, raceByKey } from './races.js';   // L2-slice (magic-10): the racial immunity arm
@@ -696,7 +697,7 @@ const casterScaledOnly = (n, ent) => (n > 0 && ent && !ent.isPlayer && Number.is
   ? Math.max(1, Math.round(n * ent.damageScale)) : n);
 /** SOFTCAP2: and a MENTORED player takes a foe's spell as it takes a foe's blow - at the mentored health pool
  *  (mentorMode.js damageTakenMult, formulas.js's own tail for blows). `target` optional: without it, as before. */
-export const casterDamageScaled = (n, ent, target = null, school = null) => {
+export const casterDamageScaled = (n, ent, target = null, school = null, rolls = Math.random) => {
   let v = casterScaledOnly(n, ent);
   if (v > 0 && target?.isPlayer && !target.peer && !ent?.isPlayer) {
     const m = mentorDamageTakenMult(target);
@@ -706,9 +707,13 @@ export const casterDamageScaled = (n, ent, target = null, school = null) => {
   // (systems/spell/spellPower.js spellPowerMult); 1 for a foe's, a peer's stand-in's and at any player. The same rounding and
   // floor of one; a spell the throw turned whole stays nothing. SCHOOLS3: `school` the school the effect is cast in
   // (spellcost.js castSchool - a signature spell's path's), Destruction's when none is said.
+  // PVE-CAST (systems/spell/pveCast.js): online, MY spell at a PvE foe lands on the rework's hold and crit instead, and
+  // the school past 100 steps aside for it (the hold reads the skill); the loot's percents still count
   if (v > 0) {
-    const p = spellPowerMult(ent, target, school == null ? {} : { school });
-    if (p !== 1) v = Math.max(1, Math.round(v * p));
+    const cast = pveCastLanding(v, ent, target, { school, rolls });
+    const p = spellPowerMult(ent, target, { ...(school == null ? {} : { school }), potency: cast == null });
+    if (cast != null) v = Math.max(1, Math.round(cast * p));
+    else if (p !== 1) v = Math.max(1, Math.round(v * p));
   }
   return v;
 };
@@ -719,7 +724,7 @@ export const casterDamageScaled = (n, ent, target = null, school = null) => {
  *  applies via liveStat / hasActiveEffect). */
 function runEffectRound(a, target, sinks, rolls) {
   if (a.kind === 'continuousDamage') {
-    const n = casterDamageScaled(effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls, a.caster), a.caster, target, a.school);   // DROPS-AUDIT ELITE-SPELLS; SOFTCAP2: the target, for mentor mode; BAL9: its caster's pierce; SCHOOLS3: the school it was cast in
+    const n = casterDamageScaled(effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls, a.caster), a.caster, target, a.school, rolls);   // DROPS-AUDIT ELITE-SPELLS; SOFTCAP2: the target, for mentor mode; BAL9: its caster's pierce; SCHOOLS3: the school it was cast in
     // AUDIT 68 S19-round-ticks-player-provenance: the tick is DamageHealthFromSource(caster) - the player's blow only
     // when the player cast it (no caster is the player, hostMagic's `!caster` law). A round sink bills nobody else.
     // DUEL1: and the entry's duel tag rides along - a duel's damage over time (bundleDuel) stops at the duel's floor
@@ -1078,7 +1083,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       continue;
     }
     if (isDamageHealth(e)) {
-      const n = casterDamageScaled(magnitude(e), caster?.entity, target, schoolOf(e));   // DROPS-AUDIT ELITE-SPELLS; SOFTCAP2: the target, for mentor mode; SCHOOLS3: the school it is cast in
+      const n = casterDamageScaled(magnitude(e), caster?.entity, target, schoolOf(e), rolls);   // DROPS-AUDIT ELITE-SPELLS; SOFTCAP2: the target, for mentor mode; SCHOOLS3: the school it is cast in
       out.damage += n;
       if (n > 0 && sinks.hurt) sinks.hurt(n, { element: spell.element ?? null });   // BOSS-TRAITS: the spell's element (a resistance reads it - systems/bossTraits.js)
       // DamageHealthFromSource runs HandleAttackFromSource whatever the

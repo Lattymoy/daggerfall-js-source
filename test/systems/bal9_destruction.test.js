@@ -21,6 +21,7 @@ import { setPref, _resetForTests } from '../../src/systems/uiPrefs.js';
 import * as LR from '../../src/systems/loot/lootRarity.js';
 import * as LP from '../../src/systems/loot/lootPowers.js';
 import * as SP from '../../src/systems/spell/spellPower.js';
+import { pveCastHold, PVE_CAST_X } from '../../src/systems/spell/pveCast.js';   // PVE-CAST: online, the rework's hold at a PvE foe
 import { _resetSetPowersForTests } from '../../src/systems/sigil/sigilSetPowers.js';
 import { setPlayerDoor } from '../../src/systems/playerDoor.js';
 import { equipItem } from '../../src/systems/equip.js';
@@ -129,9 +130,11 @@ test('BAL9b THE SCHOOL PAST 100 IS ITS POTENCY: online, 1% a point of Destructio
   // DFU's own to 100, and offline where Daggerfall's price term already pays the points past it
   assert.deepEqual([100, 150, 200].map((r) => at(r, false)), [50, 50, 50]);
   assert.deepEqual([100, 150, 200].map((r) => page(true, () => skillValue(mage(r), D))), [100, 117, 140]);
-  assert.deepEqual([100, 150, 200].map((r) => at(r, true)), [50, 59, 70], 'x1, x1.17, x1.4');
   assert.deepEqual([100, 150, 200].map((r) => page(true, () => SP.schoolPotency(mage(r)))), [1, 1.17, 1.4]);
-  assert.equal(at(200, true, BURN(50)), 70, 'a damage over time\'s first round too (the round\'s own door)');
+  // PVE-CAST (systems/spell/pveCast.js): online, my spell at a PvE foe lands on the rework's hold, and the potency steps aside
+  const held = (e, n = 50) => page(true, () => Math.max(1, Math.round(Math.min(n, pveCastHold(e)) * PVE_CAST_X * SP.spellPowerMult(e, foe(), { potency: false }))));
+  assert.deepEqual([100, 150, 200].map((r) => at(r, true)), [100, 150, 200].map((r) => held(mage(r))), 'the hold, not x1.17 and x1.4');
+  assert.equal(at(200, true, BURN(50)), held(mage(200)), 'a damage over time\'s first round too (the round\'s own door)');
   // never at a player (a refereed fight's stand-in is one), never a peer's stand-in, never a foe's spell
   assert.equal(at(200, true, BOLT(50), foe({ isPlayer: true, peer: true })), 50, 'a duel\'s stand-in');
   assert.equal(page(true, () => lands(BOLT(50), { ...mage(200), peer: true })), 50, 'a peer\'s');
@@ -144,11 +147,12 @@ test('BAL9b THE SCHOOL PAST 100 IS ITS POTENCY: online, 1% a point of Destructio
   const lifted = mage(100);
   wear(lifted, legendary('eye-of-magnus'));   // +25 Destruction
   assert.equal(page(true, () => skillValue(lifted, D)), 125, 'the live value the price reads');
-  assert.equal(page(true, () => lands(BOLT(100), lifted)), 100, 'a school lifted past 100 by a worn line strikes as at 100');
+  assert.equal(page(true, () => SP.schoolPotency(lifted)), 1, 'a school lifted past 100 by a worn line has no potency past 100');
+  assert.equal(page(true, () => lands(BOLT(100), lifted)), held(lifted, 100), 'PVE-CAST: the rework\'s hold reads the worn line');
   const capped = mage(200);
   wear(capped, legendary('eye-of-magnus'));
   assert.equal(page(true, () => skillValue(capped, D)), 165);
-  assert.equal(page(true, () => lands(BOLT(100), capped)), 140, 'x1.4, whatever is worn');
+  assert.equal(page(true, () => SP.schoolPotency(capped)), 1.4, 'x1.4, whatever is worn');
   off();
   // MENTOR2: mentoring reads the MENTORED climb (spell/spellPower.js fightingClimb) - none beside a level 5, where the edge reads none
   const m200 = mage(200);

@@ -84,12 +84,13 @@ export function registerSpellPierceMod(name, fn) { if (typeof fn === 'function')
  *  anything that is not my spell at a target the port may strengthen. */
 export function spellPowerMult(caster, target, opts = {}) {
   if (!ownSpellAt(caster, target)) return 1;
+  const { potency = true, ...rest } = /** @type {any} */ (opts);   // PVE-CAST: `potency` false leaves the school past 100 out (spell/pveCast.js reads the skill itself)
   let pct = 0;
   for (const fn of _power.values()) {
     const v = fn(caster, target);
     if (Number.isFinite(v) && v !== 0) pct += v;   // FIRM1: a keystone's price may be a percent LESS (Martyr's Vow)
   }
-  return schoolPotency(caster, opts) * Math.max(SPELL_POWER_FLOOR, 1 + pct / 100);
+  return (potency ? schoolPotency(caster, rest) : 1) * Math.max(SPELL_POWER_FLOOR, 1 + pct / 100);
 }
 
 /** SCHOOLS3: named listeners told when MY spell LANDED - `fn({ caster, target, foe, spell, r, self, reflected, took,

@@ -1,30 +1,34 @@
 // FIXED-PVE stage 3 (bible/05-Combat/Fixed-PvE.md section 4): THE REFERENCE BUILDS - the six kinds the spec names, each
-// the best custom class for its job (the owner: base-game builds are not the measure): 30 health a level, every
-// attribute raised first, its weapon skill and Critical Strike primary, expert in its weapon. A tier's hit is the live
-// formula's mean on an unarmoured target (combat/pcaao.js, systems/weaponMastery.js, the mages' rework); set powers,
-// sigils and procs are not counted. Tempos are the game's clocks. The reference player (pveCategories.js) is these
-// builds' middle. Ledger A (FIXED-PVE).
+// the best custom class for its job: 30 health a level, every attribute raised first, its weapon skill and Critical
+// Strike primary, expert in its weapon, and the gear it would build, climbing slowly. A tier's hit is the live formula's
+// mean on an unarmoured target (combat/pcaao.js, systems/weaponMastery.js, systems/spell/pveCast.js); sigils and procs
+// are not counted. Tempos are the game's clocks (the bow's: characters/weaponStates.js bowReloadSeconds). The
+// reference player (pveCategories.js) is these builds' middle. Ledger A (FIXED-PVE).
 
 import { LEVEL_MIN, LEVEL_MAX } from './pveCategories.js';
 import { swingFrameSeconds, swingHandling, swingHeft, SWING_FRAME_MIN, SWING_PACE_MOST, MELEE_NUM_FRAMES,
-  getBowCooldownTime, BOW_NUM_FRAMES, HIT_FRAME_BOW, CLASSIC_UPDATE_INTERVAL } from '../../characters/weaponStates.js';
+  BOW_NUM_FRAMES, HIT_FRAME_BOW, CLASSIC_UPDATE_INTERVAL } from '../../characters/weaponStates.js';
 import { castReleaseS, CAST_RECOVER_S } from '../../combat/fpsSpellCasting.js';
 import { speedCastRate, validCastRate } from '../castSpeed.js';
 import { pcaaoProficiencyModifiers, pcaaoDamageModifier } from '../../combat/pcaao.js';
 import { handToHandMinDamage, handToHandMaxDamage, WEAPON_MATERIAL_MODIFIER } from '../../combat/formulas.js';
 import { WEAPONS, weaponMinDamage, weaponMaxDamage } from '../../characters/weapons.js';
 import { WEAPON_GEAR_PER_POINT, WEAPON_GEAR_PCT_MOST, WEAPON_POTENCY_PER_POINT } from '../weaponMastery.js';
+import { POTENCY_CAP } from '../loot/lootPowers.js';
+import { PVE_CAST_PER_SKILL, PVE_CAST_X, pveCastStart } from '../spell/pveCast.js';
 
-/** Skill and gear by level: health, every attribute, trained skill (its climb past 100 pays to 40), what gear adds to
- *  it and to Critical Strike, the weapon's metal (formulas.js WEAPON_MATERIAL_MODIFIER's index), swing pace (to
- *  SWING_PACE_MOST), cast speed from loot, hit chance, and the guards gear brings. */
+/** Skill and gear by level, as the class would build it, gear always counted: health, every attribute, trained
+ *  skill (its climb past 100 pays to 40), what gear adds to it and to Critical Strike, the weapon's metal (formulas.js
+ *  WEAPON_MATERIAL_MODIFIER's index), swing pace (to SWING_PACE_MOST), cast speed (Rare lines to CAST_SPEED_CAP, then
+ *  Firmament), spell potency (Rare lines to POTENCY_CAP), hit chance, the guards gear brings, and from level 30 the
+ *  Imprinted Unyielding and Vigil (loot/lootCodex.js: a Rare takes a found Legendary's power). Gear climbs slowly. */
 export const TIERS = Object.freeze([
-  Object.freeze({ key: 'early', level: 1, health: 45, stat: 75, skill: 30, gearSkill: 0, metal: 0, pace: 0, cast: 0, hit: 0.8, taken: 1, evade: 0, regen: 0, vigil: false }),
-  Object.freeze({ key: 'intermediate', level: 10, health: 140, stat: 85, skill: 60, gearSkill: 10, metal: 1, pace: 0, cast: 0.03, hit: 0.9, taken: 1, evade: 0, regen: 0.001, vigil: false }),
-  Object.freeze({ key: 'advanced', level: 20, health: 330, stat: 95, skill: 100, gearSkill: 40, metal: 4, pace: 10, cast: 0.08, hit: 0.95, taken: 0.85, evade: 0.03, regen: 0.002, vigil: false }),
-  Object.freeze({ key: 'mastered', level: 30, health: 650, stat: 100, skill: 140, gearSkill: 150, metal: 7, pace: 20, cast: 0.15, hit: 0.97, taken: 0.8, evade: 0.05, regen: 0.004, vigil: false }),
-  Object.freeze({ key: 'enhanced', level: 40, health: 1000, stat: 100, skill: 140, gearSkill: 450, metal: 9, pace: 35, cast: 0.25, hit: 0.97, taken: 0.7, evade: 0.1, regen: 0.006, vigil: true }),
-  Object.freeze({ key: 'top', level: 45, health: 1265, stat: 100, skill: 140, gearSkill: 730, metal: 9, pace: SWING_PACE_MOST, cast: 0.45, hit: 0.97, taken: 0.6, evade: 0.15, regen: 0.008, vigil: true }),
+  Object.freeze({ key: 'early', level: 1, health: 45, stat: 75, skill: 30, gearSkill: 0, metal: 0, pace: 0, cast: 0, potency: 0, hit: 0.8, taken: 1, evade: 0, regen: 0, vigil: false }),
+  Object.freeze({ key: 'intermediate', level: 10, health: 140, stat: 85, skill: 60, gearSkill: 10, metal: 1, pace: 0, cast: 0.06, potency: 6, hit: 0.9, taken: 1, evade: 0, regen: 0.001, vigil: false }),
+  Object.freeze({ key: 'advanced', level: 20, health: 330, stat: 95, skill: 100, gearSkill: 40, metal: 4, pace: 10, cast: 0.15, potency: 15, hit: 0.95, taken: 0.85, evade: 0.03, regen: 0.002, vigil: false }),
+  Object.freeze({ key: 'mastered', level: 30, health: 650, stat: 100, skill: 140, gearSkill: 150, metal: 7, pace: 20, cast: 0.25, potency: 25, hit: 0.97, taken: 0.8, evade: 0.05, regen: 0.004, vigil: true }),
+  Object.freeze({ key: 'enhanced', level: 40, health: 1000, stat: 100, skill: 140, gearSkill: 450, metal: 9, pace: 35, cast: 0.38, potency: 30, hit: 0.97, taken: 0.7, evade: 0.1, regen: 0.006, vigil: true }),
+  Object.freeze({ key: 'top', level: 45, health: 1265, stat: 100, skill: 140, gearSkill: 730, metal: 9, pace: SWING_PACE_MOST, cast: 0.45, potency: POTENCY_CAP, hit: 0.97, taken: 0.6, evade: 0.15, regen: 0.008, vigil: true }),
 ]);
 
 /** @typedef {{ key: string, name: string, family: 'melee'|'bow'|'spell', range: number, health: number,
@@ -36,9 +40,9 @@ export const BUILD_KINDS = Object.freeze({
   melee: Object.freeze({ key: 'melee', name: 'Melee Fighter', family: 'melee', range: 0, blade: true, health: 1, control: 0.5,
     weapon: Object.freeze({ type: 0, twoHanded: true, kg: 7.5, item: WEAPONS.Dai_Katana }), note: 'Dai-Katana' }),
   archer: Object.freeze({ key: 'archer', name: 'Archer', family: 'bow', range: 1, blade: true, health: 1, control: 0.5,
-    weapon: Object.freeze({ type: 0, kg: 0, item: WEAPONS.Long_Bow }), note: 'long bow at full draw' }),
+    weapon: Object.freeze({ type: 0, kg: 1.5, item: WEAPONS.Long_Bow }), note: 'long bow at full draw' }),
   mage: Object.freeze({ key: 'mage', name: 'Destruction Mage', family: 'spell', range: 1, element: 'fire', health: 1, control: 2,
-    note: 'the mages\' rework: base to Destruction x0.15, spell crit, x1.1 on PvE foes - not built' }),
+    note: 'the mages\' rework on a PvE foe (spell/pveCast.js)' }),
   defender: Object.freeze({ key: 'defender', name: 'Defensive Fighter', family: 'melee', range: 0, blade: true, block: 0.25, health: 1, control: 1,
     weapon: Object.freeze({ type: 0, kg: 3, item: WEAPONS.Longsword }), note: 'longsword and shield' }),
   battlemage: Object.freeze({ key: 'battlemage', name: 'Hybrid Battlemage', family: 'melee', range: 0, blade: true, spellShare: 0.3, element: 'shock', health: 1, control: 1.5,
@@ -48,9 +52,6 @@ export const BUILD_KINDS = Object.freeze({
 });
 export const BUILD_KIND_KEYS = Object.freeze(Object.keys(BUILD_KINDS));
 
-/** The mages' rework (not built): a cast's base is Destruction x0.15, it crits as a blow does, and lands x1.1 on PvE foes. */
-export const SPELL_BASE_PER_SKILL = 0.15;
-export const SPELL_PVE_X = 1.1;
 /** The most of a trained skill's climb past 100 that pays (systems/weaponMastery.js weaponClimb). */
 const CLIMB_MOST = 40;
 
@@ -62,7 +63,7 @@ export function tierBlow(kind, tier) {
   const luckTerm = Math.floor((st - 50) / 25);
   const critChance = Math.min(1, Math.floor(live / (4 - luckTerm)) / 100), critX = Math.floor(live / 5) * 0.05 + 1;
   const crit = 1 + critChance * (critX - 1);
-  const spell = SPELL_BASE_PER_SKILL * live * crit * SPELL_PVE_X;
+  const spell = (PVE_CAST_PER_SKILL * live + pveCastStart(tier.level)) * crit * PVE_CAST_X * (1 + tier.potency / 100);   // spell/pveCast.js
   if (kind.family === 'spell') return spell;
   const w = /** @type {NonNullable<BuildKind['weapon']>} */ (kind.weapon);
   let hit;
@@ -91,7 +92,11 @@ function tierAt(level) {
 
 /** Seconds between a build's actions at a tier's Speed, Strength, pace and cast speed. */
 export function actionSeconds(kind, speed, strength, pace, cast) {
-  if (kind.family === 'bow') return getBowCooldownTime(speed) + (BOW_NUM_FRAMES.StrikeUp + HIT_FRAME_BOW) * CLASSIC_UPDATE_INTERVAL;
+  if (kind.family === 'bow') {   // BOW-LAW (characters/weaponStates.js bowReloadSeconds): the draw and loose, then the rest of a swing
+    const w = /** @type {NonNullable<BuildKind['weapon']>} */ (kind.weapon);
+    const swingS = MELEE_NUM_FRAMES.StrikeDown * Math.max(SWING_FRAME_MIN, swingFrameSeconds(speed, { heft: swingHeft(w.kg, strength), handling: swingHandling(w.type, true) }) / (1 + pace / 100));
+    return Math.max(swingS, (BOW_NUM_FRAMES.StrikeUp + HIT_FRAME_BOW) * CLASSIC_UPDATE_INTERVAL);
+  }
   const rate = validCastRate(speedCastRate(speed) + cast);
   const spellS = castReleaseS(rate) + CAST_RECOVER_S / rate;
   if (kind.family === 'spell') return spellS;

@@ -2,7 +2,7 @@
   {
     "name": "DA-ELITE-SPELLS-instant-unscaled",
     "file": "src/systems/effects.js",
-    "old": "      const n = casterDamageScaled(magnitude(e), caster?.entity, target, schoolOf(e));",
+    "old": "      const n = casterDamageScaled(magnitude(e), caster?.entity, target, schoolOf(e), rolls);",
     "new": "      const n = magnitude(e);",
     "tests": [
       "test/ui/enhanced/dropsaudit.test.js"
@@ -11,7 +11,7 @@
   {
     "name": "DA-ELITE-SPELLS-rounds-unscaled",
     "file": "src/systems/effects.js",
-    "old": "    const n = casterDamageScaled(effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls, a.caster), a.caster, target, a.school);",
+    "old": "    const n = casterDamageScaled(effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls, a.caster), a.caster, target, a.school, rolls);",
     "new": "    const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls, a.caster);",
     "tests": [
       "test/ui/enhanced/dropsaudit.test.js"

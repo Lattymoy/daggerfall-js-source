@@ -101,8 +101,8 @@
   {
     "name": "BAL9b-the-seam-skipped",
     "file": "src/systems/effects.js",
-    "old": "    if (p !== 1) v = Math.max(1, Math.round(v * p));",
-    "new": "    if (p === 0) v = Math.max(1, Math.round(v * p));",
+    "old": "    else if (p !== 1) v = Math.max(1, Math.round(v * p));",
+    "new": "    else if (p === 0) v = Math.max(1, Math.round(v * p));",
     "tests": [
       "test/systems/bal9_destruction.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "BAL9b-a-resisted-spell-made-one",
     "file": "src/systems/effects.js",
-    "old": "  if (v > 0) {\n    const p = spellPowerMult(ent, target, school == null ? {} : { school });",
-    "new": "  if (v >= 0) {\n    const p = spellPowerMult(ent, target, school == null ? {} : { school });",
+    "old": "  if (v > 0) {\n    const cast = pveCastLanding(v, ent, target, { school, rolls });",
+    "new": "  if (v >= 0) {\n    const cast = pveCastLanding(v, ent, target, { school, rolls });",
     "tests": [
       "test/systems/bal9_destruction.test.js"
     ]
