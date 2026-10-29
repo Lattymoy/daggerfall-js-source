@@ -10244,6 +10244,106 @@
   "tr": "826ed8b624ac",
   "by": "claude-in-session"
  },
+ "delve.hold.away": {
+  "en": "4331ded5f628",
+  "tr": "618eaa90bc1f",
+  "by": "claude-in-session"
+ },
+ "delve.hold.breath": {
+  "en": "662d0fba5726",
+  "tr": "604f2b981b4f",
+  "by": "claude-in-session"
+ },
+ "delve.hold.captain": {
+  "en": "de36e06413c8",
+  "tr": "dac565991bb4",
+  "by": "claude-in-session"
+ },
+ "delve.hold.failed": {
+  "en": "43aa7d928683",
+  "tr": "4109789d59d6",
+  "by": "claude-in-session"
+ },
+ "delve.hold.gather": {
+  "en": "07c41fa9f233",
+  "tr": "7639bf9e517b",
+  "by": "claude-in-session"
+ },
+ "delve.hold.wave": {
+  "en": "56a844817691",
+  "tr": "20c12a7855a0",
+  "by": "claude-in-session"
+ },
+ "delve.hold.won": {
+  "en": "eaee846c217f",
+  "tr": "2d089a12da72",
+  "by": "claude-in-session"
+ },
+ "delve.litany.show": {
+  "en": "d811f424d71f",
+  "tr": "c1bf0c7bed7b",
+  "by": "claude-in-session"
+ },
+ "delve.litany.wake": {
+  "en": "e2ea9fb49875",
+  "tr": "7b9f4c1a9661",
+  "by": "claude-in-session"
+ },
+ "delve.litany.won": {
+  "en": "3526d03b40b7",
+  "tr": "36aa7f9b2d18",
+  "by": "claude-in-session"
+ },
+ "delve.litany.work": {
+  "en": "88baea165443",
+  "tr": "8bd6be509a5b",
+  "by": "claude-in-session"
+ },
+ "delve.litany.wrong": {
+  "en": "1968af121348",
+  "tr": "7af99741c781",
+  "by": "claude-in-session"
+ },
+ "delve.near.hold": {
+  "en": "be08cc4e0f1d",
+  "tr": "e2731ee5b1df",
+  "by": "claude-in-session"
+ },
+ "delve.near.litany": {
+  "en": "0befbbd450bd",
+  "tr": "1138a6853da7",
+  "by": "claude-in-session"
+ },
+ "delve.vault.empty": {
+  "en": "3159fe421b32",
+  "tr": "f1bd4692a966",
+  "by": "claude-in-session"
+ },
+ "delve.vault.locked": {
+  "en": "0589f271d648",
+  "tr": "3bcaa6125f6a",
+  "by": "claude-in-session"
+ },
+ "delve.vault.open": {
+  "en": "fb46e3745fd3",
+  "tr": "a731191e63e2",
+  "by": "claude-in-session"
+ },
+ "delve.vault.sealed": {
+  "en": "15a91f67fd63",
+  "tr": "f1bf8a6b09ba",
+  "by": "claude-in-session"
+ },
+ "delve.vault.sealedHold": {
+  "en": "8e47889c1f6c",
+  "tr": "ec30cb6be0e5",
+  "by": "claude-in-session"
+ },
+ "delve.vault.sealedLitany": {
+  "en": "48ee4be881a3",
+  "tr": "ab78b2148a13",
+  "by": "claude-in-session"
+ },
  "dex.enemy.archerRider": {
   "en": "684bf52c59e7",
   "tr": "510271358c8d",
@@ -11232,6 +11332,16 @@
  "features.combatVoices.title": {
   "en": "0a891cfd47b5",
   "tr": "97a40e4126a3",
+  "by": "claude-in-session"
+ },
+ "features.dungeonEncounters.note": {
+  "en": "2c6e2d436602",
+  "tr": "882ee77b8dc4",
+  "by": "claude-in-session"
+ },
+ "features.dungeonEncounters.title": {
+  "en": "0a025fe37f05",
+  "tr": "983b1c824dc3",
   "by": "claude-in-session"
  },
  "features.dungeonMap3d.note": {

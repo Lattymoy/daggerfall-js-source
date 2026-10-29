@@ -23,8 +23,8 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.message)));
 const fail = async (why) => { console.log(`FAIL: ${why}`); await browser.close(); await server.close(); process.exit(1); };
 
-const q = new URLSearchParams({ region, dungeon: name, class: '1' });
-await page.goto(`http://localhost:5231/play/?shot&play&nomenu&novideo&${q}`);
+const q = new URLSearchParams({ region, dungeon: name });
+await page.goto(`http://localhost:5231/play/?shot&play&nomenu&novideo&class=1&${q}`);   // class=1: the headless character (no wizard)
 await page.waitForFunction(() => window.__frame > 10, null, { timeout: 240000 });
 const frames = async (n) => {
   const f0 = await page.evaluate(() => window.__frame);
