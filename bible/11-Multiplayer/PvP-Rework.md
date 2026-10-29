@@ -264,9 +264,27 @@ coin where it fits, else a letter of credit for the whole - the trade window's o
 (`pvpReward.js:"export const pvpGoldPaid ="`). A tab that says no weight gets the letter.
 
 "get rid of the bag drop": no bag piece drops at a kill
-(`server-account/src/wild.js:"drop = takeWildDeath(save, w, keep, wt, { letters, insured, bag: false });"`). The purse's
-tenth and the letters' tenth still go to the remains; the cart and the packs stay storage. A villain has no insurance:
+(`server-account/src/wild.js:"drop = takeWildDeath(save, w, keep, wt, { insured, bag: false, purse: false });"`). The purse's
+tenth and the letters' tenth went to the remains until PVP-NO-TENTH, below; the cart and the packs stay storage. A villain has no insurance:
 `pvpReward.js:"export const pvpInsuredFor ="` takes `villain`: "villian lose insurance" - a fallen whose kept meter is red holds no policy
 (`wild.js:"{ villain: isVillain(Number(row.villainy)) }"`). "Insurance cost 20%": a
 premium stays a fifth of `itemWorth` (`wildInsureLaw.js:"export const WILD_INSURE_DIVISOR = 5;"`), which counts the
 piece's price and its lines' worth. The service is acct214 (acct211 on its branch). A departure: DFU has no PvP.
+
+## PVP-NO-TENTH: no tenth at a kill, gold as the last roll
+
+"No gold dropped on death pvp detached gives gold as a last roll if no item or insurance", "No only the insurance": a
+player kill takes no tenth of the purse and lowers no letter, and nothing lies in the remains for anyone
+(`server-account/src/wild.js:"drop = takeWildDeath(save, w, keep, wt, { insured, bag: false, purse: false });"`). The roll
+is a worn piece, else one policy's gold, else THE LAST ROLL - only with no worn piece to take and no policy to pay
+(`wild.js:"const lastRoll = !burnt && collect && roll === null;"`). "Only give them some of their total or letter of
+credit or gold what ever =10%", "Letter only pay out 10% if they have not enough gold": a tenth of the coin and the
+letters together, the purse first, the letters (bag order) paying only what it cannot
+(`wildDropLaw.js:"export function takeWildLastRoll("`).
+
+The gold goes to the killer the way a policy's gold does: escrowed, his alone in the remains, never the fallen's to take
+back, collected as coin where it fits his free weight, else one letter of credit for the whole. The collect says it is
+the last roll (`wild.js:"return parse(fall?.tk)?.last ? { ...paid, last: true } : paid;"`), and so does each side's text
+(`wildZone.js:"lastGold: (n) =>"`, `wildZone.js:"deathLast: (name, gold) =>"`). A held record, a REPEAT-SHIELD kill
+and a room that signs no collect take nothing. A foe's death keeps everything, as FOE-KEEPS says. The service is still
+acct214. A departure: DFU has no PvP.

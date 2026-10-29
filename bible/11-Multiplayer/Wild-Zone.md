@@ -62,6 +62,11 @@ and the wagon themselves never dropped - `WILD_NEVER_GROUPS`' Transportation); a
 (section 3b). What still punishes: the bag's drop, a tenth of the purse and of each letter, the killer's one worn piece,
 the two minutes down and the rise outside the zone.
 
+PVP-REWARD and PVP-NO-TENTH (2026-10-29, `PvP-Rework.md`) took the bag's drop and the tenths away. A player kill takes
+one worn piece, else one policy's gold, else its last roll: a tenth of the coin and letters together, the purse first,
+for the killer alone (`wildDropLaw.js:"export function takeWildLastRoll("`). No gold lies in the remains for anyone,
+so WILD GOLD and LETTERS-TENTH in section 4 are history at a player kill.
+
 AUDIT PVP-EASE (2026-10-26, the owner: "Can we audit this"; `01-Overview/audits/Audit-PvP-Ease.md`): four cold lanes
 read the change: 21 reported, 16 defects. All 16 are fixed. Four of them were the owner's to call, and the owner chose:
 - a COMBAT LOCK on storing for a minute after a player's blow (section 4, STORE-KEEPS - the storage had made the drop
