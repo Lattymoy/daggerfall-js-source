@@ -1,0 +1,542 @@
+[
+  {
+    "name": "WL1-aperture-tiled-past-reason-kept",
+    "file": "src/render/windowApertures.js",
+    "old": "    if ((iu1 - iu0) * (iv1 - iv0) > 4096) continue;",
+    "new": "    if ((iu1 - iu0) * (iv1 - iv0) > 4096 * 4096) continue;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-aperture-cover-whole",
+    "file": "src/render/windowApertures.js",
+    "old": "Math.max(0, a0), Math.max(0, b0), Math.min(1, a1), Math.min(1, b1));",
+    "new": "0, 0, 1, 1);",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-aperture-yield-lost",
+    "file": "src/render/windowApertures.js",
+    "old": "    if ((k - start) % (3 * APERTURE_STEP_TRIS) === 0 && k > start) yield;",
+    "new": "    if (false) yield;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-mask-box-far-edge",
+    "file": "src/render/windowLight.js",
+    "old": "  return x1 < 0 ? null : [x0 / W, y0 / H, (x1 + 1) / W, (y1 + 1) / H];",
+    "new": "  return x1 < 0 ? null : [x0 / W, y0 / H, x1 / W, y1 / H];",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-holes-inverted",
+    "file": "src/render/windowLight.js",
+    "old": "  for (let i = 0; i < src.length; i += 4) if (src[i + 3] < 128) out.fill(255, i, i + 4);",
+    "new": "  for (let i = 0; i < src.length; i += 4) if (src[i + 3] >= 128) out.fill(255, i, i + 4);",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-twin-behind-lit",
+    "file": "src/render/windowLight.js",
+    "old": "  if (s <= 0) return [0, 0, 0];",
+    "new": "  if (s < -1e9) return [0, 0, 0];",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-twin-crossing-wrong",
+    "file": "src/render/windowLight.js",
+    "old": "const sl = dot(sub3(c4, c0), c3); tt = s / (s - sl); }",
+    "new": "const sl = dot(sub3(c4, c0), c3); tt = s / (s + sl); }",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-twin-aperture-unbounded",
+    "file": "src/render/windowLight.js",
+    "old": "  if (Math.abs(a) > 0.5 || Math.abs(b) > 0.5) return acc;",
+    "new": "  if (Math.abs(a) > 5 || Math.abs(b) > 5) return acc;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-twin-mask-v-from-u",
+    "file": "src/render/windowLight.js",
+    "old": "  const m = maskAt(c1[3] + a * c3[3], c2[3] + b * c4[3]);",
+    "new": "  const m = maskAt(c1[3] + a * c3[3], c2[3] + b * c3[3]);",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-duals-unscaled",
+    "file": "src/render/windowLight.js",
+    "old": "  out[o + 4] = vx / ku; out[o + 5] = vy / ku;",
+    "new": "  out[o + 4] = vx; out[o + 5] = vy;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-lamp-at-the-glass-middle",
+    "file": "src/render/windowLight.js",
+    "old": "  const lift = 0.5 * Math.abs(V[1]) + WL_LAMP_LIFT;",
+    "new": "  const lift = WL_LAMP_LIFT;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-glsl-behind-lit",
+    "file": "src/render/windowLight.js",
+    "old": "    if (s <= 0.0) continue;   // behind the glass",
+    "new": "    if (s <= -1e9) continue;   // behind the glass",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-glsl-crossing-wrong",
+    "file": "src/render/windowLight.js",
+    "old": "tt = s / (s - dot(c4.xyz - c0.xyz, c3.xyz)); }",
+    "new": "tt = s / (s + dot(c4.xyz - c0.xyz, c3.xyz)); }",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-glsl-aperture-unbounded",
+    "file": "src/render/windowLight.js",
+    "old": "    if (abs(a) > 0.5 || abs(b) > 0.5) continue;",
+    "new": "    if (abs(a) > 5.0 || abs(b) > 5.0) continue;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-glsl-mask-v-from-u",
+    "file": "src/render/windowLight.js",
+    "old": "vec3(c1.w + a * c3.w, c2.w + b * c4.w, float(code & 255))",
+    "new": "vec3(c1.w + a * c3.w, c2.w + b * c3.w, float(code & 255))",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-glsl-sun-map-unread",
+    "file": "src/render/windowLight.js",
+    "old": "(kind == 1 ? (isFlat > 0.5 ? sunShadowSoftAt(base, vec3(0.0), 0.0) : sunShadowAt(wp, n)) : 1.0)",
+    "new": "1.0",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-dark-room-lit",
+    "file": "src/render/windowLight.js",
+    "old": "      t.street[j] = roomLitAt(h) && Math.abs(ny) <= 0.5 ? 1 : 0;",
+    "new": "      t.street[j] = Math.abs(ny) <= 0.5 ? 1 : 0;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-seed-half-plane",
+    "file": "src/render/windowLight.js",
+    "old": "      const plane = Math.floor((nx * v[0] + ny * v[1] + nz * v[2]) * 40 + 0.5);",
+    "new": "      const plane = Math.floor((nx * v[0] + ny * v[1] + nz * v[2]) * 20 + 0.5);",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-street-gather-every-room",
+    "file": "src/render/windowLight.js",
+    "old": "        if (kind === 'street' && !t.street[j]) continue;",
+    "new": "        if (false) continue;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-interior-glass-on-the-street",
+    "file": "src/render/windowLight.js",
+    "old": "      if (!g || (kind === 'street' && g !== 'window')) continue;",
+    "new": "      if (!g) continue;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-lamp-by-day",
+    "file": "src/render/windowLight.js",
+    "old": "    if (kind === 'street' ? !!lamp : !!o) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-hold-forever",
+    "file": "src/render/windowLight.js",
+    "old": "          if (now - s.seen > WL_HOLD_MS) { list.splice(li, 1); continue; }",
+    "new": "          if (false) { list.splice(li, 1); continue; }",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-forget-lost",
+    "file": "src/render/windowLight.js",
+    "old": "  forget(mesh) { this.sources.street.delete(mesh); this.sources.inside.delete(mesh); }",
+    "new": "  forget(mesh) { }",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-shift-leaves-the-tiles",
+    "file": "src/render/windowLight.js",
+    "old": "      if (s.tiles) for (const t of s.tiles) if (t) {",
+    "new": "      if (false) for (const t of s.tiles) if (t) {",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-unsorted",
+    "file": "src/render/windowLight.js",
+    "old": "    cand.sort(byDistance);",
+    "new": "    cand.reverse();",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-no-fade",
+    "file": "src/render/windowLight.js",
+    "old": "      const fade = c.d <= cut * WL_FADE_FROM ? 1 : (cut - c.d) / (cut * (1 - WL_FADE_FROM));",
+    "new": "      const fade = 1;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-cut-jumps",
+    "file": "src/render/windowLight.js",
+    "old": "    this._cuts[kind] = dt > 0 ? this._cuts[kind] + (want - this._cuts[kind]) * (1 - Math.exp(-WL_CUT_EASE * dt)) : want;",
+    "new": "    this._cuts[kind] = want;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-curtains-ignored",
+    "file": "src/render/windowLight.js",
+    "old": "    if (clip) { u0 = Math.max(u0, clip[0]); u1 = Math.min(u1, clip[1]); }",
+    "new": "    if (false) { u0 = Math.max(u0, clip[0]); u1 = Math.min(u1, clip[1]); }",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-curtains-pass-nothing",
+    "file": "src/render/windowLight.js",
+    "old": "    if (curtains && this._aperture(c, null, this._whole)) l.area += (this._whole.area - l.area) * WL_CURTAIN_PASS;",
+    "new": "    if (false) l.area += 0;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-sunFor-facing-reversed",
+    "file": "src/render/windowLight.js",
+    "old": "if (nr[i] * dir[0] + nr[i + 1] * dir[1] + nr[i + 2] * dir[2] < -0.02) return dir;",
+    "new": "if (nr[i] * dir[0] + nr[i + 1] * dir[1] + nr[i + 2] * dir[2] > 0.02) return dir;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-sun-through-glass-facing-away",
+    "file": "src/render/windowLight.js",
+    "old": "    const faces = !!dir && !!key && dir[0] * l.nf[0] + dir[1] * l.nf[1] + dir[2] * l.nf[2] < -0.02;",
+    "new": "    const faces = !!dir && !!key;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-sun-never-shadowed",
+    "file": "src/render/windowLight.js",
+    "old": "    l.kind = shadows ? WL_KIND.sun : WL_KIND.sunBare;",
+    "new": "    l.kind = WL_KIND.sunBare;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-no-moon",
+    "file": "src/render/windowLight.js",
+    "old": "    const moonDir = !sunDir && o && o.moonScale > 0 && o.moonDir[1] > 0.05 ? o.moonDir : null;",
+    "new": "    const moonDir = null;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-kind-swapped",
+    "file": "src/render/renderer.js",
+    "old": "    return e && e[0] + e[1] + e[2] > 0 ? 'street' : 'inside';",
+    "new": "    return e && e[0] + e[1] + e[2] > 0 ? 'inside' : 'street';",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-row-off-ignored",
+    "file": "src/render/renderer.js",
+    "old": "this._studioDepth !== 0 || this._rwMode === 'off') return null;",
+    "new": "this._studioDepth !== 0) return null;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-block-unbound",
+    "file": "src/render/renderer.js",
+    "old": "    if (fsSrc.includes('WinLights')) this._wlBindProgram(p);",
+    "new": "    if (false) this._wlBindProgram(p);",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-block-on-point-zero",
+    "file": "src/render/renderer.js",
+    "old": "gl.uniformBlockBinding(p, bi, WL_UBO_BINDING);",
+    "new": "gl.uniformBlockBinding(p, bi, 0);",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-band-over-the-lanterns",
+    "file": "src/render/renderer.js",
+    "old": "    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, WL_GRID_ROW, CLUSTER_GRID_W",
+    "new": "    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, CLUSTER_GRID_W",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-draw-never-noted",
+    "file": "src/render/renderer.js",
+    "old": "    if (mesh.wl && this._wlKind && !wire) this._wl.note(",
+    "new": "    if (false) this._wl.note(",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-destroy-keeps-the-windows",
+    "file": "src/render/renderer.js",
+    "old": "    this._wl.forget(mesh);   // WL1: none of its windows lights",
+    "new": "    // forgotten",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-window-sun-not-handed",
+    "file": "src/render/renderer.js",
+    "old": "      windowSun: this._wlSun,   // WL1",
+    "new": "      windowSun: null,   // WL1",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-batch-measured-again",
+    "file": "src/render/renderer.js",
+    "old": "      const ap = sm.apertures ?? windowAperturesOf(",
+    "new": "      const ap = windowAperturesOf(",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-outside-every-frame",
+    "file": "src/render/renderer.js",
+    "old": "(o && now - o.at < WL_OUTSIDE_EVERY_MS && now >= o.at)) return;",
+    "new": "false) return;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-outside-bracket-leaks",
+    "file": "src/render/renderer.js",
+    "old": "      this._ambient = was.ambient; this._sunScale = was.sunScale;",
+    "new": "      this._sunScale = was.sunScale;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-classic-flat-unlit",
+    "file": "src/render/renderer.js",
+    "old": "  pointAcc += winLit(vBBWorld, vec3(0.0), 1.0, vBBWorld);",
+    "new": "  pointAcc += vec3(0.0);",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-shadow-window-sun-ignored",
+    "file": "src/render/shadowPass.js",
+    "old": "    const sunDir = this.kind === 'sun' ? f.lightDir : f.windowSun ?? null;",
+    "new": "    const sunDir = this.kind === 'sun' ? f.lightDir : null;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-shadow-glass-casts",
+    "file": "src/render/shadowPass.js",
+    "old": "        const glassCut = this._glassCut && mesh._evAnyGlass;",
+    "new": "        const glassCut = false;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-shadow-cut-on-the-street",
+    "file": "src/render/shadowPass.js",
+    "old": "    this._glassCut = this.kind !== 'sun' && !!sunDir;",
+    "new": "    this._glassCut = !!sunDir;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-batch-measures-none",
+    "file": "src/render/staticBatch.js",
+    "old": "      if (this.windows?.(archive, record)) sub.apertures = yield* apertureSteps(",
+    "new": "      if (false) sub.apertures = yield* apertureSteps(",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-pipeline-word-lost",
+    "file": "src/scenes/dataPipeline.js",
+    "old": "  if (renderer) renderer.glassKeyTest = (a, r) =>",
+    "new": "  if (false) renderer.glassKeyTest = (a, r) =>",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-view-out-reads-no-outside",
+    "file": "src/render/realWindows.js",
+    "old": "  finally { opts.renderer.captureOutsideLight?.(opts.scene, opts.now, opts.mode); }",
+    "new": "  finally { /* nothing */ }",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-mock-room-no-sun-patch",
+    "file": "src/render/realWindows.js",
+    "old": "      light += skyL * (${g(ROOM_SUN_SHARE)} * m * max(cosr, 0.0));",
+    "new": "      light += vec3(0.0);",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-lane-point-unlit",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  return acc + winLit(wp, n, 0.0, wp);",
+    "new": "  return acc;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-street-moon-unset",
+    "file": "src/render/enhancedSky.js",
+    "old": "  r.setLighting(withMoonAmbient(light.ambient, moon), light.sun, sunColor);\n  r.setMoonlight(moon);",
+    "new": "  r.setLighting(withMoonAmbient(light.ambient, moon), light.sun, sunColor);\n  r.setMoonlight(null);",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-exterior-glass-colour-short",
+    "file": "src/world/exteriorGlass.js",
+    "old": "  '171_2': Object.freeze([104, 105, 106]),",
+    "new": "  '171_2': Object.freeze([104]),",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-specks-kept",
+    "file": "src/world/exteriorGlass.js",
+    "old": "    if (closed && run.length <= SPECK_MAX) for (const i of run) glass[i] = 1;",
+    "new": "    if (closed && run.length < 0) for (const i of run) glass[i] = 1;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-dfu-mask-overridden",
+    "file": "src/world/exteriorGlass.js",
+    "old": "  if (!bitmap?.data || hasGlass(own)) return own;",
+    "new": "  if (!bitmap?.data) return own;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-mask-on-the-snow-unit",
+    "file": "src/render/windowLight.js",
+    "old": "export const WL_MASK_UNIT = 24;",
+    "new": "export const WL_MASK_UNIT = 16;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-mover-leaves-a-ghost",
+    "file": "src/render/windowLight.js",
+    "old": "    if (moved) { moved.m.set(m); moved.tiles = null; moved.seen = now; moved.remap = remap; return; }",
+    "new": "    if (false) { moved.m.set(m); moved.tiles = null; moved.seen = now; moved.remap = remap; return; }",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  },
+  {
+    "name": "WL1-far-placement-gathered",
+    "file": "src/render/windowLight.js",
+    "old": "      if (Math.hypot(B[0] - eye[0], B[1] - eye[1], B[2] - eye[2]) - B[3] > WL_GATHER) continue;",
+    "new": "      if (false) continue;",
+    "tests": [
+      "test/render/wl1_windowlight.test.js"
+    ]
+  }
+]

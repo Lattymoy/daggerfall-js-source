@@ -336,6 +336,16 @@ test('errors: duplicate names, type errors GLSL would reject, bad arguments', ()
   assert.throws(() => glslFunctions('float f(vec3 v) { return v.x; }').f([1, 2]), /must be a vec3/);
   assert.throws(() => glslFunctions('#define X 1\nfloat f() { return 1.0; }'), /#define is not supported/);
   assert.throws(() => glslFunctions('struct S { float a; };'), /struct is not supported/);
+  assert.throws(() => glslFunctions('out V { float a; };'), /interface blocks are not supported/);
+  assert.throws(() => glslFunctions('uniform B { float a; } b;'), /a named uniform block is not supported/);
+});
+
+test('a uniform block with no instance name (WL1\'s window lights): its members are uniforms by their own names, bound, read and read-only as any uniform', () => {
+  const src = 'layout(std140) uniform Lights { vec4 uL[3]; float uK; };\nfloat f(int i) { return uL[i].y * uK; }\nvoid g() { uK = 1.0; }';
+  const fns = glslFunctions(src, { uL: [[0, 1, 0, 0], [0, 2, 0, 0], [0, 3, 0, 0]], uK: 0.5 });
+  assert.equal(fns.f(2), 1.5);
+  assert.equal(glslFunctions(src).f(1), 0, 'unbound: zeros');
+  assert.throws(() => fns.g(), /read-only/);
 });
 
 test('eager compiles every body at load, as a driver compiles a stage - a body naming what its source never declares throws though nothing calls it; lazily it would wait for the call; and no keyword or reserved word names anything (SHADOW-CLOAK AUDIT 2: a fragment stage read a uniform only its vertex stage declared, and a variable was named `out`)', () => {

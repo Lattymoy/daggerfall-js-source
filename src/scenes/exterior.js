@@ -92,7 +92,7 @@ import { RMB_SIDE, layoutLocation, hasCustomLocationPosition } from '../world/lo
 import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
 import { decorCullVerdict, DECOR_DRAW } from './decor/decorRoom.js';   // PERF-WAGON: the street's verdict on a cart's, a wagon's and a tent's box
-import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
+import { withMoonAmbient, lightStreetAt } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient; WL1: the street lit by the clock
 import { drawCharacterSprite } from '../render/characterSprite.js';
 import { collectBlockFlats, billboardSize, mobileBillboardSize, centredBase, isNatureArchive, NATURE_FLATS_Y } from '../world/rmbFlats.js'; import { blockHillSeat, seatNatureFlat, blockHillPatch } from '../world/townStandIns.js';   // TREES-SEATED: a block's trees on the hills drawn under them; FIELD BUGS 2026-10-13e HILL-SEAT: and the pads under what its author stood on them
 import { blockSolids } from '../world/flatFields.js';   // FIELD BUGS 2026-10-04d CROPS: a crop field keeps a metre off the block's solids
@@ -4338,7 +4338,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // WAGONS2 (FINAL AUDIT): and the weather's - the street frame's own terms (world/worldClock.js viewOutLight), so the clock's
       // air below compares a dimmed sun with a dimmed sun
       const light = viewOutLight(clockMinute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherTerms().sun, sky.sunFactor());
-      r.setLighting(withMoonAmbient(light.ambient, sky.moonlight()), light.sun, SUN_RIG_COLOR);
+      lightStreetAt(r, light, sky.moonlight(), SUN_RIG_COLOR);   // WL1: and the moon of the hour, whose light a window lets in (render/enhancedSky.js)
       r.setFogColor(clockFogColor(keptFog, keptSun, r._sunScale));   // RW1 (AUDIT): ...re-lit by the clock
       r.setWindowEmission(windowEmissionRGB(windowStyleForTime(clockMinute)));
       r.setPointLights(lightsOnAt(clockMinute) ? nearestLights(cityLights, cam.pos, r.maxPointLights, lightAnimator.ranges) : new Float32Array(0), CITY_LIGHT_COLOR_F32);   // RW1 (AUDIT): the town's lanterns by the clock - never the player's own light
