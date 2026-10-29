@@ -32,9 +32,11 @@ export const HOME_TOWN_CELLS = Object.freeze([
   yardCellOf(HOME_KEY_MAX),
 ]);
 
-/** The refusal statuses a service from before acct216 answers `/v1/homes/cells` and `/v1/homes/own` with: unknown to it,
- *  they fall through to its write routes (a 400 or a 403) or its 404. */
-const OLDER_SERVICE_STATUSES = new Set([400, 403, 404, 405]);
+/** How a service from before acct216 refuses `/v1/homes/cells` and `/v1/homes/own`: a 404 or a 405, or - the paths
+ *  unknown to it fall through to its home write routes - the refusals those give a body with no building and no entry
+ *  (`bad-entry`, `no-home`) or a guest (`homes-need-account`). Never a ban's or a freeze's 403: those pass. */
+const OLDER_SERVICE_STATUSES = new Set([404, 405]);
+const OLDER_SERVICE_ERRORS = new Set(['bad-entry', 'no-home', 'homes-need-account']);
 
 /** @typedef {{ ok: boolean, data?: any, error?: string, status?: number }} Answer  net/accountClient.js `call`'s shape */
 /** @typedef {{ ver: number, homes: any[] }} HeldCell  a cell's shared rows at the version answered */
@@ -42,7 +44,10 @@ const OLDER_SERVICE_STATUSES = new Set([400, 403, 404, 405]);
 /** @typedef {{ cells: Map<number, HeldCell>, own: HeldOwn | null, gone: Map<number, number> }} HeldTown  `gone`: building key -> when this page saw it go (ms) */
 
 /** Whether an answer is a service from before acct216 refusing a route it does not know. */
-const fromOlderService = (/** @type {Answer | null} */ answer) => !!answer && !answer.ok && OLDER_SERVICE_STATUSES.has(Number(answer.status));
+function fromOlderService(/** @type {Answer | null} */ answer) {
+  if (!answer || answer.ok) return false;
+  return OLDER_SERVICE_STATUSES.has(Number(answer.status)) || OLDER_SERVICE_ERRORS.has(String(answer.error));
+}
 
 /** The refusal `read` answers for an `ok` answer whose body is not the route's shape. */
 const MALFORMED = Object.freeze({ ok: false, error: 'server' });

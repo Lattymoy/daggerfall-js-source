@@ -181,10 +181,10 @@ test('YC4 a full answer\'s `more` cells are asked in the same read, HOME_CELLS_R
   assert.equal(state.cellAsks.length, HOME_CELLS_ROUNDS_MAX, 'a service that keeps saying `more` is not asked for ever');
 });
 
-test('YC4 a service from before acct216 (404, or a 400/403 from its write routes) is read by /v1/homes/town from then on; an overload is a failure, not an older service; a door with no cell routes never asks them (mutants: the fallback, a 503 read as older)', async () => {
-  for (const status of [404, 400, 403]) {
+test('YC4 a service from before acct216 (404, or its write routes\' refusals) is read by /v1/homes/town from then on; an overload, a ban or a freeze is a failure, not an older service; a door with no cell routes never asks them (mutants: the fallback, a 503 or a ban read as older, the write routes\' refusals unread)', async () => {
+  for (const [status, error] of [[404, 'not-found'], [400, 'bad-entry'], [403, 'homes-need-account']]) {
     const { state, api } = door();
-    state.cellsReply = () => ({ ok: false, error: 'not-found', status });
+    state.cellsReply = () => ({ ok: false, error, status });
     const { homes } = registry(api);
     assert.equal(await homes.ensure(TOWN), true, `${status}: the town known all the same`);
     assert.equal(state.townAsks, 1);
@@ -194,16 +194,16 @@ test('YC4 a service from before acct216 (404, or a 400/403 from its write routes
   }
   {
     const { state, api } = door();
-    state.ownReply = { ok: false, error: 'bad-home', status: 400 };
+    state.ownReply = { ok: false, error: 'no-home', status: 400 };
     const { homes } = registry(api);
     await homes.ensure(TOWN);
     assert.equal(state.townAsks, 1, 'the own part refused as unknown: the old route too');
   }
-  {
+  for (const [status, error] of [[503, 'server'], [403, 'banned']]) {
     const { state, api } = door();
-    state.cellsReply = () => ({ ok: false, error: 'server', status: 503 });
+    state.cellsReply = () => ({ ok: false, error, status });
     const { homes } = registry(api);
-    assert.equal(await homes.ensure(TOWN), false, 'an overload: the town not known');
+    assert.equal(await homes.ensure(TOWN), false, `${error}: the town not known`);
     assert.equal(state.townAsks, 0, 'and no fallback - the cells are asked again next time');
     state.cellsReply = () => ({ ok: true, data: {} });
     assert.equal(await homes.ensure(TOWN, { force: true }), false, 'a body not the route\'s shape is a failure');
