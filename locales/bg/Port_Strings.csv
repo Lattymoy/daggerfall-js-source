@@ -2218,6 +2218,7 @@ eg.vote.respiteHow,"Отговори на отдих с R или /breach respite
 eg.vote.respiteNone,"Никой не е поискал отдих."
 eg.witness.watching,"Наблюдаваш {who} - здраве {pct}%."
 eg.witness.watchingName,"Наблюдаваш {who}."
+enchant.gildedName,"Позлатеният предмет запазва собственото си име."
 enchant.soulGone,"Тази душа вече не е в раницата ти."
 enemy.dwarvenDragon,"Джуджешки дракон"
 ether.cross.passengers,"Само групата ви може да прекоси Завесата с вас. Прекосяването чака, докато на борда не останат само хората от групата ви."

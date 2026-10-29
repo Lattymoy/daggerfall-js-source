@@ -33,7 +33,7 @@ Every reader of the ladder carries it - each found by grepping the Aetheric's ow
 | `render/spoilsGlow.js` SPOILS_LINE_H | 2.5 m - the tallest line, at the line's own cap (WB5's "a line, not a beam") |
 | `systems/physicalItems.js` PI_RIM | 0.8 - the strongest rim |
 | `systems/reforge.js` salvageRefusal | `'gilded'` - "A Gilded piece will not break" (ui/reforgeWindow.js) |
-| `systems/enchanting.js` itemMakerRefuses | true - the item maker takes no static roll |
+| `systems/enchanting.js` gildedKeeps, makerKeepsName | the item maker takes it, its record's lines untouched and its name its record's (GILDED-MAKER, section 11) |
 | `systems/legacy/heirloom.js` NEVER_RARITY | never an heirloom - it is its record's |
 | `systems/item/itemInfo.js` | named as an artifact is - "The Hourlock", never "Dwarven The Hourlock" |
 | `systems/quickslots.js` quickslotKey | `|g<record>` - only when set, so every save's keys still resolve |
@@ -62,13 +62,14 @@ a fresh item whose lines are copies (`mintGilded`). So the wire can hold it to i
 can be held (`validGildedMarks`, beside the Aetheric's `validSetMarks` in `validLootItem`): a record that exists, its
 group, template and make, its lines in its record's order with its record's params and values - one number off is a
 forgery, there is no band to sit inside - and none of the marks another door lays (`sigil`, `legendary`, `aetheric`,
-`imprint`, `cursed`, `socket`, `reforged`, `honed`, `exalted`), no DFU enchantment and no made one. A bare `rarity:
+`imprint`, `cursed`, `socket`, `reforged`, `honed`, `exalted`), no DFU enchantment but the item maker's own (section 11)
+and no made one. A bare `rarity:
 'gilded'` naming no record is refused (RF5's word for the Aetheric, now the Gilded's too).
 
 No door alters it: the Reforge's lines and the hone's are a Magic's, a Rare's or an Exalted's (`reforgeableLines`,
 `honeableLines` answer none); `exaltLegendary` is a Legendary's; `cursePiece` a Rare's or a Legendary's; the socket's
-per-mille has no row for it; the imprint is a Rare's; the salvage, the item maker and the heirloom refuse it by name;
-and the crafter's temper (CRAFT4, `net/temperLaw.js` TEMPER_SHUT - law 7, which main's arc wrote for the Legendary,
+per-mille has no row for it; the imprint is a Rare's; the salvage and the heirloom refuse it by name; the item maker
+lays its rows beside the record's lines and never moves them (GILDED-MAKER, section 11); and the crafter's temper (CRAFT4, `net/temperLaw.js` TEMPER_SHUT - law 7, which main's arc wrote for the Legendary,
 the Aetheric and the Artifact while this one was being built) shuts the rung too, at the merge that brought it.
 
 ### The power, as it runs
@@ -195,9 +196,8 @@ Rewards.md`) read the slice cold and moved what this section says where it was w
 (ItemBuilder.CreateWeapon: its make's value, its span, its condition; no draw - its arrow arm alone rolls) - where the
 Hourlock keeps the gun's (`createThunderlock`), so its record and every gift already minted of it (the HOURS-FIRST post,
 migration 0094) are byte for byte what they were. Each a STATIC ROLL, as the Hourlock is: every line its record's, held
-exactly on the wire, no door alters it (section 2's list - the Reforge, the hone, the salvage, the item maker, the
-exalt, the curse, the heirloom, the temper, a socket, a technique; the audit walked every one of them with the real
-pieces). The item law moved with them: ITEM_LAW_VERSION 5, the account service's acct137 (TECH1's LAW_SERVICE), so a
+exactly on the wire, no door alters it (section 2's list - the Reforge, the hone, the salvage, the exalt, the curse, the
+heirloom, the temper, a socket, a technique; the audit walked every one of them with the real pieces). The item law moved with them: ITEM_LAW_VERSION 5, the account service's acct137 (TECH1's LAW_SERVICE), so a
 finding a law of 4 made against one - a piece found on a site that shipped ahead of its judge - is asked again.
 
 **Why these two.** Each answers its fight. The gate is Mehrunes Dagon's: the Oath is an Akaviri Dragonguard's blade
@@ -280,7 +280,8 @@ baked from the gun's own committed art (section 5), and a DFU weapon's art is th
 it can be committed, and none can be eyed here without the data. So the Oath and the Sovereign are held, worn and
 listed in their make's own art; a gilding of the classic frames at load (the metal band, 0x70-0x7F, mapped to a gold
 ramp - `combat/fpsWeapon.js` `frameToColor32`'s dye seam) and of the Morrowind meshes is the next slice's, to be looked
-at against the player's own data.
+at against the player's own data. GILDED-GLOW (section 11) gives every Gilded weapon the rung's crimson outline in the
+hand; the gold on the frames stays the guns' alone.
 
 **The pins.** `test/systems/gilded2_world.test.js` (8) - the records, the mint, the drops, the floor's pictures, Dragonfire (a
 relay body's burn owed, a warded blow nothing), Undertow (the window, a heal for each foe one swing fells) and the look;
@@ -443,3 +444,67 @@ the account service acct180 with them (`server-account/src/service.js`).
 `test/systems/ketch/ketch_spoils.test.js` (the guns' and the Gilded's chances, the share's order), and PIN MOVED in
 `gilded2_world.test.js` (the five records; the drops one in two hundred and fifty). **The mutants:**
 `tools/mutants/ketch_gilded.json` and `tools/mutants/ketch_spoils.json`, every one dead.
+
+## 11. Enchantable, and crimson in the hand (GILDED-MAKER, GILDED-GLOW, 2026-10-29)
+
+Two reports in #feature-feedback. "Gilded weapons lacking power": *"Now that we can freely enchant rare items, feels like
+gilded items are missing something, I guess buffing them or making them enchantable would close this gap."* And "Gilded
+Weapons": *"I feel like gilded weapons should have a cool crimson glow to them to match the item picture; doesn't feel
+right to have a crazy rare item not have a cool effect on it."* The design was decided whole: the piece enchantable as a
+Rare is, its lines never raised, and a crimson glow of its own.
+
+**Found.** MAKER-RARE (`01-Overview/bugs/Field-Bugs-2026-10-26.md`) opened the item maker to an identified Rare, while a
+Gilded piece stayed shut out three times: by name (`itemMakerRefuses`), on the wire (`validGildedMarks` refused any row)
+and by the item law (`makerFindings`). So a Rare could carry the maker's rows and the rung above it could not, and the
+maker refused a Gilded piece in the Aetheric's words. In the hand the glow read the element, the Aura Armory's piece and
+DFU's enchantment, never the rung: three records glowed violet shock off their +10 shock line, and the Dragonfire Oath
+and the Sunken Sovereign glowed nothing.
+
+**The maker.** A Gilded piece is the item maker's, as a Rare is (`systems/enchanting.js:"export function gildedKeeps(item) {"`).
+Its record's lines stay as minted. The maker lays DFU rows beside them at the catalogue's cost, paid from the piece's own
+points - its make's, as any piece of that make has: 525 on the bow Hourlock, 2,100 on the Oath - and the player's gold,
+ten rows at most. Only the maker's own rows are lawful on it: the wire (`systems/gilded.js:"export function validGildedMarks(item) {"`)
+and the item law refuse any other row, a custom row and every mark NEVER_ON_GILDED names. The item law moved to 15 and
+the account service to acct220. With the ladder switched off the maker is DFU's, as for a Rare (AUDIT MAKER-RARE A2).
+The Aetheric keeps its refusal and its own line.
+
+**The name.** The maker never renames a Gilded piece: its name is its record's, as an artifact's is, and its codex row,
+card and lore read that record (`systems/enchanting.js:"export const makerKeepsName = (item) => item?.rarity === 'gilded';"`).
+The classic window says "A Gilded piece keeps its own name."; the Enhanced skin's Rename button is off.
+
+**The ceiling holds.** No line moves, and no rung or power is added. The rows are DFU's own magic: the same rows, on the
+same points, that a plain piece of the make takes (`05-Combat/Power-Ceiling.md` section 7).
+
+**Every other door.** An enchanted Gilded piece is still never salvaged, reforged, tempered or made an heirloom. It breaks
+and stays, never fading (PCAAO's fading reads `stampedTier`). A counter pays what it paid: the maker writes no price. A
+smith repairs it as DFU repairs any enchanted piece, under AllowMagicRepairs, as an enchanted Rare already is. Its card
+lists the maker's rows after its lines, then its power and lore. With the glow on, the classic hand swings the plain
+sheet under the crimson outline; with it off, a made DFU weapon swings its WEAPO1xx sheet as DFU does. A Gilded gun keeps
+its gold frames, enchanted or not (`combat/thunderlockArt.js` `thunderlockFrames`, `combat/gun/pistoletArt.js` `bledFrames`).
+
+**The glow.** Weapon glow law 8 (`05-Combat/Weapon-Glow.md`): a Gilded weapon wears the look `gilded`. Its ramp runs from
+a dark garnet through the rung's own crimson (`#ff3b4a`, RARITIES') to a hot pink-white core, where the Aura Armory's
+Brand runs coal to gold. It is a slow regal pulse - a 4 s swell, a 6 s crest walking round it, a glint - its reach under
+the Brand's. It wins over the element, the armory's piece and the arcane look, because it is the piece itself, as its
+card's colour is. It shows in the classic outline, the Morrowind arm in first and third person, and to peers as the word
+`gilded2` (relay world286). With the ladder switched off the card shows no rung, so the hand shows none.
+
+**Hosts, provinces, deploy.** No host changed: the item maker's window serves all four, and the glow rides
+`createWeaponRig` in `scenes/world.js`, `scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js`.
+Neither half reads a place, so every province is alike. Deploy the account service (acct220) and the relay (world286)
+before the site: before them an honest enchanted Gilded piece reads as a forgery, and a peer's Gilded weapon draws bare.
+
+**The pins.** `test/systems/gildedmaker.test.js` (4) and `test/systems/gildedglow.test.js` (4); the honest sweep's Gilded
+run (`test/honestItems.mjs` - every record and era through the maker, then back again), held to its makeup by INT1 (its
+producers 92). `tools/mutants/gildedmaker.json` (17) and `tools/mutants/gildedglow.json` (21), all dead. PIN MOVED:
+`gilded1_gilded.test.js` (the item maker takes it; a row no maker laid is still a forgery), `gilded2_world.test.js` (the
+item maker's), `weaponglow1.test.js` (the Hourlock and the Oath crimson; the looks and the words), INT1's producer count,
+the item law's version pins, LAW_SERVICE, and the account and relay version pins.
+
+**The mutants moved.** Re-aimed by content, each dead: GILDED1-the-item-maker (the refusal put back),
+WEAPON-GLOW1-every-word-on-the-wire, AETHERICMAKER-predicate-false, MAKER-KEPT-maker-law-refuses-era,
+MAKER-KEPT-later-sets-pass-maker-law, MAKER-RARE-no-rare-door, AUDIT-PROF10-J2-kept-any-enchanted,
+L10N3e-shown-ui-itemMakerWindow-414-Item, and the version records of the lists that pin the item law, the account service
+and the relay. MAKER-RARE-any-tier had survived on main since MASTER-ART refused every Legendary ahead of `rareKeeps`; a
+Gilded piece carrying a Rare flavour no maker laid kills it now (`gildedmaker.test.js`). Found and left, each surviving on
+main before this change: INT1-any-record and INT1-an-absent-field-judged (`tools/mutants/int1.json`).

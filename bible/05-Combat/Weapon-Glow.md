@@ -49,9 +49,9 @@ reference's enchantment glow as not ported.
 5. **Arcane is the Morrowind hand's own**: an enchanted weapon (`inventory.js` `isEnchanted`) with no element showing,
    at its one strength (`ARCANE_LEVEL`, 2 - the wire's `arcane2`). The classic hand's enchanted look is its sheet; a
    Morrowind model has no second sheet, so it is drawn. It is DFU's enchantment that answers, the ladder's switch or
-   not: a MAGIC.DEF blade glows with the ladder off, as its sheet is swung either way. An Aetheric or a Gilded piece
-   carries none - its powers are its record's - so with no element it swings bare in the Morrowind hand, as it swings
-   the plain sheet in the classic one (AUDIT WEAPON-GLOW LAW-2: named in Not done).
+   not: a MAGIC.DEF blade glows with the ladder off, as its sheet is swung either way. An Aetheric piece carries none -
+   its powers are its record's - so with no element it swings bare in the Morrowind hand, as it swings the plain sheet
+   in the classic one (AUDIT WEAPON-GLOW LAW-2: named in Not done). A Gilded piece wears law 8's crimson instead.
 6. **The switch**: the Features row Weapon glow (`weaponGlow`, on by default; `?weaponglow=off` the kill door), read
    every frame. The loot ladder's own switch answers first: off, no line is read, so no element shows.
 7. **The Aura Armory's weapon piece** (ARMORY, 2026-10-28; `04-Characters/Aura-Armory.md` section 8): a weapon in my
@@ -59,11 +59,17 @@ reference's enchantment glow as not ported.
    Breach as `brand`, the Eternal Edge as `edge`, at their one strength (`ARMORY_LEVEL`, 2). An element shows first,
    then the piece, then the arcane look. Both hands wear it when dual wielding. The classic hand draws it as an
    outline on the plain sheet, as an element is drawn, so an enchanted weapon's own sheet gives way to it.
+8. **A Gilded weapon wears the rung's crimson** (GILDED-GLOW, 2026-10-29; `06-Systems/Gilded.md` section 11): the look
+   `gilded` (`systems/weaponGlow.js:"export const GILDED_LEVEL = 2;"`, its one strength - the wire's `gilded2`), in
+   every hand of its owner. It is the piece itself, as its card's colour is, so it shows first: over its element (the
+   Hourlock's +10 shock), the armory's piece and the arcane look of rows the item maker laid. With the ladder switched
+   off the card shows no rung, so the hand shows none. The classic hand draws it on the plain sheet; a Gilded gun keeps
+   its gold frames under it.
 
 The frame asks every frame (the held weapon's, and the arm's), so the ask builds nothing: the element is summed into
 arrays kept for it, and every spec - `{ look, code, level, word, ramp, win }` - is built once, frozen whole, and
-handed back as it stands (`glowSpec`; AUDIT WEAPON-GLOW LAW-3/LAW-5). The twelve words are exactly the specs' (`glowWord`,
-`glowFromWord`) - law 7 added `brand2` and `edge2`.
+handed back as it stands (`glowSpec`; AUDIT WEAPON-GLOW LAW-3/LAW-5). The thirteen words are exactly the specs' (`glowWord`,
+`glowFromWord`) - law 7 added `brand2` and `edge2`, law 8 `gilded2`.
 
 ## The looks (`render/weaponGlowGlsl.js`)
 
@@ -79,6 +85,7 @@ shades, never a smooth blend), its REACH - how far the band stands off the edge 
 | arcane | round | 1.6 + 0.6 x level, a slow wave | an even halo that turns |
 | brand (law 7) | round | (1 + 0.7 x level) x (0.6 + 0.8 x a noise scrolled DOWN the weapon, a drip, or a gout falling down its column) | molten fire runs down the blade and drips off it; a spark caught in the band now and then |
 | edge (law 7) | round | 1 + 0.4 x level + 1.6 x a light running along the blade (or 0.6 x a slower one running back) | a white-hot line on the blade, a light sweeping its length; glints in the band |
+| gilded (law 8) | round | 1.2 + 0.4 x level + 0.6 x a 4 s swell + 0.6 x a crest walking round it every 6 s - at most 3.2, under the Brand's 3.4 | a slow regal pulse in dark garnet, the rung's crimson (`#ff3b4a`) and a pink-white core, its band a step hotter than the others' (crimson by the blade, the core at the swell); the rim breathes with it, a jewel's glint now and then; on a model, a sheen walking the blade |
 
 Inside the silhouette the weapon's own edge takes the element's light (the rim), so the outline reads as the weapon's
 and not a sticker behind it.
@@ -179,11 +186,11 @@ left blow). A third-person picture is padded for the larger of the two outlines.
 
 ## Online
 
-The affixes that decide a glow never travel, so the look says it: a weapon in a hand carries `glow`, one of twelve words (law 7's `brand2` and `edge2` since world278) -
+The affixes that decide a glow never travel, so the look says it: a weapon in a hand carries `glow`, one of thirteen words (law 7's `brand2` and `edge2` since world278, law 8's `gilded2` since world286) -
 `fire2`, `arcane2` (`weaponGlow.js` `glowWord`; `wire.js` `LOOK_GLOW_RE`, `lookGlowOk`, `validLookItem`) - written by
 `remotePlayers.js` `composeLook` on every weapon of a player's look in a hand (`LOOK_GLOW_SLOTS`, the equip table's
 RightHand and LeftHand) from the owner's card (law 4 holds: the owner's knowledge), whatever the owner's own switch
-says. A weapon in a hand's alone (AUDIT NET-4: a weapon anywhere else is in no hand; the pattern takes the twelve words a
+says. A weapon in a hand's alone (AUDIT NET-4: a weapon anywhere else is in no hand; the pattern takes the thirteen words a
 client can say and no other), a PLAYER's look's alone (a foe's kit is said on its record - `foeBodies.js` `encodeWorn`
 - which carries no glow, so a foe's weapon glowing on the host's screen alone would be one fight seen two ways), and
 OMITTED when none, `class`'s law: a plain weapon's item keeps the bytes it always had. A glow changing (a piece
@@ -195,7 +202,8 @@ wire's one law (`peerStubEntity`, `lookGlowOk`).
 **Relay world209** (`src/net/wire.js` RELAY_VERSION; its law row in `test/net/relayversion.test.js`; world208 on its branch, renumbered past main's INSTANCES world208 at the merge), NOT YET DEPLOYED. The
 order does not matter: an older relay builds its look items from the fields it knows and strips the word (a peer's
 weapon draws bare until the relay is deployed, and nothing else changes), and an older client never says it and drops
-it on receipt (AUDIT DOC-8).
+it on receipt (AUDIT DOC-8). **Relay world286** (GILDED-GLOW, NOT YET DEPLOYED) takes `gilded2` the same way: until it is
+deployed a peer's Gilded weapon draws bare.
 
 ## Departures, named
 
@@ -221,9 +229,9 @@ it on receipt (AUDIT DOC-8).
   own, not the `weapon` slot, and the reference's glow on it is not ported either.
 - **A classic-lane peer** (a billboard, Eye Of The Beholder's sprite) draws no glow; nor does a foe's weapon, nor the
   inventory's figure.
-- **A Legendary's elemental power** (Venom's poison, Dragonfire) shows nothing of its own (law 1), and an **Aetheric or
-  a Gilded weapon** with no element line is bare in the Morrowind hand - it carries no DFU enchantment for the arcane
-  look to say (law 5; AUDIT LAW-2).
+- **A Legendary's elemental power** (Venom's poison, Dragonfire) shows nothing of its own (law 1), and an **Aetheric
+  weapon** with no element line is bare in the Morrowind hand - it carries no DFU enchantment for the arcane look to say
+  (law 5; AUDIT LAW-2). A Gilded weapon is no longer bare: law 8.
 - **Enchanted armour and clothing.** The reference glows an enchanted part of any kind (npcanimation.cpp's
   `addPartGroup` / `insertBoundedPart` with `enchantedGlow`, `02-Formats/Morrowind-Rules.md`); the port glows the
   weapon alone (AUDIT DOC-15).
@@ -244,6 +252,11 @@ and hands the arm its spec in every one. A peer's body glows wherever `peerBodie
   the rings' depths at 16 bits, the third-person pad, the arm's own glow on the fixture rig, the shaders' edits, the
   clock's rates, the wire both ways, and a peer's body through `PeerBodies._arm`. Its mutants:
   `tools/mutants/weaponglow1.json`, fifty-eight, all dead.
+- `test/systems/gildedglow.test.js` (4 tests, GILDED-GLOW) - law 8 off every Gilded record and era as `mintGilded` mints
+  it, plain and enchanted by the item maker; the look's ramp, reach, window and four shader branches; the sprite field
+  through the real renderer, the classic sheet and the guns' gold frames; the Morrowind arm and pass; the word through
+  `composeLook`, the wire, the stand-in and a peer's body. Its mutants: `tools/mutants/gildedglow.json`, 21, all dead.
+  PIN MOVED in `weaponglow1.test.js`: the Hourlock and the Oath crimson, the looks' list, the thirteen words.
 - `tools/weaponGlowProbe.mjs` - the looks through the REAL renderer in headless Chromium (SwiftShader), on art that is
   not game data: a pixel sword drawn by the probe and a sword mesh built by it. Top row the sprite's outline (fire,
   frost, shock, and fire again on the same sword painted at three texels a pixel - its outline the first's size),

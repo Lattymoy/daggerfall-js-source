@@ -104,8 +104,9 @@
   {
     "name": "MAKER-KEPT-maker-law-refuses-era",
     "file": "src/systems/item/itemLaw.js",
-    "old": "  if (item.rarity === 'gilded' || (item.rarity === 'aetheric' && !MAKER_ERA_AETHERIC.has(item.aetheric))) return ['enchantments'];",
-    "new": "  if (item.rarity === 'gilded' || item.rarity === 'aetheric') return ['enchantments'];",
+    "old": "  if (item.rarity === 'aetheric' && !MAKER_ERA_AETHERIC.has(item.aetheric)) return ['enchantments'];",
+    "new": "  if (item.rarity === 'aetheric') return ['enchantments'];",
+    "note": "Re-aimed by content (GILDED-MAKER): the Gilded clause left the line (law 15); the mutant still refuses the era's rows.",
     "tests": [
       "test/systems/item/fb1016c_makerkept.test.js"
     ],
@@ -114,8 +115,9 @@
   {
     "name": "MAKER-KEPT-later-sets-pass-maker-law",
     "file": "src/systems/item/itemLaw.js",
-    "old": "  if (item.rarity === 'gilded' || (item.rarity === 'aetheric' && !MAKER_ERA_AETHERIC.has(item.aetheric))) return ['enchantments'];",
-    "new": "  if (item.rarity === 'gilded') return ['enchantments'];",
+    "old": "  if (item.rarity === 'aetheric' && !MAKER_ERA_AETHERIC.has(item.aetheric)) return ['enchantments'];",
+    "new": "  if (item.rarity === 'never') return ['enchantments'];",
+    "note": "Re-aimed by content (GILDED-MAKER): the Gilded clause left the line (law 15); the mutant still lets a later set's maker rows through.",
     "tests": [
       "test/systems/item/fb1016c_makerkept.test.js"
     ],

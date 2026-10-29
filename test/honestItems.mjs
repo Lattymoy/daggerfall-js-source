@@ -926,7 +926,7 @@ function makerSession(item, rolls, { souls, owner, picks = 6 }) {
     target = INV.splitStack(pack, item, 1) ?? item;
   }
   ENCH.applyEnchantments(target, [...powers, ...sideEffects], { owner });
-  if (rolls() < 0.3) target.name = `Honest ${target.name ?? 'Piece'}`.slice(0, 32);
+  if (rolls() < 0.3 && !ENCH.makerKeepsName?.(target)) target.name = `Honest ${target.name ?? 'Piece'}`.slice(0, 32);   // GILDED-MAKER: the window never renames a Gilded piece
   return target;
 }
 
@@ -1002,6 +1002,22 @@ function runItemMaker(run, seedsOf, S, crafted, minted) {
       const item = copyItem(made);
       owner.items.push(item);
       if (LCURSE.liftCurse(item, owner)?.ok) one(item);
+    }
+  });
+  // GILDED-MAKER: every Gilded record and era, as its door mints it, through the maker - and back again, the first visit's
+  // rows kept at the head and costed (enchanting.js gildedKeeps)
+  run('enchanting.applyEnchantments (a Gilded piece, every record and era, its record\'s lines kept)', (one) => {
+    let n = 0;
+    for (const r of [...GILD.GILDED_RECORDS, ...GILD.GILDED_ERAS]) {
+      for (const s of seedsOf(Math.max(2, Math.ceil(S / 2)))) {
+        const item = GILD.mintGilded(r);
+        if (!makerTakes(item)) continue;
+        const made = makerSession(item, seeded(hashOf(`gilded${n++}`) ^ s), { souls, owner: newPlayer(), picks: 6 });
+        if (!made) continue;
+        one(made);
+        const again = makerTakes(made) ? makerSession(copyItem(made), seeded(hashOf(`gilded-again${n}`) ^ s), { souls, owner: newPlayer(), picks: 4 }) : null;
+        if (again) one(again);
+      }
     }
   });
   run('enchanting.applyEnchantments (found Magic and common pieces the window lists)', (one) => {

@@ -2218,6 +2218,7 @@ eg.vote.respiteHow,"Ответить на передышку: R или /breach r
 eg.vote.respiteNone,"Передышку никто не просил."
 eg.witness.watching,"Вы наблюдаете за {who} - здоровье {pct}%."
 eg.witness.watchingName,"Вы наблюдаете за {who}."
+enchant.gildedName,"Позолоченный предмет сохраняет своё имя."
 enchant.soulGone,"Этой души больше нет в вашем рюкзаке."
 enemy.dwarvenDragon,"Двемерский дракон"
 ether.cross.passengers,"Пересечь Завесу с вами может только ваша группа. Переход ждёт, пока на борту не останется только ваша группа."

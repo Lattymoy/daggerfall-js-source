@@ -1364,8 +1364,9 @@
   {
     "name": "AUDIT-PROF10-J2-kept-any-enchanted",
     "file": "src/systems/enchanting.js",
-    "old": "  if (!jewel && !rareKeeps(item)) return null;\n  const out = [];",
+    "old": "  if (!jewel && !rareKeeps(item) && !gildedKeeps(item)) return null;\n  const out = [];",
     "new": "  const out = [];",
+    "note": "Re-aimed by content (GILDED-MAKER): the guard names the Gilded door too; the mutant still takes any enchanted item.",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]

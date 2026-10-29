@@ -70,7 +70,7 @@ import { SOUND } from '../../systems/soundClips.js';
 import {
   enchantDecision, applyEnchantments, enchantmentCostLabel, totalGoldCost,
   totalEnchantmentCost, itemEnchantmentPower, openPickerDecision, keptEnchantments, enchantmentListCost,
-  itemMakerRefuses,
+  itemMakerRefuses, makerKeepsName, gildedKeepsNameText,
 } from '../../systems/enchanting.js';
 import { enchantGold } from '../../net/alchemyLaw.js';   // PROF12: Enchanting's layer - the gold with the rank's share off
 import {
@@ -142,10 +142,10 @@ export const FORCED_TEXT_COLOR = [186 / 255, 207 / 255, 125 / 255, 1];
  *  carries (enchanting.js keptEnchantments - a Masterwork's Rare
  *  roll); MAKER-RARE (FIELD BUGS 2026-10-26): and an identified Rare,
  *  loot's or a Masterwork's, its ladder's rows riding free
- *  (enchanting.js rareKeeps); every other enchanted item is refused as
- *  DFU refuses it.
- *  AETHERIC-MAKER (FIELD BUGS 2026-10-03b): an Aetheric piece carries
- *  no DFU enchantment and is refused all the same (itemMakerRefuses). */
+ *  (enchanting.js rareKeeps); GILDED-MAKER: and a Gilded piece with
+ *  the maker's own rows (gildedKeeps); every other enchanted item is
+ *  refused as DFU refuses it. AETHERIC-MAKER (FIELD BUGS 2026-10-03b): an
+ *  Aetheric piece is refused all the same (itemMakerRefuses). */
 export function itemMakerFilter(item, tabPage, selected = null) {
   if (!item || item === selected) return false;
   if (!keptEnchantments(item) || item.group === 'UselessItems2') return false;
@@ -326,8 +326,10 @@ export class ItemMakerWindow {
   _openRename() {
     // no selection guard: DFU (:799-807) clicks and shows the box seeded
     // from the (then empty) label whatever is selected - AUDIT-CM struck
-    // the guard the first cut invented
+    // the guard the first cut invented; GILDED-MAKER: but a Gilded piece's
+    // name is its record's
     audio.playOneShot(SOUND.ButtonClick, 1);
+    if (makerKeepsName(this.selected)) { this._say(gildedKeepsNameText()); return; }
     this.renameBox = new InputMessageBoxWindow({
       label: enterNewNameLabel(),
       value: this.itemName,
@@ -439,7 +441,7 @@ export class ItemMakerWindow {
     // RenameItem (:761). L10N3e: the label still showing the item's own
     // name leaves its canonical name in place - only a name the player
     // gave it is written
-    if (this.itemName && this.itemName !== shownItemName(this.selected)) this.selected.name = this.itemName;
+    if (this.itemName && this.itemName !== shownItemName(this.selected) && !makerKeepsName(this.selected)) this.selected.name = this.itemName;
     audio.playOneShot(SOUND.MakeItem, 1);
     this._say(d.text);
     this.selected = null;

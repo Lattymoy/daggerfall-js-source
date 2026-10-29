@@ -83,8 +83,9 @@
   {
     "name": "GILDED1-the-item-maker",
     "file": "src/systems/enchanting.js",
-    "old": "export const itemMakerRefuses = (item) => isAetheric(item) || isGilded(item);",
-    "new": "export const itemMakerRefuses = (item) => isAetheric(item) || (false && isGilded(item));",
+    "old": "export const itemMakerRefuses = (item) => isAetheric(item);",
+    "new": "export const itemMakerRefuses = (item) => isAetheric(item) || item?.rarity === 'gilded';",
+    "note": "Re-aimed by content (GILDED-MAKER): the item maker takes a Gilded piece now, so the mutant is the refusal put back.",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]
