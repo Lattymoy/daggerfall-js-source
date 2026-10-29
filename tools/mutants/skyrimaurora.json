@@ -380,7 +380,7 @@
   {
     "name": "SKYRIM-AURORA-a-phase-unwrapped",
     "file": "src/render/auroraPass.js",
-    "old": "wrap = (r) => ((t * r) % TAU + TAU) % TAU;",
+    "old": "wrap = (r) => wrapAngle(t * r);",
     "new": "wrap = (r) => t * r;",
     "tests": [
       "test/world/skyrimaurora.test.js"

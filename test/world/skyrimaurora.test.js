@@ -18,6 +18,7 @@ import {
 import { waterUniforms, waterSurfaceFs, AURORA_SKY_UNIT, AURORA_DOME_UV_GLSL, AURORA_MIRROR } from '../../src/render/waterSurface.js';
 import { createAuroraHost, auroraDoor, withAuroraLight, AURORA_EASE_S, AURORA_DRAWN_FROM, AURORA_DOME_GAP_S } from '../../src/scenes/auroraHost.js';
 import { Renderer } from '../../src/render/renderer.js';
+import { wrapAngle } from '../../src/world/mat4.js';
 import { THEATRE_KEYS, theatreAt } from '../../src/world/worldWide/worldGrid.js';
 import { pictureToBay, setTamrielFit } from '../../src/world/tamriel/tamrielFrame.js';
 import { setTamrielTrace } from '../../src/world/tamriel/tamrielLand.js';
@@ -189,11 +190,11 @@ test('SKYRIM-AURORA THE PASS\'S DIALS: the tiers, the curtains, the clock, the c
   ]) for (const fs of [AURORA_FS, AURORA_DOME_FS]) assert.ok(fs.includes(line), line);
 });
 
-test('SKYRIM-AURORA THE CLOCK: the phases wrapped in double precision on the CPU - every wave and drift in [0, 2pi), each arc\'s rays on two whole rows of the noise\'s 256 and the share between them, seamless where the rows wrap (mutants: a phase unwrapped; the rows\' wrap lost)', () => {
+test('SKYRIM-AURORA THE CLOCK: the phases wrapped in double precision on the CPU - every wave and drift in (-pi, pi] (world/mat4.js wrapAngle), each arc\'s rays on two whole rows of the noise\'s 256 and the share between them, seamless where the rows wrap (mutants: a phase unwrapped; the rows\' wrap lost)', () => {
   for (const t of [0, 100, 3599.98, 3600, 1e9 + 0.5]) {
     const ph = auroraPhases(t);
-    AURORA_WAVES.forEach((w, i) => close(ph.wave[i], (((t * w[2]) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI), 1e-9));
-    for (const v of [...ph.wave, ...ph.drift]) assert.ok(v >= 0 && v < 2 * Math.PI, `${t}: ${v}`);
+    AURORA_WAVES.forEach((w, i) => close(ph.wave[i], wrapAngle(t * w[2]), 1e-9));
+    for (const v of [...ph.wave, ...ph.drift]) assert.ok(v > -Math.PI && v <= Math.PI, `${t}: ${v}`);
     for (let k = 0; k < 3; k++) {
       const row = (((t * 0.16 + k * 5.3) % 256) + 256) % 256, r0 = Math.floor(row), u = row - r0;
       assert.deepEqual([ph.lo[k], ph.hi[k]], [r0, (r0 + 1) % 256]);

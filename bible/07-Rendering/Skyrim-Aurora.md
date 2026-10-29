@@ -159,10 +159,11 @@ dials, the traced map, the producer's own door and the mutants.
 ## AUDIT SKYRIM-AURORA 2: the water and the light (2026-10-29)
 
 The owner: "Audit this". Three cold lanes read the frozen 69915ffbdd. Fixed: the dome map's unit 19 was the snow's far
-map's, so where the Snowfall surface drew, the water mirrored the snow's white; the water kept old curtains after a gap and under the
-brass air; the light ignored the veil and shone with no pass; the view out took the night's light into the day; the sun
-baby's water mirrored the curtains; the zenith's atan(0, 0); a pass pin that no longer held the march's restore; and the
-records' cost, bug and haze claims. Pinned by the renderer on a recording GL, the host's frames and the mutants.
+map's, so where the Snowfall surface drew, the water mirrored the snow's white; the water kept old curtains after a gap
+and under the brass air; the light ignored the veil and shone with no pass; the view out took the night's light into the
+day; the sun baby's water mirrored the curtains; the zenith's atan(0, 0); the phases' own angle wrap (ONCRASH1 C2:
+world/mat4.js wrapAngle now); a pass pin that no longer held the march's restore; and the records' cost, bug and haze
+claims. Pinned by the renderer on a recording GL, the host's frames and the mutants.
 
 ## Not carried
 

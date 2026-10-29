@@ -7,6 +7,7 @@
 // marched by direction too, for the water to reflect. Page-lifetime, as the sky's other passes.
 import { buildProgram } from './glProgram.js';
 import { createRenderTarget, withTarget } from './renderTarget.js';
+import { wrapAngle } from '../world/mat4.js';
 
 /** By the clouds' quality tier (render/volumetricClouds.js QUALITY): the march's steps, and its map's share of the world
  *  image's width and height. */
@@ -174,7 +175,7 @@ export const AURORA_DOME = Object.freeze({ width: 256, height: 64, steps: 6, eve
  *  never jump: the three waves' and [the swell's, the hem's] in radians, and each arc's rays' noise rows - the two
  *  whole rows it lies between, wrapped on the noise's period, and the smoothed share of the second. */
 export function auroraPhases(seconds) {
-  const t = Number.isFinite(seconds) ? seconds : 0, wrap = (r) => ((t * r) % TAU + TAU) % TAU;
+  const t = Number.isFinite(seconds) ? seconds : 0, wrap = (r) => wrapAngle(t * r);
   const lo = [], hi = [], share = [];
   for (let k = 0; k < 3; k++) {
     const row = ((t * AURORA_RATES.rays + k * AURORA_ARC_ROW) % AURORA_RAY_ROWS + AURORA_RAY_ROWS) % AURORA_RAY_ROWS;
