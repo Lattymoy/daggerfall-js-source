@@ -12,7 +12,7 @@ import {
   COMPANY_CITY_ADVENTURERS, COMPANY_DIVE_CHANCE, ROLE_RUNS, ROLE_ORDER, HOLY_CHANCE, COMPANY_WORDS, COMPANY_BEASTS,
 } from '../../../src/systems/livingWorld/companies.js';
 import {
-  ownTrip, townTrips, formCaravans, leaderOf, placeCycle, cycleOf, awayOf, holyTrip, CALENDAR_MPM, DIVE_CHANCE, HOLY_IN_H, WALK_FROM_H, TRIP_PACE, NATIVE_PER_M,
+  ownTrip, townTrips, formCaravans, leaderOf, placeCycle, cycleOf, awayOf, holyTrip, CALENDAR_MPM, DIVE_CHANCE, WIDE_DIVE_CHANCE, HOLY_IN_H, WALK_FROM_H, TRIP_PACE, NATIVE_PER_M,
   TRIP_CHANCE, whenWalked,
 } from '../../../src/systems/livingWorld/trips.js';
 import { travellerRoster } from '../../../src/systems/livingWorld/census.js';
@@ -55,24 +55,36 @@ test('LW13 the deal: a town\'s adventurers in slot order, each company COMPANY_S
   for (let id = 1; id < 400; id++) {
     const blocks = 9 + (id % 60);
     const roster = travellerRoster(town(id, 0, 0, blocks));
-    const advs = roster.filter((r) => r.job === 'adventurer').sort((a, b) => a.slot - b.slot);
+    const all = roster.filter((r) => r.job === 'adventurer').sort((a, b) => a.slot - b.slot);
     const cs = companiesOf(roster);
     assert.equal(companiesOf(roster), cs, 'dealt once a roster');
-    const dealt = cs.flatMap((c) => c.places);
-    assert.equal(new Set(dealt.map((p) => p.slot)).size, dealt.length, 'each place in one company');
-    assert.ok(advs.length - dealt.length <= 1, 'one left over at most');
-    if (advs.length - dealt.length === 1) { lone++; assert.equal(companyOfPlace(advs.find((a) => !dealt.includes(a)), roster), null); }
-    if (advs.length < 2) assert.equal(cs.length, 0, 'a lone adventurer keeps none');
-    const max = advs.length >= COMPANY_CITY_ADVENTURERS ? COMPANY_CITY_MAX : COMPANY_SIZE[1];
-    cs.forEach((c, i) => {
-      assert.equal(c.key, `C${id}.${i}`);
-      assert.ok(c.places.length >= 2 && c.places.length <= max, `${c.key}: ${c.places.length}`);
-      if (c.places.length === 5) cities++;
-      // its first the lowest slot left; each next of a run it lacks where one was left
-      const before = advs.filter((a) => !cs.slice(0, i).some((x) => x.places.includes(a)));
-      assert.equal(c.places[0], before[0]);
-      if (new Set(c.places.map((p) => roleOf(p.cls))).size > 1) mixed++;
-    });
+    const dealtAll = cs.flatMap((c) => c.places);
+    assert.equal(new Set(dealtAll.map((p) => p.slot)).size, dealtAll.length, 'each place in one company');
+    // LW-WIDE: PIN MOVED - each rank dealt by itself: the first three's as they always were (the roster read without its
+    // fourth rank deals the same companies), then the divers' (`wide`) among themselves
+    const first = companiesOf(roster.slice(0, roster.wideFrom));
+    assert.deepEqual(cs.filter((c) => !c.wide).map((c) => [c.key, c.name, c.places.map((p) => p.slot)]), first.map((c) => [c.key, c.name, c.places.map((p) => p.slot)]), 'today\'s companies as they were');
+    let ci = 0;
+    for (const [r, advs] of [all.filter((a) => a.slot < roster.wideFrom), all.filter((a) => a.slot >= roster.wideFrom)].entries()) {
+      const mine = cs.filter((c) => !!c.wide === (r === 1));
+      assert.deepEqual(mine, cs.slice(ci, ci + mine.length), 'the first ranks\' first, the divers\' after');
+      const dealt = mine.flatMap((c) => c.places);
+      assert.ok(dealt.every((p) => advs.includes(p)), 'a company of one rank');
+      assert.ok(advs.length - dealt.length <= 1, 'one left over at most');
+      if (advs.length - dealt.length === 1) { lone++; assert.equal(companyOfPlace(advs.find((a) => !dealt.includes(a)), roster), null); }
+      if (advs.length < 2) assert.equal(mine.length, 0, 'a lone adventurer keeps none');
+      const max = advs.length >= COMPANY_CITY_ADVENTURERS ? COMPANY_CITY_MAX : COMPANY_SIZE[1];
+      mine.forEach((c, j) => {
+        assert.equal(c.key, `C${id}.${ci + j}`);
+        assert.ok(c.places.length >= 2 && c.places.length <= max, `${c.key}: ${c.places.length}`);
+        if (c.places.length === 5) cities++;
+        // its first the lowest slot left; each next of a run it lacks where one was left
+        const before = advs.filter((a) => !mine.slice(0, j).some((x) => x.places.includes(a)));
+        assert.equal(c.places[0], before[0]);
+        if (new Set(c.places.map((p) => roleOf(p.cls))).size > 1) mixed++;
+      });
+      ci += mine.length;
+    }
     assert.ok(roster.every((r) => /^L\d+\.t\d+$/.test(r.id)), 'the census\'s ids');
   }
   assert.ok(cities > 0 && mixed > 50 && lone > 10, `${cities} ${mixed} ${lone}`);
@@ -148,20 +160,22 @@ test('LW13 a fated member sends the company out, whatever its first\'s chance sa
   assert.ok(forced > 10, `${forced} cycles sent out by a fated member`);
   // the dive: a company's first by its own dice at COMPANY_DIVE_CHANCE
   const deep = synthMap({ dives: true });
-  let dives = 0, cand = 0, between = 0;
+  let dives = 0, cand = 0, between = 0, wideBetween = 0;
   for (const t of deep.towns) {
     const r = deep.world.rosterOf(t);
     for (const co of companiesOf(r)) {
+      const chance = co.wide ? WIDE_DIVE_CHANCE : COMPANY_DIVE_CHANCE;   // LW-WIDE: PIN MOVED - the divers' companies the likelier
       for (let k = 300; k < 340; k++) {
         const tr = ownTrip(co.places[0], t, k, deep.world, O());
         if (!tr) continue;
         const roll = lwRng(co.places[0].town, co.places[0].slot, k, 0x64697665)();
-        if (tr.dive) { dives++; assert.ok(roll < COMPANY_DIVE_CHANCE); if (roll >= DIVE_CHANCE) between++; }
-        if (roll < COMPANY_DIVE_CHANCE && roll >= DIVE_CHANCE) cand++;
+        if (tr.dive) { dives++; assert.ok(roll < chance); if (roll >= DIVE_CHANCE && !co.wide) between++; if (roll >= COMPANY_DIVE_CHANCE && co.wide) wideBetween++; }
+        if (roll < COMPANY_DIVE_CHANCE && roll >= DIVE_CHANCE && !co.wide) cand++;
       }
     }
   }
   assert.ok(dives > 20 && cand > 5 && between > 3, `${dives} ${cand} ${between}: a company dives where a lone adventurer would not`);
+  assert.ok(wideBetween > 3, `${wideBetween}: the divers dive where another company would not`);
 });
 
 /** A town's roster of one merchant, a company of three and two pilgrims; their trips as given. */

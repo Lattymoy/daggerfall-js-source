@@ -164,8 +164,8 @@
   {
     "name": "LW13-dive",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "    if (drng() < (company ? COMPANY_DIVE_CHANCE : DIVE_CHANCE)) {",
-    "new": "    if (drng() < DIVE_CHANCE) {",
+    "old": ": company ? COMPANY_DIVE_CHANCE : DIVE_CHANCE)) {",
+    "new": ": DIVE_CHANCE)) {",
     "tests": [
       "test/systems/livingWorld/lw13_companies.test.js"
     ]

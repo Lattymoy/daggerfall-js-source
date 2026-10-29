@@ -86,7 +86,7 @@ function host({ online = false, id = 'peer-me', geom = 'fake', at = [600, 560], 
       iliacClaims: { add: () => {} },
     },
     say: (s) => said.push(s), cam: { yaw: 0, pitch: 0, pos: null },
-    getNameBankOfRegion: () => 0, residentName: (seed, bank, g) => `R${seed}:${g}`,
+    getNameBankOfRegion: () => 0, seededPersonName: (seed, bank, g) => `R${seed}:${g}`,   // REGION-NAMES: PIN MOVED - the regulars named through personNames.js
     stakesFor: sess.stakesFor, buyInRange: sess.buyInRange, goldAmount: court.goldAmount,
     holdCursor, renderer: {},
     createCardTableDraw: () => ({ draw: (x) => drawn.push(x), destroy() {} }),

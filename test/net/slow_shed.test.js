@@ -113,7 +113,8 @@ test('SLOW-SHED the service hears its own wait a trip at a time - a batch is one
     const base = svc.env.DB;
     svc.env.DB = Object.create(base);
     svc.env.DB.prepare = (sql) => { asked++; return base.prepare(sql); };
-    const res = await svc.fetch('https://accounts.invalid' + TOWN, { method: 'POST', headers: { authorization: `Bearer ${g.secret}`, 'content-type': 'application/json' }, body: JSON.stringify({ mapId: 7 }) });
+    // PIN MOVED (SHED-REPLICA): a busy read no replica may serve - a replica read the shed would take asks any instance
+    const res = await svc.fetch('https://accounts.invalid/v1/homes/layouts', { method: 'POST', headers: { authorization: `Bearer ${g.secret}`, 'content-type': 'application/json' }, body: JSON.stringify({}) });
     assert.equal(res.status, 503);
     assert.equal((await res.json()).error, 'server');
     assert.equal(res.headers.get('retry-after'), String(BUSY_RETRY_AFTER_S), 'with its Retry-After (AUDIT LEAN-READS C7)');

@@ -160,7 +160,7 @@ function host(relay, id, name, { seats = 4, pos = [0, 0, 0] } = {}) {
     player: { pos, eyeAt: () => [0, 1.6, 0] },
     host: { realmAct: null, relock: () => said.push('<relock>'), seatedPeers: peers, cardOnline: { ok: () => true, send: (w) => { const g = me.gate ? me.gate(w) : true; return g === 'in flight' ? true : g && relay.word(id, w); }, id: () => id, welcomes: () => me.welcomes ?? 0 } },
     say: (s) => said.push(s), cam: { yaw: 0, pitch: 0, pos: null },
-    getNameBankOfRegion: () => 0, residentName: (seed, bank, g) => `R${seed}:${g}`,
+    getNameBankOfRegion: () => 0, seededPersonName: (seed, bank, g) => `R${seed}:${g}`,   // REGION-NAMES: PIN MOVED - the regulars named through personNames.js
     stakesFor: sess.stakesFor, buyInRange: sess.buyInRange, goldAmount: court.goldAmount, holdCursor, renderer: {},
     createCardTableDraw: () => { draws.made++; return { draw() {}, destroy() { draws.destroyed++; } }; },
     createCardTableHud: (p) => hudm.createCardTableHud({ ...p, doc }), cardHudModel: hudm.cardHudModel, eventLine: hudm.eventLine,

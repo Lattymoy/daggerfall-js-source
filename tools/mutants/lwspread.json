@@ -119,8 +119,8 @@
   {
     "name": "LW-SPREAD-corners-unread",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  const social = byNear([...places.social, ...(places.corners ?? [])]);",
-    "new": "  const social = byNear(places.social);",
+    "old": "social: [...places.social, ...(places.corners ?? [])], market:",
+    "new": "social: [...places.social], market:",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "LW-SPREAD-market-unspread",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  const market = byNear([...places.market, ...(places.squares ?? [])]);",
-    "new": "  const market = byNear(places.market);",
+    "old": "market: [...places.market, ...(places.squares ?? [])] };",
+    "new": "market: [...places.market] };",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
     ]
