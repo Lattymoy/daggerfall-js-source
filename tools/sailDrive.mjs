@@ -2,7 +2,7 @@
 // AUDIT HELM-SIGHT (bible/01-Overview/audits/Audit-Helm-Sight.md): a seeded random drive of the real Come Sail Away
 // runtime (test/csaScene.mjs) - every state with her sails set and the player outdoors is sailed 12 s, and her sails must
 // still drive her. FIELD BUGS 2026-10-27 found HELM-SIGHT with it; this is that drive, committed so its counts can be run again.
-// FIELD BUGS 2026-10-29b: a wind of nought outdoors is judged too (it was skipped, the very stop SAIL-WIND and WIND-FIRST
+// FIELD BUGS 2026-10-29d: a wind of nought outdoors is judged too (it was skipped, the very stop SAIL-WIND and WIND-FIRST
 // fixed), a boat may lose her pixel (NO-PIXEL), and a step that throws is logged and the drive goes on, as world.js csaCall.
 //   node tools/sailDrive.mjs [--seed N] [--runs N] [--classic]
 // Exit 1 when a run stops dead under the Responsive helm. The Classic helm stops by design (the record says where), so

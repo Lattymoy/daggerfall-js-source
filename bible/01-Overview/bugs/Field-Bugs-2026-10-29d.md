@@ -1,10 +1,10 @@
-# FIELD BUGS 2026-10-29b - "can't sail no speed with the wind"
+# FIELD BUGS 2026-10-29d - "can't sail no speed with the wind"
 
 The Discord, ItMustBeMonday, handed over by the owner as a screenshot: "Seeing a lot of issues with sailing at the
 moment" - "Basically someone in Iliac bay, can't sail no speed With the wind. Another person next to them can. Tried
 different ships and all sorts". The owner, on the first reading: "People are having trouble sailing, period." Read on
-main's `5a77fc2f2` with the freeware's data (`tools/fetch-data.sh`). The pins are `fb1029b_sailing.test.js`, the
-mutants `tools/mutants/fb1029b_sailing.json` (12, all dead).
+main's `5a77fc2f2` with the freeware's data (`tools/fetch-data.sh`). The pins are `fb1029d_sailing.test.js`, the
+mutants `tools/mutants/fb1029d_sailing.json` (12, all dead).
 
 | | Report | What it was | Done |
 |---|---|---|---|
@@ -81,8 +81,8 @@ the door's pin stands in Cyrodiil beside the Bay's.
 
 ## Pins
 
-`test/systems/comeSailAway/fb1029b_sailing.test.js` (7): the report's door with a boat of no pixel, a Small Ship
+`test/systems/comeSailAway/fb1029d_sailing.test.js` (7): the report's door with a boat of no pixel, a Small Ship
 sailing after it, and the same at the Imperial City's pixel past the Bay; a door whose boats throw still laying its wind; a load of a record with no pixel, and a load whose
 boats throw; the Open Wagon's load ashore and aboard through the host's own line, run as the game runs it; Horse Cart
 and Cargo's keeping (beside its owner, parked at a door, stabled); the helm's line. `csa_placing.test.js`'s C# throw re-aimed: a
-boat with no pixel takes hers. `tools/mutants/fb1029b_sailing.json` (12, all dead).
+boat with no pixel takes hers. `tools/mutants/fb1029d_sailing.json` (12, all dead).

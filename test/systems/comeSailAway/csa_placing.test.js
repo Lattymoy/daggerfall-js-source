@@ -462,7 +462,7 @@ test('CSA-C: UpdateBoatVisibility - inside, only a boat placed inside this pixel
   assert.equal(kept.GameObject.activeSelf, false);
   assert.deepEqual(kept.NodeTileMapIndices, [5, 5, 5, 5, 5], 'hidden, and its nodes read all the same');
   s.rt.UpdateBoatVisibilityOf(null);
-  // NO-PIXEL (FIELD BUGS 2026-10-29b, a departure): a boat with no pixel outside takes the pixel she stands on - the C#'s
+  // NO-PIXEL (FIELD BUGS 2026-10-29d, a departure): a boat with no pixel outside takes the pixel she stands on - the C#'s
   // MapPixel.X threw, and a door's OnTransition stopped at her
   far.MapPixel = null;
   far.GameObject.position = [3 * 819.2 + 5, 34, 10];

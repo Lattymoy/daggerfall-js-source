@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-29b (bible/01-Overview/bugs/Field-Bugs-2026-10-29b.md; the Discord, ItMustBeMonday: "someone in Iliac
+// FIELD BUGS 2026-10-29d (bible/01-Overview/bugs/Field-Bugs-2026-10-29d.md; the Discord, ItMustBeMonday: "someone in Iliac
 // bay, can't sail no speed with the wind. Another person next to them can. Tried different ships and all sorts"). Two
 // laws stopped every ship one player took, on the real runtime (test/csaScene.mjs, the real SpawnBoat and Animators):
 // WIND-FIRST and NO-PIXEL - a boat with no map pixel threw in the boats' visibility, before a door's OnTransition laid the
