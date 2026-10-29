@@ -292,7 +292,7 @@ import { createHitEffects, bloodCentre } from './hitEffects.js';
 import { orbArchiveFor, ORB_RECORD, noteOrbColour, ORB_SCALE } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle   // FIELD-GUN17: ...and its colour   // FIELD-GUN18: ...and how big it is drawn
 import { bloodHit } from '../combat/blood/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { createDroppedTorches } from './droppedTorches.js';
-import { createDelveHost } from './delve/delveHost.js';   // DELVE II (DLV2, bible/03-World/Delve-II.md): the dungeon's encounters, in a module of their own
+import { createDelveHost } from './delve/delveHost.js'; import { carryDelve } from './delve/delveHold.js';   // DELVE II (DLV2, bible/03-World/Delve-II.md): the dungeon's encounters, in a module of their own; a replacing body takes its place in one
 import { createCamps, FIRE_LIGHT_UP } from './camps.js';   // REST3: a placed fire's light stands where a camp's does   // SURV3: a fire on the dungeon floor (no tent below - the camp law says so)
 import { campWire, validCampRecord, FIRE_LIGHT_RANGE } from '../systems/survival/camp.js';   // SURV3: the room's memory carries the camps as the wire says them   // HT1: Handheld Torches' dropped lights in the dungeon   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemy/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
@@ -1767,6 +1767,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (old._encId != null) { rec._encId = old._encId; _sharedById.set(rec._encId, rec); }
     if (old._loose) rec._loose = true;
     if (old._ownSeq != null) rec._ownSeq = old._ownSeq;
+    carryDelve(old, rec);   // DELVE II: and its place in a dungeon's encounter
   }
   /** AUDIT PRE-MERGE 0928 O6: a foe another client steps here - the room's while another holds the seat, a party
    *  member's own on the own lane: the frame's puppet test, and the one the host asks before it moves a foe itself. */
@@ -3703,6 +3704,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       nf.entity.wabbajackActive = true;   // once per creature (WabbajackEffect:68)
       nf.entity.health -= missing;        // carry over damage (:94)
       renownFoeCarry(f, nf);              // AUDIT RENOWN1 GAME-10: the Wabbajack's change is the same fight - my blows on it count
+      carryDelve(f, nf);                  // DELVE II: and the same encounter - a captain changed is still the captain
     }).catch(() => {});
   }
   // FS1 (wave D): the mount itself. `enchantCtx: false` is the
@@ -9629,8 +9631,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // no longer exist. FT1: the size BUILT, not the raw setting - the
         // departure and its reason are on the export.
         smallerDungeonsState: smallerDungeonsStamp(dfLocation),
-        world: { ...collectWorld(), outerCamps: opts.outerCampsSave?.() ?? null },   // AUDIT REST II H6: and my camps outside, the world host's
-        delve: delve.snapshot(),   // DELVE II: the won sites' vaults - a running attempt is never saved; the save's own, beside the world record
+        world: { ...collectWorld(), outerCamps: opts.outerCampsSave?.() ?? null, delve: delve.snapshot() },   // AUDIT REST II H6: and my camps outside, the world host's; DELVE II: the won sites' vaults, in the dungeon's own record (the envelope keeps only what it names)
         // AUDIT HCC H3: DFU's per-mod save data rides a dungeon save too - Horse Cart and Cargo's record (the horse,
         // its name, the parked wagon, the entrance it waits at) from the world host that runs the mod
         // WA1: DFU's per-mod slot - HCC's record through its own seam (AUDIT HCC H3), every mod after it through the
@@ -9744,7 +9745,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const otherLayout = extras.locationKey === _locationKey && needsStartWarp(extras.smallerDungeonsState, dfLocation);
       const settled = extras.world && extras.locationKey === _locationKey && !otherLayout ? applyWorld(extras.world) : null;   // AUDIT OH-F B1: the rebuilds, handed back
       if (!settled && extras.world && !otherLayout) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends in the STANDALONE scene alone - a world-hosted dungeon hands such a save up before this (quickLoad, CASTLE1)
-      if (extras.locationKey === _locationKey && !otherLayout) delve.restore(extras.delve);   // DELVE II: the save's won sites, under its own plan alone - a save from before them, none
+      if (extras.locationKey === _locationKey && !otherLayout) delve.restore(extras.world?.delve);   // DELVE II: the save's won sites, under its own plan alone - a save from before them, none
       // A1: restorePlayer replaced the automap store, so the live
       // record reference is stale. Re-fetch on the LOAD arm
       // (initFromLoadingSave, Automap.cs:2492-2493): a bare
@@ -10601,6 +10602,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (kind === 'corpse') { const f = foes[i]; return lootableBody(f) ? (f.entity?.items ?? []) : null; }   // AUDIT 68 S19-removed-foe-lootable
       if (kind === 'droppedLoot') return droppedLoot.contents?.(key) ?? null;
       if (kind === 'spoil') return opts.spoilContents?.(key) ?? null;   // WB9f: a piece of the Burning Court's spoils (the outer host's pool)
+      if (kind === 'delve') return delve.contents(key);   // DELVE II: a won vault's list (a sealed one names, never lists)
       return null;
     },
     /** U26: PlayerActivate's loot handling, verbatim in shape - the

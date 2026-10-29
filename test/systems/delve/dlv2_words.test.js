@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { DELVE_NEAR_TEXT, DELVE_HOLD_TEXT, DELVE_LITANY_TEXT, DELVE_VAULT_TEXT, DELVE_SAY_S, DELVE_SAY_LONG_S } from '../../../src/systems/delve/delveWords.js';
-import { rollVault, vaultEmpty } from '../../../src/systems/delve/delveVault.js';
+import { rollVault } from '../../../src/systems/delve/delveVault.js';
 
 const rd = (p) => readFileSync(new URL('../../../' + p, import.meta.url), 'utf8');
 const lines = () => [
@@ -18,7 +18,7 @@ test('DLV2 THE WORDS: each its own key in the text core, said short - no line pa
   const src = rd('src/systems/delve/delveWords.js');
   const keys = [...src.matchAll(/t\('(delve\.[a-zA-Z.]+)'/g)].map((m) => m[1]);
   assert.equal(keys.length, new Set(keys).size, 'one key a line');
-  assert.equal(keys.length, 20);
+  assert.equal(keys.length, 19);
   for (const k of keys) assert.match(rd('locales/en/Port_Strings.csv'), new RegExp(`^${k.replace(/\./g, '\\.')},`, 'm'), `${k} is in the English table`);
   for (const s of lines()) {
     assert.ok(typeof s === 'string' && s.length > 0);
@@ -46,5 +46,4 @@ test('DLV2 THE VAULT\'S ROLL: the pile\'s own roll; empty, rolled again once; em
   assert.equal(gold[0].stackCount, 7, 'the level\'s gold');
   assert.equal(rollVault(() => null, 0)[0].stackCount, 1, 'at least 1');
   assert.equal(rollVault(() => [], 3.7)[0].stackCount, 3);
-  assert.equal(vaultEmpty([]), true); assert.equal(vaultEmpty(null), true); assert.equal(vaultEmpty([{}]), false);
 });

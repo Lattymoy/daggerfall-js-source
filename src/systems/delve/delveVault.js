@@ -13,6 +13,3 @@ export function rollVault(roll, level) {
   }
   return [goldStack(Math.max(1, Math.floor(Number.isFinite(level) ? level : 1)))];
 }
-
-/** Whether a vault holds nothing more to take. */
-export const vaultEmpty = (items) => !Array.isArray(items) || items.length === 0;

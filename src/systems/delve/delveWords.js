@@ -37,7 +37,6 @@ export const DELVE_VAULT_TEXT = Object.freeze({
   sealedHold: () => t('delve.vault.sealedHold', 'Hold the ward to open it'),
   sealedLitany: () => t('delve.vault.sealedLitany', 'Light the plates to open it'),
   open: () => t('delve.vault.open', 'Vault'),
-  empty: () => t('delve.vault.empty', 'Empty'),
   locked: () => t('delve.vault.locked', 'The vault is sealed.'),
 });
 

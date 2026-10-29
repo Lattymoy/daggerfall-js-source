@@ -129,8 +129,8 @@
   {
     "name": "AUDITREST2-H6-the-composer-drops-them",
     "file": "src/scenes/dungeonContext.js",
-    "old": "world: { ...collectWorld(), outerCamps: opts.outerCampsSave?.() ?? null },",
-    "new": "world: collectWorld(),",
+    "old": "world: { ...collectWorld(), outerCamps: opts.outerCampsSave?.() ?? null, delve: delve.snapshot() },",
+    "new": "world: { ...collectWorld(), delve: delve.snapshot() },",
     "tests": [
       "test/systems/auditrest2_camps.test.js"
     ]

@@ -12,9 +12,11 @@ export const PLATE_LOOK = Object.freeze({ dark: 0, shown: 1, lit: 2, wrong: 3 })
 export const PLATE_WRONG_MS = 700;
 
 /** Each plate's look, off the ledger (null: none started) at the encounter clock `ec`; `wrong` the last wrong plate and
- *  when, or null. Pure. @param {any} led @param {number} k @param {{ j: number, at: number }|null} wrong */
-export function plateLooks(led, k, wrong = null) {
-  const out = new Array(k).fill(PLATE_LOOK.dark);
+ *  when, or null; filled into `out` (kept by the caller). Pure but for `out`. @param {any} led @param {number} k
+ *  @param {{ j: number, at: number }|null} wrong @param {number[]} [out] */
+export function plateLooks(led, k, wrong = null, out = []) {
+  out.length = k;
+  out.fill(PLATE_LOOK.dark);
   if (!led) return out;
   if (led.p === DP.won) return out.fill(PLATE_LOOK.lit);
   if (led.p === DP.show) {

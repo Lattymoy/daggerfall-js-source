@@ -38,6 +38,17 @@ for (let k = 0; k < 12; k++) {
   await page.keyboard.press('Space');
   await frames(3);
 }
+// a window the fight opens (a level gained) closes as a player would close it, said in the log
+const closeWindows = async () => {
+  for (let k = 0; k < 6; k++) {
+    const ov = JSON.parse(await page.evaluate(() => window.__overlay?.() ?? 'null') ?? 'null');
+    if (!ov) return;
+    console.log(`  a window: ${ov.kind ?? JSON.stringify(ov).slice(0, 80)}`);
+    await page.waitForTimeout(700);
+    await page.keyboard.press('Escape');
+    await frames(3);
+  }
+};
 const say = () => page.evaluate(async () => (await import('/src/ui/midScreenText.js')).midScreenText.text);
 const state = () => page.evaluate(() => window.__delve()?.state() ?? null);
 const heal = () => page.evaluate(() => { const p = window.__playerEntity; if (p) p.health = p.maxHealth; });
@@ -75,6 +86,7 @@ for (const s of sites) {
     let shotWave = false;
     while (!(await state())[s.i].won && Date.now() - t0 < 1_800_000) {
       await heal();
+      await closeWindows();
       const killed = await page.evaluate((i) => {
         let k = 0;
         for (const [j, f] of window.__delve() ? Object.entries(JSON.parse(window.__foes())) : []) {

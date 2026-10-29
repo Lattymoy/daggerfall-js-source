@@ -61,7 +61,7 @@ test('SENSE1: a stored tier - off and secrets are themselves, anything else is O
 });
 
 test('SENSE1: a target\'s kind, by its key and the plaque\'s word', () => {
-  for (const k of ['loot:0', 'corpse:3', 'search:2', 'droppedLoot:1:4', 'srch:0']) assert.equal(senseKind(k, 'x'), 'find', k);
+  for (const k of ['loot:0', 'corpse:3', 'search:2', 'droppedLoot:1:4', 'srch:0', 'delve:vault:0']) assert.equal(senseKind(k, 'x'), 'find', k);   // DELVE II: and an encounter's vault
   assert.equal(senseKind('exit:0', 'Exit'), 'door');
   assert.equal(senseKind('act:1:44', 'Door'), 'door');
   assert.equal(senseKind('door:2', 'Door'), 'door');
