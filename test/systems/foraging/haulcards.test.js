@@ -47,6 +47,7 @@ test('HAUL-CARDS the law: a material\'s tier wears the loot\'s colours - 1 and 2
   assert.equal(rankProgress((xpForRank(34) + xpForRank(35)) / 2), 0.5);
   assert.equal(rankProgress(xpForRank(100) + 5000), 1, 'the top rank');
   assert.ok(HAUL_HOLD_MS > 2500 && LODE_HOLD_MS > HAUL_HOLD_MS);
+  assert.deepEqual([HAUL_HOLD_MS, LODE_HOLD_MS], [7200, 9000], 'GATHER-HOLD: four seconds longer than 3.2 s / 5 s');
   assert.deepEqual([HAUL_ICON_BOX, LODE_ICON_BOX], [32, 38]);
   assert.equal(haulCappedText(), 'Daily silver cap reached');   // SERPENT-SET: the serpents strike under the same cap; PIN MOVED (EG-E1): and the Spire's Redoubts; PIN MOVED (STAR7): and the held stars; PIN MOVED (VOICE2, in PLAIN-SWEEP's words): no dash aside (Voice.md rule 5); PIN MOVED (AUDIT STAR W2): a label through the text core, the chat's line names the cap
 });

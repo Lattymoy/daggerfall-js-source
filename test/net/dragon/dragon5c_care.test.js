@@ -179,11 +179,11 @@ test('DRAGON5c its card and its feed: the Stable card\'s care - bond, hunger, it
 });
 
 test('DRAGON5c the oil at the Stable and in the law: every Stable sells it offline; online not until its own switch (REST6); a dragon\'s bond and food lawful on it, never on another piece (mutants: the oil sold online, the bond refused on the dragon)', () => {
-  assert.equal(DWARVEN_OIL_ONLINE, false);
+  assert.equal(DWARVEN_OIL_ONLINE, true);   // PIN MOVED (DRAGON-ON)
   assert.equal(dwarvenOilAvailable(false), true);
-  assert.equal(dwarvenOilAvailable(true), false);
+  assert.equal(dwarvenOilAvailable(true), true);
   assert.ok(yardStock('stable').some((it) => it.templateIndex === OIL && it.stackCount === 10));
-  assert.ok(!yardStock('stable', { online: true }).some((it) => it.templateIndex === OIL));
+  assert.ok(yardStock('stable', { online: true }).some((it) => it.templateIndex === OIL), 'online too, its switch on');
   const d = { ...newDragonMount({ id: ID }), horseBond: 120, horseFed: 5000 };
   assert.deepEqual([...itemFindings(d)].filter((f) => f === 'horse'), []);
   assert.ok(itemFindings({ group: 'Weapons', templateIndex: 113, horseBond: 5 }).has?.('horse') ?? [...itemFindings({ group: 'Weapons', templateIndex: 113, horseBond: 5 })].includes('horse'));

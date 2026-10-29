@@ -135,13 +135,14 @@
     ]
   },
   {
-    "name": "DRAGON5c-the-oil-sold-online",
+    "name": "DRAGON5c-the-oil-kept-off-online",
     "file": "src/systems/upkeep/upkeepItemRows.js",
-    "old": "export const dwarvenOilAvailable = (online) => !online || DWARVEN_OIL_ONLINE;",
-    "new": "export const dwarvenOilAvailable = (online) => true;",
+    "old": "export const DWARVEN_OIL_ONLINE = true;",
+    "new": "export const DWARVEN_OIL_ONLINE = false;",
     "tests": [
       "test/net/dragon/dragon5c_care.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-ON): with the switch on, the gate it mutated is always open, so the mutant is now the switch turned back off."
   },
   {
     "name": "DRAGON5c-the-oil-unsold",

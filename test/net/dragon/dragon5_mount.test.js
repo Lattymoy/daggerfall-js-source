@@ -47,7 +47,7 @@ test('DRAGON5 the item: a Transportation piece of its own template, bound to the
   assert.equal(hasDragon([{ templateIndex: 94 }, it]), true);
   assert.equal(dragonMountOf([it]), it);
   assert.equal(dragonLookOfItem(it), 1);
-  assert.equal(DRAGON_MOUNT_ONLINE, false, 'REST6: the release that ships the row binds none online');
+  assert.equal(DRAGON_MOUNT_ONLINE, true, 'REST6: the release after the row shipped binds a tame online');   // PIN MOVED (DRAGON-ON)
 });
 
 test('DRAGON5 the third mount: Dragon is riding (the ride base, the door, no climb, no crouch) but no horse ride (no sprite, hooves or voices); a key mounts the horse first, the cart next, the dragon last (mutants: the dragon a horse ride; the key preferring the dragon)', () => {
@@ -220,7 +220,7 @@ test('DRAGON5 the bind: a tame the service drew becomes its character\'s Dwarven
   playerEntity.items = []; playerEntity.characterId = 'char-0001';
   try {
     const host = { rewardsStorage, takeSpoil: (p) => p.item && playerEntity.items.push(p.item), relayNowS: () => 0, chatNotice: (t) => said.push(t), dragonAccount: { me: () => null, claim: async () => ({ ok: false, error: 'offline' }) } };
-    const off = createDragonRewards(host);
+    const off = createDragonRewards({ ...host, dragonMountOnline: false });   // PIN MOVED (DRAGON-ON): the switch off by hand - it is on
     rewardsStorage.setItem('dragon4.tamed', JSON.stringify([{ id: ID, look: 1, character: 'char-0001', w: 1 }, { id: 'dg1111111111111111', look: 0, character: 'char-0002', w: 2 }]));
     assert.equal(off.bind('char-0001'), false, 'the switch off: it waits');
     assert.equal(playerEntity.items.length, 0);

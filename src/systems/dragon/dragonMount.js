@@ -14,7 +14,7 @@ export const DRAGON_MOUNT_GROUP = 'Transportation';
 export const DRAGON_ID_RE = /^dg[0-9a-f]{16}$/;
 /** REST6's law, SHIP BEFORE ANYONE CAN SEE ONE: false for the release that ships the row, so no older client meets a
  *  dragon it cannot read. A tame waits on the device (scenes/dragonRewards.js) and in its service row until it is on. */
-export const DRAGON_MOUNT_ONLINE = false;
+export const DRAGON_MOUNT_ONLINE = true;   // DRAGON-ON (2026-10-29, the owner asked for the ride itself): on (Dwarven-Dragon.md DRAGON-ON)
 /** Its pack picture: the dragon's own idle front (characters/dwarvenDragon.js records 15-19 idle). */
 export const DRAGON_MOUNT_ICON = Object.freeze([DWARVEN_DRAGON_ARCHIVE, 15]);
 

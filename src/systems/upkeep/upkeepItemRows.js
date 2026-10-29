@@ -23,7 +23,7 @@ export const UPKEEP_ITEMS_ONLINE = true;
 export const upkeepItemsAvailable = (online) => !online || UPKEEP_ITEMS_ONLINE;
 /** DRAGON5c (bible/11-Multiplayer/Dwarven-Dragon.md section 10): Dwarven Oil's own switch, REST6's law - false for the
  *  release that ships its row, as the dragon's mount is (systems/dragon/dragonMount.js DRAGON_MOUNT_ONLINE). */
-export const DWARVEN_OIL_ONLINE = false;
+export const DWARVEN_OIL_ONLINE = true;   // DRAGON-ON (2026-10-29, with the ride): on (Dwarven-Dragon.md DRAGON-ON)
 export const dwarvenOilAvailable = (online) => !online || DWARVEN_OIL_ONLINE;
 
 const row = (index, name, baseWeight, basePrice, icon, stackable) => Object.freeze({
