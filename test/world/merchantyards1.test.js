@@ -62,7 +62,7 @@ test('MERCHANT-YARDS THE STOCK: the Stable sells a Horse, the Wagon Yard the Sma
   assert.ok(s[0].value > 0 && s[0].maxCondition > 0 && s[0].currentCondition === s[0].maxCondition, 'named, valued and whole, as a shelf\'s row');
   const t = yardStock('transport');
   assert.deepEqual(t.map((it) => [it.templateIndex, it.wagonKind ?? null, it.value]), [[TRANSPORT_SMALL_CART, null, 150], [TRANSPORT_SMALL_CART, 'openWagon', WAGON_KINDS.openWagon.value], [TRANSPORT_SMALL_CART, 'caravan', WAGON_KINDS.caravan.value], [1711, null, 60]]);
-  assert.deepEqual([yardStock('stable', { online: true }), yardStock('transport', { online: true })].map((l) => l.at(-1).templateIndex), [1710, 1711], 'UPKEEP-ONLINE: online the oats and the kits too');   // PIN MOVED (DRAGON5c): the oil not online until its switch (DWARVEN_OIL_ONLINE)
+  assert.deepEqual([yardStock('stable', { online: true }), yardStock('transport', { online: true })].map((l) => l.at(-1).templateIndex), [1712, 1711], 'UPKEEP-ONLINE: online the oats and the kits too');   // PIN MOVED (DRAGON5c): the oil not online until its switch (DWARVEN_OIL_ONLINE)
   assert.notEqual(yardStock('stable')[0], s[0], 'a yard never sells out: each Buy mints its stock afresh');
   assert.deepEqual(yardStock('barn'), []);
 });
