@@ -1,7 +1,7 @@
 // FB1029 GRAVE-PACK (bible/01-Overview/bugs/Field-Bugs-2026-10-29.md; "Bounty targets in crypt" - "The Daedroths don't
 // seem to spawn inside the crypt or in the overworld around it"): a graveyard's hunt stands its pack in the open air, and
 // the camp's stand refused every spot in any location's rect - the graveyard's own, a block past its walls each side -
-// so from its door, its grounds or its arrival nothing ever stood. The hunt's own place is never refused now, every other
+// so from its door or its grounds nothing ever stood, and from a fast travel's arrival one try in six. The hunt's own place is never refused now, every other
 // location's rect still is, and a pack stood outside is not forgotten while its hunter is down in the crypt.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -41,6 +41,9 @@ test('FB1029 GRAVE-PACK the rect law: a spot in a location\'s rect is refused, t
   assert.equal(inRect([PX - 100, 0, 0]), true, 'the next location\'s rect');
   assert.equal(inRect([PX - 100, 0, 0], own), true, 'another location\'s rect is refused still');
   assert.equal(inRect([30, 0, 0], { px: 1, py: 0 }), true, 'another place\'s hunt is refused in this one');
+  const wide = rectLaw({ '0,0': 600 });
+  assert.equal(wide([PX - 300, 0, 0]), true, 'its rect reaches over its pixel\'s edge');
+  assert.equal(wide([PX - 300, 0, 0], own), false, 'its hunt stands there too: the skip is the place\'s, not the spot\'s pixel');
   const lone = rectLaw({ '0,0': 153.6 });
   assert.equal(lone([30, 0, 0], { px: 0, py: 1 }), true, 'the skip is the place\'s own pixel, not its column');
   assert.equal(lone([500, 0, 0], own), false, 'past every rect');
@@ -149,6 +152,21 @@ test('FB1029 GRAVE-PACK AUDIT B1: a pack handed off at the crypt\'s door (online
   h.at(grave);
   h.host.tick(1);
   assert.equal(h.asked.filter((o) => o.id === grave.id).length, 2, 'out again, a pack stands');
+});
+
+test('FB1029 GRAVE-PACK AUDIT C-S2: an open-ground hunt\'s pack is the street\'s too - kept while its hunter is down in another dungeon, gone when its beasts are (mutant: the street\'s pool the graveyard\'s alone)', async () => {
+  const h = eastcastle();
+  const field = h.posts.find((p) => p.kind === 'field');
+  h.board.take(field.id);
+  h.at(field);
+  h.host.tick(1);
+  await settle();
+  h.outside = null; h.under = { x: 1, y: 1 };   // below somewhere else: the crypt's pool is not its
+  h.host.tick(1);
+  assert.equal(h.standing(field.id), true, 'kept below');
+  h.outdoor.length = 0;
+  h.host.tick(1);
+  assert.equal(h.standing(field.id), false, 'gone with its beasts');
 });
 
 test('FB1029 GRAVE-PACK AUDIT B2: a dungeon\'s hunt is judged by the dungeon\'s pool - kept while its beasts stand below, stood again when a load took them (mutants: every pack judged by the street\'s pool; by the mode\'s)', async () => {

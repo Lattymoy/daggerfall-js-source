@@ -19,6 +19,7 @@ import { buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';
 import { BULLETIN_BOARD_MODEL_ID, CITY_GATE_CLOSED_MODEL_ID, CITY_GATE_OPEN_MODEL_ID, isBulletinBoard, isCityGate } from '../world/rmbLayout.js';
 import { carveLefay, isLefayTown, lefayExitOf, lefaySpotOf } from '../world/lefayMonument.js';
 import { carveYards } from '../world/merchantYards/merchantYardSites.js';
+import { carveCapitalWalks } from '../world/capitalWalks.js';   // FB1029 BRIDGE-ENDS
 import { CityNavigation, NAV_CELL } from '../world/city/cityNavigation.js';
 import { collectCityLights, LIGHTS_ARCHIVE } from '../world/city/cityLights.js';
 import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';
@@ -876,6 +877,7 @@ export function createPixelBuild(host) {
         if (lefaySpot) carveLefay(nav, lefaySpot);   // LEFAY1: the people walk round the monument, never through it
         if (yardSites?.length) carveYards(nav, yardSites);   // MERCHANT-YARDS: and round the yards
         if (portSites?.length) carveYards(nav, portSites);   // SHIPYARDS: and round the shipyard and the lighthouse
+        carveCapitalWalks(nav, dfLocation);   // FB1029 BRIDGE-ENDS: and off a capital's works over Daggerfall's blocks
         personBatches = new Map();   // person -> batch (destroyed with the pixel)
         made.personBatches = personBatches;   // BUILD-FAIL1
         const personCollider = {

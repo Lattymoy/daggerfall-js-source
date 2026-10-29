@@ -528,7 +528,8 @@ and the wire did not.
 
 A graveyard's hunt stands its pack in the open air, through the camp's stand (`scenes/world.js` _standCampEncounter).
 That stand refused any spot in a location's rect (DISC19-F), and the graveyard's own rect runs a block past its walls,
-so from its door, its grounds or its arrival nothing ever stood: 0 of every try at the Crypts of Wickfield's door.
+so from its door or its grounds nothing ever stood, and from a fast travel's arrival one try in six (the Crypts of
+Wickfield).
 Now the board hands the stand the hunt's own pixel (`scenes/bountyHost.js` packTick, `place`), and that location's
 rect is not refused (`_inAnyLocationRect`'s `own`). Every other location's rect, a town's among them, still is, and a
 hunt on open ground hands no place.
