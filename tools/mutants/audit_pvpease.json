@@ -23,8 +23,8 @@
   {
     "name": "AUDIT-PVP-EASE-L1-3-every-carried-policy-spent",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  return [...new Set(would.taken.filter((it) => insured(it)).map(ledgerKeyOf).filter((k) => k != null))];",
-    "new": "  return [...new Set((Array.isArray(entity?.items) ? entity.items : []).filter((it) => insured(it)).map(ledgerKeyOf).filter((k) => k != null))];",
+    "old": "  return [...new Set(would.taken.filter((it) => insured(it)).map(keyOf).filter((k) => k != null))];",
+    "new": "  return [...new Set((Array.isArray(entity?.items) ? entity.items : []).filter((it) => insured(it)).map(keyOf).filter((k) => k != null))];",
     "tests": ["test/systems/wild/wildinsure.test.js"]
   },
   {

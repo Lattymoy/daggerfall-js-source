@@ -1025,6 +1025,14 @@ export const cubeKeeps = (lim, k, x, y, z, r) => {
   return !(d > R) || d === Infinity;
 };
 
+// SHADER-EASE MOUNT-START (2026-10-29): the depth programs the constructor builds, in its order, and the three a first
+// body builds (_ensureBodyPrograms) - `vs` opts.vs's shape - so a page's start can have them compiling before the lane
+// mounts (render/bootPrograms.js, render/mountPrograms.js). Change a build, change its pair here.
+/** @param {{ mesh: string, bb: string, terrain: string, char?: string }} vs @returns {Array<[string, string]>} */
+export const shadowDepthPrograms = (vs) => [[vs.mesh, DEPTH_FS], [vs.terrain, DEPTH_FS], [vs.bb, DEPTH_BB_FS], ...(vs.char ? [/** @type {[string, string]} */ ([vs.char, DEPTH_FS])] : []), [vs.mesh, DEPTH_CUT_FS], [vs.mesh, DEPTH_BB_FS], [DEPTH_COPY_VS, DEPTH_COPY_FS]];
+/** @param {{ char?: string, charSkin?: string }} vs @returns {Array<readonly [string, string]>} */
+export const shadowBodyPrograms = (vs) => [...(vs.charSkin ? [/** @type {const} */ ([vs.charSkin, DEPTH_FS]), /** @type {const} */ ([vs.charSkin, DEPTH_BB_FS])] : []), ...(vs.char ? [/** @type {const} */ ([vs.char, DEPTH_BB_FS])] : [])];
+
 /**
  * The pass: the maps, the depth programs, the record pool, the replay.
  * `opts.build(vs, fs)` compiles a program (the renderer's _buildProgram);

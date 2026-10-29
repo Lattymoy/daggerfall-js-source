@@ -61,15 +61,17 @@ function pack() {
 const recordOfE = (e) => JSON.parse(JSON.stringify(snapshotPlayer(e, {})));
 const byKey = (list, key) => list.find((it) => ledgerKeyOf(it) === key);
 
-test('WILD-INSURE THE LAW (systems/wild/wildInsureLaw.js): a piece the ledger follows that a death could take may be insured - never a plain piece, a letter, a potion or a bound piece; the premium a fifth of its worth rounded up; in force WILD_INSURE_SETTLE_S after it is written, past the killer\'s pick (mutants: the premium a tenth; rounded down; in force at once; a letter insurable; a plain piece insurable)', () => {
+test('WILD-INSURE THE LAW (systems/wild/wildInsureLaw.js): a piece the ledger follows that a death could take may be insured - PIN MOVED (INSURE-ALL): a plain piece of gear too - never a letter, a potion or a bound piece; the premium a fifth of its worth rounded up; in force WILD_INSURE_SETTLE_S after it is written, past the killer\'s pick (mutants: the premium a tenth; rounded down; in force at once; a letter insurable)', () => {
   const { e, sword, claymore, axe } = pack();
   assert.equal(wildInsurable(sword), true, 'a Magic longsword, worn');
   assert.equal(wildInsurable(claymore), true, 'a Magic claymore, carried');
-  assert.equal(wildInsurable(axe), false, 'a plain axe: no piece the ledger follows');
+  assert.equal(wildInsurable(axe), true, 'PIN MOVED (INSURE-ALL): a plain axe is gear, insured by its own id (insureall.test.js)');
   assert.equal(wildInsurable(e.items.find((it) => it.templateIndex === 275)), false, 'a letter of credit: coin, which pays its tenth');
   assert.equal(wildInsurable(e.items.find((it) => it.group === 'UselessItems1')), false, 'a potion: kept anyway');
   assert.equal(wildInsurable({ ...sword, bound: true }), false, 'a bound piece: never leaves');
-  assert.deepEqual(wildInsureTargets(e).map(ledgerKeyOf).sort(), [ledgerKeyOf(sword), ledgerKeyOf(claymore)].sort(), 'the pack\'s insurable pieces, worn or not');
+  const targets = wildInsureTargets(e);   // PIN MOVED (INSURE-ALL): the plain axe and the kit's gear among them
+  assert.ok([sword, claymore, axe].every((it) => targets.includes(it)), 'the pack\'s insurable pieces, worn or not');
+  assert.ok(targets.every((it) => ['Weapons', 'Armor', 'Jewellery', 'MensClothing', 'WomensClothing'].includes(it.group)), 'gear alone: no letter, no potion');
   assert.equal(WILD_INSURE_DIVISOR, 5, 'a fifth - the owner\'s "20% of worth" (2026-10-29: "Insurance cost 20%")');
   assert.equal(wildPremium(sword), Math.ceil(itemWorth(sword) / 5));
   assert.equal(wildPremium({ ...sword, value: 1001 }), Math.ceil(itemWorth({ ...sword, value: 1001 }) / 5), 'rounded up');
@@ -143,7 +145,7 @@ async function stood({ axeWorn = true, bare = false } = {}) {
   return { svc, ria, bo, cy, R, record, insure, policies, fall, settle, ...p };
 }
 
-test('WILD-INSURE THE SERVICE, WRITTEN (server-account/src/wildInsure.js): a policy is paid off the record - a fifth of the piece\'s worth out of the purse - and written in the same act, the record\'s sequence moved once; listed for the tab with when it is in force; refused a piece under a policy, a plain piece, a piece not carried, a malformed ask and a premium the record cannot pay, nothing moved (mutants: the premium unpaid; a second policy on one piece; a plain piece insured; the gold unchecked)', async () => {
+test('WILD-INSURE THE SERVICE, WRITTEN (server-account/src/wildInsure.js): a policy is paid off the record - a fifth of the piece\'s worth out of the purse - and written in the same act, the record\'s sequence moved once; listed for the tab with when it is in force; refused a piece under a policy, a plain piece with no id, a piece not carried, a malformed ask and a premium the record cannot pay, nothing moved (mutants: the premium unpaid; a second policy on one piece; the gold unchecked)', async () => {
   const s = await stood();
   const key = ledgerKeyOf(s.sword), premium = wildPremium(s.sword);
   const at = s.R.at();
@@ -154,7 +156,7 @@ test('WILD-INSURE THE SERVICE, WRITTEN (server-account/src/wildInsure.js): a pol
   const listed = await s.policies();
   assert.deepEqual(listed.body.policies.map((p) => p.key), [key], 'listed for the tab');
   const was = s.record();
-  for (const [why, keys, error] of [['already insured', [key], 'insure-held'], ['a plain piece', [ledgerKeyOf(s.axe)], 'body'], ['no such piece', ['00000000000000ff'], 'insure-piece'], ['twice in one ask', [ledgerKeyOf(s.claymore), ledgerKeyOf(s.claymore)], 'body'], ['none', [], 'body']]) {
+  for (const [why, keys, error] of [['already insured', [key], 'insure-held'], ['a plain piece with no id: no key to ask by', [ledgerKeyOf(s.axe)], 'body'], ['no such piece', ['00000000000000ff'], 'insure-piece'], ['twice in one ask', [ledgerKeyOf(s.claymore), ledgerKeyOf(s.claymore)], 'body'], ['none', [], 'body']]) {
     const no = await s.insure(keys);
     assert.equal(no.body.error, error, `${why}: ${JSON.stringify(no.body)}`);
   }
@@ -366,7 +368,7 @@ test('WILD-INSURE THE BOOK (net/wild/wildInsureBook.js): the policies read once 
   const book = createWildInsureBook({ door, realm, wallet, character: () => 'rchar', inZone: () => zone, now: () => clock });
   await book.read();
   assert.equal(book.offers(sword), true);
-  assert.equal(book.offers(axe), false, 'a plain piece: no act offered');
+  assert.equal(book.offers(axe), true, 'PIN MOVED (INSURE-ALL): a plain piece offered too, its id minted at the act (insureall.test.js)');
   zone = true;
   assert.deepEqual(await book.insure(sword), { ok: false, text: WILD_TEXT.insureInZone() });
   assert.deepEqual([asks.length, reserved.length], [0, 0], 'refused before a coin is reserved');

@@ -1624,6 +1624,81 @@
   "tr": "f49a40432c5f",
   "by": "claude-in-session"
  },
+ "gfx.bar.preparing": {
+  "en": "62a6d1012582",
+  "tr": "2d0177538eaa",
+  "by": "claude-in-session"
+ },
+ "gfx.bar.ready": {
+  "en": "9930ea8bc52e",
+  "tr": "5cf49dbcb6df",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.button": {
+  "en": "69086bb69eff",
+  "tr": "43c4b1270bd3",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.close": {
+  "en": "bbfa773e5a63",
+  "tr": "d2b73ab2ada1",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.copy": {
+  "en": "af74f7c5362a",
+  "tr": "09a1db3ed41f",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.edge": {
+  "en": "e3fefd6f90b9",
+  "tr": "ad3fa1fe1d61",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.folders": {
+  "en": "16eb48819d73",
+  "tr": "e4b98569efee",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.mac.go": {
+  "en": "794827f753d8",
+  "tr": "c44b10b42868",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.mac.quit": {
+  "en": "e3c9830d2135",
+  "tr": "9673f110c551",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.note": {
+  "en": "f000ca038a57",
+  "tr": "09acc31c27df",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.profile": {
+  "en": "3a1ef5df59ff",
+  "tr": "cf717d88dc2c",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.why": {
+  "en": "4c0b60ec10d9",
+  "tr": "801fb694ef43",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.win.close": {
+  "en": "520764dd506b",
+  "tr": "a806c50da8b6",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.win.run": {
+  "en": "2993606036eb",
+  "tr": "1a741beb2b16",
+  "by": "claude-in-session"
+ },
+ "gfx.fix.win.start": {
+  "en": "dc9c4564afab",
+  "tr": "c643d2ba8c7e",
+  "by": "claude-in-session"
+ },
  "growth.spec.why.chosenMentor": {
   "en": "54129619c117",
   "tr": "3ab972a05b78",

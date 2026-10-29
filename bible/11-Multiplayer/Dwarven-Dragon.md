@@ -157,7 +157,7 @@ serpent's does.
 verifier and theirs by this one. Its claims: `q` the watch, `b` the dragon (0 brass, 1 Aetherbright), `s` the account,
 `c` the hoard's seed, `x` dealt or stood, `l` the level, `m` the relay's body count, `i` issued, `e` a week on.
 
-**The claim** (`server-account/src/dragons.js` `claimDragon`, route `/v1/dragon/claim`, migration `0193_dragon.sql`, acct218).
+**The claim** (`server-account/src/dragons.js` `claimDragon`, route `/v1/dragon/claim`, migration `0193_dragon.sql`, acct219).
 The device carries the receipt (`net/dragon/dragonClaims.js`) with the character that fought and a claim id of its own.
 The service counts one kill a (watch, account) in `dragon_kills`, and gives the hoard to the claim whose id writes the
 watch's `dragon_spoils` row, so a second browser is answered no. A guest is given its hoard and nothing else. The kill is
@@ -241,9 +241,9 @@ colours, under the player and on every other screen.
 | **DRAGON7** | the Aetherbright: the palette, the roll, its look kept | no | no |
 
 The relay changes land in ONE version (world285 - every byte of the relay's bundle is hashed; world281, world283, then
-world284, until the merges of main renumbered it past world281 to world284), and the service's in one (acct218 - acct211
-when this page was written, renumbered past KEEP-MARK, SHED-REPLICA, the PvP rework's acct213-acct215, CRAFT-SET's acct216
-and AUDIT TAMRIEL-WIDE's acct217). Each slice: pins in `test/`, a mutant record, its record here.
+world284, until the merges of main renumbered it past world281 to world284), and the service's in one (acct219 - acct211
+when this page was written, renumbered past KEEP-MARK, SHED-REPLICA, the PvP rework's acct213-acct215, CRAFT-SET's acct216,
+AUDIT TAMRIEL-WIDE's acct217 and INSURE-ALL's acct218). Each slice: pins in `test/`, a mutant record, its record here.
 
 ## 13. The record, slice by slice
 
@@ -276,7 +276,7 @@ while its remains lie (`DRAGON_REMAINS_MS` moved to the law). Pinned by `test/ne
 `test/scenes/dragon3_host.test.js` (7) and `test/net/dragon/dragon3_relay.test.js` (1); `tools/mutants/dragon3.json`, 27
 dead. PINS MOVED: the serpent's marks (`serpent4`), its spell door (`fb1019f_bossdot`), NAV-H's enemies near (`nav_h_host`).
 
-**DRAGON4 - the hoard and the tame (2026-10-29, acct218, migration 0193; acct213 and 0192 on its branch, renumbered past the PvP rework, CRAFT-SET and AUDIT TAMRIEL-WIDE at the merges of main).** `server-account/src/dragons.js` `claimDragon` behind
+**DRAGON4 - the hoard and the tame (2026-10-29, acct219, migration 0193; acct213 and 0192 on its branch, renumbered past the PvP rework, CRAFT-SET, AUDIT TAMRIEL-WIDE and INSURE-ALL at the merges of main).** `server-account/src/dragons.js` `claimDragon` behind
 `/v1/dragon/claim`: one kill a (watch, account), the hoard to the device that wrote its row, the tame drawn by the
 service for a dealer's first write, one a character, named at every answer while its row stands. On the device:
 `net/dragon/dragonClaims.js` (the carrier), `systems/dragon/dragonSpoils.js` (the hoard), `scenes/dragonRewards.js` (the
@@ -335,3 +335,8 @@ ride's and the fight's gates (`dragonride_wire`, `dragon2_law`), and ten mutant 
 characters; only the client refused it. And the flight's test reset took staffDragon's name; it is `_resetDragonFlight`
 (audit24's one home). PINS MOVED: AUDIT REALM F1's rows and registrars; five mutant records on the bound list, and
 `DRAGON5-the-realm-trades-a-dragon` dead.
+
+**THE MERGE OF MAIN AT bd748f03c (2026-10-29, #1419 INSURE-ALL).** Main took acct218, so the service is acct219; the
+relay stays world285 and migration 0193 stands. Item law 15 names acct219. PINS MOVED: the account version's (twenty
+files, the dragon's note before INSURE-ALL's), the service's history check (`auditscale2_acct`), and eleven mutant
+records on the version lines.

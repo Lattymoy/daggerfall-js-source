@@ -672,6 +672,7 @@ const HARDCODED = {
   'src/ui/gate/gateGroundView.js': 3,
   'src/ui/gate/gateMarksView.js': 18,
   'src/ui/gate/gateTitleCard.js': 1,
+  'src/ui/gfxPrepBar.js': 4,   // FIX-STUTTER: the four browser folder paths, never translated
   'src/ui/grimoireDress.js': 13,
   'src/ui/growth/growthStage.js': 1,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (GROWTH-BOOK)
   'src/ui/guildServiceWindow.js': 1,

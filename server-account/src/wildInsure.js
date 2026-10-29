@@ -12,10 +12,9 @@
 // AUDIT PVP-EASE L1-2, L4-2: a policy whose piece the record holds nowhere (sold, traded, salvaged, dropped before it was in
 // force - wildPolicyHeld) LAPSES at the next insure, in its batch, and only the held count toward WILD_INSURE_MAX: before,
 // such a policy stood 'active' for good, and 32 of them shut the door on the character for ever.
-import { ledgerKeyOf } from './judge.js';
 import { prepareRealmRecord, realmAtOf, realmActFirst, recordMovedOf, mustChange, dropIfUnnamed, dropObjects, REALM_ID_RE } from './realm.js';
 import { payFromSave } from '../../src/net/realm/realmGoldLaw.js';
-import { wildInsurable, wildPremium, wildPolicyKeyOk, wildPolicyHeld, WILD_INSURE_ASK_MAX, WILD_INSURE_MAX, WILD_INSURE_SETTLE_S } from '../../src/systems/wild/wildInsureLaw.js';
+import { wildInsurable, wildPremium, insureKeyOf, wildPolicyKeyOk, wildPolicyHeld, WILD_INSURE_ASK_MAX, WILD_INSURE_MAX, WILD_INSURE_SETTLE_S } from '../../src/systems/wild/wildInsureLaw.js';
 
 /** A policy row as its tab reads it: the piece's key, the premium paid, when written and when in force. */
 const policyView = (/** @type {any} */ p) => ({ key: String(p.key), premium: Number(p.premium), at: Number(p.at), live: Number(p.at) + WILD_INSURE_SETTLE_S });
@@ -25,13 +24,13 @@ const activeOf = async (db, charId) => (await db.prepare("SELECT key, premium, a
 
 /**
  * /v1/wild/insure - POLICIES WRITTEN: `body.realm` where the caller's record stands (its tab's `at`), `body.keys` the
- * ledger keys of 1..WILD_INSURE_ASK_MAX pieces in its pack or worn, `body.region` the bank the shortfall is paid from (as
+ * keys (wildInsureLaw.js insureKeyOf) of 1..WILD_INSURE_ASK_MAX pieces in its pack or worn, `body.region` the bank the shortfall is paid from (as
  * every realm act's). Each piece must be insurable (wildInsureLaw.js wildInsurable) and under no policy in force, and the
  * character may hold WILD_INSURE_MAX at once. The premiums - each wildPremium - are paid off the record and the policies
  * written in one batch. Answers `{ policies, gold, realm }` - the policies written, the gold paid, where the record stands
  * - or `{ error }`: 'body', 'no-realm-character', 'insure-held' (a key under a policy in force), 'insure-full' (WILD_INSURE_MAX
  * policies on pieces the record still holds),
- * 'insure-piece' (a key the record holds no insurable piece by), 'realm-gold' (the premiums not covered), the record's own
+ * 'insure-piece' (a key the record holds no insurable piece by, or two pieces by), 'realm-gold' (the premiums not covered), the record's own
  * words ('lease', 'seq').
  * @param {any} ctx `{ db, bucket, rand, nowS }` @param {any} player the session's account @param {any} body
  */
@@ -54,7 +53,8 @@ export async function wildInsure(ctx, player, body) {
     if (held.size - lapsed.length + keys.length > WILD_INSURE_MAX) return 'insure-full';
     const pack = Array.isArray(save?.items) ? save.items : [];
     for (const k of keys) {
-      const piece = pack.find((it) => ledgerKeyOf(it) === k);
+      const named = pack.filter((it) => insureKeyOf(it) === k);   // INSURE-ALL: a plain piece by its own id; a key two carry, none
+      const piece = named.length === 1 ? named[0] : null;
       if (!piece || !wildInsurable(piece)) return 'insure-piece';
       premiums.set(k, wildPremium(piece));
     }
