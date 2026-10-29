@@ -72,3 +72,11 @@ alone, and a Heal Health, reach a player. Backstab was already off between playe
 "poison need diable in pvp": a Damage spell of DFU's poison element
 (`siegeCombat.js:"export const PVP_POISON_ELEMENT = 2;"`) reaches no player. A weapon's poison never rode a PvP blow:
 the striker's stub weapon carries none (`duelCombat.js:"weapon.poisonType = -1;"`).
+
+## PVP-ARMOUR-CAST: plate and chain slow a caster in a fight
+
+"do the plate cost and half its cost for chain": while a refereed fight may hold the player, each worn piece adds to a
+spell's cost and takes off the cast rate by its own type
+(`pvpArmourCasting.js:"export const PVP_ARMOUR_CAST = Object.freeze({"`): plate 6% and 3%, chain half, leather nothing.
+An RRI light set piece reads leather (`rriItems.js:"export function rriNativeMaterialValue(item) {"`). Full plate
+costs 42% more and casts 21% slower. PvE is left whole. A departure: DFU has no such cost.

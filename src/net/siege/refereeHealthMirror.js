@@ -12,6 +12,7 @@ import { SKILLS, skillValue } from '../../systems/skills.js';
 import { pvpArmorKept, pvpWardKept, pvpShielded } from '../../combat/pvpGuard.js';
 import { capPvpBuffs } from '../../combat/pvpBuffs.js';
 import { setPvpFight } from '../../combat/pvpPotions.js';
+import '../../combat/pvpArmourCasting.js';   // PVP-ARMOUR-CAST: its doors, registered where the fight flag is set
 
 /** The fewest milliseconds between two reports: four a second, well under the relay's gate for this frame. */
 export const HEALTH_REPORT_MS = 250;

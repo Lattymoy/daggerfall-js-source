@@ -23,6 +23,11 @@ import { PVP_POTION_MS, pvpPotionKind, pvpPotionRefusal, pvpPotionDrunk, pvpPoti
 import { POTION_RECIPES, potionRecipeKey } from '../../src/systems/potionRecipes.js';
 import { useItem } from '../../src/systems/useItem.js';
 import { TEMPLATES } from '../../src/systems/item/itemKinds.js';
+import { PVP_ARMOUR_CAST, pvpArmourCast } from '../../src/combat/pvpArmourCasting.js';
+import { calculateCastCost } from '../../src/systems/spellcost.js';
+import { castRate } from '../../src/systems/castSpeed.js';
+import { buildCustomSpell } from '../../src/systems/spell/spellMaker.js';
+import { setPvpFight } from '../../src/combat/pvpPotions.js';
 import { PVP_BUFF_ROUNDS, capPvpBuffs } from '../../src/combat/pvpBuffs.js';
 
 const stats = (v) => ({ strength: v, intelligence: 50, willpower: v, agility: 50, endurance: v, personality: 50, speed: 50, luck: 50 });
@@ -222,4 +227,32 @@ test('PVP-POTIONS: in a fight each potion kind (health, magicka, other) waits 15
   assert.equal(pvpPotionBundle(bundle), bundle, 'out of a fight: whole');
   const magic = readFileSync(new URL('../../src/scenes/hostMagic.js', import.meta.url), 'utf8');
   assert.match(magic, /applySpellToPlayer\(pvpPotionBundle\(bundle\), castingLevel\(playerEntity\)/, 'the drink lands the trimmed bundle');
+});
+
+test('PVP-ARMOUR-CAST: in a fight with a player a plate piece costs a spell 6% more and casts it 3% slower, chain half, leather and the RRI light set nothing; out of a fight nothing (mutants: the plate, the chain, the slow, the fight, a piece unread)', () => {
+  resetPvpPotions();
+  const SLOTS = [[102, 'ChestArmor'], [103, 'LegsArmor'], [107, 'Head'], [104, 'LeftArm'], [105, 'RightArm'], [106, 'Gloves'], [108, 'Feet']];
+  const worn = (material, templates = SLOTS) => {
+    const e = { isPlayer: true, stats: { ...body().stats, speed: 50 }, skills: {}, items: [] };
+    const t = equipTableOf(e);
+    for (const [templateIndex, slot] of templates) t[EQUIP_SLOTS[slot]] = { group: 'Armor', templateIndex, material, maxCondition: 100, currentCondition: 100 };
+    return e;
+  };
+  const plate = worn(0x0200), chain = worn(0x0100), leather = worn(0x0000), light = worn(0x0209, [[522, 'Head']]);
+  assert.deepEqual([plate, chain, leather, light].map(pvpArmourCast), [{ cost: 42, slow: 21 }, { cost: 21, slow: 10.5 }, { cost: 0, slow: 0 }, { cost: 0, slow: 0 }]);
+  assert.deepEqual(PVP_ARMOUR_CAST.cost, [0, 3, 6]);
+  const bolt = buildCustomSpell({ slots: [{ type: 4, subType: 0, settings: { magnitudeBaseLow: 20, magnitudeBaseHigh: 20, magnitudePerLevel: 20 } }], rangeType: 1, element: 0, name: 'Bolt' });
+  const cost = (e) => calculateCastCost(bolt, e, { online: true }).sp;
+  const bare = worn(0x0000, []);
+  const [base, out] = [cost(bare), cost(plate)];
+  assert.equal(out, base, 'out of a fight: plate costs nothing more');
+  assert.equal(castRate(plate), 1, 'out of a fight: no slower');
+  setPvpFight(true);
+  assert.equal(cost(plate), Math.round(base * 1.42), 'full plate: +42%');
+  assert.equal(cost(chain), Math.round(base * 1.21), 'full chain: +21%');
+  assert.equal(cost(leather), base);
+  assert.equal(castRate(plate), 0.79, 'full plate: 21% slower');
+  assert.equal(castRate(bare), 1);
+  resetPvpPotions();
+  assert.match(readFileSync(new URL('../../src/net/siege/refereeHealthMirror.js', import.meta.url), 'utf8'), /^import '\.\.\/\.\.\/combat\/pvpArmourCasting\.js';/m, 'the doors load with the fight flag');
 });

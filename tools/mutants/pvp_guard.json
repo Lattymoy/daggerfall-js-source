@@ -303,5 +303,75 @@
       "test/combat/pvp_guard.test.js"
     ],
     "why": "the drink lands the trimmed bundle"
+  },
+  {
+    "name": "PVP-ARMOUR-CAST-plate-cheap",
+    "file": "src/combat/pvpArmourCasting.js",
+    "old": "cost: Object.freeze([0, 3, 6])",
+    "new": "cost: Object.freeze([0, 3, 3])",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "plate 6% a piece"
+  },
+  {
+    "name": "PVP-ARMOUR-CAST-chain-free",
+    "file": "src/combat/pvpArmourCasting.js",
+    "old": "cost: Object.freeze([0, 3, 6])",
+    "new": "cost: Object.freeze([0, 0, 6])",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "chain half of plate"
+  },
+  {
+    "name": "PVP-ARMOUR-CAST-no-slow",
+    "file": "src/combat/pvpArmourCasting.js",
+    "old": "slow: Object.freeze([0, 1.5, 3])",
+    "new": "slow: Object.freeze([0, 1.5, 0])",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "plate 3% slower a piece"
+  },
+  {
+    "name": "PVP-ARMOUR-CAST-always",
+    "file": "src/combat/pvpArmourCasting.js",
+    "old": "(inPvpFight() ? sp * (1 + pvpArmourCast(entity).cost / 100) : sp)",
+    "new": "(true ? sp * (1 + pvpArmourCast(entity).cost / 100) : sp)",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "out of a fight nothing"
+  },
+  {
+    "name": "PVP-ARMOUR-CAST-a-piece-unread",
+    "file": "src/combat/pvpArmourCasting.js",
+    "old": "const PIECES = ['Head', 'RightArm',",
+    "new": "const PIECES = ['RightArm',",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "every piece counts"
+  },
+  {
+    "name": "PVP-ARMOUR-CAST-the-material-not-the-class",
+    "file": "src/combat/pvpArmourCasting.js",
+    "old": "const kind = Math.max(0, Math.min(2, rriNativeMaterialValue(it) >> 8));",
+    "new": "const kind = Math.max(0, Math.min(2, it.material >> 8));",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "an RRI light piece is leather"
+  },
+  {
+    "name": "PVP-ARMOUR-CAST-unregistered",
+    "file": "src/net/siege/refereeHealthMirror.js",
+    "old": "import '../../combat/pvpArmourCasting.js';",
+    "new": "import '../../combat/pvpPotions.js';",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "the doors are registered"
   }
 ]
