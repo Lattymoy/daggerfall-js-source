@@ -97,5 +97,41 @@
     "tests": [
       "test/world/shipRefit.test.js"
     ]
+  },
+  {
+    "name": "SHIP-REFIT-door-shut-bare",
+    "file": "src/formats/worldData/worldDataReplacement.js",
+    "old": "  if (!worldDataOn()) return portBuilding(blockName, blockIndex, recordIndex);   // AUDIT SHIP-REFIT: the port's own, behind no door",
+    "new": "  if (!worldDataOn()) return null;",
+    "tests": [
+      "test/world/shipRefit.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-REFIT-door-port-first",
+    "file": "src/formats/worldData/worldDataReplacement.js",
+    "old": "  const json = tryGetAsset(buildingReplacementFilename(blockName, blockIndex, recordIndex, variant)) ?? (variant === NO_VARIANT ? _portBuildings.get(file) : null);   // AUDIT SHIP-REFIT: a mod's own first",
+    "new": "  const json = (variant === NO_VARIANT ? _portBuildings.get(file) : null) ?? tryGetAsset(buildingReplacementFilename(blockName, blockIndex, recordIndex, variant));   // AUDIT SHIP-REFIT: a mod's own first",
+    "tests": [
+      "test/world/shipRefit.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-REFIT-door-open-bare",
+    "file": "src/formats/worldData/worldDataReplacement.js",
+    "old": "  const json = tryGetAsset(buildingReplacementFilename(blockName, blockIndex, recordIndex, variant)) ?? (variant === NO_VARIANT ? _portBuildings.get(file) : null);   // AUDIT SHIP-REFIT: a mod's own first",
+    "new": "  const json = tryGetAsset(buildingReplacementFilename(blockName, blockIndex, recordIndex, variant));   // AUDIT SHIP-REFIT: a mod's own first",
+    "tests": [
+      "test/world/shipRefit.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-REFIT-deck-lift-sign",
+    "file": "src/world/shipRefit.js",
+    "old": "      XPos: Math.round(p.x / U), YPos: Math.round(-(deck.floor + p.lift + foot) / U), ZPos: Math.round(p.z / U),",
+    "new": "      XPos: Math.round(p.x / U), YPos: Math.round(-(deck.floor - p.lift + foot) / U), ZPos: Math.round(p.z / U),",
+    "tests": [
+      "test/world/shipRefit.test.js"
+    ]
   }
 ]

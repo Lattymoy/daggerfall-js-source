@@ -117,6 +117,17 @@ export const DECOR_MOD_STREETS = Object.freeze({
     '10035_1': 20, '10035_2': 16, '10035_3': 31, '10035_4': 29, '10035_5': 14, '10035_6': 13, '10035_7': 28,
   }),
 });
+/** AUDIT SHIP-REFIT: THE PIECES A REMOVED MOD'S SHIPS STOOD - offered still (their pictures stand at every boot,
+ *  world/townStandIns.js installPortStandIns) and numbered among a room's, so no piece's name or number moves: each with
+ *  the count last measured on those ships (2026-10-05). */
+export const DECOR_MOD_KEPT = Object.freeze({
+  models: Object.freeze({}),
+  flats: Object.freeze({
+    '1210_1': 2, '1210_3': 1, '1210_4': 1, '1210_8': 1, '1230_30': 2, '10021_22': 1, '10021_27': 1, '10027_4': 1,
+    '10027_5': 1, '10027_6': 8, '10027_7': 2, '10027_8': 4, '10027_9': 2, '10027_10': 4, '10027_11': 1, '10027_12': 1,
+    '10027_13': 1, '10027_14': 1,
+  }),
+});
 /** Two ids the mods place that the port stands in alike - the one offered for both (its count both's). */
 export const DECOR_MOD_TWINS = Object.freeze({ 45113: 45112, 45087: 45121, 45115: 45114, 45122: 45120 });
 /** What the mods stand that is never a piece - the town itself, a field it sows, the sea's - by why. */
@@ -134,6 +145,8 @@ const MODEL_NAMES = Object.freeze({
   45082: 'Ensign staff', 45114: 'Stump', 45120: 'Flower pot', 45121: 'Wind vane', 45169: 'Column drum', 45170: 'Column head',
   45190: 'Sea chest', 45191: 'Weapon rack',
 });
+/** The items named by the piece since they were offered (AUDIT SHIP-REFIT: their names never move). */
+const ITEM_NAMES = Object.freeze({ '1210_10': 'Green bottle', '1210_11': 'Blue bottle', '1210_12': 'Brown bottle', '1230_30': 'Statuette' });
 /** The classic flat a mod's flat stands in as - [archive, record] - or null (a drawing of the port's). */
 export function decorModFlatSource(archive, record) {
   const a = DET_OLD_ARCHIVES[archive] ?? archive;
@@ -165,6 +178,8 @@ export function decorModNaming(what) {
     return { base: pic != null ? capital(TOWN_PICTURES[pic]?.name ?? '') || null : null, as: id };
   }
   const [archive, record] = what.flat;
+  const named = ITEM_NAMES[`${archive}_${record}`];
+  if (named) return { base: named, as: archive === 1210 ? 205 : archive };   // the bottles are bottles
   const drawn = DET_FLAT_DRAWINGS[DET_OLD_ARCHIVES[archive] ?? archive]?.[record];
   if (drawn) return { base: words(drawn[0]), as: archive };
   const from = decorModFlatSource(archive, record);
@@ -204,7 +219,7 @@ export function addDecorMods(into = new Map()) {
     if (into.has(key)) return;
     into.set(key, { ...what, count, from, ...decorModNaming(what) });
   };
-  for (const { table, from } of [{ table: DECOR_MOD_ROOMS, from: 'mod' }, { table: DECOR_MOD_STREETS, from: 'modstreet' }]) {
+  for (const { table, from } of [{ table: DECOR_MOD_ROOMS, from: 'mod' }, { table: DECOR_MOD_KEPT, from: 'mod' }, { table: DECOR_MOD_STREETS, from: 'modstreet' }]) {
     for (const [id, count] of Object.entries(table.models)) put({ model: Number(id), flat: null }, count, from);
     for (const [k, count] of Object.entries(table.flats)) put({ model: null, flat: k.split('_').map(Number) }, count, from);
   }

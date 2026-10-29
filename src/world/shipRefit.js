@@ -3,12 +3,12 @@
 // furnishes every room they already have: a captain's cabin, berths, a mess, a chart room and an arms locker, stores,
 // a cargo hold, and lamps in the rooms that had none. Every piece is one of Daggerfall's own models or flats, laid out
 // here in metres in the interior's frame (world/interior/interiorLayout.js) and checked against the shells by
-// tools/shipRefitCheck.mjs. The building record is the player's own (BLOCKS.BSA) with these pieces appended, served on
-// the world-data door as a building file (ReplaceRmbBlockBuildingData), so Warm Ashes' ambush variants lay it over
-// their blocks as DFU composes two such files. It is the port's own: no switch, the same deck for every player.
+// tools/shipRefitCheck.mjs. The building record is the player's own (BLOCKS.BSA) with these pieces appended, served as
+// the port's own building file (ReplaceRmbBlockBuildingData) behind no door, so Warm Ashes' ambush variants lay it over
+// their blocks as DFU composes two such files. No switch: the same deck for every player, Replace Game Artwork or not.
 
 import { buildingToDfuJson } from '../formats/worldData/worldDataJson.js';
-import { registerWorldDataAsset, buildingReplacementFilename } from '../formats/worldData/worldDataReplacement.js';
+import { registerPortBuilding, buildingReplacementFilename } from '../formats/worldData/worldDataReplacement.js';
 import { ROTATION_DIVISOR } from '../formats/blocksFile.js';
 
 const U = 0.025;   // MeshReader.GlobalScale: one classic unit in metres
@@ -80,9 +80,9 @@ export const SHIP_REFIT = Object.freeze({
       hold: Object.freeze({
         floor: 0.225,
         models: Object.freeze([
-          m(41833, -14.6, 0.55), m(41832, -11.45, 1.55), m(41822, -11.45, 1.55, 0, 1.3), m(41822, -9.95, 2.1), m(41831, -3.05, 2.45),
-          m(41827, -1.7, 2.25), m(41832, 1.1, 1.7), m(41818, 3.3, 1.85),
-          m(41834, -13.9, -4.05), m(41833, -10.9, -4.35), m(41813, 2.55, -5.1), m(41813, 3.6, -4.85, 30),
+          m(41833, -14.6, 0.5), m(41832, -11.45, 1.5), m(41822, -11.45, 1.5, 0, 1.3), m(41822, -9.95, 2.05), m(41831, -3.05, 2.45),
+          m(41827, -1.7, 2.2), m(41832, 1.1, 1.65), m(41818, 3.3, 1.8),
+          m(41834, -13.9, -4.05), m(41833, -10.9, -4.3), m(41813, 2.55, -5.05), m(41813, 3.6, -4.8, 30),
         ]),
         flats: Object.freeze([
           f(205, 0, 4.8, -1.5), f(205, 0, 5.5, -2.4), f(205, 0, 4.9, -3.3), f(205, 17, -4.5, -5.6), f(205, 17, -3.5, -5.9),
@@ -95,8 +95,8 @@ export const SHIP_REFIT = Object.freeze({
     deck: Object.freeze({
       floor: 5.8, start: Object.freeze([2.0, 1.0]),
       models: Object.freeze([
-        m(41822, -9.5, 3.4), m(41818, -9.5, 3.4, 0, 0.78), m(41811, -7.6, 3.6), m(41827, 5.95, 3.4), m(41831, 7.2, 3.15),
-        m(41832, -9.0, -6.0), m(41822, -7.4, -6.2), m(41818, 9.0, -5.6), m(41827, 10.3, -5.4), m(41822, 12.2, 2.0),
+        m(41822, -9.5, 3.4), m(41818, -9.5, 3.4, 0, 0.78), m(41811, -7.6, 3.6), m(41827, 5.9, 3.3), m(41831, 7.2, 3.05),
+        m(41832, -9.0, -6.0), m(41822, -7.4, -6.2), m(41818, 9.0, -5.6), m(41827, 10.3, -5.35), m(41822, 12.0, 1.8),
       ]),
     }),
   }),
@@ -113,8 +113,9 @@ export const SHIP_REFIT = Object.freeze({
           // the officers' quarters: three berths along the hull, a table between
           ...[-18, -12, -6].flatMap((x) => [m(41001, x, 11.4), m(41811, x + 1.6, 11.4, 90), m(41003, x, 4.2), m(41103, x + 1.6, 9.6, 180)]),
           m(41108, -3.5, 8), m(41102, -3.5, 7.0), m(41102, -3.5, 9.0, 180),
-          // the crew's berths: bunks along the hull, a sea chest at each, and along the inner wall
-          ...[1.5, 4.2, 6.9, 9.6, 12.3, 15.0, 17.7, 20.4, 23.1, 25.8, 28.5, 31.2, 33.9].flatMap((x) => [m(41002, x, 11.0), m(41812, x, 10.0)]),
+          // the crew's berths: bunks along the hull, a sea chest at each, and along the inner wall; Daggerfall's own
+          // lantern hangs where a fifth hull berth would stand (11.2, 10.4), so none stands there
+          ...[1.5, 4.2, 6.9, 9.6, 15.0, 17.7, 20.4, 23.1, 25.8, 28.5, 31.2, 33.9].flatMap((x) => [m(41002, x, 11.0), m(41812, x, 10.0)]),
           ...[2.5, 5.2, 7.9, 10.6, 13.3, 16.0, 18.7, 21.4, 24.1].flatMap((x) => [m(41002, x, 4.45), m(41812, x, 5.55, 180)]),   // the door is at 27
           // the chart room
           m(41112, -16.3, -4.5), m(41101, -17.0, -3.55, 180), m(41101, -15.6, -3.55, 180), m(41118, -13.0, -6.5, -90), m(41030, -20.1, -4.5, 90),
@@ -123,8 +124,8 @@ export const SHIP_REFIT = Object.freeze({
           m(41032, -11.85, -7.0, 90), m(41032, -11.85, -2.5, 90),
           // the galley's stores and its worktop
           m(41027, 6.65, -6.5, 90), m(41027, 6.65, -3.0, 90), m(41116, 12.0, -7.8), m(41822, 16.0, -7.6), m(41818, 16.0, -7.6, 0, 0.78), m(41827, 17.4, -7.7),
-          // the arms locker
-          m(41003, 24.0, -7.65), m(41003, 26.2, -7.65), m(41003, 28.4, -7.65), m(41813, 30.6, -7.6), m(41813, 31.6, -7.6), m(41108, 26.0, -3.0),
+          // the arms locker, its wardrobes either side of Daggerfall's own lantern (25.6, -7.2)
+          m(41003, 24.0, -7.65), m(41003, 26.9, -7.65), m(41003, 29.0, -7.65), m(41813, 30.6, -7.6), m(41813, 31.6, -7.6), m(41108, 26.0, -3.0),
           // the sail locker in the bow
           m(41832, 41.5, 6.0), m(41827, 41.5, 4.4), m(41832, 41.5, -3.5), m(41818, 40.0, -4.3),
         ]),
@@ -149,7 +150,7 @@ export const SHIP_REFIT = Object.freeze({
           m(41813, 13.0, -2.5), m(41813, 14.0, -2.5), m(41813, 26.0, 4.8), m(41827, 36.0, 5.5), m(41827, 36.0, -2.0),
         ]),
         flats: Object.freeze([
-          f(205, 0, 34.5, 4.0), f(205, 0, 35.3, 3.2), f(205, 0, 34.6, 2.4), f(205, 17, 9.0, -4.0), f(205, 17, 8.0, -4.4), f(205, 19, 20.5, 7.4),
+          f(205, 0, 34.5, 4.0), f(205, 0, 35.3, 3.2), f(205, 0, 34.6, 2.4), f(205, 17, 9.0, -4.0), f(205, 17, 8.0, -4.4), f(205, 19, 20.2, 7.4),
           f(205, 20, -4.0, -2.4), f(205, 0, 40.5, 1.5),
           lamp(0.0, 1.5, 5.52), lamp(16.0, 5.0, 5.52), lamp(38.0, 1.5, 5.52),
         ]),
@@ -230,7 +231,7 @@ export function installShipRefit(blocksFile) {
   let n = 0;
   for (const ship of Object.values(SHIP_REFIT)) {
     try {
-      if (registerWorldDataAsset(buildingReplacementFilename(ship.block, ship.index, ship.record), shipRefitJson(blocksFile, ship))) n++;
+      if (registerPortBuilding(buildingReplacementFilename(ship.block, ship.index, ship.record), shipRefitJson(blocksFile, ship))) n++;
     } catch (e) { console.error(`[worlddata] ${e?.message ?? e} - that ship stands as Daggerfall built it`); }
   }
   return n;

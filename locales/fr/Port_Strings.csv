@@ -3107,6 +3107,8 @@ instance.door.questHere,"Ce que votre quête demande ici vous attend dans votre 
 instance.door.questPublic,"Ce que votre quête demande ici ne se trouve que dans votre instance. Le donjon partagé est plus petit et n’en contient rien."
 instance.door.refused,"Cette instance vous est fermée. Seuls son propriétaire et son groupe peuvent y entrer."
 instance.door.unavailable,"Votre instance n’a pas pu être ouverte. Réessayez dans un instant."
+interior.setDown.buried,"Des meubles se trouvent désormais là où vous aviez laissé des objets. Ils ont été déposés à vos pieds."
+interior.setDown.chest,"Un coffre qui se trouvait ici a disparu. Son contenu a été déposé à vos pieds."
 inventory.batch.aetheric,"{name} est un objet Éthérique - le Courtier des sceaux le démonte, pas la Reforge."
 inventory.batch.allJunk,"Toute la camelote"
 inventory.batch.allMagic,"Tous les Magiques"

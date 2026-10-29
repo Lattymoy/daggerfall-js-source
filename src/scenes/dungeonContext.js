@@ -1090,7 +1090,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       dungeonHearths.push({ x: p[0], y: cy, z: p[2], foot: p[1], w: size.w, h: size.h, placed: true, archive, record });
     }
   }
-  await standDungeonFlora({ blocks: dungeon.blocks, collider, getTexture, flatGroups, seed: dfLocation?.dungeon?.recordElement?.header?.locationId ?? 0 });   // the seabed's flats under every flooded block's water, batched with the layout's own
   // AUDIT REST II F5: THE FIRES THAT KEEP A CAMPFIRE'S PROMISES - the ward (encounterSpot), the compass (withFireMarks)
   // and the held map (`fires`) read this list: the law's placed fires, and the layout's own fire it took for the
   // entrance's (AUDIT REST-PARTY C5 - it counts toward N, so it stands for a fire the law did not place). Read only the
@@ -1112,6 +1111,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     dungeonHearths.push(...kept);
     dungeonFires.length = 0;
   }
+  await standDungeonFlora({ blocks: dungeon.blocks, collider, getTexture, flatGroups, positionsOf: (id) => cpuModels.get(id)?.positions ?? null, seed: dfLocation?.dungeon?.recordElement?.header?.locationId ?? 0 });   // SEABED: every flooded block's seabed, batched with the layout's flats (world/dungeon/dungeonFlora.js)
 
   // Enemies (C3): the classic selection over this dungeon's markers -
   // fixed (record 16) + random (record 15, LocationId-seeded tables).

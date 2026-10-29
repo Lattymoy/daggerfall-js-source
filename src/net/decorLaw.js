@@ -353,8 +353,8 @@ export function mintDecorId(rand = Math.random) {
 // into the room its owner cleared. Pure, as the rest of this file is.
 
 /** One built-in piece's name - `m<placement>:<model>` or `f<flat>:<archive>.<record>`, every number canonical. WD3: a
- *  flat's archive runs to five digits - the town mods' interiors (Beautiful Villages, Beautiful Cities) and Detailed
- *  Ships' cabins lay flats of the mods' own archives (DET's 10010-10028, the table clutter's 56790), and a name with a
+ *  flat's archive runs to five digits - the town mods' interiors (Beautiful Villages, Beautiful Cities) lay flats of
+ *  the mods' own archives (DET's 10010-10028, the table clutter's 56790), and a name with a
  *  classic archive's three digits could not name them: online the room's whole list was refused, offline the piece came
  *  back at the next load. */
 export const DECOR_BASE_KEY_RE = /^(?:m(?:0|[1-9]\d{0,3}):(?:0|[1-9]\d{0,5})|f(?:0|[1-9]\d{0,3}):(?:0|[1-9]\d{0,4})\.(?:0|[1-9]\d{0,2}))$/;

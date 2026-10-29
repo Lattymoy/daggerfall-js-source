@@ -43,7 +43,7 @@ function det3(m) {
  * result does not matter, rotateNormal renormalises) - or null when the
  * columns are one length (rotation and uniform scale: the matrix itself
  * is exact once renormalised). A world-data model's XScale/YScale/ZScale
- * (the ship refit's rigging and rails) is the case: Unity lights it
+ * (Warm Ashes' small raid, a town pack's stretched rafters) is the case: Unity lights it
  * through the inverse transpose, as it does World of Daggerfall's rocks.
  */
 export function unevenScaleNormalMatrix(m) {

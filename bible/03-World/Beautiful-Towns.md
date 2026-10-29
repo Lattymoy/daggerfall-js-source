@@ -447,14 +447,20 @@ the hills, the pads, or the author's own models under it (a temple on its founda
 two, named: Merdale's third stair, whose pad would bury the second, and TEMPASH4's temple's back edge, 2.27 m over the
 pack's own hill too (`test/world/fb1013e_hillseat.test.js`; the whole packs swept with the player's ARCH3D on `ARENA2_PATH`).
 
-**The pack's items** (TOWN-ITEMS, 2026-10-29; Mac: "we need to do comprehensive replacements and also remove any
-mention or credit of him"). The bottles, bread and ham of archive `1210` on the towns' shelves and tables wore
-pictures from a vendored mod that its author asked to have taken out. Each now wears Daggerfall's own picture of the
-thing, sized by its record (`world/townStandIns.js` `TOWN_ITEMS`; `wd3_standins.test.js`): the green, blue and amber
-bottles `TEXTURE.205`'s at three fifths, as small as the shelves hold them; the loaf and the ham `TEXTURE.211`'s; the
-two bottles of wine `205`'s. A player's own RMB Resource Pack answers first. No town places `1210_1`, `_3`, `_4`,
-`_8`, `_9` or `1230_30`; they stood on the ships and were offered as decorations, so a piece a player placed keeps a
-picture (a map, a scroll, scrolls, two baskets, a statuette), and the catalogue offers them no more.
+**The pack's items** (TOWN-ITEMS, 2026-10-29; Mac: "we need to do comprehensive replacements"). The bottles, bread
+and ham of archive `1210` on the towns' shelves and tables wore pictures from a vendored mod, taken out that day. Each
+now wears Daggerfall's own picture of the thing, sized by its record (`world/townStandIns.js` `TOWN_ITEMS`): the green,
+blue and brown bottles `TEXTURE.205`'s at three fifths, as small as the shelves hold them; the loaf and the ham
+`TEXTURE.211`'s; the two bottles of wine `205`'s. A player's own RMB Resource Pack answers first. No town places
+`1210_1`, `_3`, `_4`, `_8`, `_9` or `1230_30`; the removed mod's ships stood them, and they wear a map, a scroll,
+scrolls, two baskets and a statuette.
+
+**What stands at every boot** (AUDIT SHIP-REFIT R1, R2). The removed mod registered these pictures and DET's pieces at
+boot behind its own switch, on by default and the room's online, so a decoration a player placed from them stood with
+every town mod off. They still do (`installPortStandIns`, called by `scenes/shared.js`); the beds, the paintings and the
+pack's own pieces stand with the towns, as before. The eighteen pieces only the ships stood stay in the decorator,
+offered and numbered as they were (`decorMods.js` `DECOR_MOD_KEPT`), and the bottles keep their names: no
+decoration's name or number moved (`decormods.test.js`, `wd3_standins.test.js`).
 
 **The stand-in doors' seams** (2026-09-25, found when the first stand-ins were wired; `standinDoor.test.js`). A
 stand-in answers its scale as `{ width, height }`, the shape `scaledBillboardSize` reads - it had answered `{ x, y }`,

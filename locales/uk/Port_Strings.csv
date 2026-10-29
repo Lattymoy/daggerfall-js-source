@@ -345,6 +345,8 @@ holdings.horse.boons.starving,"Виснажений голодом - не ска
 holdings.wagon.boons.failing,"Розвалюється, але досі котиться на повній швидкості."
 holdings.wagon.boons.rickety,"Розхитаний, але досі котиться на повній швидкості."
 holdings.wagon.boons.sound,"Міцний - тому котиться швидше."
+interior.setDown.buried,"Там, де ви залишили речі, тепер стоять меблі. Речі залишено біля ваших ніг."
+interior.setDown.chest,"Скрині, що стояла тут, більше немає. Її вміст залишено біля ваших ніг."
 inventory.cape.label,"Показувати плащ"
 inventory.cape.title,"Показує або приховує ваш плащ і вашу ауру. Інші гравці бачать те саме."
 inventory.store.chestAct,"Закрийте скриню, перш ніж це робити."

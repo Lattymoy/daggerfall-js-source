@@ -1194,6 +1194,8 @@ holdings.horse.boons.starving,"Λιμοκτονεί - δεν καλπάζει μ
 holdings.wagon.boons.failing,"Διαλύεται, αλλά κυλά ακόμη με πλήρη ταχύτητα."
 holdings.wagon.boons.rickety,"Ετοιμόρροπη, αλλά κυλά ακόμη με πλήρη ταχύτητα."
 holdings.wagon.boons.sound,"Γερή - γι' αυτό κυλά πιο γρήγορα."
+interior.setDown.buried,"Εκεί που άφησες κάποια πράγματα υπάρχουν τώρα έπιπλα. Αφέθηκαν στα πόδια σου."
+interior.setDown.chest,"Ένα σεντούκι που βρισκόταν εδώ δεν υπάρχει πια. Ό,τι περιείχε αφέθηκε στα πόδια σου."
 inventory.cape.label,"Εμφάνιση κάπας"
 inventory.cape.title,"Εμφανίζει ή κρύβει την κάπα και την αύρα σας. Οι άλλοι παίκτες βλέπουν το ίδιο."
 inventory.store.chestAct,"Κλείστε το σεντούκι πριν το κάνετε αυτό."

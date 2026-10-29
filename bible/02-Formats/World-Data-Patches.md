@@ -1,7 +1,7 @@
 # World-data patches (WD1, 2026-09-25)
 
 Three of the sea mods Mac handed over on 2026-09-25 (Warm Ashes - Ships, and
-two removed on 2026-10-29 at their author's request) are pure Daggerfall Unity *world
+two removed on 2026-10-29) are pure Daggerfall Unity *world
 data*: whole blocks and whole building records as DFU's World Data Editor
 writes them - the classic block, read out of the player's `BLOCKS.BSA`,
 with the author's edits in it. Most of every such file is the classic

@@ -1194,6 +1194,8 @@ holdings.horse.boons.starving,"Utsvulten - ingen galopp förrän den ätit. Ge d
 holdings.wagon.boons.failing,"Faller isär, men rullar fortfarande i full fart."
 holdings.wagon.boons.rickety,"Skranglig, men rullar fortfarande i full fart."
 holdings.wagon.boons.sound,"Stadig - därför rullar den snabbare."
+interior.setDown.buried,"Där du lämnade några saker står nu möbler. De har lagts vid dina fötter."
+interior.setDown.chest,"En kista som stod här är borta. Det den innehöll har lagts vid dina fötter."
 inventory.cape.label,"Visa mantel"
 inventory.cape.title,"Visar eller döljer din mantel och din aura. Andra spelare ser samma sak."
 inventory.store.chestAct,"Stäng kistan innan du gör det."

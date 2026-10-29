@@ -332,8 +332,8 @@ export const DET_TOWN_MODELS = Object.freeze({
 
 /** DET flat records stood in by the player's own sprite of the same kind: [classic archive, record] - the thing DET's
  *  catalogue names it, as the town placements bear out (a large sack on a storeroom floor 138 times, a tiny globe on a
- *  high shelf 200 times). 10021_22 and _27 and 10027_4 to _14 no town places: they stood on a ship refit since
- *  removed and were offered as decor, so a piece a player placed keeps its picture. */
+ *  high shelf 200 times). 10021_22 and _27 and 10027_4 to _14 no town places: a removed mod's ships stood them
+ *  and the decorator offers them still (systems/decor/decorMods.js DECOR_MOD_KEPT). */
 export const DET_FLAT_STAND_INS = Object.freeze({
   10021: Object.freeze({ 13: [218, 0], 17: [213, 0], 22: [200, 1], 27: [205, 30] }),   // broth in its pot; an orange; a goblet; a bucket
   10025: Object.freeze({ 3: [205, 17] }),   // a large sack

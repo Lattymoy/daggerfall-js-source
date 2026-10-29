@@ -1011,11 +1011,10 @@ export const TOWN_CLUTTER_ARCHIVE = 56790;
  *  and tables. Each record stands in as Daggerfall's own picture of the thing, at `size` times the size it stands at
  *  itself: [archive, record, size]; 13, 16 and 24 (75 placements) are named nowhere and draw nothing. The bottles are
  *  TEXTURE.205's at three fifths, as small as the shelves hold them. 1210_1, _3, _4, _8 and _9 and 1230_30 no town
- *  places: they stood on a ship refit since removed and were offered as decor, so a piece a player placed keeps a
- *  picture. */
+ *  places: a removed mod's ships stood them and the decorator offered them, so they are offered still. */
 export const TOWN_ITEMS = Object.freeze({
   1210: Object.freeze({
-    10: [205, 14, 0.6], 11: [205, 11, 0.6], 12: [205, 34, 0.6],   // a green, a blue and an amber bottle
+    10: [205, 14, 0.6], 11: [205, 11, 0.6], 12: [205, 34, 0.6],   // a green, a blue and a brown bottle
     17: [211, 31, 0.5], 18: [211, 40, 0.75],                     // a loaf of bread; a ham
     19: [205, 13, 1], 20: [205, 16, 1],                          // two bottles of wine
     1: [209, 8, 0.5], 3: [209, 5, 0.75], 4: [209, 6, 0.5], 8: [205, 9, 1], 9: [205, 9, 1],   // a map, a scroll, scrolls, two baskets
@@ -1064,11 +1063,23 @@ export function installTownStandIns(isOn = () => true) {
   });
   n += addVendorTextures(Object.entries(TOWN_CLUTTER).map(classicPicture(TOWN_CLUTTER_ARCHIVE, 'clutter')).map((e) => ({ ...e, yields: true })));
   n += addVendorTextures(Object.entries(TOWN_GARDEN).map(classicPicture(TOWN_GARDEN_ARCHIVE, 'garden')).map((e) => ({ ...e, yields: true })));
-  const items = Object.entries(TOWN_ITEMS).flatMap(([archive, recs]) => Object.entries(recs).map(([record, [a, r, size]]) => classicFlatEntry({
-    archive: Number(archive), record: Number(record), from: [a, r], size, gate: isOn, fileName: `town-item-${archive}_${record}`,
-  })));
-  n += addVendorTextures(items.map((e) => ({ ...e, yields: true })));   // a player's own RMB Resource Pack answers first
   return n;
 }
+
+let _portInstalled = false;
+/**
+ * AUDIT SHIP-REFIT (2026-10-29): THE PIECES THAT STAND AT EVERY BOOT - DET's (world/detStandIns.js) and archive 1210/1230's
+ * items (TOWN_ITEMS), each the port's own picture of the thing. A removed mod registered them at boot behind its own
+ * switch, on by default and the room's online, so a decoration a player placed from them stood whatever else was on; they
+ * still do. The towns' other pieces stand while a town mod does. Once; answers the pictures registered.
+ */
+export function installPortStandIns() {
+  if (_portInstalled) return 0;
+  _portInstalled = true;
+  const items = Object.entries(TOWN_ITEMS).flatMap(([archive, recs]) => Object.entries(recs).map(([record, [a, r, size]]) => classicFlatEntry({
+    archive: Number(archive), record: Number(record), from: [a, r], size, gate: () => true, fileName: `town-item-${archive}_${record}`,
+  })));
+  return installDetStandIns(() => true) + addVendorTextures(items.map((e) => ({ ...e, yields: true })));   // a player's own RMB Resource Pack answers first
+}
 /** Test seam. */
-export function _resetTownStandIns() { _installed = false; }
+export function _resetTownStandIns() { _installed = false; _portInstalled = false; }

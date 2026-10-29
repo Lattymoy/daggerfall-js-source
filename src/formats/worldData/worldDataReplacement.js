@@ -121,6 +121,7 @@ export function worldDataBlocksServing() {
     if (a) parts.push(`${name}=${a.vendor ?? ''}@${a.priority}:${a.version ?? ''}`);
   }
   for (const name of _portBlocks.keys()) parts.push(`port:${name}`);
+  for (const name of _portBuildings.keys()) parts.push(`port:${name}`);   // AUDIT SHIP-REFIT: the port's own building files
   for (const l of _layers) if (l.isOn?.() ?? true) parts.push(`layer:${l.vendor}`);
   return parts.sort().join('|');
 }
@@ -228,7 +229,7 @@ export function _resetWorldDataReplacement({ assets = true } = {}) {
   regions = new Map(); locations = new Map(); blocks = new Map(); buildings = new Map();
   nextBlockIndex = 0; newBlockNames = new Map(); newBlockIndices = new Map(); _blocksFile = null;
   _refused.clear(); _quietLocations = false; _doorLatched = null;
-  if (assets) { _assets.clear(); _portBlocks.clear(); _blockFamilies.length = 0; _locationEdits.length = 0; _layers.length = 0; }   // IT1: the layers with the assets
+  if (assets) { _assets.clear(); _portBlocks.clear(); _portBuildings.clear(); _blockFamilies.length = 0; _locationEdits.length = 0; _layers.length = 0; }   // IT1: the layers with the assets
 }
 
 // ---- ARENA1: THE PORT'S OWN WORLD DATA - not a mod's, so behind no switch ----
@@ -243,6 +244,18 @@ const _portBlocks = new Map();   // name -> { index, json, block }
 export function registerPortBlock(name, json, index) {
   if (!name || json == null || !Number.isSafeInteger(index)) return false;
   _portBlocks.set(name, { index, json, block: null });
+  return true;
+}
+// AUDIT SHIP-REFIT (2026-10-29): A BUILDING FILE OF THE PORT'S OWN - the ships' furnishing (world/shipRefit.js) - is the
+// port's content, never a mod's: served whatever Replace Game Artwork says, as a port block is, and kept apart from the
+// mods' files, so no file of a mod's can take its place in the list. A live mod's own file of the same name answers
+// first (a player's world data before the port's, as a player's own texture pack is).
+const _portBuildings = new Map();   // building file name -> its JSON
+/** A building file of the port's own, by DFU's name (`<block>-<index>-building<record>.json`). */
+export function registerPortBuilding(fileName, json) {
+  if (!fileName || json == null) return false;
+  _portBuildings.set(fileName, json);
+  buildings.clear();   // a record read before it was registered answered without it
   return true;
 }
 /** WW7-4: a block of the port's own MADE OF ANOTHER - `make(blocksFile)` answers the block itself (world/capitalCastles.js:
@@ -555,20 +568,31 @@ function replaceRmbBlockBuildingData(blockName, blockIndex, dfBlock) {
  *  ask sets no variant of its own (the C# asks with NoVariant and lets
  *  WorldDataVariants answer for the last location). */
 export function getBuildingReplacementData(blockName, blockIndex, recordIndex) {
-  if (!worldDataOn() || !blockName) return null;
+  if (!blockName) return null;
+  if (!worldDataOn()) return portBuilding(blockName, blockIndex, recordIndex);   // AUDIT SHIP-REFIT: the port's own, behind no door
   const variant = getBuildingVariantHere(blockName, recordIndex, NO_VARIANT);
   const key = `${blockIndex}|${recordIndex}|${variant}`;
   const file = buildingReplacementFilename(blockName, blockIndex, recordIndex, variant);
   if (pinnedHere(pinLocationKey(), file)) { const json = tryGetAsset(file); return json ? buildingReplacementFromJson(json) : null; }   // WD3
   const cached = buildings.get(key);
   if (cached !== undefined) return cached === NO_REPLACEMENT ? null : cached;
-  const json = tryGetAsset(buildingReplacementFilename(blockName, blockIndex, recordIndex, variant));
+  const json = tryGetAsset(buildingReplacementFilename(blockName, blockIndex, recordIndex, variant)) ?? (variant === NO_VARIANT ? _portBuildings.get(file) : null);   // AUDIT SHIP-REFIT: a mod's own first
   if (!json) {
     if (variant === NO_VARIANT) buildings.set(key, NO_REPLACEMENT);   // Only look for replacement data once, non variant
     return null;
   }
   const data = buildingReplacementFromJson(json);
   buildings.set(key, data);
+  return data;
+}
+/** AUDIT SHIP-REFIT: the port's own building file for a record with the door shut, converted once, or null. */
+function portBuilding(blockName, blockIndex, recordIndex) {
+  const key = `port|${blockIndex}|${recordIndex}`;
+  const cached = buildings.get(key);
+  if (cached !== undefined) return cached === NO_REPLACEMENT ? null : cached;
+  const json = _portBuildings.get(buildingReplacementFilename(blockName, blockIndex, recordIndex, NO_VARIANT));
+  const data = json ? buildingReplacementFromJson(json) : null;
+  buildings.set(key, data ?? NO_REPLACEMENT);
   return data;
 }
 /** ApplyBuildingReplacementAutoMapData (:494-508): every value but 30

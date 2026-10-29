@@ -1,0 +1,74 @@
+[
+  {
+    "name": "ARRIVAL-chest-said-for-a-crate",
+    "file": "src/scenes/arrivalSetDown.js",
+    "old": "      if (items?.length) held.push({ items: items.map((it) => ({ ...it })), said: crate ? null : 'chest' });",
+    "new": "      if (items?.length) held.push({ items: items.map((it) => ({ ...it })), said: 'chest' });",
+    "tests": [
+      "test/scenes/arrivalSetDown.test.js"
+    ]
+  },
+  {
+    "name": "ARRIVAL-nothing-reset",
+    "file": "src/scenes/arrivalSetDown.js",
+    "old": "    reset() { held = []; },",
+    "new": "    reset() {},",
+    "tests": [
+      "test/scenes/arrivalSetDown.test.js"
+    ]
+  },
+  {
+    "name": "ARRIVAL-landed-twice",
+    "file": "src/scenes/arrivalSetDown.js",
+    "old": "      held = [];\n      if (said.has('chest'))",
+    "new": "      if (said.has('chest'))",
+    "tests": [
+      "test/scenes/arrivalSetDown.test.js"
+    ]
+  },
+  {
+    "name": "ARRIVAL-up-unread",
+    "file": "src/scenes/arrivalSetDown.js",
+    "old": "  if (!metFromBehind(collider, [pos[0], pos[1] + 0.05, pos[2]], [0, 1, 0])) return false;",
+    "new": "",
+    "tests": [
+      "test/scenes/arrivalSetDown.test.js"
+    ]
+  },
+  {
+    "name": "ARRIVAL-every-side",
+    "file": "src/scenes/arrivalSetDown.js",
+    "old": "  return LEVEL_RAYS.filter((d) => metFromBehind(collider, [pos[0], pos[1] + 0.15, pos[2]], d)).length >= 3;",
+    "new": "  return LEVEL_RAYS.filter((d) => metFromBehind(collider, [pos[0], pos[1] + 0.15, pos[2]], d)).length >= 1;",
+    "tests": [
+      "test/scenes/arrivalSetDown.test.js"
+    ]
+  },
+  {
+    "name": "ARRIVAL-container-moved",
+    "file": "src/scenes/arrivalSetDown.js",
+    "old": "        if (p.container || !p.items?.length || !insideSolid(collider, p.pos)) return true;",
+    "new": "        if (!p.items?.length || !insideSolid(collider, p.pos)) return true;",
+    "tests": [
+      "test/scenes/arrivalSetDown.test.js"
+    ]
+  },
+  {
+    "name": "ARRIVAL-landed-before-the-spawn",
+    "file": "src/scenes/worldModes.js",
+    "old": "      player.spawn(spot[0], spot[1], spot[2]);\n      arrivalSetDown.land(spot);",
+    "new": "      arrivalSetDown.land(player.pos);\n      player.spawn(spot[0], spot[1], spot[2]);",
+    "tests": [
+      "test/scenes/arrivalSetDown.test.js"
+    ]
+  },
+  {
+    "name": "ARRIVAL-piles-unread",
+    "file": "src/scenes/worldModes.js",
+    "old": "    interiorDropped.restorePiles(data.droppedPiles ? arrivalSetDown.unburied(data.droppedPiles.map((p) => ({ ...p, pos: place(p.pos) })), interiorCtx.collider) : data.droppedPiles);",
+    "new": "    interiorDropped.restorePiles(data.droppedPiles ? data.droppedPiles.map((p) => ({ ...p, pos: place(p.pos) })) : data.droppedPiles);",
+    "tests": [
+      "test/scenes/arrivalSetDown.test.js"
+    ]
+  }
+]

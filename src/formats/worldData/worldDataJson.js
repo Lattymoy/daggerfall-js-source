@@ -24,8 +24,8 @@
 // at the first "���" description (RdbBlockDescProcessor),
 // an RDB object's Resources down to the one its Type uses
 // (RdbObjectProcessor), and an RMB model's zero scales dropped
-// (RmbBlock3dObjectRecordProcessor). The files these three mods ship were
-// written before DFU added RdbFlatResource.IsCustomData, so the
+// (RmbBlock3dObjectRecordProcessor). The world-data files the port has
+// carried were written before DFU added RdbFlatResource.IsCustomData, so the
 // serialiser writes the field set they carry and no more.
 
 import { BUILDING_TYPES } from '../../world/buildingNames.js';

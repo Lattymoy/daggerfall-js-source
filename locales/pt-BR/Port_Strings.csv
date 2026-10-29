@@ -3107,6 +3107,8 @@ instance.door.questHere,"O que sua missão pede aqui espera por você na sua ins
 instance.door.questPublic,"O que sua missão tem aqui está só na sua instância. A masmorra compartilhada é menor e não tem nada disso."
 instance.door.refused,"Essa instância está fechada para você. Só o dono e o grupo dele podem entrar."
 instance.door.unavailable,"Não foi possível abrir sua instância. Tente de novo em um momento."
+interior.setDown.buried,"Agora há móveis onde você deixou algumas coisas. Elas foram deixadas aos seus pés."
+interior.setDown.chest,"Um baú que ficava aqui sumiu. O que ele guardava foi deixado aos seus pés."
 inventory.batch.aetheric,"{name} é uma peça Etérea - quem a desmonta é o Corretor de Sigilos, não a Reforja."
 inventory.batch.allJunk,"Todo o lixo"
 inventory.batch.allMagic,"Todas as Mágicas"

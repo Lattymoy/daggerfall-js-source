@@ -1194,6 +1194,8 @@ holdings.horse.boons.starving,"Éhezik - nem vágtázik, amíg nem eszik. Etesd 
 holdings.wagon.boons.failing,"Szétesőben, de még teljes tempóban gurul."
 holdings.wagon.boons.rickety,"Rozoga, de még teljes tempóban gurul."
 holdings.wagon.boons.sound,"Szilárd - ezért gyorsabban gurul."
+interior.setDown.buried,"Ahol néhány holmit hagytál, most bútor áll. A holmikat a lábadhoz tettük."
+interior.setDown.chest,"Egy láda, amely itt állt, eltűnt. A tartalmát a lábadhoz tettük."
 inventory.cape.label,"Köpeny mutatása"
 inventory.cape.title,"Megjeleníti vagy elrejti a köpenyedet és az aurádat. A többi játékos ugyanezt látja."
 inventory.store.chestAct,"Csukd be a ládát, mielőtt ezt megteszed."

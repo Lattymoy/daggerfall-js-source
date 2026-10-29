@@ -3107,6 +3107,8 @@ instance.door.questHere,"Ciò che la tua missione chiede qui ti aspetta nella tu
 instance.door.questPublic,"Ciò che la tua missione cerca qui si trova solo nella tua istanza. Il dungeon condiviso è più piccolo e non ne contiene nulla."
 instance.door.refused,"Quell’istanza ti è chiusa. Possono entrare solo il suo proprietario e il suo gruppo."
 instance.door.unavailable,"Non è stato possibile aprire la tua istanza. Riprova tra un momento."
+interior.setDown.buried,"Dove avevi lasciato alcune cose ora ci sono dei mobili. Sono state posate ai tuoi piedi."
+interior.setDown.chest,"Un baule che si trovava qui non c'è più. Il suo contenuto è stato posato ai tuoi piedi."
 inventory.batch.aetheric,"{name} è un pezzo Eterico - lo smonta il Mediatore dei sigilli, non la Riforgia."
 inventory.batch.allJunk,"Tutta la cianfrusaglia"
 inventory.batch.allMagic,"Tutti i Magici"

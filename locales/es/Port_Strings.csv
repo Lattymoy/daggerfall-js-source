@@ -3107,6 +3107,8 @@ instance.door.questHere,"Lo que tu misión pide aquí te espera en tu instancia.
 instance.door.questPublic,"Lo que tu misión pide aquí solo está en tu instancia. La mazmorra compartida es más pequeña y no tiene nada de ello."
 instance.door.refused,"Esa instancia está cerrada para ti. Solo pueden entrar su dueño y su grupo."
 instance.door.unavailable,"No se pudo abrir tu instancia. Inténtalo de nuevo en un momento."
+interior.setDown.buried,"Ahora hay muebles donde dejaste algunas cosas. Se han dejado a tus pies."
+interior.setDown.chest,"Un cofre que había aquí ya no está. Lo que contenía se ha dejado a tus pies."
 inventory.batch.aetheric,"{name} es una pieza Etérea: la desmonta el Corredor de emblemas, no la Reforja."
 inventory.batch.allJunk,"Toda la basura"
 inventory.batch.allMagic,"Todas las Mágicas"

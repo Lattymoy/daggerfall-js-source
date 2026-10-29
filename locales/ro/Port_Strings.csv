@@ -3107,6 +3107,8 @@ instance.door.questHere,"Ce cere misiunea ta aici te așteaptă în instanța ta
 instance.door.questPublic,"Ce are misiunea ta de făcut aici se află doar în instanța ta. Temnița comună este mai mică și nu conține nimic din asta."
 instance.door.refused,"Instanța aceea îți este închisă. Doar proprietarul ei și grupul lui pot intra."
 instance.door.unavailable,"Instanța ta nu a putut fi deschisă. Încearcă din nou peste o clipă."
+interior.setDown.buried,"Acum sunt mobile acolo unde ai lăsat câteva lucruri. Au fost lăsate la picioarele tale."
+interior.setDown.chest,"Un cufăr care stătea aici a dispărut. Ce era în el a fost lăsat la picioarele tale."
 inventory.batch.aetheric,"{name} este o piesă Eterică - se dezmembrează la Samsarul de sigilii, nu prin reforjare."
 inventory.batch.allJunk,"Toate vechiturile"
 inventory.batch.allMagic,"Toate piesele Magice"

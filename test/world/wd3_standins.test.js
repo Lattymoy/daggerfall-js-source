@@ -30,7 +30,7 @@ import {
   TOWN_BED_FIRST, TOWN_BED_COUNT, TOWN_BED_ARCHIVE, TOWN_BED_MODELS, TOWN_BEDCLOTHS, TOWN_BED_COLOURS, townBedOf, bedclothRecord,
   isBedclothGreen, recolourBedcloth, CLASSIC_PAINTINGS, TOWN_PAINTINGS, paintingModel, ROSYS_PIECES, TOWN_CROP_FIELDS, RMBRP_ROCKS,
   RMBRP_ROCK_SCALE, RMBRP_HILLS, RMBRP_STALLS, RMBRP_DOCKS, DOCK_SCALE, RMBRP_PIECES, TOWN_CLUTTER, TOWN_CLUTTER_ARCHIVE, TOWN_GARDEN, TOWN_GARDEN_ARCHIVE, TOWN_ITEMS,
-  installTownStandIns, _resetTownStandIns,
+  installTownStandIns, installPortStandIns, _resetTownStandIns,
 } from '../../src/world/townStandIns.js';
 import { RMBRP_HILL_SHAPES, SHAPE_BEARINGS, SHAPE_RINGS } from '../../src/world/rmbrpHillShapes.js';   // FIELD BUGS 2026-10-05 HILL-SHAPES
 import { DET_TOWN_MODELS, DET_FLAT_STAND_INS, DET_FLAT_DRAWINGS, DET_TOWN_FLATS, DET_OLD_ARCHIVES, detStandInsOn, _resetDetStandIns } from '../../src/world/detStandIns.js';
@@ -334,7 +334,7 @@ test('WD3 stand-ins, a field sown in a block: rmbFlats lays a registered prefab\
 });
 
 // ---- the install ----------------------------------------------------------------------------------------------------------
-test('WD3 stand-ins, the install: once; every piece behind the town mods\' switch - beds, paintings, Rosy\'s, the pack\'s pieces, the fields, the bedclothes, the cloth, the clutter, the gardens, the pack\'s items and DET\'s pieces (mutant: TOWN-ITEMS-UNGATED)', async () => {
+test('WD3 stand-ins, the install: once; every piece behind the town mods\' switch - beds, paintings, Rosy\'s, the pack\'s pieces, the fields, the bedclothes, the cloth, the clutter, the gardens and DET\'s pieces (the boot\'s install aside, below)', async () => {
   resetAll();
   let towns = true;
   const n = installTownStandIns(() => towns);
@@ -342,7 +342,7 @@ test('WD3 stand-ins, the install: once; every piece behind the town mods\' switc
   const recs = (t) => Object.values(t).reduce((k, rs) => k + Object.keys(rs).length, 0);
   const det = recs(DET_FLAT_STAND_INS) + recs(DET_FLAT_DRAWINGS) + recs(DET_TOWN_FLATS)
     + Object.values(DET_OLD_ARCHIVES).reduce((k, a) => k + [DET_FLAT_STAND_INS, DET_FLAT_DRAWINGS, DET_TOWN_FLATS].reduce((m, t) => m + Object.keys(t[a] ?? {}).length, 0), 0) + TOWN_PICTURES.length;
-  assert.equal(n, det + 18 + 22 + 7 + 13, 'DET\'s pictures, the bedclothes, the clutter, the gardens and the pack\'s items');
+  assert.equal(n, det + 18 + 22 + 7, 'DET\'s pictures, the bedclothes, the clutter and the gardens');
   for (const id of [...Object.keys(TOWN_PAINTINGS), ...Object.keys(ROSYS_PIECES), ...Object.keys(RMBRP_PIECES), ...Object.keys(DET_TOWN_MODELS)]) assert.equal(hasCustomModel(id), true, id);
   for (const id of Object.keys(TOWN_CROP_FIELDS)) assert.ok(flatFieldFor(id), id);
   const pictures = [
@@ -353,8 +353,8 @@ test('WD3 stand-ins, the install: once; every piece behind the town mods\' switc
     ...Object.entries(DET_TOWN_FLATS).flatMap(([a, rs]) => Object.keys(rs).map((r) => [Number(a), Number(r)])),
     ...Object.entries(DET_FLAT_STAND_INS).flatMap(([a, rs]) => Object.keys(rs).map((r) => [Number(a), Number(r)])),
     ...Object.keys(DET_OLD_ARCHIVES).flatMap((a) => Object.keys(DET_FLAT_STAND_INS[DET_OLD_ARCHIVES[a]] ?? {}).map((r) => [Number(a), Number(r)])),
-    ...Object.entries(TOWN_ITEMS).flatMap(([a, rs]) => Object.keys(rs).map((r) => [Number(a), Number(r)])),
   ];
+  for (const [a, r] of Object.entries(TOWN_ITEMS).flatMap(([ar, rs]) => Object.keys(rs).map((rr) => [Number(ar), Number(rr)]))) assert.equal(hasTextureReplacement(a, r), false, `${a}_${r}: the boot's, never the town install's`);
   for (const [a, r] of pictures) assert.equal(hasTextureReplacement(a, r), true, `${a}_${r}`);
   assert.equal(detStandInsOn(), true);
   for (const [a, r] of Object.entries(TOWN_CLUTTER).concat(Object.entries(TOWN_GARDEN)).map(([, from]) => from)) assert.ok(a <= LAST_CLASSIC_TEXTURE_ARCHIVE && Number.isInteger(r), 'a classic record');
@@ -366,9 +366,28 @@ test('WD3 stand-ins, the install: once; every piece behind the town mods\' switc
   resetAll();
 });
 
+test('AUDIT SHIP-REFIT the boot\'s install: DET\'s pieces and archive 1210/1230\'s items stand at every boot, with every switch off - a decoration placed from them stood so while a removed mod carried them; once; the towns\' own pieces still the towns\' (mutants: PORT-STAND-INS-*)', () => {
+  resetAll();
+  const n = installPortStandIns();
+  assert.equal(installPortStandIns(), 0, 'once');
+  const items = Object.entries(TOWN_ITEMS).flatMap(([a, rs]) => Object.keys(rs).map((r) => [Number(a), Number(r)]));
+  assert.ok(n > items.length, 'DET\'s pictures and the items');
+  for (const [a, r] of items) assert.equal(hasTextureReplacement(a, r), true, `${a}_${r}`);
+  for (const [a, rs] of Object.entries(DET_FLAT_STAND_INS)) for (const r of Object.keys(rs)) assert.equal(hasTextureReplacement(Number(a), Number(r)), true, `${a}_${r}`);
+  for (const id of [45081, 45190, 45191, 45145]) assert.equal(hasCustomModel(id), true, `${id}`);
+  assert.equal(hasCustomModel(69424), false, 'a painting is the towns\'');
+  let towns = false;
+  installTownStandIns(() => towns);
+  assert.deepEqual([hasCustomModel(45190), hasCustomModel(69424), hasTextureReplacement(1210, 10)], [true, false, true], 'the towns off: the boot\'s stand');
+  towns = true;
+  assert.equal(hasCustomModel(69424), true);
+  assert.match(readFileSync(join(ROOT, 'src/scenes/shared.js'), 'utf8'), /installImmersiveTravel\(\);[^\n]*\n\s+installPortStandIns\(\);/, 'the boot calls it');
+  resetAll();
+});
+
 test('WD3 the pack\'s items (archive 1210): Daggerfall\'s own picture of each, sized by its record - the bottles three fifths of TEXTURE.205\'s', async () => {
   resetAll();
-  installTownStandIns(() => true);
+  installPortStandIns();
   const bottle = { width: 10, height: 25, data: new Uint8Array(1000).fill(200) };
   setTextureDeriveContext({
     classicRgba: async (a, r) => (a === 205 && r === 14 ? bottle : { width: 3, height: 3, data: new Uint8Array(36).fill(9) }),
@@ -452,6 +471,7 @@ const NOT_STOOD_IN = Object.freeze({
 
 test('WD3 with ARENA2: every model and flat the two packs place is Daggerfall\'s own, stood in by the port, or one of the named few nothing stands (as DFU without the peers) - 2,014 models and 623 flats', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set' }, () => {
   resetAll();
+  installPortStandIns();   // the boot's (scenes/shared.js), as the game stands them
   installTownStandIns(() => true);
   const { blocks, maps, arch, texture } = loadArena2();
   const models = new Map(), flats = new Map();

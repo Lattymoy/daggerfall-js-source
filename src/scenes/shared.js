@@ -103,6 +103,7 @@ import '../systems/gate/gateSpoils.js'; import '../systems/portalStone.js'; impo
    // WB5: the Sigil Stone's own template (570) registers in every host, so a save carrying one loads it in any of the four; PORTAL1: and the Portal Stone's Use (572)
 import '../systems/sigil/sigilBroker.js';   // SET7: the Broker's record (what this character bought today) registers its save slot in every host, so a save made anywhere carries it
 import { installImmersiveTravel } from '../systems/immersiveTravel.js';   // IT1: Immersive Travel's Init - the drivers' and sailors' factions, their Fast Travel services
+import { installPortStandIns } from '../world/townStandIns.js';   // AUDIT SHIP-REFIT: DET's pieces and archive 1210/1230's items, at every boot
 import { installRoleplayRealism } from '../systems/roleplayRealism/rrInstall.js';   // RR1: Roleplay & Realism's InitMod - after Items', as DFU loads them (Items is the one it looks up)   // RRI1: the templates, the patches, the art - the same seam, the same reason   // DW3: its icons, on the replacement door - here and not at worldTick's module scope, where the mod's law sits in an import cycle (a TDZ)
 import { installEnemyExpansion } from '../systems/enemyExpansion/dexInstall.js';   // DEX1: Daggerfall Enemy Expansion's fifty enemies, their careers and the classic edits, once at boot
 import { installDwarvenDragon } from '../characters/dwarvenDragon.js';   // DWARVEN-DRAGON: the staff's clockwork dragon, its row and pictures
@@ -1494,6 +1495,7 @@ export function ensureAudio(fetch = fetchBytes) {
   // archive that has replacements is actually loaded.
   installDwarvenDragon();   // DWARVEN-DRAGON: the staff's clockwork dragon - its row, name and pictures before the archives load
   installImmersiveTravel();   // IT1: Carriage Drivers (8642) and Sailors (8643), and their Fast Travel - before the faction dictionary is built at the load
+  installPortStandIns();   // AUDIT SHIP-REFIT: a placed decoration's DET piece or item picture stands whatever is switched on (world/townStandIns.js)
   installForaging();   // FORAGE1: the ForagingQuests list (before any quest bridge is built), the six tools' and five foods' UseItem, the seven pictures, Foraging_Tools
   installWarmAshesShips();   // WA1: the WA_Ships quest list (before any quest bridge is built - LoadQuestLists reads it) and the mod's save record
   installDiverseWeaponsIcons();   // DW3: before the archives load, so 233/234's preload carries the mod's icons

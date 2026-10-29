@@ -1192,6 +1192,8 @@ holdings.horse.boons.starving,"Wygłodzony - nie galopuje, dopóki nie zje. Naka
 holdings.wagon.boons.failing,"Rozpada się, ale wciąż jedzie pełnym tempem."
 holdings.wagon.boons.rickety,"Rozklekotany, ale wciąż jedzie pełnym tempem."
 holdings.wagon.boons.sound,"Solidny - dzięki temu jedzie szybciej."
+interior.setDown.buried,"Tam, gdzie zostawiono twoje rzeczy, stoją teraz meble. Leżą u twoich stóp."
+interior.setDown.chest,"Skrzyni, która tu stała, już nie ma. To, co w niej było, leży u twoich stóp."
 inventory.cape.label,"Pokaż płaszcz"
 inventory.cape.title,"Pokazuje lub ukrywa twój płaszcz i twoją aurę. Inni gracze widzą to samo."
 inventory.store.chestAct,"Zamknij skrzynię, zanim to zrobisz."

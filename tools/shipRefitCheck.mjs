@@ -31,7 +31,7 @@ const STEP = 0.25;   // the walk's grid
 const CLIMB = 0.5;   // a step a player takes
 const SLACK = 0.02;  // a piece may stand this close to a wall or a floor
 
-function loadArena2(arena2) {
+export function loadArena2(arena2) {
   const blocks = new BlocksFile();
   if (!blocks.load(new Uint8Array(readFileSync(join(arena2, 'BLOCKS.BSA'))))) throw new Error('BLOCKS.BSA did not load');
   const arch = new Arch3dFile();
@@ -67,6 +67,42 @@ function worldBox(model, mat) {
   return { lo, hi };
 }
 
+/** A model's triangles under its matrix, in world space: [[a, b, c], ...]. */
+function trianglesOf(model, m) {
+  const p = model.positions, idx = model.indices, out = [];
+  const at = (i) => [m[0] * p[i * 3] + m[4] * p[i * 3 + 1] + m[8] * p[i * 3 + 2] + m[12], m[1] * p[i * 3] + m[5] * p[i * 3 + 1] + m[9] * p[i * 3 + 2] + m[13], m[2] * p[i * 3] + m[6] * p[i * 3 + 1] + m[10] * p[i * 3 + 2] + m[14]];
+  for (let t = 0; t < idx.length; t += 3) out.push([at(idx[t]), at(idx[t + 1]), at(idx[t + 2])]);
+  return out;
+}
+/** AUDIT SHIP-REFIT: HOW FAR THE SHELL'S SURFACE PASSES INTO A BOX - every shell triangle near it sampled every 4 cm,
+ *  each point inside `box` measured by its least axis: `foot` where the face looks up (a floor - a foot settling on a
+ *  curved deck), `side` where it does not (a wall or a bulwark through it). Eight rays from a piece's middle missed a
+ *  sloped bulwark that rose through a crate's outer corners between the heights they were cast at. */
+const SAMPLE_M = 0.04;
+function shellDepthIn(tris, box) {
+  let foot = 0, side = 0;
+  for (const [a, b, c] of tris) {
+    if ([0, 1, 2].some((k) => Math.max(a[k], b[k], c[k]) < box.lo[k] || Math.min(a[k], b[k], c[k]) > box.hi[k])) continue;
+    const e1 = [0, 1, 2].map((k) => b[k] - a[k]), e2 = [0, 1, 2].map((k) => c[k] - a[k]);
+    const nm = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
+    const floorFace = Math.abs(nm[1]) >= 0.7 * Math.hypot(...nm);
+    const n = Math.min(400, Math.ceil(Math.max(Math.hypot(...[0, 1, 2].map((k) => b[k] - a[k])), Math.hypot(...[0, 1, 2].map((k) => c[k] - a[k])), Math.hypot(...[0, 1, 2].map((k) => c[k] - b[k]))) / SAMPLE_M));
+    for (let i = 0; i <= n; i++) {
+      for (let j = 0; i + j <= n; j++) {
+        const u = i / n, v = j / n, w = 1 - u - v;
+        const q = [0, 1, 2].map((k) => a[k] * w + b[k] * u + c[k] * v);
+        const d = Math.min(...[0, 1, 2].map((k) => Math.min(q[k] - box.lo[k], box.hi[k] - q[k])));
+        if (d <= 0) continue;
+        if (floorFace) foot = Math.max(foot, d); else side = Math.max(side, d);
+      }
+    }
+  }
+  return { foot, side };
+}
+/** A billboard's column - it turns to the eye, so its footprint is its half width all round its centre - as a box. */
+const flatColumn = (x, z, half, base, top) => ({ lo: [x - half, base, z - half], hi: [x + half, top, z + half] });
+const overlapOf = (a, b) => Math.min(...[0, 1, 2].map((k) => Math.min(a.hi[k], b.hi[k]) - Math.max(a.lo[k], b.lo[k])));
+
 /** The floor a player can reach from `start`, a cell a step: Map key -> { x, y, z }. */
 function reachable(col, start, isBlocked) {
   const lv = (y) => Math.round(y / 0.6);
@@ -95,13 +131,17 @@ function reachable(col, start, isBlocked) {
   return out;
 }
 
+const name0 = (label, p) => `${label} ${p.modelIdNum} at ${((p.box.lo[0] + p.box.hi[0]) / 2).toFixed(2)},${((p.box.lo[2] + p.box.hi[2]) / 2).toFixed(2)}`;
 /** The checks every piece answers - walls, floor, overlaps, the walk and the containers - against `shell` (the classic
  *  models alone) and `all` (the shell with the pieces). */
-function checkPieces({ label, shell, all, pieces, before, start, isBlocked }) {
+function checkPieces({ label, shell, shellTris, all, pieces, before, start, isBlocked }) {
   const problems = [];
   const name = (p) => `${label} ${p.modelIdNum} at ${((p.box.lo[0] + p.box.hi[0]) / 2).toFixed(2)},${((p.box.lo[2] + p.box.hi[2]) / 2).toFixed(2)}`;
   for (const [k, p] of pieces.entries()) {
     const { lo, hi } = p.box;
+    const depth = shellDepthIn(shellTris, p.box);
+    if (depth.side > SLACK * 1.5) problems.push(`${name(p)}: the shell passes ${depth.side.toFixed(2)} m into its side`);
+    if (depth.foot > SLACK * 3) problems.push(`${name(p)}: its foot sinks ${depth.foot.toFixed(2)} m into the floor`);
     const c = [(lo[0] + hi[0]) / 2, 0, (lo[2] + hi[2]) / 2];
     const half = [(hi[0] - lo[0]) / 2, (hi[2] - lo[2]) / 2];
     for (const y of [lo[1] + 0.1, (lo[1] + hi[1]) / 2, hi[1] - 0.05]) {
@@ -151,7 +191,8 @@ export function checkShip(data, ship) {
   const lay = layoutInterior(block, ship.index, ship.record, getModel);
   const shellCount = shellLay.placements.length;
   const shell = new Collider();
-  for (const p of shellLay.placements) { const md = getModel(p.modelIdNum); shell.addMesh('shell', md.positions, md.indices, p.matrix); }
+  const shellTris = [];
+  for (const p of shellLay.placements) { const md = getModel(p.modelIdNum); shell.addMesh('shell', md.positions, md.indices, p.matrix); shellTris.push(...trianglesOf(md, p.matrix)); }
   const doors = shellLay.doors.map((d) => { const c = d.centre, mt = d.matrix; return mt ? [mt[0] * c.x + mt[4] * c.y + mt[8] * c.z + mt[12], mt[2] * c.x + mt[6] * c.y + mt[10] * c.z + mt[14]] : [c.x, c.z]; });
   const byDoor = (x, z) => doors.some((d) => Math.hypot(d[0] - x, d[1] - z) < 0.9);
   const marker = shellLay.markers[0];
@@ -160,9 +201,23 @@ export function checkShip(data, ship) {
   const all = new Collider();
   for (const p of lay.placements) { const md = getModel(p.modelIdNum); all.addMesh('all', md.positions, md.indices, p.matrix); }
   const pieces = lay.placements.slice(shellCount).map((p) => ({ ...p, box: worldBox(getModel(p.modelIdNum), p.matrix) }));
-  problems.push(...checkPieces({ label: ship.block, shell, all, pieces, before, start: [marker.x, marker.y, marker.z], isBlocked: byDoor }));
-  // the flats
+  problems.push(...checkPieces({ label: ship.block, shell, shellTris, all, pieces, before, start: [marker.x, marker.y, marker.z], isBlocked: byDoor }));
+  // the flats: the classic record's own (its lanterns) and the refit's, each a billboard's column clear of every piece
   const shellFlats = shellLay.flats.length;
+  const column = (fl) => {
+    const got = flatSize(fl.archive, fl.record);
+    if (!got) return null;
+    const w = got.size.width * (1 + got.scale.width / 256) * 0.025, h = got.size.height * (1 + got.scale.height / 256) * 0.025;
+    return flatColumn(fl.x, fl.z, w / 2, fl.y - h / 2, fl.y + h / 2);
+  };
+  for (const [i, fl] of lay.flats.entries()) {
+    const col = column(fl);
+    if (!col) continue;
+    for (const p of pieces) {
+      const ov = overlapOf(col, p.box);
+      if (ov > SLACK * 2) problems.push(`${ship.block} ${i < shellFlats ? 'classic' : 'refit'} flat ${fl.archive}_${fl.record} at ${fl.x.toFixed(2)},${fl.z.toFixed(2)}: ${ov.toFixed(2)} m into ${name0(ship.block, p)}`);
+    }
+  }
   for (const fl of lay.flats.slice(shellFlats)) {
     const got = flatSize(fl.archive, fl.record);
     const key = `${fl.archive}_${fl.record}`;
@@ -188,10 +243,11 @@ function checkDeck({ blocks, getModel }, ship, refit) {
   const classicRecs = blocks.readClassicBlock(ship.index).rmbBlock.subRecords[ship.record].exterior.block3dObjectRecords;
   const recs = refit.rmbSubRecord.exterior.block3dObjectRecords;
   const shell = new Collider(), all = new Collider();
+  const shellTris = [];
   for (const [k, o] of recs.entries()) {
     const md = getModel(o.modelIdNum);
     if (!md) { problems.push(`${label}: model ${o.modelIdNum} is not in this ARCH3D`); continue; }
-    if (k < classicRecs.length) shell.addMesh('shell', md.positions, md.indices, matOf(o));
+    if (k < classicRecs.length) { shell.addMesh('shell', md.positions, md.indices, matOf(o)); shellTris.push(...trianglesOf(md, matOf(o))); }
     all.addMesh('all', md.positions, md.indices, matOf(o));
     if (k >= classicRecs.length) {
       let lo = Infinity;
@@ -203,7 +259,7 @@ function checkDeck({ blocks, getModel }, ship, refit) {
   const start = [ship.deck.start[0], ship.deck.floor + 0.1, ship.deck.start[1]];
   const before = reachable(shell, start, () => false);
   if (before.size < 100) problems.push(`${label}: the deck's start reaches ${before.size} cells`);
-  problems.push(...checkPieces({ label, shell, all, pieces, before, start, isBlocked: () => false }));
+  problems.push(...checkPieces({ label, shell, shellTris, all, pieces, before, start, isBlocked: () => false }));
   return problems;
 }
 

@@ -3107,6 +3107,8 @@ instance.door.questHere,"To, co tu žádá tvůj úkol, na tebe čeká v tvé in
 instance.door.questPublic,"To, co tu potřebuje tvůj úkol, je jen v tvé instanci. Společná kobka je menší a nic z toho v ní není."
 instance.door.refused,"Tato instance je pro tebe zavřená. Vstoupit může jen její majitel a jeho družina."
 instance.door.unavailable,"Tvou instanci se nepodařilo otevřít. Zkus to za chvíli znovu."
+interior.setDown.buried,"Tam, kde ležely některé tvé věci, teď stojí nábytek. Leží u tvých nohou."
+interior.setDown.chest,"Truhla, která tu stála, je pryč. Co v ní bylo, leží u tvých nohou."
 inventory.batch.aetheric,"{name} je Éterický kus - rozebírá ho Překupník pečetí, ne Překování."
 inventory.batch.allJunk,"Všechno harampádí"
 inventory.batch.allMagic,"Všechny Magické"

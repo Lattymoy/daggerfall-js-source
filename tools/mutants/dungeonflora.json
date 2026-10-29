@@ -11,8 +11,8 @@
   {
     "name": "SEABED-shallow",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "        if (!floor || !(floor.ny >= FLORA.flatNy) || floor.y > water - FLORA.depthM) continue;",
-    "new": "        if (!floor || !(floor.ny >= FLORA.flatNy) || floor.y > water) continue;",
+    "old": "floor.y > water - SEABED.depthM) continue;",
+    "new": "floor.y > water) continue;",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]
@@ -20,8 +20,17 @@
   {
     "name": "SEABED-slope",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "        if (!floor || !(floor.ny >= FLORA.flatNy) || floor.y > water - FLORA.depthM) continue;",
-    "new": "        if (!floor || floor.y > water - FLORA.depthM) continue;",
+    "old": "        if (!floor || !(floor.ny >= SEABED.flatNy) || floor.y > water - SEABED.depthM) continue;",
+    "new": "        if (!floor || floor.y > water - SEABED.depthM) continue;",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-another-block",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "        if (!inBlock(b, x, z)) continue;",
+    "new": "        if (!b) continue;",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]
@@ -29,8 +38,62 @@
   {
     "name": "SEABED-door",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "        if (doors.some((d) => d2(d, pos) < FLORA.doorM * FLORA.doorM)) continue;",
-    "new": "        if (doors.some((d) => d2(d, pos) < FLORA.doorM)) continue;",
+    "old": "        if (doors.some((d) => d2(d, pos) < SEABED.doorM * SEABED.doorM)) continue;",
+    "new": "        if (doors.some((d) => d2(d, pos) < SEABED.doorM)) continue;",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-markers-unread",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "        if (marks.some((m) => across(m, pos) < SEABED.markerM * SEABED.markerM)) continue;",
+    "new": "",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-marker-every-storey",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "const across = (m, p) => (Math.abs(m[1] - p[1]) < SEABED.storeyM ?",
+    "new": "const across = (m, p) => (true ?",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-flats-unread",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "        if (flats.some((f) => across(f, pos) < SEABED.flatM * SEABED.flatM)) continue;",
+    "new": "",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-level-unread",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "        if (!levelAt(probe, pos, LEVEL_RINGS)) continue;",
+    "new": "",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-no-reach",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "const LEVEL_RINGS = Object.freeze([...ringOf(SEABED.levelR), ...ringOf(SEABED.reachR)].map(Object.freeze));",
+    "new": "const LEVEL_RINGS = Object.freeze([...ringOf(SEABED.levelR)].map(Object.freeze));",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-wide-unlevelled",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "          if (!size || (size.w / 2 > SEABED.reachR && !levelAt(probe, pos, footRing(size.w / 2)))) return false;",
+    "new": "          if (!size) return false;",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]
@@ -47,8 +110,17 @@
   {
     "name": "SEABED-spacing",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "        if (d < FLORA.spacingM * FLORA.spacingM) continue;",
-    "new": "        if (d < FLORA.spacingM) continue;",
+    "old": "        if (d < SEABED.spacingM * SEABED.spacingM) continue;",
+    "new": "        if (d < SEABED.spacingM) continue;",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-spacing-per-block",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "        for (const o of out) d = Math.min(d, d2(o.pos, c.pos));",
+    "new": "",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]
@@ -56,8 +128,8 @@
   {
     "name": "SEABED-nearest",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "        if (d > bestD || (d === bestD && c.h < best.h)) { best = c; bestD = d; }",
-    "new": "        if (best === null || d < bestD || (d === bestD && c.h < best.h)) { best = c; bestD = d; }",
+    "old": "        if (ranked > bestD || (ranked === bestD && c.h < best.h)) { best = c; bestD = ranked; }",
+    "new": "        if (best === null || ranked < bestD || (ranked === bestD && c.h < best.h)) { best = c; bestD = ranked; }",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]
@@ -65,17 +137,8 @@
   {
     "name": "SEABED-no-cap",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "    while (chosen.length < FLORA.perBlock) {",
+    "old": "    while (chosen.length < SEABED.perBlock) {",
     "new": "    while (chosen.length < 1000) {",
-    "tests": [
-      "test/world/dungeonFlora.test.js"
-    ]
-  },
-  {
-    "name": "SEABED-origin",
-    "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "      ...(lay.markers ?? []).map((m) => [m.x + b.originX, m.y, m.z + b.originZ]),",
-    "new": "      ...(lay.markers ?? []).map((m) => [m.x, m.y, m.z]),",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]
@@ -99,10 +162,19 @@
     ]
   },
   {
-    "name": "SEABED-base-not-centre",
+    "name": "SEABED-bubbles-kelp",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "    flatGroups.get(key).push([f.pos[0], f.pos[1] + size.h / 2, f.pos[2]]);   // a dungeon flat's point is its centre",
-    "new": "    flatGroups.get(key).push([f.pos[0], f.pos[1], f.pos[2]]);   // a dungeon flat's point is its centre",
+    "old": "  Object.freeze({ kind: 'kelp', weight: 4, records: Object.freeze([[106, 2], [106, 3], [106, 4]]) }),",
+    "new": "  Object.freeze({ kind: 'kelp', weight: 4, records: Object.freeze([[106, 2], [106, 3], [106, 4], [106, 6]]) }),",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-eight-bearings",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "export const clearanceBearings = (half) => BEARINGS[[8, 16, 32].find((n) => (2 * Math.PI * half) / n <= 0.15) ?? 64];",
+    "new": "export const clearanceBearings = (half) => BEARINGS[8];",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]
@@ -110,8 +182,98 @@
   {
     "name": "SEABED-one-height",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "      for (const k of [0.25, 0.5, 0.75]) {",
-    "new": "      for (const k of [0.5]) {",
+    "old": "      for (const y of [SEABED.footM, height * 0.2, height * 0.4, height * 0.6, height * 0.8, height]) {",
+    "new": "      for (const y of [height * 0.5]) {",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-no-foot-ray",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "      for (const y of [SEABED.footM, height * 0.2, height * 0.4, height * 0.6, height * 0.8, height]) {",
+    "new": "      for (const y of [height * 0.2, height * 0.4, height * 0.6, height * 0.8, height]) {",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-no-top-ray",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "      for (const y of [SEABED.footM, height * 0.2, height * 0.4, height * 0.6, height * 0.8, height]) {",
+    "new": "      for (const y of [SEABED.footM, height * 0.2, height * 0.4, height * 0.6, height * 0.8]) {",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-foot-on-floor",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "  footM: 0.06,",
+    "new": "  footM: 0,",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-walls-from-behind",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "        if (hit.back) return false;\n",
+    "new": "",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-ceiling-from-behind",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "      if (!Number.isFinite(up?.dist) || up.back || up.dist < height) return false;",
+    "new": "      if (!Number.isFinite(up?.dist) || up.dist < height) return false;",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-no-headroom",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "      if (!Number.isFinite(up?.dist) || up.back || up.dist < height) return false;",
+    "new": "      if (!Number.isFinite(up?.dist) || up.back) return false;",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-floor-any-bucket",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "!hit.back && hit.key === 'dungeon' ? { y: from[1] - hit.dist, ny: hit.normal[1] } : null;",
+    "new": "!hit.back ? { y: from[1] - hit.dist, ny: hit.normal[1] } : null;",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-door-hinge",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "      if (!p?.length) { out.push([m[12], m[13], m[14]]); continue; }",
+    "new": "      if (p) { out.push([m[12], m[13], m[14]]); continue; }",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-body",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "    flatGroups.get(key).push(Object.assign([f.pos[0], f.pos[1] + size.h / 2, f.pos[2]], { noCover: true }));",
+    "new": "    flatGroups.get(key).push([f.pos[0], f.pos[1] + size.h / 2, f.pos[2]]);",
+    "tests": [
+      "test/world/dungeonFlora.test.js"
+    ]
+  },
+  {
+    "name": "SEABED-base-not-centre",
+    "file": "src/world/dungeon/dungeonFlora.js",
+    "old": "    flatGroups.get(key).push(Object.assign([f.pos[0], f.pos[1] + size.h / 2, f.pos[2]], { noCover: true }));",
+    "new": "    flatGroups.get(key).push(Object.assign([f.pos[0], f.pos[1], f.pos[2]], { noCover: true }));",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]
@@ -119,7 +281,7 @@
   {
     "name": "SEABED-unwired",
     "file": "src/scenes/dungeonContext.js",
-    "old": "  await standDungeonFlora({ blocks: dungeon.blocks, collider, getTexture, flatGroups, seed: dfLocation?.dungeon?.recordElement?.header?.locationId ?? 0 });",
+    "old": "  await standDungeonFlora({ blocks: dungeon.blocks, collider, getTexture, flatGroups, positionsOf: (id) => cpuModels.get(id)?.positions ?? null, seed: dfLocation?.dungeon?.recordElement?.header?.locationId ?? 0 });",
     "new": "  void standDungeonFlora;",
     "tests": [
       "test/world/dungeonFlora.test.js"

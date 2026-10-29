@@ -3107,6 +3107,8 @@ instance.door.questHere,"이곳에서 할 퀘스트 일은 당신의 인스턴�
 instance.door.questPublic,"이곳의 퀘스트 일은 당신의 인스턴스에만 있습니다. 공유 던전은 더 작고 그중 아무것도 없습니다."
 instance.door.refused,"그 인스턴스에는 들어갈 수 없습니다. 주인과 그 파티만 들어갈 수 있습니다."
 instance.door.unavailable,"인스턴스를 열 수 없습니다. 잠시 후 다시 시도하세요."
+interior.setDown.buried,"당신이 물건을 두었던 자리에 이제 가구가 있습니다. 그 물건들은 당신의 발치에 놓였습니다."
+interior.setDown.chest,"여기에 있던 상자가 사라졌습니다. 안에 있던 물건은 당신의 발치에 놓였습니다."
 inventory.batch.aetheric,"{name}은(는) 에테르 등급입니다 - 재련소가 아니라 인장 중개인이 해체합니다."
 inventory.batch.allJunk,"모든 잡동사니"
 inventory.batch.allMagic,"모든 마법"

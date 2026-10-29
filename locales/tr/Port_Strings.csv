@@ -452,6 +452,8 @@ holdings.horse.boons.starving,"Açlıktan bitkin - yiyene kadar dörtnala koşma
 holdings.wagon.boons.failing,"Dağılmak üzere, ama hâlâ tam hızla gider."
 holdings.wagon.boons.rickety,"Köhne, ama hâlâ tam hızla gider."
 holdings.wagon.boons.sound,"Sağlam - bu yüzden daha hızlı gider."
+interior.setDown.buried,"Bazı eşyalarınızı bıraktığınız yerde artık mobilya var. Eşyalar ayaklarınızın dibine bırakıldı."
+interior.setDown.chest,"Burada duran bir sandık artık yok. İçindekiler ayaklarınızın dibine bırakıldı."
 inventory.cape.label,"Pelerini göster"
 inventory.cape.title,"Pelerinini ve auranı gösterir ya da gizler. Diğer oyuncular da aynısını görür."
 inventory.store.chestAct,"Bunu yapmadan önce sandığı kapat."

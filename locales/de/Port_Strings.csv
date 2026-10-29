@@ -3107,6 +3107,8 @@ instance.door.questHere,"Was deine Quest hier verlangt, wartet in deiner Instanz
 instance.door.questPublic,"Was deine Quest hier verlangt, gibt es nur in deiner Instanz. Das gemeinsame Verlies ist kleiner und enthält nichts davon."
 instance.door.refused,"Diese Instanz ist dir verschlossen. Nur ihr Besitzer und dessen Gruppe können sie betreten."
 instance.door.unavailable,"Deine Instanz konnte nicht geöffnet werden. Versuche es gleich noch einmal."
+interior.setDown.buried,"Wo du einige Dinge zurückgelassen hast, stehen jetzt Möbel. Sie liegen jetzt zu deinen Füßen."
+interior.setDown.chest,"Eine Truhe, die hier stand, ist fort. Ihr Inhalt liegt jetzt zu deinen Füßen."
 inventory.batch.aetheric,"{name} ist Ätherisch - zerlegt wird das beim Siegelmakler, nicht beim Neuschmieden."
 inventory.batch.allJunk,"Aller Plunder"
 inventory.batch.allMagic,"Alles Magische"

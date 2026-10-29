@@ -10,7 +10,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SHIP_REFIT, REFIT_FLAT_PX, REFIT_MODEL_FOOT, refitRecords, refitDeckRecords, shipRefitJson, installShipRefit } from '../../src/world/shipRefit.js';
-import { getBuildingReplacementData, bindWorldDataBlocks, installWorldDataReplacement, _resetWorldDataReplacement, worldDataVendorCarries } from '../../src/formats/worldData/worldDataReplacement.js';
+import { getBuildingReplacementData, bindWorldDataBlocks, installWorldDataReplacement, _resetWorldDataReplacement, worldDataVendorCarries, registerWorldDataAsset } from '../../src/formats/worldData/worldDataReplacement.js';
 import { MOD_SETTINGS } from '../../src/systems/modSettings.js';
 import { ONLINE_ROOM_MOD_KEYS, ONLINE_PLAYERS_OWN_MODS } from '../../src/systems/online/onlineLane.js';
 import { isHouseContainerModel } from '../../src/systems/containers.js';
@@ -57,8 +57,10 @@ test('SHIP REFIT a piece\'s record: classic units, the prop\'s foot on the floor
 });
 
 test('SHIP REFIT a deck model\'s record: its origin stood over its foot (rmbLayout reads -YPos as the origin), every deck model\'s foot known', () => {
-  const [r] = refitDeckRecords({ floor: 5.8, models: [{ id: 41822, x: -9.5, z: 3.4, face: 0, lift: 0 }] });
+  const [r, up] = refitDeckRecords({ floor: 5.8, models: [{ id: 41822, x: -9.5, z: 3.4, face: 0, lift: 0 }, { id: 41818, x: -9.5, z: 3.4, face: 0, lift: 0.78 }] });
   assert.deepEqual([r.XPos, r.YPos, r.ZPos], [-380, -248, 136], 'origin at 5.8 + 0.3887 m');
+  assert.equal(up.YPos, -275, 'stacked 0.78 m up: -(5.8 + 0.78 + 0.2887) / 0.025');
+  assert.deepEqual(REFIT_MODEL_FOOT, { 41811: 0.2822, 41813: 0.2602, 41818: 0.2887, 41822: 0.3887, 41827: 0.3, 41831: 0.3, 41832: 0.65, 41834: 0.65 }, 'measured off ARCH3D (the ARENA2 check reads them back)');
   for (const ship of Object.values(SHIP_REFIT)) for (const p of ship.deck.models) assert.ok(REFIT_MODEL_FOOT[p.id] > 0, `${p.id} has a foot`);
   assert.throws(() => refitDeckRecords({ floor: 0, models: [{ id: 41000, x: 0, z: 0, face: 0, lift: 0 }] }), /no foot for deck model 41000/);
 });
@@ -76,29 +78,51 @@ test('SHIP REFIT the building file: the player\'s classic record first and whole
   assert.equal(int.Header.NumFlatObjectRecords, flatCount);
   assert.equal(ext.Block3dObjectRecords[0].ModelIdNum, 910, 'the hull first');
   assert.equal(ext.Header.Num3dObjectRecords, 1 + ship.deck.models.length);
+  // the deck carries models alone: DFU stands an exterior flat unturned by its subrecord (rmbLayout), so none is added
+  assert.deepEqual([ext.BlockFlatObjectRecords.length, ext.Header.NumFlatObjectRecords], [0, 0]);
+  for (const s2 of Object.values(SHIP_REFIT)) assert.deepEqual(Object.keys(s2.deck).sort(), ['floor', 'models', 'start']);
   assert.equal(json.BuildingType, 24);
   assert.throws(() => shipRefitJson(fakeBlocks({ 390: 'TAVRAA00.RMB' }), SHIP_REFIT.small), /wants SHIPAA00\.RMB at block 390, BLOCKS\.BSA has TAVRAA00\.RMB/);
 });
 
-test('SHIP REFIT on the door: both building files under DFU\'s names, served through the door, no vendor; a BLOCKS.BSA without the ship stands it classic and says so', () => {
+test('SHIP REFIT the port\'s own building files: both under DFU\'s names, served with the world-data door shut as with it open, a live mod\'s own file of the name first, no mod\'s file able to take their place; a BLOCKS.BSA without the ship stands it classic and says so (mutants: SHIP-REFIT-door-*)', async () => {
+  const { setValue } = await import('../../src/systems/settings/settings.js');
   _resetWorldDataReplacement(); installWorldDataReplacement();
   const err = console.error; const said = [];
   console.error = (...a) => said.push(a.join(' '));
+  const refitCount = (blocks) => shipRefitJson(blocks, SHIP_REFIT.small).RmbSubRecord.Interior.Block3dObjectRecords.length;
   try {
     const blocks = fakeBlocks();
     bindWorldDataBlocks(blocks);
     assert.equal(installShipRefit(null), 0);
     assert.equal(installShipRefit(blocks), 2);
+    setValue('Enhancements', 'AssetInjection', 'True');
     const served = getBuildingReplacementData('SHIPAA00.RMB', 390, 0);
     assert.ok(served, 'the small ship\'s building file is served');
-    assert.equal(served.rmbSubRecord.interior.block3dObjectRecords.length, shipRefitJson(blocks, SHIP_REFIT.small).RmbSubRecord.Interior.Block3dObjectRecords.length);
+    assert.equal(served.rmbSubRecord.interior.block3dObjectRecords.length, refitCount(blocks));
     assert.ok(getBuildingReplacementData('SHIPAA01.RMB', 630, 0), 'and the large\'s');
     assert.equal(worldDataVendorCarries('ship-refit', 'SHIPAA00.RMB-390-building0.json'), false, 'no vendor: no part of a town\'s layout');
+    // the door shut (Replace Game Artwork off, offline): the port's own still stands
+    _resetWorldDataReplacement({ assets: false }); installWorldDataReplacement();
+    setValue('Enhancements', 'AssetInjection', 'False');
+    assert.equal(getBuildingReplacementData('SHIPAA00.RMB', 390, 0)?.rmbSubRecord.interior.block3dObjectRecords.length, refitCount(blocks), 'behind no door');
+    assert.equal(getBuildingReplacementData('SHIPAA00.RMB', 390, 1), null, 'a record the port has no file for: none');
+    // a mod's own file of the same name, live, answers first; switched off, the port's again; registered later, it never removes the port's
+    setValue('Enhancements', 'AssetInjection', 'True');
+    _resetWorldDataReplacement({ assets: false }); installWorldDataReplacement();
+    const theirs = shipRefitJson(blocks, SHIP_REFIT.large);
+    let on = true;
+    registerWorldDataAsset('SHIPAA00.RMB-390-building0.json', theirs, () => on);
+    assert.equal(getBuildingReplacementData('SHIPAA00.RMB', 390, 0).rmbSubRecord.interior.block3dObjectRecords.length, theirs.RmbSubRecord.Interior.Block3dObjectRecords.length, 'a player\'s own file first');
+    on = false;
+    _resetWorldDataReplacement({ assets: false }); installWorldDataReplacement();
+    assert.equal(getBuildingReplacementData('SHIPAA00.RMB', 390, 0).rmbSubRecord.interior.block3dObjectRecords.length, refitCount(blocks), 'switched off, the port\'s');
     _resetWorldDataReplacement(); installWorldDataReplacement();
     assert.equal(installShipRefit(fakeBlocks({ 390: 'SHIPAA00.RMB' })), 1, 'one ship found, one served');
     assert.match(said.join(' | '), /wants SHIPAA01\.RMB at block 630, BLOCKS\.BSA has null - that ship stands as Daggerfall built it/);
   } finally {
     console.error = err;
+    setValue('Enhancements', 'AssetInjection', 'True');
     _resetWorldDataReplacement();
   }
 });

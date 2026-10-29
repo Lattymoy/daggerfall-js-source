@@ -13,13 +13,13 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import zlib from 'node:zlib';
 import {
-  DECOR_MOD_ROOMS, DECOR_MOD_STREETS, DECOR_MOD_TWINS, DECOR_MOD_LEFT_OUT, addDecorMods, decorModNaming, decorModLive,
+  DECOR_MOD_ROOMS, DECOR_MOD_STREETS, DECOR_MOD_KEPT, DECOR_MOD_TWINS, DECOR_MOD_LEFT_OUT, addDecorMods, decorModNaming, decorModLive,
   decorModFlatSource, decorModsLive, DECOR_MODS_LIVE_S,
 } from '../../../src/systems/decor/decorMods.js';
 import { collectDecor, decorCatalogue, decorRoomEntries, DECOR_KINDS, DECOR_FROM } from '../../../src/systems/decor/decorCatalogue.js';
 import { createDecorScan, decorScanDeps, standInRadius } from '../../../src/systems/decor/decorScan.js';
 import {
-  installTownStandIns, TOWN_BED_FIRST, TOWN_BED_COUNT, TOWN_PAINTINGS, ROSYS_PIECES, RMBRP_PIECES, RMBRP_ROCKS, RMBRP_STALLS,
+  installTownStandIns, installPortStandIns, TOWN_BED_FIRST, TOWN_BED_COUNT, TOWN_PAINTINGS, ROSYS_PIECES, RMBRP_PIECES, RMBRP_ROCKS, RMBRP_STALLS,
   TOWN_CLUTTER, TOWN_CLUTTER_ARCHIVE, TOWN_GARDEN, TOWN_GARDEN_ARCHIVE, TOWN_ITEMS, ROSYS_PICTURES,
 } from '../../../src/world/townStandIns.js';
 import { DET_MODELS, DET_TOWN_MODELS, DET_FLAT_STAND_INS, DET_FLAT_DRAWINGS, DET_TOWN_FLATS, DET_OLD_ARCHIVES, DET_PICTURES } from '../../../src/world/detStandIns.js';
@@ -31,8 +31,10 @@ import { openWorldDataPack } from '../../../src/formats/worldData/worldDataPack.
 import { rmb, fakeBlocks, toolRig, settle, rows, all } from '../../decorFakes.mjs';
 import { HAS_ARENA2, loadBlocks, loadMaps, ROOT } from '../../arena1Data.mjs';
 
-// the port's stand-ins, on - as while a town mod stands (scenes/modWorldData.js)
+// the port's stand-ins, on - as at every boot (scenes/shared.js: DET's pieces and the items) and while a town mod stands
+// (scenes/modWorldData.js: the rest)
 let townsOn = true;
+installPortStandIns();
 installTownStandIns(() => townsOn);
 
 const offered = (t) => [...Object.keys(t.models).map((id) => `m${id}`), ...Object.keys(t.flats).map((k) => `f${k.replace('_', '.')}`)];
@@ -71,16 +73,20 @@ test('DECOR-MODS the pieces: every one the port stands in for the mods - a room\
 
 test('DECOR-MODS the offer follows the port\'s own switch: every piece offered while its stand-in stands, none while the mods are off - AUDIT 05b A3: and every one catalogued whatever is on, so no name, kind or number moves with a switch; a key a place of Daggerfall\'s holds stays that place\'s (mutants: DECORMODS-unswitched, DECORMODS-offered-unswitched, DECORMODS-place-overwritten)', () => {
   const c = addDecorMods(new Map());
-  assert.equal(c.size, 279);
+  assert.equal(c.size, 279 + Object.keys(DECOR_MOD_KEPT.flats).length);
   assert.deepEqual([c.get('m42069').count, c.get('m42069').from, c.get('f10010.44').count, c.get('f10010.44').from], [347, 'mod', 1607, 'modstreet']);
   const cat = decorCatalogue(c);
   const yard = { kind: 'home', yard: true, natureBase: 504 };
-  assert.equal(decorModsLive(cat).size, 279, 'every one stands while the mods do');
-  assert.equal(decorRoomEntries(cat, yard, true, decorModsLive(cat)).length, 279, 'and is offered');
+  assert.equal(decorModsLive(cat).size, 297, 'every one stands while the mods do');
+  assert.equal(decorRoomEntries(cat, yard, true, decorModsLive(cat)).length, 297, 'and is offered');
   townsOn = false;
   try {
-    assert.deepEqual([addDecorMods(new Map()).size, decorModsLive(cat).size], [279, 0], 'the mods off: every piece catalogued, none standing');
-    assert.deepEqual([decorRoomEntries(cat, yard, true, decorModsLive(cat)).length, decorRoomEntries(cat, yard, true).length], [0, 0], 'none offered - nor where the offer is told nothing stands');
+    // AUDIT SHIP-REFIT: DET's pieces and the items stand at every boot (installPortStandIns), as they did while a
+    // removed mod that carried them was on by default - the beds, paintings and the pack's own pieces with the towns
+    const live = decorModsLive(cat);
+    assert.deepEqual([addDecorMods(new Map()).size, live.size], [297, 143], 'the mods off: every piece catalogued, the boot\'s standing');
+    assert.deepEqual(['m45190', 'f1210.1', 'f1230.30', 'f10021.22', 'm42069', 'm69420', 'f56790.2'].map((k) => live.has(k)), [true, true, true, true, false, false, false]);
+    assert.deepEqual([decorRoomEntries(cat, yard, true, live).length, decorRoomEntries(cat, yard, true).length], [143, 0], 'the boot\'s offered - none where the offer is told nothing stands');
     const named = (list) => list.map((e) => [e.key, e.kind, e.name]);
     assert.deepEqual(named(decorCatalogue(addDecorMods(new Map()))), named(cat), 'no name, kind or number moves with a switch');
   } finally { townsOn = true; }
@@ -97,7 +103,8 @@ test('DECOR-MODS the names and the filing: a bed by its colour, filed with the b
   assert.deepEqual(decorModNaming({ model: 69471 }).base, 'Rug 3');
   assert.deepEqual(decorModNaming({ flat: [10010, 44] }), { base: 'Dove', as: 10010 });
   assert.deepEqual(decorModNaming({ flat: [56790, 2] }), { base: null, as: TOWN_CLUTTER[2][0] });
-  assert.deepEqual(decorModNaming({ flat: [1210, 10] }), { base: null, as: 205 }, 'a bottle is Daggerfall\'s own bottle');
+  assert.deepEqual(decorModNaming({ flat: [1210, 10] }), { base: 'Green bottle', as: 205 }, 'a bottle filed as Daggerfall\'s bottles, named as it always was');
+  assert.deepEqual(decorModNaming({ flat: [1230, 30] }), { base: 'Statuette', as: 1230 });
   assert.deepEqual(decorModFlatSource(1210, 17), [211, 31], 'the pack\'s bread is Daggerfall\'s loaf');
   assert.deepEqual(decorModFlatSource(1021, 13), [...DET_FLAT_STAND_INS[10021][13]], 'an old DET number is its new one');
   // a classic room: a bed, a box, a book and a chair, then the mods
@@ -145,12 +152,14 @@ test('DECOR-MODS AUDIT 05b A3 the scan: a piece the port stood only after the sc
   try {
     const scan = createDecorScan(decorScanDeps({ blocks, arch, getTexture }));
     for (let i = 0; i < 40 && scan.phase() !== 'done'; i++) { scan.step(); await settle(); }
-    const chest = scan.entries().find((x) => x.key === 'm45190'), bed = scan.entries().find((x) => x.key === 'm42069');
-    assert.deepEqual([scan.radiusOf(chest), scan.radiusOf(bed), scan.lateSized()], [null, null, 0], 'catalogued, but no stand-in to measure while the mods are off');
+    const painting = scan.entries().find((x) => x.key === 'm69420'), bed = scan.entries().find((x) => x.key === 'm42069');
+    const chest = scan.entries().find((x) => x.key === 'm45190');
+    assert.deepEqual([scan.radiusOf(painting), scan.radiusOf(bed), scan.lateSized()], [null, null, 0], 'catalogued, but no stand-in to measure while the mods are off');
+    assert.equal(scan.radiusOf(chest), standInRadius(45190), 'AUDIT SHIP-REFIT: a piece that stands at every boot is measured at once');
     townsOn = true;
     scan.remeasure(decorModsLive(scan.entries()));
     for (let i = 0; i < 20; i++) { scan.step(); await settle(); }
-    assert.deepEqual([scan.radiusOf(chest), scan.radiusOf(bed)], [standInRadius(45190), 1.5], 'measured once it stands: the chest off its own model, the bed off its classic one');
+    assert.deepEqual([scan.radiusOf(painting), scan.radiusOf(bed)], [standInRadius(69420), 1.5], 'measured once it stands: the painting off its own model, the bed off its classic one');
     const n = scan.lateSized();
     assert.ok(n >= 2, 'counted, so the panel lists again');
     scan.remeasure(decorModsLive(scan.entries()));
@@ -172,15 +181,15 @@ test('DECOR-MODS AUDIT 05b A3 the decorator asks the switches as it offers, neve
     await run(12);
     const root = rig.doc.body.children.find((c) => c.className === 'dfdecor');
     const row = (k) => rows(root).find((r) => r.dataset.key === k) ?? null;
-    assert.deepEqual([!!row('m41000'), row('m45190')], [true, null], 'the mods off as it opens: Daggerfall\'s own, none of theirs');
+    assert.deepEqual([!!row('m41000'), row('m69420'), !!row('m45190')], [true, null, true], 'the mods off as it opens: Daggerfall\'s own and the boot\'s pieces (AUDIT SHIP-REFIT), none of the towns\'');
     townsOn = true;
     await run(Math.ceil(DECOR_MODS_LIVE_S / 0.1) + 1);
-    assert.ok(row('m45190'), 'turned on with the panel up: offered within the second');
+    assert.ok(row('m69420'), 'turned on with the panel up: offered within the second');
     await run(10);   // the scan's steps after: a step's worth of models at a time
-    assert.equal(all(row('m45190'), 'dfdecor-row-price')[0].textContent, `${decorPrice(standInRadius(45190), 1)} gold`, 'measured then, so priced - listed again as it landed');
+    assert.equal(all(row('m69420'), 'dfdecor-row-price')[0].textContent, `${decorPrice(standInRadius(69420), 1)} gold`, 'measured then, so priced - listed again as it landed');
     townsOn = false;
     await run(Math.ceil(DECOR_MODS_LIVE_S / 0.1) + 2);
-    assert.equal(row('m45190'), null, 'turned off again: gone from the list');
+    assert.deepEqual([row('m69420'), !!row('m45190')], [null, true], 'turned off again: the towns\' gone from the list, the boot\'s kept');
   } finally { townsOn = true; }
 });
 

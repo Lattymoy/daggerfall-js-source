@@ -6,7 +6,7 @@
 > rows side by side found. The live numbers are derived, not written:
 > `vendor/` holds 59 directories and 37 of their READMEs still carry an
 > unfilled permission line, each shown as `RECORD OPEN` in the table
-> (2026-10-29: two directories removed at their author's request, both with permission, so the open count stands;
+> (2026-10-29: two directories removed, both with permission, so the open count stands;
 > MUDEX1, 2026-10-20: Ralzar's `mudex`, the sixty-first - Meaner Monsters' own form beside DEX, vendored on Mac's
 > approval ("Approve MUDEX"), the author's own words not yet, so the open count rises by one;
 > DEX0, 2026-10-19: Kamer & Kab's `daggerfall-enemy-expansion`, the sixtieth (the fifty-eighth on its branch,
