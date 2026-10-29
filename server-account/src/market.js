@@ -617,10 +617,10 @@ function roadFrom(/** @type {any[][]} */ [loads = [], pieces = [], goods = []], 
  */
 const pieceIdsOf = (pieces) => (Array.isArray(pieces) ? [...new Set(pieces.filter((p) => typeof p === 'string' && PROVENANCE_RE.test(p)))].slice(0, MARKET_HELD_MAX) : []);
 /** MARKET-SPEED: pieceWays' read as a statement, for the Mine view's batch. */
-const pieceWaysRead = (db, ids) => db.prepare(`SELECT p.provenance, p.owner, p.listed,
+export const pieceWaysRead = (db, ids) => db.prepare(`SELECT p.provenance, p.owner, p.listed,
       (EXISTS (SELECT 1 FROM market_deliveries d WHERE d.provenance = p.provenance AND d.collected = 0)
         OR EXISTS (SELECT 1 FROM market_deliveries d WHERE d.player = p.owner AND d.collected = 0 AND d.item IS NOT NULL AND json_extract(d.item, '$.provenance') = p.provenance)) AS road,   -- INT19: or back as its record
-      EXISTS (SELECT 1 FROM home_decor h WHERE json_extract(h.item, '$.pv') = p.provenance) AS standing
+      EXISTS (SELECT 1 FROM home_decor h WHERE json_extract(h.item, '$.pv') = +p.provenance) AS standing   -- DECOR-SEEK: `+` lets idx_home_decor_pv be searched
     FROM products p WHERE p.provenance IN (SELECT value FROM json_each(?1))`).bind(JSON.stringify(ids));   // SCALE1: one bound array
 function pieceWays(me, ids, /** @type {any[]} */ rows) {
   if (!ids.length) return {};
