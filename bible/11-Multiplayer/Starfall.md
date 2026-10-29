@@ -27,7 +27,8 @@ So, as decided here:
 - **Three stars a night, in one coven's land.** Every real hour is a night on the sky (TimeScale 24, `Online-Time-Arc.md`),
   and each night one of the Bay's covens works the rite: three stars fall in the wilds of its region, one after another,
   near three different towns. Since WW5 (section 16), every theatre's night: the Bay's covens on the Bay, each
-  province's own coven past it, Cyrodiil's open zone none.
+  province's own coven past it, Cyrodiil's open zone none - since FRONTS a province's on its turn alone
+  (`03-World/World-Wide.md` FRONTS).
 - **The foes are Daggerfall's own**, owned by a player's machine as every foe in the open world is (the rite's camp
   law), with Daggerfall's own AI, spells and pathing. The relay holds the ledger: the wave, the star's light, the
   master's fall, who defended. This is a departure from the world bosses' Option B, named in section 10.

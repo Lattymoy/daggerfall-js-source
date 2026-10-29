@@ -1,0 +1,42 @@
+[
+  {
+    "name": "GA-ready-fades",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "  if (s.phase === 'gone' || s.phase === 'ready') return s;\n",
+    "new": "  if (s.phase === 'gone') return s;\n  if (s.phase === 'ready') return now - s.since >= 2000 ? { ...s, phase: 'gone', since: now } : s;\n",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "GFX-ALWAYS: ready fades off the menu again"
+  },
+  {
+    "name": "GA-shown-before-a-count",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "    if (!settled && total === 0) return s;   // nothing started yet\n",
+    "new": "",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "GFX-ALWAYS: an empty bar before anything has started"
+  },
+  {
+    "name": "GA-warm-ready-before-the-mount-set",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "    if (settled && (full || total === 0))",
+    "new": "    if (full || total === 0)",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "GFX-ALWAYS: ready before the mount set is queued"
+  },
+  {
+    "name": "GA-warm-ready-skips-paint",
+    "file": "src/ui/gfxPrepBar.js",
+    "old": "fill.style.width = `${state.phase === 'filling' ? pct : 100}%`;",
+    "new": "fill.style.width = `${pct}%`;",
+    "tests": [
+      "test/ui/gfxprepbar.test.js"
+    ],
+    "note": "GFX-ALWAYS: a ready bar with nothing counted shows empty"
+  }
+]

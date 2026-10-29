@@ -13,8 +13,6 @@ import { t } from '../systems/textManager.js';
 export const GFX_POLL_MS = 250;
 /** Full this long before "ready": the mount queue lands a little after the boot's own start. */
 export const GFX_HOLD_MS = 1500;
-/** "Graphics ready" shows this long, then fades. */
-export const GFX_READY_MS = 2000;
 /** A driver that never says done: the bar goes after this long, as bootPrograms.js MOUNT_WAIT_TURNS gives up. */
 export const GFX_GIVE_UP_MS = 90000;
 
@@ -75,16 +73,20 @@ export function gfxProgress(gl, ext, list = startedPrograms) {
 }
 
 /** @typedef {{ phase: 'idle'|'filling'|'ready'|'gone', done: number, total: number, fullAt: number|null, since: number }} GfxState */
-/** The bar's next state. idle (hidden) until something is still compiling - a warm cache shows nothing; filling; ready
- *  once full for GFX_HOLD_MS and the mount set is queued (`settled`); gone GFX_READY_MS later, or after GFX_GIVE_UP_MS.
+/** The bar's next state. idle (hidden) until the first count; filling; ready once full for GFX_HOLD_MS and the mount
+ *  set is queued (`settled`), and it holds while the menu stands; gone after GFX_GIVE_UP_MS. GFX-ALWAYS (2026-10-29, the
+ *  owner: "dont see shader bar"): a warm cache, or a build done during the intro, shows ready at once - never no bar.
  *  @param {GfxState} s @param {{ done: number, total: number }} c @param {number} now @param {boolean} [settled]
  *  @returns {GfxState} */
 export function gfxStep(s, { done, total }, now, settled = true) {
-  if (s.phase === 'gone') return s;
-  if (s.phase === 'ready') return now - s.since >= GFX_READY_MS ? { ...s, phase: 'gone', since: now } : s;
+  if (s.phase === 'gone' || s.phase === 'ready') return s;
   if (s.phase === 'filling' && now - s.since >= GFX_GIVE_UP_MS) return { ...s, phase: 'gone', since: now };
   const full = total > 0 && done >= total;
-  if (s.phase === 'idle') return full || total === 0 ? s : { ...s, phase: 'filling', done, total, since: now };
+  if (s.phase === 'idle') {
+    if (!settled && total === 0) return s;   // nothing started yet
+    if (settled && (full || total === 0)) return { ...s, phase: 'ready', done, total, fullAt: now, since: now };
+    return { ...s, phase: 'filling', done, total, since: now };
+  }
   if (!full) return { ...s, done, total, fullAt: null };
   const fullAt = s.fullAt ?? now;
   return settled && now - fullAt >= GFX_HOLD_MS ? { ...s, phase: 'ready', done, total, fullAt, since: now } : { ...s, done, total, fullAt };
@@ -160,7 +162,7 @@ export function mountGfxPrep({ gl, doc = document, win = globalThis, nav = win.n
     if (!poll) return;
     state = gfxStep(state, poll(), now(), settled());
     paint();
-    timer = state.phase === 'gone' ? null : win.setTimeout(tick, GFX_POLL_MS);
+    timer = state.phase === 'gone' || state.phase === 'ready' ? null : win.setTimeout(tick, GFX_POLL_MS);
   };
   tick();
   return {
