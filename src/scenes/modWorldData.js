@@ -57,8 +57,8 @@ export async function loadModWorldData() {
     await installArena();   // ARENA1: behind no switch and no door - the arena stands in every layout (world/arena/arenaCity.js)
     installCapitals();   // TESA10: the same - the capitals' blocks and landmarks (world/capitalModels.js)
     installTownOutline();   // TOWN-SHAPES TS3: the same - the open cell of a town past the Bay (world/townOutline.js)
-    installCuratedBlocks();   // DELVE II (DLV5): the same - the curated blocks, each made of its base (world/dungeon/curatedInstall.js)
     installUrbanArt();   // URBANIZER: the same - the towns' own pictures (world/urban/urbanArt.js)
+    installCuratedBlocks();   // DELVE II (DLV5): the same - the curated blocks, each made of its base (world/dungeon/curatedInstall.js)
     const door = latchWorldDataDoor();   // WD3 (AUDIT WD3 P2/P3): Replace Game Artwork (online, the room) read once for the game
     let n = 0;
     await Promise.all(Object.entries(globFiles()).map(async ([path, load]) => {

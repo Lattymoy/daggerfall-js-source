@@ -22,6 +22,7 @@ const HARDCODED = {
   'src/characters/creatureBodies.js': 8,
   'src/characters/daedra.js': 4,
   'src/systems/staffDragon.js': 1,   // DRAGON-RIDE: /dragon's /staff line, the staff list's English as the rest of it (net/staffCommands.js)
+  'src/scenes/delve/delveLab.js': 18,   // DELVE II DLV5-6: the curated blocks' lab panel (the bench's `?dungeon=lab`; a lab's module, moved from src/tools/ to stand with the bench a played page boots - AUDIT ANTICHEAT A2's premise) - a designer's tool, never the game's
   'src/scenes/staffDragonHost.js': 5,   // DRAGON-RIDE: /dragon's answers, said to the Admin alone, as the staff commands' own (world.js runStaffCommand)
   'src/characters/dwarvenDragon.js': 2,   // DWARVEN-DRAGON: its career's English (the save's and the staff list's - a player reads t()'s) and its census miss, never shown
   'src/characters/enemy/enemyBasics.js': 19,
@@ -591,7 +592,6 @@ const HARDCODED = {
   'src/tools/abyssLab.js': 2,
   'src/tools/cardsLab.js': 5,
   'src/tools/depthCopyCheck.js': 8,
-  'src/tools/delveLab.js': 18,   // DELVE II DLV5-6: the curated blocks' lab panel (delve.html, the bench's `?dungeon=lab`) - a designer's tool, never the game's
   'src/tools/delveLabPage.js': 2,   // DELVE II DLV5: the lab's front page's refusals (the types, a kept id) - the designer's
   'src/world/dungeon/curatedBlocks.js': 17,   // DELVE II DLV5-6: the record law's refusals, each by name - read in the lab and thrown at a bad record's import, never shown a player
   'src/world/dungeon/curatedLab.js': 5,   // DELVE II DLV5: the lab law's refusals (no anchor for a vault, a draft numbered past 0, no storage, a 0 exported), the designer's

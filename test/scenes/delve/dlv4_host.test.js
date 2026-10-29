@@ -352,7 +352,8 @@ test('DLV4 THE WIRING (HOST-SPLIT): the crystal seam reads the encounters\' piec
   assert.match(ctx, /: \[\]\)\), \.\.\.delve\.wards\(\)\] : null,/);
   assert.match(ctx, /delve\.frame\(dt, playerFeet, _fpYaw, playerWeapon\);/);
   const ceil = rd('test/scenes/hostceiling.test.js');
-  assert.match(ceil, /\['src\/scenes\/dungeonContext\.js', 'buildDungeonContext', 8_463, MODULE\]/, 'the ceiling unmoved');
+  const [, line, n] = /^(.*'src\/scenes\/dungeonContext\.js', 'buildDungeonContext', ([\d_]+), MODULE\].*)$/m.exec(ceil) ?? [];
+  assert.ok(Number(String(n).replace(/_/g, '')) <= 8_463 && !/DELVE|DLV/.test(line ?? 'none'), `the ceiling never raised for the encounters (${n})`);   // 8,463 when they came; main's own lines move it down
   const st = createStandIns();
   assert.equal(st(1000, 'seals'), st(1000, 'seals'), 'a stand-in made once');
   assert.equal(st(1000, 'seals').name, 'Seal');

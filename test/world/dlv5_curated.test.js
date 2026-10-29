@@ -205,7 +205,7 @@ test('DLV5 THE INSTALL: each record on the world-data door at its index, its blo
   const made = W.getDFBlockReplacementData(CURATED_BLOCK_INDEX + 7, curatedBlockName(7));
   assert.deepEqual([made?.name, asked], [curatedBlockName(7), [23]], 'made of BLOCKS.BSA\'s own base, by its index');
   W._resetWorldDataReplacement();
-  assert.match(readFileSync(new URL('../../src/scenes/modWorldData.js', import.meta.url), 'utf8'), /\n {4}installTownOutline\(\);[^\n]*\n {4}installCuratedBlocks\(\);/, 'installed with the port\'s own blocks, before any is read');
+  assert.match(readFileSync(new URL('../../src/scenes/modWorldData.js', import.meta.url), 'utf8'), /\n {4}installUrbanArt\(\);[^\n]*\n {4}installCuratedBlocks\(\);[^\n]*\n {4}const door = latchWorldDataDoor\(\);/, 'installed with the port\'s own blocks, before the door is latched and any is read');   // PIN MOVED (the merge of URBANIZER U3: the towns' art first)
 });
 
 test('DLV5 EVERY SHIPPED RECORD ON THE FREEWARE\'S BLOCKS: its base an interior block of a dungeon of each of its types; each drop takes something; each anchor\'s heart and vault on a floor of the made block (ARENA2)', { skip: NO_ARENA2 }, async () => {

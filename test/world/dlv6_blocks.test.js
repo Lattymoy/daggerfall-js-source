@@ -1,6 +1,6 @@
 // DLV6 (bible/03-World/Delve-II.md sections 8 and 15): THE FIRST CURATED BLOCKS AND THEIR SET PIECES - the light an add
 // stands (world/dungeon/curatedBlocks.js, read by the host as the block's own lights are), the lab's hand (a thing set on
-// the floor at my feet, a light over me, the spot a Rebuild leaves me on - scenes/delve/delveBench.js, tools/delveLab.js),
+// the floor at my feet, a light over me, the spot a Rebuild leaves me on - scenes/delve/delveBench.js, scenes/delve/delveLab.js),
 // the fire law kept clear of a designed encounter, and the four shipped blocks against the freeware's own: each prop on a
 // floor, none in a ward or a doorway, every light in a room, every anchor landing among them. Held to fail under
 // tools/mutants/dlv6.json.
@@ -14,8 +14,9 @@ import { collectDungeonLights } from '../../src/world/dungeon/dungeonLights.js';
 import { RDB_RESOURCE_TYPES } from '../../src/formats/blocksFile.js';
 import { DUNGEON_TYPES } from '../../src/formats/mapsFile.js';
 import { DELVE_KINDS, DELVE_FAMILIES } from '../../src/net/delve/delveLaw.js';
-import { labSpawn, labFoot, benchLocation } from '../../src/scenes/delve/delveBench.js';
-import { mountDelveLab } from '../../src/tools/delveLab.js';
+import { labSpawn, labFoot, benchLocation, labStand, mountLabPanel } from '../../src/scenes/delve/delveBench.js';
+import { mountDelveLab } from '../../src/scenes/delve/delveLab.js';
+import { labKept } from '../../src/world/dungeon/curatedLab.js';
 
 const ARENA2 = process.env.ARENA2_PATH;
 const NO_ARENA2 = (!ARENA2 || !existsSync(ARENA2)) && 'ARENA2_PATH not set or missing - real-data validation skipped';
@@ -37,6 +38,42 @@ test('DLV6 THE LIGHT AN ADD STANDS: a reach of 1 to 12 m, alone; made a Light re
   const [l] = collectDungeonLights(made);
   assert.deepEqual([l.x, l.y, l.z].map((v) => Math.round(v * 100) / 100), [10, 2.5, 12]);
   assert.ok(Math.abs(l.range - 6) < 0.05, `read back as its reach (${l.range})`);
+});
+
+test('DLV6 THE BENCH WIRES ITS LAB (scenes/dungeon.js, one call each): `labStand` my spot - the `?at` one, else the host\'s floor, none off the lab; `mountLabPanel` the panel for a lab alone, its Rebuild keeping the draft and laying it again where I stand, a draft it cannot keep never laid, its Check the host\'s word or none (mutants: off the lab stood; the spot unread; the floor unread; a panel off the lab; the draft unkept; the spot unsent; a refused draft laid; no host a throw)', async () => {
+  const host = { firstFloor: () => [9, 1, 9], landing: () => ({ ok: false, rule: 'room' }) };
+  const d = { ...REC, n: 0, anchors: [{ kind: 'hold', at: [15.6, 12.8, 15.6], r: 4, vault: [12.2, 12.8, 15.6] }] };
+  assert.deepEqual([labStand(null, host), labStand({ location: {} }, host)], [null, null], 'off the lab: the game\'s own spawn');
+  assert.deepEqual(labStand({ draft: d, spawn: [1, 2, 3] }, host), [1, 2, 3]);
+  assert.deepEqual(labStand({ draft: d, spawn: null }, host), [9, 1, 9]);
+  assert.equal(labStand({ draft: d, spawn: null }, null), null, 'no host yet: the start, then the bench\'s own');
+  const node = (tag) => ({ tag, kids: [], value: '', textContent: '', append(...k) { this.kids.push(...k); }, replaceChildren(...k) { this.kids = k; }, addEventListener() {}, remove() {} });
+  const docOf = () => ({ createElement: node, head: node('head'), body: node('body') });
+  const find = (n, text) => (n?.tag === 'button' && n.textContent === text ? n : (n?.kids ?? []).map((k) => find(k, text)).find(Boolean));
+  const said = (n) => (n?.className?.startsWith?.('say') && n.textContent ? n.textContent : (n?.kids ?? []).map(said).find(Boolean));
+  const kept = new Map(), storage = { getItem: (k) => kept.get(k) ?? null, setItem: (k, v) => { kept.set(k, String(v)); } };
+  let went = null;
+  const o = { feet: () => [10, 2, 10], delve: () => host, foot: async () => 0, storage, go: (q) => { went = q; } };
+  assert.equal(mountLabPanel({ location: {} }, { ...o, doc: docOf() }), null, 'no panel off the lab');
+  const doc = docOf();
+  const lab = await mountLabPanel({ draft: d }, { ...o, doc });
+  try {
+    find(doc.body, 'Check the anchors').onclick();
+    assert.match(said(doc.body), /hold at 15\.6, 12\.8, 15\.6: refused \(room\)/, 'the host\'s own word');
+    find(doc.body, 'Rebuild').onclick();
+    assert.equal(went, `?dungeon=lab&draft=${d.id}&class=1&novideo&at=10,2,10`);
+    assert.equal(labKept(storage).drafts[d.id]?.base, d.base, 'kept by its id first');
+  } finally { lab?.destroy(); }
+  went = null;
+  const none = docOf();
+  const bare = await mountLabPanel({ draft: d }, { ...o, storage: null, delve: () => null, doc: none });
+  try {
+    find(none.body, 'Check the anchors').onclick();
+    assert.match(said(none.body), /refused \(none\)/, 'no host: none, never a throw');
+    find(none.body, 'Rebuild').onclick();
+    assert.equal(went, null, 'a draft it cannot keep is never laid');
+    assert.match(said(none.body), /keeps no storage/);
+  } finally { bare?.destroy(); }
 });
 
 test('DLV6 THE LAB\'S HAND: I stand where my Rebuild left me (`?at=`), else on the host\'s floor by the first encounter (never its heart: it would wake the ward); a model or a flat set ON the floor at my feet - a model\'s lowest point under its origin, a flat\'s half height - one the data lacks refused; a light over me; the Rebuild told where I stand (mutants: `?at` unread; the foot\'s sign; a flat\'s whole height; the foot unread; the spot unsaid)', async () => {

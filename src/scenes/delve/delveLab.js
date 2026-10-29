@@ -5,11 +5,11 @@
 // again with it, you where you stood. Check asks the site law of every anchor; Export gives the record as
 // src/assets/delve/<id>.json takes it. The law is world/dungeon/curatedLab.js; this file is its buttons alone. A developer's
 // tool: its words are not the game's.
-import { labPut, labTake, labVault, labExport, labTypes } from '../world/dungeon/curatedLab.js';
-import { CURATED_MARKERS } from '../world/dungeon/curatedBlocks.js';
-import { CURATED_RECORDS } from '../world/dungeon/curatedRecords.js';
-import { DELVE_KIND_NAMES } from '../net/delve/delveLaw.js';
-import { DUNGEON_TYPES } from '../formats/mapsFile.js';
+import { labPut, labTake, labVault, labExport, labTypes } from '../../world/dungeon/curatedLab.js';
+import { CURATED_MARKERS } from '../../world/dungeon/curatedBlocks.js';
+import { CURATED_RECORDS } from '../../world/dungeon/curatedRecords.js';
+import { DELVE_KIND_NAMES } from '../../net/delve/delveLaw.js';
+import { DUNGEON_TYPES } from '../../formats/mapsFile.js';
 
 const CSS = `#delve-lab { position: fixed; right: 10px; top: 10px; width: min(360px, calc(100vw - 32px)); max-height: calc(100vh - 20px);
   overflow: auto; background: rgba(14, 16, 19, 0.92); color: #e9e4d9; font: 12px system-ui, sans-serif; padding: 10px;

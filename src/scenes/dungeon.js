@@ -35,8 +35,7 @@ import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks 
 import { isEnhanced } from '../systems/uiSkin.js';   // AUDIT 62 F10: the dial button's own skin gate
 import { BlocksFile } from '../formats/blocksFile.js';
 import { bindWorldDataBlocks } from '../formats/worldData/worldDataReplacement.js';   // RR3b
-import { benchLocation, labFoot } from './delve/delveBench.js';   // DELVE II (DLV5): the bench's own places
-import { labKeep } from '../world/dungeon/curatedLab.js';   // DELVE II (AUDIT DLV5-6 M6): the lab's drafts, each by its id
+import { benchLocation, labFoot, labStand, mountLabPanel } from './delve/delveBench.js';   // DELVE II (DLV5, DLV6): the bench's own places, its lab's spot and panel
 import { loadModWorldData } from './modWorldData.js';   // RR3b
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile } from '../formats/mapsFile.js';
@@ -130,7 +129,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const maps = new MapsFile();
   maps.load(mapsBytes, climateBytes, politicBytes);
 
-  const bench = benchLocation(params, maps, globalThis.localStorage, blocks);   // DELVE II (DLV5): a spawned dungeon (`?spawn=`) or the lab's block (`?dungeon=lab`)
+  const bench = benchLocation(params, maps, undefined, blocks);   // DELVE II (DLV5): a spawned dungeon (`?spawn=`) or the lab's block (`?dungeon=lab`)
   const dfLocation = bench?.location ?? maps.getLocationByName(regionName, dungeonName);
   if (!dfLocation) throw new Error(`location not found: ${regionName}/${dungeonName}`);
 
@@ -201,7 +200,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // This is the host the enter-marker preference was written for; DE1
   // found it applied to the door transition as well, which is the
   // other member and takes the start marker.
-  const spawn = loadedPos ?? bench?.spawn ?? ctx.startSpawn() ?? (bench?.draft ? ctx.delve?.()?.firstFloor?.() : null) ?? [0, 2, 0];   // U21: a loaded game resumes where it was saved; DLV6: the lab where its Rebuild left me, else by its first encounter, past its ward
+  const spawn = labStand(bench, ctx.delve?.()) ?? loadedPos ?? ctx.startSpawn() ?? [0, 2, 0];   // U21: a loaded game resumes where it was saved; DLV6: the bench's lab stands me where its Rebuild left me, else by its first encounter, past its ward
   const cam = { pos: spawn, yaw: 0, pitch: 0 };
   const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
   const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration
@@ -237,7 +236,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), enhancedJumping: () => isEnhancedJumping(playerEntity), carriedWeight: () => carriedWeight(playerEntity), climbing: climbingDeps(playerEntity), parkour: parkourDeps(playerEntity, (l) => ctx.hudSay?.(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing (no HUD seam in the standalone host); motorStats = the LIVE entity
   _motorRef = player;   // DC1: the motorState seam binds here
-  if (bench?.draft) void import('../tools/delveLab.js').then(({ mountDelveLab }) => mountDelveLab({ draft: bench.draft, feet: () => [...player.pos], landing: (at, r) => ctx.delve?.()?.landing(at, r) ?? { ok: false, rule: 'none' }, foot: labFoot(arch, pipeline.getTexture), rebuild: (d, at) => { const why = labKeep(globalThis.localStorage, d); if (!why) location.search = `?dungeon=lab&draft=${encodeURIComponent(d.id)}&class=1&novideo&at=${at.join(',')}`; return why; } }));   // DELVE II (DLV5, DLV6): the lab's panel (delve.html); AUDIT DLV5-6 M6: a draft the law refuses, or no storage, is said and never laid
+  void mountLabPanel(bench, { feet: () => [...player.pos], delve: () => ctx.delve?.(), foot: labFoot(arch, pipeline.getTexture) });   // DELVE II (DLV5, DLV6): the lab's panel (delve.html), the bench's `?dungeon=lab` alone
     const _footsteps = new FootstepMachine();   // FS-slice
     immersiveFootsteps.onTransitionDungeonInterior();   // IF1: the standalone dungeon boot IS the dungeon transition (UpdateFootsteps_OnTransitionDungeonInterior)
     betterAmbience.onTransition({ dungeon: { regionName: dfLocation.regionName, name: dfLocation.name, inCastle: () => !!ctx.insideDungeonCastle?.(), exitPos: ctx.enterMarker ? [ctx.enterMarker.x, ctx.enterMarker.y, ctx.enterMarker.z] : null } });   // BA1: the boot is the dungeon transition here too

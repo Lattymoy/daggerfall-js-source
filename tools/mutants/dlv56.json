@@ -363,7 +363,7 @@
   },
   {
     "name": "DLV56-LAB-types-first",
-    "file": "src/tools/delveLab.js",
+    "file": "src/scenes/delve/delveLab.js",
     "old": "const t = labTypes(types.value);",
     "new": "const t = labTypes(types.value)?.slice(0, 1) ?? null;",
     "tests": [
@@ -373,7 +373,7 @@
   },
   {
     "name": "DLV56-LAB-export-n-default",
-    "file": "src/tools/delveLab.js",
+    "file": "src/scenes/delve/delveLab.js",
     "old": "const exportN = num(d.from ?? Math.max(",
     "new": "const exportN = num(Math.max(",
     "tests": [

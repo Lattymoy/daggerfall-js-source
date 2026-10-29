@@ -183,7 +183,7 @@ test('AUDIT DLV5-6 THE LAB\'S CHECK IS THE HOST\'S LAW: `landing` stands a ward 
 
 test('AUDIT DLV5-6 M5 THE LAB KEEPS WHAT IT OPENED: a shipped record\'s every type and its number (its export\'s default), the types read as a list, a record numbered 0 never exported (mutants: the first type alone; the number lost; the list unread; a 0 shipped)', async () => {
   const { labDraftOf, labTypes, labExport } = await import('../../src/world/dungeon/curatedLab.js');
-  const { mountDelveLab } = await import('../../src/tools/delveLab.js');
+  const { mountDelveLab } = await import('../../src/scenes/delve/delveLab.js');
   const throne = CURATED_RECORDS.find((r) => r.id === 'throne-hall');
   const d = labDraftOf(throne);
   assert.deepEqual([d.n, d.from, d.types], [0, 4, [1, 2, 11, 13, 15]]);

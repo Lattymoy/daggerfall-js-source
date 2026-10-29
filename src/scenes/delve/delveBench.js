@@ -11,7 +11,8 @@ import { dfMeshToModel } from '../../world/meshReader.js';
 import { classicBillboardSize } from '../../world/rmbFlats.js';
 import { CURATED_RECORDS, setCuratedDraft } from '../../world/dungeon/curatedRecords.js';
 import { installCuratedBlocks } from '../../world/dungeon/curatedInstall.js';
-import { labDraftOf, labLocation, labBorders, labKept } from '../../world/dungeon/curatedLab.js';
+import { labDraftOf, labLocation, labBorders, labKept, labKeep } from '../../world/dungeon/curatedLab.js';
+import { appStorage } from '../../systems/appStorage.js';
 
 /** The lab's draft: a shipped record's (`?lab=<id>`), a kept one by its id (`?draft=<id>`), else the open one, else null. */
 export function readLabDraft(params, storage) {
@@ -39,6 +40,23 @@ export function labTemplate(maps, type) {
 export function labSpawn(params) {
   const raw = String(params.get('at') ?? '').split(',');
   return raw.length === 3 && raw.every((v) => v.trim() !== '' && Number.isFinite(Number(v))) ? raw.map(Number) : null;   // an empty field is no 0
+}
+/** DLV6: where the bench stands me in its lab - its `?at` spot, else the host's floor by the first encounter; null off
+ *  the lab, the game's own spawn (scenes/dungeon.js). @param {any} bench benchLocation's @param {any} delve the host */
+export const labStand = (bench, delve) => (bench?.draft ? bench.spawn ?? delve?.firstFloor?.() ?? null : null);
+/**
+ * DLV5-6: the lab's panel over the bench (scenes/delve/delveLab.js, loaded for a lab alone): a Rebuild keeps the draft
+ * and lays it again where I stand; one the law refuses, or no storage, is said and never laid (AUDIT DLV5-6 M6).
+ * @param {any} bench @param {{ feet: () => number[], delve: () => any, foot: (item: any) => Promise<number | null>, storage?: any, go?: (q: string) => void, doc?: any }} o
+ */
+export function mountLabPanel(bench, { feet, delve, foot, storage = appStorage(), go = (q) => { globalThis.location.search = q; }, doc }) {
+  if (!bench?.draft) return null;
+  const rebuild = (d, at) => {
+    const why = labKeep(storage, d);
+    if (!why) go(`?dungeon=lab&draft=${encodeURIComponent(d.id)}&class=1&novideo&at=${at.join(',')}`);
+    return why;
+  };
+  return import('./delveLab.js').then(({ mountDelveLab }) => mountDelveLab({ draft: bench.draft, feet, landing: (at, r) => delve()?.landing(at, r) ?? { ok: false, rule: 'none' }, foot, rebuild, ...(doc ? { doc } : {}) }));
 }
 /**
  * DLV6: how far a thing's origin stands over its foot (m), so the lab sets it ON the floor at my feet - a model's lowest
@@ -68,7 +86,7 @@ export function labFoot(arch, getTexture) {
  * as does one whose base the player's BLOCKS.BSA lacks (`blocks`, the bench's).
  * @param {URLSearchParams} params @param {any} maps the bench's MapsFile @param {any} [storage] @param {any} [blocks]
  */
-export function benchLocation(params, maps, storage = globalThis.localStorage, blocks = null) {
+export function benchLocation(params, maps, storage = appStorage(), blocks = null) {
   const name = params.get('dungeon') ?? '', region = params.get('region') || 'Daggerfall';
   if (name === 'lab') {
     const draft = readLabDraft(params, storage);
