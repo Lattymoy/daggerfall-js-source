@@ -92,7 +92,7 @@ seconds, and forgotten two hours after it ends.
   `DRAGON_ADMIT_R` (*too far*); a site in another cell (junk); a dragon slain or gone.
 - **Every word names its fight** (`id`, the watch and the site), so a client folds its own alone (the serpent's AUDIT
   SERPENT 2 F1 law).
-- **The numbers** are the gate's level-claim law: a fighter brings `DRAGON_TTK_S` (200) seconds of
+- **The numbers** are the gate's level-claim law: a fighter brings `DRAGON_TTK_S` (720; 200 before DRAGON-HARDER) seconds of
   `dpsRef(lv) = 5 + lv` to its health, at the fight's fraction for a late one, and may deal by a bucket refilled at
   three times the reference a second, fifteen deep, no blow over twelve. A share leaves the health when its fighter is
   gone from the fight for 45 s.
@@ -397,6 +397,13 @@ client's next stand-up binds it again (`scenes/dragonRewards.js` recall, bind), 
 saddlebags' load is lost. PINS MOVED: the two switches, the bind's off case (`dragon5_mount`), the tamed line
 (`dragonaudit_account`), the online stock (`dragon5c_care`, `merchantyards1`); two mutants whose gate stands open now
 mutate its other side (`DRAGON5c-the-oil-kept-off-online`, `AUDIT-DRAGON-the-waiting-line-with-the-ride-on`).
+
+**DRAGON-HARDER (2026-10-29, the owner: "The dragon is way too easy to kill wtf").** A fighter's share was 200 seconds
+of its reference damage (`dpsRef`, 5 + level), but the gate's bucket lets it deal three times that, fifteen deep: one
+fighter at the cap took its share in about a minute, and more fighters only brought more shares. `DRAGON_TTK_S` is 720:
+twelve minutes at the reference, about four at the cap - over the Ketch Warden's 600 (KETCH-LONGER, the same finding),
+the rarest world boss the longest fight. Relay world289 (`DRAGON_RIDE_RELAY_MIN` stays 288). PINS MOVED: the relay
+version's (each note before the last), `dragon2_law`'s; `DRAGON2-the-share-the-gates` mutates 720 to 600.
 
 **DRAGON7 - the Aetherbright (2026-10-29).** `characters/dwarvenDragonShiny.js` turns each PLTE colour at load - the brass
 and copper to aetherium's blue, the wings' olive membrane to its violet, the greys cooled - and writes the chunk's CRC

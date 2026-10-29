@@ -113,9 +113,9 @@ function fightOf(n = 3, lv = 20) {
 
 test('DRAGON2 brain: the seam keeps every member; a fighter brings DRAGON_TTK_S of its reference, a late one at the fraction it stands at with an empty bucket; a full fight frees a seat of one with no part and not about (mutants: the share the gate\'s; the late bucket full; a seat freed from one with a part)', () => {
   for (const k of BOSS_SEAM_KEYS) assert.equal(typeof DRAGON_SEAM[k], 'function');
-  assert.equal(B.DRAGON_TTK_S, 200);
+  assert.equal(B.DRAGON_TTK_S, 720);   // PIN MOVED: DRAGON-HARDER, 200 before
   const { f, now } = fightOf(2);
-  assert.equal(f.max, 2 * 200 * dpsRef(20));
+  assert.equal(f.max, 2 * B.DRAGON_TTK_S * dpsRef(20));   // PIN MOVED: DRAGON-HARDER, by its own constant
   assert.equal(f.players.a.bucket, BUCKET_DEPTH_X * dpsRef(20));
   f.hp = f.max / 2;
   assert.equal(B.joinDragonFight(f, 'late', 'L', 30, now, true), true);

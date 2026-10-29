@@ -110,8 +110,8 @@
   {
     "name": "DRAGON2-the-share-the-gates",
     "file": "src/net/dragon/dragonBrain.js",
-    "old": "export const DRAGON_TTK_S = 200;",
-    "new": "export const DRAGON_TTK_S = 240;",
+    "old": "export const DRAGON_TTK_S = 720;",
+    "new": "export const DRAGON_TTK_S = 600;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
