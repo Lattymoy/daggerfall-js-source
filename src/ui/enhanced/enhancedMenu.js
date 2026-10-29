@@ -1485,7 +1485,7 @@ function waitingHouseCards() {
     return card;
   });
 }
-/** FAMILY-FORGET (bible/01-Overview/bugs/Field-Bugs-2026-10-29.md, a player: "being able to remove old families"): the
+/** FAMILY-FORGET (bible/01-Overview/bugs/Field-Bugs-2026-10-29b.md, a player: "being able to remove old families"): the
  *  account's lines no living character plays, each forgotten from here. Every new house founds a line and the realm holds
  *  LINEAGES_MAX, so a one-life player who deleted each character found every new house refused. */
 function oldFamiliesCard() {

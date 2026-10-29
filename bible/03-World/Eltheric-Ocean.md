@@ -373,7 +373,7 @@ X2 and P6, `csa_together.test.js` (the count's `skip`). THE FOUR HOSTS: `world.j
 crossing; `worldModes.js`, `dungeonContext.js` and `exterior.js` sail no crossing.
 
 
-**SEA-ROWS (`01-Overview/bugs/Field-Bugs-2026-10-29.md`; a player: "You get told you're going to the E-O instead").**
+**SEA-ROWS (`01-Overview/bugs/Field-Bugs-2026-10-29b.md`; a player: "You get told you're going to the E-O instead").**
 The crossing's waters were written for the Bay's world, and since WW3 the sea south of its rows is sailed. On the
 freeware's world 3 of 66 serpent sites past the Bay lay in them, and 8 of 35 far lanes sailed through them (Shimmerene
 to Lillandril, 177 of its 284 pixels). They are the Bay's own rows alone now (`crossingWaters`), and hold no site or far
@@ -723,7 +723,7 @@ its "+75% loot" English.
   teleport into, out of or about the open Eltheric Ocean. Sail.") - asked before the mountains' mask, beside the Veil's
   own refusal (`veilRefused`, P6). The way about the sea is the sea. THE LINKED BANK CABIN is a teleport like any - to
   her boat's pixel, refused into, out of or about the open sea and across the Veil
-  (`world.js:"if (!loading && (wildTeleportRefused(boatPixelOf(boat)) || veilRefused(boatPixelOf(boat)))) return true;"`
+  (`world.js:"if (!loading && (wildTeleportRefused(boatPixelOf(boat), boat.GameObject ? campToWire(boat.GameObject.position) : null) || veilRefused(boatPixelOf(boat)))) return true;"`
   - AUDIT SEA VENTURES C1: Transport > Ship's carried a captain from a Bay town's bank onto her boat a hundred leagues
   past the Veil, and back, past every refusal).
 - THE COMPANIONS: a hand ashore's pack and a sworn one's pack and kit are storage no death takes (STORE-KEEPS,

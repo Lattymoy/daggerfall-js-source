@@ -128,8 +128,8 @@
   {
     "name": "BC-boot-starts-without-the-extension",
     "file": "src/render/bootPrograms.js",
-    "old": "  if (!parallelCompile(renderer.gl)) return false;",
-    "new": "  if (!renderer.gl) return false;",
+    "old": "  if (!parallelCompile(renderer.gl)) {",
+    "new": "  if (!renderer.gl) {",
     "tests": [
       "test/render/bootcompile.test.js"
     ]

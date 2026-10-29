@@ -277,7 +277,7 @@ test('AUDIT SERPENT D4/B8/B10/B11 and the words: the inspect card and the accoun
   assert.equal(SERPENT_SPOILS_TEXT.granted(boss), 'Vharos\'s hoard is yours. It is in your pack.');
   assert.doesNotMatch(SERPENT_SPOILS_TEXT.granted(boss), /hold/);
   assert.equal(SERPENT_SPOILS_TEXT.kept('Ama', boss), 'Vharos\'s hoard waits for Ama.');
-  assert.match(SERPENT_CLAIM_TEXT.recorded(2, 0, boss), /^The Bay will remember Vharos's fall\./);
+  assert.match(SERPENT_CLAIM_TEXT.recorded(2, 0, boss), /^The sea will remember Vharos's fall\./);   // PIN MOVED (AUDIT TAMRIEL-WIDE D6): the serpent's lanes are the world's (WW7-12)
   assert.equal(serpentBarModel({ name: 'S', title: 'T', hp: 1, max: 2, phase: 2, phaseName: 'x', fighters: 1, stunned: true, stunLeft: 8200, now: 0 }).callout.text, 'Stunned. Strike its head! 9s');
   assert.doesNotMatch(src('src/scenes/serpentHost.js'), /[`'"]Sethrakul/, 'no name written in the host\'s words');
 });

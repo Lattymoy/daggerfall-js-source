@@ -9,6 +9,7 @@ import { inEther } from '../world/ethericSea.js';
 import { isTransformedLycanthrope } from '../systems/lycanthropy.js';
 import { playerEntity } from '../characters/playerEntity.js';
 import { politicClaimed } from '../systems/gate/gateSite.js';
+import { isProvinceRegion } from '../formats/mapsTables.js';   // AUDIT TAMRIEL-WIDE C1: a province's politic is its region's too
 import { RAID_SPAWN_MAX_DISTANCE, RAID_SPAWN_MIN_DISTANCE, outOfSight as raidOutOfSight, peerInEventPlace as raidPeerInPlace, raidSpawnRange, setRaidingPartiesHost } from '../systems/raidingParties.js';
 import { REGION_NAMES } from '../formats/mapsFile.js';
 import { spoilsLock } from './spoilsPool.js';
@@ -31,7 +32,7 @@ export function createRaidHost(host) {
     random: Math.random,   // UnityEngine.Random.Range - THE ENGINE-PRNG RULE
     maps: () => maps,
     picker: () => travelMapPickerData(),   // DaggerfallUI.GetImgBitmap("TRAV0I01.IMG")
-    regionIndex: () => { const px = playerTravelPixel(); return !(etherSea && inEther(px.x, px.y)) && politicClaimed(maps.getPoliticIndex(px.x, px.y)) ? _questRegionIndex() : -1; },   // fix 8: the sea (politic 64) and an unmapped pixel are no province - AUDIT CAPTAIN'S SEA G7: nor the Eltheric Ocean (its composed politic is the isles' region's, and Betony's raids were announced to a captain past the Veil)
+    regionIndex: () => { const px = playerTravelPixel(), pol = maps.getPoliticIndex(px.x, px.y); return !(etherSea && inEther(px.x, px.y)) && (politicClaimed(pol) || isProvinceRegion(pol - 128)) ? _questRegionIndex() : -1; },   // fix 8: the sea (politic 64) and an unmapped pixel are no province - AUDIT CAPTAIN'S SEA G7: nor the Eltheric Ocean (its composed politic is the isles' region's, and Betony's raids were announced to a captain past the Veil)
     regionName: (r) => REGION_NAMES[r] ?? String(r),   // GetLocalizedRegionName - the port speaks one language (ui/travel/travelMapWindow.js)
     townHere: (outdoors) => ((host.modes?.mode ?? 'exterior') !== 'exterior' ? null : outdoors || (_musicInLocationRect() ? _questLoc() : null)),   // FindCurrentRaid: outdoors, in the rect, at a location; STAFF-EVENT: `outdoors` (true) asks only that - an area's event
     playerPixel: () => playerTravelPixel(),

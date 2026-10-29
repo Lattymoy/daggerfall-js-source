@@ -2848,7 +2848,7 @@ a pond, is its harbor's sea).
 `tvSeaAsk`), and the lanes are the planner's. `scenes/exterior.js` sails nowhere; `scenes/worldModes.js` and
 `scenes/dungeonContext.js` stand no sea. Ledger A (START2).
 
-**Taut (SEA-TAUT, `01-Overview/bugs/Field-Bugs-2026-10-29.md`; a player: "it takes forever to get to the fights that
+**Taut (SEA-TAUT, `01-Overview/bugs/Field-Bugs-2026-10-29b.md`; a player: "it takes forever to get to the fights that
 aren't near to the shore").** The ends' floods went breadth first, a diagonal step counted as one, so open water due
 east sailed as a "Λ": forty voyages past the Bay sailed a median 1.105 of the straight line, p90 1.399. The floods now
 count a step's own length (buckets a pixel wide, exact here), and the sailed stretch is pulled taut (`seaTaut`) over

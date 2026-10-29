@@ -1,4 +1,4 @@
-// SEA-TAUT (bible/01-Overview/bugs/Field-Bugs-2026-10-29.md; a player: "the pathfinding is so broken for ships in this
+// SEA-TAUT (bible/01-Overview/bugs/Field-Bugs-2026-10-29b.md; a player: "the pathfinding is so broken for ships in this
 // area, as it takes forever to get to the fights that aren't near to the shore"). A voyage past the Bay sails the sea
 // lanes' plan (travelRoute.js planSeaLanes): its ends were flooded breadth first, a diagonal step counted as one, and the
 // way to each pixel was the first neighbour's - in open water a run due east sailed as a "Λ", up to √2 the straight line

@@ -263,7 +263,7 @@ test('ETHER-SEA the crossing\'s waters: out on the open Abecean - west of CROSS_
   assert.equal(crossingWaters(-200, 300, Infinity), true, 'past the Bay\'s west edge, the Eltheric');
   assert.equal(crossingWaters(200, 300, NaN), false, 'a distance nobody measured');
   assert.equal(crossingWaters(200, -5000, Infinity), false, 'never in the sea\'s box - west of CROSS_X there too');
-  // SEA-ROWS (Field-Bugs-2026-10-29): the Bay's own rows alone - past them is the sea the world sails (Sumurset's lanes,
+  // SEA-ROWS (Field-Bugs-2026-10-29b): the Bay's own rows alone - past them is the sea the world sails (Sumurset's lanes,
   // the serpent's waters off Sunhold, Silinorin and Shimmerene)
   assert.equal(crossingWaters(200, 499, Infinity), true, 'the Bay\'s last row');
   assert.equal(crossingWaters(200, 500, Infinity), false, 'south of the Bay\'s rows');

@@ -224,7 +224,8 @@ export const FRAME_ROLES = {
     // FIRM1: the Firmament's window (ui/firmamentWindow.js) - its bar, its panels, its presses
     'body .fmt-btn.fmt-exit'],
   tile: ['.px-qoffer .px-qpiece',   // QL3: a reward waiting's piece
-    '.port-host .port-tile', '.pack-shell .sf-chip', '.port-host .port-iconcell', '.pack-shell .itemrow', '.pack-shell .equipped .wornrow', '.pack-shell .wornsock', '.wizard .racegrid button',
+    '.port-host .port-tile', '.pack-shell .sf-chip', '.port-host .port-iconcell', '.pack-shell .itemrow', '.pack-shell .equipped .wornrow', '.pack-shell .wornmap .worncape', '.pack-shell .wornsock',   // CAPE-TOGGLE: the Cloaks panel's eye, a press on the panel's wood
+    '.wizard .racegrid button',
     '.wizard .facegrid button', '.shell .ft-tile', '.shell .ft-seg', '.shell .ft-mchip', '.shell .ft-tile-more',   // FT18: a condensed tile's parts toggle
     '.sb-shell .sb-chip', '.cr-shell .sb-chip', '.piletab',
     // PLUS3: the shop's shelf rows and the tavern's food & drink rows - the same `.itemrow` the pack

@@ -2,8 +2,8 @@
   {
     "name": "SS-the-started-program-never-taken",
     "file": "src/render/glProgram.js",
-    "old": "  if (took) started.delete(key);\n  const { prog, vs, fs } = took?.prog ? took : link(gl, vsSrc, fsSrc);",
-    "new": "  const { prog, vs, fs } = link(gl, vsSrc, fsSrc);",
+    "old": "  if (took) started.delete(key);\n  takenOf(gl).add(key);\n  const { prog, vs, fs } = took?.prog ? took : link(gl, vsSrc, fsSrc);",
+    "new": "  takenOf(gl).add(key);\n  const { prog, vs, fs } = link(gl, vsSrc, fsSrc);",
     "tests": [
       "test/render/shaderstall.test.js"
     ]

@@ -92,7 +92,7 @@ test('VEIL-PARTY the captain: a rider of her party is not counted against her cr
   assert.equal(CROSS_REFUSED.passengers, 'Only your party can cross the Veil with you. The crossing waits until only your party is aboard.', 'AUDIT HORIZONTAL C7: it waits for strangers alone');
   const w = hostText('src/scenes/world.js');
   assert.match(w, /const crossRefusal = \(\) => \(navalHostileNear\(\) \? 'hostile' : csaPassengersOn\(csaRuntime\?\.state\?\.CurrentBoat, veilParty\.kin\) > 0 \? 'passengers' : null\);/);
-  assert.match(w, /if \(pick\?\.besideAt && \(wildTeleportRefused\(pick\.pixel \?\? null\) \|\| \(!pick\.veil && veilRefused\(pick\.pixel \?\? null\)\)\)\) return Promise\.resolve\(false\);/);
+  assert.match(w, /if \(pick\?\.besideAt && \(wildTeleportRefused\(pick\.pixel \?\? null, teleportLanding\(pick\.besideAt\(\)\)\) \|\| \(!pick\.veil && veilRefused\(pick\.pixel \?\? null\)\)\)\) return Promise\.resolve\(false\);/);   // PIN MOVED (AUDIT TAMRIEL-WIDE E1): the leader's feet, where it lands
   assert.ok(STRANGER);
 });
 

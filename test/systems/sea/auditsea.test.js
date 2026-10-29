@@ -864,7 +864,7 @@ test('AUDIT SEA VENTURES C2: Veilhaven\'s peace holds the way home - her own row
 test('AUDIT SEA VENTURES C1, C3, C4, C5/F2: the linked bank cabin is a teleport like any - never into, out of or about the open sea, nor across the Veil; a party\'s walk onto the open sea warns as one into the mountains does; a wagon parked on the open sea\'s ground keeps its cargo through a death there, as every wagon does since STORE-KEEPS; a death past the Veil rises at the nearest freeport, however far (mutants: the cabin\'s refusals, the walk, the cart, the rise)', () => {
   const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
   const cab = w.slice(w.indexOf('async function enterLinkedBankCabin('), w.indexOf('async function boardOrDisembark('));
-  const refuse = cab.indexOf('if (!loading && (wildTeleportRefused(boatPixelOf(boat)) || veilRefused(boatPixelOf(boat)))) return true;');
+  const refuse = cab.indexOf('if (!loading && (wildTeleportRefused(boatPixelOf(boat), boat.GameObject ? campToWire(boat.GameObject.position) : null) || veilRefused(boatPixelOf(boat)))) return true;');
   assert.ok(refuse > 0 && refuse < cab.indexOf('await _teleportToPixel(boat.MapPixel.X, boat.MapPixel.Y);'), 'refused before the teleport');
   assert.match(w, /const boatPixelOf = \(boat\) => \(\{ x: boat\.MapPixel\.X, y: boat\.MapPixel\.Y \}\);/);
   assert.match(w, /const wildWalkRow = \(x, y\) => \{ const m = wildMask\(\); return !online\?\.wildOk \? null : etherSea && etherWildRingAt\(x, y\) > 0 \? zoneWord\('walkInto', ETHER_KIND\) : m && wildNear\(m, x, y\) \? WILD_TEXT\.walkInto : null; \};/);

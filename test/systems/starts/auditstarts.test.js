@@ -582,7 +582,7 @@ const lineOf = (a, b) => {
   while (x !== b.x || y !== b.y) { const e2 = 2 * err; if (e2 > -dy) { err -= dy; x += sx; } if (e2 < dx) { err += dx; y += sy; } out.push({ x, y }); }
   return out;
 };
-// PIN MOVED (SEA-TAUT, Field-Bugs-2026-10-29): a sailed step is a straight run over open water now - each pixel of its
+// PIN MOVED (SEA-TAUT, Field-Bugs-2026-10-29b): a sailed step is a straight run over open water now - each pixel of its
 // line a boat's step - and every other step one pixel
 const stepsSailed = (plan, isWater) => {
   for (let i = 1; i < plan.pixels.length; i++) {

@@ -163,7 +163,7 @@ test('AUDIT 64 F18/F19: fast travel and the guild teleport carry DFU\'s repositi
 
   // DaggerfallTeleportPopUp.cs:143 - RandomStartMarker, explicitly,
   // against the overload's own default of Origin (StreamingWorld.cs:368).
-  const teleport = slice('async function teleportTo(pick)', '\n  }');
+  const teleport = slice('async function teleportTo(pick, { zoneFree = false } = {})', '\n  }');   // PIN MOVED (AUDIT TAMRIEL-WIDE III F1)
   assert.match(teleport, /reposition: REPOSITION\.RandomStartMarker/,
     'TeleportAway names the reposition (DaggerfallTeleportPopUp.cs:143)');
 
@@ -281,7 +281,7 @@ test('AUDIT 64 F22: fast travel clears the crime, and a teleport does not', () =
 
   // DaggerfallTeleportPopUp never runs performFastTravel, so it raises
   // no OnPostFastTravel and the crime rides a guild teleport in DFU too.
-  const tele = world.slice(world.indexOf('async function teleportTo(pick)'));
+  const tele = world.slice(world.indexOf('async function teleportTo(pick, { zoneFree = false } = {})'));   // PIN MOVED (AUDIT TAMRIEL-WIDE III F1)
   assert.equal(tele.slice(0, tele.indexOf('\n  }')).includes('setCrimeCommitted'), false,
     'a teleport keeps the crime, as it does in DFU');
 });

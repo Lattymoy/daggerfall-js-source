@@ -772,7 +772,7 @@ test('INT9 THE CLIENT: a blow rolled on my own sheet and sent as a number; no de
   const w = hostText('src/scenes/world.js'), o = rd('src/net/online.js');
   assert.ok(o.includes('if (primary) this.wildOk = relaySupportsWildRef(relayV);'), 'a relay that referees the zone, or none of it');
   assert.ok(o.includes("} else if (m.t === 'wref') {"));
-  assert.ok(w.includes('online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere() && wildOutdoors(), player.pos, Date.now()));'));   // PIN MOVED (AUDIT FOE-KEEPS E2): and left dying
+  assert.ok(w.includes('online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere(), player.pos, Date.now()));'));   // PIN MOVED (AUDIT FOE-KEEPS E2): and left dying
   assert.ok(w.includes("const n = wildFight.blow(to, 'strike', { by, p: campToWire(player.feetAt()), d: Math.trunc(r.dmg),"));
   assert.ok(!w.includes('resolveDuelStrike(d, playerEntity'), 'the defender resolves nothing');
   assert.ok(w.includes('      forcePlayerDeath(playerEntity);\n'), 'the referee\'s fall, a death');

@@ -833,7 +833,7 @@ export function drawProfessionsPage(detail, rerender, kit) {
   const next = toNextWords(tr, held);
   pane.append(el('p', 'prof-xp', next ? `${xpLine(tr, held)} · ${next}` : xpLine(tr, held)));   // CRAFT-LIMIT-SAID: a held craft its ceiling
   const practised = PRACTISED.includes(_sel);
-  if (!practised) pane.append(el('p', 'px-note', PARTLY[_sel] ?? t('prof.page.notPractised', 'This profession is not practiced in the Bay yet.')));
+  if (!practised) pane.append(el('p', 'px-note', PARTLY[_sel] ?? t('prof.page.notPractised', 'This profession is not practiced yet.')));
   if (_sel === 'hunting') {
     // PROF7: Hunting's day is the account's (PROF0 6) - its hides, every character's together, and the rare ones (CAP-OFF:
     // the hides a count, the rare ones' three the day's one bound)

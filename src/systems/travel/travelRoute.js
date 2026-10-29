@@ -911,7 +911,7 @@ function* planSeaLanesSteps(from, to, opts = {}) {
   return { pixels, cost: cost + ashore.cost, kinds };
 }
 
-/** SEA-TAUT (bible/01-Overview/bugs/Field-Bugs-2026-10-29.md): a sea route's pixels pulled taut - from each kept pixel,
+/** SEA-TAUT (bible/01-Overview/bugs/Field-Bugs-2026-10-29b.md): a sea route's pixels pulled taut - from each kept pixel,
  *  the farthest later one whose straight line (Bresenham) runs over open water: every pixel of it water and all eight
  *  about it (the kernel builds a square from its corner bytes, so a line past a land pixel's corner may run ashore
  *  between the middles - SEA-SQUARE). Along a coast the route keeps its own steps. The ends are kept. */

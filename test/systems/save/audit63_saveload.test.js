@@ -595,7 +595,7 @@ test('AUDIT 63r F30: the TWO exit transitions lower the flag - and the shared te
   }
   // the two teleport teardowns really are the same seam, and really do
   // not re-raise - which is why the third clear was a live bug.
-  for (const fn of ['async function teleportTo(pick)', 'async function _respawnAtSite(loc)']) {
+  for (const fn of ['async function teleportTo(pick, { zoneFree = false } = {})', 'async function _respawnAtSite(loc)']) {   // PIN MOVED (AUDIT TAMRIEL-WIDE III F1)
     const i = WORLD.indexOf(fn);
     assert.ok(i > 0, `${fn} exists`);
     const body = WORLD.slice(i, WORLD.indexOf('\n  }\n', i));

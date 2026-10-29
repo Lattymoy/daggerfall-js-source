@@ -218,7 +218,7 @@
   {
     "name": "LW7c-empty-silent",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "    if (!counts.people) detail.append(el('p', 'px-note', 'No one in the Bay knows you yet.'));",
+    "old": "    if (!counts.people) detail.append(el('p', 'px-note', 'No one knows you yet.'));",
     "new": "    void 0;",
     "tests": [
       "test/systems/livingWorld/lw7c_people.test.js"

@@ -2716,7 +2716,7 @@ reads its pin through `firstVisitStore.js firstVisitPin`, which throws when ther
 an update that changes a computation refreshes that cache for every player on their next launch, and one that does not
 keeps it.
 
-WEBKIT-TLA (`01-Overview/bugs/Field-Bugs-2026-10-29.md`): the store imports the pins and never awaits them. It read them
+WEBKIT-TLA (`01-Overview/bugs/Field-Bugs-2026-10-29b.md`): the store imports the pins and never awaits them. It read them
 with a top-level await, and WebKit before Safari 27 resolves a second `import()` of a graph that awaits before it has
 run (WebKit bug 242740): every iPhone's Play called `bootWorld` before the world chunk had made its classes.
 `test/tree/toplevelawait.test.js` refuses a top-level await in any module another imports.
@@ -2849,7 +2849,7 @@ real boot, each made new by a comment so that no cache answered (ANGLE D3D11, RT
   through `startPrograms` as soon as `main.js` has made the renderer, behind a dynamic import (BOOT2's ceiling). It
   starts only what the page's switches build: the lane when Enhanced Lighting is on, the air with its door, the sky's
   passes and the grass by their switches, the clip when Deep Waters stands, and no outdoor pass behind `?interior` or
-  `?dungeon`. The cloud march goes first: it is the longest single compile (6.6 s alone). The constructor starts its
+  `?dungeon`. The clouds go last: their door waits (SHADER-EASE MOUNT-START). The constructor starts its
   own seven programs before it reads the first. Each pass's build is unchanged: `buildProgram` takes the started
   program for the same sources. Where the driver cannot compile beside the page, nothing is started.
 - **P2.** `warmSteps()` and `lazyWarmSteps()` are `{ start, run, need }` steps (`render/warmPrograms.js`): a step's
@@ -3009,6 +3009,16 @@ back after each update. Each is now a named step (`DEEP_WATERS_PROGRAMS`, `OCEAN
 KHR_parallel_shader_compile it builds at its first idle, as before. **LINK-WAIT:** `buildProgram` times its one
 LINK_STATUS read; a read over 50 ms is kept (`linkWaits()`, the last 32: label, ms, whether a start had it ahead). Pins: `test/render/shaderease.test.js`. Mutants: `tools/mutants/shaderease_warmpoll.json`, 13, all
 dead.
+
+**SHADER-EASE MOUNT-START and QUEUE-ORDER (2026-10-29: in Chrome the game froze for the first 30-60 s in the world
+after each update).** Each pass an outdoor host builds at mount read its link at once, cold: the shadow pass's depth
+and body programs, the far ring and trees, the skies and weather, duel wall, banners, flags, curtains, loot lines and
+NPC marks. The depth programs join `laneBootPrograms`; `render/mountPrograms.js` lists the rest by each host's own
+switch - none behind `?interior` or `?dungeon`, only the sky and marks for the fixed city (`?exterior`, `?region`,
+`?loc`). They are queued one at a time (COMPILE-QUEUE) once the boot's batch ahead of the clouds is done
+(`startedDone`, read only), or after `MOUNT_WAIT_TURNS`. The play queue adds the nodes' glow and the sea fight's
+effects, auras and armory last. Pins: `test/render/shadermount.test.js`. Mutants: `tools/mutants/shader_mount.json`,
+28, all dead.
 
 ## CLOUD-COMPILE — the volumetric clouds arrive when their programs are done
 

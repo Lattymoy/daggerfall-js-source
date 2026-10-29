@@ -1766,7 +1766,7 @@ are never hidden: they hunt me.
 ## 51. A world boss is never one (STAR-MASTER-FLED, 2026-10-29)
 
 A player's report: a Starfall's master, an Elite Daedra Lord, rolled the mark, ran at a blow, became their revenant,
-and the star waited on it at "the master" until dawn (`01-Overview/bugs/Field-Bugs-2026-10-29.md`). A world boss's
+and the star waited on it at "the master" until dawn (`01-Overview/bugs/Field-Bugs-2026-10-29b.md`). A world boss's
 fall is its event's: `entity.worldBoss` (the Starfall's master, `scenes/starfall/starfallHost.js` masterOf) is no
 candidate (`revenant.js` revenantCandidate), the mark's gate never draws on one, and `unquietMark.js` isUnquiet and
 `foeTitle.js` never read one as marked - so it never breaks, routs nobody and rises from no deed, as the rite's faithful

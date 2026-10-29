@@ -2658,6 +2658,19 @@ export const ARMOUR_CSS = `
   color: #efe8d6; background: rgba(5,6,8,0.8); border: 1px solid rgba(192,138,62,0.8); border-radius: 7px 7px 1px 1px;
   text-shadow: 1px 1px 0 #050608; }
 .pack-shell .equipped .worncount ~ .wornhood { right: 20px; }
+/* CAPE-TOGGLE: the Cape switch, an eye in the Cloaks panel's bottom-right corner (its grid-cell sibling), lit while shown.
+   The top-right stays the count's and the raised hood's; on a phone, where the name stands at the panel's foot, it keeps
+   the corner's room (the touch-phone rule's own query, ui/enhanced/enhancedStyle.js PACK-PHONE) */
+.pack-shell .wornmap .worncape { justify-self: end; align-self: end; position: relative; z-index: 3; margin: 0 3px 3px 0;
+  width: 18px; height: 16px; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer;
+  color: #a89f88; background: rgba(5,6,8,0.8); border: 1px solid rgba(163,152,128,0.5); border-radius: 1px 1px 7px 1px; }
+.pack-shell .wornmap .worncape.on { color: #f3cf86; border-color: rgba(192,138,62,0.8); }
+.pack-shell .wornmap .worncape:hover, .pack-shell .wornmap .worncape:focus-visible { color: #efe8d6; outline: 0; }
+.pack-shell .wornmap .worncape:focus-visible { outline: 2px solid rgba(243,207,134,0.6); outline-offset: 1px; }
+@media (pointer: coarse) and (hover: none) and (max-width: 640px), (pointer: coarse) and (hover: none) and (max-height: 540px) {
+  .pack-shell .equipped .wornrow[data-fam="cloaks"] .wornname { padding-right: 20px; }
+}
+.pack-shell .wornmap .worncape:focus-visible { outline: 2px solid rgba(243,207,134,0.6); outline-offset: 1px; }
 /* AUDIT C&C S1: THE PLAQUES' ROW - the figure's first cell named whole (ui/enhanced/enhancedInventory.js: '1 / 2 / 2 / 3'; on
    '1 / 2' an absolutely placed grid child's end lines ran to the map's edge, and the Felt plaque's right corner stood on
    the R-Weapon panel), the Armour plaque at its left and the Felt plaque at its right, the Felt one under the Armour one

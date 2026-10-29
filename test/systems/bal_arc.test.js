@@ -382,7 +382,7 @@ test('BAL4 a real cost for dying offline: a death Project Legacy will raise stat
   assert.deepEqual(deathKeys('ENTER end   F11 load', false, false).map((k) => k.word), ['End your tale', 'Load last save']);
   assert.deepEqual(deathKeys('ENTER end', false, true).map((k) => k.word), ['Rise'], 'no F11 where there is no quickload');
   assert.deepEqual(deathKeys('ENTER end   F11 load', true, true).map((k) => k.word), ['Rise now']);
-  assert.match(rd('src/ui/enhanced/enhancedDeath.js'), /lossLine \|\| \(online \|\| screen\.rises\n\s*\? t\('death\.lineOnline', 'Your body falls\. The Bay is not done with you yet\.'\)/, 'and the line is the rise\'s, not "your tale ends here"');
+  assert.match(rd('src/ui/enhanced/enhancedDeath.js'), /lossLine \|\| \(online \|\| screen\.rises\n\s*\? t\('death\.lineOnline', 'Your body falls\. The world is not done with you yet\.'\)/, 'and the line is the rise\'s, not "your tale ends here"');   // PIN MOVED (AUDIT TAMRIEL-WIDE D4): a death past the Bay is not in the Bay - the line names no place
   // the street's rise takes it: the offline arm keeps only the revenant's theft online's
   const w = rd('src/scenes/world.js');
   const reset = w.slice(w.indexOf('function legacyDeathReset() {'), w.indexOf('function openLegacySuccession('));
@@ -536,10 +536,10 @@ test('AUDIT BAL the enhanced death screen, drawn: a rise offline wears Rise and 
   });
   const rising = face(true, 5);
   assert.deepEqual(rising.words, ['Rise', 'Load last save']);
-  assert.equal(rising.line, 'Your body falls. The Bay is not done with you yet.', 'a purse under ten coins loses nothing: the rise\'s own line');
+  assert.equal(rising.line, 'Your body falls. The world is not done with you yet.', 'a purse under ten coins loses nothing: the rise\'s own line');   // PIN MOVED (AUDIT TAMRIEL-WIDE D4): a death past the Bay is not in the Bay - the line names no place
   const paying = face(true, 345);
   assert.match(paying.line, /34/, 'the loss in the line\'s place');
   const ends = face(false, 345);
   assert.deepEqual(ends.words, ['End your tale', 'Load last save']);
-  assert.equal(ends.line, 'Your tale in the Iliac Bay ends here.');
+  assert.equal(ends.line, 'Your tale ends here.');   // PIN MOVED (AUDIT TAMRIEL-WIDE D4): a death past the Bay is not in the Bay - the line names no place
 });

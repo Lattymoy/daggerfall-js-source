@@ -718,12 +718,12 @@
   {
     "name": "PORTAL1-arrival-forgets-the-team",
     "file": "src/scenes/portalStoneHost.js",
-    "old": "      hccRuntimeOn()?.handlePreFastTravel();\n      try { if (!(await teleportTo(g.dest))) hudFade.clearFade(); }",
-    "new": "      try { if (!(await teleportTo(g.dest))) hudFade.clearFade(); }",
+    "old": "      hccRuntimeOn()?.handlePreFastTravel();\n      try { if (!(await teleportTo(g.dest, { zoneFree: !pvpFlagOn() }))) hudFade.clearFade(); }",
+    "new": "      try { if (!(await teleportTo(g.dest, { zoneFree: !pvpFlagOn() }))) hudFade.clearFade(); }",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ],
-    "note": "PORTAL-BAY (PIN MOVED): re-aimed by content - the arrival reads teleportTo's answer"
+    "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE III): the line its fix rewrote. PORTAL-BAY (PIN MOVED): re-aimed by content - the arrival reads teleportTo's answer"
   },
   {
     "name": "PORTAL1-arrival-failure-stays-black",
