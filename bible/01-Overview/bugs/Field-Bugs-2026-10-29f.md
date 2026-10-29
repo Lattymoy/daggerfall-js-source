@@ -1,7 +1,8 @@
 # FIELD BUGS 2026-10-29f - the phone's boot, the Starfall's master, the open sea and the boards
 
 Five Discord reports and the owner's board change (one fixed on main first), handed over by the owner in a session. Read on main's `c1f7101c0`
-with the freeware's data (`tools/fetch-data.sh`). The mutants are `tools/mutants/fb1029f_fieldbugs.json`.
+with the freeware's data (`tools/fetch-data.sh`). The mutants are `tools/mutants/fb1029f_fieldbugs.json`. The fixes were
+then read cold and corrected (`../audits/Audit-FB1029f.md`).
 (Written as page (b); #1431 took 29b and 29c, #1428 29d and #1436 29e first, so this batch is (f).)
 
 | | Report | What it was | Done |
