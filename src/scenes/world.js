@@ -23714,11 +23714,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     feet: () => (walkMode && playerSpawned ? player.feetAt() : null),
     online: () => !!online?.riteOk,   // AUDIT WB12d (L5, D9): a relay that keeps the rite (net/wire.js relaySupportsRite) - an older one never hears its word
     foes: {
-      spawn: (career, [x, z], { yaw, site, transient }) => {
+      spawn: (career, [x, z], o) => {
         const y = surfaceAt(x, z);
         if (!Number.isFinite(y)) return Promise.resolve(null);
         const hit = collider.surfaceHit([x, y + 0.2, z], _DOWN, 3);
-        return exteriorFoes.spawnFoe(career, [x, y, z], { yaw, placed: true, groundAlign: { hitDist: hitDistance(hit) }, site, transient });   // WOD7: tagged with its site - shared, as a marker's foe is; AUDIT WB12d (C5): in no save
+        return exteriorFoes.spawnFoe(career, [x, y, z], { ...o, placed: true, groundAlign: { hitDist: hitDistance(hit) } });   // WOD7: tagged with its site - shared, as a marker's foe is; AUDIT WB12d (C5): in no save; STAR-MASTER-FLED: the rite's own (`eventFoe`)
       },
       list: () => exteriorFoes.foes,
       drop: (site) => exteriorFoes.dropSiteFoes(site),   // AUDIT WB12d (C1): taken down, the site kept

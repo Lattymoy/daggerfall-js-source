@@ -48,7 +48,7 @@ function rig() {
     regionIndex: () => 3, regionName: (r) => `Region${r}`,
     townHere: (outdoors) => (outdoors ? at.outdoors : at.town), playerPixel: () => at.pixel,
     peersInTown: () => [], raidPuppets: () => at.puppets, ownRaidFoes: () => at.own, relayRaids: () => true,
-    standRaider: (mt, o) => { const f = foe(mt); f.o = o; if (o?.at) f.ai.feet = [...o.at]; log.raiders.push(f); return Promise.resolve(f); },
+    standRaider: (mt, o, boss) => { const f = foe(mt); f.o = o; f.asBoss = boss; if (o?.at) f.ai.feet = [...o.at]; log.raiders.push(f); return Promise.resolve(f); },
     standDefender: () => { const g = foe(146); log.defenders.push(g); return Promise.resolve(g); },
     defenderCount: () => 0, defendersAllowed: () => true, removeFoe: (f) => { f.dead = true; }, outOfSight: () => true,
     reputation: () => ({ player: { legalRep: {} }, store: { dict: new Map() } }), say: (line) => log.said.push(line),
@@ -119,6 +119,7 @@ test('STAFF-EVENT: RUN AS A RAID - its own monsters, mixed, up to its total; no 
   await tick();
   const boss = log.raiders.at(-1);
   assert.equal(boss.mobileType, 24, 'staff\'s pick: an Orc Warlord');
+  assert.deepEqual([boss.asBoss, log.raiders.slice(0, -1).some((f) => f.asBoss)], [true, false], 'its stand asked as the boss\'s: an event\'s own from it, never a revenant (STAR-MASTER-FLED, AUDIT FB1029e STAR F4)');
   assert.ok(isStaffBoss(boss.entity));
   assert.equal(boss.entity.maxHealth, 40 * 20, 'staff\'s health pick: 20x');
   assert.equal(eliteSize(boss.entity), 2.5);

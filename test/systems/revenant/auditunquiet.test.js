@@ -26,7 +26,8 @@ const FT = await import('../../../src/systems/revenant/revenantFate.js');
 const RC = await import('../../../src/systems/revenant/revenantCompanions.js');
 const S = await import('../../../src/systems/companionSlots.js');
 const PG = await import('../../../src/ui/revenant/revenantPage.js');
-const { isUnquiet } = await import('../../../src/systems/revenant/unquietMark.js');
+const { isUnquiet, markUnquiet, _forceUnquietForTests } = await import('../../../src/systems/revenant/unquietMark.js');
+const { promoteStaffBoss } = await import('../../../src/systems/eliteFoes.js');
 const { foeTitle } = await import('../../../src/systems/foeTitle.js');
 const { feudOf } = await import('../../../src/systems/feudLedger.js');
 const { setPref, _resetForTests } = await import('../../../src/systems/uiPrefs.js');
@@ -493,7 +494,7 @@ const careers = (() => {
   return out;
 })();
 const stubTex = { getSize: () => ({ width: 64, height: 100 }), getScale: () => ({ width: 0, height: 0 }), recordCount: 20, getFrameCount: () => 5 };
-function rig(p) {
+function rig(p, { inLocation = () => true } = {}) {
   const renderer = {
     createBillboardBatch: (archive, record, size) => ({ archive, record, size, conceal: undefined, dissolve: undefined, origin: null }),
     destroyBillboardBatch: () => {}, destroyBatch: () => {}, textures: new Map(), uploadTexture: () => ({}), uploadEmissionTexture: () => ({}),
@@ -502,7 +503,7 @@ function rig(p) {
     renderer, collider: new Collider(() => 0),
     fetchBytes: async (n) => { if (n === 'MONSTER.BSA') return careers; throw new Error(`no ${n} here`); },
     getTexture: async () => stubTex, uploadRecordFrame: () => {},
-    currentMinute: () => 1000, currentPixelKey: () => '3,12', inLocation: () => true,
+    currentMinute: () => 1000, currentPixelKey: () => '3,12', inLocation,
     playerEntity: p, audio: null, onPlayerHurt: () => {}, rolls: () => 0.5, rand: () => 0.9, say: () => {},
     fates: true, dropLoot: () => {}, shake: () => {},
   });
@@ -532,43 +533,100 @@ test('AUQ B11 THE CRAFT THROUGH THE REAL STREET POOL: a rank-II spriggan breaks 
   assert.ok(shown.some((e) => e.kind === 'escape'), 'said');
 });
 
-// ── a world boss's fall is its event's (STAR-MASTER-FLED) ───────────
+// ── an event's own foe's fall is its event's (STAR-MASTER-FLED) ─────
 
-test('STAR-MASTER-FLED NEVER A WORLD BOSS: the Starfall master (`worldBoss`), marked or not, is no candidate, wears no "Unquiet" and rises from no deed (Field-Bugs-2026-10-29e: an Unquiet Elite Daedra Lord ran, became a revenant, and its star waited on it until dawn) (mutants: the candidate\'s world boss; the mark\'s; the title\'s)', () => {
+test('STAR-MASTER-FLED AN EVENT\'S OWN FOE NEVER RISES: the Starfall\'s master, a staff event\'s boss or a rite\'s faithful (`eventFoe`, unquietMark.js isEventFoe), marked or not, draws no mark, is no candidate, wears no "Unquiet" and rises from no deed - one rule, every reader (Field-Bugs-2026-10-29e: an Unquiet Elite Daedra Lord ran, became a revenant, and its star waited on it until dawn) (mutants: the candidate\'s rule; the mark\'s gate; isUnquiet\'s; the title\'s)', () => {
   const p = me();
-  assert.equal(N.revenantCandidate(foe()), true, 'the same foe, no world boss: a candidate');
-  assert.equal(N.revenantCandidate(foe({ worldBoss: true })), false);
-  assert.equal(N.revenantCandidate(foe({ worldBoss: true, unquiet: false, revenant: { id: 'r-1', rank: 1 } })), false, 'not even one already rising');
-  assert.equal(isUnquiet(foe({ worldBoss: true })), false);
-  assert.equal(foeTitle(foe({ worldBoss: true, champion: null, eliteFoe: true }), 'Daedra Lord'), 'Elite Daedra Lord');
+  const ev = (over = {}) => foe({ eventFoe: true, ...over });
+  assert.equal(N.revenantCandidate(foe()), true, 'the same foe, no event\'s own: a candidate');
+  assert.equal(N.revenantCandidate(ev()), false);
+  assert.equal(N.revenantCandidate(ev({ unquiet: false, revenant: { id: 'r-1', rank: 1 } })), false, 'not even one already rising');
+  assert.equal(isUnquiet(ev()), false);
+  assert.equal(foeTitle(ev({ champion: null, eliteFoe: true, worldBoss: true }), 'Daedra Lord'), 'Elite Daedra Lord', 'the Starfall\'s master');
+  assert.equal(foeTitle(ev({ champion: null, eliteFoe: true, staffBoss: { size: 2 } }), 'Orc'), 'Mighty Orc', 'a staff event\'s boss');
   assert.equal(foeTitle(foe({ champion: null, eliteFoe: true }), 'Daedra Lord'), 'Unquiet Elite Daedra Lord', 'one that may rise says so');
-  assert.equal(N.revenantDeed(p, foe({ worldBoss: true }), 'fled', { mobileType: M.Orc, rolls: () => 0 }), null);
-  assert.equal(N.revenantDeed(p, foe({ worldBoss: true }), 'slew', { mobileType: M.Orc, rolls: () => 0 }), null);
+  assert.equal(N.revenantDeed(p, ev(), 'fled', { mobileType: M.Orc, rolls: () => 0 }), null);
+  assert.equal(N.revenantDeed(p, ev(), 'slew', { mobileType: M.Orc, rolls: () => 0 }), null);
   assert.equal(N.livingRevenants().length, 0);
+  _forceUnquietForTests(true);
+  try {
+    const plain = { mobileType: M.Orc, level: 6, team: 'Monster' };
+    assert.equal(markUnquiet(plain), true, 'the gate open: the draw lands');
+    const own = { mobileType: M.Orc, level: 6, team: 'Monster', eventFoe: true };
+    assert.equal(markUnquiet(own), false, 'an event\'s own: the gate never draws');
+    assert.equal(own.unquiet, undefined);
+  } finally { _forceUnquietForTests(null); }
 });
 
-test('STAR-MASTER-FLED THROUGH THE REAL STREET POOL: an elite stood by the pool and marked, at a tenth of its health on every roll\'s win, breaks and runs - and the same foe made a world boss as it lands (starfallHost.js masterOf) stands and fights (mutants: the candidate\'s world boss)', async () => {
+/** One blow to a tenth of its health on the real pool, every roll a win - does it run? */
+function struck(pool, f) {
+  const step = (dt) => { T += dt; pool.update(dt, [0, 0, 3], [0, 1.6, 3]); };
+  step(0.016);
+  f.entity.health = Math.round(f.entity.maxHealth * 0.1);
+  const random = Math.random;
+  Math.random = () => 0;
+  try { step(0.016); } finally { Math.random = random; }
+  return !!f.fleeing;
+}
+/** A foe stood by `pool` with Math.random at nought - the overworld elite's roll won (ELITE_FOE_OVERWORLD_CHANCE). */
+async function stoodWinning(pool, o) {
+  const random = Math.random;
+  Math.random = () => 0;
+  try { return await pool.spawnFoe(M.Orc, [0, 0, 6], { feetGiven: true, level: 6, ...o }); } finally { Math.random = random; }
+}
+
+test('STAR-MASTER-FLED THROUGH THE REAL STREET POOL: an elite stood by the pool, every draw of the mark forced to land, breaks and runs at a tenth of its health on every roll\'s win - stood as an event\'s own (`eventFoe`, as the Starfall stands its master) it draws no mark, stands and fights (mutants: the pool\'s stamp; the mark\'s gate; the rule unread - every reader at once)', async () => {
   const p = me();
-  const { _forceUnquietForTests } = await import('../../../src/systems/revenant/unquietMark.js');
   _forceUnquietForTests(true);
-  const run = async (worldBoss) => {
-    const pool = rig(p);
-    const f = await pool.spawnFoe(M.Orc, [0, 0, 6], { feetGiven: true, level: 6, eliteFoe: true });
-    if (worldBoss) f.entity.worldBoss = true;
-    const step = (dt) => { T += dt; pool.update(dt, [0, 0, 3], [0, 1.6, 3]); };
-    step(0.016);
-    f.entity.health = Math.round(f.entity.maxHealth * 0.1);
-    const random = Math.random;
-    Math.random = () => 0;
-    try { step(0.016); } finally { Math.random = random; }
-    return f;
-  };
   try {
-    const plain = await run(false);
+    const pool = rig(p);
+    const plain = await pool.spawnFoe(M.Orc, [0, 0, 6], { feetGiven: true, level: 6, eliteFoe: true });
     assert.equal(plain.entity.unquiet, true, 'the pool drew the mark');
-    assert.equal(plain.fleeing, true, 'an elite of the street runs');
-    const master = await run(true);
-    assert.equal(!!master.fleeing, false, 'the world boss does not');
+    assert.equal(struck(pool, plain), true, 'an elite of the street runs');
+    const own = rig(p);
+    const master = await own.spawnFoe(M.Orc, [0, 0, 6], { feetGiven: true, level: 6, eliteFoe: true, eventFoe: true });
+    assert.deepEqual([master.entity.eliteFoe, master.entity.eventFoe], [true, true]);
+    assert.notEqual(master.entity.unquiet, true, 'no mark drawn at its promotion');
+    assert.equal(struck(own, master), false, 'the event\'s own does not run');
     assert.equal(master.dead, false);
   } finally { _forceUnquietForTests(null); }
+});
+
+test('AUDIT FB1029e STAR F4 A STAFF EVENT\'S MINI BOSS NEVER RISES: stood in the wilds as raidHost.js stands a raider (loose, transient), its overworld elite won and every mark forced, it drew the mark before; stood as the boss it is an event\'s own from its stand - no mark, "Mighty" and never "Unquiet", no candidate, and at a tenth it fights; the event asks its stand as the boss\'s (mutants: the stand\'s stamp; promoteStaffBoss\'s; the host\'s wiring)', async () => {
+  const p = me();
+  _forceUnquietForTests(true);
+  try {
+    const pool = rig(p, { inLocation: () => false });
+    const before = await stoodWinning(pool, { loose: true, transient: true });
+    assert.deepEqual([before.entity.eliteFoe, before.entity.unquiet], [true, true], 'a raider: the roll\'s elite, marked');
+    const boss = await stoodWinning(pool, { loose: true, transient: true, eventFoe: true });
+    promoteStaffBoss(boss.entity, { sizePct: 200 });
+    assert.equal(boss.entity.eventFoe, true);
+    assert.notEqual(boss.entity.unquiet, true, 'no mark drawn at its stand');
+    assert.match(foeTitle(boss.entity, 'Orc'), /Mighty Orc$/);
+    assert.doesNotMatch(foeTitle(boss.entity, 'Orc'), /Unquiet/);
+    assert.equal(N.revenantCandidate(boss.entity, boss), false);
+    assert.equal(struck(pool, boss), false, 'it fights');
+    const copy = { mobileType: M.Orc, level: 6, eliteFoe: true };
+    promoteStaffBoss(copy, { own: false });
+    assert.equal(copy.eventFoe, true, 'a peer\'s copy carries the rule too');
+  } finally { _forceUnquietForTests(null); }
+  assert.match(read('src/scenes/raidHost.js'), /standRaider: \(mobileType, at, boss = false\) => standLooseFoe\(\{[^\n]*\n[^\n]*\n\s*spawn: \(mt, pos, o\) => exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, loose: true, transient: true, eventFoe: boss \}\),/);
+});
+
+test('AUDIT FB1029e STAR F5 A RITE\'S FAITHFUL NEVER SAYS "UNQUIET": stood as the world\'s deps stand one (placed, its site, transient - scenes/world.js createRiteHost) in the wilds, its elite roll won and every mark forced, it is an event\'s own from its stand - no mark, never "Unquiet", isUnquiet false, no candidate with no record to read - and at a tenth it fights (mutants: the world\'s deps dropping the rule; the pool\'s stamp)', async () => {
+  const p = me();
+  _forceUnquietForTests(true);
+  try {
+    const pool = rig(p, { inLocation: () => false });
+    const f = await stoodWinning(pool, { site: 'rite.probe', placed: true, transient: true, eventFoe: true });
+    assert.deepEqual([f.entity.eliteFoe, f.entity.eventFoe], [true, true], 'an elite of the rite');
+    assert.notEqual(f.entity.unquiet, true);
+    assert.equal(isUnquiet(f.entity), false);
+    assert.doesNotMatch(foeTitle(f.entity, 'Orc'), /Unquiet/);
+    assert.equal(N.revenantCandidate(f.entity), false, 'the rule is the body\'s: no record needed');
+    assert.equal(struck(pool, f), false, 'it fights');
+  } finally { _forceUnquietForTests(null); }
+  const w = read('src/scenes/world.js'), at = w.indexOf('const riteHost = gateOmen ? createRiteHost(');
+  assert.match(w.slice(at, at + 4000), /return exteriorFoes\.spawnFoe\(career, \[x, y, z\], \{ \.\.\.o, placed: true, groundAlign: \{ hitDist: hitDistance\(hit\) \} \}\);/, 'the rite\'s own options reach the pool');
 });

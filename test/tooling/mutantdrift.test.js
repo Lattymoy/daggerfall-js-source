@@ -43,7 +43,14 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 // were. A record here is a law nobody checks, so the right size of this
 // list is nought and the pin below asserts BOTH directions: nothing new
 // may rot in, and nothing that applies again may linger.
-const CARRIED = new Set([]);
+const CARRIED = new Set([
+  // AUDIT FB1029e STAR (2026-10-29), a fold in flight: fb1029e_fieldbugs.json is its pull request's own record, and its
+  // author folds these three from tools/mutants/audit_fb1029e_star.json, re-aimed there (`worldBoss` read as `isEventFoe`).
+  // Re-aimed in place under the same names, the `fixed` pin below asks for them to come off.
+  'fb1029e_fieldbugs.json::STAR-MASTER-FLED-candidate',
+  'fb1029e_fieldbugs.json::STAR-MASTER-FLED-mark',
+  'fb1029e_fieldbugs.json::STAR-MASTER-FLED-title',
+]);
 
 test('AUDIT QS6 F7: every mutant record still names source that is there - a record that cannot apply is a law nobody checks', () => {
   const dir = join(ROOT, 'tools/mutants');
