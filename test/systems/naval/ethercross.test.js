@@ -31,9 +31,17 @@ test('ETHER-CROSSING the ways: out in the crossing waters, home in the Veil, non
   const h = veilhaven();
   assert.equal(crossingWayAt(VEIL_X + 2, h.py, 0), 'home');
   assert.equal(crossingWayAt(VEIL_X - 2, h.py, 0), null);
-  assert.equal(crossingWayAt(150, 300, 25), 'out');
-  assert.equal(crossingWayAt(150, 300, 5), null, 'too near land');
-  assert.equal(crossingWayAt(600, 300, 50), null, 'the Bay itself');
+  assert.equal(crossingWayAt(150, 300, 25, Infinity), 'out');   // PIN MOVED (SEA-ROWS): the sailed sea's distance beside the land's
+  assert.equal(crossingWayAt(150, 300, 5, Infinity), null, 'too near land');
+  assert.equal(crossingWayAt(150, 300, 25, 5), null, 'by the sea the world sails');
+  assert.equal(crossingWayAt(600, 300, 50, Infinity), null, 'the Bay itself');
+  // SEA-ROWS: the sailed sea's measure asked only where the land allows; unmeasured, no word (undefined) - the gate keeps
+  // what it knew
+  assert.equal(crossingWayAt(150, 300, 25, () => 30), 'out');
+  assert.equal(crossingWayAt(150, 300, 25, () => 5), null);
+  assert.equal(crossingWayAt(150, 300, 25, () => null), undefined, 'not yet measured: no word');
+  assert.equal(crossingWayAt(150, 300, 5, () => { throw new Error('measured by the coast'); }), null, 'the land says no: the sea unasked');
+  assert.equal(crossingWayAt(VEIL_X + 2, h.py, 0, () => { throw new Error('measured in the Veil'); }), 'home');
   const g = createCrossingGate();
   assert.equal(g.offer('out'), true);
   g.asked('out');
@@ -44,7 +52,27 @@ test('ETHER-CROSSING the ways: out in the crossing waters, home in the Veil, non
   assert.equal(g.offer('out'), true, 'back in them: asked again');
   g.asked('out');
   assert.equal(g.offer('home'), true, 'another way\'s waters');
+  g.asked('home');
+  assert.equal(g.offer(undefined), false, 'no word');
+  assert.equal(g.pending, 'home', 'and nothing forgotten');
   assert.equal(CROSS_CHECK_S, 0.5);
+  // X1 (moved into the gate, SEA-ROWS): a refusal said once while she stays in its waters, again in waters come back to
+  const r = createCrossingGate();
+  assert.equal(r.refused('out'), true); assert.equal(r.refused('out'), false, 'said once');
+  r.offer('out'); assert.equal(r.refused('out'), false, 'still in them');
+  r.offer(null); r.offer('out'); assert.equal(r.refused('out'), true, 'come back to: said again');
+  // SEA-ROWS: under a journey (Travel Options' own) the waters are told and kept the journey's; asked where it arrives
+  const j = { isTravelActive: true, arrived: 0 }, k = createCrossingGate();
+  assert.equal(k.offer('out', j), false, 'under way: not asked');
+  assert.equal(k.pending, 'out', 'the journey\'s waters, marked');
+  j.isTravelActive = false;
+  assert.equal(k.offer('out', j), false, 'stopped there: not asked');
+  j.arrived = 1;
+  assert.equal(k.offer('out', j), true, 'arrived there: asked');
+  const m = createCrossingGate();
+  m.asked('out'); j.arrived = 2;
+  assert.equal(m.offer('out', j), false, 'refused in them, an arrival in the same waters asks nothing new');
+  assert.equal(createCrossingGate().offer('out', null), true, 'Travel Options off: as it was');
 });
 
 test('ETHER-CROSSING the voyage: three days; out to the open water off Veilhaven, home to the waters she set sail from, else the Bay\'s mouth; the question and the landfall in words (mutants: the days, the targets, the rows)', () => {
@@ -67,12 +95,15 @@ test('ETHER-CROSSING by source: asked at a helm in the exterior with no window u
   const step = src.slice(src.indexOf('function etherCrossStep(dt) {'), src.indexOf('async function etherCross(way) {'));
   assert.match(step, /if \(!etherSea \|\| _etherCrossing \|\| !csaRuntime\?\.isSailing\?\.\(\)\) return;/);
   // PIN MOVED (AUDIT CAPTAIN'S SEA X3): never while the world is being moved
-  assert.match(step, /if \(gamePaused\(\) \|\| _loading \|\| townTalk\.overlayActive \|\| modes\?\.transitioning \|\| worldMoveBusy\(\) \|\| _partyArrivalPending \|\| _mode\(\) !== 'exterior' \|\| travelOptions\.isTravelActive\) return;/);
+  // PIN MOVED (AUDIT FB1029e F1): no journey's test in the guard - the gate is told (Travel Options, null when it is off)
+  assert.match(step, /if \(gamePaused\(\) \|\| _loading \|\| townTalk\.overlayActive \|\| modes\?\.transitioning \|\| worldMoveBusy\(\) \|\| _partyArrivalPending \|\| _mode\(\) !== 'exterior'\) return;/);
   // PIN MOVED (AUDIT CAPTAIN'S SEA G2): the way out only where the crossing out is this game's - the Veil's home under any skin
   assert.match(step, /const way = crossWayHere\(\);/);
-  assert.match(src, /return crossingWayAt\(p\.x, p\.y, etherOut && p\.x < CROSS_X && !inEther\(p\.x, p\.y\) \? crossLandPx\(p\.x, p\.y\) : 0\);/);
+  // PIN MOVED (SEA-ROWS): the sailed sea's measure beside the land's distance, asked by the law where the land allows
+  assert.match(src, /return crossingWayAt\(p\.x, p\.y, etherOut && p\.x < CROSS_X && !inEther\(p\.x, p\.y\) \? crossLandPx\(p\.x, p\.y\) : 0, crossSeaPx\);/);
   // PIN MOVED (AUDIT CAPTAIN'S SEA X1): a refusal said once in those waters and the way not marked asked - asked as soon as the deck is clear
-  assert.match(step, /if \(!crossGate\.offer\(way\)\) return;\n    const why = crossRefusal\(\);\n    if \(why\) \{ if \(_crossSaid !== way\) \{ _crossSaid = way; townTalk\.say\(CROSS_REFUSED\[why\], 4\); \} return; \}\n    crossGate\.asked\(way\);/);
+  // PIN MOVED (SEA-ROWS): the said-once kept by the gate (`refused`), and the gate handed the journey
+  assert.match(step, /if \(!crossGate\.offer\(way, travelOptions\)\) return;[^\n]*\n    const why = crossRefusal\(\);\n    if \(why\) \{ if \(crossGate\.refused\(way\)\) townTalk\.say\(CROSS_REFUSED\[why\], 4\); return; \}\n    crossGate\.asked\(way\);/);
   // PIN MOVED (VEIL-PARTY): her party aboard is left out of the count (test/systems/naval/veilparty.test.js)
   assert.match(src, /const crossRefusal = \(\) => \(navalHostileNear\(\) \? 'hostile' : csaPassengersOn\(csaRuntime\?\.state\?\.CurrentBoat, veilParty\.kin\) > 0 \? 'passengers' : null\);/);
   const cross = src.slice(src.indexOf('async function etherCross(way) {'), src.indexOf('  let _navalWasOn = null;'));
@@ -93,7 +124,7 @@ test('ETHER-CROSSING by source: asked at a helm in the exterior with no window u
   assert.match(src, /if \(!gamePaused\(\) && !_loading\) \{ etherCrossStep\(dt\); veilParty\.step\(dt\); \}/);   // PIN MOVED (VEIL-PARTY): her party's passage stepped beside it - PIN MOVED (AUDIT HORIZONTAL C5): with the frame's dt, its window in stepped time
   // PIN MOVED (HOST-SPLIT, SEA VENTURES 2026-10-22): the distance to land out of bootWorld (etherCrossing.js createCrossLand),
   // over the map's one water law - asked of it here by behaviour
-  assert.match(src, /const crossLandPx = createCrossLand\(seaPixel\);/);
+  assert.match(src, /const crossLandPx = createCrossLand\(seaPixel\), crossSeaPx = createCrossSea\(\(\) => worldLanes, \(\) => serpentOmen\?\.current\?\.\(\)\?\.site\);/);   // PIN MOVED (SEA-ROWS)
   const asked = [];
   const island = (x, y) => { asked.push(`${x},${y}`); return !(x === 13 && y === 10); };   // one pixel of land, three east
   const landPx = createCrossLand(island, 20);

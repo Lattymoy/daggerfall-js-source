@@ -899,7 +899,7 @@ function* planSeaLanesSteps(from, to, opts = {}) {
   const nearLand = (x, y) => DIR_DELTA.some(([, dx, dy]) => !isWater(x + dx, y + dy));
   // SEA-TAUT: the sailed stretch pulled taut across the open water - so the lane grid's eight headings and the floods'
   // ways are no bend the ship sails (freePull's law, at sea) - its cost the lines' own pixels
-  const taut = seaTaut(pixels, isWater);
+  const taut = yield* seaTautSteps(pixels, isWater, tally);
   let cost = 0;
   for (let i = 1; i < taut.length; i++) {
     lineSteps(taut[i - 1], taut[i], (ax, ay, bx, by) => { cost += (ax !== bx && ay !== by ? Math.SQRT2 : 1) * (nearLand(bx, by) ? SEA_COST.coast : SEA_COST.sea); return true; });
@@ -911,27 +911,49 @@ function* planSeaLanesSteps(from, to, opts = {}) {
   return { pixels, cost: cost + ashore.cost, kinds };
 }
 
-/** SEA-TAUT (bible/01-Overview/bugs/Field-Bugs-2026-10-29e.md): a sea route's pixels pulled taut - from each kept pixel,
- *  the farthest later one whose straight line (Bresenham) runs over open water: every pixel of it water and all eight
- *  about it (the kernel builds a square from its corner bytes, so a line past a land pixel's corner may run ashore
- *  between the middles - SEA-SQUARE). Along a coast the route keeps its own steps. The ends are kept. */
+/** SEA-TAUT (bible/01-Overview/bugs/Field-Bugs-2026-10-29e.md): a sea route's pixels pulled taut - from each kept pixel
+ *  to a later one whose straight line (Bresenham) runs over open water: every pixel of it water and all eight about it
+ *  (the kernel builds a square from its corner bytes, so a line past a land pixel's corner may run ashore between the
+ *  middles - SEA-SQUARE). The run is galloped out and then bisected, so it ends at a pixel tested clear with the next
+ *  one tested not: not always the farthest clear one. Along a coast the route keeps its own steps. The ends are kept. */
 export function seaTaut(pixels, isWater) {
+  return drainPlan(seaTautSteps(pixels, isWater));
+}
+/** PLAN-SLICES: seaTaut's own body, a generator (planSeaLanesSteps) - each pixel a line asks one cell of the plan's
+ *  `tally`, and a yield between two lines once PLAN_YIELD_CELLS are asked; a pixel's water and its open ground kept over
+ *  the route's box, typed (AUDIT FB1029e F2: a string-keyed map, in one block, held a long voyage's last frame). */
+export function* seaTautSteps(pixels, isWater, tally = null) {
   const n = pixels.length;
   if (n < 3) return pixels.slice();
-  const wet = new Map();
-  const water = (x, y) => { const k = `${x},${y}`; let w = wet.get(k); if (w === undefined) { w = !!isWater(x, y); wet.set(k, w); } return w; };
-  const open = (x, y) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (!water(x + dx, y + dy)) return false; return true; };
-  const clear = (a, b) => open(a.x, a.y) && lineSteps(a, b, (_ax, _ay, bx, by) => open(bx, by));
+  let bx = Infinity, by = Infinity, ex = -Infinity, ey = -Infinity;
+  for (const p of pixels) { bx = Math.min(bx, p.x); by = Math.min(by, p.y); ex = Math.max(ex, p.x); ey = Math.max(ey, p.y); }
+  bx--; by--;   // a line between two of its pixels stays in their box; the eight about each, a pixel past it
+  const W = ex - bx + 2, wet = new Int8Array(W * (ey - by + 2)).fill(-1), opens = new Int8Array(wet.length).fill(-1);
+  let asked = 0, slice = PLAN_YIELD_CELLS;
+  const water = (x, y) => { const i = (y - by) * W + x - bx; if (wet[i] < 0) wet[i] = isWater(x, y) ? 1 : 0; return wet[i] === 1; };
+  const open = (x, y) => {
+    const i = (y - by) * W + x - bx;
+    if (opens[i] < 0) { opens[i] = 1; for (let dy = -1; dy <= 1 && opens[i]; dy++) for (let dx = -1; dx <= 1; dx++) if (!water(x + dx, y + dy)) { opens[i] = 0; break; } }
+    if (tally) tally.n++;
+    asked++;
+    return opens[i] === 1;
+  };
+  const clear = (a, b) => open(a.x, a.y) && lineSteps(a, b, (_ax, _ay, qx, qy) => open(qx, qy));
   const keep = [pixels[0]];
   for (let i = 0; i < n - 1;) {
-    // the farthest pixel known clear: galloped out, then narrowed - only a run tested clear is kept
+    // galloped out, then narrowed - only a run tested clear is kept
     let ok = i + 1, bad = n, step = 1;
     while (ok < n - 1) {
       const t = Math.min(ok + step, n - 1);
       if (!clear(pixels[i], pixels[t])) { bad = t; break; }
       ok = t; step *= 2;
+      if (asked >= slice) { slice = asked + PLAN_YIELD_CELLS; yield; }   // PLAN-SLICES
     }
-    while (bad - ok > 1) { const mid = (ok + bad) >> 1; if (clear(pixels[i], pixels[mid])) ok = mid; else bad = mid; }
+    while (bad - ok > 1) {
+      const mid = (ok + bad) >> 1;
+      if (clear(pixels[i], pixels[mid])) ok = mid; else bad = mid;
+      if (asked >= slice) { slice = asked + PLAN_YIELD_CELLS; yield; }   // PLAN-SLICES
+    }
     keep.push(pixels[ok]);
     i = ok;
   }

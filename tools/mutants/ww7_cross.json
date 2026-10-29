@@ -712,7 +712,7 @@
   {
     "name": "WW7-10-book-the-near-the-bays",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      if (lane.cross) return da + db <= CROSS_LANE_PATH_PX + 2 * LANE_NEAR_PX;\n",
+    "old": "      if (lane.cross) return da + db <= CROSS_LANE_PATH_PX + 2 * pad;\n",
     "new": "",
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"

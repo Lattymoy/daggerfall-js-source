@@ -326,16 +326,17 @@ night."); ended: "...went down 3 days ago; they say the aether will raise her ag
 
 **ASKED** (`etherCrossStep`, every CROSS_CHECK_S - half a second) at a helm in the exterior with no window up, never
 while the world is being moved or a party's arrival waits (X3): OUT in the crossing waters - the enhanced skin's and
-online's alone (`etherOut`) - (`crossingWaters`: west of CROSS_X - 230, west of the Bay's mouth (X4) - and
-CROSS_LAND_PX - 20 - pixels and more from any land, measured by the map's one water law, `crossLandPx`, asked once a
-pixel; never in the sea's box; past the Bay's west edge the Eltheric counts), HOME in the Veil (`crossingWayAt`) under
-any skin. A way is asked ONCE each time the ship comes into its waters (`createCrossingGate`) - marked asked when the box
-shows (X1: a refusal marked it, and it never came): refused, it is not asked again until she has left them. An enemy
-near or another player aboard is said instead, once while she stays in those waters ("Not with an enemy at your
-heels." / "Passengers can't cross the Veil..."), and the question asked as soon as the deck is clear. YES IS THE
-QUESTION AS IT STANDS NOW (`crossYes` - X2): a load, another helm, the waters left, an enemy or a passenger since - said,
-no voyage, asked afresh (CROSS_STALE); the box is taken back at a load or a jump (`withdrawCrossing`), and a way out
-kept is never one in the sea (`captainLedger.js wayOutOf`).
+online's alone (`etherOut`) - and HOME in the Veil under any skin (`crossingWayAt`). The crossing waters
+(`crossingWaters`) lie west of CROSS_X - 230, west of the Bay's mouth (X4) - on every row, CROSS_LAND_PX (20) pixels and
+more from any land (the map's one water law, `crossLandPx`, asked once a pixel) and CROSS_SEA_PX (20) from the sea the
+world sails (`crossSeaPx`, SEA-ROWS below); never in the sea's box, and past the Bay's west edge the Eltheric counts.
+
+A way is asked ONCE each time the ship comes into its waters (`createCrossingGate`) - marked asked when the box shows
+(X1): refused, it is not asked again until she has left them. Waters a journey sails into are the journey's (SEA-ROWS). An enemy near or another player aboard is said instead, once while she stays
+in those waters ("Not with an enemy at your heels." / "Only your party can cross the Veil with you."), and the question
+asked as soon as the deck is clear. YES IS THE QUESTION AS IT STANDS NOW (`crossYes` - X2): a load, another helm, the
+waters left, an enemy or a passenger since - said, no voyage, asked afresh (CROSS_STALE); the box is taken back at a load
+or a jump (`withdrawCrossing`), and a way out kept is never one in the sea (`captainLedger.js wayOutOf`).
 
 **SAILED** (`etherCross`): the way out remembered (the ledger's `setCrossedFrom` - the Bay's pixel she sets sail from);
 the screen black; the helm let go - she lies where she is; the jump - a travel (`modEvent: 'travel'`: the seasons'
@@ -374,11 +375,31 @@ crossing; `worldModes.js`, `dungeonContext.js` and `exterior.js` sail no crossin
 
 
 **SEA-ROWS (`01-Overview/bugs/Field-Bugs-2026-10-29e.md`; a player: "You get told you're going to the E-O instead").**
-The crossing's waters were written for the Bay's world, and since WW3 the sea south of its rows is sailed. On the
-freeware's world 3 of 66 serpent sites past the Bay lay in them, and 8 of 35 far lanes sailed through them (Shimmerene
-to Lillandril, 177 of its 284 pixels). They are the Bay's own rows alone now (`crossingWaters`), and hold no site or far
-lane. Nor is the crossing asked while a journey sails to a place it chose (`etherCrossStep`); one that ends in its
-waters is asked there. Pinned by `test/world/ethersea.test.js` and `test/systems/naval/auditcaptsea.test.js`.
+The crossing's waters were written for the Bay's world, and since WW3 the sea past it is sailed. On the freeware's world
+3 of 66 serpent sites past the Bay lay in them, and 8 of 35 far lanes sailed through them (Shimmerene to Lillandril, 177
+of its 284 pixels). Bounded to the Bay's rows, they left the open ocean past the Bay unasked (AUDIT FB1029e F5). Now
+they keep CROSS_SEA_PX from the sea the world sails, on every row: every lane's way and the day's serpent ring
+(`etherCrossing.js createCrossSea`). On the freeware's world no lane's way and no site's ring over 1,999 serpent days
+is in them; west of Sumurset and north-west of High Rock are, as HOME_WATERS is. West of CROSS_X they hold 2,463,963
+pixels; every row held 2,481,894, the Bay's rows 378,096.
+
+The measure asks only the lanes whose bound holds the pixel (`worldLanes.js near`, padded to the reach), once the lanes'
+book is `settled`. A lane's way walked cold is the lanes' own search, up to 50 ms, so a check walks them for
+CROSS_WALK_MS (4 ms, one at the least) and answers when all are walked; until then the helm's waters say nothing and
+the gate keeps what it knew (`crossingWayAt` undefined). It is asked only where the land allows the waters. Warm, a
+new pixel costs 0.05 to 0.19 ms; the helm's same pixel, nothing. Pinned by `test/world/ethersea.test.js` and `test/systems/naval/fb1029e_searows.test.js`
+(the freeware's world, the measure against every way). THE FOUR HOSTS: `world.js` wires the measure and hands the gate
+the journey; `worldModes.js`, `dungeonContext.js` and `exterior.js` sail no crossing.
+
+**The journey's waters (SEA-ROWS; AUDIT FB1029e F1, F3, F4).** The gate is told the helm's waters at every check, a
+journey under way or not (`offer(way, travelOptions)`, null with Travel Options off: read unguarded, offline with the
+mod off it threw at every helm). Waters a journey sails into are the journey's, marked asked: never asked across its way
+nor at a stop there (any stop closes the journey's panel, and voyages from Daggerfall to the serpent sail through
+them). Left and come back to by her own hand, they are asked again. A journey that ARRIVES in them asks there: Travel
+Options counts its arrivals apart from its other ends (`travelOptions.js arrived` - a place, a spot or a pixel reached;
+never an Exit, a Forget it or a load). Pinned by `test/systems/naval/auditcaptsea.test.js`, `ethercross.test.js` and
+`fb1029e_searows.test.js`; mutants `tools/mutants/audit_fb1029e_sea.json`.
+
 ## ETHER-CHART - the chart of the Eltheric Ocean
 
 Past the Veil the travel map's door (`toggleTravelMap`) opens the captain's chart (`ui/etherChartWindow.js`, the naval

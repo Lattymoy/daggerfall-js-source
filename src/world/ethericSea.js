@@ -384,15 +384,19 @@ export function etherLight(rgb, w, tint = ETHER_LIGHT_TINT) {
 }
 
 // ── the crossing's waters ────────────────────────────────────────────────────────────────────────────────────────────
-/** THE CROSSING OUT is offered on the open Abecean: west of CROSS_X, CROSS_LAND_PX pixels and more from any land.
- *  AUDIT CAPTAIN'S SEA X4: west of the Bay's mouth - the line from Daggerfall's coast to Myrkwasa's crosses its waters'
- *  row at about 243, and at 300 the Daggerfall-Sentinel lane was asked out thirty kilometres from Daggerfall. */
+/** THE CROSSING OUT is offered on the open ocean: west of CROSS_X, CROSS_LAND_PX pixels and more from any land and
+ *  CROSS_SEA_PX from the world's sailed sea. AUDIT CAPTAIN'S SEA X4: west of the Bay's mouth - the line from Daggerfall's
+ *  coast to Myrkwasa's crosses its waters' row at about 243, and at 300 the Daggerfall-Sentinel lane was asked out thirty
+ *  kilometres from Daggerfall. */
 export const CROSS_X = 230;
 export const CROSS_LAND_PX = 20;
-/** Is a pixel of the Bay's world crossing waters (`landPx` its distance to the nearest land, pixels - the host's)? On the
- *  Bay's own rows alone (SEA-ROWS, bible/01-Overview/bugs/Field-Bugs-2026-10-29e.md): south of them lies the sea the world
- *  sails past the Bay - Sumurset's lanes and the serpent's waters - which asked ships bound there to cross. */
-export const crossingWaters = (x, y, landPx) => !inEtherLaw(x, y) && x < CROSS_X && y >= 0 && y < MAX_MAP_PIXEL_Y && typeof landPx === 'number' && landPx >= CROSS_LAND_PX;   // BAY-OWN: the Bay's rows, west of High Rock too (no inBay); Infinity: no land in reach
+/** SEA-ROWS (bible/01-Overview/bugs/Field-Bugs-2026-10-29e.md): out of sight of the sea the world sails, as of land - every
+ *  lane's way and the serpent's ring (systems/naval/etherCrossing.js createCrossSea). Every row: Sumurset's lanes and the
+ *  serpent's waters past the Bay asked ships bound there to cross, and the Bay's rows alone left the open ocean unasked. */
+export const CROSS_SEA_PX = 20;
+/** Is a pixel crossing waters (`landPx` its distance to the nearest land, `seaPx` to the world's sailed sea - pixels, the
+ *  host's)? A distance nobody measured (null, NaN) is none. */
+export const crossingWaters = (x, y, landPx, seaPx) => !inEtherLaw(x, y) && x < CROSS_X && typeof landPx === 'number' && landPx >= CROSS_LAND_PX && seaPx >= CROSS_SEA_PX;   // Infinity: none in reach
 /** Where a crossing home comes out when the captain's way out is not kept: the open Abecean off the Bay's mouth. */
 export const HOME_WATERS = Object.freeze({ px: 180, py: 300 });
 /** Where a crossing out makes landfall: the open water this many pixels east of Veilhaven, her bow to its quay. */
