@@ -74,7 +74,7 @@ test('EL8: the constants, the door, the contact block and the table in the shade
     assert.ok(fs.includes(AIR_CONTACT_GLSL), `${name} carries the contact block`);
     assert.match(fs, /int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? casterShadowAt\(k, uPointLights\[i\], wp, n\)[^\n]*\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7\) \? 1\.0[^\n]*\n      : mix\(contactShadow\(wp, n, Ln, d\), 1\.0, smoothstep\(uPointLights\[i\]\.w \* 0\.6, uPointLights\[i\]\.w \* 0\.7, d\)\);/, `${name}: the table, then the map (DISC15: of either tier) or the march - never for the hand's light, never past seven tenths of the range (F3, F5), eased out from six (LA-COST5)`);
   }
-  assert.ok(EL_BB_FS.includes('elPointFlat(vBBWorld, base)') && (EL_BB_FS.match(/elPointLit\(/g) || []).length === 1, 'a flat lights by elPointFlat, which marches nowhere (its own flat would occlude it); elPointLit is defined and never called there');
+  assert.ok(EL_BB_FS.includes('elPointFlat(vBBWorld, base, vBBSunVis)') && (EL_BB_FS.match(/elPointLit\(/g) || []).length === 1, 'a flat lights by elPointFlat, which marches nowhere (its own flat would occlude it); elPointLit is defined and never called there');
   assert.match(SHADOW_GLSL, /uniform int uCasterOf\[48\];/);
   assert.match(SHADOW_GLSL, /float shadowOfLight\(int i, vec4 L, vec3 wp, vec3 n\) \{\n  int k = uCasterOf\[i\];\n  return k >= 0 \? casterShadowAt\(k, L, wp, n\) : 1\.0;/);   // DISC15: either tier
   assert.ok(!/for \(int k = 0; k < \$\{SHADOW_POINT_CASTERS\}/.test(read('src/render/shadowPass.js')), 'no search over the casters per light');
