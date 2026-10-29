@@ -41,7 +41,7 @@
 //
 // Pure: no clock (every `now` an argument), no DOM, no network.
 // ═════════════════════════════════════════════════════════════════════
-import { newHealthShare, noteRefereeChange, healRoom, spendHeal, guardedBlow, wardedCast } from './refereeHealthShare.js';
+import { newHealthShare, noteRefereeChange, healRoom, spendHeal, guardedBlow, wardedCast, shieldedBlow } from './refereeHealthShare.js';
 
 /** A siege's room: `siege:<seat key>:<seat week>` - one a battle (Seats-Arc 6.2). */
 export const SIEGE_ROOM = /^siege:(0|[1-9]\d{0,9}):(0|[1-9]\d{0,5})$/;
@@ -70,10 +70,11 @@ export const SIEGE_BLOWS_HZ = 4;
  *  its own (DECIDED here: 6.1 clamped a heal's size and named no rate, and at the frame gate's 8 a second an unbounded heal
  *  is 320 a second - a fighter nobody can fell; the referee has no unbounded verb). */
 export const SIEGE_CASTS = Object.freeze({ max: 3, windowMs: 5000, damageMax: 60, healMax: 40 });
-/** PVP-HIT (the PvP rework, 2026-10-28: "one hit takes at most 25% of health", then "so let cap at 45%"): with the pool the player's real health
+/** PVP-HIT (the PvP rework, 2026-10-28: "one hit takes at most 25% of health", then "so let cap at 45%"; 2026-10-29 the
+ *  triangle's 34%, still three hits): with the pool the player's real health
  *  (refereeHealthShare.js PVP-HEALTH) and skill and gear scaling every attack, one blow or cast takes at most `share` of
  *  the target's whole - the weapon's bucket and the cast's 60 retire. */
-export const PVP_HIT = Object.freeze({ share: 0.45 });
+export const PVP_HIT = Object.freeze({ share: 0.34 });
 /** The most one blow or cast may take from `to`: PVP_HIT's share of its whole, at least 1. */
 export const pvpHitMax = (to) => Math.max(1, Math.floor((Number(to?.max) || 0) * PVP_HIT.share));
 /** PVP-CASTS: casts at a player, harmful or healing, at most 1.9 a second - 19 in a 10 s window. */
@@ -240,7 +241,7 @@ export function refereeBlow(by, to, { from = null, at = null, held = null, d = 0
   if (shaft !== siegeIsBow(held.w) || (shaft && armsOk(wa) && wa[1] !== 1)) return { ok: false, dealt: 0, fell: false, why: 'weapon' };   // INT7: a shaft a signed bow's
   const reach = (shaft ? SIEGE_REACH.shaft : SIEGE_REACH.melee) + SIEGE_REACH.slack;
   if (metres(from, at) > reach) return { ok: false, dealt: 0, fell: false, why: 'reach' };
-  const want = guardedBlow(to, pvpBlowKind(held.w), Math.trunc(Number(d) || 0));   // PVP-GUARD: the armour first (none below 0)
+  const want = shieldedBlow(to, shaft, guardedBlow(to, pvpBlowKind(held.w), Math.trunc(Number(d) || 0)));   // PVP-GUARD: the armour first (none below 0), then PVP-SHIELD
   const got = Math.min(want, pvpHitMax(to), to.hp);   // PVP-HIT: the body's share
   by.clipped += want - got;
   by.dealt += got;

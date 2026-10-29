@@ -33,3 +33,6 @@ export function pvpWardKept(entity) {
     return Math.max(0, Math.min(100, Math.round(((100 - resisted) * lands) / 100)));
   });
 }
+
+/** PVP-SHIELD: a live Shield spell on `entity` (playerEntity.js damageShieldPool's pool) - the referee takes its share off. */
+export const pvpShielded = (entity) => (entity?.activeEffects ?? []).some((a) => a.kind === 'shield' && !a.ended && a.shieldRemaining > 0);

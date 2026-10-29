@@ -501,8 +501,8 @@
   {
     "name": "PVPREF-blow-fractional",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  const want = guardedBlow(to, pvpBlowKind(held.w), Math.trunc(Number(d) || 0));   // PVP-GUARD: the armour first (none below 0)",
-    "new": "  const want = guardedBlow(to, pvpBlowKind(held.w), Number(d) || 0);   // PVP-GUARD: the armour first (none below 0)",
+    "old": "  const want = shieldedBlow(to, shaft, guardedBlow(to, pvpBlowKind(held.w), Math.trunc(Number(d) || 0)));   // PVP-GUARD: the armour first (none below 0), then PVP-SHIELD",
+    "new": "  const want = shieldedBlow(to, shaft, guardedBlow(to, pvpBlowKind(held.w), Number(d) || 0));   // PVP-GUARD: the armour first (none below 0), then PVP-SHIELD",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]

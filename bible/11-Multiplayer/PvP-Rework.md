@@ -8,8 +8,8 @@ reference it reads. It ships in stages; this page holds what is built.
 
 - **PVP-HEALTH.** The referee's pool is the player's real maximum health, reported on the `vit` frame (`x`) and held to
   `refereeHealthShare.js:"export const PVP_HEALTH_MAX = 3000;"`. In a fight a rising maximum adds no health.
-- **PVP-HIT** (the owner: "so let cap at 45%", "so its 3 hits"). One blow or cast takes at most 45% of the whole
-  (`siegeRef.js:"export const PVP_HIT = Object.freeze({ share: 0.45 });"`). BAL8's 180 in 5 s is retired; the swing law
+- **PVP-HIT** (the owner: "so let cap at 45%", "so its 3 hits"; the triangle's 34%, still three hits). One blow or cast
+  takes at most 34% of the whole (`siegeRef.js:"export const PVP_HIT = Object.freeze({ share: 0.34 });"`). BAL8's 180 in 5 s is retired; the swing law
   and `siegeRef.js:"export const PVP_CASTS = Object.freeze({ max: 19, windowMs: 10_000 });"` pace a fight.
 - **PVP-HEAL.** For 30 s after a player's blow, all heals together restore 25% of the whole a 15 s, plus 1% for each 20
   Restoration past 100, to 35%. A duel heals under that cap; a siege still blocks heals by report.
@@ -34,3 +34,14 @@ effects let through, then its own saving throw - race, Willpower and gear, as a 
 the dice (`spellcast.js:"export function savingLands("`; `pvpGuard.js:"export function pvpWardKept("`, the report's
 `w`). The caster's stand-in rolls no save. The referee holds each share to at least 15 - the owner's "85% resist", immunity included - and
 takes it before PVP-HIT's cap (`refereeHealthShare.js:"export function wardedCast("`).
+
+## PVP-TRIANGLE: archer over mage, mage over warrior, warrior over archer
+
+The owner's triangle (2026-10-29: "tune it to 55% win", "just barely"), from a sim of the PvE overhaul's builds and gear
+by level, its bow on the swing law, with players landing 30-50% of their attacks: the favoured side wins 42-67% at
+levels 30-45. A player's arrow at a player is 1.28x, a harmful spell 0.96x; from level 40, as the last gear tiers land,
+1.67x and 0.81x (`pvpTriangle.js:"export const PVP_TRIANGLE = Object.freeze("`). A live Shield spell on a player is
+reported (`sh`, `pvpGuard.js:"export const pvpShielded = (entity) =>"`), and the referee takes 25% off a swing and 35%
+off a shaft (`refereeHealthShare.js:"export const PVP_SHIELD = Object.freeze("`) - the plan's "Shields max 25%". Aim and
+movement decide the rest; staff fights tune these numbers.
+

@@ -51,19 +51,28 @@ export function wardedCast(fighter, el, want) {
   return want > 0 ? Math.max(1, Math.round((want * kept) / 100)) : 0;
 }
 
+/** PVP-SHIELD (the owner's triangle, 2026-10-29: "tune it to 55% win", "just barely"; the plan's "Shields max 25%"): what of
+ *  a player's blow a fighter under a Shield spell takes, per cent - a swing's and a shaft's. The pool itself is PvE's. */
+export const PVP_SHIELD = Object.freeze({ melee: 75, shaft: 65 });
+/** PVP-SHIELD: a blow on `fighter` past its reported Shield (`shaft` an arrow's) - at least 1 where it was over 0. */
+export function shieldedBlow(fighter, shaft, want) {
+  if (!fighter?.share?.shield || !(want > 0)) return want > 0 ? want : 0;
+  return Math.max(1, Math.round((want * (shaft ? PVP_SHIELD.shaft : PVP_SHIELD.melee)) / 100));
+}
+
 /** How many referee changes a pool remembers for reports that lag behind them. */
 export const HEALTH_SHARE_LOG_MAX = 32;
 
-/** @typedef {{ epoch: number, word: number, log: Array<[number, number]>, heard: boolean, report: number, playerBlowAt: number, heals: Array<[number, number]>, resto: number, guard: number[]|null, ward: number[]|null }} HealthShare
+/** @typedef {{ epoch: number, word: number, log: Array<[number, number]>, heard: boolean, report: number, playerBlowAt: number, heals: Array<[number, number]>, resto: number, guard: number[]|null, ward: number[]|null, shield: boolean }} HealthShare
  *  The referee's state on a fighter: the pool's identity (creation ms), its last change's number, `[word, change]` of recent changes, whether a report anchored it, the last report taken, when a player last struck it (ms, 0 never), `[at, healed]` in the heal window, and its reported Restoration. */
-/** @typedef {{ report: number, share: number, seen: Array<[number, number]>, max?: number, resto?: number, guard?: number[], ward?: number[] }} HealthReport
- *  A client's report (net/wire.js validVitIn): its number, its health over its maximum in HEALTH_SHARE_WHOLE parts, `[epoch, word]` of the last word it applied from each pool, and (PVP-HEALTH) its real maximum and Restoration, and (PVP-GUARD, PVP-WARD) its armour's and resistances' shares. */
+/** @typedef {{ report: number, share: number, seen: Array<[number, number]>, max?: number, resto?: number, guard?: number[], ward?: number[], shield?: boolean }} HealthReport
+ *  A client's report (net/wire.js validVitIn): its number, its health over its maximum in HEALTH_SHARE_WHOLE parts, `[epoch, word]` of the last word it applied from each pool, and (PVP-HEALTH) its real maximum and Restoration, and (PVP-GUARD, PVP-WARD) its armour's and resistances' shares, and (PVP-SHIELD) a Shield on it. */
 /** @typedef {{ health: number, max: number, epoch: number, word: number, report: number }} PoolWord
  *  The referee's word on a pool to its fighter (net/wire.js validVitOut, `k: 'h'`): the count, its whole, the pool's epoch and last change, the last report the count includes. */
 
 /** A fresh share state: unheard, never struck by a player. @param {number} now @returns {HealthShare} */
 export function newHealthShare(now) {
-  return { epoch: Math.trunc(now), word: 0, log: [], heard: false, report: 0, playerBlowAt: 0, heals: [], resto: 0, guard: null, ward: null };
+  return { epoch: Math.trunc(now), word: 0, log: [], heard: false, report: 0, playerBlowAt: 0, heals: [], resto: 0, guard: null, ward: null, shield: false };
 }
 
 /** A fighter's share state - made where a fighter kept from before this law (a siege's storage) has none. */
@@ -157,6 +166,7 @@ export function takeHealthReport(fighter, report, now, { healsBlocked = false } 
   if (Array.isArray(report.ward) && report.ward.length === PVP_WARD.elements) {
     share.ward = report.ward.map((n) => Math.max(PVP_WARD.min, Math.min(PVP_WARD.max, Math.trunc(Number(n) || 0))));   // PVP-WARD
   }
+  if (typeof report.shield === 'boolean') share.shield = report.shield;   // PVP-SHIELD
   const target = (report.share * fighter.max) / HEALTH_SHARE_WHOLE + unseenChange(share, report.seen);
   const difference = target - fighter.hp;
   if (difference <= -0.5) {

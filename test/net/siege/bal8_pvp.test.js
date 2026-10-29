@@ -19,20 +19,20 @@ import {
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const at = (m) => ({ x: m * SIEGE_UNITS_PER_M, y: 0, z: 0 });
 
-test('PVP-HIT (the PvP rework: "so let cap at 45%"): one blow or cast takes at most 45% of the target\'s whole, never past what is left; BAL8\'s 180 in 5 s retired - blows and casts are paced by the swing law and PVP-CASTS (mutants: the share unread; the old ceiling kept)', () => {
-  assert.equal(PVP_HIT.share, 0.45);
+test('PVP-HIT (the PvP rework: "so let cap at 45%", then the triangle\'s 34%, still three hits): one blow or cast takes at most 34% of the target\'s whole, never past what is left; BAL8\'s 180 in 5 s retired - blows and casts are paced by the swing law and PVP-CASTS (mutants: the share unread; the old ceiling kept)', () => {
+  assert.equal(PVP_HIT.share, 0.34);
   const now = 1_000_000;
   const a = newFighter(10, now);
   const b = newFighter(50, now); b.max = 1000; b.hp = 1000;
   const fist = { w: -1, m: 0 };
   const blow = (d, t) => refereeBlow(a, b, { from: at(0), at: at(2), held: fist, d, r: SIEGE_HIT.Melee }, t);
-  assert.equal(blow(900, now).dealt, 450, '45% of the target, no more');
-  assert.equal(a.clipped, 450);
-  assert.equal(blow(450, now + 250).dealt, 450, 'no ceiling of 180 a 5 s');
-  const third = blow(450, now + 500);
-  assert.deepEqual([third.dealt, third.fell, b.hp], [100, true, 0], 'the third, never past what is left');
+  assert.equal(blow(900, now).dealt, 340, '34% of the target, no more');
+  assert.equal(a.clipped, 560);
+  assert.equal(blow(340, now + 250).dealt, 340, 'no ceiling of 180 a 5 s');
+  const third = blow(340, now + 500);
+  assert.deepEqual([third.dealt, third.fell, b.hp], [320, true, 0], 'the third, never past what is left');
   const c = newFighter(10, now), d = newFighter(50, now); d.max = 1000; d.hp = 1000;
-  assert.equal(refereeCast(c, d, { from: at(0), at: at(10), d: 9999 }, now).dealt, 450, 'a cast takes the same share');
+  assert.equal(refereeCast(c, d, { from: at(0), at: at(10), d: 9999 }, now).dealt, 340, 'a cast takes the same share');
   assert.equal(refereeBlow(c, d, { from: at(0), at: at(2), held: fist, d: 300, r: SIEGE_HIT.Melee }, now).dealt, 300, 'and a blow after it whole');
 });
 

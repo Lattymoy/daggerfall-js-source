@@ -20,8 +20,8 @@
   {
     "name": "PVP-GUARD-the-guard-unread",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  const want = guardedBlow(to, pvpBlowKind(held.w), Math.trunc(Number(d) || 0));",
-    "new": "  const want = Math.max(0, Math.trunc(Number(d) || 0));",
+    "old": "  const want = shieldedBlow(to, shaft, guardedBlow(to, pvpBlowKind(held.w), Math.trunc(Number(d) || 0)));",
+    "new": "  const want = shieldedBlow(to, shaft, Math.max(0, Math.trunc(Number(d) || 0)));",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "PVP-GUARD-the-change-unseen",
     "file": "src/net/siege/refereeHealthMirror.js",
-    "old": "        || `${guard()}|${ward()}` !== lastSentGuard;",
+    "old": "        || `${guard()}|${ward()}|${shield() ? 1 : 0}` !== lastSentGuard;",
     "new": "        || false;",
     "tests": [
       "test/combat/pvp_guard.test.js"
@@ -105,6 +105,87 @@
     "new": "  if (harmful && !run(harmful, {",
     "tests": [
       "test/systems/auditcc_pvp.test.js"
+    ]
+  },
+  {
+    "name": "PVP-TRIANGLE-the-late-step-unread",
+    "file": "src/combat/pvpTriangle.js",
+    "old": "export const pvpArrowScale = (level) => ((Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.arrowLate : PVP_TRIANGLE.arrow);",
+    "new": "export const pvpArrowScale = (level) => ((Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.arrow : PVP_TRIANGLE.arrow);",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-TRIANGLE-the-spell-late-unread",
+    "file": "src/combat/pvpTriangle.js",
+    "old": "export const pvpSpellScale = (level) => ((Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.spellLate : PVP_TRIANGLE.spell);",
+    "new": "export const pvpSpellScale = (level) => ((Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.spell : PVP_TRIANGLE.spell);",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-TRIANGLE-the-arrow-unscaled",
+    "file": "src/combat/duelCombat.js",
+    "old": "  const n = d.by === 'arrow' ? Math.floor(scaled * pvpArrowScale(d.a?.pl)) : scaled;",
+    "new": "  const n = scaled;",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-TRIANGLE-the-capped-level-read",
+    "file": "src/combat/duelCombat.js",
+    "old": "pvpArrowScale(d.a?.pl))",
+    "new": "pvpArrowScale(d.a?.lv))",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-TRIANGLE-the-spell-unscaled",
+    "file": "src/combat/siegeCombat.js",
+    "old": "  return { harm: Math.round(harm * pvpSpellScale(level)), heal: Math.round(heal) };",
+    "new": "  return { harm: Math.round(harm), heal: Math.round(heal) };",
+    "tests": [
+      "test/systems/auditcc_pvp.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SHIELD-the-report-unread",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "  if (typeof report.shield === 'boolean') share.shield = report.shield;",
+    "new": "",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SHIELD-the-shaft-read-as-a-swing",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "(shaft ? PVP_SHIELD.shaft : PVP_SHIELD.melee)",
+    "new": "(PVP_SHIELD.melee)",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SHIELD-a-spent-pool-counted",
+    "file": "src/combat/pvpGuard.js",
+    "old": "a.kind === 'shield' && !a.ended && a.shieldRemaining > 0",
+    "new": "a.kind === 'shield'",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SHIELD-the-change-unseen",
+    "file": "src/net/siege/refereeHealthMirror.js",
+    "old": "`${guard()}|${ward()}|${shield() ? 1 : 0}` !== lastSentGuard",
+    "new": "`${guard()}|${ward()}|0` !== lastSentGuard",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
     ]
   }
 ]

@@ -8,9 +8,14 @@ import assert from 'node:assert/strict';
 import { EQUIP_SLOTS, equipTableOf } from '../../src/systems/equip.js';
 import { pvpArmorKept, pvpWardKept } from '../../src/combat/pvpGuard.js';
 import { pvpSpellElement, pvpCastFrame } from '../../src/combat/siegeCombat.js';
+import { duelAttackerOf, resolveDuelStrike, duelStandIn } from '../../src/combat/duelCombat.js';
 import { PVP_GUARD, PVP_WARD, guardedBlow, wardedCast, takeHealthReport, HEALTH_SHARE_WHOLE } from '../../src/net/siege/refereeHealthShare.js';
 import { SIEGE_HIT, SIEGE_UNITS_PER_M, newFighter, refereeBlow, refereeCast, pvpBlowKind } from '../../src/net/siege/siegeRef.js';
 import { savingLands } from '../../src/systems/spellcast.js';
+import { PVP_TRIANGLE, pvpArrowScale, pvpSpellScale } from '../../src/combat/pvpTriangle.js';
+import { pvpShielded } from '../../src/combat/pvpGuard.js';
+import { PVP_SHIELD, shieldedBlow } from '../../src/net/siege/refereeHealthShare.js';
+import { PVP_HIT } from '../../src/net/siege/siegeRef.js';
 import { validVitIn, validDuelData, validSiegeIn, VIT_GUARD_MAX, PVP_ELEMENTS } from '../../src/net/wire.js';
 import { createRefereeHealthMirror } from '../../src/net/siege/refereeHealthMirror.js';
 
@@ -46,7 +51,7 @@ test('PVP-GUARD: the kind of a blow, and the referee takes the reported share be
   assert.equal(blow(120, 200, now).dealt, 68, 'a longsword: 34%');
   assert.equal(blow(124, 200, now + 1000).dealt, 80, 'a mace: 40%');
   assert.equal(blow(-1, 200, now + 2000).dealt, 60, 'a fist: 30%');
-  assert.equal(blow(120, 2000, now + 3000).dealt, 450, 'the armour first, then the 45% cap');
+  assert.equal(blow(120, 2000, now + 3000).dealt, 340, 'the armour first, then the 34% cap');
   assert.equal(guardedBlow(b, 'edged', 1), 1, 'a blow that lands takes at least 1');
   assert.equal(guardedBlow(b, 'edged', 0), 0);
 });
@@ -105,7 +110,7 @@ test('PVP-WARD: the referee takes the share of the spell\'s element, never under
   assert.equal(cast(0, 200, now).dealt, 80, 'fire, 40% through');
   assert.equal(cast(3, 200, now + 100).dealt, 30, 'shock, the floor of 15');
   assert.equal(cast(null, 200, now + 200).dealt, 100, 'unnamed: magic');
-  assert.equal(cast(1, 2000, now + 300).dealt, 450, 'then the 45% cap');
+  assert.equal(cast(1, 2000, now + 300).dealt, 340, 'then the 34% cap');
 });
 
 test('PVP-WARD: the wire carries the element on a duel\'s, the zone\'s and a siege\'s cast, and five shares on the report, or refuses the frame', () => {
@@ -120,4 +125,42 @@ test('PVP-WARD: the wire carries the element on a duel\'s, the zone\'s and a sie
   assert.deepEqual(validVitIn({ ...base, w: [40, 100, 100, 0, 50] })?.ward, [40, 100, 100, 0, 50]);
   assert.equal(validVitIn({ ...base, w: [40, 100, 100, 0] }), null);
   assert.equal(validVitIn({ ...base, w: [40, 100, 100, 0, 101] }), null);
+});
+
+test('PVP-TRIANGLE: an arrow at a player 1.28x, 1.67x from level 40; a harmful spell 0.96x, 0.81x from 40; one hit at most 34% (mutants: the late step unread; arrow and spell swapped)', () => {
+  assert.deepEqual(PVP_TRIANGLE, { late: 40, arrow: 1.28, arrowLate: 1.67, spell: 0.96, spellLate: 0.81 });
+  assert.deepEqual([39, 40, 45].map(pvpArrowScale), [1.28, 1.67, 1.67]);
+  assert.deepEqual([39, 40, 45].map(pvpSpellScale), [0.96, 0.81, 0.81]);
+  assert.equal(PVP_HIT.share, 0.34);
+  // the striker's sheet carries its real level (`pl`), and only a shaft is scaled
+  const strike = (level, by) => resolveDuelStrike({ by, a: duelAttackerOf({ ...body(80), level }), w: { t: 130, m: 0, c: 100 } }, duelStandIn(), { rolls: () => 0.01 }).dmg;
+  const [a39, a40, m39, m40] = [strike(39, 'arrow'), strike(40, 'arrow'), strike(39, 'melee'), strike(40, 'melee')];
+  assert.ok(a39 > 0 && m39 > 0);
+  assert.equal(Math.floor(a40 / 1.67), Math.floor(a39 / 1.28), 'the same draw, its late number');
+  assert.equal(m40, m39, 'a swing is not an arrow');
+});
+
+test('PVP-SHIELD: a live Shield on a player is reported (`sh`), and the referee takes 25% off a swing and 35% off a shaft; no Shield, nothing (mutants: the report unread; the shaft read as a swing)', () => {
+  assert.deepEqual(PVP_SHIELD, { melee: 75, shaft: 65 });
+  assert.equal(pvpShielded(body()), false);
+  assert.equal(pvpShielded({ ...body(), activeEffects: [{ kind: 'shield', shieldRemaining: 30 }] }), true);
+  assert.equal(pvpShielded({ ...body(), activeEffects: [{ kind: 'shield', shieldRemaining: 0 }, { kind: 'shield', shieldRemaining: 9, ended: true }] }), false, 'a spent or ended pool');
+  const base = { n: 1, s: 5000, seen: [] };
+  assert.equal(validVitIn({ ...base, sh: 1 })?.shield, true);
+  assert.equal(validVitIn({ ...base }).shield, undefined);
+  assert.equal(validVitIn({ ...base, sh: 2 }), null);
+  const now = 1_000_000;
+  const a = newFighter(10, now);
+  const b = newFighter(50, now); b.max = 1000; b.hp = 1000;
+  assert.equal(shieldedBlow(b, false, 200), 200, 'unreported: no Shield');
+  takeHealthReport(b, { report: 1, share: HEALTH_SHARE_WHOLE, seen: [], shield: true }, now);
+  const blow = (w, r, t) => refereeBlow(a, b, { from: at(0), at: at(2), held: { w, m: 0 }, d: 200, r }, t);
+  assert.equal(blow(120, SIEGE_HIT.Melee, now).dealt, 150, 'a longsword: 75%');
+  assert.equal(blow(130, SIEGE_HIT.Shaft, now + 1000).dealt, 130, 'an arrow: 65%');
+  takeHealthReport(b, { report: 2, share: HEALTH_SHARE_WHOLE, seen: [], shield: false }, now + 2000);
+  assert.equal(blow(120, SIEGE_HIT.Melee, now + 3000).dealt, 200, 'the Shield gone');
+  let sh = false, t = 0; const sent = [];
+  const m = createRefereeHealthMirror({ read: () => ({ health: 50, maxHealth: 100 }), write: () => {}, send: (r) => { sent.push(r); return true; }, now: () => t, shield: () => sh });
+  m.frame(true); sh = true; t += 1000; m.frame(true);
+  assert.deepEqual(sent.map((r) => r.sh), [0, 1], 'a Shield cast is reported at once');
 });

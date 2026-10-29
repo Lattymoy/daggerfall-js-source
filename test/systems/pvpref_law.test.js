@@ -85,7 +85,7 @@ test('PVP-REF THE ROOM AND VITALITY: `siege:<seat>:<week>`; 300 + 2 x Renown, th
   assert.deepEqual([relaySupportsSiege('world145'), relaySupportsSiege('world148')], [false, true]);
 });
 
-test('PVP-REF THE BLOW: both standing, the weapon the look holds, its kind its own (a bow a shaft), the reach (2.5 m and 3 of slack; a shaft 60), four a second (one second deep, spent first), a fighter just risen untouched; the damage clipped to 45% of the body (PVP-HIT) and the vitality left; a fall at none (mutants: each refusal; the clip; the fall; the rate\'s refill)', () => {
+test('PVP-REF THE BLOW: both standing, the weapon the look holds, its kind its own (a bow a shaft), the reach (2.5 m and 3 of slack; a shaft 60), four a second (one second deep, spent first), a fighter just risen untouched; the damage clipped to 34% of the body (PVP-HIT) and the vitality left; a fall at none (mutants: each refusal; the clip; the fall; the rate\'s refill)', () => {
   let now = 1_000_000;
   const a = newFighter(10, now), b = newFighter(50, now);
   assert.deepEqual([a.hp, a.max, b.hp], [320, 320, 400]);
@@ -93,8 +93,8 @@ test('PVP-REF THE BLOW: both standing, the weapon the look holds, its kind its o
   const blow = (o) => refereeBlow(a, b, { from: at(0), at: at(2), held: dk, d: 50, r: SIEGE_HIT.Melee, ...o }, now);
   assert.deepEqual(blow({}), { ok: true, dealt: 50, fell: false, why: null });
   assert.equal(b.hp, 350);
-  assert.equal(blow({ d: 500 }).dealt, 180, 'PVP-HIT: clipped to 45% of the body');
-  assert.equal(a.clipped, 320);
+  assert.equal(blow({ d: 500 }).dealt, 136, 'PVP-HIT: clipped to 34% of the body');
+  assert.equal(a.clipped, 364);
   assert.equal(blow({ at: at(5.6) }).why, 'reach', 'past 2.5 + 3 m');
   assert.equal(blow({ held: null }).why, 'weapon', 'a weapon the look does not hold');
   assert.equal(blow({}).why, 'rate', 'four a second, one second deep');
@@ -135,14 +135,14 @@ test('PVP-REF THE BLOW: both standing, the weapon the look holds, its kind its o
   assert.equal(siegeNextWave(41_000, 20_000), 60_000);
 });
 
-test('PVP-REF THE CAST AND THE STEP: PVP-HIT - a damaging cast to 45% of the body; PVP-HEAL - a heal in a fight to the target\'s window, never past whole, on oneself too; PVP-CASTS - both on one clock (bal8_pvp); a spell\'s reach; a step no faster than 18 m/s across the ground and half a metre (MEASURED: 25% above the motor\'s fastest legal run), a first one kept, a fall never judged (mutants: the quarter; the heal\'s window; the heal\'s ceiling; the speed; the slack; the height)', () => {
+test('PVP-REF THE CAST AND THE STEP: PVP-HIT - a damaging cast to 34% of the body; PVP-HEAL - a heal in a fight to the target\'s window, never past whole, on oneself too; PVP-CASTS - both on one clock (bal8_pvp); a spell\'s reach; a step no faster than 18 m/s across the ground and half a metre (MEASURED: 25% above the motor\'s fastest legal run), a first one kept, a fall never judged (mutants: the quarter; the heal\'s window; the heal\'s ceiling; the speed; the slack; the height)', () => {
   let now = 5_000_000;
   const a = newFighter(1, now), b = newFighter(1, now);
   const cast = (o) => refereeCast(a, b, { from: at(0), at: at(10), d: 100, ...o }, now);
-  assert.deepEqual([cast({ d: 999 }).dealt, cast({}).dealt], [135, 100], 'each to 45% of 302');
-  assert.equal(b.hp, 302 - 235);
+  assert.deepEqual([cast({ d: 999 }).dealt, cast({}).dealt], [102, 100], 'each to 34% of 302');
+  assert.equal(b.hp, 302 - 202);
   assert.deepEqual(cast({ heal: true }), { ok: true, dealt: -75, fell: false, why: null }, 'a heal in the fight: the window\'s quarter');
-  assert.equal(b.hp, 142);
+  assert.equal(b.hp, 175);
   assert.equal(cast({ heal: true }).dealt, 0, 'the window spent');
   a.hp = 290;
   assert.equal(refereeCast(a, a, { from: at(0), at: at(0), d: 100, heal: true }, now).dealt, -12, 'never past whole, on oneself (out of a fight)');

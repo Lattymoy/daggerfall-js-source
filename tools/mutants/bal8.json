@@ -20,7 +20,7 @@
   {
     "name": "PVP-HIT-the-share",
     "file": "src/net/siege/siegeRef.js",
-    "old": "export const PVP_HIT = Object.freeze({ share: 0.45 });",
+    "old": "export const PVP_HIT = Object.freeze({ share: 0.34 });",
     "new": "export const PVP_HIT = Object.freeze({ share: 0.5 });",
     "tests": [
       "test/net/siege/bal8_pvp.test.js"
