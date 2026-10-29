@@ -6351,6 +6351,7 @@ pvp.rules.buff,"PvP가 켜져 있으면 자신에게 그 주문을 걸 수 없�
 pvp.rules.dispel,"PvP가 켜져 있는 동안 강화 효과가 사라집니다."
 pvp.rules.levitate,"PvP가 켜져 있으면 공중 부양할 수 없습니다."
 pvp.rules.rest,"PvP가 켜져 있으면 휴식하거나 기다릴 수 없습니다."
+pvp.rules.ride,"PvP가 켜져 있으면 탈것을 탈 수 없다."
 pvp.villain.label,"악명"
 pvp.villain.red,"당신은 악당입니다. 붉은 해골이 붙고, PvP 깃발이 켜진 채로 유지됩니다."
 ql.board.head,"도움 구함"

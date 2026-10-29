@@ -5,9 +5,10 @@ import test, { afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { PVP_LIMITS, PVP_SELF_BARRED, setPvpLimitedSource, pvpLimited, pvpLevitateBarred, notePvpGround, pvpFallSpared,
+import { PVP_LIMITS, PVP_SELF_BARRED, setPvpLimitedSource, pvpLimited, pvpLevitateBarred, notePvpGround, pvpFallSpared, takePvpHeldTaken,
   pvpSpellRefusal, stripPvpBuffs } from '../../../src/systems/wild/pvpRules.js';
 import { createPvpRulesHost, PVP_RULES_POLL_MS } from '../../../src/scenes/pvpRulesHost.js';
+import { rideBarred } from '../../../src/player/mountRig.js';
 import { PlayerMotor, runSpeed, walkSpeed, FIXED_DT, moveCapNow, registerMoveCap } from '../../../src/player/motor.js';
 import { Collider } from '../../../src/player/collider.js';
 import { TRANSPORT_MODES, setCanRunOverride } from '../../../src/systems/transport.js';
@@ -91,21 +92,23 @@ test('PVP-RULES THE SPELLS REFUSED UNDER THE FLAG: Levitate at any range, a PvE 
   assert.match(readFileSync('src/scenes/hostMagic.js', 'utf8'), /\?\? sandSpellRefusal\(sp\) \?\? pvpSpellRefusal\(sp\);/, 'every host\'s one cast engine asks');
 });
 
-test('PVP-RULES THE BUFFS END: the flag going up ends every PvE buff (a potion\'s, a Shield) and arms the spare for a Levitate; after it my own casts and a mate\'s gifts but Shield go; a worn item\'s, a curse, a harm, a duel\'s and a utility stay (mutants: the edge read as later; a worn item stripped; a curse stripped; a potion\'s stripped after the edge)', () => {
+test('PVP-RULES THE BUFFS END: the flag going up ends every PvE buff (a potion\'s, a Shield) and arms the spare for a Levitate; after it my own casts and a mate\'s gifts but Shield go; a worn item\'s buff goes each poll (the owner: "Item buff no"); a worn item\'s utility, a curse, a harm, a duel\'s and a utility stay (mutants: the edge read as later; a worn item kept; a worn utility stripped; a curse stripped; a potion\'s stripped after the edge)', () => {
   const fx = () => [
     { kind: 'fortifyAttribute', bundleSelfCast: true }, { kind: 'shield', bundleSelfCast: true }, { kind: 'jumping' },
     { kind: 'chameleonNormal', heldItem: {} }, { kind: 'fortifyAttribute', permanent: true, bundleSelfCast: true }, { kind: 'continuousDamage' },
     { kind: 'elementalResistance', bundleDuel: true }, { kind: 'waterBreathing', bundleSelfCast: true },
-    { kind: 'invisNormal', bundleAlly: true }, { kind: 'levitate' },
+    { kind: 'invisNormal', bundleAlly: true }, { kind: 'levitate' }, { kind: 'waterBreathing', heldItem: {} },
   ];
   flagged();
   const a = { activeEffects: fx() };
-  assert.equal(stripPvpBuffs(a, true), 5);
-  assert.deepEqual(a.activeEffects.map((e) => e.kind), ['chameleonNormal', 'fortifyAttribute', 'continuousDamage', 'elementalResistance', 'waterBreathing']);
+  assert.equal(stripPvpBuffs(a, true), 6);
+  assert.deepEqual(a.activeEffects.map((e) => e.kind), ['fortifyAttribute', 'continuousDamage', 'elementalResistance', 'waterBreathing', 'waterBreathing']);
+  assert.equal(takePvpHeldTaken(), true, 'a worn buff taken is owed back');
+  assert.equal(takePvpHeldTaken(), false);
   assert.equal(pvpFallSpared(), true, 'a Levitate ended spares its fall');
   const b = { activeEffects: fx() };
-  assert.equal(stripPvpBuffs(b, false), 3);
-  assert.deepEqual(b.activeEffects.map((e) => e.kind), ['shield', 'jumping', 'chameleonNormal', 'fortifyAttribute', 'continuousDamage', 'elementalResistance', 'waterBreathing']);
+  assert.equal(stripPvpBuffs(b, false), 4);
+  assert.deepEqual(b.activeEffects.map((e) => e.kind), ['shield', 'jumping', 'fortifyAttribute', 'continuousDamage', 'elementalResistance', 'waterBreathing', 'waterBreathing']);
 });
 
 test('PVP-RULES THE HOST: held only flagged in the zone; the rest window refused then; the flag going up says the buffs end once; the poll at a quarter second (mutants: the zone unread; the rest unrefused; the line said each poll)', () => {
@@ -128,6 +131,23 @@ test('PVP-RULES THE HOST: held only flagged in the zone; the rest window refused
   assert.equal(said.length, 1);
   assert.deepEqual(entity.activeEffects, []);
   assert.equal(h.flag.on(), true);
+});
+
+test('PVP-RULES NO SADDLE (the owner: "No horse u demoibt", "Demount"): flagged in the zone a rider is set on foot each poll and the saddle refused; off the flag a worn buff taken is recast (mutants: the bar unasked; the rider kept; the recast unasked)', () => {
+  let on = true, zone = true;
+  const said = [], motor = { grounded: true, transportMode: TRANSPORT_MODES.Horse }, entity = { activeEffects: [{ kind: 'chameleonNormal', heldItem: { equipSlot: 1 } }], items: [] };
+  const h = createPvpRulesHost({ on: () => on }, motor, entity, (l) => said.push(l), { zone: () => zone, every: null });
+  assert.match(rideBarred(), /ride/);
+  h.tick();
+  assert.ok(said.some((l) => /ride/.test(l)), 'the rider is told');
+  assert.deepEqual(entity.activeEffects, [], 'the worn Chameleon goes');
+  assert.match(readFileSync('src/player/mountRig.js', 'utf8'), /const barred = isRiding\(mode\) \? rideBarred\(\) : null;\n\s+if \(barred\) \{ _rideSay\?\.\(barred\); return; \}/, 'the one place the mode changes refuses the saddle');
+  assert.match(readFileSync('src/scenes/pvpRulesHost.js', 'utf8'), /if \(isRiding\(motor\?\.transportMode\)\) \{ rideFoot\(\);/);
+  on = false;
+  assert.equal(rideBarred(), null, 'off the flag a saddle is free');
+  h.tick();
+  assert.match(readFileSync('src/scenes/pvpRulesHost.js', 'utf8'), /\} else if \(takePvpHeldTaken\(\)\) restartHeldEnchantments\(entity\);/);
+  assert.equal(takePvpHeldTaken(), false, 'the recast took what was owed');
 });
 
 test('PVP-RULES NO HOLD BETWEEN PLAYERS (PVP-SPELLS): a cast at a player lands only its first effect, and only Damage or a Heal Health - Paralyze, Silence, a damage over time and a Drain never; the referee\'s frame carries numbers, no effect (mutants: Paralyze let through; a second effect read)', () => {

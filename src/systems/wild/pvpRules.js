@@ -11,7 +11,7 @@ import { t } from '../textManager.js';
  *  runSpeed), and Jumping 100 with Athleticism (1 + 0.5 + 0.1, systems/skills.js jumpSpeedMultiplier), no Jump spell. */
 export const PVP_LIMITS = Object.freeze({ mps: 11.71, jump: 1.6 });
 
-/** The live effects the flag ends as it goes up: the PvE buffs. A worn item's, a curse's and a foe's harm stay. */
+/** The live effects the flag ends as it goes up: the PvE buffs, a worn item's too. A curse's and a foe's harm stay. */
 export const PVP_DISPEL_KINDS = Object.freeze(['fortifyAttribute', 'shield', 'elementalResistance', 'spellResistance',
   'spellAbsorption', 'spellReflection', 'regenerate', 'invisNormal', 'invisTrue', 'chameleonNormal', 'chameleonTrue',
   'shadeNormal', 'shadeTrue', 'jumping', 'climbing', 'slowfall', 'freeAction', 'waterWalking', 'levitate']);
@@ -24,9 +24,9 @@ const DISPEL = new Set(PVP_DISPEL_KINDS);
 const SELF_KINDS = new Set(PVP_DISPEL_KINDS.filter((k) => k !== 'shield'));
 
 let _limited = /** @type {(() => boolean) | null} */ (null);
-let _warded = false, _spare = false;
+let _warded = false, _spare = false, _heldTaken = false;
 /** The host's word on whether my flag is up in the open zone (null: never). */
-export function setPvpLimitedSource(fn) { _limited = typeof fn === 'function' ? fn : null; _warded = false; _spare = false; }
+export function setPvpLimitedSource(fn) { _limited = typeof fn === 'function' ? fn : null; _warded = false; _spare = false; _heldTaken = false; }
 /** Am I held to the flag's limits now? A source that throws holds nothing. */
 export const pvpLimited = () => { try { return !!_limited?.(); } catch { return false; } };
 
@@ -59,9 +59,10 @@ export function pvpSpellRefusal(sp, limited = pvpLimited()) {
 export const pvpRestText = () => t('pvp.rules.rest', 'You cannot rest or wait with PvP on.');
 
 /** May this entry stay? `edge` the flag just went up: every PvE buff goes (a potion's too); after it, my own casts and
- *  a party mate's gifts but Shield, and any Levitate. A worn item's, a curse's and a duel's entry stay. */
-const dispelled = (a, edge) => !a.heldItem && !a.permanent && !a.bundleDuel
-  && (a.kind === 'levitate' || (edge ? DISPEL.has(a.kind) : SELF_KINDS.has(a.kind) && (a.bundleSelfCast || a.bundleAlly)));
+ *  a party mate's gifts but Shield, and any Levitate. A worn item's buff goes each poll (the owner: "Item buff no") and
+ *  comes back when the flag drops (scenes/pvpRulesHost.js). A curse's and a duel's entry stay. */
+const dispelled = (a, edge) => !a.permanent && !a.bundleDuel
+  && (a.heldItem ? DISPEL.has(a.kind) : a.kind === 'levitate' || (edge ? DISPEL.has(a.kind) : SELF_KINDS.has(a.kind) && (a.bundleSelfCast || a.bundleAlly)));
 /** End the PvE buffs on `entity` (`edge`: the flag just went up); answers how many entries went. */
 export function stripPvpBuffs(entity, edge) {
   const list = entity?.activeEffects;
@@ -69,8 +70,13 @@ export function stripPvpBuffs(entity, edge) {
   const kept = list.filter((a) => !a || !dispelled(a, edge));
   const n = list.length - kept.length;
   if (n && list.some((a) => a?.kind === 'levitate' && !kept.includes(a))) { _warded = true; _spare = true; }   // the fall it ends is spared too
+  if (list.some((a) => a?.heldItem && !kept.includes(a))) _heldTaken = true;
   if (n) entity.activeEffects = kept;
   return n;
 }
+/** Did the flag take a worn item's buff since the last ask? The host recasts the worn set once the flag drops. */
+export const takePvpHeldTaken = () => { const h = _heldTaken; _heldTaken = false; return h; };
+/** PVP-RULES (the owner: "No horse u demoibt", "Demount"): no saddle or cart under the flag in the open zone. */
+export const pvpRideText = () => t('pvp.rules.ride', 'You cannot ride with PvP on.');
 /** The line said when the flag going up takes buffs. */
 export const pvpDispelText = () => t('pvp.rules.dispel', 'Your buffs end while PvP is on.');

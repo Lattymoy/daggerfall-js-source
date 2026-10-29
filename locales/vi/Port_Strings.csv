@@ -744,6 +744,7 @@ pvp.rules.buff,"Bạn không thể dùng phép đó lên bản thân khi bật P
 pvp.rules.dispel,"Các hiệu ứng cường hóa của bạn kết thúc khi PvP bật."
 pvp.rules.levitate,"Bạn không thể bay lơ lửng khi bật PvP."
 pvp.rules.rest,"Bạn không thể nghỉ ngơi hay chờ đợi khi bật PvP."
+pvp.rules.ride,"Bạn không thể cưỡi ngựa khi bật PvP."
 pvp.villain.label,"Độ phản diện"
 pvp.villain.red,"Bạn là kẻ phản diện. Bạn mang đầu lâu đỏ, và cờ PvP của bạn vẫn bật."
 ql.board.head,"Cần người giúp"
