@@ -190,7 +190,7 @@ export const MINUTE_JOBS = Object.freeze([
   ['motherlodes', async (ctx, env) => {
     const day = utcDay(ctx.nowS);
     if (profSwitchOf(env?.PROFESSIONS_OPEN) !== 'on' || lodesPicked === day) return 0;
-    const lodes = await motherlodesOf(ctx, day);
+    const lodes = await motherlodesOf(ctx, day, { clock: true });   // LODE-HERD: the clock picks without the readers' claim
     lodesPicked = day;
     return lodes.length;
   }],

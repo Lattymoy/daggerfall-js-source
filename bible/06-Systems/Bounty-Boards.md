@@ -350,7 +350,8 @@ The bounty host reports every bounty it pays, with its board's region (`scenes/b
 service answers it, and asked again on the pump's beat, as the professions book keeps its acts. A refusal for good
 (`hunt-tier`, `hunt-id`) lets it go; a lost network, a seat this tab does not hold, a rate or no session on the device
 keeps it (HUNT_KEEP). An account's full day keeps it until the service's UTC day turns (12.10). A report past the
-clock's window is never kept. The state is read again every two minutes, and its answer redraws an open board.
+clock's window is never kept. The state is read again every ten minutes (HUNT-LEAN, `11-Multiplayer/Scale-Arc.md`),
+and its answer redraws an open board.
 
 ### 12.3 The rank
 
@@ -506,7 +507,7 @@ written under an offline id before INT16's seat) counted as a living Master. A M
 the crafting writs read it (`craftWrits.js` ranksOf), alone and in a batch. MEASURED and bounded: the Marks of Mastery's
 clears read visited every hunt row of the account on each mint, wardrobe read and board row (SQLite's steps grew with
 the rows: 5,000 at 1,000 clears, 250,000 at 50,000). It stops at the top title's 750 now (`hunts.js` CLEARS_READ),
-flat past it. NOT CHANGED, named: the hunter's own state read (`huntStateOf`, every two minutes on an open board and each
+flat past it. NOT CHANGED, named: the hunter's own state read (`huntStateOf`, every ten minutes on an open board and each
 clear) counts the character's and the account's rows whole; a counter is a migration this lane was not given.
 
 **F8 and G3: the record's numbers.** `11-Multiplayer/Seats-Arc.md` 4.2's row names migration 0182; the Trophy Hunter's
