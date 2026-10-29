@@ -368,14 +368,14 @@ export const wildFlagWord = (x, now) => ({ t: 'wref', k: 'flag', id: x.id, f: 1,
  *  room looks for a flagged fighter's bar that moved - so each is said at most once in that time. */
 export const WILD_BAR = Object.freeze({ sayMs: 500 });
 
-/** PVP-BAR: a flagged fighter's bar as the room hears it - its health in whole per cent (1 while it stands), and `s` 100
- *  under a Shield spell (the referee knows a Shield as on or off, never its amount). Null for a pool no report anchored. */
+/** PVP-BAR: a flagged fighter's bar as the room hears it - its health in whole per cent (1 while it stands), and `s` a
+ *  Shield's share in per cent of its top (PVP-KIT: 10..25, 25 full). Null for a pool no report anchored. */
 export function wildBarWord(x) {
   const f = x?.f;
   if (!f || !f.share?.heard || !(f.max > 0)) return null;
   const hp = Math.max(0, f.hp);
   const h = hp > 0 ? Math.max(1, Math.min(100, Math.round((100 * hp) / f.max))) : 0;
-  return { t: 'wref', k: 'bar', id: x.id, h, ...(f.share.shield ? { s: 100 } : {}) };
+  return { t: 'wref', k: 'bar', id: x.id, h, ...(f.share.shield > 0 ? { s: Math.min(100, Math.round(f.share.shield * 4)) } : {}) };
 }
 
 /** PVP-BAR: the bars that moved since the room last said them - flagged fighters in the zone alone, the room's whole look

@@ -3674,6 +3674,161 @@
   "tr": "7f5f0ae6d58d",
   "by": "claude-in-session"
  },
+ "pvp.kit.absorb": {
+  "en": "ae56f146b0ea",
+  "tr": "05877183a4e1",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.agility": {
+  "en": "0fc9a6edb3ce",
+  "tr": "33eb6b53f313",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.attribute": {
+  "en": "a086d942884a",
+  "tr": "0b838dd2179d",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.close": {
+  "en": "bbfa773e5a63",
+  "tr": "a622766452d8",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.cost": {
+  "en": "1dcf44fc4a34",
+  "tr": "2baf96d5990a",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.cure": {
+  "en": "741ccd1eaaed",
+  "tr": "de772d323bc0",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.damage": {
+  "en": "7bf6d1d3a58a",
+  "tr": "1ce3e0b43e6f",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.element": {
+  "en": "49fa9fd83109",
+  "tr": "59a9b62bfa4c",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.endurance": {
+  "en": "cf6427142652",
+  "tr": "1706808d96bd",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.fire": {
+  "en": "78baebfcb4b5",
+  "tr": "d4cd5965f203",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.fortify": {
+  "en": "9ae9fef7e9c8",
+  "tr": "31ab83157632",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.frost": {
+  "en": "6032a672e309",
+  "tr": "004183d181ae",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.heal": {
+  "en": "c166015199fe",
+  "tr": "3b88569cce30",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.help": {
+  "en": "48cf8423570c",
+  "tr": "ffc118d5298e",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.icon": {
+  "en": "716f63b96e0c",
+  "tr": "ffa799151a32",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.intelligence": {
+  "en": "c698f940a03e",
+  "tr": "f1bf2d8a975d",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.jump": {
+  "en": "1eba140fdd9c",
+  "tr": "e74d5efedb04",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.luck": {
+  "en": "1c295a8aa571",
+  "tr": "46082a849432",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.magic": {
+  "en": "e6791be7eed7",
+  "tr": "28e9b1b258ab",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.only": {
+  "en": "38d6334d2862",
+  "tr": "073a86b64b23",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.personality": {
+  "en": "2981a383917f",
+  "tr": "025e0c9750f5",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.poison": {
+  "en": "6de0b0c65644",
+  "tr": "8c81c698c912",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.reflect": {
+  "en": "11a5b905dd43",
+  "tr": "3a8860c09453",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.resist": {
+  "en": "7ead1b9d305c",
+  "tr": "4f16db42ef60",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.shield": {
+  "en": "08271419319f",
+  "tr": "408d0123d16d",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.shock": {
+  "en": "674982955154",
+  "tr": "0c80e9ca8491",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.speed": {
+  "en": "2d2cb022bc3d",
+  "tr": "d8c69ef04dda",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.speedAttr": {
+  "en": "2d2cb022bc3d",
+  "tr": "d8c69ef04dda",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.spell": {
+  "en": "2747aac69844",
+  "tr": "1f34071a0066",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.strength": {
+  "en": "24d3e4fdd9a8",
+  "tr": "2935ac53d4af",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.willpower": {
+  "en": "dcd5abfb0da7",
+  "tr": "444cec40ae70",
+  "by": "claude-in-session"
+ },
  "pvp.level30.ask": {
   "en": "1f21ace75cf7",
   "tr": "e77960dfef6f",

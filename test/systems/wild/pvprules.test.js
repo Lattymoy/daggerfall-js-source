@@ -133,7 +133,7 @@ test('PVP-RULES THE HOST: held only flagged in the zone; the rest window refused
   assert.equal(h.flag.on(), true);
 });
 
-test('PVP-RULES NO SADDLE (the owner: "No horse u demoibt", "Demount"): flagged in the zone a rider is set on foot each poll and the saddle refused; off the flag a worn buff taken is recast (mutants: the bar unasked; the rider kept; the recast unasked)', () => {
+test('PVP-RULES NO SADDLE (the owner: "No horse u demoibt", "Demount"): flagged in the zone a rider is set on foot each poll and the saddle refused; off the flag a worn buff taken is recast; the PvP bar\'s spells and buffs are the flag\'s own (mutants: the kit stripped; the kit refused; the bar unasked; the rider kept; the recast unasked)', () => {
   let on = true, zone = true;
   const said = [], motor = { grounded: true, transportMode: TRANSPORT_MODES.Horse }, entity = { activeEffects: [{ kind: 'chameleonNormal', heldItem: { equipSlot: 1 } }], items: [] };
   const h = createPvpRulesHost({ on: () => on }, motor, entity, (l) => said.push(l), { zone: () => zone, every: null });
@@ -141,6 +141,12 @@ test('PVP-RULES NO SADDLE (the owner: "No horse u demoibt", "Demount"): flagged 
   h.tick();
   assert.ok(said.some((l) => /ride/.test(l)), 'the rider is told');
   assert.deepEqual(entity.activeEffects, [], 'the worn Chameleon goes');
+  entity.activeEffects = [{ kind: 'fortifyAttribute', bundleSelfCast: true, bundleKit: true }, { kind: 'spellReflection', bundleSelfCast: true }];
+  h.tick();
+  assert.deepEqual(entity.activeEffects.map((e) => e.kind), ['fortifyAttribute'], 'PVP-KIT: the PvP bar\'s buff stays, a buff of my own goes');
+  assert.equal(pvpSpellRefusal({ rangeType: 0, pvpKit: 'fortify', effects: [{ type: 9 }] }), null, 'PVP-KIT: the bar\'s Fortify is cast');
+  assert.match(pvpSpellRefusal({ rangeType: 0, effects: [{ type: 9 }] }), /yourself/);
+  assert.match(readFileSync('src/systems/effects.js', 'utf8'), /if \(spell\?\.pvpKit != null\) list\[i\]\.bundleKit = true;/, 'a bar spell\'s entry is marked');
   assert.match(readFileSync('src/player/mountRig.js', 'utf8'), /const barred = isRiding\(mode\) \? rideBarred\(\) : null;\n\s+if \(barred\) \{ _rideSay\?\.\(barred\); return; \}/, 'the one place the mode changes refuses the saddle');
   assert.match(readFileSync('src/scenes/pvpRulesHost.js', 'utf8'), /if \(isRiding\(motor\?\.transportMode\)\) \{ rideFoot\(\);/);
   on = false;

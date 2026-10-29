@@ -1704,7 +1704,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world281';   // world281: PVP-REWORK STAGE 1 with STAFF-PULL and SD-SOLO-40 (the stp frame carries pull and landed - staff bring a player to them, net/staffTeleport.js, server/src/staffTeleport.js routeStaffPull, from #1360's world276; a shared solo Shattered Hour holds 40, net/superDungeon/sdLaw.js SD_PUB_SEATS) (2026-10-28, the PvP rework; NOT YET DEPLOYED; world280 on its branch, renumbered past ARMORY) - the referee's pool is the player's real health (the `vit` report's `x`, at most 3,000) and Restoration (`r`); one blow or cast takes at most 45% of it (PVP-HIT), BAL8's 180 in 5 s retired; casts 1.9 a second (PVP-CASTS); a fight's heals 25-35% a 15 s (PVP-HEAL), duels included; a player's blow passes the struck player's armour first (PVP-GUARD, the report's `g`), a player's spell its resistance by element (PVP-WARD, the report's `w` and a cast's `el`, never past 85%); a Shield on a player takes 25% off a swing and 35% off a shaft (PVP-SHIELD, the report's `sh`), one hit at most 34% (the triangle). Deploy the relay first, then the site.
+export const RELAY_VERSION = 'world281';   // world281: PVP-REWORK STAGE 1 with STAFF-PULL and SD-SOLO-40 (the stp frame carries pull and landed - staff bring a player to them, net/staffTeleport.js, server/src/staffTeleport.js routeStaffPull, from #1360's world276; a shared solo Shattered Hour holds 40, net/superDungeon/sdLaw.js SD_PUB_SEATS) (2026-10-28, the PvP rework; NOT YET DEPLOYED; world280 on its branch, renumbered past ARMORY) - the referee's pool is the player's real health (the `vit` report's `x`, at most 3,000) and Restoration (`r`); one blow or cast takes at most 45% of it (PVP-HIT), BAL8's 180 in 5 s retired; casts 1.9 a second (PVP-CASTS); a fight's heals 25-35% a 15 s (PVP-HEAL), duels included; a player's blow passes the struck player's armour first (PVP-GUARD, the report's `g`), a player's spell its resistance by element (PVP-WARD, the report's `w` and a cast's `el`, never past 85%); a Shield on a player takes 25% off a swing and 35% off a shaft (PVP-SHIELD, the report's `sh` - PVP-KIT: a Shield's share, 10-25, of those), one hit at most 34% (the triangle). Deploy the relay first, then the site.
 // world280: ARMORY (2026-10-28, the owner: "Aura armory ... customize your character without changing your overall sprite"; bible/04-Characters/Aura-Armory.md; NOT YET DEPLOYED): a token's armory kit, `ak` (net/armoryLaw.js, which joins the bundle), refused unless it is five known pieces, each of its slot, and badged on a peer's row like the aura (readArmory); the weapon glow's two armory words, brand2 and edge2 (LOOK_GLOW_RE). Deploy the relay first. (world277 on its branch, renumbered past WILD-REMAINS-LOSS's world277 at the merge of main, and world278 past FB1028's world278 and AUDIT FB1028's world279 at the next.)
 // world279: AUDIT FB1028 A2-A3 (2026-10-28, bible/03-World/Town-Shapes.md TS2 at FB1028; NOT YET DEPLOYED) - GROUND_LAW 3 to 4: a town's ground moved at its pixel's seams and beside tall relief, so while `groundGate` is on the relay refuses a ground room's hello from a build on the old ground. Deploy the relay first, then the site.
 // world278: FB1028 TOWN-GROUND (2026-10-28, bible/01-Overview/bugs/Field-Bugs-2026-10-28.md; bible/03-World/Town-Shapes.md TS2; NOT YET DEPLOYED) - GROUND_LAW 2 to 3: a Bay town's ground moved at its shores and outskirts by tens of metres, so while `groundGate` is on the relay refuses a ground room's hello from a build on the old ground. Deploy the relay first, then the site.
@@ -5086,6 +5086,9 @@ export const VIT_HZ_MAX = 8;
 export const vitGate = (bucket, nowMs) => tokenGate(bucket, nowMs, VIT_HZ_MAX);
 /** How many pools' last words a report may name. */
 export const VIT_SEEN_MAX = 4;
+/** PVP-KIT: a report's Shield share, per cent (refereeHealthShare.js PVP_SHIELD min and max, pinned equal); an older
+ *  client's `sh: 1` is a Shield of the strongest share. */
+export const VIT_SHIELD_MIN = 10, VIT_SHIELD_MAX = 25;
 /** PVP-HEALTH: the most Restoration a report may carry (refereeHealthShare.js PVP_RESTORATION_MAX, pinned equal). */
 export const VIT_RESTORATION_MAX = 1000;
 /** PVP-GUARD: a report's armour shares, per cent, edged, blunt and unarmed (refereeHealthShare.js PVP_GUARD bounds them). */
@@ -5113,8 +5116,8 @@ export function validVitIn(m) {
   if (m.r !== undefined && !intIn(m.r, 0, VIT_RESTORATION_MAX)) return null;
   if (m.g !== undefined && !(Array.isArray(m.g) && m.g.length === 3 && m.g.every((n) => intIn(n, 0, VIT_GUARD_MAX)))) return null;   // PVP-GUARD
   if (m.w !== undefined && !(Array.isArray(m.w) && m.w.length === PVP_ELEMENTS && m.w.every((n) => intIn(n, 0, 100)))) return null;   // PVP-WARD
-  if (m.sh !== undefined && m.sh !== 0 && m.sh !== 1) return null;   // PVP-SHIELD
-  return { report: m.n, share: m.s, seen, ...(m.x !== undefined ? { max: m.x } : {}), ...(m.r !== undefined ? { resto: m.r } : {}), ...(m.g !== undefined ? { guard: [...m.g] } : {}), ...(m.w !== undefined ? { ward: [...m.w] } : {}), ...(m.sh !== undefined ? { shield: m.sh === 1 } : {}) };
+  if (m.sh !== undefined && m.sh !== 0 && m.sh !== 1 && !intIn(m.sh, VIT_SHIELD_MIN, VIT_SHIELD_MAX)) return null;   // PVP-SHIELD; PVP-KIT: its share
+  return { report: m.n, share: m.s, seen, ...(m.x !== undefined ? { max: m.x } : {}), ...(m.r !== undefined ? { resto: m.r } : {}), ...(m.g !== undefined ? { guard: [...m.g] } : {}), ...(m.w !== undefined ? { ward: [...m.w] } : {}), ...(m.sh !== undefined ? { shield: m.sh === 1 ? VIT_SHIELD_MAX : m.sh } : {}) };
 }
 
 /**

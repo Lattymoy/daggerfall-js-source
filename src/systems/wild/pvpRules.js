@@ -49,7 +49,7 @@ export const takePvpFallSpare = () => { const s = _spare; _spare = false; return
 
 /** Why this spell is not cast now, or null: Levitate at any range, a PvE buff on myself (rangeType 0, CasterOnly). */
 export function pvpSpellRefusal(sp, limited = pvpLimited()) {
-  if (!limited) return null;
+  if (!limited || sp?.pvpKit != null) return null;   // PVP-KIT: the PvP bar's spells are the flag's own
   const fx = Array.isArray(sp?.effects) ? sp.effects : [];
   if (fx.some((e) => e?.type === PVP_LEVITATE)) return t('pvp.rules.levitate', 'You cannot levitate with PvP on.');
   if (sp?.rangeType === 0 && fx.some((e) => PVP_SELF_BARRED.includes(e?.type))) return t('pvp.rules.buff', 'You cannot cast that on yourself with PvP on.');
@@ -60,8 +60,8 @@ export const pvpRestText = () => t('pvp.rules.rest', 'You cannot rest or wait wi
 
 /** May this entry stay? `edge` the flag just went up: every PvE buff goes (a potion's too); after it, my own casts and
  *  a party mate's gifts but Shield, and any Levitate. A worn item's buff goes each poll (the owner: "Item buff no") and
- *  comes back when the flag drops (scenes/pvpRulesHost.js). A curse's and a duel's entry stay. */
-const dispelled = (a, edge) => !a.permanent && !a.bundleDuel
+ *  comes back when the flag drops (scenes/pvpRulesHost.js). A curse's, a duel's and the PvP bar's entry stay. */
+const dispelled = (a, edge) => !a.permanent && !a.bundleDuel && !a.bundleKit
   && (a.heldItem ? DISPEL.has(a.kind) : a.kind === 'levitate' || (edge ? DISPEL.has(a.kind) : SELF_KINDS.has(a.kind) && (a.bundleSelfCast || a.bundleAlly)));
 /** End the PvE buffs on `entity` (`edge`: the flag just went up); answers how many entries went. */
 export function stripPvpBuffs(entity, edge) {

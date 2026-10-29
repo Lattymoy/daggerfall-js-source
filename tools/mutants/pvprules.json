@@ -29,5 +29,8 @@
   {"name": "PVP-RULES-ride-bar-unread", "file": "src/scenes/pvpRulesHost.js", "old": "setRideBar(() => (pvpLimited() ? pvpRideText() : null), midScreen);", "new": "setRideBar(() => null, midScreen);", "tests": ["test/systems/wild/pvprules.test.js"]},
   {"name": "PVP-RULES-rider-kept", "file": "src/scenes/pvpRulesHost.js", "old": "if (isRiding(motor?.transportMode)) { rideFoot(); midScreen(pvpRideText()); }", "new": "if (isRiding(motor?.transportMode)) { rideFoot(); }", "tests": ["test/systems/wild/pvprules.test.js"]},
   {"name": "PVP-RULES-recast-unasked", "file": "src/scenes/pvpRulesHost.js", "old": "} else if (takePvpHeldTaken()) restartHeldEnchantments(entity);", "new": "} else if (false) restartHeldEnchantments(entity);", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-worn-taken-unnoted", "file": "src/systems/wild/pvpRules.js", "old": "  if (list.some((a) => a?.heldItem && !kept.includes(a))) _heldTaken = true;\n", "new": "", "tests": ["test/systems/wild/pvprules.test.js"]}
+  {"name": "PVP-RULES-worn-taken-unnoted", "file": "src/systems/wild/pvpRules.js", "old": "  if (list.some((a) => a?.heldItem && !kept.includes(a))) _heldTaken = true;\n", "new": "", "tests": ["test/systems/wild/pvprules.test.js"]},
+  {"name": "PVP-RULES-kit-stripped", "file": "src/systems/wild/pvpRules.js", "old": " && !a.bundleDuel && !a.bundleKit", "new": " && !a.bundleDuel", "tests": ["test/systems/wild/pvprules.test.js"]},
+  {"name": "PVP-RULES-kit-refused", "file": "src/systems/wild/pvpRules.js", "old": "if (!limited || sp?.pvpKit != null) return null;", "new": "if (!limited) return null;", "tests": ["test/systems/wild/pvprules.test.js"]},
+  {"name": "PVP-RULES-kit-unmarked", "file": "src/systems/effects.js", "old": "        if (spell?.pvpKit != null) list[i].bundleKit = true;", "new": "        if (false) list[i].bundleKit = true;", "tests": ["test/systems/wild/pvprules.test.js"]}
 ]

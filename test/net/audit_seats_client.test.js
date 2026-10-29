@@ -700,7 +700,7 @@ test('AUDIT-SEATS G5 THE WORLD\'S BATTLE ARMS by source: the swing and the shaft
   assert.match(w, /const castAtAllyDoor = \(id, frame\) => siegeHealOut\(id, frame\) \|\| !!online\?\.sendCast\?\.\(frame\);/);
   assert.match(w, /return heal > 0 && siegeSession\.cast\(id, siegeCastClamp\(heal, true\), true\);/);
   assert.match(w, /spellRefusal: \(sp\) => battleSpellRefusal\(sp\),/);
-  assert.match(w, /const battleSpellRefusal = \(sp\) => \(inSiegeRoom\(\) && siegeSpellBarred\(sp\) \? SIEGE_SPELL_BARRED_TEXT : null\);/);
+  assert.match(w, /const battleSpellRefusal = \(sp\) => \(inSiegeRoom\(\) && siegeSpellBarred\(sp\) \? SIEGE_SPELL_BARRED_TEXT : null\) \?\? pvpKit\.refusal\(sp\);/);
   assert.match(w, /registerLevitateWard\(\(\) => inSiegeRoom\(\) \|\| madeRuleHere\('levitate'\) === 'banned'\);/);   // SD7b (PIN MOVED): and the Shattered Hour's - its Steps walked, not flown; PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law (systems/madeLevel.js)
   assert.match(w, /if \(inSiegeRoom\(\) && isRiding\(player\.transportMode\)\) \{ setTransportModeHere\(TRANSPORT_MODES\.Foot\); townTalk\.say\(SIEGE_DISMOUNT_TEXT\); \}/);
   // the side-mates the heal reaches: standing, of my side, never me

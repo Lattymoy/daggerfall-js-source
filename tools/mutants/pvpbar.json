@@ -47,7 +47,7 @@
   {
     "name": "PVP-BAR-the-shield-dropped",
     "file": "src/net/wild/wildRef.js",
-    "old": "...(f.share.shield ? { s: 100 } : {}) };",
+    "old": "...(f.share.shield > 0 ? { s: Math.min(100, Math.round(f.share.shield * 4)) } : {}) };",
     "new": "};",
     "tests": [
       "test/net/pvpbar.test.js"

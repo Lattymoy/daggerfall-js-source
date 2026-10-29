@@ -1153,7 +1153,7 @@ export function createPlayerMagic({
       say(sent ? RESURRECT_TEXT.cast(f.name) : f?.gone ? RESURRECT_TEXT.forGood(f.name) : RESURRECT_TEXT.noBody);
       return done(true);
     }
-    const allyReach = allyReachFor(sp.rangeType);
+    const allyReach = sp.pvpReach ?? allyReachFor(sp.rangeType);   // PVP-KIT: the PvP bar's gift reaches 15 m (systems/wild/pvpKit.js)
     const ally = !readiedFree && allyReach !== null && allyCastable(sp) ? allyInReach(eye, dir, allyReach) : null;
     if (ally && castAtAlly?.(ally.id, allyCastFrame(sp, castingLevel(playerEntity), ally.id))) {
       lastCastCost = cost;
@@ -1372,7 +1372,7 @@ export function createPlayerMagic({
       // the mate says "Cast Heal on Bran", and the next click resolves through releaseFrame's ally arm, or through
       // the CasterOnly arm as ever if they moved. A free ready (A7) fires on the spot as DFU's does; so does one
       // with nobody there.
-      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH, sp)) { sayArm('mate-aim', prevArm, pressButtonToFireSpellText()); return true; }
+      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, sp.pvpReach ?? ALLY_TOUCH_REACH, sp)) { sayArm('mate-aim', prevArm, pressButtonToFireSpellText()); return true; }
       // COMPANION-KIT: a CasterOnly gift ARMS with my companion under the crosshair, or near - the two arms of ALLY-CAST
       // here for a body of mine (companionMarksFor holds a free ready and a spell not his to him): the click gives it to
       // him, or, aimed anywhere else, to me.

@@ -22,7 +22,7 @@ function fighter(st, sub, id, fl, hp = 1000, now = 0) {
   return x;
 }
 
-test('PVP-BAR THE REFEREE (net/wild/wildRef.js wildBarWord, wildBarWords): a flagged fighter\'s health in whole per cent, 1 while it stands, 0 down; `s` 100 under a Shield; none for a pool no report anchored; the room looks once each half second and says a bar only when it moved; an unflagged one is never said and forgets its bar (mutants: the throttle; the unchanged said; the unflagged said; the floor of 1; the Shield dropped; the unheard said)', () => {
+test('PVP-BAR THE REFEREE (net/wild/wildRef.js wildBarWord, wildBarWords): a flagged fighter\'s health in whole per cent, 1 while it stands, 0 down; `s` a Shield\'s share of its top; none for a pool no report anchored; the room looks once each half second and says a bar only when it moved; an unflagged one is never said and forgets its bar (mutants: the throttle; the unchanged said; the unflagged said; the floor of 1; the Shield dropped; the unheard said)', () => {
   const st = newWildRef();
   const a = fighter(st, 'acct-a', 'peer-a', 1, 1000);
   const b = fighter(st, 'acct-b', 'peer-b', 0, 500);
@@ -31,8 +31,11 @@ test('PVP-BAR THE REFEREE (net/wild/wildRef.js wildBarWord, wildBarWords): a fla
   assert.equal(wildBarWord(a).h, 1, 'a sliver while it stands');
   a.f.hp = 0;
   assert.equal(wildBarWord(a).h, 0);
-  a.f.hp = 655; a.f.share.shield = true;
+  a.f.hp = 655; a.f.share.shield = 25;
   assert.deepEqual(wildBarWord(a), { t: 'wref', k: 'bar', id: 'peer-a', h: 66, s: 100 });
+  a.f.share.shield = 10;
+  assert.equal(wildBarWord(a).s, 40, 'PVP-KIT: a Shield of share 10 fills two fifths');
+  a.f.share.shield = 25;
   a.f.share.heard = false;
   assert.equal(wildBarWord(a), null, 'an unanchored pool would say whole');
   a.f.share.heard = true;
