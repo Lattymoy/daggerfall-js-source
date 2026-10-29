@@ -16,7 +16,7 @@ cost, a word or a case no player meets yet.
 | ID | Sev | Finding | Fix |
 |---|---|---|---|
 | A1 | Major | **Sites stood in a sliding wall's path.** The room was asked of the dungeon's own mesh alone; model 59006's 6.4 m wall (N0000034.RDB) reached 20 sites' discs - a plate inside it at 11 Litanies (never to be won), a gate at 9 Holds, the captain's at five. 86 sites in all had a mover, a lift or a door in the disc. | No piece but the dungeon's own may reach into a disc, 2.5 m over its floor, at its build pose (`Collider.bucketBoxes`, `boxMeetsDisc`; every client's the same, as the floor ray's). The census: 0 of 5,225. |
-| A2 | Minor | **A piece could stand on a table.** The floor was asked on rings at eight bearings: a plate, a gate or the vault between them could stand on furniture or over a hole (Ruins of Krofylen Court: a 2.5 m block under the rays). | Every piece's own spot is asked: the tier's plates, the gates, the vault's four. Sixteen bearings were measured and refused: at the 121 dungeons they emptied, the points between found furniture 0.4 to 1 m high (151) or a pillar (201) with no piece on it. A room may hold what rooms hold. |
+| A2 | Minor | **A piece could stand on a table.** The floor was asked on rings at eight bearings: a plate, a gate or the vault between them could stand on furniture or over a hole (Ruins of Krofylen Court: a 2.5 m block under the rays). | Every piece's own spot is asked: the tier's plates, the gates, the vault's four. Sixteen bearings were measured and refused: they emptied 121 dungeons, and at 400 of the sites they refused the points between found furniture 0.4 to 1 m high (151), a pillar or a hole (201) or a slope (36) where no piece stands. A room may hold what rooms hold. |
 | A3 | Minor | The vault's side was settled by walls under a micron apart at 170 Holds (33 exact ties) - a last bit of one engine's trig from another plan hash. | The walls compared to the centimetre: nearer by less is a tie, the first bearing. |
 | A4 | Nit | The small pass probed every 2 m candidate, those certainly within 60 m of a large site too: 61% of its time where one stood. | `tooNearTaken`, exact - a floor lands at most 4 m under its storey. |
 | A5 | Nit | The census read the hearths at their centres, the host at their feet (AUDIT REST-PARTY C6's mistake, again); no plan differed. | `hostFlatSize`, the fire probe's, shared. |
@@ -69,18 +69,19 @@ cost, a word or a case no player meets yet.
 
 ## The open items, closed
 
-- **Won in the real game.** The Hold (three waves and the captain) and the vault, at Bedard Laboratory; the Litany
-  woke and showed its order there. The probe now closes the windows the fight opens and fails on one left open.
+- **Won in the real game.** At Bedard Laboratory, on the audited code: the Hold (three waves and the captain, 409 s)
+  and the Litany (its order shown, then walked, 91 s), each vault opened (3 and 4 items), no page error. The probe now
+  closes the windows a fight and a vault open, and fails on one left open.
 - **The look.** Pictured before and after D1: the ward, its gates, the plates and the seal now read on a dark floor.
-- **Frame cost.** The encounters' frame 0.21 ms and their marks 0.22 ms at the mean (section 12).
+- **Frame cost.** The encounters' frame 0.09 ms and their marks 0.15 ms at the mean over 675 frames (section 12).
 
 ## The real data (MAPS.BSA, BLOCKS.BSA; read whole, kept out of the repository)
 
 - **THE CENSUS.** 5,225 of 5,698 sites stand in 3,838 dungeons (90.7%); 390 stand none; 1,381 stand two or three,
   every one a wave and a puzzle. A1's rule moved sites and lost none.
-- **WHAT A DISC HOLDS.** At the sites sixteen bearings would refuse, the points between found furniture (151, 0.4 to
-  1 m high), a pillar or a hole (201), a slope (36) and no dip. So the pieces' own spots are asked, and the rest of a
-  room is left as Daggerfall built it.
+- **WHAT A DISC HOLDS.** At 400 of the sites sixteen bearings would refuse, the points between found furniture (151,
+  0.4 to 1 m high), a pillar or a hole (201), a slope (36) and no dip. So the pieces' own spots are asked, and the rest
+  of a room is left as Daggerfall built it.
 - **THE COST.** The plan, every dungeon on one core: 7.4 ms at the median, 48 ms at the 99th percentile, 101 ms at
   worst - in the dungeon's load, beside a fire plan of 1.3 ms. A4's pruning took 61% off the small pass where it ran.
 

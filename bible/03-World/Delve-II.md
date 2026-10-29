@@ -268,7 +268,7 @@ foes. Online none stands until DLV3, and the row's note says so.
 | The vault | Daggerfall's chest (41811), in the mesh list and the collider, offline from the first frame; its roll the dungeon's own `rollPileItems`, rolled once at the win; listed on the plaque, taken by quick loot, a find to the look round |
 | A save | in the dungeon's world record (the envelope keeps only what it names): the plan's hash and each won site's vault; a running attempt is never saved, and a load takes every living foe a site stood |
 | The clock | the dungeon's frame, so it waits under a window as the foes do; a frame of no number moves it nothing |
-| The cost | the encounters' frame 0.21 ms and their marks 0.22 ms a frame at the mean, on the software rasteriser at 800 x 500 (`tools/delveProbe.mjs`, Bedard Laboratory) |
+| The cost | the encounters' frame 0.09 ms and their marks 0.15 ms a frame at the mean over 675 frames, on the software rasteriser at 800 x 500 (`tools/delveProbe.mjs`, Bedard Laboratory: the Hold and the Litany won, each vault opened) |
 
 The dev bench's `?class`, `?nofoes`, `?spell` and `?weapon` stood inside a comment (FOE1's bug class): every `?dungeon=`
 boot opened the wizard and stood no layout foe. They are one option a line now, and `tools/delveProbe.mjs` drives the

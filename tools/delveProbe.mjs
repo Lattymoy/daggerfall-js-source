@@ -94,7 +94,7 @@ for (const s of sites) {
         let k = 0;
         for (const [j, f] of window.__delve() ? Object.entries(JSON.parse(window.__foes())) : []) {
           const r = window.__foeRecord(Number(j));
-          if (r && r._delve === i && !r.dead && r.entity) { window.__damageFoe(Number(j), r.entity.health + 999); k++; }
+          if (r && r._delve?.i === i && !r.dead && r.entity) { window.__damageFoe(Number(j), r.entity.health + 999); k++; }
           void f;
         }
         return k;
