@@ -46,7 +46,10 @@ const memStorage = () => { const m = new Map(); return { getItem: (k) => (m.has(
 // ── THE LAW (net/insignia.js) ───────────────────────────────────────
 
 test('WB9g the insignia\'s law: two pieces, the Gatebreaker title at 30 Deadlands Embers and Dagon\'s Fire at 50 - dearer than anything the day\'s stock sells (the Regalia is 12) - each key in the token\'s vocabulary; the column read as the ids it holds, once each, in their order (a stranger\'s word, a repeat and an over-long column hold nothing); a sale appends; the keys of a kind; the side\'s own refusals (mutants: a price cut; a repeat held twice; the column unbounded; an owned piece sold again; an offline sale; a short purse served)', () => {
-  assert.deepEqual(INSIGNIA.map((r) => [r.id, r.kind, r.key, r.price]), [['title:gatebreaker', 'title', 'gatebreaker', 30], ['aura:dagonfire', 'aura', 'dagonfire', 50]]);
+  // PIN MOVED (ARMORY, the owner: "The dagon breach set should be very expensive from the dagon breach shop dealer"): the
+  // Aura Armory's Dagonfire line after them, 75 each (test/server/armory_service.test.js)
+  const DAGONFIRE = ['burningcrown', 'emberheart', 'ashbound', 'cinderstride', 'breachbrand'];
+  assert.deepEqual(INSIGNIA.map((r) => [r.id, r.kind, r.key, r.price]), [['title:gatebreaker', 'title', 'gatebreaker', 30], ['aura:dagonfire', 'aura', 'dagonfire', 50], ...DAGONFIRE.map((k) => [`armory:${k}`, 'armory', k, 75])]);
   assert.ok(Object.isFrozen(INSIGNIA) && INSIGNIA.every(Object.isFrozen), 'the law is not a table a caller can edit');
   const dearest = Math.max(...Object.values(BROKER_PRICES));
   assert.equal(dearest, 12, 'the Regalia, the day\'s dearest');
@@ -63,7 +66,7 @@ test('WB9g the insignia\'s law: two pieces, the Gatebreaker title at 30 Deadland
   assert.deepEqual(insigniaHeld('aura:dagonfire title:gatebreaker'), ['aura:dagonfire', 'title:gatebreaker'], 'in the order bought');
   assert.deepEqual(insigniaHeld('aura:dagonfire aura:dagonfire'), ['aura:dagonfire'], 'a repeat is one piece');
   assert.deepEqual(insigniaHeld('title:founder aura:dagonfire'), ['aura:dagonfire'], 'a word that is no offer\'s id is not held');
-  assert.equal(INSIGNIA_COLUMN_MAX, 'title:gatebreaker aura:dagonfire'.length);
+  assert.equal(INSIGNIA_COLUMN_MAX, ['title:gatebreaker', 'aura:dagonfire', ...DAGONFIRE.map((k) => `armory:${k}`)].join(' ').length);   // PIN MOVED (ARMORY): every offer once
   assert.deepEqual(insigniaHeld(`aura:dagonfire ${'x'.repeat(INSIGNIA_COLUMN_MAX)}`), [], 'a longer column is not one this law wrote');
   assert.equal(insigniaWith(null, 'aura:dagonfire'), 'aura:dagonfire');
   assert.equal(insigniaWith('aura:dagonfire', 'title:gatebreaker'), 'aura:dagonfire title:gatebreaker');
@@ -609,14 +612,19 @@ test('WB9g the account card and its flow: an Aura row beside the titles when the
   flow.wardrobe = { ...wardrobe(null), purse: 4 };
   const card = accountCard(cardDoc(), flow);
   card.paint();
-  const auraBtn = () => card.root.all.find((n) => n.tag === 'button' && n.className.includes('actaura'));
+  // PIN MOVED (PROFILE-SLOTS): the aura is a slot of the character's now - its tile pressed opens its picker
+  const auraTile = card.root.all.find((n) => n.tag === 'button' && n.className.startsWith('slottile') && n.children[0]?.textContent === 'Aura');
+  assert.ok(auraTile, 'the Aura slot');
+  auraTile.onclick();
+  card.paint();
+  const auraBtn = () => card.root.all.find((n) => n.tag === 'button' && n.className.startsWith('acttitle actaura aura-'));
   let b = auraBtn();
   assert.ok(b, 'an Aura row');
   assert.equal(b.className, 'acttitle actaura aura-dagonfire');
   assert.equal(b.children[0].className, 'actauraword');
   assert.equal(b.children[0].textContent, AURA_TEXT.dagonfire);
   assert.equal(b.attrs['aria-pressed'], 'false');
-  assert.ok(card.root.all.some((n) => n.className === 'fieldlabel' && n.textContent === 'Aura'));
+  assert.ok(card.root.all.some((n) => n.className === 'slots-pickname' && n.textContent === 'Aura'), 'its picker, under its name');
   assert.equal(await b.onclick(), true);
   assert.deepEqual(sent.at(-1), ['/v1/account/aura', { aura: 'dagonfire' }]);
   assert.equal(flow.wardrobe.aura, 'dagonfire', 'the answer\'s word');
@@ -653,19 +661,22 @@ test('WB9g the account card and its flow: an Aura row beside the titles when the
 // ── THE WORLD HOST ──────────────────────────────────────────────────
 
 test('WB9g the world host, by source: the auras gathered with the peers each frame (mine off the stored session, a concealed peer\'s concealed, none under the travel view) and drawn after each mode\'s opaque world through the veiled bodies\' hook under the frame\'s own camera - a foreign pass; the Broker\'s sale both halves through the sale\'s one law (AUDIT WB9); a wear the service\'s, told to my own name and feet at once; the window handed its doors (mutants: the auras never gathered; never drawn)', () => {
-  const w = rd('src/scenes/world.js');
-  assert.match(w, /auraFrame\(seen\);   \/\/ WB9g/);
-  assert.match(w, /const drawVeiledPeerBodies = \(\) => \{ peerBodies\?\.drawVeiled\(\); drawAuras\(\); nodeGlintPass\.draw\(travelView\?\.active \? null : nodeMarksAt\(enchantFeet\(\)\)\); partyPing\?\.draw\(renderer\); \};/);   // NODE-MARKS: the nodes' glow rides the hook after the auras
-  assert.match(w, /function auraFrame\(seen\) \{\n    _auraWearers\.length = 0;\n    if \(!online \|\| travelView\?\.active\) return;/);
-  assert.match(w, /const mine = ownAura\(\);/);
-  assert.match(w, /if \(_veils\.has\(d\.id\) \|\| !d\.shown\) continue;   \/\/ a concealed peer's fire is concealed with them/);
-  assert.match(w, /const proj = renderer\._proj, view = renderer\._view, eye = renderer\._camPos;/);
-  assert.match(w, /if \(_auraPass\?\.drawn\) renderer\.markForeignPass\(\);/);
-  assert.match(w, /_auraWearers\.length = 0;   \/\/ this frame's, drawn once: a frame that gathers none \(the seat left, death, offline\) draws none/, 'a frame that gathers none draws none');
-  assert.match(w, /peerRiders\.settle\([^\n]*\n    auraFrame\(seen\);   \/\/ WB9g/, 'gathered once the bodies and the riders have stood');
+  // PIN MOVED (ARMORY, HOST-SPLIT): the gather and the draw are scenes/auraHost.js's, the host wiring them through its calls
+  const w = rd('src/scenes/world.js'), h = rd('src/scenes/auraHost.js');
+  assert.match(w, /auraHost\.frame\(seen\);   \/\/ WB9g/);
+  assert.match(w, /const drawVeiledPeerBodies = \(\) => \{ peerBodies\?\.drawVeiled\(\); auraHost\.draw\(\); nodeGlintPass\.draw\(travelView\?\.active \? null : nodeMarksAt\(enchantFeet\(\)\)\); partyPing\?\.draw\(renderer\); \};/);   // NODE-MARKS: the nodes' glow rides the hook after the auras
+  assert.match(h, /frame\(\/\*\* @type \{any\[\]\} \*\/ seen\) \{\n      auraList\.length = 0; armoryList\.length = 0; gathered\+\+;\n      const online = deps\.online\(\);\n      if \(!online \|\| deps\.travelActive\(\)\) return;/);
+  assert.match(w, /travelActive: \(\) => !!travelView\?\.active/);
+  assert.match(h, /const mine = ownAura\(\), kit = ownArmory\(\);/);
+  assert.match(h, /if \(deps\.veiled\(d\.id\) \|\| !d\.shown\) continue;   \/\/ a concealed peer's fire is concealed with them/);
+  assert.match(w, /veiled: \(id\) => _veils\.has\(id\)/);
+  assert.match(h, /const proj = renderer\._proj, view = renderer\._view, eye = renderer\._camPos;/);
+  assert.match(h, /if \(pass\?\.drawn\) renderer\.markForeignPass\(\);/);
+  assert.match(h, /auraList\.length = 0;   \/\/ this frame's, drawn once: a frame that gathers none \(the seat left, death, offline\) draws none/, 'a frame that gathers none draws none');
+  assert.match(w, /peerRiders\.settle\([^\n]*\n    auraHost\.frame\(seen\);   \/\/ WB9g/, 'gathered once the bodies and the riders have stood');
   // PIN MOVED (AURA-STALL, #1137): the build is its door's (render/glProgram.js compiledPass), whose throw is told and answers no pass for good
   // PIN MOVED (AURA-SPLIT, #1143): the door waits on no program - each look's is the pass's own (render/auraRing.js programOf)
-  assert.match(w, /const auraPassOf = compiledPass\(renderer\.gl, \[\], \(\) => new AuraRingRenderer\(renderer\.gl\), \(e\) => console\.warn\('\[online\] the aura would not build'/, 'a fire that will not build costs the fire, never the game');
+  assert.match(h, /const auraPassOf = compiledPass\(renderer\.gl, \[\], \(\) => new AuraRingRenderer\(renderer\.gl\), \(\/\*\* @type \{any\} \*\/ e\) => console\.warn\('\[online\] the aura would not build'/, 'a fire that will not build costs the fire, never the game');
   const buy = w.slice(w.indexOf('async function insigniaBuy(offer) {'), w.indexOf('async function insigniaWear(offer) {'));
   // AUDIT WB9 (insignia F1, F2): both halves through the sale's one law (systems/sigil/sigilBroker.js insigniaSale, driven in
   // the audit's pins below) - the pack's price held first, given back unless the service holds the sale, a lost answer
@@ -676,10 +687,11 @@ test('WB9g the world host, by source: the auras gathered with the peers each fra
   assert.ok(!/spendStones/.test(buy), 'the pack paid through the sale alone, never beside it');
   assert.ok(buy.indexOf('if (!r.ok) return') > buy.indexOf('await brokerOwed.insignia('), 'a refused sale adopts nothing');
   const wear = w.slice(w.indexOf('async function insigniaWear(offer) {'), w.indexOf('const openBroker = () => {'));
-  assert.match(wear, /offer\.kind === 'title' \? await equipTitle\(io, want\) : await equipAura\(io, want\)/);
+  // PIN MOVED (ARMORY): each kind through its own door, a Dagonfire piece in its slot (scenes/brokerInsignia.js, test/render/armory.test.js)
+  assert.match(wear, /const r = await insigniaEquip\(io, offer, want\);/);
   assert.match(wear, /insigniaSelf\(r\.data, io\.secret\);/);
-  assert.match(w, /online\?\.adoptIdentity\?\.\(\{ title: _insignia\.title, glyphs: online\.glyphs, level: online\.lv, aura: _insignia\.aura \}\);/);
-  assert.match(w, /adoptSessionIdentity\(appStorage\(\), \{ glyphs: answer\?\.glyphs, glyphsOff: answer\?\.glyphsOff, aura: _insignia\.aura, secret \}\);/);
+  assert.match(w, /online\?\.adoptIdentity\?\.\(\{ title: _insignia\.title, glyphs: online\.glyphs, level: online\.lv, aura: _insignia\.aura, armory: _insignia\.armory \}\);/);   // PIN MOVED (ARMORY): and the kit
+  assert.match(w, /adoptSessionIdentity\(appStorage\(\), \{ glyphs: answer\?\.glyphs, glyphsOff: answer\?\.glyphsOff, aura: _insignia\.aura, armory: _insignia\.armory, secret \}\);/);
   assert.match(w, /insignia: insigniaRows, insigniaLoad, buyInsignia: insigniaBuy, wearInsignia: insigniaWear, insigniaBusy: \(\) => _insignia\.busy,/);
   // the service's side: the routes behind the door, the version moved, the deploy watching the law
   const svc = rd('server-account/src/service.js');

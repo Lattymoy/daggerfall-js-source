@@ -60,7 +60,7 @@ import { chromium } from 'playwright';
 // jump at the wrap, nothing before it kindles.
 import { DAWN_R, DAWN_INNER_M, DAWN_HZ, DAWN_CLIMB, DAWN_START, DAWN_SPIRE_H, dawnMarkAngle } from '../src/render/auraRing.js';
 import { SAGE_RUNE_R, SAGE_ROOTS, SAGE_ROOT_M, SAGE_ROOT_PAD, SAGE_PUFFS, SAGE_PUFF_A, sagePuff, sageRoot, sageClock } from '../src/render/auraRing.js';   // NIRNROOT-SAGE: where the nirnroots and the smoke are, by node's own law   // SPIRE-FIRST: where Firstlight's Redoubts, spires and climb are, by node's own law
-import { glyphEdges, CLOAK_GLYPH, RESONANCE_R, RESONANCE_COLUMNS, RESONANCE_CELLS, RESONANCE_PITCH_M, AURA_LIFT_M, resonanceLit, resonanceClock, MAELSTROM_R, MAELSTROM_ARMS, maelstromArmAngle, auraClock, WARREN_R, WARREN_RING_IN, WARREN_BUNNIES, WARREN_BUNNY_M, WARREN_BUNNY, WARREN_LEAN, WARREN_PRINTS, warrenBunny, warrenClock, warrenPrintsInto } from '../src/render/auraRing.js';   // WIKIMAID: where the rabbits and their tracks are, by node's own law   // SHADOW-CLOAK; SERPENT5 (AUDIT WORLD-REWARDS D3): the Maelstrom: where the wearer's glyph is, to read it back; CRYSTAL-FIST: which squares stand lit, by node's own law
+import { glyphEdges, CLOAK_GLYPH, RESONANCE_R, RESONANCE_COLUMNS, RESONANCE_CELLS, RESONANCE_PITCH_M, AURA_LIFT_M, resonanceLit, resonancePeak, resonanceClock, MAELSTROM_R, MAELSTROM_ARMS, maelstromArmAngle, auraClock, WARREN_R, WARREN_RING_IN, WARREN_BUNNIES, WARREN_BUNNY_M, WARREN_BUNNY, WARREN_LEAN, WARREN_PRINTS, warrenBunny, warrenClock, warrenPrintsInto } from '../src/render/auraRing.js';   // WIKIMAID: where the rabbits and their tracks are, by node's own law   // SHADOW-CLOAK; SERPENT5 (AUDIT WORLD-REWARDS D3): the Maelstrom: where the wearer's glyph is, to read it back; CRYSTAL-FIST: which squares stand lit, by node's own law
 import http from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
 import { join, extname, dirname } from 'node:path';
@@ -389,14 +389,17 @@ try {
   const sq = (k, j) => { const a = ((k + 0.5) / RESONANCE_COLUMNS) * Math.PI * 2; return [Math.cos(a) * RESONANCE_R, AURA_LIFT_M + (j + 0.5) * RESONANCE_PITCH_M, Math.sin(a) * RESONANCE_R]; };
   const nearCols = [9, 10, 11, 12, 13, 14];   // the near side, facing the eye (+z)
   const resPts = nearCols.flatMap((k) => Array.from({ length: RESONANCE_CELLS }, (_, j) => sq(k, j)));
-  const litAt = (t) => nearCols.flatMap((k) => Array.from({ length: RESONANCE_CELLS }, (_, j) => j < resonanceLit(k, resonanceClock(t, 0.37))));   // the probe's wearer's seed
+  const litAt = (t) => nearCols.flatMap((k) => {   // the probe's wearer's seed; AURA DETAIL: and each column's cap, its middle covered whole
+    const tt = resonanceClock(t, 0.37), n = resonanceLit(k, tt), cap = resonancePeak(k, tt);
+    return Array.from({ length: RESONANCE_CELLS }, (_, j) => j < n || j === cap);
+  });
   const rsT = 13.3, rsWhole = await rs(resEye, rsT, 1, resPts, resAt);
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'resonance.png') });
   check('the resonance draws without a GL error', rsWhole.error === 0 && rsWhole.drawn === 1, `error ${rsWhole.error}, drawn ${rsWhole.drawn}`);
   const want = litAt(rsT), onPx = rsWhole.px.filter((c, i) => want[i]), offPx = rsWhole.px.filter((c, i) => !want[i]);
   check('every square the law stands lit is lit', onPx.length > 6 && onPx.every((c) => lum(c) > 250), `${onPx.length} lit: ${onPx.map(lum).join(' ')}`);
   check('in the reference\'s purple itself (#a349a4), never summed past it', onPx.every((c) => Math.abs(c[0] - 163) <= 6 && Math.abs(c[1] - 73) <= 6 && Math.abs(c[2] - 164) <= 6), JSON.stringify(onPx.slice(0, 4)));
-  check('over a column\'s top, every square dark', offPx.length > 6 && offPx.every((c) => lum(c) < 60), `${offPx.filter((c) => lum(c) < 60).length} of ${offPx.length} dark`);
+  check('over a column\'s top, every square dark but its cap', offPx.length > 6 && offPx.every((c) => lum(c) < 60), `${offPx.filter((c) => lum(c) < 60).length} of ${offPx.length} dark`);
   // AUDIT: over a bright floor (0.08 * 9 a light grey) the squares COVER it in the purple, never summed past it
   const rsLit = await page.evaluate(([e, tt, ps, a]) => window.draw(e, tt, 1, ps, 'resonance', a, 0, 9, -1, null, { strict: true }), [resEye, rsT, resPts, resAt]);
   const litOn = rsLit.px.filter((c, i) => want[i]);

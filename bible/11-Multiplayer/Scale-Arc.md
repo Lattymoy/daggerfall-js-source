@@ -83,9 +83,9 @@ Four read-only audits covered the relay (`server/src/index.js`), the account ser
 | RELAY-LOAD | The relay's own metrics read by the operator - the rooms by kind, every five minutes by kind, the busiest rooms - from the Actions tab, as D1-LOAD reads the account service's | No | **Built** (2026-10-18, this branch - no version, no drop) |
 | FOES-FIRST | The full foes frames first on a room's foes budget: a delta stops at a reserve (a quarter of it), a full frame (once a second a sender), a handover (once a second a sender, AUDIT FOES-FIRST) or an unheard sender's frame may borrow as far below empty - the live cells dropped their full frames first; the blows a destination's funnels drop counted, and the full frames dropped, on the metrics point's blobs | Yes, once | **Built** (2026-10-21, relay world239, NOT YET DEPLOYED) |
 | FOES-HOLD | Where a room's full frames alone are more than its budget, a first frame the budget refuses is HELD for its turn: one line, one turn a sender, a newer full frame in its sender's place, nothing of a sender overtaking its own, no delta past a held frame, a held sender beaten so its readers keep it, a leaving sender's handovers tried before its leave - the star's large owner heard as often as the rest (0% before) | Yes, once (with FOES-FIRST's) | **Built** (2026-10-21, relay world239, NOT YET DEPLOYED) |
-| LODE-HERD | The account database overloaded at 00:00 UTC (2026-10-29): every Motherlodes read before the day's mark ran the pick's scan, 33 of 1.8 s in a minute. One read a minute holds the day's claim and picks; the rest answer none; the clock picks unclaimed | No | **Built** (2026-10-29; acct209) |
-| HUNT-LEAN | The overload of the evening of 2026-10-28: the hunt's read, new on 2026-10-27, was some 5 primary statements a player every two minutes, a rate window's write among them. It writes nothing now, a replica serves it, it stands back in an overload, and the book asks every ten minutes | No | **Built** (2026-10-29; acct209) |
-| GROUND-KEPT | The overload held past midnight (2026-10-29, 01:00 UTC, 22% of requests 503): a writ board read scanned its region's witnessed ground - 123,000 rows in 409 ms - twice a read where the day's writs had not posted, 684 times an hour on the primary. An isolate keeps a region's ground ten minutes; none is never kept | No | **Built** (2026-10-29; acct209) |
+| LODE-HERD | The account database overloaded at 00:00 UTC (2026-10-29): every Motherlodes read before the day's mark ran the pick's scan, 33 of 1.8 s in a minute. One read a minute holds the day's claim and picks; the rest answer none; the clock picks unclaimed | No | **Built** (2026-10-29; acct210, acct209 on its branch) |
+| HUNT-LEAN | The overload of the evening of 2026-10-28: the hunt's read, new on 2026-10-27, was some 5 primary statements a player every two minutes, a rate window's write among them. It writes nothing now, a replica serves it, it stands back in an overload, and the book asks every ten minutes | No | **Built** (2026-10-29; acct210, acct209 on its branch) |
+| GROUND-KEPT | The overload held past midnight (2026-10-29, 01:00 UTC, 22% of requests 503): a writ board read scanned its region's witnessed ground - 123,000 rows in 409 ms - twice a read where the day's writs had not posted, 684 times an hour on the primary. An isolate keeps a region's ground ten minutes; none is never kept | No | **Built** (2026-10-29; acct210, acct209 on its branch) |
 | SCALE6 | Abuse and backups: Turnstile on guest creation, /64 IPv6 rate keys, bans, report and ignore, `ALLOWED_ORIGIN`, R2 snapshots, a hub export | Some | Alongside |
 
 **Relay deploy policy (SCALE):** relay changes are batched into as few deploys as possible, each in a window announced beforehand. A deploy drops every player, and until SCALE2 every reconnect is a D1 write storm.
@@ -4568,7 +4568,7 @@ FOLLOW-DROP's "draws the target where they stand" - a target with nobody near bu
 hidden, or out of its room) is lone, and the follow draws it where its last pose put it, never more than a lone
 minute's walk behind; with the staff game standing in the cell, shown, where it stands, as before.
 
-## LODE-HERD, HUNT-LEAN and GROUND-KEPT: built (2026-10-29, this branch - acct209, no migration, no relay change)
+## LODE-HERD, HUNT-LEAN and GROUND-KEPT: built (2026-10-29, this branch - acct210 (acct209 until main's ARMORY took it), no migration, no relay change)
 
 Reported 2026-10-29: "People are experiencing server issues." Read off the live service with the account's Cloudflare
 token: the account database answered `D1 DB is overloaded. Requests queued for too long.` through the evening, and the
@@ -4622,4 +4622,4 @@ the one primary, which is the owner's to choose.
 
 `test/server/lode_herd.test.js` (4); `tools/mutants/lode_herd.json` (9, all dead); `test/server/ground_kept.test.js`
 (2); `tools/mutants/ground_kept.json` (3, all dead). PIN MOVED: the version pins to
-acct209; `test/net/busy_gate.test.js` and `test/server/scale4g.test.js` name the hunt's read.
+acct210; `test/net/busy_gate.test.js` and `test/server/scale4g.test.js` name the hunt's read.

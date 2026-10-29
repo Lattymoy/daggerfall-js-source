@@ -10,7 +10,7 @@
 // found-loot 20-75% (randomConditionLootItems), put on by equipItem. bible/01-Overview/bugs/Field-Bugs-2026-10-15c.md.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { enchantmentMagicRound, repairsObjectsTarget, repairsObjectsMend } from '../../src/systems/enchantments.js';
+import { enchantmentMagicRound, repairsObjectsTarget, repairsObjectsMend, HELD_DEGRADE_RATE } from '../../src/systems/enchantments.js';
 import { applyEnchantments } from '../../src/systems/enchanting.js';
 import { enchantmentSettings } from '../../src/systems/enchantmentCatalogue.js';
 import { equipItem } from '../../src/systems/equip.js';
@@ -49,22 +49,26 @@ const kitted = (worn, carried) => {
 };
 const rounds = (p, from, to, ctx = {}) => { for (let r = from; r <= to; r++) enchantmentMagicRound(p, r, { ctx: { ...ALLOW, ...ctx } }); };
 const conditions = (items) => items.map((it) => it.currentCondition);
-/** Ticks `from`..`to` (multiples of 4) over two worn pieces that wear themselves, `a` ahead of `b` in the pack: each tick
+/** The points a worn Cast When Held piece wears out of rest over rounds `from`..`to`: one on each HELD_DEGRADE_RATE
+ *  round (HELD-WEAR, 2026-10-28: 1 every 36 rounds, so one tick in nine where it was every tick). */
+const heldWore = (from, to) => Math.floor(to / HELD_DEGRADE_RATE) - Math.floor((from - 1) / HELD_DEGRADE_RATE);
+/** Ticks `from`..`to` (multiples of 4) over the worn ring and helm, the ring ahead of the helm in the pack: each tick
  *  mends the one with the less share left (a tie the pack's first) by its fiftieth (repairsObjectsMend), never past its
- *  condition, and then each wears its point. FIELD BUGS 2026-10-16b MEND-ARMOUR: the tick's fiftieth, where it was a
- *  point - the order is MEND-TIERS'. */
-const eachTickTheMoreWorn = (p, a, b, from, to, ctx = {}) => {
+ *  condition, and then the helm wears its point and the ring its point on a HELD_DEGRADE_RATE round. FIELD BUGS
+ *  2026-10-16b MEND-ARMOUR: the tick's fiftieth, where it was a point - the order is MEND-TIERS'. */
+const eachTickTheMoreWorn = (p, held, helm, from, to, ctx = {}) => {
   for (let r = from; r <= to; r += 4) {
-    const want = conditionShare(b) < conditionShare(a) ? b : a, other = want === a ? b : a;
+    const want = conditionShare(helm) < conditionShare(held) ? helm : held, other = want === held ? helm : held;
+    const wore = (it) => (it === helm ? 1 : heldWore(r - 3, r));
     const [w0, o0] = [want.currentCondition, other.currentCondition];
     rounds(p, r - 3, r, ctx);
-    assert.deepEqual([want.currentCondition, other.currentCondition], [Math.min(want.maxCondition, w0 + repairsObjectsMend(want)) - 1, o0 - 1],
-      `round ${r}: the more worn of the two mended, its point worn after; the other wore its point`);
+    assert.deepEqual([want.currentCondition, other.currentCondition], [Math.min(want.maxCondition, w0 + repairsObjectsMend(want)) - wore(want), o0 - wore(other)],
+      `round ${r}: the more worn of the two mended, then each wore what that round wears`);
   }
 };
 
 test('MEND-TIERS: the report - a worn Cast When Held ring, or worn Item Deteriorates armour, is held ahead of twenty damaged axes, bows and boots carried to sell; not one of them is mended while it is below its condition (mutant: MEND-STARVE\'s order, the pack ahead of it)', () => {
-  for (const [what, piece] of [['the Cast When Held ring', at(heldRing(), 40)], ['the Item Deteriorates helm', at(rottingHelm(), 30)]]) {
+  for (const [what, piece, everyTick] of [['the Cast When Held ring', at(heldRing(), 40), false], ['the Item Deteriorates helm', at(rottingHelm(), 30), true]]) {
     const trash = vendorTrash();
     assert.deepEqual(trash.map((it) => it.currentCondition < it.maxCondition), Array(20).fill(true), 'twenty damaged pieces carried');
     const p = kitted([piece], trash);
@@ -72,12 +76,23 @@ test('MEND-TIERS: the report - a worn Cast When Held ring, or worn Item Deterior
     assert.ok(trash.some((it) => conditionShare(it) < conditionShare(piece)), `carried pieces more worn than ${what}`);
     assert.equal(repairsObjectsTarget(p.items, ALLOW), piece, `${what} first all the same`);
     const packed = conditions(trash);
-    rounds(p, 1, 400);
-    // PIN MOVED (FIELD BUGS 2026-10-16b MEND-ARMOUR): a point mended on each tick it wore one held it where it stood; a
-    // fiftieth mended now climbs it to whole, less the point it wears on the tick's round - below its condition still,
-    // so the pack still waits
-    assert.equal(piece.currentCondition, piece.maxCondition - 1, `${what} held ahead of the pack: mended on each of the 100 ticks it wore a point, to whole less that point`);
-    assert.deepEqual(conditions(trash), packed, 'and the pack waits behind it');
+    // PIN MOVED (HELD-WEAR, 2026-10-28): the law read tick by tick - on every tick the piece starts below its condition
+    // the pack waits. The helm wears every tick, so the pack waits all 100; the ring wears one tick in nine now, so the
+    // pack is mended on the ticks it is whole
+    for (let r = 4; r <= 400; r += 4) {
+      const below = piece.currentCondition < piece.maxCondition, before = conditions(trash);
+      rounds(p, r - 3, r);
+      if (below) assert.deepEqual(conditions(trash), before, `round ${r}: ${what} below its condition, the pack waits`);
+    }
+    if (everyTick) {
+      // PIN MOVED (FIELD BUGS 2026-10-16b MEND-ARMOUR): a fiftieth mended climbs it to whole, less the point it wears on
+      // the tick's round - below its condition still, so the pack still waits
+      assert.equal(piece.currentCondition, piece.maxCondition - 1, `${what} held ahead of the pack: mended on each of the 100 ticks it wore a point, to whole less that point`);
+      assert.deepEqual(conditions(trash), packed, 'and the pack waits behind it');
+    } else {
+      assert.equal(piece.currentCondition, piece.maxCondition, `${what} whole: the point it wore on round ${400 - 400 % HELD_DEGRADE_RATE} mended on the next tick`);
+      assert.notDeepEqual(conditions(trash), packed, 'the pack mended on the ticks the ring was whole');
+    }
   }
 });
 
@@ -95,10 +110,10 @@ test('MEND-TIERS: three tiers - a plain worn cuirass, the least worn, is mended 
   assert.equal(ticks, 1);
   rounds(p, 1, 4 * ticks);
   assert.equal(cuirass.currentCondition, cuirass.maxCondition, 'the cuirass mended whole, a fiftieth of it a tick');
-  assert.deepEqual([helm.currentCondition, held.currentCondition], [h0 - ticks, r0 - ticks], 'the helm and the ring wore their point a tick meanwhile');
+  assert.deepEqual([helm.currentCondition, held.currentCondition], [h0 - ticks, r0 - heldWore(1, 4 * ticks)], 'the helm wore its point a tick meanwhile, the ring on its HELD_DEGRADE_RATE round');
   assert.deepEqual(conditions(trash), packed, 'the pack waited');
   rounds(p, 4 * ticks + 1, 4 * ticks + 4);
-  assert.deepEqual([helm.currentCondition, held.currentCondition], [h0 - ticks + repairsObjectsMend(helm) - 1, r0 - ticks - 1], 'then the tick mends the more worn of the two, the helm; the ring wears its point');
+  assert.deepEqual([helm.currentCondition, held.currentCondition], [h0 - ticks + repairsObjectsMend(helm) - 1, r0 - heldWore(1, 4 * ticks + 4)], 'then the tick mends the more worn of the two, the helm; the ring wears on its round');
   eachTickTheMoreWorn(p, held, helm, 4 * ticks + 8, 4 * ticks + 400);
   assert.ok(conditionShare(held) > 0.99 && conditionShare(helm) > 0.99, 'both all but whole');
   assert.deepEqual(conditions(trash), packed, 'and the pack still waits');
@@ -115,7 +130,7 @@ test('MEND-TIERS: once nothing worn is below its condition the pack is mended, i
     assert.deepEqual(trash.filter((it, i) => it.currentCondition !== before[i]), want ? [want] : [], `round ${r}: the pack's most worn piece on the tick, nothing between`);
   }
   assert.deepEqual([held, helm, cuirass].map((it) => it.currentCondition === it.maxCondition), [true, true, true], 'what is worn stayed whole');
-  // up and out in the sun: the ring wears on every tick's round again, and the helm with it
+  // up and out in the sun: the helm wears on every tick's round again, and the ring on its HELD_DEGRADE_RATE round
   rounds(p, 57, 60, { inSunlight: () => true });
   const [packed, pair] = [conditions(trash), held.currentCondition + helm.currentCondition];
   assert.ok(pair < held.maxCondition + helm.maxCondition, 'they wore');

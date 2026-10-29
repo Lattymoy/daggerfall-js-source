@@ -502,6 +502,9 @@ export function mwViewHoldFirst(on) {
 }
 /** SPYGLASS: is the view held in the head for the glass (the pins' read). */
 export const mwViewHeldFirst = () => !!heldFirst;
+/** CANDLE-POV: is the camera out of the head now, on whichever body answers (the travel view's hold included)? The
+ *  classic view has no third person. */
+export const mwViewThirdPerson = () => !!heldThird || (eotbLane() ? !!eotbCamera.thirdPerson() : fpArm.canThirdPerson() && mwCamera.thirdPerson());
 /** TV1: is a body held out of the head for the travel view (the pins' read). */
 export const mwViewHeldThird = () => (heldThird ? heldThird.lane : undefined);
 /** AUDIT DEEP T1-10: did the hold take the body OUT of the head (it was in first person)? The view's rise and fall then

@@ -15,7 +15,7 @@
 // Their pictures are the festival's own (world/festivalArt.js), put on the texture door at this file's import.
 // Not a DFU member. Ledger A (THE WITCHES' FESTIVAL).
 import { registerCustomTemplates, setItemFields, mintCondition, registerItemUseHandler } from '../item/itemTemplates.js';
-import { addVendorTextures } from '../textureReplacement.js';
+import { addVendorTextures, decodePng } from '../textureReplacement.js';
 import { FESTIVAL_ARCHIVE, FESTIVAL_ART, registerFestivalArt } from '../../world/festivalArt.js';
 import { SOUL_CAKE_LAW_ROW, HEARTH_OFFERING_LAW_ROW } from './festivalRows.js';
 import { SOUL_CAKE_TEMPLATE, HEARTH_OFFERING_TEMPLATE } from '../../net/festivalLaw.js';
@@ -27,7 +27,7 @@ export { SOUL_CAKE_TEMPLATE, HEARTH_OFFERING_TEMPLATE };
 export const SOUL_CAKE_ROW = Object.freeze({ ...SOUL_CAKE_LAW_ROW, name: 'Soul Cake', worldTextureArchive: FESTIVAL_ARCHIVE, worldTextureRecord: FESTIVAL_ART.cake });
 export const HEARTH_OFFERING_ROW = Object.freeze({ ...HEARTH_OFFERING_LAW_ROW, name: 'Hearth Offering', worldTextureArchive: FESTIVAL_ARCHIVE, worldTextureRecord: FESTIVAL_ART.offeringIcon });
 registerCustomTemplates([SOUL_CAKE_ROW, HEARTH_OFFERING_ROW]);
-registerFestivalArt(addVendorTextures);   // the import IS the registration
+registerFestivalArt(addVendorTextures, decodePng);   // the import IS the registration
 
 /** The card's lines: what each is, in a line or two - read when the card is shown. */
 export const SOUL_CAKE_TEXT = Object.freeze({

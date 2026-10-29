@@ -45,7 +45,7 @@
 //
 // ACC3, the wardrobe. A player HOLDS titles by derivation and WEARS at
 // most one, which is the only part of it that is a choice:
-//   POST /v1/account/title { title }      -> { ok, titles[], title, glyphs[] }
+//   POST /v1/account/title { title }      -> { ok, titles[], title, glyphs[] }   (ARMORY: /v1/account/armory { slot, piece|null } or { kit|null } the same)
 // NAME-AS, which name the room reads - the account's, or the realm character's the mint is for; the token's answer
 // says both (`name` the room's, `accountName` the account's), the choice (`nameAs`) and, where the character's could
 // not be worn, why (`nameWhy`, `nameWord`):
@@ -234,7 +234,7 @@ import {
   devicesOf, accountView, displayName, accountKind,
   register, login, recover, changePassword, setEmail, overRate, overAccountRate, accountRateFull,
   newRecoveryCodes,   // RECOVERY-SET: a new set of codes from the profile
-  accountWardrobe, equipTitle, equipAura, equipIcon, equipGlyph, buyInsignia, insigniaPurse, creditPlay, isMuted, mutedUntil,
+  accountWardrobe, equipTitle, equipAura, equipArmory, equipArmoryKit, equipIcon, equipGlyph, buyInsignia, insigniaPurse, creditPlay, isMuted, mutedUntil,
   duelRecordOf, claimDuel, gateRecordOf, claimGate, legalRefusal,
   nameAsOf, wornNameOf, chooseNameAs,   // NAME-AS: the name the room reads - the account's or the character's
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
@@ -256,7 +256,7 @@ import { seaSeasonBoard } from './seaSeason.js';   // SEA-SEASON: the sea's seas
 import { seaWreck, seaPrizeCollect, seaPrizeReclaim } from './seaWreck.js';   // SHIP-PVP: a wreck at sea, and its prize
 import { deckOrderOf, claimIliac, iliacBoardOf } from './iliac.js';
 import { claimGambit, gambitBoardOf } from './gambit.js';   // KG6: The King's Gambit's season board and its GRANDMASTER   // CARDS10: a ranked seat's deck vouched for, Iliac Hand's season board and its title
-import { titleWorn, glyphsOf, glyphsHidden, auraWorn, iconWorn } from './titles.js';
+import { titleWorn, glyphsOf, glyphsHidden, auraWorn, iconWorn, armoryWorn } from './titles.js';
 import { withHonours } from './honours.js';   // SIGN-BATCH: the three games' honours on a badge's row, in one batch
 import { claimArena, arenaAttempt, arenaBoardOf, arenaTeam, arenaRatingOf, ARENA_HONOUR_PATHS, ARENA_RENOWN_REGION } from './arena.js';   // ARENA4: the arena's records, its board, its banners, and the honours the mint reads
 import { arenaSeasonOf } from '../../src/net/arena/arenaLaw.js';
@@ -1256,6 +1256,7 @@ const service = {
           g: [...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])],
           au: auraWorn(who.player, env),   // WB9g: the aura worn, the title's law - absent for none; AEGIS: a list's read off the config
           pi: iconWorn(who.player),   // WITCH1: the profile icon worn, the aura's law - absent for none (the character's face)
+          ak: armoryWorn(who.player),   // ARMORY: the Aura Armory's kit worn, the aura's law - absent for none
           ...(rb ? { rb } : {}),
         };
         // GLYPH-WEAR: the glyphs taken off ride BESIDE `g`, never out of it - `g` is what is true and what the relay's
@@ -1342,6 +1343,7 @@ const service = {
           guild: guild ? guild.gt : null,   // GUILD1c: the tag my own name wears, beside the token as the level is
           aura: wardrobe.au ?? null,   // WB9g: the aura at my own feet, beside the token as the title is
           icon: wardrobe.pi ?? null,   // WITCH1: the profile icon in my own portrait well, beside the token as the aura is
+          armory: wardrobe.ak ?? null,   // ARMORY: the kit on my own body, beside the token as the aura is
           ribbon: wardrobe.rb ?? null,   // SEASON1 part two: the ribbon under my own name, beside the token as the aura is
           house: houseWorn ?? null,   // LEGACY7: the house my token wears, beside it as the ribbon is
           expiresAt: nowS + MAX_TTL_S,
@@ -2270,6 +2272,15 @@ const service = {
         // WB9g: WEAR ONE AURA, OR NONE - the title's door at the feet. 403 for `not-held`, as the title's.
         const r = await equipAura(ctx, await withSeatTitles(ctx, who.player, env), env, body.aura ?? null);   // AUDIT SEATS-3 E2: the wardrobe it answers keeps a Charter's titles
         return r.error ? no(r.error, r.error === 'not-held' ? 403 : 400, origin) : json(r, 200, origin);
+      }
+
+      if (path === '/v1/account/armory' && request.method === 'POST') {
+        // ARMORY: WEAR ONE PIECE IN ITS SLOT, OR EMPTY IT - the aura's door, a slot at a time. 403 for a piece not held, as
+        // the aura's; 400 for a slot or piece the service does not know.
+        // A whole kit at once (`kit`: the Eternal set's Wear) or one slot (`slot`, `piece`)
+        const p = await withSeatTitles(ctx, who.player, env);
+        const r = body.kit !== undefined ? await equipArmoryKit(ctx, p, env, body.kit) : await equipArmory(ctx, p, env, body.slot, body.piece ?? null);
+        return r.error ? no(r.error, r.error === 'armory-not-held' ? 403 : 400, origin) : json(r, 200, origin);
       }
 
       if (path === '/v1/account/icon' && request.method === 'POST') {

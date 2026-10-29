@@ -28,7 +28,8 @@
 import { orientationFor, portrayedYaw, frameCount, frameTime, chooseTable, speedMod, LYCAN_TICK, meleeAnimTickTime, meleeStrokeFrames, forwardFrames, RANGED_TICK, SPELL_TICK } from '../../player/eyeOfTheBeholder/eotbBillboard.js';
 import { getMeleeWeaponAnimTime } from '../../characters/weaponStates.js';
 import { EOTB_FOOT_SET_COUNT } from '../../player/classSkins.js';   // PEERFX3: a class skin is a set past the mod's
-import { spriteFor, eotbSpriteUrl, spriteSize, spriteOffset, flipRows, worldOrderColors, lookedPixels } from '../../player/eyeOfTheBeholder/eotbSprite.js';
+import { spriteMarks, spriteArmsSeen } from '../../render/armoryPose.js';   // ARMORY: where the body stands in its own picture
+import { spriteFor, eotbSpriteUrl, spriteSize, spriteOffset, spriteArtScale, flipRows, worldOrderColors, lookedPixels } from '../../player/eyeOfTheBeholder/eotbSprite.js';
 import { decodePng } from '../../systems/textureReplacement.js';
 import { isLayeredKey, decodeLayered, outfitOfItems, layeredGenderOf, LAYERED_OWN } from '../../player/eyeOfTheBeholder/layeredArmor.js';   // WORN-ARMOUR: a walker in the armour it wears
 import { modSetting } from '../../systems/modSettings.js';   // LAYERED-PEERS: whether this player wears Layered Gearing
@@ -141,8 +142,9 @@ export function createEotbArt({ renderer = null, urlFor = eotbSpriteUrl, decode 
     const p = img.then((raw) => {
       if (tex.get(k) !== p) return null;   // COATS1: let go while in flight - never uploaded
       const { width, height, colors } = lookedPixels(s, raw);   // COATS1: a rider's mount in its look
-      renderer.uploadTexture(s.archive, s.rec, { width, height, colors: s.mirror ? flipRows(colors, width, height) : colors });
-      return { w: width, h: height };
+      const px = s.mirror ? flipRows(colors, width, height) : colors;
+      renderer.uploadTexture(s.archive, s.rec, { width, height, colors: px });
+      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }) };   // ARMORY: the body's place in the picture, read once
     });
     tex.set(k, p);
     p.then((r) => { if (tex.get(k) === p) tex.set(k, r); }, () => { if (tex.get(k) === p) tex.set(k, { failedAt: clock() }); });
@@ -190,7 +192,7 @@ function figureLayer(art) {
         if (r.batch.bounds) r.batch.bounds[3] = quadHalfDiagonal(size);
         r.batchKey = key;
       }
-      r.size = size; r.xml = xml; r.mirror = s.mirror; r.g = g; r.px = up.h; r.form = mode?.riding ? 'rider' : mode?.transformed ? 'beast' : 'walker';   // AUDIT 3 (SERAPH-WINGS): its pixels tall and its form - an aura's figure (figureOf)
+      r.size = size; r.xml = xml; r.mirror = s.mirror; r.g = g; r.px = up.h; r.form = mode?.riding ? 'rider' : mode?.transformed ? 'beast' : 'walker'; r.marks = up.marks ?? null;   // AUDIT 3 (SERAPH-WINGS): its pixels tall and its form - an aura's figure (figureOf); ARMORY: and where the body stands in its picture
       if (r.batch) r.batch.noShadow = g > 1;
     }
     if (r.batch && r.xml) {
@@ -217,7 +219,7 @@ function figureLayer(art) {
      *  a pixel and whether it is a beast's (AUDIT 3: the shoulders by the pixel) - or null, and null in the saddle (the
      *  frame is the horse's too): what an aura on its back reads for the bones a sprite has not got (render/auraRing.js
      *  auraSpriteBones). */
-    figureOf: (id) => { const r = figs.get(id); return r?.batch && r.size && r.xml && r.px > 0 && r.form !== 'rider' ? { base: (r.xml.y / r.xml.scale) * (r.g ?? 1), mpp: r.size.h / r.px, beast: r.form === 'beast' } : null; },
+    figureOf: (id) => { const r = figs.get(id); return r?.batch && r.size && r.xml && r.px > 0 && r.form !== 'rider' ? { base: (r.xml.y / r.xml.scale) * (r.g ?? 1), mpp: r.size.h / r.px, beast: r.form === 'beast', marks: r.marks ?? null, shift: (r.xml.x / r.xml.scale) * (r.mirror ? -1 : 1) * (r.g ?? 1) } : null; },   // ARMORY: and where the body stands in its picture - its marks, the quad's offset along its right
     /** SPRITE-FACE (2026-10-05, Mac: "The sprite rotation on character input is a little finicky and make the aura
      *  misallign"): the way the figure drawn faces - { yaw, turn }: `yaw` its picture's (the eight-way view it was drawn
      *  in, about the eye it was drawn for - eotbBillboard.js portrayedYaw), `turn` the pose's own facing - this frame's,
