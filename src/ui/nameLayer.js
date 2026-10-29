@@ -43,6 +43,7 @@
 // file does to a line is CUT it: a bubble is a glance, not a letter.
 //
 // Not a DFU member: Daggerfall Unity has no other players and no chat. Ledger A row (ONLINE).
+import { skullSrc, skullGlow } from './pvpSkull.js';   // PVP-SKULL
 import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // the enhanced face, with FIX-D's five ahead of it
 import { NAME_GAP_PX, namePixelSize, nameViewportScale } from '../net/remotePlayers.js';
 import { titleBadge, glyphBadges, glyphSvgNode, cssRgba, titlePaint, TITLE_PAINT_KEYS } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
@@ -185,6 +186,8 @@ export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
 .dfname-title { white-space: nowrap; line-height: 1; font-size: .78em; margin-bottom: .18em;
   letter-spacing: .04em; text-shadow: 0 1px 0 #000, 0 0 3px #000, 0 0 3px #000; }
 .dfname-title:empty { display: none; }
+.dfname-skull { width: 1.6em; height: 1.6em; margin: 0 auto .15em; background: center / contain no-repeat; image-rendering: pixelated; }
+.dfname-skull.off { display: none; }
 /* ACC3 - THE GLYPHS, right of the name. Sized off the label's own em so
    they shrink with distance exactly as the name does, and drawn in
    currentColor so ui/playerBadge.js is the only place a colour is
@@ -319,9 +322,11 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
     // LEGACY7: the house, a line under the name row ("☠ Ysolde II of House Hlaalu" - net/houseLaw.js houseLine)
     const house = doc.createElement('div');
     house.className = 'dfname-house';
-    node.append(bubble, title, tag, house, ribbon);
+    const skull = doc.createElement('div');   // PVP-SKULL: over the title, the flagged player's mark (ui/pvpSkull.js)
+    skull.className = 'dfname-skull off';
+    node.append(bubble, skull, title, tag, house, ribbon);
     root.append(node);
-    return { node, bubble, title, tag, lv, name, guild, glyphs, house, ribbon, worn: null, titled: null, inked: undefined, banded: '', armed: '',
+    return { node, bubble, skull, skullOf: '', title, tag, lv, name, guild, glyphs, house, ribbon, worn: null, titled: null, inked: undefined, banded: '', armed: '',
       // PERF-NAMES1: what this tag's DOM was last told, kept here and compared here - a read of `style.x` or
       // `textContent` asks the browser to serialise the value back, a cost a frame for every label
       at: null, size: null, lvOf: undefined, gtOf: undefined, houseOf: undefined, said: null, nameText: null, titleText: null, bubbleOn: null, bubbleText: null, bubbleAlpha: null };   // HERALDRY-SHOWN: `armed`, the frame as written   // SEASON1 part two: `banded`, the ribbon as written   // SHADOW-FANG: `titled`, the title whose paint is on; AUDIT A10: `inked`, the name's colour as written
@@ -482,6 +487,7 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
           for (const k of TITLE_PAINT_KEYS) tag.title.style[k] = paint[k];
           setTitleFlame(tag.title, badge?.flame ? badge.key : null);   // SHOP: Genesis on its fire, written with its paint
         }
+        put(tag, 'skullOf', p.skull ?? '', (k) => { setCls(tag.skull, k ? 'dfname-skull' : 'dfname-skull off'); tag.skull.style.backgroundImage = k ? `url("${skullSrc(k)}")` : ''; tag.skull.style.filter = skullGlow(k); });   // PVP-SKULL
         if (p.glyphs?.length || tag.worn !== '') setGlyphs(tag, p);   // PERF-NAMES1: a peer with no glyph and none worn has nothing to compare
         const b = bubbles.get(p.id);
         // AUDIT NAME1 F9: a bubble is SHOWN when it can be seen. A negative age - a clock stepped backwards, a

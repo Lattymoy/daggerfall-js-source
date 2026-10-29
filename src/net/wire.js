@@ -5049,7 +5049,7 @@ export function validWildRefOut(m) {
     return { k: 'hull', by: m.by, to: m.to, d: m.d, s: m.s, f: m.f, h: m.h };
   }
   if (m.k === 'down') return validWildDown(m);
-  if (m.k === 'flag') return idOk(m.id) && (m.f === 0 || m.f === 1) ? { k: 'flag', id: m.id, f: m.f } : null;   // PVP-FLAG: a fighter's flag, as the referee holds it
+  if (m.k === 'flag') return idOk(m.id) && (m.f === 0 || m.f === 1) ? { k: 'flag', id: m.id, f: m.f, ...(m.f === 1 && Number.isInteger(m.a) && m.a > 0 && m.a <= 60_000 ? { a: m.a } : {}) } : null;   // PVP-FLAG: a fighter's flag, as the referee holds it - PVP-SKULL: `a`, its aggro left in ms
   if (m.k === 'grace') return idOk(m.id) && intIn(m.ms, 0, WILD_GRACE_MS_MAX) && (m.n === undefined || m.n === 1) ? { k: 'grace', id: m.id, ms: m.ms, ...(m.n === 1 ? { n: 1 } : {}) } : null;   // ZONE-GRACE
   const r = typeof m.r === 'string' && WILD_ID_RE.test(m.r) ? m.r : null;
   if (!r) return null;

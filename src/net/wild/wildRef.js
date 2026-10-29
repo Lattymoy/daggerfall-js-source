@@ -38,7 +38,7 @@
 // ═════════════════════════════════════════════════════════════════════
 import { SIEGE_HIT, newFighter, refereeBlow, refereeCast, refereeStep } from '../siege/siegeRef.js';
 import { resetHealthShare } from '../siege/refereeHealthShare.js';
-import { pvpFlagCanDrop } from '../../systems/wild/pvpFlag.js';   // PVP-FLAG
+import { pvpFlagCanDrop, pvpAggroLeft, PVP_FLAG } from '../../systems/wild/pvpFlag.js';   // PVP-FLAG
 
 /** The zone referee's own numbers: how long a bar carried from another room stands (`mendMs` - SHARED-HEALTH: no longer a
  *  heal; the name is kept for its pins and the client's readout, which hides a fight this quiet); how long a killer has to pick a worn piece before the fall is signed without one; the party's truce
@@ -339,3 +339,14 @@ export function wildDownWord(st, sub, now) {
 
 /** The fighters' vitality as the referee's word says it: `[[id, hp, max], [id, hp, max]]` for `a` and `b`. */
 export const wildVitals = (st, a, b) => [a, b].map((sub) => { const x = st.fighters.get(sub); return [x.id, Math.max(0, x.f.hp), x.f.max]; });
+
+/** PVP-SKULL: the flag word for a flagged fighter in aggro after a blow (`a`, the ms its skull stays gold), or null - said
+ *  once each PVP_FLAG.sayMs while its blows go on, so a fight of many blows costs the room a word in ten seconds. */
+export function wildAggroWord(x, now) {
+  if (!x?.flag || now - (x.aggroSaid ?? -Infinity) < PVP_FLAG.sayMs) return null;
+  x.aggroSaid = now;
+  return { t: 'wref', k: 'flag', id: x.id, f: 1, a: pvpAggroLeft(Math.max(x.fightAt, x.struckAt), now) };
+}
+
+/** PVP-SKULL: a flagged fighter's word to one entering - its aggro left riding it. */
+export const wildFlagWord = (x, now) => ({ t: 'wref', k: 'flag', id: x.id, f: 1, ...(pvpAggroLeft(Math.max(x.fightAt, x.struckAt), now) ? { a: pvpAggroLeft(Math.max(x.fightAt, x.struckAt), now) } : {}) });

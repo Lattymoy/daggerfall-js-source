@@ -6,12 +6,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PVP_FLAG, pvpFlagRefusal, pvpFlagCanDrop } from '../../src/systems/wild/pvpFlag.js';
-import { newWildRef, wildZone, wildBlow, WILD_GRACE } from '../../src/net/wild/wildRef.js';
+import { PVP_FLAG, pvpFlagRefusal, pvpFlagCanDrop, pvpAggroLeft } from '../../src/systems/wild/pvpFlag.js';
+import { newWildRef, wildZone, wildBlow, wildAggroWord, wildFlagWord, WILD_GRACE } from '../../src/net/wild/wildRef.js';
 import { SIEGE_UNITS_PER_M } from '../../src/net/siege/siegeRef.js';
 import { validWildData, validWildRefOut, worldRoom, PIXEL_UNITS } from '../../src/net/wire.js';
 import { createPvpFlagHost, pvpFlagOn } from '../../src/scenes/pvpFlagHost.js';
 import { capsFixKey, noteCaps } from '../../src/ui/capsFix.js';
+import { SKULL_ROWS, SKULL_TINTS, skullSrc, skullGlow } from '../../src/ui/pvpSkull.js';
 import { fakeRoom } from '../fakeRoom.mjs';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -30,7 +31,7 @@ function enter(fa, fb, now = WILD_GRACE.ms) {
 }
 
 test('PVP-FLAG THE LAW (systems/wild/pvpFlag.js): up from level 30, at once; down at once, but never within the minute after a PvP blow (mutants: the level, the lock, its edge)', () => {
-  assert.deepEqual(PVP_FLAG, { lockMs: 60_000, level: 30 });
+  assert.deepEqual(PVP_FLAG, { lockMs: 60_000, level: 30, sayMs: 10_000 });
   assert.equal(pvpFlagRefusal({ on: true, level: 30 }), null);
   assert.equal(pvpFlagRefusal({ on: true, level: 29 }), 'PvP opens at level 30.');
   assert.equal(pvpFlagRefusal({ on: false, fightAt: 0, now: L - 1 }), 'You are in combat. You can turn PvP off in 1 s.');
@@ -168,4 +169,51 @@ test('PVP-FLAG-CAPS (ui/capsFix.js, ui/chatPanel.js): the flag\'s Caps Lock type
   assert.deepEqual(key('E'), [false, false], 'pressed in the field: the player\'s own capitals');
   assert.ok(rd('src/ui/chatPanel.js').includes('if (capsFixKey(e, input)) { e.stopPropagation(); return; }'));
   assert.ok(rd('src/scenes/pvpFlagHost.js').includes("      noteCaps('game');"));
+});
+
+test('PVP-SKULL THE REFEREE AND THE WIRE (net/wild/wildRef.js wildAggroWord, wildFlagWord; net/wire.js): a flagged fighter in a blow is said in aggro, its ms left riding `a`, once each ten seconds; an unflagged one never; one entering hears each flagged fighter\'s aggro left; the wire keeps `a` on a flag up alone (mutants: the aggro unsaid; said each blow; the newcomer\'s aggro dropped; the wire\'s `a` dropped)', () => {
+  assert.deepEqual([pvpAggroLeft(0, 0), pvpAggroLeft(0, L - 1), pvpAggroLeft(0, L), pvpAggroLeft(-Infinity, 0)], [L, 1, 0, 0]);
+  const { st, now } = enter(1, 0);
+  assert.equal(hit(st, now).ok, true);
+  const a = st.fighters.get('acct-a'), b = st.fighters.get('acct-b');
+  assert.deepEqual(wildAggroWord(a, now), { t: 'wref', k: 'flag', id: 'peer-a', f: 1, a: L });
+  assert.equal(wildAggroWord(a, now + PVP_FLAG.sayMs - 1), null, 'once each ten seconds');
+  assert.equal(wildAggroWord(a, now + PVP_FLAG.sayMs)?.a, L - PVP_FLAG.sayMs);
+  assert.equal(wildAggroWord(b, now), null, 'the unflagged has no skull to turn gold');
+  assert.deepEqual(wildFlagWord(a, now + 1000), { t: 'wref', k: 'flag', id: 'peer-a', f: 1, a: L - 1000 });
+  assert.deepEqual(wildFlagWord(a, now + L), { t: 'wref', k: 'flag', id: 'peer-a', f: 1 }, 'past the minute: white');
+  assert.deepEqual(validWildRefOut({ t: 'wref', k: 'flag', id: 'peer-0001', f: 1, a: 5000 }), { k: 'flag', id: 'peer-0001', f: 1, a: 5000 });
+  for (const bad of [{ f: 0, a: 5000 }, { f: 1, a: 60_001 }, { f: 1, a: 1.5 }]) assert.deepEqual(validWildRefOut({ t: 'wref', k: 'flag', id: 'peer-0001', ...bad }), { k: 'flag', id: 'peer-0001', f: bad.f }, JSON.stringify(bad));
+  const srv = rd('server/src/index.js');
+  assert.ok(srv.includes('    this._wildAggroSay(st, [a.sub, tb.sub], now);'));
+  assert.ok(srv.includes('this._send(mine[0], JSON.stringify(wildFlagWord(o, Date.now())));'));
+});
+
+test('PVP-SKULL THE PAGE (scenes/pvpFlagHost.js, ui/pvpSkull.js, ui/nameLayer.js): a peer flagged wears white, gold while its aggro runs, none unflagged; mine gold after a blow; the name mask hands each point its skull; one 16-pixel drawing in three tints (mutants: the gold unread; the mask unworn; a tint lost)', () => {
+  let clock = 0;
+  const f = createPvpFlagHost(() => ({ id: 'peer-me', wildOk: true, setWildFlag: () => {} }), { level: 30 }, () => {}, { say: () => {} }, { doc: null, now: () => clock });
+  f.heard({ k: 'flag', id: 'peer-x', f: 1, a: 5000 });
+  f.heard({ k: 'flag', id: 'peer-y', f: 1 });
+  assert.deepEqual([f.skullOf('peer-x'), f.skullOf('peer-y'), f.skullOf('peer-z')], ['gold', 'white', null]);
+  clock = 5000;
+  assert.equal(f.skullOf('peer-x'), 'white', 'the aggro ran out');
+  f.heard({ k: 'flag', id: 'peer-y', f: 0 });
+  assert.equal(f.skullOf('peer-y'), null, 'down: no skull');
+  assert.equal(f.mySkull(), null);
+  f.toggle();
+  assert.equal(f.mySkull(), 'white');
+  f.heard({ k: 'hp', by: 'peer-me', to: 'peer-x' });
+  assert.equal(f.mySkull(), 'gold');
+  const mask = f.mask((p) => (p.id === 'peer-gone' ? null : p));
+  assert.deepEqual(mask({ id: 'peer-x', name: 'A' }), { id: 'peer-x', name: 'A', skull: 'white' });
+  assert.deepEqual(mask({ id: 'peer-q', name: 'B' }), { id: 'peer-q', name: 'B' });
+  assert.equal(mask({ id: 'peer-gone' }), null);
+  assert.equal(SKULL_ROWS.length, 16);
+  assert.ok(SKULL_ROWS.every((r) => r.length === 16));
+  for (const k of ['white', 'gold', 'red']) assert.ok(decodeURIComponent(skullSrc(k)).includes(`fill='${SKULL_TINTS[k][0]}'`), k);
+  assert.deepEqual(Object.fromEntries(Object.entries(SKULL_TINTS).map(([k, v]) => [k, v[0]])), { white: '#ece6d6', gold: '#e8b62c', red: '#d42a1e' }, 'the mockup\'s bone in each');
+  assert.equal(skullSrc('none'), '');
+  assert.deepEqual([skullGlow('white'), !!skullGlow('gold'), !!skullGlow('red')], ['', true, true]);
+  assert.ok(rd('src/scenes/world.js').includes('      mask: pvpFlag.mask(wildNameMask),'));
+  assert.ok(rd('src/ui/nameLayer.js').includes("put(tag, 'skullOf', p.skull ?? '',"));
 });

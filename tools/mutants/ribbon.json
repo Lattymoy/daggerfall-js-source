@@ -435,8 +435,8 @@
   {
     "name": "RIBBON-nl-order",
     "file": "src/ui/nameLayer.js",
-    "old": "    node.append(bubble, title, tag, house, ribbon);",
-    "new": "    node.append(bubble, title, ribbon, tag, house);",
+    "old": "    node.append(bubble, skull, title, tag, house, ribbon);",
+    "new": "    node.append(bubble, skull, title, ribbon, tag, house);",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ],

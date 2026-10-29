@@ -93,7 +93,7 @@ PvE is left whole. A departure: DFU's spells never crit.
 
 "u flag and un flag instanly", "we changed it to 1m", "u cant flag on a party member": Caps Lock or the top-right button
 (`pvpFlagHost.js:"export function createPvpFlagHost("`) puts the flag up at once from level 30, and takes it down at once
-unless a PvP blow fell in the last minute (`pvpFlag.js:"export const PVP_FLAG = Object.freeze({ lockMs: 60_000, level: 30 });"`).
+unless a PvP blow fell in the last minute (`pvpFlag.js:"export const PVP_FLAG = Object.freeze({ lockMs: 60_000, level: 30,"`).
 The zone word carries it; the referee holds the lock and says each flag to the room
 (`server/src/index.js:"_wildFlagSay(st, a, x, flagWas, wasIn, fl) {"`).
 
@@ -102,3 +102,12 @@ The zone word carries it; the referee holds the lock and says each flag to the r
 the Portal Stone works anywhere in the zone (`portalStoneHost.js:"const zoneRefused = (to = null) =>"`). Chat types no
 capitals under the flag's Caps Lock (`capsFix.js:"export function capsFixKey(e, field) {"`). Skulls overhead
 come next. A departure: DFU has no flag.
+
+## PVP-SKULL: the mark over a flagged player
+
+"no skull when not", "when you agro skull turns gold", "make the gold and red glow sloightly": a 16-pixel skull
+(`pvpSkull.js:"export const SKULL_ROWS = Object.freeze(["`) over the name (`nameLayer.js:"put(tag, 'skullOf', p.skull ?? '',"`)
+and on the flag button - none unflagged, white flagged, gold in aggro, red a villain. The referee says a flagged fighter's
+aggro to the room on a blow, its ms left in the flag word's `a`, once each ten seconds
+(`wildRef.js:"export function wildAggroWord(x, now) {"`). A departure: DFU has no PvP mark.
+
