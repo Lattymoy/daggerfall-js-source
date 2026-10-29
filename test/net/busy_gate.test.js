@@ -136,6 +136,7 @@ test('BUSY-GATE the service: an overloaded database met on any route opens the i
     let res = await live();
     assert.equal(res.status, 503);
     assert.equal(res.headers.get('retry-after'), String(BUSY_RETRY_AFTER_S), 'the overload\'s answer says its Retry-After');
+    assert.match(res.headers.get('access-control-expose-headers') ?? '', /retry-after/, 'RETRY-SEEN: exposed, so the page can read it');
     fault = null;
     // the shed: the town's homes answered as the overload is, and not one statement asked
     asked.length = 0;
@@ -143,6 +144,7 @@ test('BUSY-GATE the service: an overloaded database met on any route opens the i
     assert.equal(res.status, 503);
     assert.deepEqual(await res.json(), { error: 'server' });
     assert.equal(res.headers.get('retry-after'), String(BUSY_RETRY_AFTER_S));
+    assert.match(res.headers.get('access-control-expose-headers') ?? '', /retry-after/, 'RETRY-SEEN: the shed\'s too');
     assert.deepEqual(asked, [], 'not one statement - not even the session\'s lookup');
     // a write still runs
     res = await post('/v1/account/played', {});
