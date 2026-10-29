@@ -40,9 +40,9 @@ export function mountPrograms(renderer, search) {
   const world = pageHas('world', search) || !['exterior', 'region', 'loc'].some((k) => pageHas(k, search));
   // the far ring's lane: scenes/world.js mounts the lane first (syncLightingLane), and the ring reads renderer.lightingLane
   const lane = enhancedLightingOn(search) ? EL_LANE : null;
-  // scenes/world.js:"const farRing = (isEnhanced() && !ringDisabled()) ? new FarRingRenderer("
+  // scenes/world.js:"const farRing = (isEnhanced() && !ringDisabled())"
   const ring = world && isEnhanced() && !ringDisabled(search);
-  // farRing.js:"this._band = this._flora && opts.mid && !farTreesDisabled() ? new FarTreesBand("
+  // farRing.js:"this._band = this._flora && opts.mid && !farTreesDisabled()"
   const trees = ring && !floraDisabled(search) && !farTreesDisabled(search);
   const sky = o.enhancedSky;   // the sky controller's `enhanced`: the wisps, the sand, the haze, Windfall and the bolts ride it
   const bodies = lane?.shadows && !renderer._shadowPass?._bodyBuilt ? shadowBodyPrograms(SHADOW_PASS_VS) : [];
