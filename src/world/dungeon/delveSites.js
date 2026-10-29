@@ -176,12 +176,14 @@ export function siteKinds(count, seed, kinds = DELVE_KIND_NAMES) {
   return out;
 }
 
-/** The vault's spot: toward the nearest wall (the first of the eight bearings on a tie), the disc less 0.6 m out. */
-function vaultSpot(pos, walls, r) {
+/** The vault's spot: a Litany's at its heart, inside its plates' ring; a Hold's toward the nearest wall of the four axis
+ *  bearings (its gates stand on the diagonals; the first on a tie), the disc less 0.6 m out. */
+function vaultSpot(pos, walls, r, kind) {
+  if (kind === 'litany') return [cm(pos[0]), cm(pos[1]), cm(pos[2])];
   let j = 0;
-  for (let k = 1; k < EIGHT.length; k++) if (walls[k] < walls[j]) j = k;
+  for (let k = 1; k < 4; k++) if (walls[k] < walls[j]) j = k;
   const g = r - 0.6;
-  return [cm(pos[0] + EIGHT[j][0] * g), pos[1], cm(pos[2] + EIGHT[j][1] * g)];
+  return [cm(pos[0] + EIGHT[j][0] * g), cm(pos[1]), cm(pos[2] + EIGHT[j][1] * g)];
 }
 
 /** THE WHOLE LAW, for the scene: `blocks` the layout's, `probe` the collider's answers (colliderSiteProbe), `doors` its
@@ -207,7 +209,7 @@ export function delveSitePlan(/** @type {PlanOpts} */ { blocks, probe, doors = [
   const chosen = [...large, ...small];
   const kindOf = siteKinds(chosen.length, seed, kinds);
   const sites = chosen.map(({ c, r }, i) => ({
-    i, kind: kindOf[i], x: cm(c.pos[0]), y: cm(c.pos[1]), z: cm(c.pos[2]), r, tier, vault: vaultSpot(c.pos, c.walls, r),
+    i, kind: kindOf[i], x: cm(c.pos[0]), y: cm(c.pos[1]), z: cm(c.pos[2]), r, tier, vault: vaultSpot(c.pos, c.walls, r, kindOf[i]),
   }));
   return { sites, candidates: cands.length, valid: valid.length, small: small.length };
 }

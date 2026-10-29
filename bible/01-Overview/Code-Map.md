@@ -92,7 +92,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | Deep Waters | `systems/deepWater/`, `world/deepWater/`, `scenes/deepWater/` |
 | Diverse Weapons | `combat/diverseWeapons/` |
 | Duels | `net/duel/` |
-| Dungeons | `systems/dungeon/`, `world/dungeon/`, `net/delve/` (DELVE II's encounters) |
+| Dungeons | `systems/dungeon/`, `world/dungeon/`, `net/delve/`, `scenes/delve/`, `systems/delve/` (DELVE II's encounters) |
 | Dynamic Skies | `systems/dynamicSkies/` |
 | Elite Gates (the Elite Breach) | `systems/eliteGates/`, `net/eliteGates/`, `world/eliteGates/`, `render/eliteGates/`, `scenes/eliteGates/`, `ui/eliteGates/` |
 | Enemies | `characters/enemy/` |
@@ -281,6 +281,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/scenes/arena/` | The Arena: bouts, the ladder, the league (`11-Multiplayer/Arena.md`) - the hosts' wiring. |
 | `src/scenes/comeSailAway/` | Come Sail Away's boats (`03-World/Come-Sail-Away.md`) - the hosts' wiring. |
 | `src/scenes/decor/` | Decorating a home in the hosts: the base, the room, the tool. |
+| `src/scenes/delve/` | DELVE II, the dungeons' encounters (`03-World/Delve-II.md`) - the host the dungeon context wires: the plan, the Hold's foes, the Litany's plates, the marks and the vault. |
 | `src/scenes/deepWater/` | Deep Waters in the hosts: the host, swimming, the player, the fish, encounters, decor and loot. |
 | `src/scenes/eliteGates/` | The Elite Breach (`11-Multiplayer/Elite-Gates.md`, `Elite-Gates-Look.md`, `Elite-Gates-Ascent.md`) - the hosts' wiring: the client, the call and the arch, the fight, the spans, the circle's host and its swap, the look drawn. |
 | `src/scenes/gate/` | The Oblivion Gate, the world boss on the shared clock (`11-Multiplayer/World-Bosses.md`) - the hosts' wiring. |
@@ -302,6 +303,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/card/` | The card table's law (`11-Multiplayer/Tavern-Cards.md`): the regulars, the session at a table, a remote table, where the cards come from. |
 | `src/systems/comeSailAway/` | Come Sail Away's boats: the boat itself, its hulls, models, items and waves, the helm's actions, the map, the wire's words and the boat's menu (`03-World/Come-Sail-Away.md`). |
 | `src/systems/decor/` | Decorating a home: the catalogue, placing, the rooms - the law. |
+| `src/systems/delve/` | DELVE II, the dungeons' encounters (`03-World/Delve-II.md`): their words and the vault's roll. |
 | `src/systems/deepWater/` | Deep Waters' law: the swimmer, the fish as items and as rows. |
 | `src/systems/dungeon/` | A dungeon's state: its respawn, tier, echo and sense. |
 | `src/systems/dynamicSkies/` | The Dynamic Skies mod - the law. |

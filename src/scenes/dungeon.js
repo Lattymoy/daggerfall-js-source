@@ -143,7 +143,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const placeLoadedPlayer = (p) => { if (!_motorRef) return; _motorRef.spawn(p[0], p[1], p[2]); _motorRef.stopAutorun(); };
   const ctx = await buildDungeonContext(
     { ...pipeline, renderer, arch, palette }, dfLocation, blocks, dfLocation.climate.climateType, { activateHeld: () => held(keys, 'ActivateCenterObject') || _tapArmed > 0, actionDown: (action) => held(keys, action),   // KB1: registry actions
-      // HT1: the torch keys /* AUDIT 62 F8: the finger's press too - it was 'Mouse0' in the held set until the tap stopped speaking a literal code */ foes: !params.has('nofoes'), playerClass: params.has('class') ? Number(params.get('class')) : undefined, playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined, playerWeapon: params.get('weapon') ?? undefined,
+      // HT1: the torch keys /* AUDIT 62 F8: the finger's press too - it was 'Mouse0' in the held set until the tap stopped speaking a literal code */
+      // DELVE II (DLV2, the probe): THESE OPTIONS WERE INSIDE THAT COMMENT - FOE1's bug class (scenes/worldModes.js
+      // "THIS LINE WAS INSIDE A COMMENT"), so the bench's ?class, ?nofoes, ?spell and ?weapon did nothing and every
+      // ?dungeon= boot opened the wizard. One option a line, as FOE1 left the world host's.
+      foes: !params.has('nofoes'),
+      playerClass: params.has('class') ? Number(params.get('class')) : undefined,
+      playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined,
+      playerWeapon: params.get('weapon') ?? undefined,
       shakeCamera: (k) => betterAmbience.weaponKick(k),   // AUDIT TELL H6: the stagger's kick of my own blow (and an execution's), as the world host gives its dungeons
       // AUDIT 26 F222/F223: the dev scene's half of the pose. The cam
       // is created AFTER the context (from startSpawn), so the seam
@@ -321,7 +328,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // read their name on the plaque and ate the press in silence. The
     // modal dungeon arm answers them; two hosts over one context must
     // not disagree about one key.
-    if (key !== null && (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:') || key.startsWith('camp:') || key.startsWith('hearth:') || key.startsWith('search:'))) {   // SEARCH1: the modal host's arm, in step
+    if (key !== null && (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:') || key.startsWith('camp:') || key.startsWith('hearth:') || key.startsWith('search:') || key.startsWith('delve:'))) {   // SEARCH1: the modal host's arm, in step
       ctx.takeLoot(key, getInteractionMode());   // HT1: a dropped torch takes the mode (Grab/Steal picks it up, Info/Talk names it)
       return key;
     }
@@ -675,6 +682,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // The fist repro (2026-08-18): the entity + the rig's two combat
     // entries, so a probe can strip the worn weapon and swing bare.
     window.__playerEntity = playerEntity;
+    window.__delve = () => ctx.delve?.() ?? null;   // DELVE II probe surface (tools/delveProbe.mjs): the encounters' host
     window.__combat = { toggleSheath: ctx.toggleSheath, clickAttack: ctx.playerClickAttack, applySpellToPlayer: ctx.applySpellToPlayer };   // S24
     window.__foes = () => JSON.stringify(ctx.foes.map((f, i) => ({
       i, type: f.mobileType, dead: !!f.dead, health: f.entity?.health,

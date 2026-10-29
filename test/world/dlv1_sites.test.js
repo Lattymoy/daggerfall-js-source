@@ -170,7 +170,7 @@ test('DLV1 THE KINDS: drawn off the seed; two sites hold one of each family; a k
 });
 const PINNED_KINDS = ['hold', 'litany', 'hold', 'hold'];
 
-test('DLV1 THE WHOLE PLAN: the count\'s sites, one of each family, 60 m apart, each a 4 m disc with its vault 3.4 m toward its nearest wall; the same every call; none for the caller\'s none (mutants: the vault toward the farthest wall; the vault\'s reach; the plan ignoring none)', () => {
+test('DLV1 THE WHOLE PLAN: the count\'s sites, one of each family, 60 m apart, each a 4 m disc - a Hold\'s vault 3.4 m toward its nearest wall of the four axis bearings (its gates on the diagonals), a Litany\'s at its heart inside the plates; the same every call; none for the caller\'s none (mutants: the vault toward the farthest wall; the vault\'s reach; a Hold\'s vault on a diagonal; a Litany\'s off its heart; the plan ignoring none)', () => {
   const blocks = row(4);
   const plan = delveSitePlan({ blocks, probe: open, seed: 99 });
   assert.equal(plan.sites.length, 2);
@@ -179,9 +179,10 @@ test('DLV1 THE WHOLE PLAN: the count\'s sites, one of each family, 60 m apart, e
   assert.notEqual(DELVE_KINDS[plan.sites[0].kind].family, DELVE_KINDS[plan.sites[1].kind].family);
   const [a, b] = plan.sites;
   assert.ok(Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z) >= 60);
+  const vaultOf = (s, dx, dz) => (s.kind === 'litany' ? [s.x, s.y, s.z] : [Math.round((s.x + dx) * 100) / 100, s.y, Math.round((s.z + dz) * 100) / 100]);
   for (const s of plan.sites) {
     assert.equal(s.r, 4); assert.equal(s.tier, 'regular');
-    assert.deepEqual(s.vault, [Math.round((s.x + 3.4) * 100) / 100, s.y, s.z], 'toward the wall on +x, 3.4 m out');
+    assert.deepEqual(s.vault, vaultOf(s, 3.4, 0), 'a Hold\'s toward the wall on +x, 3.4 m out; a Litany\'s at its heart');
   }
   assert.deepEqual(plan.sites.map((s) => s.i), [0, 1]);
   assert.deepEqual(delveSitePlan({ blocks, probe: open, seed: 99 }), plan, 'the same every call');
@@ -190,12 +191,15 @@ test('DLV1 THE WHOLE PLAN: the count\'s sites, one of each family, 60 m apart, e
   assert.deepEqual(delveSitePlan({ blocks: row(4, { castle: true }), probe: open, seed: 99 }).sites, []);
   assert.equal(delveSitePlan({ blocks, probe: open, seed: 99, tier: 'elite' }).sites[0].tier, 'elite');
   assert.deepEqual(delveSitePlan({ blocks, probe: open, seed: 99, kinds: ['litany'] }).sites.map((s) => s.kind), ['litany', 'litany']);
-  const diag = { ...open, room: () => ({ walls: [20, 20, 20, 20, 20, 20, 20, 5] }) };
-  const s0 = delveSitePlan({ blocks, probe: diag, seed: 99 }).sites[0];
-  assert.deepEqual(s0.vault, [Math.round((s0.x - 3.4 * Math.SQRT1_2) * 100) / 100, s0.y, Math.round((s0.z - 3.4 * Math.SQRT1_2) * 100) / 100], 'the last bearing');
-  const tie = { ...open, room: () => ({ walls: [20, 20, 6, 20, 20, 20, 20, 6] }) };
-  const s1 = delveSitePlan({ blocks, probe: tie, seed: 99 }).sites[0];
-  assert.deepEqual(s1.vault, [s1.x, s1.y, Math.round((s1.z + 3.4) * 100) / 100], 'a tie: the first bearing of the two');
+  const holds = (probe) => delveSitePlan({ blocks, probe, seed: 99, kinds: ['hold'] }).sites[0];
+  const back = holds({ ...open, room: () => ({ walls: [20, 20, 20, 5, 20, 20, 20, 20] }) });
+  assert.deepEqual(back.vault, vaultOf(back, 0, -3.4), 'the fourth axis bearing, -z');
+  const diag = holds({ ...open, room: () => ({ walls: [20, 20, 20, 20, 20, 20, 20, 5] }) });
+  assert.deepEqual(diag.vault, vaultOf(diag, 3.4, 0), 'a diagonal wall nearest: never the gate\'s bearing - the first axis of a tie');
+  const tie = holds({ ...open, room: () => ({ walls: [20, 20, 6, 6, 20, 20, 20, 20] }) });
+  assert.deepEqual(tie.vault, vaultOf(tie, 0, 3.4), 'a tie: the first bearing of the two');
+  const lit = delveSitePlan({ blocks, probe: { ...open, room: () => ({ walls: [5, 20, 20, 20, 20, 20, 20, 20] }) }, seed: 99, kinds: ['litany'] }).sites[0];
+  assert.deepEqual(lit.vault, [lit.x, lit.y, lit.z], 'a Litany\'s at its heart, whatever its walls');
 });
 
 test('DLV1 THE SMALL ROOM: where the large rooms leave the count short, a 3 m disc on the 2 m grid fills it, 60 m from what they stood - its vault 2.4 m out; a dungeon with large rooms enough never asks (mutants: the second pass never run; run always; its sites crowding the first\'s)', () => {
@@ -204,7 +208,7 @@ test('DLV1 THE SMALL ROOM: where the large rooms leave the count short, a 3 m di
   const smallOnly = { floor: () => ({ y: 0, ny: 1 }), room: (p, r) => (r <= 3 ? { walls: walls() } : null) };
   const plan = delveSitePlan({ blocks, probe: smallOnly, seed: 99 });
   assert.equal(plan.sites.length, 2); assert.equal(plan.small, 2); assert.equal(plan.valid, 0);
-  for (const s of plan.sites) { assert.equal(s.r, 3); assert.deepEqual(s.vault, [Math.round((s.x + 2.4) * 100) / 100, s.y, s.z]); }
+  for (const s of plan.sites) { assert.equal(s.r, 3); assert.deepEqual(s.vault, s.kind === 'litany' ? [s.x, s.y, s.z] : [Math.round((s.x + 2.4) * 100) / 100, s.y, s.z]); }
   // one large room, the rest small: the large one first, the small 60 m from it
   const oneLarge = { floor: () => ({ y: 0, ny: 1 }), room: (p, r) => (r <= 3 || (p[0] > 180 && p[0] < 190) ? { walls: walls() } : null) };
   const mixed = delveSitePlan({ blocks, probe: oneLarge, seed: 99 });

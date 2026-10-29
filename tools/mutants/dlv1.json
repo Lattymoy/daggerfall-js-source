@@ -880,5 +880,23 @@
     "tests": [
       "test/world/dlv1_sites.test.js"
     ]
+  },
+  {
+    "name": "DLV1-hold-vault-on-a-diagonal",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "for (let k = 1; k < 4; k++) if (walls[k] < walls[j]) j = k;",
+    "new": "for (let k = 1; k < EIGHT.length; k++) if (walls[k] < walls[j]) j = k;",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-litany-vault-off-its-heart",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "  if (kind === 'litany') return [cm(pos[0]), cm(pos[1]), cm(pos[2])];\n",
+    "new": "",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
   }
 ]

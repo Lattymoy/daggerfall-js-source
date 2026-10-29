@@ -94,7 +94,7 @@ census (DLV1, `tools/delveSiteProbe.mjs`) before it was kept.
 | None in | a palace (`isPalaceLayout`), Privateer's Hold, the made levels (court, Hour, Spire, Ketch, arenas), the Abyss Hollow | a court is no dungeon; the Hold is the tutorial; the made levels have their own law |
 | Choice | the deepest first (height counted twice), then farthest-point 60 m apart, a storey with none first, ties by `hash32(seed, i)` | spread through the dungeon, the same everywhere |
 | Kind | seeded by the dungeon's id and the site's index; the second site takes the family the first did not | variety in one dungeon, the same for every visitor |
-| Vault | toward the nearest of the eight walls, the disc's radius less 0.6 m out | against a wall, out of the fight |
+| Vault | a Hold's toward the nearest wall of the four axis bearings, the disc's radius less 0.6 m out; a Litany's at its heart | a Hold's gates stand on the diagonals and a Litany's plates on the axes: the chest stands on neither |
 
 **THE CENSUS** (2026-10-28, all 4,232 dungeons, four shards of about 40 s). 4,228 want sites; the three palaces and
 Privateer's Hold want none. 3,838 (90.8%) stand at least one, and 1,382 stand two or three, each with a wave and a
@@ -151,13 +151,14 @@ No puzzle hurts a player for a wrong answer, and none is the clock: no dial, no 
 
 ## 6. The vault
 
-- A chest stands at the disc's edge, sealed, from the moment the site is seen; the encounter won, it opens.
+- A chest stands sealed from the moment the site is seen (Daggerfall's own, model 41811, the Crown Hall's): at a Hold's
+  wall, at a Litany's heart. The encounter won, it opens.
 - Its roll is `rollPileItems`: the dungeon's tables at its type, its Elite or Abyss odds, LOOT-GATE's rarity, the
   online party's shared base (PARTY-LOOT). Offline, the player's own roll. It is never empty: a roll with no item is
   rolled again, once, and then holds the pile's gold.
 - One vault a site a respawn (law 8). Online, each earner opens its own share once.
 - POWER-CEILING (`05-Combat/Power-Ceiling.md`): nothing here is a new line, rung or band.
-  `test/combat/powerceiling_walk.test.js` walks the vault's roll as it walks every pile. Patch notes, release notes
+  The vault's roll is the pile's own, which `test/combat/powerceiling_walk.test.js` walks. Patch notes, release notes
   and Discord posts say only that a vault holds the dungeon's own treasure (LOOT-GATE).
 
 ## 7. Online (DLV3)
@@ -208,7 +209,7 @@ party's puzzle. Offline the same law runs in the client, its ledger saved with t
 |---|---|---|
 | DLV0 | This record | merged |
 | DLV1 | The law: `net/delve/delveLaw.js` (kinds, numbers, the ledger machine, its words, earned) and `world/dungeon/delveSites.js` (the site law); the census probe | DONE 2026-10-28: `test/net/delve/dlv1_law.test.js` and `test/world/dlv1_sites.test.js`, 98 mutants dead (`tools/mutants/dlv1.json`); the census in section 4 |
-| DLV2 | Offline in the game: `scenes/delve/delveHost.js` wired by `buildDungeonContext`; the Hold and the Litany; the vault; the HUD's words; the Features row `dungeon-encounters`; the Ledger A row | stood and won in the real game at three sizes and an Elite; save, load and respawn; frame cost measured |
+| DLV2 | Offline in the game: `scenes/delve/delveHost.js` wired by `buildDungeonContext`; the Hold and the Litany; the vault; the HUD's words; the Features row `dungeon-encounters`; the Ledger A row | stood and won in the real game at three sizes and an Elite; save, load and respawn; frame cost measured (section 12) |
 | DLV3 | Online: the relay's ledger, the party's door, the plan's hash, the `delve` grant kind | a party of two wins both kinds; a stranger refused; a relay version |
 | DLV4 | The Wellsprings, the Vigil, the Brazier Rite, the Weighing, the Seals; AUDIT DELVE II | every kind stood, won and failed, solo and in a party |
 | DLV5 | Curated blocks: the format, the registry, the splice law, the lab page | a curated block stood in a spawned dungeon, its encounter designed |
@@ -219,12 +220,15 @@ real game over the freeware's data, and a frame-cost measure (`npm run perf`) be
 
 ## 10. The four hosts
 
-- `scenes/dungeonContext.js`: WIRED at DLV2 - the one host that stands a dungeon; a few logical lines, the rest in
-  `scenes/delve/`.
+- `scenes/dungeonContext.js`: WIRED at DLV2 - the one host that stands a dungeon. 21 logical lines (8,436 to 8,457,
+  under its 8,463 ceiling): the build after its api, the frame and the marks in drawFoes, the vault's arm in takeLoot,
+  the save's word and its restore, the destroy, and the probes' door. The rest is `scenes/delve/`.
 - `scenes/world.js`: WIRED at DLV3 - the online link (the ledger's frames), through a module it constructs.
-- `scenes/worldModes.js`: carries the dungeon in and out; nothing of its own expected. Named again when DLV2 lands.
+- `scenes/worldModes.js`: WIRED at DLV2 - `delve:` joins its press arm's prefixes (no logical line); the rest is the
+  context's.
 - `scenes/exterior.js`: FLAGGED - the fixed city stands no dungeon.
-- The dev bench `scenes/dungeon.js` (`?dungeon=`) stands the sites, for the probes.
+- The dev bench `scenes/dungeon.js` (`?dungeon=`) stands the sites: `delve:` in its press arm and `window.__delve`, the
+  probe's door (`tools/delveProbe.mjs`).
 
 ## 11. Open for the owner
 

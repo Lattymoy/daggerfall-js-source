@@ -292,6 +292,7 @@ import { createHitEffects, bloodCentre } from './hitEffects.js';
 import { orbArchiveFor, ORB_RECORD, noteOrbColour, ORB_SCALE } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle   // FIELD-GUN17: ...and its colour   // FIELD-GUN18: ...and how big it is drawn
 import { bloodHit } from '../combat/blood/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { createDroppedTorches } from './droppedTorches.js';
+import { createDelveHost } from './delve/delveHost.js';   // DELVE II (DLV2, bible/03-World/Delve-II.md): the dungeon's encounters, in a module of their own
 import { createCamps, FIRE_LIGHT_UP } from './camps.js';   // REST3: a placed fire's light stands where a camp's does   // SURV3: a fire on the dungeon floor (no tent below - the camp law says so)
 import { campWire, validCampRecord, FIRE_LIGHT_RANGE } from '../systems/survival/camp.js';   // SURV3: the room's memory carries the camps as the wire says them   // HT1: Handheld Torches' dropped lights in the dungeon   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemy/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
@@ -6431,6 +6432,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // lost without it.
       droppedTorches: droppedTorches.snapshot(),   // HT1: HandheldTorchesSaveData
       camps: camps.snapshot(),   // SURV3: my fires, the same law
+      delve: delve.snapshot(),   // DELVE II: the won sites' vaults - a running attempt is never saved
       droppedLoot: droppedLoot._piles.filter((p) => !p.unsaved).map((p) => ({   // STUCK-ARROWS: WOD5's LoadID-0 container rides no save (a stuck shaft)
         pos: [...p.pos], archive: p.archive, record: p.record, items: p.items.map((it) => ({ ...it })), ...(p.owner === 'wild' ? { wild: true } : {}),
         ...(p.physical ? { physical: true } : {}),   // AUDIT PI1 H6: a shift-drop stays one - restorePiles lays it back lying
@@ -6644,6 +6646,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // clearing restore would delete this player's floor stash and mint the host's under their feet
     if (truncate) droppedLoot.restorePiles(w.droppedLoot);   // AUDIT 23: absent list clears, per rebuild-from-save
     if (truncate) droppedTorches.restore(w.droppedTorches);   // HT1: the same law
+    if (truncate) delve.restore(w.delve);   // DELVE II: a save's won sites, under its own plan alone
     if (truncate) { camps.dropOwn(); camps.restore(w.camps); }   // SURV3; AUDIT SURV-TIERS (the third pass): the save says which fires are mine - a kit fire lit after it goes with the rewind
     // P10 + AUDIT 23 (save-load-11): state, lock and BOTH tweens
     // restore, then each object settles its matrix and collider bucket
@@ -7399,6 +7402,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     hitEffects.bleedPlayer(dt, playerFeet, playerEntity);   // BLOOD2e: and the player's own blood, at the feet
     droppedTorches.tick(dt);   // HT1: the burn, the flight, the flames
     camps.tick(dt);   // SURV3: the fires burn down
+    delve.frame(dt, playerFeet);   // DELVE II: the encounters' clock and ledgers - waits under a window, as the foes do
     sweepColdPeers(dt);   // AUDIT REST-PARTY B3: a room's cold fire whose owner left the room goes with them (AUDIT REST II F9: once a second, while a peer's camp stands)
     // PX21c / WORLD-HOVER: THE HOVER PLAQUE, from the frame function
     // both dungeon hosts already call - the splash clock's reasoning,
@@ -8175,6 +8179,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // before the water and the screen quads that end the world pass (WATER-D1's law, below)
     _npcLane?.drawVeiled();   // MWNPC5b: the concealed foes' bodies, translucent - after the last opaque flat, as the peers' below
     opts.lateWorldDraw?.();
+    delve.drawPass(proj, view, eye);   // DELVE II: the wards' and plates' marks on their floors, after the last opaque flat
     senseFrame(eye);   // SENSE1: the look round - asked for (Info mode), then lit; after the last opaque flat, as the nodes' glow is
     // WATER-D1 (2026-09-21, LostMyLeg: "you can see 2 Watertiles/textures
     // floating around ... the console says 2 Water in every dungeon";
@@ -8933,6 +8938,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     hitEffects,  // AUDIT 24 (wave 39): and the blood splashes it draws
     bloodMarks,  // BLOOD1a: the marks under them, for the world host’s own pass
     droppedTorches, torchBatches: () => droppedTorches.batches(), torchLights: () => droppedTorches.lights(),   // HT1: the dropped torches, for the hosts' draw pass and light channel
+    delve: () => delve,   // DELVE II: the encounters' host, for the probes (tools/delveProbe.mjs) and the bench
     camps, campBatches: () => camps.batches(), campLights: () => camps.lights(),   // SURV3: the campfires, on the same two passes; the pool itself for the hosts' env (byFire) and the probes
     cookFire: () => !!(_fpFeet && camps.fireNear(_fpFeet)),   // PROF9: a lit fire within reach of the feet - Cooking's fire underground (the world's, every tier)
     lights,
@@ -10624,6 +10630,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // behind it activated either. The same object opens the list
       // outdoors and indoors.
       if (kind === 'camp' || kind === 'hearth') return camps.activate(key, mode, plaqueActionFor(key)) ? 1 : 0;   // REST2: the plaque's lit row
+      if (kind === 'delve') return delve.press(key, mode);   // DELVE II: a vault - sealed, said; won, opened
       if (kind === 'search') return activateSearchable(i, mode);   // SEARCH1
       let source = null;
       let onEmptied = null;
@@ -10828,6 +10835,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       uninstallSurvivalGate(_survivalGate, unregisterPreventRestCondition);   // AUDIT SURV B/C: a dead dungeon's handler was refusing the outdoor fire
       camps.packOwnFires();   // AUDIT REST F1: the dungeon keeps nothing of mine once I leave - my Campfire comes with me
       camps.destroyAll();   // SURV3: a fire's batch is this context's too
+      delve.destroy();   // DELVE II: its targets, its chests and its pass
       droppedTorches.destroyAll();
       weaponRig.dispose?.();
       // AUDIT 64 F41: the scene ambience leaves with the scene too -
@@ -10894,5 +10902,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
   for (const [i, p] of lootPiles.entries()) if (p.stopKey && _deepCleared.has(p.stopKey) && !p.items.length) settleLootFlat(i);
   if (sdEnd && !_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }
+  // DELVE II (DLV2): THE DUNGEON'S ENCOUNTERS - the site law on the built collider, the fire plan's doors and fires, the
+  // dungeon's own pile roll; its targets and plaque through the api's own doors (scenes/delve/delveHost.js)
+  const delve = createDelveHost({ api, deps, location: dfLocation, blocks: dungeon.blocks, hearths: dungeonHearths, fires: dungeonFires, player: () => playerEntity, rollPile: () => rollPileItems(), online: onlineRoom });
   return api;
 }

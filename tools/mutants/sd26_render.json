@@ -20,8 +20,8 @@
   {
     "name": "SD26-S1-the-stand-left-to-the-first-frame",
     "file": "src/scenes/dungeonContext.js",
-    "old": "  if (sdEnd && !_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }\n  return api;",
-    "new": "  return api;",
+    "old": "  if (sdEnd && !_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }\n",
+    "new": "",
     "tests": [
       "test/world/superDungeon/sd26_render.test.js"
     ]
