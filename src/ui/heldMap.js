@@ -2752,15 +2752,18 @@ export class HeldMapWindow {
     return { x: q.px + 0.5, y: q.py + 0.5, colorIndex: 11, kind: 'city', name: '', summary };
   }
 
-  /** EVENT-TIP: the gate's ring under the cursor - it marks an AREA (bible World-Bosses.md section 2), so anywhere
-   *  inside it is the gate's. */
-  _gateAt(sx, sy) {
+  /** EVENT-TIP: the rings under the cursor, in the order they are drawn - a ring marks an AREA (bible World-Bosses.md
+   *  section 2), so anywhere inside it is its. The one reach test: the hover and every pin of it read this. */
+  _ringsAt(sx, sy) {
     const [mx, my] = toMap(this._view, sx, sy);
     // AUDIT SD III (T7): a ring answers all it is drawn over - at a far zoom the paper draws it larger than its reach
     const least = GATE_RING_MIN_PX / this._view.scale;
-    for (const g of [this._gate, ...this._gates, this._serpent, ...(this._sds ?? []), this._arch, ...this._ketches]) if (g && Math.hypot(mx - g.cx, my - g.cy) <= Math.max(g.r, least)) return g;   // WW5: every lane's Hollow   // EG-F: and my company's arch   // SERPENT1: the sea serpent's ring answers as the gate's does (SD2c: and the Super dungeon's)
-    return null;
+    return [this._gate, ...this._gates, this._serpent, ...(this._sds ?? []), this._arch, ...this._ketches]   // WW5: every lane's Hollow   // EG-F: and my company's arch; WW2: and the gates past the Bay; KETCH: and the Sky-Ketch
+      .filter((g) => g && Math.hypot(mx - g.cx, my - g.cy) <= Math.max(g.r, least));   // SERPENT1: the sea serpent's ring answers as the gate's does (SD2c: and the Super dungeon's)
   }
+
+  /** EVENT-TIP: the first ring under the cursor, or null. */
+  _gateAt(sx, sy) { return this._ringsAt(sx, sy)[0] ?? null; }
 
   /** AUDIT SD III (T7): A RING'S OWN CENTRE IS A PLACE ON THE MAP - the ring under the pointer whose centre is nearer it
    *  than the nearest mark `m` is, or null. An Abyss Dungeon stands two to four pixels out from its city, and its ring
@@ -2768,12 +2771,9 @@ export class HeldMapWindow {
   _ringCoreAt(sx, sy, m) {
     let best = null, bestD = Infinity;
     if (m) { const [x, y] = toPaper(this._view, m.x, m.y); bestD = (x - sx) * (x - sx) + (y - sy) * (y - sy); }
-    const scale = this._view.scale;
-    for (const g of [this._gate, ...this._gates, this._serpent, ...(this._sds ?? []), this._arch, ...this._ketches]) {   // WW5: every lane's Hollow   // EG-F: and my company's arch; WW2: and the gates past the Bay; KETCH: and the Sky-Ketch
-      if (!g) continue;
+    for (const g of this._ringsAt(sx, sy)) {
       const [x, y] = toPaper(this._view, g.cx, g.cy), d = (x - sx) * (x - sx) + (y - sy) * (y - sy);
-      const r = Math.max(GATE_RING_MIN_PX, g.r * scale);
-      if (d <= r * r && d < bestD) { best = g; bestD = d; }
+      if (d < bestD) { best = g; bestD = d; }
     }
     return best;
   }
@@ -4081,6 +4081,8 @@ export class HeldMapWindow {
     // GUIDE5: a quest's place answers as the quest (its card names the place); a press still picks the place under it
     const quest = this._questAt(sx, sy);
     if (quest) return { label: quest.label, cursor: m || this._questPlace(quest) ? 'pointer' : '', tip: quest.tip };
+    // EVENT-TIP: a ring holds an area - its ground answers with its card, a place nearer than its centre as the place.
+    // _ringsAt is its one reach test, so no second ring test below the marks: one would never be reached.
     const core = this._ringCoreAt(sx, sy, m);   // AUDIT SD III (T7)
     if (core) return { label: core.label, cursor: '', tip: core.tip };
     if (m) {
@@ -4098,9 +4100,6 @@ export class HeldMapWindow {
       const tip = card ? readTip(card, { textMax: SEAT_TIP_TEXT_MAX, linesMax: TOWN_TIP_LINES_MAX }) : null;
       return { label: (region && name ? `${region} : ${name}` : name) + hub + (tier ? ` (${tier})` : ''), cursor: 'pointer', ...(tip ? { tip } : {}) };
     }
-    // EVENT-TIP: the gate's ring holds an area - anywhere in it that is not a place answers with the gate's card
-    const g = this._gateAt(sx, sy);
-    if (g) return { label: g.label, cursor: '', tip: g.tip };
     const [mx, my] = toMap(this._view, sx, sy);
     const px = Math.floor(mx), py = Math.floor(my);
     const outside = px < 0 || py < 0 || px >= this._size.width || py >= this._size.height;

@@ -1252,6 +1252,14 @@ it, rewritten only when its words change, refreshed on the poll under a STILL po
 leaving, on a press, on a sheet change and at close. The classic window draws no card. Pinned in
 `test/ui/eventtip.test.js`; seen in Chromium by `tools/heldMapProbe.mjs` section 8. `01-Overview/bugs/Field-Bugs-2026-09-28b.md`.
 
+**RING-ONE (2026-10-29): one reach test.** AUDIT SD III T7 put `_ringCoreAt` above the marks with its own reach test, in
+paper pixels, beside `_gateAt`'s in map pixels. On the map's one scale the two are the same test, so the gate's own
+branch below the marks was never reached: `EVENT-TIP-the-ring-answers-with-no-card` could not die
+(`01-Overview/audits/Audit-Town-Econ.md`), and once the branch went, nothing in the game read `_gateAt` while its pins
+did. The branch is gone and the reach is `_ringsAt` alone, read by `_ringCoreAt` and `_gateAt`. The record is aimed at
+the ring's card (`if (core) return ...`), the square-ring mutant at `_ringsAt`, and `SD20E-T7-the-core-unbounded` at
+`_ringCoreAt`'s walk of `_ringsAt` - all five T7 and ring records dead.
+
 ## MAP-KEY - a key to filter by, and a dungeon in orange (2026-09-29, a player through Mac)
 
 Jigglehimmer on Discord (#suggestions): *"Enhanced map needs filterable key like the default Daggerfall world map ... The

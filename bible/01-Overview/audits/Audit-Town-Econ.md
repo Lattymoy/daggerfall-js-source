@@ -95,4 +95,5 @@ placeholder in every language, buy and sell kept apart in every language, no lin
   CLOSED 2026-10-18 (SEAT-LOOP), and its bound carried to where the price is made by `Audit-Town-Econ-2.md` PRICE-4.
 - Two mutant records survive their tests on `main` (9ae7e62b) as on the branch - not this slice's, left for their own
   arcs' next pass: `EVENT-TIP-the-ring-answers-with-no-card` (`tools/mutants/eventtip.json`) and
-  `HORSEFACE-the-placing-paints-minus-one` (`tools/mutants/fb1004e.json`).
+  `HORSEFACE-the-placing-paints-minus-one` (`tools/mutants/fb1004e.json`). The first is CLOSED 2026-10-29 (RING-ONE,
+  `10-UI/Held-Map-Arc.md`): its line had been unreachable since AUDIT SD III T7, so it went, and the record dies.

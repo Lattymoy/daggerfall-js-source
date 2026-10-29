@@ -182,8 +182,8 @@
   {
     "name": "SD20E-T7-the-core-unbounded",
     "file": "src/ui/heldMap.js",
-    "old": "if (d <= r * r && d < bestD) { best = g; bestD = d; }",
-    "new": "if (d < bestD) { best = g; bestD = d; }",
+    "old": "for (const g of this._ringsAt(sx, sy)) {",
+    "new": "for (const g of [this._gate, ...this._gates, this._serpent, ...(this._sds ?? []), this._arch, ...this._ketches].filter(Boolean)) {",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]

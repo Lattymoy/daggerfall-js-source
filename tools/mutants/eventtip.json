@@ -101,7 +101,7 @@
   {
     "name": "EVENT-TIP-the-ring-answers-with-no-card",
     "file": "src/ui/heldMap.js",
-    "old": "    if (g) return { label: g.label, cursor: '', tip: g.tip };\n",
+    "old": "    if (core) return { label: core.label, cursor: '', tip: core.tip };\n",
     "new": "",
     "tests": [
       "test/ui/eventtip.test.js"
@@ -164,8 +164,8 @@
   {
     "name": "EVENT-TIP-a-square-ring",
     "file": "src/ui/heldMap.js",
-    "old": "if (g && Math.hypot(mx - g.cx, my - g.cy) <= Math.max(g.r, least)) return g;",
-    "new": "if (g && Math.max(Math.abs(mx - g.cx), Math.abs(my - g.cy)) <= Math.max(g.r, least)) return g;",
+    "old": "g && Math.hypot(mx - g.cx, my - g.cy) <= Math.max(g.r, least)",
+    "new": "g && Math.max(Math.abs(mx - g.cx), Math.abs(my - g.cy)) <= Math.max(g.r, least)",
     "tests": [
       "test/ui/eventtip.test.js"
     ]
