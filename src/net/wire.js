@@ -36,7 +36,8 @@ import { HUB_SHARD_ROOMS, isHubShard, HUB_FIND_Q_MAX, REGION_SHARD_ROOMS } from 
 //                                                       dev glyph, in the HUB alone; kind '' ends it (EVENT_HZ_MAX)
 //                    {t:'home', order}                  QUEST-HOME: a HOME order the account service signed - a town's buildings homes
 //                                                       now and none - carried by whoever acted, in the HUB alone; the hub believes
-//                                                       the signature, never the carrier (HOME_ORDER_HZ_MAX); YC2's {t:'yard', order} likewise (net/yardWordLaw.js)
+//                                                       the signature, never the carrier (HOME_ORDER_HZ_MAX); YC2's {t:'yard', order} likewise (net/yardWordLaw.js), and
+//                                                       YC4's {t:'hcell', order} (net/homeCellWordLaw.js)
 //                    {t:'world', data, final?}          the room's memory, from its host alone (WORLD1); final once, the farewell
 //                    {t:'foes', data}                   the host's live foes, FOES_HZ_MAX a second at most (WORLD2)
 //                    {t:'hit', data}                    a blow on the host's foe, from anyone but the host (WORLD2)
@@ -85,7 +86,8 @@ import { HUB_SHARD_ROOMS, isHubShard, HUB_FIND_Q_MAX, REGION_SHARD_ROOMS } from 
 //                                                       or ended; a late joiner reads it off the hub welcome's `ev` ({kind, at}, absent: none)
 //                    {t:'home', l:[{m, u, d, i}]}       QUEST-HOME: homes that moved - town m's buildings u homes now, d none, i the
 //                                                       order's second - to every hub socket at the order, and the held words of the
-//                                                       last HOME_WORDS_KEEP_MS on a hub welcome; YC2's {t:'yard', l:[[m, c, v]]} likewise, none held (yardWords.js)
+//                                                       last HOME_WORDS_KEEP_MS on a hub welcome; YC2's {t:'yard', l:[[m, c, v]]} likewise, none held (yardWords.js), and
+//                                                       YC4's {t:'hcell', l:[[m, c, v]]} (homeCellWords.js)
 //                    {t:'host', id}                     the room's host changed (WORLD1)
 //                    {t:'world', id, data}              the room's memory, to a socket whose welcome carried none (AUDIT WORLD34 C1)
 //                    {t:'foes', id, data}               the host's live foes, to everyone but the host (WORLD2)
@@ -2356,7 +2358,7 @@ export function inRangeOf(roomKey, from) {
   return (to) => !!to && Math.max(Math.abs(fx - Math.floor(to.x / PIXEL_UNITS)), Math.abs(fy - Math.floor(to.z / PIXEL_UNITS))) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'ban'|'renown'|'guild'|'guildout'|'home'|'yard'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'caravan'|'look'|'gate'|'grant'|'siege'|'arena'|'raid'|'raidtowns'|'sev'|'rite'|'star'|'ow'|'trav'|'amap'|'stp'|'cfg'|'find'|'serpent'|'sd'|'kt'|'eg'|'wild'|'vit'|'wdun'|'holdem'|'iliac'|'gambit'|'lease', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'ban'|'renown'|'guild'|'guildout'|'home'|'yard'|'hcell'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'caravan'|'look'|'gate'|'grant'|'siege'|'arena'|'raid'|'raidtowns'|'sev'|'rite'|'star'|'ow'|'trav'|'amap'|'stp'|'cfg'|'find'|'serpent'|'sd'|'kt'|'eg'|'wild'|'vit'|'wdun'|'holdem'|'iliac'|'gambit'|'lease', ...}
  *  or {error} - the caller closes on an error. INSPECT1: every arm below, named - this line had fallen seven behind
  *  (test/net/auditworld2.test.js derives the list from the arms now, so it cannot fall behind again - the merge with
  *  main's HCC-PARK was its first catch: the park arm, unnamed). */
@@ -2730,6 +2732,12 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (!hasHello) return { error: 'yard before hello' };
     return typeof m.order === 'string' && m.order.length > 0 && m.order.length <= 1024
       ? { t: 'yard', order: m.order } : { error: 'bad yard' };
+  }
+  if (m.t === 'hcell') {
+    // YC4: THE SHAPE ONLY, as the yard order's - whether it is real is the hub's question (server/src/homeCellWords.js)
+    if (!hasHello) return { error: 'hcell before hello' };
+    return typeof m.order === 'string' && m.order.length > 0 && m.order.length <= 1024
+      ? { t: 'hcell', order: m.order } : { error: 'bad hcell' };
   }
   if (m.t === 'home') {
     // QUEST-HOME: THE SHAPE ONLY, as the guild order's. Whether it is real is the relay's question - a signature it alone

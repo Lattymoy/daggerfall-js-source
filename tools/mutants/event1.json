@@ -92,8 +92,8 @@
   {
     "name": "EVENT1-relay-late-joiner-untold",
     "file": "server/src/index.js",
-    "old": "now: Date.now(), ...(isSocialRoom(a.key) ? { [YARD_WELCOME_FIELD]: 1 } : {}), ...(ev ? { ev } : {}), ...(tr.length ? { tr } : {}), ...(isSocialRoom",
-    "new": "now: Date.now(), ...(isSocialRoom(a.key) ? { [YARD_WELCOME_FIELD]: 1 } : {}), ...(tr.length ? { tr } : {}), ...(isSocialRoom",
+    "old": "now: Date.now(), ...(isSocialRoom(a.key) ? { [YARD_WELCOME_FIELD]: 1, [HOME_CELL_WELCOME_FIELD]: 1 } : {}), ...(ev ? { ev } : {}), ...(tr.length ? { tr } : {}), ...(isSocialRoom",
+    "new": "now: Date.now(), ...(isSocialRoom(a.key) ? { [YARD_WELCOME_FIELD]: 1, [HOME_CELL_WELCOME_FIELD]: 1 } : {}), ...(tr.length ? { tr } : {}), ...(isSocialRoom",
     "tests": [
       "test/render/event1_live_event.test.js"
     ]

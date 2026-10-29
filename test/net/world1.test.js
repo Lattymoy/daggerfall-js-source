@@ -154,7 +154,7 @@ test('WORLD1: the Room - the host is the hello\'d socket in the room longest, sa
   // a channel: no host frame business, no world
   const chat = fakeRoom('chat:world');
   const ch = chat.connect(); await chat.hello(ch, 'chat-0001');
-  assert.deepEqual(welcomeOf(ch), { t: 'welcome', id: 'chat-0001', peers: [], n: 1, v: RELAY_VERSION, now: welcomeOf(ch).now, ldo: 0, yd: 1 }, 'a channel\'s welcome: SRV-N\'s deploy name and ROSTER-G\'s roster and count - still no host, still no world (AUDIT SOC B7: the clock, since the hub link reads last-seen on it)');
+  assert.deepEqual(welcomeOf(ch), { t: 'welcome', id: 'chat-0001', peers: [], n: 1, v: RELAY_VERSION, now: welcomeOf(ch).now, ldo: 0, yd: 1, hc: 1 }, 'a channel\'s welcome: SRV-N\'s deploy name and ROSTER-G\'s roster and count - still no host, still no world (AUDIT SOC B7: the clock, since the hub link reads last-seen on it)');
 });
 
 function fakeSocketClass() {

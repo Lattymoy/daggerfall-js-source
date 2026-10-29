@@ -224,8 +224,8 @@
   {
     "name": "B7-channel-welcome-without-the-clock",
     "file": "server/src/index.js",
-    "old": "others.length + 1, v: RELAY_VERSION, now: Date.now(), ...(isSocialRoom(a.key) ? { [YARD_WELCOME_FIELD]: 1 } : {}), ...(ev",
-    "new": "others.length + 1, v: RELAY_VERSION, ...(isSocialRoom(a.key) ? { [YARD_WELCOME_FIELD]: 1 } : {}), ...(ev",
+    "old": "others.length + 1, v: RELAY_VERSION, now: Date.now(), ...(isSocialRoom(a.key) ? { [YARD_WELCOME_FIELD]: 1, [HOME_CELL_WELCOME_FIELD]: 1 } : {}), ...(ev",
+    "new": "others.length + 1, v: RELAY_VERSION, ...(isSocialRoom(a.key) ? { [YARD_WELCOME_FIELD]: 1, [HOME_CELL_WELCOME_FIELD]: 1 } : {}), ...(ev",
     "tests": [
       "test/net/chat1.test.js",
       "test/systems/quest/world5.test.js"

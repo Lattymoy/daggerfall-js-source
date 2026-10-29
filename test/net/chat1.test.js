@@ -127,9 +127,9 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
   await r.hello(a, 'aaaa-0001'); await r.hello(b, 'bbbb-0002', at(3, 3));
   // ROSTER-G (Mac: "Players dont show in online"): a channel HAS a roster now - names alone, with the true count -
   // and says its joins, because the roster beside the chat is everyone online and the channel is where everyone is
-  assert.deepEqual(a.sent[0], { t: 'welcome', id: 'aaaa-0001', peers: [], n: 1, v: RELAY_VERSION, now: a.sent[0].now, ldo: 0, yd: 1 });   // PIN MOVED: YARD-CELL YC2, the hub's welcome says it hears yard orders (net/yardWordLaw.js YARD_WELCOME_FIELD)   // SRV-N: and the deploy's name, on a channel's welcome too - the only welcome a chat link ever gets; AUDIT SOC B7: and the relay's clock
+  assert.deepEqual(a.sent[0], { t: 'welcome', id: 'aaaa-0001', peers: [], n: 1, v: RELAY_VERSION, now: a.sent[0].now, ldo: 0, yd: 1, hc: 1 });   // PIN MOVED: YARD-CELL YC2, the hub's welcome says it hears yard orders (net/yardWordLaw.js YARD_WELCOME_FIELD)   // SRV-N: and the deploy's name, on a channel's welcome too - the only welcome a chat link ever gets; AUDIT SOC B7: and the relay's clock
   assert.equal(typeof a.sent[0].now, 'number');
-  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', peers: [{ id: 'aaaa-0001', name: 'aaaa-0001', sub: 'acct-aaaa-0001' }], n: 2, v: RELAY_VERSION, now: b.sent[0].now, ldo: 0, yd: 1 }], 'b is told who is in the channel - a, by name and verified account (MOD1: what /mute names), no look, no pose');
+  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', peers: [{ id: 'aaaa-0001', name: 'aaaa-0001', sub: 'acct-aaaa-0001' }], n: 2, v: RELAY_VERSION, now: b.sent[0].now, ldo: 0, yd: 1, hc: 1 }], 'b is told who is in the channel - a, by name and verified account (MOD1: what /mute names), no look, no pose');
   assert.deepEqual(ofType(a, 'join'), [{ t: 'join', id: 'bbbb-0002', name: 'bbbb-0002', sub: 'acct-bbbb-0002', n: 2 }], 'and a hears b join - the name and the verified account (MOD1), and the room\'s count (PIN MOVED, AUDIT SCALE5a C1-C3), nothing else');
   assert.equal(typeof r.room._attach(a).sc, 'string', 'the secret is kept - on the socket\'s attachment (HIBERNATE)');
   assert.equal(r.store.has('secret:aaaa-0001'), false, 'and never stored');
