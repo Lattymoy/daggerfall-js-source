@@ -94,5 +94,6 @@ equivalent), keys_blur 9, family_remove 14, hearth_sibling 7, builtin_mods 13. R
 
 ## Met, not this change's
 
-The broad run's FB1002 CRACK-LIP and FB1009 HOME-FOOT (both on ARENA2) fail the same on `5995d0bb9`. The record
+The broad run's FB1002 CRACK-LIP and FB1009 HOME-FOOT, and WD1's and IT1's patch hashes (all on this session's
+freeware download of ARENA2), fail the same on `5995d0bb9`. The record
 `navaudit_helm.json` NAV1H-the-brake-unwired-world survives its own test there too.
