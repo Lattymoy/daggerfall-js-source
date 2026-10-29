@@ -2328,7 +2328,7 @@ function capeSwitch(/** @type {string} */ area) {
   eye.append(svg('path', { d: 'M1 8 Q8 0 15 8 Q8 16 1 8 Z', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5 }), svg('circle', { cx: 8, cy: 8, r: 2.2, fill: 'currentColor' }));
   if (!on) eye.append(svg('path', { d: 'M2 14 L14 2', stroke: 'currentColor', 'stroke-width': 1.8 }));   // struck through: hidden
   b.append(eye);
-  b.onclick = (e) => { e?.stopPropagation?.(); setCapeShown(!capeShown()); refresh(); refreshFigure(); render(); };   // HOOD-SAID's three: the body dressed again, the figure, the panel
+  b.onclick = (e) => { e?.stopPropagation?.(); setCapeShown(!capeShown()); refresh(); refreshFigure(); render(); };   // as HOOD-SAID's press: the body dressed again, the figure, the panel
   return b;
 }
 

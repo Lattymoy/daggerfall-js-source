@@ -57,8 +57,9 @@ test('MWNPC8b-b the street: one batch a person in standPixelNpcs (the away arm a
   assert.ok(!stand.includes('npcGroups'), 'no shared group left');
   assert.ok(w.includes('if (!dict) return null;   // never before the faction table: asked again'));
   ordered(w, ['const _peopleOn = streetPeople.frame();', 'for (const p of _pixelOrder) {', 'const ring = Math.max(Math.abs(p.px - state.current.x)',
-    'if (p.npcs) for (const pn of p.npcs) {', 'const look = _peopleOn && ring <= 1 ? streetLook(pn) : null;', 'if (!look) { pn.standBatch.castOnly = false; continue; }',
-    'f[0] = pn.x + t[0]; f[1] = pn.y + t[1]; f[2] = pn.z + t[2];', 'streetPeople.offer(personActor(pn, look, f, mwv.eye, dt), pn.standBatch);',
+    // PIN MOVED (AUDIT TAMRIEL-WIDE E2): the feet first, so the look reads the people where the person stands
+    'if (p.npcs) for (const pn of p.npcs) {', 'f[0] = pn.x + t[0]; f[1] = pn.y + t[1]; f[2] = pn.z + t[2];', 'const look = _peopleOn && ring <= 1 ? streetLook(pn, f) : null;',
+    'if (!look) { pn.standBatch.castOnly = false; continue; }', 'streetPeople.offer(personActor(pn, look, f, mwv.eye, dt), pn.standBatch);',
     'streetPeople.draw(canvas, proj, view, mwv.eye, townTalk.overlayActive ? 0 : dt);', 'renderer.drawBillboards(allBatches, camRight, bbUp);'], 'offered in the walk, drawn before the flats');
   assert.ok(w.includes('streetPeople.destroy();   // MWNPC8b'), 'let go indoors');
   assert.ok(w.includes('streetPeople.offsetAll(r.offset);'), 'moved with the origin');

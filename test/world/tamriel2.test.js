@@ -252,7 +252,7 @@ test('TAMRIEL2 switch: the Features row `tamriel-land` is on by default in the w
   const row = FEATURES.find((f) => f.id === 'tamriel-land');
   assert.ok(row); assert.equal(row.group, 'world'); assert.deepEqual([...row.kinds], ['enhanced']);
   assert.deepEqual(row.control, { store: 'prefs', key: 'tamrielLand', initial: true, online: 'player' });
-  assert.match(row.effect, /world next loads/); assert.match(row.note, /no towns, roads or dungeons/);
+  assert.match(row.effect, /world next loads/); assert.match(row.note, /its own cities, towns, roads and dungeons\./);   // PIN MOVED (AUDIT TAMRIEL-WIDE D1): TESA stands them there now
   _resetForTests();
   try {
     assert.equal(tamrielLandOn('?skin=enhanced'), true, 'on by default, enhanced');

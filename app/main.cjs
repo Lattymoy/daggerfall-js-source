@@ -140,11 +140,12 @@ const CONFIG_FILE = () => path.join(app.getPath('userData'), 'config.json');
 // only the rest, each checked against its sha256, into a version of its own under <userData>/Game
 // (lib/gameStore.cjs), played from the game's next load and proved by its first boot. The installer runs only for a
 // release that changes the shell itself (or that the channel could not bring); macOS and the portable exe, which
-// have no installer of their own to run, get the game's updates too. Opened at ready, by the one instance only - a
+// have no installer of their own to run, get the game's updates too. Opened before ready, by the one instance only - a
 // second one's sweep would delete a version the first is writing.
 const { GAME_ENTRY, parseManifestFile, routeFor, gameAssetsOf, versionOfTag } = require('./lib/gameChannel.cjs');
 const { openGameStore, loadSeed } = require('./lib/gameStore.cjs');
 const { switchesReadyGame } = require('./lib/readyGameSwitch.cjs');
+const { turnGpuCache } = require('./lib/gpuCacheTurn.cjs');
 const GAME_SEED = path.join(__dirname, 'game-seed.json');
 const GAME_ROOT = () => path.join(app.getPath('userData'), 'Game');
 /** The game store, or null: an unpackaged run, a build cut without a release (it carries no seed), or a store that
@@ -166,6 +167,10 @@ function openGame() {
 /** The version of the game this copy plays - the channel's, or the install's own. What the player is told they have,
  *  what a release is compared against, and what Play keeps as the last played. */
 const gameVersion = () => gameStore?.version() ?? app.getVersion();
+
+// SHADER-EASE CACHE-TURN (2026-10-29): the store opens before ready, so the GPU caches are turned for the game this
+// launch plays - the channel brings new shaders without a new shell - before Chromium opens them (lib/gpuCacheTurn.cjs).
+if (isSingleInstance) { openGame(); turnGpuCache({ userData: app.getPath('userData'), version: `${app.getVersion()}/${gameVersion()}` }); }
 
 // ---- config.json: { arena2Path } ----------------------------------
 function loadConfig() {
@@ -1895,7 +1900,6 @@ ipcMain.on('dagger:relock', (e) => { e.sender.executeJavaScript('globalThis.__da
 
 app.whenReady().then(() => {
   if (!isSingleInstance) return;   // quitting; do not raise a window on the way out
-  openGame();   // DA13: before the first request is served - the version played is the store's
   protocol.handle('dagger', handleDagger);
   // L1-2: the launcher is granted nothing it asks for; every other page keeps Electron's default (granted).
   // AUDIT INSTALL R2-B3: nor anything it merely CHECKS. Chromium asks two questions - the request (a prompt) and the

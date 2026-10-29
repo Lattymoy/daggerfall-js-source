@@ -25,7 +25,7 @@
 //   colour, the moment's title and its facts as fields.
 //
 // Not a DFU member: Daggerfall has no other players and no Discord. Ledger A (SERPENT2).
-import { serpentDayAt, isSerpentDay, serpentAt, serpentTimes, serpentBossOf, sameSerpentSite, SERPENT_EVERY_DAYS, SERPENT_DIVE_MS } from './serpentLaw.js';
+import { serpentDayAt, isSerpentDay, serpentAt, serpentTimes, serpentBossOf, sameSerpentSite, SERPENT_EVERY_DAYS, SERPENT_DIVE_MS, SERPENT_SITE_LAW } from './serpentLaw.js';
 import { agreedGateSite, HERALD_FELL_KEEP_MS, GATE_SITE_SKEW_MS } from '../gate/gateHerald.js';
 import { heraldCard, heraldName, heraldStamp, heraldWhen, heraldWho, heraldRole } from '../herald/heraldCard.js';   // HERALD-CARDS: the one card
 import { SERPENT_TOP_MAX } from '../wire.js';
@@ -92,6 +92,12 @@ export const serpentHeraldFellLive = (day, nowMs) => isSerpentDay(day) && nowMs 
 /** Does the hub take a word of day `day`'s site at `nowMs` - the serpent the clock is about, or the next one a moment
  *  before the turn? */
 export const serpentSiteDayOk = (day, nowMs) => Number.isSafeInteger(day) && (day === serpentAt(nowMs).day || day === serpentAt(nowMs + GATE_SITE_SKEW_MS).day);
+
+/** AUDIT TAMRIEL-WIDE E3: does the hub fold a `site` word - its own site law's (serpentLaw.js SERPENT_SITE_LAW), of the
+ *  day the clock is about? A build on another law rolls another site, and its word would split the vote. */
+export const serpentSiteWordOk = (m, nowMs) => m?.sl === SERPENT_SITE_LAW && serpentSiteDayOk(m.d, nowMs);
+/** Where the hub keeps its record: one a site law, so a deploy never folds a word into the older law's record. */
+export const SERPENT_SITE_RECORD = `serpentsite.${SERPENT_SITE_LAW}`;
 
 /** The site the hub's record agrees on for day `day`, as `{sx, sz, place}` (the gate's record's pixel slots hold the
  *  serpent's native point), or null. */

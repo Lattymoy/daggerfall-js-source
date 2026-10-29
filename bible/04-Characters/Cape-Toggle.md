@@ -20,7 +20,8 @@ The helmet waits on art: Layered Gearing has no bare head - an empty helmet slot
 ## 2. The law
 
 `src/systems/capeShown.js`. One device pref, `capeShown` (`systems/uiPrefs.js` PREF_DEFAULTS, true): the switch is
-this player's, on this machine. `drawnEquipTable(entity)` is the equip table AS THE BODY IS DRAWN -
+this player's, on this machine, and the online lane leaves it to them (`systems/online/onlineLane.js`
+ONLINE_PLAYERS_OWN_PREFS). `drawnEquipTable(entity)` is the equip table AS THE BODY IS DRAWN -
 the player's own with Cloak1 and Cloak2 empty while capes are hidden, a copy made only when a cloak is taken out; anyone
 else's, a foe's or a townsperson's, is the table itself.
 
@@ -55,7 +56,7 @@ Aura Armory pieces are not capes: they stay drawn (`04-Characters/Aura-Armory.md
 ## 5. The wire
 
 A look may say `hc` 1 (`net/wire.js` validLook keeps 1 and nothing else, omitted otherwise - `class`'s law), relay
-world284. A relay before world284 drops `hc`: peers then see my aura as before, but never my cloak, which the look no
+world285. A relay before world285 drops `hc`: peers then see my aura as before, but never my cloak, which the look no
 longer carries. Deploy the relay first, then the site.
 
 ## 6. The switch
@@ -71,7 +72,13 @@ coarse-pointer query). `tools/enhancedPackLayoutProbe.mjs` measures it on desk, 
 (`DRESS=grimoire` for that dress): every check passes in Plus; in the Grimoire, two checks of its own tab strip fail,
 not the switch's. HOOD-SAID's raised-hood chip already touches the word CLOAKS on 360 and 740 px phones, before this.
 
-## 7. Pins
+## 7. Past the Bay
+
+The switch reads no place (TAMRIEL-WIDE, `01-Overview/Port-Doctrine.md`): the pref, the drawn table, the look and its
+`hc` are the same in every province, and a peer is drawn by the look they send wherever they stand. The look's pin
+joins a room on the Bay and one past it, Whiterun's cell.
+
+## 8. Pins
 
 `test/ui/capetoggle.test.js` (5: the law, the look and the wire, the auras, the one door, the pack's switch);
-`tools/mutants/capetoggle.json` (24, all dead). Relay world284's LAW row: `test/net/relayversion.test.js`.
+`tools/mutants/capetoggle.json` (24, all dead). Relay world285's LAW row: `test/net/relayversion.test.js`.

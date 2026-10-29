@@ -520,3 +520,17 @@ The owner's call taken (2026-10-26: *"Every single thing here needs to be addres
 
 Pins: `test/world/worldWide/ww6_raids.test.js` (12, its last half with ARENA2) and `test/server/townecon_service.test.js`
 (a raid past the Bay's receipt at the account service); `tools/mutants/ww6.json` (59, all dead).
+
+### AUDIT TAMRIEL-WIDE B5 - every lane's cleanses kept for a hello (2026-10-28)
+
+The hub kept 64 cleanses for a hello's `cls`, and the client read no more: two days of the Bay's raids. WW6's lanes roll
+286 to 334 raids in two days on the freeware, so the hub let go of cleanses still today's or yesterday's, and a joiner
+read those raids as standing. The cap is now two days of every lane's slots, the raid law's own numbers
+(`src/net/wire.js:"export const RAID_CLEANS_MAX = 2 * RAID_SLOTS_MAX * (1 + RAID_LANES_BEYOND.length);"`, 576). The hub
+and the client read the one constant. Pins: `test/world/worldWide/audit_tamrielwide_relay.test.js` B5 (576 cleanses through the real hub, and the oldest let go past them).
+Mutants: `tools/mutants/audit_tamrielwide_relay.json` (4, dead). Relay world284.
+
+AUDIT TAMRIEL-WIDE II R1 (2026-10-29): the hello says the list newest first. A build before world284 stops its read at
+64, and the hub keeps them oldest first, so on release day an older tab kept yesterday's and read today's cleansed raids
+as standing. The client's read keeps every one whatever their order. Pinned in the same B5 test; mutant: the hello oldest
+first.

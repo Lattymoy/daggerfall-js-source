@@ -1,0 +1,132 @@
+[
+  {
+    "name": "SE-a-deep-waters-pair-missed",
+    "file": "src/render/deepWatersRender.js",
+    "old": "  [SKY_FOG_VS, SKY_FOG_FS], [DECOR_VS, DECOR_FS], [SKY_FOG_VS, UNDER_LOOK_FS],",
+    "new": "  [SKY_FOG_VS, SKY_FOG_FS], [DECOR_VS, DECOR_FS],",
+    "tests": [
+      "test/render/shaderease.test.js"
+    ],
+    "note": "the under-the-sea look compiled again at the build"
+  },
+  {
+    "name": "SE-deep-waters-built-at-once",
+    "file": "src/render/deepWatersRender.js",
+    "old": "    return [{ start: () => startPrograms(this.gl, DEEP_WATERS_PROGRAMS), run:",
+    "new": "    return [{ start: () => () => true, run:",
+    "tests": [
+      "test/render/shaderease.test.js"
+    ],
+    "note": "the bare step's stall back: built at the first idle"
+  },
+  {
+    "name": "SE-deep-waters-need-never-false",
+    "file": "src/render/deepWatersRender.js",
+    "old": "need: () => !this._programs }];",
+    "new": "need: () => true }];",
+    "tests": [
+      "test/render/shaderease.test.js"
+    ],
+    "note": "a warm that polls on after a draw built the pass"
+  },
+  {
+    "name": "SE-an-ocean-holes-pair-missed",
+    "file": "src/render/oceanHolesRender.js",
+    "old": "(Object.freeze([[DISC_VS, DISC_FS], [MIASMA_VS, MIASMA_FS]]));",
+    "new": "(Object.freeze([[DISC_VS, DISC_FS]]));",
+    "tests": [
+      "test/render/shaderease.test.js"
+    ],
+    "note": "the miasma compiled again at the build"
+  },
+  {
+    "name": "SE-ocean-holes-built-at-once",
+    "file": "src/render/oceanHolesRender.js",
+    "old": "    return [{ start: () => startPrograms(this.gl, OCEAN_HOLES_PROGRAMS), run:",
+    "new": "    return [{ start: () => () => true, run:",
+    "tests": [
+      "test/render/shaderease.test.js"
+    ],
+    "note": "the bare step's stall back"
+  },
+  {
+    "name": "SE-pixel-snow-off-the-lane",
+    "file": "src/render/precipitation.js",
+    "old": "  if (opts.enhanced && opts.pixelSnow) pairs.push([PIXEL_SNOW_VS, PIXEL_SNOW_FS]);",
+    "new": "  if (opts.pixelSnow) pairs.push([PIXEL_SNOW_VS, PIXEL_SNOW_FS]);",
+    "tests": [
+      "test/render/shaderease.test.js"
+    ],
+    "note": "the classic lane starts a program its constructor never builds"
+  },
+  {
+    "name": "SE-the-lab-never-started",
+    "file": "src/render/precipitation.js",
+    "old": "  if (opts.enhanced) pairs.push([LAB_WX_VS, LAB_WX_FS]);\n",
+    "new": "",
+    "tests": [
+      "test/render/shaderease.test.js"
+    ],
+    "note": "the enhanced lane's lab compiled at the build"
+  },
+  {
+    "name": "SE-rain-built-over-the-weathers",
+    "file": "src/render/precipitation.js",
+    "old": "run: () => { if (!get()) set(new PrecipitationRenderer(gl, opts)); }",
+    "new": "run: () => { set(new PrecipitationRenderer(gl, opts)); }",
+    "tests": [
+      "test/render/shaderease.test.js"
+    ],
+    "note": "a second renderer over the one applyWeather made"
+  },
+  {
+    "name": "SE-rain-need-never-false",
+    "file": "src/render/precipitation.js",
+    "old": "}, need: () => !get() };",
+    "new": "}, need: () => true };",
+    "tests": [
+      "test/render/shaderease.test.js"
+    ],
+    "note": "the rain's warm polls on over a built renderer"
+  },
+  {
+    "name": "LW-nothing-kept",
+    "file": "src/render/glProgram.js",
+    "old": "    if (WAITS.push(wait) > LINK_WAIT_KEEP) WAITS.shift();",
+    "new": "    if (WAITS.length > LINK_WAIT_KEEP) WAITS.shift();",
+    "tests": [
+      "test/render/shaderease.test.js"
+    ],
+    "note": "no slow read kept"
+  },
+  {
+    "name": "LW-a-quick-read-kept",
+    "file": "src/render/glProgram.js",
+    "old": "  if (ms > LINK_WAIT_MS) {",
+    "new": "  if (ms >= 0) {",
+    "tests": [
+      "test/render/shaderease.test.js"
+    ],
+    "note": "every read kept, the trail full of quick ones"
+  },
+  {
+    "name": "LW-started-never-true",
+    "file": "src/render/glProgram.js",
+    "old": "started: !!took?.prog };",
+    "new": "started: false };",
+    "tests": [
+      "test/render/shaderease.test.js"
+    ],
+    "note": "a read cannot tell a warmed program from a cold one"
+  },
+  {
+    "name": "LW-the-ring-unbounded",
+    "file": "src/render/glProgram.js",
+    "old": "    if (WAITS.push(wait) > LINK_WAIT_KEEP) WAITS.shift();",
+    "new": "    WAITS.push(wait);",
+    "tests": [
+      "test/render/shaderease.test.js"
+    ],
+    "note": "the trail grows for the whole session"
+  }
+]

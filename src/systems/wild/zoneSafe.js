@@ -17,9 +17,9 @@
 // THE KINDS ARE THE THREE DFU NAMES TOWNS (DFRegion.LocationTypes TownCity, TownHamlet, TownVillage). A DEPARTURE FROM
 // DFU's IsPlayerInTown (PlayerGPS.cs:504-527), which counts four more for its rest and its watch - HomeFarms, HomeWealthy,
 // Tavern, ReligionTemple (systems/nearbyObjects.js TOWN_LOCATION_TYPES): a farmstead, a manor, a roadside inn and a
-// temple each stand alone in the open country, and MAPS.BSA holds 5,929 of them against 3,444 settlements (410 cities,
-// 1,200 towns, 1,834 villages, of its 15,251 rows) - counted as towns they would stand a refuge on every road of the
-// zone. They are DFU's towns still: the zone's watch answers a blow struck at one (ZONE-WATCH, scenes/world.js
+// temple each stand alone in the open country: Cyrodiil's countryside rolls them beside its hamlets and villages
+// (world/tamrielCountry.js COUNTRY_TYPES), as the Bay's MAPS.BSA holds 5,929 of them against 3,444 settlements - counted
+// as towns they would stand a refuge on every road of the zone. They are DFU's towns still: the zone's watch answers a blow struck at one (ZONE-WATCH, scenes/world.js
 // zoneWatchCall). A dungeon, a graveyard, a coven, a cult's shrine and a poor home are neither.
 //
 // WHO SAYS IT: each client of itself and of the bodies it sees. My word on the zone to the relay's referee is 2 in a
@@ -49,25 +49,34 @@ export const isSettlement = (loc) => SETTLEMENT_TYPES.has(loc?.mapTableData?.loc
  * @returns {boolean}
  */
 export function settledAt(p, index) {
-  if (!p || !index || !Number.isFinite(p[0]) || !Number.isFinite(p[2])) return false;
-  const px = worldCoordToMapPixel(p[0], p[2]);
-  const loc = index.get(`${px.x},${px.y}`);
-  return isSettlement(loc) && isInLocationRect(p[0], p[2], locationWorldRect(loc, px.x, px.y));
+  return !!index && landsSettled(p, (x, y) => index.get(`${x},${y}`));
 }
 
 /**
  * WILD-CITY-PORT (2026-10-28, the owner: "Even with the open pvp, players should be able to teleport in and out of the
- * cities"): MAY A TELEPORT PASS THE ZONE. Each end is none (the door, asked where I stand), outside `mask`, or a
- * settlement's. The end it lands at: the place `locAt` stands on its pixel. Where I stand: outdoors in a settlement's
- * streets (`feet`, settledAt's frame over `index`), else in a building of one (`mode` 'interior'). A dungeon is the zone's.
+ * cities"): MAY A TELEPORT PASS THE ZONE. Each end is outside `mask` or a settlement's: where it lands (`landing`, AUDIT
+ * TAMRIEL-WIDE E1), else the place `locAt` stands on its pixel; where I stand, `feet` in its streets or a building of it.
  * @param {any} mask @param {{ x: number, y: number }|null} from @param {{ x: number, y: number }|null} to @param {ArrayLike<number>|null} feet
- * @param {string|undefined} mode @param {{ get(key: string): any }} index @param {(px: number, py: number) => any} locAt @returns {boolean}
+ * @param {string|undefined} mode @param {{ get(key: string): any }} index @param {(px: number, py: number) => any} locAt @param {ArrayLike<number>|null} [landing] @returns {boolean}
  */
-export function zonePortFree(mask, from, to, feet, mode, index, locAt) {
+export function zonePortFree(mask, from, to, feet, mode, index, locAt, landing = undefined) {
   const inZone = (at) => !!at && wildInside(mask, at.x, at.y);
   const here = !inZone(from) || (feet ? settledAt(feet, index) : mode === 'interior' && isSettlement(locAt(from.x, from.y)));
-  return here && (!inZone(to) || isSettlement(locAt(to.x, to.y)));
+  return here && (!inZone(to) || (landing !== undefined ? landsSettled(landing, locAt) : isSettlement(locAt(to.x, to.y))));
 }
+
+/** AUDIT TAMRIEL-WIDE E1: does a teleport's exact landing `p` (settledAt's frame) stand in a settlement's streets - the
+ *  place `locAt` stands on its pixel, built or not. A Recall's anchor, a leader's feet and a ship's deck land where they
+ *  are, not at the city; the pixel alone let a Mark beside a village's walls land in the zone's open country. A landing
+ *  of null is no street. @param {ArrayLike<number>|null} p @param {(px: number, py: number) => any} locAt */
+export function landsSettled(p, locAt) {
+  if (!p || !Number.isFinite(p[0]) || !Number.isFinite(p[2])) return false;
+  const px = worldCoordToMapPixel(p[0], p[2]);
+  const loc = locAt(px.x, px.y);
+  return isSettlement(loc) && isInLocationRect(p[0], p[2], locationWorldRect(loc, px.x, px.y));
+}
+/** A Recall anchor's landing (teleportAnchor.js makeAnchor: natives on x and z), or a leader's feet - settledAt's frame. */
+export const teleportLanding = (a) => (a && Number.isFinite(a.nativeX) ? [a.nativeX, 0, a.nativeZ] : a && Number.isFinite(a.x) ? [a.x, a.y ?? 0, a.z] : undefined);
 
 // ── the frame's word: am I in the streets of one now ──
 let _safe = false;

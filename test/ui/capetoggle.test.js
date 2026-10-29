@@ -12,7 +12,7 @@ import { equipItem, equipTableOf } from '../../src/systems/equip.js';
 import { mintCondition, setItemFields } from '../../src/systems/item/itemTemplates.js';
 import { EQUIP_SLOTS } from '../../src/characters/paperdoll/paperdoll.js';
 import { composeLook } from '../../src/net/remotePlayers.js';
-import { validLook, RELAY_VERSION } from '../../src/net/wire.js';
+import { validLook, RELAY_VERSION, worldRoom } from '../../src/net/wire.js';
 import { OnlineSession } from '../../src/net/online.js';
 import { createAuraHost } from '../../src/scenes/auraHost.js';
 import { keepSession, adoptIdentity } from '../../src/net/accountClient.js';
@@ -53,7 +53,7 @@ test('CAPE-TOGGLE the law: shown by default; hidden, the player\'s table as draw
   assert.deepEqual([lookCapesHidden({ hc: 1 }), lookCapesHidden({ hc: true }), lookCapesHidden({}), lookCapesHidden(null)], [true, false, false, false]);
 });
 
-test('CAPE-TOGGLE the look: hidden, my look leaves the cloak out and says `hc` 1 - shown, the cloak and no `hc`; a foe\'s look keeps its cloak whatever my switch says; the wire keeps `hc` 1 and nothing else, and the session answers a look by id (mutants: the cloak sent while hidden; `hc` never said; `hc` on a foe; the wire dropping it; any `hc` kept)', () => {
+test('CAPE-TOGGLE the look: hidden, my look leaves the cloak out and says `hc` 1 - shown, the cloak and no `hc`; a foe\'s look keeps its cloak whatever my switch says; the wire keeps `hc` 1 and nothing else, and the session answers a look by id, on the Bay and past it (mutants: the cloak sent while hidden; `hc` never said; `hc` on a foe; the wire dropping it; any `hc` kept)', () => {
   const e = hero(), c = cloak();
   e.items.push(c); equipItem(e, c);
   const shown = withCape(true, () => composeLook(e));
@@ -67,13 +67,16 @@ test('CAPE-TOGGLE the look: hidden, my look leaves the cloak out and says `hc` 1
   assert.deepEqual([cloakItems(fl).length, 'hc' in fl], [1, false], 'a foe is drawn as it is dressed');
   assert.equal(validLook(hidden).hc, 1, 'the wire keeps it');
   assert.deepEqual([validLook({ ...hidden, hc: 2 }).hc, validLook({ ...hidden, hc: '1' }).hc, 'hc' in validLook(shown)], [undefined, undefined, false], 'one word, 1, or nothing');
-  assert.equal(RELAY_VERSION, 'world284', 'the relay that keeps it');
-  const { FakeWS, sockets } = fakeSocketClass();
-  const s = new OnlineSession({ url: 'wss://relay.test', name: 'Mac', id: 'mac-0001', secret: 'secret-of-mac-0001', WebSocketImpl: FakeWS, now: () => 1000, look: hidden });
-  const pose = { x: 1, y: 2, z: 3, yaw: 0, pitch: 0, mv: 0 };
-  s.join('world:2,12', pose); sockets[0].open();
-  sockets[0].receive({ t: 'welcome', id: 'mac-0001', peers: [{ id: 'peer-0002', name: 'Ember', look: hidden, pose }, { id: 'peer-0003', name: 'Ash', look: shown, pose }], host: null, world: null });
-  assert.deepEqual([lookCapesHidden(s.lookOf('peer-0002')), lookCapesHidden(s.lookOf('peer-0003')), lookCapesHidden(s.lookOf('mac-0001')), s.lookOf('nobody')], [true, false, true, null]);
+  assert.equal(RELAY_VERSION, 'world285', 'the relay that keeps it');
+  // TAMRIEL-WIDE: the switch reads no place - a room past the Bay (Whiterun's cell) answers as the Bay's does
+  for (const room of ['world:2,12', worldRoom(1820, -300)]) {
+    const { FakeWS, sockets } = fakeSocketClass();
+    const s = new OnlineSession({ url: 'wss://relay.test', name: 'Mac', id: 'mac-0001', secret: 'secret-of-mac-0001', WebSocketImpl: FakeWS, now: () => 1000, look: hidden });
+    const pose = { x: 1, y: 2, z: 3, yaw: 0, pitch: 0, mv: 0 };
+    s.join(room, pose); sockets[0].open();
+    sockets[0].receive({ t: 'welcome', id: 'mac-0001', peers: [{ id: 'peer-0002', name: 'Ember', look: hidden, pose }, { id: 'peer-0003', name: 'Ash', look: shown, pose }], host: null, world: null });
+    assert.deepEqual([lookCapesHidden(s.lookOf('peer-0002')), lookCapesHidden(s.lookOf('peer-0003')), lookCapesHidden(s.lookOf('mac-0001')), s.lookOf('nobody')], [true, false, true, null], room);
+  }
 });
 
 test('CAPE-TOGGLE the auras: hidden, my own aura is not gathered (its token still says it, so it is not said again); a peer whose look says `hc` wears no aura here and keeps their Aura Armory pieces; a peer without it wears theirs (mutants: my aura drawn while hidden; a hidden peer\'s aura drawn; the pieces taken with it)', () => {
