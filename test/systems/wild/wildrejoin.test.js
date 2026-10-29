@@ -138,7 +138,7 @@ test('WILD-REJOIN THE RELAY: a fall signed after its fallen\'s socket left says 
   step(20_000);
   const back = await join('peer-0002', 5);   // the save before the fall: alive, a few paces off
   await say(back, { k: 'zone', z: 1 });
-  const words = refs(back).map((m) => m.k).filter((k) => k !== 'flag');   // PVP-FLAG: the flags said to one entering are no fall's
+  const words = refs(back).map((m) => m.k).filter((k) => k !== 'flag' && k !== 'vil');   // PVP-FLAG: the flags said to one entering are no fall's - PVP-VILLAIN: nor its own meter
   assert.deepEqual(words.slice(0, 2), ['down', 'rc'], 'down first, then the owed receipt');
   const [down] = refs(back, 'down');
   assert.deepEqual(validWildRefOut(down), { k: 'down', ms: down.ms, r: f.r, p: W(1) });

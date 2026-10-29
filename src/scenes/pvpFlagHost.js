@@ -8,6 +8,7 @@ import { pvpFlagRefusal, PVP_FLAG } from '../systems/wild/pvpFlag.js';
 import { t } from '../systems/textManager.js';
 import { noteCaps } from '../ui/capsFix.js';
 import { skullSrc } from '../ui/pvpSkull.js';
+import { isVillain } from '../systems/wild/villainLaw.js';   // PVP-VILLAIN
 
 const SKULL_EDGE = Object.freeze({ off: '#4caf50', white: '#8a7246', gold: '#e8b62c', red: '#d42a1e' });
 
@@ -22,10 +23,12 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
   const say = (line) => { midScreen(line); talk.say(line); };
   let on = false, fightAt = -Infinity, button = /** @type {HTMLButtonElement | null} */ (null);
   const peers = new Map();   // PVP-SKULL: a flagged peer's id -> when its aggro ends (gold until then)
+  const reds = new Set();   // PVP-VILLAIN: the flagged peers the referee says are villains
+  let villainy = /** @type {number | null} */ (null);   // my own meter, the referee's word (null: not heard)
   const me = () => online()?.id ?? null;
-  /** PVP-SKULL: a skull's kind - none unflagged, gold in aggro, white else. */
-  const skullOf = (id) => (peers.has(id) ? (peers.get(id) > now() ? 'gold' : 'white') : null);
-  const mySkull = () => (on ? (now() - fightAt < PVP_FLAG.lockMs ? 'gold' : 'white') : null);
+  /** PVP-SKULL: a skull's kind - none unflagged, red a villain, gold in aggro, white else. */
+  const skullOf = (id) => (peers.has(id) ? (reds.has(id) ? 'red' : peers.get(id) > now() ? 'gold' : 'white') : null);
+  const mySkull = () => (on ? (isVillain(villainy) ? 'red' : now() - fightAt < PVP_FLAG.lockMs ? 'gold' : 'white') : null);
   const paint = () => {
     if (!button) return;
     const kind = mySkull();
@@ -38,7 +41,7 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
   const set = (v) => { on = v; online()?.setWildFlag?.(v); paint(); };
   /** Caps Lock or the button: up at once from level 30, down at once outside the lock. */
   const toggle = () => {
-    const why = pvpFlagRefusal({ on: !on, level: level(), fightAt, now: now() });
+    const why = pvpFlagRefusal({ on: !on, level: level(), fightAt, now: now(), red: isVillain(villainy) });
     if (why) { say(why); return false; }
     set(!on);
     say(on ? t('pvp.flag.on', 'PvP is on. Flagged players can attack you.') : t('pvp.flag.off', 'PvP is off.'));
@@ -47,9 +50,11 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
   /** The referee's word: a flag (mine is its to hold - a drop refused in the lock comes back up), or a blow on me or by me. */
   const heard = (g) => {
     if (g?.k === 'flag') {
+      if (g.id !== me() && g.f === 1 && g.v === 1) reds.add(g.id); else reds.delete(g.id);
       if (g.id === me()) { on = g.f === 1; paint(); } else if (g.f === 1) peers.set(g.id, g.a ? now() + g.a : -Infinity); else peers.delete(g.id);
       return true;
     }
+    if (g?.k === 'vil') { villainy = g.n; paint(); return true; }   // PVP-VILLAIN: my meter, for the sheet
     if (g?.k === 'hp' && (g.by === me() || g.to === me())) fightAt = now();
     return false;
   };
@@ -79,6 +84,8 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     flagOf: (peerId) => peers.has(peerId),
     skullOf,
     mySkull,
+    /** PVP-VILLAIN: my villain meter as the referee last said it, or null. */
+    villainy: () => villainy,
     /** PVP-SKULL: wrap the host's name mask - each player's point wears its skull (ui/nameLayer.js draws it). */
     mask: (inner) => (p) => { const q = inner ? inner(p) : p; const k = q && q.kind !== 'board' ? skullOf(q.id) : null; return k ? { ...q, skull: k } : q; },
   };
@@ -91,3 +98,5 @@ let _current = /** @type {any} */ (null);
 export const pvpFlagOn = () => _current?.on() ?? true;   // no host (a headless door): flagged, as an old client is
 /** PVP-SKULL: a peer's skull for a door outside the host (scenes/travelViewMarks.js - the Overworld's marks), or null. */
 export const pvpSkullOf = (id) => _current?.skullOf(id) ?? null;
+/** PVP-VILLAIN: my villain meter for the character sheet (ui/pvpVillainBar.js), or null - none heard. */
+export const pvpVillainy = () => _current?.villainy() ?? null;

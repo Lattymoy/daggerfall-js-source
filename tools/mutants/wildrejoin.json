@@ -16,8 +16,8 @@
   {
     "name": "WILD-REJOIN-the-kind-unknown",
     "file": "src/net/wire.js",
-    "old": "export const WILD_REF_KINDS = Object.freeze(['hp', 'fell', 'rc', 'hull', 'wreck', 'wc', 'down', 'grace', 'flag']);",
-    "new": "export const WILD_REF_KINDS = Object.freeze(['hp', 'fell', 'rc', 'hull', 'wreck', 'wc', 'grace', 'flag']);",
+    "old": "export const WILD_REF_KINDS = Object.freeze(['hp', 'fell', 'rc', 'hull', 'wreck', 'wc', 'down', 'grace', 'flag', 'vil']);",
+    "new": "export const WILD_REF_KINDS = Object.freeze(['hp', 'fell', 'rc', 'hull', 'wreck', 'wc', 'grace', 'flag', 'vil']);",
     "tests": ["test/systems/wild/wildrejoin.test.js"]
   },
   {
