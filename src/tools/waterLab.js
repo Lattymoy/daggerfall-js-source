@@ -16,6 +16,9 @@ import { generateTileData, assignTiles } from '../world/terrain/terrainTiles.js'
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE } from '../world/terrain/terrainSampler.js';
 import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind/wind.js';
 import { perspective, lookAt, identity, mirrorProjectionX } from '../world/mat4.js';
+import { AuroraPass, AURORA_LIGHT } from '../render/auroraPass.js';   // SKYRIM-AURORA: `?aurora=<0..1>&hang=` - the aurora over the sky, in the water and in the land's light
+import { auroraDoor } from '../scenes/auroraHost.js';
+import { AURORA_DIALS } from '../world/tamriel/skyrimAurora.js';
 
 const params = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
@@ -30,6 +33,8 @@ canvas.getContext('webgl2', { antialias: false, preserveDrawingBuffer: true }); 
 const renderer = new Renderer(canvas);
 const gl = renderer.gl;
 const sky = new EnhancedSkyRenderer(gl);
+const auroraW = Number(auroraDoor(params.get('aurora'))) || 0, auroraHang = Number(params.get('hang') ?? AURORA_DIALS.hangNorth);
+const aurora = auroraW > 0 ? new AuroraPass(gl) : null;
 
 // ---- the pixel: an island, a lake, a river ------------------------------
 const hDim = HEIGHTMAP_DIMENSION;
@@ -122,12 +127,12 @@ function frame() {
   const sunDir = sunSkyDirection(minuteOfDay);
   const day = Math.max(0, Math.min(1, (sunDir[1] + 0.05) / 0.35));
   const lightDir = new Float32Array([sunDir[0], Math.max(0.05, sunDir[1]), sunDir[2]]);
-  renderer.setLighting(new Float32Array([0.28 + 0.22 * day, 0.28 + 0.22 * day, 0.30 + 0.24 * day]), 0.9 * day, new Float32Array(state.sun));
+  renderer.setLighting(new Float32Array([0.28 + 0.22 * day, 0.28 + 0.22 * day, 0.30 + 0.24 * day].map((a, c) => a + AURORA_LIGHT[c] * auroraW)), 0.9 * day, new Float32Array(state.sun));
   renderer.setLightDir(lightDir);
   renderer.setFog('exp2', 0.0009, 0, 0, sky.clearColor);
   renderer.setClearColor([0, 0, 0, 1]);
   renderer.beginFrame(proj, view, lightDir);
-  if (!params.has('nosky')) { sky.draw(yaw, pitch, 65 * Math.PI / 180, w / h); renderer.markForeignPass(); }   // ?nosky: the ground alone, for a diagnosis
+  if (!params.has('nosky')) { sky.draw(yaw, pitch, 65 * Math.PI / 180, w / h); aurora?.draw(yaw, pitch, 65 * Math.PI / 180, w / h, auroraW, auroraHang, seconds, [0, 0, w, h]); renderer.markForeignPass(); }   // ?nosky: the ground alone, for a diagnosis
   renderer.setCloudShadow(sky.cloudShadow ?? null);
   // the pixel and its eight neighbours (the same island, tiled), so the
   // sea reaches the horizon as it does in the streaming world
@@ -138,7 +143,7 @@ function frame() {
       seconds,
       wind: [s * 0.8, s * 0.6],
       rain: Number($('rain').value),
-      sky: { zenith: state.zenith, horizon: state.horizon },
+      sky: { zenith: state.zenith, horizon: state.horizon, aurora: aurora?.domeTex ? { tex: aurora.domeTex } : null },
     });
     for (const m of TILE_MATRICES) renderer.drawWaterSurface(water, m, renderer.tileArrays.get(ARCHIVE), tilemapTex, 6.4, wu);
   }
