@@ -1519,7 +1519,7 @@
   "src/systems/horse/horseCart.js": 44,
   "src/systems/horse/horseCartLaw.js": 19,
   "src/systems/horse/horseCartWire.js": 34,
-  "src/systems/horse/horseCoats.js": 71,
+  "src/systems/horse/horseCoats.js": 70,
   "src/systems/horse/horseFollow.js": 38,
   "src/systems/horse/horseVoice.js": 26,
   "src/systems/horse/trailingPoseCache.js": 1,

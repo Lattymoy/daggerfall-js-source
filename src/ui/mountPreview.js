@@ -5,6 +5,7 @@
 // embers and smoke, light wisping off a ghost, sun motes, sparks and steam. For the profile's Mount slot and the shop's
 // panels. Still for less motion. Not a DFU member.
 import { recolorHorse, withMountLook } from '../systems/horse/horseCoats.js';
+import { VIEW_SIDE } from '../systems/horse/mountPaint.js';
 
 /** The picture the preview dyes (the side view) and its scale on the canvas (whole pixels, the art's own). */
 export const MOUNT_PREVIEW_FILE = 'horse3.png';
@@ -55,7 +56,7 @@ export function mountPreview(doc, { coat = 0, reduced = !!globalThis.matchMedia?
   /** @type {{ x: number, y: number, vx: number, vy: number, age: number, life: number, c: string, s: number }[]} */
   const parts = [];
   function dye(/** @type {ImageData} */ art) {
-    const d = recolorHorse({ width: art.width, height: art.height, colors: new Uint8Array(art.data.buffer, art.data.byteOffset, art.data.byteLength) }, withMountLook(coat, key), { bottomFirst: false });
+    const d = recolorHorse({ width: art.width, height: art.height, colors: new Uint8Array(art.data.buffer, art.data.byteOffset, art.data.byteLength) }, withMountLook(coat, key), { bottomFirst: false, view: VIEW_SIDE });
     const p = doc.createElement('canvas'); p.width = art.width; p.height = art.height;
     const pg = /** @type {CanvasRenderingContext2D} */ (p.getContext('2d'));
     pg.putImageData(new ImageData(new Uint8ClampedArray(d.colors.buffer, d.colors.byteOffset, art.width * art.height * 4), art.width, art.height), 0, 0);

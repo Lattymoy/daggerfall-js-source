@@ -141,8 +141,8 @@
   {
     "name": "STOREFRONT-a-mount-look-dyeing-the-tack",
     "file": "src/systems/horse/horseCoats.js",
-    "old": "      if (l.mount && !mountInto(out, i * 4, l.mount, l.seed, (x - x0) / unit, down / unit, down / hideH, x, r, legs)) out[i * 4 + 3] = 0;",
-    "new": "      if (l.mount && !mountInto(out, i * 4, l.mount, l.seed, (x - x0) / unit, down / unit, down / hideH, x, r, legs)) out[i * 4 + 3] = 0;\n      if (l.mount) for (let q = 0; q < w * h; q++) out[q * 4] = 255;",
+    "old": "      for (let j = 0; j < pts.length; j++) paint(pts[j], true);",
+    "new": "      for (let j = 0; j < pts.length; j++) paint(pts[j], true);\n      for (let q = 0; q < w * h; q++) out[q * 4] = 255;",
     "tests": [
       "test/systems/horse/mountlook.test.js"
     ]

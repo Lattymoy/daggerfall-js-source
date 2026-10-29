@@ -444,10 +444,10 @@ test('COATS1 the wiring: both exterior hosts bear the horses each frame; the rig
   for (const host of ['scenes/world.js', 'scenes/exterior.js']) assert.match(rd(host), /const hccTick = \(dt, nowMs\) => \{\n {4}birthHorses\(playerEntity\.items\);/, host);
   assert.match(rd('combat/weapon/weaponRig.js'), /horseLook: entity \? ownMountLook\(riddenHorseLook\(entity\.items \?\? \[\]\)\) : 0/);   // PIN MOVED (STOREFRONT: my mount look over it)
   assert.match(rd('player/eyeOfTheBeholder/eotbBody.js'), /horse: last\.horseLook \?\? 0/);
-  assert.match(rd('player/eyeOfTheBeholder/eotbBody.js'), /lookedPixels\(s, img\)/);
+  assert.match(rd('player/eyeOfTheBeholder/eotbBody.js'), /const riders = s\.horse \? await ridersReady\(\) : null;[\s\S]*lookedPixels\(s, img, riders\)/);   // PIN MOVED (AUDIT-STOREFRONT: its rider spared)
   assert.match(rd('player/eyeOfTheBeholder/eotbBody.js'), /renderer\?\.evictTexture\?\.\(k\.replace\(':', '_'\)\)/, 'a look left behind on my own rider is let go');
   assert.match(rd('net/peer/peerRiders.js'), /horse: peerMountLook\(peer\.id, pose\.rc \| 0, feet\)/);   // PIN MOVED (STOREFRONT: the rider's mount look over it; the wire audit: where it stands, for the Others' effects choice)
-  assert.match(rd('net/peer/peerRiders.js'), /lookedPixels\(s, raw\)/);
+  assert.match(rd('net/peer/peerRiders.js'), /const riders = s\.horse \? await ridersReady\(\) : null;[\s\S]*lookedPixels\(s, raw, riders\)/);   // PIN MOVED (AUDIT-STOREFRONT: its rider spared)
   assert.match(rd('scenes/world.js'), /rc: riding \? riddenHorseLook\(playerEntity\.items \?\? \[\]\) \|\| undefined : undefined/);
   assert.match(rd('world/wagonModels.js'), /horseLook: \(\) => riddenHorseLook\(items\(\)\)/, 'THE ONE CONSTRUCTION SEAM: both hosts\' pools');
   assert.match(rd('scenes/world.js'), /horseArt: \(look = 0\) => !!hcc\.presentation\.horseArt\.ensureLook\(look\)/, 'the town watch\'s throw in its look');

@@ -29,7 +29,7 @@ import { orientationFor, portrayedYaw, frameCount, frameTime, chooseTable, speed
 import { getMeleeWeaponAnimTime } from '../../characters/weaponStates.js';
 import { EOTB_FOOT_SET_COUNT } from '../../player/classSkins.js';   // PEERFX3: a class skin is a set past the mod's
 import { spriteMarks, spriteArmsSeen } from '../../render/armoryPose.js';   // ARMORY: where the body stands in its own picture
-import { spriteFor, eotbSpriteUrl, spriteSize, spriteOffset, spriteArtScale, flipRows, worldOrderColors, lookedPixels } from '../../player/eyeOfTheBeholder/eotbSprite.js';
+import { spriteFor, eotbSpriteUrl, spriteSize, spriteOffset, spriteArtScale, flipRows, worldOrderColors, lookedPixels, ridersReady } from '../../player/eyeOfTheBeholder/eotbSprite.js';
 import { decodePng } from '../../systems/textureReplacement.js';
 import { isLayeredKey, decodeLayered, outfitOfItems, layeredGenderOf, LAYERED_OWN } from '../../player/eyeOfTheBeholder/layeredArmor.js';   // WORN-ARMOUR: a walker in the armour it wears
 import { modSetting } from '../../systems/modSettings.js';   // LAYERED-PEERS: whether this player wears Layered Gearing
@@ -140,9 +140,10 @@ export function createEotbArt({ renderer = null, urlFor = eotbSpriteUrl, decode 
     else { img = decode(url); img.catch(() => { if (pixels.get(s.key) === img) pixels.delete(s.key); }); }
     pixels.set(s.key, img);
     if (pixels.size > RIDER_PIXELS_KEPT) pixels.delete(pixels.keys().next().value);   // PEER-ART: the longest unasked goes
-    const p = img.then((raw) => {
+    const p = img.then(async (raw) => {
+      const riders = s.horse ? await ridersReady() : null;   // AUDIT-STOREFRONT: the rider the dye spares
       if (tex.get(k) !== p) return null;   // COATS1: let go while in flight - never uploaded
-      const { width, height, colors } = lookedPixels(s, raw);   // COATS1: a rider's mount in its look
+      const { width, height, colors } = lookedPixels(s, raw, riders);   // COATS1: a rider's mount in its look
       const px = s.mirror ? flipRows(colors, width, height) : colors;
       renderer.uploadTexture(s.archive, s.rec, { width, height, colors: px });
       return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }) };   // ARMORY: the body's place in the picture, read once

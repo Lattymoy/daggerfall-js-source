@@ -494,7 +494,7 @@ export function createHorseCartPool({
       const views = [..._stillPx];
       for (; up.views < views.length && _dyeBudget > 0; up.views++, _dyeBudget--) {
         const [v, px] = views[up.views];
-        renderer.uploadTexture(HORSE_ARCHIVE, horseStillRecord(v, c), recolorHorse(px, c));
+        renderer.uploadTexture(HORSE_ARCHIVE, horseStillRecord(v, c), recolorHorse(px, c, { view: v }));   // AUDIT-STOREFRONT: its view, for a look's chest
       }
     }
     const still = up.views >= _stillPx.size;
@@ -503,7 +503,7 @@ export function createHorseCartPool({
       for (; up.walks < frames.length && _dyeBudget > 0; up.walks++, _dyeBudget--) {
         const [k, px] = frames[up.walks];
         const [v, f] = k.split('#').map(Number);
-        renderer.uploadTexture(HORSE_ARCHIVE, horseWalkRecord(v, f, c), recolorHorse(px, c));
+        renderer.uploadTexture(HORSE_ARCHIVE, horseWalkRecord(v, f, c), recolorHorse(px, c, { view: v }));
       }
     }
     return still && (up.walks >= _walkPx.size || !_walkReady);

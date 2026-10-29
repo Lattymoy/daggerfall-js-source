@@ -27,7 +27,7 @@ Severity: BLOCKER a dupe, a loss, a crash or a hole any player can use; HIGH a b
 wrong result a player meets; LOW an edge, a risk, a word or the record alone. Every FIXED is pinned in the test its
 verdict names, and where it changed code it has a mutant in the lane's list (`tools/mutants/storefront_shopaudit.json`,
 `storefront_passaudit.json`, `storefront_renderaudit.json`, `storefront_seasonaudit.json`, `storefront_portraits.json`,
-`storefront_mountpoints.json`, and lane 2's).
+`storefront_mountpoints.json`, `storefront_mountlooks.json`, and lane 2's).
 
 ## Findings
 
@@ -119,7 +119,9 @@ Lane 3's #4 is lane 2's #3.
 | V3 | MED | A bundle's stage, a booster's and a pass's showed a name and no picture | FIXED: one door for a ware's picture (`ui/wareArt.js`); a bundle lays out its pieces; a booster's and a pass's banner is built round the season's art |
 | V4 | MED | The stages wore a stand-in, never the player; the Pyre burned a shadow behind its pillar | FIXED: the player's own body, asked once a window |
 | V5 | LOW | A long title's big plate ran out of its stage | FIXED: fitted with container units at every width |
-| V6 | MED | A mount look dyed the hide alone: the Spectral Steed kept a black mane, tail and far legs, on the sprites and on the 3D horse | FIXED: the look shades the horse's points (`horseCoats.js` pointsOf, POINT_SHADES) and the 3D horse's hair (`horseRig.js` HAIR_ROWS); no rider's bow, steel or cloak moves. `mountlook` (PIN MOVED) |
+| V6 | MED | A mount look dyed the hide alone: the Spectral Steed kept a black mane, tail and far legs, on the sprites and on the 3D horse | FIXED: the look shades the horse's points (`horseCoats.js` pointsOf) and the 3D horse's hair (`horseRig.js` HAIR_ROWS); no rider's bow, steel or cloak moves. `mountlook` (PIN MOVED) |
+| V9 | HIGH | "The horse designs are awful" (the owner): each look laid flat patterns in the picture's box - a grid of holes, rows of scales, stripes - over head and legs alike | FIXED: each look painted by the horse's own shape (`systems/horse/mountPaint.js`: its ramp by the art's light, its rim, legs and strands), the riding view's mane and the 3D horse's chest and legs included; the views said by their callers. `mountlook` (PIN MOVED), `mountpaint` |
+| V10 | HIGH | A coat or a look dyed Eye of the Beholder's riders: a face joined to the neck by an arm on the reins took the hide, dark hair the points, in every view (COATS1's, seen when the looks made it blue) | FIXED: each picture's rider found by the other four sets and baked (`tools/bakeEotbRiders.mjs`, `eotbRiderMasks.js`), spared by the dye. `eotbriders` |
 | V7 | MED | The effects kit was written to the stored session and dropped by it, so a reload wore none until the service spoke (found when main's ARMORY-SEEN pin met it at the merge) | FIXED: `keepSession` keeps it. `armorylive` |
 | V8 | - | The pass-only wares (the Tonal kill, the Brass gate, the Automaton, the season's titles, glyphs and auras) | Seen in time on the stage after R1-R10: sound, nothing changed |
 
@@ -127,6 +129,8 @@ Lane 3's #4 is lane 2's #3.
 
 - A bridle drawn in the horse's black takes the look's shade with the mane: across the hide it is drawn as the shading
   is, a dark band, and a rule that spared it blacked the small sprites' shading (V6; Storefront.md section 7).
+- A few horse pixels that every other set's rider covers keep the coat's colour under a look: no set shows them, so
+  none can say they are the horse's (V10; trusting one set's word brought the riders' skin back).
 - A kill past 45 m of its killer is told to nobody (E5): peers refuse it under E1's tie, and a reach a shot's length
   would let a peer lay effects in anyone's face again.
 - A blow's fields (`hk`, `hp`) still ride every pose, as PEERFX1 made them: dropping `hk` would read to the lone sleep as

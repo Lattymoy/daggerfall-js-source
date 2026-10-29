@@ -142,19 +142,29 @@ A mount look is the account's and is laid over the horse I ride: the riding view
 horse and my standing horse. It is a fifth part of the horse's look, dyed as a coat is dyed (`systems/horse/horseCoats.js`,
 COATS1). The coat stays the player's free choice on the Stable card and comes back when the look is taken off.
 
-A look also dyes the horse's points: the near-black of its mane, tail and far legs, joined to the hide (AUDIT-STOREFRONT,
-`horseCoats.js:"function pointsOf("`). A coat keeps them black, which left a ghost with a black tail. Each look gives
-them its own shadow: a deep blue, the gold's shadow, dark steel. The Warhorse keeps its black. A rider's bow rising off
-the neck is not a point, and a line hanging in the air is not one. The saddle is never one. A bridle drawn in the same
-black is one: across the hide it is drawn as the shading is, and a rule that kept it blacked the small sprites' shading.
-The 3D horse's mane and tail are their own picture, shaded the same a few rows a frame (`world/horseRig.js` HAIR_ROWS).
+A look also dyes the horse's points: the near-black of its mane, tail and far legs, joined to the hide, and the grey
+shine among them (AUDIT-STOREFRONT, `horseCoats.js:"function pointsOf("`). A rider's bow rising off the neck is not a
+point, and a line hanging in the air is not one. The saddle is never one. A bridle drawn in the same black is one: across
+the hide it is drawn as the shading is, and a rule that kept it blacked the small sprites' shading. The 3D horse's mane
+and tail are their own picture, shaded the same a few rows a frame (`world/horseRig.js` HAIR_ROWS).
+
+Each look is painted by the horse's own shape (`systems/horse/mountPaint.js`; the owner: "the horse designs are awful"):
+a ramp of its own colours laid by the art's light, so the art's shading stays its shading, and its marks where the horse
+has them - its rim, its legs, a strand's way out from the hide. The first looks laid flat patterns in the picture's box,
+a grid of holes, rows of scales and stripes, over head and legs alike. A picture's view (the five every horse sprite is
+drawn in) says which way it faces and whether its chest is seen. The 3D horse's chest is read off its texel map.
+
+Eye of the Beholder's riders are spared (`player/eyeOfTheBeholder/eotbRiderMasks.js`, baked by
+`tools/bakeEotbRiders.mjs`). The five mounted sets are one horse under five riders, so a pixel the other four disagree
+on is its rider's. The dye took a rider's skin for hide and its hair for points, in every view; a rule read off one
+picture flickered from frame to frame. A few horse pixels that every other set's rider covers keep the coat's colour.
 
 | Look | Tier | What it is |
 | --- | --- | --- |
-| Spectral Steed | Standard | a pale blue ghost, light flowing along it, see-through at its legs; glowing prints and wisps |
-| Dawnfire Charger | Premium | radiant gold, the legs burning up from the hooves; a mane of golden fire, sun motes, burning prints |
-| Daedric Warhorse | Exclusive | black and crimson under scaled barding with burning edges; a burning mane, smoke and embers off the hooves |
-| Brass Automaton | the Deluxe Pass | riveted brass plates set with aetherium studs; sparks off the hooves, steam from the chest |
+| Spectral Steed | Standard | a pale blue ghost lit from within, mist through it, its rim glowing, its legs dissolving toward the hooves; a mane and tail of glowing wisps |
+| Dawnfire Charger | Premium | radiant gold, a sheen along its back, its legs burning white from the hooves; a mane and tail of fire |
+| Daedric Warhorse | Exclusive | obsidian, lit red from below by its own fire, embers on its hide, its hooves burning; a mane and tail of fire |
+| Brass Automaton | the Deluxe Pass | polished brass in riveted plates, its joints ringed, an aetherium heart at its chest; a steel mane |
 
 The look rides no wire of its own: the horse's code on the wire is the item's four parts (`wireHorseLook`), and each
 screen lays a rider's look on from its token (`systems/horse/mountLook.js`). The beat - hoofprints, a mane, steam - is the
