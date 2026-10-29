@@ -11695,13 +11695,23 @@
   "by": "claude-in-session"
  },
  "sea.wild.chipTip": {
-  "en": "9e14a86d940a",
-  "tr": "5c85b9496ea7",
+  "en": "88c4bc67ac34",
+  "tr": "285e2bdd34d6",
+  "by": "claude-in-session"
+ },
+ "sea.wild.dropLate": {
+  "en": "81c1d7e08802",
+  "tr": "0613a2c37a70",
   "by": "claude-in-session"
  },
  "sea.wild.enter": {
-  "en": "f49115e892b2",
-  "tr": "10779c7d7a64",
+  "en": "14bca5e366ed",
+  "tr": "de47533edf6b",
+  "by": "claude-in-session"
+ },
+ "sea.wild.walkInto": {
+  "en": "eec82857378c",
+  "tr": "f0d487fb4aba",
   "by": "claude-in-session"
  },
  "settings.language.machine": {
@@ -12415,8 +12425,8 @@
   "by": "claude-in-session"
  },
  "tutorials.wildZone.body2": {
-  "en": "5c2566aaad07",
-  "tr": "c0c91d75df79",
+  "en": "87989055cf87",
+  "tr": "fd6b5fd56034",
   "by": "claude-in-session"
  },
  "wagon.upkeep.boons.failing": {
@@ -12430,8 +12440,8 @@
   "by": "claude-in-session"
  },
  "wild.death.kept": {
-  "en": "5677b5a00569",
-  "tr": "e36c038702f2",
+  "en": "e9a05a7b45a6",
+  "tr": "15cbf1447f0c",
   "by": "claude-in-session"
  },
  "wild.death.last": {
@@ -12499,6 +12509,16 @@
   "tr": "e3231f8e99c9",
   "by": "claude-in-session"
  },
+ "wild.insure.line": {
+  "en": "3bd9cec6aa23",
+  "tr": "0549fdda2325",
+  "by": "claude-in-session"
+ },
+ "wild.legend.offline": {
+  "en": "86db54caef14",
+  "tr": "119c8891872b",
+  "by": "claude-in-session"
+ },
  "wild.safe.chip": {
   "en": "3441354558b8",
   "tr": "935fbef52ce0",
@@ -12520,13 +12540,13 @@
   "by": "claude-in-session"
  },
  "wild.zone.chipTip": {
-  "en": "fda83308207b",
-  "tr": "cca587d1ff96",
+  "en": "687871882d2f",
+  "tr": "f2fabb1086e9",
   "by": "claude-in-session"
  },
  "wild.zone.enter": {
-  "en": "006e183d3d6a",
-  "tr": "6f7d7ca7e449",
+  "en": "d8ef5b322bf0",
+  "tr": "a84af5d44f3e",
   "by": "claude-in-session"
  }
 }
