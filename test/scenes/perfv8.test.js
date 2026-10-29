@@ -30,7 +30,7 @@ const WORLD = new URL('../../src/scenes/world.js', import.meta.url);
 /** The statements moved out of the world host's frame, in the order they stand. */
 const CLOSURES = ['frameLook', 'frameMusic', 'frameMotor', 'frameDwTerrainPass', 'frameOriginShift', 'framePixelChanged', 'frameWeatherDrain', 'frameSnowCover', 'frameDistantStorm', 'frameDreadStorm', 'frameGateStorm',
   'frameLighting', 'frameLanterns', 'frameBodies', 'framePixelWalk', 'frameRing', 'frameWater', 'frameLocationRect', 'framePopulation', 'framePools', 'frameGrass', 'frameBanners',
-  'frameShipFlags', 'frameHaze', 'frameCurtains', 'frameSpells', 'frameHud', 'framePace'];
+  'frameShipFlags', 'frameHaze', 'frameCurtains', 'frameArrows', 'frameSpells', 'frameHud', 'framePace'];
 
 test('PERF-V8: every `frame` in the world host\'s graph, and every closure moved out of one, is bytecode V8 optimizes - under --max-optimized-bytecode-size, and under three quarters of it (mutant: a moved statement folded back into the frame)', (t) => {
   const opts = spawnSync(process.execPath, ['--v8-options'], { encoding: 'utf8' }).stdout;

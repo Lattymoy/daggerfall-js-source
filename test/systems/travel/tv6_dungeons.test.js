@@ -382,6 +382,7 @@ test('AUDIT OW4 D1/D6 host, then MOUNTAINS WALKABLE (the owner, the Wrothgarian 
     tvMooredDry: () => null,   // AUDIT OW5 S3: no moored boat here
     planJourney,   // PIN MOVED (PLAN-SLICES): the walk runs through the slicer
     travelPathUsesRoads: () => true, TRAVEL_PATH_TEXT: { fellBack: 'fell back' },   // OW-PATH: the Roads mode, the default
+    dragonMounted: () => false, dragonFlightPlan: () => null,   // PIN MOVED (DRAGON6): a journey begun on the dragon is flown - afoot here
   };
   const walkTo = new Function('d', `const { ${Object.keys(d).join(', ')} } = d; return ${m[1]};`)(d);
   const reset = () => { said.length = 0; begun.length = 0; plans.length = 0; };

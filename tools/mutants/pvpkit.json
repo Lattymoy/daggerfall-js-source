@@ -217,7 +217,7 @@
   },
   {
     "name": "PVP-KIT-the-gift-level-unclamped",
-    "file": "src/ui/pvpKitBar.js",
+    "file": "src/ui/pvpSpellMenu.js",
     "old": "level: gift ? Math.min(CAST_LEVEL_MAX, level) : level,",
     "new": "level,",
     "tests": [
@@ -226,7 +226,7 @@
   },
   {
     "name": "PVP-KIT-a-refusal-read-as-a-cast",
-    "file": "src/ui/pvpKitBar.js",
+    "file": "src/ui/pvpSpellMenu.js",
     "old": "  if (magic.readySpell?.(sp) === false) return 'refused';\n",
     "new": "",
     "tests": [
@@ -235,7 +235,7 @@
   },
   {
     "name": "PVP-KIT-damage-never-fired",
-    "file": "src/ui/pvpKitBar.js",
+    "file": "src/ui/pvpSpellMenu.js",
     "old": "  if (!magic.spellArmed?.()) return 'cast';",
     "new": "  return 'cast';",
     "tests": [
@@ -243,12 +243,13 @@
     ]
   },
   {
-    "name": "PVP-KIT-the-hotbar-claim-unread",
-    "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "  if (keyClaim?.(e)) return;   // PVP-KIT",
-    "new": "  // PVP-KIT",
+    "name": "PVP-KIT-the-kit-press-unread",
+    "file": "src/systems/quickslots.js",
+    "old": "const r = kitPress?.(i, { ...e.kit }) ?? 'none';",
+    "new": "const r = 'none';",
     "tests": [
-      "test/systems/wild/pvpkit.test.js"
+      "test/systems/wild/pvpkit.test.js",
+      "test/systems/wild/pvpset.test.js"
     ]
   },
   {
@@ -325,7 +326,7 @@
   },
   {
     "name": "PVP-KIT-REZ-an-ally-frame-asked",
-    "file": "src/ui/pvpKitBar.js",
+    "file": "src/ui/pvpSpellMenu.js",
     "old": "s.id !== 'damage' && s.id !== 'resurrect' && allyAimed",
     "new": "s.id !== 'damage' && allyAimed",
     "tests": [

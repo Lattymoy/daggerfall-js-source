@@ -1,0 +1,182 @@
+[
+  {
+    "name": "DRAGON5c-the-seed-unread",
+    "file": "src/systems/dragon/dragonMount.js",
+    "old": "Math.max(1, parseInt(it.dragonId.slice(-4), 16)) : 0);",
+    "new": "1 : 0);",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5c-a-horse-fed-oil",
+    "file": "src/systems/steedCare.js",
+    "old": "export const eatsFood = (steed, f) => !!f && (isDragonMount(steed) ? f.dragon === true : f.dragon !== true);",
+    "new": "export const eatsFood = (steed, f) => !!f;",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5c-the-dragon-refused-its-food",
+    "file": "src/systems/steedCare.js",
+    "old": "  if (!isSteedItem(horse) || !Array.isArray(items) || !items.includes(horse)) return { ok: false, text: STEED_TEXT.noHorse, gained: 0 };   // DRAGON5c: or the dragon",
+    "new": "  if (!isHorseItem(horse) || !Array.isArray(items) || !items.includes(horse)) return { ok: false, text: STEED_TEXT.noHorse, gained: 0 };   // DRAGON5c: or the dragon",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5c-the-oil-not-drunk-on-the-road",
+    "file": "src/systems/steedCare.js",
+    "old": "  const kind = isDragonMount(horse) ? 'oil' : 'oats';",
+    "new": "  const kind = 'oats';",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5c-a-waiting-dragon-starved",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "  const dragonWhere = () => { const k = dragonKeep(); return !k || k.where === DRAGON_WHERE.Ridden ? 'with' : 'waiting'; };",
+    "new": "  const dragonWhere = () => 'with';",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5c-flight-free",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "galloping: onDragon && moving && (galloping || dragonAloft()),",
+    "new": "galloping: onDragon && moving && galloping,",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5c-the-gallop-gate-deaf",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "    if (!care || (mode !== 'Horse' && mode !== 'Dragon')) return null;\n    if (base === false) return false;",
+    "new": "    if (!care || mode !== 'Horse') return null;\n    if (base === false) return false;",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5c-the-dragon-unpaced",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "    if (mode === 'Horse' || mode === 'Dragon') {   // DRAGON5c: the dragon's Speed on the ground, as a horse's",
+    "new": "    if (mode === 'Horse') {   // DRAGON5c: the dragon's Speed on the ground, as a horse's",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5c-the-bar-blind",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "    if (!care || (mode !== 'Horse' && mode !== 'Dragon')) return null;\n    const horse = mode === 'Dragon' ? dragon() : ridden();",
+    "new": "    if (!care || mode !== 'Horse') return null;\n    const horse = mode === 'Dragon' ? dragon() : ridden();",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5c-the-rider-pays",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "  const riderPaysGallop = (mode) => !(!!horseCare() && ((mode === 'Horse' && !!ridden()) || (mode === 'Dragon' && !!dragon())));   // DRAGON5c",
+    "new": "  const riderPaysGallop = (mode) => !(!!horseCare() && mode === 'Horse' && !!ridden());   // DRAGON5c",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5c-fed-from-afar",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "      if (!k || !(k.where === DRAGON_WHERE.Ridden || k.near)) return { ok: false, text: DRAGON_CARE_TEXT.notHere };\n",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5c-the-bags-never-drunk-from",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "      const list = from ?? (its.some(isDwarvenOilItem) ? its : bags.some(isDwarvenOilItem) ? bags : its);",
+    "new": "      const list = from ?? its;",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5c-the-winded-word-unsaid",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "  setDragonWindedSource(() => !!horseCare() && !!dragon() && dragonBreath.winded);",
+    "new": "  setDragonWindedSource(() => false);",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5c-a-winded-takeoff",
+    "file": "src/player/dragonRide.js",
+    "old": "  const what = flight.step(dt, { mounted, jump: !!input?.jump, grounded, winded });",
+    "new": "  const what = flight.step(dt, { mounted, jump: !!input?.jump, grounded });",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5c-a-journey-lifts-it-winded",
+    "file": "src/player/dragonRide.js",
+    "old": "  if (_cruise === 'cruise' && mounted && !winded && !flight.aloft() && flight.lift()) _heard?.('took-off');",
+    "new": "  if (_cruise === 'cruise' && mounted && !flight.aloft() && flight.lift()) _heard?.('took-off');",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5c-the-oil-sold-online",
+    "file": "src/systems/upkeep/upkeepItemRows.js",
+    "old": "export const dwarvenOilAvailable = (online) => !online || DWARVEN_OIL_ONLINE;",
+    "new": "export const dwarvenOilAvailable = (online) => true;",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5c-the-oil-unsold",
+    "file": "src/systems/merchantYards.js",
+    "old": ", ...(dwarvenOilAvailable(online) ? [mint(newUpkeepItem(UPKEEP_ITEM.DwarvenOil, YARD_OIL_STACK))] : [])];",
+    "new": ", ...[]];",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5c-the-bond-refused-on-the-dragon",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "item.templateIndex !== TRANSPORT_HORSE && !isDragonMount(item)) out.add('horse');",
+    "new": "item.templateIndex !== TRANSPORT_HORSE) out.add('horse');",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5c-the-oil-uncounted",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "    for (const it of [...pack(), ...dragonBags()]) if (isDwarvenOilItem(it)) out.oil += it.stackCount ?? 1;",
+    "new": "    for (const it of pack()) if (isDwarvenOilItem(it)) out.oil += it.stackCount ?? 1;",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON5c-the-oil-unused",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "    const r = upkeep.act('feedDragon', 0, { from: collection, piece: item, pass });",
+    "new": "    const r = { text: '' };",
+    "tests": [
+      "test/net/dragon/dragon5c_care.test.js"
+    ]
+  }
+]

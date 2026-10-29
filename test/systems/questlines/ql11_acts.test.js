@@ -168,6 +168,7 @@ test('QL11 THE SWEEP, both ways: every kind has a producer in src/; every produc
     'revenant-knelt': ['src/systems/revenant/revenantFate.js'],
     'rite-broken': ['src/net/gate/gateClaims.js'],
     'serpent-slain': ['src/net/serpent/serpentClaims.js'],
+    'dragon-slain': ['src/net/dragon/dragonClaims.js'],   // DRAGON4: the Dwarven Dragon's z1 receipt the service counted (test/net/dragon/dragon4_claims.test.js)
     'ship-struck': ['src/scenes/naval/navalHost.js'],
     'star-held': ['src/net/starfall/starClaims.js'],   // STAR8: a fallen star's receipt the service counted (STAR7's carrier - test/net/starfall/star7_claims.test.js)
     'star-taken': ['src/net/firmament/firmamentBook.js'],
@@ -201,7 +202,7 @@ test('QL11 the kinds: ACT_IDS is the leaf\'s keys, frozen; each kind lower-case 
   assert.ok(Object.isFrozen(ACT_KINDS) && Object.isFrozen(ACT_IDS));
   for (const k of ACT_IDS) assert.match(k, /^[a-z]+(-[a-z]+)*$/, k);
   for (const k of ACT_IDS) assert.ok(typeof ACT_KINDS[k] === 'string' && ACT_KINDS[k].length > 0, `${k} has its family`);
-  assert.equal(ACT_IDS.length, 29);   // PIN MOVED (STAR8): and star-held, a fallen star held; PIN MOVED (AUDIT STAR8 T1): and wyrd-met, a Wyrd Sister's window; PIN MOVED (T-A): and heart-star-held, the Heart-Star held; PIN MOVED (KETCH): and the sky-ketch's three - boarded, a cell banked, the Warden felled
+  assert.equal(ACT_IDS.length, 30);   // PIN MOVED (DRAGON4): and dragon-slain, the Dwarven Dragon slain; PIN MOVED (STAR8): and star-held, a fallen star held; PIN MOVED (AUDIT STAR8 T1): and wyrd-met, a Wyrd Sister's window; PIN MOVED (T-A): and heart-star-held, the Heart-Star held; PIN MOVED (KETCH): and the sky-ketch's three - boarded, a cell banked, the Warden felled
   assert.equal(ACT_KINDS['heart-star-held'], ACT_KINDS['star-held'], 'T-A: the Heart-Star\'s act the endgame\'s, as its star\'s - one family, so the festival\'s finds hear the two as one deed');
   assert.ok(!Object.hasOwn(ACT_KINDS, 'wagon-hauled'), 'no feature sells a wagon\'s load (qlActs.js says why)');
   assert.ok(Object.hasOwn(ACT_KINDS, 'valkynaz-felled'), 'the Weir Road\'s third step waits on it');
