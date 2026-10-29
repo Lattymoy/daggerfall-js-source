@@ -107,6 +107,22 @@ export function footSpeedMult() {
   for (const fn of _footMods.values()) { try { const v = Number(fn()); if (Number.isFinite(v) && v > 0) k *= v; } catch { /* a burden is not the step's problem */ } }
   return k;
 }
+// PVP-RULES (bible/11-Multiplayer/PvP-Rework.md): THE CAPS - a named registry of `fn() -> { mps, jump } | null`, the
+// most metres a second on foot (every pace, never a mount's) and the most jump multiplier; the least of each wins. None
+// registered, or each answering null, is DFU's pace and jump exactly. A departure from DFU, Ledger A.
+const _moveCaps = new Map();
+export function registerMoveCap(name, fn) { if (typeof fn === 'function') _moveCaps.set(name, fn); else _moveCaps.delete(name); }
+/** The caps now: `{ mps, jump }`, Infinity where none holds (a cap that throws is none). */
+export function moveCapNow() {
+  let mps = Infinity, jump = Infinity;
+  for (const fn of _moveCaps.values()) {
+    let c = null;
+    try { c = fn(); } catch { c = null; }
+    if (Number(c?.mps) > 0) mps = Math.min(mps, Number(c.mps));
+    if (Number(c?.jump) > 0) jump = Math.min(jump, Number(c.jump));
+  }
+  return { mps, jump };
+}
 // HOTFIX 2026-08-17 (live mobile report: "jumping has me go in the
 // air but instantly snaps me to the ground"): the motor integrated
 // with RAW RENDER dt - DFU's physics runs in Unity's FixedUpdate at
@@ -2504,9 +2520,12 @@ export class PlayerMotor {
   _pkRunLeapSpeeds(pk, dir) {
     const { along, up } = runLeapLaunch(jumpingSkill(pk.inputs?.() ?? {}), GRAVITY);
     const run = dir ? this._airVelX * dir[0] + this._airVelZ * dir[2] : 0;
-    const boost = this.jumpBoost ? this.jumpBoost() : 1;
-    return [Math.max(along, run + JUMP_SPEED * JUMP_FWD_BOOST), Math.max(up, JUMP_SPEED * boost)];
+    const boost = this._jumpBoostNow();
+    return [Math.max(along, run + JUMP_SPEED * JUMP_FWD_BOOST), Math.max(up, JUMP_SPEED * boost)];   // PVP-RULES: the boost under its cap (the leap's own rise is the skill's, held to 100)
   }
+
+  /** The skill jump's multiplier (AcrobatMotor jumpSpeedMultiplier), under PVP-RULES' cap where one holds. */
+  _jumpBoostNow() { const b = this.jumpBoost ? this.jumpBoost() : 1; return _moveCaps.size ? Math.min(b, moveCapNow().jump) : b; }
 
   /** AUDIT CLIMB-ARC L10: running at pace - the way the body really went last step, PARKOUR_RUN_SHARE of the run's speed or more. */
   _pkAtPace() { return (this._pkPace ?? 0) > 1e-3 && this._pkPace >= PARKOUR_RUN_SHARE * this.speed - 1e-6; }
@@ -3300,6 +3319,7 @@ export class PlayerMotor {
       if (this.isSneaking) speed = sneakSpeed(speed);
     }
     if (rideBase == null && _footMods.size) speed *= footSpeedMult();   // KETCH: the burden - an aether cell in both hands, on every pace on foot
+    if (rideBase == null && _moveCaps.size) speed = Math.min(speed, moveCapNow().mps);   // PVP-RULES: a flagged fighter's pace
     // AUDIT 64 F0 - UpdateSpeed's THIRD statement (PlayerMotor.cs
     // :383-389): `if (playerEnterExit.IsPlayerSwimming &&
     // !PlayerEntity.IsWaterWalking) speed = GetSwimSpeed(speed)`, over
@@ -3450,7 +3470,7 @@ export class PlayerMotor {
         && this.transportMode !== TRANSPORT_MODES.Cart) {
       const boost = this.transportMode === TRANSPORT_MODES.Horse
         ? HORSE_JUMP_MULTIPLIER
-        : (this.jumpBoost ? this.jumpBoost() : 1);
+        : this._jumpBoostNow();
       this.velY = JUMP_SPEED * boost;
       if (this.crouching) this.velY *= CROUCH_JUMP_DELTA;
       if (input.forward !== 0 || input.strafe !== 0) {

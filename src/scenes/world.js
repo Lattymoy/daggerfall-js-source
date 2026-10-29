@@ -1242,6 +1242,7 @@ import { createWildDropHost } from './wildDropHost.js';   // HOST-SPLIT
 import { createWildInsureBook, setWildInsureBook } from '../net/wild/wildInsureBook.js';   // WILD-INSURE: my policies on my gear
 import { createWildGrace } from '../systems/wild/wildGrace.js';   // ZONE-GRACE: safe passage, as the referee says it
 import { createPvpFlagHost } from './pvpFlagHost.js';   // PVP-FLAG: the open zone's flag, on this page
+import { createPvpRulesHost } from './pvpRulesHost.js';   // PVP-RULES: a flagged fighter's limits
 import { createMarketPieces } from './marketPiecesHost.js';   // HOST-SPLIT
 import { createRaidHost } from './raidHost.js';   // HOST-SPLIT
 import { createSpawnGroundHost } from './spawnGroundHost.js';   // HOST-SPLIT
@@ -21159,7 +21160,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   setWildInsureBook(wildInsure);
   wildInsure.read();
   const wildGrace = createWildGrace({ me: () => online?.id ?? null, say: (l) => { setMidScreenText(l); townTalk.say(l); } });   // ZONE-GRACE (systems/wild/wildGrace.js)
-  const pvpFlag = createPvpFlagHost(() => online, playerEntity, setMidScreenText, townTalk);   // PVP-FLAG (scenes/pvpFlagHost.js)
+  const pvpFlag = createPvpRulesHost(createPvpFlagHost(() => online, playerEntity, setMidScreenText, townTalk), player, playerEntity, setMidScreenText).flag;   // PVP-FLAG (scenes/pvpFlagHost.js); PVP-RULES (scenes/pvpRulesHost.js): a flagged fighter's limits
   const _duelSent = new Map();   // my blow's number -> { kind, weapon } - what it was
   let _duelLastWeapon = null;    // INT8: the weapon of my last strike - the referee's word on it names no number
   let _duelFoe = null;      // my opponent as the HUD's target bar reads a foe ({ entity: { name, health, maxHealth }, dead })
