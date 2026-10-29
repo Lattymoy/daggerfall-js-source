@@ -38,7 +38,7 @@
   {
     "name": "GUILD-YARD-the-halls-look-unanswered",
     "file": "server-account/src/homes.js",
-    "old": "          ...lookFor(h, h.kin === 1),   // GUILD-YARD: how its keepers painted it, to everyone (AUDIT HOME-VOTE A3: but a shunned hall's)\n",
+    "old": "      ...lookFor(h, h.kin === 1),   // GUILD-YARD: how its keepers painted it, to everyone (AUDIT HOME-VOTE A3: but a shunned hall's)\n",
     "new": "",
     "note": "AUDIT HOME-VOTE A3 (PIN MOVED): the hall's paint through lookFor, a shunned hall's to its guild alone",
     "tests": [

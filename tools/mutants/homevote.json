@@ -342,8 +342,8 @@
   {
     "name": "HOME-VOTE-score-unsaid",
     "file": "server-account/src/homes.js",
-    "old": "        ...votesOf(h),   // HOME-VOTE\n      };",
-    "new": "      };",
+    "old": "    ...votesOf(h),   // HOME-VOTE\n  };",
+    "new": "  };",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -372,8 +372,8 @@
   {
     "name": "HOME-VOTE-insider-unsaid",
     "file": "server-account/src/homes.js",
-    "old": "          ...(h.kin === 1 && rank == null ? { insider: true } : {}),",
-    "new": "          ...({}),",
+    "old": "      ...(h.kin === 1 && rank == null ? { insider: true } : {}),",
+    "new": "      ...({}),",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -832,8 +832,8 @@
   {
     "name": "HOME-VOTE-II-hall-score-unsaid",
     "file": "server-account/src/homes.js",
-    "old": "          ...votesOf(h),   // HOME-VOTE\n        };",
-    "new": "        };",
+    "old": "      ...votesOf(h),   // HOME-VOTE\n    };",
+    "new": "    };",
     "tests": [
       "test/net/homevote.test.js"
     ],

@@ -96,8 +96,8 @@
   {
     "name": "ACCOUNT-HOMES-crossed-the-realms-alone",
     "file": "server-account/src/homes.js",
-    "old": "      const crossed = mine && !deedRow && !(Number(h.paid) > 0);",
-    "new": "      const crossed = mine && !deedRow && !(Number(h.paid) > 0) && REALM_ID_RE.test(String(h.char_id));",
+    "old": "  const crossed = mine && !deedRow && !(Number(h.paid) > 0);",
+    "new": "  const crossed = mine && !deedRow && !(Number(h.paid) > 0) && REALM_ID_RE.test(String(h.char_id));",
     "tests": [
       "test/systems/homeprice.test.js",
       "test/server/account_homes.test.js"

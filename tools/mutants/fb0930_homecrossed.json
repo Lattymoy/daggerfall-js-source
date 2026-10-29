@@ -32,8 +32,8 @@
   {
     "name": "HOME-CROSSED-every-house-of-mine-crossed",
     "file": "server-account/src/homes.js",
-    "old": "      const crossed = mine && !deedRow && !(Number(h.paid) > 0);",
-    "new": "      const crossed = mine && !deedRow;",
+    "old": "  const crossed = mine && !deedRow && !(Number(h.paid) > 0);",
+    "new": "  const crossed = mine && !deedRow;",
     "tests": [
       "test/systems/online/fb0930_homecrossed.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "HOME-CROSSED-anothers-house-marked",
     "file": "server-account/src/homes.js",
-    "old": "      const crossed = mine && !deedRow && !(Number(h.paid) > 0);",
-    "new": "      const crossed = !deedRow && !(Number(h.paid) > 0);",
+    "old": "  const crossed = mine && !deedRow && !(Number(h.paid) > 0);",
+    "new": "  const crossed = !deedRow && !(Number(h.paid) > 0);",
     "tests": [
       "test/systems/online/fb0930_homecrossed.test.js"
     ],

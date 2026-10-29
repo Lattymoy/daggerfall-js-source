@@ -458,17 +458,22 @@ function offerFor(h) {
   return out;
 }
 
-export async function homesInTown({ db, nowS = Math.floor(Date.now() / 1000) }, player, { mapId, character = null } = {}, { seats = false } = {}) {
-  if (!homeMapIdOk(mapId)) return { error: 'bad-home' };
-  // HOME-RENT: each home's rooms still free to rent (how many, and the cheapest a day), and - for the character the
-  // caller names - the end of its own tenancy there, which opens the door to it
-  const me = typeof character === 'string' && CHAR_ID_RE.test(character) ? character : '';
-  // GUILD1d: a hall's guild (its name, tag and heraldry) and the named character's rank in it; a home whose owner opened
-  // it to their guild, whether the named character is in that guild with them
-  const homesRead = db.prepare(`SELECT h.building_key, h.player, h.char_id, h.owner_name, h.entry, h.paid, h.rent_due, h.look, h.guild_id, h.deed, h.score,
+// HOME-VOTE (homeVotes.js): each home's score - its votes summed, kept on its row (AUDIT A2) - and the caller's own vote,
+// said where there is one
+const votesOf = (h) => ({ ...(Number(h.score) ? { score: Number(h.score) } : {}), ...(homeMyVoteOf(h.my_vote) ? { vote: homeMyVoteOf(h.my_vote) } : {}) });
+// AUDIT HOME-VOTE A3: a shunned home's paint is its insiders' alone - said to nobody else (homeVotes.js homeShownTo's law)
+const lookFor = (h, insider) => (insider || !homeShunned(Number(h.score)) ? lookOfRow(h) : {});
+
+/** HOME-RENT: a home's rooms still free to rent at `now` (SQL - a bind or a column): how many, and the cheapest a day.
+ *  The town's read and a home cell's build (homeCells.js) count them with this one text. */
+export const roomsFreeSql = (/** @type {string} */ now) => `(SELECT COUNT(*) FROM home_rooms r WHERE r.map_id = h.map_id AND r.building_key = h.building_key AND r.listed = 1 AND (r.tenant IS NULL OR r.until <= ${now})) AS vacant,
+      (SELECT MIN(r.price) FROM home_rooms r WHERE r.map_id = h.map_id AND r.building_key = h.building_key AND r.listed = 1 AND (r.tenant IS NULL OR r.until <= ${now})) AS rent_from`;
+
+/** The homes of a town that `where` names (SQL after the town's own clause), each with every column its answer is made
+ *  of. Binds: ?1 now, ?2 the caller, ?3 the character named, ?4 the town, ?5 HOME_TOWN_MAX. */
+const homesReadSql = (/** @type {string} */ where) => `SELECT h.building_key, h.player, h.char_id, h.owner_name, h.entry, h.paid, h.rent_due, h.look, h.guild_id, h.deed, h.score,
       g.name AS guild_name, g.tag AS guild_tag, g.heraldry AS guild_heraldry,
-      (SELECT COUNT(*) FROM home_rooms r WHERE r.map_id = h.map_id AND r.building_key = h.building_key AND r.listed = 1 AND (r.tenant IS NULL OR r.until <= ?1)) AS vacant,
-      (SELECT MIN(r.price) FROM home_rooms r WHERE r.map_id = h.map_id AND r.building_key = h.building_key AND r.listed = 1 AND (r.tenant IS NULL OR r.until <= ?1)) AS rent_from,
+      ${roomsFreeSql('?1')},
       (SELECT MAX(r.until) FROM home_rooms r WHERE r.map_id = h.map_id AND r.building_key = h.building_key AND r.tenant = ?2 AND r.tenant_char = ?3 AND r.until > ?1) AS tenancy,
       (SELECT m.rank FROM guild_members m WHERE m.guild_id = h.guild_id AND m.player = ?2 AND m.char_id = ?3) AS my_rank,
       (h.guild_id IS NULL AND h.entry = 'guild' AND EXISTS (SELECT 1 FROM guild_members a JOIN guild_members b ON b.guild_id = a.guild_id
@@ -479,7 +484,23 @@ export async function homesInTown({ db, nowS = Math.floor(Date.now() / 1000) }, 
       (SELECT o.id || ':' || o.price || ':' || o.keep_decor || ':' || o.keep_items FROM home_offers o
         WHERE o.map_id = h.map_id AND o.building_key = h.building_key AND o.buyer = ?2 AND o.state = 'open' AND o.until > ?1 LIMIT 1) AS offer_for,
       (SELECT o.id FROM home_offers o WHERE o.map_id = h.map_id AND o.building_key = h.building_key AND o.seller = ?2 AND o.state = 'open' AND o.until > ?1 LIMIT 1) AS giving
-    FROM homes h LEFT JOIN guilds g ON g.id = h.guild_id WHERE h.map_id = ?4 ORDER BY h.building_key LIMIT ?5`).bind(nowS, player.id, me, mapId, HOME_TOWN_MAX);
+    FROM homes h LEFT JOIN guilds g ON g.id = h.guild_id WHERE h.map_id = ?4${where} ORDER BY h.building_key LIMIT ?5`;
+
+/** YC4 (bible/11-Multiplayer/Yard-Cells.md section 14.3): the homes of a town that are anything of the caller's - its
+ *  account's, a hall of a guild it is in, a room it rents, a vote it cast, an open offer it made or was made, a home
+ *  open to its character's guildmates - picked by the caller's own rows before any home is read. Binds as homesReadSql. */
+const OWN_KEYS_SQL = ` AND h.building_key IN (SELECT building_key FROM homes WHERE player = ?2 AND map_id = ?4
+      UNION SELECT hh.building_key FROM guild_members k JOIN homes hh ON hh.guild_id = k.guild_id WHERE k.player = ?2 AND hh.map_id = ?4
+      UNION SELECT building_key FROM home_rooms WHERE tenant = ?2 AND tenant_char = ?3 AND until > ?1 AND map_id = ?4
+      UNION SELECT building_key FROM home_votes WHERE player = ?2 AND map_id = ?4
+      UNION SELECT building_key FROM home_offers WHERE map_id = ?4 AND state = 'open' AND until > ?1 AND (buyer = ?2 OR seller = ?2)
+      UNION SELECT gh.building_key FROM guild_members b JOIN guild_members a ON a.guild_id = b.guild_id JOIN homes gh ON gh.player = a.player
+        WHERE b.player = ?2 AND b.char_id = ?3 AND gh.map_id = ?4 AND gh.guild_id IS NULL AND gh.entry = 'guild')`;
+
+/** The homes `where` names (homesReadSql), read in one batch with the named character's tombstone and the town's Open
+ *  Gates: `{ error: 'dead' }`, or the rows and whether the gates stand open. */
+async function townHomesRead(/** @type {any} */ db, /** @type {any} */ player, /** @type {string} */ me, /** @type {unknown} */ mapId, /** @type {number} */ nowS, /** @type {boolean} */ seats, /** @type {string} */ where) {
+  const homesRead = db.prepare(homesReadSql(where)).bind(nowS, player.id, me, mapId, HOME_TOWN_MAX);
   // SEAT1d (Seats-Arc 7.6): OPEN GATES - while the town's holder proclaims it, every home there stands open to all (a
   // reader the seats are open to); each owner's own choice is kept, and its own view shows it. HOMES-SHED (2026-10-13,
   // the database overloaded from 14:11 UTC; this route the service's busiest, 88,079 asks in its hour): its read rides
@@ -492,59 +513,106 @@ export async function homesInTown({ db, nowS = Math.floor(Date.now() / 1000) }, 
   if (tombRead && answers.shift()?.results?.length) return { error: 'dead' };
   const [{ results = [] }, gates = null] = answers;
   const open = !!gates?.results?.length;
-  // HOME-VOTE (homeVotes.js): each home's score - its votes summed, kept on its row (AUDIT A2) - and the caller's own vote,
-  // said where there is one
-  const votesOf = (h) => ({ ...(Number(h.score) ? { score: Number(h.score) } : {}), ...(homeMyVoteOf(h.my_vote) ? { vote: homeMyVoteOf(h.my_vote) } : {}) });
-  // AUDIT HOME-VOTE A3: a shunned home's paint is its insiders' alone - said to nobody else (homeVotes.js homeShownTo's law)
-  const lookFor = (h, insider) => (insider || !homeShunned(Number(h.score)) ? lookOfRow(h) : {});
+  return { results, open };
+}
+
+/** FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held for the named character is no online home to it - its door, storage
+ *  and bed are Daggerfall's, off the deed in its save - so its answer leaves it out (a build that reads every row of its
+ *  own as an online home kept its things under another scene); to every other reader it is its knight's home, shut. */
+const deedHiddenFrom = (h, player, me) => h.deed === 1 && h.player === player.id && h.char_id === me;
+
+/** A town's home as one caller reads it (`viewer`: the caller, the character named, now, and whether Open Gates stands) -
+ *  the fields every caller reads alike, and the caller's own. */
+function homeRowOf(h, { player, nowS, open }) {
+  if (h.guild_id != null) {
+    // GUILD1d: A GUILD'S HALL - named by its guild, whose members walk in and whose Officers furnish it; nobody's home
+    const rank = Number.isSafeInteger(h.my_rank) ? h.my_rank : null;
+    return {
+      buildingKey: h.building_key, owner: h.guild_name ?? h.owner_name, entry: h.entry, mine: false,
+      hall: { name: h.guild_name ?? h.owner_name, tag: h.guild_tag ?? '', heraldry: heraldryOfRow(h.guild_heraldry) },
+      // AUDIT GUILD-YARD Y1: a keeper as OWNS keeps it - of the rank, and a realm character (a local one is refused
+      // every write; its decorator stood for nothing)
+      ...(rank != null ? { member: true, ...(hallMay(rank, 'decorate') && h.me_realm === 1 ? { keeper: true } : {}) } : {}),
+      // AUDIT PROF-541 G2: who may say who walks in, as setHallEntry asks it (halls.js) - the rank alone, any character;
+      // `keeper`'s realm clause took the door's "Who may enter" from a local Officer the service would have answered
+      ...(rank != null && hallMay(rank, 'hallEntry') ? { hallEntry: true } : {}),
+      // GUILD-HALL-SALE (2026-10-06, asked: "Guild houses should be able to be sold, like regular houses"): who may sell
+      // it at its door, as sellHall asks it - the rank alone - and the deed share of what the treasury paid, which the
+      // sale pays back into it (with half of what records paid for its pieces, which the door says in words)
+      ...(rank != null && hallMay(rank, 'hall') ? { hallSell: true, refund: homeSaleRefund(Math.max(0, Number(h.paid) || 0)) } : {}),
+      ...(h.kin === 1 && rank == null ? { insider: true } : {}),   // AUDIT HOME-VOTE A5: the account has another character in its guild - no vote, its decor always (a `member` is one already)
+      ...lookFor(h, h.kin === 1),   // GUILD-YARD: how its keepers painted it, to everyone (AUDIT HOME-VOTE A3: but a shunned hall's)
+      ...votesOf(h),   // HOME-VOTE
+    };
+  }
+  const mine = h.player === player.id;
+  const deedRow = Number(h.deed) === 1;
+  // HOME-CROSSED: my own house no record paid for is `crossed` - its door asks no price. ACCOUNT-HOMES: any of the
+  // account's (one from before the realm is every character's now, and no record paid for it either) - never a deed's
+  const crossed = mine && !deedRow && !(Number(h.paid) > 0);
+  // HOME-PRICE: what its sale pays back, as realmRelease pays it, and (C3) the rent held on it, which the sale pays with
+  // it - to the character named when it is a realm character of the account (AUDIT HOME-PRICE L3; ACCOUNT-HOMES: any of
+  // them sells the account's home)
+  const sale = mine && !deedRow && !crossed && Number(h.me_realm) === 1 ? { ...realmSaleOf(h), ...(Number(h.rent_due) > 0 ? { rentDue: Number(h.rent_due) } : {}) } : {};
   return {
-    mapId, ...(open ? { openGates: true } : {}),
-    // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held for the named character is no online home to it - its door, storage
-    // and bed are Daggerfall's, off the deed in its save - so its answer leaves it out (a build that reads every row of its
-    // own as an online home kept its things under another scene); to every other reader it is its knight's home, shut
-    homes: results.filter((h) => !(h.deed === 1 && h.player === player.id && h.char_id === me)).map((h) => {
-      if (h.guild_id != null) {
-        // GUILD1d: A GUILD'S HALL - named by its guild, whose members walk in and whose Officers furnish it; nobody's home
-        const rank = Number.isSafeInteger(h.my_rank) ? h.my_rank : null;
-        return {
-          buildingKey: h.building_key, owner: h.guild_name ?? h.owner_name, entry: h.entry, mine: false,
-          hall: { name: h.guild_name ?? h.owner_name, tag: h.guild_tag ?? '', heraldry: heraldryOfRow(h.guild_heraldry) },
-          // AUDIT GUILD-YARD Y1: a keeper as OWNS keeps it - of the rank, and a realm character (a local one is refused
-          // every write; its decorator stood for nothing)
-          ...(rank != null ? { member: true, ...(hallMay(rank, 'decorate') && h.me_realm === 1 ? { keeper: true } : {}) } : {}),
-          // AUDIT PROF-541 G2: who may say who walks in, as setHallEntry asks it (halls.js) - the rank alone, any character;
-          // `keeper`'s realm clause took the door's "Who may enter" from a local Officer the service would have answered
-          ...(rank != null && hallMay(rank, 'hallEntry') ? { hallEntry: true } : {}),
-          // GUILD-HALL-SALE (2026-10-06, asked: "Guild houses should be able to be sold, like regular houses"): who may sell
-          // it at its door, as sellHall asks it - the rank alone - and the deed share of what the treasury paid, which the
-          // sale pays back into it (with half of what records paid for its pieces, which the door says in words)
-          ...(rank != null && hallMay(rank, 'hall') ? { hallSell: true, refund: homeSaleRefund(Math.max(0, Number(h.paid) || 0)) } : {}),
-          ...(h.kin === 1 && rank == null ? { insider: true } : {}),   // AUDIT HOME-VOTE A5: the account has another character in its guild - no vote, its decor always (a `member` is one already)
-          ...lookFor(h, h.kin === 1),   // GUILD-YARD: how its keepers painted it, to everyone (AUDIT HOME-VOTE A3: but a shunned hall's)
-          ...votesOf(h),   // HOME-VOTE
-        };
-      }
-      const mine = h.player === player.id;
-      const deedRow = Number(h.deed) === 1;
-      // HOME-CROSSED: my own house no record paid for is `crossed` - its door asks no price. ACCOUNT-HOMES: any of the
-      // account's (one from before the realm is every character's now, and no record paid for it either) - never a deed's
-      const crossed = mine && !deedRow && !(Number(h.paid) > 0);
-      // HOME-PRICE: what its sale pays back, as realmRelease pays it, and (C3) the rent held on it, which the sale pays with
-      // it - to the character named when it is a realm character of the account (AUDIT HOME-PRICE L3; ACCOUNT-HOMES: any of
-      // them sells the account's home)
-      const sale = mine && !deedRow && !crossed && Number(h.me_realm) === 1 ? { ...realmSaleOf(h), ...(Number(h.rent_due) > 0 ? { rentDue: Number(h.rent_due) } : {}) } : {};
-      return {
-        buildingKey: h.building_key, owner: h.owner_name, entry: open && !mine ? 'public' : h.entry, mine, ...(mine ? { character: h.char_id } : {}), ...(crossed ? { crossed } : {}),
-        ...sale,
-        ...(Number(h.vacant) > 0 ? { rent: { vacant: Number(h.vacant), from: Number(h.rent_from) } } : {}),
-        ...(Number.isSafeInteger(h.tenancy) && h.tenancy > nowS ? { tenant: h.tenancy } : {}),
-        ...lookFor(h, mine),   // HOME-LOOK: how its owner painted it (AUDIT HOME-VOTE A3: a shunned home's to its owner alone)
-        ...(h.guildmate === 1 ? { guildmate: true } : {}),   // GUILD1d: the named character is in the guild of one of the owner's characters (ACCOUNT-HOMES: any of the account's)
-        ...(h.deed === 1 ? { deed: true } : {}),   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held, never bought
-        ...offerFor(h),
-        ...votesOf(h),   // HOME-VOTE
-      };
-    }),
+    buildingKey: h.building_key, owner: h.owner_name, entry: open && !mine ? 'public' : h.entry, mine, ...(mine ? { character: h.char_id } : {}), ...(crossed ? { crossed } : {}),
+    ...sale,
+    ...(Number(h.vacant) > 0 ? { rent: { vacant: Number(h.vacant), from: Number(h.rent_from) } } : {}),
+    ...(Number.isSafeInteger(h.tenancy) && h.tenancy > nowS ? { tenant: h.tenancy } : {}),
+    ...lookFor(h, mine),   // HOME-LOOK: how its owner painted it (AUDIT HOME-VOTE A3: a shunned home's to its owner alone)
+    ...(h.guildmate === 1 ? { guildmate: true } : {}),   // GUILD1d: the named character is in the guild of one of the owner's characters (ACCOUNT-HOMES: any of the account's)
+    ...(h.deed === 1 ? { deed: true } : {}),   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held, never bought
+    ...offerFor(h),
+    ...votesOf(h),   // HOME-VOTE
+  };
+}
+
+/** A reader with nothing of its own in the town: no account, no character, the gates shut. */
+const NO_VIEWER = Object.freeze({ player: Object.freeze({ id: null }), me: '', nowS: 0, open: false });
+
+/**
+ * YC4 (bible/11-Multiplayer/Yard-Cells.md section 14.1): A HOME AS EVERY CALLER READS IT ALIKE - its building, owner,
+ * raw entry, free rooms, score, look (none for a shunned home), deed and hall; never a player's id or a character's.
+ * homesInTown's own row for a reader with nothing of its own, but `mine`. Reads the columns homeCells.js keeps.
+ */
+export function sharedHomeOf(/** @type {any} */ h) {
+  return Object.fromEntries(Object.entries(homeRowOf(h, NO_VIEWER)).filter(([field]) => field !== 'mine'));
+}
+
+export async function homesInTown({ db, nowS = Math.floor(Date.now() / 1000) }, player, { mapId, character = null } = {}, { seats = false } = {}) {
+  if (!homeMapIdOk(mapId)) return { error: 'bad-home' };
+  // HOME-RENT: each home's rooms still free to rent (how many, and the cheapest a day), and - for the character the
+  // caller names - the end of its own tenancy there, which opens the door to it
+  const me = typeof character === 'string' && CHAR_ID_RE.test(character) ? character : '';
+  // GUILD1d: a hall's guild (its name, tag and heraldry) and the named character's rank in it; a home whose owner opened
+  // it to their guild, whether the named character is in that guild with them
+  const read = await townHomesRead(db, player, me, mapId, nowS, seats, '');
+  if ('error' in read) return read;
+  const viewer = { player, me, nowS, open: read.open };
+  return {
+    mapId, ...(read.open ? { openGates: true } : {}),
+    homes: read.results.filter((h) => !deedHiddenFrom(h, player, me)).map((h) => homeRowOf(h, viewer)),
+  };
+}
+
+/**
+ * YC4 (bible/11-Multiplayer/Yard-Cells.md section 14.3): THE CALLER'S OWN PART OF A TOWN - each home that is anything of
+ * the caller's (OWN_KEYS_SQL) as homesInTown answers it, the deeds the named character must not see as online homes
+ * (`hidden`, KNIGHT-HOUSE), and Open Gates. The rest of the town is the cells' (homeCells.js). On the primary: its
+ * rows are the caller's own writes.
+ * @param {{db: any, nowS?: number}} ctx @param {any} player
+ * @returns {Promise<{ error: string } | { mapId: number, openGates?: true, homes: any[], hidden: number[] }>}
+ */
+export async function homesOwn({ db, nowS = Math.floor(Date.now() / 1000) }, player, { mapId, character = null } = {}, { seats = false } = {}) {
+  if (!homeMapIdOk(mapId)) return { error: 'bad-home' };
+  const me = typeof character === 'string' && CHAR_ID_RE.test(character) ? character : '';
+  const read = await townHomesRead(db, player, me, mapId, nowS, seats, OWN_KEYS_SQL);
+  if ('error' in read) return read;
+  const viewer = { player, me, nowS, open: read.open };
+  return {
+    mapId: /** @type {number} */ (mapId), ...(read.open ? { openGates: /** @type {true} */ (true) } : {}),
+    homes: read.results.filter((h) => !deedHiddenFrom(h, player, me)).map((h) => homeRowOf(h, viewer)),
+    hidden: read.results.filter((h) => deedHiddenFrom(h, player, me)).map((h) => h.building_key),
   };
 }
 

@@ -183,8 +183,8 @@
   {
     "name": "KNIGHT-HOUSE-own-deed-listed",
     "file": "server-account/src/homes.js",
-    "old": "homes: results.filter((h) => !(h.deed === 1 && h.player === player.id && h.char_id === me)).map((h) => {",
-    "new": "homes: results.map((h) => {",
+    "old": "const deedHiddenFrom = (h, player, me) => h.deed === 1 && h.player === player.id && h.char_id === me;",
+    "new": "const deedHiddenFrom = (h, player, me) => false;",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -193,7 +193,7 @@
   {
     "name": "KNIGHT-HOUSE-deed-unsaid",
     "file": "server-account/src/homes.js",
-    "old": "        ...(h.deed === 1 ? { deed: true } : {}),   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held, never bought\n",
+    "old": "    ...(h.deed === 1 ? { deed: true } : {}),   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held, never bought\n",
     "new": "",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
