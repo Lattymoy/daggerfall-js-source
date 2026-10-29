@@ -12315,8 +12315,8 @@
   "by": "claude-in-session"
  },
  "features.tamrielMap.note": {
-  "en": "35993aca8ee2",
-  "tr": "fe9632960e19",
+  "en": "e301cd0fac96",
+  "tr": "ac1d7f0afa1a",
   "by": "claude-in-session"
  },
  "features.tamrielMap.title": {
@@ -23506,7 +23506,7 @@
  },
  "mods.worldEventsRaidingParties.Enabled.description": {
   "en": "79559d752948",
-  "tr": "d6af7230fbf9",
+  "tr": "6b0cc7979b2e",
   "by": "claude-in-session"
  },
  "mods.worldOfDaggerfall.Enabled.description": {

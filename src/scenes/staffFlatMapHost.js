@@ -38,7 +38,7 @@ export function createStaffFlatMapHost({ map, politicAt, pixel, flagOf, words, c
     const fit = tamrielFit(), kept = boxes.get(r);
     if (kept && kept.fit === fit) return kept.box;
     const f = isProvinceRegion(r) ? tamrielFrameInBay() : { x0: 0, y0: 0, w: MAP_W, h: MAP_H };
-    const step = isProvinceRegion(r) ? COARSE : 1, grow = MARGIN + step - 1;
+    const coarse = isProvinceRegion(r), step = coarse ? COARSE : 1, grow = coarse ? MARGIN + COARSE : MARGIN;   // AUDIT TAMRIEL-WIDE II A3: past the Bay, a sample's step past its last land, then the margin
     const fx0 = Math.floor(f.x0), fy0 = Math.floor(f.y0), fx1 = Math.ceil(f.x0 + f.w) - 1, fy1 = Math.ceil(f.y0 + f.h) - 1;
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (let y = fy0; y <= fy1; y += step) for (let x = fx0; x <= fx1; x += step) {

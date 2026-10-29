@@ -40,7 +40,7 @@ test('AUDIT TAMRIEL-WIDE D1: the Features rows for the map and the land past the
   const map = FEATURES.find((f) => f.id === 'tamriel-map'), land = FEATURES.find((f) => f.id === 'tamriel-land');
   assert.match(land.note, /its own cities, towns, roads and dungeons\./);
   assert.match(land.note, /Off ends the world at the Bay’s edge\.$/);
-  assert.match(map.note, /A place past the Bay is reached by fast travel, as a place on the Bay is\.$/);
+  assert.match(map.note, /With Land beyond the Bay on, fast travel reaches its places too\.$/);   // AUDIT TAMRIEL-WIDE II: the land off, the world ends at the Bay
   for (const r of [map, land]) assert.doesNotMatch(r.note, /no towns|can.t travel/, `${r.id}: no word the land past the Bay outgrew`);
   // the law the map's note says (TRAVEL-EVERYWHERE): a journey past the Bay is the zone's verdict, as one on the Bay is
   assert.equal(pastBayJourney({ x: 200, y: 200 }, { x: 1500, y: -200 }, null, { ok: true }).ok, true, 'fast travel past the Bay');
@@ -164,12 +164,13 @@ test('AUDIT TAMRIEL-WIDE D4: the death screen names no place - the tale\'s end a
   } finally { if (saved === undefined) delete globalThis.document; else globalThis.document = saved; }
 });
 
-test('AUDIT TAMRIEL-WIDE D5: the travel map\'s page promises a journey to any place, past the Bay too (TRAVEL-EVERYWHERE); the arena\'s names its one city, as TUT1 allows (mutants: the travel line kept to the Bay; the arena line as it was)', () => {
+test('AUDIT TAMRIEL-WIDE D5: the travel map\'s page promises a journey to any place, past the Bay too (TRAVEL-EVERYWHERE); the arena\'s names its two cities (mutants: the travel line kept to the Bay; the arena line as it was)', () => {
   const travel = tutorialById('travel-map').body.join(' '), arena = tutorialById('arena').body.join(' ');
   assert.match(travel, /opens the map of the whole land\. Choose a place to travel there\./);
   assert.doesNotMatch(travel, /Past the Bay|in the Iliac Bay/, 'no journey kept to the Bay');
-  assert.doesNotMatch(arena, /province's capital/, 'one arena, not one a province');
-  assert.match(arena, /^The one arena stands in the westernmost of the Iliac Bay's three crown cities\./);
+  assert.doesNotMatch(arena, /province's capital/, 'no arena a province');
+  // PIN MOVED (AUDIT TAMRIEL-WIDE II T1): two arenas - IC-GRAND lays Daggerfall's block in the Imperial City's Arena District
+  assert.match(arena, /^An arena stands in the Imperial City and in the Iliac Bay's westernmost crown city\./);
 });
 
 test('AUDIT TAMRIEL-WIDE D6: the lines said wherever the player stands name no Bay - the serpent\'s, the taverns\', the sea\'s news, the crew\'s, the guild primer\'s, the Admiralty\'s carrack, the wardrobe, the card table, the raids and the sea fight (mutants: each line as it was)', () => {

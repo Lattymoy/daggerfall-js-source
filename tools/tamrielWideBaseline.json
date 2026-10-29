@@ -1,20 +1,32 @@
 {
  "pixel-id": {
-  "src/formats/mapsFile.js": 1,
   "src/net/townEconLaw.js": 2,
+  "src/scenes/naval/worldLanes.js": 1,
   "src/scenes/snowfallHost.js": 1,
+  "src/scenes/world.js": 1,
+  "src/systems/livingWorld/beyondWays.js": 1,
   "src/systems/naval/harbourBook.js": 1,
+  "src/ui/travel/travelMapWindow.js": 3,
   "src/world/deepWater/deepWatersBakeCache.js": 1,
   "src/world/deepWater/deepWatersClient.js": 1,
+  "src/world/road/roadLand.js": 3,
+  "src/world/road/roadNetwork.js": 19,
+  "src/world/roadsProducer.js": 1,
   "src/world/spawnedDungeons.js": 1,
+  "src/world/tamriel/bayFitKept.js": 1,
+  "src/world/terrain/terrainHelper.js": 4,
   "src/world/townWalls.js": 1
  },
  "pixel-mask": {
+  "src/net/townEconLaw.js": 1,
   "src/net/wire.js": 1,
+  "src/scenes/naval/worldLanes.js": 1,
+  "src/scenes/world.js": 2,
   "src/systems/classicSave.js": 1,
-  "src/systems/discovery.js": 1,
   "src/systems/gate/gateSite.js": 1,
+  "src/systems/map/mapDirectory.js": 1,
   "src/systems/superDungeon/sdSite.js": 1,
+  "src/systems/travel/travelPorts.js": 1,
   "src/world/arenaLocations.js": 1,
   "src/world/etherPlaces.js": 2,
   "src/world/oceanHoles.js": 2,
@@ -22,7 +34,6 @@
   "src/world/townWalls.js": 3
  },
  "region-count": {
-  "src/formats/mapsFile.js": 4,
   "src/scenes/world.js": 1,
   "src/systems/deathRespawn.js": 1,
   "src/systems/gate/gateSite.js": 1,
@@ -30,27 +41,37 @@
   "src/systems/quest/place.js": 3,
   "src/ui/heldMap.js": 2,
   "src/ui/ink/inkMap.js": 2,
-  "src/ui/paperDoll.js": 1,
   "src/ui/travel/travelMapWindow.js": 3,
   "src/world/oceanHoles.js": 1,
   "src/world/roadsProducer.js": 1,
   "src/world/worldWide/worldCemetery.js": 1
  },
  "bay-bound": {
-  "src/net/arena/arenaBrain.js": 1,
-  "src/net/eliteGates/egAscent.js": 1,
+  "src/net/nodeLaw.js": 2,
   "src/net/townSeatLaw.js": 2,
+  "src/scenes/livingWorld/livingIndex.js": 1,
   "src/scenes/snowfallHost.js": 1,
-  "src/scenes/world.js": 5,
+  "src/scenes/tamrielRoadsHost.js": 2,
+  "src/scenes/world.js": 4,
   "src/systems/naval/harbourBook.js": 1,
-  "src/world/spawnedDungeons.js": 1
+  "src/systems/weather/airGround.js": 1,
+  "src/systems/weather/weatherMap.js": 1,
+  "src/ui/tamrielInk.js": 1,
+  "src/ui/travel/travelMapWindow.js": 4,
+  "src/world/ethericSea.js": 1,
+  "src/world/road/roadNetwork.js": 2,
+  "src/world/spawnedDungeons.js": 1,
+  "src/world/streamingWorld.js": 2,
+  "src/world/tamriel/bayFitKept.js": 1,
+  "src/world/tamriel/tamrielRaster.js": 1,
+  "src/world/tamrielCountry.js": 2,
+  "src/world/terrain/terrainHelper.js": 4
  },
  "bay-clamp": {
   "src/scenes/world.js": 2,
+  "src/systems/raidingParties.js": 1,
   "src/world/road/roadClearance.js": 1,
   "src/world/road/roadNetwork.js": 4
  },
- "region-62": {
-  "src/formats/save/saveGames.js": 1
- }
+ "region-62": {}
 }

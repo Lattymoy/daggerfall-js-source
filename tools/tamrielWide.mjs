@@ -17,16 +17,31 @@ export const SOURCE_DIRS = Object.freeze(['src', 'server/src', 'server-account/s
 /** The marker that takes a line out of the count: the Bay's own data, read on purpose. */
 export const BAY_OWN = 'BAY-OWN:';
 
+// The spellings. A pixel's coordinate is `py`, `mapPixelY`, `loc.y`; the Bay's width is 1000 or a constant naming it
+// (MapsFile's MaxMapPixelX, WOODS' MAP_WIDTH, the frame's BAY_W). AUDIT TAMRIEL-WIDE II T2: the named constants, the
+// reversed and bracketed forms and a zero-padded mask, which the first patterns missed.
+const Y = String.raw`(?:[\w.]*\.p?y|[a-z]?[a-z]?y\d?|\w*Y\d?)`;
+const X = String.raw`(?:[\w.]*\.p?x|[a-z]?[a-z]?x\d?|\w*X\d?)`;
+const WIDE = String.raw`(?:1000|MAP_WIDTH|MAX_MAP_PIXEL_X|BAY_W)`;
+const AT = String.raw`(?:p?[xy]\d?|m[xy]|b[xy]|[nqtcgw][xy]|mapX|mapY|mapPixelX|mapPixelY|pixelX|pixelY|[a-z]+\.p?[xy])`;
+const EDGE = String.raw`(?:1000|999|500|499|(?:MAP_WIDTH|MAP_HEIGHT|MAX_MAP_PIXEL_X|MAX_MAP_PIXEL_Y|BAY_W|BAY_H)(?:\s*-\s*1)?)`;
+const CMP = String.raw`(?:<=|>=|<|>)`;
+
 /** Each idiom: what it matches, and what answers for the whole world instead. */
 export const IDIOMS = Object.freeze([
   {
     id: 'pixel-id',
-    re: /\b[\w.]*[yY]\w*\s*\*\s*1000\s*\+\s*[\w.]*[xX]\w*|\b[\w.]*[xX]\w*\s*\+\s*[\w.]*[yY]\w*\s*\*\s*1000\b|\b1000\s*\*\s*[\w.]*[yY]\w*\s*\+/,
+    re: new RegExp([
+      String.raw`\b${Y}\s*\)?\s*\*\s*${WIDE}\s*\)?\s*\+\s*\(?\s*${X}\b`,
+      String.raw`\b${X}\s*\+\s*\(?\s*${Y}\s*\*\s*${WIDE}\b`,
+      String.raw`\b${X}\s*\+\s*\(?\s*${WIDE}\s*\*\s*${Y}\b`,
+      String.raw`\b${WIDE}\s*\*\s*${Y}\s*\)?\s*\+\s*${X}\b`,
+    ].join('|')),
     use: 'worldPixelKey (world/worldWide/worldGrid.js): MapsFile\'s y * 1000 + x is unique on the Bay alone',
   },
   {
     id: 'pixel-mask',
-    re: /&\s*0x[fF]{5}\b(?!f)/,
+    re: /&\s*0x0*[fF]{5}\b(?!f)|%\s*0x100000\b/,
     use: 'discoveryKeyOf (systems/discovery.js): a MapId\'s low 20 bits name one place on the Bay alone',
   },
   {
@@ -36,17 +51,18 @@ export const IDIOMS = Object.freeze([
   },
   {
     id: 'bay-bound',
-    re: /\b(?:p?[xy]\d?|m[xy]|b[xy]|[nq][xy]|mapX|mapY|mapPixelX|mapPixelY|pixelX|pixelY|[a-z]+\.p?[xy])\s*(?:<|>=|<=|>)\s*(?:1000|999|500|499)\b/,
+    // a coordinate against the Bay's edge, either way round - not one that is a difference (a time, a height)
+    re: new RegExp(String.raw`(?<![-+*/%.]\s*)\b${AT}\s*${CMP}\s*${EDGE}(?!\s*[-+*/])\b|\b${EDGE}\s*${CMP}\s*${AT}\b`),
     use: 'worldPixelOk (net/wire.js) for a bound, inBay (world/tamriel/tamrielFrame.js) for the Bay\'s own data',
   },
   {
     id: 'bay-clamp',
-    re: /Math\.(?:min|max)\(\s*(?:999|499|(?:MAP_W|MAP_H|MAP_WIDTH|MAP_HEIGHT|BAY_W|BAY_H)\s*-\s*1)\b|Math\.min\([^)]*(?:MAP_W|MAP_WIDTH|BAY_W)\s*-\s*1\s*-\s*p?x/,
+    re: /Math\.(?:min|max)\(\s*(?:999|499|(?:MAP_W|MAP_H|MAP_WIDTH|MAP_HEIGHT|BAY_W|BAY_H)\s*-\s*1)\b|Math\.min\([^)]*(?:MAP_W|MAP_WIDTH|BAY_W)\s*-\s*1\s*-\s*p?x|Math\.(?:min|max)\(\s*[\w.]+\s*,\s*(?:999|499)\s*\)/,
     use: 'the world grid (world/worldWide/worldGrid.js inWorldGrid): a pixel clamped into the Bay is a wrong pixel past it',
   },
   {
     id: 'region-62',
-    re: /\bregion\w*\s*(?:<|>=|<=|>)\s*6[12]\b/i,
+    re: /\b(?:region\w*|reg|r)\s*(?:<|>=|<=|>)\s*6[12]\b/i,
     use: 'BAY_REGION_COUNT or theatreOfRegion (formats/mapsTables.js): the provinces are regions 62..70',
   },
 ]);
@@ -60,8 +76,11 @@ export function codeOf(line) {
   return at >= 0 && !/:\s*$/.test(line.slice(0, at)) ? line.slice(0, at) : line;
 }
 
-/** Whether line `i` is the Bay's own on purpose: the marker on it or on the line above. */
-const ownedAt = (lines, i) => lines[i].includes(BAY_OWN) || (i > 0 && lines[i - 1].includes(BAY_OWN));
+/** The marker, in a comment, with its reason after it. AUDIT TAMRIEL-WIDE II T4: never one in a string, nor a bare one. */
+const MARKED = new RegExp(String.raw`(?:\/\/|\/\*|^\s*\*).*${BAY_OWN}(?:\s*\S){3}`);
+/** Whether line `i` is the Bay's own on purpose: the marker on it, or on a comment line just above - a code line's
+ *  marker is its own line's alone. */
+const ownedAt = (lines, i) => MARKED.test(lines[i]) || (i > 0 && /^\s*(?:\/\/|\/\*|\*)/.test(lines[i - 1]) && MARKED.test(lines[i - 1]));
 
 /** Counts of each idiom in one source text: `{ id: n }`, idioms with none left out. */
 export function countIn(text) {

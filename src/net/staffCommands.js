@@ -37,7 +37,7 @@ export const TP_MAP_H = 500;
 /** The lines `/staff` shows. */
 export const STAFF_HELP_LINES = Object.freeze([
   'Staff commands:',
-  '/tp <place> - to a named place anywhere',
+  '/tp <place> - to a named place: any on the Bay, past it a city or town the map names',   // AUDIT TAMRIEL-WIDE II A5: what the search reaches
   '/tp <x> <y> - to a map pixel (x 0-999, y 0-499)',
   '/tp @<player> - to their exact live position',
   '/god [on|off] - take no damage',

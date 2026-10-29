@@ -33,7 +33,7 @@
   {
     "name": "AUDIT-TW-D1-map-note-cannot-travel",
     "file": "src/systems/features.js",
-    "old": "A place past the Bay is reached by fast travel, as a place on the Bay is.'",
+    "old": "With Land beyond the Bay on, fast travel reaches its places too.'",
     "new": "You can’t travel beyond the Bay.'",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js",
@@ -129,7 +129,7 @@
   {
     "name": "AUDIT-TW-D5-the-arena-page-as-it-was",
     "file": "src/systems/tutorialCatalogue.js",
-    "old": "'The one arena stands in the westernmost of the Iliac Bay\\'s three crown cities.",
+    "old": "'An arena stands in the Imperial City and in the Iliac Bay\\'s westernmost crown city.",
     "new": "'The arena stands in the province\\'s capital.",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"

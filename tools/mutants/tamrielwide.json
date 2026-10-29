@@ -2,22 +2,22 @@
   {
     "name": "TAMRIEL-WIDE-1-pixel-id-unread",
     "file": "tools/tamrielWide.mjs",
-    "old": "re: /\\b[\\w.]*[yY]\\w*\\s*\\*\\s*1000\\s*\\+\\s*[\\w.]*[xX]\\w*|",
-    "new": "re: /(?!)|",
+    "old": "      String.raw`\\b${Y}\\s*\\)?\\s*\\*\\s*${WIDE}\\s*\\)?\\s*\\+\\s*\\(?\\s*${X}\\b`,",
+    "new": "      String.raw`\\bNEVER_A_PIXEL_ID\\b`,",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
-    "note": "A new MapsFile pixel id written y-first would pass unseen."
+    "note": "The first spelling, y * 1000 + x, never matched."
   },
   {
     "name": "TAMRIEL-WIDE-11-pixel-mask-unread",
     "file": "tools/tamrielWide.mjs",
-    "old": "re: /&\\s*0x[fF]{5}\\b(?!f)/,",
-    "new": "re: /(?!)/,",
+    "old": "    re: /&\\s*0x0*[fF]{5}\\b(?!f)|%\\s*0x100000\\b/,",
+    "new": "    re: /&\\s*0x[fF]{5}\\b(?!f)|%\\s*0x100000\\b/,",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
-    "note": "A MapId's low 20 bits used as an identity would pass unseen (C3, C4)."
+    "note": "AUDIT TAMRIEL-WIDE II T2: the zero-padded mask (0x000fffff) unread again."
   },
   {
     "name": "TAMRIEL-WIDE-2-region-count-unread",
@@ -32,12 +32,12 @@
   {
     "name": "TAMRIEL-WIDE-3-bay-bound-999-499-unread",
     "file": "tools/tamrielWide.mjs",
-    "old": "(?:<|>=|<=|>)\\s*(?:1000|999|500|499)\\b/,",
-    "new": "(?:<|>=|<=|>)\\s*(?:1000|500)\\b/,",
+    "old": "const EDGE = String.raw`(?:1000|999|500|499|(?:MAP_WIDTH|MAP_HEIGHT|MAX_MAP_PIXEL_X|MAX_MAP_PIXEL_Y|BAY_W|BAY_H)(?:\\s*-\\s*1)?)`;",
+    "new": "const EDGE = String.raw`(?:1000|500|(?:MAP_WIDTH|MAP_HEIGHT|MAX_MAP_PIXEL_X|MAX_MAP_PIXEL_Y|BAY_W|BAY_H)(?:\\s*-\\s*1)?)`;",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
-    "note": "A bound written as > 499 or <= 999 would pass unseen."
+    "note": "The last pixel's bound, 999 and 499, unread."
   },
   {
     "name": "TAMRIEL-WIDE-12-bay-clamp-unread",
@@ -52,22 +52,22 @@
   {
     "name": "TAMRIEL-WIDE-13-bay-bound-bare-xy-unread",
     "file": "tools/tamrielWide.mjs",
-    "old": "re: /\\b(?:p?[xy]\\d?|m[xy]|",
-    "new": "re: /\\b(?:p[xy]\\d?|m[xy]|",
+    "old": "const AT = String.raw`(?:p?[xy]\\d?|m[xy]|",
+    "new": "const AT = String.raw`(?:p[xy]\\d?|m[xy]|",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
-    "note": "A bound on a bare x or y (x >= 1000) would pass unseen (C5)."
+    "note": "A bare x or y against the Bay's edge unread."
   },
   {
     "name": "TAMRIEL-WIDE-4-region-62-unread",
     "file": "tools/tamrielWide.mjs",
-    "old": "re: /\\bregion\\w*\\s*(?:<|>=|<=|>)\\s*6[12]\\b/i,",
-    "new": "re: /(?!)/,",
+    "old": "    re: /\\b(?:region\\w*|reg|r)\\s*(?:<|>=|<=|>)\\s*6[12]\\b/i,",
+    "new": "    re: /\\b(?:region\\w*|reg|r)\\s*(?:<|>=|<=|>)\\s*6[2]\\b/i,",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
-    "note": "A region bounded to the Bay's 62 would pass unseen."
+    "note": "A region against 61 unread."
   },
   {
     "name": "TAMRIEL-WIDE-5-comments-counted",
@@ -92,12 +92,12 @@
   {
     "name": "TAMRIEL-WIDE-7-marker-above-unread",
     "file": "tools/tamrielWide.mjs",
-    "old": "lines[i].includes(BAY_OWN) || (i > 0 && lines[i - 1].includes(BAY_OWN));",
-    "new": "lines[i].includes(BAY_OWN);",
+    "old": "const ownedAt = (lines, i) => MARKED.test(lines[i]) || (i > 0 && /^\\s*(?:\\/\\/|\\/\\*|\\*)/.test(lines[i - 1]) && MARKED.test(lines[i - 1]));",
+    "new": "const ownedAt = (lines, i) => MARKED.test(lines[i]);",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
-    "note": "A BAY-OWN: comment on the line above would not take the line out."
+    "note": "The marker on the line above unread."
   },
   {
     "name": "TAMRIEL-WIDE-8-unlisted-let-through",
@@ -128,5 +128,65 @@
       "test/tooling/tamrielwide.test.js"
     ],
     "note": "--lower would raise a baseline to today's count."
+  },
+  {
+    "name": "TAMRIEL-WIDE-14-named-width-unread",
+    "file": "tools/tamrielWide.mjs",
+    "old": "const WIDE = String.raw`(?:1000|MAP_WIDTH|MAX_MAP_PIXEL_X|BAY_W)`;",
+    "new": "const WIDE = String.raw`(?:1000)`;",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "AUDIT TAMRIEL-WIDE II T2: y * MAP_WIDTH + x unread again."
+  },
+  {
+    "name": "TAMRIEL-WIDE-15-reversed-bound-unread",
+    "file": "tools/tamrielWide.mjs",
+    "old": "(?!\\s*[-+*/])\\b|\\b${EDGE}\\s*${CMP}\\s*${AT}\\b`),",
+    "new": "(?!\\s*[-+*/])\\b`),",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "AUDIT TAMRIEL-WIDE II T2: 1000 <= px unread again."
+  },
+  {
+    "name": "TAMRIEL-WIDE-16-difference-counted",
+    "file": "tools/tamrielWide.mjs",
+    "old": "re: new RegExp(String.raw`(?<![-+*/%.]\\s*)\\b${AT}",
+    "new": "re: new RegExp(String.raw`\\b${AT}",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "AUDIT TAMRIEL-WIDE II T3: a difference (a time, a height) counted as a coordinate again."
+  },
+  {
+    "name": "TAMRIEL-WIDE-17-marker-above-from-code",
+    "file": "tools/tamrielWide.mjs",
+    "old": "(i > 0 && /^\\s*(?:\\/\\/|\\/\\*|\\*)/.test(lines[i - 1]) && MARKED.test(lines[i - 1]))",
+    "new": "(i > 0 && MARKED.test(lines[i - 1]))",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "AUDIT TAMRIEL-WIDE II T4: a code line's trailing marker reaches the line below again."
+  },
+  {
+    "name": "TAMRIEL-WIDE-18-marker-without-why",
+    "file": "tools/tamrielWide.mjs",
+    "old": "${BAY_OWN}(?:\\s*\\S){3}`);",
+    "new": "${BAY_OWN}`);",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "AUDIT TAMRIEL-WIDE II T4: a bare marker, with no why, exempts again."
+  },
+  {
+    "name": "TAMRIEL-WIDE-19-marker-in-a-string",
+    "file": "tools/tamrielWide.mjs",
+    "old": "const MARKED = new RegExp(String.raw`(?:\\/\\/|\\/\\*|^\\s*\\*).*${BAY_OWN}",
+    "new": "const MARKED = new RegExp(String.raw`${BAY_OWN}",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "AUDIT TAMRIEL-WIDE II T4: a marker anywhere on the line, a string's too, exempts again."
   }
 ]

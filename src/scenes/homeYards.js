@@ -325,10 +325,11 @@ export function yardLot(origin, box, margin = YARD_MARGIN, rects = null) {
   const walls = Array.isArray(rects) && rects.length ? rects.map((r) => [r[0] - origin[0], r[1] - origin[2], r[2] - origin[0], r[3] - origin[2]]) : [house];
   return { house, walls, lot: [house[0] - margin, house[1] - margin, house[2] + margin, house[3] + margin], y: box[1] - origin[1] };
 }
-/** AUDIT TAMRIEL-WIDE A1: A HOME'S LOT off its frame (pixelBuild.js homeFrames) - none for a terraced house: an
+/** AUDIT TAMRIEL-WIDE A1: A HOME'S LOT off its frame (pixelBuild.js homeFrames) - no ground for a terraced house: an
  *  Imperial City house's plot is its building (world/imperialFabricBuildings.js), its one model the door, so a lot grown
- *  round it held the owner's own rooms, the neighbours' and the street. @param {any} frame */
-export const lotOfFrame = (frame) => (frame?.terraced ? null : yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects));
+ *  round it held the owner's own rooms, the neighbours' and the street. AUDIT TAMRIEL-WIDE II W1: its lot is the door's
+ *  own box, where nothing places - so its owner, at the door, still takes back what was set down before. @param {any} frame */
+export const lotOfFrame = (frame) => (frame?.terraced ? yardLot(frame.at, frame.box, 0) : yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects));
 const inRect = (x, z, r, pad = 0) => x >= r[0] - pad && x <= r[2] + pad && z >= r[1] - pad && z <= r[3] + pad;
 /** HOME-LINE (FIELD BUGS 2026-10-11b): how far (x, z) stands from the nearest of these footprints [x0, z0, x1, z1] - 0 on
  *  one, Infinity for none. */

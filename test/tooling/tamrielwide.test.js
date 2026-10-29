@@ -11,26 +11,31 @@ const base = JSON.parse(readFileSync(new URL(`../../${BASELINE}`, import.meta.ur
 const ids = IDIOMS.map((d) => d.id);
 const none = Object.fromEntries(ids.map((id) => [id, {}]));
 
-test('TAMRIEL-WIDE each idiom is caught in the shapes the tree writes it, and the world\'s own answer is not (mutants: an idiom\'s pattern loosened or dropped)', () => {
+test('TAMRIEL-WIDE each idiom is caught in the shapes the tree writes it, and the world\'s own answer is not (mutants: an idiom\'s pattern loosened or dropped; a named width, a padded mask, a difference counted)', () => {
   assert.deepEqual(ids, ['pixel-id', 'pixel-mask', 'region-count', 'bay-bound', 'bay-clamp', 'region-62']);
   const caught = {
-    'pixel-id': ['const key = py * 1000 + px;', 'return mapPixelY * 1000 + mapPixelX;', 'm.get(loc.y * 1000 + loc.x)', 'const id = x + y * 1000;'],
-    'pixel-mask': ['const id = loc.mapTableData.mapId & 0xfffff;', 'return (id >>> 0) & 0xFFFFF;'],
+    'pixel-id': ['const key = py * 1000 + px;', 'return mapPixelY * 1000 + mapPixelX;', 'm.get(loc.y * 1000 + loc.x)', 'const id = x + y * 1000;',
+      // AUDIT TAMRIEL-WIDE II T2: bracketed, reversed, and the width by its constant's name
+      'const k = (py * 1000) + px;', 'const k = px + 1000 * py;', 'const i = py * MAP_WIDTH + px;', 'a[y * BAY_W + x]'],
+    'pixel-mask': ['const id = loc.mapTableData.mapId & 0xfffff;', 'return (id >>> 0) & 0xFFFFF;', 'mapDict.get(id & 0x000fffff)', 'const low = mapId % 0x100000;'],
     'region-count': ['for (let r = 0; r < maps.regionCount; r++) {', 'if (region >= regionCount) return null;', 'r < (maps?.regionCount ?? 0)'],
-    'bay-bound': ['if (px < 0 || px >= 1000) return;', 'py > 499', 'mapPixelX <= 999', 'x >= 1000 || y >= 500', 'p.x < 1000'],
-    'bay-clamp': ['const x = Math.min(999, px);', 'Math.max(0, Math.min(MAP_W - 1 - px, ix))', 'Math.min(MAP_H - 1, y)'],
-    'region-62': ['if (region >= 62) return null;', 'regionIndex > 61'],
+    'bay-bound': ['if (px < 0 || px >= 1000) return;', 'py > 499', 'mapPixelX <= 999', 'x >= 1000 || y >= 500', 'p.x < 1000',
+      'if (px >= MAP_WIDTH) return;', 'y < MAX_MAP_PIXEL_Y', 'if (tx >= 1000) return;', 'if (1000 <= px) return;'],
+    'bay-clamp': ['const x = Math.min(999, px);', 'Math.max(0, Math.min(MAP_W - 1 - px, ix))', 'Math.min(MAP_H - 1, y)', 'const x = Math.min(px, 999);'],
+    'region-62': ['if (region >= 62) return null;', 'regionIndex > 61', 'for (let r = 0; r < 62; r++) {'],
   };
   for (const [id, lines] of Object.entries(caught)) for (const line of lines) assert.equal(countIn(line)[id], 1, `${id}: ${line}`);
   const world = [
     'const key = worldPixelKey(px, py);', 'if (!worldPixelOk(px)) return;', 'for (const p of places.inArea(area)) {',
     'if (region < BAY_REGION_COUNT) return bayRow(region);', 'const w = 1000 * scale + x;', 'if (count >= 1000) break;',
     'const k = discoveryKeyOf(mapId);', 'const v = bits & 0xffff;', 'Math.min(width - 1, x)',
+    // AUDIT TAMRIEL-WIDE II T3: a difference is no coordinate - a time, a height - and a product of two numbers no key
+    'M.hits = M.hits.filter((x) => now - x < 1000);', 'if (u.y - d.y < 500) continue;', 'const t = delay * 1000 + maxJitter;', 'const ms = days * 1000 + extra;',
   ];
   for (const line of world) assert.deepEqual(countIn(line), {}, line);
 });
 
-test('TAMRIEL-WIDE a comment is not code, and a BAY-OWN: line - on the line or the one above - is the Bay\'s own data on purpose (mutants: comments counted; the marker unread above)', () => {
+test('TAMRIEL-WIDE a comment is not code, and a BAY-OWN: line - on the line or the one above - is the Bay\'s own data on purpose (mutants: comments counted; the marker unread above; read above from a code line; read without its why)', () => {
   assert.deepEqual(countIn('// MapsFile\'s id is py * 1000 + px'), {});
   assert.deepEqual(countIn(' * a key of py * 1000 + px'), {});
   assert.equal(codeOf('const k = py * 1000 + px; // the Bay\'s'), 'const k = py * 1000 + px; ');
@@ -38,6 +43,10 @@ test('TAMRIEL-WIDE a comment is not code, and a BAY-OWN: line - on the line or t
   assert.deepEqual(countIn(`const k = py * 1000 + px; // ${BAY_OWN} MapsFile's own id`), {});
   assert.deepEqual(countIn(`// ${BAY_OWN} DFU's GetMapPixelID\nreturn mapPixelY * 1000 + mapPixelX;`), {});
   assert.deepEqual(countIn(`// ${BAY_OWN} one line\nconst a = 1;\nconst k = py * 1000 + px;`), { 'pixel-id': 1 }, 'the marker reaches one line, not two');
+  // AUDIT TAMRIEL-WIDE II T4: a code line's marker is its own line's; a marker says why; a string is no marker
+  assert.deepEqual(countIn(`foo();   // ${BAY_OWN} the save's\nconst k = py * 1000 + px;`), { 'pixel-id': 1 }, 'a code line\'s marker reaches no line below');
+  assert.deepEqual(countIn(`const k = py * 1000 + px;   // ${BAY_OWN}`), { 'pixel-id': 1 }, 'a marker with no why');
+  assert.deepEqual(countIn(`const s = '${BAY_OWN} the Bay'; const k = py * 1000 + px;`), { 'pixel-id': 1 }, 'a marker in a string');
 });
 
 test('TAMRIEL-WIDE the verdict: a file not in the baseline is over at its first idiom; a baseline higher than today is stale until lowered, and lowering never raises (mutants: an unlisted file let through; a lower count unread)', () => {

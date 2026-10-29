@@ -1113,7 +1113,7 @@ features.tamrielLand.note,"Maailma jatkuu Iliac Bayn takana koko Tamrielin yli. 
 features.tamrielLand.title,"Maa Iliac Bayn takana"
 features.tamrielLands.note,"Jokainen Iliac Bayn takainen seutu saa oman maaperänsä, kasvinsa ja maamerkkinsä: Morrowindin tuhkan ja jättisienet, Black Marshin Histit, Summersetin viinitarhat. Pois päältä säilyttää kunkin ilmaston alkuperäisen ulkoasun."
 features.tamrielLands.title,"Tamrielin maat"
-features.tamrielMap.note,"Parannettu kartta loitontuu koko Tamrieliin: sen maakuntiin, kaupunkeihin, vuoriin ja meriin, käsin piirrettyinä ja liitettyinä Iliac Bayn omaan rannikkoon. Iliac Bayn takaiseen paikkaan pääsee pikamatkalla, kuten Iliac Bayn paikkaan."
+features.tamrielMap.note,"Parannettu kartta loitontuu koko Tamrieliin: sen maakuntiin, kaupunkeihin, vuoriin ja meriin, käsin piirrettyinä ja liitettyinä Iliac Bayn omaan rannikkoon. Kun ”Maa Iliac Bayn takana” on päällä, pikamatka vie myös sen paikkoihin."
 features.tamrielMap.title,"Tamriel kartalla"
 features.torchesFromItems.effect,"Tulee voimaan heti; uudet hahmot ja kauppojen valikoima noudattavat sitä."
 features.torchesFromItems.note,"Valosi luolastoissa tulee kantamastasi soihdusta, lyhdystä tai kynttilästä, ja se palaa loppuun, sen sijaan että valo olisi aina mukanasi. Daggerfall Unityssä oletuksena pois."

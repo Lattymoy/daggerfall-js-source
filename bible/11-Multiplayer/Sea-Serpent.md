@@ -505,8 +505,9 @@ After the kill the bar holds a moment and fades.
 ## 11. Versions and deploy order
 
 - **AUDIT TAMRIEL-WIDE E3's relay: `world281`** (section 18). The `site` word carries `sl`, and the hub folds its own
-  site law's words alone, into its own record. Deploy the relay first, then the site: a new build on an older relay
-  joins the older law's vote. Until the site deploys the herald names no place.
+  site law's words alone, into its own record. Deploy the relay first, then the site. A new build says no site to an
+  older relay (`SERPENT_SITE_RELAY_MIN` 281, AUDIT TAMRIEL-WIDE II R2), so the old law's vote is the old builds' alone.
+  Until two new builds name a site, the herald names no place, and that day's kill is not posted (II R4).
 - **WW7-12's relay: `world260`** (WORLD-WIDE's, undeployed - its row re-hashed in place). The hub's `at`: the agreed site
   told to every game online as it moves and at each hello (`net/serpent/serpentHerald.js` serpentAtWord, `server/src/index.js`
   _serpentAtTell, _serpentAtTo; `net/wire.js` the kind - an older client drops it). Deploy the relay with the client; a client

@@ -529,3 +529,8 @@ read those raids as standing. The cap is now two days of every lane's slots, the
 (`src/net/wire.js:"export const RAID_CLEANS_MAX = 2 * RAID_SLOTS_MAX * (1 + RAID_LANES_BEYOND.length);"`, 576). The hub
 and the client read the one constant. Pins: `test/world/worldWide/audit_tamrielwide_relay.test.js` B5 (576 cleanses through the real hub, and the oldest let go past them).
 Mutants: `tools/mutants/audit_tamrielwide_relay.json` (4, dead). Relay world281.
+
+AUDIT TAMRIEL-WIDE II R1 (2026-10-29): the hello says the list newest first. A build before world281 stops its read at
+64, and the hub keeps them oldest first, so on release day an older tab kept yesterday's and read today's cleansed raids
+as standing. The client's read keeps every one whatever their order. Pinned in the same B5 test; mutant: the hello oldest
+first.

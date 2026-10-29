@@ -1113,7 +1113,7 @@ features.tamrielLand.note,"A világ az Iliac Bayen túl egész Tamrielen folytat
 features.tamrielLand.title,"Föld az Öblön túl"
 features.tamrielLands.note,"Az Iliac Bayen túli minden vidék saját talajt, növényeket és tereptárgyakat kap: Morrowind hamuját és óriásgombáit, Black Marsh Histjeit, Summerset szőlőit. Kikapcsolva minden éghajlat megtartja eredeti kinézetét."
 features.tamrielLands.title,"Tamriel földjei"
-features.tamrielMap.note,"A továbbfejlesztett térkép egész Tamrielre kicsinyít: tartományaira, városaira, hegyeire és tengereire, kézzel rajzolva és az Öböl saját partjához illesztve. Az Öblön túli helyekre gyorsutazással lehet eljutni, ahogy az Öböl helyeire is."
+features.tamrielMap.note,"A továbbfejlesztett térkép egész Tamrielre kicsinyít: tartományaira, városaira, hegyeire és tengereire, kézzel rajzolva és az Öböl saját partjához illesztve. Bekapcsolt „Föld az Öblön túl” mellett a gyorsutazás a helyeire is eljut."
 features.tamrielMap.title,"Tamriel a térképen"
 features.torchesFromItems.effect,"Azonnal érvénybe lép; az új karakterek és a bolti készlet követik."
 features.torchesFromItems.note,"A kazamatákban a fényed egy magadnál tartott fáklyából, lámpásból vagy gyertyából jön, amely leég, ahelyett hogy mindig lenne fényed. A Daggerfall Unityben alapból ki van kapcsolva."

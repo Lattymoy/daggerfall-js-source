@@ -123,8 +123,8 @@
   {
     "name": "AUDIT-TW-A1-the-mark-unread",
     "file": "src/scenes/homeYards.js",
-    "old": "(frame?.terraced ? null : yardLot(",
-    "new": "(false ? null : yardLot(",
+    "old": "(frame?.terraced ? yardLot(frame.at, frame.box, 0) : yardLot(",
+    "new": "(false ? yardLot(frame.at, frame.box, 0) : yardLot(",
     "tests": [
       "test/world/worldWide/audit_tamrielwide.test.js"
     ],
@@ -139,5 +139,35 @@
       "test/world/worldWide/audit_tamrielwide.test.js"
     ],
     "note": "The build never marks a fabric house, so its lot is grown round its door."
+  },
+  {
+    "name": "AUDIT-TW-II-W1-a-terraced-lot-none",
+    "file": "src/scenes/homeYards.js",
+    "old": "(frame?.terraced ? yardLot(frame.at, frame.box, 0) :",
+    "new": "(frame?.terraced ? null :",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide.test.js"
+    ],
+    "note": "A terraced house keeps no lot: what its owner set down before A1 is drawn and cannot be taken back."
+  },
+  {
+    "name": "AUDIT-TW-II-W2-the-yard-figure-feet-dropped",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "const look = on ? figureLook(e, ctx, f) : null;",
+    "new": "const look = on ? figureLook(e, ctx) : null;",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide.test.js"
+    ],
+    "note": "A yard's figure of the people where the player stood when it was first drawn."
+  },
+  {
+    "name": "AUDIT-TW-II-W3-the-street-feet-dropped",
+    "file": "src/scenes/world.js",
+    "old": "dict.get(pn.factionID) ?? null, feet);",
+    "new": "dict.get(pn.factionID) ?? null);",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide.test.js"
+    ],
+    "note": "A townsperson's look handed no feet by the host."
   }
 ]

@@ -2361,12 +2361,16 @@ As built:
   id keeps the mask byte for byte, a place the port made keys by its whole id. The service takes 0 to 0xffffffff
   (`nodeLaw.js:"export const DUNGEON_ID_MAX = 0xffffffff;"`). The keys are TEXT: no migration, and the rows under the
   old keys are orphaned.
+- **An old tab** (AUDIT TAMRIEL-WIDE II A2): a tab built before the release still keys a dungeon past the Bay by its
+  low 20 bits, which the service cannot tell from a Bay id. Until it reloads it shares the old vein, and one account can
+  take a dungeon's slots once under each key in a day - bounded by the day's cap on unwitnessed veins.
 - **The abyss's ground** (AUDIT TAMRIEL-WIDE C3): an abyss past the Bay names its pit's ground, as the gathering reads
   that pixel (`dungeonIdentity.js:"export function keptGround(x, y) {"`). Its template is picked by hash and by the
   player's quest sites, so two players could name two grounds for one abyss. At sea past the Bay that ground is the
   Ocean climate and region 0, the politic map's clamp, as a haul there reads it. The Bay's abyss keeps its template's
-  ground, the one its facts were witnessed under. **Deploy**: the account service (acct211) first, then the site; an
-  older service refuses a whole id (`bad-node`, `bad-pixels`). The relay is unchanged. **Pinned**:
+  ground, the one its facts were witnessed under. **Deploy**: the account service (acct211) before the site; an
+  older service refuses a whole id (`bad-node`, `bad-pixels`). The deploys run the relay, then the account, then the
+  site (AUDIT TAMRIEL-WIDE II R3). The relay is unchanged. **Pinned**:
   `test/world/worldWide/audit_tamrielwide_account.test.js` (4 of its 7), `tools/mutants/audit_tamrielwide_account.json`
   (6 of its 17), all dead.
 

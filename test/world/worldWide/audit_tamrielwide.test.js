@@ -23,7 +23,10 @@ import { locationWorldRect } from '../../../src/world/streamingWorld.js';
 import { standingRace, figureLook } from '../../../src/characters/peopleBodies.js';
 import { setFolkPlace } from '../../../src/characters/provinceFolk.js';
 import { regionOfTheatre } from '../../../src/formats/mapsTables.js';
-import { lotOfFrame, yardLot, YARD_MARGIN } from '../../../src/scenes/homeYards.js';
+import { lotOfFrame, yardLot, yardWhyNot, YARD_MARGIN, createHomeYards } from '../../../src/scenes/homeYards.js';
+import { fakeDoc, fakeWin, fakeBlocks, rmb, TOWN, settle, townCellsApi } from '../../decorFakes.mjs';
+import { offerDecorFigures } from '../../../src/scenes/decor/decorRoom.js';
+import { lairPlaceId } from '../../../src/world/tamrielDungeons.js';
 import { readFileSync } from 'node:fs';
 
 test('AUDIT TAMRIEL-WIDE C1: the raid host names the region the player stands in past the Bay - a province\'s politic is its region\'s, as the Bay\'s is - and the sea none, on either side (mutant: the province\'s politic unread)', () => {
@@ -79,12 +82,16 @@ test('AUDIT TAMRIEL-WIDE D2: the held map past the Bay inks a place known as the
   try {
     const lair = { x: 1592, y: -412, type: LOCATION_TYPES.DungeonLabyrinth }, village = { x: 1600, y: -410, type: LOCATION_TYPES.TownVillage };
     addPastBayPlaces([lair, village]);
-    const ids = new Map([['1592,-412', 0x34012345], ['1600,-410', 0x30054321]]);
+    // AUDIT TAMRIEL-WIDE II W6: a real lair's id - keyed whole (discoveryKeyOf), as the province's lairs are
+    const LAIR = lairPlaceId(4660);
+    const ids = new Map([['1592,-412', LAIR], ['1600,-410', 0x30054321]]);
     const { knownPastBayIn } = createMapPlaces({ provinceQuestPlaces: { rowAt: (x, y) => (ids.has(`${x},${y}`) ? { mapId: ids.get(`${x},${y}`) } : null) } });
     const shown = () => knownPastBayIn(1580, -420, 1610, -400).map((p) => p.type).sort();
     assert.deepEqual(shown(), [LOCATION_TYPES.TownVillage], 'the village by its kind; the lair not yet found');
     const stamp = pastBayStamp(1580, -420, 1610, -400);
-    discoverLocation(0x34012345, { name: 'The Haunt of Baringon' });
+    discoverLocation(LAIR & 0xfffff, { name: 'its low 20 bits alone' });
+    assert.deepEqual(shown(), [LOCATION_TYPES.TownVillage], 'an id of its low 20 bits alone found: the lair still not');
+    discoverLocation(LAIR, { name: 'The Haunt of Baringon' });
     assert.deepEqual(shown(), [LOCATION_TYPES.TownVillage, LOCATION_TYPES.DungeonLabyrinth], 'found: inked');
     assert.notEqual(pastBayStamp(1580, -420, 1610, -400), stamp, 'and its tile painted again');
   } finally { resetPastBayPlaces(); restoreDiscovery(was); }
@@ -115,13 +122,53 @@ test('AUDIT TAMRIEL-WIDE E2: a person by a province\'s border is of the people w
     assert.equal(standingRace({ race: 1 }, null), 'Breton', 'no feet: where the player stands');
     const flats = { getFlatData: () => ({ gender: '1', caption: 'merchant' }) };
     assert.equal(figureLook({ piece: { id: 'p1', flat: [182, 3] } }, { flats, race: 1 }, [1300, 0, -256])?.race, 'Nord', 'a figure the same');
+    // AUDIT TAMRIEL-WIDE II W2: a figure an owner set in a yard, read where it stands as the street's are
+    const yardFig = { piece: { id: 'p2', flat: [182, 3], pos: [100, 0, 0] }, o: [1200, 0, -256], batch: {} };
+    offerDecorFigures([yardFig], { offer() {} }, true, { flats, race: 1 }, [0, 1.6, 0], 0);
+    assert.equal(yardFig._mwLook?.race, 'Nord', 'a yard figure stood in Skyrim');
   } finally { setFolkPlace(null, null); }
+  // AUDIT TAMRIEL-WIDE II W3: the host hands a townsperson's look its feet
+  assert.match(readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8'), /return personLook\(pn, staticNpcData\([^\n]*, dict\.get\(pn\.factionID\) \?\? null, feet\);/);
 });
 
 test('AUDIT TAMRIEL-WIDE A1: an Imperial City house has no yard - its plot is its building, its frame the door\'s - while a Bay house\'s lot is the one it was; the pixel\'s build marks a fabric house terraced (mutants: the mark unread; the host\'s mark dropped)', () => {
   const frame = { at: [10, 0, 10], box: [9, 0, 9, 11, 4, 11], rects: [[9, 9, 11, 11]] };
   assert.deepEqual(lotOfFrame(frame), yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects), 'a house of Daggerfall\'s blocks: its lot as before');
-  assert.equal(lotOfFrame({ ...frame, terraced: true }), null, 'a terraced house: none');
+  // PIN MOVED (AUDIT TAMRIEL-WIDE II W1): a terraced house's lot is its door's own box - no ground to place on, so what an
+  // owner set down there before is still theirs to take back from the door
+  const terraced = lotOfFrame({ ...frame, terraced: true });
+  assert.deepEqual(terraced.lot, terraced.house, 'a terraced house: its lot the door\'s own box');
+  for (let x = -10; x <= 10; x += 0.5) for (let z = -10; z <= 10; z += 0.5) assert.ok(yardWhyNot([x, 0, z], terraced), `nothing places at ${x},${z}`);
   const pb = readFileSync(new URL('../../../src/scenes/pixelBuild.js', import.meta.url), 'utf8');
   assert.match(pb, /parts: \[\[cpu, local\]\], terraced: isFabricDoorId\(placed\.modelIdNum\) \}\);/, 'the frame marked by its door model');
+});
+
+test('AUDIT TAMRIEL-WIDE II W1: a piece an owner set down by an Imperial City house before its lot shrank is drawn, and its owner at the door opens the decorator to take it back - as at a Bay house (mutant: a terraced house\'s lot none)', async () => {
+  const piece = { id: 'yard1', model: 41000, flat: null, pos: [3, 0, 0], rot: [0, 0, 0], scale: 1, light: null, storage: false, paid: 120 };
+  const owner = { owner: 'Gwen', own: true, mine: true, character: 'r0123456789abcdef0123', hall: null, look: null };
+  for (const terraced of [false, true]) {
+    const homeFrames = new Map([[300, { at: [10, 0, 10], box: [9, 0, 9, 11, 4, 11], rects: [[9, 9, 11, 11]], terraced }]]);
+    const built = new Map([['0,0', { px: 0, py: 0, homeTown: 7, homeFrames, homeRegion: 17 }]]);
+    const api = {
+      yardCells: townCellsApi(async () => ({ ok: true, data: { yards: [{ buildingKey: 300, pieces: [piece] }] } })),
+      place: async (b) => ({ ok: true, data: { piece: b.piece } }), move: async () => ({ ok: true, data: {} }), remove: async () => ({ ok: true, data: { piece, gold: 60 } }),
+    };
+    const feet = [13, 0, 10];   // by the door, on the piece
+    const yards = createHomeYards({
+      api, homes: { homeAt: (m, k) => (k === 300 ? owner : null), setLook: async () => ({ ok: true }) }, built: () => built, translation: () => [0, 0, 0],
+      feet: () => feet, outside: () => true, eye: () => [feet[0], 1.6, feet[2]],
+      collider: () => ({ addMesh() {}, removeBucket() {}, surfaceHit: (o, d) => ({ dist: d[1] < 0 ? o[1] / -d[1] : Infinity, normal: [0, 1, 0] }) }),
+      meshes: { getGpuMesh: async (id) => id, cpuModels: new Map([[41000, { positions: new Float32Array([-0.5, 0, -0.5, 0.5, 1, 0.5]), indices: new Uint32Array([0, 1, 0]) }]]) },
+      renderer: { drawMesh() {}, createBillboardBatch: () => ({}), destroyBillboardBatch() {} }, getTexture: async () => ({ recordCount: 1 }), uploadRecord() {},
+      scanDeps: () => ({ blocks: fakeBlocks([{ type: TOWN, block: rmb([41000]) }]), isTownBlock: (x) => x === TOWN, modelRadius: () => 0.8, flatRadius: async () => 0.2 }),
+      character: () => 'r0123456789abcdef0123', realm: () => null, wallet: () => ({ gold: 5000, pay() {}, credit() {} }), regionOf: () => 17,
+      doc: fakeDoc(), win: fakeWin(), canvas: null, touch: false, actionOf: () => null, locked: () => true, cursorOff() {}, stick: () => null,
+      say: () => {}, refusal: (w) => w, openSlot() {}, now: () => 0, look: { preview() {}, season: () => 0 },
+    });
+    const cam = { pos: [13, 1.6, 10], yaw: Math.PI, pitch: -0.6 };
+    for (let i = 0; i < 3; i++) { yards.frame({ dt: 1, cam, overlayUp: false }); await settle(); await settle(); }
+    assert.deepEqual(yards.yards()[0]?.pool.list().map((p) => p.id), ['yard1'], `terraced ${terraced}: the piece drawn`);
+    assert.ok(yards.here(), `terraced ${terraced}: the owner's yard here`);
+    assert.equal(yards.tool().openPanel?.(), true, `terraced ${terraced}: the decorator opens`);
+  }
 });

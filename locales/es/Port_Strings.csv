@@ -2462,7 +2462,7 @@ features.tamrielLand.note,"El mundo sigue más allá de la Bahía Iliaca por tod
 features.tamrielLand.title,"Tierra más allá de la Bahía"
 features.tamrielLands.note,"Cada región más allá de la Bahía Iliaca recibe su propio suelo, sus plantas y sus hitos: la ceniza y los hongos gigantes de Morrowind, los Hist de la Ciénaga Negra, los viñedos de Summerset. Desactivado conserva el aspecto original de cada clima."
 features.tamrielLands.title,"Tierras de Tamriel"
-features.tamrielMap.note,"El mapa mejorado se aleja hasta toda Tamriel: sus provincias, ciudades, montañas y mares, dibujados a mano y unidos a la propia costa de la Bahía. A un lugar más allá de la Bahía se llega con viaje rápido, como a un lugar de la Bahía."
+features.tamrielMap.note,"El mapa mejorado se aleja hasta toda Tamriel: sus provincias, ciudades, montañas y mares, dibujados a mano y unidos a la propia costa de la Bahía. Con «Tierra más allá de la Bahía» activada, el viaje rápido llega también a sus lugares."
 features.tamrielMap.title,"Tamriel en el mapa"
 features.torchesFromItems.effect,"Se aplica al instante; los personajes nuevos y las existencias de las tiendas lo siguen."
 features.torchesFromItems.note,"Tu luz en las mazmorras viene de una antorcha, un farol o una vela que llevas, y se consume, en lugar de una luz que siempre tienes. Desactivado por defecto en Daggerfall Unity."

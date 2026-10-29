@@ -18,9 +18,9 @@ import { parseStaffLine, staffHelpLines, staffTpPlaces } from '../../../src/scen
 import { createWorldPlaces } from '../../../src/world/worldWide/worldPlaces.js';
 import { createStaffFlatMapHost } from '../../../src/scenes/staffFlatMapHost.js';
 import { groundPoliticIndex } from '../../../src/world/tamriel/tamrielGround.js';
-import { tamrielFrameInBay } from '../../../src/world/tamriel/tamrielFrame.js';
+import { tamrielFrameInBay, setTamrielFit, tamrielFit } from '../../../src/world/tamriel/tamrielFrame.js';
 import { setTamrielTrace } from '../../../src/world/tamriel/tamrielLand.js';
-import { isProvinceRegion } from '../../../src/formats/mapsTables.js';
+import { isProvinceRegion, PROVINCE_REGION_NAMES } from '../../../src/formats/mapsTables.js';
 import { standService, T0 } from '../../accountDb.mjs';
 import { xpForRank } from '../../../src/net/professionLaw.js';
 import { utcDay } from '../../../src/net/marksLaw.js';
@@ -42,7 +42,7 @@ function firstRuin() {
   throw new Error('no ruin');
 }
 
-test('AUDIT TAMRIEL-WIDE C3: two dungeons past the Bay are two veins - an isle\'s ruin and the lair whose low 20 bits it shares, and two abysses a pit\'s span apart, each its whole map id; a Bay dungeon and a Bay abyss keep DFU\'s mask byte for byte (mutant: the mask kept past the Bay)', () => {
+test('AUDIT TAMRIEL-WIDE C3: two dungeons past the Bay are two veins - an isle\'s ruin and the lair whose low 20 bits it shares, and two abysses a pit\'s span apart, each its whole map id; a Bay dungeon and a Bay abyss keep DFU\'s mask byte for byte (mutant: nine digits read; the mask kept past the Bay)', () => {
   setTamrielTrace(null);
   const isle = firstRuin();
   const c = low20(etherPlaceId(isle)) - 0x80000;
@@ -57,6 +57,11 @@ test('AUDIT TAMRIEL-WIDE C3: two dungeons past the Bay are two veins - an isle\'
   assert.equal(low20(a), low20(b), 'two abysses past the Bay share their low 20');
   assert.equal(low20(a), low20(lairPlaceId(low20(a) - 0x80000)), 'and a lair\'s');
   assert.equal(new Set([dungeonIdOf(a), dungeonIdOf(b), dungeonIdOf(lairPlaceId(low20(a) - 0x80000))]).size, 3, 'three veins');
+  // AUDIT TAMRIEL-WIDE II A1: an abyss's whole id past the Bay is ten digits, and its vein parses
+  for (const id of [a, b]) {
+    assert.equal(String(dungeonIdOf(id)).length, 10, `${id}: ten digits`);
+    assert.deepEqual(parseNodeKey(dveinKey({ dungeon: dungeonIdOf(id), day: 20390, slot: 0 })), { kind: 'dvein', dungeon: dungeonIdOf(id), day: 20390, slot: 0 }, 'its vein parses');
+  }
   assert.equal(dungeonIdentity(TEMPLATE).id, 187853213 & 0xfffff, 'a Bay dungeon: MapId & 0xfffff, as DFU has it');
   assert.equal(dungeonIdOf(getAbyssMapId(412, 220)), 220 * 1000 + 412, 'the Bay\'s abyss: its pixel id, as before');
   assert.deepEqual([dungeonOk(0xffffffff), dungeonOk(2 ** 32)], [true, false]);
@@ -153,6 +158,8 @@ test('AUDIT TAMRIEL-WIDE B4/C7: /tp <x> <y> takes a pixel of the world\'s grid, 
   assert.deepEqual(parseStaffLine('/tp 8191 -8191'), { cmd: 'tp', px: 8191, py: -8191 });
   for (const line of ['/tp Daggerfall', '/tp 12', '/tp @Bran', '/god', '/staff', 'hello', '/tp 1 2 3']) assert.deepEqual(parseStaffLine(line), parseStaffCommand(line), line);
   const help = staffHelpLines();
+  // AUDIT TAMRIEL-WIDE II A5: the place's line says what the search reaches - every Bay place, the named ones past it
+  assert.ok(help.includes('/tp <place> - to a named place: any on the Bay, past it a city or town the map names'), help.join(' | '));
   assert.equal(help.length, 9);
   assert.ok(help.includes('/tp <x> <y> - to a map pixel') && !help.some((l) => /0-999/.test(l)), 'the help names no Bay bound');
   assert.match(src('src/scenes/world.js'), /const staffCmd = isStaffT\(staffGlyphs\(\)\) \? \(parseDragonCommand\(text\) \?\? parseStaffLine\(/, 'the host reads the world\'s grammar (after DRAGON-RIDE\'s /dragon)');
@@ -208,4 +215,44 @@ test('AUDIT TAMRIEL-WIDE B4/C7: the flat map opens on a province\'s land past th
     for (let y = v.box.y0 - 12; y <= v.box.y1 + 12; y++) { if (own(v.box.x0 + d, y)) edge.push(['w', y, d]); if (own(v.box.x1 - d, y)) edge.push(['e', y, d]); }
   }
   assert.deepEqual(edge, [], 'no land of its own within the margin or past the box');
+});
+
+test('AUDIT TAMRIEL-WIDE II A3, A4: every province\'s box holds all its land and four pixels of margin, the frame aside; a new fit finds the box again (mutants: the coarse step\'s pixel ungrown; the box kept across fits)', () => {
+  setTamrielTrace(null);
+  const politicAt = groundPoliticIndex((x, y) => (x >= 0 && y >= 0 && x < 1000 && y < 500 ? (y < 250 ? 128 + 17 : 64) : -1));
+  const boxesAt = () => {
+    const f = tamrielFrameInBay();
+    const fx0 = Math.floor(f.x0), fy0 = Math.floor(f.y0), fx1 = Math.ceil(f.x0 + f.w) - 1, fy1 = Math.ceil(f.y0 + f.h) - 1;
+    const land = new Map();
+    for (let y = fy0; y <= fy1; y++) for (let x = fx0; x <= fx1; x++) {
+      const r = politicAt(x, y) - 128;
+      if (!isProvinceRegion(r)) continue;
+      const b = land.get(r) ?? { x0: x, y0: y, x1: x, y1: y, at: { x, y } };
+      land.set(r, { ...b, x0: Math.min(b.x0, x), y0: Math.min(b.y0, y), x1: Math.max(b.x1, x), y1: Math.max(b.y1, y) });
+    }
+    return [...land].map(([r, e]) => {
+      const shows = [];
+      const host = createStaffFlatMapHost({ map: { pick() {}, answer: () => null }, politicAt, pixel: () => e.at, flagOf: () => null, words: () => '', choose() {},
+        makeSheet: () => ({ show: (v) => shows.push(v), hide() {}, dispose() {} }) });
+      host.toggle(); host.frame();
+      const box = shows.at(-1).box;
+      const need = { x0: Math.max(fx0, e.x0 - 4), y0: Math.max(fy0, e.y0 - 4), x1: Math.min(fx1, e.x1 + 4), y1: Math.min(fy1, e.y1 + 4) };
+      assert.ok(box.x0 <= need.x0 && box.y0 <= need.y0 && box.x1 >= need.x1 && box.y1 >= need.y1, `${r}: ${JSON.stringify(box)} holds ${JSON.stringify(need)}`);
+      return [r, box];
+    });
+  };
+  assert.equal(boxesAt().length, PROVINCE_REGION_NAMES.length, 'every province');
+  // one host across a fit: the box it keeps is the fit's own
+  let here = null;
+  for (let x = 1400; x < 3000 && !here; x += 25) if (isProvinceRegion(politicAt(x, -200) - 128)) here = { x, y: -200 };
+  const shows = [];
+  const host = createStaffFlatMapHost({ map: { pick() {}, answer: () => null }, politicAt, pixel: () => here, flagOf: () => null, words: () => '', choose() {},
+    makeSheet: () => ({ show: (v) => shows.push(v), hide() {}, dispose() {} }) });
+  host.toggle(); host.frame();
+  const before = shows.at(-1).box, was = tamrielFit();
+  try {
+    setTamrielFit({ ...was, ox: was.ox + 6 });
+    host.frame();
+    assert.notDeepEqual(shows.at(-1).box, before, 'the fit moved: the box found again');
+  } finally { setTamrielFit(was); }
 });

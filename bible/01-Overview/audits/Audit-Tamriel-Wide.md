@@ -7,14 +7,17 @@ Two halves. The audit reads main at `41804bd39` (#1184 merged as `1e18a8f64`, an
 is broken. The rule makes new work answer for all of Tamriel, and a test holds it (TAMRIEL-WIDE, below).
 
 **Status: DONE (2026-10-29).** Twenty-seven findings, each reproduced by its lane and verified again against the tree
-before it was fixed: 23 fixed, one stands, one open, and two the owner's calls (below).
+before it was fixed: 23 fixed, one stands, one open, and two the owner's calls (below). The PR itself was then read cold
+(AUDIT TAMRIEL-WIDE II, at the end): 25 findings, 20 fixed and 5 recorded.
 
 ## The baseline
 
 Run on the audited head with the freeware data (`/home/claude/dfdata/arena2`): `npm run lint` clean, `npm run types`
-clean, `npm run build` clean. The whole suite in one shard is recorded under "The suite" once it ends.
+clean, `npm run build` clean. The whole suite is under "The suite" below.
 
-Two checks fail with ARENA2 and pass without it, so CI never sees them:
+Three checks fail with ARENA2 and pass without it, so CI never sees them. The third is
+`test/world/fb1009_yardfoot.test.js` test 6 (II W5), which fails the same on main `7e6e0af86`; with ARENA2 set,
+`tools/mutate.mjs` reads a record naming that file as "its tests fail unmutated". The first two:
 `test/formats/worldData/it1_worlddata.test.js` "IT1 with ARENA2_PATH" and `test/formats/worldData/wd1_worlddata.test.js`
 "WD1 with ARENA2". Both are the Immersive Travel gate patch `WALLAA08.RMB.json`, which rebuilds to sha256 `5491ffb9...`
 where the patch records `a4c5443d...`. It fails the same way at `ca4484772` (the merge that added the test) and at
@@ -42,7 +45,7 @@ loses data; MEDIUM: wrong in a corner a player reaches; LOW: the record, a cost,
 
 | Id | Sev | Finding | Verdict |
 |---|---|---|---|
-| A1 | MEDIUM | An Imperial City house's yard lot was its door's box grown 6 m (a fabric house's one model is its door): the owner's own rooms, the neighbours' and the street | FIXED - a terraced house has no yard (`scenes/homeYards.js` lotOfFrame, the frame marked at the build) |
+| A1 | MEDIUM | An Imperial City house's yard lot was its door's box grown 6 m (a fabric house's one model is its door): the owner's own rooms, the neighbours' and the street | FIXED - a terraced house's lot is its door's own box, where nothing places (`scenes/homeYards.js` lotOfFrame, the frame marked at the build); what stood is taken back from the door (II W1) |
 | A2 | LOW | The capitals' yard bounds read the Imperial City's blocks off BLOCKS.BSA, which holds none of them: the test guarded nothing, the record's 23 and 794 were 0s | FIXED - counted as served; the record corrected (`11-Multiplayer/Yard-Cells.md`); HOME_TOWN_MAX's margin left open |
 | B1 | MEDIUM | SD-PARTY's one life and one win a Hollow kept nothing in a province's Hollow: the hub read the Bay lane's record | FIXED - the hub reads the slot's lane (`server/src/sdCopy.js`; `11-Multiplayer/Super-Dungeons.md`), world281 |
 | B2 | MEDIUM | Staff `/tp @player` refused a player in an Ocean Hole's abyss past the Bay (its pit bounded to 0..999) | FIXED - the pit bounded by `worldPixelOk` (`net/staffTeleport.js`; `03-World/Ocean-Holes.md`), world281 |
@@ -56,16 +59,16 @@ loses data; MEDIUM: wrong in a corner a player reaches; LOW: the record, a cost,
 | C5 | LOW | A Travel Options resume past the Bay read every pixel there as sea, so it never skipped ahead | FIXED - the host's own sea (`tvWater`) |
 | C6 | LOW | Map Backgrounds gave the race's backdrop in every town, dungeon and graveyard past the Bay | FIXED - a DEPARTURE, `Port-Ledger.md` section A |
 | C8 | LOW | A harbour past the Bay is sounded later than the Bay's (`dryPixel` answers the Bay alone) | STANDS - a delay, never a wrong berth; making it answer past the Bay needs the kernel's lower bound proven under the relief and the towns' eases |
-| D1 | HIGH | The Features rows said the continent holds no towns, roads or dungeons and cannot be travelled | FIXED - what stands there, in every language; since TRAVEL-EVERYWHERE the map's note says a journey reaches it. Whether `tamriel-land` is forced on online is THE OWNER'S CALL |
+| D1 | HIGH | The Features rows said the continent holds no towns, roads or dungeons and cannot be travelled | FIXED - what stands there, in every language; since TRAVEL-EVERYWHERE the map's note says fast travel reaches it with the land on (II). Whether `tamriel-land` is forced on online is THE OWNER'S CALL |
 | D2 | MEDIUM | The held map inked and named every dungeon past the Bay before it was found | FIXED - known as the Overworld knows a place (`03-World/Arena-Provinces.md` TESA13) |
 | D3 | MEDIUM | The held map past the Bay was titled "The Bay", every hover "(beyond the Bay)" | FIXED - titled Tamriel where it shows the continent; a hover names the province (`ui/map/mapStrip.js` sheetTitle, `ui/tamrielInk.js`) |
 | D4 | LOW | The death screen named the Iliac Bay wherever one died | FIXED - the two lines name no place |
-| D5 | LOW | Two help pages told the Bay's limits as the world's | FIXED - the arena page names its one city; the travel page's own line is true again since TRAVEL-EVERYWHERE |
+| D5 | LOW | Two help pages told the Bay's limits as the world's | FIXED - the arena page names both arenas, the Imperial City's too (II T1); the travel page's own line is true again since TRAVEL-EVERYWHERE |
 | D6 | LOW | Flavour lines named the Bay where the player can be anywhere | FIXED - true wherever the player stands; the live events' own words (rocket, sunbaby) THE OWNER'S CALL |
 | D7 | LOW | Cyrodiil is the Imperial Province on some screens, Sumurset Summerset on others | THE OWNER'S CALL - one name each |
 | D8 | LOW | `start2_provinces.test.js` composed the climate alone, so every start lair read region 0 | FIXED - composed as `world.js` composes it, each province's start lair pinned to its region |
 | E1 | MEDIUM | WILD-CITY-PORT read a teleport's landing by its pixel: a Mark beside a village's walls landed in Cyrodiil's open country | FIXED - the landing's own point (`11-Multiplayer/Wild-Zone.md` section 28) |
-| E2 | LOW | A person by a province's border took the people where the player stood when first drawn | FIXED - where they stand (`characters/provinceFolk.js` nativeAt) |
+| E2 | LOW | A person by a province's border took the people where the player stood when first drawn | FIXED - where they stand (`characters/provinceFolk.js` nativeAt), a yard's figures too (II W2) |
 | E3 | MEDIUM | The sea serpent's site moved with every lane added (index modulo the list), the Bay's days too; the site word carries no version | FIXED - a lane scored by its two ends, and the word carries its law (`11-Multiplayer/Sea-Serpent.md` section 18), world281 |
 | E4 | LOW | An Imperial City home is keyed by its generator's plot order, which no stamp holds | OPEN - a fabric-law version on a home record, for the day the generator changes |
 | E5 | LOW | The line keeping a yard placed again off a port's places had no pin that failed without it | FIXED - pinned (`test/world/fb1028_walls.test.js`) |
@@ -76,13 +79,23 @@ siblings, every one dead (the D-test mutant with the freeware data alone, as its
 
 **After main's merge (2026-10-29).** TRAVEL-EVERYWHERE (#1390) retired TESA-NO-FAST while this audit ran, so D1's map
 note ("not by fast travel") and D5's travel line ("Past the Bay, you go there on the Overworld") were false on the
-merge. The note now says a journey reaches a place past the Bay, in every language; the travel page keeps main's own
-line, true again. E1's bank cabin pin gained the producer's `campToWire` and asserts the landing.
+merge. The note now says fast travel reaches the land past the Bay with the land on, in every language; the travel
+page keeps main's own line, true again. E1's bank cabin pin gained the producer's `campToWire` and asserts the landing.
+ARMORY (#1392) and LODE-HERD (#1394) took world280, acct209 and acct210, so this PR ships world281 and acct211.
+
+## The suite
+
+The whole suite with ARENA2, on `0d0446bb8` (before the last merges of main), ran 24,944 tests before its hour ran
+out. Beside the three ARENA2 checks above it failed MEND-TIERS (main's, fixed by #1393), FT15 (the Features budget,
+set at the merge) and four that pass alone and on main under the same load (`staffmap_e2e`, `rescuesave`,
+`audit28_notice`, `staffpanel5message_client`). CI's eight shards ran the rest without ARENA2. `staffpanel1`'s signed
+second fails on a second boundary (301 s signed, the service's clock a second later), not this PR's code.
 
 ## Deploy order
 
-The account service first (acct211, acct209 then acct210 on the branch until ARMORY and LODE-HERD took them at the merges of main: an older service refuses a dungeon's whole id), then the relay (world281: the
-hub's lane keys, the abyss bound, the cleanses list, the serpent's site law; world280 on the branch), then the site.
+The relay (world281: the hub's lane keys, the abyss bound, the cleanses list, the serpent's site law), then the account
+service (acct211: an older one refuses a dungeon's whole id), then the site - the order the deploys run, as
+`account-deploy.yml` waits for the relay's version (II R3). C3 needs only the account before the site.
 
 ## Left for the owner, and open
 
@@ -93,7 +106,10 @@ hub's lane keys, the abyss bound, the cleanses list, the serpent's site law; wor
 - **D7** - one name each: Cyrodiil or the Imperial Province, Summerset or Sumurset.
 - **E4** (open) - a fabric-law version on an Imperial City home record, for the day its generator changes.
 - `HOME_TOWN_MAX`'s margin: an Imperial City slice holds up to 3,487 buildings and 2,773 houses.
-- `net/staffCommands.js`, in the relay's bundle, shows the Bay's bound until the relay's next version.
+- `net/staffCommands.js`, in the relay's bundle, still states the Bay's bound; folding `scenes/staffTp.js` back into it
+  is a cleanup now, as this PR ships world281 anyway (II A5).
+- The audit's second round leaves five (II, below): W4's cost, a small settlement's dungeon anchor, an old tab's veins,
+  the hover's kind words, and the service's missing lot law.
 
 ## TAMRIEL-WIDE - the rule
 
@@ -101,17 +117,60 @@ hub's lane keys, the abyss bound, the cleanses list, the serpent's site law; wor
 pull request template asks where a change works past the Bay.
 
 `tools/tamrielWide.mjs` counts six idioms in code lines (comments are not counted), a file at a time, in `src/`,
-`server/src/` and `server-account/src/` - lane C's sweep, the families whose hits were Bay-only code and almost never
-anything else:
+`server/src/` and `server-account/src/` - lane C's sweep. A count is a pattern, not a verdict: the baseline holds
+Bay-only code beside the Bay's own readers (the road network and terrain on the Bay's grid) and the port's own id
+lanes' decoders, which a fix or a marker lowers (II T3). The idioms, in their spellings (II T2: bracketed, reversed, a
+named width such as `MAP_WIDTH`, a padded mask):
 
 | Idiom | Matches | The world's way |
 |---|---|---|
-| `pixel-id` | `py * 1000 + px` and its spellings | `worldPixelKey` |
-| `pixel-mask` | `mapId & 0xfffff`, a MapId's low 20 bits as an identity (C3, C4) | `discoveryKeyOf` |
+| `pixel-id` | `py * 1000 + px`, `px + 1000 * py`, `py * MAP_WIDTH + px` | `worldPixelKey` |
+| `pixel-mask` | `mapId & 0xfffff` or `0x000fffff` or `% 0x100000`, a MapId's low 20 bits (C3, C4) | `discoveryKeyOf` |
 | `region-count` | a bound by MAPS.BSA's `regionCount`, a loop's or a check's | the `worldPlaces` registry |
-| `bay-bound` | a pixel compared with 1000, 999, 500 or 499 (C5, C8) | `worldPixelOk`, or `inBay` for the Bay's own data |
-| `bay-clamp` | a pixel clamped into the Bay (C2) | the world's grid, `inWorldGrid` |
-| `region-62` | a region compared with 61 or 62 | `BAY_REGION_COUNT`, `theatreOfRegion` |
+| `bay-bound` | a pixel against 1000, 999, 500, 499 or `MAP_WIDTH` and its kin, either way round - not a difference (C5, C8) | `worldPixelOk`, or `inBay` for the Bay's own data |
+| `bay-clamp` | a pixel clamped into the Bay, `Math.min(px, 999)` too (C2) | the world's grid, `inWorldGrid` |
+| `region-62` | a region (`region`, `r`) against 61 or 62 | `BAY_REGION_COUNT`, `theatreOfRegion` |
 
 `test/tooling/tamrielwide.test.js` holds the tree to `tools/tamrielWideBaseline.json`, which only goes down. A line
-that reads the Bay's own data on purpose carries a `BAY-OWN:` comment, on it or the line above, and is not counted.
+that reads the Bay's own data on purpose carries a `BAY-OWN:` comment with its why, on it or on a comment line just
+above, and is not counted; a marker in a string, a bare one, or a code line's reaching the line below is none (II T4).
+The wider spellings measured the baseline once more, 65 lines to 120 in 44 files; the Bay's own readers marked
+(`mapsFile.js`, `woodsFile.js`, `inBay`, `bayMapPixel`, `discoveryKeyOf`) left it.
+
+## AUDIT TAMRIEL-WIDE II - the PR read cold (2026-10-29)
+
+The owner, of this PR: *"Audit this"*. Four cold lanes read a frozen worktree of its head (`e7b4db860`): R the relay
+and the wire, A the account service and the staff tools, W the client's world fixes, T the text, the gate and the
+records. Each reproduced a finding before reporting it, and each was verified again before its fix.
+
+| Id | Sev | Finding | Verdict |
+|---|---|---|---|
+| W1 | MEDIUM | A1 left the pieces an owner set down by an Imperial City house drawn, and its decorator never opened to take them back | FIXED - the lot is the door's own box: nothing places, the owner at the door opens it |
+| T1 | MEDIUM | D5's arena page named one arena; IC-GRAND lays one in the Imperial City's Arena District too | FIXED - both named, as TUT1 allows |
+| T2 | MEDIUM | The gate missed spellings of its own idioms: a padded mask (six real lines), `MAP_WIDTH` bounds, reversed and bracketed forms | FIXED - the spellings read, the baseline measured again |
+| T- | LOW | The map's note promised fast travel past the Bay with the land off | FIXED - "with Land beyond the Bay on", in every language |
+| T3 | LOW | The baseline counted a time, a height, `discoveryKeyOf` and the Bay's own readers as Bay-only code | FIXED - a difference uncounted, the readers marked, the record says what a count is |
+| T4 | LOW | A code line's marker reached the line below; a bare marker, or one in a string, counted | FIXED |
+| T5 | LOW | Danish and Norwegian raid rows said "merge with the town guard" | FIXED |
+| T6 | LOW | The hover's kind word (`farm`, `city-state`) is English in every language | RECORDED - the port's location-type words, shared with the quests' text, an L10N item of their own |
+| T7 | LOW | A patch note credited the fix with the hover's province name, which it had before | FIXED in the PR's notes |
+| R1 | LOW | A build before world281 reads 64 cleanses, and the hub kept them oldest first: today's lost on release day | FIXED - the hello newest first |
+| R2 | LOW | A new build said its serpent site to any relay from world166, which folds it into the old law's vote | FIXED - `SERPENT_SITE_RELAY_MIN` 281 |
+| R3 = A6 | LOW | This page gave the deploy order as account, relay, site; the deploys run relay, account, site | FIXED - the order above |
+| R4 | LOW | Until two new builds name a site, a serpent day's kill is not posted, which no record said | FIXED - recorded (`Sea-Serpent.md` section 11) |
+| R5 | LOW | Two mutants on the serpent's lane score survived: one port keyed twice, the tries unbounded | FIXED - pinned |
+| A1 | LOW | No pin parsed a ten-digit vein key, and every abyss past the Bay has one | FIXED - pinned |
+| A2 | LOW | An old tab keys a dungeon past the Bay by its low 20 bits until it reloads | RECORDED - `Professions-Arc.md` C3; the service cannot tell that id from a Bay one |
+| A3 | LOW | The staff flat map's box fell a pixel short of its margin on Sumurset Isle and Cyrodiil | FIXED - the coarse step grown in full |
+| A4 | LOW | The flat map's box cache keyed by the fit had no pin | FIXED - pinned |
+| A5 | LOW | The staff help said `/tp <place>` finds a place anywhere; the record kept `staffCommands.js` for a relay release this PR makes | FIXED - the line says what it reaches; the fold left a cleanup |
+| W2 | LOW | E2 missed a yard's figures (`decorRoom.js` offerDecorFigures) | FIXED - their feet passed |
+| W3 | LOW | The host's half of E2 for the townspeople had no pin | FIXED - pinned |
+| W4 | LOW | Any find, a Bay one too, stamps every tile past the Bay again | RECORDED - one repaint at the next view; a stamp of the past-Bay finds alone needs every place's id keyed past the Bay, which W6 shows is not held |
+| W5 | LOW | This page promised "The suite" and named two ARENA2 failures of three | FIXED |
+| W6 | LOW | D2's pin found an id that keys as a Bay pixel, never a real lair's | FIXED - a real lair's whole id |
+| W- | LOW | A Mark in a dungeon of a settlement of 4 x 4 blocks or fewer reads as outside it (E1 at the anchor's corner) | RECORDED - no such dungeon stands today; a trap for one |
+
+The pins are in the four `audit_tamrielwide*.test.js` files and `test/tooling/tamrielwide.test.js`, the mutants in
+their lists - every one dead. The service has no yard lot law of its own, so an older client can still place by a
+terraced house (W1); that is the service's to hold, as it was before A1.

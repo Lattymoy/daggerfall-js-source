@@ -123,7 +123,7 @@ export function paperDollBackground(raceBackground, {
   if (!enabled) return raceBackground;
   // DEPARTURE (AUDIT TAMRIEL-WIDE C6): a province past the Bay (62..70) takes the town's, dungeon's and graveyard's
   // backdrops, which name no region; on its open road the race's, as DFU gives any region its table lacks
-  const bay = region >= 0 && region < regionCount && region < REGION_BACKGROUND_CHARS.length;
+  const bay = region >= 0 && region < regionCount && region < REGION_BACKGROUND_CHARS.length;   // BAY-OWN: the Bay's region backdrops; a province takes the context's (C6)
   if (!bay && !isProvinceRegion(region)) return raceBackground;
   if (inTown) return CONTEXT_BG.town;
   if (inDungeon) return CONTEXT_BG.dungeon;

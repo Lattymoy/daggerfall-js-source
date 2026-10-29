@@ -15,10 +15,11 @@ import { validStaffDestination, validStaffTeleportOut } from '../../../src/net/s
 import { newAbyssSaveData } from '../../../src/scenes/oceanHolesAbyss.js';
 import { buildDungeonName, getAbyssMapId, isAbyssMapId, pitPixelOk } from '../../../src/world/oceanHoles.js';
 import { RAID_SLOTS_MAX, RAID_LANES_BEYOND, RAID_BAY_REGIONS, RAID_DAY_MINUTES, raidSig } from '../../../src/net/raid/raidLaw.js';
-import { findSerpentSite, serpentLaneEnds, pointAlong, SITE_LANE_MIN_M } from '../../../src/systems/serpent/serpentSite.js';
-import { serpentAlongAt, serpentLaneScore, serpentTimes, isSerpentDay, SERPENT_SITE_LAW } from '../../../src/net/serpent/serpentLaw.js';
+import { findSerpentSite, serpentLaneEnds, serpentLaneTries, pointAlong, SITE_LANE_MIN_M } from '../../../src/systems/serpent/serpentSite.js';
+import { serpentAlongAt, serpentLaneScore, serpentTimes, isSerpentDay, SERPENT_SITE_LAW, SERPENT_LANE_TRIES } from '../../../src/net/serpent/serpentLaw.js';
 import { agreedSerpentSite, SERPENT_SITE_RECORD } from '../../../src/net/serpent/serpentHerald.js';
 import { foldGateSite } from '../../../src/net/gate/gateHerald.js';
+import { worldPixelKey } from '../../../src/world/worldWide/worldGrid.js';
 
 const quiet = async (fn) => { const warn = console.warn, info = console.info; console.warn = () => {}; console.info = () => {}; try { return await fn(); } finally { console.warn = warn; console.info = info; } };
 
@@ -80,7 +81,7 @@ test('AUDIT TAMRIEL-WIDE B2: staff /tp @player reaches a player in an Ocean Hole
   for (const bad of [{ PitMapX: 8192 }, { PitMapY: 9000 }, { PitMapX: 1.5 }, { TemplateMapX: 1000 }, { TemplateRegionIndex: 62 }]) assert.equal(validStaffDestination(abyssAt(2441, 1500, bad)), null, JSON.stringify(bad));
 }));
 
-test('AUDIT TAMRIEL-WIDE B5: the hub keeps two days of every lane\'s cleansed raids - the Bay\'s and each province\'s past it, every slot - and a joiner hears them all, the oldest let go past them (mutants: the cap the Bay\'s; the hub\'s shift at 64; the client\'s read stopping at 64)', async () => {
+test('AUDIT TAMRIEL-WIDE B5: the hub keeps two days of every lane\'s cleansed raids - the Bay\'s and each province\'s past it, every slot - and a joiner hears them all, the oldest let go past them (mutants: the cap the Bay\'s; the hub\'s shift at 64; the client\'s read stopping at 64; the hello oldest first)', async () => {
   const D = 600;
   const r = fakeRoom(SOCIAL_ROOM), realNow = Date.now;
   Date.now = () => wallMsForClassicMinutes(D * RAID_DAY_MINUTES + 600);
@@ -99,14 +100,16 @@ test('AUDIT TAMRIEL-WIDE B5: the hub keeps two days of every lane\'s cleansed ra
       for (const key of keys) assert.equal((await cleanse(key, ++at)).ok, true, key);
       const late = r.connect(); await r.hello(late, 'peer-late');
       const cls = late.sent.find((m) => m.t === 'raid' && m.k === 'cls');
-      assert.deepEqual(cls.l.map((e) => e[0]), keys, 'every lane\'s two days, in the order cleansed');
+      assert.deepEqual(cls.l.map((e) => e[0]), [...keys].reverse(), 'every lane\'s two days, newest first');
+      // AUDIT TAMRIEL-WIDE II R1: a build before world281 stops its read at 64 - the newest it keeps are today's
+      assert.ok(cls.l.slice(0, 64).every((e) => e[0].endsWith(`:${D}`)), 'an older build keeps today\'s cleanses');
       assert.equal(keys.length, RAID_CLEANS_MAX);
       assert.deepEqual(validRaidOut(cls).l, cls.l, 'the joiner\'s game reads every one');
       assert.ok(JSON.stringify(cls).length < INBOUND_FRAME_MAX, 'one frame a game reads');
       await cleanse(`61:99:${D}`, ++at);
       const next = r.connect(); await r.hello(next, 'peer-next');
       const l = next.sent.find((m) => m.t === 'raid' && m.k === 'cls').l.map((e) => e[0]);
-      assert.deepEqual(l, [...keys.slice(1), `61:99:${D}`], 'past the cap the oldest is let go');
+      assert.deepEqual(l, [`61:99:${D}`, ...keys.slice(1).reverse()], 'past the cap the oldest is let go');
     });
   } finally { Date.now = realNow; }
 });
@@ -148,6 +151,15 @@ test('AUDIT TAMRIEL-WIDE E3: the serpent\'s lane is the day\'s highest-scored by
   const short = Array.from({ length: 12 }, (_, i) => laneOf(70 + i, 200 + 9 * i, 400, 202 + 9 * i, 400));
   assert.ok(wayOf(short[0]).len < SITE_LANE_MIN_M);
   assert.deepEqual(sitesOf([...short, ...LANES]).map(siteKey), base.map(siteKey), 'better-scored lanes too short for a site: every site where it was');
+});
+
+test('AUDIT TAMRIEL-WIDE II R5: a lane is scored by both its ports - lanes out of one port score apart, so the list reordered keeps their days - and a day tries SERPENT_LANE_TRIES lanes at most (mutants: one end keyed twice; the tries unbounded)', () => {
+  const hub = P(500, 300, 200);
+  const fan = Array.from({ length: 8 }, (_, i) => ({ key: `F${i}`, a: hub, b: P(600 + i, 300 + 40 * (i + 1), 260) }));
+  for (const l of fan) assert.deepEqual(serpentLaneEnds(l), [worldPixelKey(l.a.px, l.a.py), worldPixelKey(l.b.px, l.b.py)], `${l.key}: both its ports`);
+  const lanes = [...fan, ...LANES];
+  assert.deepEqual(sitesOf([...lanes].reverse()).map(siteKey), sitesOf(lanes).map(siteKey), 'lanes out of one port, the list reversed: every site where it was');
+  assert.equal(serpentLaneTries(DAYS[0], LANES).length, SERPENT_LANE_TRIES, `${LANES.length} lanes, ${SERPENT_LANE_TRIES} tried`);
 });
 
 /** The hub with accounts and Date.now before a serpent day's bells (test/world/worldWide/ww7_longer.test.js's harness). */

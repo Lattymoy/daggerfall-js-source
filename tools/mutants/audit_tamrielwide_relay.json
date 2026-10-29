@@ -190,5 +190,45 @@
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],
     "note": "A site law out of bounds rides the wire."
+  },
+  {
+    "name": "AUDIT-TW-II-R1-the-hello-oldest-first",
+    "file": "server/src/index.js",
+    "old": "k: 'cls', l: [...l].reverse() }));",
+    "new": "k: 'cls', l }));",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_relay.test.js"
+    ],
+    "note": "The hello says the cleanses oldest first again: a build before world281 keeps the 64 oldest and reads today's cleansed raids as standing."
+  },
+  {
+    "name": "AUDIT-TW-II-R2-the-site-gate-the-old-law",
+    "file": "src/net/wire.js",
+    "old": "export const SERPENT_SITE_RELAY_MIN = 281;",
+    "new": "export const SERPENT_SITE_RELAY_MIN = 166;",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ],
+    "note": "A new build says its site to a relay that folds it into the old law's vote again."
+  },
+  {
+    "name": "AUDIT-TW-II-R5-one-end-keyed-twice",
+    "file": "src/systems/serpent/serpentSite.js",
+    "old": "? [worldPixelKey(lane.a.px, lane.a.py), worldPixelKey(lane.b.px, lane.b.py)] : null);",
+    "new": "? [worldPixelKey(lane.a.px, lane.a.py), worldPixelKey(lane.a.px, lane.a.py)] : null);",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_relay.test.js"
+    ],
+    "note": "A lane scored by one of its ports: lanes out of one port tie, and the list's order picks the day's."
+  },
+  {
+    "name": "AUDIT-TW-II-R5-the-tries-unbounded",
+    "file": "src/systems/serpent/serpentSite.js",
+    "old": ".slice(0, SERPENT_LANE_TRIES);",
+    "new": ";",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_relay.test.js"
+    ],
+    "note": "A day tries every lane, not SERPENT_LANE_TRIES of them."
   }
 ]

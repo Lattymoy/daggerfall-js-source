@@ -533,8 +533,9 @@ export const TUTORIALS = Object.freeze([
   page({
     id: 'arena', group: 'challenges', title: 'The Arena', trigger: 'When you first visit the arena.',
     body: [
-      // AUDIT TAMRIEL-WIDE D5: one arena, in Daggerfall's city alone (world/arena/arenaCity.js ARENA_REGION) - TUT1 names no Daggerfall
-      'The one arena stands in the westernmost of the Iliac Bay\'s three crown cities. Speak with the Herald at the gate to fight. The recruiters will take you onto a team, and the bookmaker takes wagers.',
+      // AUDIT TAMRIEL-WIDE II T1: two arenas - Daggerfall city's and the Imperial City's Arena District (IC-GRAND;
+      // world/arena/arenaCity.js standsArena); TUT1 names no Daggerfall
+      'An arena stands in the Imperial City and in the Iliac Bay\'s westernmost crown city. Speak with the Herald at the gate to fight. The recruiters will take you onto a team, and the bookmaker takes wagers.',
       'There are ten ranks to climb, and the purse reaches 10,000 gold. One defeat ends your run, and potions are forbidden.',
     ],
   }),

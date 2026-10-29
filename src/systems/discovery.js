@@ -296,7 +296,7 @@ export function discoveredBuildings(locationId) {
 // (every one of them past 2^20, so no key of the Bay's meets it); a Bay place, a spawn on a Bay pixel, the Abyss's pits
 // keep DFU's mask. BAY-LEFT-B: the law's leaf is world/placeIds.js (isMadePlaceId), which the deeds read too.
 /** The store's key for a map id. @param {number} mapId */
-export const discoveryKeyOf = (mapId) => { const low = mapId & 0xfffff; return low < BAY_PIXEL_IDS ? low : mapId >>> 0; };
+export const discoveryKeyOf = (mapId) => { const low = mapId & 0xfffff; return low < BAY_PIXEL_IDS ? low : mapId >>> 0; };   // BAY-OWN: a Bay id keeps its low 20 bits, a port id keys whole
 let _locations = new Map();   // discoveryKeyOf(mapId) -> { regionName, locationName }
 let _locationsGen = 0;   // AUDIT DEEP2 B-3: bumped whenever the set changes - a cache of what is named keys on it
 

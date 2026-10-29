@@ -14098,9 +14098,11 @@ finds a province's box over the continent's frame, 8 pixels apart (`staffFlatMap
 draws it as it draws a Bay region. It had scanned the Bay's 1000 x 500 and drawn nothing.
 
 The grammar and the search are `scenes/staffTp.js`, read ahead of `net/staffCommands.js`. That file is in the relay's
-bundle (its `isStaff`), so a change to it is a relay release, and this batch leaves the relay alone. The relay's copy
-still states the Bay's bound in its header and `STAFF_HELP_LINES`; the client's `/staff` drops it (`staffHelpLines`).
-Fold the grammar back into `staffCommands.js` with the relay's next version. No account or relay change. Pinned:
+bundle (its `isStaff`), and this batch was written to leave the relay alone. The relay's copy still states the Bay's
+bound in its header and `STAFF_HELP_LINES`; the client's `/staff` drops it (`staffHelpLines`). The PR ships world281
+anyway, for B1, B2, B5 and E3 (AUDIT TAMRIEL-WIDE II A5), so folding the grammar back into `staffCommands.js` waits
+for no release now - it is left as a cleanup. Its place line now says what the search reaches: any place on the Bay,
+and past it the cities and towns the map names (the registry's listed places), not every place. Pinned:
 `test/world/worldWide/audit_tamrielwide_account.test.js` (3 of its 7), `tools/mutants/audit_tamrielwide_account.json`
 (11 of its 17), all dead. STAFF1's host pin and its `STAFF1-ungated` record read `parseStaffLine` now (PIN MOVED).
 

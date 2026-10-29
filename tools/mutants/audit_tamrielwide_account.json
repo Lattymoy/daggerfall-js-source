@@ -165,12 +165,42 @@
   {
     "name": "AUDIT-TW-C7-the-coarse-reach-ungrown",
     "file": "src/scenes/staffFlatMapHost.js",
-    "old": "grow = MARGIN + step - 1;",
+    "old": "grow = coarse ? MARGIN + COARSE : MARGIN;",
     "new": "grow = MARGIN;",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_account.test.js",
       "test/scenes/staffFlatMap.test.js"
     ],
     "note": "A province's box can cut its land at the edge."
+  },
+  {
+    "name": "AUDIT-TW-II-A1-nine-digits-read",
+    "file": "src/net/nodeLaw.js",
+    "old": "const DVEIN_KEY_RE = /^dvein:(\\d{1,10}):(\\d{1,6}):(\\d{1,2})$/;",
+    "new": "const DVEIN_KEY_RE = /^dvein:(\\d{1,9}):(\\d{1,6}):(\\d{1,2})$/;",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js"
+    ],
+    "note": "A vein key of ten digits refused: every abyss past the Bay answers bad-node."
+  },
+  {
+    "name": "AUDIT-TW-II-A3-the-step-ungrown",
+    "file": "src/scenes/staffFlatMapHost.js",
+    "old": "grow = coarse ? MARGIN + COARSE : MARGIN;",
+    "new": "grow = coarse ? MARGIN + COARSE - 1 : MARGIN;",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js"
+    ],
+    "note": "The flat map's box a pixel short of its margin at a coarse sample's edge (Sumurset Isle, Cyrodiil)."
+  },
+  {
+    "name": "AUDIT-TW-II-A4-the-box-kept-across-fits",
+    "file": "src/scenes/staffFlatMapHost.js",
+    "old": "if (kept && kept.fit === fit) return kept.box;",
+    "new": "if (kept) return kept.box;",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide_account.test.js"
+    ],
+    "note": "A province's box kept from another fit of the picture."
   }
 ]
