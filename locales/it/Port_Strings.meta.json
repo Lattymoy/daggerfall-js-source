@@ -31694,6 +31694,21 @@
   "tr": "3125bd31a846",
   "by": "claude-in-session"
  },
+ "pvp.level30.ask": {
+  "en": "1f21ace75cf7",
+  "tr": "25129bc6306d",
+  "by": "claude-in-session"
+ },
+ "pvp.level30.no": {
+  "en": "8de95fd5b412",
+  "tr": "d502b297d94a",
+  "by": "claude-in-session"
+ },
+ "pvp.level30.warn": {
+  "en": "ac490f3d77ca",
+  "tr": "e08c198219a5",
+  "by": "claude-in-session"
+ },
  "pvp.potion.health": {
   "en": "fb48097d0f1f",
   "tr": "68f2ef81d986",
