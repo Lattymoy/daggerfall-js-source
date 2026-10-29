@@ -1634,6 +1634,16 @@
   "tr": "0c7c43e1809a",
   "by": "claude-in-session"
  },
+ "inventory.cape.label": {
+  "en": "cb4796c29622",
+  "tr": "bceeaae472e8",
+  "by": "claude-in-session"
+ },
+ "inventory.cape.title": {
+  "en": "8cd2d555af57",
+  "tr": "d5bba5cf4b31",
+  "by": "claude-in-session"
+ },
  "inventory.store.chestAct": {
   "en": "88d2f1cb9aea",
   "tr": "8fb669678405",

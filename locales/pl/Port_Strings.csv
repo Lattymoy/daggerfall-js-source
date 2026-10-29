@@ -1177,6 +1177,8 @@ holdings.horse.boons.starving,"Wygłodzony - nie galopuje, dopóki nie zje. Naka
 holdings.wagon.boons.failing,"Rozpada się, ale wciąż jedzie pełnym tempem."
 holdings.wagon.boons.rickety,"Rozklekotany, ale wciąż jedzie pełnym tempem."
 holdings.wagon.boons.sound,"Solidny - dzięki temu jedzie szybciej."
+inventory.cape.label,"Pokaż płaszcz"
+inventory.cape.title,"Pokazuje lub ukrywa twój płaszcz i twoją aurę. Inni gracze widzą to samo."
 inventory.store.chestAct,"Zamknij skrzynię, zanim to zrobisz."
 inventory.store.chestAlone,"Zamknij skrzynię, zanim otworzysz wóz albo torbę."
 items.gold.sharedFull,"Nie zmieści się tu więcej złota. Wszyscy tutaj dzielą ten pojemnik, a jedna kupka złota w nim mieści najwyżej {max, number}."
