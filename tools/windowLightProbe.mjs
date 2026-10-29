@@ -15,7 +15,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const W = 640, H = 400;
-const server = await createServer({ server: { port: 5309, strictPort: true }, logLevel: 'error' });
+const server = await createServer({ server: { port: 5309, strictPort: true, hmr: false, watch: null }, logLevel: 'error' });   // a source saved mid-run reloads no page
 await server.listen();
 const browser = await chromium.launch({ headless: true, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 let failed = false;

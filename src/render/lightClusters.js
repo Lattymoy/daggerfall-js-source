@@ -96,6 +96,7 @@ export function createClusterSpace(maxLights = 64) {
     total: 0,        // list entries written
     lights: 0,       // lights that touched the grid at all
     rows: 0,         // list rows to upload
+    need: 0,         // the list entries the last build's lights asked for (over CLUSTER_LIST_CAP: it failed)
     built: false,    // the last build's answer
     _tiles: new Int16Array(4),   // AUDIT LC1: a slice's tile range, scratch
     _box: new Int16Array(7 * maxLights),   // per light: x0 x1 y0 y1 z0 z1 nearFull (64 by default - the lane's cap is 48; WL1 asks for its own)
@@ -192,6 +193,7 @@ export function buildLightClusters(lights, count, view, proj, space) {
     }
   }
   space.lights = touched;
+  space.need = total;   // WL1: what the lights asked for - a builder that may leave some out sizes its next try by it
   if (total > CLUSTER_LIST_CAP) return false;
   // the offsets: a prefix sum over the cells; the grid texel is (offset, count) and the count is reset to
   // serve as the write cursor

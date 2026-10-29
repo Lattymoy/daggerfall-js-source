@@ -7,10 +7,10 @@
 // and read in both lanes' shaders (windowLightGlsl); a dark mock room throws nothing (world/windowRoomArt.js).
 // Not a DFU member: DFU's windows light nothing. 07-Rendering/Real-Windows.md, WL1.
 
-import { buildLightClusters, createClusterSpace, CLUSTER_X, CLUSTER_Y, CLUSTER_Z, CLUSTER_LIST_W, CLUSTER_LIST_ROWS } from './lightClusters.js';
+import { buildLightClusters, createClusterSpace, CLUSTER_X, CLUSTER_Y, CLUSTER_Z, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, CLUSTER_LIST_CAP } from './lightClusters.js';
 import { roomSeedBits, roomLitAt, curtainBitsOf, roomCurtained, curtainEdges } from '../world/windowRoomArt.js';
 import { pageParam } from '../systems/pageQuery.js';
-import { WL_REC, windowAperturesOf } from './windowApertures.js';
+import { WL_REC, APERTURE_CELL_REC, windowAperturesOf } from './windowApertures.js';
 
 export { WL_REC, windowAperturesOf };
 
@@ -45,6 +45,10 @@ export const WL_CURTAIN_PASS = 0.3;
  *  gains on the sun and the moon as the street is lit, and on the sky's light as a glow from the glass. */
 export const WL_SUN_REACH = 24;
 export const WL_SUN_ANGLE = 0.0093;
+/** The glass's own glow reaches this far (A / (pi d^2 + A) is about 1% of it at 5 m), so a pane the sun does not face
+ *  is a small light; and with no sun map a receiver this far under the glass's bottom is under a floor. */
+export const WL_SPILL_REACH = 6;
+export const WL_STOREY = 2.5;
 export const WL_SUN_GAIN = 0.9;
 export const WL_MOON_GAIN = 1;
 export const WL_SKY_GAIN = 0.5;
@@ -59,6 +63,9 @@ export const WL_CUT_EASE = 3;
 export const WL_HOLD_MS = 20000;
 export const WL_MOVE_REACH = 2;
 export const WL_PLACEMENTS_MAX = 4096;
+/** A frame builds at most this many tiles' world data, the nearest cells first (a city's pixel walked into lights over a
+ *  few frames, never in one long one). */
+export const WL_BUILD_TILES = 384;
 /** The outside's light, captured for a building's frame, is asked again this often. */
 export const WL_OUTSIDE_EVERY_MS = 250;
 /** The kill door: `?windowlight=off` lights no window (the Real windows row's Off lights none either). */
@@ -152,7 +159,7 @@ export function windowLightAt(rec, wp, n, maskAt, atten) {
   if (d2 >= c0[3] * c0[3]) return [0, 0, 0];
   const s = dot(rel, c3);
   if (s <= 0) return [0, 0, 0];
-  const d = Math.sqrt(d2), x2 = d2 / (c0[3] * c0[3]), win = (1 - x2 * x2) ** 2;
+  const d = Math.sqrt(d2), x2 = d2 / WL_SPILL_REACH ** 2, win = d2 < WL_SPILL_REACH ** 2 ? (1 - x2 * x2) ** 2 : 0;
   const cr = Math.max(-dot(n, rel), 0) / Math.max(d, 1e-4);
   const sp = c6[3] * (s / Math.max(d, 1e-4)) * cr / (Math.PI * d2 + c6[3]) * win;
   const acc = [c6[0] * sp, c6[1] * sp, c6[2] * sp];
@@ -162,7 +169,10 @@ export function windowLightAt(rec, wp, n, maskAt, atten) {
   else { ray = [c4[0], c4[1], c4[2]]; const dn = dot(ray, c3); if (dn > -1e-3) return acc; tt = -s / dn; }
   const w = [wp[0] + ray[0] * tt - c0[0], wp[1] + ray[1] * tt - c0[1], wp[2] + ray[2] * tt - c0[2]];
   const a = dot(w, c1), b = dot(w, c2);
-  if (Math.abs(a) > 0.5 || Math.abs(b) > 0.5) return acc;
+  const pw = kind === WL_KIND.lamp ? 2 * WL_LAMP_RADIUS * tt : WL_SUN_ANGLE * tt;
+  const pa = pw * Math.hypot(c1[0], c1[1], c1[2]), pb = pw * Math.hypot(c2[0], c2[1], c2[2]);
+  if (Math.abs(a) > 0.5 + pa || Math.abs(b) > 0.5 + pb) return acc;
+  if (kind === WL_KIND.sunBare && wp[1] < c0[1] - 0.5 / Math.max(Math.hypot(c2[0], c2[1], c2[2]), 1e-4) - WL_STOREY) return acc;
   const rl = Math.hypot(ray[0], ray[1], ray[2]);
   const ndl = Math.max(dot(n, ray), 0) / Math.max(rl, 1e-4);
   const m = maskAt(c1[3] + a * c3[3], c2[3] + b * c4[3]);
@@ -211,10 +221,12 @@ vec3 winLit(vec3 wp, vec3 n, float isFlat, vec3 base) {
     float s = dot(rel, c3.xyz);
     if (s <= 0.0) continue;   // behind the glass: the wall it stands in keeps its light
     float d = sqrt(d2);
-    float x2 = d2 / (c0.w * c0.w), win = (1.0 - x2 * x2) * (1.0 - x2 * x2);
-    vec4 c6 = uWinL[i + 6];
-    float cr = isFlat > 0.5 ? 1.0 : max(-dot(n, rel), 0.0) / max(d, 1e-4);
-    acc += c6.rgb * (c6.w * (s / max(d, 1e-4)) * cr / (3.14159265 * d2 + c6.w) * win);   // the glass's glow, a small lit area
+    if (d2 < ${f(WL_SPILL_REACH * WL_SPILL_REACH)}) {   // the glass's glow, a small lit area
+      vec4 c6 = uWinL[i + 6];
+      float x2 = d2 / ${f(WL_SPILL_REACH * WL_SPILL_REACH)}, win = (1.0 - x2 * x2) * (1.0 - x2 * x2);
+      float cr = isFlat > 0.5 ? 1.0 : max(-dot(n, rel), 0.0) / max(d, 1e-4);
+      acc += c6.rgb * (c6.w * (s / max(d, 1e-4)) * cr / (3.14159265 * d2 + c6.w) * win);
+    }
     vec4 c4 = uWinL[i + 4], c5 = uWinL[i + 5];
     int code = int(c5.w + 0.5), kind = code >> 8;
     vec3 ray; float tt;
@@ -223,12 +235,14 @@ vec3 winLit(vec3 wp, vec3 n, float isFlat, vec3 base) {
     vec3 w = wp + ray * tt - c0.xyz;
     vec4 c1 = uWinL[i + 1], c2 = uWinL[i + 2];
     float a = dot(w, c1.xyz), b = dot(w, c2.xyz);
-    if (abs(a) > 0.5 || abs(b) > 0.5) continue;   // the ray crosses the wall, not the window
+    float pw = kind == 0 ? ${f(2 * WL_LAMP_RADIUS)} * tt : ${f(WL_SUN_ANGLE)} * tt;   // the source's footprint on the glass's plane, metres
+    float pa = pw * length(c1.xyz), pb = pw * length(c2.xyz);   // ... in the aperture's own units
+    if (abs(a) > 0.5 + pa || abs(b) > 0.5 + pb) continue;   // the ray crosses the wall, not the window or its soft edge
+    if (kind == 2 && wp.y < c0.y - 0.5 / max(length(c2.xyz), 1e-4) - ${f(WL_STOREY)}) continue;   // no sun map: a storey down is under a floor
     float rl = length(ray);
     float ndl = isFlat > 0.5 ? 1.0 : max(dot(n, ray), 0.0) / max(rl, 1e-4);
     if (ndl <= 0.0) continue;
-    float pw = kind == 0 ? ${f(WL_LAMP_RADIUS)} * tt / max(1.0 - tt, 1e-3) : ${f(WL_SUN_ANGLE)} * tt;   // the penumbra, by the source's breadth
-    float lod = log2(max(pw * length(c1.xyz) * c3.w * ${WL_MASK_SIZE}.0, 1.0));
+    float lod = log2(max(max(pa * c3.w, pb * c4.w) * ${WL_MASK_SIZE}.0, 1.0));
     float m = textureLod(uWinMask, vec3(c1.w + a * c3.w, c2.w + b * c4.w, float(code & 255)), lod).r;
     if (m <= 0.0) continue;
     float r = c0.w;
@@ -251,7 +265,7 @@ function xfTo(o, i, m, x, y, z, w) {
   o[i + 2] = m[2] * x + m[6] * y + m[10] * z + m[14] * w;
 }
 const set3 = (o, x, y, z) => { o[0] = x; o[1] = y; o[2] = z; };
-const lightRec = () => ({ c: [0, 0, 0], U: [0, 0, 0], V: [0, 0, 0], nf: [0, 0, 0], uv: [0, 0, 0, 0], src: [0, 0, 0], gobo: [0, 0, 0], spill: [0, 0, 0], kind: 0, layer: 0, reach: 0, area: 0, halfDiag: 0 });
+const lightRec = () => ({ c: [0, 0, 0], U: [0, 0, 0], V: [0, 0, 0], nf: [0, 0, 0], uv: [0, 0, 0, 0], src: [0, 0, 0], gobo: [0, 0, 0], spill: [0, 0, 0], kind: 0, layer: 0, reach: 0, area: 0, halfDiag: 0, ball: [0, 0, 0, 0] });
 
 const byDistance = (a, b) => a.d - b.d;
 
@@ -260,9 +274,12 @@ export class WindowLightPass {
   constructor(gl, deps) {
     this.gl = gl;
     this.deps = deps;
-    this.masks = new Map();       // key -> { layer, box, used }
-    this._layers = 0;
-    this.sources = { street: new Map(), inside: new Map() };   // mesh -> [{ m, remap, seen, tiles }]
+    this.masks = new Map();       // key -> { box, bytes, layer (-1: none now), used }
+    this._layers = 0;             // layers ever given out; a freed one waits in _free
+    this._free = [];
+    this._holder = [];            // layer -> the mask on it
+    this._mipsDirty = false;
+    this.sources = { street: new Map(), inside: new Map() };   // mesh -> [{ m, remap, seen, subs }]
     this.data = new Float32Array(WL_MAX_LIGHTS * WL_VEC4 * 4);
     this.spheres = new Float32Array(WL_MAX_LIGHTS * 4);
     this.space = createClusterSpace(WL_MAX_LIGHTS);
@@ -273,10 +290,13 @@ export class WindowLightPass {
     this._cand = [];
     this._pool = [];              // the candidates' records, the frame's to reuse
     this._used = 0;
+    this._pending = [];           // cells near enough not yet built: { d, s, sub, p, ci }, reused
+    this._pendN = 0;
+    this._ld = new Float32Array(WL_MAX_LIGHTS);   // each written light's distance, for the cut on an overflow
     this._lt = lightRec();        // the light being written, and a curtained window's whole glass
     this._whole = lightRec();
     this._v = [0, 0, 0];
-    this.stats = { lights: 0, candidates: 0, cells: 0, walked: 0 };   // walked: the tiles a gather measured
+    this.stats = { lights: 0, candidates: 0, cells: 0, walked: 0, built: 0, dropped: 0 };   // walked: the tiles a gather measured; built: their world data made; dropped: past the list
     this.tex = null;
     this.ubo = null;
   }
@@ -317,31 +337,47 @@ export class WindowLightPass {
     this.deps.activeTexture(gl.TEXTURE0);
   }
 
-  /** A window picture's glass (`mask`: rgba, white where glass; `alpha`: its holes instead) under its key - a layer of
-   *  the array, the least lately read given back when they are all taken. */
+  /** A window picture's glass (`mask`: rgba, white where glass; `alpha`: its holes instead) under its key: its box and
+   *  its layer's bytes, kept - it goes up onto a layer when a frame's light first reads it (_resident). */
   addMask(key, mask, alpha = false) {
     if (!mask?.colors || this.masks.has(key)) return;
     const m = alpha ? holesOf(mask) : mask;
     const box = maskBoxOf(m);
-    if (!box) return;
-    this._ensureMasks();
-    let layer = this._layers;
-    if (layer < WL_MASK_LAYERS) this._layers++;
-    else {
-      let oldest = null;
-      for (const [k, v] of this.masks) if (!oldest || v.used < oldest[1].used) oldest = [k, v];
-      layer = oldest[1].layer;
-      this.masks.delete(oldest[0]);
+    if (box) this.masks.set(key, { box, bytes: maskLayerOf(m), layer: -1, used: -Infinity });
+  }
+
+  /** A mask let go with its picture (the texture evicted): its layer is free. A new upload of the key adds it again. */
+  dropMask(key) {
+    const k = this.masks.get(key);
+    if (!k) return;
+    if (k.layer >= 0) { this._holder[k.layer] = null; this._free.push(k.layer); }
+    this.masks.delete(key);
+  }
+
+  /** A mask on a layer for this frame's light: its own, a free one, or that of the mask read least lately of those this
+   *  frame has not read - from the bytes kept, so no picture is ever lost. False when every layer is this frame's. */
+  _resident(k, now) {
+    if (k.layer >= 0) { k.used = now; return true; }
+    let layer = this._free.length ? /** @type {number} */ (this._free.pop()) : this._layers < WL_MASK_LAYERS ? this._layers++ : -1;
+    if (layer < 0) {
+      let old = null;
+      for (const h of this._holder) if (h && h.used < now && (!old || h.used < old.used)) old = h;
+      if (!old) return false;
+      layer = old.layer;
+      old.layer = -1;
     }
+    this._ensureMasks();
     const gl = this.gl;
     this.deps.activeTexture(gl.TEXTURE0 + WL_MASK_UNIT);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-    gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, layer, WL_MASK_SIZE, WL_MASK_SIZE, 1, gl.RED, gl.UNSIGNED_BYTE, maskLayerOf(m));
+    gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, layer, WL_MASK_SIZE, WL_MASK_SIZE, 1, gl.RED, gl.UNSIGNED_BYTE, k.bytes);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
-    gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
     this.deps.activeTexture(gl.TEXTURE0);
-    this.masks.set(key, { layer, box, used: 0 });
+    this._holder[layer] = k;
+    k.layer = layer; k.used = now;
+    this._mipsDirty = true;
+    return true;
   }
 
   /** A mesh drawn in a frame of `kind` ('street' or 'inside') at `m`, its pictures through `remap`: kept as a source of
@@ -362,8 +398,8 @@ export class WindowLightPass {
       const d2 = dx * dx + dy * dy + dz * dz;
       if (s.seen !== now && d2 < near) { near = d2; moved = s; }
     }
-    if (moved) { moved.m.set(m); moved.tiles = null; moved.seen = now; moved.remap = remap; return; }   // a mover: its windows go with it
-    if (n < WL_PLACEMENTS_MAX) list.push({ m: Float32Array.from(m), remap, seen: now, tiles: null });
+    if (moved) { moved.m.set(m); moved.subs = null; moved.seen = now; moved.remap = remap; return; }   // a mover: its windows go with it
+    if (n < WL_PLACEMENTS_MAX) list.push({ m: Float32Array.from(m), remap, seen: now, subs: null });
   }
 
   /** A mesh let go: none of its windows lights. */
@@ -373,9 +409,10 @@ export class WindowLightPass {
   shift(offset) {
     for (const map of Object.values(this.sources)) for (const list of map.values()) for (const s of list) {
       s.m[12] += offset[0]; s.m[13] += offset[1]; s.m[14] += offset[2];
-      if (s.tiles) for (const t of s.tiles) if (t) {
-        for (let i = 0; i < t.cent.length; i += 3) { t.cent[i] += offset[0]; t.cent[i + 1] += offset[1]; t.cent[i + 2] += offset[2]; }
-        t.ball[0] += offset[0]; t.ball[1] += offset[1]; t.ball[2] += offset[2];
+      if (s.subs) for (const p of s.subs) if (p) {
+        for (let i = 0; i < p.ball.length; i += 4) { p.ball[i] += offset[0]; p.ball[i + 1] += offset[1]; p.ball[i + 2] += offset[2]; }
+        p.all[0] += offset[0]; p.all[1] += offset[1]; p.all[2] += offset[2];
+        for (const t of p.tiles) if (t) for (let i = 0; i < t.cent.length; i += 3) { t.cent[i] += offset[0]; t.cent[i + 1] += offset[1]; t.cent[i + 2] += offset[2]; }
       }
     }
   }
@@ -383,20 +420,35 @@ export class WindowLightPass {
   /** The outside's light as a building's frame sees it through its glass (the clock's, the weather's). */
   setOutside(o) { this.outside = o; }
 
-  /** Is the sun (or the moon) up outside and facing any of a building's glass near `eye` - the direction toward it, or
-   *  null. The frame's shadow pass draws its map for this. */
-  sunFor(eye, now) {
+  /** Is the sun (or the moon) up outside and facing glass this frame could light - a building's, with its mask, within
+   *  the gather of `eye` (`glass(key)` the renderer's word on a key's glass) - the direction toward it, or null. The
+   *  frame's shadow pass draws its map for this.
+   *  @param {number[]} eye @param {number} now @param {(key: string) => any} [glass] */
+  sunFor(eye, now, glass = () => 'glass') {
     const o = this.outside;
     if (!o) return null;
     const dir = o.sunScale > 0 && o.sunDir[1] > 0.05 ? o.sunDir : o.moonScale > 0 && o.moonDir[1] > 0.05 ? o.moonDir : null;
     if (!dir) return null;
+    const far = (b, i) => Math.hypot(b[i] - eye[0], b[i + 1] - eye[1], b[i + 2] - eye[2]) - b[i + 3] > WL_GATHER;
+    const v = this._v;
     for (const [mesh, list] of this.sources.inside) {
       if (mesh._dead || !mesh.wl) continue;
       for (const s of list) {
         if (now - s.seen > WL_HOLD_MS) continue;
         for (let si = 0; si < mesh.wl.length; si++) {
-          const nr = this._tilesOf(s, si, mesh.wl[si].ap).nrm;
-          for (let i = 0; i < nr.length; i += 3) if (nr[i] * dir[0] + nr[i + 1] * dir[1] + nr[i + 2] * dir[2] < -0.02) return dir;
+          const sub = mesh.wl[si];
+          const key = s.remap && s.remap.has(sub.key) ? s.remap.get(sub.key) : sub.key;
+          if (!glass(key) || !this.masks.has(key)) continue;
+          const p = this._cellsOf(s, si, sub);
+          if (far(p.all, 0)) continue;
+          for (let ci = 0; ci < p.tiles.length; ci++) {
+            if (far(p.ball, ci * 4)) continue;
+            const first = sub.cells[ci * APERTURE_CELL_REC + 4], n = sub.cells[ci * APERTURE_CELL_REC + 5];
+            for (let k = first * WL_REC; k < (first + n) * WL_REC; k += WL_REC) {
+              xfTo(v, 0, s.m, sub.ap[k + 11], sub.ap[k + 12], sub.ap[k + 13], 0);
+              if (v[0] * dir[0] + v[1] * dir[1] + v[2] * dir[2] < -0.02 * Math.hypot(v[0], v[1], v[2])) return dir;
+            }
+          }
         }
       }
     }
@@ -413,7 +465,8 @@ export class WindowLightPass {
     const cand = this._cand;
     cand.length = 0;
     this._used = 0;
-    this.stats.walked = 0;
+    this._pendN = 0;
+    this.stats.walked = 0; this.stats.built = 0;
     let gathered = 0;
     const o = this.outside;
     const sunDir = o && o.sunScale > 0 && o.sunDir[1] > 0.05 ? o.sunDir : null;
@@ -434,6 +487,7 @@ export class WindowLightPass {
         if (!list.length) this.sources[kind].delete(mesh);
       }
     }
+    gathered += this._buildPending(kind, eye, cand);
     this.stats.candidates = gathered;
     // the nearest WL_MAX_LIGHTS; the cut eases toward the frame's own so a pool at the edge fades
     cand.sort(byDistance);
@@ -448,18 +502,32 @@ export class WindowLightPass {
       const c = cand[i];
       if (c.d >= cut) break;
       const fade = c.d <= cut * WL_FADE_FROM ? 1 : (cut - c.d) / (cut * (1 - WL_FADE_FROM));
+      if (!this._resident(c.mask, now)) continue;   // every layer read this frame already
       const l = kind === 'street' ? this._lampLight(c, lampC, fade) : this._sunLight(c, sunDir ?? moonDir, !!sunDir, keyC, skyC, shadows, fade);
       if (!l) continue;
       writeWindowLight(this.data, w, l);
-      this.spheres[w * 4] = l.c[0]; this.spheres[w * 4 + 1] = l.c[1]; this.spheres[w * 4 + 2] = l.c[2];
-      this.spheres[w * 4 + 3] = l.reach + l.halfDiag;
-      c.mask.used = now;
+      this.spheres.set(l.ball, w * 4);
+      this._ld[w] = c.d;
       w++;
     }
+    if (this._mipsDirty) {   // the layers put up this frame, their mips once
+      const gl = this.gl;
+      this.deps.activeTexture(gl.TEXTURE0 + WL_MASK_UNIT);
+      gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex);
+      gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+      this.deps.activeTexture(gl.TEXTURE0);
+      this._mipsDirty = false;
+    }
+    // more cells than the band's list holds: the nearest that fit (the lights stand nearest first), never none - and
+    // the cut comes in to the first left out, so the edge fades from the next frame on
+    let fit = w;
+    while (fit > 0 && !buildLightClusters(this.spheres, fit, view, proj, this.space)) fit = Math.min(fit - 1, Math.floor(fit * CLUSTER_LIST_CAP / this.space.need * 0.9));
+    if (fit < w) this._cuts[kind] = Math.min(this._cuts[kind], this._ld[fit]);
+    this.stats.dropped = w - fit;
+    w = fit;
     this.count = w;
     this.stats.lights = w;
     if (!w) return 0;
-    if (!buildLightClusters(this.spheres, w, view, proj, this.space)) { this.count = 0; return 0; }
     this.stats.cells = this.space.total;
     const gl = this.gl;
     this._ensureBlock();
@@ -468,9 +536,12 @@ export class WindowLightPass {
     return w;
   }
 
-  /** One placement's windows into `cand`: every tile whose picture has glass of the frame's kind, near enough. */
+  /** One placement's windows into `cand`: every tile near enough whose picture has glass of the frame's kind on the
+   *  share of it the mesh covers - walked by the cells near the eye, a placement past the reach by one check. A cell
+   *  not yet built waits for _buildPending. */
   _gather(mesh, s, kind, eye, glass, cand) {
     let n = 0;
+    const far = (b, i) => Math.hypot(b[i] - eye[0], b[i + 1] - eye[1], b[i + 2] - eye[2]) - b[i + 3] > WL_GATHER;
     for (let si = 0; si < mesh.wl.length; si++) {
       const sub = mesh.wl[si];
       const key = s.remap && s.remap.has(sub.key) ? s.remap.get(sub.key) : sub.key;
@@ -478,51 +549,100 @@ export class WindowLightPass {
       if (!g || (kind === 'street' && g !== 'window')) continue;
       const mask = this.masks.get(key);
       if (!mask) continue;
-      const ap = sub.ap, t = this._tilesOf(s, si, ap), P = t.cent, B = t.ball;
-      if (Math.hypot(B[0] - eye[0], B[1] - eye[1], B[2] - eye[2]) - B[3] > WL_GATHER) continue;   // the whole placement too far
-      this.stats.walked += t.street.length;
-      for (let j = 0; j < t.street.length; j++) {
-        if (kind === 'street' && !t.street[j]) continue;   // a dark room throws nothing; glass in a roof shows no room
-        const d = Math.hypot(P[3 * j] - eye[0], P[3 * j + 1] - eye[1], P[3 * j + 2] - eye[2]);
-        if (d > WL_GATHER) continue;
-        const c = this._pool[this._used] ??= { d: 0, s: null, ap: null, k: 0, j: 0, t: null, mask: null };
-        this._used++;
-        c.d = d; c.s = s; c.ap = ap; c.k = j * WL_REC; c.j = j; c.t = t; c.mask = mask;
-        cand.push(c);
-        n++;
+      const p = this._cellsOf(s, si, sub);
+      if (far(p.all, 0)) continue;
+      for (let ci = 0; ci < p.tiles.length; ci++) {
+        if (far(p.ball, ci * 4)) continue;
+        if (p.tiles[ci]) { n += this._gatherCell(s, sub, p.tiles[ci], ci, mask, kind, eye, cand); continue; }
+        const q = this._pending[this._pendN] ??= { d: 0, s: null, sub: null, p: null, ci: 0, mask: null };
+        this._pendN++;
+        q.d = Math.hypot(p.ball[ci * 4] - eye[0], p.ball[ci * 4 + 1] - eye[1], p.ball[ci * 4 + 2] - eye[2]);
+        q.s = s; q.sub = sub; q.p = p; q.ci = ci; q.mask = mask;
       }
     }
     return n;
   }
 
-  /** A placement's tiles of one sub-mesh in the world, made once and kept with it: each tile's covered centre, its unit
-   *  normal, whether a street's lamp lights it (its room lit by the mock rooms' own seed, realWindows.js rwSeedBits - the
-   *  normal in quarters and the plane off the model's own frame - and its glass in a wall, not a roof) and its curtains. */
-  _tilesOf(s, si, ap) {
-    s.tiles ??= [];
-    let t = s.tiles[si];
-    if (t) return t;
-    const T = ap.length / WL_REC, m = s.m, v = this._v;
-    t = { cent: new Float32Array(3 * T), nrm: new Float32Array(3 * T), street: new Uint8Array(T), curtains: new Array(T).fill(null), ball: new Float64Array(4) };
+  /** One built cell's tiles into `cand`. */
+  _gatherCell(s, sub, t, ci, mask, kind, eye, cand) {
+    let n = 0;
+    const ap = sub.ap, box = mask.box, first = sub.cells[ci * APERTURE_CELL_REC + 4], P = t.cent;
+    this.stats.walked += t.street.length;
+    for (let j = 0; j < t.street.length; j++) {
+      if (kind === 'street' && !t.street[j]) continue;   // a dark room throws nothing; glass in a roof shows no room
+      const k = (first + j) * WL_REC;
+      if (!(Math.min(ap[k + 16], box[2]) - Math.max(ap[k + 14], box[0]) > 1e-3 && Math.min(ap[k + 17], box[3]) - Math.max(ap[k + 15], box[1]) > 1e-3)) continue;   // no glass on its share
+      const d = Math.hypot(P[3 * j] - eye[0], P[3 * j + 1] - eye[1], P[3 * j + 2] - eye[2]);
+      if (d > WL_GATHER) continue;
+      const c = this._pool[this._used] ??= { d: 0, s: null, ap: null, k: 0, j: 0, t: null, mask: null };
+      this._used++;
+      c.d = d; c.s = s; c.ap = ap; c.k = k; c.j = j; c.t = t; c.mask = mask;
+      cand.push(c);
+      n++;
+    }
+    return n;
+  }
+
+  /** The cells the gather found unbuilt, the nearest first, built up to WL_BUILD_TILES tiles (one cell at least) and
+   *  walked this frame; the rest wait for the next. Answers the candidates they added. */
+  _buildPending(kind, eye, cand) {
+    const n = this._pendN, list = this._pending;
+    let added = 0, built = 0;
+    if (n > 1) { const live = list.slice(0, n).sort(byDistance); for (let i = 0; i < n; i++) list[i] = live[i]; }
+    for (let i = 0; i < n; i++) {
+      const q = list[i];
+      if (!q.p.tiles[q.ci] && (built === 0 || built < WL_BUILD_TILES)) {
+        q.p.tiles[q.ci] = this._cellTiles(q.s, q.sub, q.ci);
+        built += q.sub.cells[q.ci * APERTURE_CELL_REC + 5];
+        added += this._gatherCell(q.s, q.sub, q.p.tiles[q.ci], q.ci, q.mask, kind, eye, cand);
+      }
+      q.s = null; q.sub = null; q.p = null; q.mask = null;
+    }
+    this.stats.built = built;
+    return added;
+  }
+
+  /** A placement's cells of one sub-mesh in the world, made once and kept with it (shifted with the origin): each cell's
+   *  centre and radius, the ball of them all, and each cell's tiles once a gather first walks it (_cellTiles). */
+  _cellsOf(s, si, sub) {
+    s.subs ??= [];
+    let p = s.subs[si];
+    if (p) return p;
+    const C = sub.cells, nc = C.length / APERTURE_CELL_REC, m = s.m, sc = Math.hypot(m[0], m[1], m[2]);
+    p = { ball: new Float64Array(4 * nc), all: new Float64Array(4), tiles: new Array(nc).fill(null) };
+    const B = p.ball, A = p.all;
+    for (let c = 0; c < nc; c++) {
+      xfTo(B, 4 * c, m, C[c * APERTURE_CELL_REC], C[c * APERTURE_CELL_REC + 1], C[c * APERTURE_CELL_REC + 2], 1);
+      B[4 * c + 3] = C[c * APERTURE_CELL_REC + 3] * sc;
+      A[0] += B[4 * c] / nc; A[1] += B[4 * c + 1] / nc; A[2] += B[4 * c + 2] / nc;
+    }
+    for (let c = 0; c < nc; c++) A[3] = Math.max(A[3], Math.hypot(B[4 * c] - A[0], B[4 * c + 1] - A[1], B[4 * c + 2] - A[2]) + B[4 * c + 3]);
+    s.subs[si] = p;
+    return p;
+  }
+
+  /** One cell's tiles in the world: each covered centre, its unit normal, whether a street's lamp lights it (its room
+   *  lit by the mock rooms' own seed, realWindows.js rwSeedBits - the normal in quarters and the plane off the model's
+   *  own frame - and its glass in a wall, not a roof) and its curtains. */
+  _cellTiles(s, sub, ci) {
+    const ap = sub.ap, first = sub.cells[ci * APERTURE_CELL_REC + 4], T = sub.cells[ci * APERTURE_CELL_REC + 5], m = s.m, v = this._v;
+    const t = { cent: new Float32Array(3 * T), nrm: new Float32Array(3 * T), street: new Uint8Array(T), curtains: new Array(T).fill(null) };
     const q = (x) => Math.floor(x * 4 + 0.5);
-    for (let j = 0, k = 0; j < T; j++, k += WL_REC) {
+    for (let j = 0; j < T; j++) {
+      const k = (first + j) * WL_REC;
       const cu = 0.5 * (ap[k + 14] + ap[k + 16]), cv = 0.5 * (ap[k + 15] + ap[k + 17]);   // the covered share's centre
       xfTo(t.cent, 3 * j, m, ap[k + 2] + ap[k + 5] * cu + ap[k + 8] * cv, ap[k + 3] + ap[k + 6] * cu + ap[k + 9] * cv, ap[k + 4] + ap[k + 7] * cu + ap[k + 10] * cv, 1);
       xfTo(v, 0, m, ap[k + 11], ap[k + 12], ap[k + 13], 0);
       const nl = Math.hypot(v[0], v[1], v[2]) || 1;
       const nx = v[0] / nl, ny = v[1] / nl, nz = v[2] / nl;
       t.nrm[3 * j] = nx; t.nrm[3 * j + 1] = ny; t.nrm[3 * j + 2] = nz;
-      xfTo(v, 0, m, ap[k + 2], ap[k + 3], ap[k + 4], 0);   // the tile's origin, off the model's own (uModel[3])
+      xfTo(v, 0, m, ap[k + 2] + ap[k + 5] * cu + ap[k + 8] * cv, ap[k + 3] + ap[k + 6] * cu + ap[k + 9] * cv, ap[k + 4] + ap[k + 7] * cu + ap[k + 10] * cv, 0);   // the glass's middle, off the model's own (uModel[3])
       const plane = Math.floor((nx * v[0] + ny * v[1] + nz * v[2]) * 40 + 0.5);
       const h = roomSeedBits(q(nx), q(ny), q(nz), plane, ap[k], ap[k + 1]);
       t.street[j] = roomLitAt(h) && Math.abs(ny) <= 0.5 ? 1 : 0;
       const cb = curtainBitsOf(h);
       if (roomCurtained(cb)) t.curtains[j] = curtainEdges(cb);
     }
-    const B = t.ball;   // the tiles' centres' ball: their mean and the farthest from it
-    for (let i = 0; i < 3 * T; i += 3) { B[0] += t.cent[i] / T; B[1] += t.cent[i + 1] / T; B[2] += t.cent[i + 2] / T; }
-    for (let i = 0; i < 3 * T; i += 3) B[3] = Math.max(B[3], Math.hypot(t.cent[i] - B[0], t.cent[i + 1] - B[1], t.cent[i + 2] - B[2]));
-    s.tiles[si] = t;
     return t;
   }
 
@@ -541,6 +661,7 @@ export class WindowLightPass {
     xfTo(o.c, 0, m, ap[k + 2] + ap[k + 5] * um + ap[k + 8] * vm, ap[k + 3] + ap[k + 6] * um + ap[k + 9] * vm, ap[k + 4] + ap[k + 7] * um + ap[k + 10] * vm, 1);
     set3(o.nf, t.nrm[3 * j], t.nrm[3 * j + 1], t.nrm[3 * j + 2]);
     o.area = Math.hypot(U[1] * V[2] - U[2] * V[1], U[2] * V[0] - U[0] * V[2], U[0] * V[1] - U[1] * V[0]);
+    if (!(o.area > 1e-6 && o.area < 400)) return false;   // no plane to cross (the duals NaN), or a mapping past reason
     o.uv[0] = um; o.uv[1] = vm; o.uv[2] = du; o.uv[3] = dv;
     o.halfDiag = 0.5 * Math.hypot(U[0] + V[0], U[1] + V[1], U[2] + V[2]);
     return true;
@@ -556,6 +677,7 @@ export class WindowLightPass {
     set3(l.gobo, lamp[0] * kg, lamp[1] * kg, lamp[2] * kg);
     set3(l.spill, lamp[0] * ks, lamp[1] * ks, lamp[2] * ks);
     l.kind = WL_KIND.lamp; l.layer = c.mask.layer; l.reach = WL_LAMP_RANGE;
+    l.ball[0] = l.c[0]; l.ball[1] = l.c[1]; l.ball[2] = l.c[2]; l.ball[3] = WL_LAMP_RANGE + l.halfDiag;
     return l;
   }
 
@@ -570,7 +692,13 @@ export class WindowLightPass {
     set3(l.spill, sky[0] * ks, sky[1] * ks, sky[2] * ks);
     if (!(l.gobo[0] + l.gobo[1] + l.gobo[2] + l.spill[0] + l.spill[1] + l.spill[2] > 1e-4)) return null;
     if (faces) set3(l.src, dir[0], dir[1], dir[2]); else set3(l.src, 0, 1, 0);
-    l.kind = shadows ? WL_KIND.sun : WL_KIND.sunBare; l.layer = c.mask.layer; l.reach = WL_SUN_REACH;
+    l.kind = shadows ? WL_KIND.sun : WL_KIND.sunBare; l.layer = c.mask.layer;
+    // its ball: the beam into the room (away from the sun, its reach long) and the glow round the glass; a pane the sun
+    // does not face only glows
+    const h = faces ? WL_SUN_REACH / 2 : 0;
+    l.reach = faces ? WL_SUN_REACH : WL_SPILL_REACH;
+    if (faces) { l.ball[0] = l.c[0] - dir[0] * h; l.ball[1] = l.c[1] - dir[1] * h; l.ball[2] = l.c[2] - dir[2] * h; } else set3(l.ball, l.c[0], l.c[1], l.c[2]);
+    l.ball[3] = h + Math.max(l.halfDiag, WL_SPILL_REACH);
     return l;
   }
 

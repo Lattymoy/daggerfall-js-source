@@ -39,8 +39,9 @@ export function exteriorGlassIndices(archive, record) {
  * @param {{ getWindowColors32: (b: any) => { colors: Uint8ClampedArray, width: number, height: number } }} t */
 export function exteriorWindowMask(archive, record, bitmap, t) {
   if (!isExteriorWindow(archive, record)) return null;
+  if (!bitmap?.data) return t.getWindowColors32(bitmap);
   const own = t.getWindowColors32(bitmap);
-  if (!bitmap?.data || hasGlass(own)) return own;
+  if (hasGlass(own)) return own;
   const indices = exteriorGlassIndices(archive, record);
   if (!indices) return own;   // DFU's (empty) mask: the window stands as DFU draws it
   const { width: W, height: H, data } = bitmap;
@@ -56,7 +57,7 @@ export function exteriorWindowMask(archive, record, bitmap, t) {
 }
 
 /** A speck of another colour inside a pane (a dot of the wall's grain in the castle's glass) is glass: a run of at most
- *  SPECK_MAX texels with glass on every side. A lattice's lead is one run with the frame, never a speck. */
+ *  SPECK_MAX texels with glass on every side, joined corner to corner too - a lattice's diagonal lead is one long run. */
 export const SPECK_MAX = 3;
 export function fillSpecks(glass, W, H) {
   const seen = new Uint8Array(W * H), run = [];
@@ -70,8 +71,9 @@ export function fillSpecks(glass, W, H) {
       const i = /** @type {number} */ (stack.pop()), x = i % W, y = (i - x) / W;
       run.push(i);
       if (x === 0 || y === 0 || x === W - 1 || y === H - 1) closed = false;
-      for (const j of [i - 1, i + 1, i - W, i + W]) {
-        if (j < 0 || j >= glass.length || (j === i - 1 && x === 0) || (j === i + 1 && x === W - 1)) continue;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx, ny = y + dy, j = ny * W + nx;
+        if ((!dx && !dy) || nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
         if (!glass[j] && !seen[j]) { seen[j] = 1; stack.push(j); }
       }
     }

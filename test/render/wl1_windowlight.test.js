@@ -13,11 +13,12 @@ import {
   WindowLightPass, windowLightGlsl, windowLightOn, writeWindowLight, windowLightAt, lampOf, maskBoxOf, maskLayerOf, holesOf,
   windowAperturesOf, WL_REC, WL_VEC4, WL_MAX_LIGHTS, WL_KIND, WL_LAMP_GOBO, WL_LAMP_SPILL, WL_LAMP_RANGE, WL_SUN_GAIN,
   WL_MOON_GAIN, WL_SKY_GAIN, WL_SUN_REACH, WL_HOLD_MS, WL_MASK_SIZE, WL_MASK_UNIT, WL_UBO_BINDING, WL_GRID_ROW, WL_LIST_BASE,
-  WL_GATHER, WL_CURTAIN_PASS, WL_LAMP_DEPTH, WL_LAMP_LIFT, WL_MOVE_REACH, WL_PLACEMENTS_MAX,
+  WL_GATHER, WL_CURTAIN_PASS, WL_LAMP_DEPTH, WL_LAMP_LIFT, WL_MOVE_REACH, WL_PLACEMENTS_MAX, WL_LAMP_RADIUS, WL_SUN_ANGLE,
+  WL_SPILL_REACH, WL_STOREY, WL_MASK_LAYERS, WL_BUILD_TILES,
 } from '../../src/render/windowLight.js';
 import { SNOW_UNITS } from '../../src/render/snowfallGlsl.js';
 import { readdirSync } from 'node:fs';
-import { apertureSteps, APERTURE_STEP_TRIS } from '../../src/render/windowApertures.js';
+import { apertureSteps, APERTURE_STEP_TRIS, APERTURE_CELL, APERTURE_CELL_REC, APERTURE_MIN_COVER } from '../../src/render/windowApertures.js';
 import { CLUSTER_Z, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, CLUSTER_BANDS } from '../../src/render/lightClusters.js';
 import { roomSeedBits, roomLitAt, curtainBitsOf, roomCurtained, curtainEdges } from '../../src/world/windowRoomArt.js';
 import { Renderer, WORLD_FRAME } from '../../src/render/renderer.js';
@@ -84,18 +85,21 @@ const crossAt = (u, v) => (u > 0.1 && u < 0.9 && v > 0.1 && v < 0.9 && Math.abs(
 /** A house front facing +z at z = -10: six tiles of 2.5 m across from x = -7.5, two storeys. */
 const FRONT = quad([-7.5, 0, -10], [15, 0, 0], [0, 5, 0], [0, 0, 1], 6, 2);
 const frontAp = () => windowAperturesOf(FRONT.positions, FRONT.normals, FRONT.uvs, FRONT.indices, 0, 6);
+/** A mesh's window entry, as renderer._wlApertures makes it. */
+const wlOf = (key, set) => ({ key, ap: set.recs, cells: set.cells });
 /** The mock room's seed of a front tile as the rooms' shader rounds it (realWindows.js rwSeedBits). */
 const frontSeed = (tx, ty) => roomSeedBits(0, 0, 4, Math.floor(-10 * 40 + 0.5), tx, ty);
 
 test('WL1 W1: a mesh\'s glass tile by tile - a wall\'s two triangles one quad, cut into the tiles of picture its uv spans, each tile its origin, the metres a tile of u and of v spans, its normal and the share it covers; a picture tiled past reason none; the sliced walk yields and answers the same (mutants: the tile\'s origin, the spans swapped, the cover, the yield lost)', () => {
   const q = quad([0, 0, 0], [3, 0, 0], [0, 2, 0], [0, 0, 1], 1.5, 1);
-  const ap = windowAperturesOf(q.positions, q.normals, q.uvs, q.indices, 0, 6);
+  const { recs: ap, cells } = windowAperturesOf(q.positions, q.normals, q.uvs, q.indices, 0, 6);
   assert.equal(ap.length, 2 * WL_REC, 'two tiles: u 0..1 and 1..1.5');
+  assert.deepEqual(Array.from(cells), [1.75, 1, 0, 0.75, 0, 2], 'one cell: its centre, its radius, its first record and its count');
   const rec = (k) => Array.from(ap.subarray(k * WL_REC, (k + 1) * WL_REC)).map((v) => Math.round(v * 1e4) / 1e4);
   assert.deepEqual(rec(0), [0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 1, 1]);
   assert.deepEqual(rec(1), [1, 0, 2, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0.5, 1], 'the second tile two metres along, half of it covered');
   const wild = quad([0, 0, 0], [3, 0, 0], [0, 2, 0], [0, 0, 1], 200, 200);
-  assert.equal(windowAperturesOf(wild.positions, wild.normals, wild.uvs, wild.indices, 0, 6).length, 0, 'a picture tiled 40000 times is no window');
+  assert.equal(windowAperturesOf(wild.positions, wild.normals, wild.uvs, wild.indices, 0, 6).recs.length, 0, 'a picture tiled 40000 times is no window');
   // a strip of many quads: the walk breathes between units and answers what the whole walk does
   const P = [], N = [], UV = [], IDX = [];
   for (let i = 0; i < APERTURE_STEP_TRIS + 8; i++) {
@@ -108,8 +112,14 @@ test('WL1 W1: a mesh\'s glass tile by tile - a wall\'s two triangles one quad, c
   let yields = 0, r = it.next();
   while (!r.done) { yields++; r = it.next(); }
   assert.ok(yields >= 2, `it yields (${yields})`);
-  assert.deepEqual(Array.from(r.value), Array.from(windowAperturesOf(...args)));
-  assert.equal(r.value.length / WL_REC, APERTURE_STEP_TRIS + 8, 'one plane, one mapping: a tile a quad');
+  assert.deepEqual(Array.from(r.value.recs), Array.from(windowAperturesOf(...args).recs));
+  assert.equal(r.value.recs.length / WL_REC, APERTURE_STEP_TRIS + 8, 'one plane, one mapping: a tile a quad');
+  const C = r.value.cells;
+  assert.equal(C.length / APERTURE_CELL_REC, Math.ceil((APERTURE_STEP_TRIS + 8) / APERTURE_CELL), 'filed in cells of APERTURE_CELL metres');
+  for (let c = 0; c < C.length; c += APERTURE_CELL_REC) for (let k = C[c + 4]; k < C[c + 4] + C[c + 5]; k++) {
+    const x = r.value.recs[k * WL_REC + 2] + 0.5;
+    assert.ok(Math.abs(x - C[c]) <= C[c + 3] + 1e-4 && Math.floor(x / APERTURE_CELL) === Math.floor(C[c] / APERTURE_CELL), 'each record in its cell\'s ball');
+  }
   // many triangles inside one tile: the walk breathes between triangles too, not only between tiles
   const p2 = [], n2 = [], uv2 = [], i2 = [];
   for (let i = 0; i < APERTURE_STEP_TRIS; i++) {
@@ -120,8 +130,15 @@ test('WL1 W1: a mesh\'s glass tile by tile - a wall\'s two triangles one quad, c
   const one = apertureSteps(new Float32Array(p2), new Float32Array(n2), new Float32Array(uv2), new Uint32Array(i2), 0, i2.length);
   let ty = 0, r2 = one.next();
   while (!r2.done) { ty++; r2 = one.next(); }
-  assert.equal(r2.value.length, WL_REC, 'one tile');
+  assert.equal(r2.value.recs.length, WL_REC, 'one tile');
   assert.ok(ty >= 1, 'a yield between the triangles');
+  // triangles that map no picture (no uv area): no tile to clip, and still the walk breathes between them
+  const p3 = new Float32Array(9 * 600), n3 = new Float32Array(9 * 600).fill(1), uv3 = new Float32Array(6 * 600), i3 = Uint32Array.from({ length: 1800 }, (_, i) => i);
+  for (let i = 0; i < p3.length; i += 9) { p3[i + 3] = 1; p3[i + 7] = 1; }
+  const none = apertureSteps(p3, n3, uv3, i3, 0, 1800);
+  let ny = 0;
+  while (!none.next().done) ny++;
+  assert.ok(ny >= Math.floor(600 / APERTURE_STEP_TRIS) + 1, `the triangles' own yields (${ny})`);
 });
 
 test('WL1 W2: the masks - the glass\'s box in the tile\'s uv, none without glass; a layer resampled nearest so the lead keeps its edge; a cutout\'s holes as glass (mutants: the box\'s far edge, the lead blurred, the holes inverted)', () => {
@@ -161,7 +178,8 @@ test('WL1 W3: ONE WINDOW\'S LIGHT (the shader\'s JS twin) - a lamp behind a cros
       const p = [x, 0, z];
       const [cx, cy] = crossing(p);
       const a = cx / 2, b = (cy - 1.5) / 1.5;
-      const want = Math.abs(a) <= 0.5 && Math.abs(b) <= 0.5 ? maskAt(box[0] + a * box[2], box[1] + b * box[3]) : 0;
+      const pw = 2 * WL_LAMP_RADIUS * (p[2] / (p[2] - src[2]));   // the lamp's footprint on the glass: the soft edge
+      const want = Math.abs(a) <= 0.5 + pw / 2 && Math.abs(b) <= 0.5 + pw / 1.5 ? maskAt(box[0] + a * box[2], box[1] + b * box[3]) : 0;
       const got = windowLightAt(out, p, [0, 1, 0], maskAt, atten)[0] - glowOnly(p)[0];
       if (want) { assert.ok(got > 0, `lit at ${p}`); lit++; } else { assert.ok(Math.abs(got) < 1e-9, `dark at ${p} (${got})`); dark++; }
     }
@@ -184,7 +202,11 @@ test('WL1 W4: THE SHADER\'S BLOCK walks what the twin walks - in both sets: the 
   for (const line of [
     'if (s <= 0.0) continue;',
     'if (kind == 0) { ray = c4.xyz - wp; tt = s / (s - dot(c4.xyz - c0.xyz, c3.xyz)); }',
-    'if (abs(a) > 0.5 || abs(b) > 0.5) continue;',
+    'if (abs(a) > 0.5 + pa || abs(b) > 0.5 + pb) continue;',
+    `float pw = kind == 0 ? ${2 * WL_LAMP_RADIUS} * tt : ${WL_SUN_ANGLE} * tt;`,
+    'float lod = log2(max(max(pa * c3.w, pb * c4.w) * 128.0, 1.0));',
+    `if (kind == 2 && wp.y < c0.y - 0.5 / max(length(c2.xyz), 1e-4) - ${WL_STOREY.toFixed(1)}) continue;`,
+    `if (d2 < ${(WL_SPILL_REACH * WL_SPILL_REACH).toFixed(1)}) {`,
     'float m = textureLod(uWinMask, vec3(c1.w + a * c3.w, c2.w + b * c4.w, float(code & 255)), lod).r;',
     `highp int at = ${WL_LIST_BASE} + int(cell.x) + j;`,
     `zc + ${WL_GRID_ROW}), 0).rg;`,
@@ -216,8 +238,8 @@ test('WL1 W5: THE STREET BY NIGHT - a house front\'s tiles light where the mock 
   const log = [];
   const pass = passOn(log);
   pass.addMask('4001_0', CROSS);
-  assert.equal(log.filter((c) => c[0] === 'texSubImage3D').length, 1, 'the mask a layer');
-  const mesh = { wl: [{ key: '4001_0', ap: frontAp() }] };
+  assert.equal(log.filter((c) => c[0] === 'texSubImage3D').length, 0, 'a mask goes up when a light first reads it');
+  const mesh = { wl: [wlOf('4001_0', frontAp())] };
   pass.note(mesh, I, null, 'street', 1000);
   pass.note(mesh, I, null, 'street', 1001);
   assert.equal(pass.sources.street.get(mesh).length, 1, 'a placement is one source however often drawn');
@@ -282,7 +304,7 @@ test('WL1 W6: THE NEAREST WL_MAX_LIGHTS - more lit windows than the block holds 
   const ap = frontAp();
   const meshes = [];
   for (let i = 0; i < 60; i++) {
-    const mesh = { wl: [{ key: '4001_0', ap }] };
+    const mesh = { wl: [wlOf('4001_0', ap)] };
     const m = identity(); m[14] = -2 * i;
     pass.note(mesh, m, null, 'street', 1000);
     meshes.push(mesh);
@@ -318,7 +340,7 @@ test('WL1 W7: THE SUN THROUGH A BUILDING\'S GLASS - the outside\'s sun lights in
   pass.addMask('4002_0', glass);
   // a room's east wall at x = 3, its glass facing into the room (-x)
   const wall = quad([3, 0, -3], [0, 0, 6], [0, 3, 0], [-1, 0, 0], 2, 1);
-  const mesh = { wl: [{ key: '4002_0', ap: windowAperturesOf(wall.positions, wall.normals, wall.uvs, wall.indices, 0, 6) }] };
+  const mesh = { wl: [wlOf('4002_0', windowAperturesOf(wall.positions, wall.normals, wall.uvs, wall.indices, 0, 6))] };
   pass.note(mesh, I, null, 'inside', 1000);
   const proj = perspective(1.1, 1.6, 0.1, 500), view = lookAt([0, 1.6, 0], [3, 1.6, 0], [0, 1, 0]);
   const sky = [0.6, 0.65, 0.7];
@@ -463,12 +485,12 @@ test('WL1 W11: a static batch measures its windows\' glass in its sliced merge (
   sb.add({ ...quad([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], 1, 1), subMeshes: [{ textureArchive: 9, textureRecord: 1, startIndex: 0, primitiveCount: 2 }] }, I, key);
   const m = sb.finish();
   const win = m.subMeshes.find((s) => s.textureArchive === 4001), wall = m.subMeshes.find((s) => s.textureArchive === 9);
-  assert.equal(win.apertures.length, 12 * WL_REC, 'the front\'s twelve tiles');
+  assert.equal(win.apertures.recs.length, 12 * WL_REC, 'the front\'s twelve tiles');
   assert.equal(wall.apertures, undefined, 'a wall\'s picture none');
   const log = [];
   const r = recordingRenderer(log);
   const ap = r._wlApertures(m);
-  assert.equal(ap.length, 1); assert.equal(ap[0].ap, win.apertures, 'the batch\'s own, not measured again');
+  assert.equal(ap.length, 1); assert.equal(ap[0].ap, win.apertures.recs, 'the batch\'s own, not measured again'); assert.equal(ap[0].cells, win.apertures.cells);
   assert.equal(ap[0].key, '4001_0');
   const pb = rd('src/scenes/pixelBuild.js');
   assert.match(pb, /const windowKeys = \(r\) => \(r\?\.wlGlassKey \? \(a, rec\) => r\.wlGlassKey\(a, rec\) : null\);/);
@@ -513,6 +535,9 @@ test('WL1 W13 (see-through): the exterior windows whose glass is not the palette
   assert.equal(exteriorWindowMask(171, 3, { width: W, height: H, data }, t), null, 'not a window');
   const specks = new Uint8Array(25).fill(1); specks[12] = 0; specks[13] = 0; specks[7] = 0;
   assert.equal(fillSpecks(specks, 5, 5)[12], 1, `a run of ${SPECK_MAX} inside glass filled`);
+  const diag = new Uint8Array(64).fill(1);
+  for (let i = 1; i < 7; i++) diag[i * 8 + i] = 0;   // a lattice's lead, one texel wide, corner to corner
+  assert.equal(Array.from(fillSpecks(diag, 8, 8)).filter((v) => !v).length, 6, 'a diagonal lead is one run, kept');
   assert.match(rd('src/scenes/dataPipeline.js'), /renderer\.uploadEmissionTexture\(archive, record, exteriorWindowMask\(archive, record, bitmap, t\), \{ replacement, window: true \}\);/);
 });
 
@@ -537,7 +562,7 @@ test('WL1 W14: THE HOSTS - exterior.js and world.js light the street through the
 test('WL1 W15 (AUDIT): a mover\'s windows go with it - a mesh drawn again within WL_MOVE_REACH of a placement not yet drawn this frame has moved there (no light left behind for the hold), two placements drawn in one frame stay two; a placement past the gather costs one check, not a walk of its tiles (mutants: the mover\'s ghost, the far placement walked)', () => {
   const pass = passOn();
   pass.addMask('4001_0', CROSS);
-  const mesh = { wl: [{ key: '4001_0', ap: frontAp() }] };
+  const mesh = { wl: [wlOf('4001_0', frontAp())] };
   const at = (x) => { const m = identity(); m[12] = x; return m; };
   const proj = perspective(1.1, 1.6, 0.1, 500), view = lookAt([0, 4, 0], [0, 0.3, -8.5], [0, 1, 0]);
   const frame = (now, eye = [0, 4, 0]) => pass.frame({ kind: 'street', eye, view, proj, now, lamp: [1, 1, 1], glass: () => 'window' });
@@ -572,4 +597,175 @@ test('WL1 W16 (AUDIT): the masks\' unit is no other pass\'s - the snow terrain p
   const clash = [...units].filter(([, v]) => v === WL_MASK_UNIT).map(([k]) => k);
   assert.deepEqual(clash, [], 'no other pass binds the masks\' unit');
   assert.ok(WL_MASK_UNIT < 32, 'under WebGL2\'s least MAX_COMBINED_TEXTURE_IMAGE_UNITS');
+});
+
+test('WL1 W17 (AUDIT): no window picture is ever lost - a mask is kept with its bytes and goes up onto a layer when a light first reads it; with every layer taken, the one read least lately and not this frame gives way, and a mask given way comes back the next time it is read; a picture let go frees its layer; the mips are made once a frame (mutants: the LRU, the drop, the mips per add)', () => {
+  const log = [];
+  const pass = passOn(log);
+  const keys = Array.from({ length: WL_MASK_LAYERS + 6 }, (_, i) => `k${i}`);
+  for (const k of keys) pass.addMask(k, CROSS);
+  assert.equal(log.filter((c) => c[0] === 'texSubImage3D').length, 0, 'nothing up until read');
+  const M = (k) => pass.masks.get(k);
+  for (let i = 0; i < WL_MASK_LAYERS; i++) assert.equal(pass._resident(M(keys[i]), 1), true);
+  assert.equal(pass._resident(M(keys[WL_MASK_LAYERS]), 1), false, 'every layer read this frame: none to give');
+  assert.equal(pass._resident(M(keys[WL_MASK_LAYERS]), 2), true, 'the next frame: one gives way');
+  const gone = keys.find((k) => M(k).layer < 0 && keys.indexOf(k) < WL_MASK_LAYERS);
+  assert.ok(gone, 'a mask gave way');
+  assert.equal(pass._resident(M(gone), 3), true, 'and comes back when read');
+  assert.ok(M(gone).layer >= 0);
+  const layers = keys.map((k) => M(k).layer).filter((l) => l >= 0);
+  assert.equal(new Set(layers).size, layers.length, 'no two masks on one layer');
+  const freed = M(keys[3]).layer;
+  pass.dropMask(keys[3]);
+  assert.equal(pass.masks.has(keys[3]), false);
+  assert.equal(pass._resident(M(keys[WL_MASK_LAYERS + 1]), 3), true);
+  assert.equal(M(keys[WL_MASK_LAYERS + 1]).layer, freed, 'the freed layer is taken first');
+  // a frame: the layers it put up get their mips once
+  const pass2 = passOn(log);
+  for (const k of ['a', 'b', 'c']) pass2.addMask(k, CROSS);
+  const front = (k) => ({ wl: [wlOf(k, frontAp())] });
+  for (const k of ['a', 'b', 'c']) pass2.note(front(k), I, null, 'street', 1000);
+  log.length = 0;
+  pass2.frame({ kind: 'street', eye: [0, 4, 0], view: lookAt([0, 4, 0], [0, 0.3, -8.5], [0, 1, 0]), proj: perspective(1.1, 1.6, 0.1, 500), now: 1000, lamp: [1, 1, 1], glass: () => 'window' });
+  assert.equal(log.filter((c) => c[0] === 'texSubImage3D').length, 3, 'three masks up');
+  assert.equal(log.filter((c) => c[0] === 'generateMipmap').length, 1, 'their mips once');
+  log.length = 0;
+  pass2.frame({ kind: 'street', eye: [0, 4, 0], view: lookAt([0, 4, 0], [0, 0.3, -8.5], [0, 1, 0]), proj: perspective(1.1, 1.6, 0.1, 500), now: 1016, lamp: [1, 1, 1], glass: () => 'window' });
+  assert.equal(log.filter((c) => c[0] === 'texSubImage3D' || c[0] === 'generateMipmap').length, 0, 'held: nothing again');
+  const r = rd('src/render/renderer.js');
+  assert.match(r, /this\.windowMasks\?\.delete\(key\);   \/\/ RW1\n    this\._wl\.dropMask\(key\);/, 'an evicted window picture frees its layer');
+  assert.match(r, /this\.glassMasks\.delete\(key\);\n      this\._wl\.dropMask\(key\);/, 'and an evicted glass mask');
+  assert.match(r, /if \(this\._cutoutKeys\.delete\(base\)\) this\._wl\.dropMask\(base\);/, 'and a cutout\'s last picture');
+});
+
+test('WL1 W18 (AUDIT): more cells than the band\'s list holds keeps the nearest lights that fit - never none (mutant: the frame dropping every light)', () => {
+  const pass = passOn();
+  pass.addMask('4001_0', CROSS);
+  const ap = frontAp();
+  for (let i = 0; i < 80; i++) {   // eighty fronts in rows 2 m apart, the eye among them
+    const m = identity(); m[14] = 30 - 2 * i;
+    pass.note({ wl: [wlOf('4001_0', ap)] }, m, null, 'street', 1000);
+  }
+  const view = lookAt([0, 2, 0], [0, 1.5, -10], [0, 1, 0]), proj = perspective(1.1, 1.6, 0.1, 500);
+  const n = pass.frame({ kind: 'street', eye: [0, 2, 0], view, proj, now: 1000, lamp: [1, 1, 1], glass: () => 'window' });
+  assert.ok(pass.stats.dropped > 0, `the list overflowed (${pass.stats.dropped} dropped)`);
+  assert.ok(n > 0 && n === pass.count, `the nearest kept (${n})`);
+  assert.equal(pass._cuts.street, pass._ld[n], 'the cut comes in to the first left out: from here the edge fades');
+  const d = (i) => Math.hypot(pass.data[i * WL_VEC4 * 4], pass.data[i * WL_VEC4 * 4 + 1] - 2, pass.data[i * WL_VEC4 * 4 + 2]);
+  for (let i = 1; i < n; i++) assert.ok(d(i) >= d(i - 1) - 1.5, 'nearest first (a light stands at its glass, a curtain off its tile\'s middle)');
+});
+
+test('WL1 W19 (AUDIT): a sliver of a tile is no window, a quad mapped a millimetre apart is one window, a triangle with no area none, and a tile whose share holds none of its picture\'s glass takes no light (mutants: the sliver floor, the merge, the area test, the glass test)', () => {
+  const sl = quad([0, 0, 0], [2.525, 0, 0], [0, 2.5, 0], [0, 0, 1], 1.01, 1);
+  assert.equal(windowAperturesOf(sl.positions, sl.normals, sl.uvs, sl.indices, 0, 6).recs.length / WL_REC, 1, `a 1% share is under APERTURE_MIN_COVER (${APERTURE_MIN_COVER})`);
+  const off = quad([0, 0, 0], [2.5, 0, 0], [0, 2.5, 0], [0, 0, 1], 1, 1);
+  off.positions[7] += 0.0015;   // the second triangle's corner a millimetre and a half up
+  const one = windowAperturesOf(off.positions, off.normals, off.uvs, off.indices, 0, 6).recs;
+  assert.equal(one.length / WL_REC, 1, 'one window');
+  assert.deepEqual(Array.from(one.subarray(14, 18)), [0, 0, 1, 1], 'its share the union of both');
+  const flat = { positions: new Float32Array([0, 0, 0, 1, 0, 0, 2, 0, 0]), normals: new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1]), uvs: new Float32Array([0, 0, 1, 0, 0, 1]), indices: new Uint32Array([0, 1, 2]) };
+  assert.equal(windowAperturesOf(flat.positions, flat.normals, flat.uvs, flat.indices, 0, 3).recs.length, 0, 'collinear corners: no plane');
+  // the glass in u 0.6..0.9 of its tile, the mesh over u 0..0.5: no light
+  const pass = passOn();
+  pass.addMask('m', mask(64, 64, (x, y) => x >= 38 && x < 58 && y >= 8 && y < 56));
+  const half = quad([-0.625, 0, -5], [1.25, 0, 0], [0, 2.5, 0], [0, 0, 1], 0.5, 1);
+  pass.note({ wl: [wlOf('m', windowAperturesOf(half.positions, half.normals, half.uvs, half.indices, 0, 6))] }, I, null, 'inside', 1000);
+  pass.setOutside({ at: 1000, sunDir: [0, 0.5, -0.87], sunColor: [1, 1, 1], sunScale: 1, moonDir: [0, -1, 0], moonColor: [0, 0, 0], moonScale: 0, sky: [0.5, 0.5, 0.5] });
+  assert.equal(pass.frame({ kind: 'inside', eye: [0, 1.6, 0], view: lookAt([0, 1.6, 0], [0, 1.6, -5], [0, 1, 0]), proj: perspective(1.1, 1.6, 0.1, 500), now: 1000, glass: () => 'glass' }), 0);
+  assert.equal(pass.stats.candidates, 0, 'not even a candidate - no slot spent on it');
+});
+
+test('WL1 W20 (AUDIT): with no sun map, the sun through glass stops a storey down (a floor is between), and a pane the sun does not face only glows out to WL_SPILL_REACH with a ball to match; a sun beam\'s ball runs into the room (mutants: the storey test, the spill reach, the beam\'s ball)', () => {
+  const c = [0, 4.5, 0], U = [2, 0, 0], V = [0, 1.5, 0], nf = [0, 0, 1];
+  const dir = [0, 0.6, -0.8];   // toward the sun: up and behind the glass
+  const out = new Float32Array(WL_VEC4 * 4);
+  writeWindowLight(out, 0, { c, U, V, nf, uv: [0.5, 0.5, 1, 1], src: dir, kind: WL_KIND.sunBare, layer: 0, reach: 24, area: 3, gobo: [1, 1, 1], spill: [0, 0, 0], halfDiag: 1.25 });
+  const beam = (y) => { const t = (4.5 - y) / 0.6; return [0, y, 0.8 * t]; };   // a point the beam through the middle reaches
+  const lit = (p) => windowLightAt(out, p, [0, 1, 0], () => 1, () => 1)[0];
+  assert.ok(lit(beam(3.0)) > 0, 'its own floor (1.5 m under the middle, the glass\'s bottom 0.75 above it)');
+  assert.equal(lit(beam(0.5)), 0, 'the floor below: under the storey');
+  assert.ok(windowLightGlsl().includes('if (kind == 2 && wp.y < c0.y'), 'the shader the same');
+  // the pass's balls
+  const pass = passOn();
+  pass.addMask('g', mask(16, 16, () => true));
+  const wall = quad([3, 0, -3], [0, 0, 6], [0, 3, 0], [-1, 0, 0], 2, 1);
+  pass.note({ wl: [wlOf('g', windowAperturesOf(wall.positions, wall.normals, wall.uvs, wall.indices, 0, 6))] }, I, null, 'inside', 1000);
+  const frame = (sunDir) => {
+    pass.setOutside({ at: 1000, sunDir, sunColor: [1, 1, 1], sunScale: 1, moonDir: [0, -1, 0], moonColor: [0, 0, 0], moonScale: 0, sky: [0.5, 0.5, 0.5] });
+    return pass.frame({ kind: 'inside', eye: [0, 1.6, 0], view: lookAt([0, 1.6, 0], [3, 1.6, 0], [0, 1, 0]), proj: perspective(1.1, 1.6, 0.1, 500), now: 1000, shadows: true, glass: () => 'glass' });
+  };
+  const sd = [0.8, 0.6, 0];
+  assert.equal(frame(sd), 2);
+  const b = Array.from(pass.spheres.subarray(0, 4)), ctr = [pass.data[0], pass.data[1], pass.data[2]];
+  assert.ok(near(b[0], ctr[0] - sd[0] * 12, 1e-4) && near(b[1], ctr[1] - sd[1] * 12, 1e-4) && near(b[3], 12 + WL_SPILL_REACH, 1e-4), 'the beam\'s ball: half its reach into the room');
+  assert.equal(frame([-0.8, 0.6, 0]), 2);
+  assert.equal(pass.data[3], WL_SPILL_REACH, 'facing away: only its glow, out to the spill\'s reach');
+  assert.ok(near(pass.spheres[3], WL_SPILL_REACH, 1e-4) && near(pass.spheres[0], pass.data[0], 1e-4), 'a ball to match, about the glass');
+});
+
+test('WL1 W21 (AUDIT): a frame builds at most WL_BUILD_TILES tiles\' world data, the nearest cells first, and lights what it built in that same frame (mutant: the budget ignored)', () => {
+  const pass = passOn();
+  pass.addMask('4001_0', CROSS);
+  // a strip of 1200 window tiles a decimetre wide along x - five cells of 240, all within the gather
+  const P = [], N = [], UV = [], IDX = [];
+  for (let i = 0; i < 1200; i++) {
+    const b = P.length / 3, x = i * 0.1 - 60;
+    P.push(x, 0, -6, x + 0.1, 0, -6, x + 0.1, 2.5, -6, x, 2.5, -6); N.push(0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1); UV.push(i, 0, i + 1, 0, i + 1, 1, i, 1);
+    IDX.push(b, b + 1, b + 2, b, b + 2, b + 3);
+  }
+  const set = windowAperturesOf(new Float32Array(P), new Float32Array(N), new Float32Array(UV), new Uint32Array(IDX), 0, IDX.length);
+  pass.note({ wl: [wlOf('4001_0', set)] }, I, null, 'inside', 1000);
+  pass.setOutside({ at: 1000, sunDir: [0, 0.5, -0.87], sunColor: [1, 1, 1], sunScale: 1, moonDir: [0, -1, 0], moonColor: [0, 0, 0], moonScale: 0, sky: [0.5, 0.5, 0.5] });
+  const frame = (now) => pass.frame({ kind: 'inside', eye: [0, 1.6, 0], view: lookAt([0, 1.6, 0], [0, 1.6, -5], [0, 1, 0]), proj: perspective(1.1, 1.6, 0.1, 500), now, glass: () => 'glass' });
+  assert.ok(frame(1000) > 0, 'lights the first frame');
+  const first = pass.stats.built;
+  assert.ok(first > 0 && first <= WL_BUILD_TILES + 240, `the budget, and the cell that crosses it (${first} built)`);
+  let total = first, frames = 1;
+  for (;;) { frame(1000 + 16 * frames); if (!pass.stats.built) break; total += pass.stats.built; frames++; assert.ok(frames < 10); }
+  assert.equal(total, 1200, 'every tile, once');
+  assert.ok(frames >= 3, `over ${frames} frames`);
+});
+
+test('WL1 W22 (AUDIT): the renderer\'s edges - the outside is read once in its interval though the view out stamps a moment after the caller\'s clock; the door shut reads nothing, measures no glass and keeps no mask; the sun map is asked only for glass the frame could light (its mask up, within the gather); a panel puts the frame\'s window light back; a draw always finds the block bound (mutants: the stamp ahead re-read, the door ignored, sunFor past the gather, the panel\'s loss, the block unbound)', () => {
+  const log = [];
+  const r = recordingRenderer(log);
+  let setups = 0;
+  const scene = { setup: (rr) => { setups++; rr.setLighting(new Float32Array([0.8, 0.8, 0.9]), 0.9, new Float32Array([1, 1, 1])); return new Float32Array([0.8, 0.45, 0.1]); } };
+  r._wlTakeOutside([0.8, 0.45, 0.1], 5010);   // the view out's own read, stamped after the caller's clock
+  r.captureOutsideLight(scene, 5000, 'rooms');
+  assert.equal(setups, 0, 'a stamp a moment ahead is fresh');
+  const loc = globalThis.location;
+  globalThis.location = /** @type {any} */ ({ search: '?windowlight=off' });
+  try {
+    r.captureOutsideLight(scene, 9000, 'rooms');
+    assert.equal(setups, 0, 'the door shut reads nothing');
+    r.glassKeyTest = () => true;
+    assert.equal(r._wlApertures({ ...FRONT, subMeshes: [{ textureArchive: 4001, textureRecord: 0, startIndex: 0, primitiveCount: 2 }] }), null, 'measures no glass');
+    r.glassKeyTest = null;
+    r.uploadEmissionTexture(4005, 0, CROSS, { window: true });
+    assert.equal(r._wl.masks.has('4005_0'), false, 'keeps no mask');
+  } finally { globalThis.location = loc; }
+  // sunFor: glass past the gather, or with no mask, asks no map
+  const pass = passOn();
+  const wall = quad([3, 0, -3], [0, 0, 6], [0, 3, 0], [-1, 0, 0], 2, 1);
+  const set = windowAperturesOf(wall.positions, wall.normals, wall.uvs, wall.indices, 0, 6);
+  pass.note({ wl: [wlOf('g', set)] }, I, null, 'inside', 1000);
+  pass.setOutside({ at: 1000, sunDir: [0.8, 0.5, 0.1], sunColor: [1, 1, 1], sunScale: 1, moonDir: [0, -1, 0], moonColor: [0, 0, 0], moonScale: 0, sky: [0.5, 0.5, 0.5] });
+  assert.equal(pass.sunFor([0, 1.6, 0], 1100, () => 'glass'), null, 'no mask: no map');
+  pass.addMask('g', mask(16, 16, () => true));
+  assert.deepEqual(pass.sunFor([0, 1.6, 0], 1100, () => 'glass'), [0.8, 0.5, 0.1]);
+  assert.equal(pass.sunFor([500, 1.6, 0], 1100, () => 'glass'), null, 'past the gather: no map');
+  assert.equal(pass.sunFor([0, 1.6, 0], 1100, () => null), null, 'not glass now: no map');
+  // the panel bracket
+  r._wlKind = 'street'; r._wlLive = true; r._wlSun = null;
+  r.beginPanelFrame(I, I, new Float32Array([0, 1, 0]), { x: 0, y: 0, w: 10, h: 10 });
+  assert.equal(r._wlLive, false, 'the panel\'s frame lights no window');
+  r.endPanelFrame();
+  assert.deepEqual([r._wlKind, r._wlLive], ['street', true], 'and the frame\'s is back');
+  // the block: bound for a program whatever the frame
+  r._wl.release();
+  log.length = 0;
+  r._wlLive = false;
+  r._uploadWl({ on: { name: 'uWinOn' } });
+  assert.ok(log.some((c) => c[0] === 'bindBufferBase' && c[2] === WL_UBO_BINDING), 'the block stands again');
 });

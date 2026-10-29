@@ -1832,6 +1832,7 @@ export class Renderer {
     // the cutout pictures' keys, and the pipeline's word on which pictures may hold glass. LC1's two textures are made
     // here for both sets: the window lights' band is in them, and every program that reads it needs them under its units.
     this._wl = new WindowLightPass(gl, { activeTexture: (u) => this._activeTexture(u) });
+    this._wlGlass = (k) => (this.windowMasks?.has(k) ? 'window' : this.glassMasks?.has(k) || this._cutoutKeys.has(k) ? 'glass' : null);   // a resolved key's glass
     this._wlKind = null; this._wlLive = false; this._wlSun = null; this._wlNow = 0; this._wlViewport = null;
     this._rwMode = 'off';   // the Real windows row as a host last said it (setWindowRooms, captureOutsideLight)
     this._cutoutKeys = new Set();
@@ -2831,6 +2832,7 @@ export class Renderer {
   _uploadWl(loc) {
     if (!loc?.on) return;
     const gl = this.gl;
+    this._wl.bind();   // the block stands under every program that holds it, lit or not
     const on = this._wlLive && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved;
     gl.uniform1i(loc.on, on ? 1 : 0);
     if (!on) return;
@@ -2839,7 +2841,6 @@ export class Renderer {
     gl.bindTexture(gl.TEXTURE_2D, this._clusterTex.grid);
     this._activeTexture(gl.TEXTURE0 + CLUSTER_LIST_UNIT);
     gl.bindTexture(gl.TEXTURE_2D, this._clusterTex.list);
-    this._wl.bind();
   }
 
   /** WL1: THIS FRAME'S KIND of window light - 'street' (a lit room's lamp through its glass: an exterior frame, and the
@@ -2862,7 +2863,7 @@ export class Renderer {
     const room = kind === 'street' ? roomLightFor(this._windowEmission, this._ambient) : null;
     const n = this._wl.frame({
       kind, eye, view, proj, now, lamp: room?.night ? room.lamp : null, shadows: !!this._wlSun,
-      glass: (k) => (this.windowMasks.has(k) ? 'window' : this.glassMasks.has(k) || this._cutoutKeys.has(k) ? 'glass' : null),
+      glass: this._wlGlass,
       decode: this._lane ? (c) => this._lane.decode3(c, [0, 0, 0]) : null,
     });
     if (!n) return false;
@@ -5576,7 +5577,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (opts.alpha && tex) (this._alphaArt ??= new WeakSet()).add(tex);   // OVH2: the texture's own treatment, read at every screen draw of it (AUDIT RETRO1 J7: a lost context's null is no key)
     if (opts.cutout) this._markCutout(tex);   // RW1: { cutout: true } - the texture's own treatment in every solid pass (a texel under half alpha is a hole)
     const base = `${archive}_${record}`;
-    if (opts.cutout) { this._cutoutKeys.add(base); this._wl.addMask(base, color32, true); }   // WL1: its holes, the sun's way in
+    if (opts.cutout) { this._cutoutKeys.add(base); if (windowLightOn()) this._wl.addMask(base, color32, true); }   // WL1: its holes, the sun's way in
     let keys = this._texKeysByBase.get(base);
     if (!keys) this._texKeysByBase.set(base, keys = new Set());
     keys.add(key);
@@ -5608,7 +5609,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const base = this._texBaseOf?.get(key);
     this._texBaseOf?.delete(key);
     const keys = base === undefined ? null : this._texKeysByBase.get(base);
-    if (keys) { keys.delete(key); if (!keys.size) this._texKeysByBase.delete(base); }
+    if (keys) { keys.delete(key); if (!keys.size) { this._texKeysByBase.delete(base); if (this._cutoutKeys.delete(base)) this._wl.dropMask(base); } }   // WL1: a cutout's holes go with its last picture
     if (tex) this.gl.deleteTexture(tex);
     if (this._tex0Bound === tex) this._tex0Bound = null;
     this._texGen++;
@@ -5620,6 +5621,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (!this.emissionTextures.has(key) && this.glassMasks?.has(key)) {   // RW1: an interior's declared glass rides the same `e:` key
       const glass = this.glassMasks.get(key);
       this.glassMasks.delete(key);
+      this._wl.dropMask(key);   // WL1: and its layer
       if (glass) this.gl.deleteTexture(glass);
       if (this._tex1Bound === glass) this._tex1Bound = null;
       this._texGen++;
@@ -5630,6 +5632,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.emissionTextures.delete(key);
     this.emissionWhite.delete(key);
     this.windowMasks?.delete(key);   // RW1
+    this._wl.dropMask(key);   // WL1: a window's mask, and its layer
     if (tex) this.gl.deleteTexture(tex);
     if (this._tex1Bound === tex) this._tex1Bound = null;
     this._texGen++;
@@ -5786,12 +5789,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   /** WL1: a model's apertures (render/windowLight.js windowAperturesOf) for each sub-mesh whose picture may hold glass -
    *  the static batch's sliced merge measures them ahead (`apertures`), a lone model here - or null for none. */
   _wlApertures(model) {
-    if (!model.positions || !model.normals || !model.uvs || !model.indices) return null;
+    if (!windowLightOn() || !model.positions || !model.normals || !model.uvs || !model.indices) return null;
     const out = [];
     for (const sm of model.subMeshes) {
       if (!sm.apertures && !this.wlGlassKey(sm.textureArchive, sm.textureRecord)) continue;
-      const ap = sm.apertures ?? windowAperturesOf(model.positions, model.normals, model.uvs, model.indices, sm.startIndex, sm.primitiveCount * 3);
-      if (ap.length) out.push({ key: `${sm.textureArchive}_${sm.textureRecord}`, ap });
+      const set = sm.apertures ?? windowAperturesOf(model.positions, model.normals, model.uvs, model.indices, sm.startIndex, sm.primitiveCount * 3);
+      if (set.recs.length) out.push({ key: `${sm.textureArchive}_${sm.textureRecord}`, ap: set.recs, cells: set.cells });
     }
     return out.length ? out : null;
   }
@@ -5892,7 +5895,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // WL1: the frame's kind of window light, and the sun a building's glass lets in - the shadow pass draws its map for it
     this._wlKind = this._wlKindOf(opts);
     this._wlNow = performance.now();
-    this._wlSun = this._wlKind === 'inside' && this._shadows ? this._wl.sunFor([-(view[0] * view[12] + view[1] * view[13] + view[2] * view[14]), -(view[4] * view[12] + view[5] * view[13] + view[6] * view[14]), -(view[8] * view[12] + view[9] * view[13] + view[10] * view[14])], this._wlNow) : null;
+    this._wlSun = this._wlKind === 'inside' && this._shadows ? this._wl.sunFor([-(view[0] * view[12] + view[1] * view[13] + view[2] * view[14]), -(view[4] * view[12] + view[5] * view[13] + view[6] * view[14]), -(view[8] * view[12] + view[9] * view[13] + view[10] * view[14])], this._wlNow, this._wlGlass) : null;
     this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear
     // LC1: the lantern grid for this frame's lights, on a WORLD frame of the lane alone (a panel bracket's frame is another view and another viewport: every light)
     this._clustersLive = !!this._lane && opts?.world === true && !this._panelSaved && this._spriteDepth === 0 && this._studioDepth === 0 && this._buildClusters(proj, view);
@@ -6041,6 +6044,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       // for.
       worldViewportPx: this._worldViewportPx,
       realWindows: this._rw ? { rooms: this._rw.rooms, watch: this._rw.watch, live: this._rw.live } : null,   // RW1: the frame's rooms and glass - the panel's beginFrame drops them, the world frame gets them back
+      windowLight: [this._wlKind, this._wlLive, this._wlSun],   // WL1: the frame's window light - the panel's beginFrame drops it
       rect,
     };
     this.setScreenOffset(0, 0);
@@ -6129,6 +6133,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.clearScreenScissor();
     this._worldViewportPx = s.worldViewportPx;   // E5: back to the host's world rect (null = full canvas)
     if (s.realWindows && this._rw) Object.assign(this._rw, s.realWindows);   // RW1
+    [this._wlKind, this._wlLive, this._wlSun] = s.windowLight;   // WL1
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     if (this._worldViewportPx) this._restoreWorldViewport();
     this.setScreenOffset(s.screenOffset[0], s.screenOffset[1]);
@@ -6420,7 +6425,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   captureOutsideLight(scene, now, mode = 'full') {
     this._rwMode = mode || 'off';   // the row as the host says it
     const o = this._wl.outside;
-    if (this._rwMode === 'off' || typeof scene?.setup !== 'function' || this._rwOutside || this._panelSaved || (o && now - o.at < WL_OUTSIDE_EVERY_MS && now >= o.at)) return;
+    if (this._rwMode === 'off' || !windowLightOn() || typeof scene?.setup !== 'function' || this._rwOutside || this._panelSaved || (o && Math.abs(now - o.at) < WL_OUTSIDE_EVERY_MS)) return;   // the view out's own read stamps a moment after the caller's clock
     const was = {
       ambient: this._ambient, ambientTri: this._ambientTri, sunScale: this._sunScale, sunColor: this._sunColor, clockLit: this._clockLit,
       moonScale: this._moonScale, moonDir: [...this._moonDir], moonColor: [...this._moonColor], fogColor: this._fogColor, frameStamp: this._frameStamp,
@@ -6593,7 +6598,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.emissionWhite.delete(key);
     this.windowMasks.delete(key);
     this.glassMasks.set(key, tex);
-    this._wl.addMask(key, color32);   // WL1: the sun's way in
+    if (windowLightOn()) this._wl.addMask(key, color32);   // WL1: the sun's way in
     this._texGen++;   // EV2: a sub-mesh stamped before the declaration looks again
     return tex;
   }
@@ -7109,7 +7114,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     else if (!this._retroMips) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0);   // RETRO1: the albedo's cap, so both samples still come from one level
     this._activeTexture(gl.TEXTURE0);
     this.emissionTextures.set(key, tex);
-    if (opts.window) this._wl.addMask(key, color32);   // WL1: the window's glass, for the light it lets through
+    if (opts.window && windowLightOn()) this._wl.addMask(key, color32);   // WL1: the window's glass, for the light it lets through
     this._texGen++;   // EV2: cached sub-mesh lookups refresh
     return tex;
   }
