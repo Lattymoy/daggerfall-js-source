@@ -246,6 +246,8 @@ void main() {
   float a = (1.0 - exp(-tau)) * top * clip * uAlpha * fogFactorAt(vWorld);
   o = vec4(uColor * uLight * a, a);   // premultiplied
 }`;
+// SHADER-EASE MOUNT-START (2026-10-29): what the constructor builds, started at page load (render/mountPrograms.js).
+export const CURTAIN_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([CURTAIN_VS, CURTAIN_FS]))]);
 
 function mat4Multiply(out, a, b) {
   for (let c = 0; c < 4; c++) {

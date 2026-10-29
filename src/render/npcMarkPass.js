@@ -96,6 +96,8 @@ void main() {
   if (d <= 0.0 && p.y > 0.25 && p.x < 0.0 && inner > 0.5) c = mix(c, vec3(1.0), 0.3);   // the light's catch, top left
   o = vec4(c * uAlpha, uAlpha);
 }`;
+// SHADER-EASE MOUNT-START (2026-10-29): what the constructor builds, started at page load (render/mountPrograms.js).
+export const NPC_MARK_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([NPC_MARK_VS, NPC_MARK_FS]))]);
 
 /** The quad: x across, y up, both -1..1. Pure. */
 export function markQuadVertices() {

@@ -87,9 +87,9 @@ test('BURNT-SAID THE WORDS AND THE HOST: one letter, none, a forged worth; world
   assert.equal(WILD_TEXT.deathBurnt(1), '1 thing you carried was lost where you fell. This character\'s trading is frozen, so nothing is left for anyone to take.');
   assert.equal(WILD_TEXT.deathBurnt(0), '');
   setWildDeath({ killer: 'Ria', dropped: 0, burnt: 2, letters: [letterOfCredit(650_000)] });   // PIN MOVED (PVP-NO-TENTH): a held fall taken before it, asked again
-  assert.deepEqual(wildDeathLines(), ['Ria may claim one piece of your worn gear.', WILD_TEXT.deathBurnt(2), WILD_TEXT.deathLetters(1, 650_000), 'In Cyrodiil the dead wait two minutes.'], 'its loss and its letters said');
+  assert.deepEqual(wildDeathLines(), ['Ria may take one uninsured worn piece of yours, or gold.', WILD_TEXT.deathBurnt(2), WILD_TEXT.deathLetters(1, 650_000), 'In Cyrodiil the dead wait two minutes.'], 'its loss and its letters said');   // PIN MOVED (PVP-WORDS): 'Ria may claim one piece of your worn gear.'
   setWildDeath({ killer: 'Ria', dropped: 3 });
-  assert.deepEqual(wildDeathLines(), ['Ria may claim one piece of your worn gear.', '3 things you carried lie where you fell, for ten minutes.', 'In Cyrodiil the dead wait two minutes.'], 'a death with no letters reads as it did');   // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone is Cyrodiil
+  assert.deepEqual(wildDeathLines(), ['Ria may take one uninsured worn piece of yours, or gold.', '3 things you carried lie where you fell, for ten minutes.', 'In Cyrodiil the dead wait two minutes.'], 'a death with no letters reads as it did');   // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone is Cyrodiil   // PIN MOVED (PVP-WORDS): 'Ria may claim one piece of your worn gear.'
   setWildDeath(null);
   const w = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT): my drop's answer in scenes/wildDropHost.js, read with its host
   assert.ok(w.includes('if (dd) setWildDeath({ killer: dd.killer, kill: true, dropped: d.order ? n - (d.wi === 0 ? 1 : 0) : 0, claimed, held, burnt: d.burnt ? n : 0, letters: out, insured, shield: d.shield === true, last });'), 'the host hands the burnt count and the pieces taken out');   // PIN MOVED (AUDIT FOE-KEEPS H1): my take is a kill; PIN MOVED (WILD-INSURE, REPEAT-SHIELD): and what kept

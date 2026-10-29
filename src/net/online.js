@@ -2920,6 +2920,13 @@ export class OnlineSession {
     if (id === this.id) return this.au ?? null;
     return (this.peers.get(id) ?? this._known.get(id))?.au ?? null;
   }
+  /** CAPE-TOGGLE: THE LOOK A PLAYER IS DRAWN IN, BY ID - mine, or a peer's in a room or introduced (its `hc`: capes hidden,
+   *  systems/capeShown.js lookCapesHidden) - or null. */
+  lookOf(id) {
+    if (id == null) return null;
+    if (id === this.id) return this.look ?? null;
+    return (this.peers.get(id) ?? this._known.get(id))?.look ?? null;
+  }
   /** ARMORY: THE AURA ARMORY KIT A PLAYER WEARS, BY ID - mine, or a peer's in a room or introduced - its kit (net/armoryLaw.js
    *  armoryKitPieces reads its pieces), or null for none. */
   armoryOf(id) {
