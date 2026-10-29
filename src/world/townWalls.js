@@ -697,8 +697,9 @@ export const GATE_CLEAR = Object.freeze({ model: 2.4, flat: 0.8, step: 0.8, most
  *  thing's reach: two and a half tiles - the painter's road is four whole tiles wide (measured at Stormhold, Riverhold);
  *  and how far a group goes along its wall to stand clear of them (twice GATE_CLEAR.most). */
 export const GATE_ROAD_CLEAR = Object.freeze({ line: 2.5 * TILE_M, most: 2 * GATE_CLEAR.most });
-/** TS7: the nearest offset (along, further out on its side) at which `ok` holds - rings of GATE_CLEAR.step out to its
- *  most, never back across the wall; none, where it stood. */
+/** TS7: the nearest offset (along, further out on its side) at which `ok` holds - rings of GATE_CLEAR.step out to `most`,
+ *  never back across the wall; `none` where none does (where it stood).
+ *  @param {(a: number, b: number) => boolean} ok @param {?number[]} [none] @param {number} [most] */
 function nearestClear(ok, none = [0, 0], most = GATE_CLEAR.most) {
   const { step } = GATE_CLEAR;
   for (let r = 0; r <= most; r += step) {
