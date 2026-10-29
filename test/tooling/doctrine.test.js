@@ -23,6 +23,8 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { studioListing, STUDIO_TREE } from '../../scripts/studioArtIndex.mjs';   // STUDIO1
 import { writePng } from '../../tools/pngIO.mjs';   // AUDIT STUDIO1 C12: the studio arm's own pictures
+import { dwarvenDragonSpriteEntries, DWARVEN_DRAGON_ART } from '../../src/characters/dwarvenDragon.js';   // DWARVEN-DRAGON: its sprites' rows
+import { SADDLE_PICTURES } from '../../src/systems/staffDragon.js';   // DRAGON-RIDE: its saddle's two
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const tracked = (dir) => execFileSync('git', ['ls-files', '-z', dir], { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })   // RRI1: 13,000 tracked sprites outgrew the 1 MB default (ENOBUFS)
@@ -88,6 +90,7 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/fonts/opendyslexic/OFL.txt', 'TEXT-FONT: the font\'s SIL Open Font License, which travels with it'],
   ['public/art/gun-idle.png', "OURS - Mac's own weapon art for the gun lab (2026-09-19); no ARENA2 pixel in it"],
   ['public/art/gun-fire-sheet.webp', "OURS - Mac's own six-frame fire sheet for the gun lab (2026-09-19); no ARENA2 pixel in it"],
+  ['public/art/hearth-offering.png', "OURS - the owner's own picture of the Hearth Offering at a door, a carved pumpkin on a stool under a lantern (OFFERING-ART, 2026-10-28), its pixels unchanged; no ARENA2 pixel in it"],
   ['public/art/pistol-frames.png', "OURS - the owner's own six fire frames for the pistol lab (2026-10-21), laid side by side with their pixels unchanged; no ARENA2 pixel in it"],
   ['public/art/pistolet-icon.png', "OURS - the owner's own Dwarven Pistolet sprite (PISTOLET, 2026-10-21), its 24x17 pixels recovered from the owner's screenshot; the inventory picture as it is; no ARENA2 pixel in it"],
   ['public/art/pistolet-paperdoll.png', "OURS - pistolet-icon.png with the fist's gap cut across its grip, flipped left to right and tilted barrel-down toward the other hand (RotSprite, no new colour) by tools/pistoletArt.mjs (the right hand's doll layer); no ARENA2 pixel in it"],
@@ -864,6 +867,12 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/horse/courser.json', "SUPPLIED - courser.fbx baked to the armature's frame by tools/bakeHorse.mjs; geometry, skin and gaits only, no ARENA2 data"],
   ['src/assets/horse/body.png', "SUPPLIED - the owner's body picture for the Courser (COATS3D, 2026-10-11), 256x256 indexed, as sent - a hide painted for the 3D model's own UV islands, no ARENA2 pixel in it (Daggerfall's horse is a sprite; this painting has no sprite's silhouette)"],
   ['src/assets/horse/hair.png', "SUPPLIED - the owner's mane and tail picture for the Courser's nine alpha cards (COATS3D, 2026-10-11), 512x512 RGBA, as sent - no ARENA2 pixel in it"],
+  // DWARVEN-DRAGON (2026-10-28): the staff's clockwork dragon's ninety sprites, archive 1800 - our own three.js renders of
+  // our own model, posed by the werewolf's joint directions (no Morrowind or ARENA2 pixel; src/characters/dwarvenDragon.js).
+  ...dwarvenDragonSpriteEntries({ fetchBytes: async () => new Uint8Array(0) }).map((e) => [`public/${DWARVEN_DRAGON_ART}${e.fileName}.png`,
+    "OURS - the Dwarven Dragon's sprite (DWARVEN-DRAGON, 2026-10-28), rendered from our own model, 471x262 indexed"]),
+  // DRAGON-RIDE (2026-10-28): the saddle drawn over an Admin's view on the dragon - our own model's rider view again
+  ...SADDLE_PICTURES.map((n) => [`public/${DWARVEN_DRAGON_ART}${n}.png`, "OURS - the Dwarven Dragon's saddle view (DRAGON-RIDE, 2026-10-28), rendered from our own model, 320x97 indexed"]),
 ]);
 
 test('doctrine: nothing ships out of public/ or src/assets/ that is not provably ours', () => {

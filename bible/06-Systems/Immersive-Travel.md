@@ -252,6 +252,14 @@ character's own clock (LIVED1).
     loaded the flat wears classic's own bearded man's face (182.3, 429), written
     into FLATS.CFG's dictionary as Roleplay & Realism writes it
     (`immersiveTravel.js` `IT_DRIVER_FACE`). `test/systems/fb1009b_driverface.test.js`.
+13. **A town past the Bay is a carriage's** (TRAVEL-EVERYWHERE, 2026-10-28, the owner: "the travel services won't take
+    you to other provinces", then "Like how it works in the bay should be how it works everywhere"). The mod's map is
+    DFU's, and DFU's stops at the Bay. On the enhanced sheet a driver's map picks a city, town or village past the Bay,
+    where the world knows it (AUDIT TRAVEL-EVERYWHERE), and the mod's own laws ask it as a Bay place: its type, and
+    region-locked its province's region and capital to capital both ways (a capital past the Bay is its pixels - the
+    capitals' table is the Bay's 40). The trip is DFU's fast travel at the mod's fare, as
+    any driver's (`03-World/Arena-Provinces.md` TRAVEL-EVERYWHERE). A captain's map keeps the Bay's docks, and the
+    classic skin's map is the Bay's alone. `test/ui/travel_everywhere.test.js`.
 
 ## Pins
 

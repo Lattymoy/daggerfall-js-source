@@ -10834,6 +10834,11 @@
   "tr": "99c50a5a9730",
   "by": "claude-in-session"
  },
+ "enemy.dwarvenDragon": {
+  "en": "55c68ec2d30f",
+  "tr": "7a44bfd21746",
+  "by": "claude-in-session"
+ },
  "ether.cross.passengers": {
   "en": "7307eaa64a41",
   "tr": "b8479c38030d",
@@ -16342,6 +16347,51 @@
  "lang.offer.yes": {
   "en": "5397e0583f14",
   "tr": "eaa02f3f3362",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.bloodlineOnline.final": {
+  "en": "23686618d5ae",
+  "tr": "53051cbc4fee",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.cost": {
+  "en": "15b0e2c26aba",
+  "tr": "10d3ddd269b5",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.rise": {
+  "en": "a15fcbd02c7f",
+  "tr": "bc83a7dc2366",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.title": {
+  "en": "1001e6a79636",
+  "tr": "9d2e5673942b",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.what": {
+  "en": "e3ee98e35ca2",
+  "tr": "275fe3cbfe18",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.wild": {
+  "en": "7367e331bcf8",
+  "tr": "f057cb7f3da5",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.enduringOnline.cost": {
+  "en": "390832c2c0e5",
+  "tr": "2a1f137dd5d4",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.enduringOnline.heir": {
+  "en": "0e2c72bb4597",
+  "tr": "913802868521",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.enduringOnline.toll": {
+  "en": "b5b9fbf721ef",
+  "tr": "9d6bda0a9375",
   "by": "claude-in-session"
  },
  "legacy.court.cooled": {
@@ -37304,6 +37354,16 @@
   "tr": "91c177b7f6bc",
   "by": "claude-in-session"
  },
+ "staff.pilot.bar.health": {
+  "en": "b1462cbdd74f",
+  "tr": "4721120a1e7d",
+  "by": "claude-in-session"
+ },
+ "staff.pilot.bar.title": {
+  "en": "e85fd1b6e6c9",
+  "tr": "0dbd97bd5e08",
+  "by": "claude-in-session"
+ },
  "staffEvent.attackArea": {
   "en": "ea6594b7f8f5",
   "tr": "396b8b1ed08d",
@@ -38757,11 +38817,6 @@
  "travel.nav.gatesShut": {
   "en": "fd358facc6db",
   "tr": "95d98e340e58",
-  "by": "claude-in-session"
- },
- "travel.pastBay.refused": {
-  "en": "8466408ee8fe",
-  "tr": "873494bf6d76",
   "by": "claude-in-session"
  },
  "travelView.planning": {

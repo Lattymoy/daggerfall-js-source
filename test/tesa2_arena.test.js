@@ -179,7 +179,7 @@ test('TESA2 the clone: the template under the place\'s name, its own id on the m
   assert.deepEqual([town.regionIndex, town.politic], [17, 145], 'no region handed: the template\'s');
 });
 
-test('TESA2 the map: where a host stands the places, each inked place carries the pixel it stands on, and on the teleport map the press on one is a portal\'s end at that pixel (TESA-NO-FAST: never a journey), the coordinates\' own; where none does it carries none and the press picks nothing; the cursor points at one it opens a portal to (mutant: the switch, the pixel, the pick)', () => {
+test('TESA2 the map: where a host stands the places, each inked place carries the pixel it stands on, and on the teleport map the press on one is a portal\'s end at that pixel (TRAVEL-EVERYWHERE: on the travel map a place\'s journey, test/ui/travel_everywhere.test.js), the coordinates\' own; where none does it carries none and the press picks nothing; the cursor points at one it opens a portal to (mutant: the switch, the pixel, the pick)', () => {
   setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
   setTamrielTrace(rectTrace([[3, 110, 20, 210, 80]]));
   let ink = buildTamrielInk();
@@ -195,18 +195,20 @@ test('TESA2 the map: where a host stands the places, each inked place carries th
   assert.deepEqual(arenaInkCities({ places: [] }), []);
   const held = read('src/ui/heldMap.js');
   const pick = held.slice(held.indexOf('  _pickAt(sx, sy) {'), held.indexOf('  _renderSearch(entries) {'));
-  // PIN MOVED (TESA-NO-FAST): a portal's end on the teleport map alone - the travel map makes no journey past the Bay
+  // the teleport map's arm (the travel map's is TRAVEL-EVERYWHERE's, test/ui/travel_everywhere.test.js)
   assert.match(pick, /if \(this\._tamriel && !this\._zoneMap && this\.teleportationTravel\) \{/);
   // PIN MOVED (PORTAL-ANYWHERE, bible/06-Systems/Portal-Stone.md): the portal's end is the city with a pixel, else - on the
   // Portal Stone's map alone (`portalLandPastBay`) - the land under the press (systems/travel/pastBayTravel.js portalLandAt)
   // PIN MOVED (WILD-CITY-PORT, bible/11-Multiplayer/Wild-Zone.md section 28): the city the press takes is one method, asked by
   // ZONE-ZOOM too - a city the sheet inks, with its pixel
   assert.match(held, /  _portalCityAt\(sx, sy\) \{\n\s+if \(!this\._tamriel \|\| this\._zoneMap \|\| !this\.teleportationTravel\) return null;\n[^\n]+\n\s+const city = tamrielCityAt\(mx, my, this\._view, tamrielInkFor\(this\._model\), [^\n]+\n\s+return city\?\.pixel \? city : null;\n/);
-  assert.match(pick, /const end = this\._portalCityAt\(sx, sy\) \?\? \(this\.deps\.portalLandPastBay \? portalLandAt\(Math\.floor\(mx\), Math\.floor\(my\)\) : null\);\n\s+if \(end\) \{\n\s+this\._select\(\{ coords: true, x: end\.pixel\.x \+ 0\.5, y: end\.pixel\.y \+ 0\.5, colorIndex: -1, kind: 'coords', name: end\.name, summary: null, mapId: null, arena: true \}\);\n\s+this\._openPanel\('teleport'\);/);
+  // PIN MOVED (TRAVEL-EVERYWHERE): a countryside mark's place is a portal's end too, as the Bay's teleport reaches any place
+  assert.match(pick, /const mark = past\?\.on === 'mark' && !inBay\(past\.pixel\.x, past\.pixel\.y\) && this\._pastBayTownAt\(past\.pixel\.x, past\.pixel\.y\) \? past : null;/);   // AUDIT TRAVEL-EVERYWHERE 2: a place the world knows
+  assert.match(pick, /const end = this\._portalCityAt\(sx, sy\) \?\? mark \?\? \(this\.deps\.portalLandPastBay \? portalLandAt\(Math\.floor\(mx\), Math\.floor\(my\)\) : null\);\n\s+if \(end\) \{\n\s+this\._select\(\{ coords: true, x: end\.pixel\.x \+ 0\.5, y: end\.pixel\.y \+ 0\.5, colorIndex: -1, kind: 'coords', name: end\.name, summary: null, mapId: null, arena: true \}\);\n\s+this\._openPanel\('teleport'\);/);
   assert.ok(pick.indexOf('// TESA2') < pick.indexOf('// WILD2'), 'before the zone\'s and the coordinates\' own arms');
-  assert.match(held, /if \(selected\.coords\) return \{ pixel: \{ x: Math\.floor\(selected\.x\), y: Math\.floor\(selected\.y\) \}, name: selected\.name, \.\.\.\(selected\.place \? \{ place: true \} : \{\}\) \};/, 'the journey is to its pixel, by its name');   // PIN MOVED (OW-PLACE-WALK, test/ui/owplacewalk.test.js): and a place says it is one
+  assert.match(held, /if \(selected\.coords\) return \{ pixel: \{ x: Math\.floor\(selected\.x\), y: Math\.floor\(selected\.y\) \}, name: selected\.name, \.\.\.\(selected\.place \|\| selected\.door \? \{ place: true \} : \{\}\) \};/, 'the journey is to its pixel, by its name');   // PIN MOVED (OW-PLACE-WALK, test/ui/owplacewalk.test.js): and a place; TRAVEL-EVERYWHERE: a known place's journey, an unknown one's walk to its door
   // PIN MOVED (AUDIT TESA II M7, M14): the cursor off the city the press would take (_pastBayHover: tamrielCityAt as the sheet inks)
-  assert.match(held, /cursor: \(this\.teleportationTravel \? past\.city\?\.pixel \|\| \(this\.deps\.portalLandPastBay && portalLandAt\(px, py\)\) : this\._walksPastBay\(\) && past\.on !== 'sea'\) \? 'pointer' : ''/);   // PIN MOVED (PORTAL-ANYWHERE): and on the stone's map its land; PIN MOVED (OW-PAST-BAY, test/ui/owpastbay_walk.test.js): and on the travel map where a press walks
+  assert.match(held, /cursor: \(this\.teleportationTravel \? past\.city\?\.pixel \|\| \(past\.on === 'mark' && this\._pastBayTownAt\(past\.pixel\.x, past\.pixel\.y\)\) \|\| \(this\.deps\.portalLandPastBay && portalLandAt\(px, py\)\) : \(this\._walksPastBay\(\) \|\| this\._travelsPastBay\(\)\) && this\._pastBayPressPick\(mx, my\)\) \? 'pointer' : ''/);   // PIN MOVED (AUDIT TRAVEL-EVERYWHERE 8): a known mark on the teleport map; on the travel map where a press picks
   // PIN MOVED (BAY-LEFT-MAPS C11, test/ui/bayleft_find.test.js): and the Ports filter
   assert.match(held, /city: at\.on === 'city' \? tamrielCityAt\(mx, my, this\._view, ink, \{ filters: this\.filters, continent, portsOnly: this\.portsFilter \}\) : null/);
   // WW7-6: a seat past the Bay answers with its card, as the Bay's (SEAT-TIP) - off the city the press would take

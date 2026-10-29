@@ -57,6 +57,7 @@ import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's In
 import { potionBundle } from '../systems/potions.js';   // U44: DrinkPotion's bundle
 import { potentEffect } from '../net/alchemyLaw.js';   // PROF12: a Potent potion's magnitudes
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';
+import { ridingDragon, dragonFire, dragonBolt, dragonVolley, DRAGON_BOLT_SPEED, DRAGON_BOLT_DAMAGE } from '../systems/staffDragon.js';   // DRAGON-RIDE: the dragon's shoulder cannons
 import { tallySkill } from '../systems/skills.js';
 import { morphSelf } from '../systems/lycanthropy.js';   // V2a: the MorphSelf arm the ONE cast engine wires
 import { allyCastable, allyReachFor, allyCastFrame, allyCastCasterLine, allyCastCasterLineMany, allyCastSpell, PERSON_RADIUS, ALLY_TOUCH_REACH, ALLY_ARM_RADIUS, ALLY_ARMED_LINE, COMPANION_ARMED_LINE, companionCastable, createGiftLineGate } from '../systems/allyCast.js'; import { shownSpellName } from '../systems/loot/loot.js';   // SPELL-GIFT: the arm near a mate, the line it says, and the area's one line; AUDIT WK-M4: what my companion can use; L10N3e: the caster's line names the spell as the book shows it (the frame keeps the canonical name)
@@ -71,6 +72,7 @@ import { orbColourFrom } from '../characters/thunderlockIds.js';   // ART-COLOUR
 import { createSpellImpactSounds } from '../systems/spell/spellImpactSound.js';   // IMPACTFX: ...and heard
 import { createMagicCandle } from './magicCandle.js';   // X11: the Light effect's candle
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // PlayerController.height, the candle's y term
+import { mwViewThirdPerson } from '../player/mwView.js';   // CANDLE-POV: my candle is drawn only out of first person
 import { setPlayerDoor } from '../systems/playerDoor.js';   // SET2: this host publishes itself as the scene a set's power reaches into
 import { tellPlayerCast } from '../systems/playerCasts.js';   // EG15: the player's own cast told (the Battlemage's Discipline), a leaf
 import { createHitEffects } from './hitEffects.js';   // AUDIT 26 F033: DaggerfallMissile's impact flash
@@ -88,6 +90,7 @@ import { createMwMagicFx } from './mwMagicFx.js';   // MW-SPELLFX1: Morrowind's 
 import { egAllyLook } from '../ui/eliteGates/egAccess.js';   // EG-ZG (Elite-Gates.md section 25.4): THE QUIET COMPANY - another player's spell effects in a Spire trial
 import { CONCEAL_MODE } from '../systems/combatVisuals.js';   // EG-ZG: an ally's flat drawn translucent, as a revealed foe's is (alpha alone)
 import { fpsSpellCasting } from '../combat/fpsSpellCasting.js';   // CAST-SPEED: the ONE pair of hands, whose motion gates the click
+import { reportPlayerAttack } from '../combat/formulas.js';   // SPELL-NUMBERS: my spell's landing pops its number, as a blow's does
 import { spellHandUp, spellHandBusy, tellCastPending, CAST_PRESS } from '../combat/twoHands/spellHand.js';   // SPELL-HAND: a spell in the free hand beside a weapon - the swing is the weapon's
 export { CAST_PRESS };   // SPELL-HAND: the cast's own press, handed on - the hosts ask the magic door for it, never a two-hands module (TWO-HANDS, THE FOUR HOSTS)
 
@@ -808,8 +811,9 @@ export function createPlayerMagic({
     // a school's next uses learn by that foe, as a weapon's do; only a blow ever said so, and a fireball at an Ancient
     // Lich counted as a light cast in an empty room (the quarter, UNCHALLENGED_MAGIC_WEIGHT)
     if (mine && foe?.entity && foe.entity.team !== 'PlayerAlly') noteSkillChallenge(playerEntity, foe.entity);
+    let dealt = 0;   // SPELL-NUMBERS: what MY landing struck off the foe, for the damage numbers
     const landing = sinks?.hurt ? { ...sinks, hurt: (n, o) => {
-      const d = o?.whole || o?.round ? n : blowTaken(n, striker, foe.entity, null, { kind: 'spell', element: spell?.element ?? null });
+      const d = o?.whole || o?.round ? n : blowTaken(n, striker, foe.entity, null, { kind: 'spell', element: spell?.element ?? null }); if (mine && !o?.round && Number.isFinite(d) && d > 0) dealt += d;   // SPELL-NUMBERS: what it struck, for the number
       if (mine && !o?.round) noteFeudHarm(foe.entity, elementFeudClass(spell?.element), d);
       return sinks.hurt(d, { ...(o ?? {}), element: spell?.element ?? null });   // RVN3: the element rides to the door (its weakness's weight)
     } } : sinks;
@@ -821,6 +825,9 @@ export function createPlayerMagic({
     if (caster?.entity === playerEntity && foe?.entity && r) {
       tellSpellLanded({ caster: playerEntity, target: foe.entity, foe, spell, r, self: false, took: tookOf(r, healthBefore), cast: caster.cast ?? null });
     }
+    // SPELL-NUMBERS (2026-10-28, a player: "they only show on the boss"): MY spell's landing on any foe pops its number
+    // as a blow's does (ui/hitNumbers.js, the enhanced HUD's) - only the court's boss and the relay's stand-ins said one
+    if (dealt > 0) reportPlayerAttack({ hit: true, damage: Math.round(dealt), target: foe.entity });
     if (foe?.ai?.feet && !(r?.saved || r?.chanceFailed || r?.reflected)) mwFx.hit(spell, foe.ai.feet, { body: { height: foe.ai.height ?? CAPSULE_HEIGHT, radius: foe.ai.radius ?? PLAYER_BODY_RADIUS } });
     // STRIKE-SHARED (2026-09-29): ANOTHER PLAYER'S strike spell, landed here on the foe I own (`ctx.peerCaster` its id).
     // The trap's line is its caster's and not mine to speak, and a new trap is marked with whose it is - its soul goes
@@ -1395,6 +1402,14 @@ export function createPlayerMagic({
   const allyConceal = (q) => (q ? { mode: CONCEAL_MODE.reveal, alpha: q.alpha, t: 0, phase: 0 } : null);
   /** MW-SPELLFX1: a missile's Morrowind bolt (scenes/mwMagicFx.js) - placed now, moved with the flight, ended with it. EG-ZG:
    *  an ally's (`m.quiet`) at the quiet share. */
+  /** DRAGON-RIDE (systems/staffDragon.js): both shoulder cannons down the live look - shock balls that meet monsters
+   *  alone (no mate, duel, boss or player: those doors stay shut), never paid for, on the cannons' own clock. */
+  function fireDragon() {
+    if (!lastAim || !dragonFire(performance.now())) return;
+    const spell = dragonBolt();
+    for (const v of dragonVolley(lastAim.eye, lastAim.dir)) missiles.push(withBolt({ spell, cast: newCast(0), pos: v.pos, dir: v.dir, age: 0, batch: null, fromPlayer: true, ally: false, duel: false, boss: false, dragon: true, speed: DRAGON_BOLT_SPEED }));
+    audio.playOneShotId(SPELL_CAST_SOUND[3], 1);
+  }
   function withBolt(m) {
     m.mwBolt = mwFx.bolt(m.spell, m.quiet ? { alpha: m.quiet.alpha } : undefined);
     m.mwBolt.at(m.pos, m.dir);
@@ -1467,13 +1482,16 @@ export function createPlayerMagic({
       feet: renderFeet ?? playerFeet ?? [0, 0, 0],   // DISC13-A: the candle hangs off the RENDER feet (motor.js feetAt), as the camera does - the stepped feet slid it against the view every frame on a screen faster than 60 Hz
       height: playerHeight,
       forward,
+      // CANDLE-POV (2026-10-28, Dudey: "the candle can still be visible for other players but should be removed in first
+      // person"; a DEPARTURE, Port-Ledger A): in first person the light stays and the candle in front of the face goes
+      sprite: mwViewThirdPerson(),
     });
     for (const m of missiles) {
       if (m.dead) continue;
       ensureMissileBatch(m);
       m.age += dt;
       if (m.age > MISSILE_LIFESPAN_S) { retireMissile(m); continue; }
-      const step = MISSILE_SPEED * dt;
+      const step = (m.speed ?? MISSILE_SPEED) * dt;   // DRAGON-RIDE: a shock ball flies faster
       const { unit: _unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: DaggerfallMissile.cs:333/:337-339's reach along the normalised direction
       // TACT1: cover stops a bolt, and an area spell bursts on it; AUDIT TACT B5: by touch, the bodies before it tested first
       const _len = Math.hypot(m.dir[0], m.dir[1], m.dir[2]) || 1;
@@ -1586,6 +1604,7 @@ export function createPlayerMagic({
         if (f.dead) continue;
         if (missileHitsFoe(m.pos, f)) {   // ROAD-H tail: DaggerfallMissile.cs:339's SphereCast meets the foe's CAPSULE (REVIEW 2026-09-05 had its centre as a point)
           if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, castingLevel(playerEntity), playerFeet, playerCaster(m.cast ?? null), { playerHeight, allies: !!m.ally, duel: !!m.duel, boss: m.boss ?? !!m.duel });   // ROAD-H H2
+          else if (m.dragon) foeSinks(f, true)?.hurt?.(DRAGON_BOLT_DAMAGE, { fromPlayer: true });   // DRAGON-RIDE: no save, no resist
           else applySpellToFoe(m.spell, castingLevel(playerEntity), f, playerCaster(m.cast ?? null));
           showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]);   // F033
           retireMissile(m);
@@ -1595,7 +1614,7 @@ export function createPlayerMagic({
       // DEX5 (bible/04-Characters/Enemy-Expansion.md section 11): ...and a body a mod's corpse prefab stands (corpseMarker.js
       // registerCorpsePrefab - the troll's trigger sphere): DaggerfallMissile's cast meets the trigger and the bundle goes to
       // the body's own entity; an AreaAtRange one bursts there too (its OverlapSphere ignores triggers - no other body)
-      const hitBody = m.dead ? null : corpsePrefabStruck(m.pos, foes(), MISSILE_COLLIDER_RADIUS);
+      const hitBody = m.dead || m.dragon ? null : corpsePrefabStruck(m.pos, foes(), MISSILE_COLLIDER_RADIUS);
       if (hitBody) {
         hitBody.corpsePrefab.struck(m.spell, castingLevel(playerEntity), playerCaster(m.cast ?? null));
         if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, castingLevel(playerEntity), playerFeet, playerCaster(m.cast ?? null), { playerHeight, allies: !!m.ally, duel: !!m.duel, boss: m.boss ?? !!m.duel });
@@ -1697,6 +1716,7 @@ export function createPlayerMagic({
      *  (EntityEffectManager's), the hotbar's - and not the swing button's. With a spell in the free hand beside a drawn
      *  weapon the swing button is the WEAPON's: only a cast's own press fires the spell. */
     interceptAttack(held, { cast = false } = {}) {
+      if (held && ridingDragon()) { fireDragon(); return true; }   // DRAGON-RIDE: in the saddle every press is the cannons'
       if (!cast && spellHandUp()) return false;
       if (held && readiedSpell != null && !pendingClickCast) { setPending(true); return true; }
       return false;

@@ -28,6 +28,7 @@ import { eotbBody } from '../../player/eyeOfTheBeholder/eotbBody.js';   // EOTB5
 import { eotbCamera } from '../../player/eyeOfTheBeholder/eotbCamera.js';
 import { racialFpsWeapon } from '../../systems/lycanthropy.js';   // V4: the transformed rig's claws
 import { EQUIP_SLOTS, equipTableOf, fillEquipTable } from '../../systems/equip.js';   // AUDIT 17e F17; MW-D32 the worn read; MW-EARLY: a save's worn set
+import { swapPace } from './swapPace.js';   // SWAP-PACE: the swap pause's drain, halved outside the open PvP zone
 import { setItemFields } from '../../systems/item/itemTemplates.js';   // MW-EARLY: a save's items as the restore reads them
 import { dfWornEquipment } from '../../formats/morrowind/mwItemMap.js';   // MW-D32
 import { ownWerewolfSkin } from '../../systems/ownGlyphs.js';   // SHADOW-FANG: the skin my own werewolf wears
@@ -1868,7 +1869,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // approximation - dt x 980 units/second, clamped at 0
       // (WeaponManager.cs:677-693).
       if (entity && (entity.equipCountdown ?? 0) > 0) {
-        entity.equipCountdown = Math.max(0, entity.equipCountdown - dt * 980);
+        entity.equipCountdown = Math.max(0, entity.equipCountdown - dt * 980 * swapPace());   // SWAP-PACE: twice as fast outside the open PvP zone
       }
       const c = cv();
       // MW-D12: THE RETURN VALUE WAS BEING THROWN AWAY, and it is the

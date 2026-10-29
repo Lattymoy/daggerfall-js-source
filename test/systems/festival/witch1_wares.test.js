@@ -6,6 +6,7 @@
 import '../../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { WYRD_SET_PIECES, wyrdPieceById, AETHERIC_RECORDS } from '../../../src/systems/aetheric.js';
 import { WYRD_PIECE_IDS, FESTIVAL_CARD_IDS, FESTIVAL_WARES } from '../../../src/net/festivalLaw.js';
 import { SIGIL_SETS, tierValues, SET_STAGE_MAX, _resetSigilSetsForTests } from '../../../src/systems/sigil/sigilSets.js';
@@ -24,7 +25,7 @@ import { cardRules, cardFlavor } from '../../../src/systems/iliac/iliacCardWords
 import { AURA_LOOK, AURA_FS, witchfireRatesWhole } from '../../../src/render/auraRing.js';
 import { profileIconNode, ICON_ART, ICON_TEXT } from '../../../src/ui/profileIcons.js';
 import { ICONS } from '../../../src/net/identityToken.js';
-import { FESTIVAL_PAINTERS, FESTIVAL_ART, registerFestivalArt, _resetFestivalArt } from '../../../src/world/festivalArt.js';
+import { FESTIVAL_PAINTERS, FESTIVAL_ART, OFFERING_ART, registerFestivalArt, _resetFestivalArt } from '../../../src/world/festivalArt.js';
 import { wyrdRows, wyrdPress, mountWyrdWindow, WYRD_WATCH_MS, WYRD_CSS } from '../../../src/ui/wyrdWindow.js';
 import { withDom } from '../../invdrag.mjs';
 import { mock } from 'node:test';
@@ -148,10 +149,10 @@ test('WITCH1 THE PROFILE ICONS: each drawn in code - a round field, its rim and 
   assert.equal(profileIconNode({}, 'twinmoons'), null);
 });
 
-test('WITCH1 THE FESTIVAL\'S PICTURES: six painted, each its own size, every texel of its own colours or clear; registered once on the texture door', async () => {
+test('WITCH1 THE FESTIVAL\'S PICTURES: five painted, each its own size, every texel of its own colours or clear; the offering at a door the supplied PNG (OFFERING-ART); registered once on the texture door', async () => {
   const sizes = Object.fromEntries(Object.entries(FESTIVAL_PAINTERS).map(([r, paint]) => { const img = paint(); return [r, `${img.width}x${img.height}`]; }));
   assert.deepEqual(sizes, {
-    [FESTIVAL_ART.cake]: '24x18', [FESTIVAL_ART.offeringIcon]: '28x24', [FESTIVAL_ART.offering]: '40x56',
+    [FESTIVAL_ART.cake]: '24x18', [FESTIVAL_ART.offeringIcon]: '28x24',
     [FESTIVAL_ART.turnip]: '24x26', [FESTIVAL_ART.effigy]: '32x64', [FESTIVAL_ART.wardStaff]: '24x56',
   });
   for (const paint of Object.values(FESTIVAL_PAINTERS)) {
@@ -161,12 +162,17 @@ test('WITCH1 THE FESTIVAL\'S PICTURES: six painted, each its own size, every tex
     assert.ok(solid > img.width * img.height * 0.2, 'a picture, not a speck');
   }
   _resetFestivalArt();
-  const asked = [];
-  const n = registerFestivalArt((entries) => { asked.push(...entries); return entries.length; });
+  const asked = [], fetched = [];
+  const png = readFileSync(new URL('../../../public/art/hearth-offering.png', import.meta.url));
+  const decode = async (bytes) => { assert.deepEqual([...bytes.slice(1, 4)].map((c) => String.fromCharCode(c)).join(''), 'PNG'); return { width: OFFERING_ART.width, height: OFFERING_ART.height, data: new Uint8Array(43 * 101 * 4) }; };
+  const n = registerFestivalArt((entries) => { asked.push(...entries); return entries.length; }, decode, async (url) => { fetched.push(url); return new Uint8Array(png); });
   assert.equal(n, 6);
   assert.equal(registerFestivalArt(() => 99), 0, 'once');
   const pic = await asked.find((e) => e.record === FESTIVAL_ART.offering).build();
-  assert.deepEqual([pic.width, pic.height], [40, 56]);
+  assert.deepEqual([pic.width, pic.height], [43, 101]);
+  assert.match(fetched[0], /\/art\/hearth-offering\.png$/);
+  assert.deepEqual(pic.scale, { width: -85, height: -85 }, 'stood 29 x 68 texels, its seat at the painted stool\'s');
+  assert.deepEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [OFFERING_ART.width, OFFERING_ART.height], 'the file is the size the record says');
   assert.ok(asked.every((e) => e.standIn === true && e.archive === 38291));
 });
 
