@@ -393,7 +393,7 @@ test('PROF10 pages: Jewelcrafting practised on the Professions page - its four c
     assert.deepEqual(rows, ['Mining', 'Logging', 'Herbalism', 'Hunting', 'Fishing', 'Smithing', 'Building', 'Outfitting', 'Provisioning', 'Enchanting']);
     page.buttons().find((b) => b.textContent.startsWith('Smithing')).onclick();
     page.draw();
-    assert.doesNotMatch(page.text(), /not practiced in the Bay yet/);
+    assert.doesNotMatch(page.text(), /not practiced yet/);   // PIN MOVED (AUDIT TAMRIEL-WIDE D6): the line names no place
     const cards = page.buttons().filter((b) => b.className.includes('prof-spec'));
     // PIN MOVED (CRAFT3): the track's four a rank, each named its discipline's - Jewelcrafting's four among the smith's
     assert.deepEqual(cards.map((c) => [c.querySelector('b').textContent, c.querySelector('.prof-of')?.textContent, c.disabled]),

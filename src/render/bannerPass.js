@@ -91,6 +91,8 @@ void main() {
   vec3 c = mix(uFogColor, lit, fogFactorAt(vWorld));
   o = vec4(dwWaterFog(c, vWorld), 1.0);
 }`;
+// SHADER-EASE MOUNT-START (2026-10-29): what the constructor builds, started at page load (render/mountPrograms.js).
+export const BANNER_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([BANNER_VS, BANNER_FS]))]);
 
 function mat4Multiply(out, a, b) {
   for (let c = 0; c < 4; c++) {

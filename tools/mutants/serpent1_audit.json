@@ -578,8 +578,8 @@
   {
     "name": "AUDIT-SERPENT-B11-claim-name",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "recorded: (n, xp, boss) => `The Bay will remember ${boss.name}'s fall.",
-    "new": "recorded: (n, xp, boss) => `The Bay will remember the Old Coil's fall.",
+    "old": "recorded: (n, xp, boss) => `The sea will remember ${boss.name}'s fall.",
+    "new": "recorded: (n, xp, boss) => `The sea will remember the Old Coil's fall.",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]

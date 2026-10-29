@@ -66,7 +66,7 @@ import { hideWorldPlaque, destroyWorldPlaque } from '../ui/worldPlaque.js';   //
 import { quickLootWheel, quickLootArm } from '../systems/quickLoot.js';   // QUICK-LOOT B4: the plaque owns the wheel while it lists, and the two keys arm what the next activate means
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, parkourDeps, doorSpellFor, wireDoorSpells, claimFrame, frameAlive, frameHeld } from './shared.js';
 import { standFromVoid, dungeonVoidText } from '../player/enterExit.js';   // FIELD BUGS 2026-10-19f VOID-DUNGEON: the failsafe and its line
-import { isTextEntryTarget, keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, routeKey, routeKeyUp, held, moveHeld, anyMove, actionsOf, swallowBrowserKey, mouseCode, isSwingButton, swingHeld, keyboardLook, installContextMenuGuard, swingKeyHeld } from '../ui/input.js';
+import { isTextEntryTarget, keyEdges, noteKeyDown, noteKeyUp, letGoOnBlur, beginInputFrame, pressed, released, routeKey, routeKeyUp, held, moveHeld, anyMove, actionsOf, swallowBrowserKey, mouseCode, isSwingButton, swingHeld, keyboardLook, installContextMenuGuard, swingKeyHeld } from '../ui/input.js';
 import { armUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game   // AUDIT 39r: the mouse half of the held set
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { capturePendingScreenshot } from '../systems/save/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
@@ -416,6 +416,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // DFU's `GetKeyUp` (the automap's two-phase toggle-close) or polls
   // `GetKey` (its twenty-two IsPressedWith camera arms) could not.
   // routeKey's mirror, on the same ctx.
+  letGoOnBlur(keys, keyEdge);   // KEYS-BLUR: a key held as the page lost focus is let go
   addEventListener('keyup', (e) => {
     keys.delete(e.code);
     noteKeyUp(keyEdge, e.code);

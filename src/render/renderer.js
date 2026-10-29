@@ -21,6 +21,7 @@ import { COLUMN_GLSL } from './columnGlsl.js';   // DW-F: the water column's sha
 // this is already guaranteed - the lines stand where they read as the rule.
 import { buildProgram, startPrograms, parallelCompile } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link; SHADER-STALL: and a start that never waits
 import { realWindowsGlsl, RW_MAIN_DERIVS, RW_MAIN_CUTOUT, RW_MAIN_GLASS, RW_MAIN_ROOM, GLASS_NONE, GLASS_EXTERIOR, GLASS_INTERIOR, winModeFor, roomLightFor, sphereNdcRect, cropProjection, viewTargetSize, viewSkyFrom, viewRays, VIEW_BG_VS, VIEW_BG_FS, VIEW_PANES_MAX, VIEW_PANE_UNIT, VIEW_PANE_VS, VIEW_PANE_FS } from './realWindows.js';   // RW1: the real windows - the rooms, the glass, the view out
+import { windowLightGlsl, WindowLightPass, windowLightOn, windowAperturesOf, WL_MASK_UNIT, WL_UBO_BINDING, WL_GRID_ROW, WL_LIST_BASE, WL_OUTSIDE_EVERY_MS } from './windowLight.js';   // WL1: the windows' light - a lit room's out onto the street, the sun's in onto a floor
 import { MESH_ALPHA_GLSL, samplerParams, samplerKey } from './meshAlpha.js';   // POI-2: a translucent mesh draw, and a texture's own wrap and filter
 import { frameTarget, setFrameTarget } from './renderTarget.js';   // RW1: the view out's pass hands the frame target back as it found it (EL4's restore)
 import { CLIP_SENTINEL } from '../world/terrain/terrainSurface.js';   // FAR-CLIP1: the byte the terrain's clip variant discards - the TileMap format's module, already in this file's closure (waterCorners.js)
@@ -28,6 +29,10 @@ import { CLIP_SENTINEL } from '../world/terrain/terrainSurface.js';   // FAR-CLI
 const NO_SCREEN_OFFSET = Object.freeze([0, 0]);
 /** OW-HITCH: how many layers of a ground tile array go up between two of uploadTileArraySteps' yields (8 of 256 texels: 2 MB). */
 export const TILE_LAYERS_A_STEP = 8;
+
+/** WL1: the classic set's window light block - LC1's grid declared here (the lane's EL_CLUSTER_GLSL declares it there),
+ *  no sun map to read, the classic lantern's falloff. */
+const WL_CLASSIC_GLSL = windowLightGlsl({ clusters: true });
 
 const VS = `#version 300 es
 layout(location=0) in vec3 aPos;
@@ -109,6 +114,7 @@ ${BAYER_GLSL}
 ${DISSOLVE_GLSL}
 ${realWindowsGlsl('c')}
 ${MESH_ALPHA_GLSL}
+${WL_CLASSIC_GLSL}
 out vec4 outColor;
 ${FOG_GLSL}
 void main() {
@@ -157,6 +163,7 @@ ${RW_MAIN_GLASS}
     pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
   lit += albedo * pointAcc;
+  lit += albedo * winLit(vWorldPos, n, 0.0, 1.0);   // WL1: the windows' light, through their glass (render/windowLight.js)
   // R12: the player-following indirect point light (SunlightRig's
   // IndirectLight) - same falloff shape as the lantern lights; the
   // zeroed default color makes this a no-op in unlit scenes.
@@ -512,6 +519,7 @@ uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
 ${CLOUD_SHADOW_GLSL}
+${WL_CLASSIC_GLSL}
 out vec4 outColor;
 ${FOG_GLSL}
 void main() {
@@ -535,6 +543,7 @@ void main() {
     pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
   lit += albedo * pointAcc;
+  lit += albedo * winLit(vWorldPos, n, 0.0, 1.0);   // WL1
   // R12: the player-following indirect light (see the mesh FS).
   vec3 iL = uIndirect.xyz - vWorldPos;
   float iD = length(iL);
@@ -712,7 +721,7 @@ export function bbVertexShader(ext = null) {
   return `${BB_VS.slice(0, at)}${ext.head}\n${BB_VS.slice(at, end)}${ext.main}\n${BB_VS.slice(end)}`;
 }
 
-import { createClusterSpace, buildLightClusters, CLUSTER_GRID_W, CLUSTER_GRID_H, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, CLUSTER_X, CLUSTER_Y, CLUSTER_NEAR, CLUSTER_Z_SCALE, CLUSTER_GRID_UNIT, CLUSTER_LIST_UNIT } from './lightClusters.js';   // LC1: the lantern loop's grid
+import { createClusterSpace, buildLightClusters, CLUSTER_GRID_W, CLUSTER_GRID_H, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, CLUSTER_X, CLUSTER_Y, CLUSTER_NEAR, CLUSTER_Z_SCALE, CLUSTER_GRID_UNIT, CLUSTER_LIST_UNIT, CLUSTER_BANDS } from './lightClusters.js';   // LC1: the lantern loop's grid
 import { ShadowPass, SHADOW_GLSL, SHADOW_VIEW_SCALE } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
 import { boundsOf, spherePlanes, batchVisible, batchSphere, ZERO_ORIGIN, placementGrid, quadHalfDiagonal } from './bounds.js';   // PERF-EXT1: and a batch's placement grid; the review: and the half-diagonal's one home
 import { billboardKey, sortByKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: the batch's texture key - one home with the two replays; LA-COST2: and the cutout pass's sort by it
@@ -827,6 +836,7 @@ uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
 ${CLOUD_SHADOW_GLSL}
+${WL_CLASSIC_GLSL}
 out vec4 outColor;
 ${FOG_GLSL}
 ${COLUMN_GLSL}
@@ -878,6 +888,7 @@ ${LPT_FS_TEXEL}  // Spectral flats keep their 180-alpha translucency (blended pa
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
     pointAcc += att * att * uPointColors[i];
   }
+  pointAcc += winLit(vBBWorld, vec3(0.0), 1.0, 1.0);   // WL1: by attenuation alone, as a lantern lights a flat
   // spectral eyes/body glow, or an auto-emissive flat's own albedo (black
   // tex otherwise). AUDIT 39r R17: DaggerfallBillboard.shader:56-58 lights
   // albedo.rgb - emission and adds the emission back - "Emission cancels
@@ -1018,6 +1029,7 @@ uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
 uniform vec4 uFadeTint;   // MID-RING: a just-built pixel's tint (rgb) and its share left (a) - render/pixelFade.js
+${WL_CLASSIC_GLSL}
 out vec4 outColor;
 ${FOG_GLSL}
 ${ecotoneGlsl()}
@@ -1102,6 +1114,7 @@ void main() {
     pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
   lit += tex * pointAcc;
+  lit += tex * winLit(vWorldPos, n, 0.0, 1.0);   // WL1
   // R12: the player-following indirect light (see the mesh FS).
   vec3 iL = uIndirect.xyz - vWorldPos;
   float iD = length(iL);
@@ -1278,6 +1291,7 @@ uniform vec3 uAmbientSky;
 uniform vec3 uAmbientGround;
 uniform float uPicture;   // WEAPON-MOUNT: a mounted PICTURE (the decorator's hung weapons and armour), not a film of blood
 ${CLOUD_SHADOW_GLSL}
+${WL_CLASSIC_GLSL}
 out vec4 outColor;
 ${FOG_GLSL}
 void main() {
@@ -1322,6 +1336,7 @@ void main() {
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
     pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
+  pointAcc += winLit(vWorld, n, 0.0, 1.0);   // WL1
   vec3 iL = uIndirect.xyz - vWorld;
   float iD = length(iL);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
@@ -1676,7 +1691,7 @@ export function buildWireIndices(triIndices, subMeshes) {
 }
 
 /** BOOT-COMPILE: the shaders render/bootPrograms.js laneBootPrograms names beside the world set's own. */
-export { VS as MESH_VS, BB_VS, TERRAIN_VS, TERRAIN_FS };
+export { VS as MESH_VS, BB_VS, TERRAIN_VS, TERRAIN_FS, CHAR_VS, CHAR_SKIN_VS };   // SHADER-EASE MOUNT-START: the rigs' two, for the shadow pass's early start
 
 /** EL1: the classic set's source - the world programs a classic page compiles, built by the constructor. */
 const CLASSIC_SET = Object.freeze({ key: 'classic', meshFs: FS, bbFs: BB_FS, terrainFs: TERRAIN_FS, charFs: CHAR_FS, decalFs: DECAL_FS });   // MAC-BUG W6: and the decal pass, its fifth
@@ -1812,6 +1827,19 @@ export class Renderer {
     this.outsideViewSkip = new Set();
     this._rwExterior = null; this._rwTarget = null; this._rwOutside = null; this._rwBg = null; this._rwEmptyVao = null;   // made on the first ask
     this._rwPv = null; this._rwQ = null; this._rwPanes = []; this._rwPaneN = 0; this._rwPaneOn = false; this._rwPaneProg = null; this._rwViewDraws = 0;
+    // WL1 (render/windowLight.js): THE WINDOWS' LIGHT - the pass (the masks, the windows drawn lately, each frame's lights),
+    // the frame's kind ('street' or 'inside', beginFrame's), whether its lights are live, the sun its map was drawn for,
+    // the cutout pictures' keys, and the pipeline's word on which pictures may hold glass. LC1's two textures are made
+    // here for both sets: the window lights' band is in them, and every program that reads it needs them under its units.
+    this._wl = new WindowLightPass(gl, { activeTexture: (u) => this._activeTexture(u) });
+    this._wlGlass = (k) => (this.windowMasks?.has(k) ? 'window' : this.glassMasks?.has(k) || this._cutoutKeys.has(k) ? 'glass' : null);   // a resolved key's glass
+    this._wlKind = null; this._wlLive = false; this._wlSun = null; this._wlNow = 0; this._wlViewport = null;
+    this._rwMode = 'off';   // the Real windows row as a host last said it (setWindowRooms, captureOutsideLight)
+    this._cutoutKeys = new Set();
+    /** @type {((archive: number, record: number) => boolean) | null} */
+    this.glassKeyTest = null;
+    this._ensureClusters();
+    this._wl.bind();
     // The value last uploaded to the solid program's uEmissionColor
     // (uniforms are program state, so this survives a program switch).
     this._emissionColorUp = null;
@@ -2579,7 +2607,7 @@ export class Renderer {
     // EL1: the lane's own uniforms, per program (null on the classic set, which never declares them)
     // EL2: the shadow receiver's six ride the same table (null on the classic set)
     const elLocs = (p) => {
-      /** @type {any[] & { shadow?: object, ao?: object, contact?: object, cluster?: object }} */
+      /** @type {any[] & { shadow?: object, ao?: object, contact?: object, cluster?: object, wl?: object }} */
       const a = [gl.getUniformLocation(p, 'uELExposure'), gl.getUniformLocation(p, 'uELScatter')];
       a.shadow = {
         sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'), sunTexel: gl.getUniformLocation(p, 'uSunTexel'), sunOrigin: gl.getUniformLocation(p, 'uSunOrigin'),
@@ -2590,6 +2618,7 @@ export class Renderer {
       a.ao = { adapt: gl.getUniformLocation(p, 'uAdapt') };   // EL4: the eye (EL6: the AO left the world shaders - the resolve applies it off the frame's depth)
       a.cluster = { grid: gl.getUniformLocation(p, 'uClusterGrid'), list: gl.getUniformLocation(p, 'uClusterList'), rect: gl.getUniformLocation(p, 'uClusterRect'), z: gl.getUniformLocation(p, 'uClusterZ'), fwd: gl.getUniformLocation(p, 'uCamFwd'), on: gl.getUniformLocation(p, 'uClusterOn') };   // LC1
       a.contact = { prevDepth: gl.getUniformLocation(p, 'uPrevDepth'), prevVP: gl.getUniformLocation(p, 'uPrevVP'), prevProjInfo: gl.getUniformLocation(p, 'uPrevProjInfo'), prevRect: gl.getUniformLocation(p, 'uPrevRect'), contactParams: gl.getUniformLocation(p, 'uContactParams') };   // EL8
+      a.wl = { on: gl.getUniformLocation(p, 'uWinOn'), rect: gl.getUniformLocation(p, 'uClusterRect'), z: gl.getUniformLocation(p, 'uClusterZ'), fwd: gl.getUniformLocation(p, 'uCamFwd') };   // WL1: both sets
       return a;
     };
     this._el = { mesh: elLocs(set.mesh), char: elLocs(set.char), bb: elLocs(set.bb), terrain: elLocs(this.terrainProgram), decal: elLocs(set.decal) };   // MAC-BUG W6: the decal's lane uniforms ride the same table; FAR-CLIP1: the terrain's are the installed variant's
@@ -2698,7 +2727,7 @@ export class Renderer {
    *  uploads (uPrevVP), so a shift between beginFrame and a draw left the billboard, decal, character and terrain
    *  blocks the pre-shift matrix for the rest of the frame, the march reprojecting 819 units off. The one host calls it
    *  before beginFrame today; the stamp makes the order not matter. */
-  shadowOriginShift(offset) { this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._frameStamp++; }   // LA-POST6: and the air's held view-projections - the contact march reprojects the moved world by them
+  shadowOriginShift(offset) { this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._wl?.shift(offset); this._frameStamp++; }   // LA-POST6: and the air's held view-projections - the contact march reprojects the moved world by them; WL1: and the windows the window light keeps
   /** SHADOW-REACH: would a caster whose world box is `box` (+ the translation) cast into this frame's shadow maps - a
    *  host asks for what its VIEW cull rejected, and records it (below) rather than drawing it. False with no pass. */
   shadowReach(box, ox = 0, oy = 0, oz = 0) { return this._casting && this._shadows.reaches(box, ox, oy, oz); }
@@ -2749,8 +2778,8 @@ export class Renderer {
       return tex;
     };
     this._clusterTex = {
-      grid: make(CLUSTER_GRID_UNIT, gl.RG16UI, CLUSTER_GRID_W, CLUSTER_GRID_H, gl.RG_INTEGER, gl.UNSIGNED_SHORT),
-      list: make(CLUSTER_LIST_UNIT, gl.R8UI, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, gl.RED_INTEGER, gl.UNSIGNED_BYTE),
+      grid: make(CLUSTER_GRID_UNIT, gl.RG16UI, CLUSTER_GRID_W, CLUSTER_GRID_H * CLUSTER_BANDS, gl.RG_INTEGER, gl.UNSIGNED_SHORT),   // WL1: the window lights' band below the lanterns'
+      list: make(CLUSTER_LIST_UNIT, gl.R8UI, CLUSTER_LIST_W, CLUSTER_LIST_ROWS * CLUSTER_BANDS, gl.RED_INTEGER, gl.UNSIGNED_BYTE),
     };
     this._activeTexture(gl.TEXTURE0);
     this._clusters = createClusterSpace();
@@ -2797,6 +2826,64 @@ export class Renderer {
     gl.uniform4fv(loc.fwd, this._camFwd);
     gl.uniform1i(loc.on, on ? 1 : 0);
   }
+  /** WL1: one program's window uniforms - live on this frame's own world draws (a sprite pass, a bake or a panel is
+   *  another view: none), with the grid's frame for the classic set (which declares it with the block) and the band's
+   *  two textures and the masks on their units. */
+  _uploadWl(loc) {
+    if (!loc?.on) return;
+    const gl = this.gl;
+    this._wl.bind();   // the block stands under every program that holds it, lit or not
+    const on = this._wlLive && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved;
+    gl.uniform1i(loc.on, on ? (this._wlSun ? 2 : 1) : 0);   // 2: the sun through glass stands in the sun map - a flat's vertex stage reads it once a quad
+    if (!on) return;
+    if (loc.rect) { gl.uniform4fv(loc.rect, this._clusterRect); gl.uniform2fv(loc.z, this._clusterZ); gl.uniform4fv(loc.fwd, this._camFwd); }
+    this._activeTexture(gl.TEXTURE0 + CLUSTER_GRID_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTex.grid);
+    this._activeTexture(gl.TEXTURE0 + CLUSTER_LIST_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTex.list);
+  }
+
+  /** WL1: THIS FRAME'S KIND of window light - 'street' (a lit room's lamp through its glass: an exterior frame, and the
+   *  view out's street), 'inside' (the sun through a building's glass: the frame DFU lays out under WindowStyle.Disabled,
+   *  a building's) or null (no world frame, the door shut, or the Real windows row Off as a host last said it - its
+   *  exterior frame by setWindowRooms, its building's by captureOutsideLight). */
+  _wlKindOf(opts) {
+    if (!windowLightOn()) return null;
+    if (this._rwOutside) return 'street';
+    if (opts?.world !== true || this._panelSaved || this._spriteDepth !== 0 || this._studioDepth !== 0 || this._rwMode === 'off') return null;
+    const e = this._windowEmission;
+    return e && e[0] + e[1] + e[2] > 0 ? 'street' : 'inside';
+  }
+
+  /** WL1: THE FRAME'S WINDOW LIGHTS (render/windowLight.js WindowLightPass.frame), their band of LC1's grid up and its
+   *  frame set for the viewport this frame draws into (the view out's own target). Answers whether any light stands. */
+  _wlFrame(kind, proj, view) {
+    const now = this._wlNow, v = view;
+    const eye = [-(v[0] * v[12] + v[1] * v[13] + v[2] * v[14]), -(v[4] * v[12] + v[5] * v[13] + v[6] * v[14]), -(v[8] * v[12] + v[9] * v[13] + v[10] * v[14])];
+    const room = kind === 'street' ? roomLightFor(this._windowEmission, this._ambient) : null;
+    const n = this._wl.frame({
+      kind, eye, view, proj, now, lamp: room?.night ? room.lamp : null, shadows: !!this._wlSun,
+      glass: this._wlGlass,
+      decode: this._lane ? (c) => this._lane.decode3(c, [0, 0, 0]) : null,
+    });
+    if (!n) return false;
+    const gl = this.gl, sp = this._wl.space;
+    this._activeTexture(gl.TEXTURE0 + CLUSTER_GRID_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTex.grid);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, WL_GRID_ROW, CLUSTER_GRID_W, CLUSTER_GRID_H, gl.RG_INTEGER, gl.UNSIGNED_SHORT, sp.grid);
+    if (sp.rows > 0) {
+      this._activeTexture(gl.TEXTURE0 + CLUSTER_LIST_UNIT);
+      gl.bindTexture(gl.TEXTURE_2D, this._clusterTex.list);
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, WL_LIST_BASE / CLUSTER_LIST_W, CLUSTER_LIST_W, sp.rows, gl.RED_INTEGER, gl.UNSIGNED_BYTE, sp.list.subarray(0, sp.rows * CLUSTER_LIST_W));
+    }
+    this._activeTexture(gl.TEXTURE0);
+    const vp = this._wlViewport ?? this._worldViewportPx ?? [0, 0, this.canvas.width, this.canvas.height];
+    this._clusterRect[0] = vp[0]; this._clusterRect[1] = vp[1];
+    this._clusterRect[2] = CLUSTER_X / Math.max(vp[2], 1); this._clusterRect[3] = CLUSTER_Y / Math.max(vp[3], 1);
+    this._camFwd[0] = -view[2]; this._camFwd[1] = -view[6]; this._camFwd[2] = -view[10]; this._camFwd[3] = -view[14];
+    return true;
+  }
+
   _syncAir() {
     const want = this._airWanted && !!this._lane?.air && !!this._shadows;   // the air pass replays the shadow pass's records
     if (want) {
@@ -2828,6 +2915,7 @@ export class Renderer {
    *  the exposure, and the in-scatter gain folded with the fog's density
    *  (zero with the fog off, so clear air glows nowhere). */
   _uploadEl(key) {
+    this._uploadWl(this._el[key]?.wl);   // WL1: the window lights, on either set
     const lane = this._lane;
     if (!lane) return;
     const gl = this.gl, [expLoc, scLoc] = this._el[key];
@@ -3139,6 +3227,7 @@ export class Renderer {
     if (this._everyLightNow !== this._everyLightPrev) { this._air?.invalidatePrev(); } this._everyLightPrev = this._everyLightNow; this._everyLightNow = false;   // LA-POST6: a door crossed either way is a cut - the air's contact march has no previous frame of this room (its prepare is below)
     sp.render({
       eye: this._shadowEye(), lightDir, sunScale: this._sunScale, pointLights: this._pointLights, carried: this._pointCarried,   // MAC-T1; TV1: the cascades about the focus
+      windowSun: this._wlSun,   // WL1: a building's frame - the sun's cascades drawn for the light its glass lets in, the glass cut
       ids: this._pointIds,   // LIGHT-ID: each light's identity - the pass knows a light that moved by it
       cascadeScale: this._focus[3] > 0.5 && this._focusWide ? SHADOW_VIEW_SCALE : 1,   // AUDIT DEEP R-3: and grown to the travel view's picture - AUDIT DEEP2 D7: once it is half risen (at the head the near cascade went from 1.2 cm texels to 4.7 in one frame, and back at the fall's end)
       textures: this.textures, isSpectral: isSpectralArchive, bindVao, everyLight, cut,
@@ -3350,7 +3439,26 @@ export class Renderer {
     this._2dVao = null;
   }
 
-  _buildProgram(vsSrc, fsSrc) { return buildProgram(this.gl, vsSrc, fsSrc); }
+  _buildProgram(vsSrc, fsSrc) {
+    const p = buildProgram(this.gl, vsSrc, fsSrc);
+    if (fsSrc.includes('WinLights')) this._wlBindProgram(p);
+    return p;
+  }
+
+  /** WL1: a program that reads the window lights - its block on the binding point the pass's buffer stands on, and its
+   *  samplers on their units for good (a sampler's default is unit 0, where a 2D picture stands: a 2D array or an
+   *  integer sampler there is an INVALID_OPERATION at every draw). */
+  _wlBindProgram(p) {
+    const gl = this.gl;
+    const bi = gl.getUniformBlockIndex?.(p, 'WinLights');
+    if (typeof bi === 'number' && bi !== gl.INVALID_INDEX) gl.uniformBlockBinding(p, bi, WL_UBO_BINDING);
+    for (const [name, unit] of [['uWinMask', WL_MASK_UNIT], ['uClusterGrid', CLUSTER_GRID_UNIT], ['uClusterList', CLUSTER_LIST_UNIT]]) {
+      const loc = gl.getUniformLocation(p, name);
+      if (!loc) continue;
+      this._use(p);
+      gl.uniform1i(loc, unit);
+    }
+  }
 
   /** PERF-WARM: the programs this renderer builds ON DEMAND, each as its
    *  own step, so a caller can pay for them while the browser is idle
@@ -5469,6 +5577,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (opts.alpha && tex) (this._alphaArt ??= new WeakSet()).add(tex);   // OVH2: the texture's own treatment, read at every screen draw of it (AUDIT RETRO1 J7: a lost context's null is no key)
     if (opts.cutout) this._markCutout(tex);   // RW1: { cutout: true } - the texture's own treatment in every solid pass (a texel under half alpha is a hole)
     const base = `${archive}_${record}`;
+    if (opts.cutout) { (this._cutoutKeys ??= new Set()).add(base); if (windowLightOn()) this._wl?.addMask(base, color32, true); }   // WL1: its holes, the sun's way in
     let keys = this._texKeysByBase.get(base);
     if (!keys) this._texKeysByBase.set(base, keys = new Set());
     keys.add(key);
@@ -5500,7 +5609,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const base = this._texBaseOf?.get(key);
     this._texBaseOf?.delete(key);
     const keys = base === undefined ? null : this._texKeysByBase.get(base);
-    if (keys) { keys.delete(key); if (!keys.size) this._texKeysByBase.delete(base); }
+    if (keys) { keys.delete(key); if (!keys.size) { this._texKeysByBase.delete(base); if (this._cutoutKeys?.delete(base)) this._wl?.dropMask(base); } }   // WL1: a cutout's holes go with its last picture
     if (tex) this.gl.deleteTexture(tex);
     if (this._tex0Bound === tex) this._tex0Bound = null;
     this._texGen++;
@@ -5512,6 +5621,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (!this.emissionTextures.has(key) && this.glassMasks?.has(key)) {   // RW1: an interior's declared glass rides the same `e:` key
       const glass = this.glassMasks.get(key);
       this.glassMasks.delete(key);
+      this._wl?.dropMask(key);   // WL1: and its layer
       if (glass) this.gl.deleteTexture(glass);
       if (this._tex1Bound === glass) this._tex1Bound = null;
       this._texGen++;
@@ -5522,6 +5632,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.emissionTextures.delete(key);
     this.emissionWhite.delete(key);
     this.windowMasks?.delete(key);   // RW1
+    this._wl?.dropMask(key);   // WL1: a window's mask, and its layer
     if (tex) this.gl.deleteTexture(tex);
     if (this._tex1Bound === tex) this._tex1Bound = null;
     this._texGen++;
@@ -5663,7 +5774,29 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // draws nothing), which is the honest answer for a hand-built one.
     const bundle = /** @type {any} */ ({ vao, subMeshes, buffers, triIndices: model.indices, bounds });
     if (shadowVao) { bundle.shadowVao = shadowVao; bundle.shadowCells = shadowCells; }   // LA-AUDIT A1
+    const wl = this._wlApertures(model);
+    if (wl) bundle.wl = wl;   // WL1: its glass, tile by tile, for the windows' light
     return bundle;
+  }
+
+  /** WL1: may a picture key hold glass - DFU's window masks, an interior's declared glass, a cutout's holes, or the
+   *  pipeline's word for one not uploaded yet (glassKeyTest: a mesh is made before a climate's picture of it is up). */
+  wlGlassKey(archive, record) {
+    const k = `${archive}_${record}`;
+    return !!(this.windowMasks?.has(k) || this.glassMasks?.has(k) || this._cutoutKeys?.has(k) || this.glassKeyTest?.(archive, record));
+  }
+
+  /** WL1: a model's apertures (render/windowLight.js windowAperturesOf) for each sub-mesh whose picture may hold glass -
+   *  the static batch's sliced merge measures them ahead (`apertures`), a lone model here - or null for none. */
+  _wlApertures(model) {
+    if (!windowLightOn() || !model.positions || !model.normals || !model.uvs || !model.indices) return null;
+    const out = [];
+    for (const sm of model.subMeshes) {
+      if (!sm.apertures && !this.wlGlassKey(sm.textureArchive, sm.textureRecord)) continue;
+      const set = sm.apertures ?? windowAperturesOf(model.positions, model.normals, model.uvs, model.indices, sm.startIndex, sm.primitiveCount * 3);
+      if (set.recs.length) out.push({ key: `${sm.textureArchive}_${sm.textureRecord}`, ap: set.recs, cells: set.cells });
+    }
+    return out.length ? out : null;
   }
 
   /** EG-ZN (2026-10-12, bible/11-Multiplayer/Elite-Gates.md section 11.8): A VIEW OF A MESH - `mesh`'s own VAO drawing
@@ -5759,9 +5892,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       this._worldViewportPx = this._viewportPx(r);
       if (this._worldViewportPx) this._restoreWorldViewport();
     }
+    // WL1: the frame's kind of window light, and the sun a building's glass lets in - the shadow pass draws its map for it
+    this._wlKind = this._wlKindOf(opts);
+    this._wlNow = performance.now();
+    this._wlSun = this._wlKind === 'inside' && this._shadows ? this._wl.sunFor([-(view[0] * view[12] + view[1] * view[13] + view[2] * view[14]), -(view[4] * view[12] + view[5] * view[13] + view[6] * view[14]), -(view[8] * view[12] + view[9] * view[13] + view[10] * view[14])], this._wlNow, this._wlGlass) : null;
     this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear
     // LC1: the lantern grid for this frame's lights, on a WORLD frame of the lane alone (a panel bracket's frame is another view and another viewport: every light)
     this._clustersLive = !!this._lane && opts?.world === true && !this._panelSaved && this._spriteDepth === 0 && this._studioDepth === 0 && this._buildClusters(proj, view);
+    this._wlLive = !!this._wlKind && this._wlFrame(this._wlKind, proj, view);   // WL1: the windows' lights, in the grid's band
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     s.viewDraws = this._rwOutside ? 0 : this._rwViewDraws;
     this._rwViewDraws = 0;   // PASS-COUNT: the view out's draws, taken by the room's frame (the stats' note) - the view out's own begin zeroes it too, and its close counts afresh
@@ -5906,6 +6044,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       // for.
       worldViewportPx: this._worldViewportPx,
       realWindows: this._rw ? { rooms: this._rw.rooms, watch: this._rw.watch, live: this._rw.live } : null,   // RW1: the frame's rooms and glass - the panel's beginFrame drops them, the world frame gets them back
+      windowLight: [this._wlKind, this._wlLive, this._wlSun],   // WL1: the frame's window light - the panel's beginFrame drops it
       rect,
     };
     this.setScreenOffset(0, 0);
@@ -5994,6 +6133,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.clearScreenScissor();
     this._worldViewportPx = s.worldViewportPx;   // E5: back to the host's world rect (null = full canvas)
     if (s.realWindows && this._rw) Object.assign(this._rw, s.realWindows);   // RW1
+    [this._wlKind, this._wlLive, this._wlSun] = s.windowLight;   // WL1
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     if (this._worldViewportPx) this._restoreWorldViewport();
     this.setScreenOffset(s.screenOffset[0], s.screenOffset[1]);
@@ -6022,6 +6162,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  a panel or a map never asks, so never draws one). `mode` is realWindowsMode()'s answer; 'off' asks none. The
    *  exterior's light, fog, lanterns and window style as they stand are kept for a building's view out. */
   setWindowRooms(mode) {
+    this._rwMode = mode || 'off';   // WL1: the row as the host says it, for the next frame's window light
     const rw = this._rw;
     if (!rw) return;
     rw.rooms = !!mode && mode !== 'off';
@@ -6205,12 +6346,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       }
       this.setIndirectLight([0, 0, 0], 0, new Float32Array(3));   // the player's indirect light is indoors with the player
       const sunDir = scene.setup?.(this);   // the host's light over the kept one - and the sun's direction, when it says
+      this._wlTakeOutside(sunDir ?? null, performance.now());   // WL1: the light a building's glass lets in, as the street stands now
       if (!k?.taken) {   // no street frame kept yet (a save loaded indoors): the classic haze, as bright as the host's sun says
         const day = Math.min(1, Math.max(0, this._sunScale / 0.6)), f = 0.1 + 0.9 * day;
         this.setFog('linear', 0, 0, 2400, new Float32Array([SKY_CLEAR[0] * f, SKY_CLEAR[1] * f, SKY_CLEAR[2] * f]));
       }
       t.fog = Float32Array.from(this._fogColor);   // the background's sky stands under the same air
       this.setClearColor(VIEW_OUT_CLEAR);   // nothing drawn is the sky: the background paints it
+      this._wlViewport = [0, 0, t.w, t.h];   // WL1: the street's window lights counted against the view out's own target
       this.beginFrame(cropProj, view, sunDir ?? (k?.taken ? k.lightDir : this._lightDir)); begun = true;   // PASS-COUNT (AUDIT FB1018 L2-4): from here the stats are the view out's
       this._frameFbo = t.fbo; setFrameTarget(t.fbo);   // RW1 (AUDIT): again - the frame's own begin let the lane's target go, and a sprite pass restoring "the frame's" target would have drawn on the screen
       gl.viewport(0, 0, t.w, t.h);
@@ -6271,8 +6414,49 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       if (this._worldViewportPx) this._restoreWorldViewport();
       this.markForeignPass();
       this._rwOutside = null;
+      this._wlViewport = null; this._wlLive = false; this._wlKind = null;   // WL1: the street's lights are the view out's alone
     }
     return drew;
+  }
+
+  /** WL1: THE OUTSIDE'S LIGHT FOR A BUILDING'S FRAME - the exterior host's clock over the street (scene.setup, the view
+   *  out's own), read in a bracket that puts the room's light back, at most every WL_OUTSIDE_EVERY_MS (the view out's
+   *  own draw reads it too). realWindows.js viewOutFrame asks each interior frame, before its beginFrame. */
+  captureOutsideLight(scene, now, mode = 'full') {
+    this._rwMode = mode || 'off';   // the row as the host says it
+    const o = this._wl.outside;
+    if (this._rwMode === 'off' || !windowLightOn() || typeof scene?.setup !== 'function' || this._rwOutside || this._panelSaved || (o && Math.abs(now - o.at) < WL_OUTSIDE_EVERY_MS)) return;   // the view out's own read stamps a moment after the caller's clock
+    const was = {
+      ambient: this._ambient, ambientTri: this._ambientTri, sunScale: this._sunScale, sunColor: this._sunColor, clockLit: this._clockLit,
+      moonScale: this._moonScale, moonDir: [...this._moonDir], moonColor: [...this._moonColor], fogColor: this._fogColor, frameStamp: this._frameStamp,
+      windowEmission: this._windowEmission, pointLights: this._pointLights, pointCarried: this._pointCarried, pointIds: this._pointIds, pointColor: this._pointColor, pointColors: this._pointColors,
+    };
+    try {
+      this._wlTakeOutside(scene.setup(this) ?? null, now);
+    } catch (e) {
+      console.warn('[window light] the outside light could not be read', e?.message ?? e);
+    } finally {
+      this._ambient = was.ambient; this._sunScale = was.sunScale; this._sunColor = was.sunColor; this._clockLit = was.clockLit;
+      this.setAmbientTrilight(was.ambientTri);
+      this.setMoonlight(was.moonScale ? { scale: was.moonScale, dir: was.moonDir, color: was.moonColor } : null);
+      this._moonDir.set(was.moonDir); this._moonColor.set(was.moonColor);
+      this._fogColor = was.fogColor;
+      this._windowEmission = was.windowEmission;
+      this.setPointLights(was.pointLights, was.pointColor, was.pointColors);
+      this._pointCarried = was.pointCarried ?? null; this._pointIds = was.pointIds ?? null;
+    }
+  }
+
+  /** WL1: the outside's light as the renderer holds it just after the exterior host's setup - the sun toward `sunDir` at
+   *  its scale and colour, the moon, the sky's ambient - kept by the window light pass. */
+  _wlTakeOutside(sunDir, now) {
+    const sun = this._sunScale > 0.01 && sunDir;
+    this._wl.setOutside({
+      at: now,
+      sunDir: sunDir ? [sunDir[0], sunDir[1], sunDir[2]] : [0, -1, 0], sunColor: [...this._sunColor], sunScale: sun ? this._sunScale : 0,
+      moonDir: [...this._moonDir], moonColor: [...this._moonColor], moonScale: this._moonScale,
+      sky: [this._ambient[0], this._ambient[1], this._ambient[2]],
+    });
   }
 
   /** RW1: is a drawMesh inside the view out's pass, and is this mesh one a context asked it to leave out (the
@@ -6414,6 +6598,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.emissionWhite.delete(key);
     this.windowMasks.delete(key);
     this.glassMasks.set(key, tex);
+    if (windowLightOn()) this._wl?.addMask(key, color32);   // WL1: the sun's way in
     this._texGen++;   // EV2: a sub-mesh stamped before the declaration looks again
     return tex;
   }
@@ -6929,6 +7114,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     else if (!this._retroMips) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0);   // RETRO1: the albedo's cap, so both samples still come from one level
     this._activeTexture(gl.TEXTURE0);
     this.emissionTextures.set(key, tex);
+    if (opts.window && windowLightOn()) this._wl?.addMask(key, color32);   // WL1: the window's glass, for the light it lets through
     this._texGen++;   // EV2: cached sub-mesh lookups refresh
     return tex;
   }
@@ -7251,6 +7437,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   destroyMesh(mesh) {
     const gl = this.gl;
     mesh._dead = true;   // EL2: a shadow record from the last frame may still hold it
+    this._wl?.forget(mesh);   // WL1: none of its windows lights
     for (const b of mesh.buffers) gl.deleteBuffer(b);
     gl.deleteVertexArray(mesh.vao);
     if (mesh.shadowVao) gl.deleteVertexArray(mesh.shadowVao);   // LA-AUDIT A1: its index buffer is one of mesh.buffers
@@ -8899,6 +9086,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._use(this.program);
     this._uploadCloudShadow('mesh');   // VC4
     gl.uniformMatrix4fv(this.uModel, false, modelMatrix);
+    if (mesh.wl && this._wlKind && !wire) this._wl.note(mesh, modelMatrix, texRemap, this._wlKind, this._wlNow);   // WL1: a window drawn is a window that lights
     if (!wire && !noShadow && this._casting) this._shadows.recordMesh(mesh, modelMatrix, texRemap, 1 - (this._dissolve ?? 1));   // EL2; AUDIT BAY A12: a fading ship's share of her shadow; AUDIT WAGON-HITCH B2: never a grown mesh's
     this._bindVao(wire ? wireMesh.vao : mesh.vao);
     for (let smi = 0; smi < mesh.subMeshes.length; smi++) {
@@ -8934,6 +9122,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
           const glassMask = sm._evEmis === this._blackTex ? this.glassMasks?.get(resolved) : undefined;
           if (glassMask) sm._evEmis = glassMask;
           sm._evWin = glassMask ? GLASS_INTERIOR : this.windowMasks?.has(resolved) ? GLASS_EXTERIOR : GLASS_NONE;
+          if (sm._evWin) mesh._evAnyGlass = true;   // WL1: the window sun's map draws this mesh's sub-meshes one by one, the glass cut
           sm._evCut = !!this._cutoutArt?.has(tex);
           if (sm._evCut) mesh._evAnyCut = true;   // the shadow replay draws this mesh's sub-meshes one by one, the cut ones cut
           sm._evGen = this._texGen;

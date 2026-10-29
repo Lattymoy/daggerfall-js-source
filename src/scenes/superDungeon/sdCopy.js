@@ -6,12 +6,15 @@
 // or a new leader keeps me in it while its owner is me or still in my party. SD-SOLO: in no party, the relay's walk
 // (server/src/sdCopy.js sdOpenDoor) finds the shared Hour that holds me or has a seat; none answering, my own.
 import { instanceOwnerOf } from '../../net/instanceRoom.js';
-import { sdPubOwner, isSdPubOwner, SD_PUB_SEATS } from '../../net/superDungeon/sdLaw.js';
+import { sdPubOwner, isSdPubOwner, SD_PUB_SEATS, sdLaneOf } from '../../net/superDungeon/sdLaw.js';
 import { t } from '../../systems/textManager.js';
 
 /** Where the device keeps the copy I last went into: `{ s, a, o, p }` - the slot, my account, the owner's digest, my
  *  party's id then (null alone). */
 export const SD_COPY_KEY = 'sd.myCopy';
+/** AUDIT TAMRIEL-WIDE III P1: one kept copy a lane, as the hub keeps one Hollow a lane (WW5) - a province's Hollow never
+ *  forgets the Bay's. The Bay's lane keeps the key it always had, so a copy kept before stays kept. @param {number} s */
+export const sdCopyKeyOf = (s) => { const lane = sdLaneOf(s); return lane ? `${SD_COPY_KEY}.${lane}` : SD_COPY_KEY; };
 const OWNER_RE = /^[0-9a-f]{16}$/;
 
 /**
@@ -43,9 +46,9 @@ export function sdCopyLine(owner, n) {
  *   `social` the hub link (its `acct`, its `party`: `{ leader, members: [{ acct }] }`), `store` the device's, `relay` its address
  */
 export function createSdCopy({ social, store = null, relay = () => null, fetchImpl = (...a) => fetch(...a) }) {
-  let mem = null;
-  const kept = () => { if (mem) return mem; try { return store?.get?.(SD_COPY_KEY) ?? null; } catch { return null; } };
-  const keep = (v) => { mem = v; try { store?.set?.(SD_COPY_KEY, v); } catch { /* memory holds it */ } };
+  const mem = new Map();
+  const kept = (s) => { const k = sdCopyKeyOf(s); if (mem.has(k)) return mem.get(k); try { return store?.get?.(k) ?? null; } catch { return null; } };
+  const keep = (v) => { const k = sdCopyKeyOf(v.s); mem.set(k, v); try { store?.set?.(k, v); } catch { /* memory holds it */ } };
   return {
     /** The owner's digest of the copy slot `s` takes me to, kept - or null with no account. */
     async ownerFor(s) {
@@ -61,7 +64,7 @@ export function createSdCopy({ social, store = null, relay = () => null, fetchIm
       const accts = [mine, ...(party?.members ?? []).map((m) => m?.acct).filter((a) => typeof a === 'string' && a !== mine)];
       const members = (await Promise.all(accts.map((a) => instanceOwnerOf(a)))).filter((d) => typeof d === 'string');
       const pid = typeof party?.id === 'string' ? party.id : null;
-      const pick = sdCopyChoice(s, mine, party?.leader ?? null, kept(), members, pid);
+      const pick = sdCopyChoice(s, mine, party?.leader ?? null, kept(s), members, pid);
       const owner = pick.owner ?? await instanceOwnerOf(pick.captain);
       if (owner) keep({ s, a: mine, o: owner, p: pid });
       return owner;

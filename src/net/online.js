@@ -73,7 +73,7 @@ import { loneStep, loneWake, loneAhead, loneSupported, aloneOf, LONE_HOLD, LONE_
 // the rest). WORLD_PUBLISH_MS is how often.
 //
 // Not a DFU member: Daggerfall Unity has no multiplayer. Ledger A row.
-import { validStaffTeleportIn, validStaffTeleportOut, staffTeleportSupported, staffPullSupported } from './staffTeleport.js';
+import { validStaffTeleportIn, validStaffTeleportOut, staffTeleportSupported, staffPullSupported, staffAbyssWorldSupported } from './staffTeleport.js';
 import { validFollowOut, whereNoteDue, followSupported } from './staffFollow.js';   // STAFF-PANEL5-FOLLOW: the hub's word to a spectator, and the where note's pace
 import { validRelayCfgIn, validRelayCfgOut, relayCfgSupported } from './relayCfg.js';
 import { relaySupportsSeatLive, seatAskDue, seatStreams } from './seatLive.js';   // FIELD BUGS 2026-10-18d SEAT-LIVE: a dungeon room's seat is a live socket's
@@ -121,7 +121,8 @@ import { isSdRoom } from './superDungeon/sdLaw.js';
 import { validKetchIn, validKetchOut, ketchGate, relaySupportsKetch, relaySupportsKetchTheatres, KT_BRAIN_V } from './wire.js';   // KETCH: a crew's ship's words - mine to its room, its voyage and its fight to me
 import { isKetchRoom } from './ketch/ketchLaw.js';   // KETCH: a crew's ship's room   // SD6b: the realm's room, where the Orrery's turns go
 import { owGate, validOwIn, validOwOut, relaySupportsOverworld, OW_WORD_IDS_MAX, OW_WORD_ROWS_MAX, relaySupportsOwGraves, owGraveGate, relaySupportsOwWorld } from './wire.js';   // GRAVE-PARTY: and the graves' word's relay - AUDIT GRAVE-PARTY G3: and its own bucket
-import { validSerpentIn, validSerpentOut, serpentGate, relaySupportsSerpent, relaySupportsSerpentSite } from './wire.js';   // SERPENT1: the sea serpent's frame, both ways   // OW6L: the overworld ledger's frame, both ways
+import { validSerpentIn, validSerpentOut, serpentGate, relaySupportsSerpent, relaySupportsSerpentSite } from './wire.js';
+import { SERPENT_SITE_LAW } from './serpent/serpentLaw.js';   // SERPENT1: the sea serpent's frame, both ways   // OW6L: the overworld ledger's frame, both ways
 import { owIdInCell, owRowInCell, owRowSane } from './overworldLaw.js';   // OW6L: and the cell's law, held at home before a word is said
 import { reconnectWave } from './reconnectWave.js';   // SCALE2c: a relay deploy's reconnect, spread by the hub's count
 import { readWatchReceipt } from './watchReceipt.js';   // SEAT1b: the Watch's tick, read (never judged) at home
@@ -133,7 +134,7 @@ import { MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from '../formats/mapsTables.js';   /
 /** AUDIT RELEASE R2 (bible/01-Overview/audits/Audit-Release-R2.md): is a pixel on the Bay's own map - all a relay before the
  *  world-wide one (relaySupportsWorldWide) reads in a staff destination, an Elite arch's site or a headstone's row; it
  *  closes the socket on a word that names one past it. @param {any} x @param {any} y */
-export const bayMapPixel = (x, y) => Number.isInteger(x) && Number.isInteger(y) && x >= 0 && x < MAX_MAP_PIXEL_X && y >= 0 && y < MAX_MAP_PIXEL_Y;
+export const bayMapPixel = (x, y) => Number.isInteger(x) && Number.isInteger(y) && x >= 0 && x < MAX_MAP_PIXEL_X && y >= 0 && y < MAX_MAP_PIXEL_Y;   // BAY-OWN: the Bay's own pixel test, by its name
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -646,6 +647,7 @@ export class OnlineSession {
     this.staffTeleportOk = false;
     this.worldPixelsOk = false;   // AUDIT RELEASE R2: the relay reads a pixel past the Bay in a staff destination, an arch's site and a headstone's row (relaySupportsWorldWide) - an older one closes the socket on one
     this.staffPullOk = false;     // STAFF-PULL: the hub carries a staff pull (the welcome's relay says)
+    this.abyssWorldOk = false;    // AUDIT TAMRIEL-WIDE III M1: the hub takes an abyss pit past the Bay in a staff destination
     this._rfOn = new WeakMap();    // SCALE5b: socket -> its cell judges the poses that reach it (`rf`) - a halo's are never thinned then
     this.onFound = null;          // SCALE5c: ({q, l, busy}) => void - the hub's answer to a search of everyone online by name
     this.guildOnline = new Map(); // SCALE5c: id -> my guild's members online on every shard, as the hub last said (`sendGuildWho`)
@@ -2063,7 +2065,7 @@ export class OnlineSession {
    *  on the hub's socket alone, under the serpent frames' own bucket; true once it went. */
   sendSerpentSite(day, sx, sz, place) {
     if (this._serpentSiteSaid && this._serpentSiteSaid.ws === this._ws && this._serpentSiteSaid.d === day) return true;
-    const w = validSerpentIn({ k: 'site', d: day, sx: Math.round(sx), sz: Math.round(sz), pl: gatePlaceWire(place) });
+    const w = validSerpentIn({ k: 'site', d: day, sx: Math.round(sx), sz: Math.round(sz), pl: gatePlaceWire(place), sl: SERPENT_SITE_LAW });   // AUDIT TAMRIEL-WIDE E3: and the law it was rolled by
     if (!w) { this._serpentSiteSaid = { ws: this._ws, d: day }; return false; }   // a site the wire cannot carry: asked no more today
     if (!this.acct || !this.serpentSiteOk || !isSocialRoom(this.room) || this.status !== 'open' || !this._ws) return false;
     const gate = serpentGate(this._serpentBucket, this._now());
@@ -2534,6 +2536,7 @@ export class OnlineSession {
         this.staffTeleportOk = false;
         this.worldPixelsOk = false;   // AUDIT RELEASE R2: likewise
         this.staffPullOk = false;   // STAFF-PULL: likewise
+        this.abyssWorldOk = false;   // AUDIT TAMRIEL-WIDE III M1: likewise
         this.followOk = false;   // STAFF-PANEL5-FOLLOW: likewise
         this.instanceOk = false;   // INSTANCES: likewise - a relay rolled back behind world208 keeps no instance
         this.guildInstanceOk = false;   // DOMAIN2: likewise - behind world260 a castle admits no member
@@ -2949,6 +2952,13 @@ export class OnlineSession {
     if (id === this.id) return this.au ?? null;
     return (this.peers.get(id) ?? this._known.get(id))?.au ?? null;
   }
+  /** CAPE-TOGGLE: THE LOOK A PLAYER IS DRAWN IN, BY ID - mine, or a peer's in a room or introduced (its `hc`: capes hidden,
+   *  systems/capeShown.js lookCapesHidden) - or null. */
+  lookOf(id) {
+    if (id == null) return null;
+    if (id === this.id) return this.look ?? null;
+    return (this.peers.get(id) ?? this._known.get(id))?.look ?? null;
+  }
   /** ARMORY: THE AURA ARMORY KIT A PLAYER WEARS, BY ID - mine, or a peer's in a room or introduced - its kit (net/armoryLaw.js
    *  armoryKitPieces reads its pieces), or null for none. */
   armoryOf(id) {
@@ -3333,6 +3343,8 @@ export class OnlineSession {
     // AUDIT RELEASE R2-1: a destination past the Bay, to a relay that reads the Bay's map alone, is the answer it can take
     if (m?.k === 'answer' && m.dest && !this.worldPixelsOk && !bayMapPixel(m.dest.pixel.x, m.dest.pixel.y)) return this._send({ t: 'stp', k: 'answer', ticket: m.ticket, error: 'unavailable' });
     if (m?.k === 'pull' && !this.staffPullOk) return false;   // STAFF-PULL: an older hub closes on a kind it does not know
+    // AUDIT TAMRIEL-WIDE III M1: an abyss pit past the Bay, to a hub before B2's (world284), is refused as an answer and never pulled from
+    if (m?.dest?.kind === 'abyss' && !this.abyssWorldOk && !bayMapPixel(m.dest.abyss.PitMapX, m.dest.abyss.PitMapY)) return m.k === 'answer' && this._send({ t: 'stp', k: 'answer', ticket: m.ticket, error: 'unavailable' });
     return !!m && this._send({ t: 'stp', ...m });
   }
 
@@ -3738,6 +3750,7 @@ export class OnlineSession {
       if (primary) this.staffTeleportOk = staffTeleportSupported(relayV);
       if (primary) this.worldPixelsOk = relaySupportsWorldWide(relayV);   // AUDIT RELEASE R2
       if (primary) this.staffPullOk = staffPullSupported(relayV);   // STAFF-PULL
+      if (primary) this.abyssWorldOk = staffAbyssWorldSupported(relayV);   // AUDIT TAMRIEL-WIDE III M1
       if (primary) this.followOk = followSupported(relayV);   // STAFF-PANEL5-FOLLOW
       if (primary) this.relayCfgOk = relayCfgSupported(relayV);   // SCALE5b
       if (primary) this._relayCfgV = relayV;   // HERALD-CARDS: and which of the settings it knows (relayCfg.js RELAY_CFG_KEY_MIN)

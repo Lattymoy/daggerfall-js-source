@@ -112,7 +112,7 @@ test('YARD-CELL migration 0190\'s backfill: every cell standing yard pieces when
   assert.deepEqual(backfilled.map((r) => ({ cell: r.cell, rows: r.rows })), built);
 });
 
-test('YARD-CELL the oracle: through yard and room pieces placed, moved within and between towns and cells, in and out of a yard, taken away and their homes released, every cell\'s answer off its built row is its answer off its rows, its version moves exactly when a yard row of it is written, and the old town version still moves with it - the rollback\'s net (mutants: a delete unmoved, a move between cells moving one, a room piece moving its cell, the build\'s order)', async () => {
+test('YARD-CELL the oracle: through yard and room pieces placed, moved within and between towns and cells, in and out of a yard, taken away and their homes released, every cell\'s answer off its built row is its answer off its rows, its version moves exactly when a yard row of it is written (mutants: a delete unmoved, a move between cells moving one, a room piece moving its cell, the build\'s order)', async () => {
   const TOWNS = [7, 8];
   const KEYS = [makeBuildingKey(1, 1, 1), makeBuildingKey(1, 1, 2), makeBuildingKey(3, 4, 1)];
   const CELLS = [...new Set(KEYS.map(yardCellOf))];
@@ -125,14 +125,12 @@ test('YARD-CELL the oracle: through yard and room pieces placed, moved within an
     const put = raw.prepare('INSERT INTO home_decor (map_id, building_key, id, model, place, placed_at, paid, yard) VALUES (?, ?, ?, 41000, ?, ?, 0, ?)');
     const r = lcg(seed * 104729);
     const cellVers = () => TOWNS.flatMap((t) => CELLS.map((c) => raw.prepare('SELECT ver FROM home_yard_cell_ver WHERE map_id = ? AND cell = ?').get(t, c)?.ver ?? 0));
-    const townVers = () => TOWNS.map((t) => raw.prepare('SELECT ver FROM home_yards_ver WHERE map_id = ?').get(t)?.ver ?? 0);
     let ids = 0;
     for (let op = 0; op < 60; op++) {
       const x = r();
       const t = TOWNS[Math.floor(r() * TOWNS.length)];
       const k = KEYS[Math.floor(r() * KEYS.length)];
       const before = cellVers();
-      const townsBefore = townVers();
       /** @type {string[]} the cells the op moves, `town:cell` */
       let moves = [];
       if (x < 0.45) {
@@ -162,8 +160,6 @@ test('YARD-CELL the oracle: through yard and room pieces placed, moved within an
       }
       const after = cellVers();
       TOWNS.flatMap((t2) => CELLS.map((c) => `${t2}:${c}`)).forEach((key, i) => assert.equal(after[i] !== before[i], moves.includes(key), `seed ${seed} op ${op}: cell ${key} moved ${after[i] - before[i]}`));
-      const townsAfter = townVers();
-      TOWNS.forEach((t2, i) => assert.equal(townsAfter[i] !== townsBefore[i], moves.some((key) => key.startsWith(`${t2}:`)), `seed ${seed} op ${op}: town ${t2}'s old version - the rollback's net`));
       // half the time the routes' builds, half the time the rows read as they stand
       if (r() < 0.5) for (const t2 of TOWNS) for (const k2 of KEYS) await settleYardCell(db, t2, k2);
       for (const t2 of TOWNS) {

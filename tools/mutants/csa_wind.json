@@ -182,8 +182,8 @@
   {
     "name": "CSA-E-transition-no-wind",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny);\n    UpdateWaveMesh();",
-    "new": "    UpdateWaveMesh();",
+    "old": "    ResetTimeScale(false);\n    UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny);\n",
+    "new": "    ResetTimeScale(false);\n",
     "tests": [
       "test/systems/comeSailAway/csa_wind.test.js"
     ]

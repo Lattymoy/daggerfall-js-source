@@ -15,6 +15,10 @@ export const staffTeleportSupported = (v) => Number(/^world(\d+)$/.exec(String(v
  *  closes a socket on a `stp` kind it does not know, so a pull is never sent to it. */
 export const STAFF_PULL_RELAY_MIN = 281;   // world281: the PvP release carries it (world276 on its own branch, #1360)
 export const staffPullSupported = (v) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= STAFF_PULL_RELAY_MIN;
+/** AUDIT TAMRIEL-WIDE III M1: the first relay that takes an abyss pit past the Bay (B2) - an older one refuses the frame
+ *  and closes the socket, so a newer build sends it to none. */
+export const STAFF_ABYSS_WORLD_RELAY_MIN = 284;
+export const staffAbyssWorldSupported = (v) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= STAFF_ABYSS_WORLD_RELAY_MIN;
 /** How long a pull waits for the player's game to land: it loads the staff member's place first. */
 export const STAFF_PULL_TIMEOUT_MS = 30000;
 /** STAFF-PANEL5-FOLLOW (design doc "DFO Staff Panel: design", weak spot "TP is visible...": "keep it Admin and Shadow Fang
@@ -95,7 +99,8 @@ export function validStaffDestination(d) {
   }
   if (d.kind === 'abyss') {
     const a = d.abyss;
-    if (!a || !integer(a.PitMapX, 999) || !integer(a.PitMapY, 499)
+    // AUDIT TAMRIEL-WIDE B2: a pit stands on the world's grid (PITS-WORLD); its template is a Bay dungeon, so Bay-bound
+    if (!a || !worldPixelOk(a.PitMapX) || !worldPixelOk(a.PitMapY)
       || !integer(a.TemplateMapX, 999) || !integer(a.TemplateMapY, 499)
       || !integer(a.TemplateRegionIndex, 61) || !integer(a.TemplateLocationIndex, 65535)
       || !finite(a.ReturnWorldX) || !finite(a.ReturnWorldZ) || !finite(a.ReturnPitDepth)

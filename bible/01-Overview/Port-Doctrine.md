@@ -18,6 +18,21 @@ DFO Online is its own game. Parity with Daggerfall Unity is no longer the goal, 
 
 What does not change: the non-negotiables below (no ARENA2 in the repo, and no render of it beyond the exceptions they name), Attribution, and every other Process rule in `Home.md`.
 
+## The whole of Tamriel (TAMRIEL-WIDE, 2026-10-28)
+
+The owner, 2026-10-28, the day PR #1184 brought the provinces past the Bay to players: "ensure our future development isnt just Daggerfall anymore and is the entirety of tamriel".
+
+DFO Online's world is Tamriel: the Iliac Bay and the nine provinces round it. The Bay is one theatre of ten. New work is built for all of it:
+
+- **Every province, or say which.** A system that reads a place, a pixel, a region, a person or the ground works past the Bay as it works on it. Where it does not, its record says where and why, and the owner's call is quoted there (`03-World/World-Wide.md` keeps the exclusions).
+- **The world's keys and bounds.** A pixel is keyed by `worldPixelKey` and bounded by `worldPixelOk`. A place is found in the registry (`worldPlaces`), never by a walk of MAPS.BSA alone. A region is 0..70, and a grouping is an area (`areaAt`). MapsFile's `y * 1000 + x`, its 62 regions and its rows are the Bay's own data: code reads them behind `inBay`, and a line that does so on purpose carries a `BAY-OWN:` comment that says why.
+- **Tested past the Bay.** A slice's pins hold a case past the Bay beside the Bay's, and its probe stands in a province, not only in Daggerfall.
+- **Player text names where the player is.** No string says "the Iliac Bay" or "Daggerfall" for a place that can be anywhere in Tamriel.
+- **DFU is the Bay's reference.** DFU's world ends at the Bay's edge. Past it the reference is the lore (UESP) and Arena through OpenTESArena (TESA1), and what the port builds there is its own and says so.
+- **Held by a test.** `test/tooling/tamrielwide.test.js` holds `src/`, `server/src/` and `server-account/src/` to `tools/tamrielWideBaseline.json`, which only goes down (`node tools/tamrielWide.mjs`). The audit that wrote this rule is `audits/Audit-Tamriel-Wide.md`.
+
+Older pages that say "the Bay's" for the world describe the map they were written on, as SCOPE1's "1:1" does.
+
 ## Ported from DFU - the foundation (built 1:1 before SCOPE1)
 
 - Binary format readers: BSA containers, TEXTURE.???, IMG/CIF, ARCH3D.BSA, BLOCKS.BSA, MAPS.BSA, sound/music formats.

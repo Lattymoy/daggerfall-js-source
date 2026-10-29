@@ -104,6 +104,8 @@ void main() {
   vec3 c = mix(uFogColor, lit, fogFactorAt(vWorld));
   o = vec4(dwWaterFog(c, vWorld), 1.0);
 }`;
+// SHADER-EASE MOUNT-START (2026-10-29): what the constructor builds, started at page load (render/mountPrograms.js).
+export const FLAG_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([FLAG_VS, FLAG_FS]))]);
 
 /** The cloth's vertices, (along, down) pairs, two triangles a quad. Pure. */
 export function flagVertices(cols = FLAG_COLS, rows = FLAG_ROWS) {

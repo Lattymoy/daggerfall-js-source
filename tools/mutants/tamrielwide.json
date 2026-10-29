@@ -1,0 +1,232 @@
+[
+  {
+    "name": "TAMRIEL-WIDE-1-pixel-id-unread",
+    "file": "tools/tamrielWide.mjs",
+    "old": "      String.raw`\\b${Y}\\s*\\)?\\s*\\*\\s*${WIDE}\\s*\\)?\\s*\\+\\s*\\(?\\s*${X}\\b`,",
+    "new": "      String.raw`\\bNEVER_A_PIXEL_ID\\b`,",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "The first spelling, y * 1000 + x, never matched."
+  },
+  {
+    "name": "TAMRIEL-WIDE-11-pixel-mask-unread",
+    "file": "tools/tamrielWide.mjs",
+    "old": "    re: /&\\s*0x0*[fF]{5}\\b(?!f)|%\\s*0x100000\\b/,",
+    "new": "    re: /&\\s*0x[fF]{5}\\b(?!f)|%\\s*0x100000\\b/,",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "AUDIT TAMRIEL-WIDE II T2: the zero-padded mask (0x000fffff) unread again."
+  },
+  {
+    "name": "TAMRIEL-WIDE-2-region-count-unread",
+    "file": "tools/tamrielWide.mjs",
+    "old": "re: /(?:<|>=|<=|>)\\s*\\(?\\s*[\\w.?]*\\bregionCount\\b/,",
+    "new": "re: /(?!)/,",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "A new bound by MAPS.BSA's region count would pass unseen."
+  },
+  {
+    "name": "TAMRIEL-WIDE-3-bay-bound-999-499-unread",
+    "file": "tools/tamrielWide.mjs",
+    "old": "const EDGE = String.raw`(?:1000|999|500|499|(?:MAP_WIDTH|MAP_HEIGHT|MAX_MAP_PIXEL_X|MAX_MAP_PIXEL_Y|BAY_W|BAY_H|MAP_W|MAP_H|TP_MAP_W|TP_MAP_H)(?:\\s*-\\s*1)?)`;",
+    "new": "const EDGE = String.raw`(?:1000|500|(?:MAP_WIDTH|MAP_HEIGHT|MAX_MAP_PIXEL_X|MAX_MAP_PIXEL_Y|BAY_W|BAY_H|MAP_W|MAP_H|TP_MAP_W|TP_MAP_H)(?:\\s*-\\s*1)?)`;",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE III): the line its fix rewrote. The last pixel's bound, 999 and 499, unread."
+  },
+  {
+    "name": "TAMRIEL-WIDE-12-bay-clamp-unread",
+    "file": "tools/tamrielWide.mjs",
+    "old": "re: /Math\\.(?:min|max)\\(\\s*(?:999|499|(?:MAP_W|MAP_H|MAP_WIDTH|MAP_HEIGHT|BAY_W|BAY_H)\\s*-\\s*1)\\b|",
+    "new": "re: /(?!)|",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "A pixel clamped into the Bay would pass unseen."
+  },
+  {
+    "name": "TAMRIEL-WIDE-13-bay-bound-bare-xy-unread",
+    "file": "tools/tamrielWide.mjs",
+    "old": "const AT = String.raw`(?:p?[xy]\\d?|m[xy]|",
+    "new": "const AT = String.raw`(?:p[xy]\\d?|m[xy]|",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "A bare x or y against the Bay's edge unread."
+  },
+  {
+    "name": "TAMRIEL-WIDE-4-region-62-unread",
+    "file": "tools/tamrielWide.mjs",
+    "old": "    re: /\\b(?:region\\w*|reg|r)\\s*(?:<|>=|<=|>)\\s*6[12]\\b|\\(\\s*[\\w.]*region\\w*\\s*,\\s*(?:0\\s*,\\s*)?6[12]\\s*\\)/i,",
+    "new": "    re: /\\b(?:region\\w*|reg|r)\\s*(?:<|>=|<=|>)\\s*6[2]\\b|\\(\\s*[\\w.]*region\\w*\\s*,\\s*(?:0\\s*,\\s*)?6[12]\\s*\\)/i,",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE III): the line its fix rewrote. A region against 61 unread."
+  },
+  {
+    "name": "TAMRIEL-WIDE-5-comments-counted",
+    "file": "tools/tamrielWide.mjs",
+    "old": "if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*')) return '';",
+    "new": "if (false) return '';",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "A comment that names the Bay's id would count as code."
+  },
+  {
+    "name": "TAMRIEL-WIDE-6-url-read-as-comment",
+    "file": "tools/tamrielWide.mjs",
+    "old": "return at >= 0 && !/:\\s*$/.test(line.slice(0, at)) ? line.slice(0, at) : line;",
+    "new": "return at >= 0 ? line.slice(0, at) : line;",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "The rest of a line after a URL's slashes would be dropped as a comment."
+  },
+  {
+    "name": "TAMRIEL-WIDE-7-marker-above-unread",
+    "file": "tools/tamrielWide.mjs",
+    "old": "const ownedAt = (lines, i) => MARKED.test(lines[i]) || (i > 0 && /^\\s*(?:\\/\\/|\\/\\*|\\*)/.test(lines[i - 1]) && MARKED.test(lines[i - 1]));",
+    "new": "const ownedAt = (lines, i) => MARKED.test(lines[i]);",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "The marker on the line above unread."
+  },
+  {
+    "name": "TAMRIEL-WIDE-8-unlisted-let-through",
+    "file": "tools/tamrielWide.mjs",
+    "old": "if (n > (b[f] ?? 0)) over.push",
+    "new": "if (n > (b[f] ?? Infinity)) over.push",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "A file not in the baseline could add any number of idioms."
+  },
+  {
+    "name": "TAMRIEL-WIDE-9-stale-unread",
+    "file": "tools/tamrielWide.mjs",
+    "old": "if ((n0[f] ?? 0) < n) stale.push",
+    "new": "if (false) stale.push",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "A fix that removed an idiom would leave room for a new one."
+  },
+  {
+    "name": "TAMRIEL-WIDE-10-lowering-raises",
+    "file": "tools/tamrielWide.mjs",
+    "old": ".map(([f, n]) => [f, Math.min(n, now[id]?.[f] ?? 0)])",
+    "new": ".map(([f, n]) => [f, Math.max(n, now[id]?.[f] ?? 0)])",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "--lower would raise a baseline to today's count."
+  },
+  {
+    "name": "TAMRIEL-WIDE-14-named-width-unread",
+    "file": "tools/tamrielWide.mjs",
+    "old": "const WIDE = String.raw`(?:1000|MAP_WIDTH|MAX_MAP_PIXEL_X|BAY_W|MAP_W|TP_MAP_W)`;",
+    "new": "const WIDE = String.raw`(?:1000)`;",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE III): the line its fix rewrote. AUDIT TAMRIEL-WIDE II T2: y * MAP_WIDTH + x unread again."
+  },
+  {
+    "name": "TAMRIEL-WIDE-15-reversed-bound-unread",
+    "file": "tools/tamrielWide.mjs",
+    "old": "(?!\\s*[-+*/])\\b|\\b${EDGE}\\s*${CMP}\\s*${AT}\\b|${ARG_BOUND}`),",
+    "new": "(?!\\s*[-+*/])\\b|${ARG_BOUND}`),",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE III): the line its fix rewrote. AUDIT TAMRIEL-WIDE II T2: 1000 <= px unread again."
+  },
+  {
+    "name": "TAMRIEL-WIDE-16-difference-counted",
+    "file": "tools/tamrielWide.mjs",
+    "old": "re: new RegExp(String.raw`(?<![-+*/%.]\\s*)\\b${AT}",
+    "new": "re: new RegExp(String.raw`\\b${AT}",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "AUDIT TAMRIEL-WIDE II T3: a difference (a time, a height) counted as a coordinate again."
+  },
+  {
+    "name": "TAMRIEL-WIDE-17-marker-above-from-code",
+    "file": "tools/tamrielWide.mjs",
+    "old": "(i > 0 && /^\\s*(?:\\/\\/|\\/\\*|\\*)/.test(lines[i - 1]) && MARKED.test(lines[i - 1]))",
+    "new": "(i > 0 && MARKED.test(lines[i - 1]))",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "AUDIT TAMRIEL-WIDE II T4: a code line's trailing marker reaches the line below again."
+  },
+  {
+    "name": "TAMRIEL-WIDE-18-marker-without-why",
+    "file": "tools/tamrielWide.mjs",
+    "old": "${BAY_OWN}(?:\\s*\\S){3}`);",
+    "new": "${BAY_OWN}`);",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "AUDIT TAMRIEL-WIDE II T4: a bare marker, with no why, exempts again."
+  },
+  {
+    "name": "TAMRIEL-WIDE-19-marker-in-a-string",
+    "file": "tools/tamrielWide.mjs",
+    "old": "const MARKED = new RegExp(String.raw`(?:\\/\\/|\\/\\*|^\\s*\\*).*${BAY_OWN}",
+    "new": "const MARKED = new RegExp(String.raw`${BAY_OWN}",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "AUDIT TAMRIEL-WIDE II T4: a marker anywhere on the line, a string's too, exempts again."
+  },
+  {
+    "name": "TAMRIEL-WIDE-20-the-width-by-its-other-names",
+    "file": "tools/tamrielWide.mjs",
+    "old": "const WIDE = String.raw`(?:1000|MAP_WIDTH|MAX_MAP_PIXEL_X|BAY_W|MAP_W|TP_MAP_W)`;",
+    "new": "const WIDE = String.raw`(?:1000|MAP_WIDTH|MAX_MAP_PIXEL_X|BAY_W)`;",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "AUDIT TAMRIEL-WIDE III P5/T9: py * MAP_W + px, roadNetwork.js's name for the Bay's width, passes the gate again."
+  },
+  {
+    "name": "TAMRIEL-WIDE-21-the-edge-by-its-other-names",
+    "file": "tools/tamrielWide.mjs",
+    "old": "BAY_W|BAY_H|MAP_W|MAP_H|TP_MAP_W|TP_MAP_H)(?:\\s*-\\s*1)?)`;",
+    "new": "BAY_W|BAY_H)(?:\\s*-\\s*1)?)`;",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "AUDIT TAMRIEL-WIDE III P5/T9: px >= TP_MAP_W and x < MAP_W pass the gate again."
+  },
+  {
+    "name": "TAMRIEL-WIDE-22-a-bound-handed-to-a-call",
+    "file": "tools/tamrielWide.mjs",
+    "old": "|\\b${EDGE}\\s*${CMP}\\s*${AT}\\b|${ARG_BOUND}`),",
+    "new": "|\\b${EDGE}\\s*${CMP}\\s*${AT}\\b`),",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "AUDIT TAMRIEL-WIDE III P5/T9: ok(px, 999) and intIn(px, 0, 999) pass the gate again."
+  },
+  {
+    "name": "TAMRIEL-WIDE-23-a-region-bound-handed-to-a-call",
+    "file": "tools/tamrielWide.mjs",
+    "old": "6[12]\\b|\\(\\s*[\\w.]*region\\w*\\s*,\\s*(?:0\\s*,\\s*)?6[12]\\s*\\)/i,",
+    "new": "6[12]\\b/i,",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "AUDIT TAMRIEL-WIDE III P5/T9: integer(a.TemplateRegionIndex, 61) passes the gate again."
+  }
+]

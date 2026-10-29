@@ -1761,7 +1761,8 @@ test('MW-D29: the thread is unbroken - the menu reads the equip table, the build
   // TR2: the worn read lives in weaponRig's opts home now; the menu
   // reaches it through buildArmsFor (swept in the MW-D27 pin above).
   const rig = readFileSync('src/combat/weapon/weaponRig.js', 'utf8');
-  assert.match(rig, /armor: dfWornEquipment\(equipTableOf\(entity\), EQUIP_SLOTS, ARMOR_ENUM\)/);
+  // PIN MOVED (CAPE-TOGGLE, 2026-10-29): the table as the body is drawn (systems/capeShown.js) - the worn one, a hidden cloak left out
+  assert.match(rig, /armor: dfWornEquipment\(drawnEquipTable\(entity\), EQUIP_SLOTS, ARMOR_ENUM\)/);
   // and the readout itself: armor slots in, shields from hands, a
   // sword in a hand refused.
   const slots = []; slots[12] = { templateIndex: ARMOR_ENUM.Helm, material: 2 };
@@ -1955,7 +1956,8 @@ test('MW-D32: setWorn is one key compare per frame, and a change rebuilds throug
 
 test('MW-D32: the per-frame read in weaponRig hands the rig its worn list', () => {
   const rig = readFileSync('src/combat/weapon/weaponRig.js', 'utf8');
-  assert.match(rig, /fpArm\.setWorn\(dfWornEquipment\(equipTableOf\(entity\), EQUIP_SLOTS, ARMOR_ENUM\)\)/,
+  // PIN MOVED (CAPE-TOGGLE, 2026-10-29): the table as the body is drawn (systems/capeShown.js) - the worn one, a hidden cloak left out
+  assert.match(rig, /fpArm\.setWorn\(dfWornEquipment\(drawnEquipTable\(entity\), EQUIP_SLOTS, ARMOR_ENUM\)\)/,
     'the game no longer dresses the rig from the equip table');
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.match(arm, /return this\.build\(\{ \.\.\.lastBuildOpts, armor: pieces, weapon: lastBuildOpts\.weapon \}\);/,
@@ -2832,7 +2834,8 @@ test('PX25: a worn change during a rebuild is applied when the build settles, no
 test('PX25: the pack hands the rig the worn table on every refresh', () => {
   const pack = readFileSync('src/ui/enhanced/enhancedInventory.js', 'utf8');
   const refresh = pack.slice(pack.indexOf('const refresh = () => {'), pack.indexOf('const refresh = () => {') + 1400);
-  assert.match(refresh, /arm\.setWorn\(dfWornEquipment\(equipTableOf\(deps\.entity\), EQUIP_SLOTS, ARMOR_ENUM\)\)/,
+  // PIN MOVED (CAPE-TOGGLE, 2026-10-29): the table as the body is drawn (systems/capeShown.js) - the worn one, a hidden cloak left out
+  assert.match(refresh, /arm\.setWorn\(dfWornEquipment\(drawnEquipTable\(deps\.entity\), EQUIP_SLOTS, ARMOR_ENUM\)\)/,
     'refresh must tell the rig what is worn');
   const src = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.match(src, /if \(busy\) \{ pendingWorn = pieces; return false; \}/);

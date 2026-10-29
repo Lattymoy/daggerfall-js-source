@@ -1023,7 +1023,7 @@ export function createGatherHost(deps) {
       for (const k of kinds) k.dropped?.(entry);   // PROF4: a fall or logs under way on it went with its batches
     },
     /**
-     * PROF2: A DUNGEON ENTERED - `{ id, climate, region, wall, stand, drop }`: DFU's identity for it (MapId & 0xfffff),
+     * PROF2: A DUNGEON ENTERED - `{ id, climate, region, wall, stand, drop }`: its identity (scenes/dungeonIdentity.js),
      * its ground as this client derives it, the wall its veins stand on (`wall(marker, bearing)`), and its own doors
      * for flats (`stand(archive, record, scale, centers, { dynamic })` -> a batch it owns - VEIN-CRACKS: a dynamic one for
      * a blow's chunks - `drop(batch)`).

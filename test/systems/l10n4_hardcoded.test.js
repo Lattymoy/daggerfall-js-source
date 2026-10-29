@@ -204,7 +204,7 @@ const HARDCODED = {
   'src/render/eliteGates/egMistPass.js': 1,
   'src/render/eliteGates/egSkyPass.js': 1,
   'src/render/eliteGates/egStairPass.js': 2,
-  'src/render/enhancedLighting.js': 4,
+  'src/render/enhancedLighting.js': 3,
   'src/render/enhancedSky.js': 1,
   'src/render/farTrees.js': 2,   // FAR-TREES: its fragment stages' head and body - GLSL the scan reads as prose (`in vec3`), as every pass's; no word a player reads
   'src/render/foeTelegraph.js': 1,
@@ -246,7 +246,7 @@ const HARDCODED = {
   'src/render/superDungeon/sdStompWall.js': 2,
   'src/render/superDungeon/sdVeil.js': 1,
   'src/render/serpentRender.js': 4,
-  'src/render/shadowPass.js': 6,
+  'src/render/shadowPass.js': 7,   // WL1: DEPTH_GLASS_FS, a building's glass cut out of its sun map - GLSL the scan reads as prose (`in vec2`), as DEPTH_BB_FS beside it
   'src/render/skyRenderer.js': 1,
   'src/render/snowfallGlsl.js': 2,
   'src/render/spellImpactFx.js': 2,
@@ -356,7 +356,7 @@ const HARDCODED = {
   'src/systems/champions.js': 6,
   'src/systems/chargen.js': 1,
   'src/systems/cloudSaves.js': 5,
-  'src/systems/comeSailAway/comeSailAway.js': 86,
+  'src/systems/comeSailAway/comeSailAway.js': 87,   // AUDIT FB1029d WIND-HELD: +1, the log's line when the frame lays the door's wind - a developer's, never a player's
   'src/systems/comeSailAway/comeSailAwayBoat.js': 1,
   'src/systems/comeSailAway/comeSailAwayHulls.js': 3,
   'src/systems/comeSailAway/comeSailAwayItems.js': 2,
@@ -397,7 +397,7 @@ const HARDCODED = {
   'src/systems/eventTimers.js': 50,
   'src/systems/faction/factionStanding.js': 3,
   'src/systems/faction/provinceFactions.js': 1,   // PROVINCE-COURTS (bible/03-World/World-Wide.md): Cyrodiil's ruler, Uriel Septim VII - a proper name, Daggerfall's own Emperor (TEXT.RSC), a faction's name and its key
-  'src/systems/features.js': 128,   // RPT1026-CLIENT: the mod's 'Camera Shake.maxShake' on its tile - a mod's settings key the scan reads as words, as its three neighbours on the list are
+  'src/systems/features.js': 120,   // AUDIT TAMRIEL-WIDE D1: -8, the two Tamriel rows routed. RPT1026-CLIENT: the mod's 'Camera Shake.maxShake' on its tile - a mod's settings key the scan reads as words, as its three neighbours on the list are
   'src/systems/fleet.js': 10,
   'src/systems/fletching.js': 1,
   'src/systems/festival/soulCake.js': 2,   // WITCH1: the Soul Cake's and the Hearth Offering's names - an item's canonical name is its row's, as the Weir Key's
@@ -590,6 +590,11 @@ const HARDCODED = {
   'src/tools/abyssLab.js': 2,
   'src/tools/cardsLab.js': 5,
   'src/tools/depthCopyCheck.js': 8,
+  'src/tools/delveLab.js': 17,   // DELVE II DLV5-6: the curated blocks' lab panel (delve.html, the bench's `?dungeon=lab`) - a designer's tool, never the game's
+  'src/tools/delveLabPage.js': 1,   // DELVE II DLV5: the lab's front page's one refusal (no storage) - the designer's
+  'src/world/dungeon/curatedBlocks.js': 16,   // DELVE II DLV5-6: the record law's refusals, each by name - read in the lab and thrown at a bad record's import, never shown a player
+  'src/world/dungeon/curatedLab.js': 2,   // DELVE II DLV5: the lab law's two refusals (no anchor for a vault), the designer's
+  'src/world/dungeon/curatedRecords.js': 2,   // DELVE II DLV5: a shipped record numbered 0, a draft numbered past 0 - refusals thrown at load or said in the lab
   'src/tools/enhanced/enhancedUI.js': 24,
   'src/tools/enhanced/enhancedVisuals.js': 1,
   'src/tools/firmamentLab.js': 3,
@@ -670,6 +675,7 @@ const HARDCODED = {
   'src/ui/gate/gateGroundView.js': 3,
   'src/ui/gate/gateMarksView.js': 18,
   'src/ui/gate/gateTitleCard.js': 1,
+  'src/ui/gfxPrepBar.js': 4,   // FIX-STUTTER: the four browser folder paths, never translated
   'src/ui/grimoireDress.js': 13,
   'src/ui/growth/growthStage.js': 1,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (GROWTH-BOOK)
   'src/ui/guildServiceWindow.js': 1,
@@ -702,7 +708,6 @@ const HARDCODED = {
   'src/ui/loadingScreen.js': 10,
   'src/ui/localeFaces.js': 27,
   'src/ui/lootBanner.js': 3,
-  'src/ui/map/mapStrip.js': 1,
   'src/ui/marketTab.js': 140,   // PACK-PICK: the List form's piece and pack words through the text core; AUDIT PACK-PICK: its kinds' and empty forms' too
   'src/ui/merchant/merchantRepairDoor.js': 2,
   'src/ui/mouseControlsWindow.js': 2,
@@ -771,7 +776,6 @@ const HARDCODED = {
   'src/ui/spyglassView.js': 2,
   'src/ui/statsCard.js': 5,
   'src/ui/supportAsks.js': 2,
-  'src/ui/tamrielInk.js': 4,   // TESA13 (the Arena arc, at its merge with main): +1, a place's kind in the land past the Bay's tip line
   'src/ui/tavernWindow.js': 2,
   'src/ui/techniqueCard.js': 8,
   'src/ui/techniqueGlyph.js': 2,

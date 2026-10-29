@@ -83,6 +83,7 @@ import { RING_SEA_GLSL, FLORA_GLSL } from './horizonHaze.js';   // FAR-SEA1: the
 import { RING_HAZE_GLSL } from './hazeGlsl.js';   // BANTHA1: and the jungle's haze over it, the classic ring's own text
 import { realWindowsGlsl, RW_MAIN_DERIVS, RW_MAIN_CUTOUT, RW_MAIN_GLASS, RW_MAIN_ROOM } from './realWindows.js';   // RW1: the real windows, the classic FS's own block on the lane's codec
 import { MESH_ALPHA_GLSL } from './meshAlpha.js';   // POI-2: the lane's mesh FS ends on the same translucency as the classic one
+import { windowLightGlsl } from './windowLight.js';   // WL1: the windows' light, read in the lantern loop's own function
 
 /** The lane's light cap - the classic lane's sixteen, tripled. Forty-eight
  *  vec4 + forty-eight vec3 are 96 uniform vectors; ES 3.0 guarantees 224
@@ -398,8 +399,11 @@ int elClusterLight(highp uvec2 cell, int j) {
 // takes the attenuation alone - it has no normal, as in the classic lane).
 // LC1: the loop walks the fragment's CELL (elCluster) - two or three
 // lights where it walked forty-eight - and every light with the grid off.
-const EL_POINT_LIT_GLSL = `
+// WL1: `wlShadow` is windowLightGlsl's - a surface's programs read the sun map per fragment, the flat's takes its quad's
+// one read (TREES1, LA-COST3: a flat's fragment reads no sun map).
+const elPointLitGlsl = (wlShadow) => `
 ${EL_CLUSTER_GLSL}
+${windowLightGlsl({ atten: 'elAttenuation(rl, r)', shadow: wlShadow })}
 // BLOOD2f / BLOOD AUDIT 5: the lantern loop with a WET surface's glint
 // beside the diffuse - ONE loop, ONE shadow answer for both (a mark in a
 // contact shadow is glint-shadowed as it is diffuse-shadowed), the
@@ -453,7 +457,7 @@ vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {
     }
   }
   glint *= ${glslFloat(EL_WET_STRENGTH)} * wet;
-  return acc;
+  return acc + winLit(wp, n, 0.0, 1.0);   // WL1: the windows' light, through their glass
 }
 vec3 elPointLit(vec3 wp, vec3 n) { vec3 g; return elPointLitWet(wp, n, 0.0, g); }
 // a flat's lantern term, attenuation only; its shadow is read at the
@@ -466,7 +470,7 @@ vec3 elPointLit(vec3 wp, vec3 n) { vec3 g; return elPointLitWet(wp, n, 0.0, g); 
 // redraws every third frame): a flat walking away from its lamp read its
 // own late card nearer the lamp than itself and lost that lamp's light whole
 // - the player's own sprite in third person at 60 Hz, a townsman at 20 Hz.
-vec3 elPointFlat(vec3 wp, vec3 base) {
+vec3 elPointFlat(vec3 wp, vec3 base, float flatSun) {   // WL1: flatSun the flat's sun map word, read once a quad (vBBSunVis)
   vec3 acc = vec3(0.0);
   highp uvec2 cell = elCluster(wp);   // LC1
   int cellCount = int(cell.y);
@@ -481,7 +485,7 @@ vec3 elPointFlat(vec3 wp, vec3 base) {
     float sh = shadowOfLight(i, uPointLights[i], at, vec3(0.0));   // EL2; EL5: any caster's; DISC15: either tier
     acc += sh * elAttenuation(d, uPointLights[i].w) * uPointColors[i];
   }
-  return acc;
+  return acc + winLit(wp, vec3(0.0), 1.0, flatSun);   // WL1: a flat takes the windows' light by its attenuation alone, as a lantern's - its sun through glass by the quad's one read (LA-COST3)
 }
 vec3 elIndirectLit(vec3 wp, vec3 n) {
   vec3 iL = uIndirect.xyz - wp;
@@ -536,6 +540,8 @@ vec3 elFinish(vec3 lit, vec3 wp) {
   return dwWaterFog(col, wp) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it   // DW-C: the sea's distance fog on the DISPLAY colour - the mod's post effect reads the camera's finished image
 }
 `;
+const EL_POINT_LIT_GLSL = elPointLitGlsl(true);
+const EL_POINT_LIT_FLAT_GLSL = elPointLitGlsl('flat');   // WL1: the billboard program's
 
 /** The mesh fragment shader of the lane - the classic FS's every term
  *  (the automap presentation, the trilight, emission's cancel-and-return,
@@ -673,7 +679,7 @@ ${EL_GLSL}
 ${SHADOW_GLSL}
 ${AIR_CONTACT_GLSL}
 ${EL_FOG_GLSL}
-${EL_POINT_LIT_GLSL}
+${EL_POINT_LIT_FLAT_GLSL}
 ${COLUMN_GLSL}
 ${HIT_FLASH_GLSL}
 ${ELITE_GLOW_GLSL}
@@ -719,7 +725,7 @@ ${LPT_FS_TEXEL}  if (tex.a < ((uSpectral == 1 || uConceal.x > 0.0) ? 0.1 : 0.5))
   // vertex shader (EL_BB_VS_EXT) reads it at that same point, with the same
   // function, at each corner - the four agree - and hands it here flat.
   vec3 sunLit = dot(uBBSun, uBBSun) > 0.0 ? uBBSun * cloudShadowAt(vBBWorld) * vBBSunVis : vec3(0.0);
-  vec3 lit = albedo * (uTint + sunLit + elPointFlat(vBBWorld, base) + elIndirectFlat(vBBWorld)) + emission;
+  vec3 lit = albedo * (uTint + sunLit + elPointFlat(vBBWorld, base, vBBSunVis) + elIndirectFlat(vBBWorld)) + emission;
   float undyed = dot(lit, vec3(0.2126, 0.7152, 0.0722));   // VEIN-HUE: the lit flat's brightness, in the lane's linear light
   lit *= elDecode(uBatchTint);   // ARENA5: the batch's wash after both maps (the classic lane's law, in the lane's linear light - white is white)
   if (uBatchDye > 0.0) lit = mix(lit, undyed * elDecode(uBatchTint), uBatchDye);   // VEIN-HUE: a dyed batch's wash is its colour
@@ -756,11 +762,12 @@ precision mediump int;   // LA-COST3: the fragment stage's default, so the unifo
 uniform vec3 uCamPos;
 uniform vec3 uBBSun;
 uniform float uSunLift;   // AUDIT BANTHA1 TREE-2: the share of the drawn height the sun is read at - 0 the root's half unit (every flat, every Low Poly Tree); a jungle tree's crown
+uniform int uWinOn;   // WL1: 2 while a window's sun stands in the sun map - indoors, where uBBSun is none (render/windowLight.js)
 flat out float vBBSunVis;   // LA-COST3: the sun map's word at the flat's base, one value for the whole quad
 ${SHADOW_GLSL}`,
   main: `
   vec3 sunAt = vBBBase + vec3(0.0, max(0.5, uSunLift * uSize.y * (uMesh > 0.5 ? aScale : abs(aCorner.x) * 2.0)), 0.0);   // AUDIT BANTHA1 TREE-2: a jungle tree reads its sun at its crown, near and far alike - at its root under a closed canopy every crown, an emergent's in full sun, stood in its neighbours' shade
-  vBBSunVis = dot(uBBSun, uBBSun) > 0.0 ? (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;   // LA-COST3: EL2's point, TREES1's kernel, PERF-SUN2's gate; AUDIT FLICKER S1: its height, off its own card; AUDIT LPT B4: a low-poly tree's every VERTEX runs this, so one tap at its root`,
+  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0 || uWinOn == 2) ? (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;   // LA-COST3: EL2's point, TREES1's kernel, PERF-SUN2's gate; AUDIT FLICKER S1: its height, off its own card; AUDIT LPT B4: a low-poly tree's every VERTEX runs this, so one tap at its root`,
 });
 
 /** MAC-BUG W6 (2026-09-20, Mac: "super dark coloring instead of red") -

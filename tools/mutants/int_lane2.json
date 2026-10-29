@@ -285,12 +285,12 @@
   {
     "name": "INT9-CLIENT-THE-ZONE-UNSAID",
     "file": "src/scenes/world.js",
-    "old": "    online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere() && wildOutdoors(), player.pos, Date.now()));",
+    "old": "    online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere(), player.pos, Date.now()));",
     "new": "    void 0;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
-    "note": "Re-aimed by content (AUDIT FOE-KEEPS): the zone word says a death too (E2)"
+    "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE III P2): the edge reads the zone's pixel alone. Re-aimed by content (AUDIT FOE-KEEPS): the zone word says a death too (E2)"
   },
   {
     "name": "INT9-CLIENT-THE-KILLERS-PIECE-A-PILE",
