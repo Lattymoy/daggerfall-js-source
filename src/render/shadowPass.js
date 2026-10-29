@@ -949,6 +949,14 @@ uniform sampler2D uTex;
 void main() {
   if (texture(uTex, vUV).a < 0.5) discard;
 }`;
+/** WL1: a window's glass in a building's sun map - its mask (the emission unit's: white where glass) is a hole. */
+export const DEPTH_GLASS_FS = `#version 300 es
+precision highp float;
+in vec2 vUV;
+uniform sampler2D uTex;
+void main() {
+  if (texture(uTex, vUV).r > 0.5) discard;
+}`;
 /** CACHE-COPY (2026-10-07): SC1's cache into the live layers BY A DRAW (_blitSlot) - a full-screen triangle made of
  *  gl_VertexID alone (deepWatersRender.js's), drawn with an empty vertex array. */
 export const DEPTH_COPY_VS = `#version 300 es
@@ -1029,7 +1037,7 @@ export const cubeKeeps = (lim, k, x, y, z, r) => {
 // body builds (_ensureBodyPrograms) - `vs` opts.vs's shape - so a page's start can have them compiling before the lane
 // mounts (render/bootPrograms.js, render/mountPrograms.js). Change a build, change its pair here.
 /** @param {{ mesh: string, bb: string, terrain: string, char?: string }} vs @returns {Array<[string, string]>} */
-export const shadowDepthPrograms = (vs) => [[vs.mesh, DEPTH_FS], [vs.terrain, DEPTH_FS], [vs.bb, DEPTH_BB_FS], ...(vs.char ? [/** @type {[string, string]} */ ([vs.char, DEPTH_FS])] : []), [vs.mesh, DEPTH_CUT_FS], [vs.mesh, DEPTH_BB_FS], [DEPTH_COPY_VS, DEPTH_COPY_FS]];
+export const shadowDepthPrograms = (vs) => [[vs.mesh, DEPTH_FS], [vs.terrain, DEPTH_FS], [vs.bb, DEPTH_BB_FS], ...(vs.char ? [/** @type {[string, string]} */ ([vs.char, DEPTH_FS])] : []), [vs.mesh, DEPTH_CUT_FS], [vs.mesh, DEPTH_BB_FS], [vs.mesh, DEPTH_GLASS_FS], [DEPTH_COPY_VS, DEPTH_COPY_FS]];   // WL1: and a building's glass cut
 /** @param {{ char?: string, charSkin?: string }} vs @returns {Array<readonly [string, string]>} */
 export const shadowBodyPrograms = (vs) => [...(vs.charSkin ? [/** @type {const} */ ([vs.charSkin, DEPTH_FS]), /** @type {const} */ ([vs.charSkin, DEPTH_BB_FS])] : []), ...(vs.char ? [/** @type {const} */ ([vs.char, DEPTH_BB_FS])] : [])];
 
@@ -1081,12 +1089,14 @@ export class ShadowPass {
     this._buildCharCut = opts.vs.char ? () => opts.build(opts.vs.char, DEPTH_BB_FS) : null;
     const meshCut = opts.build(opts.vs.mesh, DEPTH_CUT_FS);   // AUDIT BAY A12
     const meshCutout = opts.build(opts.vs.mesh, DEPTH_BB_FS);   // RW1: a cutout picture's sub-mesh - its holes cast no shadow (the flats' own half-alpha cut)
+    const meshGlass = opts.build(opts.vs.mesh, DEPTH_GLASS_FS);   // WL1: a window's sub-mesh in a building's sun map - its panes cast nothing
     const copy = opts.build(DEPTH_COPY_VS, DEPTH_COPY_FS);   // CACHE-COPY: the cache into the live layers (_blitSlot)
     this.programs = {
       copy: { p: copy, cache: u(copy, 'uCache'), layer: u(copy, 'uLayer') },
       mesh: { p: mesh, proj: u(mesh, 'uProj'), view: u(mesh, 'uView'), model: u(mesh, 'uModel') },
       meshCut: { p: meshCut, proj: u(meshCut, 'uProj'), view: u(meshCut, 'uView'), model: u(meshCut, 'uModel'), cut: u(meshCut, 'uDissolveCut') },
       meshCutout: { p: meshCutout, proj: u(meshCutout, 'uProj'), view: u(meshCutout, 'uView'), model: u(meshCutout, 'uModel'), tex: u(meshCutout, 'uTex') },   // RW1
+      meshGlass: { p: meshGlass, proj: u(meshGlass, 'uProj'), view: u(meshGlass, 'uView'), model: u(meshGlass, 'uModel'), tex: u(meshGlass, 'uTex') },   // WL1
       char: char ? { p: char, proj: u(char, 'uProj'), view: u(char, 'uView'), model: u(char, 'uModel') } : null,
       terrain: { p: terrain, proj: u(terrain, 'uProj'), view: u(terrain, 'uView'), model: u(terrain, 'uModel') },
       bb: {
@@ -1794,13 +1804,18 @@ export class ShadowPass {
     gl.enable(gl.DEPTH_TEST);
     gl.depthMask(true);
     gl.colorMask(false, false, false, false);
-    if (this.kind === 'sun') {
+    // WL1: A BUILDING'S FRAME DRAWS THE SUN TOO when its glass lets the outside's sun in (f.windowSun, the direction toward
+    // it): the same cascades, the window glass cut out of them (render/windowLight.js reads the map through each pane)
+    const sunDir = this.kind === 'sun' ? f.lightDir : f.windowSun ?? null;
+    this._glassCut = this.kind !== 'sun' && !!sunDir;
+    if (this._glassCut !== this._glassCutWas) { this._glassCutWas = this._glassCut; this._sunDrawn.fill(0); }   // a map drawn the other way is never kept
+    if (sunDir) {
       // AUDIT DEEP R-3: the travel view's scale - a far map drawn at the other scale is never kept (EL8's every-other-frame)
       const k = f.cascadeScale > 1 ? f.cascadeScale : 1;
       if (k !== this._sunScaleK) { this._sunScaleK = k; this._sunDrawn.fill(0); }
-      sunAnchorFor(f.eye, this._sunAnchor, f.lightDir, sunTexelWorld(SHADOW_CASCADES.length - 1, k));   // LA-SHADOW1; AUDIT FLICKER S2: on the grid it had
-      sunCascadeMatrices(f.eye, f.lightDir, this._sunVPNew, this._sunAnchor, k);
-      const ld = f.lightDir;
+      sunAnchorFor(f.eye, this._sunAnchor, sunDir, sunTexelWorld(SHADOW_CASCADES.length - 1, k));   // LA-SHADOW1; AUDIT FLICKER S2: on the grid it had
+      sunCascadeMatrices(f.eye, sunDir, this._sunVPNew, this._sunAnchor, k);
+      const ld = sunDir;
       const rl = Math.hypot(ld[2], ld[0]) || 1;
       this._right[0] = ld[2] / rl; this._right[1] = 0; this._right[2] = -ld[0] / rl;
       const last = SHADOW_CASCADES.length - 1;
@@ -1819,6 +1834,7 @@ export class ShadowPass {
       this.sunParams[3] = 1;
       this.sunOrigin[0] = f.eye[0]; this.sunOrigin[1] = f.eye[1]; this.sunOrigin[2] = f.eye[2]; this.sunOrigin[3] = 1;   // TV1
     } else this._sunDrawn.fill(0);   // AUDIT 68 S17-far-cascade-shift: a returning sun never reuses a map drawn at another place and time
+    this._glassCut = false;   // WL1: the lamps' maps keep the glass as they always did
     // EL5: THE LANTERNS CAST TOO, sun or no sun - the nearest SHADOW_POINT_CASTERS
     // of them, each into its six layers; the replays are culled to the
     // lantern's range and the face's frustum, so a caster costs what it lights
@@ -2457,7 +2473,8 @@ export class ShadowPass {
         let vaoBound = false;
         // LA-AUDIT A1: a static batch with shadow cells replays its cells, not its sub-meshes - the same triangles in
         // the cells' own buffer (staticBatch.js shadowCells), each culled by its own sphere
-        const cells = r.bounded && !mesh._evAnyCut ? mesh.shadowCells : null;   // RW1: a mesh with a cutout picture replays its sub-meshes - a cell mixes pictures
+        const glassCut = this._glassCut && mesh._evAnyGlass;   // WL1: a building's sun map cuts its windows' panes
+        const cells = r.bounded && !mesh._evAnyCut && !glassCut ? mesh.shadowCells : null;   // RW1: a mesh with a cutout picture replays its sub-meshes - a cell mixes pictures
         const subs = cells ?? mesh.subMeshes;
         const vao = cells ? mesh.shadowVao : mesh.vao;
         // PERF-EXT2 (2026-09-25, the players' "fps issues in the exterior
@@ -2476,6 +2493,15 @@ export class ShadowPass {
         for (let k = 0; k < subs.length; k++) {
           if (cells ? !sphereInPlanes(planes, r.cellSpheres[k * 4], r.cellSpheres[k * 4 + 1], r.cellSpheres[k * 4 + 2], r.cellSpheres[k * 4 + 3]) : !subMeshVisible(planes, r, k)) { this.stats.culled++; continue; }
           const sm = subs[k], n = sm.primitiveCount * 3;
+          if (glassCut && !cells && sm._evWin && sm._evEmis) {   // WL1: a window's glass - its panes let the sun through: its own draw, its mask cut
+            if (runAt >= 0) { gl.drawElements(gl.TRIANGLES, runEnd - runAt, gl.UNSIGNED_INT, runAt * 4); draws++; runAt = -1; runEnd = -1; }
+            use(P.meshGlass); gl.uniformMatrix4fv(P.meshGlass.model, false, r.matrix);
+            gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, sm._evEmis); gl.uniform1i(P.meshGlass.tex, 0);
+            f.bindVao(vao);
+            gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_INT, sm.startIndex * 4); draws++;
+            vaoBound = false;
+            continue;
+          }
           if (!cells && sm._evCut && sm._evTex) {   // RW1: a cutout picture (renderer.js _markCutout) - its holes cast nothing: its own draw, its picture's half-alpha cut
             if (runAt >= 0) { gl.drawElements(gl.TRIANGLES, runEnd - runAt, gl.UNSIGNED_INT, runAt * 4); draws++; runAt = -1; runEnd = -1; }
             use(P.meshCutout); gl.uniformMatrix4fv(P.meshCutout.model, false, r.matrix);

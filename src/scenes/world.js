@@ -88,7 +88,7 @@ import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, identity, UP_Y, wrapAngle } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // GHOST1: the plane extraction comes through bounds.js's `spherePlanes` now - `_planes` serves the sphere test too
 import { spherePlanes, batchVisible, setFlatLean, batchSphere } from '../render/bounds.js';   // PERF-CROWD: the batch's own bounding sphere, the test the shadow replay already uses   // GHOST1: through its ONE home, on the NORMALISED planes it needs   // EV3: the frustum
-import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
+import { withMoonAmbient, lightStreetAt } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient; WL1: the street lit by the clock
 import { FarRingRenderer, ringDisabled, ringGroundAt, RING_HAZE_HOLD, BuiltPixels } from '../render/farRing.js';   // EV8: the province's mountains on the horizon; FAR-SEA1: its haze, the sea's too; OW-HORIZON: the built pixels, counting their changes for the ring's hole
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1: the Enhanced Lighting lane, installed at mount
 import { collectBlockFlats, billboardSize, mobileBillboardSize, centredBase, classicBillboardSize } from '../world/rmbFlats.js'; // TREES-SEATED: a block's trees on the hills drawn under them; FIELD BUGS 2026-10-13e HILL-SEAT: and the pads under what its author stood on them
@@ -28213,7 +28213,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // WAGONS2 (FINAL AUDIT): and the weather's - the street frame's own terms (world/worldClock.js viewOutLight), so the clock's
       // air below compares a dimmed sun with a dimmed sun
       const light = viewOutLight(clockMinute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherTerms().sun, sky.sunFactor());
-      r.setLighting(withMoonAmbient(light.ambient, sky.moonlight()), light.sun, SUN_RIG_COLOR);
+      lightStreetAt(r, light, sky.moonlight(), SUN_RIG_COLOR);   // WL1: and the moon of the hour, whose light a window lets in (render/enhancedSky.js)
       r.setFogColor(clockFogColor(keptFog, keptSun, r._sunScale));   // RW1 (AUDIT): ...re-lit by the clock - the sky behind the glass with it
       r.setWindowEmission(windowEmissionRGB(windowStyleForTime(clockMinute)));
       r.setPointLights(lightsOnAt(clockMinute) ? outsideLanterns(r) : new Float32Array(0), CITY_LIGHT_COLOR_F32);   // RW1 (AUDIT): the town's lanterns by the clock - never the player's own light, which stays indoors with them

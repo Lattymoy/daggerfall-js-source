@@ -52,6 +52,7 @@ await page.locator('.px-shopmark').click();
 await page.waitForSelector('.px-shopwin .sh-tab', { timeout: 15000 });
 await page.locator('.sh-cpause').click().catch(() => {});
 
+const shot = new Set();   // the wares whose stage was shot
 const tabs = await page.locator('.sh-tab').count();
 for (let i = 0; i < tabs; i++) {
   const tabId = (await page.locator('.sh-tab').nth(i).getAttribute('id')) ?? '';
@@ -74,6 +75,7 @@ for (let i = 0; i < tabs; i++) {
       if (wait > 0) await page.waitForTimeout(wait);
       await stage.screenshot({ path: `${OUT}/${id.replace(':', '-')}-${m}.png` }).catch(() => {});
     }
+    shot.add(id);
     console.log(`shot ${id}`);
   }
 }
@@ -93,5 +95,11 @@ await page.evaluate(async () => {
 });
 await page.waitForTimeout(500);
 await page.locator('#icon-wall').screenshot({ path: `${OUT}/icons.png` });
-console.log(errors.length ? `page errors: ${errors.slice(0, 3).join(' | ')}` : 'no page error');
 await browser.close();
+// the judgement: every ware on sale has a panel whose stage was shot (a section shot whole), and the page never threw
+const unshot = ONLY ? [] : answer().shop.wares.map((w) => w.id).filter((id) => !shot.has(id));
+if (errors.length || unshot.length) {
+  console.error(`FAIL: ${errors.length} page errors (${errors.slice(0, 3).join(' | ')}); wares with no panel shot: ${unshot.join(', ') || 'none'}`);
+  process.exit(1);
+}
+console.log(`PASS: ${shot.size} wares shot, no page error`);

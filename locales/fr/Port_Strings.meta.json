@@ -3784,6 +3784,11 @@
   "tr": "d326a028cabc",
   "by": "claude-in-session"
  },
+ "account.refusal.taken": {
+  "en": "d9745037440f",
+  "tr": "813987b50243",
+  "by": "claude-in-session"
+ },
  "account.refusal.termsStale": {
   "en": "608f3f07d210",
   "tr": "4fe252a95e8f",
@@ -10692,6 +10697,11 @@
  "decor.tool.unread": {
   "en": "d51fdf0ea300",
   "tr": "635a7f8e1dad",
+  "by": "claude-in-session"
+ },
+ "decor.yard.behind": {
+  "en": "e66a9854186d",
+  "tr": "08a73a83b82d",
   "by": "claude-in-session"
  },
  "dex.enemy.archerRider": {
