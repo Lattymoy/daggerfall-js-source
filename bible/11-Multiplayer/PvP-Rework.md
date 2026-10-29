@@ -227,12 +227,32 @@ it. All of it is the client's: the relay refs only blows. A departure: DFU has n
 
 ## PVP-KIT: the PvP spell bar
 
-"they only get to tool kit we give", "flagged has a seperate hot barr": while my flag is up in the open zone, keys 3 to 0
-are eight slots of the toolkit (`pvpKit.js:"export const PVP_KIT = Object.freeze({ slots: 8, reachM: 15, rounds: 12, lo: 100, hi: 300 });"`),
-pressed the hotbar's way (`pvpKitBar.js:"export function castKitSlot("`). Keys 1 and 2 stay the potions'. Every other
-spell is refused under the flag, and only the bar's spells reach a player (`world.js:"if (!wildFair(peerId) || !sp?.pvpKit) return false;"`).
-"Let them set the icons for these spells": with the mouse free, a click on a slot picks its spell, its element or
-attribute and its icon, kept in the browser. Outside PvP the spell keys work as before.
+"they only get to tool kit we give", "flagged has a seperate hot barr": while my flag is up in the open zone, the
+hotbar's PvP set (PVP-SET, below) holds the toolkit's spells, each pressed the hotbar's way
+(`pvpSpellMenu.js:"export function castKitSlot("`). Every other spell is refused under the flag, and only the toolkit's
+spells reach a player (`world.js:"if (!wildFair(peerId) || !sp?.pvpKit) return false;"`). The first bar's eight slots
+(`pvpKit.js:"export const PVP_KIT = Object.freeze({ slots: 8, reachM: 15, rounds: 12, lo: 100, hi: 300 });"`) are carried
+into the set. Outside PvP the spell keys work as before.
+
+PVP-SET (the owner, 2026-10-29: "player should get a whole second hot bar of the one we have", "hot bar need to use
+exsistning one u stack one on top", "need a menu to make spells for thr hot bar small easy"): the hotbar has two sets of
+the same slots (`quickslots.js:"export function useHotbarSet(name) {"`). The PvP set is in force while my flag is up in
+the zone or the PvP menu is open (`pvpSpellMenu.js:"const inForce = () => on() || open;"`): the same bar and
+place, keys 1 to 0, held up whatever the bar's style (`uiSkin.js:"export function forceHotbar(fn) {"`). It takes toolkit
+spells and items, never a book spell; the save keeps the normal set alone. It lives in the browser; an old bar
+(`dfo.pvpKitBar.v1`) lands on keys 3 to 0 with the normal set's potions on 1 and 2
+(`pvpSet.js:"export function pvpStoreFromV1(v1, main = []) {"`).
+
+The menu (the PvP spells button on the bar, or the spellbook's) makes a spell from its kind, its element or attribute
+and its icon, and lists it with its cost and where it lands. A row is dragged onto a slot, or clicked and then a slot
+clicked (`enhancedHotbar.js:"export function hotbarDropKit(i, kit, name = '') {"`); a slot dragged off or right-clicked
+clears.
+
+Each slot shows its key, the cost a cast charges now, armour and all (`pvpSpellMenu.js:"export const kitCastCost = (entity, slot) =>"`),
+a gold edge on the last cast, a shade that drains with the cast clock, grey when magicka is short, and a padlock while
+the PvP combat lock runs (`pvpFlagHost.js:"fightLeft: () => pvpAggroLeft(fightAt, now()),"`): the set cannot change then
+(`quickslots.js:"if (!kept || frozen()) return false;"`). The classic skin has no hotbar: there a key whose slot holds a
+toolkit spell casts it. A departure: DFU has no PvP.
 
 "They get to pick damage and its a aoe", "Just our damage formula": Damage is the classic Fireball's record at Area at
 Range in the picked element (`pvpKit.js:"const FIREBALL = Object.freeze({"`), its harm the referee's path as before

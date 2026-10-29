@@ -4,7 +4,7 @@
 // given or taken (`wref` k 'hp'), toggles on Caps Lock or the HUD button, and answers the two doors the host asks: may I
 // strike a player (my flag up), and is a Portal Stone free of the zone's law (I am not flagged - the owner: "with no
 // flagg we will allow player to use portal stone anywwere").
-import { pvpFlagRefusal, PVP_FLAG } from '../systems/wild/pvpFlag.js';
+import { pvpFlagRefusal, PVP_FLAG, pvpAggroLeft } from '../systems/wild/pvpFlag.js';
 import { t } from '../systems/textManager.js';
 import { noteCaps } from '../ui/capsFix.js';
 import { skullSrc } from '../ui/pvpSkull.js';
@@ -101,6 +101,8 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     skullOf,
     mySkull,
     foeOf,
+    /** PVP-SET: the combat lock left on me, ms (0 none) - the PvP set is fixed while it runs. */
+    fightLeft: () => pvpAggroLeft(fightAt, now()),
     /** PVP-VILLAIN: my villain meter as the referee last said it, or null. */
     villainy: () => villainy,
     /** PVP-SKULL: wrap the host's name mask - each player's point wears its skull (ui/nameLayer.js draws it). PVP-BAR: and

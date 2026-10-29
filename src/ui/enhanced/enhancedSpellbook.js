@@ -50,7 +50,7 @@ const SPELL_DRAG_BOX = 38;
 // for the diamond's spell slot.
 import { setHotbarDropMode, hotbarAcceptsDrops, beginHotbarDrag, takeHotbarDragClick, hotbarMode, toggleHotbarSpell,
   spellSigil, spellInitials,   // PX23b: the classic's OWN words for the two icons
-  hotbarShownSlotOf, setHotbarPick } from './enhancedHotbar.js';   // DIAMOND-HB: shown-slot lookup; hover + key to slot
+  hotbarShownSlotOf, setHotbarPick, hotbarHasSecondSet, openHotbarSecondSet, hotbarSecondSetLabel } from './enhancedHotbar.js';   // DIAMOND-HB: shown-slot lookup; hover + key to slot
 import { listenWindowKeys } from '../windowStack.js';   // COVERED-KEYS: the window's keys, gated while a box covers it
 
 const el = (tag, cls, text) => {
@@ -318,6 +318,11 @@ function paint() {
       render();
     };
     acts.append(slot);
+  }
+  if (hotbarHasSecondSet()) {   // PVP-SET: the PvP menu, one press from the book
+    const pvp = el('button', 'act sb-pvp', hotbarSecondSetLabel());
+    pvp.onclick = () => { onExit(); openHotbarSecondSet(); };
+    acts.append(pvp);
   }
   // RENAME. The classic asks "Enter spell name : " (ENTER_SPELL_NAME,
   // :934) and the first draft dropped it - a prettier window that can
