@@ -23,7 +23,7 @@
 // no larger than maxParticleSize (0.08) of the view's height.
 // ═══════════════════════════════════════════════════════════════════
 
-import { buildProgram } from './glProgram.js';
+import { buildProgram, startPrograms } from './glProgram.js';
 import { FOG_GLSL } from './fogGlsl.js';
 import { COLUMN_GLSL } from './columnGlsl.js';
 import { createDiscMesh, createMiasmaTexture, MIASMA_COLOR, MIASMA_EMISSION } from '../world/oceanHoles.js';
@@ -116,6 +116,9 @@ void main() {
 
 const locs = (gl, p, names) => Object.fromEntries(names.map((n) => [n, gl.getUniformLocation(p, n)]));
 
+// SHADER-EASE WARM-POLL (2026-10-29): the pairs _ensure builds - what the warm starts ahead of the build (warmSteps).
+export const OCEAN_HOLES_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[DISC_VS, DISC_FS], [MIASMA_VS, MIASMA_FS]]));
+
 /** The pit's programs and shared buffers, on the Deep Waters renderer they draw beside. */
 export class OceanHolesRenderer {
   /** @param {any} dw - the DeepWatersRenderer (its frame and column uniforms are these passes' too) */
@@ -124,6 +127,11 @@ export class OceanHolesRenderer {
     this.gl = dw.gl;
     this._res = null;
     this._stream = null;
+  }
+
+  /** The warm's one named step (render/warmPrograms.js), as Deep Waters' own. */
+  warmSteps() {
+    return [{ start: () => startPrograms(this.gl, OCEAN_HOLES_PROGRAMS), run: () => { this._ensure(); }, need: () => !this._res }];
   }
 
   _ensure() {

@@ -35,7 +35,7 @@
 // restarts mid-fight forgets its ships; a wreck awaiting its boarding is kept in its storage, as a fall is).
 // ═════════════════════════════════════════════════════════════════════
 import { SHIP_REF, clampHull } from '../serpent/serpentBrain.js';
-import { WILD_REF } from '../wild/wildRef.js';
+import { WILD_REF, wildStreetsBar } from '../wild/wildRef.js';
 import { SIEGE_UNITS_PER_M } from '../siege/siegeRef.js';
 
 /** THE BASE STRENGTH OF A PLAYER'S HULL, by hull (navalShips.js HULL_BUILDS' hullHp - the rowboat, the Large Boat, the
@@ -153,6 +153,7 @@ export function seaShot(st, by, to, { d = 0, s: sail = 0, f = false, kin = false
   const a = st.fighters?.get(by), x = st.fighters?.get(to);
   if (!a || !x || by === to) return no('no-fighter');
   if (!a.zone || !x.zone) return no('zone');
+  if (wildStreetsBar(a, x)) return no('streets');   // PVP-SAFE-HIT: a harbour's safe streets, as a blow's
   if (a.down || x.down) return no('down');
   if (kin) return no('kin');
   const ships = shipsOf(st), me = ships.get(by), her = ships.get(to);

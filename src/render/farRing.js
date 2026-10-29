@@ -542,6 +542,9 @@ void main() {
   // through the haze - then closed to 1 at the rim (FAR-SEA1: the horizon's one law)
   outColor = vec4(mix(lit, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist)))), 1.0);   // BANTHA1: and the jungle's haze
 }`;
+// SHADER-EASE MOUNT-START (2026-10-29): what the constructor builds, started at page load (render/mountPrograms.js).
+/** @param {any} lane the installed lane (renderer.lightingLane), or null */
+export const farRingPrograms = (lane) => [/** @type {const} */ ([VS, lane ? lane.farRingFs : FS])];
 
 const FLAT_UP = new Float32Array([0, 1, 0]);
 const NO_SKY = new Float32Array(3);   // FAR-SEA1: a frame with no sky to reflect (uSeaLook 0 reads none)

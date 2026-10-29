@@ -119,6 +119,8 @@ void main() {
     outColor = vec4(col * a, a);
   }
 }`;
+// SHADER-EASE QUEUE-ORDER (2026-10-29): its first build, started in the play queue (render/playPrograms.js).
+export const NAVAL_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([VS, NAVAL_FS]))]);
 
 /** A deterministic draw for the pictures (the same bytes every boot). */
 function prng(seed) {

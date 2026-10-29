@@ -99,7 +99,8 @@ The zone word carries it; the referee holds the lock and says each flag to the r
 
 "flaggin is so yu dont hit a player when ur trying to kill a monster": an unflagged striker touches no player
 (`wildRef.js:"if (!a.flag) return"`), and the flag never shields its bearer; party, duel and guild kin stay unhittable as before. While the flag is down
-the Portal Stone works anywhere in the zone (`portalStoneHost.js:"const zoneRefused = (to = null) =>"`). Chat types no
+the Portal Stone works anywhere in the zone (`portalStoneHost.js:"const zoneRefused = (to = null) =>"`), its arrival
+too (`portalStoneHost.js:"teleportTo(g.dest, { zoneFree: !pvpFlagOn() })"`, AUDIT TAMRIEL-WIDE III F1). Chat types no
 capitals under the flag's Caps Lock (`capsFix.js:"export function capsFixKey(e, field) {"`). Skulls overhead
 come next. A departure: DFU has no flag.
 
@@ -132,7 +133,9 @@ replaces ZONE-GRACE's rise arm (`Wild-Zone.md`); an entry from outside, away and
 "only from ebterin from the edge", "if u tp in no safe passage": the game says the zone word's `ed` only when its last
 step outside was close and just now (`zoneEdge.js:"export const ZONE_EDGE = Object.freeze({ m: 60, ms: 5_000,"`), and
 the referee grants an entry's safe passage on it alone (`wildRef.js:"else if (!x.down && !rose && ed && now"`). A
-teleport, a dungeon left, a town's streets left (the streets say 0 to the referee) and a rise grant none. The relay has
+teleport, a dungeon or a building left, a town's streets left (they are in the zone, PVP-SAFE-HIT's `sf`) and a rise
+grant none: the edge reads the zone's pixel alone (`world.js:"zoneEdgeSee(wildHere(), player.pos, Date.now())"`, AUDIT
+TAMRIEL-WIDE III P2 - a shop's door had read as the edge). The relay has
 no map, so the word is the client's own, as the streets' peace is.
 
 ## PVP-BAR: health over a flagged player
@@ -275,9 +278,10 @@ coin where it fits, else a letter of credit for the whole - the trade window's o
 (`server-account/src/wild.js:"drop = takeWildDeath(save, w, keep, wt, { insured, bag: false, purse: false });"`). The purse's
 tenth and the letters' tenth went to the remains until PVP-NO-TENTH, below; the cart and the packs stay storage. A villain has no insurance:
 `pvpReward.js:"export const pvpInsuredFor ="` takes `villain`: "villian lose insurance" - a fallen whose kept meter is red holds no policy
-(`wild.js:"{ villain: isVillain(Number(row.villainy)) }"`). "Insurance cost 20%": a
+(`wild.js:"{ villain: isVillain(Number(row.villainy)), among: stored.items }"`). "Insurance cost 20%": a
 premium stays a fifth of `itemWorth` (`wildInsureLaw.js:"export const WILD_INSURE_DIVISOR = 5;"`), which counts the
-piece's price and its lines' worth. The service is acct214 (acct211 on its branch). A departure: DFU has no PvP.
+piece's price and its lines' worth - and, since INSURE-ALL (`Wild-Zone.md` 4b), the item maker's gold, on every piece of
+gear. The service is acct214 (acct211 on its branch). A departure: DFU has no PvP.
 
 ## PVP-RISE: a death's wait like PvE's
 
@@ -311,3 +315,43 @@ the last roll (`wild.js:"return parse(fall?.tk)?.last ? { ...paid, last: true } 
 (`wildZone.js:"lastGold: (n) =>"`, `wildZone.js:"deathLast: (name, gold) =>"`). A held record, a REPEAT-SHIELD kill
 and a room that signs no collect take nothing. A foe's death keeps everything, as FOE-KEEPS says. The service is
 acct215. A departure: DFU has no PvP.
+
+## PVP-GUARDS: the watch hunts a villain in town
+
+"Guards constantly come after a villain", "like my self coming for me": while I am red on the villain meter in a
+settlement's streets of the open zone, the watch sends two guards at once, one more each 30 s, six at most
+(`villainHunt.js:"export const VILLAIN_HUNT = Object.freeze({ first: 2, stepMs: 30_000, max: 6, taken: 0.05 });"`). Each comes on
+the watch's ring at my level, my mirror turned to a guard's use (`villainHunt.js:"export function villainMirror(villain, { skill = skillValue, stat = liveStat } = {}) {"`):
+every weapon skill my best attack skill (any weapon, Hand-to-Hand, Archery or Destruction), my Critical Strike, and
+Dodging the best of my Dodging, Restoration and Alteration, since a guard casts nothing. DFU has no Block skill: a
+shield's block reads six attributes, and each of mine that beats the guard's own is its. It keeps its own kit.
+
+"they have 95 % resistance": a hunter takes 5% of every hit, at least 1, at the watch's one damage door
+(`cityGuards.js:"damage = hunterTaken(g.entity, damage);"`). It is no crime's watch, so the crime's clearing does not
+send it away; once I leave the streets, fall or am red no more, every hunter walks away
+(`pvpGuardsHost.js:"export function createPvpGuardsHost("`), as DFU's watch does at the location's edge.
+
+"a villain can always take damage in a town": the streets keep no peace for a villain
+(`villainHunt.js:"export const peaceFor = "`). Red, my word on the zone stays 1 there, and a red body there is fair to
+every door of mine. A player in the streets is at peace, and strikes a villain alone (PVP-SAFE-HIT, below). Guards are
+this client's NPCs, so the hunt is the client's, on the meter the relay already says (`wref` `vil`); a villain who
+enters the zone in a town is hunted from its first step out of the streets. THE FOUR HOSTS: `world.js` wired;
+`exterior.js`, `worldModes.js` (a building) and `dungeonContext.js` hunt no one. A departure from
+PlayerEntity.SpawnCityGuards (`PlayerEntity.cs:625-694`): DFU sends 2-5 once for a crime, at my level plus 3-6, every
+skill level x 5 + 30, and its watch resists nothing.
+
+## PVP-SAFE-HIT: from the streets, a villain alone
+
+"Let them hit them jit ge that back in safezone": in a settlement's streets of the open zone, a player who is no villain
+may strike a red villain, and nobody may strike that player there. My word on the zone is 2 there
+(`world.js:"online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, playerEntity.health <= 0,"`), said as 1 with
+`sf` (`online.js:"const sf = zone === 1 && this._wildStreets"`). The referee holds both sides
+(`wildRef.js:"export function wildStreetsBar(a, t) {"`): no blow lands on a fighter in the streets who is no villain on
+the meter it keeps, and one from there lands on a villain alone. A villain who says the streets is struck all the same.
+The sea's guns read the same bar (`seaRef.js:"if (wildStreetsBar(a, x)) return no('streets');"`).
+
+My doors agree: from the streets a red body alone is fair
+(`world.js:"&& streetsStrike(zoneSafe(), pvpFlag.skullOf(peerId) === 'red');"`), and a blow there calls no watch
+(`world.js:"if (!inTown || !wildHere() || zoneSafe()) return;"`). The safe line says so (`zoneSafe.js:"get enter()"`).
+A relay before world283 does not read `sf`, so it hears 0 there, as before
+(`wire.js:"export const WILD_STREETS_RELAY_MIN = 283;"`). Relay world283. A departure: DFU has no PvP.

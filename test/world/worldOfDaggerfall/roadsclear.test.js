@@ -129,6 +129,6 @@ test('ROADS-CLEAR by source: the world host asks the site at its pick, each piec
   assert.match(w, /const _roadsNow = terrainGen\.roads\(\);/);
   assert.match(w, /if \(anchor && _nearRoad\(\[anchor\.x, anchor\.y, anchor\.z\], \(hit\.spacing \?\? 0\) \+ CAMP_ROAD_CLEAR_M\)\) anchor = null;/, 'the camp ring clear of the road');
   assert.match(w, /if \(spot && _nearRoad\(\[spot\.x, spot\.y, spot\.z\], CAMP_ROAD_CLEAR_M\)\) spot = null;/, 'and each member');
-  assert.match(w, /const _nearRoad = \(pos, radiusM\) => \{\n\s*const net = terrainGen\.roads\(\);\n\s*if \(!net\) return false;\n\s*const wc = state\.worldCoords\(pos\);\n\s*const p = worldCoordToMapPixel\(wc\.x, wc\.z\);\n\s*const o = mapPixelToWorldCoords\(p\.x, p\.y\);\n\s*return pointNearPath\(net, p\.x, p\.y, wc\.x - o\.x, wc\.z - o\.z, radiusM \* UNITS_PER_METRE\);/,
-    'a scene position into its pixel\'s own frame, the network\'s units');
+  assert.match(w, /const _nearRoad = \(pos, radiusM\) => \{\n\s*const net = terrainGen\.roads\(\);\n\s*if \(!net\) return false;\n\s*const wc = state\.worldCoords\(pos\);\n\s*const p = worldCoordToMapPixel\(wc\.x, wc\.z\);\n\s*const o = mapPixelToWorldCoords\(p\.x, p\.y\);\n\s*return nearRoad\(net, p\.x, p\.y, wc\.x - o\.x, wc\.z - o\.z, radiusM \* UNITS_PER_METRE\);/,
+    'a scene position into its pixel\'s own frame, the network\'s units - PIN MOVED (AUDIT TAMRIEL-WIDE C2): past the Bay the curves\' band');
 });

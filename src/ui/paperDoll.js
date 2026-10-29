@@ -44,6 +44,7 @@ import { packImgTexture } from './packArt.js';   // OVH2: a worn UI pack's backd
 import { racialPaperDollBackground, racialOverrideHeadArt, racialSuppressPaperDollBodyAndItems } from '../systems/vampirism.js';   // V5: the curse art laws, both curses' one switch
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { getBool } from '../systems/settings/settings.js';   // UI3: EnableGeographicBackgrounds; ChildGuard/PlayerNudity gates the welds
+import { isProvinceRegion } from '../formats/mapsTables.js';   // AUDIT TAMRIEL-WIDE C6
 import { EQUIP_SLOTS, equipTableOf, getItemHands, ITEM_HANDS } from '../systems/equip.js';
 import { getTemplate, paperdollOrder } from '../characters/paperdoll/paperdoll.js';
 import { applyDyeToIndex, DYE_TARGETS, DYE_COLORS, CLOTHING_DYES } from '../characters/dyes.js';
@@ -120,11 +121,14 @@ export function paperDollBackground(raceBackground, {
   inTown = false, inDungeon = false, inGraveyard = false,
 } = {}) {
   if (!enabled) return raceBackground;
-  if (region < 0 || region >= regionCount || region >= REGION_BACKGROUND_CHARS.length) return raceBackground;
+  // DEPARTURE (AUDIT TAMRIEL-WIDE C6): a province past the Bay (62..70) takes the town's, dungeon's and graveyard's
+  // backdrops, which name no region; on its open road the race's, as DFU gives any region its table lacks
+  const bay = region >= 0 && region < regionCount && region < REGION_BACKGROUND_CHARS.length;   // BAY-OWN: the Bay's region backdrops; a province takes the context's (C6)
+  if (!bay && !isProvinceRegion(region)) return raceBackground;
   if (inTown) return CONTEXT_BG.town;
   if (inDungeon) return CONTEXT_BG.dungeon;
   if (inGraveyard) return CONTEXT_BG.graveyard;
-  return `SCBG0${REGION_BACKGROUND_CHARS[region]}I0.IMG`;
+  return bay ? `SCBG0${REGION_BACKGROUND_CHARS[region]}I0.IMG` : raceBackground;
 }
 
 // AUDIT 17e F32/F33: clampArmorVariant + the armor archive rule

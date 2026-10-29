@@ -10,7 +10,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { pathsDataPoint, MP_WORLD_UNITS, N, NE, E, SE, S, SW, W, NW } from './pathData.js';
 import { MAP_W, MAP_H } from './roadNetwork.js';
-import { PATH_HALF_WIDTH, UNITS_PER_METRE } from './roadClearance.js';
+import { PATH_HALF_WIDTH, UNITS_PER_METRE, pointNearPath } from './roadClearance.js';
 import { arenaRoadByte, arenaJoinByte } from '../arenaRoads.js';   // TESA4: Arena's roads past the Bay; TESA5: their joins on it
 import { curveDistance, CURVE_DIM } from './roadCurves.js';   // VOYAGER2: past the Bay the band is a curve's
 
@@ -65,4 +65,15 @@ export function roadRoom(net, px, py, x, z, reach) {
     }
   }
   return room;
+}
+
+/** ROADS-CLEAR on the whole map (AUDIT TAMRIEL-WIDE C2): is a pixel-local point (native units) within `radius` (native)
+ *  of a road's or a track's band? On the Bay pointNearPath's straight arms, as ever; past it the curves' band, which
+ *  pointNearPath never asks (OW-WOD-LAG clamps it to the Bay's pixels), so a camp stood on a road there.
+ *  @param {object|null} net @param {number} px @param {number} py @param {number} x @param {number} z @param {number} radius */
+export function nearRoad(net, px, py, x, z, radius) {
+  if (!net) return false;
+  if (px >= 0 && py >= 0 && px < MAP_W && py < MAP_H) return pointNearPath(net, px, py, x, z, radius);
+  const reach = radius / UNITS_PER_METRE;
+  return roadRoom(net, px, py, x / UNITS_PER_METRE, z / UNITS_PER_METRE, reach) < reach;
 }

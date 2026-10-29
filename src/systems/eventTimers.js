@@ -229,7 +229,7 @@ export function eventTimerRows(src) {
     // the soonest to matter: one under way (to its end), else the next to start
     const next = elsewhere.reduce((a, r) => ((r.startMs <= now ? r.endMs : r.startMs) < (a.startMs <= now ? a.endMs : a.startMs) ? r : a));
     const more = elsewhere.length - 1;
-    const rest = more ? `${more} more today across the Iliac Bay` : null;
+    const rest = more ? `${more} more today across Tamriel` : null;
     const under = next.startMs <= now;
     const id = `raids:elsewhere`;
     const title = home ? `Raids elsewhere: ${next.name}` : `Next raid: ${next.name}`;

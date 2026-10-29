@@ -43,7 +43,7 @@
 // the mod's materials are unlit, and what they write is what it shows.
 // ═══════════════════════════════════════════════════════════════════
 
-import { buildProgram } from './glProgram.js';
+import { buildProgram, startPrograms } from './glProgram.js';
 import { FOG_GLSL } from './fogGlsl.js';
 import { COLUMN_GLSL } from './columnGlsl.js';   // DW-F: the column's share, one home (the renderer's billboards take it too)
 import { WATER_LAYER_UNITS } from './waterSurface.js';   // FIELD BUGS 2026-09-29 (the sea) #4: the top's place in the sea's stack
@@ -407,6 +407,13 @@ void main() {
 
 const locs = (gl, p, names) => Object.fromEntries(names.map((n) => [n, gl.getUniformLocation(p, n)]));
 
+// SHADER-EASE WARM-POLL (2026-10-29): the pairs _ensure builds, in its order - what the warm starts ahead of the build,
+// so the seven reads after it wait on nothing (warmSteps; render/glProgram.js startPrograms).
+export const DEEP_WATERS_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([
+  [FLOOR_VS, FLOOR_FS], [SURFACE_VS, TOP_FS], [SURFACE_VS, TOP_FAR_FS], [SURFACE_VS, UNDERSIDE_FS],
+  [SKY_FOG_VS, SKY_FOG_FS], [DECOR_VS, DECOR_FS], [SKY_FOG_VS, UNDER_LOOK_FS],
+]));
+
 /** The pass: one per renderer, built on first use. */
 export class DeepWatersRenderer {
   constructor(renderer) {
@@ -415,6 +422,12 @@ export class DeepWatersRenderer {
     this._programs = null;
     this._fwd = new Float32Array(3);
     this._stream = null;   // DW-E3: the moving billboards' streamed buffers
+  }
+
+  /** The warm's one named step (render/warmPrograms.js): the seven started, built once the driver is done - and
+   *  stood down when a draw built them first. */
+  warmSteps() {
+    return [{ start: () => startPrograms(this.gl, DEEP_WATERS_PROGRAMS), run: () => { this._ensure(); }, need: () => !this._programs }];
   }
 
   _ensure() {

@@ -167,7 +167,7 @@ export const guildRealmGoldText = (hallGold, treasury, hall = false) => (Number.
 /** GUILD3c: A GUILD IN ONE LOOK, for a character in none - what one is for, before the invitations and the founding. */
 export const GUILD_PRIMER_LINES = Object.freeze([   // AUDIT GUILD3 W10: one reading each, and no town promised that is no seat
   'Guild members share a gold treasury, a silver treasury and a vault for items. A guild can also buy a hall under its own arms.',
-  'Together they can hold seats of the Iliac Bay: a palace\'s or a crown\'s Charter, contested from that town\'s Notice Board.',
+  'Together they can hold seats across Tamriel: a palace\'s or a crown\'s Charter, contested from that town\'s Notice Board.',
 ]);
 /** GUILD3c: where the rest of a guild is run - said on the Overview, so a member is never left to find the boards. */
 export const GUILD_ELSEWHERE_TEXT = 'Seats and sieges are run from the Seat tab of a seat town\'s Notice Board, where you can also read its Chronicle. Guild writs and contracts are posted from the Work tab of any Notice Board.';   // AUDIT GUILD3 W9: a Chronicle is read, never run

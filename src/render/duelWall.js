@@ -96,6 +96,8 @@ void main() {
   float light = (0.07 + 0.45 * lines + 0.22 * bands + 0.55 * sweep) * foot * top * shimmer;
   o = vec4(dwWaterFogAdd(uColor * light * uAlpha * fogFactorAt(vWorld), vWorld), 1.0);   // DW-C: an added glow's share of the carved sea's distance fog
 }`;
+// SHADER-EASE MOUNT-START (2026-10-29): what the constructor builds, started at page load (render/mountPrograms.js).
+export const DUEL_WALL_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([DUEL_WALL_VS, DUEL_WALL_FS]))]);
 
 function mat4Multiply(out, a, b) {
   for (let c = 0; c < 4; c++) {

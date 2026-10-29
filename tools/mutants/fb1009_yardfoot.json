@@ -74,8 +74,8 @@
   {
     "name": "FB1009-the-yard-made-without-its-ground",
     "file": "src/scenes/homeYards.js",
-    "old": "lot: yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects)",
-    "new": "lot: yardLot(frame.at, frame.box)",
+    "old": ": yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects));",
+    "new": ": yardLot(frame.at, frame.box));",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "FB1009-the-host-records-no-ground",
     "file": "src/scenes/pixelBuild.js",
-    "old": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]] });",
-    "new": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]] });",
+    "old": "pixelHomeFrames.set(homeKey, { at, box: [...box], rects, type:",
+    "new": "pixelHomeFrames.set(homeKey, { at, box: [...box], type:",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
     ]

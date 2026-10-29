@@ -297,12 +297,12 @@ test('PROF12 pages: Alchemy and Enchanting practised on the Professions page - t
       'Alchemy: Chameleon Form, Shadow Form, Cure Poisonrank 55', 'Alchemy: Invisibilityrank 70', 'Cooking: Feast of the Hearthrank 70', 'Alchemy: Purificationrank 90',
     ]);
     assert.match(page.text(), /Brew on the Crafting page at an alchemy station/);   // VOICE1 (PIN MOVED): the same law in plain words; PIN MOVED (PLAIN-TEXT)
-    assert.doesNotMatch(page.text(), /not practiced in the Bay yet/);
+    assert.doesNotMatch(page.text(), /not practiced yet/);   // PIN MOVED (AUDIT TAMRIEL-WIDE D6): the line names no place
     page.buttonStarting('Enchanting').onclick();
     page.draw();
     assert.match(page.text(), /Enchanting rises as you break crafted pieces into Arcane Essence at an enchanting station/);   // VOICE1 (PIN MOVED): the same law in plain words; PIN MOVED (PLAIN-TEXT)
     assert.match(page.text(), /From Journeyman on, the item maker costs you less\./);   // VOICE1 (PIN MOVED); PIN MOVED (PLAIN-TEXT)
-    assert.doesNotMatch(page.text(), /not practiced in the Bay yet/);
+    assert.doesNotMatch(page.text(), /not practiced yet/);   // PIN MOVED (AUDIT TAMRIEL-WIDE D6): the line names no place
   } finally { page.done(); setProfessionsPages(null); }
 });
 

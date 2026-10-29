@@ -46,7 +46,12 @@ test('UI3: the region table is DFU\'s 62 - one per Daggerfall region - and an ou
   // The guard runs BEFORE the town/dungeon arms, so a bad region gives
   // the race's background even standing in a town (:215-216).
   assert.equal(paperDollBackground(RACE, { enabled: true, region: -1, inTown: true }), RACE);
-  assert.equal(paperDollBackground(RACE, { enabled: true, region: 62, inTown: true }), RACE);
+  // PIN MOVED (AUDIT TAMRIEL-WIDE C6, a DEPARTURE): 62..70 are the provinces past the Bay - a town's backdrop there, the
+  // race's on the open road; past the provinces the race's even in a town, as DFU's guard gives
+  assert.equal(paperDollBackground(RACE, { enabled: true, region: 62, inTown: true }), 'SCBG04I0.IMG');
+  assert.equal(paperDollBackground(RACE, { enabled: true, region: 64, regionCount: 62, inDungeon: true }), paperDollBackground(RACE, { enabled: true, region: 23, inDungeon: true }), 'Skyrim\'s dungeon is a dungeon\'s');
+  assert.equal(paperDollBackground(RACE, { enabled: true, region: 64, regionCount: 62 }), RACE, 'its open road the race\'s');
+  assert.equal(paperDollBackground(RACE, { enabled: true, region: 71, inTown: true }), RACE);
   assert.equal(paperDollBackground(RACE, { enabled: true, region: 5, regionCount: 3 }), RACE, 'the READER\'s count bounds it too');
 });
 

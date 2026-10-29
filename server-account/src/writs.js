@@ -39,7 +39,7 @@
 import { accountKind, displayName, mintId, overRate } from './accounts.js';
 import { guildActorOf } from './guilds.js';
 import { marksOpenFor, balanceOf, guildBalanceOf } from './marks.js';
-import { profOpenFor, spendStatements, spendableSql, storeOf } from './professions.js';
+import { profOpenFor, spendStatements, spendableSql, storeOf, craftedBySql } from './professions.js';
 import { CHAR_ID_RE } from './service.js';
 import { realmHoldOf, realmActFirst, mustChange, dropIfUnnamed, recordMovedOf, dropObjects } from './realm.js';   // CRAFT-HOLD: a commission filled hands a crafted piece to another player
 import { prepareCraftedPiece, pieceComingBack } from './craftedPiece.js';   // INT19: and the piece leaves the crafter's realm record
@@ -262,11 +262,11 @@ async function eligibleHere(db, me, region, nowS) {
       JOIN products p ON p.owner = ?1 AND p.listed = 0 AND p.recipe = c.recipe AND (c.quality IS NULL OR p.quality >= c.quality)
         AND COALESCE(p.bought_with, '') != 'gold'   -- GOLD-MARKET: a piece bought with gold fills no Drakes commission
     WHERE c.crafter = ?1 AND c.region = ?2 AND c.state = 'open' AND c.expires_at > ?3
-      AND EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND (provenance = p.provenance OR provenance2 = p.provenance))
+      AND p.provenance IN ${craftedBySql('?1')}   -- CRAFT-SET: the crafts read once, never once a piece
       AND NOT EXISTS (SELECT 1 FROM market_listings WHERE provenance = p.provenance AND state = 'open')
       AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = p.provenance AND state = 'open')
       AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = p.provenance AND collected = 0)
-      AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = p.provenance)
+      AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = +p.provenance)   -- DECOR-SEEK: `+` lets idx_home_decor_pv be searched
     ORDER BY p.quality, p.provenance LIMIT ${WRIT_SHOWN * 4}`).bind(me, region, nowS).all();
   const out = new Map();
   for (const r of results) {
