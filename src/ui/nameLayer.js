@@ -44,6 +44,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no other players and no chat. Ledger A row (ONLINE).
 import { skullSrc, skullGlow } from './pvpSkull.js';   // PVP-SKULL
+import { nameConeTarget, nameConeStep } from './nameCone.js';   // PVP-CONE
 import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // the enhanced face, with FIX-D's five ahead of it
 import { NAME_GAP_PX, namePixelSize, nameViewportScale } from '../net/remotePlayers.js';
 import { titleBadge, glyphBadges, glyphSvgNode, cssRgba, titlePaint, TITLE_PAINT_KEYS } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
@@ -348,7 +349,7 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
     return { node, bubble, skull, skullOf: '', bar, barS, barH, barOf: '', title, tag, lv, name, guild, glyphs, house, ribbon, worn: null, titled: null, inked: undefined, banded: '', armed: '',
       // PERF-NAMES1: what this tag's DOM was last told, kept here and compared here - a read of `style.x` or
       // `textContent` asks the browser to serialise the value back, a cost a frame for every label
-      at: null, size: null, lvOf: undefined, gtOf: undefined, houseOf: undefined, said: null, nameText: null, titleText: null, bubbleOn: null, bubbleText: null, bubbleAlpha: null };   // HERALDRY-SHOWN: `armed`, the frame as written   // SEASON1 part two: `banded`, the ribbon as written   // SHADOW-FANG: `titled`, the title whose paint is on; AUDIT A10: `inked`, the name's colour as written
+      at: null, size: null, lvOf: undefined, gtOf: undefined, houseOf: undefined, said: null, nameText: null, titleText: null, bubbleOn: null, bubbleText: null, bubbleAlpha: null, cone: NaN, coneAt: NaN, coneAlpha: null };   // HERALDRY-SHOWN: `armed`, the frame as written   // SEASON1 part two: `banded`, the ribbon as written   // SHADOW-FANG: `titled`, the title whose paint is on; AUDIT A10: `inked`, the name's colour as written
   };
 
   /** ACC3: the glyph run, REBUILT ONLY WHEN IT CHANGES. A glyph set is
@@ -458,6 +459,9 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
         // edge lands the gap above it. PERF-NAMES1: the anchor rides the TRANSFORM (the sheet's own lift after it) -
         // the same whole pixels `left`/`top` held, and no layout for a label that only moved.
         put(tag, 'at', `translate(${Math.round(p.x)}px, ${Math.round(p.y - NAME_GAP_PX)}px) translate(-50%, -100%)`, (v) => { tag.node.style.transform = v; });
+        // PVP-CONE (ui/nameCone.js): the whole tag - skull, bars and bubble with it - near the crosshair, eased; a new tag starts where it stands
+        tag.cone = nameConeStep(tag.cone, nameConeTarget(p), t - tag.coneAt); tag.coneAt = t;
+        put(tag, 'coneAlpha', tag.cone.toFixed(2), (v) => { tag.node.style.opacity = v === '1.00' ? '' : v; tag.node.style.visibility = v === '0.00' ? 'hidden' : ''; });
         put(tag, 'size', `${namePixelSize(p.scale ?? 1, vp, hudScale).toFixed(1)}px`, (v) => { tag.node.style.fontSize = v; });
         // PERF-NAMES1: the words are worked out when the stamp they come from changes, not every frame
         if (tag.lvOf !== p.lv) { tag.lvOf = p.lv; setText(tag.lv, renownText(p.lv) ?? ''); }   // RENOWN1: "12" in its box, or nothing

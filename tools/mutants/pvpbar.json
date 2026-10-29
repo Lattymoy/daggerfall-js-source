@@ -173,8 +173,8 @@
   {
     "name": "PVP-BAR-the-page-bar-unworn",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "return { ...shown, skull: k, ...(bar ? { bar } : {}) };",
-    "new": "return { ...shown, skull: k };",
+    "old": "skull: k, ...(bar ? { bar } : {}),",
+    "new": "skull: k,",
     "tests": [
       "test/net/pvpbar.test.js"
     ]

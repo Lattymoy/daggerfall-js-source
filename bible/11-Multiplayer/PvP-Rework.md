@@ -148,3 +148,16 @@ skull and bar (`pvpFlagHost.js:"const shown = !q ||"`).
 "So a hidden player u only see the skull and hp bar", "They always have some body just fiant": a Chameleon or
 Invisible player whose skull is gold is drawn faint, with skull and bar and no name
 (`pvpFlagHost.js:"export const PVP_FIGHT_VEIL = Object.freeze({"`). A departure: DFU has no PvP.
+
+## PVP-CONE: names near the crosshair
+
+"Was thinking we needed to make them not visible less u look within a angle", and "Yes" to everywhere: another player's
+tag - its skull, its bars and its bubble with it - shows only within about 20 degrees of the crosshair, full inside 17
+and gone past 23 (`nameCone.js:"export const NAME_CONE = Object.freeze({ deg: 20, band: 6, fadeMs: 250 });"`). Each name
+point carries its angle off the camera's forward (`remotePlayers.js:"off: nameOffDeg(view, head)"`), and the DOM layer
+eases the whole tag toward the cone's answer over 250 ms, so a tag never pops (`nameLayer.js:"tag.cone = nameConeStep("`).
+
+My party and my foe - a peer I struck or was struck by within the flag's lock - always show
+(`pvpFlagHost.js:"const foeOf = (id) =>"`), passed through the name mask the host already wore. The client draws it;
+the relay sends every name as before. The classic bitmap face, which only headless probes draw, keeps every name. The
+Overworld's travel marks are left as they were. A departure: DFU has no player names.
