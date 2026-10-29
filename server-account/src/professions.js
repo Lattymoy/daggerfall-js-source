@@ -245,6 +245,11 @@ const carriedSql = (p, c, m) => `COALESCE((SELECT SUM(qty) FROM prof_carried WHE
  *  no writ, no guild and no sale). `m` the material's SQL, `p` and `c` the player's and the character's. */
 const originsSql = (list) => list.map((o) => `'${o}'`).join(', ');
 export const spendableSql = (p, c, m) => `COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ${p} AND char_id = ${c} AND material = ${m} AND origin IN (${originsSql(WRIT_ORIGINS)})), 0)`;
+/** CRAFT-SET (OVERLOAD-EASE 3, 2026-10-29): every provenance player `p` crafted (a craft's first piece or its second), as
+ *  an IN list. Uncorrelated, so SQLite reads it once a statement - a correlated `EXISTS (... provenance = x OR provenance2
+ *  = x)` scanned the player's every craft for each piece, and the Work tab's eligible read cost ~6M rows a run. */
+export const craftedBySql = (p) => `(SELECT provenance FROM prof_crafts WHERE player = ${p}
+    UNION ALL SELECT provenance2 FROM prof_crafts WHERE player = ${p} AND provenance2 IS NOT NULL)`;
 /** AUDIT BAG-CRAFT A1: THE UNITS A STATION MAY SPEND - a craft, a smelt, a brew, a temper: own, bought and loose, never
  *  gold's (bagLaw.js STATION_ORIGINS); spent by `workStatements`, loose first. */
 export const workableSql = (p, c, m) => `COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ${p} AND char_id = ${c} AND material = ${m} AND origin IN (${originsSql(STATION_ORIGINS)})), 0)`;

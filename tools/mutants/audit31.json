@@ -262,7 +262,7 @@
   {
     "name": "AUDIT31-svc-eligible-bought",
     "file": "server-account/src/writs.js",
-    "old": "      AND EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND (provenance = p.provenance OR provenance2 = p.provenance))",
+    "old": "      AND p.provenance IN ${craftedBySql('?1')}   -- CRAFT-SET: the crafts read once, never once a piece",
     "new": "      AND ?1 = ?1",
     "tests": [
       "test/net/audit31_service.test.js"
