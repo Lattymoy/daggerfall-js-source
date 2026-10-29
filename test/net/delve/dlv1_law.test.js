@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import {
   DELVE_KINDS, DELVE_KIND_NAMES, DELVE_FAMILIES, delveKind, DELVE_PARTY_MAX, delveParty, DELVE_PACE_MPS, delveErrandMs,
   DELVE_PRESENT_MS, DELVE_LEAVE_MS, DELVE_LET_GO_MS, DELVE_EARN_MS, DELVE_ORPHAN_MS,
-  HOLD_WAVES, HOLD_GATHER_MS, HOLD_BREATH_MS, HOLD_WAVE_MAX_MS, HOLD_WAVE_MAX, holdWaveSize, HOLD_CAPTAIN_MIN_MS, holdCaptainTraits,
+  HOLD_WAVES, HOLD_GATHER_MS, HOLD_BREATH_MS, HOLD_WAVE_MAX_MS, HOLD_WAVE_MAX, holdWaveSize, HOLD_CAPTAIN_MIN_MS, HOLD_CAPTAIN_MAX_MS, holdCaptainTraits,
   litanyCount, LITANY_RING_M, LITANY_STAND_M, LITANY_SHOW_STEP_MS, litanyShowMs, LITANY_WAKE, litanyPlates, litanyOrder, holdGates,
   DELVE_WARD_PAD_M, inWard, plateAt, delvePlanHash, DP, newDelveLedger, delveWon, delveInWard, delveFoeOwner, stepDelve,
   foldDelveWord, delvePhaseLeft, delveState,
@@ -38,22 +38,22 @@ test('DLV1 THE PARTY AND THE PACE: one to eight; the delve pace is a weak charac
   assert.deepEqual([0, -5, 1, 62.658].map(delveErrandMs), [1500, 1500, 1660, 11500]);
 });
 
-test('DLV1 THE CLOCKS: present 15 s after a word, the Hold failed at 30 s of nobody in the ward, a puzzle let go at 60 s of silence, earned within 15 s of the win, the foes\' machine believed 10 s (mutants: each moved)', () => {
+test('DLV1 THE CLOCKS: present 15 s after a word, the Hold failed at 30 s of nobody in the ward, a puzzle let go at 60 s of silence, earned within 15 s of the win, the foes\' machine believed 10 s; the captain\'s fall believed a kill\'s least time after it stands, its time 5 min (mutants: each moved)', () => {
   assert.deepEqual([DELVE_PRESENT_MS, DELVE_LEAVE_MS, DELVE_LET_GO_MS, DELVE_EARN_MS, DELVE_ORPHAN_MS], [15_000, 30_000, 60_000, 15_000, 10_000]);
-  assert.deepEqual([HOLD_WAVES, HOLD_GATHER_MS, HOLD_BREATH_MS, HOLD_WAVE_MAX_MS, HOLD_WAVE_MAX, HOLD_CAPTAIN_MIN_MS], [3, 4_000, 5_000, 90_000, 12, 20_000]);
+  assert.deepEqual([HOLD_WAVES, HOLD_GATHER_MS, HOLD_BREATH_MS, HOLD_WAVE_MAX_MS, HOLD_WAVE_MAX, HOLD_CAPTAIN_MIN_MS, HOLD_CAPTAIN_MAX_MS], [3, 4_000, 5_000, 90_000, 12, STAR_KILL_MIN_MS, 300_000]);
   assert.deepEqual([LITANY_RING_M, LITANY_STAND_M, LITANY_SHOW_STEP_MS, LITANY_WAKE, DELVE_WARD_PAD_M], [2.5, 1.2, 1_000, 2, 2]);
 });
 
-test('DLV1 THE HOLD\'S NUMBERS: three for one, two more a member, one more a wave, never past twelve; the captain one boss trait, two in an Elite or Abyss dungeon (mutants: a member counted three; the wave\'s step dropped; the cap lifted; the Abyss a regular)', () => {
+test('DLV1 THE HOLD\'S NUMBERS: three for one, two more a member, one more a wave, never past twelve; the captain one boss trait, two in an Elite dungeon - an Abyss dungeon stands no site, so its tier is no case (mutants: a member counted three; the wave\'s step dropped; the cap lifted; the Elite a regular)', () => {
   const t = (w, n) => holdWaveSize(w, n);
   assert.deepEqual([t(1, 1), t(2, 1), t(3, 1), t(1, 2), t(2, 2), t(1, 4), t(3, 4), t(1, 5), t(3, 5), t(1, 8), t(3, 8)], [3, 4, 5, 5, 6, 9, 11, 11, 12, 12, 12]);
   assert.equal(t(1, 0), 3, 'nobody counted is one');
   assert.equal(t(0, 1), 3, 'no wave before the first');
-  assert.deepEqual(['regular', 'elite', 'super', undefined].map(holdCaptainTraits), [1, 2, 2, 1]);
+  assert.deepEqual(['regular', 'elite', 'super', undefined].map(holdCaptainTraits), [1, 2, 1, 1]);
 });
 
-test('DLV1 THE LITANY\'S NUMBERS: four plates, five in an Elite or Abyss dungeon; the show a second a plate and a second more (mutants: five everywhere; the held step dropped)', () => {
-  assert.deepEqual(['regular', 'elite', 'super', undefined].map(litanyCount), [4, 5, 5, 4]);
+test('DLV1 THE LITANY\'S NUMBERS: four plates, five in an Elite dungeon; the show a second a plate and a second more (mutants: five everywhere; the held step dropped)', () => {
+  assert.deepEqual(['regular', 'elite', 'super', undefined].map(litanyCount), [4, 5, 4, 4]);
   assert.deepEqual([4, 5].map(litanyShowMs), [5_000, 6_000]);
 });
 
@@ -113,17 +113,18 @@ test('DLV1 THE PLAN\'S HASH: every site\'s index, kind, heart, radius and vault 
   assert.equal(delvePlanHash([]), delvePlanHash(null));
 });
 
-test('DLV1 A NEW LEDGER: idle, the starter its owner, the Litany\'s order drawn, nothing moved; a word from outside the party or outside the ward starts nothing (mutants: a stranger counted; a word from the corridor counted)', () => {
+test('DLV1 A NEW LEDGER: idle, the starter its owner, the Litany\'s order drawn, nothing moved; a word from outside the party or outside the ward starts nothing, and a ledger never woken lets go after 60 s with no word from the ward (mutants: a stranger counted; a word from the corridor counted; an idle ledger kept for ever)', () => {
   const led = newDelveLedger(site(), 'A', 7, T0);
   assert.equal(led.p, DP.idle); assert.equal(led.own, 'A'); assert.deepEqual(led.order, []); assert.equal(led.k, 0);
   const lit = newDelveLedger(site({ kind: 'litany', i: 1 }), 'A', 7, T0);
   assert.equal(lit.k, 4); assert.deepEqual(lit.order, litanyOrder(7, 1, 4));
   assert.deepEqual(foldDelveWord(led, 'X', 'x', word(), { party: false, inWard: true, nowMs: T0 }), []);
-  assert.deepEqual(led.a, {}, 'a stranger leaves no trace');
+  assert.equal(Object.keys(led.a).length, 0, 'a stranger leaves no trace');
   assert.deepEqual(say(led, 'A', word(), T0, { inWard: false }), []);
   assert.equal(led.p, DP.idle, 'heard from the corridor: nothing starts');
   assert.equal(led.a.A.last, T0); assert.equal(led.a.A.inAt, -Infinity);
-  assert.deepEqual(stepDelve(led, T0 + 600_000), [], 'idle stays idle however long');
+  assert.deepEqual(stepDelve(led, T0 + DELVE_LET_GO_MS - 1), [], 'idle, and kept');
+  assert.deepEqual(stepDelve(led, T0 + DELVE_LET_GO_MS), [{ k: 'let' }], 'never woken in 60 s: let go - the site is free');
   assert.deepEqual(foldDelveWord(led, 'A', 'a', null, { party: true, inWard: true, nowMs: T0 }), [], 'no word, nothing');
   assert.deepEqual(DP, { idle: 0, gather: 1, wave: 2, breath: 3, captain: 4, show: 5, work: 6, won: 7 });
 });
@@ -166,15 +167,15 @@ test('DLV1 THE HOLD, WHOLE: the ward rises, three waves each cleared no sooner t
   assert.deepEqual(say(led, 'A', word({ o: 1, kw: 3, kn: 7, wc: 3 }), t), [{ k: 'breath', w: 3 }]);
   assert.deepEqual(say(led, 'A', word({ o: 1 }), t + HOLD_BREATH_MS), [{ k: 'captain', traits: 1 }], 'three waves, then the captain');
   t += HOLD_BREATH_MS;
-  assert.equal(delvePhaseLeft(led), -1, 'the captain runs no clock');
-  say(led, 'A', word({ o: 1 }), t + 10_000);
-  assert.deepEqual(say(led, 'A', word({ o: 1, cf: 1 }), t + HOLD_CAPTAIN_MIN_MS - 10), [], 'fallen too soon');
+  assert.equal(delvePhaseLeft(led), HOLD_CAPTAIN_MAX_MS, 'the captain\'s own time runs');
+  assert.deepEqual(say(led, 'A', word({ o: 1, cf: 1 }), t + HOLD_CAPTAIN_MIN_MS - 10), [], 'fallen too soon: faster than any blow');
   assert.equal(delveWon(led), false);
-  say(led, 'C', word(), t + 1_000, { inWard: false });
-  const ev = say(led, 'A', word({ o: 1, cf: 1 }), t + HOLD_CAPTAIN_MIN_MS);
+  say(led, 'C', word(), t + 5_000, { inWard: false });
+  for (let s = 5_000; s < 20_000; s += 5_000) say(led, 'A', word({ o: 1 }), t + s);
+  const ev = say(led, 'A', word({ o: 1, cf: 1 }), t + 20_000);
   assert.deepEqual(ev, [{ k: 'won', earned: ['A'] }], 'B silent past 15 s, C never in the ward: neither earned');
-  assert.equal(delveWon(led), true); assert.equal(led.wonAt, t + HOLD_CAPTAIN_MIN_MS);
-  assert.deepEqual(say(led, 'B', word(), t + HOLD_CAPTAIN_MIN_MS + 1), [], 'won is over');
+  assert.equal(delveWon(led), true); assert.equal(led.wonAt, t + 20_000);
+  assert.deepEqual(say(led, 'B', word(), t + 20_001), [], 'won is over');
   assert.deepEqual(stepDelve(led, t + 10 * DELVE_LEAVE_MS), [], 'and stays won');
 });
 
@@ -258,7 +259,7 @@ test('DLV1 THE LITANY, WHOLE: the order shown, then worked - a plate stood on an
 });
 
 test('DLV1 THE LITANY IN AN ELITE DUNGEON: five plates, a wrong one wakes two foes; a party silent 60 s lets it go, and the next word shows it from the start (mutants: the wake in every dungeon; the let-go window; a let-go Litany keeping its lit plates)', () => {
-  const led = newDelveLedger(site({ kind: 'litany', tier: 'super' }), 'A', 1, T0);
+  const led = newDelveLedger(site({ kind: 'litany', tier: 'elite' }), 'A', 1, T0);
   assert.equal(led.k, 5);
   say(led, 'A', word(), T0);
   assert.deepEqual(stepDelve(led, T0 + 6_000), [{ k: 'work' }], 'five plates: six seconds');
@@ -272,9 +273,9 @@ test('DLV1 THE LITANY IN AN ELITE DUNGEON: five plates, a wrong one wakes two fo
   assert.deepEqual(stepDelve(led, T0 + 12_300 + DELVE_LET_GO_MS - 1), [], 'a word from outside is no word at the site');
   assert.deepEqual(stepDelve(led, T0 + 12_300 + DELVE_LET_GO_MS), [{ k: 'let' }]);
   assert.equal(led.p, DP.idle); assert.equal(led.next, 0, 'its lit plate dark again');
-  assert.deepEqual(say(led, 'A', word(), T0 + 100_000), [{ k: 'show', order }]);
-  assert.equal(led.shows, 3);
-  assert.deepEqual(stepDelve(led, T0 + 100_000 + 30_000), [{ k: 'work' }], 'a Litany never fails for the party\'s leaving, only lets go');
+  const again = newDelveLedger(site({ kind: 'litany', tier: 'elite' }), 'A', 1, T0 + 100_000);   // the caller drops a let-go ledger
+  assert.deepEqual(say(again, 'A', word(), T0 + 100_000), [{ k: 'show', order }], 'shown from the start');
+  assert.deepEqual(stepDelve(again, T0 + 100_000 + 30_000), [{ k: 'work' }], 'a Litany never fails for the party\'s leaving, only lets go');
 });
 
 test('DLV1 THE SCREEN\'S STATE: the site, kind, phase, wave, size, deaths, time left, the party in the ward, the foes stood, the next plate - no account named; a ledger holds sixteen accounts at most (mutants: the in-ward count from every word heard)', () => {
@@ -292,4 +293,58 @@ test('DLV1 THE SCREEN\'S STATE: the site, kind, phase, wave, size, deaths, time 
   say(led, 'acct-secret', word({ lv: 500 }), T0 + 50);
   assert.equal(led.a['acct-secret'].lv, 99);
   assert.equal(led.a['acct-secret'].nm, 'n-acct-secret');
+});
+
+test('DLV1 THE CAPTAIN\'S TIME AND THE ENDS: a captain not fallen in 5 min of the encounter clock ends the attempt (outlasted); a word in the ward at the very moment an attempt ends starts nothing in the same fold - the caller drops the ledger (mutants: the captain\'s time unread; the fold run on past its end)', () => {
+  const led = newDelveLedger(site(), 'A', 7, T0);
+  let t = T0;
+  const beat = (until) => { while (t < until) { t = Math.min(until, t + 5_000); say(led, 'A', word({ o: 1 }), t); } };
+  say(led, 'A', word({ o: 1 }), t);
+  for (let w = 1; w <= HOLD_WAVES; w++) {
+    beat(t + (w === 1 ? HOLD_GATHER_MS : HOLD_BREATH_MS));
+    beat(t + 12 * STAR_KILL_MIN_MS);
+    say(led, 'A', word({ o: 1, kw: w, kn: 12, wc: w }), t);
+  }
+  beat(t + HOLD_BREATH_MS);
+  assert.equal(led.p, DP.captain);
+  const cs = t;
+  beat(cs + HOLD_CAPTAIN_MAX_MS - 5_000);
+  assert.equal(led.p, DP.captain, 'fought, not fallen: still running');
+  assert.deepEqual(say(led, 'A', word({ o: 1 }), cs + HOLD_CAPTAIN_MAX_MS), [{ k: 'failed', outlasted: true }], 'outlasted - and nothing after it in the fold');
+  assert.equal(led.p, DP.idle);
+  // the leave's end and a step back in, in one fold: the end alone
+  const L = newDelveLedger(site(), 'A', 7, T0);
+  say(L, 'A', word({ o: 1 }), T0);
+  say(L, 'A', word({ o: 1 }), T0 + 1_000, { inWard: false });
+  assert.deepEqual(say(L, 'A', word({ o: 1 }), T0 + DELVE_LEAVE_MS), [{ k: 'failed' }], 'never [failed, gather]');
+});
+
+test('DLV1 A MOMENT THAT IS NO NUMBER moves nothing, and the clock runs on after it; a word heard late moves no time back (mutants: a NaN taken; a presence moved back)', () => {
+  const led = newDelveLedger(site(), 'A', 7, T0);
+  say(led, 'A', word({ o: 1 }), T0);
+  assert.deepEqual(stepDelve(led, NaN), []);
+  assert.deepEqual(say(led, 'A', word({ o: 1 }), Infinity), []);
+  assert.equal(led.stepAt, T0);
+  assert.deepEqual(stepDelve(led, T0 + HOLD_GATHER_MS), [{ k: 'wave', w: 1, wz: 3 }], 'the clock runs on');
+  say(led, 'A', word({ o: 1 }), T0 + 10_000);
+  say(led, 'A', word({ o: 1 }), T0 + 2_000);   // a late word
+  assert.equal(led.inAt, T0 + 10_000); assert.equal(led.a.A.inAt, T0 + 10_000); assert.equal(led.a.A.last, T0 + 10_000);
+  assert.deepEqual(stepDelve(led, T0 + 10_000 + DELVE_LEAVE_MS - 1), [], 'not failed early');
+});
+
+test('DLV1 A WAVE SIZED AT ITS MOMENT: the party in the ward as the wave stands, not when the step comes (mutants: the size read at the step)', () => {
+  const led = newDelveLedger(site(), 'A', 7, T0);
+  for (const m of ['A', 'B', 'C', 'D']) say(led, m, word({ o: m === 'A' ? 1 : 0 }), T0);
+  // the next word 16 s on: the wave stood at 4 s, when all four were in the ward
+  assert.deepEqual(say(led, 'A', word({ o: 1 }), T0 + 16_000), [{ k: 'wave', w: 1, wz: holdWaveSize(1, 4) }]);
+  assert.equal(led.n, 4);
+});
+
+test('DLV1 AN ACCOUNT\'S NAME IS NEVER AN OBJECT\'S: "constructor" and "__proto__" are accounts like any other, and nothing lands on Object.prototype (mutants: a plain object)', () => {
+  const led = newDelveLedger(site(), 'constructor', 7, T0);
+  say(led, 'constructor', word({ o: 1 }), T0);
+  say(led, '__proto__', word(), T0 + 1);
+  assert.deepEqual(delveInWard(led, T0 + 2), ['__proto__', 'constructor']);
+  assert.equal(Object.prototype.nm, undefined); assert.equal({}.inAt, undefined);
+  assert.equal(Object.getPrototypeOf(led.a), null);
 });

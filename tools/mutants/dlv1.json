@@ -155,17 +155,17 @@
   {
     "name": "DLV1-captain-believed-early",
     "file": "src/net/delve/delveLaw.js",
-    "old": "HOLD_CAPTAIN_MIN_MS = 20_000;",
-    "new": "HOLD_CAPTAIN_MIN_MS = 10_000;",
+    "old": "export const HOLD_CAPTAIN_MIN_MS = STAR_KILL_MIN_MS;",
+    "new": "export const HOLD_CAPTAIN_MIN_MS = 0;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
   },
   {
-    "name": "DLV1-abyss-captain-a-regular",
+    "name": "DLV1-elite-captain-a-regular",
     "file": "src/net/delve/delveLaw.js",
-    "old": "holdCaptainTraits = (tier) => (tier === 'elite' || tier === 'super' ? 2 : 1);",
-    "new": "holdCaptainTraits = (tier) => (tier === 'elite' ? 2 : 1);",
+    "old": "holdCaptainTraits = (tier) => (tier === 'elite' ? 2 : 1);",
+    "new": "holdCaptainTraits = (tier) => (tier === 'elite' ? 1 : 1);",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "DLV1-five-plates-everywhere",
     "file": "src/net/delve/delveLaw.js",
-    "old": "(tier === 'elite' || tier === 'super' ? 5 : 4)",
-    "new": "(tier === 'elite' || tier === 'super' ? 5 : 5)",
+    "old": "(tier === 'elite' ? 5 : 4)",
+    "new": "(tier === 'elite' ? 5 : 5)",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -425,7 +425,7 @@
   {
     "name": "DLV1-the-wake-everywhere",
     "file": "src/net/delve/delveLaw.js",
-    "old": "if (led.tier === 'elite' || led.tier === 'super') ev.push({ k: 'wake'",
+    "old": "if (led.tier === 'elite') ev.push({ k: 'wake'",
     "new": "if (true) ev.push({ k: 'wake'",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
@@ -497,7 +497,7 @@
   {
     "name": "DLV1-wave-sized-for-one",
     "file": "src/net/delve/delveLaw.js",
-    "old": "led.n = delveParty(delveInWard(led, nowMs).length);",
+    "old": "led.n = delveParty(delveInWard(led, end - (led.ec - at)).length);",
     "new": "led.n = 1;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
@@ -641,8 +641,8 @@
   {
     "name": "DLV1-level-against-the-grid",
     "file": "src/world/dungeon/delveSites.js",
-    "old": "levelDisc(probe, pos, law.rings)",
-    "new": "levelDisc(probe, at, law.rings)",
+    "old": "!levelDisc(probe, pos, law, tier)",
+    "new": "!levelDisc(probe, at, law, tier)",
     "tests": [
       "test/world/dlv1_sites.test.js"
     ]
@@ -794,8 +794,8 @@
   {
     "name": "DLV1-vault-toward-the-farthest-wall",
     "file": "src/world/dungeon/delveSites.js",
-    "old": "if (walls[k] < walls[j]) j = k;",
-    "new": "if (walls[k] > walls[j]) j = k;",
+    "old": "if (cm(walls[k]) < cm(walls[j])) j = k;",
+    "new": "if (cm(walls[k]) > cm(walls[j])) j = k;",
     "tests": [
       "test/world/dlv1_sites.test.js"
     ]
@@ -803,8 +803,8 @@
   {
     "name": "DLV1-vault-tie-the-last-bearing",
     "file": "src/world/dungeon/delveSites.js",
-    "old": "if (walls[k] < walls[j]) j = k;",
-    "new": "if (walls[k] <= walls[j]) j = k;",
+    "old": "if (cm(walls[k]) < cm(walls[j])) j = k;",
+    "new": "if (cm(walls[k]) <= cm(walls[j])) j = k;",
     "tests": [
       "test/world/dlv1_sites.test.js"
     ]
@@ -848,8 +848,8 @@
   {
     "name": "DLV1-small-pass-crowding",
     "file": "src/world/dungeon/delveSites.js",
-    "old": "taken: large.map(({ c }) => c.pos)",
-    "new": "taken: []",
+    "old": "small = chooseSites(spots, { seed, start, count: count - large.length, taken })",
+    "new": "small = chooseSites(spots, { seed, start, count: count - large.length, taken: [] })",
     "tests": [
       "test/world/dlv1_sites.test.js"
     ]
@@ -884,8 +884,8 @@
   {
     "name": "DLV1-hold-vault-on-a-diagonal",
     "file": "src/world/dungeon/delveSites.js",
-    "old": "for (let k = 1; k < 4; k++) if (walls[k] < walls[j]) j = k;",
-    "new": "for (let k = 1; k < EIGHT.length; k++) if (walls[k] < walls[j]) j = k;",
+    "old": "for (let k = 1; k < 4; k++) if (cm(walls[k]) < cm(walls[j])) j = k;",
+    "new": "for (let k = 1; k < EIGHT.length; k++) if (cm(walls[k]) < cm(walls[j])) j = k;",
     "tests": [
       "test/world/dlv1_sites.test.js"
     ]
@@ -895,6 +895,195 @@
     "file": "src/world/dungeon/delveSites.js",
     "old": "  if (kind === 'litany') return [cm(pos[0]), cm(pos[1]), cm(pos[2])];\n",
     "new": "",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-captain-forever",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "else if (led.p === DP.captain && led.ec >= led.cs + HOLD_CAPTAIN_MAX_MS)",
+    "new": "else if (false)",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-captain-time",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "export const HOLD_CAPTAIN_MAX_MS = 300_000;",
+    "new": "export const HOLD_CAPTAIN_MAX_MS = 200_000;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-outlasted-unmarked",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "reset(led, 'failed', ev, true)",
+    "new": "reset(led, 'failed', ev)",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-a-nan-step-taken",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "if (!Number.isFinite(nowMs) || led.p === DP.won) return ev;",
+    "new": "if (led.p === DP.won) return ev;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-a-nan-word-taken",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "!w || typeof w !== 'object' || !Number.isFinite(nowMs)) return [];",
+    "new": "!w || typeof w !== 'object') return [];",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-fold-runs-past-its-end",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "if (led.p === DP.won || ev.some((e) => ENDS.includes(e.k))) return ev;",
+    "new": "if (led.p === DP.won) return ev;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-presence-moved-back",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "led.inAt = Math.max(led.inAt, nowMs);",
+    "new": "led.inAt = nowMs;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-a-plain-object",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "a: Object.create(null),",
+    "new": "a: {},",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-an-idle-ledger-kept",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "    if (nowMs - Math.max(led.nearAt, led.bornAt) >= DELVE_LET_GO_MS) reset(led, 'let', ev);\n",
+    "new": "",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-wave-sized-at-the-step",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "delveInWard(led, end - (led.ec - at))",
+    "new": "delveInWard(led, led.stepAt)",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-movers-unread",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "      if (others.some((b) => boxMeetsDisc(b, p, r))) return null;\n",
+    "new": "",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-disc-s-edge-a-mover-s",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "return dx * dx + dz * dz < r * r;",
+    "new": "return dx * dx + dz * dz <= r * r;",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-band-over-the-floor",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "b.min[1] > p[1] + CLEAR_H",
+    "new": "b.min[1] > p[1] + 1",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-eight-bearings",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "for (const [dx, dz] of SIXTEEN) if (!flat(",
+    "new": "for (const [dx, dz] of EIGHT) if (!flat(",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-plates-unasked",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "  for (const [dx, dz] of PLATES[litanyCount(tier)]) if (!flat(pos[0] + dx * LITANY_RING_M, pos[2] + dz * LITANY_RING_M)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-gates-unasked",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "  for (const [dx, dz] of EIGHT.slice(4)) if (!flat(pos[0] + dx * g, pos[2] + dz * g)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-small-gate-at-the-large-reach",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "const g = law.r - 0.5;",
+    "new": "const g = DSITE.r - 0.5;",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-walls-raw",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "for (let k = 1; k < 4; k++) if (cm(walls[k]) < cm(walls[j])) j = k;",
+    "new": "for (let k = 1; k < 4; k++) if (walls[k] < walls[j]) j = k;",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-nothing-pruned",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "const cands2 = siteCandidates(blocks, DSITE_SMALL.gridM).filter((c) => !tooNearTaken(c.pos, taken));",
+    "new": "const cands2 = siteCandidates(blocks, DSITE_SMALL.gridM);",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-bound-s-height-dropped",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "dy = Math.abs(pos[1] - q[1]) + DFIRE.floorM;",
+    "new": "dy = Math.abs(pos[1] - q[1]);",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-plates-tier-unread",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "for (const [dx, dz] of PLATES[litanyCount(tier)])",
+    "new": "for (const [dx, dz] of PLATES[4])",
     "tests": [
       "test/world/dlv1_sites.test.js"
     ]

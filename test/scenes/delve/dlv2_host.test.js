@@ -7,10 +7,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createDelveHost, delveStandsNone, delveKindsFor, delveKeySite, chestYaw, DELVE_PREF, DELVE_KEY, DELVE_NEAR_M, DELVE_AWAY_SAY_MS } from '../../../src/scenes/delve/delveHost.js';
-import { createHoldFoes, holdStandPlaces, holdDowned, carryDelve, HOLD_RANK_STEP_M, HOLD_STAND_TRIES, HOLD_RESTAND_MS } from '../../../src/scenes/delve/delveHold.js';
+import { createHoldFoes, holdStandPlaces, holdDowned, HOLD_RANK_STEP_M, HOLD_STAND_TRIES, HOLD_RESTAND_MS } from '../../../src/scenes/delve/delveHold.js';
 import { plateLooks, shownPlate, createPlateSteps, PLATE_LOOK, PLATE_WRONG_MS, DELVE_SOUNDS } from '../../../src/scenes/delve/delveLitany.js';
 import { siteShapes, siteFloor, chestMatrix, createDelvePieces, delveChestBucket, DELVE_COLORS, DELVE_CHEST_MODEL, DELVE_DRAW_M } from '../../../src/scenes/delve/delvePieces.js';
-import { DP, holdGates, litanyPlates, newDelveLedger, foldDelveWord, HOLD_GATHER_MS, HOLD_BREATH_MS, HOLD_CAPTAIN_MIN_MS, litanyShowMs, DELVE_KIND_NAMES } from '../../../src/net/delve/delveLaw.js';
+import { DP, holdGates, litanyPlates, newDelveLedger, foldDelveWord, HOLD_GATHER_MS, HOLD_BREATH_MS, HOLD_CAPTAIN_MIN_MS, HOLD_CAPTAIN_MAX_MS, litanyShowMs, DELVE_KIND_NAMES } from '../../../src/net/delve/delveLaw.js';
 import { siteKinds } from '../../../src/world/dungeon/delveSites.js';
 import { starClearFloorMs } from '../../../src/net/starfall/starfallLaw.js';
 import { TELEGRAPH_KIND, TELEGRAPH_POOL } from '../../../src/render/gate/gateTelegraph.js';
@@ -63,7 +63,7 @@ function fakeFoes() {
 const kill = (f) => { f.entity.health = 0; f.dead = true; };
 const read = (H) => { H.frame(); return H.word(); };
 
-test('DLV2 THE HOLD\'S FOES: a wave stands its size at the gates, a step off the floor, facing the heart, stamped and unleashed (the Enhanced AI fights with it); its downed and its clear read off the pool; a foe removed is out of the wave but no kill; a body that takes another\'s place takes its stamp (mutants: the clear before the last stood; a removal counted a kill; the stamp not carried; a leash set)', async () => {
+test('DLV2 THE HOLD\'S FOES: a wave stands its size at the gates, a step off the floor, facing the heart, stamped and unleashed (the Enhanced AI fights with it); its downed and its clear read off the pool; a foe removed is out of the wave but no kill; a body that takes another\'s place stands for it (mutants: the clear before the last stood; a removal counted a kill; a leash set)', async () => {
   const s = site(), { host, pool, stood } = fakeFoes();
   const H = createHoldFoes(s, host);
   assert.deepEqual(read(H), { o: 1, kw: 0, kn: 0, wc: 0, cf: 0 });
@@ -82,9 +82,9 @@ test('DLV2 THE HOLD\'S FOES: a wave stands its size at the gates, a step off the
   assert.deepEqual(read(H), { o: 1, kw: 1, kn: 2, wc: 0, cf: 0 });
   host.remove(stood[1]);   // a dispel's, a mod's: out of the fight, no kill
   assert.deepEqual(read(H), { o: 1, kw: 1, kn: 2, wc: 0, cf: 0 }, 'gone, not downed');
-  const changed = { type: 9, dead: false, ai: {}, entity: { maxHealth: 20, health: 20 } };   // the Wabbajack's change of stood[2]
-  stood[2].dead = true; pool.push(changed); carryDelve(stood[2], changed);
-  assert.equal(stood[2]._delve, null); assert.deepEqual(changed._delve, { i: 0, g: 0, w: 1, cap: false });
+  // the Wabbajack's change of stood[2]: the old body removed alive (no kill), the new one stamped as the context's door stamps it
+  const changed = { type: 9, dead: false, ai: {}, entity: { maxHealth: 20, health: 20 } };
+  stood[2].dead = true; pool.push(changed); changed._delve = stood[2]._delve;
   kill(stood[4]);
   assert.deepEqual(read(H), { o: 1, kw: 1, kn: 3, wc: 0, cf: 0 }, 'the changed body still stands for the wave');
   kill(changed);
@@ -451,6 +451,47 @@ test('DLV2 THE HOLD LEFT: out of the ward 2 s, told to go back once; 30 s, the a
   assert.equal(host.state()[0].p, DP.gather, 'back in: woken again');
 });
 
+test('DLV2 THE CAPTAIN OUTLASTS THE WARD: alive 5 min after it stands, the attempt ends with its own line and its foes crumble, and the ward stays dark until a step back in; a frame of no number moves no clock (mutants: the outlasted said as the left; woken again at once; a NaN clock)', async () => {
+  _resetForTests();
+  const D = dungeonOf(seedFor('hold')), { host } = D, s = host.sites[0];
+  const feet = [s.x, s.y, s.z];
+  host.frame(NaN, feet);
+  assert.equal(host.state()[0].p, DP.gather);
+  const run = async (ms) => { for (let k = 0; k < ms; k += 100) host.frame(0.1, feet); await flush(); };
+  await run(HOLD_GATHER_MS);
+  host.frame(NaN, feet); host.frame(Infinity, feet);
+  for (let w = 1; w <= 3; w++) {
+    for (const f of D.stood.slice(-(2 + w))) kill(f);
+    await run(starClearFloorMs(2 + w, 1) + 200);
+    await run(HOLD_BREATH_MS);
+  }
+  assert.equal(host.state()[0].p, DP.captain, 'the clock ran on after the frames of no number');
+  const cap = D.stood.at(-1);
+  await run(HOLD_CAPTAIN_MAX_MS - 1_000);
+  assert.equal(host.state()[0].p, DP.captain);
+  await run(1_100);
+  assert.equal(host.state()[0].p, DP.idle);
+  assert.equal(midScreenText.text, 'The captain outlasted the ward. It goes dark and its foes crumble.');
+  assert.ok(D.removed.includes(cap), 'the captain crumbles');
+  await run(2_000);
+  assert.equal(host.state()[0].p, DP.idle, 'still standing in it: dark until a step back in');
+  host.frame(0.1, [s.x + 20, s.y, s.z]);
+  host.frame(0.1, feet);
+  assert.equal(host.state()[0].p, DP.gather, 'out and in again: woken');
+});
+
+test('DLV2 IN THE WARD IS IN ITS ROOM: past the disc, a wall between the player and the heart keeps the ward asleep - a corridor behind it is no part of it (mutants: presence through the wall)', () => {
+  _resetForTests();
+  const D = dungeonOf(seedFor('hold')), { host } = D, s = host.sites[0];
+  // a wall of the dungeon's own across the ward's +x pad, 5 m from the heart (the plan already made)
+  const x = s.x + 5, v = [x, s.y, s.z - 3, x, s.y, s.z + 3, x, s.y + 3, s.z + 3, x, s.y + 3, s.z - 3];
+  D.api.collider.addMesh('dungeon', v, [0, 1, 2, 0, 2, 3], [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  host.frame(0.1, [s.x + 5.5, s.y, s.z]);
+  assert.equal(host.state()[0].p, DP.idle, 'behind the wall, 5.5 m off: asleep');
+  host.frame(0.1, [s.x - 5.5, s.y, s.z]);
+  assert.equal(host.state()[0].p, DP.gather, 'the open side, 5.5 m off: woken');
+});
+
 test('DLV2 THE LITANY, WON IN A ROOM: the order shown, a wrong plate shown again, every plate stepped in order - the vault opens (mutants: a plate said every frame; the show cut short; the vault never rolled)', async () => {
   _resetForTests();
   const D = dungeonOf(seedFor('litany')), { host } = D, s = host.sites[0];
@@ -505,8 +546,8 @@ test('DLV2 THE WIRING (HOST-SPLIT): the context builds it after its api and befo
   assert.match(ctx, /world: \{ \.\.\.collectWorld\(\), outerCamps: opts\.outerCampsSave\?\.\(\) \?\? null, delve: delve\.snapshot\(\) \},/);
   assert.doesNotMatch(ctx, /^\s+delve: delve\.snapshot\(\),/m, 'never beside the world record: snapshotPlayer drops a name it does not know');
   assert.match(ctx, /if \(extras\.locationKey === _locationKey && !otherLayout\) delve\.restore\(extras\.world\?\.delve\);/);
-  assert.match(ctx, /function takeRoomPlace\(old, rec\) \{\n(?: {4}[^\n]*\n){3} {4}carryDelve\(old, rec\);/);
-  assert.match(ctx, /renownFoeCarry\(f, nf\);[^\n]*\n {6}carryDelve\(f, nf\);/);
+  assert.match(ctx, /function takeRoomPlace\(old, rec\) \{\n(?: {4}[^\n]*\n){3} {4}rec\._delve = old\._delve;/);
+  assert.match(ctx, /renownFoeCarry\(f, nf\);[^\n]*\n {6}nf\._delve = f\._delve;/);
   assert.doesNotMatch(ctx.slice(ctx.indexOf('function collectWorld()'), ctx.indexOf('function applyWorld(')), /delve/, 'the world record and its apply hold none of it (the room\'s memory is DLV3\'s)');
   assert.match(ctx, /delve\.destroy\(\);/);
   for (const h of ['src/scenes/worldModes.js', 'src/scenes/dungeon.js']) assert.match(rd(h), /key\.startsWith\('search:'\) \|\| key\.startsWith\('delve:'\)/, `${h}'s press arm`);

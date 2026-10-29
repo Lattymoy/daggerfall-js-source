@@ -40,6 +40,7 @@ export const DELVE_NEAR_M = 6;
 export const DELVE_AWAY_SAY_MS = 2_000;
 /** The player's own account in the ledger offline. */
 const ME = 'me';
+const ONLY_DUNGEON = Object.freeze({ only: Object.freeze(['dungeon']) });
 
 /** Whether a dungeon stands no site: the row off, a made level, an arena's sand, an Abyss Hollow, Privateer's Hold
  *  (section 4's None in; a palace the law's own). Pure but for the pref. */
@@ -90,7 +91,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
     now: () => now,
   };
   const runs = plan.sites.map((site) => ({
-    site, led: /** @type {any} */ (null), won: false, vault: /** @type {any[]|null} */ (null), said: false, away: false,
+    site, led: /** @type {any} */ (null), won: false, vault: /** @type {any[]|null} */ (null), said: false, away: false, dark: false,
     foes: site.kind === 'hold' ? createHoldFoes(site, foeHost) : null,
     wakers: site.kind === 'litany' ? createHoldFoes(site, foeHost) : null,
     plates: site.kind === 'litany' ? litanyPlates(site) : null,
@@ -112,7 +113,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
       case 'wave': r.foes?.on(ev); say(DELVE_HOLD_TEXT.wave(ev.w, HOLD_WAVES)); break;
       case 'breath': say(DELVE_HOLD_TEXT.breath()); break;
       case 'captain': r.foes?.on(ev); say(DELVE_HOLD_TEXT.captain()); sound(DELVE_SOUNDS.wake, site); break;
-      case 'failed': r.foes?.on(ev); r.led = null; say(DELVE_HOLD_TEXT.failed(), DELVE_SAY_LONG_S); break;
+      case 'failed': r.foes?.on(ev); r.led = null; r.dark = true; say(ev.outlasted ? DELVE_HOLD_TEXT.outlasted() : DELVE_HOLD_TEXT.failed(), DELVE_SAY_LONG_S); break;
       case 'let': r.wakers?.crumble(); r.led = null; r.steps?.reset(); r.wrong = null; break;
       case 'show': if (!r.wrong) say(DELVE_LITANY_TEXT.show()); r.shown = -1; break;   // after a wrong plate its own line said it
       case 'work': say(DELVE_LITANY_TEXT.work()); break;
@@ -135,8 +136,9 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
       say(site.kind === 'hold' ? DELVE_NEAR_TEXT.hold() : DELVE_NEAR_TEXT.litany(r.plates?.length ?? 0), DELVE_SAY_LONG_S);
     }
     if (r.won) return;
-    const iw = inWard(site, feet[0], feet[1], feet[2]);
-    if (!r.led) { if (!iw) return; r.led = newDelveLedger(site, ME, seed, now); r.away = false; }
+    const iw = inWard(site, feet[0], feet[1], feet[2]) && seesHeart(site, feet);
+    if (r.dark && !iw) r.dark = false;   // a ward gone dark wakes again only to a step back in
+    if (!r.led) { if (!iw || r.dark) return; r.led = newDelveLedger(site, ME, seed, now); r.away = false; }
     const plate = r.plates ? plateAt(r.plates, feet[0], feet[1], feet[2]) : -1;
     const w = r.word;
     w.lv = lv(); w.st = r.steps ? r.steps.at(iw ? plate : -1) : -1;
@@ -151,6 +153,14 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
     const running = r.foes && r.led.p !== DP.idle && r.led.p !== DP.won;
     if (running && !iw && now - r.led.inAt >= DELVE_AWAY_SAY_MS && !r.away) { r.away = true; say(DELVE_HOLD_TEXT.away()); }
     if (iw) r.away = false;
+  }
+
+  /** In the ward is in its room: on the disc, or with nothing of the dungeon's between the player and the heart at the
+   *  waist (the ward reaches 2 m past the disc, and a corridor behind its wall is no part of it). */
+  function seesHeart(site, feet) {
+    const dx = feet[0] - site.x, dz = feet[2] - site.z, d = Math.hypot(dx, dz);
+    if (d <= site.r || !api.collider) return true;
+    return !(api.collider.raycast([site.x, site.y + 1, site.z], [dx / d, 0, dz / d], d, ONLY_DUNGEON) < d);
   }
 
   const unTargets = none ? null : api.addActivationTargets?.(() => targets());
@@ -182,7 +192,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
     frame(dt, feet) {
       if (dead || none || online() || !feet) return;
       if (!chestsStood) { chestsStood = true; for (const r of runs) pieces.standChest(r.site.i, r.site.vault, chestYaw(r.site)); }
-      now += Math.min(Math.max(0, dt), 1) * 1000;
+      now += Number.isFinite(dt) ? Math.min(Math.max(0, dt), 1) * 1000 : 0;
       for (const r of runs) frameSite(r, feet);
     },
     /** The marks on the floors near the eye, after the last opaque flat (drawFoes' late slot). Nothing made a frame. */
@@ -219,7 +229,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
     /** A save's word laid back - under the same plan alone. Every running attempt ends first, and every living foe one
      *  stood goes - a foe the save held alive stood up again by the world record's own restore among them. */
     restore(s) {
-      for (const r of runs) { r.foes?.crumble(); r.wakers?.crumble(); r.led = null; r.won = false; r.vault = null; r.said = false; r.away = false; r.steps?.reset(); r.wrong = null; r.shown = -1; }
+      for (const r of runs) { r.foes?.crumble(); r.wakers?.crumble(); r.led = null; r.won = false; r.vault = null; r.said = false; r.away = false; r.dark = false; r.steps?.reset(); r.wrong = null; r.shown = -1; }
       if (!s || s.h !== hash || !Array.isArray(s.won)) return;
       for (const w of s.won) { const r = runs[w?.i]; if (r) { r.won = true; r.vault = Array.isArray(w.items) ? w.items.map((it) => ({ ...it })) : []; } }
     },

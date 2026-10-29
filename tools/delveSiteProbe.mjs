@@ -10,7 +10,7 @@
 import { writeFileSync } from 'node:fs';
 import { isMain } from './lib/isMain.mjs';
 import { loadData } from './climbDungeonProbe.mjs';
-import { hostModelReader, hostFireCollider, layoutHearths } from './dungeonFireProbe.mjs';
+import { hostModelReader, hostFireCollider, layoutHearths, hostFlatSize } from './dungeonFireProbe.mjs';
 import { layoutDungeon } from '../src/world/dungeon/dungeonLayout.js';
 import { colliderFireProbe, dungeonFirePlan, fireLayoutInputs } from '../src/world/dungeon/dungeonFires.js';
 import { colliderSiteProbe, delveSitePlan, delveSiteCount } from '../src/world/dungeon/delveSites.js';
@@ -18,10 +18,11 @@ import { colliderSiteProbe, delveSitePlan, delveSiteCount } from '../src/world/d
 /** The Hold stands no site (the tutorial - Delve-II.md section 11); the caller's word, as the host's will be. */
 export const NO_SITES = Object.freeze(['Privateer\'s Hold']);
 
-/** One dungeon: its fires as the host stands them, then its sites. `tally` gathers the refused spots' rules. */
-export function probeSites(blocks, getModel, { seed = 0, name = '', tally = null } = {}) {
+/** One dungeon: its fires as the host stands them (its hearths' feet off the classic record - `sizeOf`, hostFlatSize), then
+ *  its sites. `tally` gathers the refused spots' rules. */
+export function probeSites(blocks, getModel, { seed = 0, name = '', tally = null, sizeOf = () => null } = {}) {
   const col = hostFireCollider(blocks, getModel);
-  const { doors, existing } = fireLayoutInputs(blocks, layoutHearths(blocks));
+  const { doors, existing } = fireLayoutInputs(blocks, layoutHearths(blocks, sizeOf));
   const firePlan = dungeonFirePlan({ blocks, probe: colliderFireProbe(col), doors, existing, seed });
   const fires = [...existing, ...firePlan.fires, ...(firePlan.doorFire ? [firePlan.doorFire] : [])];
   const none = NO_SITES.includes(name);
@@ -50,6 +51,7 @@ if (isMain(import.meta.url)) {
   if (!arena2) { console.error('ARENA2_PATH is not set'); process.exit(2); }
   const data = loadData(arena2);
   const getModel = hostModelReader(data.arch);
+  const sizeOf = hostFlatSize(arena2);
   const shardArg = argv[argv.indexOf('--shard') + 1];
   const [si, sn] = argv.includes('--shard') ? shardArg.split('/').map(Number) : [0, 1];
   const jsonOut = argv.includes('--json') ? argv[argv.indexOf('--json') + 1] : null;
@@ -65,7 +67,7 @@ if (isMain(import.meta.url)) {
     let out;
     try {
       const { blocks } = layoutDungeon(loc, data.blocks, getModel);
-      out = probeSites(blocks, getModel, { seed: loc.dungeon.recordElement.header.locationId, name: loc.name, tally });
+      out = probeSites(blocks, getModel, { seed: loc.dungeon.recordElement.header.locationId, name: loc.name, tally, sizeOf });
     } catch (e) { console.log(`${data.maps.getRegionName(loc.regionIndex)} / ${loc.name}: not measured - ${e?.message ?? e}`); continue; }
     wanted += out.wanted; stood += out.sites.length; small += out.small;
     if (out.sites.length < out.wanted) short++;

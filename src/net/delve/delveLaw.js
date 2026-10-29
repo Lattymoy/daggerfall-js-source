@@ -4,7 +4,7 @@
 // site's floor and the ledger one started site keeps. Pure: the moment, the words and the party handed in, events out, so
 // the client runs it offline and the relay runs it online (DLV3) on the same state. Not a DFU member (Ledger A: DELVE II).
 import { gateHash } from '../gate/gateLaw.js';
-import { starClearFloorMs } from '../starfall/starfallLaw.js';
+import { starClearFloorMs, STAR_KILL_MIN_MS } from '../starfall/starfallLaw.js';
 
 // ═══ THE KINDS ═══════════════════════════════════════════════════════════════════════════════════════════════════════
 /** Each kind: its number on the wire and in the plan's hash, and its family. Its floor is the site's (delveSites.js). */
@@ -52,14 +52,17 @@ export const HOLD_WAVE_MAX_MS = 90_000;
 export const HOLD_WAVE_MAX = 12;
 /** A wave's size: three for one member and two for each beside it, one more each wave on - three to twelve. Pure. */
 export const holdWaveSize = (w, n) => Math.min(HOLD_WAVE_MAX, 3 + 2 * (delveParty(n) - 1) + Math.max(0, (w | 0) - 1));
-/** The captain's fall is believed no sooner than this after it stands (encounter clock). */
-export const HOLD_CAPTAIN_MIN_MS = 20_000;
-/** The captain's boss traits: one, two in an Elite or Abyss dungeon (BOSS-TRAITS). */
-export const holdCaptainTraits = (tier) => (tier === 'elite' || tier === 'super' ? 2 : 1);
+/** The captain's fall is believed no sooner than one kill's least time after it stands (the Starfall's STAR_KILL_MIN_MS,
+ *  encounter clock): a fall a player saw is said at once, and a word faster than any blow is not believed. */
+export const HOLD_CAPTAIN_MIN_MS = STAR_KILL_MIN_MS;
+/** The captain not fallen this long after it stands, the attempt ends (every phase ends on the encounter clock). */
+export const HOLD_CAPTAIN_MAX_MS = 300_000;
+/** The captain's boss traits: one, two in an Elite dungeon (BOSS-TRAITS). An Abyss dungeon stands no site. */
+export const holdCaptainTraits = (tier) => (tier === 'elite' ? 2 : 1);
 
 // ═══ THE LITANY ══════════════════════════════════════════════════════════════════════════════════════════════════════
-/** The plates: four, five in an Elite or Abyss dungeon. */
-export const litanyCount = (tier) => (tier === 'elite' || tier === 'super' ? 5 : 4);
+/** The plates: four, five in an Elite dungeon. */
+export const litanyCount = (tier) => (tier === 'elite' ? 5 : 4);
 /** The plates' ring about the site's heart (m), and how near a member stands to stand on one (m). */
 export const LITANY_RING_M = 2.5;
 export const LITANY_STAND_M = 1.2;
@@ -67,7 +70,7 @@ export const LITANY_STAND_M = 1.2;
 export const LITANY_SHOW_STEP_MS = 1_000;
 /** The show's length for `k` plates (ms). */
 export const litanyShowMs = (k) => (k + 1) * LITANY_SHOW_STEP_MS;
-/** In an Elite or Abyss dungeon a wrong plate wakes this many foes of the table. */
+/** In an Elite dungeon a wrong plate wakes this many foes of the table. */
 export const LITANY_WAKE = 2;
 
 // ═══ THE PIECES' SPOTS ═══════════════════════════════════════════════════════════════════════════════════════════════
@@ -96,7 +99,8 @@ export function litanyOrder(seed, i, k) {
   }
   return out;
 }
-/** The Hold's four gates the waves come through, on the ward's rim (half a metre in), its diagonals. Pure. @param {DelveSite} site */
+/** The Hold's four gates the waves come through, on its diagonals half a metre inside its disc (2.5 m inside the ward).
+ *  Pure. @param {DelveSite} site */
 export function holdGates(site) {
   const g = site.r - 0.5;
   return DIAGONALS.map(([dx, dz]) => [cm(site.x + dx * g), site.y, cm(site.z + dz * g)]);
@@ -133,10 +137,11 @@ export function delvePlanHash(sites) {
 // ═══ THE LEDGER ══════════════════════════════════════════════════════════════════════════════════════════════════════
 /** The phases: a wave's (gather, wave, breath, captain), a puzzle's (show, work), and both ends. */
 export const DP = Object.freeze({ idle: 0, gather: 1, wave: 2, breath: 3, captain: 4, show: 5, work: 6, won: 7 });
-/** An account: the verified name, the level its last word said, its last word and its last from inside the ward (ms).
+/** An account: the verified name, the level its last word said, its last word and its last from inside the ward (ms). The
+ *  ledger keeps them in a map with no prototype, so no account id is a name an object already answers.
  *  @typedef {{ nm: string, lv: number, last: number, inAt: number }} DelveAccount
  *  @typedef {{ s: number, kind: string, tier: string, seed: number, own: string, p: number, ec: number, stepAt: number,
- *   nearAt: number, inAt: number, n: number, w: number, wz: number, kn: number, gs: number, ws: number, bs: number,
+ *   nearAt: number, inAt: number, bornAt: number, n: number, w: number, wz: number, kn: number, gs: number, ws: number, bs: number,
  *   cs: number, fo: string, foAt: number, k: number, order: number[], next: number, sh: number, shows: number,
  *   wonAt: number, earned: string[], a: Record<string, DelveAccount> }} DelveLedger */
 
@@ -145,8 +150,8 @@ export function newDelveLedger(site, own, seed, nowMs) {
   const k = site.kind === 'litany' ? litanyCount(site.tier) : 0;
   return {
     s: site.i, kind: site.kind, tier: site.tier, seed: seed >>> 0, own, p: DP.idle, ec: 0, stepAt: nowMs, nearAt: -Infinity, inAt: -Infinity,
-    n: 1, w: 0, wz: 0, kn: 0, gs: 0, ws: 0, bs: 0, cs: 0, fo: '', foAt: 0,
-    k, order: k ? litanyOrder(seed, site.i, k) : [], next: 0, sh: 0, shows: 0, wonAt: 0, earned: [], a: {},
+    bornAt: nowMs, n: 1, w: 0, wz: 0, kn: 0, gs: 0, ws: 0, bs: 0, cs: 0, fo: '', foAt: 0,
+    k, order: k ? litanyOrder(seed, site.i, k) : [], next: 0, sh: 0, shows: 0, wonAt: 0, earned: [], a: Object.create(null),
   };
 }
 /** Whether the ledger is over. */
@@ -156,25 +161,29 @@ export const delveInWard = (led, nowMs) => Object.keys(led.a).filter((acct) => n
 /** The member standing a wave's foes, while heard. */
 export const delveFoeOwner = (led, nowMs) => (led.fo && nowMs - led.foAt <= DELVE_ORPHAN_MS ? led.fo : '');
 
-/** The encounter clock runs while a member is present - up to DELVE_PRESENT_MS past the last word from the site. */
+/** The encounter clock runs while a member is present - up to DELVE_PRESENT_MS past the last word from the site. Answers
+ *  the wall moment the clock now stands at, so a transition at encounter time `at` happened at `end - (ec - at)`. */
 function clockTo(led, nowMs) {
   const from = led.stepAt, to = Math.min(nowMs, led.nearAt + DELVE_PRESENT_MS);
   led.stepAt = Math.max(led.stepAt, nowMs);
-  if (led.p === DP.idle || led.p === DP.won) return;
   if (to > from) led.ec += to - from;
+  return to;   // still, it stopped at `to`: DELVE_PRESENT_MS past the last word from the site
 }
-function waveStarts(led, at, nowMs, ev) {
+/** A wave stands at encounter time `at`, sized by the party in the ward at that moment (`end` the clock's, clockTo). */
+function waveStarts(led, at, end, ev) {
   led.w++; led.p = DP.wave; led.ws = at; led.kn = 0;
-  led.n = delveParty(delveInWard(led, nowMs).length);
+  led.n = delveParty(delveInWard(led, end - (led.ec - at)).length);
   led.wz = holdWaveSize(led.w, led.n);
   ev.push({ k: 'wave', w: led.w, wz: led.wz });
 }
 function breathStarts(led, at, ev) { led.p = DP.breath; led.bs = at; led.kn = 0; ev.push({ k: 'breath', w: led.w }); }
-/** Back to nothing: a wave's attempt ended, a puzzle let go. The ledger stays the owner's until the caller drops it. */
-function reset(led, why, ev) {
+/** Back to nothing: a wave's attempt ended (`outlasted` - by its captain's time), a puzzle let go. The caller drops the
+ *  ledger, and the fold that ended it moves nothing more. */
+function reset(led, why, ev, outlasted = false) {
   Object.assign(led, { p: DP.idle, ec: 0, w: 0, wz: 0, kn: 0, gs: 0, ws: 0, bs: 0, cs: 0, fo: '', foAt: 0, next: 0, sh: 0 });
-  ev.push({ k: why });
+  ev.push(outlasted ? { k: why, outlasted: true } : { k: why });
 }
+const ENDS = Object.freeze(['failed', 'let']);
 function win(led, nowMs, ev) {
   led.p = DP.won; led.wonAt = nowMs;
   led.earned = Object.keys(led.a).filter((acct) => nowMs - led.a[acct].inAt <= DELVE_EARN_MS).sort();
@@ -182,23 +191,30 @@ function win(led, nowMs, ev) {
 }
 
 /**
- * THE MACHINE, moved on to `nowMs`: a wave's attempt ended by the party's leaving, a puzzle let go by its silence, then
- * every transition its encounter clock has passed, each at its own moment on it. Answers the events, in order. Pure but
- * for the ledger it is handed. @param {DelveLedger} led @param {number} nowMs @returns {Array<any>}
+ * THE MACHINE, moved on to `nowMs`: a ledger never woken let go by its silence, a wave's attempt ended by the party's
+ * leaving, a puzzle let go by its silence, then every transition its encounter clock has passed, each at its own moment
+ * on it - the captain's time the last of them. A moment that is no number moves nothing. Answers the events, in order.
+ * Pure but for the ledger it is handed. @param {DelveLedger} led @param {number} nowMs @returns {Array<any>}
  */
 export function stepDelve(led, nowMs) {
   const ev = [];
-  if (led.p === DP.won || led.p === DP.idle) { led.stepAt = Math.max(led.stepAt, nowMs); return ev; }
+  if (!Number.isFinite(nowMs) || led.p === DP.won) return ev;
+  if (led.p === DP.idle) {
+    if (nowMs - Math.max(led.nearAt, led.bornAt) >= DELVE_LET_GO_MS) reset(led, 'let', ev);
+    led.stepAt = Math.max(led.stepAt, nowMs);
+    return ev;
+  }
   if (led.kind === 'hold' && nowMs - led.inAt >= DELVE_LEAVE_MS) { reset(led, 'failed', ev); return ev; }
   if (led.kind === 'litany' && nowMs - led.nearAt >= DELVE_LET_GO_MS) { reset(led, 'let', ev); return ev; }
-  clockTo(led, nowMs);
+  const end = clockTo(led, nowMs);
   for (let i = 0; i < 2 * HOLD_WAVES + 6; i++) {
-    if (led.p === DP.gather && led.ec >= led.gs + HOLD_GATHER_MS) waveStarts(led, led.gs + HOLD_GATHER_MS, nowMs, ev);
+    if (led.p === DP.gather && led.ec >= led.gs + HOLD_GATHER_MS) waveStarts(led, led.gs + HOLD_GATHER_MS, end, ev);
     else if (led.p === DP.wave && led.ec >= led.ws + HOLD_WAVE_MAX_MS) breathStarts(led, led.ws + HOLD_WAVE_MAX_MS, ev);
     else if (led.p === DP.breath && led.ec >= led.bs + HOLD_BREATH_MS) {
       if (led.w >= HOLD_WAVES) { led.p = DP.captain; led.cs = led.bs + HOLD_BREATH_MS; led.kn = 0; ev.push({ k: 'captain', traits: holdCaptainTraits(led.tier) }); }
-      else waveStarts(led, led.bs + HOLD_BREATH_MS, nowMs, ev);
-    } else if (led.p === DP.show && led.ec >= led.sh + litanyShowMs(led.k)) { led.p = DP.work; led.next = 0; ev.push({ k: 'work' }); }
+      else waveStarts(led, led.bs + HOLD_BREATH_MS, end, ev);
+    } else if (led.p === DP.captain && led.ec >= led.cs + HOLD_CAPTAIN_MAX_MS) { reset(led, 'failed', ev, true); break; }
+    else if (led.p === DP.show && led.ec >= led.sh + litanyShowMs(led.k)) { led.p = DP.work; led.next = 0; ev.push({ k: 'work' }); }
     else break;
   }
   return ev;
@@ -213,14 +229,14 @@ export function stepDelve(led, nowMs) {
  *  @param {{ party: boolean, inWard: boolean, plate?: number, nowMs: number }} ctx @returns {Array<any>} */
 export function foldDelveWord(led, acct, name, w, ctx) {
   const { nowMs } = ctx;
-  if (led.p === DP.won || !ctx.party || !w || typeof w !== 'object') return [];
+  if (led.p === DP.won || !ctx.party || !w || typeof w !== 'object' || !Number.isFinite(nowMs)) return [];
   const ev = stepDelve(led, nowMs);
-  if (led.p === DP.won) return ev;
+  if (led.p === DP.won || ev.some((e) => ENDS.includes(e.k))) return ev;   // an ended ledger is dropped: the next word starts anew
   const rec = led.a[acct] ?? (Object.keys(led.a).length < DELVE_PARTY_MAX * 2 ? (led.a[acct] = { nm: '', lv: 1, last: 0, inAt: -Infinity }) : null);
   if (!rec) return ev;
-  rec.nm = typeof name === 'string' ? name : ''; rec.lv = Math.max(1, Math.min(99, w.lv | 0)); rec.last = nowMs;
+  rec.nm = typeof name === 'string' ? name : ''; rec.lv = Math.max(1, Math.min(99, w.lv | 0)); rec.last = Math.max(rec.last, nowMs);
   if (!ctx.inWard) return ev;   // heard, never counted: a word from outside the ward moves nothing
-  rec.inAt = nowMs; led.inAt = nowMs; led.nearAt = nowMs;
+  rec.inAt = Math.max(rec.inAt, nowMs); led.inAt = Math.max(led.inAt, nowMs); led.nearAt = Math.max(led.nearAt, nowMs);   // a word heard late moves no time back
   if (led.p === DP.idle) {
     if (led.kind === 'hold') { led.p = DP.gather; led.gs = led.ec; ev.push({ k: 'gather' }); }
     else { led.p = DP.show; led.sh = led.ec; led.shows++; ev.push({ k: 'show', order: [...led.order] }); }
@@ -247,16 +263,18 @@ function litanyWord(led, w, plate, nowMs, ev) {
   if (led.order.slice(0, led.next).includes(plate)) return ev;   // a plate already lit is stood on freely
   led.p = DP.show; led.sh = led.ec; led.next = 0; led.shows++;
   ev.push({ k: 'wrong', j: plate });
-  if (led.tier === 'elite' || led.tier === 'super') ev.push({ k: 'wake', n: LITANY_WAKE });
+  if (led.tier === 'elite') ev.push({ k: 'wake', n: LITANY_WAKE });
   ev.push({ k: 'show', order: [...led.order] });
   return ev;
 }
 
-/** The ms left in the phase on the encounter clock (the gathering, a wave, a breath, the show), or -1 where none runs. */
+/** The ms left in the phase on the encounter clock (the gathering, a wave, a breath, the captain's time, the show), or
+ *  -1 where none runs. */
 export function delvePhaseLeft(led) {
   if (led.p === DP.gather) return Math.max(0, led.gs + HOLD_GATHER_MS - led.ec);
   if (led.p === DP.wave) return Math.max(0, led.ws + HOLD_WAVE_MAX_MS - led.ec);
   if (led.p === DP.breath) return Math.max(0, led.bs + HOLD_BREATH_MS - led.ec);
+  if (led.p === DP.captain) return Math.max(0, led.cs + HOLD_CAPTAIN_MAX_MS - led.ec);
   if (led.p === DP.show) return Math.max(0, led.sh + litanyShowMs(led.k) - led.ec);
   return -1;
 }

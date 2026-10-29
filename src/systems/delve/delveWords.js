@@ -19,6 +19,7 @@ export const DELVE_HOLD_TEXT = Object.freeze({
   captain: () => t('delve.hold.captain', 'Their captain comes.'),
   away: () => t('delve.hold.away', 'Go back into the circle. The ward fails when nobody holds it.'),
   failed: () => t('delve.hold.failed', 'Nobody held the ward. It goes dark and its foes crumble.'),
+  outlasted: () => t('delve.hold.outlasted', 'The captain outlasted the ward. It goes dark and its foes crumble.'),
   won: () => t('delve.hold.won', 'The ward holds. The vault is open.'),
 });
 

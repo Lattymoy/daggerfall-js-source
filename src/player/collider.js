@@ -588,6 +588,15 @@ function intoBucket(x, y, z, t, R, out) {
   out[2] = R[6] * px + R[7] * py + R[8] * pz;
   return out;
 }
+/** A bucket's world box as it stands (its translation, and a mover's turn - turnedBox), into `out` [min xyz, max xyz]. */
+function worldBoxOf(bucket, out) {
+  const t = bucket.t();
+  const R = bucket.r ? bucket.r() : null;   // AUDIT NAV1 (#12): a mover's, its box as it stands turned
+  if (R) return turnedBox(bucket, t, R, out);
+  for (let k = 0; k < 3; k++) { out[k] = bucket.min[k] + t[k]; out[k + 3] = bucket.max[k] + t[k]; }
+  return out;
+}
+
 /** A turned bucket's box as it stands in the world: its own box's centre carried, its half-extents through |R| -
  *  [minX, minY, minZ, maxX, maxY, maxZ], holding every point of the turned box. */
 function turnedBox(bucket, t, R, out) {
@@ -1002,19 +1011,22 @@ export class Collider {
     const max = [-Infinity, -Infinity, -Infinity];
     for (const bucket of this._buckets.values()) {
       if (!(bucket.min[0] <= bucket.max[0])) continue;   // an empty bucket's box is inverted
-      const t = bucket.t();
-      const R = bucket.r ? bucket.r() : null;   // AUDIT NAV1 (#12): a mover's, its box as it stands turned
-      if (R) {
-        const b = turnedBox(bucket, t, R, TURNED_BOX);
-        for (let k = 0; k < 3; k++) { if (b[k] < min[k]) min[k] = b[k]; if (b[k + 3] > max[k]) max[k] = b[k + 3]; }
-        continue;
-      }
-      for (let k = 0; k < 3; k++) {
-        if (bucket.min[k] + t[k] < min[k]) min[k] = bucket.min[k] + t[k];
-        if (bucket.max[k] + t[k] > max[k]) max[k] = bucket.max[k] + t[k];
-      }
+      const b = worldBoxOf(bucket, TURNED_BOX);
+      for (let k = 0; k < 3; k++) { if (b[k] < min[k]) min[k] = b[k]; if (b[k + 3] > max[k]) max[k] = b[k + 3]; }
     }
     return min[0] <= max[0] ? { min, max } : null;
+  }
+
+  /** DELVE II (AUDIT DELVE II L1): each standing bucket's own world box as it stands now - `filter.skip` leaves buckets
+   *  out - `[{ key, min, max }]`, an empty bucket none. The site law reads the movers and doors a site keeps clear of. */
+  bucketBoxes(filter = null) {
+    const skip = filter?.skip ? new Set(filter.skip) : null, out = [];
+    for (const bucket of this._buckets.values()) {
+      if (skip?.has(bucket.key) || !(bucket.min[0] <= bucket.max[0])) continue;
+      const b = worldBoxOf(bucket, TURNED_BOX);
+      out.push({ key: bucket.key, min: [b[0], b[1], b[2]], max: [b[3], b[4], b[5]] });
+    }
+    return out;
   }
 
   /**

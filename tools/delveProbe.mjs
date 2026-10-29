@@ -4,16 +4,18 @@
 // struck down through the real damage door, a Litany's plates stepped in its order), its vault pressed, the frame's cost
 // of the encounters measured, every page error a failure. Pictures at each stage when a folder is given.
 //
-//   node tools/delveProbe.mjs [region] [dungeon] [shots-dir]      e.g.  Daggerfall "Bedard Laboratory" /tmp/delve
+//   node tools/delveProbe.mjs [region] [dungeon] [shots-dir] [--look]      e.g.  Daggerfall "Bedard Laboratory" /tmp/delve
 //
-// Exits 1 on a page error, a site never stood, or a site never won.
+// `--look`: each site's marks pictured at rest and woken, nothing fought. Exits 1 on a page error, a site never stood,
+// a site never won, or a window left open.
 import { mkdirSync } from 'node:fs';
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { litanyPlates } from '../src/net/delve/delveLaw.js';
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
-const [region = 'Daggerfall', name = 'Bedard Laboratory', shots = null] = process.argv.slice(2);
+const LOOK = process.argv.includes('--look');
+const [region = 'Daggerfall', name = 'Bedard Laboratory', shots = null] = process.argv.slice(2).filter((a) => a !== '--look');
 if (shots) mkdirSync(shots, { recursive: true });
 const server = await createServer({ server: { port: 5231, strictPort: true }, logLevel: 'error' });
 await server.listen();
@@ -81,6 +83,7 @@ for (const s of sites) {
   console.log(`  in: "${await say()}"  ${JSON.stringify((await state())[s.i])}`);
   await look(); await frames(4);
   await shot(`site${s.i}-in`);
+  if (LOOK) { await at([s.x + s.r + 5, s.y, s.z]); await frames(4); continue; }
   const t0 = Date.now();
   if (s.kind === 'hold') {
     let shotWave = false;
@@ -123,8 +126,8 @@ for (const s of sites) {
   const opened = await page.evaluate((i) => { window.__delve().press(`delve:vault:${i}`); return window.__overlay(); }, s.i);
   console.log(`  the vault: ${JSON.parse(opened ?? 'null')?.kind ?? 'no window'}`);
   await shot(`site${s.i}-vault`);
-  await page.evaluate(() => window.__overlayKey?.('Escape'));
-  await frames(4);
+  await closeWindows();
+  if (await page.evaluate(() => window.__overlay?.() ?? null)) await fail('a window stayed open over the encounters');
 }
 const cost = await page.evaluate(() => window.__delveCost);
 if (cost?.n) console.log(`cost: frame ${(cost.frame / cost.n).toFixed(3)} ms mean, ${cost.max.toFixed(2)} ms worst; marks ${(cost.draw / cost.n).toFixed(3)} ms mean over ${cost.n} frames`);

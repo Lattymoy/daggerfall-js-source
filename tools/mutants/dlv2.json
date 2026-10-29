@@ -416,24 +416,6 @@
     ]
   },
   {
-    "name": "DLV2-stamp-not-carried",
-    "file": "src/scenes/delve/delveHold.js",
-    "old": "  to._delve = from._delve;\n",
-    "new": "",
-    "tests": [
-      "test/scenes/delve/dlv2_host.test.js"
-    ]
-  },
-  {
-    "name": "DLV2-stamp-left-on-the-old",
-    "file": "src/scenes/delve/delveHold.js",
-    "old": "  from._delve = null;\n",
-    "new": "",
-    "tests": [
-      "test/scenes/delve/dlv2_host.test.js"
-    ]
-  },
-  {
     "name": "DLV2-no-restand",
     "file": "src/scenes/delve/delveHold.js",
     "old": "      if (traits && !capDown && !capLive && pending === 0 && host.now() - askedAt >= HOLD_RESTAND_MS) standCaptain();\n",
@@ -636,6 +618,60 @@
     "file": "src/scenes/delve/delveHost.js",
     "old": "      if (quickLootTake(key, { items: () => r.vault }, player(), setMidScreenText, { took: showPickups })) return 1;\n",
     "new": "",
+    "tests": [
+      "test/scenes/delve/dlv2_host.test.js"
+    ]
+  },
+  {
+    "name": "DLV2-a-rebuild-drops-the-stamp",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    rec._delve = old._delve;   // DELVE II: and its place in a dungeon's encounter (scenes/delve/delveHold.js)\n",
+    "new": "",
+    "tests": [
+      "test/scenes/delve/dlv2_host.test.js"
+    ]
+  },
+  {
+    "name": "DLV2-a-change-drops-the-stamp",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      nf._delve = f._delve;               // DELVE II: and the same encounter - a captain changed is still the captain\n",
+    "new": "",
+    "tests": [
+      "test/scenes/delve/dlv2_host.test.js"
+    ]
+  },
+  {
+    "name": "DLV2-outlasted-said-as-left",
+    "file": "src/scenes/delve/delveHost.js",
+    "old": "say(ev.outlasted ? DELVE_HOLD_TEXT.outlasted() : DELVE_HOLD_TEXT.failed(), DELVE_SAY_LONG_S)",
+    "new": "say(DELVE_HOLD_TEXT.failed(), DELVE_SAY_LONG_S)",
+    "tests": [
+      "test/scenes/delve/dlv2_host.test.js"
+    ]
+  },
+  {
+    "name": "DLV2-woken-again-at-once",
+    "file": "src/scenes/delve/delveHost.js",
+    "old": "    if (!r.led) { if (!iw || r.dark) return;",
+    "new": "    if (!r.led) { if (!iw) return;",
+    "tests": [
+      "test/scenes/delve/dlv2_host.test.js"
+    ]
+  },
+  {
+    "name": "DLV2-a-nan-clock",
+    "file": "src/scenes/delve/delveHost.js",
+    "old": "now += Number.isFinite(dt) ? Math.min(Math.max(0, dt), 1) * 1000 : 0;",
+    "new": "now += Math.min(Math.max(0, dt), 1) * 1000;",
+    "tests": [
+      "test/scenes/delve/dlv2_host.test.js"
+    ]
+  },
+  {
+    "name": "DLV2-presence-through-the-wall",
+    "file": "src/scenes/delve/delveHost.js",
+    "old": "    return !(api.collider.raycast([site.x, site.y + 1, site.z], [dx / d, 0, dz / d], d, ONLY_DUNGEON) < d);",
+    "new": "    return true;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]

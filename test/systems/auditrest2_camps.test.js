@@ -130,7 +130,7 @@ test('AUDIT REST II H5: a load that does not enter the dungeon carries my Campfi
 });
 
 test('AUDIT REST II H6: a dungeon save carries the camps I left standing outside, and every dungeon load stands the save\'s - no Campfire placed after the save beside the pack\'s restored one, none lost on a fresh page; a save from before carries none and what stands, stands (mutants: the composer drops them; the load never stands them; the host never hands them)', () => {
-  assert.match(rd('src/scenes/dungeonContext.js'), /world: \{ \.\.\.collectWorld\(\), outerCamps: opts\.outerCampsSave\?\.\(\) \?\? null \},/);
+  assert.match(rd('src/scenes/dungeonContext.js'), /world: \{ \.\.\.collectWorld\(\), outerCamps: opts\.outerCampsSave\?\.\(\) \?\? null(?:, delve: delve\.snapshot\(\))? \},/);   // PIN MOVED (DELVE II): the won vaults ride beside them
   assert.match(rd('src/scenes/worldModes.js'), /outerCampsSave: \(\) => host\.outerCampsSave\?\.\(\) \?\? null,/);
   const w = rd('src/scenes/world.js');
   // AUDIT LANDFORMS C1 MOVED THIS PIN: in natives, with the height in DFU's frame (campToRecord - the Landforms row's lift

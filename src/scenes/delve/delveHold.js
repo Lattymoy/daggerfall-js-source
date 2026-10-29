@@ -3,8 +3,8 @@
 // A wave's foes at the ward's four gates, drawn off the dungeon's own encounter table (systems/encounters.js
 // chooseRandomEnemy, as the dungeon rolls its own), each a foe like any other (no leash: a follower's leash turns the
 // Enhanced AI's fighting off - ai/tactics.js). The captain: an elite of the table where elites stand, with its boss
-// traits. Each foe carries its stamp (`_delve`), which a body taking its place takes (carryDelve), so the count is read
-// off the pool. Not a DFU member (Ledger A: DELVE II).
+// traits. Each foe carries its stamp (`_delve`), which a body taking its place takes (the context's replace doors: the
+// Wabbajack's change, a rebuild in its slot), so the count is read off the pool. Not a DFU member (Ledger A: DELVE II).
 import { holdGates } from '../../net/delve/delveLaw.js';
 import { rollBossTraits, giveBossTraits } from '../../systems/bossTraits.js';
 import { PLACE_FOE_DEFAULTS } from '../../systems/quest/sceneMount.js';
@@ -32,14 +32,6 @@ export function holdStandPlaces(site, n) {
 /** Whether a foe went down to the fight - killed, executed, spared or put to flight - and not removed by another hand
  *  (a Wabbajack's change, a dispel, a mod's). Pure. */
 export const holdDowned = (f) => !!f?.dead && (f.entity?.health <= 0 || !!f.executed || !!f._swornAway || !!f.escaped);
-
-/** A body that takes another's place (the Wabbajack's change, a rebuild in the pool's slot) takes its place in the
- *  encounter too. The context's replace doors call it. */
-export function carryDelve(from, to) {
-  if (!from?._delve || !to) return;
-  to._delve = from._delve;
-  from._delve = null;
-}
 
 /**
  * One site's foes. `host`: `spawn(mobileType, at, opts)` the dungeon's spawnLooseFoe, `remove(f)` its removeLooseFoe,

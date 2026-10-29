@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  DSITE, DSITE_SMALL, delveSiteCount, colliderSiteProbe, siteCandidates, landDelveSites, chooseSites, siteKinds, delveSitePlan,
+  DSITE, DSITE_SMALL, delveSiteCount, colliderSiteProbe, siteCandidates, landDelveSites, chooseSites, siteKinds, delveSitePlan, boxMeetsDisc, tooNearTaken,
 } from '../../src/world/dungeon/delveSites.js';
 import { DELVE_KINDS, delvePlanHash } from '../../src/net/delve/delveLaw.js';
 import { Collider } from '../../src/player/collider.js';
@@ -136,8 +136,8 @@ test('DLV1 THE CHOICE: the deepest spot first, height counted twice; then the fa
   assert.deepEqual(chooseSites(line, { start: [0, 0, 0], count: 3 }).map((c) => c.pos[0]), [200, 0, 100], 'deepest, farthest, then the middle 100 m from both');
   assert.deepEqual(chooseSites(line.slice(0, 12), { start: [0, 0, 0], count: 3 }).map((c) => c.pos[0]), [110, 0], 'nothing 60 m from both');
   assert.deepEqual(chooseSites([at(0), at(60), at(59.9)], { start: [0, 0, 0], count: 2 }).map((c) => c.pos[0]), [60, 0], '60 m exactly is far enough');
-  const banded = [at(0), at(400), at(200), at(100, -30)];
-  assert.deepEqual(chooseSites(banded, { start: [0, 0, 0], count: 3 }).map((c) => c.pos[0]), [400, 100, 200], 'the lower storey before the far middle');
+  const banded = [at(0), at(400), at(210), at(100, -30)];
+  assert.deepEqual(chooseSites(banded, { start: [0, 0, 0], count: 3 }).map((c) => c.pos[0]), [400, 100, 210], 'the lower storey before the farthest; then the farthest by its score, no tie');
   const twins = [at(-100), at(100)];
   const picks = new Set();
   for (let s = 0; s < 40; s++) {
@@ -225,4 +225,79 @@ test('DLV1 THE SMALL ROOM: where the large rooms leave the count short, a 3 m di
   const tally = {};
   delveSitePlan({ blocks, probe: smallOnly, seed: 99, tally });
   assert.ok(tally.room > 0 && tally.small && !tally.small.room, 'each pass tallied apart');
+});
+
+test('DLV1 THE ROOM KEEPS CLEAR OF WHAT MOVES: no mover, door or piece not the dungeon\'s own reaches into the disc at its build pose - a sliding wall, a lift, a door (AUDIT DELVE II L1: model 59006\'s wall stood in 20 sites\' discs) (mutants: the movers unread; the disc\'s reach; the band over the floor)', () => {
+  const c = room();
+  const v = [], idx = [];
+  const box = (x0, x1, y0, y1, z0, z1) => { const n = v.length / 3; v.push(x0, y0, z0, x1, y0, z0, x1, y1, z0, x0, y1, z1, x1, y1, z1); idx.push(n, n + 1, n + 2, n + 2, n + 3, n + 4); };
+  box(3.7, 5, 0, 3, -1, 1);   // a wall's piece reaching 3.7 m from the heart, on its own bucket
+  c.addMesh('act:0:7', v, idx, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  const pr = colliderSiteProbe(c);
+  assert.equal(pr.room([0, 0, 0]), null, 'the mover inside the disc');
+  assert.ok(pr.room([-1, 0, 0]), '4.7 m off: clear of it');
+  assert.ok(pr.room([0, 0, 0], 3), 'outside the small disc');
+  const b = { min: [3.9, 0, -1], max: [5, 3, 1] };
+  assert.equal(boxMeetsDisc(b, [0, 0, 0], 4), true);
+  assert.equal(boxMeetsDisc(b, [-0.1, 0, 0], 4), false, '4 m exactly: clear');
+  assert.equal(boxMeetsDisc({ min: [2.9, 2.9, 0], max: [5, 5, 3] }, [0, 0, 0], 4), false, 'a corner off the disc, inside its square');
+  assert.equal(boxMeetsDisc(b, [0, 3.3, 0], 4), false, 'below the floor\'s band');
+  assert.equal(boxMeetsDisc(b, [0, 3.2, 0], 4), true, 'a platform flush with the floor, a lift\'s');
+  assert.equal(boxMeetsDisc(b, [0, -2.6, 0], 4), false, 'over the 2.5 m a site keeps');
+  assert.equal(boxMeetsDisc(b, [0, -2.4, 0], 4), true);
+});
+
+test('DLV1 THE FLOOR ASKED WHERE IT MATTERS: sixteen bearings on every ring, and every piece\'s own spot - the tier\'s plates, the gates (AUDIT DELVE II L9: a block between two bearings) (mutants: eight bearings; the plates\' spots unasked; the tier unread; the gates\' unasked)', () => {
+  const near = (p, x, z) => Math.abs(p[0] - x) < 1e-6 && Math.abs(p[2] - z) < 1e-6;
+  const raised = (x, z) => ({ floor: (p) => (near(p, x, z) ? { y: 0.6, ny: 1 } : { y: 0, ny: 1 }), room: () => ({ walls: walls() }) });
+  const cand = [{ pos: [0, 0.5, 0], water: -Infinity, block: 0, start: false }];
+  assert.equal(landDelveSites(cand, { probe: raised(99, 99) }).length, 1, 'flat: kept');
+  assert.equal(landDelveSites(cand, { probe: raised(3 * 0.9238795325112867, 3 * 0.3826834323650898) }).length, 0, 'between the eight, on the 3 m ring');
+  assert.equal(landDelveSites(cand, { probe: raised(2.5 * 0.951057, 2.5 * 0.309017), tier: 'elite' }).length, 0, 'an Elite\'s plate');
+  assert.equal(landDelveSites(cand, { probe: raised(2.5 * 0.951057, 2.5 * 0.309017) }).length, 1, 'no plate there in a regular dungeon');
+  assert.equal(landDelveSites(cand, { probe: raised(0, -2.5) }).length, 0, 'a plate of four');
+  assert.equal(landDelveSites(cand, { probe: raised(3.5 * Math.SQRT1_2, -3.5 * Math.SQRT1_2) }).length, 0, 'a gate');
+  assert.equal(landDelveSites(cand, { probe: raised(2.5 * Math.SQRT1_2, -2.5 * Math.SQRT1_2), law: DSITE_SMALL }).length, 0, 'the small room\'s gate, half a metre in from its 3 m');
+});
+
+test('DLV1 THE VAULT\'S WALL TO THE CENTIMETRE: two axis walls nearer by less than a centimetre are a tie (the first bearing), never an engine\'s last bit of trig (mutants: the walls compared raw)', () => {
+  const holdAt = (w) => delveSitePlan({ blocks: row(4), probe: { ...open, room: () => ({ walls: w }) }, seed: 99, kinds: ['hold'] }).sites[0];
+  const tie = holdAt([6.004, 20, 6, 20, 20, 20, 20, 20]);
+  assert.deepEqual([tie.vault[0] - tie.x, tie.vault[2] - tie.z].map((d) => Math.round(d * 100) / 100), [3.4, 0], 'the first of two within a centimetre');
+  const nearer = holdAt([6.02, 20, 6, 20, 20, 20, 20, 20]);
+  assert.deepEqual([nearer.vault[0] - nearer.x, nearer.vault[2] - nearer.z].map((d) => Math.round(d * 100) / 100), [0, 3.4], 'two centimetres nearer: that wall');
+});
+
+test('DLV1 THE SMALL PASS ASKS ONLY WHAT IT COULD CHOOSE: a candidate certainly within 60 m of a large site, wherever its floor lands, is never probed (mutants: the bound\'s height dropped; nothing pruned)', () => {
+  const blocks = row(6);
+  const room4 = (p, r) => (r <= 3 || (p[0] > 180 && p[0] < 190 && p[2] < 10) ? { walls: walls() } : null);
+  const asked = new Set();
+  const plan = delveSitePlan({ blocks, probe: { floor: (p) => { asked.add(`${p[0]},${p[1]},${p[2]}`); return { y: 0, ny: 1 }; }, room: room4 }, seed: 99 });
+  assert.equal(plan.sites[0].r, 4); assert.equal(plan.small, plan.sites.length - 1);
+  const big = plan.sites[0];
+  let near = 0, far = 0;
+  for (let b = 1; b < 6; b++) {
+    for (let gx = 0; gx < 25; gx++) for (let gz = 0; gz < 25; gz++) {
+      if (gx % 2 === 1 && gz % 2 === 1) continue;   // the large grid's own points: asked by the first pass
+      const x = b * RDB_SIDE + 1.6 + gx * 2, z = 1.6 + gz * 2;
+      const certain = (x - big.x) ** 2 + (z - big.z) ** 2 + (Math.abs(0 - big.y) + 4) ** 2 < 3600;
+      if (certain) { near++; assert.ok(!asked.has(`${x},0,${z}`), `${x},${z}: certainly too near, never asked`); } else if (asked.has(`${x},0,${z}`)) far++;
+    }
+  }
+  assert.ok(near > 300 && far > 300, `the bound cuts both ways (${near} near, ${far} far asked)`);
+  for (const s of plan.sites.slice(1)) assert.ok(Math.hypot(s.x - big.x, s.y - big.y, s.z - big.z) >= 60, 'and what it stands keeps the spacing');
+  // the bound: its floor may land 4 m under its storey, so 59.9 m along the floor is not certainly near
+  assert.equal(tooNearTaken([59.8, 0, 0], [[0, 0, 0]]), true);
+  assert.equal(tooNearTaken([59.9, 0, 0], [[0, 0, 0]]), false, '59.9 m and 4 m of slack: could land 60 m off');
+  assert.equal(tooNearTaken([50, 30, 0], [[0, 0, 0]]), false, '30 m up, 50 along: not certain');
+  assert.equal(tooNearTaken([50, 10, 0], [[0, 0, 0]]), true, '10 m up: certain');
+  assert.equal(tooNearTaken([50, 0, 0], [[300, 0, 0], [0, 0, 0]]), true, 'any site taken');
+});
+
+test('DLV1 THE RULES\' OTHER EDGES: the way in 20 m exactly is far enough; a door is measured in three dimensions - 4.49 m over the spot still too near, 4.5 clear (mutants: the start\'s edge; the door on the floor alone)', () => {
+  const at = { pos: [0, 0.5, 0], water: -Infinity, block: 0, start: false };
+  assert.equal(landDelveSites([at], { probe: open, start: [20, 0, 0] }).length, 1);
+  assert.equal(landDelveSites([at], { probe: open, start: [19.99, 0, 0] }).length, 0);
+  assert.equal(landDelveSites([at], { probe: open, doors: [[0, 4.49, 0]] }).length, 0, 'a door straight over it');
+  assert.equal(landDelveSites([at], { probe: open, doors: [[0, 4.5, 0]] }).length, 1);
 });

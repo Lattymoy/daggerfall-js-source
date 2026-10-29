@@ -292,7 +292,7 @@ import { createHitEffects, bloodCentre } from './hitEffects.js';
 import { orbArchiveFor, ORB_RECORD, noteOrbColour, ORB_SCALE } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle   // FIELD-GUN17: ...and its colour   // FIELD-GUN18: ...and how big it is drawn
 import { bloodHit } from '../combat/blood/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { createDroppedTorches } from './droppedTorches.js';
-import { createDelveHost } from './delve/delveHost.js'; import { carryDelve } from './delve/delveHold.js';   // DELVE II (DLV2, bible/03-World/Delve-II.md): the dungeon's encounters, in a module of their own; a replacing body takes its place in one
+import { createDelveHost } from './delve/delveHost.js';   // DELVE II (DLV2, bible/03-World/Delve-II.md): the dungeon's encounters, in a module of their own
 import { createCamps, FIRE_LIGHT_UP } from './camps.js';   // REST3: a placed fire's light stands where a camp's does   // SURV3: a fire on the dungeon floor (no tent below - the camp law says so)
 import { campWire, validCampRecord, FIRE_LIGHT_RANGE } from '../systems/survival/camp.js';   // SURV3: the room's memory carries the camps as the wire says them   // HT1: Handheld Torches' dropped lights in the dungeon   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemy/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
@@ -1767,7 +1767,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (old._encId != null) { rec._encId = old._encId; _sharedById.set(rec._encId, rec); }
     if (old._loose) rec._loose = true;
     if (old._ownSeq != null) rec._ownSeq = old._ownSeq;
-    carryDelve(old, rec);   // DELVE II: and its place in a dungeon's encounter
+    rec._delve = old._delve;   // DELVE II: and its place in a dungeon's encounter (scenes/delve/delveHold.js)
   }
   /** AUDIT PRE-MERGE 0928 O6: a foe another client steps here - the room's while another holds the seat, a party
    *  member's own on the own lane: the frame's puppet test, and the one the host asks before it moves a foe itself. */
@@ -3704,7 +3704,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       nf.entity.wabbajackActive = true;   // once per creature (WabbajackEffect:68)
       nf.entity.health -= missing;        // carry over damage (:94)
       renownFoeCarry(f, nf);              // AUDIT RENOWN1 GAME-10: the Wabbajack's change is the same fight - my blows on it count
-      carryDelve(f, nf);                  // DELVE II: and the same encounter - a captain changed is still the captain
+      nf._delve = f._delve;               // DELVE II: and the same encounter - a captain changed is still the captain
     }).catch(() => {});
   }
   // FS1 (wave D): the mount itself. `enchantCtx: false` is the
