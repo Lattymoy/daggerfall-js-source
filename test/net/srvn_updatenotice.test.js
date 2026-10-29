@@ -232,7 +232,7 @@ test('SRV-N: a notice is a line the GAME wrote - `system` is a flag, not a name,
 
   assert.notEqual(RELAY_RESTART_TEXT, BUILD_UPDATE_TEXT);
   for (const t of [RELAY_RESTART_TEXT, BUILD_UPDATE_TEXT]) assert.ok(t.length > 20 && t.length < 240, 'a notice fits a chat line');
-  assert.match(BUILD_UPDATE_TEXT, /[Ss]ave/, 'the build notice tells the player to save FIRST - it does not reload for them, and a reload mid-dungeon costs whatever is not saved');
+  assert.match(BUILD_UPDATE_TEXT, /saved/, 'UPDATE-FORCE: the build notice says the game saves and reloads for them');
 });
 
 // ── THE HOST ─────────────────────────────────────────────────────────
@@ -243,7 +243,7 @@ test('SRV-N: the host wires BOTH arms and puts a notice on EVERY tab - the prese
   assert.match(w, /online\.onRelay\s*=\s*onRelayVersion/, 'and so does the presence session, which is usually first back after a deploy');
   assert.match(w, /relayVersionSeen\(v\)\s*===\s*'changed'/, 'ONE detector behind both arms, or two sockets say it twice');
   assert.match(w, /chatNotice\(relayRestartText\(\)\)/);   // L10N4 (PIN MOVED): RELAY_RESTART_TEXT through its reader, in the player's language
-  assert.match(w, /chatNotice\(buildUpdateText\(\)\)/);
+  assert.match(w, /=== 'changed'\) startForcedUpdate\(\{ notice: chatNotice, save: onlineCheckpoint, busy: /);   // UPDATE-FORCE (PIN MOVED): the warning, the save and the reload
   // A NOTICE IS NOT A ROOM'S EVENT. It is kept on every one of the log's
   // tabs rather than pushed to the active one, so a later row in CHAT_TABS
   // gets it for free and a player reading one tab is never guessing.
