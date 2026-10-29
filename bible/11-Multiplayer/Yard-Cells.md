@@ -729,8 +729,10 @@ Only the shared part goes by cell and version. The caller's own part is one read
   moves, as arenaMoveHome does), of `home_rooms`, and of `guilds` (name, tag, heraldry: every cell that holds one of
   its halls).
 - **Time moves vacancy too.** A room whose tenancy ends is vacant without a write. A cell's built row keeps the
-  earliest `until` of its let rooms as `stale_at`. A read at or past it treats the cell as changed and builds it again.
-- **The route.** `POST /v1/homes/cells`, `{ mapId, cells: [[cell, ver], ...] }`, answered before the session check.
+  earliest `until` of its let rooms as `stale_at`. The minute's clock moves the version of every cell past its
+  `stale_at`, so a page that holds the cell hears it changed, and builds it again.
+- **The route.** `POST /v1/homes/cells`, `{ mapId, cells: [[cell, ver], ...] }`, under the session pass as
+  `/v1/homes/town` is: owners' handles are account data, where the yards' pieces were not.
   It answers only the cells whose version moved, under a byte budget with `more`, kept per cell in the isolate, and
   read on a replica with "a version never goes back". It is section 3.4's route for homes.
 
@@ -753,8 +755,9 @@ many cells at once (a guild's heraldry, which redraws all its halls) answers no 
 
 `onlineHomes.js` keeps one registry, and `homeAt` reads it as today. It merges the shared rows by cell with the
 caller's own rows by building key. It asks a town's cells as `yardCellSync.js` asks the yards: nearest first, with the
-versions it holds, every 60 s and at once on a home word. It asks its own part every 60 s and after each of its own
-writes, as `wrote` does now. QUEST-HOME's home words (`hearHome`) still make it ask at once.
+versions it holds, every 60 s and at once on a home word. It asks its own part when it first asks a town, after each of its own writes, on a
+home word for a cell where it holds an own row, and every 5 minutes. Only those make the own part change, so it
+is asked far less than the town is today. QUEST-HOME's home words (`hearHome`) still make it ask at once.
 
 ### 14.6 Decided (2026-10-29)
 
