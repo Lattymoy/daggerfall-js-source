@@ -1088,7 +1088,7 @@ import {
   weatherRng, fogFactor, precipitationForWeather, isDryFall,
   LightningPlayer,
 } from '../world/weather.js';
-import { PrecipitationRenderer } from '../render/precipitation.js';
+import { PrecipitationRenderer, precipWarmStep } from '../render/precipitation.js';
 import { warmPrograms } from '../render/warmPrograms.js';
 import { ROTOR_HUB, advanceRotor, mountRotor, MILL_SOUND, millSoundPosition } from '../world/windmills.js';   // WM2b: the sails; WM4c: the hum
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
@@ -2721,7 +2721,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   void warmPrograms([
     ...renderer.warmSteps(),
     ...(renderer.lazyWarmSteps?.() ?? []),   // PERF-COMPILE1: the telegraph pass and the windows' background, at idle
-    () => { if (!precip) precip = new PrecipitationRenderer(renderer.gl, precipOpts); },
+    precipWarmStep(renderer.gl, precipOpts, () => precip, (made) => { precip = made; }),   // SHADER-EASE WARM-POLL: started, then built
   ]);
   const wisps = sky.enhanced ? new WindWispsRenderer(renderer.gl) : null;   // WIND3: built on the enhanced lane, so a shader fault is a boot fault; its row is read per frame
   const windAudio = createWindAudio();   // WIND3: the wind loop, ticked on the exterior frame and stopped on the modal one
@@ -4431,7 +4431,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const dwRender = deepWatersOn() ? new DeepWatersRenderer(renderer) : null;
   latchModLoaded(DEEP_WATERS_VENDOR, !!dwRender);   // AUDIT PRE-MERGE 0928 S4: the sea is built now or not at all - its fish's shelf rows answer the same (systems/deepWater/deepWatersFishItems.js)
   if (dwRender) renderer.prepareTerrainClip();   // FAR-CLIP1: the cap's clip program, built with the mod's own at mount - not inside the first frame that draws a coast
-  if (dwRender) void warmPrograms([() => dwRender._ensure()]);   // PERF-COMPILE1 (stutter): the mod's seven programs at idle - they were built inside the first frame that drew a coast, seven compiles in one frame
+  if (dwRender) void warmPrograms(dwRender.warmSteps());   // PERF-COMPILE1 (stutter): the mod's seven programs at idle - they were built inside the first frame that drew a coast, seven compiles in one frame; SHADER-EASE WARM-POLL: started, then built once the driver is done
   // DW-E2: GameManager.IsPlayingGame for the Deep Waters runtime's gates - no window up. The overlay slot (townTalk) is
   // made further down; the first pixels promote before it exists, so the question is late-bound (nothing is up yet).
   let _dwOverlayUp = () => false;
@@ -4484,7 +4484,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // OH-B / OH-C: THE PITS - Iliac Puddle No More's dependant, cut into its floors (scenes/oceanHolesHost.js says how). Its
   // switch is read once, at the world's mount, with its dependency's: no carved sea, no pits.
   const ohRender = deepWaters && oceanHolesOn(true) ? new OceanHolesRenderer(dwRender) : null;
-  if (ohRender) void warmPrograms([() => ohRender._ensure()]);   // PERF-COMPILE1 (stutter): the holes' two programs at idle, not at the first hole drawn
+  if (ohRender) void warmPrograms(ohRender.warmSteps());   // PERF-COMPILE1 (stutter): the holes' two programs at idle, not at the first hole drawn (SHADER-EASE WARM-POLL: started first)
   let _ohTime = 0;   // OceanHoles' Time.time - the game's, held by a pause (the entrance's once-a-second)
   const _ohOrigin = [0, 0, 0];
   oceanHoles = ohRender ? createOceanHoles({

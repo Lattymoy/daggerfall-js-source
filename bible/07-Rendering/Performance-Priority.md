@@ -2997,6 +2997,14 @@ built where its owner builds it, and every draw that builds on demand still does
 the head in two of the three pairs, by less than the two base runs differ from each other (10 fps); the change runs
 nothing per frame, and these runs cannot tell a few percent either way.
 
+**SHADER-EASE WARM-POLL (2026-10-29).** Deep Waters' seven programs, Ocean Holes' two and the rain's one to three were
+still warmed by a bare step: every compile and its LINK_STATUS read in one idle callback, seven cold compiles back to
+back after each update. Each is now a named step (`DEEP_WATERS_PROGRAMS`, `OCEAN_HOLES_PROGRAMS`, `precipPrograms`,
+`precipWarmStep`): started, built once the driver says done, stood down when a draw built the pass first. Without
+KHR_parallel_shader_compile it builds at its first idle, as before. **LINK-WAIT:** `buildProgram` times its one
+LINK_STATUS read; a read over 50 ms is kept (`linkWaits()`, the last 32: label, ms, whether a start had it ahead). Pins: `test/render/shaderease.test.js`. Mutants: `tools/mutants/shaderease_warmpoll.json`, 13, all
+dead.
+
 ## CLOUD-COMPILE — the volumetric clouds arrive when their programs are done
 
 *The owner's performance review (2026-10-26, P3): BOOT-COMPILE's busy pair still waited 3.6 s for the clouds' march
