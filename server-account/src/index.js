@@ -240,7 +240,7 @@ import {
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
 import { mintToken, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, mintHomeOrder, mintYardOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
-import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, SAFE_OPEN_ROUTES, STAFF_ROUTES, savePathOf, realmPathOf, poiPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining, routeDb, d1BookmarkOf, D1_BOOKMARK_RE, d1Overloaded, noteOverload, shedding } from './service.js';   // SCALE4d: the routes a read replica may serve, and the session they are served on
+import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, SAFE_OPEN_ROUTES, STAFF_ROUTES, savePathOf, realmPathOf, poiPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining, routeDb, d1BookmarkOf, D1_BOOKMARK_RE, d1Overloaded, noteOverload, shedding, REPLICA_ROUTES } from './service.js';   // SCALE4d: the routes a read replica may serve, and the session they are served on
 import { poiRolesOf, putPoiAsset, getPoiAsset, savePoiDraft, submitPoi, withdrawPoi, requestRetire, reviewPoi, rollbackPoi, listPoi, poiHistory, poiQueue, poiLiveFeed, poiHeldVersion, poiFeedTag, listShelf, shelfEntry, shelve, unshelve, POI_ASSET_MAX, POI_DRAFT_BODY_MAX, POI_LIVE_ASSET_MAX_AGE_S } from './poi.js';   // POI-1: the POI store - builders draft, an approver decides, the feed is what is live; POI-4b: the library's shelf
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey, gatePublicKey } from './signing.js';
@@ -777,6 +777,11 @@ const service = {
     const res = await service.route(request, env, held);
     let mark = null;
     try { mark = held.session?.getBookmark?.() ?? null; } catch { mark = null; }
+    // KEEP-MARK (2026-10-29, bible/11-Multiplayer/Scale-Arc.md KEEP-MARK): a replica read whose session said no position - a
+    // shed, an overload, a session that ran nothing - hands back the one it carried. The page forgets its bookmark on a read
+    // answered with none (AUDIT SCALE II C-7), so every shed sent the next read to the primary, and the replicas sat idle
+    // through the overload of 2026-10-29 while the primary refused half the service.
+    if (!(typeof mark === 'string' && D1_BOOKMARK_RE.test(mark)) && REPLICA_ROUTES.get(new URL(request.url).pathname) === request.method) mark = d1BookmarkOf(request);
     const marked = typeof mark === 'string' && D1_BOOKMARK_RE.test(mark);
     if (!marked && !held.pass) return res;
     const out = new Response(res.body, res);   // its status and headers, copied - a copy's headers may be set
