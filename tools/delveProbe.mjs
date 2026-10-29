@@ -18,7 +18,7 @@ if (shots) mkdirSync(shots, { recursive: true });
 const server = await createServer({ server: { port: 5231, strictPort: true }, logLevel: 'error' });
 await server.listen();
 const browser = await chromium.launch({ headless: true, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
-const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+const page = await browser.newPage({ viewport: { width: 800, height: 500 } });   // the software rasteriser's frames: smaller is faster
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.message)));
 const fail = async (why) => { console.log(`FAIL: ${why}`); await browser.close(); await server.close(); process.exit(1); };
@@ -57,6 +57,7 @@ console.log(`${region} / ${name}: ${sites.length} site(s)`);
 if (!sites.length) await fail('the plan stood no site');
 
 for (const s of sites) {
+  const fps0 = await page.evaluate(() => window.__frame);
   console.log(`site ${s.i}: ${s.kind} at [${s.x}, ${s.y}, ${s.z}] r ${s.r}, vault [${s.vault.join(', ')}]`);
   const at = (p) => page.evaluate(([x, y, z]) => window.__player.warp(x, y + 0.05, z), p);
   // the vantage: inside the ward on its +x side, looking back at the heart and down at the floor
@@ -72,7 +73,7 @@ for (const s of sites) {
   const t0 = Date.now();
   if (s.kind === 'hold') {
     let shotWave = false;
-    while (!(await state())[s.i].won && Date.now() - t0 < 600_000) {
+    while (!(await state())[s.i].won && Date.now() - t0 < 1_800_000) {
       await heal();
       const killed = await page.evaluate((i) => {
         let k = 0;
@@ -103,7 +104,8 @@ for (const s of sites) {
   }
   await look(); await frames(4);
   const st = (await state())[s.i];
-  console.log(`  ${st.won ? 'WON' : 'NOT WON'} in ${((Date.now() - t0) / 1000).toFixed(0)} s: "${await say()}", vault ${st.vault} item(s)`);
+  const fr = (await page.evaluate(() => window.__frame)) - fps0;
+  console.log(`  ${st.won ? 'WON' : 'NOT WON'} in ${((Date.now() - t0) / 1000).toFixed(0)} s (${fr} frames): "${await say()}", vault ${st.vault} item(s), chest ${st.chest ? 'stood' : 'NOT stood'}`);
   await shot(`site${s.i}-won`);
   if (!st.won) await fail(`site ${s.i} never won`);
   const opened = await page.evaluate((i) => { window.__delve().press(`delve:vault:${i}`); return window.__overlay(); }, s.i);

@@ -190,7 +190,7 @@ export function createDelveHost({ api, deps = {}, location, blocks, hearths = []
       for (const w of s.won) { const r = runs[w?.i]; if (r) { r.won = true; r.vault = Array.isArray(w.items) ? w.items.map((it) => ({ ...it })) : []; } }
     },
     /** The ledgers, for the tests and the probes. */
-    state: () => runs.map((r) => ({ i: r.site.i, kind: r.site.kind, won: r.won, p: r.led?.p ?? DP.idle, w: r.led?.w ?? 0, next: r.led?.next ?? 0, order: [...(r.led?.order ?? [])], vault: r.vault?.length ?? 0 })),
+    state: () => runs.map((r) => ({ i: r.site.i, kind: r.site.kind, won: r.won, p: r.led?.p ?? DP.idle, w: r.led?.w ?? 0, next: r.led?.next ?? 0, order: [...(r.led?.order ?? [])], vault: r.vault?.length ?? 0, chest: !!pieces.chest(r.site.i, r.site.vault, chestYaw(r.site)) })),
     destroy() {
       dead = true;
       unTargets?.(); unNamer?.();
