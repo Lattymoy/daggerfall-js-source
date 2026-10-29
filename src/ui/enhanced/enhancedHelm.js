@@ -386,7 +386,7 @@ export function buildHelmPreview(doc) {
   return p.root;
 }
 
-/** HEAVY-HINT (FIELD BUGS 2026-10-29): why a laden ship makes little or no way - the cargo law weighs the captain's own
+/** HEAVY-HINT (FIELD BUGS 2026-10-29b): why a laden ship makes little or no way - the cargo law weighs the captain's own
  *  load. In the language of the moment. */
 export const helmHeavyText = () => t('helm.heavy', 'Too heavy. Lighten your pack, your wagon or the hold');
 /**

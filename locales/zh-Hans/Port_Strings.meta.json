@@ -1734,6 +1734,16 @@
   "tr": "6c92bd1dac0d",
   "by": "claude-in-session"
  },
+ "inventory.cape.label": {
+  "en": "cb4796c29622",
+  "tr": "be9ddfb4d8f2",
+  "by": "claude-in-session"
+ },
+ "inventory.cape.title": {
+  "en": "8cd2d555af57",
+  "tr": "5d81a251ccd5",
+  "by": "claude-in-session"
+ },
  "inventory.store.chestAct": {
   "en": "88d2f1cb9aea",
   "tr": "b53817bae61d",
@@ -4445,13 +4455,23 @@
   "by": "claude-in-session"
  },
  "sea.wild.chipTip": {
-  "en": "9e14a86d940a",
-  "tr": "ee859f3029d4",
+  "en": "88c4bc67ac34",
+  "tr": "b967135c3d07",
+  "by": "claude-in-session"
+ },
+ "sea.wild.dropLate": {
+  "en": "81c1d7e08802",
+  "tr": "73a46f6e253f",
   "by": "claude-in-session"
  },
  "sea.wild.enter": {
-  "en": "f49115e892b2",
-  "tr": "e174a17b28ac",
+  "en": "14bca5e366ed",
+  "tr": "38a3bc00326e",
+  "by": "claude-in-session"
+ },
+ "sea.wild.walkInto": {
+  "en": "eec82857378c",
+  "tr": "02e4febfcfb5",
   "by": "claude-in-session"
  },
  "settings.language.machine": {
@@ -5165,8 +5185,8 @@
   "by": "claude-in-session"
  },
  "tutorials.wildZone.body2": {
-  "en": "5c2566aaad07",
-  "tr": "d5ca4bb78f3b",
+  "en": "87989055cf87",
+  "tr": "87dc40ad80b9",
   "by": "claude-in-session"
  },
  "wagon.upkeep.boons.failing": {
@@ -5180,8 +5200,8 @@
   "by": "claude-in-session"
  },
  "wild.death.kept": {
-  "en": "5677b5a00569",
-  "tr": "3a85488d9d43",
+  "en": "e9a05a7b45a6",
+  "tr": "8daa216e88d7",
   "by": "claude-in-session"
  },
  "wild.death.last": {
@@ -5249,6 +5269,16 @@
   "tr": "a32d0cfaa2c8",
   "by": "claude-in-session"
  },
+ "wild.insure.line": {
+  "en": "3bd9cec6aa23",
+  "tr": "979fb139f0d9",
+  "by": "claude-in-session"
+ },
+ "wild.legend.offline": {
+  "en": "86db54caef14",
+  "tr": "daf79f58e0c1",
+  "by": "claude-in-session"
+ },
  "wild.safe.chip": {
   "en": "3441354558b8",
   "tr": "397c92600c37",
@@ -5270,13 +5300,13 @@
   "by": "claude-in-session"
  },
  "wild.zone.chipTip": {
-  "en": "fda83308207b",
-  "tr": "a835774956aa",
+  "en": "687871882d2f",
+  "tr": "198d9dd4ee07",
   "by": "claude-in-session"
  },
  "wild.zone.enter": {
-  "en": "006e183d3d6a",
-  "tr": "d63656cb55d9",
+  "en": "d8ef5b322bf0",
+  "tr": "b13bef52a955",
   "by": "claude-in-session"
  }
 }

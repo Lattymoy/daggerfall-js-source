@@ -15684,6 +15684,16 @@
   "tr": "3b1adad651de",
   "by": "claude-in-session"
  },
+ "inventory.cape.label": {
+  "en": "cb4796c29622",
+  "tr": "88b18672a75d",
+  "by": "claude-in-session"
+ },
+ "inventory.cape.title": {
+  "en": "8cd2d555af57",
+  "tr": "10e88d4b02cc",
+  "by": "claude-in-session"
+ },
  "inventory.quest.item": {
   "en": "18d4da5c6380",
   "tr": "5319838a3fc2",
@@ -37410,8 +37420,8 @@
   "by": "claude-in-session"
  },
  "sea.wild.chipTip": {
-  "en": "9e14a86d940a",
-  "tr": "6a30d64d7ba6",
+  "en": "88c4bc67ac34",
+  "tr": "67bbacbcbde4",
   "by": "claude-in-session"
  },
  "sea.wild.crossWarn": {
@@ -37430,13 +37440,13 @@
   "by": "claude-in-session"
  },
  "sea.wild.dropLate": {
-  "en": "0a6951c155e0",
-  "tr": "f1c0ad37d31e",
+  "en": "81c1d7e08802",
+  "tr": "3f325a18fb73",
   "by": "claude-in-session"
  },
  "sea.wild.enter": {
-  "en": "f49115e892b2",
-  "tr": "588e532d9515",
+  "en": "14bca5e366ed",
+  "tr": "c6298c49a466",
   "by": "claude-in-session"
  },
  "sea.wild.leave": {
@@ -37480,8 +37490,8 @@
   "by": "claude-in-session"
  },
  "sea.wild.walkInto": {
-  "en": "4a86279b0614",
-  "tr": "58cff4b70871",
+  "en": "eec82857378c",
+  "tr": "b2e36ffde307",
   "by": "claude-in-session"
  },
  "search.searchedBy": {
@@ -40210,8 +40220,8 @@
   "by": "claude-in-session"
  },
  "tutorials.wildZone.body2": {
-  "en": "5c2566aaad07",
-  "tr": "6128d65d3d87",
+  "en": "87989055cf87",
+  "tr": "08cef9ed2b01",
   "by": "claude-in-session"
  },
  "veil.party.captain": {
@@ -40435,8 +40445,8 @@
   "by": "claude-in-session"
  },
  "wild.death.kept": {
-  "en": "5677b5a00569",
-  "tr": "280df7741918",
+  "en": "e9a05a7b45a6",
+  "tr": "dfe28b96e891",
   "by": "claude-in-session"
  },
  "wild.death.last": {
@@ -40545,8 +40555,8 @@
   "by": "claude-in-session"
  },
  "wild.insure.line": {
-  "en": "993784cd95a5",
-  "tr": "b5a744bcbf8b",
+  "en": "3bd9cec6aa23",
+  "tr": "b2a3fbfceeb9",
   "by": "claude-in-session"
  },
  "wild.insure.offline": {
@@ -40560,8 +40570,8 @@
   "by": "claude-in-session"
  },
  "wild.legend.offline": {
-  "en": "80b4064ee77c",
-  "tr": "ca4b9c597186",
+  "en": "86db54caef14",
+  "tr": "f88e23c4add4",
   "by": "claude-in-session"
  },
  "wild.legend.travel": {
@@ -40610,13 +40620,13 @@
   "by": "claude-in-session"
  },
  "wild.zone.chipTip": {
-  "en": "fda83308207b",
-  "tr": "7b7a29947430",
+  "en": "687871882d2f",
+  "tr": "efa5398c6063",
   "by": "claude-in-session"
  },
  "wild.zone.enter": {
-  "en": "006e183d3d6a",
-  "tr": "2e8b00d06306",
+  "en": "d8ef5b322bf0",
+  "tr": "c38051d0f92b",
   "by": "claude-in-session"
  },
  "wild.zone.revenantOne": {

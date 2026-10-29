@@ -9,6 +9,7 @@ import {
   AuraRingRenderer, auraWearers, auraLookOf, auraBeastStep, auraMotionStep, auraCapeStep, auraSpriteBones, auraSpritePosed, auraWingLights,
   CLOAK_BONES, AURA_KINDLE_S, AURA_FORGET_S,
 } from '../render/auraRing.js';
+import { auraClothOver } from '../render/auraRing.js';   // ARMORY-SEEN: whether a body's cloth covers its pieces from the eye
 import { ArmoryRenderer, armoryWearers, armoryMotionStep, armoryEyeAtHead, armoryHeadTip, ARMORY_DETAIL_M } from '../render/armoryPass.js';
 import { ARMORY_BONES, newPose, poseFromBones, poseFromFigure, poseAtRest } from '../render/armoryPose.js';
 import { compiledPass } from '../render/glProgram.js';
@@ -17,11 +18,24 @@ import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { mwViewBodyBones, mwViewSpriteFigure, mwViewSpriteFacing } from '../player/mwView.js';
 import { ownAura, ownArmory } from '../systems/ownGlyphs.js';
 import { getPref } from '../systems/uiPrefs.js';
+import { capeShown, lookCapesHidden } from '../systems/capeShown.js';   // CAPE-TOGGLE: capes hidden - mine by my switch, a peer's by their look
 
 /** ARMORY: the "Others' armory" choice (systems/features.js 'armory-others') - every peer's pieces, those within this many
  *  metres, or none. One's own always draws. */
 export const ARMORY_NEAR_M = 20;
 export const armoryOthersOf = (/** @type {unknown} */ v) => (v === 'near' || v === 'none' ? v : 'all');
+
+/** ARMORY-SEEN: the armory's wearers drawn this frame (`kits`), split by the aura each wears (`auras`, by id): `under` those
+ *  whose cloth covers them from `eye` (auraRing.js auraClothOver), drawn before the auras so the cloth lies over them;
+ *  `over` the rest, drawn after. Both lists refilled. Pure but for them. */
+export function armoryLayers(/** @type {any[]} */ kits, /** @type {any[]} */ auras, /** @type {ArrayLike<number>} */ eye, /** @type {any[]} */ under, /** @type {any[]} */ over) {
+  under.length = 0; over.length = 0;
+  for (const k of kits) {
+    const a = auras.find((w) => w.id === k.id);
+    (a && auraClothOver(a, eye) ? under : over).push(k);
+  }
+  return under;
+}
 
 /** A peer's seed, by its id - the auras' own (FNV-1a over the id, a share of 997). Pure. */
 export const auraSeedOf = (/** @type {string} */ id) => { let h = 2166136261; for (const ch of String(id)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return ((h >>> 0) % 997) / 997; };
@@ -41,6 +55,7 @@ export function createAuraHost(deps) {
   let auraHeard, armoryHeard;
   let gathered = 0;   // PROFILE-SLOTS: the frames gathered - a name lifts only over a piece drawn in this one (nameTopOf)
   const auraList = [], auraDraw = [], auraPool = new Map(), auraLights = [], armoryList = [], armoryDraw = [], armoryPool = new Map();
+  const armoryUnder = [], armoryOver = [];   // ARMORY-SEEN: this frame's pieces under the cloth on their back, and the rest
   const self = { id: 'self', at: [0, 0, 0], aura: null, seed: 0.37, kindle: 1, since: 0, yaw: 0 };   // SHADOW-CLOAK: `yaw` the facing the cloak's opening faces
   const selfKit = { id: 'self', at: [0, 0, 0], kit: null, seed: 0.37, kindle: 1, since: 0, yaw: 0, pose: newPose(), torn: -1 };
   // AURA-STALL (bible/07-Rendering/Performance-Priority.md): built at the first wearer in range, each look's program at its
@@ -48,6 +63,13 @@ export function createAuraHost(deps) {
   const auraPassOf = compiledPass(renderer.gl, [], () => new AuraRingRenderer(renderer.gl), (/** @type {any} */ e) => console.warn('[online] the aura would not build', e?.message ?? e));
   const armoryPassOf = compiledPass(renderer.gl, [], () => new ArmoryRenderer(renderer.gl), (/** @type {any} */ e) => console.warn('[online] the armory would not build', e?.message ?? e));
   const fogNow = () => ({ mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: renderer._camPos, focus: renderer._focus, haze: renderer._haze });
+  /** ARMORY-SEEN: one layer of the frame's pieces (armoryLayers), under the frame's camera. */
+  const drawArmory = (/** @type {any[]} */ list, /** @type {any} */ proj, /** @type {any} */ view, /** @type {any} */ eye, /** @type {number} */ now) => {
+    if (!list.length) return;
+    const pass = armoryPassOf();
+    pass?.draw(list, proj, view, eye, now, fogNow());
+    if (pass?.drawn) renderer.markForeignPass();
+  };
 
   /** The pose of my own body as drawn - the rig's bones, the sprite's figure, or the rest pose pressed to my height. */
   function selfPose(/** @type {any} */ pose, /** @type {any} */ player) {
@@ -91,7 +113,7 @@ export function createAuraHost(deps) {
       const mine = ownAura(), kit = ownArmory();
       if ((auraHeard !== undefined && mine !== auraHeard) || (armoryHeard !== undefined && kit !== armoryHeard)) { if (online.rehello?.()) { auraHeard = mine; armoryHeard = kit; } }
       const spawned = deps.spawned(), faced = mwViewSpriteFacing();
-      if (mine && spawned) {
+      if (mine && spawned && capeShown()) {   // CAPE-TOGGLE: my aura hidden with my cloak, here and (the look's `hc`) on every screen
         const f = player.feetAt();
         if (self.aura !== mine) self.since = t;
         self.at[0] = f[0]; self.at[1] = f[1]; self.at[2] = f[2]; self.aura = mine; self.yaw = faced?.yaw ?? player.bodyYawFor(deps.camYaw()); auraBeastStep(self, deps.beast(), t);   // SHADOW-CLOAK: the body's own facing, as its third person is drawn (SPRITE-FACE: a sprite's, as its picture faces); turned beast, the cloak torn
@@ -108,7 +130,7 @@ export function createAuraHost(deps) {
       } else selfKit.kit = null;
       for (const d of seen) {
         if (deps.veiled(d.id) || !d.shown) continue;   // a concealed peer's fire is concealed with them
-        const au = online.auraOf?.(d.id) ?? null, ak = online.armoryOf?.(d.id) ?? null;
+        const au = lookCapesHidden(online.lookOf?.(d.id)) ? null : online.auraOf?.(d.id) ?? null, ak = online.armoryOf?.(d.id) ?? null;   // CAPE-TOGGLE: a peer who hides their capes wears no aura here
         if (!au) auraPool.delete(d.id);
         if (!ak) armoryPool.delete(d.id);
         if (!au && !ak) continue;
@@ -136,28 +158,33 @@ export function createAuraHost(deps) {
      *  street, the dungeon's lateWorldDraw, the building); never under the travel view. */
     draw() {
       const proj = renderer._proj, view = renderer._view, eye = renderer._camPos;   // the frame's camera, the world's own
-      if (proj && view && eye && auraList.length && auraWearers(auraList, eye, auraDraw).length) {
-        const pass = auraPassOf();   // AURA-STALL: null while its program compiles - the capes still hang and swing below
-        const now = performance.now() / 1000, player = deps.player(), walkers = deps.walkers(), riders = deps.riders(), faced = mwViewSpriteFacing();
+      const now = performance.now() / 1000;
+      if (!(proj && view && eye && auraList.length && auraWearers(auraList, eye, auraDraw).length)) auraDraw.length = 0;
+      if (auraDraw.length) {
+        const player = deps.player(), walkers = deps.walkers(), riders = deps.riders(), faced = mwViewSpriteFacing();
         // SHADOW-CLOAK: each cape hung on its body as drawn this frame - its bones posed by now (mine, or a peer's), else at
         // rest, crouched with a crouch - and swung by how it moves where it is drawn; SPRITE-FACE: a sprite's faced as its
         // PICTURE is, in the saddle too, and swung by the way the body turns (`turn`)
         for (const w of auraDraw) if (auraLookOf(w.aura).mesh) { auraCapeStep(w, w === self ? { feet: player.bodyFeetAt(), yaw: faced?.yaw ?? player.bodyYawFor(deps.camYaw()), turn: faced?.turn, bones: mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()) } : deps.bodies()?.bonesOf(w.id, CLOAK_BONES) ?? auraSpritePosed(w, walkers?.figureOf(w.id) ?? riders?.figureOf?.(w.id), walkers?.faceOf?.(w.id) ?? riders?.faceOf?.(w.id)), w === self ? player.height / CAPSULE_HEIGHT : 1); auraMotionStep(w, now); }
+      }
+      auraList.length = 0;   // this frame's, drawn once: a frame that gathers none (the seat left, death, offline) draws none
+      armoryDraw.length = 0;
+      if (proj && view && eye && armoryList.length) {
+        for (const w of armoryList) w.atHead = w === selfKit && armoryEyeAtHead(w, eye);   // my own first person: no body piece over the view
+        armoryWearers(armoryList.filter((w) => w === selfKit || othersShown(w.at, eye)), eye, armoryDraw);
+        for (const w of armoryDraw) w.drawn = gathered;
+      }
+      armoryList.length = 0;
+      // ARMORY-SEEN: a body's pieces before the auras where the cloth on its back covers them, so the cloth lies over them;
+      // the rest after. Drawn after every cape, the pieces under one burned through it
+      armoryLayers(armoryDraw, auraDraw, eye, armoryUnder, armoryOver);
+      drawArmory(armoryUnder, proj, view, eye, now);
+      if (auraDraw.length) {
+        const pass = auraPassOf();   // AURA-STALL: null while its program compiles - the capes still hang and swing above
         pass?.draw(auraDraw, proj, view, eye, now, fogNow());
         if (pass?.drawn) renderer.markForeignPass();
       }
-      auraList.length = 0;   // this frame's, drawn once: a frame that gathers none (the seat left, death, offline) draws none
-      if (proj && view && eye && armoryList.length) {
-        for (const w of armoryList) w.atHead = w === selfKit && armoryEyeAtHead(w, eye);   // my own first person: no body piece over the view
-        const shown = armoryList.filter((w) => w === selfKit || othersShown(w.at, eye));
-        if (armoryWearers(shown, eye, armoryDraw).length) {
-          for (const w of armoryDraw) w.drawn = gathered;
-          const pass = armoryPassOf();
-          pass?.draw(armoryDraw, proj, view, eye, performance.now() / 1000, fogNow());
-          if (pass?.drawn) renderer.markForeignPass();
-        }
-      }
-      armoryList.length = 0;
+      drawArmory(armoryOver, proj, view, eye, now);
     },
     /** SERAPH-WINGS: the gold of the nearest wings, for every host's light list. */
     wingLights: (/** @type {number[]} */ eye) => auraWingLights(auraList, eye, auraLights),

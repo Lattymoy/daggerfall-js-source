@@ -1276,7 +1276,7 @@ export function createHorseCartRuntime(deps) {
     if (wagonState.Mode === WAGON_MODE.WithPlayer) return !wagonState.WagonStabled;   // WAGON-STABLED: a stabled one stays at the stable
     return physicalPersistenceEnabled && (followingTransportFastTravels || forceNextJourney) && isTeamFollowing();
   }
-  /** CARGO-ASHORE (FIELD BUGS 2026-10-29): whether the wagon is in the player's keeping - not parked, stabled or
+  /** CARGO-ASHORE (FIELD BUGS 2026-10-29b): whether the wagon is in the player's keeping - not parked, stabled or
    *  following on foot - so its load goes where they go, a ship's hold too (world.js, Come Sail Away's cargo). */
   const wagonWithPlayer = () => wagonState.Mode === WAGON_MODE.WithPlayer && !wagonState.WagonStabled;
   function convertFollowingTransportToWaitAtDeparture() {

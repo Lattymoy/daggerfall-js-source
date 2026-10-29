@@ -1728,7 +1728,7 @@ export function createComeSailAwayRuntime(deps) {
   }
   /** The map pixel under scene point `p`, off terrain `t0`'s own: map x grows with the scene's x, map y against its z. */
   const pixelUnderOn = (t0, p) => ({ X: t0.mapPixelX + Math.floor((p[0] - t0.position[0]) / TERRAIN_EDGE), Y: t0.mapPixelY - Math.floor((p[2] - t0.position[2]) / TERRAIN_EDGE) });
-  /** NO-PIXEL (FIELD BUGS 2026-10-29, a departure): a boat with no map pixel - placed on a terrain the streamer no longer
+  /** NO-PIXEL (FIELD BUGS 2026-10-29b, a departure): a boat with no map pixel - placed on a terrain the streamer no longer
    *  held (GetMapPixelFromTerrain's null), or saved so - takes the pixel she stands on, off the player's terrain, else the
    *  player's own. The C# reads her pixel's X and throws: the visibility, a recentre's shift and a restore stopped at her. */
   function pixelOf(boat) {
@@ -2846,7 +2846,7 @@ export function createComeSailAwayRuntime(deps) {
     UpdateBoatVisibility();
     UpdateWaveMesh();   // `if (waveObject != null)` - Start built it
   }
-  /** OnTransition (1978-1985): into or out of a building or a dungeon. WIND-FIRST (FIELD BUGS 2026-10-29, a departure):
+  /** OnTransition (1978-1985): into or out of a building or a dungeon. WIND-FIRST (FIELD BUGS 2026-10-29b, a departure):
    *  the door's wind is laid before the boats are shown, never after - it reads no boat, and a boat the visibility could
    *  not read (NO-PIXEL) had thrown first and left the indoors' none on the open sea: no ship made way under sail. */
   function OnTransition() {

@@ -3555,7 +3555,7 @@ the Cloudflare token: "Use it", then "Do everything. No band aids. No short fixe
 - **The Daggerfall city's yards past the bound**: YARD-TOWN's (`06-Systems/Online-Arc.md`, 2026-10-25) - the bound raised
   to what a built row keeps (6,500) and refused at the placement, every town built again at it (migration 0175).
   YARD-CELL (`Yard-Cells.md`, 2026-10-26; YC1 built) replaced the town's row with one row a block, read by version,
-  and dropped the town-wide bound: `home_yards` and `home_yards_ver` stay only as the rollback's net until YC3.
+  and dropped the town-wide bound: `home_yards` and `home_yards_ver` stayed as the rollback's net until YC3 dropped them (migration 0193).
 - **The arena's board past the bound**: its climb is every account that ever won a ladder bout, every season's; at some
   5,000-15,000 such accounts (lanes B and D measured) its text passes KEPT_BOARD_MAX_BYTES and the board is counted every
   time, as before - the log says so. Live, 2026-10-20: 13,051 ladder bouts in all, 230 banner members - far under it.

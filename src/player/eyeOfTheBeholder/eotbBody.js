@@ -56,7 +56,7 @@ import { decodePng } from '../../systems/textureReplacement.js';   // EOTB-FLIP:
 import { decodeServedPng } from '../../systems/vanillaEnhanced/vanillaEnhancedPack.js';   // FIRST-VISIT: and its decode workers
 import { isLayeredKey, decodeLayered, outfitOfSlots, layeredGenderOf, LAYERED_ARCHIVE } from './layeredArmor.js';   // WORN-ARMOUR: the body in the armour it wears
 import { playerEntity } from '../../characters/playerEntity.js';   // WORN-ARMOUR: whose armour
-import { equipTableOf } from '../../systems/equip.js';   // WORN-ARMOUR: what they wear
+import { drawnEquipTable } from '../../systems/capeShown.js';   // WORN-ARMOUR: what they wear; CAPE-TOGGLE: as it is drawn
 import { horseLookCode, horseLookOfCode, lookSuffix } from '../../systems/horse/horseCoats.js';   // COATS1: the ridden horse's look
 import { getMeleeWeaponAnimTime } from '../../characters/weaponStates.js';   // [IL] GetMeleeAnimTickTime reads FormulaHelper's own
 import { setPlayerTorchOffsetOverride, setPlayerWaistLightOverride } from '../../systems/playerTorch.js';   // [IL] TorchOffset writes PlayerTorch's position; HT-WAIST: and the lantern at the waist lights from where it hangs
@@ -153,7 +153,7 @@ function look() {
  *  character's own). An equip table that cannot be read is plain leather. */
 function wornOutfit(gender) {
   let slots = null;
-  try { slots = equipTableOf(playerEntity); } catch { slots = null; }
+  try { slots = drawnEquipTable(playerEntity); } catch { slots = null; }   // CAPE-TOGGLE: a hidden cloak is not drawn
   return { outfit: outfitOfSlots(slots), gender };
 }
 
