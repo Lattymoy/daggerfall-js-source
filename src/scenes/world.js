@@ -9385,13 +9385,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** The helm's waters asked every CROSS_CHECK_S: a way they offer, not asked since the ship came into them, asked - or
    *  said refused once in those waters (an enemy near, another player aboard), and asked as soon as the deck is clear.
    *  AUDIT CAPTAIN'S SEA X1: a refusal marked the way asked, and the question never came back while she stayed in those
-   *  waters; X3: never while the world is being moved (a party member's helm through the arrival's wait). */
+   *  waters; X3: never while the world is being moved (a party member's helm through the arrival's wait). SEA-ROWS: nor
+   *  while a journey sails to a place it chose (a voyage to a serpent past the Bay was asked to cross on its way). */
   function etherCrossStep(dt) {
     if (!etherSea || _etherCrossing || !csaRuntime?.isSailing?.()) return;
     _crossCheckT -= dt;
     if (_crossCheckT > 0) return;
     _crossCheckT = CROSS_CHECK_S;
-    if (gamePaused() || _loading || townTalk.overlayActive || modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior') return;
+    if (gamePaused() || _loading || townTalk.overlayActive || modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior' || travelOptions.isTravelActive) return;   // SEA-ROWS: never across a journey's way - asked where it ends
     const way = crossWayHere();
     if (way !== _crossSaid) _crossSaid = null;
     if (!crossGate.offer(way)) return;

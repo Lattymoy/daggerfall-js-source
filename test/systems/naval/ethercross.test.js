@@ -67,7 +67,7 @@ test('ETHER-CROSSING by source: asked at a helm in the exterior with no window u
   const step = src.slice(src.indexOf('function etherCrossStep(dt) {'), src.indexOf('async function etherCross(way) {'));
   assert.match(step, /if \(!etherSea \|\| _etherCrossing \|\| !csaRuntime\?\.isSailing\?\.\(\)\) return;/);
   // PIN MOVED (AUDIT CAPTAIN'S SEA X3): never while the world is being moved
-  assert.match(step, /if \(gamePaused\(\) \|\| _loading \|\| townTalk\.overlayActive \|\| modes\?\.transitioning \|\| worldMoveBusy\(\) \|\| _partyArrivalPending \|\| _mode\(\) !== 'exterior'\) return;/);
+  assert.match(step, /if \(gamePaused\(\) \|\| _loading \|\| townTalk\.overlayActive \|\| modes\?\.transitioning \|\| worldMoveBusy\(\) \|\| _partyArrivalPending \|\| _mode\(\) !== 'exterior' \|\| travelOptions\.isTravelActive\) return;/);
   // PIN MOVED (AUDIT CAPTAIN'S SEA G2): the way out only where the crossing out is this game's - the Veil's home under any skin
   assert.match(step, /const way = crossWayHere\(\);/);
   assert.match(src, /return crossingWayAt\(p\.x, p\.y, etherOut && p\.x < CROSS_X && !inEther\(p\.x, p\.y\) \? crossLandPx\(p\.x, p\.y\) : 0\);/);

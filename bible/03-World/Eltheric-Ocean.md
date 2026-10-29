@@ -372,6 +372,13 @@ Mutants: `tools/mutants/seaopen.json` (VEIL-, all dead). PINS MOVED: `ethercross
 X2 and P6, `csa_together.test.js` (the count's `skip`). THE FOUR HOSTS: `world.js` builds it and steps it beside the
 crossing; `worldModes.js`, `dungeonContext.js` and `exterior.js` sail no crossing.
 
+
+**SEA-ROWS (`01-Overview/bugs/Field-Bugs-2026-10-29.md`; a player: "You get told you're going to the E-O instead").**
+The crossing's waters were written for the Bay's world, and since WW3 the sea south of its rows is sailed. On the
+freeware's world 3 of 66 serpent sites past the Bay lay in them, and 8 of 35 far lanes sailed through them (Shimmerene
+to Lillandril, 177 of its 284 pixels). They are the Bay's own rows alone now (`crossingWaters`), and hold no site or far
+lane. Nor is the crossing asked while a journey sails to a place it chose (`etherCrossStep`); one that ends in its
+waters is asked there. Pinned by `test/world/ethersea.test.js` and `test/systems/naval/auditcaptsea.test.js`.
 ## ETHER-CHART - the chart of the Eltheric Ocean
 
 Past the Veil the travel map's door (`toggleTravelMap`) opens the captain's chart (`ui/etherChartWindow.js`, the naval

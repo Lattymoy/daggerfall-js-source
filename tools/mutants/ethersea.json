@@ -326,8 +326,8 @@
   {
     "name": "SEA-cross-west",
     "file": "src/world/ethericSea.js",
-    "old": "!inEtherLaw(x, y) && x < CROSS_X && typeof landPx",
-    "new": "!inEtherLaw(x, y) && x <= CROSS_X && typeof landPx",
+    "old": "!inEtherLaw(x, y) && x < CROSS_X && y >= 0",
+    "new": "!inEtherLaw(x, y) && x <= CROSS_X && y >= 0",
     "tests": [
       "test/world/ethersea.test.js"
     ]

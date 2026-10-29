@@ -592,12 +592,19 @@ test('START2 LONG-VOYAGE (travelRoute.js planSeaLanes): a booked voyage whose po
   assert.deepEqual(plan.pixels.at(-1), to);
   assert.equal(plan.kinds.length, plan.pixels.length - 1);
   assert.ok(Math.min(...plan.pixels.map((p) => p.y)) < -250, 'round the wall\'s north end, past the box\'s bounds (the map and its two ends: y -100 at the least)');
+  // PIN MOVED (SEA-TAUT, Field-Bugs-2026-10-29): a sailed step is a straight run over open water - each pixel of its line
+  // a boat's step - and every other step one pixel
   for (let i = 1; i < plan.pixels.length; i++) {
     const a = plan.pixels[i - 1], b = plan.pixels[i];
-    assert.ok(Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)) === 1, 'one pixel a step');
-    if (plan.kinds[i - 1] === 'sea') {
-      assert.ok(isWater(b.x, b.y), 'sailed on water');
-      assert.ok(a.x === b.x || a.y === b.y || isWater(b.x, a.y) || isWater(a.x, b.y), 'never through a corner of the land');
+    if (plan.kinds[i - 1] !== 'sea') { assert.ok(Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)) === 1, 'one pixel a step'); continue; }
+    let { x, y } = a;
+    const dx = Math.abs(b.x - a.x), dy = Math.abs(b.y - a.y), sx = a.x < b.x ? 1 : -1, sy = a.y < b.y ? 1 : -1;
+    for (let err = dx - dy; x !== b.x || y !== b.y;) {
+      const px = x, py = y, e2 = 2 * err;
+      if (e2 > -dy) { err -= dy; x += sx; }
+      if (e2 < dx) { err += dx; y += sy; }
+      assert.ok(isWater(x, y), 'sailed on water');
+      assert.ok(px === x || py === y || isWater(x, py) || isWater(px, y), 'never through a corner of the land');
     }
   }
   const fall = plan.kinds.indexOf('landfall');

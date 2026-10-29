@@ -792,26 +792,41 @@ function* planSeaLanesSteps(from, to, opts = {}) {
     }
     return t.join[i] === 1;
   };
-  /** The water a boat sails from `seeds`, breadth first, out to LANE_END_REACH about `origin`: each pixel's steps, and
-   *  the way to it. */
+  /** The water a boat sails from `seeds` out to LANE_END_REACH about `origin`, nearest first by the way's own length (a
+   *  diagonal step √2 - SEA-TAUT: counted as one, the A* took a lane in at a diagonal's far cell and the way to it bent,
+   *  up to √2 the straight line): each pixel's length, and the way to it. Queued in buckets a pixel's length wide, which
+   *  is exact with every step one or more - and a step reaches only the next two, so three turn round. */
   const flood = function* (origin, seeds) {
     const R = LANE_END_REACH, W = 2 * R + 1, ox = origin.x - R, oy = origin.y - R;
-    const dist = new Int32Array(W * W).fill(-1), prev = new Int32Array(W * W).fill(-1), q = new Int32Array(W * W);
-    let qh = 0, qt = 0;
+    const dist = new Float64Array(W * W).fill(Infinity), prev = new Int32Array(W * W).fill(-1), done = new Uint8Array(W * W);
+    const q = [new Int32Array(W * W), new Int32Array(W * W), new Int32Array(W * W)], len = [0, 0, 0];
     const ix = (x, y) => (x < ox || y < oy || x >= ox + W || y >= oy + W ? -1 : (y - oy) * W + (x - ox));
-    for (const p of seeds) { const i = ix(p.x, p.y); if (i >= 0 && dist[i] < 0) { dist[i] = 0; q[qt++] = i; } }
-    while (qh < qt) {
-      if (qh && (qh & (PLAN_YIELD_CELLS - 1)) === 0) yield;   // PLAN-SLICES
-      if (tally) tally.n++;
-      const i = q[qh++], x = ox + (i % W), y = oy + Math.floor(i / W);
-      for (let d = 0; d < 8; d++) {
-        const nx = x + STEP_DX[d], ny = y + STEP_DY[d], j = ix(nx, ny);
-        if (j < 0 || dist[j] >= 0 || !sails(x, y, nx, ny)) continue;
-        dist[j] = dist[i] + 1; prev[j] = i; q[qt++] = j;
+    // each pixel's water asked once (-1 not yet): a queued pixel's neighbours are asked again as it is reached
+    const wetAt = new Int8Array(W * W).fill(-1);
+    const wet = (x, y) => { const i = ix(x, y); if (i < 0) return isWater(x, y); if (wetAt[i] < 0) wetAt[i] = isWater(x, y) ? 1 : 0; return wetAt[i] === 1; };
+    const step = (ax, ay, bx, by) => wet(bx, by) && !(ax !== bx && ay !== by && !wet(bx, ay) && !wet(ax, by));   // `sails`, on the kept water
+    for (const p of seeds) { const i = ix(p.x, p.y); if (i >= 0 && dist[i] > 0) { dist[i] = 0; q[0][len[0]++] = i; } }
+    let popped = 0;
+    for (let b = 0; len[0] + len[1] + len[2]; b++) {
+      const at = b % 3, list = q[at];
+      for (let k = 0; k < len[at]; k++) {
+        const i = list[k];
+        if (done[i]) continue;
+        done[i] = 1;
+        if (++popped % PLAN_YIELD_CELLS === 0) yield;   // PLAN-SLICES
+        if (tally) tally.n++;
+        const x = ox + (i % W), y = oy + Math.floor(i / W);
+        for (let d = 0; d < 8; d++) {
+          const nx = x + STEP_DX[d], ny = y + STEP_DY[d], j = ix(nx, ny);
+          if (j < 0 || done[j] || !step(x, y, nx, ny)) continue;
+          const nd = dist[i] + (STEP_DX[d] && STEP_DY[d] ? Math.SQRT2 : 1);
+          if (nd < dist[j]) { dist[j] = nd; prev[j] = i; const to = Math.floor(nd) % 3; q[to][len[to]++] = j; }
+        }
       }
+      len[at] = 0;
     }
     return {
-      steps: (x, y) => { const i = ix(x, y); return i < 0 ? -1 : dist[i]; },
+      steps: (x, y) => { const i = ix(x, y); return i < 0 || !done[i] ? -1 : dist[i]; },
       /** The way from a seed to (x, y), the seed first. */
       way: (x, y) => { const out = []; for (let i = ix(x, y); i >= 0; i = prev[i]) out.push({ x: ox + (i % W), y: oy + Math.floor(i / W) }); return out.reverse(); },
     };
@@ -882,16 +897,59 @@ function* planSeaLanesSteps(from, to, opts = {}) {
   if (!ashore) return null;
   pixels.push(...inshore.slice(1));
   const nearLand = (x, y) => DIR_DELTA.some(([, dx, dy]) => !isWater(x + dx, y + dy));
-  const kinds = [];
+  // SEA-TAUT: the sailed stretch pulled taut across the open water - so the lane grid's eight headings and the floods'
+  // ways are no bend the ship sails (freePull's law, at sea) - its cost the lines' own pixels
+  const taut = seaTaut(pixels, isWater);
   let cost = 0;
-  for (let i = 1; i < pixels.length; i++) {
-    const p = pixels[i], q = pixels[i - 1];
-    kinds.push('sea');
-    cost += (p.x !== q.x && p.y !== q.y ? Math.SQRT2 : 1) * (nearLand(p.x, p.y) ? SEA_COST.coast : SEA_COST.sea);
+  for (let i = 1; i < taut.length; i++) {
+    lineSteps(taut[i - 1], taut[i], (ax, ay, bx, by) => { cost += (ax !== bx && ay !== by ? Math.SQRT2 : 1) * (nearLand(bx, by) ? SEA_COST.coast : SEA_COST.sea); return true; });
   }
+  pixels.length = 0; pixels.push(...taut);
+  const kinds = taut.slice(1).map(() => 'sea');
   pixels.push(...ashore.pixels.slice(1));
   kinds.push(...ashore.kinds);
   return { pixels, cost: cost + ashore.cost, kinds };
+}
+
+/** SEA-TAUT (bible/01-Overview/bugs/Field-Bugs-2026-10-29.md): a sea route's pixels pulled taut - from each kept pixel,
+ *  the farthest later one whose straight line (Bresenham) runs over open water: every pixel of it water and all eight
+ *  about it (the kernel builds a square from its corner bytes, so a line past a land pixel's corner may run ashore
+ *  between the middles - SEA-SQUARE). Along a coast the route keeps its own steps. The ends are kept. */
+export function seaTaut(pixels, isWater) {
+  const n = pixels.length;
+  if (n < 3) return pixels.slice();
+  const wet = new Map();
+  const water = (x, y) => { const k = `${x},${y}`; let w = wet.get(k); if (w === undefined) { w = !!isWater(x, y); wet.set(k, w); } return w; };
+  const open = (x, y) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (!water(x + dx, y + dy)) return false; return true; };
+  const clear = (a, b) => open(a.x, a.y) && lineSteps(a, b, (_ax, _ay, bx, by) => open(bx, by));
+  const keep = [pixels[0]];
+  for (let i = 0; i < n - 1;) {
+    // the farthest pixel known clear: galloped out, then narrowed - only a run tested clear is kept
+    let ok = i + 1, bad = n, step = 1;
+    while (ok < n - 1) {
+      const t = Math.min(ok + step, n - 1);
+      if (!clear(pixels[i], pixels[t])) { bad = t; break; }
+      ok = t; step *= 2;
+    }
+    while (bad - ok > 1) { const mid = (ok + bad) >> 1; if (clear(pixels[i], pixels[mid])) ok = mid; else bad = mid; }
+    keep.push(pixels[ok]);
+    i = ok;
+  }
+  return keep;
+}
+/** Each 8-connected step of the straight line a -> b (Bresenham) asked of `step(ax, ay, bx, by)`; whether every one said
+ *  yes. */
+function lineSteps(a, b, step) {
+  let x = a.x, y = a.y;
+  const dx = Math.abs(b.x - a.x), dy = Math.abs(b.y - a.y), sx = a.x < b.x ? 1 : -1, sy = a.y < b.y ? 1 : -1;
+  let err = dx - dy;
+  while (x !== b.x || y !== b.y) {
+    const e2 = 2 * err, px = x, py = y;
+    if (e2 > -dy) { err -= dy; x += sx; }
+    if (e2 < dx) { err += dx; y += sy; }
+    if (!step(px, py, x, y)) return false;
+  }
+  return true;
 }
 
 /** AUDIT STARTS V4: the dry pixel nearest `p` within VOYAGE_LANDFALL_PX (the ring nearest first, then row, then column),

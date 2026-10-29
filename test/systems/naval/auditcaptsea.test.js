@@ -710,6 +710,7 @@ async function crossingWorld(over = {}) {
     get etherSea() { return w.etherSea; }, get etherOut() { return w.etherOut; }, csaRuntime, CROSS_CHECK_S: EC.CROSS_CHECK_S,
     gamePaused: () => w.paused, get _loading() { return w.loading; }, townTalk, modes: { get transitioning() { return w.transitioning; } }, _mode: () => w.mode,
     worldMoveBusy: () => w.busy, get _partyArrivalPending() { return w.arriving; },
+    travelOptions: { get isTravelActive() { return !!w.journey; } },   // SEA-ROWS: a journey under way
     playerTravelPixel: () => ({ x: w.px, y: w.py }), crossingWayAt: EC.crossingWayAt, CROSS_X: ES.CROSS_X, inEther: ES.inEther,
     veilParty: { kin: () => false },   // PIN MOVED (VEIL-PARTY): the crossing's count leaves her party out - none here
     navalHostileNear: () => w.hostile, CROSS_REFUSED: EC.CROSS_REFUSED, CROSS_STALE: EC.CROSS_STALE, CROSS_FAILED: EC.CROSS_FAILED, csaPassengersOn: () => w.passengers, YesNoBoxWindow,
@@ -748,6 +749,17 @@ test('AUDIT CAPTAIN\'S SEA X1/X3: a refusal said once in its waters, and the cro
   assert.deepEqual(d.log, [], 'the world being moved: nothing');
   d.w.busy = false; d.w.arriving = true; d.step();
   assert.deepEqual(d.log, [], 'a party member\'s helm through the arrival\'s wait: nothing');
+});
+
+test('SEA-ROWS: never asked across a journey\'s way - a voyage to a serpent past the Bay was asked to cross on its way - and asked where the journey ends in the crossing\'s waters; never on the rows south of the Bay\'s (Field-Bugs-2026-10-29) (mutants: the journey\'s gate; the rows\' bound)', async () => {
+  const c = await crossingWorld({ journey: true });
+  c.step(6);
+  assert.deepEqual(c.log, [], 'under way: nothing');
+  c.w.journey = false; c.step();
+  assert.deepEqual(c.log, ['asked'], 'arrived in its waters: asked');
+  const s = await crossingWorld({ px: 60, py: 1200 });   // off Sumurset's north coast, out of sight of land
+  s.step(4);
+  assert.deepEqual(s.log, [], 'the world\'s sea past the Bay: nothing');
 });
 
 test('AUDIT CAPTAIN\'S SEA X2/X9: Yes is the question as it stands NOW (a load, another helm, waters left, an enemy, a passenger: said, no voyage, asked afresh); the box is taken back at a load or a jump; a voyage that cannot be made brings ship and captain back where they set out, at the helm, the way out as it was (mutants: each of Yes\'s checks, the withdrawal, the way back)', async () => {

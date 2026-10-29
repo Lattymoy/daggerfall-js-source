@@ -2848,6 +2848,14 @@ a pond, is its harbor's sea).
 `tvSeaAsk`), and the lanes are the planner's. `scenes/exterior.js` sails nowhere; `scenes/worldModes.js` and
 `scenes/dungeonContext.js` stand no sea. Ledger A (START2).
 
+**Taut (SEA-TAUT, `01-Overview/bugs/Field-Bugs-2026-10-29.md`; a player: "it takes forever to get to the fights that
+aren't near to the shore").** The ends' floods went breadth first, a diagonal step counted as one, so open water due
+east sailed as a "Λ": forty voyages past the Bay sailed a median 1.105 of the straight line, p90 1.399. The floods now
+count a step's own length (buckets a pixel wide, exact here), and the sailed stretch is pulled taut (`seaTaut`) over
+open water - each pixel of a run water and all eight about it, since a run past a land pixel's corner can go ashore
+between the middles (SEA-SQUARE). A coast keeps the route's own steps. A sailed step is a straight run now, as a FREE
+walk's is. After: median 1.001, p90 1.004, in about the same time. Pinned by `test/systems/travel/fb1029_seataut.test.js`.
+
 ## VOYAGER2.1 - the roads past the Bay walked as roads (2026-10-26, KPbICA's spec, forwarded by the owner)
 
 KPbICA: *"Roads at current state does not behave like roads for Pathfinding system in Overworld view"*. Measured first:

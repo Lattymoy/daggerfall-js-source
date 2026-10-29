@@ -2585,8 +2585,8 @@
   {
     "name": "ACS-X3-move-gate",
     "file": "src/scenes/world.js",
-    "old": "modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior') return;",
-    "new": "modes?.transitioning || _partyArrivalPending || _mode() !== 'exterior') return;",
+    "old": "modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior' || travelOptions.isTravelActive) return;",
+    "new": "modes?.transitioning || _partyArrivalPending || _mode() !== 'exterior' || travelOptions.isTravelActive) return;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2594,8 +2594,8 @@
   {
     "name": "ACS-X3-arrival-gate",
     "file": "src/scenes/world.js",
-    "old": "modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior') return;",
-    "new": "modes?.transitioning || worldMoveBusy() || _mode() !== 'exterior') return;",
+    "old": "modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior' || travelOptions.isTravelActive) return;",
+    "new": "modes?.transitioning || worldMoveBusy() || _mode() !== 'exterior' || travelOptions.isTravelActive) return;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

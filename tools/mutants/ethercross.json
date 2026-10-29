@@ -92,7 +92,7 @@
   {
     "name": "CROSS-host-window",
     "file": "src/scenes/world.js",
-    "old": "    if (gamePaused() || _loading || townTalk.overlayActive || modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior') return;",
+    "old": "    if (gamePaused() || _loading || townTalk.overlayActive || modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior' || travelOptions.isTravelActive) return;",
     "new": "    if (gamePaused() || _loading) return;",
     "tests": [
       "test/systems/naval/ethercross.test.js"
