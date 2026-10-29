@@ -288,7 +288,8 @@ export function createGateClearSweep() {
       if (key !== swept) { swept = key; for (const k of built.keys()) due.add(k); }
       const again = [];
       const now = membersOf(clear), nowKeys = new Set(now.map((c) => c.key));
-      /** STOREFRONT (AUDIT LANE 5): the clearings come since a key, one set a key - its members indexed once (setNear) */
+      /** STOREFRONT (AUDIT LANE 5): the clearings come since a key, one set a key - its members indexed once (setNear) -
+       *  and whether any of the key's has gone since (`gone`) */
       const comeOf = new Map();
       for (const k of due) {
         const p = built.get(k);
@@ -297,9 +298,11 @@ export function createGateClearSweep() {
         if ((p.gateClearKey ?? null) === key) continue;
         // EG-F: THE SET'S CHANGE - the clearings gone since its build, and the ones come (a gate alone: its one key each way)
         const was = String(p.gateClearKey ?? '');
-        const had = new Set(was.split(CLEAR_KEY_JOIN).filter(Boolean));
-        const gone = [...had].some((x) => !nowKeys.has(x));
-        if (!comeOf.has(was)) comeOf.set(was, { list: now.filter((c) => !had.has(c.key)) });
+        if (!comeOf.has(was)) {   // W14: a key read once a sweep - the provinces' fissures make a set hundreds of members long
+          const had = new Set(was.split(CLEAR_KEY_JOIN).filter(Boolean));
+          comeOf.set(was, { list: now.filter((c) => !had.has(c.key)), gone: [...had].some((x) => !nowKeys.has(x)) });
+        }
+        const gone = comeOf.get(was).gone;
         if ((gone && p.gateRefused) || reachNearGate(p.wodReach, comeOf.get(was), p.px, p.py)) again.push(p);
         else p.gateClearKey = key;   // the old clearings cost it nothing, and nothing it stands reaches a new one
       }

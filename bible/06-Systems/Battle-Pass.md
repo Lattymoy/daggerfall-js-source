@@ -98,12 +98,13 @@ heard (`relayNowS`).
   350 ms under the player's own shake cap, swelling and dying away, harder each stage (1.5, 2.5, 4 - a gun's shot is 3);
   a rumble (`fx-season-tremor`), dust and grit shaken up about the feet, and the stage's line in the event board's news,
   a kind of its own (`season`, news alone, as the festival's).
-- **Brass Fissures.** Two to each Bay region in the first stage, three in the second and third, on pixels the Oblivion
-  Gate's scan finds suitable (land, no place near, a town close), drawn by hash from the season, the stage and the
-  region, four pixels apart and 12 m past Basic Roads' road and track bands (`FISSURE_ROAD_M`; the host reads the
-  vendored roads before it stands any): every machine finds the same. A fissure gives way to the day's gate on its pixel
-  or beside it. World of Daggerfall's rock keeps 26 m off it, and the grass off its scorch. On the map each is a brass cog crossed
-  by a blue crack, a Heart Fissure's larger and ringed, its card naming its town and what waits there.
+- **Brass Fissures.** Two to each area in the first stage, three in the second and third: a Bay region, or a province's
+  district past the Bay (W14, below). They stand on pixels the Oblivion Gate's scan of their theatre finds suitable (land,
+  no place near, a town close), drawn by hash from the season, the stage and the area, four pixels apart and 12 m past
+  the roads' and tracks' bands (`FISSURE_ROAD_M`): every machine finds the same. A fissure gives way to its own
+  theatre's gate of the day on its pixel or beside it. World of Daggerfall's rock keeps 26 m off it, and the grass off
+  its scorch. On the map, the Bay's sheet or the continent's, each is a brass cog crossed by a blue crack, a Heart
+  Fissure's larger and ringed, its card naming its town and what waits there.
 - **A fissure, built** (`world/fissureModel.js`, its art `fissureArt.js`, pseudo-archive 38341): a scorched oval
   on the land, the crack's black depths with the aetherium's blue in them, short cracks off it, slabs of earth heaved up
   along both lips; round it a toothed cog past each end and one off the south lip, a split copper pipe, and a fallen
@@ -115,7 +116,7 @@ heard (`relayNowS`).
   screen sees the owner's. One woken wakes the camp. Each is a find of 40. A camp is cleared on a screen whose last
   standing foes of it are all bodies now, whoever stood it; that character's fissure is then quiet twenty minutes, kept in
   the device's store across a reload (`dagger:fissureQuiet`). A camp gone without a body is no clear.
-- **The Brass Colossus.** In the third stage each region's first fissure is its Heart Fissure: two Spheres and a Golem,
+- **The Brass Colossus.** In the third stage each area's first fissure is its Heart Fissure: two Spheres and a Golem,
   and at the middle a Steam Centurion made a raid leader (half again its size, an elite's health and blows, its name),
   three times that health, and Warded, Stormproof and Blade-turning - bring a hammer; never the street's elite roll.
   Every screen names it by its site (`.h`), stands its three traits (`systems/bossTraits.js` bossTraitsMost) and bars
@@ -149,6 +150,24 @@ C2): one owner holds a site, and the camp law hands a site's foes over only wher
 teleport, a death, the page's going - `handOverSiteFoes`). A walk-off hand-over would leave the walker's word on the site
 while its heir stood it. It costs the fighters the damage done, never the Maul or the quiet, and a reset Colossus is
 no easier.
+
+**W14: the season in every theatre (AUDIT-STOREFRONT, 2026-10-29).** The fissures stood on the Iliac Bay alone: the law
+walked the Bay's gate scan and named its regions, and the host asked the Bay's scan and gate. TAMRIEL-WIDE
+(`01-Overview/Port-Doctrine.md`) came before STOREFRONT, so the season now stands where the Starfall's coven nights do:
+the Bay and the eight provinces, Cyrodiil's open zone none (`net/wire.js` SITE_EVENT_LANES). A province's fissures are
+drawn an area at a time over its theatre's scan (`systems/pass/seasonWorld.js` areaFissures), the scans warmed one
+theatre at a time (`scenes/eventTheatres.js`); a pixel is read by the world's key, the region is the province's
+(62..69) and the name its town's or the province's. The Bay's are the law before W14, to the byte. The camp, the
+Colossus, the Maul and the tremor read no place but the fissure's own, so they work in a province unchanged.
+
+**What a province's fissures keep off.** The roads past the Bay are laid a region at a time on each machine
+(`scenes/tamrielRoadsHost.js`). A province's area is drawn once every region that may lay a road on it has landed
+(`landedIn`, kept as `world/arenaRoads.js` keptArenaRoadsHost), so every machine keeps off the same roads, as the Bay's
+fissures wait for Basic Roads' bytes. The band there is the one the terrain paints (`world/road/roadBand.js` nearRoad).
+A province's fissure gives way to its own theatre's gate (`systems/gate/theatreGateSite.js`). The held map shows them
+over the continent. The rock's clearings take them all, some 900 in the third stage on the freeware (the Bay's 129),
+and the sweep reads a clearing's key once a turn. One theatre's fissures are drawn a frame: all eight at once took 8 to
+44 ms. Pins: `season_tamriel.test.js`. Mutants: `tools/mutants/storefront_seasontamriel.json` (18, all dead).
 
 ## 7. The window
 

@@ -45,10 +45,10 @@ const turn = (p, a, x, z) => [x + p[0] * Math.cos(a) - p[2] * Math.sin(a), p[1],
  * WHERE ITS PARTS STAND, in the fissure's frame: the crack's spine `{ x, z, w }` (its middle and its width at each step),
  * its branches (spines of their own), the slabs `{ x, z, len, wid, lift, side, a }`, the cogs `{ x, z, r, a, lean }`, the
  * pipe `{ x, z, a, gap }` and the pillar `{ x, z, a }`. Pure: the fissure's own rolls.
- * @param {{ n: number, stage: number, region: number, k: number }} f
+ * @param {{ n: number, stage: number, area: number, k: number }} f
  */
 export function fissureLayout(f) {
-  const u = (j) => fissureRoll(f.n, f.stage, f.region, f.k, 500 + j) / 4294967296;
+  const u = (j) => fissureRoll(f.n, f.stage, f.area, f.k, 500 + j) / 4294967296;
   const STEPS = 26;
   const spine = [];
   const ph = u(0) * 6.28, ph2 = u(1) * 6.28;
@@ -82,7 +82,7 @@ export function fissureLayout(f) {
   return { spine, branches, slabs, cogs, pipe: { x: px, z: pz, a: (u(152) - 0.5) * 1.0, gap: 0.5 + 0.4 * u(153) }, pillar: { x: qx, z: qz, a: (u(162) - 0.5) * 1.0 } };
 }
 /** Where its steam rises - three vents along the crack, in the fissure's frame `[x, z]`. */
-export function fissureVents(/** @type {{ n: number, stage: number, region: number, k: number }} */ f) {
+export function fissureVents(/** @type {{ n: number, stage: number, area: number, k: number }} */ f) {
   const { spine } = fissureLayout(f);
   return [0.3, 0.55, 0.8].map((t) => { const s = spine[Math.round(t * (spine.length - 1))]; return [s.x, s.z]; });
 }
@@ -91,7 +91,7 @@ export function fissureVents(/** @type {{ n: number, stage: number, region: numb
  * THE FISSURE'S MODEL: renderer.createMesh's shape, in its frame. `heightAt(x, z)` the ground over the heart's at a point
  * of the frame (0 where nothing answers). `parts`: `ground` the scorch and the crack (drawn pulled toward the eye, the
  * crater's floor's way), `solid` the slabs and the wreckage (the collider's too). Sub-meshes by the archive's records.
- * @param {{ n: number, stage: number, region: number, k: number }} fz
+ * @param {{ n: number, stage: number, area: number, k: number }} fz
  * @param {(x: number, z: number) => number} [heightAt]
  * @param {{ ground?: boolean, solid?: boolean }} [parts]
  */
@@ -101,7 +101,7 @@ export function buildFissureModel(fz, heightAt = () => 0, { ground = true, solid
   const ride = (x, z) => Math.max(h(x, z), h(x + REACH, z), h(x - REACH, z), h(x, z + REACH), h(x, z - REACH), h(x + D, z + D), h(x - D, z + D), h(x + D, z - D), h(x - D, z - D));
   const f = faces();
   const L = fissureLayout(fz);
-  const u = (j) => fissureRoll(fz.n, fz.stage, fz.region, fz.k, 700 + j) / 4294967296;
+  const u = (j) => fissureRoll(fz.n, fz.stage, fz.area, fz.k, 700 + j) / 4294967296;
   if (ground) {
     // THE SCORCH: an irregular oval in rings out from the heart, each point on the highest ground about it
     const RINGS = 7, SEGS = 36, [A, B] = FISSURE_SCORCH;

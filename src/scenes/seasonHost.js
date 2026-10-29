@@ -8,7 +8,13 @@
 // the Starfall (HOST-SPLIT). Online alone, on the relay's clock once heard. Not a DFU member. Ledger A (STOREFRONT).
 import { bindPass } from '../systems/pass/passClient.js';
 import { PASS_EVENT_TEXT, passGrantName, passChallengeText } from '../ui/passText.js';
-import { seasonStageAt, tremorAt, stageFissures, fissureUnderGate, fissureRoster, COLOSSUS_MOBILE } from '../systems/pass/seasonWorld.js';
+import { seasonStageAt, tremorAt, stageFissures, theatreFissures, areaBox, fissureUnderGate, fissureRoster, COLOSSUS_MOBILE } from '../systems/pass/seasonWorld.js';
+import { keptTheatreScans } from './gate/gateLanes.js';   // W14: a province's fissures over its theatre's ground, the gate's own scan
+import { createEventTheatres } from './eventTheatres.js';   // W14: a theatre's scan warmed in the idle moments (WW5's)
+import { findTheatreGateSite } from '../systems/gate/theatreGateSite.js';   // W14: a province's fissures give way to its own gate
+import { keptPlaces } from '../net/staffPlaces.js';
+import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';
+import { arenaRoadsVersion, keptArenaRoadsHost } from '../world/arenaRoads.js';   // W14: the roads past the Bay, a region at a time
 import { loadModRoads, MOD_ROADS } from '../world/roadsProducer.js';
 import { TREMOR_TEXT, FISSURE_TEXT, COLOSSUS_TEXT } from '../systems/pass/seasonWords.js';
 import { mintResonantMaul } from '../systems/pass/resonantMaul.js';
@@ -71,6 +77,12 @@ export const SEASON_MAUL_ASK_MS = 4000;
 /** AUDIT LANE 5: Basic Roads' roads and tracks asked again this long after a load that failed (seasonWorld.js keeps the
  *  fissures off them, so none stands before they are read). */
 export const SEASON_ROADS_RETRY_MS = 30_000;
+/** W14: a province's areas whose roads were not yet laid are asked again as the layer moves, and this often besides (a
+ *  region whose build failed lays no layer, and is let go). */
+export const SEASON_LANES_ASK_MS = 5000;
+/** W14: one theatre's fissures are drawn at a time, this long (a frame) before the next's - all eight at once were 8 to
+ *  44 ms on the freeware's provinces (no road, and a road on every pixel), one some 1 to 6. */
+export const SEASON_LANE_DRAW_MS = 16;
 /** The ground under a fissure is read again every this many frames, its model made again when it moved this far. */
 export const SEASON_GROUND_EVERY = 20;
 export const SEASON_GROUND_TOL = 0.01;
@@ -90,13 +102,23 @@ const sameMatrix = (a, b) => { if (!a || !b) return false; for (let i = 0; i < 1
  *  `exteriorFoes`, `gateScanOf`, `warmGateScan`, `surfaceAt`, `player`, `walkMode`, `playerSpawned`, `online`, `collider`,
  *  `_sharedOffsetMs`, `relayNowS`, `labGrassField`, `chatNotice`, the camp law's five, `gamePaused`, `townTalk` - and, for
  *  the tests, `audio`, `storage`, `say`, `shake`, `burst`, `struckAt`, `who`, `take`, `bindPass`, `passApi`, `maulApi`,
- *  `rid`, `wait` and `roads`.
+ *  `rid`, `wait`, `roads` and W14's `theatreScans`, `worldPlaces`, `landVersion`, `idle` and `pastBayRoads`.
  *  @param {any} host */
 export function createSeasonHost(host) {
   const renderer = host.renderer ?? null;
   const collider = () => host.collider ?? null;
   const now = () => Date.now() + (host._sharedOffsetMs ?? 0);
+  // BAY-OWN: the Bay's own gate scan (MAPS.BSA's rows) - a province's fissures stand on its theatre's (`theatres`, W14)
   const scan = () => host.gateScanOf?.(() => false) ?? null;
+  /** W14 (WW5's theatres, the Starfall's): the theatres past the Bay a site-bound event stands in, each scan warmed a
+   *  theatre an idle moment (scenes/eventTheatres.js) - the host's own (`theatreScans`), else the world host's. */
+  const theatres = createEventTheatres({
+    scans: () => (host.theatreScans !== undefined ? host.theatreScans : keptTheatreScans()),
+    generation: () => (host.worldPlaces ?? keptPlaces())?.generation?.() ?? 0, land: () => (host.landVersion ?? tamrielLandVersion)(),
+    idle: host.idle !== undefined ? host.idle : undefined,
+  });
+  /** W14: the roads past the Bay's host (scenes/tamrielRoadsHost.js: `landedIn` a box's roads laid whole, `build`) */
+  const pastRoads = () => (host.pastBayRoads !== undefined ? host.pastBayRoads : keptArenaRoadsHost());
   const pixelTranslation = (px, py, out) => host.state.pixelTranslation(px, py, out);
   const groundAt = (x, z) => host.surfaceAt?.(x, z) ?? NaN;
   const feet = () => (host.walkMode && host.playerSpawned ? host.player?.feetAt?.() ?? null : null);
@@ -145,11 +167,15 @@ export function createSeasonHost(host) {
   const paths = { net: host.roads, askedAt: -Infinity };
   let frameN = 0, artUp = false, barUp = false;
   const tremor = { hour: NaN, kickAt: -Infinity, dustAt: -Infinity };
-  /** the stage's fissures, made once a stage and a scan */
-  const sites = { key: '', scan: null, roads: /** @type {any} */ (null), list: /** @type {ReadonlyArray<any>} */ (NONE) };
-  /** the day's gate, found once a day over the same scan */
-  const gate = { day: NaN, scan: null, site: null };
-  const clears = { key: '', list: /** @type {any} */ (NONE) };
+  /** the stage's fissures: the Bay's (`bay`) made once a stage and a scan, then each theatre's past it (`lanes`) - `list`
+   *  every one, made again only when a part moved */
+  const sites = { key: '', scan: null, roads: /** @type {any} */ (null), bay: /** @type {ReadonlyArray<any>} */ (NONE), parts: /** @type {any[]} */ ([]), list: /** @type {ReadonlyArray<any>} */ (NONE) };
+  /** W14: lane -> its stage's fissures past the Bay: an area's drawn once its roads are laid (`todo` the rest) - and when a
+   *  theatre's were last drawn (one theatre's draws a moment) */
+  const lanes = new Map(), drew = { at: -Infinity };
+  /** each lane's gate of the day, found once a day over the same scan: lane -> `{ day, sc, site }` */
+  const gates = new Map();
+  const clears = { key: /** @type {any} */ (''), list: /** @type {any} */ (NONE) };
   const glow = { x: 0, y: 0, z: 0, range: SEASON_GLOW.range, color: SEASON_GLOW.color }, glowList = Object.freeze([glow]);
   const T3 = [0, 0, 0];
 
@@ -172,19 +198,52 @@ export function createSeasonHost(host) {
   function stageSites(at) {
     const sc = scan(), rn = roads();
     if (!sc) host.warmGateScan?.();
-    if (!sc || rn === undefined) return sites.list;
+    if (rn === undefined) return sites.list;
     const key = `${at.n}.${at.stage}`;
     if (sites.key !== key || sites.scan !== sc || sites.roads !== rn) {
       sites.key = key; sites.scan = sc; sites.roads = rn;
-      try { sites.list = Object.freeze(stageFissures(at.n, at.stage, sc, rn)); } catch (e) { console.warn('[season] no fissures', e?.message ?? e); sites.list = NONE; }
+      try { sites.bay = sc ? Object.freeze(stageFissures(at.n, at.stage, sc, rn)) : NONE; } catch (e) { console.warn('[season] no fissures', e?.message ?? e); sites.bay = NONE; }
     }
+    const parts = [sites.bay];
+    for (const [lane, lsc] of theatres.warmLanes()) parts.push(laneSites(/** @type {number} */ (lane), lsc, at, rn));
+    if (parts.length !== sites.parts.length || parts.some((p, i) => p !== sites.parts[i])) { sites.parts = parts; sites.list = Object.freeze(parts.flat()); }
     return sites.list;
   }
-  function gateToday(t) {
-    const sc = scan(), day = gateAt(t).day;
-    if (gate.day !== day || gate.scan !== sc) { gate.day = day; gate.scan = sc; try { gate.site = sc ? findGateSite(day, sc) : null; } catch { gate.site = null; } }
-    return gate.site;
+  /** W14: A THEATRE'S FISSURES PAST THE BAY (seasonWorld.js theatreFissures) - an area's drawn once the roads past the Bay
+   *  are laid over it (`pastRoads().landedIn`: every machine keeps off the same roads, as the Bay's waits for its own),
+   *  asked again as the layer moves; all drawn again for a new stage, scan, Bay network or roads' build. */
+  function laneSites(lane, sc, at, rn) {
+    const key = `${at.n}.${at.stage}`, R = pastRoads(), build = R?.build?.() ?? 0;
+    let L = lanes.get(lane);
+    if (!L || L.key !== key || L.sc !== sc || L.rn !== rn || L.build !== build) {
+      const todo = [...sc.byArea.keys()].map((a) => ({ a, box: areaBox(sc, a) }));
+      lanes.set(lane, L = { key, sc, rn, build, asked: '', todo, areas: new Map(), list: NONE });
+    }
+    const stamp = `${arenaRoadsVersion()}:${Math.floor(Date.now() / SEASON_LANES_ASK_MS)}`;
+    if (!L.todo.length || L.asked === stamp || Date.now() - drew.at < SEASON_LANE_DRAW_MS) return L.list;
+    L.asked = stamp;
+    const laid = new Set(L.todo.filter(({ box }) => !!box && !!R?.landedIn?.(box[0], box[1], box[2], box[3])).map(({ a }) => a));
+    if (!laid.size) return L.list;
+    drew.at = Date.now();
+    for (const a of laid) L.areas.set(a, []);
+    try { for (const f of theatreFissures(at.n, at.stage, sc, rn, (a) => laid.has(a))) L.areas.get(f.area).push(f); } catch (e) { console.warn('[season] no fissures', lane, e?.message ?? e); }
+    L.todo = L.todo.filter(({ a }) => !laid.has(a));
+    L.list = Object.freeze([...L.areas.keys()].sort((x, y) => x - y).flatMap((a) => L.areas.get(a)));
+    return L.list;
   }
+  /** Each lane's gate of the day (the Bay's over its own scan, a province's over its theatre's - systems/gate/
+   *  theatreGateSite.js), found once a day over the same scan. */
+  function gateOf(lane, t) {
+    const sc = lane ? lanes.get(lane)?.sc ?? null : scan(), day = gateAt(t, lane).day;
+    let g = gates.get(lane);
+    if (!g || g.day !== day || g.sc !== sc) {
+      gates.set(lane, g = { day, sc, site: null });
+      try { g.site = sc ? (lane ? findTheatreGateSite(day, sc) : findGateSite(day, sc)) : null; } catch { g.site = null; }
+    }
+    return g.site;
+  }
+  /** The day's gates at `t`, each lane asked once: `gateFor(f)` a fissure's own theatre's. */
+  const gatesAt = (t) => { const seen = new Map(); return (f) => { const lane = f.theatre ?? 0; if (!seen.has(lane)) seen.set(lane, gateOf(lane, t)); return seen.get(lane); }; };
 
   // ── a fissure's place in the scene: its heart, and a point of its own frame in the world's ──
   const yawDeg = (F) => F.f.yaw * DEG;
@@ -430,7 +489,7 @@ export function createSeasonHost(host) {
       if (!at || !online() || !heard()) { this.destroyAll(); return; }
       const f = feet();
       quake(t, f);
-      const gateSite = gateToday(t), seen = new Set();
+      const gateFor = gatesAt(t), seen = new Set();
       for (const site of stageSites(at)) {
         const tr = pixelTranslation(site.px, site.py, T3);
         const hx = tr[0] + site.spot[0], hz = tr[2] + site.spot[1];
@@ -440,7 +499,7 @@ export function createSeasonHost(host) {
         if (F && d > SEASON_BUILD_M * 1.2) { leave(F); continue; }
         F ??= enter(site);
         seen.add(site.key);
-        if (fissureUnderGate(site, gateSite)) { dropCamp(F); dropBuild(F); continue; }   // it gives way to the day's gate
+        if (fissureUnderGate(site, gateFor(site))) { dropCamp(F); dropBuild(F); continue; }   // it gives way to its theatre's gate of the day
         placeOf(F);
         if (!F.known) continue;
         ground(F);
@@ -495,19 +554,20 @@ export function createSeasonHost(host) {
     mapMarks() {
       const t = now(), at = seasonStageAt(t);
       if (!at || !online() || !heard()) return NONE;
-      const gateSite = gateToday(t);
+      const gateFor = gatesAt(t);
       return stageSites(at).map((s) => {
         const title = s.hSite ? FISSURE_TEXT.heart() : FISSURE_TEXT.name();
-        const lines = [FISSURE_TEXT.near(s.near), s.hSite ? FISSURE_TEXT.wakes() : FISSURE_TEXT.guards(), ...(fissureUnderGate(s, gateSite) ? [FISSURE_TEXT.quiet()] : [])];
+        const lines = [FISSURE_TEXT.near(s.near), s.hSite ? FISSURE_TEXT.wakes() : FISSURE_TEXT.guards(), ...(fissureUnderGate(s, gateFor(s)) ? [FISSURE_TEXT.quiet()] : [])];
         return { key: s.key, px: s.px, py: s.py, heart: !!s.hSite, label: `${title}, ${s.near}`, tip: { title, lines } };
       });
     },
     /** STAR-CLEAR's law for the fissures (world/gate/gateClearance.js gateClearSet's `fissures`): `{ f, px, py, x, z }` for
-     *  every fissure of the stage - its key, its pixel and its heart there - the same frozen list while the stage stands. */
+     *  every fissure of the stage in every theatre - its key, its pixel and its heart there - the same frozen list while the
+     *  same fissures stand (W14: a province's areas join as their roads are laid). */
     fissureClears() {
       const at = seasonStageAt(now());
       const list = at && online() && heard() ? stageSites(at) : NONE;
-      const key = list.length ? `${sites.key}:${list.length}` : '';
+      const key = list.length ? list : '';
       if (key !== clears.key) { clears.key = key; clears.list = key ? Object.freeze(list.map((s) => Object.freeze({ f: s.key, px: s.px, py: s.py, x: s.spot[0], z: s.spot[1] }))) : NONE; }
       return clears.list;
     },
