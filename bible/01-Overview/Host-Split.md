@@ -825,3 +825,15 @@ mutant re-aimed under it). The tool re-aimed ten mutant records over the moved l
 `portships.json`'s); the pins that read the moved lines off world.js's own text read the host whole (`hostText`:
 `shiplife.test.js`, `sealanes.test.js`, `auditholdings.test.js`, `etherplaces.test.js` - PIN MOVED, PORT-SHIPS).
 
+## DRAGON0 - the POI editor's mount out of bootWorld (2026-10-29)
+
+The Dwarven Dragon (`11-Multiplayer/Dwarven-Dragon.md`) needs wiring in the world host - its client, its blows on the
+player, the player's blows on it and its mount - and `bootWorld` stood at its ceiling (35,299). The POI editor's mount
+(`mountPoiEditor`), one member of 112 lines, went out first, verbatim, by `tools/hostMove.mjs`, to `scenes/poiEditorMount.js`
+`createPoiEditorMount`: twenty names by value, nine live (three written), `mountPoiEditor` returned (read above the
+construction by `startPoiEditor`, inside a closure run after it). `bootWorld` 35,299 -> 35,173 logical lines, and the
+ceiling at it (`test/scenes/hostceiling.test.js`, its mutant re-aimed under it). The tool re-aimed nine mutant records over the
+moved lines (`auditpoi_editor.json`); the pins that read the moved lines off world.js's own text read the host whole
+(`hostText`: `auditpoi_editor.test.js`, `poi3b_panel.test.js`, `poi6_review.test.js` - PIN MOVED, DRAGON0), and one reads
+`travelView` as the move reads it, live through `host`.
+
