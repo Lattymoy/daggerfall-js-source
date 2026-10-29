@@ -300,11 +300,12 @@ export const WATER_SCENE_UNIT = 7;
 /** WATER-NEXT 4: the ripple field's unit - 1, the billboards' emission unit, its shadow forgotten after the bind. */
 export const WATER_RIPPLE_UNIT = 1;
 export const WATER_SCENE_DEPTH_UNIT = 6;
-/** SKYRIM-AURORA: the aurora's dome map's unit - free of every other pass's; the black texel while there is none. */
-export const AURORA_SKY_UNIT = 19;
+/** SKYRIM-AURORA: the aurora's dome map's unit - no other fixed unit's (the snow's are 16-20, the skin's 21, the panes' 22,
+ *  the snow lines' 23); the black texel while there is none. */
+export const AURORA_SKY_UNIT = 24;
 /** SKYRIM-AURORA: where the aurora's dome map (render/auroraPass.js AURORA_DOME_FS) holds direction R - its azimuth from the
  *  north toward the east across, its height up. Here, beside its reader, so the boot's graph takes no new file. */
-export const AURORA_DOME_UV_GLSL = `vec2 auroraDomeUv(vec3 R) { return vec2(atan(R.x, R.z) * 0.15915494 + 0.5, R.y); }`;
+export const AURORA_DOME_UV_GLSL = `vec2 auroraDomeUv(vec3 R) { return vec2((length(R.xz) > 1e-6 ? atan(R.x, R.z) : 0.0) * 0.15915494 + 0.5, R.y); }`;   // atan(0, 0) is undefined: straight up, any azimuth
 /** SKYRIM-AURORA: the least share of the aurora the water reflects - its Fresnel where that is more. Calm water at night
  *  shows the curtains as it shows a lamp's glint; the bare Fresnel, a few hundredths looking down, hid them. */
 export const AURORA_MIRROR = 0.3;

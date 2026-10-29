@@ -319,10 +319,10 @@ export function createSkyController(gl, params) {
   /** VALENWOOD-CANOPY: and under a closed canopy, the leaves' (world/jungle/jungleCanopy.js canopyWaterSky). */
   const leaved = (ws) => canopyWaterSky(ws, canopyLeaves);
   /** SKYRIM-AURORA: and the aurora's dome map, for the water to reflect (render/waterSurface.js) - null under none. */
-  const auroraIn = (ws) => ({ ...ws, aurora: aurora?.skyMap ?? null });
+  const auroraIn = (ws) => { const map = aurora?.skyMap ?? null; return map ? { ...ws, aurora: map } : ws; };
   /** EV5: the moons' term (`moonlight` below) - the dome's own state; DS1: the same term from the mod's own moons - where
    *  its orbit puts them, lit by DFU's phase - so the world's night agrees with the sky it stands under. */
-  const moonNow = () => withAuroraLight(enhancedSky?.state ? moonlightTerm(enhancedSky.state) : dynamicMoonlight(dynamicMoons), aurora?.light ?? null);   // SKYRIM-AURORA: and the aurora's light
+  const moonNow = (minute) => withAuroraLight(enhancedSky?.state ? moonlightTerm(enhancedSky.state) : dynamicMoonlight(dynamicMoons), aurora?.light(minute) ?? null);   // SKYRIM-AURORA: and the aurora's light (at a view out's clock minute)
   // NIGHT-FOG (systems/weather/nightFog.js): THE FOG IS LIT BY THE LIGHT THE LAND IS LIT BY - on the enhanced lane the
   // frame's fog is never darker than air lit by the open air's light (the hour and the weather's sunlight scale the last
   // use() was handed, the player's Night Brightness, the moons); the classic panorama keeps SetSkyFogColor verbatim, and
@@ -635,7 +635,7 @@ export function createSkyController(gl, params) {
      *  cloud-dimmed visibility; secunda's ambient lift). null under
      *  the classic sky - which has no moon state, so the 1:1 lane
      *  keeps DFU's hard-off night - and null by day. */
-    moonlight() { return moonNow(); },
+    moonlight(minute) { return moonNow(minute); },   // SKYRIM-AURORA: `minute`, a view out of a building's clock
     /** Ensure the panorama for (skyIndex, minuteOfDay); async, frame-late.
      *  ES1: the enhanced sky takes the same call and needs the weather
      *  and the classic clock too (`extra`), for the clouds and the moons;
@@ -714,8 +714,9 @@ export function createSkyController(gl, params) {
         weatherRowNow = easeWeather(weatherRowNow, want, easeDt);
         weatherRowNow.wind = windModel.vector();
         // SKYRIM-AURORA: the eased cover hides it as the clouds come; the port's dome reads no WeatherStyle (its cover is
-        // the front's), the mod's presets switch on it; and over the sky's own decks it goes sooner
-        aurora?.use(minuteOfDay, skyNow, weatherRowNow.cover, dynamic ? showNightSky : true, !cloudsShown, nowMin);
+        // the front's), the mod's presets switch on it; over the sky's own decks it goes sooner; the sun baby's flower
+        // sky puts it out (its water's sky is the flower's)
+        aurora?.use(minuteOfDay, skyNow, weatherRowNow.cover, (dynamic ? showNightSky : true) && !sunbabyOn && !(sunbabyW > 0), !cloudsShown, nowMin);
         // WIND2: the cloud DRIFT is integrated here, once - the one place
         // the wind and the clock meet. Every deck reads this offset
         // instead of multiplying wind by time, which with a wind that

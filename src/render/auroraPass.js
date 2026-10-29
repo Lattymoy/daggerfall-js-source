@@ -247,8 +247,9 @@ export class AuroraPass {
   }
 
   /** Draw at `weight` (0 draws nothing) with the arcs `hang` hem heights north of the eye, at `seconds` on the sky's
-   *  clock, into the world image's rect `viewport` ([x, y, w, h], restored after the march). */
-  draw(yaw, pitch, fovY, aspect, weight, hang, seconds, viewport) {
+   *  clock, into the world image's rect `viewport` ([x, y, w, h], restored after the march). `freshDome`: the last draw
+   *  was not the frame before, so the water's map is marched now, never left from then. */
+  draw(yaw, pitch, fovY, aspect, weight, hang, seconds, viewport, freshDome = false) {
     if (!(weight > 0)) return;
     const gl = this.gl, u = this.u, ph = auroraPhases(seconds), tanHalf = Math.tan(fovY / 2);
     const map = this._mapFor(viewport[2], viewport[3]);
@@ -262,7 +263,8 @@ export class AuroraPass {
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     });
     // the dome map the water reflects, every few frames: by direction, so a reflection a frame or two old still lines up
-    if (this._domeTurn++ % AURORA_DOME.every === 0 || !this.domeDrawn) {
+    if (freshDome || !this.domeDrawn) this._domeTurn = 0;
+    if (this._domeTurn++ % AURORA_DOME.every === 0) {
       this.dome ??= createRenderTarget(gl, AURORA_DOME.width, AURORA_DOME.height, { wrapS: 'REPEAT' });
       withTarget(gl, this.dome, viewport, () => {
         gl.useProgram(this.domeProgram);

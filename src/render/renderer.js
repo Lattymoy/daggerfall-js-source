@@ -7402,8 +7402,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   /** SKYRIM-AURORA: a water program's two fixed samplers, sent once when it is built: the snow lines' unit and the aurora's
-   *  dome map's. A frame with no snow had left the snow's on unit 0 beside the tile array - two types on one unit, and the
-   *  draw refused (the fixed-city bench and the water lab hand no snow frame). */
+   *  dome map's. A frame with no ground snow (Enhanced Environments off, a boot before the snow is read, the bench, the
+   *  water lab) had left the snow's on unit 0 beside the tile array - two types on one unit, and the water refused. */
   _waterSamplerUnits(P, L) {
     this._use(P);
     this.gl.uniform1i(L.snow.lines, SNOW_LINES_UNIT); L.snowUnit = true;
@@ -7411,7 +7411,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   /** SKYRIM-AURORA: the aurora's dome map on its unit (render/auroraPass.js, waterUniforms' `aurora`), or the black texel
-   *  and the switch off - each sent only when it changes, the unit the aurora's alone. */
+   *  and the switch off - each sent only when it changes: the unit is the aurora's alone (skyrimaurora.test.js holds it). */
   _bindAuroraSky(L, tex) {
     const gl = this.gl, on = tex ? 1 : 0, want = tex ?? this._blackTex;
     if (L.auroraOn !== on) { gl.uniform1i(L.auroraSkyOn, on); L.auroraOn = on; }
