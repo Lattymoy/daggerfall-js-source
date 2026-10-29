@@ -453,8 +453,13 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
  *  Imperial City's of its gate's slice's (imperialSliceFootprint: its whole would build all of its parts), the rest's of
  *  their own footprint, the one their blocks already read (`footprint`). */
 export function capitalCarriagesOf(cap, footprint) {
+  return capitalGateThings(cap, { footprintOf: carriageFootprintOf(cap, footprint) });
+}
+/** CAPITAL-CARRIAGES: the footprint a capital's gate things stand clear of near a point (anchor metres) - the Imperial
+ *  City's slice's there, the rest's whole one. */
+export function carriageFootprintOf(cap, footprint) {
   const B = BLOCK_M, sliceAt = (x, z) => Math.floor((z / B + cap.anchor[1]) / 8) * IMPERIAL_SPAN + Math.floor((x / B + cap.anchor[0]) / 8);
-  return capitalGateThings(cap, { footprintOf: cap.family ? (x, z) => imperialSliceFootprint(sliceAt(x, z)) : () => footprint() });
+  return cap.family ? (x, z) => imperialSliceFootprint(sliceAt(x, z)) : () => footprint();
 }
 /** Test seam. */
 export function _resetCapitals() { _installed = false; _footprints.clear(); }

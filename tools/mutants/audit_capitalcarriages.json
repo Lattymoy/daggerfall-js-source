@@ -15,7 +15,8 @@
   "new": "  return rise;",
   "tests": [
    "test/world/capitalcarriages.test.js"
-  ]
+  ],
+  "note": "Dies with ARENA2_PATH set (the pin is the freeware's)."
  },
  {
   "name": "AUDIT-CC-L4-the-relief-own-law",
@@ -69,7 +70,8 @@
   "new": "    && !nearPassage(x, z, reach);",
   "tests": [
    "test/world/capitalcarriages.test.js"
-  ]
+  ],
+  "note": "Dies with ARENA2_PATH set (the pin is the freeware's)."
  },
  {
   "name": "AUDIT-CC-L2-the-ground-unread",
@@ -78,7 +80,8 @@
   "new": "true",
   "tests": [
    "test/world/capitalcarriages.test.js"
-  ]
+  ],
+  "note": "Dies with ARENA2_PATH set (the pin is the freeware's)."
  },
  {
   "name": "AUDIT-CC-L2-the-passage-unread",
@@ -87,7 +90,8 @@
   "new": "&& true;",
   "tests": [
    "test/world/capitalcarriages.test.js"
-  ]
+  ],
+  "note": "Dies with ARENA2_PATH set (the pin is the freeware's)."
  },
  {
   "name": "AUDIT-CC-L2-the-outside-unread",
@@ -96,7 +100,8 @@
   "new": "true",
   "tests": [
    "test/world/capitalcarriages.test.js"
-  ]
+  ],
+  "note": "Dies with ARENA2_PATH set (the pin is the freeware's)."
  },
  {
   "name": "AUDIT-CC-L2-the-group-never-along",
@@ -105,7 +110,8 @@
   "new": "null",
   "tests": [
    "test/world/capitalcarriages.test.js"
-  ]
+  ],
+  "note": "Dies with ARENA2_PATH set (the pin is the freeware's)."
  },
  {
   "name": "AUDIT-CC-L2-the-near-reach",
@@ -114,7 +120,8 @@
   "new": "nearestClear((a, b) => group.every((it) => clear(it, a, b)), null, GATE_CLEAR.most)",
   "tests": [
    "test/world/capitalcarriages.test.js"
-  ]
+  ],
+  "note": "Dies with ARENA2_PATH set (the pin is the freeware's)."
  },
  {
   "name": "AUDIT-CC-L2-the-carrier-unread",
@@ -123,7 +130,8 @@
   "new": "const ci = -1",
   "tests": [
    "test/world/capitalcarriages.test.js"
-  ]
+  ],
+  "note": "Dies with ARENA2_PATH set (the pin is the freeware's)."
  },
  {
   "name": "AUDIT-CC-L2-the-road-narrow",
@@ -132,13 +140,154 @@
   "new": "line: 1.5 * TILE_M,",
   "tests": [
    "test/world/capitalcarriages.test.js"
-  ]
+  ],
+  "note": "Dies with ARENA2_PATH set (the pin is the freeware's)."
  },
  {
   "name": "AUDIT-CC-L3-a-gate-past-the-frames-bare",
   "file": "src/world/townWalls.js",
   "old": "  for (const [, i, j] of pairs) if (!usedP.has(i)) { usedP.add(i); dressed.push([i, j]); }\n",
   "new": "",
+  "tests": [
+   "test/world/capitalcarriages.test.js"
+  ],
+  "note": "Dies with ARENA2_PATH set (the pin is the freeware's)."
+ },
+ {
+  "name": "AUDIT-CC-T-clearOf-null-blocks",
+  "file": "src/world/capitalCarriages.js",
+  "old": "  if (!test) return true;\n  for (let i",
+  "new": "  if (!test) return false;\n  for (let i",
+  "tests": [
+   "test/world/capitalcarriages.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-CC-T-mod-not-loaded-guard-gone",
+  "file": "src/world/capitalCarriages.js",
+  "old": "  if (!Object.values(SIDE_GATES).some((g) => records(g))) return [];",
+  "new": "  if (false) return [];",
+  "tests": [
+   "test/world/capitalcarriages.test.js"
+  ],
+  "equivalent": true,
+  "why": "With the mod not loaded every gate's records are none and nothing stands either way; the guard only spares building a capital's footprint for nothing."
+ },
+ {
+  "name": "AUDIT-CC-T-ground-sea-unread",
+  "file": "src/world/capitalCarriages.js",
+  "old": "    return !relief || relief.height(x, z) > 1e-3;",
+  "new": "    return true;",
+  "tests": [
+   "test/world/capitalcarriages.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-CC-T-ground-lake-open",
+  "file": "src/world/capitalCarriages.js",
+  "old": "const OPEN_CELLS = Object.freeze(['G', 'O']);",
+  "new": "const OPEN_CELLS = Object.freeze(['G', 'O', 'L']);",
+  "tests": [
+   "test/world/capitalcarriages.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-CC-T-side-gt-zero",
+  "file": "src/world/capitalCarriages.js",
+  "old": "const ok = b > reach && ",
+  "new": "const ok = b > 0 && ",
+  "tests": [
+   "test/world/capitalcarriages.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-CC-T-no-fallback-gate",
+  "file": "src/world/capitalCarriages.js",
+  "old": "        if (!shift) continue;",
+  "new": "        if (!shift) return null;",
+  "tests": [
+   "test/world/capitalcarriages.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-CC-T-never-toward-wall",
+  "file": "src/world/capitalCarriages.js",
+  "old": "for (const db of b > 1e-9 ? [b, -b] : [0])",
+  "new": "for (const db of [b])",
+  "tests": [
+   "test/world/capitalcarriages.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-CC-T-along-one-way",
+  "file": "src/world/capitalCarriages.js",
+  "old": "for (let a = -r; a <= r + 1e-9; a += step) {",
+  "new": "for (let a = 0; a <= r + 1e-9; a += step) {",
+  "tests": [
+   "test/world/capitalcarriages.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-CC-T-ic-footprint-none",
+  "file": "src/world/capitalModels.js",
+  "old": "  return cap.family ? (x, z) => imperialSliceFootprint(sliceAt(x, z)) : () => footprint();",
+  "new": "  return cap.family ? () => null : () => footprint();",
+  "tests": [
+   "test/world/capitalcarriages.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-CC-T-ic-slice-wrong",
+  "file": "src/world/capitalModels.js",
+  "old": "Math.floor((z / B + cap.anchor[1]) / 8) * IMPERIAL_SPAN + Math.floor((x / B + cap.anchor[0]) / 8);",
+  "new": "0;",
+  "tests": [
+   "test/world/capitalcarriages.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-CC-T-approach-walkers-through",
+  "file": "src/world/tamrielCapitals.js",
+  "old": "closed: on }), ...coachAt(cap, cx, r) });",
+  "new": "closed: () => false }), ...coachAt(cap, cx, r) });",
+  "tests": [
+   "test/world/capitalcarriages.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-CC-T-own-block-coach-unlaid",
+  "file": "src/world/tamrielCapitals.js",
+  "old": "miscModelAt(id, at[0], at[1])), ...coach.models],",
+  "new": "miscModelAt(id, at[0], at[1]))],",
+  "tests": [
+   "test/world/capitalcarriages.test.js"
+  ],
+  "equivalent": true,
+  "why": "No capital's road gate stands in one of its own blocks' cells today (gardens, the Imperial City's approach); the records are laid there so a plan whose gate does is not left bare."
+ },
+ {
+  "name": "AUDIT-CC-T-capital-k-truthy",
+  "file": "src/world/capitalCarriages.js",
+  "old": "const cap = loc?.capital ? CAPITALS[loc.capital.k] : null;",
+  "new": "const cap = loc?.capital?.k ? CAPITALS[loc.capital.k] : null;",
+  "tests": [
+   "test/world/capitalcarriages.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-CC-T-stand-narrow",
+  "file": "src/world/solitudeRelief.js",
+  "old": "x0: 262.4, x1: 294.4, z0: SOLITUDE_CLIFFS.south, z1: 435.2",
+  "new": "x0: 274.4, x1: 294.4, z0: SOLITUDE_CLIFFS.south, z1: 428.8",
+  "tests": [
+   "test/world/capitalcarriages.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-CC-T-bank-linear",
+  "file": "src/world/solitudeRelief.js",
+  "old": "SOLITUDE_LEVELS.city + (h - SOLITUDE_LEVELS.city) * smooth(d / S.bank);",
+  "new": "SOLITUDE_LEVELS.city + (h - SOLITUDE_LEVELS.city) * (d / S.bank);",
   "tests": [
    "test/world/capitalcarriages.test.js"
   ]

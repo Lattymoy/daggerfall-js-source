@@ -12,8 +12,8 @@ import { capitalCarriages, capitalGatePoints, capitalGateThings, carriageRecords
 import { townWallBlockName, GATE_ROAD_CLEAR } from '../../src/world/townWalls.js';
 import { rumareFlatAt, RUMARE_LANDING } from '../../src/world/rumareWaters.js';
 import { reliefDrawnAt } from '../../src/world/terrain/capitalRelief.js';
-import { CAPITALS, capitalDims, capitalPortBlocks, inCapitalRim, planCell, capitalGardenName, capitalApproachName } from '../../src/world/tamrielCapitals.js';
-import { installCapitals, capitalFootprint, capitalCarriagesOf } from '../../src/world/capitalModels.js';
+import { CAPITALS, capitalDims, capitalPortBlocks, inCapitalRim, planCell, capitalGardenName, capitalApproachName, synthesizeCapitalLocation, capitalCentre } from '../../src/world/tamrielCapitals.js';
+import { installCapitals, capitalFootprint, capitalCarriagesOf, carriageFootprintOf, imperialSliceFootprint } from '../../src/world/capitalModels.js';
 import { onCapitalApproach, APPROACH_HALF } from '../../src/world/capitalApproaches.js';
 import { GATE_CLEAR } from '../../src/world/townWalls.js';
 import { CAPITAL_RELIEFS } from '../../src/world/terrain/capitalRelief.js';
@@ -353,4 +353,56 @@ test('AUDIT CAPITAL-CARRIAGES with ARENA2: a walled city\'s gates on their roads
     assert.ok(p.onRoad <= 0.02 * p.gates, `past the Bay on a painted road: ${p.onRoad} of ${p.gates}`);
     assert.equal(GATE_ROAD_CLEAR.most, 2 * GATE_CLEAR.most);
   } finally { TW.setTownWallPaths(null); }
+});
+
+test('AUDIT CAPITAL-CARRIAGES T3-T7: the Imperial City\'s stand clear of its gate slice\'s models and its walkers round it; the search\'s every arm - the next gate\'s things where the side\'s own stand nowhere, a step toward the wall, along either way, a reach off the gate\'s line, never the sea or a lake; the carriage towns as the capitals\' own locations are minted; the gate frames; the stand\'s measures (mutants: the slice\'s footprint none; the slice another; the approach\'s walkers through; no next gate; never toward the wall; along one way; on the gate\'s line; the sea read as ground; a lake open; the Imperial City\'s number read as a flag; a frame moved; the stand narrowed; the bank linear)', () => {
+  modOn();
+  installCapitals({ addTextures: () => 0 });
+  // T3: the Imperial City's footprint at its gate its slice's, 300 (imperialSliceFootprint: the parts of it and its eight
+  // neighbours); a capital of one footprint its own
+  const IC = CAPITALS[0];
+  assert.equal(carriageFootprintOf(IC, () => 'own')(...IC.gateAt.W), imperialSliceFootprint(300));
+  assert.notEqual(imperialSliceFootprint(300), null, 'Talos Bridge stands on it');
+  assert.equal(carriageFootprintOf(CAPITALS[2], () => 'own')(0, 0), 'own');
+  // T3: the walkers round its things - each one's cell shut on the approach block it stands on
+  const blocks = capitalPortBlocks({ gateThings: capitalCarriagesOf }), byName = new Map(blocks.map((b) => [b.name, b]));
+  for (const it of standsOf(IC)[0].items) {
+    const c = Math.floor(it.x / B + IC.anchor[0]), r = Math.floor(it.z / B + IC.anchor[1]), a = byName.get(capitalApproachName(IC, c, r))?.json?.RmbBlock;
+    assert.ok(a, `on an approach block (${c}, ${r})`);
+    const bx = it.x - (c - IC.anchor[0]) * B, bz = (r + 1 - IC.anchor[1]) * B - it.z;
+    assert.equal(a.FldHeader.AutoMapData[(63 - Math.floor(bz / 1.6)) * 64 + Math.floor(bx / 1.6)], 0xfe, 'its walkers round it');
+  }
+  const he = CAPITALS.find((c) => c.key === 'helstrom'), N = { ...he, gates: ['N'] }, fpHe = () => (footprints.get('helstrom') ?? footprints.set('helstrom', capitalFootprint(he)).get('helstrom'));
+  // T4: the side's own gate's things that stand nowhere (one of them 100 m inside the wall's line): the next gate's, outside
+  const r08 = carriageRecordsOf('WALLAA08'), deep = { ...r08, MiscFlatObjectRecords: [...r08.MiscFlatObjectRecords, { ...r08.MiscFlatObjectRecords[0], ZPos: r08.MiscFlatObjectRecords[0].ZPos - 4000 }] };
+  const next = capitalCarriages(N, { footprintOf: fpHe, records: (g) => (g === 'WALLAA08' ? deep : carriageRecordsOf(g)) })[0];
+  assert.deepEqual([next.gate, next.inside], ['WALLAA09', false]);
+  // T4: toward the wall - Helstrom's north carriage a step nearer its gate than Daggerfall's, its reach off the rim
+  const car = standsOf(he)[0].items.find((it) => it.r.ModelIdNum === 41214), out08 = (r08.Misc3dObjectRecords.find((q) => q.ModelIdNum === 41214).ZPos + 4096) * 0.025 - IT_GATE_FRAMES.WALLAA08.at[1];
+  assert.ok(he.gateAt.N[1] - car.z < out08 - 0.5, `toward the wall: ${he.gateAt.N[1] - car.z} for ${out08}`);
+  // T4: along either way - kept off the ground east of x -30, the things go west (the nearer)
+  const west = capitalCarriages(N, { footprintOf: () => (x, z) => x > -30 && x < 60 && z < -224.8 })[0];
+  assert.ok(west && west.items.every((it) => it.x < -30), 'west');
+  // T4: a thing within its reach of the gate's line steps out of it
+  const f0 = r08.MiscFlatObjectRecords[0], near = { Misc3dObjectRecords: [], MiscFlatObjectRecords: [{ ...f0, XPos: Math.round((38.4 - 14) / 0.025), ZPos: Math.round((11.2 + 0.5) / 0.025) - 4096 }] };
+  const stepped = capitalCarriages(N, { footprintOf: () => null, records: (g) => (g === 'WALLAA08' ? near : null) })[0];
+  assert.ok(he.gateAt.N[1] - stepped.items[0].z > GATE_CLEAR.flat, `off the gate's line: ${he.gateAt.N[1] - stepped.items[0].z}`);
+  // T4: never the sea - Solitude's east wall where its cliff falls to the sea north of the neck; never a lake - Alinor's
+  // harbour wall, the quay and the sea past it
+  const so = CAPITALS.find((c) => c.key === 'solitude'), east = capitalCarriages({ ...so, gates: ['E'], gateAt: { E: [530, -40] } }, { footprintOf: () => null });
+  for (const st of east) for (const it of st.items) assert.ok(CAPITAL_RELIEFS.solitude.height(it.x, it.z) > 1e-3, `Solitude's ${st.inside ? 'inside' : 'outside'}: on the sea at ${it.x}, ${it.z}`);
+  const al = CAPITALS.find((c) => c.key === 'alinor'), south = capitalCarriages({ ...al, gates: ['S'], gateAt: { S: [0, 466] } }, { footprintOf: () => null });
+  for (const st of south) for (const it of st.items) assert.notEqual(planCell(al, Math.floor(it.z / B + al.anchor[1]), Math.floor(it.x / B + al.anchor[0])), 'L', 'on a lake');
+  // T5: the carriage towns as the capitals' own locations are minted (synthesizeCapitalLocation) - the Imperial City (its k
+  // 0) its landing's slice and no other, a harbour's sea slice none
+  const kinds = new Map([...new Set(['RESI', 'GENR', ...CAPITALS.flatMap((c) => (c.plan ?? []).flat())])].map((k) => [k, [`${k}AA00.RMB`]])), base = { name: 'B', regionIndex: 1, regionName: 'R', politic: 129, climate: { worldClimate: 231 }, hasDungeon: false, mapTableData: { mapId: 9, locationType: 0 }, exterior: { exteriorData: { blockNames: ['X'], width: 1, height: 1, mapId: 9, portTownAndUnknown: 0 }, buildings: [], recordElement: { header: { locationId: 9 } } } };
+  const minted = (k, s) => synthesizeCapitalLocation({ cap: CAPITALS[k], k, s }, { base, names: kinds, blockOf: () => null, px: 2177, py: 612 });
+  assert.deepEqual([minted(0, 300), minted(0, 312), minted(0, 0), minted(3, 0), minted(3, 1), minted(6, capitalCentre(CAPITALS[6]))].map((l) => isCarriageTown(l)), [true, false, false, true, false, true]);
+  // T6: the gate frames, as the ARENA2 pin measures them on BLOCKS.BSA
+  assert.deepEqual(JSON.parse(JSON.stringify(IT_GATE_FRAMES)), { WALLAA08: { at: [38.4, 11.2], out: [0, 1] }, WALLAA09: { at: [11.2, 64], out: [1, 0] }, WALLAA10: { at: [38.4, 91.2], out: [0, -1] }, WALLAA11: { at: [91.2, 38.4], out: [-1, 0] } });
+  // T7: the stand 32 m along the wall and 13.2 m out past the cliff's line, banked over a tile by a smoothstep
+  const S = R.SOLITUDE_CARRIAGE_STAND;
+  assert.deepEqual([S.x1 - S.x0, Math.round((S.z1 - S.z0) * 10) / 10, S.bank], [32, 13.2, 6.4]);
+  const G = R.SOLITUDE_GATE_ROAD, at = [280, S.z1 + S.bank / 4], r = R.gateRoadAt(...at), slope = r.d < G.half + G.shoulder ? null : R.southSlope(...at);
+  assert.ok(slope !== null && Math.abs(R.southHeight(...at) - (R.SOLITUDE_LEVELS.city + (slope - R.SOLITUDE_LEVELS.city) * 0.15625)) < 1e-9, 'a quarter into the bank: smoothstep\'s 0.15625');
 });

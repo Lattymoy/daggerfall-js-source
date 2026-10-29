@@ -141,6 +141,7 @@
   "new": "const own = classicOf?.(f.name)?.rmbBlock ?? null, more = null;",
   "tests": [
    "test/world/capitalcarriages.test.js"
-  ]
+  ],
+  "note": "Dies with ARENA2_PATH set (the pin is the freeware's)."
  }
 ]
