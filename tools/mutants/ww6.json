@@ -149,7 +149,7 @@
   {
     "name": "WW6-slots-zone-drawn",
     "file": "src/net/raid/raidLaw.js",
-    "old": "  if (!raidLaneOpen(lane) || !parties.length) return out;\n",
+    "old": "  if (!raidLaneStands(day, lane) || !parties.length) return out;   // FRONTS: a province off its turn rolls no slot\n",
     "new": "",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"

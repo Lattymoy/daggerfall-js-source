@@ -1323,8 +1323,9 @@ Measured on the freeware's registry with TESA's places (the game's own templates
 | Black Marsh | 32 | 31 | 16 |
 | Cyrodiil | 0 | 0 | 0 |
 
-125 raids a game day past the Bay beside the Bay's 22, each province's towns at the Bay's own pace. Day 600's first
-Skyrim raid is on Torbarke (2425, 270), bandits, its key `64:-1000124:600`, its cell `world:151,16`.
+125 raids a game day past the Bay beside the Bay's 22, each province's towns at the Bay's own pace. Day 601's first
+Skyrim raid is on Falkreath (1829, 139), bandits, its key `64:-1000102:601`, its cell `world:114,8` (FRONTS: day 600 is
+Morrowind's and Summerset's turn; Torbarke on day 600 was the pin before).
 
 ### The client (`systems/raidingParties.js`, wired by `scenes/raidHost.js`)
 
