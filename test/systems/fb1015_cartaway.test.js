@@ -19,7 +19,7 @@ import { makeWorld, RATIO, WX0, WZ0 } from '../hccWorld.mjs';
 import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { applyRarity } from '../../src/systems/loot/lootRarity.js';
 import { assignStartingGear } from '../../src/systems/startingGear.js';
-import { equipItem, isEquipped } from '../../src/systems/equip.js';
+import { equipItem, isEquipped, unequipItem } from '../../src/systems/equip.js';
 import { snapshotPlayer } from '../../src/systems/save/save.js';
 import { stampItemIds } from '../../src/systems/item/itemIds.js';
 import { addItem, goldStack } from '../../src/systems/inventory.js';
@@ -94,6 +94,7 @@ function pack() {
   const e = { name: 'Riadne', gender: 'female', level: 9, items: [], wagonItems: [], goldPieces: 400 };
   assignStartingGear(e, { classIndex: 16, rolls: seeded(3) });
   e.goldPieces = 400;   // after the kit's own purse
+  for (const it of [...e.items]) if (isEquipped(it)) unequipItem(e, it);   // PIN MOVED (PVP-REWARD): the axe her one worn piece, the roll's
   const sword = applyRarity(createWeapon(LONGSWORD, STEEL, seeded(7)), 'magic', seeded(8));
   e.items.push(sword);
   const axe = createWeapon(BATTLE_AXE, IRON, seeded(9));
@@ -177,7 +178,7 @@ test('STORE-KEEPS THROUGH THE SERVICE: at another\'s hand, the cart keeps every 
     assert.equal(res.status, 200, `${name}: ${JSON.stringify(res.body)}`);
     const d = res.body;
     assert.deepEqual(d.took[0].t, BATTLE_AXE, `${name}: the killer's worn axe first`);
-    assert.ok(d.took.some((x) => x.t === LONGSWORD), `${name}: the bag's Magic longsword`);
+    assert.ok(!d.took.some((x) => x.t === LONGSWORD), `${name}: the bag's Magic longsword kept`);   // PIN MOVED (PVP-REWARD): no bag drop
     assert.deepEqual([...new Set(d.took.map((x) => x.f))], ['bag'], `${name}: nothing of the cart`);
     assert.deepEqual(d.gold, { purse: 40, cart: 0 }, name);
     assert.ok(!d.items.some((it) => it.templateIndex === CLAYMORE || it.templateIndex === SHORTSWORD), `${name}: no cargo in the remains`);
@@ -185,7 +186,7 @@ test('STORE-KEEPS THROUGH THE SERVICE: at another\'s hand, the cart keeps every 
     assert.equal(p.record().goldPieces, 360, `${name}: a tenth of the purse gone`);
     const live = p.e;
     wildTakeTook(live, d.took, d.gold);
-    assert.deepEqual([kept(live), live.goldPieces, dropsOf(live).includes(LONGSWORD)], [WHOLE, 360, false], `${name}: the game's own pack the same`);
+    assert.deepEqual([kept(live), live.goldPieces, dropsOf(live).includes(LONGSWORD)], [WHOLE, 360, true], `${name}: the game's own pack the same`);   // PIN MOVED (PVP-REWARD)
   }
 });
 

@@ -111,7 +111,7 @@ test('AUDIT 23 magic-14: readying enforces the cost and CasterOnly casts instant
   // a recorded departure); with nobody there it fires on the ready as :350-351 does, and a free ready always does.
   // RESURRECT1: and a Resurrect ARMS too - its target is a fallen party member's body, which the instant arm would
   // never aim at (the port's own effect; DFU has no raise-dead to depart from)
-  assert.ok(arm.includes('if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH, sp)) { sayArm(\'mate-aim\', prevArm, pressButtonToFireSpellText()); return true; }\n'), 'CasterOnly fires on ready, no click latch - unless a party mate is under the crosshair');
+  assert.ok(arm.includes('if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, sp.pvpReach ?? ALLY_TOUCH_REACH, sp)) { sayArm(\'mate-aim\', prevArm, pressButtonToFireSpellText()); return true; }\n'), 'CasterOnly fires on ready, no click latch - unless a party mate is under the crosshair');
   // SPELL-GIFT (2026-09-27): ...or NEAR (systems/allyCast.js ALLY_ARM_RADIUS) - the arm between the crosshair's and Resurrect's
   // PIN MOVED (AUDIT WATCH-KIT WK-M9, 2026-10-01): my companion's near arm (COMPANION-KIT) follows the mate's, in the
   // click's own order, where it stood ahead of every arm of ALLY-CAST's

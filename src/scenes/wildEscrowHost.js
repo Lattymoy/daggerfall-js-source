@@ -9,7 +9,8 @@
 import { WILD_TEXT } from '../systems/wild/wildZone.js';
 import { itemLongName } from '../systems/item/itemInfo.js';
 import { validLootList } from '../systems/loot/loot.js';
-import { addItem } from '../systems/inventory.js';
+import { addItem, addGoldPieces, isGoldPieces, carriedWeight, LETTER_OF_CREDIT_TEMPLATE } from '../systems/inventory.js';
+import { entityMaxEncumbrance } from '../combat/formulas.js';   // PVP-REWARD: the weight a policy's gold must fit
 import { realmGoldAct } from '../systems/realmSaves.js';
 import { DeathScreen } from '../ui/deathScreen.js';
 import { playerEntity } from '../characters/playerEntity.js';
@@ -38,8 +39,11 @@ export function createWildEscrowHost({ townTalk, session, modes, wildAccount, ch
     if (!d || d.again) return;   // collected already: my record (and the pack it loaded) holds it
     const item = validLootList([d.item])?.[0] ?? null;
     if (!item) return;
-    addItem((playerEntity.items ??= []), item);
-    townTalk.say(WILD_TEXT.collected(itemLongName(item)));
+    // PVP-REWARD: a policy's gold comes as coin, or as a letter of credit where the coin would overweight me
+    if (isGoldPieces(item)) addGoldPieces(playerEntity, item.stackCount ?? 1);
+    else addItem((playerEntity.items ??= []), item);
+    townTalk.say(isGoldPieces(item) ? WILD_TEXT.policyGold(item.stackCount ?? 1)
+      : item.templateIndex === LETTER_OF_CREDIT_TEMPLATE ? WILD_TEXT.policyLetter(item.value ?? 0) : WILD_TEXT.collected(itemLongName(item)));
   };
   const wildEscrowBack = (r, d) => {
     const e = _wildEscrows.get(r);
@@ -77,7 +81,7 @@ export function createWildEscrowHost({ townTalk, session, modes, wildAccount, ch
     for (const [r, c] of _wildCollects) {
       if (c.busy || now < c.due) continue;
       c.busy = true;
-      realmGoldAct({ session, checkpoint: () => checkpoint(), needsAnswer: true, call: (at) => wildAccount.collect({ receipt: c.cr, realm: at }), apply: (a) => wildCollected(a?.data ?? null) })
+      realmGoldAct({ session, checkpoint: () => checkpoint(), needsAnswer: true, call: (at) => wildAccount.collect({ receipt: c.cr, realm: at, free: entityMaxEncumbrance(playerEntity) - carriedWeight(playerEntity) }), apply: (a) => wildCollected(a?.data ?? null) })
         .then((res) => {
           c.busy = false;
           if (res?.ok) { _wildCollects.delete(r); return; }

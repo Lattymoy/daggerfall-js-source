@@ -7,8 +7,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { SIEGE_HIT, SIEGE_UNITS_PER_M, newFighter, refereeBlow, siegeRise } from '../../../src/net/siege/siegeRef.js';
-import { HEALTH_SHARE_WHOLE, PVP_HEAL_BLOCK_MS, takeHealthReport, poolWord, poolUnheard, resetHealthShare, noteRefereeChange } from '../../../src/net/siege/refereeHealthShare.js';
+import { HEALTH_SHARE_WHOLE, PVP_HEAL_BLOCK_MS, PVP_HEAL, PVP_HEALTH_MAX, PVP_RESTORATION_MAX, pvpHealShare, healRoom, takeHealthReport, poolWord, poolUnheard, resetHealthShare, noteRefereeChange } from '../../../src/net/siege/refereeHealthShare.js';
 import { WILD_REF } from '../../../src/net/wild/wildRef.js';
+import { validVitIn, VIT_RESTORATION_MAX } from '../../../src/net/wire.js';
 import { createRefereeHealthMirror, HEALTH_REPORT_MS } from '../../../src/net/siege/refereeHealthMirror.js';
 
 const fist = { w: -1, m: 0 };
@@ -94,40 +95,92 @@ test('SHARED-HEALTH: A FOE\'S BLOW WHILE A PLAYER\'S IS IN FLIGHT - both land, a
   assert.ok(Math.abs(r.client.health - expectedHealth(r.fighter, 60)) <= 0.5, 'the client and the count agree');
 });
 
-test('SHARED-HEALTH: NO HEAL MID-PVP - a heal within PVP_HEAL_BLOCK_MS of a player\'s blow is refused and the client pulled back to the count; past it, a heal is taken whole; a relay foe\'s blow opens no window; a duel refuses every heal (mutants: the window unread; the window opened by a foe; the duel\'s block unread; the heal clipped)', () => {
+test('PVP-HEAL: A FIGHT\'S HEALS ARE CAPPED - within PVP_HEAL_BLOCK_MS of a player\'s blow every heal together restores at most a quarter of the whole per 15 s, the client pulled back to the count past it; past the fight a heal is taken whole; a relay foe\'s blow opens no fight; a siege refuses every heal by report (mutants: the window unread; the cap unread; the fight opened by a foe; the siege\'s block unread)', () => {
   const r = rig({ health: 60, maxHealth: 60 });
   r.mirror.ask();
   r.roundTrip();
   r.blow(60); r.blow(60); r.blow(60);   // 302 - 180 = 122
   r.tell(poolWord(r.fighter));
   assert.equal(r.fighter.hp, 122);
-  const hurt = r.client.health;
   r.client.health = 60;   // a potion mid-fight
   r.later();
   r.roundTrip();
-  assert.equal(r.fighter.hp, 122, 'refused: a fight between players heals nobody');
-  assert.equal(r.client.health, hurt, 'and the client is pulled back to the count');
+  assert.equal(r.fighter.hp, 122 + Math.floor(302 * PVP_HEAL.base), 'a quarter of the whole, no more');
+  const capped = r.client.health;
+  assert.ok(capped < 60, 'and the client is pulled back to the count');
+  r.client.health = 60;   // a second potion in the same 15 s
+  r.later();
+  r.roundTrip();
+  assert.equal(r.fighter.hp, 197, 'the window is spent');
+  r.later(PVP_HEAL.windowMs);
+  r.client.health = 60;   // the next window, still in the fight
+  r.roundTrip();
+  assert.equal(r.fighter.hp, 272, 'a new window, a new quarter');
   r.later(PVP_HEAL_BLOCK_MS);
   r.client.health = 60;   // a potion once the fight is over
   r.roundTrip();
   assert.equal(r.fighter.hp, 302, 'taken whole');
   assert.equal(r.client.health, 60);
-  // a relay foe's blow (a siege's guard) is no player's: a heal after it is taken
-  r.fighter.hp -= 50;
-  noteRefereeChange(r.fighter, -50, r.clock.now);
+  // a relay foe's blow (a siege's guard) is no player's: a heal after it is taken whole, past the fight's cap
+  r.fighter.hp -= 200;
+  noteRefereeChange(r.fighter, -200, r.clock.now);
   r.tell(poolWord(r.fighter));
   r.client.health = 60;
   r.later();
   r.roundTrip();
-  assert.equal(r.fighter.hp, 302, 'a guard\'s blow opens no window');
-  // a duel: no heal for its whole length, however long since a blow
+  assert.equal(r.fighter.hp, 302, 'a guard\'s blow opens no fight');
+  // a siege: no heal by report for its whole length, however long since a blow
   r.fighter.hp -= 50;
   noteRefereeChange(r.fighter, -50, r.clock.now);
   r.tell(poolWord(r.fighter));
   r.client.health = 60;
   r.later(10 * PVP_HEAL_BLOCK_MS);
   r.roundTrip(true, true);
-  assert.equal(r.fighter.hp, 252, 'a duel heals nobody');
+  assert.equal(r.fighter.hp, 252, 'a siege heals nobody by report');
+});
+
+test('PVP-HEAL: Restoration lifts the window from 25% to 35% - one point a 20 past 100 (mutants: the step unread; the top unread)', () => {
+  assert.equal(pvpHealShare(0), 0.25);
+  assert.equal(pvpHealShare(100), 0.25);
+  assert.equal(pvpHealShare(119), 0.25);
+  assert.equal(pvpHealShare(120), 0.26);
+  assert.equal(pvpHealShare(300), 0.35);
+  assert.equal(pvpHealShare(900), 0.35);
+  const f = newFighter(1, 1000);
+  f.hp = 100;
+  noteRefereeChange(f, -202, 1000, true);
+  assert.equal(healRoom(f, 1001), Math.floor(302 * 0.25));
+  assert.equal(healRoom(f, 1001, 300), Math.floor(302 * 0.35), 'a healer\'s better Restoration counts');
+  assert.equal(healRoom(f, 1000 + PVP_HEAL_BLOCK_MS), Infinity, 'out of the fight, no cap');
+});
+
+test('PVP-HEALTH: the wire takes a report\'s maximum and Restoration, within bounds, and the mirror sends both (mutants: the fields dropped; the bound unpinned)', () => {
+  assert.equal(VIT_RESTORATION_MAX, PVP_RESTORATION_MAX);
+  assert.deepEqual(validVitIn({ n: 1, s: 5000, seen: [], x: 1300, r: 250 }), { report: 1, share: 5000, seen: [], max: 1300, resto: 250 });
+  assert.equal(validVitIn({ n: 1, s: 5000, seen: [], x: 0 }), null);
+  assert.equal(validVitIn({ n: 1, s: 5000, seen: [], r: VIT_RESTORATION_MAX + 1 }), null);
+  const sent = [];
+  const client = { health: 650, maxHealth: 1300 };
+  const m = createRefereeHealthMirror({ read: () => client, write: () => {}, send: (r) => { sent.push(r); return true; }, now: () => 1e6, restoration: () => 180 });
+  m.frame(true);
+  assert.deepEqual([sent[0].x, sent[0].r], [1300, 180]);
+});
+
+test('PVP-HEALTH: a report\'s real maximum is the pool\'s whole (PVP_HEALTH_MAX at most), the count at the same share; in a fight a rising whole adds no health (mutants: the maximum unread; the bound dropped; the rise healing)', () => {
+  const f = newFighter(1, 0);
+  assert.ok(takeHealthReport(f, { report: 1, share: HEALTH_SHARE_WHOLE / 2, seen: [], max: 1300, resto: 250 }, 0));
+  assert.equal(f.max, 1300);
+  assert.equal(f.hp, 650);
+  assert.equal(f.share.resto, 250);
+  takeHealthReport(f, { report: 2, share: HEALTH_SHARE_WHOLE, seen: [], max: 99_999 }, 0);
+  assert.equal(f.max, PVP_HEALTH_MAX);
+  noteRefereeChange(f, 0, 10, true);   // a player's blow: the fight is on
+  takeHealthReport(f, { report: 3, share: HEALTH_SHARE_WHOLE, seen: [], max: 2 }, 20);
+  assert.equal(f.max, 2);
+  assert.equal(f.hp, 2);
+  takeHealthReport(f, { report: 4, share: HEALTH_SHARE_WHOLE, seen: [], max: 1300 }, 30);
+  assert.equal(f.max, 1300);
+  assert.equal(f.hp, 2 + Math.floor(1300 * pvpHealShare(250)), 'dropping and lifting the maximum heals no more than the window');
 });
 
 test('SHARED-HEALTH: a REPORTED LOSS is taken at once and never fells - the client\'s own death is its own word; a fallen fighter takes no report (mutants: the floor dropped; the fall reported into)', () => {

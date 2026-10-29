@@ -66,7 +66,7 @@ export {
 import { getBool, getInt } from '../../systems/settings/settings.js';
 import { liveStat } from '../../systems/statMods.js';
 import {
-  getMeleeWeaponAnimTime, getBowCooldownTime, CLASSIC_UPDATE_INTERVAL, HIT_FRAME_MELEE, HIT_FRAME_BOW, MELEE_NUM_FRAMES, BOW_NUM_FRAMES,
+  getMeleeWeaponAnimTime, bowReloadSeconds, CLASSIC_UPDATE_INTERVAL, HIT_FRAME_MELEE, HIT_FRAME_BOW, MELEE_NUM_FRAMES, BOW_NUM_FRAMES,
 } from '../../characters/weaponStates.js';
 import { WEAPON_TYPES, STATE_INDEX, ALIGN, NATIVE_W, NATIVE_H, WEAPON_FILE, weaponTypeForItem } from '../fpsWeapon.js';
 import { weaponOffsetHeight } from '../../ui/hud/hudLarge.js';
@@ -534,7 +534,7 @@ export function createWeaponWidget({
         yield tick;
         while (machineStateIndex() === S.StrikeDown && w.currentFrame < BOW_NUM_FRAMES.StrikeDown - 1) {
           w.offsetTarget = [0, 0]; w.offsetCurrent = [0, 0];
-          if (w.currentFrame === hitFrame()) cooldownTime = w.time + getBowCooldownTime(liveSpeed());
+          if (w.currentFrame === hitFrame()) cooldownTime = w.time + bowReloadSeconds(liveSpeed(), animCtx());   // BOW-LAW: the machine's reload
           w.currentFrame += 1; updateWeapon();
           yield tick;
         }
@@ -550,7 +550,7 @@ export function createWeaponWidget({
       w.currentFrame = 3; changeWeaponState(S.StrikeDown); updateWeapon();
       yield tick;
       // BOW-VOICE: the IL's PlaySwingSound here is the loose's second voice - the machine's `bowSound` is its one
-      cooldownTime = w.time + getBowCooldownTime(liveSpeed());
+      cooldownTime = w.time + bowReloadSeconds(liveSpeed(), animCtx());   // BOW-LAW: the machine's reload
       yield tick;
       while (w.currentFrame < BOW_NUM_FRAMES.StrikeDown - 1) { w.offsetTarget = [0, 0]; w.offsetCurrent = [0, 0]; w.currentFrame += 1; updateWeapon(); yield tick; }
       do { w.offsetTarget = [0, 1]; yield FRAME; } while (w.time < cooldownTime);

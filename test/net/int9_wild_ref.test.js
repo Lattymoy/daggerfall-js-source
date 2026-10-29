@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 import { mintWildReceipt, readWildReceipt, verifyWildReceipt, wildReceiptValid, WILD_RECEIPT_V, WILD_RECEIPT_TTL_S, WILD_RECEIPT_MAX, WILD_FALL_GRACE_S, WILD_WORN_MAX } from '../../src/net/wild/wildReceipt.js';
 import { mintDuelReceipt, verifyDuelReceipt } from '../../src/net/duel/duelReceipt.js';
 import { newWildRef, wildZone, wildPose, wildBlow, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildFallOf, WILD_REF, WILD_GRACE } from '../../src/net/wild/wildRef.js';
-import { SIEGE_UNITS_PER_M, SIEGE_HIT, siegeVitality, siegeBlowMax, SIEGE_CASTS } from '../../src/net/siege/siegeRef.js';
+import { SIEGE_UNITS_PER_M, SIEGE_HIT, siegeVitality, siegeBlowMax, pvpHitMax } from '../../src/net/siege/siegeRef.js';
 import { mintRemainsOrder, verifyOrder, remainsDigest, REMAINS_RECORDS_MAX, mintToken, ORDER_TTL_S } from '../../src/net/identityToken.js';
 import { newRemains, foldFall, takeFrom, remainsWords, remainsFit, wildRemainsKey, WILD_REMAINS_BYTES_MAX, WILD_RECORD_BYTES_MAX, remainsSpent, remainsTakeover, remainsEvict, remainsOf, WILD_TOMB_MIN_MS, WILD_STALL_MS } from '../../src/net/wild/wildLaw.js';
 import { takeWildDeath, wornOffer, wildRecord, wildPickOf, wildDropCandidates, wildTookOf, wildTakeTook } from '../../src/systems/wild/wildDropLaw.js';
@@ -90,18 +90,18 @@ test('INT9 THE REFEREE\'S LAW, WHO FIGHTS: a blow lands only between two fighter
   assert.equal(wildBlow(st, 'acct-b', 'acct-a', { d: 5, held: FIST }, 10_300).why, 'zone', 'and strikes nobody either');
   st = zone();
   const r = wildBlow(st, 'acct-a', 'acct-b', { d: 999, held: FIST, rid: '0123456789ab' }, 10_100);
-  assert.deepEqual([r.ok, r.dealt, r.fell], [true, siegeBlowMax(-1, 0), false], 'a fist, to a fist\'s most');
+  assert.deepEqual([r.ok, r.dealt, r.fell], [true, pvpHitMax({ max: whole }), false], 'PVP-HIT: 45% of the body');
   assert.equal(WILD_REF.truceMs, WILD_PARTY_TRUCE_MS, 'the party\'s truce, the hub\'s and the client\'s one number');
   assert.equal(WILD_REF.pickMs, WILD_BODY_MS, 'the body\'s window, the referee\'s pick');
 });
 
-test('INT9 THE REFEREE\'S LAW, A FALL: a strike clipped to the weapon the look holds and the arms the token signs, a cast to SIEGE_CASTS; the fall at none left, its killer the striker; the killer picks ONE worn piece once inside WILD_REF.pickMs, else it is signed with none; SHARED-HEALTH: a fighter unstruck WILD_REF.mendMs is NOT whole again (its count is its health - only its own report heals it); a fallen rises whole on its word that it stands in the zone once WILD_REF.riseMs has gone by (mutants: the arms unread; the cast unclipped; a second pick; a stranger\'s pick; the old mend restored; the rise unread; AUDIT INT9: the rise at once)', () => {
+test('INT9 THE REFEREE\'S LAW, A FALL: a strike on the weapon the look holds and a cast, each to 45% of the body (PVP-HIT); the fall at none left, its killer the striker; the killer picks ONE worn piece once inside WILD_REF.pickMs, else it is signed with none; SHARED-HEALTH: a fighter unstruck WILD_REF.mendMs is NOT whole again (its count is its health - only its own report heals it); a fallen rises whole on its word that it stands in the zone once WILD_REF.riseMs has gone by (mutants: the arms unread; the cast unclipped; a second pick; a stranger\'s pick; the old mend restored; the rise unread; AUDIT INT9: the rise at once)', () => {
   const st = zone();
   let t = 10_000;
   const r = wildBlow(st, 'acct-a', 'acct-b', { d: 999, held: { w: 123, m: 9 }, wa: [16, 0], rid: 'aaaaaaaaaaaa' }, t += 300);
-  assert.equal(r.dealt, siegeBlowMax(123, 9, [16, 0]), 'the Dai-Katana its look holds, clipped to the Longsword its pack does');
+  assert.equal(r.dealt, pvpHitMax({ max: siegeVitality(10) }), 'PVP-HIT: the Dai-Katana its look holds, to 45% of the body');
   const c = wildBlow(st, 'acct-a', 'acct-b', { d: 999, r: SIEGE_HIT.Spell, rid: 'aaaaaaaaaaab' }, t += 300);
-  assert.equal(c.dealt, SIEGE_CASTS.damageMax, 'a cast to its harm\'s most');
+  assert.equal(c.dealt, pvpHitMax({ max: siegeVitality(10) }), 'a cast to the same share');
   // SHARED-HEALTH: unstruck for mendMs, still hurt - the count is the player's health, healed by its own report alone
   st.fighters.get('acct-b').f.share.heard = true;   // a client that reported: its count is its health, and mends by its own report alone
   const hurt = wildVitals(st, 'acct-a', 'acct-b')[1][1];
@@ -429,26 +429,35 @@ test('INT9 THE RELAY, THE FIGHT: a strike in the zone is the referee\'s - routed
   const a = await join('peer-0001', -1), b = await join('peer-0002', 1, { rc: 1, ci: RC }), c = await join('peer-0003', 30);
   await say(a, { k: 'strike', to: 'peer-0002', n: 1, by: 'melee', p: W(-1), d: 999 });
   assert.equal(refs(a).length + refs(b).length, 0, 'nobody said they stand in the zone: nothing lands');
-  await say(a, { k: 'zone', z: 1 });
+  await say(a, { k: 'zone', z: 1, ed: 1 });
   step(300);
   await say(a, { k: 'strike', to: 'peer-0002', n: 2, by: 'melee', p: W(-1), d: 999 });
   assert.equal(refs(b, 'hp').length, 0, 'one fighter\'s word is not the other\'s');   // PIN MOVED (ZONE-GRACE): the room hears a's safe passage - no blow
   assert.deepEqual(refs(b, 'grace'), [{ t: 'wref', k: 'grace', id: 'peer-0001', ms: WILD_GRACE.ms }], 'ZONE-GRACE: a\'s entry, said to the room');
-  await say(b, { k: 'zone', z: 1 });
+  await say(b, { k: 'zone', z: 1, ed: 1 });
   step(300);
   await say(a, { k: 'strike', to: 'peer-0002', n: 3, by: 'melee', p: W(-1), d: 999 });
   assert.deepEqual(refs(a, 'grace').at(-1), { t: 'wref', k: 'grace', id: 'peer-0002', ms: WILD_GRACE.ms - 300, n: 1 }, 'PIN MOVED (ZONE-GRACE): just entered, under safe passage - the striker told');
   step(WILD_GRACE.ms);   // PIN MOVED (ZONE-GRACE, 2026-10-26): past the safe passage both took at their entry
   await say(a, { k: 'strike', to: 'peer-0002', n: 4, by: 'melee', p: W(-1), d: 999 });
-  const whole = siegeVitality(10), fist = siegeBlowMax(-1, 0);
+  const whole = siegeVitality(10), fist = pvpHitMax({ max: whole });   // PVP-HIT: 45% of the body
   for (const ws of [a, b]) assert.deepEqual(refs(ws, 'hp').at(-1), { t: 'wref', k: 'hp', by: 'peer-0001', to: 'peer-0002', d: fist, r: SIEGE_HIT.Melee, h: [['peer-0001', whole, whole], ['peer-0002', whole - fist, whole]] });
   assert.equal(b.sent.filter((m) => m.t === 'wild' && m.data && (m.data.k === 'strike' || m.data.k === 'spell')).length, 0, 'routed to nobody: the defender resolves nothing');
-  // AUDIT INT7 (the pins' own): the zone's referee clips a weapon's blow to the arms the striker's token signs
+  // AUDIT INT7 (the pins' own), PIN MOVED (PVP-HIT): a weapon's blow is clipped to the body's share, not the signed arms
   const armed = await join('peer-0006', 0, { look: LOOK([{ templateIndex: 123, group: 'Weapons', equipSlot: 19, material: 9 }]), wa: [5, 0] });
   await say(armed, { k: 'zone', z: 1 });
   step(300);
   await say(armed, { k: 'strike', to: 'peer-0002', n: 1, w: { t: 123, m: 9, c: 100 }, by: 'melee', p: W(0), d: 999 });
-  assert.equal(refs(armed, 'hp').at(-1)?.d, siegeBlowMax(123, 9, [5, 0]), 'a Daedric Dai-Katana, struck at the reach its pack signs');
+  assert.equal(refs(armed, 'hp').at(-1)?.d, fist, 'PVP-HIT: a Daedric Dai-Katana takes the body\'s share, whatever its pack signs');
+  // INT7: a shaft is the signed arms' - a pack that signs no bow lands nothing, whatever its look holds; one that signs a bow lands
+  const bow = LOOK([{ templateIndex: 130, group: 'Weapons', equipSlot: 19, material: 9 }]);
+  for (const [id, wa, lands] of [['peer-0007', [5, 0], false], ['peer-0008', [5, 1], true]]) {
+    const archer = await join(id, 0, { look: bow, wa });
+    await say(archer, { k: 'zone', z: 1 });
+    step(300);
+    await say(archer, { k: 'strike', to: 'peer-0002', n: 1, w: { t: 130, m: 9, c: 100 }, by: 'arrow', p: W(0), d: 20 });
+    assert.equal(refs(archer, 'hp').length > 0, lands, lands ? 'a signed bow\'s shaft lands' : 'a shaft from no signed bow lands nothing');
+  }
   const f = await fell(a, 'peer-0002');
   assert.ok(f, 'B fell');
   assert.deepEqual([f.id, f.by], ['peer-0002', 'peer-0001']);
@@ -603,11 +612,12 @@ test('INT9 (AUDIT) THE RELAY, KIN AT THE HUB: a blow between two of one party ne
 // ─── THE ACCOUNT SERVICE ────────────────────────────────────────────────────────────────────────────────────────
 
 const nowS = () => Math.floor(Date.now() / 1000);
-const record = () => ({ name: 'Riadne', level: 9, ...sheet() });
-async function fallen() {
+// PIN MOVED (PVP-REWARD): the short sword carried, not worn - the service's roll lands on the one worn piece, the axe
+const record = (magic = false) => { const r = { name: 'Riadne', level: 9, ...sheet() }; delete r.items[0].equipSlot; if (magic) Object.assign(r.items[3], { magic: true, value: 1500 }); return r; };
+async function fallen(magic = false) {
   const svc = await standService();
   const ria = await svc.registered('Riadne'), bo = await svc.registered('Borin'), cy = await svc.registered('Cyrus');
-  const R = await seatRealm(svc.env, ria.secret, 'Riadne', record());
+  const R = await seatRealm(svc.env, ria.secret, 'Riadne', record(magic));
   const saved = () => JSON.parse(new TextDecoder().decode(svc.env.SAVES._map.get(svc.env.DB._raw.prepare('SELECT obj FROM realm_characters WHERE id = ?').get(R.id).obj)));
   const receipt = (o = {}) => mintWildReceipt({ f: ria.id, c: R.id, k: bo.id, r: '0123456789ab', w: 1, ...o }, svc.gatePriv, { subtle, nowS: o.nowS ?? nowS() });
   return { svc, ria, bo, cy, R, saved, receipt };
@@ -622,15 +632,15 @@ test('INT9 THE SERVICE, THE FALLEN\'S OWN ACT: the drop taken off the judged rec
   const res = await fall(svc, ria, { receipt: rc, realm: at });
   assert.equal(res.status, 200, JSON.stringify(res.body));
   const d = res.body;
-  assert.deepEqual(kinds(d.items), [121, 'gold', 120], 'the killer\'s pick (the second worn piece), the coin, the magic sword - nothing of the cart');   // PIN MOVED (STORE-KEEPS)
+  assert.deepEqual(kinds(d.items), [121, 'gold'], 'the killer\'s piece (the one worn), the coin - nothing of the bag, nothing of the cart');   // PIN MOVED (STORE-KEEPS)   // PIN MOVED (PVP-REWARD): no bag drop
   assert.equal(d.realm.seq, at.seq + 1);
   assert.deepEqual([d.kept, d.wi, d.gold], [[], 0, { purse: 10, cart: 0 }]);   // PIN MOVED (FOE-KEEPS): a tenth, the usual death's share - it was half; PIN MOVED (STORE-KEEPS): the cart's none
-  assert.deepEqual(d.took.map((x) => [x.t, x.u, x.f]), [[121, '00000000000000a3', 'bag'], [120, '00000000000000a2', 'bag']], 'what the record lost, by the ids the game holds');
+  assert.deepEqual(d.took.map((x) => [x.t, x.u, x.f]), [[121, '00000000000000a3', 'bag']], 'what the record lost, by the ids the game holds');   // PIN MOVED (PVP-REWARD)
   const v = await verifyOrder(d.order, svc.identityPublic, { subtle, nowS: nowS(), kind: 'remains' });
   assert.ok(v.ok, v.why);
-  assert.deepEqual([v.claims.s, v.claims.wr, v.claims.wn, v.claims.wm, v.claims.wk, v.claims.wi, v.claims.wh], [ria.id, '0123456789ab', 3, CELL, bo.id, 0, await remainsDigest(d.items, { subtle })]);   // PIN MOVED (STORE-KEEPS): three records
+  assert.deepEqual([v.claims.s, v.claims.wr, v.claims.wn, v.claims.wm, v.claims.wk, v.claims.wi, v.claims.wh], [ria.id, '0123456789ab', 2, CELL, bo.id, 0, await remainsDigest(d.items, { subtle })]);   // PIN MOVED (STORE-KEEPS): three records   // PIN MOVED (PVP-REWARD): two
   const after = saved();
-  assert.deepEqual(kinds(after.items), [113, 'potion'], 'the record lost what the room holds');
+  assert.deepEqual(kinds(after.items), [113, 'potion', 120], 'the record lost what the room holds - the bag kept');   // PIN MOVED (PVP-REWARD)
   assert.deepEqual(kinds(after.wagonItems), [122, 'gold'], 'and kept its cart');   // STORE-KEEPS
   assert.equal(after.goldPieces, 91);   // PIN MOVED (FOE-KEEPS)
   const again = await fall(svc, ria, { receipt: rc, realm: R.at(), room: worldRoom(PX + 16, PY) });
@@ -651,16 +661,16 @@ test('INT9 THE SERVICE, THE FALLEN\'S OWN ACT: the drop taken off the judged rec
 });
 
 test('INT9 (AUDIT) THE SERVICE, THE DROP\'S LEDGER: every valuable piece dropped lies in the remains under a FRESH id, and the id it had is written down as the fallen\'s own copy - a game that kept the piece holds a copy that moves by no route, and whoever takes it up holds it clean (it charged the taker); a crafted piece keeps its craft\'s key, written down the same; the save two back dropped (mutants: the old id in the remains; no copy written; the old save left)', async () => {
-  const { svc, ria, R, receipt } = await fallen();
+  const { svc, ria, R, receipt } = await fallen(true);   // PIN MOVED (PVP-REWARD): the worn axe a magic one - the bag drops nothing
   const prevObj = () => svc.env.DB._raw.prepare('SELECT prev FROM realm_characters WHERE id = ?').get(R.id).prev;
   const res = await fall(svc, ria, { receipt: await receipt(), realm: R.at() });
   assert.equal(res.status, 200, JSON.stringify(res.body));
-  const sword = res.body.items.find((it) => it.templateIndex === 120);
+  const sword = res.body.items.find((it) => it.templateIndex === 121);
   assert.match(sword.uid, /^[0-9a-f]{16}$/);
-  assert.notEqual(sword.uid, '00000000000000a2', 'the magic sword (a piece the ledger follows): never the id it had');
-  assert.deepEqual(res.body.items.filter((it) => it.templateIndex !== 120 && it.uid).map((it) => it.uid).sort(), ['00000000000000a3'], 'a plain piece is no piece the ledger follows: as it was');   // PIN MOVED (STORE-KEEPS): the cart's plain piece stays
+  assert.notEqual(sword.uid, '00000000000000a3', 'the magic axe (a piece the ledger follows): never the id it had');
+  assert.deepEqual(res.body.items.filter((it) => it.templateIndex !== 121 && it.uid), [], 'nothing else with an id');   // PIN MOVED (STORE-KEEPS): the cart's plain piece stays   // PIN MOVED (PVP-REWARD): the bag too
   const copies = svc.env.DB._raw.prepare('SELECT uid FROM item_dupes WHERE char_id = ? ORDER BY uid').all(R.id).map((x) => x.uid);
-  assert.deepEqual(copies, ['00000000000000a2'], 'the id it had, the fallen\'s copy');
+  assert.deepEqual(copies, ['00000000000000a3'], 'the id it had, the fallen\'s copy');
   assert.equal(svc.env.DB._raw.prepare('SELECT COUNT(*) AS n FROM item_uids WHERE uid = ?').get(sword.uid).n, 0, 'the fresh id, nobody\'s yet');
   assert.ok(prevObj() == null || svc.env.SAVES._map.has(prevObj()), 'the row names no object that is gone');
   assert.ok(rd('server-account/src/wild.js').includes('await dropObjects(ctx.bucket, [moved.prev]);'), 'the save two back dropped, as every act drops it');
@@ -693,7 +703,7 @@ test('INT9 THE SERVICE, THE KILLER\'S SEIZURE: the killer carries the receipt on
   assert.equal(late.status, 200, JSON.stringify(late.body));
   assert.equal(late.body.realm, undefined, 'no record of the killer\'s moved');
   assert.deepEqual([R.at().seq, R.at().lease], [at.seq + 1, null], 'moved where it stood, the lease cleared');
-  assert.deepEqual(kinds(saved().items), [113, 'potion']);
+  assert.deepEqual(kinds(saved().items), [113, 'potion', 120]);   // PIN MOVED (PVP-REWARD): the bag kept
 });
 
 test('WILD-REJOIN THE SERVICE, A FALLEN GONE: a receipt the relay signed with its fallen gone from the room (`g` 1) is its killer\'s to carry at once - the record taken where it stands, its lease cleared, as any seizure; one without it still waits the grace (mutants: the grace for every fall)', async () => {
@@ -704,7 +714,7 @@ test('WILD-REJOIN THE SERVICE, A FALLEN GONE: a receipt the relay signed with it
   const now = await fall(svc, bo, { receipt: await receipt({ g: 1 }) });
   assert.equal(now.status, 200, JSON.stringify(now.body));
   assert.deepEqual([R.at().seq, R.at().lease], [at.seq + 1, null], 'moved where it stood, the lease cleared');
-  assert.deepEqual(kinds(saved().items), [113, 'potion']);
+  assert.deepEqual(kinds(saved().items), [113, 'potion', 120]);   // PIN MOVED (PVP-REWARD): the bag kept
 });
 
 // PIN MOVED (FOE-KEEPS, 2026-10-24, bible/11-Multiplayer/Wild-Zone.md section 4 - the owner: "I dont want people to lose
@@ -731,13 +741,13 @@ test('FOE-KEEPS THE SERVICE, A DEATH TO A FOE: no receipt takes nothing - refuse
 });
 
 test('INT9 THE SERVICE, THE LEDGER AND THE FREEZE: a piece the ledger bars from leaving (another\'s, a claim waiting) stays on the record and is named `kept`; a record the judge holds still loses its drop and the room is given none of it - no order (lane 1\'s freeze: a held character hands no value to another player); the falls swept past WILD_FALLS_KEEP_S (mutants: a barred piece taken; the hold unread; the sweep unread)', async () => {
-  const f = await fallen();
-  f.svc.env.DB._raw.prepare("INSERT INTO item_uids (uid, player, char_id, seen_seq, state, fp, at) VALUES ('00000000000000a2', 'someone', 'rffffffffffffffffffff', 1, 'held', '120:0', 1)").run();
+  const f = await fallen(true);   // PIN MOVED (PVP-REWARD): the worn axe a magic one, the piece the roll would land on
+  f.svc.env.DB._raw.prepare("INSERT INTO item_uids (uid, player, char_id, seen_seq, state, fp, at) VALUES ('00000000000000a3', 'someone', 'rffffffffffffffffffff', 1, 'held', '121:0', 1)").run();
   const res = await fall(f.svc, f.ria, { receipt: await f.receipt(), realm: f.R.at() });
   assert.equal(res.status, 200, JSON.stringify(res.body));
-  assert.deepEqual(res.body.kept, ['00000000000000a2']);
-  assert.deepEqual(kinds(res.body.items), [121, 'gold']);   // PIN MOVED (STORE-KEEPS): no cargo
-  assert.deepEqual(kinds(f.saved().items), [113, 'potion', 120], 'kept where it lay');
+  assert.deepEqual(res.body.kept, ['00000000000000a3']);
+  assert.deepEqual(kinds(res.body.items), ['gold']);   // PIN MOVED (STORE-KEEPS): no cargo   // PIN MOVED (PVP-REWARD): the barred axe the roll's last piece - nothing for the killer
+  assert.deepEqual(kinds(f.saved().items), [113, 'potion', 120, 121], 'kept where it lay');
   const h = await fallen();
   h.svc.env.DB._raw.prepare("UPDATE realm_characters SET held = 'law' WHERE id = ?").run(h.R.id);
   const held = await fall(h.svc, h.ria, { receipt: await h.receipt(), realm: h.R.at() });
@@ -745,8 +755,8 @@ test('INT9 THE SERVICE, THE LEDGER AND THE FREEZE: a piece the ledger bars from 
   assert.deepEqual([held.body.burnt, held.body.order], [true, null], 'nothing for the room');
   // PIN MOVED (MAC, 2026-10-14, the two-phase handoff - "the fallen must lose the worn piece only once the killer actually
   // has it"): a held record's killer can never have the piece it picked, so the record keeps it; the rest is lost still
-  assert.equal(held.body.items.length, 2, 'and the death cost the drop');   // PIN MOVED (STORE-KEEPS): the gold and the magic sword, no cargo
-  assert.deepEqual(kinds(h.saved().items), [113, 'potion', 121], 'the killer\'s pick kept - it could never reach them');
+  assert.equal(held.body.items.length, 1, 'and the death cost the drop');   // PIN MOVED (STORE-KEEPS): the gold and the magic sword, no cargo   // PIN MOVED (PVP-REWARD): the gold alone
+  assert.deepEqual(kinds(h.saved().items), [113, 'potion', 120, 121], 'the killer\'s piece kept - it could never reach them');
   assert.equal(held.body.wi, -1, 'no piece of the killer\'s named');
   // the sweep
   const job = HOUR_JOBS.find(([name]) => name === 'wild-falls');
@@ -762,7 +772,7 @@ test('INT9 THE CLIENT: a blow rolled on my own sheet and sent as a number; no de
   const w = hostText('src/scenes/world.js'), o = rd('src/net/online.js');
   assert.ok(o.includes('if (primary) this.wildOk = relaySupportsWildRef(relayV);'), 'a relay that referees the zone, or none of it');
   assert.ok(o.includes("} else if (m.t === 'wref') {"));
-  assert.ok(w.includes('online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0);'));   // PIN MOVED (AUDIT FOE-KEEPS E2): and left dying
+  assert.ok(w.includes('online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere() && wildOutdoors(), player.pos, Date.now()));'));   // PIN MOVED (AUDIT FOE-KEEPS E2): and left dying
   assert.ok(w.includes("const n = wildFight.blow(to, 'strike', { by, p: campToWire(player.feetAt()), d: Math.trunc(r.dmg),"));
   assert.ok(!w.includes('resolveDuelStrike(d, playerEntity'), 'the defender resolves nothing');
   assert.ok(w.includes('      forcePlayerDeath(playerEntity);\n'), 'the referee\'s fall, a death');
@@ -812,7 +822,7 @@ test('INT9 (AUDIT) THE CLIENT\'S LINK: my zone word on MY OWN CELL\'S socket alo
 });
 
 const vits = (ws, k) => ws.sent.filter((m) => m.t === 'vit' && (!k || m.k === k));
-test('SHARED-HEALTH THE RELAY, THE ZONE: a fighter\'s zone word asks for its health; its report anchors the count at its share, told back; a player\'s blow is said on the struck player\'s own health; a foe\'s blow reported while that blow was in flight lands on top of it; a heal mid-PvP is refused and one after the window taken whole; a stranger\'s report reaches no pool (mutants: no ask; the blow unsaid; the in-flight blow undone; the window unread)', () => withZone(async ({ r, say, join, step }) => {
+test('SHARED-HEALTH THE RELAY, THE ZONE: a fighter\'s zone word asks for its health; its report anchors the count at its share, told back; a player\'s blow is said on the struck player\'s own health; a foe\'s blow reported while that blow was in flight lands on top of it; a heal mid-PvP is held to a quarter of the whole (PVP-HEAL) and one after the window taken whole; a stranger\'s report reaches no pool (mutants: no ask; the blow unsaid; the in-flight blow undone; the window unread)', () => withZone(async ({ r, say, join, step }) => {
   const a = await join('peer-0001', -1), b = await join('peer-0002', 1, { rc: 1, ci: RC });
   const whole = siegeVitality(10), fist = Math.min(20, siegeBlowMax(-1, 0));
   await say(a, { k: 'zone', z: 1 });
@@ -838,9 +848,10 @@ test('SHARED-HEALTH THE RELAY, THE ZONE: a fighter\'s zone word asks for its hea
   // a potion mid-fight: refused, the count told back unmoved; once no player has struck for the window, taken whole
   const before = vits(b, 'h').at(-1);
   await r.raw(b, JSON.stringify({ t: 'vit', n: 3, s: 10000, seen: [[before.e, before.w]] }));
-  assert.equal(vits(b, 'h').at(-1).h, before.h, 'no heal mid-PvP');
+  assert.equal(vits(b, 'h').at(-1).h, before.h + Math.floor(whole * 0.25), 'PVP-HEAL: a quarter of the whole mid-PvP');
+  const capped = vits(b, 'h').at(-1);
   step(WILD_REF.mendMs);
-  await r.raw(b, JSON.stringify({ t: 'vit', n: 4, s: 10000, seen: [[before.e, before.w]] }));
+  await r.raw(b, JSON.stringify({ t: 'vit', n: 4, s: 10000, seen: [[capped.e, capped.w]] }));
   assert.equal(vits(b, 'h').at(-1).h, whole, 'the fight over: healed whole');
   // a socket with no fighter here: nothing
   const c = await join('peer-0003', 30);

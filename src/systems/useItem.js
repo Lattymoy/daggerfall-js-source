@@ -43,6 +43,7 @@ import { localizedStrings } from './textManager.js';   // L10N3d: DFU's Internal
 import { hoodCapable, hoodUp } from './survival/temperature.js';   // HOOD-SAID: the one hood law, for toggleHood
 import { sandPotionRefusal } from './arena/arenaKit.js';   // AUDIT ARENA-LADDER: no potion on the sand
 import { spirePotionRefusal, spirePotionDrunk } from './eliteGates/spireKit.js';   // EG-FULL: THE POTION LAW
+import { pvpPotionRefusal, pvpPotionDrunk } from '../combat/pvpPotions.js';   // PVP-POTIONS: 15 s a kind in a fight with a player
 
 /** THE ARMS WHOSE DESTINATION WINDOW THE PORT HAS NOT BUILT, named so a use
  *  SAYS something rather than eating itself. Keyed by this module's own result
@@ -346,6 +347,8 @@ export function useItem(item, collection, {
   else if (isPotion(item) && sandPotionRefusal()) out = { kind: 'refused', refused: true, text: sandPotionRefusal() };
   // EG-FULL: THE POTION LAW - two restoring potions a hall in an Elite Breach, and the bottle is kept (systems/eliteGates/spireKit.js)
   else if (isPotion(item) && spirePotionRefusal(item)) out = { kind: 'refused', refused: true, text: spirePotionRefusal(item) };
+  // PVP-POTIONS: in a fight with a player each kind waits 15 s, and the bottle is kept (combat/pvpPotions.js)
+  else if (isPotion(item) && pvpPotionRefusal(item)) out = { kind: 'refused', refused: true, text: pvpPotionRefusal(item) };
 
   else if (isPotion(item)) {
     // DrinkPotion + RemoveOne. AUDIT 22 F5: RemoveOne takes THIS
@@ -363,6 +366,7 @@ export function useItem(item, collection, {
     // here.
     const drank = drinkPotion ? drinkPotion(item.potionRecipeKey ?? 0, Number.isInteger(item.potent) ? item.potent : 0) : null;   // PROF12: a Potent potion's share
     spirePotionDrunk(item);   // EG-FULL: a restoring one counted against the hall's two
+    pvpPotionDrunk(item);   // PVP-POTIONS: its kind's 15 s start
     out = drank ? { kind: 'potion', potion: drank } : { kind: 'potion', pending: true };
   }
 

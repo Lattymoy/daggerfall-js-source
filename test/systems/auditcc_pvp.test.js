@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 
 import { duelAttackerOf, duelWeaponOf, duelStandIn, DUEL_STAND_IN, resolveDuelStrike } from '../../src/combat/duelCombat.js';
-import { siegeSpellNumbers, siegeCastClamp } from '../../src/combat/siegeCombat.js';
+import { siegeSpellNumbers, siegeCastClamp, pvpFirstEffect } from '../../src/combat/siegeCombat.js';
 import { installPcaao, uninstallPcaao } from '../../src/combat/pcaao.js';
 import { playerEntity } from '../../src/characters/playerEntity.js';
 import { createCharacter, STAT_KEYS_ORDER } from '../../src/systems/chargen.js';
@@ -132,20 +132,30 @@ test('AUDIT C&C H5 A STRIKER\'S BUFFS HELP ITS BLOW AND NO LUCK HARMS IT: the li
   assert.deepEqual(stock, [[2201, 10067], [2196, 12198], [2201, 10067], [2196, 12198], [2201, 10067], [2233, 10195]], 'DFU\'s own core: an unarmoured body (a stand-in with no table read 0, an armour past any - 3 blows in 100 landed)');
 });
 
-test('AUDIT C&C H5 A SPELL\'S HARM IS COUNTED ON THE NEUTRAL STAND-IN: the caster\'s own race and willpower save against nothing of its own - a Breton\'s Magic bolt counts what its Fire and Frost bolts do, and a Fortify Willpower to 100 changes nothing (2,361 of 200 bolts each; against its own sheet 1,184 and 1,006 - its race\'s +30, its own willpower) - and a Disintegrate counts the body whole whatever the caster\'s own wounds (99,999, sent as a cast\'s most, 60, for the referee to clip; against its own sheet the caster\'s own 35, or 5 wounded) (mutants: the race; an attribute off the middle; the health)', () => {
+test('AUDIT C&C H5 A SPELL\'S HARM IS COUNTED ON THE NEUTRAL STAND-IN: the caster\'s own race and willpower save against nothing of its own - a Breton\'s Magic bolt counts what its Fire and Frost bolts do, and a Fortify Willpower to 100 changes nothing (2,361 of 200 bolts each; against its own sheet 1,184 and 1,006 - its race\'s +30, its own willpower) - and a Disintegrate reaches no player (PVP-SPELLS) (mutants: the race; an attribute off the middle; the health)', () => {
   const e = mintPlayer();
   assert.deepEqual([e.raceId, e.level, e.health], [1, 1, 35], 'a level-1 Breton - its race resists Magic - whole at 35');
   const strong = mintPlayer();
   fortify(strong, 'willpower', 49);
   assert.equal(liveStat(strong, 'willpower'), 100);
-  assert.deepEqual([sum(casts(e, bolt(4), 200)), sum(casts(e, bolt(0), 200)), sum(casts(e, bolt(1), 200)), sum(casts(strong, bolt(4), 200))], [2361, 2361, 2361, 2361], 'harm of 200 bolts each');
+  assert.deepEqual([sum(casts(e, bolt(4), 200)), sum(casts(e, bolt(0), 200)), sum(casts(e, bolt(1), 200)), sum(casts(strong, bolt(4), 200))], [3902, 3902, 3902, 3902], 'harm of 200 bolts each');   // PIN MOVED (PVP-SPELL-CRIT): the caster's Critical Strike crits a spell at a player (was 3,800); PIN MOVED (PVP-WARD): no save rolled on the stand-in - the target's own throw rides its report (was 2,361); PIN MOVED (PVP-TRIANGLE): a spell at a player x0.96 (was 4,000)
   const DISINTEGRATE = buildCustomSpell({ slots: [{ type: 5, subType: 255, settings: { chanceBase: 100 } }], rangeType: 1, element: 4, name: 'Disintegrate' });
   const hurt = mintPlayer();
   hurt.health = 5;
+  // PVP-SPELLS: Disintegrate reaches no player (combat/siegeCombat.js PVP_SPELL_TYPES)
   const kills = casts(e, DISINTEGRATE, 8);
-  assert.deepEqual(kills, [0, 0, 99999, 99999, 0, 0, 99999, 99999], 'a kill counts the body whole, or a save spares it');
+  assert.deepEqual(kills, [0, 0, 0, 0, 0, 0, 0, 0], 'a Disintegrate counts nothing at a player');
   assert.deepEqual(casts(hurt, DISINTEGRATE, 8), kills, 'the caster\'s own wounds are not the count');
-  assert.deepEqual(kills.map((n) => siegeCastClamp(n, false)), [0, 0, 60, 60, 0, 0, 60, 60], 'the number the hosts send: a cast\'s most');
+  // PVP-NO-DRAIN: a Drain reaches no player until it is balanced
+  const DRAIN = buildCustomSpell({ slots: [{ type: 7, subType: 0, settings: { chanceBase: 100, magnitude: { baseMin: 20, baseMax: 20, plusMin: 0, plusMax: 0, perLevel: 1 } } }], rangeType: 1, element: 4, name: 'Sap' });
+  assert.deepEqual(casts(e, DRAIN, 8), [0, 0, 0, 0, 0, 0, 0, 0], 'a Drain counts nothing at a player');
+  assert.equal(pvpFirstEffect(DRAIN), null, 'a Drain is no PvP effect');
+  // PVP-NO-POISON: a poison spell reaches no player; the same bolt of fire still does
+  const venom = (element) => buildCustomSpell({ slots: [{ type: 4, subType: 0, settings: { chanceBase: 100, magnitude: { baseMin: 20, baseMax: 20, plusMin: 0, plusMax: 0, perLevel: 1 } } }], rangeType: 1, element, name: 'Venom' });
+  assert.equal(pvpFirstEffect(venom(2)), null, 'poison: no PvP effect');
+  assert.equal(pvpFirstEffect(venom(0))?.type, 4, 'fire: a Damage');
+  assert.deepEqual(casts(e, venom(2), 4), [0, 0, 0, 0], 'a poison bolt counts nothing at a player');
+  assert.deepEqual([99999, 12].map((n) => siegeCastClamp(n, false)), [10_000, 12], 'the number the hosts send: the wire\'s most (PVP-HIT: the referee takes 45% of the body)');
 });
 
 test('AUDIT C&C H5 THE HOSTS BY SOURCE - ONE CONSTRUCTION SEAM: every blow a host rolls between players (a duel\'s, a siege\'s, a siege work\'s, the open zone\'s) and every spell it counts (a duel\'s, a siege\'s, a side-mate\'s gift, the zone\'s) takes the one stand-in, swept over every source file; no stub of the striker\'s own sheet stands in anywhere (mutants: each of the eight sites back on a stub of my own sheet)', () => {

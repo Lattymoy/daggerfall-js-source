@@ -263,7 +263,7 @@ import { isSiegeRoom, newFighter, armsOk, SIEGE_HIT, ROYAL_RING, isSiegeNpcId, s
 import { mintSiegeReceipt, SIEGE_RECEIPT_TTL_S, mintRoyalReceipt } from '../../src/net/siege/siegeReceipt.js';   // SEAT2a: the relay's fourth signature - a fighter's result and Honours
 import { takeHealthReport, poolWord, poolUnheard } from '../../src/net/siege/refereeHealthShare.js';   // SHARED-HEALTH: one health pool under the referee
 import { newDuelRef, duelNote, duelOpen, duelBoutOf, duelBlow, duelPose, duelEnd, duelForfeit, duelStep, duelVitals } from '../../src/net/duel/duelRef.js';   // INT8: the duel refereed
-import { newWildRef, wildZone, wildPose, wildBlow, wildKin, sameGuild, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildCredit, wildFallOf, wildDownWord, wildGraceLeft, wildGraceTaken, WILD_GRACE, WILD_FALL_PREFIX, WILD_REF } from '../../src/net/wild/wildRef.js';   // INT9: the open zone refereed
+import { newWildRef, wildZone, wildTokenAtt, wildPose, wildBlow, wildKin, sameGuild, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildCredit, wildFallOf, wildDownWord, wildGraceLeft, wildGraceTaken, wildAggroWord, wildFlagWord, wildBarWord, wildBarWords, wildOpenedBy, wildVillainy, wildRed, WILD_GRACE, WILD_FALL_PREFIX, WILD_REF } from '../../src/net/wild/wildRef.js';   // INT9: the open zone refereed
 import { mintWildReceipt, mintWildCollect, mintSeaWreck, WILD_RECEIPT_TTL_S, SEA_WRECK_TTL_S } from '../../src/net/wild/wildReceipt.js';   // INT9: a fall, signed; MAC (2026-10-14): and a killer's collect; SHIP-PVP: and a wreck
 import { seaHelm, seaShot, seaBoard, seaStep, seaGone, seaCarry, seaWreckOf, SEA_WRECK_PREFIX, SEA_REF } from '../../src/net/sea/seaRef.js';
 /** AUDIT SEA VENTURES A8: a signed word owed an account that is away (a fall's receipt, a wreck's) kept in the room's storage
@@ -3485,6 +3485,7 @@ export class Room {
     // AUDIT LEGACY III O1: and the realm character itself - `ci`, beside the realm's yes alone (identityToken.js claimsValid)
     // INT7: and its ARMS (`wa`, the judged pack's most reach and its bow) - every referee's clip of a blow between players
     if (c.ak) house.ak = c.ak;   // ARMORY: `ak`, the Aura Armory's kit the token signed for (stamped by `badged` beside the aura) - set here, as `fo` is, the return's literal being pinned
+    if (c.vl) house.vl = c.vl;   // PVP-VILLAIN-KEEP: `vl`, the villain meter the token signed for (wildRef.js wildTokenAtt puts it on the socket)
     if (c.fo) house.fo = c.fo;   // STAFF-PANEL5-FOLLOW: `fo`, the account a hidden spectator follows (beside `hd` alone - claimsValid); set here, as the return's literal is pinned by other mutant lists
     if (c.hd === 1) this._hidHellos.add(m);   // STAFF-PANEL5-HIDDEN: `hd`, a hidden staff spectator's token - the hello marked off the signature (staffHidden.js hiddenHello)
     return { name: c.n, kind: c.k, subject: c.s, title: c.t, ts: c.ts, glyphs: c.g, gx: c.gx, au: c.au, pi: c.pi, rb: c.rb, mu, lt, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl, ...house, ci: c.ci, wa: c.wa };   // ARENA4: the season's rating, the hall's queue's   // ARENA4b: `cl` the character's level, a ladder fighter's vitality's
@@ -3873,7 +3874,7 @@ export class Room {
         // AUDIT SCALE II R2-4: and kept, so a woken instance whose sockets say nothing still knows it
         if (this._hubKeyKept !== this._hubKey) { this._hubKeyKept = this._hubKey; try { await this.state.storage.put(HUB_KEY_KEY, this._hubKey); } catch { this._hubKeyKept = null; } }
       }
-      if (!this._setAttach(ws, { ...a, ...placed, ...shown, ...(shard ? { vid, hm: { acct: m.acct ?? null, as: m.asecret ?? null, ps: m.ps === 1 ? 1 : 0, sc: m.secret } } : copy ? { vid } : {}), ...(m.gv >= GRANT_HELLO_LAW && streamsFoes(a.key) ? { gv: 1 } : {}), id: m.id, sc: m.secret, name: who.name, title: who.title, ...(who.ts ? { ts: who.ts } : {}), glyphs: who.glyphs, gx: who.gx, au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), lv: who.lv, ...guild, ...(who.hn ? { hn: who.hn, hc: who.hc, hb: who.hb, hg: who.hg } : {}), ...(who.ci && !chat && !isSocialRoom(a.key) ? { ci: who.ci } : {}), ...(armsOk(who.wa) && !chat && !isSocialRoom(a.key) ? { wa: who.wa } : {}), gio: who.gio, ...(Number.isSafeInteger(who.lt) ? { lt: who.lt } : {}), ...(m.ls === 1 && leaseRoom(a.key) ? { ld: 0 } : {}), sub: who.subject, ...instAtt, ...(siegeSide ? { sd: siegeSide } : {}), mu: who.mu, ...(who.fz ? { fz: who.fz } : {}), ...(m.fv === 1 ? { fv: 1 } : {}), pose: chat ? null : m.pose, since: this._seatKeep(replaced, now), ...arena, ...charLv, ...linked, ...(chat && who.kind === 'guest' ? { gu: 1 } : {}), ...(m.w2 === 1 ? { w2: 1 } : {}), ...(who.fo ? { fo: who.fo } : {}), ...(m.sm === 1 && isSocialRoom(a.key) ? { sm: 1 } : {}), ...(who.hid ? { hid: 1, lk: 0 } : {}) })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk   // RENOWN1: `lv` the Renown level the token carried   // AUDIT SAFE RELAY-11: `gu`, a guest's socket in a channel - paced as a sprout's (`_newVoiceWait`)   // STAFF-PANEL5-MESSAGE: `sm`, a hub socket whose game shows a staff message's box (its hello said so) - one without it is "old game, not shown"   // STAFF-PANEL5-HIDDEN: `hid`, a hidden staff spectator's socket (staffHidden.js) - and in no census (`lk` 0 over `linked`)
+      if (!this._setAttach(ws, { ...a, ...placed, ...shown, ...(shard ? { vid, hm: { acct: m.acct ?? null, as: m.asecret ?? null, ps: m.ps === 1 ? 1 : 0, sc: m.secret } } : copy ? { vid } : {}), ...(m.gv >= GRANT_HELLO_LAW && streamsFoes(a.key) ? { gv: 1 } : {}), id: m.id, sc: m.secret, name: who.name, title: who.title, ...(who.ts ? { ts: who.ts } : {}), glyphs: who.glyphs, gx: who.gx, au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), lv: who.lv, ...guild, ...(who.hn ? { hn: who.hn, hc: who.hc, hb: who.hb, hg: who.hg } : {}), ...(who.ci && !chat && !isSocialRoom(a.key) ? wildTokenAtt(who) : {}), ...(armsOk(who.wa) && !chat && !isSocialRoom(a.key) ? { wa: who.wa } : {}), gio: who.gio, ...(Number.isSafeInteger(who.lt) ? { lt: who.lt } : {}), ...(m.ls === 1 && leaseRoom(a.key) ? { ld: 0 } : {}), sub: who.subject, ...instAtt, ...(siegeSide ? { sd: siegeSide } : {}), mu: who.mu, ...(who.fz ? { fz: who.fz } : {}), ...(m.fv === 1 ? { fv: 1 } : {}), pose: chat ? null : m.pose, since: this._seatKeep(replaced, now), ...arena, ...charLv, ...linked, ...(chat && who.kind === 'guest' ? { gu: 1 } : {}), ...(m.w2 === 1 ? { w2: 1 } : {}), ...(who.fo ? { fo: who.fo } : {}), ...(m.sm === 1 && isSocialRoom(a.key) ? { sm: 1 } : {}), ...(who.hid ? { hid: 1, lk: 0 } : {}) })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk   // RENOWN1: `lv` the Renown level the token carried   // AUDIT SAFE RELAY-11: `gu`, a guest's socket in a channel - paced as a sprout's (`_newVoiceWait`)   // STAFF-PANEL5-MESSAGE: `sm`, a hub socket whose game shows a staff message's box (its hello said so) - one without it is "old game, not shown"   // STAFF-PANEL5-HIDDEN: `hid`, a hidden staff spectator's socket (staffHidden.js) - and in no census (`lk` 0 over `linked`)
       if (!chat && m.pose && this._trailing({ key: a.key, sub: who.subject })) this._trailPose(ws, m.pose, now);   // AUDIT INT11: a fighter's socket new to the room stands where its hello put it, from now - on its trail, or none says when
       // SRV-N: `v` rides EVERY welcome, a channel's included. A player in the enhanced skin holds a presence socket
       // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
@@ -4297,7 +4298,7 @@ export class Room {
       const k = m.data.k;
       if (k === 'strike' || k === 'spell') { if (m.data.to === a.id) { this._junk(ws); return; } await this._wildBlow(a, m.data, now); return; }
       if (k === 'helm' || k === 'shot' || k === 'board') { await this._seaWord(a, m.data, now); return; }   // SHIP-PVP: the open sea's guns, the referee's
-      if (k === 'zone') { await this._wildZoneWord(a, m.data.z, now, m.data.dd === 1); return; }   // AUDIT FOE-KEEPS E2: `dd`, its word that it died
+      if (k === 'zone') { await this._wildZoneWord(a, m.data.z, now, m.data.dd === 1, m.data.fl ?? null, m.data.ed === 1); return; }   // AUDIT FOE-KEEPS E2: `dd`, its word that it died
       if (k === 'pick') { await this._wildPickWord(a, m.data, now); return; }
       if (wildDirected(m.data)) {
         const to = m.data.to;
@@ -6747,7 +6748,7 @@ export class Room {
     }
     const r = d.k === 'spell' ? SIEGE_HIT.Spell : d.by === 'arrow' ? SIEGE_HIT.Shaft : SIEGE_HIT.Melee;
     const held = d.k === 'strike' ? siegeHeld(look, d.w ? d.w.t : -1, d.w ? d.w.m : 0) : null;
-    const res = duelBlow(st, a.sub, d.to, { d: d.d, r, held, wa: a.wa ?? null }, now);
+    const res = duelBlow(st, a.sub, d.to, { d: d.d, r, held, wa: a.wa ?? null, el: d.el ?? null }, now);   // PVP-WARD: the spell's element
     if (!res.ok || !res.dealt) return;
     this._duelSay(bout, { t: 'dref', k: 'hp', s: bout.s, by: a.id, to: d.to, d: res.dealt, r, h: duelVitals(bout) });
     const struck = bout.a.id === d.to ? bout.a : bout.b;
@@ -6784,7 +6785,7 @@ export class Room {
   /**
    * The pools this room's referees hold for an account: its open-zone fighter, its live duel's side, its siege fighter.
    * Never a Royal Tourney contender's: the tourney keeps its own count between bouts. Each `{ fighter, healsBlocked,
-   * kept }` - `healsBlocked` a duel's or a siege's (no heal by report for its whole length), `kept` what the room does once the count has moved
+   * kept }` - `healsBlocked` a siege's (no heal by report for its whole length - PVP-HEAL: a duel's are capped instead), `kept` what the room does once the count has moved
    * (the zone's carry at the hub, a siege's checkpoint).
    */
   async _vitPools(sub, now) {
@@ -6795,7 +6796,7 @@ export class Room {
       if (x && !x.down) pools.push({ fighter: x.f, healsBlocked: false, kept: async () => this._wildCarryPut(sub, this._zoneCarry(st, sub, now)) });
     }
     const bout = this._duelRef ? duelBoutOf(this._duelRef, sub) : null;
-    if (bout) pools.push({ fighter: bout.a.sub === sub ? bout.a.f : bout.b.f, healsBlocked: true, kept: async () => {} });   // a duel heals nobody for its whole length
+    if (bout) pools.push({ fighter: bout.a.sub === sub ? bout.a.f : bout.b.f, healsBlocked: false, kept: async () => {} });   // PVP-HEAL: a duel heals, to the fight's window
     const siege = this._siege;
     const siegeFighter = siege?.fighters?.[sub];
     if (siegeFighter && siege.battle?.kind !== 'royal') pools.push({ fighter: siegeFighter, healsBlocked: true, kept: () => this._siegeSave(now, false) });   // a siege heals nobody by report either: its heals are the side-mates' spells and the wave's rise, the referee's own
@@ -6892,7 +6893,7 @@ export class Room {
     let look = this._looks.get(a.id) ?? null;
     if (!look && m.k === 'blow') { look = (await this.state.storage.get(lookKey(a.id))) ?? null; if (look) this._looks.set(a.id, look); }
     const res = m.k === 'cast'
-      ? refereeCast(by, to, { from: by.pose, at: to.pose, d: m.d, heal }, now)
+      ? refereeCast(by, to, { from: by.pose, at: to.pose, d: m.d, heal, el: m.el ?? null }, now)
       : refereeBlow(by, to, { from: by.pose, at: to.pose, held: siegeHeld(look, m.w, m.m), d: m.d, r: m.r, wa: a.wa ?? null }, now);   // INT7: clipped to the striker's signed arms
     if (!res.ok || !res.dealt) return;
     if (b?.kind !== 'royal') this._vitSay(target.sub, to);   // SHARED-HEALTH: the blow or the heal on the player's own health
@@ -11411,13 +11412,15 @@ export class Room {
   /** A socket's word that it stands in the zone or has left it - and a fall signed while it was away, said again. A
    *  fighter is a realm character in play (AUDIT INT9: one with none fought and dropped nothing - its fall's receipt named
    *  no record); standing in the zone again, it takes the vitality it carries from its last fight in another room. */
-  async _wildZoneWord(a, z, now, died = false) {
+  async _wildZoneWord(a, z, now, died = false, fl = null, ed = false) {
     if (!a.sub || (z === 1 && !a.ci)) return;
     const st = await this._wildSt();
     if (z !== 1 && died) await this._wildCredit(st, a, now);   // AUDIT FOE-KEEPS E2: a death within the kill credit of a player's blow
     const was = st.fighters.get(a.sub), graceWas = was?.graceUntil ?? -Infinity, wasIn = !!was?.zone;
     const carry = z === 1 && (!was || !was.zone) ? await this._wildCarryAsk(a.sub) : null;
-    const x = wildZone(st, a.sub, { id: a.id, lv: a.lv, ci: a.ci ?? '', carry, died }, z === 1, a.pose, now);
+    const flagWas = was?.flag;
+    const x = wildZone(st, a.sub, { id: a.id, lv: a.lv, cl: a.cl ?? null, ci: a.ci ?? '', carry, died, fl, ed, vl: a.vl ?? 0 }, z === 1, a.pose, now);
+    if (x) this._wildFlagSay(st, a, x, flagWas, wasIn, fl);   // PVP-FLAG
     if (x && x.graceUntil > now && x.graceUntil !== graceWas) this._wildGraceSay(a, x.graceUntil - now);   // ZONE-GRACE: safe passage begun, or carried in
     if (x && (x.zone !== wasIn || died)) this._wildCarryPut(a.sub, this._zoneCarry(st, a.sub, now, a.key));   // AUDIT PVP-EASE L3-1: an entry, a leave and a death, at the hub
     if (x && carry?.sea) x.seaCarry = carry.sea;   // AUDIT SEA VENTURES F1/A1: her ship's bar too, for her next helm word (seaRef.js seaHelm)
@@ -11445,6 +11448,7 @@ export class Room {
     const res = wildCredit(st, a.sub, rid, now);
     if (!res) return;
     if (res.evicted) await this._wildSign(res.evicted, now);
+    await this._wildVillainy(st, res.fall, now);   // PVP-VILLAIN
     try { await this.state.storage.put(`${WILD_FALL_PREFIX}${rid}`, res.fall); } catch (e) { console.warn('[wild] credited fall kept failed', e?.message ?? e); }
     this._wildFan({ t: 'wref', k: 'fell', id: a.id, by: res.fall.killerId, r: rid });
     if (!isCellRoom(res.fall.m || a.key)) { const f = wildSignNow(st, rid); if (f) await this._wildSign(f, now); }
@@ -11474,10 +11478,11 @@ export class Room {
     const bytes = new Uint8Array(6);
     globalThis.crypto.getRandomValues(bytes);
     const rid = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
-    const res = wildBlow(st, a.sub, tb.sub, { d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key }, now);   // SEA-BOUNTY: the room it fell in
+    const res = wildBlow(st, a.sub, tb.sub, { d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key, el: d.el ?? null }, now);   // SEA-BOUNTY: the room it fell in
     if (res.evicted) await this._wildSign(res.evicted, now);   // INT9 (AUDIT): a full room's oldest fall, signed without its pick - never forgotten
     if (res.graceEnded || res.why === 'grace') this._wildGraceBlow(a, tb, st, res, now);   // ZONE-GRACE
     if (!res.ok || !res.dealt) return;
+    this._wildAggroSay(st, [a.sub, tb.sub], now);   // PVP-SKULL: the striker's and the struck one's skulls gold
     const word = JSON.stringify({ t: 'wref', k: 'hp', by: a.id, to: tb.id, d: res.dealt, r, h: wildVitals(st, a.sub, tb.sub) });
     this._send(target[0], word);
     const mine = this._siegeSocketOf(a.sub);
@@ -11485,6 +11490,7 @@ export class Room {
     this._wildCarryPut(tb.sub, this._zoneCarry(st, tb.sub, now, a.key));   // INT9 (AUDIT): the bar it carries into the next room
     this._vitSay(tb.sub, ft.f);   // SHARED-HEALTH: the blow on the struck player's own health
     if (!res.fell) return;
+    await this._wildVillainy(st, res.fall, now);   // PVP-VILLAIN: the kill's points on its killer
     try { await this.state.storage.put(`${WILD_FALL_PREFIX}${rid}`, res.fall); } catch (e) { console.warn('[wild] fall kept failed', e?.message ?? e); }
     this._wildFan({ t: 'wref', k: 'fell', id: tb.id, by: a.id, r: rid });
     // INT9 (AUDIT): a building's or a dungeon's room searches no body (the worn offer is the open country's) - its fall is
@@ -11493,6 +11499,41 @@ export class Room {
   }
   /** ZONE-GRACE (2026-10-26, the owner chose "Entry/rise grace" - wildRef.js WILD_GRACE): A FIGHTER'S SAFE PASSAGE SAID TO
    *  THE ROOM (`wref` `grace`: its id and the ms it has left; 0, ended by its own blow). */
+  /** PVP-FLAG (systems/wild/pvpFlag.js): a fighter's flag said to the room when it moves (or the relay kept it up - its
+   *  word refused in the lock), and every flagged fighter's said to one that has just stood in the zone. */
+  _wildFlagSay(st, a, x, flagWas, wasIn, fl) {
+    if (x.flag !== flagWas || !wasIn || (fl === 0 && x.flag) || (fl === 1 && !x.flag)) this._wildFan({ t: 'wref', k: 'flag', id: a.id, f: x.flag ? 1 : 0, ...(x.flag ? wildRed(x) : {}) });
+    if (wasIn || !x.zone) return;
+    const mine = this._siegeSocketOf(a.sub);
+    if (!mine) return;
+    this._send(mine[0], JSON.stringify({ t: 'wref', k: 'vil', n: x.vi ?? 0 }));   // PVP-VILLAIN: my own meter, for the sheet
+    for (const [sub, o] of st.fighters) if (sub !== a.sub && o.zone && o.flag) this._send(mine[0], JSON.stringify(wildFlagWord(o, Date.now())));
+    this._wildBarsTo(st, a.sub, mine[0]);   // PVP-BAR: and each one's bar
+  }
+  /** PVP-BAR (wildRef.js wildBarWords): each flagged fighter's bar that moved, said to the room - at most once each half second. */
+  _wildBarSay(st, now) { for (const w of wildBarWords(st, now)) this._wildFan(w); }
+  /** PVP-BAR: every flagged fighter's bar but its own, to one that has just stood in the zone. */
+  _wildBarsTo(st, sub, ws) {
+    for (const [s, o] of st.fighters) { const w = s !== sub && o.zone && o.flag ? wildBarWord(o) : null; if (w) this._send(ws, JSON.stringify(w)); }
+  }
+
+  /** PVP-VILLAIN (systems/wild/villainLaw.js): a fall's points on its killer's meter - none where the fallen struck one of
+   *  the killer's party first (the hub's party word, wildOpenedBy); the meter told its killer, a new villain's red to the
+   *  room, and the meter kept at the hub for the next room. */
+  async _wildVillainy(st, fall, now) {
+    let partyFirst = false;
+    if (fall.vp > 0) for (const sub of wildOpenedBy(st, fall.fallen, now)) if (sub !== fall.killer && await this._wdunKinOf(fall.killer, sub, now)) { partyFirst = true; break; }
+    const { vi, turned } = wildVillainy(st, fall, partyFirst);
+    if (!(fall.vp > 0)) return;
+    const mine = this._siegeSocketOf(fall.killer), x = st.fighters.get(fall.killer);
+    if (mine) this._send(mine[0], JSON.stringify({ t: 'wref', k: 'vil', n: vi }));
+    if (turned && x) this._wildFan(wildFlagWord(x, now));
+    this._wildCarryPut(fall.killer, this._zoneCarry(st, fall.killer, now, fall.m));
+  }
+  /** PVP-SKULL: each flagged fighter of a blow said to the room in aggro (wildRef.js wildAggroWord). */
+  _wildAggroSay(st, subs, now) {
+    for (const sub of subs) { const w = wildAggroWord(st.fighters.get(sub), now); if (w) this._wildFan(w); }
+  }
   _wildGraceSay(a, ms) { this._wildFan({ t: 'wref', k: 'grace', id: a.id, ms: Math.max(0, Math.min(WILD_GRACE.ms, Math.ceil(ms))) }); }
   /** ZONE-GRACE: a blow's word on safe passage - the striker's ended by its own blow, said to the room; a blow the struck
    *  one's kept off, said to the striker alone (`n` 1, with the ms it has left). */
@@ -11528,6 +11569,7 @@ export class Room {
   async _wildBeat(now) {
     const st = await this._wildSt();
     for (const w of seaStep(st, now)) await this._seaSign(w, now);   // SHIP-PVP: a wreck its killer never boarded, signed unboarded
+    this._wildBarSay(st, now);   // PVP-BAR
     if (!st.falls.size) return;
     for (const fall of wildStep(st, now)) await this._wildSign(fall, now);
   }
@@ -11537,7 +11579,7 @@ export class Room {
     let rc = null;
     // WILD-REJOIN: a fallen with no socket here has no tab to take its drop first - its killer carries the receipt at once
     const fallenGone = this._siegeSocketOf(fall.fallen) ? 0 : 1;
-    try { rc = await mintWildReceipt({ f: fall.fallen, c: fall.ci, k: fall.killer, r: fall.r, w: fall.w, wt: fall.wt, m: fall.m, kc: fall.kc, g: fallenGone }, await this._receiptKeyOf(), { subtle: globalThis.crypto.subtle, nowS: Math.floor(now / 1000) }); } catch (e) { console.warn('[wild] receipt failed', e?.message ?? e); }
+    try { rc = await mintWildReceipt({ f: fall.fallen, c: fall.ci, k: fall.killer, r: fall.r, w: fall.w, wt: fall.wt, m: fall.m, kc: fall.kc, g: fallenGone, vp: fall.vp }, await this._receiptKeyOf(), { subtle: globalThis.crypto.subtle, nowS: Math.floor(now / 1000) }); } catch (e) { console.warn('[wild] receipt failed', e?.message ?? e); }
     wildSigned(this._wildRef, fall.r);
     try { await this.state.storage.delete(`${WILD_FALL_PREFIX}${fall.r}`); } catch { /* read back and signed again: the service takes a fall once */ }
     if (!rc) return;

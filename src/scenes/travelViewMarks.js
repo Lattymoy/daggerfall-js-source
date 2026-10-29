@@ -26,6 +26,7 @@ import { vendorWaypoint } from '../systems/vendorWaypoint.js';
 import { warmAshesOn } from '../systems/warmAshesShips.js';
 import { WILD_MARK } from '../systems/wild/wildAlert.js';
 import { WILD_TEXT } from '../systems/wild/wildZone.js';
+import { pvpSkullOf } from './pvpFlagHost.js';   // PVP-SKULL: a flagged player's skull on the Overworld too
 
 /** OW-QUEST: a quest mark's words on the Overworld - the first quest's title (the followed one first, questMapMarks'
  *  order) with how many more stand at the place, and under it the distance and the first quest's time left (AUDIT
@@ -251,7 +252,7 @@ export function createTravelViewMarks(host) {
       // when you near them Like 600m away"): in the open zone a stranger within WILD_STRANGER_M stands as an enemy
       if (_wildStrangerIds.has(d.id)) {
         near.add(d.id);
-        marks.push({ key: `peer:${d.id}`, at: [f[0], f[1] + TV_PEER_HEAD_M, f[2]], label: WILD_TEXT.stranger, kind: 'stranger', edge: true });
+        marks.push({ key: `peer:${d.id}`, at: [f[0], f[1] + TV_PEER_HEAD_M, f[2]], label: WILD_TEXT.stranger, kind: 'stranger', edge: true, skull: pvpSkullOf(d.id) });
         continue;
       }
       // AUDIT NAMES N2-2: THE SWITCH HOLDS - a player who shares nothing with the region ("Show me to travellers" off)
@@ -264,7 +265,7 @@ export function createTravelViewMarks(host) {
       near.add(d.id);
       // AUDIT NAMES: and one on a journey (their region mark's `tv`) keeps the arrow they wore from afar
       marks.push({ key: `peer:${d.id}`, at: [f[0], f[1] + h, f[2]], label: d.name ?? '', kind: `${party ? 'party' : 'traveller'}${isShipMark(t?.p) ? ' ship' : ''}${t?.p.tv ? ' journey' : ''}`, edge: party || !!t, badge: tvBadgeOf(d),
-        kin: travellerKin({ friend: !!host.social?.isFriendPeer(d.id), gt: d.gt }, myGt), lv: d.lv ?? null });   // OWS1: at sea (their region mark says so), a ship; OW-KIN / OW-WHO: who they are to me, and their Renown
+        kin: travellerKin({ friend: !!host.social?.isFriendPeer(d.id), gt: d.gt }, myGt), lv: d.lv ?? null, skull: pvpSkullOf(d.id) });   // OWS1: at sea (their region mark says so), a ship; OW-KIN / OW-WHO: who they are to me, and their Renown
     }
     // TV3: THE REGION'S TRAVELLERS - their marks, beyond the pose range (inside it they are the players above); a party
     // member's in the party's colour; one outside the picture held at its edge, pointing
@@ -278,7 +279,7 @@ export function createTravelViewMarks(host) {
       if (wildHidesPlayer({ kin: travellerKin({ friend: !!host.social?.isFriendPeer(t.id), gt: t.gt }, myGt), wire: [w.x, 0, w.z], party: kind === 'party' })) continue;   // WILD1: in or near the open zone, my party and my guild alone
       const ship = isShipMark(t.p);   // OWS1: at sea, a ship - riding the sea's top
       marks.push({ key: `trav:${t.id}`, at: tvSceneKept(t, w.x, w.z, 2, ship), label: t.name, kind: `${kind}${ship ? ' ship' : ''}${t.p.tv ? ' journey' : ''}`, edge: true, badge: tvBadgeOf(t),
-        kin: travellerKin({ friend: !!host.social?.isFriendPeer(t.id), gt: t.gt }, myGt), lv: t.lv ?? null });   // OW-KIN / OW-WHO
+        kin: travellerKin({ friend: !!host.social?.isFriendPeer(t.id), gt: t.gt }, myGt), lv: t.lv ?? null, skull: pvpSkullOf(t.id) });   // OW-KIN / OW-WHO
       near.add(t.id);
     }
     // AUDIT OW5 P6: MY PARTY, WHEREVER THEY ARE - the held map draws them from the party's own poses (partyMarkers); here

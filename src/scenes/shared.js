@@ -68,6 +68,7 @@ import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (w
 import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate, restIgnoresNoRegen } from '../systems/rest/rest.js';
 import { entityImprovedAthleticism } from '../systems/enchantments.js';   // AUDIT 26 F044: the ImprovesTalents fatigue arm   // the rested hour's three rates, one home for every host (V5 + S40, same line from two lanes)
 import { getPreventedRestMessage } from '../systems/rest/restSession.js';
+import { pvpFallSpared, takePvpFallSpare } from '../systems/wild/pvpRules.js';   // PVP-RULES
 import { nightDue, nightRealMinutesLeft, stampNight, runRestNight, topUpRest, sleepShortRest, spendRoomNight, roomNightsLeft, heardNight, REST_CHANNEL_SECONDS, REST_ACT_TEXT, NIGHT_HOURS, openChannelHeal, stepChannelHeal } from '../systems/rest/restAct.js';   // REST1: the rest act online
 import { registerPreventRestCondition } from '../systems/rest/restSession.js';   // SURV7: the survival rest gate's seam
 import { quietNights } from '../systems/encounters.js';   // CAMP-ROLL: a camp mate's night rolls nothing of mine
@@ -1393,6 +1394,7 @@ export const WARDROBE_FATIGUE_MOST = 50;
  *  billed its own and the Long Road was dead below ground. */
 export function playerFallDamage(entity, distance) {
   const less = Math.min(WARDROBE_FALL_MOST, Math.max(0, Number(entity?._mods?.fallLess) || 0)) / 100;
+  if (pvpFallSpared()) return 0;   // PVP-RULES: the fall a flag's ward on Levitate began costs nothing
   return Math.trunc(FALL_HP_PER_METRE * (distance - FALL_DAMAGE_THRESHOLD) * (1 - less));
 }
 /** AcrobatMotor.CheckFallingDamage (:214-222) + PlayerHealth
@@ -1423,7 +1425,7 @@ export function applyFallLanding(entity, distance, { hurt = null, sound = null, 
   // Hosts pass this from isOutdoorWaterTile(the tile under the
   // player); it defaults FALSE, which is DFU's own answer for the
   // -1 the streaming world reports off terrain (indoors, dungeons).
-  if (inOutdoorWater) return;
+  if (inOutdoorWater || takePvpFallSpare()) return;   // PVP-RULES: and the fall a flag's ward on Levitate began, spent here
   if (distance > FALL_DAMAGE_THRESHOLD) {
     const dmg = playerFallDamage(entity, distance);   // LOOT15 (bible/06-Systems/Loot-II-Arc.md section 7): the bill, the Long Road off it
     // AUDIT 21 (hosts lane, F6): the no-`hurt` arm went through the ONE

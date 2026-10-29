@@ -145,7 +145,7 @@
 // save carries (RENOWN-CHAR: a track a character again - RENOWN-ACCOUNT
 // kept one an account for a day); the level rides the token when the
 // mint names one:
-//   POST /v1/renown/xp { character, xp, name?, rid?, region? } -> { character, xp, level, credited, rose, order, max?, repeat? }   (SEAT1b: `region` where it was earned)
+//   POST /v1/renown/xp { character, xp, name?, rid?, region?, vd? } -> { character, xp, level, credited, rose, order, max?, repeat? }   (SEAT1b: `region` where it was earned; PVP-VILLAIN-KEEP: `vd` the villain meter it lowers)
 // FIRM1, THE FIRMAMENT (firmament.js; the law src/net/firmament/firmamentLaw.js): a character's passive tree, its Stars the Renown
 // track's and its Craft points the profession tracks', every change the whole tree judged by the law, a refund's silver
 // burnt in the change's batch. Behind FIRMAMENT_OPEN:
@@ -357,6 +357,7 @@ import { PROGRESS_ROUTES, seatRefusalOf, progressConfig, progressRoom, progressS
 import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/net/realm/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P2.1: a trade, settled here
 import { wildInsure, wildPolicies } from './wildInsure.js';   // WILD-INSURE (2026-10-26): a policy on a piece of gear, written against its premium off the record
+import { lowerVillainy, villainReportDown } from './villainy.js';   // PVP-VILLAIN-KEEP: the villain meter lowered by a Renown report
 import { wildFall, wildCollect, wildReclaim, wildEscrows } from './wild.js';   // INT9: a death in the open zone's drop, taken off the record; MAC (2026-10-14): its killer's piece in escrow - collected, taken back, listed
 import { listLineages, putLineage, realmDie, realmRaise, realmWed, listUnions, LINEAGE_BODY_MAX } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone; REZ-BLOODLINE AUDIT R1: a Resurrect inside its hold
 import { measured, heartbeatPartsOf } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine); AUDIT SCALE II A-3: a heartbeat's parts, of the body the route read
@@ -1323,6 +1324,7 @@ const service = {
         // INT7: AND THAT REALM CHARACTER'S ARMS, `wa` - the most reach of its judged pack's lawful weapons and its bow
         // (realm.js realmMintFacts), every referee's clip of a blow between players. Absent before its first judged checkpoint.
         const wa = facts.wa;
+        // PVP-VILLAIN-KEEP: AND ITS VILLAIN METER, `vl` (realm.js realmMintFacts) - the relay seeds the referee's meter from it
         // ARENA4: AND THE ACCOUNT'S ARENA RATING this season, for a registered account - the hall queues by it (net/arena/arenaLaw.js
         // pairQueue), off the signature, never a word of the client's. A guest's token carries none (a guest is not queued).
         const ar = who.player.handle ? (await arenaRatingOf(ctx, who.player.id, arenaSeasonOf(nowS))).rating : undefined;
@@ -1338,7 +1340,7 @@ const service = {
         // AUDIT LEGACY III O1: AND WHICH REALM CHARACTER (`ci`, beside a 1 alone) - the relay stamps it on a wedding's frames,
         // so each half names the character its player saw. Kept when a house is left unsaid: the widest token without a
         // house is under TOKEN_MAX_CHARS with it (test/auditlegacy3)
-        const signed = { s: who.player.id, n: nameWorn.name, k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(rc ? { ci: body.character } : {}), ...(ar !== undefined ? { ar } : {}), ...(cl != null ? { cl } : {}), ...(wa ? { wa } : {}), ...(fz ? { fz } : {}) };
+        const signed = { s: who.player.id, n: nameWorn.name, k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(rc ? { ci: body.character } : {}), ...(ar !== undefined ? { ar } : {}), ...(cl != null ? { cl } : {}), ...(wa ? { wa } : {}), ...(fz ? { fz } : {}), ...(rc && facts.vl > 0 ? { vl: facts.vl } : {}) };
         let token = await mintToken(house ? { ...signed, ...house } : signed, key, { subtle, nowS });
         // the token's own bounds (identityToken.js TOKEN_MAX_CHARS, and AUDIT LEGACY III O11 the relay hello's TOKEN_BODY_MAX):
         // a house that would take it past either is left unsaid, never the rest
@@ -1755,6 +1757,7 @@ const service = {
         // nothing for a repeat - kept for the character's war-guild where it pledged in that region
         if (body.region != null && r.credited > 0 && !r.repeat) await creditRenown(ctx, who.player, env, { character: body.character, region: body.region, xp: r.credited });
         await progressSpent(ctx, who.player.id, path, r);   // INT17: what it credited, measured against the play that paid for it
+        await lowerVillainy(ctx, who.player.id, body.character, villainReportDown(body.vd, r));   // PVP-VILLAIN-KEEP: monsters at its level and quests, within what it credited
         let order = null;
         if (r.rose || (r.repeat && r.level > 1)) {
           const key = await signingKey(env, subtle);

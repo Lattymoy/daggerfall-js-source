@@ -108,7 +108,7 @@ export function playerMeleeCanHit(dist, inView, losClear) {
 // here - so binding that ONE field to the used hand carries them all.
 
 /** WeaponManager.cs:45 - the switch-delay divisor, a float. */
-import { BOW_SWITCH_DIVISOR } from '../characters/weaponStates.js';   // ONE home (WeaponManager.cs:45); a12's switch law reads it here
+import { BOW_SWITCH_DIVISOR, bowReloadSeconds } from '../characters/weaponStates.js';   // ONE home (WeaponManager.cs:45); a12's switch law reads it here
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 export { BOW_SWITCH_DIVISOR };
 
@@ -962,7 +962,9 @@ export class PlayerWeapon {
     // BAL-ARCHERY: the reload is thunderlockReloadSeconds of live Speed, committed onto cooldownUntil
     // when the shot ends, so a Speed change mid-pump does not move the pump already running.
     this.machine.tick = thunderlock ? GUN_TICK_SECONDS : null;
-    this.machine.cooldown = thunderlock ? thunderlockReloadSeconds(this.liveSpeed) : null;
+    // BOW-LAW: and the bow's reload is the swing's (characters/weaponStates.js bowReloadSeconds), read as the shot steps
+    this.machine.cooldown = thunderlock ? thunderlockReloadSeconds(this.liveSpeed)
+      : t === WEAPON_TYPES.Bow ? bowReloadSeconds(this.liveSpeed, this.animCtx?.() ?? null) : null;
     this.machine.hitFrame = thunderlock ? GUN_FEEL.hitFrame : null;
   }
 

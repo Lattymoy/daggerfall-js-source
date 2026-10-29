@@ -154,6 +154,16 @@ export function registerMeleeWeaponAnimTime(fn) { _animTimeOverride = typeof fn 
 export function getBowCooldownTime(liveSpeed) {
   return (10 * (100 - liveSpeed) + 800) / CLASSIC_FRAME_UPDATE;
 }
+/** BOW-LAW (bible/01-Overview/Port-Ledger.md, BOW-LAW): A DEPARTURE - A BOW RELOADS ON THE SWING'S LAW. DFU's line above
+ *  keeps a shot 1.4-1.6 s apart at any Speed and nothing quickens it, so an archer lands half a swordsman's damage a
+ *  second. For a wielder the port knows, the reload is what is left of a five-frame swing of the bow - its weight
+ *  against Strength, both hands, the pace powers, SWING_FRAME_MIN - once the draw and the loose have played; DFU's line otherwise. */
+export function bowReloadSeconds(liveSpeed, ctx = null) {
+  if (!ctx?.entity) return getBowCooldownTime(liveSpeed);
+  const w = _swingReader?.(ctx) ?? null;
+  const frame = paced(swingFrameSeconds(liveSpeed, { heft: w ? swingHeft(w.weight, w.strength) : 1, handling: swingHandling(ctx.weaponType, !!w?.twoHanded) }), ctx, w);
+  return Math.max(0, MELEE_NUM_FRAMES.StrikeDown * frame - (BOW_NUM_FRAMES.StrikeUp + HIT_FRAME_BOW) * CLASSIC_UPDATE_INTERVAL);
+}
 
 // WeaponManager.cs verbatim
 export const MAX_GESTURE_SECONDS = 1.0;
@@ -278,7 +288,7 @@ export function machineAttack(m, strikeState) {
 export function machineCancelBowDraw(m, liveSpeed = 50) {
   if (m.isBow && m.state === 'StrikeUp') {
     m.state = 'Idle'; m.frame = 0; m.ticks = 0; m.acc = 0;
-    m.cooldownUntil = m.now + getBowCooldownTime(liveSpeed);
+    m.cooldownUntil = m.now + (m.cooldown ?? getBowCooldownTime(liveSpeed));   // BOW-LAW: the reload the shot would have paid
     return true;
   }
   return false;
@@ -416,7 +426,7 @@ export function machineStep(m, dt, liveSpeed, animCtx = null) {   // AUDIT-RR F1
         // so a machine minted before this field existed - every
         // classic one - still reads exactly as it did.
         // `m.cooldown` is the Thunderlock's reload in seconds (gunFeel.js thunderlockReloadSeconds),
-        // set before this step. A bow leaves it null and uses getBowCooldownTime.
+        // set before this step; BOW-LAW: a player's bow's is bowReloadSeconds (combat/playerWeapon.js _tuneClassic), else getBowCooldownTime.
         if (m.ranged ?? m.isBow) m.cooldownUntil = m.now + (m.cooldown ?? getBowCooldownTime(liveSpeed));
         break;
       }

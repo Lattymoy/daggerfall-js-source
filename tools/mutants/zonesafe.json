@@ -122,8 +122,8 @@
   {
     "name": "ZONESAFE-wildFair-the-dungeon-made-safe",
     "file": "src/scenes/world.js",
-    "old": "return modes?.mode === 'dungeon' || (wildAtWire(duelWorldOf(peerId)) &&",
-    "new": "return (modes?.mode === 'dungeon' && !settledAt(duelWorldOf(peerId), locationIndex)) || (wildAtWire(duelWorldOf(peerId)) &&",
+    "old": "(modes?.mode === 'dungeon' || (wildAtWire(duelWorldOf(peerId)) &&",
+    "new": "((modes?.mode === 'dungeon' && !settledAt(duelWorldOf(peerId), locationIndex)) || (wildAtWire(duelWorldOf(peerId)) &&",
     "tests": [
       "test/systems/wild/zonesafe.test.js"
     ],

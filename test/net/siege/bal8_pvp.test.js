@@ -2,7 +2,7 @@
 //   - INT10 bounded a caster at 3 casts of 60 in 5 s (180, 36 a second); a blade or a bare hand was bounded at nothing
 //     past 4 blows a second and one blow's bucket, which no measured blow came near: a kitted monk felled a fighter in
 //     8.3 s where the mage's ceiling takes 10.6. Every harm a fighter deals in a duel, a siege or the Wild Zone - blows
-//     and casts together - is held to the casts' own ceiling (net/siege/siegeRef.js SIEGE_HARM).
+//     and casts together - was held to the casts' own ceiling (SIEGE_HARM), retired by the PvP rework's PVP-HIT.
 //   - The arena's stand-in for a rival player faced `yaw: 0` (scenes/world.js arenaRivalBody), so every blow or shaft
 //     from its -z side was a backstab, x3, whatever way the rival faced. No referee of a fight between players rolls a
 //     backstab (the duel's, the siege's and the zone's pass none - combat/duelCombat.js); the arena's now passes none.
@@ -13,45 +13,38 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  SIEGE_HARM, SIEGE_CASTS, SIEGE_HIT, SIEGE_UNITS_PER_M, newFighter, refereeBlow, refereeCast, harmRoom,
+  PVP_HIT, PVP_CASTS, SIEGE_HIT, SIEGE_UNITS_PER_M, newFighter, refereeBlow, refereeCast,
 } from '../../../src/net/siege/siegeRef.js';
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const at = (m) => ({ x: m * SIEGE_UNITS_PER_M, y: 0, z: 0 });
 
-test('BAL8: every harm a fighter deals - blows and casts together - at most the casts\' own 180 in any 5 s; the window slides (mutants: the ceiling dropped from the blow; from the cast; the window never sliding; a blow\'s harm never spent)', () => {
-  assert.deepEqual(SIEGE_HARM, { max: SIEGE_CASTS.max * SIEGE_CASTS.damageMax, windowMs: SIEGE_CASTS.windowMs });
-  assert.equal(SIEGE_HARM.max, 180);
-  let now = 1_000_000;
-  const a = newFighter(10, now), b = newFighter(50, now);
-  assert.deepEqual(a.harm, [], 'a fighter is born with no harm dealt');
+test('PVP-HIT (the PvP rework: "so let cap at 45%", then the triangle\'s 34%, still three hits): one blow or cast takes at most 34% of the target\'s whole, never past what is left; BAL8\'s 180 in 5 s retired - blows and casts are paced by the swing law and PVP-CASTS (mutants: the share unread; the old ceiling kept)', () => {
+  assert.equal(PVP_HIT.share, 0.34);
+  const now = 1_000_000;
+  const a = newFighter(10, now);
+  const b = newFighter(50, now); b.max = 1000; b.hp = 1000;
   const fist = { w: -1, m: 0 };
-  const blow = (d) => refereeBlow(a, b, { from: at(0), at: at(2), held: fist, d, r: SIEGE_HIT.Melee }, now);
-  assert.equal(blow(100).dealt, 100);
-  assert.equal(blow(100).dealt, 80, 'the window\'s last 80');
-  const third = blow(100);
-  assert.deepEqual([third.ok, third.dealt], [true, 0], 'judged, and nothing past the ceiling');
-  assert.equal(b.hp, 400 - 180);
-  assert.equal(a.clipped, 120);
-  assert.equal(harmRoom(a, now), 0);
-  now += 4999;
-  assert.equal(harmRoom(a, now), 0, 'inside the window still');
-  now += 1;
-  assert.equal(harmRoom(a, now), 180, 'five seconds on: the window has slid past it');
-  assert.equal(blow(60).dealt, 60);
-  // casts and blows share it: a spellsword's blade and spell are never two ceilings
+  const blow = (d, t) => refereeBlow(a, b, { from: at(0), at: at(2), held: fist, d, r: SIEGE_HIT.Melee }, t);
+  assert.equal(blow(900, now).dealt, 340, '34% of the target, no more');
+  assert.equal(a.clipped, 560);
+  assert.equal(blow(340, now + 250).dealt, 340, 'no ceiling of 180 a 5 s');
+  const third = blow(340, now + 500);
+  assert.deepEqual([third.dealt, third.fell, b.hp], [320, true, 0], 'the third, never past what is left');
+  const c = newFighter(10, now), d = newFighter(50, now); d.max = 1000; d.hp = 1000;
+  assert.equal(refereeCast(c, d, { from: at(0), at: at(10), d: 9999 }, now).dealt, 340, 'a cast takes the same share');
+  assert.equal(refereeBlow(c, d, { from: at(0), at: at(2), held: fist, d: 300, r: SIEGE_HIT.Melee }, now).dealt, 300, 'and a blow after it whole');
+});
+
+test('PVP-CASTS: harmful and healing casts share one clock, at most 1.9 a second (mutants: the heal off the clock; the rate unread)', () => {
+  assert.deepEqual(PVP_CASTS, { max: 19, windowMs: 10_000 });
+  const now = 1_000_000;
   const c = newFighter(10, now), d = newFighter(50, now);
-  const cast = () => refereeCast(c, d, { from: at(0), at: at(10), d: 60 }, now);
-  assert.equal(cast().dealt, 60);
-  assert.equal(cast().dealt, 60);
-  assert.equal(refereeBlow(c, d, { from: at(0), at: at(2), held: fist, d: 100, r: SIEGE_HIT.Melee }, now).dealt, 60, 'a blow after two casts: the 60 left');
-  assert.equal(cast().dealt, 0, 'and the third cast finds none (it is still counted: three a window)');
-  assert.equal(refereeCast(c, d, { from: at(0), at: at(10), d: 60 }, now).why, 'rate', 'INT10\'s own three');
-  // a heal is no harm
-  assert.equal(refereeCast(c, c, { from: at(0), at: at(0), d: 40, heal: true }, now).ok, true);
-  // a fighter from before BAL8 (a room's record with no `harm`) is read as having dealt none
-  const old = newFighter(10, now); delete old.harm;
-  assert.equal(harmRoom(old, now), 180);
+  for (let i = 0; i < 18; i++) assert.equal(refereeCast(c, d, { from: at(0), at: at(10), d: 1 }, now).ok, true);
+  assert.equal(refereeCast(c, c, { from: at(0), at: at(0), d: 1, heal: true }, now).ok, true, 'the 19th, a heal');
+  assert.equal(refereeCast(c, d, { from: at(0), at: at(10), d: 1 }, now).why, 'rate');
+  assert.equal(refereeCast(c, c, { from: at(0), at: at(0), d: 1, heal: true }, now).why, 'rate', 'a heal counts on the same clock');
+  assert.equal(refereeCast(c, d, { from: at(0), at: at(10), d: 1 }, now + PVP_CASTS.windowMs).ok, true, 'the window passed');
 });
 
 test('BAL8: one referee - the duel\'s, the Wild Zone\'s and the siege\'s rooms all judge a blow through refereeBlow, so the ceiling is every lane\'s', () => {
