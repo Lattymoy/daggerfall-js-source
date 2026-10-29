@@ -4,6 +4,7 @@
 // resistances the same way for a player's spell, by the spell's element (`w`, and the cast's `el`).
 
 import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { EQUIP_SLOTS, equipTableOf } from '../../src/systems/equip.js';
 import { pvpArmorKept, pvpWardKept } from '../../src/combat/pvpGuard.js';
@@ -18,6 +19,10 @@ import { PVP_SHIELD, shieldedBlow } from '../../src/net/siege/refereeHealthShare
 import { PVP_HIT } from '../../src/net/siege/siegeRef.js';
 import { validVitIn, validDuelData, validSiegeIn, VIT_GUARD_MAX, PVP_ELEMENTS } from '../../src/net/wire.js';
 import { createRefereeHealthMirror, createPlayerHealthMirror } from '../../src/net/siege/refereeHealthMirror.js';
+import { PVP_POTION_MS, pvpPotionKind, pvpPotionRefusal, pvpPotionDrunk, pvpPotionBundle, inPvpFight, resetPvpPotions } from '../../src/combat/pvpPotions.js';
+import { POTION_RECIPES, potionRecipeKey } from '../../src/systems/potionRecipes.js';
+import { useItem } from '../../src/systems/useItem.js';
+import { TEMPLATES } from '../../src/systems/item/itemKinds.js';
 import { PVP_BUFF_ROUNDS, capPvpBuffs } from '../../src/combat/pvpBuffs.js';
 
 const stats = (v) => ({ strength: v, intelligence: 50, willpower: v, agility: 50, endurance: v, personality: 50, speed: 50, luck: 50 });
@@ -184,4 +189,37 @@ test('PVP-BUFFS: in a fight my own buffs run a minute at most - a worn item\'s e
   assert.equal(me.activeEffects[0].roundsRemaining, 300, 'out of a fight: whole');
   m.frame(true);
   assert.equal(me.activeEffects[0].roundsRemaining, 12, 'in a fight: a minute');
+});
+
+test('PVP-POTIONS: in a fight each potion kind (health, magicka, other) waits 15 s and lands its first effect alone; out of a fight nothing waits (mutants: the clock, the kinds, the first effect, the fight)', () => {
+  resetPvpPotions();
+  const bottle = (name) => ({ group: 'UselessItems1', templateIndex: TEMPLATES.Glass_Bottle, potionRecipeKey: potionRecipeKey(POTION_RECIPES.find((r) => r.name === name).ingredients) });
+  const [heal, power, pure] = ['healing', 'restorePower', 'purification'].map(bottle);
+  assert.deepEqual([heal, power, pure].map(pvpPotionKind), ['health', 'magicka', 'other']);
+  pvpPotionDrunk(heal, 0);
+  assert.equal(pvpPotionRefusal(heal, 1000), null, 'out of a fight: no clock');
+  const me = { ...body(), health: 50, maxHealth: 100, activeEffects: [] };
+  const mirror = createPlayerHealthMirror(me, () => ({ sendVit: () => true }));
+  mirror.frame(true);
+  assert.equal(inPvpFight(), true, 'the mirror says when a fight may hold the player');
+  pvpPotionDrunk(heal, 1000);
+  assert.equal(pvpPotionRefusal(heal, 1000 + PVP_POTION_MS - 1), 'You can drink another health potion in 1 s.');
+  assert.equal(pvpPotionRefusal(heal, 1000 + PVP_POTION_MS), null, '15 s on: free');
+  assert.equal(pvpPotionRefusal(power, 2000), null, 'magicka keeps its own clock');
+  assert.equal(pvpPotionRefusal(pure, 2000), null, 'other keeps its own clock');
+  const drank = [];
+  pvpPotionDrunk(heal);
+  const used = useItem(heal, [heal], { drinkPotion: (k) => { drank.push(k); return 'Healing'; } });
+  assert.equal(used.kind, 'refused', 'the bottle is kept');
+  assert.deepEqual(drank, []);
+  assert.equal(useItem(power, [power], { drinkPotion: (k) => { drank.push(k); return 'Restore Power'; } }).kind, 'potion');
+  assert.match(pvpPotionRefusal(power), /another magicka potion in 15 s/, 'a drink through the item use starts its clock');
+  const bundle = { name: 'Purification', effects: [{ type: 3 }, { type: 10, subType: 8 }, { type: 13 }] };
+  assert.deepEqual(pvpPotionBundle(bundle).effects, [{ type: 3 }], 'in a fight: the first effect alone');
+  mirror.frame(false);
+  assert.equal(pvpPotionRefusal(power), null, 'the fight over: no wait');
+  resetPvpPotions();
+  assert.equal(pvpPotionBundle(bundle), bundle, 'out of a fight: whole');
+  const magic = readFileSync(new URL('../../src/scenes/hostMagic.js', import.meta.url), 'utf8');
+  assert.match(magic, /applySpellToPlayer\(pvpPotionBundle\(bundle\), castingLevel\(playerEntity\)/, 'the drink lands the trimmed bundle');
 });

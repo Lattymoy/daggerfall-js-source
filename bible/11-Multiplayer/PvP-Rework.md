@@ -52,3 +52,17 @@ The plan's "buffs last 1 min": each frame a refereed fight may hold the player (
 effect it cast for itself is cut to `pvpBuffs.js:"export const PVP_BUFF_ROUNDS = 12;"` magic rounds - a round is a game
 minute, five seconds at DFU's 12x. A worn item's effect (`heldItem`) and a foe's harm are left whole
 (`pvpBuffs.js:"export function capPvpBuffs("`). A departure: DFU has no PvP.
+
+## PVP-POTIONS: one potion of a kind each 15 s in a fight
+
+The plan's "potion timers 15 s, health / magicka / other": while a refereed fight may hold the player (the health mirror
+sets `pvpPotions.js:"export function setPvpFight(active)"`), each kind waits
+`pvpPotions.js:"export const PVP_POTION_MS = 15_000;"` after the last of its kind, and the bottle is kept
+(`pvpPotions.js:"export function pvpPotionRefusal("`). The kind is the first effect's: Heal Health, Heal Spell Points,
+or other. A potion drunk in a fight lands its first effect alone (`pvpPotions.js:"export const pvpPotionBundle ="`,
+laid on at `hostMagic.js:"applySpellToPlayer(pvpPotionBundle(bundle)"`). A departure: DFU has no PvP and no potion clock.
+
+## PVP-NO-DRAIN: Drain stays home
+
+"remove drain till we can balance it": `siegeCombat.js:"export const PVP_SPELL_TYPES = Object.freeze([4]);"` - Damage
+alone, and a Heal Health, reach a player. Backstab was already off between players (BAL8).

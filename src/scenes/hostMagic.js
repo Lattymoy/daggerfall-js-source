@@ -55,6 +55,7 @@ import { applySpell, spellReflectedText, hasActiveEffect, isSoulTrapEffect, spel
 import { spellToFoeOwner } from '../systems/enchantments.js';   // RPT1026-FIGHTS (TRAP-TO-OWNER): the session's door to a foe another player runs
 import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { potionBundle } from '../systems/potions.js';   // U44: DrinkPotion's bundle
+import { pvpPotionBundle } from '../combat/pvpPotions.js';   // PVP-POTIONS
 import { potentEffect } from '../net/alchemyLaw.js';   // PROF12: a Potent potion's magnitudes
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { ridingDragon, dragonFire, dragonBolt, dragonVolley, DRAGON_BOLT_SPEED, DRAGON_BOLT_DAMAGE } from '../systems/staffDragon.js';   // DRAGON-RIDE: the dragon's shoulder cannons
@@ -1697,7 +1698,7 @@ export function createPlayerMagic({
       // PROF12: a Potent potion (an alchemy station's brew) lays its share on every magnitude (alchemyLaw potentEffect) -
       // AUDIT PROF12 A3: on its duration (and chance) where its magnitude is DFU's default, at the drinker's level
       const bundle = potent ? { ...plain, effects: plain.effects.map((e) => potentEffect(e, potent, castingLevel(playerEntity))) } : plain;
-      applySpellToPlayer(bundle, castingLevel(playerEntity), null,
+      applySpellToPlayer(pvpPotionBundle(bundle), castingLevel(playerEntity), null,   // PVP-POTIONS: the first effect alone in a fight with a player
         { bypassSavingThrows: true, bypassChance: true });
       audio.playOneShotId(SPELL_CAST_SOUND[bundle.element] ?? SPELL_CAST_SOUND[4], 1);   // AUDIT 58: the same ID door
       return bundle.name;

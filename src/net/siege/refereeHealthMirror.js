@@ -11,6 +11,7 @@ import { HEALTH_SHARE_WHOLE, PVP_RESTORATION_MAX } from './refereeHealthShare.js
 import { SKILLS, skillValue } from '../../systems/skills.js';
 import { pvpArmorKept, pvpWardKept, pvpShielded } from '../../combat/pvpGuard.js';
 import { capPvpBuffs } from '../../combat/pvpBuffs.js';
+import { setPvpFight } from '../../combat/pvpPotions.js';
 
 /** The fewest milliseconds between two reports: four a second, well under the relay's gate for this frame. */
 export const HEALTH_REPORT_MS = 250;
@@ -163,6 +164,7 @@ export function createPlayerHealthMirror(player, onlineOf) {
   const frame = mirror.frame;
   mirror.frame = (active) => {
     if (active) capPvpBuffs(player);
+    setPvpFight(active);   // PVP-POTIONS: the potion clocks run only in a fight
     frame(active);
   };
   return mirror;

@@ -223,5 +223,85 @@
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
+  },
+  {
+    "name": "PVP-POTIONS-the-clock-short",
+    "file": "src/combat/pvpPotions.js",
+    "old": "export const PVP_POTION_MS = 15_000;",
+    "new": "export const PVP_POTION_MS = 10_000;",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "15 s a kind"
+  },
+  {
+    "name": "PVP-POTIONS-one-kind",
+    "file": "src/combat/pvpPotions.js",
+    "old": "  return isHealHealth(e) ? 'health' : e.key === HEAL_SPELL_POINTS_KEY ? 'magicka' : 'other';",
+    "new": "  return isHealHealth(e) ? 'health' : 'other';",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "magicka keeps its own clock"
+  },
+  {
+    "name": "PVP-POTIONS-every-effect",
+    "file": "src/combat/pvpPotions.js",
+    "old": "? { ...bundle, effects: bundle.effects.slice(0, 1) } : bundle);",
+    "new": "? { ...bundle, effects: bundle.effects } : bundle);",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "first effect alone"
+  },
+  {
+    "name": "PVP-POTIONS-always-a-fight",
+    "file": "src/combat/pvpPotions.js",
+    "old": "export function setPvpFight(active) { fight = !!active; }",
+    "new": "export function setPvpFight(active) { fight = true; }",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "no clock out of a fight"
+  },
+  {
+    "name": "PVP-POTIONS-the-refusal-unasked",
+    "file": "src/systems/useItem.js",
+    "old": "  else if (isPotion(item) && pvpPotionRefusal(item)) out =",
+    "new": "  else if (isPotion(item) && false) out =",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "the bottle is kept"
+  },
+  {
+    "name": "PVP-POTIONS-the-drink-uncounted",
+    "file": "src/systems/useItem.js",
+    "old": "    pvpPotionDrunk(item);   // PVP-POTIONS",
+    "new": "    void pvpPotionDrunk;   // PVP-POTIONS",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "a drink starts its clock"
+  },
+  {
+    "name": "PVP-POTIONS-the-mirror-silent",
+    "file": "src/net/siege/refereeHealthMirror.js",
+    "old": "    setPvpFight(active);   // PVP-POTIONS",
+    "new": "    void setPvpFight;   // PVP-POTIONS",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "the mirror sets the fight"
+  },
+  {
+    "name": "PVP-POTIONS-the-bundle-whole",
+    "file": "src/scenes/hostMagic.js",
+    "old": "applySpellToPlayer(pvpPotionBundle(bundle), castingLevel(playerEntity)",
+    "new": "applySpellToPlayer(bundle, castingLevel(playerEntity)",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ],
+    "why": "the drink lands the trimmed bundle"
   }
 ]
