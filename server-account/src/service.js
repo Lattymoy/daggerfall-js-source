@@ -409,6 +409,7 @@ export const ROUTES = new Set([
   '/v1/account/effect',   // STOREFRONT: a kill effect, a portal skin or a mount look worn in its slot, or the slot bared
   // STOREFRONT (bible/06-Systems/Battle-Pass.md): THE BATTLE PASS - the account's season, and a deed's find
   '/v1/pass/mine', '/v1/pass/find',
+  '/v1/season/maul',   // AUDIT LANE 5: the Resonant Maul's day, an account's (seasonClaim.js)
   // WITCH1 (bible/06-Systems/Witches-Festival.md): THE WITCHES' FESTIVAL - the account's cakes, a find, a sale, a town's
   // offerings, and an offering set out, filled, taken in and taken from
   '/v1/festival/mine', '/v1/festival/find', '/v1/festival/buy', '/v1/festival/town',

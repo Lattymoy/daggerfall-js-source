@@ -101,7 +101,7 @@
   {
     "name": "AUDIT-WE-L2-11-the-mask-untrimmed",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "bossTraitsOfMask(r.bt, r.rl === 1 ? 2 : 1)",
+    "old": "bossTraitsOfMask(r.bt, bossTraitsMost(r.rl === 1, isColossusSite(f.site)))",
     "new": "bossTraitsOfMask(r.bt)",
     "tests": [
       "test/scenes/auditwe_traits.test.js"
@@ -184,8 +184,8 @@
   {
     "name": "AUDIT-WE-L2-7-the-joiners-ward-kept",
     "file": "src/scenes/foeTraitsHost.js",
-    "old": "giveBossTraits(entity, bossTraitsOfMask(r.bt, entity.raidLeader ? 2 : 1), { own: false });",
-    "new": "giveBossTraits(entity, bossTraitsOfMask(r.bt, entity.raidLeader ? 2 : 1), { own: true });",
+    "old": "giveBossTraits(entity, bossTraitsOfMask(r.bt, bossTraitsMost(!!entity.raidLeader)), { own: false });",
+    "new": "giveBossTraits(entity, bossTraitsOfMask(r.bt, bossTraitsMost(!!entity.raidLeader)), { own: true });",
     "tests": [
       "test/scenes/auditwe_traits.test.js"
     ]

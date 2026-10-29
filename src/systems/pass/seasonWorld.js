@@ -9,6 +9,7 @@ import { passSeasonAt, passStageAt, PASS_SEASONS } from '../../net/battlePassLaw
 import { gateHash, PIXEL_M, GATE_SPOT_SPREAD_M } from '../../net/gate/gateLaw.js';
 import { REGION_NAMES } from '../../formats/mapsFile.js';
 import { brassSiteId } from '../../world/worldOfDaggerfall/wodShared.js';
+import { pointNearPath, UNITS_PER_METRE } from '../../world/road/roadClearance.js';
 
 const W = 1000;
 /** The season's own salt on the gate's hash. */
@@ -27,6 +28,10 @@ export const FISSURE_APART_PX = 4;
 export const FISSURE_DRAWS = 24;
 /** A fissure keeps this far off the day's gate, map pixels (Chebyshev): the gate's pixel and its neighbours. */
 export const FISSURE_GATE_PX = 1;
+/** STOREFRONT (AUDIT LANE 5): a fissure's heart keeps this far past a road's or a track's band, metres - its scorch and
+ *  wreckage (world/fissureModel.js FISSURE_BARE_R, 10) and a step more: 7 of the season's 344 had stood their solid
+ *  slabs on a road. */
+export const FISSURE_ROAD_M = 12;
 
 /**
  * THE CONSTRUCTS a fissure's camp stands, by the stage (Daggerfall Enemy Expansion's: 289 the Centurion Sphere, 270 the
@@ -78,38 +83,42 @@ export function fissureSpotLocal(n, stage, region, k) {
  *   town: any, near: string, regionName: string, spot: number[], yaw: number, site: string, hSite: string|null }} Fissure
  */
 const apart = (a, px, py, d) => Math.max(Math.abs(a.px - px), Math.abs(a.py - py)) >= d;
+/** Whether a heart at `spot` in pixel `id` reaches a road or a track's band, FISSURE_ROAD_M past it (null roads: none). */
+const onRoad = (paths, id, spot) => !!paths && pointNearPath(paths, id % W, Math.floor(id / W), spot[0] * UNITS_PER_METRE, spot[1] * UNITS_PER_METRE, FISSURE_ROAD_M * UNITS_PER_METRE);
 /**
  * A REGION'S FISSURES for season `n`'s stage `stage`: up to FISSURES_BY_STAGE[stage], each `{ key, n, stage, region, k,
  * heart, px, py, town, near, regionName, spot, yaw, site, hSite }` - `site` its constructs' camp, `hSite` its Colossus's
- * (the Heart Fissure's alone). Drawn from the gate's scan's pixels for the region; a region too small gives fewer.
- * @param {number} n @param {number} stage @param {number} region @param {any} scan
- * @returns {Fissure[]}
+ * (the Heart Fissure's alone). Drawn from the gate's scan's pixels for the region; a region too small gives fewer. AUDIT
+ * LANE 5: a draw whose heart reaches `paths` (Basic Roads' roads and tracks, the room's) is passed over, as one too near.
+ * @param {number} n @param {number} stage @param {number} region @param {any} scan @param {any} [paths] @returns {Fissure[]}
  */
-export function regionFissures(n, stage, region, scan) {
+export function regionFissures(n, stage, region, scan, paths = null) {
   const pixels = scan?.byRegion?.get(region);
   if (!pixels?.length) return [];
   /** @type {Fissure[]} */ const out = [];
   for (let k = 0; k < (FISSURES_BY_STAGE[stage] ?? 0); k++) {
     let pick = -1;
+    const spot = fissureSpotLocal(n, stage, region, k);
     for (let d = 0; d < FISSURE_DRAWS && pick < 0; d++) {
       const id = pixels[fissureRoll(n, stage, region, k, 100 + d) % pixels.length];
-      if (out.every((f) => apart(f, id % W, Math.floor(id / W), FISSURE_APART_PX))) pick = id;
+      if (out.every((f) => apart(f, id % W, Math.floor(id / W), FISSURE_APART_PX)) && !onRoad(paths, id, spot)) pick = id;
     }
     if (pick < 0) continue;
     const px = pick % W, py = Math.floor(pick / W), heart = stage === HEART_STAGE && k === 0;
     const town = scan.towns?.[scan.townAt?.[pick]] ?? null, regionName = REGION_NAMES[region] ?? '';
     out.push({
       key: `${n}.${stage}.${region}.${k}`, n, stage, region, k, heart, px, py, town, near: town?.name || regionName, regionName,
-      spot: fissureSpotLocal(n, stage, region, k), yaw: unit(n, stage, region, k, 3) * 2 * Math.PI,
+      spot, yaw: unit(n, stage, region, k, 3) * 2 * Math.PI,
       site: brassSiteId(px, py, stage, k), hSite: heart ? brassSiteId(px, py, stage, k, 'h') : null,
     });
   }
   return out;
 }
-/** Every region's fissures for a season's stage, region by region in the scan's order. Pure over the scan. */
-export function stageFissures(/** @type {number} */ n, /** @type {number} */ stage, /** @type {any} */ scan) {
+/** Every region's fissures for a season's stage, region by region in the scan's order (`paths` the roads they keep off).
+ *  Pure over the scan and the roads. */
+export function stageFissures(/** @type {number} */ n, /** @type {number} */ stage, /** @type {any} */ scan, /** @type {any} */ paths = null) {
   /** @type {Fissure[]} */ const out = [];
-  for (const region of scan?.byRegion?.keys?.() ?? []) out.push(...regionFissures(n, stage, region, scan));
+  for (const region of scan?.byRegion?.keys?.() ?? []) out.push(...regionFissures(n, stage, region, scan, paths));
   return out;
 }
 /** Whether a fissure stands beside the day's gate (`gate` its `{ px, py }`, or null) - it gives way to it. */

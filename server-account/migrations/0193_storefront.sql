@@ -56,3 +56,16 @@ ALTER TABLE shop_orders ADD COLUMN refund_owed INTEGER NOT NULL DEFAULT 0;
 -- THE DEMAND (Storefront.md section 3.2): the staff's sales by day read paid and opened orders by day and ware.
 CREATE INDEX IF NOT EXISTS idx_shop_orders_created ON shop_orders (created_at, ware);
 CREATE INDEX IF NOT EXISTS idx_shop_orders_paid ON shop_orders (paid_at, ware);
+
+-- AUDIT LANE 5 (2026-10-29, the season in the world audited): THE RESONANT MAUL'S DAY (seasonClaim.js) - one row an
+-- account a UTC day it took the Maul, its season's, with the ask that took it (`rid`): an answer lost and asked again with
+-- the same id is a yes again, any other ask that day is refused. The page had kept the day in its own store.
+CREATE TABLE IF NOT EXISTS season_mauls (
+  account TEXT NOT NULL,
+  day     INTEGER NOT NULL,
+  season  TEXT NOT NULL,
+  rid     TEXT NOT NULL,
+  at      INTEGER NOT NULL,
+  PRIMARY KEY (account, day),
+  FOREIGN KEY (account) REFERENCES players(id) ON DELETE CASCADE
+);

@@ -18,7 +18,7 @@ import { setupFoeLook } from '../characters/enemy/foeLook.js';   // DEX2: SetupD
 import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';   // HALT-ONE: a peer's watchman, silent in the living watch's lane
 import { foeTitle } from '../systems/foeTitle.js';   // FOE-TITLE: what a revenant, a champion or an elite is called
 import { strikeTraits, traitWireKey } from './foeTraitsHost.js';   // AUDIT WORLD-EVENTS: my blow's door - resisted, its number retold, each trait taught once; and the record key's share
-import { bossStrikeAt, bossTakeAt, eliteTraits, giveBossTraits, bossTraitsOf, bossTraitsOfMask, bossTraitMask, markBossWrath, bossWardShare, hasBossTrait, standBossWard, tickBossClock, bossClockS, bossTraitsTick, bossWardBrokeLine, bossWrathLine } from '../systems/bossTraits.js';   // BOSS-TRAITS: a hard foe's own rules (AUDIT WORLD-EVENTS: its clock, its tick, its ward on the wire, its rules taught)
+import { bossStrikeAt, bossTakeAt, eliteTraits, giveBossTraits, bossTraitsOf, bossTraitsOfMask, bossTraitsMost, bossTraitMask, markBossWrath, bossWardShare, hasBossTrait, standBossWard, tickBossClock, bossClockS, bossTraitsTick, bossWardBrokeLine, bossWrathLine } from '../systems/bossTraits.js';   // BOSS-TRAITS: a hard foe's own rules (AUDIT WORLD-EVENTS: its clock, its tick, its ward on the wire, its rules taught)
 import { effectiveLevel } from '../systems/mentorMode.js';   // SOFTCAP2: mentor mode - the level the world is built around
 import { markFoeStruck } from '../ui/hud/hudFoeTarget.js';   // PX30
 import { damageShieldPool, playerBlowCameToNothing } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's (DaggerfallEntity.cs:313-328)
@@ -99,7 +99,7 @@ import { puppetLead } from './puppetLead.js';   // DESYNC-ZERO: a moving puppet 
 import { appliedOwnerTm } from '../net/ownerClock.js';   // OWNER-CLOCK: and by its owner's clock, where the frame says it
 import { bindQuestFoeHost, isPrivateQuestFoe, placeFoeEnv, entityOccupancy } from './quest/questFoeHost.js';   // B1: quest foes ride this pool; CURSE-SYNC: a world quest's ride as the world's; RVN6: a band placed about its master
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // RVN6: PlaceFoeFreely's ring, a camp member's law
-import { validSites, validSiteTags, isRiteSite, isStarSite, WOD_CAMP_PUPPETS_MAX, WOD_STAR_PUPPETS_MAX, WOD_SITES_MAX, WOD_AGE_MAX } from '../world/worldOfDaggerfall/wodShared.js';   // WOD7: a World of Daggerfall camp's foes, shared
+import { validSites, validSiteTags, isRiteSite, isStarSite, isColossusSite, WOD_CAMP_PUPPETS_MAX, WOD_STAR_PUPPETS_MAX, WOD_SITES_MAX, WOD_AGE_MAX } from '../world/worldOfDaggerfall/wodShared.js';   // WOD7: a World of Daggerfall camp's foes, shared
 import { validRaidTags, validAlliedIds, validStaffBossTags, RAID_PUPPETS_MAX } from '../world/raidShared.js';   // RAID2: a town's raid, shared
 import { isShipmate, sparedBySwing } from '../combat/friendlyFire.js';   // SHIPMATES: my crew named on the wire, and never the swing's; AUDIT WORLD-EVENTS L4-5: nor a raid's refugees
 import { campTagsOf, validCampTags } from '../world/campShared.js';   // OW6: a camp rides tagged, and an heir takes it as a camp
@@ -2384,7 +2384,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   function restoreTraits(entity, sf) {
     entity.bossTraits = undefined; entity.bossWard = undefined;
     entity.bossWardShown = Number.isInteger(sf.ward) ? sf.ward / 100 : undefined;
-    giveBossTraits(entity, bossTraitsOfMask(sf.traits, entity.raidLeader ? 2 : 1));
+    giveBossTraits(entity, bossTraitsOfMask(sf.traits, bossTraitsMost(!!entity.raidLeader, isColossusSite(sf.site))));
     if (sf.wrath === true) markBossWrath(entity);
     entity.bossWardShown = undefined;
   }
@@ -2894,7 +2894,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (r.sb && !f.entity.staffBoss) promoteStaffBoss(f.entity, { own: false, sizePct: r.sb });   // STAFF-EVENT: its owner's mini boss - its size, its yellow (its maximum is `k`)
     if (r.z === 1 && !f.entity.eliteFoe && !f.entity.champion && markedOf(f.puppet, isElitePuppet) < PEER_ELITE_PUPPETS_MAX) promoteEliteFoe(f.entity, { own: false });   // ELITE FOES: its owner's elite - the blows, the size, the glow (its maximum is `k`); FOE-FORGE: no more of them than an owner rolls
     if (f.entity.eliteFoe && r.rl === 1) promoteRaidLeader(f.entity, { own: false, name: (f._pupRaid ? null : huntMarkSeen(f.mobileType, r.bt, wallMsForClassicMinutes(worldMinutes()))?.title) ?? raidLeaderNameOf(f.mobileType) });   // RAID5: its owner's raid leader - its size, its name; HUNTERS-MARK-II: a leader no raid tags is a hunter's named mark, by the week's name (the event clock's)
-    if (f.entity.eliteFoe && r.bt) { giveBossTraits(f.entity, bossTraitsOfMask(r.bt, r.rl === 1 ? 2 : 1), { own: false }); if (r.bw === 1 && markBossWrath(f.entity)) say?.(bossWrathLine(foeTitle(f.entity, enemyDisplayName(f.mobileType)) ?? '')); }   // BOSS-TRAITS: its owner's traits, on an elite alone (a mask on a plain foe stands nothing); AUDIT WORLD-EVENTS L2-11: no more than an elite carries (two a raid's leader), never an exclusive pair; L2-7: its wrath said here too
+    if (f.entity.eliteFoe && r.bt) { giveBossTraits(f.entity, bossTraitsOfMask(r.bt, bossTraitsMost(r.rl === 1, isColossusSite(f.site))), { own: false }); if (r.bw === 1 && markBossWrath(f.entity)) say?.(bossWrathLine(foeTitle(f.entity, enemyDisplayName(f.mobileType)) ?? '')); }   // BOSS-TRAITS: its owner's traits, on an elite alone (a mask on a plain foe stands nothing); AUDIT WORLD-EVENTS L2-11: no more than an elite carries (two a raid's leader, STOREFRONT the Colossus's three - bossTraitsMost), never an exclusive pair; L2-7: its wrath said here too
     if (r.bv !== undefined && hasBossTrait(f.entity, 'warded')) { if (f.entity.bossWardShown > 0 && r.bv === 0) say?.(bossWardBrokeLine(foeTitle(f.entity, enemyDisplayName(f.mobileType)) ?? '')); f.entity.bossWardShown = r.bv / 100; }   // AUDIT WORLD-EVENTS L2-7: its ward as its owner holds it - drawn, and its break said, here too
     f._pupYield = r.yd === 1;   // REVENANT-FATE: its owner's revenant kneels...
     f._pupExec = r.ex === 1 ? (f._pupExec ?? Date.now()) : null;   // ...or burns away, from the record that said so

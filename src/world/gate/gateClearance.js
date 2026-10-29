@@ -88,6 +88,52 @@ const boxNear = (cx, cz, x0, z0, x1, z1, r) => {
   return dx * dx + dz * dz <= r * r;
 };
 
+/** STOREFRONT (AUDIT LANE 5): a set's members by the map pixels their clearings reach. A season's set is the gate and 129
+ *  fissures, and every flat of every pixel built asked all of them: 4,000 points 44-65 ms, where the gate alone took
+ *  under one. A box asks only the members on the pixels it reaches (CELL_PAD past, for the sums' rounding); each still
+ *  answers its own exact question, so the same boxes clear. A box past CELL_SPAN pixels across asks them all. */
+const CELL_PAD = 1;
+const CELL_SPAN = 8;
+const cellKey = (cx, cy) => cx * 1_000_003 + cy;
+/** @type {WeakMap<object, { cells: Map<number, any[]>, wide: any[] }>} */
+const _cells = new WeakMap();
+/** A member's points and their reach, pixel-local to its own pixel: the gate's foot and its circle, or the one heart. */
+const reachOf = (c) => (Number.isFinite(c.r) ? [[c.x, c.z, c.r]] : [[c.x, c.z, GATE_CLEAR_M], ...(Number.isFinite(c.rx) && Number.isFinite(c.rz) ? [[c.rx, c.rz, RITE_CLEAR_M]] : [])]);
+function cellsOf(set) {
+  let idx = _cells.get(set);
+  if (idx) return idx;
+  idx = { cells: new Map(), wide: [] };
+  for (const c of set.list) {
+    const keys = new Set();
+    for (const [x, z, r] of reachOf(c)) {
+      const c0 = c.px + Math.floor((x - r - CELL_PAD) / PIXEL_M), c1 = c.px + Math.floor((x + r + CELL_PAD) / PIXEL_M);
+      const r0 = c.py - Math.floor((z + r + CELL_PAD) / PIXEL_M), r1 = c.py - Math.floor((z - r - CELL_PAD) / PIXEL_M);
+      if (!(c1 - c0 <= CELL_SPAN && r1 - r0 <= CELL_SPAN)) { keys.clear(); keys.add(NaN); break; }
+      for (let cx = c0; cx <= c1; cx++) for (let cy = r0; cy <= r1; cy++) keys.add(cellKey(cx, cy));
+    }
+    if (keys.has(NaN)) { idx.wide.push(c); continue; }
+    for (const k of keys) { const at = idx.cells.get(k); if (at) at.push(c); else idx.cells.set(k, [c]); }
+  }
+  _cells.set(set, idx);
+  return idx;
+}
+/** A set's question, asked of the members on the pixels the box reaches, its margin and CELL_PAD past it. */
+function setNear(set, px, py, x0, z0, x1, z1, margin) {
+  const { cells, wide } = cellsOf(set);
+  for (const c of wide) if (boxNearGate(c, px, py, x0, z0, x1, z1, margin)) return true;
+  const pad = margin + CELL_PAD;
+  const c0 = px + Math.floor((Math.min(x0, x1) - pad) / PIXEL_M), c1 = px + Math.floor((Math.max(x0, x1) + pad) / PIXEL_M);
+  const r0 = py - Math.floor((Math.max(z0, z1) + pad) / PIXEL_M), r1 = py - Math.floor((Math.min(z0, z1) - pad) / PIXEL_M);
+  if (!(c1 - c0 <= CELL_SPAN && r1 - r0 <= CELL_SPAN)) return set.list.some((c) => boxNearGate(c, px, py, x0, z0, x1, z1, margin));
+  for (let cx = c0; cx <= c1; cx++) {
+    for (let cy = r0; cy <= r1; cy++) {
+      const at = cells.get(cellKey(cx, cy));
+      if (at) for (const c of at) if (boxNearGate(c, px, py, x0, z0, x1, z1, margin)) return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Does the box [x0,x1] x [z0,z1] - pixel-local to (px, py), metres, free to reach past its edges - come within the
  * clearing, and `margin` more? The box's nearest point to the gate's foot, measured on the ground - AUDIT WB12d (G12):
@@ -97,7 +143,7 @@ const boxNear = (cx, cz, x0, z0, x1, z1, r) => {
  */
 export function boxNearGate(clear, px, py, x0, z0, x1, z1, margin = 0) {
   if (!clear) return false;
-  if (Array.isArray(clear.list)) return clear.list.some((c) => boxNearGate(c, px, py, x0, z0, x1, z1, margin));   // EG-F: a set - any of its clearings
+  if (Array.isArray(clear.list)) return setNear(clear, px, py, x0, z0, x1, z1, margin);   // EG-F: a set - any of its clearings
   const [gx, gz] = gatePointIn(clear, px, py);
   if (Number.isFinite(clear.r)) return boxNear(gx, gz, x0, z0, x1, z1, clear.r + margin);   // EG-F: an arch's, by its own reach
   if (boxNear(gx, gz, x0, z0, x1, z1, GATE_CLEAR_M + margin)) return true;
@@ -241,17 +287,20 @@ export function createGateClearSweep() {
       const key = clear?.key ?? null;
       if (key !== swept) { swept = key; for (const k of built.keys()) due.add(k); }
       const again = [];
-      const now = membersOf(clear);
+      const now = membersOf(clear), nowKeys = new Set(now.map((c) => c.key));
+      /** STOREFRONT (AUDIT LANE 5): the clearings come since a key, one set a key - its members indexed once (setNear) */
+      const comeOf = new Map();
       for (const k of due) {
         const p = built.get(k);
         due.delete(k);
         if (!p) continue;   // torn down since: it is built fresh, on the clearing its build reads
         if ((p.gateClearKey ?? null) === key) continue;
         // EG-F: THE SET'S CHANGE - the clearings gone since its build, and the ones come (a gate alone: its one key each way)
-        const had = new Set(String(p.gateClearKey ?? '').split(CLEAR_KEY_JOIN).filter(Boolean));
-        const gone = [...had].some((x) => !now.some((c) => c.key === x));
-        const come = now.filter((c) => !had.has(c.key));
-        if ((gone && p.gateRefused) || come.some((c) => reachNearGate(p.wodReach, c, p.px, p.py))) again.push(p);
+        const was = String(p.gateClearKey ?? '');
+        const had = new Set(was.split(CLEAR_KEY_JOIN).filter(Boolean));
+        const gone = [...had].some((x) => !nowKeys.has(x));
+        if (!comeOf.has(was)) comeOf.set(was, { list: now.filter((c) => !had.has(c.key)) });
+        if ((gone && p.gateRefused) || reachNearGate(p.wodReach, comeOf.get(was), p.px, p.py)) again.push(p);
         else p.gateClearKey = key;   // the old clearings cost it nothing, and nothing it stands reaches a new one
       }
       return again;

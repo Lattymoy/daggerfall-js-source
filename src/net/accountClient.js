@@ -2090,6 +2090,16 @@ export function accountBattlePass({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS
 }
 
 /**
+ * STOREFRONT (AUDIT LANE 5): THE RESONANT MAUL'S DAY (server-account/src/seasonClaim.js) - asked when a Brass Colossus this
+ * character struck falls with a body (scenes/seasonHost.js), with the ask's own id (`rid`, 16 hex), so an answer lost and
+ * asked again is a yes again. `call`'s shape, waited for ACCOUNT_ACT_WAIT_MS at most; no session is `no-session`.
+ */
+export function accountSeasonMaul({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
+  const post = waitedPost({ fetch, storage }, waitMs);
+  return { claim: (/** @type {string} */ rid) => post('/v1/season/maul', { rid }) };
+}
+
+/**
  * ARENA4: THE ARENA (server-account/src/arena.js) through the one door - a bout's receipt the relay signed, carried here
  * by an account it names (`claim`); the boards, counted from the rows (`board` - the season's ratings, the climb, the
  * banners, the Hall of Champions, and this account's own); a banner joined or quit (`team` - 'red', 'blue' or null).
