@@ -26,9 +26,11 @@
 // fought). One receipt an account a raid.
 //
 // PURE - no clock, no storage, no socket: the relay (server/src/index.js) hands in the minute and the millisecond, and
-// the pins drive it as the relay would. Imports nothing, so the worker's graph stays flat (guildLaw.js's law).
+// the pins drive it as the relay would. Imports nothing but the fronts' leaf (net/frontLaw.js, which imports nothing),
+// so the worker's graph stays flat (guildLaw.js's law).
 //
 // Not a DFU member. Ledger A (RAID1's row).
+import { frontStands } from '../frontLaw.js';   // FRONTS: a province's raids on its turn alone
 
 /** A raid's key - RaidEnemyName's bracket [IL_13cc]: `region:location:day` (systems/raidingParties.js raidKey).
  *  AUDIT RAID R5: CANONICAL - no leading zero (`3:07:0600` was forty spellings of one raid, at the relay and at the
@@ -290,6 +292,9 @@ export const raidLaneOfRegion = (r) => {
 export const raidLaneOfKey = (key) => (typeof key === 'string' && RAID_KEY_RE.test(key) ? raidLaneOfRegion(Number(key.slice(0, key.indexOf(':')))) : -1);
 /** Does a lane stand raids - the Bay's, and every province's but the open zone's? @param {unknown} lane */
 export const raidLaneOpen = (lane) => Number.isInteger(lane) && /** @type {number} */ (lane) >= 0 && /** @type {number} */ (lane) < RAID_LANES && lane !== RAID_ZONE_LANE;
+/** FRONTS (bible/03-World/World-Wide.md FRONTS): does a lane stand raids on game day `day` - open, and a province on its
+ *  turn alone (net/frontLaw.js); the Bay's every day. @param {number} day @param {unknown} lane */
+export const raidLaneStands = (day, lane) => raidLaneOpen(lane) && frontStands(day, /** @type {number} */ (lane));
 /** The lanes past the Bay that stand raids, ascending. */
 export const RAID_LANES_BEYOND = Object.freeze(Array.from({ length: RAID_LANES - 1 }, (_, i) => i + 1).filter(raidLaneOpen));
 /** WW6: the world's pixel, as the wire bounds it (net/wire.js WORLD_PIXEL_BOUND - pinned equal). */
@@ -360,7 +365,7 @@ export function rollRaidTowns(day, regions, count, random, parties = RAID_LANE_P
  */
 export function raidDaySlots(day, lane = 0) {
   const random = raidDayRandom(day, lane), parties = raidLaneParties(lane), out = new Set();
-  if (!raidLaneOpen(lane) || !parties.length) return out;
+  if (!raidLaneStands(day, lane) || !parties.length) return out;   // FRONTS: a province off its turn rolls no slot
   for (let l = 0; l < RAID_SLOTS_MAX; l++) {
     random(); random();   // its region and its town - the towns table's
     const st = day * RAID_DAY_MINUTES + rangeInt(0, RAID_START_LAST + 1, random);

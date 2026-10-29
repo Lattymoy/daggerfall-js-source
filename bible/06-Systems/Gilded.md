@@ -464,8 +464,8 @@ and the Sunken Sovereign glowed nothing.
 Its record's lines stay as minted. The maker lays DFU rows beside them at the catalogue's cost, paid from the piece's own
 points - its make's, as any piece of that make has: 525 on the bow Hourlock, 2,100 on the Oath - and the player's gold,
 ten rows at most. Only the maker's own rows are lawful on it: the wire (`systems/gilded.js:"export function validGildedMarks(item) {"`)
-and the item law refuse any other row, a custom row and every mark NEVER_ON_GILDED names. The item law moved to 15 and
-the account service to acct222 (acct220 on its branch, renumbered at the merge of main). With the ladder switched off the maker is DFU's, as for a Rare (AUDIT MAKER-RARE A2).
+and the item law refuse any other row, a custom row and every mark NEVER_ON_GILDED names. The item law moved to 16 and
+the account service to acct223 (15 and acct220, then acct222, on its branch, renumbered at the merges of main). With the ladder switched off the maker is DFU's, as for a Rare (AUDIT MAKER-RARE A2).
 The Aetheric keeps its refusal and its own line.
 
 **The name.** The maker never renames a Gilded piece: its name is its record's, as an artifact's is, and its codex row,
@@ -487,11 +487,11 @@ a dark garnet through the rung's own crimson (`#ff3b4a`, RARITIES') to a hot pin
 Brand runs coal to gold. It is a slow regal pulse - a 4 s swell, a 6 s crest walking round it, a glint - its reach under
 the Brand's. It wins over the element, the armory's piece and the arcane look, because it is the piece itself, as its
 card's colour is. It shows in the classic outline, the Morrowind arm in first and third person, and to peers as the word
-`gilded2` (relay world287). With the ladder switched off the card shows no rung, so the hand shows none.
+`gilded2` (relay world289). With the ladder switched off the card shows no rung, so the hand shows none.
 
 **Hosts, provinces, deploy.** No host changed: the item maker's window serves all four, and the glow rides
 `createWeaponRig` in `scenes/world.js`, `scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js`.
-Neither half reads a place, so every province is alike. Deploy the account service (acct222) and the relay (world287)
+Neither half reads a place, so every province is alike. Deploy the account service (acct223) and the relay (world289)
 before the site: before them an honest enchanted Gilded piece reads as a forgery, and a peer's Gilded weapon draws bare.
 
 **The pins.** `test/systems/gildedmaker.test.js` (4) and `test/systems/gildedglow.test.js` (4); the honest sweep's Gilded

@@ -43,7 +43,7 @@
 // character's baseline is a newborn's purse (REALM_BIRTH_WEALTH_MAX); one through customs, its level's allowance.
 // ═══════════════════════════════════════════════════════════════════
 
-import { judgeSave, judgeProducts, STRIKES_FOR_TIMED, JUDGE_VERSION, FINDINGS_KEPT, WEALTH_VERSION, goodsOf, lawValuesOf, LAW_VALUES_CUT } from './judge.js';
+import { judgeSave, judgeProducts, judgeDragons, STRIKES_FOR_TIMED, JUDGE_VERSION, FINDINGS_KEPT, WEALTH_VERSION, goodsOf, lawValuesOf, LAW_VALUES_CUT } from './judge.js';
 import { ledgerStep, chargeSteps } from './ledger.js';
 import { budgetConfig, bandOf, stepBudget } from './budget.js';
 import { customsAllowance } from '../../src/net/realm/realmGoldLaw.js';
@@ -160,13 +160,14 @@ export async function verdictOn({ db, nowS }, { player, char, seq, key }, row, s
   const judged = judgeSave(save, summary, { level: lv.level });
   const crafts = judged.provenances.length ? await judgeProducts(db, judged.provenances, player) : { findings: [], arrived: [] };
   const products = crafts.findings;
+  const tames = judged.dragons.length ? await judgeDragons(db, judged.dragons, player, char) : [];   // DRAGON5: a held dragon a tame made
   const ledger = await ledgerStep(db, { player, char, seq, nowS }, judged.pieces, known);   // SAVE-BATCH: its two reads answered in the checkpoint's first batch
   // AUDIT AUTO-HOLD: a key on another piece names the piece it is on (its template, off its print) - "something it carries"
   // was all its holder heard, and a griefer's planted one was a piece nobody could find
   const printOf = new Map(judged.pieces.map((p) => [p.key, p.fp]));
   const templateOfKey = (/** @type {string} */ k) => { const t = Number(String(printOf.get(k) ?? '').split(':')[0]); return Number.isSafeInteger(t) ? t : null; };
-  const lawFindings = [...judged.findings, ...products, ...ledger.forged.map((k) => ({ code: 'uid', at: k, t: templateOfKey(k) }))];
-  const law = judged.count + products.length + ledger.forged.length;
+  const lawFindings = [...judged.findings, ...products, ...tames, ...ledger.forged.map((k) => ({ code: 'uid', at: k, t: templateOfKey(k) }))];
+  const law = judged.count + products.length + tames.length + ledger.forged.length;
   const sig = law > 0 ? lawSigOf(lawFindings) : null;
   const values = law > 0 ? lawValuesOf(save, summary) : null;   // RPT1026-LEDGERLAW: an excuse is of the values too
   const lawHolds = law > 0 && !lawExcused(row.law_excused, sig, values) ? law : 0;

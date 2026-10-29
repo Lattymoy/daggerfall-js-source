@@ -36,7 +36,8 @@ The ground's `IS NULL` race guard is recorded `equivalent` with its reason.
 
 **A6 (LOW). A home priced by another law asked for its ground every visit,** refused each time. Asked once a session.
 
-**A7 (process).** Main took world287 since: the next merge renumbers this branch's relay version again.
+**A7 (process).** Main took world287, world288, acct222, item law 15 and migration 0194 since. At the merge of main this
+branch's relay is world289, its account service acct223, its item law 16, its migrations 0195 and 0196.
 
 ## The yard's geometry (B)
 
@@ -118,7 +119,7 @@ already does. `04-Characters/Aura-Armory.md` section 8 says so now; the owner ma
 
 **D5 (LOW). A two-hander dropped on the left hand was refused.** A piece goes to the hand that holds it.
 
-**D6 (LOW).** Weapon-Glow.md named world286; world287 now.
+**D6 (LOW).** Weapon-Glow.md named world286; it names world289, the relay this branch ships, now.
 
 **D7 (LOW, recorded).** The item maker refuses a Legendary and takes a Gilded piece; the record keeps the reports' ask.
 

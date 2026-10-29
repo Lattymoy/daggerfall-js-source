@@ -311,8 +311,8 @@
   {
     "name": "TIDE3-tr-ocean",
     "file": "src/systems/travel/travel.js",
-    "old": "    minutes += terrain === CLIMATES.Ocean && seaMult !== 1 ? Math.floor(m * seaMult) : m;",
-    "new": "    minutes += seaMult !== 1 ? Math.floor(m * seaMult) : m;",
+    "old": "minutes += terrain === CLIMATES.Ocean && seaMult !== 1 && !hasDragon ? Math.floor(m * seaMult) : m;",
+    "new": "minutes += seaMult !== 1 && !hasDragon ? Math.floor(m * seaMult) : m;",
     "tests": [
       "test/net/tide_orcs.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "TIDE3-tr-floor",
     "file": "src/systems/travel/travel.js",
-    "old": "    minutes += terrain === CLIMATES.Ocean && seaMult !== 1 ? Math.floor(m * seaMult) : m;",
-    "new": "    minutes += terrain === CLIMATES.Ocean && seaMult !== 1 ? Math.ceil(m * seaMult) : m;",
+    "old": "minutes += terrain === CLIMATES.Ocean && seaMult !== 1 && !hasDragon ? Math.floor(m * seaMult) : m;",
+    "new": "minutes += terrain === CLIMATES.Ocean && seaMult !== 1 && !hasDragon ? Math.ceil(m * seaMult) : m;",
     "tests": [
       "test/net/tide_orcs.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "TIDE3-tr-default",
     "file": "src/systems/travel/travel.js",
-    "old": "  hasHorse = false, hasCart = false, seaMult = seaTideAt(end),",
-    "new": "  hasHorse = false, hasCart = false, seaMult = 1,",
+    "old": "  hasHorse = false, hasCart = false, hasDragon = false, seaMult = seaTideAt(end),",
+    "new": "  hasHorse = false, hasCart = false, hasDragon = false, seaMult = 1,",
     "tests": [
       "test/net/tide_orcs.test.js"
     ]

@@ -96,40 +96,41 @@ export function sdFoundPost({ rec, role = null }) {
 /**
  * THE FALL'S POST: who broke the Hour - the top fighter and how many more fought (`n` counts every seat, the top's
  * among them) - where, and when the next may rise. Pings nobody. HERALD-CARDS: the card - its title who broke it, its
- * fields the Hollow, where and when the next may rise.
- * @param {{ rec: SdRecord }} o
+ * fields the Hollow, where and when the next may rise (AUDIT FRONTS A1: `next`, the hub's sdRiseNotBefore - a province's
+ * turn and a free place past the Bay; the record's rest where none is handed).
+ * @param {{ rec: SdRecord, next?: number }} o
  */
-export function sdFellPost({ rec }) {
+export function sdFellPost({ rec, next = rec.next }) {
   const name = sdHeraldName(rec.s);
   return heraldCard({
     family: 'abyss', moment: 'Hour broken',
     title: `${heraldWho([heraldName(rec.top) || 'Someone'], rec.n)} broke the Hour`,
     text: 'The Brass Remnant has fallen, and the Abyss Dungeon collapses.',
-    fields: [['Dungeon', name], ['Where', whereField(rec)], ['Next may rise', heraldWhen(rec.next)]],
+    fields: [['Dungeon', name], ['Where', whereField(rec)], ['Next may rise', heraldWhen(next)]],
   });
 }
 
 /**
  * THE FADE'S POST: the chat's own line (net/superDungeon/sdLaw.js sdFadeLine), where, and when the next may rise. Pings nobody.
  * HERALD-CARDS: the card - its title the line (with no place - the field says it), its fields where and when the next
- * may rise.
- * @param {{ rec: SdRecord }} o
+ * may rise (`next` as the fall's).
+ * @param {{ rec: SdRecord, next?: number }} o
  */
-export function sdFadePost({ rec }) {
+export function sdFadePost({ rec, next = rec.next }) {
   const name = sdHeraldName(rec.s);
   return heraldCard({
     family: 'abyss', moment: 'Faded',
     title: sdFadeLine({ name: name ?? 'an Abyss Dungeon' }).replace(/\.$/, ''),   // a title ends without its full stop
-    fields: [['Where', whereField(rec)], ['Next may rise', heraldWhen(rec.next)]],
+    fields: [['Where', whereField(rec)], ['Next may rise', heraldWhen(next)]],
   });
 }
 
 /** The post for a moment the herald owes - the role the rise's and the find's alone. */
-export function sdHeraldPost(kind, rec, role = null) {
+export function sdHeraldPost(kind, rec, role = null, next = rec.next) {
   if (kind === 'rise') return sdRisePost({ rec, role });
   if (kind === 'found') return sdFoundPost({ rec, role });
-  if (kind === 'fell') return sdFellPost({ rec });
-  return sdFadePost({ rec });
+  if (kind === 'fell') return sdFellPost({ rec, next });
+  return sdFadePost({ rec, next });
 }
 
 /**

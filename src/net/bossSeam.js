@@ -35,7 +35,8 @@
 import { newFight, joinFight, applyHit, stepBrain, stateOf, earned } from './gate/gateBrain.js';
 import { newRemnantFight, joinRemnant, applyRemnantHit, stepRemnant, remnantStateOf } from './superDungeon/sdRemnant.js';
 import { newSerpentFight, joinSerpentFight, applySerpentHit, stepSerpentBrain, serpentStateOf, serpentEarned } from './serpent/serpentBrain.js';
-import { judgeGate, judgeRemnant, judgeSerpent } from './bossRef.js';
+import { newDragonFight, joinDragonFight, applyDragonHit, stepDragonBrain, dragonStateOf, dragonEarned } from './dragon/dragonBrain.js';   // DRAGON2
+import { judgeGate, judgeRemnant, judgeSerpent, judgeDragon } from './bossRef.js';
 
 /** The contract's members, in the page's order. */
 export const BOSS_SEAM_KEYS = Object.freeze(['new', 'join', 'hit', 'step', 'stateOf', 'judge', 'earned']);
@@ -75,4 +76,12 @@ export const SERPENT_SEAM = bossSeam('serpent', {
   join: (f, sub, name, lv, now, present = null, o = {}) => joinSerpentFight(f, sub, name, lv, o.hl, now, o.admits, present, o.near ?? true),
   hit: (f, sub, d, r, pose, now, _seq = null, o = {}) => applySerpentHit(f, sub, d, o.z, pose, now, r === 1),
   step: stepSerpentBrain, stateOf: serpentStateOf, judge: judgeSerpent, earned: serpentEarned,
+});
+/** DRAGON2 - THE DWARVEN DRAGON (bible/11-Multiplayer/Dwarven-Dragon.md section 4): born of `{ w, b, sx, sz, now, leaveAt,
+ *  roost }`, joined while `o.admits`; a blow's kind the gate's (HIT_KINDS). */
+export const DRAGON_SEAM = bossSeam('dragon', {
+  new: (birth) => newDragonFight(birth),
+  join: (f, sub, name, lv, now, present = null, o = {}) => joinDragonFight(f, sub, name, lv, now, !!o.admits, present),
+  hit: (f, sub, d, r, pose, now) => applyDragonHit(f, sub, d, r, pose, now),
+  step: stepDragonBrain, stateOf: dragonStateOf, judge: judgeDragon, earned: dragonEarned,
 });

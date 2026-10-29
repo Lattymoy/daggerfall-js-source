@@ -448,6 +448,7 @@ import { createSerpentOmen, insideSerpentRing, SERPENT_OMEN_SETTLE_MS } from '..
 import { worldSerpentSite } from '../systems/serpent/serpentSite.js';   // SERPENT1: where it rises - on a packet lane, in open sea; WW7-12: the world's lanes', or the hub's word of it
 import { createSerpentLink } from '../net/serpent/serpentLink.js'; import { readSerpentReceipt } from '../net/serpent/serpentReceipt.js';   // SERPENT1: the cell's words of its fight, folded; a receipt's day, seed and earning
 import { createSerpentHost } from './serpentHost.js';   // SERPENT1: the client's half of the fight - the `in`, the volleys, the blows on my ship, the coil and the whirl
+import { createDragonSky, dragonBoxesWith } from './dragonHost.js';   // DRAGON3: the Dwarven Dragon on this screen - its sky, its fight, its blows on me and mine on it (AUDIT DRAGON: made whole there)
 import { SerpentRenderer } from '../render/serpentRender.js';   // SERPENT1: its body over and under the sea, its telegraphs, the maelstrom and the venom
 import { createSdFightLink } from '../net/superDungeon/sdFightLink.js';   // SD8c: the realm's fight as the page holds it
 import { createSdRemnantBlows } from './superDungeon/sdRemnantBlows.js';   // SD8d: its blows on me - seen, heard, judged on my feet
@@ -545,7 +546,7 @@ import { onTravelPace, setPaceGround, setPaceZoneCap, WILD_PACE_CAP } from '../s
 import { showPaceBox, hidePaceBox } from '../ui/travel/travelPaceControls.js';   // PACE-DIALS: the other skins' dials, while a journey runs
 import { markShown, travellerKin } from '../systems/travel/travelViewFilters.js';   // OW-FILTER: a hidden group's sprites hidden with its marks
 import { travelPathMode, travelPathUsesRoads, pickTakesPlace, pickNearPlaceMiddle, fineMoveHeld, TRAVEL_PATH_TEXT } from '../systems/travel/travelPathMode.js';   // OW-PATH: roads or free, and the snap to a town; OW-TOWN-ROUND: only at its middle
-import { groundHit, canvasPoint, classifyPick } from '../player/travelPick.js';   // TV2: the click's ground
+import { canvasPoint, classifyPick } from '../player/travelPick.js';   // TV2: the click's ground
 import { routeLegs, roadShare, crossesWater, dryLine, SEA_KINDS } from '../systems/travel/travelRoute.js';   // TV2: the way by the roads; OWS2: and over the water
 import { planRouteSliced as planRoute, planJourney } from '../systems/travel/planSlices.js';   // PLAN-SLICES: the journeys' plans a slice of cells at a time
 import { tvMooredDry, tvSeaAsk } from '../systems/travel/seaAsk.js';   // OWS2's two asks of the planner (PLAN-SLICES: out of the host)
@@ -613,6 +614,9 @@ import { TRANSPORT_MODES } from '../systems/transport.js';   // TR3: what the ro
 import { shipTransition, REPOSITION, isOnShip, shipMemory, shipRestorePos } from '../systems/ship.js';   // TR4: board and disembark; AUDIT-TO1 D1: TransportManager.IsOnShip for the popup; AUDIT 68 S22: the memory's height, compensation-free
 import { createStaffDragonHost } from './staffDragonHost.js';   // DRAGON-RIDE: an Admin's ride on the Dwarven Dragon
 import { parseDragonCommand, DRAGON_HELP_LINE, noteDragonRelay, dragonPoseRide } from '../systems/staffDragon.js';   // DRAGON-RIDE: /dragon's grammar and its /staff line
+import { dragonMountOf, dragonLookOfItem } from '../systems/dragon/dragonMount.js';   // DRAGON5: a tamed dragon's look in the pose
+import { dragonMounted } from '../player/dragonRide.js';   // DRAGON6: a journey begun on the dragon is flown
+import { dragonFlightPlan } from '../systems/dragon/dragonJourney.js';   // DRAGON6: its plan, straight
 import { createMountRig } from '../player/mountRig.js';   // MAC-K3: the mount surface, one home for this host and the fixed-city one
 import { worldViewportRect, largeHudWorldAspect } from '../ui/hud/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass (RETRO1: and retro mode's aspect correction pillarboxes it)
 import { createLockOn, LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // TI1: touch lock-on
@@ -844,13 +848,8 @@ import { onFloatingFrame } from '../player/collider.js';   // PERF-COL2: a strea
 import { createPoiHost } from './poiHost.js';   // POI-2: the approved POIs, standing in the streamed world
 import { createPoiFeed, pagePoiCache } from '../poi/poiFeed.js';   // POI-2: the approved set, read live and kept
 import { poiPixelKey } from '../poi/poiLaw.js';   // AUDIT RELEASE R2-8: a pixel's one id, the Bay's and past it
-import { decodePoiImage, decodePoiImageSteps } from '../poi/poiImageDecode.js';   // POI-2: a POI's picture, decoded by the browser (AUDIT POI R8: the host's in steps)
+import { decodePoiImageSteps } from '../poi/poiImageDecode.js';   // POI-2: a POI's picture, decoded by the browser (AUDIT POI R8: the host's in steps)
 import { poiMapMarks } from '../ui/poi/poiMapMark.js';   // POI-2: their marks on both world maps
-import { createPoiEdit } from '../poi/poiEdit.js';   // POI-3: the editor's documents and their undo
-import { createPoiEditorHost, createPoiEditorRouter, POI_EDITOR_EVENTS, POI_PICK_REACH } from './poiEditorHost.js';   // POI-3: the editor's eye, cursor and handles; AUDIT POI E2/E14/E16: its input, routed
-import { holdHotbarKeys } from '../ui/enhanced/enhancedHotbar.js';   // AUDIT POI E1: the bar's keys stood down under the editor
-import { createPoiEditorPanel } from '../ui/poi/poiEditorPanel.js';   // POI-3: its panel
-import { PoiGizmoPass } from '../render/poiGizmoPass.js';   // POI-3: its lines over the world
 import { poiMe } from '../poi/poiService.js';   // POI-3: the store's word on who may build
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
@@ -1051,8 +1050,8 @@ import { isShelved } from '../systems/quest/quest.js';   // QUEST-SHELF: a quest
 import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup, activeMemberships, guildInitiationQuestEnded } from '../systems/guild/guilds.js';   // V2e: the per-read vampire book pick; F96: the TG/DB initiation listener
 import { GUILD_FACTION_IDS } from '../systems/guild/guildFactions.js';   // CHAP4b: the Mages Guild's faction, for its seat's teleport
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';   // the membership book's key - the travel popup's free-ship read   // AUDIT 39 (#23): GetRegionFaction's Province filter
-import { freeShipTravel, freeTavernRooms, avoidDeath, avoidDeathText } from '../systems/guild/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip; FreeTavernRooms, the trip cost's inn nights
-import { resolveVariantGuild, orderOf } from '../systems/guild/guildVariants.js';   // TN1: GetFactionName's HolyOrder arm
+import { avoidDeath, avoidDeathText } from '../systems/guild/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip; FreeTavernRooms, the trip cost's inn nights
+import { resolveVariantGuild } from '../systems/guild/guildVariants.js';   // TN1: GetFactionName's HolyOrder arm
 import { revealGuildHallsOnMap, revealingMemberships } from '../systems/guild/guildHallReveal.js';   // AUDIT 63 F9: ThievesGuild/DarkBrotherhood RevealGuildHallOnMap; AUDIT CHAP2 D4: either book's
 // TK-i: THE RUMOR MILL - the quest machine's rumor seams stop being silent.
 import { RumorMill, tokensToString } from '../systems/rumorMill.js';
@@ -1245,7 +1244,7 @@ import { createPortalStoneHost } from './portalStoneHost.js';   // HOST-SPLIT
 import { createWildDropHost } from './wildDropHost.js';   // HOST-SPLIT
 import { createWildInsureBook, setWildInsureBook } from '../net/wild/wildInsureBook.js';   // WILD-INSURE: my policies on my gear
 import { createWildGrace } from '../systems/wild/wildGrace.js';   // ZONE-GRACE: safe passage, as the referee says it
-import { createPvpKitBar } from '../ui/pvpKitBar.js';   // PVP-KIT: the PvP spell bar
+import { createPvpSpellMenu } from '../ui/pvpSpellMenu.js';   // PVP-SET: the PvP set of the hotbar and its menu
 import { createPvpFlagHost } from './pvpFlagHost.js';   // PVP-FLAG: the open zone's flag, on this page
 import { createPvpRulesHost } from './pvpRulesHost.js';   // PVP-RULES: a flagged fighter's limits
 import { createPvpGuardsHost } from './pvpGuardsHost.js';   // PVP-GUARDS: the watch hunts a villain in town
@@ -1261,6 +1260,8 @@ import { createSnowGround } from './snowGround.js';   // HOST-SPLIT
 import { createLandformSites } from './landformSitesHost.js';   // BAY-LEFT-GROUND (D1): the landforms' sites past the Bay
 import { createGroundFrame } from './groundFrameHost.js';   // HOST-SPLIT
 import { createHarbourHost } from './harbourHost.js';   // HOST-SPLIT
+import { createPoiEditorMount } from './poiEditorMount.js';   // HOST-SPLIT
+import { createTravelFareDeps } from './travelFareHost.js';   // HOST-SPLIT
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -7339,6 +7340,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** SERPENT1: the sea serpent's host (scenes/serpentHost.js) - made with the online links below; the naval host and
    *  Come Sail Away read it through their seams at a frame, never at their build. */
   let serpentHost = null;
+  /** DRAGON3: the Dwarven Dragon's host (scenes/dragonHost.js) - made with the online links below; the shots, the spells, the
+   *  swing and the enemies-near test read it at a frame. */
+  let dragonSky = null;
   /** SERPENT4 (2026-10-11, the players: "also let players on the ship be able to hurt it"): THE SEA SERPENT'S STAND-IN - the
    *  entity a hand's shaft and spell are computed against on this machine by the port's own formulas (the gate's
    *  bossStandIn, on the Dreugh's own mobile - the Bay's sea-thing, whose voice it has): a hide no armour turns and nothing
@@ -7365,8 +7369,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** NAV-H: every boat that stands in the mode's collider - mine, and the sea's ships near enough to strike and walk. */
   const csaColliderBoats = () => (naval?.enabled ? [...csa.boats, ...naval.collidable()] : csa.boats);
   /** NAV-H: a hostile ship in reach (navalHost.js HOSTILE_NEAR_M) is an enemy nearby wherever the game asks it outdoors,
-   *  as DUEL1's opponent is - the helm's time scale, the travel map and the party's trip, a journey, a rest. */
-  const navalHostileNear = () => !!naval?.hostileNear();
+   *  as DUEL1's opponent is - the helm's time scale, the travel map and the party's trip, a journey, a rest. DRAGON3: and a
+   *  dragon's fight about me (scenes/dragonHost.js near). */
+  const navalHostileNear = () => !!naval?.hostileNear() || !!dragonSky?.near();
   const csaPeers = createComeSailAwayPeers({ pool: csa, selfId: () => online?.id ?? null });   // CSA-J: the others' boats, in the pool's peer list
   csaPeers.setPeerLook((id) => (_hiddenPeers.has(id) || !gateCrowd.shows(id) ? 'hidden' : (_veils.get(id) ?? null)));   // AUDIT PRE-MERGE 0928 O4: a concealed sailor's boat is concealed with them (the cart pool's I-B law; last frame's word); AUDIT CROWD-WIDE B1: and one the crowd's count leaves undrawn - no boat under way with an empty helm
   const csaAboard = createComeSailAwayAboard({ peers: csaPeers, geometry: (c) => csaColliderMesh(c), selfId: () => online?.id ?? null });   // CSA-K: another player's boat, stood on and carried by; and the others aboard, seen on the deck
@@ -10320,6 +10325,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     (key) => (typeof key === 'string' && key.startsWith('water:')
       ? waterSourceHoverName(!!springAt(key)?.dry) : null),
     (key) => wagonHoverName(key),
+    (key) => dragonSky?.keepHoverName(key) ?? null,   // DRAGON5b: my tamed dragon by its name and its verbs, another's by its name
     (key) => hcc.hoverName(key),   // HCC: the horse by its name (HorseNameTooltipController's HorseTargetLabel), the wagon, a peer's by whose it is
     (key) => csaHoverName(key),   // CSA-D: a boat, by its hull's name
     // LEFAY1: the monument to Julian LeFay - its years, the flowers laid, and its rows; after the Sigil Broker's and the
@@ -11564,8 +11570,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // DUEL1: my duel opponent's body, for my harmful spells alone, while we fight - and the door the blow leaves by
     duelMark: () => { if (!duelMgr.fighting) return siegeSpellMarks(); const b = duelBody(duelMgr.opponent); return b ? { ...b, name: peerName(b.id) ?? 'your opponent' } : null; },   // AUDIT-SEATS G5: outside a duel, a siege's foes (WILD1: and past them the open zone's fair players)
     castAtDuel: (id, sp) => duelSpellOut(id, sp),
-    boxMarks: () => serpentHost?.handBoxes?.() ?? null,   // SERPENT4: the sea serpent's hide, a hand's harmful missile's mark
-    castAtBox: (sp, q, caster) => serpentSpell.cast(sp, q, caster),
+    boxMarks: () => dragonBoxesWith(dragonSky, serpentHost?.handBoxes?.() ?? null),   // SERPENT4: the sea serpent's hide, a hand's harmful missile's mark; DRAGON3: and the dragon's body
+    castAtBox: (sp, q, caster) => dragonSky?.cast(sp, q, caster) ?? serpentSpell.cast(sp, q, caster),
     castRefusal: () => modes?.castRefusal?.() ?? null,   // HOME-MAGIC: a visitor casts nothing in another's online home (worldModes.js visitorMagicRefusal)
     spellRefusal: (sp) => battleSpellRefusal(sp),   // AUDIT-SEATS G5: Teleport, Recall and Levitate do nothing in a siege's room
     collider: liveCollider(() => ((modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider)),   // GROUND-BOLT: the mesh ray and the ground - a missile meets the terrain
@@ -16084,80 +16090,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     return true;
   }
 
-  /** PARTY-TRAVEL (2026-09-25): THE TRAVEL POPUP'S OWN DEP BAG - every read ui/travel/travelPopUp.js prices a trip with and
-   *  its gold check asks, lifted out of buildTravelMapWindow's bag (which spreads it, so both maps read it as before)
-   *  so the party's journeys price a trip through the SAME popup without opening a map (partyTripFare). One bag: a
-   *  fare the map charges and a fare the party's prompt names cannot drift apart. */
-  function travelFareDeps() {
-    return {
-      // TP1: the popup's GuildManager.FastTravel fold reads the
-      // player's guild memberships off the entity.
-      playerEntity: () => playerEntity,
-      // GetGoldAmount is coins PLUS letters of credit; the popup's
-      // second test and its label want the coins alone.
-      gold: () => totalGoldAmount(playerEntity),
-      goldPieces: () => goldAmount(playerEntity),
-      // Items.Contains(Transportation, Horse / Small_cart)
-      // (DaggerfallTravelPopUp.cs:216-217) - a town's Stable and Wagon
-      // Yard sell both (MERCHANT-YARDS; DFU's General Store did), so the
-      // calculator's transport modifier is real.
-      hasHorse: () => hasTransport(TRANSPORT_HORSE),
-      hasCart: () => hasTransport(TRANSPORT_SMALL_CART),
-      // `DaggerfallBankManager.OwnsShip || GuildManager.FreeShipTravel()`
-      // (DaggerfallTravelPopUp.cs:219), read at OnPush like the two
-      // above. FreeShipTravel is base-false everywhere and overridden
-      // only by the knightly orders (KnightlyOrder.cs:167-170: rank 6),
-      // so the order slot of the membership book is the only one that
-      // can answer yes; the record keys by GROUP and carries the
-      // guild's name, so the order is recoverable from it (the tavern
-      // window's free-rooms read does the same).
-      hasShip: () => {
-        if (ownsShip(playerEntity)) return true;
-        const km = joinedGuildOfGroup(activeMemberships(playerEntity), GUILD_GROUPS.KnightlyOrder);
-        const order = km?.guild?.startsWith('Order:') ? orderOf(km.guild.slice('Order:'.length)) : null;
-        return !!order && freeShipTravel(order, km);
-      },
-      // TravelTimeCalculator.cs:163 - `GetGuild(KnightlyOrder)
-      // .FreeTavernRooms()`, read inside CalculateTripCost, so the inn
-      // nights of a fare are waived for the same knight the tavern
-      // window already houses free. The order is recovered from the
-      // membership exactly as hasShip above does; the region is
-      // PlayerGPS.CurrentLocation.RegionIndex, which is 0 in open
-      // wilderness because CurrentLocation is a default struct there.
-      freeTavernRooms: () => {
-        const km = joinedGuildOfGroup(activeMemberships(playerEntity), GUILD_GROUPS.KnightlyOrder);
-        const order = km?.guild?.startsWith('Order:') ? orderOf(km.guild.slice('Order:'.length)) : null;
-        if (!order) return false;
-        const px = playerTravelPixel();
-        return freeTavernRooms(order, km, {
-          regionIndex: locationIndex.get(`${px.x},${px.y}`)?.regionIndex ?? 0,
-          orderRegion: townTalk.factionDict?.get(order.factionId)?.region ?? null,
-        });
-      },
-      diseaseCount: () => diseaseCount(playerEntity),
-      poisonCount: () => poisonCount(playerEntity),
-      noWorldTime: () => sharedClockOn(),   // OL2: online the trip takes no world time (WORLD5), and the popup says so
-      // TO1: the mod itself, and the six reads its additions to the
-      // map need. Every one is guarded on the other side - with
-      // Travel Options off `travelOptions` answers null and the map is
-      // DFU's own, whole.
-      travelOptions: () => { refreshTravelOptionsSettings(); return travelOptions; },   // TO-LIVE: the live keys as they stand at the map's open
-      // AUDIT-TO1 D1: PlayerGPS.CurrentLocation's MapId (null in open
-      // wilderness, the C#'s !Loaded) and TransportManager.IsOnShip - the
-      // two reads IsNotAtPort / HasNoOceanTravel need and never had.
-      // SHIP-PORT (2026-09-28, Discord: "a player is at a port but unable
-      // to set sail"): ON THE SHIP, the port it was boarded at. The deck is
-      // "Your Ship" (2,2 or 5,5), in neither port list, so the passage was
-      // refused from the deck ("since there's no port") while every trip
-      // from it is reckoned from the boarding pixel - and By land walked
-      // out onto the sea into the mod's ocean stop ("maybe you should
-      // travel on a ship"). The mod reads PlayerGPS.CurrentLocation and
-      // meets the same dead end; its own HasNoOceanTravel names IsOnShip,
-      // the passage from the deck it meant (DEPARTURE, Travel-Options.md).
-      currentLocationMapId: () => travelOriginMapId(),
-      isOnShip: () => isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()),
-    };
-  }
+  const { travelFareDeps } = createTravelFareDeps({   // HOST-SPLIT: src/scenes/travelFareHost.js
+    hasTransport, locationIndex, playerTravelPixel, refreshTravelOptionsSettings, townTalk, travelOriginMapId,
+    get travelOptions() { return travelOptions; },
+  });
   /** MINE-PERKS (Professions-Arc 43): THE MAPS' MOTHERLODES - a Motherlode Sense's (Mining 100) every one of the day's
    *  still to rise or standing, from the day's start (net/motherlodeBook.js sensedAll); none for anyone else, whose
    *  compass alone marks one, from its warning (LODE-MARK). */
@@ -16250,6 +16186,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // open); null offline and while no gate is marked, and both maps draw nothing
       gate: () => gateOmen?.mapMark() ?? null,
       gates: () => gateOmen?.mapMarks() ?? [],   // WW2: every lane's ring past the Bay
+      fronts: () => (_sharedClockHeard && gateOmen?.lanesOk() ? battleNowMs() : null),   // FRONTS: the card's line for a place past the Bay
       // EVENT-TIP (Mac: "add a tooltip to the map for these type of events"): THE TOWNS UNDER ATTACK - every raid
       // running now on the raids' own clock, at its town, with the card a hover asks for (ui/eventMapMarks.js). A
       // function for the gate's reason; none while the mod is off. The enhanced map alone draws them.
@@ -16530,6 +16467,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         pixel: playerTravelPixel(),
         gate: { place: gateOmen?.current?.()?.site?.place ?? null, site: gateOmen?.current?.()?.site ?? null, fellAt: (day) => gateLink?.fellAt?.(day) ?? null },
         gates: (gateOmen?.currents() ?? []).filter((x) => x.lane && x.c.site).map(({ lane, c }) => ({ lane, place: c.site.place, site: c.site })),   // WW2: every lane's past the Bay that found its site
+        fronts: !!gateOmen?.lanesOk(),   // FRONTS: the provinces' turns, where the provinces stand events
         // SERPENT-TIMERS: the sea serpent - the port it lies off as the omen found it, and its kill at this machine's site
         serpent: { place: serpentOmen?.current?.()?.site?.near ?? null, site: serpentOmen?.current?.()?.site ?? null, fellAt: (day) => { const site = serpentOmen?.current?.()?.site; return site && site.day === day ? serpentLink?.fellAt?.(day, site) ?? null : null; } },
         // SD2c: the Super dungeon - the hub's record, its name and its city (the row's own law asks the phase: a row once found)
@@ -19436,7 +19374,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const seaRaidMoved = cell && seaRaidWord(null, full);   // OW6: and a raider's at sea
     const frame = cell ? ((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoes.foesFrame(full, _hccDirty || csaMoved || csaAboardMoved || bandMoved || navalMoved || seaRaidMoved) : null) : modes?.dungeonFoesFrame?.(full);
     if (!frame) return false;
-    if (cell && full) frame.c = camps.wireRecords(campToWire); if (cell && (full || _hccDirty)) { frame.hv = hcc.wireRecord(campToWire); _hccDirty = false; } if (cell) duelRingWord(frame, full); if (cell) csaWord(frame, full); if (cell) csaAboardWord(frame, full); if (cell) bandWord(frame, full); if (cell) navalWord(frame, full); if (cell) seaRaidWord(frame, full); if (cell) { const rk = raidWireWord(), ro = raidObjWord(); if (rk) frame.rk = rk; if (ro) frame.ro = ro; } if (cell) portalWord(frame, full); if (cell && frame.hv !== undefined) frame.wr = wagonRiders?.word() ?? null;   // HCC-ONLINE: my horse and wagon as shown (null: none stand) ride beside the camps - on every full frame, and on a moved word between them   // AUDIT SURV B: an empty list says "none stand" - the last camp packed reaches the peers   // SURV3: my camps ride my full frame - a shared world object in the cell's own way; RAID2: my word on the raids I run or fought - my share of their deaths, and my claim; PORTAL1: my portal, on every full frame while it stands and I stand near it; WAGONS1: my ask for a seat in another's wagon, or the seat I sit in - beside my team's word, on its clock (sent whenever `hv` is)
+    if (cell && full) frame.c = camps.wireRecords(campToWire); if (cell && (full || _hccDirty)) { frame.hv = hcc.wireRecord(campToWire); _hccDirty = false; } if (cell) duelRingWord(frame, full); if (cell) csaWord(frame, full); if (cell) csaAboardWord(frame, full); if (cell) bandWord(frame, full); if (cell) navalWord(frame, full); if (cell) seaRaidWord(frame, full); if (cell) { const rk = raidWireWord(), ro = raidObjWord(); if (rk) frame.rk = rk; if (ro) frame.ro = ro; } if (cell) portalWord(frame, full); if (cell && frame.hv !== undefined) frame.wr = wagonRiders?.word() ?? null; if (cell) dragonSky?.keepWord(frame, full, campToWire);   // DRAGON5b: my tamed dragon left in the world, beside my team's word; HCC-ONLINE: my horse and wagon as shown (null: none stand) ride beside the camps - on every full frame, and on a moved word between them   // AUDIT SURV B: an empty list says "none stand" - the last camp packed reaches the peers   // SURV3: my camps ride my full frame - a shared world object in the cell's own way; RAID2: my word on the raids I run or fought - my share of their deaths, and my claim; PORTAL1: my portal, on every full frame while it stands and I stand near it; WAGONS1: my ask for a seat in another's wagon, or the seat I sit in - beside my team's word, on its clock (sent whenever `hv` is)
     // SCALE2c: A FULL FRAME THAT SAYS NOTHING IS SAID ONCE (net/foesQuiet.js) - in a cell, after one that said the same
     const said = { full, cell, room: online.room };
     if (_foesQuiet.skip(frame, said)) { _foesFullAt = now; return false; }
@@ -20198,6 +20136,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     exteriorFoes.setOnSites((from, sites) => wodPeerSites(from, sites), wodSprungList);   // WOD7: a peer's sprung markers - mine are spent; mine ride my full frames
     exteriorFoes.setOnCamps((from, c, at) => camps.applyOwner(from, c, campToScene, at));   // SURV3: a peer's camps, off their foes frame past the pool's own room test, through validCampRecord
     exteriorFoes.setOnHcc((from, hv, at) => hcc.applyOwner(from, hv, campToScene, at), () => hcc.clearPeers());
+    exteriorFoes.setOnDragonKeep((from, dk) => dragonSky?.keepPeer(from, dk, campToScene), () => dragonSky?.keepPeersClear());   // DRAGON5b: the others' tamed dragons off their frames
     exteriorFoes.setOnRide((from, wr) => wagonRiders?.hear(from, wr));   // WAGONS1: a rider's ask, or the seat they sit in
     exteriorFoes.setPuppetSeatDraw((f) => (hccOn() && (f.companion != null || f.shipmate) ? hcc.puppetSeatDrawn(f.puppet, f.ai?.feet, f._pup?.wire ?? null) : null));   // WAGONS2: a peer's seated companion drawn in their grown wagon
     exteriorFoes.setOnBands((from, bd) => bandHear(from, bd));   // TV7b: a peer's band chases, off their foes frame past the room test
@@ -20301,6 +20240,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     online.onSdReceipt = (r, room) => { sdClaims?.add(r); sdSpoilsReceipt(r, room); };   // SD9b: my Hour receipt (my realm's at the fall, the hub's at a hello) - to the account service, kept until it is counted; SD9e: and its spoils
     online.onEg = (w, room) => egClient?.word(w, room);   // EG-PLAY: my breach room's word - its state, its fights, my receipts
     online.onKetch = (w) => ketch?.word(w);   // KETCH: my ship's room's word - its voyage, its fights, its cells, my receipt
+    online.onDragon = (w) => { if (w?.k === 'bd') bossCountFell(!!dragonSky?.near()); else dragonSky?.word(w); };   // DRAGON3: a dragon's cell's word, or my receipt from the hub; INT11: the relay's count's fall of me
     online.onSerpent = (w) => { if (w?.k === 'bd') serpentHost?.wrecked?.(w); else serpentLink?.word(w); };   // SERPENT1: the sea serpent's cell's word (on my cell's socket or a halo's) - its fight, its swim, its blows, my receipt
     online.onRaid = (f, room) => raidRelayWord(f, room);   // RAID3: a town cell's word about its raid - the ledger, the cleanse, my receipt
     online.onRite = (w) => riteHost?.onBroken(w);   // WB12d: the hub's broken rite
@@ -21174,7 +21114,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   wildInsure.read();
   const wildGrace = createWildGrace({ me: () => online?.id ?? null, say: (l) => { setMidScreenText(l); townTalk.say(l); } });   // ZONE-GRACE (systems/wild/wildGrace.js)
   const pvpFlag = createPvpGuardsHost(createPvpRulesHost(createPvpFlagHost(() => online, playerEntity, setMidScreenText, townTalk), player, playerEntity, setMidScreenText), () => [cityGuards, walkMode && playerSpawned ? player.pos : cam.pos, cam.yaw, modes?.mode ?? 'exterior', settledAt(campToWire(player.feetAt()), locationIndex)], playerEntity, setMidScreenText).flag;   // PVP-FLAG (scenes/pvpFlagHost.js); PVP-RULES (scenes/pvpRulesHost.js): a flagged fighter's limits; PVP-GUARDS (scenes/pvpGuardsHost.js): the watch hunts a villain in town
-  const pvpKit = createPvpKitBar(() => [online, magic, modes?.mode, allyTargetPick, cam, socialFwd], pvpFlag, playerEntity);   // PVP-KIT: the PvP spell bar on keys 3 to 0 (ui/pvpKitBar.js)
+  const pvpKit = createPvpSpellMenu(() => [online, magic, modes?.mode, allyTargetPick, cam, socialFwd], pvpFlag, playerEntity);   // PVP-SET: the hotbar's PvP set under the flag, and its menu (ui/pvpSpellMenu.js)
   const _duelSent = new Map();   // my blow's number -> { kind, weapon } - what it was
   let _duelLastWeapon = null;    // INT8: the weapon of my last strike - the referee's word on it names no number
   let _duelFoe = null;      // my opponent as the HUD's target bar reads a foe ({ entity: { name, health, maxHealth }, dead })
@@ -22963,11 +22903,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   onSlotSaved((characterId) => { try { spoilsPool.saved(characterId); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); } });
   // REALM P1.3: a realm checkpoint's spoils. AUDIT REALM2 C1: a town's thanks with them - RAID4b's own pool was cleared by a
   // slot's save alone (onSlotSaved, below), which a realm character never writes, so every join handed the thanks back
-  _realmSaveHooks.held = (who) => { try { return [...(spoilsPool?.heldIds?.(who) ?? []), ...(raidSpoils?.heldIds?.(who) ?? []), ...(serpentSpoils?.heldIds?.(who) ?? []), ...(sdSpoilsPool?.heldIds?.(who) ?? []), ...(starfall?.spoilsHeld(who) ?? []), ...(ketch?.spoilsHeld(who) ?? [])]; } catch { return null; } };   // SERPENT1: and the Old Coil's hoard; SD9e: and the Brass Remnant's spoils; STAR7: and a held star's
+  _realmSaveHooks.held = (who) => { try { return [...(spoilsPool?.heldIds?.(who) ?? []), ...(raidSpoils?.heldIds?.(who) ?? []), ...(serpentSpoils?.heldIds?.(who) ?? []), ...(sdSpoilsPool?.heldIds?.(who) ?? []), ...(starfall?.spoilsHeld(who) ?? []), ...(ketch?.spoilsHeld(who) ?? []), ...(dragonSky?.spoilsHeld(who) ?? [])]; } catch { return null; } };   // SERPENT1: and the Old Coil's hoard; SD9e: and the Brass Remnant's spoils; STAR7: and a held star's
   // INT3: the judge's hold, said to the player each time a landed checkpoint moves it (systems/realmSaves.js); AUTO-HOLD: and
   // the pieces the ledger locked, named (scenes/realmHoldHost.js)
   wireRealmHolds(realmSession, { say: (t) => townTalk.say(t), entity: playerEntity });
-  _realmSaveHooks.landed = (who, ids) => { try { spoilsPool?.saved(who, ids); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); } try { raidSpoils?.saved(who, ids); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } try { serpentSpoils?.saved(who, ids); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } try { sdSpoilsPool?.saved(who, ids); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } starfall?.spoilsSaved(who, ids); ketch?.spoilsLanded(who, ids); };   // STAR7: and a held star's (its own catch); AUDIT KETCH L2-3: and the Ketchmaster's hold's (its own)
+  _realmSaveHooks.landed = (who, ids) => { try { spoilsPool?.saved(who, ids); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); } try { raidSpoils?.saved(who, ids); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } try { serpentSpoils?.saved(who, ids); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } try { sdSpoilsPool?.saved(who, ids); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } starfall?.spoilsSaved(who, ids); ketch?.spoilsLanded(who, ids); dragonSky?.spoilsSaved(who, ids); };   // STAR7: and a held star's (its own catch); AUDIT KETCH L2-3: and the Ketchmaster's hold's (its own)
   onSlotSaved((characterId) => { try { raidSpoils.saved(characterId); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } });   // RAID4b
   /** SERPENT1: THE OLD COIL'S HOARD (systems/serpent/serpentSpoils.js) - the raids' door, under keys of its own: no floor, no word
    *  to the hub, the crash's records a save clears. Made online or not, as the pools are. */
@@ -23132,6 +23072,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     try { if (recoverSpoils(_spoilsStore, takeSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => sdSpoilsPool.adopt(rec), key: SD_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(SD_SPOILS_TEXT.recovered); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); }   // SD9e: the Brass Remnant's spoils, the same door
     starfall?.recoverSpoils(who, _spoilsInSave);   // STAR7: a held star's spoils, the same door (scenes/starfall/starRewards.js)
     ketch?.recoverSpoils(who, _spoilsInSave);   // AUDIT KETCH L2-2, L2-3: the Ketchmaster's hold's, and my shares still owed (scenes/ketch/ketchClient.js)
+    dragonSky?.recoverSpoils(who, _spoilsInSave);   // DRAGON4: a slain dragon's hoard, the same door (scenes/dragonRewards.js)
     _spoilsInSave = null;   // AUDIT RESCUE-SAVE A1: the boot's load alone - a load in the session is its own pack
   };
   // AUDIT ONLINE2 F3 (AUDIT RAID R8d): A LOAD IN THE SESSION IS A STAND-UP - the pack is the loaded save's, so the pools
@@ -23603,6 +23544,22 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (_serpentBarUp) { drawGateBossBar(null); _serpentBarUp = false; }
     if (offline) { serpentHost?.leave(); serpentOmen?.reset(); }   // AUDIT SERPENT L4: offline, no ring and no compass mark stand
   };
+  // DRAGON3 (bible/11-Multiplayer/Dwarven-Dragon.md): THE DWARVEN DRAGON - where it comes down (the gate's scans), the cell's
+  // words for this machine's site, and its host (scenes/dragonHost.js). Online alone: the relay runs its fight. The Bay's
+  // scan is read once its slices are whole, never forced in a frame (AUDIT WB C7).
+  dragonSky = params.has('online') ? createDragonSky({
+    bayScan: () => (warmGateScan(), _gateScan), theatres: () => theatreGates,
+    street: () => (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned, barBlocked: () => _serpentBarUp, barHidden: () => gamePaused() || !!townTalk.hudHidden, drawBar: drawGateBossBar,
+    now: () => Date.now() + _sharedOffsetMs,
+    online: { ready: (cell) => !!online?.dragonReady?.(cell), send: (w, cell) => !!online?.sendDragon?.(w, cell) },
+    local: (nx, nz) => state.localFromWorld(nx, nz), native: (x, z) => { const w = state.worldCoords([x, 0, z]); return [w.x, w.z]; },
+    ground: (x, z) => surfaceAt(x, z), feet: () => player.feetAt(), eye: () => cam.pos, level: () => playerEntity.level ?? 1,
+    renderer, getTexture, uploadRecordFrame, audio,
+    say: (text, sec) => townTalk.say(text, sec), mid: (text, sec) => setMidScreenText(text, sec),
+    townTalk, makeInventoryWindow,   // DRAGON5b: the keep's name box and its saddlebags' door
+    aboard: () => isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()) || !!(csaBoatUnderMe() ?? _csaBuckets.get(player.groundKey)?.boat) || !!naval?.aboard?.(),   // DRAGON5b: no call onto a ship - Daggerfall's, a Come Sail Away deck (the pair's rule, AUDIT FB1029d B1) or a sea ship's
+    takeSpoil, relayNowS, chatNotice: (text) => chatNotice(text),   // DRAGON4: its rewards' (scenes/dragonRewards.js) - the pack's door, the relay's clock, the chat's line (declared below: read at the call)
+  }) : null;
   /** SERPENT1: the compass's mark - where it hunts, in THIS scene, while it swims and the player stands in its ring. */
   const serpentCompassMark = () => {
     const sw = serpentOmen?.swimming?.();
@@ -24527,123 +24484,19 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       mountPoiEditor(r.data, io);
     }, (e) => console.warn('[poi] the editor\'s door', e?.message ?? e));
   }
-  /** POI-3: THE EDITOR MADE - its documents, its eye and handles over this host's frame, its panel, its lines. The body
-   *  stands where the builder left it while the editor is open: the motor held (frameMotor), no blow lands on it (the
-   *  damage fold), the eye the world's own `cam` so the streamer and the floating origin follow it as they follow the dev
-   *  fly-cam. Leaving: back to the body (fetched by a teleport if its pixel went while the eye was away), or stood on
-   *  what is under the eye. */
-  function mountPoiEditor(me, io) {
-    const edit = createPoiEdit();
-    const S = TERRAIN_SIZE;
-    /** A scene point as its map pixel and the spot in that pixel's frame (streamingWorld.js pixelTranslation, inverted). */
-    const sceneToPixel = (p) => {
-      const t0 = state.pixelTranslation(0, 0, [0, 0, 0]);
-      const px = Math.floor((p[0] - t0[0]) / S), py = Math.ceil((t0[2] - p[2]) / S);
-      return { px, py, x: p[0] - (t0[0] + px * S), z: p[2] - (t0[2] - py * S) };
-    };
-    let panel = null;
-    let openedAt = restoresSoFar();   // AUDIT POI E14: the loads made when the editor last opened (save.js restoresSoFar: every load passes its one door)
-    const editor = createPoiEditorHost({
-      edit, feed: poiFeed, host: poiHost,
-      view: () => (_lastProj && _lastView ? { proj: _lastProj, view: _lastView, eye: cam.pos, fovY: fieldOfView() + climbFeel.fovRad(), w: canvas.clientWidth, h: canvas.clientHeight, rect: worldViewportRect(canvas.clientWidth, canvas.clientHeight), canvasRect: canvas.getBoundingClientRect() } : null),
-      translation: (px, py, out) => state.pixelTranslation(px, py, out),
-      sceneToPixel,
-      // the ground under a ray, or a model standing on it, whichever is nearer (a part placed on a roof stands on the roof)
-      groundHit: (o, d) => {
-        const g = groundHit(o, d, surfaceAt);
-        const m = collider.raycastHit(o, d, Math.min(g.dist, POI_PICK_REACH));
-        return m && m.dist < g.dist ? { point: [o[0] + d[0] * m.dist, o[1] + d[1] * m.dist, o[2] + d[2] * m.dist], dist: m.dist } : g;
-      },
-      surfaceAt: (x, z) => surfaceAt(x, z),
-      onChange: () => panel?.refresh(),
-      pass: new PoiGizmoPass(renderer.gl),
-      actionOf: (e) => actionOf(e, keys),   // the eye flies by the registry's actions - the builder's own bindings
-      viewport: () => renderer.worldViewportPx,   // AUDIT POI E18: the lines' pixels the world pass's own (the strip above a docked large HUD)
-      // AUDIT POI E14: THE WORLD GONE FROM UNDER IT - a mode changed (a building or a dungeon entered by any door: the
-      // editor's listener ate every key in it, the motor held on the way back out) or a game loaded: the editor left,
-      // its eye and body where the change put them
-      gone: () => _mode() !== 'exterior' || restoresSoFar() !== openedAt,
-      onGone: () => exit('away'),
-    });
-    registerPlayerDamageMod('poi-editor', (_e, dmg) => (editor.active() ? 0 : dmg));   // the body left standing takes no blow
-    let from = null, cursorWas = false, hotbarKeysBack = null;
-    // the editor's input (scenes/poiEditorHost.js createPoiEditorRouter): the window's events in their capture phase, and a
-    // key typed at the panel's own controls (AUDIT POI E2) on the panel's root
-    const route = createPoiEditorRouter({ editor, canvas, cam, acts: () => panel.acts, owns: (target) => panel.owns(target), overlayUp: () => townTalk.overlayActive, textEntry: isTextEntryTarget, win: window });
-    const onEvent = route.onEvent;
-    /** AUDIT POI E3: the world's held keys and its key edges let go - a key held as the editor opened stayed held after it
-     *  closed (the editor ate its keyup, and only the world's own keyup empties the set): the body walked on its own. */
-    const worldKeysUp = () => { keys.clear(); for (const ring of Object.values(latch.edge)) ring.clear(); };
-    function enter() {
-      if (editor.active()) return;
-      // AUDIT POI E12: on foot alone - a bench sets the eye on itself every frame after the editor's, a saddle's rig draws
-      // over the view, and a helm is a ship's
-      if (_mode() !== 'exterior' || travelView?.active || !isOnFoot(player.transportMode) || !!csaRuntime?.isSailing?.()) { townTalk.say(t('poi.editor.outdoorsOnly', 'The POI editor opens outdoors, on foot.')); return; }
-      from = { yaw: cam.yaw, pitch: cam.pitch };
-      openedAt = restoresSoFar();
-      cursorWas = cursorActive(); setCursorActive(true); releaseLook();
-      hotbarKeysBack = holdHotbarKeys();   // AUDIT POI E1: the bar's digits are not the body's while the editor is open
-      worldKeysUp();
-      for (const ty of POI_EDITOR_EVENTS) window.addEventListener(ty, onEvent, { capture: true, passive: false });
-      editor.enter(); panel.setOn(true);
-    }
-    /** Leaving: 'back' to the body, 'here' onto the ground under the eye, 'away' as the world changed under it (a mode, a
-     *  load - the eye and the body are where that put them). */
-    function exit(how) {
-      if (!editor.active()) return;
-      let landing = null;
-      if (how === 'here' && walkMode) {
-        // stood on what is under the eye - the ground, a roof, a POI's own floor
-        const below = surfaceAt(cam.pos[0], cam.pos[2]);
-        // AUDIT POI E13: over ground not yet built, refused - the landing reached 15 m, found no floor and stood the body in
-        // the air at the eye (the editor's guard against blows already down: the fall hurt)
-        if (!Number.isFinite(below)) { panel.say(t('poi.editor.hereNoGround', 'The ground here has not loaded yet. Fly on, or exit to where you were standing.'), 'bad'); return; }
-        landing = floorLanding(collider, [cam.pos[0], cam.pos[1], cam.pos[2]], Math.max(10, cam.pos[1] - below + 5), 0);
-        // ...and the teleport's own check (UNSTUCK-OUT): a floor inside a rock is no place to stand - the nearest open ground
-        if (heldInSolid(collider, landing)) landing = openGroundNear(collider, landing[0], landing[2], { dry: (floor) => floor >= tvSeaY() }) ?? landing;
-      }
-      for (const ty of POI_EDITOR_EVENTS) window.removeEventListener(ty, onEvent, { capture: true });
-      editor.exit(); panel.setOn(false);
-      hotbarKeysBack?.(); hotbarKeysBack = null;
-      worldKeysUp();   // AUDIT POI E3: the keys held under the editor are not the world's on the way out
-      if (landing) {
-        player.spawn(landing[0], landing[1], landing[2]); playerSpawned = true;
-      } else if (from && how !== 'away') {
-        cam.yaw = from.yaw; cam.pitch = from.pitch;
-        const at = sceneToPixel(player.pos);
-        // the body's pixel went while the eye was away: fetched back by the one door that rebuilds a place
-        if (walkMode && !built.has(`${at.px},${at.py}`)) _teleportToPixel(at.px, at.py, [at.x, player.pos[1] + 1, at.z], { grounded: true })   /* ohTeleportToWorld's way: the pixel's own spot, the frame's height, landed on what is under it */.catch((e2) => console.warn('[poi] back to the body', e2?.message ?? e2));
-      }
-      if (walkMode && how !== 'away') cam.pos = player.eyeAt();
-      setCursorActive(cursorWas);
-      if (!cursorWas && !gamePaused() && !pointerSurfaces.size && !(modes?.modalWindowUp?.() ?? false) && !overlayOpen()) requestLook(canvas);
-    }
-    function jump() {
-      // the map, armed: the body taken to the square picked (the one door that rebuilds a place far off), the eye above it
-      const win = buildTravelMapWindow({
-        onTeleport: (pick) => {
-          const p = pick?.pixel;
-          if (!p) return;
-          _teleportToPixel(p.x, p.y, null, { grounded: true }).then(() => { cam.pos = [player.pos[0], player.pos[1] + 40, player.pos[2]]; cam.pitch = -0.6; }, (e2) => console.warn('[poi] the jump', e2?.message ?? e2));
-        },
-      });
-      win?.activateTeleportationTravel();
-      if (win) townTalk.showOverlay(win);
-    }
-    /** POI-6: the eye to a POI's place (the approver's look) - the body taken there by the same door as the map's jump,
-     *  the eye south of the place and above it, looking north and down at it. */
-    function goTo(place) {
-      if (!place) return;
-      _teleportToPixel(place.px, place.py, [place.x, player.pos[1] + 1, place.z], { grounded: true }).then(() => { cam.pos = [player.pos[0], player.pos[1] + 25, player.pos[2] - 35]; cam.yaw = 0; cam.pitch = -0.6; }, (e2) => console.warn('[poi] going there', e2?.message ?? e2));
-    }
-    panel = createPoiEditorPanel({ edit, editor, feed: poiFeed, io, me, onExit: exit, onEnter: enter, onJump: jump, decodeImage: decodePoiImage, goTo });
-    for (const ty of ['keydown', 'keyup']) panel.root.addEventListener(ty, route.onPanelKey);   // AUDIT POI E2: a key at the panel's controls
-    editor.wantsOpen = (id) => { panel.open(id).catch((e2) => console.warn('[poi] opening it', e2?.message ?? e2)); };   // AUDIT POI E15: a live POI clicked in the world is opened for editing (its own open draft, else its live revision), as the outliner opens it
-    document.body.append(panel.root);
-    poiEditor = editor;
-    poiEditorLeave = exit;
-    enter();
-  }
+  const { mountPoiEditor } = createPoiEditorMount({   // HOST-SPLIT: src/scenes/poiEditorMount.js
+    _mode, _teleportToPixel, buildTravelMapWindow, built, cam, canvas, climbFeel, collider, csaRuntime, gamePaused,
+    keys, latch, player, pointerSurfaces, renderer, state, surfaceAt, townTalk, tvSeaY, walkMode,
+    get _lastProj() { return _lastProj; },
+    get _lastView() { return _lastView; },
+    get modes() { return modes; },
+    get playerSpawned() { return playerSpawned; }, set playerSpawned(v) { playerSpawned = v; },
+    get poiEditor() { return poiEditor; }, set poiEditor(v) { poiEditor = v; },
+    get poiEditorLeave() { return poiEditorLeave; }, set poiEditorLeave(v) { poiEditorLeave = v; },
+    get poiFeed() { return poiFeed; },
+    get poiHost() { return poiHost; },
+    get travelView() { return travelView; },
+  });
   // MERCHANT-YARDS: THE TOWNS' STABLES AND WAGON YARDS (scenes/merchantYardsHost.js) - each where its pixel's build
   // placed it (`p.merchantYards`, the location frame), carried by the live floating-origin translation; its horses Horse
   // Cart and Cargo's standing horse, its wagons on show the pool's own wagons; its trade the modes' counter
@@ -27773,6 +27626,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     _mailFrameAt = performance.now();   // MAIL1: the letterbox looks while this lane runs - SCALE4c: on the heartbeat (its part, above), before the dead return as the chat's heartbeat is
     gateFrame();   // WB1: the Oblivion Gate's omen - its line when a new moment comes, before the dead return (the omen speaks to the dead too)
     serpentFrame();   // SERPENT1: the sea serpent's sighting (to the dead too), and on the street its fight and its bar
+    dragonSky?.onlineFrame();   // DRAGON3: the Dwarven Dragon in the sky, and on the street its fight and its bar
     sdFrame();   // SD2b: the Hollow stood or taken down, its find, its lines - SD2d: in every mode, so its end reaches a player inside it
     egFrame();   // EG-PLAY: an Elite Breach - its call, its halls, its fight, its tracker, its receipts - in every mode
     try { ketch?.frame(); } catch (e) { console.warn('[kt] frame', e?.message ?? e); }   // KETCH: the voyage's words, the sky, the ship aboard, the receipts - in every mode
@@ -27937,9 +27791,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       ar: rig.shot?.n ?? 0,   // SPELLFX1: and the arrows loosed, so the peers draw the shafts
       // RIDE: the mount - the horse or the cart, outdoors (a door dismounts), and which of Eye Of The Beholder's five
       // mounted sprite sets this player chose, so the others draw the rider they drew themselves
-      rd: dragonPoseRide() ?? (!riding ? 0 : player.transportMode === TRANSPORT_MODES.Cart ? 2 : 1),   // DRAGON-RIDE: on the dragon, its own ride (systems/staffDragon.js - a relay that keeps it)
+      rd: dragonPoseRide(riding ? player.transportMode : null) ?? (!riding ? 0 : player.transportMode === TRANSPORT_MODES.Cart ? 2 : 1),   // DRAGON-RIDE: on the dragon, its own ride (systems/staffDragon.js - a relay that keeps it); DRAGON5: a tamed one's too
       rv: Math.max(0, Math.min(4, (() => { try { return modSetting('eye-of-the-beholder', 'Graphics.OnHorse') | 0; } catch { return 0; } })())),   // AUDIT RIDE: the one key, not the mod's whole settings object every frame
-      rc: riding ? riddenHorseLook(playerEntity.items ?? []) || undefined : undefined,   // COATS1: the look the horse under them wears (wire.js rideOf) - absent for the bay as drawn
+      rc: riding ? (player.transportMode === TRANSPORT_MODES.Dragon ? dragonLookOfItem(dragonMountOf(playerEntity.items)) : riddenHorseLook(playerEntity.items ?? [])) || undefined : undefined,   // DRAGON5: a tamed dragon's look, 1 the Aetherbright   // COATS1: the look the horse under them wears (wire.js rideOf) - absent for the bay as drawn
       hs: riding && moved && _hsLatch ? 1 : undefined,   // DISC7: the motor's half-speed flag, the one fact the peers' clop swaps on (wire.js rideOf) - latched off a moving frame (AUDIT DISC7 B2), and absent rather than 0 (B8: the wire omits it at 0)
       // DISC12: the hand in use (the look carries both hands' weapons; the others drew the right one always, so a
       // left-handed fighter was a fist to them) and the beast form (LycanthropyEffect's isTransformed - the others saw
@@ -28066,7 +27920,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // COATS3D: and a peer on a HORSE, on the lane that builds them a Morrowind body, rides the 3D horse in it - the rider
     // layer yields them (peerRidesIn3d), so they are the bodies' (net/peer/peerBodies.js) as a peer afoot is
     peerRiders.sync(seen, onlineToScene, { eye: peerEye, right: peerRight, dt, defer: (d) => peerIsWolf(d.shown), yields: peerRidesIn3d, conceal: veilOf, grow: tvGrow });
-    const afoot = seen.filter((d) => (peerRidesIn3d(d) || !peerRiders.isRiding(d.id)) && !d.shown?.wb || (peerIsWolf(d.shown) && !d.shown.rd));   // COATS3D (AUDIT A3): a rider on the 3D horse the bodies' whether or not its sprite stood in for it last frame   // DISC12: a beast wears no Morrowind body; PR-WW1: it stands as EOTB's lycanthrope (peerRiders), or - while that art is not up - as the beast's enemy sprite (remotePlayers); WEREWOLF1: but a werewolf on foot does, Bloodmoon's
+    const afoot = seen.filter((d) => d.shown?.rd !== POSE_RIDE.Dragon && (peerRidesIn3d(d) || !peerRiders.isRiding(d.id)) && !d.shown?.wb || (peerIsWolf(d.shown) && !d.shown.rd));   // DRAGON1: a dragon's rider wears no Morrowind body   // COATS3D (AUDIT A3): a rider on the 3D horse the bodies' whether or not its sprite stood in for it last frame   // DISC12: a beast wears no Morrowind body; PR-WW1: it stands as EOTB's lycanthrope (peerRiders), or - while that art is not up - as the beast's enemy sprite (remotePlayers); WEREWOLF1: but a werewolf on foot does, Bloodmoon's
     peerBodies.sync(afoot, onlineToScene, dt, player.pos, { priority: (id) => !!social?.isPartyPeer(id), conceal: veilOf });   // the nearest first, the far ones asleep; AUDIT PARTY8: a party mate before a stranger
     // DISC23-B: a peer on foot who stands in no Morrowind body here stands as the Eye Of The Beholder set they chose -
     // after the bodies (a Morrowind player's own choice for everyone they meet), before the class sprite and the doll
@@ -28251,7 +28105,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // WAGONS2 (FINAL AUDIT): and the weather's - the street frame's own terms (world/worldClock.js viewOutLight), so the clock's
       // air below compares a dimmed sun with a dimmed sun
       const light = viewOutLight(clockMinute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherTerms().sun, sky.sunFactor());
-      lightStreetAt(r, light, sky.moonlight(), SUN_RIG_COLOR);   // WL1: and the moon of the hour, whose light a window lets in (render/enhancedSky.js)
+      lightStreetAt(r, light, sky.moonlight(clockMinute), SUN_RIG_COLOR);   // WL1: and the moon of the hour, whose light a window lets in (render/enhancedSky.js) - the sky's night light at the clock's minute
       r.setFogColor(clockFogColor(keptFog, keptSun, r._sunScale));   // RW1 (AUDIT): ...re-lit by the clock - the sky behind the glass with it
       r.setWindowEmission(windowEmissionRGB(windowStyleForTime(clockMinute)));
       r.setPointLights(lightsOnAt(clockMinute) ? outsideLanterns(r) : new Float32Array(0), CITY_LIGHT_COLOR_F32);   // RW1 (AUDIT): the town's lanterns by the clock - never the player's own light, which stays indoors with them
@@ -29641,13 +29495,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const from = playerTravelPixel();
     // AUDIT DEEP T2-7: Hazelnut's bytes or none - the port's own generated network (Basic Roads off) is not his mod's, as
     // the follow key and the static's paths already hold (`source`): with none, the journey goes across country
-    let means = tvSeaMeans();   // OWS2: a boat to cross the water in (at its helm, moored in reach, packed in the pack), or none
+    let means = dragonMounted() ? null : tvSeaMeans();   // OWS2: a boat to cross the water in (at its helm, moored in reach, packed in the pack), or none - DRAGON6: never on the dragon, which flies it
     const raw = terrainGen.roads();
     const roadNet = raw?.source === 'basic-roads' ? raw : null;
     // OW-PATH: FREE walks across country (never onto a road it does not need) - and a free trip with no way falls back
     // to the roads, said, rather than refused
     let net = (roads || travelPathUsesRoads()) ? roadNet : null;
-    let plan = planRoute(from, summary.pixel, { roads: net?.roads ?? null, tracks: net?.tracks ?? null, ...tvRouteGround(), sea: tvSeaAsk(means, 'land') });   // OW-MOUNTAINS: never across the peaks; OWS2: across the water in a boat
+    let plan = (dragonMounted() ? dragonFlightPlan(from, summary.pixel) : null) ?? planRoute(from, summary.pixel, { roads: net?.roads ?? null, tracks: net?.tracks ?? null, ...tvRouteGround(), sea: tvSeaAsk(means, 'land') });   // OW-MOUNTAINS: never across the peaks; OWS2: across the water in a boat; DRAGON6: flown straight on the dragon
     if (!plan && !net && roadNet) { net = roadNet; plan = planRoute(from, summary.pixel, { roads: net.roads ?? null, tracks: net.tracks ?? null, ...tvRouteGround(), sea: tvSeaAsk(means, 'land') }); if (plan) townTalk.say(TRAVEL_PATH_TEXT.fellBack); }   // OW-PATH
     const dry = tvMooredDry(means, plan, () => planRoute(from, summary.pixel, { roads: net?.roads ?? null, tracks: net?.tracks ?? null, ...tvRouteGround() }));   // AUDIT OW5 S3
     if (dry) { plan = dry; means = null; }
@@ -29770,19 +29624,19 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   function travelViewWalkTo(point, pix, { door = null, water = false, roads = false, outside = false } = {}) {
     return planJourney(() => {   // PLAN-SLICES: as travelViewRouteTo's
     let n = outside && !water ? spotOffTownFor(state.worldCoords(point), tvTownRects(pix.x, pix.y), state.worldCoords(player.pos)) : state.worldCoords(point);
-    if (!door && !water && tvRouteGround().peakAt(pix.x, pix.y)) { tvSay(TRAVEL_VIEW_TEXT.mountains); return false; }   // OW-MOUNTAINS; OW-WOD-PATH: a World of Daggerfall massif's pixel too
+    if (!door && !water && !dragonMounted() && tvRouteGround().peakAt(pix.x, pix.y)) { tvSay(TRAVEL_VIEW_TEXT.mountains); return false; }   // OW-MOUNTAINS; OW-WOD-PATH: a World of Daggerfall massif's pixel too
     // OW-MOUNTAINS: to the spot's pixel round the peaks (the roads where they help), then to the spot itself
     const from = playerTravelPixel();
     const roadsRaw = terrainGen.roads(), roadNet = roadsRaw?.source === 'basic-roads' ? roadsRaw : null;   // AUDIT DEEP T2-7's law: Hazelnut's bytes or none
     let wnet = (roads || travelPathUsesRoads()) ? roadNet : null;   // OW-PATH: FREE never asks the roads
     // OWS2: a spot across the water, one on it, or any from a helm is a route that may put to sea (the planner's sea
     // layers); THE MERGE: every other spot is still routed on land, round the peaks (OW-MOUNTAINS) - never the straight walk
-    const means = tvSeaMeans();
+    const means = dragonMounted() ? null : tvSeaMeans();   // DRAGON6: the dragon flies the water, no boat asked
     let seaAsk = means && (water || means.start === 'sea' || !dryLine(from, pix, tvWater)) ? tvSeaAsk(means, water ? 'sea' : 'land') : null;
     if (water && !seaAsk) { tvSeaNoWay(from, pix, null, null, 'sea'); return false; }
     // AUDIT OW3 J5: the step onto a SPOT is asked too (`goalExempt: false`) - a spot on a plateau was reached straight up
     // its cliff (a rise of 60 against the law's 16: the lag and the fall Mac hit); a place's own pixel stays exempt
-    let plan = planRoute(from, pix, { roads: wnet?.roads ?? null, tracks: wnet?.tracks ?? null, ...tvRouteGround(), goalExempt: !!door, sea: seaAsk });
+    let plan = (dragonMounted() ? dragonFlightPlan(from, pix) : null) ?? planRoute(from, pix, { roads: wnet?.roads ?? null, tracks: wnet?.tracks ?? null, ...tvRouteGround(), goalExempt: !!door, sea: seaAsk });   // DRAGON6: flown straight on the dragon
     if (!plan && !wnet && roadNet) { wnet = roadNet; plan = planRoute(from, pix, { roads: wnet.roads ?? null, tracks: wnet.tracks ?? null, ...tvRouteGround(), goalExempt: !!door, sea: seaAsk }); if (plan) townTalk.say(TRAVEL_PATH_TEXT.fellBack); }   // OW-PATH
     if (!plan) { tvSeaNoWay(from, pix, seaAsk ? means : null, wnet, water ? 'sea' : 'land'); return false; }
     const dry = water ? null : tvMooredDry(seaAsk ? means : null, plan, () => planRoute(from, pix, { roads: wnet?.roads ?? null, tracks: wnet?.tracks ?? null, ...tvRouteGround(), goalExempt: !!door }));   // AUDIT OW5 S3
@@ -31357,7 +31211,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     saddleDrawPanel();   // STEED-UI: the saddle panel, as the helm's below - every mode, so a door takes it down
     csaDrawHelmPanel();   // CSA-L: the helm panel, once a frame in every mode
     spoilsRecoverFrame();   // WB5: a boss's spoils no save holds, back to their character as it stands up - before it can save, online or not
-    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else { if (_peerCandleLights.length) peerCandlesFrame([], dt);   /* PEERLIGHT2: offline, no one's candle stays lit */ serpentAway(!onlineOn); /* SERPENT1: its bar put away - offline, my ship let go of its coil */ sdFightAway(); /* SD8c: and the Remnant's */ if (!onlineOn && modes?.gateArenaDay?.() != null) { ejectFromCourt(COURT_TEXT.collapse); gateCourt?.leave(); /* AUDIT SS: and its floor into the pack - online, the frame's own court does it */ } if (player.arena) player.arena = modes?.gateArenaDay?.() != null ? courtRing() : null; if (!player.arena) player.arena = arenaBouts.ring(); /* ARENA2: my bout's ring on the arena's sand */ siegeHud?.hide(); /* AUDIT-SEATS C1: no online frame (a load, a spawn), no battle's tick - its HUD hidden, never frozen; the next tick draws it again */ }   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone; WB3b: the court's is its floor's, and offline there is no court   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
+    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else { if (_peerCandleLights.length) peerCandlesFrame([], dt);   /* PEERLIGHT2: offline, no one's candle stays lit */ serpentAway(!onlineOn); /* SERPENT1: its bar put away - offline, my ship let go of its coil */ dragonSky?.away(!onlineOn); /* DRAGON3: and the dragon's */ sdFightAway(); /* SD8c: and the Remnant's */ if (!onlineOn && modes?.gateArenaDay?.() != null) { ejectFromCourt(COURT_TEXT.collapse); gateCourt?.leave(); /* AUDIT SS: and its floor into the pack - online, the frame's own court does it */ } if (player.arena) player.arena = modes?.gateArenaDay?.() != null ? courtRing() : null; if (!player.arena) player.arena = arenaBouts.ring(); /* ARENA2: my bout's ring on the arena's sand */ siegeHud?.hide(); /* AUDIT-SEATS C1: no online frame (a load, a spawn), no battle's tick - its HUD hidden, never frozen; the next tick draws it again */ }   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone; WB3b: the court's is its floor's, and offline there is no court   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
     deadlandsAirFrame();   // WB6b: after the court's ways out have run, online or not - the frame it is gone is the frame its air falls silent
     sdAirFrame();   // SD14b: and the Hour's, the same way
     if (onlineOn && playerSpawned && (seatOut() || townTalk.overlay instanceof DeathScreen || modes?.deathUp?.())) { siegeHud?.hide(); siegeNpcs?.leave(); }   // AUDIT SEATS-2 C4: the dead and a tab out of the seat draw no battle - the online frame returns before its tick
@@ -31974,7 +31828,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           const odo = player.odometer?.h ?? 0, metres = _upkeepOdo == null ? 0 : Math.max(0, odo - _upkeepOdo);
           _upkeepOdo = odo;
           const mode = player.transportMode;
-          const galloping = !_overlayHeld && mode === TRANSPORT_MODES.Horse && !!player.isRunning && !player.standing;
+          const galloping = !_overlayHeld && (mode === TRANSPORT_MODES.Horse || mode === TRANSPORT_MODES.Dragon) && !!player.isRunning && !player.standing;   // DRAGON5c: the dragon gallops on horse care's breath
           upkeep.tick(gamePaused() ? 0 : dt, {
             mode, galloping, moving: !player.standing,
             metres, road: _surfPath, load: wagonLoadShare(),
@@ -32225,6 +32079,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           const _torchPick = pickActivatableHit(cam.pos, useFwd, droppedTorches.targets(), collider);   // HT1: the mod's RegisterCustomActivation over its six records, the same one ray
           const _wagonPick = pickActivatableHit(cam.pos, useFwd, mwViewWagonTargets(RAY_DISTANCE), collider);   // EOTB-IL: Eye Of The Beholder's cart, RegisterCustomActivation(41239, 3.2), the same one ray
           const _campPick = pickActivatableHit(cam.pos, useFwd, camps.targets(), collider);   // SURV3: a camp's fire or tent, the same one ray
+          const _dragonPick = dragonSky ? pickActivatableHit(cam.pos, useFwd, dragonSky.keepTargets(), collider) : null;   // DRAGON5b: a tamed dragon waiting, the same one ray
           const _hccPick = pickActivatableHit(cam.pos, useFwd, hcc.targets(), collider);   // HCC: the parked wagon's box, the following team's, the standing horse's (RegisterCustomActivation at 3.2), the same one ray
           const _springPick = pickActivatableHit(cam.pos, useFwd, springTargets(), collider);   // SURV3: a fountain, a well, a trough
           const _gatePick = gatePool ? pickActivatableHit(cam.pos, useFwd, [...gatePool.targets(), ...(riteHost?.targets() ?? [])], collider) : null;   // WB2: an Oblivion Gate's fire; WB12d: and the faithful's casket, on its ray
@@ -32244,6 +32099,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             torch: _torchPick,
             wagon: _wagonPick,
             horseCart: _hccPick,   // HCC
+            dragon: _dragonPick,   // DRAGON5b
             camp: _campPick,   // SURV3
             water: _springPick,   // SURV3
             gate: _gatePick,   // WB2
@@ -32298,6 +32154,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             else if (_race.campWins) { if (_campPick.distance > _campPick.reach) setMidScreenText(tooFarAwayText()); else camps.activate(_campPick.key, getInteractionMode(), plaqueActionFor(_campPick.key)); }   // REST2: the plaque's lit row
             else if (_race.waterWins) { if (_springPick.distance > _springPick.reach) setMidScreenText(tooFarAwayText()); else drinkAtSpring(_springPick.key); }
             else if (_race.wagonWins) { if (_wagonPick.distance > _wagonPick.reach) setMidScreenText(tooFarAwayText()); else mwViewWagonActivate(getInteractionMode(), { say: (l) => townTalk.say(l), openInventoryWithWagon: () => { const w = makeInventoryWindow(EOTB_WAGON_PACK); if (w) townTalk.showOverlay(w); } }); }   // DISC10-E L3: a refused pack is null
+            else if (_race.dragonWins) dragonSky.keepActivate(_dragonPick.key, _dragonPick.distance, getInteractionMode(), plaqueActionFor(_dragonPick.key));   // DRAGON5b: ride it, its bags, send it away, name it
             else if (_race.horseCartWins) { hcc.activate(_hccPick.key, _hccPick.distance, (l) => townTalk.say(l), () => setMidScreenText(tooFarAwayText()), plaqueActionFor(_hccPick.key)); }
             else if (_race.boatWins) csaActivate(_csaBoatPick);   // CSA-D: Come Sail Away's seven activations - the helm, the board, the status (the rest are their slices')   // ACT-MENU: the verb the plaque lit, where it stands   // HCC: DeployedWagonActivator / FollowingWagonActivator / StationaryHorseActivator - the runtime's own reach test and refusals
             else if (_torchNearest) { if (_torchPick.distance > _torchPick.reach) setMidScreenText(tooFarAwayText()); else droppedTorches.activate(_torchPick.key, getInteractionMode()); }   // the mod's own activation, ahead of DFU's ladder
@@ -33687,6 +33544,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     portalGates.tick(_mode() === 'exterior' && walkMode && playerSpawned ? player.feetAt() : null, { hold: portalHoldNow });   // PORTAL1: the portals run out, and a step in is an arrival - indoors nobody steps in
     if (_mode() === 'exterior') livePersonBatches.push(...portalGates.batches());   // PORTAL1: the vortexes on the flats' axis
     if (sigilBroker && _mode() === 'exterior') livePersonBatches.push(...sigilBroker.batches());   // SET7: the Broker on the flats' axis, as a foe stands
+    if (dragonSky && _mode() === 'exterior') livePersonBatches.push(...dragonSky.batches());   // DRAGON3: the Dwarven Dragon, in its sky or on its ground
     if (lefay && _mode() === 'exterior') livePersonBatches.push(...lefay.batches());   // LEFAY1: the flowers laid at the monument, and the ones in flight
     if (merchantYards && _mode() === 'exterior') livePersonBatches.push(...merchantYards.batches());   // MERCHANT-YARDS: the keepers and the Stables' horses on the flats' axis
     portBatchesInto(livePersonBatches);   // SHIPYARDS: the port's people on the flats' axis
@@ -33723,6 +33581,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     csaDrawParticlesBlended();   // CSA-F: the oars' and rudders' drops (the Transparent queue)
     if (naval?.enabled) navalRender.draw(naval.drawFrame());   // NAV-B: the smoke, the spray, the balls in flight and the aim's arcs and zone, over the sea's top
     if (_serpentDraw) { try { serpentRenderer()?.drawSea(_serpentDraw); } catch (e) { console.warn('[serpent] marks', e?.message ?? e); } }   // SERPENT1: its telegraphs, the maelstrom and the venom, over the sea's top
+    if (dragonSky && _mode() === 'exterior') { try { dragonSky.drawMarks(); } catch (e) { console.warn('[dragon] marks', e?.message ?? e); } }   // DRAGON3: its telegraphs, draped on the land
     portGlows();   // SHIPYARDS: the lighthouses' lamps and their turning beams, added light over the sea's top
     navalHud(dt);   // NAV-F: the helm's readout
     // DW-C: under the distance fog the air's own effects - the sand, the wisps, the bolts, none of which writes a depth
@@ -34087,6 +33946,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // Dodging tally, the poison seam and the recoverable arrow all
     // ride the hit.
     meterFor(renderer.gl)?.markCpu('arrows');   // PERF-ZONE2: the missiles' flight and their draw
+    const frameArrows = () => {   // PERF-V8
     arrows.update(foeDt, {   // AUDIT (pre-merge) P6: QUEST-POPUP-PAUSE's hold - offline, an arrow already loosed waits under the quest's box with its archer
       // enemy arrows hunt only a SPAWNED, WALKING player - fly/orbit
       // camera modes have no capsule to hit
@@ -34121,8 +33981,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       foeTargets: [...[...exteriorFoes.foes, ...cityGuards.guards]
         .filter((t) => !t.dead && t.ai).map((t) => ({ feet: t.ai.feet, ref: t })), ...duelArrowTargets()],   // DUEL1: and my duel opponent's body, while we fight
       onFoeHit: (m, t) => (t?.duel ? undefined : exteriorFoes.arrowHitFoe(m, t)),   // DUEL1: a foe's shaft stops on a duellist and deals them nothing
-      boxTargets: serpentHost?.handBoxes?.() ?? null,   // SERPENT4: the sea serpent's hide - a hand's shaft stops in it
-      onPlayerArrowHitBox: (m, t) => serpentArrowOn(m, t),
+      boxTargets: dragonBoxesWith(dragonSky, serpentHost?.handBoxes?.() ?? null),   // SERPENT4: the sea serpent's hide - a hand's shaft stops in it; DRAGON3: and the dragon's body
+      onPlayerArrowHitBox: (m, t) => dragonSky?.arrow(m, t) || serpentArrowOn(m, t),
       // AUDIT 39 (#64): and the PLAYER's shaft lands too. It used to
       // fly, spend its Arrow and tally Archery against a guard or an
       // encounter foe and inflict nothing - both impact arms were
@@ -34153,6 +34013,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           : exteriorFoes.attackFromPlayer(f, player.pos, 'arrow')),   // AUDIT WORLD6b-iii(e) A2: the shaft's kind on the zero blow; AUDIT WORLD6b-ii B4: the one door - a PUPPET's is its owner's (a zero blow diverted, a damaging one already was), no area of mine wakes
       })),
     });
+    };
+    frameArrows();
     arrows.draw(renderer);
     // UNDER-LOOK and UNDER-RAYS (FIELD BUGS 2026-10-01 #4, #5): under the sea, the water body and the sun's shafts over
     // every pixel the world drew - after the last world pass, before the weapon and the HUD (world/underwater/underwaterLook.js)
@@ -34225,8 +34087,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // grunt rolls in the first pool that has anyone, not in each.
         const swing = {};
         // DUEL1: my duel opponent first - a swing that reaches them is theirs (their client resolves it: net/duel/duelSession.js),
-        // tallied as a connect, and no pool, civilian or door hears it
-        if (duelMeleeHit(cam.pos, makeInView(proj, view, multiply))) {
+        // tallied as a connect, and no pool, civilian or door hears it; DRAGON3: so is a grounded dragon's, out to its cell
+        if (duelMeleeHit(cam.pos, makeInView(proj, view, multiply)) || !!dragonSky?.swing(weaponRig.playerWeapon, cam.pos, lookFwd, makeInView(proj, view, multiply))) {
           tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon, weaponRig.playerWeapon.blowWeight);
           surfacePlayer();
         } else if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { swing })) {
@@ -34363,6 +34225,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             torch: pickActivatableHit(cam.pos, _hd, droppedTorches.targets(), collider),
             wagon: pickActivatableHit(cam.pos, _hd, mwViewWagonTargets(RAY_DISTANCE), collider),
             horseCart: pickActivatableHit(cam.pos, _hd, hcc.targets(), collider),   // HCC
+            dragon: dragonSky ? pickActivatableHit(cam.pos, _hd, dragonSky.keepTargets(), collider) : null,   // DRAGON5b
             camp: pickActivatableHit(cam.pos, _hd, [...camps.targets(), ...(yards?.targets() ?? [])], collider),
             water: pickActivatableHit(cam.pos, _hd, springTargets(), collider),
             gate: gatePool ? pickActivatableHit(cam.pos, _hd, [...gatePool.targets(), ...(riteHost?.targets() ?? [])], collider) : null,   // WB2; WB12d: the casket

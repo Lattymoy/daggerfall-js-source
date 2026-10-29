@@ -60,7 +60,7 @@ the one that ground and the town's blocks set (`net/homeLaw.js` homeGroundOk). T
 client's word, as HOME-PRICE's price always was, so a forged client can name a wider ground (AUDIT FB1029f A2):
 DECOR_CAP_MAX bounds it, and only the service knowing each town's blocks would close it.
 
-FIXED. A claim keeps the ground (migration 0195). A home bought before names it once, from its owner's client, at its
+FIXED. A claim keeps the ground (migration 0196). A home bought before names it once, from its owner's client, at its
 first list read (`systems/decor/homeDecorCap.js`, the service's `op: 'ground'`). A home the arena moves carries its ground with its price. The list says the room's cap; a
 placement and a batch hold it. An offline house holds its own ground's cap. The refusal names no number now.
 
@@ -70,7 +70,7 @@ PINS: `test/server/decorroomy_service.test.js`, `test/systems/decor/decorroomy.t
 ## 3. REST-GUEST - who may rest in my home
 
 FIXED. The owner's bar in their own online home has a chip, "Who may rest", that steps through Me, Friends, Party and
-Guild. It is the home's own row among its pieces' access rows (`DECOR_REST_ID`, migration 0194), set and read as a
+Guild. It is the home's own row among its pieces' access rows (`DECOR_REST_ID`, migration 0195), set and read as a
 chest's is (`server-account/src/decorAccess.js`). A guest the row names is told so with the room's grants, and the
 rest's bag stands their bed as the owner's: `systems/decor/decorGrants.js:"export const decorMayRest = (mapId, buildingKey) =>"`.
 A guild's hall keeps its own law; its members already rest there. A home's rows end with it: a sale or a character's
@@ -201,8 +201,8 @@ only its element.
 FIXED. A Gilded piece is the item maker's, as a Rare is: its record's lines stay as minted, the maker's own rows are
 laid beside them, and it keeps its name (`systems/enchanting.js:"export function gildedKeeps(item) {"`). A Gilded weapon
 wears a crimson look of its own over its element, the Aura Armory's piece and the arcane look (weapon glow law 8,
-`05-Combat/Weapon-Glow.md`; `06-Systems/Gilded.md` section 11). ITEM_LAW_VERSION 15, the account service acct222, the relay
-world287 (acct220 and world286 on its branch, renumbered at the merge of main). No line, rung or power number moves.
+`05-Combat/Weapon-Glow.md`; `06-Systems/Gilded.md` section 11). ITEM_LAW_VERSION 16, the account service acct223, the relay
+world289 (law 15, acct220 then acct222 and world286 then world287 on its branch, renumbered at the merges of main). No line, rung or power number moves.
 
 PINS: `test/systems/gildedmaker.test.js`, `test/systems/gildedglow.test.js`; `tools/mutants/gildedmaker.json` and
 `gildedglow.json`, dead.

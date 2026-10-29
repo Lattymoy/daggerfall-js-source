@@ -605,8 +605,9 @@ test('AUDIT SCHOOLS L2 F4: MY SPELL ON THE RELAY\'S STAND-INS IS TOLD TO THE RID
   assert.match(dc, /castAtHost: opts\.gateHost \? \(sp, i, caster\) => spellOnHost\(sp, i, caster\) : null,/);
   const w = src('src/scenes/world.js');
   // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): the serpent's door left bootWorld for scenes/gate/standInSpell.js createSerpentSpell, which tells the riders
-  assert.match(sis, /tellSpellLanded\(\{ caster: player, target: e, foe: null, spell: sp, r, self: false, took: standInShown\(dealt, SERPENT_HIT_CAP_X \* SERPENT_HAND_REF\), cast: caster\?\.cast \?\? null \}\);/);
-  assert.match(w, /castAtBox: \(sp, q, caster\) => serpentSpell\.cast\(sp, q, caster\),/);
+  assert.match(sis, /tellSpellLanded\(\{ caster: player, target: e, foe: null, spell: sp, r, self: false, took: standInShown\(dealt, cap\(\)\), cast: caster\?\.cast \?\? null \}\);/);   // PIN MOVED (DRAGON3): its cap the door's own (`cap`, the serpent's hand's purse by default)
+  assert.match(sis, /cap = \(\) => SERPENT_HIT_CAP_X \* SERPENT_HAND_REF \}\) \{/);
+  assert.match(w, /castAtBox: \(sp, q, caster\) => dragonSky\?\.cast\(sp, q, caster\) \?\? serpentSpell\.cast\(sp, q, caster\),/);   // PIN MOVED (DRAGON3): the serpent's door for any mark not the dragon's
   const hm = src('src/scenes/hostMagic.js');
   assert.match(hm, /function giveToBoss\(mark, sp, caster = null\) \{/);
   assert.match(hm, /else giveToBoss\(hitBoss, m\.spell, playerCaster\(m\.cast \?\? null\)\);/);

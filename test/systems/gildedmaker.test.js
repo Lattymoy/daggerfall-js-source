@@ -127,7 +127,7 @@ test('GILDED-MAKER THROUGH THE WINDOW: the Hourlock enchanted as a player does -
 
 test('GILDED-MAKER THE LAW: item law 15 - the maker\'s rows on every Gilded record and era lawful, held to the maker\'s law and the piece\'s points; a row no maker laid, a made row of no maker, a cost lied, the points passed, a kind twice, a door\'s mark or a line moved beside them - each refused by the law and the wire; the account service\'s judge, headless, agrees (mutants: the law refusing them; the wire taking any row; the wire refusing the maker\'s; a custom row let in; the law unmoved)', () => {
   on();
-  assert.equal(ITEM_LAW_VERSION, 15);
+  assert.equal(ITEM_LAW_VERSION, 16);   // PIN MOVED (GILDED-MAKER): law 16 - the item maker's rows on a Gilded piece lawful (15 on its branch, renumbered past DRAGON5's 15 at the merge)
   assert.equal(JUDGE_VERSION, ITEM_LAW_VERSION, 'the account service\'s judge is this law');
   const lawful = ALL.map((r) => made(r, [FEATHER, LOW_DAMAGE]));
   for (const it of lawful) {

@@ -68,7 +68,7 @@ test('RIDE wire: the pose carries the mount (1 the horse, 2 the cart) and the sp
   assert.deepEqual(Object.keys(validPose({ x: 1, y: 2, z: 3, yaw: 0, pitch: 0, rd: 0, rv: 3 })), Object.keys(foot), 'rd 0 is on foot: no fields');
   const horse = validPose({ x: 1, y: 2, z: 3, yaw: 0, pitch: 0, rd: 1, rv: 9 });
   assert.equal(horse.rd, POSE_RIDE.Horse); assert.equal(horse.rv, 4, 'the sprite set clamped to the five');
-  assert.equal(validPose({ x: 1, y: 2, z: 3, yaw: 0, pitch: 0, rd: 7 }).rd, POSE_RIDE.Cart, 'clamped');
+  assert.equal(validPose({ x: 1, y: 2, z: 3, yaw: 0, pitch: 0, rd: 7 }).rd, POSE_RIDE.Dragon, 'clamped');   // PIN MOVED (DRAGON1): the top ride is the dragon's now (test/net/dragonride_wire.test.js)
   assert.ok(poseChanged(foot, horse), 'mounting goes out at once');
   assert.ok(poseChanged(horse, { ...horse, rv: 1 }));
   assert.equal(lerpPose(foot, horse, 0.5).rd, 1); assert.equal('rd' in lerpPose(horse, foot, 0.5), false, 'a dismount drawn at once');
@@ -379,10 +379,10 @@ test('HCC-PARK / RIDE hosts: the owner\'s word names the character, is ticked wi
   assert.match(w, /online\.onPark = \(room, e\) => \{ wagonWarden\?\.keptWord\(room, e\); hcc\.applyKept\(room, e, campToScene, performance\.now\(\)\); \};/);   // PIN MOVED (WARDEN1): a throw it had not said is played before the pool takes the word
   assert.match(w, /online\.onParks = \(room, list\) => hcc\.replaceKept\(room, list, campToScene, performance\.now\(\)\);/);
   assert.match(w, /hcc\.pruneKept\(isCellRoom\(online\.room\) \? \[online\.room, \.\.\.online\.haloRooms\(\)\] : \[\], now\);/);
-  assert.match(w, /peerRiders\.sync\(seen, onlineToScene,[^\n]*\n\s+const afoot = seen\.filter\(\(d\) => (?:\(peerRidesIn3d\(d\) \|\| )?!peerRiders\.isRiding\(d\.id\)[^;]*\);[^\n]*\n\s+peerBodies\.sync\(afoot,/);
+  assert.match(w, /peerRiders\.sync\(seen, onlineToScene,[^\n]*\n\s+const afoot = seen\.filter\(\(d\) => (?:d\.shown\?\.rd !== POSE_RIDE\.Dragon && )?(?:\(peerRidesIn3d\(d\) \|\| )?!peerRiders\.isRiding\(d\.id\)[^;]*\);[^\n]*\n\s+peerBodies\.sync\(afoot,/);
   assert.match(w, /bodyHeight: \(id\) => peerRiders\.heightOf\(id\) \|\| peerBodies\.heightOf\(id\)/);
   assert.match(w, /const riding = \(modes\?\.mode \?\? 'exterior'\) === 'exterior' && isRiding\(player\.transportMode\);/);
-  assert.match(w, /rd: dragonPoseRide\(\) \?\? \(!riding \? 0 : player\.transportMode === TRANSPORT_MODES\.Cart \? 2 : 1\),/);   // PIN MOVED (DRAGON-RIDE): on the dragon, its own ride first (systems/staffDragon.js)
+  assert.match(w, /rd: dragonPoseRide\(riding \? player\.transportMode : null\) \?\? \(!riding \? 0 : player\.transportMode === TRANSPORT_MODES\.Cart \? 2 : 1\),/);   // PIN MOVED (DRAGON5): a tamed dragon's rider too; PIN MOVED (DRAGON-RIDE): on the dragon, its own ride first (systems/staffDragon.js)
   assert.match(w, /rv: [^\n]*modSetting\('eye-of-the-beholder', 'Graphics\.OnHorse'\)/);
   assert.match(w, /const eye = \[feet\[0\], feet\[1\] \+ \(s\.rd \? RIDE_EYE_HEIGHT : h - 0\.2\), feet\[2\]\];/);
   assert.match(rd('src/net/remotePlayers.js'), /onFoot: !shown\.rd,/);

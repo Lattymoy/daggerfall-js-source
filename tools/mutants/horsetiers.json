@@ -146,7 +146,7 @@
   {
     "name": "HORSE-TIERS-the-starving-line-unheld",
     "file": "src/systems/steedCare.js",
-    "old": "    if (!rules.bondFades && holdStarving(horse, now)) changed = true;   // HORSE-TIERS: Boons owes no fade, then or later\n",
+    "old": "  if (!rules.bondFades && holdStarving(horse, now)) changed = true;   // HORSE-TIERS: Boons owes no fade, then or later\n",
     "new": "",
     "tests": [
       "test/systems/horsetiers.test.js"

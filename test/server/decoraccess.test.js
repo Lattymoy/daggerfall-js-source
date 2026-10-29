@@ -407,5 +407,5 @@ test('REST-GUEST (FIELD BUGS 2026-10-29f, the housing thread\'s item 8: "Allow f
   env.DB._raw.prepare("UPDATE homes SET guild_id = 'g1' WHERE map_id = ?").run(HOME.mapId);
   assert.equal((await set({ mode: 'guild', names: [], rank: 1 })).body.error, 'bad-decor', 'never a hall\'s, whatever rank it names');
   env.DB._raw.prepare('UPDATE homes SET guild_id = NULL WHERE map_id = ?').run(HOME.mapId);
-  assert.match(src('server-account/migrations/0194_decor_rest.sql'), /kind\s+TEXT NOT NULL CHECK \(kind IN \('storage', 'station', 'rest'\)\)/);
+  assert.match(src('server-account/migrations/0195_decor_rest.sql'), /kind\s+TEXT NOT NULL CHECK \(kind IN \('storage', 'station', 'rest'\)\)/);
 });
