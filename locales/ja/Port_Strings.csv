@@ -3330,6 +3330,8 @@ tutorials.wildZone.body1,"Cyrodiilと開かれた{word}大洋では、プレイ�
 tutorials.wildZone.body2,"そこで他のプレイヤーに倒されても、何も落としません。相手は保険のない装備品を1つ奪えます。なければ保険1件分のゴールド、それもなければ硬貨と信用状の10分の1です。それ以外の死は通常どおり10分の1です。"
 wagon.upkeep.boons.failing,"{name}が崩れかけています。荷車置き場か荷車修理キットで直せます。"
 wagon.upkeep.boons.rickety,"{name}ががたついています。荷車置き場で直せます。"
+wild.death.away,"不在の間に{name}に倒された。"
+wild.death.awayAnon,"不在の間に倒された。"
 wild.death.kept,"何も落としていません。通常の死亡時の損失を支払います。"
 wild.death.last,"{name}があなたの硬貨と信用状の十分の一、{gold}ゴールドを奪った。奪える装備も保険もなかった。"
 wild.death.lastAnon,"あなたを倒した者があなたの硬貨と信用状の十分の一、{gold}ゴールドを奪った。奪える装備も保険もなかった。"

@@ -1203,6 +1203,8 @@ tutorials.wildZone.body1,"Cyrodiil'de ve açık {word} Okyanusu'nda oyuncular bi
 tutorials.wildZone.body2,"Orada seni başka bir oyuncu öldürürse hiçbir şey düşmez. O, giydiğin sigortasız bir eşyayı, yoksa bir poliçenin altınını, o da yoksa sikkelerinin ve kredi mektuplarının onda birini alabilir. Başka her ölüm olağan onda birine mal olur."
 wagon.upkeep.boons.failing,"{name} dağılıyor. Bir Araba Avlusu ya da bir Araba Tamir Takımı onu onarır."
 wagon.upkeep.boons.rickety,"{name} köhne. Bir Araba Avlusu onu onarabilir."
+wild.death.away,"Sen yokken {name} seni öldürdü."
+wild.death.awayAnon,"Sen yokken öldürüldün."
 wild.death.kept,"Hiçbir şey düşmedi. Ölümün olağan bedelini ödersin."
 wild.death.last,"{name}, sikkelerinin ve kredi mektuplarının onda biri olan {gold} altını aldı. Alınacak teçhizatın ve sigortan yoktu."
 wild.death.lastAnon,"Katilin, sikkelerinin ve kredi mektuplarının onda biri olan {gold} altını aldı. Alınacak teçhizatın ve sigortan yoktu."

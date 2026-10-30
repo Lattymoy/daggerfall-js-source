@@ -487,11 +487,11 @@ a dark garnet through the rung's own crimson (`#ff3b4a`, RARITIES') to a hot pin
 Brand runs coal to gold. It is a slow regal pulse - a 4 s swell, a 6 s crest walking round it, a glint - its reach under
 the Brand's. It wins over the element, the armory's piece and the arcane look, because it is the piece itself, as its
 card's colour is. It shows in the classic outline, the Morrowind arm in first and third person, and to peers as the word
-`gilded2` (relay world290). With the ladder switched off the card shows no rung, so the hand shows none.
+`gilded2` (relay world291). With the ladder switched off the card shows no rung, so the hand shows none.
 
 **Hosts, provinces, deploy.** No host changed: the item maker's window serves all four, and the glow rides
 `createWeaponRig` in `scenes/world.js`, `scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js`.
-Neither half reads a place, so every province is alike. Deploy the account service (acct225) and the relay (world290)
+Neither half reads a place, so every province is alike. Deploy the account service (acct225) and the relay (world291)
 before the site: before them an honest enchanted Gilded piece reads as a forgery, and a peer's Gilded weapon draws bare.
 
 **The pins.** `test/systems/gildedmaker.test.js` (4) and `test/systems/gildedglow.test.js` (4); the honest sweep's Gilded
