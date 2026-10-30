@@ -1169,3 +1169,44 @@ DEPARTURE from the assembly, the sixth, recorded in the Ledger row.
 (the body's clip is one stroke under Mixed, alternating, by the rig's count where it names one, at five-thirds of the
 weapon's tick), `test/net/disc23b_eotb_sprites.test.js` (a peer's stroke by `an`); `tools/mutants/onestroke.json`.
 `tools/mutants/disc23b.json`'s clip-never-ends record re-aimed at the shot's own frames. Not verified in a browser.
+
+## BACK-HOLSTER (2026-10-30): the sheathed weapon on the sprite's back - NOT the mod's
+
+Mac: "For layered/skins in third person. I want to implement back holstered weapon visuals for the sprites which rotate
+on the back properly in all directions." Eye Of The Beholder draws no holster, and DFU has none; this is the port's own.
+The Morrowind body keeps Weapon Sheathing's (`systems/weaponSheathing.js`, WS1).
+
+**What rides the back.** While the weapon is sheathed, the one in the weapon hand (`EQUIP_SLOTS.RightHand`) if its skill
+is Long Blade, Axe, Blunt Weapon or Archery: the long blades, the axes, the maces, flails, warhammers and staffs, the bows
+and the Thunderlock. A short blade (Dagger, Tanto, Wakizashi, Shortsword) belongs at the hip, which is not drawn yet;
+nor is the Pistolet. In hand, in the saddle, as a beast, in first person and under the Overworld's grown body there is
+none. The skins and Layered Gearing alike carry it, mine and every walker's (`wd` 0, their look's weapon hand).
+
+**The picture.** The weapon's own paper-doll picture, as the pack draws it for its wearer: TEXTURE.233/234 in its metal,
+a Diverse Weapons replacement, a custom class's (`ui/item/itemIconColor32.js`), read from the player's data at run time -
+nothing of ARENA2 ships. Each is drawn on its own slant, so `uprightWeaponPicture` finds its long axis (the straight line
+through the most pixels - a haft, a blade, a bowstring; a mean axis was pulled off an axe's haft by its head), turns it
+upright by a half turn where needed so its widest end is on top (a sword's guard, an axe's or a hammer's head), and
+resamples it at the sprites' pixel size: the paper doll's 0.01 m a pixel against the sets' 0.019. It is uploaded as
+drawn and mirrored; a store keeps eight.
+
+**The hang.** A line in the body's frame from the right shoulder to the left hip, 35 degrees off the spine, a quarter
+of its height over the shoulder row (`EOTB_FIGURE.shoulder`), 0.16 m behind the body's middle (past a side view's
+painted back), centred on the painted body (`spriteMarks`), scaled with the sprite. Its frame is the picture's facing
+(`portrayedYaw`), so it turns with the eight views and never between them. Each frame the line is laid into the view
+plane: from behind it leans to the right shoulder, from the front the other way and mirrored, from the side it stands
+upright and shorter. From the front the body's card hides it but the hilt and the tip. From the side and behind it lies
+3 cm toward the eye: drawn behind the card there, a longsword vanished into the side view's profile.
+
+**Where.** `player/eyeOfTheBeholder/eotbHolster.js` (the law, the picture, the store, the hang, the batch);
+`eotbBody.js` draws mine after the body (`drawHolster`); `net/peer/peerRiders.js` hangs each walker's (`slingHolster`)
+and draws it in `drawLanterns`, beside the bodies. No host changed. **Known limits.** Layered Gearing's art holds its
+mace in every frame, so a sheathed layered body shows the mace in hand and the weapon on its back. A flail stands on
+its handle with its chain and ball off to the side. Not yet checked in the running game.
+
+**Pins.** `test/player/eyeOfTheBeholder/backholster.test.js` (which weapons; the picture stood up, end and side kept;
+the slant, length, face and depth in all eight views and three facings; glued to the picture; the store; my body's
+gates; the walkers'); `tools/mutants/backholster.json` (nineteen, all killed). Three records in `htwaist.json` and
+`seraphwings.json` re-aimed by content at the lines this touched. `tools/backHolsterProbe.mjs` draws it in the real
+renderer (the game's mirrored lens) on a skin and on Layered Gearing with five weapons from ARENA2, eight views each:
+30 checks that it leans to the right shoulder from behind, stands upright from the side and hides in front.

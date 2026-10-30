@@ -1,0 +1,276 @@
+// BACK-HOLSTER (2026-10-30, Mac: "For layered/skins in third person. I want to implement back holstered weapon visuals
+// for the sprites which rotate on the back properly in all directions"). The law is player/eyeOfTheBeholder/eotbHolster.js:
+// which weapons ride the back, the picture stood upright, the line across the back laid into each of the eight views,
+// and the batch. Driven through the real body (createEotbBody) and the real walker layer (createPeerWalkers) with fakes.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+import {
+  HOLSTER_HAND_SLOT, BACK_HOLSTER, PAPERDOLL_MPP, holstersOnBack, holsterItemOfLook, uprightWeaponPicture, hangSpriteHolster,
+  createSpriteHolster, createHolsterArt, HOLSTER_ART_KEPT,
+} from '../../../src/player/eyeOfTheBeholder/eotbHolster.js';
+import { EOTB_FIGURE } from '../../../src/render/auraRing.js';
+import { EQUIP_SLOTS } from '../../../src/systems/equip.js';
+import { createEotbBody } from '../../../src/player/eyeOfTheBeholder/eotbBody.js';
+import { createPeerWalkers, createEotbArt } from '../../../src/net/peer/peerRiders.js';
+import { PISTOLET_TEMPLATE, THUNDERLOCK_TEMPLATE } from '../../../src/characters/thunderlockIds.js';
+
+const EIGHT = [0, 1, 2, 3, 4, 5, 6, 7];
+const settle = (ms = 5) => new Promise((res) => setTimeout(res, ms));
+const T = BACK_HOLSTER.tilt;
+
+/** The camera for view `o` of a figure facing +Z at `feet` (orientationFor's wheel: 0 in front, 4 behind). */
+function cameraFor(o, feet, nudge = 0, turn = 0) {
+  const a = o * Math.PI / 4 + nudge + turn, tc = [Math.sin(a), 0, Math.cos(a)];   // `turn`: the figure faces that yaw
+  const yaw = Math.atan2(-tc[0], -tc[2]);
+  return { eye: [feet[0] + 2 * tc[0], feet[1] + 1.5, feet[2] + 2 * tc[2]], yaw, right: [Math.cos(yaw), 0, -Math.sin(yaw)] };
+}
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const flatDist = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]);
+
+test('BACK-HOLSTER: the weapon hand is EQUIP_SLOTS.RightHand, and the back carries the long blades, axes, blunt weapons, staffs, bows and the Thunderlock - not a short blade, an arrow, the Pistolet or anything not a weapon (mutants: a skill dropped; the short blades let in)', () => {
+  assert.equal(HOLSTER_HAND_SLOT, EQUIP_SLOTS.RightHand);
+  const riding = [];
+  for (let t = 113; t <= 131; t++) if (holstersOnBack({ templateIndex: t })) riding.push(t);
+  assert.deepEqual(riding, [115, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130],
+    'Staff, Broadsword .. Long Bow - never the Dagger (113), Tanto (114), Shortsword (116), Wakizashi (117) nor the Arrow (131)');
+  assert.equal(holstersOnBack({ templateIndex: THUNDERLOCK_TEMPLATE }), true, 'the Thunderlock, fired on Archery');
+  assert.equal(holstersOnBack({ templateIndex: PISTOLET_TEMPLATE }), false, 'the Pistolet is a hand gun');
+  for (const junk of [null, undefined, {}, { templateIndex: 'x' }, { templateIndex: 0 }]) assert.equal(holstersOnBack(junk), false);
+  const sword = { templateIndex: 120, equipSlot: 19 };
+  assert.equal(holsterItemOfLook([{ templateIndex: 101, equipSlot: 21 }, sword]), sword);
+  assert.equal(holsterItemOfLook([{ templateIndex: 101, equipSlot: 21 }]), null);
+  assert.equal(holsterItemOfLook(null), null);
+});
+
+/** A color32 picture (row 0 the bottom) with the pixels `on(x, y)` answers, coloured by `rgb(x, y)`. */
+function picture(W, H, on, rgb = () => [200, 200, 200]) {
+  const colors = new Uint8Array(W * H * 4);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (!on(x, y)) continue;
+    const o = (y * W + x) * 4, [r, g, b] = rgb(x, y);
+    colors[o] = r; colors[o + 1] = g; colors[o + 2] = b; colors[o + 3] = 255;
+  }
+  return { width: W, height: H, colors };
+}
+/** The opaque rows of an upright picture, and the widest. */
+function rowsOf(p) {
+  const widths = [];
+  for (let y = 0; y < p.height; y++) { let n = 0; for (let x = 0; x < p.width; x++) if (p.colors[(y * p.width + x) * 4 + 3]) n++; widths.push(n); }
+  return widths;
+}
+
+test('BACK-HOLSTER picture: a slanted sword stands upright, its guard (the widest end) on top, at the sprites\' pixel size - and turned end for end it stands the same way up; a mirror is its columns reversed (mutants: no flip to the widest end; the step dropped)', () => {
+  // a blade from (6, 6) up to (66, 66) (row 0 the bottom), its guard across it near the upper end
+  const onBlade = (x, y) => Math.abs(x - y) <= 1 && x >= 6 && x <= 66;
+  const guardAt = (c) => (x, y) => Math.abs(x + y - 2 * c) <= 1 && Math.abs(x - y) <= 12;
+  for (const [name, guard] of [['guard up-right', 56], ['guard down-left', 16]]) {
+    const p = uprightWeaponPicture(picture(72, 72, (x, y) => onBlade(x, y) || guardAt(guard)(x, y)));
+    assert.ok(p, name);
+    const len = Math.hypot(60, 60) + 1, step = EOTB_FIGURE.mpp / PAPERDOLL_MPP;
+    assert.ok(Math.abs(p.height - Math.ceil(len / step)) <= 2, `${name}: ${p.height} rows - the blade's length at the sprites' texel (${step.toFixed(2)} source px)`);
+    assert.ok(p.width <= 15, `${name}: ${p.width} wide - stood upright, not on its slant`);
+    const widths = rowsOf(p), widest = widths.indexOf(Math.max(...widths));
+    assert.ok(widest > p.height * 0.6, `${name}: the guard (row ${widest} of ${p.height}) is in the top - row 0 is the bottom`);
+    assert.ok(Math.abs(p.h - p.height * step * PAPERDOLL_MPP) < 1e-9 && Math.abs(p.w - p.width * step * PAPERDOLL_MPP) < 1e-9, 'its quad, in metres');
+    for (let y = 0; y < p.height; y++) for (let x = 0; x < p.width; x++) {
+      for (let k = 0; k < 4; k++) assert.equal(p.mirror[(y * p.width + x) * 4 + k], p.colors[(y * p.width + (p.width - 1 - x)) * 4 + k]);
+    }
+  }
+  assert.equal(uprightWeaponPicture(picture(4, 4, (x, y) => x === y && x < 3)), null, 'three pixels are no weapon');
+  assert.equal(uprightWeaponPicture(null), null);
+});
+
+test('BACK-HOLSTER picture: stood up by a half turn, never a mirror - an axe head on the haft\'s right stays on its right; the haft, not the head, is the axis (mutants: the turn made a flip; a mean axis pulled off the haft)', () => {
+  // a haft up the middle (x 20, y 0..60) with a heavy head on its right near the top
+  const axe = (x, y) => (Math.abs(x - 20) <= 1 && y <= 60) || (x >= 21 && x <= 34 && y >= 44 && y <= 58);
+  const grey = () => [150, 150, 150];
+  /** the head's pixels right of the haft (the fullest column) less those left of it */
+  const side = (p) => {
+    const col = (x) => { let n = 0; for (let y = 0; y < p.height; y++) if (p.colors[(y * p.width + x) * 4 + 3]) n++; return n; };
+    let haft = 0;
+    for (let x = 1; x < p.width; x++) if (col(x) > col(haft)) haft = x;
+    let left = 0, right = 0;
+    for (let y = 0; y < p.height; y++) for (let x = 0; x < p.width; x++) if (p.colors[(y * p.width + x) * 4 + 3] && Math.abs(x - haft) > 1) (x < haft ? left++ : right++);
+    return right - left;
+  };
+  const up = uprightWeaponPicture(picture(40, 64, axe, grey));
+  assert.ok(side(up) > 0, 'upright already: the head on the haft\'s right');
+  // the same axe turned end for end (head at the bottom, on the haft's left): a half turn puts it back as it was
+  const turned = uprightWeaponPicture(picture(40, 64, (x, y) => axe(39 - x + 1, 63 - y), grey));
+  assert.ok(side(turned) > 0, 'turned end for end and stood up again: the head on the right, as a half turn leaves it');
+  // the haft is the axis: a column of the picture holds it whole
+  let longest = 0;
+  for (let x = 0; x < up.width; x++) { let n = 0; for (let y = 0; y < up.height; y++) if (up.colors[(y * up.width + x) * 4 + 3]) n++; longest = Math.max(longest, n); }
+  assert.ok(longest >= up.height - 2, `the haft stands straight up a column (${longest} of ${up.height})`);
+});
+
+const FEET = [4, 0.5, 9];
+const FIG = Object.freeze({ base: 0, mpp: EOTB_FIGURE.mpp, marks: null, shift: 0 });
+const ART = Object.freeze({ w: 0.2, h: 1.4, archive: 'eotb-holster:t' });
+/** The weapon's line as hung for view `o` - its slant along the view's right, its drawn length, its middle and ends. */
+function hungFrom(o, { fig = FIG, nudge = 0, turn = 0 } = {}) {
+  const cam = cameraFor(o, FEET, nudge, turn);
+  const l = hangSpriteHolster(createSpriteHolster(), fig, o, FEET, cam.eye, cam.right, ART);
+  assert.ok(l, `view ${o}: it hangs`);
+  const top = [l.origin[0] + l.up[0] * l.h, l.origin[1] + l.up[1] * l.h, l.origin[2] + l.up[2] * l.h];
+  return { l, cam, slant: dot(l.up, cam.right), top };
+}
+
+test('BACK-HOLSTER hang: the line across the back turns with the view - from behind its upper end leans to the screen\'s right (the right shoulder), from the front to the left and mirrored, from the side it stands upright and shortened; the diagonals between (mutants: the facing ignored; the tilt\'s sign; the side not shortened)', () => {
+  const s = EIGHT.map((o) => hungFrom(o));
+  const sinT = Math.sin(T), cosT = Math.cos(T);
+  // the slant seen: sin T times the cosine between the figure's right and the view's right, over the drawn length
+  for (const o of EIGHT) {
+    const c = Math.cos(o * Math.PI / 4 + Math.PI);   // the figure's right against the view's: +1 from behind (4), -1 in front (0)
+    const len = Math.hypot(sinT * c, cosT);
+    assert.ok(Math.abs(s[o].slant - (sinT * c) / len) < 1e-9, `view ${o}: slant ${s[o].slant.toFixed(4)}`);
+    assert.ok(Math.abs(s[o].l.h - ART.h * len) < 1e-9, `view ${o}: drawn ${s[o].l.h.toFixed(4)} m of ${ART.h}`);
+    assert.ok(Math.abs(dot(s[o].l.up, s[o].l.right)) < 1e-12 && Math.abs(Math.hypot(...s[o].l.up) - 1) < 1e-12, 'a turn of the view plane, not a shear');
+  }
+  assert.ok(s[4].slant > 0.5 && s[3].slant > 0 && s[5].slant > 0, 'from behind and its diagonals: toward the screen\'s right');
+  assert.ok(s[0].slant < -0.5 && s[1].slant < 0 && s[7].slant < 0, 'from the front and its diagonals: toward the left');
+  assert.ok(Math.abs(s[2].slant) < 1e-9 && Math.abs(s[6].slant) < 1e-9, 'from the side: upright');
+  assert.ok(Math.abs(s[2].l.h - ART.h * cosT) < 1e-9, 'and as long as the line stands tall');
+  assert.deepEqual(EIGHT.filter((o) => s[o].l.mirror), [0, 1, 7], 'its other face from the front and its three-quarters');
+  // the upper end stands the same height over the shoulders from every side
+  const topY = FEET[1] + EOTB_FIGURE.shoulder * EOTB_FIGURE.mpp + BACK_HOLSTER.over * ART.h * cosT;
+  for (const o of EIGHT) assert.ok(Math.abs(s[o].top[1] - topY) < 1e-9, `view ${o}: top at ${s[o].top[1].toFixed(3)}`);
+});
+
+test('BACK-HOLSTER hang: behind the card from the front and its diagonals, before it from the side and behind - so the body\'s own depth hides it from the front, and from the side it lies over the back\'s edge (mutants: no back offset; the bias away from the eye)', () => {
+  for (const turn of [0, Math.PI / 2, 2.2]) {
+    for (const o of EIGHT) {
+      const { l, cam } = hungFrom(o, { turn });
+      const nearer = flatDist(cam.eye, FEET) - flatDist(cam.eye, l.mid);
+      if ([2, 3, 4, 5, 6].includes(o)) assert.ok(nearer > ([2, 6].includes(o) ? 0.01 : 0.05), `facing ${turn.toFixed(2)}, view ${o}: ${nearer.toFixed(3)} m before the card`);
+      else assert.ok(nearer < -0.05, `facing ${turn.toFixed(2)}, view ${o}: ${(-nearer).toFixed(3)} m behind the card`);
+    }
+  }
+});
+
+test('BACK-HOLSTER hang: glued to the picture - turning the eye within one view changes nothing of the slant or the length (the picture\'s facing, portrayedYaw), and it centres on the painted body and grows with the sprite (mutants: the walk\'s own facing; marks ignored; the scale ignored)', () => {
+  for (const o of EIGHT) {
+    const a = hungFrom(o), b = hungFrom(o, { nudge: 0.3 });
+    assert.ok(Math.abs(a.slant - b.slant) < 1e-9 && Math.abs(a.l.h - b.l.h) < 1e-9, `view ${o}: as the picture stands`);
+  }
+  const plain = hungFrom(4), shifted = hungFrom(4, { fig: { ...FIG, marks: { chest: 10 }, shift: 0.05 } });
+  const moved = [0, 1, 2].map((k) => shifted.l.mid[k] - plain.l.mid[k]);
+  const want = 0.05 + 10 * EOTB_FIGURE.mpp;
+  assert.ok(Math.abs(dot(moved, plain.cam.right) - want) < 1e-9 && Math.abs(moved[1]) < 1e-9, 'across to the painted body\'s middle');
+  const big = hungFrom(4, { fig: { ...FIG, mpp: EOTB_FIGURE.mpp * 2 } });
+  assert.ok(Math.abs(big.l.h - plain.l.h * 2) < 1e-9 && Math.abs(big.l.w - plain.l.w * 2) < 1e-9, 'a sprite drawn twice the size carries a weapon twice the size');
+  const c = cameraFor(4, FEET);
+  assert.equal(hangSpriteHolster(createSpriteHolster(), null, 4, FEET, c.eye, c.right, ART), null, 'no figure, no hang');
+  assert.equal(hangSpriteHolster(createSpriteHolster(), FIG, 4, FEET, null, c.right, ART), null, 'no eye, no hang');
+});
+
+function recordingRenderer() {
+  return {
+    uploads: [], batches: [], draws: [], destroyed: [], evicted: [], textures: new Map(),
+    uploadTexture(archive, rec, img) { this.uploads.push({ archive, rec, img }); this.textures.set(`${archive}_${rec}`, img); },
+    evictTexture(key) { this.evicted.push(key); this.textures.delete(key); },
+    createBillboardBatch(archive, record, size) { const b = { archive, record, size: { ...size }, origin: [0, 0, 0] }; this.batches.push(b); return b; },
+    destroyBillboardBatch(b) { this.destroyed.push(b); },
+    drawBillboards(batches, right, up) { this.draws.push({ batch: batches[0], archive: batches[0].archive, record: batches[0].record, right: [...right], up: [...up] }); },
+  };
+}
+const isHolster = (a) => typeof a === 'string' && a.startsWith('eotb-holster:');
+const PIC = uprightWeaponPicture(picture(40, 64, (x, y) => (Math.abs(x - 20) <= 1 && y <= 60) || (x >= 21 && x <= 34 && y >= 44 && y <= 58)));
+const LONGSWORD = { templateIndex: 120, group: 'Weapons', equipSlot: 19, material: 1 };
+
+test('BACK-HOLSTER picture store: asked once while it loads, uploaded as drawn and mirrored, kept to HOLSTER_ART_KEPT (the oldest let go from the renderer), uploaded again when the renderer let it go (mutants: asked every frame; no eviction)', async () => {
+  const r = recordingRenderer();
+  let asked = 0;
+  const store = createHolsterArt(() => r, async () => { asked++; return PIC; });
+  for (let i = 0; i < 3; i++) assert.equal(store.ensure(LONGSWORD, null), null);   // no wearer named: the pack's default
+  await settle();
+  const a = store.ensure(LONGSWORD, null);
+  assert.ok(a && isHolster(a.archive) && asked === 1, 'one ask, coalesced');
+  assert.deepEqual(r.uploads.map((u) => [u.archive === a.archive, u.rec]), [[true, 0], [true, 1]], 'as drawn, and mirrored');
+  r.evictTexture(`${a.archive}_0`);
+  store.ensure(LONGSWORD, null);
+  assert.ok(r.textures.has(`${a.archive}_0`), 'let go by the renderer: uploaded again from the kept pixels');
+  for (let m = 0; m < HOLSTER_ART_KEPT; m++) store.ensure({ ...LONGSWORD, material: 2 + m }, null);
+  await settle();
+  assert.equal(store.size, HOLSTER_ART_KEPT);
+  assert.ok(r.evicted.includes(`${a.archive}_0`) && r.evicted.includes(`${a.archive}_1`), 'the oldest picture let go, both faces');
+});
+
+async function liveBody(item = LONGSWORD) {
+  const r = recordingRenderer();
+  let weapon = item;
+  const b = createEotbBody({
+    count: () => 3035, urlFor: (k) => `/art/${k}.png`,
+    decode: async () => ({ width: 53, height: 110, colors: new Uint32Array(53 * 110) }),
+    loadLantern: async () => null, loadHolster: async () => PIC, holsterItem: () => weapon,
+  });
+  b.attach(r, () => ({}));
+  await settle();
+  b.toggle(true, false);
+  return { b, r, wield: (it) => { weapon = it; } };
+}
+const bodyState = (cam, extra = {}) => ({ motion: { forward: 0, standing: true, speed: 0, grounded: true, height: 1.8 }, feet: [0, 0, 0], yaw: cam.yaw, cameraPos: cam.eye, ...extra });
+function viewFrom(b, o, extra = {}) {
+  const cam = cameraFor(o, [0, 0, 0], 0.05);   // off the views' edges (a 45-degree tie is the rounding's to break)
+  for (let i = 0; i < 12; i++) b.tick(1 / 60, bodyState(cam, extra));
+  return b.draw(null, { eye: cam.eye, feet: [0, 0, 0], yaw: cam.yaw });
+}
+
+test('BACK-HOLSTER (your sprite): sheathed, the weapon is drawn on the back from all eight views, after the body, mirrored from the front - and not while it is drawn, in the saddle, in first person or for a dagger (mutants: the sheathed gate; drawn before the body)', async () => {
+  const { b, r, wield } = await liveBody();
+  const behind = cameraFor(4, [0, 0, 0]);   // a step away from the camera: the body faces +Z (the IL keeps a walk's facing)
+  for (let i = 0; i < 12; i++) b.tick(1 / 60, { ...bodyState(behind), motion: { forward: 1, standing: false, speed: 5, grounded: true, height: 1.8 } });
+  viewFrom(b, 4); await settle(); viewFrom(b, 4); await settle();
+  for (const o of [...EIGHT, 4]) {
+    const before = r.draws.length;
+    viewFrom(b, o);
+    const mine = r.draws.slice(before);
+    const at = mine.findIndex((d) => isHolster(d.archive));
+    assert.equal(b.state().shown.orientation, o);
+    assert.ok(at > 0 && !isHolster(mine[0].archive), `view ${o}: drawn, after the body`);
+    assert.equal(mine[at].record, [0, 1, 7].includes(o) ? 1 : 0, `view ${o}: its face`);
+    assert.equal(b.state().holster.drawn, true);
+  }
+  const drawnWith = (extra) => { const before = r.draws.length; viewFrom(b, 4, extra); return r.draws.slice(before).some((d) => isHolster(d.archive)); };
+  assert.equal(drawnWith({ weaponReady: true }), false, 'drawn in the hand: not on the back');
+  assert.equal(b.state().holster.batch, false, 'and its batch let go');
+  assert.equal(drawnWith({}), true, 'sheathed again: on the back again');
+  assert.equal(drawnWith({ riding: true }), false, 'in the saddle: the horse\'s picture, no back');
+  assert.equal(drawnWith({ transformed: true, lycanthropyType: 1 }), false, 'a beast carries nothing');
+  wield({ ...LONGSWORD, templateIndex: 113 });
+  assert.equal(drawnWith({}), false, 'a dagger rides the hip, not the back');
+  wield(null);
+  assert.equal(drawnWith({}), false, 'nothing in the hand');
+  wield(LONGSWORD);
+  assert.equal(drawnWith({}), true);
+  const cam = cameraFor(4, [0, 0, 0], 0.05), before = r.draws.length;
+  b.draw(null, { eye: cam.eye, feet: [0, 0, 0], yaw: cam.yaw, face: { yaw: cam.yaw, grow: 4 } });
+  assert.equal(r.draws.slice(before).some((d) => isHolster(d.archive)), false, 'the Overworld\'s grown body: no weapon at a giant\'s back (OW-BIG)');
+  assert.equal(b.state().holster.batch, false);
+  b.toggle(true, true);
+  assert.equal(drawnWith({}), false, 'first person: no back to see');
+});
+
+test('BACK-HOLSTER (the others): a walker whose look holds a back weapon in the weapon hand carries it, sheathed (`wd` 0), drawn beside the lanterns - not drawn (`wd` 1), not a dagger, and its batch goes with the walker (mutants: the walkers never sling it; wd ignored)', async () => {
+  const renderer = recordingRenderer();
+  let asked = 0;
+  const art = createEotbArt({ renderer, urlFor: (k) => `u:${k}`, decode: async () => ({ width: 50, height: 110, colors: new Uint32Array(50 * 110) }), loadHolster: async () => { asked++; return PIC; } });
+  const w = createPeerWalkers({ art });
+  const pose = (o = {}) => ({ x: FEET[0], y: FEET[1], z: FEET[2], yaw: 0, pitch: 0, mv: 0, wd: 0, an: 0, sr: 0, cn: 0, ar: 0, ...o });
+  const walker = (o = {}, items = [LONGSWORD]) => ({ id: 'p1', look: { eo: 2, gender: 'male', race: 'Breton', items }, shown: pose(o) });
+  const frame = (peers, o) => { const cam = cameraFor(o, FEET); w.sync(peers, (p) => [p.x, p.y, p.z], { eye: cam.eye, right: cam.right, dt: 1 / 60 }); const before = renderer.draws.length; w.drawLanterns(); return renderer.draws.slice(before).filter((d) => isHolster(d.archive)); };
+  frame([walker()], 4); await settle(); frame([walker()], 4); await settle();
+  for (const o of EIGHT) {
+    const d = frame([walker()], o);
+    assert.equal(d.length, 1, `view ${o}: one weapon on the back`);
+    assert.equal(d[0].record, [0, 1, 7].includes(o) ? 1 : 0, `view ${o}: its face`);
+  }
+  assert.equal(asked, 1, 'the picture asked once');
+  assert.equal(frame([walker({ wd: 1 })], 4).length, 0, 'drawn: in the hand, not on the back');
+  assert.equal(frame([walker({}, [{ ...LONGSWORD, templateIndex: 113 }])], 4).length, 0, 'a dagger');
+  assert.equal(frame([walker()], 4).length, 1);
+  const batch = w.walkers.get('p1').holster.batch;
+  frame([], 4);
+  assert.ok(renderer.destroyed.includes(batch), 'the walker gone, its weapon\'s batch freed');
+});

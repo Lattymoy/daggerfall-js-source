@@ -64,6 +64,10 @@ import {
   isRearView, createLanternArt, loadLanternArt, createSpriteLantern, restSpriteLantern, stepSpriteLantern, spriteStride,
   hangSpriteLantern, mintSpriteLantern, dropSpriteLantern,
 } from './eotbLantern.js';   // HT-WAIST-BACK: the lantern on every EOTB sprite, one home - this body's and the peers'
+import {
+  createSpriteHolster, createHolsterArt, loadHolsterPicture, hangSpriteHolster, mintSpriteHolster, dropSpriteHolster, holstersOnBack, HOLSTER_HAND_SLOT,
+} from './eotbHolster.js';   // BACK-HOLSTER: the sheathed weapon on the sprite's back, one home - this body's and the peers'
+import { equipTableOf } from '../../systems/equip.js';   // BACK-HOLSTER: the weapon in the hand
 
 /** PlayerHeightChanger's controllerStandingHeight, the capsule the
  *  billboard's parent sits at the centre of - the fallback when a
@@ -212,7 +216,9 @@ export { decodeSprite };   // PROFILE-SLOTS: the decode's one door is eotbSprite
 
 const norm2 = (v) => { const l = Math.hypot(v[0], v[2]); return l > 0 ? [v[0] / l, 0, v[2] / l] : [0, 0, 0]; };
 
-export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, decode = decodeSprite, loadLantern = loadLanternArt } = {}) {
+const handWeapon = () => { try { return equipTableOf(playerEntity)?.[HOLSTER_HAND_SLOT] ?? null; } catch { return null; } };
+
+export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, decode = decodeSprite, loadLantern = loadLanternArt, loadHolster = loadHolsterPicture, holsterItem = handWeapon } = {}) {
   let renderer = null;
   /** the per-frame state thunk of the rig that owns the body (see attach) */
   let attachedState = null;
@@ -295,6 +301,23 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   // the frame's scratch - drawLantern and stepLantern run every Eye Of The Beholder frame and allocate nothing
   const lanternFacing = { fx: 0, fz: 1 };
   const lanternWaist = { left: 0, up: 0, forward: 0 };
+  // ── BACK-HOLSTER: the sheathed weapon on the back (eotbHolster.js) ─
+  const holster = createSpriteHolster();
+  const holsterArt = createHolsterArt(() => renderer, loadHolster);
+  let holsterDrawn = false;
+  const dropHolster = () => { dropSpriteHolster(holster, renderer); holsterDrawn = false; };
+  /** Draw the weapon on the sprite's back: alive, in your own form, sheathed, a weapon that rides the back, its picture
+   *  up and the body drawn this frame - on foot and in third person, where alone `figure` stands. After the body, so the
+   *  card's depth hides it from the front. */
+  function drawHolster(camRight) {
+    const item = activeFlag && !died && !last.died && !last.transformed && last.sheathed ? holsterItem() : null;
+    const art = item && holstersOnBack(item) ? holsterArt.ensure(item, playerEntity) : null;
+    if (!art || !shown || !hangSpriteHolster(holster, figure, shown.orientation, cam.feet, cam.pos, camRight, art)) { dropHolster(); return false; }
+    mintSpriteHolster(holster, renderer).conceal = material();
+    renderer.drawBillboards(holster.list, holster.right, holster.up);
+    holsterDrawn = true;
+    return true;
+  }
   /** Does the lantern hang this frame: lit at the waist, third person, on foot, alive, in your own form. */
   const lanternHangs = () => last.hipLantern && activeFlag && !FP && !died && !last.died && !last.riding && !last.transformed;
   /** HT-WAIST-BACK: is it DRAWN this frame - it hangs, and the sprite is painted from behind (eotbLantern.js
@@ -935,7 +958,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     toggle(active, fp = false) {
       FP = !!fp;
       activeFlag = !!active;
-      if (!activeFlag) { torchDefault(); pending.length = 0; dropLantern(); }   // HT-WAIST: the lantern and its light leave with the body
+      if (!activeFlag) { torchDefault(); pending.length = 0; dropLantern(); dropHolster(); }   // HT-WAIST: the lantern and its light leave with the body; BACK-HOLSTER: and the weapon on its back
       if (activeFlag) initialize();
       return activeFlag;
     },
@@ -944,7 +967,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     torchDefault,
     /** HT-WAIST: another body has the frame (mwView's Morrowind lane) - the sprite's lantern, its batch and the
      *  light point it wrote, stand down, so the Morrowind body's hip is lit from its own hook. */
-    standDown() { dropLantern(); },
+    standDown() { dropLantern(); dropHolster(); },   // BACK-HOLSTER: the Morrowind body hangs its own (WS1)
     /** HORSE-FACE: the floating origin moved the world under the feet - they move with it, so the shift is no placing. */
     rebase(delta) {
       if (!delta || !cam.feet) return;
@@ -1005,9 +1028,9 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
 
     draw(canvas, { eye, feet, yaw, face: faceNow = null } = {}) {
       face = faceNow && Number.isFinite(faceNow.yaw) ? faceNow : null;
-      figure = null; facingDrawn = null;
+      figure = null; facingDrawn = null; holsterDrawn = false;
       if (!renderer || !activeFlag || !shown) return false;
-      if (!cfg.graphic) { dropLantern(); return false; }   // HT-WAIST: no body drawn, no lantern on it
+      if (!cfg.graphic) { dropLantern(); dropHolster(); return false; }   // HT-WAIST: no body drawn, no lantern on it - BACK-HOLSTER: nor a weapon
       if (feet) cam.feet = feet;
       if (Number.isFinite(yaw)) cam.yaw = yaw;
       if (eye && !FP) cam.pos = eye;
@@ -1063,6 +1086,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       if (!FP || cfg.visibility === 2) renderer.drawBillboards([batch], camRight, bbUp);
       else if (cfg.visibility === 1) renderer.recordShadowBillboards?.([batch], camRight, bbUp);
       if (grow === 1) drawLantern();   // HT-WAIST: the lantern at the waist, its own billboard, after the body - OW-BIG: a grown body's waist is not where the lantern hangs
+      if (grow === 1) drawHolster(camRight); else dropHolster();   // BACK-HOLSTER: the weapon on the back, after the body (OW-BIG's rule too)
       return true;
     },
 
@@ -1092,6 +1116,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       lastMoveDirection: lastMoveDirection ? [...lastMoveDirection] : null, last: { ...last }, hasPlayedFootstep, footstepAlt, wasGrounded,
       material: material(), placed: place(),
       lantern: { hangs: lanternHangs(), shown: lanternShown(), swing: { fore: lantern.swing.fore, side: lantern.swing.side }, batch: !!lantern.batch },   // HT-WAIST; HT-WAIST-BACK: hangs, and drawn
+      holster: { drawn: holsterDrawn, batch: !!holster.batch, mirror: holster.mirror, h: holster.h, w: holster.w, up: [...holster.up], mid: [...holster.mid] },   // BACK-HOLSTER
     }),
     settings: () => cfg,
     reload,
