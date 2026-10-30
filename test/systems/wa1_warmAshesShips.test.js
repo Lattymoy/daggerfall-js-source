@@ -11,7 +11,7 @@
 // a quest, a save carrying it restored); the host's wiring, pinned where
 // DFU raises each event; the switch, the lane, the credit - and, with
 // ARENA2_PATH set, the variants rebuilt and served through the door with
-// Detailed Ships' building laid over them, as DFU composes the two.
+// the port's ship refit laid over them, as DFU composes the two.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
@@ -38,6 +38,7 @@ import { PATCH_FORMAT, rebuildWorldDataPatch } from '../../src/formats/worldData
 import { BlocksFile } from '../../src/formats/blocksFile.js';
 import { getDFBlockReplacementData, bindWorldDataBlocks, installWorldDataReplacement, _resetWorldDataReplacement } from '../../src/formats/worldData/worldDataReplacement.js';
 import { registerWorldDataPatch } from '../../src/scenes/modWorldData.js';
+import { installShipRefit, shipRefitJson, SHIP_REFIT } from '../../src/world/shipRefit.js';
 import { hostText } from '../hostText.mjs';   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld - the host read whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -363,7 +364,7 @@ test('WA1 the switch, the lane and the credit: one Enabled on by default, the pl
 
 // ---- with the player's own data ----------------------------------------------
 
-test('WA1 with ARENA2: the variants rebuilt and served; with Detailed Ships on, its building laid over the player\'s ship and the pirates\' left classic', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set' }, async () => {
+test('WA1 with ARENA2: the variants rebuilt and served; the ship refit\'s building laid over the player\'s ship and the pirates\' left classic', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set' }, async () => {
   const blocks = new BlocksFile();
   assert.ok(blocks.load(new Uint8Array(readFileSync(join(ARENA2, 'BLOCKS.BSA')))));
   const patch = (vendor, f) => JSON.parse(readFileSync(join(ROOT, 'vendor', vendor, 'WorldDataPatches', f), 'utf8'));
@@ -375,14 +376,15 @@ test('WA1 with ARENA2: the variants rebuilt and served; with Detailed Ships on, 
   try {
     _resetWorldDataReplacement(); installWorldDataReplacement(); bindWorldDataBlocks(blocks); clearWorldDataVariants();
     for (const f of readdirSync(join(ROOT, 'vendor/warm-ashes-ships/WorldDataPatches'))) assert.equal(await registerWorldDataPatch(patch('warm-ashes-ships', f), null), true, f);
-    assert.equal(await registerWorldDataPatch(patch('detailed-ships', 'SHIPAA01.RMB-630-building0.json'), null), true);
+    assert.equal(installShipRefit(blocks), 2, 'both ships\' building files');
     setLastLocationKeyTo(31, 2);
     setBlockVariant('SHIPAA01.RMB', '_smallraid', ANY_LOCATION_KEY);
     assert.equal(getBlockVariantHere('SHIPAA01.RMB'), '_smallraid');
     const served = getDFBlockReplacementData(630, 'SHIPAA01.RMB');
     const subs = served.rmbBlock.subRecords;
     assert.equal(subs.length, 3);
-    assert.equal(subs[0].interior.block3dObjectRecords.length, 1134, 'the player\'s ship is Detailed Ships\' - its building file over the variant block');
+    assert.equal(subs[0].interior.block3dObjectRecords.length, shipRefitJson(blocks, SHIP_REFIT.large).RmbSubRecord.Interior.Block3dObjectRecords.length, 'the player\'s ship is the refit\'s - its building file over the variant block');
+    assert.ok(subs[0].interior.block3dObjectRecords.length > 100, 'the refit\'s cabins, not the classic two');
     assert.equal(subs[1].interior.block3dObjectRecords.length, blocks.readClassicBlock(390).rmbBlock.subRecords[0].interior.block3dObjectRecords.length, 'the pirates\' is the classic small ship');
     assert.deepEqual([subs[0].xPos, subs[0].zPos], [1408, 1600], 'the variant\'s own position stands (only Exterior and Interior are replaced)');
   } finally {

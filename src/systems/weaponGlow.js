@@ -31,6 +31,7 @@
 
 import { readLines, validAffix, PROC_ELEMENTS, lootRarityOn, rarityKnown, RARITIES } from './loot/lootRarity.js';
 import { isEnchanted } from './inventory.js';
+import { isHandWraps } from '../characters/handWrapsIds.js';   // HAND-WRAPS: the fists' arcane outline
 import { getPref } from './uiPrefs.js';
 import { pageParam } from './pageQuery.js';
 import { GLOW_SPRITE_WINDOW } from '../render/weaponGlowGlsl.js';   // the sprite's search window - a leaf with no imports
@@ -192,8 +193,9 @@ const SPEC_BY_WORD = new Map(Object.values(SPEC_TABLE).flatMap((row) => row.filt
 /** THE CLASSIC HAND'S ASK: the outline its sprite wears (law 8's crimson, an element or law 7's piece - its enchanted
  *  look is its WEAPO1xx sheet), or null. When this answers, the rig swings the PLAIN sheet (combat/fpsWeapon.js
  *  plainWeaponType): an outline round a sheet painted with the blue glow says two things at once.
+ *  HAND-WRAPS: the fists have no WEAPO1xx sheet, so enchanted Hand Wraps take law 5's arcane outline here too.
  *  @param {any} item @param {{ on?: boolean, ladder?: boolean }} [opts] */
-export const spriteGlow = (item, opts) => specOf(item, false, opts?.on, opts?.ladder);
+export const spriteGlow = (item, opts) => specOf(item, isHandWraps(item), opts?.on, opts?.ladder);
 
 /** THE MORROWIND HAND'S ASK: its element, or the arcane look for an enchanted weapon with none showing (law 5).
  *  @param {any} item @param {{ on?: boolean, ladder?: boolean }} [opts] */

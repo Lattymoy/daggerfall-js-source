@@ -596,6 +596,7 @@ export const WILD_TEXT = Object.freeze({
   chip: 'Open PvP',
   get chipTip() { return t('wild.zone.chipTip', '{zone}: other players may attack you. Foes are four times as strong and drop up to twice the loot (25% more at the edge, twice in the heart). A player\'s kill may cost uninsured gear or gold.', { zone: WILD_NAME }); },
   mapKey: 'Open PvP zone',
+  deathSlain: (name) => (name ? t('wild.death.slain', 'Slain by {name}.', { name }) : t('wild.death.slainAnon', 'Slain by another player.')),   // PVP-HUD: the mockup's head
   deathPvp: (name) => `${name || 'Another player'} may take one uninsured worn piece of yours, or gold.`,   // PVP-WORDS: the service's roll
   deathDrop: (n) => (n > 0 ? `${n} ${n === 1 ? 'thing you carried lies' : 'things you carried lie'} where you fell, for ten minutes.` : ''),
   // FOE-KEEPS: a foe's kill. AUDIT FOE-KEEPS O1, H5: it said "You keep what you carry" over the gold the same death
@@ -780,6 +781,8 @@ export function wildDeathAtHand(/** @type {any} */ fell, /** @type {string | nul
 export const wildDeathKill = () => _killed;
 /** The referee's fall heard for me since my last rise, or null (wildDeathBegin shows my worn pieces to its killer). */
 export const wildFallHeard = () => _fell;
+/** PVP-HUD (the mockup): the death screen's head at a player's kill - "Slain by" the killer - or '' for any other. */
+export const wildDeathSlain = (d = _death) => (d && (d.killer || d.kill) ? WILD_TEXT.deathSlain(d.killer) : '');
 /** The death screen's lines for a death in the zone (empty for any other). */
 export function wildDeathLines(d = _death) {
   if (!d) return [];

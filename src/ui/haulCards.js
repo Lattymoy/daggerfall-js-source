@@ -35,10 +35,11 @@ import { MARKS_COMBAT, MARKS_FAUCETS } from '../net/marksLaw.js';
  *  SERPENT-SET: the serpents strike under the same cap; EG-E1: and the Spire's Redoubts; STAR7: and the held stars.
  *  AUDIT STAR (W2): a label, through the text core, read when the card is made - the chat's line names the cap. */
 export const haulCappedText = () => t('haul.capped', 'Daily silver cap reached');
-/** A gather card holds a little longer than a pickup's (ui/pickupFeed.js PICKUP_FEED_HOLD_MS) - it says more. */
-export const HAUL_HOLD_MS = 3200;
-/** A Motherlode's card stands longer still - the day's one. */
-export const LODE_HOLD_MS = 5000;
+/** A gather card holds a little longer than a pickup's (ui/pickupFeed.js PICKUP_FEED_HOLD_MS) - it says more.
+ *  GATHER-HOLD (2026-10-29, "keep these pop up 3-5 second longer"): 3.2 s -> 7.2 s, four seconds more to read it. */
+export const HAUL_HOLD_MS = 7200;
+/** A Motherlode's card stands longer still - the day's one. GATHER-HOLD: 5 s -> 9 s, the same four seconds more. */
+export const LODE_HOLD_MS = 9000;
 
 /** A material's tier as the cards colour it: the loot's own rarity names (ui/enhanced/enhancedPlusStyle.js RARITY_VARS) -
  *  tiers 1 and 2 plain, 3 magic's blue, 4 rare's gold, 5 legendary's orange, 6 artifact's violet; none while the

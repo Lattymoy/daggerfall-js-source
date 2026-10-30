@@ -184,9 +184,13 @@ second hand (`offGlowShown`: the blade bound, the pair drawn). The arm's held gl
 the right hand's, whichever hand strikes - the weapon in use changes mid-blow, and the key guard would drop it for every
 left blow). A third-person picture is padded for the larger of the two outlines.
 
+**The fists** (HAND-WRAPS, `05-Combat/Hand-Wraps.md`): the Hand Wraps glow on both fists. The classic sheet takes the
+arcane outline for an enchantment, since Melee has no magic sheet; the Morrowind hands are lit on their own ranges
+(`renderer.js` `inGlowSlot` 'hands').
+
 ## Online
 
-The affixes that decide a glow never travel, so the look says it: a weapon in a hand carries `glow`, one of thirteen words (law 7's `brand2` and `edge2` since world278, law 8's `gilded2` since world289) -
+The affixes that decide a glow never travel, so the look says it: a weapon in a hand carries `glow`, one of thirteen words (law 7's `brand2` and `edge2` since world278, law 8's `gilded2` since world290) -
 `fire2`, `arcane2` (`weaponGlow.js` `glowWord`; `wire.js` `LOOK_GLOW_RE`, `lookGlowOk`, `validLookItem`) - written by
 `remotePlayers.js` `composeLook` on every weapon of a player's look in a hand (`LOOK_GLOW_SLOTS`, the equip table's
 RightHand and LeftHand) from the owner's card (law 4 holds: the owner's knowledge), whatever the owner's own switch
@@ -202,7 +206,7 @@ wire's one law (`peerStubEntity`, `lookGlowOk`).
 **Relay world209** (`src/net/wire.js` RELAY_VERSION; its law row in `test/net/relayversion.test.js`; world208 on its branch, renumbered past main's INSTANCES world208 at the merge), NOT YET DEPLOYED. The
 order does not matter: an older relay builds its look items from the fields it knows and strips the word (a peer's
 weapon draws bare until the relay is deployed, and nothing else changes), and an older client never says it and drops
-it on receipt (AUDIT DOC-8). **Relay world289** (GILDED-GLOW, NOT YET DEPLOYED; world286 then world287 on its branch, renumbered at the merges of main) takes `gilded2` the same way: until it is
+it on receipt (AUDIT DOC-8). **Relay world290** (GILDED-GLOW, NOT YET DEPLOYED; world286, world287 then world289 on its branch, renumbered at the merges of main) takes `gilded2` the same way: until it is
 deployed a peer's Gilded weapon draws bare.
 
 ## Departures, named

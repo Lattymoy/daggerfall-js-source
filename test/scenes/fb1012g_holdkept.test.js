@@ -74,8 +74,7 @@ test('HOLD-KEPT the host: chest records say which chest, are matched by it, and 
   assert.match(wm, /\.\.\.chestIdentity\(c, buildingOrigin\(\)\),/);
   assert.match(wm, /const chestOf = matchChests\(data\.lootContainers, interiorCtx\.containers, buildingOrigin\(\)\);/);
   assert.match(wm, /const target = kind === 'shelf' \? interiorCtx\.shelves\?\.\[\+i\] : chestOf\.get\(c\);/);
-  assert.match(wm, /if \(!target && kind === 'container' && c\.items\?\.length\) \{\n\s+const o = buildingOrigin\(\), f = player\.pos;\n\s+data\.droppedPiles = /);
-  assert.match(wm, /if \(setDown\) say\(/);
+  assert.match(wm, /if \(!target && kind === 'container' && c\.items\?\.length\) \{ arrivalSetDown\.hold\(c\.items, \{ crate: !!c\.crate \}\); continue; \}/);   // AUDIT SHIP-REFIT: held for the arrival (arrivalSetDown.test.js)
   assert.match(wm, /if \(interiorHome\?\.own && !_sceneHeldForLayout\) decorSetDownHeld\(r\.data\.pieces\);/);
   assert.match(wm, /const items = interiorDecor\.takeUnserved\(served\);\n\s+if \(!items\.length\) return 0;\n\s+interiorDropped\.dropPile\(items, interiorDropFeet\(\)\);/);
 });

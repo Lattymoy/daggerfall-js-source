@@ -1,6 +1,6 @@
 // CSA-A (2026-09-27): IS A LARGE PICTURE BUILT OUT OF CLASSIC TEXTURES?
 //
-// Detailed Ships' search (tools/detailedShipsAssets.mjs findClassicSource)
+// The classic-record search (tools/lib/classicSource.mjs findClassicSource)
 // asks whether ONE classic record covers a picture of about its own size. A
 // mod's 640x640 animation frame is no record's size, so that search passes
 // it without looking. This one looks: the picture is cut into aligned blocks
@@ -8,7 +8,7 @@
 // record of that size is laid on every block; the best share of a block's
 // VISIBLE pixels a record matches exactly (RGB; a clear pixel never draws,
 // so it is neither a match nor a miss) is the answer. A block less than a
-// quarter visible is not judged - a few pixels agree with anything. DS1's bar, DERIVED_SHARE of the block,
+// quarter visible is not judged - a few pixels agree with anything. The search's bar, DERIVED_SHARE of the block,
 // is the line between a picture that happens to share a palette's greys and
 // one made of a record.
 //
@@ -24,7 +24,7 @@
 // 32x32 block against TEXTURE.000 record 119 that way. A record one colour
 // covers FLAT_SHARE of is a swatch, and the search says which it skipped.
 
-import { DERIVED_SHARE } from '../detailedShipsAssets.mjs';
+import { DERIVED_SHARE } from './classicSource.mjs';
 
 const rgbAt = (d, i) => (d[i] << 16) | (d[i + 1] << 8) | d[i + 2];
 
@@ -111,5 +111,5 @@ export function cropToVisible(pic) {
   return { width: w, height: h, data, at: [x0, y0] };
 }
 
-/** Whether a block match is a derivation by DS1's bar. */
+/** Whether a block match is a derivation by the search's bar. */
 export const isDerivedBlock = (m) => !!m && m.share >= DERIVED_SHARE;

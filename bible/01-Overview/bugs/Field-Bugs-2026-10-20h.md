@@ -493,8 +493,8 @@ DaggerfallBillboard.cs:257-260, DaggerfallInterior.cs:869). With both town packs
 by the room's settings) there are 448: 282 in Beautiful Villages' TEMPASC0 #9 (151 of them the wilderness temples named
 "... of Mara"), 122 in Beautiful Cities' TEMPAAC0 #21, 26 in TEMPBSC0 #12 and 18 in TEMPBAC0 #21. The four pack blocks
 share one interior design (254-275 models, 105-118 flats), whose god's statue is flat 1230.11, a metre up on the stone
-pedestal 74091. Archive 1230 is the RMB Resource Pack's statues, which the port does not carry (its 1230 stand-in holds
-only Detailed Ships' 1230_30), so 1230_11 measures 1 x 1 px (0.025 m) and `dataPipeline.js:"    if (!swap && t.vendor) {"`
+pedestal 74091. Archive 1230 is the RMB Resource Pack's statues, which the port does not carry (its 1230 stand-in held
+only 1230_30), so 1230_11 measures 1 x 1 px (0.025 m) and `dataPipeline.js:"    if (!swap && t.vendor) {"`
 uploads one clear pixel. DFU draws nothing there either (it finds no TEXTURE.1230); `03-World/Beautiful-Towns.md`
 already lists it under "Not stood in". The pedestal stands empty in all 448.
 
@@ -515,7 +515,7 @@ people) but drew no frame in 15 minutes.
 NOT CHANGED (for the owner, with the reporter's word):
 - WHAT THE PLAYER SAW. Only the reporter can say - the town, whether the packs were on, and whether a .dfmod was attached.
   The real RMB Resource Pack attached would draw 1230_11 through the attached-mod path at its own xml's scale; the
-  Detailed Ships statue beside it (1230_30) suggests the pack's statues are drawn at a fifth of their pixels (xml 0.20),
+  ship mod's statue beside it (1230_30) suggested the pack's statues are drawn at a fifth of their pixels (xml 0.20),
   so one would look giant only from a bundle with no xml.
 - THE EMPTY PEDESTAL. All 448 pack temples of Mara, and every pack temple of the Eight (39 statues), stand an empty
   pedestal where the god's statue was meant to be. Standing Daggerfall's own statue there instead (Mara's, TEXTURE.097

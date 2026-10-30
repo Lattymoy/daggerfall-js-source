@@ -46,7 +46,7 @@ test('WD3 online, the service: a claim keeps the layout its client\'s town stand
   const home = (extra) => ({ mapId: TOWN, buildingKey: 0x10203, region: 17, price: 42000, ...extra });
   const bad = await seatHome(aldric, home({ layout: 'classic' }));
   assert.deepEqual([bad.status, bad.body?.error], [400, 'bad-home'], 'classic is no field, never a stamp');
-  assert.deepEqual((await seatHome(aldric, home({ layout: 'detailed-ships@1.0.0' }))).body?.error, 'bad-home', 'a mod that moves no building');
+  assert.deepEqual((await seatHome(aldric, home({ layout: 'warm-ashes-ships@1.1' }))).body?.error, 'bad-home', 'a mod that moves no building');
   // AUDIT WD3 B2: a claim that names no layout at all is a build from before the town mods - asked to update, never seated
   const R0 = await seatRealm(env, aldric.secret, aldric.handle, { name: aldric.handle, level: 9, goldPieces: 1_000_000, items: [] });
   const old = await call('/v1/homes/claim', { ...home(), character: R0.id, realm: R0.at() }, aldric.secret);

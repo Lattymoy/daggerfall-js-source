@@ -75,7 +75,7 @@ export const DECOR_KINDS = Object.freeze({
   dungeon: 'Dungeon pieces',   // DECOR-DUNGEON: what Daggerfall stands in its dungeons and nowhere in a house - a cage, a coffin, a chain (DECOR-KINDS: its tables and statues filed as what they are)
   outdoor: 'Outdoors',   // DECOR-OUTDOOR: what Daggerfall stands in its streets and nowhere inside - a fence, a well, a fountain, a cart
   nature: 'Trees and plants',   // DECOR-OUTDOOR: the climate's own nature - a yard's own climate's; DECOR-KINDS: and the potted plants, crops and flowers
-  mods: "Town mods' furnishings",   // DECOR-MODS: what the town mods (and Detailed Ships) furnish, as the port stands it in
+  mods: "Town mods' furnishings",   // DECOR-MODS: what the town mods furnish, as the port stands it in
 });
 /** A kind's own word for one piece of it, where the game gives none. */
 const KIND_ONE = Object.freeze({

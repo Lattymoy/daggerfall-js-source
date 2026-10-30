@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fakeRooms } from '../fakeRoom.mjs';
 import { LOOT_HELLO_LAW, LOOT_HELLO_LAW_WIRE_MAX, LOOT_OLD_REASON, GROUND_LAW, GRANT_HELLO_LAW, lootRoom, groundRoom, parseClient, CLOSE_POLICY, RELAY_VERSION } from '../../src/net/wire.js';
+import { createHandWraps } from '../../src/systems/handWraps.js';   // HAND-WRAPS: law 2's piece
 import { RELAY_CFG_KEYS, RELAY_CFG_VARS, RELAY_CFG_KEY_MIN, RELAY_INTERNAL_CFG, RELAY_CFG_TTL_MS, parseRelayCfgCommand, relayCfgSupported } from '../../src/net/relayCfg.js';
 import { privateInteriorPrefix, privateInteriorRoom, privateBoatRoom } from '../../src/net/privateInterior.js';
 import { siegeRoomKey, royalRoomKey } from '../../src/net/siege/siegeRef.js';
@@ -50,13 +51,14 @@ test('LOOT-DOOR THE NUMBER READS WHAT IT SAYS: 1 is a Master\'s work and a Mount
   const lines = masterRecordLines(rollMasterLines(recipeById('longsword:daedric'), ['damage', 'stat:strength', 'elemental:fire'], 4242));
   const work = mintPiece({ recipe: 'longsword:daedric', quality: MASTERWORK, seed: 4242, maker: 'Mac', marked: true, version: MINT_V_MASTER, lines }, 'a1b2c3d4e5f60718');
   const trophy = mintTrophy(TROPHY_BEASTS[0], { nameIndex: 0 });
-  assert.equal(LOOT_HELLO_LAW, 1);
+  assert.equal(LOOT_HELLO_LAW, 2);   // PIN MOVED (HAND-WRAPS, AUDIT B2): 2 - and the Hand Wraps (563), below
   const base = carriedBase([mintPiece({ recipe: 'dagger:iron', quality: 1, seed: 7 }, 'b1b2c3d4e5f60718')]);
   const st = roomState({ g: 1, lv: 10, n: 1, tm: 0, h: base.h });
   st.base = base;
-  for (const [i, piece] of [work, trophy].entries()) assert.equal(judgeRoomClaim(st, 1, base.full, { id: `peer:s1:${i + 1}`, it: JSON.parse(JSON.stringify(piece)) }), 1);
+  const wraps = createHandWraps();
+  for (const [i, piece] of [work, trophy, wraps].entries()) assert.equal(judgeRoomClaim(st, 1, base.full, { id: `peer:s1:${i + 1}`, it: JSON.parse(JSON.stringify(piece)) }), 1);
   const heard = validRoomWord(JSON.parse(JSON.stringify(roomWord('container:7', st, base.h, { s: st.stored, si: st.ids }, null, [], base.records))));
-  assert.deepEqual(heard.s.map((it) => [it.rarity ?? null, it.templateIndex]), [['legendary', work.templateIndex], [null, trophy.templateIndex]]);
+  assert.deepEqual(heard.s.map((it) => [it.rarity ?? null, it.templateIndex]), [['legendary', work.templateIndex], [null, trophy.templateIndex], [null, 563]]);
 });
 
 test('LOOT-DOOR THE RELAY\'S DOOR, through real Rooms: off, the current build and main\'s are let in; a developer turns it on at the hub (on and off alone); the hub lets anyone in; a cold cell lets the current build in without asking, asks before its first older hello and refuses it with the words every build shows, nothing written - a dungeon\'s and a building\'s room too; a later build is let in; turned off, a cell lets it in again inside a TTL (mutants: the room unread; the law unread; the cold ask unawaited; the setting unread; the door not shut)', async () => {

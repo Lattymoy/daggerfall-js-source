@@ -208,13 +208,21 @@ export function gateRoadAt(x, z) {
   return { d: best, h };
 }
 
+/** CAPITAL-CARRIAGES (world/capitalCarriages.js): the carriage's stand outside the main gate - the Well District's ledge
+ *  under the south wall carried out level west of the Gate Road's last run, its edge banked down to the slope over `bank`
+ *  metres, clear of the road and its shoulder. The slope there falls half a metre a metre: no carriage stood on it.
+ *  AUDIT CAPITAL-CARRIAGES L4/L5: its edges and its bank's on the terrain's vertex lines (6.4 m from the pixel's corner), so
+ *  the ground drawn on it is level to its edge; its bank short of the shoulder it had reshaped. */
+export const SOLITUDE_CARRIAGE_STAND = Object.freeze({ x0: 262.4, x1: 294.4, z0: SOLITUDE_CLIFFS.south, z1: 435.2, bank: 6.4 });
+
 /** The slope below the south wall: from the plateau's edge to the land's own at the pixel's south edge, steepest under
- *  the wall - and the Gate Road cut and filled across it. */
+ *  the wall - and the Gate Road cut and filled across it, and the carriage's stand filled out level beside it. */
 export function southHeight(x, z) {
   const slope = southSlope(x, z), R = SOLITUDE_GATE_ROAD, r = gateRoadAt(x, z);
   if (r.d <= R.half) return r.h;
-  if (r.d < R.half + R.shoulder) return r.h + (slope - r.h) * smooth((r.d - R.half) / R.shoulder);
-  return slope;
+  const h = r.d < R.half + R.shoulder ? r.h + (slope - r.h) * smooth((r.d - R.half) / R.shoulder) : slope;
+  const S = SOLITUDE_CARRIAGE_STAND, d = Math.hypot(Math.max(S.x0 - x, 0, x - S.x1), Math.max(S.z0 - z, 0, z - S.z1));
+  return d >= S.bank ? h : SOLITUDE_LEVELS.city + (h - SOLITUDE_LEVELS.city) * smooth(d / S.bank);
 }
 
 /** How far out a point stands in a cliff's band (0 at its top, 1 at its foot): `out` metres past the line's unworn top,

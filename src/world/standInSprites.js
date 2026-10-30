@@ -1,11 +1,11 @@
 // WD3 (2026-10-01): FLATS DAGGERFALL DRAWS NOTHING LIKE - the port's own sprites, drawn in code.
 //
 // Daggerfall Expanded Textures fills the towns Beautiful Villages and Beautiful Cities lay out with its own flats - a
-// farm's chickens and sheep, the rock doves on a city's walls, a table's cheese and grapes and porridge - and a few
-// of them stand on Detailed Ships' decks. Where Daggerfall has a sprite of the same thing (a horse, a cow, a dog, a
-// sack, a globe) the stand-in is that sprite, rebuilt from the player's own files (world/detStandIns.js); where it
-// has none, it is one of these: small pictures at Daggerfall's own pixel (one pixel is 2.5 cm at a record scale of
-// 0), outlined and lit from the upper left like the game's own, transparent round the subject (a flat is a cut-out).
+// farm's chickens and sheep, the rock doves on a city's walls, a table's cheese and grapes and porridge. Where
+// Daggerfall has a sprite of the same thing (a horse, a cow, a dog, a sack, a globe) the stand-in is that sprite,
+// rebuilt from the player's own files (world/detStandIns.js); where it has none, it is one of these: small pictures at
+// Daggerfall's own pixel (one pixel is 2.5 cm at a record scale of 0), outlined and lit from the upper left like the
+// game's own, transparent round the subject (a flat is a cut-out).
 // Deterministic: the same picture every time, no file.
 
 class Sprite {

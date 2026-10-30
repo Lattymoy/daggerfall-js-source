@@ -20,6 +20,7 @@ import { weaponMinDamage, weaponMaxDamage } from '../characters/weapons.js';   /
 import { materialArmorValue, itemArmorValue, BODY_PARTS } from '../systems/armorMaterials.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';   // AUDIT 24 (wave 41): one home
 import { ARROW_TEMPLATE } from '../systems/inventory.js';   // X11b: CreateWeapon's one special case
+import { HAND_WRAPS_TEMPLATE } from '../characters/handWrapsIds.js';   // HAND-WRAPS: minted cloth
 import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js';   // RRI2: a custom piece's body part is its class's equip slot
 
 export { materialArmorValue };
@@ -157,6 +158,7 @@ export function createWeapon(templateIndex, material, rolls = Math.random) {
  *  to a stored field - itemBaseValue's ammunition floor is the arrow
  *  ARM's, not this pair's. */
 export function weaponOfMaterial(templateIndex, material) {
+  if (templateIndex === HAND_WRAPS_TEMPLATE) material = 0;   // HAND-WRAPS: cloth - no metal, whatever the roll (systems/handWraps.js)
   const t = templateByIndex(templateIndex);
   const name = WEAPON_BY_INDEX[templateIndex] ?? t?.name;   // AUDIT-RR2 G12: SetItem's `shortName = itemTemplate.name` (DaggerfallUnityItem.cs:551) - the class enum has no 513/514
   return mintCondition({
