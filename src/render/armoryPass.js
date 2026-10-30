@@ -639,7 +639,7 @@ export class ArmoryRenderer {
         let P0 = null;
         for (const w of list) {
           if (w._pieces[slot] !== key) continue;
-          const kindle = Math.max(0, Math.min(1, Number.isFinite(w.kindle) ? w.kindle : 1)) * (w.torn >= 0 && !ARMORY_BEAST_SLOTS.includes(slot) ? 0 : 1);   // WOLF-KIT: turned beast, the body's pieces stay on the wolf
+          const kindle = Math.max(0, Math.min(1, Number.isFinite(w.kindle) ? w.kindle : 1)) * (w.torn >= 0 && (w.pose?.card || !ARMORY_BEAST_SLOTS.includes(slot)) ? 0 : 1);   // WOLF-KIT: turned beast, the body's pieces stay on the 3D wolf - never on the paperdoll's
           if (!(kindle > 0) || w.atHead) continue;
           const draws = armoryDraws(key, w, eye, !(w._d > ARMORY_DETAIL_M), right);
           if (!draws.length) continue;

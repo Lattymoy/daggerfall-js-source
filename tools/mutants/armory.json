@@ -160,7 +160,7 @@
   {
     "name": "ARMORY-a-beast-dressed",
     "file": "src/render/armoryPass.js",
-    "old": "w.kindle : 1)) * (w.torn >= 0 && !ARMORY_BEAST_SLOTS.includes(slot) ? 0 : 1);",
+    "old": "w.kindle : 1)) * (w.torn >= 0 && (w.pose?.card || !ARMORY_BEAST_SLOTS.includes(slot)) ? 0 : 1);",
     "new": "w.kindle : 1));",
     "tests": [
       "test/render/armory.test.js"
@@ -562,7 +562,7 @@
   {
     "name": "WOLF-KIT-every-piece-off-the-beast",
     "file": "src/render/armoryPass.js",
-    "old": "(w.torn >= 0 && !ARMORY_BEAST_SLOTS.includes(slot) ? 0 : 1)",
+    "old": "(w.torn >= 0 && (w.pose?.card || !ARMORY_BEAST_SLOTS.includes(slot)) ? 0 : 1)",
     "new": "(w.torn >= 0 ? 0 : 1)",
     "tests": [
       "test/render/armory.test.js"
@@ -614,24 +614,6 @@
     ]
   },
   {
-    "name": "WOLF-KIT-the-sprites-wolf-on-a-persons-rows",
-    "file": "src/render/armoryPose.js",
-    "old": "  if (fig.beast === true) beastLimbs(fig.mpp * art, fig.base, pts, out);\n",
-    "new": "\n",
-    "tests": [
-      "test/render/armory.test.js"
-    ]
-  },
-  {
-    "name": "WOLF-KIT-the-sprites-wolf-without-forearms",
-    "file": "src/render/armoryPose.js",
-    "old": "  out.limbs = 'full'; out.arm = ARMORY_BEAST_ARM.arm;",
-    "new": "  out.arm = ARMORY_BEAST_ARM.arm;",
-    "tests": [
-      "test/render/armory.test.js"
-    ]
-  },
-  {
     "name": "WOLF-KIT-the-wolfs-chest-on-its-leaning-spine",
     "file": "src/render/armoryPose.js",
     "old": "beast && spine ? [(L[0] + R[0]) / 2, spine[1] - drop, (L[2] + R[2]) / 2 + face] :",
@@ -650,15 +632,6 @@
     ]
   },
   {
-    "name": "WOLF-KIT-the-sprites-wolf-a-mirror",
-    "file": "src/render/armoryPose.js",
-    "old": "R: Object.freeze({ sh: [14, 56], el: [19, 48], wa: [24, 41], kn: [13, 22], ft: [16, 9] }),",
-    "new": "R: Object.freeze({ sh: [12, 57], el: [17, 48], wa: [21, 40], kn: [6, 24], ft: [12, 15] }),",
-    "tests": [
-      "test/render/armory.test.js"
-    ]
-  },
-  {
     "name": "WOLF-KIT-the-wolf-left-on-a-person",
     "file": "src/render/armoryPose.js",
     "old": "out.scale = k; out.back = 0; out.arm = 1; out.hock = false; out.dx.fill(0);",
@@ -672,6 +645,15 @@
     "file": "src/render/armoryPose.js",
     "old": "out.back = 0; out.arm = 1; out.hock = false;\n",
     "new": "out.back = 0;\n",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-paperdolls-wolf-dressed",
+    "file": "src/render/armoryPass.js",
+    "old": "(w.pose?.card || !ARMORY_BEAST_SLOTS.includes(slot))",
+    "new": "(!ARMORY_BEAST_SLOTS.includes(slot))",
     "tests": [
       "test/render/armory.test.js"
     ]

@@ -13,7 +13,7 @@ import { INSIGNIA, ARMORY_BROKER_PRICE } from '../../src/net/insignia.js';
 import { SHOP_WARES, shopKeysOf, shopOwns } from '../../src/net/shopLaw.js';
 import { ARMORY_SET_TEXT } from '../../src/ui/armoryText.js';
 import { badged, readArmory } from '../../src/net/wire.js';
-import { POSE_AT, REST_POINTS, newPose, poseFromBones, poseFromFigure, poseAtRest, poseWorld, spriteMarks, spriteArmsSeen, ARMORY_BEAST_FIT, ARMORY_BEAST_CHEST, ARMORY_BEAST_ARM, BEAST_ROWS } from '../../src/render/armoryPose.js';
+import { POSE_AT, REST_POINTS, newPose, poseFromBones, poseFromFigure, poseAtRest, poseWorld, spriteMarks, spriteArmsSeen, ARMORY_BEAST_FIT, ARMORY_BEAST_CHEST, ARMORY_BEAST_ARM } from '../../src/render/armoryPose.js';
 import { spriteFor } from '../../src/player/eyeOfTheBeholder/eotbSprite.js';
 import { auraSpriteBones, auraClothOver } from '../../src/render/auraRing.js';
 import {
@@ -323,7 +323,7 @@ test('ARMORY the pass draws a worn piece and nothing over my own eyes, a torn be
   assert.deepEqual(log.find((c) => c[0] === 'depthMask' && c[1] === true)?.[1], true);
 });
 
-test('WOLF-KIT turned beast, the chest, arm and leg pieces stay worn on the wolf and the head\'s does not; the wolf\'s pose fitted wider (mutants: every piece off the beast; the head\'s crown on the muzzle; the wolf posed at a person\'s scale)', () => {
+test('WOLF-KIT turned beast, the chest, arm and leg pieces stay worn on the wolf and the head\'s does not; the wolf\'s pose fitted wider, the paperdoll\'s wolf bare (mutants: every piece off the beast; the paperdoll\'s wolf dressed; the head\'s crown on the muzzle; the wolf posed at a person\'s scale)', () => {
   const { gl, count } = logGl();
   const pass = new ArmoryRenderer(/** @type {any} */ (gl));
   const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
@@ -363,14 +363,12 @@ test('WOLF-KIT turned beast, the chest, arm and leg pieces stay worn on the wolf
   assert.equal(+wl.B[1].toFixed(3), +wolfBack.pts[POSE_AT.ftL + 1].toFixed(3), 'the wolf\'s topped at the hock');
   assert.ok(Math.abs(wl.A[1] - 0.1 * ARMORY_BEAST_FIT) < 1e-6 && Math.abs(wl.A[0] - wl.B[0]) < 1e-6, 'and straight down to its toes');
   poseAtRest(wolfBack); assert.deepEqual([wolfBack.arm, wolfBack.hock, wolfBack.back], [1, false, 0], 'the rest pose a person\'s - nothing of the wolf left on it');
-  // the classic sprite's lycanthrope: its own picture's limbs (BEAST_ROWS), forearms worn
+  // the classic sprite's lycanthrope wears none (mob: "just remove them from the paperdoll")
   const lyc = newPose(); poseFromFigure({ base: 0.1, mpp: 0.029, beast: true, marks: null }, lyc);
-  assert.deepEqual([lyc.card, lyc.limbs, lyc.arm], [true, 'full', ARMORY_BEAST_ARM.arm], 'a beast\'s picture measured to the wrist');
-  assert.equal(+lyc.pts[POSE_AT.waR].toFixed(4), +(BEAST_ROWS.R.wa[0] * 0.029).toFixed(4), 'its hands flung out as its picture draws them');
-  assert.ok(lyc.pts[POSE_AT.ftL + 1] > lyc.pts[POSE_AT.ftR + 1], 'its left leg drawn up, its right planted - no side the other\'s mirror');
-  assert.equal(+lyc.pts[POSE_AT.knL + 1].toFixed(4), +(0.1 + BEAST_ROWS.L.kn[1] * 0.029).toFixed(4), 'its knees where its picture bends them');
-  assert.equal(arms('ashbound', lyc).length, 4, 'shoulder to wrist on the sprite\'s wolf, both arms');
-  poseFromFigure({ base: 0, mpp: 0.02, marks: null }, lyc); assert.deepEqual([lyc.limbs, lyc.arm], ['upper', 1], 'turned back, a person\'s picture');
+  pass.draw([wearer({ pose: lyc })], I, I, [0, 1.6, 3], 1, null, true);
+  assert.equal(pass.drawn, 0, 'the paperdoll\'s wolf bare');
+  pass.draw([wearer({ pose: lyc, torn: -1 })], I, I, [0, 1.6, 3], 1, null, true);
+  assert.equal(pass.drawn, 4, 'a person\'s picture dressed');
   poseFromBones(bones, wolfBack, true); poseFromFigure({ base: 0, mpp: 0.02, marks: null }, wolfBack); assert.deepEqual([wolfBack.arm, wolfBack.hock, wolfBack.back], [1, false, 0], 'nor on a sprite\'s');
 });
 

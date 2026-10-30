@@ -277,31 +277,9 @@ export function poseFromFigure(/** @type {any} */ fig, /** @type {any} */ out) {
     });
   }
   out.card = true; out.limbs = 'upper'; out.sunk = at(EOTB_FIGURE.shoulder) < CLOAK_SHOULDER_Y * 0.4; out.scale = m / EOTB_FIGURE.mpp; out.back = 0; out.arm = 1; out.hock = false;
-  if (fig.beast === true) beastLimbs(fig.mpp * art, fig.base, pts, out);
   return true;
 }
 
-/** WOLF-KIT (mob: "make sure this work for morrowind and paperdoll"; "they are off a lot"): THE LYCANTHROPE'S PICTURE'S
- *  LIMBS, each joint [across, up] in its own pixels off its axis and over the frame's foot (112380's idle, measured off its
- *  alpha joint by joint): its arms flung wide, its hands at its hips, its left leg drawn up and its right planted - nothing
- *  like the sets' rows, and no side the other's mirror. Its chest and pelvis on its axis. */
-export const BEAST_ROWS = Object.freeze({
-  chest: 50, pelvis: 30,
-  L: Object.freeze({ sh: [-12, 57], el: [-17, 48], wa: [-21, 40], kn: [-6, 24], ft: [-12, 15] }),
-  R: Object.freeze({ sh: [14, 56], el: [19, 48], wa: [24, 41], kn: [13, 22], ft: [16, 9] }),
-});
-/** A beast's sprite pose written over a figure's (`px` its metres a picture's pixel, `base` the frame's foot): BEAST_ROWS,
- *  every limb measured so the forearms' pieces are worn too, the bands as wide as the wolf's arms. */
-function beastLimbs(/** @type {number} */ px, /** @type {number} */ base, /** @type {Float32Array} */ pts, /** @type {any} */ out) {
-  const B = BEAST_ROWS, at = (/** @type {number} */ r) => base + r * px;
-  set(pts, 'chest', [0, at(B.chest), 0.12]); set(pts, 'pelvis', [0, at(B.pelvis), 0]);
-  for (const S of /** @type {const} */ (['L', 'R'])) {
-    for (const j of /** @type {const} */ (['sh', 'el', 'wa', 'kn', 'ft'])) { const [x, r] = B[S][j]; set(pts, `${j}${S}`, [x * px, at(r), j === 'wa' || j === 'kn' ? 0.02 : 0]); }
-    out.dx[POSE_AT[`sh${S}`] / 3] = out.dx[POSE_AT[`el${S}`] / 3] = out.dx[POSE_AT[`wa${S}`] / 3] = out.dx[POSE_AT.chest / 3];
-    out.dx[POSE_AT[`kn${S}`] / 3] = out.dx[POSE_AT[`ft${S}`] / 3] = out.dx[POSE_AT.pelvis / 3];
-  }
-  out.limbs = 'full'; out.arm = ARMORY_BEAST_ARM.arm;
-}
 
 /** THE REST POSE written into `out`, pressed down to `crouch` (the body's height over its standing height, 1 standing)
  *  and lifted onto a saddle for a rider. Pure but for `out`. */
