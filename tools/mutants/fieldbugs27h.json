@@ -345,8 +345,8 @@
   {
     "name": "HOLD-STEP-unclamped",
     "file": "src/systems/spell/spellMaker.js",
-    "old": "next[field] = clampSetting(field, Number(value), effectKey);",
-    "new": "next[field] = Number(value);",
+    "old": "  next[field] = clampSetting(field, Number(value), effectKey); // ABSORB-NERF: the effect's own range",
+    "new": "  next[field] = Number(value); // ABSORB-NERF: the effect's own range",
     "tests": [
       "test/ui/enhanced/holdstep.test.js"
     ]
@@ -354,7 +354,7 @@
   {
     "name": "HOLD-STEP-no-pair-rule",
     "file": "src/systems/spell/spellMaker.js",
-    "old": "  next[field] = clampSetting(field, Number(value), effectKey);   // ABSORB-NERF: the effect's own range\n  return applyPairRules(next, field);",
+    "old": "  next[field] = clampSetting(field, Number(value), effectKey); // ABSORB-NERF: the effect's own range\n  return applyPairRules(next, field);",
     "new": "  next[field] = clampSetting(field, Number(value), effectKey);\n  return next;",
     "tests": [
       "test/ui/enhanced/holdstep.test.js"

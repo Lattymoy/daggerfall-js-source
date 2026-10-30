@@ -34,14 +34,24 @@
 // window says so. DFU has no such marking; it is the port telling
 // the truth about its own residue rather than taking the money quietly.
 
-import { localizedStrings, localizedTable } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedStrings, localizedTable } from '../textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** The 8 attributes in DFCareer.Stats order - note PERSONALITY is 5,
  *  ahead of Speed, which is the order the classic subType uses. */
-export const STAT_SUBGROUPS = Object.freeze(
-  ['Strength', 'Intelligence', 'Willpower', 'Agility', 'Endurance', 'Personality', 'Speed', 'Luck']);
+export const STAT_SUBGROUPS = Object.freeze([
+  'Strength',
+  'Intelligence',
+  'Willpower',
+  'Agility',
+  'Endurance',
+  'Personality',
+  'Speed',
+  'Luck',
+]);
 
-const D = 'duration', C = 'chance', M = 'magnitude';
+const D = 'duration',
+  C = 'chance',
+  M = 'magnitude';
 // [type, subType, group, subgroup, supports]
 const ROWS = [
   [0, 255, 'Paralyze', '', [D, C]],
@@ -130,10 +140,10 @@ const ROWS = [
 ];
 // the stat/vital families, expanded exactly as DFU's per-stat classes are
 const FAMILIES = [
-  [7, 'Drain', STAT_SUBGROUPS, [M]],                                  // Drain{Attribute}, 0..7
-  [9, 'Fortify Attribute', STAT_SUBGROUPS, [D, M]],                   // Fortify{Attribute}, 0..7
-  [10, 'Heal', [...STAT_SUBGROUPS, 'Health', 'Fatigue'], [M]],        // Heal{Attribute} + Health 8 / Fatigue 9
-  [11, 'Transfer', [...STAT_SUBGROUPS, 'Health', 'Fatigue'], [M]],    // Transfer{...}, same 0..9
+  [7, 'Drain', STAT_SUBGROUPS, [M]], // Drain{Attribute}, 0..7
+  [9, 'Fortify Attribute', STAT_SUBGROUPS, [D, M]], // Fortify{Attribute}, 0..7
+  [10, 'Heal', [...STAT_SUBGROUPS, 'Health', 'Fatigue'], [M]], // Heal{Attribute} + Health 8 / Fatigue 9
+  [11, 'Transfer', [...STAT_SUBGROUPS, 'Health', 'Fatigue'], [M]], // Transfer{...}, same 0..9
 ];
 
 /** L10N3d: GroupName and SubGroupName are properties each effect class
@@ -147,38 +157,82 @@ const FAMILIES = [
  *  stays English: DFU reads it as `true`, which the vendored
  *  Internal_Strings.csv carries only as the spreadsheet's `TRUE`. */
 const GROUP_NAMES = localizedTable({
-  Paralyze: ['paralyze', 'Paralyze'], 'Continuous Damage': ['continuousDamage', 'Continuous Damage'],
-  'Create Item': ['createItem', 'Create Item'], Cure: ['cure', 'Cure'], Damage: ['damage', 'Damage'],
-  Disintegrate: ['disintegrate', 'Disintegrate'], Dispel: ['dispel', 'Dispel'], Drain: ['drain', 'Drain'],
+  Paralyze: ['paralyze', 'Paralyze'],
+  'Continuous Damage': ['continuousDamage', 'Continuous Damage'],
+  'Create Item': ['createItem', 'Create Item'],
+  Cure: ['cure', 'Cure'],
+  Damage: ['damage', 'Damage'],
+  Disintegrate: ['disintegrate', 'Disintegrate'],
+  Dispel: ['dispel', 'Dispel'],
+  Drain: ['drain', 'Drain'],
   'Elemental Resistance': ['elementalResistance', 'Elemental Resistance'],
-  'Fortify Attribute': ['fortifyAttribute', 'Fortify Attribute'], Heal: ['heal', 'Heal'], Transfer: ['transfer', 'Transfer'],
-  'Soul Trap': ['soulTrap', 'Soul Trap'], Invisibility: ['invisibility', 'Invisibility'], Levitate: ['levitate', 'Levitate'],
-  Light: ['light', 'Light'], Lock: ['lock', 'Lock'], Open: ['open', 'Open'], Regenerate: ['regenerate', 'Regenerate'],
-  Silence: ['silence', 'Silence'], 'Spell Absorption': ['spellAbsorption', 'Spell Absorption'],
-  'Spell Reflection': ['spellReflection', 'Spell Reflection'], 'Spell Resistance': ['spellResistance', 'Spell Resistance'],
-  Chameleon: ['chameleon', 'Chameleon'], Shadow: ['shadow', 'Shadow'], Slowfall: ['slowfall', 'Slowfall'],
-  'Free Action': ['freeAction', 'Free Action'], Jumping: ['jumping', 'Jumping'], Climbing: ['climbing', 'Climbing'],
-  'Morph Self': ['morphSelf', 'Morph Self'], 'Water Breathing': ['waterBreathing', 'Water Breathing'],
-  'Water Walking': ['waterWalking', 'Water Walking'], Pacify: ['pacify', 'Pacify'], Charm: ['charm', 'Charm'],
-  Shield: ['shield', 'Shield'], Detect: ['detect', 'Detect'], Identify: ['identify', 'Identify'],
-  Teleport: ['teleport', 'Teleport'], 'Comprehend Languages': ['comprehendLanguages', 'Comprehend Languages'],
+  'Fortify Attribute': ['fortifyAttribute', 'Fortify Attribute'],
+  Heal: ['heal', 'Heal'],
+  Transfer: ['transfer', 'Transfer'],
+  'Soul Trap': ['soulTrap', 'Soul Trap'],
+  Invisibility: ['invisibility', 'Invisibility'],
+  Levitate: ['levitate', 'Levitate'],
+  Light: ['light', 'Light'],
+  Lock: ['lock', 'Lock'],
+  Open: ['open', 'Open'],
+  Regenerate: ['regenerate', 'Regenerate'],
+  Silence: ['silence', 'Silence'],
+  'Spell Absorption': ['spellAbsorption', 'Spell Absorption'],
+  'Spell Reflection': ['spellReflection', 'Spell Reflection'],
+  'Spell Resistance': ['spellResistance', 'Spell Resistance'],
+  Chameleon: ['chameleon', 'Chameleon'],
+  Shadow: ['shadow', 'Shadow'],
+  Slowfall: ['slowfall', 'Slowfall'],
+  'Free Action': ['freeAction', 'Free Action'],
+  Jumping: ['jumping', 'Jumping'],
+  Climbing: ['climbing', 'Climbing'],
+  'Morph Self': ['morphSelf', 'Morph Self'],
+  'Water Breathing': ['waterBreathing', 'Water Breathing'],
+  'Water Walking': ['waterWalking', 'Water Walking'],
+  Pacify: ['pacify', 'Pacify'],
+  Charm: ['charm', 'Charm'],
+  Shield: ['shield', 'Shield'],
+  Detect: ['detect', 'Detect'],
+  Identify: ['identify', 'Identify'],
+  Teleport: ['teleport', 'Teleport'],
+  'Comprehend Languages': ['comprehendLanguages', 'Comprehend Languages'],
 });
 const SUBGROUP_NAMES = localizedTable({
-  Health: ['health', 'Health'], Fatigue: ['fatigue', 'Fatigue'], 'Spell Points': ['spellPoints', 'Spell Points'],
-  Disease: ['disease', 'Disease'], Poison: ['poison', 'Poison'], Paralyzation: ['paralyzation', 'Paralyzation'],
-  Magic: ['magic', 'Magic'], Undead: ['undead', 'Undead'], Daedra: ['daedra', 'Daedra'], Enemy: ['enemy', 'Enemy'],
-  Treasure: ['treasure', 'Treasure'], Normal: ['normal', 'Normal'],
-  Strength: ['strength', 'Strength'], Intelligence: ['intelligence', 'Intelligence'], Willpower: ['willpower', 'Willpower'],
-  Agility: ['agility', 'Agility'], Endurance: ['endurance', 'Endurance'], Personality: ['personality', 'Personality'],
-  Speed: ['speed', 'Speed'], Luck: ['luck', 'Luck'],
+  Health: ['health', 'Health'],
+  Fatigue: ['fatigue', 'Fatigue'],
+  'Spell Points': ['spellPoints', 'Spell Points'],
+  Disease: ['disease', 'Disease'],
+  Poison: ['poison', 'Poison'],
+  Paralyzation: ['paralyzation', 'Paralyzation'],
+  Magic: ['magic', 'Magic'],
+  Undead: ['undead', 'Undead'],
+  Daedra: ['daedra', 'Daedra'],
+  Enemy: ['enemy', 'Enemy'],
+  Treasure: ['treasure', 'Treasure'],
+  Normal: ['normal', 'Normal'],
+  Strength: ['strength', 'Strength'],
+  Intelligence: ['intelligence', 'Intelligence'],
+  Willpower: ['willpower', 'Willpower'],
+  Agility: ['agility', 'Agility'],
+  Endurance: ['endurance', 'Endurance'],
+  Personality: ['personality', 'Personality'],
+  Speed: ['speed', 'Speed'],
+  Luck: ['luck', 'Luck'],
 });
 /** The two variant families key each subgroup by the English word
  *  itself (ElementalResistance.cs:27, PacifyEffect.cs:27). */
 const VARIANT_SUBGROUP_NAMES = localizedStrings({
-  Fire: 'Fire', Frost: 'Frost', Poison: 'Poison', Shock: 'Shock', Magicka: 'Magicka',
-  Animal: 'Animal', Undead: 'Undead', Humanoid: 'Humanoid', Daedra: 'Daedra',
+  Fire: 'Fire',
+  Frost: 'Frost',
+  Poison: 'Poison',
+  Shock: 'Shock',
+  Magicka: 'Magicka',
+  Animal: 'Animal',
+  Undead: 'Undead',
+  Humanoid: 'Humanoid',
+  Daedra: 'Daedra',
 });
-const VARIANT_TYPES = new Set([8, 33]);   // ElementalResistance, PacifyEffect
+const VARIANT_TYPES = new Set([8, 33]); // ElementalResistance, PacifyEffect
 /** A name as the player reads it; one no table carries (the port's own
  *  Resurrect, "True") is shown as it stands. */
 const shown = (names, en) => (Object.hasOwn(names, en) ? names[en] : en);
@@ -188,44 +242,99 @@ const shown = (names, en) => (Object.hasOwn(names, en) ? names[en] : en);
  *  falls to that module's `skipped` counter - it casts and does
  *  nothing, for a made spell exactly as for a stock one. */
 export const PORTED_KEYS = new Set([
-  '0,255',                                                          // Paralyze
-  '1,0', '1,1', '1,2',                                              // Continuous Damage {Health,Fatigue,SpellPoints}
-  '3,0', '3,1', '3,2',                                              // Cure {Disease,Poison,Paralyzation}
-  '4,0', '4,1', '4,2',                                              // Damage {Health,Fatigue,SpellPoints}
-  '7,0', '7,1', '7,2', '7,3', '7,4', '7,5', '7,6', '7,7',           // Drain{Attribute}
-  '9,0', '9,1', '9,2', '9,3', '9,4', '9,5', '9,6', '9,7',           // Fortify{Attribute}
-  '10,0', '10,1', '10,2', '10,3', '10,4', '10,5', '10,6', '10,7', '10,8', '10,9',   // Heal{...}
-  '11,0', '11,1', '11,2', '11,3', '11,4', '11,5', '11,6', '11,7', '11,8', '11,9',   // Transfer{...}
-  '8,0', '8,1', '8,2', '8,3', '8,4',                                // Elemental Resistance (X1)
-  '13,0', '13,1',                                                   // Invisibility (BUFF_KINDS)
-  '14,255',                                                         // Levitate
-  '16,255', '17,255',                                               // Lock / Open (X1 - armed at cast, fired by the door)
-  '18,255',                                                         // Regenerate
-  '19,255',                                                         // Silence
-  '2,255',                                                          // Create Item (X11b - the picker seam + the conjured lifetime)
-  '5,255',                                                          // Disintegrate (X11 - chance, then the no-magnitude save, then the kill)
-  '15,255',                                                         // Light (X11 - BUFF_KINDS; the candle is scenes/magicCandle.js)
-  '20,255', '21,255', '22,255',                                     // Spell Absorption / Reflection (X11) / Resistance (X1)
-  '44,255',                                                         // Comprehend Languages (X11 - the pacification bonus)
-  '23,0', '23,1',                                                   // Chameleon
-  '24,0', '24,1',                                                   // Shadow
-  '25,255',                                                         // Slowfall
-  '26,255',                                                         // Free Action
-  '27,255',                                                         // Jumping (X1)
-  '28,255',                                                         // Climbing (X1)
-  '29,255',                                                         // Morph Self (V2a - the arm calls the racial override)
-  '45,255',                                                         // Resurrect (RESURRECT1 - the arm is the cast engine's, at a fallen party member's body)
-  '46,255',                                                         // Shared Cartography (PARTY-MAP - BUFF_KINDS; the share is systems/party/partyMap.js)
-  '30,255',                                                         // Water Breathing
-  '31,255',                                                         // Water Walking
-  '6,0', '6,1', '6,2',                                              // Dispel {Magic,Undead,Daedra} (X9 the sweeps, X10 the bundle picker)
-  '12,255',                                                         // Soul Trap (X5 - the kill-time re-roll + the gem)
-  '33,0', '33,1', '33,2', '33,3',                                   // Pacify {Animal,Undead,Humanoid,Daedra} (X8)
-  '34,255',                                                         // Charm (X8 - Pacify Humanoid for enemy CLASSES)
-  '35,255',                                                         // Shield (X1 - the damage pool)
-  '39,0', '39,1', '39,2',                                           // Detect {Magic,Enemy,Treasure} (X4 - the compass markers)
-  '40,255',                                                         // Identify (X7 - the window opener + the per-item roll)
-  '43,255',                                                         // Teleport (the inline arm)
+  '0,255', // Paralyze
+  '1,0',
+  '1,1',
+  '1,2', // Continuous Damage {Health,Fatigue,SpellPoints}
+  '3,0',
+  '3,1',
+  '3,2', // Cure {Disease,Poison,Paralyzation}
+  '4,0',
+  '4,1',
+  '4,2', // Damage {Health,Fatigue,SpellPoints}
+  '7,0',
+  '7,1',
+  '7,2',
+  '7,3',
+  '7,4',
+  '7,5',
+  '7,6',
+  '7,7', // Drain{Attribute}
+  '9,0',
+  '9,1',
+  '9,2',
+  '9,3',
+  '9,4',
+  '9,5',
+  '9,6',
+  '9,7', // Fortify{Attribute}
+  '10,0',
+  '10,1',
+  '10,2',
+  '10,3',
+  '10,4',
+  '10,5',
+  '10,6',
+  '10,7',
+  '10,8',
+  '10,9', // Heal{...}
+  '11,0',
+  '11,1',
+  '11,2',
+  '11,3',
+  '11,4',
+  '11,5',
+  '11,6',
+  '11,7',
+  '11,8',
+  '11,9', // Transfer{...}
+  '8,0',
+  '8,1',
+  '8,2',
+  '8,3',
+  '8,4', // Elemental Resistance (X1)
+  '13,0',
+  '13,1', // Invisibility (BUFF_KINDS)
+  '14,255', // Levitate
+  '16,255',
+  '17,255', // Lock / Open (X1 - armed at cast, fired by the door)
+  '18,255', // Regenerate
+  '19,255', // Silence
+  '2,255', // Create Item (X11b - the picker seam + the conjured lifetime)
+  '5,255', // Disintegrate (X11 - chance, then the no-magnitude save, then the kill)
+  '15,255', // Light (X11 - BUFF_KINDS; the candle is scenes/magicCandle.js)
+  '20,255',
+  '21,255',
+  '22,255', // Spell Absorption / Reflection (X11) / Resistance (X1)
+  '44,255', // Comprehend Languages (X11 - the pacification bonus)
+  '23,0',
+  '23,1', // Chameleon
+  '24,0',
+  '24,1', // Shadow
+  '25,255', // Slowfall
+  '26,255', // Free Action
+  '27,255', // Jumping (X1)
+  '28,255', // Climbing (X1)
+  '29,255', // Morph Self (V2a - the arm calls the racial override)
+  '45,255', // Resurrect (RESURRECT1 - the arm is the cast engine's, at a fallen party member's body)
+  '46,255', // Shared Cartography (PARTY-MAP - BUFF_KINDS; the share is systems/party/partyMap.js)
+  '30,255', // Water Breathing
+  '31,255', // Water Walking
+  '6,0',
+  '6,1',
+  '6,2', // Dispel {Magic,Undead,Daedra} (X9 the sweeps, X10 the bundle picker)
+  '12,255', // Soul Trap (X5 - the kill-time re-roll + the gem)
+  '33,0',
+  '33,1',
+  '33,2',
+  '33,3', // Pacify {Animal,Undead,Humanoid,Daedra} (X8)
+  '34,255', // Charm (X8 - Pacify Humanoid for enemy CLASSES)
+  '35,255', // Shield (X1 - the damage pool)
+  '39,0',
+  '39,1',
+  '39,2', // Detect {Magic,Enemy,Treasure} (X4 - the compass markers)
+  '40,255', // Identify (X7 - the window opener + the per-item roll)
+  '43,255', // Teleport (the inline arm)
 ]);
 
 /** AUDIT 58: EntityEffect.DisplayName (EntityEffect.cs:385-387) is
@@ -248,9 +357,12 @@ export const PORTED_KEYS = new Set([
  *  (:947, :732) and the spellbook takes GroupName/SubGroupName into two
  *  labels (DaggerfallSpellBookWindow.cs:646-647). */
 const PAREN_DISPLAY_NAME = new Set([
-  '13,0', '13,1',   // InvisibilityNormal / InvisibilityTrue
-  '23,0', '23,1',   // ChameleonNormal / ChameleonTrue
-  '24,0', '24,1',   // ShadowNormal / ShadowTrue
+  '13,0',
+  '13,1', // InvisibilityNormal / InvisibilityTrue
+  '23,0',
+  '23,1', // ChameleonNormal / ChameleonTrue
+  '24,0',
+  '24,1', // ShadowNormal / ShadowTrue
 ]);
 
 /** Each row's English [group, subgroup], by its key: the catalogue's
@@ -261,37 +373,50 @@ const ENGLISH_NAMES = new Map();
  *  subgroup, name, duration, chance, magnitude, ported }. `group`,
  *  `subgroup` and `name` are GroupName, SubGroupName and DisplayName,
  *  read in the player's language each time they are read. */
-export const SPELL_MAKER_EFFECTS = Object.freeze((() => {
-  const out = [];
-  const push = (type, subType, group, subgroup, supports, craftable = true) => {
-    const key = `${type},${subType}`;
-    const subgroups = VARIANT_TYPES.has(type) ? VARIANT_SUBGROUP_NAMES : SUBGROUP_NAMES;
-    const groupName = () => shown(GROUP_NAMES, group);
-    const subGroupName = () => (subgroup ? shown(subgroups, subgroup) : '');
-    ENGLISH_NAMES.set(key, [group, subgroup]);
-    out.push(Object.freeze({
-      key, type, subType,
-      get group() { return groupName(); },
-      get subgroup() { return subGroupName(); },
-      // DisplayName: GetDisplayName's default arm, or the six
-      // concealment classes' `"{0} ({1})"` override (see above).
-      get name() {
-        const g = groupName(), s = subGroupName();
-        return s ? (PAREN_DISPLAY_NAME.has(key) ? `${g} (${s})` : `${g} ${s}`) : g;
-      },
-      duration: supports.includes(D), chance: supports.includes(C), magnitude: supports.includes(M),
-      ported: PORTED_KEYS.has(key),
-      // AllowedCraftingStations != None. A false row is in the REGISTRY
-      // (so the spellbook can name the effect) and out of the maker's
-      // two picker lists.
-      craftable,
-    }));
-  };
-  for (const [t, s, g, sub, sup, craft] of ROWS) push(t, s, g, sub, sup, craft);
-  for (const [t, g, subs, sup] of FAMILIES) subs.forEach((sub, i) => push(t, i, g, sub, sup));
-  const en = (e) => ENGLISH_NAMES.get(e.key)[0];
-  return out.sort((a, b) => (en(a) === en(b) ? a.subType - b.subType : en(a).localeCompare(en(b))));
-})());
+export const SPELL_MAKER_EFFECTS = Object.freeze(
+  (() => {
+    const out = [];
+    const push = (type, subType, group, subgroup, supports, craftable = true) => {
+      const key = `${type},${subType}`;
+      const subgroups = VARIANT_TYPES.has(type) ? VARIANT_SUBGROUP_NAMES : SUBGROUP_NAMES;
+      const groupName = () => shown(GROUP_NAMES, group);
+      const subGroupName = () => (subgroup ? shown(subgroups, subgroup) : '');
+      ENGLISH_NAMES.set(key, [group, subgroup]);
+      out.push(
+        Object.freeze({
+          key,
+          type,
+          subType,
+          get group() {
+            return groupName();
+          },
+          get subgroup() {
+            return subGroupName();
+          },
+          // DisplayName: GetDisplayName's default arm, or the six
+          // concealment classes' `"{0} ({1})"` override (see above).
+          get name() {
+            const g = groupName(),
+              s = subGroupName();
+            return s ? (PAREN_DISPLAY_NAME.has(key) ? `${g} (${s})` : `${g} ${s}`) : g;
+          },
+          duration: supports.includes(D),
+          chance: supports.includes(C),
+          magnitude: supports.includes(M),
+          ported: PORTED_KEYS.has(key),
+          // AllowedCraftingStations != None. A false row is in the REGISTRY
+          // (so the spellbook can name the effect) and out of the maker's
+          // two picker lists.
+          craftable,
+        }),
+      );
+    };
+    for (const [t, s, g, sub, sup, craft] of ROWS) push(t, s, g, sub, sup, craft);
+    for (const [t, g, subs, sup] of FAMILIES) subs.forEach((sub, i) => push(t, i, g, sub, sup));
+    const en = (e) => ENGLISH_NAMES.get(e.key)[0];
+    return out.sort((a, b) => (en(a) === en(b) ? a.subType - b.subType : en(a).localeCompare(en(b))));
+  })(),
+);
 
 /** The group picker's list: de-duplicated group names, alpha-sorted
  *  (EntityEffectBroker.GetGroupNames(sortAlpha: true)). GetGroupNames
@@ -305,8 +430,9 @@ export const spellMakerGroups = () =>
  *  as DFU sorts before populating. A group whose single effect has
  *  no subgroup skips the picker entirely (the window's own arm). */
 export const spellMakerSubgroups = (group) =>
-  SPELL_MAKER_EFFECTS.filter((e) => e.group === group && e.craftable)
-    .sort((a, b) => a.subgroup.localeCompare(b.subgroup));
+  SPELL_MAKER_EFFECTS.filter((e) => e.group === group && e.craftable).sort((a, b) =>
+    a.subgroup.localeCompare(b.subgroup),
+  );
 
 /** EntityEffectBroker.GetEffectTemplate (:641) - the whole REGISTRY,
  *  including the rows no crafting station offers. The spellbook names
@@ -356,44 +482,97 @@ export function dfuEffectKeyOf(type, subType) {
  *  the spellbook reads the whole registry, the same reason its ROWS
  *  entry exists. */
 export const SPELLBOOK_DESCRIPTION_IDS = new Map([
-  ['0,255', 1202],                                       // Paralyze
-  ['1,0', 1204], ['1,1', 1205], ['1,2', 1206],           // Continuous Damage
-  ['2,255', 1207],                                       // Create Item
-  ['3,0', 1209], ['3,1', 1210], ['3,2', 1211],           // Cure
-  ['4,0', 1212], ['4,1', 1213], ['4,2', 1214],           // Damage
-  ['5,255', 1215],                                       // Disintegrate
-  ['6,0', 1216], ['6,1', 1217], ['6,2', 1218],           // Dispel
-  ['7,0', 1219], ['7,1', 1220], ['7,2', 1221], ['7,3', 1222],
-  ['7,4', 1223], ['7,5', 1225], ['7,6', 1224], ['7,7', 1226],   // Drain{Attribute} - Personality 1225 BEFORE Speed 1224, the classic subType order
-  ['8,0', 1227], ['8,1', 1228], ['8,2', 1229], ['8,3', 1230], ['8,4', 1231],   // Elemental Resistance, 1227 + variant
-  ['9,0', 1232], ['9,1', 1233], ['9,2', 1234], ['9,3', 1235],
-  ['9,4', 1236], ['9,5', 1237], ['9,6', 1238], ['9,7', 1239],   // Fortify Attribute
-  ['10,0', 1240], ['10,1', 1241], ['10,2', 1242], ['10,3', 1243], ['10,4', 1244],
-  ['10,5', 1245], ['10,6', 1246], ['10,7', 1247], ['10,8', 1248], ['10,9', 1249],   // Heal{...}, Health 8 / Fatigue 9
-  ['11,0', 1250], ['11,1', 1251], ['11,2', 1252], ['11,3', 1253], ['11,4', 1254],
-  ['11,5', 1255], ['11,6', 1256], ['11,7', 1257], ['11,8', 1258], ['11,9', 1259],   // Transfer{...}
-  ['12,255', 1303],                                      // Soul Trap
-  ['13,0', 1260], ['13,1', 1261],                        // Invisibility
-  ['14,255', 1262],                                      // Levitate
-  ['15,255', 1263],                                      // Light
-  ['16,255', 1264], ['17,255', 1265],                    // Lock / Open
-  ['18,255', 1266],                                      // Regenerate
-  ['19,255', 1267],                                      // Silence
-  ['20,255', 1268], ['21,255', 1269], ['22,255', 1270],  // Absorption / Reflection / Resistance
-  ['23,0', 1271], ['23,1', 1272],                        // Chameleon
-  ['24,0', 1273], ['24,1', 1274],                        // Shadow
-  ['25,255', 1275],                                      // Slowfall
-  ['26,255', 1276],                                      // Free Action
-  ['27,255', 1277], ['28,255', 1278],                    // Jumping / Climbing
-  ['29,255', 1279],                                      // Morph Self (registry only)
-  ['30,255', 1282], ['31,255', 1283],                    // Water Breathing / Walking
-  ['33,0', 1285], ['33,1', 1286], ['33,2', 1287], ['33,3', 1288],   // Pacify, 1285 + variant
-  ['34,255', 1289],                                      // Charm
-  ['35,255', 1290],                                      // Shield
-  ['39,0', 1296], ['39,1', 1297], ['39,2', 1298],        // Detect
-  ['40,255', 1299],                                      // Identify
-  ['43,255', 1302],                                      // Teleport
-  ['44,255', 1305],                                      // Comprehend Languages
+  ['0,255', 1202], // Paralyze
+  ['1,0', 1204],
+  ['1,1', 1205],
+  ['1,2', 1206], // Continuous Damage
+  ['2,255', 1207], // Create Item
+  ['3,0', 1209],
+  ['3,1', 1210],
+  ['3,2', 1211], // Cure
+  ['4,0', 1212],
+  ['4,1', 1213],
+  ['4,2', 1214], // Damage
+  ['5,255', 1215], // Disintegrate
+  ['6,0', 1216],
+  ['6,1', 1217],
+  ['6,2', 1218], // Dispel
+  ['7,0', 1219],
+  ['7,1', 1220],
+  ['7,2', 1221],
+  ['7,3', 1222],
+  ['7,4', 1223],
+  ['7,5', 1225],
+  ['7,6', 1224],
+  ['7,7', 1226], // Drain{Attribute} - Personality 1225 BEFORE Speed 1224, the classic subType order
+  ['8,0', 1227],
+  ['8,1', 1228],
+  ['8,2', 1229],
+  ['8,3', 1230],
+  ['8,4', 1231], // Elemental Resistance, 1227 + variant
+  ['9,0', 1232],
+  ['9,1', 1233],
+  ['9,2', 1234],
+  ['9,3', 1235],
+  ['9,4', 1236],
+  ['9,5', 1237],
+  ['9,6', 1238],
+  ['9,7', 1239], // Fortify Attribute
+  ['10,0', 1240],
+  ['10,1', 1241],
+  ['10,2', 1242],
+  ['10,3', 1243],
+  ['10,4', 1244],
+  ['10,5', 1245],
+  ['10,6', 1246],
+  ['10,7', 1247],
+  ['10,8', 1248],
+  ['10,9', 1249], // Heal{...}, Health 8 / Fatigue 9
+  ['11,0', 1250],
+  ['11,1', 1251],
+  ['11,2', 1252],
+  ['11,3', 1253],
+  ['11,4', 1254],
+  ['11,5', 1255],
+  ['11,6', 1256],
+  ['11,7', 1257],
+  ['11,8', 1258],
+  ['11,9', 1259], // Transfer{...}
+  ['12,255', 1303], // Soul Trap
+  ['13,0', 1260],
+  ['13,1', 1261], // Invisibility
+  ['14,255', 1262], // Levitate
+  ['15,255', 1263], // Light
+  ['16,255', 1264],
+  ['17,255', 1265], // Lock / Open
+  ['18,255', 1266], // Regenerate
+  ['19,255', 1267], // Silence
+  ['20,255', 1268],
+  ['21,255', 1269],
+  ['22,255', 1270], // Absorption / Reflection / Resistance
+  ['23,0', 1271],
+  ['23,1', 1272], // Chameleon
+  ['24,0', 1273],
+  ['24,1', 1274], // Shadow
+  ['25,255', 1275], // Slowfall
+  ['26,255', 1276], // Free Action
+  ['27,255', 1277],
+  ['28,255', 1278], // Jumping / Climbing
+  ['29,255', 1279], // Morph Self (registry only)
+  ['30,255', 1282],
+  ['31,255', 1283], // Water Breathing / Walking
+  ['33,0', 1285],
+  ['33,1', 1286],
+  ['33,2', 1287],
+  ['33,3', 1288], // Pacify, 1285 + variant
+  ['34,255', 1289], // Charm
+  ['35,255', 1290], // Shield
+  ['39,0', 1296],
+  ['39,1', 1297],
+  ['39,2', 1298], // Detect
+  ['40,255', 1299], // Identify
+  ['43,255', 1302], // Teleport
+  ['44,255', 1305], // Comprehend Languages
 ]);
 
 /** MACRO-5 - the EffectSettings a spellbook entry carries, as
@@ -407,9 +586,17 @@ export const SPELLBOOK_DESCRIPTION_IDS = new Map([
 export function classicEffectSettings(e) {
   const t = e ? effectByKey(`${e.type},${e.subType & 0xff}`) : null;
   const s = {
-    durationBase: 1, durationPlus: 1, durationPerLevel: 1,
-    chanceBase: 1, chancePlus: 1, chancePerLevel: 1,
-    magnitudeBaseMin: 1, magnitudeBaseMax: 1, magnitudePlusMin: 1, magnitudePlusMax: 1, magnitudePerLevel: 1,
+    durationBase: 1,
+    durationPlus: 1,
+    durationPerLevel: 1,
+    chanceBase: 1,
+    chancePlus: 1,
+    chancePerLevel: 1,
+    magnitudeBaseMin: 1,
+    magnitudeBaseMax: 1,
+    magnitudePlusMin: 1,
+    magnitudePlusMax: 1,
+    magnitudePerLevel: 1,
   };
   if (t?.duration) {
     s.durationBase = e.durationBase ?? 0;
@@ -449,18 +636,24 @@ export const spellBookDescriptionId = (key) => SPELLBOOK_DESCRIPTION_IDS.get(key
 /** RESURRECT1: the PORT'S OWN effects have no TEXT.RSC record to name, so their box reads these rows instead - the
  *  spellbook's effect popup is never empty on an effect the port itself added. */
 export const PORT_EFFECT_DESCRIPTIONS = new Map([
-  ['45,255', Object.freeze([
-    'Resurrect',
-    'Calls a fallen party member back from death.',
-    'Cast by touch at their body; they rise where',
-    'they fell, with 30% of their health.',
-  ])],
-  ['46,255', Object.freeze([
-    'Shared Cartography',
-    'While it lasts, the parts of a dungeon you',
-    'map are drawn on your party\'s maps too,',
-    'for those in the same dungeon.',
-  ])],
+  [
+    '45,255',
+    Object.freeze([
+      'Resurrect',
+      'Calls a fallen party member back from death.',
+      'Cast by touch at their body; they rise where',
+      'they fell, with 30% of their health.',
+    ]),
+  ],
+  [
+    '46,255',
+    Object.freeze([
+      'Shared Cartography',
+      'While it lasts, the parts of a dungeon you',
+      "map are drawn on your party's maps too,",
+      'for those in the same dungeon.',
+    ]),
+  ],
 ]);
 export const portEffectDescription = (key) => PORT_EFFECT_DESCRIPTIONS.get(key) ?? null;
 
@@ -482,8 +675,8 @@ export const portEffectDescription = (key) => PORT_EFFECT_DESCRIPTIONS.get(key) 
  *  DrainSpeed.cs:40). +300 would swap them, so the two are named. */
 export const SPELLMAKER_DESCRIPTION_OFFSET = 300;
 const SPELLMAKER_DESCRIPTION_EXCEPTIONS = new Map([
-  ['7,5', 1524],   // Drain Personality
-  ['7,6', 1525],   // Drain Speed
+  ['7,5', 1524], // Drain Personality
+  ['7,6', 1525], // Drain Speed
 ]);
 export const spellMakerDescriptionId = (key) => {
   const named = SPELLMAKER_DESCRIPTION_EXCEPTIONS.get(key);

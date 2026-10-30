@@ -35,9 +35,9 @@
 import { SKILLS } from '../skills.js';
 import { SKILL_SOFT_CAP, effectiveSkill } from '../skillSoftcap.js';
 import { masterCappedSkill } from '../masterSkills.js';
-import { mentoredSkill } from '../mentorMode.js';   // MENTOR2: kept out of skillSoftcap.js, which the relay reads
+import { mentoredSkill } from '../mentorMode.js'; // MENTOR2: kept out of skillSoftcap.js, which the relay reads
 import { isOnlinePage } from '../online/onlineLane.js';
-import { sigilDueling } from '../sigil/sigil.js';   // SCHOOLS2: a self perk sleeps in a refereed fight, as every loot and set power does
+import { sigilDueling } from '../sigil/sigil.js'; // SCHOOLS2: a self perk sleeps in a refereed fight, as every loot and set power does
 
 /** Each effective point of Destruction past 100 is this much more damage (CLIMB-PAST's CLIMB_OVERCAP_SPEED_PER_POINT). */
 export const DESTRUCTION_POTENCY_PER_POINT = 0.01;
@@ -47,12 +47,14 @@ export const SCHOOL_POTENCY_PER_POINT = DESTRUCTION_POTENCY_PER_POINT;
 /** MY spell at a target the port may strengthen: a player's own (no peer's stand-in), at no player. */
 export const ownSpellAt = (caster, target) => !!caster?.isPlayer && !caster.peer && !!target && !target.isPlayer;
 /** SCHOOLS2: MY spell on MYSELF - my own player entity, its own caster, and no refereed fight in progress. */
-export const ownSpellOnSelf = (caster, target) => !!caster?.isPlayer && !caster.peer && caster === target && !sigilDueling();
+export const ownSpellOnSelf = (caster, target) =>
+  !!caster?.isPlayer && !caster.peer && caster === target && !sigilDueling();
 
 /** MENTOR2: the climb a character FIGHTS with - the mentored value while mentoring (mentorMode.js mentoredSkill), else
  *  skillSoftcap.js climbedSkill's. What a school's potency and a weapon past 100 pay on; the foes' edge reads the real
  *  climb, and none while mentoring (combatEdge). */
-export const fightingClimb = (entity, id) => effectiveSkill(mentoredSkill(entity, masterCappedSkill(entity, entity?.skills?.[id] ?? 0, id)));
+export const fightingClimb = (entity, id) =>
+  effectiveSkill(mentoredSkill(entity, masterCappedSkill(entity, entity?.skills?.[id] ?? 0, id)));
 
 /** The school past 100: 1 to 100, then 1% a point of the school's CLIMB (effective 140 at most: x1.4) - Destruction's
  *  unless `school` names another (SCHOOLS2). Online alone; MENTOR2: while mentoring, the mentored climb. */
@@ -76,9 +78,15 @@ const _pierce = new Map();
  *  Firmament keystone's - is ever below none). */
 export const SPELL_POWER_FLOOR = 0.5;
 /** Named modifiers, `fn(caster, target) -> percent` more damage (FIRM1: or less, below none). A non-function removes the name. */
-export function registerSpellPowerMod(name, fn) { if (typeof fn === 'function') _power.set(name, fn); else _power.delete(name); }
+export function registerSpellPowerMod(name, fn) {
+  if (typeof fn === 'function') _power.set(name, fn);
+  else _power.delete(name);
+}
 /** Named modifiers, `fn(caster, target) -> points` off the target's saving throw. A non-function removes the name. */
-export function registerSpellPierceMod(name, fn) { if (typeof fn === 'function') _pierce.set(name, fn); else _pierce.delete(name); }
+export function registerSpellPierceMod(name, fn) {
+  if (typeof fn === 'function') _pierce.set(name, fn);
+  else _pierce.delete(name);
+}
 
 /** The multiplier on MY damage spell's landed amount: the school past 100, times every modifier's percent. 1 for
  *  anything that is not my spell at a target the port may strengthen. */
@@ -87,7 +95,7 @@ export function spellPowerMult(caster, target, opts = {}) {
   let pct = 0;
   for (const fn of _power.values()) {
     const v = fn(caster, target);
-    if (Number.isFinite(v) && v !== 0) pct += v;   // FIRM1: a keystone's price may be a percent LESS (Martyr's Vow)
+    if (Number.isFinite(v) && v !== 0) pct += v; // FIRM1: a keystone's price may be a percent LESS (Martyr's Vow)
   }
   return schoolPotency(caster, opts) * Math.max(SPELL_POWER_FLOOR, 1 + pct / 100);
 }
@@ -102,9 +110,18 @@ export function spellPowerMult(caster, target, opts = {}) {
  *  there, FIELD BUGS 2026-10-19f STAND-IN-WHOLE; and the sea serpent's door, createSerpentSpell, out of bootWorld by BOSS-DOT -
  *  what a hand's purse can land, SERPENT_HIT_CAP_X of SERPENT_HAND_REF: 21). A non-function removes the name; one that throws is skipped. */
 const _landed = new Map();
-export function registerSpellLandedListener(name, fn) { if (typeof fn === 'function') _landed.set(name, fn); else _landed.delete(name); }
+export function registerSpellLandedListener(name, fn) {
+  if (typeof fn === 'function') _landed.set(name, fn);
+  else _landed.delete(name);
+}
 export function tellSpellLanded(info) {
-  for (const fn of _landed.values()) { try { fn(info); } catch { /* a rider is not the cast's problem */ } }
+  for (const fn of _landed.values()) {
+    try {
+      fn(info);
+    } catch {
+      /* a rider is not the cast's problem */
+    }
+  }
 }
 
 /** The points MY damage spell takes off the target's saving throw - never negative, none but my own at no player. */

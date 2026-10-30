@@ -65,8 +65,8 @@
   {
     "name": "BAL9b-at-a-player",
     "file": "src/systems/spell/spellPower.js",
-    "old": "!caster.peer && !!target && !target.isPlayer;",
-    "new": "!caster.peer && !!target;",
+    "old": "export const ownSpellAt = (caster, target) => !!caster?.isPlayer && !caster.peer && !!target && !target.isPlayer;",
+    "new": "export const ownSpellAt = (caster, target) => !!caster?.isPlayer && !caster.peer && !!target;",
     "tests": [
       "test/systems/bal9_destruction.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "BAL9b-a-peers",
     "file": "src/systems/spell/spellPower.js",
-    "old": "!!caster?.isPlayer && !caster.peer && !!target",
-    "new": "!!caster?.isPlayer && !!target",
+    "old": "export const ownSpellAt = (caster, target) => !!caster?.isPlayer && !caster.peer && !!target && !target.isPlayer;",
+    "new": "export const ownSpellAt = (caster, target) => !!caster?.isPlayer && !!target && !target.isPlayer;",
     "tests": [
       "test/systems/bal9_destruction.test.js"
     ]
@@ -92,7 +92,7 @@
   {
     "name": "BAL9b-MENTOR2-the-real-climb-while-mentoring",
     "file": "src/systems/spell/spellPower.js",
-    "old": "export const fightingClimb = (entity, id) => effectiveSkill(mentoredSkill(entity, masterCappedSkill(entity, entity?.skills?.[id] ?? 0, id)));",
+    "old": "export const fightingClimb = (entity, id) =>\n  effectiveSkill(mentoredSkill(entity, masterCappedSkill(entity, entity?.skills?.[id] ?? 0, id)));",
     "new": "export const fightingClimb = (entity, id) => effectiveSkill(masterCappedSkill(entity, entity?.skills?.[id] ?? 0, id));",
     "tests": [
       "test/systems/bal9_destruction.test.js"

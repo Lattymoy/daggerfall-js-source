@@ -1019,7 +1019,7 @@ alone.
 
 WHAT THE PORT DOES. The same: `effects.js:"const saveElement = (e) => (savesAsMagic(e) ? 4 : spell.element);"` -
 Disintegrate is not one of MAGIC_ONLY_KEYS. The spellmaker's default element is Magic
-(`spellMaker.js:"export const DEFAULT_ELEMENT_INDEX = 4;"`). The Enemy Expansion's careers (`dexTableText.js`
+(`spellMaker.js:"export const DEFAULT_ELEMENT_INDEX"`). The Enemy Expansion's careers (`dexTableText.js`
 CareerBase): the Ice Golem is immune to Magic, Frost and Poison; the Stone Golem to Magic and Poison; the Iron Golem
 to Shock and Poison. Run on the real modules (200 casts each of a three-Disintegrate spell at 100%): element Magic -
 Iron Golem 200 of 200 disintegrated, Ice and Stone Golems 0; element Fire - all three, every time.

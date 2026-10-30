@@ -148,6 +148,8 @@
 /src/systems/song/*/
 !/src/systems/soundscape/
 /src/systems/soundscape/*/
+!/src/systems/spell/
+/src/systems/spell/*/
 !/src/systems/starfall/
 /src/systems/starfall/*/
 !/src/systems/starts/

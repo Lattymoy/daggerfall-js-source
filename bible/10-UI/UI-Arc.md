@@ -9842,7 +9842,7 @@ VALUE IT READ FOR. effectWords took a component to be there when its
 field was not zero. The Spell Maker never writes a zero there: a
 greyed-out spinner takes no value
 (DaggerfallEffectSettingsEditorWindow.InitControlState) and keeps the
-maker's floor of 1 (spellMaker.js:"export function blankEffectSettings() {",
+maker's floor of 1 (spellMaker.js:"export function blankEffectSettings",
 DefaultEffectSettings' "1 + 1 per level"), and all 99 effect slots of
 the stock SPELLS.STD hold the same 1s in each component their effect
 does not support. So every Damage Health in the game, stock or made,
@@ -9866,7 +9866,7 @@ TEST THE SHAPE THE PRODUCER MINTS, once more.
 
 FIXED WHERE IT READS. effectWords reads the effect the way DFU
 instantiates it (enhancedSpellbook.js:"const s = classicEffectSettings(effect);"): the settings are
-ClassicEffectRecordToEffectSettings' (spellEffects.js:"export function classicEffectSettings(e) {", MACRO-5's
+ClassicEffectRecordToEffectSettings' (spellEffects.js:"export function classicEffectSettings", MACRO-5's
 port - one DFU member, one export), a component is printed only when
 the effect class supports it (SupportDuration, SupportChance,
 SupportMagnitude - the template's three flags, the gates the settings
