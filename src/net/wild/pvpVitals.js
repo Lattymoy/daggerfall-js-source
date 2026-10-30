@@ -11,10 +11,31 @@ export const VITAL_WHOLE = 10_000;
 
 /** The PvP bar's price list, per cent of maximum magicka (systems/wild/pvpKit.js KIT_SPELLS' `cost`, pinned equal), by the
  *  kit's order (KIT_IDS). The relay charges these, never plate's surcharge on them. */
-export const KIT_COSTS = Object.freeze({ damage: 8, heal: 12, shield: 15, resist: 12, reflect: 12, absorb: 12, fortify: 10, regen: 10, jump: 6, speed: 6, resurrect: 25 });
+export const KIT_COSTS = Object.freeze({
+  damage: 8,
+  heal: 12,
+  shield: 15,
+  resist: 12,
+  reflect: 12,
+  absorb: 12,
+  fortify: 10,
+  regen: 10,
+  jump: 6,
+  speed: 6,
+  resurrect: 25,
+});
 export const KIT_ORDER = Object.freeze(Object.keys(KIT_COSTS));
 /** An ally cast frame's first effect type to its cheapest kit price (Fortify and Speed share 9: the cheaper is charged). */
-export const KIT_COST_BY_TYPE = Object.freeze({ 10: KIT_COSTS.heal, 35: KIT_COSTS.shield, 8: KIT_COSTS.resist, 21: KIT_COSTS.reflect, 20: KIT_COSTS.absorb, 9: KIT_COSTS.speed, 18: KIT_COSTS.regen, 27: KIT_COSTS.jump });
+export const KIT_COST_BY_TYPE = Object.freeze({
+  10: KIT_COSTS.heal,
+  35: KIT_COSTS.shield,
+  8: KIT_COSTS.resist,
+  21: KIT_COSTS.reflect,
+  20: KIT_COSTS.absorb,
+  9: KIT_COSTS.speed,
+  18: KIT_COSTS.regen,
+  27: KIT_COSTS.jump,
+});
 
 /** The numbers (parts of the whole unless named): health and magicka regen a second (gear and powers, with room); the
  *  potion clock (combat/pvpPotions.js, pinned equal); a magicka and a fatigue potion; a paid buff's minute (pvpKit.js);
@@ -23,9 +44,25 @@ export const KIT_COST_BY_TYPE = Object.freeze({ 10: KIT_COSTS.heal, 35: KIT_COST
  *  health credit held, the most regen banks, and how long a paid heal's credit waits (a potion is no store of health);
  *  PVP-KIT-REGEN's most a second, per cent of health (the kit's top share, a round taken as a second at the shortest). */
 export const PVP_VITALS = Object.freeze({
-  hpRegen: 10, mpRegen: 5, potionMs: 15_000, mpPotion: 6_000, fpPotion: 5_000, buffMs: 60_000,
-  healLo: 25, healHi: 35, swing: 5, runPerS: 80, walkMps: 8.9, castMs: 1_500, creditMax: 1, regenBank: 0.05, creditMs: 5_000,
-  shaftMs: 250, shaftBurst: 2, swingMs: 450, regenKit: 4,
+  hpRegen: 10,
+  mpRegen: 5,
+  potionMs: 15_000,
+  mpPotion: 6_000,
+  fpPotion: 5_000,
+  buffMs: 60_000,
+  healLo: 25,
+  healHi: 35,
+  swing: 5,
+  runPerS: 80,
+  walkMps: 8.9,
+  castMs: 1_500,
+  creditMax: 1,
+  regenBank: 0.05,
+  creditMs: 5_000,
+  shaftMs: 250,
+  shaftBurst: 2,
+  swingMs: 450,
+  regenKit: 4,
 });
 
 /** BOW-RATE: `shaftMs` is the closest two honest arrows come - the bow's loose at no reload, four ticks
@@ -60,25 +97,51 @@ export const potionHealAt = (cl) => 5 + 19 * (Number.isSafeInteger(cl) && cl >= 
  */
 /** A fighter's ledgers - made unheard (full until the game's word anchors them). @param {any} f @param {number} now @returns {Vitals} */
 export function vitalsOf(f, now) {
-  if (!f.vitals) f.vitals = { heard: false, mp: VITAL_WHOLE, fp: VITAL_WHOLE, credit: 0, creditAt: -Infinity, at: now, potion: {}, shieldTo: 0, absorbTo: 0, regenTo: 0, castC: 0, castAt: 0, castTo: [], shafts: PVP_VITALS.shaftBurst, shaftAt: now, fastK: 0, fastAt: -Infinity, swings: {} };
+  if (!f.vitals)
+    f.vitals = {
+      heard: false,
+      mp: VITAL_WHOLE,
+      fp: VITAL_WHOLE,
+      credit: 0,
+      creditAt: -Infinity,
+      at: now,
+      potion: {},
+      shieldTo: 0,
+      absorbTo: 0,
+      regenTo: 0,
+      castC: 0,
+      castAt: 0,
+      castTo: [],
+      shafts: PVP_VITALS.shaftBurst,
+      shaftAt: now,
+      fastK: 0,
+      fastAt: -Infinity,
+      swings: {},
+    };
   return f.vitals;
 }
 /** The regen since the ledgers last moved: magicka, and health credit (to `creditMax` of the whole). */
 function accrue(f, v, now) {
-  const s = Math.max(0, now - v.at) / 1000, from = v.at;
+  const s = Math.max(0, now - v.at) / 1000,
+    from = v.at;
   v.at = now;
   v.mp = Math.min(VITAL_WHOLE, v.mp + s * PVP_VITALS.mpRegen);
   const bank = f.max * PVP_VITALS.regenBank;
-  if (now - (v.creditAt ?? -Infinity) > PVP_VITALS.creditMs) v.credit = Math.min(v.credit, bank);   // a paid heal's credit not taken in time
+  if (now - (v.creditAt ?? -Infinity) > PVP_VITALS.creditMs) v.credit = Math.min(v.credit, bank); // a paid heal's credit not taken in time
   if (v.credit < bank) v.credit = Math.min(bank, v.credit + (s * PVP_VITALS.hpRegen * f.max) / VITAL_WHOLE);
-  const rs = Math.max(0, Math.min(now, v.regenTo ?? 0) - from) / 1000;   // PVP-KIT-REGEN: a paid Regenerate's rounds
-  if (rs > 0) { v.credit = Math.min(f.max * PVP_VITALS.creditMax, v.credit + (rs * PVP_VITALS.regenKit * f.max) / 100); v.creditAt = now; }
+  const rs = Math.max(0, Math.min(now, v.regenTo ?? 0) - from) / 1000; // PVP-KIT-REGEN: a paid Regenerate's rounds
+  if (rs > 0) {
+    v.credit = Math.min(f.max * PVP_VITALS.creditMax, v.credit + (rs * PVP_VITALS.regenKit * f.max) / 100);
+    v.creditAt = now;
+  }
 }
 const share = (n) => Math.max(0, Math.min(VITAL_WHOLE, Math.round(Number(n))));
 /** A kit price in parts. */
 const parts = (pct) => Math.round((pct * VITAL_WHOLE) / 100);
 /** A kit heal's share of the whole at Restoration `resto`, per cent (pvpKit.js kitScale). */
-export const kitHealShare = (resto) => PVP_VITALS.healLo + (PVP_VITALS.healHi - PVP_VITALS.healLo) * Math.max(0, Math.min(1, ((Number(resto) || 0) - 100) / 200));
+export const kitHealShare = (resto) =>
+  PVP_VITALS.healLo +
+  (PVP_VITALS.healHi - PVP_VITALS.healLo) * Math.max(0, Math.min(1, ((Number(resto) || 0) - 100) / 200));
 
 /** Pay `pct` of magicka now - false (nothing spent) where the ledger is short. */
 export function payMagicka(f, pct, now) {
@@ -99,7 +162,10 @@ export function payFatigue(f, n, now) {
 /** BOW-RATE: an arrow loosed now - false (none spent) where it comes sooner than the bow allows. */
 export function shaftPaid(f, now) {
   const v = vitalsOf(f, now);
-  v.shafts = Math.min(PVP_VITALS.shaftBurst, (v.shafts ?? PVP_VITALS.shaftBurst) + Math.max(0, now - (v.shaftAt ?? now)) / PVP_VITALS.shaftMs);
+  v.shafts = Math.min(
+    PVP_VITALS.shaftBurst,
+    (v.shafts ?? PVP_VITALS.shaftBurst) + Math.max(0, now - (v.shaftAt ?? now)) / PVP_VITALS.shaftMs,
+  );
   v.shaftAt = now;
   if (v.shafts < 1) return false;
   v.shafts -= 1;
@@ -120,7 +186,7 @@ export function swingPaid(f, to, now) {
   const [n, at] = v.swings[to] ?? [PVP_VITALS.shaftBurst, now];
   const left = Math.min(PVP_VITALS.shaftBurst, n + Math.max(0, now - at) / PVP_VITALS.swingMs);
   if (left < 1) return false;
-  for (const k in v.swings) if (now - v.swings[k][1] > 10_000) delete v.swings[k];   // a target long left
+  for (const k in v.swings) if (now - v.swings[k][1] > 10_000) delete v.swings[k]; // a target long left
   v.swings[to] = [left - 1, now];
   return true;
 }
@@ -132,8 +198,15 @@ export function creditHeal(f, hp, now) {
   v.creditAt = now;
 }
 /** The health credit `f` holds now (its regen counted), and its spending. */
-export function healCredit(f, now) { const v = vitalsOf(f, now); accrue(f, v, now); return v.credit; }
-export function spendCredit(f, n, now) { const v = vitalsOf(f, now); v.credit = Math.max(0, v.credit - Math.max(0, n)); }
+export function healCredit(f, now) {
+  const v = vitalsOf(f, now);
+  accrue(f, v, now);
+  return v.credit;
+}
+export function spendCredit(f, n, now) {
+  const v = vitalsOf(f, now);
+  v.credit = Math.max(0, v.credit - Math.max(0, n));
+}
 /** Whether a paid Shield runs on `f`. */
 export const shieldPaid = (f, now) => (f?.vitals?.shieldTo ?? 0) > now;
 
@@ -141,10 +214,14 @@ export const shieldPaid = (f, now) => (f?.vitals?.shieldTo ?? 0) > now;
  *  the kit's share at `resto`), a Shield's or an Absorb's minute. */
 export function kitLanded(t, id, now, { hp = null, resto = 0 } = {}) {
   const v = vitalsOf(t, now);
-  if (id === 'heal') creditHeal(t, Math.min(t.max * PVP_VITALS.healHi / 100, hp ?? (t.max * kitHealShare(resto)) / 100), now);
+  if (id === 'heal')
+    creditHeal(t, Math.min((t.max * PVP_VITALS.healHi) / 100, hp ?? (t.max * kitHealShare(resto)) / 100), now);
   else if (id === 'shield') v.shieldTo = now + PVP_VITALS.buffMs;
   else if (id === 'absorb') v.absorbTo = now + PVP_VITALS.buffMs;
-  else if (id === 'regen') { accrue(t, v, now); v.regenTo = now + PVP_VITALS.buffMs; }   // PVP-KIT-REGEN
+  else if (id === 'regen') {
+    accrue(t, v, now);
+    v.regenTo = now + PVP_VITALS.buffMs;
+  } // PVP-KIT-REGEN
 }
 
 /**
@@ -164,14 +241,14 @@ export function vitalsReport(f, report, now, { flagged = false, fresh = true, cl
   if (!fresh || !Array.isArray(report.use)) return;
   for (const u of report.use.slice(0, DECLARES_PER_REPORT)) {
     if (u === DECLARE.hpPotion || u === DECLARE.mpPotion || u === DECLARE.otherPotion) {
-      if (now - (v.potion[u] ?? -Infinity) < PVP_VITALS.potionMs) continue;   // the relay's own potion clock
+      if (now - (v.potion[u] ?? -Infinity) < PVP_VITALS.potionMs) continue; // the relay's own potion clock
       v.potion[u] = now;
       if (u === DECLARE.hpPotion) creditHeal(f, potionHealAt(cl), now);
       else if (u === DECLARE.mpPotion) v.mp = Math.min(VITAL_WHOLE, v.mp + PVP_VITALS.mpPotion);
       else v.fp = Math.min(VITAL_WHOLE, v.fp + PVP_VITALS.fpPotion);
     } else if (Number.isInteger(u) && u >= DECLARE.kit && u <= DECLARE_MAX) {
       const id = KIT_ORDER[u - DECLARE.kit];
-      if (id === 'damage' || !payMagicka(f, KIT_COSTS[id], now)) continue;   // damage is paid where it lands (castPaid)
+      if (id === 'damage' || !payMagicka(f, KIT_COSTS[id], now)) continue; // damage is paid where it lands (castPaid)
       kitLanded(f, id, now, { resto });
     }
   }
@@ -189,7 +266,11 @@ export function castPaid(f, c, to, now) {
     return true;
   }
   if (!payMagicka(f, KIT_COSTS.damage, now)) return false;
-  if (Number.isSafeInteger(c)) { v.castC = c; v.castAt = now; v.castTo = [to]; }
+  if (Number.isSafeInteger(c)) {
+    v.castC = c;
+    v.castAt = now;
+    v.castTo = [to];
+  }
   return true;
 }
 /** An Absorb on `t` takes a landed harmful cast's price back into its magicka. */
@@ -206,9 +287,12 @@ export function runPaid(f, metres, ms, now) {
 }
 
 /** What the ledgers carry into another room (net/wild/wildRef.js wildCarry), and taken from one. */
-export const vitalsCarry = (f) => (f?.vitals?.heard ? { mp: Math.round(f.vitals.mp), fp: Math.round(f.vitals.fp) } : null);
+export const vitalsCarry = (f) =>
+  f?.vitals?.heard ? { mp: Math.round(f.vitals.mp), fp: Math.round(f.vitals.fp) } : null;
 export function vitalsTake(f, c, now) {
   if (!c || !Number.isFinite(c.mp) || !Number.isFinite(c.fp)) return;
   const v = vitalsOf(f, now);
-  v.mp = share(c.mp); v.fp = share(c.fp); v.heard = true;
+  v.mp = share(c.mp);
+  v.fp = share(c.fp);
+  v.heard = true;
 }

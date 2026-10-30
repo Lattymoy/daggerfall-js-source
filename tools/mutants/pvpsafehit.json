@@ -2,8 +2,8 @@
   {
     "name": "PVP-SAFE-HIT-struck-streets-unread",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (t.streets && !isVillain(t.vi)) return 'streets';\n",
-    "new": "",
+    "old": "  if (t.streets && !isVillain(t.vi)) return 'streets';\n  if (a.streets && !isVillain(a.vi) && !isVillain(t.vi)) return 'streets';",
+    "new": "  if (a.streets && !isVillain(a.vi) && !isVillain(t.vi)) return 'streets';",
     "tests": [
       "test/systems/wild/pvpsafehit.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PVP-SAFE-HIT-striker-streets-unread",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (a.streets && !isVillain(a.vi) && !isVillain(t.vi)) return 'streets';\n",
-    "new": "",
+    "old": "  if (a.streets && !isVillain(a.vi) && !isVillain(t.vi)) return 'streets';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/wild/pvpsafehit.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PVP-SAFE-HIT-villain-exception-dropped",
     "file": "src/net/wild/wildRef.js",
-    "old": "if (a.streets && !isVillain(a.vi) && !isVillain(t.vi))",
-    "new": "if (a.streets && !isVillain(a.vi))",
+    "old": "  if (a.streets && !isVillain(a.vi) && !isVillain(t.vi)) return 'streets';",
+    "new": "  if (a.streets && !isVillain(a.vi)) return 'streets';",
     "tests": [
       "test/systems/wild/pvpsafehit.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PVP-SAFE-HIT-villain-word-shields",
     "file": "src/net/wild/wildRef.js",
-    "old": "if (t.streets && !isVillain(t.vi))",
-    "new": "if (t.streets)",
+    "old": "  if (t.streets && !isVillain(t.vi)) return 'streets';",
+    "new": "  if (t.streets) return 'streets';",
     "tests": [
       "test/systems/wild/pvpsafehit.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PVP-SAFE-HIT-word-kept-off-zone",
     "file": "src/net/wild/wildRef.js",
-    "old": "x.streets = !!z && !!sf;",
-    "new": "x.streets = !!sf;",
+    "old": "  x.streets = !!z && !!sf; // PVP-SAFE-HIT: wildStreetsBar reads it",
+    "new": "  x.streets = !!sf; // PVP-SAFE-HIT: wildStreetsBar reads it",
     "tests": [
       "test/systems/wild/pvpsafehit.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PVP-SAFE-HIT-bar-unread-at-blow",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (streets) return { ok: false, dealt: 0, fell: false, fall: null, why: streets };\n",
-    "new": "",
+    "old": "  if (streets) return { ok: false, dealt: 0, fell: false, fall: null, why: streets };\n  if (!a.flag) return { ok: false, dealt: 0, fell: false, fall: null, why: 'unflagged' }; // PVP-FLAG: an unflagged striker touches no player - the struck one's flag never shields it",
+    "new": "  if (!a.flag) return { ok: false, dealt: 0, fell: false, fall: null, why: 'unflagged' }; // PVP-FLAG: an unflagged striker touches no player - the struck one's flag never shields it",
     "tests": [
       "test/systems/wild/pvpsafehit.test.js",
       "test/net/int9_wild_ref.test.js"

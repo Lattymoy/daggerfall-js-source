@@ -214,7 +214,7 @@ writes it): the body's offer and the pick (`world.js` wildBodyArrived, wildBodyC
 pick's place and what it showed), the account service's take (`wildDropLaw.js` takeWildDeath - the piece off the record
 first, `wildRecord` stripping the receiver's marks, `equipSlot` among them), the fallen's game taking out exactly that
 (wildTakeTook, unequipped first), the remains laid on the service's order (`wk`, `wi`: the killer's), the killer's own
-book asking for it (`wildRemains.js:"const askMine = "`) and the room's `got` minted into the pack (`loot.js`
+book asking for it (`wildRemains.js:"const askMine = (/** @type {any} */ rec)"`) and the room's `got` minted into the pack (`loot.js`
 validLootList, the receiver's marks stripped again). For a killer who is a stranger every step holds: the piece lands,
 unequipped. The break was the room's take. `_wildWord` asked the PVPDUNGEONS friend law ("Party/guildmembers cant pick it
 up" - a fallen's remains are theirs and their foes', never their party's or their guild's) before takeFrom, of EVERY

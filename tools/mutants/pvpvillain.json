@@ -65,8 +65,8 @@
   {
     "name": "PVP-VILLAIN-first-strike-unkept",
     "file": "src/net/wild/wildRef.js",
-    "old": "  wildOpen(st, by, to, now);   // PVP-VILLAIN: who struck first\n",
-    "new": "",
+    "old": "  wildOpen(st, by, to, now); // PVP-VILLAIN: who struck first\n  t.by = { sub: by, at: now, room: typeof room === 'string' ? room : '' }; // AUDIT FOE-KEEPS E2: the last fair player's blow",
+    "new": "  t.by = { sub: by, at: now, room: typeof room === 'string' ? room : '' }; // AUDIT FOE-KEEPS E2: the last fair player's blow",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PVP-VILLAIN-defended-unasked",
     "file": "src/net/wild/wildRef.js",
-    "old": "defended: wildFirst(st, by, to, now) === to });",
-    "new": "defended: false });",
+    "old": "  const vp = villainKillPoints({\n    killer: a.cl ?? null,\n    victim: t.cl ?? null,\n    flagged: !!t.flag,\n    defended: wildFirst(st, by, to, now) === to,\n  });",
+    "new": "  const vp = villainKillPoints({ killer: a.cl ?? null, victim: t.cl ?? null, flagged: !!t.flag, defended: false });",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PVP-VILLAIN-party-unasked",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (partyFirst) fall.vp = 0;\n",
-    "new": "",
+    "old": "  if (partyFirst) fall.vp = 0;\n  const x = st.fighters.get(fall.killer);",
+    "new": "  const x = st.fighters.get(fall.killer);",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PVP-VILLAIN-red-flag-unheld",
     "file": "src/net/wild/wildRef.js",
-    "old": "  else if (isVillain(x.vi)) x.flag = true;   // PVP-VILLAIN: a villain is always in aggro\n",
-    "new": "",
+    "old": "  else if (isVillain(x.vi))\n    x.flag = true; // PVP-VILLAIN: a villain is always in aggro\n  else if (fl === 0 && pvpFlagCanDrop(Math.max(x.fightAt, x.struckAt), now)) x.flag = false;",
+    "new": "  else if (fl === 0 && pvpFlagCanDrop(Math.max(x.fightAt, x.struckAt), now)) x.flag = false;",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PVP-VILLAIN-carry-drops-meter",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (Number.isSafeInteger(carry.vi)) x.vi = carry.vi;   // PVP-VILLAIN: the meter, of any age (it never decays)\n",
-    "new": "",
+    "old": "  if (Number.isSafeInteger(carry.vi)) x.vi = carry.vi; // PVP-VILLAIN: the meter, of any age (it never decays)\n  x.outAt = carry.in === 1 ? now : Math.max(x.outAt, carry.at);",
+    "new": "  x.outAt = carry.in === 1 ? now : Math.max(x.outAt, carry.at);",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PVP-VILLAIN-receipt-unpointed",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "...(vp > 0 ? { vp } : {}), i: nowS",
-    "new": "i: nowS",
+    "old": "    ...(vp > 0 ? { vp } : {}),\n    i: nowS,",
+    "new": "    i: nowS,",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PVP-VILLAIN-receipt-unbounded",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "c.vp > 0 && c.vp <= WILD_VILLAIN_MAX))",
-    "new": "c.vp > 0))",
+    "old": "  if (c.vp !== undefined && !(Number.isSafeInteger(c.vp) && c.vp > 0 && c.vp <= WILD_VILLAIN_MAX)) return false; // PVP-VILLAIN",
+    "new": "  if (c.vp !== undefined && !(Number.isSafeInteger(c.vp) && c.vp > 0)) return false; // PVP-VILLAIN",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]

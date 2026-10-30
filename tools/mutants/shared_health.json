@@ -83,8 +83,8 @@
   {
     "name": "SHARED-HEALTH-the-carry-drops-the-window",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (x.f.share) x.f.share.playerBlowAt = carry.pvpAt;",
-    "new": "",
+    "old": "  if (x.f.share) x.f.share.playerBlowAt = carry.pvpAt; // and its no-heal window: a step into another cell is no way out of a fight",
+    "new": "  // and its no-heal window: a step into another cell is no way out of a fight",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -243,8 +243,8 @@
   {
     "name": "SHARED-HEALTH-the-zone-refill-restored",
     "file": "src/net/wild/wildRef.js",
-    "old": "  const res = r === SIEGE_HIT.Spell\n    ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d, el }, now)",
-    "new": "  if (now - a.struckAt >= WILD_REF.mendMs) a.f.hp = a.f.max;\n  if (now - t.struckAt >= WILD_REF.mendMs) t.f.hp = t.f.max;\n  const res = r === SIEGE_HIT.Spell\n    ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d, el }, now)",
+    "old": "  const res =",
+    "new": "  if (now - a.struckAt >= WILD_REF.mendMs) a.f.hp = a.f.max;\n  if (now - t.struckAt >= WILD_REF.mendMs) t.f.hp = t.f.max;\n  const res =",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -293,8 +293,8 @@
   {
     "name": "SHARED-HEALTH-the-carry-drops-the-report-number",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (x.f.share) x.f.share.report = carry.rep;",
-    "new": "",
+    "old": "  if (x.f.share) x.f.share.report = carry.rep; // the last report this count took: the client's first word here keeps what its health did since",
+    "new": "  // the last report this count took: the client's first word here keeps what its health did since",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],

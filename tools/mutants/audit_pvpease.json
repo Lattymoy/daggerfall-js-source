@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-PVP-EASE-L4-4-a-lost-answer-forgotten",
     "file": "src/net/wild/wildInsureBook.js",
-    "old": "      else { readAt = -Infinity; book.read(); }",
-    "new": "      else { readAt = -Infinity; }",
+    "old": "        book.read();\n      } // AUDIT PVP-EASE L4-4: landed, its answer lost - the policy is read back",
+    "new": "      } // AUDIT PVP-EASE L4-4: landed, its answer lost - the policy is read back",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-PVP-EASE-L3-1-the-fight-uncarried",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (Number.isFinite(carry.fa)) x.fightAt = Math.max(x.fightAt, carry.fa);\n",
-    "new": "",
+    "old": "  if (Number.isFinite(carry.fa)) x.fightAt = Math.max(x.fightAt, carry.fa);\n  if (Number.isSafeInteger(carry.vi)) x.vi = carry.vi; // PVP-VILLAIN: the meter, of any age (it never decays)",
+    "new": "  if (Number.isSafeInteger(carry.vi)) x.vi = carry.vi; // PVP-VILLAIN: the meter, of any age (it never decays)",
     "tests": [
       "test/net/zonegrace.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "PVP-DEATH-a-foes-death-an-entry",
     "file": "src/net/wild/wildRef.js",
-    "old": "if (!x.down && x.diedAt > -Infinity) x.diedAt = -Infinity;",
-    "new": "if (false) x.diedAt = -Infinity;",
+    "old": "    if (!x.down && x.diedAt > -Infinity) x.diedAt = -Infinity;",
+    "new": "    if (false) x.diedAt = -Infinity;",
     "tests": [
       "test/net/zonegrace.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-PVP-EASE-L3-6-dd-uncarried",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (Number.isFinite(carry.dd)) x.diedAt = Math.max(x.diedAt, carry.dd);\n",
-    "new": "",
+    "old": "  if (Number.isFinite(carry.dd)) x.diedAt = Math.max(x.diedAt, carry.dd);\n  if (!(now - carry.at < Math.max(WILD_REF.mendMs, carry.down ? WILD_REF.riseMs : 0))) return; // the bar and the fall: a word of a moment ago alone",
+    "new": "  if (!(now - carry.at < Math.max(WILD_REF.mendMs, carry.down ? WILD_REF.riseMs : 0))) return; // the bar and the fall: a word of a moment ago alone",
     "tests": [
       "test/net/zonegrace.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-PVP-EASE-L3-6-the-death-unmarked",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (!z && died && !x.down) x.diedAt = now;",
-    "new": "  void 0;",
+    "old": "  if (!z && died && !x.down) x.diedAt = now; // AUDIT PVP-EASE L3-6: a death the referee kept rises by its own law (above)",
+    "new": "  void 0; // AUDIT PVP-EASE L3-6: a death the referee kept rises by its own law (above)",
     "tests": [
       "test/net/zonegrace.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "PVP-DEATH-a-foes-death-graced",
     "file": "src/net/wild/wildRef.js",
-    "old": "if (!x.down && x.diedAt > -Infinity) x.diedAt = -Infinity;",
-    "new": "if (!x.down && x.diedAt > -Infinity) { x.graceUntil = now + WILD_GRACE.ms; x.diedAt = -Infinity; }",
+    "old": "    if (!x.down && x.diedAt > -Infinity) x.diedAt = -Infinity;\n    else if (",
+    "new": "    if (!x.down && x.diedAt > -Infinity) {\n      x.graceUntil = now + WILD_GRACE.ms;\n      x.diedAt = -Infinity;\n    } else if (",
     "tests": [
       "test/net/zonegrace.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-PVP-EASE-L3-4-a-take-unread",
     "file": "src/net/wild/wildRef.js",
-    "old": "  x.graceUntil = -Infinity;\n  return true;\n}",
-    "new": "  return true;\n}",
+    "old": "  x.graceUntil = -Infinity;\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/net/zonegrace.test.js"
     ]

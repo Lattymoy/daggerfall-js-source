@@ -32,8 +32,8 @@
   {
     "name": "PVP-FLAG-the-blow-unasked",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (!a.flag) return",
-    "new": "  if (false) return",
+    "old": "  if (!a.flag) return { ok: false, dealt: 0, fell: false, fall: null, why: 'unflagged' }; // PVP-FLAG: an unflagged striker touches no player - the struck one's flag never shields it",
+    "new": "  if (false) return { ok: false, dealt: 0, fell: false, fall: null, why: 'unflagged' }; // PVP-FLAG: an unflagged striker touches no player - the struck one's flag never shields it",
     "tests": [
       "test/net/pvpflag.test.js"
     ],
@@ -194,8 +194,8 @@
   {
     "name": "PVP-SKULL-the-unflagged-gold",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (!x?.flag || now - (x.aggroSaid",
-    "new": "  if (!x || now - (x.aggroSaid",
+    "old": "  if (!x?.flag || now - (x.aggroSaid ?? -Infinity) < PVP_FLAG.sayMs) return null;",
+    "new": "  if (!x || now - (x.aggroSaid ?? -Infinity) < PVP_FLAG.sayMs) return null;",
     "tests": [
       "test/net/pvpflag.test.js"
     ],
@@ -254,8 +254,8 @@
   {
     "name": "PVP-30-the-young-unread",
     "file": "src/net/wild/wildRef.js",
-    "old": "if (pvpYoung(a.cl) || pvpYoung(t.cl)) return",
-    "new": "if (pvpYoung(a.cl) && pvpYoung(t.cl)) return",
+    "old": "  if (pvpYoung(a.cl) || pvpYoung(t.cl)) return { ok: false, dealt: 0, fell: false, fall: null, why: 'young' }; // PVP-30: under level 30 no player strikes or is struck",
+    "new": "  if (pvpYoung(a.cl) && pvpYoung(t.cl)) return { ok: false, dealt: 0, fell: false, fall: null, why: 'young' }; // PVP-30: under level 30 no player strikes or is struck",
     "tests": [
       "test/net/pvpflag.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "PVP-30-the-level-unkept",
     "file": "src/net/wild/wildRef.js",
-    "old": "if (Number.isSafeInteger(cl)) x.cl = cl;",
-    "new": "if (false) x.cl = cl;",
+    "old": "  if (Number.isSafeInteger(cl)) x.cl = cl; // PVP-30: the character level its token signs",
+    "new": "  if (false) x.cl = cl; // PVP-30: the character level its token signs",
     "tests": [
       "test/net/pvpflag.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "PVP-EDGE-the-referee-unasking",
     "file": "src/net/wild/wildRef.js",
-    "old": "else if (!x.down && !rose && ed && now",
-    "new": "else if (!x.down && !rose && now",
+    "old": "      ed &&\n      now - x.outAt >= WILD_GRACE.awayMs &&",
+    "new": "      now - x.outAt >= WILD_GRACE.awayMs &&",
     "tests": [
       "test/net/pvpflag.test.js"
     ]

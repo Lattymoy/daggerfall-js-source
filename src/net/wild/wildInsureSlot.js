@@ -9,5 +9,7 @@
  *   insure: (item: any) => Promise<{ ok: boolean, text: string }> }} WildInsureCard */
 
 let _book = /** @type {WildInsureCard | null} */ (null);
-export const setWildInsureBook = (/** @type {WildInsureCard | null} */ b) => { _book = b; };
+export const setWildInsureBook = (/** @type {WildInsureCard | null} */ b) => {
+  _book = b;
+};
 export const wildInsureBook = () => _book;

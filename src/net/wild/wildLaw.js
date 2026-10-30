@@ -25,7 +25,21 @@
 // to takes only when they digest to the order's (`ok`); the killer's piece is the killer's alone. The service fits the
 // drop to the room's own bounds first (remainsFit - the same law foldFall keeps), so an honest deposit always digests.
 // ═══════════════════════════════════════════════════════════════════
-import { WILD_ITEMS_MAX, WILD_REMAINS_ITEMS_MAX, WILD_REMAINS_MS, WILD_ROOM_REMAINS_MAX, sanitizeName, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_RESET_MS, WDUN_STALE_MS, SEA_FLEET_PERIOD_MS, SEA_FLEET_OFFSET_MS, SEA_FLEET_SAIL_MS, SEA_FLEET_LATE_MS } from '../wire.js';
+import {
+  WILD_ITEMS_MAX,
+  WILD_REMAINS_ITEMS_MAX,
+  WILD_REMAINS_MS,
+  WILD_ROOM_REMAINS_MAX,
+  sanitizeName,
+  WDUN_DAY_MS,
+  WDUN_LOCK_MS,
+  WDUN_RESET_MS,
+  WDUN_STALE_MS,
+  SEA_FLEET_PERIOD_MS,
+  SEA_FLEET_OFFSET_MS,
+  SEA_FLEET_SAIL_MS,
+  SEA_FLEET_LATE_MS,
+} from '../wire.js';
 
 /** A remains' bytes in storage, at most - under the object store's own bound for one value (128 KiB), with room. */
 export const WILD_REMAINS_BYTES_MAX = 100 * 1024;
@@ -38,9 +52,39 @@ export const wildRemainsKey = (r) => `${WILD_REMAINS_PREFIX}${r}`;
  *  its carrier's last chunk (a deposit stalled half-way is another carrier's to lay - remainsTakeover). MAC (2026-10-14,
  *  the two-phase handoff): `we` the order's word that the service holds the killer's piece in escrow (its take is a
  *  collect - collectAsk), `wc` the collect this room signed for it (said again to its killer, never minted twice). */
-export function newRemains({ r, os = null, oid = null, nm = '', p, now, gi = null, wh = null, wn = 0, wk = null, wi = -1, we = false }) {
-  return { r, gi: typeof gi === 'string' && gi ? gi : null, os: typeof os === 'string' && os ? os : null, oid: typeof oid === 'string' && oid ? oid : null, nm: sanitizeName(nm ?? ''), p: [p[0], p[1], p[2]], at: now, lastAt: now, open: true, items: [],
-    wh: typeof wh === 'string' ? wh : null, wn: Number.isSafeInteger(wn) ? wn : 0, wk: typeof wk === 'string' && wk ? wk : null, wi: Number.isSafeInteger(wi) ? wi : -1, we: we === true && typeof wk === 'string' && !!wk, wc: null, ok: false };
+export function newRemains({
+  r,
+  os = null,
+  oid = null,
+  nm = '',
+  p,
+  now,
+  gi = null,
+  wh = null,
+  wn = 0,
+  wk = null,
+  wi = -1,
+  we = false,
+}) {
+  return {
+    r,
+    gi: typeof gi === 'string' && gi ? gi : null,
+    os: typeof os === 'string' && os ? os : null,
+    oid: typeof oid === 'string' && oid ? oid : null,
+    nm: sanitizeName(nm ?? ''),
+    p: [p[0], p[1], p[2]],
+    at: now,
+    lastAt: now,
+    open: true,
+    items: [],
+    wh: typeof wh === 'string' ? wh : null,
+    wn: Number.isSafeInteger(wn) ? wn : 0,
+    wk: typeof wk === 'string' && wk ? wk : null,
+    wi: Number.isSafeInteger(wi) ? wi : -1,
+    we: we === true && typeof wk === 'string' && !!wk,
+    wc: null,
+    ok: false,
+  };
 }
 /** INT9 (AUDIT): the most one record's JSON may weigh in a remains - a realm trade's own bound (net/realm/realmTradeLaw.js
  *  REALM_TRADE_RECORD_MAX, pinned equal): a chunk of WILD_ITEMS_MAX of them and its order fit the wire's frame (net/wire.js
@@ -56,7 +100,7 @@ export const WILD_STALL_MS = 10_000;
  *  The account service fits its drop with it before it signs, so every honest deposit is kept whole and digests. */
 export function remainsFit(items) {
   const out = [];
-  let bytes = 2;   // JSON.stringify([]).length
+  let bytes = 2; // JSON.stringify([]).length
   for (const it of Array.isArray(items) ? items : []) {
     if (out.length >= WILD_REMAINS_ITEMS_MAX) break;
     const size = JSON.stringify(it).length + 1;
@@ -82,7 +126,10 @@ export const remainsSpent = (rec) => !!rec?.ok && remainsEmpty(rec);
  *  over (the remains emptied and reopened for `oid`). */
 export function remainsTakeover(rec, oid, now) {
   if (!rec || rec.ok || rec.oid === oid || now - (rec.lastAt ?? rec.at) < WILD_STALL_MS) return false;
-  rec.oid = oid; rec.items = []; rec.open = true; rec.lastAt = now;
+  rec.oid = oid;
+  rec.items = [];
+  rec.open = true;
+  rec.lastAt = now;
   return true;
 }
 /** What is left of its life, ms - the `ri` word's `ttl` (the room's clock, never the client's). */
@@ -144,13 +191,16 @@ export function collectAsk(rec, i, sub) {
  * stored one whole, or a copy at the count taken) and how many left - or null when there is nothing there to take.
  */
 export function takeFrom(rec, i, n, sub = null) {
-  if (!rec?.ok) return null;   // INT9: a remains whose records the order never vouched for is nobody's
+  if (!rec?.ok) return null; // INT9: a remains whose records the order never vouched for is nobody's
   const named = remainsNamedFor(rec, i);
-  if (named && sub !== named) return null;   // INT9: the killer's worn piece is the killer's alone
+  if (named && sub !== named) return null; // INT9: the killer's worn piece is the killer's alone
   const it = rec?.items?.[i];
   if (!it) return null;
   const stack = Number.isInteger(it.stackCount) && it.stackCount > 1 ? it.stackCount : 1;
-  if (n >= stack) { rec.items[i] = null; return { it, n: stack }; }
+  if (n >= stack) {
+    rec.items[i] = null;
+    return { it, n: stack };
+  }
   it.stackCount = stack - n;
   return { it: { ...it, stackCount: n }, n };
 }
@@ -158,8 +208,18 @@ export function takeFrom(rec, i, n, sub = null) {
 /** The room's remains as `ri` words for a socket that just said hello (or for a new chunk): WILD_ITEMS_MAX a word, the
  *  last one `end`. A remains with nothing left says nothing. */
 export function remainsWords(rec, now) {
-  if (!rec?.ok || !remainsLive(rec, now) || remainsEmpty(rec)) return [];   // INT9: a remains the order never vouched for is said to nobody
-  const head = { t: 'wild', k: 'ri', r: rec.r, p: rec.p, nm: rec.nm, os: rec.os, oid: rec.oid, ttl: remainsTtl(rec, now), ...(rec.wk ? { wk: rec.wk, wi: rec.wi } : {}) };
+  if (!rec?.ok || !remainsLive(rec, now) || remainsEmpty(rec)) return []; // INT9: a remains the order never vouched for is said to nobody
+  const head = {
+    t: 'wild',
+    k: 'ri',
+    r: rec.r,
+    p: rec.p,
+    nm: rec.nm,
+    os: rec.os,
+    oid: rec.oid,
+    ttl: remainsTtl(rec, now),
+    ...(rec.wk ? { wk: rec.wk, wi: rec.wi } : {}),
+  };
   const out = [];
   const total = rec.items.length;
   if (!total) return [{ ...head, off: 0, items: [], end: rec.open ? 0 : 1 }];
@@ -184,12 +244,36 @@ export function remainsEvict(map, now = Infinity) {
 
 /** A remains read back from storage, checked for the shape this file writes - or null. */
 export function remainsOf(v) {
-  if (!v || typeof v !== 'object' || typeof v.r !== 'string' || !Array.isArray(v.items) || !Array.isArray(v.p) || v.p.length !== 3 || !Number.isFinite(v.at)) return null;
-  return { r: v.r, gi: typeof v.gi === 'string' && v.gi ? v.gi : null, os: typeof v.os === 'string' ? v.os : null, oid: typeof v.oid === 'string' ? v.oid : null, nm: typeof v.nm === 'string' ? v.nm : '', p: [Number(v.p[0]) || 0, Number(v.p[1]) || 0, Number(v.p[2]) || 0], at: v.at, lastAt: Number.isFinite(v.lastAt) ? v.lastAt : v.at, open: v.open === true, items: v.items.map((it) => (it && typeof it === 'object' ? it : null)),   // INT9 (AUDIT): the guild kept too - a woken room let the fallen's guildmates take
-    wh: typeof v.wh === 'string' ? v.wh : null, wn: Number.isSafeInteger(v.wn) ? v.wn : 0, wk: typeof v.wk === 'string' ? v.wk : null, wi: Number.isSafeInteger(v.wi) ? v.wi : -1, ok: v.ok === true,   // INT9
-    we: v.we === true, wc: typeof v.wc === 'string' && v.wc ? v.wc : null };   // MAC (2026-10-14): the escrow's word and its collect, kept through a restart
+  if (
+    !v ||
+    typeof v !== 'object' ||
+    typeof v.r !== 'string' ||
+    !Array.isArray(v.items) ||
+    !Array.isArray(v.p) ||
+    v.p.length !== 3 ||
+    !Number.isFinite(v.at)
+  )
+    return null;
+  return {
+    r: v.r,
+    gi: typeof v.gi === 'string' && v.gi ? v.gi : null,
+    os: typeof v.os === 'string' ? v.os : null,
+    oid: typeof v.oid === 'string' ? v.oid : null,
+    nm: typeof v.nm === 'string' ? v.nm : '',
+    p: [Number(v.p[0]) || 0, Number(v.p[1]) || 0, Number(v.p[2]) || 0],
+    at: v.at,
+    lastAt: Number.isFinite(v.lastAt) ? v.lastAt : v.at,
+    open: v.open === true,
+    items: v.items.map((it) => (it && typeof it === 'object' ? it : null)), // INT9 (AUDIT): the guild kept too - a woken room let the fallen's guildmates take
+    wh: typeof v.wh === 'string' ? v.wh : null,
+    wn: Number.isSafeInteger(v.wn) ? v.wn : 0,
+    wk: typeof v.wk === 'string' ? v.wk : null,
+    wi: Number.isSafeInteger(v.wi) ? v.wi : -1,
+    ok: v.ok === true, // INT9
+    we: v.we === true,
+    wc: typeof v.wc === 'string' && v.wc ? v.wc : null,
+  }; // MAC (2026-10-14): the escrow's word and its collect, kept through a restart
 }
-
 
 // ═══════════════════════════════════════════════════════════════════
 // PVPDUNGEONS (2026-10-08) - THE ZONE'S HALLS, AS THE HUB KEEPS THEM.
@@ -207,7 +291,16 @@ export function remainsOf(v) {
 export const WDUN_KEY = 'wdun';
 export const WDUN_ACCTS_MAX = 20000;
 export const wdunDay = (now) => Math.floor(now / WDUN_DAY_MS);
-export const wdunEmpty = () => ({ locks: {}, inside: {}, empty: {}, crows: {}, piles: {}, eps: {}, giants: {}, fleets: {} });   // ZONE-GIANTS: `giants` - a giant's index -> when it walks again; SEA-EVENTS: `fleets` - a sailing whose flagship is down -> when it is let go
+export const wdunEmpty = () => ({
+  locks: {},
+  inside: {},
+  empty: {},
+  crows: {},
+  piles: {},
+  eps: {},
+  giants: {},
+  fleets: {},
+}); // ZONE-GIANTS: `giants` - a giant's index -> when it walks again; SEA-EVENTS: `fleets` - a sailing whose flagship is down -> when it is let go
 /** A stored record, made safe (anything malformed is dropped). */
 export function wdunOf(v) {
   const out = wdunEmpty();
@@ -220,30 +313,74 @@ export function wdunOf(v) {
 export function wdunPrune(st, now) {
   let moved = false;
   for (const [acct, halls] of Object.entries(st.locks)) {
-    for (const [h, until] of Object.entries(halls)) if (!(until > now)) { delete halls[h]; moved = true; }
-    if (!Object.keys(halls).length) { delete st.locks[acct]; moved = true; }
+    for (const [h, until] of Object.entries(halls))
+      if (!(until > now)) {
+        delete halls[h];
+        moved = true;
+      }
+    if (!Object.keys(halls).length) {
+      delete st.locks[acct];
+      moved = true;
+    }
   }
-  for (const [acct, p] of Object.entries(st.piles)) if (!(p?.until > now)) { delete st.piles[acct]; moved = true; }
-  for (const [h, until] of Object.entries(st.crows)) if (!(until > now)) { delete st.crows[h]; moved = true; }
-  for (const [g, until] of Object.entries(st.giants ?? {})) if (!(until > now)) { delete st.giants[g]; moved = true; }   // ZONE-GIANTS: up again
-  for (const [n, until] of Object.entries(st.fleets ?? {})) if (!(until > now)) { delete st.fleets[n]; moved = true; }   // SEA-EVENTS: a sailing long past
+  for (const [acct, p] of Object.entries(st.piles))
+    if (!(p?.until > now)) {
+      delete st.piles[acct];
+      moved = true;
+    }
+  for (const [h, until] of Object.entries(st.crows))
+    if (!(until > now)) {
+      delete st.crows[h];
+      moved = true;
+    }
+  for (const [g, until] of Object.entries(st.giants ?? {}))
+    if (!(until > now)) {
+      delete st.giants[g];
+      moved = true;
+    } // ZONE-GIANTS: up again
+  for (const [n, until] of Object.entries(st.fleets ?? {}))
+    if (!(until > now)) {
+      delete st.fleets[n];
+      moved = true;
+    } // SEA-EVENTS: a sailing long past
   for (const [h, who] of Object.entries(st.inside)) {
     let last = 0;
-    for (const [acct, seen] of Object.entries(who)) if (!(now - seen < WDUN_STALE_MS)) { last = Math.max(last, seen); delete who[acct]; moved = true; }
-    if (!Object.keys(who).length) { delete st.inside[h]; if (!(st.empty[h] > 0)) st.empty[h] = last || now; moved = true; }
+    for (const [acct, seen] of Object.entries(who))
+      if (!(now - seen < WDUN_STALE_MS)) {
+        last = Math.max(last, seen);
+        delete who[acct];
+        moved = true;
+      }
+    if (!Object.keys(who).length) {
+      delete st.inside[h];
+      if (!(st.empty[h] > 0)) st.empty[h] = last || now;
+      moved = true;
+    }
   }
-  for (const [h, since] of Object.entries(st.empty)) if (now - since > WDUN_DAY_MS) { delete st.empty[h]; moved = true; }   // a day on, the hall has moved anyway
-  for (const [h, e] of Object.entries(st.eps)) if (!(now - (e?.at ?? 0) < 2 * WDUN_DAY_MS)) { delete st.eps[h]; moved = true; }
+  for (const [h, since] of Object.entries(st.empty))
+    if (now - since > WDUN_DAY_MS) {
+      delete st.empty[h];
+      moved = true;
+    } // a day on, the hall has moved anyway
+  for (const [h, e] of Object.entries(st.eps))
+    if (!(now - (e?.at ?? 0) < 2 * WDUN_DAY_MS)) {
+      delete st.eps[h];
+      moved = true;
+    }
   return moved;
 }
 /** My lock on a hall, ms left (0: none). */
-export function wdunLockLeft(st, acct, h, now) { const u = st.locks[acct]?.[h] ?? 0; return u > now ? u - now : 0; }
+export function wdunLockLeft(st, acct, h, now) {
+  const u = st.locks[acct]?.[h] ?? 0;
+  return u > now ? u - now : 0;
+}
 /** May `acct` go into hall `h` now? `{ ok, left, reset }` - `reset` true when the hall stood empty past WDUN_RESET_MS
  *  (the hub wipes its world room before it answers). A lock is lifted while the account's own remains lie there. */
 export function wdunEnter(st, acct, h, now) {
   const left = wdunLockLeft(st, acct, h, now);
   const pile = st.piles[acct];
-  if (left > 0 && !(pile && pile.h === h && pile.until > now)) return { ok: false, left, reset: false, ep: st.eps[h]?.n ?? 0 };
+  if (left > 0 && !(pile && pile.h === h && pile.until > now))
+    return { ok: false, left, reset: false, ep: st.eps[h]?.n ?? 0 };
   const since = st.empty[h];
   const occupied = st.inside[h] && Object.keys(st.inside[h]).length > 0;
   const reset = !occupied && since > 0 && now - since >= WDUN_RESET_MS;
@@ -251,7 +388,14 @@ export function wdunEnter(st, acct, h, now) {
   // AUDIT TESA III E2-5: A BODY STANDS IN ONE HALL - going into this one is leaving any other the record still holds it in
   // (a hall it never said `out` of: a crash, a word lost), which then counts empty from now; so the halls one account
   // stands in are one, never one a word
-  for (const [o, who] of Object.entries(st.inside)) if (o !== h && who[acct] != null) { delete who[acct]; if (!Object.keys(who).length) { delete st.inside[o]; st.empty[o] = now; } }
+  for (const [o, who] of Object.entries(st.inside))
+    if (o !== h && who[acct] != null) {
+      delete who[acct];
+      if (!Object.keys(who).length) {
+        delete st.inside[o];
+        st.empty[o] = now;
+      }
+    }
   (st.inside[h] ??= {})[acct] = now;
   // the hall's EPOCH: a reset is a new one, and every client keys the hall's chests by it (dungeonContext.js
   // searchLocationKey), so a reset fills them again for everyone, not only for whoever came in first
@@ -260,12 +404,24 @@ export function wdunEnter(st, acct, h, now) {
   return { ok: true, left: 0, reset, ep };
 }
 /** A heartbeat from inside (one the hub never let in is ignored). */
-export function wdunHere(st, acct, h, now) { if (st.inside[h]?.[acct] != null) { st.inside[h][acct] = now; return true; } return false; }
+export function wdunHere(st, acct, h, now) {
+  if (st.inside[h]?.[acct] != null) {
+    st.inside[h][acct] = now;
+    return true;
+  }
+  return false;
+}
 /** `acct` left hall `h` (walked out, or fell): its hour's lock starts; the hall, if now empty, starts its reset clock. */
 export function wdunLeave(st, acct, h, now) {
   const halls = (st.locks[acct] ??= {});
   halls[h] = now + WDUN_LOCK_MS;
-  if (st.inside[h]) { delete st.inside[h][acct]; if (!Object.keys(st.inside[h]).length) { delete st.inside[h]; st.empty[h] = now; } }
+  if (st.inside[h]) {
+    delete st.inside[h][acct];
+    if (!Object.keys(st.inside[h]).length) {
+      delete st.inside[h];
+      st.empty[h] = now;
+    }
+  }
   return WDUN_LOCK_MS;
 }
 /** `acct` fell in hall `h`: it has left it (locked), its remains lie there until `until` (its way back in), and the crows
@@ -285,21 +441,32 @@ export function wdunGone(st, acct, now) {
   const p = st.piles[acct];
   if (!p) return false;
   delete st.piles[acct];
-  const still = Object.values(st.piles).filter((q) => q.h === p.h && q.until > now).reduce((m, q) => Math.max(m, q.until), 0);
-  if (still) st.crows[p.h] = still; else delete st.crows[p.h];
+  const still = Object.values(st.piles)
+    .filter((q) => q.h === p.h && q.until > now)
+    .reduce((m, q) => Math.max(m, q.until), 0);
+  if (still) st.crows[p.h] = still;
+  else delete st.crows[p.h];
   return true;
 }
 /** The words a socket gets at its hello: the day by the relay's clock, its own locks, and the crows. */
 export function wdunState(st, acct, now) {
   return {
-    t: 'wdun', k: 'st', day: wdunDay(now), now,
-    locks: Object.entries(st.locks[acct] ?? {}).filter(([, u]) => u > now).map(([h, u]) => [h, u - now]),
+    t: 'wdun',
+    k: 'st',
+    day: wdunDay(now),
+    now,
+    locks: Object.entries(st.locks[acct] ?? {})
+      .filter(([, u]) => u > now)
+      .map(([h, u]) => [h, u - now]),
     crows: wdunCrows(st, now),
     giants: wdunGiants(st, now),
     fleets: wdunFleets(st, now),
   };
 }
-export const wdunCrows = (st, now) => Object.entries(st.crows).filter(([, u]) => u > now).map(([h, u]) => [h, u - now]);
+export const wdunCrows = (st, now) =>
+  Object.entries(st.crows)
+    .filter(([, u]) => u > now)
+    .map(([h, u]) => [h, u - now]);
 /**
  * AUDIT TESA III E2-5 (2026-10-26; the owner: "Take care of exclusions and gaps"): WHAT ONE SOCKET CAN MAKE THE HUB KEEP,
  * BOUNDED. A hall is any world map pixel (`wdunHall` - the relay cannot see the map), and every word a socket said about
@@ -330,9 +497,15 @@ export const wdunNewHall = (st, h) => !(h in st.inside) && !(h in st.empty) && !
 export function wdunMeterOf(meters, acct, now) {
   let m = meters.get(acct);
   if (m) meters.delete(acct);
-  else { m = { b: null, d: wdunDay(now), n: 0 }; if (meters.size >= WDUN_ACCTS_MAX) meters.delete(meters.keys().next().value); }
+  else {
+    m = { b: null, d: wdunDay(now), n: 0 };
+    if (meters.size >= WDUN_ACCTS_MAX) meters.delete(meters.keys().next().value);
+  }
   meters.set(acct, m);
-  if (m.d !== wdunDay(now)) { m.d = wdunDay(now); m.n = 0; }
+  if (m.d !== wdunDay(now)) {
+    m.d = wdunDay(now);
+    m.n = 0;
+  }
   return m;
 }
 /** Let go of a map's entries past `max`, the lowest `rank` first. Answers whether any went. @param {Record<string, any>} map */
@@ -350,17 +523,27 @@ const newest = (/** @type {Record<string, number>} */ who) => Math.max(0, ...Obj
 export function wdunBound(st) {
   let moved = false;
   for (const halls of Object.values(st.locks)) moved = capBy(halls, WDUN_ACCT_LOCKS_MAX, (u) => u) || moved;
-  const all = Object.entries(st.locks).flatMap(([a, halls]) => Object.entries(halls).map(([h, u]) => /** @type {[string, string, number]} */ ([a, h, u])));
+  const all = Object.entries(st.locks).flatMap(([a, halls]) =>
+    Object.entries(halls).map(([h, u]) => /** @type {[string, string, number]} */ ([a, h, u])),
+  );
   if (all.length > WDUN_LOCKS_MAX) {
-    for (const [a, h] of all.sort((x, y) => x[2] - y[2]).slice(0, all.length - WDUN_LOCKS_MAX)) { delete st.locks[a][h]; if (!Object.keys(st.locks[a]).length) delete st.locks[a]; }
+    for (const [a, h] of all.sort((x, y) => x[2] - y[2]).slice(0, all.length - WDUN_LOCKS_MAX)) {
+      delete st.locks[a][h];
+      if (!Object.keys(st.locks[a]).length) delete st.locks[a];
+    }
     moved = true;
   }
   moved = capBy(st.locks, WDUN_ACCTS_MAX, (halls) => Math.max(0, ...Object.values(halls))) || moved;
   moved = capBy(st.piles, WDUN_PILES_MAX, (p) => p?.until ?? 0) || moved;
   moved = capBy(st.inside, WDUN_HALLS_MAX, newest) || moved;
-  const inside = Object.entries(st.inside).flatMap(([h, who]) => Object.entries(who).map(([a, seen]) => /** @type {[string, string, number]} */ ([h, a, seen])));
+  const inside = Object.entries(st.inside).flatMap(([h, who]) =>
+    Object.entries(who).map(([a, seen]) => /** @type {[string, string, number]} */ ([h, a, seen])),
+  );
   if (inside.length > WDUN_INSIDE_MAX) {
-    for (const [h, a] of inside.sort((x, y) => x[2] - y[2]).slice(0, inside.length - WDUN_INSIDE_MAX)) { delete st.inside[h][a]; if (!Object.keys(st.inside[h]).length) delete st.inside[h]; }
+    for (const [h, a] of inside.sort((x, y) => x[2] - y[2]).slice(0, inside.length - WDUN_INSIDE_MAX)) {
+      delete st.inside[h][a];
+      if (!Object.keys(st.inside[h]).length) delete st.inside[h];
+    }
     moved = true;
   }
   moved = capBy(st.empty, WDUN_HALLS_MAX, (since) => since) || moved;
@@ -384,7 +567,10 @@ export function wdunGiantDie(st, g, now) {
   return true;
 }
 /** The giants down: `[[g, msLeft]]`. */
-export const wdunGiants = (st, now) => Object.entries(st.giants ?? {}).filter(([, u]) => u > now).map(([g, u]) => [Number(g), u - now]);
+export const wdunGiants = (st, now) =>
+  Object.entries(st.giants ?? {})
+    .filter(([, u]) => u > now)
+    .map(([g, u]) => [Number(g), u - now]);
 
 // ── SEA-EVENTS (2026-10-22, the owner: "Build ever single bit of this"; bible/03-World/Eltheric-Ocean.md SEA-EVENTS): the hub
 // keeps which treasure fleet's flagship is down (systems/sea/seaEvents.js - its route and its ships are every client's own
@@ -401,4 +587,8 @@ export function wdunFleetSunk(st, n, now) {
   return true;
 }
 /** The sailings whose flagship is down: `[n]`, oldest first. */
-export const wdunFleets = (st, now) => Object.entries(st.fleets ?? {}).filter(([, u]) => u > now).map(([n]) => Number(n)).sort((a, b) => a - b);
+export const wdunFleets = (st, now) =>
+  Object.entries(st.fleets ?? {})
+    .filter(([, u]) => u > now)
+    .map(([n]) => Number(n))
+    .sort((a, b) => a - b);

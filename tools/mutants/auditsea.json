@@ -374,8 +374,8 @@
   {
     "name": "AUDIT-SEA-F1-hub-drops-the-ship",
     "file": "src/net/wild/wildRef.js",
-    "old": "...grace, ...pass, ...(sea ? { sea } : {}), ...(Number.isFinite(v.mp)",
-    "new": "...grace, ...pass, ...(Number.isFinite(v.mp)",
+    "old": "    ...(sea ? { sea } : {}),\n    ...(Number.isFinite(v.mp) && Number.isFinite(v.fp) ? { mp: v.mp, fp: v.fp } : {}),",
+    "new": "    ...(Number.isFinite(v.mp) && Number.isFinite(v.fp) ? { mp: v.mp, fp: v.fp } : {}),",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]

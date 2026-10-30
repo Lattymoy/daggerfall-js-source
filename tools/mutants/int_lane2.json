@@ -2,8 +2,8 @@
   {
     "name": "INT9-ZONE-ONE-WORD-ENOUGH",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (!a.zone || !t.zone) return",
-    "new": "  if (!t.zone) return",
+    "old": "  if (!a.zone || !t.zone) return { ok: false, dealt: 0, fell: false, fall: null, why: 'zone' };",
+    "new": "  if (!t.zone) return { ok: false, dealt: 0, fell: false, fall: null, why: 'zone' };",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "INT9-THE-FALLEN-STRUCK",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (a.down || t.down) return",
-    "new": "  if (a.down) return",
+    "old": "  if (a.down || t.down) return { ok: false, dealt: 0, fell: false, fall: null, why: 'down' };",
+    "new": "  if (a.down) return { ok: false, dealt: 0, fell: false, fall: null, why: 'down' };",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -31,8 +31,8 @@
   {
     "name": "INT9-A-STRANGERS-PICK",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (!fall || fall.killer !== killer || fall.picked ||",
-    "new": "  if (!fall || fall.picked ||",
+    "old": "  if (!fall || fall.killer !== killer || fall.picked || now - fall.at > WILD_REF.pickMs) return null;",
+    "new": "  if (!fall || fall.picked || now - fall.at > WILD_REF.pickMs) return null;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "INT9-A-SECOND-PICK",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (!fall || fall.killer !== killer || fall.picked ||",
-    "new": "  if (!fall || fall.killer !== killer ||",
+    "old": "  if (!fall || fall.killer !== killer || fall.picked || now - fall.at > WILD_REF.pickMs) return null;",
+    "new": "  if (!fall || fall.killer !== killer || now - fall.at > WILD_REF.pickMs) return null;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "INT9-THE-PICK-LATE",
     "file": "src/net/wild/wildRef.js",
-    "old": "fall.picked || now - fall.at > WILD_REF.pickMs) return null;",
-    "new": "fall.picked) return null;",
+    "old": "  if (!fall || fall.killer !== killer || fall.picked || now - fall.at > WILD_REF.pickMs) return null;",
+    "new": "  if (!fall || fall.killer !== killer || fall.picked) return null;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "INT9-THE-STEP-UNREAD",
     "file": "src/net/wild/wildRef.js",
-    "old": "if (!fall.picked && now - fall.at > WILD_REF.pickMs) { fall.picked = true; out.push(fall); }",
-    "new": "if (false) { fall.picked = true; out.push(fall); }",
+    "old": "    if (!fall.picked && now - fall.at > WILD_REF.pickMs) {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "INT9-RC-A-SELF-KILL",
     "file": "src/net/wild/wildReceipt.js",
-    "old": " || !ID_RE.test(c.k) || c.f === c.k) return false;",
-    "new": " || !ID_RE.test(c.k)) return false;",
+    "old": "  if (typeof c.f !== 'string' || !ID_RE.test(c.f) || typeof c.k !== 'string' || !ID_RE.test(c.k) || c.f === c.k)\n    return false;",
+    "new": "  if (typeof c.f !== 'string' || !ID_RE.test(c.f) || typeof c.k !== 'string' || !ID_RE.test(c.k)) return false;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "INT9-RC-A-FOREIGN-FIELD",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "  if (WILD_FOREIGN.some((f) => c[f] !== undefined)) return false;\n",
-    "new": "",
+    "old": "  if (WILD_FOREIGN.some((f) => c[f] !== undefined)) return false;\n  if (typeof c.f !== 'string' || !ID_RE.test(c.f) || typeof c.k !== 'string' || !ID_RE.test(c.k) || c.f === c.k)",
+    "new": "  if (typeof c.f !== 'string' || !ID_RE.test(c.f) || typeof c.k !== 'string' || !ID_RE.test(c.k) || c.f === c.k)",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "INT9-RC-THE-PIECE-UNBOUNDED",
     "file": "src/net/wild/wildReceipt.js",
-    "old": " || c.w < -1 || c.w >= WILD_WORN_MAX) return false;",
-    "new": " || c.w < -1) return false;",
+    "old": "  if (!Number.isInteger(c.w) || c.w < -1 || c.w >= WILD_WORN_MAX) return false;",
+    "new": "  if (!Number.isInteger(c.w) || c.w < -1) return false;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "INT9-RC-THE-VERSION-UNREAD",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "  if (v !== V) return { ok: false, why: 'version' };\n",
-    "new": "",
+    "old": "  if (v !== V) return { ok: false, why: 'version' };\n  if (!sig64) return { ok: false, why: 'unsigned' };",
+    "new": "  if (!sig64) return { ok: false, why: 'unsigned' };",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "INT9-A-REMAINS-UNVOUCHED-TAKEN",
     "file": "src/net/wild/wildLaw.js",
-    "old": "  if (!rec?.ok) return null;",
-    "new": "  if (!rec) return null;",
+    "old": "  if (!rec?.ok) return null; // INT9: a remains whose records the order never vouched for is nobody's",
+    "new": "  if (!rec) return null; // INT9: a remains whose records the order never vouched for is nobody's",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "INT9-THE-KILLERS-PIECE-ANYONES",
     "file": "src/net/wild/wildLaw.js",
-    "old": "  if (named && sub !== named) return null;",
-    "new": "  if (false) return null;",
+    "old": "  if (named && sub !== named) return null; // INT9: the killer's worn piece is the killer's alone",
+    "new": "  if (false) return null; // INT9: the killer's worn piece is the killer's alone",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -141,8 +141,8 @@
   {
     "name": "INT9-A-REMAINS-UNVOUCHED-SAID",
     "file": "src/net/wild/wildLaw.js",
-    "old": "  if (!rec?.ok || !remainsLive(rec, now) || remainsEmpty(rec)) return [];",
-    "new": "  if (!remainsLive(rec, now) || remainsEmpty(rec)) return [];",
+    "old": "  if (!rec?.ok || !remainsLive(rec, now) || remainsEmpty(rec)) return []; // INT9: a remains the order never vouched for is said to nobody",
+    "new": "  if (!remainsLive(rec, now) || remainsEmpty(rec)) return []; // INT9: a remains the order never vouched for is said to nobody",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "INT9-CLIENT-THE-KILLERS-PIECE-A-PILE",
     "file": "src/net/wild/wildRemains.js",
-    "old": "      if (!r || i === rec.wi) continue;",
-    "new": "      if (!r) continue;",
+    "old": "      if (!r || i === rec.wi) continue; // INT9: the killer's piece is no pile's - theirs comes by itself (onWord)",
+    "new": "      if (!r) continue; // INT9: the killer's piece is no pile's - theirs comes by itself (onWord)",
     "tests": [
       "test/net/wild1_fight.test.js"
     ]
@@ -313,8 +313,8 @@
   {
     "name": "INT9-CLIENT-ANOTHER-FALLS-OFFER",
     "file": "src/net/wild/wildFight.js",
-    "old": "      if (!b || b.s !== d.s || b.offered ||",
-    "new": "      if (!b || b.offered ||",
+    "old": "      if (!b || b.s !== d.s || b.offered || b.picked || now() - b.at > WILD_BODY_MS) return;",
+    "new": "      if (!b || b.offered || b.picked || now() - b.at > WILD_BODY_MS) return;",
     "tests": [
       "test/net/wild1_fight.test.js"
     ]
@@ -403,8 +403,8 @@
   {
     "name": "INT9-AUDIT-A-WORD-OFF-AND-ON-A-HEAL",
     "file": "src/net/wild/wildRef.js",
-    "old": "    if (now - x.outAt >= WILD_REF.awayMs && !x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; resetHealthShare(x.f, now); }",
-    "new": "    if (!x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; resetHealthShare(x.f, now); }",
+    "old": "    if (now - x.outAt >= WILD_REF.awayMs && !x.down) {",
+    "new": "    if (!x.down) {",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -421,8 +421,8 @@
   {
     "name": "INT9-AUDIT-THE-CARRY-BACK-UNREAD",
     "file": "src/net/wild/wildRef.js",
-    "old": "  } else if (z && !x.zone && carry && carry.at > x.outAt) takeCarry(x, carry, now);",
-    "new": "  }",
+    "old": "  } else if (z && !x.zone && carry && carry.at > x.outAt) takeCarry(x, carry, now); // it fought in another room since it left this one",
+    "new": "  } // it fought in another room since it left this one",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -430,7 +430,7 @@
   {
     "name": "INT9-AUDIT-A-FALLEN-CARRIED-WHOLE",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (carry.down && now - carry.downAt < WILD_REF.riseMs) { x.down = true; x.downAt = carry.downAt; x.f.down = true; x.f.hp = 0; return; }",
+    "old": "  if (carry.down && now - carry.downAt < WILD_REF.riseMs) {\n    x.down = true;\n    x.downAt = carry.downAt;\n    x.f.down = true;\n    x.f.hp = 0;\n    return;\n  }",
     "new": "  if (false) return;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
@@ -439,8 +439,8 @@
   {
     "name": "INT9-AUDIT-THE-GONE-STILL-FIGHTING",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (x && x.zone) { x.zone = false; x.outAt = now; }",
-    "new": "  if (false) { x.zone = false; x.outAt = now; }",
+    "old": "  if (x && x.zone) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -448,8 +448,8 @@
   {
     "name": "INT9-AUDIT-THE-JUMPER-STRIKES",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (now - a.jumpAt < WILD_REF.jumpMs) return",
-    "new": "  if (false) return",
+    "old": "  if (now - a.jumpAt < WILD_REF.jumpMs) return { ok: false, dealt: 0, fell: false, fall: null, why: 'jump' };",
+    "new": "  if (false) return { ok: false, dealt: 0, fell: false, fall: null, why: 'jump' };",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -457,7 +457,7 @@
   {
     "name": "INT9-AUDIT-THE-EVICTED-FORGOTTEN",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (st.falls.size >= WILD_REF.fallsMax) { evicted = st.falls.values().next().value; evicted.picked = true; st.falls.delete(evicted.r); }",
+    "old": "  if (st.falls.size >= WILD_REF.fallsMax) {\n    evicted = st.falls.values().next().value;\n    evicted.picked = true;\n    st.falls.delete(evicted.r);\n  }",
     "new": "  if (st.falls.size >= WILD_REF.fallsMax) st.falls.delete(st.falls.keys().next().value);",
     "tests": [
       "test/net/int9_wild_ref.test.js"
@@ -466,7 +466,7 @@
   {
     "name": "INT9-AUDIT-THE-PICKS-PIECE-UNSIGNED",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (Array.isArray(wt) && wt.length === 2 && wt.every((n) => Number.isSafeInteger(n) && n >= 0 && n < 65536)) fall.wt = [wt[0], wt[1]];",
+    "old": "  if (Array.isArray(wt) && wt.length === 2 && wt.every((n) => Number.isSafeInteger(n) && n >= 0 && n < 65536))\n    fall.wt = [wt[0], wt[1]];",
     "new": "",
     "tests": [
       "test/net/int9_wild_ref.test.js"
@@ -475,8 +475,8 @@
   {
     "name": "INT9-AUDIT-A-TOMBSTONE-LET-GO",
     "file": "src/net/wild/wildLaw.js",
-    "old": "    if (remainsSpent(rec) && now - rec.at < WILD_TOMB_MIN_MS) continue;",
-    "new": "",
+    "old": "    if (remainsSpent(rec) && now - rec.at < WILD_TOMB_MIN_MS) continue;\n    if (!old || rec.at < old.at) old = rec;",
+    "new": "    if (!old || rec.at < old.at) old = rec;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -493,8 +493,8 @@
   {
     "name": "INT9-AUDIT-THE-GUILD-LOST-ON-A-WAKE",
     "file": "src/net/wild/wildLaw.js",
-    "old": "return { r: v.r, gi: typeof v.gi === 'string' && v.gi ? v.gi : null, os:",
-    "new": "return { r: v.r, gi: null, os:",
+    "old": "    gi: typeof v.gi === 'string' && v.gi ? v.gi : null,",
+    "new": "    gi: null,",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -768,8 +768,8 @@
   {
     "name": "INT9-AUDIT-CLIENT-THE-KILLERS-PIECE-NEVER-ASKED-AGAIN",
     "file": "src/net/wild/wildRemains.js",
-    "old": "        askMine(rec);   // AUDIT INT9: an ask that never left",
-    "new": "        void 0;   // AUDIT INT9: an ask that never left",
+    "old": "        askMine(rec); // AUDIT INT9: an ask that never left (the socket, the gate) is asked again - it was asked once, at the word",
+    "new": "        void 0; // AUDIT INT9: an ask that never left (the socket, the gate) is asked again - it was asked once, at the word",
     "tests": [
       "test/net/wild1_fight.test.js"
     ]
@@ -813,8 +813,8 @@
   {
     "name": "INT9-AUDIT-CLIENT-AN-EMPTIED-REMAINS-FORGOTTEN",
     "file": "src/net/wild/wildRemains.js",
-    "old": "    has(r) { return recs.has(r) || saidIds.has(r); },",
-    "new": "    has(r) { return recs.has(r); },",
+    "old": "      return recs.has(r) || saidIds.has(r);",
+    "new": "      return recs.has(r);",
     "tests": [
       "test/net/wild1_fight.test.js"
     ]

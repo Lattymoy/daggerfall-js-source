@@ -430,11 +430,11 @@ and the book asks the room for what the window moved. Traced end to end on the r
 FIXED, both in the book, which every host reaches. REMAINS-TAKE: a pile shows what the room holds less my takes still
 waiting on an answer. The book keeps the count of each take it has asked, in order (`asked`); each `got`, `no` or `cr`
 ends the oldest. Every `rm` sets the pile to the room's count less those takes, in place
-(`wildRemains.js:"const follow = "`), and before any room word moves a pile, and before a pile is rebuilt, the book first
-asks the room for what the window took since the last frame (`wildRemains.js:"const settle = "`). The room grants at most
-what is left (`wildLaw.js:"export function takeFrom(rec, i, n, sub = null) {"`), so a take larger than the pile is a `got`
+(`wildRemains.js:"const follow = (rec, i)"`), and before any room word moves a pile, and before a pile is rebuilt, the book first
+asks the room for what the window took since the last frame (`wildRemains.js:"const settle = (rec)"`). The room grants at most
+what is left (`wildLaw.js:"export function takeFrom"`), so a take larger than the pile is a `got`
 of the rest, never a `no`. REMAINS-GOLD: a coin record is minted by its count, in the pile and in the room's grant
-(`wildRemains.js:"const mintOne = "`, through `goldStack`, the service's own minter), any whole count to `GOLD_INT_MAX`;
+(`wildRemains.js:"const mintOne = (/** @type {any} */ r)"`, through `goldStack`, the service's own minter), any whole count to `GOLD_INT_MAX`;
 every other record keeps the host's mint. The remains are the service's word, never a peer's, so the stranger's bound
 (HACKED-GOLD) is not theirs; the 65,535 stands for every peer's word. Neither is a DFU member (WILD1's remains), so
 nothing departs from DFU, and the coin's count now follows DFU's int.
@@ -468,7 +468,7 @@ take moved into `settle`): dead, as are int_lane2's four mutants on the book.
 
 NOT CHANGED:
 - THE PILE'S PLACE. It stands a fixed step from where the fallen fell, at their feet's height
-  (`wildRemains.js:"const feet = [f0[0] + 1.8, f0[1], f0[2] + 1.2];"`). Over the zone's real terrain (DFU's kernel, no
+  (`wildRemains.js:"const feet = [f0[0] + 1.8, f0[1], f0[2] + 1.2]"`). Over the zone's real terrain (DFU's kernel, no
   landforms; 6,000 points in 300 of its 12,564 pixels) the ground there sits a median 0.135 m off (90% within 0.32 m,
   worst 1.16 m). Underground a step that size could put the pile in a wall; not measured.
 - A TAKE PAST A MILLION. The wire bounds a take at 1,000,000 (`wire.js:"export const WILD_STACK_MAX = 1_000_000;"`); a

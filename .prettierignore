@@ -58,6 +58,8 @@
 /src/net/staffEvent/*/
 !/src/net/starfall/
 /src/net/starfall/*/
+!/src/net/wild/
+/src/net/wild/*/
 !/src/player/
 /src/player/*
 !/src/player/climb/

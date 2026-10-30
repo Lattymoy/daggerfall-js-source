@@ -995,7 +995,7 @@ are the sailing's own.
 - SCATTERED FOR EVERYONE. The hub keeps a sailing whose flagship is down (`net/wild/wildLaw.js` `wdunFleetSunk`): HEARD
   ONLY WHILE SHE IS UNDER WAY - the ninety minutes she sails, an hour into her sailing's three, and a word a minute late
   on its way
-  (`wildLaw.js:"if (!(now >= start && now <= start + SEA_FLEET_SAIL_MS + SEA_FLEET_LATE_MS)) return false;"`,
+  (`wildLaw.js:">= start && now <="`,
   `SEA_FLEET_OFFSET_MS`, `SEA_FLEET_SAIL_MS`, `SEA_FLEET_LATE_MS`, held equal to the clients') - and NEVER FROM A GUEST
   (`server/src/index.js:"if (a?.gu) return;"` - a guest sails no realm ship); AUDIT SEA VENTURES A7: anyone, a guest
   among them, scattered every fleet before it sailed, the last sailing's and the next's; once, kept till the sailing after

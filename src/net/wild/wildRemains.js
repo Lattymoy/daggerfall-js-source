@@ -44,7 +44,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { WILD_REMAINS_ITEMS_MAX } from '../wire.js';
 import { WILD_TEXT } from '../../systems/wild/wildZone.js';
-import { goldStack, isGoldPieces, addCarryClaims, pieceKg } from '../../systems/inventory.js';   // CARRY-CLAIMS: a take in flight weighs on the carry gate
+import { goldStack, isGoldPieces, addCarryClaims, pieceKg } from '../../systems/inventory.js'; // CARRY-CLAIMS: a take in flight weighs on the carry gate
 import { GOLD_INT_MAX } from '../../systems/item/itemLaw.js';
 
 /** The pile's icon: the treasure flat a dropped pile wears (archive 216's sack, randomTreasureIconIndices' first). */
@@ -83,16 +83,33 @@ export const remainsMine = (rec, acct, peer, laid) =>
  * @param {(cr: string, at: { r: string, i: number, rec: any }) => void} [o.collect]   MAC (2026-10-14): the room's collect of
  *   my piece in escrow, for the host to carry to the service (once a remains)
  */
-export function createWildRemains({ send, pool, toScene, mine, pack, mint, addItem, stacksWith, unequip = () => {}, unpurse = () => 0, canTake = () => true, say = () => {}, now = () => Date.now(), nameOf = () => 'it', me = () => null, collect = () => {} }) {
+export function createWildRemains({
+  send,
+  pool,
+  toScene,
+  mine,
+  pack,
+  mint,
+  addItem,
+  stacksWith,
+  unequip = () => {},
+  unpurse = () => 0,
+  canTake = () => true,
+  say = () => {},
+  now = () => Date.now(),
+  nameOf = () => 'it',
+  me = () => null,
+  collect = () => {},
+}) {
   /** @type {Map<string, any>} */
-  const recs = new Map();     // r -> { r, p, nm, os, oid, until, items[], end, pile, seen: Map<obj, {i, n}>, mine }
+  const recs = new Map(); // r -> { r, p, nm, os, oid, until, items[], end, pile, seen: Map<obj, {i, n}>, mine }
   // HALO-REMAINS: the rooms I hold - my own and the halo's (the cells beside mine); each record is its room's
   let rooms = new Set();
   let poolNow = null;
   /** @type {Map<string, number[]>} */
-  const asked = new Map();    // `${r}:${i}` -> the counts of my takes in flight, in the order asked (the room answers in order)
+  const asked = new Map(); // `${r}:${i}` -> the counts of my takes in flight, in the order asked (the room answers in order)
   /** @type {Map<string, number[]>} */
-  const askedKg = new Map();  // CARRY-CLAIMS: `${r}:${i}` -> what each take in flight weighs, in the same order
+  const askedKg = new Map(); // CARRY-CLAIMS: `${r}:${i}` -> what each take in flight weighs, in the same order
   /** CARRY-CLAIMS (systems/inventory.js claimedCarryKg): what my takes in flight weigh - lifted out of my pack until the
    *  room's `got` - or null once none is, and the gate lets this book go until its next take. */
   const claimedKg = (/** @type {any} */ e) => {
@@ -103,17 +120,29 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
     return kg;
   };
   const ask = (/** @type {string} */ key, /** @type {number} */ n, kg = 0) => {
-    const l = asked.get(key); if (l) l.push(n); else asked.set(key, [n]);
-    const w = askedKg.get(key); if (w) w.push(kg); else askedKg.set(key, [kg]);
+    const l = asked.get(key);
+    if (l) l.push(n);
+    else asked.set(key, [n]);
+    const w = askedKg.get(key);
+    if (w) w.push(kg);
+    else askedKg.set(key, [kg]);
     addCarryClaims(claimedKg, claimedKg);
   };
   /** One take answered (`got`, `no`, `cr`): the oldest in flight. */
   const answered = (/** @type {string} */ key) => {
-    const l = asked.get(key); if (!l) return; l.shift(); if (!l.length) asked.delete(key);
-    const w = askedKg.get(key); if (w) { w.shift(); if (!w.length) askedKg.delete(key); }
+    const l = asked.get(key);
+    if (!l) return;
+    l.shift();
+    if (!l.length) asked.delete(key);
+    const w = askedKg.get(key);
+    if (w) {
+      w.shift();
+      if (!w.length) askedKg.delete(key);
+    }
   };
   /** REMAINS-TAKE: how much of record `i` my takes in flight hold - the pile stands without it. */
-  const inFlight = (/** @type {string} */ r, /** @type {number} */ i) => (asked.get(`${r}:${i}`) ?? []).reduce((a, n) => a + n, 0);
+  const inFlight = (/** @type {string} */ r, /** @type {number} */ i) =>
+    (asked.get(`${r}:${i}`) ?? []).reduce((a, n) => a + n, 0);
   const countOf = (/** @type {any} */ it) => Math.max(1, it?.stackCount ?? 1);
   /**
    * REMAINS-GOLD: ONE RECORD MINTED. A coin pile is minted by its count (inventory.js goldStack - the service's own minter,
@@ -130,22 +159,30 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
   };
 
   const unseed = (rec) => {
-    if (rec.pile) { try { rec.poolOf?.removePile(rec.pile); } catch { /* a pool torn down already */ } }
-    rec.pile = null; rec.poolOf = null; rec.seen = new Map();
+    if (rec.pile) {
+      try {
+        rec.poolOf?.removePile(rec.pile);
+      } catch {
+        /* a pool torn down already */
+      }
+    }
+    rec.pile = null;
+    rec.poolOf = null;
+    rec.seen = new Map();
   };
   /** A record's pile in the pool I stand in: what is left of it, minted, each item remembered with its place. REMAINS-TAKE:
    *  what is left is the room's word less my takes in flight. */
   const seed = (rec) => {
-    settle(rec);   // REMAINS-TAKE: a take the window made off the pile standing now is asked before it goes
+    settle(rec); // REMAINS-TAKE: a take the window made off the pile standing now is asked before it goes
     unseed(rec);
     const p = poolNow;
     if (!p || rec.items.every((it) => it == null)) return;
-    if (!canTake(rec)) return;   // PVPDUNGEONS: a party's or a guild's member's remains are no pile of mine to take
+    if (!canTake(rec)) return; // PVPDUNGEONS: a party's or a guild's member's remains are no pile of mine to take
     const live = [];
     const seen = new Map();
     for (let i = 0; i < rec.items.length; i++) {
       const r = rec.items[i];
-      if (!r || i === rec.wi) continue;   // INT9: the killer's piece is no pile's - theirs comes by itself (onWord)
+      if (!r || i === rec.wi) continue; // INT9: the killer's piece is no pile's - theirs comes by itself (onWord)
       const n = countOf(r) - inFlight(rec.r, i);
       const minted = n > 0 ? mintOne(r) : null;
       if (!minted) continue;
@@ -159,10 +196,12 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
     const f0 = toScene(rec.p);
     const feet = [f0[0] + 1.8, f0[1], f0[2] + 1.2];
     const pile = p.seedPile(live, feet, WILD_PILE_ICON, null, null, { unsaved: true, owner: 'wild' });
-    pile.noStore = WILD_NO_STORE;   // droppedLootHooks: nothing is put on remains
+    pile.noStore = WILD_NO_STORE; // droppedLootHooks: nothing is put on remains
     pile.wild = { r: rec.r, name: rec.nm, mine: rec.mine };
-    pile.label = rec.mine ? WILD_TEXT.mine : WILD_TEXT.remainsName(rec.nm);   // the plaque's name for it (droppedLoot labelFor)
-    rec.pile = pile; rec.poolOf = p; rec.seen = seen;
+    pile.label = rec.mine ? WILD_TEXT.mine : WILD_TEXT.remainsName(rec.nm); // the plaque's name for it (droppedLoot labelFor)
+    rec.pile = pile;
+    rec.poolOf = p;
+    rec.seen = seen;
   };
   /** Take `n` of `item` back out of my pack - the very record, or (it merged) as much of a stack it joined. */
   const lift = (item, n) => {
@@ -171,17 +210,37 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
     const at = list.indexOf(item);
     if (at >= 0) {
       const have = Math.max(1, item.stackCount ?? 1);
-      if (have <= left) { try { unequip(item); } catch { /* not worn */ } list.splice(at, 1); left -= have; }
-      else { item.stackCount = have - left; left = 0; }
+      if (have <= left) {
+        try {
+          unequip(item);
+        } catch {
+          /* not worn */
+        }
+        list.splice(at, 1);
+        left -= have;
+      } else {
+        item.stackCount = have - left;
+        left = 0;
+      }
     }
     for (let i = list.length - 1; i >= 0 && left > 0; i--) {
       const held = list[i];
       if (held === item || !stacksWith(held, item)) continue;
       const have = Math.max(1, held.stackCount ?? 1);
-      if (have <= left) { try { unequip(held); } catch { /* not worn */ } list.splice(i, 1); left -= have; }
-      else { held.stackCount = have - left; left = 0; }
+      if (have <= left) {
+        try {
+          unequip(held);
+        } catch {
+          /* not worn */
+        }
+        list.splice(i, 1);
+        left -= have;
+      } else {
+        held.stackCount = have - left;
+        left = 0;
+      }
     }
-    if (left > 0 && item?.group === 'Currency') left -= unpurse(left);   // WILD GOLD: the window's take of coin went to the purse
+    if (left > 0 && item?.group === 'Currency') left -= unpurse(left); // WILD GOLD: the window's take of coin went to the purse
   };
   /** What the window took off a record's pile since the last look - lifted back out of my pack and asked of the room. The
    *  host's frame looks (tick), and so does a room word before it moves the pile (REMAINS-TAKE: a word that came between a
@@ -194,13 +253,14 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
       if (cur >= info.n) continue;
       const k = info.n - cur;
       lift(obj, k);
-      if (!send({ k: 'take', r: rec.r, i: info.i, n: k }, rec.room)) {   // HALO-REMAINS: to the room that keeps it
+      if (!send({ k: 'take', r: rec.r, i: info.i, n: k }, rec.room)) {
+        // HALO-REMAINS: to the room that keeps it
         // the ask never left (the socket, the gate): it goes back on the pile as it was, and nothing was lost
         obj.stackCount = info.n > 1 || obj.stackCount != null ? info.n : obj.stackCount;
         if (!there) rec.pile.items.push(obj);
         continue;
       }
-      ask(`${rec.r}:${info.i}`, k, pieceKg(obj, k));   // CARRY-CLAIMS: weighed until the room's word
+      ask(`${rec.r}:${info.i}`, k, pieceKg(obj, k)); // CARRY-CLAIMS: weighed until the room's word
       info.n = cur;
       if (!there) rec.seen.delete(obj);
     }
@@ -213,8 +273,16 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
     const want = (rec.items[i] ? countOf(rec.items[i]) : 0) - inFlight(rec.r, i);
     for (const [obj, info] of rec.seen) {
       if (info.i !== i) continue;
-      if (want > 0) { if (want !== info.n) { obj.stackCount = want; info.n = want; } }
-      else { const at = rec.pile.items.indexOf(obj); if (at >= 0) rec.pile.items.splice(at, 1); rec.seen.delete(obj); }
+      if (want > 0) {
+        if (want !== info.n) {
+          obj.stackCount = want;
+          info.n = want;
+        }
+      } else {
+        const at = rec.pile.items.indexOf(obj);
+        if (at >= 0) rec.pile.items.splice(at, 1);
+        rec.seen.delete(obj);
+      }
       break;
     }
     if (!rec.pile.items.length) unseed(rec);
@@ -228,20 +296,34 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
   const askMine = (/** @type {any} */ rec) => {
     const it = rec.wk && rec.wk === me() ? rec.items[rec.wi] : null;
     const key = `${rec.r}:${rec.wi}`;
-    if (it && !asked.has(key) && send({ k: 'take', r: rec.r, i: rec.wi, n: countOf(it) }, rec.room)) ask(key, countOf(it), pieceKg(it, countOf(it)));   // HALO-REMAINS: to the room that keeps it
+    if (it && !asked.has(key) && send({ k: 'take', r: rec.r, i: rec.wi, n: countOf(it) }, rec.room))
+      ask(key, countOf(it), pieceKg(it, countOf(it))); // HALO-REMAINS: to the room that keeps it
   };
 
   const book = {
     /** The remains I may see now, for the maps (mine marked): `{ r, p, nm, mine, until }`. */
-    list() { return [...recs.values()].filter((r) => r.items.some(Boolean)).map((r) => ({ r: r.r, p: r.p, nm: r.nm, mine: r.mine, until: r.until })); },
+    list() {
+      return [...recs.values()]
+        .filter((r) => r.items.some(Boolean))
+        .map((r) => ({ r: r.r, p: r.p, nm: r.nm, mine: r.mine, until: r.until }));
+    },
     /** INT9: has remains `r` been said in this room (a killer's seizure waits on it) - AUDIT INT9: ever, an emptied one too. */
-    has(r) { return recs.has(r) || saidIds.has(r); },
+    has(r) {
+      return recs.has(r) || saidIds.has(r);
+    },
     /** Mine, in this room. */
-    mineHere() { return book.list().filter((r) => r.mine); },
+    mineHere() {
+      return book.list().filter((r) => r.mine);
+    },
     /** Whether any remains of mine stand here - the loot lines' door with the rarity row off (scenes/lootLines.js). */
-    hasMine() { for (const r of recs.values()) if (r.mine && r.items.some(Boolean)) return true; return false; },
+    hasMine() {
+      for (const r of recs.values()) if (r.mine && r.items.some(Boolean)) return true;
+      return false;
+    },
     /** The room I stand in changed (or I left the world): every pile goes; the new room says its own at its hello. */
-    setRoom(key) { book.setRooms(key == null ? [] : [key]); },
+    setRoom(key) {
+      book.setRooms(key == null ? [] : [key]);
+    },
     /** HALO-REMAINS: the rooms I hold now (my own and the halo's). A room let go takes its piles; a room still held
      *  keeps them - a crossing into a halo's cell PROMOTES its socket, and no hello says its remains again. */
     setRooms(keys) {
@@ -250,8 +332,13 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
       rooms = next;
       for (const rec of [...recs.values()]) {
         if (rooms.has(rec.room)) continue;
-        unseed(rec); recs.delete(rec.r);
-        for (const k of [...asked.keys()]) if (k.startsWith(`${rec.r}:`)) { asked.delete(k); askedKg.delete(k); }
+        unseed(rec);
+        recs.delete(rec.r);
+        for (const k of [...asked.keys()])
+          if (k.startsWith(`${rec.r}:`)) {
+            asked.delete(k);
+            askedKg.delete(k);
+          }
       }
     },
     /** The host I stand in changed under the same room (a recentre, a mode): the piles are stood again in its pool. */
@@ -265,27 +352,51 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
       if (w.k === 'ri') {
         let rec = recs.get(w.r);
         if (!rec) {
-          rec = { r: w.r, room: from, p: w.p, nm: w.nm, os: w.os, oid: w.oid, until: now() + w.ttl, items: [], end: 0, pile: null, poolOf: null, seen: new Map(), mine: false, wk: typeof w.wk === 'string' ? w.wk : null, wi: Number.isInteger(w.wi) ? w.wi : -1 };
+          rec = {
+            r: w.r,
+            room: from,
+            p: w.p,
+            nm: w.nm,
+            os: w.os,
+            oid: w.oid,
+            until: now() + w.ttl,
+            items: [],
+            end: 0,
+            pile: null,
+            poolOf: null,
+            seen: new Map(),
+            mine: false,
+            wk: typeof w.wk === 'string' ? w.wk : null,
+            wi: Number.isInteger(w.wi) ? w.wi : -1,
+          };
           rec.mine = !!mine(rec);
           recs.set(w.r, rec);
         }
-        for (let k = 0; k < w.items.length && w.off + k < WILD_REMAINS_ITEMS_MAX; k++) rec.items[w.off + k] = w.items[k] ?? null;
+        for (let k = 0; k < w.items.length && w.off + k < WILD_REMAINS_ITEMS_MAX; k++)
+          rec.items[w.off + k] = w.items[k] ?? null;
         rec.end = w.end;
         rec.until = now() + w.ttl;
         saidIds.add(w.r);
         if (saidIds.size > 64) saidIds.delete(saidIds.values().next().value);
         seed(rec);
-        askMine(rec);   // INT9: the piece I picked off this fallen's body - asked for at once, the whole of it
+        askMine(rec); // INT9: the piece I picked off this fallen's body - asked for at once, the whole of it
         return;
       }
       const rec = recs.get(w.r);
-      if (w.k === 'gone') { if (rec) { unseed(rec); recs.delete(w.r); } return; }
+      if (w.k === 'gone') {
+        if (rec) {
+          unseed(rec);
+          recs.delete(w.r);
+        }
+        return;
+      }
       if (w.k === 'rm') {
         if (!rec || !rec.items[w.i]) return;
-        settle(rec);   // REMAINS-TAKE: what the window took since the frame's look, asked before the room's word moves the pile
+        settle(rec); // REMAINS-TAKE: what the window took since the frame's look, asked before the room's word moves the pile
         const it = rec.items[w.i];
         const stack = countOf(it);
-        if (w.n >= stack) rec.items[w.i] = null; else rec.items[w.i] = { ...it, stackCount: stack - w.n };
+        if (w.n >= stack) rec.items[w.i] = null;
+        else rec.items[w.i] = { ...it, stackCount: stack - w.n };
         // the pile follows IN PLACE (a window may stand open on it): the room's count less my takes in flight - REMAINS-TAKE:
         // it skipped every `rm` while a take of mine was in flight and subtracted any other from what it showed, so my
         // own take's `rm`, heard after its `got`, came off the pile a second time
@@ -297,35 +408,56 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
         // MAC (2026-10-14): MY COLLECT - the piece the service holds in escrow is mine once the service commits it; the
         // room's record of it is nobody's to add
         const it = rec && w.i === rec.wi && rec.wk === me() ? rec.items[w.i] : null;
-        if (rec && w.i === rec.wi && rec.wk === me()) rec.items[w.i] = null;   // never asked again
+        if (rec && w.i === rec.wi && rec.wk === me()) rec.items[w.i] = null; // never asked again
         if (!collected.has(w.r)) {
           collected.add(w.r);
           if (collected.size > 64) collected.delete(collected.values().next().value);
-          try { collect(w.cr, { r: w.r, i: w.i, rec: it }); } catch { /* the host's */ }
+          try {
+            collect(w.cr, { r: w.r, i: w.i, rec: it });
+          } catch {
+            /* the host's */
+          }
         }
         return;
       }
       if (w.k === 'got') {
-        if (rec && w.i === rec.wi && rec.wk === me()) rec.items[w.i] = null;   // AUDIT INT9: mine, whole - never asked again before the room's `rm`
-        const item = mintOne(w.it);   // REMAINS-GOLD: a coin pile by its count
-        if (item) { addItem(pack(), item); say(`You take ${nameOf(item)}.`); }
+        if (rec && w.i === rec.wi && rec.wk === me()) rec.items[w.i] = null; // AUDIT INT9: mine, whole - never asked again before the room's `rm`
+        const item = mintOne(w.it); // REMAINS-GOLD: a coin pile by its count
+        if (item) {
+          addItem(pack(), item);
+          say(`You take ${nameOf(item)}.`);
+        }
       } else if (w.k === 'no') {
-        say('Someone took that first.');   // nothing comes back: nothing was kept (the room's `rm` for the winner's take moved the pile)
+        say('Someone took that first.'); // nothing comes back: nothing was kept (the room's `rm` for the winner's take moved the pile)
       }
     },
     /** The host's frame: a pile the window took from is asked of the room; a remains whose time is up goes. */
     tick() {
       const t = now();
       for (const rec of [...recs.values()]) {
-        if (t >= rec.until) { unseed(rec); recs.delete(rec.r); continue; }
-        askMine(rec);   // AUDIT INT9: an ask that never left (the socket, the gate) is asked again - it was asked once, at the word
+        if (t >= rec.until) {
+          unseed(rec);
+          recs.delete(rec.r);
+          continue;
+        }
+        askMine(rec); // AUDIT INT9: an ask that never left (the socket, the gate) is asked again - it was asked once, at the word
         // a pile its pool let go under me (a building's cache restored, a dungeon rebuilt) is stood again from the room's word
-        if (!rec.pile || rec.pile.dead) { rec.pile = null; if (poolNow && rec.items.some(Boolean)) seed(rec); continue; }
+        if (!rec.pile || rec.pile.dead) {
+          rec.pile = null;
+          if (poolNow && rec.items.some(Boolean)) seed(rec);
+          continue;
+        }
         settle(rec);
       }
     },
     /** Every pile down (the host is going). */
-    clear() { for (const rec of recs.values()) unseed(rec); recs.clear(); asked.clear(); askedKg.clear(); rooms = new Set(); },
+    clear() {
+      for (const rec of recs.values()) unseed(rec);
+      recs.clear();
+      asked.clear();
+      askedKg.clear();
+      rooms = new Set();
+    },
   };
   return book;
 }

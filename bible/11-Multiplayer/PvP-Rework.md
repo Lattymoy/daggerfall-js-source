@@ -142,7 +142,7 @@ it shows a dim skull, never a green ring (PVP-FLAG-LOOK, "The green one looks ba
 (`pvpSkull.js:"export const SKULL_ROWS = Object.freeze(["`) over the name (`nameLayer.js:"put(tag, 'skullOf', p.skull ?? '',"`)
 and on the flag button - none unflagged, white flagged, gold in aggro, red a villain. The referee says a flagged fighter's
 aggro to the room on a blow, its ms left in the flag word's `a`, once each ten seconds
-(`wildRef.js:"export function wildAggroWord(x, now) {"`). "overwold should show skulls": the Overworld's player marks
+(`wildRef.js:"export function wildAggroWord"`). "overwold should show skulls": the Overworld's player marks
 carry it over the name too (`travelViewMarks.js:"skull: pvpSkullOf(t.id) });"`). A departure: DFU has no PvP mark.
 
 
@@ -150,21 +150,21 @@ carry it over the name too (`travelViewMarks.js:"skull: pvpSkullOf(t.id) });"`).
 
 "add a are you sure to the 29 to 30 levleing", "explain this make u able to die in pvp zones": the referee reads the
 character level the token signs (`cl`) and refuses every blow given or taken under 30, and any flag asked up
-(`wildRef.js:"if (pvpYoung(a.cl) || pvpYoung(t.cl)) return"`). A token with no level is left to the game's own flag
+(`wildRef.js:"if (pvpYoung(a.cl) || pvpYoung(t.cl))"`). A token with no level is left to the game's own flag
 refusal. Online, the level up from 29 to 30 asks first, Yes or Not yet; Not yet keeps the level owed
 (`pvp30Ask.js:"export const pvp30Asks"`), on the sheet's door and the Growth tab alike. A departure: DFU has no PvP.
 
 ## PVP-DEATH: no safe passage after a death
 
 "when u die u need to take away player protection form ebing killed again", "they go to town in a safe zone when dead": a
-rise from a fall, or a return after a foe's kill, grants no safe passage (`wildRef.js:"const rose = z && x.down"`). This
+rise from a fall, or a return after a foe's kill, grants no safe passage (`wildRef.js:"const rose = z &&"`). This
 replaces ZONE-GRACE's rise arm (`Wild-Zone.md`); an entry from outside, away and quiet, still grants it.
 
 ## PVP-EDGE: safe passage only for a walk in
 
 "only from ebterin from the edge", "if u tp in no safe passage": the game says the zone word's `ed` only when its last
 step outside was close and just now (`zoneEdge.js:"export const ZONE_EDGE = Object.freeze({ m: 60, ms: 5_000,"`), and
-the referee grants an entry's safe passage on it alone (`wildRef.js:"else if (!x.down && !rose && ed && now"`). A
+the referee grants an entry's safe passage on it alone (`wildRef.js:"if (!x.down && x.diedAt > -Infinity)".."!x.down &&"`). A
 teleport, a dungeon or a building left, a town's streets left (they are in the zone, PVP-SAFE-HIT's `sf`) and a rise
 grant none: the edge reads the zone's pixel alone (`world.js:"zoneEdgeSee(wildHere(), player.pos, Date.now())"`, AUDIT
 TAMRIEL-WIDE III P2 - a shop's door had read as the edge). The relay has
@@ -175,7 +175,7 @@ no map, so the word is the client's own, as the streets' peace is.
 "How does the health and shield bar look", then "Perfect" to its mockup: a red health bar with a thin blue Shield strip
 on top, between the skull and the name (`nameLayer.js:"const paintBar = (tag, b) => {"`), on flagged players alone. The
 referee says each flagged fighter's bar to the room when it moves, in whole per cent, at most once each half second
-(`wildRef.js:"export function wildBarWords(st, now) {"`), off the zone's beat
+(`wildRef.js:"export function wildBarWords"`), off the zone's beat
 (`server/src/index.js:"_wildBarSay(st, now) {"`), and every bar to one entering. The referee knows a Shield spell as on
 or off, never its amount, so the strip is whole or gone. A flagged stranger, nameless in the 3D scene, still shows its
 skull and bar (`pvpFlagHost.js:"const shown = k && (!q ||"`).
@@ -204,12 +204,12 @@ pushed in becoming a villian its a CHOICES": each character has a meter from 0 t
 (`villainLaw.js:"export const VILLAIN = Object.freeze({"`). A kill of a flagged player adds 100 for each level the
 victim is under the killer, from 5 under; an unflagged victim adds the same and 2,000. Hits add nothing. A kill adds
 nothing where the victim struck the killer, or one of its party, first in this fight - a blow between the two inside the
-aggro's minute (`wildRef.js:"export function wildOpen("`; the party is the hub's word, `server/src/index.js:"async _wildVillainy(st, fall, now) {"`).
+aggro's minute (`wildRef.js:"two inside PVP_FLAG.lockMs".."/** @type {any} */ st,"`; the party is the hub's word, `server/src/index.js:"async _wildVillainy(st, fall, now) {"`).
 No clock, no gold and no death lower it.
 
 At 5,000 the killer is a villain: a red skull (`pvpFlagHost.js:"const skullOf = (id) =>"`) and a flag the referee holds
-up (`wildRef.js:"else if (isVillain(x.vi)) x.flag = true;"`). The referee counts a fall's points
-(`wildRef.js:"const vp = villainKillPoints("`), keeps the meter on the fighter and in its carry, marks the flag word `v`,
+up (`wildRef.js:"else if (isVillain(x.vi))"`). The referee counts a fall's points
+(`wildRef.js:"const vp = villainKillPoints"`), keeps the meter on the fighter and in its carry, marks the flag word `v`,
 tells the killer its meter (`wref` `vil`) and signs the points into the fall's receipt (`vp`). The top of the pause menu's
 Standing page ("top of standings") shows "Villainy 3,240 / 5,000" on a bar to 10,000 with a red mark at 5,000
 (`pvpVillainBar.js:"export function statsVillainy("`), always: out of the zone the last meter this browser heard, else 0
@@ -227,8 +227,8 @@ so a fall asked twice adds once. The meter is held to 10,000.
 
 The mint signs it as `vl` beside the realm's yes (`realm.js:"vl: villainClamp(row.villainy),"`, checked at
 `identityToken.js:"if (c.vl !== undefined && !(c.rc === 1 && villainyIssuable(c.vl))) return false;"`). The relay puts it
-on the socket (`wildRef.js:"export const wildTokenAtt = "`) and the referee takes the larger of it and the carried meter
-(`wildRef.js:"if (villainClamp(vl) > villainClamp(x.vi)) x.vi = villainClamp(vl);"`). A villain by its token is red at its
+on the socket (`wildRef.js:"export const wildTokenAtt"`) and the referee takes the larger of it and the carried meter
+(`wildRef.js:"if (villainClamp(vl) > villainClamp(x.vi))"`). A villain by its token is red at its
 first step into the zone. The hello's token body is 928 now: a house beside every other claim and `vl` is 899.
 
 What lowers it. A raid's claim takes 500, once by its own row, none while red
@@ -307,7 +307,7 @@ PVP-KIT-REGEN (2026-10-30: "cure is worthless in pvp"): Regenerate takes Cure's 
 2% to 4% of the receiver's health each round for a minute, 10% of maximum magicka
 (`pvpKit.js:"regen: Object.freeze({ cost: 10, scale: Object.freeze([2, 4]), icon: 1 }),"`). Each round is its receiver's own
 rise, so PVP-HEAL's window caps it with every other heal. The relay prices it in Cure's place and banks its rounds
-as health credit for the minute, at most `regenKit` (4%) a second (`pvpVitals.js:"else if (id === 'regen') {"`). A
+as health credit for the minute, at most `regenKit` (4%) a second (`pvpVitals.js:"else if (id === 'regen')"`). A
 saved Cure slot loads as Regenerate
 (`pvpKit.js:"if (raw?.id === 'cure') raw = {"`). A departure: DFU has no PvP.
 
@@ -326,7 +326,7 @@ worn piece, rolled by the account service on the fallen's record, never chosen a
 (`pvpReward.js:"export function pvpRewardRoll(items, { insured = () => false, keep = () => false, pick }) {"`, called at
 `server-account/src/wild.js:"const roll = burnt ? null : pvpRewardRoll(stored.items, { insured, keep, pick: (n) => pvpRollIndex(ctx.rand, n) });"`).
 The roll skips a piece a policy in force or a ledger hold keeps. The pick and the worn offer are gone: the relay signs
-a fall after `wildRef.js:"pickMs: 10_000"`, so the fallen's first dead frame lays its body first, and the service reads
+a fall after `wildRef.js:"pickMs: 10_000,"`, so the fallen's first dead frame lays its body first, and the service reads
 no `w`. The piece reaches the killer through the escrow and the collect. A hall's kill rolls too.
 
 "random policy gold": when every worn piece is insured, the killer gets the premium of one random policy, and that
@@ -415,7 +415,7 @@ skill level x 5 + 30, and its watch resists nothing.
 may strike a red villain, and nobody may strike that player there. My word on the zone is 2 there
 (`world.js:"online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, playerEntity.health <= 0,"`), said as 1 with
 `sf` (`online.js:"const sf = zone === 1 && this._wildStreets"`). The referee holds both sides
-(`wildRef.js:"export function wildStreetsBar(a, t) {"`): no blow lands on a fighter in the streets who is no villain on
+(`wildRef.js:"export function wildStreetsBar"`): no blow lands on a fighter in the streets who is no villain on
 the meter it keeps, and one from there lands on a villain alone. A villain who says the streets is struck all the same.
 The sea's guns read the same bar (`seaRef.js:"if (wildStreetsBar(a, x))"`).
 
@@ -429,14 +429,14 @@ A relay before world283 does not read `sf`, so it hears 0 there, as before
 
 "keep their body in game if they login in the window of cooldown": a fighter whose last socket in a room closes inside
 the lock of a PvP blow given or taken leaves its body in the zone until the lock runs out
-(`wildLinger.js:"export function lingerUntil("`). Peers keep its last pose, said again before their silence law hides it,
+(`wildLinger.js:"export function lingerUntil"`). Peers keep its last pose, said again before their silence law hides it,
 and one who enters is shown it (`pvpLinger.js:"export async function lingerHello("`). Flagged players strike it by the
 referee's law (`server/src/index.js:"const target = this._idFirst(d.to) ?? lingerTarget(this, d.to);"`); it moves and
 casts nothing, and a blow on it renews its lock, never past three minutes from the close. A kill is a normal PvP kill: the
 villain points, and a fall signed with its fallen away (`g` 1), so its killer carries the receipt at once and the
 account service rolls the reward as for any kill. No account change was needed.
 
-The body goes as a normal leave when its lock runs out or its fall is signed (`wildLinger.js:"export function lingerOver("`).
+The body goes as a normal leave when its lock runs out or its fall is signed (`wildLinger.js:"export function lingerOver"`).
 Its account's hello in that room takes it back, with the health the referee kept and no safe passage
 (`pvpLinger.js:"function lingerTaken("`); a hello in another room ends it at the room's next ask of the hub. A villain
 stays only when a blow fell in the lock. A close outside the lock, a hidden socket, or the room's last socket leaves at
@@ -445,7 +445,7 @@ once. Relay world290. A departure: DFU has no PvP.
 PVP-LINGER-RISE ("So u respawn in town if u get killed and log back in?"): yes. A body slain while its player is away
 is kept in its room's storage for a week (`pvpLinger.js:"export async function lingerSlain("`). The player's next word
 that it stands in the zone is a `down` word with `aw` 1 and its killer's name
-(`wildLinger.js:"export function lingerAwayWord("`): ten seconds on the death screen, or the referee's own wait if it is
+(`wildLinger.js:"export function lingerAwayWord"`): ten seconds on the death screen, or the referee's own wait if it is
 still down, then the zone's rise in the nearest town outside it, with no safe passage (PVP-DEATH). The screen says who
 killed it (`wildZone.js:"deathAway: "`). A log-in in another room, or after a week, hears nothing, and the player stands
 where the save left it. The relay says it, not the account service: no account change.
@@ -492,7 +492,7 @@ only out of a credit the relay grants: a slow regen, a declared potion on the re
 paid for (`refereeHealthShare.js:"const got = Math.min(fighter.max - fighter.hp, Math.round(target) - fighter.hp, healRoom(fighter, now), sourced"`).
 
 Magicka and fatigue are the relay's own ledgers, anchored at the game's word while the flag is down. Each refereed cast
-and swing pays the PvP bar's cheapest price, or lands nothing (`wildRef.js:"if (spell ? !castPaid(a.f, c, to, now)"`).
+and swing pays the PvP bar's cheapest price, or lands nothing (`wildRef.js:"? !castPaid(a.f, c, to, now)"`).
 A party member's gift is paid where the relay passes it (`server/src/index.js:"async _wildCastPaid(a, tb, data, now) {"`).
 A Shield counts only while a paid one runs. The health whole is held to the signed level's.
 
@@ -501,12 +501,12 @@ A harmful cast carries its number, so one area cast is one price. Not yet the re
 resistances. Relay world293. Tests: `test/net/pvpvitals.test.js`. A departure: DFU has no PvP.
 
 BOW-RATE: an arrow comes no sooner than the fastest honest bow, its four-tick loose with no reload, so 0.25 s. Two may
-arrive together over a late network. A sooner one lands nothing (`wildRef.js:"if (r === SIEGE_HIT.Shaft ? !shaftPaid(a.f, now)"`).
+arrive together over a late network. A sooner one lands nothing (`wildRef.js:"=== SIEGE_HIT.Shaft ?"`).
 The relay cannot trust a Speed, so it holds every build to that floor. A slower bow law can raise it.
 
 SWING-RATE: a melee blow on one player comes no sooner than the quickest swing, five frames at the 0.09 s floor, so
 0.45 s, two deep. It is counted per target, because a Cleave lands on each player in its arc.
 
 BOW-FAST: the relay cuts a shaft it judges by a fifth for each arrow within its bow's window of the last (a Short Bow 0.75 s, a Long Bow 1.25 s, else 1 s), four at most
-(`pvpVitals.js:"export function bowFastCut(f, d, now, w = null) {"`). The game sends that claim uncut, so it cannot skip the cut. The zone strike is marked `relayCut`, and the game keeps
+(`pvpVitals.js:"export function bowFastCut"`). The game sends that claim uncut, so it cannot skip the cut. The zone strike is marked `relayCut`, and the game keeps
 only the bow's pull (`duelCombat.js:"bowFastDamage(d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft()"`).

@@ -11,8 +11,8 @@
   {
     "name": "SEA-BOUNTY-room-unchecked",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "  if (c.m !== undefined && !(typeof c.m === 'string' && WILD_ROOM_RE.test(c.m))) return false;   // SEA-BOUNTY: the room\n",
-    "new": "",
+    "old": "  if (c.m !== undefined && !(typeof c.m === 'string' && WILD_ROOM_RE.test(c.m))) return false; // SEA-BOUNTY: the room\n  if (c.kc !== undefined && !(typeof c.kc === 'string' && REALM_CHARACTER_RE.test(c.kc))) return false; // SEA-BOUNTY: the killer's character",
+    "new": "  if (c.kc !== undefined && !(typeof c.kc === 'string' && REALM_CHARACTER_RE.test(c.kc))) return false; // SEA-BOUNTY: the killer's character",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SEA-BOUNTY-room-any-type",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "  if (c.m !== undefined && !(typeof c.m === 'string' && WILD_ROOM_RE.test(c.m))) return false;",
-    "new": "  if (c.m !== undefined && !(WILD_ROOM_RE.test(c.m))) return false;",
+    "old": "  if (c.m !== undefined && !(typeof c.m === 'string' && WILD_ROOM_RE.test(c.m))) return false; // SEA-BOUNTY: the room",
+    "new": "  if (c.m !== undefined && !WILD_ROOM_RE.test(c.m)) return false; // SEA-BOUNTY: the room",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SEA-BOUNTY-killer-char-unchecked",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "  if (c.kc !== undefined && !(typeof c.kc === 'string' && REALM_CHARACTER_RE.test(c.kc))) return false;   // SEA-BOUNTY: the killer's character\n",
-    "new": "",
+    "old": "  if (c.kc !== undefined && !(typeof c.kc === 'string' && REALM_CHARACTER_RE.test(c.kc))) return false; // SEA-BOUNTY: the killer's character\n  if (c.g !== undefined && c.g !== 1) return false; // WILD-REJOIN: the fallen gone from the room, or unsaid",
+    "new": "  if (c.g !== undefined && c.g !== 1) return false; // WILD-REJOIN: the fallen gone from the room, or unsaid",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SEA-BOUNTY-mint-no-room",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "...(m ? { m } : {}), ...(kc ? { kc } : {}), ...fallenGone, ...(vp > 0 ? { vp } : {}), i: nowS",
-    "new": "...(kc ? { kc } : {}), ...fallenGone, ...(vp > 0 ? { vp } : {}), i: nowS",
+    "old": "    ...(m ? { m } : {}),\n    ...(kc ? { kc } : {}),",
+    "new": "    ...(kc ? { kc } : {}),",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SEA-BOUNTY-mint-no-killer-char",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "...(m ? { m } : {}), ...(kc ? { kc } : {}), ...fallenGone, ...(vp > 0 ? { vp } : {}), i: nowS",
-    "new": "...(m ? { m } : {}), ...fallenGone, ...(vp > 0 ? { vp } : {}), i: nowS",
+    "old": "    ...(kc ? { kc } : {}),\n    ...fallenGone,",
+    "new": "    ...fallenGone,",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SEA-BOUNTY-mint-always",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "...(m ? { m } : {}), ...(kc ? { kc } : {}), ...fallenGone, ...(vp > 0 ? { vp } : {}), i: nowS",
-    "new": "m: m || 'world:0,0', kc: kc || 'r00000000000000000000', ...fallenGone, ...(vp > 0 ? { vp } : {}), i: nowS",
+    "old": "    ...(m ? { m } : {}),\n    ...(kc ? { kc } : {}),",
+    "new": "    m: m || 'world:0,0',\n    kc: kc || 'r00000000000000000000',",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SEA-BOUNTY-fall-no-killer-char",
     "file": "src/net/wild/wildRef.js",
-    "old": "killerId: a.id, kc: a.ci || '', m: typeof room === 'string' ? room : '',",
-    "new": "killerId: a.id, kc: '', m: typeof room === 'string' ? room : '',",
+    "old": "    kc: a.ci || '',",
+    "new": "    kc: '',",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SEA-BOUNTY-fall-no-room",
     "file": "src/net/wild/wildRef.js",
-    "old": "killerId: a.id, kc: a.ci || '', m: typeof room === 'string' ? room : '',",
-    "new": "killerId: a.id, kc: a.ci || '', m: '',",
+    "old": "    m: typeof room === 'string' ? room : '',",
+    "new": "    m: '',",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SEA-BOUNTY-fall-read-back-unkept",
     "file": "src/net/wild/wildRef.js",
-    "old": "kc: typeof v.kc === 'string' ? v.kc : '', m: typeof v.m === 'string' ? v.m : '',",
-    "new": "kc: '', m: '',",
+    "old": "    kc: typeof v.kc === 'string' ? v.kc : '',\n    m: typeof v.m === 'string' ? v.m : '',",
+    "new": "    kc: '',\n    m: '',",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]

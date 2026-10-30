@@ -2,8 +2,8 @@
   {
     "name": "SHIP-PVP-wreck-self",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "  if (typeof c.f !== 'string' || typeof c.k !== 'string' || !ID_RE.test(c.f) || !ID_RE.test(c.k) || c.k === c.f) return false;   // never her own guns",
-    "new": "  if (typeof c.f !== 'string' || typeof c.k !== 'string' || !ID_RE.test(c.f) || !ID_RE.test(c.k)) return false;   // never her own guns",
+    "old": "  if (typeof c.f !== 'string' || typeof c.k !== 'string' || !ID_RE.test(c.f) || !ID_RE.test(c.k) || c.k === c.f)\n    return false; // never her own guns",
+    "new": "  if (typeof c.f !== 'string' || typeof c.k !== 'string' || !ID_RE.test(c.f) || !ID_RE.test(c.k)) return false; // never her own guns",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -11,7 +11,7 @@
   {
     "name": "SHIP-PVP-wreck-killer-char-any",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "  if (typeof c.c !== 'string' || !REALM_CHARACTER_RE.test(c.c) || typeof c.kc !== 'string' || !REALM_CHARACTER_RE.test(c.kc)) return false;",
+    "old": "  if (\n    typeof c.c !== 'string' ||\n    !REALM_CHARACTER_RE.test(c.c) ||\n    typeof c.kc !== 'string' ||\n    !REALM_CHARACTER_RE.test(c.kc)\n  )\n    return false;",
     "new": "  if (typeof c.c !== 'string' || !REALM_CHARACTER_RE.test(c.c)) return false;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "SHIP-PVP-wreck-room-any",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "  if (typeof c.m !== 'string' || !WILD_ROOM_RE.test(c.m)) return false;\n  if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;\n  if (c.e <= c.i || c.e - c.i > SEA_WRECK_TTL_S) return false;",
-    "new": "  if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;\n  if (c.e <= c.i || c.e - c.i > SEA_WRECK_TTL_S) return false;",
+    "old": "  if (typeof c.m !== 'string' || !WILD_ROOM_RE.test(c.m)) return false;\n  if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;",
+    "new": "  if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SHIP-PVP-wreck-ttl",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "  if (c.e <= c.i || c.e - c.i > SEA_WRECK_TTL_S) return false;\n  return true;\n}\n/** MINT A WRECK",
-    "new": "  if (c.e <= c.i) return false;\n  return true;\n}\n/** MINT A WRECK",
+    "old": "  if (c.e <= c.i || c.e - c.i > SEA_WRECK_TTL_S) return false;",
+    "new": "  if (c.e <= c.i) return false;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SHIP-PVP-wreck-foreign",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "  if (WRECK_FOREIGN.some((f) => c[f] !== undefined)) return false;\n",
-    "new": "",
+    "old": "  if (WRECK_FOREIGN.some((f) => c[f] !== undefined)) return false;\n  if (typeof c.f !== 'string' || typeof c.k !== 'string' || !ID_RE.test(c.f) || !ID_RE.test(c.k) || c.k === c.f)",
+    "new": "  if (typeof c.f !== 'string' || typeof c.k !== 'string' || !ID_RE.test(c.f) || !ID_RE.test(c.k) || c.k === c.f)",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]

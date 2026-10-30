@@ -16,7 +16,7 @@ THE TRACE, producer by producer (the sweep's piles):
 - A purse dropped on the GROUND never rides the wire: a drop is the dropper's (AUDIT WORLD B3), and the room's memory
   carries none. A pile of 1,000,000 there is honest and stays.
 - The open zone's remains (`wildDropLaw.js` takeWildGold) are minted by the coin's count up to `GOLD_INT_MAX`, never
-  through `validLootList` (REMAINS-GOLD, `Field-Bugs-2026-10-20h.md`; `wildRemains.js:"const mintOne = (/** @type {any} */ r) => {"`),
+  through `validLootList` (REMAINS-GOLD, `Field-Bugs-2026-10-20h.md`; `wildRemains.js:"const mintOne = (/** @type {any} */ r)"`),
   and the relay bounds no stack. Already answered.
 - The legacy remains' gold is at most `REMAINS_GOLD_MAX`, 2,500 (`legacyLaw.js`). Never past the bound.
 - A purse dropped INTO A SHARED CONTAINER is the one that broke. The drop (`planDropGold`, then `addItem(remote,

@@ -185,7 +185,7 @@ ZONE (never on a rise since PVP-DEATH, `PvP-Rework.md`), NO PLAYER'S BLOW OR CAS
 fighter under it is refused (`wildBlow`'s `grace`), and a striker under it loses it as its blow is judged
 (`graceEnded`). AN ENTRY GRANTS IT ONLY TO ONE AWAY AND QUIET: away from the zone `WILD_GRACE.awayMs` (30 s) and in no
 fight - a blow it landed or took - for `WILD_GRACE.fightMs` (60 s), so a step over the edge and back is no way out of a
-fight (`wildRef.js:"// ZONE-GRACE: an entry - away long enough, and out of every fight long enough"`). A CELL CROSSED IS NO
+fight (`wildRef.js:"ZONE-GRACE: an entry"`). A CELL CROSSED IS NO
 ENTRY, NOR A ROOM WOKEN FROM ITS SLEEP (AUDIT PVP-EASE L3-1, L3-2, L3-5 - `01-Overview/audits/Audit-PvP-Ease.md`): the hub
 keeps each fighter's carry (`wildCarry`) - its last fight (`fa`), whether it stands in the zone by the last room's word
 (`in`), when it left (`at`), the passage it has left (`gr`, none once ended) and a death the referee did not keep (`dd`) -
@@ -452,7 +452,7 @@ sigil's bound piece are never taken, so need none.
 
 A POLICY NAMES ITS PIECE BY `insureKeyOf` (`src/systems/wild/wildInsureLaw.js:"export function insureKeyOf(item) {"`):
 its ledger key, or a plain piece's own id. The book mints that id when the piece is insured
-(`wildInsureBook.js:"const key = wildInsureKey(item), gold = wildPremium(item), at = region();"`) and the act's first
+(`wildInsureBook.js:"const key = wildInsureKey"`) and the act's first
 checkpoint carries it to the record. No ledger reads it: `ledgerKeyOf` answers null for a plain piece whatever it
 carries, so the judge, the wealth and the trade lock see the record as before (`insureall.test.js` judges it both ways).
 
@@ -503,7 +503,7 @@ with the minutes left.
 - WHOSE, AND BY WHAT NAME (WILD-REMAINS-LOSS, `01-Overview/bugs/Field-Bugs-2026-10-25h.md`): a remains is the fallen's
   by its order's account (`os`) and named for the fallen by its order's `wnm` (the name the fallen wears), whoever laid it - a seizure is
   laid by the killer, whose socket's name and peer had made it "Traveller" and the killer's own
-  (`wildRemains.js:"export const remainsMine = "`). The room checks a deposit's order with its verifying key loaded
+  (`wildRemains.js:"export const remainsMine"`). The room checks a deposit's order with its verifying key loaded
   first: a room woken from hibernation since its last hello refused every deposit, and the drop the service had taken
   lay nowhere. A game knows its own account in the zone by the hub's word, else by its signed-in session's
   (`wildSelf.js:"export const wildSelf = "`, WILD-HUBLESS): a game the hub had not seated never took its own drop, and
@@ -539,13 +539,13 @@ with the minutes left.
   `test/systems/wild/fb1009c_wildkeep.test.js`; `tools/mutants/fb1009c_wildkeep.json` (7, all dead).
 - THE GOLD PILE (FIELD BUGS 2026-10-20h, "the PvP remains and gold pile", `01-Overview/bugs/Field-Bugs-2026-10-20h.md`).
   REMAINS-GOLD: the pile's one coin record is minted by its count, to the item law's one count
-  (`wildRemains.js:"const mintOne = "`). The game's mint is the stranger's projection, whose stack bound is the wire's 65,535,
+  (`wildRemains.js:"const mintOne = (/** @type {any} */ r)"`). The game's mint is the stranger's projection, whose stack bound is the wire's 65,535,
   so a death that dropped more gold than that showed it to nobody, and the gold stayed in the room until the remains
   went. REMAINS-TAKE: a pile shows what the room holds, less the takes of mine still waiting on an answer
-  (`wildRemains.js:"const follow = "`). A take of part of a stack, such as the gold a pack has no room for, was taken off
+  (`wildRemains.js:"const follow = (rec, i)"`). A take of part of a stack, such as the gold a pack has no room for, was taken off
   the taker's pile twice, and a room word heard between the window's take and the frame set the count over that take,
   so the taker kept coin the room still held. A word now waits for the window's take to be asked first
-  (`wildRemains.js:"const settle = "`). Pinned by `test/net/fb1020h_remains.test.js`; `tools/mutants/fb1020h_remains.json`
+  (`wildRemains.js:"const settle = (rec)"`). Pinned by `test/net/fb1020h_remains.test.js`; `tools/mutants/fb1020h_remains.json`
   (10, all dead).
 
 ## 6. The maps

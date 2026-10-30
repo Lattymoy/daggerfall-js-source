@@ -83,8 +83,8 @@
   {
     "name": "ESCROW-the-escrows-word-lost-in-a-wake",
     "file": "src/net/wild/wildLaw.js",
-    "old": "    we: v.we === true, wc: typeof v.wc === 'string' && v.wc ? v.wc : null };",
-    "new": "    we: false, wc: typeof v.wc === 'string' && v.wc ? v.wc : null };",
+    "old": "    we: v.we === true,",
+    "new": "    we: false,",
     "tests": [
       "test/systems/fb1014_pvpescrow.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "ESCROW-the-collect-lost-in-a-wake",
     "file": "src/net/wild/wildLaw.js",
-    "old": "    we: v.we === true, wc: typeof v.wc === 'string' && v.wc ? v.wc : null };",
-    "new": "    we: v.we === true, wc: null };",
+    "old": "    wc: typeof v.wc === 'string' && v.wc ? v.wc : null,",
+    "new": "    wc: null,",
     "tests": [
       "test/systems/fb1014_pvpescrow.test.js"
     ]

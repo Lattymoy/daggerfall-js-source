@@ -164,8 +164,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-token-unread",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (villainClamp(vl) > villainClamp(x.vi)) x.vi = villainClamp(vl);",
-    "new": "",
+    "old": "  if (villainClamp(vl) > villainClamp(x.vi)) x.vi = villainClamp(vl); // PVP-VILLAIN-KEEP: the meter its token signs, where it is the larger",
+    "new": "  // PVP-VILLAIN-KEEP: the meter its token signs, where it is the larger",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-smaller-kept",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (villainClamp(vl) > villainClamp(x.vi)) x.vi = villainClamp(vl);",
-    "new": "  if (villainClamp(vl) > 0) x.vi = villainClamp(vl);",
+    "old": "  if (villainClamp(vl) > villainClamp(x.vi)) x.vi = villainClamp(vl); // PVP-VILLAIN-KEEP: the meter its token signs, where it is the larger",
+    "new": "  if (villainClamp(vl) > 0) x.vi = villainClamp(vl); // PVP-VILLAIN-KEEP: the meter its token signs, where it is the larger",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-socket-never-carries-it",
     "file": "src/net/wild/wildRef.js",
-    "old": "({ ci: who.ci, ...(Number.isSafeInteger(who.vl) && who.vl > 0 ? { vl: villainClamp(who.vl) } : {}) })",
-    "new": "({ ci: who.ci })",
+    "old": "export const wildTokenAtt = (/** @type {any} */ who) => ({\n  ci: who.ci,\n  ...(Number.isSafeInteger(who.vl) && who.vl > 0 ? { vl: villainClamp(who.vl) } : {}),\n});",
+    "new": "export const wildTokenAtt = (/** @type {any} */ who) => ({ ci: who.ci });",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]

@@ -92,8 +92,8 @@
   {
     "name": "SEA-EVENTS-hub-never-pruned",
     "file": "src/net/wild/wildLaw.js",
-    "old": "  for (const [n, until] of Object.entries(st.fleets ?? {})) if (!(until > now)) { delete st.fleets[n]; moved = true; }",
-    "new": "  void 0;",
+    "old": "  for (const [n, until] of Object.entries(st.fleets ?? {}))\n    if (!(until > now)) {\n      delete st.fleets[n];\n      moved = true;\n    } // SEA-EVENTS: a sailing long past",
+    "new": "  void 0; // SEA-EVENTS: a sailing long past",
     "tests": [
       "test/systems/sea/seaevents.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SEA-EVENTS-hub-hello-none",
     "file": "src/net/wild/wildLaw.js",
-    "old": "    fleets: wdunFleets(st, now),\n",
-    "new": "\n",
+    "old": "    fleets: wdunFleets(st, now),\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/sea/seaevents.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SEA-EVENTS-hub-not-stored",
     "file": "src/net/wild/wildLaw.js",
-    "old": "eps: {}, giants: {}, fleets: {} });",
-    "new": "eps: {}, giants: {} });",
+    "old": "export const wdunEmpty = () => ({\n  locks: {},\n  inside: {},\n  empty: {},\n  crows: {},\n  piles: {},\n  eps: {},\n  giants: {},\n  fleets: {},\n}); // ZONE-GIANTS: `giants` - a giant's index -> when it walks again; SEA-EVENTS: `fleets` - a sailing whose flagship is down -> when it is let go",
+    "new": "export const wdunEmpty = () => ({ locks: {}, inside: {}, empty: {}, crows: {}, piles: {}, eps: {}, giants: {} }); // ZONE-GIANTS: `giants` - a giant's index -> when it walks again; SEA-EVENTS: `fleets` - a sailing whose flagship is down -> when it is let go",
     "tests": [
       "test/systems/sea/seaevents.test.js"
     ]
