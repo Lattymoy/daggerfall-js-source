@@ -7,6 +7,8 @@
 import { t } from '../systems/textManager.js';
 import { PVP_FLAG } from '../systems/wild/pvpFlag.js';
 
+/** PVP-FLAG-SPOT: the flag button's place - `lift` px over the right edge's middle, clear of the Decorate button - and size. */
+export const PVP_FLAG_SPOT = Object.freeze({ lift: 64, size: 36 });
 /** The ring's box (px, centred on the 36 px button), its radius and its stroke; the lines the panel keeps. */
 export const PVP_RING = Object.freeze({ size: 52, r: 24, stroke: 3, hits: 3 });
 const RED = '#d42a1e', LIGHT_RED = '#ff9a8a', GROUND = '#2a241c', EDGE = '#8a7246';
@@ -58,12 +60,13 @@ export function createPvpHud(doc, tick, { raf = typeof requestAnimationFrame ===
   const ring = doc.createElementNS(NS, 'svg');
   ring.setAttribute('width', String(PVP_RING.size));
   ring.setAttribute('height', String(PVP_RING.size));
-  Object.assign(ring.style, fixed, { top: '50%', right: `${8 + 18 - half}px`, transform: 'translateY(-50%)', zIndex: '41' });   // over the button's corners, clicks pass through
+  const ringTop = PVP_FLAG_SPOT.lift + half - PVP_FLAG_SPOT.size / 2;   // PVP-FLAG-SPOT: centred on the button where it stands
+  Object.assign(ring.style, fixed, { top: `calc(50% - ${ringTop}px)`, right: `${8 + 18 - half}px`, zIndex: '41' });   // over the button's corners, clicks pass through
   const arc = doc.createElementNS(NS, 'circle');
   for (const [k, v] of /** @type {[string, string | number][]} */ ([['cx', half], ['cy', half], ['r', PVP_RING.r], ['fill', 'none'], ['stroke', RED], ['stroke-width', PVP_RING.stroke], ['transform', `rotate(-90 ${half} ${half})`]])) arc.setAttribute(k, String(v));
   ring.appendChild(arc);
   const secs = doc.createElement('div');
-  Object.assign(secs.style, fixed, { top: `calc(50% + ${half + 2}px)`, right: '8px', width: '36px', textAlign: 'center', zIndex: '40', font: 'bold 12px Georgia, serif', color: LIGHT_RED, textShadow: '0 1px 2px #000' });
+  Object.assign(secs.style, fixed, { top: `calc(50% - ${ringTop + 18}px)`, right: '8px', width: '36px', textAlign: 'center', zIndex: '40', font: 'bold 12px Georgia, serif', color: LIGHT_RED, textShadow: '0 1px 2px #000' });
   const panel = { background: GROUND, border: `2px solid ${EDGE}`, boxShadow: '0 2px 6px #0008', zIndex: '40' };
   const banner = doc.createElement('div');
   Object.assign(banner.style, fixed, panel, { top: '8px', left: '50%', transform: 'translateX(-50%)', padding: '3px 12px', font: '14px Cinzel, "Trajan Pro", Georgia, serif', color: LIGHT_RED, whiteSpace: 'nowrap' });

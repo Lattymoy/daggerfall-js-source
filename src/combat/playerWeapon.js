@@ -451,7 +451,7 @@ export class PlayerWeapon {
     return hand === 'L' ? fistWrapsOf(L, R) : fistWrapsOf(R, L);
   }
   /** HAND-WRAPS: the wraps of the hand in use - what a fist's blow carries (combat/formulas.js `wraps`) and its glow. */
-  get wraps() { return this.weapon?.werecreatureClaws ? null : this.wrapsOf(this.activeHand); }
+  get wraps() { return this.wrapsOf(this.activeHand); }   // WERE-WRAPS: the claws strike in theirs too
   /** TWO-HANDS (AUDIT): the strike in flight is the OFF hand's - the blow a player-vs-player arm rolls carries the off
    *  hand's terms as resolveHit's does (combat/duelCombat.js resolveDuelStrike `off`). */
   get offStrike() { return !!(this.handsMode === HANDS_MODE.Dual && this.strike && this.machine.state !== 'Idle' && this.strike.off); }

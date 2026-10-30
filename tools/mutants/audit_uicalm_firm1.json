@@ -606,8 +606,8 @@
   {
     "name": "AUF-L5H2-wild-strike-with-sky",
     "file": "src/scenes/world.js",
-    "old": "    if (!wildFair(to)) return false;\n    const a = withoutFirmament(playerEntity, () => duelAttackerOf(playerEntity, weapon)),",
-    "new": "    if (!wildFair(to)) return false;\n    const a = duelAttackerOf(playerEntity, weapon),",
+    "old": "    if (!wildFair(to)) return false;\n    const a = withoutFirmament(playerEntity, () => duelAttackerOf(playerEntity, weapon, weaponRig?.playerWeapon?.wraps, to)),",
+    "new": "    if (!wildFair(to)) return false;\n    const a = duelAttackerOf(playerEntity, weapon, weaponRig?.playerWeapon?.wraps, to),",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]

@@ -149,7 +149,7 @@
   {
     "name": "QUICK-LOOT-the-open-key-takes-the-row-instead",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (how === 'open') return null;",
+    "old": "  if (how === 'open' && !beast) return null;",
     "new": "  if (false) return null;",
     "tests": [
       "test/systems/quickloot.test.js"
@@ -168,7 +168,7 @@
   {
     "name": "QUICK-LOOT-the-take-runs-with-the-switch-off",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (!quickLootOn() || !hooks || !playerEntity) return null;",
+    "old": "  if ((!quickLootOn() && !beast) || !hooks || !playerEntity) return null;",
     "new": "  if (!hooks || !playerEntity) return null;",
     "tests": [
       "test/systems/quickloot.test.js"

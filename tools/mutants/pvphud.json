@@ -171,10 +171,10 @@
     ]
   },
   {
-    "name": "PVP-HUD-the-stone-locked-unflagged",
+    "name": "PVP-PORTAL-the-stone-lock-flagged-only",
     "file": "src/scenes/portalStoneHost.js",
-    "old": "const s = pvpFlagOn() ? pvpLockSecs(pvpFightLeft()) : 0;",
-    "new": "const s = pvpLockSecs(pvpFightLeft());",
+    "old": "import { pvpFightLeft, pvpLockSay } from './pvpFlagHost.js';",
+    "new": "import { pvpFlagOn, pvpLockSay, pvpFightLeft as _fightLeft } from './pvpFlagHost.js'; const pvpFightLeft = () => (pvpFlagOn() ? _fightLeft() : 0);",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -268,5 +268,12 @@
     "tests": [
       "test/ui/pvphud.test.js"
     ]
+  },
+  {
+    "name": "PVP-FLAG-SPOT-the-ring-left-at-the-middle",
+    "file": "src/ui/pvpHud.js",
+    "old": "top: `calc(50% - ${ringTop}px)`, right:",
+    "new": "top: '50%', right:",
+    "tests": ["test/ui/pvphud.test.js"]
   }
 ]

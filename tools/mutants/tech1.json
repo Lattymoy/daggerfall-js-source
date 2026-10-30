@@ -352,8 +352,8 @@
   {
     "name": "TECH1-the-shaft-weight-unread",
     "file": "src/combat/arrowFlight.js",
-    "old": "const dmg = m.technique && !playerBody(foe) ? scaleBlowDamage(rolled, blowMult(m.technique, foe)) : rolled;",
-    "new": "const dmg = rolled;",
+    "old": "const dmg = bowFastDamage(m, m.technique && !playerBody(foe) ? scaleBlowDamage(rolled, blowMult(m.technique, foe)) : rolled);",
+    "new": "const dmg = bowFastDamage(m, rolled);",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]

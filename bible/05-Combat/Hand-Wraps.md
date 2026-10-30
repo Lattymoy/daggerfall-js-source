@@ -101,3 +101,16 @@ meshes on the retail skeleton, bare and in steel gauntlets, its gates, and the r
 wraps' leech, power and sigil, the item law loaded alone, the running hands, and the Strikes payload. Its mutants:
 `tools/mutants/handwraps.json`, 55, all dead. The audit's record: `01-Overview/audits/Audit-Westhead-Hand-Wraps.md`. Not run in a browser here: the glow's drawing is WEAPON-GLOW1's, pinned by
 its own probe (`tools/weaponGlowProbe.mjs`).
+
+## WERE-WRAPS, WERE-LOOT, WERE-POTIONS: the beast keeps its wraps
+
+2026-10-30, the owner: "let them keep the wraps and let them loot and use potions just dont let them open inventory",
+"keep wraps and make them useful". A DEPARTURE from DFU's MorphSelf, which empties both hands: the change takes a weapon
+off and leaves a pair of Hand Wraps on (`lycanthropy.js:"if (!isHandWraps(equipTableOf(entity)[slot])) unequipSlot"`).
+The claws strike in them (`playerWeapon.js:"get wraps() { return this.wrapsOf(this.activeHand); }"`): their damage
+lines and gems ride the claws' roll as a fist's, their skill lines and enchantments count while worn, and between players
+their lines are the claws' (PvP-Rework PVP-GEAR). The loot ladder's blow powers stay off the claws (BAL10).
+
+The pack window stays shut. A press on a pile or a body takes the lot, quick loot on or off
+(`quickLoot.js:"const beast = !!racialSuppressInventory(playerEntity);"`), and a picked item comes into the pack. A
+potion on the hotbar is drunk; any other pack item stays refused (`quickslots.js:"if (sup && !isPotion(r?.item))"`).
