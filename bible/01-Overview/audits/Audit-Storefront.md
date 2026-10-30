@@ -219,7 +219,101 @@ anything should be is $30"**. Pins: `storefront_badges.test.js`, `shop_service.t
 | P2 | HIGH | The Deluxe Pass, three effects, all four bundles and the largest Aurum pack cost over $30 (the Lord of Oblivion $119.99) | FIXED: every price about half the sheet's and under `SHOP_PRICE_CAP`, the tiers kept (`Storefront.md` section 2); a pin holds every ware to it |
 | P3 | LOW | The Dawnbringer cost 400 Aurum, more than its $3.99 buys at the smallest pack's rate - no pin held a daily ware under its money | FIXED: 300; a pin holds each daily ware sold for money to between three quarters of its money and its money |
 
+## AUDIT-STOREFRONT III (2026-10-30)
+
+The owner, of the arc after PASS-PANELS, the Folios, the caches and three merges of main: **"Audit and ensure
+perfection"**. Five cold lanes read the branch at ec9ab3de0, each told to reproduce a finding before reporting it and to
+fix nothing: A the money, B the Folios' logic, C the window rendered and looked at, D the Aurum caches in the world, E
+the seams with what main brought (ADMIN-ALL, WYRM-RIDER, PVP-VITALS, DRAGON-HARDER). Lanes C and D were fixed each on a
+worktree of their own, then merged. Every FIXED is pinned in the test it names and guarded by a mutant
+(`tools/mutants/storefront_audit3.json`, `storefront_audit3_window.json`, `storefront_audit3_caches.json`).
+
+### A - the money
+
+Pins: `test/server/storefront_audit3_money.test.js`, `test/net/storefront_audit3_law.test.js`.
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| A1 | MED | The Folios' unlock and buys asked PASS_OPEN alone: AURUM_OPEN shut still spent Aurum there | FIXED: `battlePass.js` buyGate asks both, as the window does |
+| A2 | MED | On the deployed schedule the daily wares showed four a day for 28 days and one kill effect 14 days running - ties went by the id | FIXED: a short slot hands its count on; a tie goes to the shorter run, then the day's hash (`Aurum.md` section 5) |
+| A3 | LOW | A limited ware stayed a daily ware on a day its window shut mid-day | FIXED: a daily ware only on a day its window holds whole |
+| A4 | LOW | A dispute won before its created word landed was reopened by it, the ware taken for good | FIXED: a closed word never opens again; a lost one stays open |
+| A5 | LOW | A money refund took a ware Aurum paid for, and its paid line made every later buy answer busy | FIXED: an Aurum buy holds its ware; a ware its line paid for comes back free |
+| A6 | LOW | An Aurum buy left the ware's money page open, refunded in full if paid | FIXED: the route closes stale pages |
+| A7 | LOW | A pack's done page said to wear it, its receipt named the Battle Pass, the demand lent the first day's wares to the days before it | FIXED |
+
+### B - the Folios' logic
+
+Pins: `test/systems/pass/passclient_audit3.test.js`, `test/net/storefront_audit3_law.test.js`.
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| B1 | HIGH | The card and the window hold one season: with a second, Season One's folios (which never expire) would leave the only window that sells them | GUARDED: a gate pin holds PASS_SEASONS to one until the Folios show every open season |
+| B2 | LOW | The challenges are keyed by stage alone; the season's names, folios and emblems by s1 | GUARDED: every per-season table pinned to exactly the seasons there are |
+| B3 | LOW | The window read AURUM_OPEN, the service PASS_OPEN | FIXED: each reads both (A1; `enhancedPass.js` passCannot) |
+| B4 | LOW | A find asked again past midnight took yesterday's capped answer for today's | FIXED: the answer names its day; a repeat of another day reads the card |
+| B5 | LOW | A find held while the service was unreachable was paid to whoever signed in meanwhile | FIXED: a find keeps its account |
+| B6 | LOW | A find not yet answered died with the page | FIXED: kept on the device a day and asked again with its own id |
+| B7 | LOW | One refusal said in two wordings | FIXED with C10 |
+| B8 | LOW | The shop judged the season's opening by the device's clock | FIXED: the shared clock |
+
+### C - the window, seen
+
+Pins: `test/ui/storefront_audit3_window.test.js`, `test/server/storefront_audit3_spent.test.js`. Every fix was shot
+at phone, laptop and wide sizes, in slate, stone and the Grimoire, in de, fr and ru, and looked at.
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| C1 | MED | Unlocking the Gilded Folio dropped the keyboard's focus to the page | FIXED: focus moves to what stays |
+| C2 | MED | The page arrows disabled themselves while focused | FIXED: aria-disabled, focus kept |
+| C3 | MED | In German and French the day's Aurum line ran out of its panel on a phone | FIXED: the meter wraps to its own row |
+| C4 | MED | The Grimoire's face drew Roman page numerals as 1, 11, 111 | FIXED: Arabic numerals under the dress |
+| C5 | MED | Before the season opened, an open folio's items stood dead with no reason | FIXED: each item and the unlock say why |
+| C6 | MED | The Grimoire dress's words fell under 4.5:1 on its parchment; `inkPaintedWord` read `#rrggbb` where the browser answers `rgb()` | FIXED: every ink 4.5:1 or better, the shop's panels washed toward the page |
+| C7 | LOW | Stone sat just under 4.5:1 in four places | FIXED |
+| C8 | LOW | Escape in an open folio closed the shop | FIXED: back to the covers |
+| C9 | LOW | A screen reader heard prices without Aurum, and Wear or Hide with no item | FIXED |
+| C10 | LOW | One refusal said twice, in two wordings, one wrong for a rate limit | FIXED: one table, one voice |
+| C11 | LOW | The success note landed out of sight | FIXED: said above the page, in view |
+| C12 | LOW | The pressed Confirm turned back into Buy while the purchase was out | FIXED: Buying..., Unlocking... |
+| C13 | LOW | An Admin's folio said 6,400 Aurum spent | FIXED: `passOf` answers each track's real spending from the ledger |
+| C14 | LOW | The pause screen's words showed through the shop | FIXED: hidden under the shop alone |
+| C15 | LOW | Phone presses under 44 px | FIXED: 44 px under a coarse pointer |
+| C16 | LOW | On a phone the tabs left half the screen to scroll; German names broke mid-word | FIXED: one scrolling row of tabs; hyphens |
+| C17 | LOW | A locked Gilded page asked for spending it could not take | FIXED: the folio's lock read first |
+
+### D - the Aurum caches
+
+Pins: `test/scenes/aurum_cache_world.test.js` (real dungeons in the Bay and every province, on the freeware). Measured
+with the lane's own tools, before and after.
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| D1 | HIGH | The coffer stood a fixed 0.9 m from its pile whatever the pile's size: in 45% of the Bay's coffers its foot was in the pile's press box, and a press on it took the pile | FIXED: by the pile's size from the archive, clear of every pile's, door's and mover's box - 0 of 15,512 meet one |
+| D2 | MED | With no way clear the coffer stood on its pile's own foot (2.8%) | FIXED: the next pile is tried; none, and no coffer stands |
+| D3 | LOW | A shut door could stand through the coffer | FIXED with D1 |
+| D4 | LOW | After the day's three claims every cache dungeon still invited a refused press | FIXED: a spent day stands none; an unknown id takes the coffer away |
+| D5 | LOW | A yes landing after the level was gone was lost to the device | FIXED: kept first, said on the mid-screen line |
+| D6 | LOW | The probe read the Bay's whole layout alone | FIXED: it probes a province's online layout and asserts the coffer clear |
+
+### E - the seams with main
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| E1 | LOW | With this arc's glyphs an Admin hiding every glyph, at a house's widest, could pass the token's body bound, and the house is left unsaid | KNOWN (below) |
+| E2 | LOW | The relay graph's note left two of the branch's versions out | FIXED |
+| E3 | LOW | The first merge said every title keeps 40 apart; only this arc's six are held to it | FIXED in the record; main's pairs below |
+
 ## Known, and not changed
+
+- E1: an Admin who is a moderator, the arena's #1 and a sprout, hides every glyph and wears a house at its widest can
+  pass the token's body bound; the minter then leaves the house out. The token is never refused. The fix is `gx` as a
+  mask, a wire change across the relay, the service and the page, for an Admin's edge alone.
+- Main's titles close in colour (E3): Beacon-Lighter and First Wyrm Rider 2.7 apart, Wyrm Rider and First Wyrm Rider 6.2,
+  Lone Beacon and Aether Rider 14 - main's own, for main to decide.
+- C6: other Grimoire windows with panels may read as the shop's did; the wash is the shop's alone.
+- `grant3_asks` and `staffpanel5message_client` (main's) wait a count of loop turns for a signed post and fail under
+  load; reported on the pull request with a patch.
 
 - A concealed peer who is struck still shows the hit's splash at their body (lane C): a blow lands only on someone
   found, so the splash tells no more than the blow did. C1 is the mount's beat alone.

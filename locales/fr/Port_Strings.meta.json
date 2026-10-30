@@ -40264,6 +40264,11 @@
   "tr": "adb05f2ba3e9",
   "by": "claude-in-session"
  },
+ "shop.hideLabel": {
+  "en": "6845a0d59d4a",
+  "tr": "454602e50c44",
+  "by": "claude-in-session"
+ },
  "shop.kind.armory": {
   "en": "b8314b7db1da",
   "tr": "75096be1e08a",
@@ -40469,6 +40474,11 @@
   "tr": "0a1adc8c85b8",
   "by": "claude-in-session"
  },
+ "shop.pass.buying": {
+  "en": "affb00bfd315",
+  "tr": "977c06f67b5a",
+  "by": "claude-in-session"
+ },
  "shop.pass.challenges": {
   "en": "c71fc4df525a",
   "tr": "b4b4d20274be",
@@ -40497,61 +40507,6 @@
  "shop.pass.ended": {
   "en": "f5b12601a3c7",
   "tr": "63bdf9639587",
-  "by": "claude-in-session"
- },
- "shop.pass.err.auth": {
-  "en": "ecb59a53ec68",
-  "tr": "80cb7eb2f79d",
-  "by": "claude-in-session"
- },
- "shop.pass.err.busy": {
-  "en": "23804d692eb6",
-  "tr": "76dd6d6b1da4",
-  "by": "claude-in-session"
- },
- "shop.pass.err.held": {
-  "en": "dbe917b21e79",
-  "tr": "82e2f3df9928",
-  "by": "claude-in-session"
- },
- "shop.pass.err.item": {
-  "en": "940ddc4c6ed0",
-  "tr": "55511030010a",
-  "by": "claude-in-session"
- },
- "shop.pass.err.offline": {
-  "en": "f87c7e368b45",
-  "tr": "720c6802d9c2",
-  "by": "claude-in-session"
- },
- "shop.pass.err.other": {
-  "en": "cfae8ea083f4",
-  "tr": "ae64c632b445",
-  "by": "claude-in-session"
- },
- "shop.pass.err.panel": {
-  "en": "5907faa42d00",
-  "tr": "251909289696",
-  "by": "claude-in-session"
- },
- "shop.pass.err.season": {
-  "en": "6b7aa90ca9ae",
-  "tr": "f529ea59661b",
-  "by": "claude-in-session"
- },
- "shop.pass.err.short": {
-  "en": "49ae2dda9de8",
-  "tr": "8cb067b4d1b7",
-  "by": "claude-in-session"
- },
- "shop.pass.err.soon": {
-  "en": "929958a2c8ff",
-  "tr": "2996214a7ed5",
-  "by": "claude-in-session"
- },
- "shop.pass.err.track": {
-  "en": "36f50227bf85",
-  "tr": "d8f3ef5646f4",
   "by": "claude-in-session"
  },
  "shop.pass.folio": {
@@ -40624,9 +40579,9 @@
   "tr": "10e4725d5544",
   "by": "claude-in-session"
  },
- "shop.pass.pageFolio": {
-  "en": "0f98a19cc95d",
-  "tr": "6d7f660190c4",
+ "shop.pass.pageFolioLocked": {
+  "en": "482a5792f293",
+  "tr": "7a264a69aadf",
   "by": "claude-in-session"
  },
  "shop.pass.pageLocked": {
@@ -40709,6 +40664,11 @@
   "tr": "2f020a2635af",
   "by": "claude-in-session"
  },
+ "shop.pass.unlocking": {
+  "en": "0970fd2831e0",
+  "tr": "0f6d1fa2c90f",
+  "by": "claude-in-session"
+ },
  "shop.pass.until": {
   "en": "936fa43b47a4",
   "tr": "3f73ef14394d",
@@ -40727,6 +40687,11 @@
  "shop.show": {
   "en": "d97d1ee339e4",
   "tr": "5e8020402fa8",
+  "by": "claude-in-session"
+ },
+ "shop.showLabel": {
+  "en": "49dc0e501b9e",
+  "tr": "3c7cc51821de",
   "by": "claude-in-session"
  },
  "shop.state.closed": {
@@ -40784,6 +40749,11 @@
   "tr": "54ec24a19c21",
   "by": "claude-in-session"
  },
+ "shop.takeOffLabel": {
+  "en": "74e62a844afd",
+  "tr": "80aa8e4e3ccd",
+  "by": "claude-in-session"
+ },
  "shop.terms": {
   "en": "0c8a9a95e21a",
   "tr": "9074eac79986",
@@ -40837,6 +40807,11 @@
  "shop.wear": {
   "en": "94433a7ece91",
   "tr": "8a48b54cc817",
+  "by": "claude-in-session"
+ },
+ "shop.wearLabel": {
+  "en": "1a4bce33b9bf",
+  "tr": "d54c8b24fccf",
   "by": "claude-in-session"
  },
  "shop.who.closed": {
