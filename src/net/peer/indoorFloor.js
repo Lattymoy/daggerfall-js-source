@@ -17,6 +17,8 @@ export function withIndoorFloor(pose, ctx, comp) {
   if (f != null) pose.fy = Math.round(f * 100) / 100;
   return pose;
 }
+/** AUDIT FB1030 N1: `o` (a mark of where a body lies) with the room's floor `pose` said, if it said one. */
+export const keepIndoorFloor = (o, pose) => (Number.isFinite(pose?.fy) ? { ...o, fy: pose.fy } : o);
 /** A peer pose's height in this scene: over this room's floor as far as over the sender's, where both say one; else
  *  the wire's height shed of the floating origin, as before. @param {any} p @param {any} ctx @param {number} comp */
 export function indoorSceneY(p, ctx, comp) {

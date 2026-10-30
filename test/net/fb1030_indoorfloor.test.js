@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { indoorFloorOf, withIndoorFloor, indoorSceneY } from '../../src/net/peer/indoorFloor.js';
+import { indoorFloorOf, withIndoorFloor, indoorSceneY, keepIndoorFloor } from '../../src/net/peer/indoorFloor.js';
 import { validPose, validPartyPose, poseChanged } from '../../src/net/wire.js';
 import { RemotePlayers } from '../../src/net/remotePlayers.js';
 import { createPeerFxPlayer } from '../../src/net/peer/peerFx.js';
@@ -44,7 +44,8 @@ test('AUDIT FB1030 N1-N3: what a peer leaves indoors stands on the same floor as
   assert.equal(rp._corpses.at(-1).pose.fy, 60, 'N1: the body keeps its room\'s floor');
   const party = validPartyPose({ px: 120, py: 140, h: 1, hm: 10, f: 1, fm: 10, m: 1, mm: 10, dd: { k: 'interior:m7.300', x: 1, y: 60.2, z: 2, fy: 60, at: 5 } });
   assert.equal(party?.dd?.fy, 60, 'N1: the party pose\'s mark of the body keeps it');
-  assert.match(readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8'), /_deadMark = online\._pose \? \{ k: online\.room, x: online\._pose\.x, y: online\._pose\.y, z: online\._pose\.z, \.\.\.\(Number\.isFinite\(online\._pose\.fy\) \? \{ fy: online\._pose\.fy \} : \{\}\)/, 'and the host marks it');
+  assert.match(readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8'), /_deadMark = online\._pose \? keepIndoorFloor\(\{ k: online\.room, x: online\._pose\.x, y: online\._pose\.y, z: online\._pose\.z, at: Date\.now\(\) \}, online\._pose\) : null;/, 'and the host marks it');
+  assert.deepEqual([keepIndoorFloor({ x: 1 }, { fy: 60 }), keepIndoorFloor({ x: 1 }, { y: 2 })], [{ x: 1, fy: 60 }, { x: 1 }]);
   const asked = [];
   const fx = createPeerFxPlayer({ play: () => {}, toScene: (p) => { asked.push(p); return [p.x, p.y, p.z]; }, now: () => 10 });
   fx.update('p1', { hk: 0, fy: 60 }, [0, 0, 0]);

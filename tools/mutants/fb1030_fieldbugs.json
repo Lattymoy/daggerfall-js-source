@@ -28,7 +28,7 @@
   {"name": "AUDIT-FB1030-Z1-a-found-spawn-capped", "file": "src/systems/travel/travelDungeons.js", "old": "const inGrid = (g) => (!g.found || g.spawn) &&", "new": "const inGrid = (g) => !g.found &&", "tests": ["test/scenes/fb1030_spawnplate.test.js"]},
   {"name": "AUDIT-FB1030-N1-the-corpse-drops-it", "file": "src/net/remotePlayers.js", "old": "pose: { x: pose.x, y: pose.y, z: pose.z, ...(Number.isFinite(pose.fy) ? { fy: pose.fy } : {}) }, room,", "new": "pose: { x: pose.x, y: pose.y, z: pose.z }, room,", "tests": ["test/net/fb1030_indoorfloor.test.js"]},
   {"name": "AUDIT-FB1030-N1-the-party-mark-drops-it", "file": "src/net/wire.js", "old": "...(finite(p.dd.fy) && Math.abs(p.dd.fy) <= POSE_Y_BOUND ? { fy: p.dd.fy } : {}), at:", "new": "at:", "tests": ["test/net/fb1030_indoorfloor.test.js"]},
-  {"name": "AUDIT-FB1030-N1-the-host-marks-none", "file": "src/scenes/world.js", "old": "z: online._pose.z, ...(Number.isFinite(online._pose.fy) ? { fy: online._pose.fy } : {}), at: Date.now() }", "new": "z: online._pose.z, at: Date.now() }", "tests": ["test/net/fb1030_indoorfloor.test.js"]},
+  {"name": "AUDIT-FB1030-N1-the-host-marks-none", "file": "src/net/peer/indoorFloor.js", "old": "(Number.isFinite(pose?.fy) ? { ...o, fy: pose.fy } : o);", "new": "o;", "tests": ["test/net/fb1030_indoorfloor.test.js"]},
   {"name": "AUDIT-FB1030-N2-the-blow-point-drops-it", "file": "src/net/peer/peerFx.js", "old": "z: hp[2], fy: pose.fy })", "new": "z: hp[2] })", "tests": ["test/net/fb1030_indoorfloor.test.js"]},
   {"name": "AUDIT-FB1030-N3-poseChanged-blind-to-it", "file": "src/net/wire.js", "old": "    || (a.fy ?? null) !== (b.fy ?? null)", "new": "    || false", "tests": ["test/net/fb1030_indoorfloor.test.js"]}
 ]
