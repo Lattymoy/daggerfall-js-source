@@ -22,8 +22,8 @@ export function drawArms(ctx, arms, x, y, size, logo = null) {
   const P = globalThis.Path2D;
   if (typeof P !== 'function') return false;
   if (h && !logo) return drawShield(ctx, h, x, y, size);
-  const field = h ? heraldryColourOf(h.field)?.hex ?? PLAIN.field : PLAIN.field;
-  const border = h ? heraldryColourOf(h.border)?.hex ?? PLAIN.border : PLAIN.border;
+  const field = h ? (heraldryColourOf(h.field)?.hex ?? PLAIN.field) : PLAIN.field;
+  const border = h ? (heraldryColourOf(h.border)?.hex ?? PLAIN.border) : PLAIN.border;
   const shield = new P(SHIELD_CLOTH);
   ctx.save();
   ctx.translate(x, y);
@@ -32,7 +32,10 @@ export function drawArms(ctx, arms, x, y, size, logo = null) {
   ctx.fill(shield);
   ctx.save();
   ctx.clip(shield);
-  if (h?.division) { ctx.fillStyle = heraldryColourOf(h.field2)?.hex ?? field; ctx.fill(new P(divisionPath(h.division, 100, 104))); }
+  if (h?.division) {
+    ctx.fillStyle = heraldryColourOf(h.field2)?.hex ?? field;
+    ctx.fill(new P(divisionPath(h.division, 100, 104)));
+  }
   if (logo) ctx.drawImage(logo, LOGO_BOX.x, LOGO_BOX.y, LOGO_BOX.w, LOGO_BOX.h);
   ctx.strokeStyle = border;
   ctx.lineWidth = SHIELD_BORDER_W * 2;
@@ -47,10 +50,18 @@ export function drawArms(ctx, arms, x, y, size, logo = null) {
 
 /** THE ARMS AS A BANNER, `w` wide and three tall: heraldryArt.js drawBanner, and an approved logo (`logo`, a decoded
  *  picture) over its device, on a square of its field. */
-export function drawBannerArms(/** @type {CanvasRenderingContext2D} */ ctx, /** @type {any} */ heraldry, /** @type {number} */ w, /** @type {any} */ logo = null) {
+export function drawBannerArms(
+  /** @type {CanvasRenderingContext2D} */ ctx,
+  /** @type {any} */ heraldry,
+  /** @type {number} */ w,
+  /** @type {any} */ logo = null,
+) {
   drawBanner(ctx, heraldry, w);
   if (!logo) return;
-  const k = w / 100, side = 100 * BANNER_DEVICE.scale * k, x = BANNER_DEVICE.x * k, y = BANNER_DEVICE.y * k;
+  const k = w / 100,
+    side = 100 * BANNER_DEVICE.scale * k,
+    x = BANNER_DEVICE.x * k,
+    y = BANNER_DEVICE.y * k;
   const h = heraldryOf(heraldry);
   ctx.save();
   ctx.fillStyle = (h && heraldryColourOf(h.field)?.hex) || PLAIN.field;
@@ -69,13 +80,19 @@ export const CREST_PX = 128;
 export function paintCrest(ctx, arms, logo = null) {
   const P = globalThis.Path2D;
   if (typeof P !== 'function') return false;
-  const S = CREST_PX, frame = S * 0.92, fx = (S - frame) / 2, fy = S * 0.02;
+  const S = CREST_PX,
+    frame = S * 0.92,
+    fx = (S - frame) / 2,
+    fy = S * 0.02;
   ctx.clearRect(0, 0, S, S);
   ctx.save();
   ctx.translate(fx, fy);
   ctx.scale(frame / 100, frame / 100);
   const gold = ctx.createLinearGradient(0, 0, 100, 104);
-  gold.addColorStop(0, '#fff0b0'); gold.addColorStop(0.35, '#d9a632'); gold.addColorStop(0.7, '#8a5a12'); gold.addColorStop(1, '#e8bd55');
+  gold.addColorStop(0, '#fff0b0');
+  gold.addColorStop(0.35, '#d9a632');
+  gold.addColorStop(0.7, '#8a5a12');
+  gold.addColorStop(1, '#e8bd55');
   ctx.fillStyle = gold;
   ctx.fill(new P(SHIELD_CLOTH));
   ctx.strokeStyle = '#4a2e06';
@@ -83,7 +100,19 @@ export function paintCrest(ctx, arms, logo = null) {
   ctx.stroke(new P(SHIELD_CLOTH));
   // rivets round the rim, where a smith would strike them
   ctx.fillStyle = '#fff6cc';
-  for (const [rx, ry] of [[14, 10], [86, 10], [10, 44], [90, 44], [26, 80], [74, 80], [50, 96]]) { ctx.beginPath(); ctx.arc(rx, ry, 2.2, 0, Math.PI * 2); ctx.fill(); }
+  for (const [rx, ry] of [
+    [14, 10],
+    [86, 10],
+    [10, 44],
+    [90, 44],
+    [26, 80],
+    [74, 80],
+    [50, 96],
+  ]) {
+    ctx.beginPath();
+    ctx.arc(rx, ry, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.restore();
   const inset = frame * 0.8;
   drawArms(ctx, arms, (S - inset) / 2, fy + frame * 0.09, inset, logo);

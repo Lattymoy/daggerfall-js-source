@@ -24,11 +24,19 @@ export function logoImage(/** @type {unknown} */ id) {
   const e = { img, ok: false, failed: false };
   _logos.set(id, e);
   img.crossOrigin = 'anonymous';
-  img.onload = () => { e.ok = true; _version++; };
-  img.onerror = () => { e.failed = true; };
+  img.onload = () => {
+    e.ok = true;
+    _version++;
+  };
+  img.onerror = () => {
+    e.failed = true;
+  };
   img.src = src;
   return null;
 }
 
 /** For the tests: every picture forgotten. */
-export function _resetLogoImages() { _logos.clear(); _version = 0; }
+export function _resetLogoImages() {
+  _logos.clear();
+  _version = 0;
+}

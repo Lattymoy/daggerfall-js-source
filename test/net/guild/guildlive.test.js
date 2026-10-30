@@ -133,7 +133,7 @@ test('GUILD-LIVE: a field\'s value is the draft only through its keystroke (a fr
     assert.match(S, new RegExp(`liveBtn\\('${label}', \\(\\) => \\(\\{ enabled: !g\\.busy`), `${label} is a live button`);
   }
   // PIN MOVED (GUILD-RANKS): the rank names are the Ranks page's, its Save a live button there (the window's own, through its kit)
-  assert.match(src('src/ui/guild/guildRanksPage.js'), /k\.live\(t\('guild\.ranks\.save', 'Save ranks'\), \(\) => \{/);
+  assert.match(src('src/ui/guild/guildRanksPage.js'), /k\.live\(\n\s*t\('guild\.ranks\.save', 'Save ranks'\),\n\s*\(\) => \{/);
   assert.match(S, /live: liveBtn, field: guildField, paint: paintLiveBtns/);
   assert.match(S, /f\.addEventListener\('input', \(\) => \{ onInput\(f\.value\); paintLiveBtns\(\); \}\);/);
   assert.match(S, /ticking = \[\]; liveSubs = \[\]; liveBtns = \[\];/, 'a repaint forgets the last body\'s buttons');

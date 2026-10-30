@@ -116,6 +116,8 @@
 /src/ui/card/*/
 !/src/ui/collections/
 /src/ui/collections/*/
+!/src/ui/guild/
+/src/ui/guild/*/
 !/src/ui/ketch/
 /src/ui/ketch/*/
 !/src/ui/map/

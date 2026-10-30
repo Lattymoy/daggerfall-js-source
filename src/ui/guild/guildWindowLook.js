@@ -11,13 +11,17 @@ import { t } from '../../systems/textManager.js';
 
 /** The pages in their groups, in the column's order - a page a guild does not show is passed over. */
 export const GUILD_NAV_GROUPS = Object.freeze([
-  Object.freeze({ id: 'guild', pages: Object.freeze(['overview', 'members', 'ranks']) }),   // GUILD-RANKS
+  Object.freeze({ id: 'guild', pages: Object.freeze(['overview', 'members', 'ranks']) }), // GUILD-RANKS
   Object.freeze({ id: 'wealth', pages: Object.freeze(['treasury', 'vault', 'stores', 'shop']) }),
   Object.freeze({ id: 'look', pages: Object.freeze(['arms', 'settings']) }),
 ]);
 /** A group's name. */
-export const guildNavGroupName = (/** @type {string} */ id) => (id === 'guild' ? t('social.guild.group.guild', 'Guild')
-  : id === 'wealth' ? t('social.guild.group.wealth', 'Wealth') : t('social.guild.group.look', 'Identity'));
+export const guildNavGroupName = (/** @type {string} */ id) =>
+  id === 'guild'
+    ? t('social.guild.group.guild', 'Guild')
+    : id === 'wealth'
+      ? t('social.guild.group.wealth', 'Wealth')
+      : t('social.guild.group.look', 'Identity');
 /** The group a page opens, or null where it opens none (it is not its group's first shown). */
 export function guildNavGroupAt(/** @type {string} */ page, /** @type {string[]} */ shown) {
   for (const g of GUILD_NAV_GROUPS) if (g.pages.find((p) => shown.includes(p)) === page) return g.id;
@@ -35,11 +39,15 @@ export function guildCrestSvg(/** @type {any} */ heraldry, size = 76) {
   const h = heraldryOf(heraldry);
   const ring = (h && heraldryColourOf(h.border)?.hex) || '#c08a3e';
   const shield = shieldSvg(heraldry, { size: 52 });
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="${size}" height="${size}" role="img">`
-    + `<rect x="4" y="4" width="92" height="92" rx="46" fill="#141a22" stroke="${ring}" stroke-width="5"/>`
-    + `<rect x="10" y="10" width="80" height="80" rx="40" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>`
-    + (shield ? `<g transform="translate(24 20)">${shield}</g>` : `<path d="M30 24 H70 V52 Q70 72 50 80 Q30 72 30 52 Z" fill="#8a8f99" stroke="#3a3f47" stroke-width="2"/>`)
-    + '</svg>';
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="${size}" height="${size}" role="img">` +
+    `<rect x="4" y="4" width="92" height="92" rx="46" fill="#141a22" stroke="${ring}" stroke-width="5"/>` +
+    `<rect x="10" y="10" width="80" height="80" rx="40" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>` +
+    (shield
+      ? `<g transform="translate(24 20)">${shield}</g>`
+      : `<path d="M30 24 H70 V52 Q70 72 50 80 Q30 72 30 52 Z" fill="#8a8f99" stroke="#3a3f47" stroke-width="2"/>`) +
+    '</svg>'
+  );
 }
 
 /**
@@ -48,11 +56,17 @@ export function guildCrestSvg(/** @type {any} */ heraldry, size = 76) {
  */
 export function guildCrestNode(doc, picture, v, alt) {
   const src = v?.logo ? guildLogoSrc(v.logo) : null;
-  if (!src) { const img = picture(guildCrestSvg(v?.heraldry), 76, 76, alt); img.className = 'dfguild-crest'; return img; }
+  if (!src) {
+    const img = picture(guildCrestSvg(v?.heraldry), 76, 76, alt);
+    img.className = 'dfguild-crest';
+    return img;
+  }
   const img = doc.createElement('img');
   img.className = 'dfguild-crest dfguild-crestlogo';
   img.src = src;
-  img.setAttribute('width', '76'); img.setAttribute('height', '76'); img.setAttribute('alt', alt);
+  img.setAttribute('width', '76');
+  img.setAttribute('height', '76');
+  img.setAttribute('alt', alt);
   return img;
 }
 
