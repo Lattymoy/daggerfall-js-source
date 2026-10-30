@@ -1,0 +1,72 @@
+// @ts-check
+// DRAGON-POV (2026-10-30, mob: "can we get a 3rd person dragon for scrolling its brokewn"): MY DRAGON IN THIRD PERSON.
+// The wheel out of the head on a dragon either did nothing (a tamed dragon is a ride, and RIDE-POV held every ride but the
+// 3D horse in the head) or showed my own body standing in the air with the saddle still painted over the screen (an
+// Admin's /dragon). Out of the head on a dragon now the camera stands back from the dragon the others see me on - the
+// Dwarven Dragon's own sprite with its rider in the art, puppeted the way net/remotePlayers.js puppets a peer's
+// (DRAGON1), hovering at rest (DRAGON-HOVER) - and neither my body (player/mwView.js mwViewDrawBody) nor the saddle
+// (player/dragonSaddle.js, its two hosts) is drawn. The wheel zooms out past the foot's far end to DRAGON_VIEW_REACH_M,
+// by the helm's ratio (player/seaZoom.js), and the camera turns about the rider's seat, not my feet. Not a DFU member.
+import { RemotePlayers } from '../net/remotePlayers.js';
+import { POSE_RIDE } from '../net/wire.js';
+import { TRANSPORT_MODES } from '../systems/transport.js';
+import { ridingDragon, dragonRideLook } from '../systems/staffDragon.js';
+import { dragonMountOf, dragonLookOfItem } from '../systems/dragon/dragonMount.js';
+import { mwViewThirdPerson } from '../player/mwView.js';
+
+/** How far the wheel reaches out on a dragon (m) - a few of its lengths. */
+export const DRAGON_VIEW_REACH_M = 40;
+/** The rider's seat over the dragon's feet, as a share of the drawn sprite's height - the camera's pivot. */
+export const DRAGON_VIEW_SEAT = 0.75;
+/** The seat's height (m) until the sprite's pictures are up. */
+export const DRAGON_VIEW_SEAT_M = 4;
+/** Below this many metres a second the dragon stands (hovers) rather than walks. */
+const MOVING_MPS = 0.3;
+
+/** The dragon I sit, by the host's state: `{ look }` (1 the Aetherbright) or null on none - a tamed one ridden, or an
+ *  Admin's /dragon. @param {any} player @param {any[] | null | undefined} items */
+export function dragonRidden(player, items) {
+  if (player?.riding && player.transportMode === TRANSPORT_MODES.Dragon) return { look: dragonLookOfItem(dragonMountOf(items)) };
+  return ridingDragon() ? { look: dragonRideLook() } : null;
+}
+
+/** `deps` the texture pipeline (getTexture, uploadRecordFrame - the class sprite's two doors); `third()` whether the camera
+ *  is out of the head (tests hand their own).
+ *  @param {any} renderer @param {any} deps @param {() => boolean} [third] */
+export function createDragonViewHost(renderer, deps, third = mwViewThirdPerson) {
+  const layer = new RemotePlayers({ renderer, deps });   // no audio: my own dragon's sounds are the ride's
+  /** @type {{ look: number } | null} */
+  let ride = null;
+  let shown = false;
+  /** @type {number[] | null} */
+  let lastFeet = null;
+  let height = 0;   // the sprite's drawn height (m), kept from the last frame it stood
+  return {
+    /** The frame's ride, read before the camera (mwViewFrame's `dragon`). @param {any} player @param {any[]} items */
+    ride(player, items) { ride = dragonRidden(player, items); return !!ride; },
+    /** The wheel's reach on a dragon (m; 0 on none) - mwViewFrame's `seaReach` where no helm has one. */
+    reach: () => (ride ? DRAGON_VIEW_REACH_M : 0),
+    /** The camera's pivot floor over `feetY` on a dragon (the seat), else `floor`. @param {number} feetY @param {number | null} floor */
+    pivotFloor(feetY, floor) {
+      if (!ride || floor != null) return floor;
+      return feetY + (height > 0 ? height * DRAGON_VIEW_SEAT : DRAGON_VIEW_SEAT_M);
+    },
+    /** Each frame after the camera: my dragon stood at my `feet`, facing `yaw`, when the camera is out of the head, seen
+     *  from `eye`. @param {ArrayLike<number>} feet @param {number} yaw @param {ArrayLike<number>} eye @param {number} dt */
+    frame(feet, yaw, eye, dt) {
+      const was = shown;
+      shown = !!ride && third();
+      if (!shown) { if (was) { lastFeet = null; layer.sync([]); } return; }   // into the head, or off the dragon: its batch goes
+      const speed = lastFeet && dt > 0 ? Math.hypot(feet[0] - lastFeet[0], feet[1] - lastFeet[1], feet[2] - lastFeet[2]) / dt : 0;
+      const moving = speed > MOVING_MPS;
+      lastFeet = [feet[0], feet[1], feet[2]];
+      const shownPose = { x: feet[0], y: feet[1], z: feet[2], yaw, rd: POSE_RIDE.Dragon, rc: ride?.look || undefined, mv: moving ? 1 : 0 };
+      layer.sync([{ id: 'self-dragon', shown: shownPose, look: null }], (p) => [p.x, p.y, p.z], { dt, eye: [eye[0], eye[1], eye[2]] });
+      height = Math.abs(layer.batches()[0]?.size?.h ?? 0) || height;
+    },
+    /** Whether my dragon stands in the world this frame. */
+    shown: () => shown,
+    /** Its batch, for the host's billboard pass (none in first person). */
+    batches: () => (shown ? layer.batches() : []),
+  };
+}
