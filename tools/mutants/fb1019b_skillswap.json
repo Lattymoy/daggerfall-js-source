@@ -16,7 +16,7 @@
     "new": "export const swapInChoices = (entity) => (entity?.career ? ALL : []);",
     "tests": ["test/systems/fb1019b_skillswap.test.js"], "why": "a skill already in the class taken twice" },
   { "name": "SKILL-SWAP-start-sum-left", "file": "src/systems/skillSwap.js",
-    "old": "  entity.startingLevelUpSkillSum = (entity.startingLevelUpSkillSum ?? 0) + rise;\n", "new": "",
+    "old": "  entity.startingLevelUpSkillSum = startAfterRise(entity, held, held + rise);\n", "new": "",
     "tests": ["test/systems/fb1019b_skillswap.test.js"], "why": "a trained skill brought into the class hands out levels" },
   { "name": "SKILL-SWAP-current-sum-left", "file": "src/systems/skillSwap.js",
     "old": "  entity.currentLevelUpSkillSum = held + rise;\n", "new": "",

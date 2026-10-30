@@ -46,6 +46,7 @@ import { GUILD_TREASURY_MAX, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S, guildMay } from 
 import { guildPowerSql } from './guildPowerSql.js';   // GUILD-RANKS: the guild's powers, read in the statement
 import { GUILD_HALL_ENTRY_DEFAULT, HALL_POWERS, hallMay, guildHallPrice, guildHallEntryOk, guildHallOwner } from '../../src/net/hallLaw.js';
 import { HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S, homeMapIdOk, homeBuildingKeyOk, homeRegionOk, homePriceOk, homeSaleRefund, homeInArenaCell, homeLayoutOk, homeMoved } from '../../src/net/homeLaw.js';   // ARENA4b: the arena's cell; QUEST-HOME: what a hall's buy or sale moved
+import { homeListedOff, homeListedPrice } from '../../src/net/homeListingLaw.js';   // FOUNDATION F3: the listings' rows
 import { HERALDRY_CHANGE_DRAKES, heraldryOf, heraldrySame } from '../../src/net/heraldryLaw.js';
 import { MARKS_RID_RE, utcDay } from '../../src/net/marksLaw.js';
 import { seatWeekOf } from '../../src/net/townSeatLaw.js';   // AUDIT-SEATS S10: a siege week refuses a change
@@ -93,6 +94,8 @@ export async function buyHall(ctx, player, body = {}) {
   if (!homePriceOk(price)) return { error: 'home-update' };   // HOME-PRICE: a build from before the online price (homes.js claimHome)
   if (!homeLayoutOk(layout)) return { error: 'bad-home' };   // AUDIT PRE-MERGE 1003 WD1: the layout the buyer's town stands in
   if (homeInArenaCell(mapId, buildingKey)) return { error: 'home-arena' };   // ARENA4b: the arena stands there - a build from before it still stands GEMSAL03 (homes.js claimHome's guard)
+  if (homeListedOff(mapId, buildingKey, undefined, layout)) return { error: 'home-unlisted' };   // FOUNDATION F3: off the market by its row
+  if (homeListedPrice(mapId, buildingKey, price, undefined, layout) !== price) return { error: 'home-update' };
   if (!Object.hasOwn(body ?? {}, 'layout')) return { error: 'home-update' };   // AUDIT PRE-MERGE 1003 WD1: a build from before the town mods (AUDIT WD3 B2)
   const gid = a.me.guild_id;
   const held = await db.prepare('SELECT guild_id FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first();

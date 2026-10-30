@@ -343,6 +343,7 @@ const REFUSAL_WORDS = {
   'home-rent-due': () => t('account.refusal.homeRentDue', 'Rent is waiting to be collected at your home. Collect it first.'),
   // ARENA4b: a home the arena displaced (homes.js arenaMoveHome), and a house of its block an old build would buy
   'home-arena': () => ARENA_TEXT.homeMove.arena,
+  'home-unlisted': () => t('account.refusal.homeUnlisted', 'That house is not for sale.'),   // FOUNDATION F3: off the market by its row (net/homeListingLaw.js)
   'home-unmoved': () => ARENA_TEXT.homeMove.unmoved,
   'home-changed': () => ARENA_TEXT.homeMove.changed,
   // HOME-VOTE: a town's word on a player's house (server-account/src/homeVotes.js) - met at its door
@@ -738,6 +739,7 @@ const REFUSAL_WORDS = {
   'logo-file': () => t('account.refusal.logoFile', 'That file is too large. Choose a picture under 8 MB.'),
   'logo-soon': () => t('account.refusal.logoSoon', 'A guild can send one logo every {min} minutes. Try again soon.', { min: GUILD_LOGO_GAP_S / 60 }),
   'logo-none': () => t('account.refusal.logoNone', 'No logo is under review.'),
+  'no-logo': () => t('account.refusal.noLogo', 'That logo is not shown now.'),   // GUILD-SHOP: a picture under no review and worn by no guild
   'logo-bytes': () => t('account.refusal.logoBytes', 'That picture is too large. A logo is at most {kb} KB.', { kb: GUILD_LOGO_MAX_BYTES / 1024 }),
   'logo-type': () => t('account.refusal.logoType', 'A logo must be a PNG or WebP picture.'),
   'logo-square': () => t('account.refusal.logoSquare', 'A logo must be square.'),

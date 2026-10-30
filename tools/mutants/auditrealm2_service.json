@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-REALM2-S1-a-birth-at-any-level",
     "file": "server-account/src/realm.js",
-    "old": "shaped && save.level === REALM_BIRTH_LEVEL && liquidWealthOf(save)",
-    "new": "shaped && liquidWealthOf(save)",
+    "old": "shaped && save.level === REALM_BIRTH_LEVEL && birthSkillOk(save",
+    "new": "shaped && birthSkillOk(save",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]

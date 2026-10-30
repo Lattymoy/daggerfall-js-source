@@ -302,7 +302,7 @@ test('AURA-SPLIT the auras\' looks: one program a look - the whole source with `
   assert.equal(g.count('createProgram'), 2, 'the looks drawn alone');
   const w = read('src/scenes/auraHost.js');   // PIN MOVED (ARMORY, HOST-SPLIT): the world's auras are the host's module's
   assert.match(w, /const auraPassOf = compiledPass\(renderer\.gl, \[\], \(\) => new AuraRingRenderer\(renderer\.gl\),/, 'the world\'s door waits on no program');
-  assert.match(w, /const pass = auraPassOf\(\);/);
+  assert.match(w, /const pass = auraDraw\.length \? auraPassOf\(\) : null;/);   // AUDIT BACK-HOLSTER A2 (PIN MOVED): asked once a frame a wearer stands
   assert.equal(read('src/scenes/world.js').split('\n').filter((l) => l.split('//')[0].includes('new AuraRingRenderer(')).length, 0, 'and none in the world host itself');
   assert.equal(w.split('\n').filter((l) => l.split('//')[0].includes('new AuraRingRenderer(')).length, 1, 'built nowhere outside its door (a comment that names the build is no build)');
   assert.match(read('src/render/auraRing.js'), /const P = this\.programOf\(look\.kind\);/, 'a look never asked as needed in the draw');

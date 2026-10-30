@@ -392,6 +392,7 @@ Generated from `ACTION_GROUPS` and the two default tables; the enhanced pane dra
 | Action | Key | Pad | What it does |
 |---|---|---|---|
 | `SocialInteract` | F |  | Interact with player |
+| `PvpFlag` | CAPS |  | PvP on / off |
 
 ### Professions
 

@@ -386,6 +386,7 @@ import { crownRulerFactionId, crownRulerHere, crownHallPlan, CROWN_HALL_TEXT } f
 import { hallPlaquePlan, PLAQUE_MODEL, PLAQUE_BARE_MODEL } from '../world/arena/arenaPlaques.js';   // ARENA5: the Hall of Champions' plaque wall
 import { bannerKeyOf } from './hallBanners.js';   // CROWN-HALL: the throne room's cloth, keyed as the street's
 import { HOME_ENTRIES, homePriceOk, homeOnlinePrice, rentCost, rentDaysLeft } from '../net/homeLaw.js';   // HOME-PRICE: what a home costs online
+import { homeListedPrice } from '../net/homeListingLaw.js';   // FOUNDATION F3: a row's price
 // HOME-RENT: a home's rooms, rented at its door and offered, priced and collected in its owner's decorator
 import {
   homeRooms, rentable, rentHomeRoom, collectHomeRent, rentPickLines, rentDaysLines, rentConfirmLines, rentDoneLine, rentShortLine,
@@ -7522,7 +7523,7 @@ export function createWorldModes(host) {
    *  nobody can measure. */
   function homeListPrice(bd) {
     const price = homeOnlinePrice(houseFootprintM2(bd), bd?.townBlocks ?? 0);
-    return homePriceOk(price) ? price : 0;
+    return homePriceOk(price) ? homeListedPrice(homeTownOf(bd), bd?.buildingKey, price, undefined, homeClaimLayout(homeTownOf(bd))) : 0;   // FOUNDATION F3: its row's price, where one sets it
   }
   /** What a house I could buy costs - online, its town known, nobody's home, for sale (no quest in it) - at its online
    *  price (homeListPrice); 0 for none. */
@@ -9718,7 +9719,7 @@ export function createWorldModes(host) {
           onArenaHit: (hit) => !!host.onArenaHit?.(hit),   // ARENA4: and the door a blow's number on them leaves through - to the referee
           spoilContents: (key) => host.spoilContents?.(key) ?? null,   // WB9f: a piece of his spoils, listed on the plaque
           onActions: (data) => host.onActions?.(data), peers: () => host.peers?.() ?? null, selfId: () => host.selfId?.() ?? null, party: () => host.partyNear?.() ?? [], nodeMarks: (feet) => host.professionMarks?.(feet) ?? null, questMarks: () => dungeonQuestMarksHere(), grants: () => host.grants?.() ?? null,   // GUIDE8: the Exact tier's quest resources, on the dungeon's map and compass; NODE-MARKS: the dungeon's nodes on its compass, at its own feet; WORLD3: a door moved goes out; the peers the foes see; whose blow a puppet's is
-          postItem: (text, item) => host.postItem?.(text, item) ?? false, linkItem: (item) => host.linkItem?.(item) ?? false, canPostItem: () => host.canPostItem?.() ?? false,   // CHAT-POST: the dungeon's pack posts through the outer host
+          linkItem: (item) => host.linkItem?.(item) ?? false, canPostItem: () => host.canPostItem?.() ?? false,   // CHAT-POST: the dungeon's pack links through the outer host
           allyMarks: (sp) => host.allyMarks?.(sp) ?? null,   // AID1 onto ALLY-CAST: the party mates' bodies, in the dungeon's frame - SPELL-GIFT: with the spell
           companionBodies: () => host.companionBodies?.() ?? null,   // COMPANION-KIT: my companions underground (the dungeon's own records)
           fates: !!host.openRevenantFate, shakeCamera: (k) => host.shakeCamera?.(k),   // REVENANT-FATE: the host opens a beaten revenant's choice; an execution's blow felt

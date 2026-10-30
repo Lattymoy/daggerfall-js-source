@@ -1209,6 +1209,7 @@ import { RACES } from '../systems/races.js';   // DW-D: ArgonianInfiniteBreath
 import { localizedStrings, localizedText, getLocalizedLocationName, getLocalizedRegionName, getLocalizedFactionName, t } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: and the names shown
 import { hallStepsFor, harbourPortFor, coastalAt } from '../net/fortLaw.js';   // SEAT2b part two: a seat's crafting halls, its members' Harbour, a coast
 import { isWaterPixel } from '../ui/overworldModel.js';   // SEAT2b part two: a coast is the sea beside the town (the port's one water law)
+import { filedClimate, filedHeight } from '../world/land/landLayer.js';   // AUDIT FOUNDATION II L1: the Bay's fit and rates read the files as they came
 import { createSiegeNpcs } from './siegeNpcs.js';   // SEAT2b part two (c): the Barracks' guards and a revolt's rising, drawn
 import { createSiegeSession, isBattleLeaveCommand, BATTLE_NONE_TEXT } from '../net/siege/siegeSession.js';   // SEAT2a part four: a siege as this client fights it   // AUDIT-SEATS C1: the chat's `/leave`
 import { SIEGE_UNITS_PER_M, SIEGE_REACH, SIEGE_WORK_IDS, SIEGE_GATEHOUSE, SIEGE_RAM, SIEGE_HIT as DUEL_REF_KIND } from '../net/siege/siegeRef.js';   // SEAT2b part two (b): a swing at the Gatehouse or the Ram; INT8: a referee's word's kind
@@ -1923,12 +1924,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // Bay, off the same rows (the game's own, as MAPS.BSA holds them: every client rolls the same countryside), kept before
   // the rows go. The land past the Bay streamed (TAMRIEL2), `?country` open; online too.
   const _countryTemplates = tamrielLand && countrysideOn() ? countryTemplates(_classicRows ?? _hubRows.map(classicRow).filter(Boolean), isMainStoryDungeon) : null;
-  const _countryCounts = _countryTemplates ? countryCounts(_countryTemplates, (x, y) => maps.getClimateIndex(x, y)) : null;
+  const _countryCounts = _countryTemplates ? countryCounts(_countryTemplates, (x, y) => filedClimate(x, y, maps.getClimateIndex(x, y))) : null;   // AUDIT FOUNDATION II L1: the Bay as it came
   // TESA8 (world/tamrielDungeons.js): THE LAIRS' TEMPLATES, THEIR COUNT AND THEIR BLOCKS - the labyrinths, keeps, ruins and
   // graveyards a cell past the Bay may stand, how many of each the Bay's climates stand, and every dungeon type's blocks a
   // lair's own plan is laid of - off the same rows, under the countryside's door
   const _lairTemplates = _countryTemplates ? lairTemplates(_classicRows ?? _hubRows.map(classicRow).filter(Boolean), isMainStoryDungeon) : null;
-  const _lairCounts = _lairTemplates ? countryCounts(_lairTemplates, (x, y) => maps.getClimateIndex(x, y)) : null;
+  const _lairCounts = _lairTemplates ? countryCounts(_lairTemplates, (x, y) => filedClimate(x, y, maps.getClimateIndex(x, y))) : null;
   const _lairPools = _lairTemplates ? lairPools(_lairTemplates) : null;
   // TESA10 (world/tamrielCapitals.js): THE CAPITALS' BASE AND THEIR BLOCKS - the city a capital stands on the shape of, and
   // every classic city block the game's cities lay, by kind (a district's houses, shops, guilds and temples) - off the same
@@ -6518,7 +6519,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     arenaTraceAsked = true;
     preloadTamrielTrace({ fetchBytes, palette }).then(async (trace) => {
       if (!trace) { console.warn('[tamriel] the picture traced to nothing; the authored continent stands'); return; }
-      const fit = await keptBayFit({ bayLand: (x, y) => !isWaterPixel(maps.getClimateIndex(x, y), woods.getHeightMapValue(x, y)), trace });
+      const fit = await keptBayFit({ bayLand: (x, y) => !isWaterPixel(filedClimate(x, y, maps.getClimateIndex(x, y)), filedHeight(x, y, woods.getHeightMapValue(x, y))), trace });   // AUDIT FOUNDATION II L1: the Bay as it came
       const fitPx = fit ? { ox: fit.ox * fit.ppu, oy: fit.oy * fit.ppu, ppu: fit.ppu } : null;
       terrainGen.setTamriel({ trace, fit: fitPx });
       StreamingWorldState.frame = tamrielLand ? tamrielFrameInBay() : null;
@@ -12479,7 +12480,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
 
   const makeInventoryWindow = (extra = {}) => createInventoryWindow({
     ...packDoors,   // UI2: the book, the camp and the spellbook - one bag with the hotbar's Use
-    postItem: (text, item) => postItemInChat(text, item), linkItem: (item) => linkItemInChat(item), canPostItem: () => canPostItemInChat(),   // CHAT-POST: post or link into the field
+    linkItem: (item) => linkItemInChat(item), canPostItem: () => canPostItemInChat(),   // CHAT-POST: link into the field
     say: (l) => townTalk.say(l),   // FX1 (F128): the "Equipping %s" cue on close
     items: () => (playerEntity.items ??= []),
     wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
@@ -26856,12 +26857,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** CHAT-CHAN: a typed line said on `tabId` - each tab's own door. False keeps the line in the field (AUDIT CHAT B2):
    *  nothing went. A reason is said as a line on the tab the line was typed on (`from`): the strip speaks for the
    *  active tab alone, and `/p` is typed on another. */
-  /** CHAT-POST (2026-09-27, Discord - Tabitha: "Link in chat / Post in chat"): an item's line and its record
-   *  (itemChatText + the piece) said on the chat's open tab - chatSend's own door, so every tab's reasons hold
-   *  (no party, an older relay); none offline. A hearing client draws a coloured [Name] and the pack's hover card. */
+  /** CHAT-POST: insert the piece into the chat field as `[Label]` - the player finishes the line and sends.
+   *  Online only, with a chat tab open; a hearing client draws a coloured [Name] and the pack's hover card. */
   const canPostItemInChat = () => !!(chatLog?.active && chatPanel);
-  const postItemInChat = (text, item) => (canPostItemInChat() ? chatSend(chatLog.active, text, chatLog.active, { item }) === true : false);
-  /** CHAT-POST: insert the piece into the chat field as `[Label]` - the player finishes the line and sends. */
   const linkItemInChat = (item) => (canPostItemInChat() ? chatPanel.linkItem?.(item) === true : false);
   const chatSend = (tabId, text, from = tabId, { me = false, item = null, items = null } = {}) => {
     const why = (line) => { chatLog.push(from, { text: line, system: true }); return false; };
@@ -28354,7 +28352,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     partyLevels: () => partyMateLevels(),   // PARTY-LOOT: my party's levels, for the level a room container's base is minted at
     roomHost: () => online?.host ?? null,   // PARTY-LOOT: the relay's seat - whose word a room container's state is (the host grants the takes)
     peers: peersNear,
-    postItem: (text, item) => postItemInChat(text, item), linkItem: (item) => linkItemInChat(item), canPostItem: () => canPostItemInChat(),   // CHAT-POST: the building's and the dungeon's packs post too
+    linkItem: (item) => linkItemInChat(item), canPostItem: () => canPostItemInChat(),   // CHAT-POST: the building's and the dungeon's packs link too
     partyNear: () => partyOnMaps(), professionMarks: (feet) => professionMarks(feet),   // DISC23-A: the party's bodies, for the dungeon's and the building's plans (AUDIT pre-merge I-E: those drawn here); NODE-MARKS: the dungeon's veins (and a body the knife may skin) on its compass, at its own feet
     allyMarks: (sp) => allyMarksNear(sp),   // AID1 onto ALLY-CAST: the dungeon's own cast engine gives to the same mates - SPELL-GIFT: and strangers, by the spell
     companionBodies: () => [...crewAshore.bodies(), ...revenantAshore.bodies()],   // COMPANION-KIT: my companions underground, for the dungeon's own cast engine (REVENANT-COMPANION: the sworn too)

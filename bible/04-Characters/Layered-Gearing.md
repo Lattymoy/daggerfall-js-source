@@ -52,6 +52,10 @@ switch is gone).
   stay whole; what a helmet pushes into the air beside the hood (horns, wing tips) is trimmed. `applyCloak`,
   `dyeCloth`, `applyHoodFix`.
 
+- **The weapon on the back** (BACK-HOLSTER, 2026-10-30): a sheathed long blade, axe, blunt weapon, staff or bow rides
+  the back, on this look and on the skins (`06-Systems/Eye-Of-The-Beholder.md` BACK-HOLSTER). The art holds its mace in
+  every frame, so a sheathed layered body shows both.
+
 ## Online
 
 The look carries the body as an optional field `lg` (1 female, 2 male - the own-body default sent as the character's;

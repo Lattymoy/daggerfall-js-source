@@ -230,8 +230,8 @@
   {
     "name": "CARDS9-service-birth",
     "file": "server-account/src/realm.js",
-    "old": "liquidWealthOf(save) <= REALM_BIRTH_WEALTH_MAX && cardWorthOf(save) <= STARTER_DECK_WORTH && cardPacksOf(save) === 0 ? null",
-    "new": "liquidWealthOf(save) <= REALM_BIRTH_WEALTH_MAX && cardPacksOf(save) === 0 ? null",
+    "old": "liquidWealthOf(save) <= REALM_BIRTH_WEALTH_MAX && cardWorthOf(save) <= STARTER_DECK_WORTH && cardPacksOf(save) === 0\n      ? null",
+    "new": "liquidWealthOf(save) <= REALM_BIRTH_WEALTH_MAX && cardPacksOf(save) === 0\n      ? null",
     "tests": [
       "test/systems/cards9_sources.test.js"
     ]
