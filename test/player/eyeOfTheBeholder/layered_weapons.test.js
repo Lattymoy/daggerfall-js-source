@@ -662,6 +662,21 @@ test('LAYERED-DUAL the second weapon\'s line: in the free hand where the art sho
   assert.ok(Math.hypot(px - sx, py - sy) < 0.2 && Math.abs(Math.abs(Math.atan2(Math.sin(turn), Math.cos(turn))) - Math.PI * 22 / 180) < 0.01 && swing.off[4] === 'b', 'a swing: fanned off the joined fists, behind');
 });
 
+test('LAYERED-DUAL the free hand is open in the art: the second weapon\'s handle and guard pass behind its fingers, never over them', { skip: !PNG && 'no pngjs' }, async () => {
+  const withPic = { ...opts, heldArt: async () => sword({ handle: 6 }) };
+  for (const [body, rf] of [['male', '0-0'], ['male', '1-1'], ['female', '15-0'], ['female', '3-1']]) {
+    const plain = `LA:${body}:leather_leather_leather:${rf}:lll`, [ox, oy] = weaponRigOf(body, rf).off;
+    const bare = await decodeLayered(`${plain}@0`, decodePng, opts), two = await decodeLayered(`${plain}@ls1+dg3`, decodePng, withPic);
+    let over = 0, guard = 0;
+    for (let y = Math.floor(oy) - 5; y <= oy + 5; y++) for (let x = Math.floor(ox) - 5; x <= ox + 5; x++) {
+      const i = (y * bare.width + x) * 4, g = two.data[i + 1] > 200 && two.data[i] < 60 && two.data[i + 2] < 60, b = two.data[i + 2] > 200 && two.data[i] < 60;
+      if (g) guard++;
+      if ((g || b) && bare.data[i + 3]) over++;
+    }
+    assert.ok(over === 0 && (guard > 0 || rf === '1-1'), `${body} ${rf}: the guard past the fingers (${guard} px), none over the hand (${over})`);   // 1-1: the hand before the body, the guard behind both
+  }
+});
+
 test('LAYERED-DUAL composed: the second weapon is drawn in the other hand - every px the one weapon drew stays, more are drawn; the glow counts both', { skip: !PNG && 'no pngjs' }, async () => {
   for (const [body, rf] of [['male', '0-0'], ['male', '7-3'], ['female', '1-1'], ['female', '15-0']]) {
     const plain = `LA:${body}:leather_leather_leather:${rf}:lll`;

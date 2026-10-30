@@ -802,8 +802,8 @@
   {
     "name": "LAYERED-DUAL-off-blade-side",
     "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
-    "old": "    o = { w: fr.off.slice(0, 4), d: c.repeat(-lo - 3) + 'bbb' + blade.repeat(hi + 1), side: fr.side, cv: fr.cv };",
-    "new": "    o = { w: fr.off.slice(0, 4), d: c.repeat(-lo - 3) + 'bbb' + c.repeat(hi + 1), side: fr.side, cv: fr.cv };",
+    "old": "    o = { w: fr.off.slice(0, 4), d: 'b'.repeat(-lo + OFF_GUARD) + blade.repeat(hi + 1 - OFF_GUARD), side: fr.side, cv: fr.cv };",
+    "new": "    o = { w: fr.off.slice(0, 4), d: 'b'.repeat(-lo + OFF_GUARD) + 'b'.repeat(hi + 1 - OFF_GUARD), side: fr.side, cv: fr.cv };",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -908,5 +908,25 @@
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
     "why": "a thrust from behind drawn through the body"
+  },
+  {
+    "name": "LAYERED-DUAL-guard-over-palm",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    _depth.set(o, o.d);   // as written: settleDepth's fist rule would bring the guard out over the fingers\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the second weapon's guard painted over the open hand"
+  },
+  {
+    "name": "LAYERED-DUAL-handle-over-palm",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "d: 'b'.repeat(-lo + OFF_GUARD) + blade",
+    "new": "d: 'f'.repeat(-lo + OFF_GUARD) + blade",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the handle and guard over the fingers"
   }
 ]

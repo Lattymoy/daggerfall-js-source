@@ -110,6 +110,8 @@ export function weaponRigOf(body, rf, top = 'l') {
 }
 export const WEAPON_SPAN = Object.freeze([...rig.span]);
 const _off = new WeakMap();
+/** LAYERED-DUAL: px of the second weapon's guard, past the grip, behind its open hand (the handle is, all of it). */
+const OFF_GUARD = 3;
 /** LAYERED-DUAL: a pair's other weapon's rig in a frame, as drawWeapon reads one - its line in the other hand (the rig's
  *  `off`: the free hand's, else fanned off the first behind the body), the blade on its side and the fist over the
  *  handle - or null where the frame has none. */
@@ -117,9 +119,11 @@ export function offRigOf(fr) {
   if (!Array.isArray(fr?.off)) return null;
   let o = _off.get(fr);
   if (!o) {
-    const [lo, hi] = rig.span, blade = fr.off[4], c = blade === 'x' ? 'b' : blade;
-    o = { w: fr.off.slice(0, 4), d: c.repeat(-lo - 3) + 'bbb' + blade.repeat(hi + 1), side: fr.side, cv: fr.cv };
+    // the free hand is open in the art: the handle and the guard pass behind its fingers, which close over them
+    const [lo, hi] = rig.span, blade = fr.off[4];
+    o = { w: fr.off.slice(0, 4), d: 'b'.repeat(-lo + OFF_GUARD) + blade.repeat(hi + 1 - OFF_GUARD), side: fr.side, cv: fr.cv };
     _off.set(fr, o);
+    _depth.set(o, o.d);   // as written: settleDepth's fist rule would bring the guard out over the fingers
   }
   return o;
 }

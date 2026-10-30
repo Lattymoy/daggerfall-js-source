@@ -181,11 +181,13 @@ bow at the hammer's fist (`bowM`), the left hand once turned, on the far side, b
 covers.
 
 **Two weapons** (LAYERED-DUAL, the owner, 2026-10-30: "We need to find a way to implement duel wielding perfectly"). A
-pair (`combat/twoHands/handsLaw.js`: two one-handed weapons) is both codes, `@ls7+dg3`, the hammer line's first. Its
-right weapon is on the line, the left in the free hand. Flipped, the hands swap, so the left is on the line; in a swing
-the striking hand's is (`strike`: the rig's blow in flight, a walker's `ah`). The second line is the rig's `off`. In
-the walk and the idle it is the free hand (the bow's), held as the first is, mirrored from the front and behind, its
-blade hidden from behind. Daggerfall's swing is two-handed - both fists meet on the haft - so in a swing, a flinch, or
+pair (`combat/twoHands/handsLaw.js`) is both codes, `@ls7+dg3`, the hammer line's first: the right weapon on the line,
+the left in the free hand. Flipped, the hands swap; in a swing the striking hand's is on the line (`strike`: the rig's
+blow in flight, a walker's `ah`).
+
+**The second line** is the rig's `off`. In the walk and the idle it is the free hand (the bow's), held as the first is,
+mirrored from the front and behind, its blade hidden from behind; the hand is open in the art, so the handle and guard
+pass behind its fingers. Daggerfall's swing is two-handed - both fists meet on the haft - so in a swing, a flinch, or
 where the art hides that hand, the second is fanned 22 degrees off the first, behind the body. The glow counts both.
 
 **Its own cut of the swing** (SWING-CUTS, the owner, 2026-10-30: "Is there anyway to switch up the animation?"). The
@@ -209,7 +211,7 @@ shaft. The female's back-view flinch (14-0) keeps its raised hand two pixels off
 and with empty hands her back-3/4 swing (8-2) its hand, whose arm is behind the body. A weapon's glow stands round the
 weapon alone (LAYERED-GLOW, `05-Combat/Weapon-Glow.md` "Round the weapon"). Verified by
 `test/player/eyeOfTheBeholder/layered_weapons.test.js`, `spriteglow.test.js` and `tools/mutants/layered_weapons.json`
-(91 mutants, all dead); the peer-art pins moved to the new codes (`test/net/peer/fb1022d_peerart.test.js`).
+(93 mutants, all dead); the peer-art pins moved to the new codes (`test/net/peer/fb1022d_peerart.test.js`).
 
 ## The art - the doctrine's third exception
 
