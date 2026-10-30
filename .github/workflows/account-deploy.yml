@@ -1340,7 +1340,8 @@ jobs:
           if [ "$code" != "200" ] || [ -z "$rc" ] || [ -z "$lease" ]; then
             echo "::error::the smoke's guest could not take a realm character ($code)"; cat /tmp/realm.json || true; exit 1
           fi
-          code=$(put /tmp/realmsave.json "$base/v1/realm/$rc/data" '{"level":1,"goldPieces":100,"items":[]}' "$lease")
+          # BIRTH-SKILL (#1484): a creation's skills, the least one gives (test/realmSeat.mjs freshSave) - else 'realm-birth'
+          code=$(put /tmp/realmsave.json "$base/v1/realm/$rc/data" '{"level":1,"goldPieces":100,"items":[],"career":{"primarySkills":[0,1,2],"majorSkills":[3,4,5],"minorSkills":[6,7,8,9,10,11]},"skills":[30,30,30,20,20,20,14,14,14,14,14,14,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"startingLevelUpSkillSum":144,"currentLevelUpSkillSum":144}' "$lease")
           echo "realm first save -> $code"
           if [ "$code" != "200" ] && ! { [ "$code" = "409" ] && grep -q '"seq":1' /tmp/realmsave.json; }; then
             echo "::error::the smoke's realm character's first save was refused ($code)"; cat /tmp/realmsave.json || true; exit 1
