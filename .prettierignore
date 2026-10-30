@@ -6,6 +6,12 @@
 /src/*
 !/src/ai/
 /src/ai/*/
+!/src/ai/nav/
+/src/ai/nav/*
+!/src/ai/nav/navBake.js
+!/src/ai/nav/navClient.js
+!/src/ai/nav/navWorker.js
+!/src/ai/nav/navmesh.js
 !/src/buildTag.js
 !/src/characters/
 /src/characters/*

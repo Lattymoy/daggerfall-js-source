@@ -805,8 +805,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-packed-as-array",
     "file": "src/ai/nav/navmesh.js",
-    "old": "idx = colliders.box ? buildPackedIndex(colliders) : buildColliderIndex(colliders);",
-    "new": "idx = buildColliderIndex(colliders);",
+    "old": "    idx = colliders.box ? buildPackedIndex(colliders) : buildColliderIndex(colliders);",
+    "new": "    idx = buildColliderIndex(colliders);",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -814,8 +814,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-count-shifted",
     "file": "src/ai/nav/navmesh.js",
-    "old": "for (let k = k0; k <= k1; k++) for (let i = i0; i <= i1; i++) start[k * bx + i + 1]++;",
-    "new": "for (let k = k0; k <= k1; k++) for (let i = i0; i <= i1; i++) start[k * bx + i]++;",
+    "old": "    for (let k = k0; k <= k1; k++) for (let i = i0; i <= i1; i++) start[k * bx + i + 1]++;",
+    "new": "    for (let k = k0; k <= k1; k++) for (let i = i0; i <= i1; i++) start[k * bx + i]++;",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -823,8 +823,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-no-prefix",
     "file": "src/ai/nav/navmesh.js",
-    "old": "  for (let j = 0; j < bx * bz; j++) start[j + 1] += start[j];\n",
-    "new": "",
+    "old": "  for (let j = 0; j < bx * bz; j++) start[j + 1] += start[j];\n  const list = new Int32Array(start[bx * bz]),",
+    "new": "  const list = new Int32Array(start[bx * bz]),",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -832,8 +832,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-fill-wrong-box",
     "file": "src/ai/nav/navmesh.js",
-    "old": "list[fill[k * bx + i]++] = ci;",
-    "new": "list[fill[k * bx + i]++] = n - 1 - ci;",
+    "old": "      for (let i = span[s]; i <= span[s + 1]; i++) list[fill[k * bx + i]++] = ci;",
+    "new": "      for (let i = span[s]; i <= span[s + 1]; i++) list[fill[k * bx + i]++] = n - 1 - ci;",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -841,8 +841,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-mint-top-bottom",
     "file": "src/ai/nav/navmesh.js",
-    "old": "top: box[o + 4], bottom: box[o + 5],",
-    "new": "top: box[o + 5], bottom: box[o + 4],",
+    "old": "      top: box[o + 4],\n      bottom: box[o + 5],",
+    "new": "      top: box[o + 5],\n      bottom: box[o + 4],",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -850,8 +850,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-mint-x1",
     "file": "src/ai/nav/navmesh.js",
-    "old": "x0: box[o], x1: box[o + 1], z0: box[o + 2],",
-    "new": "x0: box[o], x1: box[o], z0: box[o + 2],",
+    "old": "      x1: box[o + 1],",
+    "new": "      x1: box[o],",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -859,8 +859,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-client-unpacks",
     "file": "src/ai/nav/navClient.js",
-    "old": "      if (m) result = m;",
-    "new": "      if (m) result = { ...m, cols: Array.from({ length: m.cols.noNavTop.length }, (_, i) => ({ x0: m.cols.box[i * 6], x1: m.cols.box[i * 6 + 1], z0: m.cols.box[i * 6 + 2], z1: m.cols.box[i * 6 + 3], top: m.cols.box[i * 6 + 4], bottom: m.cols.box[i * 6 + 5], noNavTop: m.cols.noNavTop[i] === 1 })) };",
+    "old": "      if (m) result = m; // its boxes packed, as they landed (INDOOR-WATCH AUDIT W2: unpacking them was the landing's hitch)",
+    "new": "      if (m)\n        result = {\n          ...m,\n          cols: Array.from({ length: m.cols.noNavTop.length }, (_, i) => ({\n            x0: m.cols.box[i * 6],\n            x1: m.cols.box[i * 6 + 1],\n            z0: m.cols.box[i * 6 + 2],\n            z1: m.cols.box[i * 6 + 3],\n            top: m.cols.box[i * 6 + 4],\n            bottom: m.cols.box[i * 6 + 5],\n            noNavTop: m.cols.noNavTop[i] === 1,\n          })),\n        }; // its boxes packed, as they landed (INDOOR-WATCH AUDIT W2: unpacking them was the landing's hitch)",
     "tests": [
       "test/ai/nav/audit68_enemies.test.js"
     ]
@@ -868,8 +868,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-client-recuts-hit",
     "file": "src/ai/nav/navClient.js",
-    "old": "    if (m) return m.cols;",
-    "new": "    if (m) return trianglesToColliders(input.positions, input.indices, { cs, maxSlope: agent.maxSlope });",
+    "old": "    if (m) return m.cols; // INDOOR-WATCH AUDIT W2: packed, as they landed - the height layer indexes them so (navmesh.js buildPackedIndex)",
+    "new": "    if (m) return trianglesToColliders(input.positions, input.indices, { cs, maxSlope: agent.maxSlope }); // INDOOR-WATCH AUDIT W2: packed, as they landed - the height layer indexes them so (navmesh.js buildPackedIndex)",
     "tests": [
       "test/ai/nav/audit68_enemies.test.js"
     ]
@@ -877,8 +877,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-soup-unturned-x",
     "file": "src/ai/nav/navBake.js",
-    "old": "const x = R ? R[0] * v[0] + R[3] * v[1] + R[6] * v[2] : v[0],",
-    "new": "const x = v[0],",
+    "old": "        const x = R ? R[0] * v[0] + R[3] * v[1] + R[6] * v[2] : v[0],",
+    "new": "        const x = v[0],",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -886,8 +886,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-soup-unmoved-y",
     "file": "src/ai/nav/navBake.js",
-    "old": ": v[1]) + t[1], z = R",
-    "new": ": v[1]), z = R",
+    "old": "          y = (R ? R[1] * v[0] + R[4] * v[1] + R[7] * v[2] : v[1]) + t[1],",
+    "new": "          y = R ? R[1] * v[0] + R[4] * v[1] + R[7] * v[2] : v[1],",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -895,8 +895,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-soup-unmoved-x",
     "file": "src/ai/nav/navBake.js",
-    "old": "positions[p++] = x + t[0];",
-    "new": "positions[p++] = x;",
+    "old": "        positions[p++] = x + t[0];",
+    "new": "        positions[p++] = x;",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -904,8 +904,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-soup-indices",
     "file": "src/ai/nav/navBake.js",
-    "old": "indices[p / 3] = p / 3;",
-    "new": "indices[p / 3] = 0;",
+    "old": "        indices[p / 3] = p / 3;",
+    "new": "        indices[p / 3] = 0;",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -913,8 +913,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-soup-count",
     "file": "src/ai/nav/navBake.js",
-    "old": "use.push(bucket); tris += bucket.tris.length;",
-    "new": "use.push(bucket); tris += 1;",
+    "old": "    tris += bucket.tris.length;",
+    "new": "    tris += 1;",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -922,7 +922,7 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-soup-minY",
     "file": "src/ai/nav/navBake.js",
-    "old": "        if (y < minY) minY = y; if (y > maxY) maxY = y;",
+    "old": "        if (y < minY) minY = y;\n        if (y > maxY) maxY = y;",
     "new": "        if (y > maxY) maxY = y;",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"

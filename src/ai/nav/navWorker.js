@@ -17,9 +17,17 @@ globalThis.onmessage = (ev) => {
   const m = ev.data ?? {};
   try {
     if (m.t === 'bake') {
-      const r = bakeSoup(m.positions, m.indices, { floor: m.floor, anchor: m.anchor, anchors: m.anchors ?? null, agent: m.agent ?? SOUP_AGENT });
+      const r = bakeSoup(m.positions, m.indices, {
+        floor: m.floor,
+        anchor: m.anchor,
+        anchors: m.anchors ?? null,
+        agent: m.agent ?? SOUP_AGENT,
+      });
       const cols = packColliders(r.cols);
-      globalThis.postMessage({ t: 'baked', id: m.id, baked: bakeNavData(r.chf), cs: r.agent.cs, stats: r.stats, cols }, [cols.box.buffer, cols.noNavTop.buffer]);
+      globalThis.postMessage(
+        { t: 'baked', id: m.id, baked: bakeNavData(r.chf), cs: r.agent.cs, stats: r.stats, cols },
+        [cols.box.buffer, cols.noNavTop.buffer],
+      );
     } else if (m.t === 'cols') {
       const cols = packColliders(trianglesToColliders(m.positions, m.indices, { cs: m.cs, maxSlope: m.maxSlope }));
       globalThis.postMessage({ t: 'cols', id: m.id, cols }, [cols.box.buffer, cols.noNavTop.buffer]);
