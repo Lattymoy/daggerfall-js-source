@@ -32,7 +32,7 @@ import { spaceFoes, freeLodgedFeet } from '../characters/foeSpacing.js';   // FO
 import { blowConnects, blowScaled } from '../ai/foeBlows.js';   // TACT4
 import { foeGlint, tacticsNow, beginRoar } from '../ai/tactics.js';   // TELL2: a wind-up's glint (bible/12-Enhanced-AI/Feud-Arc.md section 4.2); TELL8: the record's wind-up on the foes' clock; RVN4: a last stand's roar
 import { feudRevealWeak, feudWeakBlow } from '../systems/feudLedger.js';   // RVN13: a peer's blow of its weakness; AUDIT FEUD: and mine on a puppet
-import { lastStandGlint, lastStandSize, pyreSpell, bandMembers, bandName, bandWord, BAND_SCATTER_S, BAND_SPACING, RALLY_KIN, ROUT, feudWire, feudFromWire, puppetBandName, puppetRevenantBlows, SIG } from '../systems/revenant/revenantFeud.js';   // RVN4: phase two's rim and size; RVN5: the pyre's blast; RVN6: its band; RVN10: the rout's distance; FEUD WIRE: a puppet's blows and signature
+import { lastStandGlint, lastStandSize, pyreSpell, bandMembers, retinueCount, bandName, bandWord, BAND_SCATTER_S, BAND_SPACING, RALLY_KIN, ROUT, feudWire, feudFromWire, puppetBandName, puppetRevenantBlows, SIG } from '../systems/revenant/revenantFeud.js';   // RVN4: phase two's rim and size; RVN5: the pyre's blast; RVN6: its band; RVN10: the rout's distance; FEUD WIRE: a puppet's blows and signature
 import { runTargetMachine, boutGate, isPlayerTarget, isLocalPlayerTarget, isPeerTarget, resetAllyTeamOnPlayerAttack, PLAYER_TARGET, PEER_CAST_TARGET, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection, wireRecipient, bumpAtkCount, staticTeamOf } from '../characters/enemy/enemyTargets.js';   // AUDIT WATCH1: the wire's spellings, one home   // WORLD6b-ii: the local player told from a peer, the peer told from a foe   // MT-ii   // ROAD-H H1/H1b: the ONE arrow loose point and the crouch dip
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';   // CH3: the shared fall formula
 import { SOUND, hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';   // CH3: the FallDamage clip; WORLD6b: a peer's blow rung at the owner
@@ -118,6 +118,7 @@ import { raidLeaderNameOf } from '../systems/raidKinds.js';   // RAID5: a raid's
 import { huntMarkSeen } from '../systems/hunt/namedMark.js';   // HUNTERS-MARK-II: a hunter's named mark, read off its record
 import { elitesAllowed, promoteEliteFoe, promoteRaidLeader, rollOverworldElite, grantEliteLoot, eliteLoot, eliteGlow, setBatchEliteGlow, eliteSize, isEliteCorpse, markEliteCorpseBatch, isStaffBoss, promoteStaffBoss, STAFF_BOSS_SPELL_TAKEN, staffBossHit, STAFF_BOSS_FIGHTERS_MAX } from '../systems/eliteFoes.js';   // ELITE FOES: 5% of the wilds' foes   // HITFLASH1
 import { grantKindOf, grantElite } from '../net/grantLaw.js';   // GRANT3-GRANT4: a stand's grant - its kind, its member's elite (bible/11-Multiplayer/Spawn-Grants.md)
+import { standTemplate, templateMayBeElite, rankTemplateElite, revenantTemplate, templateBand } from '../systems/pve/pveGrant.js';   // FIXED-PVE: a template foe at its own level, health and blow
 
 // The port's allocation-owner guards (classic self-limits through the
 // 144-minute cadence; these keep a long session bounded).
@@ -431,7 +432,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // CENTRE, and `hitDist` what AlignControllerToGround's ray found below
   // it (null: nothing within 3); the drop needs the capsule the sprite
   // sizes, so it lands once the sprite has.
-  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false, replacing = false, puppet = null, seq = null, level = null, placed = false, groundAlign = null, site = null, loose = false, transformY = null, team = null, transient = false, managed = false, questMarker = false, champion = undefined, revenant = null, eliteFoe = undefined, turned = false, band = true, zoneGiant = null, grantKind = null, eventFoe = false } = {}) {   // LOOT7: `champion` - a puppet's owner's word or a save's trait (null none); unsaid, an encounter's own roll
+  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false, replacing = false, puppet = null, seq = null, level = null, placed = false, groundAlign = null, site = null, loose = false, transformY = null, team = null, transient = false, managed = false, questMarker = false, champion = undefined, revenant = null, eliteFoe = undefined, template = null, turned = false, band = true, zoneGiant = null, grantKind = null, eventFoe = false } = {}) {   // LOOT7: `champion` - a puppet's owner's word or a save's trait (null none); unsaid, an encounter's own roll
     // WORLD6b: a puppet is not this cap's. AUDIT 68 review (R-scenes-loose-foe-squad-capped): nor is a `loose` stand -
     // CreateFoeSpawner's (a summoning punishment, RR's expulsion squad, a Rose's Daedroth) stands however many it is
     // told in one loop, and DFU caps none of them; the cap is the encounter rolls'
@@ -450,20 +451,21 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     pending.capped = capped;
     spawning.push(pending);
     const gen = epoch;   // AUDIT-39r: the world this foe is being built for
+    let tpl = template ?? revenantTemplate(revenant) ?? (puppet ? _net?.grants?.puppetTemplate?.(puppet, seq) ?? null : null);   // FIXED-PVE: a template foe (systems/pve/pveGrant.js) - none while the switch is off
     try {
       if (grantKind === 'enc' && grantAsk) {   // GRANT8 (Spawn-Grants section 16): an encounter whose grant rolls its species (`encr`) stands that species
         const a = await grantAsk, t = a && 'gr' in a ? (_net?.grants?.speciesOf(a.gr, a.i, inLocation()) ?? -1) : -1;
-        if (t >= 0 && ENEMY_BASICS[t]?.maleTexture) { mobileType = t; basics = ENEMY_BASICS[t]; }
+        if (t >= 0 && ENEMY_BASICS[t]?.maleTexture) { mobileType = t; basics = ENEMY_BASICS[t]; tpl = _net?.grants?.templateOf?.(a.gr, a.i) ?? null; }
       }
       const isClass = enemyEntityType(mobileType) === 'class', career = loadEnemyCareer(mobileType, fetchBytes);   // DEX1: SetupDemoEnemy's type, SetEnemyCareer's one career door (a mod's id too)
-      const builtLevel = level ?? effectiveLevel(playerEntity);   // SOFTCAP2: a mentor's foes at the group's level
+      const builtLevel = tpl?.level ?? level ?? effectiveLevel(playerEntity);   // SOFTCAP2: a mentor's foes at the group's level
       // GRANT3: its grant (none inside GRANT_WAIT_MS: it stands as it would have with no law) - the grant's marks in place of
       // the street's rolls, through the same gates: its elite only where an elite may stand, its trait only a capped stand's
       const granted = grantAsk ? await grantAsk : null, gm = granted && 'gr' in granted ? granted : null;
       if (grantAsk && !gm && _net?.grants?.enforcing()) return null;   // GRANT6: while the law enforces, a stand stands on its grant or not at all
-      if (gm && !revenant && eliteFoe === undefined) eliteFoe = grantElite(gm.gr, gm.i) && !allied && !questBehaviour && !replacing && !team && !inLocation() && elitesAllowed({ onlinePage: isOnlinePage(), inRoom: _net != null });
+      if (gm && !revenant && eliteFoe === undefined) eliteFoe = grantElite(gm.gr, gm.i) && templateMayBeElite(tpl) && !allied && !questBehaviour && !replacing && !team && !inLocation() && elitesAllowed({ onlinePage: isOnlinePage(), inRoom: _net != null });
       if (gm && !revenant && champion === undefined && capped) champion = gm.gr.c[gm.i] >= 0 ? gm.gr.c[gm.i] : null;
-      const entity = makeEnemyEntity(mobileType, basics, await career, builtLevel, Math.random, { exactLevel: !!puppet });   // AUDIT WORLD6b-ii B2: a puppet at its OWNER's foe's level, not mine; AUDIT WATCH1 A5: EXACTLY that level (the City Watch bonus is the owner's roll, already in the word)
+      const entity = standTemplate(makeEnemyEntity(mobileType, basics, await career, builtLevel, Math.random, { exactLevel: !!puppet || !!tpl }), tpl);   // AUDIT WORLD6b-ii B2: a puppet at its OWNER's foe's level, not mine; AUDIT WATCH1 A5: EXACTLY that level (the City Watch bonus is the owner's roll, already in the word)
       // MT-ii: an ALLIED summon (Sanguine Rose / Skull of Corruption).
       // SetupDemoEnemy.cs:85-86 overwrites the MobileEnemy STRUCT COPY
       // before SetEnemy, and EnemyEntity.cs:316 seeds Entity.Team from
@@ -478,17 +480,18 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // ELITE-RATES: ELITE-RARITY's gate (one standing at a time, a 180-minute gap, never a loose stand) is gone.
       if (eliteFoe === true && !allied) promoteEliteFoe(entity);   // a saved foe's classification, restored before its HP/items overlay - never re-rolled
       else if (eliteFoe === undefined && !puppet && !allied && !questBehaviour && !replacing && !team && !inLocation() && elitesAllowed({ onlinePage: isOnlinePage(), inRoom: _net != null })
-        && (revenant ? revenant.elite : rollOverworldElite(Math.random))) promoteEliteFoe(entity);   // REVENANT: a returning revenant stands as what it was - an elite's glow where elites stand, never a fresh roll   // BAL4: online, and offline under the loot ladder
+        && templateMayBeElite(tpl) && (revenant ? revenant.elite : rollOverworldElite(Math.random))) promoteEliteFoe(entity);   // REVENANT: a returning revenant stands as what it was - an elite's glow where elites stand, never a fresh roll   // BAL4: online, and offline under the loot ladder
+      rankTemplateElite(entity, tpl);   // FIXED-PVE ELITES: an elite template at its fixed rank, not the street's x5 and x3
       if (entity.eliteFoe && !puppet && !entity.raidLeader && !bossTraitsOf(entity).length) eliteTraits(entity);   // BOSS-TRAITS: an elite of my own carries a trait, mine to draw (its record carries it - `bt`)
       // SOFTCAP5: THE WILDS ARE AN AREA TOO - the dungeons' law, with the wilderness's share (22% by day, 44% at night):
       // my own foes only (a puppet is its owner's build), never an ally, never on a location's ground
-      if (!puppet && !allied && !inLocation()) {
+      if (!puppet && !allied && !inLocation() && !tpl) {   // FIXED-PVE: a template foe stands at its own numbers - no player's scaling
         let night = false;
         try { night = isNight((skyMinute ?? currentMinute)()); } catch { /* no clock: day */ }   // TIME1: the sky's night
         // BAL3 (bible/05-Combat/Balance-Arc.md section 5): and the wilds' own threat - tier 5 by day, a harpy nest's 7 at night - while the ladder stands
         // BAL11 (section 17): and the hero's threat - my level past 10 and my Renown past 15, every kind alike
         applyProgressionScaling(entity, progressionScaling(combatStanding(playerEntity), wildernessShare(night), foeShare(basics?.level ?? entity.level, isClass), lootRarityOn() ? placeVeteran(wildernessThreat(night)) : 0, heroThreatOf(playerEntity)));
-      } else if (puppet && !allied && !inLocation()) {
+      } else if (puppet && !allied && !inLocation() && !tpl) {
         // BAL11: a peer's foe strikes ME at MY threat - its blows alone; its maximum is its owner's word (the record's `k`)
         applyProgressionScaling(entity, progressionScaling(null, 0, 0, 0, heroThreatOf(playerEntity, { puppet: true })));
       }
@@ -660,7 +663,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // B1: the quest resource behaviour couples at the stand - the
       // activation moment, where Unity runs the deferred Start.
       if (questBehaviour) bindQuestFoeHost(f, questBehaviour, questPoolOps);
-      if (revenant && band && !puppet && !allied && entity.revenant) Promise.resolve().then(() => standBand(f, bandMembers(revenant, effectiveLevel(playerEntity))));   // RVN6: its band about it - once its own slot is let go (the finally below)
+      if (revenant && band && !puppet && !allied && entity.revenant) Promise.resolve().then(() => standBand(f, templateBand(revenant, retinueCount(revenant.rank)) ?? bandMembers(revenant, effectiveLevel(playerEntity))));   // RVN6: its band about it - once its own slot is let go (the finally below)
       return f;
     } catch (err) {
       console.error(`[encounter] mobileType ${mobileType} failed to spawn:`, err?.message ?? err);
@@ -926,11 +929,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   /** BOSS-EXACT (mob 2026-10-25: "the rat isnt takeing any dmage"): a shared foe whose health its fighters' toughness weighs -
    *  never a staff event's mini boss, whose health is the exact number staff typed (BOSS-HP); over eight fighters' 4.5 a
    *  Daedric blow on a 10,000-health boss took four. Its blows at me still weigh by them (partyHit). */
-  const _toughFoe = (f) => _sharedFoe(f) && !f.entity?.staffBoss;
+  const _toughFoe = (f) => _sharedFoe(f) && !f.entity?.staffBoss && !f.entity?.pveTemplate;   // FIXED-PVE: a template foe's toughness is its composition, never the party's
   const fightN = (f) => (f.puppet ? (f._fightN ?? 1) : (f._fightN = foeFighters(f, _now())));
   /** PSCALE1: a shared foe's weapon or arrow hit on me, weighed by the players fighting it (partyFoeHits), the
    *  remainder carried on me (AUDIT PSCALE1 DOORS-4). */
-  const partyHit = (dmg, f) => (_sharedFoe(f) ? partyFoeHits(dmg, fightN(f), playerEntity) : dmg);
+  const partyHit = (dmg, f) => (_sharedFoe(f) && !f?.entity?.pveTemplate ? partyFoeHits(dmg, fightN(f), playerEntity) : dmg);
   /** AUDIT PSCALE1 DOORS-5: a heal on my foe - a shared one's over its fighters' toughness, as its damage is; a
    *  puppet's copy is its owner's to heal (the next record says so) and keeps the heal unweighed until then. */
   function healFoe(f, n) {
@@ -1414,7 +1417,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const fly = (ENEMY_BASICS[m.mobileType]?.behaviour ?? 'General') === 'Flying';
       const feet = [spot.x, fly ? spot.y + 1.5 : spot.y, spot.z];
       if (portal) portals.open(feet);
-      stands.push(spawnFoe(m.mobileType, feet, { yaw: f.ai.yaw, level: m.level, champion: null, eliteFoe: false, transient: true }).then((g) => {
+      stands.push(spawnFoe(m.mobileType, feet, { yaw: f.ai.yaw, level: m.level, template: m.template ?? null, champion: null, eliteFoe: false, transient: true }).then((g) => {
         if (!g) return null;
         g.retinueOf = id;
         if (g.entity) { g.entity.retinueOf = id; g.entity.campId = campId; g.entity.bandName = name; }

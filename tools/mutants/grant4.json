@@ -304,8 +304,8 @@
   {
     "name": "GRANT8-owner-own-roll",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "        if (t >= 0 && ENEMY_BASICS[t]?.maleTexture) { mobileType = t; basics = ENEMY_BASICS[t]; }",
-    "new": "        if (false) { mobileType = t; basics = ENEMY_BASICS[t]; }",
+    "old": "        if (t >= 0 && ENEMY_BASICS[t]?.maleTexture) { mobileType = t; basics = ENEMY_BASICS[t]; tpl = _net?.grants?.templateOf?.(a.gr, a.i) ?? null; }",
+    "new": "        if (false) { mobileType = t; basics = ENEMY_BASICS[t]; tpl = _net?.grants?.templateOf?.(a.gr, a.i) ?? null; }",
     "why": "an encr owner stands its own roll",
     "tests": [
       "test/scenes/grant4_lanes.test.js"

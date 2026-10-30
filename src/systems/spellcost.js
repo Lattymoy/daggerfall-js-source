@@ -32,6 +32,8 @@ import { skillValue, SKILLS } from './skills.js';
 import { isOnlinePage } from './online/onlineLane.js';   // SPELL-COST-PAST: online, a skill past 100 never prices a spell under nothing
 import { pathCastSchool } from './arcanePaths.js';   // SCHOOLS3: a signature spell is cast in its path's two schools (a leaf)
 
+import { castLevels, castCostScale, budgetEffect, skillCasts, oneDamagePerKind, CAST_COST_PRICE_SKILL } from './spell/castLevel.js';   // SPELL-SKILL: a player's price follows the school's power
+
 export const CAST_COST_FLOOR = 5;
 
 // SPELL-COST-PAST (FIELD BUGS 2026-10-12c, bible/01-Overview/bugs/Field-Bugs-2026-10-12c.md; from the field: "AoE buffing
@@ -185,6 +187,16 @@ export function effectCost(e, casterSkillOf, { online = isOnlinePage() } = {}) {
   return { gold, sp: skillScaledCost(gold, skill, 400, { online }) };   // SPELL-COST-PAST
 }
 
+/** SPELL-SKILL (spell/castLevel.js): my effect's price under fixed PvE - the classic price at skill 50, grown with the
+ *  power the school's skill gives it. Gold (the guild's price) stays the classic one. Past the spellmaker's budget it prices as built at it. */
+function skillPricedCost(made, casterSkillOf, { online = isOnlinePage() } = {}) {
+  const e = budgetEffect(made);
+  const entry = EFFECT_COST_TABLE[`${e.type},${e.subType & 0xff}`];
+  const base = effectCost(e, () => CAST_COST_PRICE_SKILL, { online });
+  if (!entry) return base;
+  return { gold: base.gold, sp: base.sp * castCostScale(e, entry, casterSkillOf(entry.skill)) };
+}
+
 // SET2 (Mora's Mantle's Waters of Oblivion, bible/11-Multiplayer/Sigil-Sets.md): THE PORT'S SAY OVER A PLAYER'S COST.
 // Named modifiers, `fn(entity, sp) -> sp`, over the spell points a PLAYER's cast costs after DFU's floor - read by every
 // door that prices the player's cast (the ready, the charge, the spellbook's and the HUD's figures all come through
@@ -204,9 +216,9 @@ export function registerSpellFreeCast(name, fn) { if (typeof fn === 'function') 
 export function calculateCastCost(spell, casterEntity, { portMods = true, online = isOnlinePage() } = {}) {
   const skillOf = (id) => skillValue(casterEntity, pathCastSchool(casterEntity, spell, id));   // SCHOOLS3: the school it is cast in
   let gold = 0, sp = 0;
-  for (const e of spell.effects) {
+  for (const e of skillCasts(casterEntity) ? oneDamagePerKind(spell.effects) : spell.effects) {   // SPELL-SKILL: one damage of a kind
     if (e.type <= -1) continue;
-    const c = effectCost(e, skillOf, { online });
+    const c = castLevels(casterEntity, castSchool(casterEntity, spell, e)) ? skillPricedCost(e, skillOf, { online }) : effectCost(e, skillOf, { online });   // SPELL-SKILL
     gold += c.gold;
     sp += c.sp;
   }

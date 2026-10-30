@@ -179,7 +179,7 @@ test('RVN6 THE CAP: followers are trimmed first - the room the pool has left aft
   const { pool, band } = await stood(p, 4, { fill: 6 });
   assert.equal(band.length, 1, 'six and its master: room for one');
   assert.ok(pool.activeCount() <= MAX_ACTIVE_ENCOUNTER_FOES);
-  assert.match(read('src/scenes/exteriorFoes.js'), /if \(revenant && band && !puppet && !allied && entity\.revenant\) Promise\.resolve\(\)\.then\(\(\) => standBand\(f, bandMembers\(revenant, effectiveLevel\(playerEntity\)\)\)\);/);   // PIN MOVED (RVN11c: a betrayer stands without one)
+  assert.match(read('src/scenes/exteriorFoes.js'), /if \(revenant && band && !puppet && !allied && entity\.revenant\) Promise\.resolve\(\)\.then\(\(\) => standBand\(f, templateBand\(revenant, retinueCount\(revenant\.rank\)\) \?\? bandMembers\(revenant, effectiveLevel\(playerEntity\)\)\)\);/);   // PIN MOVED (RVN11c: a betrayer stands without one)
 });
 
 test('RVN6 NO INFIGHTING: on the real target machine a follower never takes its master or its bandmate (different combat teams in one band), and still takes another foe; its master likewise (mutants: no shared camp)', async () => {

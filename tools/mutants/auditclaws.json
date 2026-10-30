@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-CLAWS-C7-dfu-metal-outside-the-backstab",
     "file": "src/combat/formulas.js",
-    "old": "      damage = backstabDamage(damage, backstabChance, rolls, say);\n      if (before > 0 && damage === before * 3) notes.backstab = true;\n    }\n  } else {",
-    "new": "      damage = backstabDamage(damage, backstabChance, rolls, say);\n      if (before > 0 && damage === before * 3) damage -= 2 * clawMetalDamage(attacker);\n      if (before > 0 && damage - before * 3 === -2 * clawMetalDamage(attacker)) notes.backstab = true;\n    }\n  } else {",
+    "old": "      damage = backstabDamage(damage, backstabChance, rolls, say);\n      if (before > 0 && damage === before * 3) notes.backstab = true;\n      damage = templateBackstab(target, before, damage, !!unaware);   // FIXED-PVE: an opener's triple, a fight's half again\n    }\n  } else {",
+    "new": "      damage = backstabDamage(damage, backstabChance, rolls, say);\n      if (before > 0 && damage === before * 3) damage -= 2 * clawMetalDamage(attacker);\n      if (before > 0 && damage - before * 3 === -2 * clawMetalDamage(attacker)) notes.backstab = true;\n      damage = templateBackstab(target, before, damage, !!unaware);   // FIXED-PVE: an opener's triple, a fight's half again\n    }\n  } else {",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]

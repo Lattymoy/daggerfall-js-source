@@ -133,7 +133,7 @@ test('PSCALE1 the hosts, by source (AUDIT PSCALE1: the rest is mounted and drive
   const x = strip(src('src/scenes/exteriorFoes.js'));
   assert.match(x, /if \(fromPlayer\) noteFighter\(f, peer \? peerId : PARTY_ME, _now\(\)\);\s*f\.entity\.health -= !bypassShield && !_whole && _toughFoe\(f\) \? partyFoeLoses\(f, healthDamage, fightN\(f\)\) : healthDamage;/, 'the owner\'s damage door');
   assert.match(x, /const dmg = (?:blowScaled\(f\.ai, )?partyHit\(calculateAttackDamage\(f\.entity, playerEntity, \{/, 'the owner\'s foe\'s blow and a puppet\'s alike reach me weighed');
-  assert.match(x, /const partyHit = \(dmg, f\) => \(_sharedFoe\(f\) \? partyFoeHits\(dmg, fightN\(f\), playerEntity\) : dmg\);/, 'by the foe\'s own fighters, the remainder on me');
+  assert.match(x, /const partyHit = \(dmg, f\) => \(_sharedFoe\(f\) && !f\?\.entity\?\.pveTemplate \? partyFoeHits\(dmg, fightN\(f\), playerEntity\) : dmg\);/, 'by the foe\'s own fighters, the remainder on me (FIXED-PVE: never a template foe)');
   assert.match(x, /if \(!onWatch && !f\.dead && _sharedFoe\(f\)\) \{ const n = fightN\(f\); if \(n > 1\) r\.n = n; \}/, 'the record carries the count');
   assert.match(x, /f\._fightN = r\.n \?\? 1;/, 'a reader reads it');
   const w = strip(src('src/scenes/world.js'));

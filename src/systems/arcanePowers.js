@@ -38,6 +38,7 @@ import { registerSpellPowerMod, registerSpellPierceMod, registerSpellLandedListe
 import { registerSpellCostMod, effectSchool } from './spellcost.js';
 import { registerCastSpeedMod } from './castSpeed.js';
 import { registerEntityFold, newMods, EMPTY_MODS } from './entityMods.js';
+import './spell/skillPool.js';   // SPELL-SKILL POOL: a mage's pool grows with the school (its fold registers on load)
 import { registerPlayerDamageMod, registerPlayerHurtListener, registerPlayerBlowEvasion, playerEntity } from '../characters/playerEntity.js';
 import { guardRoom } from './powerCeiling.js';   // POWER-CEILING: the guards' one share
 import { registerPlayerKillListener } from './playerKills.js';

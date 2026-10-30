@@ -306,8 +306,8 @@
   {
     "name": "BAL11-the-town-answers-a-puppet",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      } else if (puppet && !allied && !inLocation()) {",
-    "new": "      } else if (puppet && !allied) {",
+    "old": "      } else if (puppet && !allied && !inLocation() && !tpl) {",
+    "new": "      } else if (puppet && !allied && !tpl) {",
     "tests": [
       "test/systems/bal11_hero.test.js"
     ]

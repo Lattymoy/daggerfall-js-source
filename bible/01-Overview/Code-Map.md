@@ -103,6 +103,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | Festival (the Witches' Festival, a live event) | `systems/festival/` - and loose: `net/festivalLaw.js`, `scenes/witchesHost.js`, `world/witchesDecor.js`, `world/festivalArt.js`, `ui/wyrdDoor.js`, `ui/wyrdWindow.js`, `ui/profileIcons.js` |
 | Firmament | `net/firmament/` |
 | First-person weapon | `combat/weapon/` |
+| Fixed PvE (foes set by the place) | `systems/pve/` |
 | Foraging | `systems/foraging/` |
 | Grammar (translations) | `systems/grammar/` |
 | Guilds | `systems/guild/`, `net/guild/` |
@@ -333,6 +334,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/naval/` | Ships and the sea: naval combat, crews, ship life, harbours, trade goods. |
 | `src/systems/online/` | The online save: checkpoints, homes, the lane, the sync - the law. |
 | `src/systems/party/` | A party: travelling, resting and walking together - the law. |
+| `src/systems/pve/` | Fixed PvE (`05-Combat/Fixed-PvE.md`): species, mob templates, roles and abilities - data, switched off. |
 | `src/systems/professions/` | The professions' law (`06-Systems/Professions-Arc.md`): their items, templates and sounds. |
 | `src/systems/quest/` | The quest machine: the parser, its tables, actions and conditions. |
 | `src/systems/questlines/` | The questlines over the quest machine (`06-Systems/Questlines-Arc.md`): the objective sheets and branch patches by family, the actions, the rewards, the acts feed and the elite foe's act (`qlEliteFoe.js`, which the dungeon host hands its place - AUDIT QUESTLINES ACTS-8), the questlines, their runner and the guilds' ladders - the law. |

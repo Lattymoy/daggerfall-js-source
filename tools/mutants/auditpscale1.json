@@ -385,8 +385,8 @@
   {
     "name": "BOSS-EXACT-boss-weighed",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "  const _toughFoe = (f) => _sharedFoe(f) && !f.entity?.staffBoss;",
-    "new": "  const _toughFoe = (f) => _sharedFoe(f);",
+    "old": "  const _toughFoe = (f) => _sharedFoe(f) && !f.entity?.staffBoss && !f.entity?.pveTemplate;",
+    "new": "  const _toughFoe = (f) => _sharedFoe(f) && !f.entity?.pveTemplate;",
     "tests": [
       "test/systems/auditpscale1.test.js"
     ]

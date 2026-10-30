@@ -1,0 +1,9 @@
+[
+  {"name": "PVE-CAST-the-start-never-fades", "file": "src/systems/spell/pveCast.js", "old": "  return L >= PVE_CAST_START_GONE ? 0 : (PVE_CAST_START * (PVE_CAST_START_GONE - L)) / (PVE_CAST_START_GONE - 1);", "new": "  return PVE_CAST_START;", "tests": ["test/systems/pve/pve_fixes.test.js"]},
+  {"name": "PVE-CAST-no-crit", "file": "src/systems/spell/pveCast.js", "old": "  if (Math.floor(rolls() * 100) < Math.trunc(crit / (4 - luckTerm))) v *= Math.floor(crit / 5) * 0.05 + 1;", "new": "", "tests": ["test/systems/pve/pve_fixes.test.js"]},
+  {"name": "PVE-CAST-no-pve-x", "file": "src/systems/spell/pveCast.js", "old": "  return v * PVE_CAST_X;", "new": "  return v;", "tests": ["test/systems/pve/pve_fixes.test.js"]},
+  {"name": "PVE-CAST-no-hold", "file": "src/systems/spell/pveCast.js", "old": "  let v = Math.min(n, pveCastHold(caster, school ?? SKILLS.Destruction));", "new": "  let v = n;", "tests": ["test/systems/pve/pve_fixes.test.js"]},
+  {"name": "PVE-CAST-offline-too", "file": "src/systems/spell/pveCast.js", "old": "  if (!(n > 0) || !online || !ownSpellAt(caster, target)) return null;", "new": "  if (!(n > 0) || !ownSpellAt(caster, target)) return null;", "tests": ["test/systems/pve/pve_fixes.test.js"]},
+  {"name": "PVE-CAST-at-anyone", "file": "src/systems/spell/pveCast.js", "old": "  if (!(n > 0) || !online || !ownSpellAt(caster, target)) return null;", "new": "  if (!(n > 0) || !online) return null;", "tests": ["test/systems/pve/pve_fixes.test.js"]},
+  {"name": "PVE-CAST-the-door-skipped", "file": "src/systems/effects.js", "old": "    if (cast != null) v = Math.max(1, Math.round(cast * p));", "new": "    if (cast != null) v = Math.max(1, Math.round(v * p));", "tests": ["test/systems/bal9_destruction.test.js", "test/systems/schools_arcane.test.js"]}
+]
