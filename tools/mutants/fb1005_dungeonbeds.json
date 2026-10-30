@@ -94,8 +94,8 @@
   {
     "name": "DUNGEONBEDS-any-storey",
     "file": "src/systems/rest/restAct.js",
-    "old": "    if (Math.abs(pos[1] - aabb.min[1]) > BED_STOREY_M) continue;",
-    "new": "",
+    "old": "    if (Math.abs(pos[1] - aabb.min[1]) > BED_STOREY_M) continue; // AUDIT FB1005 B4: the bed's own floor, not the storey above or below",
+    "new": "    // AUDIT FB1005 B4: the bed's own floor, not the storey above or below",
     "tests": [
       "test/systems/rest/fb1005_dungeonbeds.test.js"
     ],

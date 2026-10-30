@@ -21,8 +21,8 @@
   {
     "name": "RESTX2-online-banks-no-real-time-RESTX1s-skip-back",
     "file": "src/systems/rest/restSession.js",
-    "old": "  _accrue(dt) {\n    this._timer += dt;\n  }",
-    "new": "  _accrue(dt) {\n    if (!Number.isFinite(this.deps.sharedMinutes?.())) this._timer += dt;\n  }",
+    "old": "    this._timer += dt;",
+    "new": "    if (!Number.isFinite(this.deps.sharedMinutes?.())) this._timer += dt;",
     "tests": [
       "test/systems/rest/restx2_online_rest.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "RESTX2-F1s-full-health-guard-put-back",
     "file": "src/systems/rest/restSession.js",
-    "old": "        this.deps.tickVitals();\n        if (--this.hoursRemaining < 1) done = REST_TEXT.wakeUp;",
-    "new": "        if (!this.deps.fullyHealed?.()) this.deps.tickVitals();\n        if (--this.hoursRemaining < 1) done = REST_TEXT.wakeUp;",
+    "old": "        this.deps.tickVitals();",
+    "new": "        if (!this.deps.fullyHealed?.()) this.deps.tickVitals();",
     "tests": [
       "test/systems/rest/restx2_online_rest.test.js"
     ]

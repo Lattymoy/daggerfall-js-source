@@ -26,10 +26,10 @@
 
 import { RestSession, REST_TEXT, REST_WAIT_PER_HOUR, MINUTES_PER_TICK } from './restSession.js';
 import { restCost, REST_KIND } from '../survival/rest.js';
-import { paySleep } from '../survival/needs.js';   // REST-SLEEP1: the short rest sleeps by the minute law's own pay
+import { paySleep } from '../survival/needs.js'; // REST-SLEEP1: the short rest sleeps by the minute law's own pay
 import { liveVampirism } from '../racialLive.js';
-import { roomRemainingHours } from '../tavern.js';   // AUDIT REST II P6: an old save's room, its nights read off its hours
-import { BY_FIRE_REACH } from '../survival/camp.js';   // FIELD BUGS 2026-10-05 DUNGEON-BEDS: a bed's reach is a fire's
+import { roomRemainingHours } from '../tavern.js'; // AUDIT REST II P6: an old save's room, its nights read off its hours
+import { BY_FIRE_REACH } from '../survival/camp.js'; // FIELD BUGS 2026-10-05 DUNGEON-BEDS: a bed's reach is a fire's
 
 /** A night: DFU's customary eight hours, on the character's own clock. */
 export const NIGHT_HOURS = 8;
@@ -48,16 +48,16 @@ export const REST_ACT_TEXT = Object.freeze({
   interrupted: 'Your rest is interrupted.',
   channel: (where) => `Resting by the ${where}...`,
   channelBed: 'Resting...',
-  meditating: 'Meditating by the candle...',   // REST6: the Meditation Candle's kneel
-  noVote: 'Online there is no vote. Rest at a fire, tent or bed, and party members within 15 m rest with you.',   // AUDIT REST: /ready online
+  meditating: 'Meditating by the candle...', // REST6: the Meditation Candle's kneel
+  noVote: 'Online there is no vote. Rest at a fire, tent or bed, and party members within 15 m rest with you.', // AUDIT REST: /ready online
   nextNight: (minutes) => `A night can pass again in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}.`,
-  rested: 'Next night',   // AUDIT C&C (lens S): the interval's tile (ui/hud/hudStatus.js) - "Rested" stood beside Boons' Well rested
-  carried: (name) => `${name} rests here, and you rest with them through the night.`,   // REST5: a member's night, carried
+  rested: 'Next night', // AUDIT C&C (lens S): the interval's tile (ui/hud/hudStatus.js) - "Rested" stood beside Boons' Well rested
+  carried: (name) => `${name} rests here, and you rest with them through the night.`, // REST5: a member's night, carried
   carriedShort: (name) => `${name} rests here, and you rest a while with them.`,
   carriedSkipped: (name) => `${name} rests here, but you are too busy to rest with them.`,
-  carriedFar: (name) => `${name} rested a night without you. Come within 15 m of them to rest with the party.`,   // AUDIT REST-PARTY: PARTY-REST-FAR1's word, online
-  carriedTown: (name) => `${name} rests here, but it is illegal to camp in town.`,   // AUDIT REST II P4: the act's own town law, for a member it would carry
-  campWait: (name) => `Resting with ${name}...`,   // CAMP-ROLL: a camp mate's night is the camp's - held until it lands
+  carriedFar: (name) => `${name} rested a night without you. Come within 15 m of them to rest with the party.`, // AUDIT REST-PARTY: PARTY-REST-FAR1's word, online
+  carriedTown: (name) => `${name} rests here, but it is illegal to camp in town.`, // AUDIT REST II P4: the act's own town law, for a member it would carry
+  campWait: (name) => `Resting with ${name}...`, // CAMP-ROLL: a camp mate's night is the camp's - held until it lands
 });
 
 /**
@@ -73,7 +73,7 @@ export const BED_STOREY_M = 1.5;
 export function bedInReach(beds, pos, reach = BY_FIRE_REACH) {
   if (!pos || !beds?.length) return false;
   for (const { aabb } of beds) {
-    if (Math.abs(pos[1] - aabb.min[1]) > BED_STOREY_M) continue;   // AUDIT FB1005 B4: the bed's own floor, not the storey above or below
+    if (Math.abs(pos[1] - aabb.min[1]) > BED_STOREY_M) continue; // AUDIT FB1005 B4: the bed's own floor, not the storey above or below
     const d = [0, 1, 2].map((k) => Math.max(aabb.min[k] - pos[k], 0, pos[k] - aabb.max[k]));
     if (Math.hypot(d[0], d[1], d[2]) <= reach) return true;
   }
@@ -123,15 +123,20 @@ export function stampNight(entity, ownNow) {
 let _night = null;
 export function runRestNight(deps, { rentedHours = -1, hours = NIGHT_HOURS } = {}) {
   const s = new RestSession('timed', hours, deps, rentedHours, null);
-  const step = REST_WAIT_PER_HOUR / MINUTES_PER_TICK;   // the session's own sub-tick (RestSession _subTickEvery), one a call
+  const step = REST_WAIT_PER_HOUR / MINUTES_PER_TICK; // the session's own sub-tick (RestSession _subTickEvery), one a call
   const outer = _night;
   _night = s;
   let r = null;
   // a night is hours * 6 sub-ticks; the guard is twice that, so a float that falls a sub-tick short each call still
   // finishes, and a session that never answers cannot hang the frame
-  try { for (let i = 0; r === null && i < hours * 12 + 8; i++) r = s.tick(step); } finally { _night = outer; }
+  try {
+    for (let i = 0; r === null && i < hours * 12 + 8; i++) r = s.tick(step);
+  } finally {
+    _night = outer;
+  }
   r = r ?? s._finish(REST_TEXT.wakeUp);
-  if (s._abortEnemySpawn && !r.died && !r.enemyBroke) {   // AUDIT REST II P7: a foe stood in the night's last sub-tick
+  if (s._abortEnemySpawn && !r.died && !r.enemyBroke) {
+    // AUDIT REST II P7: a foe stood in the night's last sub-tick
     deps.onEnemyBreak?.();
     r = { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false };
   }
@@ -154,9 +159,9 @@ export function ambushNight() {
  *  candle's kneel is its own (anywhere a rest may begin). */
 export function actAtChannelEnd(opened, now, hpAtOpen, hpNow) {
   if (opened?.meditate) return opened;
-  if (opened?.point?.where && !now?.point) return null;   // a fire, a tent or a Bedroll gone - a bed (no `where`) is the room's or the ship's, and a ship's press lasts only the press
+  if (opened?.point?.where && !now?.point) return null; // a fire, a tent or a Bedroll gone - a bed (no `where`) is the room's or the ship's, and a ship's press lasts only the press
   if (Number.isFinite(hpAtOpen) && Number.isFinite(hpNow) && hpNow < hpAtOpen) return null;
-  return { ...opened, night: now ? !!now.night : !!opened?.night };   // the point it opened on, the interval read now
+  return { ...opened, night: now ? !!now.night : !!opened?.night }; // the point it opened on, the interval read now
 }
 
 /** AUDIT REST II P8: THE HOLD IS BROKEN WHILE IT IS HELD. The channel asked for enemies and a blow only at its END, and
@@ -281,7 +286,8 @@ export function roomNightsLeft(room, nowMinutes) {
 export function spendRoomNight(room, nowMinutes) {
   if (!room || !Number.isFinite(room.expiryMinutes)) return;
   room.nights = Math.max(0, roomNightsLeft(room, nowMinutes) - 1);
-  if (room.nights === 0 && Number.isFinite(nowMinutes)) room.expiryMinutes = Math.min(room.expiryMinutes, Math.floor(nowMinutes));
+  if (room.nights === 0 && Number.isFinite(nowMinutes))
+    room.expiryMinutes = Math.min(room.expiryMinutes, Math.floor(nowMinutes));
 }
 
 /** REST5 (bible/06-Systems/Rest-Arc.md 2.6): THE NIGHT IS HEARD. A host that shares the night (world.js, the party's
@@ -290,8 +296,14 @@ export function spendRoomNight(room, nowMinutes) {
  *  it hears WHERE - the rest kind of the spot the night was slept at (survival/rest.js REST_KIND), so the party sleeps
  *  it at the rester's fire and not on the ground beside it. */
 let _nightListener = null;
-export function setNightListener(fn) { const prev = _nightListener; _nightListener = typeof fn === 'function' ? fn : null; return prev; }
-export const heardNight = (kind = null) => { _nightListener?.(kind); };
+export function setNightListener(fn) {
+  const prev = _nightListener;
+  _nightListener = typeof fn === 'function' ? fn : null;
+  return prev;
+}
+export const heardNight = (kind = null) => {
+  _nightListener?.(kind);
+};
 
 /** AUDIT REST II P3: A NIGHT SLEPT WHOLE - the session ended on its own: not in death, not broken by a foe, not cut by a
  *  prevent-rest condition (RestSession _prevented) - whatever the shape answers, the night was not slept to its end.
@@ -330,7 +342,10 @@ export const PARTY_NIGHT_MARKS = Object.freeze({ [REST_KIND.Rough]: 775, [REST_K
 /** AUDIT REST II P5: the marks' kinds, read once - the party's watch asks of a stamp every frame, and a key array a call
  *  was an allocation a member a frame. */
 const NIGHT_KINDS = Object.freeze(Object.keys(PARTY_NIGHT_MARKS));
-const markOf = (kind) => (typeof kind === 'string' && Object.hasOwn(PARTY_NIGHT_MARKS, kind) ? PARTY_NIGHT_MARKS[kind] : PARTY_NIGHT_MARKS[REST_KIND.Camp]);
+const markOf = (kind) =>
+  typeof kind === 'string' && Object.hasOwn(PARTY_NIGHT_MARKS, kind)
+    ? PARTY_NIGHT_MARKS[kind]
+    : PARTY_NIGHT_MARKS[REST_KIND.Camp];
 export const nightStamp = (t, kind = REST_KIND.Camp) => Math.floor(t / 1000) * 1000 + markOf(kind);
 /** The rest kind a night's stamp names, or null for a stamp that is no night's. */
 export const nightKindOf = (t) => {
@@ -347,7 +362,8 @@ export const isNightStamp = (t) => nightKindOf(t) !== null;
  *  watch never carries anyone on one. An older build's window open lands on `open` one time in a thousand, and costs a
  *  follower at most CAMP_WAIT_MS (partyRestLaw.js). */
 export const CAMP_MARKS = Object.freeze({ open: 774, done: 773 });
-export const campStamp = (t, which) => Math.floor(t / 1000) * 1000 + (which === 'open' ? CAMP_MARKS.open : CAMP_MARKS.done);
+export const campStamp = (t, which) =>
+  Math.floor(t / 1000) * 1000 + (which === 'open' ? CAMP_MARKS.open : CAMP_MARKS.done);
 /** 'open', 'done', or null for a stamp that is neither. */
 export const campMarkOf = (t) => {
   if (!Number.isFinite(t)) return null;
@@ -362,9 +378,12 @@ export const campMarkOf = (t) => {
  *  camp mate's that a foe broke (`enemy`). A short rest and a candle's kneel roll nothing and ask nothing. Answers
  *  `{ wait: name }` while the wait holds, else `{ r }` - the result the window ends on. */
 export function campNightStep(deps, act, rentedHours = -1) {
-  const v = act?.night && !act.meditate ? deps.camp?.verdict?.() ?? null : null;
+  const v = act?.night && !act.meditate ? (deps.camp?.verdict?.() ?? null) : null;
   if (v?.act === 'wait') return { wait: v.name || 'A party member' };
-  if (v?.act === 'enemy') { deps.onEnemyBreak?.(); return { r: { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false } }; }
+  if (v?.act === 'enemy') {
+    deps.onEnemyBreak?.();
+    return { r: { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false } };
+  }
   if (v?.act === 'night') {
     const r = deps.restCampNight?.(v.kind, true) ?? null;
     const end = carriedNightEnd(v.name || 'A party member', true, r, deps.endLines);

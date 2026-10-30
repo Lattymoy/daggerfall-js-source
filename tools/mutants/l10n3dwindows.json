@@ -132,8 +132,8 @@
   {
     "name": "L10N3d2-systems-restSession-372-cannotLoiterMoreThanXHours1",
     "file": "src/systems/rest/restSession.js",
-    "old": "  localizedText('cannotLoiterMoreThanXHours1', 'You cannot loiter more'),",
-    "new": "  'You cannot loiter more',",
+    "old": "    localizedText('cannotLoiterMoreThanXHours1', 'You cannot loiter more'),",
+    "new": "    'You cannot loiter more',",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/ui/l10n3d_windows.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "L10N3d2-systems-restSession-373-cannotLoiterMoreThanXHours2",
     "file": "src/systems/rest/restSession.js",
-    "old": "  formatText(localizedText('cannotLoiterMoreThanXHours2', 'than {0} hours at a time.'), loiterLimitHours()),   // (:780-782)",
-    "new": "  formatText('than {0} hours at a time.', loiterLimitHours()),   // (:780-782)",
+    "old": "    formatText(localizedText('cannotLoiterMoreThanXHours2', 'than {0} hours at a time.'), loiterLimitHours()), // (:780-782)",
+    "new": "    formatText('than {0} hours at a time.', loiterLimitHours()), // (:780-782)",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/ui/l10n3d_windows.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "L10N3d2-systems-restSession-544-expiredRentedRoom",
     "file": "src/systems/rest/restSession.js",
-    "old": "    if (this.remainingHoursRented === 0) return { textId: null, text: localizedText('expiredRentedRoom', EXPIRED_RENTED_ROOM), rentExpired: true, enemyBroke: false, died: false };",
-    "new": "    if (this.remainingHoursRented === 0) return { textId: null, text: EXPIRED_RENTED_ROOM, rentExpired: true, enemyBroke: false, died: false };",
+    "old": "      return {\n        textId: null,\n        text: localizedText('expiredRentedRoom', EXPIRED_RENTED_ROOM),\n        rentExpired: true,\n        enemyBroke: false,\n        died: false,\n      };",
+    "new": "      return { textId: null, text: EXPIRED_RENTED_ROOM, rentExpired: true, enemyBroke: false, died: false };",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/ui/l10n3d_windows.test.js"

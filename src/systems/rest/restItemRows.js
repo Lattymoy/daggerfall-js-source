@@ -8,7 +8,15 @@
 import { ICON_TWIGS } from '../../net/professionLaw.js';
 
 /** The block (Rest-Arc.md section 6: 1700-1709, the last three spare). */
-export const REST_ITEM = Object.freeze({ Bedroll: 1700, EmberJar: 1701, Firewood: 1702, Tonic: 1703, Candle: 1704, Salts: 1705, Draught: 1706 });
+export const REST_ITEM = Object.freeze({
+  Bedroll: 1700,
+  EmberJar: 1701,
+  Firewood: 1702,
+  Tonic: 1703,
+  Candle: 1704,
+  Salts: 1705,
+  Draught: 1706,
+});
 /** A rest item (REST6): one of the seven templates - INT9: its home here, so the account Worker reads it (a death in the
  *  zone's drop keeps it - systems/wild/wildDropLaw.js); systems/rest/restItems.js re-exports it. */
 export const isRestItem = (item) => !!item && Object.values(REST_ITEM).includes(item.templateIndex);
@@ -17,14 +25,31 @@ export const BEDROLL_NIGHTS = 10;
 export const CANDLE_USES = 3;
 export const SALTS_USES = 3;
 
-const row = (index, name, baseWeight, hitPoints, basePrice, rarity, icon, stackable) => Object.freeze({
-  index, name, baseWeight, hitPoints, capacityOrTarget: 0, basePrice, enchantmentPoints: 0, rarity, variants: 0,
-  drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false,
-  worldTextureArchive: icon[0], worldTextureRecord: icon[1], playerTextureArchive: 0, playerTextureRecord: 0, stackable,
-  // AUDIT REST II H7: a supply's charges are its uses, never wear a smith mends - a repair counter recharged a Bedroll's
-  // nights, a Candle's and the Salts' doses for less than the supply costs (DFU's ItemTemplate.isNotRepairable)
-  isNotRepairable: !stackable,
-});
+const row = (index, name, baseWeight, hitPoints, basePrice, rarity, icon, stackable) =>
+  Object.freeze({
+    index,
+    name,
+    baseWeight,
+    hitPoints,
+    capacityOrTarget: 0,
+    basePrice,
+    enchantmentPoints: 0,
+    rarity,
+    variants: 0,
+    drawOrderOrEffect: 0,
+    isBluntWeapon: false,
+    isLiquid: false,
+    isOneHanded: false,
+    isIngredient: false,
+    worldTextureArchive: icon[0],
+    worldTextureRecord: icon[1],
+    playerTextureArchive: 0,
+    playerTextureRecord: 0,
+    stackable,
+    // AUDIT REST II H7: a supply's charges are its uses, never wear a smith mends - a repair counter recharged a Bedroll's
+    // nights, a Candle's and the Salts' doses for less than the supply costs (DFU's ItemTemplate.isNotRepairable)
+    isNotRepairable: !stackable,
+  });
 /** The rows, in DFU's ItemTemplates.txt columns - charges as hitPoints (mintCondition), stacking unless they carry
  *  charges. The pictures are DFU's own: the camping bundle, the Clay Jar, the twigs, the Glass Bottle, the Candle, the
  *  Glass Jar, the Holy Water's flask. */

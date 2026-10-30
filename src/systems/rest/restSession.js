@@ -80,14 +80,14 @@
 // its real seconds again. DFU's unconditional tally stands in every
 // lane.
 
-import { getInt, getBool } from '../settings/settings.js';   // SETT: LoiterLimitInHours, S40: IllegalRestWarning
-import { roomRemainingHours } from '../tavern.js';   // S40: GetRemainingHours, CanRest's room arm
-import { BUILDING_TYPES } from '../../world/buildingNames.js';   // S40: the Ship and Tavern arms
-import { localizedText, formatText } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { getInt, getBool } from '../settings/settings.js'; // SETT: LoiterLimitInHours, S40: IllegalRestWarning
+import { roomRemainingHours } from '../tavern.js'; // S40: GetRemainingHours, CanRest's room arm
+import { BUILDING_TYPES } from '../../world/buildingNames.js'; // S40: the Ship and Tavern arms
+import { localizedText, formatText } from '../textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 
-export const MINUTES_PER_TICK = 10;          // classic minutes per sub-tick
-export const REST_WAIT_PER_HOUR = 0.75;      // real seconds per rested hour
-export const LOITER_WAIT_PER_HOUR = 1.25;    // loiter runs slower
+export const MINUTES_PER_TICK = 10; // classic minutes per sub-tick
+export const REST_WAIT_PER_HOUR = 0.75; // real seconds per rested hour
+export const LOITER_WAIT_PER_HOUR = 1.25; // loiter runs slower
 /** DFU LoiterLimitInHours (ships 3, classic's cap). SETT made it a
  *  real setting, so this is a point-of-use read; the refusal lines
  *  quote it and are a FUNCTION for the same reason. The 3..12 range is
@@ -96,8 +96,12 @@ export const LOITER_WAIT_PER_HOUR = 1.25;    // loiter runs slower
 export const loiterLimitHours = () => getInt('Enhancements', 'LoiterLimitInHours', 3, 12);
 
 export const REST_TEXT = Object.freeze({
-  loiterDone: 349, healed: 350, wakeUp: 353, enemiesNearby: 354, cannotRestNow: 355,
-  cityCampingIllegal: 17,   // V5: DaggerfallRestWindow.cs:69
+  loiterDone: 349,
+  healed: 350,
+  wakeUp: 353,
+  enemiesNearby: 354,
+  cannotRestNow: 355,
+  cityCampingIllegal: 17, // V5: DaggerfallRestWindow.cs:69
 });
 /** Internal_Strings.csv:357 / :871 - the two lines CanRest speaks. */
 export const HAVE_NOT_RENTED_ROOM = 'You have not rented a room here.';
@@ -106,7 +110,7 @@ export const ILLEGAL_REST_WARNING = 'It is illegal to camp in or near a city. Co
 export const illegalRestWarningText = () => localizedText('illegalRestWarning', ILLEGAL_REST_WARNING);
 /** DFLocation.BuildingTypes.Tavern - the one type the guild-hall arm
  *  excludes, because the data marks EVERY tavern a Fighters Guild. */
-export const BUILDING_TAVERN = BUILDING_TYPES.Tavern;   // AUDIT 68 S31-restsession-dup-remaining-hours: one home for the enum
+export const BUILDING_TAVERN = BUILDING_TYPES.Tavern; // AUDIT 68 S31-restsession-dup-remaining-hours: one home for the enum
 /** DFLocation.BuildingTypes.Ship / None - CanRest's ship arm (:580)
  *  and the bag's default when no door has been walked through. */
 export const BUILDING_SHIP = BUILDING_TYPES.Ship;
@@ -175,7 +179,9 @@ export function getPreventedRestMessage() {
 
 /** Not DFU's - the port's teardown door, so a page that rebuilds its
  *  scene does not carry a dead closure's condition into the next one. */
-export function clearPreventRestConditions() { preventRestConditions.clear(); }
+export function clearPreventRestConditions() {
+  preventRestConditions.clear();
+}
 
 /**
  * U48 - THE REST DISPATCH (DaggerfallUI.cs:651-688), which is the
@@ -229,8 +235,12 @@ export function clearPreventRestConditions() { preventRestConditions.clear(); }
  * 'offer' has nothing to say - the press is simply spent.
  */
 export function restDecision({
-  enemiesNearby = false, swimming = false, grounded = true,
-  preventedMessage = null, giveOffer = null, racialOverrideBlocks = false,
+  enemiesNearby = false,
+  swimming = false,
+  grounded = true,
+  preventedMessage = null,
+  giveOffer = null,
+  racialOverrideBlocks = false,
 } = {}) {
   if (enemiesNearby) return { kind: 'enemies', textId: REST_TEXT.enemiesNearby };
   if (swimming || !grounded) return { kind: 'cannot', textId: REST_TEXT.cannotRestNow };
@@ -239,10 +249,10 @@ export function restDecision({
   if (prevented !== null && prevented !== undefined) {
     return prevented === ''
       ? { kind: 'cannot', textId: REST_TEXT.cannotRestNow }
-      // the RESOLVED text, never the producer: every host renders this
-      // field straight into an ActionTextBox line, and DaggerfallUI.cs
-      // :667-669 shows the string GetPreventedRestMessage returned.
-      : { kind: 'prevented', message: prevented };
+      : // the RESOLVED text, never the producer: every host renders this
+        // field straight into an ActionTextBox line, and DaggerfallUI.cs
+        // :667-669 shows the string GetPreventedRestMessage returned.
+        { kind: 'prevented', message: prevented };
   }
   // :680's `else if (!GiveOffer())` - inside the third else, after the
   // prevented-rest message and BEFORE the racial override.
@@ -295,24 +305,26 @@ export function canRest({
   // - TRUE only standing in the OPEN inside a town's rect. Read the
   // second flag backwards and every inn refuses to let you sleep.
   inTownOutside = false,
-  inTownLocation = false,    // PlayerGPS.IsPlayerInTown() - the location type alone
+  inTownLocation = false, // PlayerGPS.IsPlayerInTown() - the location type alone
   insideBuilding = false,
   buildingType = null,
-  permanentScene = false,    // StateManager.ContainsPermanentScene(sceneName)
+  permanentScene = false, // StateManager.ContainsPermanentScene(sceneName)
   isShip = false,
-  houseOwned = false,        // DaggerfallBankManager.IsHouseOwned(buildingKey)
-  room = null,               // the rental record for THIS inn, or null
+  houseOwned = false, // DaggerfallBankManager.IsHouseOwned(buildingKey)
+  room = null, // the rental record for THIS inn, or null
   nowMinutes = 0,
-  restMarkers = 0,           // Interior.FindMarkers(InteriorMarkerTypes.Rest).length
-  guildCanRest = false,      // GuildManager.GetGuild(factionID).CanRest()
+  restMarkers = 0, // Interior.FindMarkers(InteriorMarkerTypes.Rest).length
+  guildCanRest = false, // GuildManager.GetGuild(factionID).CanRest()
   alreadyWarned = false,
 } = {}) {
   if (inTownOutside) {
     return {
       allowed: alreadyWarned,
       textId: alreadyWarned ? null : REST_TEXT.cityCampingIllegal,
-      crime: 'Vagrancy', spawnGuards: true,
-      hoursRented: -1, bedIndex: -1,
+      crime: 'Vagrancy',
+      spawnGuards: true,
+      hoursRented: -1,
+      bedIndex: -1,
     };
   }
   if (inTownLocation && insideBuilding) {
@@ -332,8 +344,8 @@ export function canRest({
       // The bed index is stored rather than a position because
       // "building positions are not stable" (DFU's own comment);
       // out of range falls to 0, as :582.
-      const idx = (room && room.allocatedBedIndex >= 0 && room.allocatedBedIndex < restMarkers)
-        ? room.allocatedBedIndex : 0;
+      const idx =
+        room && room.allocatedBedIndex >= 0 && room.allocatedBedIndex < restMarkers ? room.allocatedBedIndex : 0;
       bedIndex = restMarkers > 0 ? idx : -1;
       if (hoursRented > 0) return { allowed: true, hoursRented, bedIndex };
     }
@@ -377,10 +389,11 @@ export const LOITER_PROMPT = 'Loiter how many hours : ';
 /** L10N3d: the two field labels (:616, :697) in the player's language, read where the field shows. */
 export const restPrompt = () => localizedText('restHowManyHours', REST_PROMPT);
 export const loiterPrompt = () => localizedText('loiterHowManyHours', LOITER_PROMPT);
-export const cannotLoiterLines = () => Object.freeze([
-  localizedText('cannotLoiterMoreThanXHours1', 'You cannot loiter more'),
-  formatText(localizedText('cannotLoiterMoreThanXHours2', 'than {0} hours at a time.'), loiterLimitHours()),   // (:780-782)
-]);
+export const cannotLoiterLines = () =>
+  Object.freeze([
+    localizedText('cannotLoiterMoreThanXHours1', 'You cannot loiter more'),
+    formatText(localizedText('cannotLoiterMoreThanXHours2', 'than {0} hours at a time.'), loiterLimitHours()), // (:780-782)
+  ]);
 
 /** Internal_Strings.csv :358, verbatim - EndRest's FIRST arm, which
  *  outranks "You wake up." and "You are healed." both (:480-486). */
@@ -406,9 +419,15 @@ export const illegalRestWarning = () => getBool('GUI', 'IllegalRestWarning');
  * test, both optional flags defaulting off (PlayerGPS.cs:504-527).
  */
 export function interiorRestPlace({
-  inTownLocation = false, building = null, nowMinutes = 0,
-  restMarkers = 0, permanentScene = false, houseOwned = false,
-  room = null, guildCanRest = false, homeBed = false,
+  inTownLocation = false,
+  building = null,
+  nowMinutes = 0,
+  restMarkers = 0,
+  permanentScene = false,
+  houseOwned = false,
+  room = null,
+  guildCanRest = false,
+  homeBed = false,
 } = {}) {
   // RENT-REST (FIELD BUGS 2026-10-01, "Room renting is buggy"; online, Ledger A - HOME1, HOME-RENT): `homeBed`, the
   // visit's online home is the player's to sleep in - its owner's, or a tenant's while the tenancy runs
@@ -423,18 +442,17 @@ export function interiorRestPlace({
     insideBuilding: true,
     buildingType,
     isShip: buildingType === BUILDING_SHIP,
-    permanentScene: permanentScene || homeBed,   // RENT-REST
+    permanentScene: permanentScene || homeBed, // RENT-REST
     // DaggerfallBankManager.IsHouseOwned - live since H1; a host
     // without a bank passes DFU's own default for a player who has
     // bought nothing.
-    houseOwned: houseOwned || homeBed,   // RENT-REST
+    houseOwned: houseOwned || homeBed, // RENT-REST
     room,
     nowMinutes,
     restMarkers,
     guildCanRest,
   };
 }
-
 
 /**
  * RPT1026-MISC BED-PRESS-INDOOR (a private report: a rest in a Fighters Guild hall woke to the rough night's line though
@@ -472,7 +490,7 @@ export class RestSession {
     this.totalHours = 0;
     this._minutesOfHour = 0;
     this._timer = 0;
-    this._abortEnemySpawn = false;   // B1: the OnEncounter latch, read at the next tick
+    this._abortEnemySpawn = false; // B1: the OnEncounter latch, read at the next tick
     // waitTimePerHour / minutesPerTick, verbatim (NOT per-hour /
     // ticks-per-hour - see the header quirk note).
     this._subTickEvery = (mode === 'loiter' ? LOITER_WAIT_PER_HOUR : REST_WAIT_PER_HOUR) / MINUTES_PER_TICK;
@@ -494,7 +512,9 @@ export class RestSession {
   /** GameManager.OnEncounter -> DaggerfallRestWindow.
    *  AbortRestForEnemySpawn (:301-304): latch only; the next tick
    *  answers the enemies-nearby break. */
-  abortForEnemySpawn() { this._abortEnemySpawn = true; }
+  abortForEnemySpawn() {
+    this._abortEnemySpawn = true;
+  }
 
   /**
    * ROAD-B B5 - THE PER-FRAME PREVENTED-REST POLL.
@@ -531,7 +551,9 @@ export class RestSession {
 
   /** `uiManager.TopWindow != this` (:364, :399). See the ctor note:
    *  no seam means no stack above this window. */
-  _covered() { return this.isTopWindow ? !this.isTopWindow() : false; }
+  _covered() {
+    return this.isTopWindow ? !this.isTopWindow() : false;
+  }
 
   /** RESTX2: the frame's real seconds, banked for the timer in EVERY mode - see the header. RESTX1 skipped
    *  this under the shared clock (a free rest read no timer at all, a loiter read the world's clock); both
@@ -572,7 +594,14 @@ export class RestSession {
    *  RemoveExpiredRentedRooms right there, so the landlord clears the
    *  room as the player wakes. */
   _finish(textId) {
-    if (this.remainingHoursRented === 0) return { textId: null, text: localizedText('expiredRentedRoom', EXPIRED_RENTED_ROOM), rentExpired: true, enemyBroke: false, died: false };
+    if (this.remainingHoursRented === 0)
+      return {
+        textId: null,
+        text: localizedText('expiredRentedRoom', EXPIRED_RENTED_ROOM),
+        rentExpired: true,
+        enemyBroke: false,
+        died: false,
+      };
     return { textId, enemyBroke: false, died: false };
   }
 
@@ -687,7 +716,10 @@ export class RestSession {
       if (this._covered()) return null;
       // PARTY-REST5: see the doc comment on the abort-latch arm above - the same hook, the same law, the other
       // of the two places a real session's enemy break can be discovered.
-      if (this.deps.enemiesNearby()) { this.deps.onEnemyBreak?.(); return { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false }; }
+      if (this.deps.enemiesNearby()) {
+        this.deps.onEnemyBreak?.();
+        return { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false };
+      }
       // :405-410 - the poll AGAIN, after the enemies and before the
       // vitals, so a condition that turns on during the hour's own
       // quest ticks stops the healing rather than following it.

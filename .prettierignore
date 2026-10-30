@@ -148,6 +148,8 @@
 /src/systems/professions/*/
 !/src/systems/region/
 /src/systems/region/*/
+!/src/systems/rest/
+/src/systems/rest/*/
 !/src/systems/sea/
 /src/systems/sea/*/
 !/src/systems/snowfall/

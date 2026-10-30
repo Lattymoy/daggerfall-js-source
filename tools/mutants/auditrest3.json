@@ -224,8 +224,8 @@
   {
     "name": "AUDITREST3-C3-only-a-whole-night-raises",
     "file": "src/systems/rest/restAct.js",
-    "old": "  const raise = !!r;\n  if (!night)",
-    "new": "  const raise = nightWhole(r);\n  if (!night)",
+    "old": "  const raise = !!r;",
+    "new": "  const raise = nightWhole(r);",
     "tests": [
       "test/systems/auditrest2_party.test.js"
     ]
@@ -233,8 +233,8 @@
   {
     "name": "AUDITREST3-C3-a-rest-that-never-ran-raises",
     "file": "src/systems/rest/restAct.js",
-    "old": "  const raise = !!r;\n  if (!night)",
-    "new": "  const raise = true;\n  if (!night)",
+    "old": "  const raise = !!r;",
+    "new": "  const raise = true;",
     "tests": [
       "test/systems/auditrest2_party.test.js"
     ]

@@ -92,8 +92,8 @@
   {
     "name": "CAP-SUPPLIES-rest-unregistered",
     "file": "src/systems/rest/restItems.js",
-    "old": "registerLootSupply('REST', isRestItem);",
-    "new": "registerLootSupply('REST', null);",
+    "old": "registerLootSupply('REST', isRestItem); // CAP-SUPPLIES: a full body's cap keeps one before a Common piece (foeLootCap.js)",
+    "new": "registerLootSupply('REST', null); // CAP-SUPPLIES: a full body's cap keeps one before a Common piece (foeLootCap.js)",
     "why": "the seven never registered: a Tonic is no supply",
     "tests": [
       "test/systems/search1_searchables.test.js"
@@ -340,8 +340,8 @@
   {
     "name": "REST-LOOT-pile-ember-back",
     "file": "src/systems/rest/restItems.js",
-    "old": "[[REST_ITEM.EmberJar, 6], [REST_ITEM.Tonic, 6],",
-    "new": "[[REST_ITEM.EmberJar, 4], [REST_ITEM.Tonic, 6],",
+    "old": "  [REST_ITEM.EmberJar, 6],",
+    "new": "  [REST_ITEM.EmberJar, 4],",
     "why": "a pile's Ember Jar back at 4",
     "tests": [
       "test/systems/survival/rest6_consumables.test.js"
@@ -350,8 +350,8 @@
   {
     "name": "REST-LOOT-pile-firewood",
     "file": "src/systems/rest/restItems.js",
-    "old": "[REST_ITEM.Firewood, 4], [REST_ITEM.Candle, 2]",
-    "new": "[REST_ITEM.Firewood, 5], [REST_ITEM.Candle, 2]",
+    "old": "  [REST_ITEM.Firewood, 4],",
+    "new": "  [REST_ITEM.Firewood, 5],",
     "why": "a pile's Firewood moved",
     "tests": [
       "test/systems/survival/rest6_consumables.test.js"
@@ -360,8 +360,8 @@
   {
     "name": "REST-LOOT-foe-ember-back",
     "file": "src/systems/rest/restItems.js",
-    "old": "export const REST_FOE_CHANCES = Object.freeze([[REST_ITEM.EmberJar, 3],",
-    "new": "export const REST_FOE_CHANCES = Object.freeze([[REST_ITEM.EmberJar, 2],",
+    "old": "  [REST_ITEM.EmberJar, 3],",
+    "new": "  [REST_ITEM.EmberJar, 2],",
     "why": "a foe's Ember Jar back at 2",
     "tests": [
       "test/systems/survival/rest6_consumables.test.js"
@@ -370,8 +370,8 @@
   {
     "name": "REST-LOOT-foe-draught-dropped",
     "file": "src/systems/rest/restItems.js",
-    "old": "[REST_ITEM.Salts, 1], [REST_ITEM.Draught, 1]]);",
-    "new": "[REST_ITEM.Salts, 1]]);",
+    "old": "  [REST_ITEM.Draught, 1],\n]);",
+    "new": "]);",
     "why": "a foe never carries the Draught",
     "tests": [
       "test/systems/survival/rest6_consumables.test.js"
@@ -380,8 +380,8 @@
   {
     "name": "REST-LOOT-the-bedroll-found",
     "file": "src/systems/rest/restItems.js",
-    "old": "export const REST_FOE_CHANCES = Object.freeze([[REST_ITEM.EmberJar, 3],",
-    "new": "export const REST_FOE_CHANCES = Object.freeze([[REST_ITEM.Bedroll, 1], [REST_ITEM.EmberJar, 3],",
+    "old": "  [REST_ITEM.EmberJar, 3],",
+    "new": "  [REST_ITEM.Bedroll, 1],\n  [REST_ITEM.EmberJar, 3],",
     "why": "the Bedroll on a foe",
     "tests": [
       "test/systems/survival/rest6_consumables.test.js"

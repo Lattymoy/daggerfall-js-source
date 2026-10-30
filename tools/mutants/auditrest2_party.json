@@ -114,8 +114,8 @@
   {
     "name": "AUDITREST2-P-P3-a-cut-night-is-whole",
     "file": "src/systems/rest/restAct.js",
-    "old": "!r.enemyBroke && !r.prevented;",
-    "new": "!r.enemyBroke;",
+    "old": "export const nightWhole = (r) => !!r && !r.died && !r.enemyBroke && !r.prevented;",
+    "new": "export const nightWhole = (r) => !!r && !r.died && !r.enemyBroke;",
     "tests": [
       "test/systems/auditrest2_party.test.js",
       "test/systems/rest/auditrestparty.test.js",
@@ -256,8 +256,8 @@
   {
     "name": "AUDITREST2-P-P5-a-key-array-a-call",
     "file": "src/systems/rest/restAct.js",
-    "old": "  for (const kind of NIGHT_KINDS) if",
-    "new": "  for (const kind of Object.keys(PARTY_NIGHT_MARKS)) if",
+    "old": "  for (const kind of NIGHT_KINDS) if (PARTY_NIGHT_MARKS[kind] === ms) return kind;",
+    "new": "  for (const kind of Object.keys(PARTY_NIGHT_MARKS)) if (PARTY_NIGHT_MARKS[kind] === ms) return kind;",
     "tests": [
       "test/systems/auditrest2_party.test.js",
       "test/systems/rest/auditrestparty.test.js",
@@ -309,8 +309,8 @@
   {
     "name": "AUDITREST2-P-P6-the-day-spent-again",
     "file": "src/systems/rest/restAct.js",
-    "old": "  room.nights = Math.max(0, roomNightsLeft(room, nowMinutes) - 1);",
-    "new": "  room.nights = Math.max(0, roomNightsLeft(room, nowMinutes) - 1); room.expiryMinutes -= 960;",
+    "old": "  if (room.nights === 0 && Number.isFinite(nowMinutes))",
+    "new": "  room.expiryMinutes -= 960;\n  if (room.nights === 0 && Number.isFinite(nowMinutes))",
     "tests": [
       "test/systems/auditrest2_party.test.js",
       "test/systems/rest/rest1_act.test.js"
@@ -319,8 +319,8 @@
   {
     "name": "AUDITREST2-P-P6-the-last-night-keeps-the-room",
     "file": "src/systems/rest/restAct.js",
-    "old": "  if (room.nights === 0 && Number.isFinite(nowMinutes)) room.expiryMinutes",
-    "new": "  if (false && Number.isFinite(nowMinutes)) room.expiryMinutes",
+    "old": "  if (room.nights === 0 && Number.isFinite(nowMinutes))\n    room.expiryMinutes = Math.min(room.expiryMinutes, Math.floor(nowMinutes));",
+    "new": "  if (false && Number.isFinite(nowMinutes)) room.expiryMinutes = Math.min(room.expiryMinutes, Math.floor(nowMinutes));",
     "tests": [
       "test/systems/auditrest2_party.test.js",
       "test/systems/rest/rest1_act.test.js"
@@ -329,8 +329,8 @@
   {
     "name": "AUDITREST2-P-P6-the-days-floored",
     "file": "src/systems/rest/restAct.js",
-    "old": "Math.max(0, Math.ceil(h / 24))",
-    "new": "Math.max(0, Math.floor(h / 24))",
+    "old": "    room.nights = Number.isFinite(h) ? Math.max(0, Math.ceil(h / 24)) : 0;",
+    "new": "    room.nights = Number.isFinite(h) ? Math.max(0, Math.floor(h / 24)) : 0;",
     "tests": [
       "test/systems/auditrest2_party.test.js",
       "test/systems/rest/rest1_act.test.js"
@@ -360,8 +360,8 @@
   {
     "name": "AUDITREST2-P-P7-the-break-unheard",
     "file": "src/systems/rest/restAct.js",
-    "old": "    deps.onEnemyBreak?.();\n    r = {",
-    "new": "    r = {",
+    "old": "    deps.onEnemyBreak?.();\n    r = { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false };",
+    "new": "    r = { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false };",
     "tests": [
       "test/systems/auditrest2_party.test.js",
       "test/systems/rest/auditrestparty.test.js",
@@ -415,8 +415,8 @@
   {
     "name": "AUDITREST2-P-P8-a-kneel-broken-by-a-blow",
     "file": "src/systems/rest/restAct.js",
-    "old": "  if (opened?.meditate) return false;\n  if (Number.isFinite(hpAtOpen)",
-    "new": "  if (Number.isFinite(hpAtOpen)",
+    "old": "  if (opened?.meditate) return false;\n  if (Number.isFinite(hpAtOpen) && Number.isFinite(hpNow) && hpNow < hpAtOpen) return true;",
+    "new": "  if (Number.isFinite(hpAtOpen) && Number.isFinite(hpNow) && hpNow < hpAtOpen) return true;",
     "tests": [
       "test/systems/auditrest2_party.test.js",
       "test/systems/rest/rest1_act.test.js"
@@ -446,8 +446,8 @@
   {
     "name": "AUDITREST2-P-P8-no-blow-felt",
     "file": "src/systems/rest/restAct.js",
-    "old": "  if (Number.isFinite(hpAtOpen) && Number.isFinite(hpNow) && hpNow < hpAtOpen) return true;\n",
-    "new": "",
+    "old": "  if (Number.isFinite(hpAtOpen) && Number.isFinite(hpNow) && hpNow < hpAtOpen) return true;\n  return !!opened?.point?.where && typeof restActNow === 'function' && !restActNow()?.point;",
+    "new": "  return !!opened?.point?.where && typeof restActNow === 'function' && !restActNow()?.point;",
     "tests": [
       "test/systems/auditrest2_party.test.js",
       "test/systems/rest/rest1_act.test.js"

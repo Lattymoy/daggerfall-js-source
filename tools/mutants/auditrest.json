@@ -40,8 +40,8 @@
   {
     "name": "AUDITREST-F3-the-draught-for-ever",
     "file": "src/systems/rest/restItems.js",
-    "old": "export const DRAUGHT_SPENT_MINUTES = 60;",
-    "new": "export const DRAUGHT_SPENT_MINUTES = 360;",
+    "old": "export const DRAUGHT_SPENT_MINUTES = 60; // AUDIT REST F3: an hour's rest under it spends it - a stopped channel keeps it",
+    "new": "export const DRAUGHT_SPENT_MINUTES = 360; // AUDIT REST F3: an hour's rest under it spends it - a stopped channel keeps it",
     "tests": [
       "test/systems/survival/auditrest.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "AUDITREST-F4-the-candle-not-the-packs",
     "file": "src/systems/rest/restItems.js",
-    "old": "(_candle && (!entity || (entity.items ?? []).includes(_candle.item)) ? _candle : null)",
-    "new": "(_candle ? _candle : null)",
+    "old": "export const litCandle = (entity = null) =>\n  _candle && (!entity || (entity.items ?? []).includes(_candle.item)) ? _candle : null;",
+    "new": "export const litCandle = (entity = null) => (_candle ? _candle : null);",
     "tests": [
       "test/systems/survival/auditrest.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "AUDITREST-F4-meditate-unbound",
     "file": "src/systems/rest/restItems.js",
-    "old": "  const c = litCandle(entity);\n  _candle = null;",
-    "new": "  const c = _candle;\n  _candle = null;",
+    "old": "  const c = litCandle(entity);",
+    "new": "  const c = _candle;",
     "tests": [
       "test/systems/survival/auditrest.test.js"
     ]
@@ -115,8 +115,8 @@
   {
     "name": "AUDITREST-F9-the-salts-read-the-debt",
     "file": "src/systems/rest/restItems.js",
-    "old": "  if (sleepStage(s.sleepDebt ?? 0) === 'rested') return",
-    "new": "  if ((s.sleepDebt ?? 0) <= 0) return",
+    "old": "  if (sleepStage(s.sleepDebt ?? 0) === 'rested') return { kind: 'text', text: REST_ITEM_TEXT.saltsNotTired }; // AUDIT REST F9: the stage, not the debt",
+    "new": "  if ((s.sleepDebt ?? 0) <= 0) return { kind: 'text', text: REST_ITEM_TEXT.saltsNotTired }; // AUDIT REST F9: the stage, not the debt",
     "tests": [
       "test/systems/survival/auditrest.test.js"
     ]

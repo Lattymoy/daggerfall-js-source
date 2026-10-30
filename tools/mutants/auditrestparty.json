@@ -249,7 +249,7 @@
   {
     "name": "AUDITRESTPARTY-B4-used-online",
     "file": "src/systems/rest/restItems.js",
-    "old": "  const h = (item, list, ctx) => (restItemsShut() ? { kind: 'text', text: REST_ITEM_TEXT.notOnline } : fn(item, list, ctx));",
+    "old": "  const h = (item, list, ctx) =>\n    restItemsShut() ? { kind: 'text', text: REST_ITEM_TEXT.notOnline } : fn(item, list, ctx);",
     "new": "  const h = (item, list, ctx) => fn(item, list, ctx);",
     "tests": [
       "test/systems/survival/auditrestparty_camps.test.js"
@@ -294,8 +294,8 @@
   {
     "name": "AUDITRESTPARTY-B6-salts-stack",
     "file": "src/systems/rest/restItems.js",
-    "old": "  if (wakingHeld(s, now)) return { kind: 'text', text: REST_ITEM_TEXT.saltsHeld };",
-    "new": "  if (false) return { kind: 'text', text: REST_ITEM_TEXT.saltsHeld };",
+    "old": "  if (wakingHeld(s, now)) return { kind: 'text', text: REST_ITEM_TEXT.saltsHeld }; // AUDIT REST-PARTY B6: one hour at a time - three taken at once held three hours and landed ONE hour's debt (needs.js landWakingDebt lands once), and at the debt's cap none",
+    "new": "  if (false) return { kind: 'text', text: REST_ITEM_TEXT.saltsHeld }; // AUDIT REST-PARTY B6: one hour at a time - three taken at once held three hours and landed ONE hour's debt (needs.js landWakingDebt lands once), and at the debt's cap none",
     "tests": [
       "test/systems/survival/auditrestparty_camps.test.js"
     ]
@@ -312,8 +312,8 @@
   {
     "name": "AUDITRESTPARTY-A1-a-night-an-hour-a-call",
     "file": "src/systems/rest/restAct.js",
-    "old": "  const step = REST_WAIT_PER_HOUR / MINUTES_PER_TICK;",
-    "new": "  const step = (REST_WAIT_PER_HOUR / MINUTES_PER_TICK) * 6;",
+    "old": "  const step = REST_WAIT_PER_HOUR / MINUTES_PER_TICK; // the session's own sub-tick (RestSession _subTickEvery), one a call",
+    "new": "  const step = (REST_WAIT_PER_HOUR / MINUTES_PER_TICK) * 6; // the session's own sub-tick (RestSession _subTickEvery), one a call",
     "tests": [
       "test/systems/rest/auditrestparty.test.js"
     ]
@@ -384,8 +384,8 @@
   {
     "name": "AUDITRESTPARTY-A5-a-gone-fire-sleeps",
     "file": "src/systems/rest/restAct.js",
-    "old": "  if (opened?.point?.where && !now?.point) return null;",
-    "new": "",
+    "old": "  if (opened?.point?.where && !now?.point) return null; // a fire, a tent or a Bedroll gone - a bed (no `where`) is the room's or the ship's, and a ship's press lasts only the press",
+    "new": "  // a fire, a tent or a Bedroll gone - a bed (no `where`) is the room's or the ship's, and a ship's press lasts only the press",
     "tests": [
       "test/systems/survival/auditrestparty_camps.test.js"
     ]
@@ -402,8 +402,8 @@
   {
     "name": "AUDITRESTPARTY-A5-the-interval-read-at-the-open",
     "file": "src/systems/rest/restAct.js",
-    "old": "  return { ...opened, night: now ? !!now.night : !!opened?.night };",
-    "new": "  return { ...opened, night: !!opened?.night };",
+    "old": "  return { ...opened, night: now ? !!now.night : !!opened?.night }; // the point it opened on, the interval read now",
+    "new": "  return { ...opened, night: !!opened?.night }; // the point it opened on, the interval read now",
     "tests": [
       "test/systems/survival/auditrestparty_camps.test.js"
     ]
@@ -411,8 +411,8 @@
   {
     "name": "AUDITRESTPARTY-A5-a-bed-interrupted",
     "file": "src/systems/rest/restAct.js",
-    "old": "  if (opened?.point?.where && !now?.point) return null;",
-    "new": "  if (!now?.point) return null;",
+    "old": "  if (opened?.point?.where && !now?.point) return null; // a fire, a tent or a Bedroll gone - a bed (no `where`) is the room's or the ship's, and a ship's press lasts only the press",
+    "new": "  if (!now?.point) return null; // a fire, a tent or a Bedroll gone - a bed (no `where`) is the room's or the ship's, and a ship's press lasts only the press",
     "tests": [
       "test/systems/survival/auditrestparty_camps.test.js"
     ]

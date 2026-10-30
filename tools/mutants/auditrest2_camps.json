@@ -183,8 +183,8 @@
   {
     "name": "AUDITREST2-H7-a-supply-recharged",
     "file": "src/systems/rest/restItemRows.js",
-    "old": "  isNotRepairable: !stackable,",
-    "new": "  isNotRepairable: false,",
+    "old": "    isNotRepairable: !stackable,",
+    "new": "    isNotRepairable: false,",
     "tests": [
       "test/systems/auditrest2_camps.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "AUDITREST2-H10-the-entity-dropped",
     "file": "src/systems/rest/restItems.js",
-    "old": "offlineUse((item, list, ctx) => useCandle(item, list, ctx?.entity))",
-    "new": "offlineUse((item, list) => useCandle(item, list))",
+    "old": "  offlineUse((item, list, ctx) => useCandle(item, list, ctx?.entity)),",
+    "new": "  offlineUse((item, list) => useCandle(item, list)),",
     "tests": [
       "test/systems/auditrest2_camps.test.js"
     ]

@@ -22,8 +22,8 @@
   {
     "name": "RENT-REST-the-bed-outside-the-permanent-scene",
     "file": "src/systems/rest/restSession.js",
-    "old": "permanentScene: permanentScene || homeBed,",
-    "new": "permanentScene,",
+    "old": "    permanentScene: permanentScene || homeBed, // RENT-REST",
+    "new": "    permanentScene, // RENT-REST",
     "tests": [
       "test/systems/fb1001_rent.test.js"
     ]
@@ -31,8 +31,8 @@
   {
     "name": "RENT-REST-the-bed-no-house",
     "file": "src/systems/rest/restSession.js",
-    "old": "houseOwned: houseOwned || homeBed,",
-    "new": "houseOwned,",
+    "old": "    houseOwned: houseOwned || homeBed, // RENT-REST",
+    "new": "    houseOwned, // RENT-REST",
     "tests": [
       "test/systems/fb1001_rent.test.js"
     ]

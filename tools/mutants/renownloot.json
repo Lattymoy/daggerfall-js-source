@@ -225,8 +225,8 @@
   {
     "name": "RENOWN-LOOT-rest-from-some",
     "file": "src/systems/rest/restItems.js",
-    "old": "chances.map(([t, pct]) => [t, lootEased(0, pct, quarters)]);",
-    "new": "chances.map(([t, pct]) => [t, lootEased(pct, pct, quarters)]);",
+    "old": "  quarters === 4 ? chances : chances.map(([t, pct]) => [t, lootEased(0, pct, quarters)]);",
+    "new": "  quarters === 4 ? chances : chances.map(([t, pct]) => [t, lootEased(pct, pct, quarters)]);",
     "why": "the supplies flat online",
     "tests": [
       "test/systems/renownloot.test.js"
@@ -235,8 +235,8 @@
   {
     "name": "RENOWN-LOOT-rest-foe-hook-whole",
     "file": "src/systems/rest/restItems.js",
-    "old": "rollRestLoot(items, restLootChances(REST_FOE_CHANCES, quarters), rolls); });",
-    "new": "rollRestLoot(items, REST_FOE_CHANCES, rolls); });",
+    "old": "    rollRestLoot(items, restLootChances(REST_FOE_CHANCES, quarters), rolls);",
+    "new": "    rollRestLoot(items, REST_FOE_CHANCES, rolls);",
     "why": "the foe's supplies at LOOT-EASE's whole",
     "tests": [
       "test/systems/renownloot.test.js"
@@ -245,8 +245,8 @@
   {
     "name": "RENOWN-LOOT-rest-pile-hook-whole",
     "file": "src/systems/rest/restItems.js",
-    "old": "rollRestLoot(items, restLootChances(REST_PILE_CHANCES, quarters), rolls); });",
-    "new": "rollRestLoot(items, REST_PILE_CHANCES, rolls); });",
+    "old": "    if (isDeepPileKey(key)) rollRestLoot(items, restLootChances(REST_PILE_CHANCES, quarters), rolls);",
+    "new": "    if (isDeepPileKey(key)) rollRestLoot(items, REST_PILE_CHANCES, rolls);",
     "why": "the pile's supplies at LOOT-EASE's whole",
     "tests": [
       "test/systems/renownloot.test.js"
@@ -255,8 +255,8 @@
   {
     "name": "RENOWN-LOOT-rest-whole-shortcut",
     "file": "src/systems/rest/restItems.js",
-    "old": "  quarters === 4 ? chances : chances.map(",
-    "new": "  chances.map(",
+    "old": "  quarters === 4 ? chances : chances.map(([t, pct]) => [t, lootEased(0, pct, quarters)]);",
+    "new": "  chances.map(([t, pct]) => [t, lootEased(0, pct, quarters)]);",
     "why": "a fresh table for LOOT-EASE's own (not the very table)",
     "tests": [
       "test/systems/renownloot.test.js"

@@ -137,8 +137,8 @@
   {
     "name": "CAMP-ROLL-a-short-rest-waits-on-the-camp",
     "file": "src/systems/rest/restAct.js",
-    "old": "  const v = act?.night && !act.meditate ? deps.camp?.verdict?.() ?? null : null;",
-    "new": "  const v = !act?.meditate ? deps.camp?.verdict?.() ?? null : null;",
+    "old": "  const v = act?.night && !act.meditate ? (deps.camp?.verdict?.() ?? null) : null;",
+    "new": "  const v = !act?.meditate ? (deps.camp?.verdict?.() ?? null) : null;",
     "tests": [
       "test/systems/camproll.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "CAMP-ROLL-their-ambush-breaks-me-silently",
     "file": "src/systems/rest/restAct.js",
-    "old": "  if (v?.act === 'enemy') { deps.onEnemyBreak?.(); return",
-    "new": "  if (v?.act === 'enemy') { return",
+    "old": "    deps.onEnemyBreak?.();\n    return { r: { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false } };",
+    "new": "    return { r: { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false } };",
     "tests": [
       "test/systems/camproll.test.js"
     ]
