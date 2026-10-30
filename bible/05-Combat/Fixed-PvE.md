@@ -18,7 +18,7 @@ Unity has no templates: its monsters stand at their row and its class foes at th
 | Standing | `pveStanding.js` | Stage 4: the state a creature meets a player in, what a blow on it costs, the services it offers (section 6) |
 | Bestiary | `pveBestiary.js` | Stage 5: where each species lives, by province, region, climate, dungeon type, faction and need (section 7) |
 | Encounter | `pveThreat.js`, `pveContribution.js`, `pveEncounter.js` | Stage 6: whom a foe fights, who earns the kill, the encounter director and who joins a fight (section 8) |
-| Population | `pveZones.js`, `pveSpawnTable.js`, `pvePopulation.js` | Stage 7: the fixed-level zones, a place's spawn table and the manager that keeps a cell's count (section 9) |
+| Population | `pveZones.js`, `pveSpawnTable.js`, `pvePopulation.js`, `pveGrant.js` | Stage 7: the fixed-level zones, a place's spawn table, the manager that keeps a cell's count, and the spawn grant that stands a template (section 9) |
 | Template | `pveTemplates.js` | One gameplay variant: species, level 1-45, category, 1-2 roles, abilities, disposition, faction, kit metal |
 
 ## 2. The numbers
@@ -152,3 +152,11 @@ grows with the crowd. A fallen slot waits its population's time (a minute on a f
 foe), and its next foe is drawn from the slot's name and turn, the same on every machine. A cell unseen for five
 minutes sleeps; its waits and a lasting death outlive the sleep. Daggerfall Unity spawns round the one player and keeps
 no cell. The tests: `test/systems/pve/pve_population.test.js`.
+
+A spawn grant (`pveGrant.js`, `11-Multiplayer/Spawn-Grants.md`) stands a template once the world hands the grant host a
+table (`scenes/grantHost.js` `tableAt`; none while the switch is off). An `encr` grant's member is drawn from the
+table's plain foes with its own species die, a camp's from the seed's group member by member, so the owner and every
+reader stand the same template. Its level, health and blow are the template's: the owner's signed level and party never
+move them, and a reader refuses a record whose body or level differs, with no slack. Who holds a place is a first pass
+(`factionsHolding`): outlaws every road and wild, the clans Wrothgar and their strongholds. Daggerfall Unity rolls a
+climate's table at the player's level. The tests: `test/systems/pve/pve_grant.test.js`.

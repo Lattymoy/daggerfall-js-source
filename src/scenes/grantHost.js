@@ -51,6 +51,7 @@ import { serviceBase } from '../net/accountClient.js';
 import { appStorage } from '../systems/appStorage.js';
 import { resolveEncounterTableIndex, chooseRandomEnemy } from '../systems/encounters.js';
 import { encounterTableChoices, encounterTableGeneration } from '../characters/encounterTableDoor.js';   // DEX3: every table a mod may pick, on any machine
+import { templateDiceRefusal, grantTemplateKey, templateFoe } from '../systems/pve/pveGrant.js';   // FIXED-PVE: a grant stands its seed's template while the switch is on
 import { isClassEnemyId } from '../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
 
 /** The reader's bounds: the verdicts it keeps (owner and grant), the members it has seen stand, the puppets it knows the
@@ -116,8 +117,11 @@ export function grantSpeciesOf(c, fauna = null) {
  *  watchman - 'dice', or null. `climateAt` a map pixel's climate (null: no species law), `faunaAt` its zone's band past
  *  the Bay (TESA-BIOME: the zone's tables before the climate's - AUDIT TESA-BIOME P2 pins it here, out of the host). Pure.
  *  @param {any} gr @param {any} r @param {((px: number, py: number) => number)|null} climateAt
- *  @param {(px: number, py: number) => ReadonlyArray<number>|null} faunaAt */
-export function grantDiceRefusal(gr, r, climateAt, faunaAt = () => null) {
+ *  @param {(px: number, py: number) => ReadonlyArray<number>|null} faunaAt
+ *  FIXED-PVE: `tableAt` the spawn table at a grant (systems/pve/pveGrant.js; null while the switch is off) - a rolled
+ *  grant's member is then its seed's template, body and level. */
+export function grantDiceRefusal(gr, r, climateAt, faunaAt = () => null, tableAt = null) {
+  if (tableAt && (gr.k === 'encr' || gr.k === 'camp')) return templateDiceRefusal(gr, r, tableAt(gr));
   if (gr.k === 'watch' && r.t !== KNIGHT_CITYWATCH_ID) return 'dice';   // GRANT4: the watch's grant stands the watch alone
   if (gr.k === 'encr' && climateAt) {   // GRANT8: its seed's species exactly - out of a location's rect or in one (its owner's place, which a reader cannot see)
     const c = climateAt(gr.p[0], gr.p[1]), z = faunaAt(gr.p[0], gr.p[1]), i = r.gr[1];   // TESA-BIOME: and its zone's band
@@ -143,12 +147,13 @@ const capMap = (m, max) => { while (m.size > max) m.delete(m.keys().next().value
 
 /**
  * @param {{ session: () => any, climateAt?: ((px: number, py: number) => number)|null,
- *   faunaAt?: (px: number, py: number) => ReadonlyArray<number>|null, now?: () => number,
+ *   faunaAt?: (px: number, py: number) => ReadonlyArray<number>|null, tableAt?: ((gr: any) => any)|null, now?: () => number,
  *   fetchKey?: (env: { subtle: SubtleCrypto }) => Promise<CryptoKey|null>, subtle?: SubtleCrypto, wait?: number, verdictWait?: number }} deps
  *   `session` the online session now (null offline); `climateAt` a map pixel's climate (the reader's species law); TESA-BIOME:
- *   `faunaAt` its zone's band past the Bay (null on the Bay); `now` the relay's clock
+ *   `faunaAt` its zone's band past the Bay (null on the Bay); FIXED-PVE: `tableAt` a grant's spawn table (null while the
+ *   switch is off); `now` the relay's clock
  */
-export function createGrantHost({ session, climateAt = null, faunaAt = () => null, now = () => Date.now() + (Number(session()?.clockOffsetMs) || 0), fetchKey = relayKeyOf, subtle = globalThis.crypto?.subtle, wait = GRANT_WAIT_MS, verdictWait = GRANT_VERDICT_WAIT_MS }) {
+export function createGrantHost({ session, climateAt = null, faunaAt = () => null, tableAt = null, now = () => Date.now() + (Number(session()?.clockOffsetMs) || 0), fetchKey = relayKeyOf, subtle = globalThis.crypto?.subtle, wait = GRANT_WAIT_MS, verdictWait = GRANT_VERDICT_WAIT_MS }) {
   // AUDIT GRANT A6: `now` the RELAY's clock (net/online.js clockOffsetMs, from the welcome) - a grant's expiry is the relay's
   // ── the asks ─────────────────────────────────────────────────────────────────────────────────────────────────────
   let askId = 0;
@@ -415,7 +420,7 @@ export function createGrantHost({ session, climateAt = null, faunaAt = () => nul
       ?? twice(from, g, i, r.i);
     return why ? note(from, why) : null;
   }
-  const diceRefusal = (gr, r) => grantDiceRefusal(gr, r, climateAt, faunaAt);
+  const diceRefusal = (gr, r) => grantDiceRefusal(gr, r, climateAt, faunaAt, tableAt);
   function twice(from, g, i, seq) {
     const k = `${from}|${g}|${i}`, was = members.get(k);
     members.set(k, seq);
@@ -476,7 +481,9 @@ export function createGrantHost({ session, climateAt = null, faunaAt = () => nul
     if (res) { pending.delete(a.id); res(a); }
   }
   /** GRANT8: my `encr` member's species - its seed's at its pixel's climate (-1: none, or no map to read). */
-  const speciesOf = (gr, i, inRect) => (gr?.k === 'encr' && climateAt ? grantSpecies(gr, i, climateAt(gr.p[0], gr.p[1]), !!inRect, faunaAt(gr.p[0], gr.p[1])) : -1);
+  /** FIXED-PVE: member `i`'s template under `gr` (its body, level, health, blow), or null - the switch off, no table. */
+  const templateOf = (gr, i) => (tableAt && gr ? templateFoe(grantTemplateKey(gr, i, tableAt(gr))) : null);
+  const speciesOf = (gr, i, inRect) => (tableAt && gr?.k === 'encr' ? templateOf(gr, i)?.mobile ?? -1 : gr?.k === 'encr' && climateAt ? grantSpecies(gr, i, climateAt(gr.p[0], gr.p[1]), !!inRect, faunaAt(gr.p[0], gr.p[1])) : -1);
   /** Is the law enforcing in my cell (GRANT6: the pool stands down what the check refuses)? */
   const enforcing = () => open()?.grantMode === 'enforce';
   /** GRANT6: does an enforcing reader stand down a foe its check refused for `why` (GRANT_STANDDOWN_REASONS)? */
@@ -508,5 +515,5 @@ export function createGrantHost({ session, climateAt = null, faunaAt = () => nul
     for (const [g, p] of watchmen) if (p === pool && (!here.has(g) || g._gone)) { watchmen.delete(g); ended(g); }
   }
 
-  return { memberFor, stood, ended, handed, tick, frameGrants, adopted, heard, check, downed, statsRefused, answer, enforcing, standsDown, watchReady, watchSweep, speciesOf, tallied: () => new Map(tallies), live: () => [...live] };
+  return { memberFor, stood, ended, handed, tick, frameGrants, adopted, heard, check, downed, statsRefused, answer, enforcing, standsDown, watchReady, watchSweep, speciesOf, templateOf, tallied: () => new Map(tallies), live: () => [...live] };
 }

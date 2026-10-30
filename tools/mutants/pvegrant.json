@@ -1,0 +1,17 @@
+[
+  {"name": "STAGE7B-town-held", "file": "src/systems/pve/pveGrant.js", "old": "  const f = place === 'town' ? [] : ['bandits'];", "new": "  const f = ['bandits'];", "tests": ["test/systems/pve/pve_grant.test.js"]},
+  {"name": "STAGE7B-no-clan-stronghold", "file": "src/systems/pve/pveGrant.js", "old": "region === ORSINIUM_REGION || dungeon === DUNGEON_TYPES.OrcStronghold", "new": "region === ORSINIUM_REGION", "tests": ["test/systems/pve/pve_grant.test.js"]},
+  {"name": "STAGE7B-province-reads-map", "file": "src/systems/pve/pveGrant.js", "old": "  const region = inBay(px, py) ? regionAt(px, py) : regionOfTheatre(theatreAt(px, py));", "new": "  const region = regionAt(px, py);", "tests": ["test/systems/pve/pve_grant.test.js"]},
+  {"name": "STAGE7B-always-day", "file": "src/systems/pve/pveGrant.js", "old": "night: isNight(minute)", "new": "night: false", "tests": ["test/systems/pve/pve_grant.test.js"], "equivalent": true, "why": "No template yet stands only by night (the bestiary's werewolf has no template), so no table changes with the hour. Pin it when a night-only template is added."},
+  {"name": "STAGE7B-camp-as-enc", "file": "src/systems/pve/pveGrant.js", "old": "  if (gr.k === 'camp') {", "new": "  if (false) {", "tests": ["test/systems/pve/pve_grant.test.js"]},
+  {"name": "STAGE7B-camp-member-wrap", "file": "src/systems/pve/pveGrant.js", "old": ".flatMap(([k, n]) => Array(n).fill(k))[i] ?? null", "new": ".flatMap(([k, n]) => Array(n).fill(k))[i % 4] ?? null", "tests": ["test/systems/pve/pve_grant.test.js"]},
+  {"name": "STAGE7B-band-templates", "file": "src/systems/pve/pveGrant.js", "old": "  return gr.k === 'encr' ? drawByShare(", "new": "  return gr.k !== 'camp' ? drawByShare(", "tests": ["test/systems/pve/pve_grant.test.js"]},
+  {"name": "STAGE7B-one-die", "file": "src/systems/pve/pveGrant.js", "old": "grantDice(gr.s, i).species)[0]", "new": "grantDice(gr.s, 0).species)[0]", "tests": ["test/systems/pve/pve_grant.test.js"]},
+  {"name": "STAGE7B-level-slack", "file": "src/systems/pve/pveGrant.js", "old": "(Number.isInteger(r.l) && r.l !== f.level)", "new": "(Number.isInteger(r.l) && r.l > f.level + 2)", "tests": ["test/systems/pve/pve_grant.test.js"]},
+  {"name": "STAGE7B-body-unchecked", "file": "src/systems/pve/pveGrant.js", "old": "r.t !== f.mobile || ", "new": "", "tests": ["test/systems/pve/pve_grant.test.js"]},
+  {"name": "STAGE7B-no-template-passes", "file": "src/systems/pve/pveGrant.js", "old": "  if (!f) return 'dice';\n", "new": "  if (!f) return null;\n", "tests": ["test/systems/pve/pve_grant.test.js"]},
+  {"name": "STAGE7B-host-ignores-table", "file": "src/scenes/grantHost.js", "old": "  if (tableAt && (gr.k === 'encr' || gr.k === 'camp')) return templateDiceRefusal(gr, r, tableAt(gr));\n", "new": "", "tests": ["test/systems/pve/pve_grant.test.js"]},
+  {"name": "STAGE7B-host-camp-skipped", "file": "src/scenes/grantHost.js", "old": "(gr.k === 'encr' || gr.k === 'camp')", "new": "(gr.k === 'encr')", "tests": ["test/systems/pve/pve_grant.test.js"]},
+  {"name": "STAGE7B-host-wire-dropped", "file": "src/scenes/grantHost.js", "old": "  const diceRefusal = (gr, r) => grantDiceRefusal(gr, r, climateAt, faunaAt, tableAt);", "new": "  const diceRefusal = (gr, r) => grantDiceRefusal(gr, r, climateAt, faunaAt);", "tests": ["test/systems/pve/pve_grant.test.js"]},
+  {"name": "STAGE7B-species-old-law", "file": "src/scenes/grantHost.js", "old": "(tableAt && gr?.k === 'encr' ? templateOf(gr, i)?.mobile ?? -1 :", "new": "(false ? -1 :", "tests": ["test/systems/pve/pve_grant.test.js"]}
+]
