@@ -65,7 +65,7 @@
   {
     "name": "FLOW2-the-first-draw-unadvanced",
     "file": "src/systems/wind/wind.js",
-    "old": "export const seededFirst = (seed) => mulberryDraw(((seed >>> 0) + 0x6D2B79F5) >>> 0);",
+    "old": "export const seededFirst = (seed) => mulberryDraw(((seed >>> 0) + 0x6d2b79f5) >>> 0);",
     "new": "export const seededFirst = (seed) => mulberryDraw(seed >>> 0);",
     "tests": [
       "test/systems/flow2_fast_tests.test.js"

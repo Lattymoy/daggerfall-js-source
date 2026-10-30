@@ -43,9 +43,9 @@
 // `enhanced-sounds` row, pref `soundEnhancements`); `?windaudio=off` the kill door.
 
 import { audio as defaultAudio } from '../audio.js';
-import { enhancedSoundsOn } from '../enhancedSounds.js';   // ES1: the wind rides the one Enhanced sounds switch
-import { pageParam } from '../pageQuery.js';   // PERF-URL: the page's query, parsed once a search
-import { section, mulberry32 } from '../soundscape/bedDsp.js';   // AUDIT SOUNDSCAPE W4: the bed's section and its die, moved to a leaf the beds' worker can import (one home)
+import { enhancedSoundsOn } from '../enhancedSounds.js'; // ES1: the wind rides the one Enhanced sounds switch
+import { pageParam } from '../pageQuery.js'; // PERF-URL: the page's query, parsed once a search
+import { section, mulberry32 } from '../soundscape/bedDsp.js'; // AUDIT SOUNDSCAPE W4: the bed's section and its die, moved to a leaf the beds' worker can import (one home)
 
 /** The loudest the wind ever is, as a loop gain (the rain loop plays at
  *  1, the birds at their clips' own level). */
@@ -71,14 +71,17 @@ export const WIND_BED_SHAPE = Object.freeze({ centreHz: 500, q: 0.6, lowpassHz: 
 /** The noise's seed: the same bed every boot. */
 export const WIND_BED_SEED = 0x57494e44;
 
-const smooth = (a, b, x) => { const u = Math.max(0, Math.min(1, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
+const smooth = (a, b, x) => {
+  const u = Math.max(0, Math.min(1, (x - a) / (b - a)));
+  return u * u * (3 - 2 * u);
+};
 
 /** The gain a wind of `strength01` with gust `gust` asks for: nothing in
  *  a calm, the ceiling in a gale, the gust worth a fifth on top. Never
  *  above WIND_GAIN_MAX. Pure. */
 export function windGain(strength01, gust = 1) {
   const g = Math.max(0, Math.min(1, gust));
-  return Math.min(WIND_GAIN_MAX, WIND_GAIN_MAX * smooth(0.12, 0.85, strength01) * (0.80 + 0.20 * g));
+  return Math.min(WIND_GAIN_MAX, WIND_GAIN_MAX * smooth(0.12, 0.85, strength01) * (0.8 + 0.2 * g));
 }
 
 /** The pitch: a touch lower in a breeze, a touch higher in a gale. */
@@ -93,7 +96,12 @@ export function windPitchFor(strength01) {
  * runs into the first as any sample into the next (a filter's steady answer to a periodic input is periodic) and the
  * native loop has no seam.
  */
-export function windBedSamples({ sampleRate = WIND_BED_RATE, seconds = WIND_BED_SECONDS, seed = WIND_BED_SEED, rms = WIND_BED_RMS } = {}) {
+export function windBedSamples({
+  sampleRate = WIND_BED_RATE,
+  seconds = WIND_BED_SECONDS,
+  seed = WIND_BED_SEED,
+  rms = WIND_BED_RMS,
+} = {}) {
   const n = Math.max(1, Math.round(sampleRate * seconds));
   const next = mulberry32(seed);
   const x = new Float32Array(n);
@@ -103,14 +111,24 @@ export function windBedSamples({ sampleRate = WIND_BED_RATE, seconds = WIND_BED_
   const [l0, l1, l2, l3, l4] = section('lowpass', lowpassHz, Math.SQRT1_2, sampleRate);
   // direct form I: each section's last two inputs and outputs, carried from sample to sample and from the first pass
   // into the second (the low-pass's inputs are the band-pass's outputs, so their history is one)
-  let x1 = 0, x2 = 0, b1 = 0, b2 = 0, y1 = 0, y2 = 0;
+  let x1 = 0,
+    x2 = 0,
+    b1 = 0,
+    b2 = 0,
+    y1 = 0,
+    y2 = 0;
   const y = new Float64Array(n);
   for (let pass = 0; pass < 2; pass++) {
     for (let i = 0; i < n; i++) {
       const v = x[i];
       const b = p0 * v + p1 * x1 + p2 * x2 - p3 * b1 - p4 * b2;
       const l = l0 * b + l1 * b1 + l2 * b2 - l3 * y1 - l4 * y2;
-      x2 = x1; x1 = v; b2 = b1; b1 = b; y2 = y1; y1 = l;
+      x2 = x1;
+      x1 = v;
+      b2 = b1;
+      b1 = b;
+      y2 = y1;
+      y1 = l;
       y[i] = l;
     }
   }
@@ -131,7 +149,7 @@ const theBed = () => (_bed ??= windBedSamples());
  *  loop's own `windSound` row folded into it), and `?windaudio=off` the
  *  kill door. */
 export function windSoundOn(search = globalThis.location?.search ?? '') {
-  return enhancedSoundsOn() && pageParam('windaudio', search) !== 'off';   // PERF-URL
+  return enhancedSoundsOn() && pageParam('windaudio', search) !== 'off'; // PERF-URL
 }
 
 /** The loop's driver: `update(wd, dt, on)` once a frame with
@@ -141,12 +159,21 @@ export function windSoundOn(search = globalThis.location?.search ?? '') {
  *  not running yet answers no loop, and the next frame asks again. */
 export function createWindAudio(engine = defaultAudio) {
   let gain = 0;
-  let loop = null;   // the bed's loop on the engine (audio.loop's handle), or null
-  const release = () => { if (loop) { loop.stop(); loop = null; } };
+  let loop = null; // the bed's loop on the engine (audio.loop's handle), or null
+  const release = () => {
+    if (loop) {
+      loop.stop();
+      loop = null;
+    }
+  };
   return {
     /** the current gain, for the record and the tests */
-    get gain() { return gain; },
-    get playing() { return loop != null; },
+    get gain() {
+      return gain;
+    },
+    get playing() {
+      return loop != null;
+    },
     update(wd, dt, on = true) {
       const target = on && wd?.on ? windGain(wd.strength01, wd.gust) : 0;
       const slew = WIND_SLEW_PER_S * Math.max(0, Number(dt) || 0);
@@ -157,7 +184,7 @@ export function createWindAudio(engine = defaultAudio) {
         return;
       }
       if (!loop) {
-        if (!engine.registerSamples?.(WIND_BED_KEY, theBed(), WIND_BED_RATE)) return;   // no context yet
+        if (!engine.registerSamples?.(WIND_BED_KEY, theBed(), WIND_BED_RATE)) return; // no context yet
         loop = engine.loop(WIND_BED_KEY, gain) ?? null;
         if (!loop) return;
       } else loop.setVolume(gain);

@@ -37,9 +37,15 @@
 
 /** How much wind a weather brings in with it, 0..1. */
 export const VIOLENCE = Object.freeze({
-  sunny: 0.10, cloudy: 0.25, overcast: 0.30, fog: 0.08, rain: 0.55, snow: 0.45, thunder: 1.0,
-  sandstorm: 0.95,   // WEATHER2d: a gale, a shade under the storm's
-  ashfall: 0.3,   // ASHFALL1: an overcast's breeze - the ash drifts, it is not driven
+  sunny: 0.1,
+  cloudy: 0.25,
+  overcast: 0.3,
+  fog: 0.08,
+  rain: 0.55,
+  snow: 0.45,
+  thunder: 1.0,
+  sandstorm: 0.95, // WEATHER2d: a gale, a shade under the storm's
+  ashfall: 0.3, // ASHFALL1: an overcast's breeze - the ash drifts, it is not driven
 });
 
 /** A front's shape, in GAME MINUTES: the wind rises over the lead,
@@ -65,7 +71,7 @@ export const WIND_ROW_SPAN = 0.0262;
  *  over its hours. Named so the FAIR DAY below is derived from the
  *  roll rather than measured off it. */
 export const CALM_MIN = 0.06;
-export const CALM_SPAN = 0.50;
+export const CALM_SPAN = 0.5;
 export const DRIFT_MEAN = 0.85;
 export const DRIFT_SWING = 0.15;
 
@@ -83,7 +89,7 @@ export const WIND_ROW_FAIR = WIND_ROW_CALM + FAIR_STRENGTH * WIND_ROW_SPAN;
 export function seededRng(seed) {
   let a = seed >>> 0;
   return () => {
-    a = (a + 0x6D2B79F5) >>> 0;
+    a = (a + 0x6d2b79f5) >>> 0;
     return mulberryDraw(a);
   };
 }
@@ -96,7 +102,7 @@ function mulberryDraw(a) {
 }
 /** FLOW2 (2026-09-26): `seededRng(seed)()` - a seed's first draw, the same bits - without making a generator for one
  *  number (the weather map's value noise asks twelve of them a wind reading). */
-export const seededFirst = (seed) => mulberryDraw(((seed >>> 0) + 0x6D2B79F5) >>> 0);
+export const seededFirst = (seed) => mulberryDraw(((seed >>> 0) + 0x6d2b79f5) >>> 0);
 
 /**
  * The front's envelope at `sinceArrival` game minutes: 0 before the
@@ -107,13 +113,13 @@ export function frontFactor(sinceArrival, lead = FRONT_LEAD_MIN) {
   if (sinceArrival < -lead) return 0;
   if (sinceArrival < 0) {
     const u = (sinceArrival + lead) / lead;
-    return u * u * (3 - 2 * u);   // ease-in: a front builds
+    return u * u * (3 - 2 * u); // ease-in: a front builds
   }
   if (sinceArrival < FRONT_HOLD_MIN) return 1;
   const v = (sinceArrival - FRONT_HOLD_MIN) / FRONT_TAIL_MIN;
   if (v >= 1) return 0;
   const w = 1 - v;
-  return w * w * (3 - 2 * w);   // ease-out: it rolls away
+  return w * w * (3 - 2 * w); // ease-out: it rolls away
 }
 
 /** The gust envelope for a wind of `strength` 0..1 at `tsec` seconds:
@@ -121,8 +127,8 @@ export function frontFactor(sinceArrival, lead = FRONT_LEAD_MIN) {
  *  Returns a multiplier around 1. Pure. */
 export function gustEnvelope(strength, tsec) {
   const s = Math.max(0, Math.min(1, strength));
-  const slow = 0.20 * Math.sin(tsec * (0.20 + 0.25 * s));
-  const mid = 0.14 * Math.sin(tsec * (0.70 + 0.9 * s) + 1.7);
+  const slow = 0.2 * Math.sin(tsec * (0.2 + 0.25 * s));
+  const mid = 0.14 * Math.sin(tsec * (0.7 + 0.9 * s) + 1.7);
   const sharp = (0.06 + 0.22 * s) * Math.max(0, Math.sin(tsec * (1.6 + 2.4 * s) + 0.4)) ** (1 + 2 * s);
   return 0.72 + slow + mid + sharp;
 }
@@ -134,31 +140,31 @@ export function gustEnvelope(strength, tsec) {
  * the state the last tick left.
  */
 export function createWindModel({ seed = 7 } = {}) {
-  let day = null;         // the game day the calm was rolled for
-  let calm = 0.2;         // this day's baseline strength, 0..1
-  let prevCalm = 0.2;     // yesterday's, blended out over the morning - the day boundary is
-                          // also the weather's, and a calm that SNAPPED there made a departing
-                          // storm's wind drop in one tick instead of rolling away
-  let heading = 0.35;     // radians, the day's prevailing direction
-  let last = null;        // the weather word at the last tick
-  let front = null;       // { at, strength, turn } or null
+  let day = null; // the game day the calm was rolled for
+  let calm = 0.2; // this day's baseline strength, 0..1
+  let prevCalm = 0.2; // yesterday's, blended out over the morning - the day boundary is
+  // also the weather's, and a calm that SNAPPED there made a departing
+  // storm's wind drop in one tick instead of rolling away
+  let heading = 0.35; // radians, the day's prevailing direction
+  let last = null; // the weather word at the last tick
+  let front = null; // { at, strength, turn } or null
   let nowMin = 0;
-  let jumpPending = false;   // WX2a: the next change of word is a jump, not a front
+  let jumpPending = false; // WX2a: the next change of word is a jump, not a front
   let arrivePending = false; // WEATHER2b: the next change of word is a crossing - a front on the short lead
-  let approach = 0;          // WEATHER3c: the world weather map's storms drawing near (VIOLENCE's scale, 0..1)
+  let approach = 0; // WEATHER3c: the world weather map's storms drawing near (VIOLENCE's scale, 0..1)
 
   const rollDay = (d) => {
     const r = seededRng(seed * 1000003 + d);
     prevCalm = day === null ? CALM_MIN + r() * CALM_SPAN : calm;
     day = d;
-    calm = CALM_MIN + r() * CALM_SPAN;                  // a still day to a brisk one
-    heading = r() * Math.PI * 2;               // the day's prevailing wind
+    calm = CALM_MIN + r() * CALM_SPAN; // a still day to a brisk one
+    heading = r() * Math.PI * 2; // the day's prevailing wind
   };
 
   return {
     tick(nowMinutes, weather, violenceWord = weather, approachNow = 0) {
       nowMin = nowMinutes;
-      approach = Math.max(0, Math.min(1, approachNow || 0));   // WEATHER3c: the storms drawing near, this frame
+      approach = Math.max(0, Math.min(1, approachNow || 0)); // WEATHER3c: the storms drawing near, this frame
       const d = Math.floor(nowMinutes / 1440);
       if (d !== day) rollDay(d);
       if (weather !== last) {
@@ -177,12 +183,12 @@ export function createWindModel({ seed = 7 } = {}) {
           // table's own word before the ground law turned it (a storm
           // that falls as snow over a winter ground is a blizzard).
           const violence = VIOLENCE[violenceWord] ?? VIOLENCE[weather] ?? 0.2;
-          const lead = arrivePending ? CROSS_LEAD_MIN : FRONT_LEAD_MIN;   // WEATHER2b: a crossing arrives on the short lead
+          const lead = arrivePending ? CROSS_LEAD_MIN : FRONT_LEAD_MIN; // WEATHER2b: a crossing arrives on the short lead
           front = {
-            at: nowMinutes + lead,   // the sky finishes turning here; the wind is already up
+            at: nowMinutes + lead, // the sky finishes turning here; the wind is already up
             lead,
             strength: violence * (0.6 + r() * 0.8),
-            turn: (r() - 0.5) * Math.PI * 0.8,  // a front turns the wind, up to ~72 degrees
+            turn: (r() - 0.5) * Math.PI * 0.8, // a front turns the wind, up to ~72 degrees
           };
         }
         last = weather;
@@ -194,12 +200,16 @@ export function createWindModel({ seed = 7 } = {}) {
 
     /** WEATHER2b: the host saw the sim's crossing stamp move this frame -
      *  the change the next tick sees builds its front on CROSS_LEAD_MIN. */
-    arrive() { arrivePending = true; },
+    arrive() {
+      arrivePending = true;
+    },
 
     /** WEATHER2b: the lead the front up was built on (the day roll's
      *  three hours, a crossing's few minutes) - what the sky's ease
      *  stretches to. FRONT_LEAD_MIN with none up. */
-    leadMinutes() { return front?.lead ?? FRONT_LEAD_MIN; },
+    leadMinutes() {
+      return front?.lead ?? FRONT_LEAD_MIN;
+    },
 
     /** WX2a: the host saw the sim's jump stamp move this frame. Any
      *  front up is dropped now - the world it belonged to is gone - and
@@ -211,7 +221,7 @@ export function createWindModel({ seed = 7 } = {}) {
 
     /** 0..1: the day's calm, with the front on top of it. */
     strength() {
-      const drift = DRIFT_MEAN + DRIFT_SWING * Math.sin(nowMin / 1440 * Math.PI * 4 + calm * 9);   // the day's own slow breath
+      const drift = DRIFT_MEAN + DRIFT_SWING * Math.sin((nowMin / 1440) * Math.PI * 4 + calm * 9); // the day's own slow breath
       // The day's calm arrives over its first CALM_BLEND_MIN, from
       // yesterday's - so a still morning after a windy night is a wind
       // dying down, not a switch.
@@ -267,6 +277,8 @@ export function createWindModel({ seed = 7 } = {}) {
     },
 
     /** For the record and the tests. */
-    state() { return { day, calm, prevCalm, heading, front: front ? { ...front } : null, last, jumpPending, arrivePending }; },
+    state() {
+      return { day, calm, prevCalm, heading, front: front ? { ...front } : null, last, jumpPending, arrivePending };
+    },
   };
 }

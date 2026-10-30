@@ -168,6 +168,8 @@
 /src/systems/vanillaEnhanced/*/
 !/src/systems/wagon/
 /src/systems/wagon/*/
+!/src/systems/wind/
+/src/systems/wind/*/
 !/src/ui/
 /src/ui/*
 !/src/ui/arena/
