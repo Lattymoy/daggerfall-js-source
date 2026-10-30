@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-PI1-R1-a-layer-frees-its-own",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "  if (n > 0) { m.set(record, n); return; }",
-    "new": "  if (false) { m.set(record, n); return; }",
+    "old": "  if (n > 0) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-PI1-R1-uploaded-per-holder",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "if (cached === false || (cached === undefined && n === 1))",
-    "new": "if (true)",
+    "old": "  if (cached === false || (cached === undefined && n === 1))\n    renderer.uploadTexture?.(PI_ICON_ARCHIVE, record, { width: pic.vw, height: pic.vh, colors: pic.colors });",
+    "new": "  if (true) renderer.uploadTexture?.(PI_ICON_ARCHIVE, record, { width: pic.vw, height: pic.vh, colors: pic.colors });",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-PI1-R2-classic-first",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "morrowind().catch(() => null).then((got) => { mwMissed = stamp != null && !got; return got ?? classic(); })",
-    "new": "classic().catch(() => null).then((got) => { mwMissed = stamp != null && !got; return got ?? morrowind(); })",
+    "old": "    morrowind()\n      .catch(() => null)\n      .then((got) => {\n        mwMissed = stamp != null && !got;\n        return got ?? classic();",
+    "new": "    classic()\n      .catch(() => null)\n      .then((got) => {\n        mwMissed = stamp != null && !got;\n        return got ?? morrowind();",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-PI1-R9-mw-miss-never-again",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "if (mwMissed && p.tries < PI_RETRY_MAX) p.retryAt",
-    "new": "if (false) p.retryAt",
+    "old": "            if (mwMissed && p.tries < PI_RETRY_MAX) p.retryAt = now() + PI_RETRY_MS * 2 ** p.tries++;",
+    "new": "            if (false) p.retryAt = now() + PI_RETRY_MS * 2 ** p.tries++;",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-PI1-R6-reask-drops-the-picture",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "      } else if (p.batch) {",
-    "new": "      } else if (false) {",
+    "old": "          } else if (p.batch) {",
+    "new": "          } else if (false) {",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-PI1-L7-none-never-again",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "        presentItem(p.item, false);\n        if (p.tries < PI_RETRY_MAX)",
-    "new": "        presentItem(p.item, false);\n        if (false)",
+    "old": "            presentItem(p.item, false);\n            if (p.tries < PI_RETRY_MAX) p.retryAt = now() + PI_RETRY_MS * 2 ** p.tries++;",
+    "new": "            presentItem(p.item, false);\n            if (false) p.retryAt = now() + PI_RETRY_MS * 2 ** p.tries++;",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-PI1-R3-no-bleed",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "const cut = bleedEdges(cropTo(colors, width, box), box.w, box.h);",
-    "new": "const cut = cropTo(colors, width, box);",
+    "old": "    const cut = bleedEdges(cropTo(colors, width, box), box.w, box.h);",
+    "new": "    const cut = cropTo(colors, width, box);",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-PI1-R4-dressed-once",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "if (redress && p.batch) dress(p);",
-    "new": "if (false && redress && p.batch) dress(p);",
+    "old": "        if (redress && p.batch) dress(p);",
+    "new": "        if (false && redress && p.batch) dress(p);",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-PI1-R5-presented-at-mint",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "  proxies.set(p.id, p);\n    askPicture(p);",
-    "new": "  proxies.set(p.id, p);\n    presentItem(item, true);\n    askPicture(p);",
+    "old": "    proxies.set(p.id, p);\n    askPicture(p);",
+    "new": "    proxies.set(p.id, p);\n    presentItem(item, true);\n    askPicture(p);",
     "tests": [
       "test/systems/pi1_physicalitems.test.js",
       "test/systems/audit_pi1.test.js"
@@ -111,8 +111,8 @@
   {
     "name": "AUDIT-PI1-R5-presents-unpictured",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "return !!p && p.batch != null; },",
-    "new": "return !!p; },",
+    "old": "      return !!p && p.batch != null;",
+    "new": "      return !!p;",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "AUDIT-PI1-F2-casts-a-card-shadow",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "    p.batch.noShadow = true;",
-    "new": "    p.batch.noShadow = false;",
+    "old": "    p.batch.noShadow = true; // F2: a thing lying on the ground is no standing card for the sun",
+    "new": "    p.batch.noShadow = false; // F2: a thing lying on the ground is no standing card for the sun",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "AUDIT-PI1-I1-scatter-point-as-is",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "const at = constrainMove(start, [g.pos[0] + off[0], start[1], g.pos[2] + off[2]], H / 2, H, rayHit);",
-    "new": "const at = [g.pos[0] + off[0], start[1], g.pos[2] + off[2]];",
+    "old": "        const at = constrainMove(start, [g.pos[0] + off[0], start[1], g.pos[2] + off[2]], H / 2, H, rayHit);",
+    "new": "        const at = [g.pos[0] + off[0], start[1], g.pos[2] + off[2]];",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "AUDIT-PI1-I2-press-takes-a-part",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "took: host.took ?? null, wholeStack: true });",
-    "new": "took: host.took ?? null, wholeStack: false });",
+    "old": "          wholeStack: true,",
+    "new": "          wholeStack: false,",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT-PI1-H2-told-on-a-refusal",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "      if (moved) {\n",
-    "new": "      if (true) {\n",
+    "old": "      if (moved) {",
+    "new": "      if (true) {",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -201,7 +201,7 @@
   {
     "name": "AUDIT-PI1-I11-summoned-map-read",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "      if (isSummoned(p.item)) { say(CANNOT_REMOVE_ITEM_TEXT); return true; }",
+    "old": "      if (isSummoned(p.item)) {\n        say(CANNOT_REMOVE_ITEM_TEXT);\n        return true;\n      }",
     "new": "",
     "tests": [
       "test/systems/audit_pi1.test.js"
@@ -219,8 +219,8 @@
   {
     "name": "AUDIT-PI1-maps-none-left-unsaid",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "if (!name) say(USE_TEXT.readMapFail);",
-    "new": "if (false) say(USE_TEXT.readMapFail);",
+    "old": "          if (!name) say(USE_TEXT.readMapFail);",
+    "new": "          if (false) say(USE_TEXT.readMapFail);",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "AUDIT-PI1-H3-key-left-armed",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "try { quickLootSpend(); } catch",
-    "new": "try { /* left armed */ } catch",
+    "old": "        quickLootSpend();",
+    "new": "        /* left armed */",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "AUDIT-PI1-H7-no-silver",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "if (g.silver != null) silverFindAt('corpse', g.silver);",
-    "new": "if (false) silverFindAt('corpse', g.silver);",
+    "old": "          if (g.silver != null) silverFindAt('corpse', g.silver);",
+    "new": "          if (false) silverFindAt('corpse', g.silver);",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "AUDIT-PI1-L15-feed-throw-is-none",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "try { list = host.corpses?.() ?? []; } catch { return; }",
-    "new": "try { list = host.corpses?.() ?? []; } catch { list = []; }",
+    "old": "    } catch {\n      return;",
+    "new": "    } catch {\n      list = [];",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "AUDIT-PI1-L15-plaque-of-a-gone-item",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "return p && listOf(p)?.includes(p.item) ? [p.item] : null;",
-    "new": "return p ? [p.item] : null;",
+    "old": "      return p && listOf(p)?.includes(p.item) ? [p.item] : null;",
+    "new": "      return p ? [p.item] : null;",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "AUDIT-PI1-L10-flown-under-the-window",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "fly(paused ? 0 : dt);",
-    "new": "fly(dt);",
+    "old": "      fly(paused ? 0 : dt);",
+    "new": "      fly(dt);",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "AUDIT-PI1-I5-no-path-check",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "return !(Number.isFinite(d) && d < l - PI_PATH.skin);",
-    "new": "return true || d;",
+    "old": "        return !(Number.isFinite(d) && d < l - PI_PATH.skin);",
+    "new": "        return true || d;",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "AUDIT-PI1-I6-the-ray-reach",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "distance: RAY_DISTANCE, reach: PI_REACH });",
-    "new": "distance: RAY_DISTANCE, reach: 2.5 });",
+    "old": "          reach: PI_REACH,",
+    "new": "          reach: 2.5,",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "AUDIT-PI1-recentre-twice",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "      for (const g of groups.values()) { g.pos[0] += dx; g.pos[1] += dy; g.pos[2] += dz; }\n",
-    "new": "",
+    "old": "      for (const g of groups.values()) {\n        g.pos[0] += dx;\n        g.pos[1] += dy;\n        g.pos[2] += dz;\n      }\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "AUDIT-PI1-ground-move-twice",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "{ const d = dy(g.pos[0], g.pos[2]); if (d) g.pos[1] += d; }",
-    "new": "{ const d = dy(g.pos[0], g.pos[2]); if (false) g.pos[1] += d; }",
+    "old": "          if (d) g.pos[1] += d;",
+    "new": "          if (false) g.pos[1] += d;",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]

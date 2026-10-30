@@ -482,7 +482,7 @@
   {
     "name": "PORTAL1-vortex-follows-the-eye",
     "file": "src/scenes/portalFx.js",
-    "old": "      if (p.fixed) { p.origin[0] = p.feet[0]; p.origin[2] = p.feet[2]; }   // PORTAL1: a gate stands where it opened\n      else if (eye) {",
+    "old": "      if (p.fixed) {\n        p.origin[0] = p.feet[0];\n        p.origin[2] = p.feet[2];\n      } // PORTAL1: a gate stands where it opened\n      else if (eye) {",
     "new": "      if (eye) {",
     "tests": [
       "test/systems/portal1_stone.test.js"
@@ -608,8 +608,8 @@
   {
     "name": "PORTAL1-short-purse-asked",
     "file": "src/scenes/portalCounter.js",
-    "old": "    if (max < 1) { say(portalStoneRefusalText(pack(), portalStoneRefusal(pack(), 1))); return null; }\n",
-    "new": "",
+    "old": "    if (max < 1) {\n      say(portalStoneRefusalText(pack(), portalStoneRefusal(pack(), 1)));\n      return null;\n    }\n    const flow = new ServiceFlowWindow([max === 1 ? offer(1) : count(max)]);",
+    "new": "    const flow = new ServiceFlowWindow([max === 1 ? offer(1) : count(max)]);",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ],
@@ -942,8 +942,8 @@
   {
     "name": "PORTAL-BULK-field-seeded-with-max",
     "file": "src/scenes/portalCounter.js",
-    "old": "initial: '1', label: HOW_MANY_ITEMS(max)",
-    "new": "initial: String(max), label: HOW_MANY_ITEMS(max)",
+    "old": "  initial: '1',",
+    "new": "  initial: String(max),",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ],
@@ -952,8 +952,8 @@
   {
     "name": "PORTAL-BULK-count-unbounded",
     "file": "src/scenes/portalCounter.js",
-    "old": "const n = parseSplitAmount(text, max);",
-    "new": "const n = parseSplitAmount(text, Infinity);",
+    "old": "      const n = parseSplitAmount(text, max);",
+    "new": "      const n = parseSplitAmount(text, Infinity);",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -961,8 +961,8 @@
   {
     "name": "PORTAL-BULK-one-stone-asks-the-field",
     "file": "src/scenes/portalCounter.js",
-    "old": "new ServiceFlowWindow([max === 1 ? offer(1) : count(max)])",
-    "new": "new ServiceFlowWindow([count(max)])",
+    "old": "    const flow = new ServiceFlowWindow([max === 1 ? offer(1) : count(max)]);",
+    "new": "    const flow = new ServiceFlowWindow([count(max)]);",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -970,8 +970,8 @@
   {
     "name": "PORTAL-BULK-yes-buys-one",
     "file": "src/scenes/portalCounter.js",
-    "old": "    onYes: () => { buy(n); return null; },",
-    "new": "    onYes: () => { buy(1); return null; },",
+    "old": "      buy(n);",
+    "new": "      buy(1);",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -980,7 +980,7 @@
     "name": "PORTAL-BULK-no-buys",
     "file": "src/scenes/portalCounter.js",
     "old": "    onNo: () => null,",
-    "new": "    onNo: () => { buy(n); return null; },",
+    "new": "    onNo: () => {\n      buy(n);\n      return null;\n    },",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]

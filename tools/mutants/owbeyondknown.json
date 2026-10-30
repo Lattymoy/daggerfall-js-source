@@ -20,8 +20,8 @@
   {
     "name": "OWBK-the-rows-kind-unread",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "(named || knownByKind(row.mapId >>> 0, row.type) || hasDiscoveredLocationId(row.mapId))",
-    "new": "(named || hasDiscoveredLocationId(row.mapId))",
+    "old": "      return row?.name && (named || knownByKind(row.mapId >>> 0, row.type) || hasDiscoveredLocationId(row.mapId))\n        ? pendingSummary(px, py, row)\n        : null;",
+    "new": "      return row?.name && (named || hasDiscoveredLocationId(row.mapId)) ? pendingSummary(px, py, row) : null;",
     "tests": [
       "test/systems/travel/owbeyondknown.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "OWBK-the-standing-kind-unread",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "(named || knownByKind(id, loc.mapTableData?.locationType) || hasDiscoveredLocationId(id))",
-    "new": "(named || hasDiscoveredLocationId(id))",
+    "old": "        return loc.name &&\n          id &&\n          (named || knownByKind(id, loc.mapTableData?.locationType) || hasDiscoveredLocationId(id))",
+    "new": "        return loc.name && id && (named || hasDiscoveredLocationId(id))",
     "tests": [
       "test/systems/travel/owbeyondknown.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "OWBK-every-slice-a-town",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "BAKED_KNOWN_TYPES.has(type) && !capitalStreet({ mapId });",
-    "new": "BAKED_KNOWN_TYPES.has(type);",
+    "old": "  const knownByKind = (mapId, type) => BAKED_KNOWN_TYPES.has(type) && !capitalStreet({ mapId });",
+    "new": "  const knownByKind = (mapId, type) => BAKED_KNOWN_TYPES.has(type);",
     "tests": [
       "test/systems/travel/owbeyondknown.test.js"
     ]

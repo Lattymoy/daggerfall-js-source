@@ -33,7 +33,7 @@ export const PORTAL_SOUND = 349;
 export const PORTAL_SOUND_GAP_MS = 1500;
 
 const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
-const NONE = Object.freeze([]);   // no portal standing: the frame's batches() allocates nothing
+const NONE = Object.freeze([]); // no portal standing: the frame's batches() allocates nothing
 
 /**
  * One frame of the vortex as RGBA rows from the BOTTOM up (a world billboard's color32 order, v = 0 its foot) -
@@ -46,10 +46,11 @@ export function portalFrame(k, n = PORTAL_FRAMES, w = PORTAL_TEX.w, h = PORTAL_T
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       // the oval in -1..1, a touch taller than wide
-      const u = ((x + 0.5) / w) * 2 - 1, v = ((y + 0.5) / h) * 2 - 1;
+      const u = ((x + 0.5) / w) * 2 - 1,
+        v = ((y + 0.5) / h) * 2 - 1;
       const r = Math.hypot(u, v);
       const o = (y * w + x) * 4;
-      if (r > 1) continue;   // outside: clear
+      if (r > 1) continue; // outside: clear
       const a = Math.atan2(v, u);
       // spiral arms turning inward, and a hot rim
       const arms = 0.5 + 0.5 * Math.sin(a * 3 + r * 9 - phase * 2);
@@ -61,9 +62,15 @@ export function portalFrame(k, n = PORTAL_FRAMES, w = PORTAL_TEX.w, h = PORTAL_T
       let R = 40 + 120 * swirl + 215 * rim * flick;
       let G = 14 + 70 * swirl + 190 * rim * flick;
       let B = 80 + 150 * swirl + 175 * rim * flick;
-      R *= 1 - 0.65 * core; G *= 1 - 0.75 * core; B *= 1 - 0.45 * core;
-      out[o] = R; out[o + 1] = G; out[o + 2] = B;
-      out[o + 3] = Math.round(255 * clamp01(0.55 + 0.45 * Math.max(swirl, rim) + 0.25 * core) * clamp01((1 - r) / 0.05));
+      R *= 1 - 0.65 * core;
+      G *= 1 - 0.75 * core;
+      B *= 1 - 0.45 * core;
+      out[o] = R;
+      out[o + 1] = G;
+      out[o + 2] = B;
+      out[o + 3] = Math.round(
+        255 * clamp01(0.55 + 0.45 * Math.max(swirl, rim) + 0.25 * core) * clamp01((1 - r) / 0.05),
+      );
     }
   }
   return { width: w, height: h, colors: out };
@@ -86,14 +93,20 @@ export function ensurePortalArt(renderer) {
 export function portalOpenAt(t, { short = false, holdMs = null } = {}) {
   const hold = Number.isFinite(holdMs) ? Math.max(0, holdMs) : short ? PORTAL_MS.shortHold : PORTAL_MS.hold;
   if (t < 0) return { open: 0, done: false };
-  if (t < PORTAL_MS.open) { const x = t / PORTAL_MS.open; return { open: Math.min(1.06, 1 - Math.pow(1 - x, 3) * (1 - 0.4 * x) + 0.06 * Math.sin(x * Math.PI)), done: false }; }
+  if (t < PORTAL_MS.open) {
+    const x = t / PORTAL_MS.open;
+    return { open: Math.min(1.06, 1 - Math.pow(1 - x, 3) * (1 - 0.4 * x) + 0.06 * Math.sin(x * Math.PI)), done: false };
+  }
   if (t < PORTAL_MS.open + hold) return { open: 1, done: false };
   const c = (t - PORTAL_MS.open - hold) / PORTAL_MS.close;
   if (c >= 1) return { open: 0, done: true };
   return { open: 1 - c * c, done: false };
 }
 /** A portal's whole life (ms). */
-export const portalLife = ({ short = false, holdMs = null } = {}) => PORTAL_MS.open + (Number.isFinite(holdMs) ? Math.max(0, holdMs) : short ? PORTAL_MS.shortHold : PORTAL_MS.hold) + PORTAL_MS.close;
+export const portalLife = ({ short = false, holdMs = null } = {}) =>
+  PORTAL_MS.open +
+  (Number.isFinite(holdMs) ? Math.max(0, holdMs) : short ? PORTAL_MS.shortHold : PORTAL_MS.hold) +
+  PORTAL_MS.close;
 
 /**
  * A pool's portals. `now()` ms; `audio` its 3D voice (optional).
@@ -103,19 +116,40 @@ export function createPortalSet({ renderer, audio = null, now = () => performanc
   /** @type {{ at: number, feet: number[], short: boolean, holdMs: number | null, fixed: boolean, batch: any, origin: number[] }[]} */
   const list = [];
   let eye = null;
-  let soundAt = -Infinity;   // QUIET-COMPANIONS: the set's last portal sound
+  let soundAt = -Infinity; // QUIET-COMPANIONS: the set's last portal sound
   /** PORTAL1: `holdMs` a hold of its own; `fixed` stands it where it opened (a gate in the world, not a body's back). */
   function open(feet, { short = false, quiet = false, holdMs = null, fixed = false } = {}) {
     if (!renderer?.createBillboardBatch || !feet) return null;
     ensurePortalArt(renderer);
     const at = [feet[0], feet[1] - 0.05, feet[2]];
-    const batch = renderer.createBillboardBatch(PORTAL_ARCHIVE, '0', { w: PORTAL_SIZE.w, h: PORTAL_SIZE.h }, [[0, 0, 0]], { dynamic: true });
+    const batch = renderer.createBillboardBatch(
+      PORTAL_ARCHIVE,
+      '0',
+      { w: PORTAL_SIZE.w, h: PORTAL_SIZE.h },
+      [[0, 0, 0]],
+      { dynamic: true },
+    );
     batch.origin = [at[0], at[1], at[2]];
     batch.noShadow = true;
     batch.conceal = { mode: 3, alpha: 0, t: 0, phase: 0 };
-    const p = { at: now(), feet: at, short, holdMs: Number.isFinite(holdMs) ? holdMs : null, fixed, batch, origin: batch.origin };
+    const p = {
+      at: now(),
+      feet: at,
+      short,
+      holdMs: Number.isFinite(holdMs) ? holdMs : null,
+      fixed,
+      batch,
+      origin: batch.origin,
+    };
     list.push(p);
-    if (!quiet && p.at - soundAt >= PORTAL_SOUND_GAP_MS) { soundAt = p.at; try { audio?.play3dId?.(PORTAL_SOUND, at, 0.9, { maxDistance: 24 }); } catch { /* silent */ } }   // a sound ID (DAGGER.SND's), not an index - AUDIT 58's law
+    if (!quiet && p.at - soundAt >= PORTAL_SOUND_GAP_MS) {
+      soundAt = p.at;
+      try {
+        audio?.play3dId?.(PORTAL_SOUND, at, 0.9, { maxDistance: 24 });
+      } catch {
+        /* silent */
+      }
+    } // a sound ID (DAGGER.SND's), not an index - AUDIT 58's law
     return p;
   }
   /** One frame: each portal's size, frame and glow; the closed ones freed. `viewEye` the camera (it stands behind). */
@@ -126,18 +160,33 @@ export function createPortalSet({ renderer, audio = null, now = () => performanc
       const p = list[i];
       const age = t - p.at;
       const { open: k, done } = portalOpenAt(age, { short: p.short, holdMs: p.holdMs });
-      if (done) { try { renderer.destroyBillboardBatch(p.batch); } catch { /* gone */ } list.splice(i, 1); continue; }
-      const w = PORTAL_SIZE.w * Math.max(0.04, Math.min(1, k * 1.25 - 0.1)), hgt = PORTAL_SIZE.h * Math.max(0.12, Math.min(1.06, 0.35 + k * 0.7));
+      if (done) {
+        try {
+          renderer.destroyBillboardBatch(p.batch);
+        } catch {
+          /* gone */
+        }
+        list.splice(i, 1);
+        continue;
+      }
+      const w = PORTAL_SIZE.w * Math.max(0.04, Math.min(1, k * 1.25 - 0.1)),
+        hgt = PORTAL_SIZE.h * Math.max(0.12, Math.min(1.06, 0.35 + k * 0.7));
       p.batch.size = { w, h: hgt };
       p.batch.record = String(Math.floor((age / 1000) * PORTAL_FPS) % PORTAL_FRAMES);
       p.batch.conceal.alpha = clamp01(k * 1.15);
       // stand a step behind the body, along the line from the eye
-      if (p.fixed) { p.origin[0] = p.feet[0]; p.origin[2] = p.feet[2]; }   // PORTAL1: a gate stands where it opened
+      if (p.fixed) {
+        p.origin[0] = p.feet[0];
+        p.origin[2] = p.feet[2];
+      } // PORTAL1: a gate stands where it opened
       else if (eye) {
-        const dx = p.feet[0] - eye[0], dz = p.feet[2] - eye[2], L = Math.hypot(dx, dz) || 1;
-        p.origin[0] = p.feet[0] + (dx / L) * PORTAL_BACK; p.origin[2] = p.feet[2] + (dz / L) * PORTAL_BACK;
+        const dx = p.feet[0] - eye[0],
+          dz = p.feet[2] - eye[2],
+          L = Math.hypot(dx, dz) || 1;
+        p.origin[0] = p.feet[0] + (dx / L) * PORTAL_BACK;
+        p.origin[2] = p.feet[2] + (dz / L) * PORTAL_BACK;
       }
-      p.origin[1] = p.feet[1] + (PORTAL_SIZE.h - hgt) * 0.5;   // it opens about its middle
+      p.origin[1] = p.feet[1] + (PORTAL_SIZE.h - hgt) * 0.5; // it opens about its middle
     }
   }
   return {
@@ -146,11 +195,37 @@ export function createPortalSet({ renderer, audio = null, now = () => performanc
     /** The portals' batches, drawn with the pool's. */
     batches: () => (list.length ? list.map((p) => p.batch) : NONE),
     /** The floating origin moved: every portal with it (exteriorFoes.js offsetAll). */
-    offsetAll(o) { for (const p of list) { p.feet[0] += o[0]; p.feet[1] += o[1]; p.feet[2] += o[2]; } },
+    offsetAll(o) {
+      for (const p of list) {
+        p.feet[0] += o[0];
+        p.feet[1] += o[1];
+        p.feet[2] += o[2];
+      }
+    },
     /** PORTAL1: one portal out at once, its batch freed (a gate whose word was replaced or ran out). */
-    remove(p) { const i = list.indexOf(p); if (i < 0) return; try { renderer.destroyBillboardBatch(p.batch); } catch { /* gone */ } list.splice(i, 1); },
+    remove(p) {
+      const i = list.indexOf(p);
+      if (i < 0) return;
+      try {
+        renderer.destroyBillboardBatch(p.batch);
+      } catch {
+        /* gone */
+      }
+      list.splice(i, 1);
+    },
     /** How many stand (tests, the pool's sweep). */
-    get count() { return list.length; },
-    clear() { for (const p of list) { try { renderer.destroyBillboardBatch(p.batch); } catch { /* gone */ } } list.length = 0; },
+    get count() {
+      return list.length;
+    },
+    clear() {
+      for (const p of list) {
+        try {
+          renderer.destroyBillboardBatch(p.batch);
+        } catch {
+          /* gone */
+        }
+      }
+      list.length = 0;
+    },
   };
 }

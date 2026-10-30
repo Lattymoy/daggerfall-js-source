@@ -8,9 +8,26 @@ import { isActionDoorObject } from '../world/actionSystem.js';
 import { PartyPingDraw } from '../render/partyPingDraw.js';
 import { createPingLabels, pingDistanceText } from '../render/partyPingLabels.js';
 import {
-  PING_MARK_MS, PING_PATH_MS, PING_OUT_MS, PING_REACH_M, PING_GROUND_M, PING_COOLDOWN_MS, PING_ARRIVE_M,
-  PING_WALL_NY, PING_WALL_BACK, PING_COLOR_MINE, PING_COLOR_MATE,
-  aimPoint, placeOk, pingPlace, fadeAlpha, settleAim, pingGround, groundRoute, markUnderLook, buildingStop,
+  PING_MARK_MS,
+  PING_PATH_MS,
+  PING_OUT_MS,
+  PING_REACH_M,
+  PING_GROUND_M,
+  PING_COOLDOWN_MS,
+  PING_ARRIVE_M,
+  PING_WALL_NY,
+  PING_WALL_BACK,
+  PING_COLOR_MINE,
+  PING_COLOR_MATE,
+  aimPoint,
+  placeOk,
+  pingPlace,
+  fadeAlpha,
+  settleAim,
+  pingGround,
+  groundRoute,
+  markUnderLook,
+  buildingStop,
 } from '../systems/party/partyPing.js';
 
 /** Unlocked action doors, left out of the soup the way the dungeon's bake leaves them
@@ -24,14 +41,18 @@ function openDoors(actions) {
 }
 
 const dist2 = (a, b) => {
-  const dx = a[0] - b[0], dy = a[1] - b[1], dz = a[2] - b[2];
+  const dx = a[0] - b[0],
+    dy = a[1] - b[1],
+    dz = a[2] - b[2];
   return dx * dx + dy * dy + dz * dz;
 };
 
 /** A knee-height step hits a mesh before it arrives: a building, a rock, a wall. The ground is not a mesh. */
 function kneeClear(col, a, b) {
   if (!col?.raycastHit) return true;
-  const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2];
+  const dx = b[0] - a[0],
+    dy = b[1] - a[1],
+    dz = b[2] - a[2];
   const len = Math.hypot(dx, dy, dz);
   if (!(len > 0.05)) return true;
   const hit = col.raycastHit([a[0], a[1] + 0.85, a[2]], [dx / len, dy / len, dz / len], len);
@@ -115,7 +136,10 @@ export function createPartyPingHost(deps) {
       if (now >= m.markUntil && now >= m.pathUntil) marks.splice(i, 1);
     }
     if (ribbonOut && now >= ribbonOut.until) ribbonOut = null;
-    if (pg && now > pgUntil) { pg = null; unsent = false; }
+    if (pg && now > pgUntil) {
+      pg = null;
+      unsent = false;
+    }
   };
 
   /** A mark fades out. The one being followed is let go with it. */
@@ -124,7 +148,10 @@ export function createPartyPingHost(deps) {
     m.hold = false;
     if (m.markUntil > dead) m.markUntil = dead;
     if (m.pathUntil > dead) m.pathUntil = dead;
-    if (follow === m) { follow = null; if (ribbon) present(null, pathColor, now, now, null); }
+    if (follow === m) {
+      follow = null;
+      if (ribbon) present(null, pathColor, now, now, null);
+    }
   };
 
   /** My own showing ping gives way. A mate's mark, and the one I follow, stay. */
@@ -149,10 +176,18 @@ export function createPartyPingHost(deps) {
 
   const present = (pts, color, now, until, goalId) => {
     if (pts && ribbon && ribbon.goalId === goalId) {
-      ribbon.pts = pts; ribbon.color = color; ribbon.until = until;
+      ribbon.pts = pts;
+      ribbon.color = color;
+      ribbon.until = until;
       return;
     }
-    if (ribbon?.pts) ribbonOut = { pts: ribbon.pts, color: ribbon.color, born: now - PING_OUT_MS, until: Math.min(ribbon.until, now + PING_OUT_MS) };
+    if (ribbon?.pts)
+      ribbonOut = {
+        pts: ribbon.pts,
+        color: ribbon.color,
+        born: now - PING_OUT_MS,
+        until: Math.min(ribbon.until, now + PING_OUT_MS),
+      };
     ribbon = pts && pts.length > 1 ? { pts, color, born: now, until, goalId } : null;
   };
 
@@ -163,7 +198,10 @@ export function createPartyPingHost(deps) {
     path = null;
     ribbon = null;
     ribbonOut = null;
-    if (nav) { nav.dispose(); nav = null; }
+    if (nav) {
+      nav.dispose();
+      nav = null;
+    }
   };
 
   const askBake = (feet, key) => {
@@ -173,21 +211,31 @@ export function createPartyPingHost(deps) {
     baking = true;
     nav = nav ?? new NavClient();
     const anchor = [feet[0], feet[1], feet[2]];
-    nav.bake({ collider: col, anchor, exclude: openDoors(deps.actions?.() ?? null), key: `ping:${key}` })
-      .then((b) => { if (placeKey === key) chf = b?.chf ?? null; })
-      .catch(() => { if (placeKey === key) chf = null; })
-      .finally(() => { baking = false; if (placeKey === key && !chf) bakeFailed = key; });
+    nav
+      .bake({ collider: col, anchor, exclude: openDoors(deps.actions?.() ?? null), key: `ping:${key}` })
+      .then((b) => {
+        if (placeKey === key) chf = b?.chf ?? null;
+      })
+      .catch(() => {
+        if (placeKey === key) chf = null;
+      })
+      .finally(() => {
+        baking = false;
+        if (placeKey === key && !chf) bakeFailed = key;
+      });
   };
 
   const retarget = (now, feet, place) => {
     const goal = follow;
     if (!feet || !goal || !shown(goal, place) || place.space === 'interior') {
-      path = null; pathGoal = null;
+      path = null;
+      pathGoal = null;
       if (ribbon) present(null, pathColor, now, now, null);
       return;
     }
     if (dist2(feet, goal.at) <= PING_ARRIVE_M * PING_ARRIVE_M) {
-      path = null; pathGoal = null;
+      path = null;
+      pathGoal = null;
       if (ribbon) present(null, pathColor, now, now, null);
       return;
     }
@@ -199,17 +247,33 @@ export function createPartyPingHost(deps) {
     pathColor = goal.color;
     if (place.space === 'world') {
       path = null;
-      if (!deps.ground) { present(null, pathColor, now, now, goal); return; }
+      if (!deps.ground) {
+        present(null, pathColor, now, now, goal);
+        return;
+      }
       let pts = null;
-      try { pts = groundRoute(feet, goal.at, deps.ground, deps.clear ?? ((a, b) => kneeClear(deps.collider(), a, b))); } catch { pts = null; }
+      try {
+        pts = groundRoute(feet, goal.at, deps.ground, deps.clear ?? ((a, b) => kneeClear(deps.collider(), a, b)));
+      } catch {
+        pts = null;
+      }
       path = pts && pts.length > 1 ? pts : null;
       present(path, pathColor, now, goal.pathUntil, goal);
       return;
     }
     const mesh = deps.navMesh?.() ?? chf;
-    if (!mesh) { path = null; present(null, pathColor, now, now, goal); askBake(feet, place.k); return; }
+    if (!mesh) {
+      path = null;
+      present(null, pathColor, now, now, goal);
+      askBake(feet, place.k);
+      return;
+    }
     let pts = null;
-    try { pts = route(mesh, feet, goal.at); } catch { pts = null; }
+    try {
+      pts = route(mesh, feet, goal.at);
+    } catch {
+      pts = null;
+    }
     path = pts && pts.length > 1 ? pts : null;
     present(path, pathColor, now, goal.pathUntil, goal);
   };
@@ -220,7 +284,11 @@ export function createPartyPingHost(deps) {
     const place = deps.place();
     if (deps.blocked() || !place || !eye || !dir || now - lastCast < PING_COOLDOWN_MS) return false;
     const cap = reach ?? (place.space === 'world' ? PING_GROUND_M : PING_REACH_M);
-    const under = markUnderLook(eye, dir, marks.filter((m) => shown(m, place) && (m === follow || (m.hold && now < m.markUntil))));
+    const under = markUnderLook(
+      eye,
+      dir,
+      marks.filter((m) => shown(m, place) && (m === follow || (m.hold && now < m.markUntil))),
+    );
     if (under) {
       lastCast = now;
       if (follow === under) {
@@ -231,15 +299,23 @@ export function createPartyPingHost(deps) {
       return true;
     }
     let sub = null;
-    try { sub = deps.subject?.(eye, dir, cap) ?? null; } catch { sub = null; }
-    let at = null, name = '', elite = false;
+    try {
+      sub = deps.subject?.(eye, dir, cap) ?? null;
+    } catch {
+      sub = null;
+    }
+    let at = null,
+      name = '',
+      elite = false;
     if (place.space === 'world' && typeof deps.ground === 'function') {
       const g = pingGround(eye, dir, deps.ground, cap);
       const gDist = g ? Math.hypot(g[0] - eye[0], g[1] - eye[1], g[2] - eye[2]) : Infinity;
       const shell = buildingStop(eye, dir, deps.collider(), deps.buildings?.() ?? null, cap);
       const limit = Math.min(gDist, shell?.dist ?? Infinity);
       if (sub && Number.isFinite(sub.dist) && sub.dist <= limit + 0.75) {
-        at = aimPoint(eye, dir, sub.dist, cap); name = sub.name || ''; elite = !!sub.elite;
+        at = aimPoint(eye, dir, sub.dist, cap);
+        name = sub.name || '';
+        elite = !!sub.elite;
       } else if (shell && shell.dist < gDist) {
         at = aimPoint(eye, dir, Math.max(0.2, shell.dist - 0.35), cap);
       } else at = g;
@@ -255,7 +331,9 @@ export function createPartyPingHost(deps) {
       const floor = settleAim(eye, dir, hit, down);
       const hitDist = Number.isFinite(hit?.dist) ? hit.dist : Infinity;
       if (sub && Number.isFinite(sub.dist) && sub.dist <= hitDist + 0.75) {
-        at = aimPoint(eye, dir, sub.dist, cap); name = sub.name || ''; elite = !!sub.elite;
+        at = aimPoint(eye, dir, sub.dist, cap);
+        name = sub.name || '';
+        elite = !!sub.elite;
       } else at = floor;
     }
     if (!at || !placeOk(place.k)) return false;
@@ -268,8 +346,21 @@ export function createPartyPingHost(deps) {
     pgUntil = now + PING_PATH_MS;
     unsent = true;
     marks.push({
-      id: `p${lid++}`, at, wire, born: now, lifeUntil: now + PING_MARK_MS, markUntil: now + PING_MARK_MS, pathUntil: pgUntil,
-      color: PING_COLOR_MINE, k: place.k, space: place.space, hold: true, mine: true, acct: null, name, elite,
+      id: `p${lid++}`,
+      at,
+      wire,
+      born: now,
+      lifeUntil: now + PING_MARK_MS,
+      markUntil: now + PING_MARK_MS,
+      pathUntil: pgUntil,
+      color: PING_COLOR_MINE,
+      k: place.k,
+      space: place.space,
+      hold: true,
+      mine: true,
+      acct: null,
+      name,
+      elite,
     });
     deps.sound();
     return true;
@@ -281,7 +372,10 @@ export function createPartyPingHost(deps) {
       const now = deps.now();
       const place = deps.place();
       const key = place?.k ?? '';
-      if (key !== placeKey) { placeKey = key; forgetMesh(); }
+      if (key !== placeKey) {
+        placeKey = key;
+        forgetMesh();
+      }
       for (const m of marks) placeAt(m);
       if (follow && place && !shown(follow, place)) follow = null;
       lookEye = eye ?? lookEye;
@@ -308,9 +402,21 @@ export function createPartyPingHost(deps) {
       const left = g.at + PING_MARK_MS - now;
       const name = typeof g.n === 'string' ? g.n : '';
       marks.push({
-        id: `p${lid++}`, at, wire: { x: g.x, y: g.y, z: g.z }, born: now, lifeUntil: g.at + PING_MARK_MS,
-        markUntil: now + Math.max(0, Math.min(PING_MARK_MS, left)), pathUntil: g.at + PING_PATH_MS,
-        color: PING_COLOR_MATE, k: g.k, space: place.space, hold: true, mine: false, acct: id, name, elite: g.e === 1,
+        id: `p${lid++}`,
+        at,
+        wire: { x: g.x, y: g.y, z: g.z },
+        born: now,
+        lifeUntil: g.at + PING_MARK_MS,
+        markUntil: now + Math.max(0, Math.min(PING_MARK_MS, left)),
+        pathUntil: g.at + PING_PATH_MS,
+        color: PING_COLOR_MATE,
+        k: g.k,
+        space: place.space,
+        hold: true,
+        mine: false,
+        acct: id,
+        name,
+        elite: g.e === 1,
       });
       deps.sound();
     },
@@ -319,8 +425,12 @@ export function createPartyPingHost(deps) {
       expire(deps.now());
       return pg ? { pg } : {};
     },
-    unsent() { return unsent && !!pg; },
-    sent() { unsent = false; },
+    unsent() {
+      return unsent && !!pg;
+    },
+    sent() {
+      unsent = false;
+    },
     /** The marks still on screen, for the test. */
     points() {
       const now = deps.now();
@@ -333,7 +443,9 @@ export function createPartyPingHost(deps) {
       return out;
     },
     /** Whether a route is showing, before its fade-out. */
-    line() { return !!(ribbon && ribbon.pts && ribbon.pts.length > 1); },
+    line() {
+      return !!(ribbon && ribbon.pts && ribbon.pts.length > 1);
+    },
     /** After the opaque world, in the veiled-bodies' slot. */
     draw(renderer) {
       const now = deps.now();
@@ -352,15 +464,23 @@ export function createPartyPingHost(deps) {
           if (at?.front) {
             const c = m.color;
             rows.push({
-              id: m.id, x: at.x, y: at.y, name: m.name, elite: m.elite, alpha,
-              author: m.mine ? (deps.author?.() || '') : (deps.mateName?.(m.acct) || ''),
+              id: m.id,
+              x: at.x,
+              y: at.y,
+              name: m.name,
+              elite: m.elite,
+              alpha,
+              author: m.mine ? deps.author?.() || '' : deps.mateName?.(m.acct) || '',
               color: `rgb(${(c[0] * 255) | 0},${(c[1] * 255) | 0},${(c[2] * 255) | 0})`,
               dist: pingDistanceText(Math.hypot(eye[0] - m.at[0], eye[1] - m.at[1], eye[2] - m.at[2])),
             });
           }
         }
       }
-      if (deps.project) { labels = labels ?? createPingLabels(); labels.sync(rows, now); }
+      if (deps.project) {
+        labels = labels ?? createPingLabels();
+        labels.sync(rows, now);
+      }
       const ribbons = [];
       const pushR = (r) => {
         if (!r?.pts || r.pts.length < 2 || now >= r.until || now < r.born) return;
@@ -374,13 +494,23 @@ export function createPartyPingHost(deps) {
       try {
         drawPass = drawPass ?? new PartyPingDraw(renderer.gl);
         drawPass.draw(renderer, live, ribbons);
-      } catch (e) { console.warn('[party-ping] draw', e?.message ?? e); }
+      } catch (e) {
+        console.warn('[party-ping] draw', e?.message ?? e);
+      }
     },
     dispose() {
       forgetMesh();
-      try { labels?.dispose(); } catch { /* the page is already gone */ }
+      try {
+        labels?.dispose();
+      } catch {
+        /* the page is already gone */
+      }
       labels = null;
-      try { drawPass?.dispose(); } catch { /* the context is already gone */ }
+      try {
+        drawPass?.dispose();
+      } catch {
+        /* the context is already gone */
+      }
       drawPass = null;
     },
   };

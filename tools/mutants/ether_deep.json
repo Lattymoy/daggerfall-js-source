@@ -182,7 +182,7 @@
   {
     "name": "ED-pits-everywhere",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "    if (!pitPixelOk(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }",
+    "old": "    if (!pitPixelOk(st.mapX, st.mapY)) {\n      markTerrainProcessed(st, v, 'rejected:off-the-map');\n      return;\n    }",
     "new": "",
     "tests": [
       "test/scenes/oh_host.test.js"

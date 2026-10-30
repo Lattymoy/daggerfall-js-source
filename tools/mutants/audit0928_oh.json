@@ -11,8 +11,8 @@
   {
     "name": "H4-process-x-double-size",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "const num4 = f32(t[0] + f32(num2 * TILE_WORLD_SIZE_F32));",
-    "new": "const num4 = f32(t[0] + f32(num2 * 819.2));",
+    "old": "    const num4 = f32(t[0] + f32(num2 * TILE_WORLD_SIZE_F32));",
+    "new": "    const num4 = f32(t[0] + f32(num2 * 819.2));",
     "tests": [
       "test/world/audit0928_oh.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "H4-process-z-double-size",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "const num5 = f32(t[2] + f32(num3 * TILE_WORLD_SIZE_F32));",
-    "new": "const num5 = f32(t[2] + f32(num3 * 819.2));",
+    "old": "    const num5 = f32(t[2] + f32(num3 * TILE_WORLD_SIZE_F32));",
+    "new": "    const num5 = f32(t[2] + f32(num3 * 819.2));",
     "tests": [
       "test/world/audit0928_oh.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "H4-deform-x-double-size",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "sizeX: TILE_WORLD_SIZE_F32, sizeZ: TILE_WORLD_SIZE_F32",
-    "new": "sizeX: 819.2, sizeZ: TILE_WORLD_SIZE_F32",
+    "old": "        sizeX: TILE_WORLD_SIZE_F32,",
+    "new": "        sizeX: 819.2,",
     "tests": [
       "test/world/audit0928_oh.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "H4-deform-z-double-size",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "sizeX: TILE_WORLD_SIZE_F32, sizeZ: TILE_WORLD_SIZE_F32",
-    "new": "sizeX: TILE_WORLD_SIZE_F32, sizeZ: 819.2",
+    "old": "        sizeZ: TILE_WORLD_SIZE_F32,",
+    "new": "        sizeZ: 819.2,",
     "tests": [
       "test/world/audit0928_oh.test.js"
     ]

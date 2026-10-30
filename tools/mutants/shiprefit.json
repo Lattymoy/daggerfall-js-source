@@ -92,8 +92,8 @@
   {
     "name": "SHIP-REFIT-unwired",
     "file": "src/scenes/modWorldData.js",
-    "old": "    installShipRefit(boundWorldDataBlocks());   // the ships' building files, built from your own BLOCKS.BSA (world/shipRefit.js)\n",
-    "new": "",
+    "old": "    installShipRefit(boundWorldDataBlocks()); // the ships' building files, built from your own BLOCKS.BSA (world/shipRefit.js)\n    installCuratedBlocks(); // DELVE II (DLV5): the same - the curated blocks, each made of its base (world/dungeon/curatedInstall.js)",
+    "new": "    installCuratedBlocks(); // DELVE II (DLV5): the same - the curated blocks, each made of its base (world/dungeon/curatedInstall.js)",
     "tests": [
       "test/world/shipRefit.test.js"
     ]

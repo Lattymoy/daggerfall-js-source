@@ -34,23 +34,37 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  isPitPixel, placementFraction, getScaledSliderValue, deformSeafloorVertices, raycastFloorY, findPitOpeningY, oceanSurfaceWorldY,
-  MAX_FLOOR_WAIT_FRAMES, MINIMUM_DEPTH, MINIMUM_EDGE_DISTANCE, FLOOR_FLATTEN_VARIANCE, SURFACE_OUTER_RADIUS, SURFACE_MIASMA_MAX_PARTICLES,
-  SURFACE_MIASMA_HEIGHT, OCEAN_HOLES_VENDOR,
-  pitPixelOk,   // PITS-WORLD: IsValidMapPixel's hold - the world's grid, where an abyss has an id (ETHER-DEEP held it to the Bay's map)
+  isPitPixel,
+  placementFraction,
+  getScaledSliderValue,
+  deformSeafloorVertices,
+  raycastFloorY,
+  findPitOpeningY,
+  oceanSurfaceWorldY,
+  MAX_FLOOR_WAIT_FRAMES,
+  MINIMUM_DEPTH,
+  MINIMUM_EDGE_DISTANCE,
+  FLOOR_FLATTEN_VARIANCE,
+  SURFACE_OUTER_RADIUS,
+  SURFACE_MIASMA_MAX_PARTICLES,
+  SURFACE_MIASMA_HEIGHT,
+  OCEAN_HOLES_VENDOR,
+  pitPixelOk, // PITS-WORLD: IsValidMapPixel's hold - the world's grid, where an abyss has an id (ETHER-DEEP held it to the Bay's map)
 } from '../world/oceanHoles.js';
-import { cyrodiilMask } from '../systems/wild/cyrodiilZone.js';   // PITS-WORLD: the open zone stands no pit
+import { cyrodiilMask } from '../systems/wild/cyrodiilZone.js'; // PITS-WORLD: the open zone stands no pit
 import { wildInside } from '../systems/wild/wildZone.js';
 import { isOnlinePage } from '../systems/online/onlineLane.js';
-import { sampleMeshLocalY, TILE_WORLD_SIZE_F32 } from '../world/deepWater/deepWaterFloor.js';   // AUDIT PRE-MERGE 0928 H4: terrainData.size, a float
+import { sampleMeshLocalY, TILE_WORLD_SIZE_F32 } from '../world/deepWater/deepWaterFloor.js'; // AUDIT PRE-MERGE 0928 H4: terrainData.size, a float
 import { modSetting, modSettingsGeneration } from '../systems/modSettings.js';
-import { OCEAN_CLIMATE } from '../world/terrain/terrainHelper.js';   // worldClimate 223: the unverified placement's own check
+import { OCEAN_CLIMATE } from '../world/terrain/terrainHelper.js'; // worldClimate 223: the unverified placement's own check
 
 const f32 = Math.fround;
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 /** The mod's switch (the port's Enabled), and its dependency's. */
-export function oceanHolesOn(deepWatersOn) { return deepWatersOn && modSetting(OCEAN_HOLES_VENDOR, 'Enabled') === true; }
+export function oceanHolesOn(deepWatersOn) {
+  return deepWatersOn && modSetting(OCEAN_HOLES_VENDOR, 'Enabled') === true;
+}
 
 /**
  * ApplySettings: the seven sliders read as the C# reads them - the surface
@@ -63,15 +77,25 @@ export function oceanHolesSettings() {
     surfaceHoleRadius: getScaledSliderValue(get('SurfaceHoleSize'), SURFACE_OUTER_RADIUS),
     seafloorHoleScale: getScaledSliderValue(get('SeafloorHoleSize'), 1),
     pitSpawnRate: f32(clamp01(f32(get('PitSpawnRate') || 0))),
-    miasmaParticleCount: Math.max(0, roundHalfEven(getScaledSliderValue(get('MiasmaParticleCount'), SURFACE_MIASMA_MAX_PARTICLES))),
+    miasmaParticleCount: Math.max(
+      0,
+      roundHalfEven(getScaledSliderValue(get('MiasmaParticleCount'), SURFACE_MIASMA_MAX_PARTICLES)),
+    ),
     miasmaHeight: getScaledSliderValue(get('MiasmaHeight'), SURFACE_MIASMA_HEIGHT),
     dungeonVisualIntensity: f32(clamp01(f32(get('DungeonVisualIntensity') || 0))),
     dungeonVisualDarkness: f32(clamp01(f32(get('DungeonVisualDarkness') || 0))),
   };
 }
 /** The keys whose change re-evaluates the loaded pits (LoadSettings' HasChanged five). */
-export const PIT_REFRESH_KEYS = Object.freeze(['SurfaceHoleSize', 'SeafloorHoleSize', 'PitSpawnRate', 'MiasmaParticleCount', 'MiasmaHeight']);
-const snapshotOf = (s) => `${s.surfaceHoleRadius}|${s.seafloorHoleScale}|${s.pitSpawnRate}|${s.miasmaParticleCount}|${s.miasmaHeight}`;
+export const PIT_REFRESH_KEYS = Object.freeze([
+  'SurfaceHoleSize',
+  'SeafloorHoleSize',
+  'PitSpawnRate',
+  'MiasmaParticleCount',
+  'MiasmaHeight',
+]);
+const snapshotOf = (s) =>
+  `${s.surfaceHoleRadius}|${s.seafloorHoleScale}|${s.pitSpawnRate}|${s.miasmaParticleCount}|${s.miasmaHeight}`;
 
 /** PITS-WORLD (the owner's call taken, 2026-10-26: site-bound things stand nowhere in the open PvP zone): IS A PIXEL THE OPEN
  *  ZONE'S - online, Cyrodiil's mask (systems/wild/cyrodiilZone.js, the world host's wildMapMask: the province whole and the
@@ -84,7 +108,8 @@ export function openZoneAtNow(mapX, mapY) {
   return !!m && wildInside(m, mapX, mapY);
 }
 
-function roundHalfEven(v) {   // Mathf.RoundToInt
+function roundHalfEven(v) {
+  // Mathf.RoundToInt
   const f = Math.floor(v);
   return v - f === 0.5 ? (f % 2 === 0 ? f : f + 1) : Math.round(v);
 }
@@ -105,12 +130,24 @@ function roundHalfEven(v) {   // Mathf.RoundToInt
  * @param {(mapX: number, mapY: number) => boolean} [deps.openZoneAt] - PITS-WORLD: whether a pixel is the open PvP zone's
  *   (online, Cyrodiil's mask - openZoneAt below), where no pit is cut
  */
-export function createOceanHoles({ deepWaters, decor = null, built, pixelTranslation, hasLocation, worldClimateOf,
-  pits = null, onEnterPit = () => {}, now = () => performance.now() / 1000, settings = oceanHolesSettings, warn = (m) => console.warn(m),
-  inside = () => false, openZoneAt = openZoneAtNow }) {
-  const pendingTerrains = [];            // Queue<DaggerfallTerrain>
-  const queuedTerrains = new Set();      // HashSet<DaggerfallTerrain>
-  const states = new WeakMap();          // entry -> OceanPitTileState
+export function createOceanHoles({
+  deepWaters,
+  decor = null,
+  built,
+  pixelTranslation,
+  hasLocation,
+  worldClimateOf,
+  pits = null,
+  onEnterPit = () => {},
+  now = () => performance.now() / 1000,
+  settings = oceanHolesSettings,
+  warn = (m) => console.warn(m),
+  inside = () => false,
+  openZoneAt = openZoneAtNow,
+}) {
+  const pendingTerrains = []; // Queue<DaggerfallTerrain>
+  const queuedTerrains = new Set(); // HashSet<DaggerfallTerrain>
+  const states = new WeakMap(); // entry -> OceanPitTileState
   let s = settings();
   let snapshot = snapshotOf(s);
   let settingsGen = modSettingsGeneration();
@@ -123,13 +160,33 @@ export function createOceanHoles({ deepWaters, decor = null, built, pixelTransla
   const version = (e) => deepWaters.seafloorBuildVersion(e);
 
   function newState(mapX, mapY) {
-    return { mapX, mapY, attempts: 0, appliedFloorBuildVersion: -1, evaluatedFloorBuildVersion: -1, processed: false, flattenedFloor: false, diagnostic: 'queued' };
+    return {
+      mapX,
+      mapY,
+      attempts: 0,
+      appliedFloorBuildVersion: -1,
+      evaluatedFloorBuildVersion: -1,
+      processed: false,
+      flattenedFloor: false,
+      diagnostic: 'queued',
+    };
   }
   /** OceanPitTileState.ResetState. */
-  function resetState(st, mapX, mapY) { Object.assign(st, newState(mapX, mapY)); }
+  function resetState(st, mapX, mapY) {
+    Object.assign(st, newState(mapX, mapY));
+  }
   /** OceanPitTileState.Reprocess. */
-  function reprocess(st) { st.attempts = 0; st.evaluatedFloorBuildVersion = -1; st.processed = false; st.diagnostic = 'requeued'; }
-  function markTerrainProcessed(st, buildVersion, diagnostic) { st.diagnostic = diagnostic; st.evaluatedFloorBuildVersion = buildVersion; st.processed = true; }
+  function reprocess(st) {
+    st.attempts = 0;
+    st.evaluatedFloorBuildVersion = -1;
+    st.processed = false;
+    st.diagnostic = 'requeued';
+  }
+  function markTerrainProcessed(st, buildVersion, diagnostic) {
+    st.diagnostic = diagnostic;
+    st.evaluatedFloorBuildVersion = buildVersion;
+    st.processed = true;
+  }
 
   function destroyPit(entry) {
     const pit = entry._ohPit;
@@ -141,13 +198,19 @@ export function createOceanHoles({ deepWaters, decor = null, built, pixelTransla
   /** ResetTerrainPit: the old pit destroyed, the state made (or reset) for this pixel. */
   function resetTerrainPit(entry, st) {
     destroyPit(entry);
-    if (!st) { st = newState(entry.px, entry.py); states.set(entry, st); }
+    if (!st) {
+      st = newState(entry.px, entry.py);
+      states.set(entry, st);
+    }
     resetState(st, entry.px, entry.py);
     return st;
   }
 
   function enqueueTerrain(entry) {
-    if (entry && !queuedTerrains.has(entry)) { queuedTerrains.add(entry); pendingTerrains.push(entry); }
+    if (entry && !queuedTerrains.has(entry)) {
+      queuedTerrains.add(entry);
+      pendingTerrains.push(entry);
+    }
   }
 
   /** OnTerrainPromoted. */
@@ -158,8 +221,13 @@ export function createOceanHoles({ deepWaters, decor = null, built, pixelTransla
     const v = version(entry);
     const flag = !!st && st.mapX === entry.px && st.mapY === entry.py;
     if (!flag || !st.processed || st.evaluatedFloorBuildVersion !== v || (st.appliedFloorBuildVersion >= 0 && !pit)) {
-      if (flag && st.appliedFloorBuildVersion === v) { reprocess(st); enqueueTerrain(entry); }
-      else { resetTerrainPit(entry, st); enqueueTerrain(entry); }
+      if (flag && st.appliedFloorBuildVersion === v) {
+        reprocess(st);
+        enqueueTerrain(entry);
+      } else {
+        resetTerrainPit(entry, st);
+        enqueueTerrain(entry);
+      }
     }
   }
 
@@ -167,7 +235,8 @@ export function createOceanHoles({ deepWaters, decor = null, built, pixelTransla
   function seafloorBuilt(entry) {
     if (!entry) return;
     const st = states.get(entry);
-    if (!st || st.mapX !== entry.px || st.mapY !== entry.py || st.appliedFloorBuildVersion !== version(entry)) resetTerrainPit(entry, st);
+    if (!st || st.mapX !== entry.px || st.mapY !== entry.py || st.appliedFloorBuildVersion !== version(entry))
+      resetTerrainPit(entry, st);
     processTerrain(entry);
   }
 
@@ -178,7 +247,8 @@ export function createOceanHoles({ deepWaters, decor = null, built, pixelTransla
     const t = pixelTranslation(entry.px, entry.py);
     const num = f32(worldPosition[0] - f32(t[0] + m.localX));
     const num2 = f32(worldPosition[2] - f32(t[2] + m.localZ));
-    if (m.decorationExclusionRadius > 0) return f32(f32(num * num) + f32(num2 * num2)) <= f32(m.decorationExclusionRadius * m.decorationExclusionRadius);
+    if (m.decorationExclusionRadius > 0)
+      return f32(f32(num * num) + f32(num2 * num2)) <= f32(m.decorationExclusionRadius * m.decorationExclusionRadius);
     return false;
   }
 
@@ -204,11 +274,15 @@ export function createOceanHoles({ deepWaters, decor = null, built, pixelTransla
     try {
       const bake = deepWaters.bake;
       if (!bake || !bake.loaded) return { ok: false, rejection: 'rejected:bake-not-loaded', verified: false };
-      if (!bake.mapPixelHasWaterCells(mapX, mapY)) return { ok: false, rejection: 'rejected:bake-no-water', verified: false };
-      if (bake.mapPixelHasLandCells(mapX, mapY)) return { ok: false, rejection: 'rejected:bake-has-land', verified: false };
-      if (!bake.isCarvedWater(mapX, mapY, fracX, fracZ)) return { ok: false, rejection: 'rejected:not-carved-water', verified: false };
+      if (!bake.mapPixelHasWaterCells(mapX, mapY))
+        return { ok: false, rejection: 'rejected:bake-no-water', verified: false };
+      if (bake.mapPixelHasLandCells(mapX, mapY))
+        return { ok: false, rejection: 'rejected:bake-has-land', verified: false };
+      if (!bake.isCarvedWater(mapX, mapY, fracX, fracZ))
+        return { ok: false, rejection: 'rejected:not-carved-water', verified: false };
       const num = bake.sampleEdgeDistanceMeters(mapX, mapY, fracX, fracZ);
-      if (num < MINIMUM_EDGE_DISTANCE) return { ok: false, rejection: `rejected:edge-distance-${num.toFixed(1)}`, verified: false };
+      if (num < MINIMUM_EDGE_DISTANCE)
+        return { ok: false, rejection: `rejected:edge-distance-${num.toFixed(1)}`, verified: false };
       return { ok: true, rejection: '', verified: true };
     } catch (ex) {
       bakeApiFailed = true;
@@ -232,10 +306,17 @@ export function createOceanHoles({ deepWaters, decor = null, built, pixelTransla
       const floor = deepWaters.tryGetSeafloor(entry);
       if (!floor) return { ok: false, flattened };
       // AUDIT PRE-MERGE 0928 H4: terrainData.size is 819.2f - the centre and the edges in floats (IL_20c0-IL_20e8, IL_2212-IL_2258)
-      const r = deformSeafloorVertices(floor.positions, { fractionX, fractionZ, sizeX: TILE_WORLD_SIZE_F32, sizeZ: TILE_WORLD_SIZE_F32, scale: s.seafloorHoleScale, allowFlatten });
+      const r = deformSeafloorVertices(floor.positions, {
+        fractionX,
+        fractionZ,
+        sizeX: TILE_WORLD_SIZE_F32,
+        sizeZ: TILE_WORLD_SIZE_F32,
+        scale: s.seafloorHoleScale,
+        allowFlatten,
+      });
       if (!r) return { ok: false, flattened };
       flattened = r.flattened;
-      if (!deepWaters.commitSeafloorChanges(entry, r.positions)) return { ok: false, flattened };   // RestoreSeafloor: nothing was taken
+      if (!deepWaters.commitSeafloorChanges(entry, r.positions)) return { ok: false, flattened }; // RestoreSeafloor: nothing was taken
       st.appliedFloorBuildVersion = v;
       st.flattenedFloor = flattened;
       return { ok: true, flattened };
@@ -252,24 +333,45 @@ export function createOceanHoles({ deepWaters, decor = null, built, pixelTransla
    */
   function buildPit(entry, mapX, mapY, worldX, worldZ, surfaceY, floorY) {
     const t = pixelTranslation(entry.px, entry.py);
-    const opening = findPitOpeningY((x, z) => floorWorldY(entry, x, z), worldX, worldZ, surfaceY, floorY, s.seafloorHoleScale);
-    const lx = f32(worldX - t[0]), lz = f32(worldZ - t[2]);
+    const opening = findPitOpeningY(
+      (x, z) => floorWorldY(entry, x, z),
+      worldX,
+      worldZ,
+      surfaceY,
+      floorY,
+      s.seafloorHoleScale,
+    );
+    const lx = f32(worldX - t[0]),
+      lz = f32(worldZ - t[2]);
     const local = (y) => f32(y - t[1]);
-    destroyPit(entry);   // the C# would stand a second OceanHole_Pit beside a stale one; no path here reaches BuildPit with one standing
+    destroyPit(entry); // the C# would stand a second OceanHole_Pit beside a stale one; no path here reaches BuildPit with one standing
     const scale = s.seafloorHoleScale;
     const pit = {
       marker: { mapX, mapY, localX: lx, localZ: lz, decorationExclusionRadius: f32(32 * scale) },
       core: { name: 'Blue Hole Core', y: local(f32(surfaceY + f32(0.07))), radius: s.surfaceHoleRadius },
       underside: { name: 'Blue Hole Underside', y: local(f32(surfaceY - f32(0.01))), radius: s.surfaceHoleRadius },
-      miasma: { name: 'Abyss Miasma', y: local(f32(surfaceY + f32(0.12))), count: s.miasmaParticleCount, height: s.miasmaHeight, radius: Math.max(0, f32(s.surfaceHoleRadius - 1)) },
+      miasma: {
+        name: 'Abyss Miasma',
+        y: local(f32(surfaceY + f32(0.12))),
+        count: s.miasmaParticleCount,
+        height: s.miasmaHeight,
+        radius: Math.max(0, f32(s.surfaceHoleRadius - 1)),
+      },
       black: { name: 'Pit Black', y: local(f32(opening + f32(0.08))), radius: f32(12 * scale) },
-      entrance: { name: 'Ocean Hole Entrance', y: local(f32(opening + f32(0.22))), size: [f32(18 * scale), f32(0.35), f32(18 * scale)], mapX, mapY, nextAllowedTime: 0 },
+      entrance: {
+        name: 'Ocean Hole Entrance',
+        y: local(f32(opening + f32(0.22))),
+        size: [f32(18 * scale), f32(0.35), f32(18 * scale)],
+        mapX,
+        mapY,
+        nextAllowedTime: 0,
+      },
       openingY: local(opening),
       handle: null,
     };
     entry._ohPit = pit;
     pit.handle = pits?.create(entry, pit) ?? null;
-    decor?.refreshLoadedTile(entry);   // RequestDecorationRefresh
+    decor?.refreshLoadedTile(entry); // RequestDecorationRefresh
   }
 
   /** ProcessTerrain: the pixel's gates in the C#'s order, each rejection a diagnostic. */
@@ -288,17 +390,29 @@ export function createOceanHoles({ deepWaters, decor = null, built, pixelTransla
     // map because a pit's drowned dungeon was named by its pixel's id's low twenty bits (GetAbyssMapId), which the Bay's
     // 1000 x 500 alone keeps apart; past the Bay an abyss is named in the world's abyss lane now, so every pixel of the
     // world's grid may open one - the continent's sea (TAMRIEL-DEEP) and the Eltheric Ocean's (ETHER-DEEP) as the Bay's
-    if (!pitPixelOk(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }
-    if (!isPitPixel(st.mapX, st.mapY, s.pitSpawnRate)) { markTerrainProcessed(st, v, 'rejected:not-selected'); return; }
-    if (hasLocation(entry)) { markTerrainProcessed(st, v, 'rejected:has-location'); return; }
-    if (openZoneAt(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:open-zone'); return; }   // PITS-WORLD: the open zone stands no pit
-    const flag = !!deepWaters.tryGetSeafloor(entry);   // TryGetFloorCollider
+    if (!pitPixelOk(st.mapX, st.mapY)) {
+      markTerrainProcessed(st, v, 'rejected:off-the-map');
+      return;
+    }
+    if (!isPitPixel(st.mapX, st.mapY, s.pitSpawnRate)) {
+      markTerrainProcessed(st, v, 'rejected:not-selected');
+      return;
+    }
+    if (hasLocation(entry)) {
+      markTerrainProcessed(st, v, 'rejected:has-location');
+      return;
+    }
+    if (openZoneAt(st.mapX, st.mapY)) {
+      markTerrainProcessed(st, v, 'rejected:open-zone');
+      return;
+    } // PITS-WORLD: the open zone stands no pit
+    const flag = !!deepWaters.tryGetSeafloor(entry); // TryGetFloorCollider
     if (!flag || !deepWaters.isSeafloorCurrent(entry)) {
       const text = flag ? 'stale-seafloor' : 'missing-seafloor';
       const text2 = `waiting:${text}`;
       const num = st.diagnostic !== text2;
       st.diagnostic = text2;
-      if (num || st.attempts % 30 === 0) deepWaters.refreshLoadedTile(entry);   // RequestSeafloorRefresh
+      if (num || st.attempts % 30 === 0) deepWaters.refreshLoadedTile(entry); // RequestSeafloorRefresh
       if (!st.processed) {
         if (++st.attempts < MAX_FLOOR_WAIT_FRAMES) enqueueTerrain(entry);
         else markTerrainProcessed(st, v, `rejected:${text}-timeout`);
@@ -308,23 +422,43 @@ export function createOceanHoles({ deepWaters, decor = null, built, pixelTransla
     const num2 = placementFraction(st.mapX, st.mapY, 88);
     const num3 = placementFraction(st.mapX, st.mapY, 90);
     const bake = passesBakeFilter(st.mapX, st.mapY, num2, num3);
-    if (!bake.ok) { markTerrainProcessed(st, v, bake.rejection); return; }
-    if (!bake.verified && worldClimateOf(entry) !== OCEAN_CLIMATE) { markTerrainProcessed(st, v, 'rejected:not-ocean-climate'); return; }
+    if (!bake.ok) {
+      markTerrainProcessed(st, v, bake.rejection);
+      return;
+    }
+    if (!bake.verified && worldClimateOf(entry) !== OCEAN_CLIMATE) {
+      markTerrainProcessed(st, v, 'rejected:not-ocean-climate');
+      return;
+    }
     const t = pixelTranslation(entry.px, entry.py);
     const oceanY = oceanSurfaceWorldY(t[1], deepWaters.oceanLocalY);
     // AUDIT PRE-MERGE 0928 H4: position + fraction x terrainData.size, a float 819.2f (IL_19a5-IL_19b9, IL_19bc-IL_19e0)
     const num4 = f32(t[0] + f32(num2 * TILE_WORLD_SIZE_F32));
     const num5 = f32(t[2] + f32(num3 * TILE_WORLD_SIZE_F32));
     let hit = raycastFloor(entry, num4, num5, oceanY);
-    if (hit == null) { markTerrainProcessed(st, v, 'rejected:centre-raycast'); return; }
+    if (hit == null) {
+      markTerrainProcessed(st, v, 'rejected:centre-raycast');
+      return;
+    }
     const num6 = f32(oceanY - hit);
-    if (num6 < MINIMUM_DEPTH) { markTerrainProcessed(st, v, `rejected:depth-${num6.toFixed(1)}`); return; }
+    if (num6 < MINIMUM_DEPTH) {
+      markTerrainProcessed(st, v, `rejected:depth-${num6.toFixed(1)}`);
+      return;
+    }
     if (!bake.verified) {
       const num7 = f32(f32(32 * s.seafloorHoleScale) + 2);
       for (let i = 0; i < 4; i++) {
         const num8 = f32(f32(Math.PI / 2) * i);
-        const hit2 = raycastFloor(entry, f32(num4 + f32(f32(Math.cos(num8)) * num7)), f32(num5 + f32(f32(Math.sin(num8)) * num7)), oceanY);
-        if (hit2 == null || Math.abs(f32(hit2 - hit)) > FLOOR_FLATTEN_VARIANCE) { markTerrainProcessed(st, v, 'rejected:unsafe-geometry-fallback'); return; }
+        const hit2 = raycastFloor(
+          entry,
+          f32(num4 + f32(f32(Math.cos(num8)) * num7)),
+          f32(num5 + f32(f32(Math.sin(num8)) * num7)),
+          oceanY,
+        );
+        if (hit2 == null || Math.abs(f32(hit2 - hit)) > FLOOR_FLATTEN_VARIANCE) {
+          markTerrainProcessed(st, v, 'rejected:unsafe-geometry-fallback');
+          return;
+        }
       }
     }
     const d = deformSeafloor(entry, st, num2, num3, bake.verified);
@@ -361,8 +495,11 @@ export function createOceanHoles({ deepWaters, decor = null, built, pixelTransla
     settingsGen = g;
     const next = settings();
     const snap = snapshotOf(next);
-    s = next;   // ApplySettings, every change
-    if (snap !== snapshot) { snapshot = snap; refreshLoadedPits(); }   // HasChanged: one of the five
+    s = next; // ApplySettings, every change
+    if (snap !== snapshot) {
+      snapshot = snap;
+      refreshLoadedPits();
+    } // HasChanged: one of the five
   }
 
   const offSuppression = decor?.onShouldSuppressDecoration?.((entry, p) => shouldSuppressDecoration(entry, p)) ?? null;
@@ -393,7 +530,9 @@ export function createOceanHoles({ deepWaters, decor = null, built, pixelTransla
       if (i >= 0) pendingTerrains.splice(i, 1);
     },
     /** The pit standing on `entry`, or null (transform.Find("OceanHole_Pit")). */
-    pitOf(entry) { return entry?._ohPit ?? null; },
+    pitOf(entry) {
+      return entry?._ohPit ?? null;
+    },
     /** The entrance's world centre and the top of its box (the collider's bounds.max.y), or null. */
     entranceOf(entry) {
       const pit = entry?._ohPit;
@@ -416,10 +555,16 @@ export function createOceanHoles({ deepWaters, decor = null, built, pixelTransla
       onEnterPit(e.mapX, e.mapY);
       return true;
     },
-    get settings() { return s; },
-    get pendingCount() { return pendingTerrains.length; },
+    get settings() {
+      return s;
+    },
+    get pendingCount() {
+      return pendingTerrains.length;
+    },
     /** Diagnostics: the pixel's OceanPitTileState. */
-    stateOf(entry) { return states.get(entry) ?? null; },
+    stateOf(entry) {
+      return states.get(entry) ?? null;
+    },
     dispose() {
       offSuppression?.();
       for (const e of built.values()) destroyPit(e);

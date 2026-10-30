@@ -596,8 +596,8 @@
   {
     "name": "MENUORDER-thumb-square-off-card",
     "file": "src/scenes/panelPicture.js",
-    "old": "x: Math.round((box.left - c.left + box.width / 2) * sx - pw / 2)",
-    "new": "x: Math.round((box.left - c.left) * sx - pw / 2)",
+    "old": "    x: Math.round((box.left - c.left + box.width / 2) * sx - pw / 2),",
+    "new": "    x: Math.round((box.left - c.left) * sx - pw / 2),",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "MENUORDER-thumb-copy-wrong-square",
     "file": "src/scenes/panelPicture.js",
-    "old": "drawImage(canvas, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h)",
-    "new": "drawImage(canvas, 0, 0, rect.w, rect.h, 0, 0, rect.w, rect.h)",
+    "old": "    out.getContext('2d')?.drawImage(canvas, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h);",
+    "new": "    out.getContext('2d')?.drawImage(canvas, 0, 0, rect.w, rect.h, 0, 0, rect.w, rect.h);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -767,8 +767,8 @@
   {
     "name": "MENUORDER-ship-box-centre",
     "file": "src/scenes/panelPicture.js",
-    "old": "y: Math.round((box.top - c.top + box.height / 2) * sy - ph / 2)",
-    "new": "y: Math.round((box.top - c.top) * sy - ph / 2)",
+    "old": "    y: Math.round((box.top - c.top + box.height / 2) * sy - ph / 2),",
+    "new": "    y: Math.round((box.top - c.top) * sy - ph / 2),",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -920,8 +920,8 @@
   {
     "name": "AUDITMO-R6-lanterns-lit",
     "file": "src/scenes/panelPicture.js",
-    "old": "  renderer.setPointLights?.(NO_POINTS, null, null);\n",
-    "new": "",
+    "old": "  renderer.setPointLights?.(NO_POINTS, null, null);\n  renderer.setIndirectLight?.(NONE3, 0, NONE3);",
+    "new": "  renderer.setIndirectLight?.(NONE3, 0, NONE3);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -929,8 +929,8 @@
   {
     "name": "AUDITMO-R6-moonlit",
     "file": "src/scenes/panelPicture.js",
-    "old": "  renderer.setMoonlight?.(null);\n",
-    "new": "",
+    "old": "  renderer.setMoonlight?.(null);\n  renderer.setThirdLight?.(null);",
+    "new": "  renderer.setThirdLight?.(null);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]

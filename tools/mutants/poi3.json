@@ -236,8 +236,8 @@
   {
     "name": "POI3-the-drag-not-one-step",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "if (r) { const sel = { id: drag.id, part: drag.part, light: drag.light }; edit.preview((doc) => apply(doc, r, sel)); }",
-    "new": "if (r) { const sel = { id: drag.id, part: drag.part, light: drag.light }; edit.commit(); edit.edit(drag.id, 'move', (doc) => apply(doc, r, sel)); }",
+    "old": "          edit.preview((doc) => apply(doc, r, sel));",
+    "new": "          edit.commit();\n          edit.edit(drag.id, 'move', (doc) => apply(doc, r, sel));",
     "tests": [
       "test/poi/poi3_edit.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "POI3-the-snap-unread",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "const snapNow = () => (snapOn !== ctrlHeld ? snap : null);",
-    "new": "const snapNow = () => null;",
+    "old": "  const snapNow = () => (snapOn !== ctrlHeld ? snap : null);",
+    "new": "  const snapNow = () => null;",
     "tests": [
       "test/poi/poi3_edit.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "POI3-the-overlay-every-frame",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "if (g !== overlayGen) { overlayGen = g; feed.setOverlay(edit.overlay()); }",
-    "new": "{ overlayGen = g; feed.setOverlay(edit.overlay()); }",
+    "old": "      if (g !== overlayGen) {",
+    "new": "      {",
     "tests": [
       "test/poi/poi3_edit.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "POI3-the-part-taken-first",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "edit.select(sel?.id === hit.id ? { id: hit.id, part: hit.key } : { id: hit.id, part: null });",
-    "new": "edit.select({ id: hit.id, part: hit.key });",
+    "old": "    edit.select(sel?.id === hit.id ? { id: hit.id, part: hit.key } : { id: hit.id, part: null });",
+    "new": "    edit.select({ id: hit.id, part: hit.key });",
     "tests": [
       "test/poi/poi3_edit.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "POI3-keys-heard-while-flying",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "      if (eye.look) { const a = actionOf(e); if (a && POI_EYE_ACTIONS.includes(a)) { eye.keys.add(a); return true; } return false; }",
-    "new": "      if (eye.look) { const a = actionOf(e); if (a && POI_EYE_ACTIONS.includes(a)) eye.keys.add(a); }",
+    "old": "        if (a && POI_EYE_ACTIONS.includes(a)) {\n          eye.keys.add(a);\n          return true;\n        }\n        return false;",
+    "new": "        if (a && POI_EYE_ACTIONS.includes(a)) eye.keys.add(a);",
     "tests": [
       "test/poi/poi3_edit.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "POI3-a-light-drag-moves-the-poi",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "    if (sel.light != null) { const l = doc.lights?.[sel.light]; if (l && r.move) movePart(doc.place, l, r.move); return; }",
-    "new": "    if (false) { return; }",
+    "old": "    if (sel.light != null) {\n      const l = doc.lights?.[sel.light];\n      if (l && r.move) movePart(doc.place, l, r.move);",
+    "new": "    if (false) {",
     "tests": [
       "test/poi/poi3_edit.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "POI3-a-turn-offered-a-light",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "if (!tg || !v || (tg.light && mode !== 'move')) return null;",
-    "new": "if (!tg || !v) return null;",
+    "old": "    if (!tg || !v || (tg.light && mode !== 'move')) return null;",
+    "new": "    if (!tg || !v) return null;",
     "tests": [
       "test/poi/poi3_edit.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "POI3-flight-by-the-raw-key",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "      if (eye.look) { const a = actionOf(e); if (a && POI_EYE_ACTIONS.includes(a)) { eye.keys.add(a); return true; } return false; }",
-    "new": "      if (eye.look) { eye.keys.add(e.code === 'KeyW' ? 'MoveForwards' : e.code); return true; }",
+    "old": "        const a = actionOf(e);\n        if (a && POI_EYE_ACTIONS.includes(a)) {\n          eye.keys.add(a);\n          return true;\n        }\n        return false;",
+    "new": "        eye.keys.add(e.code === 'KeyW' ? 'MoveForwards' : e.code);\n        return true;",
     "tests": [
       "test/poi/poi3_edit.test.js"
     ]

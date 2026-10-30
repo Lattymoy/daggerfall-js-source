@@ -3869,7 +3869,7 @@ The field, the day TESA shipped: *"travel nodes dont exist outside the bay in ov
 to travel"*.
 
 **What stood.** A plate on the Overworld - TV2's grid, TV5's edge, the junction map's dot - is a known place
-(`mapPlacesHost.js:"const tvPlaceSummary = (px, py, named = false) =>"`). On the Bay that is DFU's law: MAPS.BSA's baked
+(`mapPlacesHost.js:"const tvPlaceSummary"`). On the Bay that is DFU's law: MAPS.BSA's baked
 Discovered bit, which every town of the Bay carries. Past the Bay no place is a row of MAPS.BSA, so only a place the
 player had walked into was known, and the land past the Bay wore no plate to click.
 

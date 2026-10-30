@@ -768,8 +768,8 @@ test('PORTAL1 the hosts: every shop\'s keeper sells it (a teller and a mod\'s se
   assert.match(read('src/scenes/shopRows.js'), /const portalCounter = createPortalCounter\(\{ say, mount: mountInterior \}\);/);
   assert.doesNotMatch(wm, /askPortalStone|buyPortalStoneNow|buyPortalStones?\(/, 'no second sale in the host');
   const pc = read('src/scenes/portalCounter.js');
-  assert.match(pc, /if \(max < 1\) \{ say\(portalStoneRefusalText\(pack\(\), portalStoneRefusal\(pack\(\), 1\)\)\); return null; \}/, 'a short purse (or a full stack) is told at once, nothing raised - AUDIT PORTAL1 C4');
-  assert.match(pc, /const sale = buyPortalStones\(entity\.items, n\);\n\s+if \(!sale\.ok\) \{ say\(portalStoneRefusalText\(entity\.items, sale\.reason\)\); return false; \}/, 'the sale the law\'s, refused in words');
+  assert.match(pc, /if \(max < 1\) \{\n\s*say\(portalStoneRefusalText\(pack\(\), portalStoneRefusal\(pack\(\), 1\)\)\);\n\s*return null;\n\s*\}/, 'a short purse (or a full stack) is told at once, nothing raised - AUDIT PORTAL1 C4');
+  assert.match(pc, /const sale = buyPortalStones\(entity\.items, n\);\n\s*if \(!sale\.ok\) \{\n\s*say\(portalStoneRefusalText\(entity\.items, sale\.reason\)\);\n\s*return false;\n\s*\}/, 'the sale the law\'s, refused in words');
   const w = read('src/scenes/world.js');
   const doors = cut(w, '  const packDoors = {', '\n  };\n');
   assert.match(doors, /openPortal: \(item, list\) => openPortalStone\(item, list\),/, 'the pack\'s door (the interior\'s pack is this host\'s)');

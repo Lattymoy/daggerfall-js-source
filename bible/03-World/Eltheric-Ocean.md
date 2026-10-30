@@ -581,7 +581,7 @@ Puddle No More's floors, and a pit's drowned dungeon was named by its pixel's id
 GetAbyssMapId) - the Bay's 1000 x 500 alone keeps those apart - so a pixel off the Bay's map was refused before the hash
 was asked: no pit past the Veil until it had an abyss of its own. It has one now: an abyss past the Bay is named in the
 world's abyss lane (`03-World/World-Wide.md` WORLD-LANES), and the hold is the world's grid
-(`oceanHolesHost.js:"if (!pitPixelOk(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }"`),
+(`oceanHolesHost.js:"if (!pitPixelOk(st.mapX, st.mapY))"`),
 so the Veil's open sea opens pits as the Bay's does (`03-World/Ocean-Holes.md` PITS-WORLD).
 
 ## ETHER-NODES - the professions' nodes

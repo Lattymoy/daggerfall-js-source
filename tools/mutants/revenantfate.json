@@ -237,8 +237,8 @@
   {
     "name": "COMPANION-PORTAL-never-freed",
     "file": "src/scenes/portalFx.js",
-    "old": "      if (done) { try { renderer.destroyBillboardBatch(p.batch); } catch { /* gone */ } list.splice(i, 1); continue; }",
-    "new": "      if (false) { continue; }",
+    "old": "      if (done) {\n        try {\n          renderer.destroyBillboardBatch(p.batch);\n        } catch {\n          /* gone */\n        }\n        list.splice(i, 1);",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "COMPANION-PORTAL-art-outside-the-oval",
     "file": "src/scenes/portalFx.js",
-    "old": "      if (r > 1) continue;   // outside: clear",
-    "new": "      if (r > 1.5) continue;   // outside: clear",
+    "old": "      if (r > 1) continue; // outside: clear",
+    "new": "      if (r > 1.5) continue; // outside: clear",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "COMPANION-PORTAL-standing-in-front",
     "file": "src/scenes/portalFx.js",
-    "old": "        p.origin[0] = p.feet[0] + (dx / L) * PORTAL_BACK; p.origin[2] = p.feet[2] + (dz / L) * PORTAL_BACK;",
-    "new": "        p.origin[0] = p.feet[0] - (dx / L) * PORTAL_BACK; p.origin[2] = p.feet[2] - (dz / L) * PORTAL_BACK;",
+    "old": "        p.origin[0] = p.feet[0] + (dx / L) * PORTAL_BACK;\n        p.origin[2] = p.feet[2] + (dz / L) * PORTAL_BACK;",
+    "new": "        p.origin[0] = p.feet[0] - (dx / L) * PORTAL_BACK;\n        p.origin[2] = p.feet[2] - (dz / L) * PORTAL_BACK;",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]

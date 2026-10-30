@@ -94,7 +94,7 @@ test('IT1 the layer: the gate\'s records appended to whatever the door serves un
 
 test('IT1 by source: the loader reads the mod\'s patches into the layer it lays - after every patch is on the door', () => {
   const src = readFileSync(join(ROOT, 'src/scenes/modWorldData.js'), 'utf8');
-  assert.match(src, /const onServed = vendor === 'immersive-travel' \? \(json\) => \{ itPatches\.push\(patch\); itOwn\.push\(json\); \} : null;/);
+  assert.match(src, /const onServed =\n\s*vendor === 'immersive-travel'\n\s*\? \(json\) => \{\n\s*itPatches\.push\(patch\);\n\s*itOwn\.push\(json\);\n\s*\}\n\s*: null;/);
   assert.match(src, /installImmersiveTravelGates\(itPatches, itOwn, immersiveTravelLoaded\);/);   // AUDIT IT1 G3 (PIN MOVED): the mod loaded for the game
   assert.ok(src.indexOf('installImmersiveTravelGates(itPatches') > src.indexOf('registerWorldDataPatch(patch, '));
 });

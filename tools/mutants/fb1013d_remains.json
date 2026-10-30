@@ -128,8 +128,8 @@
   {
     "name": "FB1013d-REMAINS-STAND-one-word-for-every-kind",
     "file": "src/scenes/lootLines.js",
-    "old": "export const setLootMarksLive = (on, by = 'wild') => { if (on) _marksLive.add(by); else _marksLive.delete(by); };",
-    "new": "export const setLootMarksLive = (on) => { if (on) _marksLive.add('wild'); else _marksLive.delete('wild'); };",
+    "old": "export const setLootMarksLive = (on, by = 'wild') => {\n  if (on) _marksLive.add(by);\n  else _marksLive.delete(by);",
+    "new": "export const setLootMarksLive = (on) => {\n  if (on) _marksLive.add('wild');\n  else _marksLive.delete('wild');",
     "tests": [
       "test/systems/fb1013d_remains.test.js"
     ]

@@ -399,8 +399,8 @@
   {
     "name": "DLV5-install-unwired",
     "file": "src/scenes/modWorldData.js",
-    "old": "    installCuratedBlocks();   // DELVE II (DLV5)",
-    "new": "    void installCuratedBlocks;   // DELVE II (DLV5)",
+    "old": "    installCuratedBlocks(); // DELVE II (DLV5): the same - the curated blocks, each made of its base (world/dungeon/curatedInstall.js)",
+    "new": "    void installCuratedBlocks; // DELVE II (DLV5): the same - the curated blocks, each made of its base (world/dungeon/curatedInstall.js)",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]

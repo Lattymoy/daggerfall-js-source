@@ -165,8 +165,8 @@
   {
     "name": "QUIET-portal-no-gap",
     "file": "src/scenes/portalFx.js",
-    "old": "if (!quiet && p.at - soundAt >= PORTAL_SOUND_GAP_MS) {",
-    "new": "if (!quiet) {",
+    "old": "    if (!quiet && p.at - soundAt >= PORTAL_SOUND_GAP_MS) {",
+    "new": "    if (!quiet) {",
     "tests": [
       "test/scenes/fb1004b_companions.test.js"
     ]

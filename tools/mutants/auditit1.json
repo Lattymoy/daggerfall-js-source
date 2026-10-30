@@ -173,7 +173,7 @@
   {
     "name": "AUDIT-IT1-G2-the-install-unguarded",
     "file": "src/scenes/modWorldData.js",
-    "old": "    try { installImmersiveTravelGates(itPatches, itOwn, immersiveTravelLoaded); } catch (e) { console.error(`[worlddata] immersive travel's gate layer: ${e?.message ?? e}`); }",
+    "old": "    try {\n      installImmersiveTravelGates(itPatches, itOwn, immersiveTravelLoaded);\n    } catch (e) {\n      console.error(`[worlddata] immersive travel's gate layer: ${e?.message ?? e}`);\n    }",
     "new": "    installImmersiveTravelGates(itPatches, itOwn, immersiveTravelLoaded);",
     "tests": [
       "test/systems/auditit1.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-IT1-G3-the-patch-reads-the-switch",
     "file": "src/scenes/modWorldData.js",
-    "old": "      const isOn = vendor === IMMERSIVE_TRAVEL_VENDOR ? immersiveTravelLoaded : () => modSetting(vendor, 'Enabled') === true;",
-    "new": "      const isOn = () => modSetting(vendor, 'Enabled') === true;",
+    "old": "        const isOn =\n          vendor === IMMERSIVE_TRAVEL_VENDOR ? immersiveTravelLoaded : () => modSetting(vendor, 'Enabled') === true;",
+    "new": "        const isOn = () => modSetting(vendor, 'Enabled') === true;",
     "tests": [
       "test/systems/auditit1.test.js"
     ]

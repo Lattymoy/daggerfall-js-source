@@ -473,8 +473,8 @@
   {
     "name": "TESA10-install-unwired",
     "file": "src/scenes/modWorldData.js",
-    "old": "    installCapitals();   // TESA10",
-    "new": "    // TESA10",
+    "old": "    installCapitals(); // TESA10: the same - the capitals' blocks and landmarks (world/capitalModels.js)",
+    "new": "    // TESA10: the same - the capitals' blocks and landmarks (world/capitalModels.js)",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]

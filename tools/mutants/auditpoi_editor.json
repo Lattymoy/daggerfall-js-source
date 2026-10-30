@@ -29,8 +29,8 @@
   {
     "name": "AUDITPOI-E1-the-bar-never-held",
     "file": "src/scenes/poiEditorMount.js",
-    "old": "hotbarKeysBack = holdHotbarKeys();",
-    "new": "hotbarKeysBack = null;",
+    "old": "      hotbarKeysBack = holdHotbarKeys(); // AUDIT POI E1: the bar's digits are not the body's while the editor is open",
+    "new": "      hotbarKeysBack = null; // AUDIT POI E1: the bar's digits are not the body's while the editor is open",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDITPOI-E2-the-panel-s-keys-handed-down",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "    e.stopPropagation?.();   // AUDIT POI E2",
-    "new": "    // AUDIT POI E2",
+    "old": "    e.stopPropagation?.(); // AUDIT POI E2: nothing below the panel - the world, the mode machine - hears a key typed at it",
+    "new": "    // AUDIT POI E2: nothing below the panel - the world, the mode machine - hears a key typed at it",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "AUDITPOI-E2-a-field-s-key-acted-on",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "    if (textEntry(e.target)) return;   // a typed field keeps its key",
+    "old": "    if (textEntry(e.target)) return; // a typed field keeps its key",
     "new": "    // a typed field keeps its key",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "AUDITPOI-E2-the-panel-unbound",
     "file": "src/scenes/poiEditorMount.js",
-    "old": "for (const ty of ['keydown', 'keyup']) panel.root.addEventListener(ty, route.onPanelKey);",
-    "new": "void route.onPanelKey;",
+    "old": "    for (const ty of ['keydown', 'keyup']) panel.root.addEventListener(ty, route.onPanelKey); // AUDIT POI E2: a key at the panel's controls",
+    "new": "    void route.onPanelKey; // AUDIT POI E2: a key at the panel's controls",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDITPOI-E3-the-held-keys-kept",
     "file": "src/scenes/poiEditorMount.js",
-    "old": "const worldKeysUp = () => { keys.clear(); for (const ring of Object.values(latch.edge)) ring.clear(); };",
-    "new": "const worldKeysUp = () => {};",
+    "old": "    const worldKeysUp = () => {\n      keys.clear();\n      for (const ring of Object.values(latch.edge)) ring.clear();\n    };",
+    "new": "    const worldKeysUp = () => {};",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDITPOI-E6-measured-from-the-held-pivot",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "const local = worldToPlace(doc.place, sub(at, o));",
-    "new": "const local = worldToPlace(doc.place, sub(at, target()?.c ?? o));",
+    "old": "        const local = worldToPlace(doc.place, sub(at, o));",
+    "new": "        const local = worldToPlace(doc.place, sub(at, target()?.c ?? o));",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDITPOI-E7-the-ray-read-in-the-new-frame",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "if (ray) { translation(drag.px, drag.py, drag.now); for (let a = 0; a < 3; a++) ray.o[a] -= drag.now[a] - drag.frame[a]; }",
-    "new": "void 0;",
+    "old": "        if (ray) {\n          translation(drag.px, drag.py, drag.now);\n          for (let a = 0; a < 3; a++) ray.o[a] -= drag.now[a] - drag.frame[a];\n        } // AUDIT POI E7: the ray read in the frame the drag began in",
+    "new": "        void 0; // AUDIT POI E7: the ray read in the frame the drag began in",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AUDITPOI-E9-the-host-s-drag-left-standing",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "if (mod && (e.code === 'KeyZ' || e.code === 'KeyY') && drag) { edit.cancel(); drag = null; told(); return true; }",
-    "new": "void 0;",
+    "old": "      if (mod && (e.code === 'KeyZ' || e.code === 'KeyY') && drag) {\n        edit.cancel();\n        drag = null;\n        told();\n        return true;\n      }",
+    "new": "      void 0;",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "AUDITPOI-E11-the-create-and-the-parts-two-steps",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "if (!sel) edit.create({ px: px.px, py: px.py, x: px.x, z: px.z, y: lift, name: asset.name || placing.fallbackName || '' }, fill, held);",
-    "new": "if (!sel) { const nid = edit.create({ px: px.px, py: px.py, x: px.x, z: px.z, y: lift, name: asset.name || placing.fallbackName || '' }); if (edit.edit(nid, 'add parts', fill) && key) edit.select(held(nid)); }",
+    "old": "      if (!sel)\n        edit.create(\n          { px: px.px, py: px.py, x: px.x, z: px.z, y: lift, name: asset.name || placing.fallbackName || '' },\n          fill,\n          held,\n        );\n      else if (edit.edit(sel.id, pieces.length > 1 ? 'add parts' : 'add part', fill) && key) edit.select(held(sel.id));",
+    "new": "      if (!sel) {\n        const nid = edit.create({\n          px: px.px,\n          py: px.py,\n          x: px.x,\n          z: px.z,\n          y: lift,\n          name: asset.name || placing.fallbackName || '',\n        });\n        if (edit.edit(nid, 'add parts', fill) && key) edit.select(held(nid));\n      } else if (edit.edit(sel.id, pieces.length > 1 ? 'add parts' : 'add part', fill) && key)\n        edit.select(held(sel.id));",
     "tests": [
       "test/scenes/auditpoi_editor.test.js",
       "test/poi/poi4b_library.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "AUDITPOI-E12-a-bench-a-saddle-a-helm-let-in",
     "file": "src/scenes/poiEditorMount.js",
-    "old": " || !isOnFoot(player.transportMode) || !!csaRuntime?.isSailing?.()) { townTalk.say(",
-    "new": ") { townTalk.say(",
+    "old": "      if (\n        _mode() !== 'exterior' ||\n        host.travelView?.active ||\n        !isOnFoot(player.transportMode) ||\n        !!csaRuntime?.isSailing?.()\n      ) {",
+    "new": "      if (_mode() !== 'exterior' || host.travelView?.active) {",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "AUDITPOI-E13-unbuilt-ground-let-through",
     "file": "src/scenes/poiEditorMount.js",
-    "old": "if (!Number.isFinite(below)) { panel.say(",
-    "new": "if (false) { panel.say(",
+    "old": "        if (!Number.isFinite(below)) {",
+    "new": "        if (false) {",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "AUDITPOI-E13-the-rock-unchecked",
     "file": "src/scenes/poiEditorMount.js",
-    "old": "if (heldInSolid(collider, landing)) landing = openGroundNear(",
-    "new": "if (false) landing = openGroundNear(",
+    "old": "        if (heldInSolid(collider, landing))",
+    "new": "        if (false)",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "AUDITPOI-E14-a-pointer-up-under-a-window-lost",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "if (overlayUp() || owns(e.target)) { if (e.type === 'pointerup') editor.letGo(); return; }",
-    "new": "if (overlayUp() || owns(e.target)) return;",
+    "old": "    if (overlayUp() || owns(e.target)) {\n      if (e.type === 'pointerup') editor.letGo();\n      return;\n    }",
+    "new": "    if (overlayUp() || owns(e.target)) return;",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "AUDITPOI-E14-the-window-s-blur-unheard",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "{ if (e.type === 'lostpointercapture' || e.target === win) editor.letGo(); return; }",
-    "new": "{ if (e.type === 'lostpointercapture') editor.letGo(); return; }",
+    "old": "      if (e.type === 'lostpointercapture' || e.target === win) editor.letGo();",
+    "new": "      if (e.type === 'lostpointercapture') editor.letGo();",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "AUDITPOI-E14-the-drag-let-go-not-kept",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "      if (drag) { edit.commit(); drag = null; }\n      eye.look = eye.pan = eye.orbit = false; eye.keys.clear(); press = null; ctrlHeld = false;",
-    "new": "      if (drag) { edit.cancel(); drag = null; }\n      eye.look = eye.pan = eye.orbit = false; eye.keys.clear(); press = null; ctrlHeld = false;",
+    "old": "      const held = !!drag || eye.look || eye.pan || eye.orbit || eye.keys.size > 0 || !!press || ctrlHeld;\n      if (drag) {\n        edit.commit();\n        drag = null;",
+    "new": "      const held = !!drag || eye.look || eye.pan || eye.orbit || eye.keys.size > 0 || !!press || ctrlHeld;\n      if (drag) {\n        edit.cancel();\n        drag = null;",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "AUDITPOI-E14-the-frame-never-asks-for-the-world",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "      if (api.worldGone()) return;   // AUDIT POI E14",
-    "new": "      // AUDIT POI E14",
+    "old": "      if (api.worldGone()) return; // AUDIT POI E14: a load under the editor (the street's frame runs on) - the editor left first",
+    "new": "      // AUDIT POI E14: a load under the editor (the street's frame runs on) - the editor left first",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "AUDITPOI-E14-the-router-never-asks-for-the-world",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "if (!editor.active() || editor.worldGone()) return;",
-    "new": "if (!editor.active()) return;",
+    "old": "    if (!editor.active() || editor.worldGone()) return;",
+    "new": "    if (!editor.active()) return;",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "AUDITPOI-E14-a-load-uncounted",
     "file": "src/scenes/poiEditorMount.js",
-    "old": "gone: () => _mode() !== 'exterior' || restoresSoFar() !== openedAt,",
-    "new": "gone: () => _mode() !== 'exterior',",
+    "old": "      gone: () => _mode() !== 'exterior' || restoresSoFar() !== openedAt,",
+    "new": "      gone: () => _mode() !== 'exterior',",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "AUDITPOI-E15-a-live-poi-clicked-for-nothing",
     "file": "src/scenes/poiEditorMount.js",
-    "old": "editor.wantsOpen = (id) => { panel.open(id).catch(",
-    "new": "const unwired = (id) => { panel.open(id).catch(",
+    "old": "    editor.wantsOpen = (id) => {",
+    "new": "    const unwired = (id) => {",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "AUDITPOI-E16-every-chord-answered-taken",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "      if (mod || e.altKey) return false;   // AUDIT POI E16",
-    "new": "      if (mod || e.altKey) return true;   // AUDIT POI E16",
+    "old": "      if (mod || e.altKey) return false; // AUDIT POI E16: every other chord the browser's",
+    "new": "      if (mod || e.altKey) return true; // AUDIT POI E16: every other chord the browser's",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "AUDITPOI-E16-any-key-answered-taken",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "        default: return false;   // AUDIT POI E16",
-    "new": "        default: return true;   // AUDIT POI E16",
+    "old": "          return false; // AUDIT POI E16: not the editor's - the world still hears none of it (the host stops it), the browser keeps it",
+    "new": "          return true; // AUDIT POI E16: not the editor's - the world still hears none of it (the host stops it), the browser keeps it",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "AUDITPOI-E16-the-browser-loses-every-key",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "    if (took && e.type !== 'pointermove') e.preventDefault?.();   // AUDIT POI E16",
-    "new": "    if (e.type !== 'pointermove') e.preventDefault?.();   // AUDIT POI E16",
+    "old": "    if (took && e.type !== 'pointermove') e.preventDefault?.(); // AUDIT POI E16: the browser loses what the editor acted on, and only that",
+    "new": "    if (e.type !== 'pointermove') e.preventDefault?.(); // AUDIT POI E16: the browser loses what the editor acted on, and only that",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "AUDITPOI-E17-the-pick-unasked",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "    if (edit.shownAs?.(hit.id) !== undefined) { told(); return; }   // AUDIT POI E17",
-    "new": "    // AUDIT POI E17",
+    "old": "    if (edit.shownAs?.(hit.id) !== undefined) {\n      told();\n      return;\n    } // AUDIT POI E17: what was clicked is the document shown in its place, not the one being edited",
+    "new": "    // AUDIT POI E17: what was clicked is the document shown in its place, not the one being edited",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "AUDITPOI-E17-the-gizmo-offered",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "    if (edit.shownAs?.(tg.sel.id) !== undefined) return null;   // AUDIT POI E17",
-    "new": "    // AUDIT POI E17",
+    "old": "    if (edit.shownAs?.(tg.sel.id) !== undefined) return null; // AUDIT POI E17: another stands in its place on this screen (the approver's \"Show the live one\") - nothing of what is seen to hold",
+    "new": "    // AUDIT POI E17: another stands in its place on this screen (the approver's \"Show the live one\") - nothing of what is seen to hold",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "AUDITPOI-E18-the-viewport-unread",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "const vp = viewport(), vw = vp ? vp[2] : 0, vh = vp ? vp[3] : 0;",
-    "new": "const vw = 0, vh = 0;",
+    "old": "      const vp = viewport(),\n        vw = vp ? vp[2] : 0,\n        vh = vp ? vp[3] : 0;",
+    "new": "      const vw = 0,\n        vh = 0;",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "AUDITPOI-E18-the-world-hands-no-rect",
     "file": "src/scenes/poiEditorMount.js",
-    "old": "      viewport: () => renderer.worldViewportPx,   // AUDIT POI E18",
-    "new": "      // AUDIT POI E18",
+    "old": "      viewport: () => renderer.worldViewportPx, // AUDIT POI E18: the lines' pixels the world pass's own (the strip above a docked large HUD)",
+    "new": "      // AUDIT POI E18: the lines' pixels the world pass's own (the strip above a docked large HUD)",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]

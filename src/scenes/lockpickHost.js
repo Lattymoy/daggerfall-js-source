@@ -27,7 +27,12 @@ import { lockSeed, lockBand } from '../systems/lockpick/lockpickLaw.js';
 import { lockpickCount, spendLockpick } from '../systems/lockpick/lockpickItem.js';
 import { createLockEar } from '../systems/lockpick/lockpickSounds.js';
 import { createLockpickOverlay } from '../ui/lockpickDoor.js';
-import { lookAtLockText, exteriorLockpickingChance, interiorLockpickingChance, LOCKPICKING_SUCCESS_TEXT } from '../world/actionSystem.js';
+import {
+  lookAtLockText,
+  exteriorLockpickingChance,
+  interiorLockpickingChance,
+  LOCKPICKING_SUCCESS_TEXT,
+} from '../world/actionSystem.js';
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { setMidScreenText } from '../ui/midScreenText.js';
@@ -47,7 +52,8 @@ export const LOCKPICK_HOST_WORDS = Object.freeze({
   door: () => t('lock.what.door', 'the door'),
   /** A locked searchable - SEARCH1's lockable kinds, a chest or a crate - each its own words (searchables.js's names are
    *  English, and a name set into a sentence cannot take its language's article or case). */
-  container: (/** @type {string} */ kind) => (kind === 'crate' ? t('lock.what.crate', 'the crate') : t('lock.what.chest', 'the chest')),
+  container: (/** @type {string} */ kind) =>
+    kind === 'crate' ? t('lock.what.crate', 'the crate') : t('lock.what.chest', 'the chest'),
 });
 
 /**
@@ -59,9 +65,22 @@ export const LOCKPICK_HOST_WORDS = Object.freeze({
  *   character (the one entity); `say` the mid-screen line (the refusal); `changed` the pack moved (a pick snapped);
  *   `overlay` the door (a test's stand-in)
  */
-export function createLockpickHost({ talk = null, mount = (w) => talk?.showOverlay?.(w), line = (l) => talk?.say?.(l), player = playerEntity, say = setMidScreenText, audio = bus, changed = surfacePlayer,
-  gentle = () => getPref('gentleActs') === true, reduced = defaultReduced, rolls = () => Math.random(), overlay = createLockpickOverlay }) {   // `rolls` read at the roll, not at the host's making
-  let ear = null, dead = false;
+export function createLockpickHost({
+  talk = null,
+  mount = (w) => talk?.showOverlay?.(w),
+  line = (l) => talk?.say?.(l),
+  player = playerEntity,
+  say = setMidScreenText,
+  audio = bus,
+  changed = surfacePlayer,
+  gentle = () => getPref('gentleActs') === true,
+  reduced = defaultReduced,
+  rolls = () => Math.random(),
+  overlay = createLockpickOverlay,
+}) {
+  // `rolls` read at the roll, not at the host's making
+  let ear = null,
+    dead = false;
   /** @type {any} */
   let open = null;
   const host = {
@@ -73,34 +92,53 @@ export function createLockpickHost({ talk = null, mount = (w) => talk?.showOverl
      * @param {{ lock: number, chance: number, key: string, what?: string, exterior?: boolean, onOpen?: () => void }} o
      */
     begin({ lock, chance, key, what = LOCKPICK_HOST_WORDS.door(), exterior = false, onOpen = () => {} }) {
-      if (dead || (open && !open.done)) return true;   // one lock at a time
-      if (lockpickCount(player?.items) < 1) { say(LOCKPICK_HOST_WORDS.need()); return true; }
+      if (dead || (open && !open.done)) return true; // one lock at a time
+      if (lockpickCount(player?.items) < 1) {
+        say(LOCKPICK_HOST_WORDS.need());
+        return true;
+      }
       const skill = skillValue(player, SKILLS.Lockpicking);
       const seed = lockSeed(key);
-      const act = createLockpickAct({ lock, chance, seed, band: lockBand(liveStat(player, 'agility')), skill, exterior, rng: rolls });
+      const act = createLockpickAct({
+        lock,
+        chance,
+        seed,
+        band: lockBand(liveStat(player, 'agility')),
+        skill,
+        exterior,
+        rng: rolls,
+      });
       ear ??= createLockEar({ audio });
       let opened = false;
       const ov = overlay({
-        act, what, seed, skill, gentle: gentle(), reduced,
-        gone: () => player?.health <= 0,   // AUDIT LOCKPICK A3/A4: dead under it - the interior's slot is overwritten, never disposed
+        act,
+        what,
+        seed,
+        skill,
+        gentle: gentle(),
+        reduced,
+        gone: () => player?.health <= 0, // AUDIT LOCKPICK A3/A4: dead under it - the interior's slot is overwritten, never disposed
         difficulty: lookAtLockText(lock, player.level, skill),
         picks: () => lockpickCount(player?.items),
         onAnswer: (/** @type {string} */ a) => {
           ear.cue(a);
           if (a === 'break') {
             spendLockpick(player);
-            tallySkill(player, SKILLS.Lockpicking, 1);   // TallySkill(Lockpicking, 1) - an attempt, ended by a snap
+            tallySkill(player, SKILLS.Lockpicking, 1); // TallySkill(Lockpicking, 1) - an attempt, ended by a snap
             changed();
             if (lockpickCount(player?.items) < 1) ov?.out?.();
           } else if (a === 'open') {
             opened = true;
-            tallySkill(player, SKILLS.Lockpicking, 1);   // ...or by the lock opening
+            tallySkill(player, SKILLS.Lockpicking, 1); // ...or by the lock opening
             setTimeout(() => ov?.shut?.(), OPEN_HOLD_MS);
           }
         },
         // AUDIT LOCKPICK A3: the success tail only when the window shut itself or by the player's hand - a death screen
         // (or any window) replacing it in its hold ran the tail under it: a corpse walked into the house
-        onClose: (/** @type {boolean} */ self) => { if (open === ov) open = null; if (opened && self && !dead && !(player?.health <= 0)) onOpen(); },
+        onClose: (/** @type {boolean} */ self) => {
+          if (open === ov) open = null;
+          if (opened && self && !dead && !(player?.health <= 0)) onOpen();
+        },
       });
       if (!ov) return true;
       open = ov;
@@ -116,8 +154,16 @@ export function createLockpickHost({ talk = null, mount = (w) => talk?.showOverl
      */
     frontDoor({ lock, skill, key, enter }) {
       return host.begin({
-        lock, chance: exteriorLockpickingChance(lock, skill), exterior: true, key,
-        onOpen: () => { tallyCrimeGuildRequirements(player, true, 1); line(LOCKPICKING_SUCCESS_TEXT); audio?.playOneShot?.(SOUND.ActivateLockUnlock, 1); enter(); },
+        lock,
+        chance: exteriorLockpickingChance(lock, skill),
+        exterior: true,
+        key,
+        onOpen: () => {
+          tallyCrimeGuildRequirements(player, true, 1);
+          line(LOCKPICKING_SUCCESS_TEXT);
+          audio?.playOneShot?.(SOUND.ActivateLockUnlock, 1);
+          enter();
+        },
       });
     },
     /**
@@ -126,7 +172,13 @@ export function createLockpickHost({ talk = null, mount = (w) => talk?.showOverl
      * @param {{ lock: number, key: string, what?: string, onOpen?: () => void }} o
      */
     inside({ lock, key, what, onOpen }) {
-      return host.begin({ lock, chance: interiorLockpickingChance(player.level, lock, skillValue(player, SKILLS.Lockpicking)), key, what, onOpen });
+      return host.begin({
+        lock,
+        chance: interiorLockpickingChance(player.level, lock, skillValue(player, SKILLS.Lockpicking)),
+        key,
+        what,
+        onOpen,
+      });
     },
     /**
      * AN ACTION GRAPH'S LOCKED DOORS (world/actionSystem.js onLockpickAttempt - the magic arm stays the roll's): each picked
@@ -139,21 +191,40 @@ export function createLockpickHost({ talk = null, mount = (w) => talk?.showOverl
      */
     wire(actions, place) {
       if (!actions) return;
-      actions.onLockpickAttempt = (o) => host.inside({ lock: o.currentLockValue, key: `${place}:${o.key}`, onOpen: () => {
-        if (!actions.lockpicked(o)) return;
-        if (actions.onLockpickResult) actions.onLockpickResult(o, true);
-        else { line(LOCKPICKING_SUCCESS_TEXT); audio?.playOneShot?.(SOUND.ActivateLockUnlock, 1); }
-      } });
+      actions.onLockpickAttempt = (o) =>
+        host.inside({
+          lock: o.currentLockValue,
+          key: `${place}:${o.key}`,
+          onOpen: () => {
+            if (!actions.lockpicked(o)) return;
+            if (actions.onLockpickResult) actions.onLockpickResult(o, true);
+            else {
+              line(LOCKPICKING_SUCCESS_TEXT);
+              audio?.playOneShot?.(SOUND.ActivateLockUnlock, 1);
+            }
+          },
+        });
     },
     /** Whether a lock's window is up. */
-    get busy() { return !!open && !open.done; },
+    get busy() {
+      return !!open && !open.done;
+    },
     /** The host's end: a lock's window still up is shut, its success tail never run. */
-    dispose() { dead = true; const o = open; open = null; o?.dispose?.(); },
+    dispose() {
+      dead = true;
+      const o = open;
+      open = null;
+      o?.dispose?.();
+    },
   };
   return host;
 }
 
 /** The system's reduced motion (the professions' own reading - ui/professions/profHud.js). */
 function defaultReduced() {
-  try { return !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches; } catch { return false; }
+  try {
+    return !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  } catch {
+    return false;
+  }
 }

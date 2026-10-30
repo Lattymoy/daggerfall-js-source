@@ -194,8 +194,8 @@
   {
     "name": "POI4B-the-turn-dropped",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "            t: [local[0] + off[0], local[1] + off[1], local[2] + off[2]], r: piece.r, s: piece.s,",
-    "new": "            t: [local[0] + off[0], local[1] + off[1], local[2] + off[2]], s: piece.s,",
+    "old": "            r: piece.r,\n            s: piece.s,",
+    "new": "            s: piece.s,",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "POI4B-the-lights-dropped",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "        for (const l of asset.lights ?? []) doc.lights.push(",
-    "new": "        for (const l of []) doc.lights.push(",
+    "old": "        for (const l of asset.lights ?? [])",
+    "new": "        for (const l of [])",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]

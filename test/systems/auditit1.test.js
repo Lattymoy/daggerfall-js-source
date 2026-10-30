@@ -342,7 +342,7 @@ test('AUDIT IT1 W4/G3: the mod is loaded for the game - off at the start, no fac
   const w = read('src/scenes/world.js');
   assert.match(w, /const immersiveSettingsIfOn = \(\) => \(immersiveTravelLoaded\(\) \? readImmersiveTravelSettings\(\) : null\);/);
   assert.match(w, /if \(!immersiveTravelLoaded\(\) \|\| \(kind !== IT_POPUP\.carriage && kind !== IT_POPUP\.seafarer\)\) return null;/);
-  assert.match(read('src/scenes/modWorldData.js'), /const isOn = vendor === IMMERSIVE_TRAVEL_VENDOR \? immersiveTravelLoaded : \(\) => modSetting\(vendor, 'Enabled'\) === true;/);
+  assert.match(read('src/scenes/modWorldData.js'), /const isOn =\n\s*vendor === IMMERSIVE_TRAVEL_VENDOR \? immersiveTravelLoaded : \(\) => modSetting\(vendor, 'Enabled'\) === true;/);
   assert.match(read('src/systems/features.js'), /modFeature\('immersive-travel', \(\) => t\('features\.mod\.immersiveTravel\.effect', 'Takes effect the next time you start the game; loading a save is not enough\. Fares and rules change at the next map\.'/);
 });
 

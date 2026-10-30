@@ -317,8 +317,8 @@
   {
     "name": "PI1-layer-fresh-always",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "const fresh = !g && diedRecently(entity, now());",
-    "new": "const fresh = !g;",
+    "old": "      const fresh = !g && diedRecently(entity, now());",
+    "new": "      const fresh = !g;",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "PI1-layer-unpresented",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "    setBatchGlint(p.batch, rarityRim(p.item));\n    presentItem(p.item, true);\n",
-    "new": "    setBatchGlint(p.batch, rarityRim(p.item));\n",
+    "old": "    presentItem(p.item, true);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "PI1-room-untold",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "try { host.taken?.(backingOf(p)); }",
-    "new": "try { void backingOf(p); }",
+    "old": "          host.taken?.(backingOf(p));",
+    "new": "          void backingOf(p);",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "PI1-window-take-unseen",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "if (!wanted.has(it)) orphans.push(it);",
-    "new": "if (false) orphans.push(it);",
+    "old": "        if (!wanted.has(it)) orphans.push(it);",
+    "new": "        if (false) orphans.push(it);",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "PI1-piles-never-presented",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "return !!p && p.batch != null; },",
-    "new": "return false && !!p; },",
+    "old": "      return !!p && p.batch != null;",
+    "new": "      return false && !!p;",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "PI1-drop-unlifted",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "return [at[0], at[1] + PI_SPIRAL.lift, at[2]];",
-    "new": "return at;",
+    "old": "        return [at[0], at[1] + PI_SPIRAL.lift, at[2]];",
+    "new": "        return at;",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "PI1-off-still-standing",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "if (!on()) { if (proxies.size) this.clear(); return; }",
-    "new": "if (!on()) return;",
+    "old": "      if (!on()) {\n        if (proxies.size) this.clear();\n        return;\n      }",
+    "new": "      if (!on()) return;",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "PI1-line-counted-twice",
     "file": "src/scenes/lootLines.js",
-    "old": "bestRarity(f.own ? f.items : f.items.filter((it) => !isPresented(it)))",
-    "new": "bestRarity(f.items)",
+    "old": "    const tier = bestRarity(f.own ? f.items : f.items.filter((it) => !isPresented(it))); // PI1: a standing item's line is its own",
+    "new": "    const tier = bestRarity(f.items); // PI1: a standing item's line is its own",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]

@@ -31,7 +31,13 @@
 // ═══════════════════════════════════════════════════════════════════
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { HOW_MANY_ITEMS, SPLIT_INPUT_MAX, parseSplitAmount } from '../systems/item/itemTransfer.js';
-import { buyPortalStones, portalStoneMax, portalStoneRefusal, portalStoneRefusalText, PORTAL_TEXT } from '../systems/portalStone.js';
+import {
+  buyPortalStones,
+  portalStoneMax,
+  portalStoneRefusal,
+  portalStoneRefusalText,
+  PORTAL_TEXT,
+} from '../systems/portalStone.js';
 import { shardsHeld } from '../systems/reforge.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { audio } from '../systems/audio.js';
@@ -39,7 +45,12 @@ import { SOUND } from '../systems/soundClips.js';
 
 /** The count's field: the split popup's (numeric, SPLIT_INPUT_MAX characters, labelled howManyItems with the most),
  *  seeded with ONE - never the most. */
-export const portalCountField = (max) => ({ numeric: true, maxCharacters: SPLIT_INPUT_MAX, initial: '1', label: HOW_MANY_ITEMS(max) });
+export const portalCountField = (max) => ({
+  numeric: true,
+  maxCharacters: SPLIT_INPUT_MAX,
+  initial: '1',
+  label: HOW_MANY_ITEMS(max),
+});
 
 /**
  * THE PORTAL STONE'S COUNTER - `{ ask, buy }`.
@@ -53,19 +64,28 @@ export function createPortalCounter({ say, mount, entity = playerEntity }) {
   const offer = (n) => ({
     rows: [{ text: PORTAL_TEXT.ask(n, shardsHeld(pack())), center: true }],
     buttons: 'YesNo',
-    onYes: () => { buy(n); return null; },
+    onYes: () => {
+      buy(n);
+      return null;
+    },
     onNo: () => null,
   });
   /** THE COUNT: up to `max`; an answer the parse refuses ("0", past the most, "3x") ends the chain with nothing taken. */
   const count = (max) => ({
     rows: [],
     field: portalCountField(max),
-    onInput: (text) => { const n = parseSplitAmount(text, max); return n == null ? null : [offer(n)]; },
+    onInput: (text) => {
+      const n = parseSplitAmount(text, max);
+      return n == null ? null : [offer(n)];
+    },
   });
   /** The row's press: the question, or - with nothing to be had - why, at once. Answers the window raised, or null. */
   function ask() {
     const max = portalStoneMax(pack());
-    if (max < 1) { say(portalStoneRefusalText(pack(), portalStoneRefusal(pack(), 1))); return null; }
+    if (max < 1) {
+      say(portalStoneRefusalText(pack(), portalStoneRefusal(pack(), 1)));
+      return null;
+    }
     const flow = new ServiceFlowWindow([max === 1 ? offer(1) : count(max)]);
     mount(flow);
     return flow;
@@ -75,7 +95,10 @@ export function createPortalCounter({ say, mount, entity = playerEntity }) {
   function buy(n) {
     entity.items = entity.items || [];
     const sale = buyPortalStones(entity.items, n);
-    if (!sale.ok) { say(portalStoneRefusalText(entity.items, sale.reason)); return false; }
+    if (!sale.ok) {
+      say(portalStoneRefusalText(entity.items, sale.reason));
+      return false;
+    }
     audio.playOneShot(SOUND.GoldPieces, 1);
     surfacePlayer();
     say(PORTAL_TEXT.bought(n));

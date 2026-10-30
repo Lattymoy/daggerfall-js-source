@@ -129,7 +129,7 @@
   {
     "name": "OH-B-location-cut",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "if (hasLocation(entry)) { markTerrainProcessed(st, v, 'rejected:has-location'); return; }",
+    "old": "    if (hasLocation(entry)) {\n      markTerrainProcessed(st, v, 'rejected:has-location');\n      return;\n    }",
     "new": "",
     "tests": [
       "test/scenes/oh_host.test.js"
@@ -138,8 +138,8 @@
   {
     "name": "OH-B-shallow-cut",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "if (num6 < MINIMUM_DEPTH) {",
-    "new": "if (num6 < 0) {",
+    "old": "    if (num6 < MINIMUM_DEPTH) {",
+    "new": "    if (num6 < 0) {",
     "tests": [
       "test/scenes/oh_host.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "OH-B-floor-asked-once",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "if (num || st.attempts % 30 === 0) deepWaters.refreshLoadedTile(entry);",
-    "new": "if (num) deepWaters.refreshLoadedTile(entry);",
+    "old": "      if (num || st.attempts % 30 === 0) deepWaters.refreshLoadedTile(entry); // RequestSeafloorRefresh",
+    "new": "      if (num) deepWaters.refreshLoadedTile(entry); // RequestSeafloorRefresh",
     "tests": [
       "test/scenes/oh_host.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "OH-B-floor-cut-twice",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "    if (st.appliedFloorBuildVersion === v) return { ok: true, flattened };\n",
-    "new": "",
+    "old": "    if (st.appliedFloorBuildVersion === v) return { ok: true, flattened };\n    try {",
+    "new": "    try {",
     "tests": [
       "test/scenes/oh_host.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "OH-B-edge-distance-unread",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "      if (num < MINIMUM_EDGE_DISTANCE) return",
-    "new": "      if (num < 0) return",
+    "old": "      if (num < MINIMUM_EDGE_DISTANCE)\n        return { ok: false, rejection: `rejected:edge-distance-${num.toFixed(1)}`, verified: false };",
+    "new": "      if (num < 0) return { ok: false, rejection: `rejected:edge-distance-${num.toFixed(1)}`, verified: false };",
     "tests": [
       "test/scenes/oh_host.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "OH-B-abyss-dials-recut",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "if (snap !== snapshot) { snapshot = snap; refreshLoadedPits(); }",
-    "new": "{ snapshot = snap; refreshLoadedPits(); }",
+    "old": "    if (snap !== snapshot) {",
+    "new": "    {",
     "tests": [
       "test/scenes/oh_host.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "OH-B-a-lost-pit-cut-again",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "      if (flag && st.appliedFloorBuildVersion === v) { reprocess(st); enqueueTerrain(entry); }",
-    "new": "      if (false) { reprocess(st); enqueueTerrain(entry); }",
+    "old": "      if (flag && st.appliedFloorBuildVersion === v) {",
+    "new": "      if (false) {",
     "tests": [
       "test/scenes/oh_host.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "OH-C-entrance-every-frame",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "      e.nextAllowedTime = t + 1;\n",
-    "new": "",
+    "old": "      e.nextAllowedTime = t + 1;\n      onEnterPit(e.mapX, e.mapY);",
+    "new": "      onEnterPit(e.mapX, e.mapY);",
     "tests": [
       "test/scenes/oh_host.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "OH-C-entrance-on-foot",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "if (t < e.nextAllowedTime || inside || !swimming) return false;",
-    "new": "if (t < e.nextAllowedTime || inside) return false;",
+    "old": "      if (t < e.nextAllowedTime || inside || !swimming) return false;",
+    "new": "      if (t < e.nextAllowedTime || inside) return false;",
     "tests": [
       "test/scenes/oh_host.test.js"
     ]
@@ -815,8 +815,8 @@
   {
     "name": "OH-F-A1-check-applies-nothing",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "    s = next;   // ApplySettings, every change\n    if (snap !== snapshot)",
-    "new": "    if (snap !== snapshot)",
+    "old": "    s = next; // ApplySettings, every change\n    if (snap !== snapshot) {",
+    "new": "    if (snap !== snapshot) {",
     "tests": [
       "test/scenes/oh_host.test.js"
     ]
@@ -824,8 +824,8 @@
   {
     "name": "OH-F-A3-active-indoors",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "const isActive = (e) => !inside() && built.get(keyOf(e)) === e;",
-    "new": "const isActive = (e) => built.get(keyOf(e)) === e;",
+    "old": "  const isActive = (e) => !inside() && built.get(keyOf(e)) === e;",
+    "new": "  const isActive = (e) => built.get(keyOf(e)) === e;",
     "tests": [
       "test/scenes/oh_host.test.js"
     ]
@@ -833,8 +833,8 @@
   {
     "name": "OH-F-A3-refresh-inactive",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "for (const e of built.values()) if (isActive(e)) deepWaters.refreshLoadedTile(e, true);",
-    "new": "for (const e of built.values()) deepWaters.refreshLoadedTile(e, true);",
+    "old": "    for (const e of built.values()) if (isActive(e)) deepWaters.refreshLoadedTile(e, true);",
+    "new": "    for (const e of built.values()) deepWaters.refreshLoadedTile(e, true);",
     "tests": [
       "test/scenes/oh_host.test.js"
     ]
@@ -842,8 +842,8 @@
   {
     "name": "OH-F-A3-saveload-inactive",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "for (const e of built.values()) if (isActive(e)) promoted(e);",
-    "new": "for (const e of built.values()) promoted(e);",
+    "old": "      for (const e of built.values()) if (isActive(e)) promoted(e);",
+    "new": "      for (const e of built.values()) promoted(e);",
     "tests": [
       "test/scenes/oh_host.test.js"
     ]

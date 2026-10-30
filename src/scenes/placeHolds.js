@@ -37,19 +37,26 @@ const WHATS = Object.freeze(['mesh', 'tex', 'tile']);
  *   `free.mesh` answers whether it freed one - a model still building, or one this data set lacks, is not yet freeable.
  */
 export function createPlaceHolds({ free, kept = PLACES_KEPT }) {
-  const held = { mesh: new Map(), tex: new Map(), tile: new Map() };     // key -> how many holders (places, and a model for its pictures)
-  const pinned = { mesh: new Set(), tex: new Set(), tile: new Set() };   // asked for outside any place: kept for good
-  const loose = { mesh: new Set(), tex: new Set(), tile: new Set() };    // let go since the last sweep - the only keys a sweep asks
-  const meshTex = new Map();   // model key -> the picture keys its build uploaded, held for as long as the model stands
+  const held = { mesh: new Map(), tex: new Map(), tile: new Map() }; // key -> how many holders (places, and a model for its pictures)
+  const pinned = { mesh: new Set(), tex: new Set(), tile: new Set() }; // asked for outside any place: kept for good
+  const loose = { mesh: new Set(), tex: new Set(), tile: new Set() }; // let go since the last sweep - the only keys a sweep asks
+  const meshTex = new Map(); // model key -> the picture keys its build uploaded, held for as long as the model stands
   const keep = { ...kept };
-  const shelves = new Map();   // kind -> Map(place key -> hold), oldest first: the places gone and kept
+  const shelves = new Map(); // kind -> Map(place key -> hold), oldest first: the places gone and kept
   let live = 0;
 
-  const add = (what, key) => { const m = held[what]; m.set(key, (m.get(key) ?? 0) + 1); };
+  const add = (what, key) => {
+    const m = held[what];
+    m.set(key, (m.get(key) ?? 0) + 1);
+  };
   const sub = (what, key) => {
-    const m = held[what], n = (m.get(key) ?? 0) - 1;
+    const m = held[what],
+      n = (m.get(key) ?? 0) - 1;
     if (n > 0) m.set(key, n);
-    else { m.delete(key); loose[what].add(key); }
+    else {
+      m.delete(key);
+      loose[what].add(key);
+    }
   };
 
   /** What was let go and is neither held nor pinned is freed - a model first, so the pictures it held come loose
@@ -92,12 +99,17 @@ export function createPlaceHolds({ free, kept = PLACES_KEPT }) {
   function place(kind, key) {
     live++;
     const h = {
-      kind, key, state: 'live',
+      kind,
+      key,
+      state: 'live',
       holds: { mesh: new Set(), tex: new Set(), tile: new Set() },
       /** One thing this place asks for. A place already dropped (a build's late answer after its pixel went) holds
        *  nothing: what it made is nobody's, and the next sweep asks after it. */
       hold(what, k) {
-        if (h.state === 'dropped') { if (!held[what].has(k) && !pinned[what].has(k)) loose[what].add(k); return; }
+        if (h.state === 'dropped') {
+          if (!held[what].has(k) && !pinned[what].has(k)) loose[what].add(k);
+          return;
+        }
         if (h.holds[what].has(k)) return;
         h.holds[what].add(k);
         add(what, k);
@@ -111,7 +123,10 @@ export function createPlaceHolds({ free, kept = PLACES_KEPT }) {
         let shelf = shelves.get(kind);
         if (!shelf) shelves.set(kind, (shelf = new Map()));
         const older = shelf.get(h.key);
-        if (older) { shelf.delete(h.key); drop(older); }
+        if (older) {
+          shelf.delete(h.key);
+          drop(older);
+        }
         shelf.set(h.key, h);
         trim(kind);
         sweep();
@@ -129,7 +144,9 @@ export function createPlaceHolds({ free, kept = PLACES_KEPT }) {
       },
       /** IC-SWAP-BEHIND (scenes/swapBehind.js): a live place built under a second key (a pixel's view built behind the one
        *  that stands) is its place's from now - kept, and settled, as that place. @param {any} to */
-      rekey(to) { if (h.state === 'live') h.key = to; },
+      rekey(to) {
+        if (h.state === 'live') h.key = to;
+      },
     };
     return h;
   }
@@ -137,7 +154,9 @@ export function createPlaceHolds({ free, kept = PLACES_KEPT }) {
   return {
     place,
     /** Asked for outside any place: never freed. */
-    pin(what, key) { pinned[what].add(key); },
+    pin(what, key) {
+      pinned[what].add(key);
+    },
     /** A model's build finished: it holds the pictures it uploaded for as long as it stands. A model no place holds
      *  and nothing pinned (a late build for a place already gone) is loose from birth. */
     meshBuilt(key, pictures) {
@@ -157,7 +176,8 @@ export function createPlaceHolds({ free, kept = PLACES_KEPT }) {
       const keptBy = {};
       for (const [kind, shelf] of shelves) keptBy[kind] = shelf.size;
       return {
-        live, kept: keptBy,
+        live,
+        kept: keptBy,
         held: { mesh: held.mesh.size, tex: held.tex.size, tile: held.tile.size },
         pinned: { mesh: pinned.mesh.size, tex: pinned.tex.size, tile: pinned.tile.size },
       };

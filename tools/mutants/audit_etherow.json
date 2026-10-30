@@ -453,8 +453,8 @@
   {
     "name": "AEOW-T-pits-ether-only",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "    if (!pitPixelOk(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }",
-    "new": "    if (st.mapY < -2688 && st.mapY >= -7680 && st.mapX >= 64 && st.mapX < 8128) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }",
+    "old": "    if (!pitPixelOk(st.mapX, st.mapY)) {",
+    "new": "    if (st.mapY < -2688 && st.mapY >= -7680 && st.mapX >= 64 && st.mapX < 8128) {",
     "tests": [
       "test/scenes/oh_host.test.js"
     ],

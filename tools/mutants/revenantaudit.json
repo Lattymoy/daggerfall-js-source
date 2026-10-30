@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-E2-the-index-played",
     "file": "src/scenes/portalFx.js",
-    "old": "audio?.play3dId?.(PORTAL_SOUND, at, 0.9, { maxDistance: 24 })",
-    "new": "audio?.play3d?.(PORTAL_SOUND, at, 0.9, { maxDistance: 24 })",
+    "old": "        audio?.play3dId?.(PORTAL_SOUND, at, 0.9, { maxDistance: 24 });",
+    "new": "        audio?.play3d?.(PORTAL_SOUND, at, 0.9, { maxDistance: 24 });",
     "tests": [
       "test/systems/revenant/revenant_audit.test.js"
     ]

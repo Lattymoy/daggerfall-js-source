@@ -20,8 +20,8 @@
   {
     "name": "AWD3-PACK-BEHIND-CLOSED-DOOR",
     "file": "src/scenes/modWorldData.js",
-    "old": "      const got = on && door ? await loadPackFrom(vendor, url, () => true) : 0;",
-    "new": "      const got = on ? await loadPackFrom(vendor, url, () => true) : 0;",
+    "old": "        const got = on && door ? await loadPackFrom(vendor, url, () => true) : 0;",
+    "new": "        const got = on ? await loadPackFrom(vendor, url, () => true) : 0;",
     "tests": [
       "test/systems/wd3_door.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AWD3-PIN-BEHIND-CLOSED-DOOR",
     "file": "src/scenes/modWorldData.js",
-    "old": "  if (!worldDataDoorOpen()) return false;",
-    "new": "",
+    "old": "  if (!worldDataDoorOpen()) return false; // AUDIT WD3 P2: behind a closed door no pin is honoured - the town stands as it is served",
+    "new": "  // AUDIT WD3 P2: behind a closed door no pin is honoured - the town stands as it is served",
     "tests": [
       "test/systems/wd3_door.test.js"
     ]

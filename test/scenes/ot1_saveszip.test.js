@@ -160,7 +160,7 @@ test('OT1: the picker offers the zip door beside the directory one, and a droppe
   assert.match(menu, /<input type="file" id="picksaves" webkitdirectory multiple[^>]*>\s*<p[^>]*>\$\{t\('menu\.classicLoad\.phone', 'on a phone: pick a \{zip\} of your Daggerfall folder or a SAVE# folder instead', \{ zip: '<b>\.zip<\/b>' \}\)\}/, 'the phone line sits under the directory input');
   assert.match(menu, /<input type="file" id="picksaveszip" accept="\.zip,application\/zip"/, 'the zip input is accept-gated');
   assert.match(menu, /querySelector\('#picksaveszip'\)\.addEventListener\('change'[\s\S]{0,400}await ingest\(await classicSaveFilesFromZip\(f\)\)/, 'the zip input feeds the SAME ingest as the directory pick');
-  assert.match(menu, /if \(\/\\\.zip\$\/i\.test\(f\.name\)\) \{ files\.push\(\.\.\.await classicSaveFilesFromZip\(f\)\); return; \}/, 'a dropped .zip expands in the directory walk');   // AUDIT 68: the walk is dataSource's walkDroppedEntries now, which hands the File
+  assert.match(menu, /if \(\/\\\.zip\$\/i\.test\(f\.name\)\) \{\n\s*files\.push\(\.\.\.\(await classicSaveFilesFromZip\(f\)\)\);\n\s*return;\n\s*\}/, 'a dropped .zip expands in the directory walk');   // AUDIT 68: the walk is dataSource's walkDroppedEntries now, which hands the File
   // one collector: the directory pick, the drop and the zip all land in it
   assert.match(menu, /const saves = collectClassicSaveFiles\(files\);/);
   assert.equal((menu.match(/SAVE\(\[0-5\]\)/g) || []).length, 1, 'the SAVE# rule is written once (classicSaveSlot)');
