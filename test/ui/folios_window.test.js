@@ -248,3 +248,10 @@ test('FOLIOS in Collections: a folio\'s item is had from its page, in its folio,
   assert.equal(wardrobeAvail(e, Date.UTC(2027, 5, 1)), 'pass', 'long after the season: still sold');
   assert.equal(availLine(e, NOW), 'Bought with Aurum from the Folios. They never close, and those who buy it keep it.');
 });
+
+test('FOLIOS the page arrows are drawn chevrons, never a font\'s glyph - a pixel font (the Grimoire\'s) draws ‹ and › too small to see (mutants: the arrows back to a glyph)', () => {
+  assert.doesNotMatch(SHOP_CSS, /sh-page(?:prev|next)::before \{ content: '\\/, 'no arrow glyph (the carousel\'s steps keep theirs)');
+  assert.ok(SHOP_CSS.includes(".px-shopwin .sh-pageprev::before, .px-shopwin .sh-pagenext::before { content: ''; display: inline-block; width: 10px; height: 10px; border-left: 3px solid currentColor; border-bottom: 3px solid currentColor; }"), 'a drawn corner');
+  assert.ok(SHOP_CSS.includes('.px-shopwin .sh-pageprev::before { transform: translateX(2px) rotate(45deg); }'), 'turned back');
+  assert.ok(SHOP_CSS.includes('.px-shopwin .sh-pagenext::before { transform: translateX(-2px) rotate(-135deg); }'), 'turned on');
+});

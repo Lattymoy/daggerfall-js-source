@@ -169,5 +169,14 @@
     "tests": [
       "test/ui/folios_window.test.js"
     ]
+  },
+  {
+    "name": "FOLIOS-the-page-arrow-back-to-a-glyph",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": ".px-shopwin .sh-pagenext::before { transform: translateX(-2px) rotate(-135deg); }",
+    "new": ".px-shopwin .sh-pagenext::before { content: '\\\\203A'; }",
+    "tests": [
+      "test/ui/folios_window.test.js"
+    ]
   }
 ]

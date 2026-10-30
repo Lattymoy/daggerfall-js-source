@@ -516,7 +516,8 @@ export const PASS_CSS = `
 .px-shopwin .sh-punlock .sh-state:empty { display: none; }
 .px-shopwin .sh-pagenav { display: flex; align-items: center; gap: 6px; }
 .px-shopwin .sh-pageprev, .px-shopwin .sh-pagenext { min-width: 44px; min-height: 36px; padding: 0; font-size: 20px; }
-.px-shopwin .sh-pageprev::before { content: '\\2039'; } .px-shopwin .sh-pagenext::before { content: '\\203A'; }
+.px-shopwin .sh-pageprev::before, .px-shopwin .sh-pagenext::before { content: ''; display: inline-block; width: 10px; height: 10px; border-left: 3px solid currentColor; border-bottom: 3px solid currentColor; }
+.px-shopwin .sh-pageprev::before { transform: translateX(2px) rotate(45deg); } .px-shopwin .sh-pagenext::before { transform: translateX(-2px) rotate(-135deg); }   /* a drawn chevron, not a font's: a pixel font (the Grimoire's) draws its arrows too small to see */
 .px-shopwin .sh-pagetabs { display: flex; flex: 1; justify-content: center; flex-wrap: wrap; gap: 2px 6px; }
 .px-shopwin .sh-pagetab { font: inherit; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 12px; font-size: 13px; letter-spacing: 0.12em;
   text-transform: uppercase; color: #d8cfae; background: none; border: 0; cursor: pointer; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
