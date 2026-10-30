@@ -5,7 +5,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DRAGON_FIGHT_KEY, SOCIAL_ROOM, cellRoomOfWire, PIXEL_UNITS } from '../../../src/net/wire.js';
-import { dragonTimes, isDragonWatch, dragonFightId, DRAGON_BRAIN_V, DRAGON_NATIVE_PER_M, DRAGON_CLIMB_MS } from '../../../src/net/dragon/dragonLaw.js';
+import { dragonTimes, dragonFightId, DRAGON_BRAIN_V, DRAGON_NATIVE_PER_M, DRAGON_CLIMB_MS } from '../../../src/net/dragon/dragonLaw.js';
+import { RELAY_KEY, dragonOmenFrom } from '../../dragonOmen.mjs';
 import { DRAGON_TICK_MS, DRAGON_OPENING_MS, DRAGON_FAN_R, DRAGON_ADMIT_R, DRAGON_TTK_S } from '../../../src/net/dragon/dragonBrain.js';
 import { dpsRef } from '../../../src/net/gate/gateBrain.js';
 import { verifyDragonReceipt } from '../../../src/net/dragon/dragonReceipt.js';
@@ -13,9 +14,8 @@ import { DRAGON_KEEP_MS } from '../../../server/src/dragonFights.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
 
 const subtle = globalThis.crypto.subtle;
-let W = 500_000;
-while (!isDragonWatch(W)) W++;
-const TT = dragonTimes(W);
+const OMEN = await dragonOmenFrom(500_000), { w: W } = OMEN;   // DRAGON-HIDDEN: a dragon's watch under the relay's own secret
+const TT = dragonTimes(OMEN);
 const PX = 205, PY = 214;
 const SX = (PX + 0.5) * PIXEL_UNITS, SZ = (499 - PY + 0.5) * PIXEL_UNITS;
 const CELL = cellRoomOfWire(SX, SZ);
@@ -31,6 +31,7 @@ async function withSky(fn, { start = TT.landAt + 60_000 } = {}) {
     Date.now = () => clock;
     const world = fakeRooms({ now: () => clock });
     const r = world.room(CELL);
+    r.env.GATE_SIGNING_KEY = RELAY_KEY.pkcs8;   // DRAGON-HIDDEN: no secret, no dragon
     const tick = async (n = 1) => { for (let i = 0; i < n; i++) { clock += DRAGON_TICK_MS; if (r.alarm.at != null && clock >= r.alarm.at) await r.fire(); } };
     const say = (ws, o) => r.raw(ws, JSON.stringify({ t: 'dragon', ...o }));
     await fn({ world, r, tick, say, now: () => clock, set: (t) => { clock = t; } });
@@ -98,10 +99,7 @@ test('DRAGON2 relay: A DRAGON_BLOW - believed from where the socket\'s OWN pose 
 });
 
 test('DRAGON2 relay: THE KILL - said once to everyone about it, a z1 receipt to exactly the accounts that earned one (signed by GATE_SIGNING_KEY), the fight checkpointed with them, the hub keeping each for its hello; a fighter back at an `in` is handed theirs again; the fight forgotten after its keeping (mutants: a receipt to one who earned nothing; the hub told nothing; said twice)', async () => {
-  const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
-  const pkcs8 = Buffer.from(await subtle.exportKey('pkcs8', kp.privateKey)).toString('base64');
   await withSky(async ({ world, r, tick, say, now, set }) => {
-    r.env.GATE_SIGNING_KEY = pkcs8;
     const hub = world.room(SOCIAL_ROOM);
     const a = r.connect(), w = r.connect(), idle = r.connect();
     await r.hello(a, 'peer-0001', at(40, 0)); await r.hello(w, 'peer-0002', at(1500, 900)); await r.hello(idle, 'peer-0003', at(0, 550));
@@ -118,7 +116,7 @@ test('DRAGON2 relay: THE KILL - said once to everyone about it, a z1 receipt to 
     const mine = words(a, 'rcpt');
     assert.equal(mine.length, 1);
     assert.equal(words(idle, 'rcpt').length, 0, 'it earned no receipt');
-    const ok = await verifyDragonReceipt(mine[0].r, kp.publicKey, { subtle, nowS: Math.floor(now() / 1000) });
+    const ok = await verifyDragonReceipt(mine[0].r, RELAY_KEY.publicKey, { subtle, nowS: Math.floor(now() / 1000) });
     assert.equal(ok.ok, true);
     assert.deepEqual([ok.claims.s, ok.claims.q, ok.claims.b, ok.claims.x, ok.claims.l], ['acct-peer-0001', W, 0, 'dealt', 33]);
     assert.equal(r.store.get(FIGHT_AT).said, true, 'checkpointed with the kill');

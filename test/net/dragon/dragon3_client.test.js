@@ -6,23 +6,25 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createDragonLink, foldDragon, DRAGON_STATE_EMPTY, sameDragonSite } from '../../../src/net/dragon/dragonLink.js';
-import { dragonSiteOf, pixelCentreNative, createDragonSites } from '../../../src/systems/dragon/dragonSite.js';
+import { dragonSiteOf, createDragonSites } from '../../../src/systems/dragon/dragonSite.js';
 import { dragonBarModel, DRAGON_PHASE_AT, DRAGON_LEAVE_WARN_MS } from '../../../src/ui/dragonBar.js';
 import { drapeGrid, drapeBounds, DRAPE_CELLS_MAX } from '../../../src/render/dragon/dragonTelegraph.js';
 import { dragonSkyAt, skyWatchAt } from '../../../src/scenes/dragonHost.js';
 import { DRAGON_NO_TEXT, DRAGON_WORDS } from '../../../src/systems/dragon/dragonWords.js';
 import { COMPASS_WORDS } from '../../../src/systems/compassWords.js';
 import * as tm from '../../../src/systems/textManager.js';
-import { isDragonWatch, dragonTimes, dragonSiteDay, dragonLaneOf, DRAGON_CLIMB_MS, DRAGON_REMAINS_MS } from '../../../src/net/dragon/dragonLaw.js';
+import { isDragonOmen, dragonTimes, pixelCentreNative, dragonSiteDay, dragonLaneOf, DRAGON_CLIMB_MS, DRAGON_REMAINS_MS } from '../../../src/net/dragon/dragonLaw.js';
 import { roostLeg, dragonLegAt, orbitLeg, CLIMB_ALT } from '../../../src/net/dragon/dragonBody.js';
 import { validDragonOut, DRAGON_NO_WORDS } from '../../../src/net/wire.js';
 import { gateNumber } from '../../../src/net/gate/gateLaw.js';
 import { sitePixelOfNative } from '../../../src/systems/serpent/serpentSite.js';
 import { TELEGRAPH_KIND } from '../../../src/render/gate/gateTelegraph.js';
 
+/** DRAGON-HIDDEN: a watch's omen under the tests' seed (the relay's is its secret's - net/dragon/dragonSeed.js). */
+const om = (w, s = 0x5eed1234) => ({ w, s });
 let W = 500_000;
-while (!isDragonWatch(W)) W++;
-const TT = dragonTimes(W);
+while (!isDragonOmen(om(W))) W++;
+const TT = { ...dragonTimes(om(W)), s: om(W).s };
 const SITE = { w: W, ...pixelCentreNative(205, 214) };
 const word = (o) => validDragonOut({ t: 'dragon', w: W, sx: SITE.sx, sz: SITE.sz, ...o });
 const ST = (o = {}) => word({ k: 'st', b: 0, ph: 1, h: 1000, m: 1000, md: 0, mu: 0, sh: 0, legs: [orbitLeg(TT.landAt, 0, 0, 55, 0, 1, 30)], blows: [], n: 1, lv: TT.leaveAt, op: 0, fell: null, gone: null, ...o });
@@ -79,20 +81,20 @@ test('DRAGON3 site: watch w\'s site is the gate\'s law under the dragon\'s own n
   let asked = null;
   const scans = { bayScan: () => ({ byRegion: new Map(), towns: [], townAt: [] }), theatres: () => ({ siteOf: (n) => { asked = n; return { px: 3001, py: -40, near: 'Far' }; } }) };
   let w = W;
-  while (dragonLaneOf(w) === 0) w++;
-  const far = dragonSiteOf(w, scans);
-  assert.equal(asked, gateNumber(dragonSiteDay(w), dragonLaneOf(w)));
+  while (dragonLaneOf(om(w)) === 0) w++;
+  const far = dragonSiteOf(om(w), scans);
+  assert.equal(asked, gateNumber(dragonSiteDay(om(w)), dragonLaneOf(om(w))));
   assert.deepEqual(sitePixelOfNative(far.sx, far.sz), [3001, -40]);
   let w0 = W;
-  while (dragonLaneOf(w0) !== 0) w0++;
-  const bay = dragonSiteOf(w0, { bayScan: () => null, theatres: () => { throw new Error('no theatre on the Bay\'s lane'); } });
+  while (dragonLaneOf(om(w0)) !== 0) w0++;
+  const bay = dragonSiteOf(om(w0), { bayScan: () => null, theatres: () => { throw new Error('no theatre on the Bay\'s lane'); } });
   assert.equal(bay, null, 'no scan yet');
   let t = 0, calls = 0;
   const S = createDragonSites({ bayScan: () => null, theatres: () => ({ siteOf: () => { calls++; return { px: 5, py: 6 }; } }) }, { now: () => t, retryMs: 1000 });
-  assert.ok(S.of(w)); assert.ok(S.of(w));
+  assert.ok(S.of(om(w))); assert.ok(S.of(om(w)));
   assert.equal(calls, 1, 'found once');
   const N = createDragonSites({ bayScan: () => null, theatres: () => ({ siteOf: () => { calls++; return null; } }) }, { now: () => t, retryMs: 1000 });
-  calls = 0; N.of(w); N.of(w); t = 1001; N.of(w);
+  calls = 0; N.of(om(w)); N.of(om(w)); t = 1001; N.of(om(w));
   assert.equal(calls, 2, 'asked again after its retry');
 });
 
@@ -127,13 +129,17 @@ test('DRAGON3 drape: the grid lies on the land - every vertex\'s height the grou
 
 test('DRAGON3 sky: with no fight heard it roosts on its own clock, then climbs away from its leaving; a dragon slain late in its watch is still about while its remains may lie (mutants: the climb from nowhere; the remains forgotten at the watch\'s turn)', () => {
   const at = TT.landAt + 123_456;
-  assert.deepEqual(dragonSkyAt(TT, at), dragonLegAt(roostLeg(W), at));
-  const up = dragonSkyAt(TT, TT.leaveAt + DRAGON_CLIMB_MS), from = dragonLegAt(roostLeg(W), TT.leaveAt), leaving = dragonSkyAt(TT, TT.leaveAt);
+  assert.deepEqual(dragonSkyAt(TT, at), dragonLegAt(roostLeg(om(W)), at));
+  const up = dragonSkyAt(TT, TT.leaveAt + DRAGON_CLIMB_MS), from = dragonLegAt(roostLeg(om(W)), TT.leaveAt), leaving = dragonSkyAt(TT, TT.leaveAt);
   assert.ok(Math.abs(up.a - CLIMB_ALT) < 1e-6, 'it climbs out of sight');
   assert.ok(Math.hypot(leaving.x - from.x, leaving.z - from.z) < 0.05 && Math.abs(leaving.a - from.a) < 0.05, 'from where it roosted, no jump');
-  assert.equal(skyWatchAt(TT.leaveAt + 60_000).w, W, 'past its climb, its remains may still lie');
-  const after = skyWatchAt(TT.leaveAt + DRAGON_REMAINS_MS + 1);
-  assert.notEqual(after.w, W);
+  const told = (w) => (w === W ? TT.s : undefined);   // DRAGON-HIDDEN: the omen its cell told, and no other
+  assert.equal(skyWatchAt(TT.landAt - 1, told), null, 'before it lands: nothing in the sky');
+  assert.equal(skyWatchAt(TT.landAt, told).w, W);
+  assert.equal(skyWatchAt(TT.leaveAt + 60_000, told).w, W, 'past its climb, its remains may still lie');
+  assert.equal(skyWatchAt(TT.leaveAt + 6 * 60_000, told).w, W, 'past its watch\'s turn too, while they may lie');
+  assert.equal(skyWatchAt(TT.leaveAt + DRAGON_REMAINS_MS + 1, told), null);
+  assert.equal(skyWatchAt(TT.landAt, () => undefined), null, 'no omen told, no dragon drawn - the source rolls none');
 });
 
 test('DRAGON3 the sighting\'s way: every compass way a whole phrase of its own, so a language never reads an English word inside its sentence (mutants: the way left English)', () => {

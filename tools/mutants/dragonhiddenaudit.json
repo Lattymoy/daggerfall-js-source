@@ -1,0 +1,158 @@
+[
+  {
+    "name": "AUDIT-DRAGON-HIDDEN-A1-the-theatre-unchecked",
+    "file": "src/net/dragon/dragonLaw.js",
+    "old": "  return gateLanePixelOk(dragonLaneOf(o), px, py) && sx === c.sx && sz === c.sz;",
+    "new": "  return sx === c.sx && sz === c.sz;",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-HIDDEN-A1-the-centre-unchecked",
+    "file": "src/net/dragon/dragonLaw.js",
+    "old": "  return gateLanePixelOk(dragonLaneOf(o), px, py) && sx === c.sx && sz === c.sz;",
+    "new": "  return gateLanePixelOk(dragonLaneOf(o), px, py);",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-HIDDEN-A1-its-north-unchecked",
+    "file": "src/net/dragon/dragonLaw.js",
+    "old": "  return gateLanePixelOk(dragonLaneOf(o), px, py) && sx === c.sx && sz === c.sz;",
+    "new": "  return gateLanePixelOk(dragonLaneOf(o), px, py) && sx === c.sx;",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-HIDDEN-A1-the-cells-check-dropped",
+    "file": "server/src/dragonFights.js",
+    "old": "  if (!dragonSiteOk(o, m.sx, m.sz)) { no('gone'); return; }",
+    "new": "  if (!dragonSiteOk) { no('gone'); return; }",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-HIDDEN-A4-none-let-go",
+    "file": "server/src/dragonFights.js",
+    "old": "      if (!f.fell && !(f.v >= DRAGON_BRAIN_MIN)) old.push(id); else s.fights.set(id, dragonBrain.dragonWoke(f));",
+    "new": "      s.fights.set(id, dragonBrain.dragonWoke(f));",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-HIDDEN-A4-a-slain-one-let-go",
+    "file": "server/src/dragonFights.js",
+    "old": "      if (!f.fell && !(f.v >= DRAGON_BRAIN_MIN)) old.push(id);",
+    "new": "      if (!(f.v >= DRAGON_BRAIN_MIN)) old.push(id);",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-HIDDEN-A4-its-record-kept",
+    "file": "server/src/dragonFights.js",
+    "old": "    if (old.length) { await room.state.storage.delete(old.map(storeKey)); await index(room, s.fights); }",
+    "new": "    if (old.length) { await index(room, s.fights); }",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-HIDDEN-B1-an-ask-in-a-battle-junked",
+    "file": "server/src/index.js",
+    "old": "      if (typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }   // AUDIT DRAGON-HIDDEN B1",
+    "new": "      if (!isCellRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }   // AUDIT DRAGON-HIDDEN B1",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-HIDDEN-B1-a-battles-blow-let-through",
+    "file": "server/src/dragonFights.js",
+    "old": "  if (!isCellRoom(a.key)) { room._junk(ws); return; }\n",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-HIDDEN-B1-the-ask-wants-a-cell",
+    "file": "src/net/online.js",
+    "old": "    if (!w || (ask ? !(this.dragonOk && this.status === 'open' && this._ws) : !this.dragonReady(cell))) return false;",
+    "new": "    if (!w || !this.dragonReady(cell)) return false;",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-HIDDEN-B1-the-battles-omen-dropped",
+    "file": "src/net/online.js",
+    "old": "isCellRoom(room) || r.k === 'omen')) this._deliver('dragon'",
+    "new": "isCellRoom(room))) this._deliver('dragon'",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-HIDDEN-A3-the-fight-brass",
+    "file": "server/src/dragonFights.js",
+    "old": "b: dragonLookOf(o), sx: m.sx,",
+    "new": "b: 0, sx: m.sx,",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-HIDDEN-C2-the-share-brass",
+    "file": "server/src/dragonFights.js",
+    "old": "look = c.b === 1 ? 1 : 0;",
+    "new": "look = 0;",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-HIDDEN-B5-again-only-at-fifteen-seconds",
+    "file": "src/scenes/dragonHost.js",
+    "old": "export const DRAGON_ASK_RETRY_MS = 15_000;",
+    "new": "export const DRAGON_ASK_RETRY_MS = 60_000;",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ],
+    "note": "Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start."
+  },
+  {
+    "name": "AUDIT-DRAGON-HIDDEN-B5-asked-after-a-null-omen",
+    "file": "src/scenes/dragonHost.js",
+    "old": "if (omens.has(w) || t < dragonQuietAt(w)",
+    "new": "if (omens.get(w) != null || t < dragonQuietAt(w)",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ],
+    "note": "Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start."
+  },
+  {
+    "name": "AUDIT-DRAGON-HIDDEN-B5-asked-past-its-remains",
+    "file": "src/scenes/dragonHost.js",
+    "old": " || t >= dragonAskEnd(w) || t - (asked.get(w)",
+    "new": " || t - (asked.get(w)",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ],
+    "note": "Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start."
+  },
+  {
+    "name": "AUDIT-DRAGON-HIDDEN-B5-the-sighting-brass",
+    "file": "src/scenes/dragonHost.js",
+    "old": "mine ? s.b : dragonLookOf(d)), 5); }",
+    "new": "mine ? s.b : 0), 5); }",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ]
+  }
+]
