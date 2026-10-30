@@ -281,8 +281,8 @@
   {
     "name": "SD25-S9-the-line-half-as-wide",
     "file": "src/render/superDungeon/sdStepsPass.js",
-    "old": "c.xy += (n * aM.y + d * (far ? 1.0 : -1.0)) * (uWidth * 0.5) / h * c.w;",
-    "new": "c.xy += (n * aM.y + d * (far ? 1.0 : -1.0)) * (uWidth * 0.25) / h * c.w;",
+    "old": "  c.xy += (n * aM.y + d * (far ? 1.0 : -1.0)) * (uWidth * 0.5) / h * c.w;   // square caps: the corners meet",
+    "new": "  c.xy += (n * aM.y + d * (far ? 1.0 : -1.0)) * (uWidth * 0.25) / h * c.w;   // square caps: the corners meet",
     "tests": [
       "test/world/superDungeon/sd25_steps.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "SD25-S9-the-ghost-hand-mirrored",
     "file": "src/render/superDungeon/sdStepsPass.js",
-    "old": "B = vec3(sin(a) * HAND, LIFT, cos(a) * HAND);",
-    "new": "B = vec3(-sin(a) * HAND, LIFT, cos(a) * HAND);",
+    "old": "  if (aM.w > 0.5) { float a = st.y * 6.283185307179586; A = vec3(0.0, LIFT, 0.0); B = vec3(sin(a) * HAND, LIFT, cos(a) * HAND); }",
+    "new": "  if (aM.w > 0.5) { float a = st.y * 6.283185307179586; A = vec3(0.0, LIFT, 0.0); B = vec3(-sin(a) * HAND, LIFT, cos(a) * HAND); }",
     "tests": [
       "test/world/superDungeon/sd25_steps.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "SD25-S9-an-unlit-ghost-drawn",
     "file": "src/render/superDungeon/sdStepsPass.js",
-    "old": "if (st.x <= 0.0) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }",
-    "new": "if (st.x < 0.0) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }",
+    "old": "  if (st.x <= 0.0) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }   // no ghost: outside every clip${",
+    "new": "  if (st.x < 0.0) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }   // no ghost: outside every clip${",
     "tests": [
       "test/world/superDungeon/sd25_steps.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "SD25-S9-the-ghost-unposterized",
     "file": "src/render/superDungeon/sdStepsPass.js",
-    "old": "o = vec4(sdPixel(uColor * vK, floor(gl_FragCoord.xy), uSteps) * fogFactorAt(vWorld), 1.0);",
-    "new": "o = vec4(uColor * vK * fogFactorAt(vWorld), 1.0);",
+    "old": "  o = vec4(sdPixel(uColor * vK, floor(gl_FragCoord.xy), uSteps) * fogFactorAt(vWorld), 1.0);`",
+    "new": "  o = vec4(uColor * vK * fogFactorAt(vWorld), 1.0);`",
     "tests": [
       "test/world/superDungeon/sd25_steps.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "SD25-S9-every-ghost-a-beat-plate",
     "file": "src/render/superDungeon/sdStepsPass.js",
-    "old": "const edges = stepEdges(s.kind);",
-    "new": "const edges = stepEdges('beat');",
+    "old": "    const edges = stepEdges(s.kind);",
+    "new": "    const edges = stepEdges('beat');",
     "tests": [
       "test/world/superDungeon/sd25_steps.test.js"
     ]

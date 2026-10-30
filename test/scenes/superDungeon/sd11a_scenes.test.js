@@ -503,7 +503,7 @@ test('AUDIT SD II L2 F9: THE SAME LIGHTS AND THE SAME SKY, made in place - realm
     assert.equal(got, into);
     for (const key of ['right', 'up', 'fwd', 'lens']) assert.ok(near(got[key], Float32Array.from(want[key])), key);
   }
-  assert.match(read('src/render/superDungeon/sdSky.js'), /const gl = this\.gl, U = this\.u, b = sdSkyBasisInto\(view, proj, this\._b\);/, 'the pass\'s frame reads it into its own');
+  assert.match(read('src/render/superDungeon/sdSky.js'), /const gl = this\.gl,\n\s*U = this\.u,\n\s*b = sdSkyBasisInto\(view, proj, this\._b\);/, 'the pass\'s frame reads it into its own');
   // the blows' driver idles only when sdBlowsInFlight would hand it nothing
   const atk = { i: 1, a: 1, at: 0 }, rem = { x: 0, z: 8, yw: 0, mv: null, atk: null }, ec = (a0, a1, h = 50) => [{ h, atk: a0 }, { h, atk: a1 }];
   for (const s of [SD_FIGHT_EMPTY, { ...SD_FIGHT_EMPTY, fi: 1 }, { ...SD_FIGHT_EMPTY, fi: 1, rem: { ...rem, atk } }, { ...SD_FIGHT_EMPTY, fi: 1, clk: atk },

@@ -70,6 +70,8 @@
 /src/render/ketch/*/
 !/src/render/starfall/
 /src/render/starfall/*/
+!/src/render/superDungeon/
+/src/render/superDungeon/*/
 !/src/scenes/
 /src/scenes/*
 !/src/scenes/delve/

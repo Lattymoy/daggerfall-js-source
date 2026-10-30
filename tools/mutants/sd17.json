@@ -326,8 +326,8 @@
   {
     "name": "SD17-the-beam-writes-depth",
     "file": "src/render/superDungeon/sdBeam.js",
-    "old": "    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);\n    gl.depthMask(false);\n    gl.disable(gl.CULL_FACE);\n    for (let i = 0; i < n && this.drawn < SD_BEAM_MAX; i++) {",
-    "new": "    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);\n    gl.disable(gl.CULL_FACE);\n    for (let i = 0; i < n && this.drawn < SD_BEAM_MAX; i++) {",
+    "old": "    gl.depthMask(false);\n    gl.disable(gl.CULL_FACE);",
+    "new": "    gl.disable(gl.CULL_FACE);",
     "tests": [
       "test/scenes/superDungeon/sd17_body.test.js"
     ]

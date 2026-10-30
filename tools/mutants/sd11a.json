@@ -395,8 +395,8 @@
   {
     "name": "SD11A-L2F9-the-sky-basis-made",
     "file": "src/render/superDungeon/sdSky.js",
-    "old": "b = sdSkyBasisInto(view, proj, this._b);",
-    "new": "b = sdSkyBasisInto(view, proj, { right: [0, 0, 0], up: [0, 0, 0], fwd: [0, 0, 0], lens: [0, 0, 0, 0] });",
+    "old": "      b = sdSkyBasisInto(view, proj, this._b);",
+    "new": "      b = sdSkyBasisInto(view, proj, { right: [0, 0, 0], up: [0, 0, 0], fwd: [0, 0, 0], lens: [0, 0, 0, 0] });",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -509,8 +509,8 @@
   {
     "name": "SD11A-L2F12-the-arch-a-pow",
     "file": "src/render/superDungeon/sdSky.js",
-    "old": "  float curve = 0.14 + 0.36 * arch * arch;",
-    "new": "  float curve = 0.14 + 0.36 * pow(arch, 2.0);",
+    "old": "  float curve = 0.14 + 0.36 * arch * arch;         // where GLSL ES leaves a power of it undefined (D3D answers NaN)",
+    "new": "  float curve = 0.14 + 0.36 * pow(arch, 2.0);         // where GLSL ES leaves a power of it undefined (D3D answers NaN)",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],

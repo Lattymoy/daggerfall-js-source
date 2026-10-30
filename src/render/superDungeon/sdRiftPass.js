@@ -52,7 +52,9 @@ uniform vec3 uCamPos;
 uniform vec3 uFogColor;
 `;
 
-export const SD_WINDOW_VS = HEAD + `layout(location = 0) in vec2 aDisc;
+export const SD_WINDOW_VS =
+  HEAD +
+  `layout(location = 0) in vec2 aDisc;
 uniform mat4 uView, uProj, uModel;
 uniform vec2 uSize;   // the opening's half-size across and up (m) - a disc's radius twice, an arch's own
 out vec2 vDisc;
@@ -65,7 +67,9 @@ void main() {
 }`;
 
 /** The Rift's window. */
-export const SD_WINDOW_FS = HEAD + `in vec2 vDisc;
+export const SD_WINDOW_FS =
+  HEAD +
+  `in vec2 vDisc;
 in vec3 vWorld;
 uniform mat4 uModel;
 uniform mat3 uToLocal;   // the world's directions into the ring's frame
@@ -113,7 +117,9 @@ void main() {
 }`;
 
 /** The way back's window: the Hollow's hall behind the ring, interior-mapped. */
-export const SD_HOLLOW_FS = HEAD + `in vec2 vDisc;
+export const SD_HOLLOW_FS =
+  HEAD +
+  `in vec2 vDisc;
 in vec3 vWorld;
 uniform mat4 uModel;
 uniform mat3 uToLocal;
@@ -195,7 +201,9 @@ void main() {
 }`;
 
 /** The floor light, in the ring's foot frame: x across, z through (the disc's own xy - see the VS, laid flat). */
-export const SD_FLOOR_VS = HEAD + `layout(location = 0) in vec2 aDisc;
+export const SD_FLOOR_VS =
+  HEAD +
+  `layout(location = 0) in vec2 aDisc;
 uniform mat4 uView, uProj, uModel;
 uniform float uReach;
 out vec2 vP;
@@ -206,7 +214,9 @@ void main() {
   vWorld = w.xyz;
   gl_Position = uProj * uView * w;
 }`;
-export const SD_FLOOR_FS = HEAD + `in vec2 vP;
+export const SD_FLOOR_FS =
+  HEAD +
+  `in vec2 vP;
 in vec3 vWorld;
 uniform float uRadii[${SD_FLOOR_BEARINGS}];   // the hall's edge along each bearing (m), the first along +x, turning toward +z
 uniform float uCrater;   // the crater's rim (m) - the light seeps from it
@@ -241,7 +251,9 @@ void main() {
 }`;
 
 /** The Return's window home: the Bay's sky at the world's hour, its clouds, its moons, its city on the sill. */
-export const SD_BAY_FS = HEAD + `in vec2 vDisc;
+export const SD_BAY_FS =
+  HEAD +
+  `in vec2 vDisc;
 in vec3 vWorld;
 uniform vec2 uSize;
 uniform float uHour;     // the game's hour, 0..24
@@ -294,7 +306,8 @@ void main() {
 function discFan(n) {
   const out = [];
   for (let k = 0; k < n; k++) {
-    const a0 = (k / n) * Math.PI * 2, a1 = ((k + 1) / n) * Math.PI * 2;
+    const a0 = (k / n) * Math.PI * 2,
+      a1 = ((k + 1) / n) * Math.PI * 2;
     out.push(0, 0, Math.sin(a0), Math.cos(a0), Math.sin(a1), Math.cos(a1));
   }
   return new Float32Array(out);
@@ -302,9 +315,12 @@ function discFan(n) {
 /** The Return's opening as a fan over -1..1 (its sill at y -1, its apex at +1): `outline` the opening's edge in
  *  (x, y) of the arch's own frame and `size` its half-size. */
 export function archFan(outline, half) {
-  const out = [], cx = 0, cy = 0;
+  const out = [],
+    cx = 0,
+    cy = 0;
   for (let k = 0; k + 1 < outline.length; k++) {
-    const a = outline[k], b = outline[k + 1];
+    const a = outline[k],
+      b = outline[k + 1];
     out.push(cx, cy, a[0] / half[0], a[1] / half[1], b[0] / half[0], b[1] / half[1]);
   }
   return new Float32Array(out);
@@ -327,17 +343,73 @@ export class SdRiftRenderer {
   /** @param {WebGL2RenderingContext} gl */
   constructor(gl) {
     this.gl = gl;
-    const mk = (vs, fs, label, names) => { const prog = buildProgram(gl, vs, fs, label), u = {}; for (const n of names) u[n] = gl.getUniformLocation(prog, n); return { prog, u }; };
-    this.win = mk(SD_WINDOW_VS, SD_WINDOW_FS, 'sd rift window', ['uView', 'uProj', 'uModel', 'uSize', 'uToLocal', 'uEye', 'uLight', 'uEmber', 'uRipple', 'uSteps', 'uSkyMap', 'uTime', 'uGain', 'uClock', ...FOGS]);
-    this.floor = mk(SD_FLOOR_VS, SD_FLOOR_FS, 'sd rift floor', ['uView', 'uProj', 'uModel', 'uReach', 'uRadii', 'uCrater', 'uGear', 'uPulse', 'uColor', 'uSteps', ...FOGS]);
-    this.bay = mk(SD_WINDOW_VS, SD_BAY_FS, 'sd return window', ['uView', 'uProj', 'uModel', 'uSize', 'uHour', 'uClouds', 'uFade', 'uSteps', ...FOGS]);
-    this.hollow = mk(SD_WINDOW_VS, SD_HOLLOW_FS, 'sd way back window', ['uView', 'uProj', 'uModel', 'uSize', 'uToLocal', 'uEye', 'uFloor', 'uLight', 'uTime', 'uSteps', ...FOGS]);
+    const mk = (vs, fs, label, names) => {
+      const prog = buildProgram(gl, vs, fs, label),
+        u = {};
+      for (const n of names) u[n] = gl.getUniformLocation(prog, n);
+      return { prog, u };
+    };
+    this.win = mk(SD_WINDOW_VS, SD_WINDOW_FS, 'sd rift window', [
+      'uView',
+      'uProj',
+      'uModel',
+      'uSize',
+      'uToLocal',
+      'uEye',
+      'uLight',
+      'uEmber',
+      'uRipple',
+      'uSteps',
+      'uSkyMap',
+      'uTime',
+      'uGain',
+      'uClock',
+      ...FOGS,
+    ]);
+    this.floor = mk(SD_FLOOR_VS, SD_FLOOR_FS, 'sd rift floor', [
+      'uView',
+      'uProj',
+      'uModel',
+      'uReach',
+      'uRadii',
+      'uCrater',
+      'uGear',
+      'uPulse',
+      'uColor',
+      'uSteps',
+      ...FOGS,
+    ]);
+    this.bay = mk(SD_WINDOW_VS, SD_BAY_FS, 'sd return window', [
+      'uView',
+      'uProj',
+      'uModel',
+      'uSize',
+      'uHour',
+      'uClouds',
+      'uFade',
+      'uSteps',
+      ...FOGS,
+    ]);
+    this.hollow = mk(SD_WINDOW_VS, SD_HOLLOW_FS, 'sd way back window', [
+      'uView',
+      'uProj',
+      'uModel',
+      'uSize',
+      'uToLocal',
+      'uEye',
+      'uFloor',
+      'uLight',
+      'uTime',
+      'uSteps',
+      ...FOGS,
+    ]);
     const vao = (data) => {
       const v = gl.createVertexArray();
       gl.bindVertexArray(v);
       gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
       gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-      gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
       gl.bindVertexArray(null);
       return { vao: v, count: data.length / 2 };
     };
@@ -351,12 +423,17 @@ export class SdRiftRenderer {
   /** The Return's opening's fan, made once for its outline. */
   archOf(key, outline, half) {
     let a = this._arches.get(key);
-    if (!a) { a = this._vao(archFan(outline, half)); this._arches.set(key, a); }
+    if (!a) {
+      a = this._vao(archFan(outline, half));
+      this._arches.set(key, a);
+    }
     return a;
   }
   _common(U, proj, view, model, fog) {
     const gl = this.gl;
-    gl.uniformMatrix4fv(U.uView, false, view); gl.uniformMatrix4fv(U.uProj, false, proj); gl.uniformMatrix4fv(U.uModel, false, model);
+    gl.uniformMatrix4fv(U.uView, false, view);
+    gl.uniformMatrix4fv(U.uProj, false, proj);
+    gl.uniformMatrix4fv(U.uModel, false, model);
     bindFog(gl, U, fog);
   }
   /**
@@ -367,10 +444,14 @@ export class SdRiftRenderer {
   draw(proj, view, look, fog = null, steps = 10) {
     const gl = this.gl;
     let n = 0;
-    gl.enable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthMask(false);
+    gl.disable(gl.CULL_FACE);
     if (look.window?.hollow) {
       // the way back's window: the Hollow's hall behind the ring
-      const w = look.window, P = this.hollow, U = P.u;
+      const w = look.window,
+        P = this.hollow,
+        U = P.u;
       gl.disable(gl.BLEND);
       gl.useProgram(P.prog);
       this._common(U, proj, view, w.model, fog);
@@ -378,13 +459,17 @@ export class SdRiftRenderer {
       gl.uniform2fv(U.uSize, this._size);
       gl.uniformMatrix3fv(U.uToLocal, false, w.toLocal);
       gl.uniform3fv(U.uEye, w.eye);
-      gl.uniform1f(U.uFloor, w.hollow.floor); gl.uniform1f(U.uLight, w.light ?? 1);
-      gl.uniform1f(U.uTime, sdSkyClock(w.sky?.seconds ?? 0)); gl.uniform1f(U.uSteps, steps);
+      gl.uniform1f(U.uFloor, w.hollow.floor);
+      gl.uniform1f(U.uLight, w.light ?? 1);
+      gl.uniform1f(U.uTime, sdSkyClock(w.sky?.seconds ?? 0));
+      gl.uniform1f(U.uSteps, steps);
       gl.bindVertexArray(this.disc.vao);
       gl.drawArrays(gl.TRIANGLES, 0, this.disc.count);
       n++;
     } else if (look.window?.sky?.map) {
-      const w = look.window, P = this.win, U = P.u;
+      const w = look.window,
+        P = this.win,
+        U = P.u;
       gl.disable(gl.BLEND);
       gl.useProgram(P.prog);
       this._common(U, proj, view, w.model, fog);
@@ -392,43 +477,63 @@ export class SdRiftRenderer {
       gl.uniform2fv(U.uSize, this._size);
       gl.uniformMatrix3fv(U.uToLocal, false, w.toLocal);
       gl.uniform3fv(U.uEye, w.eye);
-      gl.uniform1f(U.uLight, w.light ?? 1); gl.uniform1f(U.uEmber, w.ember ?? 0);
+      gl.uniform1f(U.uLight, w.light ?? 1);
+      gl.uniform1f(U.uEmber, w.ember ?? 0);
       gl.uniform4fv(U.uRipple, w.ripple ?? [0, 0, 0, 9]);
       gl.uniform1f(U.uSteps, steps);
-      gl.uniform1f(U.uTime, sdSkyClock(w.sky.seconds)); gl.uniform1f(U.uGain, w.sky.gain ?? 1); gl.uniform4fv(U.uClock, w.sky.clock ?? NO_CLOCK);   // AUDIT SD V (P1): none, made once
-      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, w.sky.map); gl.uniform1i(U.uSkyMap, 0);
+      gl.uniform1f(U.uTime, sdSkyClock(w.sky.seconds));
+      gl.uniform1f(U.uGain, w.sky.gain ?? 1);
+      gl.uniform4fv(U.uClock, w.sky.clock ?? NO_CLOCK); // AUDIT SD V (P1): none, made once
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, w.sky.map);
+      gl.uniform1i(U.uSkyMap, 0);
       gl.bindVertexArray(this.disc.vao);
       gl.drawArrays(gl.TRIANGLES, 0, this.disc.count);
       n++;
     }
     if (look.bay) {
-      const b = look.bay, P = this.bay, U = P.u, arch = this.archOf(b.key, b.outline, b.half);
+      const b = look.bay,
+        P = this.bay,
+        U = P.u,
+        arch = this.archOf(b.key, b.outline, b.half);
       gl.disable(gl.BLEND);
       gl.useProgram(P.prog);
       this._common(U, proj, view, b.model, fog);
-      this._size[0] = b.half[0]; this._size[1] = b.half[1];
+      this._size[0] = b.half[0];
+      this._size[1] = b.half[1];
       gl.uniform2fv(U.uSize, this._size);
-      gl.uniform1f(U.uHour, b.hour ?? 12); gl.uniform1f(U.uClouds, b.clouds ?? 0); gl.uniform1f(U.uFade, b.fade ?? 0);
+      gl.uniform1f(U.uHour, b.hour ?? 12);
+      gl.uniform1f(U.uClouds, b.clouds ?? 0);
+      gl.uniform1f(U.uFade, b.fade ?? 0);
       gl.uniform1f(U.uSteps, steps);
       gl.bindVertexArray(arch.vao);
       gl.drawArrays(gl.TRIANGLES, 0, arch.count);
       n++;
     }
     if (look.floor) {
-      const f = look.floor, P = this.floor, U = P.u;
-      gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
+      const f = look.floor,
+        P = this.floor,
+        U = P.u;
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE);
       gl.useProgram(P.prog);
       this._common(U, proj, view, f.model, fog);
       for (let k = 0; k < SD_FLOOR_BEARINGS; k++) this._radii[k] = f.radii?.[k] ?? f.reach;
-      gl.uniform1f(U.uReach, f.reach); gl.uniform1fv(U.uRadii, this._radii); gl.uniform1f(U.uCrater, f.crater);
-      gl.uniform1f(U.uGear, f.gear ?? 0); gl.uniform1f(U.uPulse, f.pulse ?? -1); gl.uniform3fv(U.uColor, f.color); gl.uniform1f(U.uSteps, steps);
+      gl.uniform1f(U.uReach, f.reach);
+      gl.uniform1fv(U.uRadii, this._radii);
+      gl.uniform1f(U.uCrater, f.crater);
+      gl.uniform1f(U.uGear, f.gear ?? 0);
+      gl.uniform1f(U.uPulse, f.pulse ?? -1);
+      gl.uniform3fv(U.uColor, f.color);
+      gl.uniform1f(U.uSteps, steps);
       gl.bindVertexArray(this.disc.vao);
       gl.drawArrays(gl.TRIANGLES, 0, this.disc.count);
       gl.disable(gl.BLEND);
       n++;
     }
     gl.bindVertexArray(null);
-    gl.depthMask(true); gl.enable(gl.CULL_FACE);
+    gl.depthMask(true);
+    gl.enable(gl.CULL_FACE);
     this.drawn = n;
     return n > 0;
   }

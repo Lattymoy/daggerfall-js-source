@@ -51,7 +51,10 @@ export const SD_VEIL_SHATTER = Object.freeze({ cols: 8, rows: 5, s: 1.4 });
 export function sdVeilHand(t, mode) {
   const s = Math.max(0, t);
   if (mode === SD_VEIL_MODE.in || mode === SD_VEIL_MODE.cast) {
-    const turns = s < SD_VEIL_SLOW_AFTER_S ? s / SD_VEIL_TURN_S : SD_VEIL_SLOW_AFTER_S / SD_VEIL_TURN_S + (s - SD_VEIL_SLOW_AFTER_S) / SD_VEIL_SLOW_S;
+    const turns =
+      s < SD_VEIL_SLOW_AFTER_S
+        ? s / SD_VEIL_TURN_S
+        : SD_VEIL_SLOW_AFTER_S / SD_VEIL_TURN_S + (s - SD_VEIL_SLOW_AFTER_S) / SD_VEIL_SLOW_S;
     return -Math.PI * 2 * turns;
   }
   return Math.PI * 2 * 1.2 * (1 - Math.exp(-s * 0.7));
@@ -257,21 +260,40 @@ void main() {
 export class SdVeilRenderer {
   constructor(gl) {
     this.gl = gl;
-    this.prog = buildProgram(gl, `#version 300 es
+    this.prog = buildProgram(
+      gl,
+      `#version 300 es
 layout(location = 0) in vec2 aPos;
-void main() { gl_Position = vec4(aPos, 0.0, 1.0); }`, SD_VEIL_FS, 'sd veil');
+void main() { gl_Position = vec4(aPos, 0.0, 1.0); }`,
+      SD_VEIL_FS,
+      'sd veil',
+    );
     this.u = {};
-    for (const n of ['uRes', 'uTime', 'uCover', 'uShut', 'uOpening', 'uCentre', 'uMode', 'uMend', 'uShatter', 'uReduce']) this.u[n] = gl.getUniformLocation(this.prog, n);
+    for (const n of [
+      'uRes',
+      'uTime',
+      'uCover',
+      'uShut',
+      'uOpening',
+      'uCentre',
+      'uMode',
+      'uMend',
+      'uShatter',
+      'uReduce',
+    ])
+      this.u[n] = gl.getUniformLocation(this.prog, n);
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
   }
   draw(w, h, t, v, look) {
-    const gl = this.gl, U = this.u;
+    const gl = this.gl,
+      U = this.u;
     gl.viewport(0, 0, w, h);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -292,6 +314,8 @@ void main() { gl_Position = vec4(aPos, 0.0, 1.0); }`, SD_VEIL_FS, 'sd veil');
   }
   destroy() {
     const gl = this.gl;
-    gl.deleteBuffer(this.vbo); gl.deleteVertexArray(this.vao); gl.deleteProgram(this.prog);
+    gl.deleteBuffer(this.vbo);
+    gl.deleteVertexArray(this.vao);
+    gl.deleteProgram(this.prog);
   }
 }

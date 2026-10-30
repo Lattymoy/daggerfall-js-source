@@ -101,8 +101,8 @@
   {
     "name": "SD25-S7-the-hand-the-wrong-way-round",
     "file": "src/render/superDungeon/sdPillarPass.js",
-    "old": "vec2 dir = vec2(sin(a), cos(a)), side = vec2(cos(a), -sin(a));",
-    "new": "vec2 dir = vec2(cos(a), sin(a)), side = vec2(sin(a), -cos(a));",
+    "old": "  vec2 dir = vec2(sin(a), cos(a)), side = vec2(cos(a), -sin(a));",
+    "new": "  vec2 dir = vec2(cos(a), sin(a)), side = vec2(sin(a), -cos(a));",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SD25-S7-no-spade",
     "file": "src/render/superDungeon/sdPillarPass.js",
-    "old": "if (spade >= 0.0 && spade <= 1.0 && off <= ",
-    "new": "if (spade >= 9.0 && spade <= 1.0 && off <= ",
+    "old": "  if (spade >= 0.0 && spade <= 1.0 && off <= ${SD_DIAL_HAND.spadeW.toFixed(2)} * (1.0 - abs(spade * 2.0 - 1.0)) + 0.5) return 3.0;",
+    "new": "  if (spade >= 9.0 && spade <= 1.0 && off <= ${SD_DIAL_HAND.spadeW.toFixed(2)} * (1.0 - abs(spade * 2.0 - 1.0)) + 0.5) return 3.0;",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SD25-S7-the-quarters-thin",
     "file": "src/render/superDungeon/sdPillarPass.js",
-    "old": "float w = mod(h, 3.0) < 0.5 ?",
-    "new": "float w = mod(h, 3.0) < -0.5 ?",
+    "old": "    float w = mod(h, 3.0) < 0.5 ? ${SD_DIAL_RINGS.quarterW.toFixed(2)} : ${SD_DIAL_RINGS.tickW.toFixed(2)};",
+    "new": "    float w = mod(h, 3.0) < -0.5 ? ${SD_DIAL_RINGS.quarterW.toFixed(2)} : ${SD_DIAL_RINGS.tickW.toFixed(2)};",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]

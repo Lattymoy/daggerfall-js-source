@@ -21,13 +21,28 @@
 import { buildProgram } from '../glProgram.js';
 import { FOG_FACTOR_GLSL } from '../labGrass.js';
 import { BAYER_GLSL, SD_PIXEL_GLSL } from '../orderedDither.js';
-import { sdPillarDials, sdLanterns, SD_PILLAR_DIAL, SD_PILLAR_LOOK, SD_LANTERN } from '../../world/superDungeon/sdPillarModel.js';
+import {
+  sdPillarDials,
+  sdLanterns,
+  SD_PILLAR_DIAL,
+  SD_PILLAR_LOOK,
+  SD_LANTERN,
+} from '../../world/superDungeon/sdPillarModel.js';
 
 /** A dial's radius in the pixel law's cells (its stone's own 32 texels a metre, SD_PILLAR_DIAL.r across). */
 export const SD_DIAL_TEXELS = Math.round(SD_PILLAR_DIAL.r * 32);
 /** The hand in a dial's cells: its shaft's half-width and reach, its spade (from, to, half-width), its tail and the
  *  counterweight's radius, the boss's radius; the bezel's and the ticks' rings (cells in from the rim). */
-export const SD_DIAL_HAND = Object.freeze({ shaftW: 1, reach: 13, spade0: 11, spade1: 18, spadeW: 3.2, tail: 5, weight: 2.3, boss: 2.2 });
+export const SD_DIAL_HAND = Object.freeze({
+  shaftW: 1,
+  reach: 13,
+  spade0: 11,
+  spade1: 18,
+  spadeW: 3.2,
+  tail: 5,
+  weight: 2.3,
+  boss: 2.2,
+});
 export const SD_DIAL_RINGS = Object.freeze({ bezel: 2.2, tick0: 3.2, tick1: 7, tickW: 0.9, quarterW: 1.6 });
 /** The parts of a dial (dialPart's answer). */
 export const SD_DIAL_PART = Object.freeze({ off: -1, enamel: 0, bezel: 1, tick: 2, hand: 3, boss: 4 });
@@ -47,7 +62,9 @@ export const SD_LANTERN_SPILLS = 8;
 const HEAD = `#version 300 es
 precision highp float;
 `;
-export const SD_PILLAR_VS = HEAD + `layout(location = 0) in vec3 aAt;
+export const SD_PILLAR_VS =
+  HEAD +
+  `layout(location = 0) in vec3 aAt;
 layout(location = 1) in vec2 aQ;
 layout(location = 2) in float aKind;
 uniform mat4 uView, uProj;
@@ -62,7 +79,9 @@ void main() {
     gl_Position = uProj * c;
   } else gl_Position = uProj * uView * vec4(aAt, 1.0);
 }`;
-export const SD_PILLAR_FS = HEAD + `in vec2 vQ;
+export const SD_PILLAR_FS =
+  HEAD +
+  `in vec2 vQ;
 in float vKind;
 in vec3 vWorld;
 uniform float uHands[${SD_PILLAR_DIALS}];
@@ -148,13 +167,44 @@ void main() {
 /** The static buffer: each dial a quad over its face (its centre, its right and up times its radius), each flame a quad
  *  about its centre (the vertex shader turns it to the eye) - centre xyz, corner uv, which (0-15 a dial, 16-19 a flame). */
 export function sdPillarPassGeometry() {
-  const D = sdPillarDials(), L = sdLanterns(), R = SD_PILLAR_DIAL.r, out = [];
-  const corners = [[-1, -1], [1, -1], [1, 1], [-1, -1], [1, 1], [-1, 1]];
-  D.forEach((d, i) => { for (const [u, v] of corners) out.push(d.at[0] + d.right[0] * u * R, d.at[1] + v * R, d.at[2] + d.right[2] * u * R, u, v, i); });
-  L.forEach((p, k) => { for (const [u, v] of corners) out.push(p[0], p[1], p[2], u, v, SD_PILLAR_DIALS + k); });
+  const D = sdPillarDials(),
+    L = sdLanterns(),
+    R = SD_PILLAR_DIAL.r,
+    out = [];
+  const corners = [
+    [-1, -1],
+    [1, -1],
+    [1, 1],
+    [-1, -1],
+    [1, 1],
+    [-1, 1],
+  ];
+  D.forEach((d, i) => {
+    for (const [u, v] of corners)
+      out.push(d.at[0] + d.right[0] * u * R, d.at[1] + v * R, d.at[2] + d.right[2] * u * R, u, v, i);
+  });
+  L.forEach((p, k) => {
+    for (const [u, v] of corners) out.push(p[0], p[1], p[2], u, v, SD_PILLAR_DIALS + k);
+  });
   // the housing's lit faces: each hood's underside a hair under it, then each cornice's top a hair over it
-  const P = SD_PILLAR_LOOK, faces = [[P.lantern.y1 - 0.004, P.roof.w - 0.01], [P.cornice.y1 + 0.004, P.cornice.w - 0.01]];
-  faces.forEach(([y, h], f) => L.forEach((p, k) => { for (const [u, v] of corners) out.push(p[0] + u * h, p[1] - SD_LANTERN.flameY + y, p[2] + v * h, u, v, SD_PILLAR_DIALS + SD_LANTERNS * (1 + f) + k); }));
+  const P = SD_PILLAR_LOOK,
+    faces = [
+      [P.lantern.y1 - 0.004, P.roof.w - 0.01],
+      [P.cornice.y1 + 0.004, P.cornice.w - 0.01],
+    ];
+  faces.forEach(([y, h], f) =>
+    L.forEach((p, k) => {
+      for (const [u, v] of corners)
+        out.push(
+          p[0] + u * h,
+          p[1] - SD_LANTERN.flameY + y,
+          p[2] + v * h,
+          u,
+          v,
+          SD_PILLAR_DIALS + SD_LANTERNS * (1 + f) + k,
+        );
+    }),
+  );
   return new Float32Array(out);
 }
 
@@ -165,7 +215,21 @@ export class SdPillarPassRenderer {
     this.gl = gl;
     this.prog = buildProgram(gl, SD_PILLAR_VS, SD_PILLAR_FS, 'sd pillars');
     this.u = {};
-    for (const n of ['uView', 'uProj', 'uHands', 'uDim', 'uEnd', 'uGain', 'uSteps', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFogColor']) this.u[n] = gl.getUniformLocation(this.prog, n);
+    for (const n of [
+      'uView',
+      'uProj',
+      'uHands',
+      'uDim',
+      'uEnd',
+      'uGain',
+      'uSteps',
+      'uFogMode',
+      'uFogDensity',
+      'uFogRange',
+      'uCamPos',
+      'uFogColor',
+    ])
+      this.u[n] = gl.getUniformLocation(this.prog, n);
     const data = sdPillarPassGeometry();
     this.count = data.length / 6;
     this.vao = gl.createVertexArray();
@@ -173,30 +237,49 @@ export class SdPillarPassRenderer {
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 24, 0);
-    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 24, 12);
-    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 24, 20);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 24, 0);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 24, 12);
+    gl.enableVertexAttribArray(2);
+    gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 24, 20);
     gl.bindVertexArray(null);
   }
   /** Draw the dials and the flames as `look` says (`{ hands, k: [dim, end] }` - scenes/superDungeon/sdArenaWatch.js's kept record),
    *  in `fog`, at the pixel law's `steps`, the flames' glow at `gain`. Answers whether it drew. */
   draw(proj, view, look, fog = null, steps = 10, gain = 1) {
-    const gl = this.gl, U = this.u;
-    gl.enable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.CULL_FACE);
-    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    const gl = this.gl,
+      U = this.u;
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthMask(false);
+    gl.disable(gl.CULL_FACE);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.useProgram(this.prog);
-    gl.uniformMatrix4fv(U.uView, false, view); gl.uniformMatrix4fv(U.uProj, false, proj);
-    gl.uniform1fv(U.uHands, look.hands); gl.uniform1f(U.uDim, look.k[0]); gl.uniform1f(U.uEnd, look.k[1]); gl.uniform1f(U.uGain, gain); gl.uniform1f(U.uSteps, steps);
-    gl.uniform1i(U.uFogMode, fog ? fog.mode : 0); gl.uniform1f(U.uFogDensity, fog?.density ?? 0);
-    gl.uniform2fv(U.uFogRange, fog?.range ?? [0, 1]); gl.uniform3fv(U.uCamPos, fog?.camPos ?? [0, 0, 0]); gl.uniform3fv(U.uFogColor, fog?.color ?? [0, 0, 0]);
+    gl.uniformMatrix4fv(U.uView, false, view);
+    gl.uniformMatrix4fv(U.uProj, false, proj);
+    gl.uniform1fv(U.uHands, look.hands);
+    gl.uniform1f(U.uDim, look.k[0]);
+    gl.uniform1f(U.uEnd, look.k[1]);
+    gl.uniform1f(U.uGain, gain);
+    gl.uniform1f(U.uSteps, steps);
+    gl.uniform1i(U.uFogMode, fog ? fog.mode : 0);
+    gl.uniform1f(U.uFogDensity, fog?.density ?? 0);
+    gl.uniform2fv(U.uFogRange, fog?.range ?? [0, 1]);
+    gl.uniform3fv(U.uCamPos, fog?.camPos ?? [0, 0, 0]);
+    gl.uniform3fv(U.uFogColor, fog?.color ?? [0, 0, 0]);
     gl.bindVertexArray(this.vao);
     gl.drawArrays(gl.TRIANGLES, 0, this.count);
     gl.bindVertexArray(null);
-    gl.disable(gl.BLEND); gl.depthMask(true); gl.enable(gl.CULL_FACE);
+    gl.disable(gl.BLEND);
+    gl.depthMask(true);
+    gl.enable(gl.CULL_FACE);
     return true;
   }
   destroy() {
     const gl = this.gl;
-    gl.deleteBuffer(this.vbo); gl.deleteVertexArray(this.vao); gl.deleteProgram(this.prog);
+    gl.deleteBuffer(this.vbo);
+    gl.deleteVertexArray(this.vao);
+    gl.deleteProgram(this.prog);
   }
 }

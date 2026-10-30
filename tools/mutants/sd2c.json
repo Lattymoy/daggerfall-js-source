@@ -173,8 +173,8 @@
   {
     "name": "SD2C-a-dark-column-drawn",
     "file": "src/render/superDungeon/sdOmenPass.js",
-    "old": "o.origin.every(Number.isFinite) && o.fade > 0.001);",
-    "new": "o.origin.every(Number.isFinite) && o.fade >= 0);",
+    "old": "      (o) => o && Array.isArray(o.origin) && o.origin.length === 3 && o.origin.every(Number.isFinite) && o.fade > 0.001,",
+    "new": "      (o) => o && Array.isArray(o.origin) && o.origin.length === 3 && o.origin.every(Number.isFinite) && o.fade >= 0,",
     "tests": [
       "test/ui/enhanced/sd2c_omen.test.js"
     ]

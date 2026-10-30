@@ -191,8 +191,8 @@
   {
     "name": "EGSEAM-the-ghosts-the-hours",
     "file": "src/render/superDungeon/sdStepsPass.js",
-    "old": "export const sdGhostStepsOf = (course) => course.steps.filter(",
-    "new": "export const sdGhostStepsOf = (course) => SD_COURSE.steps.filter(",
+    "old": "export const sdGhostStepsOf = (course) => course.steps.filter((s) => s.kind === 'beat' || s.kind === 'crumble');",
+    "new": "export const sdGhostStepsOf = (course) => SD_COURSE.steps.filter((s) => s.kind === 'beat' || s.kind === 'crumble');",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]

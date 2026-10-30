@@ -20,8 +20,8 @@
   {
     "name": "SD27-S1-the-sky-blind-to-the-empty-fight",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "if (!s || !(s.fi > 0) || s.fell || !(t >= s.op)) return out;",
-    "new": "if (!s || s.fell || !(t >= s.op)) return out;",
+    "old": "  if (!s || !(s.fi > 0) || s.fell || !(t >= s.op)) return out; // AUDIT SD V (S1): no fight heard is no End - the sky red over every fresh Hour",
+    "new": "  if (!s || s.fell || !(t >= s.op)) return out; // AUDIT SD V (S1): no fight heard is no End - the sky red over every fresh Hour",
     "tests": [
       "test/scenes/sd27_audit.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SD27-S1-the-floor-blind-to-the-empty-fight",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "if (!s || !(s.fi > 0) || s.fell) return memo;",
-    "new": "if (!s || s.fell) return memo;",
+    "old": "  if (!s || !(s.fi > 0) || s.fell) return memo; // AUDIT SD V (S1): no fight heard (SD_FIGHT_EMPTY's ends 0) is no End",
+    "new": "  if (!s || s.fell) return memo; // AUDIT SD V (S1): no fight heard (SD_FIGHT_EMPTY's ends 0) is no End",
     "tests": [
       "test/scenes/sd27_audit.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "SD27-P4-the-skys-key-a-string",
     "file": "src/render/superDungeon/sdSky.js",
-    "old": "    this._all = all;\n",
-    "new": "    this._all = all; this._key = `${steps}|${idx}|${light?.join(',') ?? ''}|${haze?.join?.(',') ?? ''}`;\n",
+    "old": "    this._all = all;\n    gl.disable(gl.BLEND);",
+    "new": "    this._all = all;\n    this._key = `${steps}|${idx}|${light?.join(',') ?? ''}|${haze?.join?.(',') ?? ''}`;\n    gl.disable(gl.BLEND);",
     "tests": [
       "test/scenes/sd27_audit.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "SD27-P6-the-halos-corners-made",
     "file": "src/render/superDungeon/sdHalo.js",
-    "old": "for (let c = 0; c < 12; c += 2) { d[o++] = h.at[0]; d[o++] = h.at[1]; d[o++] = h.at[2]; d[o++] = CORNERS[c]; d[o++] = CORNERS[c + 1];",
-    "new": "for (const C of [[-1, -1], [1, -1], [1, 1], [-1, -1], [1, 1], [-1, 1]]) { d[o++] = h.at[0]; d[o++] = h.at[1]; d[o++] = h.at[2]; d[o++] = C[0]; d[o++] = C[1];",
+    "old": "      for (let c = 0; c < 12; c += 2) {\n        d[o++] = h.at[0];\n        d[o++] = h.at[1];\n        d[o++] = h.at[2];\n        d[o++] = CORNERS[c];\n        d[o++] = CORNERS[c + 1];",
+    "new": "      for (const C of [\n        [-1, -1],\n        [1, -1],\n        [1, 1],\n        [-1, -1],\n        [1, 1],\n        [-1, 1],\n      ]) {\n        d[o++] = h.at[0];\n        d[o++] = h.at[1];\n        d[o++] = h.at[2];\n        d[o++] = C[0];\n        d[o++] = C[1];",
     "tests": [
       "test/scenes/sd27_audit.test.js"
     ]

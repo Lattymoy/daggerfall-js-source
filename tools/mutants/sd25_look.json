@@ -148,8 +148,8 @@
   {
     "name": "SD25-a-fold-turned",
     "file": "src/render/superDungeon/sdSky.js",
-    "old": "if (n.y < 0.0) p = (1.0 - abs(n.zx)) *",
-    "new": "if (n.y < 0.0) p = (1.0 - abs(n.xz)) *",
+    "old": "  if (n.y < 0.0) p = (1.0 - abs(n.zx)) * vec2(n.x >= 0.0 ? 1.0 : -1.0, n.z >= 0.0 ? 1.0 : -1.0);",
+    "new": "  if (n.y < 0.0) p = (1.0 - abs(n.xz)) * vec2(n.x >= 0.0 ? 1.0 : -1.0, n.z >= 0.0 ? 1.0 : -1.0);",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "SD25-the-face-high-again",
     "file": "src/render/superDungeon/sdSky.js",
-    "old": "Object.freeze({ az: 0, elev: 0.2, r: 0.34,",
-    "new": "Object.freeze({ az: 0, elev: 0.38, r: 0.34,",
+    "old": "export const SD_CLOCK_FACE = Object.freeze({ az: 0, elev: 0.2, r: 0.34, hourTurns: 1, minuteTurns: 12 });",
+    "new": "export const SD_CLOCK_FACE = Object.freeze({ az: 0, elev: 0.38, r: 0.34, hourTurns: 1, minuteTurns: 12 });",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "SD25-the-void-lifted",
     "file": "src/render/superDungeon/sdSky.js",
-    "old": "float k = e >= 0.0 ? 0.75 * exp(-e * 3.2) :",
-    "new": "float k = e >= 0.0 ? 0.95 :",
+    "old": "  float k = e >= 0.0 ? 0.75 * exp(-e * 3.2) : 0.75 * exp(e * 6.0) + 0.95 * smoothstep(${f4(SD_FURNACE.from)}, ${f4(SD_FURNACE.full)}, -e);",
+    "new": "  float k = e >= 0.0 ? 0.95 : 0.75 * exp(e * 6.0) + 0.95 * smoothstep(${f4(SD_FURNACE.from)}, ${f4(SD_FURNACE.full)}, -e);",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "SD25-the-Break-at-once",
     "file": "src/render/superDungeon/sdVeil.js",
-    "old": "float w = mode < 0.5 ? 0.008 * step(${f4(SD_VEIL_TURN_S)}, t) :",
-    "new": "float w = mode < 0.5 ? 0.008 :",
+    "old": "  float w = mode < 0.5 ? 0.008 * step(${f4(SD_VEIL_TURN_S)}, t) : mode < 1.5 ? 0.008 : mode < 2.5 ? 0.008 * (1.0 - uMend) : 0.012;",
+    "new": "  float w = mode < 0.5 ? 0.008 : mode < 1.5 ? 0.008 : mode < 2.5 ? 0.008 * (1.0 - uMend) : 0.012;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "SD25-the-mend-unread",
     "file": "src/render/superDungeon/sdVeil.js",
-    "old": "mode < 2.5 ? 0.008 * (1.0 - uMend) : 0.012;",
-    "new": "mode < 2.5 ? 0.008 : 0.012;",
+    "old": "  float w = mode < 0.5 ? 0.008 * step(${f4(SD_VEIL_TURN_S)}, t) : mode < 1.5 ? 0.008 : mode < 2.5 ? 0.008 * (1.0 - uMend) : 0.012;",
+    "new": "  float w = mode < 0.5 ? 0.008 * step(${f4(SD_VEIL_TURN_S)}, t) : mode < 1.5 ? 0.008 : mode < 2.5 ? 0.008 : 0.012;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "SD25-the-pieces-never-falling",
     "file": "src/render/superDungeon/sdVeil.js",
-    "old": "vec2 rel = uv - seed - vec2((h - 0.5) * 0.3 * tt, -2.4 * tt * tt);",
-    "new": "vec2 rel = uv - seed;",
+    "old": "        vec2 rel = uv - seed - vec2((h - 0.5) * 0.3 * tt, -2.4 * tt * tt);",
+    "new": "        vec2 rel = uv - seed;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "SD25-the-veil-smooth",
     "file": "src/render/superDungeon/sdVeil.js",
-    "old": "  c = floor(c * 6.0 + bayer4(gl_FragCoord.xy)) / 6.0;   // six levels",
-    "new": "  c = clamp(c, 0.0, 1.0);   // six levels",
+    "old": "  c = floor(c * 6.0 + bayer4(gl_FragCoord.xy)) / 6.0;   // six levels through the ordered dither - pixel art",
+    "new": "  c = clamp(c, 0.0, 1.0);   // six levels through the ordered dither - pixel art",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "SD25-the-flood-never-fading",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "memo.floodK = age < SD_FLOOD.front_s ? 1 : 1 - (age - SD_FLOOD.front_s) / SD_FLOOD.fade_s;",
-    "new": "memo.floodK = 1;",
+    "old": "    memo.floodK = age < SD_FLOOD.front_s ? 1 : 1 - (age - SD_FLOOD.front_s) / SD_FLOOD.fade_s;",
+    "new": "    memo.floodK = 1;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "SD25-the-Pulse-not-kept",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "const age = (t - (memo.pulseAt ?? -Infinity)) / 1000;",
-    "new": "const age = (t - (clk?.a === PULSE.id ? clk.at : -Infinity)) / 1000;",
+    "old": "  const age = (t - (memo.pulseAt ?? -Infinity)) / 1000;",
+    "new": "  const age = (t - (clk?.a === PULSE.id ? clk.at : -Infinity)) / 1000;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "SD25-the-count-one-short",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "Math.floor(((t - called) / RESET.windup) * 12) + 1))",
-    "new": "Math.floor(((t - called) / RESET.windup) * 12)))",
+    "old": "    memo.reset = t >= atk.at ? 12 : Math.max(0, Math.min(12, Math.floor(((t - called) / RESET.windup) * 12) + 1));",
+    "new": "    memo.reset = t >= atk.at ? 12 : Math.max(0, Math.min(12, Math.floor(((t - called) / RESET.windup) * 12)));",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -455,8 +455,8 @@
   {
     "name": "SD25-the-stun-ignored",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "if (atk && atk.a === RESET.id && t < atk.at + RESET.active && !(s.su > t)) {",
-    "new": "if (atk && atk.a === RESET.id && t < atk.at + RESET.active) {",
+    "old": "  if (atk && atk.a === RESET.id && t < atk.at + RESET.active && !(s.su > t)) {",
+    "new": "  if (atk && atk.a === RESET.id && t < atk.at + RESET.active) {",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "SD25-the-End-unread",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "if (s.lost || (clk && clk.a === END.id) || (Number.isFinite(s.ends) && t >= s.ends - END.windup)) memo.end = 1;",
-    "new": "if (s.lost) memo.end = 1;",
+    "old": "  if (s.lost || (clk && clk.a === END.id) || (Number.isFinite(s.ends) && t >= s.ends - END.windup)) memo.end = 1;",
+    "new": "  if (s.lost) memo.end = 1;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "SD25-the-sky-Reset-at-once",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "out[1] = Math.max(0, Math.min(1, (t - (atk.at - RESET.windup)) / RESET.windup)); }",
-    "new": "out[1] = 1; }",
+    "old": "    out[1] = Math.max(0, Math.min(1, (t - (atk.at - RESET.windup)) / RESET.windup));",
+    "new": "    out[1] = 1;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "SD25-no-last-minute",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "out[2] = s.ends - t <= 60_000 ? 1 : 0; }",
-    "new": "out[2] = 0; }",
+    "old": "    out[2] = s.ends - t <= 60_000 ? 1 : 0;",
+    "new": "    out[2] = 0;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -500,8 +500,8 @@
   {
     "name": "SD25-no-ember",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "g = order > ${12 - SD_RESET_EMBER} ? EMBER : SOUL;",
-    "new": "g = SOUL;",
+    "old": "      if (uReset >= 0.0 && float(order) <= uReset) g = order > ${12 - SD_RESET_EMBER} ? EMBER : SOUL;",
+    "new": "      if (uReset >= 0.0 && float(order) <= uReset) g = SOUL;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -509,8 +509,8 @@
   {
     "name": "SD25-the-front-ignored",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "if (uFlood.x >= 0.0 && r <= uFlood.x) {",
-    "new": "if (uFlood.x >= 0.0) {",
+    "old": "    if (uFlood.x >= 0.0 && r <= uFlood.x) {",
+    "new": "    if (uFlood.x >= 0.0) {",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -518,8 +518,8 @@
   {
     "name": "SD25-a-fallen-Echo-wall",
     "file": "src/render/superDungeon/sdStompWall.js",
-    "old": "if (ec[i].h > 0 && rolling(ec[i].atk, t, out[n])) n++;",
-    "new": "if (rolling(ec[i].atk, t, out[n])) n++;",
+    "old": "  for (let i = 0; i < ec.length && n < out.length; i++) if (ec[i].h > 0 && rolling(ec[i].atk, t, out[n])) n++;",
+    "new": "  for (let i = 0; i < ec.length && n < out.length; i++) if (rolling(ec[i].atk, t, out[n])) n++;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -527,8 +527,8 @@
   {
     "name": "SD25-the-wall-never-fading",
     "file": "src/render/superDungeon/sdStompWall.js",
-    "old": "w.k = u > 0.8 ? Math.max(0, (1 - u) / 0.2) : 1;",
-    "new": "w.k = 1;",
+    "old": "  w.k = u > 0.8 ? Math.max(0, (1 - u) / 0.2) : 1;",
+    "new": "  w.k = 1;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -536,8 +536,8 @@
   {
     "name": "SD25-the-wall-lip-dropped",
     "file": "src/render/superDungeon/sdStompWall.js",
-    "old": "  if (v > 0.86) k = 1.25;\n",
-    "new": "",
+    "old": "  if (v > 0.86) k = 1.25;\n  // the beacon: brightest at its foot, falling off up it in the same four steps",
+    "new": "  // the beacon: brightest at its foot, falling off up it in the same four steps",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -545,8 +545,8 @@
   {
     "name": "SD25-the-wall-height-ignored",
     "file": "src/render/superDungeon/sdStompWall.js",
-    "old": "gl.uniform1f(U.uH, w.h ?? SD_STOMP_WALL.h);",
-    "new": "gl.uniform1f(U.uH, SD_STOMP_WALL.h);",
+    "old": "      gl.uniform1f(U.uH, w.h ?? SD_STOMP_WALL.h);",
+    "new": "      gl.uniform1f(U.uH, SD_STOMP_WALL.h);",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -554,8 +554,8 @@
   {
     "name": "SD25-every-wall-in-brass",
     "file": "src/render/superDungeon/sdStompWall.js",
-    "old": "gl.uniform3fv(U.uColor, w.color ?? SD_STOMP_WALL.color);",
-    "new": "gl.uniform3fv(U.uColor, SD_STOMP_WALL.color);",
+    "old": "      gl.uniform3fv(U.uColor, w.color ?? SD_STOMP_WALL.color);",
+    "new": "      gl.uniform3fv(U.uColor, SD_STOMP_WALL.color);",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -726,8 +726,8 @@
   {
     "name": "SD25-the-beacon-never-settling",
     "file": "src/render/superDungeon/sdStompWall.js",
-    "old": "out.h = B.tall + (B.low - B.tall) * e;",
-    "new": "out.h = B.tall;",
+    "old": "  out.h = B.tall + (B.low - B.tall) * e;",
+    "new": "  out.h = B.tall;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -735,8 +735,8 @@
   {
     "name": "SD25-the-beacon-across-its-window",
     "file": "src/render/superDungeon/sdStompWall.js",
-    "old": "out.y0 = foot; out.h",
-    "new": "out.y0 = 0; out.h",
+    "old": "  out.y0 = foot;",
+    "new": "  out.y0 = 0;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -753,8 +753,8 @@
   {
     "name": "SD25-the-way-home-no-column",
     "file": "src/render/superDungeon/sdStompWall.js",
-    "old": "  if (age < 0) {\n",
-    "new": "  if (age < -Infinity) {\n",
+    "old": "  if (age < 0) {",
+    "new": "  if (age < -Infinity) {",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]

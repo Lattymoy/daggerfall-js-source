@@ -56,8 +56,8 @@
   {
     "name": "SD20C-V2-the-band-turned-to-the-eye",
     "file": "src/render/superDungeon/sdBeam.js",
-    "old": "  if (uFlat == 1) across = vec3(along.z, 0.0, -along.x);   // the band: level across the floor\n",
-    "new": "",
+    "old": "  if (uFlat == 1) across = vec3(along.z, 0.0, -along.x);   // the band: level across the floor\n  float l = length(across);",
+    "new": "  float l = length(across);",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD20C-V2-precisions-differ",
     "file": "src/render/superDungeon/sdBeam.js",
-    "old": "uniform highp int uFlat;",
-    "new": "uniform int uFlat;",
+    "old": "uniform highp int uFlat;   // highp: the vertex stage's own (a uniform's precision is one across the program)",
+    "new": "uniform int uFlat;   // highp: the vertex stage's own (a uniform's precision is one across the program)",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SD20C-V14-the-beams-end-reversed",
     "file": "src/render/superDungeon/sdBeam.js",
-    "old": "  float ends = smoothstep(0.0, 0.015, y) * (1.0 - smoothstep(0.985, 1.0, y));",
-    "new": "  float ends = smoothstep(0.0, 0.015, y) * smoothstep(1.0, 0.985, y);",
+    "old": "  float ends = smoothstep(0.0, 0.015, y) * (1.0 - smoothstep(0.985, 1.0, y));   // AUDIT SD III (V14): edges rising - reversed ones are undefined in GLSL",
+    "new": "  float ends = smoothstep(0.0, 0.015, y) * smoothstep(1.0, 0.985, y);   // AUDIT SD III (V14): edges rising - reversed ones are undefined in GLSL",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SD20C-V14-the-clock-ring-reversed",
     "file": "src/render/superDungeon/sdSky.js",
-    "old": "float r = length(p), seen = smoothstep(-0.06, 0.02, e);",
-    "new": "float r = length(p), seen = smoothstep(0.02, -0.06, e);",
+    "old": "    float r = length(p), seen = smoothstep(-0.06, 0.02, e);",
+    "new": "    float r = length(p), seen = smoothstep(0.02, -0.06, e);",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
