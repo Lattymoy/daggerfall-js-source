@@ -164,6 +164,8 @@
 /src/ui/eliteGates/*/
 !/src/ui/guild/
 /src/ui/guild/*/
+!/src/ui/ink/
+/src/ui/ink/*/
 !/src/ui/intro/
 /src/ui/intro/*
 !/src/ui/intro/set/

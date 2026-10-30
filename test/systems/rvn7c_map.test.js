@@ -100,7 +100,7 @@ test('RVN7c EVERY MAP READS IT: the held map (its poll, its sheet, its legend), 
   const t = read('src/ui/travel/travelMapWindow.js');
   assert.match(t, /const lairs = readBountyMarks\(this\.deps\.revenants, \{ width: MAP_WIDTH, height: MAP_HEIGHT \}, REVENANT_LEGEND_TEXT\);\n\s*this\._revenantsKey = bountyMarksKey\(lairs\);\n\s*if \(lairs\.length\) \{\n\s*const lairPx = packRGBA\(REVENANT_DOT_RGB\[0\], REVENANT_DOT_RGB\[1\], REVENANT_DOT_RGB\[2\], 255\);\n\s*for \(const \[x, y\] of bountyRingTexels\(lairs, originX, originY, width, height\)\) plot\(x, y, lairPx\);/);
   assert.match(t, /bountyMarksKey\(readBountyMarks\(this\.deps\.revenants, \{ width: MAP_WIDTH, height: MAP_HEIGHT \}, REVENANT_LEGEND_TEXT\)\) === \(this\._revenantsKey \?\? ''\)\n[^\n]*\) return false;/);   // PIN MOVED (FEUD's merge of main): HOME-VENDOR's trader is asked after the lairs
-  assert.match(read('src/ui/ink/inkMap.js'), /for \(const b of opts\.revenants \?\? \[\]\) if \(visible\(b\.cx, b\.cy, b\.r \+ 2\)\) paintBountyRing\(ctx, view, b, pulse, REVENANT_INK\);/);
+  assert.match(read('src/ui/ink/inkMap.js'), /for \(const b of opts\.revenants \?\? \[\]\)\n\s*if \(visible\(b\.cx, b\.cy, b\.r \+ 2\)\) paintBountyRing\(ctx, view, b, pulse, REVENANT_INK\);/);
   assert.match(read('src/scenes/world.js'), /revenants: \(\) => revenantMapMarks\(\),/);
 });
 

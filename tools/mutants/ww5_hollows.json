@@ -543,8 +543,8 @@
   {
     "name": "WW5-SD-the-inks-one-ring",
     "file": "src/ui/ink/inkMap.js",
-    "old": "for (const m of opts.sds ?? (opts.sd ? [opts.sd] : []))",
-    "new": "for (const m of (opts.sd ? [opts.sd] : []))",
+    "old": "  for (const m of opts.sds ?? (opts.sd ? [opts.sd] : []))",
+    "new": "  for (const m of opts.sd ? [opts.sd] : [])",
     "tests": [
       "test/ui/enhanced/sd2c_omen.test.js"
     ]

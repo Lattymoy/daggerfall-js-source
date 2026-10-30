@@ -44,21 +44,21 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { PEN, HALO_PEN, NAME_FACE, toPaper, paintCaret, paintPartyCarets, CARET_R } from './inkMap.js';
-import { paintQuestMark, paintQuestDiamond } from './inkMap.js';   // GUIDE8: the world map's quest diamond - its gold is inkMap's, so no colour is invented here
+import { paintQuestMark, paintQuestDiamond } from './inkMap.js'; // GUIDE8: the world map's quest diamond - its gold is inkMap's, so no colour is invented here
 import { STRIP, stripScale, grabHit } from '../map/mapStrip.js';
 
 /** What each thing on a dungeon plan is drawn in. Every one of these is
  *  inkMap's own pen: the two sheets share a hand, and a colour invented
  *  here would be the first thing to give that away. */
 export const PLAN_PEN = Object.freeze({
-  wall: PEN.line,      // the outline of what has been revealed
-  wash: PEN.wash,      // the floor walked THIS RUN (DFU's grayscale law, as ink)
-  caret: PEN.player,   // the player, and which way they face
-  beacon: PEN.select,  // the way in
-  mark: PEN.soft,      // a door, a teleporter
-  open: PEN.soft,      // DISC22-G: an edge onto floor not yet seen - a way on, not a wall
-  note: PEN.name,      // what the player wrote down
-  stair: PEN.line,     // DISC25-A: a stair onto another floor - the wall's own pen, because it is where the wall opens
+  wall: PEN.line, // the outline of what has been revealed
+  wash: PEN.wash, // the floor walked THIS RUN (DFU's grayscale law, as ink)
+  caret: PEN.player, // the player, and which way they face
+  beacon: PEN.select, // the way in
+  mark: PEN.soft, // a door, a teleporter
+  open: PEN.soft, // DISC22-G: an edge onto floor not yet seen - a way on, not a wall
+  note: PEN.name, // what the player wrote down
+  stair: PEN.line, // DISC25-A: a stair onto another floor - the wall's own pen, because it is where the wall opens
   halo: PEN.halo,
 });
 
@@ -85,9 +85,9 @@ export const FLOOR_STRIP = Object.freeze({
   // MAP-FIELD's lesson again, that the paper's rectangle is not the
   // part of it a player can SEE. The hands hold the sheet at its lower
   // corners, so the top-right quadrant is the clear parchment.
-  padX: 26,     // in from the paper's RIGHT edge, clear of the thumb
-  padY: 10,     // below the tab strip's own band
-  gap: 7,       // between one storey's row and the next
+  padX: 26, // in from the paper's RIGHT edge, clear of the thumb
+  padY: 10, // below the tab strip's own band
+  gap: 7, // between one storey's row and the next
   font: 13,
   grab: 6,
   rule: 1.3,
@@ -154,7 +154,12 @@ export function paintPlanStatic(ctx, plan, view, opts) {
     let first = true;
     for (const p of chain) {
       const [x, y] = toPaper(view, p.x, p.y);
-      if (first) { ctx.moveTo(x, y); first = false; } else { ctx.lineTo(x, y); }
+      if (first) {
+        ctx.moveTo(x, y);
+        first = false;
+      } else {
+        ctx.lineTo(x, y);
+      }
     }
   }
   ctx.stroke();
@@ -172,7 +177,12 @@ export function paintPlanStatic(ctx, plan, view, opts) {
       let first = true;
       for (const p of chain) {
         const [x, y] = toPaper(view, p.x, p.y);
-        if (first) { ctx.moveTo(x, y); first = false; } else { ctx.lineTo(x, y); }
+        if (first) {
+          ctx.moveTo(x, y);
+          first = false;
+        } else {
+          ctx.lineTo(x, y);
+        }
       }
     }
     ctx.stroke();
@@ -201,26 +211,30 @@ export function paintPlanStatic(ctx, plan, view, opts) {
  *          party?:Array<{x:number,z:number,yaw?:number,name?:string}>, partyFill?:string}} opts
  */
 /** NOTE-PIN: the waypoint pin's size in paper px - it is a cursor-sized mark, not a room, so it does not scale. */
-export const NOTE_PIN = Object.freeze({ stem: 16, head: 5.5, foot: 2 });   // big enough to see and to click
+export const NOTE_PIN = Object.freeze({ stem: 16, head: 5.5, foot: 2 }); // big enough to see and to click
 
 /** NOTE-PIN: a pin whose point is at paper (x, y): a stem up from a dot on the floor to a round inked head. `lit`
  *  (the one under the pointer) is drawn a size larger with a ring, so it reads as a thing to double-click. */
 export function paintNotePin(ctx, x, y, lit = false) {
   if (!ctx?.beginPath) return;
-  const r = NOTE_PIN.head * (lit ? 1.3 : 1), hy = y - NOTE_PIN.stem;
+  const r = NOTE_PIN.head * (lit ? 1.3 : 1),
+    hy = y - NOTE_PIN.stem;
   ctx.save?.();
   ctx.lineCap = 'round';
   // halo first, so the pin stands off whatever ink is under it
   ctx.strokeStyle = PLAN_PEN.halo;
   ctx.lineWidth = 2 * HALO_PEN + 1.4;
   ctx.beginPath();
-  ctx.moveTo(x, y); ctx.lineTo(x, hy + r);
-  ctx.moveTo(x + r, hy); ctx.arc(x, hy, r, 0, Math.PI * 2);
+  ctx.moveTo(x, y);
+  ctx.lineTo(x, hy + r);
+  ctx.moveTo(x + r, hy);
+  ctx.arc(x, hy, r, 0, Math.PI * 2);
   ctx.stroke();
   ctx.strokeStyle = PLAN_PEN.note;
   ctx.lineWidth = 1.4;
   ctx.beginPath();
-  ctx.moveTo(x, y); ctx.lineTo(x, hy + r);
+  ctx.moveTo(x, y);
+  ctx.lineTo(x, hy + r);
   ctx.stroke();
   ctx.fillStyle = PLAN_PEN.note;
   ctx.beginPath();
@@ -275,7 +289,8 @@ export function paintPlanOverlay(ctx, view, opts) {
     for (const l of opts.links) {
       const [x0, y0] = toPaper(view, l.x0, l.z0);
       const [x1, y1] = toPaper(view, l.x1, l.z1);
-      ctx.moveTo(x0, y0); ctx.lineTo(x1, y1);
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
     }
     ctx.stroke();
     ctx.setLineDash?.([]);
@@ -288,7 +303,8 @@ export function paintPlanOverlay(ctx, view, opts) {
       // beside its head, haloed like every other name on this sheet (MAP-FIELD6). The pin is what a double-click
       // takes; the box it and its word fill is handed back (opts.noteBoxes) for the sheet's hit test.
       paintNotePin(ctx, x, y, m.id != null && m.id === opts.hoverNote);
-      const hx = x, hy = y - NOTE_PIN.stem;
+      const hx = x,
+        hy = y - NOTE_PIN.stem;
       let x1 = hx + NOTE_PIN.head + 2;
       if (m.name) {
         ctx.font = `12px ${NAME_FACE}`;
@@ -313,19 +329,24 @@ export function paintPlanOverlay(ctx, view, opts) {
       ctx.lineWidth = 1.4;
       ctx.beginPath();
       ctx.arc(x, y, MARK_R * 0.9, 0, Math.PI * 2);
-      for (const [ux, uy] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+      for (const [ux, uy] of [
+        [1, 1],
+        [1, -1],
+        [-1, 1],
+        [-1, -1],
+      ]) {
         ctx.moveTo(x + ux * MARK_R * 1.3, y + uy * MARK_R * 1.3);
         ctx.lineTo(x + ux * k, y + uy * k);
       }
       ctx.stroke();
-      paintMarkName(ctx, m.name, x, y + MARK_R * 2 + 2, PLAN_PEN.note);   // AUDIT DELVE D7: the names' pen (the beacon's was 3:1)
+      paintMarkName(ctx, m.name, x, y + MARK_R * 2 + 2, PLAN_PEN.note); // AUDIT DELVE D7: the names' pen (the beacon's was 3:1)
       continue;
     }
     if (m.kind === 'quest') {
       // GUIDE8: a quest resource's place - the world map's own diamond (inkMap.js paintQuestMark: tied to its spot,
       // gold edged in ink, the followed quest's filled), its name under the spot
       paintQuestMark(ctx, view, { x: m.x, y: m.z, tracked: !!m.followed });
-      paintMarkName(ctx, m.name, x, y + MARK_R + 2, PLAN_PEN.note);   // AUDIT DELVE D7: the name is what the tier is for - the names' pen (10.5:1), not the marks' (2.3:1)
+      paintMarkName(ctx, m.name, x, y + MARK_R + 2, PLAN_PEN.note); // AUDIT DELVE D7: the name is what the tier is for - the names' pen (10.5:1), not the marks' (2.3:1)
       continue;
     }
     if (m.kind === 'fire') {
@@ -336,7 +357,8 @@ export function paintPlanOverlay(ctx, view, opts) {
       ctx.moveTo(x, y - MARK_R * 1.4);
       ctx.quadraticCurveTo?.(x + MARK_R, y - MARK_R * 0.2, x, y + MARK_R * 0.5);
       ctx.quadraticCurveTo?.(x - MARK_R, y - MARK_R * 0.2, x, y - MARK_R * 1.4);
-      ctx.moveTo(x - MARK_R, y + MARK_R); ctx.lineTo(x + MARK_R, y + MARK_R);
+      ctx.moveTo(x - MARK_R, y + MARK_R);
+      ctx.lineTo(x + MARK_R, y + MARK_R);
       ctx.stroke();
       if (m.name) {
         ctx.font = `11px ${NAME_FACE}`;
@@ -373,7 +395,8 @@ export function paintPlanOverlay(ctx, view, opts) {
       }
     } else {
       // a door: a stroke across the opening
-      ctx.moveTo(x - MARK_R, y); ctx.lineTo(x + MARK_R, y);
+      ctx.moveTo(x - MARK_R, y);
+      ctx.lineTo(x + MARK_R, y);
     }
     ctx.stroke();
   }
@@ -397,10 +420,14 @@ export function paintPlanOverlay(ctx, view, opts) {
 
   // DISC23-A: the party members on this storey, under the player's own caret
   if (opts.party?.length && opts.partyFill) {
-    paintPartyCarets(ctx, opts.party.map((m) => {
-      const [x, y] = toPaper(view, m.x, m.z);
-      return { x, y, yaw: m.yaw, name: m.name };
-    }), { fill: opts.partyFill, halo: PLAN_PEN.halo });
+    paintPartyCarets(
+      ctx,
+      opts.party.map((m) => {
+        const [x, y] = toPaper(view, m.x, m.z);
+        return { x, y, yaw: m.yaw, name: m.name };
+      }),
+      { fill: opts.partyFill, halo: PLAN_PEN.halo },
+    );
   }
 
   if (opts.player) {
@@ -457,8 +484,11 @@ export function floorStripLayout(floors, live, opts = {}) {
   // all (the way in's, with the quest on it). The words stand in from the edge by the widest row's marks when the pad
   // will not hold them.
   const marksW = (i) => {
-    const r = FLOOR_MARK.r * scale, g = FLOOR_MARK.gap * scale;
-    return g + (i === opts.you ? r * 1.6 + g : 0) + (i === opts.exit ? r * 2 + g : 0) + (opts.quest?.has?.(i) ? r * 2.4 : 0);
+    const r = FLOOR_MARK.r * scale,
+      g = FLOOR_MARK.gap * scale;
+    return (
+      g + (i === opts.you ? r * 1.6 + g : 0) + (i === opts.exit ? r * 2 + g : 0) + (opts.quest?.has?.(i) ? r * 2.4 : 0)
+    );
   };
   const room = Math.max(padX, ...all.map((f) => marksW(f.index) + FLOOR_MARK.gap * scale));
   const left = paperW - room - widest;
@@ -473,21 +503,25 @@ export function floorStripLayout(floors, live, opts = {}) {
   const rows = [];
   const push = (row) => rows.push({ ...row, h: rowH, y: top + rows.length * (rowH + gap) });
   const chevron = fontPx * 1.1;
-  if (win.above >= 0) push({ index: win.above, label: '', more: 1, w: chevron, x: paperW - padX - chevron, live: false });
+  if (win.above >= 0)
+    push({ index: win.above, label: '', more: 1, w: chevron, x: paperW - padX - chevron, live: false });
   for (let i = win.shown.length - 1; i >= 0; i--) {
-    const f = win.shown[i];    // top of the paper is the TOP floor
+    const f = win.shown[i]; // top of the paper is the TOP floor
     const w = width(f.label);
     push({
-      index: f.index, label: f.label, w,
+      index: f.index,
+      label: f.label,
+      w,
       x: paperW - room - w,
       live: f.index === live,
       you: f.index === opts.you,
       exit: f.index === opts.exit,
-      quest: !!opts.quest?.has?.(f.index),   // GUIDE8: a quest mark stands on this floor
+      quest: !!opts.quest?.has?.(f.index), // GUIDE8: a quest mark stands on this floor
       faint: !!opts.seen && !opts.seen.has(f.index) && f.index !== live,
     });
   }
-  if (win.below >= 0) push({ index: win.below, label: '', more: -1, w: chevron, x: paperW - padX - chevron, live: false });
+  if (win.below >= 0)
+    push({ index: win.below, label: '', more: -1, w: chevron, x: paperW - padX - chevron, live: false });
   return { scale, fontPx, rows };
 }
 
@@ -496,7 +530,8 @@ export function floorStripLayout(floors, live, opts = {}) {
 function stripWindow(all, live, max) {
   if (all.length <= max) return { shown: all, above: -1, below: -1 };
   const shown = visibleFloors(all, live, Math.max(1, max - 2));
-  const lo = all.indexOf(shown[0]), hi = all.indexOf(shown[shown.length - 1]);
+  const lo = all.indexOf(shown[0]),
+    hi = all.indexOf(shown[shown.length - 1]);
   return {
     shown,
     above: hi < all.length - 1 ? all[hi + 1].index : -1,
@@ -510,7 +545,10 @@ function stripWindow(all, live, max) {
 export function visibleFloors(floors, live, max = FLOOR_STRIP_MAX) {
   const all = floors ?? [];
   if (all.length <= max) return all;
-  const at = Math.max(0, all.findIndex((f) => f.index === live));
+  const at = Math.max(
+    0,
+    all.findIndex((f) => f.index === live),
+  );
   let lo = at - (max >> 1);
   lo = Math.max(0, Math.min(all.length - max, lo));
   return all.slice(lo, lo + max);
@@ -541,7 +579,10 @@ export function paintFloorStrip(ctx, layout, { font = null } = {}) {
   ctx.textBaseline = 'top';
   const s = layout.scale ?? 1;
   for (const r of layout.rows) {
-    if (r.more) { paintStripChevron(ctx, r, s); continue; }
+    if (r.more) {
+      paintStripChevron(ctx, r, s);
+      continue;
+    }
     ctx.lineWidth = 2 * HALO_PEN;
     ctx.strokeStyle = PEN.halo;
     ctx.lineJoin = 'round';
@@ -598,7 +639,9 @@ export const FLOOR_MARK = Object.freeze({ r: 3, gap: 4 });
 
 /** DISC25-A: a chevron row - more floors that way - drawn as ink, not a glyph a face may not carry. */
 function paintStripChevron(ctx, r, s) {
-  const cx = r.x + r.w / 2, cy = r.y + r.h / 2, k = r.h * 0.28;
+  const cx = r.x + r.w / 2,
+    cy = r.y + r.h / 2,
+    k = r.h * 0.28;
   ctx.beginPath();
   ctx.moveTo(cx - k * 1.4, cy + r.more * k * 0.6);
   ctx.lineTo(cx, cy - r.more * k * 0.6);
@@ -640,10 +683,18 @@ export function paintStairs(ctx, view, stairs, opts = {}) {
   ctx.lineJoin = 'round';
   for (const s of stairs) {
     const [x, y] = toPaper(view, s.x, s.z);
-    let dx = s.dx ?? 0, dy = s.dz ?? 0;
+    let dx = s.dx ?? 0,
+      dy = s.dz ?? 0;
     const len = Math.hypot(dx, dy);
-    if (len > 1e-6) { dx /= len; dy /= len; } else { dx = 0; dy = -1; }
-    const nx = -dy, ny = dx;
+    if (len > 1e-6) {
+      dx /= len;
+      dy /= len;
+    } else {
+      dx = 0;
+      dy = -1;
+    }
+    const nx = -dy,
+      ny = dx;
     const pen = s.cross ? PLAN_PEN.stair : PLAN_PEN.mark;
     // the halo under the whole mark, then the ink over it
     for (const pass of ['halo', 'ink']) {
@@ -651,25 +702,28 @@ export function paintStairs(ctx, view, stairs, opts = {}) {
       ctx.lineWidth = pass === 'halo' ? 2 * HALO_PEN + 1.2 : 1.2;
       ctx.beginPath();
       for (const t of [-G.step, 0, G.step]) {
-        const cx = x + dx * t, cy = y + dy * t;
+        const cx = x + dx * t,
+          cy = y + dy * t;
         ctx.moveTo(cx - nx * G.tread, cy - ny * G.tread);
         ctx.lineTo(cx + nx * G.tread, cy + ny * G.tread);
       }
-      const hx = x + dx * (G.step + G.head + 1.5), hy = y + dy * (G.step + G.head + 1.5);
+      const hx = x + dx * (G.step + G.head + 1.5),
+        hy = y + dy * (G.step + G.head + 1.5);
       ctx.moveTo(hx - dx * G.head - nx * G.head * 0.8, hy - dy * G.head - ny * G.head * 0.8);
       ctx.lineTo(hx, hy);
       ctx.lineTo(hx - dx * G.head + nx * G.head * 0.8, hy - dy * G.head + ny * G.head * 0.8);
       ctx.stroke();
     }
     if (s.cross && s.name) {
-      const lx = x + dx * (G.step + G.head + 5), ly = y + dy * (G.step + G.head + 5);
+      const lx = x + dx * (G.step + G.head + 5),
+        ly = y + dy * (G.step + G.head + 5);
       if (under(lx, ly)) continue;
       ctx.font = `${G.label}px ${NAME_FACE}`;
-      ctx.textAlign = Math.abs(dx) < 0.35 ? 'center' : (dx > 0 ? 'left' : 'right');
-      ctx.textBaseline = Math.abs(dy) < 0.35 ? 'middle' : (dy > 0 ? 'top' : 'bottom');
+      ctx.textAlign = Math.abs(dx) < 0.35 ? 'center' : dx > 0 ? 'left' : 'right';
+      ctx.textBaseline = Math.abs(dy) < 0.35 ? 'middle' : dy > 0 ? 'top' : 'bottom';
       const tw = ctx.measureText?.(s.name)?.width ?? s.name.length * G.label * 0.5;
-      const bx = ctx.textAlign === 'center' ? lx - tw / 2 : (ctx.textAlign === 'left' ? lx : lx - tw);
-      const by = ctx.textBaseline === 'middle' ? ly - G.label / 2 : (ctx.textBaseline === 'top' ? ly : ly - G.label);
+      const bx = ctx.textAlign === 'center' ? lx - tw / 2 : ctx.textAlign === 'left' ? lx : lx - tw;
+      const by = ctx.textBaseline === 'middle' ? ly - G.label / 2 : ctx.textBaseline === 'top' ? ly : ly - G.label;
       const box = { x0: bx - 2, y0: by - 1, x1: bx + tw + 2, y1: by + G.label + 1 };
       if (placed.some((b) => b.x0 < box.x1 && box.x0 < b.x1 && b.y0 < box.y1 && box.y0 < b.y1)) continue;
       placed.push(box);
@@ -698,10 +752,12 @@ export const FLOOR_PARTY_DOT = Object.freeze({ r: 3, gap: 5 });
  */
 export function paintFloorStripParty(ctx, layout, storeys, fill) {
   if (!ctx?.beginPath || !layout?.rows?.length || !storeys?.size) return;
-  const r = FLOOR_PARTY_DOT.r * layout.scale, gap = FLOOR_PARTY_DOT.gap * layout.scale;
+  const r = FLOOR_PARTY_DOT.r * layout.scale,
+    gap = FLOOR_PARTY_DOT.gap * layout.scale;
   for (const row of layout.rows) {
-    if (row.more || !storeys.has(row.index)) continue;   // DISC25-A: a chevron is not a floor
-    const x = row.x - gap - r, y = row.y + row.h / 2;
+    if (row.more || !storeys.has(row.index)) continue; // DISC25-A: a chevron is not a floor
+    const x = row.x - gap - r,
+      y = row.y + row.h / 2;
     ctx.lineWidth = 2 * HALO_PEN;
     ctx.strokeStyle = PLAN_PEN.halo;
     ctx.fillStyle = fill;

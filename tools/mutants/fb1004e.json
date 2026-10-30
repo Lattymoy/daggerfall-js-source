@@ -732,8 +732,8 @@
   {
     "name": "OWHUBS-the-wheel-on-the-mark",
     "file": "src/ui/ink/inkMap.js",
-    "old": "(beside ? [x - markReach(m) - CARRIAGE_WHEEL_R - 1, y - 1] : [x, y])",
-    "new": "(beside ? [x - 9, y - 1] : [x, y])",
+    "old": "export const carriageWheelAt = (m, x, y, beside = true) =>\n  beside ? [x - markReach(m) - CARRIAGE_WHEEL_R - 1, y - 1] : [x, y];",
+    "new": "export const carriageWheelAt = (m, x, y, beside = true) => (beside ? [x - 9, y - 1] : [x, y]);",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],
@@ -742,8 +742,8 @@
   {
     "name": "OWHUBS-the-wheels-ground-unreserved",
     "file": "src/ui/ink/inkMap.js",
-    "old": "    if (m.carriage) {   // OW-HUBS: and a carriage town's wheel beside it\n",
-    "new": "    if (false) {   // OW-HUBS: and a carriage town's wheel beside it\n",
+    "old": "    if (m.carriage) {",
+    "new": "    if (false) {",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],
@@ -752,8 +752,8 @@
   {
     "name": "OWHUBS-the-left-name-on-the-wheel",
     "file": "src/ui/ink/inkMap.js",
-    "old": "(m.carriage ? markReach(m) + 2 * CARRIAGE_WHEEL_R + 2 : glyph)",
-    "new": "glyph",
+    "old": "      { x: px - (m.carriage ? markReach(m) + 2 * CARRIAGE_WHEEL_R + 2 : glyph) - 3 - w, base: py + size * 0.35 }, // OW-HUBS: past a carriage town's wheel",
+    "new": "      { x: px - glyph - 3 - w, base: py + size * 0.35 }, // OW-HUBS: past a carriage town's wheel",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],

@@ -629,8 +629,8 @@
   {
     "name": "AUDIT-GUIDE-U16-the-gold-fill",
     "file": "src/ui/ink/inkMap.js",
-    "old": "paintQuestDiamond(ctx, x, cy, r, 1, m.tracked ? PEN.line : null);",
-    "new": "paintQuestDiamond(ctx, x, cy, r, 1, m.tracked ? QUEST_MARK_CSS : null);",
+    "old": "  paintQuestDiamond(ctx, x, cy, r, 1, m.tracked ? PEN.line : null);",
+    "new": "  paintQuestDiamond(ctx, x, cy, r, 1, m.tracked ? QUEST_MARK_CSS : null);",
     "tests": [
       "test/ui/quest/audit_guide.test.js",
       "test/ui/quest/guide5_marks.test.js"

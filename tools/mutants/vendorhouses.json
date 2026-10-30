@@ -62,8 +62,8 @@
   {
     "name": "VENDOR-HOUSES-no-blue",
     "file": "src/ui/ink/inkTown.js",
-    "old": "    [x + 7, y], [x + 5, y], [x + 5, y + t]], own ? TOWN_PEN.home : vendor ? TOWN_PEN.vendor : TOWN_PEN.halo);",
-    "new": "    [x + 7, y], [x + 5, y], [x + 5, y + t]], own ? TOWN_PEN.home : TOWN_PEN.halo);",
+    "old": "    own ? TOWN_PEN.home : vendor ? TOWN_PEN.vendor : TOWN_PEN.halo,",
+    "new": "    own ? TOWN_PEN.home : TOWN_PEN.halo,",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "VENDOR-HOUSES-blue-over-own",
     "file": "src/ui/ink/inkTown.js",
-    "old": "    [x + 7, y], [x + 5, y], [x + 5, y + t]], own ? TOWN_PEN.home : vendor ? TOWN_PEN.vendor : TOWN_PEN.halo);",
-    "new": "    [x + 7, y], [x + 5, y], [x + 5, y + t]], vendor ? TOWN_PEN.vendor : own ? TOWN_PEN.home : TOWN_PEN.halo);",
+    "old": "    own ? TOWN_PEN.home : vendor ? TOWN_PEN.vendor : TOWN_PEN.halo,",
+    "new": "    vendor ? TOWN_PEN.vendor : own ? TOWN_PEN.home : TOWN_PEN.halo,",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ],

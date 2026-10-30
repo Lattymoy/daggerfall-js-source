@@ -2,8 +2,8 @@
   {
     "name": "EM3-1-the-wall-is-a-stroke-per-chain",
     "file": "src/ui/ink/inkAutomap.js",
-    "old": "      if (first) { ctx.moveTo(x, y); first = false; } else { ctx.lineTo(x, y); }\n    }\n  }\n  ctx.stroke();",
-    "new": "      if (first) { ctx.moveTo(x, y); first = false; } else { ctx.lineTo(x, y); }\n    }\n    ctx.stroke();\n  }\n  ctx.stroke();",
+    "old": "    }\n  }\n  ctx.stroke();",
+    "new": "    }\n    ctx.stroke();\n  }\n  ctx.stroke();",
     "tests": [
       "test/ui/ink/inkautomap.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "EM3-3-the-wash-is-a-second-outline",
     "file": "src/ui/ink/inkAutomap.js",
-    "old": "    ctx.fill();\n  }\n\n  // THE WALL: the outline of everything revealed on this storey.",
-    "new": "    ctx.fill();\n    ctx.stroke();\n  }\n\n  // THE WALL: the outline of everything revealed on this storey.",
+    "old": "    }\n    ctx.fill();\n  }\n",
+    "new": "    }\n    ctx.fill();\n    ctx.stroke();\n  }\n",
     "tests": [
       "test/ui/ink/inkautomap.test.js"
     ],
@@ -33,7 +33,7 @@
     "name": "EM3-4-the-wash-goes-OVER-the-wall",
     "file": "src/ui/ink/inkAutomap.js",
     "old": "  const occ = opts.walked?.occupancy ?? null;",
-    "new": "  const occ = null; const later = opts.walked?.occupancy ?? null; void later;",
+    "new": "  const occ = null;\n  const later = opts.walked?.occupancy ?? null;\n  void later;",
     "tests": [
       "test/ui/ink/inkautomap.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "EM3-6-the-caret-points-south",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  const hx = Math.sin(yaw), hy = -Math.cos(yaw);",
-    "new": "  const hx = Math.sin(yaw), hy = Math.cos(yaw);",
+    "old": "    hy = -Math.cos(yaw);",
+    "new": "    hy = Math.cos(yaw);",
     "tests": [
       "test/ui/ink/inkautomap.test.js",
       "test/ui/ink/townsheet.test.js"
@@ -73,8 +73,8 @@
   {
     "name": "EM3-8-the-caret-is-filled-before-its-halo",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  ctx.stroke();   // the halo first\n  ctx.fill();",
-    "new": "  ctx.fill();\n  ctx.stroke();   // the halo first",
+    "old": "  ctx.stroke(); // the halo first\n  ctx.fill();",
+    "new": "  ctx.fill();\n  ctx.stroke(); // the halo first",
     "tests": [
       "test/ui/ink/inkautomap.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "EM3-10-a-note-is-drawn-without-a-halo",
     "file": "src/ui/ink/inkAutomap.js",
-    "old": "        ctx.strokeText(m.name, hx + NOTE_PIN.head + 7, hy);\n",
-    "new": "",
+    "old": "        ctx.strokeText(m.name, hx + NOTE_PIN.head + 7, hy);\n        ctx.fillStyle = PLAN_PEN.note;",
+    "new": "        ctx.fillStyle = PLAN_PEN.note;",
     "tests": [
       "test/ui/ink/inkautomap.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "EM3-11-the-floor-strip-is-TOP-storey-at-the-bottom",
     "file": "src/ui/ink/inkAutomap.js",
-    "old": "  for (let i = win.shown.length - 1; i >= 0; i--) {\n    const f = win.shown[i];    // top of the paper is the TOP floor",
-    "new": "  for (let i = 0; i < win.shown.length; i++) {\n    const f = win.shown[i];    // top of the paper is the TOP floor",
+    "old": "  for (let i = win.shown.length - 1; i >= 0; i--) {",
+    "new": "  for (let i = 0; i < win.shown.length; i++) {",
     "tests": [
       "test/ui/ink/inkautomap.test.js"
     ]
@@ -258,7 +258,7 @@
   {
     "name": "EM4-2-a-house-is-washed-like-a-shop",
     "file": "src/ui/ink/inkTown.js",
-    "old": "export const isEnterable = (byte) => { const q = quarterOf(byte); return q !== null && q !== 'house'; };",
+    "old": "export const isEnterable = (byte) => {\n  const q = quarterOf(byte);\n  return q !== null && q !== 'house';\n};",
     "new": "export const isEnterable = (byte) => quarterOf(byte) !== null;",
     "tests": [
       "test/ui/ink/townsheet.test.js"
@@ -296,7 +296,7 @@
   {
     "name": "EM4-6-a-block-off-its-own-grid-writes-past-the-field",
     "file": "src/ui/ink/inkTown.js",
-    "old": "    if (bx < 0 || by < 0 || bx + BLOCK_PX > w || by + BLOCK_PX > h) continue;   // a block off its own grid",
+    "old": "    if (bx < 0 || by < 0 || bx + BLOCK_PX > w || by + BLOCK_PX > h) continue; // a block off its own grid",
     "new": "",
     "tests": [
       "test/ui/ink/townsheet.test.js"
@@ -305,7 +305,7 @@
   {
     "name": "EM4-7-the-reader-is-unbounded",
     "file": "src/ui/ink/inkTown.js",
-    "old": "  return (x, y) => (x >= 0 && y >= 0 && x < field.w && y < field.h) && pick(field.bytes[y * field.w + x]);",
+    "old": "  return (x, y) => x >= 0 && y >= 0 && x < field.w && y < field.h && pick(field.bytes[y * field.w + x]);",
     "new": "  return (x, y) => pick(field.bytes[y * field.w + x]);",
     "tests": [
       "test/ui/ink/townsheet.test.js"
@@ -315,8 +315,8 @@
   {
     "name": "EM4-8-the-wash-goes-over-the-wall",
     "file": "src/ui/ink/inkTown.js",
-    "old": "  for (const q of QUARTERS) {\n    const chains = plan?.quarters?.[q];\n    if (!chains?.length) continue;",
-    "new": "  ctx.strokeStyle = TOWN_PEN.wall;\n  trace(plan?.chains);\n  ctx.stroke();\n  for (const q of QUARTERS) {\n    const chains = plan?.quarters?.[q];\n    if (!chains?.length) continue;",
+    "old": "  for (const q of QUARTERS) {",
+    "new": "  ctx.strokeStyle = TOWN_PEN.wall;\n  trace(plan?.chains);\n  ctx.stroke();\n  for (const q of QUARTERS) {",
     "tests": [
       "test/ui/ink/townsheet.test.js"
     ]
@@ -333,8 +333,8 @@
   {
     "name": "EM4-10-the-footprints-are-not-closed",
     "file": "src/ui/ink/inkTown.js",
-    "old": "      ctx.closePath();\n    }\n  };",
-    "new": "    }\n  };",
+    "old": "      ctx.closePath();\n    }",
+    "new": "    }",
     "tests": [
       "test/ui/ink/townsheet.test.js"
     ]

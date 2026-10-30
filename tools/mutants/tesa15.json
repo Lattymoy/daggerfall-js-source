@@ -521,27 +521,35 @@
     "file": "src/ui/heldMap.js",
     "old": "    return now - since < ms;",
     "new": "    return true;",
-    "tests": ["test/ui/audittesa2m_window.test.js"]
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
   },
   {
     "name": "K3-ZOOM-settle-never",
     "file": "src/ui/heldMap.js",
     "old": "    return now - since < ms;",
     "new": "    return false;",
-    "tests": ["test/ui/audittesa2m_window.test.js"]
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
   },
   {
     "name": "K3-ZOOM-settle-tiles-forced",
     "file": "src/ui/tamrielInk.js",
     "old": "...(opts.settling ? { budgetMs: 0, force: false } : {})",
     "new": "...({})",
-    "tests": ["test/ui/audittesa2m_window.test.js"]
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
   },
   {
     "name": "TESA15-the-level-the-scale-levelOf",
     "file": "src/ui/tamrielTiles.js",
     "old": "export const levelOf = (scale) => 2 ** (tileLevelIndex(scale) / LEVEL_STEPS);",
     "new": "export const levelOf = (scale) => scale;",
-    "tests": ["test/tesa15_mapfidelity.test.js"]
+    "tests": [
+      "test/tesa15_mapfidelity.test.js"
+    ]
   }
 ]

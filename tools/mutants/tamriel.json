@@ -267,8 +267,8 @@
   {
     "name": "TAMRIEL1-clamp-origin-dropped",
     "file": "src/ui/ink/inkMap.js",
-    "old": "return Math.min(lo + map - visible, Math.max(lo, o));",
-    "new": "return Math.min(lo + map - visible, Math.max(0, o));",
+    "old": "    return Math.min(lo + map - visible, Math.max(lo, o));",
+    "new": "    return Math.min(lo + map - visible, Math.max(0, o));",
     "tests": [
       "test/ui/tamriel.test.js",
       "test/ui/heldmap.test.js"
@@ -277,8 +277,8 @@
   {
     "name": "TAMRIEL1-clamp-rest-off-the-frame",
     "file": "src/ui/ink/inkMap.js",
-    "old": "if (visible >= map) return lo + (map - visible) / 2;",
-    "new": "if (visible >= map) return (map - visible) / 2;",
+    "old": "    if (visible >= map) return lo + (map - visible) / 2;",
+    "new": "    if (visible >= map) return (map - visible) / 2;",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -286,8 +286,8 @@
   {
     "name": "TAMRIEL1-region-names-on-the-continent",
     "file": "src/ui/ink/inkMap.js",
-    "old": "if (band !== 'near' && !opts.continent && opts.regionNames) {",
-    "new": "if (band !== 'near' && opts.regionNames) {",
+    "old": "  if (band !== 'near' && !opts.continent && opts.regionNames) {",
+    "new": "  if (band !== 'near' && opts.regionNames) {",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "TAMRIEL1-carets-not-thinned-on-the-continent",
     "file": "src/ui/ink/inkMap.js",
-    "old": "const caretBand = opts.continent ? CONTINENT_BAND : band;",
-    "new": "const caretBand = band;",
+    "old": "  const caretBand = opts.continent ? CONTINENT_BAND : band; // TAMRIEL1: on the continent the carets thin further",
+    "new": "  const caretBand = band; // TAMRIEL1: on the continent the carets thin further",
     "tests": [
       "test/ui/tamriel.test.js"
     ]

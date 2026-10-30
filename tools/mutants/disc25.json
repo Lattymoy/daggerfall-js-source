@@ -193,8 +193,8 @@
   {
     "name": "D25A-strip-ignores-hands",
     "file": "src/ui/ink/inkAutomap.js",
-    "old": "    max = Math.min(max, Math.floor((h.y0 - padY - top + gap) / (rowH + gap)));\n",
-    "new": "",
+    "old": "    max = Math.min(max, Math.floor((h.y0 - padY - top + gap) / (rowH + gap)));\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "D25A-faint-not-drawn",
     "file": "src/ui/ink/inkAutomap.js",
-    "old": "    if (r.faint) ctx.globalAlpha = FLOOR_UNSEEN_ALPHA;\n",
-    "new": "",
+    "old": "    if (r.faint) ctx.globalAlpha = FLOOR_UNSEEN_ALPHA;\n    ctx.strokeText(r.label, r.x, r.y);",
+    "new": "    ctx.strokeText(r.label, r.x, r.y);",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "D25A-name-under-hand",
     "file": "src/ui/ink/inkAutomap.js",
-    "old": "      if (under(lx, ly)) continue;\n",
-    "new": "",
+    "old": "      if (under(lx, ly)) continue;\n      ctx.font = `${G.label}px ${NAME_FACE}`;",
+    "new": "      ctx.font = `${G.label}px ${NAME_FACE}`;",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "D25A-names-overwrite",
     "file": "src/ui/ink/inkAutomap.js",
-    "old": "      if (placed.some((b) => b.x0 < box.x1 && box.x0 < b.x1 && b.y0 < box.y1 && box.y0 < b.y1)) continue;\n",
-    "new": "",
+    "old": "      if (placed.some((b) => b.x0 < box.x1 && box.x0 < b.x1 && b.y0 < box.y1 && box.y0 < b.y1)) continue;\n      placed.push(box);",
+    "new": "      placed.push(box);",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]

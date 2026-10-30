@@ -65,8 +65,8 @@
   {
     "name": "far-shows-hamlets",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  far: new Set([11]),\n  mid: new Set([0, 1, 2, 8, 9, 10, 11, 12, 13]),",
-    "new": "  far: new Set([11, 12]),\n  mid: new Set([0, 1, 2, 8, 9, 10, 11, 12, 13]),",
+    "old": "export const BAND_MARKS = Object.freeze({\n  far: new Set([11]),",
+    "new": "export const BAND_MARKS = Object.freeze({\n  far: new Set([11, 12]),",
     "tests": [
       "test/ui/heldmap.test.js"
     ]
@@ -119,7 +119,7 @@
   {
     "name": "overlap-drawn",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  const hits = (box) => boxes.some((b) => b.x < box.x + box.w && b.x + b.w > box.x && b.y < box.y + box.h && b.y + b.h > box.y);",
+    "old": "  const hits = (box) =>\n    boxes.some((b) => b.x < box.x + box.w && b.x + b.w > box.x && b.y < box.y + box.h && b.y + b.h > box.y);",
     "new": "  const hits = () => false;",
     "tests": [
       "test/ui/heldmap.test.js"
@@ -128,8 +128,8 @@
   {
     "name": "rank-ignored",
     "file": "src/ui/ink/inkMap.js",
-    "old": "    .sort((a, b) => (rank.get(a.colorIndex) ?? 99) - (rank.get(b.colorIndex) ?? 99));",
-    "new": "    ;",
+    "old": "  const sorted = marks\n    .filter((m) => m.name && named.has(m.colorIndex) && onSheet(m))\n    .sort((a, b) => (rank.get(a.colorIndex) ?? 99) - (rank.get(b.colorIndex) ?? 99));",
+    "new": "  const sorted = marks.filter((m) => m.name && named.has(m.colorIndex) && onSheet(m));",
     "tests": [
       "test/ui/heldmap.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "no-clear",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  ctx.clearRect(0, 0, paperW, paperH);\n",
-    "new": "",
+    "old": "  ctx.clearRect(0, 0, paperW, paperH);\n  ctx.lineCap = 'round';",
+    "new": "  ctx.lineCap = 'round';",
     "tests": [
       "test/ui/heldmap.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "wash-dropped",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  stroke(model.coast, Math.max(3, s * 1.6), PEN.wash);\n",
-    "new": "",
+    "old": "  stroke(model.coast, Math.max(3, s * 1.6), PEN.wash);\n  stroke(model.coast, 1.3, PEN.line);",
+    "new": "  stroke(model.coast, 1.3, PEN.line);",
     "tests": [
       "test/ui/heldmap.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "roads-flag-ignored",
     "file": "src/ui/ink/inkMap.js",
-    "old": "    if (filters[kind]) continue;\n    const pen = pathPen(kind, band);",
-    "new": "    if (filters[kind] && kind !== 'roads') continue;\n    const pen = pathPen(kind, band);",
+    "old": "    if (filters[kind]) continue;",
+    "new": "    if (filters[kind] && kind !== 'roads') continue;",
     "tests": [
       "test/ui/heldmap.test.js",
       "test/ui/audittesa2m_tiles.test.js"
@@ -176,8 +176,8 @@
   {
     "name": "party-in-ink-colour",
     "file": "src/ui/ink/inkMap.js",
-    "old": "    ctx.strokeStyle = m.color; ctx.lineWidth = 2.2;",
-    "new": "    ctx.strokeStyle = PEN.line; ctx.lineWidth = 2.2;",
+    "old": "    ctx.strokeStyle = m.color;",
+    "new": "    ctx.strokeStyle = PEN.line;",
     "tests": [
       "test/ui/heldmap.test.js",
       "test/ui/soc6_partymap.test.js"
@@ -186,8 +186,8 @@
   {
     "name": "label-ignores-view",
     "file": "src/ui/ink/inkMap.js",
-    "old": "    const [x, y] = toPaper(view, m.x, m.y);\n    ctx.strokeStyle = m.color;",
-    "new": "    const [x, y] = [m.x * view.scale, m.y * view.scale];\n    ctx.strokeStyle = m.color;",
+    "old": "    if (!visible(m.x, m.y)) continue;\n    const [x, y] = toPaper(view, m.x, m.y);",
+    "new": "    if (!visible(m.x, m.y)) continue;\n    const [x, y] = [m.x * view.scale, m.y * view.scale];",
     "tests": [
       "test/ui/soc6_partymap.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "names-not-in-the-face",
     "file": "src/ui/ink/inkMap.js",
-    "old": "      ctx.font = nameFont(n.mark, n.size);\n      ctx.fillText(n.mark.name, n.x, n.y);",
-    "new": "      ctx.font = `${n.size}px sans-serif`;\n      ctx.fillText(n.mark.name, n.x, n.y);",
+    "old": "    for (const n of opts.names) {\n      ctx.font = nameFont(n.mark, n.size);\n      ctx.fillText(n.mark.name, n.x, n.y);",
+    "new": "    for (const n of opts.names) {\n      ctx.font = `${n.size}px sans-serif`;\n      ctx.fillText(n.mark.name, n.x, n.y);",
     "tests": [
       "test/ui/heldmap.test.js"
     ]
@@ -528,7 +528,7 @@
   {
     "name": "MAPFIELD6-names-ignore-glyphs",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  for (const m of marks) {\n    if (!shown.has(m.colorIndex) || !onSheet(m)) continue;\n    const [px, py] = toPaper(view, m.x, m.y);\n    const r = markReach(m) + 1;   // HUB1: a hub's circle is ground its glyph holds\n    boxes.push({ x: px - r, y: py - r, w: r * 2, h: r * 2 });\n    if (m.carriage) {   // OW-HUBS: and a carriage town's wheel beside it\n      const [wx, wy] = carriageWheelAt(m, px, py), wr = CARRIAGE_WHEEL_R + 1;\n      boxes.push({ x: wx - wr, y: wy - wr, w: wr * 2, h: wr * 2 });\n    }\n  }",
+    "old": "  for (const m of marks) {\n    if (!shown.has(m.colorIndex) || !onSheet(m)) continue;\n    const [px, py] = toPaper(view, m.x, m.y);\n    const r = markReach(m) + 1; // HUB1: a hub's circle is ground its glyph holds\n    boxes.push({ x: px - r, y: py - r, w: r * 2, h: r * 2 });\n    if (m.carriage) {\n      // OW-HUBS: and a carriage town's wheel beside it\n      const [wx, wy] = carriageWheelAt(m, px, py),\n        wr = CARRIAGE_WHEEL_R + 1;\n      boxes.push({ x: wx - wr, y: wy - wr, w: wr * 2, h: wr * 2 });\n    }\n  }",
     "new": "",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e, OW-HUBS): the seeding loop grew a carriage wheel's ground",
     "tests": [
@@ -538,8 +538,8 @@
   {
     "name": "MAPFIELD6-one-candidate-only",
     "file": "src/ui/ink/inkMap.js",
-    "old": "    const fit = cands.map((c) => ({ ...c, box: nameBox(c.x, c.base, w, size) }))",
-    "new": "    const fit = [cands[0]].map((c) => ({ ...c, box: nameBox(c.x, c.base, w, size) }))",
+    "old": "    const fit = cands",
+    "new": "    const fit = [cands[0]]",
     "tests": [
       "test/ui/heldmap.test.js"
     ]
@@ -556,8 +556,8 @@
   {
     "name": "MAPFIELD6-the-halo-is-drawn-per-mark-not-per-pass",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);\n  for (const [m, x, y] of inked) {\n    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind]",
-    "new": "  for (const [m, x, y] of inked) {\n    paintGlyph(ctx, m.kind, x, y, true);\n    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind]",
+    "old": "  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);\n  for (const [m, x, y] of inked) {",
+    "new": "  for (const [m, x, y] of inked) {\n    paintGlyph(ctx, m.kind, x, y, true);",
     "tests": [
       "test/ui/heldmap.test.js"
     ]
@@ -637,7 +637,7 @@
   {
     "name": "MAPFIELD6-a-name-may-sit-off-the-paper",
     "file": "src/ui/ink/inkMap.js",
-    "old": "      .find((c) => c.box.x >= 2 && c.box.x + c.box.w <= paperW - 2\n        && c.box.y >= 2 && c.box.y + c.box.h <= paperH - 2 && !hits(c.box));",
+    "old": "      .find(\n        (c) =>\n          c.box.x >= 2 &&\n          c.box.x + c.box.w <= paperW - 2 &&\n          c.box.y >= 2 &&\n          c.box.y + c.box.h <= paperH - 2 &&\n          !hits(c.box),\n      );",
     "new": "      .find((c) => c.box.x >= 2 && c.box.x + c.box.w <= paperW - 2 && !hits(c.box));",
     "tests": [
       "test/ui/heldmap.test.js"
@@ -646,8 +646,8 @@
   {
     "name": "MAPFIELD6-the-reserved-box-is-not-the-inks",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  return { x, y: baseline - (size * NAME_ASC), w, h: size * (NAME_ASC + NAME_DESC) };",
-    "new": "  return { x, y: baseline - (size * 0.55), w, h: size * 1.1 };",
+    "old": "  return { x, y: baseline - size * NAME_ASC, w, h: size * (NAME_ASC + NAME_DESC) };",
+    "new": "  return { x, y: baseline - size * 0.55, w, h: size * 1.1 };",
     "tests": [
       "test/ui/heldmap.test.js"
     ]
@@ -700,8 +700,8 @@
   {
     "name": "AUDITMAPFIELD-the-halo-is-the-pen",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  halo: rgba(PARCHMENT_RGB, 0.80),    // MAP-FIELD6: the parchment, quieted under a glyph or a name",
-    "new": "  halo: rgba(INK_RGB, 0.80),    // MAP-FIELD6: the parchment, quieted under a glyph or a name",
+    "old": "  halo: rgba(PARCHMENT_RGB, 0.8), // MAP-FIELD6: the parchment, quieted under a glyph or a name",
+    "new": "  halo: rgba(INK_RGB, 0.8), // MAP-FIELD6: the parchment, quieted under a glyph or a name",
     "tests": [
       "test/ui/heldmap.test.js"
     ]
@@ -709,8 +709,8 @@
   {
     "name": "AUDITMAPFIELD-the-filled-halo-is-not-stroked",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  const solid = () => { ctx.fill(); if (halo) ctx.stroke(); };",
-    "new": "  const solid = () => { ctx.fill(); };",
+    "old": "    if (halo) ctx.stroke();\n  };",
+    "new": "  };",
     "tests": [
       "test/ui/heldmap.test.js"
     ]

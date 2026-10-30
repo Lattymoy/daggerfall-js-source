@@ -85,8 +85,8 @@
   {
     "name": "mark-colour-ignored",
     "file": "src/ui/ink/inkMap.js",
-    "old": "      ctx.strokeStyle = opts.markColor; ctx.lineWidth = 2;",
-    "new": "      ctx.strokeStyle = PEN.select; ctx.lineWidth = 2;",
+    "old": "      ctx.strokeStyle = opts.markColor;",
+    "new": "      ctx.strokeStyle = PEN.select;",
     "tests": [
       "test/ui/heldmap.test.js"
     ]

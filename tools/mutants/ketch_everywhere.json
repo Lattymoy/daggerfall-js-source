@@ -444,8 +444,8 @@
   {
     "name": "KTE-the-ink-maps-rings-past-the-first",
     "file": "src/ui/ink/inkMap.js",
-    "old": "for (const k of opts.ketches ?? (opts.ketch ? [opts.ketch] : []))",
-    "new": "for (const k of (opts.ketches ?? (opts.ketch ? [opts.ketch] : [])).slice(0, 1))",
+    "old": "  for (const k of opts.ketches ?? (opts.ketch ? [opts.ketch] : []))",
+    "new": "  for (const k of (opts.ketches ?? (opts.ketch ? [opts.ketch] : [])).slice(0, 1))",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]

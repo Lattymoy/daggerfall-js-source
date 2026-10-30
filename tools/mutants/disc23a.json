@@ -92,8 +92,8 @@
   {
     "name": "D23A-no-name",
     "file": "src/ui/ink/inkMap.js",
-    "old": "    ctx.fillText(m.name, m.x, ly);\n",
-    "new": "",
+    "old": "    ctx.fillText(m.name, m.x, ly);\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/ink/disc23a_party_plans.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "D23A-party-over-player-automap",
     "file": "src/ui/ink/inkAutomap.js",
-    "old": "  // DISC23-A: the party members on this storey, under the player's own caret\n  if (opts.party?.length && opts.partyFill) {",
-    "new": "  // DISC23-A: the party members on this storey, under the player's own caret\n  if (opts.party?.length && opts.partyFill && false) {",
+    "old": "  if (opts.party?.length && opts.partyFill) {",
+    "new": "  if (opts.party?.length && opts.partyFill && false) {",
     "tests": [
       "test/ui/ink/disc23a_party_plans.test.js"
     ]

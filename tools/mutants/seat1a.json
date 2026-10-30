@@ -286,8 +286,8 @@
   {
     "name": "SEAT1a-map-reach-ignores-the-ring",
     "file": "src/ui/ink/inkMap.js",
-    "old": " + (m.seat ? SEAT_RING_PAD : 0);",
-    "new": " + 0;",
+    "old": "export const markReach = (m) => (GLYPH_R[m.kind] ?? 4) + (m.hub ? HUB_CIRCLE_PAD : 0) + (m.seat ? SEAT_RING_PAD : 0);",
+    "new": "export const markReach = (m) => (GLYPH_R[m.kind] ?? 4) + (m.hub ? HUB_CIRCLE_PAD : 0) + 0;",
     "tests": [
       "test/net/seat1a_client.test.js"
     ]

@@ -20,8 +20,8 @@
   {
     "name": "PORT-MAP-never-on-the-place",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  const ax = beside ? x + 8 : x, ay = beside ? y - 1 : y;",
-    "new": "  const ax = x + 8, ay = y - 1;",
+    "old": "  const ax = beside ? x + 8 : x,\n    ay = beside ? y - 1 : y;",
+    "new": "  const ax = x + 8,\n    ay = y - 1;",
     "tests": [
       "test/ui/ink/portmap.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PORT-MAP-no-halo",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  ctx.strokeStyle = PEN.halo; ctx.lineWidth = HARBOUR_HALO;\n  anchorPath(ctx, ax, ay);\n  ctx.stroke();\n",
-    "new": "",
+    "old": "  ctx.strokeStyle = PEN.halo;\n  ctx.lineWidth = HARBOUR_HALO;\n  anchorPath(ctx, ax, ay);\n  ctx.stroke();\n  ctx.strokeStyle = PEN.line;",
+    "new": "  ctx.strokeStyle = PEN.line;",
     "tests": [
       "test/ui/ink/portmap.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PORT-MAP-the-soft-pen",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  ctx.strokeStyle = PEN.line; ctx.lineWidth = HARBOUR_PEN;",
-    "new": "  ctx.strokeStyle = PEN.soft; ctx.lineWidth = HARBOUR_PEN;",
+    "old": "  ctx.stroke();\n  ctx.strokeStyle = PEN.line;",
+    "new": "  ctx.stroke();\n  ctx.strokeStyle = PEN.soft;",
     "tests": [
       "test/ui/ink/portmap.test.js"
     ]

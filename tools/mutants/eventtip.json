@@ -209,8 +209,8 @@
   {
     "name": "EVENT-TIP-the-overlay-paints-no-raids",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  for (const m of opts.raids ?? []) if (visible(m.x, m.y)) paintRaidMark(ctx, view, m, pulse);\n",
-    "new": "",
+    "old": "  for (const m of opts.raids ?? []) if (visible(m.x, m.y)) paintRaidMark(ctx, view, m, pulse);\n  // STAR6: the night's fallen stars, beside the raids - none ever falls in a town",
+    "new": "  // STAR6: the night's fallen stars, beside the raids - none ever falls in a town",
     "tests": [
       "test/ui/eventtip.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "EVENT-TIP-the-blades-on-the-town",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  const cy = y - 18, s = 5, g = 2, h = s * 0.55;",
-    "new": "  const cy = y, s = 5, g = 2, h = s * 0.55;",
+    "old": "  const cy = y - 18,",
+    "new": "  const cy = y,",
     "tests": [
       "test/ui/eventtip.test.js"
     ]

@@ -357,8 +357,8 @@
   {
     "name": "SERPENT1-ink-serpent-in-gate-red",
     "file": "src/ui/ink/inkMap.js",
-    "old": "ctx.strokeStyle = ink?.ring ?? GATE_RING_CSS; ctx.lineWidth = 2.4;",
-    "new": "ctx.strokeStyle = GATE_RING_CSS; ctx.lineWidth = 2.4;",
+    "old": "  ctx.strokeStyle = ink?.ring ?? GATE_RING_CSS;",
+    "new": "  ctx.strokeStyle = GATE_RING_CSS;",
     "tests": [
       "test/systems/serpent1_client.test.js"
     ]

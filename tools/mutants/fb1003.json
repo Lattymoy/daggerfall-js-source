@@ -165,8 +165,8 @@
   {
     "name": "GLLEAK-fail-keeps-context",
     "file": "src/ui/ink/inkDungeonGL.js",
-    "old": "catch { loseGlContext(gl); return null; }",
-    "new": "catch { return null; }",
+    "old": "    loseGlContext(gl);\n    return null;",
+    "new": "    return null;",
     "tests": [
       "test/ui/ink/fb1003_glleak.test.js"
     ]

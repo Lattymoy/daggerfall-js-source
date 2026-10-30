@@ -76,7 +76,11 @@
     "file": "src/ui/heldMap.js",
     "old": "part: 'over', under: paintZone, nameless:",
     "new": "part: 'over', nameless:",
-    "tests": ["test/ui/regionlines.test.js", "test/ui/tamriel.test.js", "test/world/worldWide/wwc2_zone.test.js"]
+    "tests": [
+      "test/ui/regionlines.test.js",
+      "test/ui/tamriel.test.js",
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
   },
   {
     "name": "ZONE-NAMES-cyrodiils-places-unnamed",
@@ -92,6 +96,9 @@
     "file": "src/ui/heldMap.js",
     "old": "const past = (this._tamriel || this._zoneMap) ? this._pastBayHover(mx, my) : null;",
     "new": "const past = (this._tamriel && !this._zoneMap) ? this._pastBayHover(mx, my) : null;",
-    "tests": ["test/ui/regionlines.test.js", "test/ui/tamriel.test.js"]
+    "tests": [
+      "test/ui/regionlines.test.js",
+      "test/ui/tamriel.test.js"
+    ]
   }
 ]

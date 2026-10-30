@@ -540,7 +540,7 @@ test('ROADS 12: the two chips ride the store, default shown, and the relief is k
   // inversion (AUDIT 47 A1's law: read from the store, not assumed).
   const ink = (await import('node:fs')).readFileSync('src/ui/ink/inkMap.js', 'utf8');
   assert.match(ink, /for \(const kind of PATH_KINDS\) \{\n\s+if \(filters\[kind\]\) continue;/, 'a hidden roads flag is not inked');   // PIN MOVED (TESA13): inkMap strokePaths; PIN MOVED (AUDIT TESA II M10): a kind at a time
-  assert.match(ink, /return band === 'far' \? \{ width: FAR_TRACK_PEN, style: PEN\.soft, dash: null \} : \{ width: 1, style: PEN\.soft, dash: \[2, 3\] \};/, 'the tracks likewise - PIN MOVED (TESA15): a hair at the far band; PIN MOVED (AUDIT TESA II M10): pathPen');
+  assert.match(ink, /return band === 'far'\n\s*\? \{ width: FAR_TRACK_PEN, style: PEN\.soft, dash: null \}\n\s*: \{ width: 1, style: PEN\.soft, dash: \[2, 3\] \};/, 'the tracks likewise - PIN MOVED (TESA15): a hair at the far band; PIN MOVED (AUDIT TESA II M10): pathPen');
   // MAP-FIELD2: `names` is a literal null now (Mac: the town names are
   // clutter) - what this pin is about is the FILTERS being the live
   // store object, which is unchanged.

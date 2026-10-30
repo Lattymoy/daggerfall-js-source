@@ -139,8 +139,8 @@
   {
     "name": "HUB1-marks-carry-no-hub",
     "file": "src/ui/ink/inkMap.js",
-    "old": "hub: hubAt(m.summary) ?? null,",
-    "new": "hub: null,",
+    "old": "    hub: hubAt(m.summary) ?? null,",
+    "new": "    hub: null,",
     "tests": [
       "test/ui/ink/hub1.test.js",
       "test/ui/heldmap.test.js"
@@ -149,8 +149,8 @@
   {
     "name": "HUB1-circle-over-the-glyph",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  for (const [m, x, y] of inked) if (m.hub) paintHubCircle(ctx, x, y, markReach(m) - (m.seat ? SEAT_RING_PAD : 0), !!m.hub.capital);\n  // SEAT1a (Seats-Arc 3.3): a seat's ring, in HUB1's order - under the glyph, round any hub's circle\n  for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);\n  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);",
-    "new": "  // SEAT1a (Seats-Arc 3.3): a seat's ring, in HUB1's order - under the glyph, round any hub's circle\n  for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);\n  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);\n  for (const [m, x, y] of inked) if (m.hub) paintHubCircle(ctx, x, y, markReach(m) - (m.seat ? SEAT_RING_PAD : 0), !!m.hub.capital);",
+    "old": "  for (const [m, x, y] of inked)\n    if (m.hub) paintHubCircle(ctx, x, y, markReach(m) - (m.seat ? SEAT_RING_PAD : 0), !!m.hub.capital);\n  // SEAT1a (Seats-Arc 3.3): a seat's ring, in HUB1's order - under the glyph, round any hub's circle\n  for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);\n  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);",
+    "new": "  // SEAT1a (Seats-Arc 3.3): a seat's ring, in HUB1's order - under the glyph, round any hub's circle\n  for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);\n  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);\n  for (const [m, x, y] of inked)\n    if (m.hub) paintHubCircle(ctx, x, y, markReach(m) - (m.seat ? SEAT_RING_PAD : 0), !!m.hub.capital);",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "HUB1-colours-swapped",
     "file": "src/ui/ink/inkMap.js",
-    "old": "const c = capital ? HUB_CIRCLE.capital : HUB_CIRCLE.hub;",
-    "new": "const c = capital ? HUB_CIRCLE.hub : HUB_CIRCLE.capital;",
+    "old": "  const c = capital ? HUB_CIRCLE.capital : HUB_CIRCLE.hub;",
+    "new": "  const c = capital ? HUB_CIRCLE.hub : HUB_CIRCLE.capital;",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "HUB1-circle-no-reach",
     "file": "src/ui/ink/inkMap.js",
-    "old": "(m.hub ? HUB_CIRCLE_PAD : 0)",
-    "new": "0",
+    "old": "export const markReach = (m) => (GLYPH_R[m.kind] ?? 4) + (m.hub ? HUB_CIRCLE_PAD : 0) + (m.seat ? SEAT_RING_PAD : 0);",
+    "new": "export const markReach = (m) => (GLYPH_R[m.kind] ?? 4) + 0 + (m.seat ? SEAT_RING_PAD : 0);",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -176,8 +176,8 @@
   {
     "name": "HUB1-name-across-its-circle",
     "file": "src/ui/ink/inkMap.js",
-    "old": "    const glyph = markReach(m) + 1;",
-    "new": "    const glyph = (GLYPH_R[m.kind] ?? 4) + 1;",
+    "old": "    const glyph = markReach(m) + 1; // HUB1: set clear of a hub's circle, not only its glyph",
+    "new": "    const glyph = (GLYPH_R[m.kind] ?? 4) + 1; // HUB1: set clear of a hub's circle, not only its glyph",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "HUB1-neighbour-across-the-circle",
     "file": "src/ui/ink/inkMap.js",
-    "old": "    const r = markReach(m) + 1;",
-    "new": "    const r = (GLYPH_R[m.kind] ?? 4) + 1;",
+    "old": "    const r = markReach(m) + 1; // HUB1: a hub's circle is ground its glyph holds",
+    "new": "    const r = (GLYPH_R[m.kind] ?? 4) + 1; // HUB1: a hub's circle is ground its glyph holds",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "HUB1-circle-unfilled",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  ctx.fillStyle = c.fill;\n  ctx.fill();\n",
-    "new": "",
+    "old": "  ctx.fillStyle = c.fill;\n  ctx.fill();\n  ctx.strokeStyle = c.rim;",
+    "new": "  ctx.strokeStyle = c.rim;",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]

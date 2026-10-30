@@ -194,8 +194,8 @@
   {
     "name": "TOWN-MARKS-the-tick-drawn-under-the-glyph",
     "file": "src/ui/ink/inkTown.js",
-    "old": "      if (p.marked) continue;   // TOWN-MARKS: the building's glyph is its tick\n",
-    "new": "",
+    "old": "      if (p.marked) continue; // TOWN-MARKS: the building's glyph is its tick\n      ctx.fillStyle = ink;",
+    "new": "      ctx.fillStyle = ink;",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "TOWN-MARKS-the-house-off-its-place",
     "file": "src/ui/ink/inkTown.js",
-    "old": "  paintMarkShape(ctx, [[x - 5, y + t], [x - 5, y], [x - 7, y], [x, y - t],\n    [x + 7, y], [x + 5, y], [x + 5, y + t]],",
-    "new": "  paintMarkShape(ctx, [[x - 5, y + t - 8], [x - 5, y - 8], [x - 7, y - 8], [x, y - t - 8],\n    [x + 7, y - 8], [x + 5, y - 8], [x + 5, y + t - 8]],",
+    "old": "      [x - 5, y + t],\n      [x - 5, y],\n      [x - 7, y],\n      [x, y - t],\n      [x + 7, y],\n      [x + 5, y],\n      [x + 5, y + t],",
+    "new": "      [x - 5, y + t - 8],\n      [x - 5, y - 8],\n      [x - 7, y - 8],\n      [x, y - t - 8],\n      [x + 7, y - 8],\n      [x + 5, y - 8],\n      [x + 5, y + t - 8],",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ]

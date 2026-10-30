@@ -95,7 +95,7 @@ test('EM4: the town is drawn in the BAY\'s pen - not one colour is invented here
     assert.ok(Object.values(PEN).includes(value), `TOWN_PEN.${name} is a colour inkMap does not have`);
   }
   const text = src('src/ui/ink/inkTown.js');
-  assert.match(text, /PEN, HALO_PEN, NAME_FACE, toPaper, paintCaret, paintPartyCarets, CARET_R, quarterWash, quarterInk,\n\} from '\.\/inkMap\.js';/);
+  assert.match(text, /PEN,\n\s*HALO_PEN,\n\s*NAME_FACE,\n\s*toPaper,\n\s*paintCaret,\n\s*paintPartyCarets,\n\s*CARET_R,\n\s*quarterWash,\n\s*quarterInk,\n\s*\} from '\.\/inkMap\.js';/);
   assert.doesNotMatch(text, /rgba?\(/, 'a colour written out here is a colour that drifts');
   assert.doesNotMatch(text, /#[0-9a-fA-F]{3,8}\b/);
   // and the three sheets share the pen by VALUE, not by coincidence

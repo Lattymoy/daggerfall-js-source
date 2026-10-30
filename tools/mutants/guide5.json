@@ -146,8 +146,8 @@
   {
     "name": "GUIDE5-every-diamond-filled",
     "file": "src/ui/ink/inkMap.js",
-    "old": "paintQuestDiamond(ctx, x, cy, r, 1, m.tracked ? PEN.line : null);",
-    "new": "paintQuestDiamond(ctx, x, cy, r, 1, PEN.line);",
+    "old": "  paintQuestDiamond(ctx, x, cy, r, 1, m.tracked ? PEN.line : null);",
+    "new": "  paintQuestDiamond(ctx, x, cy, r, 1, PEN.line);",
     "tests": [
       "test/ui/quest/guide5_marks.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "GUIDE5-diamond-on-the-place",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  const cy = y - (m.lift ?? QUEST_MARK_LIFT), r = 6;",
-    "new": "  const cy = y, r = 6;",
+    "old": "  const cy = y - (m.lift ?? QUEST_MARK_LIFT),",
+    "new": "  const cy = y,",
     "tests": [
       "test/ui/quest/guide5_marks.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "GUIDE5-overlay-skips-quests",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  for (const m of opts.quests ?? []) if (visible(m.x, m.y)) paintQuestMark(ctx, view, m);\n",
-    "new": "",
+    "old": "  for (const m of opts.quests ?? []) if (visible(m.x, m.y)) paintQuestMark(ctx, view, m);\n  // HOME-VENDOR: the trader's waypoint - its coin over the quests' diamonds, its town ringed in gold, under the party",
+    "new": "  // HOME-VENDOR: the trader's waypoint - its coin over the quests' diamonds, its town ringed in gold, under the party",
     "tests": [
       "test/ui/quest/guide5_marks.test.js"
     ]

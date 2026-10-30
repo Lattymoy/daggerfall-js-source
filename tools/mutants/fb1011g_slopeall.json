@@ -20,8 +20,8 @@
   {
     "name": "SLOPE-ALL-c-the-shaders-own-literal",
     "file": "src/ui/ink/inkDungeonGL.js",
-    "old": "    bool climbs = (n.y > ${FNY} && n.y < ${CNY}) ||",
-    "new": "    bool climbs = (n.y > ${FNY} && n.y < 0.97) ||",
+    "old": "    bool climbs = (n.y > ${FNY} && n.y < ${CNY}) || (vN.w > 1.2 && vN.w < 1.5);   // climbsOf",
+    "new": "    bool climbs = (n.y > ${FNY} && n.y < 0.97) || (vN.w > 1.2 && vN.w < 1.5);   // climbsOf",
     "tests": [
       "test/ui/ink/fb1011g_slopeall.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SLOPE-ALL-d-the-tread-unspared",
     "file": "src/ui/ink/inkDungeonGL.js",
-    "old": "    bool climbs = (n.y > ${FNY} && n.y < ${CNY}) || (vN.w > 1.2 && vN.w < 1.5);",
-    "new": "    bool climbs = (n.y > ${FNY} && n.y < ${CNY});",
+    "old": "    bool climbs = (n.y > ${FNY} && n.y < ${CNY}) || (vN.w > 1.2 && vN.w < 1.5);   // climbsOf",
+    "new": "    bool climbs = (n.y > ${FNY} && n.y < ${CNY});   // climbsOf",
     "tests": [
       "test/ui/ink/fb1011g_slopeall.test.js"
     ]

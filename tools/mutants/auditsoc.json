@@ -446,8 +446,8 @@
   {
     "name": "D2-members-on-one-pixel-not-stacked",
     "file": "src/ui/ink/inkMap.js",
-    "old": "(m.stack ?? 0) * PARTY_LABEL_STACK",
-    "new": "0 * PARTY_LABEL_STACK",
+    "old": "    ctx.fillText(m.name, x, y + 9 + (m.stack ?? 0) * PARTY_LABEL_STACK);",
+    "new": "    ctx.fillText(m.name, x, y + 9 + 0 * PARTY_LABEL_STACK);",
     "tests": [
       "test/ui/soc6_partymap.test.js"
     ]
