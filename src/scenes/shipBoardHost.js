@@ -29,9 +29,10 @@ export function createShipBoard(host) {
     // carried a captain over and home again without the crossing, the boat left behind. Leaving the ship always goes
     // back where it was boarded (`boardShipPosition`), whichever side that is
     if (!playerEntity.boardShipPosition && host.veilRefused(t.go)) return;
-    // TR-AUDIT F-F1: READ the reposition, never infer it from `restore`. The two ship pixels are not open sea: (2,2) and
-    // (5,5) are region 31's "Your Ship" locations (HomeYourShips, blocks SHIPAA00/SHIPAA01 - banking.js
-    // SHIP_INTERIOR_MAP_IDS; measured 2026-09-03 on MAPS.BSA). So boarding is an ordinary location arrival:
+    // TR-AUDIT F-F1: READ the reposition, never infer it from `restore`.
+    // MEASURED, 2026-09-03, against the owner's real MAPS.BSA: the two ship pixels are not open sea - (2,2) and (5,5)
+    // are region 31's "Your Ship" locations (HomeYourShips, blocks SHIPAA00/SHIPAA01, banking.js SHIP_INTERIOR_MAP_IDS).
+    // So boarding is an ordinary location arrival:
     // RandomStartMarker (PositionPlayerToLocation, :1437-1447) stands the player on the deck at a random side of the
     // block, not at a terrain origin dropped to sea level. Pinned by tr4_ship.test.js's data gate.
     // AUDIT 68 S22: the height is stood in the arrival's frame (compensation[1] survives state.init); a memory

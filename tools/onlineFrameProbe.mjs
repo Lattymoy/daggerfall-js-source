@@ -89,9 +89,12 @@ export const ONLINE_PROBE_EDITS = Object.freeze([
   // world may carry. Here the world is this run's own, local, and the seams are the instrument
   { file: 'src/systems/online/onlineLane.js', edits: [["export const ONLINE_REFUSED_FLAGS = Object.freeze(['shot', ", 'export const ONLINE_REFUSED_FLAGS = Object.freeze([']] },
   // the composer's hook, and the peers the session draws
-  { file: 'src/scenes/world.js', edits: [['    window.__quickSave = (name) => modes.quickSaveNow(name);', `    window.__quickSave = (name) => modes.quickSaveNow(name);
+  // HOST-SPLIT SHOT-PROBES: the shot block left bootWorld, so the seam stands before its construction, in the host's scope
+  { file: 'src/scenes/world.js', edits: [['  createWorldShotProbes({   // HOST-SPLIT: src/scenes/worldShotProbes.js', `  if (shotMode) {
     window.__probeSaveText = () => { let t = null; modes.quickSaveNow('probe', { quiet: true, sink: (s) => { t = JSON.stringify(s); } }); return t; };
-    window.__probeOnline = () => ({ peers: online ? online.drawable().length : null, status: online ? online.status : null, ways: livingWays.size, frame: window.__frame | 0 });`]] },
+    window.__probeOnline = () => ({ peers: online ? online.drawable().length : null, status: online ? online.status : null, ways: livingWays.size, frame: window.__frame | 0 });
+  }
+  createWorldShotProbes({   // HOST-SPLIT: src/scenes/worldShotProbes.js`]] },
 ]);
 
 /** The page's server's transforms: the frame probe's and this probe's own (exported for test/tooling/perfon4_probes.test.js). */

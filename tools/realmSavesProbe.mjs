@@ -52,13 +52,16 @@ const EDGE_ARGS = ['--disable-backgrounding-occluded-windows', '--disable-render
  *  the HUD says, and the realm's end said on the console (the page leaves for the door). */
 export const REALM_SAVES_PROBE_EDITS = Object.freeze([
   { file: 'src/scenes/world.js', edits: [
-    ['    window.__quickSave = (name) => modes.quickSaveNow(name);', `    window.__quickSave = (name) => modes.quickSaveNow(name);
+    // HOST-SPLIT SHOT-PROBES: before the shot block's construction, in the host's scope, as the online probe's seam
+    ['  createWorldShotProbes({   // HOST-SPLIT: src/scenes/worldShotProbes.js', `  if (shotMode) {
     window.__onlineCheckpoint = () => onlineCheckpoint();
     window.__realmState = () => (realmSession ? { seq: realmSession.seq, lost: realmSession.lost, missedSince: realmSession.missedSince } : null);
     window.__seatOut = () => seatOut();
     window.__rollHeld = () => !!rollTracker?.held; window.__rollStopped = () => rollTracker?.stopped ?? null; window.__rollRep = (f) => rollTracker?.standing(f)?.rep ?? null;
     window.__standing = (f) => playerEntity?.factionRep?.dict?.get(f)?.rep ?? null;
-    { const said = townTalk.say; window.__heard = []; townTalk.say = (line, delay) => { window.__heard.push({ at: Date.now(), line: String(line) }); return said(line, delay); }; }`],
+    { const said = townTalk.say; window.__heard = []; townTalk.say = (line, delay) => { window.__heard.push({ at: Date.now(), line: String(line) }); return said(line, delay); }; }
+  }
+  createWorldShotProbes({   // HOST-SPLIT: src/scenes/worldShotProbes.js`],
     ['  function realmLost(why) {', '  function realmLost(why) {\n    console.info(`[realm] lost: ${why}`);'],
     ['  if (realmBoot?.stranded) townTalk.say(realmStrandedText());', '  if (realmBoot?.stranded) { townTalk.say(realmStrandedText()); window.__strandedSaid = realmStrandedText(); }'],
   ] },

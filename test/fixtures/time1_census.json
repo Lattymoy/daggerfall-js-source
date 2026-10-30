@@ -1029,8 +1029,8 @@
    "count": 2
   },
   {
-   "file": "src/scenes/world.js",
-   "has": "hour: exhibitionFor(worldMinutes()), ran: _arenaHourRun",
+   "file": "src/scenes/worldShotHooks.js",
+   "has": "hour: exhibitionFor(worldMinutes()), ran: host._arenaHourRun",
    "clock": "event",
    "why": "ARENA2: the hour's exhibition, run once an hour"
   },

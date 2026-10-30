@@ -891,3 +891,9 @@ The late probes went the same way: five statements that start at the boot's end 
 `createWorldShotProbes`: sixteen names by value, four live (`_travelMap` written). `bootWorld` 34,479 -> 34,366
 logical lines, the ceiling at it. The tool now refuses a line two statements start on. Two cites in code comments
 (`ambientEffects.js`, `travelControlUI.js`) and `spellbookwindow.test.js` read the new module (PIN MOVED).
+
+The whole suite found what the moves' own tests had not: the online and realm-saves probes inject their seams into
+the host's scope beside `__quickSave`, which left with the late probes, so their needle is now the construction that
+stands where the block stood (`onlineFrameProbe.mjs`, `realmSavesProbe.mjs`, in `if (shotMode)`); the clock census
+row for the exhibition's hour follows its line (`time1_census.json`); `hc1_horsecart.test.js` reads the ship's landing
+through `hostText`; and the board's cut comment keeps the measured sentence `tr4_ship.test.js` quotes.
