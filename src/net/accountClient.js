@@ -181,11 +181,12 @@ const REFUSAL_WORDS = {
   rehearsed: () => t('account.refusal.rehearsed', 'You have rehearsed the Spire today. A Weir Key opens it again.'),
   spent: () => t('account.refusal.spent', 'That breach is spent.'),
   taken: () => t('account.refusal.taken', 'You took the Resonant Maul today. Fell the Colossus again tomorrow for another.'),   // AUDIT-STOREFRONT: the Maul's day (seasonClaim.js)
-  // AURUM (bible/06-Systems/Aurum.md): a daily ware's refusals (server-account/src/aurum.js buyDaily)
+  // AURUM (bible/06-Systems/Aurum.md): a ware's refusals for Aurum (server-account/src/aurum.js buyWare)
   'aurum-guest': () => t('account.refusal.aurumGuest', 'Aurum needs a registered account. Add a username and password first.'),
-  'aurum-closed': () => t('account.refusal.aurumClosed', 'The daily wares are closed for now.'),
+  'aurum-closed': () => t('account.refusal.aurumShut', 'Aurum is closed for now.'),
   'aurum-ware': () => t('account.refusal.aurumWare', 'That is not sold for Aurum.'),
-  'aurum-today': () => t('account.refusal.aurumToday', 'That is no longer among the daily wares. They change each day at midnight, UTC.'),
+  'aurum-sale': () => t('account.refusal.aurumSale', 'That is not on sale now.'),   // AURUM-ONLY
+  'aurum-price': () => t('account.refusal.aurumPrice', 'Its price changed. Check the new price, then buy again.'),   // AURUM-ONLY: a deal turned at midnight
   'aurum-held': () => t('account.refusal.aurumHeld', 'Your account holds that already.'),
   'aurum-short': () => t('account.refusal.aurumShort', 'Your account has too little Aurum for that.'),
   'aurum-busy': () => t('account.refusal.aurumBusy', 'The shop is busy. Try again in a moment.'),
@@ -1374,9 +1375,10 @@ export const equipEffect = (io, slot, key) => call(io, '/v1/account/effect', { s
 /** WITCH1: wear one profile icon, or none (null: the character's face) - the wardrobe after the write. The service refuses
  *  `not-held` for an icon this account does not hold. */
 export const equipIcon = (io, icon) => call(io, '/v1/account/icon', { icon: icon ?? null });
-/** AURUM (bible/06-Systems/Aurum.md): a daily ware bought for Aurum - the wardrobe after it and the Aurum's card. The
- *  service refuses `aurum-short`, `aurum-today` (no longer among the day's wares), `aurum-held` and `aurum-closed`. */
-export const buyDailyWare = (io, ware) => call(io, '/v1/aurum/buy', { ware });
+/** AURUM (bible/06-Systems/Aurum.md): a ware bought for Aurum (AURUM-ONLY: any but a pack) at the `price` the window
+ *  showed - the wardrobe after it and the Aurum's card. The service refuses `aurum-short`, `aurum-sale` (not sold now),
+ *  `aurum-price` (its price moved: a deal turned, a giver's share), `aurum-held` and `aurum-closed`. */
+export const buyAurumWare = (io, ware, price) => call(io, '/v1/aurum/buy', { ware, ...(Number.isSafeInteger(price) ? { price } : {}) });
 /** PASS-PANELS (bible/06-Systems/Battle-Pass.md): a season's premium track (the Gilded Folio) opened for Aurum, and an
  *  item on its tracks bought for Aurum - each the wardrobe after it, the Aurum's card and the pass's. The service refuses
  *  `pass-short`, `pass-held`, `pass-track` (the premium track shut), `pass-panel` (a panel not yet open), `pass-closed`. */

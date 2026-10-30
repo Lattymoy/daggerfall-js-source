@@ -387,7 +387,7 @@ import {
   PATREON_PAGES, PATREON_TICKET_S, PATREON_HOOK_MAX_BYTES, PATREON_CALLBACK_PATH,
 } from './patreon.js';   // PATREON-LINK: a patron's own Patreon, linked
 import { SHOP_OPEN_ROUTES, SHOP_WEBHOOK_PATH, SHOP_HOOK_MAX_BYTES, shopDoor, shopCardOf, closeStale } from './shop.js';   // SHOP: the shop's doors, and its card on the account read
-import { aurumCardOf, buyDaily, AURUM_STATUS } from './aurum.js';   // AURUM: the balance, the day's wares and a ware bought
+import { aurumCardOf, buyWare, AURUM_STATUS } from './aurum.js';   // AURUM: the balance, the day's deals and a ware bought
 import { claimCache, AURUM_CACHE_STATUS } from './aurumCache.js';   // AURUM-CACHES: a cache claimed
 
 // THIS MODULE EXPORTS `default` AND NOTHING ELSE, and that is a
@@ -2428,11 +2428,12 @@ const service = {
       }
 
       if (path === '/v1/aurum/buy') {
-        // AURUM (bible/06-Systems/Aurum.md): A DAILY WARE BOUGHT FOR AURUM - one transaction (aurum.js buyDaily); the answer
-        // is the wardrobe after it and the Aurum's card, so the window shows the ware held and the balance at once.
+        // AURUM (bible/06-Systems/Aurum.md): A WARE BOUGHT FOR AURUM - AURUM-ONLY, any ware but a pack - one transaction
+        // (aurum.js buyWare); the answer is the wardrobe after it and the Aurum's card, so the window shows the ware held
+        // and the balance at once.
         if (request.method !== 'POST') return no('method', 405, origin);
-        const r = await buyDaily(ctx, who.player, body, env);
-        if ('error' in r) return json({ error: r.error, ...(Number.isSafeInteger(r.balance) ? { balance: r.balance } : {}) }, AURUM_STATUS[/** @type {keyof typeof AURUM_STATUS} */ (r.error)] ?? 400, origin);
+        const r = await buyWare(ctx, who.player, body, env);
+        if ('error' in r) return json({ error: r.error, ...(Number.isSafeInteger(r.balance) ? { balance: r.balance } : {}), ...(Number.isSafeInteger(r.price) ? { price: r.price } : {}) }, AURUM_STATUS[/** @type {keyof typeof AURUM_STATUS} */ (r.error)] ?? 400, origin);
         await closeStale(ctx, env, (u, i) => globalThis.fetch(u, i), who.player.id);   // AUDIT-STOREFRONT III A6: a money page for it left open
         const after = await withSeatTitles(ctx, r.row, env);
         return json({ ok: true, ware: r.ware, spent: r.spent, ...accountWardrobe(after, env, nowS), aurum: await aurumCardOf(ctx, after, env) }, 200, origin);

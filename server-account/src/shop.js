@@ -3,13 +3,16 @@
 // shop ... with a strict disclaimer that all proceeds go towards development costs"; bible/06-Systems/Shop.md): THE
 // SHOP'S SIDE OF THE SERVICE. What a ware is lives in src/net/shopLaw.js; this file sells one. Stripe takes the money on
 // its own hosted page, so no card number ever reaches this service, and Stripe's signed word on a payment is the one
-// thing that grants: the ware's bit on the row and a receipt in the mailbox, in one batch.
+// thing that grants: the ware's bit on the row and a receipt in the mailbox, in one batch. AURUM-ONLY (2026-10-30): money
+// buys the Aurum packs alone; every other ware is bought with Aurum (aurum.js buyWare). An order older than that for
+// another ware is still fulfilled, refunded and taken back as it always was.
 // Off until the deploy puts both Stripe secrets (shopOn) - the window then shows the wares with nothing to buy.
 import {
   SHOP_WARES, SHOP_CURRENCY, SHOP_WARE_NAME, SHOP_KIND_NAME, SHOP_ORDER_ID_RE, shopWareById, shopOwns, shopOnSaleOf, shopPriceText, shopReceiptBatch,
-  shopPriceFor, shopHeldIds, shopHeldDirect, shopFeaturedOf, shopFeaturedNow, shopSellable, shopDropped, shopClosure, shopCreditOf, SHOP_CHECKOUT_MS, shopRepeatable,
+  shopHeldIds, shopHeldDirect, shopFeaturedOf, shopFeaturedNow, shopSellable, shopDropped, shopClosure, shopCreditOf, SHOP_CHECKOUT_MS, shopRepeatable,
 } from '../../src/net/shopLaw.js';
 import { aurumSwitchOf } from '../../src/net/aurumLaw.js';   // AURUM: its packs are sold while it is open to every account
+import { dailyWaresAt, aurumPriceAt } from './aurum.js';   // AURUM-ONLY: a ware's Aurum price on the card, today's deals
 import { POST_SENDER } from '../../src/net/postLaw.js';
 import { sealKey, sealUnder, openWith } from './sealed.js';
 import { patreonPage, patreonHtml } from './patreon.js';
@@ -67,6 +70,8 @@ export const shopFeatured = (/** @type {any} */ env) => shopFeaturedOf(env?.SHOP
 const aurumShut = (/** @type {any} */ env, /** @type {any} */ w) => w?.kind === 'aurum' && aurumSwitchOf(env?.AURUM_OPEN) !== 'on';
 /** STOREFRONT: whether a ware is sold at `nowS` (shopLaw.js shopSellable: on sale, inside a limited window). */
 export const shopSoldNow = (/** @type {any} */ env, /** @type {any} */ w, /** @type {number} */ nowS) => shopSellable(w, shopOnSale(env), shopFeatured(env), nowS * 1000) && !aurumShut(env, w);
+/** AURUM-ONLY: whether a ware is sold for MONEY at `nowS` - an Aurum pack sold now, and nothing else. */
+export const shopSoldForMoney = (/** @type {any} */ env, /** @type {any} */ w, /** @type {number} */ nowS) => shopRepeatable(w) && shopSoldNow(env, w, nowS);
 /** STOREFRONT: THE CAROUSEL'S WARES at `nowS`, in order: the schedule's featured wares in its order - each sold now (a
  *  ware featured but off sale is not shown). PASS-PANELS: the pass sells nothing for money, so it leads it no more. */
 export function shopCarousel(/** @type {any} */ env, /** @type {number} */ nowS) {
@@ -89,26 +94,31 @@ export const shopHolds = (/** @type {any} */ player, /** @type {any} */ env, /**
 export const wareLine = (/** @type {any} */ w) => (w.kind === 'aurum' ? SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (w.id)] : `${SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (w.id)] ?? w.key} (${SHOP_KIND_NAME[/** @type {keyof typeof SHOP_KIND_NAME} */ (w.kind)] ?? w.kind})`);
 
 /**
- * THE SHOP'S CARD in the account read: `{ on, wares }`, each ware `{ id, sale, held, buy }` - `buy` a link to this
- * service's own confirm page, its ticket sealed for this account and ware, while the shop is on, the ware on sale and
- * not held, and the account registered (every grant asks one). Patreon's way: the window has the link before it is
- * pressed, so the press opens it at once (a window opened after an await is a popup a phone blocks).
+ * THE SHOP'S CARD in the account read: `{ on, wares }`. AURUM-ONLY: a ware bought with Aurum `{ id, sale, held, price,
+ * deal }` - its price this account's (a giver's share; a quarter off on its deal day, `deal`). An Aurum pack `{ id, sale,
+ * held, buy, cents }` - `buy` a link to this service's own confirm page, its ticket sealed for this account and pack,
+ * while the shop is on and the account registered (every grant asks one). Patreon's way: the window has the link before
+ * it is pressed, so the press opens it at once (a window opened after an await is a popup a phone blocks).
  */
 export async function shopCardOf(/** @type {any} */ player, /** @type {any} */ env, { subtle, rand, nowS, origin }) {
   const on = shopOn(env);
-  const schedule = shopFeatured(env), live = shopFeaturedNow(schedule, nowS * 1000);
+  const schedule = shopFeatured(env), live = shopFeaturedNow(schedule, nowS * 1000), deals = dailyWaresAt(env, nowS);
   const wares = [];
   let key = null;   // derived once a read, at its first Buy link - every account read asks this
   for (const w of SHOP_WARES) {
-    if (!w.alone || !w.cash) continue;   // STOREFRONT: a ware sold only in a bundle has no row of its own; AURUM: nor one sold only for Aurum
-    const isHeld = registered(player) && shopHolds(player, env, w), onSale = shopSoldNow(env, w, nowS);   // ARMORY: a set's pieces, or the set's through its pieces; STOREFRONT: a bundle's wares; ADMIN-ALL
+    if (!w.alone) continue;   // STOREFRONT: a ware sold only in a bundle has no row of its own
+    const isHeld = registered(player) && shopHolds(player, env, w), onSale = shopSoldNow(env, w, nowS) || deals.includes(w.id);   // ARMORY: a set's pieces, or the set's through its pieces; STOREFRONT: a bundle's wares; ADMIN-ALL
     if (!isHeld && !onSale && (!shopDropped(w, schedule, nowS * 1000) || aurumShut(env, w))) continue;   // AUDIT-STOREFRONT S2: nothing upcoming is told; AURUM: no pack while Aurum is shut
-    if (on && onSale && !isHeld && registered(player)) key ??= await sealKey(subtle, String(env.STRIPE_SECRET_KEY), SEAL_SALT, 'buy');
-    const buy = key && onSale && !isHeld
-      ? `${origin}${SHOP_BUY_PATH}?t=${await sealUnder(key, { p: player.id, w: w.id, x: nowS + SHOP_TICKET_S }, { subtle, rand })}`
-      : null;
     const feat = onSale ? live.find((e) => e.id === w.id) : null;   // AUDIT-STOREFRONT S9: a window's end only beside a sale
-    wares.push({ id: w.id, sale: onSale, held: isHeld, buy, cents: (registered(player) ? shopPriceFor(player, w.id) : null) ?? w.cents, ...(feat ? { until: feat.toMs, limited: feat.limited } : {}) });
+    const win = feat ? { until: feat.toMs, limited: feat.limited } : {};
+    if (!w.cash) {   // AURUM-ONLY: no link - the window buys it for Aurum (aurum.js buyWare) at this account's price
+      const at = isHeld ? null : aurumPriceAt(registered(player) ? player : null, w, deals);
+      wares.push({ id: w.id, sale: onSale, held: isHeld, price: at?.price ?? w.price, ...(at?.deal ? { deal: true } : {}), ...win });
+      continue;
+    }
+    if (on && onSale && registered(player)) key ??= await sealKey(subtle, String(env.STRIPE_SECRET_KEY), SEAL_SALT, 'buy');
+    const buy = key && onSale ? `${origin}${SHOP_BUY_PATH}?t=${await sealUnder(key, { p: player.id, w: w.id, x: nowS + SHOP_TICKET_S }, { subtle, rand })}` : null;
+    wares.push({ id: w.id, sale: onSale, held: false, buy, cents: w.cents, ...win });
   }
   return { on, wares, featured: shopCarousel(env, nowS) };
 }
@@ -128,6 +138,7 @@ export const SHOP_PAGES = Object.freeze({
   expired: { heading: 'This link has expired', lines: ['Open the shop in the game and press Buy again.'] },
   account: { heading: 'This account needs a username', lines: ['Give your game account a username and a password, then buy from the shop.'] },
   sold: { heading: 'Not on sale', lines: ['This item is no longer sold. Nothing was charged.'] },
+  aurum: { heading: 'Bought with Aurum', lines: ['Items are bought with Aurum in the shop in the game now. Nothing was charged.'] },   // AURUM-ONLY: a link to an item's page
   held: { heading: 'Already yours', lines: ['Your account holds this item already. Nothing was charged.'] },
   down: { heading: 'The payment page did not open', lines: ['Nothing was charged. Wait a minute, then press Buy in the game again.'] },
   rate: { heading: 'Too many tries', lines: ['Wait a few minutes, then press Buy in the game again.'] },
@@ -228,12 +239,12 @@ export async function shopCheckout(ctx, env, claims, { fetch, origin }) {
   const { db, nowS, rand } = ctx;
   const ware = shopWareById(claims?.w);
   if (!ware) return { page: 'expired' };
-  if (!shopSoldNow(env, ware, nowS)) return { page: 'sold' };
+  if (!shopRepeatable(ware)) return { page: 'aurum' };   // AURUM-ONLY: a ticket for an item, sealed before the switch
+  if (!shopSoldForMoney(env, ware, nowS)) return { page: 'sold' };
   const player = await db.prepare(`SELECT id, handle, staff_suspended, ${HELD_COLS} FROM players WHERE id = ?1`).bind(claims.p).first();
   if (!registered(player)) return { page: 'account' };
   if (shopHolds(player, env, ware)) return { page: 'held' };   // ADMIN-ALL: an admin's too
-  const cents = shopPriceFor(player, ware.id) ?? ware.cents;   // STOREFRONT: a bundle's price for this account - what it does not hold yet
-  const credit = shopCreditOf(player, ware.id).join(' ');   // AUDIT-STOREFRONT S1: what that price took off, kept on the order
+  const cents = ware.cents, credit = '';   // AURUM-ONLY: a pack's price is its own, and it gives nothing held
   // an open page at another price (a ware bought meanwhile that the bundle holds) is not gone back to: a new order is priced now
   const open = await db.prepare("SELECT stripe_url FROM shop_orders WHERE player = ?1 AND ware = ?2 AND cents = ?4 AND credit = ?5 AND status = 'open' AND expires_at > ?3 AND stripe_url IS NOT NULL ORDER BY created_at DESC LIMIT 1")
     .bind(player.id, ware.id, nowS + 60, cents, credit).first();
@@ -417,7 +428,7 @@ const rowWrite = (/** @type {any} */ db, /** @type {string} */ player, /** @type
     .bind(player, after.shop_wares, after.shop_held, before.shop_wares, before.shop_held);
 const heldRow = (/** @type {any} */ db, /** @type {string} */ player) => db.prepare(`SELECT ${HELD_COLS} FROM players WHERE id = ?1`).bind(player).first();
 /** An account's other paid orders - what else covers its wares - and AUDIT-STOREFRONT III A5 its wares bought for Aurum
- *  (aurum.js buyDaily's `buy` lines), each its own holder for good: a money refund never takes a ware Aurum paid for. */
+ *  (aurum.js buyWare's `buy` lines), each its own holder for good: a money refund never takes a ware Aurum paid for. */
 const paidOthers = async (/** @type {any} */ db, /** @type {any} */ order) => {
   const paid = (await db.prepare("SELECT id, ware, credit FROM shop_orders WHERE player = ?1 AND status = 'paid' AND id <> ?2").bind(order.player, order.id).all())?.results ?? [];
   const bought = (await db.prepare("SELECT ref FROM aurum_ledger WHERE account = ?1 AND kind = 'buy'").bind(order.player).all())?.results ?? [];
@@ -540,11 +551,11 @@ export async function fulfilOrder({ db, nowS }, orderId, { intent = null, amount
 }
 
 /** AUDIT-STOREFRONT S3: an account's open pages that a grant left wrong - for a ware it now holds, or at a price that is
- *  no longer its own - closed. AUDIT-STOREFRONT III A6: a daily ware bought for Aurum is such a grant (index.js). */
+ *  no longer its own - closed. AUDIT-STOREFRONT III A6: a ware bought for Aurum is such a grant (index.js). AURUM-ONLY: a
+ *  pack's own price is its page's; any other ware's page is no longer a price, so it closes. */
 export async function closeStale(/** @type {{ db: any, nowS: number }} */ ctx, /** @type {any} */ env, /** @type {typeof fetch|undefined} */ fetch, /** @type {string} */ player) {
-  const row = await heldRow(ctx.db, player);
   const open = (await ctx.db.prepare("SELECT id, ware, cents, stripe_session FROM shop_orders WHERE player = ?1 AND status = 'open'").bind(player).all())?.results ?? [];
-  await closePages(ctx, env, fetch, open.filter((/** @type {any} */ o) => shopPriceFor(row, o.ware) !== o.cents));
+  await closePages(ctx, env, fetch, open.filter((/** @type {any} */ o) => { const w = shopWareById(o.ware); return !w || !shopRepeatable(w) || w.cents !== o.cents; }));
 }
 
 /**
@@ -692,13 +703,11 @@ export async function shopDoor(ctx, env, path, { method, url, bytes, signature, 
     const claims = await openShopTicket(ticket, env, ctx);
     if (!claims) return shopHtml(SHOP_PAGES.expired, 400);
     const ware = /** @type {any} */ (shopWareById(claims.w));
-    if (!shopSoldNow(env, ware, ctx.nowS)) return shopHtml(SHOP_PAGES.sold, 410);
+    if (!shopRepeatable(ware)) return shopHtml(SHOP_PAGES.aurum, 410);   // AURUM-ONLY
+    if (!shopSoldForMoney(env, ware, ctx.nowS)) return shopHtml(SHOP_PAGES.sold, 410);
     const player = await ctx.db.prepare(`SELECT id, handle, staff_suspended, ${HELD_COLS} FROM players WHERE id = ?1`).bind(claims.p).first();
     if (!registered(player)) return shopHtml(SHOP_PAGES.account, 403);
-    if (shopHolds(player, env, ware)) return shopHtml(SHOP_PAGES.held, 409);   // ADMIN-ALL: an admin's too
-    const held = shopHeldIds(player);
-    const holds = ware.gives.filter((g) => held.includes(g)).length, part = !holds && shopCreditOf(player, ware.id).length > 0;
-    return shopHtml(shopConfirmPage({ handle: player.handle, ware, ticket, cents: shopPriceFor(player, ware.id) ?? ware.cents, holds, part }));   // NOTHING IS WRITTEN on a GET
+    return shopHtml(shopConfirmPage({ handle: player.handle, ware, ticket, cents: ware.cents }));   // NOTHING IS WRITTEN on a GET
   }
   if (method !== 'POST') return { json: { error: 'method' }, status: 405 };
   const claims = await openShopTicket(new URLSearchParams(bytes ? dec.decode(bytes) : '').get('ticket'), env, ctx);

@@ -1,14 +1,16 @@
 // @ts-check
 // SHOP (2026-10-28, bible/06-Systems/Shop.md; STOREFRONT 2026-10-29, Storefront.md): THE SHOP'S LAW, read by the account
 // service (server-account/src/shop.js), the pause face's window (ui/enhanced/enhancedShop.js) and the Collections page. A
-// ware is a cosmetic the ACCOUNT keeps, bought once with money: the service records the sale on the row, so what is held
-// is read off the row at every ask (server-account/src/titles.js), and the relay sees it only in the signed token.
+// ware is a cosmetic the ACCOUNT keeps, bought once: the service records the sale on the row, so what is held is read
+// off the row at every ask (server-account/src/titles.js), and the relay sees it only in the signed token. AURUM-ONLY
+// (2026-10-30, the owner: "nothing should cost money money anymore ... Aurem purchase itself should be the only thing"):
+// every ware is bought with Aurum, and money buys the Aurum packs alone.
 // Pure. Not a DFU member - Daggerfall Unity has no accounts. Ledger A (SHOP, STOREFRONT).
 import { TITLES, AURAS, GLYPHS, ICONS } from './identityToken.js';
 import { ARMORY_PIECES, ARMORY_NAME, ARMORY_SETS, armoryLinePieces } from './armoryLaw.js';   // ARMORY: the Aura Armory's shop pieces and its set - armoryLaw.js imports nothing
 import { EFFECTS, effectOf } from './effectLaw.js';   // STOREFRONT: the kill effects, portal skins and mount looks - a leaf
 
-/** The currency every price is charged in, as Stripe spells it. */
+/** The currency a pack is charged in, as Stripe spells it. */
 export const SHOP_CURRENCY = 'usd';
 /** STOREFRONT: the least a checkout may charge - Stripe's own floor for a dollar charge. */
 export const SHOP_MIN_CENTS = 50;
@@ -26,59 +28,65 @@ export const SHOP_KIND_CATEGORY = Object.freeze({
 export const SHOP_TIERS = Object.freeze(['standard', 'premium', 'exclusive']);
 
 /**
- * One ware. `cents` its price in US cents (a ware never sold alone: its worth in a bundle); `bit` its bit on
+ * One ware. `price` its price in Aurum (a ware never sold alone: its worth in a bundle); an Aurum pack's `cents` its
+ * price in US cents and `aurum` the Aurum it gives - a pack alone is sold for money (`cash`). `bit` its bit on
  * `players.shop_wares` (the first nine only, never renumbered: a stored bit is a sale) or 0 for one held by its id in
- * `players.shop_held`. `gives` what it holds for its holder; `alone` false for a bundle's alone. AURUM: `cash` false
- * for Aurum alone (the daily wares); `aurum` a pack's.
- * @param {string} kind @param {string} key @param {number} cents
- * @param {{ bit?: number, tier?: string|null, gives?: string[], alone?: boolean, preAlpha?: boolean, cash?: boolean, aurum?: number }} [o]
+ * `players.shop_held`. `gives` what it holds for its holder; `alone` false for a bundle's alone.
+ * @param {string} kind @param {string} key @param {number} price - Aurum, or a pack's US cents
+ * @param {{ bit?: number, tier?: string|null, gives?: string[], alone?: boolean, preAlpha?: boolean, aurum?: number }} [o]
  */
-const ware = (kind, key, cents, { bit = 0, tier = null, gives = [], alone = true, preAlpha = false, cash = true, aurum = 0 } = {}) => Object.freeze({
-  id: `${kind}:${key}`, kind, key, category: SHOP_KIND_CATEGORY[/** @type {keyof typeof SHOP_KIND_CATEGORY} */ (kind)], cents, bit, preAlpha, tier,
-  gives: Object.freeze([...gives]), alone, cash, aurum,
+const ware = (kind, key, price, { bit = 0, tier = null, gives = [], alone = true, preAlpha = false, aurum = 0 } = {}) => Object.freeze({
+  id: `${kind}:${key}`, kind, key, category: SHOP_KIND_CATEGORY[/** @type {keyof typeof SHOP_KIND_CATEGORY} */ (kind)],
+  price: kind === 'aurum' ? 0 : price, cents: kind === 'aurum' ? price : 0, bit, preAlpha, tier,
+  gives: Object.freeze([...gives]), alone, cash: kind === 'aurum', aurum,
 });
-/** AURUM: a profile icon sold only for Aurum - its worth in cents, should a bundle ever give it. */
-const icon = (/** @type {string} */ key, /** @type {number} */ cents, /** @type {string} */ tier) => ware('icon', key, cents, { tier, cash: false });
+const icon = (/** @type {string} */ key, /** @type {number} */ price, /** @type {string} */ tier) => ware('icon', key, price, { tier });
 const pre = (/** @type {number} */ bit) => ({ bit, preAlpha: true });
-/** THE PRICE CAP (the owner, 2026-10-29: "the most expensive anything should be is $30"): no ware, bundle or pack costs
- *  more, in US cents; a pin holds every ware to it. */
+/** THE PRICE CAP (the owner, 2026-10-29: "the most expensive anything should be is $30"): no pack costs more, in US
+ *  cents, and (AURUM-ONLY) no ware more Aurum than the cap at SHOP_AURUM_PER_DOLLAR; a pin holds every ware to it. */
 export const SHOP_PRICE_CAP = 3000;
+/** AURUM-ONLY (the owner chose "$1 = 100 Aurum"): a ware's Aurum price is its old dollar price at the smallest pack's
+ *  rate, to the whole dollar - a bigger pack's bonus makes every ware cheaper bought in bulk. */
+export const SHOP_AURUM_PER_DOLLAR = 100;
+export const SHOP_AURUM_CAP = (SHOP_PRICE_CAP / 100) * SHOP_AURUM_PER_DOLLAR;
+/** AURUM-ONLY: the least a giver's share may cost in Aurum, as SHOP_MIN_CENTS bounds a money charge. */
+export const SHOP_MIN_PRICE = 50;
 /** THE WARES, in the window's order within each section. The pre-alpha nine are the owner's (SHOP, ARMORY); the rest are
  *  the sheet's (STOREFRONT, Storefront.md sections 2-8). */
 export const SHOP_WARES = Object.freeze([
-  // Every price under SHOP_PRICE_CAP (AUDIT-STOREFRONT II): the sheet's tiers kept, each ware about half the sheet's.
-  // PASS-PANELS: the Battle Pass sells nothing for money - its tracks are opened and bought with Aurum (battlePassLaw.js)
-  ware('kill', 'ashen', 499, { tier: 'standard' }),
-  ware('kill', 'voidrend', 999, { tier: 'premium' }),
-  ware('kill', 'pyre', 1499, { tier: 'exclusive' }),
-  ware('portal', 'runic', 799, { tier: 'standard' }),
-  ware('portal', 'daedric', 1299, { tier: 'premium' }),
-  ware('portal', 'aetheric', 1999, { tier: 'exclusive' }),
-  ware('mount', 'spectral', 999, { tier: 'standard' }),
-  ware('mount', 'dawnfire', 1499, { tier: 'premium' }),
-  ware('mount', 'warhorse', 2499, { tier: 'exclusive' }),
+  // Every price under SHOP_AURUM_CAP: the sheet's tiers kept (AUDIT-STOREFRONT II's dollar prices, each at
+  // SHOP_AURUM_PER_DOLLAR). PASS-PANELS: the Folios' items are their own tracks' (battlePassLaw.js)
+  ware('kill', 'ashen', 500, { tier: 'standard' }),
+  ware('kill', 'voidrend', 1000, { tier: 'premium' }),
+  ware('kill', 'pyre', 1500, { tier: 'exclusive' }),
+  ware('portal', 'runic', 800, { tier: 'standard' }),
+  ware('portal', 'daedric', 1300, { tier: 'premium' }),
+  ware('portal', 'aetheric', 2000, { tier: 'exclusive' }),
+  ware('mount', 'spectral', 1000, { tier: 'standard' }),
+  ware('mount', 'dawnfire', 1500, { tier: 'premium' }),
+  ware('mount', 'warhorse', 2500, { tier: 'exclusive' }),
   ware('title', 'genesis', 500, pre(1)),
   ware('glyph', 'origin', 200, pre(2)),
-  ware('title', 'dawnbringer', 399, { tier: 'standard' }),
-  ware('title', 'voidwalker', 699, { tier: 'premium' }),
-  ware('title', 'eternalchampion', 999, { tier: 'exclusive' }),
-  ware('glyph', 'oblivion', 299, { alone: false }),
-  ware('glyph', 'gatesigil', 299, { alone: false }),
+  ware('title', 'dawnbringer', 400, { tier: 'standard' }),
+  ware('title', 'voidwalker', 700, { tier: 'premium' }),
+  ware('title', 'eternalchampion', 1000, { tier: 'exclusive' }),
+  ware('glyph', 'oblivion', 300, { alone: false }),
+  ware('glyph', 'gatesigil', 300, { alone: false }),
   ware('aura', 'eternal', 2000, pre(4)),
-  ware('aura', 'dominion', 1499, { alone: false }),
+  ware('aura', 'dominion', 1500, { alone: false }),
   // ARMORY (bible/04-Characters/Aura-Armory.md section 4): the Eternal line - the owner: "The store set should be $20" -
-  // whole at $20, and a piece a slot at $6; the Dagonfire line is the Sigil Broker's, never sold for money
+  // whole at 2,000 Aurum, and a piece a slot at 600; the Dagonfire line is the Sigil Broker's, never in the shop
   ware('armory', 'eternalset', 2000, { ...pre(256), gives: armoryLinePieces(ARMORY_SETS.eternalset).map((p) => `armory:${p.key}`) }),
   ware('armory', 'eternalhalo', 600, pre(8)),
   ware('armory', 'eternalsigil', 600, pre(16)),
   ware('armory', 'eternalarmlets', 600, pre(32)),
   ware('armory', 'eternalgreaves', 600, pre(64)),
   ware('armory', 'eternaledge', 600, pre(128)),
-  ware('bundle', 'daedricchampion', 2799, { tier: 'exclusive', gives: ['aura:dominion', 'kill:pyre', 'title:eternalchampion', 'glyph:oblivion'] }),
-  ware('bundle', 'portalmaster', 1999, { tier: 'premium', gives: ['portal:daedric', 'aura:dominion', 'glyph:gatesigil'] }),
-  ware('bundle', 'lordofoblivion', 2999, { tier: 'exclusive', gives: ['mount:warhorse', 'portal:daedric', 'aura:dominion', 'kill:pyre'] }),
-  // AURUM (bible/06-Systems/Aurum.md): the profile icons the daily wares sell, and the Aurum's packs - bought again and
-  // again, never held (shopRepeatable); a bigger pack gives more for each dollar
+  ware('bundle', 'daedricchampion', 2800, { tier: 'exclusive', gives: ['aura:dominion', 'kill:pyre', 'title:eternalchampion', 'glyph:oblivion'] }),
+  ware('bundle', 'portalmaster', 2000, { tier: 'premium', gives: ['portal:daedric', 'aura:dominion', 'glyph:gatesigil'] }),
+  ware('bundle', 'lordofoblivion', 3000, { tier: 'exclusive', gives: ['mount:warhorse', 'portal:daedric', 'aura:dominion', 'kill:pyre'] }),
+  // AURUM (bible/06-Systems/Aurum.md): the profile icons, and the Aurum's packs - bought again and again for money,
+  // never held (shopRepeatable); a bigger pack gives more for each dollar
   icon('gatefire', 300, 'premium'), icon('aurbis', 400, 'exclusive'), icon('elderscroll', 300, 'premium'), icon('azurastar', 300, 'premium'),
   icon('redmountain', 400, 'exclusive'), icon('hourglass', 300, 'standard'), icon('sanguinerose', 200, 'standard'), icon('whitegold', 200, 'standard'),
   ware('aurum', '500', 499, { tier: 'standard', aurum: 500 }),
@@ -92,9 +100,10 @@ const OWN_NAME = Object.freeze({
   'title:dawnbringer': 'Dawnbringer', 'title:voidwalker': 'Voidwalker', 'title:eternalchampion': 'Eternal Champion',
   'glyph:oblivion': 'Oblivion Sigil', 'glyph:gatesigil': 'Gate Sigil', 'aura:dominion': 'Daedric Dominion',
   'bundle:daedricchampion': 'Daedric Champion', 'bundle:portalmaster': 'Portal Master', 'bundle:lordofoblivion': 'Lord of Oblivion',
-  'aurum:500': '500 Aurum', 'aurum:1100': '1,100 Aurum', 'aurum:2400': '2,400 Aurum', 'aurum:3900': '3,900 Aurum',   // AURUM: Stripe's line and the receipt; an icon is never sold for money, so never named here
+  'aurum:500': '500 Aurum', 'aurum:1100': '1,100 Aurum', 'aurum:2400': '2,400 Aurum', 'aurum:3900': '3,900 Aurum',   // AURUM: Stripe's line and the receipt
 });
-/** A ware's name and kind in English, for the service's pages, Stripe's line and the receipt. */
+/** A ware's name and kind in English, for the service's pages, Stripe's line and the receipt (a money order's, older
+ *  than AURUM-ONLY, names its ware still). */
 export const SHOP_WARE_NAME = Object.freeze({
   'title:genesis': 'Genesis', 'glyph:origin': 'Origin', 'aura:eternal': 'Eternal',
   ...Object.fromEntries([...ARMORY_PIECES.filter((p) => p.source === 'shop').map((p) => p.key), ...Object.keys(ARMORY_SETS)].map((k) => [`armory:${k}`, ARMORY_NAME[/** @type {keyof typeof ARMORY_NAME} */ (k)]])),
@@ -186,31 +195,32 @@ export const shopKeysOf = (/** @type {unknown} */ row, /** @type {string} */ kin
   const held = shopHeldIds(row);
   return SHOP_WARES.filter((w) => w.kind === kind && !w.gives.length && held.includes(w.id)).map((w) => w.key);
 };
-/** STOREFRONT: A WARE'S WORTH - its price, or for a giver what it gives and its own beside them, at their worth. Pure. */
+/** STOREFRONT: A WARE'S WORTH in Aurum - its price, or for a giver what it gives, at their worth. Pure. */
 export function shopWorth(/** @type {unknown} */ id) {
   const w = shopWareById(id);
   if (!w) return 0;
-  return w.gives.length ? w.gives.reduce((a, g) => a + shopWorth(g), 0) : w.cents;
+  return w.gives.length ? w.gives.reduce((a, g) => a + shopWorth(g), 0) : w.price;
 }
 /** The worth of what a ware gives that `held` (ware ids, as shopHeldIds answers) does not - 0 once all of it is held. */
 function worthLeft(/** @type {any} */ w, /** @type {ReadonlyArray<string>} */ held) {
   if (!w || held.includes(w.id)) return 0;
-  return w.gives.length ? w.gives.reduce((a, /** @type {string} */ g) => a + worthLeft(shopWareById(g), held), 0) : w.cents;
+  return w.gives.length ? w.gives.reduce((a, /** @type {string} */ g) => a + worthLeft(shopWareById(g), held), 0) : w.price;
 }
 /** Whether a row holds what a ware gives - its own id, or everything it gives: a ware so held is not sold again. Pure. */
 export const shopOwns = (/** @type {unknown} */ row, /** @type {string} */ id) => {
   const w = shopWareById(id);
   return !!w && worthLeft(w, shopHeldIds(row)) === 0;
 };
-/** STOREFRONT: A WARE'S PRICE FOR A ROW - a giver's price times the share of its worth not yet held (never under
- *  SHOP_MIN_CENTS), any other ware's own; null when it is owned. The service charges it and the window shows it. Pure. */
+/** STOREFRONT: A WARE'S PRICE FOR A ROW, in Aurum - a giver's price times the share of its worth not yet held (never
+ *  under SHOP_MIN_PRICE), any other ware's own; null when it is owned, and for a pack (its price is its `cents`). The
+ *  service charges it and the window shows it. Pure. */
 export function shopPriceFor(/** @type {unknown} */ row, /** @type {string} */ id) {
   const w = shopWareById(id);
-  if (!w) return null;
+  if (!w || shopRepeatable(w)) return null;
   const left = worthLeft(w, shopHeldIds(row));
   if (left === 0) return null;
-  if (!w.gives.length) return w.cents;
-  return Math.max(SHOP_MIN_CENTS, Math.min(w.cents, Math.round((w.cents * left) / shopWorth(w.id))));
+  if (!w.gives.length) return w.price;
+  return Math.max(SHOP_MIN_PRICE, Math.min(w.price, Math.round((w.price * left) / shopWorth(w.id))));
 }
 
 /** WHAT IS ON SALE, off the service's config (`SHOP_ON_SALE = "title:genesis,glyph:origin,aura:eternal"`): the wares it
@@ -258,11 +268,11 @@ export function shopFeaturedNow(/** @type {ReadonlyArray<{ id: string, fromMs: n
   for (const e of list) if (nowMs >= e.fromMs && nowMs < e.toMs && !seen.has(e.id)) { seen.add(e.id); out.push(e); }
   return out;
 }
-/** WHETHER A WARE IS SOLD FOR MONEY AT `nowMs`: sold alone and for money, named on sale, never before its first featured
- *  window (a drop is news when it lands), and - for a ware the schedule marks limited - inside one of its limited
- *  windows. Pure. */
+/** WHETHER A WARE IS SOLD AT `nowMs` (AURUM-ONLY: a pack for money, any other for Aurum): sold alone, named on sale,
+ *  never before its first featured window (a drop is news when it lands), and - for a ware the schedule marks limited -
+ *  inside one of its limited windows. Pure. */
 export function shopSellable(/** @type {any} */ w, /** @type {ReadonlyArray<string>} */ onSale, /** @type {ReadonlyArray<any>} */ featured, /** @type {number} */ nowMs) {
-  if (!w?.alone || !w.cash || !onSale.includes(w.id)) return false;
+  if (!w?.alone || !onSale.includes(w.id)) return false;
   const mine = featured.filter((e) => e.id === w.id);
   if (mine.some((e) => e.bad)) return false;
   if (mine.length && nowMs < Math.min(...mine.map((e) => e.fromMs))) return false;
@@ -297,9 +307,10 @@ export const shopReceiptBatch = (/** @type {string} */ orderId) => `shop-${order
 
 /**
  * THE SHOP'S CARD as the account read carries it (`/v1/account`'s `shop`), checked on the way in: `{ on, wares, featured }`
- * - `on` whether the service takes payments, each ware `{ id, sale, held, buy, cents, until, limited }` (`buy` the
- * service's own https link, or null; `cents` this account's price, a giver's share; `until` the end of its featured window
- * now, or null), `featured` the carousel's ware ids in order. Null for anything else, which draws nothing to buy. Pure.
+ * - `on` whether the service takes payments, each ware `{ id, sale, held, buy, cents, price, deal, until, limited }`
+ * (AURUM-ONLY: a pack's `buy` the service's own https link or null and `cents` its money price; any other ware's `price`
+ * this account's in Aurum - a giver's share, or `deal` today's (net/aurumLaw.js aurumDealOf); `until` the end of its
+ * featured window now, or null), `featured` the carousel's ware ids in order. Null for anything else. Pure.
  * @param {any} card
  */
 export function shopCardOf(card) {
@@ -309,10 +320,12 @@ export function shopCardOf(card) {
   for (const r of rows) {
     const w = shopWareById(r?.id);
     if (!w || wares.some((x) => x.id === w.id)) continue;
-    const buy = typeof r.buy === 'string' && r.buy.startsWith('https://') && r.buy.length <= 2048 ? r.buy : null;
-    const cents = Number.isSafeInteger(r.cents) && r.cents >= SHOP_MIN_CENTS && r.cents <= w.cents ? r.cents : w.cents;
+    const buy = w.cash && typeof r.buy === 'string' && r.buy.startsWith('https://') && r.buy.length <= 2048 ? r.buy : null;
+    const cents = w.cash && Number.isSafeInteger(r.cents) && r.cents >= SHOP_MIN_CENTS && r.cents <= w.cents ? r.cents : w.cents;
+    const price = !w.cash && Number.isSafeInteger(r.price) && r.price > 0 && r.price <= w.price ? r.price : w.price;
     const until = Number.isSafeInteger(r.until) && r.until > 0 ? r.until : null;
-    wares.push({ id: w.id, sale: r.sale === true, held: r.held === true, buy: card.on && r.sale === true && r.held !== true ? buy : null, cents, until, limited: until !== null && r.limited === true });
+    wares.push({ id: w.id, sale: r.sale === true, held: r.held === true, buy: card.on && r.sale === true && r.held !== true ? buy : null, cents, price,
+      deal: !w.cash && r.deal === true, until, limited: until !== null && r.limited === true });
   }
   const featured = (Array.isArray(card.featured) ? card.featured : []).filter((/** @type {unknown} */ id, /** @type {number} */ i, /** @type {unknown[]} */ a) => wares.some((x) => x.id === id) && a.indexOf(id) === i);
   return { on: card.on, wares, featured };

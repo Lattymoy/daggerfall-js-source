@@ -2,7 +2,8 @@
 // AURUM (2026-10-29, the owner: "Implement a currency that can be earned ingame and through the past + purchased to be
 // used to purchase a selection of rotating items daily"; bible/06-Systems/Aurum.md): THE AURUM'S LAW, read by the account
 // service (server-account/src/aurum.js) and the shop's window. Aurum is the account's and buys cosmetics alone - never
-// traded, never gold, never power (THE CEILING HOLDS). Pure. Not a DFU member. Ledger A (AURUM).
+// traded, never gold, never power (THE CEILING HOLDS). AURUM-ONLY (2026-10-30): it buys every ware in the shop, and
+// the daily wares are the day's deals. Pure. Not a DFU member. Ledger A (AURUM).
 import { SHOP_WARES, shopWareById } from './shopLaw.js';
 
 const DAY_MS = 86_400_000;
@@ -33,18 +34,21 @@ export function aurumBonusOf(/** @type {unknown} */ id) {
   return Math.max(0, Math.round(((w.aurum / w.cents) / (base.aurum / base.cents) - 1) * 100));
 }
 
-// ═══ SPENT: THE DAILY WARES ═══════════════════════════════════════════════════════════════════════════════════════════
-const daily = (/** @type {string} */ id, /** @type {number} */ aurum, /** @type {'effect'|'name'|'icon'} */ slot) => Object.freeze({ id, aurum, slot });
-/** WHAT THE DAILY WARES DRAW FROM, each with its price in Aurum and its slot - a ware sold for money too a little under its
- *  price at the smallest pack's rate (SHOP_PRICE_CAP's prices, AUDIT-STOREFRONT II). The shop's effects and name visuals (also
- *  sold for money) and the profile icons sold for Aurum alone. A season's items never: its tracks are how they are had. */
+// ═══ SPENT: THE DAILY DEALS ═══════════════════════════════════════════════════════════════════════════════════════════
+/** AURUM-ONLY (the owner chose "Daily deals"): the share of its price a ware costs on its deal day - a quarter off. */
+export const AURUM_DEAL = 0.75;
+/** A price on its deal day, in whole Aurum. Pure. */
+export const aurumDealOf = (/** @type {number} */ price) => Math.round(price * AURUM_DEAL);
+const daily = (/** @type {string} */ id, /** @type {'effect'|'name'|'icon'} */ slot) => Object.freeze({ id, aurum: aurumDealOf(/** @type {any} */ (shopWareById(id))?.price ?? 0), slot });
+/** WHAT THE DAILY DEALS DRAW FROM, each with its deal price and its slot: the shop's effects, name visuals and profile
+ *  icons. A season's items never: its tracks are how they are had. */
 export const AURUM_DAILY = Object.freeze([
-  daily('kill:ashen', 400, 'effect'), daily('kill:voidrend', 900, 'effect'), daily('kill:pyre', 1300, 'effect'),
-  daily('portal:runic', 700, 'effect'), daily('portal:daedric', 1200, 'effect'), daily('portal:aetheric', 1800, 'effect'),
-  daily('mount:spectral', 900, 'effect'), daily('mount:dawnfire', 1300, 'effect'), daily('mount:warhorse', 2200, 'effect'),
-  daily('title:dawnbringer', 300, 'name'), daily('title:voidwalker', 600, 'name'), daily('title:eternalchampion', 900, 'name'),
-  daily('icon:gatefire', 300, 'icon'), daily('icon:aurbis', 400, 'icon'), daily('icon:elderscroll', 300, 'icon'), daily('icon:azurastar', 300, 'icon'),
-  daily('icon:redmountain', 400, 'icon'), daily('icon:hourglass', 300, 'icon'), daily('icon:sanguinerose', 200, 'icon'), daily('icon:whitegold', 200, 'icon'),
+  daily('kill:ashen', 'effect'), daily('kill:voidrend', 'effect'), daily('kill:pyre', 'effect'),
+  daily('portal:runic', 'effect'), daily('portal:daedric', 'effect'), daily('portal:aetheric', 'effect'),
+  daily('mount:spectral', 'effect'), daily('mount:dawnfire', 'effect'), daily('mount:warhorse', 'effect'),
+  daily('title:dawnbringer', 'name'), daily('title:voidwalker', 'name'), daily('title:eternalchampion', 'name'),
+  daily('icon:gatefire', 'icon'), daily('icon:aurbis', 'icon'), daily('icon:elderscroll', 'icon'), daily('icon:azurastar', 'icon'),
+  daily('icon:redmountain', 'icon'), daily('icon:hourglass', 'icon'), daily('icon:sanguinerose', 'icon'), daily('icon:whitegold', 'icon'),
 ]);
 /** How many of each slot a day shows, in the window's order. */
 export const AURUM_DAILY_SLOTS = Object.freeze({ effect: 2, name: 1, icon: 2 });
@@ -53,7 +57,7 @@ export const AURUM_DAILY_SLOTS = Object.freeze({ effect: 2, name: 1, icon: 2 });
 export const AURUM_DAILY_FROM = Math.floor(Date.UTC(2026, 9, 1) / DAY_MS);
 /** A daily ware by its id, or null. */
 export const aurumDailyById = (/** @type {unknown} */ id) => AURUM_DAILY.find((d) => d.id === id) ?? null;
-/** The Aurum a ware costs in the daily wares, or 0 for none. */
+/** The Aurum a ware costs on its deal day, or 0 for none the deals draw from. */
 export const aurumPriceOf = (/** @type {unknown} */ id) => aurumDailyById(id)?.aurum ?? 0;
 /** When a day's wares give way to the next (ms): the next midnight, UTC. Pure. */
 export const aurumDayEndMs = (/** @type {number} */ day) => (day + 1) * DAY_MS;

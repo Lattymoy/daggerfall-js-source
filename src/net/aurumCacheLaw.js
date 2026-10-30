@@ -6,12 +6,16 @@
 // cache in the same spot on every client. A leaf: no imports. Not a DFU member. Ledger A (AURUM-CACHES).
 
 const DAY_S = 86_400;
+// AURUM-CACHES BALANCE (2026-10-30, the owner: "ensure the aurem caches are balanced", once AURUM-ONLY priced every ware
+// in Aurum): at 15 Aurum in one dungeon in five a visit was worth 3 Aurum, a tenth of its finds, and a regular player
+// earned 9% of a week from caches. Now a cache is worth two and a half quests' finds, a regular player (four dungeons a
+// day) finds about one a day, and the day's most stays under the finds' own 100 (Aurum.md section 3a, Balance).
 /** The Aurum one cache gives. */
-export const AURUM_CACHE_AURUM = 15;
+export const AURUM_CACHE_AURUM = 25;
 /** The caches an account may claim in one UTC day. */
 export const AURUM_CACHE_DAY_MAX = 3;
-/** The share of places that hold a cache on a day: one in five. */
-export const AURUM_CACHE_SHARE = 0.2;
+/** The share of places that hold a cache on a day: one in four. */
+export const AURUM_CACHE_SHARE = 0.25;
 /** A dungeon's id as the professions key it (scenes/dungeonIdentity.js): an unsigned 32-bit number - net/nodeLaw.js
  *  DUNGEON_ID_MAX, pinned equal. */
 export const AURUM_CACHE_DUNGEON_MAX = 0xffffffff;

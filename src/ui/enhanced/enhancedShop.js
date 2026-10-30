@@ -6,7 +6,7 @@
 // STOREFRONT's carousel of the featured wares (2026-10-29, the owner: "a rotating panel carousel with limited featured
 // items"; bible/06-Systems/Storefront.md section 9), then a tab a section and in each a panel a ware - seen live - its
 // tier, the price it costs this account, and Buy, which opens Stripe's page. PASS-PANELS: the Folios (enhancedPass.js).
-import { SHOP_WARES, SHOP_CATEGORIES, SHOP_TIERS, shopPriceText, shopWareById, shopWorth, shopClosure } from '../../net/shopLaw.js';
+import { SHOP_WARES, SHOP_CATEGORIES, SHOP_TIERS, shopPriceText, shopWareById, shopWorth, shopClosure, shopRepeatable } from '../../net/shopLaw.js';
 import { TERMS_URL } from '../../net/legalLaw.js';
 import { titleBadge, paintTitle, glyphBadges, glyphSvgNode, TITLE_TEXT, AURA_TEXT, AURA_PAINT } from '../playerBadge.js';
 import { GLYPH_LABEL } from './enhancedAccount.js';
@@ -20,7 +20,7 @@ import { wareArtNode } from '../wareArt.js';   // AUDIT-STOREFRONT: a piece's, a
 import { mountPreview } from '../mountPreview.js';
 import { playPreviewSound } from '../effectPreviewSound.js';
 import { passSection, passItemsIn, passShownSeason, PASS_CSS } from './enhancedPass.js';   // PASS-PANELS: the Folios' section
-import { AURUM_DEEDS, aurumPriceOf, aurumBonusOf } from '../../net/aurumLaw.js';   // AURUM: the daily wares, the packs and the week's deeds
+import { AURUM_DEEDS, aurumBonusOf } from '../../net/aurumLaw.js';   // AURUM: the packs and the week's deeds
 import { aurumArtNode } from '../aurumArt.js';
 import { sharedClockOn, worldMinutes } from '../../systems/worldTick.js';   // AUDIT-STOREFRONT III B8: the shared clock's now
 import { wallMsForClassicMinutes } from '../../net/wire.js';
@@ -35,7 +35,7 @@ export const SHOP_CATEGORY_TEXT = Object.freeze({
   auras: () => t('shop.cat.auras', 'Auras'),
   armory: () => t('shop.cat.armory', 'Aura Armory'),
   bundles: () => t('shop.cat.bundles', 'Bundles'),
-  daily: () => t('shop.cat.daily', 'Daily Wares'),   // AURUM
+  daily: () => t('shop.cat.deals', 'Daily Deals'),   // AURUM; AURUM-ONLY: the day's deals
   icons: () => t('shop.cat.icons', 'Profile Icons'),
   aurum: () => t('shop.cat.aurum', 'Aurum'),
 });
@@ -87,7 +87,7 @@ export const SHOP_LOOK = Object.freeze({
   'icon:hourglass': () => t('shop.look.hourglass', 'A gilded hourglass that turns over when its last grain falls. It moves.'),
   'icon:sanguinerose': () => t('shop.look.sanguinerose', 'A black-red rose in full bloom, dew on its petals, thorns along its stem.'),
   'icon:whitegold': () => t('shop.look.whitegold', 'The White-Gold Tower over the Imperial City and Lake Rumare at dusk.'),
-  ...Object.fromEntries(SHOP_WARES.filter((w) => w.kind === 'aurum').map((w) => [w.id, () => t('shop.look.aurumFolios', 'Aurum for the daily wares and the Folios. It has no cash value and cannot be traded.')])),
+  ...Object.fromEntries(SHOP_WARES.filter((w) => w.kind === 'aurum').map((w) => [w.id, () => t('shop.look.aurumAll', 'Aurum for every item in the shop and in the Folios. It has no cash value and cannot be traded.')])),
 });
 /** STOREFRONT: the names of the wares no other face names - the bundles'. */
 const OWN_NAME = Object.freeze({
@@ -148,22 +148,29 @@ export function shopHeldAny(flow, id) {
   return false;
 }
 /**
- * WHAT A WARE'S PANEL SAYS AND OFFERS, from the flow as it stands. Pure. `state`: 'held', 'buy' (a link to follow), 'gone'
- * (no longer sold), 'closed' (the shop takes no payments yet), 'guest', 'out' (nobody signed in), 'reading'. `cents` what
- * it costs this account (STOREFRONT: a bundle's, less what is held).
- * @param {any} flow @param {{ id: string, kind: string, key: string, cents: number }} ware
+ * WHAT A WARE'S PANEL SAYS AND OFFERS, from the flow as it stands. Pure. AURUM-ONLY: a pack's `state` 'buy' (a link to
+ * follow, `cents` its money price); any other ware's 'afford' (Buy, for `price` Aurum) or 'short' (`need` more), its
+ * `price` this account's (a giver's share; a quarter off on its deal day, `deal`) and `list` its own. Either: 'held',
+ * 'gone' (no longer sold), 'closed' (a pack while no payments are taken, a ware while Aurum is shut), 'guest', 'out'
+ * (nobody signed in), 'reading'.
+ * @param {any} flow @param {{ id: string, kind: string, key: string, cents: number, price: number }} ware
  */
 export function shopWareState(flow, ware) {
-  const row = rowOf(flow, ware.id);
-  const cents = row?.cents ?? ware.cents;
-  if (row?.held) return { state: 'held', worn: shopWorn(flow, ware), buy: null, cents };
-  if (!flow || flow.stage === 'loading') return { state: 'reading', buy: null, cents };
-  if (flow.stage !== 'in') return { state: 'out', buy: null, cents };
-  if (!flow.account?.handle) return { state: 'guest', buy: null, cents };
-  if (!flow.shop) return { state: 'closed', buy: null, cents };
-  if (row && !row.sale) return { state: 'gone', buy: null, cents };
-  if (!flow.shop.on || !row?.buy) return { state: 'closed', buy: null, cents };
-  return { state: 'buy', buy: row.buy, cents };
+  const row = rowOf(flow, ware.id), aurum = !shopRepeatable(ware);
+  const base = aurum ? { price: row?.price ?? ware.price, list: ware.price, deal: row?.deal === true, cents: 0 } : { cents: row?.cents ?? ware.cents, price: 0, list: 0, deal: false };
+  if (row?.held || (aurum && shopHeldAny(flow, ware.id))) return { state: 'held', worn: shopWorn(flow, ware), buy: null, ...base };
+  if (!flow || flow.stage === 'loading') return { state: 'reading', buy: null, ...base };
+  if (flow.stage !== 'in') return { state: 'out', buy: null, ...base };
+  if (!flow.account?.handle) return { state: 'guest', buy: null, ...base };
+  if (!flow.shop) return { state: 'closed', buy: null, ...base };
+  if (row && !row.sale) return { state: 'gone', buy: null, ...base };
+  if (aurum) {
+    const a = flow.aurum;
+    if (!row || !a?.open) return { state: 'closed', buy: null, ...base };
+    return a.balance >= base.price ? { state: 'afford', buy: null, ...base } : { state: 'short', buy: null, need: base.price - Math.max(0, a.balance), ...base };
+  }
+  if (!flow.shop.on || !row?.buy) return { state: 'closed', buy: null, ...base };
+  return { state: 'buy', buy: row.buy, ...base };
 }
 /** Whether a held ware is worn: the title, the aura, a glyph not taken off, an effect in its slot. Pure. */
 export function shopWorn(/** @type {any} */ flow, /** @type {{ kind: string, key: string }} */ w) {
@@ -177,22 +184,7 @@ export function shopWorn(/** @type {any} */ flow, /** @type {{ kind: string, key
 }
 /** Whether a ware is worn at all - a bundle and Aurum are held, never worn. Pure. */
 const wearable = (/** @type {{ kind: string }} */ w) => !['bundle', 'aurum'].includes(w.kind);
-/**
- * AURUM: WHAT A DAILY WARE'S PANEL SAYS AND OFFERS, from the flow's Aurum card. Pure. `state`: 'held', 'afford' (Buy, for
- * `price` Aurum), 'short' (`need` more), 'gone' (no longer among the day's), 'closed', 'guest', 'out', 'reading'.
- * @param {any} flow @param {{ id: string, kind: string, key: string }} w
- */
-export function shopDailyState(flow, w) {
-  const a = flow?.aurum, row = a?.daily?.wares?.find((/** @type {any} */ x) => x.id === w.id), price = aurumPriceOf(w.id);
-  if (!flow || flow.stage === 'loading') return { state: 'reading', price };
-  if (flow.stage !== 'in') return { state: 'out', price };
-  if (!flow.account?.handle) return { state: 'guest', price };
-  if (row?.held || shopHeldAny(flow, w.id)) return { state: 'held', worn: shopWorn(flow, w), price };
-  if (!a?.open) return { state: 'closed', price };
-  if (!row) return { state: 'gone', price };
-  return a.balance >= price ? { state: 'afford', price } : { state: 'short', price, need: price - Math.max(0, a.balance) };
-}
-/** AURUM: how long until the daily wares turn, in words. Pure. */
+/** AURUM: how long until the day's deals turn, in words. Pure. */
 export function aurumTurnsText(/** @type {number} */ untilMs, /** @type {number} */ nowMs) {
   const min = Math.max(1, Math.ceil((untilMs - nowMs) / 60_000)), h = Math.floor(min / 60);
   return h ? t('shop.daily.turnsH', 'New wares in {h} h {m} min', { h, m: min % 60 }) : t('shop.daily.turnsM', 'New wares in {m} min', { m: min });
@@ -207,7 +199,7 @@ export function shopWhoText(/** @type {any} */ flow) {
   if (!flow || flow.stage === 'loading') return t('shop.who.reading', 'Reading your account...');
   if (flow.stage !== 'in') return t('shop.who.out', 'Sign in from your profile to buy.');
   if (!flow.account?.handle) return t('shop.who.guest', 'A guest account cannot buy. Add a username from your profile first.');
-  if (!flow.shop?.on) return t('shop.who.closed', 'The shop does not take payments yet.');
+  if (!flow.shop?.on && !flow.aurum?.open) return t('shop.who.closed', 'The shop does not take payments yet.');   // AURUM-ONLY: a ware is bought with Aurum
   return t('shop.who.for', 'Purchases go to the account {name}, for every character on it.', { name: flow.account.handle });
 }
 
@@ -228,11 +220,10 @@ export const shopBundleRows = (/** @type {any} */ flow, /** @type {{ gives: Read
   const g = shopWareById(id), held = shopHeldAny(flow, id);
   return { id, name: g ? shopWareName(g) : id, kind: g ? KIND_TEXT[/** @type {keyof typeof KIND_TEXT} */ (g.kind)]?.() ?? g.kind : '', held, part: !held && shopClosure(id).some((x) => x !== id && shopHeldAny(flow, x)) };
 });
-/** STOREFRONT: the sections the window shows - each with a ware the card lists (every one sold alone for money with no
- *  card); PASS-PANELS: the Folios' always, sold for Aurum; AURUM: the daily wares after the Folios while
- *  Aurum is open to the account. Pure. */
+/** STOREFRONT: the sections the window shows - each with a ware the card lists (every one sold alone with no card);
+ *  PASS-PANELS: the Folios' always; AURUM: the day's deals after the Folios while Aurum is open to the account. Pure. */
 export function shopSections(/** @type {any} */ flow) {
-  const listed = (/** @type {any} */ w) => w.alone && w.cash && (!flow?.shop || !!rowOf(flow, w.id));
+  const listed = (/** @type {any} */ w) => w.alone && (!flow?.shop || !!rowOf(flow, w.id));
   const out = SHOP_CATEGORIES.filter((c) => c === 'pass' || SHOP_WARES.some((w) => w.category === c && listed(w)));
   if (flow?.aurum?.open && flow.aurum.daily?.wares?.length) out.splice(out[0] === 'pass' ? 1 : 0, 0, 'daily');
   return out;
@@ -484,9 +475,10 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     tags.append(el('li', 'sh-tag', t('shop.tag.account', 'Every character on your account')));
     return tags;   // a featured window's tag is drawPanel's, as the card moves
   };
-  /** A ware's panel: its stage, its words, its contents (a bundle's), its price and its press. AURUM: `daily`, a daily
-   *  ware's - its price in Aurum, its press the Aurum's. */
+  /** A ware's panel: its stage, its words, its contents (a bundle's), its price and its press. AURUM-ONLY: any ware but a
+   *  pack priced in Aurum, its press the Aurum's; `daily` one among the day's deals. */
   const panelOf = (/** @type {any} */ w, slide = false, daily = false) => {
+    const inAurum = !shopRepeatable(w);
     const panel = el('article', slide ? 'sh-ware sh-slide' : `sh-ware sh-panel sh-panel-${w.kind}${daily ? ' sh-daily' : ''}${w.tier ? ` sh-tierpanel-${w.tier}` : ''}`);
     panel.setAttribute('data-ware', w.id);
     const info = el('div', 'sh-info');
@@ -500,18 +492,18 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     /** @type {HTMLElement|null} */ let contents = null;
     if (w.kind === 'bundle') {   // STOREFRONT: what it gives, each held one marked, and its worth alone
       contents = el('ul', 'sh-contents');
-      info.append(contents, el('p', 'sh-worth', t('shop.bundle.worth', 'Worth {price} bought alone.', { price: shopPriceText(shopWorth(w.id), intlLocale()) })));
+      info.append(contents, el('p', 'sh-worth', t('shop.bundle.worthAurum', 'Worth {n, number} Aurum bought alone.', { n: shopWorth(w.id) })));
     }
     const buyrow = el('div', 'sh-buyrow');
-    const price = el('span', daily ? 'sh-price sh-aurumprice' : 'sh-price', '');
-    const priceN = daily ? el('span', 'sh-pricen') : price, priceSay = daily ? el('span', 'sh-sr') : null;
-    if (daily) { const c = aurumArtNode(doc, 0, 22, 'sh-coin'); if (c) price.append(c); priceN.setAttribute('aria-hidden', 'true'); price.append(priceN, /** @type {any} */ (priceSay)); }   // AUDIT-STOREFRONT III C9: its currency said
+    const price = el('span', inAurum ? 'sh-price sh-aurumprice' : 'sh-price', '');
+    const priceN = inAurum ? el('span', 'sh-pricen') : price, priceSay = inAurum ? el('span', 'sh-sr') : null;
+    if (inAurum) { const c = aurumArtNode(doc, 0, 22, 'sh-coin'); if (c) price.append(c); priceN.setAttribute('aria-hidden', 'true'); price.append(priceN, /** @type {any} */ (priceSay)); }   // AUDIT-STOREFRONT III C9: its currency said
     const was = el('s', 'sh-was', '');
     const state = el('span', 'sh-state');
     buyrow.append(was, price, state);
     info.append(buyrow);
     panel.append(stageOf(w, slide), info);
-    return { panel, parts: { daily, buyrow, state, price, priceN, priceSay, was, contents, wintag, until, untilKey: '', act: /** @type {any} */ (null), actKey: '', contentsKey: '' } };
+    return { panel, parts: { inAurum, buyrow, state, price, priceN, priceSay, was, contents, wintag, until, untilKey: '', act: /** @type {any} */ (null), actKey: '', contentsKey: '' } };
   };
 
   // ── PASS-PANELS: THE FOLIOS' SECTION (enhancedPass.js), drawn in place as the flow moves ──
@@ -537,8 +529,8 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     const box = el('section', 'sh-dailyhead');
     const top = el('div', 'sh-sectop');
     turnsEl = el('span', 'sh-turns', a?.daily?.until ? aurumTurnsText(a.daily.until, now()) : '');
-    top.append(el('h4', 'sh-secname', t('shop.daily.title', "Today's wares")), turnsEl);
-    box.append(top, el('p', 'sh-secline', t('shop.daily.line', 'Bought with Aurum. New wares come each day at midnight UTC.')));
+    top.append(el('h4', 'sh-secname', t('shop.deals.title', "Today's deals")), turnsEl);
+    box.append(top, el('p', 'sh-secline', t('shop.deals.line', 'Each costs a quarter less today. New deals come each day at midnight UTC.')));
     const deeds = el('ul', 'sh-deeds');
     deeds.setAttribute('aria-label', t('shop.deed.head', "This week's deeds"));
     for (const [k, n] of Object.entries(AURUM_DEEDS)) {
@@ -558,7 +550,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     if (art) box.append(art);
     const words = el('div', 'sh-aurumwords');
     words.append(el('h4', 'sh-secname', a ? t('shop.aurum.hold', 'Your balance: {n, number} Aurum', { n: a.balance }) : SHOP_CATEGORY_TEXT.aurum()),
-      el('p', 'sh-secline', t('shop.aurum.lineFolios', "Aurum buys the daily wares and the Folios' items. Your deeds find it, the week's deeds pay it, and you can buy it here.")),
+      el('p', 'sh-secline', t('shop.aurum.lineAll', "Aurum buys every item in the shop and in the Folios. Your deeds find it, the week's deeds pay it, and you can buy it here.")),
       el('p', 'sh-secline', t('shop.aurum.rules', 'Aurum has no cash value. It cannot be traded, and it buys no power.')));
     box.append(words);
     return box;
@@ -572,9 +564,9 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     aurum: { build: () => aurumSection(), key: (fl) => JSON.stringify([fl?.aurum?.balance]) },
   });
   let headNode = /** @type {HTMLElement|null} */ (null), headKey = '', dailyKey = '';
-  /** The wares a section lists: the day's for the daily wares, else each sold alone for money that the card lists. */
+  /** The wares a section lists: the day's for the deals, else each sold alone that the card lists. */
   const waresOf = (/** @type {string} */ c, /** @type {any} */ fl) => (c === 'daily' ? dailyWares(fl)
-    : SHOP_WARES.filter((x) => x.category === c && x.alone && x.cash && (!fl?.shop || !!rowOf(fl, x.id))));
+    : SHOP_WARES.filter((x) => x.category === c && x.alone && (!fl?.shop || !!rowOf(fl, x.id))));
   const buildPanels = () => {
     stopLive();
     drawn = new Map();
@@ -724,11 +716,12 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     else if (w.kind === 'icon') fl.wearIcon?.(w.key);   // AURUM: in the portrait well
     else fl.toggleGlyph?.(w.key);
   };
-  /** AURUM: A DAILY WARE'S PRESS. Spending is pressed twice - Buy arms it, saying the price again, and the second press
-   *  buys; left alone it goes back to Buy. Short of the price, Get Aurum (while the packs are sold). Held, Wear. */
+  /** AURUM: A WARE'S PRESS FOR AURUM (AURUM-ONLY: any ware but a pack). Spending is pressed twice - Buy arms it, saying
+   *  the price again, and the second press buys at that price; left alone it goes back to Buy. Short of the price, Get
+   *  Aurum (while the packs are sold). Held, Wear. */
   let armed = /** @type {{ id: string, at: number }|null} */ (null);
   let buying = /** @type {string|null} */ (null);   // AUDIT-STOREFRONT III C12: the ware whose buy is out, its press saying so
-  const dailyActFor = (/** @type {any} */ w, /** @type {any} */ st) => {
+  const aurumActFor = (/** @type {any} */ w, /** @type {any} */ st) => {
     if (st.state === 'held') return actFor(w, st);
     if (st.state === 'afford') {
       const on = armed?.id === w.id, n = st.price, going = buying === w.id;
@@ -739,7 +732,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
         armed = null;
         buying = w.id;
         draw();
-        Promise.resolve(fl.buyDaily?.(w.id)).catch(() => {}).finally(() => { buying = null; draw(); });
+        Promise.resolve(fl.buyWare?.(w.id, n)).catch(() => {}).finally(() => { buying = null; draw(); });
       });
       if (!going) b.setAttribute('aria-label', on ? t('shop.daily.confirmLabel', 'Confirm: buy {name} for {n, number} Aurum', { name: shopWareName(w), n }) : t('shop.daily.buyLabel', 'Buy {name} for {n, number} Aurum', { name: shopWareName(w), n }));
       if (on || going) b.setAttribute('data-armed', 'true');
@@ -782,26 +775,38 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     out: () => t('shop.state.out', 'Sign in to buy'),
     reading: () => '',
     buy: () => '',
+    afford: () => '',
   });
+  /** What a panel's state says: the Aurum it still needs, Aurum shut, or the state's own words. */
+  const stateWords = (/** @type {any} */ st, /** @type {boolean} */ inAurum) => (st.state === 'short' ? t('shop.daily.short', 'You need {n, number} more Aurum', { n: st.need })
+    : inAurum && st.state === 'closed' ? t('shop.daily.closed', 'Aurum is not open yet') : STATE_TEXT[/** @type {keyof typeof STATE_TEXT} */ (st.state)]());
   /** One panel brought up to date: its price (this account's, the list's struck through beside it), its state, its press,
-   *  a bundle's contents. */
+   *  a bundle's contents. AURUM-ONLY: a ware's in Aurum (a deal's tag beside it), a pack's in money. */
   const drawPanel = (/** @type {any} */ w, /** @type {any} */ d, /** @type {any} */ fl) => {
-    const st = shopWareState(fl, w);
-    const words = STATE_TEXT[/** @type {keyof typeof STATE_TEXT} */ (st.state)]();
+    const st = /** @type {any} */ (shopWareState(fl, w));
+    const words = stateWords(st, d.inAurum);
     if (d.state.textContent !== words) d.state.textContent = words;
     d.state.className = 'sh-state sh-state-' + st.state;
     d.buyrow.className = 'sh-buyrow sh-buyrow-' + st.state;   // AUDIT-STOREFRONT II (lane E 12): held, its price dimmed under its state
-    const priceText = shopPriceText(st.cents, intlLocale()), wasText = st.cents < w.cents && st.state !== 'held' ? shopPriceText(w.cents, intlLocale()) : '';
-    if (d.price.textContent !== priceText) d.price.textContent = priceText;
+    if (d.inAurum) {
+      const priceText = num(st.price), say = t('shop.daily.priceLabel', '{n, number} Aurum', { n: st.price });
+      if (d.priceN.textContent !== priceText) d.priceN.textContent = priceText;
+      if (d.priceSay && d.priceSay.textContent !== say) d.priceSay.textContent = say;
+    } else {
+      const priceText = shopPriceText(st.cents, intlLocale());
+      if (d.price.textContent !== priceText) d.price.textContent = priceText;
+    }
+    const less = d.inAurum && st.price < st.list && st.state !== 'held';   // a deal, or a giver's share
+    const wasText = less ? num(st.list) : '';
     if (d.was.textContent !== wasText) d.was.textContent = wasText;
-    d.was.setAttribute?.('aria-label', wasText ? t('shop.was', 'Was {price}', { price: wasText }) : '');
+    d.was.setAttribute?.('aria-label', less ? t('shop.was', 'Was {price}', { price: t('shop.daily.priceLabel', '{n, number} Aurum', { n: st.list }) }) : '');
     // AUDIT-STOREFRONT S9: a featured window told only beside its sale, its days left counted again as they pass
-    const row = rowOf(fl, w.id), win = row?.until && row.sale ? row : null;
-    const untilText = win ? shopUntilText(win.until, win.limited, now()) : '', uk = win ? `${win.limited ? 1 : 0}${untilText}` : '';
+    const row = rowOf(fl, w.id), win = row?.until && row.sale ? row : null, deal = st.deal && st.state !== 'held';
+    const untilText = win ? shopUntilText(win.until, win.limited, now()) : '', uk = `${deal ? 1 : 0}${win ? `${win.limited ? 1 : 0}${untilText}` : ''}`;
     if (d.untilKey !== uk) {   // empty, each is not shown (SHOP_CSS)
-      d.untilKey = uk;
-      d.wintag.className = win ? `sh-tag ${win.limited ? 'sh-tag-limited' : 'sh-tag-featured'}` : 'sh-tag';
-      d.wintag.textContent = !win ? '' : win.limited ? t('shop.tag.limited', 'Limited') : t('shop.tag.featured', 'Featured');
+      d.untilKey = uk;   // AURUM-ONLY: a deal's tag before a featured window's - its price is the day's
+      d.wintag.className = deal ? 'sh-tag sh-tag-deal' : win ? `sh-tag ${win.limited ? 'sh-tag-limited' : 'sh-tag-featured'}` : 'sh-tag';
+      d.wintag.textContent = deal ? t('shop.tag.deal', "Today's deal") : !win ? '' : win.limited ? t('shop.tag.limited', 'Limited') : t('shop.tag.featured', 'Featured');
       d.until.className = `sh-until${win?.limited ? ' sh-until-limited' : ''}`;
       d.until.textContent = untilText;
     }
@@ -821,38 +826,11 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
         d.contentsKey = key;
       }
     }
-    const key = `${st.state}:${st.worn ? 1 : 0}:${st.buy ?? ''}:${fl?.busy ? 1 : 0}`;
+    const key = `${st.state}:${st.worn ? 1 : 0}:${st.buy ?? ''}:${st.price}:${armed?.id === w.id ? 1 : 0}:${fl?.busy ? 1 : 0}:${shopSections(fl).includes('aurum') ? 1 : 0}:${buying === w.id ? 1 : 0}`;
     if (d.actKey !== key) {
       const had = d.act && doc.activeElement === d.act;
       d.act?.remove?.();
-      d.act = actFor(w, st);
-      d.actKey = key;
-      if (d.act) { d.buyrow.append(d.act); if (had) d.act.focus?.({ preventScroll: true }); }
-    }
-  };
-  /** AURUM: what a daily ware's state says. */
-  const DAILY_TEXT = Object.freeze({
-    held: () => t('shop.state.held', 'Owned'),
-    gone: () => t('shop.daily.gone', "Not among today's wares"),
-    closed: () => t('shop.daily.closed', 'Aurum is not open yet'),
-    guest: STATE_TEXT.guest, out: STATE_TEXT.out, reading: () => '', afford: () => '',
-  });
-  /** AURUM: a daily ware's panel brought up to date - its price in Aurum, its state (what more it needs), its press. */
-  const drawDaily = (/** @type {any} */ w, /** @type {any} */ d, /** @type {any} */ fl) => {
-    const st = /** @type {any} */ (shopDailyState(fl, w));
-    const words = st.state === 'short' ? t('shop.daily.short', 'You need {n, number} more Aurum', { n: st.need }) : DAILY_TEXT[/** @type {keyof typeof DAILY_TEXT} */ (st.state)]();
-    if (d.state.textContent !== words) d.state.textContent = words;
-    d.state.className = 'sh-state sh-state-' + st.state;
-    d.buyrow.className = 'sh-buyrow sh-buyrow-' + st.state;
-    const priceText = num(st.price);
-    if (d.priceN.textContent !== priceText) d.priceN.textContent = priceText;
-    const say = t('shop.daily.priceLabel', '{n, number} Aurum', { n: st.price });
-    if (d.priceSay && d.priceSay.textContent !== say) d.priceSay.textContent = say;
-    const key = `${st.state}:${st.worn ? 1 : 0}:${armed?.id === w.id ? 1 : 0}:${fl?.busy ? 1 : 0}:${shopSections(fl).includes('aurum') ? 1 : 0}:${buying === w.id ? 1 : 0}`;
-    if (d.actKey !== key) {
-      const had = d.act && doc.activeElement === d.act;
-      d.act?.remove?.();
-      d.act = dailyActFor(w, st);
+      d.act = d.inAurum ? aurumActFor(w, st) : actFor(w, st);
       d.actKey = key;
       if (d.act) { d.buyrow.append(d.act); if (had) d.act.focus?.({ preventScroll: true }); }
     }
@@ -867,7 +845,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     const sections = shopSections(fl);
     if (sections.join(',') !== [...tabOf.keys()].join(',')) { buildTabs(); if (!sections.includes(cat)) { cat = sections[0] ?? cat; buildPanels(); } }
     if (cat === 'daily' && dailyWares(fl).map((/** @type {any} */ w) => w.id).join(',') !== dailyKey) buildPanels();   // AURUM: the day turned
-    for (const [id, d] of drawn) { const w = shopWareById(id); if (w) (d.daily ? drawDaily : drawPanel)(w, d, fl); }
+    for (const [id, d] of drawn) { const w = shopWareById(id); if (w) drawPanel(w, d, fl); }
     passView?.draw(fl);   // PASS-PANELS: the tracks in place - a press keeps its focus
     const h = HEADS[cat], hk = h ? h.key(fl) : '';
     if (headNode && h && hk !== headKey) { const next = h.build(); headNode.replaceWith?.(next); headNode = next; headKey = hk; }   // the card read again: the head on it
@@ -1024,6 +1002,7 @@ export const SHOP_CSS = `
 .px-shopwin .sh-tier-exclusive { color: #ffd27a; }
 .px-shopwin .sh-tag-featured { color: #ffd27a; }
 .px-shopwin .sh-tag-limited { color: #ffb08f; font-weight: bold; }
+.px-shopwin .sh-tag-deal { color: #9fe6a8; font-weight: bold; }   /* AURUM-ONLY: a deal's tag */
 .px-shopwin .sh-until { margin: 0; font-size: 12.5px; color: #ffd27a; }
 .px-shopwin .sh-until:empty, .px-shopwin .sh-tag:empty { display: none; }
 .px-shopwin .sh-until-limited { color: #ff9a7a; font-weight: bold; }

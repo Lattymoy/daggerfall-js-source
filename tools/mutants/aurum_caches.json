@@ -2,8 +2,8 @@
   {
     "name": "AURUM-CACHES-the-amount",
     "file": "src/net/aurumCacheLaw.js",
-    "old": "export const AURUM_CACHE_AURUM = 15;",
-    "new": "export const AURUM_CACHE_AURUM = 20;",
+    "old": "export const AURUM_CACHE_AURUM = 25;",
+    "new": "export const AURUM_CACHE_AURUM = 30;",
     "tests": [
       "test/net/aurum_cache_law.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AURUM-CACHES-the-share",
     "file": "src/net/aurumCacheLaw.js",
-    "old": "export const AURUM_CACHE_SHARE = 0.2;",
-    "new": "export const AURUM_CACHE_SHARE = 0.25;",
+    "old": "export const AURUM_CACHE_SHARE = 0.25;",
+    "new": "export const AURUM_CACHE_SHARE = 0.3;",
     "tests": [
       "test/net/aurum_cache_law.test.js"
     ]

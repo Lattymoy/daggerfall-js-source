@@ -44,7 +44,7 @@
 
 import {
   openGuest, register, login, recover, readAccount, changePassword, logout, equipTitle, equipAura, equipArmory, equipArmoryKit, equipEffect, equipIcon, equipGlyph, adoptIdentity, unlinkPatreon,
-  buyDailyWare,   // AURUM: a daily ware bought
+  buyAurumWare,   // AURUM: a ware bought for Aurum (AURUM-ONLY: any but a pack)
   passUnlock, passBuy,   // PASS-PANELS: a premium track opened and a track's item bought, for Aurum
   newRecoveryCodes,   // RECOVERY-SET: a new set of recovery codes, from the profile
   chooseNameAs,   // NAME-AS: which name the room reads
@@ -615,20 +615,21 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
   };
 
   /**
-   * AURUM (bible/06-Systems/Aurum.md) - A DAILY WARE BOUGHT FOR AURUM: it asks, the service decides (the day's wares, the
-   * balance, what is held) in one transaction, and the answer is the wardrobe after it and the Aurum's card. A ware the
-   * day no longer sells, or one held already, reads the account again so the window shows the day as it is.
+   * AURUM (bible/06-Systems/Aurum.md) - A WARE BOUGHT FOR AURUM (AURUM-ONLY: any but a pack) at the `price` the window
+   * showed: it asks, the service decides (the sale, the day's deals, the balance, what is held) in one transaction, and
+   * the answer is the wardrobe after it and the Aurum's card. A ware no longer sold, one held already or one whose price
+   * moved reads the account again so the window shows the shop as it is.
    */
-  self.buyDaily = async (/** @type {string} */ ware) => {
+  self.buyWare = async (/** @type {string} */ ware, /** @type {number|undefined} */ price) => {
     if (self.busy || self.stage !== 'in') return false;
     const asked = secret();
     self.busy = true; self.error = ''; self.note = ''; changed();
     try {
-      const r = await ask(() => buyDailyWare(door(), ware));
+      const r = await ask(() => buyAurumWare(door(), ware, price));
       if (!r) return false;
       if (!r.ok) {
         refuse(accountRefusalText(r.error));
-        if (r.error === 'aurum-today' || r.error === 'aurum-held') await self.refresh();
+        if (r.error === 'aurum-sale' || r.error === 'aurum-held' || r.error === 'aurum-price') await self.refresh();
         return false;
       }
       self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };

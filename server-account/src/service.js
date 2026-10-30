@@ -425,7 +425,7 @@ export const ROUTES = new Set([
   // premium track opened and an item bought, for Aurum
   '/v1/pass/mine', '/v1/pass/find', '/v1/pass/unlock', '/v1/pass/buy',
   '/v1/season/maul',   // AUDIT LANE 5: the Resonant Maul's day, an account's (seasonClaim.js)
-  '/v1/aurum/buy',   // AURUM (bible/06-Systems/Aurum.md): a daily ware bought for Aurum (aurum.js)
+  '/v1/aurum/buy',   // AURUM (bible/06-Systems/Aurum.md): a ware bought for Aurum - AURUM-ONLY, any but a pack (aurum.js)
   '/v1/aurum/cache',   // AURUM-CACHES: an Aurum cache claimed (aurumCache.js)
   // WITCH1 (bible/06-Systems/Witches-Festival.md): THE WITCHES' FESTIVAL - the account's cakes, a find, a sale, a town's
   // offerings, and an offering set out, filled, taken in and taken from

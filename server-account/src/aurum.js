@@ -3,10 +3,10 @@
 // used to purchase a selection of rotating items daily"; bible/06-Systems/Aurum.md): THE AURUM AS THE SERVICE KEEPS IT.
 // A balance is never stored: it is counted at every ask from the account's paid packs (shop.js sells them) and the
 // ledger's lines - what the finds, the challenges, the week's witnessed deeds (migration 0201's triggers) and the caches
-// gave, and what the pass and the daily wares cost. So a refund takes a pack's Aurum back by its order's status. The law
-// both ends read is src/net/aurumLaw.js.
-import { shopOwns, shopWareById, shopOnSaleOf, shopFeaturedOf, shopDropped } from '../../src/net/shopLaw.js';
-import { AURUM_DEEDS, aurumSwitchOf, aurumDailyOf, aurumDailyById, aurumDayEndMs, aurumWeekOf, aurumWeekEndMs } from '../../src/net/aurumLaw.js';
+// gave, and what the pass and the shop's wares cost. So a refund takes a pack's Aurum back by its order's status. The law
+// both ends read is src/net/aurumLaw.js. AURUM-ONLY (2026-10-30): every ware is bought here (buyWare), money buys packs.
+import { shopOwns, shopWareById, shopOnSaleOf, shopFeaturedOf, shopDropped, shopSellable, shopPriceFor, shopRepeatable } from '../../src/net/shopLaw.js';
+import { AURUM_DEEDS, aurumSwitchOf, aurumDailyOf, aurumDayEndMs, aurumWeekOf, aurumWeekEndMs, aurumDealOf } from '../../src/net/aurumLaw.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 import { isDeveloper, holdsAll } from './titles.js';   // ADMIN-ALL: an admin holds every daily ware, so is sold none
 import { mustChange } from './realm.js';
@@ -18,7 +18,7 @@ export const aurumOpenFor = (/** @type {any} */ player, /** @type {any} */ env) 
   return s === 'on' || (s === 'dev' && isDeveloper(player, env));
 };
 /** The answer's status by refusal. */
-export const AURUM_STATUS = Object.freeze({ 'aurum-guest': 403, 'aurum-closed': 409, 'aurum-ware': 400, 'aurum-today': 409, 'aurum-held': 409, 'aurum-short': 409, 'aurum-busy': 503 });
+export const AURUM_STATUS = Object.freeze({ 'aurum-guest': 403, 'aurum-closed': 409, 'aurum-ware': 400, 'aurum-sale': 409, 'aurum-price': 409, 'aurum-held': 409, 'aurum-short': 409, 'aurum-busy': 503 });
 
 const int = (/** @type {unknown} */ v) => (Number.isSafeInteger(Number(v)) ? Number(v) : 0);
 /** The Aurum an account's paid packs gave, and its ledger's sum - each bound to the account at ?1. A balance is their
@@ -55,6 +55,17 @@ export function dailySaleOf(/** @type {any} */ env) {
 }
 /** The day's wares at `nowS`, by the config's sale. */
 export const dailyWaresAt = (/** @type {any} */ env, /** @type {number} */ nowS) => { const s = dailySaleOf(env); return aurumDailyOf(utcDay(nowS), s.eligible, s.cache); };
+/** AURUM-ONLY: whether a ware is sold for Aurum at `nowS` - on sale by the config (shopLaw.js shopSellable), never a pack. */
+export const soldForAurum = (/** @type {any} */ env, /** @type {any} */ w, /** @type {number} */ nowS) =>
+  !!w && !shopRepeatable(w) && shopSellable(w, shopOnSaleOf(env?.SHOP_ON_SALE), shopFeaturedOf(env?.SHOP_FEATURED), nowS * 1000);
+/** AURUM-ONLY: A WARE'S AURUM PRICE FOR A ROW at `nowS` - its share for a giver (shopPriceFor), a quarter off on its deal
+ *  day - with whether it is today's deal; null when the row owns it. `deals` the day's, as dailyWaresAt answers. */
+export function aurumPriceAt(/** @type {any} */ row, /** @type {any} */ w, /** @type {ReadonlyArray<string>} */ deals) {
+  const list = shopPriceFor(row, w.id);
+  if (list === null) return null;
+  const deal = deals.includes(w.id);
+  return { price: deal ? aurumDealOf(list) : list, deal };
+}
 
 /**
  * THE AURUM'S CARD on the account read (aurumLaw.js aurumCardOf reads it): whether it is open to this account, the
@@ -80,35 +91,39 @@ export async function aurumCardOf({ db, nowS }, player, env) {
 }
 
 /**
- * A DAILY WARE BOUGHT: `body.ware` among the day's wares, not held, for its price in Aurum - in ONE TRANSACTION: the
- * ledger's line written only while the balance (its packs and lines as they stand then) covers the price, and the ware
- * put on the row only while the row is the one read (what it holds). A row moved meanwhile (a grant, a refund) is read
- * again, three times. `{ ok, ware, spent, row }` - `row` the account's
- * whole row after, for the wardrobe - or `{ error }`: aurum-guest, -closed, -ware, -today (not among the day's wares), -held, -short (with `balance`), -busy.
+ * A WARE BOUGHT FOR AURUM (AURUM-ONLY: every ware but a pack): `body.ware` sold now or among the day's deals, not held,
+ * for its price for this row (aurumPriceAt) - and, when the page says what it showed (`body.price`), that price, so a deal
+ * turned at midnight or a giver's share moved is told before it is spent. In ONE TRANSACTION: the ledger's line written
+ * only while the balance (its packs and lines as they stand then) covers the price, and the ware put on the row only
+ * while the row is the one read. A row moved meanwhile (a grant, a refund) is read again, three times. `{ ok, ware, spent,
+ * row }` - `row` the account's whole row after, for the wardrobe - or `{ error }`: aurum-guest, -closed, -ware, -sale (not
+ * sold now), -price (with `price`), -held, -short (with `balance`), -busy.
  * @param {{ db: any, nowS: number }} ctx @param {any} player @param {any} body @param {any} env
  */
-export async function buyDaily({ db, nowS }, player, body, env) {
+export async function buyWare({ db, nowS }, player, body, env) {
   if (!player?.handle) return { error: 'aurum-guest' };
   if (!aurumOpenFor(player, env)) return { error: 'aurum-closed' };
-  const d = aurumDailyById(body?.ware);
-  if (!d) return { error: 'aurum-ware' };
-  if (!dailyWaresAt(env, nowS).includes(d.id)) return { error: 'aurum-today' };
+  const w = /** @type {any} */ (shopWareById(body?.ware));
+  if (!w || !w.alone || shopRepeatable(w)) return { error: 'aurum-ware' };
+  const deals = dailyWaresAt(env, nowS);
+  if (!deals.includes(w.id) && !soldForAurum(env, w, nowS)) return { error: 'aurum-sale' };
   if (holdsAll(player, env)) return { error: 'aurum-held' };   // ADMIN-ALL
-  const w = /** @type {any} */ (shopWareById(d.id));
   for (let i = 0; i < 3; i++) {
     const row = await aurumRow(db, player.id);
     if (!row) return { error: 'aurum-guest' };
-    if (shopOwns(row, d.id)) return { error: 'aurum-held' };
+    const at = aurumPriceAt(row, w, deals);
+    if (!at) return { error: 'aurum-held' };
     // AUDIT-STOREFRONT III A5: Aurum already paid for it (a line keyed by the ware): given back free, never asked again
-    const paid = !!(await db.prepare("SELECT 1 AS x FROM aurum_ledger WHERE account = ?1 AND kind = 'buy' AND ref = ?2").bind(player.id, d.id).first());
+    const paid = !!(await db.prepare("SELECT 1 AS x FROM aurum_ledger WHERE account = ?1 AND kind = 'buy' AND ref = ?2").bind(player.id, w.id).first());
+    if (!paid && Number.isSafeInteger(body?.price) && body.price !== at.price) return { error: 'aurum-price', price: at.price };
     const balance = balanceOfRow(row);
-    if (!paid && balance < d.aurum) return { error: 'aurum-short', balance };
+    if (!paid && balance < at.price) return { error: 'aurum-short', balance };
     const toks = String(row.shop_held ?? '').split(' ').filter(Boolean);
-    const after = { shop_wares: (Number(row.shop_wares) || 0) | w.bit, shop_held: (w.bit || toks.includes(d.id) ? toks : [...toks, d.id]).join(' ') };
+    const after = { shop_wares: (Number(row.shop_wares) || 0) | w.bit, shop_held: (w.bit || toks.includes(w.id) ? toks : [...toks, w.id]).join(' ') };
     try {
       await db.batch([
         ...(paid ? [] : [db.prepare(`INSERT INTO aurum_ledger (account, kind, ref, amount, day, at) SELECT ?1, 'buy', ?2, ?3, ?4, ?5
-          WHERE ${AURUM_BALANCE_SQL} >= ?6`).bind(player.id, d.id, -d.aurum, utcDay(nowS), nowS, d.aurum), mustChange(db)]),
+          WHERE ${AURUM_BALANCE_SQL} >= ?6`).bind(player.id, w.id, -at.price, utcDay(nowS), nowS, at.price), mustChange(db)]),
         db.prepare('UPDATE players SET shop_wares = ?2, shop_held = ?3 WHERE id = ?1 AND shop_wares = ?4 AND shop_held = ?5')
           .bind(player.id, after.shop_wares, after.shop_held, Number(row.shop_wares) || 0, String(row.shop_held ?? '')),
         mustChange(db),
@@ -116,7 +131,7 @@ export async function buyDaily({ db, nowS }, player, body, env) {
     } catch {
       continue;   // the row moved, or the balance fell under the price meanwhile: read again
     }
-    return { ok: true, ware: d.id, spent: paid ? 0 : d.aurum, row: await db.prepare('SELECT * FROM players WHERE id = ?1').bind(player.id).first() };
+    return { ok: true, ware: w.id, spent: paid ? 0 : at.price, row: await db.prepare('SELECT * FROM players WHERE id = ?1').bind(player.id).first() };
   }
   return { error: 'aurum-busy' };
 }
