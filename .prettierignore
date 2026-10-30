@@ -86,11 +86,7 @@
 !/src/combat/combatStats.js
 !/src/combat/combatVoices.js
 !/src/combat/diverseWeapons/
-/src/combat/diverseWeapons/*
-!/src/combat/diverseWeapons/diverseWeapons.js
-!/src/combat/diverseWeapons/diverseWeaponsAssets.js
-!/src/combat/diverseWeapons/diverseWeaponsIcons.js
-!/src/combat/diverseWeapons/diverseWeaponsIndex.js
+/src/combat/diverseWeapons/*/
 !/src/combat/duelCombat.js
 !/src/combat/enemyEquipment.js
 !/src/combat/enemyGroups.js
