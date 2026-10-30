@@ -273,7 +273,6 @@ account.refusal.guildPatron,"Kilta on tehnyt tarjouksen osaston suojeluksesta. S
 account.refusal.guildRank,"Arvosi killassa ei voi tehdä sitä."
 account.refusal.guildRankWord,"Arvon nimessä ei saa olla sanaa, joka ei ole sallittu nimissä."
 account.refusal.guildRate,"Olet muuttanut kiltaasi liian usein tällä tunnilla. Yritä myöhemmin uudelleen."
-account.refusal.guildRenameGold,"Uusi nimi maksaa {cost, number} kultaa, joka maksetaan valtakuntahahmojen rahastoon panemasta kullasta, eikä sitä ole niin paljon."
 account.refusal.guildRenameMoved,"Kilta muuttui nimeä vaihdettaessa. Mitään ei maksettu. Katso uudelleen."
 account.refusal.guildRenameSame,"Se on jo killan nimi ja tunnus."
 account.refusal.guildRenameSiege,"Kilta on tällä viikolla piirityksessä tai Turnajaisissa. Sen nimeä ei voi vaihtaa ennen kuin taistelu on ohi."
