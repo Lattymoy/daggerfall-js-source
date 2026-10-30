@@ -69,11 +69,11 @@ const deepFreeze = (o) => {
 export const HORSE_CARE_RULES = deepFreeze({
   boons: {
     id: 'boons',
-    hungerCosts: false,      // Hungry and Starving take steedCare.js HUNGER's penalty off every stat and slow the breath
-    bondFades: false,        // a starving horse's bond fades STARVING_BOND_TENTHS_A_DAY
-    paceFloor: true,         // the ride's pace is never under DFU's (steedSpeedScale never under 1)
-    draftDrags: false,       // a team's Strength drags a loaded wagon (teamDraftScale)
-    refusedRunWalks: false,  // a gallop refused (winded, starving) holds the horse to the walk - else DFU's own pace
+    hungerCosts: false, // Hungry and Starving take steedCare.js HUNGER's penalty off every stat and slow the breath
+    bondFades: false, // a starving horse's bond fades STARVING_BOND_TENTHS_A_DAY
+    paceFloor: true, // the ride's pace is never under DFU's (steedSpeedScale never under 1)
+    draftDrags: false, // a team's Strength drags a loaded wagon (teamDraftScale)
+    refusedRunWalks: false, // a gallop refused (winded, starving) holds the horse to the walk - else DFU's own pace
   },
   hard: {
     id: 'hard',
@@ -88,7 +88,8 @@ export const HORSE_CARE_RULES = deepFreeze({
 /** The system as it stood: what a law runs when it is handed no rules. */
 export const HORSE_CARE_HARD = HORSE_CARE_RULES.hard;
 /** A tier's rules, or null for Off and for anything that is not a tier. */
-export const horseCareRulesForTier = (tier) => (typeof tier === 'string' && Object.hasOwn(HORSE_CARE_RULES, tier) ? HORSE_CARE_RULES[tier] : null);
+export const horseCareRulesForTier = (tier) =>
+  typeof tier === 'string' && Object.hasOwn(HORSE_CARE_RULES, tier) ? HORSE_CARE_RULES[tier] : null;
 
 // ── WAGON-TIERS ─────────────────────────────────────────────────────
 // WAGON-TIERS (2026-10-15, Mac: "Yes, same tiers") - WAGON UPKEEP'S TIERS, AS DATA (bible/06-Systems/Wagon-Upkeep.md),
@@ -132,9 +133,9 @@ export const WAGON_SOUND_BOON = 1.1;
 export const WAGON_UPKEEP_RULES = deepFreeze({
   boons: {
     id: 'boons',
-    wearSlows: false,    // a Rickety or Failing wagon rolls at its state's pace (WAGON_STATES), under DFU's
-    wearPrices: false,   // a counter prices a wagon by its condition, under a whole one's
-    soundPace: WAGON_SOUND_BOON,   // a Sound wagon's pace, times its state's
+    wearSlows: false, // a Rickety or Failing wagon rolls at its state's pace (WAGON_STATES), under DFU's
+    wearPrices: false, // a counter prices a wagon by its condition, under a whole one's
+    soundPace: WAGON_SOUND_BOON, // a Sound wagon's pace, times its state's
   },
   hard: {
     id: 'hard',
@@ -146,4 +147,5 @@ export const WAGON_UPKEEP_RULES = deepFreeze({
 /** The system as it stood: what a law runs when it is handed no rules. */
 export const WAGON_UPKEEP_HARD = WAGON_UPKEEP_RULES.hard;
 /** A tier's rules, or null for Off and for anything that is not a tier. */
-export const wagonUpkeepRulesForTier = (tier) => (typeof tier === 'string' && Object.hasOwn(WAGON_UPKEEP_RULES, tier) ? WAGON_UPKEEP_RULES[tier] : null);
+export const wagonUpkeepRulesForTier = (tier) =>
+  typeof tier === 'string' && Object.hasOwn(WAGON_UPKEEP_RULES, tier) ? WAGON_UPKEEP_RULES[tier] : null;

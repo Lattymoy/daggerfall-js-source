@@ -11,8 +11,8 @@
   {
     "name": "HORSE-TIERS-a-tiers-field",
     "file": "src/systems/upkeep/upkeepTiers.js",
-    "old": "    paceFloor: true,         // the ride's pace is never under DFU's",
-    "new": "    paceFloor: false,         // the ride's pace is never under DFU's",
+    "old": "    paceFloor: true, // the ride's pace is never under DFU's (steedSpeedScale never under 1)",
+    "new": "    paceFloor: false, // the ride's pace is never under DFU's (steedSpeedScale never under 1)",
     "tests": [
       "test/systems/horsetiers.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "HORSE-TIERS-the-accessor-read-once",
     "file": "src/systems/upkeep/upkeepSwitch.js",
-    "old": "export const horseCareRules = () => (isEnhanced() ? horseCareRulesForTier(horseCareTierOfStored(getPref(HORSE_CARE_PREF))) : null);",
+    "old": "export const horseCareRules = () =>\n  isEnhanced() ? horseCareRulesForTier(horseCareTierOfStored(getPref(HORSE_CARE_PREF))) : null;",
     "new": "const HORSE_CARE_AT_LOAD = horseCareRulesForTier(horseCareTierOfStored(getPref(HORSE_CARE_PREF)));\nexport const horseCareRules = () => (isEnhanced() ? HORSE_CARE_AT_LOAD : null);",
     "tests": [
       "test/systems/horsetiers.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "HORSE-TIERS-a-refused-gallop-walked",
     "file": "src/systems/upkeep/upkeepRuntime.js",
-    "old": "    if (runAsked && !care.refusedRunWalks) return false;\n",
-    "new": "",
+    "old": "    if (runAsked && !care.refusedRunWalks) return false;\n    return !!steedStats(mode === 'Dragon' ? dragon() : ridden(), now(), care);",
+    "new": "    return !!steedStats(mode === 'Dragon' ? dragon() : ridden(), now(), care);",
     "tests": [
       "test/systems/horsetiers.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "HORSE-TIERS-offs-clock-left-running",
     "file": "src/systems/upkeep/upkeepRuntime.js",
-    "old": "h.horseFed = Math.round(h.horseFed + (t - lastNow));",
-    "new": "void h;",
+    "old": "        for (const h of its)\n          if (isSteedItem(h) && Number.isInteger(h.horseFed) && h.horseFed > 0)\n            h.horseFed = Math.round(h.horseFed + (t - lastNow)); // DRAGON5c: the dragon's too",
+    "new": "        for (const h of its) if (isSteedItem(h) && Number.isInteger(h.horseFed) && h.horseFed > 0) void h; // DRAGON5c: the dragon's too",
     "tests": [
       "test/systems/horsetiers.test.js"
     ]

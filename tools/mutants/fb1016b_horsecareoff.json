@@ -2,8 +2,8 @@
   {
     "name": "HORSE-CARE-OFF-off-lists-no-horse",
     "file": "src/systems/upkeep/upkeepRuntime.js",
-    "old": "      if (!care) { out.horses.push(own); return; }",
-    "new": "      if (!care) return;",
+    "old": "      if (!care) {\n        out.horses.push(own);\n        return;\n      } // HORSE-CARE-OFF: Off owns its horses all the same - no care to read",
+    "new": "      if (!care) return; // HORSE-CARE-OFF: Off owns its horses all the same - no care to read",
     "tests": [
       "test/systems/horse/fb1016b_horsecareoff.test.js"
     ],
@@ -41,7 +41,7 @@
     "name": "HORSE-CARE-OFF-the-off-horses-own-look-dropped",
     "file": "src/systems/upkeep/upkeepRuntime.js",
     "old": "      const own = { i, ridden: i === 0, name: i === 0 && name ? name : null, look: describeHorseLook(horseLookOf(h)) };",
-    "new": "      const own = { i, ridden: i === 0, name: i === 0 && name ? name : null, look: describeHorseLook(horseLookOf(its[0])) };",
+    "new": "      const own = {\n        i,\n        ridden: i === 0,\n        name: i === 0 && name ? name : null,\n        look: describeHorseLook(horseLookOf(its[0])),\n      };",
     "tests": [
       "test/systems/horse/fb1016b_horsecareoff.test.js"
     ]

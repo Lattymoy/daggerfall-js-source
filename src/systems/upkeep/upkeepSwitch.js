@@ -18,13 +18,20 @@
 // (scenes/world.js mendAtYard) and a counter's price for a wagon (systems/tradeModes.js saleConditionPercentage).
 import { isEnhanced } from '../uiSkin.js';
 import { getPref } from '../uiPrefs.js';
-import { horseCareTierOfStored, horseCareRulesForTier, wagonUpkeepTierOfStored, wagonUpkeepRulesForTier } from './upkeepTiers.js';
+import {
+  horseCareTierOfStored,
+  horseCareRulesForTier,
+  wagonUpkeepTierOfStored,
+  wagonUpkeepRulesForTier,
+} from './upkeepTiers.js';
 
 export const HORSE_CARE_PREF = 'horseCare';
 export const WAGON_UPKEEP_PREF = 'wagonUpkeep';
 /** HORSE-TIERS: the live tier's rules (upkeepTiers.js HORSE_CARE_RULES) - null for Off, and on any skin but the
  *  enhanced one (the classic skin's horse is DFU's). Read live at every call: the tile's press takes effect at once. */
-export const horseCareRules = () => (isEnhanced() ? horseCareRulesForTier(horseCareTierOfStored(getPref(HORSE_CARE_PREF))) : null);
+export const horseCareRules = () =>
+  isEnhanced() ? horseCareRulesForTier(horseCareTierOfStored(getPref(HORSE_CARE_PREF))) : null;
 /** WAGON-TIERS: the live tier's rules (upkeepTiers.js WAGON_UPKEEP_RULES) - null for Off, and on any skin but the
  *  enhanced one (the classic skin's wagon is DFU's). Read live at every call. */
-export const wagonUpkeepRules = () => (isEnhanced() ? wagonUpkeepRulesForTier(wagonUpkeepTierOfStored(getPref(WAGON_UPKEEP_PREF))) : null);
+export const wagonUpkeepRules = () =>
+  isEnhanced() ? wagonUpkeepRulesForTier(wagonUpkeepTierOfStored(getPref(WAGON_UPKEEP_PREF))) : null;

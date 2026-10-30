@@ -116,6 +116,8 @@
 /src/systems/starts/*/
 !/src/systems/studioArt/
 /src/systems/studioArt/*/
+!/src/systems/upkeep/
+/src/systems/upkeep/*/
 !/src/systems/vanillaEnhanced/
 /src/systems/vanillaEnhanced/*/
 !/src/systems/wagon/

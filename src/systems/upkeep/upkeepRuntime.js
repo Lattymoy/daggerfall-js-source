@@ -26,16 +26,48 @@
 import { activeHorseItem, birthHorses, isHorseItem, describeHorseLook, horseLookOf } from '../horse/horseCoats.js';
 import { activeWagonItem, wagonHorsesOf, wagonKindOf } from '../wagon/wagonKinds.js';
 import {
-  steedStats, stepBreath, freshBreath, breathShare, canGallop, steedSpeedScale, teamDraftScale, tendHorses, feedHorse,
-  chooseRiddenHorse, horsesIn, steedFoodOf, STEED_TEXT, SKIP_MINUTES, HUNGER, STEED_STATS, STEED_STAT_TEXT, fedUntil,
-  FULL_AHEAD, BOND_TIERS, isSteedItem, tendSteed,
+  steedStats,
+  stepBreath,
+  freshBreath,
+  breathShare,
+  canGallop,
+  steedSpeedScale,
+  teamDraftScale,
+  tendHorses,
+  feedHorse,
+  chooseRiddenHorse,
+  horsesIn,
+  steedFoodOf,
+  STEED_TEXT,
+  SKIP_MINUTES,
+  HUNGER,
+  STEED_STATS,
+  STEED_STAT_TEXT,
+  fedUntil,
+  FULL_AHEAD,
+  BOND_TIERS,
+  isSteedItem,
+  tendSteed,
 } from '../steedCare.js';
-import { dragonMountOf } from '../dragon/dragonMount.js';   // DRAGON5c: the tamed dragon, cared for by the same law
+import { dragonMountOf } from '../dragon/dragonMount.js'; // DRAGON5c: the tamed dragon, cared for by the same law
 import { dragonKeepDoor, DRAGON_WHERE, DRAGON_CARE_TEXT } from '../dragon/dragonKeep.js';
-import { dragonAloft, setDragonWindedSource } from '../../player/dragonRide.js';   // DRAGON5c: its breath spent aloft, and its winded word to its flight
+import { dragonAloft, setDragonWindedSource } from '../../player/dragonRide.js'; // DRAGON5c: its breath spent aloft, and its winded word to its flight
 import {
-  wagonState, wagonSoundness, wagonCondition, wagonConditionMax, rollWear, journeyWear, createWearAccount, wearWagon,
-  wagonPace, mendPrice, kitMendWagon, wagonWord, WAGON_UPKEEP_TEXT, THROWN_WEAR, WAGON_KIT_CEILING,
+  wagonState,
+  wagonSoundness,
+  wagonCondition,
+  wagonConditionMax,
+  rollWear,
+  journeyWear,
+  createWearAccount,
+  wearWagon,
+  wagonPace,
+  mendPrice,
+  kitMendWagon,
+  wagonWord,
+  WAGON_UPKEEP_TEXT,
+  THROWN_WEAR,
+  WAGON_KIT_CEILING,
 } from '../wagon/wagonUpkeep.js';
 import { isWagonKitItem, isDwarvenOilItem, UPKEEP_ITEM } from './upkeepItemRows.js';
 import { registerItemUseHandler } from '../item/itemTemplates.js';
@@ -47,7 +79,10 @@ export const BREATH_LOW = 0.25;
  *  reached at (`next`, null at Kindred). Pure. @param {number} bond */
 export function bondWay(bond) {
   const next = BOND_TIERS.find((x) => x.min > bond) ?? null;
-  return { tierAt: [...BOND_TIERS].reverse().find((x) => bond >= x.min)?.min ?? 0, next: next ? { name: next.name, at: next.min } : null };
+  return {
+    tierAt: [...BOND_TIERS].reverse().find((x) => bond >= x.min)?.min ?? 0,
+    next: next ? { name: next.name, at: next.min } : null,
+  };
 }
 
 /**
@@ -57,34 +92,62 @@ export function bondWay(bond) {
  * @param {{ items: () => any[], now: () => number, horseCare?: () => any, wagonUpkeep?: () => any,
  *   where?: () => string, stores?: () => any[], say?: (text: string) => void }} deps
  */
-export function createUpkeep({ items, now, horseCare = () => null, wagonUpkeep = () => null, where = () => 'with', stores = () => [], say = () => {} }) {
+export function createUpkeep({
+  items,
+  now,
+  horseCare = () => null,
+  wagonUpkeep = () => null,
+  where = () => 'with',
+  stores = () => [],
+  say = () => {},
+}) {
   /** @type {Map<number, { spent: number, winded: boolean }>} */
   const breaths = new Map();
   let lastNow = /** @type {number|null} */ (null);
-  let tendedAt = /** @type {number|null} */ (null);   // the clock's minute the keep last ran (once a game minute - five seconds)
-  let wasRiding = false, wasWinded = false;
+  let tendedAt = /** @type {number|null} */ (null); // the clock's minute the keep last ran (once a game minute - five seconds)
+  let wasRiding = false,
+    wasWinded = false;
   const wear = createWearAccount();
   let lastState = /** @type {string|null} */ (null);
   let lastWagon = /** @type {any} */ (null);
 
-  const pack = () => { const it = items(); return Array.isArray(it) ? it : []; };
-  const store = () => { const s = stores(); return Array.isArray(s) ? s : []; };
-  const breathOf = (horse) => { const s = horse?.horseSeed | 0; if (!breaths.has(s)) breaths.set(s, freshBreath()); return /** @type {{ spent: number, winded: boolean }} */ (breaths.get(s)); };
+  const pack = () => {
+    const it = items();
+    return Array.isArray(it) ? it : [];
+  };
+  const store = () => {
+    const s = stores();
+    return Array.isArray(s) ? s : [];
+  };
+  const breathOf = (horse) => {
+    const s = horse?.horseSeed | 0;
+    if (!breaths.has(s)) breaths.set(s, freshBreath());
+    return /** @type {{ spent: number, winded: boolean }} */ (breaths.get(s));
+  };
   const ridden = () => activeHorseItem(pack());
   // DRAGON5c: THE TAMED DRAGON on horse care's law - its keep (fed with its owner from the pack and its bags, hunting
   // for itself waiting or away: never starving), its breath (spent galloping and flying), its pace, its gallop
-  let dragonBreath = freshBreath(), dragonWinded = false, wasDragon = false;
+  let dragonBreath = freshBreath(),
+    dragonWinded = false,
+    wasDragon = false;
   const dragon = () => dragonMountOf(pack());
   const dragonKeep = () => dragonKeepDoor()?.model?.() ?? null;
-  const dragonWhere = () => { const k = dragonKeep(); return !k || k.where === DRAGON_WHERE.Ridden ? 'with' : 'waiting'; };
-  const dragonBags = () => { const k = dragonKeep(); return k && (k.where === DRAGON_WHERE.Ridden || k.near) ? dragonKeepDoor()?.bags?.() ?? [] : []; };
+  const dragonWhere = () => {
+    const k = dragonKeep();
+    return !k || k.where === DRAGON_WHERE.Ridden ? 'with' : 'waiting';
+  };
+  const dragonBags = () => {
+    const k = dragonKeep();
+    return k && (k.where === DRAGON_WHERE.Ridden || k.near) ? (dragonKeepDoor()?.bags?.() ?? []) : [];
+  };
   setDragonWindedSource(() => !!horseCare() && !!dragon() && dragonBreath.winded);
 
   /** A wagon's state moved down a step: said, once - Rickety, Failing. WAGON-TIERS: in its tier's words - Boons' say
    *  no slowness it does not have. */
   function sayWorn(item, after, wcare) {
     if (!after || after.key === 'sound' || after.key === 'worn') return;
-    const name = wagonWord(item), slows = !!wcare?.wearSlows;
+    const name = wagonWord(item),
+      slows = !!wcare?.wearSlows;
     if (after.key === 'failing') say(slows ? WAGON_UPKEEP_TEXT.failing(name) : WAGON_UPKEEP_TEXT.failingBoons(name));
     else say(slows ? WAGON_UPKEEP_TEXT.rickety(name) : WAGON_UPKEEP_TEXT.ricketyBoons(name));
   }
@@ -97,60 +160,102 @@ export function createUpkeep({ items, now, horseCare = () => null, wagonUpkeep =
    * @param {number} dt
    * @param {{ mode?: string, galloping?: boolean, moving?: boolean, metres?: number, road?: boolean, load?: number, wagonGoes?: boolean }} [f]
    */
-  function tick(dt, { mode = 'Foot', galloping = false, moving = false, metres = 0, road = true, load = 0, wagonGoes = false } = {}) {
-    const its = pack(), t = now();
+  function tick(
+    dt,
+    { mode = 'Foot', galloping = false, moving = false, metres = 0, road = true, load = 0, wagonGoes = false } = {},
+  ) {
+    const its = pack(),
+      t = now();
     if (!Number.isFinite(t)) return;
     const skipped = lastNow != null && t - lastNow >= SKIP_MINUTES;
     const care = horseCare();
     if (care) {
       birthHorses(its);
-      if (skipped || tendedAt == null || Math.floor(t) !== tendedAt) {   // the keep: the host's `where` read a game minute at most
+      if (skipped || tendedAt == null || Math.floor(t) !== tendedAt) {
+        // the keep: the host's `where` read a game minute at most
         const r = tendHorses(its, t, { since: tendedAt ?? lastNow, where: where(), stores: store(), rules: care });
         if (r.ate) say(STEED_TEXT.ateOnTheRoad(r.ate));
-        const d = dragon();   // DRAGON5c
-        const dr = d ? tendSteed(d, its, t, { since: tendedAt ?? lastNow, where: dragonWhere(), stores: dragonBags(), rules: care }) : null;
+        const d = dragon(); // DRAGON5c
+        const dr = d
+          ? tendSteed(d, its, t, {
+              since: tendedAt ?? lastNow,
+              where: dragonWhere(),
+              stores: dragonBags(),
+              rules: care,
+            })
+          : null;
         if (dr?.ate) say(DRAGON_CARE_TEXT.ateOnTheRoad(dr.ate));
         tendedAt = Math.floor(t);
       }
-      if (skipped) { breaths.clear(); dragonBreath = freshBreath(); }   // a span skipped: every horse its breath back (DRAGON5c: the dragon's too)
+      if (skipped) {
+        breaths.clear();
+        dragonBreath = freshBreath();
+      } // a span skipped: every horse its breath back (DRAGON5c: the dragon's too)
       const horse = activeHorseItem(its);
       const riding = mode === 'Horse';
       if (horse) {
         const st = steedStats(horse, t, care);
         if (st) {
-          const b = stepBreath(breathOf(horse), { stats: st.stats, hunger: st.hunger, galloping: riding && galloping, ridden: riding && moving, dt, rules: care });
+          const b = stepBreath(breathOf(horse), {
+            stats: st.stats,
+            hunger: st.hunger,
+            galloping: riding && galloping,
+            ridden: riding && moving,
+            dt,
+            rules: care,
+          });
           breaths.set(horse.horseSeed | 0, b);
           if (b.winded && !wasWinded && riding) say(STEED_TEXT.winded);
           else if (!b.winded && wasWinded && riding) say(STEED_TEXT.rested);
           wasWinded = b.winded;
-          if (riding && !wasRiding && st.hunger !== 'fed') say(st.hunger === 'starving' ? STEED_TEXT.starving : 'Your horse is hungry.');
+          if (riding && !wasRiding && st.hunger !== 'fed')
+            say(st.hunger === 'starving' ? STEED_TEXT.starving : 'Your horse is hungry.');
         }
       }
       wasRiding = riding;
-      const d = dragon();   // DRAGON5c: the dragon's breath - a gallop on the ground, or flight, spends it
+      const d = dragon(); // DRAGON5c: the dragon's breath - a gallop on the ground, or flight, spends it
       const dst = d ? steedStats(d, t, care) : null;
       const onDragon = mode === 'Dragon';
       if (dst) {
-        dragonBreath = stepBreath(dragonBreath, { stats: dst.stats, hunger: dst.hunger, galloping: onDragon && moving && (galloping || dragonAloft()), ridden: onDragon && moving, dt, rules: care });
+        dragonBreath = stepBreath(dragonBreath, {
+          stats: dst.stats,
+          hunger: dst.hunger,
+          galloping: onDragon && moving && (galloping || dragonAloft()),
+          ridden: onDragon && moving,
+          dt,
+          rules: care,
+        });
         if (dragonBreath.winded && !dragonWinded && onDragon) say(DRAGON_CARE_TEXT.winded);
         else if (!dragonBreath.winded && dragonWinded && onDragon) say(DRAGON_CARE_TEXT.rested);
-        if (onDragon && !wasDragon && dst.hunger !== 'fed') say(dst.hunger === 'starving' ? DRAGON_CARE_TEXT.starving : DRAGON_CARE_TEXT.hungry);
+        if (onDragon && !wasDragon && dst.hunger !== 'fed')
+          say(dst.hunger === 'starving' ? DRAGON_CARE_TEXT.starving : DRAGON_CARE_TEXT.hungry);
       }
-      dragonWinded = dragonBreath.winded; wasDragon = onDragon;
+      dragonWinded = dragonBreath.winded;
+      wasDragon = onDragon;
     } else {
-      breaths.clear(); wasRiding = false; wasWinded = false; tendedAt = null;   // AUDIT STEED1: off, no keep ran - none to catch up when it is on again
-      dragonBreath = freshBreath(); dragonWinded = false; wasDragon = false;   // DRAGON5c: the dragon's too
+      breaths.clear();
+      wasRiding = false;
+      wasWinded = false;
+      tendedAt = null; // AUDIT STEED1: off, no keep ran - none to catch up when it is on again
+      dragonBreath = freshBreath();
+      dragonWinded = false;
+      wasDragon = false; // DRAGON5c: the dragon's too
       // HORSE-TIERS (Climates & Calories' Off, SURV-TIERS: "its minutes are nobody's needs"): Off a horse is DFU's and
       // needs nothing, so each horse's food clock is carried with the clock - it stands, on again, where Off found it,
       // neither starved nor its bond faded by the time it was DFU's
       if (lastNow != null && t > lastNow) {
-        for (const h of its) if (isSteedItem(h) && Number.isInteger(h.horseFed) && h.horseFed > 0) h.horseFed = Math.round(h.horseFed + (t - lastNow));   // DRAGON5c: the dragon's too
+        for (const h of its)
+          if (isSteedItem(h) && Number.isInteger(h.horseFed) && h.horseFed > 0)
+            h.horseFed = Math.round(h.horseFed + (t - lastNow)); // DRAGON5c: the dragon's too
       }
     }
-    const wcare = wagonUpkeep();   // WAGON-TIERS: Boons and Hard wear it alike (the same world); Off never
+    const wcare = wagonUpkeep(); // WAGON-TIERS: Boons and Hard wear it alike (the same world); Off never
     if (wcare) {
       const w = activeWagonItem(its);
-      if (w !== lastWagon) { lastWagon = w; lastState = w ? wagonState(w).key : null; }
+      if (w !== lastWagon) {
+        lastWagon = w;
+        lastState = w ? wagonState(w).key : null;
+      }
       if (w && wagonGoes && metres > 0 && metres < 1000) {
         const r = wear.add(w, rollWear(metres, { kind: wagonKindOf(w), road, load }));
         if (r && r.after.key !== r.before.key) sayWorn(w, r.after, wcare);
@@ -164,9 +269,11 @@ export function createUpkeep({ items, now, horseCare = () => null, wagonUpkeep =
    *  its load. 1 with either tier Off - and a wagon's state only where its tier's wear slows it (WAGON-TIERS: Hard).
    *  @param {string} mode @param {number} [load] */
   function rideScale(mode, load = 0) {
-    const its = pack(), t = now();
+    const its = pack(),
+      t = now();
     const care = horseCare();
-    if (mode === 'Horse' || mode === 'Dragon') {   // DRAGON5c: the dragon's Speed on the ground, as a horse's
+    if (mode === 'Horse' || mode === 'Dragon') {
+      // DRAGON5c: the dragon's Speed on the ground, as a horse's
       if (!care) return 1;
       const st = steedStats(mode === 'Dragon' ? dragon() : activeHorseItem(its), t, care);
       return st ? steedSpeedScale(st.stats.speed, care) : 1;
@@ -175,7 +282,7 @@ export function createUpkeep({ items, now, horseCare = () => null, wagonUpkeep =
       let k = 1;
       const w = activeWagonItem(its);
       const wcare = wagonUpkeep();
-      if (wcare && w) k *= wagonPace(w, wcare);   // WAGON-MEND: a failing wagon's the slowest - and every wagon rolls; WAGON-TIERS: on Hard
+      if (wcare && w) k *= wagonPace(w, wcare); // WAGON-MEND: a failing wagon's the slowest - and every wagon rolls; WAGON-TIERS: on Hard
       if (care && w) {
         const team = horsesIn(its).slice(0, wagonHorsesOf(wagonKindOf(w)));
         const strengths = team.map((h) => steedStats(h, t, care)?.stats.strength).filter((v) => Number.isFinite(v));
@@ -193,7 +300,10 @@ export function createUpkeep({ items, now, horseCare = () => null, wagonUpkeep =
     const care = horseCare();
     if (!care || (mode !== 'Horse' && mode !== 'Dragon')) return null;
     if (base === false) return false;
-    if (mode === 'Dragon') { const st = steedStats(dragon(), now(), care); return st ? canGallop(dragonBreath, st.hunger) : base; }   // DRAGON5c
+    if (mode === 'Dragon') {
+      const st = steedStats(dragon(), now(), care);
+      return st ? canGallop(dragonBreath, st.hunger) : base;
+    } // DRAGON5c
     const horse = ridden();
     const st = steedStats(horse, now(), care);
     if (!st) return base;
@@ -208,23 +318,25 @@ export function createUpkeep({ items, now, horseCare = () => null, wagonUpkeep =
    *  @param {string} mode @param {boolean} [runAsked] */
   function rideWalks(mode, runAsked = false) {
     const care = horseCare();
-    if (!care || (mode !== 'Horse' && mode !== 'Dragon')) return false;   // DRAGON5c: the dragon walks and gallops as a horse
+    if (!care || (mode !== 'Horse' && mode !== 'Dragon')) return false; // DRAGON5c: the dragon walks and gallops as a horse
     if (runAsked && !care.refusedRunWalks) return false;
     return !!steedStats(mode === 'Dragon' ? dragon() : ridden(), now(), care);
   }
 
   /** Whether the rider pays the gallop's fatigue (DFU's running band): not when horse care has the horse pay it in
    *  breath. @param {string} mode */
-  const riderPaysGallop = (mode) => !(!!horseCare() && ((mode === 'Horse' && !!ridden()) || (mode === 'Dragon' && !!dragon())));   // DRAGON5c
+  const riderPaysGallop = (mode) =>
+    !(!!horseCare() && ((mode === 'Horse' && !!ridden()) || (mode === 'Dragon' && !!dragon()))); // DRAGON5c
 
   /** The HUD's horse bar while riding: `{ amount, low }` or null. @param {string} mode */
   function bar(mode) {
     const care = horseCare();
     if (!care || (mode !== 'Horse' && mode !== 'Dragon')) return null;
-    const horse = mode === 'Dragon' ? dragon() : ridden();   // DRAGON5c: the dragon's breath on the same bar
+    const horse = mode === 'Dragon' ? dragon() : ridden(); // DRAGON5c: the dragon's breath on the same bar
     const st = steedStats(horse, now(), care);
     if (!st) return null;
-    const b = mode === 'Dragon' ? dragonBreath : breathOf(horse), amount = breathShare(b, st.stats);
+    const b = mode === 'Dragon' ? dragonBreath : breathOf(horse),
+      amount = breathShare(b, st.stats);
     return { amount, low: b.winded || amount < BREATH_LOW || st.hunger === 'starving' };
   }
 
@@ -256,18 +368,28 @@ export function createUpkeep({ items, now, horseCare = () => null, wagonUpkeep =
       else if (food === 'apple') out.apples += it.stackCount ?? 1;
       if (isWagonKitItem(it)) out.kits += it.stackCount ?? 1;
     }
-    for (const it of [...pack(), ...dragonBags()]) if (isDwarvenOilItem(it)) out.oil += it.stackCount ?? 1;   // DRAGON5c: the pack's and its saddlebags'
+    for (const it of [...pack(), ...dragonBags()]) if (isDwarvenOilItem(it)) out.oil += it.stackCount ?? 1; // DRAGON5c: the pack's and its saddlebags'
     return out;
   }
   /** A wagon's card: its kind's word, its state, its share of whole, whether a kit would mend it, and a Wagon Yard's
    *  price to make it whole - drawn up at the yard, and with its wright going out to it (`mendAway`). WAGON-TIERS: its
    *  tier's id and whether its wear slows it (`wearSlows` - the card's and the panel's words and tones read it). */
   function wagonCard(w, wcare) {
-    const s = wagonState(w), share = wagonSoundness(w);
+    const s = wagonState(w),
+      share = wagonSoundness(w);
     return {
-      name: wagonWord(w), state: s.name, stateKey: s.key, tone: s.tone, condition: wagonCondition(w), max: wagonConditionMax(w), share,
-      tier: wcare?.id ?? null, wearSlows: !!wcare?.wearSlows,
-      kitWorks: share < WAGON_KIT_CEILING, mend: mendPrice(w), mendAway: mendPrice(w, { away: true }),
+      name: wagonWord(w),
+      state: s.name,
+      stateKey: s.key,
+      tone: s.tone,
+      condition: wagonCondition(w),
+      max: wagonConditionMax(w),
+      share,
+      tier: wcare?.id ?? null,
+      wearSlows: !!wcare?.wearSlows,
+      kitWorks: share < WAGON_KIT_CEILING,
+      mend: mendPrice(w),
+      mendAway: mendPrice(w, { away: true }),
     };
   }
 
@@ -278,41 +400,74 @@ export function createUpkeep({ items, now, horseCare = () => null, wagonUpkeep =
    *  its name and its look, for its card and the choice to ride it; its care (stats, bond, hunger, breath) only where
    *  horse care rules. */
   function model({ near = true, name = '' } = {}) {
-    const its = pack(), t = now();
+    const its = pack(),
+      t = now();
     const care = horseCare();
     // HORSE-TIERS: `tier` the tier's id and `hungerCosts` its word on hunger (the card's words and tones read them)
     const wcare = wagonUpkeep();
-    const out = { horseCare: !!care, tier: care?.id ?? null, hungerCosts: !!care?.hungerCosts, wagonUpkeep: !!wcare, near: !!near, horses: /** @type {any[]} */ ([]), wagon: /** @type {any} */ (null), dragon: /** @type {any} */ (null), ...supplies() };
+    const out = {
+      horseCare: !!care,
+      tier: care?.id ?? null,
+      hungerCosts: !!care?.hungerCosts,
+      wagonUpkeep: !!wcare,
+      near: !!near,
+      horses: /** @type {any[]} */ ([]),
+      wagon: /** @type {any} */ (null),
+      dragon: /** @type {any} */ (null),
+      ...supplies(),
+    };
     horsesIn(its).forEach((h, i) => {
       const own = { i, ridden: i === 0, name: i === 0 && name ? name : null, look: describeHorseLook(horseLookOf(h)) };
-      if (!care) { out.horses.push(own); return; }   // HORSE-CARE-OFF: Off owns its horses all the same - no care to read
+      if (!care) {
+        out.horses.push(own);
+        return;
+      } // HORSE-CARE-OFF: Off owns its horses all the same - no care to read
       const st = steedStats(h, t, care);
       if (!st) return;
       const f = fedUntil(h);
       out.horses.push({
         ...own,
         stats: STEED_STATS.map((k) => ({ key: k, name: STEED_STAT_TEXT[k], born: st.born[k], now: st.stats[k] })),
-        ...bondWay(st.bond), bond: st.bond, tier: st.tier, bonus: st.bonus, penalty: st.penalty, hunger: HUNGER[st.hunger].name, hungerKey: st.hunger,
-        fedHours: f != null && f > t ? (f - t) / 60 : 0, full: f != null && f - t >= FULL_AHEAD,
-        breath: i === 0 ? breathShare(breathOf(h), st.stats) : 1, winded: i === 0 && !!breathOf(h).winded,
+        ...bondWay(st.bond),
+        bond: st.bond,
+        tier: st.tier,
+        bonus: st.bonus,
+        penalty: st.penalty,
+        hunger: HUNGER[st.hunger].name,
+        hungerKey: st.hunger,
+        fedHours: f != null && f > t ? (f - t) / 60 : 0,
+        full: f != null && f - t >= FULL_AHEAD,
+        breath: i === 0 ? breathShare(breathOf(h), st.stats) : 1,
+        winded: i === 0 && !!breathOf(h).winded,
       });
     });
     const w = activeWagonItem(its);
     if (wcare && w) out.wagon = wagonCard(w, wcare);
-    out.dragon = care ? dragonCard(t, care) : null;   // DRAGON5c
+    out.dragon = care ? dragonCard(t, care) : null; // DRAGON5c
     return out;
   }
   /** DRAGON5c: the tamed dragon's care on its card - as a horse's (its stats, bond, hunger, breath), and whether a hand
    *  can feed it (`near`: on its back, or beside it waiting). */
   function dragonCard(t, care) {
-    const d = dragon(), st = d ? steedStats(d, t, care) : null;
+    const d = dragon(),
+      st = d ? steedStats(d, t, care) : null;
     if (!st) return null;
-    const f = fedUntil(d), k = dragonKeep();
+    const f = fedUntil(d),
+      k = dragonKeep();
     return {
       stats: STEED_STATS.map((key) => ({ key, name: STEED_STAT_TEXT[key], born: st.born[key], now: st.stats[key] })),
-      ...bondWay(st.bond), bond: st.bond, tier: st.tier, bonus: st.bonus, penalty: st.penalty, hunger: HUNGER[st.hunger].name, hungerKey: st.hunger,
-      fedHours: f != null && f > t ? (f - t) / 60 : 0, full: f != null && f - t >= FULL_AHEAD,
-      breath: breathShare(dragonBreath, st.stats), winded: !!dragonBreath.winded, near: !!k && (k.where === DRAGON_WHERE.Ridden || !!k.near),
+      ...bondWay(st.bond),
+      bond: st.bond,
+      tier: st.tier,
+      bonus: st.bonus,
+      penalty: st.penalty,
+      hunger: HUNGER[st.hunger].name,
+      hungerKey: st.hunger,
+      fedHours: f != null && f > t ? (f - t) / 60 : 0,
+      full: f != null && f - t >= FULL_AHEAD,
+      breath: breathShare(dragonBreath, st.stats),
+      winded: !!dragonBreath.winded,
+      near: !!k && (k.where === DRAGON_WHERE.Ridden || !!k.near),
     };
   }
 
@@ -328,23 +483,35 @@ export function createUpkeep({ items, now, horseCare = () => null, wagonUpkeep =
    * @param {string} mode
    */
   function saddle(mode) {
-    const its = pack(), t = now();
+    const its = pack(),
+      t = now();
     const out = { horse: /** @type {any} */ (null), wagon: /** @type {any} */ (null), ...supplies() };
     const care = horseCare();
     if (care) {
-      const h = ridden(), st = steedStats(h, t, care);
+      const h = ridden(),
+        st = steedStats(h, t, care);
       if (st) {
-        const riding = mode === 'Horse', b = breathOf(h);
-        const horses = horsesIn(its), w = activeWagonItem(its);
+        const riding = mode === 'Horse',
+          b = breathOf(h);
+        const horses = horsesIn(its),
+          w = activeWagonItem(its);
         const team = riding || !w ? [h] : horses.slice(0, Math.max(1, wagonHorsesOf(wagonKindOf(w))));
         const needy = team.reduce((a, x) => ((fedUntil(x) ?? Infinity) < (fedUntil(a) ?? Infinity) ? x : a), h);
-        const ns = steedStats(needy, t, care) ?? st, f = fedUntil(needy);
+        const ns = steedStats(needy, t, care) ?? st,
+          f = fedUntil(needy);
         out.horse = {
-          breath: riding ? breathShare(b, st.stats) : null, winded: riding && !!b.winded,
-          hunger: HUNGER[ns.hunger].name, hungerKey: ns.hunger, fedHours: f != null && f > t ? (f - t) / 60 : 0,
-          full: f != null && f - t >= FULL_AHEAD, feed: Math.max(0, horses.indexOf(needy)), team: team.length,
-          tier: st.tier, bond: st.bond, ...bondWay(st.bond),
-          hungerCosts: !!care.hungerCosts,   // HORSE-TIERS: NO RED where hunger costs nothing (ui/enhanced/enhancedSaddle.js)
+          breath: riding ? breathShare(b, st.stats) : null,
+          winded: riding && !!b.winded,
+          hunger: HUNGER[ns.hunger].name,
+          hungerKey: ns.hunger,
+          fedHours: f != null && f > t ? (f - t) / 60 : 0,
+          full: f != null && f - t >= FULL_AHEAD,
+          feed: Math.max(0, horses.indexOf(needy)),
+          team: team.length,
+          tier: st.tier,
+          bond: st.bond,
+          ...bondWay(st.bond),
+          hungerCosts: !!care.hungerCosts, // HORSE-TIERS: NO RED where hunger costs nothing (ui/enhanced/enhancedSaddle.js)
         };
       }
     }
@@ -362,39 +529,69 @@ export function createUpkeep({ items, now, horseCare = () => null, wagonUpkeep =
    * the very piece.
    * @param {string} verb @param {any} arg @param {{ near?: boolean, stabled?: boolean, wagonNear?: boolean, pass?: (m: number) => void, who?: string, from?: any[]|null, piece?: any }} [o]
    */
-  function act(verb, arg, { near = true, stabled = false, wagonNear = true, pass = () => {}, who = 'Your horse', from = null, piece = null } = {}) {
-    const its = pack(), t = now();
+  function act(
+    verb,
+    arg,
+    {
+      near = true,
+      stabled = false,
+      wagonNear = true,
+      pass = () => {},
+      who = 'Your horse',
+      from = null,
+      piece = null,
+    } = {},
+  ) {
+    const its = pack(),
+      t = now();
     if (verb === 'ride') return chooseRiddenHorse(its, Number(arg) | 0);
     if (verb === 'feed' || verb === 'treat' || verb === 'feedDragon') {
       const care = horseCare();
       if (!care) return { ok: false, text: 'Not here.' };
-      if (verb === 'feedDragon') {   // DRAGON5c: a flask of Dwarven Oil, from the pack first, then its saddlebags
-        const d = dragon(), k = dragonKeep();
+      if (verb === 'feedDragon') {
+        // DRAGON5c: a flask of Dwarven Oil, from the pack first, then its saddlebags
+        const d = dragon(),
+          k = dragonKeep();
         if (!d) return { ok: false, text: DRAGON_CARE_TEXT.none };
         if (!k || !(k.where === DRAGON_WHERE.Ridden || k.near)) return { ok: false, text: DRAGON_CARE_TEXT.notHere };
         const bags = dragonBags();
         const list = from ?? (its.some(isDwarvenOilItem) ? its : bags.some(isDwarvenOilItem) ? bags : its);
-        return feedHorse(its, d, 'oil', t, k.title || DRAGON_CARE_TEXT.yourDragon, { from: list, food: piece, rules: care });
+        return feedHorse(its, d, 'oil', t, k.title || DRAGON_CARE_TEXT.yourDragon, {
+          from: list,
+          food: piece,
+          rules: care,
+        });
       }
       const horse = horsesIn(its)[Number(arg) | 0];
       if (!horse) return { ok: false, text: STEED_TEXT.noHorse };
       if (stabled) return { ok: false, text: STEED_TEXT.stabled };
       if (!near) return { ok: false, text: STEED_TEXT.notHere };
       const kind = verb === 'feed' ? 'oats' : 'apple';
-      const list = from ?? (steedFoodOf(its.find((x) => steedFoodOf(x)?.key === kind)) ? its : store().some((x) => steedFoodOf(x)?.key === kind) ? store() : its);   // the pack's first, then the wagon's load
-      return feedHorse(its, horse, kind, t, (Number(arg) | 0) === 0 ? who : 'Your horse', { from: list, food: piece, rules: care });
+      const list =
+        from ??
+        (steedFoodOf(its.find((x) => steedFoodOf(x)?.key === kind))
+          ? its
+          : store().some((x) => steedFoodOf(x)?.key === kind)
+            ? store()
+            : its); // the pack's first, then the wagon's load
+      return feedHorse(its, horse, kind, t, (Number(arg) | 0) === 0 ? who : 'Your horse', {
+        from: list,
+        food: piece,
+        rules: care,
+      });
     }
     if (verb === 'kit') {
       if (!wagonUpkeep()) return { ok: false, text: 'Not here.' };
       const w = activeWagonItem(its);
       if (!w) return { ok: false, text: WAGON_UPKEEP_TEXT.noWagon };
       if (!wagonNear) return { ok: false, text: WAGON_UPKEEP_TEXT.kitNotNear(wagonWord(w)) };
-      const list = from ?? (its.some(isWagonKitItem) ? its : store().some(isWagonKitItem) ? store() : its);   // the pack's first, then the wagon's load
+      const list = from ?? (its.some(isWagonKitItem) ? its : store().some(isWagonKitItem) ? store() : its); // the pack's first, then the wagon's load
       const kit = piece && isWagonKitItem(piece) && list.includes(piece) ? piece : list.find(isWagonKitItem);
       if (!kit) return { ok: false, text: 'You have no Wagon Repair Kit. A Wagon Yard sells them.' };
       const r = kitMendWagon(w);
       if (!r.ok) return r;
-      if ((kit.stackCount ?? 1) > 1) kit.stackCount--; else list.splice(list.indexOf(kit), 1);
+      if ((kit.stackCount ?? 1) > 1) kit.stackCount--;
+      else list.splice(list.indexOf(kit), 1);
       pass(60);
       lastState = wagonState(w).key;
       return r;
@@ -403,15 +600,42 @@ export function createUpkeep({ items, now, horseCare = () => null, wagonUpkeep =
   }
 
   return {
-    tick, rideScale, gallopGate, rideWalks, riderPaysGallop, bar, journey, thrown, model, saddle, act,
+    tick,
+    rideScale,
+    gallopGate,
+    rideWalks,
+    riderPaysGallop,
+    bar,
+    journey,
+    thrown,
+    model,
+    saddle,
+    act,
     /** The yard's price to mend the wagon driven (`away` it is not at the yard), or 0. */
-    mendPrice: (away = false) => { const w = activeWagonItem(pack()); return w ? mendPrice(w, { away }) : 0; },
+    mendPrice: (away = false) => {
+      const w = activeWagonItem(pack());
+      return w ? mendPrice(w, { away }) : 0;
+    },
     /** Tests: the ridden horse's breath. */
-    breathOf: () => { const h = ridden(); return h ? { ...breathOf(h) } : null; },
+    breathOf: () => {
+      const h = ridden();
+      return h ? { ...breathOf(h) } : null;
+    },
     /** Tests: the dragon's breath. */
     dragonBreathOf: () => ({ ...dragonBreath }),
     /** A load, a new character: every breath fresh, no span to catch up. */
-    reset() { breaths.clear(); lastNow = null; tendedAt = null; wasRiding = false; wasWinded = false; lastWagon = null; lastState = null; dragonBreath = freshBreath(); dragonWinded = false; wasDragon = false; },
+    reset() {
+      breaths.clear();
+      lastNow = null;
+      tendedAt = null;
+      wasRiding = false;
+      wasWinded = false;
+      lastWagon = null;
+      lastState = null;
+      dragonBreath = freshBreath();
+      dragonWinded = false;
+      wasDragon = false;
+    },
   };
 }
 
@@ -430,7 +654,7 @@ export function horseWhereOf(view) {
   if (view.wagonMode === WAGON_MODE.FollowingPlayer && view.horseMode === HORSE_MODE.HitchedToWagon) return 'with';
   if (view.horseMode === HORSE_MODE.LooseStationary) return 'waiting';
   if (view.horseMode === HORSE_MODE.HitchedToWagon && view.wagonMode === WAGON_MODE.Deployed) return 'waiting';
-  return view.horseStabled ? 'stabled' : 'with';   // WAGON-STABLED: sent away; never sent, the mod's WithPlayer beside its owner
+  return view.horseStabled ? 'stabled' : 'with'; // WAGON-STABLED: sent away; never sent, the mod's WithPlayer beside its owner
 }
 
 /**
@@ -440,7 +664,7 @@ export function horseWhereOf(view) {
  * with their owner. `who` the horse's name in a sentence.
  */
 export function upkeepReach(runtime, on) {
-  const v = on ? runtime?.stableView?.() ?? null : null;
+  const v = on ? (runtime?.stableView?.() ?? null) : null;
   const persistent = !!v?.persistence;
   return {
     near: !persistent || !!runtime?.canMountHorseFromTransportWindow?.(),
@@ -461,22 +685,44 @@ export function upkeepReach(runtime, on) {
  * `wagonUpkeep` wagon upkeep's, the same way.
  */
 export function registerUpkeepUses(upkeep, { reach, pass, horseCare, wagonUpkeep }) {
-  registerItemUseHandler(UPKEEP_ITEM.Oats, Object.assign((item, collection) => {
-    if (!horseCare()) return null;
-    const r = upkeep.act('feed', 0, { ...reach(), from: collection, piece: item, pass });
-    return { kind: 'upkeep', text: r.text };
-  }, { usable: () => !!horseCare() }));
-  registerItemUseHandler(UPKEEP_ITEM.DwarvenOil, Object.assign((item, collection) => {   // DRAGON5c: the oil feeds the tamed dragon
-    if (!horseCare()) return null;
-    const r = upkeep.act('feedDragon', 0, { from: collection, piece: item, pass });
-    return { kind: 'upkeep', text: r.text };
-  }, { usable: () => !!horseCare() }));
-  registerItemUseHandler(UPKEEP_ITEM.WagonKit, Object.assign((item, collection) => {
-    if (!wagonUpkeep()) return null;
-    const r = upkeep.act('kit', 0, { ...reach(), from: collection, piece: item, pass });
-    return { kind: 'upkeep', text: r.text };
-  }, { usable: () => !!wagonUpkeep() }));
+  registerItemUseHandler(
+    UPKEEP_ITEM.Oats,
+    Object.assign(
+      (item, collection) => {
+        if (!horseCare()) return null;
+        const r = upkeep.act('feed', 0, { ...reach(), from: collection, piece: item, pass });
+        return { kind: 'upkeep', text: r.text };
+      },
+      { usable: () => !!horseCare() },
+    ),
+  );
+  registerItemUseHandler(
+    UPKEEP_ITEM.DwarvenOil,
+    Object.assign(
+      (item, collection) => {
+        // DRAGON5c: the oil feeds the tamed dragon
+        if (!horseCare()) return null;
+        const r = upkeep.act('feedDragon', 0, { from: collection, piece: item, pass });
+        return { kind: 'upkeep', text: r.text };
+      },
+      { usable: () => !!horseCare() },
+    ),
+  );
+  registerItemUseHandler(
+    UPKEEP_ITEM.WagonKit,
+    Object.assign(
+      (item, collection) => {
+        if (!wagonUpkeep()) return null;
+        const r = upkeep.act('kit', 0, { ...reach(), from: collection, piece: item, pass });
+        return { kind: 'upkeep', text: r.text };
+      },
+      { usable: () => !!wagonUpkeep() },
+    ),
+  );
 }
 
 /** Whether a pack's horses are all born and known to the law (a test's and a host's read). */
-export const horsesBorn = (items) => (Array.isArray(items) ? items.filter(isHorseItem).every((h) => Number.isInteger(h.horseSeed) && h.horseSeed > 0) : true);
+export const horsesBorn = (items) =>
+  Array.isArray(items)
+    ? items.filter(isHorseItem).every((h) => Number.isInteger(h.horseSeed) && h.horseSeed > 0)
+    : true;

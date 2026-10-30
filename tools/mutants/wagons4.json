@@ -65,8 +65,8 @@
   {
     "name": "WAGONS4-worn-where-it-stays",
     "file": "src/systems/upkeep/upkeepRuntime.js",
-    "old": "if (w && wagonGoes && metres > 0 && metres < 1000) {",
-    "new": "if (w && metres > 0 && metres < 1000) {",
+    "old": "      if (w && wagonGoes && metres > 0 && metres < 1000) {",
+    "new": "      if (w && metres > 0 && metres < 1000) {",
     "tests": [
       "test/systems/wagons4_upkeep.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "WAGONS4-the-kit-not-spent",
     "file": "src/systems/upkeep/upkeepRuntime.js",
-    "old": "      if ((kit.stackCount ?? 1) > 1) kit.stackCount--; else list.splice(list.indexOf(kit), 1);\n",
-    "new": "\n",
+    "old": "      if ((kit.stackCount ?? 1) > 1) kit.stackCount--;\n      else list.splice(list.indexOf(kit), 1);",
+    "new": "",
     "tests": [
       "test/systems/wagons4_upkeep.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "WAGONS4-the-hour-unpassed",
     "file": "src/systems/upkeep/upkeepRuntime.js",
-    "old": "      pass(60);\n",
-    "new": "\n",
+    "old": "      pass(60);",
+    "new": "",
     "tests": [
       "test/systems/wagons4_upkeep.test.js"
     ]

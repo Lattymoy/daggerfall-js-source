@@ -111,5 +111,5 @@ climates and calories boons." So the switch is three tiers on its one key, as Cl
 horse), Boons - the default - (care earns, neglect costs nothing, never below DFU's horse) and Hard (the system as it
 stood), each player's own online as every Climates & Calories tier is. A stored Off stays Off, a stored On lands on
 Hard, and a player who never touched it plays Boons. Every door asks the tier through one accessor
-(`upkeepSwitch.js:"export const horseCareRules = () =>"`). `06-Systems/Horse-Care.md`, The tiers; pinned by
+(`upkeepSwitch.js:"export const horseCareRules"`). `06-Systems/Horse-Care.md`, The tiers; pinned by
 `test/systems/horsetiers.test.js` (7) and `tools/mutants/horsetiers.json` (20, all dead).

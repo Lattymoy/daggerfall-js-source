@@ -236,8 +236,8 @@
   {
     "name": "WAGON-STABLED-the-keep-feeds-a-horse-beside-you-at-the-stable",
     "file": "src/systems/upkeep/upkeepRuntime.js",
-    "old": "  return view.horseStabled ? 'stabled' : 'with';",
-    "new": "  return 'stabled';",
+    "old": "  return view.horseStabled ? 'stabled' : 'with'; // WAGON-STABLED: sent away; never sent, the mod's WithPlayer beside its owner",
+    "new": "  return 'stabled'; // WAGON-STABLED: sent away; never sent, the mod's WithPlayer beside its owner",
     "tests": [
       "test/systems/horse/fb1015_wagonstabled.test.js"
     ]
