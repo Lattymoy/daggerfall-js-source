@@ -249,8 +249,8 @@
   {
     "name": "the-pool-is-re-rolled-on-every-open-again",
     "file": "src/systems/advancement.js",
-    "old": "  if (entity.pendingBonusPool == null) {\n    // LEVEL-EVEN (systems/levelEven.js): online the pool is BonusPool's mean, drawn from no stream\n    entity.pendingBonusPool = online ? ONLINE_BONUS_POOL : LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));\n  }\n  return entity.pendingBonusPool;",
-    "new": "  entity.pendingBonusPool = online ? ONLINE_BONUS_POOL : LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));\n  return entity.pendingBonusPool;",
+    "old": "  if (entity.pendingBonusPool == null) {\n    // LEVEL-EVEN (systems/levelEven.js): online the pool is BonusPool's mean, drawn from no stream\n    entity.pendingBonusPool = online\n      ? ONLINE_BONUS_POOL\n      : LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));\n  }",
+    "new": "  entity.pendingBonusPool = online\n    ? ONLINE_BONUS_POOL\n    : LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));",
     "tests": [
       "test/ui/levelNotice.test.js"
     ],
@@ -259,8 +259,8 @@
   {
     "name": "the-spent-level-keeps-its-pool",
     "file": "src/systems/advancement.js",
-    "old": "  entity.pendingLevel = null;\n  entity.pendingBonusPool = null;   // the level is spent, so its pool is not pending either",
-    "new": "  entity.pendingLevel = null;",
+    "old": "  entity.pendingBonusPool = null; // the level is spent, so its pool is not pending either\n  if (entity._online === true) checkForLevelUp(entity); // LEVEL-OWED: online the next owed level is offered now, not a rest later",
+    "new": "  if (entity._online === true) checkForLevelUp(entity); // LEVEL-OWED: online the next owed level is offered now, not a rest later",
     "tests": [
       "test/ui/levelNotice.test.js"
     ],
@@ -269,8 +269,8 @@
   {
     "name": "the-oghma-arm-keeps-the-pool-it-did-not-spend",
     "file": "src/systems/advancement.js",
-    "old": "    entity.pendingLevel = null;\n    entity.pendingBonusPool = null;   // the book's thirty is fixed, but a level owed UNDER it was pending too",
-    "new": "    entity.pendingLevel = null;",
+    "old": "    entity.pendingBonusPool = null; // the book's thirty is fixed, but a level owed UNDER it was pending too\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/ui/levelNotice.test.js"
     ],

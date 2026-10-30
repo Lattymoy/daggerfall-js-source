@@ -218,8 +218,8 @@
   {
     "name": "EGZ-ba-never-yields",
     "file": "src/systems/betterAmbience.js",
-    "old": "if (audio.reverbHeld?.() != null) { reverbOn = null; return; }",
-    "new": "if (false) { reverbOn = null; return; }",
+    "old": "    if (audio.reverbHeld?.() != null) {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "EGZ-ba-cache-kept",
     "file": "src/systems/betterAmbience.js",
-    "old": "if (audio.reverbHeld?.() != null) { reverbOn = null; return; }",
-    "new": "if (audio.reverbHeld?.() != null) { return; }",
+    "old": "      reverbOn = null;\n      return;",
+    "new": "      return;",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]

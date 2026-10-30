@@ -12,8 +12,8 @@
   {
     "name": "LEVEL-45-sum-unread",
     "file": "src/systems/advancement.js",
-    "old": ": Math.min(LEVEL_CAP, calculatePlayerLevel(entity.startingLevelUpSkillSum",
-    "new": ": Math.min(Infinity, calculatePlayerLevel(entity.startingLevelUpSkillSum",
+    "old": "      : Math.min(LEVEL_CAP, calculatePlayerLevel(entity.startingLevelUpSkillSum, entity.currentLevelUpSkillSum));",
+    "new": "      : Math.min(Infinity, calculatePlayerLevel(entity.startingLevelUpSkillSum, entity.currentLevelUpSkillSum));",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "LEVEL-45-latched-level-applied",
     "file": "src/systems/advancement.js",
-    "old": "  if (atLevelCap(entity)) {\n    entity.readyToLevelUp = false;",
-    "new": "  if (false) {\n    entity.readyToLevelUp = false;",
+    "old": "  if (atLevelCap(entity)) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "LEVEL-45-sum-check-holds-the-latch",
     "file": "src/systems/advancement.js",
-    "old": "  releaseCapLatch(entity);\n  const calculated",
-    "new": "  const calculated",
+    "old": "  releaseCapLatch(entity);\n  const calculated =",
+    "new": "  const calculated =",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
     ],

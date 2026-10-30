@@ -2827,7 +2827,7 @@ the fix is the stand-in's, as a duel's was (`combat/duelCombat.js` DUEL_STAND_IN
   the placeholder and bled the bottom rung on every blow; a whole of 975 would have bled a body of 975's rungs, so it
   measures no whole on a stand-in (`bloodDecals.js:"maxHealth: Number.isFinite"`):
   the same rung, by law now; a host body's real whole still comes as its `bloodOf`.
-- **MEHRUNES' RAZOR STAYS PASSED BY** (`artifactEffects.js:"if (!target || !item || target.spareGear) return null;"`, AUDIT
+- **MEHRUNES' RAZOR STAYS PASSED BY** (`artifactEffects.js:"if (!target || !item || target.spareGear)"`, AUDIT
   WBX F1). Its two reasons were the 1e9 billed to its condition and a blow the wire refused; the wire carries the whole
   now and no Strikes payload bills wear on a stand-in (F2) - and that is why it stays: the Razor's kill is paid in its own
   condition, the health it removes (`MehrunesRazorEffect`), and on a body the relay runs nothing would pay it - a whole blow

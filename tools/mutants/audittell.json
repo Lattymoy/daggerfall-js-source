@@ -240,8 +240,8 @@
   {
     "name": "AUDITTELL-L1-drain-dead",
     "file": "src/systems/blowEffects.js",
-    "old": "  if (entity && !(entity.health > 0)) { _queue.length = 0; return; }   // AUDIT TELL L1: a dead body takes nothing\n",
-    "new": "",
+    "old": "  if (entity && !(entity.health > 0)) {\n    _queue.length = 0;\n    return;\n  } // AUDIT TELL L1: a dead body takes nothing\n  while (_queue.length) {",
+    "new": "  while (_queue.length) {",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -249,8 +249,8 @@
   {
     "name": "AUDITTELL-L1-bleed-start",
     "file": "src/systems/blowEffects.js",
-    "old": "  if (!(entity?.health > 0)) return;   // AUDIT TELL L1: a dead body never bleeds",
-    "new": "  // AUDIT TELL L1: a dead body never bleeds",
+    "old": "  if (!(entity?.health > 0)) return; // AUDIT TELL L1: a dead body never bleeds - its tick would hurt a corpse into a second death",
+    "new": "  // AUDIT TELL L1: a dead body never bleeds - its tick would hurt a corpse into a second death",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -258,8 +258,8 @@
   {
     "name": "AUDITTELL-L1-bleed-tick",
     "file": "src/systems/blowEffects.js",
-    "old": "if (entity.health > b.health || !(entity.health > 0)) { entity.bleed = null; return 0; }",
-    "new": "if (entity.health > b.health) { entity.bleed = null; return 0; }",
+    "old": "  if (entity.health > b.health || !(entity.health > 0)) {",
+    "new": "  if (entity.health > b.health) {",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "AUDITTELL-L2-reset-queue",
     "file": "src/systems/blowEffects.js",
-    "old": "  _queue.length = 0; _downUntil = -Infinity; _guardUntil = -Infinity; _downMotor = null;",
-    "new": "  _downUntil = -Infinity; _guardUntil = -Infinity; _downMotor = null;",
+    "old": "  _queue.length = 0;\n  _downUntil = -Infinity;",
+    "new": "  _downUntil = -Infinity;",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -357,8 +357,8 @@
   {
     "name": "AUDITTELL-L4-refusal-heard",
     "file": "src/systems/blowEffects.js",
-    "old": "motor?.blowKnockDown?.(BLOW_EFFECT.KNOCKDOWN_S, BLOW_EFFECT.KNOCKDOWN_DROP) !== false)",
-    "new": "(motor?.blowKnockDown?.(BLOW_EFFECT.KNOCKDOWN_S, BLOW_EFFECT.KNOCKDOWN_DROP), true))",
+    "old": "      motor?.blowKnockDown?.(BLOW_EFFECT.KNOCKDOWN_S, BLOW_EFFECT.KNOCKDOWN_DROP) !== false",
+    "new": "      (motor?.blowKnockDown?.(BLOW_EFFECT.KNOCKDOWN_S, BLOW_EFFECT.KNOCKDOWN_DROP), true)",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "AUDITTELL-L5-carry",
     "file": "src/systems/blowEffects.js",
-    "old": "    b.per = b.left > 0 ? (rem - n) / b.left : 0;\n",
-    "new": "",
+    "old": "    b.per = b.left > 0 ? (rem - n) / b.left : 0;\n    b.health = entity.health;",
+    "new": "    b.health = entity.health;",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -384,8 +384,8 @@
   {
     "name": "AUDITTELL-L5-nothing",
     "file": "src/systems/blowEffects.js",
-    "old": "    if (n > 0) {\n      if (b.foe)",
-    "new": "    if (true) {\n      if (b.foe)",
+    "old": "    if (n > 0) {",
+    "new": "    if (true) {",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "AUDITTELL-L9-motor",
     "file": "src/systems/blowEffects.js",
-    "old": "now < _downUntil && (_downMotor?.isDown?.() ?? true);",
-    "new": "now < _downUntil;",
+    "old": "export const knockedDown = (now = tacticsNow()) => now < _downUntil && (_downMotor?.isDown?.() ?? true);",
+    "new": "export const knockedDown = (now = tacticsNow()) => now < _downUntil;",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -402,8 +402,8 @@
   {
     "name": "AUDITTELL-L9-bound",
     "file": "src/systems/blowEffects.js",
-    "old": "now < _downUntil && (_downMotor?.isDown?.() ?? true);",
-    "new": "(_downMotor?.isDown?.() ?? now < _downUntil);",
+    "old": "export const knockedDown = (now = tacticsNow()) => now < _downUntil && (_downMotor?.isDown?.() ?? true);",
+    "new": "export const knockedDown = (now = tacticsNow()) => _downMotor?.isDown?.() ?? now < _downUntil;",
     "tests": [
       "test/scenes/audittell.test.js"
     ]

@@ -34,7 +34,7 @@ and the code. Reports 1-7 were traced in parallel lanes on 2026-10-21, each on m
 FOUND. The Work answers, TEXT.RSC 8076 (6 variants) and 8077 (8), each name the potential questor through `%pqn` and
 their building through `%pqp`. Both read the pool's selection, and `npcSession.js:"    if (!entry) return '';"` answers
 the empty string for a selection the pool does not hold. The answer is expanded first and the next questor is picked
-after it (`answerPipeline.js:"        this.deps.setRandomQuestor?.();"`), which is DFU's own order
+after it (`answerPipeline.js:"this.deps.setRandomQuestor?.()"`), which is DFU's own order
 (TalkManager.cs:2033-2036). So an answer names the selection that stood BEFORE the ask. The build keeps that selection
 in the pool: it selects the last questor it adds (`npcSession.js:"        this.selectedNpcWorkKey = npc.nameSeed;"`,
 TalkManager.cs:2869). The other two writers did not:

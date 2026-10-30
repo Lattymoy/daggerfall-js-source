@@ -538,8 +538,8 @@
   {
     "name": "AUDIT-PASSAGE-B1-the-bank-cabin-linked-to-her",
     "file": "src/systems/boatCabinOwnership.js",
-    "old": "if (!b.inside && !b.charter) add(b.uid, b.hull);",
-    "new": "if (!b.inside) add(b.uid, b.hull);",
+    "old": "  for (const b of boats) if (!b.inside && !b.charter) add(b.uid, b.hull); // AUDIT PASSAGE B1: a booked ship is her master's - the bank cabin moved into her was lost when she sailed on",
+    "new": "  for (const b of boats) if (!b.inside) add(b.uid, b.hull); // AUDIT PASSAGE B1: a booked ship is her master's - the bank cabin moved into her was lost when she sailed on",
     "tests": [
       "test/scenes/naval/passageaudit.test.js"
     ]

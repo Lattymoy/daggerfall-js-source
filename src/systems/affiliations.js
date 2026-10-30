@@ -13,11 +13,11 @@
 // table, the enhanced page as its own rows.
 
 import { activeMemberships, GUILDS, getTitle } from './guild/guilds.js';
-import { reviewWarnings } from './guild/guildServiceFlow.js';   // AUDIT GUILD-WORDS L1-2: the review's warnings, as the hall says them
-import { standingOwedOf } from './standingOwed.js';   // STANDING-WORDS: what the Roll still owes, online
+import { reviewWarnings } from './guild/guildServiceFlow.js'; // AUDIT GUILD-WORDS L1-2: the review's warnings, as the hall says them
+import { standingOwedOf } from './standingOwed.js'; // STANDING-WORDS: what the Roll still owes, online
 import { templeOf, orderOf } from './guild/guildVariants.js';
 import { getReputation } from './faction/factionRep.js';
-import { getLocalizedFactionName } from './textManager.js';   // L10N3e: the faction's name in the player's language
+import { getLocalizedFactionName } from './textManager.js'; // L10N3e: the faction's name in the player's language
 
 /** The membership book stores the port's canonical guild-record name;
  *  a temple's or an order's is its variant's (guildVariants.js). */
@@ -61,9 +61,11 @@ export function affiliations(entity, { now = null, online = false } = {}) {
       title: getTitle(membership, entity, guild),
       rep: entity?.factionRep ? getReputation(entity.factionRep, guild.factionId) : 0,
       factionId: guild.factionId,
-      probation: !!membership.probation,   // REP6: on probation - the next review below -10 expels
-      owed: standingOwedOf(guild.factionId),   // STANDING-WORDS
-      warnings: entity?.factionRep ? reviewWarnings(entity, guild, activeMemberships(entity), entity.factionRep, { now, online }) : [],
+      probation: !!membership.probation, // REP6: on probation - the next review below -10 expels
+      owed: standingOwedOf(guild.factionId), // STANDING-WORDS
+      warnings: entity?.factionRep
+        ? reviewWarnings(entity, guild, activeMemberships(entity), entity.factionRep, { now, online })
+        : [],
     });
   }
   return out;

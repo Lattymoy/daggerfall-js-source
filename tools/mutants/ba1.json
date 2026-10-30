@@ -2,8 +2,8 @@
   {
     "name": "stride-interval-3",
     "file": "src/systems/betterAmbience.js",
-    "old": "export const BA_WALK_STEP_INTERVAL = 2.5;",
-    "new": "export const BA_WALK_STEP_INTERVAL = 3.0;",
+    "old": "export const BA_WALK_STEP_INTERVAL = 2.5; // :12-13 \"Matched to classic\"",
+    "new": "export const BA_WALK_STEP_INTERVAL = 3.0; // :12-13 \"Matched to classic\"",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "outside-volume",
     "file": "src/systems/betterAmbience.js",
-    "old": "FootstepSoundOutside: ['footstepVolume', 0.15]",
-    "new": "FootstepSoundOutside: ['footstepVolume', 0.4]",
+    "old": "  FootstepSoundOutside: ['footstepVolume', 0.15],",
+    "new": "  FootstepSoundOutside: ['footstepVolume', 0.4],",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "armor-pitch",
     "file": "src/systems/betterAmbience.js",
-    "old": "stem: 'sfx_footstep_armor_light', count: 11, pitch: [1, 1.2]",
-    "new": "stem: 'sfx_footstep_armor_light', count: 11, pitch: [0.8, 1.2]",
+    "old": "  FootstepsArmor: Object.freeze({ stem: 'sfx_footstep_armor_light', count: 11, pitch: [1, 1.2] }),",
+    "new": "  FootstepsArmor: Object.freeze({ stem: 'sfx_footstep_armor_light', count: 11, pitch: [0.8, 1.2] }),",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "shallow-at-057",
     "file": "src/systems/betterAmbience.js",
-    "old": "export const SHALLOW_ENTER = 0.55;",
-    "new": "export const SHALLOW_ENTER = 0.57;",
+    "old": "export const SHALLOW_ENTER = 0.55; // :129 - NOT PlayerFootsteps' 0.57",
+    "new": "export const SHALLOW_ENTER = 0.57; // :129 - NOT PlayerFootsteps' 0.57",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "leave-at-055",
     "file": "src/systems/betterAmbience.js",
-    "old": "export const SHALLOW_LEAVE = 0.95;",
-    "new": "export const SHALLOW_LEAVE = 0.55;",
+    "old": "export const SHALLOW_LEAVE = 0.95; // :137",
+    "new": "export const SHALLOW_LEAVE = 0.55; // :137",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "mounted-in-water-silent",
     "file": "src/systems/betterAmbience.js",
-    "old": "    if (m.levitating || (m.onFoot === false && !m.onExteriorWaterAny)) { distance = 0; return; }",
-    "new": "    if (m.levitating || m.onFoot === false) { distance = 0; return; }",
+    "old": "    if (m.levitating || (m.onFoot === false && !m.onExteriorWaterAny)) {",
+    "new": "    if (m.levitating || m.onFoot === false) {",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]
@@ -111,7 +111,7 @@
     "name": "classic-kept-all",
     "file": "src/systems/betterAmbience.js",
     "old": "export const CLASSIC_CLIPS_KEPT = Object.freeze(new Set([FOOTSTEP.Stone2, FOOTSTEP.Outside2]));",
-    "new": "export const CLASSIC_CLIPS_KEPT = Object.freeze(new Set([FOOTSTEP.Stone1, FOOTSTEP.Stone2, FOOTSTEP.Outside1, FOOTSTEP.Outside2]));",
+    "new": "export const CLASSIC_CLIPS_KEPT = Object.freeze(\n  new Set([FOOTSTEP.Stone1, FOOTSTEP.Stone2, FOOTSTEP.Outside1, FOOTSTEP.Outside2]),\n);",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "inactive-kept",
     "file": "src/systems/betterAmbience.js",
-    "old": "      if (c.currentState === 3 && c.DeleteOnInactive) { this.instances.splice(i, 1); i--; }",
-    "new": "      if (false) { this.instances.splice(i, 1); i--; }",
+    "old": "      if (c.currentState === 3 && c.DeleteOnInactive) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "trilight-greys",
     "file": "src/systems/betterAmbience.js",
-    "old": "const GREY = Object.freeze({ sky: [0.433, 0.433, 0.433], equator: [0.396, 0.396, 0.396], ground: [0.254, 0.254, 0.254] });",
-    "new": "const GREY = Object.freeze({ sky: [0.433, 0.433, 0.433], equator: [0.433, 0.433, 0.433], ground: [0.254, 0.254, 0.254] });",
+    "old": "  equator: [0.396, 0.396, 0.396],",
+    "new": "  equator: [0.433, 0.433, 0.433],",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "castle-fogged",
     "file": "src/systems/betterAmbience.js",
-    "old": "    if (!s.Enabled || !d || inCastle) { fogState = null; return; }",
-    "new": "    if (!s.Enabled || !d) { fogState = null; return; }",
+    "old": "    if (!s.Enabled || !d || inCastle) {",
+    "new": "    if (!s.Enabled || !d) {",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "wait-three-frames",
     "file": "src/systems/betterAmbience.js",
-    "old": "export const TRANSITION_WAIT_FRAMES = 4;",
-    "new": "export const TRANSITION_WAIT_FRAMES = 3;",
+    "old": "export const TRANSITION_WAIT_FRAMES = 4; // \"Wait some frames XD\" - four yields in UpdateDungeonFog and UpdateAmbientSoundSources",
+    "new": "export const TRANSITION_WAIT_FRAMES = 3; // \"Wait some frames XD\" - four yields in UpdateDungeonFog and UpdateAmbientSoundSources",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "rain-no-lowpass",
     "file": "src/systems/betterAmbience.js",
-    "old": "          ? audio.loop(baSoundKey(AMBIENT_RAIN_CLIP), rainTarget(), { lowpass: AMBIENT_RAIN_LOWPASS_HZ })",
-    "new": "          ? audio.loop(baSoundKey(AMBIENT_RAIN_CLIP), rainTarget(), {})",
+    "old": "            ? audio.loop(baSoundKey(AMBIENT_RAIN_CLIP), rainTarget(), { lowpass: AMBIENT_RAIN_LOWPASS_HZ }) // DISC11: the street's level, not 1",
+    "new": "            ? audio.loop(baSoundKey(AMBIENT_RAIN_CLIP), rainTarget(), {}) // DISC11: the street's level, not 1",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "rain-outdoors",
     "file": "src/systems/betterAmbience.js",
-    "old": "    else rainKind = null;\n  }",
-    "new": "    else rainKind = 'interior';\n  }",
+    "old": "    else rainKind = null;",
+    "new": "    else rainKind = 'interior';",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "gate-if-not-consulted",
     "file": "src/systems/betterAmbience.js",
-    "old": "  if (immersiveFootsteps.ownsStride()) return false;",
-    "new": "",
+    "old": "  if (immersiveFootsteps.ownsStride()) return false;\n  if (betterAmbience.ownsStride()) return betterAmbience.classicClipKept(clip);",
+    "new": "  if (betterAmbience.ownsStride()) return betterAmbience.classicClipKept(clip);",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ],
@@ -364,8 +364,8 @@
   {
     "name": "rebase-no-swallow",
     "file": "src/systems/betterAmbience.js",
-    "old": "    rebase() { lastPosition = null; ignoreLostGrounding = true; },",
-    "new": "    rebase() { lastPosition = null; },",
+    "old": "      ignoreLostGrounding = true;\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "shake-runs-paused",
     "file": "src/systems/betterAmbience.js",
-    "old": "      shaker.update(m.paused ? 0 : Math.max(0, Number(dt) || 0));",
-    "new": "      shaker.update(Math.max(0, Number(dt) || 0));",
+    "old": "      shaker.update(m.paused ? 0 : Math.max(0, Number(dt) || 0)); // CameraShaker.Update - AUDIT-BA F3: Time.deltaTime is 0 under IsGamePaused, so a shake freezes under a window",
+    "new": "      shaker.update(Math.max(0, Number(dt) || 0)); // CameraShaker.Update - AUDIT-BA F3: Time.deltaTime is 0 under IsGamePaused, so a shake freezes under a window",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "ba2-reader-ignores-ambient-key",
     "file": "src/systems/betterAmbience.js",
-    "old": "enableAmbientLighting: g('Dungeon Lighting.enableFogAmbientEffect', true),",
-    "new": "enableAmbientLighting: true,",
+    "old": "    enableAmbientLighting: g('Dungeon Lighting.enableFogAmbientEffect', true),",
+    "new": "    enableAmbientLighting: true,",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]

@@ -183,8 +183,8 @@
   {
     "name": "AUDIT-CLAWS-B2-the-armour-value-one-metal-up",
     "file": "src/systems/armorMaterials.js",
-    "old": "PLATE_ARMOR_VALUES[plateMetal(material)]",
-    "new": "PLATE_ARMOR_VALUES[plateMetal(material) + 1]",
+    "old": "  if (isPlate(material)) return PLATE_ARMOR_VALUES[plateMetal(material)] ?? 0;",
+    "new": "  if (isPlate(material)) return PLATE_ARMOR_VALUES[plateMetal(material) + 1] ?? 0;",
     "tests": [
       "test/combat/audit18_combat.test.js",
       "test/systems/audit24_enemytable.test.js",

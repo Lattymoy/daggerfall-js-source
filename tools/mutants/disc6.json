@@ -29,8 +29,8 @@
   {
     "name": "DISC6-rain-full-in-building",
     "file": "src/systems/ambientEffects.js",
-    "old": "(deps.indoorRainSource ? 0 : INDOOR_RAIN_GAIN)",
-    "new": "(deps.indoorRainSource ? 0 : 1)",
+    "old": "      this.rainGain *\n      (building ? (deps.indoorRainSource ? 0 : INDOOR_RAIN_GAIN) : deps.underground && deps.indoorRainSource ? 0 : 1);",
+    "new": "      this.rainGain * (building ? (deps.indoorRainSource ? 0 : 1) : deps.underground && deps.indoorRainSource ? 0 : 1);",
     "tests": [
       "test/systems/disc6.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DISC6-rain-doubled-with-BA",
     "file": "src/systems/ambientEffects.js",
-    "old": "(deps.indoorRainSource ? 0 : INDOOR_RAIN_GAIN)",
-    "new": "INDOOR_RAIN_GAIN",
+    "old": "    const rainGain =\n      this.rainGain *\n      (building ? (deps.indoorRainSource ? 0 : INDOOR_RAIN_GAIN) : deps.underground && deps.indoorRainSource ? 0 : 1);",
+    "new": "    const rainGain = this.rainGain * (building ? INDOOR_RAIN_GAIN : deps.underground && deps.indoorRainSource ? 0 : 1);",
     "tests": [
       "test/systems/disc6.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DISC6-underground-is-a-building",
     "file": "src/systems/ambientEffects.js",
-    "old": "const building = !!deps.inside && !deps.underground;",
-    "new": "const building = !!deps.inside;",
+    "old": "    const building = !!deps.inside && !deps.underground;",
+    "new": "    const building = !!deps.inside;",
     "tests": [
       "test/systems/disc6.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DISC8A-crickets-through-the-walls",
     "file": "src/systems/ambientEffects.js",
-    "old": "if (deps.inside || deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP))",
-    "new": "if (deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP))",
+    "old": "      if (deps.inside || deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) {",
+    "new": "      if (deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) {",
     "tests": [
       "test/systems/disc6.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DISC6-birds-indoors",
     "file": "src/systems/ambientEffects.js",
-    "old": "      if (!deps.inside) this._playEffects(deps);",
-    "new": "      this._playEffects(deps);",
+    "old": "      if (!deps.inside) this._playEffects(deps); // DISC6: the birds and the thunder are outdoor things - indoors the clock runs, nothing plays",
+    "new": "      this._playEffects(deps); // DISC6: the birds and the thunder are outdoor things - indoors the clock runs, nothing plays",
     "tests": [
       "test/systems/disc6.test.js"
     ]

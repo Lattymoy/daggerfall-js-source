@@ -2,8 +2,8 @@
   {
     "name": "MACE-MAX-the-max-mod-not-added",
     "file": "src/systems/artifactEffects.js",
-    "old": "        (st.statMaxMods ??= {}).strength = (st.statMaxMods.strength ?? 0) + strengthDrained;\n",
-    "new": "",
+    "old": "          (st.statMaxMods ??= {}).strength = (st.statMaxMods.strength ?? 0) + strengthDrained;\n          st.statMods.strength = (st.statMods.strength ?? 0) + strengthDrained;",
+    "new": "          st.statMods.strength = (st.statMods.strength ?? 0) + strengthDrained;",
     "tests": [
       "test/systems/fb1013e_macemax.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "MACE-MAX-the-immediate-max-magicka-raise-removed",
     "file": "src/systems/artifactEffects.js",
-    "old": "          entity.maxMagickaModifier = (entity.maxMagickaModifier ?? 0) + overflow;\n",
-    "new": "",
+    "old": "            entity.maxMagickaModifier = (entity.maxMagickaModifier ?? 0) + overflow;\n            st.maxMagickaIncrease += overflow;",
+    "new": "            st.maxMagickaIncrease += overflow;",
     "tests": [
       "test/systems/fb1013e_macemax.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "MACE-MAX-the-decay-keeps-the-max-mod",
     "file": "src/systems/artifactEffects.js",
-    "old": "        st.statMaxMods = {};   // SetStatMaxMod(Strength, 0) (:75)\n",
-    "new": "",
+    "old": "          st.statMaxMods = {}; // SetStatMaxMod(Strength, 0) (:75)\n          st.statMods = {}; // SetStatMod(Strength, 0) (:76)",
+    "new": "          st.statMods = {}; // SetStatMod(Strength, 0) (:76)",
     "tests": [
       "test/systems/fb1013e_macemax.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "MACE-MAX-the-unequip-ends-nothing",
     "file": "src/systems/artifactEffects.js",
-    "old": "      if (st) entity.activeEffects.splice(entity.activeEffects.indexOf(st), 1);",
-    "new": "      void st;",
+    "old": "        if (st) entity.activeEffects.splice(entity.activeEffects.indexOf(st), 1);",
+    "new": "        void st;",
     "tests": [
       "test/systems/fb1013e_macemax.test.js"
     ]

@@ -172,8 +172,8 @@
   {
     "name": "AUDIT-GROWTH-L1-6-bloodmage-underclaims",
     "file": "src/systems/arcanePaths.js",
-    "old": "'If the target is below {pct}% health after the hit, it takes the same damage again.'",
-    "new": "'If the target drops below {pct}% health, it takes the same damage again.'",
+    "old": "    rider: t(\n      'schools.bloodmage.rider',\n      'If the target is below {pct}% health after the hit, it takes the same damage again.',\n      { pct: pc(N.bloodBoil.below) },\n    ),",
+    "new": "    rider: t('schools.bloodmage.rider', 'If the target drops below {pct}% health, it takes the same damage again.', {\n      pct: pc(N.bloodBoil.below),\n    }),",
     "tests": [
       "test/ui/growth/growth1_tab.test.js"
     ],

@@ -74,8 +74,8 @@
   {
     "name": "SPEC-RESET-arcane-box-permanent",
     "file": "src/systems/arcanePaths.js",
-    "old": "    ...pathPowerRows(p),\n    '',\n    t('schools.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }),",
-    "new": "    ...pathPowerRows(p),\n    '',\n    t('schools.choice.final', 'This decision cannot be undone.'),",
+    "old": "    '',\n    t('schools.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }),",
+    "new": "    '',\n    t('schools.choice.final', 'This decision cannot be undone.'),",
     "tests": [
       "test/ui/growth/specreset.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "AUDIT-SPEC-RESET-L4-5-arcane-price-row-dropped",
     "file": "src/systems/arcanePaths.js",
-    "old": "    // a lone word onto a line of its own in six languages\n    t('schools.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }),\n",
-    "new": "    // a lone word onto a line of its own in six languages\n",
+    "old": "    t('schools.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }),\n  ];",
+    "new": "  ];",
     "tests": [
       "test/ui/growth/specreset.test.js"
     ]

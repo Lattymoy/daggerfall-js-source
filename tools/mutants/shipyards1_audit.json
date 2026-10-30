@@ -461,8 +461,8 @@
   {
     "name": "AUDIT-SHIPYARDS-a-mark-of-nothing-at-the-pipeline",
     "file": "src/systems/answerPipeline.js",
-    "old": "    if (!lettersOnMap(this.currentKeySubjectBuildingKey)) return this.getKeySubjectBuildingDirection();",
-    "new": "",
+    "old": "    if (!lettersOnMap(this.currentKeySubjectBuildingKey)) return this.getKeySubjectBuildingDirection(); // AUDIT SHIPYARDS L7-5: no mark to make",
+    "new": "    // AUDIT SHIPYARDS L7-5: no mark to make",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"
     ]

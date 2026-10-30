@@ -1121,8 +1121,8 @@
   {
     "name": "PROF12-item-potent-dropped",
     "file": "src/systems/alchemyItems.js",
-    "old": "    if (potent) {\n      it.potent = potent;",
-    "new": "    if (potent) {\n      it.potent = undefined;",
+    "old": "      it.potent = potent;",
+    "new": "      it.potent = undefined;",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]
@@ -1659,8 +1659,8 @@
   {
     "name": "PROF12-A3-brewed-words",
     "file": "src/systems/alchemyItems.js",
-    "old": "(potentLasts(p) ? ` (lasts ${data.potent}% longer)` :",
-    "new": "(false ? ` (lasts ${data.potent}% longer)` :",
+    "old": "  return `You brewed ${n === 1 ? 'a' : n} ${potent ? 'Potent ' : ''}${n === 1 ? 'Potion' : 'Potions'} of ${p.name}${potent ? (potentLasts(p) ? ` (lasts ${data.potent}% longer)` : ` (+${data.potent}% magnitude)`) : ''}`;",
+    "new": "  return `You brewed ${n === 1 ? 'a' : n} ${potent ? 'Potent ' : ''}${n === 1 ? 'Potion' : 'Potions'} of ${p.name}${potent ? (false ? ` (lasts ${data.potent}% longer)` : ` (+${data.potent}% magnitude)`) : ''}`;",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]
@@ -1734,8 +1734,8 @@
   {
     "name": "PROF-541-B3-mint",
     "file": "src/systems/alchemyItems.js",
-    "old": "potentOk(data?.potent) && potentAble(p) ? data.potent : 0",
-    "new": "potentOk(data?.potent) ? data.potent : 0",
+    "old": "  const potent = potentOk(data?.potent) && potentAble(p) ? data.potent : 0; // AUDIT PROF-541 B3: never a Potent Cure - its name and worth +25% for nothing",
+    "new": "  const potent = potentOk(data?.potent) ? data.potent : 0; // AUDIT PROF-541 B3: never a Potent Cure - its name and worth +25% for nothing",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]
@@ -1743,8 +1743,8 @@
   {
     "name": "PROF-541-B3-word",
     "file": "src/systems/alchemyItems.js",
-    "old": "const potent = potentOk(data?.potent) && potentAble(p);",
-    "new": "const potent = potentOk(data?.potent);",
+    "old": "  const potent = potentOk(data?.potent) && potentAble(p); // AUDIT PROF-541 B3",
+    "new": "  const potent = potentOk(data?.potent); // AUDIT PROF-541 B3",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]

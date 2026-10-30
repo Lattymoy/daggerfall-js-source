@@ -334,8 +334,8 @@
   {
     "name": "the-headless-arm-takes-the-dfu-pool",
     "file": "src/systems/advancement.js",
-    "old": "      if (virtue) virtueLevelUpHeadless(entity, virtueSettings, rolls);\n      else applyLevelUp",
-    "new": "      if (false) virtueLevelUpHeadless(entity, virtueSettings, rolls);\n      else applyLevelUp",
+    "old": "      if (virtue) virtueLevelUpHeadless(entity, virtueSettings, rolls);",
+    "new": "      if (false) virtueLevelUpHeadless(entity, virtueSettings, rolls);",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]

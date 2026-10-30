@@ -36,7 +36,7 @@
     "name": "L10N3e-systems-answerPipeline-568-Region",
     "file": "src/systems/answerPipeline.js",
     "old": "    return Number.isInteger(index) ? getLocalizedRegionName(index, canonical) : canonical();",
-    "new": "    return Number.isInteger(index) ? (canonical)(index) : canonical();",
+    "new": "    return Number.isInteger(index) ? canonical(index) : canonical();",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3e_places.test.js",
@@ -46,7 +46,7 @@
   {
     "name": "L10N3e-systems-answerPipeline-588-Location",
     "file": "src/systems/answerPipeline.js",
-    "old": "      this.locationOfRegionalBuilding = this.deps.localizedLocationName?.(mapId, location.name) ?? getLocalizedLocationName(mapId, location.name);",
+    "old": "      this.locationOfRegionalBuilding =\n        this.deps.localizedLocationName?.(mapId, location.name) ?? getLocalizedLocationName(mapId, location.name);",
     "new": "      this.locationOfRegionalBuilding = this.deps.localizedLocationName?.(mapId, location.name) ?? location.name;",
     "tests": [
       "test/systems/l10n3d_sites.test.js",

@@ -82,8 +82,8 @@
   {
     "name": "LEVEL-EVEN-refresh-dropped-classic",
     "file": "src/systems/advancement.js",
-    "old": "  // after the points, not before them), current health left as it stands (L2-1)\n  refreshOnlineLayer(entity, { keepHealth: true });\n",
-    "new": "  // after the points, not before them), current health left as it stands (L2-1)\n",
+    "old": "  refreshOnlineLayer(entity, { keepHealth: true });\n  entity.readyToLevelUp = false;",
+    "new": "  entity.readyToLevelUp = false;",
     "tests": [
       "test/systems/fb1019b_leveleven.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "LEVEL-EVEN-pool-online-gate",
     "file": "src/systems/advancement.js",
-    "old": "    entity.pendingBonusPool = online ? ONLINE_BONUS_POOL :",
-    "new": "    entity.pendingBonusPool = !online ? ONLINE_BONUS_POOL :",
+    "old": "    entity.pendingBonusPool = online",
+    "new": "    entity.pendingBonusPool = !online",
     "tests": [
       "test/systems/fb1019b_leveleven.test.js"
     ],

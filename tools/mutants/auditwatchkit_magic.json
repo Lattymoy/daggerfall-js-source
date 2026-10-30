@@ -92,8 +92,8 @@
   {
     "name": "WK-M4-nothing-he-can-use",
     "file": "src/systems/allyCast.js",
-    "old": "return allyCastable(spell) && spell.effects.some(companionEffect);",
-    "new": "return allyCastable(spell);",
+    "old": "  return allyCastable(spell) && spell.effects.some(companionEffect);",
+    "new": "  return allyCastable(spell);",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "WK-M4-only-what-he-can-use",
     "file": "src/systems/allyCast.js",
-    "old": "spell.effects.some(companionEffect)",
-    "new": "spell.effects.every(companionEffect)",
+    "old": "  return allyCastable(spell) && spell.effects.some(companionEffect);",
+    "new": "  return allyCastable(spell) && spell.effects.every(companionEffect);",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "WK-M4-strip-ignored",
     "file": "src/systems/allyCast.js",
-    "old": "stranger ? strangerEffect : companion ? companionEffect : allyEffect",
-    "new": "stranger ? strangerEffect : allyEffect",
+    "old": "  const effects = d.effects\n    .filter(stranger ? strangerEffect : companion ? companionEffect : allyEffect)\n    .slice(0, MAX_EFFECTS_PER_SPELL); // SPELL-GIFT: a stranger's cast keeps the stranger's list alone; AUDIT WK-M4: my companion's gift, what he can use",
+    "new": "  const effects = d.effects.filter(stranger ? strangerEffect : allyEffect).slice(0, MAX_EFFECTS_PER_SPELL); // SPELL-GIFT: a stranger's cast keeps the stranger's list alone; AUDIT WK-M4: my companion's gift, what he can use",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "WK-M4-light-unlisted",
     "file": "src/systems/allyCast.js",
-    "old": "new Set([15, 39, 44])",
-    "new": "new Set([39, 44])",
+    "old": "export const COMPANION_UNREAD_TYPES = Object.freeze(new Set([15, 39, 44]));",
+    "new": "export const COMPANION_UNREAD_TYPES = Object.freeze(new Set([39, 44]));",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "WK-M4-detect-unlisted",
     "file": "src/systems/allyCast.js",
-    "old": "new Set([15, 39, 44])",
-    "new": "new Set([15, 44])",
+    "old": "export const COMPANION_UNREAD_TYPES = Object.freeze(new Set([15, 39, 44]));",
+    "new": "export const COMPANION_UNREAD_TYPES = Object.freeze(new Set([15, 44]));",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "WK-M4-comprehend-unlisted",
     "file": "src/systems/allyCast.js",
-    "old": "new Set([15, 39, 44])",
-    "new": "new Set([15, 39])",
+    "old": "export const COMPANION_UNREAD_TYPES = Object.freeze(new Set([15, 39, 44]));",
+    "new": "export const COMPANION_UNREAD_TYPES = Object.freeze(new Set([15, 39]));",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]

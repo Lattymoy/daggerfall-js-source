@@ -160,8 +160,8 @@
   {
     "name": "AUDWBX-F1-the-razor-on-the-stand-in",
     "file": "src/systems/artifactEffects.js",
-    "old": "      if (!target || !item || target.spareGear) return null;",
-    "new": "      if (!target || !item) return null;",
+    "old": "        if (!target || !item || target.spareGear) return null;",
+    "new": "        if (!target || !item) return null;",
     "tests": [
       "test/net/gate/auditwbx.test.js"
     ]

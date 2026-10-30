@@ -287,7 +287,7 @@ healed the whole claim of blows into the Warden's ward and into the Brass Remnan
 loot maker mints it, healed every point of 20 blows into the Warden's ward. FIXED
 (`enchantments.js:"if (param !== 1 || target?.warded) return null;"`): VampiricEffect.cs's own law told what the blow
 dealt, not a departure. AUDIT FB1018f L1: the Mace of Molag Bal's drain had the same hole and gives nothing off a ward
-or a blow of none (`artifactEffects.js:"if (!entity || !target || damage === 0 || target.warded) return null;"`). AUDIT FB1018f L3-2,
+or a blow of none (`artifactEffects.js:"if (!entity || !target || damage === 0 || target.warded)"`). AUDIT FB1018f L3-2,
 L3-3: a spell into a ward, Cast When Strikes and the sets' strike refuse it too (TURNED-BLOW). Pins:
 `test/systems/fb1018f_vampiricward.test.js` (6). Mutants: `tools/mutants/fb1018f_vampiricward.json` (6, all dead).
 

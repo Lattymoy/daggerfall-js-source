@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-WE-L1-3-steadfast-unheld",
     "file": "src/systems/arcanePowers.js",
-    "old": "{ const held = regenShare((entity.maxHealth * mentorScaled(entity, N.steadfast.pct)) / 100, 'steadfast', entity); if (held > 0) healMine(entity, held); }",
-    "new": "healMine(entity, (entity.maxHealth * mentorScaled(entity, N.steadfast.pct)) / 100);",
+    "old": "  if (entity.health > 0 && entity.health < entity.maxHealth) {\n    const held = regenShare((entity.maxHealth * mentorScaled(entity, N.steadfast.pct)) / 100, 'steadfast', entity);\n    if (held > 0) healMine(entity, held);\n  } // AUDIT WORLD-EVENTS L1-3: held in a made level (systems/courtRules.js)",
+    "new": "  if (entity.health > 0 && entity.health < entity.maxHealth)\n    healMine(entity, (entity.maxHealth * mentorScaled(entity, N.steadfast.pct)) / 100); // AUDIT WORLD-EVENTS L1-3: held in a made level (systems/courtRules.js)",
     "tests": [
       "test/systems/auditwe_rules.test.js"
     ]

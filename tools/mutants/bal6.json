@@ -137,8 +137,8 @@
   {
     "name": "BAL6-GAUNTLETS-leather-and-chain-a-metal",
     "file": "src/systems/armorMaterials.js",
-    "old": "(isPlate(m) && m <= ARMOR_MATERIAL.Daedric ? m - ARMOR_MATERIAL.Iron : null)",
-    "new": "(m <= ARMOR_MATERIAL.Daedric ? m & 0xFF : null)",
+    "old": "export const plateMetal = (m) => (isPlate(m) && m <= ARMOR_MATERIAL.Daedric ? m - ARMOR_MATERIAL.Iron : null);",
+    "new": "export const plateMetal = (m) => (m <= ARMOR_MATERIAL.Daedric ? m & 0xff : null);",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "BAL6-GAUNTLETS-a-metal-past-daedric",
     "file": "src/systems/armorMaterials.js",
-    "old": "isPlate(m) && m <= ARMOR_MATERIAL.Daedric ?",
-    "new": "isPlate(m) ?",
+    "old": "export const plateMetal = (m) => (isPlate(m) && m <= ARMOR_MATERIAL.Daedric ? m - ARMOR_MATERIAL.Iron : null);",
+    "new": "export const plateMetal = (m) => (isPlate(m) ? m - ARMOR_MATERIAL.Iron : null);",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]

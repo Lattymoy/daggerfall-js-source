@@ -2,8 +2,8 @@
   {
     "name": "DISC21-A-the-biography-weapon-hand-built",
     "file": "src/systems/biography.js",
-    "old": "  if (group === 'Weapons') return createWeapon(t.index, t.index === ARROW_TEMPLATE ? 0 : material, rolls);\n",
-    "new": "  if (group === 'Weapons') return { group, templateIndex: t.index, material, name: t.name, value: 1 };\n",
+    "old": "  if (group === 'Weapons') return createWeapon(t.index, t.index === ARROW_TEMPLATE ? 0 : material, rolls);",
+    "new": "  if (group === 'Weapons') return { group, templateIndex: t.index, material, name: t.name, value: 1 };",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DISC21-A-the-bare-record-unminted",
     "file": "src/systems/biography.js",
-    "old": "  return mintCondition(item);\n};",
-    "new": "  return item;\n};",
+    "old": "  return mintCondition(item);",
+    "new": "  return item;",
     "tests": [
       "test/systems/disc21.test.js"
     ]

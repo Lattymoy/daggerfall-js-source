@@ -98,8 +98,8 @@
   {
     "name": "MEND-THIRD-stone-uncredited",
     "file": "src/systems/ayleidStones.js",
-    "old": "  pieces.forEach((it, i) => creditOwnMend(it, was[i]));",
-    "new": "",
+    "old": "  pieces.forEach((it, i) => creditOwnMend(it, was[i])); // AUDIT MEND-THIRD L2-7: the stone is its user's own mend - a third of it past a found piece's mark sells",
+    "new": "  // AUDIT MEND-THIRD L2-7: the stone is its user's own mend - a third of it past a found piece's mark sells",
     "tests": [
       "test/systems/mend_third.test.js"
     ],

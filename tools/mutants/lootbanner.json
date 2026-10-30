@@ -2,8 +2,8 @@
   {
     "name": "ACQUIRE1-the-baseline-announcing",
     "file": "src/systems/acquireWatch.js",
-    "old": "        item[ACQUIRED_FIELD] = true;\n        if (prime) continue;\n",
-    "new": "        item[ACQUIRED_FIELD] = true;\n",
+    "old": "        if (prime) continue;\n        const tier = acquiredTier(item);",
+    "new": "        const tier = acquiredTier(item);",
     "tests": [
       "test/systems/lootbanner.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ACQUIRE1-the-mark-never-written",
     "file": "src/systems/acquireWatch.js",
-    "old": "        if (isAcquired(item)) continue;\n        item[ACQUIRED_FIELD] = true;\n",
-    "new": "        if (isAcquired(item)) continue;\n",
+    "old": "        item[ACQUIRED_FIELD] = true;\n        if (prime) continue;",
+    "new": "        if (prime) continue;",
     "tests": [
       "test/systems/lootbanner.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ACQUIRE1-the-card-merge-missed",
     "file": "src/systems/acquireWatch.js",
-    "old": "if (!held.has(item) && isAcquired(item)) movedIn",
-    "new": "if (isAcquired(item)) movedIn",
+    "old": "          if (!held.has(item) && isAcquired(item)) movedIn.set(id, (movedIn.get(id) ?? 0) + n);",
+    "new": "          if (isAcquired(item)) movedIn.set(id, (movedIn.get(id) ?? 0) + n);",
     "tests": [
       "test/systems/lootbanner.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ACQUIRE1-my-own-stack-an-arrival",
     "file": "src/systems/acquireWatch.js",
-    "old": "const rose = total - (totals.get(id) ?? 0) - (movedIn.get(id) ?? 0);",
-    "new": "const rose = total - (totals.get(id) ?? 0);",
+    "old": "        const rose = total - (totals.get(id) ?? 0) - (movedIn.get(id) ?? 0);",
+    "new": "        const rose = total - (totals.get(id) ?? 0);",
     "tests": [
       "test/systems/lootbanner.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ACQUIRE1-the-wagon-not-watched",
     "file": "src/systems/acquireWatch.js",
-    "old": "[entity?.items, entity?.wagonItems, entity?.bagItems].filter(Array.isArray)",
-    "new": "[entity?.items].filter(Array.isArray)",
+    "old": "const listsOf = (entity) => [entity?.items, entity?.wagonItems, entity?.bagItems].filter(Array.isArray);",
+    "new": "const listsOf = (entity) => [entity?.items].filter(Array.isArray);",
     "tests": [
       "test/systems/lootbanner.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ACQUIRE1-no-baseline-at-a-load",
     "file": "src/systems/acquireWatch.js",
-    "old": "entity !== lastEntity || entity.items !== lastItems || !done",
-    "new": "entity !== lastEntity || !done",
+    "old": "    const prime = entity !== lastEntity || entity.items !== lastItems || !done || lastDone !== done;",
+    "new": "    const prime = entity !== lastEntity || !done || lastDone !== done;",
     "tests": [
       "test/systems/lootbanner.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ACQUIRE1-the-creations-end-announced",
     "file": "src/systems/acquireWatch.js",
-    "old": "|| !done || lastDone !== done;",
-    "new": "|| !done;",
+    "old": "    const prime = entity !== lastEntity || entity.items !== lastItems || !done || lastDone !== done;",
+    "new": "    const prime = entity !== lastEntity || entity.items !== lastItems || !done;",
     "tests": [
       "test/systems/lootbanner.test.js"
     ]

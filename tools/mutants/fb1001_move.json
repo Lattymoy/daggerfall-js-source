@@ -101,8 +101,8 @@
   {
     "name": "MOVE-BANK-the-carry-capped-at-0.99-again",
     "file": "src/systems/advancement.js",
-    "old": "      prog[i] = (prog[i] - 1) * cost / nextCost;",
-    "new": "      prog[i] = Math.min(0.99, prog[i] - 1);",
+    "old": "      prog[i] = ((prog[i] - 1) * cost) / nextCost; // 0 at the hard cap (the next point costs Infinity)",
+    "new": "      prog[i] = Math.min(0.99, prog[i] - 1); // 0 at the hard cap (the next point costs Infinity)",
     "tests": [
       "test/systems/fb1001_move.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "MOVE-BANK-the-carry-not-re-priced",
     "file": "src/systems/advancement.js",
-    "old": "      prog[i] = (prog[i] - 1) * cost / nextCost;",
-    "new": "      prog[i] = prog[i] - 1;",
+    "old": "      prog[i] = ((prog[i] - 1) * cost) / nextCost; // 0 at the hard cap (the next point costs Infinity)",
+    "new": "      prog[i] = prog[i] - 1; // 0 at the hard cap (the next point costs Infinity)",
     "tests": [
       "test/systems/fb1001_move.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "MOVE-BANK-re-priced-at-the-same-point",
     "file": "src/systems/advancement.js",
-    "old": "      const nextCost = softcapUsesForAdvancement(entity.skills[i] + 1, ",
-    "new": "      const nextCost = softcapUsesForAdvancement(entity.skills[i], ",
+    "old": "        entity.skills[i] + 1,",
+    "new": "        entity.skills[i],",
     "tests": [
       "test/systems/fb1001_move.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "MOVE-BANK-a-pass-with-no-new-uses-lands-nothing",
     "file": "src/systems/advancement.js",
-    "old": "      if (entity.skills[i] >= SKILL_HARD_CAP) continue;\n      // MOVE-BANK",
-    "new": "      if (entity.skills[i] >= SKILL_HARD_CAP || calcUses <= 0) continue;\n      // MOVE-BANK",
+    "old": "      if (entity.skills[i] >= SKILL_HARD_CAP) continue;",
+    "new": "      if (entity.skills[i] >= SKILL_HARD_CAP || calcUses <= 0) continue;",
     "tests": [
       "test/systems/fb1001_move.test.js"
     ]

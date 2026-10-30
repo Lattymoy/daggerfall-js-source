@@ -137,8 +137,8 @@
   {
     "name": "SET2-the-headroom-gate-skipped",
     "file": "src/systems/absorption.js",
-    "old": "  if (drink > available) return 0;\n",
-    "new": "",
+    "old": "  if (drink > available) return 0;\n  // X1: the EFFECT-based arm is tried FIRST (:1186-1189), and it is",
+    "new": "  // X1: the EFFECT-based arm is tried FIRST (:1186-1189), and it is",
     "tests": [
       "test/systems/set2_seams.test.js"
     ]

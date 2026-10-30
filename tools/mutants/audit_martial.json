@@ -370,8 +370,8 @@
   {
     "name": "AUDIT-MARTIAL-L4M1-the-spell-sentence-back",
     "file": "src/systems/arcanePaths.js",
-    "old": "t('schools.chosen', 'Specialization chosen: {name}.', { name: p.name })",
-    "new": "t('schools.chosen', 'Specialization chosen: {name}. {spell} is sold to you at the Mages Guild.', { name: p.name, spell: p.spell.name })",
+    "old": "  return { ok: true, text: t('schools.chosen', 'Specialization chosen: {name}.', { name: p.name }) };",
+    "new": "  return {\n    ok: true,\n    text: t('schools.chosen', 'Specialization chosen: {name}. {spell} is sold to you at the Mages Guild.', {\n      name: p.name,\n      spell: p.spell.name,\n    }),\n  };",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"

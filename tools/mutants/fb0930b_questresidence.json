@@ -4,49 +4,63 @@
     "file": "src/ui/town/townSheet.js",
     "old": "if (!named.has(b?.buildingKey) && (!(b?.questName || b?.questMarked) || !found.has(b.buildingKey))) continue;   // RES-RING",
     "new": "if (!named.has(b?.buildingKey) && (!b?.questName || !found.has(b.buildingKey))) continue;   // RES-RING",
-    "tests": ["test/systems/fb0930b_questresidence.test.js"]
+    "tests": [
+      "test/systems/fb0930b_questresidence.test.js"
+    ]
   },
   {
     "name": "RES-RING-the-pen-left-off-the-override-arm",
     "file": "src/ui/town/townSheet.js",
     "old": "          quest = !!b.questMarked;   // RES-RING: a quest's marked residence, override-named at its discovery",
     "new": "",
-    "tests": ["test/systems/fb0930b_questresidence.test.js"]
+    "tests": [
+      "test/systems/fb0930b_questresidence.test.js"
+    ]
   },
   {
     "name": "RES-RING-the-stamp-says-nothing",
     "file": "src/ui/exteriorAutomapWindow.js",
     "old": "    b.questMarked = marked !== '';",
     "new": "",
-    "tests": ["test/systems/fb0930b_questresidence.test.js"]
+    "tests": [
+      "test/systems/fb0930b_questresidence.test.js"
+    ]
   },
   {
     "name": "RES-RING-the-classic-plate-stamped-on-the-override-arm",
     "file": "src/ui/exteriorAutomapWindow.js",
     "old": "    if (rec.isOverrideName) continue;   // :676-682 - the display-name arm returns first (the classic plate, unchanged)",
     "new": "",
-    "tests": ["test/systems/fb0930b_questresidence.test.js"]
+    "tests": [
+      "test/systems/fb0930b_questresidence.test.js"
+    ]
   },
   {
     "name": "RES-MARK-the-roll-kept-for-the-quest-row",
     "file": "src/systems/answerPipeline.js",
     "old": "    if (randomFloat > CHANCE_TO_REVEAL_LOCATION_ON_MAP && !questRow) return this.getKeySubjectBuildingDirection();",
     "new": "    if (randomFloat > CHANCE_TO_REVEAL_LOCATION_ON_MAP) return this.getKeySubjectBuildingDirection();",
-    "tests": ["test/systems/fb0930b_questresidence.test.js"]
+    "tests": [
+      "test/systems/fb0930b_questresidence.test.js"
+    ]
   },
   {
     "name": "RES-MARK-the-map-arm-for-a-plain-building",
     "file": "src/systems/answerPipeline.js",
     "old": "    if (randomFloat > CHANCE_TO_REVEAL_LOCATION_ON_MAP && !questRow) return this.getKeySubjectBuildingDirection();",
     "new": "    if (randomFloat > 1 && !questRow) return this.getKeySubjectBuildingDirection();",
-    "tests": ["test/systems/fb0930b_questresidence.test.js"]
+    "tests": [
+      "test/systems/fb0930b_questresidence.test.js"
+    ]
   },
   {
     "name": "RES-MARK-the-map-arm-indoors",
     "file": "src/systems/answerPipeline.js",
     "old": "    if (this.deps.isPlayerInside?.() ?? false) return this.getKeySubjectBuildingDirection();",
     "new": "",
-    "tests": ["test/systems/fb0930b_questresidence.test.js"]
+    "tests": [
+      "test/systems/fb0930b_questresidence.test.js"
+    ]
   },
   {
     "name": "HOME-PLAQUE-the-word-dropped",
@@ -54,7 +68,9 @@
     "old": "export const homeDoorName = (name, hasVerbs, type = null) => name || (hasVerbs || isHouseType(type) ? localizedText('residence', 'Residence') : '');",
     "new": "export const homeDoorName = (name, hasVerbs, type = null) => name || (hasVerbs || isHouseType(type) ? '' : '');",
     "note": "Re-aimed by content (IC-PROPS): the word is DFU's localized residence now, for a house by its type as well as for verbs; the mutant still drops it.",
-    "tests": ["test/systems/fb0930b_questresidence.test.js"]
+    "tests": [
+      "test/systems/fb0930b_questresidence.test.js"
+    ]
   },
   {
     "name": "HOME-PLAQUE-the-door-unnamed",
@@ -62,6 +78,8 @@
     "old": "homeDoorName(shownBuildingName(db, bd.name), !!houseVerbs, bd.buildingType)",
     "note": "Re-aimed by content (IC-PROPS): the hover hands the building's type too; the mutant still bypasses the word.",
     "new": "shownBuildingName(db, bd.name)",
-    "tests": ["test/systems/fb0930b_questresidence.test.js"]
+    "tests": [
+      "test/systems/fb0930b_questresidence.test.js"
+    ]
   }
 ]

@@ -11,8 +11,8 @@
   {
     "name": "WB12c-the-title-unknown",
     "file": "src/systems/books.js",
-    "old": "?? portBookTitle(id);",
-    "new": "?? null;",
+    "old": "  return BOOK_ID_TITLES.get(key) ?? portBookTitle(id);",
+    "new": "  return BOOK_ID_TITLES.get(key) ?? null;",
     "tests": [
       "test/systems/wb12c_burning_doors.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB12c-the-price-the-template-s",
     "file": "src/systems/books.js",
-    "old": "export const bookFilePrice = (id) => (isPortBook(id) ?",
-    "new": "export const bookFilePrice = (id) => (false ?",
+    "old": "export const bookFilePrice = (id) =>\n  isPortBook(id) ? portBookPrice(id) : (_bookPrices.get(id === 10000 ? 5 : id) ?? null); // WB12c: a port book's is its own bytes'",
+    "new": "export const bookFilePrice = (id) => (false ? portBookPrice(id) : (_bookPrices.get(id === 10000 ? 5 : id) ?? null)); // WB12c: a port book's is its own bytes'",
     "tests": [
       "test/systems/wb12c_burning_doors.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB12c-no-name-for-a-port-book",
     "file": "src/systems/books.js",
-    "old": "BOOK_ID_TITLES.has(key) || isPortBook(key) ?",
-    "new": "BOOK_ID_TITLES.has(key) ?",
+    "old": "  return BOOK_ID_TITLES.has(key) || isPortBook(key) ? messageToBookFilename(key) : null; // WB12c: a port book's name is its id's own",
+    "new": "  return BOOK_ID_TITLES.has(key) ? messageToBookFilename(key) : null; // WB12c: a port book's name is its id's own",
     "tests": [
       "test/systems/wb12c_burning_doors.test.js"
     ]

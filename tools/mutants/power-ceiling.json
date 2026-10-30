@@ -227,8 +227,8 @@
   {
     "name": "POWER-CEILING-the-wardens-aegis-not-asking",
     "file": "src/systems/arcanePowers.js",
-    "old": "  const owed = (dmg * guardRoom(mentorScaled(entity, N.livingAegis.lighter), 'arcane')) / 100 + _s.guardOwed;",
-    "new": "  const owed = (dmg * mentorScaled(entity, N.livingAegis.lighter)) / 100 + _s.guardOwed;",
+    "old": "  const owed = (dmg * guardRoom(mentorScaled(entity, N.livingAegis.lighter), 'arcane')) / 100 + _s.guardOwed; // POWER-CEILING: its room under the guards' one share",
+    "new": "  const owed = (dmg * mentorScaled(entity, N.livingAegis.lighter)) / 100 + _s.guardOwed; // POWER-CEILING: its room under the guards' one share",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -553,8 +553,8 @@
   {
     "name": "AUDIT-HORIZONTAL-D4-the-aegis-asking-as-the-martial-path",
     "file": "src/systems/arcanePowers.js",
-    "old": "guardRoom(mentorScaled(entity, N.livingAegis.lighter), 'arcane')",
-    "new": "guardRoom(mentorScaled(entity, N.livingAegis.lighter), 'martial')",
+    "old": "  const owed = (dmg * guardRoom(mentorScaled(entity, N.livingAegis.lighter), 'arcane')) / 100 + _s.guardOwed; // POWER-CEILING: its room under the guards' one share",
+    "new": "  const owed = (dmg * guardRoom(mentorScaled(entity, N.livingAegis.lighter), 'martial')) / 100 + _s.guardOwed; // POWER-CEILING: its room under the guards' one share",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -607,8 +607,8 @@
   {
     "name": "AUDIT-HORIZONTAL-D2-the-aegis-spends-its-raw-guard",
     "file": "src/systems/arcanePowers.js",
-    "old": "  const owed = (dmg * guardRoom(mentorScaled(entity, N.livingAegis.lighter), 'arcane')) / 100 + _s.guardOwed;",
-    "new": "  guardRoom(mentorScaled(entity, N.livingAegis.lighter), 'arcane'); const owed = (dmg * mentorScaled(entity, N.livingAegis.lighter)) / 100 + _s.guardOwed;",
+    "old": "  const owed = (dmg * guardRoom(mentorScaled(entity, N.livingAegis.lighter), 'arcane')) / 100 + _s.guardOwed; // POWER-CEILING: its room under the guards' one share",
+    "new": "  guardRoom(mentorScaled(entity, N.livingAegis.lighter), 'arcane');\n  const owed = (dmg * mentorScaled(entity, N.livingAegis.lighter)) / 100 + _s.guardOwed; // POWER-CEILING: its room under the guards' one share",
     "tests": [
       "test/combat/powerceiling_rooms.test.js"
     ]

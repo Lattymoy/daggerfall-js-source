@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-SCHOOLS-L1-H1-the-reach-unfiltered",
     "file": "src/systems/arcanePowers.js",
-    "old": "  return near(door, at, metres, struck.entity).filter((f) => f !== struck)",
-    "new": "  return door.foes().filter((f) => f.entity !== struck.entity && !f.dead && Array.isArray(f.ai?.feet) && flat(f) <= metres).filter((f) => f !== struck)",
+    "old": "  return near(door, at, metres, struck.entity)",
+    "new": "  return door\n    .foes()\n    .filter((f) => f.entity !== struck.entity && !f.dead && Array.isArray(f.ai?.feet) && flat(f) <= metres)",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -38,7 +38,7 @@
   {
     "name": "AUDIT-SCHOOLS-L3-F1-the-arc-share-dropped",
     "file": "src/systems/arcanePowers.js",
-    "old": "const arcOn = (f, amount, spell) => hurt(f, Math.floor(amount * elementShare(f.entity, ELEMENT_NAMES[spell?.element] ?? 'magic')));",
+    "old": "const arcOn = (f, amount, spell) =>\n  hurt(f, Math.floor(amount * elementShare(f.entity, ELEMENT_NAMES[spell?.element] ?? 'magic')));",
     "new": "const arcOn = (f, amount, spell) => hurt(f, Math.floor(amount));",
     "tests": [
       "test/systems/audit_schools.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-SCHOOLS-L1-H2-the-class-read-as-a-monster",
     "file": "src/systems/arcanePowers.js",
-    "old": "const undeadOrDaedra = (t) => { const g = foeGroup(t);",
-    "new": "const undeadOrDaedra = (t) => { const g = foeGroup(t && { ...t, affinity: null });",
+    "old": "  const g = foeGroup(t);",
+    "new": "  const g = foeGroup(t && { ...t, affinity: null });",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-SCHOOLS-L1-M1-the-rider-no-power",
     "file": "src/systems/arcanePowers.js",
-    "old": "playerDoor()?.castOnPlayer?.(bundle, { power: true });",
-    "new": "playerDoor()?.castOnPlayer?.(bundle);",
+    "old": "    playerDoor()?.castOnPlayer?.(bundle, { power: true });",
+    "new": "    playerDoor()?.castOnPlayer?.(bundle);",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-SCHOOLS-L1-M2-the-carry-dropped",
     "file": "src/systems/arcanePowers.js",
-    "old": "  const owed = (dmg * guardRoom(mentorScaled(entity, N.livingAegis.lighter), 'arcane')) / 100 + _s.guardOwed;",
-    "new": "  const owed = (dmg * guardRoom(mentorScaled(entity, N.livingAegis.lighter), 'arcane')) / 100;",
+    "old": "  const owed = (dmg * guardRoom(mentorScaled(entity, N.livingAegis.lighter), 'arcane')) / 100 + _s.guardOwed; // POWER-CEILING: its room under the guards' one share",
+    "new": "  const owed = (dmg * guardRoom(mentorScaled(entity, N.livingAegis.lighter), 'arcane')) / 100; // POWER-CEILING: its room under the guards' one share",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-SCHOOLS-L1-L1-conflux-once-a-foe",
     "file": "src/systems/arcanePowers.js",
-    "old": " && !(cast && _s.stacked.has(cast))) {",
-    "new": ") {",
+    "old": "  if (id === 'elementalist' && !self && landed > 0 && target && !target.isPlayer && !(cast && _s.stacked.has(cast))) {",
+    "new": "  if (id === 'elementalist' && !self && landed > 0 && target && !target.isPlayer) {",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "AUDIT-SCHOOLS-L5-M4-conflux-resumes-old-stacks",
     "file": "src/systems/arcanePowers.js",
-    "old": "(now < _s.confluxUntil ? _s.conflux : 0) + 1",
-    "new": "_s.conflux + 1",
+    "old": "    _s.conflux = Math.min(N.conflux.stacks, (now < _s.confluxUntil ? _s.conflux : 0) + 1);",
+    "new": "    _s.conflux = Math.min(N.conflux.stacks, _s.conflux + 1);",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "AUDIT-SCHOOLS-L5-M4-shadow-on-a-save",
     "file": "src/systems/arcanePowers.js",
-    "old": "      if (landed > 0) castOnMe(selfBundle(spellName('shadowcaster'),",
-    "new": "      castOnMe(selfBundle(spellName('shadowcaster'),",
+    "old": "      if (landed > 0) castOnMe(selfBundle(spellName('shadowcaster'), 24, 0, N.shadowBolt.rounds));",
+    "new": "      castOnMe(selfBundle(spellName('shadowcaster'), 24, 0, N.shadowBolt.rounds));",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "AUDIT-SCHOOLS-L5-M4-aegis-on-a-save",
     "file": "src/systems/arcanePowers.js",
-    "old": "      if (landed > 0) castOnMe(selfBundle(spellName('battlemage'),",
-    "new": "      castOnMe(selfBundle(spellName('battlemage'),",
+    "old": "      if (landed > 0)\n        castOnMe(\n          selfBundle(spellName('battlemage'), 35, 255, N.aegisBolt.rounds, {\n            magnitude: Math.max(\n              1,\n              Math.round(\n                k * Math.min(landed * N.aegisBolt.times, Math.round((caster.maxHealth * N.aegisBolt.most) / 100)),\n              ),\n            ),\n          }),\n        );",
+    "new": "      castOnMe(\n        selfBundle(spellName('battlemage'), 35, 255, N.aegisBolt.rounds, {\n          magnitude: Math.max(\n            1,\n            Math.round(\n              k * Math.min(landed * N.aegisBolt.times, Math.round((caster.maxHealth * N.aegisBolt.most) / 100)),\n            ),\n          ),\n        }),\n      );",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "AUDIT-SCHOOLS-L5-M4-a-rider-at-a-player",
     "file": "src/systems/arcanePowers.js",
-    "old": "  if (!target || target.isPlayer) return;\n  const k = mentorPowerScale(caster);",
-    "new": "  if (!target) return;\n  const k = mentorPowerScale(caster);",
+    "old": "  if (!target || target.isPlayer) return;",
+    "new": "  if (!target) return;",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "AUDIT-SCHOOLS-L5-LOW-soul-well-the-watch",
     "file": "src/systems/arcanePowers.js",
-    "old": "const neverCounts = (e) => e?.mobileType === KNIGHT_CITY_WATCH || ",
-    "new": "const neverCounts = (e) => ",
+    "old": "const neverCounts = (e) =>\n  e?.mobileType === KNIGHT_CITY_WATCH || e?.team === 'PlayerAlly' || e?.mobileTeam === 'PlayerAlly';",
+    "new": "const neverCounts = (e) => e?.team === 'PlayerAlly' || e?.mobileTeam === 'PlayerAlly';",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "AUDIT-SCHOOLS-L5-LOW-soul-well-an-ended-trap",
     "file": "src/systems/arcanePowers.js",
-    "old": "a.kind === 'soulTrap' && !a.ended && !a.by",
-    "new": "a.kind === 'soulTrap' && !a.by",
+    "old": "    const trapped = (foe.activeEffects ?? []).some((a) => a.kind === 'soulTrap' && !a.ended && !a.by); // mine: a peer's trap carries `by`",
+    "new": "    const trapped = (foe.activeEffects ?? []).some((a) => a.kind === 'soulTrap' && !a.by); // mine: a peer's trap carries `by`",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "AUDIT-SCHOOLS-L2-F5-the-school-through-awake",
     "file": "src/systems/arcanePaths.js",
-    "old": "export function pathCastSchool(entity, spell, school) {\n  if (!spell || !isSignatureSpell(spell)) return school;\n  const p = pathHeld(entity);",
-    "new": "export function pathCastSchool(entity, spell, school) {\n  if (!spell || !isSignatureSpell(spell)) return school;\n  const p = pathAwake(entity);",
+    "old": "  const p = pathHeld(entity);",
+    "new": "  const p = pathAwake(entity);",
     "tests": [
       "test/systems/audit_schools.test.js"
     ],
@@ -544,8 +544,8 @@
   {
     "name": "AUDIT-SCHOOLS-L5-M2-a-pair-effect-in-the-stronger",
     "file": "src/systems/arcanePaths.js",
-    "old": "  if (p.schools.includes(school)) return school;\n",
-    "new": "",
+    "old": "  if (p.schools.includes(school)) return school;\n  const [a, b] = p.schools;",
+    "new": "  const [a, b] = p.schools;",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -652,8 +652,8 @@
   {
     "name": "AUDIT-SCHOOLS-L5-H5-aegis-bolt-fire",
     "file": "src/systems/arcanePaths.js",
-    "old": "  ['battlemage', [ALT, DES], [1, 23, SHOCK, AT_RANGE,",
-    "new": "  ['battlemage', [ALT, DES], [1, 23, FIRE, AT_RANGE,",
+    "old": "  ['battlemage', [ALT, DES], [1, 23, SHOCK, AT_RANGE, [DAMAGE_HEALTH(m(10, 18, 2, 3, 1))]]],",
+    "new": "  ['battlemage', [ALT, DES], [1, 23, FIRE, AT_RANGE, [DAMAGE_HEALTH(m(10, 18, 2, 3, 1))]]],",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -661,8 +661,8 @@
   {
     "name": "AUDIT-SCHOOLS-L5-H5-fleeting-hold-surer",
     "file": "src/systems/arcanePaths.js",
-    "old": "slot(0, 255, d(2, 1, 4), c(35, 2, 2))",
-    "new": "slot(0, 255, d(2, 1, 4), c(95, 2, 2))",
+    "old": "  ['trickster', [ALT, ILL], [2, 30, MAGIC, AT_RANGE, [slot(0, 255, d(2, 1, 4), c(35, 2, 2))]]],",
+    "new": "  ['trickster', [ALT, ILL], [2, 30, MAGIC, AT_RANGE, [slot(0, 255, d(2, 1, 4), c(95, 2, 2))]]],",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -670,8 +670,8 @@
   {
     "name": "AUDIT-SCHOOLS-L5-H5-the-ward-poison",
     "file": "src/systems/arcanePaths.js",
-    "old": "slot(8, 3, d(10, 2, 2), c(25, 2, 2))",
-    "new": "slot(8, 2, d(10, 2, 2), c(25, 2, 2))",
+    "old": "        slot(8, 3, d(10, 2, 2), c(25, 2, 2)),",
+    "new": "        slot(8, 2, d(10, 2, 2), c(25, 2, 2)),",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -679,8 +679,8 @@
   {
     "name": "AUDIT-SCHOOLS-L5-H5-beguile-animals",
     "file": "src/systems/arcanePaths.js",
-    "old": "slot(33, 2, c(30, 2, 2))",
-    "new": "slot(33, 0, c(30, 2, 2))",
+    "old": "  ['enchanter', [ILL, THA], [12, 33, MAGIC, AT_RANGE, [slot(33, 2, c(30, 2, 2)), slot(34, 255, c(30, 2, 2))]]],",
+    "new": "  ['enchanter', [ILL, THA], [12, 33, MAGIC, AT_RANGE, [slot(33, 0, c(30, 2, 2)), slot(34, 255, c(30, 2, 2))]]],",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -688,8 +688,8 @@
   {
     "name": "AUDIT-SCHOOLS-L5-H5-sanctify-heals-more",
     "file": "src/systems/arcanePaths.js",
-    "old": "HEAL_HEALTH(m(12, 20, 2, 4, 1))",
-    "new": "HEAL_HEALTH(m(12, 60, 2, 4, 1))",
+    "old": "    [15, 9, MAGIC, SELF, [HEAL_HEALTH(m(12, 20, 2, 4, 1)), slot(3, 1, c(100, 1, 20)), slot(3, 0, c(100, 1, 20))]],",
+    "new": "    [15, 9, MAGIC, SELF, [HEAL_HEALTH(m(12, 60, 2, 4, 1)), slot(3, 1, c(100, 1, 20)), slot(3, 0, c(100, 1, 20))]],",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -697,8 +697,8 @@
   {
     "name": "AUDIT-SCHOOLS-L5-H5-soul-lance-trap-longer",
     "file": "src/systems/arcanePaths.js",
-    "old": "slot(12, 255, d(6, 1, 2), c(40, 2, 2))",
-    "new": "slot(12, 255, d(60, 1, 2), c(40, 2, 2))",
+    "old": "    [14, 62, MAGIC, AT_RANGE, [slot(12, 255, d(6, 1, 2), c(40, 2, 2)), DAMAGE_HEALTH(m(6, 12, 2, 3, 1))]],",
+    "new": "    [14, 62, MAGIC, AT_RANGE, [slot(12, 255, d(60, 1, 2), c(40, 2, 2)), DAMAGE_HEALTH(m(6, 12, 2, 3, 1))]],",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -724,8 +724,8 @@
   {
     "name": "AUDIT-SCHOOLS-L4-H2-a-before-a-vowel",
     "file": "src/systems/arcanePaths.js",
-    "old": "t('schools.choice.title', 'Specialize as {name}?', { name: p.name })",
-    "new": "t('schools.choice.title', 'Become a {name}?', { name: p.name })",
+    "old": "    t('schools.choice.title', 'Specialize as {name}?', { name: p.name }),",
+    "new": "    t('schools.choice.title', 'Become a {name}?', { name: p.name }),",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]

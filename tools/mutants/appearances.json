@@ -203,8 +203,8 @@
   {
     "name": "APPEARANCES-the-wagon-unread",
     "file": "src/systems/appearances.js",
-    "old": "for (const list of [entity.items, entity.wagonItems, entity.bagItems]) {",
-    "new": "for (const list of [entity.items, entity.bagItems]) {",
+    "old": "  for (const list of [entity.items, entity.wagonItems, entity.bagItems]) {",
+    "new": "  for (const list of [entity.items, entity.bagItems]) {",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "APPEARANCES-the-bag-unread",
     "file": "src/systems/appearances.js",
-    "old": "for (const list of [entity.items, entity.wagonItems, entity.bagItems]) {",
-    "new": "for (const list of [entity.items, entity.wagonItems]) {",
+    "old": "  for (const list of [entity.items, entity.wagonItems, entity.bagItems]) {",
+    "new": "  for (const list of [entity.items, entity.wagonItems]) {",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "APPEARANCES-a-record-never-read-again",
     "file": "src/systems/appearances.js",
-    "old": "if (_read.get(it) === sig) continue;",
-    "new": "if (_read.has(it)) continue;",
+    "old": "      if (_read.get(it) === sig) continue;",
+    "new": "      if (_read.has(it)) continue;",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -231,7 +231,7 @@
     "name": "APPEARANCES-the-list-pushed",
     "file": "src/systems/appearances.js",
     "old": "  entity.appearances = ALL_LOOKS.map(lookCode).filter((k) => all.has(k));",
-    "new": "  if (Array.isArray(entity.appearances)) entity.appearances.push(...add); else entity.appearances = ALL_LOOKS.map(lookCode).filter((k) => all.has(k));",
+    "new": "  if (Array.isArray(entity.appearances)) entity.appearances.push(...add);\n  else entity.appearances = ALL_LOOKS.map(lookCode).filter((k) => all.has(k));",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "APPEARANCES-the-saved-list-unread",
     "file": "src/systems/appearances.js",
-    "old": "const set = new Set(Array.isArray(arr) ? arr.filter((k) => lookOfKey(k)) : []);",
-    "new": "const set = new Set(Array.isArray(arr) ? arr : []);",
+    "old": "  const set = new Set(Array.isArray(arr) ? arr.filter((k) => lookOfKey(k)) : []);",
+    "new": "  const set = new Set(Array.isArray(arr) ? arr : []);",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "APPEARANCES-a-general-store-wardrobe",
     "file": "src/systems/appearances.js",
-    "old": "BUILDING_TYPES.Armorer, BUILDING_TYPES.WeaponSmith]));",
-    "new": "BUILDING_TYPES.Armorer, BUILDING_TYPES.GeneralStore]));",
+    "old": "  /** @type {number[]} */ ([BUILDING_TYPES.ClothingStore, BUILDING_TYPES.Armorer, BUILDING_TYPES.WeaponSmith]),",
+    "new": "  /** @type {number[]} */ ([BUILDING_TYPES.ClothingStore, BUILDING_TYPES.Armorer, BUILDING_TYPES.GeneralStore]),",
     "tests": [
       "test/systems/appearances.test.js",
       "test/ui/wardrobe_window.test.js"
@@ -276,8 +276,8 @@
   {
     "name": "APPEARANCES-an-unworn-piece-dressed",
     "file": "src/systems/appearances.js",
-    "old": "  if (!isWorn(entity, item)) return 'worn';\n  if (pieceKind(item)",
-    "new": "  if (pieceKind(item)",
+    "old": "  if (!isWorn(entity, item)) return 'worn';\n  if (pieceKind(item) !== a.kind) return 'kind';",
+    "new": "  if (pieceKind(item) !== a.kind) return 'kind';",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -304,8 +304,8 @@
   {
     "name": "APPEARANCES-the-clear-charged",
     "file": "src/systems/appearances.js",
-    "old": "  delete item.appearance;",
-    "new": "  delete item.appearance; deductGold(entity, WARDROBE_FEE_MIN);",
+    "old": "  return { ok: true, reason: null };",
+    "new": "  deductGold(entity, WARDROBE_FEE_MIN);\n  return { ok: true, reason: null };",
     "tests": [
       "test/systems/appearances.test.js",
       "test/ui/wardrobe_window.test.js"
@@ -314,8 +314,8 @@
   {
     "name": "APPEARANCES-the-style-0-based",
     "file": "src/systems/appearances.js",
-    "old": "return vs.length > 1 ? vs.indexOf(look.v) + 1 : 0;",
-    "new": "return vs.length > 1 ? vs.indexOf(look.v) : 0;",
+    "old": "  return vs.length > 1 ? vs.indexOf(look.v) + 1 : 0;",
+    "new": "  return vs.length > 1 ? vs.indexOf(look.v) : 0;",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -323,8 +323,8 @@
   {
     "name": "APPEARANCES-a-style-said-of-one",
     "file": "src/systems/appearances.js",
-    "old": "return vs.length > 1 ? vs.indexOf(look.v) + 1 : 0;",
-    "new": "return vs.length > 0 ? vs.indexOf(look.v) + 1 : 0;",
+    "old": "  return vs.length > 1 ? vs.indexOf(look.v) + 1 : 0;",
+    "new": "  return vs.length > 0 ? vs.indexOf(look.v) + 1 : 0;",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -332,8 +332,8 @@
   {
     "name": "APPEARANCES-a-ring-in-the-wardrobe",
     "file": "src/systems/appearances.js",
-    "old": "    if (kind && LOOK_KIND_ORDER.includes(kind)) out.push({ slot, item, kind });",
-    "new": "    if (item) out.push({ slot, item, kind });",
+    "old": "    if (kind && LOOK_KIND_ORDER.includes(kind)) out.push({ slot, item, kind }); // AUDIT HORIZONTAL E5: a kind no look is of (a Light Flail's) offers none",
+    "new": "    if (item) out.push({ slot, item, kind }); // AUDIT HORIZONTAL E5: a kind no look is of (a Light Flail's) offers none",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -640,8 +640,8 @@
   {
     "name": "APPEARANCES-the-line-of-every-piece",
     "file": "src/systems/appearances.js",
-    "old": "  return a ? t('wardrobe.wearing',",
-    "new": "  return item ? t('wardrobe.wearing',",
+    "old": "  return a ? t('wardrobe.wearing', 'Looks like {name}', { name: lookName(a) }) : '';",
+    "new": "  return item ? t('wardrobe.wearing', 'Looks like {name}', { name: lookName(a) }) : '';",
     "tests": [
       "test/ui/appearances_render.test.js"
     ]
@@ -767,8 +767,8 @@
   {
     "name": "AUDIT-E5-any-kind-at-the-wardrobe",
     "file": "src/systems/appearances.js",
-    "old": "if (kind && LOOK_KIND_ORDER.includes(kind)) out.push({ slot, item, kind });",
-    "new": "if (kind) out.push({ slot, item, kind });",
+    "old": "    if (kind && LOOK_KIND_ORDER.includes(kind)) out.push({ slot, item, kind }); // AUDIT HORIZONTAL E5: a kind no look is of (a Light Flail's) offers none",
+    "new": "    if (kind) out.push({ slot, item, kind }); // AUDIT HORIZONTAL E5: a kind no look is of (a Light Flail's) offers none",
     "tests": [
       "test/systems/appearances_audit.test.js"
     ]

@@ -62,8 +62,8 @@
   {
     "name": "AUDIT-1019-L2-2-refresh-before-points",
     "file": "src/systems/advancement.js",
-    "old": "  distribute(entity.stats, pool);\n  // LEVEL-EVEN (systems/levelEven.js): the floor over the new maximum and the Endurance just spent (AUDIT LEVEL-EVEN L2-2:\n  // after the points, not before them), current health left as it stands (L2-1)\n  refreshOnlineLayer(entity, { keepHealth: true });\n",
-    "new": "  distribute(entity.stats, pool);\n",
+    "old": "  // LEVEL-EVEN (systems/levelEven.js): the floor over the new maximum and the Endurance just spent (AUDIT LEVEL-EVEN L2-2:\n  // after the points, not before them), current health left as it stands (L2-1)\n  refreshOnlineLayer(entity, { keepHealth: true });\n  entity.readyToLevelUp = false;",
+    "new": "  entity.readyToLevelUp = false;",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "AUDIT-1019-L2-2-oghma-unrefreshed",
     "file": "src/systems/advancement.js",
-    "old": "    refreshOnlineLayer(entity, { keepHealth: true });   // AUDIT LEVEL-EVEN L2-2: the book's Endurance reaches the floor now\n",
-    "new": "",
+    "old": "    refreshOnlineLayer(entity, { keepHealth: true }); // AUDIT LEVEL-EVEN L2-2: the book's Endurance reaches the floor now\n    entity.readyToLevelUp = false;",
+    "new": "    entity.readyToLevelUp = false;",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "AUDIT-1019-L3-2-lock-before-pass",
     "file": "src/systems/advancement.js",
-    "old": "    : value >= 95 && !masterSkillsActive(entity) && lockedBy(entity, i) ? 'lock' : null;",
-    "new": "    : value >= 95 && !masterSkillsActive(entity) && alreadyMasteredASkill(entity) ? 'lock' : null;",
+    "old": "      : value >= 95 && !masterSkillsActive(entity) && lockedBy(entity, i)",
+    "new": "      : value >= 95 && !masterSkillsActive(entity) && alreadyMasteredASkill(entity)",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "AUDIT-1019-L3-3-open-mastery-as-cap",
     "file": "src/systems/advancement.js",
-    "old": "  const held = value >= 100 ? (masteryRefusal(entity, i) == null ? 'master' : 'cap')",
-    "new": "  const held = value >= 100 ? 'cap'",
+    "old": "  const held =\n    value >= 100\n      ? masteryRefusal(entity, i) == null\n        ? 'master'\n        : 'cap'\n      : value >= 95 && !masterSkillsActive(entity) && lockedBy(entity, i)\n        ? 'lock'\n        : null;",
+    "new": "  const held = value >= 100 ? 'cap' : value >= 95 && !masterSkillsActive(entity) && lockedBy(entity, i) ? 'lock' : null;",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],

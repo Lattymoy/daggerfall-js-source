@@ -2,8 +2,8 @@
   {
     "name": "SKILL-TICK-reflexes-dropped",
     "file": "src/systems/advancement.js",
-    "old": "  const have = (tally * reflexesMod) >> 16;\n",
-    "new": "  const have = tally;\n",
+    "old": "  const have = (tally * reflexesMod) >> 16;",
+    "new": "  const have = tally;",
     "tests": [
       "test/systems/fb1019b_skilltick.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SKILL-TICK-level-one-price",
     "file": "src/systems/advancement.js",
-    "old": "const needed = skillUsesForAdvancement(value, SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career?.advancementMultiplier ?? 1, raisePriceLevel(entity));",
-    "new": "const needed = skillUsesForAdvancement(value, SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career?.advancementMultiplier ?? 1, 1);",
+    "old": "    SKILL_ADVANCEMENT_MULTIPLIER[i],\n    entity.career?.advancementMultiplier ?? 1,\n    raisePriceLevel(entity),\n  );\n  const reflexesMod = 0x10000 - (((entity.reflexes ?? 2) - 2) << 13);",
+    "new": "    SKILL_ADVANCEMENT_MULTIPLIER[i],\n    entity.career?.advancementMultiplier ?? 1,\n    1,\n  );\n  const reflexesMod = 0x10000 - (((entity.reflexes ?? 2) - 2) << 13);",
     "tests": [
       "test/systems/fb1019b_skilltick.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SKILL-TICK-lock-forgotten",
     "file": "src/systems/advancement.js",
-    "old": "value >= 95 && !masterSkillsActive(entity) && lockedBy(entity, i) ? 'lock' : null;",
-    "new": "false ? 'lock' : null;",
+    "old": "  const held =\n    value >= 100\n      ? masteryRefusal(entity, i) == null\n        ? 'master'\n        : 'cap'\n      : value >= 95 && !masterSkillsActive(entity) && lockedBy(entity, i)\n        ? 'lock'\n        : null;",
+    "new": "  const held = value >= 100 ? (masteryRefusal(entity, i) == null ? 'master' : 'cap') : false ? 'lock' : null;",
     "tests": [
       "test/systems/fb1019b_skilltick.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SKILL-TICK-cap-forgotten",
     "file": "src/systems/advancement.js",
-    "old": "  const held = value >= 100 ? (masteryRefusal(entity, i) == null ? 'master' : 'cap')",
-    "new": "  const held = false ? 'cap'",
+    "old": "  const held =\n    value >= 100\n      ? masteryRefusal(entity, i) == null\n        ? 'master'\n        : 'cap'\n      : value >= 95 && !masterSkillsActive(entity) && lockedBy(entity, i)\n        ? 'lock'\n        : null;",
+    "new": "  const held = false ? 'cap' : value >= 95 && !masterSkillsActive(entity) && lockedBy(entity, i) ? 'lock' : null;",
     "tests": [
       "test/systems/fb1019b_skilltick.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "SKILL-TICK-bank-forgotten",
     "file": "src/systems/advancement.js",
-    "old": "ready: banked + uses / cost >= 1, held: null, wait };",
-    "new": "ready: uses / cost >= 1, held: null, wait };",
+    "old": "    return { have: Math.floor(banked * cost) + uses, need: cost, ready: banked + uses / cost >= 1, held: null, wait }; // the pass's own test",
+    "new": "    return { have: Math.floor(banked * cost) + uses, need: cost, ready: uses / cost >= 1, held: null, wait }; // the pass's own test",
     "tests": [
       "test/systems/fb1019b_skilltick.test.js"
     ],

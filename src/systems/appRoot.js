@@ -39,9 +39,14 @@ export function appRootFrom(moduleUrl) {
   // module evaluation, in a file scenes/world.js imports statically
   // through travelMapDoor.js, so the throw would not cost the map, it
   // would cost the whole scene. There is no root to find in such a URL.
-  try { u = new URL(moduleUrl); } catch { return null; }
-  if (!u.pathname.startsWith('/')) return null;   // an opaque path: cannot-be-a-base
-  u.search = ''; u.hash = '';
+  try {
+    u = new URL(moduleUrl);
+  } catch {
+    return null;
+  }
+  if (!u.pathname.startsWith('/')) return null; // an opaque path: cannot-be-a-base
+  u.search = '';
+  u.hash = '';
   // AUDIT-FIELD F3: THE LAST such segment, not the first. JS regex
   // matching is leftmost-first, and `.*$` being greedy only decides the
   // tail - so the first cut cut at the FIRST `/assets/` or `/src/` on

@@ -25,7 +25,7 @@ craft, a trade, the market and a card all `addItem` straight into the pack - and
 Materials Bag tells the listeners as if it were new. So the pack is watched, not the doors.
 
 - **Once a frame**, on drawHud's one call (`hud.js:"drawLootBanners({ entity: vitals,"`) - every host hands drawHud the
-  player entity as `vitals` - the watcher (`acquireWatch.js:"export function createAcquireWatch()"`) reads the player's
+  player entity as `vitals` - the watcher (`acquireWatch.js:"export function createAcquireWatch"`) reads the player's
   three own lists: the pack, the wagon and the Materials Bag. It runs on every skin, so a piece found on the classic skin
   is not announced if the player switches to Enhanced Plus later.
 - **The mark.** A piece that could ever announce (`markable` - a weapon that is not ammunition, armour, clothing,

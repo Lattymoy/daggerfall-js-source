@@ -494,7 +494,7 @@ THE FIX - ONE WHOLE, ONE DOOR.
   would bleed a body of 975's rungs, so it measures no whole on a stand-in
   (`bloodDecals.js:"maxHealth: Number.isFinite"`) - the same
   rung, by law. Berserker's leech reads `min(damage, target.health)`: unchanged under 975.
-- **Mehrunes' Razor stays passed by** (`artifactEffects.js:"if (!target || !item || target.spareGear) return null;"`). Its two
+- **Mehrunes' Razor stays passed by** (`artifactEffects.js:"if (!target || !item || target.spareGear)"`). Its two
   reasons were the 1e9 billed to its condition and a blow the wire refused. The wire carries the whole now and no Strikes
   payload bills wear on a stand-in (AUDIT WBX F2) - and that is why it must stay: the Razor's kill is paid in its own condition,
   the health it removes (DFU `MehrunesRazorEffect`), and on a body the relay runs nothing would pay it - a free whole blow every

@@ -244,8 +244,8 @@
   {
     "name": "AUDIT-PSCALE1-razor-unmarked",
     "file": "src/systems/artifactEffects.js",
-    "old": "        markWholeBlow(target);   // AUDIT PSCALE1 DOORS-1",
-    "new": "        void markWholeBlow;   // AUDIT PSCALE1 DOORS-1",
+    "old": "          markWholeBlow(target); // AUDIT PSCALE1 DOORS-1: the whole health, whole - the foe's door takes it undivided, and so does its owner's",
+    "new": "          void markWholeBlow; // AUDIT PSCALE1 DOORS-1: the whole health, whole - the foe's door takes it undivided, and so does its owner's",
     "tests": [
       "test/systems/party/pscale1.test.js",
       "test/systems/auditpscale1.test.js"
@@ -254,8 +254,8 @@
   {
     "name": "AUDIT-PSCALE1-namira-writes-the-number",
     "file": "src/systems/artifactEffects.js",
-    "old": "  if (door) door(reflected);\n  else attacker.health",
-    "new": "  if (false) door(reflected);\n  else attacker.health",
+    "old": "  if (door) door(reflected);",
+    "new": "  if (false) door(reflected);",
     "tests": [
       "test/systems/party/pscale1.test.js",
       "test/systems/auditpscale1.test.js"

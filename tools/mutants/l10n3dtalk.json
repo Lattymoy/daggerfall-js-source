@@ -22,8 +22,8 @@
   {
     "name": "L10N3d2-systems-biography-227-table",
     "file": "src/systems/biography.js",
-    "old": "const HOME_PROVINCE = localizedTable({   // HomeProvinceName (:87-115)",
-    "new": "const HOME_PROVINCE = ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({   // HomeProvinceName (:87-115)",
+    "old": "const HOME_PROVINCE = localizedTable({",
+    "new": "const HOME_PROVINCE = ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "L10N3d2-systems-biography-232-table",
     "file": "src/systems/biography.js",
-    "old": "const GEOGRAPHICAL_FEATURE = localizedTable({   // GeographicalFeature (:117-141)",
-    "new": "const GEOGRAPHICAL_FEATURE = ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({   // GeographicalFeature (:117-141)",
+    "old": "const GEOGRAPHICAL_FEATURE = localizedTable({",
+    "new": "const GEOGRAPHICAL_FEATURE = ((t) =>\n  Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"

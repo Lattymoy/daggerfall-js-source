@@ -299,8 +299,8 @@
   {
     "name": "STANDING-WORDS-the-books-owed",
     "file": "src/systems/affiliations.js",
-    "old": "      owed: standingOwedOf(guild.factionId),   // STANDING-WORDS\n",
-    "new": "      owed: 0,\n",
+    "old": "      owed: standingOwedOf(guild.factionId), // STANDING-WORDS",
+    "new": "      owed: 0,",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "STANDING-WORDS-the-books-warnings",
     "file": "src/systems/affiliations.js",
-    "old": "      warnings: entity?.factionRep ? reviewWarnings(",
-    "new": "      warnings: false ? reviewWarnings(",
+    "old": "      warnings: entity?.factionRep",
+    "new": "      warnings: false",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -756,8 +756,8 @@
   {
     "name": "LANE-E-AF-raw-book",
     "file": "src/systems/affiliations.js",
-    "old": "reviewWarnings(entity, guild, activeMemberships(entity), entity.factionRep",
-    "new": "reviewWarnings(entity, guild, entity.guildMemberships, entity.factionRep",
+    "old": "        ? reviewWarnings(entity, guild, activeMemberships(entity), entity.factionRep, { now, online })",
+    "new": "        ? reviewWarnings(entity, guild, entity.guildMemberships, entity.factionRep, { now, online })",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js",
       "test/systems/guild/guildrep.test.js"
@@ -1020,8 +1020,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-page-offline",
     "file": "src/systems/affiliations.js",
-    "old": "entity.factionRep, { now, online }) : [],",
-    "new": "entity.factionRep, { now }) : [],",
+    "old": "        ? reviewWarnings(entity, guild, activeMemberships(entity), entity.factionRep, { now, online })",
+    "new": "        ? reviewWarnings(entity, guild, activeMemberships(entity), entity.factionRep, { now })",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
