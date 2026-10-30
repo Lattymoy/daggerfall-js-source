@@ -124,8 +124,8 @@
   {
     "name": "ARMORY-the-forearm-drawn-on-a-card",
     "file": "src/render/armoryPass.js",
-    "old": "        if (full) tube(0, el, wa, 0.054, 0.046);",
-    "new": "        tube(0, el, wa, 0.054, 0.046);",
+    "old": "        if (full) tube(0, el, wa, 0.054 * a, 0.046 * a);",
+    "new": "        tube(0, el, wa, 0.054 * a, 0.046 * a);",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "ARMORY-the-sigils-back-inside-the-torso",
     "file": "src/render/armoryPass.js",
-    "old": "-(pose.card ? 0.24 : 0.27) * s)",
-    "new": "-(pose.card ? 0.24 : 0.2) * s)",
+    "old": ": (pose.card ? 0.24 : 0.27) * s))",
+    "new": ": (pose.card ? 0.24 : 0.2) * s))",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -582,6 +582,88 @@
     "file": "src/render/armoryPose.js",
     "old": "const k = beast ? ARMORY_BEAST_FIT : 1, face",
     "new": "const k = 1, face",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-wolfs-chest-a-persons",
+    "file": "src/render/armoryPose.js",
+    "old": "face = beast ? ARMORY_BEAST_CHEST.face : 0.12;",
+    "new": "face = 0.12;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-wolfs-back-a-persons",
+    "file": "src/render/armoryPass.js",
+    "old": "-(pose.back > 0 ? pose.back : (pose.card ? 0.24 : 0.27) * s)",
+    "new": "-((pose.card ? 0.24 : 0.27) * s)",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-wolfs-chest-on-its-shoulders",
+    "file": "src/render/armoryPose.js",
+    "old": "const drop = beast ? ARMORY_BEAST_CHEST.down : 0;",
+    "new": "const drop = 0;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-bands-inside-the-wolfs-arms",
+    "file": "src/render/armoryPass.js",
+    "old": "const a = pose.arm > 0 ? pose.arm : 1,",
+    "new": "const a = 1,",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-no-claws",
+    "file": "src/render/armoryPass.js",
+    "old": "claw = full && pose.claw > 0 ? pose.claw : 0,",
+    "new": "claw = 0,",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-claws-left-on-a-person",
+    "file": "src/render/armoryPose.js",
+    "old": "out.scale = k; out.back = 0; out.arm = 1; out.claw = 0;",
+    "new": "out.scale = k; out.back = 0; out.arm = 1;",
+    "tests": [
+      "test/render/armory.test.js",
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-claws-left-on-a-sprite",
+    "file": "src/render/armoryPose.js",
+    "old": "out.back = 0; out.arm = 1; out.claw = 0;\n",
+    "new": "out.back = 0; out.arm = 1;\n",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-sprites-wolf-on-a-persons-rows",
+    "file": "src/render/armoryPose.js",
+    "old": "  if (fig.beast === true) beastLimbs(fig.mpp * art, fig.base, pts, out);\n",
+    "new": "\n",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-sprites-wolf-without-forearms",
+    "file": "src/render/armoryPose.js",
+    "old": "  out.limbs = 'full'; out.arm = ARMORY_BEAST_ARM.arm;",
+    "new": "  out.arm = ARMORY_BEAST_ARM.arm;",
     "tests": [
       "test/render/armory.test.js"
     ]

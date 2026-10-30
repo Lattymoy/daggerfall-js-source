@@ -201,8 +201,9 @@ try {
   check('the Ember Heart from behind: none of it through the body', back.px[0] <= backBare.px[0] + 12, `${back.px[0]} against the bare body's ${backBare.px[0]}`);
   const cold = await draw({ kit: 'aaaa0', eye: FRONT, kindle: 0, pts: [crownTop, chest, shin] });
   check('nothing at all before it kindles', cold.lit === 0 && cold.drawn === 0, `${cold.lit} lit, ${cold.drawn} drawn`);
-  const beast = await draw({ kit: 'aaaa0', eye: FRONT, torn: 1, pts: [crownTop] });
-  check('nothing on a beast', beast.lit === 0, `${beast.lit} lit`);
+  const beast = await draw({ kit: 'aaaa0', eye: FRONT, torn: 1, pts: [crownTop, chest, shin] });
+  await shot('rig_beast_dagonfire_front');
+  check('WOLF-KIT turned beast: the crown off, the heart and the stride still worn', beast.px[0] < bare.px[0] + 30 && beast.px[1] > bare.px[1] + 90 && beast.px[2] > bare.px[2] + 60 && beast.drawn === 3, `${beast.px.join(', ')}, drawn ${beast.drawn}`);
   const e = await draw({ kit: 'bbbb0', eye: FRONT, pts: [[0, at('crown')[1] + 0.05, 0.17], chest, shin, [0.6, 1.0, 0]] });
   await shot('rig_eternal_front');
   check('the rig in Eternal: drawn without a GL error', e.error === 0 && e.drawn === 4, `error ${e.error}, drawn ${e.drawn}`);

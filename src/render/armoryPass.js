@@ -481,20 +481,24 @@ export function armoryDraws(key, w, eye, near, right = null) {
     decal(0, chest, fwd, (key === 'emberheart' ? 0.14 : 0.12) * s, f);
     cards(1, 1, chest, chest, UP, [0, 0], (key === 'emberheart' ? 0.3 : 0.2) * s, f, 1, true);
     if (key === 'emberheart') cards(2, 8, chest, chest, UP, [0, 0], 0, f);
-    else { const back = add(chest, fwd, -(pose.card ? 0.24 : 0.27) * s), nb = [-fwd[0], 0, -fwd[2]]; decal(0, back, nb, 0.13 * s, facing(back, nb)); }   // AUDIT ARMORY: a rig's back clear of its torso - a Morrowind body's back stands about 0.22 m behind its chest's face
+    else { const back = add(chest, fwd, -(pose.back > 0 ? pose.back : (pose.card ? 0.24 : 0.27) * s)), nb = [-fwd[0], 0, -fwd[2]]; decal(0, back, nb, 0.13 * s, facing(back, nb)); }   // AUDIT ARMORY: a rig's back clear of its torso - a Morrowind body's back stands about 0.22 m behind its chest's face (WOLF-KIT: the wolf's its pose's `back`)
   } else if (key === 'ashbound' || key === 'eternalarmlets') {
     for (const side of ['L', 'R']) {
       const sh = pt(`sh${side}`), el = pt(`el${side}`), wa = pt(`wa${side}`);
+      // WOLF-KIT: the wolf's arms wider (`a`), and its claws past the wrist (`tip`) - the pieces burn on down them
+      const a = pose.arm > 0 ? pose.arm : 1, claw = full && pose.claw > 0 ? pose.claw : 0, tip = claw ? add(wa, unit(sub(wa, el)), claw) : wa;
       if (key === 'ashbound') {
-        tube(0, sh, el, 0.065, 0.056);
-        if (full) tube(0, el, wa, 0.054, 0.046);
-        cards(1, 8, sh, full ? wa : el, UP, [0.06 * s, 0]);
+        tube(0, sh, el, 0.065 * a, 0.056 * a);
+        if (full) tube(0, el, wa, 0.054 * a, 0.046 * a);
+        if (claw) tube(0, wa, tip, 0.046 * a, 0.03 * a);
+        cards(1, 8, sh, full ? tip : el, UP, [0.06 * s * a, 0]);
       } else {
         // a band's flames rise off it: each tube runs from its lower edge up the arm
         const d = unit(sub(el, sh)), mid = mix(sh, el, 0.45);
-        tube(0, add(mid, d, 0.03 * s), add(mid, d, -0.08 * s), 0.062, 0.066);
-        cards(1, 8, add(mid, d, 0.03 * s), add(mid, d, -0.03 * s), d, [0.07 * s, 0], 0, 1, speed);
-        if (full) { const dw = unit(sub(wa, el)), cuff = mix(el, wa, 0.82); tube(0, add(cuff, dw, 0.025 * s), add(cuff, dw, -0.06 * s), 0.056, 0.06); }
+        tube(0, add(mid, d, 0.03 * s), add(mid, d, -0.08 * s), 0.062 * a, 0.066 * a);
+        cards(1, 8, add(mid, d, 0.03 * s), add(mid, d, -0.03 * s), d, [0.07 * s * a, 0], 0, 1, speed);
+        if (full) { const dw = unit(sub(wa, el)), cuff = mix(el, wa, 0.82); tube(0, add(cuff, dw, 0.025 * s), add(cuff, dw, -0.06 * s), 0.056 * a, 0.06 * a); }
+        if (claw) { const dc = unit(sub(tip, wa)), knuckle = mix(wa, tip, 0.45); tube(0, add(knuckle, dc, 0.02 * s), add(knuckle, dc, -0.04 * s), 0.05 * a, 0.054 * a); cards(1, 6, knuckle, tip, dc, [0.05 * s * a, 0], 0, 1, speed); }
       }
     }
   } else if (key === 'cinderstride' || key === 'eternalgreaves') {
