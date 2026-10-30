@@ -15524,9 +15524,9 @@
   "tr": "cfe4c7a06da2",
   "by": "claude-in-session"
  },
- "growth.spec.useTechniqueOwn": {
-  "en": "0bb82f12f4e7",
-  "tr": "f928e8e32eab",
+ "growth.spec.useTechniqueBoth": {
+  "en": "f91674506bb7",
+  "tr": "72d6aed3570e",
   "by": "claude-in-session"
  },
  "growth.spec.weapon.archery": {
@@ -41614,6 +41614,11 @@
   "tr": "81be52539f57",
   "by": "claude-in-session"
  },
+ "technique.noSignature": {
+  "en": "512147f4746c",
+  "tr": "fb9bfcdd36e9",
+  "by": "claude-in-session"
+ },
  "timers.at": {
   "en": "ed220995fa6d",
   "tr": "92a6646a09b0",
@@ -41837,6 +41842,11 @@
  "town.econ.trend.rising": {
   "en": "26b01983c6f4",
   "tr": "418d42ab63a0",
+  "by": "claude-in-session"
+ },
+ "town.home.trader": {
+  "en": "e4224318b32c",
+  "tr": "3e60e9b5d98c",
   "by": "claude-in-session"
  },
  "town.panel.bounty": {

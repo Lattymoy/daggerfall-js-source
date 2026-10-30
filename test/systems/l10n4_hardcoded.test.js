@@ -429,7 +429,7 @@ const HARDCODED = {
   'src/systems/immersiveFootsteps.js': 10,
   'src/systems/immersiveTravel.js': 13,
   'src/systems/improvedInteriorLighting.js': 1,
-  'src/systems/inputActions.js': 85,
+  'src/systems/inputActions.js': 86,   // TECH-KEY2: +1, the signature key's row label, beside its sibling rows'
   'src/systems/inventory.js': 2,
   'src/systems/item/itemBound.js': 4,
   'src/systems/item/itemInfo.js': 8,
@@ -706,7 +706,7 @@ const HARDCODED = {
   'src/ui/intro/set/imperialCity.js': 23,   // INTRO4's set (at the merge of main into #1184): main's world/imperialCity.js as the film was shot on it, kept as shot - TOWN-SHAPES TS5's lake and the districts' proper names
   'src/ui/inventoryDoor.js': 1,
   'src/ui/joystickControlsWindow.js': 1,
-  'src/ui/legacy/legacyModelChoice.js': 26,
+  'src/ui/legacy/legacyModelChoice.js': 25,
   'src/ui/legacy/legacySuccession.js': 3,
   'src/ui/levelUp/levelNotice.js': 6,   // AUDIT UICALM-FIRM1 L4 M8: the Renown rise routed (level.renown.*)
   'src/ui/levelingChoice.js': 16,
@@ -735,7 +735,7 @@ const HARDCODED = {
   'src/ui/playerBadge.js': 55,   // WYRM-RIDER: the four dragon riders' titles in words, beside the other titles'; HUNTERS-MARK: the hunt's and the Marks of Mastery's fourteen two-word titles in words, beside the other titles'; NIRNROOT-SAGE: the Nirnroot Sage's title in words, beside the other titles'; QL12: the questlines' five titles in words ("Witness of the Hour" the one two-word phrase); SERPENT5: The Maelstrom's word, beside the other auras'; EG-E2: the Spire's thirteen titles and three auras in words; WIKIMAID: the Lilac Warren's word, beside the other auras'
   'src/ui/playerHistory.js': 1,
   'src/ui/plus/plusPad.js': 18,
-  'src/ui/plus/plusPadBinds.js': 30,
+  'src/ui/plus/plusPadBinds.js': 31,   // TECH-KEY2: +1, the signature key's bind row, beside the technique's
   'src/ui/prisonScreen.js': 1,
   'src/ui/professions/profPages.js': 29,   // FB1020c ONE-SAVE: the kept words, moved here from the world host; REFORGE-REPLACE: the Reforge with Essence's two words through t()
   'src/ui/profileBadge.js': 4,
@@ -786,7 +786,7 @@ const HARDCODED = {
   'src/ui/techniqueGlyph.js': 2,
   'src/ui/temperatureCard.js': 8,
   'src/ui/textFont.js': 4,
-  'src/ui/touch/touchButtons.js': 10,
+  'src/ui/touch/touchButtons.js': 11,   // TECH-KEY2: +1, the Martial technique's corner button, beside the technique's
   'src/ui/town/townMapMarks.js': 1,   // NOTICE-PANEL: 2 -> 1, the board's mark and its label out
   'src/ui/travel/travelMapWindow.js': 14,
   'src/ui/travel/travelPopUp.js': 5,

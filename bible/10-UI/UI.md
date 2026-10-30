@@ -89,7 +89,7 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and NOTICE-PANEL's ONE (`hud/townPanel.js`: the town's panel under the compass, its Notice Board and Bounty Board - `01-Overview/bugs/Field-Bugs-2026-10-29g.md`);
 - and PVP-HUD's ONE (`pvpHud.js`: the combat lock's ring, banner and last hits - `11-Multiplayer/PvP-Rework.md` PVP-HUD);
 - and GUILD-SHOP's NINE (`sailClothPanel.js`: the Fleet's sailcloth; `guild/guildShopText.js`, `guildShopPage.js`, `guildWareArt.js`: the guild window's Shop page, its words and its pictures; `guild/guildCrestArt.js`, `guildLogoImages.js`, `guildLogoPick.js`, `guildLogoPage.js`: a guild's crest, its logo loaded, picked and sent; `guild/guildWindowLook.js`: the window's look - `11-Multiplayer/Guild-Shop.md`);
-477 modules
+479 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.
