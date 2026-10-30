@@ -1139,11 +1139,6 @@
   "tr": "396f8260f813",
   "by": "claude-in-session"
  },
- "account.refusal.decorCap": {
-  "en": "ad0a7b25f301",
-  "tr": "180b78cf7272",
-  "by": "claude-in-session"
- },
  "account.refusal.decorFigure": {
   "en": "3beb231fb9ad",
   "tr": "2650e96d3108",
@@ -1157,6 +1152,11 @@
  "account.refusal.decorRate": {
   "en": "c2a0d6f99c79",
   "tr": "0eebe792c428",
+  "by": "claude-in-session"
+ },
+ "account.refusal.decorRoomFull": {
+  "en": "72f4b2f577d5",
+  "tr": "61913d05c998",
   "by": "claude-in-session"
  },
  "account.refusal.decorTaken": {
@@ -4399,6 +4399,56 @@
   "tr": "edba5865ffe1",
   "by": "claude-in-session"
  },
+ "decor.bar.keys.nudge": {
+  "en": "7846d6e7802c",
+  "tr": "fc3f7757df2b",
+  "by": "claude-in-session"
+ },
+ "decor.bar.nudgeAway": {
+  "en": "db0ce1bb6fb1",
+  "tr": "d4b479cd87cb",
+  "by": "claude-in-session"
+ },
+ "decor.bar.nudgeBack": {
+  "en": "3596bd668511",
+  "tr": "014cebcb0c07",
+  "by": "claude-in-session"
+ },
+ "decor.bar.nudgeLeft": {
+  "en": "171b51377324",
+  "tr": "ee769745af73",
+  "by": "claude-in-session"
+ },
+ "decor.bar.nudgeRight": {
+  "en": "b9e54bcce258",
+  "tr": "5baa0784c79b",
+  "by": "claude-in-session"
+ },
+ "decor.look.rest": {
+  "en": "bffd4f8810fb",
+  "tr": "b976e65f1d08",
+  "by": "claude-in-session"
+ },
+ "decor.look.who.friends": {
+  "en": "c11d5e1d35fb",
+  "tr": "9379fe59ef43",
+  "by": "claude-in-session"
+ },
+ "decor.look.who.guild": {
+  "en": "54241a3d0070",
+  "tr": "c0c332a9989e",
+  "by": "claude-in-session"
+ },
+ "decor.look.who.party": {
+  "en": "60b18fc8a85f",
+  "tr": "36bd06cd8a41",
+  "by": "claude-in-session"
+ },
+ "decor.look.who.private": {
+  "en": "94563ec383e2",
+  "tr": "46a884dc6046",
+  "by": "claude-in-session"
+ },
  "decor.station.cooking": {
   "en": "36967130897c",
   "tr": "7323ec666c45",
@@ -4667,6 +4717,11 @@
  "eg.say.duelUnmet": {
   "en": "4aa70c44cca8",
   "tr": "0cfa7ae5ea76",
+  "by": "claude-in-session"
+ },
+ "enchant.gildedName": {
+  "en": "7112548c12b9",
+  "tr": "95f6956e5254",
   "by": "claude-in-session"
  },
  "enemy.dwarvenDragon": {
@@ -5987,6 +6042,31 @@
  "holdings.wagon.boons.sound": {
   "en": "71476c661351",
   "tr": "505ff5d64494",
+  "by": "claude-in-session"
+ },
+ "home.mute.done": {
+  "en": "3cc8b3e4545a",
+  "tr": "14f4cad8095e",
+  "by": "claude-in-session"
+ },
+ "home.mute.hide": {
+  "en": "c0361ced4119",
+  "tr": "cd8f9b0d5721",
+  "by": "claude-in-session"
+ },
+ "home.mute.muted": {
+  "en": "a9e219fbc554",
+  "tr": "80d68510f89a",
+  "by": "claude-in-session"
+ },
+ "home.mute.show": {
+  "en": "f284142913e4",
+  "tr": "d731c46cbad3",
+  "by": "claude-in-session"
+ },
+ "home.mute.undone": {
+  "en": "5b03bedff4c8",
+  "tr": "71821f128c6c",
   "by": "claude-in-session"
  },
  "interior.setDown.buried": {
@@ -15184,6 +15264,21 @@
   "tr": "7399f14003c1",
   "by": "claude-in-session"
  },
+ "sea.cross.homeRow": {
+  "en": "d138c9ff8a76",
+  "tr": "e01e1cfdec29",
+  "by": "claude-in-session"
+ },
+ "sea.cross.landfall": {
+  "en": "d0992f50ef01",
+  "tr": "ea46fb04bfc9",
+  "by": "claude-in-session"
+ },
+ "sea.cross.openSea": {
+  "en": "a08cbe63d371",
+  "tr": "acb7bbad2a90",
+  "by": "claude-in-session"
+ },
  "sea.exchange.band": {
   "en": "80c476366bce",
   "tr": "604d4d925c61",
@@ -15852,6 +15947,11 @@
  "town.econ.trend.rising": {
   "en": "26b01983c6f4",
   "tr": "0d9185205ffb",
+  "by": "claude-in-session"
+ },
+ "town.panel.new": {
+  "en": "c06b33d8318f",
+  "tr": "e8351592b363",
   "by": "claude-in-session"
  },
  "travel.held.foes": {

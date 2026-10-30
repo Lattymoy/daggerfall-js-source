@@ -44,8 +44,7 @@ import { PROPS_OFFSET_Y } from './rmbLayout.js';   // FIELD BUGS 2026-10-04d CRO
 import { quarterOf } from '../ui/town/townQuarters.js';   // HOUSE-BUSH: an automap byte's building, by the town map's own ladder
 
 /** RMBLayout's blockFlatsOffsetY: a block's flats stand this far (native units) below their records - and their lights
- *  do not (AddLight hangs at the record's -YPos plus the picture's height - world/city/cityLights.js). AUDIT YARD-LIGHT: so a
- *  yard's lamp hangs the town's distance above its picture (scenes/homeYards.js yardLampOf). */
+ *  do not (AddLight hangs at the record's -YPos plus the picture's height - world/city/cityLights.js). */
 export const BLOCK_FLATS_OFFSET_Y = -6;
 const NATURE_FLATS_OFFSET_Y = -2;
 export const EDITOR_FLATS_ARCHIVE = 199;

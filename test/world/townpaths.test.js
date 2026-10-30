@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { paveOnGrid, townWalkShut, PATH_WEIGHT } from '../../src/world/townWalls.js';
 import { tileWeight, CityNavigation, TILE_FLAG_OCCUPIED } from '../../src/world/city/cityNavigation.js';
 import { townGroundOf, yardSitesOn } from '../../src/world/merchantYards/merchantYardSites.js';
-import { ROAD_WEIGHT } from '../../src/systems/gothwayBoards.js';
+import { ROAD_WEIGHT } from '../../src/world/city/cityNavigation.js';
 import { hostText } from '../hostText.mjs';
 
 const ARENA2 = process.env.ARENA2_PATH;

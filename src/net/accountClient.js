@@ -49,7 +49,7 @@ import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, LETTERS_SENT_MAX
 import { banRangeText, bannedText } from './safety/safetyLaw.js';   // SAFE4: a ban's bound in its refusal's sentence, from its home; AUDIT SAFE CLIENT-2: and the ban itself
 import { muteRangeText } from './moderation.js';   // AUDIT 68 S14-mute-range-text-duplicated: the mute's bound in the refusal's sentence, from its home (L10N4: its reader)
 import { HOME_CAP, RENT_ROOMS_MAX, RENT_HELD_MAX, RENT_DAYS_MAX } from './homeLaw.js';   // HOME1: the cap a refusal names; HOME-RENT: and the rooms'
-import { DECOR_CAP, DECOR_YARD_CAP, DECOR_YARD_HIGH_WHY } from './decorLaw.js';   // DECOR1: the cap its refusal names; HOME-YARD: a yard's
+import { DECOR_YARD_CAP, DECOR_YARD_HIGH_WHY } from './decorLaw.js';   // HOME-YARD: the cap a yard's refusal names
 import { MARKS_MAX, MARKS_BANK, MARKS_MOVE_MAX, MARKS_FAUCETS } from './marksLaw.js';   // MARKS1: the bounds its refusals name; CRAFT-WRITS: a crafting writ's day
 import { NOTES_LIVE_MAX, NOTE_DAYS, NOTICE_DAYS_MAX } from './boardLaw.js';   // NOTICE1: the bounds its refusals name
 import { SIGN_WHY, SIEGE_WHY, ROYAL_WHY, FEALTY_WHY, SELLSWORD_FEE_MAX } from './townSeatLaw.js';   // SEAT2a: the rosters' refusals in the board's own words; the fee's bound
@@ -372,7 +372,8 @@ const REFUSAL_WORDS = {
   // HOME-LOOK: an online home's outside (server-account/src/homes.js setHomeLook)
   'bad-look': () => t('account.refusal.badLook', 'The account service could not read that look. The game may need updating.'),
   // DECOR1: an online home's decor (server-account/src/decor.js)
-  'decor-cap': () => t('account.refusal.decorCap', 'A home holds at most {max} pieces. Remove one to place another.', { max: DECOR_CAP }),
+  // DECOR-ROOMY: a room holds its own cap (net/decorLaw.js decorCapOf), so the refusal names none - the bar said it first
+  'decor-cap': () => t('account.refusal.decorRoomFull', 'This room holds as many pieces as it can. Remove one to place another.'),
   'yard-cap': () => t('account.refusal.yardCap', 'A yard holds at most {max} pieces. Remove one to place another.', { max: DECOR_YARD_CAP }),   // HOME-YARD
   'yard-high': () => DECOR_YARD_HIGH_WHY,   // YARD-HEIGHT (AUDIT Y3): the decorator's own sentence
   'decor-taken': () => t('account.refusal.decorTaken', 'Another piece already stands under that name. Place it again.'),
@@ -2210,7 +2211,7 @@ export function accountHomes({ fetch, storage }) {
   return {
     town: (mapId, character = null) => post('/v1/homes/town', { mapId, ...(character ? { character } : {}) }),   // HOME-RENT: the playing character's own tenancies
     mine: () => post('/v1/homes/mine', {}),
-    claim: ({ mapId, buildingKey, region, character, price, realm = null, layout = null }) => post('/v1/homes/claim', { mapId, buildingKey, region, character, price, ...(realm ? { realm } : {}), layout: layout || null }),   // REALM P2.2b: a realm character's record pays; WD3: the layout the town stands in, always said (null: Daggerfall's - AUDIT WD3 B2)
+    claim: ({ mapId, buildingKey, region, character, price, realm = null, layout = null, ground = null, townBlocks = null }) => post('/v1/homes/claim', { mapId, buildingKey, region, character, price, ...(realm ? { realm } : {}), layout: layout || null, ...(ground != null ? { ground, townBlocks } : {}) }),   // DECOR-ROOMY: the ground its price was set from   // REALM P2.2b: a realm character's record pays; WD3: the layout the town stands in, always said (null: Daggerfall's - AUDIT WD3 B2)
     layouts: () => post('/v1/homes/layouts', {}),   // WD3: every town holding a home, and the layout it keeps
     release: (mapId, buildingKey, realm = null) => post('/v1/homes/release', { mapId, buildingKey, ...(realm ? { realm } : {}) }),
     transfer: (body) => post('/v1/homes/transfer', body),

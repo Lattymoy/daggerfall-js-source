@@ -34,7 +34,7 @@
 // buyOnlineHome order): short then, the piece is taken back out. The
 // offline house or ship pays and stands the piece at once; the room's
 // scene carries it into the save (scenes/decor/decorRoom.js, DECOR1c). A
-// room holds DECOR_CAP pieces either way.
+// room holds DECOR_CAP pieces either way (DECOR-ROOMY: a wider house more - net/decorLaw.js decorCapOf).
 //
 // DECOR1e - THE ROOM'S OWN PIECES. The panel's "In this room" view
 // lists what stands; a piece chosen there is MOVED by the same flight
@@ -86,18 +86,18 @@ import { createDecorDoorways, decorDoorwaysFree, decorDoorwayAimed, decorDoorFit
 import { writeDecalQuad, clearDecalQuad, DECAL_FLOATS } from '../../combat/blood/bloodDecals.js';   // HOME-DOORS: the doorways' marks, on the decal pass
 import { rentRoomsView, rentAnchorOfRoom } from '../../systems/homeRent.js';   // HOME-RENT: the owner's rooms, offered to rent
 import { goldSum, EMPIRE_ACCOUNT_WORDS } from '../../systems/homeWords.js';   // AUDIT HOME-PRICE E4: the rent's sums and account, as the door says them
-import { createDecorPlacer, decorEntrySized, DECOR_TURN_STEP, DECOR_TURN_FINE, DECOR_RAISE_STEP, DECOR_RAISE_FINE, wrapTurn } from '../../systems/decor/decorPlacer.js';   // DECOR-FIGURE: whether a piece takes a size step
+import { createDecorPlacer, decorEntrySized, decorNudgeStep, DECOR_TURN_STEP, DECOR_TURN_FINE, DECOR_RAISE_STEP, DECOR_RAISE_FINE, DECOR_NUDGE_STEP, DECOR_NUDGE_FINE, DECOR_GRID, wrapTurn } from '../../systems/decor/decorPlacer.js';   // DECOR-FIGURE: whether a piece takes a size step; NUDGE: the level push
 import { createDecorButton, createDecorPanel, createDecorBar, createDecorHotbar, decorWhyNot } from '../../ui/decorPanel.js';
 import { DecisionBoxWindow } from '../../ui/decisionBox.js';
 import { InputMessageBoxWindow } from '../../ui/inputMessageBox.js';
 import { loadDecorHotbar, saveDecorHotbar, decorHotId, DECOR_HOT_SLOTS } from '../../systems/decor/decorHotbar.js';
-import { decorLookOffers, decorAimKind, decorUseLabel, decorUseNext, decorUseCircle, decorHallRankNext, decorHallUseLabel, DECOR_USE_MODES } from '../../systems/decor/decorLook.js';
+import { decorLookOffers, decorAimKind, decorUseLabel, decorRestLabel, decorUseNext, decorUseCircle, decorHallRankNext, decorHallUseLabel, DECOR_USE_MODES } from '../../systems/decor/decorLook.js';   // REST-GUEST: who may rest
 import { noteDecorShared } from '../../systems/decor/decorGrants.js';
 import { dropGhosts } from '../../systems/decor/homeStranded.js';   // HOME-STRANDED: a chest's move reaches every cached scene
 import { decorDelta, decorDraftParts, decorDraftText, decorHallDraftText, mintDecorTxn } from '../../systems/decor/decorDraft.js';   // DECOR-BATCH
 import { interiorDoorIndex, interiorDoorKey } from '../../systems/decor/decorInteriorDoors.js';
-import { DECOR_CAP, DECOR_HALL_CAP, DECOR_PRICE_PER_METRE, DECOR_HIDDEN_CAP, decorPrice, decorPieceOf, decorRefund, decorRescale, mintDecorId, DECOR_STATIONS, DECOR_STATION_FEES, DECOR_STATION_NAMES, decorGoldMove } from '../../net/decorLaw.js';
-import { decorKey, DECOR_KINDS, decorFlatLight, modelKind, flatKind, decorRoomEntries } from '../../systems/decor/decorCatalogue.js';
+import { DECOR_CAP, DECOR_HALL_CAP, DECOR_PRICE_PER_METRE, DECOR_HIDDEN_CAP, DECOR_REST_ID, decorPrice, decorPieceOf, decorRefund, decorRescale, mintDecorId, DECOR_STATIONS, DECOR_STATION_FEES, DECOR_STATION_NAMES, decorGoldMove } from '../../net/decorLaw.js';
+import { decorKey, DECOR_KINDS, decorFlatLight, decorWhatKind, decorRoomEntries } from '../../systems/decor/decorCatalogue.js';
 import { decorOwnEntry, decorItemName, decorMountDye, decorMountDyeTarget } from '../../systems/decor/decorItems.js';
 import { decorFurnishingEntry, isFurnishing } from '../../systems/decor/decorFurnish.js';
 import { itemLongName } from '../../systems/item/itemInfo.js';
@@ -218,8 +218,11 @@ export const decorLookEntry = (furn, look) => ({
 
 /** The actions whose keys, held, fly the eye - the decorator keeps their state itself (the host never sees them). */
 export const DECOR_FLY_ACTIONS = Object.freeze(['MoveForwards', 'MoveBackwards', 'MoveLeft', 'MoveRight', 'Jump', 'Crouch', 'Run']);
-/** The keys no action is bound to by default, which the decorator keys by code: the size, and the grid. */
-export const DECOR_FREE_KEYS = Object.freeze({ Minus: 'smaller', Equal: 'bigger', Slash: 'grid' });
+/** The keys no action is bound to by default, which the decorator keys by code: the size, the grid, and NUDGE's push. */
+export const DECOR_FREE_KEYS = Object.freeze({ Minus: 'smaller', Equal: 'bigger', Slash: 'grid',
+  Numpad4: 'nudgeLeft', Numpad6: 'nudgeRight', Numpad8: 'nudgeForward', Numpad2: 'nudgeBack' });
+/** NUDGE: each push's way, as the eye sees it (decorPlacer.js decorNudgeStep). */
+const NUDGE_WAYS = Object.freeze({ nudgeLeft: 'left', nudgeRight: 'right', nudgeForward: 'forward', nudgeBack: 'back' });
 
 /** The eye's direction for a yaw and pitch - the host's own (worldModes.js eyeDir). */
 export const lookDir = (yaw, pitch) => [Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)];
@@ -642,10 +645,12 @@ export function createDecorTool(deps) {
         place: () => { commit(); }, back: () => back(),
         turnLeft: () => turnPiece(-DECOR_TURN_STEP), turnRight: () => turnPiece(DECOR_TURN_STEP),   // HOME-DOORS: a door swings the other way
         raise: () => placing?.placer?.raise(DECOR_RAISE_STEP), lower: () => placing?.placer?.raise(-DECOR_RAISE_STEP),
+        nudgeLeft: () => nudgePiece('left'), nudgeRight: () => nudgePiece('right'), nudgeForward: () => nudgePiece('forward'), nudgeBack: () => nudgePiece('back'),
         smaller: () => placing?.placer?.rescale(false), bigger: () => placing?.placer?.rescale(true),
         grid: () => placing?.placer?.toggleSnap(),
         preview: () => togglePreview(),
         catalog: () => openPanel(),
+        rest: () => { cycleRest(); },   // REST-GUEST
         confirm: () => { confirmDraft(); },
         discard: () => { discardDraft(); },
         fly: (dir) => { if (placing) placing.rise = dir; },   // DECOR1e: a touch screen's Fly up/down, held
@@ -826,7 +831,7 @@ export function createDecorTool(deps) {
     const key = decorKey(piece);
     // the catalogue not read yet: its kind by its model all the same (AUDIT: a door moved in the first moments of a visit
     // flew as furniture - set on any surface, at any turn - and was still hung as a door)
-    const kind = piece.model != null ? modelKind(piece.model) : 'decor';
+    const kind = decorWhatKind(piece) ?? (piece.model != null ? 'furniture' : 'decor');   // DECOR-KINDS: what it is
     return {
       key, model: piece.model ?? null, flat: piece.flat ?? null, kind,
       name: piece.name || (deps.names?.get(key) ?? DECOR_KINDS[kind]), count: 0, storage: !!piece.storage, light: piece.light ?? null,
@@ -1004,7 +1009,7 @@ export function createDecorTool(deps) {
     const roomOf = (at) => (list && at ? rooms.roomOf(at)?.id ?? null : null);
     const furniture = b.list().map((p) => {
       const shape = decorKey(p);
-      const kind = p.model != null ? modelKind(p.model) : flatKind(p.flat[0]);
+      const kind = decorWhatKind(p) ?? (p.model != null ? 'furniture' : 'decor');   // DECOR-KINDS: what it is, as the catalogue files it
       return { key: p.key, shape, model: p.model, flat: p.flat, kind, name: deps.names?.get(shape) ?? DECOR_KINDS[kind], hidden: p.hidden, holds: p.holds, dist: distOf(p.at), room: roomOf(p.at) };
     });
     const doors = (b.roomDoors?.list?.() ?? []).map((p) => ({
@@ -1016,36 +1021,34 @@ export function createDecorTool(deps) {
   /** BASE-HIDE: THE ROOM'S OWN FURNITURE TAKEN OUT (`out`) OR PUT BACK - free. An online home writes the room's whole list
    *  first (the account service is the room's truth, and every visitor's) and stands it once the service has it; the
    *  house and the ship stand it at once (the room's scene carries the list into the save). A piece that holds anything
-   *  is never taken out: what it holds would go with it. */
-  function setRoomDoor(key, out) {
-    const i = interiorDoorIndex(key);
-    const doors = deps.base?.()?.roomDoors;
-    if (i == null || !doors || !deps.room?.()) return false;
-    const ok = out ? doors.hide(i) : doors.show(i);
-    if (ok) deps.say?.(`Door ${out ? 'taken out' : 'put back'}.`);
-    return ok;
-  }
+   *  is never taken out: what it holds would go with it. DOOR-KEPT: a room's swing door rides the same list and write -
+   *  an online home's door taken out was the owner's save's alone, so every visitor, and their other devices, still met it. */
   async function setBase(keys, out) {
     const r = deps.room?.();
     const b = deps.base?.();
     if (!r || !b || !Array.isArray(keys)) return false;
-    let doorsChanged = 0;
-    for (const k of keys) if (interiorDoorIndex(k) != null && setRoomDoor(k, out)) doorsChanged += 1;
+    const doors = b.roomDoors ?? null;
+    const doorsOut = new Set(doors?.hidden?.() ?? []);
+    const known = new Set((doors?.list?.() ?? []).map((d) => d.key));
+    const doorsMoving = keys.filter((k) => known.has(k) && doorsOut.has(k) !== out);
     const rows = new Map(b.list().map((p) => [p.key, p]));
     const moving = keys.filter((k) => { const p = rows.get(k); return p && p.hidden !== out && !(out && p.holds); });
-    if (!moving.length) return doorsChanged > 0;
+    if (!moving.length && !doorsMoving.length) return false;
     const next = new Set(b.hidden());
     for (const k of moving) { if (out) next.add(k); else next.delete(k); }
-    if (next.size > DECOR_HIDDEN_CAP) { deps.say?.('No more of this room\'s own furniture can be taken out.'); return false; }
+    for (const k of doorsMoving) { if (out) doorsOut.add(k); else doorsOut.delete(k); }
+    if (next.size + doorsOut.size > DECOR_HIDDEN_CAP) { deps.say?.('No more of this room\'s own furniture can be taken out.'); return false; }
     const visit = deps.visit?.();
     if (r.kind === 'home') {
-      const res = await deps.homeDecor?.hidden?.({ mapId: r.mapId, buildingKey: r.buildingKey, character: deps.character?.(), keys: [...next].sort() });
+      const res = await deps.homeDecor?.hidden?.({ mapId: r.mapId, buildingKey: r.buildingKey, character: deps.character?.(), keys: [...next, ...doorsOut].sort() });
       if (!res?.ok) { deps.say?.(deps.refusal?.(res?.error) ?? 'The room could not be changed.'); return false; }
     }
     if (deps.visit?.() !== visit) return false;
     for (const k of moving) { if (out) b.hide(k); else b.show(k); }
-    const one = moving.length === 1 ? (baseRows().find((row) => row.key === moving[0])?.name ?? null) : null;
-    deps.say?.(one ? `${one} ${out ? 'taken out' : 'put back'}.` : `${moving.length} pieces ${out ? 'taken out' : 'put back'}.`);
+    for (const k of doorsMoving) { if (out) doors.hide(interiorDoorIndex(k)); else doors.show(interiorDoorIndex(k)); }
+    const all = [...moving, ...doorsMoving];
+    const one = all.length === 1 ? (baseRows().find((row) => row.key === all[0])?.name ?? null) : null;
+    deps.say?.(one ? `${one} ${out ? 'taken out' : 'put back'}.` : `${all.length} pieces ${out ? 'taken out' : 'put back'}.`);
     return true;
   }
 
@@ -1081,7 +1084,7 @@ export function createDecorTool(deps) {
       entry, radius, editing, pose: from, through: pose?.through ?? null, hotbar: !!pose?.hotbar, free, placer: null, fly: [...eye], start: [...eye], id: editing ? editing.id : mintDecorId(), piece: null,
       refused: null, busy: false, batch: null, flatSize: null, rise: 0, art: null, decal: null, inside: [], mirrors: true, release: null,   // DECOR-LPT: the host's picture's
       door: entry.kind === 'door', flip: false, marks: null, markSig: '',   // HOME-DOORS: hung in a doorway, its marks
-      lotMarks: null, lotSig: '', lifted: !!editing,   // HOME-YARD: the lot's edge; a move hides the piece where it stood
+      lotMarks: null, lotSig: '', lifted: !!editing,   // HOME-YARD: the lot's edge; a move leaves the piece's ghost where it stood (DECOR-GHOST)
     };
     if (editing) pool.hold?.(editing.id, true);
     deps.cursorOff?.();   // a cursor freed to press the button would hold the look off for the whole placement
@@ -1227,6 +1230,38 @@ export function createDecorTool(deps) {
       return true;
     } finally { useBusy = false; }
   }
+  /** REST-GUEST (FIELD BUGS 2026-10-29f, the housing thread's item 8: "Allow friends and guild members to rest in your
+   *  house"): whether the owner may say who rests here - their own online home, never a hall (its members rest already)
+   *  nor a palace. */
+  const restOffered = (r) => !!(r && r.kind === 'home' && !r.hall && !r.seat && typeof deps.homeDecor?.use === 'function');
+  /** REST-GUEST: a press moves who may rest in the home on - Me, Friends, Party, Guild - written at once, as a chest's is. */
+  async function cycleRest() {
+    const r = deps.room?.();
+    if (useBusy || !restOffered(r)) return false;
+    const cur = useMode.get(DECOR_REST_ID) ?? 'private';
+    const mode = decorUseNext(cur);
+    const keep = (m) => { if (m === 'private') useMode.delete(DECOR_REST_ID); else useMode.set(DECOR_REST_ID, m); };
+    useBusy = true;
+    useAsk++;
+    keep(mode);
+    deps.say?.(`${decorRestLabel(mode)}.`);
+    const circle = decorUseCircle(deps.social?.());
+    const names = mode === 'friends' ? circle.friends : mode === 'party' ? circle.party : [];
+    // AUDIT FB1029f C7: the answer is this room's - a decorator opened in another home since keeps its own chip
+    const here = () => { const n = deps.room?.(); return !!n && n.mapId === r.mapId && n.buildingKey === r.buildingKey; };
+    try {
+      useBusy = false;   // as cycleUse: a press on a chest while the row is written is not dropped
+      const res = await deps.homeDecor.use({ mapId: r.mapId, buildingKey: r.buildingKey, character: deps.character?.(), op: 'set', id: DECOR_REST_ID, kind: 'rest', mode, names, realm: null });
+      if (!here()) return !!res?.ok;
+      if (!res?.ok) {
+        if ((useMode.get(DECOR_REST_ID) ?? 'private') === mode) keep(cur);
+        deps.say?.(deps.refusal?.(res?.error) ?? t('decor.tool.unkept', 'It could not be kept.'));
+        return false;
+      }
+      keep(DECOR_USE_MODES.includes(res.data?.mode) ? res.data.mode : mode);
+      return true;
+    } finally { useBusy = false; }
+  }
   /** While a hotbar piece, a move or a copy is in hand, Escape is the placement's. The browser would free the look. */
   function holdDecorEscape() {
     const kb = deps.win?.navigator?.keyboard;
@@ -1252,8 +1287,9 @@ export function createDecorTool(deps) {
       return true;
     }
     if (Number.isInteger(id)) {
-      if (verb !== 'remove') return false;
-      return setRoomDoor(interiorDoorKey(id), true);
+      if (verb !== 'remove' || !deps.base?.()?.roomDoors) return false;
+      setBase([interiorDoorKey(id)], true);   // DOOR-KEPT: an online home's door taken out on the service, as its furniture is
+      return true;
     }
     const piece = typeof id === 'string' ? pool.pieceOf?.(id) : null;
     const offers = decorLookOffers(piece ? { kind: decorAimKind(decorKeyOf(piece.id), piece), piece, holds: !!pool.holdsAny?.(piece.id), mayEdit: true } : null);
@@ -1759,7 +1795,7 @@ export function createDecorTool(deps) {
    *  asked, the piece is taken back out and the item never leaves. One item, one piece: then back to the pack's list. */
   async function commitOwn(p, r) {
     const item = p.entry.own;
-    if (pool.size() >= DECOR_CAP || !deps.packHas?.(item)) return false;   // the bar says why
+    if (pool.size() >= capHere(r) || !deps.packHas?.(item)) return false;   // the bar says why; DECOR-ROOMY: the room's own cap
     p.busy = true;
     p.refused = null;
     const piece = p.piece;
@@ -2134,6 +2170,15 @@ export function createDecorTool(deps) {
     placing.placer?.turn(deg);
   }
 
+  /** NUDGE: the piece pushed a step along the level, the way the eye sees it - never a door, which its doorway fits. */
+  function nudgePiece(dir, fine = false) {
+    if (!placing?.placer || placing.door) return;
+    // AUDIT FB1029f C6: on the grid, a step is the grid's - the nudge lands after the snap, so a finer one left it
+    const snapped = !!placing.placer.state?.().snap;
+    const [dx, dz] = decorNudgeStep(placing.aimYaw ?? 0, dir, snapped ? DECOR_GRID : fine ? DECOR_NUDGE_FINE : DECOR_NUDGE_STEP);
+    placing.placer.nudge(dx, dz);
+  }
+
   // THE KEYS AND PRESSES WHILE THE CAMERA FLIES, taken before the host sees them
   const turn = (e, dir) => { if (!e.repeat || !placing?.door) turnPiece(dir * (e.shiftKey ? DECOR_TURN_FINE : DECOR_TURN_STEP)); };
   const lift = (e, dir) => placing?.placer?.raise(dir * (e.shiftKey ? DECOR_RAISE_FINE : DECOR_RAISE_STEP));
@@ -2155,6 +2200,7 @@ export function createDecorTool(deps) {
     if (free === 'smaller') placing?.placer?.rescale(false);
     else if (free === 'bigger') placing?.placer?.rescale(true);
     else if (free === 'grid' && once) placing?.placer?.toggleSnap();
+    else if (NUDGE_WAYS[free]) nudgePiece(NUDGE_WAYS[free], e.shiftKey || e.ctrlKey);   // AUDIT FB1029f C6: Windows lets Shift go for a numpad key under NumLock
   }
   const suspended = () => !placing || placing.suspended;
   const now = () => deps.now?.() ?? Date.now();
@@ -2314,7 +2360,7 @@ export function createDecorTool(deps) {
     if (p.browse) {
       const pending = draftDirty();
       bar?.show({ name: 'Decorating', priceText: pending ? (r.hall ? decorHallDraftText(draftParts()) : decorDraftText(draftGoldNow())) : '', browse: true, draft: pending, sized: true,
-        count: pool.size(), cap: capHere(r),
+        count: pool.size(), cap: capHere(r), rest: restOffered(r) ? decorRestLabel(useMode.get(DECOR_REST_ID) ?? 'private') : null,   // REST-GUEST
         why: p.draftWhy ?? (!deps.touch && !deps.locked?.() ? t('decor.tool.lookAgain', 'Click to look around again.') : null) });
       return;
     }

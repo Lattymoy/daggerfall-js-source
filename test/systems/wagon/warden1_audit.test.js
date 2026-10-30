@@ -21,7 +21,7 @@ import {
   landingsOf, landingOf, strayOf, thrownRecord, thrownTo, wardenWordOf, wardenStamp, horseThrownWith, WARDEN_HORSE_BY_NATIVES,
   WARDEN_SAME_NATIVES, WARDEN_LAND_PAST, WARDEN_LAND_SCATTER,
 } from '../../../src/systems/wagon/wagonWarden.js';
-import { ROAD_WEIGHT } from '../../../src/systems/gothwayBoards.js';
+import { ROAD_WEIGHT } from '../../../src/world/city/cityNavigation.js';
 import { createHorseCartPool } from '../../../src/scenes/horseCartPool.js';
 import { WAGON_MODE, HORSE_MODE, INTERIOR_ACCESS, WAGON_MODEL_ID } from '../../../src/systems/horse/horseCartLaw.js';
 import { createWardenShows, WARDEN_HEAD } from '../../../src/scenes/wagon/wagonWardenShow.js';

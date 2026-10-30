@@ -13,6 +13,8 @@ let station = new Set();
 let bin = new Set();
 let shared = new Set();
 let known = false;
+/** REST-GUEST: the room the service said I may rest in (`${mapId}:${buildingKey}`), or none. */
+let restAt = null;
 let door = null;
 // HOME-SHARE-WAIT: the room the grants are asked for (an answer for an earlier room is not this room's), whether that
 // ask is out, and how to ask it again after a refusal or no answer
@@ -29,6 +31,7 @@ export function noteDecorGrants(homeDecor, mapId, buildingKey, character, pool =
   bin = new Set();
   shared = new Set();
   known = false;
+  restAt = null;
   const ask = ++asked;
   again = () => noteDecorGrants(homeDecor, mapId, buildingKey, character, pool, player);
   if (!homeDecor?.use) { asking = false; known = true; return; }   // no service to say a chest is shared: none is
@@ -43,6 +46,7 @@ export function noteDecorGrants(homeDecor, mapId, buildingKey, character, pool =
     const use = new Set((res.data.use ?? []).map((row) => row?.id));
     shared = new Set([...(res.data.storage ?? []).filter((id) => use.has(id)), ...(res.data.bin ?? [])]);
     known = true;
+    restAt = res.data.rest === true ? `${mapId}:${buildingKey}` : null;
     if (pool && player?.sceneCache) {
       const back = bringStrandedHome(player.sceneCache, { mapId, buildingKey }, { storage: [...storage], shared, itemsOf: pool.itemsOf, carried: player.items ?? [] });
       if (back.length) door?.say?.(strandedBackLine(back.length));
@@ -51,6 +55,8 @@ export function noteDecorGrants(homeDecor, mapId, buildingKey, character, pool =
 }
 
 export const decorMayStorage = (id) => storage.has(id);
+/** REST-GUEST: whether the service said I may rest in this home (its owner, or a guest its owner named). */
+export const decorMayRest = (mapId, buildingKey) => restAt !== null && restAt === `${mapId}:${buildingKey}`;
 export const decorMayStation = (id) => station.has(id);
 /** A hall station the service has named as shut to this player. Until the list arrives, a member still may. */
 export const decorStationShut = (id) => known && !station.has(id);

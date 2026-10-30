@@ -20,8 +20,9 @@
   {
     "name": "AETHERICMAKER-predicate-false",
     "file": "src/systems/enchanting.js",
-    "old": "export const itemMakerRefuses = (item) => isAetheric(item) || isGilded(item);",
-    "new": "export const itemMakerRefuses = (item) => false && isAetheric(item) || isGilded(item);",
+    "old": "export const itemMakerRefuses = (item) => isAetheric(item);",
+    "new": "export const itemMakerRefuses = (item) => false && isAetheric(item);",
+    "note": "Re-aimed by content (GILDED-MAKER): the Gilded arm left the predicate; the mutant still opens the maker to an Aetheric piece.",
     "tests": [
       "test/systems/fb1003b_aethericmaker.test.js"
     ]

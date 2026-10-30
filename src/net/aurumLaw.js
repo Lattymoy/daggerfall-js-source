@@ -15,7 +15,7 @@ export const aurumSwitchOf = (/** @type {unknown} */ v) => (v === 'on' || v === 
 // ═══ EARNED: THE WEEK'S DEEDS ═════════════════════════════════════════════════════════════════════════════════════════
 /** A WITNESSED DEED'S AURUM, the first of its kind an account does in a UTC week: a receipt the relay signed and the service
  *  counted (a Dagon's Breach closed, an Elite Breach's Redoubt paid, a sea serpent slain, a fallen star held, a town
- *  defended). Struck by the receipt's own row (migration 0196's triggers), so no client can ask for it. */
+ *  defended). Struck by the receipt's own row (migration 0198's triggers), so no client can ask for it. */
 export const AURUM_DEEDS = Object.freeze({ gate: 30, eg: 30, serpent: 25, star: 20, raid: 15 });
 /** A UTC week's number, Monday its first day (1 January 1970 was a Thursday). Pure. */
 export const aurumWeekOf = (/** @type {number} */ nowS) => Math.floor((Math.floor(nowS / 86_400) + 3) / 7);

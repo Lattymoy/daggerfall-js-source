@@ -682,10 +682,10 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
   const refused = (r) => ({ ok: false, error: r?.error ?? 'server', ...(Number.isSafeInteger(r?.seq) ? { seq: r.seq } : {}) });
   const realmOf = (r) => (r?.data?.realm ? { data: { realm: r.data.realm } } : {});
 
-  async function claim({ mapId, buildingKey, region, price, realm = null, layout = null }) {
+  async function claim({ mapId, buildingKey, region, price, realm = null, layout = null, ground = null }) {
     const id = idOf(mapId);
     const me = character();
-    const r = await api.claim({ mapId: id, buildingKey, region, character: me, price, ...(realm ? { realm } : {}), layout: layout || null });   // WD3 (AUDIT WD3 B2): always said - null is Daggerfall's own
+    const r = await api.claim({ mapId: id, buildingKey, region, character: me, price, ...(realm ? { realm } : {}), layout: layout || null, ...(ground ? { ground: ground[0], townBlocks: ground[1] } : {}) });   // DECOR-ROOMY   // WD3 (AUDIT WD3 B2): always said - null is Daggerfall's own
     if (r?.ok) {
       const had = towns.get(id)?.homes.get(buildingKey);
       // HOME-PRICE: and what its sale pays back, as the service answers it (AUDIT HOME-PRICE C2: a claim answered as mine
@@ -847,7 +847,7 @@ export function homeClaimLayout(mapId) {
  * is given back rather than kept unpaid. `pay(price)` takes it, purse first, as Daggerfall's own purchase does.
  * Answers `{ ok: true }` or `{ ok: false, error }` - `gold` for the purse, else the service's word.
  */
-export async function buyOnlineHome(homes, { mapId, buildingKey, region, price, afford, pay, refund = null, realm = null }) {
+export async function buyOnlineHome(homes, { mapId, buildingKey, region, price, afford, pay, refund = null, realm = null, ground = null }) {   // DECOR-ROOMY: `ground` [m2, town blocks], the price's own measure
   if (!homePriceOk(price)) return { ok: false, error: 'bad-home' };
   // AUDIT MERGE-PLUS A1: ONE CLAIM A HOUSE AT A TIME. The registry is written only when the claim answers, so until
   // then the door went on offering "Buy it" - a second press sent a second claim, the service answered it `repeat`
@@ -871,11 +871,11 @@ export async function buyOnlineHome(homes, { mapId, buildingKey, region, price, 
         // AUDIT REALM: a claim answered as the house already this character's (`repeat`) moved no gold on the record - the
         // purse's reserve comes back, or the next checkpoint would write the price paid twice
         apply: (/** @type {any} */ res) => { if (res?.repeat) paid.back(); },
-        call: (/** @type {any} */ at) => homes.claim({ mapId, buildingKey, region, price, realm: at, layout }),
+        call: (/** @type {any} */ at) => homes.claim({ mapId, buildingKey, region, price, realm: at, layout, ground }),
       });
       return r?.ok ? { ok: true } : { ok: false, error: r?.error ?? 'server' };
     }
-    const r = await homes.claim({ mapId, buildingKey, region, price, layout });
+    const r = await homes.claim({ mapId, buildingKey, region, price, layout, ground });
     if (!r.ok) return r;
     if (!afford(price)) {
       await homes.release(mapId, buildingKey);

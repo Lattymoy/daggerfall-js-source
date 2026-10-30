@@ -104,8 +104,8 @@
   {
     "name": "DSIZE1-the-door-builds-small",
     "file": "src/world/smallerDungeons.js",
-    "old": "  return size === 'medium' ? generateMediumDungeon(dfLocation) : dfLocation;",
-    "new": "  return size === 'medium' ? generateSmallerDungeon(dfLocation) : dfLocation;",
+    "old": "size === 'medium' ? generateMediumDungeon(dfLocation) : dfLocation;\n  // DELVE II",
+    "new": "size === 'medium' ? generateSmallerDungeon(dfLocation) : dfLocation;\n  // DELVE II",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"
     ]

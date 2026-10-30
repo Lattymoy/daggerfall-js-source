@@ -164,11 +164,12 @@
   {
     "name": "AUDITQS-F2-bare-hands-put-nothing-away",
     "file": "src/systems/quickslots.js",
-    "old": "    unequipSlot(entity, hand);\n    billEquipDelayOnClose(entity, snap);",
-    "new": "    billEquipDelayOnClose(entity, snap);",
+    "old": "    unequipSlot(entity, hand);\n    door?.keepHand?.();",
+    "new": "    door?.keepHand?.();",
     "tests": [
       "test/systems/quickslots.test.js"
-    ]
+    ],
+    "note": "AUDIT FB1029f (PIN MOVED): re-aimed by content."
   },
   {
     "name": "AUDITQS-F7-the-held-record-is-gone",
@@ -191,11 +192,12 @@
   {
     "name": "AUDITQS-F2-putting-the-weapon-away-bills-no-pause",
     "file": "src/systems/quickslots.js",
-    "old": "    unequipSlot(entity, hand);\n    billEquipDelayOnClose(entity, snap);",
-    "new": "    unequipSlot(entity, hand);",
+    "old": "    door?.keepHand?.();   // AUDIT FB1029f D2: bare hands asked are bare hands - the hand in use stays, never follows the other\n    billEquipDelayOnClose(entity, snap);",
+    "new": "    door?.keepHand?.();   // AUDIT FB1029f D2: bare hands asked are bare hands - the hand in use stays, never follows the other",
     "tests": [
       "test/systems/quickslots.test.js"
-    ]
+    ],
+    "note": "AUDIT FB1029f (PIN MOVED): re-aimed by content."
   },
   {
     "name": "QS4-the-off-hand-presses-with-no-light-at-all",

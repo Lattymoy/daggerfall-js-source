@@ -124,13 +124,22 @@ test('FIRST-VISIT REFRESH: the same pin on every OS - the same tokens with CRLF 
   } finally { lf.done(); crlf.done(); }
 });
 
-test('FIRST-VISIT REFRESH: the dev server serves the pins as the walk computes them, under each page load\'s own URL - so a dev edit is a new key at the next load, as an update is - and answers for no other module (mutants: the file on disk served; a load URL\'s query not matched; a native path not matched)', () => {
+test('FIRST-VISIT REFRESH: the dev server serves the pins as the walk computes them, and each page load drops the module it served - so a dev edit is a new key at the next load, as an update is - and answers for no other module (mutants: the file on disk served; a page load that keeps the served pins; a native path not matched)', () => {
   const plugin = firstVisitPinsPlugin();
   plugin.configResolved({ root: ROOT, command: 'serve' });
   assert.equal(plugin.load(join(ROOT, 'src/other.js')), null);
   const want = pinsSource(firstVisitPins());
-  assert.equal(plugin.load(`${join(ROOT, PINS_PATH).split(sep).join('/')}?load=1700000000000`), want, 'a page load\'s own URL, as Vite keys it');
+  assert.equal(plugin.load(`${join(ROOT, PINS_PATH).split(sep).join('/')}?v=1`), want, 'a URL with a query, as Vite keys it');
   assert.equal(plugin.load(join(ROOT, PINS_PATH)), want, 'the native path');
+  // Vite's client graph keys a module by its file with forward slashes (WEBKIT-TLA: the store imports one URL now)
+  const pinsMod = { id: 'pins' }, dropped = [];
+  const graph = {
+    getModulesByFile: (file) => (file === join(ROOT, PINS_PATH).split(sep).join('/') ? new Set([pinsMod]) : undefined),
+    invalidateModule: (mod) => dropped.push(mod),
+  };
+  plugin.configureServer({ environments: { client: { moduleGraph: graph } } });
+  plugin.transformIndexHtml();
+  assert.deepEqual(dropped, [pinsMod], 'a page load drops the served pins');
 });
 
 /** The player's store, with the sweep the real one makes (dataSource.js sweepDerived over staleKey). */

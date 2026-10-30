@@ -142,7 +142,7 @@ Stripe tells a payment's words in no order and retries a refused one for days. P
 
 | # | Sev | Finding | Verdict |
 |---|---|---|---|
-| A1 | HIGH | A refund or a dispute told before the paid word was forgotten: the paid word, retried later, granted the ware on a payment already gone back | FIXED: every word on a payment is kept by its payment intent (`shop_charge_words`, migration 0196), whatever its order's state; the paid word reads them before it grants and ends the order refunded or disputed |
+| A1 | HIGH | A refund or a dispute told before the paid word was forgotten: the paid word, retried later, granted the ware on a payment already gone back | FIXED: every word on a payment is kept by its payment intent (`shop_charge_words`, migration 0198), whatever its order's state; the paid word reads them before it grants and ends the order refunded or disputed |
 | A2 | HIGH | A giver's price was trusted at the grant: a bundle paged with credit for a ware whose own payment went back after gave that ware unpaid; a bundle won back from a dispute did the same | FIXED: a giver whose credit no longer matches the row is refunded for its price, never granted; a giver given again marks each credited ware it no longer holds lost (`-<id>`) |
 | A3 | MED | A refund while an inquiry stood was ignored, and the inquiry's close gave the ware back on a refunded payment | FIXED: a refund ends a disputed order refunded; a dispute's close restores only with no refund kept and no other dispute open |
 | A4 | LOW | A paid word told twice at once: the late copy acted on a refund it had computed from the order as it stood before the first landed, and returned a good sale | FIXED: an attempt answers only the refund it wrote; one refused by the order's guard answers none |
@@ -156,7 +156,7 @@ Pins: `test/server/storefront_audit2_pass.test.js`, `test/scenes/storefront_audi
 | # | Sev | Finding | Verdict |
 |---|---|---|---|
 | B1 | HIGH | A Colossus's fall was kept on its fissure's record, made again by a relay blip, a walk off and back or a new day: the fall said again, the Maul asked again, a second given after midnight | FIXED with D1: the fall kept by the foe pool's record, one for the body's life |
-| B2 | MED | A find dropped offline or on a 5xx was lost, and with no id could not be asked again safely | FIXED: each find carries its own id and is asked again with it; the service keeps the id with its answer (`pass_asks`, migration 0196) in the find's own batch, so a repeat is answered as it was and counted once |
+| B2 | MED | A find dropped offline or on a 5xx was lost, and with no id could not be asked again safely | FIXED: each find carries its own id and is asked again with it; the service keeps the id with its answer (`pass_asks`, migration 0198) in the find's own batch, so a repeat is answered as it was and counted once |
 | B4 | LOW | The 'make' challenge said "Make or find" where it counts crafting, socketing and reforging | FIXED: its words, in every language that held the row |
 
 ### C - the effects

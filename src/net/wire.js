@@ -280,11 +280,11 @@ export const LOOK_GROUPS = Object.freeze(['MensClothing', 'WomensClothing', 'Arm
  *  `arcane2` (systems/weaponGlow.js glowWord) - so a peer's Morrowind body draws the weapon as its owner sees it: the
  *  affixes that decide it never travel. A weapon's alone, OMITTED when none (`class`'s law: an item without it keeps
  *  the bytes it always had); anything else is dropped, never the item. */
-export const LOOK_GLOW_RE = /^(?:(?:fire|frost|shock)[123]|arcane2|brand2|edge2)$/;   // AUDIT WEAPON-GLOW NET-4: the ten words a client can say - the arcane look has one strength; ARMORY: and the Aura Armory's two weapon pieces, one each
+export const LOOK_GLOW_RE = /^(?:(?:fire|frost|shock)[123]|arcane2|brand2|edge2|gilded2)$/;   // AUDIT WEAPON-GLOW NET-4: the words a client can say (thirteen) - the arcane look has one strength; ARMORY: and the Aura Armory's two weapon pieces, one each; GILDED-GLOW: and the Gilded rung's crimson, one
 /** AUDIT WEAPON-GLOW NET-4: the slots a glowing weapon is said in - the hands (the equip table's RightHand and LeftHand,
  *  the siege referee's own pair); a weapon anywhere else is in no hand. */
 export const LOOK_GLOW_SLOTS = SIEGE_HAND_SLOTS;
-/** Whether an item as the look carries it may say a glow - a weapon, in a hand, its word one of the ten. */
+/** Whether an item as the look carries it may say a glow - a weapon, in a hand, its word one LOOK_GLOW_RE takes. */
 export const lookGlowOk = (it) => it?.group === 'Weapons' && LOOK_GLOW_SLOTS.includes(it.equipSlot) && typeof it.glow === 'string' && LOOK_GLOW_RE.test(it.glow);
 /** AUDIT MW-NPC II K2: a foe record's worn kit (`lw`) - a piece a slot of the equip table's 27 at most. */
 export const WORN_PIECES_MAX = 27;
@@ -1150,12 +1150,16 @@ export const isRegionRoom = (key) => isChatRoom(key) && String(key).startsWith(C
 //  and epoch after it (net/instanceRoom.js INSTANCE_TAG_SOURCE, its one home), a dungeon's whole (never `.m` or `.s`).
 //  A world room like its public twin - its host, its acts, its loot, its memory (on worldTtlMsFor's clock) - which only
 //  its owner and the owner's party may enter (the relay's hello, instanceAdmits).
-const WORLD_ROOM = new RegExp(`^(?:dungeon:m[1-9]\\d{0,9}(?:\\.[ms]|${INSTANCE_TAG_SOURCE})?|interior:m[1-9]\\d{0,9}\\.[1-9]\\d{0,7}(?:${INSTANCE_TAG_SOURCE})?)$`);
+const WORLD_ROOM = new RegExp(`^(?:dungeon:m[1-9]\\d{0,9}(?:(?:\\.[ms])?(?:\\.c[1-9]\\d{0,2})?|${INSTANCE_TAG_SOURCE})|interior:m[1-9]\\d{0,9}\\.[1-9]\\d{0,7}(?:${INSTANCE_TAG_SOURCE})?)$`);   // DELVE II (AUDIT DLV5-6 M3): a curated block's room, `.c<n>` after the size's - an older page lays that slot as Daggerfall's
 export const isWorldRoom = (key) => WORLD_ROOM.test(String(key ?? ''));
 /** SD-ONLINE: the tag a dungeon's room name carries for the size it was built at (smallerDungeons.js builtDungeonSize);
- *  the whole dungeon carries none. One home, both ends: roomKeyFor mints it, WORLD_ROOM admits it. */
+ *  the whole dungeon carries none. One home, both ends: roomKeyFor mints it, WORLD_ROOM admits it. DELVE II: the size
+ *  word may name a curated block after it (smallerDungeons.js dungeonRoomSize, `medium+2`), its tag `.c2` after the size's. */
 export const DUNGEON_ROOM_TAGS = Object.freeze({ medium: '.m', small: '.s' });
-export const dungeonRoomTag = (size) => (Object.hasOwn(DUNGEON_ROOM_TAGS, size) ? DUNGEON_ROOM_TAGS[size] : '');
+export const dungeonRoomTag = (size) => {
+  const [s, c] = String(size ?? '').split('+');
+  return (Object.hasOwn(DUNGEON_ROOM_TAGS, s) ? DUNGEON_ROOM_TAGS[s] : '') + (/^[1-9]\d{0,2}$/.test(c ?? '') ? `.c${c}` : '');
+};
 //  WORLD6b (Mac, 2026-09-14: "Continue"): A CELL STREAMS ITS FOES. The open country's room is a sixteen-pixel cell
 //  (worldRoom), and nothing in it is a layout every client builds alike: every foe was one client's roll, near that
 //  client, on terrain only the clients near it have built - so a cell has no HOST simulation and keeps no memory
@@ -1705,8 +1709,11 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world291';   // world291: STOREFRONT (2026-10-29, world281, world283, world286, world288, world289 then world290 on its branch, renumbered past PVP-REWORK's world281, PVP-FOLLOWUP's world282, PVP-SAFE-HIT's world283, AUDIT TAMRIEL-WIDE's world284, CAPE-TOGGLE's world285, FB1029 GROUND's world286, FRONTS' world287, DRAGON's world288, HAND-WRAPS' world289 and PVP-LINGER's world290 at the merges of main; the owner: "an overhaul to the ingame shop menu ... Portal effects ... and kill effects"; bible/06-Systems/Storefront.md, Battle-Pass.md; NOT YET DEPLOYED): a token's effects kit, `fx` (net/effectLaw.js JOINED THE BUNDLE), badged onto a peer's row with the armory's kit - both on the hello's row now; a pose's kill (`xk`, `xp`, `xh`), its place and a blow's (`hp`) rounded on the second wire as the pose's own (slimPose, the wire audit); the token's glyphs signed as their mask over GLYPHS (`gb`, read back as `g`) and a socket's attachment holding them so (packAttach); the camp law's brass sites are the readers'. Deploy the relay before the account service that mints `gb`. ROLLBACK FLOOR: world291 while acct225 or later mints `gb` - an older relay drops a `gb` token's glyphs, or refuses one with `gx`; roll the service back first and wait MAX_TTL_S (five minutes) before the relay (bible/06-Systems/Storefront.md section 10).
+export const RELAY_VERSION = 'world293';   // world293: STOREFRONT (2026-10-29, world281, world283, world286, world288, world289, world290 then world291 on its branch, renumbered past PVP-REWORK's world281, PVP-FOLLOWUP's world282, PVP-SAFE-HIT's world283, AUDIT TAMRIEL-WIDE's world284, CAPE-TOGGLE's world285, FB1029 GROUND's world286, FRONTS' world287, DRAGON's world288, HAND-WRAPS' world289, PVP-LINGER's world290, GILDED-GLOW's world291 and DELVE II's world292 at the merges of main; the owner: "an overhaul to the ingame shop menu ... Portal effects ... and kill effects"; bible/06-Systems/Storefront.md, Battle-Pass.md; NOT YET DEPLOYED): a token's effects kit, `fx` (net/effectLaw.js JOINED THE BUNDLE), badged onto a peer's row with the armory's kit - both on the hello's row now; a pose's kill (`xk`, `xp`, `xh`), its place and a blow's (`hp`) rounded on the second wire as the pose's own (slimPose, the wire audit); the token's glyphs signed as their mask over GLYPHS (`gb`, read back as `g`) and a socket's attachment holding them so (packAttach); the camp law's brass sites are the readers'. Deploy the relay before the account service that mints `gb`. ROLLBACK FLOOR: world293 while acct227 or later mints `gb` - an older relay drops a `gb` token's glyphs, or refuses one with `gx`; roll the service back first and wait MAX_TTL_S (five minutes) before the relay (bible/06-Systems/Storefront.md section 10).
+// world292: DELVE II DLV3 (2026-10-29, NOT YET DEPLOYED; world284, world288 then world289 on its branch, renumbered past AUDIT TAMRIEL-WIDE's world284, CAPE-TOGGLE's world285, FB1029 GROUND's world286, FRONTS's world287, DRAGON's world288, HAND-WRAPS' world289, PVP-LINGER's world290 and GILDED-GLOW's world291 at the merges of main): a dungeon's room keeps its encounters (`dv`, DELVE_RELAY_MIN - server/src/delveRoom.js, net/delve/delveLaw.js joins the bundle), the `delve` grant kind (a world room's alone, GRANT_ROOM_KINDS) and the token's level stamped in a dungeon's room; a game-made dungeon's curated block names its room, `.c<n>` (AUDIT DLV5-6 M3). Deploy the relay first, then the site.
+// world291: GILDED-GLOW and DECOR-ROOMY (world286, world287, world289 then world290 on its branch, renumbered past FB1029 GROUND's world286, FRONTS' world287, DRAGON's world288, HAND-WRAPS' world289 and PVP-LINGER's world290 at the merges of main; 2026-10-29, #feature-feedback: "gilded weapons should have a cool crimson glow"; bible/05-Combat/Weapon-Glow.md law 8; NOT YET DEPLOYED): a look's weapon may say `gilded2` (LOOK_GLOW_RE) - a Gilded weapon's crimson, which an older relay strips (its peers' Gilded weapon draws bare until it is deployed); and net/homeLaw.js's ground law (FIELD BUGS 2026-10-29f DECOR-ROOMY), which the relay bundles and never calls. Deploy the relay first, then the site.
 // world290: PVP-LINGER (world288, then world289, on its branch, renumbered past DRAGON's world288 and HAND-WRAPS' world289 at the merges of main; 2026-10-29, the owner: "keep their body in game if they login in the window of cooldown"; bible/11-Multiplayer/PvP-Rework.md PVP-LINGER; NOT YET DEPLOYED): a fighter whose last socket closes inside its PvP lock leaves its body in the zone - its pose said again, struck and killed by the referee's law, its fall signed for its killer to carry - until the lock runs out (net/wild/wildLinger.js, server/src/pvpLinger.js); its account's hello here, or its word from another room at the hub, takes the body back. PVP-LINGER-RISE: a body slain while away is kept in the room's storage, and its player's next zone word is a `down` word with `aw` 1 and its killer's name `n` (validWildDown) - a death, then the zone's rise in a town. The site may deploy first: an older page reads the word as WILD-REJOIN's.
+// world289: HAND-WRAPS (world286 on its branch, renumbered past FB1029 GROUND's world286, FRONTS' world287 and DRAGON's world288 at the merge of main; 2026-10-29, AUDIT HAND-WRAPS B2; bible/05-Combat/Hand-Wraps.md; NOT YET DEPLOYED): LOOT_HELLO_LAW 1 to 2 - a build that reads the Hand Wraps (template 563); while `lootDoor` is on, a loot room refuses an older one, which would drop a pair from a shared container. Deploy the relay first, then the site.
 // world288: DRAGON (2026-10-29, bible/11-Multiplayer/Dwarven-Dragon.md; NOT YET DEPLOYED; world281, world283, world284, world285, world286 then world287 on its branch, renumbered past the PvP rework's world281 and world282, PVP-SAFE-HIT's world283, AUDIT TAMRIEL-WIDE's world284, CAPE-TOGGLE's world285, FB1029 GROUND's world286 and FRONTS' world287 at the merges of main): the pose's `rd` keeps 3, a rider on the Dwarven Dragon (POSE_RIDE.Dragon, DRAGON_RIDE_RELAY_MIN), and the Dwarven Dragon's fight (server/src/dragonFights.js, its cell's words and its z1 receipts). Deploy the relay first.
 // world287: FRONTS (world286 on its branch, renumbered past FB1029 GROUND's world286 at the merge of main; 2026-10-29, the owner: "events are way overdone with their spawning"; bible/03-World/World-Wide.md FRONTS; NOT YET DEPLOYED): net/frontLaw.js JOINS THE BUNDLE - past the Bay two provinces stir a game day, and only they open a gate (gateLaw.js isGateDay), land a star (starfallLaw.js starInWindow), roll raid slots (raid/raidLaw.js raidDaySlots) or raise a Hollow, at most two of those standing (superDungeon/sdLaw.js sdDue, sdRise; the hub's _sdHeldPast). AUDIT FRONTS (re-hashed in place, undeployed): the hub beats the provinces that waited longest first (sdBeatOrder), arms a turn that ended mid-census, and its Hollow cards name the next's turn and a free place (sdRiseNotBefore). The Bay's lane unchanged. The site may deploy first: it sends nothing world287 alone reads (bible/03-World/World-Wide.md FRONTS, the deploy).
 // world286: FB1029 GROUND (2026-10-29, NOT YET DEPLOYED; world284 on its branch, renumbered past world284 and world285 on main at the merge): GROUND_LAW 4 to 5 - the ground about a Bay town meets it across its pixel's edge (ACROSS-EDGE) and the Bay's paving over the sea stands dry (ROAD-DRY), so the relay refuses a ground room's hello from the old ground while `groundGate` is on; the bundle's files otherwise unchanged. world285: CAPE-TOGGLE (world284 on its branch, renumbered past AUDIT TAMRIEL-WIDE's world284 at the merge of main; 2026-10-29, the owner: "add a cape/helmet toggle option in the inventory for people"; bible/04-Characters/Cape-Toggle.md; NOT YET DEPLOYED): a look may say `hc` 1 - its player hides their capes, so a peer draws no aura on them (validLook keeps it, omitted otherwise). Deploy the relay first, then the site.
@@ -2389,7 +2396,7 @@ export function inRangeOf(roomKey, from) {
   return (to) => !!to && Math.max(Math.abs(fx - Math.floor(to.x / PIXEL_UNITS)), Math.abs(fy - Math.floor(to.z / PIXEL_UNITS))) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'ban'|'renown'|'guild'|'guildout'|'home'|'yard'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'caravan'|'look'|'gate'|'grant'|'siege'|'arena'|'raid'|'raidtowns'|'sev'|'rite'|'star'|'ow'|'trav'|'amap'|'stp'|'cfg'|'find'|'serpent'|'dragon'|'sd'|'kt'|'eg'|'wild'|'vit'|'wdun'|'holdem'|'iliac'|'gambit'|'lease', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'ban'|'renown'|'guild'|'guildout'|'home'|'yard'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'caravan'|'look'|'gate'|'grant'|'siege'|'arena'|'raid'|'raidtowns'|'sev'|'rite'|'star'|'ow'|'trav'|'amap'|'stp'|'cfg'|'find'|'serpent'|'dragon'|'sd'|'kt'|'eg'|'wild'|'vit'|'wdun'|'holdem'|'iliac'|'gambit'|'lease'|'dv', ...}
  *  or {error} - the caller closes on an error. INSPECT1: every arm below, named - this line had fallen seven behind
  *  (test/net/auditworld2.test.js derives the list from the arms now, so it cannot fall behind again - the merge with
  *  main's HCC-PARK was its first catch: the park arm, unnamed). */
@@ -2532,6 +2539,11 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (!hasHello) return { error: 'star before hello' };
     const r = validStarIn(m);
     return r ? { t: 'star', ...r } : { error: 'bad star' };
+  }
+  if (m.t === 'dv') {   // DELVE II (DLV3): a word at a dungeon's encounter, to its room - projected by validDelveIn; the room's ledger (net/delve/delveLaw.js) judges where and when
+    if (!hasHello) return { error: 'dv before hello' };
+    const r = validDelveIn(m);
+    return r ? { t: 'dv', ...r } : { error: 'bad dv' };
   }
   if (m.t === 'kt') {   // KETCH: a word aboard a crew's ship - projected by validKetchIn; the ship's director (net/ketch/ketchBrain.js) judges it
     if (!hasHello) return { error: 'kt before hello' };
@@ -6117,6 +6129,141 @@ export const STAR_RC_PREFIX = 'starrc:';
 export const starReceiptKeyOf = (acct) => `${STAR_RC_PREFIX}${acct}`;
 export const STAR_RC_KEEP = 9;
 export const STAR_RC_KEEP_MS = 24 * 60 * 60 * 1000;
+
+// ═══ DELVE II (DLV3): A DUNGEON'S ENCOUNTERS, KEPT BY ITS ROOM ═════════════════════════════════════════════
+//
+// (bible/03-World/Delve-II.md section 7.) Every client in a dungeon's room makes the same plan of its encounters. The
+// room keeps the first plan it hears (`pl`) and each started site's ledger (net/delve/delveLaw.js), folding the owning
+// party's words (`w`), acts (`a`) and blows (`x`); it says the ledger back (`dl`, each socket its own `me`) with what
+// moved it (`ev`), and an earner asks to open its share (`v`). No law imported: its bounds are pinned equal by test.
+/** The first relay that keeps a dungeon's encounters. An older one CLOSES the socket on `dv`, so a client says none. */
+export const DELVE_RELAY_MIN = 292;
+export const relaySupportsDelve = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= DELVE_RELAY_MIN; };
+/** A socket's `dv` words a second: a word each site a second, an act, and a hand of four blows - a second's slack. */
+export const DELVE_HZ_MAX = 8;
+export const delveGate = (bucket, nowMs) => tokenGate(bucket, nowMs, DELVE_HZ_MAX);
+/** The relay's bucket is deeper than the client's - the same rate, twice the burst (the rite's AUDIT WB12d L4). */
+export const DELVE_RELAY_BURST = 16;
+export const delveRelayGate = (bucket, nowMs) => tokenGate(bucket, nowMs, DELVE_HZ_MAX, DELVE_RELAY_BURST);
+/** A plan's most sites (delveSites.js DSITE.max is three; a curated block's anchors may add), and a site's number's
+ *  bound - the crystal seam numbers sixteen a site (scenes/delve/delveBodies.js delveCrystalC). */
+export const DELVE_SITES_WIRE_MAX = 8;
+export const DELVE_SITE_I_MAX = 15;
+/** The law's bounds, pinned equal: the kinds (DELVE_KIND_NAMES), the phases (DP), a level, a wave's count and size, the
+ *  pieces a site stands (a Litany's five, the seals' six), a Vigil's blows (STAR_BLOWS_WIRE_MAX), a ward's radius. */
+export const DELVE_KINDS_WIRE = 7;
+export const DELVE_PHASE_WIRE_MAX = 9;
+export const DELVE_LEVEL_MAX = 99;
+export const DELVE_WAVES_WIRE = 3;
+export const DELVE_WAVE_WIRE_MAX = 12;
+export const DELVE_PIECES_MAX = 6;
+export const DELVE_BLOWS_WIRE_MAX = 9999;
+export const DELVE_R_MAX = 8;
+/** A dungeon's coordinates (m), far past any layout's, and a blow's most (a crystal's whole is far under it). */
+const DELVE_AT_MAX = 100_000;
+export const DELVE_HIT_MAX = 100_000;
+/** An act's word on the wire: take, light, drop, set (delveLaw.js foldDelveAct's `a`). */
+export const DELVE_ACTS = Object.freeze(['take', 'light', 'drop', 'set']);
+/** Why the room refused a word: no room for another plan yet, not of the owning party, the hub silent on the party, the
+ *  speaker's own attempt running at another site. */
+export const DELVE_NO = Object.freeze({ plan: 0, party: 1, busy: 2, held: 3 });
+const atOk = (v) => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= DELVE_AT_MAX;
+const hashOk = (v) => Number.isInteger(v) && v >= 0 && v <= 0xffffffff;
+const siteIOk = (v) => intIn(v, 0, DELVE_SITE_I_MAX);
+/** A plan's site on the wire: `[i, kind id, x, y, z, r, vault x, y, z]`, or null. */
+function delveSiteWire(q) {
+  if (!Array.isArray(q) || q.length !== 9 || !siteIOk(q[0]) || !intIn(q[1], 1, DELVE_KINDS_WIRE)) return null;
+  if (![2, 3, 4, 6, 7, 8].every((k) => atOk(q[k])) || !(typeof q[5] === 'number' && q[5] > 0 && q[5] <= DELVE_R_MAX)) return null;
+  return [q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7], q[8]];
+}
+/**
+ * A client's `dv` word, projected - or null: `pl` the plan (`h` its hash, `e` 1 an Elite dungeon's, `s` its sites, each
+ * index once); `w` a word at site `i` (`lv` the level, `o` 1 while my machine stands its foes, `kw`/`kn` the deaths of
+ * wave `kw`, `wc` the wave seen cleared, `cf` 1 its captain fallen, `st` the plate stepped on, `hb` the Vigil's blows
+ * landed, `iw` 1 while my screen sees me in its ward - the room believes it only where my pose agrees); `a` an act (`a` its DELVE_ACTS index, `j` its piece); `x` a blow on piece `j` (`d` its number, `r` its kind,
+ * `q` its sequence); `v` the ask to open site `i`'s vault. Each under the plan's hash `h`.
+ * @param {any} m
+ */
+export function validDelveIn(m) {
+  if (!m || typeof m !== 'object' || !hashOk(m.h)) return null;
+  if (m.k === 'pl') {
+    if (!flag(m.e) || !Array.isArray(m.s) || m.s.length < 1 || m.s.length > DELVE_SITES_WIRE_MAX) return null;
+    const s = m.s.map(delveSiteWire);
+    if (s.some((q) => !q) || new Set(s.map((q) => q[0])).size !== s.length) return null;
+    return { k: 'pl', h: m.h, e: m.e, s };
+  }
+  if (!siteIOk(m.i)) return null;
+  if (m.k === 'w') {
+    if (!intIn(m.lv, 1, DELVE_LEVEL_MAX) || !flag(m.o) || !intIn(m.kw, 0, DELVE_WAVES_WIRE) || !intIn(m.kn, 0, DELVE_WAVE_WIRE_MAX)) return null;
+    if (!intIn(m.wc, 0, DELVE_WAVES_WIRE) || !flag(m.cf) || !intIn(m.st, -1, DELVE_PIECES_MAX - 1) || !intIn(m.hb, 0, DELVE_BLOWS_WIRE_MAX) || !flag(m.iw)) return null;
+    return { k: 'w', h: m.h, i: m.i, lv: m.lv, o: m.o, kw: m.kw, kn: m.kn, wc: m.wc, cf: m.cf, st: m.st, hb: m.hb, iw: m.iw };
+  }
+  if (m.k === 'a') return intIn(m.a, 0, DELVE_ACTS.length - 1) && intIn(m.j, -1, DELVE_PIECES_MAX - 1) ? { k: 'a', h: m.h, i: m.i, a: m.a, j: m.j } : null;
+  if (m.k === 'x') {
+    if (!intIn(m.j, 0, DELVE_PIECES_MAX - 1) || !(typeof m.d === 'number' && m.d > 0 && m.d <= DELVE_HIT_MAX) || !intIn(m.r, 0, 2) || !intIn(m.q, 0, 0x7fffffff)) return null;
+    return { k: 'x', h: m.h, i: m.i, j: m.j, d: m.d, r: m.r, q: m.q };
+  }
+  if (m.k === 'v') return { k: 'v', h: m.h, i: m.i };
+  return null;
+}
+const pieceHp = (v) => Array.isArray(v) && v.length <= DELVE_PIECES_MAX && v.every((x) => intIn(x, 0, DELVE_HIT_MAX));
+/** A weight on the wire: `[where, plate, x, z]` (delveLaw.js WEIGHT's places, -1 no plate). */
+const weightWire = (t) => Array.isArray(t) && t.length === 4 && intIn(t[0], 0, 3) && intIn(t[1], -1, 2) && atOk(t[2]) && atOk(t[3]);
+/**
+ * The room's `dv` word, projected - or null: `dl` a site's ledger as a screen reads it (delveLaw.js delveState) with
+ * this socket's own `me` (`fm` 1 my machine stands its foes, `hd` the piece I carry: -2 none, -1 the flame, else a
+ * weight; `ea` 1 I earned its vault and have not opened it; `pa` 1 I am of its party), `rs` the ms until a won site
+ * stands again; `ev` what moved site `i`; `v` a vault's answer (`ok` 1 open your share) - each under its plan's hash
+ * `ph` (`h` is a state's pieces' health); `pl?` asks for my plan; `no` a refusal (DELVE_NO), at site `i` if it names one.
+ * @param {any} m
+ */
+export function validDelveOut(m) {
+  if (!m || typeof m !== 'object' || m.t !== 'dv') return null;
+  if (m.k === 'pl?') return { k: 'pl?' };
+  if (m.k === 'no') return intIn(m.m, 0, 3) && (m.i === undefined || siteIOk(m.i)) ? { k: 'no', m: m.m, ...(m.i === undefined ? {} : { i: m.i }) } : null;
+  if (!siteIOk(m.i) || !hashOk(m.ph)) return null;
+  if (m.k === 'v') return flag(m.ok) ? { k: 'v', ph: m.ph, i: m.i, ok: m.ok } : null;
+  if (m.k === 'ev') {
+    if (!Array.isArray(m.ev) || m.ev.length > 16 || !m.ev.every((e) => e && typeof e === 'object' && typeof e.k === 'string' && e.k.length <= 12)) return null;
+    return { k: 'ev', ph: m.ph, i: m.i, ev: m.ev.map((e) => delveEventWire(e)).filter(Boolean) };
+  }
+  if (m.k !== 'dl') return null;
+  if (!intIn(m.kd, 1, DELVE_KINDS_WIRE) || !intIn(m.p, 0, DELVE_PHASE_WIRE_MAX) || !intIn(m.w, 0, DELVE_WAVES_WIRE) || !intIn(m.wz, 0, DELVE_WAVE_WIRE_MAX)) return null;
+  if (!intIn(m.kn, 0, DELVE_WAVE_WIRE_MAX) || !(Number.isSafeInteger(m.wl) && m.wl >= -1) || !intIn(m.nd, 0, 16) || !flag(m.fo) || !intIn(m.nx, 0, DELVE_PIECES_MAX)) return null;
+  const me = m.me;
+  if (!me || typeof me !== 'object' || !flag(me.fm) || !intIn(me.hd, -2, 2) || !flag(me.ea) || !flag(me.pa) || !(Number.isSafeInteger(m.rs) && m.rs >= 0)) return null;
+  const out = { k: 'dl', ph: m.ph, i: m.i, kd: m.kd, p: m.p, w: m.w, wz: m.wz, kn: m.kn, wl: m.wl, nd: m.nd, fo: m.fo, nx: m.nx, rs: m.rs, me: { fm: me.fm, hd: me.hd, ea: me.ea, pa: me.pa } };
+  if (m.n !== undefined && !intIn(m.n, 0, DELVE_PIECES_MAX)) return null;
+  if (m.h !== undefined && !pieceHp(m.h)) return null;
+  if (m.hx !== undefined && !intIn(m.hx, 0, DELVE_HIT_MAX)) return null;
+  if (m.lt !== undefined && !intIn(m.lt, 0, 100)) return null;
+  if (m.lb !== undefined && !intIn(m.lb, 0, 15)) return null;
+  if (m.fl !== undefined && !intIn(m.fl, 0, 2)) return null;
+  if (m.fx !== undefined && !(Array.isArray(m.fx) && (m.fx.length === 0 || (m.fx.length === 3 && m.fx.every(atOk))))) return null;
+  if (m.wt !== undefined && !(Array.isArray(m.wt) && m.wt.length <= 3 && m.wt.every(weightWire))) return null;
+  if (m.hd !== undefined && !(Number.isSafeInteger(m.hd) && m.hd >= -1)) return null;
+  if (m.or !== undefined && !(Array.isArray(m.or) && m.or.length <= DELVE_PIECES_MAX && m.or.every((x) => intIn(x, 0, DELVE_PIECES_MAX - 1)))) return null;
+  for (const f of ['n', 'h', 'hx', 'lt', 'lb', 'fl', 'fx', 'wt', 'hd', 'or']) if (m[f] !== undefined) out[f] = Array.isArray(m[f]) ? m[f].map((x) => (Array.isArray(x) ? [...x] : x)) : m[f];
+  return out;
+}
+/** An event the room says moved a site, projected to the fields the host reads (delveLaw.js's events), or null. */
+function delveEventWire(e) {
+  const out = { k: e.k };
+  for (const f of ['w', 'wz', 'n', 'h', 'j', 'p', 'next', 'wl', 'rest']) if (e[f] !== undefined) { if (!(Number.isSafeInteger(e[f]) && Math.abs(e[f]) <= DELVE_AT_MAX)) return null; out[f] = e[f]; }
+  if (e.order !== undefined) { if (!(Array.isArray(e.order) && e.order.length <= DELVE_PIECES_MAX && e.order.every((x) => intIn(x, 0, DELVE_PIECES_MAX - 1)))) return null; out.order = [...e.order]; }
+  if (e.traits !== undefined) { if (!intIn(e.traits, 0, 4)) return null; out.traits = e.traits; }
+  for (const f of ['outlasted', 'springs', 'dark']) if (e[f] !== undefined) { if (typeof e[f] !== 'boolean') return null; out[f] = e[f]; }
+  return out;
+}
+/** Where a room keeps its encounters (never `world:` - that prefix is swept): each plan by its hash, and a ledger a site
+ *  of a plan. */
+export const DELVE_PLAN_PREFIX = 'dv:p:';
+export const delvePlanKey = (h) => `${DELVE_PLAN_PREFIX}${h}`;
+export const DELVE_LEDGER_PREFIX = 'dv:l:';
+export const delveLedgerKey = (h, i) => `${DELVE_LEDGER_PREFIX}${h}:${i}`;
+/** A won site stands won this long (systems/dungeon/dungeonRespawn.js: twenty minutes, an Elite dungeon forty). */
+export const DELVE_RESPAWN_MS = 20 * 60 * 1000;
+export const DELVE_RESPAWN_ELITE_MS = 40 * 60 * 1000;
 
 // ═══ OW6L: THE OVERWORLD'S LEDGER, KEPT BY THE RELAY ═════════════════════════════════════════════
 //

@@ -109,12 +109,13 @@
   },
   {
     "name": "TOTEMCAGE-wm-box-placed",
-    "file": "src/scenes/worldModes.js",
-    "old": "        aabb: questStandBox(s),",
-    "new": "        aabb: { min: [s.x - s.width / 2, s.y, s.z - s.width / 2], max: [s.x + s.width / 2, s.y + s.height, s.z + s.width / 2] },",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "      aabb: questStandBox(s),",
+    "new": "      aabb: { min: [s.x - s.width / 2, s.y, s.z - s.width / 2], max: [s.x + s.width / 2, s.y + s.height, s.z + s.width / 2] },",
     "tests": [
       "test/systems/quest/fb1003b_totem.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "TOTEMCAGE-dc-no-mover",

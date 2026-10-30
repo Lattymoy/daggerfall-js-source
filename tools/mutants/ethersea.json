@@ -335,8 +335,8 @@
   {
     "name": "SEA-cross-land",
     "file": "src/world/ethericSea.js",
-    "old": "typeof landPx === 'number' && landPx >= CROSS_LAND_PX;",
-    "new": "typeof landPx === 'number' && landPx > CROSS_LAND_PX;",
+    "old": "typeof landPx === 'number' && landPx >= CROSS_LAND_PX && seaPx",
+    "new": "typeof landPx === 'number' && landPx > CROSS_LAND_PX && seaPx",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "SEA-cross-in-box",
     "file": "src/world/ethericSea.js",
-    "old": "export const crossingWaters = (x, y, landPx) => !inEtherLaw(x, y) && x < CROSS_X",
-    "new": "export const crossingWaters = (x, y, landPx) => x < CROSS_X",
+    "old": "export const crossingWaters = (x, y, landPx, seaPx) => !inEtherLaw(x, y) && x < CROSS_X",
+    "new": "export const crossingWaters = (x, y, landPx, seaPx) => x < CROSS_X",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "SEA-cross-infinity",
     "file": "src/world/ethericSea.js",
-    "old": "typeof landPx === 'number' && landPx >= CROSS_LAND_PX;",
-    "new": "Number.isFinite(landPx) && landPx >= CROSS_LAND_PX;",
+    "old": "typeof landPx === 'number' && landPx >= CROSS_LAND_PX && seaPx",
+    "new": "Number.isFinite(landPx) && landPx >= CROSS_LAND_PX && seaPx",
     "tests": [
       "test/world/ethersea.test.js"
     ]

@@ -40,7 +40,7 @@ import { setPref, _resetForTests } from '../../src/systems/uiPrefs.js';
 import { synthesizeDungeonLocation, WORLD_SALT } from '../../src/world/spawnedDungeons.js';
 import { arenaFloorLocation } from '../../src/world/arena/arenaFloor.js';
 import { ARENA_REGION, ARENA_LOCATION, undercroftLocation } from '../../src/world/arena/arenaCity.js';
-import { builtDungeonSize, generateMediumDungeon } from '../../src/world/smallerDungeons.js';
+import { builtDungeonSize, dungeonRoomSize, generateMediumDungeon } from '../../src/world/smallerDungeons.js';
 
 const rd = (f) => readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8');
 const W = rd('src/scenes/world.js');
@@ -132,11 +132,11 @@ function worldOf(w) {
   const names = ['playerTravelPixel', 'maps', 'locationIndex', 'modes', 'walkMode', 'playerSpawned', 'player', 'cam', 'REGION_NAMES', 'state',
     'heightAt', 'floorLanding', 'collider', 'LEGACY_REMAINS_NEAR_DUNGEON', 'LEGACY_REMAINS_NEAR', 'createRemainsStand', 'droppedLoot', 'REMAINS_FLAT',
     'areEnemiesNearby', 'exteriorFoePool', 'exteriorFoes', 'cityGuards', 'groundFrameHeight', 'restandHeight', 'scaleOf', 'STREAMING_TERRAIN_SCALE', 'LEGACY_TEXT',
-    'builtDungeonSize', 'duelEnemyNear', 'navalHostileNear', 'RECORD_GROUND_STAMP'];   // PIN MOVED (BAY-LEFT-GROUND, D5): the scale and the frame's law, stamped together
+    'dungeonRoomSize', 'duelEnemyNear', 'navalHostileNear', 'RECORD_GROUND_STAMP'];   // PIN MOVED (DELVE II, AUDIT DLV5-6 M3): the size word names a curated block too   // PIN MOVED (BAY-LEFT-GROUND, D5): the scale and the frame's law, stamped together
   const vals = [() => ({ ...w.pixel }), maps, locationIndex, modes, true, true, player, { pos: [0, 0, 0] }, REGION_NAMES, state,
     heightAt, floorLanding, collider, 6, 2400, createRemainsStand, w.streetPool, REMAINS_FLAT,
     areEnemiesNearby, exteriorFoePool, exteriorFoes, cityGuards, groundFrameHeight, restandHeight, scaleOf, SCALE, LEGACY_TEXT,
-    builtDungeonSize, () => !!w.duel, () => !!w.ship, { terrainScale: SCALE, groundFrame: 2 }];   // a duel or the one played's own bout (duelEnemyNear); a hostile ship in reach (navalHostileNear)
+    dungeonRoomSize, () => !!w.duel, () => !!w.ship, { terrainScale: SCALE, groundFrame: 2 }];   // a duel or the one played's own bout (duelEnemyNear); a hostile ship in reach (navalHostileNear)
   const body = `${HERE}\n${IN_DUNGEON}\n${AT_PLACE}\n${ANCHOR}\n${FEET}\n${STAND}\nconst inFight = ${FIGHT};\nconst letGoRemains = ${LET_GO};\nreturn { legacyHere, legacyAtPlace, legacyRemainsFeet, legacyRemainsStand, inFight, letGoRemains };`;
   return new Function(...names, body)(...vals);
 }

@@ -769,6 +769,10 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/egfrags/source/egheroOssuary.fbx', 'OURS - the Ossuary\'s scene, written by tools/egHeroOssuaryScene.mjs from numbers alone; no ARENA2 data, no third-party art'],
   ['src/assets/egfrags/egheroOssuary.law.json', 'OURS - egheroOssuary.fbx\'s law half (its markers, section 11.5\'s record) baked by tools/bakeEgHeroOssuary.mjs; numbers only'],
   ['src/assets/egfrags/egheroOssuary.mesh.json', 'OURS - egheroOssuary.fbx\'s mesh half baked by tools/bakeEgHeroOssuary.mjs; geometry only, its pictures the band\'s painted dress, no ARENA2 data'],
+  // DELVE II (DLV6, bible/03-World/Delve-II.md section 8): the curated blocks' records - numbers and names alone (a base
+  // block's name, Daggerfall's model and flat ids, the places); each block is made of the player's own BLOCKS.BSA at the build
+  ...['crypt-hall', 'mine-gallery', 'desecrated-chapel', 'throne-hall'].map((id) => [`src/assets/delve/${id}.json`,
+    "OURS - a curated block's record (DELVE II DLV6): its base's name, the ids it drops and adds, its anchor; numbers only, no ARENA2 data"]),
   ['src/assets/egfrags/source/egheroMistStair.fbx', 'OURS - the Mist Stair\'s scene, written by tools/egHeroMistStairScene.mjs from numbers alone; no ARENA2 data, no third-party art'],
   ['src/assets/egfrags/egheroMistStair.law.json', 'OURS - egheroMistStair.fbx\'s law half (its markers, section 11.5\'s record) baked by tools/bakeEgHeroMistStair.mjs; numbers only'],
   ['src/assets/egfrags/egheroMistStair.mesh.json', 'OURS - egheroMistStair.fbx\'s mesh half baked by tools/bakeEgHeroMistStair.mjs; geometry only, its pictures the band\'s painted dress, no ARENA2 data'],

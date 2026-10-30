@@ -130,8 +130,8 @@ import { DRAGON_MOUNT_TEMPLATE, isDragonMount, dragonMountWellFormed } from '../
  *  the Reforge takes alone - on a Legendary no Exalted, or a piece of no tier, a finding from it on (a law of 13 knew no
  *  such field). Nothing a law of 13 found is lawful now. MASTER-ART left it at 14: a Master's work (net/masterLaw.js) is a
  *  shape no earlier law met honestly - none was made before the service that makes it, whose judge is this law - so no
- *  finding of 14 is one to ask again. */
-export const ITEM_LAW_VERSION = 15;   // DRAGON5: the Dwarven Dragon (1820) a template the law knows - law 14 found every one 'template'; HAND-WRAPS left it: no pair existed for a law to find against (acct224 carries the row)
+ *  finding of 14 is one to ask again. GILDED-MAKER moved it to 16 (15 on its branch): a maker's row on a Gilded piece is lawful. */
+export const ITEM_LAW_VERSION = 16;   // 15, DRAGON5: the Dwarven Dragon (1820) a template the law knows - law 14 found every one 'template'; HAND-WRAPS left it: no pair existed for a law to find against (acct224 carries the row)
 
 const T = ENCHANTMENT_TYPES;
 const TYPE_KEY = Object.freeze(Object.fromEntries(Object.entries(T).map(([k, v]) => [v, k])));
@@ -445,7 +445,7 @@ const firstOwnRow = (/** @type {any} */ item) => (Array.isArray(item.enchantment
  *  itemMakerRefuses), whose record promised "A piece enchanted before keeps its rows" (Field-Bugs-2026-10-03b). INT1's
  *  law held every Aetheric piece to no rows at all, so those pieces read as forged and held their owners' trade. Ruhn's
  *  Regalia and the raiding parties' three sets stood then; the Serpent's and Numidium's sets came after the refusal,
- *  and no maker ever laid a row on one. The Gilded rung was refused from its first day (GILDED1). Frozen by its pin
+ *  and no maker ever laid a row on one. The Gilded rung takes them since GILDED-MAKER (law 15). Frozen by its pin
  *  (test/systems/item/fb1016c_makerkept.test.js): a record added to either list later is no record the maker took. */
 const MAKER_ERA_AETHERIC = new Set([...REGALIA, ...RAID_SET_PIECES].map((r) => r.id));
 /** An Aetheric piece: its record, minted whole (aetheric.js validSetMarks), and none of a roll's marks - its rows none,
@@ -588,7 +588,7 @@ function enchantmentFindings(/** @type {any} */ item) {
  *  catalogue's, never the cost a row says of itself - within the item's power. */
 function makerFindings(/** @type {any} */ item, /** @type {any[]} */ rows, /** @type {any[]} */ maker) {
   if (!MAKER_GROUPS.includes(item.group) || (item.group === 'Weapons' && item.templateIndex === ARROW_TEMPLATE)) return ['enchantments'];   // the window lists every weapon but the Arrow (itemMakerFilter)
-  if (item.rarity === 'gilded' || (item.rarity === 'aetheric' && !MAKER_ERA_AETHERIC.has(item.aetheric))) return ['enchantments'];   // MAKER-KEPT: the maker's era's records keep its rows
+  if (item.rarity === 'aetheric' && !MAKER_ERA_AETHERIC.has(item.aetheric)) return ['enchantments'];   // MAKER-KEPT: the maker's era's records keep its rows; GILDED-MAKER: a Gilded piece takes them (law 15)
   /** @type {any[]} */
   const chosen = [];
   /** @type {Map<string, any[]>} */

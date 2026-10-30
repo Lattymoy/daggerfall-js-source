@@ -144,6 +144,7 @@ export const FRAME_ROLES = {
     'body .star-hud',
     // EVENTS1: the event board, a plate over the world (ui/eventBoard.js) - its news inside it
     'body .evboard',
+    'body .dftown-panel',   // NOTICE-PANEL: the town's panel under the compass (ui/hud/townPanel.js)
     '.px-sys .cmp-sheet',   // RVN-GEAR / RVN-ERRAND: a sworn one's kit and its errand, a box under its card
     '.px-sys .coll-whole',   // COLLECTIONS-II: a wardrobe row opened whole - a box under its line
     '.px-sys .codex-whole',   // AUDIT COLLECTIONS-II (lane 3): and a codex row opened whole - the same box, where it was a bare list
@@ -207,8 +208,10 @@ export const FRAME_ROLES = {
     'body .fmt-btn',
     // EG-PLUS: a breach window's presses and its close; the Spire HUD's decrees press and its touch buttons
     'body .eg-k-btn', 'body .eg-k-x', 'body .eg-spire.enhanced .eg-fold', 'body .eg-spire.enhanced .eg-touch button',
-    '.px-shopwin .act'],   // AUDIT-STOREFRONT II (lane E 1): the shop's Close, Wear, the carousel's steps - the kit's presses
+    '.px-shopwin .act',   // AUDIT-STOREFRONT II (lane E 1): the shop's Close, Wear, the carousel's steps - the kit's presses
+    'body .dftown-panel .dftown-btn'],   // NOTICE-PANEL: the town panel's Notice Board and Bounty Board
   primary: ['.px-shopwin .sh-buy',   // AUDIT-STOREFRONT II: Buy - what the shop is for
+    'body .dftown-panel .dftown-btn.primary',   // NOTICE-PANEL: the Notice Board - what the panel is for
     '.lv-ok', '.hmroot .act:not(.hmtool)', 'body .dfdecor-place', 'body .bounty-shell .act.primary', 'body .lgs-shell .act.primary', 'body .notice-shell .act.primary',
     'body .aw-shell .act.primary',   // ARENA3: Fight and the wager placed - what the window is for   // BOUNTY1: Take bounty and Take the reward in brass   // PLUS-MAP: the map's tools are plain stone   // PLUS-DRESS: Place is what the decorator is for
     'body .dfnaval-take',   // NAV-F: Take all (and a raid's Sail on) - what the plunder window is for

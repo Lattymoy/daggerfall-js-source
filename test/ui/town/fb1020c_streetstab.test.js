@@ -69,15 +69,15 @@ const LOC_ID = `${TOWN.regionIndex}:${TOWN.name}`;   // the talk seam's key and 
 function townHost({ dfLoc = TOWN, blocks = [block()], yards = [YARD] } = {}) {
   const h = {
     at: { x: 5, y: 5 }, shown: [], asked: [], mode: 'exterior',
-    boardSplitOf: () => new Map(), built: new Map([['5,5', { locBlocks: blocks, locOrigin: [0, 0, 0], merchantYards: yards }]]),
+    built: new Map([['5,5', { locBlocks: blocks, locOrigin: [0, 0, 0], merchantYards: yards }]]),
     cam: { pos: [10, 0, 10], yaw: 0 }, cpuModels: new Map(), getGpuMesh: () => Promise.resolve(),
     locationIndex: new Map([['5,5', dfLoc]]), maps: { getRegionName: () => 'Daggerfall' },
-    noticeBook: null, noticeTownOf: () => null, onlineHomes: { ensure: (mapId) => h.asked.push(mapId), homeAt: () => null, version: () => 0 },
+    onlineHomes: { ensure: (mapId) => h.asked.push(mapId), homeAt: () => null, version: () => 0 },
     player: { pos: [10, 0, 10] }, playerTravelPixel: () => h.at, questBuildingSource: {},
     state: { pixelTranslation: () => [0, 0, 0] },
     townTalk: { overlayActive: false, showOverlay: (w) => h.shown.push(w), directory: [] },
     walkMode: true, weaponRig: null, activeQuestIds: () => [], hudArt: null, partyOnMaps: () => [], questBridge: null,
-    topicTree: { isBuildingQuestResource: () => false }, townBoardMarks: () => [], renameMapBuilding: () => {},
+    topicTree: { isBuildingQuestResource: () => false }, renameMapBuilding: () => {},
     get modes() { return { mode: h.mode }; },
   };
   return h;
@@ -150,7 +150,7 @@ test('STREETS-TAB ONE BAG: the streets on the travel key\'s window are the M key
   assert.deepEqual(h.asked, [4242, 4242, 4242], 'the town\'s homes asked at every open, either key (TOWN-MARKS)');
   h.shown[0].dispose?.(); travel.dispose?.();
   // the door's bag is the one home of both
-  assert.deepEqual(Object.keys(townSheetBag({})).sort(), ['blocks', 'boards', 'buildings', 'discovered', 'gridH', 'gridW', 'homes', 'homesVersion', 'imperial', 'party', 'player', 'questBuildings', 'revealAll', 'title']);   // PIN MOVED (IC-TOWNMAP): and the Imperial City's slice (ui/town/imperialSheet.js)
+  assert.deepEqual(Object.keys(townSheetBag({})).sort(), ['blocks', 'buildings', 'discovered', 'gridH', 'gridW', 'homes', 'homesVersion', 'imperial', 'party', 'player', 'questBuildings', 'revealAll', 'title']);   // PIN MOVED (NOTICE-PANEL): no boards. PIN MOVED (IC-TOWNMAP): and the Imperial City's slice (ui/town/imperialSheet.js)
   // the wild: the M key opens nothing, as DFU's (DaggerfallUI.cs:633-650)
   h.at = { x: 6, y: 5 };
   town.toggleExteriorAutomap();

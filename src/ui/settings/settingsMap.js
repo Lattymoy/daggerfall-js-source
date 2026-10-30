@@ -72,7 +72,7 @@ export const CATEGORIES = Object.freeze([
       "port:questRepair", "feat:questlines", "feat:nearby-quests", "feat:choose-guild-jobs", "Enhancements/GuildQuestListBox", "GUI/CanDropQuestItems",
       "GUI/QuestRumorWeight", "GUI/EnableQuestDebugger"]),
     sec("dungeons", "Dungeons", [
-      "feat:smaller-dungeons", "Experimental/SmallerDungeons", "feat:medium-dungeons", "feat:world-dungeon-sizes", "feat:varied-dungeon-monsters",
+      "feat:smaller-dungeons", "Experimental/SmallerDungeons", "feat:medium-dungeons", "feat:world-dungeon-sizes", "feat:dungeon-encounters", "feat:varied-dungeon-monsters",
       "Enhancements/AlternateRandomEnemySelection"]),
     sec("loot", "Loot & items", [
       "feat:quick-loot", "feat:loot-rarity", "feat:mod-unleveledloot", "feat:mod-roleplay-realism-items", "feat:mod-physical-items"]),

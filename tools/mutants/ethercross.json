@@ -11,8 +11,8 @@
   {
     "name": "CROSS-gate-unforgotten",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "      if (way !== asked) asked = null;\n",
-    "new": "",
+    "old": "      if (way !== asked || (ours && n !== arrivals)) { asked = null; ours = false; }   // left them, or a journey arrived in them\n",
+    "new": "      if (ours && n !== arrivals) { asked = null; ours = false; }   // left them, or a journey arrived in them\n",
     "tests": [
       "test/systems/naval/ethercross.test.js"
     ]

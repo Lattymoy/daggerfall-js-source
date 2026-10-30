@@ -501,7 +501,7 @@ test('RAID1 the world host by source: the seams answered where GameManager would
   assert.ok(at > 0);
   const body = rh.slice(at, rh.indexOf('\n  });', at));
   assert.match(w, /\n {2}createRaidHost\(\{/, 'the host constructs it');
-  assert.match(body, /spawn: \(mt, pos, o\) => exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, loose: true, transient: true \}\)/);
+  assert.match(body, /spawn: \(mt, pos, o\) => exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, loose: true, transient: true, eventFoe: boss \}\)/);   // PIN MOVED (STAR-MASTER-FLED): a staff event's boss asked as an event's own
   assert.match(body, /\}, mobileType, raidSpawnRange\(at\)\),/);   // PIN MOVED (STAFF-EVENT PACKS): the band through raidSpawnRange - a town raid's the mod's own, a staff event pack's its own
   assert.deepEqual(raidSpawnRange(undefined), { minDistance: RAID_SPAWN_MIN_DISTANCE, maxDistance: RAID_SPAWN_MAX_DISTANCE, lineOfSightCheck: true, open: true });   // PACK-OPEN: never in a house or building
   assert.match(body, /standDefender: \(threats\) => cityGuards\.standDefender\(\{/);

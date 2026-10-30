@@ -873,7 +873,7 @@
   {
     "name": "BAY-A19-lane-margin-dropped",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "return Math.min(da, db) <= LANE_PATH_PX / 2 + LANE_NEAR_PX;",
+    "old": "return Math.min(da, db) <= LANE_PATH_PX / 2 + pad;",
     "new": "return Math.min(da, db) <= LANE_PATH_PX / 2;",
     "tests": [
       "test/systems/naval/auditbay_lanes.test.js"

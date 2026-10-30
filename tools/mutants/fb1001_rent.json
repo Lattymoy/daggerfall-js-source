@@ -40,14 +40,15 @@
   {
     "name": "RENT-REST-the-host-hands-no-bed",
     "file": "src/scenes/worldModes.js",
-    "old": "homeBed: homeBedIsMine(interiorHome, Math.floor(Date.now() / 1000)) || !!interiorSeatHall?.member,   // HOME1",
-    "new": "homeBed: false,   // HOME1",
+    "old": "homeBed: homeBedIsMine(interiorHome, Math.floor(Date.now() / 1000)) || !!interiorSeatHall?.member || (!!interiorHome && decorMayRest(Number(homeTownOf(b)) >>> 0, b?.buildingKey)),   // REST-GUEST",
+    "new": "homeBed: false,   // REST-GUEST",
     "tests": [
       "test/systems/fb1001_rent.test.js",
       "test/scenes/restlodging.test.js",
       "test/server/homerent.test.js",
       "test/systems/houses.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "RENT-REST-the-host-asks-the-offline-bank-online",

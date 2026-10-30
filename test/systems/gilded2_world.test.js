@@ -112,7 +112,7 @@ test('GILDED2 THE MINT: a DFU weapon\'s own (CreateWeapon - its make, its span, 
     assert.equal(wire(off((c) => { c.honed = 1; })), null, 'a mark another door lays');
     assert.equal(salvageRefusal(it), 'gilded', 'never salvaged');
     assert.ok(reforgeRefusal(it), 'never reforged');
-    assert.equal(itemMakerRefuses(it), true, 'never the item maker\'s');
+    assert.equal(itemMakerRefuses(it), false, 'PIN MOVED (GILDED-MAKER): the item maker\'s now, its lines kept (gildedmaker.test.js)');
   }
   // PIN MOVED (GUNS-UNFOUND): the Hourlock is CreateWeapon's Dwarven Long Bow now; a gun Hourlock a save holds is its gun
   // era's, the gun's mint, at the price every gift of it was minted at

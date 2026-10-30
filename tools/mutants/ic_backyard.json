@@ -67,7 +67,7 @@
     "tests": [
       "test/world/worldWide/ic_backyard.test.js"
     ],
-    "note": "A turned yard read on the frame's axes: pieces refused in it and stood outside it."
+    "note": "A turned yard read on the frame's axes: pieces refused in it and stood outside it. FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "IC-BACKYARD-not-alone",

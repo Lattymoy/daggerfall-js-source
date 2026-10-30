@@ -228,7 +228,7 @@ dead); lane 5's `SEASONAUDIT-a-lost-answer-refused` is aimed at the kept id's li
 - **B2. A find lost to a dropped answer.** Off line or a 5xx, the find was dropped, and with no id it could not be asked
   again safely. A find now carries its own id, sixteen hex, and is asked again with it while the service cannot be
   reached: 4 s on, doubling to a minute, the deeds behind it waiting. The service keeps the id with its answer
-  (`pass_asks`, migration 0196), written in the find's own batch, so an id asked again is answered as it was and counted
+  (`pass_asks`, migration 0198), written in the find's own batch, so an id asked again is answered as it was and counted
   once (`server-account/src/battlePass.js:"const kept = rid ? await passAskOf(db, player.id, rid) : null;"`). An
   account's ids go two days after their own, at its first find of a later day: an hourly job would take a share of
   every other job's statements (`cron.js` runCron).

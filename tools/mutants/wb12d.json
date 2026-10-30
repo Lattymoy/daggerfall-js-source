@@ -1218,8 +1218,8 @@
   {
     "name": "AUDIT-WB12d-the-stood-in-a-save",
     "file": "src/scenes/riteHost.js",
-    "old": "{ yaw, site, transient: true }",
-    "new": "{ yaw, site, transient: false }",
+    "old": "{ yaw, site, transient: true, eventFoe: true }",
+    "new": "{ yaw, site, transient: false, eventFoe: true }",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js",
       "test/net/gate/wb12d_rite_host.test.js"
@@ -2784,8 +2784,8 @@
   {
     "name": "AUDIT-WB12d-T-host-faithful-facing-north",
     "file": "src/scenes/riteHost.js",
-    "old": "{ yaw, site, transient: true }).then(landed",
-    "new": "{ yaw: 0, site, transient: true }).then(landed",
+    "old": "{ yaw, site, transient: true, eventFoe: true }).then(landed",
+    "new": "{ yaw: 0, site, transient: true, eventFoe: true }).then(landed",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js",
       "test/net/gate/wb12d_rite_law.test.js",

@@ -682,6 +682,12 @@ test('AUDIT CAPTAIN\'S SEA P5: the Fleet never carries a ship across the Veil - 
 
 // ── X: the crossing and the chart ───────────────────────────────────────────────────────────────────────────────────
 
+/** A lanes' book (scenes/naval/worldLanes.js's shape) of straight ways between map pixels: each lane `[ax, ay, bx, by]`,
+ *  near everywhere, settled. */
+const laneBook = (ways, settled = () => true) => {
+  const lanes = ways.map(([ax, ay, bx, by], i) => ({ key: `l${i}`, pts: [{ x: (ax + 0.5) * 32768, z: (499.5 - ay) * 32768 }, { x: (bx + 0.5) * 32768, z: (499.5 - by) * 32768 }] }));
+  return { settled, all: () => lanes, near: () => true, way: (l) => ({ pts: l.pts }) };
+};
 /** world.js's crossing (crossGate .. etherCross, its own text) run over stand-ins: `w` the state they read, `log` what it
  *  asked of the world. */
 async function crossingWorld(over = {}) {
@@ -707,9 +713,14 @@ async function crossingWorld(over = {}) {
   class YesNoBoxWindow { constructor(o) { Object.assign(this, o); this.done = false; } answer(yes) { if (this.done) return; this.done = true; (yes ? this.onYes : this.onNo)?.(); } withdraw() { this.done = true; log.push('withdrawn'); } }
   const scope = {
     createCrossingGate: EC.createCrossingGate, createCrossLand: EC.createCrossLand, seaPixel: () => true,   // SEA-BOUNTY: the land ring built by its own module
+    // SEA-ROWS: the sea the world sails measured by its own module, over the lanes' book (`w.lanes`: one lane's way, or
+    // none) and the day's serpent (none here)
+    createCrossSea: EC.createCrossSea, worldLanes: laneBook(over.lanes ?? [], () => !w.unsettled), serpentOmen: null,
     get etherSea() { return w.etherSea; }, get etherOut() { return w.etherOut; }, csaRuntime, CROSS_CHECK_S: EC.CROSS_CHECK_S,
     gamePaused: () => w.paused, get _loading() { return w.loading; }, townTalk, modes: { get transitioning() { return w.transitioning; } }, _mode: () => w.mode,
     worldMoveBusy: () => w.busy, get _partyArrivalPending() { return w.arriving; },
+    // SEA-ROWS: Travel Options - a journey under way, the journeys that arrived; null with the mod off (AUDIT FB1029g F1)
+    travelOptions: 'travelOptions' in over ? over.travelOptions : { get isTravelActive() { return !!w.journey; }, get arrived() { return w.arrived ?? 0; } },
     playerTravelPixel: () => ({ x: w.px, y: w.py }), crossingWayAt: EC.crossingWayAt, CROSS_X: ES.CROSS_X, inEther: ES.inEther,
     veilParty: { kin: () => false },   // PIN MOVED (VEIL-PARTY): the crossing's count leaves her party out - none here
     navalHostileNear: () => w.hostile, CROSS_REFUSED: EC.CROSS_REFUSED, CROSS_STALE: EC.CROSS_STALE, CROSS_FAILED: EC.CROSS_FAILED, csaPassengersOn: () => w.passengers, YesNoBoxWindow,
@@ -748,6 +759,57 @@ test('AUDIT CAPTAIN\'S SEA X1/X3: a refusal said once in its waters, and the cro
   assert.deepEqual(d.log, [], 'the world being moved: nothing');
   d.w.busy = false; d.w.arriving = true; d.step();
   assert.deepEqual(d.log, [], 'a party member\'s helm through the arrival\'s wait: nothing');
+});
+
+test('SEA-ROWS: waters a journey sails into are the journey\'s - never asked across its way, nor at a stop there (an enemy, a window: the panel closes on any stop) - and asked where it ARRIVES; left and come back to by her own hand, asked again; refused, then a journey out of them and back, it ends there (Field-Bugs-2026-10-29g; AUDIT FB1029g F3, F4) (mutants: the journey\'s mark, the arrival, the gate told under way)', async () => {
+  const c = await crossingWorld({ journey: true });
+  c.step(6);
+  assert.deepEqual(c.log, [], 'under way: nothing');
+  c.w.journey = false; c.step(4);
+  assert.deepEqual(c.log, [], 'stopped in them: nothing - the journey\'s waters');
+  c.w.journey = true; c.step(); c.w.journey = false; c.w.arrived = 1; c.step();
+  assert.deepEqual(c.log, ['asked'], 'arrived at the spot she picked in them: asked');
+  const b = await crossingWorld({ journey: true });
+  b.step(); b.w.journey = false; b.step();
+  b.w.px = 240; b.step(); b.w.px = 150; b.step();
+  assert.deepEqual(b.log, ['asked'], 'out and back by her own hand: asked');
+  const f = await crossingWorld();
+  f.step(); f.w.overlay.answer(false);
+  f.w.journey = true; f.w.px = 240; f.step(2); f.w.px = 150; f.step(2);
+  f.w.journey = false; f.w.arrived = 1; f.step();
+  assert.deepEqual(f.log, ['asked', 'asked'], 'refused, then a journey out of them and back to a spot in them: asked there (F4)');
+  const g = await crossingWorld();
+  g.step(); g.w.overlay.answer(false);
+  g.w.journey = true; g.w.px = 240; g.step(2); g.w.px = 150; g.step(2); g.w.journey = false; g.step(2);
+  assert.deepEqual(g.log, ['asked'], 'refused, and a journey back into them stopped there: nothing');
+});
+
+test('SEA-ROWS: the sea the world sails is no crossing water on any row - a lane past the Bay, off Sunhold - and the open ocean past the Bay is, west of Sumurset (Field-Bugs-2026-10-29g; AUDIT FB1029g F5) (mutants: the sailed sea unmeasured, its reach)', async () => {
+  const s = await crossingWorld({ px: 62, py: 1573, lanes: [[40, 1560, 90, 1590]] });   // off Sunhold, by its lane
+  s.step(4);
+  assert.deepEqual(s.log, [], 'by a lane past the Bay: nothing');
+  s.w.px = 62; s.w.py = 1600; s.step();
+  assert.deepEqual(s.log, ['asked'], 'out of sight of it: asked');
+  const o = await crossingWorld({ px: -300, py: 1500 });
+  o.step();
+  assert.deepEqual(o.log, ['asked'], 'west of Sumurset, the open ocean');
+  const u = await crossingWorld();
+  u.step(); u.w.overlay.answer(false);
+  u.w.unsettled = true; u.step(3); u.w.unsettled = false; u.step(3);
+  assert.deepEqual(u.log, ['asked'], 'refused, then a check with the sea unmeasured: no word, and the refusal kept');
+});
+
+test('SEA-ROWS: with Travel Options off (its switch, offline) the crossing is asked as it always was - the journey\'s test threw on a null mod and stopped the frame (AUDIT FB1029g F1) (mutants: the journey read unguarded)', async () => {
+  const c = await crossingWorld({ travelOptions: null });
+  assert.doesNotThrow(() => c.step(2));
+  assert.deepEqual(c.log, ['asked'], 'in the crossing waters: asked');
+  const ES = await import('../../../src/world/ethericSea.js');
+  const v = await crossingWorld({ travelOptions: null, px: ES.VEIL_X + 4, py: -5000 });
+  assert.doesNotThrow(() => v.step());
+  assert.deepEqual(v.log, ['asked'], 'and home in the Veil');
+  const e = await crossingWorld({ travelOptions: null, px: 400, py: 200 });
+  assert.doesNotThrow(() => e.step(2));
+  assert.deepEqual(e.log, [], 'the Bay: nothing');
 });
 
 test('AUDIT CAPTAIN\'S SEA X2/X9: Yes is the question as it stands NOW (a load, another helm, waters left, an enemy, a passenger: said, no voyage, asked afresh); the box is taken back at a load or a jump; a voyage that cannot be made brings ship and captain back where they set out, at the helm, the way out as it was (mutants: each of Yes\'s checks, the withdrawal, the way back)', async () => {

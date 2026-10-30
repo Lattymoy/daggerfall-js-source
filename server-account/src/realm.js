@@ -938,6 +938,9 @@ export async function deleteRealm({ db, bucket, nowS = Math.floor(Date.now() / 1
   // with the delete in one batch, so the answer names exactly what went
   const [gone] = await db.batch([
     db.prepare('SELECT map_id, building_key FROM homes WHERE player = ? AND char_id = ? ORDER BY map_id, building_key').bind(playerId, id),
+    // AUDIT FB1029f A1: the homes' access rows with them (a chest's, a station's, who may rest)
+    db.prepare(`DELETE FROM decor_access WHERE EXISTS (SELECT 1 FROM homes h WHERE h.map_id = decor_access.map_id
+      AND h.building_key = decor_access.building_key AND h.player = ? AND h.char_id = ?)`).bind(playerId, id),
     db.prepare('DELETE FROM homes WHERE player = ? AND char_id = ?').bind(playerId, id),
     db.prepare('DELETE FROM guild_members WHERE player = ? AND char_id = ?').bind(playerId, id),
     db.prepare('DELETE FROM renown_tracks WHERE player = ? AND char_id = ?').bind(playerId, id),

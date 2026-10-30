@@ -53,7 +53,7 @@ bought with Aurum (`Battle-Pass.md` section 3). A ware has a **tier** - Standard
 three columns - shown as a mark on its panel; the pre-alpha wares keep their Pre-alpha mark instead.
 
 **Held by id.** The first nine wares are bits on `players.shop_wares`; the bits stay, since a stored bit is a sale that
-happened. Every later ware is held by its id in `players.shop_held`, space-separated in sale order (migration 0196): a
+happened. Every later ware is held by its id in `players.shop_held`, space-separated in sale order (migration 0198): a
 32-bit mask had room for 22 more. `shopHeldIds` reads both. The pass's items are not shop wares: they are held on
 `players.pass_items`.
 
@@ -250,9 +250,9 @@ the pose's own (`slimPose`). The session keeps a peer's kit with its id, so a pe
 effects. The service answers glyphs in GLYPHS' order, the order the mask gives the room, and GLYPHS grows only at its
 end. Pinned by `test/net/storefront_wireaudit.test.js`.
 
-**Deploy, and the rollback floor.** The relay (world291) goes before the account service (acct225) that mints `gb`, and
-`account-deploy.yml` waits for it. A relay before world291 drops a `gb` token's glyphs, or refuses one that also carries
-`gx`. So world291 is the relay's floor while acct225 or later mints: to roll the relay back, roll the service back first
+**Deploy, and the rollback floor.** The relay (world293) goes before the account service (acct227) that mints `gb`, and
+`account-deploy.yml` waits for it. A relay before world293 drops a `gb` token's glyphs, or refuses one that also carries
+`gx`. So world293 is the relay's floor while acct227 or later mints: to roll the relay back, roll the service back first
 and wait MAX_TTL_S (five minutes) for its tokens to lapse.
 
 ## 11. Not built, and why

@@ -156,12 +156,12 @@ test('THE WIRE AUDIT 5: my kill is told by the wire\'s own reach from my feet, w
 
 test('THE WIRE AUDIT 6 and 9: the relay\'s rollback floor is written where a deploy reads it, and the pose\'s kill fields are named as the code names them - `xk`, `xp`, `xh` (mutants: the floor unsaid)', () => {
   const version = rd('src/net/wire.js').split('\n').find((l) => l.startsWith('export const RELAY_VERSION = '));
-  assert.equal(RELAY_VERSION, 'world291');   // PIN MOVED: world291, STOREFRONT (world283, world286, world288, world289 then world290 on its branch, renumbered past FB1029 GROUND, FRONTS, DRAGON, HAND-WRAPS and PVP-LINGER at the merges of main); PIN MOVED: world288, STOREFRONT (world283 then world286 on its branch, renumbered past FB1029 GROUND and FRONTS at the merge of main at 05cf1838d); PIN MOVED: world286, STOREFRONT (world283 on its branch, renumbered past PVP-SAFE-HIT, AUDIT TAMRIEL-WIDE and CAPE-TOGGLE at the merge)
-  assert.match(version, /ROLLBACK FLOOR: world291 while acct225 or later mints `gb`/);
+  assert.equal(RELAY_VERSION, 'world293');   // PIN MOVED: world293, STOREFRONT (world283, world286, world288, world289, world290 then world291 on its branch, renumbered past FB1029 GROUND, FRONTS, DRAGON, HAND-WRAPS, PVP-LINGER, GILDED-GLOW and DELVE II at the merges of main); PIN MOVED: world288, STOREFRONT (world283 then world286 on its branch, renumbered past FB1029 GROUND and FRONTS at the merge of main at 05cf1838d); PIN MOVED: world286, STOREFRONT (world283 on its branch, renumbered past PVP-SAFE-HIT, AUDIT TAMRIEL-WIDE and CAPE-TOGGLE at the merge)
+  assert.match(version, /ROLLBACK FLOOR: world293 while acct227 or later mints `gb`/);
   assert.match(version, /a pose's kill \(`xk`, `xp`, `xh`\)/);
   const page = rd('bible/06-Systems/Storefront.md');
   assert.match(page, /\*\*Deploy, and the rollback floor\.\*\*/);
-  assert.match(page, /world291 is the relay's floor while acct225 or later mints/);
+  assert.match(page, /world293 is the relay's floor while acct227 or later mints/);
   assert.match(page, /\(`xk`,\n`xp`, `xh`\)/, 'section 4 names them as section 10 does');
   for (const [where, text] of [['wire.js', version], ['Storefront.md', page], ['relayversion.test.js', rd('test/net/relayversion.test.js')]]) assert.doesNotMatch(text, /`kc`, `kp`, `ks`/, `${where}: \`kc\` is a sea receipt's killer (world246), never the pose's kill`);
 });
