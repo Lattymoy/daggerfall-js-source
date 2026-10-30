@@ -448,5 +448,5 @@ A party member's gift is paid where the relay passes it (`server/src/index.js:"a
 A Shield counts only while a paid one runs. The health whole is held to the signed level's.
 
 The game declares its potions and self-cast bar spells in its report (`pvpDeclare.js:"export function declarePotion("`).
-A harmful cast carries its number, so one area cast is one price. Not yet the relay's: how many potions a pack holds,
-armour and resistances. Relay world293. Tests: `test/net/pvpvitals.test.js`. A departure: DFU has no PvP.
+A harmful cast carries its number, so one area cast is one price. Not yet the relay's: armour and
+resistances. Relay world293. Tests: `test/net/pvpvitals.test.js`. A departure: DFU has no PvP.
