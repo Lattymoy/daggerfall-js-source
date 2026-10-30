@@ -18,10 +18,10 @@
     ]
   },
   {
-    "name": "FB1016-STOLEN-GOODS-sold-stolen-shelved",
+    "name": "FB1016-STOLEN-GOODS-sold-shelved",
     "file": "src/systems/stolenGoods.js",
-    "old": "  if (isStolen(item)) return false;\n",
-    "new": "",
+    "old": "  void shelfItems; void item;\n  return false;\n",
+    "new": "  shelfItems.push(item);\n  return true;\n",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
