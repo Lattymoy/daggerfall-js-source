@@ -110,8 +110,8 @@
   {
     "name": "DISC20-B-the-synth-bypasses-the-fader",
     "file": "src/systems/song/songPlayer.js",
-    "old": "const to = this._level ?? this._fader ?? this._master;   // DISC20-B: through the fader; WBX9: and the song's own level before it",
-    "new": "const to = this._master;   // DISC20-B: through the fader; WBX9: and the song's own level before it",
+    "old": "      const to = this._level ?? this._fader ?? this._master; // DISC20-B: through the fader; WBX9: and the song's own level before it",
+    "new": "      const to = this._master; // DISC20-B: through the fader; WBX9: and the song's own level before it",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DISC20-B-the-pack-bypasses-the-fader",
     "file": "src/systems/song/songPlayer.js",
-    "old": "src.connect(this._fader ?? this._master);   // DISC20-B: through the fader",
-    "new": "src.connect(this._master);   // DISC20-B: through the fader",
+    "old": "    src.connect(this._fader ?? this._master); // DISC20-B: through the fader",
+    "new": "    src.connect(this._master); // DISC20-B: through the fader",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "DISC20-B-the-ramp-jumps-from-its-old-start",
     "file": "src/systems/song/songPlayer.js",
-    "old": "  if (typeof g.cancelAndHoldAtTime === 'function') g.cancelAndHoldAtTime(now);\n  else { const v = g.value; g.cancelScheduledValues(now); g.setValueAtTime(v, now); }\n",
-    "new": "  g.cancelScheduledValues(now);\n",
+    "old": "  if (typeof g.cancelAndHoldAtTime === 'function') g.cancelAndHoldAtTime(now);\n  else {\n    const v = g.value;\n    g.cancelScheduledValues(now);\n    g.setValueAtTime(v, now);\n  }",
+    "new": "  g.cancelScheduledValues(now);",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "DISC20-B-the-fade-rides-the-volume",
     "file": "src/systems/song/songPlayer.js",
-    "old": "  fadeTo(level, seconds) { rampFader(this.ctx, this._fader, level, seconds); }\n\n  /** The MusicVolume setting moved",
-    "new": "  fadeTo(level, seconds) { rampFader(this.ctx, this._master, level, seconds); }\n\n  /** The MusicVolume setting moved",
+    "old": "\n  /** DISC20-B: ramp the fader to `level` over `seconds` (see rampFader). */\n  fadeTo(level, seconds) {\n    rampFader(this.ctx, this._fader, level, seconds);\n  }\n\n  /** The MusicVolume setting moved (2026-08-27): follow it now, not at",
+    "new": "\n  /** DISC20-B: ramp the fader to `level` over `seconds` (see rampFader). */\n  fadeTo(level, seconds) {\n    rampFader(this.ctx, this._master, level, seconds);\n  }\n\n  /** The MusicVolume setting moved (2026-08-27): follow it now, not at",
     "tests": [
       "test/systems/disc20.test.js"
     ]

@@ -585,8 +585,8 @@
   {
     "name": "EGLOOK-player-duck-up",
     "file": "src/systems/song/songPlayer.js",
-    "old": "low = base * 10 ** (-db / 20)",
-    "new": "low = base * 10 ** (db / 20)",
+    "old": "      low = base * 10 ** (-db / 20),",
+    "new": "      low = base * 10 ** (db / 20),",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -594,8 +594,8 @@
   {
     "name": "EGLOOK-player-duck-stays",
     "file": "src/systems/song/songPlayer.js",
-    "old": "g.linearRampToValueAtTime(base, now + hold + EG_DUCK_BACK_S);",
-    "new": "g.linearRampToValueAtTime(low, now + hold + EG_DUCK_BACK_S);",
+    "old": "    g.linearRampToValueAtTime(base, now + hold + EG_DUCK_BACK_S);",
+    "new": "    g.linearRampToValueAtTime(low, now + hold + EG_DUCK_BACK_S);",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]

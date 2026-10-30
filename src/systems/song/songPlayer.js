@@ -24,10 +24,16 @@
 // the windows advance, which is what a MIDI sequencer does.
 
 import {
-  noteToHz, fmSpec, percussionSpec, velocityGain, volumeGain,
-  panPosition, bendCents, PERCUSSION_CHANNEL,
+  noteToHz,
+  fmSpec,
+  percussionSpec,
+  velocityGain,
+  volumeGain,
+  panPosition,
+  bendCents,
+  PERCUSSION_CHANNEL,
 } from '../gmSynth.js';
-import { getFloat } from '../settings/settings.js';   // SETT: MusicVolume
+import { getFloat } from '../settings/settings.js'; // SETT: MusicVolume
 
 /** How far ahead each wake-up schedules, and how often it wakes. The
  *  window must exceed the interval or notes fall through the gap. */
@@ -59,7 +65,9 @@ export const MUSIC_GAIN = 0.22;
  *  level is recomputed from the setting on unmute either way. */
 let musicMuted = false;
 export const isMusicMuted = () => musicMuted;
-export const setMusicMuted = (v) => { musicMuted = Boolean(v); };
+export const setMusicMuted = (v) => {
+  musicMuted = Boolean(v);
+};
 
 export const musicGain = () => (musicMuted ? 0 : MUSIC_GAIN * getFloat('Controls', 'MusicVolume', 0, 1));
 
@@ -70,10 +78,20 @@ export const musicGain = () => (musicMuted ? 0 : MUSIC_GAIN * getFloat('Controls
  *  turned round half way turns round where it is; a zero length sets it at once. */
 export function rampFader(ctx, fader, level, seconds) {
   if (!fader || !ctx) return;
-  const g = fader.gain, now = ctx.currentTime;
-  if (!(seconds > 0)) { g.cancelScheduledValues(now); g.setValueAtTime(level, now); g.value = level; return; }
+  const g = fader.gain,
+    now = ctx.currentTime;
+  if (!(seconds > 0)) {
+    g.cancelScheduledValues(now);
+    g.setValueAtTime(level, now);
+    g.value = level;
+    return;
+  }
   if (typeof g.cancelAndHoldAtTime === 'function') g.cancelAndHoldAtTime(now);
-  else { const v = g.value; g.cancelScheduledValues(now); g.setValueAtTime(v, now); }
+  else {
+    const v = g.value;
+    g.cancelScheduledValues(now);
+    g.setValueAtTime(v, now);
+  }
   g.linearRampToValueAtTime(level, now + seconds);
 }
 
@@ -91,7 +109,8 @@ export const trackGain = () => (musicMuted ? 0 : getFloat('Controls', 'MusicVolu
 export const SONG_LEVEL_MAX = 4;
 /** EG-G2: how long a duck takes to come back up (s - SongPlayer.duck). */
 export const EG_DUCK_BACK_S = 0.12;
-export const songLevel = (song) => (Number.isFinite(song?.level) && song.level > 0 ? Math.min(SONG_LEVEL_MAX, song.level) : 1);
+export const songLevel = (song) =>
+  Number.isFinite(song?.level) && song.level > 0 ? Math.min(SONG_LEVEL_MAX, song.level) : 1;
 
 /** WB10a (2026-09-30, Mac: "make it more loud, just feel like its too quite"): A SONG'S OWN PRESS - a song may carry
  *  `press`, a compressor it is played through, and how far its output is carried after it (`out`). The level alone
@@ -105,7 +124,12 @@ export const songLevel = (song) => (Number.isFinite(song?.level) && song.level >
 export const PRESS_OUT_MAX = 8;
 export const PRESS_CEILING_MIN = -24;
 export const PRESS_RANGE = Object.freeze({
-  threshold: [-100, 0, -24], knee: [0, 40, 6], ratio: [1, 20, 8], attack: [0, 1, 0.003], release: [0, 1, 0.25], out: [0, PRESS_OUT_MAX, 1],
+  threshold: [-100, 0, -24],
+  knee: [0, 40, 6],
+  ratio: [1, 20, 8],
+  attack: [0, 1, 0.003],
+  release: [0, 1, 0.25],
+  out: [0, PRESS_OUT_MAX, 1],
   ceiling: [PRESS_CEILING_MIN, 0, 0],
 });
 /** WB10a: THE CEILING - the most a pressed song can reach at the speakers at the HIGHEST MusicVolume, in dBFS: a soft
@@ -118,7 +142,8 @@ export function songPress(song) {
   const p = song?.press;
   if (!p || typeof p !== 'object') return null;
   const out = {};
-  for (const [k, [lo, hi, dflt]] of Object.entries(PRESS_RANGE)) out[k] = Number.isFinite(p[k]) ? Math.min(hi, Math.max(lo, p[k])) : dflt;
+  for (const [k, [lo, hi, dflt]] of Object.entries(PRESS_RANGE))
+    out[k] = Number.isFinite(p[k]) ? Math.min(hi, Math.max(lo, p[k])) : dflt;
   if (!(out.out > 0)) out.out = PRESS_RANGE.out[2];
   return out;
 }
@@ -144,10 +169,33 @@ export function songPress(song) {
  *  noise's crack). Every song MIDI.BSA holds carries neither and plays the bank exactly as it always has. A field out
  *  of its range is held to it, one that is not a number is dropped. Pure. */
 export const VOICE_RANGE = Object.freeze({
-  car: [0.25, 8], mod: [0.25, 12], index: [0, 12], idxDecay: [0.01, 4], attack: [0.001, 2], decay: [0.01, 4], sustain: [0, 1], release: [0.01, 4], gain: [0, 1.5],
-  unison: [1, 4], cents: [0, 40], sub: [0, 1], spread: [0, 1], vibrato: [0, 50], vibRate: [0.5, 12], noise: [0, 1],
-  saw: [0, 1], cutoff: [1, 64], cutQ: [0.3, 8], air: [-30, 0], ensemble: [0, 1], ensembleRate: [0.1, 4], ensembleMs: [1, 30], idxFloor: [0.05, 1],
-  arc: [0, 1], sway: [0, 1], swayRate: [0.05, 2],
+  car: [0.25, 8],
+  mod: [0.25, 12],
+  index: [0, 12],
+  idxDecay: [0.01, 4],
+  attack: [0.001, 2],
+  decay: [0.01, 4],
+  sustain: [0, 1],
+  release: [0.01, 4],
+  gain: [0, 1.5],
+  unison: [1, 4],
+  cents: [0, 40],
+  sub: [0, 1],
+  spread: [0, 1],
+  vibrato: [0, 50],
+  vibRate: [0.5, 12],
+  noise: [0, 1],
+  saw: [0, 1],
+  cutoff: [1, 64],
+  cutQ: [0.3, 8],
+  air: [-30, 0],
+  ensemble: [0, 1],
+  ensembleRate: [0.1, 4],
+  ensembleMs: [1, 30],
+  idxFloor: [0.05, 1],
+  arc: [0, 1],
+  sway: [0, 1],
+  swayRate: [0.05, 2],
 });
 /** INTRO3c: a voice's `body` - up to four resonances `[Hz, dB, Q]`, each held to its range; null for none, or none usable. */
 export function heldBody(list) {
@@ -155,15 +203,29 @@ export function heldBody(list) {
   const out = [];
   for (const r of list.slice(0, 4)) {
     if (!Array.isArray(r) || r.length < 3 || !r.slice(0, 3).every(Number.isFinite)) continue;
-    out.push([Math.min(12000, Math.max(40, r[0])), Math.min(24, Math.max(-24, r[1])), Math.min(12, Math.max(0.3, r[2]))]);
+    out.push([
+      Math.min(12000, Math.max(40, r[0])),
+      Math.min(24, Math.max(-24, r[1])),
+      Math.min(12, Math.max(0.3, r[2])),
+    ]);
   }
   return out.length ? out : null;
 }
-export const KIT_RANGE = Object.freeze({ hz: [20, 12000], attack: [0.001, 0.2], decay: [0.01, 3], gain: [0, 1.5], drop: [0.1, 1], q: [0.2, 12], click: [0, 1], body: [0, 400] });
+export const KIT_RANGE = Object.freeze({
+  hz: [20, 12000],
+  attack: [0.001, 0.2],
+  decay: [0.01, 3],
+  gain: [0, 1.5],
+  drop: [0.1, 1],
+  q: [0.2, 12],
+  click: [0, 1],
+  body: [0, 400],
+});
 const held = (o, range) => {
   if (!o || typeof o !== 'object') return null;
   const out = {};
-  for (const [k, [lo, hi]] of Object.entries(range)) if (Number.isFinite(o[k])) out[k] = Math.min(hi, Math.max(lo, o[k]));
+  for (const [k, [lo, hi]] of Object.entries(range))
+    if (Number.isFinite(o[k])) out[k] = Math.min(hi, Math.max(lo, o[k]));
   return Object.keys(out).length ? out : null;
 };
 /** EG-ROAR: a song's channels' voices, `[16]` (null where the bank's own plays), or null for a song that names none. */
@@ -173,7 +235,7 @@ export function songVoices(song) {
   const out = new Array(16).fill(null);
   for (let c = 0; c < 16; c++) {
     let s = held(v[c], VOICE_RANGE);
-    const body = heldBody(v[c]?.body);   // INTRO3c: the resonances, a list not a number
+    const body = heldBody(v[c]?.body); // INTRO3c: the resonances, a list not a number
     if (body) s = { ...(s ?? {}), body };
     if (s && 'unison' in s) s.unison = Math.round(s.unison);
     out[c] = s;
@@ -185,7 +247,11 @@ export function songKit(song) {
   const k = song?.kit;
   if (!k || typeof k !== 'object') return null;
   const out = new Map();
-  for (const [key, o] of Object.entries(k)) { const n = Number(key), s = held(o, KIT_RANGE); if (Number.isInteger(n) && n >= 0 && n <= 127 && s) out.set(n, s); }
+  for (const [key, o] of Object.entries(k)) {
+    const n = Number(key),
+      s = held(o, KIT_RANGE);
+    if (Number.isInteger(n) && n >= 0 && n <= 127 && s) out.set(n, s);
+  }
   return out.size ? out : null;
 }
 /** INTRO3c: A SONG'S OWN TONE - `tone`, the shape of the whole mix between the fader and the master: `bands`, up to four
@@ -195,9 +261,14 @@ export function songKit(song) {
 export function songTone(song) {
   const t = song?.tone;
   if (!t || typeof t !== 'object') return null;
-  const shelf = (v) => (Array.isArray(v) && v.length >= 2 && Number.isFinite(v[0]) && Number.isFinite(v[1]) ? [Math.min(16000, Math.max(20, v[0])), Math.min(24, Math.max(-24, v[1]))] : null);
+  const shelf = (v) =>
+    Array.isArray(v) && v.length >= 2 && Number.isFinite(v[0]) && Number.isFinite(v[1])
+      ? [Math.min(16000, Math.max(20, v[0])), Math.min(24, Math.max(-24, v[1]))]
+      : null;
   const out = {};
-  const bands = heldBody(t.bands), low = shelf(t.low), high = shelf(t.high);
+  const bands = heldBody(t.bands),
+    low = shelf(t.low),
+    high = shelf(t.high);
   if (bands) out.bands = bands;
   if (low) out.low = low;
   if (high) out.high = high;
@@ -215,7 +286,9 @@ export function unisonCents(n, cents) {
 /** INTRO3d: params that move slowly (a bow's cutoff, a vibrato's pitch) read once a render quantum (2.7 ms), not a
  *  sample: a biquad recomputes its coefficients every sample while a param is a-rate, and an a-rate pitch puts the
  *  oscillator on its per-sample path. An engine without `automationRate` keeps a-rate, as before. */
-const slow = (...params) => { for (const p of params) if (p && 'automationRate' in p) p.automationRate = 'k-rate'; };
+const slow = (...params) => {
+  for (const p of params) if (p && 'automationRate' in p) p.automationRate = 'k-rate';
+};
 
 /** WB10a: the ceiling in the song's own amplitude (before the music's master, MUSIC_GAIN at the highest MusicVolume). */
 export const ceilingAmplitude = (dbfs) => Math.pow(10, dbfs / 20) / MUSIC_GAIN;
@@ -245,12 +318,17 @@ export function eventsInWindow(events, fromTick, toTick) {
   // OW-HITCH (2026-10-21, the owner: "Theres still a lot of hitching in the overworld"): the window's first event found by
   // halving - the events are tick-ordered - where every pump walked the song from its first event (a long cue late in
   // its play: thousands of events a pump, a pump every few frames, in the real game's journey profile). The same events.
-  let lo = 0, hi = events.length;
-  while (lo < hi) { const mid = (lo + hi) >>> 1; if (events[mid].tick < fromTick) lo = mid + 1; else hi = mid; }
+  let lo = 0,
+    hi = events.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if (events[mid].tick < fromTick) lo = mid + 1;
+    else hi = mid;
+  }
   const out = [];
   for (let i = lo; i < events.length; i++) {
     const e = events[i];
-    if (e.tick >= toTick) break;          // events are tick-ordered
+    if (e.tick >= toTick) break; // events are tick-ordered
     out.push(e);
   }
   return out;
@@ -372,18 +450,18 @@ export class SongPlayer {
    */
   constructor(ctx, destination = null, reverbSend = null) {
     this.ctx = ctx;
-    this._reverbSend = reverbSend;   // AUDIT-BA F4: the audio engine's reverb send - Unity's zone takes the music's AudioSource at reverbZoneMix 1 like every other
+    this._reverbSend = reverbSend; // AUDIT-BA F4: the audio engine's reverb send - Unity's zone takes the music's AudioSource at reverbZoneMix 1 like every other
     this.song = null;
     this.playing = false;
     this.loop = true;
     this._timer = null;
     this._voices = [];
     this._master = null;
-    this._fader = null;   // DISC20-B: built with the master
-    this._level = null;   // WBX9: built with the master
-    this._press = null;   // WB10a: built the first time a song asks for one
-    this._tone = null;   // INTRO3c: the song's tone chain, fader to master, for the songs that carry one
-    this._levelTo = null;   // WB10a: where the level runs - the fader, or the press
+    this._fader = null; // DISC20-B: built with the master
+    this._level = null; // WBX9: built with the master
+    this._press = null; // WB10a: built the first time a song asks for one
+    this._tone = null; // INTRO3c: the song's tone chain, fader to master, for the songs that carry one
+    this._levelTo = null; // WB10a: where the level runs - the fader, or the press
     this._destination = destination;
   }
 
@@ -392,11 +470,11 @@ export class SongPlayer {
     this._master = this.ctx.createGain();
     this._master.gain.value = musicGain();
     this._master.connect(this._destination ?? this.ctx.destination);
-    if (this._reverbSend) this._master.connect(this._reverbSend);   // AUDIT-BA F4
-    this._fader = this.ctx.createGain();   // DISC20-B: the transition's own gain, under the volume
+    if (this._reverbSend) this._master.connect(this._reverbSend); // AUDIT-BA F4
+    this._fader = this.ctx.createGain(); // DISC20-B: the transition's own gain, under the volume
     this._fader.gain.value = 1;
     this._fader.connect(this._master);
-    this._level = this.ctx.createGain();   // WBX9: the song's own level, under the fader
+    this._level = this.ctx.createGain(); // WBX9: the song's own level, under the fader
     this._level.gain.value = 1;
     this._level.connect(this._fader);
     this._levelTo = this._fader;
@@ -407,17 +485,36 @@ export class SongPlayer {
    *  the graph it always did); a context with no filter plays the song untoned. */
   _routeTone(tone) {
     if (!this._fader || !this._master || (!tone && !this._tone)) return;
-    for (const f of this._tone ?? []) { try { f.disconnect(); } catch { /* gone */ } }
+    for (const f of this._tone ?? []) {
+      try {
+        f.disconnect();
+      } catch {
+        /* gone */
+      }
+    }
     this._tone = null;
     this._fader.disconnect();
-    if (!tone || typeof this.ctx.createBiquadFilter !== 'function') { this._fader.connect(this._master); return; }
+    if (!tone || typeof this.ctx.createBiquadFilter !== 'function') {
+      this._fader.connect(this._master);
+      return;
+    }
     const chain = [];
-    const add = (type, hz, db, q) => { const f = this.ctx.createBiquadFilter(); f.type = type; f.frequency.value = hz; f.gain.value = db; if (q) f.Q.value = q; chain.push(f); };
+    const add = (type, hz, db, q) => {
+      const f = this.ctx.createBiquadFilter();
+      f.type = type;
+      f.frequency.value = hz;
+      f.gain.value = db;
+      if (q) f.Q.value = q;
+      chain.push(f);
+    };
     if (tone.low) add('lowshelf', tone.low[0], tone.low[1]);
     for (const [hz, db, q] of tone.bands ?? []) add('peaking', hz, db, q);
     if (tone.high) add('highshelf', tone.high[0], tone.high[1]);
     let node = this._fader;
-    for (const f of chain) { node.connect(f); node = f; }
+    for (const f of chain) {
+      node.connect(f);
+      node = f;
+    }
     node.connect(this._master);
     this._tone = chain;
   }
@@ -430,11 +527,18 @@ export class SongPlayer {
   _routePress(press) {
     if (!this._level) return;
     let to = this._fader;
-    if (press && typeof this.ctx.createDynamicsCompressor === 'function' && typeof this.ctx.createWaveShaper === 'function') {
+    if (
+      press &&
+      typeof this.ctx.createDynamicsCompressor === 'function' &&
+      typeof this.ctx.createWaveShaper === 'function'
+    ) {
       if (!this._press) {
-        const comp = this.ctx.createDynamicsCompressor(), out = this.ctx.createGain(), shaper = this.ctx.createWaveShaper(), top = this.ctx.createGain();
+        const comp = this.ctx.createDynamicsCompressor(),
+          out = this.ctx.createGain(),
+          shaper = this.ctx.createWaveShaper(),
+          top = this.ctx.createGain();
         shaper.curve = ceilingCurve();
-        shaper.oversample = '4x';   // the clip's harmonics folded back under the audible band, not into it
+        shaper.oversample = '4x'; // the clip's harmonics folded back under the audible band, not into it
         comp.connect(out);
         out.connect(shaper);
         shaper.connect(top);
@@ -451,13 +555,28 @@ export class SongPlayer {
     // EG-ROAR: THE FLOOR - a song that carries its own voices is high-passed at SONG_FLOOR_HZ before its press: a 1:1 FM
     // voice's first lower sideband lands on 0 Hz, an offset no speaker plays that the press would answer by pressing
     // the whole song (measured - a quarter of the spiccato's energy under 40 Hz)
-    const hp = this._songVoices && typeof this.ctx.createBiquadFilter === 'function' ? (this._floor ??= this._makeFloor()) : null;
+    const hp =
+      this._songVoices && typeof this.ctx.createBiquadFilter === 'function'
+        ? (this._floor ??= this._makeFloor())
+        : null;
     if (hp) {
-      if (this._floorTo !== to) { try { hp.disconnect(); } catch { /* nothing connected */ } hp.connect(to); this._floorTo = to; }
+      if (this._floorTo !== to) {
+        try {
+          hp.disconnect();
+        } catch {
+          /* nothing connected */
+        }
+        hp.connect(to);
+        this._floorTo = to;
+      }
       to = hp;
     }
     if (this._levelTo === to) return;
-    try { this._level.disconnect(); } catch { /* nothing connected */ }
+    try {
+      this._level.disconnect();
+    } catch {
+      /* nothing connected */
+    }
     this._level.connect(to);
     this._levelTo = to;
   }
@@ -465,7 +584,9 @@ export class SongPlayer {
   /** EG-ROAR: the floor's high-pass, made once. */
   _makeFloor() {
     const f = this.ctx.createBiquadFilter();
-    f.type = 'highpass'; f.frequency.value = SONG_FLOOR_HZ; f.Q.value = Math.SQRT1_2;
+    f.type = 'highpass';
+    f.frequency.value = SONG_FLOOR_HZ;
+    f.Q.value = Math.SQRT1_2;
     return f;
   }
 
@@ -475,7 +596,10 @@ export class SongPlayer {
   duck(db, seconds) {
     const g = this._level?.gain;
     if (!g || !this.ctx || !(db > 0)) return;
-    const now = this.ctx.currentTime, base = songLevel(this.song), low = base * 10 ** (-db / 20), hold = Math.max(0.02, seconds);
+    const now = this.ctx.currentTime,
+      base = songLevel(this.song),
+      low = base * 10 ** (-db / 20),
+      hold = Math.max(0.02, seconds);
     g.cancelScheduledValues(now);
     g.setValueAtTime(g.value, now);
     g.linearRampToValueAtTime(low, now + 0.02);
@@ -484,7 +608,9 @@ export class SongPlayer {
   }
 
   /** DISC20-B: ramp the fader to `level` over `seconds` (see rampFader). */
-  fadeTo(level, seconds) { rampFader(this.ctx, this._fader, level, seconds); }
+  fadeTo(level, seconds) {
+    rampFader(this.ctx, this._fader, level, seconds);
+  }
 
   /** The MusicVolume setting moved (2026-08-27): follow it now, not at
    *  the next song. A short ramp, so a slider drag is not a zipper. */
@@ -502,20 +628,20 @@ export class SongPlayer {
     if (this.playing && this.song === song) return true;
     this.stop();
     this._ensureMaster();
-    if (this._level) this._level.gain.value = songLevel(song);   // WBX9: the song's own level - 1 for every song but the ones that carry one
-    this._songVoices = songVoices(song); this._songKit = songKit(song);   // EG-ROAR: its own voices - none for every song but the ones that carry them (and the floor under them, _routePress)
-    if (this._songVoices || this._voicedChains) this._dropChannelChains();   // INTRO3c: a voiced song's channels play through their own body and ensemble - built for this song, not the last
+    if (this._level) this._level.gain.value = songLevel(song); // WBX9: the song's own level - 1 for every song but the ones that carry one
+    this._songVoices = songVoices(song);
+    this._songKit = songKit(song); // EG-ROAR: its own voices - none for every song but the ones that carry them (and the floor under them, _routePress)
+    if (this._songVoices || this._voicedChains) this._dropChannelChains(); // INTRO3c: a voiced song's channels play through their own body and ensemble - built for this song, not the last
     this._voicedChains = !!this._songVoices;
-    this._routePress(songPress(song));   // WB10a: and its press - none for every song but the ones that carry one
-    this._routeTone(songTone(song));   // INTRO3c: and its tone - none for every song but the ones that carry one
+    this._routePress(songPress(song)); // WB10a: and its press - none for every song but the ones that carry one
+    this._routeTone(songTone(song)); // INTRO3c: and its tone - none for every song but the ones that carry one
     this.song = song;
     // Computed once per song, not per window: the pedal map is a pure
     // function of the event list and the scheduler re-enters constantly.
-    this._sustain = sustainIntervals(song.events,
-      Number.isFinite(song.durationTicks) ? song.durationTicks : Infinity);
+    this._sustain = sustainIntervals(song.events, Number.isFinite(song.durationTicks) ? song.durationTicks : Infinity);
     this.playing = true;
     this._state = freshChannelState();
-    this._resyncChannelGains();   // audio-4: a new song starts at full channel volume
+    this._resyncChannelGains(); // audio-4: a new song starts at full channel volume
     this._cursorTick = 0;
     // Everything is scheduled relative to this, so the whole song shares
     // one origin and cannot drift against the wall clock.
@@ -527,10 +653,17 @@ export class SongPlayer {
 
   stop() {
     this.playing = false;
-    if (this._timer !== null) { clearInterval(this._timer); this._timer = null; }
+    if (this._timer !== null) {
+      clearInterval(this._timer);
+      this._timer = null;
+    }
     this._cancelChannelGains();
     for (const v of this._voices) {
-      try { v.stop(); } catch { /* already stopped */ }
+      try {
+        v.stop();
+      } catch {
+        /* already stopped */
+      }
     }
     this._voices = [];
     this.song = null;
@@ -575,8 +708,11 @@ export class SongPlayer {
         // archive puts 15,017 of them inside notes that are already sounding.
         if (e.type !== 'noteOn') this._control(e, this._originTime + e.tick * secondsPerTick);
         if (e.type !== 'noteOn' || !e.velocity) continue;
-        this._voice(e, this._originTime + e.tick * secondsPerTick,
-          sustainedDuration(e.tick, e.duration || 0, this._sustain?.get(e.channel)) * secondsPerTick);
+        this._voice(
+          e,
+          this._originTime + e.tick * secondsPerTick,
+          sustainedDuration(e.tick, e.duration || 0, this._sustain?.get(e.channel)) * secondsPerTick,
+        );
       }
       this._cursorTick = toTick;
     }
@@ -602,12 +738,15 @@ export class SongPlayer {
     // rather than waiting, so the loop seam is scheduled ahead like any
     // other window.
     if (nowTick > durationTicks + 1 / secondsPerTick) {
-      if (!this.loop) { this.stop(); return; }
+      if (!this.loop) {
+        this.stop();
+        return;
+      }
       this._state = freshChannelState();
-      this._resyncChannelGains();   // audio-4: the seam carries no stale CC7
+      this._resyncChannelGains(); // audio-4: the seam carries no stale CC7
       this._cursorTick = 0;
       this._originTime = this._origin(LOOP_LEAD_SECONDS);
-      this._pump();          // schedule the seam NOW, not on the next tick
+      this._pump(); // schedule the seam NOW, not on the next tick
       return;
     }
     // Drop finished voices so a long song does not grow an unbounded list.
@@ -625,8 +764,10 @@ export class SongPlayer {
   /** The stall skip (AUDIT 19 F8): fold the skipped control events forward so the instruments and volumes on the far
    *  side of the gap are still right. MIDI-OUT1: its own method, so the MIDI-out player can tell the device too. */
   _skip(toTick) {
-    applyChannelEvents(this._state, eventsInWindow(this.song.events, 0, toTick)
-      .filter((e) => e.type !== 'noteOn'));
+    applyChannelEvents(
+      this._state,
+      eventsInWindow(this.song.events, 0, toTick).filter((e) => e.type !== 'noteOn'),
+    );
   }
 
   /** Build and schedule ONE note. The only method that touches the graph. */
@@ -644,7 +785,7 @@ export class SongPlayer {
     let spec;
 
     if (e.channel === PERCUSSION_CHANNEL) {
-      const own = this._songKit?.get(e.note) ?? null;   // EG-ROAR: the song's own drum, over the kit's
+      const own = this._songKit?.get(e.note) ?? null; // EG-ROAR: the song's own drum, over the kit's
       spec = own ? { ...percussionSpec(e.note), ...own } : percussionSpec(e.note);
       if (spec.kind === 'noise') {
         node = ctx.createBufferSource();
@@ -677,8 +818,14 @@ export class SongPlayer {
       this._connect(gain, ch.pan, e.channel);
       node.start(when);
       node.stop(when + spec.attack + spec.decay + 0.02);
-      const extra = own ? this._drumLayers(spec, when, peak, ch.pan, e.channel) : null;   // EG-ROAR: its click and its body
-      this._voices.push({ stop: () => { node.stop(); extra?.forEach((x) => x.stop()); }, endsAt: when + spec.attack + spec.decay });
+      const extra = own ? this._drumLayers(spec, when, peak, ch.pan, e.channel) : null; // EG-ROAR: its click and its body
+      this._voices.push({
+        stop: () => {
+          node.stop();
+          extra?.forEach((x) => x.stop());
+        },
+        endsAt: when + spec.attack + spec.decay,
+      });
       return;
     }
 
@@ -687,7 +834,7 @@ export class SongPlayer {
     // The modulator's output is in Hz, so a gain of index*hz gives a
     // modulation depth of `index` multiples of the carrier - which is
     // what "brightness" means in FM.
-    const own = this._songVoices?.[e.channel] ?? null;   // EG-ROAR: the song's own voice, over the program's
+    const own = this._songVoices?.[e.channel] ?? null; // EG-ROAR: the song's own voice, over the program's
     spec = own ? { ...fmSpec(ch.program), ...own } : fmSpec(ch.program);
     const hz = noteToHz(e.note);
     const t0 = when;
@@ -699,13 +846,17 @@ export class SongPlayer {
     // EG-ROAR: a unison is `unison` pairs, each set off the note by its cents (unisonCents) and begun a share of a
     // period apart so the copies do not all start in phase; one pair is the bank's own note. A `spread` unison lays its
     // copies in turn either side of the channel's place, each side its own envelope; the sub stands between them
-    const offs = unisonCents(own?.unison ?? 1, own?.cents ?? 0), oscs = [], detunes = [], links = [];
-    const peak = (amp * spec.gain) / Math.sqrt(offs.length);   // a unison as loud as the one pair it stands for
+    const offs = unisonCents(own?.unison ?? 1, own?.cents ?? 0),
+      oscs = [],
+      detunes = [],
+      links = [];
+    const peak = (amp * spec.gain) / Math.sqrt(offs.length); // a unison as loud as the one pair it stands for
     const sustain = Math.max(0.0001, peak * spec.sustain);
     const sides = own?.spread > 0 && offs.length > 1 ? [gain, ctx.createGain()] : [gain];
     // INTRO3c: a BOWED voice's copies are sawtooths into a low-pass a side (_bow) - the string's own waveform under the
     // bow's pressure - and carry no modulator; every other voice is the FM pair the bank has always played
-    const bowed = own?.saw > 0, into = bowed ? sides.map((side) => this._bow(spec, hz, e.velocity, side, t0, tA, tD)) : sides;
+    const bowed = own?.saw > 0,
+      into = bowed ? sides.map((side) => this._bow(spec, hz, e.velocity, side, t0, tA, tD)) : sides;
     for (let u = 0; u < offs.length; u++) {
       const at = t0 + (u * 0.29) / hz;
       const carrier = ctx.createOscillator();
@@ -728,21 +879,31 @@ export class SongPlayer {
         modGain.gain.setValueAtTime(depth, t0);
         // INTRO3c: ...to `idxFloor` of itself (12% unnamed - a sine, near enough): a horn holds its brightness
         modGain.gain.exponentialRampToValueAtTime(
-          Math.max(1, depth * (spec.idxFloor ?? 0.12)), t0 + Math.max(0.02, spec.idxDecay));
+          Math.max(1, depth * (spec.idxFloor ?? 0.12)),
+          t0 + Math.max(0.02, spec.idxDecay),
+        );
         mod.connect(modGain);
         modGain.connect(carrier.frequency);
         mod.start(at);
         oscs.push(mod);
       }
       let out = into[u % into.length];
-      if (own?.sway > 0) { const g = ctx.createGain(); g.connect(out); out = g; const sway = this._sway(own, e.channel, u, offs.length); sway.connect(g.gain); links.push([sway, g.gain]); }   // INTRO3c: the section's sway
+      if (own?.sway > 0) {
+        const g = ctx.createGain();
+        g.connect(out);
+        out = g;
+        const sway = this._sway(own, e.channel, u, offs.length);
+        sway.connect(g.gain);
+        links.push([sway, g.gain]);
+      } // INTRO3c: the section's sway
       carrier.connect(out);
       carrier.start(at);
-      oscs.push(carrier); detunes.push(carrier.detune, mod ? mod.detune : carrier.detune);   // two a copy: a bend's spread map counts pairs
-      if (own?.vibrato > 0) links.push(...this._vibrato(carrier, mod, own, e.channel, u, offs.length, t0, tA));   // INTRO3c
+      oscs.push(carrier);
+      detunes.push(carrier.detune, mod ? mod.detune : carrier.detune); // two a copy: a bend's spread map counts pairs
+      if (own?.vibrato > 0) links.push(...this._vibrato(carrier, mod, own, e.channel, u, offs.length, t0, tA)); // INTRO3c
     }
-    if (own?.noise > 0) oscs.push(this._breath(hz, own.noise, into, t0, tA));   // INTRO3c: the bow's bite, as the note starts
-    const subN = own?.sub > 0 ? ctx.createOscillator() : null;   // EG-ROAR: the sub, an octave under, inside the note's own envelope
+    if (own?.noise > 0) oscs.push(this._breath(hz, own.noise, into, t0, tA)); // INTRO3c: the bow's bite, as the note starts
+    const subN = own?.sub > 0 ? ctx.createOscillator() : null; // EG-ROAR: the sub, an octave under, inside the note's own envelope
     if (subN) {
       const subG = ctx.createGain();
       subN.type = 'sine';
@@ -752,7 +913,8 @@ export class SongPlayer {
       subN.connect(subG);
       for (const g of sides) subG.connect(g);
       subN.start(t0);
-      oscs.push(subN); detunes.push(subN.detune);
+      oscs.push(subN);
+      detunes.push(subN.detune);
     }
 
     // INTRO3c: THE BOW'S ARC - a held note (its sustain a quarter second or more past the decay, its crest past the decay)
@@ -764,26 +926,49 @@ export class SongPlayer {
       g.gain.setValueAtTime(0.0001, t0);
       g.gain.linearRampToValueAtTime(Math.max(0.0001, peak), tA);
       g.gain.exponentialRampToValueAtTime(arc ? Math.max(0.0001, sustain * (1 - 0.4 * arc)) : sustain, tD);
-      if (arc) { g.gain.exponentialRampToValueAtTime(sustain, crest); g.gain.exponentialRampToValueAtTime(Math.max(0.0001, sustain * (1 - 0.6 * arc)), tOff); }
-      else g.gain.setValueAtTime(sustain, tOff);
+      if (arc) {
+        g.gain.exponentialRampToValueAtTime(sustain, crest);
+        g.gain.exponentialRampToValueAtTime(Math.max(0.0001, sustain * (1 - 0.6 * arc)), tOff);
+      } else g.gain.setValueAtTime(sustain, tOff);
       g.gain.exponentialRampToValueAtTime(0.0001, end);
     }
 
-    const outs = sides.length > 1
-      ? [this._connect(sides[0], Math.max(-1, (ch.pan ?? 0) - own.spread), e.channel), this._connect(sides[1], Math.min(1, (ch.pan ?? 0) + own.spread), e.channel)]
-      : [this._connect(gain, ch.pan, e.channel)];
+    const outs =
+      sides.length > 1
+        ? [
+            this._connect(sides[0], Math.max(-1, (ch.pan ?? 0) - own.spread), e.channel),
+            this._connect(sides[1], Math.min(1, (ch.pan ?? 0) + own.spread), e.channel),
+          ]
+        : [this._connect(gain, ch.pan, e.channel)];
     for (const o of oscs) o.stop(end + 0.02);
     // INTRO3d (2026-10-24, the owner: "Intro music is broken"): A FINISHED NOTE LETS GO. Chromium does not disable a
     // chain whose nodes take more than one input (a bow's low-pass a side, the bite into both), so every finished
     // INTRO3c note stayed on its channel and was pulled every quantum - 440 dead filters and 520 dead panners by 40 s,
     // the theme 6 s behind its film. Its outputs leave the channel and the shared sines leave it as it ends.
     oscs[0].onended = () => {
-      for (const n of outs) { try { n.disconnect(); } catch { /* gone with the context */ } }
-      for (const [from, to] of links) { try { from.disconnect(to); } catch { /* gone with the context */ } }
+      for (const n of outs) {
+        try {
+          n.disconnect();
+        } catch {
+          /* gone with the context */
+        }
+      }
+      for (const [from, to] of links) {
+        try {
+          from.disconnect(to);
+        } catch {
+          /* gone with the context */
+        }
+      }
     };
     this._voices.push({
-      stop: () => { for (const o of oscs) o.stop(); }, endsAt: end,
-      channel: e.channel, detunes, offs: offs.length > 1 ? [...offs.flatMap((c) => [c, c]), ...(subN ? [0] : [])] : null,   // INTRO3d: a unison's, by its copies (a bowed one's oscillators are one a copy)
+      stop: () => {
+        for (const o of oscs) o.stop();
+      },
+      endsAt: end,
+      channel: e.channel,
+      detunes,
+      offs: offs.length > 1 ? [...offs.flatMap((c) => [c, c]), ...(subN ? [0] : [])] : null, // INTRO3d: a unison's, by its copies (a bowed one's oscillators are one a copy)
     });
   }
 
@@ -796,7 +981,8 @@ export class SongPlayer {
    *  detune, which costs an exp2 a sample an oscillator; returns the note's [lfo, depth] links, let go as it ends. */
   _vibrato(carrier, mod, own, channel, u, n, t0, tA) {
     const lfo = this._channelLfo(channel, `vib${u}`, (own.vibRate ?? 5.5) * (1 + 0.06 * (u - (n - 1) / 2)));
-    const span = Math.pow(2, own.vibrato / 1200) - 1, links = [];
+    const span = Math.pow(2, own.vibrato / 1200) - 1,
+      links = [];
     for (const osc of mod ? [carrier, mod] : [carrier]) {
       const depth = this.ctx.createGain();
       depth.gain.setValueAtTime(0, t0);
@@ -813,7 +999,12 @@ export class SongPlayer {
    *  the others', so a held chord moves instead of standing. INTRO3d: the channel's sine for copy `u`, at its depth
    *  (_channelLfo) - every note's copy `u` sways on it, so a player's breath runs on across notes. */
   _sway(own, channel, u, n) {
-    return this._channelLfo(channel, `sway${u}`, (own.swayRate ?? 0.3) * (1 + 0.21 * (u - (n - 1) / 2)), 0.3 * own.sway);
+    return this._channelLfo(
+      channel,
+      `sway${u}`,
+      (own.swayRate ?? 0.3) * (1 + 0.21 * (u - (n - 1) / 2)),
+      0.3 * own.sway,
+    );
   }
 
   /** INTRO3d: A CHANNEL'S SINE - one oscillator at `hz` a channel a key, through a gain of `scale` when it is not 1,
@@ -823,9 +1014,14 @@ export class SongPlayer {
     const bank = ((this._chLfos ??= {})[channel] ??= {});
     if (!bank[key]) {
       const lfo = this.ctx.createOscillator();
-      lfo.type = 'sine'; lfo.frequency.value = hz;
+      lfo.type = 'sine';
+      lfo.frequency.value = hz;
       let out = lfo;
-      if (scale !== 1) { out = this.ctx.createGain(); out.gain.value = scale; lfo.connect(out); }
+      if (scale !== 1) {
+        out = this.ctx.createGain();
+        out.gain.value = scale;
+        lfo.connect(out);
+      }
       lfo.start(this.ctx.currentTime);
       bank[key] = { lfo, out };
     }
@@ -838,12 +1034,19 @@ export class SongPlayer {
    *  amplitude AS THE NOTE STARTS, fading to a sixteenth of that (-24 dB) over the attack and 0.3 s. A bow's start is
    *  noisy and its sustain is not: the owner heard a breath held under the note as static. */
   _breath(hz, share, into, t0, tA) {
-    const ctx = this.ctx, n = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
-    n.buffer = this._noiseBuffer(); n.loop = true;
-    bp.type = 'bandpass'; bp.frequency.value = Math.min(5000, Math.max(600, hz * 2.5)); bp.Q.value = 0.6;
+    const ctx = this.ctx,
+      n = ctx.createBufferSource(),
+      bp = ctx.createBiquadFilter(),
+      g = ctx.createGain();
+    n.buffer = this._noiseBuffer();
+    n.loop = true;
+    bp.type = 'bandpass';
+    bp.frequency.value = Math.min(5000, Math.max(600, hz * 2.5));
+    bp.Q.value = 0.6;
     g.gain.setValueAtTime(share, t0);
     g.gain.exponentialRampToValueAtTime(Math.max(0.0001, share / 16), tA + 0.3);
-    n.connect(bp); bp.connect(g);
+    n.connect(bp);
+    bp.connect(g);
     for (const node of into) g.connect(node);
     n.start(t0);
     return n;
@@ -855,9 +1058,11 @@ export class SongPlayer {
    *  decay, under the context's Nyquist; `cutQ` its
    *  resonance (0.8 unnamed). A sawtooth has every harmonic at 1/n; the low-pass gives it the string's roll-off. */
   _bow(spec, hz, velocity, side, t0, tA, tD) {
-    const ctx = this.ctx, lp = ctx.createBiquadFilter();
+    const ctx = this.ctx,
+      lp = ctx.createBiquadFilter();
     const fc = Math.min(0.45 * ctx.sampleRate, hz * (spec.cutoff ?? 8) * (0.7 + 0.3 * Math.min(1, velocity / 127)));
-    lp.type = 'lowpass'; lp.Q.value = spec.cutQ ?? 0.8;
+    lp.type = 'lowpass';
+    lp.Q.value = spec.cutQ ?? 0.8;
     slow(lp.frequency, lp.Q, lp.gain, lp.detune);
     lp.frequency.setValueAtTime(fc * 0.5, t0);
     lp.frequency.linearRampToValueAtTime(fc, tA + 0.08);
@@ -870,20 +1075,29 @@ export class SongPlayer {
    *  gone in 15 ms; `body`, a skin's tone under a noise's crack, falling a third over the first of the decay. Each its
    *  own nodes, stopped with the hit. */
   _drumLayers(spec, when, peak, pan, channel) {
-    const ctx = this.ctx, out = [];
+    const ctx = this.ctx,
+      out = [];
     if (spec.click > 0) {
-      const n = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+      const n = ctx.createBufferSource(),
+        bp = ctx.createBiquadFilter(),
+        g = ctx.createGain();
       n.buffer = this._noiseBuffer();
-      bp.type = 'bandpass'; bp.frequency.value = 3200; bp.Q.value = 0.8;
+      bp.type = 'bandpass';
+      bp.frequency.value = 3200;
+      bp.Q.value = 0.8;
       g.gain.setValueAtTime(peak * spec.click, when);
       g.gain.exponentialRampToValueAtTime(0.0001, when + 0.015);
-      n.connect(bp); bp.connect(g);
+      n.connect(bp);
+      bp.connect(g);
       this._connect(g, pan, channel);
-      n.start(when); n.stop(when + 0.03);
+      n.start(when);
+      n.stop(when + 0.03);
       out.push(n);
     }
     if (spec.body > 0) {
-      const o = ctx.createOscillator(), g = ctx.createGain(), len = Math.max(0.03, spec.decay * 0.6);
+      const o = ctx.createOscillator(),
+        g = ctx.createGain(),
+        len = Math.max(0.03, spec.decay * 0.6);
       o.type = 'sine';
       o.frequency.setValueAtTime(spec.body, when);
       o.frequency.exponentialRampToValueAtTime(spec.body * 0.66, when + len);
@@ -892,7 +1106,8 @@ export class SongPlayer {
       g.gain.exponentialRampToValueAtTime(0.0001, when + len);
       o.connect(g);
       this._connect(g, pan, channel);
-      o.start(when); o.stop(when + len + 0.02);
+      o.start(when);
+      o.stop(when + len + 0.02);
       out.push(o);
     }
     return out;
@@ -939,9 +1154,9 @@ export class SongPlayer {
     if (!g) {
       g = this.ctx.createGain();
       g.gain.value = this._state[channel]?.volume ?? 1;
-      const to = this._level ?? this._fader ?? this._master;   // DISC20-B: through the fader; WBX9: and the song's own level before it
+      const to = this._level ?? this._fader ?? this._master; // DISC20-B: through the fader; WBX9: and the song's own level before it
       const own = this._songVoices?.[channel];
-      (own && (own.body || own.air !== undefined || own.ensemble > 0) ? this._insert(g, own, channel) : g).connect(to);   // INTRO3c: through the voice's body, air and ensemble
+      (own && (own.body || own.air !== undefined || own.ensemble > 0) ? this._insert(g, own, channel) : g).connect(to); // INTRO3c: through the voice's body, air and ensemble
       this._chGains[channel] = g;
     }
     return g;
@@ -955,29 +1170,55 @@ export class SongPlayer {
    *  noise. Built once a song a channel (play() drops a voiced song's chains); the sweeps stop with them. Returns the
    *  chain's last node, for the level. A context with no delay plays the body and the air alone. */
   _insert(g, own, channel) {
-    const ctx = this.ctx, lfos = [];
+    const ctx = this.ctx,
+      lfos = [];
     let node = g;
     for (const [hz, db, q] of own.body ?? []) {
       const f = ctx.createBiquadFilter();
-      f.type = 'peaking'; f.frequency.value = hz; f.gain.value = db; f.Q.value = q;
-      node.connect(f); node = f;
+      f.type = 'peaking';
+      f.frequency.value = hz;
+      f.gain.value = db;
+      f.Q.value = q;
+      node.connect(f);
+      node = f;
     }
     if (own.air !== undefined) {
       const f = ctx.createBiquadFilter();
-      f.type = 'highshelf'; f.frequency.value = 5000; f.gain.value = own.air;
-      node.connect(f); node = f;
+      f.type = 'highshelf';
+      f.frequency.value = 5000;
+      f.gain.value = own.air;
+      node.connect(f);
+      node = f;
     }
     if (own.ensemble > 0 && typeof ctx.createDelay === 'function') {
-      const out = ctx.createGain(), dry = ctx.createGain(), ms = (own.ensembleMs ?? 12) / 1000, rate = own.ensembleRate ?? 0.7;
+      const out = ctx.createGain(),
+        dry = ctx.createGain(),
+        ms = (own.ensembleMs ?? 12) / 1000,
+        rate = own.ensembleRate ?? 0.7;
       dry.gain.value = 1 - 0.35 * own.ensemble;
-      node.connect(dry); dry.connect(out);
-      for (const [len, speed] of [[1, 1], [1.37, 0.79], [1.83, 1.31]]) {
-        const d = ctx.createDelay(0.2), wet = ctx.createGain(), lfo = ctx.createOscillator(), sweep = ctx.createGain();
-        d.delayTime.value = ms * len; wet.gain.value = 0.28 * own.ensemble;
-        lfo.type = 'sine'; lfo.frequency.value = rate * speed; sweep.gain.value = ms * len * 0.2;
-        lfo.connect(sweep); sweep.connect(d.delayTime);
-        node.connect(d); d.connect(wet); wet.connect(out);
-        lfo.start(ctx.currentTime); lfos.push(lfo);
+      node.connect(dry);
+      dry.connect(out);
+      for (const [len, speed] of [
+        [1, 1],
+        [1.37, 0.79],
+        [1.83, 1.31],
+      ]) {
+        const d = ctx.createDelay(0.2),
+          wet = ctx.createGain(),
+          lfo = ctx.createOscillator(),
+          sweep = ctx.createGain();
+        d.delayTime.value = ms * len;
+        wet.gain.value = 0.28 * own.ensemble;
+        lfo.type = 'sine';
+        lfo.frequency.value = rate * speed;
+        sweep.gain.value = ms * len * 0.2;
+        lfo.connect(sweep);
+        sweep.connect(d.delayTime);
+        node.connect(d);
+        d.connect(wet);
+        wet.connect(out);
+        lfo.start(ctx.currentTime);
+        lfos.push(lfo);
       }
       node = out;
     }
@@ -987,15 +1228,41 @@ export class SongPlayer {
 
   /** INTRO3c: the channel gains and their inserts, dropped - a new voiced song builds its own (the next note asks). */
   _dropChannelChains() {
-    for (const g of Object.values(this._chGains ?? {})) { try { g.disconnect(); } catch { /* gone */ } }
+    for (const g of Object.values(this._chGains ?? {})) {
+      try {
+        g.disconnect();
+      } catch {
+        /* gone */
+      }
+    }
     for (const { lfos, last } of Object.values(this._chInserts ?? {})) {
-      try { last.disconnect(); } catch { /* gone */ }
-      for (const o of lfos) { try { o.stop(this.ctx.currentTime); } catch { /* never ran */ } }
+      try {
+        last.disconnect();
+      } catch {
+        /* gone */
+      }
+      for (const o of lfos) {
+        try {
+          o.stop(this.ctx.currentTime);
+        } catch {
+          /* never ran */
+        }
+      }
     }
-    for (const bank of Object.values(this._chLfos ?? {})) {   // INTRO3d: and the channels' sines
-      for (const { lfo, out } of Object.values(bank)) { try { lfo.stop(this.ctx.currentTime); out.disconnect(); } catch { /* never ran */ } }
+    for (const bank of Object.values(this._chLfos ?? {})) {
+      // INTRO3d: and the channels' sines
+      for (const { lfo, out } of Object.values(bank)) {
+        try {
+          lfo.stop(this.ctx.currentTime);
+          out.disconnect();
+        } catch {
+          /* never ran */
+        }
+      }
     }
-    this._chGains = null; this._chInserts = null; this._chLfos = null;
+    this._chGains = null;
+    this._chInserts = null;
+    this._chLfos = null;
   }
 
   _connect(gain, pan, channel = 0) {
@@ -1020,14 +1287,22 @@ export class SongPlayer {
       for (const v of this._voices) {
         if (v.channel !== e.channel || v.endsAt <= when) continue;
         v.detunes.forEach((d, i) => {
-          try { d.setValueAtTime(cents + (v.offs?.[i] ?? 0), when); } catch { /* param already past */ }   // EG-ROAR: a unison's copies keep their spread
+          try {
+            d.setValueAtTime(cents + (v.offs?.[i] ?? 0), when);
+          } catch {
+            /* param already past */
+          } // EG-ROAR: a unison's copies keep their spread
         });
       }
       return;
     }
     if (e.type === 'controller' && e.controller === 7) {
       const g = this._channelGain(e.channel);
-      try { g.gain.setValueAtTime(volumeGain(e.value), when); } catch { /* ignore */ }
+      try {
+        g.gain.setValueAtTime(volumeGain(e.value), when);
+      } catch {
+        /* ignore */
+      }
     }
   }
 
@@ -1070,28 +1345,30 @@ export class AudioSongPlayer {
    */
   constructor(ctx, destination = null, reverbSend = null) {
     this.ctx = ctx;
-    this._reverbSend = reverbSend;   // AUDIT-BA F4: the audio engine's reverb send - Unity's zone takes the music's AudioSource at reverbZoneMix 1 like every other
+    this._reverbSend = reverbSend; // AUDIT-BA F4: the audio engine's reverb send - Unity's zone takes the music's AudioSource at reverbZoneMix 1 like every other
     this.playing = false;
     this.loop = true;
     this._source = null;
     this._master = null;
-    this._fader = null;   // DISC20-B: built with the master
+    this._fader = null; // DISC20-B: built with the master
     this._destination = destination;
   }
 
   _ensureMaster() {
     if (this._master || !this.ctx) return;
     this._master = this.ctx.createGain();
-    this._master.gain.value = trackGain();   // the setting alone: a mastered pack needs no FM trim
+    this._master.gain.value = trackGain(); // the setting alone: a mastered pack needs no FM trim
     this._master.connect(this._destination ?? this.ctx.destination);
-    if (this._reverbSend) this._master.connect(this._reverbSend);   // AUDIT-BA F4
-    this._fader = this.ctx.createGain();   // DISC20-B: the transition's own gain, under the volume
+    if (this._reverbSend) this._master.connect(this._reverbSend); // AUDIT-BA F4
+    this._fader = this.ctx.createGain(); // DISC20-B: the transition's own gain, under the volume
     this._fader.gain.value = 1;
     this._fader.connect(this._master);
   }
 
   /** DISC20-B: ramp the fader to `level` over `seconds` (see rampFader). */
-  fadeTo(level, seconds) { rampFader(this.ctx, this._fader, level, seconds); }
+  fadeTo(level, seconds) {
+    rampFader(this.ctx, this._fader, level, seconds);
+  }
 
   /** Follow the setting now (see SongPlayer.resyncGain). */
   resyncGain() {
@@ -1111,14 +1388,19 @@ export class AudioSongPlayer {
     // The gain is re-read on every start, not just on the first: a
     // player who moves the music slider between songs expects the next
     // one to obey it, and the node is built once.
-    this._master.gain.value = trackGain();   // the setting alone, on every start too
+    this._master.gain.value = trackGain(); // the setting alone, on every start too
     const src = this.ctx.createBufferSource();
     src.buffer = buffer;
     src.loop = this.loop;
-    src.connect(this._fader ?? this._master);   // DISC20-B: through the fader
+    src.connect(this._fader ?? this._master); // DISC20-B: through the fader
     // A non-looping clip has to clear `playing`, or the director reads
     // a song that is still sounding forever and never re-evaluates.
-    src.onended = () => { if (this._source === src) { this.playing = false; this._source = null; } };
+    src.onended = () => {
+      if (this._source === src) {
+        this.playing = false;
+        this._source = null;
+      }
+    };
     src.start();
     this._source = src;
     this.playing = true;
@@ -1130,8 +1412,12 @@ export class AudioSongPlayer {
     const src = this._source;
     this._source = null;
     if (src) {
-      src.onended = null;   // stop() must not look like a track ending
-      try { src.stop(); } catch { /* already stopped */ }
+      src.onended = null; // stop() must not look like a track ending
+      try {
+        src.stop();
+      } catch {
+        /* already stopped */
+      }
     }
   }
 }

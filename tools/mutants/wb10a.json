@@ -2,8 +2,8 @@
   {
     "name": "WB10a-a-plain-song-read-as-pressed",
     "file": "src/systems/song/songPlayer.js",
-    "old": "  if (!p || typeof p !== 'object') return null;\n  const out = {};",
-    "new": "  if (!p) return null;\n  const out = {};",
+    "old": "  if (!p || typeof p !== 'object') return null;",
+    "new": "  if (!p) return null;",
     "tests": [
       "test/systems/gate/wb10a_gate_score.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB10a-the-press-never-routed",
     "file": "src/systems/song/songPlayer.js",
-    "old": "    this._routePress(songPress(song));",
-    "new": "    this._routePress(null);",
+    "old": "    this._routePress(songPress(song)); // WB10a: and its press - none for every song but the ones that carry one",
+    "new": "    this._routePress(null); // WB10a: and its press - none for every song but the ones that carry one",
     "tests": [
       "test/systems/gate/wb10a_gate_score.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB10a-a-plain-song-left-on-the-press",
     "file": "src/systems/song/songPlayer.js",
-    "old": "    let to = this._fader;\n    if (press &&",
-    "new": "    let to = this._levelTo ?? this._fader;\n    if (press &&",
+    "old": "    let to = this._fader;",
+    "new": "    let to = this._levelTo ?? this._fader;",
     "tests": [
       "test/systems/gate/wb10a_gate_score.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WB10a-the-press-rebuilt-each-song",
     "file": "src/systems/song/songPlayer.js",
-    "old": "      if (!this._press) {\n        const comp",
-    "new": "      if (true) {\n        const comp",
+    "old": "      if (!this._press) {",
+    "new": "      if (true) {",
     "tests": [
       "test/systems/gate/wb10a_gate_score.test.js"
     ]

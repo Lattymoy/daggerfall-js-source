@@ -2,8 +2,8 @@
   {
     "name": "EGROAR-voice-unheld",
     "file": "src/systems/song/songPlayer.js",
-    "old": "for (const [k, [lo, hi]] of Object.entries(range)) if (Number.isFinite(o[k])) out[k] = Math.min(hi, Math.max(lo, o[k]));",
-    "new": "for (const [k] of Object.entries(range)) if (Number.isFinite(o[k])) out[k] = o[k];",
+    "old": "  for (const [k, [lo, hi]] of Object.entries(range))\n    if (Number.isFinite(o[k])) out[k] = Math.min(hi, Math.max(lo, o[k]));",
+    "new": "  for (const [k] of Object.entries(range)) if (Number.isFinite(o[k])) out[k] = o[k];",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "EGROAR-unison-all-sharp",
     "file": "src/systems/song/songPlayer.js",
-    "old": "return Array.from({ length: n }, (_, i) => -cents + (2 * cents * i) / (n - 1));",
-    "new": "return Array.from({ length: n }, (_, i) => (cents * i) / (n - 1));",
+    "old": "  return Array.from({ length: n }, (_, i) => -cents + (2 * cents * i) / (n - 1));",
+    "new": "  return Array.from({ length: n }, (_, i) => (cents * i) / (n - 1));",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGROAR-unison-as-loud-as-its-copies",
     "file": "src/systems/song/songPlayer.js",
-    "old": "const peak = (amp * spec.gain) / Math.sqrt(offs.length);",
-    "new": "const peak = amp * spec.gain;",
+    "old": "    const peak = (amp * spec.gain) / Math.sqrt(offs.length); // a unison as loud as the one pair it stands for",
+    "new": "    const peak = amp * spec.gain; // a unison as loud as the one pair it stands for",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGROAR-spread-one-side",
     "file": "src/systems/song/songPlayer.js",
-    "old": "const sides = own?.spread > 0 && offs.length > 1 ? [gain, ctx.createGain()] : [gain];",
-    "new": "const sides = [gain];",
+    "old": "    const sides = own?.spread > 0 && offs.length > 1 ? [gain, ctx.createGain()] : [gain];",
+    "new": "    const sides = [gain];",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGROAR-sub-on-the-note",
     "file": "src/systems/song/songPlayer.js",
-    "old": "subN.frequency.value = (hz * spec.car) / 2;",
-    "new": "subN.frequency.value = hz * spec.car;",
+    "old": "      subN.frequency.value = (hz * spec.car) / 2;",
+    "new": "      subN.frequency.value = hz * spec.car;",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EGROAR-bend-flattens-the-spread",
     "file": "src/systems/song/songPlayer.js",
-    "old": "d.setValueAtTime(cents + (v.offs?.[i] ?? 0), when);",
-    "new": "d.setValueAtTime(cents, when);",
+    "old": "            d.setValueAtTime(cents + (v.offs?.[i] ?? 0), when);",
+    "new": "            d.setValueAtTime(cents, when);",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EGROAR-drum-unvoiced",
     "file": "src/systems/song/songPlayer.js",
-    "old": "const own = this._songKit?.get(e.note) ?? null;",
-    "new": "const own = null;",
+    "old": "      const own = this._songKit?.get(e.note) ?? null; // EG-ROAR: the song's own drum, over the kit's",
+    "new": "      const own = null; // EG-ROAR: the song's own drum, over the kit's",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EGROAR-no-floor",
     "file": "src/systems/song/songPlayer.js",
-    "old": "const hp = this._songVoices && typeof this.ctx.createBiquadFilter === 'function'",
-    "new": "const hp = false && typeof this.ctx.createBiquadFilter === 'function'",
+    "old": "    const hp =\n      this._songVoices && typeof this.ctx.createBiquadFilter === 'function'\n        ? (this._floor ??= this._makeFloor())\n        : null;",
+    "new": "    const hp = false && typeof this.ctx.createBiquadFilter === 'function' ? (this._floor ??= this._makeFloor()) : null;",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]

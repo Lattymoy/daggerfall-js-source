@@ -29,52 +29,95 @@ import { srand, rand } from '../../formats/dfRandom.js';
 
 /** Dungeon interiors. SongManager.cs:666-681. */
 export const DUNGEON_SONGS = Object.freeze([
-  'DUNGEON.HMI', 'DUNGEON5.HMI', 'DUNGEON6.HMI', 'DUNGEON7.HMI', 'DUNGEON8.HMI',
-  'DUNGEON9.HMI', 'GDNGN10.HMI', 'GDNGN11.HMI', 'GDUNGN4.HMI', 'GDUNGN9.HMI',
-  '04.HMI', '05.HMI', '07.HMI', '15.HMI', '28.HMI',
+  'DUNGEON.HMI',
+  'DUNGEON5.HMI',
+  'DUNGEON6.HMI',
+  'DUNGEON7.HMI',
+  'DUNGEON8.HMI',
+  'DUNGEON9.HMI',
+  'GDNGN10.HMI',
+  'GDNGN11.HMI',
+  'GDUNGN4.HMI',
+  'GDUNGN9.HMI',
+  '04.HMI',
+  '05.HMI',
+  '07.HMI',
+  '15.HMI',
+  '28.HMI',
 ]);
 
 /** Dungeon, FM. SongManager.cs:817-840 - song_fm_dngn1 and song_15fm
  *  each appear TWICE in DFU's array. Preserved: a duplicate doubles that
  *  song's odds, so removing it would change the selection. */
 export const DUNGEON_SONGS_FM = Object.freeze([
-  'FM_DNGN1.HMI', 'FM_DNGN1.HMI', 'FM_DNGN2.HMI', 'FM_DNGN3.HMI', 'FM_DNGN4.HMI',
-  'FM_DNGN5.HMI', 'FDNGN10.HMI', 'FDNGN11.HMI', 'FDUNGN4.HMI', 'FDUNGN9.HMI',
-  '04FM.HMI', '05FM.HMI', '07FM.HMI', '15FM.HMI', '15FM.HMI',
+  'FM_DNGN1.HMI',
+  'FM_DNGN1.HMI',
+  'FM_DNGN2.HMI',
+  'FM_DNGN3.HMI',
+  'FM_DNGN4.HMI',
+  'FM_DNGN5.HMI',
+  'FDNGN10.HMI',
+  'FDNGN11.HMI',
+  'FDUNGN4.HMI',
+  'FDUNGN9.HMI',
+  '04FM.HMI',
+  '05FM.HMI',
+  '07FM.HMI',
+  '15FM.HMI',
+  '15FM.HMI',
 ]);
 
 /** Sunny. SongManager.cs:686-694. */
 export const SUNNY_SONGS = Object.freeze([
-  'GDAY___D.HMI', 'SWIMMING.HMI', 'GSUNNY2.HMI', 'SUNNYDAY.HMI',
-  '02.HMI', '03.HMI', '22.HMI',
+  'GDAY___D.HMI',
+  'SWIMMING.HMI',
+  'GSUNNY2.HMI',
+  'SUNNYDAY.HMI',
+  '02.HMI',
+  '03.HMI',
+  '22.HMI',
 ]);
 
 /** Sunny, FM. SongManager.cs:697-705. */
 export const SUNNY_SONGS_FM = Object.freeze([
-  'FDAY___D.HMI', 'FM_SWIM2.HMI', 'FM_SUNNY.HMI', '02FM.HMI', '03FM.HMI', '22FM.HMI',
+  'FDAY___D.HMI',
+  'FM_SWIM2.HMI',
+  'FM_SUNNY.HMI',
+  '02FM.HMI',
+  '03FM.HMI',
+  '22FM.HMI',
 ]);
 
 /** Cloudy. SongManager.cs:709-720. */
 export const CLOUDY_SONGS = Object.freeze([
-  'GDAY___D.HMI', 'SWIMMING.HMI', 'GSUNNY2.HMI', 'SUNNYDAY.HMI',
-  '02.HMI', '03.HMI', '22.HMI', '29.HMI', '12.HMI',
+  'GDAY___D.HMI',
+  'SWIMMING.HMI',
+  'GSUNNY2.HMI',
+  'SUNNYDAY.HMI',
+  '02.HMI',
+  '03.HMI',
+  '22.HMI',
+  '29.HMI',
+  '12.HMI',
 ]);
 
 /** Cloudy, FM. SongManager.cs:723-733. */
 export const CLOUDY_SONGS_FM = Object.freeze([
-  'FDAY___D.HMI', 'FM_SWIM2.HMI', 'FM_SUNNY.HMI',
-  '02FM.HMI', '03FM.HMI', '22FM.HMI', '29FM.HMI', '12FM.HMI',
+  'FDAY___D.HMI',
+  'FM_SWIM2.HMI',
+  'FM_SUNNY.HMI',
+  '02FM.HMI',
+  '03FM.HMI',
+  '22FM.HMI',
+  '29FM.HMI',
+  '12FM.HMI',
 ]);
 
 /** Overcast/fog. SongManager.cs:736-743. */
-export const OVERCAST_SONGS = Object.freeze([
-  '29.HMI', '12.HMI', '13.HMI', 'GPALAC.HMI', 'OVERCAST.HMI',
-]);
+export const OVERCAST_SONGS = Object.freeze(['29.HMI', '12.HMI', '13.HMI', 'GPALAC.HMI', 'OVERCAST.HMI']);
 
 /** Overcast/fog, FM. SongManager.cs:746-753. */
-export const OVERCAST_SONGS_FM = Object.freeze([
-  '29FM.HMI', '12FM.HMI', '13FM.HMI', 'FPALAC.HMI', 'FMOVER_C.HMI',
-]);
+export const OVERCAST_SONGS_FM = Object.freeze(['29FM.HMI', '12FM.HMI', '13FM.HMI', 'FPALAC.HMI', 'FMOVER_C.HMI']);
 
 /** Rain. SongManager.cs:756-761 - OVERLONG is DFU's noted "long version
  *  of overcast". */
@@ -85,22 +128,32 @@ export const RAIN_SONGS_FM = Object.freeze(['FMOVER_C.HMI', 'FM_RAIN.HMI', '08FM
 
 /** Snow. SongManager.cs:764-770 - SNOWING is DFU's noted "not used in
  *  classic", kept because the array is the law, not our reading of it. */
-export const SNOW_SONGS = Object.freeze([
-  '20.HMI', 'GSNOW__B.HMI', 'OVERSNOW.HMI', 'SNOWING.HMI',
-]);
+export const SNOW_SONGS = Object.freeze(['20.HMI', 'GSNOW__B.HMI', 'OVERSNOW.HMI', 'SNOWING.HMI']);
 
 /** Snow, FM. SongManager.cs:865-870. */
 export const SNOW_SONGS_FM = Object.freeze(['20FM.HMI', 'FSNOW__B.HMI', 'FMOVER_S.HMI']);
 
 /** Sneaking - DFU's own comment says classic does not use it. :773-782. */
 export const SNEAKING_SONGS = Object.freeze([
-  'GSNEAK2.HMI', 'SNEAKING.HMI', 'SNEAKNG2.HMI', '16.HMI', '09.HMI', '25.HMI', '30.HMI',
+  'GSNEAK2.HMI',
+  'SNEAKING.HMI',
+  'SNEAKNG2.HMI',
+  '16.HMI',
+  '09.HMI',
+  '25.HMI',
+  '30.HMI',
 ]);
 
 /** Sneaking, FM. :873-881 - FSNEAK2 appears TWICE, with DFU's note that
  *  FMSNEAK2 is Arena's home-trespass cue. Preserved. */
 export const SNEAKING_SONGS_FM = Object.freeze([
-  'FSNEAK2.HMI', 'FMSNEAK2.HMI', 'FSNEAK2.HMI', '16FM.HMI', '09FM.HMI', '25FM.HMI', '30FM.HMI',
+  'FSNEAK2.HMI',
+  'FMSNEAK2.HMI',
+  'FSNEAK2.HMI',
+  '16FM.HMI',
+  '09FM.HMI',
+  '25FM.HMI',
+  '30FM.HMI',
 ]);
 
 /** Temples, by alignment. SongManager.cs:785-798. */
@@ -112,21 +165,33 @@ export const TEMPLE_NEUTRAL_SONGS_FM = Object.freeze(['FNEUT.HMI']);
 export const TEMPLE_BAD_SONGS_FM = Object.freeze(['FBAD.HMI']);
 
 /** Taverns. SongManager.cs:801-808. */
-export const TAVERN_SONGS = Object.freeze([
-  'SQUARE_2.HMI', 'TAVERN.HMI', 'FOLK1.HMI', 'FOLK2.HMI', 'FOLK3.HMI',
-]);
+export const TAVERN_SONGS = Object.freeze(['SQUARE_2.HMI', 'TAVERN.HMI', 'FOLK1.HMI', 'FOLK2.HMI', 'FOLK3.HMI']);
 
 /** Night. SongManager.cs:811-820. DFU's comment on the last entry: for
  *  general midi song_10 is DUPLICATED here in classic, although song_21fm
  *  is used in FM mode. DFU lists song_21; so do we. */
 export const NIGHT_SONGS = Object.freeze([
-  '10.HMI', '11.HMI', 'GCURSE.HMI', 'GEERIE.HMI', 'GRUINS.HMI', '18.HMI', '21.HMI',
+  '10.HMI',
+  '11.HMI',
+  'GCURSE.HMI',
+  'GEERIE.HMI',
+  'GRUINS.HMI',
+  '18.HMI',
+  '21.HMI',
 ]);
 
 /** Day, FM. SongManager.cs:843-854. */
 export const DAY_SONGS_FM = Object.freeze([
-  'FDAY___D.HMI', 'FM_SWIM2.HMI', 'FM_SUNNY.HMI', '02FM.HMI', '03FM.HMI',
-  '22FM.HMI', '29FM.HMI', '12FM.HMI', '13FM.HMI', 'FPALAC.HMI',
+  'FDAY___D.HMI',
+  'FM_SWIM2.HMI',
+  'FM_SUNNY.HMI',
+  '02FM.HMI',
+  '03FM.HMI',
+  '22FM.HMI',
+  '29FM.HMI',
+  '12FM.HMI',
+  '13FM.HMI',
+  'FPALAC.HMI',
 ]);
 
 /**
@@ -150,10 +215,10 @@ export const DAY_SONGS_FM = Object.freeze([
  * arithmetic C# performs, not because anyone can hear it, and it is not ours
  * to round away.
  */
-export function selectSong(playlist, {
-  gameDays = 0, tavern = false, dungeonKey = null, unseeded = false,
-  random = Math.random,
-} = {}) {
+export function selectSong(
+  playlist,
+  { gameDays = 0, tavern = false, dungeonKey = null, unseeded = false, random = Math.random } = {},
+) {
   if (!playlist || playlist.length === 0) return null;
 
   let index = 0;
@@ -208,14 +273,19 @@ export function dungeonKey(unknown2, regionIndex) {
 export function outdoorPlaylist({ night = false, weather = 'sunny', fm = false } = {}) {
   if (night) return fm ? NIGHT_SONGS_FM : NIGHT_SONGS;
   switch (String(weather).toLowerCase()) {
-    case 'cloudy':   return fm ? CLOUDY_SONGS_FM : CLOUDY_SONGS;
+    case 'cloudy':
+      return fm ? CLOUDY_SONGS_FM : CLOUDY_SONGS;
     case 'overcast':
     case 'fog':
-    case 'ashfall':  return fm ? OVERCAST_SONGS_FM : OVERCAST_SONGS;
+    case 'ashfall':
+      return fm ? OVERCAST_SONGS_FM : OVERCAST_SONGS;
     case 'rain':
-    case 'thunder':  return fm ? RAIN_SONGS_FM : RAIN_SONGS;
-    case 'snow':     return fm ? SNOW_SONGS_FM : SNOW_SONGS;
-    default:         return fm ? SUNNY_SONGS_FM : SUNNY_SONGS;   // DFU's own default arm
+    case 'thunder':
+      return fm ? RAIN_SONGS_FM : RAIN_SONGS;
+    case 'snow':
+      return fm ? SNOW_SONGS_FM : SNOW_SONGS;
+    default:
+      return fm ? SUNNY_SONGS_FM : SUNNY_SONGS; // DFU's own default arm
   }
 }
 
@@ -229,7 +299,12 @@ export function outdoorPlaylist({ night = false, weather = 'sunny', fm = false }
  *  in MIDI.BSA at all, which is how the corpus pin caught an earlier
  *  version of this list that had extrapolated one from the GM shape. */
 export const NIGHT_SONGS_FM = Object.freeze([
-  '11FM.HMI', 'FCURSE.HMI', 'FEERIE.HMI', 'FRUINS.HMI', '18FM.HMI', '21FM.HMI',
+  '11FM.HMI',
+  'FCURSE.HMI',
+  'FEERIE.HMI',
+  'FRUINS.HMI',
+  '18FM.HMI',
+  '21FM.HMI',
 ]);
 
 // --- AUDIT 19 F1/F2: the sixteen lists and the arms that were missing ----
@@ -276,9 +351,21 @@ export const TAVERN_SONGS_FM = Object.freeze(['FM_SQR_2.HMI']);
 
 /** The music ENVIRONMENTS, DFU's PlayerMusicEnvironment enum by name. */
 export const MUSIC_ENVIRONMENTS = Object.freeze([
-  'city', 'wilderness', 'castle', 'dungeonExterior', 'dungeonInterior',
-  'graveyard', 'magesGuild', 'fighterTrainers', 'interior', 'palace',
-  'shop', 'tavern', 'templeGood', 'templeNeutral', 'templeBad',
+  'city',
+  'wilderness',
+  'castle',
+  'dungeonExterior',
+  'dungeonInterior',
+  'graveyard',
+  'magesGuild',
+  'fighterTrainers',
+  'interior',
+  'palace',
+  'shop',
+  'tavern',
+  'templeGood',
+  'templeNeutral',
+  'templeBad',
 ]);
 
 /** UpdatePlayerMusicEnvironment's building arm (SongManager.cs:463-523).
@@ -288,13 +375,35 @@ export const MUSIC_ENVIRONMENTS = Object.freeze([
  *  plain Interior, which is DFU's own `default`. */
 export function environmentForBuilding(buildingType, { factionId = 0, templeAlignment = null } = {}) {
   const B = {
-    Alchemist: 0, Armorer: 2, Bank: 3, Bookseller: 5, ClothingStore: 6,
-    FurnitureStore: 7, GemStore: 8, GeneralStore: 9, Library: 10,
-    GuildHall: 11, PawnShop: 12, WeaponSmith: 13, Temple: 14, Tavern: 15,
+    Alchemist: 0,
+    Armorer: 2,
+    Bank: 3,
+    Bookseller: 5,
+    ClothingStore: 6,
+    FurnitureStore: 7,
+    GemStore: 8,
+    GeneralStore: 9,
+    Library: 10,
+    GuildHall: 11,
+    PawnShop: 12,
+    WeaponSmith: 13,
+    Temple: 14,
+    Tavern: 15,
     Palace: 16,
   };
-  const SHOPS = [B.Alchemist, B.Armorer, B.Bank, B.Bookseller, B.ClothingStore,
-    B.FurnitureStore, B.GemStore, B.GeneralStore, B.Library, B.PawnShop, B.WeaponSmith];
+  const SHOPS = [
+    B.Alchemist,
+    B.Armorer,
+    B.Bank,
+    B.Bookseller,
+    B.ClothingStore,
+    B.FurnitureStore,
+    B.GemStore,
+    B.GeneralStore,
+    B.Library,
+    B.PawnShop,
+    B.WeaponSmith,
+  ];
   if (SHOPS.includes(buildingType)) return 'shop';
   if (buildingType === B.Tavern) return 'tavern';
   if (buildingType === B.Palace) return 'palace';
@@ -343,28 +452,42 @@ export const FIGHTERS_GUILD_FACTION = 41;
  * exterior and a graveyard are night music at noon - which is easy to miss
  * because it looks like the day/night gate and is not.
  */
-export function playlistForEnvironment(environment, {
-  arrested = false, night = false, weather = 'sunny', fm = false,
-} = {}) {
+export function playlistForEnvironment(
+  environment,
+  { arrested = false, night = false, weather = 'sunny', fm = false } = {},
+) {
   if (arrested) return fm ? COURT_SONGS_FM : COURT_SONGS;
   switch (environment) {
     case 'city':
-    case 'wilderness':      return outdoorPlaylist({ night, weather, fm });
-    case 'castle':          return fm ? CASTLE_SONGS_FM : CASTLE_SONGS;
+    case 'wilderness':
+      return outdoorPlaylist({ night, weather, fm });
+    case 'castle':
+      return fm ? CASTLE_SONGS_FM : CASTLE_SONGS;
     // NOT gated on the clock - DFU takes night songs here at any hour.
     case 'dungeonExterior':
-    case 'graveyard':       return fm ? NIGHT_SONGS_FM : NIGHT_SONGS;
-    case 'dungeonInterior': return fm ? DUNGEON_SONGS_FM : DUNGEON_SONGS;
-    case 'magesGuild':      return fm ? MAGES_GUILD_SONGS_FM : MAGES_GUILD_SONGS;
-    case 'fighterTrainers': return fm ? KNIGHT_SONGS_FM : KNIGHT_SONGS;
-    case 'palace':          return fm ? PALACE_SONGS_FM : PALACE_SONGS;
-    case 'shop':            return fm ? SHOP_SONGS_FM : SHOP_SONGS;
-    case 'tavern':          return fm ? TAVERN_SONGS_FM : TAVERN_SONGS;
-    case 'templeGood':      return fm ? TEMPLE_GOOD_SONGS_FM : TEMPLE_GOOD_SONGS;
-    case 'templeNeutral':   return fm ? TEMPLE_NEUTRAL_SONGS_FM : TEMPLE_NEUTRAL_SONGS;
-    case 'templeBad':       return fm ? TEMPLE_BAD_SONGS_FM : TEMPLE_BAD_SONGS;
+    case 'graveyard':
+      return fm ? NIGHT_SONGS_FM : NIGHT_SONGS;
+    case 'dungeonInterior':
+      return fm ? DUNGEON_SONGS_FM : DUNGEON_SONGS;
+    case 'magesGuild':
+      return fm ? MAGES_GUILD_SONGS_FM : MAGES_GUILD_SONGS;
+    case 'fighterTrainers':
+      return fm ? KNIGHT_SONGS_FM : KNIGHT_SONGS;
+    case 'palace':
+      return fm ? PALACE_SONGS_FM : PALACE_SONGS;
+    case 'shop':
+      return fm ? SHOP_SONGS_FM : SHOP_SONGS;
+    case 'tavern':
+      return fm ? TAVERN_SONGS_FM : TAVERN_SONGS;
+    case 'templeGood':
+      return fm ? TEMPLE_GOOD_SONGS_FM : TEMPLE_GOOD_SONGS;
+    case 'templeNeutral':
+      return fm ? TEMPLE_NEUTRAL_SONGS_FM : TEMPLE_NEUTRAL_SONGS;
+    case 'templeBad':
+      return fm ? TEMPLE_BAD_SONGS_FM : TEMPLE_BAD_SONGS;
     case 'interior':
-    default:                return fm ? INTERIOR_SONGS_FM : INTERIOR_SONGS;
+    default:
+      return fm ? INTERIOR_SONGS_FM : INTERIOR_SONGS;
   }
 }
 
@@ -393,37 +516,58 @@ export function playlistForEnvironment(environment, {
 
 /** PlayerMusicEnvironment (SongManager.cs:93-110), by name. */
 export const MUSIC_ENV = Object.freeze({
-  Castle: 'castle', City: 'city', DungeonExterior: 'dungeonExterior',
-  DungeonInterior: 'dungeonInterior', Graveyard: 'graveyard',
-  MagesGuild: 'magesGuild', Interior: 'interior', Palace: 'palace',
-  Shop: 'shop', Tavern: 'tavern', TempleGood: 'templeGood',
-  TempleNeutral: 'templeNeutral', TempleBad: 'templeBad',
-  Wilderness: 'wilderness', FighterTrainers: 'fighterTrainers',
+  Castle: 'castle',
+  City: 'city',
+  DungeonExterior: 'dungeonExterior',
+  DungeonInterior: 'dungeonInterior',
+  Graveyard: 'graveyard',
+  MagesGuild: 'magesGuild',
+  Interior: 'interior',
+  Palace: 'palace',
+  Shop: 'shop',
+  Tavern: 'tavern',
+  TempleGood: 'templeGood',
+  TempleNeutral: 'templeNeutral',
+  TempleBad: 'templeBad',
+  Wilderness: 'wilderness',
+  FighterTrainers: 'fighterTrainers',
 });
 
 /** DFRegion.LocationTypes, the values UpdatePlayerMusicEnvironment reads. */
 export const LOCATION_TYPES = Object.freeze({
-  TownCity: 0, TownHamlet: 1, TownVillage: 2, HomeFarms: 3,
-  DungeonLabyrinth: 4, ReligionTemple: 5, Tavern: 6, DungeonKeep: 7,
-  HomeWealthy: 8, ReligionCult: 9, DungeonRuin: 10, HomePoor: 11,
-  Graveyard: 12, Coven: 13, HomeYourShips: 14, None: 0xffff,
+  TownCity: 0,
+  TownHamlet: 1,
+  TownVillage: 2,
+  HomeFarms: 3,
+  DungeonLabyrinth: 4,
+  ReligionTemple: 5,
+  Tavern: 6,
+  DungeonKeep: 7,
+  HomeWealthy: 8,
+  ReligionCult: 9,
+  DungeonRuin: 10,
+  HomePoor: 11,
+  Graveyard: 12,
+  Coven: 13,
+  HomeYourShips: 14,
+  None: 0xffff,
 });
 
 /** The temple faction tables (SongManager.cs:306-320), verbatim. Two
  *  parallel id lists - the TEMPLE factions and the GOD factions - share
  *  one alignment table by index, which is why GetTempleIndex searches
  *  the second only after the first misses. */
-export const TEMPLE_FACTIONS = Object.freeze([0x52, 0x54, 0x58, 0x5C, 0x5E, 0x62, 0x6A, 0x24]);
-export const GOD_FACTIONS = Object.freeze([0x15, 0x16, 0x18, 0x1A, 0x1B, 0x1D, 0x21, 0x23]);
+export const TEMPLE_FACTIONS = Object.freeze([0x52, 0x54, 0x58, 0x5c, 0x5e, 0x62, 0x6a, 0x24]);
+export const GOD_FACTIONS = Object.freeze([0x15, 0x16, 0x18, 0x1a, 0x1b, 0x1d, 0x21, 0x23]);
 export const TEMPLE_ALIGNMENTS = Object.freeze([
-  'good',     // Arkay
-  'bad',      // Z'en
-  'good',     // Mara
-  'neutral',  // Akatosh
-  'bad',      // Julianos
-  'good',     // Dibella
-  'bad',      // Stendarr
-  'neutral',  // Kynareth
+  'good', // Arkay
+  'bad', // Z'en
+  'good', // Mara
+  'neutral', // Akatosh
+  'bad', // Julianos
+  'good', // Dibella
+  'bad', // Stendarr
+  'neutral', // Kynareth
 ]);
 
 /** GetTempleIndex: -1 when the id is neither a temple nor a god faction.
@@ -449,9 +593,13 @@ export function templeAlignment(factionId) {
  * exteriors, which looks like a mistake and is not - it is what DFU reads.
  */
 export function musicEnvironment({
-  inside = false, insideDungeon = false, insideDungeonCastle = false,
-  inLocationRect = false, locationType = LOCATION_TYPES.None,
-  buildingType = -1, factionId = 0,
+  inside = false,
+  insideDungeon = false,
+  insideDungeonCastle = false,
+  inLocationRect = false,
+  locationType = LOCATION_TYPES.None,
+  buildingType = -1,
+  factionId = 0,
 } = {}) {
   const L = LOCATION_TYPES;
   if (!inside) {
@@ -461,23 +609,28 @@ export function musicEnvironment({
       case L.DungeonLabyrinth:
       case L.DungeonRuin:
       case L.Coven:
-      case L.HomePoor:        return MUSIC_ENV.DungeonExterior;
-      case L.Graveyard:       return MUSIC_ENV.Graveyard;
+      case L.HomePoor:
+        return MUSIC_ENV.DungeonExterior;
+      case L.Graveyard:
+        return MUSIC_ENV.Graveyard;
       case L.HomeFarms:
       case L.HomeWealthy:
       case L.Tavern:
       case L.TownCity:
       case L.TownHamlet:
       case L.TownVillage:
-      case L.ReligionTemple:  return MUSIC_ENV.City;
-      default:                return MUSIC_ENV.Wilderness;
+      case L.ReligionTemple:
+        return MUSIC_ENV.City;
+      default:
+        return MUSIC_ENV.Wilderness;
     }
   }
   if (insideDungeon) {
     return insideDungeonCastle ? MUSIC_ENV.Castle : MUSIC_ENV.DungeonInterior;
   }
   return environmentForBuilding(buildingType, {
-    factionId, templeAlignment: templeAlignment(factionId),
+    factionId,
+    templeAlignment: templeAlignment(factionId),
   });
 }
 
@@ -499,12 +652,14 @@ export function holdEnvironment(next, previous) {
  *  decide whether the music re-evaluates. */
 export function contextEquals(a, b) {
   if (!a || !b) return false;
-  return a.environment === b.environment
-    && a.weather === b.weather
-    && a.night === b.night
-    && a.gameDays === b.gameDays
-    && a.locationIndex === b.locationIndex
-    && a.arrested === b.arrested;
+  return (
+    a.environment === b.environment &&
+    a.weather === b.weather &&
+    a.night === b.night &&
+    a.gameDays === b.gameDays &&
+    a.locationIndex === b.locationIndex &&
+    a.arrested === b.arrested
+  );
 }
 
 /**
@@ -535,12 +690,12 @@ export class SongManager {
     this._stop = stop ?? (() => {});
     this.fm = fm;
     this.random = random;
-    this.playSong = true;              // DFU's `playSong` flag
+    this.playSong = true; // DFU's `playSong` flag
     this.currentPlaylist = null;
     this.currentSong = null;
     this.currentSongIndex = 0;
-    this._last = null;                 // lastContext
-    this._current = null;              // currentContext
+    this._last = null; // lastContext
+    this._current = null; // currentContext
   }
 
   /**
@@ -553,7 +708,7 @@ export class SongManager {
       weather: context.weather ?? 'sunny',
       night: Boolean(context.night),
       gameDays: Math.trunc(context.gameDays ?? 0),
-      locationIndex: context.locationIndex ?? -1,   // -1 is DFU's "no location"
+      locationIndex: context.locationIndex ?? -1, // -1 is DFU's "no location"
       arrested: Boolean(context.arrested),
       // Not part of Equals - DFU reads it inside SelectCurrentSong, not
       // from the context - but it has to reach the selection somehow.
@@ -577,7 +732,10 @@ export class SongManager {
 
       const lastPlaylist = this.currentPlaylist;
       this.currentPlaylist = playlistForEnvironment(ctx.environment, {
-        arrested: ctx.arrested, night: ctx.night, weather: ctx.weather, fm: this.fm,
+        arrested: ctx.arrested,
+        night: ctx.night,
+        weather: ctx.weather,
+        fm: this.fm,
       });
 
       // THE LAW THAT NEEDS THE CONTEXT: a new day or a new location picks

@@ -182,8 +182,8 @@
   {
     "name": "OW-HITCH-window-closed-start",
     "file": "src/systems/song/songPlayer.js",
-    "old": "if (events[mid].tick < fromTick) lo = mid + 1; else hi = mid;",
-    "new": "if (events[mid].tick <= fromTick) lo = mid + 1; else hi = mid;",
+    "old": "    if (events[mid].tick < fromTick) lo = mid + 1;",
+    "new": "    if (events[mid].tick <= fromTick) lo = mid + 1;",
     "tests": [
       "test/render/owhitch.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "OW-HITCH-window-open-end",
     "file": "src/systems/song/songPlayer.js",
-    "old": "    if (e.tick >= toTick) break;          // events are tick-ordered\n    out.push(e);",
-    "new": "    if (e.tick > toTick) break;          // events are tick-ordered\n    out.push(e);",
+    "old": "    if (e.tick >= toTick) break; // events are tick-ordered",
+    "new": "    if (e.tick > toTick) break; // events are tick-ordered",
     "tests": [
       "test/render/owhitch.test.js"
     ]

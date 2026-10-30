@@ -2,8 +2,8 @@
   {
     "name": "WBX9-the-level-ignored",
     "file": "src/systems/song/songPlayer.js",
-    "old": "    if (this._level) this._level.gain.value = songLevel(song);",
-    "new": "    void songLevel;",
+    "old": "    if (this._level) this._level.gain.value = songLevel(song); // WBX9: the song's own level - 1 for every song but the ones that carry one",
+    "new": "    void songLevel; // WBX9: the song's own level - 1 for every song but the ones that carry one",
     "tests": [
       "test/systems/gate/wbx9_gate_score.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WBX9-a-missing-level-as-nothing",
     "file": "src/systems/song/songPlayer.js",
-    "old": "export const songLevel = (song) => (Number.isFinite(song?.level) && song.level > 0 ? Math.min(SONG_LEVEL_MAX, song.level) : 1);",
-    "new": "export const songLevel = (song) => (Number.isFinite(song?.level) && song.level > 0 ? Math.min(SONG_LEVEL_MAX, song.level) : 0);",
+    "old": "  Number.isFinite(song?.level) && song.level > 0 ? Math.min(SONG_LEVEL_MAX, song.level) : 1;",
+    "new": "  Number.isFinite(song?.level) && song.level > 0 ? Math.min(SONG_LEVEL_MAX, song.level) : 0;",
     "tests": [
       "test/systems/gate/wbx9_gate_score.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WBX9-the-channels-past-the-level",
     "file": "src/systems/song/songPlayer.js",
-    "old": "      const to = this._level ?? this._fader ?? this._master;   // DISC20-B: through the fader; WBX9: and the song's own level before it",
-    "new": "      const to = this._fader ?? this._master;   // DISC20-B: through the fader; WBX9: and the song's own level before it",
+    "old": "      const to = this._level ?? this._fader ?? this._master; // DISC20-B: through the fader; WBX9: and the song's own level before it",
+    "new": "      const to = this._fader ?? this._master; // DISC20-B: through the fader; WBX9: and the song's own level before it",
     "tests": [
       "test/systems/gate/wbx9_gate_score.test.js",
       "test/systems/disc20.test.js"

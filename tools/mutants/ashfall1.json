@@ -452,8 +452,8 @@
   {
     "name": "ASH-the-songs-a-sunny-day",
     "file": "src/systems/song/songManager.js",
-    "old": "    case 'ashfall':  return fm ? OVERCAST_SONGS_FM : OVERCAST_SONGS;\n",
-    "new": "",
+    "old": "    case 'ashfall':\n      return fm ? OVERCAST_SONGS_FM : OVERCAST_SONGS;\n    case 'rain':",
+    "new": "    case 'rain':",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]

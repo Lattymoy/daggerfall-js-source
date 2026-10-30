@@ -76,6 +76,8 @@
 /src/systems/sea/*/
 !/src/systems/snowfall/
 /src/systems/snowfall/*/
+!/src/systems/song/
+/src/systems/song/*/
 !/src/systems/soundscape/
 /src/systems/soundscape/*/
 !/src/systems/starfall/
