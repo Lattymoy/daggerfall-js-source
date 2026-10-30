@@ -4,8 +4,10 @@ Two reports from the owner, of the Aura Armory (`04-Characters/Aura-Armory.md`) 
 guild arm band isnt correct on the sprite" and "Head aura doesnt allign on the sprite". Then, of the fixes as they
 landed: "Arm band still has issues", "Guild patch is still wrong", "Still wrong on one of the angles", and "Dont worry
 about the skin system. Only worry about the layered system". Then: "ensure the armory aura sets dont show through the
-body and allign perfectly on the sprites". Read on `b92fd38e1` with the freeware's data
-(`tools/fetch-data.sh`). Not a DFU member: Daggerfall Unity has no cosmetic pieces. The pins are
+body and allign perfectly on the sprites".
+
+Read on `b92fd38e1` with the freeware's data (`tools/fetch-data.sh`). Not a DFU member: Daggerfall Unity has no
+cosmetic pieces. The pins are
 `test/render/armorymirror.test.js` and `test/render/armory.test.js` (HOST-SPLIT, its pins moved), the mutants
 `tools/mutants/armorymirror.json` (22, all dead). The probe `tools/armorySpriteProbe.mjs`, on Layered Gearing: 10 of 257
 before (none of the armlet's), 296 of 296 after, 96 of 96 close up, and 392 of 392 for both sets piece by piece.
