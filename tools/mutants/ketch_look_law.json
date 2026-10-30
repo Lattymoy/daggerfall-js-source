@@ -193,8 +193,8 @@
   {
     "name": "KTL3-the-dial-the-other-way",
     "file": "src/render/ketch/ktGaugePass.js",
-    "old": "const needle = KT_DIAL.from + KT_DIAL.sweep * Math.max(0, Math.min(1, a));",
-    "new": "const needle = KT_DIAL.from + KT_DIAL.sweep * (1 - Math.max(0, Math.min(1, a)));",
+    "old": "      const needle = KT_DIAL.from + KT_DIAL.sweep * Math.max(0, Math.min(1, a));",
+    "new": "      const needle = KT_DIAL.from + KT_DIAL.sweep * (1 - Math.max(0, Math.min(1, a)));",
     "tests": [
       "test/render/ketch/kt_gauge_pass.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "KTL3-the-red-at-the-full-end",
     "file": "src/render/ketch/ktGaugePass.js",
-    "old": "inSweep <= KT_DIAL.red) return P.red;",
-    "new": "inSweep >= KT_DIAL.sweep - KT_DIAL.red && inSweep <= KT_DIAL.sweep) return P.red;",
+    "old": "      if (r > 0.7 && r < 0.82 && inSweep <= KT_DIAL.red) return P.red;",
+    "new": "      if (r > 0.7 && r < 0.82 && inSweep >= KT_DIAL.sweep - KT_DIAL.red && inSweep <= KT_DIAL.sweep) return P.red;",
     "tests": [
       "test/render/ketch/kt_gauge_pass.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "KTL3-the-glass-from-the-top",
     "file": "src/render/ketch/ktGaugePass.js",
-    "old": "return v <= top ? P.signal : P.dark;",
-    "new": "return v >= -top ? P.signal : P.dark;",
+    "old": "      return v <= top ? P.signal : P.dark;",
+    "new": "      return v >= -top ? P.signal : P.dark;",
     "tests": [
       "test/render/ketch/kt_gauge_pass.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "KTL3-the-lamps-from-the-right",
     "file": "src/render/ketch/ktGaugePass.js",
-    "old": "return i < Math.round(Math.max(0, Math.min(1, a)) * n) ? P.signal : P.dark;",
-    "new": "return n - 1 - i < Math.round(Math.max(0, Math.min(1, a)) * n) ? P.signal : P.dark;",
+    "old": "      return i < Math.round(Math.max(0, Math.min(1, a)) * n) ? P.signal : P.dark;",
+    "new": "      return n - 1 - i < Math.round(Math.max(0, Math.min(1, a)) * n) ? P.signal : P.dark;",
     "tests": [
       "test/render/ketch/kt_gauge_pass.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "KTL3-the-ring-counter-clockwise",
     "file": "src/render/ketch/ktGaugePass.js",
-    "old": "const th = Math.atan2(u, v), turned =",
-    "new": "const th = Math.atan2(-u, v), turned =",
+    "old": "      const th = Math.atan2(u, v),",
+    "new": "      const th = Math.atan2(-u, v),",
     "tests": [
       "test/render/ketch/kt_gauge_pass.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "KTL3-a-share-unclamped",
     "file": "src/render/ketch/ktGaugePass.js",
-    "old": "return Math.abs(u - (-1 + 2 * Math.max(0, Math.min(1, a)))) < 0.12 ? P.signal : P.dark;",
-    "new": "return Math.abs(u - (-1 + 2 * a)) < 0.12 ? P.signal : P.dark;",
+    "old": "      return Math.abs(u - (-1 + 2 * Math.max(0, Math.min(1, a)))) < 0.12 ? P.signal : P.dark;",
+    "new": "      return Math.abs(u - (-1 + 2 * a)) < 0.12 ? P.signal : P.dark;",
     "tests": [
       "test/render/ketch/kt_gauge_pass.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "KTL3-the-meaning-lost-to-the-kind",
     "file": "src/render/ketch/ktGaugePass.js",
-    "old": "out[o + 9] = kind + KT_GAUGE_MEANING_STRIDE * meaning;",
-    "new": "out[o + 9] = kind;",
+    "old": "  out[o + 9] = kind + KT_GAUGE_MEANING_STRIDE * meaning;",
+    "new": "  out[o + 9] = kind;",
     "tests": [
       "test/render/ketch/kt_gauge_pass.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "KTL3-a-field-off-its-slot",
     "file": "src/render/ketch/ktGaugePass.js",
-    "old": "out[o + 10] = a; out[o + 11] = b;",
-    "new": "out[o + 10] = b; out[o + 11] = a;",
+    "old": "  out[o + 10] = a;\n  out[o + 11] = b;",
+    "new": "  out[o + 10] = b;\n  out[o + 11] = a;",
     "tests": [
       "test/render/ketch/kt_gauge_pass.test.js"
     ]
