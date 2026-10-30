@@ -2108,16 +2108,20 @@ float eternalHalfW(float y) { return mix(${g3(ETERNAL_HALF.hem)}, ${g3(ETERNAL_H
 float eternalBackOf(float y) { return mix(${g3(ETERNAL_BACK.hem)}, ${g3(ETERNAL_BACK.top)}, eternalUp(y)); }
 float eternalFoldPhase(float u) { return CLOAK_TAU * (${g1(ETERNAL_FOLDS)} * u + 0.13 * sin(CLOAK_TAU * 2.0 * u)); }
 float eternalFoldOf(float u, float y) { return ${g3(ETERNAL_FOLD_M)} * cos(eternalFoldPhase(u)) * sin(3.14159265 * u) * cloakDrapeOf(y); }
+// AUDIT CAPE-CARD B2: how far a fold's flank turns its face toward the wearer's right - the depth's slope across, whose
+// sign was flipped in the light (u runs to the left, so a flank deepening with u faces the right)
+float eternalFoldLean(float u, float y) { return -0.6 * sin(eternalFoldPhase(u)) * cloakDrapeOf(y); }
 `;
 /** SHOP: ETERNAL'S VERTEX HALF - the cape behind the shoulders, a wave flowing down it; and each card's flight: a wisp
  *  off the hem, rising and trailing behind (and further behind as its wearer moves), an ember off the cloth. */
 const ETERNAL_VS_GLSL = `
 vec3 eternalPoint(vec2 q, float t) {
-  float u = q.x, y = q.y * uFlameH, h = cloakHangOf(y), ky = uCapeS.y / ${g3(CLOAK_SHOULDER_Y)};
+  float u = q.x, y = q.y * uFlameH, h = cloakHangOf(y), ky = uCapeS.y / ${g3(CLOAK_SHOULDER_Y)}, rip = cloakRipOf();
   // CAPE-FLAT: straight across the back, its right side (u 0) to its left; its folds and its wave in its depth alone, so
   // its edges stay straight. Lagging a turn about the body's axis
   float wave = ${g3(ETERNAL_FLOW_M)} * h * h * (0.7 * sin(CLOAK_TAU * (u * 1.2 + y * 1.6) - t * CLOAK_TAU ${hzGlsl(ETERNAL_HZ.wave)}) + 0.3 * sin(CLOAK_TAU * (u * 3.0 - y * 3.0) - t * CLOAK_TAU ${hzGlsl(ETERNAL_HZ.wave * 2)}));
-  vec2 d = vec2((1.0 - 2.0 * u) * eternalHalfW(y) * uCapeS.w, -(eternalBackOf(y) + eternalFoldOf(u, y) + wave));
+  vec2 d = vec2((1.0 - 2.0 * u) * eternalHalfW(y) * uCapeS.w, -(eternalBackOf(y) + eternalFoldOf(u, y) + wave + max(0.0, 1.0 - ky) * h * 0.3));   // AUDIT CAPE-CARD: gathering out as it is pressed down, the cloak's own term
+  d += vec2((1.0 - 2.0 * u) * 0.15, -(0.15 + 0.35 * sin(3.14159265 * u))) * rip;   // AUDIT CAPE-CARD D3: bursting out as it tears, as the cloak does
   float a = cloakTwistAt(y) * CLOAK_TAU;
   d = vec2(d.x * cos(a) + d.y * sin(a), -d.x * sin(a) + d.y * cos(a));
   // THE BODY'S POSE AND THE SWING, the cloak's (cloakPoint): from the shoulders where they are, scaled between the feet
@@ -2128,9 +2132,11 @@ vec3 eternalPoint(vec2 q, float t) {
   float tl = length(trail);
   if (tl > 0.7 * hang) trail *= 0.7 * hang / tl;   // as the cloak's: the hem never folded over itself
   d += trail - vec2(0.0, uSwing.z * h * 0.6);
-  py += hang - sqrt(max(hang * hang - dot(trail, trail), 0.0)) + max(uSwing.z, 0.0) * h * h;
-  // never through the legs: below the shoulders a hand behind the body's axis, and pressed back by a passing knee
-  float keep = y < ${g3(CLOAK_SHOULDER_Y)} ? mix(0.15, 0.22, h) : 0.0;
+  py += hang - sqrt(max(hang * hang - dot(trail, trail), 0.0)) + max(uSwing.z, 0.0) * h * h + rip * 0.2 * q.y;
+  // never through the legs: a hand behind the body's axis by the hips, and pressed back by a passing knee. AUDIT
+  // CAPE-CARD B1: from nothing at the shoulders - full there, it was measured from the feet, not the shoulders a body
+  // leans forward over, and pulled the rows under them back a step off the rows over them
+  float keep = y < ${g3(CLOAK_SHOULDER_Y)} ? mix(0.15, 0.22, h) * smoothstep(0.0, 0.4, h) : 0.0;
   if (-d.y < keep) d.y = -keep;
   float ub = fract(atan(d.x, d.y) / CLOAK_TAU), r = length(d);
   d.y -= cloakKneePush(uKneeL, ub, r, py) + cloakKneePush(uKneeR, ub, r, py);
@@ -2210,7 +2216,7 @@ vec4 eternalWall(vec2 q) {
   float vein = pow(1.0 - abs(vn * 2.0 - 1.0), 10.0);
   // the cloth's facing against the eye (the cloak's way): lit where it faces, a rim where it turns away - CAPE-FLAT: out of
   // its back, tilted up by its straight fall and across by its folds
-  vec2 bn = -cloakBearing(cloakTwistAt(y)) + vec2(cos(uYaw), -sin(uYaw)) * 0.6 * sin(eternalFoldPhase(u)) * cloakDrapeOf(y);
+  vec2 bn = -cloakBearing(cloakTwistAt(y)) + vec2(cos(uYaw), -sin(uYaw)) * eternalFoldLean(u, y);
   vec3 e = uCamPos - vWorld;
   float toward = dot(normalize(vec3(bn.x, ${g3((ETERNAL_BACK.hem - ETERNAL_BACK.top) / (ETERNAL_TOP - ETERNAL_HEM_Y))}, bn.y)), dot(e, e) > 1e-8 ? normalize(e) : vec3(bn.x, 0.0, bn.y));
   float lit = abs(toward), rim = pow(max(0.0, 1.0 - lit), 3.0);
@@ -3098,8 +3104,9 @@ export const AURA_CARDS = Math.max(...Object.values(AURA_LOOK).map((l) => l.glyp
  *  its turn from the body's, rad), and no knee to press it (at the feet's own axis, nowhere). A wearer with no posed
  *  body hangs it from this. */
 export const CLOAK_REST_POSE = Object.freeze({ shoulders: Float32Array.of(0, CLOAK_SHOULDER_Y, 0, 1), head: Float32Array.of(0, CLOAK_HOOD_Y, 0, 0), kneeL: new Float32Array(3), kneeR: new Float32Array(3), torso: Float32Array.of(0, 1, 0, 0, 0, 1), wingBack: 0 });   // SERAPH-WINGS: the torso upright and facing forward; WINGS-FIT: the wings at the back itself
-/** CAPE-CARD: the rest pose on a flat card with no figure to read (a paperdoll, a class sprite - auraSpritePosed): what hangs
- *  on the back stands WING_SPRITE_BACK behind the card, WINGS-FIT's law. Shared, as the rest pose is: never written. */
+/** CAPE-CARD: the rest pose on a flat card with no figure to read (a class sprite, a sprite rider - auraSpritePosed): the
+ *  wings and the Eternal cape stand WING_SPRITE_BACK behind the card, WINGS-FIT's law (AUDIT CAPE-CARD D4: the Holo
+ *  Shadow Cloak wraps the body and reads no `uWingBack`). Shared, as the rest pose is: never written. */
 export const CLOAK_CARD_POSE = Object.freeze({ ...CLOAK_REST_POSE, wingBack: WING_SPRITE_BACK });
 const posedOwn = (p) => (p && p !== CLOAK_REST_POSE && p !== CLOAK_CARD_POSE ? p : null);   // a wearer's own pose, to write into - never a shared one
 /** SHADOW-CLOAK: THE BONES IT HANGS FROM - the retail third-person skeleton's (base_anim.nif and its kin, lowercase as
@@ -3289,6 +3296,17 @@ export function auraMotionStep(w, t) {
   return w;
 }
 
+/** AUDIT CAPE-CARD A2: THE SWING AS THE CLOTH IS DRAWN - [x, z, lift, twist]. auraMotionStep reads it along the way the
+ *  body turns (`turnYaw`); the shader lays it along the way the picture faces (`yaw`). Turned from the one frame into the
+ *  other, the hem trails the walk whichever way the picture faces - a doll's front is always to the eye. Written into
+ *  `out`. Pure but for `out`. */
+export function auraSwingDrawn(w, out) {
+  const sw = w.swing, x = sw?.x || 0, z = sw?.z || 0, yaw = Number.isFinite(w.yaw) ? w.yaw : 0;
+  const d = Number.isFinite(w.turnYaw) ? w.turnYaw - yaw : 0, c = Math.cos(d), s = Math.sin(d);
+  out[0] = x * c + z * s; out[1] = -x * s + z * c; out[2] = sw?.lift || 0; out[3] = sw?.twist || 0;
+  return out;
+}
+
 /** SHADOW-CLOAK: THE BEAST FORM, a wearer's step each frame - `beast` whether they stand turned lycanthrope, `t` the
  *  clock (s). Turned, the cloak tears: `w.torn` the seconds since the turn, wrapped whole past the tear by the clock's
  *  period (the shreds' rates are whole over it, so their flights meet themselves); -1 while they are not. A wearer
@@ -3370,6 +3388,7 @@ export class AuraRingRenderer {
     gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
     this._vp = new Float32Array(16);
+    this._swing = [0, 0, 0, 0];   // AUDIT CAPE-CARD A2: the swing as uploaded, refilled per wearer
     this._resLit = new Float32Array(RESONANCE_COLUMNS);   // CRYSTAL-FIST AUDIT: one list, refilled per wearer
     this._resCap = new Float32Array(RESONANCE_COLUMNS);   // AURA DETAIL: and the caps over them
     this._warren = new Float32Array(WARREN_BUNNIES * 4);   // WIKIMAID: the rabbits, and their tracks - refilled per wearer
@@ -3463,8 +3482,8 @@ export class AuraRingRenderer {
         gl.uniform1f(U.uYaw, Number.isFinite(w.yaw) ? w.yaw : 0);   // SHADOW-CLOAK: the facing its opening is at
         const torn = Number.isFinite(w.torn) ? w.torn : -1;
         gl.uniform1f(U.uTorn, torn);   // SHADOW-CLOAK: turned beast, the cloak torn (auraBeastStep)
-        const sw = w.swing, pose = w.cape ?? CLOAK_REST_POSE;   // SHADOW-CLOAK: its swing (auraMotionStep) and the body's pose it hangs from (auraCapePose)
-        gl.uniform4f(U.uSwing, sw?.x || 0, sw?.z || 0, sw?.lift || 0, sw?.twist || 0);
+        const sw = auraSwingDrawn(w, this._swing), pose = w.cape ?? CLOAK_REST_POSE;   // SHADOW-CLOAK: its swing (auraMotionStep) and the body's pose it hangs from (auraCapePose); AUDIT CAPE-CARD A2: the swing in the frame the cloth is drawn in
+        gl.uniform4f(U.uSwing, sw[0], sw[1], sw[2], sw[3]);
         gl.uniform4fv(U.uCapeS, pose.shoulders); gl.uniform4fv(U.uCapeH, pose.head);
         gl.uniform3fv(U.uKneeL, pose.kneeL); gl.uniform3fv(U.uKneeR, pose.kneeR);
         const torso = pose.torso ?? CLOAK_REST_POSE.torso;   // SERAPH-WINGS: the back the wings grow from

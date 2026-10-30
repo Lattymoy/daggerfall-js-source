@@ -1,0 +1,119 @@
+[
+  {
+    "name": "AUDIT-CAPECARD-A1-a-class-sprite-turned-to-the-listener",
+    "file": "src/net/remotePlayers.js",
+    "old": "this._syncMobilePeer(peer, bundle, toScene, dt, view ?? eye, veil);",
+    "new": "this._syncMobilePeer(peer, bundle, toScene, dt, eye, veil);",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-A1-the-walkers-to-the-head",
+    "file": "src/scenes/world.js",
+    "old": "    const peerEye = travelView?.eye ?? (renderer._view ? renderer._camPos : cam.pos), peerRight",
+    "new": "    const peerEye = travelView?.eye ?? cam.pos, peerRight",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-A1-the-class-sprites-view-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "eye: travelView?.eye ?? player.pos, view: peerEye, poseAgeMs:",
+    "new": "eye: travelView?.eye ?? player.pos, poseAgeMs:",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-A2-the-swing-in-the-turnings-frame",
+    "file": "src/render/auraRing.js",
+    "old": "const d = Number.isFinite(w.turnYaw) ? w.turnYaw - yaw : 0, c = Math.cos(d), s = Math.sin(d);",
+    "new": "const d = 0, c = Math.cos(d), s = Math.sin(d);",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-A3-a-riders-face-no-card",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "(r.face = { yaw: null, turn: 0, card: true })",
+    "new": "(r.face = { yaw: null, turn: 0, card: false })",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-A3-my-sprite-no-card",
+    "file": "src/scenes/auraHost.js",
+    "old": "auraSpriteBones(mwViewSpriteFigure()), card: !!faced }",
+    "new": "auraSpriteBones(mwViewSpriteFigure()) }",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-A4-the-gather-on-the-poses-feet",
+    "file": "src/scenes/auraHost.js",
+    "old": "p = seenAs?.at ?? deps.toScene(d.shown), up",
+    "new": "p = deps.toScene(d.shown), up",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-A5-the-gather-before-the-classic-layer",
+    "file": "src/scenes/world.js",
+    "old": "    remotePlayers.sync(visiblePeers",
+    "new": "    auraHost.frame(seen);\n    remotePlayers.sync(visiblePeers",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-D1-a-doll-a-card",
+    "file": "src/net/remotePlayers.js",
+    "old": "f.card = e.kind === 'mobile';",
+    "new": "f.card = true;",
+    "tests": [
+      "test/render/capecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-D3-no-burst",
+    "file": "src/render/auraRing.js",
+    "old": "  d += vec2((1.0 - 2.0 * u) * 0.15, -(0.15 + 0.35 * sin(3.14159265 * u))) * rip;",
+    "new": "",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-B1-the-keep-whole-at-the-shoulders",
+    "file": "src/render/auraRing.js",
+    "old": "mix(0.15, 0.22, h) * smoothstep(0.0, 0.4, h)",
+    "new": "mix(0.15, 0.22, h)",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-B2-the-lean-flipped",
+    "file": "src/render/auraRing.js",
+    "old": "float eternalFoldLean(float u, float y) { return -0.6 *",
+    "new": "float eternalFoldLean(float u, float y) { return 0.6 *",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-the-crouch-gather-dropped",
+    "file": "src/render/auraRing.js",
+    "old": " + max(0.0, 1.0 - ky) * h * 0.3));",
+    "new": "));",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  }
+]

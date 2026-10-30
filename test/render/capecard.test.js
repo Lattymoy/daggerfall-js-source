@@ -65,7 +65,7 @@ test('CAPE-CARD a class sprite\'s facing: mobileOrientation run backwards - ever
   assert.equal(mobilePortrayedYaw(2, [1, 0, 1], [1, 4, 1]), null, 'the eye over the feet: no line of sight');
 });
 
-test('CAPE-CARD the classic layer says how its picture faces, built by its own producers: a doll shows the eye its front whichever way its peer turns, a class sprite the view it was drawn in as the camera sees it; each says it is a card and hands the pose\'s own facing for the swing; nothing for a peer it does not draw (mutants: a doll faced on the pose; the card unsaid)', async () => {
+test('CAPE-CARD the classic layer says how its picture faces, built by its own producers: a doll shows the eye its front whichever way its peer turns, a class sprite the view it was drawn in as the camera sees it; a class sprite says it is a card and a doll does not (AUDIT CAPE-CARD D1: it has no side to be seen from); each hands the pose\'s own facing for the swing and its picture\'s feet; nothing for a peer it does not draw (mutants: a doll faced on the pose; the card unsaid; a doll a card)', async () => {
   const dolls = dollLayer();
   const away = { id: 'd', name: 'd', look: LOOK, shown: { x: 1, y: 0, z: 3, yaw: 0, pitch: 0, mv: 0 } };   // faces +z
   await drawn(dolls, away, [1, 1, -5], 'doll');
@@ -73,7 +73,8 @@ test('CAPE-CARD the classic layer says how its picture faces, built by its own p
     const f = dolls.faceOf('d', eye);
     assert.ok(f && Math.abs(wrap(f.yaw - Math.atan2(eye[0] - 1, eye[2] - 3))) < 1e-9, `eye ${eye}: the doll's front to it (${f?.yaw})`);
     assert.equal(f?.turn, 0, 'its peer\'s own facing, for the swing');
-    assert.equal(f?.card, true, 'a flat card with no figure');
+    assert.equal(f?.card, false, 'AUDIT CAPE-CARD D1: no side to be seen from - no push off it');
+    assert.deepEqual([...(f?.at ?? [])], [1, 0, 3], 'its picture\'s feet');
   }
   assert.equal(dolls.faceOf('nobody', [0, 1, 0]), null);
   assert.equal(dolls.faceOf('d', null), null, 'no eye, no facing');
@@ -117,7 +118,7 @@ const vsOf = (/** @type {any} */ w) => glslFunctions(AURA_VS, {
 });
 const QUIET = 13.2;
 
-test('CAPE-CARD the owner\'s shot: a doll whose peer faces away from the eye - the cape hung as the doll faces lies wholly behind its card, cloth, wisps and embers, where hung on the pose it stood between the eye and the doll (mutants: a doll faced on the pose)', async () => {
+test('CAPE-CARD the owner\'s shot: a doll whose peer faces away from the eye - the cape hung as the doll faces lies wholly behind its card, cloth, wisps and embers, where hung on the pose it stood between the eye and the doll (mutants: a doll faced on the pose; a doll a card)', async () => {
   const dolls = dollLayer();
   const peer = { id: 'p', name: 'p', look: LOOK, shown: { x: 0, y: 0, z: 0, yaw: Math.PI, pitch: 0, mv: 0 } };   // faces -z, away from the eye
   const eye = [0, 1.7, 3];
@@ -130,7 +131,7 @@ test('CAPE-CARD the owner\'s shot: a doll whose peer faces away from the eye - t
   };
   const w = /** @type {any} */ ({ at: [0, 0, 0], yaw: Math.PI, aura: 'eternal' });
   auraCapeStep(w, auraSpritePosed(w, spriteAnswer([null, null], 'figureOf', 'p'), spriteAnswer([null, dolls], 'faceOf', 'p', eye)));
-  assert.equal(w.cape, CLOAK_CARD_POSE);
+  assert.equal(w.cape, CLOAK_REST_POSE, 'AUDIT CAPE-CARD D1: at the body - faced to the eye, the cape is behind the doll without a push');
   const now = depths(w);
   assert.ok(now.every((z) => z < -0.1), `all of it behind the doll (${Math.max(...now).toFixed(3)})`);
   const was = /** @type {any} */ ({ at: [0, 0, 0], yaw: Math.PI, aura: 'eternal' });
@@ -138,7 +139,7 @@ test('CAPE-CARD the owner\'s shot: a doll whose peer faces away from the eye - t
   assert.ok(depths(was).filter((z) => z > 0).length > 100, 'hung on the pose, it stood in front of the doll');
 });
 
-test('CAPE-FLAT the cut: its top edge one straight line across the shoulders - one height, one depth, from one side to the other at the top\'s width; each side a straight line from the hem to the top, seen from behind; its hem level; all of it behind the body, and still behind it swung forward as far as it swings (mutants: the sides eased; folds along the top edge; the keep off the legs dropped)', () => {
+test('CAPE-FLAT the cut: its top edge one straight line across the shoulders - one height, one depth, from one side to the other at the top\'s width; each side a straight line from the hem to the top, seen from behind; its hem level; all of it behind the body, and off the legs swung forward as far as it swings (mutants: the sides eased; folds along the top edge; the keep off the legs dropped)', () => {
   const w = /** @type {any} */ ({ at: [0, 0, 0], yaw: 0, aura: 'eternal' });
   auraCapeStep(w, null);
   const F = vsOf(w);
@@ -163,8 +164,8 @@ test('CAPE-FLAT the cut: its top edge one straight line across the shoulders - o
   assert.ok(grid(F).every((p) => p[2] < -0.1), 'still: behind the body');
   const G = vsOf(w);
   G.globals.uSwing = [0, CLOAK_SWING.trailMax, 0, 0];   // walking backward: the hem trails forward as far as it can
-  const under = grid(G).filter((p) => p[1] < CLOAK_SHOULDER_Y);
-  assert.ok(under.every((p) => p[2] <= -0.15 + 1e-6), `swung forward: never through the legs (${Math.max(...under.map((p) => p[2])).toFixed(3)})`);
+  const legs = grid(G).filter((p) => p[1] < 0.9);   // AUDIT CAPE-CARD B1: the keep is the legs' - full by the hips, from nothing at the shoulders
+  assert.ok(legs.every((p) => p[2] <= -0.15 + 1e-6), `swung forward: never through the legs (${Math.max(...legs.map((p) => p[2])).toFixed(3)})`);
 });
 
 test('CAPE-CARD the host: every layer that draws a peer as a picture is one list, the paperdolls and class sprites with the Eye of the Beholder sets - the gather faces a doll\'s pieces as the doll faces, and the draw hangs a cape off any of them; world.js hands the three over (mutants: the classic layer left out)', async () => {

@@ -739,7 +739,7 @@
   {
     "name": "SHADOWCLOAK-the-swing-never-set",
     "file": "src/render/auraRing.js",
-    "old": "gl.uniform4f(U.uSwing, sw?.x || 0, sw?.z || 0, sw?.lift || 0, sw?.twist || 0);",
+    "old": "gl.uniform4f(U.uSwing, sw[0], sw[1], sw[2], sw[3]);",
     "new": "gl.uniform4f(U.uSwing, 0, 0, 0, 0);",
     "tests": [
       "test/net/shadowcloak.test.js"
@@ -748,8 +748,8 @@
   {
     "name": "SHADOWCLOAK-the-pose-never-set",
     "file": "src/render/auraRing.js",
-    "old": "const sw = w.swing, pose = w.cape ?? CLOAK_REST_POSE;",
-    "new": "const sw = w.swing, pose = CLOAK_REST_POSE;",
+    "old": "const sw = auraSwingDrawn(w, this._swing), pose = w.cape ?? CLOAK_REST_POSE;",
+    "new": "const sw = auraSwingDrawn(w, this._swing), pose = CLOAK_REST_POSE;",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
@@ -757,8 +757,8 @@
   {
     "name": "SHADOWCLOAK-my-bones-never-read",
     "file": "src/scenes/auraHost.js",
-    "old": "bones: selfLiftNow > 0 ? null : mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()) }",
-    "new": "bones: selfLiftNow > 0 ? null : null ?? auraSpriteBones(mwViewSpriteFigure()) }",
+    "old": "bones: selfLiftNow > 0 ? null : mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()), card: !!faced }",
+    "new": "bones: selfLiftNow > 0 ? null : null ?? auraSpriteBones(mwViewSpriteFigure()), card: !!faced }",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],

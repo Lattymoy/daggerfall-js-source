@@ -165,8 +165,8 @@ export function createAuraHost(deps) {
         if (!au) auraPool.delete(d.id);
         if (!ak) armoryPool.delete(d.id);
         if (!au && !ak) continue;
-        const p = deps.toScene(d.shown), up = deps.peerLift?.(d) || 0;   // AURA-ON-DRAGON: a dragon's rider wears them in its seat
-        const face = spriteAnswer(layers, 'faceOf', d.id, eye)?.yaw ?? peerBodyYaw(d.shown) ?? 0;   // SPRITE-FACE: a sprite's as its picture is drawn this frame; CAPE-CARD: a paperdoll's and a class sprite's too
+        const seenAs = spriteAnswer(layers, 'faceOf', d.id, eye), p = seenAs?.at ?? deps.toScene(d.shown), up = deps.peerLift?.(d) || 0;   // AURA-ON-DRAGON: a dragon's rider wears them in its seat; AUDIT CAPE-CARD A4: at its picture's own feet (a seated doll sinks)
+        const face = seenAs?.yaw ?? peerBodyYaw(d.shown) ?? 0;   // SPRITE-FACE: a sprite's as its picture is drawn this frame; CAPE-CARD: a paperdoll's and a class sprite's too
         if (au) {
           let w = auraPool.get(d.id);
           if (!w || w.aura !== au) { w = { id: d.id, at: [0, 0, 0], aura: au, seed: auraSeedOf(d.id), kindle: 0, since: t }; auraPool.set(d.id, w); }
@@ -196,8 +196,9 @@ export function createAuraHost(deps) {
         const player = deps.player(), layers = deps.sprites(), faced = mwViewSpriteFacing();
         // SHADOW-CLOAK: each cape hung on its body as drawn this frame - its bones posed by now (mine, or a peer's), else at
         // rest, crouched with a crouch - and swung by how it moves where it is drawn; SPRITE-FACE: a sprite's faced as its
-        // PICTURE is, in the saddle too, and swung by the way the body turns (`turn`)
-        for (const w of auraDraw) if (auraLookOf(w.aura).mesh) { auraCapeStep(w, w === self ? { feet: liftedFeet(player.bodyFeetAt(), selfLiftNow), yaw: faced?.yaw ?? player.bodyYawFor(deps.camYaw()), turn: faced?.turn, bones: selfLiftNow > 0 ? null : mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()) } : deps.bodies()?.bonesOf(w.id, CLOAK_BONES) ?? auraSpritePosed(w, spriteAnswer(layers, 'figureOf', w.id), spriteAnswer(layers, 'faceOf', w.id, eye)), w === self ? player.height / CAPSULE_HEIGHT : 1); auraMotionStep(w, now); }
+        // PICTURE is, in the saddle too, and swung by the way the body turns (`turn`); AUDIT CAPE-CARD A3: my sprite's a card
+        // (`card`), so in the saddle, with no figure to read, what hangs on my back stands behind it as on a walker
+        for (const w of auraDraw) if (auraLookOf(w.aura).mesh) { auraCapeStep(w, w === self ? { feet: liftedFeet(player.bodyFeetAt(), selfLiftNow), yaw: faced?.yaw ?? player.bodyYawFor(deps.camYaw()), turn: faced?.turn, bones: selfLiftNow > 0 ? null : mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()), card: !!faced } : deps.bodies()?.bonesOf(w.id, CLOAK_BONES) ?? auraSpritePosed(w, spriteAnswer(layers, 'figureOf', w.id), spriteAnswer(layers, 'faceOf', w.id, eye)), w === self ? player.height / CAPSULE_HEIGHT : 1); auraMotionStep(w, now); }
       }
       auraList.length = 0;   // this frame's, drawn once: a frame that gathers none (the seat left, death, offline) draws none
       armoryDraw.length = 0;

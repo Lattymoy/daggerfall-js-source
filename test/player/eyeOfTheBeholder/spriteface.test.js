@@ -212,7 +212,7 @@ test('SPRITE-FACE the wiring: the view keeps the sprite\'s facing beside its fig
   assert.ok(w.includes('self.yaw = faced?.yaw ?? player.bodyYawFor(deps.camYaw());') && w.includes('const spawned = deps.spawned(), faced = mwViewSpriteFacing();'), 'the gather: mine as my picture faces');
   assert.ok(w.includes('yaw: faced?.yaw ?? player.bodyYawFor(deps.camYaw()), turn: faced?.turn,') && w.includes('layers = deps.sprites(), faced = mwViewSpriteFacing();'), 'the draw: mine, and my turning');   // CAPE-CARD (PIN MOVED): the sprite layers one list
   assert.ok(w.includes('auraSpritePosed(w, spriteAnswer(layers, \'figureOf\', w.id), spriteAnswer(layers, \'faceOf\', w.id, eye))'), 'a peer\'s: their picture\'s');   // CAPE-CARD (PIN MOVED): off any sprite layer
-  assert.ok(w.includes('const face = spriteAnswer(layers, \'faceOf\', d.id, eye)?.yaw ?? peerBodyYaw(d.shown) ?? 0;') && w.includes('w.yaw = face; auraBeastStep(w, !!d.shown.wb, t);'), 'and gathered so - the wings\' light stands where the wings do');
+  assert.ok(w.includes('const seenAs = spriteAnswer(layers, \'faceOf\', d.id, eye), p = seenAs?.at ?? deps.toScene(d.shown)') && w.includes('const face = seenAs?.yaw ?? peerBodyYaw(d.shown) ?? 0;') && w.includes('w.yaw = face; auraBeastStep(w, !!d.shown.wb, t);'), 'and gathered so - the wings\' light stands where the wings do');
   const pr = rd('src/net/peer/peerRiders.js');
   assert.equal((pr.match(/faceDrawn\(r, view, yaw, feet, eye\);/g) ?? []).length, 2, 'both layers record it as they draw');
 });

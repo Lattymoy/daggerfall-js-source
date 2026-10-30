@@ -23,9 +23,10 @@ A class sprite had the same gap. Its picture is chosen for my own place, not my 
 view off the picture. From the side it lay over the card, as the wings did before WINGS-FIT.
 
 FIXED. `RemotePlayers.faceOf(id, eye)` says how its picture faces as the eye sees it - a doll its front, a class sprite
-its view (`mobilePortrayedYaw`, mobileOrientation run backwards) - with the pose's yaw as `turn`, and `card`.
-`auraSpritePosed` hangs a face that says `card` from the rest pose WING_SPRITE_BACK behind the card
-(`CLOAK_CARD_POSE`). The aura host reads every sprite layer as one list (`sprites`, `spriteAnswer`), so the Aura
+its view (`mobilePortrayedYaw`, mobileOrientation run backwards) - with the pose's yaw as `turn`. A class sprite's face
+says `card`, and `auraSpritePosed` hangs the wings and the Eternal cape from the rest pose WING_SPRITE_BACK behind it
+(`CLOAK_CARD_POSE`). A doll's says none: it has no side to be seen from, and faced to the eye the cape is behind it at
+its own depth (`../audits/Audit-Cape-Card.md` D1). The aura host reads every sprite layer as one list (`sprites`, `spriteAnswer`), so the Aura
 Armory's pieces on a doll face as the doll does too. In `scenes/world.js` the list replaces the two getters it held, so
 bootWorld does not grow.
 
@@ -61,7 +62,6 @@ its own copy of the cloak's pendulum line, so the cloak's records name the cloak
 
 ## Not changed
 
-An Eye of the Beholder rider's face has no figure and says no card: wings over a horse's picture hang at the body, as
-before. A class sprite's picture is still chosen for my own place (world.js remotePlayers.sync's `eye`), not my
-camera; the cape follows the picture it shows. From the side, the cape on a card stands WING_SPRITE_BACK behind the
-picture's back, ETERNAL-FIT's law.
+From the side, the cape on a card stands WING_SPRITE_BACK behind the picture's back, ETERNAL-FIT's law. The audit
+(`../audits/Audit-Cape-Card.md`) turned every peer's picture to the camera that draws it, laid the swing in the frame
+the cloth is drawn in, and made a sprite rider a card; its last section says what it left to the owner.

@@ -219,7 +219,7 @@ test('AUDIT DEEP R-1: EVERY fogged program under the travel view measures its fo
   assert.match(w, /const tvStand = tvf \? cam\.pos : mwv\.eye;[^\n]*\n\s*const gateSky = gateOmen\?\.sky\(tvStand, gateSkyTranslate\)/);
   assert.match(w, /dreadStorm\.tick\(\{ sharedMs: Date\.now\(\) \+ _sharedOffsetMs, eye: tvStand, weight: dreadW \}\)/);
   assert.match(w, /gateStorm\.tick\(\{ sharedMs: Date\.now\(\) \+ _sharedOffsetMs, eye: tvStand,/);
-  assert.match(w, /dt, eye: travelView\?\.eye \?\? player\.pos, poseAgeMs:/);
+  assert.match(w, /dt, eye: travelView\?\.eye \?\? player\.pos, view: peerEye, poseAgeMs:/);   // PIN MOVED (AUDIT CAPE-CARD A1): `view`, the camera a class sprite turns to
   assert.match(w, /camPos: renderer\._camPos, focus: renderer\._focus, haze: renderer\._haze \}\)\) renderer\.markForeignPass\(\);   \/\/ AUDIT DEEP R-1/, 'the gate handed it');
   // the gate's own upload, driven: a fake GL hears the focus it was handed, and w 0 without one
   const { GatePassRenderer } = await import('../../src/render/gate/gatePass.js');

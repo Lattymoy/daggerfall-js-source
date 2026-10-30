@@ -20,8 +20,8 @@
   {
     "name": "CAPE-CARD-the-card-unsaid",
     "file": "src/net/remotePlayers.js",
-    "old": "(e.face = { yaw: 0, turn: 0, card: true })",
-    "new": "(e.face = { yaw: 0, turn: 0 })",
+    "old": "f.card = e.kind === 'mobile';",
+    "new": "f.card = false;",
     "tests": [
       "test/render/capecard.test.js"
     ]

@@ -152,7 +152,7 @@
   {
     "name": "SPRITEFACE-a-peers-light-off-the-pose",
     "file": "src/scenes/auraHost.js",
-    "old": "const face = spriteAnswer(layers, 'faceOf', d.id, eye)?.yaw ?? peerBodyYaw(d.shown) ?? 0;",
+    "old": "const face = seenAs?.yaw ?? peerBodyYaw(d.shown) ?? 0;",
     "new": "const face = peerBodyYaw(d.shown) ?? 0;",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteface.test.js"

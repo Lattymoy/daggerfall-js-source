@@ -182,8 +182,9 @@ Pins: `test/server/shoplocal.test.js`. Mutants: `tools/mutants/shoplocal.json`.
   lies over the body. From behind it covers the back, as a cape does.
 - **CAPE-CARD, CAPE-FLAT** (2026-10-30, the owner, with a shot of the cape on a player's front: "Did we learn nothing
   from the angel wings aura? And the cape sides and top shouldnt be curved"; `01-Overview/bugs/Field-Bugs-2026-10-30.md`).
-  A peer drawn as a paperdoll or a class sprite now says how its picture faces and that it is a card
-  (`net/remotePlayers.js` faceOf), so the cape hangs behind it as on a sprite. The cape is cut straight: a top edge
+  A peer drawn as a paperdoll or a class sprite now says how its picture faces (`net/remotePlayers.js` faceOf), so the
+  cape hangs on its back; a class sprite is a card, and the cape stands behind it as on a sprite. AUDIT CAPE-CARD
+  (`01-Overview/audits/Audit-Cape-Card.md`): every peer's picture turns to the camera that draws it. The cape is cut straight: a top edge
   across the shoulders, straight sides and a straight fall to a level hem (ETERNAL_HALF, ETERNAL_BACK, ETERNAL_HEM_Y).
 
 ## 7. Seen
@@ -205,4 +206,5 @@ Wear and its sentence, Escape back to the gem - at 1280 and on a 390 phone, sign
 
 Pins: `test/server/shop_service.test.js` (the law, the service end to end), `test/ui/shop_window.test.js` (the
 window, the faces, the catalogue's entries, ETERNAL-FIT), `test/render/capecard.test.js` (CAPE-CARD, CAPE-FLAT).
-Mutants: `tools/mutants/shop.json`, `tools/mutants/eternalfit.json`, `tools/mutants/capecard.json`.
+`test/render/auditcapecard.test.js` (AUDIT CAPE-CARD). Mutants: `tools/mutants/shop.json`, `tools/mutants/eternalfit.json`,
+`tools/mutants/capecard.json`, `tools/mutants/auditcapecard.json`.
