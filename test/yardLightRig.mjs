@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { Renderer } from '../src/render/renderer.js';
 import { EL_LANE, lanternColor } from '../src/render/enhancedLighting.js';
-import { CITY_LIGHT_COLOR, fillLanternPool, nearestLights, rangesFor, capFadeColors, capFadePairs } from '../src/world/city/cityLights.js';
+import { CITY_LIGHT_COLOR, fillLanternPool, nearestLights, rangesFor, capFadeColors, capFadePairs, streetLightReach } from '../src/world/city/cityLights.js';
 import { withPlayerLights } from '../src/scenes/magicCandle.js';
 import { wodLightColors } from '../src/world/worldOfDaggerfall/worldOfDaggerfall.js';
 import { yardLampRows } from '../src/scenes/homeYards.js';
@@ -73,6 +73,7 @@ export function exteriorFrame({ lane, night, town, lamps, eye, ranges, tick = ()
     CITY_LIGHT_COLOR_F32: lanternColor(lane, new Float32Array(CITY_LIGHT_COLOR)),
     lightingOn: !!lane,   // CANDLE-DIM: the lane a yard's candle burns on
     fillLanternPool, nearestLights, rangesFor, capFadeColors, capFadePairs, withPlayerLights, wodLightColors,
+    streetLightReach,   // PIN MOVED (AUDIT LIGHT-REACH S5): the harbour's lamps at the lane's share
     meterFor: () => null,   // PIN MOVED (PERF-SIM3): the frame's CPU meter marks its spans inside this source - no meter in this rig
     adoptLight,   // PIN MOVED (LIGHT-ID): the pools name each entry by its light, and a quay's lantern its own (render/lightId.js)
   };

@@ -81,7 +81,7 @@ import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // AUDIT 58
 import { createEnchantCtx, standLooseFoe, LOOSE_FOE_PLACE_ATTEMPTS } from './hostEnchant.js';   // FS1 (wave D): the ONE ctx body + SD1's loose-foe placement
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { realWindowsMode, clockFogColor } from '../render/realWindows.js';   // RW1: the rooms behind the glass, and the street a building's glass looks out on
-import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/city/cityLights.js';
+import { CITY_LIGHT_COLOR, LIGHTS_ARCHIVE, collectCityLights, nearestLights, streetLanternAnimator, streetLightRange } from '../world/city/cityLights.js';
 import { isHearthFlat } from '../systems/survival/hearth.js';   // HEARTH1: which of those lanterns is a fire you could cook on
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -127,7 +127,7 @@ import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNp
 import { createStandingHorses, isStandingHorseFlat } from '../world/standingHorses.js';   // STAND-HORSE: the location's town horses as the 3D horse
 import { isStandFlat, standFlatId, standFlatRecord } from '../world/standFlats.js';   // STAND-FLAT: a town horse and a person's flat no StaticNPC holds, a batch each   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
 import { drawnFlat } from '../characters/nudeFlats.js';   // NUDE-FLATS: Show Nudity off draws a nude figure's clothed stand-in
-import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime, viewOutLight } from '../world/worldClock.js';
+import { SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime, viewOutLight } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
 import { createWeatherFront, blendTerms, soundWeather, fallTerms } from '../systems/weather/weatherFront.js';   // WX2: the front reaches the ground; RAIN-SPRINKLE: the look of what falls
@@ -4990,7 +4990,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     },
   });
 
-  const lightAnimator = new CityLightAnimator(cityLights.length, CITY_LIGHT_RANGE);
+  const lightAnimator = streetLanternAnimator(cityLights.length, lightingOn);   // LIGHT-REACH: the lane's lanterns reach farther
   // WOD4: the Hold's FireLights burn at every hour, each in its own
   // colour: with the lanterns (while lit) through the one nearest-N
   // selection and its colour arm - world.js's _wodSelect, fixed frame.
@@ -5002,7 +5002,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (!lanternsOn) return nearestLights(holdLights, eye, renderer.maxPointLights, _holdOnlyRanges, (l) => l.color);
     const animated = Math.min(cityLights.length, lightAnimator.ranges.length);
     _holdAllRanges.set(lightAnimator.ranges.subarray(0, animated), 0);
-    _holdAllRanges.fill(CITY_LIGHT_RANGE, animated, cityLights.length);
+    _holdAllRanges.fill(streetLightRange(lightingOn), animated, cityLights.length);
     return nearestLights(_holdAll, eye, renderer.maxPointLights, _holdAllRanges, (l, i) => (i < cityLights.length ? CITY_LIGHT_COLOR_F32 : l.color));
   };
   const nightAmbientFloor = new Float32Array([0.25, 0.25, 0.25]);

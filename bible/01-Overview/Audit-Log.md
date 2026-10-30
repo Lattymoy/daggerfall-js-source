@@ -8,6 +8,13 @@
 
 Newest first.
 
+**2026-10-30 - AUDIT LIGHT-REACH.** The owner: *"Audit"*, of LIGHT-REACH (#1456), the street's lamps and windows lit farther.
+Five cold lanes on a frozen head (`d19e9f1a7`), each finding proven on the real code. Paid: a tile an overflowing near list
+trimmed lost up to 74% of its light every other frame; beside a long wall the far cut fell to 12 m; a yard's candle reached
+7.5 on the lane; the far tier and its shader walk could break with every pin green; the record's "no pixel changed" was
+false for the back-face skip (a leak closed, kept); the patch notes' 160 m was not a busy street's. Record:
+`audits/Audit-Light-Reach.md` (AUDIT LIGHT-REACH).
+
 **2026-10-30 - AUDIT TECH-FEEDBACK II.** Mac: *"Audit this"*, again, of the pass and its first audit. One review of the
 branch, each finding read against the code: eight reported, seven fixed, one kept. Paid: a flight's backs were read from
 its landing, so a Lunge through a foe facing me backstabbed it (F1); a gun mid-reload started an aim that failed silent
