@@ -5,23 +5,23 @@ cape on a peer's front, and its curved cut), merged with main's AURA-ON-DRAGON. 
 of that commit, each given the files and one brief (what to hunt, how to prove it), never a conclusion. Each finding
 was proven on the real code - a probe, a test that fails at the commit, or quoted lines - and proven again here before
 its fix. Fixes carry an `AUDIT CAPE-CARD <id>` comment; the pins are `test/render/auditcapecard.test.js`, the mutants
-`tools/mutants/auditcapecard.json` (13, all dead).
+`tools/mutants/auditcapecard.json` (34, all dead).
 
 | Lane | Read | Found |
 |---|---|---|
 | A | the facing law and its wiring: every layer a peer is drawn in, the eye, the order | 5 |
 | B | the straight cut as geometry and GLSL, on retail's rig, the sprite figure and the rest pose | 3 |
-| C | the pins, the mutants, the record and the pull request's words | reading |
+| C | the pins, the mutants, the record and the pull request's words | 8 |
 | D | rendered frames in Chromium: every look with a body mesh, before and after | 4 |
 
 ## The facing law (A)
 
 **A1 (HIGH). In third person the Eye of the Beholder walkers and riders turned to the head, not the camera.** World.js
-handed their layers `cam.pos` (`player.eyeAt()`), and the frame draws from `mwv.eye`, 2.7 m behind it. A peer beside
-me showed the camera one view and hung a cape on another: 78 of 143 cape points lay over a party mate's front. The
-class sprites turned to `player.pos` the same way. Every peer's picture now turns to the eye that draws it, WAGONS3's
-law (`hcc.faceTeams`): the walkers and riders to the renderer's camera (`peerEye`), the class sprites to `view`. The
-classic layer's `eye` stays the listener's, for the steps', swings' and hooves' sounds. Older than CAPE-CARD (SPRITE-FACE).
+handed their layers `cam.pos` (`player.eyeAt()`), and the frame draws from `mwv.eye`, 2.7 m behind it. A peer beside me
+showed the camera one view and hung a cape on another: 78 of 143 cape points lay over a party mate's front. The class
+sprites turned to `player.pos` the same way. Every peer's picture now turns to the eye that draws it, WAGONS3's law
+(`hcc.faceTeams`): the walkers and riders to the renderer's camera (`peerEye`), the class sprites to `view`. The classic
+layer's `eye` stays the listener's, for the steps', swings' and hooves' sounds. Older than CAPE-CARD (SPRITE-FACE).
 
 **A2 (MEDIUM). On a doll the swing was laid along the wrong frame.** auraMotionStep reads the swing along the way the
 body turns; the shader lays it along the way the picture faces. A doll faces the eye whichever way its peer walks, so
@@ -68,7 +68,24 @@ the body and reads no `uWingBack`; the comment, the field-bug page and Shop.md s
 
 ## The pins and the record (C)
 
-Lane C was still reading when the fixes above went up; its findings follow them here.
+**C1 (MEDIUM). Nothing held the cut's own copy of the cloak's law.** The old Eternal cape called cloakPoint, so the
+cloak's pins held both; the straight cut copies the pose and the swing, and ten mutants of the copy lived - the
+pendulum, the trail's limit, the knees, the shoulders, the crouch, the lag both ways, the breadth, the lift and the
+swing's share - and three of the wisps' and embers' flights. Each is pinned on the copy now, the flights against the
+shader's own placing.
+
+**C2 (MEDIUM). A patch note said the cloak hangs behind the card.** The Holo Shadow Cloak wraps the body - its hood and
+clasp are its front - and reads no push; it is faced as the picture now, as the note's own rule needs, and the note
+names only the wings.
+
+**C3 (LOW) = B2,** and no pin held the light's facing: one home now, `eternalNormal`, pinned with the sides' burn.
+
+**C4 (LOW). The face's edges were unpinned** - the turn's fallback, an eye over a doll's feet, a view that is no whole
+view, the wrap. Pinned.
+
+**C5 to C8 (LOW).** The field-bug page undercounted the moved pins and fixtures; the pull request's numbers predated
+the merge of main; it said the wave vanishes at the edges (the folds do); and the new test's header ran past eight
+lines. Each put right. The sigil's own mirror (a lane mutant) is no defect: the glyph is the same either way round.
 
 ## Not changed, and the owner's to decide
 

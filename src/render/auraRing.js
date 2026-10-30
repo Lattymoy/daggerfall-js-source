@@ -2111,6 +2111,12 @@ float eternalFoldOf(float u, float y) { return ${g3(ETERNAL_FOLD_M)} * cos(etern
 // AUDIT CAPE-CARD B2: how far a fold's flank turns its face toward the wearer's right - the depth's slope across, whose
 // sign was flipped in the light (u runs to the left, so a flank deepening with u faces the right)
 float eternalFoldLean(float u, float y) { return -0.6 * sin(eternalFoldPhase(u)) * cloakDrapeOf(y); }
+// the cloth's outward facing, for its light: out of its back as the turn's lag carries it, tilted up by its straight
+// fall and across by its folds (AUDIT CAPE-CARD C3: one home, so a pin reads what the light reads)
+vec3 eternalNormal(float u, float y) {
+  vec2 bn = -cloakBearing(cloakTwistAt(y)) + vec2(cos(uYaw), -sin(uYaw)) * eternalFoldLean(u, y);
+  return normalize(vec3(bn.x, ${g3((ETERNAL_BACK.hem - ETERNAL_BACK.top) / (ETERNAL_TOP - ETERNAL_HEM_Y))}, bn.y));
+}
 `;
 /** SHOP: ETERNAL'S VERTEX HALF - the cape behind the shoulders, a wave flowing down it; and each card's flight: a wisp
  *  off the hem, rising and trailing behind (and further behind as its wearer moves), an ember off the cloth. */
@@ -2214,11 +2220,9 @@ vec4 eternalWall(vec2 q) {
   // VEINS of flame through the mantle's dark, flowing up it
   float vn = fbmP(vec2(u * 14.0 + 3.0, y * 4.0 - t * ${g3(ETERNAL_FLOW.veins)}), vec2(14.0, ${g1(ETERNAL_FLOW.veins * AURA_CLOCK_PERIOD)}));
   float vein = pow(1.0 - abs(vn * 2.0 - 1.0), 10.0);
-  // the cloth's facing against the eye (the cloak's way): lit where it faces, a rim where it turns away - CAPE-FLAT: out of
-  // its back, tilted up by its straight fall and across by its folds
-  vec2 bn = -cloakBearing(cloakTwistAt(y)) + vec2(cos(uYaw), -sin(uYaw)) * eternalFoldLean(u, y);
-  vec3 e = uCamPos - vWorld;
-  float toward = dot(normalize(vec3(bn.x, ${g3((ETERNAL_BACK.hem - ETERNAL_BACK.top) / (ETERNAL_TOP - ETERNAL_HEM_Y))}, bn.y)), dot(e, e) > 1e-8 ? normalize(e) : vec3(bn.x, 0.0, bn.y));
+  // the cloth's facing against the eye (the cloak's way): lit where it faces, a rim where it turns away
+  vec3 nrm = eternalNormal(u, y), e = uCamPos - vWorld;
+  float toward = dot(nrm, dot(e, e) > 1e-8 ? normalize(e) : nrm);
   float lit = abs(toward), rim = pow(max(0.0, 1.0 - lit), 3.0);
   vec2 hx = cloakWorldXZ(uCapeH.xz);
   float seen = smoothstep(${g3(CLOAK_INSIDE_M)}, ${g3(CLOAK_INSIDE_M + 0.15)}, distance(uCamPos, uAt + vec3(hx.x, uCapeH.y, hx.y)));   // as the cloak's: none from inside the collar

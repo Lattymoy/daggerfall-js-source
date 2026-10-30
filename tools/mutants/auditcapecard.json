@@ -115,5 +115,194 @@
     "tests": [
       "test/render/auditcapecard.test.js"
     ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C1-no-pendulum",
+    "file": "src/render/auraRing.js",
+    "old": "  py += hang - sqrt(max(hang * hang - dot(trail, trail), 0.0)) + max(uSwing.z, 0.0) * h * h + rip * 0.2 * q.y;",
+    "new": "  py += max(uSwing.z, 0.0) * h * h + rip * 0.2 * q.y;",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C1-no-trail-clamp",
+    "file": "src/render/auraRing.js",
+    "old": "  if (tl > 0.7 * hang) trail *= 0.7 * hang / tl;   // as the cloak's: the hem never folded over itself",
+    "new": "  if (false) trail *= 0.7 * hang / tl;   // as the cloak's: the hem never folded over itself",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C1-no-knees",
+    "file": "src/render/auraRing.js",
+    "old": "  d.y -= cloakKneePush(uKneeL, ub, r, py) + cloakKneePush(uKneeR, ub, r, py);",
+    "new": "",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C1-shoulders-ignored",
+    "file": "src/render/auraRing.js",
+    "old": "  d += uCapeS.xz * (1.0 - 0.5 * h);\n",
+    "new": "",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C1-crouch-ignored",
+    "file": "src/render/auraRing.js",
+    "old": "  float py = y * ky, hang =",
+    "new": "  float py = y, hang =",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C1-no-twist",
+    "file": "src/render/auraRing.js",
+    "old": "  float a = cloakTwistAt(y) * CLOAK_TAU;",
+    "new": "  float a = 0.0;",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C1-twist-reversed",
+    "file": "src/render/auraRing.js",
+    "old": "  float a = cloakTwistAt(y) * CLOAK_TAU;",
+    "new": "  float a = -cloakTwistAt(y) * CLOAK_TAU;",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C1-width-not-the-shoulders",
+    "file": "src/render/auraRing.js",
+    "old": "* eternalHalfW(y) * uCapeS.w, -(eternalBackOf(y)",
+    "new": "* eternalHalfW(y), -(eternalBackOf(y)",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C1-lift-forward",
+    "file": "src/render/auraRing.js",
+    "old": "  d += trail - vec2(0.0, uSwing.z * h * 0.6);",
+    "new": "  d += trail + vec2(0.0, uSwing.z * h * 0.6);",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C1-swing-as-the-cloaks",
+    "file": "src/render/auraRing.js",
+    "old": "min(ky, 1.0) * ${g3(ETERNAL_SWING)};",
+    "new": "min(ky, 1.0);",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C1-wisps-not-off-the-hem",
+    "file": "src/render/auraRing.js",
+    "old": "float y0 = wisp ? ${g3(ETERNAL_HEM_Y)} + 0.02",
+    "new": "float y0 = wisp ? 0.6 + 0.02",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C1-cards-inside-the-cloth",
+    "file": "src/render/auraRing.js",
+    "old": ") - vec3(cloakFwd().x, 0.0, cloakFwd().y) * 0.03;   // on the cloth",
+    "new": ") + vec3(cloakFwd().x, 0.0, cloakFwd().y) * 0.03;   // on the cloth",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C1-sway-in-depth",
+    "file": "src/render/auraRing.js",
+    "old": "vec2 side = vec2(cos(uYaw), -sin(uYaw)) * 0.025",
+    "new": "vec2 side = cloakFwd() * 0.025",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C3-facing-forward",
+    "file": "src/render/auraRing.js",
+    "old": "  vec2 bn = -cloakBearing(cloakTwistAt(y)) + vec2(cos(uYaw), -sin(uYaw)) * eternalFoldLean(u, y);",
+    "new": "  vec2 bn = cloakBearing(cloakTwistAt(y)) + vec2(cos(uYaw), -sin(uYaw)) * eternalFoldLean(u, y);",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C3-no-tilt",
+    "file": "src/render/auraRing.js",
+    "old": "  return normalize(vec3(bn.x, ${g3((ETERNAL_BACK.hem - ETERNAL_BACK.top) / (ETERNAL_TOP - ETERNAL_HEM_Y))}, bn.y));",
+    "new": "  return normalize(vec3(bn.x, 0.0, bn.y));",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C3-sides-ragged-again",
+    "file": "src/render/auraRing.js",
+    "old": "float sideEdge = sideM - (tongue - 0.5) * 0.02;",
+    "new": "float sideEdge = sideM - (tongue - 0.5) * 0.3;",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C4-turn-no-fallback",
+    "file": "src/net/remotePlayers.js",
+    "old": "f.turn = Number.isFinite(turn) ? turn : yaw;",
+    "new": "f.turn = turn;",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C4-no-facing-kept",
+    "file": "src/net/remotePlayers.js",
+    "old": "    if (yaw === null) return null;\n    const turn = peerBodyYaw",
+    "new": "    const turn = peerBodyYaw",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C4-eye-over-the-feet-faced",
+    "file": "src/net/remotePlayers.js",
+    "old": ": eye[0] !== at[0] || eye[2] !== at[2] ? Math.atan2(eye[0] - at[0], eye[2] - at[2]) : null;",
+    "new": ": Math.atan2(eye[0] - at[0], eye[2] - at[2]);",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C4-no-whole-view-guard",
+    "file": "src/characters/mobile/mobileUnit.js",
+    "old": "if (!Number.isInteger(orientation) || (!dx && !dz)) return null;",
+    "new": "if (!dx && !dz) return null;",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CAPECARD-C4-unwrapped",
+    "file": "src/characters/mobile/mobileUnit.js",
+    "old": "  const y = Math.atan2(dx, dz) + orientation * Math.PI / 4;\n  return Math.atan2(Math.sin(y), Math.cos(y));",
+    "new": "  const y = Math.atan2(dx, dz) + orientation * Math.PI / 4;\n  return y;",
+    "tests": [
+      "test/render/auditcapecard.test.js"
+    ]
   }
 ]

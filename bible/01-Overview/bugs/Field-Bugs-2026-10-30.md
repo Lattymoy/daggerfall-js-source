@@ -26,9 +26,9 @@ FIXED. `RemotePlayers.faceOf(id, eye)` says how its picture faces as the eye see
 its view (`mobilePortrayedYaw`, mobileOrientation run backwards) - with the pose's yaw as `turn`. A class sprite's face
 says `card`, and `auraSpritePosed` hangs the wings and the Eternal cape from the rest pose WING_SPRITE_BACK behind it
 (`CLOAK_CARD_POSE`). A doll's says none: it has no side to be seen from, and faced to the eye the cape is behind it at
-its own depth (`../audits/Audit-Cape-Card.md` D1). The aura host reads every sprite layer as one list (`sprites`, `spriteAnswer`), so the Aura
-Armory's pieces on a doll face as the doll does too. In `scenes/world.js` the list replaces the two getters it held, so
-bootWorld does not grow.
+its own depth (`../audits/Audit-Cape-Card.md` D1). The aura host reads every sprite layer as one list (`sprites`,
+`spriteAnswer`), so the Aura Armory's pieces on a doll face as the doll does too. In `scenes/world.js` the list replaces
+the two getters it held, so bootWorld does not grow.
 
 WHY THE PINS PASSED. ETERNAL-FIT's pin hung the cape on an Eye of the Beholder sprite's pose. No pin drew a peer as a
 doll or a class sprite under an aura. The new pins build both with `RemotePlayers`' own producers (`Home.md`, TEST THE
@@ -55,10 +55,12 @@ wave move it in depth alone, and no fold lies along the top edge or a side, so i
 cloak's pose and swing law - the shoulders, the crouch, the pendulum, the turn's lag, the knees, a hand off the legs -
 and ETERNAL-FIT's push. The fire, the sigil, the wisps and the embers read the flat measures.
 
-PINS MOVED. `test/ui/shop_window.test.js` (the look's height, 1.47 for 1.54), `test/net/shadowcloak.test.js` and
-`test/net/seraphwings.test.js` (the host's lines, now one list), and the three host fixtures that named the two
-getters. Mutant records re-aimed by content: `armory.json`, `seraphwings.json`, `shadowcloak.json` (the cape now has
-its own copy of the cloak's pendulum line, so the cloak's records name the cloak's comment) and `spriteface.json`.
+PINS MOVED. `test/ui/shop_window.test.js` (the look's height, 1.47 for 1.54); `test/net/shadowcloak.test.js`,
+`test/net/seraphwings.test.js`, `test/player/eyeOfTheBeholder/spriteface.test.js` and `test/render/armory.test.js` (the
+host's lines, now one list); and the five host fixtures that named the two getters, in `armorylive`, `armory` (two),
+`capetoggle` and `profileslots`. Mutant records re-aimed by content: `armory.json`, `seraphwings.json`,
+`shadowcloak.json` (the cape now has its own copy of the cloak's pendulum line, so the cloak's records name the cloak's
+comment) and `spriteface.json`.
 
 ## Not changed
 

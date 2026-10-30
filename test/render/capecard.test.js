@@ -1,13 +1,9 @@
-// CAPE-CARD and CAPE-FLAT (2026-10-30, the owner, with a shot of the Eternal cape on a peer's front: "With the new cape
-// why is it showing on the front of the player? Did we learn nothing from the angel wings aura? And the cape sides and
-// top shouldnt be curved"; bible/01-Overview/bugs/Field-Bugs-2026-10-30.md).
-//
-// CAPE-CARD: a peer drawn as a paperdoll or a class sprite (net/remotePlayers.js) had no face and no figure, so a cape
-// hung on the peer's pose yaw, at rest, on the body's axis. A doll shows every eye its front, so whenever its peer faced
-// away the cape lay over the doll's chest, its sigil out. The layer now says how its picture faces (faceOf: a doll its
-// front to the eye, a class sprite the view it was drawn in) and that it is a card, and the cape hangs behind the card
-// as WINGS-FIT's law says. CAPE-FLAT: the Eternal cape was a span of the turn round the body, 0.64 of it at the collar;
-// it is cut straight now - a straight top edge across the shoulders, straight sides, a straight fall.
+// CAPE-CARD and CAPE-FLAT (2026-10-30, the owner, with a shot of the Eternal cape on a peer's front: "Did we learn
+// nothing from the angel wings aura? And the cape sides and top shouldnt be curved"; bible/01-Overview/bugs/
+// Field-Bugs-2026-10-30.md). A paperdoll or class sprite peer had no face, so its cape hung on the pose's yaw - over a
+// doll's chest whenever its peer faced away. Now the layer says how its picture faces (faceOf), a class sprite that it
+// is a card (AUDIT CAPE-CARD D1: a doll is not), and the cape hangs behind it. CAPE-FLAT: cut straight - a straight top
+// edge across the shoulders, straight sides, a straight fall; it was a span of the turn round the body.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
