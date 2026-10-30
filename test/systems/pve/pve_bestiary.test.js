@@ -2,14 +2,14 @@
 // dungeon type, faction and need - the same list for every player, and never a body the game cannot draw.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BESTIARY, BESTIARY_BY_SPECIES, DISTRIBUTION, PROVINCE_KEYS, ORSINIUM_REGION, distributionProblems, standingAt,
+import { BESTIARY, BESTIARY_BY_SPECIES, DISTRIBUTION, PROVINCE_KEYS, ORSINIUM_REGION, distributionProblems, speciesStandingAt,
   regionalSpecies, regionalTemplates } from '../../../src/systems/pve/pveBestiary.js';
 import { CANDIDATE_SPECIES } from '../../../src/systems/pve/pveSpecies.js';
 import { MOB_TEMPLATES } from '../../../src/systems/pve/pveTemplates.js';
 import { CLIMATES } from '../../../src/formats/mapsTables.js';
 import { DUNGEON_TYPES } from '../../../src/formats/mapsFile.js';
 
-const at = (species, place) => standingAt(BESTIARY_BY_SPECIES.get(species), place);
+const at = (species, place) => speciesStandingAt(BESTIARY_BY_SPECIES.get(species), place);
 const holds = (place) => regionalSpecies(place).map((x) => x.species);
 
 test('STAGE 5: every record stands, every template\'s species has one, and the nine provinces are the game\'s', () => {
@@ -59,7 +59,7 @@ test('STAGE 5: a creature the spec names with no art never spawns, and the valid
   for (const c of CANDIDATE_SPECIES) assert.equal(at(c.key, { province: 'Skyrim', climate: CLIMATES.Mountain }), 'unavailable', c.key);
   const draugr = { species: 'draugr', provinces: { Skyrim: 'primary' }, climates: [CLIMATES.Mountain], lore: 'established' };
   assert.deepEqual(distributionProblems(draugr), ['draugr has no art and cannot spawn']);
-  assert.equal(standingAt(draugr, { province: 'Skyrim', climate: CLIMATES.Mountain }), 'unavailable', 'and a record that slips past spawns it nowhere');
+  assert.equal(speciesStandingAt(draugr, { province: 'Skyrim', climate: CLIMATES.Mountain }), 'unavailable', 'and a record that slips past spawns it nowhere');
   assert.deepEqual(distributionProblems({ species: 'harpy', provinces: { Elsweyr: 'primary' }, climates: [CLIMATES.Desert], lore: 'proposed' }), ['a proposed record may not be primary or secondary']);
   assert.deepEqual(distributionProblems({ species: 'harpy', provinces: { Elsweyr: 'conditional' }, climates: [CLIMATES.Desert], lore: 'inferred' }), ['a conditional record names no condition']);
   assert.deepEqual(distributionProblems({ species: 'harpy', provinces: { Atmora: 'secondary' }, climates: [CLIMATES.Desert], lore: 'inferred' }), ['unknown province Atmora']);

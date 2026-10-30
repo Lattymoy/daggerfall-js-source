@@ -115,7 +115,7 @@ export function distributionProblems(r) {
  * @param {Distribution} r
  * @param {{ province?: string, region?: number|null, climate?: number|null, dungeon?: number|null, met?: Iterable<string>, factions?: Iterable<string> }} at
  */
-export function standingAt(r, { province, region = null, climate = null, dungeon = null, met = [], factions = [] } = {}) {
+export function speciesStandingAt(r, { province, region = null, climate = null, dungeon = null, met = [], factions = [] } = {}) {
   if (!hasArt(r.species)) return 'unavailable';
   const cat = (region != null ? r.regions?.[region] : undefined) ?? r.provinces[province ?? ''] ?? r.provinces[ALL] ?? 'unavailable';
   if (cat === 'unavailable') return cat;
@@ -127,15 +127,15 @@ export function standingAt(r, { province, region = null, climate = null, dungeon
   return cat;
 }
 
-/** The species a place may hold and each one's share, by key - the same list for every player. @param {Parameters<typeof standingAt>[1]} at */
+/** The species a place may hold and each one's share, by key - the same list for every player. @param {Parameters<typeof speciesStandingAt>[1]} at */
 export function regionalSpecies(at) {
-  return BESTIARY.map((r) => ({ species: r.species, standing: standingAt(r, at) }))
+  return BESTIARY.map((r) => ({ species: r.species, standing: speciesStandingAt(r, at) }))
     .filter((x) => DISTRIBUTION[x.standing] > 0)
     .map((x) => ({ ...x, weight: DISTRIBUTION[x.standing] }))
     .sort((a, b) => a.species.localeCompare(b.species));
 }
 
-/** The templates a place may hold: those whose species it holds, at that species' share. @param {Parameters<typeof standingAt>[1]} at */
+/** The templates a place may hold: those whose species it holds, at that species' share. @param {Parameters<typeof speciesStandingAt>[1]} at */
 export function regionalTemplates(at) {
   const w = new Map(regionalSpecies(at).map((x) => [x.species, x.weight]));
   return MOB_TEMPLATES.filter((t) => w.has(t.species)).map((t) => ({ template: t.key, weight: /** @type {number} */ (w.get(t.species)) }));
