@@ -227,7 +227,7 @@ collection stood 17 MB below where the walk began. A long journey's cost is the 
   sea (bytes): 1.7 MB of vertex buffers and 0.65-1.3 MB of index, rebuilt every MID_REBUILD_DRIFT (3) pixels.
 - **The far field**: 14,641 vertices (positions and normals Float32, colour and sea bytes): ~0.4 MB and its index.
 - **The Graht-oaks**: nine meshes (three variants, three LODs) packed in 3.16 MB, made once a session a breath at a time;
-  a frame walks every built pixel's trees (`src/scenes/grahtHost.js:"if (n || shown) gpu.setInstances(scratch, n);"` -
+  a frame walks every built pixel's trees (`src/scenes/grahtHost.js:"if (n || shown) gpu.setInstances"` -
   the instances uploaded each frame they are shown), a few thousand trees at the default view.
 - **The roads past the Bay**: a region's layer and places, a worker ~80 MB while it builds; the merged layer on the page
   is a Map of road pixels (not measured whole here).

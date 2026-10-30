@@ -1471,7 +1471,7 @@ cards, as sections 5.3, 5.4, 10.1, 10.7, 14.3, 14.7 and 14.8 decided.
   - SOLVED, not guessed: pitched `GAMBIT_LEAN_PITCH` (55 degrees) down over the board, the eye moved back along its line
   of sight and slid square to it until the board's corners and its head row's cards standing fill `GAMBIT_LEAN_FILL` of
   the CLEAR screen and stand centred in it. The clear screen
-  (`gambitTableGame.js:"export function gambitClear(box, { w, h, rect = null }, touch = false) {"`) is the largest of what
+  (`gambitTableGame.js:"export function gambitClear"`) is the largest of what
   lies left of the panel, right of it and above it - the desktop's column, the phone's strip, the landscape phone's
   column - under the touch layer's presses (`GAMBIT_TOUCH_TOP_PX`) on a touch device, read in the world's strip. The
   battle leans in over `GAMBIT_LEAN_S` (at once under reduced motion) from the seat's own eye and look and back out with

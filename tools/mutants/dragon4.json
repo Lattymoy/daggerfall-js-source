@@ -128,8 +128,8 @@
   {
     "name": "DRAGON4-the-hoard-never-given",
     "file": "src/scenes/dragonRewards.js",
-    "old": "onSpoils: (entry) => grant(entry),",
-    "new": "onSpoils: () => {},",
+    "old": "    onSpoils: (entry) => grant(entry),",
+    "new": "    onSpoils: () => {},",
     "tests": [
       "test/net/dragon/dragon4_claims.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "DRAGON4-a-tame-forgotten",
     "file": "src/scenes/dragonRewards.js",
-    "old": "    writeTames([...readTames(), { id: t.id,",
-    "new": "    void ([...readTames(), { id: t.id,",
+    "old": "    writeTames([\n      ...readTames(),\n      {\n        id: t.id,\n        look: t.look === 1 ? 1 : 0,\n        character: typeof t.character === 'string' ? t.character : (entry?.ch ?? null),\n        w: c?.q ?? null,\n      },\n    ]);",
+    "new": "    void [\n      ...readTames(),\n      {\n        id: t.id,\n        look: t.look === 1 ? 1 : 0,\n        character: typeof t.character === 'string' ? t.character : (entry?.ch ?? null),\n        w: c?.q ?? null,\n      },\n    ];",
     "tests": [
       "test/net/dragon/dragon4_claims.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "DRAGON4-the-receipt-unheard",
     "file": "src/scenes/dragonHost.js",
-    "old": ", onReceipt: (r) => host?.receipt(r) })",
-    "new": " })",
+    "old": "    onReceipt: (r) => host?.receipt(r),\n  });",
+    "new": "  });",
     "tests": [
       "test/net/dragon/dragon4_claims.test.js"
     ]

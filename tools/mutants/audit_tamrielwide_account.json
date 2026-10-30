@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-TW-C3-the-pit's-region-unread",
     "file": "src/scenes/dungeonIdentity.js",
-    "old": "region: g ? g.region : loc.regionIndex ?? null",
-    "new": "region: loc.regionIndex ?? null",
+    "old": "    region: g ? g.region : (loc.regionIndex ?? null),",
+    "new": "    region: loc.regionIndex ?? null,",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_account.test.js"
     ],

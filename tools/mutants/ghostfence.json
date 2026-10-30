@@ -164,8 +164,8 @@
   {
     "name": "GHOSTFENCE-the-seat-its-lowest",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "    const y = groundAt(x, z), low = lowestGroundUnder(samples, footprint(x, z, tx, tz, PYLON.plinth[0], PYLON.plinth[0]));",
-    "new": "    const low = lowestGroundUnder(samples, footprint(x, z, tx, tz, PYLON.plinth[0], PYLON.plinth[0])), y = low;",
+    "old": "    const y = groundAt(x, z),\n      low = lowestGroundUnder(samples, footprint(x, z, tx, tz, PYLON.plinth[0], PYLON.plinth[0]));",
+    "new": "    const low = lowestGroundUnder(samples, footprint(x, z, tx, tz, PYLON.plinth[0], PYLON.plinth[0])),\n      y = low;",
     "tests": [
       "test/world/ghostfence.test.js"
     ],
@@ -183,8 +183,8 @@
   {
     "name": "GHOSTFENCE-the-curtain-short",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "ax, hi + CURTAIN_SOLID_TOP, az);",
-    "new": "ax, hi + CURTAIN.to, az);",
+    "old": "        ax,\n        hi + CURTAIN_SOLID_TOP,",
+    "new": "        ax,\n        hi + CURTAIN.to,",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "GHOSTFENCE-the-feet-by-the-build-key",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "  noteFenceFeet(pkey, { frame: f,",
-    "new": "  noteFenceFeet(key, { frame: f,",
+    "old": "  noteFenceFeet(pkey, {",
+    "new": "  noteFenceFeet(key, {",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "FENCE-CLEAR-no-reach",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "ghostfenceNear(gx, gy, FENCE_CLEAR + reach)",
-    "new": "ghostfenceNear(gx, gy, FENCE_CLEAR)",
+    "old": "    return (lava && redMountainLavaBed(gx, gy)) || (fence && ghostfenceNear(gx, gy, FENCE_CLEAR + reach));",
+    "new": "    return (lava && redMountainLavaBed(gx, gy)) || (fence && ghostfenceNear(gx, gy, FENCE_CLEAR));",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "FENCE-CLEAR-a-landmark's-reach-unread",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "const reach = landMeasures(LAND_KINDS[raw[i + 5]], raw[i + 6]).reach * raw[i + 4];",
-    "new": "const reach = 0;",
+    "old": "    const reach = landMeasures(LAND_KINDS[raw[i + 5]], raw[i + 6]).reach * raw[i + 4];",
+    "new": "    const reach = 0;",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "LAVA-CLEAR-the-clearing-everywhere",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "  if (!lava && !fence) return null;\n",
-    "new": "  if (false) return null;\n",
+    "old": "  if (!lava && !fence) return null;",
+    "new": "  if (false) return null;",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "LAVA-CLEAR-the-clearing-blind-to-lava",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "return (lava && redMountainLavaBed(gx, gy)) ||",
-    "new": "return false ||",
+    "old": "    return (lava && redMountainLavaBed(gx, gy)) || (fence && ghostfenceNear(gx, gy, FENCE_CLEAR + reach));",
+    "new": "    return false || (fence && ghostfenceNear(gx, gy, FENCE_CLEAR + reach));",
     "tests": [
       "test/world/ghostfence.test.js"
     ]

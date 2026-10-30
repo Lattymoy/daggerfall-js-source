@@ -229,8 +229,8 @@
   {
     "name": "PROF8-kind-one-key",
     "file": "src/scenes/fishHost.js",
-    "old": "cast.day !== day || book.taken(cast.key, 'fish') || book.counting(cast.key, 'fish')) {",
-    "new": "cast.day !== day) {",
+    "old": "    if (\n      !cast ||\n      cast.x !== px.x ||\n      cast.y !== px.y ||\n      cast.day !== day ||\n      book.taken(cast.key, 'fish') ||\n      book.counting(cast.key, 'fish')\n    ) {",
+    "new": "    if (!cast || cast.x !== px.x || cast.y !== px.y || cast.day !== day) {",
     "tests": [
       "test/world/terrain/prof8_client.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "PROF8-kind-school-anywhere",
     "file": "src/scenes/fishHost.js",
-    "old": "if (Math.hypot(s.x - at[0], s.z - at[1]) <= SCHOOL_R) return",
-    "new": "if (Math.hypot(s.x - at[0], s.z - at[1]) >= 0) return",
+    "old": "    for (const s of schoolPlaces())\n      if (Math.hypot(s.x - at[0], s.z - at[1]) <= SCHOOL_R) return /** @type {0|1} */ (s.k);",
+    "new": "    for (const s of schoolPlaces()) if (Math.hypot(s.x - at[0], s.z - at[1]) >= 0) return /** @type {0|1} */ (s.k);",
     "tests": [
       "test/world/terrain/prof8_client.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "PROF8-schools-on-land",
     "file": "src/scenes/fishHost.js",
-    "old": "      if (!isOutdoorWaterTile(tilemap[ty * WORLD_MAP_TILE_DIM + tx])) continue;\n",
-    "new": "",
+    "old": "      if (!isOutdoorWaterTile(tilemap[ty * WORLD_MAP_TILE_DIM + tx])) continue;\n      const x = (tx + 0.5) * scale,",
+    "new": "      const x = (tx + 0.5) * scale,",
     "tests": [
       "test/world/terrain/prof8_client.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "PROF8-kind-foraging-unasked",
     "file": "src/scenes/fishHost.js",
-    "old": "      const refusal = foragingActRefusal(FT.FishingNet);\n      if (refusal) return { refused: refusal };\n",
-    "new": "",
+    "old": "      const refusal = foragingActRefusal(FT.FishingNet);\n      if (refusal) return { refused: refusal };\n      const g = host.ground();",
+    "new": "      const g = host.ground();",
     "tests": [
       "test/world/terrain/prof8_client.test.js"
     ]

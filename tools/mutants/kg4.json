@@ -173,8 +173,8 @@
   {
     "name": "KG4-G-touch",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "const y0 = touch ? Math.min(0.3, fy(GAMBIT_TOUCH_TOP_PX)) : 0;",
-    "new": "const y0 = 0;",
+    "old": "  const y0 = touch ? Math.min(0.3, fy(GAMBIT_TOUCH_TOP_PX)) : 0;",
+    "new": "  const y0 = 0;",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "KG4-G-feed",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "if (events.length) g.motion.feed(events, now, s.state);",
-    "new": "",
+    "old": "    if (events.length) g.motion.feed(events, now, s.state); // KG4: the pieces' motion, from the law's own words",
+    "new": "    // KG4: the pieces' motion, from the law's own words",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "KG4-G-lean-phase",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "const want = g.phase === 'battle' && !watching() ? 1 : 0;",
-    "new": "const want = 1;",
+    "old": "      const want = g.phase === 'battle' && !watching() ? 1 : 0; // KG5: a watcher keeps the seat's own view",
+    "new": "      const want = 1; // KG5: a watcher keeps the seat's own view",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "KG4-G-built-press",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "const built = ray ? gambitPressCell(g.places, g.session.state, cam.eye, ray, g.selected) : null;",
-    "new": "const built = p ? g.places.cellAt(p) : null;",
+    "old": "    const built = ray ? gambitPressCell(g.places, g.session.state, cam.eye, ray, g.selected) : null; // KG4: the built board - a card's face, a wall's top (AUDIT KG II C7: the chosen card where it is drawn, lifted)",
+    "new": "    const built = p ? g.places.cellAt(p) : null; // KG4: the built board - a card's face, a wall's top (AUDIT KG II C7: the chosen card where it is drawn, lifted)",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "KG4-G-snap-mid",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "const s = projectToScreen(c[2] ? [o[0], o[1] + mid, o[2]] : o, w, h, cam.proj, cam.view, rect);",
-    "new": "const s = projectToScreen(o, w, h, cam.proj, cam.view, rect);",
+    "old": "        const s = projectToScreen(c[2] ? [o[0], o[1] + mid, o[2]] : o, w, h, cam.proj, cam.view, rect);",
+    "new": "        const s = projectToScreen(o, w, h, cam.proj, cam.view, rect);",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "KG4b-G-result",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "else if (e.winner === 1 && e.by !== 'forfeit') sound(SOUND.Groan, GAMBIT_RESULT_MS);",
-    "new": "else if (e.winner === 1 && e.by !== 'forfeit') sound(SOUND.Groan, 0);",
+    "old": "        } else if (e.winner === 1 && e.by !== 'forfeit') sound(SOUND.Groan, GAMBIT_RESULT_MS); // AUDIT KG II C11: the mod's forfeit is silent (ChooseArmy clears the pending sounds, IL_098f - never FinishMatch)",
+    "new": "        } else if (e.winner === 1 && e.by !== 'forfeit') sound(SOUND.Groan, 0); // AUDIT KG II C11: the mod's forfeit is silent (ChooseArmy clears the pending sounds, IL_098f - never FinishMatch)",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "KG4b-G-coins",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "if (g.game?.stake > 0) sound(SOUND.GoldPieces, GAMBIT_RESULT_MS + 600);",
-    "new": "",
+    "old": "          if (g.game?.stake > 0) sound(SOUND.GoldPieces, GAMBIT_RESULT_MS + 600);\n        } else if (e.winner === 1 && e.by !== 'forfeit') sound(SOUND.Groan, GAMBIT_RESULT_MS); // AUDIT KG II C11: the mod's forfeit is silent (ChooseArmy clears the pending sounds, IL_098f - never FinishMatch)",
+    "new": "        } else if (e.winner === 1 && e.by !== 'forfeit') sound(SOUND.Groan, GAMBIT_RESULT_MS); // AUDIT KG II C11: the mod's forfeit is silent (ChooseArmy clears the pending sounds, IL_098f - never FinishMatch)",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -398,7 +398,7 @@
   {
     "name": "KG4b-G-click",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "if (mine) sound(SOUND.ButtonClick);",
+    "old": "      if (mine) sound(SOUND.ButtonClick);",
     "new": "",
     "tests": [
       "test/systems/kg3_host.test.js"

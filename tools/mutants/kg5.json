@@ -371,8 +371,8 @@
   {
     "name": "KG5-H-watcher-mine",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "    const mine = s.playing() && st.turn === 0 && !st.ending && !watching();",
-    "new": "    const mine = s.playing() && st.turn === 0 && !st.ending;",
+    "old": "    const mine = s.playing() && st.turn === 0 && !st.ending && !watching(); // KG5: a watcher presses nothing of the game's",
+    "new": "    const mine = s.playing() && st.turn === 0 && !st.ending; // KG5: a watcher presses nothing of the game's",
     "tests": [
       "test/net/kg5_client.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "KG5-H-guest-places",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "{ flip: side === 1 });",
-    "new": "{ flip: false });",
+    "old": "      flip: side === 1,",
+    "new": "      flip: false,",
     "tests": [
       "test/net/kg5_client.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "KG5-H-close-stands",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "      if (online()) standUp();   // KG5: up from the relay's board",
-    "new": "      if (online()) g.sitting = false;   // KG5: up from the relay's board",
+    "old": "        standUp(); // KG5: up from the relay's board - a game under way is the other player's",
+    "new": "        g.sitting = false; // KG5: up from the relay's board - a game under way is the other player's",
     "tests": [
       "test/net/kg5_client.test.js"
     ]

@@ -32,7 +32,7 @@
   {
     "name": "AUDIT-GRANT-A2-same-first-ones",
     "file": "src/scenes/grantHost.js",
-    "old": "    if (full) { fullSeq++; rest.sort((a, b) => (a._gsFull ?? 0) - (b._gsFull ?? 0)); }",
+    "old": "    if (full) {\n      fullSeq++;\n      rest.sort((a, b) => (a._gsFull ?? 0) - (b._gsFull ?? 0));\n    }",
     "new": "    if (full) fullSeq++;",
     "why": "every full frame the same first grants",
     "tests": [
@@ -42,8 +42,8 @@
   {
     "name": "AUDIT-GRANT-A3-pools-sweep-each-other",
     "file": "src/scenes/grantHost.js",
-    "old": "if (p === pool && (!here.has(g) || g._gone))",
-    "new": "if (!here.has(g) || g._gone)",
+    "old": "      if (p === pool && (!here.has(g) || g._gone)) {",
+    "new": "      if (!here.has(g) || g._gone) {",
     "why": "a building's sweep ends the street's watch",
     "tests": [
       "test/scenes/grantaudit_host.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "AUDIT-GRANT-A6-machine-clock",
     "file": "src/scenes/grantHost.js",
-    "old": "now = () => Date.now() + (Number(session()?.clockOffsetMs) || 0),",
-    "new": "now = () => Date.now(),",
+    "old": "  now = () => Date.now() + (Number(session()?.clockOffsetMs) || 0),",
+    "new": "  now = () => Date.now(),",
     "why": "a grant's expiry read on this machine's clock",
     "tests": [
       "test/scenes/grantaudit_host.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "AUDIT-GRANT-A7-free-per-grant",
     "file": "src/scenes/grantHost.js",
-    "old": "    if (!gr._dead && gr.q === open()?.room) post('free', gr.g);",
-    "new": "    if (!gr._dead && gr.q === open()?.room) send({ k: 'free', gs: [gr.g] });",
+    "old": "    if (!gr._dead && gr.q === open()?.room) post('free', gr.g); // GRANT4: to the room that holds it - one left behind counts there to its expiry",
+    "new": "    if (!gr._dead && gr.q === open()?.room) send({ k: 'free', gs: [gr.g] }); // GRANT4: to the room that holds it - one left behind counts there to its expiry",
     "why": "a free sent at once, ahead of its heir",
     "tests": [
       "test/scenes/grant3_pool.test.js"
@@ -114,8 +114,8 @@
   {
     "name": "AUDIT-GRANT-A9-closed-socket-law",
     "file": "src/scenes/grantHost.js",
-    "old": "return s && s.status === 'open' && s.grantMode && s.grantMode !== 'off'",
-    "new": "return s && s.grantMode && s.grantMode !== 'off'",
+    "old": "    return s && s.status === 'open' && s.grantMode && s.grantMode !== 'off' && typeof s.sendGrant === 'function'\n      ? s\n      : null;",
+    "new": "    return s && s.grantMode && s.grantMode !== 'off' && typeof s.sendGrant === 'function' ? s : null;",
     "why": "a closed socket's last law still enforcing",
     "tests": [
       "test/scenes/grantaudit_host.test.js"
@@ -134,8 +134,8 @@
   {
     "name": "AUDIT-GRANT-A11-tallied-twice",
     "file": "src/scenes/grantHost.js",
-    "old": "    if (memo) return memo.why;   // AUDIT GRANT A11",
-    "new": "    if (memo) void memo;   // AUDIT GRANT A11",
+    "old": "    if (memo) return memo.why; // AUDIT GRANT A11: a record judged once is never tallied twice",
+    "new": "    if (memo) void memo; // AUDIT GRANT A11: a record judged once is never tallied twice",
     "why": "a record judged twice tallied twice",
     "tests": [
       "test/scenes/grantaudit_host.test.js",
@@ -145,8 +145,8 @@
   {
     "name": "AUDIT-GRANT-A12-never-asked-again",
     "file": "src/scenes/grantHost.js",
-    "old": "    if (g._grantDone && now() - g._grantAt >= GRANT_WATCH_REASK_MS) { g._grantAt = undefined; g._grantDone = false; }",
-    "new": "",
+    "old": "    if (g._grantDone && now() - g._grantAt >= GRANT_WATCH_REASK_MS) {\n      g._grantAt = undefined;\n      g._grantDone = false;\n    } // AUDIT GRANT A12: refused or never come - asked again at the watch's pace",
+    "new": "    // AUDIT GRANT A12: refused or never come - asked again at the watch's pace",
     "why": "a refused watchman never asked again",
     "tests": [
       "test/scenes/grantaudit_host.test.js"
@@ -155,7 +155,7 @@
   {
     "name": "AUDIT-GRANT-A13-unanswered-given-up",
     "file": "src/scenes/grantHost.js",
-    "old": "    if (++carryTries < GRANT_CARRY_TRIES) { if (!carryTo && isCellRoom(open()?.room)) carryTo = open().room; return; }",
+    "old": "    if (++carryTries < GRANT_CARRY_TRIES) {\n      if (!carryTo && isCellRoom(open()?.room)) carryTo = open().room;\n      return;\n    }",
     "new": "    carryTries = GRANT_CARRY_TRIES;",
     "why": "an unanswered carry given up at once",
     "tests": [
@@ -165,8 +165,8 @@
   {
     "name": "AUDIT-GRANT-A14-encr-asked",
     "file": "src/scenes/grantHost.js",
-    "old": "memberFor(w.k === 'encr' ? 'enc' : w.k)",
-    "new": "memberFor(w.k)",
+    "old": "        memberFor(w.k === 'encr' ? 'enc' : w.k)?.then((m) => {",
+    "new": "        memberFor(w.k)?.then((m) => {",
     "why": "an encr heir's fallback asks encr",
     "tests": [
       "test/scenes/grantaudit_host.test.js"

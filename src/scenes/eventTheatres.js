@@ -36,29 +36,51 @@ export function createEventTheatres({ scans, generation = () => 0, land = () => 
     busy = false;
     const S = scans();
     const t = owed.values().next().value;
-    if (t === undefined || !S) { owed.clear(); return; }
+    if (t === undefined || !S) {
+      owed.clear();
+      return;
+    }
     try {
       // WW5 x WW-GATES-EVERYWHERE (A2c): the gate's scans slice a theatre's walk across the page's idle moments themselves -
       // a theatre is asked of them whole (wholeScan) and waited on, never made whole in this one
       const sc = S.wholeScan ? S.wholeScan(t) : S.scanOf(t);
-      if (sc) { owed.delete(t); warm.set(t, stampOf(S)); }
-    } catch (e) { owed.delete(t); console.warn('[events] theatre scan', t, /** @type {any} */ (e)?.message ?? e); }
-    if (owed.size && idle) { busy = true; idle(drain); }
+      if (sc) {
+        owed.delete(t);
+        warm.set(t, stampOf(S));
+      }
+    } catch (e) {
+      owed.delete(t);
+      console.warn('[events] theatre scan', t, /** @type {any} */ (e)?.message ?? e);
+    }
+    if (owed.size && idle) {
+      busy = true;
+      idle(drain);
+    }
   }
   /** @param {number} t */
   function scanOf(t) {
     const S = scans();
     if (!S || !PROVINCE_EVENT_LANES.includes(t)) return null;
     if (warm.get(t) === stampOf(S)) return S.scanOf(t);
-    if (!idle) { const sc = S.scanOf(t); warm.set(t, stampOf(S)); return sc; }
+    if (!idle) {
+      const sc = S.scanOf(t);
+      warm.set(t, stampOf(S));
+      return sc;
+    }
     owed.add(t);
-    if (!busy) { busy = true; idle(drain); }
+    if (!busy) {
+      busy = true;
+      idle(drain);
+    }
     return null;
   }
   return {
     scanOf,
     /** @param {number} t */
-    ready: (t) => { const S = scans(); return !!S && warm.get(t) === stampOf(S); },
+    ready: (t) => {
+      const S = scans();
+      return !!S && warm.get(t) === stampOf(S);
+    },
     /** The lanes past the Bay, each with its scan once warm (`[lane, scan]`, warm ones only - asking warms the rest). */
     warmLanes: () => PROVINCE_EVENT_LANES.map((t) => [t, scanOf(t)]).filter(([, sc]) => !!sc),
   };
@@ -67,7 +89,12 @@ export function createEventTheatres({ scans, generation = () => 0, land = () => 
 /** A scans object's identity as a number (a new one - a new world host - is a new stamp). */
 const _ids = new WeakMap();
 let _next = 1;
-const idOf = (o) => { if (!o) return 0; let n = _ids.get(o); if (!n) _ids.set(o, n = _next++); return n; };
+const idOf = (o) => {
+  if (!o) return 0;
+  let n = _ids.get(o);
+  if (!n) _ids.set(o, (n = _next++));
+  return n;
+};
 
 /** The browser's idle queue, or null where there is none. */
 function defaultIdle() {

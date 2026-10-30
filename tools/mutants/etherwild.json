@@ -192,8 +192,8 @@
   {
     "name": "ETHER-WILD-bounds-mountains-only",
     "file": "src/scenes/grantHost.js",
-    "old": "    if (inEther(px, py)) return true;",
-    "new": "",
+    "old": "    if (inEther(px, py)) return true; // ETHER-WILD: past the Veil the zone is everywhere but Veilhaven's peace - a foe stood by an owner a stride over its edge is the zone's (a wider bound only allows)",
+    "new": "    // ETHER-WILD: past the Veil the zone is everywhere but Veilhaven's peace - a foe stood by an owner a stride over its edge is the zone's (a wider bound only allows)",
     "tests": [
       "test/systems/wild/etherwild.test.js"
     ]

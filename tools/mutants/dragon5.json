@@ -218,8 +218,8 @@
   {
     "name": "DRAGON5-a-second-dragon",
     "file": "src/scenes/dragonRewards.js",
-    "old": "      if (!hasDragon(items)) { host.takeSpoil?.({ kind: 'item', item: newDragonMount(t) }); bound = true; }",
-    "new": "      { host.takeSpoil?.({ kind: 'item', item: newDragonMount(t) }); bound = true; }",
+    "old": "      if (!hasDragon(items)) {",
+    "new": "      {",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"
     ]

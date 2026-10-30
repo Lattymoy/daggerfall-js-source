@@ -164,8 +164,8 @@
   {
     "name": "MA-the-schools-never-dropped",
     "file": "src/scenes/fishHost.js",
-    "old": "    dropped(entry) { const k = pixelKey(entry.px, entry.py); if (schools.get(k)?.entry === entry) schools.delete(k); },\n",
-    "new": "",
+    "old": "    dropped(entry) {\n      const k = pixelKey(entry.px, entry.py);\n      if (schools.get(k)?.entry === entry) schools.delete(k);\n    },\n    flatsOf: () => [],",
+    "new": "    flatsOf: () => [],",
     "tests": [
       "test/systems/memaudit.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "MA-the-schools-dropped-for-any-entry",
     "file": "src/scenes/fishHost.js",
-    "old": "if (schools.get(k)?.entry === entry) schools.delete(k);",
-    "new": "schools.delete(k);",
+    "old": "      if (schools.get(k)?.entry === entry) schools.delete(k);",
+    "new": "      schools.delete(k);",
     "tests": [
       "test/systems/memaudit.test.js"
     ]

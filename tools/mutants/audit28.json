@@ -450,7 +450,7 @@
   {
     "name": "AUDIT28-F1-a-live-join-cut-to-the-max",
     "file": "src/scenes/foragingWait.js",
-    "old": "      r.seconds += real;   // the sum, uncut",
+    "old": "      r.seconds += real; // the sum, uncut",
     "new": "      r.seconds = Math.min(FORAGING_WAIT_MAX_SECONDS, r.seconds + real);",
     "tests": [
       "test/systems/audit28_forage.test.js",
@@ -460,8 +460,8 @@
   {
     "name": "AUDIT28-F1-every-read-re-cuts",
     "file": "src/scenes/foragingWait.js",
-    "old": "    if (r === _ours) return r;\n",
-    "new": "    if (r === _ours && r == null) return r;\n",
+    "old": "    if (r === _ours) return r;",
+    "new": "    if (r === _ours && r == null) return r;",
     "tests": [
       "test/systems/audit28_forage.test.js",
       "test/systems/quest/forage4_wait.test.js"
@@ -479,8 +479,8 @@
   {
     "name": "AUDIT28-F6-the-held-boxes-kept-in-memory-alone",
     "file": "src/scenes/foragingWait.js",
-    "old": "    for (const keep of sane?.held ?? []) _held.push({ fn: () => revive?.(keep), keep });\n",
-    "new": "",
+    "old": "    for (const keep of sane?.held ?? []) _held.push({ fn: () => revive?.(keep), keep });\n    return sane;",
+    "new": "    return sane;",
     "tests": [
       "test/systems/audit28_forage.test.js"
     ]

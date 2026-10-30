@@ -20,7 +20,7 @@ import { drawnGroundAt, walkGroundAt } from '../world/terrain/terrainSurface.js'
 import { flatBatchAabb } from '../render/frustum.js';
 import { FELLED } from '../ai/cover.js';
 import { GRAHT_TREE_FLOATS } from '../world/jungle/grahtOaks.js';
-import { LAND_PROP_FLOATS } from '../world/lands/landProps.js';   // TESA-LANDS: the lands' landmarks, seated as the graht-oaks are
+import { LAND_PROP_FLOATS } from '../world/lands/landProps.js'; // TESA-LANDS: the lands' landmarks, seated as the graht-oaks are
 
 /** The centres stood on the ground by its law (the kernel's woods and scatter, the jungle's trees and roadside pairs, a
  *  town's nature flats on its ground) - a mark on the flat's own base array. OW-SEAT: a mark, not a WeakSet - every wild
@@ -28,11 +28,14 @@ import { LAND_PROP_FLOATS } from '../world/lands/landProps.js';   // TESA-LANDS:
 const ON_GROUND = Symbol('onGround');
 /** A flat's centre stands on the ground (walkGroundAt, less its slope's sink): drawn on its pixel's ring.
  *  @param {number[]} c */
-export const standsOnGround = (c) => { c[ON_GROUND] = true; };
+export const standsOnGround = (c) => {
+  c[ON_GROUND] = true;
+};
 
 /** What the ground a pixel draws (`stride`, `carve`) stands over the walk ground at (x, z), m - 0 in the near ring
  *  with no bed under it. */
-const liftAt = (samples, x, z, stride, carve) => drawnGroundAt(samples, x, z, stride, carve) - walkGroundAt(samples, x, z);
+const liftAt = (samples, x, z, stride, carve) =>
+  drawnGroundAt(samples, x, z, stride, carve) - walkGroundAt(samples, x, z);
 
 /**
  * Each ground-stood centre's lift at a ring, null where every one is 0 (the near ring, no bed under its plants).
@@ -81,7 +84,8 @@ function liftsFor(holder, stride, carve, make) {
  */
 export function warmFlora(p, stride) {
   if (stride === 1) return;
-  for (const g of p.forest?.groups?.values() ?? []) if (g.batch) liftsFor(g, stride, null, () => ringLifts(p.samples, g.centers, stride, null));
+  for (const g of p.forest?.groups?.values() ?? [])
+    if (g.batch) liftsFor(g, stride, null, () => ringLifts(p.samples, g.centers, stride, null));
   const set = p.grahtOaks;
   if (set) liftsFor(set, stride, null, () => packedLifts(p.samples, set.trees, GRAHT_TREE_FLOATS, stride, null));
   const lands = p.landProps;
@@ -110,19 +114,28 @@ export function drawnCentre(g, c, i, felled) {
  */
 export function seatFlora(p, renderer) {
   if (!p?.samples) return;
-  const stride = p._stride ?? 1, carve = p._bed?.depths ?? null;
+  const stride = p._stride ?? 1,
+    carve = p._bed?.depths ?? null;
   for (const g of p.forest?.groups?.values() ?? []) {
     if (!g.batch) continue;
     const lift = liftsFor(g, stride, carve, () => ringLifts(p.samples, g.centers, stride, carve));
-    if (lift === (g.lift ?? null)) continue;   // drawn on this ground already - the walk ground then and now, or this ring's
+    if (lift === (g.lift ?? null)) continue; // drawn on this ground already - the walk ground then and now, or this ring's
     g.lift = lift;
     const drawn = g.centers.map((c, i) => drawnCentre(g, c, i, FELLED.has(c)));
     renderer.moveBillboardBatch(g.batch, drawn);
-    g.batch._box = flatBatchAabb(drawn, g.size);   // EV3: culled where it is drawn
-    if (p._box) for (let k = 0; k < 3; k++) { p._box[k] = Math.min(p._box[k], g.batch._box[k]); p._box[3 + k] = Math.max(p._box[3 + k], g.batch._box[3 + k]); }
+    g.batch._box = flatBatchAabb(drawn, g.size); // EV3: culled where it is drawn
+    if (p._box)
+      for (let k = 0; k < 3; k++) {
+        p._box[k] = Math.min(p._box[k], g.batch._box[k]);
+        p._box[3 + k] = Math.max(p._box[3 + k], g.batch._box[3 + k]);
+      }
   }
   const set = p.grahtOaks;
-  if (set) set.lift = liftsFor(set, stride, carve, () => packedLifts(p.samples, set.trees, GRAHT_TREE_FLOATS, stride, carve));
-  const lands = p.landProps;   // TESA-LANDS: the landmarks by the same law (landPropsHost.js frames each at its lift)
-  if (lands) lands.lift = liftsFor(lands, stride, carve, () => packedLifts(p.samples, lands.props, LAND_PROP_FLOATS, stride, carve));
+  if (set)
+    set.lift = liftsFor(set, stride, carve, () => packedLifts(p.samples, set.trees, GRAHT_TREE_FLOATS, stride, carve));
+  const lands = p.landProps; // TESA-LANDS: the landmarks by the same law (landPropsHost.js frames each at its lift)
+  if (lands)
+    lands.lift = liftsFor(lands, stride, carve, () =>
+      packedLifts(p.samples, lands.props, LAND_PROP_FLOATS, stride, carve),
+    );
 }

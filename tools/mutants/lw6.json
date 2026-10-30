@@ -186,8 +186,8 @@
   {
     "name": "LW6-met-ahead",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "      const dx = -Math.sin(L.yaw) * back + Math.cos(L.yaw) * side, dz = -Math.cos(L.yaw) * back - Math.sin(L.yaw) * side;",
-    "new": "      const dx = Math.sin(L.yaw) * back + Math.cos(L.yaw) * side, dz = Math.cos(L.yaw) * back - Math.sin(L.yaw) * side;",
+    "old": "      const dx = -Math.sin(L.yaw) * back + Math.cos(L.yaw) * side,\n        dz = -Math.cos(L.yaw) * back - Math.sin(L.yaw) * side;",
+    "new": "      const dx = Math.sin(L.yaw) * back + Math.cos(L.yaw) * side,\n        dz = Math.cos(L.yaw) * back - Math.sin(L.yaw) * side;",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "LW6-unfollowing",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "        if (rec.ai && !at) rec.ai.follow = heelOf(i);",
-    "new": "        void heelOf;",
+    "old": "          if (rec.ai && !at) rec.ai.follow = heelOf(i); // LW14: along the trail; met at their place, they hold it",
+    "new": "          void heelOf; // LW14: along the trail; met at their place, they hold it",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "LW6-divers-struck",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "        rec.shipmate = true;",
-    "new": "        void rec.shipmate;",
+    "old": "          rec.shipmate = true;",
+    "new": "          void rec.shipmate;",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
     ]
@@ -213,7 +213,7 @@
   {
     "name": "LW6-fallen-unturned",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "          if (deps.died) deps.died(rec.living.res, t); else turn('fallen', deps.turnKeyOf(rec.living.res, c.trip));",
+    "old": "          if (deps.died) deps.died(rec.living.res, t);\n          else turn('fallen', deps.turnKeyOf(rec.living.res, c.trip));",
     "new": "          void turn;",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
@@ -240,8 +240,8 @@
   {
     "name": "LW6-fallen-thanked",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "      if (c.fell.has(mid) || rec.dead) continue;\n      const m = rec.living.res;",
-    "new": "      if (false) continue;\n      const m = rec.living.res;",
+    "old": "      if (c.fell.has(mid) || rec.dead) continue;",
+    "new": "      if (false) continue;",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
     ]

@@ -138,8 +138,8 @@
   {
     "name": "AUDIT-DRAGON-the-recall-unasked",
     "file": "src/scenes/dragonRewards.js",
-    "old": "    if (!(host.dragonMountOnline ?? DRAGON_MOUNT_ONLINE) || !characterId || !account.tames) return;\n    const r = await account.tames().catch(() => null);",
-    "new": "    return;\n    const r = await account.tames().catch(() => null);",
+    "old": "    if (!(host.dragonMountOnline ?? DRAGON_MOUNT_ONLINE) || !characterId || !account.tames) return;",
+    "new": "    return;",
     "tests": [
       "test/net/dragon/dragonaudit_account.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "AUDIT-DRAGON-another-characters-recalled",
     "file": "src/scenes/dragonRewards.js",
-    "old": "m && TAME_ID_RE.test(m.id) && m.character === characterId && !have.has(m.id)",
-    "new": "m && TAME_ID_RE.test(m.id) && !have.has(m.id)",
+    "old": "      .filter((m) => m && TAME_ID_RE.test(m.id) && m.character === characterId && !have.has(m.id))",
+    "new": "      .filter((m) => m && TAME_ID_RE.test(m.id) && !have.has(m.id))",
     "tests": [
       "test/net/dragon/dragonaudit_account.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "AUDIT-DRAGON-the-bar-over-the-serpents",
     "file": "src/scenes/dragonHost.js",
-    "old": "      if ((bar || barUp) && !barBlocked()) { drawBar(bar, { hidden: barHidden() }); barUp = !!bar; }",
-    "new": "      if (bar || barUp) { drawBar(bar, { hidden: barHidden() }); barUp = !!bar; }",
+    "old": "      if ((bar || barUp) && !barBlocked()) {",
+    "new": "      if (bar || barUp) {",
     "tests": [
       "test/scenes/dragon3_host.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "AUDIT-DRAGON-the-bar-left-up",
     "file": "src/scenes/dragonHost.js",
-    "old": "    away(offline) { if (barUp) { drawBar(null); barUp = false; } host.leave(offline); },",
-    "new": "    away(offline) { host.leave(offline); },",
+    "old": "      if (barUp) {\n        drawBar(null);\n        barUp = false;\n      }\n      host.leave(offline);",
+    "new": "      host.leave(offline);",
     "tests": [
       "test/scenes/dragon3_host.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT-DRAGON-the-fight-off-the-street",
     "file": "src/scenes/dragonHost.js",
-    "old": "      try { fight = street() ? host.frame() : (host.leave(), false); }",
-    "new": "      try { fight = host.frame(); }",
+    "old": "        fight = street() ? host.frame() : (host.leave(), false);",
+    "new": "        fight = host.frame();",
     "tests": [
       "test/scenes/dragon3_host.test.js"
     ]

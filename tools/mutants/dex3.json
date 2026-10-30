@@ -162,8 +162,8 @@
   {
     "name": "DEX3-the-bounds-the-first-choice",
     "file": "src/scenes/grantHost.js",
-    "old": "encounterTableChoices(/** @type {number} */ (i)).flat())",
-    "new": "encounterTableChoices(/** @type {number} */ (i))[0])",
+    "old": "    ? new Set(tables.flatMap((i) => encounterTableChoices(/** @type {number} */ (i)).flat()))",
+    "new": "    ? new Set(tables.flatMap((i) => encounterTableChoices(/** @type {number} */ (i))[0]))",
     "why": "a reader bounds a granted species by one table of the mod's, and refuses the other machine's pick",
     "tests": [
       "test/systems/enemyExpansion/dex3_encounters.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "DEX3-the-bounds-kept-past-the-selectors",
     "file": "src/scenes/grantHost.js",
-    "old": "  const key = `${c}:${fauna?.[0] ?? ''}:${encounterTableGeneration()}`;",
-    "new": "  const key = `${c}:${fauna?.[0] ?? ''}`;",
+    "old": "  const key = `${c}:${fauna?.[0] ?? ''}:${encounterTableGeneration()}`; // DEX3: kept per climate (TESA-BIOME: and zone) while the tables' selectors stand",
+    "new": "  const key = `${c}:${fauna?.[0] ?? ''}`; // DEX3: kept per climate (TESA-BIOME: and zone) while the tables' selectors stand",
     "why": "a climate's species bounds kept from before the mod's tables stood",
     "tests": [
       "test/systems/enemyExpansion/dex3_encounters.test.js"

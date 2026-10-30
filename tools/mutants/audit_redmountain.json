@@ -222,8 +222,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-N1-the-ground-at-the-ends-alone",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "  cross(ax, dx); cross(az, dz); cross(az - ax, dz - dx);\n",
-    "new": "",
+    "old": "  cross(ax, dx);\n  cross(az, dz);\n  cross(az - ax, dz - dx);\n  let lo = Infinity,",
+    "new": "  let lo = Infinity,",
     "tests": [
       "test/world/audit_redmountain.test.js",
       "test/world/ghostfence.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-N1-the-solid-on-its-ground",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "quads.push(ax, lo + CURTAIN.from, az,",
-    "new": "quads.push(ax, lo, az,",
+    "old": "      quads.push(\n        ax,\n        lo + CURTAIN.from,\n        az,\n        bx,\n        lo + CURTAIN.from,\n        bz,\n        bx,\n        hi + CURTAIN_SOLID_TOP,\n        bz,\n        ax,\n        hi + CURTAIN_SOLID_TOP,\n        az,\n      );",
+    "new": "      quads.push(ax, lo, az, bx, lo + CURTAIN.from, bz, bx, hi + CURTAIN_SOLID_TOP, bz, ax, hi + CURTAIN_SOLID_TOP, az);",
     "tests": [
       "test/world/audit_redmountain.test.js",
       "test/world/ghostfence.test.js"
@@ -278,8 +278,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-N4-the-footing-unstood",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "    if (y - low > FOOTING_FROM) { const foot = pylonFooting(y - low); stand(foot.model, foot.solid, m); }\n",
-    "new": "",
+    "old": "    if (y - low > FOOTING_FROM) {\n      const foot = pylonFooting(y - low);\n      stand(foot.model, foot.solid, m);\n    }\n  }",
+    "new": "  }",
     "tests": [
       "test/world/ghostfence.test.js"
     ]

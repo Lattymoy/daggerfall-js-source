@@ -56,8 +56,8 @@
   {
     "name": "FORAGE4-8-a-save-mid-wait-owes-all",
     "file": "src/scenes/foragingWait.js",
-    "old": "      if (!_win.done && record()) record().seconds = _win.remaining;\n",
-    "new": "",
+    "old": "      if (!_win.done && record()) record().seconds = _win.remaining;\n      return _win;",
+    "new": "      return _win;",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "FORAGE4-9-the-held-boxes-never-shown",
     "file": "src/scenes/foragingWait.js",
-    "old": "    if (pending()) return overlayActive() ? null : open();\n    release();\n    return null;",
-    "new": "    if (pending()) return overlayActive() ? null : open();\n    return null;",
+    "old": "    release();\n    return null;",
+    "new": "    return null;",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "FORAGE4-11-offline-keeps-a-wait",
     "file": "src/scenes/foragingWait.js",
-    "old": "      if (pending()) write(0);\n",
-    "new": "",
+    "old": "      if (pending()) write(0);\n      release();",
+    "new": "      release();",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "FORAGE4-16-a-join-never-reaches-the-page",
     "file": "src/scenes/foragingWait.js",
-    "old": "      _win?.extend(real);\n",
-    "new": "",
+    "old": "      _win?.extend(real);\n      r.seconds += real; // the sum, uncut",
+    "new": "      r.seconds += real; // the sum, uncut",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"
     ]

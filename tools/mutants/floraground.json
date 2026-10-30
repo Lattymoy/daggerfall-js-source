@@ -333,8 +333,8 @@
   {
     "name": "FLORA-GROUND-RINGS-the-mark-unread",
     "file": "src/scenes/floraSeat.js",
-    "old": "    if (c[ON_GROUND] !== true) continue;\n",
-    "new": "",
+    "old": "    if (c[ON_GROUND] !== true) continue;\n    const d = liftAt(samples, c[0], c[2], stride, carve);",
+    "new": "    const d = liftAt(samples, c[0], c[2], stride, carve);",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]
@@ -342,8 +342,8 @@
   {
     "name": "FLORA-GROUND-RINGS-the-lift-reversed",
     "file": "src/scenes/floraSeat.js",
-    "old": "const liftAt = (samples, x, z, stride, carve) => drawnGroundAt(samples, x, z, stride, carve) - walkGroundAt(samples, x, z);",
-    "new": "const liftAt = (samples, x, z, stride, carve) => walkGroundAt(samples, x, z) - drawnGroundAt(samples, x, z, stride, carve);",
+    "old": "  drawnGroundAt(samples, x, z, stride, carve) - walkGroundAt(samples, x, z);",
+    "new": "  walkGroundAt(samples, x, z) - drawnGroundAt(samples, x, z, stride, carve);",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]
@@ -360,8 +360,8 @@
   {
     "name": "FLORA-GROUND-RINGS-the-seat-that-never-moves",
     "file": "src/scenes/floraSeat.js",
-    "old": "    if (lift === (g.lift ?? null)) continue;",
-    "new": "    if (lift || !lift) continue;",
+    "old": "    if (lift === (g.lift ?? null)) continue; // drawn on this ground already - the walk ground then and now, or this ring's",
+    "new": "    if (lift || !lift) continue; // drawn on this ground already - the walk ground then and now, or this ring's",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]
@@ -369,8 +369,8 @@
   {
     "name": "FLORA-GROUND-RINGS-the-box-left-behind",
     "file": "src/scenes/floraSeat.js",
-    "old": "    g.batch._box = flatBatchAabb(drawn, g.size);",
-    "new": "    g.batch._box = flatBatchAabb(g.centers, g.size);",
+    "old": "    g.batch._box = flatBatchAabb(drawn, g.size); // EV3: culled where it is drawn",
+    "new": "    g.batch._box = flatBatchAabb(g.centers, g.size); // EV3: culled where it is drawn",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]
@@ -378,8 +378,8 @@
   {
     "name": "FLORA-GROUND-RINGS-the-pixels-box-ungrown",
     "file": "src/scenes/floraSeat.js",
-    "old": "    if (p._box) for (let k = 0; k < 3; k++)",
-    "new": "    if (!p._box) for (let k = 0; k < 3; k++)",
+    "old": "    if (p._box)",
+    "new": "    if (!p._box)",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]
@@ -405,8 +405,8 @@
   {
     "name": "FLORA-GROUND-RINGS-the-felled-tree-stood-up-by-the-restride",
     "file": "src/scenes/floraSeat.js",
-    "old": "drawnCentre(g, c, i, FELLED.has(c))",
-    "new": "drawnCentre(g, c, i, false)",
+    "old": "    const drawn = g.centers.map((c, i) => drawnCentre(g, c, i, FELLED.has(c)));",
+    "new": "    const drawn = g.centers.map((c, i) => drawnCentre(g, c, i, false));",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]
@@ -424,8 +424,8 @@
   {
     "name": "FLORA-GROUND-RINGS-the-graht-set-unlifted",
     "file": "src/scenes/floraSeat.js",
-    "old": "  if (set) set.lift = liftsFor(",
-    "new": "  if (set) set.lift = null && liftsFor(",
+    "old": "    set.lift = liftsFor(set, stride, carve, () => packedLifts(p.samples, set.trees, GRAHT_TREE_FLOATS, stride, carve));",
+    "new": "    set.lift =\n      null && liftsFor(set, stride, carve, () => packedLifts(p.samples, set.trees, GRAHT_TREE_FLOATS, stride, carve));",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]
@@ -433,8 +433,8 @@
   {
     "name": "FLORA-GROUND-RINGS-the-graht-frame-blind-to-its-lift",
     "file": "src/scenes/grahtHost.js",
-    "old": "const y0 = lift ? tr[i + 1] + lift[i / GRAHT_TREE_FLOATS] : tr[i + 1];",
-    "new": "const y0 = tr[i + 1];",
+    "old": "          const y0 = lift ? tr[i + 1] + lift[i / GRAHT_TREE_FLOATS] : tr[i + 1]; // its root as drawn - its place (its bodies, its cover) the walk ground's",
+    "new": "          const y0 = tr[i + 1]; // its root as drawn - its place (its bodies, its cover) the walk ground's",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]
@@ -505,8 +505,8 @@
   {
     "name": "FLORA-GROUND-RINGS-the-lifts-not-made-ahead",
     "file": "src/scenes/floraSeat.js",
-    "old": "export function warmFlora(p, stride) {\n  if (stride === 1) return;",
-    "new": "export function warmFlora(p, stride) {\n  return;",
+    "old": "  if (stride === 1) return;",
+    "new": "  return;",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]

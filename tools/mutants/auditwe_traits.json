@@ -148,8 +148,8 @@
   {
     "name": "AUDIT-WE-L2-13-the-number-unretold",
     "file": "src/scenes/foeTraitsHost.js",
-    "old": "  if (d !== damage) retellHit(entity, d, t('bossTraits.tag.resisted', 'Resisted'));",
-    "new": "",
+    "old": "  if (d !== damage) retellHit(entity, d, t('bossTraits.tag.resisted', 'Resisted')); // L2-13: the number that landed, said so",
+    "new": "  // L2-13: the number that landed, said so",
     "tests": [
       "test/scenes/auditwe_traits.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "AUDIT-WE-L2-3-the-wrath-unsent",
     "file": "src/scenes/foeTraitsHost.js",
-    "old": "  if (entity.bossWrath) out.bw = 1;\n",
-    "new": "",
+    "old": "  if (entity.bossWrath) out.bw = 1;\n  if (entity.bossWard) out.bv = bossWardShare(entity, bossClockS());",
+    "new": "  if (entity.bossWard) out.bv = bossWardShare(entity, bossClockS());",
     "tests": [
       "test/scenes/auditwe_traits.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "AUDIT-WE-L2-3-the-own-lane-plain",
     "file": "src/scenes/foeTraitsHost.js",
-    "old": "  if (seeded && entity.eliteFoe) { out.z = 1; out.bt = bossTraitMask(entity.bossTraits); }\n",
-    "new": "",
+    "old": "  if (seeded && entity.eliteFoe) {\n    out.z = 1;\n    out.bt = bossTraitMask(entity.bossTraits);\n  }\n  return out;",
+    "new": "  return out;",
     "tests": [
       "test/scenes/auditwe_traits.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "AUDIT-WE-L2-7-the-joiners-ward-kept",
     "file": "src/scenes/foeTraitsHost.js",
-    "old": "giveBossTraits(entity, bossTraitsOfMask(r.bt, entity.raidLeader ? 2 : 1), { own: false });",
-    "new": "giveBossTraits(entity, bossTraitsOfMask(r.bt, entity.raidLeader ? 2 : 1), { own: true });",
+    "old": "    giveBossTraits(entity, bossTraitsOfMask(r.bt, entity.raidLeader ? 2 : 1), { own: false });",
+    "new": "    giveBossTraits(entity, bossTraitsOfMask(r.bt, entity.raidLeader ? 2 : 1), { own: true });",
     "tests": [
       "test/scenes/auditwe_traits.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "AUDIT-WE-L2-7-the-drawn-copy-keeps-its-ward",
     "file": "src/scenes/foeTraitsHost.js",
-    "old": "/ 100; entity.bossWard = undefined; }",
-    "new": "/ 100; }",
+    "old": "    entity.bossWard = undefined;\n  }",
+    "new": "  }",
     "tests": [
       "test/scenes/auditwe_traits.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "AUDIT-WE-L5-6-the-rules-never-told",
     "file": "src/scenes/foeTraitsHost.js",
-    "old": "  for (const l of bossTraitsTaught(entity)) say?.(l);\n",
-    "new": "",
+    "old": "  for (const l of bossTraitsTaught(entity)) say?.(l);\n  return d;",
+    "new": "  return d;",
     "tests": [
       "test/scenes/auditwe_traits.test.js"
     ]

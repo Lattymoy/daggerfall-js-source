@@ -365,8 +365,8 @@
   {
     "name": "KG6-H-pick-bounds",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "const why = theirs !== null && theirs !== n ? stakeDiffers(other?.name ?? '', theirs) : (purse ?? 0) < n ? stakeShort(purse ?? 0) : null;",
-    "new": "const why = null;",
+    "old": "          const why =\n            theirs !== null && theirs !== n\n              ? stakeDiffers(other?.name ?? '', theirs)\n              : (purse ?? 0) < n\n                ? stakeShort(purse ?? 0)\n                : null;",
+    "new": "          const why = null;",
     "tests": [
       "test/net/gambit/kg6_season.test.js"
     ]
@@ -374,8 +374,8 @@
   {
     "name": "KG6-H-order-sent",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "crown: crownIndex(g.crown), stake: r.stake })",
-    "new": "crown: crownIndex(g.crown) })",
+    "old": "      mySeat() >= 0 && send({ op: 'ready', army: g.army.slice(), crown: crownIndex(g.crown), stake: r.stake })\n        ? (r.id ?? null)\n        : null;",
+    "new": "      mySeat() >= 0 && send({ op: 'ready', army: g.army.slice(), crown: crownIndex(g.crown) }) ? (r.id ?? null) : null;",
     "tests": [
       "test/net/gambit/kg6_season.test.js"
     ]
@@ -383,7 +383,7 @@
   {
     "name": "KG6-H-book",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "    if (g.stakeId && me >= 0 && st?.seats?.[me]?.stake) { d.online.seated?.(g.stakeId); g.stakeId = null; }",
+    "old": "    if (g.stakeId && me >= 0 && st?.seats?.[me]?.stake) {\n      d.online.seated?.(g.stakeId);\n      g.stakeId = null;\n    }",
     "new": "    // the book",
     "tests": [
       "test/net/gambit/kg6_season.test.js"

@@ -86,7 +86,13 @@ export function createDoorToken({ minter, session, modes = () => null, player = 
    *  (null when unknown), and when it is let go - until the session stands in another room. */
   let pending = /** @type {{ from: string, room: string|null, until: number } | null} */ (null);
   // a seam read before the host has stood it up (a jump during the boot's own load) is none, never a throw
-  const read = (/** @type {() => any} */ f) => { try { return f() ?? null; } catch { return null; } };
+  const read = (/** @type {() => any} */ f) => {
+    try {
+      return f() ?? null;
+    } catch {
+      return null;
+    }
+  };
   const live = () => {
     const s = read(session);
     return s && s.url && s.room && !s.terminal && !s.superseded ? s : null;
@@ -104,9 +110,11 @@ export function createDoorToken({ minter, session, modes = () => null, player = 
   };
   /** The nearest exit door of the live place, m - Infinity outside, or with none. */
   const exitDistance = () => {
-    const md = read(modes), pos = read(player)?.pos;
+    const md = read(modes),
+      pos = read(player)?.pos;
     if (!md || !pos) return Infinity;
-    const doors = md.mode === 'dungeon' ? md.dungeonCtx?.exitDoors : md.mode === 'interior' ? md.interiorCtx?.doors : null;
+    const doors =
+      md.mode === 'dungeon' ? md.dungeonCtx?.exitDoors : md.mode === 'interior' ? md.interiorCtx?.doors : null;
     if (!doors?.length) return Infinity;
     const near = closestDoorTo(pos, doors);
     return near ? Math.hypot(near.pos[0] - pos[0], near.pos[1] - pos[1], near.pos[2] - pos[2]) : Infinity;
@@ -117,7 +125,8 @@ export function createDoorToken({ minter, session, modes = () => null, player = 
       const s = live();
       if (!s) return false;
       if (isCellRoom(s.room)) back = s.room;
-      armed = false; walked = false;
+      armed = false;
+      walked = false;
       return change(null);
     },
     /** A door is taking me out, to the cell I came in from. True when a mint went. */
@@ -128,25 +137,35 @@ export function createDoorToken({ minter, session, modes = () => null, player = 
     /** A jump to another place. True when a mint went. */
     jumping() {
       back = null;
-      armed = false; walked = false;
+      armed = false;
+      walked = false;
       return change(null);
     },
     /** Each online frame: a place change under way, asked again; or the way out approached. True when a mint went. */
     frame() {
       if (pending) {
         const s = read(session);
-        if (now() > pending.until || (s?.room && s.room !== pending.from)) pending = null;   // its room joined (or given up)
+        if (now() > pending.until || (s?.room && s.room !== pending.from))
+          pending = null; // its room joined (or given up)
         else return ahead(pending.room, DOOR_SOON_MS);
       }
       const d = exitDistance();
-      if (!(d < Infinity)) { armed = false; return false; }
-      if (d > EXIT_ARM_M) { armed = !walked; return false; }
+      if (!(d < Infinity)) {
+        armed = false;
+        return false;
+      }
+      if (d > EXIT_ARM_M) {
+        armed = !walked;
+        return false;
+      }
       if (!armed || d > EXIT_NEAR_M) return false;
       armed = false;
       walked = ahead(back, EXIT_WALK_MS);
       return walked;
     },
     /** The way back out (null when no door took me in). */
-    get back() { return back; },
+    get back() {
+      return back;
+    },
   };
 }

@@ -119,8 +119,8 @@
   {
     "name": "DOOR-TOKEN-armed-without-the-walk-away",
     "file": "src/scenes/doorTokenHost.js",
-    "old": "      if (d > EXIT_ARM_M) { armed = !walked; return false; }",
-    "new": "      if (d > EXIT_NEAR_M) { armed = !walked; return false; }",
+    "old": "      if (d > EXIT_ARM_M) {",
+    "new": "      if (d > EXIT_NEAR_M) {",
     "tests": [
       "test/net/fb1016b_doortoken.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "DOOR-TOKEN-the-way-out-unremembered",
     "file": "src/scenes/doorTokenHost.js",
-    "old": "      if (isCellRoom(s.room)) back = s.room;\n",
-    "new": "",
+    "old": "      if (isCellRoom(s.room)) back = s.room;\n      armed = false;",
+    "new": "      armed = false;",
     "tests": [
       "test/net/fb1016b_doortoken.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "DOOR-TOKEN-leaving-asks-no-room",
     "file": "src/scenes/doorTokenHost.js",
-    "old": "    leaving() {\n      armed = false;\n      return change(back);",
-    "new": "    leaving() {\n      armed = false;\n      return change(null);",
+    "old": "      return change(back);",
+    "new": "      return change(null);",
     "tests": [
       "test/net/fb1016b_doortoken.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "DOOR-TOKEN-a-jump-keeps-the-way-back",
     "file": "src/scenes/doorTokenHost.js",
-    "old": "    jumping() {\n      back = null;\n",
-    "new": "    jumping() {\n",
+    "old": "      back = null;\n      armed = false;",
+    "new": "      armed = false;",
     "tests": [
       "test/net/fb1016b_doortoken.test.js"
     ]
@@ -173,7 +173,7 @@
   {
     "name": "DOOR-TOKEN-a-seam-throws",
     "file": "src/scenes/doorTokenHost.js",
-    "old": "  const read = (/** @type {() => any} */ f) => { try { return f() ?? null; } catch { return null; } };",
+    "old": "  const read = (/** @type {() => any} */ f) => {\n    try {\n      return f() ?? null;\n    } catch {\n      return null;\n    }\n  };",
     "new": "  const read = (/** @type {() => any} */ f) => f() ?? null;",
     "tests": [
       "test/net/fb1016b_doortoken.test.js"
@@ -236,8 +236,8 @@
   {
     "name": "DOOR-TOKEN-A2-the-door-s-margin-the-old-20s",
     "file": "src/scenes/doorTokenHost.js",
-    "old": "    return ahead(room, DOOR_SOON_MS);\n  };",
-    "new": "    return ahead(room, 20_000);\n  };",
+    "old": "    return ahead(room, DOOR_SOON_MS);",
+    "new": "    return ahead(room, 20_000);",
     "tests": [
       "test/net/fb1016b_doortoken.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "DOOR-TOKEN-A2-the-door-s-margin-the-walk-s",
     "file": "src/scenes/doorTokenHost.js",
-    "old": "    return ahead(room, DOOR_SOON_MS);\n  };",
-    "new": "    return ahead(room, EXIT_WALK_MS);\n  };",
+    "old": "    return ahead(room, DOOR_SOON_MS);",
+    "new": "    return ahead(room, EXIT_WALK_MS);",
     "tests": [
       "test/net/fb1016b_doortoken.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "DOOR-TOKEN-A2-the-ask-outliving-its-room",
     "file": "src/scenes/doorTokenHost.js",
-    "old": "if (now() > pending.until || (s?.room && s.room !== pending.from)) pending = null;",
-    "new": "if (now() > pending.until) pending = null;",
+    "old": "        if (now() > pending.until || (s?.room && s.room !== pending.from))",
+    "new": "        if (now() > pending.until)",
     "tests": [
       "test/net/fb1016b_doortoken.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "DOOR-TOKEN-A2-the-pending-never-let-go",
     "file": "src/scenes/doorTokenHost.js",
-    "old": "if (now() > pending.until || (s?.room && s.room !== pending.from)) pending = null;",
-    "new": "if (s?.room && s.room !== pending.from) pending = null;",
+    "old": "        if (now() > pending.until || (s?.room && s.room !== pending.from))",
+    "new": "        if (s?.room && s.room !== pending.from)",
     "tests": [
       "test/net/fb1016b_doortoken.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "DOOR-TOKEN-A2-the-walk-out-re-armed",
     "file": "src/scenes/doorTokenHost.js",
-    "old": "      if (d > EXIT_ARM_M) { armed = !walked; return false; }",
-    "new": "      if (d > EXIT_ARM_M) { armed = true; return false; }",
+    "old": "        armed = !walked;",
+    "new": "        armed = true;",
     "tests": [
       "test/net/fb1016b_doortoken.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "DOOR-TOKEN-A2-an-approach-that-minted-nothing-spent",
     "file": "src/scenes/doorTokenHost.js",
-    "old": "      walked = ahead(back, EXIT_WALK_MS);\n      return walked;",
-    "new": "      ahead(back, EXIT_WALK_MS);\n      walked = true;\n      return walked;",
+    "old": "      walked = ahead(back, EXIT_WALK_MS);",
+    "new": "      ahead(back, EXIT_WALK_MS);\n      walked = true;",
     "tests": [
       "test/net/fb1016b_doortoken.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "DOOR-TOKEN-A2-a-new-visit-unarmed",
     "file": "src/scenes/doorTokenHost.js",
-    "old": "      armed = false; walked = false;\n      return change(null);\n    },\n    /** A door is taking me out",
-    "new": "      armed = false;\n      return change(null);\n    },\n    /** A door is taking me out",
+    "old": "      if (isCellRoom(s.room)) back = s.room;\n      armed = false;\n      walked = false;\n      return change(null);\n    },",
+    "new": "      if (isCellRoom(s.room)) back = s.room;\n      armed = false;\n      return change(null);\n    },",
     "tests": [
       "test/net/fb1016b_doortoken.test.js"
     ]

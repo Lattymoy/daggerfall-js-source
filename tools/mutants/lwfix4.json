@@ -200,8 +200,8 @@
   {
     "name": "LW-FIX4-divers-ended",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "        if (companies.has(trip.id) || ended.has(trip.id) || !own",
-    "new": "        if (companies.has(trip.id) || !own",
+    "old": "        if (companies.has(trip.id) || ended.has(trip.id) || !own || !members.some((m) => m.cls != null)) continue;",
+    "new": "        if (companies.has(trip.id) || !own || !members.some((m) => m.cls != null)) continue;",
     "tests": [
       "test/systems/livingWorld/lwfix4_turns.test.js",
       "test/systems/livingWorld/lw4b_roadFights.test.js",
@@ -211,7 +211,7 @@
   {
     "name": "LW-FIX4-divers-died",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "          if (deps.died) deps.died(rec.living.res, t); else turn('fallen', deps.turnKeyOf(rec.living.res, c.trip));",
+    "old": "          if (deps.died) deps.died(rec.living.res, t);\n          else turn('fallen', deps.turnKeyOf(rec.living.res, c.trip));",
     "new": "          turn('fallen', deps.turnKeyOf(rec.living.res, c.trip));",
     "tests": [
       "test/systems/livingWorld/lwfix4_turns.test.js",
@@ -222,8 +222,8 @@
   {
     "name": "LW-FIX4-divers-dead-kept",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "    for (const rec of c.allies.values()) if (!rec.dead) takeOut(rec);",
-    "new": "    for (const rec of c.allies.values()) takeOut(rec);",
+    "old": "    for (const rec of c.allies.values()) if (!rec.dead) takeOut(rec); // AUDIT-C4: one cut down is the pool's own (their body, to be found)",
+    "new": "    for (const rec of c.allies.values()) takeOut(rec); // AUDIT-C4: one cut down is the pool's own (their body, to be found)",
     "tests": [
       "test/systems/livingWorld/lwfix4_turns.test.js",
       "test/systems/livingWorld/lw4b_roadFights.test.js",

@@ -174,9 +174,9 @@ and for those seconds neither side of the door could see the other.
     a visit. An exit is a click with nothing to build behind it, so the walk is the mint's only time.
 - **It mints only when the held token could not open the next room by the time its socket asks**: none held, spent
   there, or its minute out within the door's own margin. A door's margin is
-  `doorTokenHost.js:"export const DOOR_SOON_MS = 2_000;"` (a frame, the join's 500 ms hold, a socket's open), asked again
+  `doorTokenHost.js:"export const DOOR_SOON_MS"` (a frame, the join's 500 ms hold, a socket's open), asked again
   every frame of the place change until its room is joined (at most `DOOR_PENDING_MS`, 30 s), so a long build or stream
-  needs no guessed bound; the walk's is `doorTokenHost.js:"export const EXIT_WALK_MS = 8_000;"` (16 m at the slowest
+  needs no guessed bound; the walk's is `doorTokenHost.js:"export const EXIT_WALK_MS"` (16 m at the slowest
   walk, the door's click, `DOOR_SOON_MS`). Never through a failure's hold (STORM-SHED), never while a mint is on the
   wire, never offline.
 - **AUDIT (2026-10-16, A2): the margin was one 20 s (`TOKEN_AHEAD_MS`) at every door**, and the record said "the next

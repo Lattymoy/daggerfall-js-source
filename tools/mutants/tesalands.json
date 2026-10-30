@@ -1067,8 +1067,8 @@
   {
     "name": "TL-landmarks-unseated",
     "file": "src/scenes/floraSeat.js",
-    "old": "if (lands) lands.lift = liftsFor(lands, stride, carve, () => packedLifts(p.samples, lands.props, LAND_PROP_FLOATS, stride, carve));",
-    "new": "if (lands) lands.lift = null;",
+    "old": "  if (lands)\n    lands.lift = liftsFor(lands, stride, carve, () =>\n      packedLifts(p.samples, lands.props, LAND_PROP_FLOATS, stride, carve),\n    );",
+    "new": "  if (lands) lands.lift = null;",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -1076,8 +1076,8 @@
   {
     "name": "TL-landmarks-warmed-none",
     "file": "src/scenes/floraSeat.js",
-    "old": "  if (lands) liftsFor(lands, stride, null, () => packedLifts(p.samples, lands.props, LAND_PROP_FLOATS, stride, null));\n",
-    "new": "",
+    "old": "  if (lands) liftsFor(lands, stride, null, () => packedLifts(p.samples, lands.props, LAND_PROP_FLOATS, stride, null));\n}",
+    "new": "}",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]

@@ -739,8 +739,8 @@
   {
     "name": "KG3-H-regulars-order",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "GAMBIT_TIERS.indexOf(a.tier) - GAMBIT_TIERS.indexOf(b.tier) || a.chair - b.chair",
-    "new": "a.chair - b.chair",
+    "old": "  regulars\n    .map((r) => ({ ...r, tier: tierFor(r.seed) }))\n    .sort((a, b) => GAMBIT_TIERS.indexOf(a.tier) - GAMBIT_TIERS.indexOf(b.tier) || a.chair - b.chair);",
+    "new": "  regulars.map((r) => ({ ...r, tier: tierFor(r.seed) })).sort((a, b) => a.chair - b.chair);",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -757,8 +757,8 @@
   {
     "name": "KG3-H-regular-prechosen",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "regs: gambitRegulars(d.regulars), regular: /** @type {number|null} */ (null),",
-    "new": "regs: gambitRegulars(d.regulars), regular: /** @type {number|null} */ (0),",
+    "old": "    regular: /** @type {number|null} */ (null),",
+    "new": "    regular: /** @type {number|null} */ (0),",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -766,8 +766,8 @@
   {
     "name": "KG3-H-stake-unchecked",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "    else if (id === 'next' && stakeNow() !== null) g.phase = 'army';",
-    "new": "    else if (id === 'next') g.phase = 'army';",
+    "old": "    } else if (id === 'next' && stakeNow() !== null) g.phase = 'army';",
+    "new": "    } else if (id === 'next') g.phase = 'army';",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -775,8 +775,8 @@
   {
     "name": "KG3-H-crown-unkept",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "{ g.crown = GAMBIT_CROWNS[value]; d.entity.gambitCrown = g.crown; }",
-    "new": "{ g.crown = GAMBIT_CROWNS[value]; }",
+    "old": "      d.entity.gambitCrown = g.crown;\n    } else if (id === 'next' && stakeNow() !== null) g.phase = 'army';",
+    "new": "    } else if (id === 'next' && stakeNow() !== null) g.phase = 'army';",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -784,8 +784,8 @@
   {
     "name": "KG3-H-bark",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "g.stakeMult = null; bark(g.regs[value].name, barkInvite(), now); }",
-    "new": "g.stakeMult = null; }",
+    "old": "        bark(g.regs[value].name, barkInvite(), now);\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -793,8 +793,8 @@
   {
     "name": "KG3-H-army-refusal",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "      g.why = g.said;\n",
-    "new": "\n",
+    "old": "      g.why = g.said;\n    } else if (id === 'remove' && Number.isInteger(value) && g.army[value] != null) {",
+    "new": "    } else if (id === 'remove' && Number.isInteger(value) && g.army[value] != null) {",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -802,8 +802,8 @@
   {
     "name": "KG3-H-remove-index",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "g.army = g.army.filter((_, k) => k !== value);",
-    "new": "g.army = g.army.filter((_, k) => k !== value + 1);",
+    "old": "      g.army = g.army.filter((_, k) => k !== value);",
+    "new": "      g.army = g.army.filter((_, k) => k !== value + 1);",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -811,8 +811,8 @@
   {
     "name": "KG3-H-full-word",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "g.said = armyRefusal([...g.army, value]) === 'units' ? armyFull()",
-    "new": "g.said = armyRefusal([...g.army, value]) === 'points' ? armyFull()",
+    "old": "        armyRefusal([...g.army, value]) === 'units'",
+    "new": "        armyRefusal([...g.army, value]) === 'points'",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -829,8 +829,8 @@
   {
     "name": "KG3-H-crown-clash",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "return GAMBIT_CROWNS[GAMBIT_CROWNS[i] === mine ? (i + 1) % GAMBIT_CROWNS.length : i];",
-    "new": "return GAMBIT_CROWNS[i];",
+    "old": "  return GAMBIT_CROWNS[GAMBIT_CROWNS[i] === mine ? (i + 1) % GAMBIT_CROWNS.length : i];",
+    "new": "  return GAMBIT_CROWNS[i];",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -838,8 +838,8 @@
   {
     "name": "KG3-H-staked-flag",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "staked: () => !g.closed && !!g.session?.playing() && (g.game?.stake ?? 0) > 0,",
-    "new": "staked: () => !g.closed && !!g.session?.playing(),",
+    "old": "    staked: () => !g.closed && !!g.session?.playing() && (g.game?.stake ?? 0) > 0,",
+    "new": "    staked: () => !g.closed && !!g.session?.playing(),",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -856,8 +856,8 @@
   {
     "name": "KG3-H-book-sign",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "d.entity.gambitPurses = gambitPursesAfter(d.entity.gambitPurses, d.key, today(), r.name, gold.net);",
-    "new": "d.entity.gambitPurses = gambitPursesAfter(d.entity.gambitPurses, d.key, today(), r.name, -gold.net);",
+    "old": "      d.entity.gambitPurses = gambitPursesAfter(d.entity.gambitPurses, d.key, today(), r.name, gold.net);",
+    "new": "      d.entity.gambitPurses = gambitPursesAfter(d.entity.gambitPurses, d.key, today(), r.name, -gold.net);",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -865,8 +865,8 @@
   {
     "name": "KG3-H-result-at-once",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "    if (s.shown && g.phase === 'battle') { g.phase = 'over';",
-    "new": "    if (s.over && g.phase === 'battle') { g.phase = 'over';",
+    "old": "    if (s.shown && g.phase === 'battle') {",
+    "new": "    if (s.over && g.phase === 'battle') {",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -883,8 +883,8 @@
   {
     "name": "KG3-H-one-press",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "      if (g.armed !== 'forfeit') { g.armed = 'forfeit'; g.armedAt = now; return; }",
-    "new": "      if (!s) { g.armed = 'forfeit'; g.armedAt = now; return; }",
+    "old": "      if (g.armed !== 'forfeit') {",
+    "new": "      if (!s) {",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -892,8 +892,8 @@
   {
     "name": "KG3-H-arm-kept",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "    if (g.armed && now - g.armedAt >= GAMBIT_ARM_MS) { g.armed = null; changed = true; }",
-    "new": "    if (!g) { g.armed = null; changed = true; }",
+    "old": "    if (g.armed && now - g.armedAt >= GAMBIT_ARM_MS) {",
+    "new": "    if (!g) {",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -901,8 +901,8 @@
   {
     "name": "KG3-H-escape-stands-at-once",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "      else press('stand');   // nothing to cancel",
-    "new": "      else d.onStand();   // nothing to cancel",
+    "old": "      else press('stand'); // nothing to cancel: the Stand up press - asked twice while a game is under way",
+    "new": "      else d.onStand(); // nothing to cancel: the Stand up press - asked twice while a game is under way",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -910,8 +910,8 @@
   {
     "name": "KG3-H-concession",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "      else if (concede && g.session?.playing()) { g.session.forfeit(d.now()); pump(d.now()); }",
-    "new": "      else if (!concede && g.session?.playing()) { g.session.forfeit(d.now()); pump(d.now()); }",
+    "old": "      else if (concede && g.session?.playing()) {",
+    "new": "      else if (!concede && g.session?.playing()) {",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -928,8 +928,8 @@
   {
     "name": "KG3-H-closed-twice",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "    close({ concede = true } = {}) {\n      if (g.closed) return;\n",
-    "new": "    close({ concede = true } = {}) {\n",
+    "old": "      if (g.closed) return;\n      if (online())",
+    "new": "      if (online())",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -937,8 +937,8 @@
   {
     "name": "KG3-H-night-unread",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "const nightLeft = d.friendly ? 0 : gambitNightLeft(d.entity.gambitPurses, d.key, today(), r.name, r.tier);",
-    "new": "const nightLeft = d.friendly ? 0 : r.tier.stake * 1000;",
+    "old": "      const nightLeft = d.friendly ? 0 : gambitNightLeft(d.entity.gambitPurses, d.key, today(), r.name, r.tier);",
+    "new": "      const nightLeft = d.friendly ? 0 : r.tier.stake * 1000;",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -991,8 +991,8 @@
   {
     "name": "KG3-H-lens",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "const ray = rayDirFromScreen(at[0], at[1], w, h, cam.proj, cam.view, cam.eye, rect);",
-    "new": "const ray = rayDirFromScreen(at[0], at[1], w, h, cam.proj, cam.proj, cam.eye, rect);",
+    "old": "    const ray = rayDirFromScreen(at[0], at[1], w, h, cam.proj, cam.view, cam.eye, rect);",
+    "new": "    const ray = rayDirFromScreen(at[0], at[1], w, h, cam.proj, cam.proj, cam.eye, rect);",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -1018,8 +1018,8 @@
   {
     "name": "KG3-H-felt",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "    if (!cell) { paint(); return true; }",
-    "new": "    if (!cell) { paint(); return false; }",
+    "old": "      paint();\n      return true;\n    } // the table round the board: taken, and nothing pressed",
+    "new": "      paint();\n      return false;\n    } // the table round the board: taken, and nothing pressed",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -1027,8 +1027,8 @@
   {
     "name": "KG3-H-free",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "      g.draw?.destroy();\n",
-    "new": "\n",
+    "old": "      g.draw?.destroy();",
+    "new": "",
     "tests": [
       "test/systems/kg3_host.test.js"
     ]
@@ -1036,8 +1036,8 @@
   {
     "name": "KG3-H-draw-after-close",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "      if (g.closed) return;\n      if (cam) g.cam",
-    "new": "      if (cam) g.cam",
+    "old": "      if (g.closed) return;\n      if (cam) g.cam = { proj: cam.proj, view: Float32Array.from(cam.view), eye: cam.eye.slice() };",
+    "new": "      if (cam) g.cam = { proj: cam.proj, view: Float32Array.from(cam.view), eye: cam.eye.slice() };",
     "tests": [
       "test/systems/kg3_host.test.js"
     ],

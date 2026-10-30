@@ -608,8 +608,8 @@
   {
     "name": "TESA-BIOME-68-grant-species-fauna",
     "file": "src/scenes/grantHost.js",
-    "old": "return chooseRandomEnemy({ climateIndex: climate, fauna, inLocationRect: inRect,",
-    "new": "return chooseRandomEnemy({ climateIndex: climate, inLocationRect: inRect,",
+    "old": "    { climateIndex: climate, fauna, inLocationRect: inRect, isDay: !isNight(gr.m), playerLevel: gr.l > 0 ? gr.l : 1 },",
+    "new": "    { climateIndex: climate, inLocationRect: inRect, isDay: !isNight(gr.m), playerLevel: gr.l > 0 ? gr.l : 1 },",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -617,8 +617,8 @@
   {
     "name": "TESA-BIOME-69-grant-set-key",
     "file": "src/scenes/grantHost.js",
-    "old": "const key = `${c}:${fauna?.[0] ?? ''}:${encounterTableGeneration()}`;",
-    "new": "const key = `${c}:${encounterTableGeneration()}`;",
+    "old": "  const key = `${c}:${fauna?.[0] ?? ''}:${encounterTableGeneration()}`; // DEX3: kept per climate (TESA-BIOME: and zone) while the tables' selectors stand",
+    "new": "  const key = `${c}:${encounterTableGeneration()}`; // DEX3: kept per climate (TESA-BIOME: and zone) while the tables' selectors stand",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -626,8 +626,8 @@
   {
     "name": "TESA-BIOME-70-grant-set-fauna",
     "file": "src/scenes/grantHost.js",
-    "old": ".map((o) => resolveEncounterTableIndex({ climateIndex: c, fauna, ...o }))",
-    "new": ".map((o) => resolveEncounterTableIndex({ climateIndex: c, ...o }))",
+    "old": "    .map((o) => resolveEncounterTableIndex({ climateIndex: c, fauna, ...o }))",
+    "new": "    .map((o) => resolveEncounterTableIndex({ climateIndex: c, ...o }))",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -635,8 +635,8 @@
   {
     "name": "TESA-BIOME-71-grant-host-fauna",
     "file": "src/scenes/grantHost.js",
-    "old": "!!inRect, faunaAt(gr.p[0], gr.p[1])) : -1);",
-    "new": "!!inRect) : -1);",
+    "old": "    gr?.k === 'encr' && climateAt\n      ? grantSpecies(gr, i, climateAt(gr.p[0], gr.p[1]), !!inRect, faunaAt(gr.p[0], gr.p[1]))\n      : -1;",
+    "new": "    gr?.k === 'encr' && climateAt ? grantSpecies(gr, i, climateAt(gr.p[0], gr.p[1]), !!inRect) : -1;",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -653,8 +653,8 @@
   {
     "name": "TESA-BIOME-73-reader-encr-zone",
     "file": "src/scenes/grantHost.js",
-    "old": "z = faunaAt(gr.p[0], gr.p[1]), i = r.gr[1];",
-    "new": "z = null, i = r.gr[1];",
+    "old": "      z = faunaAt(gr.p[0], gr.p[1]),",
+    "new": "      z = null,",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]

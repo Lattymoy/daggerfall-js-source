@@ -275,8 +275,8 @@
   {
     "name": "COST2-grant-host-cover",
     "file": "src/scenes/grantHost.js",
-    "old": "cover: session()?.coverOf?.(at) ?? at,",
-    "new": "cover: at,",
+    "old": "      grantRefusal(v.gr, { from, cell: at, cover: session()?.coverOf?.(at) ?? at, nowMs: now(), i }) ?? // COST-2 (b): in any cell the socket it came on covers",
+    "new": "      grantRefusal(v.gr, { from, cell: at, cover: at, nowMs: now(), i }) ?? // COST-2 (b): in any cell the socket it came on covers",
     "tests": [
       "test/net/cellcover.test.js"
     ]

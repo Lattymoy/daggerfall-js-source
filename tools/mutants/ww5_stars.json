@@ -229,8 +229,8 @@
   {
     "name": "WW5-STAR-every-theatre-one-idle-moment",
     "file": "src/scenes/eventTheatres.js",
-    "old": "    if (owed.size && idle) { busy = true; idle(drain); }\n",
-    "new": "    if (owed.size) drain();\n",
+    "old": "    if (owed.size && idle) {\n      busy = true;\n      idle(drain);\n    }",
+    "new": "    if (owed.size) drain();",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "WW5-STAR-a-stale-scan-kept",
     "file": "src/scenes/eventTheatres.js",
-    "old": "    if (warm.get(t) === stampOf(S)) return S.scanOf(t);\n",
-    "new": "    if (warm.has(t)) return S.scanOf(t);\n",
+    "old": "    if (warm.get(t) === stampOf(S)) return S.scanOf(t);",
+    "new": "    if (warm.has(t)) return S.scanOf(t);",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "WW5-STAR-the-open-zone-warmed",
     "file": "src/scenes/eventTheatres.js",
-    "old": "    if (!S || !PROVINCE_EVENT_LANES.includes(t)) return null;\n",
-    "new": "    if (!S) return null;\n",
+    "old": "    if (!S || !PROVINCE_EVENT_LANES.includes(t)) return null;",
+    "new": "    if (!S) return null;",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "WW5-STAR-the-bays-lane-a-province",
     "file": "src/scenes/eventTheatres.js",
-    "old": "SITE_EVENT_LANES.filter((l) => l > 0)",
-    "new": "SITE_EVENT_LANES.filter((l) => l >= 0)",
+    "old": "export const PROVINCE_EVENT_LANES = Object.freeze(SITE_EVENT_LANES.filter((l) => l > 0));",
+    "new": "export const PROVINCE_EVENT_LANES = Object.freeze(SITE_EVENT_LANES.filter((l) => l >= 0));",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]

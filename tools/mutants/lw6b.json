@@ -274,8 +274,8 @@
   {
     "name": "LW6b-stood-member",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "return !!c && (c.allies.has(resId) || c.foes.has(resId)); },",
-    "new": "return !!c; },",
+    "old": "      return !!c && (c.allies.has(resId) || c.foes.has(resId));",
+    "new": "      return !!c;",
     "tests": [
       "test/systems/livingWorld/lw6b_remains.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "LW6b-stood-allies",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "return !!c && (c.allies.has(resId) || c.foes.has(resId)); },",
-    "new": "return !!c && c.foes.has(resId); },",
+    "old": "      return !!c && (c.allies.has(resId) || c.foes.has(resId));",
+    "new": "      return !!c && c.foes.has(resId);",
     "tests": [
       "test/systems/livingWorld/lw6b_remains.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "LW6b-stood-foes",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "return !!c && (c.allies.has(resId) || c.foes.has(resId)); },",
-    "new": "return !!c && c.allies.has(resId); },",
+    "old": "      return !!c && (c.allies.has(resId) || c.foes.has(resId));",
+    "new": "      return !!c && c.allies.has(resId);",
     "tests": [
       "test/systems/livingWorld/lw6b_remains.test.js"
     ]

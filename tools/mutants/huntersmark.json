@@ -563,8 +563,8 @@
   {
     "name": "HUNTERS-MARK-fish-logged-twice",
     "file": "src/scenes/fishHost.js",
-    "old": "if (d?.node && !logged.has(d.node)) {",
-    "new": "if (d?.node) {",
+    "old": "      if (d?.node && !logged.has(d.node)) {",
+    "new": "      if (d?.node) {",
     "tests": [
       "test/systems/huntersmark_trophies.test.js"
     ]

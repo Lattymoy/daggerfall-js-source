@@ -2367,7 +2367,7 @@ As built:
   low 20 bits, which the service cannot tell from a Bay id. Until it reloads it shares the old vein, and one account can
   take a dungeon's slots once under each key in a day - bounded by the day's cap on unwitnessed veins.
 - **The abyss's ground** (AUDIT TAMRIEL-WIDE C3): an abyss past the Bay names its pit's ground, as the gathering reads
-  that pixel (`dungeonIdentity.js:"export function keptGround(x, y) {"`). Its template is picked by hash and by the
+  that pixel (`dungeonIdentity.js:"export function keptGround"`). Its template is picked by hash and by the
   player's quest sites, so two players could name two grounds for one abyss. At sea past the Bay that ground is the
   Ocean climate and region 0, the politic map's clamp, as a haul there reads it. The Bay's abyss keeps its template's
   ground, the one its facts were witnessed under. **Deploy**: the account service (acct217) before the site; an

@@ -759,7 +759,7 @@ its "+75% loot" English.
   open sea's fights. Outdoors on the open sea it is refused, as on the mountains' slopes - in the sea's words ("/unstuck
   does not work outdoors on the open Eltheric Ocean." - AUDIT SEA VENTURES C6: "in the mountains", at sea).
 - FOE-BOUNDS (Spawn-Grants section 19): a street foe stood past the Veil may carry the zone's health to a client in
-  Veilhaven's peace (`grantHost.js:"function wildAbout(r, lane) {"`) - the whole sea is near the zone, as the
+  Veilhaven's peace (`grantHost.js:"function wildAbout"`) - the whole sea is near the zone, as the
   mountains' band is, so an owner's foe a stride over the peace's edge is never taken down as impossible.
 
 **WHAT THE SEA KEEPS ITS OWN** (named, each a reading of the mountains' law on water):

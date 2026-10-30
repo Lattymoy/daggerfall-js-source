@@ -12,7 +12,7 @@
     "name": "ANY-HOUR-the-net-words-the-hour",
     "file": "src/scenes/fishHost.js",
     "old": "export const NET_WHERE = Object.freeze(['inside', 'town']);\nexport const NET_WHERE_WORDS = Object.freeze({ inside: 'not in here', town: 'not in a settlement' });",
-    "new": "export const NET_WHERE = Object.freeze(['inside', 'town', 'daylight']);\nexport const NET_WHERE_WORDS = Object.freeze({ inside: 'not in here', town: 'not in a settlement', daylight: 'the fish bite by daylight (07:00-17:59)' });",
+    "new": "export const NET_WHERE = Object.freeze(['inside', 'town', 'daylight']);\nexport const NET_WHERE_WORDS = Object.freeze({\n  inside: 'not in here',\n  town: 'not in a settlement',\n  daylight: 'the fish bite by daylight (07:00-17:59)',\n});",
     "tests": [
       "test/scenes/fb1001_anyhour.test.js",
       "test/world/terrain/prof8_client.test.js"

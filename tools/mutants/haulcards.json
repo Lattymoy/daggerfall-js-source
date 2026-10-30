@@ -277,8 +277,8 @@
   {
     "name": "HAUL-CARDS-species-unnamed",
     "file": "src/scenes/fishHost.js",
-    "old": "haulName: (d) => speciesOfHaul(d.node, climateOf(d.node))?.itemName ?? null,",
-    "new": "haulName: () => null,",
+    "old": "    haulName: (d) => speciesOfHaul(d.node, climateOf(d.node))?.itemName ?? null, // HAUL-CARDS: the catch's species on its card, the Raw Fish its sub",
+    "new": "    haulName: () => null, // HAUL-CARDS: the catch's species on its card, the Raw Fish its sub",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]

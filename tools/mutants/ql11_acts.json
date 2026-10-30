@@ -137,8 +137,8 @@
   {
     "name": "AUDIT-QL-ACTS-M8-gambitTableGame-a-watcher-s-board-counts",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "if (s.over.winner === 0 && !watching()) noteAct('gambit-won');",
-    "new": "if (s.over.winner === 0) noteAct('gambit-won');",
+    "old": "    if (s.over.winner === 0 && !watching()) noteAct('gambit-won'); // QL11: a game won - side 0 is mine, a regular's game or the relay's (a watcher's board is the host's)",
+    "new": "    if (s.over.winner === 0) noteAct('gambit-won'); // QL11: a game won - side 0 is mine, a regular's game or the relay's (a watcher's board is the host's)",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-QL-ACTS-M8b-gambitTableGame-the-winner-unread",
     "file": "src/scenes/gambitTableGame.js",
-    "old": "if (s.over.winner === 0 && !watching()) noteAct('gambit-won');",
-    "new": "if (!watching()) noteAct('gambit-won');",
+    "old": "    if (s.over.winner === 0 && !watching()) noteAct('gambit-won'); // QL11: a game won - side 0 is mine, a regular's game or the relay's (a watcher's board is the host's)",
+    "new": "    if (!watching()) noteAct('gambit-won'); // QL11: a game won - side 0 is mine, a regular's game or the relay's (a watcher's board is the host's)",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-QL-ACTS-M13-fishHost-only-a-trophy-haul-counts",
     "file": "src/scenes/fishHost.js",
-    "old": "      noteAct('fish-caught');   // QL11: a fish caught - the net's haul, in the Stores or the bag\n",
-    "new": "      if (d?.trophy) noteAct('fish-caught');\n",
+    "old": "      noteAct('fish-caught'); // QL11: a fish caught - the net's haul, in the Stores or the bag",
+    "new": "      if (d?.trophy) noteAct('fish-caught');",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]

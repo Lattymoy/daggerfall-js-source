@@ -194,7 +194,7 @@
   {
     "name": "FOE-BOUNDS-tallied-every-frame",
     "file": "src/scenes/grantHost.js",
-    "old": "    if (!statsSaid.has(k)) { statsSaid.add(k); capMap(statsSaid, GRANT_MEMBERS_MAX); note(from, 'stats'); }",
+    "old": "    if (!statsSaid.has(k)) {\n      statsSaid.add(k);\n      capMap(statsSaid, GRANT_MEMBERS_MAX);\n      note(from, 'stats');\n    }",
     "new": "    note(from, 'stats');",
     "why": "one impossible record tallied on every frame",
     "tests": [
@@ -214,8 +214,8 @@
   {
     "name": "FOE-BOUNDS-stats-to-older-relay",
     "file": "src/scenes/grantHost.js",
-    "old": "[...tallies].filter(([k]) => said || !k.endsWith('|stats'))",
-    "new": "[...tallies]",
+    "old": "      .filter(([k]) => said || !k.endsWith('|stats'))\n      .sort((a, b) => b[1] - a[1])",
+    "new": "      .sort((a, b) => b[1] - a[1])",
     "why": "`stats` handed to a relay that refuses the whole tally for it",
     "tests": [
       "test/scenes/foebounds_pool.test.js"
@@ -224,8 +224,8 @@
   {
     "name": "GRANT-DOOR-vouch-unread-reader",
     "file": "src/scenes/grantHost.js",
-    "old": "capable.has(from) || session()?.grantSenders?.has(from) ? note(from, 'ungranted')",
-    "new": "capable.has(from) ? note(from, 'ungranted')",
+    "old": "    if (!r?.gr) return capable.has(from) || session()?.grantSenders?.has(from) ? note(from, 'ungranted') : null; // GRANT4: the City Watch's too (watchReady); GRANT-DOOR: a sender the relay vouches stands on grants (net/online.js grantSenders)",
+    "new": "    if (!r?.gr) return capable.has(from) ? note(from, 'ungranted') : null; // GRANT4: the City Watch's too (watchReady); GRANT-DOOR: a sender the relay vouches stands on grants (net/online.js grantSenders)",
     "why": "a vouched sender's ungranted record never counted",
     "tests": [
       "test/scenes/foebounds_pool.test.js"
@@ -254,8 +254,8 @@
   {
     "name": "BOSS-BOUND-bound-unchecked",
     "file": "src/scenes/grantHost.js",
-    "old": "if (b !== null && s.k <= b) return false;",
-    "new": "if (b !== null) return false;",
+    "old": "      if (b !== null && s.k <= b) return false;",
+    "new": "      if (b !== null) return false;",
     "why": "a tagged boss past its event's own health stands",
     "tests": [
       "test/scenes/foebounds_pool.test.js"

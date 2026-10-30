@@ -2,8 +2,8 @@
   {
     "name": "BAYLEFT-SEAM-the-drain-makes-it-whole",
     "file": "src/scenes/eventTheatres.js",
-    "old": "      const sc = S.wholeScan ? S.wholeScan(t) : S.scanOf(t);\n",
-    "new": "      const sc = S.scanOf(t);\n",
+    "old": "      const sc = S.wholeScan ? S.wholeScan(t) : S.scanOf(t);",
+    "new": "      const sc = S.scanOf(t);",
     "tests": [
       "test/world/worldWide/bayleft_scanseam.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "BAYLEFT-SEAM-the-owed-dropped-unwhole",
     "file": "src/scenes/eventTheatres.js",
-    "old": "      if (sc) { owed.delete(t); warm.set(t, stampOf(S)); }\n",
-    "new": "      owed.delete(t); if (sc) warm.set(t, stampOf(S));\n",
+    "old": "      if (sc) {\n        owed.delete(t);\n        warm.set(t, stampOf(S));\n      }",
+    "new": "      owed.delete(t);\n      if (sc) warm.set(t, stampOf(S));",
     "tests": [
       "test/world/worldWide/bayleft_scanseam.test.js"
     ]

@@ -1032,8 +1032,8 @@
   {
     "name": "DPD-deck-hull-blind",
     "file": "src/scenes/deckPlanDoor.js",
-    "old": "const deck = rec ? deps.pool?.deckOf?.(rec.hull) ?? null : null;",
-    "new": "const deck = rec ? deps.pool?.deckOf?.(2) ?? null : null;",
+    "old": "    const deck = rec ? (deps.pool?.deckOf?.(rec.hull) ?? null) : null;",
+    "new": "    const deck = rec ? (deps.pool?.deckOf?.(2) ?? null) : null;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1041,8 +1041,8 @@
   {
     "name": "DPD-unbaked-opened",
     "file": "src/scenes/deckPlanDoor.js",
-    "old": "if (!rec || !deck?.count) {",
-    "new": "if (!rec || !deck) {",
+    "old": "    if (!rec || !deck?.count) {",
+    "new": "    if (!rec || !deck) {",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1050,8 +1050,8 @@
   {
     "name": "DPD-footprint-xy",
     "file": "src/scenes/deckPlanDoor.js",
-    "old": "return b ? [b.max[0] - b.min[0], b.max[2] - b.min[2]] : null;",
-    "new": "return b ? [b.max[0] - b.min[0], b.max[1] - b.min[1]] : null;",
+    "old": "    return b ? [b.max[0] - b.min[0], b.max[2] - b.min[2]] : null;",
+    "new": "    return b ? [b.max[0] - b.min[0], b.max[1] - b.min[1]] : null;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1059,8 +1059,8 @@
   {
     "name": "DPD-loaded-unasked",
     "file": "src/scenes/deckPlanDoor.js",
-    "old": "for (const [m] of DECK_FITTINGS) Promise",
-    "new": "for (const [m] of DECK_FITTINGS) if (!deps.pipeline?.cpuModels?.get(m)) Promise",
+    "old": "    for (const [m] of DECK_FITTINGS) Promise.resolve(deps.pipeline?.getGpuMesh?.(m)).catch(() => {}); // AUDIT 2: each asked, loaded or not - the ask pins it (a house's own hold freed it under the plan)",
+    "new": "    for (const [m] of DECK_FITTINGS)\n      if (!deps.pipeline?.cpuModels?.get(m)) Promise.resolve(deps.pipeline?.getGpuMesh?.(m)).catch(() => {}); // AUDIT 2: each asked, loaded or not - the ask pins it (a house's own hold freed it under the plan)",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1068,8 +1068,8 @@
   {
     "name": "DPD-save-elsewhere",
     "file": "src/scenes/deckPlanDoor.js",
-    "old": "save: (list) => deps.act(uid, 'deck', list) });",
-    "new": "save: (list) => deps.act(uid, 'livery', list) });",
+    "old": "      save: (list) => deps.act(uid, 'deck', list),",
+    "new": "      save: (list) => deps.act(uid, 'livery', list),",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1077,8 +1077,8 @@
   {
     "name": "DPD-unshown",
     "file": "src/scenes/deckPlanDoor.js",
-    "old": "    if (w) deps.show(w);\n",
-    "new": "",
+    "old": "    if (w) deps.show(w);\n    return !!w;",
+    "new": "    return !!w;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]

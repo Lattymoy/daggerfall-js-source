@@ -33,7 +33,8 @@ const MOVING_MPS = 0.3;
 /** The dragon I sit, by the host's state: `{ look }` (1 the Aetherbright) or null on none - a tamed one ridden, or an
  *  Admin's /dragon. @param {any} player @param {any[] | null | undefined} items */
 export function dragonRidden(player, items) {
-  if (player?.riding && player.transportMode === TRANSPORT_MODES.Dragon) return { look: dragonLookOfItem(dragonMountOf(items)) };
+  if (player?.riding && player.transportMode === TRANSPORT_MODES.Dragon)
+    return { look: dragonLookOfItem(dragonMountOf(items)) };
   return ridingDragon() ? { look: dragonRideLook() } : null;
 }
 
@@ -41,13 +42,13 @@ export function dragonRidden(player, items) {
  *  is out of the head (tests hand their own).
  *  @param {any} renderer @param {any} deps @param {() => boolean} [third] */
 export function createDragonViewHost(renderer, deps, third = mwViewThirdPerson) {
-  const layer = new RemotePlayers({ renderer, deps });   // no audio: my own dragon's sounds are the ride's
+  const layer = new RemotePlayers({ renderer, deps }); // no audio: my own dragon's sounds are the ride's
   /** @type {{ look: number } | null} */
   let ride = null;
   let shown = false;
   /** @type {number[] | null} */
   let lastFeet = null;
-  let height = 0;   // the sprite's drawn height (m), kept from the last frame it stood
+  let height = 0; // the sprite's drawn height (m), kept from the last frame it stood
   return {
     /** The frame's ride, read before the camera - mwViewFrame's `dragon`: the rider's seat over my feet (m), the camera's
      *  pivot, or 0 on no dragon. @param {any} player @param {any[]} items */
@@ -60,12 +61,30 @@ export function createDragonViewHost(renderer, deps, third = mwViewThirdPerson) 
     frame(feet, yaw, eye, dt) {
       const was = shown;
       shown = !!ride && third();
-      if (!shown) { if (was) { lastFeet = null; layer.sync([]); } return; }   // into the head, or off the dragon: its batch goes
-      const speed = lastFeet && dt > 0 ? Math.hypot(feet[0] - lastFeet[0], feet[1] - lastFeet[1], feet[2] - lastFeet[2]) / dt : 0;
+      if (!shown) {
+        if (was) {
+          lastFeet = null;
+          layer.sync([]);
+        }
+        return;
+      } // into the head, or off the dragon: its batch goes
+      const speed =
+        lastFeet && dt > 0 ? Math.hypot(feet[0] - lastFeet[0], feet[1] - lastFeet[1], feet[2] - lastFeet[2]) / dt : 0;
       const moving = speed > MOVING_MPS;
       lastFeet = [feet[0], feet[1], feet[2]];
-      const shownPose = { x: feet[0], y: feet[1], z: feet[2], yaw, rd: POSE_RIDE.Dragon, rc: ride?.look || undefined, mv: moving ? 1 : 0 };
-      layer.sync([{ id: 'self-dragon', shown: shownPose, look: null }], (p) => [p.x, p.y, p.z], { dt, eye: [eye[0], eye[1], eye[2]] });
+      const shownPose = {
+        x: feet[0],
+        y: feet[1],
+        z: feet[2],
+        yaw,
+        rd: POSE_RIDE.Dragon,
+        rc: ride?.look || undefined,
+        mv: moving ? 1 : 0,
+      };
+      layer.sync([{ id: 'self-dragon', shown: shownPose, look: null }], (p) => [p.x, p.y, p.z], {
+        dt,
+        eye: [eye[0], eye[1], eye[2]],
+      });
       height = Math.abs(layer.batches()[0]?.size?.h ?? 0) || height;
     },
     /** Whether my dragon stands in the world this frame. */
@@ -76,6 +95,8 @@ export function createDragonViewHost(renderer, deps, third = mwViewThirdPerson) 
     /** Its batch, for the host's billboard pass (none in first person). */
     batches: () => (shown ? layer.batches() : []),
     /** Its batch onto the street's billboard list `out` (none in first person). @param {any[]} out */
-    drawInto(out) { if (shown) for (const b of layer.batches()) out.push(b); },
+    drawInto(out) {
+      if (shown) for (const b of layer.batches()) out.push(b);
+    },
   };
 }
