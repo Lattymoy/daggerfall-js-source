@@ -99,7 +99,7 @@ hurt and idle frame of every outfit. The body now holds what the player holds: `
 | Sheathed, a spell readied, bare hands | Idle, Move, Death, IdleSpell, MoveSpell, any melee table with nothing held | nothing: the hammer is taken out |
 | A melee weapon | IdleMelee, MoveMelee, AttackMelee | the weapon, its shape and its metal |
 | A bow | IdleRanged, MoveRanged | the bow, upright in the free hand; the weapon hand empty |
-| The loose | AttackRanged | the strips' own bow (records 20-24), as before |
+| The loose | AttackRanged | the strips' own bow (records 20-24), as before; with hands known to hold no bow, the ranged stance, empty |
 | A cast | AttackSpell | the swing's wind-up and throw (records 5-9, frames 0-3), hands empty |
 | A gun (thunderlock, pistolet) | AttackMelee | the swing's frame 3, held for the shot, from the hip |
 | A walker's flinch | Death (the hurt frame) | what its hands held before it (`armedTable`) |
@@ -143,8 +143,10 @@ laid along the frame's line from the fist, foreshortened as the line is, at the 
 a picture pixel a centimetre: the rig's `cm`), its heavier side on the hammer face's side. A katana is its flat
 picture. A thin handle keeps a pixel's width.
 
-**Its chain and its grip.** A flail's chain and ball are split off the handle (`heldChain`) and hang straight down from
-its head end; in a swing they fly out with the picture. The doll's hand gap is bridged with the handle's own core
+**Its chain and its grip** (the owner, 2026-10-30: "We need to animate the flail"). A flail's chain and ball are split
+off the handle (`heldChain`) and run from its head end the way `chainWay` says. In a walk they hang and lag the hand's
+move since the frame before (the rig's `cv`), at most 31 degrees off the plumb; in a swing they are flung out along the
+handle and trail the blow; at rest they hang plumb. The ball stays in the picture. The doll's hand gap is bridged with the handle's own core
 (`bridgeGap`, never a guard's breadth), drawn only into open air: where the art lost the fist with the hammer (the side
 flinch), the pommel stays joined to the guard, and a fist the art keeps covers it.
 

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import {
   layeredWeaponOf, weaponShownFor, weaponRigOf, WEAPON_SHAPES, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode, removeWeapon,
-  maskTile, fillFrom, weaponLen, WEAPON_SPAN, heldPicture, heldBow, heldImage, drawWeapon,
+  maskTile, fillFrom, weaponLen, WEAPON_SPAN, heldPicture, heldBow, heldImage, drawWeapon, chainWay, heldChain,
 } from '../../../src/player/eyeOfTheBeholder/layeredWeapon.js';
 import { inventoryItemImage } from '../../../src/systems/item/itemTemplates.js';
 import { layeredSprite, outfitPieces, outfitCombo, decodeLayered } from '../../../src/player/eyeOfTheBeholder/layeredArmor.js';
@@ -403,9 +403,9 @@ test('a flail\'s chain hangs; a katana is held as its flat picture, not the pack
   const W = 40, H = 40, colors = new Uint8Array(W * H * 4);
   for (let x = 0; x < 30; x++) if (x < 4 || x > 7) colors.set([...BLUE, 255], (20 * W + x) * 4);
   for (let y = 21; y < 38; y++) colors.set([...RED, 255], (y * W + 29) * 4);
-  // the handle's head end is 21 picture px past the grip (x 8): a walk's chain hangs straight down from there; a swing's
-  // flies out with the picture, across the line
-  for (const frame of ['2-0', '1-1', '0-0', '7-3']) {
+  // the handle's head end is 21 picture px past the grip (x 8): the chain runs from there the way chainWay says - a walk's
+  // hanging, lagging the hand's move since the last frame; a swing's flung out along the handle, trailing the blow
+  for (const frame of ['2-0', '1-1', '0-0', '15-0', '7-1', '5-1', '6-3']) {
     const flail = await decodeLayered(`LA:male:leather_leather_leather:${frame}:lll@fl1`, decodePng, { ...opts, heldArt: async () => ({ width: W, height: H, colors }) });
     const fr = weaponRigOf('male', frame), [qx, qy, tx, ty] = fr.w ?? [...fr.q, ...fr.t], D = Math.hypot(tx - qx, ty - qy), ux = (tx - qx) / D, uy = (ty - qy) / D;
     const along = rig.male.cm * Math.max(0.14, Math.min(1, D / rig.male.len)), hx = qx + ux * 21 * along, hy = qy + uy * 21 * along;
@@ -414,13 +414,10 @@ test('a flail\'s chain hangs; a katana is held as its flat picture, not the pack
       if (flail.data[i * 4] > 200 && flail.data[i * 4 + 2] < 60 && flail.data[i * 4 + 1] < 60) red.push([(i % flail.width) + 0.5, ((i / flail.width) | 0) + 0.5]);
     }
     assert.ok(red.length > 3, `${frame}: the chain drawn (${red.length} px)`);
-    if (frame === '7-3') {
-      assert.ok(red.every(([x, y]) => Math.abs((x - hx) * ux + (y - hy) * uy) <= 2), `${frame}: a swing's chain lies across the line at the head end`);
-      continue;
-    }
-    assert.ok(red.every(([x, y]) => Math.abs(x - hx) <= 1.5 && y > hy), `${frame}: the chain hangs straight down from the head end (${hx.toFixed(1)}, ${hy.toFixed(1)})`);
-  }
-  const kt = { group: 'Weapons', templateIndex: WEAPONS.Katana, material: 0 }, ls = { group: 'Weapons', templateIndex: WEAPONS.Longsword, material: 0 };
+    const [gx, gy] = chainWay(fr.cv, { ux, uy }, Number(frame.split('-')[0]) >= 5 && Number(frame.split('-')[0]) <= 9);
+    assert.ok(red.every(([x, y]) => Math.abs((x - hx) * gy - (y - hy) * gx) <= 1.6 && (x - hx) * gx + (y - hy) * gy > 0), `${frame}: the chain runs from the head end along (${gx.toFixed(2)}, ${gy.toFixed(2)})`);
+    if (!fr.cv) assert.deepEqual([gx, gy], [0, 1], `${frame}: at rest it hangs plumb`);
+  }  const kt = { group: 'Weapons', templateIndex: WEAPONS.Katana, material: 0 }, ls = { group: 'Weapons', templateIndex: WEAPONS.Longsword, material: 0 };
   assert.equal(heldImage(kt, { gender: 'male' }).record, inventoryItemImage(kt, { gender: 'male' }).record - 1);
   assert.deepEqual(heldImage(ls, { gender: 'female' }), inventoryItemImage(ls, { gender: 'female' }));
 });
@@ -561,4 +558,52 @@ test('LAYERED-GLOW the compose keeps the weapon\'s own px: those its drawing cha
   let k = 0;
   for (let i = 0; i < mask.length; i++) { assert.ok(!iron.held[i] || mask[i], 'only the hammer\'s'); k += iron.held[i]; }
   assert.ok(k > 20, `the art's own hammer: ${k} px`);
+});
+
+test('a flail\'s chain swings: in a walk it lags the hand\'s move since the frame before, no further than a tilt; in a swing it is flung out along the handle and trails the blow; the ball stays in the picture', { skip: !PNG && 'no pngjs' }, async () => {
+  assert.deepEqual(chainWay(undefined, { ux: 1, uy: 0 }, false), [0, 1], 'at rest: plumb');
+  const [lx, ly] = chainWay([8, 0], { ux: 1, uy: 0 }, false);
+  assert.ok(lx < -0.2 && ly > 0.8, `the hand goes right, the chain lags left (${lx.toFixed(2)}, ${ly.toFixed(2)})`);
+  const [fx, fy] = chainWay([80, 0], { ux: 1, uy: 0 }, false);
+  assert.ok(Math.atan2(-fx, fy) <= 0.56, 'never past the tilt, however fast');
+  const [sx, sy] = chainWay([-20, 0], { ux: 0, uy: -1 }, true);
+  assert.ok(sy < 0 && sx > 0, `a swing: out along the raised handle, trailing the blow (${sx.toFixed(2)}, ${sy.toFixed(2)})`);
+  // the rig: a walk loops (its first frame's move is from its last), a swing starts at rest, a held pose has none
+  for (const body of ['male', 'female']) {
+    assert.ok(Array.isArray(weaponRigOf(body, '2-0').cv) && Array.isArray(weaponRigOf(body, '5-2').cv), `${body}: a walk's and a swing's move`);
+    for (const rf of ['5-0', '15-0', '12-0']) assert.equal(weaponRigOf(body, rf).cv, undefined, `${body} ${rf}: at rest`);
+  }
+  // a swing that flings the ball off the picture's top, and a walk's toward its side: it stays inside
+  const W = 40, H = 80, colors = new Uint8Array(W * H * 4);
+  for (let x = 0; x < 30; x++) if (x < 4 || x > 7) colors.set([0, 0, 255, 255], (20 * W + x) * 4);
+  for (let y = 21; y < 70; y++) for (let x = 27; x <= 31; x++) colors.set([255, 0, 0, 255], (y * W + x) * 4);
+  for (const [body, rf] of [['male', '8-1'], ['male', '6-1'], ['male', '0-0'], ['female', '0-0']]) {
+    const f = await decodeLayered(`LA:${body}:leather_leather_leather:${rf}:lll@fl1`, decodePng, { ...opts, heldArt: async () => ({ width: W, height: H, colors }) });
+    let red = 0, edge = 0;
+    for (let i = 0; i < f.width * f.height; i++) {
+      if (!(f.data[i * 4] > 200 && f.data[i * 4 + 1] < 60 && f.data[i * 4 + 2] < 60)) continue;
+      red++; if (i % f.width === 0 || i % f.width === f.width - 1 || i < f.width) edge++;
+    }
+    assert.ok(red > 20 && edge === 0, `${body} ${rf}: the ball whole in the picture (${red} px, ${edge} on its edge)`);
+  }
+  // a chain a picture px thin keeps a screen px, hung on a px's edge: x 20.0 exactly
+  const thin = new Uint8Array(W * H * 4);
+  for (let x = 0; x < 30; x++) if (x < 4 || x > 7) thin.set([0, 0, 255, 255], (20 * W + x) * 4);
+  for (let y = 21; y < 38; y++) thin.set([255, 0, 0, 255], (y * W + 29) * 4);
+  const pic = heldChain(heldPicture({ width: W, height: H, colors: thin })), along = 0.62 * (20 / 30), qx = 20 - 21 * along;
+  const out = { width: 60, height: 60, data: new Uint8Array(60 * 60 * 4) };
+  drawWeapon(out, { q: [qx, 10], t: [qx + 20, 10], d: 'f'.repeat(87), side: 1 }, 'fl1', 30, 2, { cm: 0.62, pic, swing: false });
+  const rows = new Set();
+  for (let i = 0; i < 60 * 60; i++) if (out.data[i * 4] > 200 && out.data[i * 4 + 2] < 60) rows.add((i / 60) | 0);
+  assert.ok(rows.size >= 8, `the thin chain drawn on ${rows.size} rows`);
+});
+
+test('the loose\'s frames hold the art\'s own bow: with no bow in hand they are the ranged stance, hands empty', () => {
+  const look = (weapon) => ({ outfit: 'lll', gender: 'male', weapon });
+  const sword = layeredSprite('AttackRanged', 0, 1, 4, look('ls3'), false), none = layeredSprite('AttackRanged', 0, 1, 4, look(null), false);
+  for (const s of [sword, none]) assert.ok(s.key.endsWith('@0') && s.record === 15, `the stance, hands empty: ${s.key}`);
+  const bow = layeredSprite('AttackRanged', 0, 1, 4, look('lb3'), false);
+  assert.ok(!bow.key.includes('@') && bow.record === 20, `a bow's loose is the art's: ${bow.key}`);
+  const unnamed = layeredSprite('AttackRanged', 0, 1, 4, { outfit: 'lll', gender: 'male' }, false);
+  assert.ok(!unnamed.key.includes('@') && unnamed.record === 20, 'a look that names no weapon keeps the art\'s loose');
 });

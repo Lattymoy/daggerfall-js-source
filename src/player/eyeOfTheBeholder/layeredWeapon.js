@@ -499,9 +499,9 @@ export function drawWeapon(out, fr, code, len, view = 2, art = {}) {
     const L = { qx, qy, ux, uy, nx, ny, along: /** @type {number} */ (art.cm) * f, across: /** @type {number} */ (art.cm), side: face };
     // the doll's hand gap: its handle, where no fist of the art's covers it
     if (pic.bridge) drawPicture(out, pic, L, (a, proj) => !a && shown(a, proj), pic.bridge);
-    if (!pic.chain || art.swing) return drawPicture(out, pic, L, shown);   // a swing flings the chain out with the picture
+    if (!pic.chain) return drawPicture(out, pic, L, shown);
     drawPicture(out, pic, L, shown, pic.handle);
-    return drawChain(out, pic, L, shown);
+    return drawChain(out, pic, L, shown, chainWay(fr.cv, L, !!art.swing));
   }
   const parts = SHAPES[shape];
   if (!parts) return;
@@ -588,17 +588,42 @@ function drawPicture(out, P, L, shown, img = P.img) {
   return out;
 }
 
-/** A flail's chain (heldChain) hung straight down from its handle's head end, as drawPicture laid the handle: unshortened,
- *  at the head end's depth. */
-function drawChain(out, P, L, shown) {
+/** How a flail's chain lags and flies (screen px): a hand's move of a px tilts it this much off the plumb, at most
+ *  CHAIN_TILT radians; in a swing it is flung out along the handle (FLING), trails the blow (1) and sags (SAG). */
+const CHAIN_LAG = 0.07, CHAIN_TILT = 0.55, CHAIN_FLING = 1, CHAIN_SAG = 0.35;
+/** Which way a flail's chain lies on screen, a unit [x, y]: down, lagging the head's move since the frame before (`cv`,
+ *  the rig's - a walk swings it); in a swing, flung out along the handle and trailing the blow. */
+export function chainWay(cv, L, swing) {
+  const [vx, vy] = Array.isArray(cv) ? cv : [0, 0], sp = Math.hypot(vx, vy);
+  if (!sp) return [0, 1];   // at rest: plumb
+  if (swing) {
+    const x = L.ux * CHAIN_FLING - vx / sp, y = L.uy * CHAIN_FLING - vy / sp + CHAIN_SAG, n = Math.hypot(x, y) || 1;
+    return [x / n, y / n];
+  }
+  const a = Math.max(-CHAIN_TILT, Math.min(CHAIN_TILT, Math.atan2(-vx * CHAIN_LAG, 1 + vy * CHAIN_LAG * 0.5)));
+  return [Math.sin(a), Math.cos(a)];
+}
+
+/** A flail's chain (heldChain) from its handle's head end the way `g` says (chainWay), as drawPicture laid the handle:
+ *  unshortened, at the head end's depth. */
+function drawChain(out, P, L, shown, g = [0, 1]) {
   const C = P.chain, w = out.width, h = out.height, d = out.data, k = L.across, sg = L.side >= 0 ? 1 : -1;
   const rs = (C.x - P.gx) * P.ux + (C.y - P.gy) * P.uy, rr = ((C.x - P.gx) * P.rx + (C.y - P.gy) * P.ry) * sg;
   const hx = L.qx + L.ux * rs * L.along + L.nx * rr * k, hy = L.qy + L.uy * rs * L.along + L.ny * rr * k, proj = rs * L.along;
-  const wide = C.half * k + 1;
-  const x0 = Math.max(0, Math.floor(hx - wide)), x1 = Math.min(w - 1, Math.ceil(hx + wide));
-  const y0 = Math.max(0, Math.floor(hy - 1)), y1 = Math.min(h - 1, Math.ceil(hy + C.len * k + 1));
+  const wide = C.half * k + 1, reach = C.len * k;
+  let [gx, gy] = g;   // the ball stays in the picture: the chain turns back toward the plumb till it does
+  for (let t = 0; t < 8 && (hx + gx * reach < wide || hx + gx * reach > w - wide || hy + gy * reach < wide); t++) {
+    const x = gx * 0.7, y = gy * 0.7 + 0.3, n = Math.hypot(x, y) || 1;
+    gx = x / n; gy = y / n;
+  }
+  const ex = hx + gx * reach, ey = hy + gy * reach;
+  const x0 = Math.max(0, Math.floor(Math.min(hx, ex) - wide)), x1 = Math.min(w - 1, Math.ceil(Math.max(hx, ex) + wide));
+  const y0 = Math.max(0, Math.floor(Math.min(hy, ey) - wide)), y1 = Math.min(h - 1, Math.ceil(Math.max(hy, ey) + wide));
   const n = Math.max(3, Math.min(12, Math.ceil(2 / k)));
-  const at = (x, y) => { const c = (y - hy) / k, v = (x - hx) / k; return [C.x + C.dx * c - C.dy * v, C.y + C.dy * c + C.dx * v]; };
+  const at = (x, y) => {
+    const c = ((x - hx) * gx + (y - hy) * gy) / k, v = ((x - hx) * gy - (y - hy) * gx) / k;
+    return [C.x + C.dx * c - C.dy * v, C.y + C.dy * c + C.dx * v];
+  };
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const i = (y * w + x) * 4;
     if (!shown(d[i + 3], proj)) continue;

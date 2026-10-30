@@ -499,6 +499,14 @@ def main(only=None):
                 if (body, rf) in BOW_NEAR: p['bow'] = fist + [1]
                 rec = int(rf.split('-')[0])
                 if rec in (1, 2, 3, 16, 17, 18) and 'bow' in p: p['bowM'] = fist + [0, -1]
+        for rf, per in frames.items():   # a flail's chain lags the hand: the head's move since the frame before (`cv`, px)
+            rec, i = map(int, rf.split('-')); n = sum(1 for k in frames if k.startswith(f'{rec}-'))
+            prev = f'{rec}-{(i - 1) % n}' if rec <= 4 else f'{rec}-{i - 1}' if i > 0 else None   # a walk loops, a swing starts at rest
+            for k, p in enumerate(per):
+                p.pop('cv', None)
+                if not prev or prev == rf: continue
+                q = frames[prev][k]; a, b = (p.get('w') or p['q'] + p['t'])[2:], (q.get('w') or q['q'] + q['t'])[2:]
+                if math.hypot(a[0] - b[0], a[1] - b[1]) >= 0.5: p['cv'] = [round(a[0] - b[0], 1), round(a[1] - b[1], 1)]
         fig = np.nonzero(strip_base(body, 'leather_leather_leather', '15-0')[..., 3] > 0)[0]   # the idle's height is 1.8 m
         rig[body] = {'len': ln, 'bow': BOW_PX[body], 'cm': round(float(np.ptp(fig) + 1) / 180, 4), 'frames': frames}
     with open(f'{V}/weapon/manifest.json', 'w') as f: json.dump(rig, f, separators=(',', ':'))

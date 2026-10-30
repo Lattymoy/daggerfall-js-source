@@ -125,10 +125,13 @@ function recordBase(table, hasRanged, hasHurt) {
  * The worn-armour sprite of one on-foot state, in spriteFor's shape - or null when the option is off, the table is
  * not an on-foot one, or this body has no art for the outfit (the male outfits without a plate piece until
  * male_mixes_v66 is built in): the caller then draws the chosen skin as before.
- * @param {string} table  @param {number} offset the wheel's record offset 0..4  @param {number} frame the body's frame
+ * @param {string} tableAsked  @param {number} offset the wheel's record offset 0..4  @param {number} frame the body's frame
  * @param {number} tableFrames the table's clip length  @param {{gender?:string, outfit?:string}} look  @param {boolean} mirror
  */
-export function layeredSprite(table, offset, frame, tableFrames, look, mirror) {
+export function layeredSprite(tableAsked, offset, frame, tableFrames, look, mirror) {
+  // the loose's frames hold the art's own bow: hands known to hold no bow (`weapon` named, null for none) take the ranged
+  // stance, empty; a look that names no weapon keeps the art's
+  const table = tableAsked === 'AttackRanged' && look && 'weapon' in look && !isBowCode(look.weapon) ? 'IdleRanged' : tableAsked;
   const worn = outfitPieces(look?.outfit ?? 'lll');
   if (!worn) return null;
   const body = bodyOf(look?.gender);
