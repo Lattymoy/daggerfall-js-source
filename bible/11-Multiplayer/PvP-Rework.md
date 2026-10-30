@@ -508,4 +508,5 @@ SWING-RATE: a melee blow on one player comes no sooner than the quickest swing, 
 0.45 s, two deep. It is counted per target, because a Cleave lands on each player in its arc.
 
 BOW-FAST: the relay cuts a shaft it judges by a fifth for each arrow within its bow's window of the last (a Short Bow 0.75 s, a Long Bow 1.25 s, else 1 s), four at most
-(`pvpVitals.js:"export function bowFastCut(f, d, now, w = null) {"`). The game sends that claim uncut, so it cannot skip the cut.
+(`pvpVitals.js:"export function bowFastCut(f, d, now, w = null) {"`). The game sends that claim uncut, so it cannot skip the cut. The zone strike is marked `relayCut`, and the game keeps
+only the bow's pull (`duelCombat.js:"bowFastDamage(d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft()"`).
