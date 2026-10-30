@@ -1139,11 +1139,6 @@
   "tr": "183589295507",
   "by": "claude-in-session"
  },
- "account.refusal.decorCap": {
-  "en": "ad0a7b25f301",
-  "tr": "670bd091b1eb",
-  "by": "claude-in-session"
- },
  "account.refusal.decorFigure": {
   "en": "3beb231fb9ad",
   "tr": "9a34fb5a7320",
@@ -1157,6 +1152,11 @@
  "account.refusal.decorRate": {
   "en": "c2a0d6f99c79",
   "tr": "afd30297a6d9",
+  "by": "claude-in-session"
+ },
+ "account.refusal.decorRoomFull": {
+  "en": "72f4b2f577d5",
+  "tr": "6c0bae362c11",
   "by": "claude-in-session"
  },
  "account.refusal.decorTaken": {
@@ -4394,6 +4394,56 @@
   "tr": "de94305a0673",
   "by": "claude-in-session"
  },
+ "decor.bar.keys.nudge": {
+  "en": "7846d6e7802c",
+  "tr": "721830e444aa",
+  "by": "claude-in-session"
+ },
+ "decor.bar.nudgeAway": {
+  "en": "db0ce1bb6fb1",
+  "tr": "a70182d7f0fd",
+  "by": "claude-in-session"
+ },
+ "decor.bar.nudgeBack": {
+  "en": "3596bd668511",
+  "tr": "033e6b01dfcb",
+  "by": "claude-in-session"
+ },
+ "decor.bar.nudgeLeft": {
+  "en": "171b51377324",
+  "tr": "762f37b739a7",
+  "by": "claude-in-session"
+ },
+ "decor.bar.nudgeRight": {
+  "en": "b9e54bcce258",
+  "tr": "cd74539d188d",
+  "by": "claude-in-session"
+ },
+ "decor.look.rest": {
+  "en": "bffd4f8810fb",
+  "tr": "8d870c07d4c2",
+  "by": "claude-in-session"
+ },
+ "decor.look.who.friends": {
+  "en": "c11d5e1d35fb",
+  "tr": "8a468ab5186d",
+  "by": "claude-in-session"
+ },
+ "decor.look.who.guild": {
+  "en": "54241a3d0070",
+  "tr": "ef6efb892f07",
+  "by": "claude-in-session"
+ },
+ "decor.look.who.party": {
+  "en": "60b18fc8a85f",
+  "tr": "9238042a6793",
+  "by": "claude-in-session"
+ },
+ "decor.look.who.private": {
+  "en": "94563ec383e2",
+  "tr": "283c735c8901",
+  "by": "claude-in-session"
+ },
  "decor.yard.behind": {
   "en": "e66a9854186d",
   "tr": "044bd5992684",
@@ -4657,6 +4707,11 @@
  "eg.say.duelUnmet": {
   "en": "4aa70c44cca8",
   "tr": "b526e8b70968",
+  "by": "claude-in-session"
+ },
+ "enchant.gildedName": {
+  "en": "7112548c12b9",
+  "tr": "1fc007a6016f",
   "by": "claude-in-session"
  },
  "enemy.dwarvenDragon": {
@@ -5977,6 +6032,31 @@
  "holdings.wagon.boons.sound": {
   "en": "71476c661351",
   "tr": "bcc5e42442ac",
+  "by": "claude-in-session"
+ },
+ "home.mute.done": {
+  "en": "3cc8b3e4545a",
+  "tr": "090cc42a25ec",
+  "by": "claude-in-session"
+ },
+ "home.mute.hide": {
+  "en": "c0361ced4119",
+  "tr": "3b3e7e0f1912",
+  "by": "claude-in-session"
+ },
+ "home.mute.muted": {
+  "en": "a9e219fbc554",
+  "tr": "343f51867f49",
+  "by": "claude-in-session"
+ },
+ "home.mute.show": {
+  "en": "f284142913e4",
+  "tr": "0276c845f33e",
+  "by": "claude-in-session"
+ },
+ "home.mute.undone": {
+  "en": "5b03bedff4c8",
+  "tr": "30020e927dfe",
   "by": "claude-in-session"
  },
  "interior.setDown.buried": {
@@ -16027,6 +16107,16 @@
  "wagon.upkeep.boons.rickety": {
   "en": "8dcc1fe1e4b7",
   "tr": "2ef92cc0395f",
+  "by": "claude-in-session"
+ },
+ "wild.death.away": {
+  "en": "2a5d5ee0de2a",
+  "tr": "0b8e69fc39d1",
+  "by": "claude-in-session"
+ },
+ "wild.death.awayAnon": {
+  "en": "79f5def63d85",
+  "tr": "076b62412949",
   "by": "claude-in-session"
  },
  "wild.death.kept": {

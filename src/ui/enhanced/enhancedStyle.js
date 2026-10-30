@@ -6491,7 +6491,7 @@ button.lv-note.lv-clickable:hover, button.lv-note.lv-clickable:focus-visible {
 }
 .qtrack.touch { top: calc(max(76px, var(--qt-clear)) + env(safe-area-inset-top, 0px)); }
 @media (max-width: 900px) {
-  /* NOTICE-PANEL (AUDIT FB1029f P6): the town panel under the compass, its height its own (ui/hud/townPanel.js --dftown-h) */
+  /* NOTICE-PANEL (AUDIT FB1029g P6): the town panel under the compass, its height its own (ui/hud/townPanel.js --dftown-h) */
   body:has(.hud .dftown-panel.on) .qtrack { --qt-town: var(--dftown-h, 0px); }
   body:has(.hud-foe.on) .qtrack { --qt-clear: calc(18px + 28px * var(--hud-scale, 1) + 30px + 46px * var(--hud-scale, 1) + var(--qt-town, 0px)); }
   body:has(.hud-foe.on.blade) .qtrack { --qt-clear: calc(18px + 28px * var(--hud-scale, 1) + 30px + 76px * var(--hud-scale, 1) + var(--qt-town, 0px)); }

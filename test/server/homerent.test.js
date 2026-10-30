@@ -397,13 +397,13 @@ test('HOME-RENT the decorator\'s rooms view: an online home of two rooms gets "R
 
 test('HOME-RENT the host by source: the door lists a tenant\'s and a room-to-rent\'s rows, a rent row pressed (or a click on a home that shuts me out with a room free) asks which room, how many days and the price before it pays on the record, a tenant is told their days and rests there, and the decorator\'s rooms go through the service\'s own door (mutants: the rent before the lock unasked; the tenant\'s bed; the confirm skipped)', () => {
   const wm = src('src/scenes/worldModes.js');
-  assert.match(wm, /const rows = \[\.\.\.\(homeVisitorRows\(home, homeDoorFor\(bd, home\)\) \?\? \[\]\), \.\.\.\(worldPlaqueOn\(\) \? homeVoteRows\(home\) : \[\]\)\];/);   // PIN MOVED: HOME-VOTE - a visitor's rows, and the town's votes under them; PIN MOVED (AUDIT HOME-VOTE II D1): where the plaque draws a list
+  assert.match(wm, /const rows = \[\.\.\.\(homeVisitorRows\(home, homeDoorFor\(bd, home\)\) \?\? \[\]\), \.\.\.\(worldPlaqueOn\(\) \? \[\.\.\.homeVoteRows\(home\), \.\.\.homeMuteRows\(home, homeTownOf\(bd\)\)\] : \[\]\)\];/);   // PIN MOVED: HOME-VOTE - a visitor's rows, and the town's votes under them; PIN MOVED (AUDIT HOME-VOTE II D1): where the plaque draws a list; PIN MOVED (HOME-MUTE, FIELD BUGS 2026-10-29f): and the row that hides its decorations for me
   assert.match(wm, /&& \(verb === HOME_VERB\.rent \|\| \(verb == null && door === 'locked' && home\.rent\)\)\) \{ openHomeRent\(bd, home\)/);
   assert.ok(wm.indexOf('openHomeRent(bd, home).catch') < wm.indexOf("if (door === 'locked') { townTalk?.say?.(homeLockedLine(home)); return true; }"), 'before the lock');
   assert.match(wm, /action: \(\) => openHomeRentConfirm\(bd, room, d\)/, 'the price asked before it is paid');
   // PIN MOVED (FIELD BUGS 2026-10-01 RENT-REST): the tenant's bed rides the rest's bag as the home's bed, which stands
   // where a bought house stands (test/systems/fb1001_rent.test.js drives it through canRest)
-  assert.match(wm, /homeBed: homeBedIsMine\(interiorHome, Math\.floor\(Date\.now\(\) \/ 1000\)\) \|\| !!interiorSeatHall\?\.member,/);   // PIN MOVED (SEAT-HALL): and the palace holder's members rest there
+  assert.match(wm, /homeBed: homeBedIsMine\(interiorHome, Math\.floor\(Date\.now\(\) \/ 1000\)\) \|\| !!interiorSeatHall\?\.member(?:,| \|\| \(!!interiorHome && decorMayRest\()/);   // PIN MOVED (SEAT-HALL): and the palace holder's members rest there; PIN MOVED (REST-GUEST): a guest its owner named after
   assert.match(wm, /if \(home && !home\.own && rentDaysLeft\(home\.tenant, Math\.floor\(Date\.now\(\) \/ 1000\)\) > 0\) say\(rentWelcomeLine/);
   assert.match(wm, /rent: \(\) => decorRentDoor\(\),/);
   assert.match(wm, /if \(!api \|\| !interiorHome\?\.own \|\| !b\) return null;/, 'the owner\'s alone');

@@ -238,8 +238,8 @@
   {
     "name": "SD11b-L7M2-the-realm-unsigned",
     "file": "server/src/index.js",
-    "old": "const charLv = (isCellRoom(a.key) || realmRoom || ktRoom) && Number.isSafeInteger(who.cl)",
-    "new": "const charLv = (isCellRoom(a.key) || ktRoom) && Number.isSafeInteger(who.cl)",
+    "old": "const charLv = (isCellRoom(a.key) || realmRoom || ktRoom || isWorldRoom(a.key)) && Number.isSafeInteger(who.cl)",
+    "new": "const charLv = (isCellRoom(a.key) || ktRoom || isWorldRoom(a.key)) && Number.isSafeInteger(who.cl)",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
     ]

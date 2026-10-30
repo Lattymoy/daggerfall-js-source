@@ -394,10 +394,10 @@ test('SCALE4c D: the world host makes ONE heartbeat on the device\'s session, th
   assert.match(w, /startPlayClock\(\{\s*beat: \(\) => heartbeat\.beat\(\),\s*visible: \(\) => globalThis\.document\?\.visibilityState !== 'hidden',/);
   assert.equal((w.match(/startPlayClock\(/g) ?? []).length, 1, 'one play clock');
   assert.doesNotMatch(w, /accountPlayBeat/, 'no knock past the heartbeat');
-  assert.match(w, /if \(noticeBook\) heartbeat\.add\('board', noticeBook\.heartbeatPart\(\(\) => townPanel\.boardTown\(FRAME_LIVE_MS\)\)\);/);   // PIN MOVED (AUDIT FB1029f P3): the town panel's frame stamps the town
+  assert.match(w, /if \(noticeBook\) heartbeat\.add\('board', noticeBook\.heartbeatPart\(\(\) => townPanel\.boardTown\(FRAME_LIVE_MS\)\)\);/);   // PIN MOVED (AUDIT FB1029g P3): the town panel's frame stamps the town
   assert.match(w, /heartbeat\.add\('mail', whileLive\(mail\.heartbeatPart\(\), \(\) => performance\.now\(\) - _mailFrameAt < FRAME_LIVE_MS\)\);/);
   assert.doesNotMatch(w, /mail\??\.poll\(/, 'the lane no longer looks at the box itself');
-  // PIN MOVED (AUDIT FB1029f P3): the town is stamped by the town panel's frame - above the modal gate, so in a town's
+  // PIN MOVED (AUDIT FB1029g P3): the town is stamped by the town panel's frame - above the modal gate, so in a town's
   // buildings too - once a second by the wall clock (AUDIT SCALE B7: the frame's dt is clamped, and at four frames a
   // second its "second" outran FRAME_LIVE_MS); no frame reads the board itself (AUDIT SCALE B8)
   assert.deepEqual(w.match(/noticeBook\??\.read\([^)]*\)/g), ['noticeBook.read(town.mapId)'], 'no frame reads the board itself: the press alone, a board not yet open');

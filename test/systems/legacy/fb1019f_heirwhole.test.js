@@ -32,7 +32,7 @@ import { floorLanding } from '../../../src/player/enterExit.js';
 import { hurtPlayer, setDeathListener } from '../../../src/characters/playerEntity.js';
 import { planTake, applyTransfer } from '../../../src/systems/item/itemTransfer.js';
 import { isRemainsItem } from '../../../src/systems/legacy/heirloom.js';
-import { builtDungeonSize, dungeonLocationFor, onlineDungeonSize, dungeonSizeFor, builtSizeFor } from '../../../src/world/smallerDungeons.js';
+import { builtDungeonSize, dungeonRoomSize, dungeonLocationFor, onlineDungeonSize, dungeonSizeFor, builtSizeFor } from '../../../src/world/smallerDungeons.js';
 import { createInstanceDoor, INSTANCE_TEXT, dungeonSite, siteBase } from '../../../src/scenes/instanceDoor.js';
 import { remainsWholeAt, remainsInstanceEpoch } from '../../../src/systems/instancePlaces.js';
 import { instanceRoomOf, instanceWord, instanceAdmission } from '../../../src/net/instanceRoom.js';
@@ -131,9 +131,9 @@ function worldOf(w) {
   const state = { compensation: [0, 0, 0], worldCoords: (p) => ({ x: p[0] * 40, z: p[2] * 40 }), localFromWorld: (x, z) => [x / 40, z / 40] };
   const locationIndex = new Map([[`${PIXEL.x},${PIXEL.y}`, w.at]]);
   const names = ['playerTravelPixel', 'maps', 'locationIndex', 'modes', 'walkMode', 'playerSpawned', 'player', 'cam', 'REGION_NAMES', 'state', 'heightAt', 'floorLanding', 'collider',
-    'LEGACY_REMAINS_NEAR_DUNGEON', 'LEGACY_REMAINS_NEAR', 'createRemainsStand', 'droppedLoot', 'REMAINS_FLAT', 'groundFrameHeight', 'restandHeight', 'scaleOf', 'STREAMING_TERRAIN_SCALE', 'LEGACY_TEXT', 'builtDungeonSize'];
+    'LEGACY_REMAINS_NEAR_DUNGEON', 'LEGACY_REMAINS_NEAR', 'createRemainsStand', 'droppedLoot', 'REMAINS_FLAT', 'groundFrameHeight', 'restandHeight', 'scaleOf', 'STREAMING_TERRAIN_SCALE', 'LEGACY_TEXT', 'dungeonRoomSize'];   // PIN MOVED (DELVE II, AUDIT DLV5-6 M3)
   const vals = [() => ({ ...PIXEL }), { getRegionIndexAt: () => 23 }, locationIndex, modes, true, true, { get pos() { return w.pos; } }, { pos: [0, 0, 0] }, REGION_NAMES, state, () => -Infinity, floorLanding, { raycast: () => Infinity },
-    NEAR_DUNGEON, 2400, createRemainsStand, groundPool(), REMAINS_FLAT, (y) => y, (y) => y, () => 1, 1, LEGACY_TEXT, builtDungeonSize];
+    NEAR_DUNGEON, 2400, createRemainsStand, groundPool(), REMAINS_FLAT, (y) => y, (y) => y, () => 1, 1, LEGACY_TEXT, dungeonRoomSize];
   return new Function(...names, `${HERE}\n${IN_DUNGEON}\n${AT_PLACE}\n${ANCHOR}\n${FEET}\n${STAND}\nreturn { legacyHere, legacyAtPlace, legacyRemainsStand };`)(...vals);
 }
 

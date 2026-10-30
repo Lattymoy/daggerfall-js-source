@@ -297,7 +297,7 @@ as Daggerfall furnished it; the owner's pieces are asked for only after the entr
 (`decorRoom.js:"export const DECOR_LIST_RETRY_MS = 2_000;"`) and asked again later still when the homes' layouts land
 (`worldModes.js:"homeLayoutsLanded() { loadHomeDecor(); },"`). Its answer stands the owner's pieces
 (`worldModes.js:"interiorDecor.set(pieces);"`) and hides the room's own the owner took out
-(`worldModes.js:"interiorCtx?.base?.setHidden(Array.isArray(r.data.hidden)"` - the furniture that "moved"). Each placed
+(`worldModes.js:"standRoomHidden(interiorCtx?.base, Array.isArray(r.data.hidden)"` - what "moved"). Each placed
 model turned solid the moment its model loaded (put's `solid`: `collider?.()?.addMesh?.(decorKeyOf(piece.id), ...)` at
 main's 9e00d52e9), and a hired trader (HOME-VENDOR) is a flat that stands before any model does; a piece of the room's own
 put back (`decorBase.js` show) was solid again at once. Nothing asked where the player stood. The collider holds both

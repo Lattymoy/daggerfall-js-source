@@ -177,7 +177,7 @@ export const usingRightHandFromSaveVars = (saveVars) => !saveVars?.usingLeftHand
  * leaving it to be discovered: if a caller ever does pass null, the
  * pin says what changed and when.
  */
-export const weaponPoseOf = (w) => (w ? { weaponDrawn: !w.sheathed, usingRightHand: w.usingRightHand } : null);
+export const weaponPoseOf = (w) => (w ? { weaponDrawn: !w.sheathed, usingRightHand: w.usingRightHand, handKept: true } : null);   // AUDIT FB1029f D4: a hand chosen under HAND-FOLLOWS
 
 /** RR1: WeaponManager.Sheathed / ScreenWeapon.WeaponType, asked by a law
  *  that lives nowhere near the rig (Roleplay & Realism's climbing gate
@@ -208,7 +208,9 @@ export const currentWeaponPose = () => _poseProbe?.() ?? null;
 export function applyWeaponPose(w, pose) {
   if (!w || !pose) return false;
   if (pose.weaponDrawn != null) w.sheathed = !pose.weaponDrawn;
-  if (pose.usingRightHand != null) w.usingRightHand = !!pose.usingRightHand;
+  // HAND-FOLLOWS: the next UpdateHands keeps a hand chosen under it; AUDIT FB1029f D4: a pose from before it (`handKept`
+  // unsaid) follows once - a save made with a lone weapon left beside an empty hand in use loaded to fists
+  if (pose.usingRightHand != null) { w.usingRightHand = !!pose.usingRightHand; w.handRestored = pose.handKept === true; }
   return true;
 }
 
@@ -303,6 +305,7 @@ export class PlayerWeapon {
     this.holdingShield = false;
     this.currentRightHandWeapon = null;
     this.currentLeftHandWeapon = null;
+    this.handRestored = false;   // HAND-FOLLOWS: a pose just restored, kept through the next UpdateHands
     // TWO-HANDS (bible/05-Combat/Two-Hands.md): how the hands are held (combat/twoHands/handsLaw.js HANDS_MODE - DFU's one used
     // hand, both fists, or a pair), the strike in flight ({ hand, flurry, off } - strikeHandOf's answer as it began), and the
     // last strike's hand and the machine time it ended, which the next one alternates from. `usingRightHand` keeps
@@ -369,8 +372,15 @@ export class PlayerWeapon {
       this.holdingShield = true;
       left = null;
     }
+    // HAND-FOLLOWS (FIELD BUGS 2026-10-29f, "long sword bugged"): when what the hands hold changes, an empty hand in use
+    // gives way to a lone weapon in the other - a one-hander moved to the left hand swung fists and trained Hand-to-Hand.
+    // H still picks the bare hand after; a restored hand (applyWeaponPose) is kept. MW-HAND follows every frame.
+    const changed = (rightHandItem ?? null) !== this.currentRightHandWeapon || left !== this.currentLeftHandWeapon;
+    const restored = this.handRestored === true;
+    this.handRestored = false;
     this.currentRightHandWeapon = rightHandItem ?? null;
     this.currentLeftHandWeapon = left;
+    if (changed && !restored) this.followHeldHand();
   }
 
   /**
@@ -378,8 +388,8 @@ export class PlayerWeapon {
    * when in morrowind since its not visible"; asked, "Never on an empty hand"): THE MORROWIND LANE'S DEPARTURE. DFU
    * lets the hand in use be an empty one - H to a bare left hand is how a classic player fights with fists, and the
    * sprite shows which hand is up. The Morrowind arm draws one weapon and no second hand, so there a weapon in the
-   * hand not in use was a weapon that would not show, over fists. In that lane (the rig calls this only while the arm
-   * is built) the hand in use follows the weapons: an empty hand gives way to the other when it holds one.
+   * hand not in use was a weapon that would not show, over fists. In that lane every frame, and in both when the hands
+   * change (HAND-FOLLOWS), an empty hand in use gives way to the other when it holds one.
    * @returns true when the hand moved.
    */
   followHeldHand() {

@@ -251,7 +251,7 @@ test('a model missing from ARCH3D costs the placement, never the building', () =
   assert.match(doorArm, /if \(!gpu \|\| !cpu\) \{/, 'the dungeon door arm skips a missing model');
 });
 
-test('AUDIT FB1029f: the ResizeObserver spec\'s loop notice - an error event with no error object - is no crash; a real throw, a script error or any other message with no object still is (mutant: the notice an overlay again)', () => {
+test('AUDIT FB1029g: the ResizeObserver spec\'s loop notice - an error event with no error object - is no crash; a real throw, a script error or any other message with no object still is (mutant: the notice an overlay again)', () => {
   assert.equal(isBenignWindowError({ error: null, message: 'ResizeObserver loop completed with undelivered notifications.' }), true, 'WebKit\'s and Chrome\'s words');
   assert.equal(isBenignWindowError({ message: 'ResizeObserver loop limit exceeded' }), true, 'Chrome\'s older words');
   assert.equal(isBenignWindowError({ error: new Error('ResizeObserver loop completed'), message: 'ResizeObserver loop completed' }), false, 'a thrown error is a crash, whatever it says');

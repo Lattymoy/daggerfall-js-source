@@ -1,5 +1,5 @@
 // @ts-check
-// NOTICE-PANEL (bible/01-Overview/bugs/Field-Bugs-2026-10-29f.md; the owner: "a detailed drop down from the compass that
+// NOTICE-PANEL (bible/01-Overview/bugs/Field-Bugs-2026-10-29g.md; the owner: "a detailed drop down from the compass that
 // shows the town name, guild control, prosperity and clickable notice board button"): THE TOWN'S PANEL, hung from the
 // compass while the player is in a settlement. A view only - scenes/townPanelHost.js says what it shows and answers its
 // presses. The kit (ui/enhanced/enhancedFrame.js FRAME_ROLES) paints its frame and buttons; this sheet lays them out.
@@ -13,7 +13,7 @@ import { hudArranging } from './hudLayout.js';
 export const TOWN_PANEL_TEXT = Object.freeze({
   get notice() { return t('town.panel.notice', 'Notice Board'); },
   get bounty() { return t('town.panel.bounty', 'Bounty Board'); },
-  /** AUDIT FB1029f P10: the Notice Board's count of new notes, '' for none. @param {number} n */
+  /** AUDIT FB1029g P10: the Notice Board's count of new notes, '' for none. @param {number} n */
   unseen: (n) => (n > 0 ? t('town.panel.new', '{n, plural, one {# new} other {# new}}', { n }) : ''),
 });
 
@@ -91,7 +91,7 @@ export function createTownPanel({ doc = globalThis.document, onNotice = () => {}
   body.append(lines, acts);
   root.append(head, body);
   let measured = -1;
-  /** AUDIT FB1029f P6: its height, for the quest card it would stand under on a narrow screen (enhancedStyle.js --qt-town). */
+  /** AUDIT FB1029g P6: its height, for the quest card it would stand under on a narrow screen (enhancedStyle.js --qt-town). */
   const measure = () => { const h = Math.round(root.offsetHeight || 0); if (h !== measured) { measured = h; doc.body?.style?.setProperty?.('--dftown-h', `${h}px`); } };
   const fold = (f) => { folded = !!f; root.classList.toggle('folded', folded); head.setAttribute('aria-expanded', String(!folded)); measure(); };
   fold(folded);
@@ -99,13 +99,13 @@ export function createTownPanel({ doc = globalThis.document, onNotice = () => {}
     n.addEventListener('mousedown', (e) => { if (!hudArranging()) e.stopPropagation(); });
     n.addEventListener('mouseup', (e) => { if (!hudArranging()) e.stopPropagation(); });
   }
-  // AUDIT FB1029f P14: the press lets go of the focus - a button kept focused takes the next Space or Enter as a press
+  // AUDIT FB1029g P14: the press lets go of the focus - a button kept focused takes the next Space or Enter as a press
   const press = (n, fn) => n.addEventListener('click', (e) => { if (hudArranging()) return; e.stopPropagation(); n.blur?.(); fn(); });
   press(head, () => { fold(!folded); onFold(folded); });
   press(notice, () => onNotice());
   press(bounty, () => onBounty());
   let drawn = '', anchored = '';
-  /** The panel rides the compass's column where the enhanced HUD stands, else stands on its own. AUDIT FB1029f P4: seated
+  /** The panel rides the compass's column where the enhanced HUD stands, else stands on its own. AUDIT FB1029g P4: seated
    *  from its making, so the HUD's editor has it to preview before the first town. */
   const seat = () => {
     const top = doc.querySelector?.('.hud .hud-top');
@@ -138,12 +138,12 @@ export function createTownPanel({ doc = globalThis.document, onNotice = () => {}
       }
       root.classList.add('on');
     },
-    /** AUDIT FB1029f P4: out of town its heading is the editor's preview (hudLayout.js), never the last town's. */
+    /** AUDIT FB1029g P4: out of town its heading is the editor's preview (hudLayout.js), never the last town's. */
     hide() {
       root.classList.remove('on');
       if (drawn) { drawn = ''; name.textContent = ''; lines.replaceChildren(); }
     },
-    /** AUDIT FB1029f P6, P13: on the classic skin the panel stands on the compass (hud.js classicCompassAnchor: its right
+    /** AUDIT FB1029g P6, P13: on the classic skin the panel stands on the compass (hud.js classicCompassAnchor: its right
      *  and bottom offsets), off the popup text it covered at the top; with no anchor, under the top edge.
      *  @param {{ right: number, bottom: number } | null} anchor */
     place(anchor) {

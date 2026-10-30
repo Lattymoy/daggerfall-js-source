@@ -83,29 +83,32 @@
   {
     "name": "ROAD-LOT-the-host-finds-no-road",
     "file": "src/scenes/homeYards.js",
-    "old": "return { yard: y, others, lines, roads: yardRoadsOf(p, y.frame.at, y.lot), hall: !!home.hall };",
-    "new": "return { yard: y, others, lines, roads: [], hall: !!home.hall };",
+    "old": "return { yard: y, lot, others, lines, roads: yardRoadsOf(p, y.frame.at, lot), hall: !!home.hall };",
+    "new": "return { yard: y, lot, others, lines, roads: [], hall: !!home.hall };",
     "tests": [
       "test/scenes/fb1001_yard.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "ROAD-LOT-the-decorator-asks-no-road",
     "file": "src/scenes/homeYards.js",
-    "old": "yardWhyNot(piece.pos, cur.yard.lot, cur.others, foot, cur.roads, cur.lines)",
-    "new": "yardWhyNot(piece.pos, cur.yard.lot, cur.others, foot, [], cur.lines)",
+    "old": "yardWhyNot(piece.pos, cur.lot, cur.others, foot, cur.roads, cur.lines)",
+    "new": "yardWhyNot(piece.pos, cur.lot, cur.others, foot, [], cur.lines)",
     "tests": [
       "test/scenes/fb1001_yard.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "ROAD-LOT-the-marked-edge-crosses-the-road",
     "file": "src/scenes/homeYards.js",
-    "old": "yardLotQuads(cur.yard.lot, originOf(cur.yard), YARD_MARK_HIGH, cur.roads)",
-    "new": "yardLotQuads(cur.yard.lot, originOf(cur.yard), YARD_MARK_HIGH)",
+    "old": "yardLotQuads(cur.lot, o, YARD_MARK_HIGH, cur.roads, cur.lines)",
+    "new": "yardLotQuads(cur.lot, o, YARD_MARK_HIGH, [], cur.lines)",
     "tests": [
       "test/scenes/fb1001_yard.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "ROAD-LOT-a-west-east-side-turned-the-wrong-way",
@@ -120,11 +123,12 @@
   {
     "name": "ROAD-LOT-a-road-squares-north-side-unread",
     "file": "src/scenes/homeYards.js",
-    "old": "return !holes.some((r) => cx > r[0] && cx < r[2] && cz > r[1] && cz < r[3]);",
-    "new": "return !holes.some((r) => cx > r[0] && cx < r[2] && cz > r[1]);",
+    "old": "(cx, cz) => !holes.some((r) => cx > r[0] && cx < r[2] && cz > r[1] && cz < r[3])",
+    "new": "(cx, cz) => !holes.some((r) => cx > r[0] && cx < r[2] && cz > r[1])",
     "tests": [
       "test/scenes/fb1001_yard.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "ROAD-LOT-a-loops-runs-left-unjoined",

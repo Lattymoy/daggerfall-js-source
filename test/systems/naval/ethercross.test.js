@@ -95,7 +95,7 @@ test('ETHER-CROSSING by source: asked at a helm in the exterior with no window u
   const step = src.slice(src.indexOf('function etherCrossStep(dt) {'), src.indexOf('async function etherCross(way) {'));
   assert.match(step, /if \(!etherSea \|\| _etherCrossing \|\| !csaRuntime\?\.isSailing\?\.\(\)\) return;/);
   // PIN MOVED (AUDIT CAPTAIN'S SEA X3): never while the world is being moved
-  // PIN MOVED (AUDIT FB1029f F1): no journey's test in the guard - the gate is told (Travel Options, null when it is off)
+  // PIN MOVED (AUDIT FB1029g F1): no journey's test in the guard - the gate is told (Travel Options, null when it is off)
   assert.match(step, /if \(gamePaused\(\) \|\| _loading \|\| townTalk\.overlayActive \|\| modes\?\.transitioning \|\| worldMoveBusy\(\) \|\| _partyArrivalPending \|\| _mode\(\) !== 'exterior'\) return;/);
   // PIN MOVED (AUDIT CAPTAIN'S SEA G2): the way out only where the crossing out is this game's - the Veil's home under any skin
   assert.match(step, /const way = crossWayHere\(\);/);
@@ -335,7 +335,7 @@ test('ETHER-CHART the doors: the travel map\'s door opens the chart past the Vei
   assert.equal(none.letters[0].words, 'Every isle in these waters is already on your charts.');
 });
 
-test('AUDIT FB1029f SEA F9: the words name the Iliac Bay only on its own map - asked west of Sumurset, landing where she set out there, they name no sea they do not mean (mutants: AFB-SEA-F9-the-bay-everywhere)', () => {
+test('AUDIT FB1029g SEA F9: the words name the Iliac Bay only on its own map - asked west of Sumurset, landing where she set out there, they name no sea they do not mean (mutants: AFB-SEA-F9-the-bay-everywhere)', () => {
   const bay = { px: 180, py: 300 }, past = { px: -300, py: 1500 };
   assert.match(crossingRows('out', {}, bay)[0], /^The Abecean runs empty/);
   assert.match(crossingRows('out', {}, { x: past.px, y: past.py })[0], /^The open sea runs empty/, 'the helm\'s pixel, as playerTravelPixel gives it');

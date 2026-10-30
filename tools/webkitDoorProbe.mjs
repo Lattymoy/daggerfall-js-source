@@ -1,4 +1,4 @@
-// WEBKIT-TLA (bible/01-Overview/bugs/Field-Bugs-2026-10-29f.md; AUDIT FB1029f TLA-2): THE BUILT GAME THROUGH ITS FRONT
+// WEBKIT-TLA (bible/01-Overview/bugs/Field-Bugs-2026-10-29g.md; AUDIT FB1029g TLA-2): THE BUILT GAME THROUGH ITS FRONT
 // DOOR IN WEBKIT - the iPhone's engine. Serves a build's dist and the player's ARENA2, opens /play/, presses OFFLINE,
 // NEW GAME and BEGIN by their words, and says whether the world booted or the field's error came ("undefined is not a
 // constructor" - a chunk's body run after its importer). The bug lived in the built bundle's chunking, so the dev server

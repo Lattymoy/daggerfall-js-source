@@ -601,7 +601,7 @@ test('AUDIT SCHOOLS L2 F4: MY SPELL ON THE RELAY\'S STAND-INS IS TOLD TO THE RID
     assert.match(sis, new RegExp(`function ${fn}\\(sp, [^)]*caster = null\\) \\{[\\s\\S]*?return onBody\\(sp, ${who}, harm, caster, host\\.${land}, `), fn);   // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): each its rounds' key
   }
   assert.match(dc, /castAtBoss: opts\.gateBoss \? \(sp, caster\) => spellOnBoss\(sp, caster\) : null,/);
-  assert.match(dc, /castAtCrystal: opts\.gateCrystals \? \(sp, c, caster\) => spellOnCrystal\(sp, c, caster\) : null,/);
+  assert.match(dc, /castAtCrystal: \(sp, c, caster\) => spellOnCrystal\(sp, c, caster\),/);   // PIN MOVED (DELVE II DLV4): always on - a dungeon's sources and seals meet a spell too
   assert.match(dc, /castAtHost: opts\.gateHost \? \(sp, i, caster\) => spellOnHost\(sp, i, caster\) : null,/);
   const w = src('src/scenes/world.js');
   // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): the serpent's door left bootWorld for scenes/gate/standInSpell.js createSerpentSpell, which tells the riders

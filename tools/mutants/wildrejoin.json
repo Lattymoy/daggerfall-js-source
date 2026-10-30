@@ -30,8 +30,9 @@
   {
     "name": "WILD-REJOIN-a-place-with-no-id",
     "file": "src/net/wire.js",
-    "old": "  if (m.r === undefined && m.p === undefined) return { k: 'down', ms: m.ms };",
-    "new": "  if (m.r === undefined) return { k: 'down', ms: m.ms };",
+    "old": "  if (m.r === undefined && m.p === undefined) return { k: 'down', ms: m.ms, ...away };",
+    "new": "  if (m.r === undefined) return { k: 'down', ms: m.ms, ...away };",
+    "note": "Re-aimed by content (PVP-LINGER-RISE: the word carries `aw` and `n`)",
     "tests": ["test/systems/wild/wildrejoin.test.js"]
   },
   {

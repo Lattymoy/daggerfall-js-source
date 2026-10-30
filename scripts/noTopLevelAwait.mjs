@@ -1,4 +1,4 @@
-// WEBKIT-TLA (bible/01-Overview/bugs/Field-Bugs-2026-10-29f.md; AUDIT FB1029f TLA-1): THE GUARD ON WHAT SHIPS. A top-level
+// WEBKIT-TLA (bible/01-Overview/bugs/Field-Bugs-2026-10-29g.md; AUDIT FB1029g TLA-1): THE GUARD ON WHAT SHIPS. A top-level
 // await makes every graph that imports its module async, and WebKit before Safari 27 resolves a second import() of such a
 // graph before it has run - the iPhone's "undefined is not a constructor". test/tree/toplevelawait.test.js reads the
 // source; this reads the build's own chunks, so vendor code, a template-literal import and anything the bundler emits are

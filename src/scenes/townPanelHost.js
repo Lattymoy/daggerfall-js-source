@@ -1,5 +1,5 @@
 // @ts-check
-// NOTICE-PANEL (bible/01-Overview/bugs/Field-Bugs-2026-10-29f.md; the owner: "remove the notice board prop from all
+// NOTICE-PANEL (bible/01-Overview/bugs/Field-Bugs-2026-10-29g.md; the owner: "remove the notice board prop from all
 // cities", its replacement "a detailed drop down from the compass ... always be present when inside a city and go away
 // when leaving a city. This goes for any settlement"): THE TOWN PANEL AS THE WORLD HOST WIRES IT (HOST-SPLIT: the module
 // the host wires, scenes/fishHost.js's shape). The view is ui/hud/townPanel.js; this says when it stands, what it says
@@ -21,14 +21,14 @@ export const TOWN_PANEL_READ_MS = 1000;
  *  clamped dt (AUDIT SCALE B7: at four frames a second that "second" outran the heartbeat's live window). */
 const STAMP_MS = 1000;
 
-/** AUDIT FB1029f P2: a settlement is a city, a hamlet or a village (MAPS' three town types) - the owner's "any settlement,
+/** AUDIT FB1029g P2: a settlement is a city, a hamlet or a village (MAPS' three town types) - the owner's "any settlement,
  *  city or town". DFU's in-town test (nearbyObjects.js TOWN_LOCATION_TYPES) also takes farms, manors, lone taverns and
  *  temples; no board ever stood at one. */
 export const PANEL_TOWN_TYPES = Object.freeze(new Set([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage]));
 
 /**
  * The panel's town for the location the player stands in (`loc`, the world's: MAPS' or a place past the Bay) at map
- * pixel `at`, or null where it is no settlement. AUDIT FB1029f P7: a capital over several pixels is one town - its own
+ * pixel `at`, or null where it is no settlement. AUDIT FB1029g P7: a capital over several pixels is one town - its own
  * map id, name and centre pixel (one Notice Board, one Bounty Board), the slice's name a district line.
  * @param {any} loc @param {{ x: number, y: number } | null} at @param {(mapId: number, name: string) => string} shownOf
  * @returns {PanelTown | null}
@@ -59,7 +59,7 @@ export function createTownPanelHost(host) {
   /** @type {PanelTown | null} */
   let shownFor = null;
   let readAt = -Infinity, placedAt = -Infinity;
-  /** AUDIT FB1029f P3: the town the Notice Board's heartbeat reads, stamped from this frame - above the modal gate, so
+  /** AUDIT FB1029g P3: the town the Notice Board's heartbeat reads, stamped from this frame - above the modal gate, so
    *  in a town's buildings too (it rode the exterior frame alone, and indoors the board was never read). */
   let stamp = /** @type {{ mapId: number | null, at: number } | null} */ (null);
   const here = () => { try { return host.town(); } catch { return null; } };

@@ -127,7 +127,7 @@ test('FAMILY-REMOVE (AUDIT FB1029e T11) another account\'s living character of a
   assert.deepEqual((await call('/v1/realm/lineage/remove', { id: A })).body, { ok: true }, 'this one\'s goes');
 });
 
-test('FAMILY-REMOVE (AUDIT FB1029f FAMILY F3) a remove that lands between a write\'s read and its UPDATE answers no-lineage, never a 500', async () => {
+test('FAMILY-REMOVE (AUDIT FB1029g FAMILY F3) a remove that lands between a write\'s read and its UPDATE answers no-lineage, never a 500', async () => {
   const S = await standService();
   const g = await S.guest();
   const db = S.env.DB, nowS = 1_800_000_000, A = famOf(1);

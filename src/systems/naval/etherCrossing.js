@@ -15,7 +15,7 @@
 import { crossingWaters, inVeil, inEtherLaw, landfall, HOME_WATERS, ETHER_WORD, ETHER_SEA_NAME, CROSS_LAND_PX, CROSS_SEA_PX } from '../../world/ethericSea.js';
 import { NATIVE_PIXEL } from '../seaRaiders.js';   // SEA-ROWS: a lane's way is in native units
 import { t } from '../textManager.js';   // ETHER-WILD: the open sea's warning, in the player's language (L10N4)
-import { inBay } from '../../world/tamriel/tamrielFrame.js';   // AUDIT FB1029f SEA F9: the words name the Bay only in it
+import { inBay } from '../../world/tamriel/tamrielFrame.js';   // AUDIT FB1029g SEA F9: the words name the Bay only in it
 
 /** The voyage, either way (days). */
 export const CROSS_DAYS = 3;
@@ -133,7 +133,7 @@ export function questionRows(text, width = ROW_CHARS) {
 }
 /** The widest row of the question's own (its first lines' measure). */
 export const ROW_CHARS = 56;
-/** AUDIT FB1029f SEA F9: whether the words may name the Bay - `at` (the helm's waters out, the landfall's home) is on the
+/** AUDIT FB1029g SEA F9: whether the words may name the Bay - `at` (the helm's waters out, the landfall's home) is on the
  *  Bay's own map. The crossing is asked west of Sumurset too, and the way home lands where it set out. */
 const bayAt = (at) => !at || inBay(at.px ?? at.x, at.py ?? at.y);
 /** The question, in rows (ui/yesNoBox.js). ETHER-WILD (2026-10-21): `pvp` - online, where the open sea past Veilhaven's

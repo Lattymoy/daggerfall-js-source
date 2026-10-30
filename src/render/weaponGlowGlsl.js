@@ -95,7 +95,7 @@ export const GLOW_DRAWS_MAX = 64;
  *  1, arcane (its one level, 2) 1.6 + 1.2. The sprite clamps its reach here (`uReachMax`), and its window below holds
  *  every cell within it, so no band is ever cut short by the window's box (AUDIT WEAPON-GLOW SPR-2: the window was a
  *  guess, and shock's band reached past it in every frame at level 3). */
-export const GLOW_REACH_MAX = Object.freeze({ fire: 7.35, frost: 6.1, shock: 10, arcane: 2.8, brand: 3.4, edge: 3.4 });   // ARMORY: the Brand's (1 + 0.7 x 2)(0.6 + 0.8), the Edge's 1 + 0.4 x 2 + 1.6
+export const GLOW_REACH_MAX = Object.freeze({ fire: 7.35, frost: 6.1, shock: 10, arcane: 2.8, brand: 3.4, edge: 3.4, gilded: 3.2 });   // ARMORY: the Brand's (1 + 0.7 x 2)(0.6 + 0.8), the Edge's 1 + 0.4 x 2 + 1.6; GILDED-GLOW: 1.2 + 0.4 x 2 + 0.6 + 0.6, under the Brand's
 /** How far past its band a fire ember may rise off the weapon (GLOW_SPRITE_FS - an ember stands only over a solid). */
 export const GLOW_EMBER_SLACK = 3;
 /** The farthest a look's field measures, in glow cells: its reach, and fire's embers past it. */
@@ -104,7 +104,7 @@ export const glowFieldReach = (look) => GLOW_REACH_MAX[/** @type {keyof typeof G
  *  within glowFieldReach in the look's metric (gwMetric), and no more. Fire's flame stands over its weapon, so it looks
  *  far DOWN (its metric shrinks a rise by GLOW_FIRE_UP) and a little way up (a fall grows by 1/GLOW_FIRE_DOWN), and only
  *  its band looks up - an ember rises off a solid below it. */
-export const GLOW_SPRITE_WINDOW = Object.freeze(Object.fromEntries(['fire', 'frost', 'shock', 'arcane', 'brand', 'edge'].map((look) => {
+export const GLOW_SPRITE_WINDOW = Object.freeze(Object.fromEntries(['fire', 'frost', 'shock', 'arcane', 'brand', 'edge', 'gilded'].map((look) => {
   const r = GLOW_REACH_MAX[/** @type {keyof typeof GLOW_REACH_MAX} */ (look)], e = glowFieldReach(look);
   return [look, Object.freeze(look === 'fire' ? [Math.floor(e), Math.floor(r * GLOW_FIRE_DOWN), Math.floor(e * GLOW_FIRE_UP)] : [Math.floor(e), Math.floor(e), Math.floor(e)])];
 })));
@@ -172,6 +172,11 @@ float gwReach(int look, vec2 c, float t, float lv) {
     float back = pow(0.5 + 0.5 * sin(t * 1.0471976 + (c.x + c.y) * 0.11), 12.0);
     return 1.0 + 0.4 * lv + 1.6 * max(run, 0.6 * back);
   }
+  if (look == 7) {   // GILDED-GLOW: a slow regal pulse - the halo swells every 4 s, a crest of light walks round it every 6 s
+    float beat = 0.5 + 0.5 * sin(t * 1.5707963);
+    float crest = pow(0.5 + 0.5 * sin(t * 1.0471976 - (c.x - c.y) * 0.14), 6.0);
+    return 1.2 + 0.4 * lv + 0.6 * beat + 0.6 * crest;
+  }
   float w = 0.5 + 0.5 * sin(t * 1.5707963 + c.x * 0.15 + c.y * 0.1);
   return 1.6 + 0.6 * lv * (0.7 + 0.3 * w);
 }
@@ -184,6 +189,8 @@ vec4 gwShade(int look, float h, vec2 c, float t, float lv) {
   if (look == 3 && gwHash(floor(c * 0.5) + floor(t * 12.0) * 13.0) < 0.18) return vec4(0.0);
   if (look == 6 && h > 0.7) { col = uRamp[3]; a = 1.0; }   // ARMORY: the Edge's line white-hot at the blade
   if ((look == 5 || look == 6) && gwHash(floor(c) + floor(t * 6.0) * 3.17) > 0.982) { col = uRamp[3]; a = 1.0; }   // ARMORY: a spark caught in the band
+  if (look == 7) col = uRamp[int(clamp(floor(h * 4.0 + 0.5), 0.0, 3.0))];   // GILDED-GLOW: a step hotter - crimson by the blade, its core at the swell
+  if (look == 7 && gwHash(floor(c) + floor(t * 4.0) * 2.71) > 0.988) { col = uRamp[3]; a = 1.0; }   // GILDED-GLOW: a jewel's glint, slower
   return vec4(col, a * (0.75 + 0.083 * lv));
 }
 // an ember over a flame: rising a cell a step, six steps a second
@@ -198,6 +205,7 @@ vec4 gwRim(int look, vec2 c, float t, float lv) {
   else if (look == 3) k = gwHash(floor(c * 0.5) + floor(t * 12.0) * 5.0) > 0.5 ? 0.65 : 0.15;
   else if (look == 5) k = 0.3 + 0.35 * gwNoise(vec2(c.x * 0.6, c.y * 0.6 + t * 2.0), 480.0);
   else if (look == 6) k = 0.4 + 0.45 * pow(0.5 + 0.5 * sin(t * 1.5707963 - (c.x + c.y) * 0.18), 8.0);
+  else if (look == 7) k = 0.3 + 0.25 * (0.5 + 0.5 * sin(t * 1.5707963));   // GILDED-GLOW: the edge breathes with the halo
   return vec4(uRamp[2], k * (0.7 + 0.1 * lv));
 }
 // the Morrowind charge's pattern on the surface, 0..1: fire boils up the screen, frost is facets that glint in turn,
@@ -214,6 +222,7 @@ float gwSurface(int look, vec2 uv, vec2 c, float t) {
   }
   if (look == 5) return max(smoothstep(0.45, 0.95, gwNoise(vec2(c.x * 0.5, c.y * 0.35 + t * 2.0), 480.0)), 0.6 * (1.0 - smoothstep(0.0, 0.05, abs(gwNoise(c * 0.4 + 9.0, 4096.0) - 0.5))));   // ARMORY: the Brand's fire runs down its cracks
   if (look == 6) return max(pow(0.5 + 0.5 * sin(t * 1.5707963 - uv.y * 12.0), 10.0), step(0.985, gwHash(floor(uv * 32.0) + floor(t * 4.0) * 5.71)));   // ARMORY: a light sweeping the Edge's length, a glint here and there
+  if (look == 7) return max(0.35 * (0.5 + 0.5 * sin(t * 1.5707963)), pow(0.5 + 0.5 * sin(t * 1.0471976 - uv.y * 8.0), 8.0));   // GILDED-GLOW: a sheen walking the blade over the halo's beat
   float a = t * 0.2617994;
   return gwNoise(uv * 8.0 + vec2(sin(a), cos(a)) * 2.0, 4096.0);
 }

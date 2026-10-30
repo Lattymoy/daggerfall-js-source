@@ -555,7 +555,7 @@ test('AUDIT STARFALL C4 A MASTER THAT NEVER STOOD IS STOOD AGAIN: a stand that c
   Date.now = realNow;
 });
 
-test('STAR-MASTER-FLED A MASTER GONE WITHOUT A FALL IS STOOD AGAIN: one removed from the pool with no body (a dispel) holds nothing; once nothing of its site has stood STAR_RESTAND_MS it is stood again whole, an event\'s own from its stand and a world boss from its landing; one that fell with a body is its fall and stands no second (Field-Bugs-2026-10-29f: the star waited on an escaped master until dawn) (mutants: the gone master kept; a fall read as gone; the wait)', async () => {
+test('STAR-MASTER-FLED A MASTER GONE WITHOUT A FALL IS STOOD AGAIN: one removed from the pool with no body (a dispel) holds nothing; once nothing of its site has stood STAR_RESTAND_MS it is stood again whole, an event\'s own from its stand and a world boss from its landing; one that fell with a body is its fall and stands no second (Field-Bugs-2026-10-29g: the star waited on an escaped master until dawn) (mutants: the gone master kept; a fall read as gone; the wait)', async () => {
   const w = world();
   clockOf(w);
   const ms = w.sites(2);
@@ -594,7 +594,7 @@ async function toMaster(w) {
   await w.beat();
 }
 
-test('AUDIT FB1029f STAR F1 A WABBAJACK ON THE MASTER LEAVES ONE MASTER: the master removed and its changed foe landing under its site inside the wait (scenes/world.js enchantReplaceFoe - online, after its grant) is claimed the master, and no fresh one stands beside it; a peer\'s copy under the site holds the wait too, counted again from its going (AUDIT WB12d C11) (mutants: the wait; the site\'s foes unread)', async () => {
+test('AUDIT FB1029g STAR F1 A WABBAJACK ON THE MASTER LEAVES ONE MASTER: the master removed and its changed foe landing under its site inside the wait (scenes/world.js enchantReplaceFoe - online, after its grant) is claimed the master, and no fresh one stands beside it; a peer\'s copy under the site holds the wait too, counted again from its going (AUDIT WB12d C11) (mutants: the wait; the site\'s foes unread)', async () => {
   const w = world();
   clockOf(w);
   const ms = w.sites(2), M = starMasterOf(1, 2);
@@ -625,7 +625,7 @@ test('AUDIT FB1029f STAR F1 A WABBAJACK ON THE MASTER LEAVES ONE MASTER: the mas
   Date.now = realNow;
 });
 
-test('AUDIT FB1029f STAR F2 A MASTER HANDED ON IS ITS HEIR\'S: handed alive at a door or a death (exteriorFoes.js letGo - dead, no body, `_gone`), the star is given up at once - its sites nobody\'s, the word o:0 - and held again only STAR_YIELD_MS on, by when its heir holds it; no master of mine stands over the heir\'s copy, and one stands again once nothing of it does (mutants: the handing read as a removal; the star kept; the yield; its length; a stand over a copy)', async () => {
+test('AUDIT FB1029g STAR F2 A MASTER HANDED ON IS ITS HEIR\'S: handed alive at a door or a death (exteriorFoes.js letGo - dead, no body, `_gone`), the star is given up at once - its sites nobody\'s, the word o:0 - and held again only STAR_YIELD_MS on, by when its heir holds it; no master of mine stands over the heir\'s copy, and one stands again once nothing of it does (mutants: the handing read as a removal; the star kept; the yield; its length; a stand over a copy)', async () => {
   const w = world();
   clockOf(w);
   const ms = w.sites(2), M = starMasterOf(1, 2);
@@ -655,7 +655,7 @@ test('AUDIT FB1029f STAR F2 A MASTER HANDED ON IS ITS HEIR\'S: handed alive at a
   Date.now = realNow;
 });
 
-test('AUDIT FB1029f STAR F6 A MASTER STOOD AGAIN IS WHOLE: one that called both its circles and went without a fall is stood again with none of its calls made - at two-thirds its circle comes again (mutants: the calls kept)', async () => {
+test('AUDIT FB1029g STAR F6 A MASTER STOOD AGAIN IS WHOLE: one that called both its circles and went without a fall is stood again with none of its calls made - at two-thirds its circle comes again (mutants: the calls kept)', async () => {
   const w = world();
   clockOf(w);
   const ms = w.sites(2);
@@ -679,7 +679,7 @@ test('AUDIT FB1029f STAR F6 A MASTER STOOD AGAIN IS WHOLE: one that called both 
   Date.now = realNow;
 });
 
-test('AUDIT FB1029f STAR F7 A FALL HAS A BODY: a master removed with none shows no fall moment, and the one stood after it shows its own fall at its moment - as does mine after a peer\'s copy fell (mutants: a fall without a body; the moment kept from before)', async () => {
+test('AUDIT FB1029g STAR F7 A FALL HAS A BODY: a master removed with none shows no fall moment, and the one stood after it shows its own fall at its moment - as does mine after a peer\'s copy fell (mutants: a fall without a body; the moment kept from before)', async () => {
   const w = world();
   clockOf(w);
   const ms = w.sites(2), M = starMasterOf(1, 2);
@@ -1076,9 +1076,9 @@ test('AUDIT STAR-TUNE F4 A CRATER BUILT AGAIN ASKS THE BODY AGAIN: the ground un
   Date.now = realNow;
 });
 
-// ── the field report through the real street pool (AUDIT FB1029f STAR F3, F8) ──
+// ── the field report through the real street pool (AUDIT FB1029g STAR F3, F8) ──
 
-test('AUDIT FB1029f STAR F3 F8 THE FIELD REPORT THROUGH THE REAL STREET POOL: the master the real pool stands, every draw of the mark forced to land, is an elite, an event\'s own and a world boss from its stand - no mark drawn, no "Unquiet", no candidate, no card - and struck to a tenth on every roll\'s win it stands and fights; the same pool\'s plain elite runs (Field-Bugs-2026-10-29f: an Unquiet Elite Daedra Lord ran and its star waited until dawn) (mutants: the stand\'s stamp; the pool\'s; the mark\'s gate; the rule unread - every reader at once; the card\'s guard)', async () => {
+test('AUDIT FB1029g STAR F3 F8 THE FIELD REPORT THROUGH THE REAL STREET POOL: the master the real pool stands, every draw of the mark forced to land, is an elite, an event\'s own and a world boss from its stand - no mark drawn, no "Unquiet", no candidate, no card - and struck to a tenth on every roll\'s win it stands and fights; the same pool\'s plain elite runs (Field-Bugs-2026-10-29g: an Unquiet Elite Daedra Lord ran and its star waited until dawn) (mutants: the stand\'s stamp; the pool\'s; the mark\'s gate; the rule unread - every reader at once; the card\'s guard)', async () => {
   resetPrefs(); setPref('lootRarity', true); setPref('enhancedAI', false);
   _resetRevenantForTests(); resetTactics(); resetBlows();
   setRevenantPresenter(() => true);

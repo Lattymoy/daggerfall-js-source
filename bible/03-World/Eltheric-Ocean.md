@@ -374,10 +374,10 @@ X2 and P6, `csa_together.test.js` (the count's `skip`). THE FOUR HOSTS: `world.j
 crossing; `worldModes.js`, `dungeonContext.js` and `exterior.js` sail no crossing.
 
 
-**SEA-ROWS (`01-Overview/bugs/Field-Bugs-2026-10-29f.md`; a player: "You get told you're going to the E-O instead").**
+**SEA-ROWS (`01-Overview/bugs/Field-Bugs-2026-10-29g.md`; a player: "You get told you're going to the E-O instead").**
 The crossing's waters were written for the Bay's world, and since WW3 the sea past it is sailed. On the freeware's world
 3 of 66 serpent sites past the Bay lay in them, and 8 of 35 far lanes sailed through them (Shimmerene to Lillandril, 177
-of its 284 pixels). Bounded to the Bay's rows, they left the open ocean past the Bay unasked (AUDIT FB1029f F5). Now
+of its 284 pixels). Bounded to the Bay's rows, they left the open ocean past the Bay unasked (AUDIT FB1029g F5). Now
 they keep CROSS_SEA_PX from the sea the world sails, on every row: every lane's way and the day's serpent ring
 (`etherCrossing.js createCrossSea`). On the freeware's world no lane's way and no site's ring over 1,999 serpent days
 is in them; west of Sumurset and north-west of High Rock are, as HOME_WATERS is. West of CROSS_X they hold 2,463,963
@@ -387,18 +387,18 @@ The measure asks only the lanes whose bound holds the pixel (`worldLanes.js near
 book is `settled`. A lane's way walked cold is the lanes' own search, up to 50 ms, so a check walks them for
 CROSS_WALK_MS (4 ms, one at the least) and answers when all are walked; until then the helm's waters say nothing and
 the gate keeps what it knew (`crossingWayAt` undefined). It is asked only where the land allows the waters. Warm, a
-new pixel costs 0.05 to 0.19 ms; the helm's same pixel, nothing. Pinned by `test/world/ethersea.test.js` and `test/systems/naval/fb1029f_searows.test.js`
+new pixel costs 0.05 to 0.19 ms; the helm's same pixel, nothing. Pinned by `test/world/ethersea.test.js` and `test/systems/naval/fb1029g_searows.test.js`
 (the freeware's world, the measure against every way). THE FOUR HOSTS: `world.js` wires the measure and hands the gate
 the journey; `worldModes.js`, `dungeonContext.js` and `exterior.js` sail no crossing.
 
-**The journey's waters (SEA-ROWS; AUDIT FB1029f F1, F3, F4).** The gate is told the helm's waters at every check, a
+**The journey's waters (SEA-ROWS; AUDIT FB1029g F1, F3, F4).** The gate is told the helm's waters at every check, a
 journey under way or not (`offer(way, travelOptions)`, null with Travel Options off: read unguarded, offline with the
 mod off it threw at every helm). Waters a journey sails into are the journey's, marked asked: never asked across its way
 nor at a stop there (any stop closes the journey's panel, and voyages from Daggerfall to the serpent sail through
 them). Left and come back to by her own hand, they are asked again. A journey that ARRIVES in them asks there: Travel
 Options counts its arrivals apart from its other ends (`travelOptions.js arrived` - a place, a spot or a pixel reached;
 never an Exit, a Forget it or a load). Pinned by `test/systems/naval/auditcaptsea.test.js`, `ethercross.test.js` and
-`fb1029f_searows.test.js`; mutants `tools/mutants/audit_fb1029f_sea.json`.
+`fb1029g_searows.test.js`; mutants `tools/mutants/audit_fb1029g_sea.json`.
 
 ## ETHER-CHART - the chart of the Eltheric Ocean
 

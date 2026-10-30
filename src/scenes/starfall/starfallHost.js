@@ -89,9 +89,9 @@ export const STAR_HELD_FADE_MS = 60_000;
 /** A standing star's beacon at no light left: this share of its full strength (it never quite goes out before it is lost). */
 export const STAR_BEACON_DIM = 0.3;
 /** A stand that stood nothing is tried again this long after - and a master gone with no fall, once nothing of its
- *  site has stood this long (AUDIT FB1029f STAR F1). */
+ *  site has stood this long (AUDIT FB1029g STAR F1). */
 export const STAR_RESTAND_MS = 4000;
-/** AUDIT FB1029f STAR F2: a screen that handed its master on alive holds the star again only this long after - by
+/** AUDIT FB1029g STAR F2: a screen that handed its master on alive holds the star again only this long after - by
  *  then its heir, hearing it no more past STAR_ORPHAN_MS, holds it. */
 export const STAR_YIELD_MS = 2 * STAR_ORPHAN_MS;
 /** The star's hum is played this often for a player near it. */
@@ -483,7 +483,7 @@ export function createStarfallHost(host) {
     S.master = f; S.masterStood = true;
     if (f.entity) { f.entity.eventFoe = true; f.entity.name = M.name(); f.entity.properName = M.name(); f.entity.worldBoss = true; }
     f.circleWard = () => (S.circle | 0) > 0;
-    S.lostAt = NaN; S.fellAt = NaN;   // AUDIT FB1029f STAR F7: a master taken has not fallen - no moment of one before it
+    S.lostAt = NaN; S.fellAt = NaN;   // AUDIT FB1029g STAR F7: a master taken has not fallen - no moment of one before it
   }
   /** STAR-TUNE: WHERE A FOE STANDS at (x, z) - on whatever is highest there: the land, or the crater's floor and rim now
    *  that they are solid (`place`), read from over the rim's crest (a ray from just over the land starts under the rim and
@@ -589,7 +589,7 @@ export function createStarfallHost(host) {
     else if (S.circleSeen > 0) { S.circleSeen = 0; S.broken++; sayAt(S, `broken${S.broken}`, STAR_AT_TEXT.circleBroken(M.female)); playStarSound(audio, 'circle', S.heart); }
     S.circle = circle;
     S.masterFoe = master;
-    if (master?.dead && master.corpse && !Number.isFinite(S.fellAt)) S.fellAt = now();   // AUDIT FB1029f STAR F7: a fall has a body - a master gone without one fell nowhere
+    if (master?.dead && master.corpse && !Number.isFinite(S.fellAt)) S.fellAt = now();   // AUDIT FB1029g STAR F7: a fall has a body - a master gone without one fell nowhere
   }
   /** Whether I hold the star's foes: I sprang them and no peer holds them - a peer silent STAR_ORPHAN_MS holds nothing. */
   function holds(S) {
@@ -619,14 +619,14 @@ export function createStarfallHost(host) {
       return;
     }
     if (L.p === P_WAVE && S.stoodWave === L.w && !S.pending && S.waveFoes.size && [...S.waveFoes].every((f) => f.dead)) S.wc = L.w;
-    // STAR-MASTER-FLED (Field-Bugs-2026-10-29f): a master gone from the pool with no fall (no body, never counted) held
+    // STAR-MASTER-FLED (Field-Bugs-2026-10-29g): a master gone from the pool with no fall (no body, never counted) held
     // the star until dawn. Handed on alive (letGo marks it `_gone`), it is its heir's (handedOn); removed (a dispel, a
     // Wabbajack's), it is let go, and stood again as C4 stands one that never stood (masterLost)
     if (L.p === P_MASTER && S.master?._gone && !S.master.corpse && !S.mf) { handedOn(S); return; }
     if (L.p === P_MASTER && S.master?.dead && !S.master.corpse && !S.mf) S.master = null;
     if (L.p === P_MASTER && S.masterStood && !S.master && masterLost(S)) S.masterStood = false;
     if (L.p === P_MASTER && !S.masterStood && !masterSeen(S)) {
-      S.masterStood = true; S.calls = 0; S.lostAt = now();   // AUDIT FB1029f STAR F6: stood whole - its circle called afresh
+      S.masterStood = true; S.calls = 0; S.lostAt = now();   // AUDIT FB1029g STAR F6: stood whole - its circle called afresh
       const M = starMasterOf(L.b, S.site.k, S.site.coven);
       stand(S, [M.career], starStandPlaces(S.site.n, S.site.k, 9, 1), S.sites.m, (f) => masterOf(S, f, M), { elite: true });
       return;
@@ -641,7 +641,7 @@ export function createStarfallHost(host) {
   }
   /** Whether a foe of the master's site stands - mine, or a peer's copy. */
   const masterSeen = (S) => (foes?.foes ?? NONE).some((f) => f.site === S.sites.m && !f.dead);
-  /** AUDIT STARFALL C4, AUDIT FB1029f STAR F1: whether to stand the master again - none of its site standing for
+  /** AUDIT STARFALL C4, AUDIT FB1029g STAR F1: whether to stand the master again - none of its site standing for
    *  STAR_RESTAND_MS since the stand that put none up or the master's going (staffEvents.js staffBossLost's shape). A
    *  Wabbajack's changed foe (scenes/world.js enchantReplaceFoe) lands inside the wait and is claimed the master. */
   function masterLost(S) {
@@ -649,7 +649,7 @@ export function createStarfallHost(host) {
     if (!Number.isFinite(S.lostAt)) S.lostAt = now();
     return now() - S.lostAt >= STAR_RESTAND_MS;
   }
-  /** AUDIT FB1029f STAR F2: THE MASTER HANDED ON ALIVE (exteriorFoes.js letGo - at a door, a death, back to the one I
+  /** AUDIT FB1029g STAR F2: THE MASTER HANDED ON ALIVE (exteriorFoes.js letGo - at a door, a death, back to the one I
    *  took it from) is its heir's. The star is given up here - its sites nobody's, my word `o:0` - and this screen holds it
    *  again only STAR_YIELD_MS on (defend), so it never stands a second master over the heir's. */
   function handedOn(S) {
@@ -685,7 +685,7 @@ export function createStarfallHost(host) {
     if (over) { if (S.own) dropDefense(S); return; }
     const s = session();
     const online = !!s?.starReady?.(S.cell), inside = d <= STAR_SAY_M;
-    if (online && foes && S.known && inside && holds(S) && t - S.yieldAt >= STAR_YIELD_MS) { S.awayAt = NaN; owner(S, L); }   // AUDIT FB1029f STAR F2: not while its handed master is its heir's
+    if (online && foes && S.known && inside && holds(S) && t - S.yieldAt >= STAR_YIELD_MS) { S.awayAt = NaN; owner(S, L); }   // AUDIT FB1029g STAR F2: not while its handed master is its heir's
     else if (S.own && (camp.peerSprang?.(S.sites.base) || leashSlipped(S, t, inside))) dropDefense(S);   // a peer won the race, or I walked off
     if (online && inside) { blowsOf(S); word(S, t); }   // to the deadline (`over`): the grace is a word's flight alone
   }

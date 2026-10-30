@@ -169,7 +169,7 @@ test('ETHER-WILD: the crossing says what lies past the peace, online alone; at s
   assert.deepEqual(questionRows('abcdefgh ij', 5), ['abcdefgh', 'ij'], 'a word past the width stands alone');
   assert.deepEqual(questionRows('  '), []);
   assert.deepEqual(crossingRows('home', { pvp: true }), crossingRows('home'), 'the way home warns of nothing');
-  assert.match(src('src/scenes/world.js'), /rows: crossingRows\(way, \{ pvp: _onlineWorldSession\(\) && !!online\?\.wildOk \}, /, 'online, past a relay that raises the zone');   // PIN MOVED (AUDIT FB1029f SEA F9): the waters the words read follow
+  assert.match(src('src/scenes/world.js'), /rows: crossingRows\(way, \{ pvp: _onlineWorldSession\(\) && !!online\?\.wildOk \}, /, 'online, past a relay that raises the zone');   // PIN MOVED (AUDIT FB1029g SEA F9): the waters the words read follow
   // PIN MOVED (STORE-KEEPS, 2026-10-26): a hand ashore was held at my side in the mountains (COMPANION-DROP) and sent back
   // aboard at sea; his pack is storage no death takes now, and he is sent back aboard from either ground
   assert.ok(!src('src/systems/naval/crewCompanions.js').includes('heldAtSide'), 'no ground holds him');

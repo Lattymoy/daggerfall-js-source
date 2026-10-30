@@ -135,7 +135,7 @@ export async function putLineage({ db, nowS }, playerId, { id, record: sent, bas
     }
     const stale = await staleLine(db, playerId, id, rec.model);
     if (stale) return stale;
-    // AUDIT FB1029f FAMILY F3: removed between the read and the UPDATE - F2's answer to a copy made from it (null was a
+    // AUDIT FB1029g FAMILY F3: removed between the read and the UPDATE - F2's answer to a copy made from it (null was a
     // 500); a founding founds
     if (base !== null) return { error: 'no-lineage' };
   }

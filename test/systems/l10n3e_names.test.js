@@ -28,7 +28,7 @@ const NAMED = {
   'src/scenes/instanceDoor.js': 1,   // INSTANCES (the audit): the door's popup names its dungeon in the player's language
   'src/scenes/quest/questBridge.js': 1,   // QL12: a guild's ladder named by its faction, in the player's language
   'src/scenes/townTalk.js': 4,   // IC-PROPS: a door's building named in its own town - its town's and region's shown names (buildingNameIn)
-  'src/scenes/world.js': 6,   // NOTICE-PANEL: the Notice Board's heading - the settlement's name as shown, handed to the town panel's panelTownOf (AUDIT FB1029f P7: a capital's name and its district's), so no call of its own
+  'src/scenes/world.js': 6,   // NOTICE-PANEL: the Notice Board's heading - the settlement's name as shown, handed to the town panel's panelTownOf (AUDIT FB1029g P7: a capital's name and its district's), so no call of its own
   'src/scenes/worldModes.js': 4,   // NOTICE-PANEL: the board's heading moved to world.js with its press. SUMMON-OFFER: the summoning's no-offer line moved to the law module (daedraSummoning.js noQuestText)
   'src/systems/affiliations.js': 1,
   'src/systems/answerPipeline.js': 3,

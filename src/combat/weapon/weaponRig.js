@@ -1664,7 +1664,14 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *  ToggleHand through this rig's own SwitchHand leg. */
     handDoor() {
       syncWorn();
-      return { usingRightHand: playerWeapon.usingRightHand, switchHand: () => this.switchHand() };
+      return {
+        usingRightHand: playerWeapon.usingRightHand, switchHand: () => this.switchHand(),
+        // AUDIT FB1029f D1: the hand in use set to a slot's hand - this frame's UpdateHands first (HAND-FOLLOWS may have
+        // moved it already), then ToggleHand only where it still differs
+        useHand: (slot) => { syncWorn(); if (playerWeapon.usingRightHand !== (slot === EQUIP_SLOTS.RightHand)) this.switchHand(); },
+        // AUDIT FB1029f D2: the hand in use kept through the next UpdateHands (a hand bared on purpose)
+        keepHand: () => { playerWeapon.handRestored = true; },
+      };
     },
     /** QS4 - THE OFF-HAND KEY'S LIGHT ARM. The quickslot diamond's
      *  off-hand cell presses the same thing Handheld Torches' own toggle

@@ -1057,6 +1057,14 @@ each is a line here, findable by its tag.
   inventory"): a hand's own panel is a drop target (`handIntent`, `enhancedInventory.js:"function handIntent"`).
   HANDS-COMPARE (the owner: "Damage comparison should now show left and right hand in the item info when hovering"): a
   weapon's card sets it against each hand's (`armourCard.js:"comparison should now show left"`).
+- HAND-DROP (FIELD BUGS 2026-10-29, #feature-feedback: "Dragging a weapon from the inventory to the L-Hand slot pushes
+  the weapon that was previously there to the right hand and unequips what was your main weapon"): a pack piece dropped
+  on a hand's panel goes in that hand and takes off only that hand's piece, in one equip act (`equipItem`'s `hand`,
+  `equip.js:"export function mayHold"`; `enhancedInventory.js:"function dropOnHand"`). The drop had worn it where DFU's
+  table puts it - the first open hand, else the right - and then traded the hands. A hand that cannot hold the piece
+  refuses it on its panel: a two-hander on the left, a shield on the right. A piece put in the left hand takes a held
+  two-hander off, as a shield does in DFU. A held piece dragged to the other hand still trades places (SWAP-HANDS).
+  Pinned by `offhanddrop.test.js`; `tools/mutants/offhanddrop.json`.
 - TRACK-ONLY (the owner: "When you dont track a quest it should never appear on the screen! right now when i dont
   track the main quest it still is shown tracked."): the quest on screen - the card, the compass's mark, the map's
   filled diamond - is the TRACKED one and nothing else (`shown`, `questTracker.js:"shown() {"`); the journal still
@@ -1071,7 +1079,7 @@ each is a line here, findable by its tag.
   north - the road read off the town's own walk grid (`gothwayNorthSpots`), stood in the town's build each with its foot
   on the ground and counted a bounty board always (`boardSplitOf`). NOTICE-PANEL (2026-10-29, the owner: "remove the
   notice board prop from all cities") took them with every town's board: Gothway Garden's Bounty Board is on its town
-  panel now (`01-Overview/bugs/Field-Bugs-2026-10-29f.md`).
+  panel now (`01-Overview/bugs/Field-Bugs-2026-10-29g.md`).
 - PVPFIX (the owner: "Undeniable Access/lockpicking should actually work on locked crates"): an armed Open spell fires
   on the next lock touched, a crate's as a door's, and the pick is tried in Grab mode too
   (`dungeonContext.js:"Access/lockpicking"`).

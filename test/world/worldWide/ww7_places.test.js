@@ -29,7 +29,7 @@ test('WW7-1 and WW7-2 by source: TESA\'s four providers registered after the Bay
   // PIN MOVED (TESA x AUDIT TESA II P7): the capitals and Arena's places one live list (world/pastBayRows.js), registered at the
   // host's making - before the countryside's and the lairs' pixels, which stay providers (a pixel's roll)
   assert.ok(m.indexOf('worldPlaces.registerLive(PAST_BAY_SOURCE, {') > m.indexOf('if (_countryTemplates) worldPlaces.registerPixels(TESA_SOURCES.country, countryRow, countryPixelOfId);'), 'its line below');
-  assert.match(m, /if \(_countryTemplates\) worldPlaces\.registerPixels\(TESA_SOURCES\.country, countryRow, countryPixelOfId\);   \/\/ AUDIT FB1029f P1: its id read back to its pixel\n\s+if \(_lairTemplates\) worldPlaces\.registerPixels\(TESA_SOURCES\.lairs, lairRow\);/, 'the build\'s order: the countryside, a lair');
+  assert.match(m, /if \(_countryTemplates\) worldPlaces\.registerPixels\(TESA_SOURCES\.country, countryRow, countryPixelOfId\);   \/\/ AUDIT FB1029g P1: its id read back to its pixel\n\s+if \(_lairTemplates\) worldPlaces\.registerPixels\(TESA_SOURCES\.lairs, lairRow\);/, 'the build\'s order: the countryside, a lair');
   assert.match(m, /rows: \(\) => pastBayPlaceRows\(\{ pixels: _arenaTemplates \? arenaPixels\(\) : null, templateOf: \(p\) => arenaTemplateOf\(_arenaTemplates, p\), capitals: !!_capitalBase \}\),/, 'a capital, an Arena place');
   assert.match(m, /const key = `\$\{tamrielLandVersion\(\)\}\|\$\{arenaPlacesVersion\(\)\}\|\$\{capitalsVersion\(\)\}`;\n\s+if \(key === _registered\) return false;/);
   assert.match(m, /if \(!worldPlaces \|\| !tamrielLand\) return false;/, 'only where the land past the Bay stands');

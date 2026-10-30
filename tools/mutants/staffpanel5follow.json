@@ -573,7 +573,7 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-notes-whole-lost",
     "file": "src/net/staffTeleport.js",
-    "old": "whole: !!word || !m[2], pos: null",
+    "old": "whole: !!word || (!m[2] && !m[3]), pos: null",
     "new": "whole: !!word, pos: null",
     "why": "a public dungeon built at the world's size",
     "tests": [

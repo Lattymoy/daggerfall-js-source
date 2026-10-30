@@ -92,8 +92,8 @@
   {
     "name": "SD-ONLINE-the-small-room-refused",
     "file": "src/net/wire.js",
-    "old": "dungeon:m[1-9]\\\\d{0,9}(?:\\\\.[ms]|${INSTANCE_TAG_SOURCE})?|",
-    "new": "dungeon:m[1-9]\\\\d{0,9}(?:\\\\.m|${INSTANCE_TAG_SOURCE})?|",
+    "old": "dungeon:m[1-9]\\\\d{0,9}(?:(?:\\\\.[ms])?",
+    "new": "dungeon:m[1-9]\\\\d{0,9}(?:(?:\\\\.m)?",
     "tests": [
       "test/systems/sdonline.test.js"
     ],
@@ -112,7 +112,7 @@
   {
     "name": "SD-ONLINE-the-identity-blind",
     "file": "src/scenes/worldModes.js",
-    "old": "name: dungeonLoc?.name ?? '', size: builtDungeonSize(dungeonLoc), instance:",
+    "old": "name: dungeonLoc?.name ?? '', size: dungeonRoomSize(dungeonLoc), instance:",
     "new": "name: dungeonLoc?.name ?? '', size: null, instance:",
     "tests": [
       "test/systems/sdonline.test.js"

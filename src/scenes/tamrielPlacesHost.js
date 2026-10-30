@@ -294,7 +294,7 @@ export function createTamrielPlaces(host) {
     const key = `${tamrielLandVersion()}|${arenaPlacesVersion()}|${capitalsVersion()}`;
     if (key === _registered) return false;
     _registered = key;
-    if (_countryTemplates) worldPlaces.registerPixels(TESA_SOURCES.country, countryRow, countryPixelOfId);   // AUDIT FB1029f P1: its id read back to its pixel
+    if (_countryTemplates) worldPlaces.registerPixels(TESA_SOURCES.country, countryRow, countryPixelOfId);   // AUDIT FB1029g P1: its id read back to its pixel
     if (_lairTemplates) worldPlaces.registerPixels(TESA_SOURCES.lairs, lairRow);
     if (townSeats) replaceSeats(townSeats, 'tesa', tamrielSeatsOf(seatPlaces()));   // WW7-3: the seats past the Bay with their places
     return true;

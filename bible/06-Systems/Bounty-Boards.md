@@ -41,7 +41,7 @@ Each is quoted where the code keeps it, beside the line it decided.
 
 ## 1. The board
 
-NOTICE-PANEL (2026-10-29, `01-Overview/bugs/Field-Bugs-2026-10-29f.md`; the owner: "remove the notice board prop from
+NOTICE-PANEL (2026-10-29, `01-Overview/bugs/Field-Bugs-2026-10-29g.md`; the owner: "remove the notice board prop from
 all cities"): no board stands now. Every settlement's town panel under the compass carries a Bounty Board button that
 opens this window (`scenes/townPanelHost.js`), Alinor's and a hamlet's alike. The split below places only the siege
 field's Market; the hover name and the press are gone with the boards. The rest of this section is the board's history.

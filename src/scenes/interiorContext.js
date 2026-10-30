@@ -360,7 +360,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   const base = opts.baseEditable ? createBaseRoom({ drawList, batches: () => billboardBatches, lights: () => lights, collider }) : null;
   const iilFireplaces = [];   // IIL1: the fireplace models' centres (Improved Interior Lighting)
   for (const [pi, p] of interior.placements.entries()) {
-    // NOTICE-PANEL (AUDIT FB1029f R2, the owner: "remove the notice board prop from all cities"): the town packs' rooms
+    // NOTICE-PANEL (AUDIT FB1029g R2, the owner: "remove the notice board prop from all cities"): the town packs' rooms
     // place model 41739 too - a tavern's, a temple's, a gate's. None stands; its index is kept, so a room's keys hold
     if (isBulletinBoard(p.modelIdNum)) continue;
     const matrix = parent(p.matrix);

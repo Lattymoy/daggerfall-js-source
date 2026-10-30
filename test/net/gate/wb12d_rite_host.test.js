@@ -229,7 +229,7 @@ test('AUDIT WB12d (C3): taken over, the faithful stay the rite\'s - where they s
   fresh();
 });
 
-test('STAR-MASTER-FLED (AUDIT FB1029f STAR F5) THE FAITHFUL ARE THE RITE\'S OWN: each asked of the pool as an event\'s own (`eventFoe` - no promotion draws the Unquiet mark on one), and one taken over made one too (mutants: the rite\'s stand unsaid; riteFoe\'s stamp)', async () => {
+test('STAR-MASTER-FLED (AUDIT FB1029g STAR F5) THE FAITHFUL ARE THE RITE\'S OWN: each asked of the pool as an event\'s own (`eventFoe` - no promotion draws the Unquiet mark on one), and one taken over made one too (mutants: the rite\'s stand unsaid; riteFoe\'s stamp)', async () => {
   fresh();
   const clock = { t: T.omenAt + 60_000 };
   const A = client('aaaa-0001', { clock }), B = client('bbbb-0002', { clock });

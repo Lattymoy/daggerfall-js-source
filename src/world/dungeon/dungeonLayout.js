@@ -67,6 +67,8 @@ export function layoutDungeon(dfLocation, blocksFile, getModel) {
   let startMarker = null;
   let enterMarker = null;
 
+  // DELVE II (DLV5): a game-made dungeon's curated block is in its list already - the location as built
+  // (smallerDungeons.js dungeonLocationFor, curatedSplice.js curatedLocation), which the quests read too
   for (const block of dfLocation.dungeon.blocks) {
     const blockIndex = blocksFile.getBlockIndex(block.blockName);
     if (blockIndex === -1) throw new Error(`block not found: ${block.blockName}`);

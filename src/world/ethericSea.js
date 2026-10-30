@@ -390,7 +390,7 @@ export function etherLight(rgb, w, tint = ETHER_LIGHT_TINT) {
  *  kilometres from Daggerfall. */
 export const CROSS_X = 230;
 export const CROSS_LAND_PX = 20;
-/** SEA-ROWS (bible/01-Overview/bugs/Field-Bugs-2026-10-29f.md): out of sight of the sea the world sails, as of land - every
+/** SEA-ROWS (bible/01-Overview/bugs/Field-Bugs-2026-10-29g.md): out of sight of the sea the world sails, as of land - every
  *  lane's way and the serpent's ring (systems/naval/etherCrossing.js createCrossSea). Every row: Sumurset's lanes and the
  *  serpent's waters past the Bay asked ships bound there to cross, and the Bay's rows alone left the open ocean unasked. */
 export const CROSS_SEA_PX = 20;

@@ -701,7 +701,8 @@ test('SD11b THE DIRECTOR TRIES AGAIN, AND READS AGAIN (L8 G9): a beat that throw
 test('SD11b THE RELAY BY SOURCE: the seams these fixes stand on - the realm\'s attachment marks a registered account and carries its signed level; the hub\'s beat hands the held receipts; the fall told through one flight; the hub\'s record and its mark written together (mutants: each seam removed)', () => {
   const r = strip(RELAY);
   assert.match(r, /const linked = \(isRegionRoom\(a\.key\) \|\| realmRoom\) && who\.kind === 'linked' \? \{ lk: 1 \} : \{\};/);
-  assert.match(r, /const charLv = \(isCellRoom\(a\.key\) \|\| realmRoom \|\| ktRoom\) && Number\.isSafeInteger\(who\.cl\) && who\.cl >= 1 \? \{ cl: who\.cl \} : \{\};/);   // PIN MOVED (KETCH): and a ship's member's, the level its token signs
+  // PIN MOVED (DELVE II DLV3): a world room's attachment carries the signed level too (a dungeon encounter's level)
+  assert.match(r, /const charLv = \(isCellRoom\(a\.key\) \|\| realmRoom \|\| ktRoom \|\| isWorldRoom\(a\.key\)\) && Number\.isSafeInteger\(who\.cl\) && who\.cl >= 1 \? \{ cl: who\.cl \} : \{\};/);   // PIN MOVED (KETCH): and a ship's member's, the level its token signs
   assert.match(r, /try \{ await this\._sdHeldBeat\(now\); \}/);
   assert.match(r, /if \(this\._sdFellTelling\) return this\._sdFellTelling;/);
   assert.match(r, /await this\.state\.storage\.put\(\{ \[sdLaneKey\(SD_KEY, lane\)\]: rec, \[sdLaneKey\(SD_SLOT_KEY, lane\)\]: hw \}\);/);   // PIN MOVED (WW5): a lane's record and its mark, together - the Bay's under the keys it always had (wire.js sdLaneKey)

@@ -105,7 +105,7 @@ test('BAY-LEFT-SEA (ARENA2): on the freeware the registry\'s four capital harbou
       assert.equal(byte !== 0, r.port, `${r.name} (${r.px},${r.py}): its byte its registry row's word`);
       if (byte) ported.push([r.name, r.px, r.py]);
     }
-    assert.equal(registry.length, 625 + 6 + 2);   // the Imperial City's 625, each other capital's centre and Alinor's and Torval's sea slices - PIN MOVED (AUDIT FB1029f P1): the build stands a sea slice (its quay), and the rows read a span's square, so they left it out
+    assert.equal(registry.length, 625 + 6 + 2);   // the Imperial City's 625, each other capital's centre and Alinor's and Torval's sea slices - PIN MOVED (AUDIT FB1029g P1): the build stands a sea slice (its quay), and the rows read a span's square, so they left it out
     assert.deepEqual(ported, [['Waterfront District', 2069, 668], ['Solitude', 1569, -430], ['Alinor', 8, 1533], ['Torval', 1922, 1705]]);
     // each harbour measured as townPlacesFor measures a town: its layout, every model's box - a capital's landmark by its
     // footprint (`foot`) or, as before, by its box - its yards, then the port's two on what they left, off the sea

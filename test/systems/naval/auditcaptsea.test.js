@@ -719,7 +719,7 @@ async function crossingWorld(over = {}) {
     get etherSea() { return w.etherSea; }, get etherOut() { return w.etherOut; }, csaRuntime, CROSS_CHECK_S: EC.CROSS_CHECK_S,
     gamePaused: () => w.paused, get _loading() { return w.loading; }, townTalk, modes: { get transitioning() { return w.transitioning; } }, _mode: () => w.mode,
     worldMoveBusy: () => w.busy, get _partyArrivalPending() { return w.arriving; },
-    // SEA-ROWS: Travel Options - a journey under way, the journeys that arrived; null with the mod off (AUDIT FB1029f F1)
+    // SEA-ROWS: Travel Options - a journey under way, the journeys that arrived; null with the mod off (AUDIT FB1029g F1)
     travelOptions: 'travelOptions' in over ? over.travelOptions : { get isTravelActive() { return !!w.journey; }, get arrived() { return w.arrived ?? 0; } },
     playerTravelPixel: () => ({ x: w.px, y: w.py }), crossingWayAt: EC.crossingWayAt, CROSS_X: ES.CROSS_X, inEther: ES.inEther,
     veilParty: { kin: () => false },   // PIN MOVED (VEIL-PARTY): the crossing's count leaves her party out - none here
@@ -761,7 +761,7 @@ test('AUDIT CAPTAIN\'S SEA X1/X3: a refusal said once in its waters, and the cro
   assert.deepEqual(d.log, [], 'a party member\'s helm through the arrival\'s wait: nothing');
 });
 
-test('SEA-ROWS: waters a journey sails into are the journey\'s - never asked across its way, nor at a stop there (an enemy, a window: the panel closes on any stop) - and asked where it ARRIVES; left and come back to by her own hand, asked again; refused, then a journey out of them and back, it ends there (Field-Bugs-2026-10-29f; AUDIT FB1029f F3, F4) (mutants: the journey\'s mark, the arrival, the gate told under way)', async () => {
+test('SEA-ROWS: waters a journey sails into are the journey\'s - never asked across its way, nor at a stop there (an enemy, a window: the panel closes on any stop) - and asked where it ARRIVES; left and come back to by her own hand, asked again; refused, then a journey out of them and back, it ends there (Field-Bugs-2026-10-29g; AUDIT FB1029g F3, F4) (mutants: the journey\'s mark, the arrival, the gate told under way)', async () => {
   const c = await crossingWorld({ journey: true });
   c.step(6);
   assert.deepEqual(c.log, [], 'under way: nothing');
@@ -784,7 +784,7 @@ test('SEA-ROWS: waters a journey sails into are the journey\'s - never asked acr
   assert.deepEqual(g.log, ['asked'], 'refused, and a journey back into them stopped there: nothing');
 });
 
-test('SEA-ROWS: the sea the world sails is no crossing water on any row - a lane past the Bay, off Sunhold - and the open ocean past the Bay is, west of Sumurset (Field-Bugs-2026-10-29f; AUDIT FB1029f F5) (mutants: the sailed sea unmeasured, its reach)', async () => {
+test('SEA-ROWS: the sea the world sails is no crossing water on any row - a lane past the Bay, off Sunhold - and the open ocean past the Bay is, west of Sumurset (Field-Bugs-2026-10-29g; AUDIT FB1029g F5) (mutants: the sailed sea unmeasured, its reach)', async () => {
   const s = await crossingWorld({ px: 62, py: 1573, lanes: [[40, 1560, 90, 1590]] });   // off Sunhold, by its lane
   s.step(4);
   assert.deepEqual(s.log, [], 'by a lane past the Bay: nothing');
@@ -799,7 +799,7 @@ test('SEA-ROWS: the sea the world sails is no crossing water on any row - a lane
   assert.deepEqual(u.log, ['asked'], 'refused, then a check with the sea unmeasured: no word, and the refusal kept');
 });
 
-test('SEA-ROWS: with Travel Options off (its switch, offline) the crossing is asked as it always was - the journey\'s test threw on a null mod and stopped the frame (AUDIT FB1029f F1) (mutants: the journey read unguarded)', async () => {
+test('SEA-ROWS: with Travel Options off (its switch, offline) the crossing is asked as it always was - the journey\'s test threw on a null mod and stopped the frame (AUDIT FB1029g F1) (mutants: the journey read unguarded)', async () => {
   const c = await crossingWorld({ travelOptions: null });
   assert.doesNotThrow(() => c.step(2));
   assert.deepEqual(c.log, ['asked'], 'in the crossing waters: asked');

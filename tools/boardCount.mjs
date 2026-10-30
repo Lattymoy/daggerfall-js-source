@@ -1,7 +1,7 @@
 // NOTICE1b's MEASURE - BOARD-COUNT (PROF0 10.1: "Every seat and hub has one"): how many bulletin boards a hub's blocks
 // place, split as BOUNTY1 split them (systems/bounty/bountyBoard.js questBoardIndices). NOTICE-PANEL (2026-10-29) stands
 // none of them - every settlement's Notice Board is its town panel - so this is DFU's own count, the one its field report
-// read (bible/01-Overview/bugs/Field-Bugs-2026-10-29f.md: only a city wall's blocks place one). It walks MAPS.BSA and
+// read (bible/01-Overview/bugs/Field-Bugs-2026-10-29g.md: only a city wall's blocks place one). It walks MAPS.BSA and
 // BLOCKS.BSA from the player's own ARENA2 as the world host's boot pass does (regionHubs.js pickRegionHubs), lays out
 // every hub (world/locationLayout.js) and prints each: its region, its name, whether it is a capital, how many boards
 // its blocks place, how many of them bounty boards and how many rumour boards - and the hubs with none.

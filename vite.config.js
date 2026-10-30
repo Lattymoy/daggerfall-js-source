@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { landingHtml, readBuildSha } from './scripts/landingHtml.mjs';
 import { studioArtIndex } from './scripts/studioArtIndex.mjs';   // STUDIO1: the studio's listing, served and built from the folder
 import { firstVisitPinsPlugin } from './scripts/firstVisitPins.mjs';   // FIRST-VISIT: the kept answers' pins, computed by the build and the dev server
-import { noImportedTopLevelAwait } from './scripts/noTopLevelAwait.mjs';   // WEBKIT-TLA (AUDIT FB1029f TLA-1): no imported chunk awaits at its top level
+import { noImportedTopLevelAwait } from './scripts/noTopLevelAwait.mjs';   // WEBKIT-TLA (AUDIT FB1029g TLA-1): no imported chunk awaits at its top level
 
 // Dev-only: serve ARENA2 game data at /arena2/*. The data is freeware but
 // never committed or bundled (Port-Doctrine); builds contain no game files.
@@ -220,6 +220,7 @@ export default defineConfig({
         abyss: 'abyss.html', // SD-LAB: the Shattered Hour and the Rift, made in code, drawn by the game's renderer (src/tools/abyssLab.js)
         spire: 'spire.html', // EG-G2: an Elite Breach's circle in its band's dress, made in code (src/tools/spireLab.js) - tools/spireLabProbe.mjs
         cards: 'cards.html', // CARDS3: the card table lab (src/tools/cardsLab.js) - tools/cardsProbe.mjs
+        delve: 'delve.html', // DLV5: the curated blocks' lab - its front page (src/tools/delveLabPage.js), the bench's `?dungeon=lab` its floor (src/tools/delveLab.js)
         // MW-D: the Morrowind data inspector. Reads a player's own
         // archives and reports what is IN them; it draws nothing, stores
         // nothing and is wired to nothing the game runs. It exists

@@ -194,7 +194,7 @@
     "old": "rows.map((r) => r.text).filter((t, i) => !(i === 0 && t === town.shown))",
     "new": "rows.map((r) => r.text)",
     "tests": [
-      "test/scenes/fb1029f_townpanel.test.js"
+      "test/scenes/fb1029g_townpanel.test.js"
     ]
   },
   {

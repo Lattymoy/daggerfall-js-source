@@ -499,7 +499,7 @@ export function createTravelOptions(deps = {}) {
     // clears it, :392-398's callers), Exit, the map's Forget it, a load. The port's own count, read by a host that must
     // tell a journey's END from a STOP: a spot's stop nulls its route too (TV2 AUDIT TV A4), so the fields cannot.
     cleared: 0,
-    // SEA-ROWS (bible/01-Overview/bugs/Field-Bugs-2026-10-29f.md): how many journeys ARRIVED - the ends `cleared` counts
+    // SEA-ROWS (bible/01-Overview/bugs/Field-Bugs-2026-10-29g.md): how many journeys ARRIVED - the ends `cleared` counts
     // that reached the place, pixel or spot picked, not an Exit, a Forget it or a load (the crossing asks where one ends)
     arrived: 0,
     // RATE-LAW: what the journey walks - 'path' (the follow key's legs: a road or a track), 'ring' (a town's border

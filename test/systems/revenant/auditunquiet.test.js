@@ -535,7 +535,7 @@ test('AUQ B11 THE CRAFT THROUGH THE REAL STREET POOL: a rank-II spriggan breaks 
 
 // ── an event's own foe's fall is its event's (STAR-MASTER-FLED) ─────
 
-test('STAR-MASTER-FLED AN EVENT\'S OWN FOE NEVER RISES: the Starfall\'s master, a staff event\'s boss or a rite\'s faithful (`eventFoe`, unquietMark.js isEventFoe), marked or not, draws no mark, is no candidate, wears no "Unquiet" and rises from no deed - one rule, every reader (Field-Bugs-2026-10-29f: an Unquiet Elite Daedra Lord ran, became a revenant, and its star waited on it until dawn) (mutants: the candidate\'s rule; the mark\'s gate; isUnquiet\'s; the title\'s)', () => {
+test('STAR-MASTER-FLED AN EVENT\'S OWN FOE NEVER RISES: the Starfall\'s master, a staff event\'s boss or a rite\'s faithful (`eventFoe`, unquietMark.js isEventFoe), marked or not, draws no mark, is no candidate, wears no "Unquiet" and rises from no deed - one rule, every reader (Field-Bugs-2026-10-29g: an Unquiet Elite Daedra Lord ran, became a revenant, and its star waited on it until dawn) (mutants: the candidate\'s rule; the mark\'s gate; isUnquiet\'s; the title\'s)', () => {
   const p = me();
   const ev = (over = {}) => foe({ eventFoe: true, ...over });
   assert.equal(N.revenantCandidate(foe()), true, 'the same foe, no event\'s own: a candidate');
@@ -592,7 +592,7 @@ test('STAR-MASTER-FLED THROUGH THE REAL STREET POOL: an elite stood by the pool,
   } finally { _forceUnquietForTests(null); }
 });
 
-test('AUDIT FB1029f STAR F4 A STAFF EVENT\'S MINI BOSS NEVER RISES: stood in the wilds as raidHost.js stands a raider (loose, transient), its overworld elite won and every mark forced, it drew the mark before; stood as the boss it is an event\'s own from its stand - no mark, "Mighty" and never "Unquiet", no candidate, and at a tenth it fights; the event asks its stand as the boss\'s (mutants: the stand\'s stamp; promoteStaffBoss\'s; the host\'s wiring)', async () => {
+test('AUDIT FB1029g STAR F4 A STAFF EVENT\'S MINI BOSS NEVER RISES: stood in the wilds as raidHost.js stands a raider (loose, transient), its overworld elite won and every mark forced, it drew the mark before; stood as the boss it is an event\'s own from its stand - no mark, "Mighty" and never "Unquiet", no candidate, and at a tenth it fights; the event asks its stand as the boss\'s (mutants: the stand\'s stamp; promoteStaffBoss\'s; the host\'s wiring)', async () => {
   const p = me();
   _forceUnquietForTests(true);
   try {
@@ -614,7 +614,7 @@ test('AUDIT FB1029f STAR F4 A STAFF EVENT\'S MINI BOSS NEVER RISES: stood in the
   assert.match(read('src/scenes/raidHost.js'), /standRaider: \(mobileType, at, boss = false\) => standLooseFoe\(\{[^\n]*\n[^\n]*\n\s*spawn: \(mt, pos, o\) => exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, loose: true, transient: true, eventFoe: boss \}\),/);
 });
 
-test('AUDIT FB1029f STAR F5 A RITE\'S FAITHFUL NEVER SAYS "UNQUIET": stood as the world\'s deps stand one (placed, its site, transient - scenes/world.js createRiteHost) in the wilds, its elite roll won and every mark forced, it is an event\'s own from its stand - no mark, never "Unquiet", isUnquiet false, no candidate with no record to read - and at a tenth it fights (mutants: the world\'s deps dropping the rule; the pool\'s stamp)', async () => {
+test('AUDIT FB1029g STAR F5 A RITE\'S FAITHFUL NEVER SAYS "UNQUIET": stood as the world\'s deps stand one (placed, its site, transient - scenes/world.js createRiteHost) in the wilds, its elite roll won and every mark forced, it is an event\'s own from its stand - no mark, never "Unquiet", isUnquiet false, no candidate with no record to read - and at a tenth it fights (mutants: the world\'s deps dropping the rule; the pool\'s stamp)', async () => {
   const p = me();
   _forceUnquietForTests(true);
   try {

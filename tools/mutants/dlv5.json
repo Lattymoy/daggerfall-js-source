@@ -1,0 +1,408 @@
+[
+  {
+    "name": "DLV5-index-moved",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "export const CURATED_BLOCK_INDEX = 907000;",
+    "new": "export const CURATED_BLOCK_INDEX = 906000;",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-id-any",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "/^[a-z][a-z0-9-]{2,40}$/.test(rec.id)",
+    "new": "/./.test(rec.id)",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-n-unbounded",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "rec.n < 0 || rec.n >= CURATED_BLOCKS_MAX",
+    "new": "rec.n < 0",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-base-a-border",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "/^[NW][0-9]{7}\\.RDB$/.test(rec.base)",
+    "new": "/^[NWBS][0-9]{7}\\.RDB$/.test(rec.base)",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-types-unread",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "!rec.types.every((t) => types.includes(t))",
+    "new": "false",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-drop-names-nothing",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "[d.model !== undefined, d.flat !== undefined, d.marker !== undefined].filter(Boolean).length !== 1",
+    "new": "[d.model !== undefined, d.flat !== undefined, d.marker !== undefined].filter(Boolean).length > 1",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-add-two-at-once",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "if (kinds !== 1) return 'add: one of model, flat, marker or light';",
+    "new": "if (kinds > 1 && false) return 'add: one of model, flat, marker or light';",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-foe-without-mobile",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "(a.marker === 'foe') !== (a.mobile !== undefined)",
+    "new": "false",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-flat-record-unbounded",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "v >= 0 && v < 1024",
+    "new": "v >= 0",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-anchors-three",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "export const CURATED_ANCHORS_MAX = 1;",
+    "new": "export const CURATED_ANCHORS_MAX = 2;",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-anchor-any-kind",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "if (!DELVE_KIND_NAMES.includes(a?.kind)) return",
+    "new": "if (!a?.kind) return",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-anchor-ward-any",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "export const CURATED_ANCHOR_R = Object.freeze([3, 4]);",
+    "new": "export const CURATED_ANCHOR_R = Object.freeze([3, 4, 5]);",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-drop-any-model",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "if (d.model !== undefined) return o.type === RDB_RESOURCE_TYPES.Model && rdb.modelReferenceList?.[o.resources?.modelResource?.modelIndex]?.modelIdNum === d.model;",
+    "new": "if (d.model !== undefined) return o.type === RDB_RESOURCE_TYPES.Model;",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-drop-a-model-as-flat",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "  if (o.type !== RDB_RESOURCE_TYPES.Flat) return false;\n",
+    "new": "",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-drop-chained",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "const dropped = (o) => !linked.has(o.position) && (rec.drop ?? [])",
+    "new": "const dropped = (o) => (rec.drop ?? [])",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-drop-reach-unread",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "Math.hypot(...metresOf(o).map((v, k) => v - d.at[k])) <= d.r",
+    "new": "true",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-ref-doubled",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "let k = refs.findIndex((m) => m.modelIdNum === id && !m.description);",
+    "new": "let k = -1;",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-rotation-sign",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "Math.round(-deg * ROTATION_DIVISOR)",
+    "new": "Math.round(deg * ROTATION_DIVISOR)",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-height-sign",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "Math.round(-at[1] / GLOBAL_SCALE)",
+    "new": "Math.round(at[1] / GLOBAL_SCALE)",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-base-position-kept",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "servedName: name, position: CURATED_POSITION + rec.n * CURATED_POSITION_STEP,",
+    "new": "servedName: name,",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-added-positions-base",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "position: CURATED_ADD_POSITION + k,",
+    "new": "position: k,",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-treasure-record",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "enemy: 16, foe: 15, treasure: 19 });",
+    "new": "enemy: 16, foe: 15, treasure: 20 });",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-mobile-unread",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "flatOf(archive, record, a.mobile ?? 0)",
+    "new": "flatOf(archive, record, 0)",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-flat-no-model-struct",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "resources: { modelResource: modelNone(), flatResource: flatOf(archive, record, a.mobile ?? 0)",
+    "new": "resources: { modelResource: null, flatResource: flatOf(archive, record, a.mobile ?? 0)",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-anchor-origin-unread",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "at: [a.at[0] + b.originX, a.at[1], a.at[2] + b.originZ]",
+    "new": "at: [a.at[0], a.at[1], a.at[2]]",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-name-any",
+    "file": "src/world/dungeon/curatedBlocks.js",
+    "old": "/^NDLV[0-9]{4}\\.RDB$/.test(String(name ?? ''))",
+    "new": "/^N/.test(String(name ?? ''))",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-lab-draft-ships",
+    "file": "src/world/dungeon/curatedRecords.js",
+    "old": "(rec.n === 0 ? 'n: 0 is the lab\\'s draft' :",
+    "new": "(false ? 'n: 0 is the lab\\'s draft' :",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-id-twice",
+    "file": "src/world/dungeon/curatedRecords.js",
+    "old": ": ids.has(rec.id) ? 'id: twice'",
+    "new": ": false ? 'id: twice'",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-n-twice",
+    "file": "src/world/dungeon/curatedRecords.js",
+    "old": ": ns.has(rec.n) ? 'n: twice'",
+    "new": ": false ? 'n: twice'",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-every-dungeon",
+    "file": "src/world/dungeon/curatedSplice.js",
+    "old": "export const gameMade = (loc) => !!loc?.spawned || loc?.country?.dungeon === true;",
+    "new": "export const gameMade = (loc) => !!loc;",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-lairs-left-out",
+    "file": "src/world/dungeon/curatedSplice.js",
+    "old": "export const gameMade = (loc) => !!loc?.spawned || loc?.country?.dungeon === true;",
+    "new": "export const gameMade = (loc) => !!loc?.spawned;",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-chance-every",
+    "file": "src/world/dungeon/curatedSplice.js",
+    "old": "export const CURATED_CHANCE = 0.5;",
+    "new": "export const CURATED_CHANCE = 1;",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-chance-unread",
+    "file": "src/world/dungeon/curatedSplice.js",
+    "old": "  if (share(id, 0) >= CURATED_CHANCE) return null;\n",
+    "new": "",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-border-taken",
+    "file": "src/world/dungeon/curatedSplice.js",
+    "old": "!border(blocks[j]) && !blocks[j].isStartingBlock",
+    "new": "!blocks[j].isStartingBlock",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-start-taken",
+    "file": "src/world/dungeon/curatedSplice.js",
+    "old": "!border(blocks[j]) && !blocks[j].isStartingBlock",
+    "new": "!border(blocks[j])",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-type-unread",
+    "file": "src/world/dungeon/curatedSplice.js",
+    "old": "const pool = records.filter((r) => r.types.includes(type));",
+    "new": "const pool = records;",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-slot-of-one",
+    "file": "src/world/dungeon/curatedSplice.js",
+    "old": "return { j: slots[pick(id, 2, slots.length)], rec };",
+    "new": "return { j: slots[0], rec };",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-anchor-kind-unbuilt",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "anchors.filter((a) => kinds.includes(a.kind) && fires",
+    "new": "anchors.filter((a) => true && fires",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-count-not-shortened",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "Math.max(0, delveSiteCount(blocks) - fixed.length)",
+    "new": "delveSiteCount(blocks)",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-found-on-an-anchor",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": ".filter((c) => !tooNearTaken(c.pos, held)) : [];",
+    "new": " : [];",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-anchor-family-unread",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "siteKinds(fixed.length + chosen.length, seed, kinds, fixed.map((a) => a.kind))",
+    "new": "siteKinds(fixed.length + chosen.length, seed, kinds)",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-splice-unasked",
+    "file": "src/world/smallerDungeons.js",
+    "old": "return deps.whole ? built : curatedLocation(built);",
+    "new": "return built;",
+    "tests": [
+      "test/world/dlv5_curated.test.js",
+      "test/world/dlv56_audit.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-install-one-index",
+    "file": "src/world/dungeon/curatedInstall.js",
+    "old": "(blocksFile) => curatedBlockOf(blocksFile?.readClassicBlock?.(blocksFile.getBlockIndex(rec.base)) ?? null, rec), CURATED_BLOCK_INDEX + rec.n);",
+    "new": "(blocksFile) => curatedBlockOf(blocksFile?.readClassicBlock?.(blocksFile.getBlockIndex(rec.base)) ?? null, rec), CURATED_BLOCK_INDEX);",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-install-base-unread",
+    "file": "src/world/dungeon/curatedInstall.js",
+    "old": "blocksFile.getBlockIndex(rec.base)",
+    "new": "blocksFile.getBlockIndex(curatedBlockName(rec.n))",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  },
+  {
+    "name": "DLV5-install-unwired",
+    "file": "src/scenes/modWorldData.js",
+    "old": "    installCuratedBlocks();   // DELVE II (DLV5)",
+    "new": "    void installCuratedBlocks;   // DELVE II (DLV5)",
+    "tests": [
+      "test/world/dlv5_curated.test.js"
+    ]
+  }
+]

@@ -438,7 +438,7 @@ test('COATS1 the wiring: both exterior hosts bear the horses each frame; the rig
   assert.match(rd('player/eyeOfTheBeholder/eotbBody.js'), /renderer\?\.evictTexture\?\.\(k\.replace\(':', '_'\)\)/, 'a look left behind on my own rider is let go');
   assert.match(rd('net/peer/peerRiders.js'), /horse: pose\.rc \| 0/);
   assert.match(rd('net/peer/peerRiders.js'), /lookedPixels\(s, raw\)/);
-  assert.match(rd('scenes/world.js'), /rc: riding \? \(player\.transportMode === TRANSPORT_MODES\.Dragon \? dragonLookOfItem\(dragonMountOf\(playerEntity\.items\)\) : riddenHorseLook\(playerEntity\.items \?\? \[\]\)\) \|\| undefined : undefined/);   // PIN MOVED (DRAGON5): a tamed dragon's look on its own ride
+  assert.match(rd('scenes/world.js'), /rc: riding \? \(player\.transportMode === TRANSPORT_MODES\.Dragon \? dragonLookOfItem\(dragonMountOf\(playerEntity\.items\)\) : riddenHorseLook\(playerEntity\.items \?\? \[\]\)\) \|\| undefined : dragonRideLook\(\) \|\| undefined/);   // PIN MOVED (DRAGON5): a tamed dragon's look on its own ride; PIN MOVED (DRAGON-BLUE): an Admin's ride's look off a horse (was: `: undefined`)
   assert.match(rd('world/wagonModels.js'), /horseLook: \(\) => riddenHorseLook\(items\(\)\)/, 'THE ONE CONSTRUCTION SEAM: both hosts\' pools');
   assert.match(rd('scenes/world.js'), /horseArt: \(look = 0\) => !!hcc\.presentation\.horseArt\.ensureLook\(look\)/, 'the town watch\'s throw in its look');
 });

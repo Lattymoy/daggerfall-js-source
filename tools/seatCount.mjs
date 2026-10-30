@@ -4,7 +4,7 @@
 // deriveTownSeats over the game's own rows (the boot pass's, regionHubs.js pickRegionHubs's); each is laid out
 // (world/locationLayout.js) and its bulletin boards tallied as BOARD-COUNT tallies a hub's (tools/boardCount.mjs), so a
 // seat whose blocks place no board is named - PROF0 10.1's "a seat ... whose blocks place no board gets one", met since
-// NOTICE-PANEL (2026-10-29) by the town panel's Notice Board in every settlement, none stood (AUDIT FB1029f R3).
+// NOTICE-PANEL (2026-10-29) by the town panel's Notice Board in every settlement, none stood (AUDIT FB1029g R3).
 //
 // The economy is built so the count does not break it: every cost is per seat, and a guild's influence is capped per
 // account (SEAT0 3.1). The count is recorded in Seats-Arc 14 when Mac has run it.

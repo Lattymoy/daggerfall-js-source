@@ -911,7 +911,7 @@ function* planSeaLanesSteps(from, to, opts = {}) {
   return { pixels, cost: cost + ashore.cost, kinds };
 }
 
-/** SEA-TAUT (bible/01-Overview/bugs/Field-Bugs-2026-10-29f.md): a sea route's pixels pulled taut - from each kept pixel
+/** SEA-TAUT (bible/01-Overview/bugs/Field-Bugs-2026-10-29g.md): a sea route's pixels pulled taut - from each kept pixel
  *  to a later one whose straight line (Bresenham) runs over open water: every pixel of it water and all eight about it
  *  (the kernel builds a square from its corner bytes, so a line past a land pixel's corner may run ashore between the
  *  middles - SEA-SQUARE). The run is galloped out and then bisected, so it ends at a pixel tested clear with the next
@@ -921,7 +921,7 @@ export function seaTaut(pixels, isWater) {
 }
 /** PLAN-SLICES: seaTaut's own body, a generator (planSeaLanesSteps) - each pixel a line asks one cell of the plan's
  *  `tally`, and a yield between two lines once PLAN_YIELD_CELLS are asked; a pixel's water and its open ground kept over
- *  the route's box, typed (AUDIT FB1029f F2: a string-keyed map, in one block, held a long voyage's last frame). */
+ *  the route's box, typed (AUDIT FB1029g F2: a string-keyed map, in one block, held a long voyage's last frame). */
 export function* seaTautSteps(pixels, isWater, tally = null) {
   const n = pixels.length;
   if (n < 3) return pixels.slice();

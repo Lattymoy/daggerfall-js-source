@@ -153,7 +153,7 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
      *  PVP-CONE: my party (`social`, net/social.js) and my foe are `near`, shown off the crosshair too (ui/nameCone.js). */
     mask: (inner, social = null) => (p) => {
       const q = inner ? inner(p) : p;
-      if (!p) return q;   // AUDIT FB1029f R4: no board's point rides the names' pass now
+      if (!p) return q;   // AUDIT FB1029g R4: no board's point rides the names' pass now
       const k = skullOf(p.id), party = !!social?.isPartyPeer?.(p.id), near = foeOf(p.id) || party;
       const shown = k && (!q || now() - (veiled.get(p.id) ?? -Infinity) < VEIL_FRAME_MS) ? nameless(q ?? p) : q;
       noteName(p.id, shown?.name);   // PVP-HUD: the last hits name whom the layer names

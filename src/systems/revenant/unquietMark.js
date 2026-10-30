@@ -52,7 +52,7 @@ export function markUnquiet(entity) {
   entity.unquiet = _force ?? unquietId(entity._voiceId);
   return entity.unquiet;
 }
-/** AN EVENT'S OWN FOE NEVER RISES (STAR-MASTER-FLED, Field-Bugs-2026-10-29f): the Starfall's master, a staff event's
+/** AN EVENT'S OWN FOE NEVER RISES (STAR-MASTER-FLED, Field-Bugs-2026-10-29g): the Starfall's master, a staff event's
  *  boss, a rite's faithful - each stamped `eventFoe` at its stand, before its promotion draws (exteriorFoes.js spawnFoe).
  *  Its fall is its event's. The one rule the mark's gate, isUnquiet and revenantCandidate read (foeTitle.js its copy). */
 export const isEventFoe = (entity) => entity?.eventFoe === true;

@@ -374,7 +374,7 @@ test('TELL9: the enhanced HUD draws the track under the foe\'s health - its stat
   // PIN MOVED (AUDIT TELL U3/U4): the flash on THIS foe's break alone; the word under the track, which the card clears
   assert.match(css, /\.hud-foepoise\.poise-staggered \.hud-poisefill \{ background: #fff; \}\n\.hud-foepoise\.poise-staggered\.poise-flash \.hud-poisefill \{ animation: hud-poise-flash/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{ \.hud-foepoise\.poise-staggered\.poise-flash \.hud-poisefill \{ animation: none; \} \}/);
-  assert.match(css, /body:has\(\.hud-foe\.on\.poised\) \.qtrack \{ --qt-clear: calc\(18px \+ 28px \* var\(--hud-scale, 1\) \+ 30px \+ 74px \* var\(--hud-scale, 1\) \+ var\(--qt-town, 0px\)\); \}/);   // PIN MOVED (AUDIT FB1029f P6): the town panel's height joins the sum
+  assert.match(css, /body:has\(\.hud-foe\.on\.poised\) \.qtrack \{ --qt-clear: calc\(18px \+ 28px \* var\(--hud-scale, 1\) \+ 30px \+ 74px \* var\(--hud-scale, 1\) \+ var\(--qt-town, 0px\)\); \}/);   // PIN MOVED (AUDIT FB1029g P6): the town panel's height joins the sum
   assert.match(css, /\.hitnum-word \{/);
   assert.match(css, /\.hitnum-perfect \{/);
   assert.match(rd('src/scenes/hostCombat.js'), /setFoePoiseReader\(\(f\) => poiseTrack\(f\?\.ai\)\);/, 'the host registers the brain\'s reading (the HUD imports no brain)');

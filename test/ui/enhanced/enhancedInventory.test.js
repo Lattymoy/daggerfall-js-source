@@ -296,8 +296,10 @@ test('U53: a broken item says so, and the WINDOW refuses it', () => {
   // equipItem's, because ItemEquipTable.cs:94-154 has no condition
   // test. This assertion used to read `equipItem(e, dagger) === null`,
   // pinning the gate one seam too low.
+  // PIN MOVED (HAND-DROP, FIELD BUGS 2026-10-29): wear takes the hand a drop on a hand's panel names - the refusal is
+  // the same door's, so a broken piece dropped on a hand is refused in the same words
   assert.match(read('src/ui/enhanced/enhancedInventory.js'),
-    /function wear\(item\) \{[\s\S]*?if \(isBrokenItem\(item\)\) \{ notice = `\$\{named\} is broken and cannot be worn\.`; return render\(\); \}/);   // RF6: `named` is itemLongName's
+    /function wear\(item, hand = null\) \{[\s\S]*?if \(isBrokenItem\(item\)\) \{ notice = `\$\{named\} is broken and cannot be worn\.`; return render\(\); \}/);   // RF6: `named` is itemLongName's
   assert.notEqual(equipItem(e, dagger), null, 'the TABLE below it does not refuse - ItemEquipTable.cs:94-154');
   assert.equal(model(e).worn.size, 1, 'so the slot fills, which is what PlayerEntity.cs:959 relies on');
 });
@@ -904,7 +906,8 @@ test('U59: the doll is the COMPOSITOR\'s, and the schematic is the fallback', ()
   assert.match(fp, /wornmap/);
   // and the compositor is asked to recompose when the kit changes, or
   // the avatar shows yesterday's armour
-  for (const fn of ['function wear(item)', 'function takeOff(slot)']) {
+  // PIN MOVED (HAND-DROP, FIELD BUGS 2026-10-29): wear takes the hand a drop on a hand's panel names
+  for (const fn of ['function wear(item, hand = null)', 'function takeOff(slot)']) {
     const from = src.indexOf(fn);
     assert.ok(from > 0, `${fn} is gone`);
     const body = src.slice(from, src.indexOf('\nfunction ', from + fn.length));

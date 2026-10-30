@@ -172,7 +172,7 @@
   {
     "name": "QP3C-handover-names-none",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      if (heirOf && !f.dead) { const h = f.entity?.revenant?.id ? null : (heirOf(f) ?? null); f._heir = h; if (h) r.e = h; }",
+    "old": "      if (heirOf && !f.dead) { const h = f.entity?.revenant?.id || f._delve ? null : (heirOf(f) ?? null); f._heir = h; if (h) r.e = h; }",
     "new": "      void heirOf;",
     "tests": ["test/scenes/questparty3c.test.js"]
   },
@@ -242,8 +242,8 @@
   {
     "name": "QP3C-hunt-no-party",
     "file": "src/scenes/dungeonContext.js",
-    "old": ": (ownQuestTag(rec) ? peerCandidates().filter((c) => ownShare()?.peerMayHit?.(c.id, rec)) : []))] : null,",
-    "new": ": [])] : null,",
+    "old": ": (ownQuestTag(rec) ? peerCandidates().filter((c) => ownShare()?.peerMayHit?.(c.id, rec)) : [])), ...delve.wards()] : null,",
+    "new": ": []), ...delve.wards()] : null,",
     "tests": ["test/scenes/questparty3c.test.js"]
   },
   {

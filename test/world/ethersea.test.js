@@ -264,7 +264,7 @@ test('ETHER-SEA the crossing\'s waters: out on the open ocean - west of CROSS_X,
   assert.equal(crossingWaters(-200, 300, Infinity, Infinity), true, 'past the Bay\'s west edge, the Eltheric');
   assert.equal(crossingWaters(200, 300, NaN, Infinity), false, 'a distance nobody measured');
   assert.equal(crossingWaters(200, -5000, Infinity, Infinity), false, 'never in the sea\'s box - west of CROSS_X there too');
-  // SEA-ROWS (Field-Bugs-2026-10-29f): every row, out of sight of the sea the world sails - a lane's way, the serpent's ring
+  // SEA-ROWS (Field-Bugs-2026-10-29g): every row, out of sight of the sea the world sails - a lane's way, the serpent's ring
   assert.equal(crossingWaters(200, 300, Infinity, 20), true, 'as far from it as from land');
   assert.equal(crossingWaters(200, 300, Infinity, 19), false, 'by a lane, or the serpent\'s waters');
   assert.equal(crossingWaters(66, 1575, Infinity, 3), false, 'off Sunhold, by its lane');

@@ -263,7 +263,7 @@ async function main() {
   if (process.argv.includes('--locales')) return mergeLocales(apply);
   const v = nextVersions();
   const next = { world: v.world.theirs + 1, acct: v.acct.theirs + 1 };
-  const moves = renumbered(v);   // AUDIT FB1029f: a kind the branch never bumped is main's as it stands
+  const moves = renumbered(v);   // AUDIT FB1029g: a kind the branch never bumped is main's as it stands
   if (moves.includes('world')) console.log(`relay: world${v.world.ours} (ours) -> world${next.world} (past main's world${v.world.theirs})`);
   if (moves.includes('acct')) console.log(`account: acct${v.acct.ours} (ours) -> acct${next.acct} (past main's acct${v.acct.theirs})`);
   if (sweep) {

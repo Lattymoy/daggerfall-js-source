@@ -195,7 +195,7 @@
   {
     "name": "HACKED-GOLD-the-law-version-unmoved",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 15;",
+    "old": "export const ITEM_LAW_VERSION = 16;",
     "new": "export const ITEM_LAW_VERSION = 3;",
     "tests": [
       "test/systems/item/int1_itemlaw.test.js",
@@ -206,7 +206,7 @@
   {
     "name": "HACKED-GOLD-account-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct225';",
+    "old": "export const ACCOUNT_VERSION = 'acct226';",
     "new": "export const ACCOUNT_VERSION = 'acct123';",
     "tests": [
       "test/systems/tech1_roster.test.js",

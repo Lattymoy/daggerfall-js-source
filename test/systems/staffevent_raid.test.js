@@ -119,7 +119,7 @@ test('STAFF-EVENT: RUN AS A RAID - its own monsters, mixed, up to its total; no 
   await tick();
   const boss = log.raiders.at(-1);
   assert.equal(boss.mobileType, 24, 'staff\'s pick: an Orc Warlord');
-  assert.deepEqual([boss.asBoss, log.raiders.slice(0, -1).some((f) => f.asBoss)], [true, false], 'its stand asked as the boss\'s: an event\'s own from it, never a revenant (STAR-MASTER-FLED, AUDIT FB1029f STAR F4)');
+  assert.deepEqual([boss.asBoss, log.raiders.slice(0, -1).some((f) => f.asBoss)], [true, false], 'its stand asked as the boss\'s: an event\'s own from it, never a revenant (STAR-MASTER-FLED, AUDIT FB1029g STAR F4)');
   assert.ok(isStaffBoss(boss.entity));
   assert.equal(boss.entity.maxHealth, 40 * 20, 'staff\'s health pick: 20x');
   assert.equal(eliteSize(boss.entity), 2.5);

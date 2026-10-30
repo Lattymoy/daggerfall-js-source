@@ -95,6 +95,22 @@ export function layoutHearths(blocks, sizeOf = () => null) {
   }));
 }
 
+/** The host's flat size (`sizeOf` for layoutHearths): getTexture(archive), then the classic size where the record is
+ *  there - AUDIT REST-PARTY C7: the law's height is the classic record's (dungeonContext's lawFoot). */
+export function hostFlatSize(arena2) {
+  const textures = new Map();
+  return (archive, record) => {
+    if (!textures.has(archive)) {
+      const t = new TextureFile();
+      let ok = false;
+      try { ok = t.load(new Uint8Array(readFileSync(join(arena2, texName(archive)))), texName(archive)); } catch { ok = false; }
+      textures.set(archive, ok ? t : null);
+    }
+    const t = textures.get(archive);
+    return t && record < t.recordCount ? classicBillboardSize(t, record) : null;
+  };
+}
+
 /** One dungeon's report. `sizeOf` as layoutHearths'. AUDIT REST II: the law's one call reports it all - the candidates,
  *  the landed ones, the fires and the layout fire taken for the entrance's (F5); a palace wants none (F2). */
 export function probeFires(col, blocks, { elite = false, seed = 0, sizeOf } = {}) {
@@ -112,17 +128,7 @@ if (isMain(import.meta.url)) {
   if (!arena2) { console.error('ARENA2_PATH is not set'); process.exit(2); }
   const data = loadData(arena2);
   const getModel = hostModelReader(data.arch);   // AUDIT REST II F6: the host's models, seams patched
-  const textures = new Map();
-  const sizeOf = (archive, record) => {   // the host's: getTexture(archive), then the classic size where the record is there
-    if (!textures.has(archive)) {
-      const t = new TextureFile();
-      let ok = false;
-      try { ok = t.load(new Uint8Array(readFileSync(join(arena2, texName(archive)))), texName(archive)); } catch { ok = false; }
-      textures.set(archive, ok ? t : null);
-    }
-    const t = textures.get(archive);
-    return t && record < t.recordCount ? classicBillboardSize(t, record) : null;   // AUDIT REST-PARTY C7: the law's height is the classic record's (dungeonContext's lawFoot)
-  };
+  const sizeOf = hostFlatSize(arena2);
   const list = all ? RECORD_DUNGEONS : [[argv[0], argv[1]]];
   let short = 0;
   for (const [region, name] of list) {

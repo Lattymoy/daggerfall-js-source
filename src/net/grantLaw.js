@@ -90,7 +90,7 @@ export const GRANT_CHAMPION_TRAITS = 5;
  *    star    - STAR-TUNE: a fallen star's coven (scenes/starfall/starfallHost.js stand): its law's largest wave in one
  *              grant (net/starfall/starfallLaw.js STAR_WAVE_MAX, held equal by the test); a star's waves, its master and
  *              its circle's two calls asked within the burst, a breath's ten seconds a token. The open country's alone.
- *  enc's, camp's and star's `max` are held equal to their homes by the test; the rest are bounds. */
+ *  enc's, camp's, star's and delve's `max` are held equal to their homes by the test; the rest are bounds. */
 export const GRANT_KINDS = Object.freeze({
   enc: Object.freeze({ max: 4, rate: 1 / 60, cap: 6, hostile: true }),
   camp: Object.freeze({ max: 8, rate: 1 / 20, cap: 9, hostile: true }),
@@ -107,17 +107,21 @@ export const GRANT_KINDS = Object.freeze({
   kept: Object.freeze({ max: 24, rate: 1 / 600, cap: 2, hostile: true }),
   encr: Object.freeze({ max: 4, rate: 1 / 60, cap: 6, hostile: true }),
   star: Object.freeze({ max: 24, rate: 1 / 10, cap: 8, hostile: true }),
+  delve: Object.freeze({ max: 12, rate: 1 / 3, cap: 8, hostile: true }),   // DLV3: a dungeon encounter's foes - its law's largest wave a grant (net/delve/delveLaw.js HOLD_WAVE_MAX), a Wellsprings' four pours each 12 s the rate; a world room's alone
 });
 /** GRANT4: the kinds of the open country alone - a world room (a building's, a dungeon's) refuses them `kind`: its stands
  *  roll no road's table, carry no bounty and call no Greater Giant. */
 export const GRANT_OPEN_KINDS = Object.freeze(['enc', 'camp', 'bounty', 'giant', 'encr', 'star']);
+/** DLV3: the kinds of a world room alone (a dungeon's, a building's) - the open country refuses them `kind`: a dungeon
+ *  encounter's foes stand in its dungeon. */
+export const GRANT_ROOM_KINDS = Object.freeze(['delve']);
 /** GRANT8 (Spawn-Grants section 16): the kind the relay makes an `enc` ask's grant while `grantRoll` is on - its species
  *  rolled from its seed (scenes/grantHost.js grantSpecies), so neither its owner nor a forger chooses it. Pure. */
 export const grantKindRolled = (k, roll) => (k === 'enc' && roll ? 'encr' : k);
 /** GRANT4: A STAND'S KIND BY ITS OWN SHAPE (scenes/exteriorFoes.js spawnFoe's options), for a caller that names none - the
  *  first that holds: an ally, a quest's foe, a Greater Giant, a revenant, a stand whose marks its caller decided
- *  (`kept`), the deep's or the Living World's, a loose stand or Wabbajack's change, a marker's or the rite's, else a capped
- *  stand (a band's). Pure. @param {any} o */
+ *  (`kept`), the deep's or the Living World's, a dungeon encounter's, a loose stand or Wabbajack's change, a marker's or
+ *  the rite's, else a capped stand (a band's). Pure. @param {any} o */
 export function grantKindOf(o) {
   if (o?.allied) return 'ally';
   if (o?.questBehaviour) return 'quest';
@@ -125,6 +129,7 @@ export function grantKindOf(o) {
   if (o?.revenant) return 'rev';
   if (o?.kept) return 'kept';
   if (o?.managed) return 'managed';
+  if (o?.delve) return 'delve';   // DLV3: an encounter's foes ask their own kind (a stand a dungeon's encounter makes)
   if (o?.replacing || o?.loose) return 'loose';
   if (o?.site || o?.placed) return 'site';
   return 'band';

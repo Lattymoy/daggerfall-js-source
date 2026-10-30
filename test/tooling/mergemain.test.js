@@ -70,7 +70,7 @@ test('MERGE-MAIN imports: each module\'s names unioned, main\'s order then the b
 });
 
 test('MERGE-MAIN a line number both sides moved: ours + theirs - base, where the three are one text but their numbers (mutants: theirs alone; no base asked)', () => {
-  assert.deepEqual(mergeNumbersHunk(H(['the row `Port-Ledger.md:858`, and :864'], ['the row `Port-Ledger.md:863`, and :869'], ['the row `Port-Ledger.md:853`, and :859'])), ['the row `Port-Ledger.md:868`, and :874']);
+  assert.deepEqual(mergeNumbersHunk(H(['the row `Port-Ledger.md:859`, and :864'], ['the row `Port-Ledger.md:864`, and :869'], ['the row `Port-Ledger.md:854`, and :859'])), ['the row `Port-Ledger.md:869`, and :874']);
   assert.equal(mergeNumbersHunk(H(['row :855 here'], ['row :860 there'], ['row :850 here'])), null, 'words changed too: a person');
   assert.equal(mergeNumbersHunk(H(['row :855'], ['row :860'])), null, 'no base, no arithmetic');
 });
@@ -87,7 +87,7 @@ test('MERGE-MAIN the sweep: a pin outside the conflicts that still names an old 
   assert.equal(sweepLine("  assert.equal(RELAY_VERSION, 'world250');", 'world', [260, 265], 266, 'the merge'), "  assert.equal(RELAY_VERSION, 'world250');");
 });
 
-test('MERGE-MAIN (AUDIT FB1029f) what a merge renumbers: a kind the branch bumped that main reached or passed - never one the branch left at the base, whose pins are main\'s (mutants: the base unread; a branch ahead of main renumbered)', () => {
+test('MERGE-MAIN (AUDIT FB1029g) what a merge renumbers: a kind the branch bumped that main reached or passed - never one the branch left at the base, whose pins are main\'s (mutants: the base unread; a branch ahead of main renumbered)', () => {
   assert.deepEqual(renumbered({ world: { base: 286, ours: 286, theirs: 288 }, acct: { base: 220, ours: 221, theirs: 222 } }), ['acct'], 'the relay never bumped here: main\'s world288 stands');
   assert.deepEqual(renumbered({ world: { base: 286, ours: 287, theirs: 287 }, acct: { base: 220, ours: 220, theirs: 220 } }), ['world'], 'both took 287: the branch\'s goes past');
   assert.deepEqual(renumbered({ world: { base: 286, ours: 288, theirs: 287 }, acct: { base: 220, ours: 220, theirs: 223 } }), [], 'ahead of main: nothing moves');

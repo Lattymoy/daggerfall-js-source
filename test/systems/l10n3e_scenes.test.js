@@ -45,7 +45,7 @@ import { presentNpcInfoText } from '../../src/player/activate.js';
 import { TopicTree, INFO_FACTION_IDS } from '../../src/systems/topicTree.js';
 import { revealGuildHallsOnMap } from '../../src/systems/guild/guildHallReveal.js';
 import { GUILDS, joinGuild } from '../../src/systems/guild/guilds.js';
-import { panelTownOf } from '../../src/scenes/townPanelHost.js';   // NOTICE-PANEL: the settlement's own law (AUDIT FB1029f P2, P7)
+import { panelTownOf } from '../../src/scenes/townPanelHost.js';   // NOTICE-PANEL: the settlement's own law (AUDIT FB1029g P2, P7)
 
 beforeEach(() => { tm._resetTextManagerForTests(); restoreDiscovery(null); setSpellRecordsByIndex(null); });
 

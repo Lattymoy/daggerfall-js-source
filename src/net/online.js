@@ -107,7 +107,7 @@ import { isBattleRoom, isRoyalRoom } from './siege/siegeRef.js';   // SEAT2a par
 import { caravanKeyOf } from './privateInterior.js';   // WAGONS2-VISIT: a caravan's own room (NET-SMOOTH's owned interior is wire.js nativePoseRoom's now, SLIM-FRAME)
 import { relaySupportsCaravan, validCaravanData } from './wire.js';   // WAGONS2-VISIT: what a caravan's owner placed, said to its room
 import { isArenaRoom, validArenaIn } from './arena/arenaLaw.js';   // ARENA4: the arena's hall and its bouts
-import { poseChanged, POSE_TS_MOD, poseTsDiff, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, CLOSE_SAME_ROOM, CLOSE_REPARTITION, CELL_HELLO_LAW, HALO_OF_PARAM, HALO_OF_MAX, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, readAura, readArmory, readIcon, readRibbon, sanitizeChat, validChatItem, validChatItems, chatGate, redGate, dmGate, relaySupportsDm, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, streamsFoes, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, FOES_FULL_MS, FOES_STALE_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questInGate, validQuestFrame, QUEST_SEND_MS, QUEST_HUB_MIN_MS, PARTY_MAX, tokenGate, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, relaySupportsLang, relaySupportsTradeChan, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage, validDuelData, duelGate, duelInGate, DUEL_FRAME_MAX, DUEL_IN_HZ_MAX, relaySupportsBossRef, bodyWordGate, relaySupportsDuelRef, validDuelRefOut, validWedData, wedGate, wedInGate, WED_FRAME_MAX, WED_IN_HZ_MAX, relaySupportsWed, readRenown, renownGate, relaySupportsRenown, RENOWN_ORDER_KEEP_MS, RENOWN_RESEND_MS, lookGate, relaySupportsLook, relaySupportsPartyTravel, relaySupportsRestOpt, relaySupportsEvent, relayKnowsLiveEvent, eventGate, validLiveEvent, LIVE_EVENTS, isSocialRoom, validGateIn, validGateOut, gateGate, relaySupportsGate, relaySupportsOwn, relaySupportsGateSpent, relaySupportsGateSite, relaySupportsGateHeal, relaySupportsCourtWatch, relaySupportsPortents, gatePlaceWire, readGuildTag, readHouse, relaySupportsGuild, GUILD_ORDER_KEEP_MS, guildChatInGate, GUILD_CHAT_ROOM_HZ_MAX, validRaidIn, validRaidOut, raidGate, relaySupportsRaid, validRaidTownsIn, isRegionRoom, validTravellerMark, validTravellerFrame, validTravWords, relaySupportsTravellers, travInGate, TRAV_SEND_MIN_MS, TRAV_WELCOME_MAX, TRAV_STALE_MS, relaySupportsPartyWalk, relaySupportsPartyLead, relaySupportsPartyMap, validAmapFrame, amapBody, AMAP_SEND_MS, AMAP_HUB_MIN_MS, validSiegeIn, validSiegeOut, siegeGate, relayFightsBattles, relayRunsRoyal, validRiteIn, validRiteOut, riteGate, relaySupportsRite, validStarIn, validStarOut, starGate, relaySupportsStar, arenaGate, relaySupportsArena, readArenaOut, validWildData, validWildOut, wildDirected, wildGate, wildInGate, WILD_IN_HZ_MAX, WILD_FRAME_MAX, relaySupportsWildRef, relaySupportsWildStreets, validWildRefOut, relaySupportsWdun, relaySupportsWdunGiants, relaySupportsWdunSea, seaVaultCell, validWdunIn, validWdunOut, BUSY_TOKEN_UNREAD, WIRE2_BATCH_MAX, GROUND_LAW, groundRoom, GRANT_HELLO_LAW, LOOT_HELLO_LAW, lootRoom, validParkYeet, relaySupportsWildCollect, relaySupportsHome, HOME_ORDER_KEEP_MS, validHomeFrame, homeInGate, relaySupportsSeaPvp, SEA_PVP_KINDS, relaySupportsRaidWorld, relaySupportsProvinceRegions, relaySupportsGateLanes, gateLaneWire, relaySupportsWdunWorld, relaySupportsVit, validVitIn, validVitOut, vitGate } from './wire.js';   // SCALE5a: a busy close's word that the token went unread   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
+import { poseChanged, POSE_TS_MOD, poseTsDiff, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, CLOSE_SAME_ROOM, CLOSE_REPARTITION, CELL_HELLO_LAW, HALO_OF_PARAM, HALO_OF_MAX, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, readAura, readArmory, readIcon, readRibbon, sanitizeChat, validChatItem, validChatItems, chatGate, redGate, dmGate, relaySupportsDm, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, streamsFoes, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, FOES_FULL_MS, FOES_STALE_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questInGate, validQuestFrame, QUEST_SEND_MS, QUEST_HUB_MIN_MS, PARTY_MAX, tokenGate, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, relaySupportsLang, relaySupportsTradeChan, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage, validDuelData, duelGate, duelInGate, DUEL_FRAME_MAX, DUEL_IN_HZ_MAX, relaySupportsBossRef, bodyWordGate, relaySupportsDuelRef, validDuelRefOut, validWedData, wedGate, wedInGate, WED_FRAME_MAX, WED_IN_HZ_MAX, relaySupportsWed, readRenown, renownGate, relaySupportsRenown, RENOWN_ORDER_KEEP_MS, RENOWN_RESEND_MS, lookGate, relaySupportsLook, relaySupportsPartyTravel, relaySupportsRestOpt, relaySupportsEvent, relayKnowsLiveEvent, eventGate, validLiveEvent, LIVE_EVENTS, isSocialRoom, validGateIn, validGateOut, gateGate, relaySupportsGate, relaySupportsOwn, relaySupportsGateSpent, relaySupportsGateSite, relaySupportsGateHeal, relaySupportsCourtWatch, relaySupportsPortents, gatePlaceWire, readGuildTag, readHouse, relaySupportsGuild, GUILD_ORDER_KEEP_MS, guildChatInGate, GUILD_CHAT_ROOM_HZ_MAX, validRaidIn, validRaidOut, raidGate, relaySupportsRaid, validRaidTownsIn, isRegionRoom, validTravellerMark, validTravellerFrame, validTravWords, relaySupportsTravellers, travInGate, TRAV_SEND_MIN_MS, TRAV_WELCOME_MAX, TRAV_STALE_MS, relaySupportsPartyWalk, relaySupportsPartyLead, relaySupportsPartyMap, validAmapFrame, amapBody, AMAP_SEND_MS, AMAP_HUB_MIN_MS, validSiegeIn, validSiegeOut, siegeGate, relayFightsBattles, relayRunsRoyal, validRiteIn, validRiteOut, riteGate, relaySupportsRite, validStarIn, validStarOut, starGate, relaySupportsStar, validDelveIn, validDelveOut, delveGate, relaySupportsDelve, arenaGate, relaySupportsArena, readArenaOut, validWildData, validWildOut, wildDirected, wildGate, wildInGate, WILD_IN_HZ_MAX, WILD_FRAME_MAX, relaySupportsWildRef, relaySupportsWildStreets, validWildRefOut, relaySupportsWdun, relaySupportsWdunGiants, relaySupportsWdunSea, seaVaultCell, validWdunIn, validWdunOut, BUSY_TOKEN_UNREAD, WIRE2_BATCH_MAX, GROUND_LAW, groundRoom, GRANT_HELLO_LAW, LOOT_HELLO_LAW, lootRoom, validParkYeet, relaySupportsWildCollect, relaySupportsHome, HOME_ORDER_KEEP_MS, validHomeFrame, homeInGate, relaySupportsSeaPvp, SEA_PVP_KINDS, relaySupportsRaidWorld, relaySupportsProvinceRegions, relaySupportsGateLanes, gateLaneWire, relaySupportsWdunWorld, relaySupportsVit, validVitIn, validVitOut, vitGate } from './wire.js';   // SCALE5a: a busy close's word that the token went unread   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 import { relaySupportsHoldem, holdemGate, validHoldemIn, validHoldemOut, relaySupportsIliac, validIliacIn, validIliacOut, relaySupportsGambit, validGambitIn, validGambitOut } from './wire.js';   // CARDS5: the relay's card table, both ways
 import { RAID_TOWNS_CHUNK, raidLaneOfKey } from './raid/raidLaw.js';   // RAID-ROLL: the towns table's pieces; WW6: a raid's lane
 import { dungeonRoomTag } from './wire.js';   // SD-ONLINE: a dungeon's room carries the size it was built at
@@ -915,6 +915,9 @@ export class OnlineSession {
     this.onDragon = null;         // DRAGON3: (word, room) => void - a dragon's cell's word, or the hub's (my receipt), projected by the wire's validDragonOut
     this._dragonBucket = null;    // DRAGON3: my own dragon words out - dragonGate's law
     this._riteBucket = null;      // WB12d: my own rite words out - riteGate's law
+    this.delveOk = false;         // DELVE II (DLV3): the relay that welcomed my primary socket keeps a dungeon's encounters (relaySupportsDelve) - an older one CLOSES the socket on `dv`
+    this._delveBucket = null;     // DLV3: my own `dv` words out - delveGate's law
+    this.onDelve = null;          // DLV3: (word, room) => void - the dungeon room's word of its encounters (net/wire.js validDelveOut)
     this.starOk = false;          // STAR3: the relay that welcomed my primary socket keeps a fallen star's ledger (relaySupportsStar) - an older one CLOSES the socket on the frame
     this.ww5Ok = false;           // WW5: and keeps a star and a Hollow past the Bay (relaySupportsWw5) - an older one refuses a star word past the Bay's map as junk, and holds no lane's Hollow
     this.onStar = null;           // STAR3: (word, room) => void - a star's cell's word (its ledger, its hold, my receipt) or the hub's (a hold anywhere, my receipt, the night's held stars), projected by the wire's validStarOut
@@ -2151,6 +2154,30 @@ export class OnlineSession {
     return !!h?.starOk && h.status === 'open' && !!h.ws;
   }
 
+  /** DELVE II (DLV3): a word at the dungeon's encounters (net/wire.js validDelveIn) - down my own socket, in the dungeon's
+   *  room, DELVE_HZ_MAX a second, never at a relay that would close the socket for it. TRUE MEANS THE WORD LEFT THE SOCKET. */
+  sendDelve(word) {
+    const w = validDelveIn(word);
+    if (!w || !this.delveReady()) return false;
+    const gate = delveGate(this._delveBucket, this._now());
+    if (!gate.pass) return false;
+    this._poseCurrent();   // the room reads the ward off the pose it last heard
+    try { this._ws.send(JSON.stringify({ t: 'dv', ...w })); } catch { return false; }
+    this._delveBucket = gate.bucket; this.stats.sent++;
+    return true;
+  }
+  /** DLV3: my own socket's pose made current before a word the room judges by it - a still player's pose waits for its
+   *  heartbeat (HEARTBEAT_MS) and a lone one's for LONE-SLEEP's minute, and the ward is read off it. Sent only when it
+   *  moved, as sendPose sends it (_poseOut: a body lying down is said lying). */
+  _poseCurrent() {
+    const pose = this._pose, now = this._now();
+    if (!pose || !this.presence || !this.welcomed || (this._lastSent && !poseChanged(this._lastSent, pose))) return;
+    if (this._send({ t: 'pose', p: this._poseOut(pose) })) { this._earOf(this._ws).posed = now; this._lastSent = { ...pose }; this._lastSentAt = now; this.stats.poses++; }
+  }
+  /** DLV3: whether a `dv` word would leave now - my socket welcomed (SD-HELLO: `delveOk` is the last welcome's, and a
+   *  reconnect's socket opens before its own), in a dungeon's room, at a relay that keeps its encounters. */
+  delveReady() { return this.delveOk && this.welcomed && isWorldRoom(this.room); }
+
   /** SD3: a Super dungeon found (net/wire.js validSdIn - its slot and the map pixel I stand on at its door) - down the
    *  socket of the CELL that pixel is in (my own cell's or a halo's, the rite's law), SD_HZ_MAX a second, never at a relay
    *  that would close the socket for it. TRUE MEANS THE WORD LEFT THE SOCKET. */
@@ -2745,10 +2772,7 @@ export class OnlineSession {
     // is due (HALO-THIN, haloPoseDue); AUDIT WORLD6b-iii(b) A5: through every OPEN socket, my own cell's down or not (the
     // halos rode out nothing while the fan sat behind the primary's send), and then whole
     if (!(this._ws && this.status === 'open') && ![...this._halo.values()].some((h) => h.status === 'open' && h.ws)) return false;   // nowhere to say it: nothing stamped
-    const pl = this.poseRide?.() ?? null;   // EG-H1: RIDDEN POSES - my ride on a breach's moving piece, when I stand on one
-    const ab = this.poseAboard?.() ?? null;   // DECK-POSE: and my place on a boat's deck, when I stand aboard one
-    const dn = this.poseDown?.() ?? null;   // AUDIT WORLD-EVENTS L1-4: my body lying down where it fell (a made level keeps me for a raise) - its place, still, dying
-    const out = { ...pose, ...(dn ? { x: dn[0], y: dn[1], z: dn[2], mv: 0, dd: 1 } : {}), ...(pl && !dn ? { pl } : {}), ...(ab ? { ab } : {}), ts: this._stampTs() };   // SCALE2b: one send time for every room's copy - that is what lets a listener order them
+    const out = this._poseOut(pose);   // SCALE2b: one send time for every room's copy - that is what lets a listener order them
     // RPT1026-SECNET: a stalled line is handed no burst to deliver (LINE_STALL_MS) - the pose waits, the latest goes
     let went = this._poseHeld(this._ws, now) ? false : this._send({ t: 'pose', p: out });
     if (went) this._earOf(this._ws).posed = now;
@@ -2765,6 +2789,14 @@ export class OnlineSession {
     if (!went) return false;
     this._lastSent = { ...pose }; this._lastSentAt = now; this.stats.poses++;
     return true;
+  }
+
+  /** A pose frame's body, one home (sendPose, _poseCurrent): my pose with what it rides on, and its send time. */
+  _poseOut(pose) {
+    const pl = this.poseRide?.() ?? null;   // EG-H1: RIDDEN POSES - my ride on a breach's moving piece, when I stand on one
+    const ab = this.poseAboard?.() ?? null;   // DECK-POSE: and my place on a boat's deck, when I stand aboard one
+    const dn = this.poseDown?.() ?? null;   // AUDIT WORLD-EVENTS L1-4: my body lying down where it fell (a made level keeps me for a raise) - its place, still, dying
+    return { ...pose, ...(dn ? { x: dn[0], y: dn[1], z: dn[2], mv: 0, dd: 1 } : {}), ...(pl && !dn ? { pl } : {}), ...(ab ? { ab } : {}), ts: this._stampTs() };
   }
 
   /** HALO-THIN (AUDIT B F1): does this halo room report a player in range of `pose` that my own cell's room does not - one
@@ -3710,7 +3742,7 @@ export class OnlineSession {
       else { const h = this._halo.get(room); if (h) h.sevOk = relaySupportsStaffEvents(relayV); }
       if (primary) this.riteOk = relaySupportsRite(relayV);   // WB12d: the cell keeps the rite - an older relay closes the socket on `rite`
       else { const h = this._halo.get(room); if (h) h.riteOk = relaySupportsRite(relayV); }
-      if (primary) { this.starOk = relaySupportsStar(relayV); this.ww5Ok = relaySupportsWw5(relayV); }   // STAR3: the cell keeps a fallen star - an older relay closes the socket on `star`; WW5: and a province's
+      if (primary) { this.starOk = relaySupportsStar(relayV); this.ww5Ok = relaySupportsWw5(relayV); this.delveOk = relaySupportsDelve(relayV); }   // STAR3: the cell keeps a fallen star - an older relay closes the socket on `star`; WW5: and a province's
       else { const h = this._halo.get(room); if (h) { h.starOk = relaySupportsStar(relayV); h.ww5Ok = relaySupportsWw5(relayV); } }   // WW5: a halo says for itself (AUDIT RAID R8b's law)
       if (primary) this.egOk = relaySupportsEg(relayV);   // EG-PLAY: a relay that opens Elite Breaches - an older one closes the socket on `eg`
       if (primary) this.ktOk = relaySupportsKetch(relayV);   // KETCH: a relay that keeps a crew's ship - an older one closes the socket on `kt`
@@ -3952,6 +3984,11 @@ export class OnlineSession {
       // own law; from any other room it is dropped
       const r = validRiteOut(m);
       if (r && isSocialRoom(room)) this._deliver('rite', () => this.onRite?.(r, room));
+    } else if (m.t === 'dv') {
+      // DELVE II (DLV3): the dungeon room's word of its encounters - a site's state, what moved it, a vault's answer -
+      // projected by the wire's own law; from any other room it is dropped (scenes/delve/delveHost.js decides what it means)
+      const r = validDelveOut(m);
+      if (r && isWorldRoom(room)) this._deliver('delve', () => this.onDelve?.(r, room));
     } else if (m.t === 'star') {
       // STAR3: a star's cell's word (its ledger, its hold, my receipt - on any cell socket I hold, my own cell's or a halo's)
       // or the hub's (a hold anywhere, my receipt, the night's held stars at my hello), projected by the wire's own law; a

@@ -377,7 +377,7 @@ export function townTipOf({ name, p, prev, raided = false, players = 0, seat = n
   return { title: name, lines };
 }
 /**
- * NOTICE-PANEL (bible/01-Overview/bugs/Field-Bugs-2026-10-29f.md): A TOWN'S LINES ON THE PANEL under the compass - the
+ * NOTICE-PANEL (bible/01-Overview/bugs/Field-Bugs-2026-10-29g.md): A TOWN'S LINES ON THE PANEL under the compass - the
  * card's lines in the owner's order ("the town name, guild control, prosperity"): a seat's own card lines or the area's
  * holder, then the economy, the prices and the strongest reason. `area` null in a region with no seat, which no guild
  * can hold, so control is left out (the owner: "If a place cannot be guild controlled, then this can be left out").

@@ -87,7 +87,7 @@ test('AUDIT TESA II P7/P13 (ARENA2) THE ROWS PAST THE BAY on the freeware\'s tra
   const t = arenaTemplates(gameRows());
   const px = arenaPixels();
   const rows = pastBayPlaceRows({ pixels: px, templateOf: (p) => arenaTemplateOf(t, p), capitals: true });
-  const slices = CAPITALS.reduce((n, c) => { const D = capitalDims(c); return n + D.w * D.h; }, 0);   // PIN MOVED (AUDIT FB1029f P1): a span is w by h - its square read Alinor's and Torval's sea slices out
+  const slices = CAPITALS.reduce((n, c) => { const D = capitalDims(c); return n + D.w * D.h; }, 0);   // PIN MOVED (AUDIT FB1029g P1): a span is w by h - its square read Alinor's and Torval's sea slices out
   const pinned = px.stood.filter((p) => p.pinned).length;
   assert.deepEqual([rows.length, slices, pinned], [px.stood.length - pinned + slices, 633, 7], 'the slices, and the stood places but the pinned');   // PIN MOVED (TS5): the Imperial City seven pixels a side; PIN MOVED (IC-GRAND): twenty-five (625 and the other six capitals' six)
   const ic = CAPITALS.findIndex((c) => c.name === 'Imperial City'), at = capitalPin({ name: CAPITALS[ic].name, province: CAPITALS[ic].province });

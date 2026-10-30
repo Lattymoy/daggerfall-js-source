@@ -371,24 +371,24 @@ the client (`scenes/starfall/starfallHost.js`):
 - **The master is a world boss.** Its body carries `entity.worldBoss` on every screen - the owner's, a handed one, a
   peer's copy - and no witch of its coven does: its fall is the star's own deed, which the festival's finds pay once as a
   held star (section 12, "one deed, one find"), never again as an elite's body.
-- **The master never runs (STAR-MASTER-FLED, `01-Overview/bugs/Field-Bugs-2026-10-29f.md`).** A player's report: an
+- **The master never runs (STAR-MASTER-FLED, `01-Overview/bugs/Field-Bugs-2026-10-29g.md`).** A player's report: an
   Unquiet Elite Daedra Lord was struck, ran, became their revenant, and the star waited on it until dawn - its fall
   counts only with a body. The master is an event's own foe from its stand (`entity.eventFoe`, asked of the pool before
-  its elite's promotion draws the mark - AUDIT FB1029f STAR F3) and a world boss from its landing: it draws no mark,
+  its elite's promotion draws the mark - AUDIT FB1029g STAR F3) and a world boss from its landing: it draws no mark,
   never breaks, rises from no deed and wears no "Unquiet" (`06-Systems/Revenants.md` section 51, the one rule a staff
   event's boss and a rite's faithful share). Pinned through the real street pool and this host
   (`test/scenes/starfall/star5_host.test.js`, `test/systems/revenant/auditunquiet.test.js`).
-- **A master gone with no fall is stood again (STAR-MASTER-FLED; AUDIT FB1029f STAR F1, F6, F7).** One gone from the pool
+- **A master gone with no fall is stood again (STAR-MASTER-FLED; AUDIT FB1029g STAR F1, F6, F7).** One gone from the pool
   with no body and no `mf` said (a dispel, a Wabbajack's removal) is let go, and stood again whole once nothing of its
   site - mine or a peer's copy - has stood for `STAR_RESTAND_MS` since its going (`staffEvents.js` staffBossLost's
   shape; C4 stands one that never stood the same way). A Wabbajack's changed foe lands inside that wait and is claimed
   the master, never stood beside a fresh one (AUDIT WB12d C11). One stood again calls its circle afresh, and the bar's
   fall moment needs a body, cleared when a master is taken.
-- **A master handed on is its heir's (AUDIT FB1029f STAR F2).** Handed alive at a door or a death (`exteriorFoes.js`
+- **A master handed on is its heir's (AUDIT FB1029g STAR F2).** Handed alive at a door or a death (`exteriorFoes.js`
   letGo marks it `_gone`), the master is the heir's: this screen gives the star up at once - its sites nobody's, its
   word `o:0` - and holds it again only `STAR_YIELD_MS` (twice `STAR_ORPHAN_MS`) on, by when the heir holds it, and it
-  never stands a master over the heir's copy. Mutants in `tools/mutants/fb1029f_fieldbugs.json` and
-  `tools/mutants/audit_fb1029f_star.json`.
+  never stands a master over the heir's copy. Mutants in `tools/mutants/fb1029g_fieldbugs.json` and
+  `tools/mutants/audit_fb1029g_star.json`.
 
 ## 5. The relay holds the star
 

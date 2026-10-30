@@ -12,6 +12,7 @@ import { HOME_ARENA_MAP_ID, HOME_ARENA_CELL, homeInArenaCell, RENT_ANCHOR_MOVED 
 import { ARENA_CELL, inArenaCell } from '../../src/world/arena/arenaCity.js';
 import { CASTLE_DAGGERFALL_MAP_ID } from '../../src/world/actionSystem.js';
 import { guildHallOwner } from '../../src/net/hallLaw.js';
+import { DECOR_REST_ID } from '../../src/net/decorLaw.js';   // AUDIT FB1029f A1
 
 const DF = HOME_ARENA_MAP_ID;
 const key = (x, y, r) => (x << 16) | (y << 8) | r;
@@ -204,4 +205,18 @@ test('ARENA4b the unread moves: listed for the character that moved them, the re
   assert.deepEqual((await S.call('/v1/homes/arena-seen', { mapId: DF, from: OLD }, owner.secret)).body, { ok: true, seen: false }, 'once');
   assert.deepEqual((await list(owner, R.id)).body.moves, [], 'read, not listed again');
   assert.equal(realmAt(S.env, R.id).seq, R.at().seq);
+});
+
+test('AUDIT FB1029f A1: a home moved carries who may rest with it (REST-GUEST, the home\'s own row), leaves its pieces\' rows behind with its pieces, and takes no row an earlier home at the new key left (mutants: AUDITFB1029F-A1-move-drops-rest, AUDITFB1029F-A1-move-keeps-old, AUDITFB1029F-A1-move-takes-orphan)', async (t) => {
+  t.mock.method(Date, 'now', () => T * 1000);
+  const { raw, owner, R, move } = await stood();
+  const access = raw.prepare(`INSERT INTO decor_access (map_id, building_key, piece_id, kind, mode, friends) VALUES (?, ?, ?, ?, 'friends', '[]')`);
+  access.run(DF, OLD, DECOR_REST_ID, 'rest');
+  access.run(DF, OLD, 'bench1', 'storage');
+  access.run(DF, NEW, 'stray', 'storage');   // a row an earlier home at the new key left
+  const r = await move(owner, { realm: R.at() });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  const at = (k) => raw.prepare('SELECT piece_id, kind FROM decor_access WHERE map_id = ? AND building_key = ? ORDER BY piece_id').all(DF, k).map((r) => ({ ...r }));
+  assert.deepEqual(at(NEW), [{ piece_id: DECOR_REST_ID, kind: 'rest' }], 'who may rest, carried; no stray of before');
+  assert.deepEqual(at(OLD), [], 'the old key keeps nothing');
 });

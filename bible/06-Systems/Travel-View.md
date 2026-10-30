@@ -2848,22 +2848,22 @@ a pond, is its harbor's sea).
 `tvSeaAsk`), and the lanes are the planner's. `scenes/exterior.js` sails nowhere; `scenes/worldModes.js` and
 `scenes/dungeonContext.js` stand no sea. Ledger A (START2).
 
-**Taut (SEA-TAUT, `01-Overview/bugs/Field-Bugs-2026-10-29f.md`; a player: "it takes forever to get to the fights that
+**Taut (SEA-TAUT, `01-Overview/bugs/Field-Bugs-2026-10-29g.md`; a player: "it takes forever to get to the fights that
 aren't near to the shore").** The ends' floods went breadth first, a diagonal step counted as one, so open water due
 east sailed as a "Λ": forty voyages past the Bay sailed a median 1.173 of the straight line, p90 1.364, max 1.403 (the
 planner at main's 043338ef6). The floods now count a step's own length (buckets a pixel wide, exact here), and the
 sailed stretch is pulled taut (`seaTaut`) over open water - each pixel of a run water and all eight about it, since a
 run past a land pixel's corner can go ashore between the middles (SEA-SQUARE). A coast keeps the route's own steps. A
 sailed step is a straight run now, as a FREE walk's is. After: median 1.001, p90 1.004, max 1.039. Pinned by
-`test/systems/travel/fb1029f_seataut.test.js`.
+`test/systems/travel/fb1029g_seataut.test.js`.
 
-**The pull in slices (SEA-TAUT; AUDIT FB1029f F2).** The pull ran as one block, its water in a string-keyed map and
+**The pull in slices (SEA-TAUT; AUDIT FB1029g F2).** The pull ran as one block, its water in a string-keyed map and
 none of it in the plan's tally: on ten of twelve long voyages the last slice held the frame 67 to 147 ms (warm, the
 least of three runs). It is a generator now (`seaTautSteps`): each pixel a line asks is one cell of the tally, a
 yield comes between two lines once PLAN_YIELD_CELLS are asked, and the water and the open ground are typed arrays over
 the route's box. The same voyages' last slice takes 5 to 30 ms, and their longest slice anywhere 54 ms (the floods' and
 the lanes' own). The pull's cells are the plan's: a long voyage plans in a slice or two more (Solitude to Elden Root
-27 slices, 26 before). Pinned by the same file; mutants `tools/mutants/audit_fb1029f_sea.json` (AFB-SEA-F2).
+27 slices, 26 before). Pinned by the same file; mutants `tools/mutants/audit_fb1029g_sea.json` (AFB-SEA-F2).
 
 ## VOYAGER2.1 - the roads past the Bay walked as roads (2026-10-26, KPbICA's spec, forwarded by the owner)
 

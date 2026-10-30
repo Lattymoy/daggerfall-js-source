@@ -243,10 +243,12 @@ export const ITEM_BROKEN_TEXT_ID = 29;
 export const isBrokenItem = (item) => item?.currentCondition != null && item.currentCondition < 1;
 
 /** EquipItem verbatim: the unequipped list, or null when the item
- *  cannot equip. */
-export function equipItem(entity, item) {
+ *  cannot equip. HAND-DROP: `hand` puts a held piece in THAT hand, where the hand law
+ *  lets it (mayHold) - the enhanced pack's drop on a hand's panel. DFU's EquipItem has no
+ *  target: GetEquipSlot takes the first open hand, else the right. */
+export function equipItem(entity, item, hand = null) {
   const slots = equipTableOf(entity);
-  const slot = getEquipSlot(entity, item);   // computed ONCE up front (the DFU order)
+  const slot = hand == null ? getEquipSlot(entity, item) : mayHold(item, hand) ? hand : EQUIP_SLOTS.None;   // computed ONCE up front (the DFU order)
   if (slot === EQUIP_SLOTS.None) return null;
   if (item.group === 'Weapons' && item.templateIndex === WEAPONS.Arrow) return null;   // cannot equip arrows
   // AUDIT 63 F23: NO condition gate here. ItemEquipTable.cs:94-154
@@ -284,6 +286,16 @@ export function equipItem(entity, item) {
 
 export const isEquipped = (item) => item.equipSlot != null;
 
+/** THE HAND LAW, one home (characters/equipTable.js getItemHands): an Either piece goes in either hand, a LeftOnly one
+ *  (a shield) the left, a RightOnly or two-handed one the right. SWAP-HANDS, the pack's hand drop and equipItem's
+ *  `hand` all ask it. */
+export function mayHold(item, hand) {
+  const h = getItemHands(item);
+  if (hand === EQUIP_SLOTS.LeftHand) return h === ITEM_HANDS.Either || h === ITEM_HANDS.LeftOnly;
+  if (hand === EQUIP_SLOTS.RightHand) return h === ITEM_HANDS.Either || h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both;
+  return false;
+}
+
 /** SWAP-HANDS (2026-10-08, the owner: "the game should also let you swap out left and right hand in the inventory (right
  *  now you have to put both in the inventory again and requip it)"): the pieces in the two hands change hands - each by
  *  the hand law the equip table itself keeps (characters/equipTable.js getItemHands): a piece held in EITHER hand may go
@@ -294,12 +306,8 @@ export function canSwapHands(entity) {
   const slots = equipTableOf(entity);
   const R = slots[EQUIP_SLOTS.RightHand], L = slots[EQUIP_SLOTS.LeftHand];
   if (!R && !L) return { ok: false, why: 'Your hands are empty.' };
-  const may = (item, to) => {
-    const h = getItemHands(numeric(item));
-    return h === ITEM_HANDS.Either || (to === EQUIP_SLOTS.LeftHand ? h === ITEM_HANDS.LeftOnly : h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both);
-  };
-  if (R && !may(R, EQUIP_SLOTS.LeftHand)) return { ok: false, why: `${R.name ?? 'That'} can only be held in the right hand.` };
-  if (L && !may(L, EQUIP_SLOTS.RightHand)) return { ok: false, why: `${L.name ?? 'That'} can only be held in the left hand.` };
+  if (R && !mayHold(R, EQUIP_SLOTS.LeftHand)) return { ok: false, why: `${R.name ?? 'That'} can only be held in the right hand.` };
+  if (L && !mayHold(L, EQUIP_SLOTS.RightHand)) return { ok: false, why: `${L.name ?? 'That'} can only be held in the left hand.` };
   return { ok: true };
 }
 export function swapHands(entity) {
@@ -388,16 +396,16 @@ export function seedStartingEquipment(entity) {
 
 /** AC-COMPARE (FIELD BUGS 2026-09-29d): WHAT A WEAR TAKES OFF - EquipItem's three unequip arms
  *  (ItemEquipTable.cs:117-137), in its own order, as the slots they empty: a two-hander clears both hands (:117-122),
- *  a LeftOnly piece - a shield, or a bow under BowLeftHandWithSwitching - bumps a two-hander held right (:125-131), and
- *  the destination's occupant swaps out (alwaysEquip, :134-137). ONE LAW: equipItem takes off exactly these, and the
- *  enhanced pack's card reads them to say what a wear would replace before it is worn. `slot` is getEquipSlot's
- *  answer, computed once by the caller (the DFU order); None takes nothing off. A slot may repeat (a two-hander's own
- *  hand) and an empty one takes nothing off. Pure: the table is read, never written. */
+ *  a piece put in the left hand bumps a two-hander held right (:125-131 ask LeftOnly - a shield, a switching bow - and
+ *  GetEquipSlot puts every LeftOnly piece there; HAND-DROP's `hand` puts others), and the destination's occupant swaps
+ *  out (alwaysEquip, :134-137). ONE LAW: equipItem takes off exactly these, and the enhanced pack's card reads them to
+ *  say what a wear would replace. `slot` is getEquipSlot's answer or equipItem's `hand`, computed once by the caller;
+ *  None takes nothing off. A slot may repeat (a two-hander's own hand). Pure: the table is read, never written. */
 export function wearLeavers(entity, item, slot = getEquipSlot(entity, item)) {
   if (!item || slot === EQUIP_SLOTS.None) return [];
   const out = [];
   if (item.group === 'Weapons' && getItemHands(item) === ITEM_HANDS.Both) out.push(EQUIP_SLOTS.LeftHand, EQUIP_SLOTS.RightHand);   // 2H clears both hands
-  if (getItemHands(item) === ITEM_HANDS.LeftOnly) {
+  if (slot === EQUIP_SLOTS.LeftHand) {
     const right = equipTableOf(entity)[EQUIP_SLOTS.RightHand];
     if (right && getItemHands(right) === ITEM_HANDS.Both) out.push(EQUIP_SLOTS.RightHand);   // a shield bumps a held 2H
   }
