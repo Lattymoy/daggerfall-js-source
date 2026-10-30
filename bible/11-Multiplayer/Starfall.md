@@ -518,7 +518,7 @@ said: the count and the Renown the row credited its character
 The device marks a kept receipt whose attempt went unanswered (`lost`: no answer, and no refusal the service made) and,
 on such a `claimed`, finishes it once - the act owed, the line said, the Renown adopted by the character that held it -
 the mark cleared as it finishes, so an answer heard is never finished twice and another device's row never at all
-(`net/starfall/starClaims.js:"const found = !counted && answer?.ok && answer.data?.why === 'claimed' && answer.data?.own === true && e.lost === true;"`).
+(`net/starfall/starClaims.js:"const found ="`).
 
 **The act is the holder's (AUDIT STARFALL 7, AS BUILT).** A receipt is kept with the character that held the star, and
 its act is that character's quests': noted while it stands here (`createStarClaims`'s `who`, the Starfall host's
@@ -528,7 +528,7 @@ already the holder's alone.
 
 **The Heart-Star's act (T-A, AS BUILT).** A counted Heart-Star (`systems/starfall/starfallNight.js` `heartStar`, off the
 receipt's night and star) notes `heart-star-held` beside `star-held` in the same turn
-(`net/starfall/starClaims.js:"const noteStar = (heart) => { noteAct('star-held'); if (heart) noteAct('heart-star-held'); };"`),
+(`net/starfall/starClaims.js:"const noteStar ="`),
 an act of the endgame family as its star's - so the festival's finds hear the two as one deed and ask one find
 (`systems/festival/festivalClient.js` ONE DEED, ONE FIND). The line's scripts may ask it as an optional objective.
 

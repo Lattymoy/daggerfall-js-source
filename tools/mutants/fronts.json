@@ -82,8 +82,8 @@
   {
     "name": "FRONTS-star-unfronted",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": " && starfallRuns(starTimes(n, k).fallAt) && frontStands(starFrontDay(n, k), starLaneOf(k));",
-    "new": " && starfallRuns(starTimes(n, k).fallAt);",
+    "old": "export const starInWindow = (n, k) =>\n  starOk(n, k) && starfallRuns(starTimes(n, k).fallAt) && frontStands(starFrontDay(n, k), starLaneOf(k));",
+    "new": "export const starInWindow = (n, k) => starOk(n, k) && starfallRuns(starTimes(n, k).fallAt);",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-FRONTS-A5-starOk-fronted",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "&& siteEventLaneOpen(starLaneOf(k));\n",
-    "new": "&& siteEventLaneOpen(starLaneOf(k)) && frontStands(frontDayOfMinute(sharedClassicMinutes(starTimes(n, k).fallAt)), starLaneOf(k));\n",
+    "old": "  siteEventLaneOpen(starLaneOf(k));",
+    "new": "  siteEventLaneOpen(starLaneOf(k)) &&\n  frontStands(frontDayOfMinute(sharedClassicMinutes(starTimes(n, k).fallAt)), starLaneOf(k));",
     "tests": [
       "test/net/fronts1_law.test.js",
       "test/net/starfall/star1_law.test.js"

@@ -67,8 +67,8 @@
   {
     "name": "AUDIT-STAR-W3-guest-explains",
     "file": "src/net/starfall/starClaims.js",
-    "old": "'Star not recorded. Add a username within a week to keep it.'",
-    "new": "'This star is not on your record yet. Only registered accounts keep one. Add a username this week and it counts.'",
+    "old": "  guest: () => t('starfall.claim.guest', 'Star not recorded. Add a username within a week to keep it.'),",
+    "new": "  guest: () =>\n    t(\n      'starfall.claim.guest',\n      'This star is not on your record yet. Only registered accounts keep one. Add a username this week and it counts.',\n    ),",
     "tests": [
       "test/systems/starfall/auditstar.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "AUDIT-STAR-W5-day-full-old",
     "file": "src/net/starfall/starClaims.js",
-    "old": "'You have held enough stars for today.'",
-    "new": "'You have been counted for every star one day allows.'",
+    "old": "  dayFull: () => t('starfall.claim.dayFull', 'You have held enough stars for today.'),",
+    "new": "  dayFull: () => t('starfall.claim.dayFull', 'You have been counted for every star one day allows.'),",
     "tests": [
       "test/systems/starfall/auditstar.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "AUDIT-STAR-W5-recorded-old",
     "file": "src/net/starfall/starClaims.js",
-    "old": "t('starfall.claim.recorded', 'Star recorded. Stars held: {n}.', { n })",
-    "new": "t('starfall.claim.recorded', 'The star is on your record. Stars held: {n}.', { n })",
+    "old": "      : t('starfall.claim.recorded', 'Star recorded. Stars held: {n}.', { n }),",
+    "new": "      : t('starfall.claim.recorded', 'The star is on your record. Stars held: {n}.', { n }),",
     "tests": [
       "test/systems/starfall/auditstar.test.js"
     ]

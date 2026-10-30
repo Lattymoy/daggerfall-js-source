@@ -353,8 +353,8 @@
   {
     "name": "STAR7-no-act",
     "file": "src/net/starfall/starClaims.js",
-    "old": "const noteStar = (heart) => { noteAct('star-held'); if (heart)",
-    "new": "const noteStar = (heart) => { if (heart)",
+    "old": "    noteAct('star-held');\n    if (heart) noteAct('heart-star-held');",
+    "new": "    if (heart) noteAct('heart-star-held');",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "STAR7-settled-forgotten",
     "file": "src/net/starfall/starClaims.js",
-    "old": "settled.add(e.r); markSettled(live(e.r)); keep(",
-    "new": "keep(",
+    "old": "          settled.add(e.r);\n          markSettled(live(e.r));\n          keep(kept().filter((k) => k.r !== e.r));",
+    "new": "          keep(kept().filter((k) => k.r !== e.r));",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "STAR7-any-account",
     "file": "src/net/starfall/starClaims.js",
-    "old": "if (!mine || live(e.r)?.s !== mine) continue;   // another account's waits for its own sign-in",
-    "new": "if (!mine) continue;   // another account's waits for its own sign-in",
+    "old": "        if (!mine || live(e.r)?.s !== mine) continue; // another account's waits for its own sign-in",
+    "new": "        if (!mine) continue; // another account's waits for its own sign-in",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "STAR7-guest-said-again",
     "file": "src/net/starfall/starClaims.js",
-    "old": "answer.data?.why === 'guest' && !guestSaid.has(e.r)) {",
-    "new": "answer.data?.why === 'guest') {",
+    "old": "        } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(e.r)) {",
+    "new": "        } else if (answer?.ok && answer.data?.why === 'guest') {",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "STAR7-spoils-ungated",
     "file": "src/net/starfall/starClaims.js",
-    "old": "const given = answer?.ok && answer.data?.spoils === true ? await granted(onSpoils, e, answer.data) : true;",
-    "new": "const given = answer?.ok ? await granted(onSpoils, e, answer.data) : true;",
+    "old": "        const given = answer?.ok && answer.data?.spoils === true ? await granted(onSpoils, e, answer.data) : true; // the spoils, this claim's",
+    "new": "        const given = answer?.ok ? await granted(onSpoils, e, answer.data) : true; // the spoils, this claim's",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "STAR7-spoils-unawaited",
     "file": "src/net/starfall/starClaims.js",
-    "old": "if (given && starClaimVerdict(answer) === 'done')",
-    "new": "if (starClaimVerdict(answer) === 'done')",
+    "old": "        if (given && starClaimVerdict(answer) === 'done') {",
+    "new": "        if (starClaimVerdict(answer) === 'done') {",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "STAR7-expiry-ignored",
     "file": "src/net/starfall/starClaims.js",
-    "old": "return c && c.signed && (now == null || c.e > now) ? c : null; };",
-    "new": "return c && c.signed ? c : null; };",
+    "old": "    return c && c.signed && (now == null || c.e > now) ? c : null;",
+    "new": "    return c && c.signed ? c : null;",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "STAR7-record-zero",
     "file": "src/net/starfall/starClaims.js",
-    "old": "return rec.held > 0 ? String(rec.held) : t('starfall.claim.noneYet', 'None yet');",
-    "new": "return String(rec.held);",
+    "old": "  return rec.held > 0 ? String(rec.held) : t('starfall.claim.noneYet', 'None yet');",
+    "new": "  return String(rec.held);",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ]
@@ -520,8 +520,8 @@
   {
     "name": "B3-lost-never-marked",
     "file": "src/net/starfall/starClaims.js",
-    "old": "        if (unheard !== !!e.lost && (unheard || answer?.ok)) mark(e, unheard);\n",
-    "new": "",
+    "old": "        if (unheard !== !!e.lost && (unheard || answer?.ok)) mark(e, unheard);\n        if (given && starClaimVerdict(answer) === 'done') {",
+    "new": "        if (given && starClaimVerdict(answer) === 'done') {",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ],
@@ -530,8 +530,8 @@
   {
     "name": "B3-own-unread",
     "file": "src/net/starfall/starClaims.js",
-    "old": "answer.data?.own === true && e.lost === true;",
-    "new": "e.lost === true;",
+    "old": "        const found =\n          !counted && answer?.ok && answer.data?.why === 'claimed' && answer.data?.own === true && e.lost === true;",
+    "new": "        const found = !counted && answer?.ok && answer.data?.why === 'claimed' && e.lost === true;",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ],
@@ -540,8 +540,8 @@
   {
     "name": "B3-finished-twice",
     "file": "src/net/starfall/starClaims.js",
-    "old": "        if (unheard !== !!e.lost && (unheard || answer?.ok)) mark(e, unheard);\n",
-    "new": "        if (unheard) mark(e, true);\n",
+    "old": "        if (unheard !== !!e.lost && (unheard || answer?.ok)) mark(e, unheard);",
+    "new": "        if (unheard) mark(e, true);",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ],
@@ -550,8 +550,8 @@
   {
     "name": "B3-a-refusal-marks",
     "file": "src/net/starfall/starClaims.js",
-    "old": "answer?.error !== 'no-session' && !(answer?.status >= 400 && answer?.status < 500);",
-    "new": "answer?.error !== 'no-session';",
+    "old": "        const unheard =\n          !answer?.ok && answer?.error !== 'no-session' && !(answer?.status >= 400 && answer?.status < 500);",
+    "new": "        const unheard = !answer?.ok && answer?.error !== 'no-session';",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ],
@@ -560,8 +560,8 @@
   {
     "name": "STAR7-act-for-anyone",
     "file": "src/net/starfall/starClaims.js",
-    "old": "    if (ch && ch === e.ch) { noteStar(heart); return; }\n",
-    "new": "    { noteStar(heart); return; }\n",
+    "old": "    if (ch && ch === e.ch) {",
+    "new": "    {",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ],
@@ -570,8 +570,8 @@
   {
     "name": "STAR7-owed-dropped",
     "file": "src/net/starfall/starClaims.js",
-    "old": "    keepOwed([...owed(), { ch: e.ch, h: heart ? 1 : 0 }].slice(-STAR_ACTS_MAX));\n",
-    "new": "",
+    "old": "    keepOwed([...owed(), { ch: e.ch, h: heart ? 1 : 0 }].slice(-STAR_ACTS_MAX));\n  }",
+    "new": "  }",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ],
@@ -580,8 +580,8 @@
   {
     "name": "STAR7-owed-twice",
     "file": "src/net/starfall/starClaims.js",
-    "old": "    keepOwed(list.filter((_, j) => j !== i));\n",
-    "new": "",
+    "old": "    keepOwed(list.filter((_, j) => j !== i));\n    noteStar(list[i].h === 1);",
+    "new": "    noteStar(list[i].h === 1);",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ],
@@ -590,8 +590,8 @@
   {
     "name": "STAR7-owed-unpaid",
     "file": "src/net/starfall/starClaims.js",
-    "old": "      payOwed();   // AUDIT STARFALL 7: an act owed the character standing now\n",
-    "new": "",
+    "old": "      payOwed(); // AUDIT STARFALL 7: an act owed the character standing now\n      const mine = me(),",
+    "new": "      const mine = me(),",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ],

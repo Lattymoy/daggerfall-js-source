@@ -310,8 +310,8 @@
   {
     "name": "T-A-the-heart-unsaid",
     "file": "src/net/starfall/starClaims.js",
-    "old": "noteAct('star-held'); if (heart) noteAct('heart-star-held'); };",
-    "new": "noteAct('star-held'); };",
+    "old": "    if (heart) noteAct('heart-star-held');\n  };",
+    "new": "  };",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ],
@@ -320,8 +320,8 @@
   {
     "name": "T-A-the-heart-for-every-star",
     "file": "src/net/starfall/starClaims.js",
-    "old": "const heart = !!c && heartStar(c.night, c.star);",
-    "new": "const heart = !!c;",
+    "old": "    const heart = !!c && heartStar(c.night, c.star);",
+    "new": "    const heart = !!c;",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ],
@@ -330,8 +330,8 @@
   {
     "name": "T-A-two-turns",
     "file": "src/net/starfall/starClaims.js",
-    "old": "if (heart) noteAct('heart-star-held'); };",
-    "new": "if (heart) void Promise.resolve().then(() => noteAct('heart-star-held')); };",
+    "old": "    if (heart) noteAct('heart-star-held');",
+    "new": "    if (heart) void Promise.resolve().then(() => noteAct('heart-star-held'));",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ],

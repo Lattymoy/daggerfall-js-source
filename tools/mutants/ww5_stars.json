@@ -2,8 +2,8 @@
   {
     "name": "WW5-STAR-cyrodiil-lane-open",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "k < STAR_PER_NIGHT * STAR_LANES && siteEventLaneOpen(starLaneOf(k));",
-    "new": "k < STAR_PER_NIGHT * STAR_LANES;",
+    "old": "  Number.isSafeInteger(n) &&\n  n > 0 &&\n  Number.isInteger(k) &&\n  k >= 0 &&\n  k < STAR_PER_NIGHT * STAR_LANES &&\n  siteEventLaneOpen(starLaneOf(k));",
+    "new": "  Number.isSafeInteger(n) && n > 0 && Number.isInteger(k) && k >= 0 && k < STAR_PER_NIGHT * STAR_LANES;",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WW5-STAR-the-lane-bound",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "k < STAR_PER_NIGHT * STAR_LANES && siteEventLaneOpen(starLaneOf(k));",
-    "new": "k < STAR_PER_NIGHT && siteEventLaneOpen(starLaneOf(k));",
+    "old": "  k < STAR_PER_NIGHT * STAR_LANES &&",
+    "new": "  k < STAR_PER_NIGHT &&",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WW5-STAR-the-instant-by-the-raw-number",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "STAR_FALLS_MS[starIndexOf(k)]",
-    "new": "STAR_FALLS_MS[k]",
+    "old": "  const fallAt = n * STAR_HOUR_MS + STAR_FALLS_MS[starIndexOf(k)]; // WW5: every lane's star its place's instant",
+    "new": "  const fallAt = n * STAR_HOUR_MS + STAR_FALLS_MS[k]; // WW5: every lane's star its place's instant",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WW5-STAR-the-ledger-pixel-unread",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": " && siteEventPixelOk(starLaneOf(v.k), v.px, v.py)",
-    "new": "",
+    "old": "  Number.isInteger(v.py) &&\n  siteEventPixelOk(starLaneOf(v.k), v.px, v.py) && // WW5: on its own lane's pixel, as its word was (net/wire.js starWireOk)",
+    "new": "  Number.isInteger(v.py) && // WW5: on its own lane's pixel, as its word was (net/wire.js starWireOk)",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WW5-STAR-the-held-order",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": ".sort((a, b) => (starLaneOf(a[0][1]) === 0 ? 0 : 1) - (starLaneOf(b[0][1]) === 0 ? 0 : 1) || a[1] - b[1])",
-    "new": ".sort((a, b) => a[1] - b[1])",
+    "old": "    .sort((a, b) => (starLaneOf(a[0][1]) === 0 ? 0 : 1) - (starLaneOf(b[0][1]) === 0 ? 0 : 1) || a[1] - b[1])",
+    "new": "    .sort((a, b) => a[1] - b[1])",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]

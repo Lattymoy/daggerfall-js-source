@@ -38,6 +38,8 @@
 /src/net/sea/*/
 !/src/net/staffEvent/
 /src/net/staffEvent/*/
+!/src/net/starfall/
+/src/net/starfall/*/
 !/src/player/
 /src/player/*
 !/src/player/climb/
