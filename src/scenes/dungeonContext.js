@@ -4153,8 +4153,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const t = await getTexture(RANDOM_TREASURE_ARCHIVE);
     if (!t || pile.record >= t.recordCount) continue;
     uploadRecord(RANDOM_TREASURE_ARCHIVE, pile.record);
-    const size = billboardSize(t, pile.record);
-    pile.half = [size.w / 2, size.h / 2];
+    const size = billboardSize(t, pile.record), law = classicBillboardSize(t, pile.record);
+    // AUDIT-STOREFRONT III D1: and its size from the archive (`lawHalf`), which the Aurum coffer keeps clear of - the same
+    // on every client, where a texture mod's XML scale is this device's alone (scenes/aurumCacheHost.js aurumCacheFoot)
+    [pile.half, pile.lawHalf] = [[size.w / 2, size.h / 2], [law.w / 2, law.h / 2]];
     // AUDIT 64 F16: a FIXED (archive 216) pile is not grounded.
     // AssignFixedTreasure (RDBLayout.cs:417-427) passes
     // adjustPosition:false - "Add fixed treasure flat with same archive

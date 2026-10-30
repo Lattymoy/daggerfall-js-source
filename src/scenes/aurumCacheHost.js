@@ -23,24 +23,39 @@ import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { audio as defaultAudio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { t } from '../systems/textManager.js';
+import { setMidScreenText } from '../ui/midScreenText.js';
 
 registerAurumCofferArt(addVendorTextures);   // the import is the registration (world/festivalArt.js's law)
 
 /** The coffer's activation key: the press ladders' loot arm hands it to the context's takeLoot, whose `aurum` arm presses it. */
 export const AURUM_CACHE_KEY = 'aurum:cache';
-/** From its pile the coffer stands this far along its bearing (m), where the way is clear this far at knee height, the
- *  walls this far off either side of it (half its width: no wall cuts its picture), and its foot lands within
- *  AURUM_CACHE_STEP_M of the pile's floor (no coffer off a ledge). */
-export const AURUM_CACHE_OFF_M = 0.9;
-export const AURUM_CACHE_CLEAR_M = 1.5;
+/** AUDIT-STOREFRONT III D1: the coffer's box stands AURUM_CACHE_GAP_M clear of its pile's (the pile's size from the
+ *  archive) and half that clear of every pile's, door's and mover's (no tie at its own pile's edge); the way to it is
+ *  clear at knee height to AURUM_CACHE_CLEAR_M past its foot, no wall within AURUM_CACHE_SIDE_M of it any eighth round
+ *  at shin or knee height (none cuts its picture), and its foot within AURUM_CACHE_STEP_M of the pile's floor (no
+ *  coffer off a ledge). Metres. */
+export const AURUM_CACHE_GAP_M = 0.15;
+export const AURUM_CACHE_CLEAR_M = 0.6;
 export const AURUM_CACHE_SIDE_M = 0.45;
+export const AURUM_CACHE_SHIN_M = 0.15;
 export const AURUM_CACHE_KNEE_M = 0.5;
 export const AURUM_CACHE_STEP_M = 0.3;
-/** The rays read the dungeon's own mesh alone - never a door's, which stands only while shut (dungeonContext.js's veins'). */
-const MESH_ONLY = Object.freeze({ only: Object.freeze(['dungeon']) });
+/** The coffer's half-width and height (m): its shut picture's, the box it is pressed by. */
+const COFFER_HW = (AURUM_COFFER_SIZE.shut.w * GLOBAL_SCALE) / 2, COFFER_H = AURUM_COFFER_SIZE.shut.h * GLOBAL_SCALE;
+/** The rays read the dungeon's own mesh alone (a door's stands only while shut); the doors and movers are kept clear of by
+ *  their boxes, as the build stands them - every door shut, every platform home. */
+const MESH = 'dungeon';
+const MESH_ONLY = Object.freeze({ only: Object.freeze([MESH]) });
+const NOT_MESH = Object.freeze({ skip: Object.freeze([MESH]) });
+const DOWN = Object.freeze([0, -1, 0]), UP = Object.freeze([0, 1, 0]);
+const EIGHT = Object.freeze(Array.from({ length: 8 }, (_, k) => Object.freeze([Math.sin((k * Math.PI) / 4), 0, Math.cos((k * Math.PI) / 4)])));
 /** Where this device keeps the caches each account emptied (`{ [account]: [id, ...] }`) - a hint for the coffer it
- *  stands; the service's word is the claim's answer. Today's and yesterday's are kept. */
+ *  stands; the service's word is the claim's answer. Today's and yesterday's are kept, and (AUDIT-STOREFRONT III D4) the
+ *  mark `<day>:cap` of a UTC day the account's caches were all claimed. */
 export const AURUM_CACHE_STORE = 'dagger:aurumCaches';
+/** The mark of a UTC day an account's caches are all claimed. */
+const capOf = (/** @type {number} */ day) => `${day}:cap`;
+const NO_TARGETS = Object.freeze([]);
 
 /** The coffer's words. */
 export const AURUM_CACHE_TEXT = Object.freeze({
@@ -64,37 +79,71 @@ export function aurumCachePlaceOf(loc) {
   return aurumCacheDungeonKey(dungeonIdOf(mapId));
 }
 
+/** Two boxes `{ min, max }` meet, the one grown by `gap` (m). Pure. */
+const meets = (/** @type {Box} */ a, /** @type {Box} */ b, /** @type {number} */ gap) => [0, 1, 2].every((k) => a.min[k] < b.max[k] + gap && b.min[k] < a.max[k] + gap);
+/** The coffer's press box on its foot. Pure. @typedef {{ min: number[], max: number[] }} Box */
+export const aurumCofferBox = (/** @type {number[]} */ f) => ({ min: [f[0] - COFFER_HW, f[1], f[2] - COFFER_HW], max: [f[0] + COFFER_HW, f[1] + COFFER_H, f[2] + COFFER_HW] });
+/** A treasure pile's press box as dungeonContext.js lootTargets builds it, by its size from the archive (`lawHalf`). Pure. */
+export function aurumPileBox(/** @type {{ pos: number[], lawHalf: number[] }} */ p) {
+  const [hx, hy] = p.lawHalf;
+  return { min: [p.pos[0] - hx, p.pos[1], p.pos[2] - hx], max: [p.pos[0] + hx, p.pos[1] + hy * 2, p.pos[2] + hx] };
+}
+
 /**
- * WHERE THE COFFER STANDS: one of the dungeon's random treasure piles (its fixed ones where it has none), picked by the
- * cache's `pile`, and from that pile's foot the first of eight ways from `bearing` clear at knee height, AURUM_CACHE_OFF_M
- * along it, clear to either side, on a floor no step from the pile's; the pile's own foot where no way is. The same on
- * every client: the piles are the layout's, the rays the dungeon's own mesh. Null with no pile.
- * @param {ReadonlyArray<{ pos?: number[], isFixed?: boolean }>} piles in the build's order (dungeonContext.js lootPiles)
- * @param {{ pile: number, bearing: number }} spot the law's (aurumCacheSpotOf) @param {{ raycast: (from: number[], dir: number[], max: number, filter?: any) => number }} collider
+ * WHERE THE COFFER STANDS: beside the random treasure pile the cache's `pile` picks (a fixed one where none is random),
+ * else the next in the list's order with room. From a pile on the dungeon's own floor, the first of eight ways from
+ * `bearing` with room (the constants above), at the distance that holds the coffer's box clear of the pile's. Null where
+ * no pile has room: no coffer stands. The same on every client: the layout's piles at their sizes from the archive, the
+ * dungeon's mesh, its doors and movers as the build stands them. `piles`: dungeonContext.js lootPiles, in its order.
+ * @param {ReadonlyArray<any>} piles @param {{ pile: number, bearing: number }} spot the law's (aurumCacheSpotOf) @param {any} collider player/collider.js's
  */
 export function aurumCacheFoot(piles, spot, collider) {
-  const placed = (piles ?? []).filter((p) => Array.isArray(p?.pos));
-  const random = placed.filter((p) => !p.isFixed), list = random.length ? random : placed;
+  const sized = (piles ?? []).filter((p) => Array.isArray(p?.pos) && Array.isArray(p.lawHalf));
+  const random = sized.filter((p) => !p.isFixed), list = random.length ? random : sized;
   if (!list.length) return null;
-  const g = /** @type {number[]} */ (list[Math.min(list.length - 1, Math.floor(spot.pile * list.length))].pos);
-  for (let k = 0; k < 8; k++) {
-    const a = spot.bearing + (k * Math.PI) / 4, dir = [Math.sin(a), 0, Math.cos(a)];
-    const from = [g[0], g[1] + AURUM_CACHE_KNEE_M, g[2]];
-    if (Number.isFinite(collider.raycast(from, dir, AURUM_CACHE_CLEAR_M, MESH_ONLY))) continue;
-    const at = [from[0] + dir[0] * AURUM_CACHE_OFF_M, from[1], from[2] + dir[2] * AURUM_CACHE_OFF_M];
-    if ([1, -1].some((s) => Number.isFinite(collider.raycast(at, [dir[2] * s, 0, -dir[0] * s], AURUM_CACHE_SIDE_M, MESH_ONLY)))) continue;
-    const down = collider.raycast(at, [0, -1, 0], AURUM_CACHE_KNEE_M + AURUM_CACHE_STEP_M, MESH_ONLY);
-    if (!Number.isFinite(down) || Math.abs(at[1] - down - g[1]) > AURUM_CACHE_STEP_M) continue;
-    return [at[0], at[1] - down, at[2]];
+  const boxes = sized.map(aurumPileBox);
+  /** @type {Box[] | null} */
+  let others = null;
+  const clear = (/** @type {number[]} */ foot) => {
+    const box = aurumCofferBox(foot);
+    others ??= /** @type {Box[]} */ (collider.bucketBoxes?.(NOT_MESH) ?? []);
+    return !boxes.some((b) => meets(box, b, AURUM_CACHE_GAP_M / 2)) && !others.some((b) => meets(box, b, AURUM_CACHE_GAP_M / 2));
+  };
+  const first = Math.min(list.length - 1, Math.floor(spot.pile * list.length));
+  for (let n = 0; n < list.length; n++) {
+    const foot = footBeside(list[(first + n) % list.length], spot.bearing, collider, clear);
+    if (foot) return foot;
   }
-  return [g[0], g[1], g[2]];
+  return null;
 }
+
+/** One pile's coffer foot by aurumCacheFoot's law, or null. */
+function footBeside(/** @type {any} */ pile, /** @type {number} */ bearing, /** @type {any} */ collider, /** @type {(f: number[]) => boolean} */ clear) {
+  const g = pile.pos, under = collider.raycastHit([g[0], g[1] + AURUM_CACHE_KNEE_M, g[2]], DOWN, AURUM_CACHE_KNEE_M + AURUM_CACHE_STEP_M);
+  if (under?.key !== MESH) return null;   // AUDIT-STOREFRONT III D2: a pile on a mover, a door or no floor
+  const floor = g[1] + AURUM_CACHE_KNEE_M - under.dist, reach = pile.lawHalf[0] + COFFER_HW + AURUM_CACHE_GAP_M;
+  for (let k = 0; k < 8; k++) {
+    const a = bearing + (k * Math.PI) / 4, dir = [Math.sin(a), 0, Math.cos(a)];
+    const off = reach / Math.max(Math.abs(dir[0]), Math.abs(dir[2])), from = [g[0], floor + AURUM_CACHE_KNEE_M, g[2]];
+    if (Number.isFinite(collider.raycast(from, dir, off + AURUM_CACHE_CLEAR_M, MESH_ONLY))) continue;
+    const at = [from[0] + dir[0] * off, from[1], from[2] + dir[2] * off];
+    const down = collider.raycast(at, DOWN, AURUM_CACHE_KNEE_M + AURUM_CACHE_STEP_M, MESH_ONLY);
+    if (!Number.isFinite(down) || Math.abs(at[1] - down - floor) > AURUM_CACHE_STEP_M) continue;
+    const foot = [at[0], at[1] - down, at[2]];
+    if (!walled(collider, foot) && clear(foot)) return foot;
+  }
+  return null;
+}
+/** A wall within AURUM_CACHE_SIDE_M of a foot, any eighth round, at shin or knee height, or a ceiling under the coffer's
+ *  height: either would cut the picture. */
+const walled = (/** @type {any} */ collider, /** @type {number[]} */ f) => Number.isFinite(collider.raycast([f[0], f[1] + 0.02, f[2]], UP, COFFER_H, MESH_ONLY))
+  || [AURUM_CACHE_SHIN_M, AURUM_CACHE_KNEE_M].some((h) => EIGHT.some((d) => Number.isFinite(collider.raycast([f[0], f[1] + h, f[2]], d, AURUM_CACHE_SIDE_M, MESH_ONLY))));
 
 /** The ids an account emptied, as this device keeps them. */
 function keptIds(/** @type {any} */ storage, /** @type {string} */ account) {
   try { const v = JSON.parse(storage?.getItem?.(AURUM_CACHE_STORE) ?? '{}')?.[account]; return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []; } catch { return []; }
 }
-/** Keep an emptied id for an account, dropping every id older than yesterday. */
+/** Keep an emptied id (or a day's cap mark) for an account, dropping every one older than yesterday. */
 function keepId(/** @type {any} */ storage, /** @type {string} */ account, /** @type {string} */ id, /** @type {number} */ day) {
   try {
     const all = JSON.parse(storage?.getItem?.(AURUM_CACHE_STORE) ?? '{}') ?? {};
@@ -115,8 +164,8 @@ export function _resetAurumCaches() { _closed = false; _last = null; }
 /**
  * STAND TODAY'S COFFER in a dungeon context, if this dungeon holds one: its billboard (the context owns it and frees it
  * with the level), its activation target and its name on the plaque, and a line that it is here. Answers the coffer -
- * `{ id, foot, open, press(key) }` - or null. The context's takeLoot presses it (its `aurum` arm).
- * `deps` are the tests' and the probes': `online`, `session`, `nowMs`, `claim`, `storage`, `audio`.
+ * `{ id, foot, open, press(key) }` - or null. The context's takeLoot presses it (its `aurum` arm). `deps` are the tests'
+ * and the probes': `online`, `session`, `nowMs`, `claim`, `storage`, `audio`, `lateSay` (a line the level is gone for).
  * @param {any} ctx the context's api (dungeonContext.js) @param {any} loc its location @param {any[]} piles its treasure piles
  * @param {any} [deps]
  */
@@ -126,51 +175,62 @@ export function standAurumCache(ctx, loc, piles, deps = {}) {
   const session = deps.session ?? (() => storedSession(storage));
   const nowMs = deps.nowMs ?? (() => (sharedClockOn() ? wallMsForClassicMinutes(worldMinutes()) : Date.now()));
   const audio = deps.audio ?? defaultAudio;
+  const lateSay = deps.lateSay ?? ((/** @type {string} */ line) => setMidScreenText(line));
   const me = session();
   if (_closed || !online() || !me?.id || me.kind === 'guest') return null;
   const place = aurumCachePlaceOf(loc), day = aurumCacheDayOf(nowMs() / 1000);
   if (!place || !aurumCacheHolds(day, place)) return null;
-  const id = aurumCacheId(day, place), foot = aurumCacheFoot(piles, aurumCacheSpotOf(id), ctx.collider);
+  const id = aurumCacheId(day, place), kept = keptIds(storage, me.id);
+  if (!kept.includes(id) && kept.includes(capOf(day))) return null;   // AUDIT-STOREFRONT III D4: the day's caches all claimed - none stands, none is said
+  const foot = aurumCacheFoot(piles, aurumCacheSpotOf(id), ctx.collider);
   if (!foot) return null;
   const claim = deps.claim ?? accountAurumCache({ fetch: (/** @type {any} */ u, /** @type {any} */ i) => globalThis.fetch(u, i), storage }).claim;
   const say = (/** @type {string} */ line) => ctx.hudSay?.(line);
-  let batch = /** @type {any} */ (null), stood = 0, asking = false, gone = false;
-  const coffer = { id, foot, open: keptIds(storage, me.id).includes(id), press };
+  const today = () => aurumCacheDayOf(nowMs() / 1000);
+  let batch = /** @type {any} */ (null), stood = 0, asking = false, gone = false, away = false;
+  const coffer = { id, foot, open: kept.includes(id), press };
   /** The billboard for the coffer as it is now - the last asked wins, an older one landing late is dropped. */
   const stand = async () => {
     const mine = ++stood;
     const b = await ctx.standProfFlats?.(AURUM_COFFER_ARCHIVE, coffer.open ? AURUM_COFFER_ART.open : AURUM_COFFER_ART.shut, 1, [foot]);
-    if (gone || mine !== stood) { if (b) ctx.dropProfFlats?.(b); return; }
+    if (gone || away || mine !== stood) { if (b) ctx.dropProfFlats?.(b); return; }
     if (batch) ctx.dropProfFlats?.(batch);
     batch = b ?? null;
   };
-  const opened = () => { coffer.open = true; keepId(storage, me.id, id, day); stand(); };
-  /** A press on the coffer: an open one says it is empty; a shut one asks the service once - a second press while the
-   *  ask is out is the same ask (ASYNC NEVER DROPS: one claim, one answer said). */
+  const opened = () => { coffer.open = true; stand(); };
+  /** AUDIT-STOREFRONT III D4: a coffer the service no longer knows (stood before one midnight, pressed after the next) goes. */
+  const takeAway = () => { away = true; stood++; if (batch) ctx.dropProfFlats?.(batch); batch = null; if (_last === coffer) _last = null; };
+  /** A press on the coffer: an open one says it is empty, and one on a day this account's caches are spent says so; a
+   *  shut one asks the service once - a second press while the ask is out is the same ask (ASYNC NEVER DROPS). */
   function press(/** @type {unknown} */ key) {
-    if (key !== AURUM_CACHE_KEY) return false;
+    if (key !== AURUM_CACHE_KEY || away) return false;
     if (coffer.open) { say(AURUM_CACHE_TEXT.empty()); return true; }
+    if (keptIds(storage, me.id).includes(capOf(today()))) { say(accountRefusalText('cache-capped')); return true; }
     if (asking) return true;
     asking = true;
     Promise.resolve().then(() => claim(id)).catch(() => ({ ok: false, error: 'server' })).then((/** @type {any} */ r) => {
       asking = false;
-      if (gone) return;
+      // AUDIT-STOREFRONT III D5, D4: what the ledger now holds is kept before the level's end is read
+      if (r?.ok || r?.error === 'cache-taken') keepId(storage, me.id, id, day);
+      if (r?.error === 'cache-capped' || (r?.ok && Number.isSafeInteger(r.data?.max) && r.data.today >= r.data.max)) keepId(storage, me.id, capOf(today()), today());
+      const found = () => AURUM_CACHE_TEXT.found(Number.isSafeInteger(r.data?.aurum) ? r.data.aurum : AURUM_CACHE_AURUM);
+      if (gone) { if (r?.ok) lateSay(found()); return; }
       if (r?.ok) {
         opened();
-        say(AURUM_CACHE_TEXT.found(Number.isSafeInteger(r.data?.aurum) ? r.data.aurum : AURUM_CACHE_AURUM));
+        say(found());
         try { audio?.play3d?.(SOUND.GoldPieces, [foot[0], foot[1] + 0.3, foot[2]], 1, { maxDistance: 16 }); } catch { /* silent */ }
         return;
       }
       if (r?.error === 'cache-taken') opened();
       if (r?.error === 'cache-closed') _closed = true;
+      if (r?.error === 'cache-id') takeAway();
       say(accountRefusalText(r?.error));
     });
     return true;
   }
-  const size = AURUM_COFFER_SIZE.shut, hw = (size.w * GLOBAL_SCALE) / 2, top = size.h * GLOBAL_SCALE;
-  const target = Object.freeze([{ key: AURUM_CACHE_KEY, aabb: { min: [foot[0] - hw, foot[1], foot[2] - hw], max: [foot[0] + hw, foot[1] + top, foot[2] + hw] }, distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE }]);
-  ctx.addActivationTargets?.(() => target);
-  ctx.addActivationNamer?.((/** @type {unknown} */ key) => (key === AURUM_CACHE_KEY ? { title: coffer.open ? AURUM_CACHE_TEXT.emptyName() : AURUM_CACHE_TEXT.name() } : null));
+  const target = Object.freeze([{ key: AURUM_CACHE_KEY, aabb: aurumCofferBox(foot), distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE }]);
+  ctx.addActivationTargets?.(() => (away ? NO_TARGETS : target));
+  ctx.addActivationNamer?.((/** @type {unknown} */ key) => (key === AURUM_CACHE_KEY && !away ? { title: coffer.open ? AURUM_CACHE_TEXT.emptyName() : AURUM_CACHE_TEXT.name() } : null));
   ctx.addTeardown?.(() => { gone = true; if (_last === coffer) _last = null; });
   stand();
   if (!coffer.open) say(AURUM_CACHE_TEXT.here());

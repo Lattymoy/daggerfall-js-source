@@ -68,15 +68,22 @@ points of interest) that a player picks up, each one server-checked and under a 
 hash of the day and the dungeon's key (`src/net/aurumCacheLaw.js` aurumCacheHolds). The key is the professions'
 (`src/scenes/dungeonIdentity.js`): a Bay dungeon's pixel id, and the whole map id of a lair, a ruin, a spawned dungeon
 or an abyss past the Bay, so every theatre has its caches. A made level (the Burning Court, the Shattered Hour, the
-Spire, the ketch), an Abyss Dungeon, the arena's floor and undercroft and a zone hall hold none. Inside, the coffer
-stands beside one of the dungeon's random treasure piles, picked by the cache's hash, 0.9 m from it where the floor
-is level and no wall is near (`src/scenes/aurumCacheHost.js` aurumCacheFoot). Every client stands it in the same spot.
+Spire, the ketch), an Abyss Dungeon, the arena's floor and undercroft and a zone hall hold none.
+
+**Inside.** The coffer stands beside the random treasure pile the cache's hash picks, or the next pile in the layout's
+order where that one has no room (`src/scenes/aurumCacheHost.js` aurumCacheFoot). Its box stands 0.15 m clear of the
+pile's, by the pile's size in the archive (never a texture mod's), and clear of every other pile's, door's and mover's
+box, on the pile's floor, with no wall or ceiling near enough to cut its picture. A pile on a mover is passed. Every
+client stands it in the same spot. Where no pile has room no coffer stands, about one cache dungeon in 160 that has a
+pile (AUDIT-STOREFRONT III lane D, measured on the freeware over the Bay and every theatre).
 
 **Found and opened.** In a cache dungeon the HUD says "An Aurum coffer is hidden in this dungeon today." The coffer is
 an oak chest bound in gold, the Aurum coin's sun on its lock plate (`src/world/aurumCofferArt.js`, a billboard as
 Daggerfall's treasure is). The activate key opens it at a treasure pile's reach: the page asks the service, and on a
 yes the coffer stands open and empty and the HUD says "+15 Aurum". A refusal says why. A coffer the account emptied
-stands open for it on every visit that day; the device keeps a note, and the service's answer is what counts.
+stands open for it on every visit that day; the device keeps a note, and the service's answer is what counts. The note
+also keeps a UTC day the account claimed its third cache: no shut coffer stands for it again that day. A coffer pressed
+after its id has expired (stood before one midnight, pressed after the next) is taken away.
 
 **The claim.** `/v1/aurum/cache` `{ id }` (`server-account/src/aurumCache.js` claimCache) takes a cache's id,
 `<day>:d<dungeon>`, checked by the law alone: in its one spelling, a place that holds a cache that day, of today or
@@ -171,4 +178,6 @@ Aurum spent beside each ware's orders, and lists each day's wares beside its fea
 The caches (section 3a): `test/net/aurum_cache_law.test.js` (the share, the id, the check, the spot),
 `test/server/aurum_cache_service.test.js` (the claim, the bound, a repeat, a forged id, the guards),
 `test/scenes/aurum_cache_world.test.js` (which dungeons, the spot, the press; a Bay dungeon and a lair of Cyrodiil on
-the freeware) and `test/world/aurum_coffer_art.test.js` (the pictures). The mutants are `tools/mutants/aurum_caches.json`.
+the freeware) and `test/world/aurum_coffer_art.test.js` (the pictures). The mutants are `tools/mutants/aurum_caches.json`
+and, for AUDIT-STOREFRONT III lane D (the coffer's room, its spent day, its late yes), `tools/mutants/storefront_audit3_caches.json`.
+`tools/aurumCacheProbe.mjs` renders and presses a coffer in a place past the Bay (`--spawn`) or a Bay dungeon (`--bay`).
