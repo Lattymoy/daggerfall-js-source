@@ -45,6 +45,7 @@
 import {
   openGuest, register, login, recover, readAccount, changePassword, logout, equipTitle, equipAura, equipArmory, equipArmoryKit, equipEffect, equipIcon, equipGlyph, adoptIdentity, unlinkPatreon,
   buyDailyWare,   // AURUM: a daily ware bought
+  passUnlock, passBuy,   // PASS-PANELS: a premium track opened and a track's item bought, for Aurum
   newRecoveryCodes,   // RECOVERY-SET: a new set of recovery codes, from the profile
   chooseNameAs,   // NAME-AS: which name the room reads
   storedSession, keepSession, forgetSession, accountRefusalText, handleShapeOk,
@@ -60,7 +61,8 @@ import { armoryPieceName } from './armoryText.js';   // ARMORY: a piece's name i
 import { effectKitOk, effectWorn } from '../net/effectLaw.js';   // STOREFRONT: the effects kit a wardrobe states
 import { effectName, effectsHeldOf } from './effectText.js';   // STOREFRONT: an effect's name in the card's note
 import { shopCardOf, shopWareById, SHOP_WARE_NAME } from '../net/shopLaw.js';   // SHOP: the shop's card on the account read
-import { passCardOf } from '../net/battlePassLaw.js';   // STOREFRONT: and the season's card beside it
+import { passCardOf, passSeasonById } from '../net/battlePassLaw.js';   // STOREFRONT: and the season's card beside it
+import { passGrantName, PASS_SEASON_TEXT } from './passText.js';   // PASS-PANELS: an item's and a season's name in the card's note
 import { aurumCardOf } from '../net/aurumLaw.js';   // AURUM: and the Aurum's
 
 /** SHOP: a ware's name as the arrival's note says it - a piece's and an effect's in the player's language (STOREFRONT),
@@ -212,8 +214,8 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
     /** AURUM: the Aurum's card (net/aurumLaw.js aurumCardOf) - the balance, the day's wares, the week's deeds - or null
      *  (nobody signed in, a guest, a service from before acct220) */
     aurum: /** @type {any} */ (null),
-    /** STOREFRONT: the season's card (net/battlePassLaw.js passCardOf) - the account's level, tracks and challenges - or
-     *  null (nobody signed in, a guest, a service from before acct220) */
+    /** STOREFRONT: the season's card (net/battlePassLaw.js passCardOf) - the tracks opened, the items bought, the day's
+     *  Aurum found and the challenges - or null (nobody signed in, a guest, a service from before acct220) */
     pass: /** @type {any} */ (null),
     /** a sentence for the player, never a machine word */
     error: '',
@@ -641,6 +643,42 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
       return refuse(accountRefusalText('offline'));
     }
   };
+
+  /**
+   * PASS-PANELS (bible/06-Systems/Battle-Pass.md) - A SEASON'S PREMIUM TRACK OPENED, OR AN ITEM ON ITS TRACKS BOUGHT, FOR
+   * AURUM: it asks, the service decides (the balance, the track, the panel, what is bought) in one transaction, and the
+   * answer is the wardrobe after it, the Aurum's card and the pass's. A refusal the window may be behind on reads the
+   * account again. Answers `{ ok, error? }` - `error` the service's word, for the window.
+   */
+  const passAct = async (/** @type {() => Promise<any>} */ asking, /** @type {() => string} */ noted) => {
+    if (self.busy || self.stage !== 'in') return { ok: false, error: 'busy' };
+    const asked = secret();
+    self.busy = true; self.error = ''; self.note = ''; changed();
+    try {
+      const r = await ask(asking);
+      if (!r) return { ok: false, error: 'auth' };   // signed out: the card says why
+      if (!r.ok) {
+        refuse(accountRefusalText(r.error));
+        if (['pass-held', 'pass-track', 'pass-panel', 'pass-short'].includes(r.error)) await self.refresh();
+        return { ok: false, error: String(r.error ?? 'server') };
+      }
+      self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };
+      self.aurum = aurumCardOf(r.data.aurum) ?? self.aurum;
+      self.pass = passCardOf(r.data.pass) ?? self.pass;
+      self.busy = false;
+      self.note = noted();
+      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), effects: effectsStated(r.data), icon: iconStated(r.data), secret: asked });
+      changed();
+      return { ok: true };
+    } catch {
+      refuse(accountRefusalText('offline'));
+      return { ok: false, error: 'offline' };
+    }
+  };
+  self.passUnlock = (/** @type {string} */ season) => passAct(() => passUnlock(door(), season), () => t('account.flow.passUnlocked',
+    'The premium track of {season} is open.', { season: PASS_SEASON_TEXT[/** @type {keyof typeof PASS_SEASON_TEXT} */ (passSeasonById(season)?.id ?? '')]?.() ?? season }));
+  self.passBuy = (/** @type {string} */ season, /** @type {string} */ grant) => passAct(() => passBuy(door(), season, grant),
+    () => t('account.flow.passBought', '{name} is yours. Wear it here or from your profile.', { name: passGrantName(grant) }));
 
   /**
    * NAME-AS (2026-10-12, Mac: "I want to add an option to the profile menu where players can toggle to use their account

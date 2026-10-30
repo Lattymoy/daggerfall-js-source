@@ -246,7 +246,7 @@ export function progressSpentOf(path, a) {
     case '/v1/seats/watch': add('watch', n(a.counted)); break;
     case '/v1/towns/watch': break;   // AUDIT TOWN-ECON 2 SVC-2: a town's share, never its player's progress
     case '/v1/marks/find': if (n(a.struck)) add('find', 1); break;
-    case '/v1/pass/find': case '/v1/festival/find': add(PROGRESS_ROUTES[path][0], 1); break;   // AUDIT PASS 3: an ask answered (a pass's `xp` is the season's, never a profession's)
+    case '/v1/pass/find': case '/v1/festival/find': add(PROGRESS_ROUTES[path][0], 1); break;   // AUDIT PASS 3: an ask answered (PASS-PANELS: a pass's Aurum is the account's, never a profession's)
     case '/v1/writs/deliver': if (a.ok) { add('prof', writXp(n(a.pay))); add('renown', n(a.renown?.credited)); } break;
     case '/v1/writs/craft': if (a.ok) { add('prof', n(a.xp)); add('renown', n(a.renown?.credited)); } break;   // CRAFT-WRITS: the XP the crafter's limit let in
     default:

@@ -3,7 +3,8 @@
 // account's season as the service last said it, and the finds a kill and a deed ask for. THE SERVICE DECIDES, THIS PAGE
 // ASKS (server-account/src/battlePass.js): a kill my own blow made (systems/playerKills.js), an act of mine
 // (systems/questlines/qlActs.js), a quest done and a bounty paid each ask by their source, one after another, never
-// dropped. A level reached and a challenge paid are told through the host's doors (`onEvent`), which word them.
+// dropped. PASS-PANELS: a find pays Aurum; a challenge paid and the day's Aurum found are told through the host's doors
+// (`onEvent`), which word them.
 // HOSTS: the world host binds it (scenes/seasonHost.js); unbound, nothing is asked. Not a DFU member. Ledger A (STOREFRONT).
 import { accountBattlePass } from '../../net/accountClient.js';
 import { appStorage } from '../appStorage.js';
@@ -11,7 +12,7 @@ import { registerPlayerKillListener } from '../playerKills.js';
 import { hearActs, ACT_KINDS, ACT_NOT_FOUND } from '../questlines/qlActs.js';
 import { KNIGHT_CITY_WATCH } from '../../characters/mobile/mobileTypes.js';
 import { foeFindSource } from '../festival/festivalFoes.js';
-import { isPassSource, passSeasonAt, PASS_REWARDS, PASS_DAY_XP, PASS_CONSTRUCT_MOBILES } from '../../net/battlePassLaw.js';
+import { isPassSource, passChallengeOf, PASS_DAY_AURUM, PASS_FINDS_FROM_MS, PASS_CONSTRUCT_MOBILES } from '../../net/battlePassLaw.js';
 import { utcDay } from '../../net/marksLaw.js';
 import { createAskRest } from '../../net/askRest.js';
 
@@ -53,9 +54,9 @@ function queued(/** @type {() => Promise<any>} */ fn) {
   return p;
 }
 
-/** THE HOST'S DOORS: `online()` the world plays online, `nowMs()` the shared clock, `onEvent(e)` a level reached (`{ kind:
- *  'level', level, grants }`), a challenge paid (`{ kind: 'challenge', key }`) or the day's experience spent (`{ kind:
- *  'full' }`) - and, for the tests, `wait(ms)` and `rid()`. Null unbinds. Answers the door to the service (or null). */
+/** THE HOST'S DOORS: `online()` the world plays online, `nowMs()` the shared clock, `onEvent(e)` a challenge paid (`{ kind:
+ *  'challenge', key, aurum }`) or the day's Aurum found (`{ kind: 'full' }`) - and, for the tests, `wait(ms)` and `rid()`.
+ *  Null unbinds. Answers the door to the service (or null). */
 export function bindPass(doors = null) {
   _doors = doors ? { ...NO_DOORS, ...doors } : NO_DOORS;
   _api = doors ? (doors.api ?? accountBattlePass({ fetch: (/** @type {any} */ u, /** @type {any} */ i) => globalThis.fetch(u, i), storage: appStorage() })) : null;
@@ -68,34 +69,29 @@ export function hearPass(/** @type {() => void} */ fn) { _hear.add(fn); return (
 export const passVersion = () => _version;
 /** The account's season as last heard (null: unheard, or another account's). */
 export const passState = () => (_stateOf && _stateOf === account() ? _state : null);
-/** Whether this page plays the pass now: bound and online, a registered account, a season open on the shared clock, and
- *  no refusal standing it back. AUDIT PASS 2: a season the service said shut is read again (askPassFind), never shut for
- *  the page - a page loaded before the opening or before the switch turned on asked nothing until it was reloaded. */
+/** Whether this page plays the pass now: bound and online, a registered account, the finds begun on the shared clock
+ *  (PASS-PANELS: they never close), and no refusal standing it back. AUDIT PASS 2: a pass the service said shut is read
+ *  again (askPassFind), never shut for the page - a page loaded before the switch turned on asked nothing until reloaded. */
 export function passLive() {
   if (!_api || !_doors.online() || !account() || _api.guest?.()) return false;
-  return !!passSeasonAt(_doors.nowMs()) && !_rest.resting();
+  return _doors.nowMs() >= PASS_FINDS_FROM_MS && !_rest.resting();
 }
 
-/** The season's answer taken in - its level before and after told as a level reached, with the rewards on it. */
+/** The pass's answer taken in - a find's challenges paid told with their Aurum, and the day's bound once a day. A find's
+ *  answer (`gained`, `found`, `done`) is no card: only its `today` is kept. */
 function learn(/** @type {any} */ d, /** @type {boolean} */ told) {
   if (!d || typeof d !== 'object') return;
   const was = passState();
-  const next = { ...(was ?? {}), ...d };
-  _state = next; _stateOf = account();
-  if (told && was && Number.isSafeInteger(d.level) && d.level > (was.level ?? 0)) {
-    for (let lv = (was.level ?? 0) + 1; lv <= d.level; lv++) _doors.onEvent({ kind: 'level', level: lv, grants: grantsAt(next, lv) });
+  _state = told ? { ...(was ?? {}), ...(Number.isSafeInteger(d.today) ? { today: d.today } : {}) } : d;
+  _stateOf = account();
+  if (told && Array.isArray(d.done)) {
+    for (const key of d.done) { const c = passChallengeOf(key); if (c) _doors.onEvent({ kind: 'challenge', key, aurum: c.aurum }); }
   }
-  if (told && Array.isArray(d.done)) for (const key of d.done) _doors.onEvent({ kind: 'challenge', key });
-  if (told && Number.isSafeInteger(d.today) && d.today >= PASS_DAY_XP) {
+  if (told && Number.isSafeInteger(d.today) && d.today >= PASS_DAY_AURUM) {
     const k = `${account()}:${utcDay(Math.floor(_doors.nowMs() / 1000))}`;
     if (_fullSaid !== k) { _fullSaid = k; _doors.onEvent({ kind: 'full' }); }
   }
   changed();
-}
-/** The rewards a level gives an account that plays these tracks (the state's `tracks`). Pure but for the law. */
-export function grantsAt(/** @type {any} */ state, /** @type {number} */ level) {
-  const rewards = PASS_REWARDS[/** @type {keyof typeof PASS_REWARDS} */ (state?.season)] ?? [];
-  return rewards.filter((r) => r.level === level && (r.track === 'free' || (r.track === 'premium' && state?.tracks?.premium))).map((r) => r.grant);
 }
 
 /** The account's season read, off the queue (its own steps call it). Answers whether it was heard. */
@@ -111,13 +107,13 @@ async function readPass() {
 export const refreshPass = () => queued(readPass);
 
 /** ASK FOR A FIND: `source` (battlePassLaw PASS_SOURCES), queued behind the asks before it, with its own id - asked again
- *  with it while the service cannot be reached (AUDIT-STOREFRONT II, lane B 2). Answers the experience gained. */
+ *  with it while the service cannot be reached (AUDIT-STOREFRONT II, lane B 2). Answers the Aurum gained. */
 export function askPassFind(/** @type {string} */ source) {
   if (!isPassSource(source) || !passLive()) return Promise.resolve(0);
   const rid = _doors.rid();
   return queued(async () => {
     if (!passLive()) return 0;   // a refusal ahead of it in the queue stood the page back
-    // a level reached is told against the level before it: read it first; and a season said shut, again
+    // the day's bound is told against the pass as read: read it first; and a pass said shut, again
     const due = _rest.due(passState()?.open);
     if ((due || !passState()) && !(await readPass()) && due) { _rest.unheard(); return 0; }
     if (passState()?.open === false) return 0;
