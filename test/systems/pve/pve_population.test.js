@@ -97,6 +97,32 @@ test('GROUP-PARTY: the heart\'s inner ring is the party zone - wild and dungeons
   assert.equal(pveZoneAt({ px: cx + 20, py: cy, region: SKYRIM }).party, false);
 });
 
+test('REGION-LADDER: every region climbs from 1-8 at a town\'s gate to 36-45 in the empty wild, steeper near the center', async () => {
+  const { townRung, ladderTier, zoneTownsAt, LADDER_RUNGS, TOWN_TYPES } = await import('../../../src/systems/pve/pveZones.js');
+  assert.deepEqual([townRung([0, 5, 9]), townRung([9, 3, 6]), townRung([4, 4, 4]), townRung([1, 2]), townRung([])], [0, 1 / 3, 1, 1, 1]);
+  assert.deepEqual([0.29, 0.31, 0.45, 0.56, 0.67, 0.79, 1].map((r) => ladderTier(r, 0)), [0, 1, 2, 3, 4, 5, 5]);
+  assert.equal(LADDER_RUNGS.length, ZONE_BANDS.length - 1);
+  assert.ok(ladderTier(0.5, 1) > ladderTier(0.5, 0), 'the center climbs faster');
+  assert.equal(ladderTier(0, 1), 0, 'a town\'s gate is the first band even at the heart');
+  const [cx, cy] = zoneCenterPx().map(Math.floor);
+  for (const [region, px, py] of [[17, 207, 213], [HIGH_ROCK, plain[0], plain[1]], [CYRODIIL_REGION, cx + 20, cy], [SKYRIM, cx, cy - 300]]) {
+    const z = (towns) => pveZoneAt({ px, py, region, towns });
+    const gate = z([0.5, 6, 9]), wild = z([9, 9, 9]);
+    assert.deepEqual([gate.tier, gate.band[0]], [0, 1], `${region}: a town's gate holds level 1 foes`);
+    assert.equal(wild.tier, ZONE_BANDS.length - 1, `${region}: the empty wild holds the top`);
+  }
+  for (const step of [-1, 1]) {
+    const [sx, sy] = pixelWhere((r) => r >= ZONE_SHARE.enclave + ZONE_SHARE.farming && DISTRICT_STEP[r % DISTRICT_STEP.length] === step);
+    assert.deepEqual([0.5, 9].map((d) => pveZoneAt({ px: sx, py: sy, region: 2, towns: [d, 9, 9] }).tier), [0, ZONE_BANDS.length - 1], `a district stepping ${step} keeps both ends`);
+  }
+  assert.equal(pveZoneAt({ px: cx + 20, py: cy, region: CYRODIIL_REGION, towns: [0.5, 6, 9] }).party, false, 'a town\'s gate by the heart is no party zone');
+  const places = { near: (x, y, r, keep) => [{ px: x + 2, py: y, type: 0 }, { px: x, py: y + 4, type: 1 }, { px: x + 5, py: y + 5, type: 2 }, { px: x - 6, py: y, type: 1 }].filter((p) => Math.max(Math.abs(p.px - x), Math.abs(p.py - y)) <= r && keep(p)) };
+  assert.deepEqual(zoneTownsAt(places, 10, 10), [2, 4, 6]);
+  const corner = { near: (x, y, r, keep) => [[2, 0], [0, 4], [7, 7], [9, 0]].map(([dx, dy]) => ({ px: x + dx, py: y + dy, type: 0 })).filter((p) => Math.max(Math.abs(p.px - x), Math.abs(p.py - y)) <= r && keep(p)) };
+  assert.deepEqual(zoneTownsAt(corner, 0, 0).slice(0, 3), [2, 4, 9], 'a town in the square\'s corner waits for the wider square');
+  assert.deepEqual(TOWN_TYPES, [0, 1]);
+});
+
 test('STAGE 7: the recommended score climbs with the band and is advice only', () => {
   const s = ZONE_BANDS.map(recommendedScore);
   for (let i = 1; i < s.length; i++) assert.ok(s[i] > s[i - 1]);

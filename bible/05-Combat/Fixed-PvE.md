@@ -147,8 +147,18 @@ SAFE-ROAD ("make the road safe out of the pvp
 zone", "enemys avoid roads"): the Imperial start wakes at the center, so Cyrodiil's roads hold no hostile population
 and foes keep off them; a new character is under the PvP zone's level 30 and walks out on them.
 
-Each 96-pixel district steps one band down or up from its key alone. Four districts in a hundred are high-level
-enclaves, three bands up, with a warning; ten are farming grounds. A road keeps its base band, a town is safe, a dungeon
+REGION-LADDER (the owner, 2026-10-30: "every region need to have enemy to fight for all leveling in that region";
+the owner chose every region 1-45): where the world hands the zone its nearby towns (`zoneTownsAt`, cities and hamlets through
+the world's places), the base band comes from a rung, not the progress. The rung is the distance to the nearest town
+over the distance to the third, so 0 at a town's gate and near 1 in the empty wild, alike in a crowded region and a
+bare one. Bands start at rungs 0.30, 0.44, 0.55, 0.66 and 0.78, which cut the Bay's land into six near-even shares.
+
+Progress toward the center steepens the climb, so the heart has more high ground, but a gate is level 1 even there.
+Without towns the base is the progress alone. Measured on the Bay with every rule: 42 of 45 land regions hold both ends of the ladder. The rest are
+two small islands and one with no town.
+
+Each 96-pixel district steps one band down or up from its key alone, except the first and last bands, which never step. Four districts in a hundred are high-level
+enclaves, three bands up, with a warning; ten are farming grounds. The party zone is the heart's ring on the top band. A road keeps its base band, a town is safe, a dungeon
 is one band deeper and the old and undead ones two. The recommended Combat Score is advice and changes no foe.
 
 A spawn table (`pveSpawnTable.js`) follows the spec's six steps: place, bestiary, hour and event and factions, band,

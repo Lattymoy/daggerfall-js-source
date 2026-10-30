@@ -5,7 +5,7 @@
 // with a warning, a road keeps its band, a town is safe and a dungeon is a step harder. The recommendation is advice
 // only: it changes no foe and bars no one. Ledger A (FIXED-PVE).
 import { BAY_REGION_COUNT, REGION_NAMES } from '../../formats/mapsTables.js';
-import { DUNGEON_TYPES } from '../../formats/mapsFile.js';
+import { DUNGEON_TYPES, LOCATION_TYPES } from '../../formats/mapsFile.js';
 import { districtOf } from '../../world/worldWide/worldGrid.js';
 import { CITIES } from '../../world/tamriel/tamrielGeography.js';
 import { pictureToBay } from '../../world/tamriel/tamrielFrame.js';
@@ -69,17 +69,57 @@ export function zoneProgress(px, py, area) {
 /** The base band at (`px`, `py`) in `area`: its progress cut into six even steps, the center the top. */
 export const zoneBaseTier = (px, py, area) => Math.min(TOP, Math.floor(zoneProgress(px, py, area) * ZONE_BANDS.length));
 
+/** REGION-LADDER (the owner, 2026-10-30: "every area will have lvl 1 so every region need to have enemy to fight for all
+ *  leveling in that region"; chose "every region 1-45"): EVERY REGION CLIMBS FROM 1 TO 45. A place's rung is how far it
+ *  lies from its nearest town against the third nearest - 0 at a town's gate, toward 1 in the empty wild between towns -
+ *  so the rung reads alike in a crowded region and a bare one. Closer to the center the climb steepens: more high ground.
+ *  Where the caller hands no towns, the base is the area's progress alone (CENTER-HARDEST). */
+export const TOWN_TYPES = Object.freeze([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet]);
+/** The rung each band above the first starts at: cut so the Bay's land falls about evenly into the six. */
+export const LADDER_RUNGS = Object.freeze([0.3, 0.44, 0.55, 0.66, 0.78]);
+/** How much the center steepens the climb: the rung r reads 1 - (1 - r)^(1 + LEAN x progress). */
+export const LADDER_LEAN = 0.5;
+/** A place's rung from its distances to the towns near it (any order); 1 with fewer than three. @param {Iterable<number>} towns */
+export function townRung(towns) {
+  const d = [...towns].filter(Number.isFinite).sort((a, b) => a - b);
+  if (d.length < 3) return 1;
+  return d[2] > 0 ? Math.min(1, d[0] / d[2]) : 0;
+}
+/** The band a rung stands on at `progress` toward the center. @param {number} rung @param {number} progress */
+export function ladderTier(rung, progress) {
+  const r = 1 - (1 - rung) ** (1 + LADDER_LEAN * Math.max(0, Math.min(1, progress)));
+  let t = 0;
+  while (t < TOP && r >= LADDER_RUNGS[t]) t++;
+  return t;
+}
+/** The search squares tried, smallest first, for three towns. */
+const TOWN_REACH = Object.freeze([8, 16, 32, 64]);
+/**
+ * Distances from (`px`, `py`) to the towns near it, through the world's places (worldPlaces.near) - the first square
+ * that holds three towns within its own reach. Every province alike. @param {{ near: Function }} places
+ * @param {number} px @param {number} py @returns {number[]}
+ */
+export function zoneTownsAt(places, px, py) {
+  let d = [];
+  for (const r of TOWN_REACH) {
+    d = places.near(px, py, r, (p) => TOWN_TYPES.includes(p.type)).map((p) => Math.hypot(p.px - px, p.py - py)).sort((a, b) => a - b);
+    if (d.length >= 3 && d[2] <= r) return d;
+  }
+  return d;
+}
+
 /** SAFE-ROAD (the owner, 2026-10-30: "have them spawn there make the road safe out of the pvp zone", "enemys avoid
  *  roads"): the Imperial start wakes at the center, so Cyrodiil's roads are safe - no hostile population, and a foe
  *  keeps off them - and a new character walks out of the heart on them. Its wild is the PvP zone's and stands high. */
 export const SAFE_ROAD_AREAS = Object.freeze(['Imperial']);
 
 /** GROUP-PARTY (the owner, 2026-10-30: "we need an area above that", "for group"): the heart's inner ring - this far
- *  on the road to the Imperial City and more - is the party zone: its groups stand whole (pveGrant.js packShare passed
+ *  on the road to the Imperial City and more, on the top band - is the party zone: its groups stand whole (pveGrant.js packShare passed
  *  by), weighing a party of their level, where everywhere else a group is one player's pack. */
 export const PARTY_ZONE_FROM = 0.9;
 
-/** A district's step from its base band, drawn from its key - most stand at the base, some a step either side. */
+/** A district's step from its base band, drawn from its key - most stand at the base, some a step either side. The first
+ *  and last bands take no step: every region keeps its level 1 foes and its top (REGION-LADDER). */
 export const DISTRICT_STEP = Object.freeze([-1, 0, 0, 0, 1, 1]);
 /** Of each hundred districts: the first ENCLAVE are high-level enclaves (three bands up), the next FARMING farming
  *  grounds (a dense, steady population at the band). */
@@ -101,21 +141,22 @@ export function districtRoll(px, py) {
 /**
  * The zone at world pixel (`px`, `py`) in `region`, for a place of kind `place` (dungeon: its `dungeon` type). Every
  * machine reads the same zone: nothing here knows a player.
- * @param {{ px: number, py: number, region: number, place?: string, dungeon?: number|null }} at
+ * `towns`: distances to the towns near it (zoneTownsAt), for REGION-LADDER.
+ * @param {{ px: number, py: number, region: number, place?: string, dungeon?: number|null, towns?: Iterable<number>|null }} at
  */
-export function pveZoneAt({ px, py, region, place = 'wild', dungeon = null }) {
+export function pveZoneAt({ px, py, region, place = 'wild', dungeon = null, towns = null }) {
   const area = zoneAreaOf(region);
   if (area == null || !ZONE_PLACES.includes(place)) return null;
-  const base = zoneBaseTier(px, py, area);
+  const base = towns ? ladderTier(townRung(towns), zoneProgress(px, py, area)) : zoneBaseTier(px, py, area);   // REGION-LADDER
   const roll = districtRoll(px, py);
   const enclave = place === 'wild' && roll < ZONE_SHARE.enclave;
   const farming = place === 'wild' && !enclave && roll < ZONE_SHARE.enclave + ZONE_SHARE.farming;
-  let tier = clampTier(base + DISTRICT_STEP[roll % DISTRICT_STEP.length]);
+  let tier = base === 0 || base === TOP ? base : clampTier(base + DISTRICT_STEP[roll % DISTRICT_STEP.length]);   // REGION-LADDER: the ends hold
   if (enclave) tier = clampTier(base + 3);
   else if (place === 'road') tier = Math.min(tier, base);
   else if (place === 'town') tier = 0;
   else if (place === 'dungeon') tier = clampTier(tier + 1 + (DEEP_DUNGEONS.includes(/** @type {number} */ (dungeon)) ? 1 : 0));
-  const party = area === 'Imperial' && (place === 'wild' || place === 'dungeon') && zoneProgress(px, py, area) >= PARTY_ZONE_FROM;
+  const party = area === 'Imperial' && (place === 'wild' || place === 'dungeon') && zoneProgress(px, py, area) >= PARTY_ZONE_FROM && base === TOP;
   const band = ZONE_BANDS[tier], safeRoad = place === 'road' && SAFE_ROAD_AREAS.includes(area);   // SAFE-ROAD below
   return Object.freeze({ region, name: REGION_NAMES[region], area, pastBay: region >= BAY_REGION_COUNT, place, tier, band,
     safe: place === 'town' || safeRoad, enclave, farming, party, warning: enclave || party || tier >= base + 2 });
